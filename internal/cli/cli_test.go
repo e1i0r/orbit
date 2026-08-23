@@ -13,7 +13,20 @@ func workspace(t *testing.T) (root string, orbitHome string) {
 	t.Helper()
 	root = t.TempDir()
 	orbitHome = filepath.Join(t.TempDir(), "orbit")
-	dir := filepath.Join(root, "payments")
+	initRepo(t, filepath.Join(root, "payments"))
+	t.Setenv("ORBIT_HOME", orbitHome)
+	return root, orbitHome
+}
+
+// initRepo makes one git repository at dir: a branch, a first commit and a
+// remote, which is the least repo.Open needs to read a shape out of it.
+//
+// It is a function of its own rather than four lines inside workspace
+// because a board is only a board over more than one repository — the frame
+// `orbit top -once` draws gives the repository column up when every row
+// would carry the same value in it, so top_test.go builds two.
+func initRepo(t *testing.T, dir string) {
+	t.Helper()
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
@@ -38,8 +51,6 @@ func workspace(t *testing.T) (root string, orbitHome string) {
 			t.Fatalf("git %v: %v\n%s", args, err, out)
 		}
 	}
-	t.Setenv("ORBIT_HOME", orbitHome)
-	return root, orbitHome
 }
 
 func run(t *testing.T, args ...string) (code int, stdout, stderr string) {

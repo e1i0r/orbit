@@ -19,6 +19,7 @@ import (
 // their own: the `new` line is longer than the rest, and the hand-counted
 // spaces that once aligned them stopped aligning the moment it was written.
 var synopsis = [][2]string{
+	{"orbit top [dir]", "watch every task in one window"},
 	{"orbit repos [dir]", "list the repositories under a directory"},
 	{"orbit flows", "list the flows a task can be written against"},
 	{"orbit new -repo <dir> -id <id> <text>", "write a task down"},
@@ -99,6 +100,8 @@ func Run(args []string, out, errOut io.Writer) int {
 	}
 	var err error
 	switch args[0] {
+	case "top":
+		err = top(args[1:], out)
 	case "repos":
 		err = repos(args[1:], out)
 	case "flows":
