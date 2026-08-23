@@ -91,6 +91,12 @@ func TestEveryPermissionMapsToAStatedArgv(t *testing.T) {
 // the binary's own default in charge, stated nowhere, on a process whose
 // working directory sits inside the state root. Asking for nothing has to
 // come out as an argv that says so.
+//
+// Both halves have to be stated, which is why the tool assertions below are
+// about what the flag says and not only about what it omits. Asserting that
+// the argv never mentions Edit was satisfied for free by an argv carrying no
+// --allowedTools at all — the test passed while the tool question was being
+// handed to whatever the machine's settings files happened to say.
 func TestAnEmptyPostureIsTheMostRestrictiveArgvRatherThanNone(t *testing.T) {
 	got := argvFor(t, nil)
 	joined := strings.Join(got, " ")
@@ -100,9 +106,45 @@ func TestAnEmptyPostureIsTheMostRestrictiveArgvRatherThanNone(t *testing.T) {
 	if !slices.Contains(got, "plan") {
 		t.Errorf("the empty posture produced %q, want the strictest mode claude names", joined)
 	}
+	at := slices.Index(got, "--allowedTools")
+	if at < 0 || at == len(got)-1 {
+		t.Fatalf("the empty posture produced %q, which leaves the tool half to the machine's settings", joined)
+	}
+	if got[at+1] != noTools {
+		t.Errorf("the empty posture allowed %q, want %q — the list is stated and grants nothing", got[at+1], noTools)
+	}
 	for _, forbidden := range []string{"Edit", "Write", "Bash", "WebFetch", "WebSearch"} {
 		if strings.Contains(joined, forbidden) {
 			t.Errorf("the empty posture allowed %s: %q", forbidden, joined)
+		}
+	}
+}
+
+// TestTheEmptySentinelNamesNoToolThisPackageGrants is what makes noTools
+// safe to write on a command line. It is a name chosen because nothing
+// matches it; a tool that arrived later under that name would turn the
+// posture that asks for nothing into a posture that asks for something, and
+// this is the assertion that would notice.
+func TestTheEmptySentinelNamesNoToolThisPackageGrants(t *testing.T) {
+	if slices.Contains(toolOrder, noTools) {
+		t.Fatalf("%q is a tool this package grants, so the posture that asks for nothing is asking for it", noTools)
+	}
+}
+
+// TestEveryPostureStatesItsToolList sweeps the same eight subsets as the
+// rules below. A posture that named no tools used to produce no flag, which
+// read on `ps` as an absence and behaved as a delegation; every posture now
+// says what it asked for, including the one that asked for nothing.
+func TestEveryPostureStatesItsToolList(t *testing.T) {
+	for _, set := range postures() {
+		got := argvFor(t, set)
+		at := slices.Index(got, "--allowedTools")
+		if at < 0 || at == len(got)-1 {
+			t.Errorf("posture %v produced %q, which states no tool list", set, strings.Join(got, " "))
+			continue
+		}
+		if got[at+1] == "" {
+			t.Errorf("posture %v produced an empty tool list, which a binary may read as no list at all", set)
 		}
 	}
 }
@@ -149,10 +191,14 @@ func TestNoEngineIsEverHandedTheDangerousFlag(t *testing.T) {
 	}
 }
 
-// TestNoEngineAutoApprovesEditsWithoutBash is the v1 lesson, kept as a test
-// so it cannot be relearned. A mode that auto-approved edits but not the
-// commands the edits needed put a run into a loop of identical refusals and
-// spent $5.04 in eight minutes. Whatever repo means, it may not mean that.
+// TestNoEngineAutoApprovesEditsWithoutBash keeps one half of an expensive
+// lesson from being relearned. A mode that auto-approved edits but not the
+// commands those edits needed put a headless run into a loop of identical
+// refusals for eight minutes, billed by the turn. The mechanism was the
+// denials, not the mode, and nothing in this argv bounds turns or cost — the
+// comment on the tool lists says so plainly, and the ceiling belongs to a
+// later task. What this test can hold is the mode: whatever repo means, it
+// may not mean that.
 func TestNoEngineAutoApprovesEditsWithoutBash(t *testing.T) {
 	for _, set := range postures() {
 		joined := strings.Join(argvFor(t, set), " ")
