@@ -234,6 +234,26 @@ func TestTheEngineThatCannotResumeIsNamed(t *testing.T) {
 	}
 }
 
+// TestTheEngineIsAskedAboutOneTaskAtATime is the other half of the sentence
+// above being true. Naming the engine is only honest if the answer is about
+// that engine: the port used to be a standing bool — an AND over every engine
+// configured — so a build with two engines, one of which could not resume,
+// refused t on every task and told each of them that its own engine was the
+// one at fault.
+func TestTheEngineIsAskedAboutOneTaskAtATime(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+	m.opts.CanResume = func(engine string) bool { return engine == "claude" }
+	for engine, want := range map[string]bool{"claude": true, "codex": false, "": false} {
+		if got := m.conditions(view.Task{ID: "ACME-1", Engine: engine}).CanResume; got != want {
+			t.Errorf("a task on %q is told CanResume=%v, want %v", engine, got, want)
+		}
+	}
+	m.opts.CanResume = nil
+	if m.conditions(view.Task{ID: "ACME-1", Engine: "claude"}).CanResume {
+		t.Error("a window with no way to ask about engines answered yes")
+	}
+}
+
 // TestAskIsListedAndRefused is the tool being honest about its own gap in
 // the same voice it uses about an engine's. The verb exists in the menu, it
 // is refused, and the reason says what to do instead.

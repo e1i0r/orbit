@@ -116,12 +116,21 @@ type Options struct {
 	// without a state root gets.
 	Flows flow.Source
 
-	// CanResume is whether the configured engine can resume a session,
-	// which decides whether taking the keyboard is offered at all. It
-	// arrives as a bool for the same reason Control arrives as a function:
-	// internal/engine is not on internal/ui's import list, so the answer
-	// has to be carried in rather than asked for. It is what fills
-	// Conditions.CanResume, which task 10 declared and internal/cli now
-	// answers from the engines this build can run.
-	CanResume bool
+	// CanResume is whether the engine a task ran under can carry on a
+	// session it started before, which decides whether taking the keyboard
+	// is offered for that task at all. It is a function for the same reason
+	// Control is: internal/engine is not on internal/ui's import list, so
+	// the answer has to be carried in rather than asked for.
+	//
+	// It takes the engine's name rather than being a standing bool because
+	// the sentence it produces names one engine. A program-wide answer was
+	// an AND over every engine configured, so two engines of which one
+	// could not resume refused every task — and told each of them that its
+	// own engine was the one that could not. The engine's name comes off
+	// the task, which is the only place that fact is recorded.
+	//
+	// A nil port answers no. A window handed no way to ask knows nothing
+	// about engines, and a key that is offered and then refused is worse
+	// than one greyed out with its reason.
+	CanResume func(engine string) bool
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/store"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // flows lists the names a task can be written against.
@@ -30,8 +31,43 @@ func flows(args []string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	for _, name := range flow.Names(s) {
-		fmt.Fprintln(out, name)
+	// The language is the saved setting and nothing else. words.Resolve
+	// falls through to $LANG, and a listing that changed language with the
+	// terminal it was run in would make this command's own tests depend on
+	// the machine running them. The flag and the environment variable join
+	// in at the composition root, once, where every command can see them.
+	cfg, err := s.Settings()
+	if err != nil {
+		return err
+	}
+	p := words.For(cfg.Language)
+	for _, f := range flow.List(s) {
+		fmt.Fprintf(out, "%s (%s)\n", f.Name, flowMark(p, f.Origin))
 	}
 	return nil
+}
+
+// flowMark is where a flow came from, in the reader's own language.
+//
+// The classification is flow.List's and the sentence is this call site's,
+// which is the split that lets a translation test see the words: a mark
+// spliced in as a Go constant inside internal/flow was invisible to both the
+// honesty test and the pseudolocale golden. The window's start dialog draws
+// the same three facts through the same three keys, so the two screens can
+// only disagree by disagreeing about the classification — and there is one
+// of those.
+//
+// OriginUnknown reaches here only if List ever returned it. It does not, and
+// the empty string is what an unmarkable name would get rather than a panic
+// in a listing.
+func flowMark(p *words.Printer, o flow.Origin) string {
+	switch o {
+	case flow.OriginBuiltin:
+		return p.T("flow.built_in", "built in")
+	case flow.OriginUser:
+		return p.T("flow.yours", "yours")
+	case flow.OriginShadow:
+		return p.T("flow.shadowing", "yours, shadowing the built-in")
+	}
+	return ""
 }

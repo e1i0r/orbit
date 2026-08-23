@@ -85,6 +85,34 @@ func TestAFileThatShadowsABuiltinSaysSo(t *testing.T) {
 	}
 }
 
+// The mark is a sentence, and every sentence Orbit shows a person goes
+// through the catalogue. This is the test that says so for this one: the
+// same three facts are drawn by the window's start dialog through the same
+// three keys, and English written inside internal/flow — where it used to
+// be, spliced into a Sprintf as data — could not be translated and could not
+// be seen by the tests that check translations exist.
+//
+// The language is the saved setting. Nothing here reads $LANG, so this test
+// says the same thing on a machine running in Spanish.
+func TestTheListingIsInTheReadersOwnLanguage(t *testing.T) {
+	_, orbitHome := workspace(t)
+	userFlow(t, orbitHome, "mine")
+	userFlow(t, orbitHome, "task")
+	if code, _, errOut := run(t, "set", "language", "es"); code != 0 {
+		t.Fatalf("set language exited %d: %s", code, errOut)
+	}
+
+	code, out, errOut := run(t, "flows")
+	if code != 0 {
+		t.Fatalf("flows exited %d: %s", code, errOut)
+	}
+	for _, want := range []string{"careful (de serie)", "mine (tuyo)", "task (tuyo, tapa el de serie)"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("the listing does not say %q:\n%s", want, out)
+		}
+	}
+}
+
 func TestNewSaysWhichFlowTheTaskWasWrittenAgainst(t *testing.T) {
 	root, _ := workspace(t)
 	repoDir := filepath.Join(root, "payments")

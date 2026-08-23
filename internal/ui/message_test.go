@@ -12,28 +12,63 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"path/filepath"
 	"strings"
 	"testing"
 )
 
 // TestEveryMessageTheWindowRaisesIsHandledInUpdate is the structural claim.
 //
-// It parses msg.go for every type whose name ends in Msg and ui.go for every
-// case of Update's type switch, and fails on a message that is declared and
-// never answered. A Cmd whose Msg falls through the switch is a gesture that
-// silently does nothing — the one defect in this layer that no rendering test
-// and no transition table can see, because there is nothing to look at.
+// It reads every non-test file in this package for types whose name ends in
+// Msg, reads Update's type switch for the ones it answers, and fails on a
+// message that is declared and never answered. A Cmd whose Msg falls through
+// the switch is a gesture that silently does nothing — the one defect in this
+// layer that no rendering test and no transition table can see, because there
+// is nothing to look at.
+//
+// The package is globbed rather than two file names being written down here.
+// It used to read "msg.go" and "ui.go", which made the test blind to a message
+// declared in a third file — and the 300-line ceiling means this package gains
+// files as it grows, so the drift the test exists to catch was exactly the
+// drift that would hide from it.
 func TestEveryMessageTheWindowRaisesIsHandledInUpdate(t *testing.T) {
-	declared := declaredMessages(t, "msg.go")
-	if len(declared) == 0 {
-		t.Fatal("msg.go declares no messages, so this test is checking nothing")
+	files := packageFiles(t)
+	var declared []string
+	for _, f := range files {
+		declared = append(declared, declaredMessages(t, f)...)
 	}
-	handled := handledMessages(t, "ui.go")
+	if len(declared) == 0 {
+		t.Fatal("this package declares no messages, so this test is checking nothing")
+	}
+	handled := handledMessages(t, files)
 	for _, name := range declared {
 		if !handled[name] {
-			t.Errorf("msg.go declares %s and Update has no case for it", name)
+			t.Errorf("%s is declared and Update has no case for it", name)
 		}
 	}
+}
+
+// packageFiles is this package's own source, tests excluded.
+//
+// Tests are excluded because a fixture message declared for one table is not
+// something the window raises, and because this file would otherwise be
+// reading itself.
+func packageFiles(t *testing.T) []string {
+	t.Helper()
+	all, err := filepath.Glob("*.go")
+	if err != nil {
+		t.Fatalf("glob: %v", err)
+	}
+	var files []string
+	for _, f := range all {
+		if !strings.HasSuffix(f, "_test.go") {
+			files = append(files, f)
+		}
+	}
+	if len(files) == 0 {
+		t.Fatal("no source files found beside this test")
+	}
+	return files
 }
 
 // declaredMessages is every type in one file whose name ends in Msg.
@@ -53,26 +88,44 @@ func declaredMessages(t *testing.T, file string) []string {
 // handledMessages is every local type named in a case of Update's type
 // switch. Qualified names — tea.KeyPressMsg and the rest — are the event
 // loop's own and are not what this test is about.
-func handledMessages(t *testing.T, file string) map[string]bool {
+//
+// It is a type switch inside Update and nothing else: a case clause anywhere
+// in the file would otherwise satisfy this test, and a value switch that
+// happened to mention a message's name would answer for a message Update never
+// sees.
+func handledMessages(t *testing.T, files []string) map[string]bool {
 	t.Helper()
 	handled := map[string]bool{}
-	for _, decl := range parse(t, file).Decls {
-		fn, ok := decl.(*ast.FuncDecl)
-		if !ok || fn.Name.Name != "Update" {
-			continue
-		}
-		ast.Inspect(fn, func(n ast.Node) bool {
-			clause, ok := n.(*ast.CaseClause)
-			if !ok {
-				return true
+	found := false
+	for _, file := range files {
+		for _, decl := range parse(t, file).Decls {
+			fn, ok := decl.(*ast.FuncDecl)
+			if !ok || fn.Name.Name != "Update" {
+				continue
 			}
-			for _, expr := range clause.List {
-				if ident, ok := expr.(*ast.Ident); ok {
-					handled[ident.Name] = true
+			found = true
+			ast.Inspect(fn, func(n ast.Node) bool {
+				sw, ok := n.(*ast.TypeSwitchStmt)
+				if !ok {
+					return true
 				}
-			}
-			return true
-		})
+				for _, stmt := range sw.Body.List {
+					clause, ok := stmt.(*ast.CaseClause)
+					if !ok {
+						continue
+					}
+					for _, expr := range clause.List {
+						if ident, ok := expr.(*ast.Ident); ok {
+							handled[ident.Name] = true
+						}
+					}
+				}
+				return true
+			})
+		}
+	}
+	if !found {
+		t.Fatal("no Update in this package, so this test is checking nothing")
 	}
 	return handled
 }

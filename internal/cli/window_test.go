@@ -14,23 +14,32 @@ import (
 	"github.com/e1i0r/orbit/internal/engine"
 )
 
+// The answer is about the engine the task in front of the reader ran under,
+// which is what lets the refusal name it truthfully. "one of each" is the
+// case that used to be wrong: an AND over both engines refused every task and
+// told each of them its own engine was the one at fault.
 func TestOnlyEnginesThatCarryOnASessionSayTheyCan(t *testing.T) {
 	claude := engine.NewClaude()
 	fake := engine.NewFake("")
+	both := map[string]engine.Engine{"claude": claude, "fake": fake}
 	for _, c := range []struct {
 		name    string
 		engines map[string]engine.Engine
+		engine  string
 		want    bool
 	}{
-		{"the engine this program runs", map[string]engine.Engine{"claude": claude}, true},
-		{"one that cannot", map[string]engine.Engine{"fake": fake}, false},
-		{"one of each", map[string]engine.Engine{"claude": claude, "fake": fake}, false},
-		{"none configured", map[string]engine.Engine{}, false},
-		{"a nil in the map", map[string]engine.Engine{"claude": nil}, false},
+		{"the engine this program runs", map[string]engine.Engine{"claude": claude}, "claude", true},
+		{"one that cannot", map[string]engine.Engine{"fake": fake}, "fake", false},
+		{"one of each, asked about the one that can", both, "claude", true},
+		{"one of each, asked about the one that cannot", both, "fake", false},
+		{"none configured", map[string]engine.Engine{}, "claude", false},
+		{"a nil in the map", map[string]engine.Engine{"claude": nil}, "claude", false},
+		{"an engine this build does not have", map[string]engine.Engine{"claude": claude}, "gone", false},
+		{"a task that has never run names no engine", both, "", false},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			if got := canResume(c.engines); got != c.want {
-				t.Errorf("canResume is %v, want %v", got, c.want)
+			if got := canResume(c.engines, c.engine); got != c.want {
+				t.Errorf("canResume(%q) is %v, want %v", c.engine, got, c.want)
 			}
 		})
 	}

@@ -223,15 +223,23 @@ func (m Model) notBuilt(b key.Binding) Model {
 
 // conditions is the standing state the verbs are asked about, for one task.
 //
-// It takes the task because one of the three answers is about a particular
-// one: whether this window handed the terminal to an engine for it. The other
-// two are about the whole program.
+// It takes the task because two of the three answers are about a particular
+// one: whether this window handed the terminal to an engine for it, and
+// whether the engine that ran it can carry a session on at all. Only the
+// autopilot switch is about the whole program.
 func (m Model) conditions(t view.Task) Conditions {
 	return Conditions{
 		Autopilot: m.autopilotOn(),
-		CanResume: m.opts.CanResume,
+		CanResume: m.canResume(t.Engine),
 		Taken:     m.taken[t.ID],
 	}
+}
+
+// canResume asks the port about one engine by name, and answers no for a
+// window that was handed no way to ask — a rendering test, or a window built
+// before the composition root knows what it can run.
+func (m Model) canResume(engine string) bool {
+	return m.opts.CanResume != nil && m.opts.CanResume(engine)
 }
 
 // autopilotOn reads the switch, and answers for a window opened without a

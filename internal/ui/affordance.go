@@ -26,13 +26,18 @@ import (
 // verbs are asked about.
 type Conditions struct {
 	Autopilot bool // the switch; a paused task is still the reader's to lift
-	CanResume bool // whether the configured engine can resume a session
+
+	// CanResume is whether the engine *this task* ran under can carry on a
+	// session it started before. It is per-task, not per-program: the
+	// refusal it produces names an engine, and a standing answer made that
+	// sentence name whichever engine the task in front of the reader
+	// happened to use rather than the one that could not resume.
+	CanResume bool
 
 	// Taken is whether the caller handed the terminal to an engine for this
-	// task and has not handed it back. It is per-task where the other two
-	// are per-program, and it is here rather than on view.Task because
-	// nothing in the record says it — the argument, and what it costs, is
-	// at took in gesture.go.
+	// task and has not handed it back. It is here rather than on view.Task
+	// because nothing in the record says it — the argument, and what it
+	// costs, is at took in gesture.go.
 	Taken bool
 }
 
@@ -196,16 +201,20 @@ func whyNotTake(t view.Task, s Conditions) words.Arg {
 //
 // Until Conditions carried Taken, h was offered on any parked run — including
 // one that was merely paused, where "hand the keyboard back" names a keyboard
-// nobody had. The three refusals are in the order a reader would hit them: an
-// engine that cannot resume can never have handed anything over, a run that
-// is not stopped is not somewhere a session could be open, and a run that is
-// stopped but was never taken wants r rather than h.
+// nobody had.
+//
+// The engine is asked about last, as it is in whyNotTake and for the same
+// reason: the sentence it produces names the engine, and a task that has
+// never run has no engine to name. Ask it first and a task nothing has ever
+// touched is refused with a sentence that begins with a blank. A run that is
+// stopped at a phase is a run that happened, so by the time the engine's arm
+// is reached there is a name to put in it.
 func whyNotHand(t view.Task, s Conditions) words.Arg {
 	switch {
-	case !s.CanResume:
-		return about(whyHandBackEngineCannotResume, t.Engine)
 	case !parked(t):
 		return because(whyHandBackNotStopped)
+	case !s.CanResume:
+		return about(whyHandBackEngineCannotResume, t.Engine)
 	case !s.Taken:
 		return because(whyHandBackNotTaken)
 	}

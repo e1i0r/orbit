@@ -105,7 +105,10 @@ func TestTheGesturesReachTheFunctionsTheSubcommandsCall(t *testing.T) {
 			if cmd != nil || got.word != "" {
 				t.Fatalf("cmd=%v word=%q, want nothing written for a session nobody took", cmd != nil, got.word)
 			}
-			wantBand(t, m, "t")
+			// The whole sentence up to and including the key, because
+			// this case is named for the key being named: every refusal
+			// this window has contains the letter t somewhere.
+			wantBand(t, m, "nobody took the keyboard here; press t")
 		},
 	}, {
 		name: "d marks a finished task read",
@@ -148,7 +151,7 @@ func TestTheGesturesReachTheFunctionsTheSubcommandsCall(t *testing.T) {
 			if cmd != nil {
 				t.Fatal("a produced a command, and orbit cannot ask an engine anything yet")
 			}
-			wantBand(t, m, "t")
+			wantBand(t, m, "cannot ask an engine a question yet")
 		},
 	}}
 
@@ -190,7 +193,9 @@ func TestTakingTheKeyboardIsRefusedWhileARunnerHoldsTheWorktree(t *testing.T) {
 	if got.taken != "" {
 		t.Errorf("the take port was asked about %q, want it never reached", got.taken)
 	}
-	for _, want := range []string{"worktree", "p"} {
+	// The reason and the key, each as a phrase of its own: "p" alone was
+	// true of almost every refusal this window can produce.
+	for _, want := range []string{"a phase is writing in this worktree", "press p to stop it"} {
 		wantBand(t, after, want)
 	}
 }

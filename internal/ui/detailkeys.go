@@ -56,6 +56,12 @@ func (m Model) detailKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.edit()
 	case key.Matches(msg, m.keys.Open), key.Matches(msg, m.keys.Last):
 		return m.newest(), nil
+	case key.Matches(msg, m.keys.Help):
+		// Answered here for the reason startKey answers it: the bar prints
+		// [?] on every screen and never drops it, so every screen owes the
+		// reader the same sentence back. Without this arm ? fell through to
+		// scroll, which moves nothing and says nothing.
+		return m.notBuilt(m.keys.Help), nil
 	case key.Matches(msg, m.keys.Quit):
 		return m, tea.Quit
 	}

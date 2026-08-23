@@ -29,7 +29,6 @@ package ui
 
 import (
 	"slices"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -57,11 +56,10 @@ const namedInRefusal = 3
 // where they should find that out — before a worktree, a process and a bill.
 // It is the same argument flow.Validate makes about loading one at all.
 type startFlow struct {
-	name    string
-	mine    bool // written by the reader, under $ORBIT_HOME/flows
-	shadows bool // and hiding a built-in of the same name
-	flow    flow.Flow
-	err     error
+	name   string
+	origin flow.Origin // built in, the reader's own, or shadowing a built-in
+	flow   flow.Flow
+	err    error
 }
 
 // startModel is what the dialog remembers: which task it is about, every
@@ -102,36 +100,34 @@ func (s startModel) cycle() []startFlow {
 // mark beside the name is for, in the words `orbit flows` uses. A task
 // written against a name that is neither is kept at the front all the same:
 // a name that will not resolve is a thing to say on this screen, not a task
-// to hide from it.
+// to hide from it, and it arrives with flow.OriginUnknown because that is
+// what it is: a name nothing answers to.
+//
+// Which mark a name gets is flow.List's answer and is not worked out again
+// here. It used to be — from flow.UserNames and a slices.Contains against
+// the built-ins — and that made two implementations of one rule, one of
+// which `orbit flows` used and one of which this dialog used. They agreed
+// only because nobody had edited either of them yet.
 func newStart(src flow.Source, t view.Task) startModel {
 	own := t.Flow
 	if own == "" {
 		own = flow.Default
 	}
-	builtin := flow.BuiltinNames()
-	names, mine := slices.Clone(builtin), map[string]bool{}
-	for _, n := range flow.UserNames(src) {
-		mine[n] = true
-		if !slices.Contains(names, n) {
-			names = append(names, n)
-		}
+	listed := flow.List(src)
+	if !slices.ContainsFunc(listed, func(l flow.Listed) bool { return l.Name == own }) {
+		listed = append([]flow.Listed{{Name: own}}, listed...)
 	}
-	sort.Strings(names)
-	if !slices.Contains(names, own) {
-		names = append([]string{own}, names...)
-	}
-	s := startModel{id: t.ID, flows: make([]startFlow, 0, len(names))}
-	for i, n := range names {
-		if n == own {
+	s := startModel{id: t.ID, flows: make([]startFlow, 0, len(listed))}
+	for i, l := range listed {
+		if l.Name == own {
 			s.at = i
 		}
-		f, err := flow.Resolve(src, n)
+		f, err := flow.Resolve(src, l.Name)
 		s.flows = append(s.flows, startFlow{
-			name:    n,
-			mine:    mine[n],
-			shadows: mine[n] && slices.Contains(builtin, n),
-			flow:    f,
-			err:     err,
+			name:   l.Name,
+			origin: l.Origin,
+			flow:   f,
+			err:    err,
 		})
 	}
 	return s
@@ -176,6 +172,12 @@ func (m Model) startKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.cycleFlow(), nil
 	case key.Matches(msg, m.keys.Autopilot):
 		return m.autopilot(), nil
+	case key.Matches(msg, m.keys.Help):
+		// The bar prints [?] on every screen, because help and quit are the
+		// two things a reader who is lost reaches for and barLine never
+		// drops them. A key the bar offers has to do something, and what ?
+		// does everywhere in this window is say it is not built yet.
+		return m.notBuilt(m.keys.Help), nil
 	case key.Matches(msg, m.keys.Quit):
 		return m, tea.Quit
 	}
@@ -209,19 +211,34 @@ func (m Model) runIt() (tea.Model, tea.Cmd) {
 	if chosen.err != nil {
 		return m.say(chosen.err.Error()), nil
 	}
-	if waiting := board.Unreads(m.board); m.atUnreadCap() {
+	// The board is walked once. The unread tasks are the count, the
+	// colour and the ids in the refusal all at once, and reading it three
+	// times to answer one question was three answers that could disagree
+	// if a refresh landed between them.
+	waiting := board.Unreads(m.board)
+	if m.atUnreadCap(len(waiting)) {
 		return m.say(m.unreadRefusal(waiting)), nil
 	}
 	m.screen, m.start = screenList, startModel{}
-	return m, start(m.opts.Start, t, chosen.name, board.Unread(m.board))
+	return m, start(m.opts.Start, t, chosen.name, len(waiting))
 }
 
 // atUnreadCap is whether the brake is on: as many finished tasks unread as
 // the settings file allows, or more. A cap of zero is no cap, which is what
 // a window opened without a settings file has.
-func (m Model) atUnreadCap() bool {
+//
+// It takes the count rather than reading the board, for two reasons. A
+// caller that already holds the unread tasks does not walk the board again
+// to be told how many it found. And this is the only spelling of the
+// predicate in this package: the header's warning colour and the ToDo band's
+// hint had each inlined `limit > 0 && unread >= limit` at the site, so the
+// rule that decides whether anything may start was written three times on
+// three screens. There is a fourth in internal/task, and that one stays —
+// it reads the settings file rather than a board, and it is the one that
+// actually decides.
+func (m Model) atUnreadCap(unread int) bool {
 	limit := m.unreadCap()
-	return limit > 0 && board.Unread(m.board) >= limit
+	return limit > 0 && unread >= limit
 }
 
 // unreadRefusal is the sentence the brake says, and it names names.
@@ -239,9 +256,13 @@ func (m Model) unreadRefusal(waiting []view.Task) string {
 		}
 		ids = append(ids, t.ID)
 	}
+	// esc first, and then d. The refusal is only ever said from this
+	// dialog, and the dialog does not handle d — it takes every keystroke
+	// while it is up. A sentence that names a key the screen it is printed
+	// on will not answer is worse than one that names no key at all.
 	return m.opts.Words.P("start.unread_cap", len(waiting),
-		"{n} finished task is waiting to be read and the cap is {cap}: {ids} — press d on it",
-		"{n} finished tasks are waiting to be read and the cap is {cap}: {ids} — press d on one",
+		"{n} finished task is waiting to be read and the cap is {cap}: {ids} — press esc, then d on it",
+		"{n} finished tasks are waiting to be read and the cap is {cap}: {ids} — press esc, then d on one",
 		about("n", strconv.Itoa(len(waiting))),
 		about("cap", strconv.Itoa(m.unreadCap())),
 		about("ids", strings.Join(ids, ", ")))

@@ -283,7 +283,8 @@ func (m Model) countRole(r row) Role {
 // otherwise looks like a bug.
 func (m Model) headHint(r row) string {
 	if r.band == view.ToDo {
-		if unread, limit := board.Unread(m.board), m.unreadCap(); limit > 0 && unread >= limit {
+		if unread := board.Unread(m.board); m.atUnreadCap(unread) {
+			limit := m.unreadCap()
 			return m.opts.Words.T("band.unread_cap", "unread cap reached · {n} of {cap}",
 				about("n", strconv.Itoa(unread)), about("cap", strconv.Itoa(limit)))
 		}

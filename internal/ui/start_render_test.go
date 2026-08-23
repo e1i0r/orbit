@@ -12,9 +12,12 @@ package ui
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
+
+	"charm.land/bubbles/v2/key"
 
 	"github.com/charmbracelet/x/ansi"
 
@@ -67,21 +70,34 @@ func TestEveryStartDialogFitsTheTerminalItWasGiven(t *testing.T) {
 
 // TestTheStartDialogOffersOnlyKeysItHandles is the footer's whole claim.
 //
-// It is drawn from the same bindings the dialog matches against, so a key
-// printed under the phases is a key that does something. Pressing every one
-// of them and finding the window unmoved is how a footer that has drifted
-// from its own key map is caught.
+// It reads the bar rather than the key map, and that is the whole of what
+// makes it a test. The bar is hints() plus a tail — [?] and [q] — appended
+// outside them and never dropped, so a version of this test that walked
+// startBindings() was structurally unable to see the tail, and the dialog
+// printed [?] for a key it did not answer for as long as that was true.
+//
+// Every glyph the bar prints has to belong to a binding this screen handles,
+// and every one of those keys has to move something when it is pressed.
 func TestTheStartDialogOffersOnlyKeysItHandles(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m, _ = dialog(t, m, "ACME-2662")
 	rows := renderAt(t, m, 100, 30)
-	bar := rows[len(rows)-1]
-	for _, glyph := range []string{"space", " e ", "[e]"} {
-		if strings.Contains(bar, glyph) {
-			t.Errorf("the footer offers %q, which this dialog does not handle: %q", glyph, bar)
-		}
+	bar := ansi.Strip(rows[len(rows)-1])
+
+	handled := map[string]key.Binding{}
+	for _, b := range append(m.startBindings(), m.keys.Help, m.keys.Quit) {
+		handled[b.Help().Key] = b
 	}
-	for _, b := range m.startBindings() {
+	glyphs := inBrackets(bar)
+	if len(glyphs) == 0 {
+		t.Fatalf("the bar offers no keys at all, so this test asserts nothing: %q", bar)
+	}
+	for _, glyph := range glyphs {
+		b, ok := handled[glyph]
+		if !ok {
+			t.Errorf("the bar offers %q, which this dialog does not handle: %q", glyph, bar)
+			continue
+		}
 		for _, keystroke := range b.Keys() {
 			after, cmd := advance(t, m, press(keystroke))
 			if cmd == nil && after.screen == m.screen && after.start.at == m.start.at &&
@@ -91,6 +107,20 @@ func TestTheStartDialogOffersOnlyKeysItHandles(t *testing.T) {
 		}
 	}
 }
+
+// inBrackets is every [glyph] in one rendered line, in the order they were
+// drawn. It is how a test reads a key bar: the bar draws a key as its glyph
+// in square brackets and its meaning after it, and the glyph is the part a
+// reader is being invited to press.
+func inBrackets(line string) []string {
+	var out []string
+	for _, m := range bracketed.FindAllStringSubmatch(line, -1) {
+		out = append(out, m[1])
+	}
+	return out
+}
+
+var bracketed = regexp.MustCompile(`\[([^\[\]]+)\]`)
 
 // flowDir is a reader's own flow directory, as internal/flow asks for it.
 type flowDir string
@@ -119,43 +149,69 @@ func userFlows(t *testing.T, names ...string) flow.Source {
 // the fixture board cannot show, because the fixture has no flow directory:
 // the cycle offers a reader's own flows, and says which they are.
 //
-// The two marks are asserted as the English `orbit flows` prints, and that
-// is the whole point of the assertion — a reader who ran the command and
-// then opened this dialog is looking at one fact, and two spellings of it
-// would read as two.
+// It is named for an equivalence, so it asserts one rather than writing both
+// sides down. The classification comes from flow.List — the one function
+// that decides where a name came from, and the one `orbit flows` asks — and
+// the sentence comes from the same catalogue key that listing prints
+// through. Change the rule and both sides move; change the dialog alone and
+// this fails.
+//
+// Both languages, and each catches a different drift. In Spanish the words
+// come from es.json, so a dialog that quietly grew a key of its own falls
+// back to English and is caught. In English T returns what the caller wrote,
+// so the literal here and the literal in flowMark are compared directly —
+// and they are not two copies free to differ, because
+// TestEveryTranslationKeyIsHonest fails the build when two call sites give
+// one key two different English sentences. That is what welds this test, the
+// dialog and `orbit flows` to one wording.
+//
+// What the test still says on its own is which key belongs to which origin.
+// That is the contract between the two screens, and stating it is the point.
 func TestAFlowOfTheReadersOwnIsMarkedTheWayOrbitFlowsMarksIt(t *testing.T) {
-	m, _ := testModel(t, 100, 30)
-	m.opts.Flows = userFlows(t, "mine", "task")
-	m, _ = dialog(t, m, "ACME-2662")
+	for _, lang := range []string{"en", "es"} {
+		t.Run(lang, func(t *testing.T) {
+			p := printerFor(t, lang)
+			m := modelWith(t, p, fixtureBoard(fixtureTasks(), 4), 100, 30, nil)
+			m.opts.Flows = userFlows(t, "mine", "task")
+			m, _ = dialog(t, m, "ACME-2662")
 
-	marks := map[string]string{}
-	for _, f := range m.start.flows {
-		marks[f.name] = m.flowMark(f)
-	}
-	for name, want := range map[string]string{
-		"mine":    "yours",
-		"task":    "yours, shadowing the built-in",
-		"careful": "",
-	} {
-		if marks[name] != want {
-			t.Errorf("the cycle marks %q as %q, want %q", name, marks[name], want)
-		}
-	}
-	for _, name := range []string{"mine", "task", "careful"} {
-		if _, listed := marks[name]; !listed {
-			t.Errorf("the cycle does not offer %q at all, so its mark says nothing", name)
-		}
-	}
-	// A shadowed built-in is one entry and not two, for the reason
-	// `orbit flows` lists it once: there is one flow that name resolves to.
-	var seen int
-	for _, f := range m.start.flows {
-		if f.name == "task" {
-			seen++
-		}
-	}
-	if seen != 1 {
-		t.Errorf("the cycle lists a shadowed built-in %d times, want once", seen)
+			marks, seen := map[string]string{}, map[string]int{}
+			for _, f := range m.start.flows {
+				marks[f.name], seen[f.name] = m.flowMark(f), seen[f.name]+1
+			}
+			listed := flow.List(m.opts.Flows)
+			if len(listed) == 0 {
+				t.Fatal("flow.List offers nothing, so the comparison would assert nothing")
+			}
+			for _, l := range listed {
+				var want string
+				switch l.Origin {
+				case flow.OriginUser:
+					want = p.T("flow.yours", "yours")
+				case flow.OriginShadow:
+					want = p.T("flow.shadowing", "yours, shadowing the built-in")
+				}
+				if seen[l.Name] == 0 {
+					t.Errorf("the cycle does not offer %q at all, so its mark says nothing", l.Name)
+					continue
+				}
+				if marks[l.Name] != want {
+					t.Errorf("the cycle marks %q as %q, want %q", l.Name, marks[l.Name], want)
+				}
+				// A shadowed built-in is one entry and not two, for the
+				// reason `orbit flows` lists it once: there is one flow
+				// that name resolves to.
+				if seen[l.Name] != 1 {
+					t.Errorf("the cycle lists %q %d times, want once", l.Name, seen[l.Name])
+				}
+			}
+			if marks["task"] == marks["mine"] {
+				t.Errorf("a shadowing flow and an ordinary one of the reader's own are marked the same: %q", marks["task"])
+			}
+			if marks["careful"] != "" {
+				t.Errorf("a built-in is marked %q; a mark on every line is not a mark", marks["careful"])
+			}
+		})
 	}
 }
 

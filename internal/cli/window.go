@@ -16,27 +16,26 @@ import (
 	"github.com/e1i0r/orbit/internal/engine"
 )
 
-// canResume is whether the engines this program is configured with can carry
-// on a session they started before.
+// canResume is whether one named engine can carry on a session it started
+// before.
 //
-// Every one of them has to, and not merely one: the answer is a standing
-// fact the window shows beside a task whose engine it has not looked up, and
-// an optimistic answer would offer t on a task the engine behind it cannot
-// resume — a key that is offered and then refused is worse than one that was
-// greyed out with its reason.
+// It answers about one engine because the window asks about one task, and
+// because the refusal it produces names an engine. It used to be an AND over
+// every engine configured — a standing fact for the whole program — and that
+// was wrong in a way that only shows up with two engines: if either of them
+// could not resume, t was refused on every task, and each task was told that
+// its own engine was the one that could not. The name comes off the task,
+// which is where the record keeps it.
 //
-// No engines at all is false rather than vacuously true, for the same
-// reason: nothing configured is nothing that can resume anything.
-func canResume(engines map[string]engine.Engine) bool {
-	if len(engines) == 0 {
-		return false
-	}
-	for _, e := range engines {
-		if e == nil || !e.CanResume() {
-			return false
-		}
-	}
-	return true
+// A name nothing is configured for is false rather than an error. The window
+// is drawing a key's reason, not validating a configuration, and a task
+// recorded against an engine this build no longer has is a task whose session
+// cannot be resumed by anything here — which is exactly what false says. So
+// is a nil in the map, and so is the empty name a task that has never run
+// carries.
+func canResume(engines map[string]engine.Engine, name string) bool {
+	e, ok := engines[name]
+	return ok && e != nil && e.CanResume()
 }
 
 // takeCommand builds the interactive session the window suspends itself for

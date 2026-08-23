@@ -136,7 +136,7 @@ func (m Model) headerFields() []string {
 	unread, limit := board.Unread(m.board), m.unreadCap()
 
 	brake := Dim
-	if limit > 0 && unread >= limit {
+	if m.atUnreadCap(unread) {
 		brake = Warn
 	}
 	fields := []string{Paint(brake).Render(p.T("header.unread", "unread {n}/{cap}",

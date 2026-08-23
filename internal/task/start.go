@@ -34,7 +34,7 @@ import (
 // must not do a second time: internal/board and internal/view are the
 // readers of that format, and internal/board imports this package, so a fold
 // here would be both a second opinion and a cycle. Whoever holds the board
-// passes the number; internal/cli has Unread for exactly that.
+// passes the number; internal/board has Unread for exactly that.
 //
 // The cap itself comes from the settings file and is read here, so that a
 // caller cannot forget it. At the cap Start refuses and says the two numbers,

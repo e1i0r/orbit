@@ -33,15 +33,40 @@ type Source interface {
 	FlowDir() string
 }
 
-// The words Names puts beside a flow, saying where the one that would be
-// resolved came from. A shadow is marked as such because a flow that
-// stopped behaving as documented is then one command away from explaining
-// itself.
+// Origin says where the flow a name resolves to came from.
+//
+// It is a classification and not a sentence, and that is the whole of why
+// it exists. This package holds no English: a flow is data, and the words a
+// reader sees are written at the call site that draws them, where
+// internal/words can check them against the catalogue. A mark spliced in
+// here as a Go constant was a user-facing sentence no translation test
+// could see — so the fact travels as a value, and `orbit flows` and the
+// window's start dialog each say it through the same catalogue key.
+//
+// A shadow is a case of its own because a flow that stopped behaving as
+// documented is then one command away from explaining itself.
+type Origin int
+
 const (
-	markBuiltin = "built in"
-	markUser    = "yours"
-	markShadow  = "yours, shadowing the built-in"
+	// OriginUnknown is a name nothing answers to: the zero value, and what
+	// a task written against a flow somebody has since deleted has. List
+	// never returns it.
+	OriginUnknown Origin = iota
+	// OriginBuiltin is a flow shipped inside the binary.
+	OriginBuiltin
+	// OriginUser is a file in the user's flow directory.
+	OriginUser
+	// OriginShadow is a file of the user's hiding a built-in of the same
+	// name.
+	OriginShadow
 )
+
+// Listed is one flow name and where the flow that name resolves to came
+// from.
+type Listed struct {
+	Name   string
+	Origin Origin
+}
 
 // Resolve turns a name into the flow that name means, looking in the user's
 // flow directory before the flows shipped inside the binary.
@@ -93,32 +118,53 @@ func named(f Flow, want, source string) (Flow, error) {
 	return f, nil
 }
 
-// Names is every flow that could be resolved, sorted, each marked with
-// where the one that would win came from.
+// List is every flow that could be resolved, sorted, each with where the
+// one that would win came from.
+//
+// *This is the only place that decision is made.* Two screens show it —
+// the `orbit flows` listing and the window's start dialog — and both take
+// the classification from here rather than working it out again from
+// BuiltinNames and a directory listing. Two implementations of one rule are
+// two rules the day somebody edits one of them, and the drift is invisible:
+// both keep printing a mark, and the marks disagree.
 //
 // It is a listing and not a load: a file in the directory is named here
 // whether or not it parses, because "there is a file called that" is the
 // thing a reader is asking, and Resolve is what says whether it is a flow.
-func Names(src Source) []string {
-	marks := make(map[string]string)
+func List(src Source) []Listed {
+	origins := make(map[string]Origin)
 	names := BuiltinNames()
 	for _, n := range names {
-		marks[n] = markBuiltin
+		origins[n] = OriginBuiltin
 	}
-	for _, n := range UserNames(src) {
-		if _, shadows := marks[n]; shadows {
-			marks[n] = markShadow
+	for _, n := range userNames(src) {
+		if _, shadows := origins[n]; shadows {
+			origins[n] = OriginShadow
 		} else {
-			marks[n] = markUser
+			origins[n] = OriginUser
 			names = append(names, n)
 		}
 	}
 	sort.Strings(names)
-	listed := make([]string, 0, len(names))
+	listed := make([]Listed, 0, len(names))
 	for _, n := range names {
-		listed = append(listed, fmt.Sprintf("%s (%s)", n, marks[n]))
+		listed = append(listed, Listed{Name: n, Origin: origins[n]})
 	}
 	return listed
+}
+
+// Names is that same listing as bare names.
+//
+// It is what a sentence uses when the reader is being told what they could
+// have typed: the mark answers "where did this come from", which is not the
+// question somebody who just misspelled a flow name is asking.
+func Names(src Source) []string {
+	listed := List(src)
+	names := make([]string, 0, len(listed))
+	for _, l := range listed {
+		names = append(names, l.Name)
+	}
+	return names
 }
 
 // ValidName rejects a name that could not be the file a flow lives in.
@@ -148,21 +194,20 @@ func dirOf(src Source) string {
 	return src.FlowDir()
 }
 
-// UserNames lists the flows a user has written, by file name.
+// userNames lists the flows a user has written, by file name.
 //
 // A directory that is not there is a user who has written none, which is
 // the ordinary case and not a fault: nothing creates $ORBIT_HOME/flows, and
 // a reader that failed because a folder was missing would make the whole
 // command unusable until somebody made one.
 //
-// It is exported for the window, which draws the flow cycle in the start
-// dialog and has to mark a user's flow the way `orbit flows` marks it. Names
-// is no use there: it returns each flow already written out as "name (built
-// in)", and reading a name back out of a formatted line is the kind of
-// parsing this repository refuses. So the two callers take what they need —
-// this one the bare names, Names the marked line — and the marking rule
-// stays here, in one function, above both.
-func UserNames(src Source) []string {
+// It is unexported, and it went back to being so when List started
+// answering with a classification. It was exported for one caller — the
+// window, which draws the flow cycle and marks a flow of the reader's own
+// the way `orbit flows` marks it — and that caller was then deciding, from
+// these bare names and BuiltinNames, a thing List had already decided. The
+// window takes List now, so nothing outside this package needs the halves.
+func userNames(src Source) []string {
 	dir := dirOf(src)
 	if dir == "" {
 		return nil

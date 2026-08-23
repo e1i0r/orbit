@@ -21,7 +21,9 @@ package ui
 // session lives wherever the engine puts it, and finding it is the reader's.
 
 import (
+	"errors"
 	"maps"
+	"os/exec"
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
@@ -108,8 +110,21 @@ func (m Model) session(msg sessionMsg) (tea.Model, tea.Cmd) {
 
 // sessionEnded is the reader back from one, and it says what is still true:
 // the run is still parked, and it is theirs until they hand it back.
+//
+// An error here is two different events wearing one word, and the window has
+// to tell them apart because they leave it in two different states. A session
+// that ran and exited badly is a session the reader sat in front of, and the
+// run is still theirs. A session that never started at all — no such program,
+// a worktree that is not there — is a task the window would otherwise go on
+// believing somebody is sitting in front of, which is the thing takeKey's own
+// doc promises never to leave behind. An *exec.ExitError is the first;
+// anything else is the second, so anything else is forgotten.
 func (m Model) sessionEnded(msg sessionEndedMsg) Model {
 	if msg.Err != nil {
+		var exited *exec.ExitError
+		if !errors.As(msg.Err, &exited) {
+			m = m.took(msg.ID, false)
+		}
 		return m.say(msg.Err.Error())
 	}
 	return m.say(m.opts.Words.T("msg.session_ended", "{id} is still stopped and still yours; press h to hand it back",
@@ -122,6 +137,36 @@ func (m Model) readSaid(msg readMsg) string {
 		return msg.Err.Error()
 	}
 	return m.opts.Words.T("msg.marked_read", "{id} is marked read", about("id", msg.ID))
+}
+
+// stillTaken forgets the sessions the board says cannot be open any more.
+//
+// took is set when the terminal is handed over and cleared when the keyboard
+// is handed back, and those used to be the only two moments it changed. So a
+// task that was cancelled, resumed with r, or simply ran to completion kept
+// its entry for as long as the window stayed open, and h went on being
+// offered for a session that ended long ago.
+//
+// The board is the authority and this window's memory is not: a task stopped
+// at a phase is one a session could still be sitting in, and a task that is
+// running, finished, or gone from the board altogether is not, whatever this
+// map says. Nothing is ever added here — forgetting is the safe direction,
+// because h refused still leaves r, which releases the same pause.
+//
+// It runs where the board arrives rather than where h is drawn, so that the
+// map shrinks once per refresh instead of being filtered on every render.
+func (m Model) stillTaken() Model {
+	if len(m.taken) == 0 {
+		return m
+	}
+	held := make(map[string]bool, len(m.taken))
+	for _, t := range m.board.Tasks {
+		if m.taken[t.ID] && parked(t) {
+			held[t.ID] = true
+		}
+	}
+	m.taken = held
+	return m
 }
 
 // took records, or forgets, that this window handed the terminal to an
@@ -141,6 +186,9 @@ func (m Model) readSaid(msg readMsg) string {
 // would have worked, while r — which releases the same pause — still does.
 // That is the safe direction to be wrong in. The day the record carries the
 // fact, this map is deleted and Conditions.Taken is filled from view.Task.
+//
+// What it is not is a memory that only grows: stillTaken above drops an
+// entry as soon as the board says that run is no longer stopped at a phase.
 //
 // It is cloned rather than written in place, for the reason Model's other
 // maps are: a map field survives the copy Update makes, so mutating one

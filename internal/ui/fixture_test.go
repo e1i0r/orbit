@@ -17,6 +17,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
 
@@ -155,7 +156,11 @@ func modelWith(t *testing.T, p *words.Printer, b board.Board, w, h int, got *rec
 	t.Helper()
 	o := got.ports()
 	o.Root, o.Settings, o.Words = "~/work", &settings{autopilot: true, lang: "en", unread: 5}, p
-	o.Width, o.Height, o.CanResume = w, h, true
+	o.Width, o.Height = w, h
+	// Every engine in the fixture can resume. The port is a function of the
+	// engine's name, and the one test that is about an engine that cannot
+	// replaces it with a closure that answers for a name.
+	o.CanResume = func(string) bool { return true }
 	m := New(o)
 	m.now = fixtureNow
 	next, _ := m.Update(boardMsg{Board: b})
@@ -230,11 +235,30 @@ func wantNoPane(t *testing.T, m Model) {
 	}
 }
 
+// discriminatingWant is how short an argument to wantBand may be before the
+// check stops being a check.
+//
+// Four runes, because the shortest want in this package that is a word is
+// "diff", and because the arguments this constant exists to refuse were "t"
+// and "p": single keystrokes. Every refusal in why.go contains the letter t
+// somewhere, so a test named for naming the right key was green while the
+// reader was being told something else entirely. A substring check is only
+// worth what its substring discriminates.
+const discriminatingWant = 4
+
 // wantBand fails unless the activity band is saying something that contains
 // want. The band is where a message lands, and a message that landed
 // nowhere is a Cmd whose answer the reader never sees.
+//
+// want has to be long enough to name one message rather than any message.
+// The helper's contract — "the band said something about this" — is what
+// invites a one-letter argument, so the helper refuses one rather than
+// leaving the next reader to notice.
 func wantBand(t *testing.T, m Model, want string) {
 	t.Helper()
+	if utf8.RuneCountInString(want) < discriminatingWant {
+		t.Fatalf("wantBand(%q) would pass on almost any sentence; assert a phrase only the right message contains", want)
+	}
 	if !strings.Contains(m.message, want) {
 		t.Errorf("the band says %q, want it to mention %q", m.message, want)
 	}

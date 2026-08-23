@@ -3,6 +3,7 @@ package flow
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -218,7 +219,11 @@ func TestResolveRefusesANameThatWouldLeaveTheFlowDirectory(t *testing.T) {
 	}
 }
 
-func TestNamesMarksWhereEachFlowCameFromAndSortsThem(t *testing.T) {
+// The classification is this package's whole answer about where a flow came
+// from, and it is the answer both screens draw. There is no English in it:
+// what "yours, shadowing the built-in" says in a given language is decided
+// where it is printed, by internal/cli and internal/ui, through one key each.
+func TestListSaysWhereEachFlowCameFromAndSortsThem(t *testing.T) {
 	src := flowsIn(t)
 	writeFlow(t, src, "mine", onePhase("mine"))
 	writeFlow(t, src, "task", onePhase("task"))
@@ -228,24 +233,49 @@ func TestNamesMarksWhereEachFlowCameFromAndSortsThem(t *testing.T) {
 		t.Fatalf("write: %v", err)
 	}
 
-	got := strings.Join(Names(src), "\n")
-	want := strings.Join([]string{
-		"careful (built in)",
-		"mine (yours)",
-		"quick (built in)",
-		"task (yours, shadowing the built-in)",
-	}, "\n")
-	if got != want {
-		t.Errorf("Names() =\n%s\nwant\n%s", got, want)
+	got := List(src)
+	want := []Listed{
+		{Name: "careful", Origin: OriginBuiltin},
+		{Name: "mine", Origin: OriginUser},
+		{Name: "quick", Origin: OriginBuiltin},
+		{Name: "task", Origin: OriginShadow},
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("List() =\n%v\nwant\n%v", got, want)
 	}
 }
 
-func TestNamesOnAStateRootWithNoFlowsOfItsOwn(t *testing.T) {
+func TestListOnAStateRootWithNoFlowsOfItsOwn(t *testing.T) {
+	want := []Listed{
+		{Name: "careful", Origin: OriginBuiltin},
+		{Name: "quick", Origin: OriginBuiltin},
+		{Name: "task", Origin: OriginBuiltin},
+	}
 	for _, src := range []Source{flowsIn(t), homeDir(filepath.Join(t.TempDir(), "never-made")), nil} {
-		got := strings.Join(Names(src), "\n")
-		want := "careful (built in)\nquick (built in)\ntask (built in)"
-		if got != want {
-			t.Errorf("Names() =\n%s\nwant\n%s", got, want)
+		if got := List(src); !slices.Equal(got, want) {
+			t.Errorf("List() =\n%v\nwant\n%v", got, want)
 		}
+	}
+}
+
+// Names is bare because of who reads it: somebody who just typed a flow name
+// wrong, and whose next move is to type one right. A mark in that sentence
+// answers a question they did not ask, and "careful (built in)" is not a
+// thing they can type.
+func TestNamesAreBareNamesAndTheRefusalOffersThem(t *testing.T) {
+	src := flowsIn(t)
+	writeFlow(t, src, "mine", onePhase("mine"))
+
+	got := strings.Join(Names(src), ", ")
+	want := "careful, mine, quick, task"
+	if got != want {
+		t.Fatalf("Names() = %q, want %q", got, want)
+	}
+	_, err := Resolve(src, "nope")
+	if err == nil {
+		t.Fatal("a name nothing answers to resolved")
+	}
+	if !strings.Contains(err.Error(), want) {
+		t.Errorf("the refusal does not offer the names there are: %v", err)
 	}
 }

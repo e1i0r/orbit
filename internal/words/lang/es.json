@@ -555,23 +555,27 @@
     },
     "start.unread_cap": {
       "source": {
-        "one": "{n} finished task is waiting to be read and the cap is {cap}: {ids} — press d on it",
-        "other": "{n} finished tasks are waiting to be read and the cap is {cap}: {ids} — press d on one"
+        "one": "{n} finished task is waiting to be read and the cap is {cap}: {ids} — press esc, then d on it",
+        "other": "{n} finished tasks are waiting to be read and the cap is {cap}: {ids} — press esc, then d on one"
       },
       "value": {
-        "one": "hay {n} tarea terminada sin leer y el límite es {cap}: {ids} — pulsa d sobre ella",
-        "other": "hay {n} tareas terminadas sin leer y el límite es {cap}: {ids} — pulsa d sobre una"
+        "one": "hay {n} tarea terminada sin leer y el límite es {cap}: {ids} — pulsa esc y luego d sobre ella",
+        "other": "hay {n} tareas terminadas sin leer y el límite es {cap}: {ids} — pulsa esc y luego d sobre una"
       }
     },
     "start.flow": {
       "source": "flow",
       "value": "flujo"
     },
-    "start.flow_shadowing": {
+    "flow.built_in": {
+      "source": "built in",
+      "value": "de serie"
+    },
+    "flow.shadowing": {
       "source": "yours, shadowing the built-in",
       "value": "tuyo, tapa el de serie"
     },
-    "start.flow_yours": {
+    "flow.yours": {
       "source": "yours",
       "value": "tuyo"
     },

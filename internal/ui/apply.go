@@ -35,7 +35,7 @@ func (m Model) applyBoard(msg boardMsg) (tea.Model, tea.Cmd) {
 	first := !m.seen
 	m.board, m.seen = msg.Board, true
 	m.totals = phaseTotals(msg.Board.Tasks)
-	m = m.replan().clampCursor()
+	m = m.stillTaken().replan().clampCursor()
 	if first {
 		m.cursor = m.firstTask()
 		m = m.follow()

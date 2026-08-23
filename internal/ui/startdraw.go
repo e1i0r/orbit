@@ -90,22 +90,27 @@ func (m Model) flowLine(w int) string {
 
 // flowMark says where a flow came from, in the words `orbit flows` uses.
 //
-// The two marked cases are word for word the ones internal/flow puts beside
-// a name in that listing, and deliberately so: a reader who ran the command
-// and then opened this dialog is looking at the same fact, and two spellings
-// of it would read as two facts. The English is repeated here rather than
-// imported because the marks are the listing's own, and because English in
-// this package lives at the call site.
+// Word for word the same words, and not by anyone remembering to keep them
+// so: both screens say a mark through the same catalogue key, and the
+// translation honesty test fails if two call sites give one key two
+// different English sentences. A reader who ran the command and then opened
+// this dialog is looking at the same fact, and two spellings of it would
+// read as two facts.
 //
-// A built-in is unmarked. It is the ordinary case, and a mark on every line
-// is not a mark.
+// A built-in is unmarked here and marked in the listing, and that difference
+// is deliberate. The listing is a catalogue of everything there is, where the
+// question is where each one came from; the dialog is one line about the flow
+// that is about to run, where a mark on every line is not a mark.
+//
+// A name nothing answers to is unmarked too. The dialog says what is wrong
+// with it in the error line below, which is a sentence and not a mark.
 func (m Model) flowMark(f startFlow) string {
 	p := m.opts.Words
-	switch {
-	case f.shadows:
-		return p.T("start.flow_shadowing", "yours, shadowing the built-in")
-	case f.mine:
-		return p.T("start.flow_yours", "yours")
+	switch f.origin {
+	case flow.OriginShadow:
+		return p.T("flow.shadowing", "yours, shadowing the built-in")
+	case flow.OriginUser:
+		return p.T("flow.yours", "yours")
 	}
 	return ""
 }
