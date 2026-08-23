@@ -26,7 +26,27 @@ import (
 // readable by `orbit show`, by `cat`, and by the window at the same time —
 // and a background process writing over a full-screen terminal is the
 // alternative.
-func Start(s *store.Store, t Task, flowName string) (int, error) {
+//
+// unread is how many finished tasks nobody has looked at, and it is the one
+// place the cap is enforced. It is a parameter rather than something this
+// function works out, because working it out means folding every record in
+// the state root — which the caller has already done, and which this package
+// must not do a second time: internal/board and internal/view are the
+// readers of that format, and internal/board imports this package, so a fold
+// here would be both a second opinion and a cycle. Whoever holds the board
+// passes the number; internal/cli has Unread for exactly that.
+//
+// The cap itself comes from the settings file and is read here, so that a
+// caller cannot forget it. At the cap Start refuses and says the two numbers,
+// because a brake that says only "no" is a brake people route around.
+func Start(s *store.Store, t Task, flowName string, unread int) (int, error) {
+	cfg, err := s.Settings()
+	if err != nil {
+		return 0, err
+	}
+	if atCap(unread, cfg.UnreadCap) {
+		return 0, fmt.Errorf("task %s was not started: %d finished tasks are unread and the cap is %d — read one with `orbit read`, or change the cap with `orbit set unread-cap <n>`", t.ID, unread, cfg.UnreadCap)
+	}
 	exe, err := os.Executable()
 	if err != nil {
 		return 0, fmt.Errorf("find the orbit binary to start task %s: %w", t.ID, err)

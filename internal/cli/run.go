@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
@@ -29,6 +30,13 @@ import (
 // would end real work in the middle for the sake of tidiness. A run that is
 // wedged is a run somebody can see in the window, and `orbit cancel` is one
 // line away.
+//
+// The gate is a real one even here, where there is no window: a run started
+// from a terminal is still a run the reader can pause from another terminal,
+// and a phase whose flow asks to wait still waits. One second between looks
+// at the control file is a tenth of a human reaction and is only paid at a
+// phase boundary that is already stopped — a run nobody is holding never
+// reaches the loop that polls.
 func runTask(args []string, out io.Writer) error {
 	fs := flag.NewFlagSet("run", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
@@ -76,7 +84,7 @@ func runTask(args []string, out io.Writer) error {
 	}
 
 	engines := map[string]engine.Engine{"claude": engine.NewClaude()}
-	if err := task.Run(ctx, s, t, f, engines); err != nil {
+	if err := task.Run(ctx, s, t, f, engines, task.FileGate(s, time.Second)); err != nil {
 		return err
 	}
 	fmt.Fprintf(out, "%s finished\n", id)

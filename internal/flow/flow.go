@@ -10,25 +10,29 @@ import "fmt"
 
 // Phase is one step, and the five things that decide how it runs.
 //
-// Two of the five are not read by anything yet. They are documented as inert
+// One of the five is not read by anything yet. It is documented as inert
 // rather than deleted: the design defines the five-field object, so removing
-// them would put the code out of step with the authority — but a field that
-// looks live and is not is a lie, and one of these two is the security
-// posture. Both are gaps, and both are named here rather than anywhere
-// else, because this struct is where a reader meets them.
+// it would put the code out of step with the authority — but a field that
+// looks live and is not is a lie, and this one is the security posture. It is
+// named here rather than anywhere else, because this struct is where a reader
+// meets it.
 type Phase struct {
 	Name   string `json:"name"`
 	Engine string `json:"engine"`
 	Model  string `json:"model,omitempty"`
 
-	// Wait is inert. task.Run walks every phase straight through and never
-	// consults it, so no phase can stop for a human yet. What is missing is
-	// a Run that can pause and a window to release it from — plan 2.
-	// WithAutopilot already clears this field, which is the whole of what
-	// the autopilot switch will mean once something reads it.
+	// Wait is this phase's default answer to "should this stop for a human?".
+	// It is a default and not a switch, which is the distinction that took a
+	// deleted function to learn. task.Run puts every phase to its gate, and
+	// the gate reads the autopilot setting and the reader's control word at
+	// that moment: a phase with Wait true stops unless autopilot is on, and a
+	// phase with Wait false runs unless the reader has pressed pause. A Flow
+	// is copied by value into a run, so anything decided about waiting before
+	// the run started could never hear about a switch flipped while it was
+	// going.
 	Wait bool `json:"wait,omitempty"`
 
-	// Permissions is inert, and it is the more serious of the two.
+	// Permissions is inert.
 	// engine.Request has no field that could carry it, so no engine could
 	// honour it even if Run passed it along: the built-in task flow ships
 	// "permissions": ["repo"] while claudeArgs passes no permission flag at
@@ -67,27 +71,4 @@ func (f Flow) Validate() error {
 		seen[p.Name] = true
 	}
 	return nil
-}
-
-// WithAutopilot returns a copy that stops for nobody.
-//
-// This is the whole of what the autopilot switch does. Night is not a second
-// system: it is this function applied to an ordinary flow.
-//
-// Copying the phase slice is not enough on its own. A copied Phase still
-// points at the same Permissions backing array as the phase it came from, so
-// writing through the copy would reach into the original — a flow the caller
-// still holds and believes is untouched.
-func (f Flow) WithAutopilot() Flow {
-	phases := make([]Phase, len(f.Phases))
-	copy(phases, f.Phases)
-	for i := range phases {
-		phases[i].Wait = false
-		if phases[i].Permissions != nil {
-			perms := make([]string, len(phases[i].Permissions))
-			copy(perms, phases[i].Permissions)
-			phases[i].Permissions = perms
-		}
-	}
-	return Flow{Name: f.Name, Phases: phases}
 }

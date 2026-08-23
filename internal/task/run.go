@@ -16,7 +16,10 @@ import (
 
 // Run walks a flow, phase by phase, in a worktree of its own.
 //
-// It stops at the first failure and says why, in the words the engine used.
+// It stops at the first failure and says why, in the words the engine used,
+// and it stops before any phase its gate will not let past. A nil gate never
+// stops anything, which is what `orbit run` was before there was a window to
+// release a run from.
 //
 // The worktree is never removed. Not on failure, where the work that did
 // happen is the most valuable thing in the run and is not this function's to
@@ -28,7 +31,7 @@ import (
 // settled worktree. repo.RemoveWorktree is written and nothing calls it, so
 // every run leaves a .git/worktrees entry behind in a repository Orbit does
 // not own, and `git worktree prune` by hand is the only remedy.
-func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[string]engine.Engine) error {
+func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[string]engine.Engine, g Gate) error {
 	// task.started is written first — before the flow is validated, before
 	// the engines are checked, before the worktree exists — and the ordering
 	// is load-bearing rather than tidy.
@@ -81,6 +84,27 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 	}
 
 	for i, p := range f.Phases {
+		// Every phase is put to the gate, not only the ones whose Wait says
+		// so; Gate says why. A gate that cannot read what it needs is a
+		// failure of the run, because a run that cannot be held is not the
+		// run the reader asked for.
+		decision, gateErr := ask(ctx, g, t, p, i+1)
+		if gateErr != nil {
+			return failed(s, t, fmt.Errorf("task %s, before phase %q: %w", t.ID, p.Name, gateErr))
+		}
+		switch decision {
+		case Stop:
+			// A context that is done is not a reader who said cancel, and
+			// asking the context is how they are told apart — the same
+			// distinction the engine's error path draws below.
+			return gateStop(s, t, p.Name, ctx.Err())
+		case Skip:
+			// Nothing is recorded for a phase that did not run. A phase.
+			// started with no ending would read for ever as a phase in
+			// flight, and a phase.finished would be a lie about work.
+			continue
+		}
+
 		if err := emit(s, t, record.Event{
 			Kind:  record.PhaseStarted,
 			Phase: p.Name,

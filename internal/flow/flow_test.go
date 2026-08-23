@@ -91,22 +91,6 @@ func TestValidateRejectsTwoPhasesWithOneName(t *testing.T) {
 	}
 }
 
-func TestWithAutopilotClearsEveryWait(t *testing.T) {
-	f := Flow{Name: "x", Phases: []Phase{
-		{Name: "implement", Engine: "claude", Wait: true},
-		{Name: "review", Engine: "claude", Wait: true},
-	}}
-	got := f.WithAutopilot()
-	for _, p := range got.Phases {
-		if p.Wait {
-			t.Errorf("phase %q still waits with autopilot on", p.Name)
-		}
-	}
-	if !f.Phases[0].Wait {
-		t.Error("WithAutopilot modified the original flow instead of returning a new one")
-	}
-}
-
 func TestLoadRejectsUnknownFields(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "typo.json")
 	body := `{"name":"mine","phases":[{"name":"implement","engine":"claude","mdoel":"sonnet"}]}`
@@ -115,17 +99,6 @@ func TestLoadRejectsUnknownFields(t *testing.T) {
 	}
 	if _, err := Load(path); err == nil {
 		t.Error("Load succeeded despite unknown field mdoel")
-	}
-}
-
-func TestWithAutopilotDoesNotWriteThroughToTheOriginalsPermissions(t *testing.T) {
-	f := Flow{Name: "x", Phases: []Phase{
-		{Name: "implement", Engine: "claude", Wait: true, Permissions: []string{"repo"}},
-	}}
-	got := f.WithAutopilot()
-	got.Phases[0].Permissions[0] = "everything"
-	if f.Phases[0].Permissions[0] != "repo" {
-		t.Errorf("the original's permissions became %q — the copy shares its backing array, so the caller's flow was rewritten under it", f.Phases[0].Permissions[0])
 	}
 }
 

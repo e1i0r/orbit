@@ -22,10 +22,14 @@ var synopsis = [][2]string{
 	{"orbit repos [dir]", "list the repositories under a directory"},
 	{"orbit new -repo <dir> -id <id> <text>", "write a task down"},
 	{"orbit run -repo <dir> <id>", "run a task through its flow"},
+	{"orbit pause -repo <dir> <id>", "stop a run at its next phase"},
+	{"orbit resume -repo <dir> <id>", "let a stopped run carry on"},
 	{"orbit list -repo <dir>", "list the tasks of a repository"},
 	{"orbit show -repo <dir> <id>", "print what happened to a task"},
+	{"orbit read -repo <dir> <id>", "mark a finished task as looked at"},
 	{"orbit cancel -repo <dir> <id>", "stop a run, and say so in its record"},
 	{"orbit reconcile -repo <dir> [id]", "close the records of runs whose processes are gone"},
+	{"orbit set <key> <value>", "change a setting"},
 }
 
 // usage is the whole of orbit on one screen.
@@ -100,14 +104,22 @@ func Run(args []string, out, errOut io.Writer) int {
 		err = newTask(args[1:], out)
 	case "run":
 		err = runTask(args[1:], out)
+	case "pause", "resume":
+		// The word the reader typed is the word the run is left, which is
+		// why these two share a case: the command name is the argument.
+		err = controlTask(args[0], args[1:], out)
 	case "list":
 		err = list(args[1:], out)
 	case "show":
 		err = show(args[1:], out)
+	case "read":
+		err = readTask(args[1:], out)
 	case "cancel":
 		err = cancelTask(args[1:], out)
 	case "reconcile":
 		err = reconcile(args[1:], out)
+	case "set":
+		err = set(args[1:], out)
 	case "help", "-h", "--help":
 		fmt.Fprint(out, usage())
 		return 0

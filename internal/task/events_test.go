@@ -37,7 +37,7 @@ func TestRunRecordsTheDataKeysTheWindowWillRead(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
-	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": engine.NewFake("done")}); err != nil {
+	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": engine.NewFake("done")}, nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 	events, err := Events(s, tk)
@@ -76,7 +76,7 @@ func TestRunTruncatesAnEnormousOutputAndSaysSoInTheRecord(t *testing.T) {
 	// written down at all.
 	huge := strings.Repeat("x", 5<<20)
 	eng := resultEngine{result: engine.Result{Output: huge}}
-	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": eng}); err != nil {
+	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": eng}, nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -105,7 +105,7 @@ func TestAnOrdinaryOutputIsRecordedWhole(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
-	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": engine.NewFake("wrote the retry")}); err != nil {
+	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": engine.NewFake("wrote the retry")}, nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 	events, err := Events(s, tk)
@@ -135,7 +135,7 @@ func TestRunRecordsAFlowThatDoesNotValidate(t *testing.T) {
 		t.Fatalf("Create: %v", err)
 	}
 	f := flow.Flow{Name: "task"} // no phases
-	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": engine.NewFake("")}); err == nil {
+	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": engine.NewFake("")}, nil); err == nil {
 		t.Fatal("Run walked a flow with no phases")
 	}
 	failed := find(t, mustEvents(t, s, tk), "task.failed")
@@ -151,7 +151,7 @@ func TestRunRecordsAnEngineNobodyConfigured(t *testing.T) {
 		t.Fatalf("Create: %v", err)
 	}
 	f := flow.Flow{Name: "task", Phases: []flow.Phase{{Name: "implement", Engine: "opencode"}}}
-	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": engine.NewFake("")}); err == nil {
+	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": engine.NewFake("")}, nil); err == nil {
 		t.Fatal("Run accepted a phase naming an engine that is not configured")
 	}
 	failed := find(t, mustEvents(t, s, tk), "task.failed")
