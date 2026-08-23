@@ -37,11 +37,25 @@ import (
 //
 // Two things it cannot answer, said out loud rather than hidden. A pid can
 // be reused: if the machine went down and something else has taken that
-// number since, this reports a dead run as alive, and the run stays in the
-// window as running until somebody looks. And the process it finds might not
-// be Orbit at all, for the same reason. Both are the cost of a pid file, and
-// both fail in the safe direction — towards leaving a record alone rather
-// than towards writing "abandoned" over a run that is working.
+// number since, this reports a dead run as alive. And the process it finds
+// might not be Orbit at all, for the same reason. Both are the cost of a pid
+// file.
+//
+// What that costs depends on who is asking, and the two answers are not the
+// same. The board only draws a row, so it fails in the safe direction: the
+// run sits there as running until somebody looks, which is better than
+// writing "abandoned" over a run that is working. Cancel and Kill do not
+// fail safe. They send SIGTERM and SIGKILL to whatever holds that number
+// now, and this function is the only thing that told them it was a run.
+//
+// The window for that is narrow and it is real: a marker outlives its run
+// (SIGKILL, or the machine went down), the number is recycled by something
+// unrelated, and a cancel arrives before Reconcile has swept the marker
+// away. Closing it means checking the claim's identity rather than its
+// number — a start time, or the name of the executable, written into the
+// marker and compared here — which is a change to what the marker records
+// and is not made yet. What is done instead is narrowing what a marker may
+// name at all: see parsePid, and killTarget in cancel.go.
 func Alive(s *store.Store, t Task) (pid int, ok bool, err error) {
 	pid, found, err := readMarker(s, t)
 	if err != nil || !found {
@@ -136,12 +150,17 @@ func parsePid(body string) (int, error) {
 		if err != nil {
 			return 0, fmt.Errorf("the pid line reads %q: %w", line, err)
 		}
-		// A number below 1 is never a process. Zero and negative numbers are
-		// how kill(2) is told to signal a whole process group or every
-		// process on the machine, so a damaged marker must be stopped here
-		// rather than handed to a signal.
-		if pid < 1 {
-			return 0, fmt.Errorf("the marker names pid %d, which is not a process", pid)
+		// A number below 2 is never a run this may signal. Zero and
+		// negative numbers are how kill(2) is told to signal a whole
+		// process group or every process on the machine, and 1 is worse
+		// than either: Kill negates a pid to reach its group, and -1 is
+		// POSIX for every process this user may signal. `orbit run` is pid
+		// 1 in a container, so a marker naming 1 is not only a marker
+		// somebody hand-edited — and refusing it is the right answer there
+		// too, because a run that is its container's init is stopped by
+		// stopping the container, not by a signal from inside it.
+		if pid <= 1 {
+			return 0, fmt.Errorf("the marker names pid %d, which is not a process this may signal", pid)
 		}
 		return pid, nil
 	}

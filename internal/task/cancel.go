@@ -52,21 +52,43 @@ func Kill(s *store.Store, t Task) error {
 	if !ok {
 		return notRunning(t, pid)
 	}
-	// The whole group, but only when the run made itself the leader of one.
-	// Start does that (start.go), and a run typed into a shell by hand does
-	// not — its group is the shell's job, or a script's, and signalling a
-	// group Orbit did not create would take everything else in it down too.
-	// Where the run leads its own group, the group is exactly the run and
-	// the engine it spawned, and killing the engine is the point: it is the
-	// process actually holding the work.
-	target := pid
-	if pgid, gerr := syscall.Getpgid(pid); gerr == nil && pgid == pid {
-		target = -pid
-	}
-	if err := syscall.Kill(target, syscall.SIGKILL); err != nil {
+	// The whole group, but only when the run leads one. Start makes it the
+	// leader of a group of its own (start.go), and then the group is exactly
+	// the run and the engine it spawned — killing the engine is the point,
+	// since it is the process actually holding the work.
+	//
+	// What the leader test excludes is a run that is in a group it did not
+	// start: launched from a script, or as one process of a pipeline, where
+	// the group also holds work that has nothing to do with this task and
+	// signalling it would take that down too. It does not exclude a run
+	// typed at a terminal — an interactive shell puts each job in a new
+	// group led by its first process, so a hand-typed `orbit run` leads one
+	// as surely as a spawned one does, and killing that group is right for
+	// the same reason.
+	pgid, gerr := syscall.Getpgid(pid)
+	if err := syscall.Kill(killTarget(pid, pgid, gerr), syscall.SIGKILL); err != nil {
 		return fmt.Errorf("stop process %d holding task %s: %w", pid, t.ID, err)
 	}
 	return nil
+}
+
+// killTarget says what Kill signals: the run's process group, when the run
+// leads one, or the run's process alone when it does not. A negative number
+// is how kill(2) is told to name a group, so this is the only place in Orbit
+// where a minus sign belongs in front of a pid — and it is a function of its
+// own so that boundary can be asserted without sending a signal to anything.
+//
+// A pgid of 1 is never negated, whatever Getpgid said. -1 is not a group: it
+// is every process this user may signal, which on a developer's machine is
+// their session and in a container is the container. parsePid already
+// refuses a marker naming a pid below 2, so nothing should reach here with
+// one; this refuses it again, because a defence written in two places
+// survives one of them being edited.
+func killTarget(pid, pgid int, gerr error) int {
+	if gerr != nil || pgid != pid || pgid <= 1 {
+		return pid
+	}
+	return -pid
 }
 
 // notRunning says which kind of "not running" this is, because they are
