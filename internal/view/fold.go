@@ -93,11 +93,13 @@ func fold(t *Task, e record.Event) {
 		// is not a reason any more. Cost and Read do not: cost is what the
 		// task has spent in total, and task.read is a fact about the log.
 		//
-		// Clearing the phase is what makes the window between this event
-		// and the first phase.started honest. Three of the four ways a run
-		// can fail happen inside it, and a task.failed arriving there has
-		// no phase to name — so it says the run never started rather than
-		// naming the phase the attempt before it died in.
+		// The clearing is not what makes a failed re-run honest, though it
+		// reads as if it should be: internal/task's three pre-phase
+		// failures all return before this event is ever written
+		// (run.go:31-43), so a re-run that fails that way never reaches
+		// here. kindFailed below is where that is caught. This clearing is
+		// for the row itself — a phase from an attempt that is over, drawn
+		// beside a run that has just begun, is a stale phase.
 		t.Attempt++
 		t.state = stateRunning
 		t.Reason = Reason{}
@@ -125,18 +127,43 @@ func fold(t *Task, e record.Event) {
 		t.Phase = e.Phase
 		t.Cost += money(e.Data["cost"])
 	case kindPhaseFailed:
-		// phase.failed is where the phase's name is recorded, and the
-		// task.failed that follows never carries one. Setting the state here
-		// as well as there is what makes a log that ends at phase.failed —
-		// which happens when writing the second event is what failed — fold
-		// to the same verdict as a log that got both.
+		// phase.failed is the only place a failure's phase is written down;
+		// the task.failed that follows it never carries one. Recording the
+		// verdict here as well as there is what makes a log that ends at
+		// this event — the next write is best-effort and its error is
+		// discarded (run.go:109), so a log can end here — fold to the same
+		// band and the same reason as a log that got both.
+		//
+		// The state is its own, and not stateFailed, because the task.failed
+		// that normally follows has to be able to tell "the phase I am
+		// holding is this run's" from "the phase I am holding is over". That
+		// is the whole difference between the two, and it is not otherwise
+		// in the record.
 		t.Phase = e.Phase
-		t.state = stateFailed
+		t.state = statePhaseFailed
 		t.Reason = failure(e.Phase)
 		stamp(&t.Since, e.At)
 	case kindFailed:
-		t.state = stateFailed
-		t.Reason = failure(t.Phase)
+		// One event, two situations, and internal/task writes the same thing
+		// for both from one function (run.go:108-111). Where the fold
+		// already is decides which this is.
+		if inAttempt(t.state) {
+			// A run was under way, so the phase it is holding is the phase
+			// it died in — phase.failed put it there a moment ago.
+			t.state = stateFailed
+			t.Reason = failure(t.Phase)
+		} else {
+			// Nothing was under way. An invalid flow, an engine nobody
+			// configured, a worktree that could not be made: all three
+			// return before task.started is emitted (run.go:31-43), so on a
+			// re-run this event lands on the end of a log whose last phase
+			// belongs to the attempt before it. Naming that phase would tell
+			// the reader a run died in review when it never started, so the
+			// phase goes with the attempt it belonged to.
+			t.Phase, t.PhaseN, t.Engine, t.Model = "", 0, "", ""
+			t.state = stateFailed
+			t.Reason = Reason{Key: ReasonFailedToStart}
+		}
 		stamp(&t.Since, e.At)
 	case kindPhaseCancelled:
 		t.Phase = e.Phase

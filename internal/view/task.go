@@ -87,15 +87,16 @@ func (b Band) String() string {
 type state int
 
 const (
-	stateNew       state = iota // written down; no run has started
-	stateRunning                // a run is between task.started and a terminal event
-	stateHeld                   // stopped at a gate because the reader asked
-	stateWaiting                // stopped at a gate because the flow asked
-	stateFailed                 // task.failed, or a phase.failed with nothing after it
-	stateTimedOut               // task.timedout
-	stateAbandoned              // task.abandoned
-	stateCancelled              // task.cancelled, or a phase.cancelled with nothing after it
-	stateFinished               // task.finished
+	stateNew         state = iota // written down; no run has started
+	stateRunning                  // a run is between task.started and a terminal event
+	stateHeld                     // stopped at a gate because the reader asked
+	stateWaiting                  // stopped at a gate because the flow asked
+	statePhaseFailed              // a phase failed and the task-level event has not arrived
+	stateFailed                   // the run stopped and task.failed says so
+	stateTimedOut                 // task.timedout
+	stateAbandoned                // task.abandoned
+	stateCancelled                // task.cancelled, or a phase.cancelled with nothing after it
+	stateFinished                 // task.finished
 
 	// stateCount is not a state. It is how many there are, so a test can
 	// walk every one and fail when a new state arrives without a band.
@@ -196,11 +197,31 @@ func bandOfState(s state) Band {
 		return ToDo
 	case stateRunning, stateHeld:
 		return Running
-	case stateWaiting, stateFailed, stateTimedOut, stateAbandoned:
+	case stateWaiting, statePhaseFailed, stateFailed, stateTimedOut, stateAbandoned:
 		return NeedsYou
 	case stateCancelled, stateFinished:
 		return Done
 	default:
 		return NeedsYou
+	}
+}
+
+// inAttempt reports whether the fold is inside a run that had started: one
+// working, one stopped at a gate, or one whose phase has just failed and
+// whose task-level event has not arrived yet.
+//
+// It exists because internal/task writes one task.failed for two different
+// things and puts no phase on either (run.go:108-111). A run that died in a
+// phase and a run that never reached one produce the same event, and the
+// only thing that tells them apart is where the fold already was when it
+// arrived. Inside an attempt, the phase the fold is holding is this run's.
+// Outside one — before the first run, or after a previous one ended — the
+// phase it is holding belongs to something that is over.
+func inAttempt(s state) bool {
+	switch s {
+	case stateRunning, stateHeld, stateWaiting, statePhaseFailed:
+		return true
+	default:
+		return false
 	}
 }

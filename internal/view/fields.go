@@ -34,9 +34,10 @@ func waiting(e record.Event) (state, Reason) {
 }
 
 // failure names the phase a run stopped in, or says the run never got that
-// far. internal/task writes task.failed with no Phase on it in every case,
-// so the phase here is whatever the fold already knew — and when it knew
-// none, the run failed before any phase started.
+// far. internal/task writes task.failed with no Phase on it in every case
+// (run.go:108-111), so the phase is whatever the fold knew while it was
+// still inside the attempt — and a run that was inside one without a phase
+// to its name is a run that had not reached its first.
 func failure(phase string) Reason {
 	if phase == "" {
 		return Reason{Key: ReasonFailedToStart}

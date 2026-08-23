@@ -122,6 +122,26 @@ func foldCases() []foldCase {
 			},
 		},
 		{
+			// The instant between run.go:44 and run.go:49, where a run has
+			// started and no phase has. A log stays this way if the
+			// phase.started emit is what fails (run.go:53-55), and the row
+			// must not go on drawing the previous attempt's phase, model and
+			// number beside a run that has only just begun.
+			name: "a second attempt has no phase until one starts",
+			events: []record.Event{
+				{At: at(0), Kind: "task.created", Text: "Retry the webhook on 5xx"},
+				{At: at(1), Kind: "task.started", Data: data("flow", "task")},
+				{At: at(2), Kind: "phase.started", Phase: "review", Data: data("engine", "claude", "model", "sonnet", "n", "2")},
+				{At: at(3), Kind: "phase.failed", Phase: "review", Text: "the test suite is red"},
+				{At: at(4), Kind: "task.failed", Text: `task ACME-1, phase "review": the test suite is red`},
+				{At: at(5), Kind: "task.started", Data: data("flow", "task")},
+			},
+			want: Task{
+				Title: "Retry the webhook on 5xx", Band: Running, Flow: "task",
+				Since: at(5), Started: at(5), Attempt: 2, state: stateRunning,
+			},
+		},
+		{
 			name: "a second task.started opens attempt 2 and clears the last one",
 			events: []record.Event{
 				{At: at(0), Kind: "task.created", Text: "Retry the webhook on 5xx"},
