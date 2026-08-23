@@ -45,11 +45,12 @@ func root(t *testing.T) string {
 func goFiles(t *testing.T) []string {
 	t.Helper()
 	var found []string
-	err := filepath.WalkDir(root(t), func(path string, d os.DirEntry, err error) error {
+	r := root(t)
+	err := filepath.WalkDir(r, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if d.IsDir() && (d.Name() == ".git" || d.Name() == "vendor") {
+		if outsideTheModule(r, path, d) {
 			return filepath.SkipDir
 		}
 		if !d.IsDir() && strings.HasSuffix(path, ".go") {
@@ -88,14 +89,15 @@ func TestNoFileOverTheCeiling(t *testing.T) {
 }
 
 func TestNoJunkDrawerPackages(t *testing.T) {
-	err := filepath.WalkDir(root(t), func(path string, d os.DirEntry, err error) error {
+	r2 := root(t)
+	err := filepath.WalkDir(r2, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if !d.IsDir() {
 			return nil
 		}
-		if d.Name() == ".git" || d.Name() == "vendor" {
+		if outsideTheModule(r2, path, d) {
 			return filepath.SkipDir
 		}
 		for _, bad := range banned {
@@ -162,4 +164,21 @@ func TestGoModTakesOnlyApprovedDependencies(t *testing.T) {
 			t.Errorf("go.mod:%d requires %q, which nobody approved — add it to arch.approved in a commit that says why, or take it out", i+1, path)
 		}
 	}
+}
+
+// outsideTheModule is a directory `go build ./...` would not compile: vendor,
+// and anything whose name begins with "." or "_". These walkers have to agree
+// with the toolchain about where the module ends, because a directory the
+// toolchain ignores can still hold a complete second copy of it — an agent's
+// git worktree under .claude, an editor's index, a nested checkout — and every
+// file in that copy would otherwise be read as if it were part of this one.
+//
+// The walk root is never outside the module, whatever it is called: a checkout
+// that happens to live in a dotted directory is still the module.
+func outsideTheModule(root, path string, d os.DirEntry) bool {
+	if path == root || !d.IsDir() {
+		return false
+	}
+	n := d.Name()
+	return n == "vendor" || strings.HasPrefix(n, ".") || strings.HasPrefix(n, "_")
 }

@@ -50,7 +50,7 @@ func collectMethodValueUses(t *testing.T) []methodValueUse {
 			return err
 		}
 		if d.IsDir() {
-			if d.Name() == ".git" || d.Name() == "vendor" {
+			if outsideTheModule(modRoot, path, d) {
 				return filepath.SkipDir
 			}
 			return nil

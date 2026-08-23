@@ -74,7 +74,7 @@ func collectCallSites(t *testing.T) []callSite {
 			return err
 		}
 		if d.IsDir() {
-			if d.Name() == ".git" || d.Name() == "vendor" || path == wordsDir {
+			if outsideTheModule(modRoot, path, d) || path == wordsDir {
 				return filepath.SkipDir
 			}
 			return nil
@@ -152,4 +152,21 @@ func stringLiteral(e ast.Expr) (string, bool) {
 		return "", false
 	}
 	return v, true
+}
+
+// outsideTheModule is a directory `go build ./...` would not compile: vendor,
+// and anything whose name begins with "." or "_". These walkers have to agree
+// with the toolchain about where the module ends, because a directory the
+// toolchain ignores can still hold a complete second copy of it — an agent's
+// git worktree under .claude, an editor's index, a nested checkout — and every
+// file in that copy would otherwise be read as if it were part of this one.
+//
+// The walk root is never outside the module, whatever it is called: a checkout
+// that happens to live in a dotted directory is still the module.
+func outsideTheModule(root, path string, d os.DirEntry) bool {
+	if path == root || !d.IsDir() {
+		return false
+	}
+	n := d.Name()
+	return n == "vendor" || strings.HasPrefix(n, ".") || strings.HasPrefix(n, "_")
 }
