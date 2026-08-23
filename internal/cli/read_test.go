@@ -90,7 +90,7 @@ func TestUnreadCountsOnlyFinishedWorkNobodyHasLookedAt(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := Unread(board.Board{Tasks: tc.tasks}); got != tc.want {
+			if got := board.Unread(board.Board{Tasks: tc.tasks}); got != tc.want {
 				t.Errorf("Unread is %d, want %d", got, tc.want)
 			}
 		})

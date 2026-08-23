@@ -156,6 +156,230 @@
     "why.read_already_read": {
       "source": "this task is already marked read",
       "value": "esta tarea ya está marcada como leída"
+    },
+    "header.autopilot": {
+      "source": "autopilot",
+      "value": "piloto automático"
+    },
+    "header.unread": {
+      "source": "unread {n}/{cap}",
+      "value": "sin leer {n}/{cap}"
+    },
+    "band.needs_you": {
+      "source": "NEEDS YOU",
+      "value": "TE NECESITAN"
+    },
+    "band.running": {
+      "source": "RUNNING",
+      "value": "EN MARCHA"
+    },
+    "band.to_do": {
+      "source": "TO DO",
+      "value": "POR HACER"
+    },
+    "band.done": {
+      "source": "DONE TODAY",
+      "value": "TERMINADAS HOY"
+    },
+    "band.unread_cap": {
+      "source": "unread cap reached · {n} of {cap}",
+      "value": "límite de sin leer alcanzado · {n} de {cap}"
+    },
+    "band.shown": {
+      "source": "{n} of {total} shown",
+      "value": "se ven {n} de {total}"
+    },
+    "band.elapsed": {
+      "source": "{d} in",
+      "value": "lleva {d}"
+    },
+    "band.nothing_running": {
+      "source": "nothing is running",
+      "value": "no hay nada en marcha"
+    },
+    "band.nothing_todo": {
+      "source": "nothing to do",
+      "value": "nada por hacer"
+    },
+    "band.write_one": {
+      "source": "press n to write one",
+      "value": "pulsa n para escribir una"
+    },
+    "filter.placeholder": {
+      "source": "repository, id or title",
+      "value": "repositorio, id o título"
+    },
+    "key.move": {
+      "source": "move",
+      "value": "moverse"
+    },
+    "reason.failed": {
+      "source": "failed: {phase}",
+      "value": "falló: {phase}"
+    },
+    "reason.failed_to_start": {
+      "source": "would not start",
+      "value": "no arrancó"
+    },
+    "reason.gate": {
+      "source": "waiting: {phase}",
+      "value": "espera: {phase}"
+    },
+    "reason.held": {
+      "source": "held: {phase}",
+      "value": "en pausa: {phase}"
+    },
+    "reason.timed_out": {
+      "source": "timed out",
+      "value": "se agotó el tiempo"
+    },
+    "reason.abandoned": {
+      "source": "abandoned",
+      "value": "abandonada"
+    },
+    "reason.cancelled": {
+      "source": "cancelled",
+      "value": "cancelada"
+    },
+    "state.unreadable": {
+      "source": "record unreadable",
+      "value": "registro ilegible"
+    },
+    "state.finished": {
+      "source": "finished",
+      "value": "terminada"
+    },
+    "state.not_started": {
+      "source": "not started",
+      "value": "sin empezar"
+    },
+    "state.running": {
+      "source": "running",
+      "value": "en marcha"
+    },
+    "state.phase_of": {
+      "source": "{phase} {n}/{total}",
+      "value": "{phase} {n}/{total}"
+    },
+    "msg.confirm_cancel": {
+      "source": "cancel {id}? press y to confirm, anything else to leave it running",
+      "value": "¿cancelar {id}? pulsa y para confirmar, cualquier otra tecla la deja en marcha"
+    },
+    "msg.autopilot_on": {
+      "source": "autopilot is on: every phase runs without asking",
+      "value": "el piloto automático está activado: cada fase se ejecuta sin preguntar"
+    },
+    "msg.autopilot_off": {
+      "source": "autopilot is off: every phase stops for you",
+      "value": "el piloto automático está desactivado: cada fase se detiene a esperarte"
+    },
+    "msg.not_built": {
+      "source": "{key} is not wired up yet; this window is still being built",
+      "value": "{key} todavía no está conectada; esta ventana aún se está construyendo"
+    },
+    "msg.control_sent": {
+      "source": "asked {id} to {word}",
+      "value": "se le pidió a {id} que {word}"
+    },
+    "msg.started": {
+      "source": "{id} is running, as process {pid}",
+      "value": "{id} está en marcha, como proceso {pid}"
+    },
+    "empty.needs_you": {
+      "source": "Nothing needs you.",
+      "value": "Nada te necesita."
+    },
+    "empty.press_n": {
+      "source": "Press n to write one.",
+      "value": "Pulsa n para escribir una."
+    },
+    "empty.no_repos": {
+      "source": "No repositories under {root} yet.",
+      "value": "Todavía no hay repositorios en {root}."
+    },
+    "empty.add_repo": {
+      "source": "Clone one into {root}, or start orbit in a folder that already has one.",
+      "value": "Clona uno en {root}, o arranca orbit en una carpeta que ya tenga uno."
+    },
+    "empty.filter": {
+      "source": "Nothing matches {filter}.",
+      "value": "Nada coincide con {filter}."
+    },
+    "empty.clear_filter": {
+      "source": "Press esc to clear the filter and see everything again.",
+      "value": "Pulsa esc para limpiar el filtro y volver a verlo todo."
+    },
+    "detail.gone": {
+      "source": "this task is no longer on the board",
+      "value": "esta tarea ya no está en el tablero"
+    },
+    "narrow.refused": {
+      "source": "orbit needs {need} columns.",
+      "value": "orbit necesita {need} columnas."
+    },
+    "narrow.got": {
+      "source": "this one has {got}.",
+      "value": "esta tiene {got}."
+    },
+    "header.repos": {
+      "source": {
+        "one": "{n} repo",
+        "other": "{n} repos"
+      },
+      "value": {
+        "one": "{n} repositorio",
+        "other": "{n} repositorios"
+      }
+    },
+    "band.todo": {
+      "source": {
+        "one": "{n} to do",
+        "other": "{n} to do"
+      },
+      "value": {
+        "one": "{n} por hacer",
+        "other": "{n} por hacer"
+      }
+    },
+    "body.more": {
+      "source": {
+        "one": "… and {n} more",
+        "other": "… and {n} more"
+      },
+      "value": {
+        "one": "… y {n} más",
+        "other": "… y {n} más"
+      }
+    },
+    "empty.no_tasks": {
+      "source": {
+        "one": "{n} repository, and no tasks written against it yet.",
+        "other": "{n} repositories, and no tasks written against any of them yet."
+      },
+      "value": {
+        "one": "{n} repositorio, y todavía ninguna tarea escrita contra él.",
+        "other": "{n} repositorios, y todavía ninguna tarea escrita contra ninguno de ellos."
+      }
+    },
+    "msg.unreadable": {
+      "source": {
+        "one": "{n} record could not be read",
+        "other": "{n} records could not be read"
+      },
+      "value": {
+        "one": "no se pudo leer {n} registro",
+        "other": "no se pudieron leer {n} registros"
+      }
+    },
+    "msg.entered": {
+      "source": {
+        "one": "{n} task needs you",
+        "other": "{n} tasks need you"
+      },
+      "value": {
+        "one": "{n} tarea te necesita",
+        "other": "{n} tareas te necesitan"
+      }
     }
   }
 }

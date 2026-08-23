@@ -10,7 +10,7 @@ import (
 	"github.com/e1i0r/orbit/internal/words"
 )
 
-// Settings is the standing state a verb's answer depends on, as this package
+// Conditions is the standing state a verb's answer depends on, as this package
 // needs it.
 //
 // It is declared here, where it is consumed, and it is deliberately not
@@ -19,7 +19,12 @@ import (
 // would invite exactly the coupling arch.layers exists to prevent. The
 // caller converts, from the persisted settings and from what the configured
 // engine can do.
-type Settings struct {
+//
+// It is called Conditions and not Settings because the window's port to the
+// settings file took that name, and the two are different things: Settings
+// is where the answers are read and written, Conditions is the snapshot the
+// verbs are asked about.
+type Conditions struct {
 	Autopilot bool // the switch; a paused task is still the reader's to lift
 	CanResume bool // whether the configured engine can resume a session
 }
@@ -61,7 +66,7 @@ type Affordance struct {
 // press", which is the offered verbs, and "what can I do with this one",
 // which is the whole list with its reasons. The key bar asks the first, the
 // menu asks the second.
-func (k Keys) Affordances(t view.Task, s Settings) []Affordance {
+func (k Keys) Affordances(t view.Task, s Conditions) []Affordance {
 	return []Affordance{
 		// Open is the one verb that is never refused: every task can be
 		// opened, including one that has never run — that is where its
@@ -123,7 +128,7 @@ func started(t view.Task) bool {
 
 // whyNotPause refuses in four different ways, and the differences are the
 // point: each one names something else to press.
-func whyNotPause(t view.Task, s Settings) words.Arg {
+func whyNotPause(t view.Task, s Conditions) words.Arg {
 	switch {
 	case !t.Live:
 		return because(whyPauseNotRunning)
@@ -167,7 +172,7 @@ func whyNotCancel(t view.Task) words.Arg {
 // engine's own session by hand, so it needs a session to carry on — a run
 // that has started — and a phase that is not in the middle of writing
 // something.
-func whyNotTake(t view.Task, s Settings) words.Arg {
+func whyNotTake(t view.Task, s Conditions) words.Arg {
 	switch {
 	case !started(t):
 		return because(whyTakeNeverRun)
@@ -189,7 +194,7 @@ func whyNotTake(t view.Task, s Settings) words.Arg {
 // would be honest and useless; offering it where taking it was possible is
 // the closest true answer available, and it stops being an approximation the
 // moment the record carries the fact.
-func whyNotHand(t view.Task, s Settings) words.Arg {
+func whyNotHand(t view.Task, s Conditions) words.Arg {
 	switch {
 	case !parked(t):
 		return because(whyHandBackNotTaken)

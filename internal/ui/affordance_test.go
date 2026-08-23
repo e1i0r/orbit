@@ -26,7 +26,7 @@ func printers(t *testing.T) (english, spanish *words.Printer) {
 type affordanceCase struct {
 	name     string
 	task     view.Task
-	settings Settings
+	settings Conditions
 	offered  []string
 }
 
@@ -34,7 +34,7 @@ type affordanceCase struct {
 // the verbs whose key the bar may show; everything else in the menu is
 // greyed with a reason.
 func everyCase() []affordanceCase {
-	can := Settings{CanResume: true}
+	can := Conditions{CanResume: true}
 	return []affordanceCase{{
 		name:     "a task written down and never started",
 		task:     view.Task{ID: "ACME-1", Band: view.ToDo},
@@ -58,7 +58,7 @@ func everyCase() []affordanceCase {
 	}, {
 		name:     "the same gate with autopilot on",
 		task:     view.Task{ID: "ACME-5", Band: view.NeedsYou, Live: true, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonGate}},
-		settings: Settings{Autopilot: true, CanResume: true},
+		settings: Conditions{Autopilot: true, CanResume: true},
 		offered:  []string{"enter", "r", "x", "t", "h"},
 	}, {
 		name:     "a run that failed and whose process is gone",
@@ -78,7 +78,7 @@ func everyCase() []affordanceCase {
 	}, {
 		name:     "a paused run on an engine that cannot resume a session",
 		task:     view.Task{ID: "ACME-9", Band: view.Running, Live: true, Attempt: 1, Engine: "codex", Reason: view.Reason{Key: view.ReasonHeld}},
-		settings: Settings{},
+		settings: Conditions{},
 		offered:  []string{"enter", "r", "x"},
 	}}
 }
@@ -185,15 +185,15 @@ func TestARefusalNamesWhatToDoNext(t *testing.T) {
 	keys := NewKeys(english)
 	gate := view.Task{Band: view.NeedsYou, Live: true, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonGate}}
 
-	held := find(keys.Affordances(view.Task{Band: view.Running, Live: true, Attempt: 1, Reason: view.Reason{Key: view.ReasonHeld}}, Settings{}), "p")
+	held := find(keys.Affordances(view.Task{Band: view.Running, Live: true, Attempt: 1, Reason: view.Reason{Key: view.ReasonHeld}}, Conditions{}), "p")
 	if held.WhyNot.Name != whyPauseAlreadyHeld {
 		t.Errorf("pausing a paused run says %q, want %q", held.WhyNot.Name, whyPauseAlreadyHeld)
 	}
-	waiting := find(keys.Affordances(gate, Settings{}), "p")
+	waiting := find(keys.Affordances(gate, Conditions{}), "p")
 	if waiting.WhyNot.Name != whyPauseAlreadyWaiting {
 		t.Errorf("pausing a run waiting at a gate says %q, want %q", waiting.WhyNot.Name, whyPauseAlreadyWaiting)
 	}
-	lifting := find(keys.Affordances(gate, Settings{Autopilot: true}), "p")
+	lifting := find(keys.Affordances(gate, Conditions{Autopilot: true}), "p")
 	if lifting.WhyNot.Name != whyPauseAutopilotIsLifting {
 		t.Errorf("pausing a gate autopilot is lifting says %q, want %q — the switch is what the reader has to reach for", lifting.WhyNot.Name, whyPauseAutopilotIsLifting)
 	}
@@ -207,7 +207,7 @@ func TestTheEngineThatCannotResumeIsNamed(t *testing.T) {
 	keys := NewKeys(english)
 	paused := view.Task{Band: view.Running, Live: true, Attempt: 1, Engine: "codex", Reason: view.Reason{Key: view.ReasonHeld}}
 	for _, verb := range []string{"t", "h"} {
-		a := find(keys.Affordances(paused, Settings{}), verb)
+		a := find(keys.Affordances(paused, Conditions{}), verb)
 		if a.OK {
 			t.Fatalf("%q is offered on an engine that cannot resume a session", verb)
 		}

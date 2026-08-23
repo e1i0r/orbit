@@ -1,0 +1,200 @@
+package ui
+
+// fixture_test.go holds the board every test in this package draws, and the
+// two ports the window is handed instead of a state root: a settings file in
+// memory and a control function that records rather than acts.
+//
+// It is a file of its own because the transition table, the measured render
+// and the golden files all need the same board, and because the 300-line
+// ceiling is a real ceiling — a fixture inlined into the table would have
+// pushed that file over it, and a table nobody can read at one sitting is
+// the thing the ceiling exists to prevent.
+//
+// Nothing here opens a terminal, spawns a process, or reads anything outside
+// this repository.
+
+import (
+	"strings"
+	"testing"
+	"time"
+
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/board"
+	"github.com/e1i0r/orbit/internal/view"
+	"github.com/e1i0r/orbit/internal/words"
+)
+
+// fixtureNow is the clock every fixture is measured against, so an elapsed
+// column is a fact about the fixture and not about when the test ran.
+var fixtureNow = time.Date(2026, 8, 23, 15, 4, 0, 0, time.UTC)
+
+func ago(d time.Duration) time.Time { return fixtureNow.Add(-d) }
+
+// settings is the settings file, in memory. It is the whole of what
+// internal/cli will satisfy with a store-backed type.
+type settings struct {
+	autopilot bool
+	lang      string
+	unread    int
+	fail      error
+}
+
+func (s *settings) Autopilot() bool { return s.autopilot }
+
+func (s *settings) SetAutopilot(v bool) error {
+	if s.fail != nil {
+		return s.fail
+	}
+	s.autopilot = v
+	return nil
+}
+
+func (s *settings) Language() string { return s.lang }
+
+func (s *settings) SetLanguage(v string) error {
+	if s.fail != nil {
+		return s.fail
+	}
+	s.lang = v
+	return nil
+}
+
+func (s *settings) UnreadCap() int { return s.unread }
+
+// arg is one placeholder for a reason, spelled the way internal/view spells
+// it so a fixture reads like the record it stands for.
+func arg(name, value string) view.Arg { return view.Arg{Name: name, Value: value} }
+
+// fixtureTasks is the board the plan's 100-column screen draws, in the
+// order that screen draws it.
+func fixtureTasks() []view.Task {
+	tasks := []view.Task{
+		{Repo: "payments", ID: "ACME-2662", Title: "Retry the webhook on 5xx", Band: view.NeedsYou,
+			Flow: "careful", Phase: "gates", Attempt: 2, Since: ago(31 * time.Minute),
+			Reason: view.Reason{Key: view.ReasonFailed, Args: []view.Arg{arg("phase", "gates")}}},
+		{Repo: "app", ID: "ACME-2701", Title: "Move the assets cron", Band: view.NeedsYou,
+			Flow: "task", Phase: "review", Attempt: 1, Since: ago(4 * time.Minute),
+			Reason: view.Reason{Key: view.ReasonGate, Args: []view.Arg{arg("phase", "review")}}},
+		{Repo: "payments", ID: "ACME-2698", Title: "Fix the swagger lint", Band: view.NeedsYou,
+			Flow: "task", Attempt: 1, Since: ago(3 * time.Hour),
+			Reason: view.Reason{Key: view.ReasonAbandoned}},
+		{Repo: "app", ID: "ACME-2705", Title: "Reconciliation endpoint", Band: view.Running,
+			Flow: "careful", Phase: "implement", PhaseN: 1, Engine: "claude", Model: "opus",
+			Live: true, Attempt: 1, Since: ago(8 * time.Minute), Started: ago(8 * time.Minute)},
+		{Repo: "payments", ID: "ACME-2706", Title: "Index on settlements", Band: view.Running,
+			Flow: "careful", Phase: "review", PhaseN: 2, Engine: "claude", Model: "opus",
+			Live: true, Attempt: 1, Since: ago(3 * time.Minute), Started: ago(40 * time.Minute)},
+	}
+	for _, id := range []string{"ACME-2710", "ACME-2711", "ACME-2712", "ACME-2713"} {
+		tasks = append(tasks, view.Task{Repo: "app", ID: id, Title: "Written down and not started",
+			Band: view.ToDo, Flow: "task", Since: ago(2 * time.Hour)})
+	}
+	for i, id := range []string{"ACME-2690", "ACME-2691", "ACME-2692", "ACME-2693", "ACME-2694", "ACME-2695"} {
+		tasks = append(tasks, view.Task{Repo: "payments", ID: id, Title: "Finished earlier today",
+			Band: view.Done, Flow: "task", Phase: "review", Engine: "claude", Model: "opus",
+			Attempt: 1, Read: i >= 3, Since: ago(time.Duration(i+1) * time.Hour)})
+	}
+	return tasks
+}
+
+// fixtureBoard is what a Reader would have handed the window, counts and
+// all. counts is computed with view.BandOf for the same reason internal/board
+// computes it that way: the number above a band and the rows inside it have
+// to be one answer.
+func fixtureBoard(tasks []view.Task, repos int) board.Board {
+	b := board.Board{Tasks: tasks, Repos: repos, ReadAt: fixtureNow}
+	for _, t := range tasks {
+		b.Counts[view.BandOf(t)]++
+	}
+	return b
+}
+
+// recorder records what a gesture asked for, so a Cmd can be executed in a
+// test without anything being controlled. It is not named control because
+// msg.go's control is the function it stands in for.
+type recorder struct {
+	id, word string
+	err      error
+}
+
+// testModel is a window of the given size with the fixture board already in
+// it, its clock stopped, and a control port that records rather than acts.
+func testModel(t *testing.T, w, h int) (Model, *recorder) {
+	t.Helper()
+	got := &recorder{}
+	m := modelWith(t, words.For("en"), fixtureBoard(fixtureTasks(), 4), w, h, got)
+	return m, got
+}
+
+// modelWith is the same window in whatever language and over whatever board
+// a caller names. Every Options field the window has is filled here, so a
+// field added without a decision about what a test should pass shows up as a
+// compile failure in one place rather than as a zero value in twenty.
+func modelWith(t *testing.T, p *words.Printer, b board.Board, w, h int, got *recorder) Model {
+	t.Helper()
+	m := New(Options{
+		Root:      "~/work",
+		Settings:  &settings{autopilot: true, lang: "en", unread: 5},
+		Words:     p,
+		Width:     w,
+		Height:    h,
+		CanResume: true,
+		Control: func(task view.Task, word string) error {
+			if got == nil {
+				return nil
+			}
+			got.id, got.word = task.ID, word
+			return got.err
+		},
+	})
+	m.now = fixtureNow
+	next, _ := m.Update(boardMsg{Board: b})
+	loaded, ok := next.(Model)
+	if !ok {
+		t.Fatalf("Update returned %T, want ui.Model", next)
+	}
+	loaded.now = fixtureNow
+	return loaded
+}
+
+// press is one keystroke as the event loop delivers it.
+func press(keystroke string) tea.KeyPressMsg {
+	switch keystroke {
+	case "enter":
+		return tea.KeyPressMsg{Code: tea.KeyEnter}
+	case "down":
+		return tea.KeyPressMsg{Code: tea.KeyDown}
+	case "esc":
+		return tea.KeyPressMsg{Code: tea.KeyEscape}
+	}
+	r := []rune(keystroke)[0]
+	return tea.KeyPressMsg{Code: r, Text: string(r)}
+}
+
+// at moves the cursor to the first row of the given band, or to its head.
+//
+// The blank check is not belt and braces: view.ToDo is zero, so a separator
+// row's zero-value band is ToDo, and without it this would happily park the
+// cursor on a blank line and every assertion after it would be about nothing.
+func at(t *testing.T, m Model, b view.Band, head bool) Model {
+	t.Helper()
+	for i, r := range m.rows() {
+		if r.band == b && r.head == head && !r.blank {
+			m.cursor = i
+			return m
+		}
+	}
+	t.Fatalf("no %v row in the body", b)
+	return m
+}
+
+// wantBand fails unless the activity band is saying something that contains
+// want. The band is where a message lands, and a message that landed
+// nowhere is a Cmd whose answer the reader never sees.
+func wantBand(t *testing.T, m Model, want string) {
+	t.Helper()
+	if !strings.Contains(m.message, want) {
+		t.Errorf("the band says %q, want it to mention %q", m.message, want)
+	}
+}

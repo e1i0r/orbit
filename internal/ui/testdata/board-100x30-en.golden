@@ -1,0 +1,30 @@
+ orbit  ~/work                                                  autopilot ●    unread 3/5    4 repos
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ NEEDS YOU  3
+▸  payments  ACME-2662  Retry the webhook on 5xx                      failed: gates              31m
+   app       ACME-2701  Move the assets cron                          waiting: review             4m
+   payments  ACME-2698  Fix the swagger lint                          abandoned                   3h
+
+ RUNNING  2
+   app       ACME-2705  Reconciliation endpoint                       implement        opus       8m
+   payments  ACME-2706  Index on settlements                          review 2/3       opus       3m
+
+ TO DO  4                                                                                     ⏎ open
+
+ DONE TODAY  6                                                                                ⏎ open
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ ACME-2705 · implement · 8m in · claude/opus · careful
+ [↑↓] move  [⏎] open  [n] new  [t] take the keyboard  [/] filter  [?] [q]
