@@ -1,6 +1,6 @@
 GO ?= go
 
-.PHONY: check fmt vet lint test tidy build
+.PHONY: check fmt vet lint test tidy build install
 
 # check is what a contributor runs before pushing, so it has to be what CI
 # runs: lint used to be in CI and not here, which meant a green local check
@@ -33,3 +33,15 @@ tidy:
 
 build:
 	$(GO) build -o orbit ./cmd/orbit
+
+# install puts the binary where the shell will find it. PREFIX is honoured so
+# a packager, or somebody without write access to /usr/local, can redirect it
+# without editing this file; the default is the one directory a Homebrew mac
+# and a plain Linux both already have on PATH.
+PREFIX ?= /usr/local
+BINDIR ?= $(PREFIX)/bin
+
+install: build
+	@mkdir -p "$(BINDIR)"
+	install -m 0755 orbit "$(BINDIR)/orbit"
+	@echo "installed $(BINDIR)/orbit"
