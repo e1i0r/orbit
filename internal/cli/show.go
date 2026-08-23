@@ -36,7 +36,7 @@ func show(args []string, out io.Writer) error {
 	w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
 	for _, e := range events {
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
-			stamp(e.At), e.Kind, e.Phase, firstLine(e.Text))
+			stamp(e.At), e.Kind, e.Phase, firstLine(detail(e.Text, e.Data)))
 	}
 	return w.Flush()
 }
@@ -52,6 +52,27 @@ func stamp(t time.Time) string {
 		return "—"
 	}
 	return t.Format("2006-01-02 15:04:05")
+}
+
+// detail is what the last cell says about an event, and for an event that
+// ended badly that is why it ended.
+//
+// Text is what the engine printed. The reason a phase failed lives in
+// Data["error"], where phaseEnd puts it (task/run.go) so that a log ending
+// at phase.failed still says why — and a row that reads "phase.failed" and
+// then quotes the last line the engine happened to print reads as though
+// that line were the failure. So the reason wins the cell when there is one;
+// what the engine printed is in the log, which is a file you can read.
+//
+// It takes the two fields rather than the event because internal/cli does
+// not import internal/record and should not start: that absence is what
+// stops a command writing to the log behind internal/task's back
+// (arch/imports_test.go).
+func detail(text string, data map[string]string) string {
+	if reason := data["error"]; reason != "" {
+		return reason
+	}
+	return text
 }
 
 // firstLine keeps the table a table. The whole text stays in events.jsonl,

@@ -35,17 +35,7 @@ func TestShowSaysNothingRatherThanTheYearOne(t *testing.T) {
 	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
-	log := findLog(t, orbitHome)
-	f, err := os.OpenFile(log, os.O_APPEND|os.O_WRONLY, 0o600)
-	if err != nil {
-		t.Fatalf("open the record: %v", err)
-	}
-	if _, err := f.WriteString("{not json\n"); err != nil {
-		t.Fatalf("write: %v", err)
-	}
-	if err := f.Close(); err != nil {
-		t.Fatalf("close: %v", err)
-	}
+	appendLine(t, findLog(t, orbitHome), "{not json")
 
 	code, out, errOut := run(t, "show", "-repo", repoDir, "ACME-1")
 	if code != 0 {
@@ -60,6 +50,83 @@ func TestShowSaysNothingRatherThanTheYearOne(t *testing.T) {
 	if !strings.Contains(out, "—") {
 		t.Errorf("show leaves the time column blank instead of saying it is unknown:\n%s", out)
 	}
+}
+
+// TestShowSaysWhyAPhaseFailed pins the last cell of a phase.failed row on
+// the reason rather than on whatever the engine had printed. The reason
+// moved into Data["error"] when Text became the engine's output, and a row
+// that quotes stdout under the word "failed" reads as though stdout were the
+// failure.
+func TestShowSaysWhyAPhaseFailed(t *testing.T) {
+	root, orbitHome := workspace(t)
+	repoDir := filepath.Join(root, "payments")
+	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
+		t.Fatalf("new exited %d: %s", code, errOut)
+	}
+	appendLine(t, findLog(t, orbitHome), `{"at":"2026-08-23T09:14:02Z","kind":"phase.failed","phase":"implement",`+
+		`"text":"reading the webhook handler","data":{"error":"claude exited 1: no such model"}}`)
+
+	code, out, errOut := run(t, "show", "-repo", repoDir, "ACME-1")
+	if code != 0 {
+		t.Fatalf("show exited %d: %s", code, errOut)
+	}
+	row := rowContaining(t, out, "phase.failed")
+	if !strings.Contains(row, "claude exited 1: no such model") {
+		t.Errorf("the failed row does not say why it failed:\n%s", row)
+	}
+	if strings.Contains(row, "reading the webhook handler") {
+		t.Errorf("the failed row quotes the engine's stdout in place of the reason:\n%s", row)
+	}
+}
+
+// TestDetailPrefersTheReasonOverTheOutput is the same rule without a
+// repository around it, and it pins the events that have no reason: they go
+// on printing what the engine said.
+func TestDetailPrefersTheReasonOverTheOutput(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		text string
+		data map[string]string
+		want string
+	}{
+		{"a failure says why", "stdout", map[string]string{"error": "exit 1"}, "exit 1"},
+		{"no data at all", "stdout", nil, "stdout"},
+		{"an empty reason is no reason", "stdout", map[string]string{"error": ""}, "stdout"},
+		{"other data is not the reason", "stdout", map[string]string{"cost": "0.4"}, "stdout"},
+	} {
+		if got := detail(tc.text, tc.data); got != tc.want {
+			t.Errorf("%s: detail(%q, %v) = %q, want %q", tc.name, tc.text, tc.data, got, tc.want)
+		}
+	}
+}
+
+// appendLine adds one line to a log that is already there, which is how a
+// test plants an event no command writes yet.
+func appendLine(t *testing.T, path, line string) {
+	t.Helper()
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0o600)
+	if err != nil {
+		t.Fatalf("open the record: %v", err)
+	}
+	if _, err := f.WriteString(line + "\n"); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	if err := f.Close(); err != nil {
+		t.Fatalf("close: %v", err)
+	}
+}
+
+// rowContaining is the one printed row that mentions something, because an
+// assertion against the whole table cannot tell which row carried the text.
+func rowContaining(t *testing.T, out, want string) string {
+	t.Helper()
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, want) {
+			return line
+		}
+	}
+	t.Fatalf("no row mentioning %q:\n%s", want, out)
+	return ""
 }
 
 // findLog is the one events.jsonl under the state root. The path is derived
