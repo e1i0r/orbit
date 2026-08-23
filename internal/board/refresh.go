@@ -13,7 +13,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
+	"github.com/e1i0r/orbit/internal/task"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -73,11 +75,38 @@ func (r *Reader) Refresh() (Board, Changed, error) {
 		// repository whose name has just become readable reaches the rows
 		// it owns without waiting for their logs to move.
 		//
-		// Live is left exactly as Fold set it. Deciding whether a process
-		// still holds a task means reading the run marker and asking the
-		// operating system about a pid, and that marker is task 6's; until
-		// it exists the record's answer is the only honest one.
 		st.task.ID, st.task.Repo, st.task.RepoPath = st.id, st.repo.name, st.repo.path
+
+		// Live is the one field on the row that does not come from the log,
+		// and cannot: a run killed with SIGKILL writes nothing on its way
+		// out, so a log ending at phase.started is either a run in flight or
+		// a run that died on Tuesday. The run marker under the task's
+		// directory, and a signal 0 to the pid it names, are the only things
+		// that tell those apart, and task.Alive is the very function `orbit
+		// reconcile` asks — one reader of that file, not two.
+		//
+		// It is asked on every refresh, including for a log that has not
+		// moved, because a process dying changes no file the poll above
+		// would notice. It costs one open that usually fails with ENOENT,
+		// which is the same order of cost as the stat the poll is built on.
+		//
+		// Believing it is as far as this package goes: the band still comes
+		// from the record. A run whose process is gone is not abandoned
+		// until somebody appends task.abandoned — task.Reconcile's job, and
+		// the window's to call once when it opens — because a board that
+		// banded on liveness would be the only reader of the record that
+		// knew, and `orbit show` and `cat` would still say the run was
+		// going. That drift is the thing the record exists to prevent.
+		_, alive, aliveErr := task.Alive(r.store, task.Task{ID: st.id, Repo: repo.Repo{Path: st.repo.path}})
+		if aliveErr != nil {
+			// Not a *TaskError: that type says the task's log could not be
+			// read, which drives the flipped test above and would be a lie
+			// here — the log is fine, the marker beside it is not. The row
+			// stays, showing what the record says, and the fault is
+			// reported where a reader can see it.
+			b.Errs = append(b.Errs, fmt.Errorf("task %s in %s: %w", st.id, st.repo.name, aliveErr))
+		}
+		st.task.Live = alive
 
 		// One call to view.BandOf, answering both the crossing and — via
 		// counts below, over these very tasks — the number in the header.

@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -28,6 +29,43 @@ import (
 // every run leaves a .git/worktrees entry behind in a repository Orbit does
 // not own, and `git worktree prune` by hand is the only remedy.
 func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[string]engine.Engine) error {
+	// task.started is written first — before the flow is validated, before
+	// the engines are checked, before the worktree exists — and the ordering
+	// is load-bearing rather than tidy.
+	//
+	// Every way a run can fail writes task.failed (see failed below), and a
+	// task.failed lands on the end of a log that may already carry a phase
+	// from the attempt before it. The event that tells a reader the old
+	// phase is over is task.started, which clears it. While the three
+	// pre-phase failures returned before task.started was ever written, a
+	// second attempt refused for an invalid flow showed up in the window as
+	// a failure in the phase the *first* attempt had died in: a stale phase,
+	// named after an attempt that never ran. Writing task.started here is
+	// the whole fix, it needs no reader to change, and it is simply true —
+	// this is where an attempt begins, and now the log has a line for every
+	// attempt rather than only for the ones that reached a worktree.
+	//
+	// It costs the worktree path this event used to carry. Nothing read it,
+	// and it is a pure function of the state root, the repository's path and
+	// the id (store.CreateWorktreeParent), so nothing was knowable only from
+	// that field — whereas an attempt with no line in the log is knowable
+	// from nowhere at all.
+	if err := emit(s, t, record.Event{Kind: record.TaskStarted, Data: map[string]string{"flow": f.Name}}); err != nil {
+		return err
+	}
+
+	// The run marker goes down next and comes off on every way out of here,
+	// which is what lets any reader tell a phase still running from a phase
+	// whose process is gone. It cannot survive SIGKILL — nothing written by
+	// the dying process can — so the invariant a reader may rely on is the
+	// weaker, true one: a task's log ends in a terminal event, or a reader
+	// appends one. Reconcile is the reader that appends it.
+	release, err := hold(s, t)
+	if err != nil {
+		return failed(s, t, err)
+	}
+	defer release()
+
 	if err := f.Validate(); err != nil {
 		return failed(s, t, err)
 	}
@@ -41,13 +79,10 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 	if err != nil {
 		return failed(s, t, err)
 	}
-	if err := emit(s, t, record.Event{Kind: "task.started", Data: map[string]string{"flow": f.Name, "worktree": wt}}); err != nil {
-		return err
-	}
 
 	for i, p := range f.Phases {
 		if err := emit(s, t, record.Event{
-			Kind:  "phase.started",
+			Kind:  record.PhaseStarted,
 			Phase: p.Name,
 			Data:  map[string]string{"engine": p.Engine, "model": p.Model, "n": strconv.Itoa(i + 1)},
 		}); err != nil {
@@ -60,35 +95,98 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 			Dir:    wt,
 		})
 		if runErr != nil {
+			// A context that is done is not an engine that broke. The engine
+			// reports being killed the same way it reports falling over —
+			// exec gives it no other vocabulary — so the difference between
+			// "the model failed" and "you stopped it" is not in the error at
+			// all, it is here, and only this function can tell them apart.
+			// Asking the context first is what keeps a task somebody
+			// cancelled from being written down as a task that broke.
+			//
+			// The check is inside the error branch, not before it: a phase
+			// that finished in the same instant the deadline passed did the
+			// work, and calling that a cancellation would throw away a
+			// finished phase to make the bookkeeping neat.
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return stopped(s, t, p.Name, out, ctxErr)
+			}
 			// The engine's error is what the caller needs; a failure to
 			// record it must not replace or mask that error, so this emit is
 			// best-effort and its own error is discarded, for the same
 			// reason as the one in failed below.
-			_ = emit(s, t, record.Event{Kind: "phase.failed", Phase: p.Name, Text: runErr.Error()}) //nolint:errcheck // deliberate: see above
+			_ = emit(s, t, phaseEnd(record.PhaseFailed, p.Name, out, runErr)) //nolint:errcheck // deliberate: see above
 			return failed(s, t, fmt.Errorf("task %s, phase %q: %w", t.ID, p.Name, runErr))
 		}
 
-		text, full := captured(out.Output)
-		finished := record.Event{Kind: "phase.finished", Phase: p.Name, Text: text}
-		data := map[string]string{}
-		if full > 0 {
-			data["output_bytes"] = strconv.Itoa(full)
-		}
-		if out.SessionID != "" {
-			data["session"] = out.SessionID
-		}
-		if out.Cost != 0 {
-			data["cost"] = strconv.FormatFloat(out.Cost, 'f', -1, 64)
-		}
-		if len(data) > 0 {
-			finished.Data = data
-		}
-		if err := emit(s, t, finished); err != nil {
+		if err := emit(s, t, phaseEnd(record.PhaseFinished, p.Name, out, nil)); err != nil {
 			return err
 		}
 	}
 
-	return emit(s, t, record.Event{Kind: "task.finished"})
+	return emit(s, t, record.Event{Kind: record.TaskFinished})
+}
+
+// phaseEnd is the one event that ends a phase, whichever way it ended.
+//
+// The three endings carry the same facts because the same things are true of
+// all three: the engine printed something, it may have cost money, it may
+// have a session somebody wants to resume. Only the kind differs, and cause
+// — the reason a phase that did not finish stopped.
+//
+// That the ending carries the output at all is a fix. run.go bound the
+// engine's answer and then threw it away on the error path, so every failed
+// or cancelled phase lost everything the agent had printed before it died,
+// which is the case where a reader most wants it: on a cancellation it is
+// the only evidence of what the run did before it was stopped. Claude.Run
+// returns its captured stdout alongside its error precisely so this can keep
+// it (claude.go:45-51).
+func phaseEnd(kind, phase string, out engine.Result, cause error) record.Event {
+	text, full := captured(out.Output)
+	e := record.Event{Kind: kind, Phase: phase, Text: text}
+	data := map[string]string{}
+	if full > 0 {
+		data["output_bytes"] = strconv.Itoa(full)
+	}
+	if out.SessionID != "" {
+		data["session"] = out.SessionID
+	}
+	if out.Cost != 0 {
+		data["cost"] = strconv.FormatFloat(out.Cost, 'f', -1, 64)
+	}
+	if cause != nil {
+		// Why it stopped goes in Data rather than Text, because Text is now
+		// what the engine printed, and a log that ends at phase.failed — it
+		// can, the write after it is best-effort — must still say why. It is
+		// cut to the same length for the same reason: one event is one line
+		// and record.MaxLine is what a line may weigh, and an engine's error
+		// can carry the whole of its stderr.
+		msg, _ := captured(cause.Error())
+		data["error"] = msg
+	}
+	if len(data) > 0 {
+		e.Data = data
+	}
+	return e
+}
+
+// stopped writes down that a run was stopped from outside rather than broken
+// from inside, and hands back the context's error so the caller sees which.
+//
+// A cancellation and a timeout are different facts and the window bands them
+// differently — you stopped this one, and this one outlived its deadline and
+// wants you — so they are different kinds rather than one kind with a
+// reason. Both are terminal: whichever wrote the phase, the attempt is over.
+func stopped(s *store.Store, t Task, phase string, out engine.Result, cause error) error {
+	// Best-effort, and the errors discarded, for the same reason as in
+	// failed below: what stopped the run matters more than a failure to
+	// write it down, and there is nobody left to hand a second error to.
+	_ = emit(s, t, phaseEnd(record.PhaseCancelled, phase, out, nil)) //nolint:errcheck // deliberate: see failed
+	kind := record.TaskCancelled
+	if errors.Is(cause, context.DeadlineExceeded) {
+		kind = record.TaskTimedOut
+	}
+	_ = emit(s, t, record.Event{Kind: kind}) //nolint:errcheck // deliberate: see failed
+	return fmt.Errorf("task %s, phase %q: %w", t.ID, phase, cause)
 }
 
 // failed writes down that the run stopped and why, then hands the error back
@@ -106,7 +204,11 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 // failure to write down why a run died must never replace the error that
 // killed it.
 func failed(s *store.Store, t Task, err error) error {
-	_ = emit(s, t, record.Event{Kind: "task.failed", Text: err.Error()}) //nolint:errcheck // deliberate: see above
+	// Cut for the same reason phaseEnd cuts: this text can be an engine's
+	// error with the whole of its stderr inside it, and an event too large
+	// to write is a failure nobody can read afterwards.
+	text, _ := captured(err.Error())
+	_ = emit(s, t, record.Event{Kind: record.TaskFailed, Text: text}) //nolint:errcheck // deliberate: see above
 	return err
 }
 

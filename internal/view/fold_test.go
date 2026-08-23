@@ -196,6 +196,7 @@ func TestFoldRemembersNothingBetweenCalls(t *testing.T) {
 func allCases() []foldCase {
 	all := foldCases()
 	all = append(all, stoppedCases()...)
+	all = append(all, stoppedByHandCases()...)
 	all = append(all, damageCases()...)
 	return all
 }

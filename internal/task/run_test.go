@@ -165,16 +165,13 @@ func TestRunRecordsAPrepareFailureAndStops(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Events: %v", err)
 	}
-	if len(events) != 2 {
-		t.Fatalf("events = %+v, want exactly [task.created, task.failed]", events)
-	}
-	if events[0].Kind != "task.created" {
-		t.Errorf("event 0 = %q, want task.created", events[0].Kind)
-	}
-	if events[1].Kind != "task.failed" {
-		t.Errorf("event 1 = %q, want task.failed", events[1].Kind)
-	}
-	if events[1].Text == "" {
+	// task.started is in the middle because an attempt that could not make
+	// a worktree is still an attempt, and the log says so. It is also what
+	// keeps a re-run honest: the event clears the phase the attempt before
+	// it died in, so the task.failed below is not read as a failure in that
+	// phase.
+	wantKinds(t, events, record.TaskCreated, record.TaskStarted, record.TaskFailed)
+	if events[2].Text == "" {
 		t.Error("the failure was recorded with no reason — evidence is never paraphrased away")
 	}
 }

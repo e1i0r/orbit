@@ -211,12 +211,13 @@ func bandOfState(s state) Band {
 // whose task-level event has not arrived yet.
 //
 // It exists because internal/task writes one task.failed for two different
-// things and puts no phase on either (run.go:108-111). A run that died in a
-// phase and a run that never reached one produce the same event, and the
-// only thing that tells them apart is where the fold already was when it
-// arrived. Inside an attempt, the phase the fold is holding is this run's.
-// Outside one — before the first run, or after a previous one ended — the
-// phase it is holding belongs to something that is over.
+// things and puts no phase on either — task-level events name no phase,
+// phase-level events do. A run that died in a phase and a run that never
+// reached one produce the same event, and the only thing that tells them
+// apart is where the fold already was when it arrived. Inside an attempt,
+// the phase the fold is holding is this run's. Outside one — before the
+// first run, or after a previous one ended — the phase it is holding
+// belongs to something that is over.
 func inAttempt(s state) bool {
 	switch s {
 	case stateRunning, stateHeld, stateWaiting, statePhaseFailed:

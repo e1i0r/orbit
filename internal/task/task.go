@@ -59,7 +59,7 @@ func Create(s *store.Store, r repo.Repo, id, text string) (Task, error) {
 		return Task{}, fmt.Errorf("write %q: %w", path, err)
 	}
 	t := Task{ID: id, Repo: r, Text: text}
-	if err := emit(s, t, record.Event{Kind: "task.created", Text: text}); err != nil {
+	if err := emit(s, t, record.Event{Kind: record.TaskCreated, Text: text}); err != nil {
 		// The file landed and nothing was recorded. Left alone, that is the
 		// worst of both: the task exists to List, `orbit show` has nothing
 		// to show, and writing it again is refused as a duplicate — a task

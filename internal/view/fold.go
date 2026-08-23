@@ -2,31 +2,6 @@ package view
 
 import "github.com/e1i0r/orbit/internal/record"
 
-// The kinds this fold understands. They are string constants here and string
-// literals in internal/task, which writes them, because the layering forbids
-// either package from importing the other — internal/view may import
-// internal/record and nothing else, and that restriction is what keeps the
-// window from being able to append an event. The seam is real: a kind
-// renamed on the writing side and not here would fold to nothing. It is
-// narrow enough to live with, and wide enough to be worth saying out loud.
-const (
-	kindCreated   = "task.created"
-	kindStarted   = "task.started"
-	kindFinished  = "task.finished"
-	kindFailed    = "task.failed"
-	kindCancelled = "task.cancelled"
-	kindTimedOut  = "task.timedout"
-	kindAbandoned = "task.abandoned"
-	kindRead      = "task.read"
-
-	kindPhaseStarted   = "phase.started"
-	kindPhaseFinished  = "phase.finished"
-	kindPhaseFailed    = "phase.failed"
-	kindPhaseCancelled = "phase.cancelled"
-	kindPhaseWaiting   = "phase.waiting"
-	kindPhaseResumed   = "phase.resumed"
-)
-
 // whyPaused is the value phase.waiting carries when the reader asked for the
 // stop rather than the flow. It is the difference between a task that needs
 // you and a task you are holding, and it is the only thing in the record
@@ -77,7 +52,7 @@ func fold(t *Task, e record.Event) {
 		// exactly the lie the whole record exists to prevent: the one thing
 		// worse than not knowing what happened is being told confidently.
 		t.Damaged++
-	case kindCreated:
+	case record.TaskCreated:
 		// task.created carries the whole of task.md, and the first line of
 		// it is the title. Everything below the first line is the task, and
 		// the window has a pane for that.
@@ -85,7 +60,7 @@ func fold(t *Task, e record.Event) {
 		flow(t, e)
 		t.state = stateNew
 		stamp(&t.Since, e.At)
-	case kindStarted:
+	case record.TaskStarted:
 		// There is no run identifier anywhere in the record; the boundary
 		// between one run and the next is this event. Everything the last
 		// attempt left on the row goes with it — a phase from an attempt
@@ -93,13 +68,16 @@ func fold(t *Task, e record.Event) {
 		// is not a reason any more. Cost and Read do not: cost is what the
 		// task has spent in total, and task.read is a fact about the log.
 		//
-		// The clearing is not what makes a failed re-run honest, though it
-		// reads as if it should be: internal/task's three pre-phase
-		// failures all return before this event is ever written
-		// (run.go:31-43), so a re-run that fails that way never reaches
-		// here. kindFailed below is where that is caught. This clearing is
-		// for the row itself — a phase from an attempt that is over, drawn
-		// beside a run that has just begun, is a stale phase.
+		// The clearing is what makes a failed re-run honest. internal/task
+		// writes this event first, before it validates the flow or makes a
+		// worktree, so every attempt reaches here — including the ones
+		// refused before a phase — and the phase the attempt before it died
+		// in is cleared before the task.failed that refuses this one
+		// arrives. It reads as "failed to start", which is what happened.
+		//
+		// Logs written before that ordering changed have no task.started on
+		// the refused attempt at all, and record.TaskFailed below is what
+		// catches those.
 		t.Attempt++
 		t.state = stateRunning
 		t.Reason = Reason{}
@@ -107,7 +85,7 @@ func fold(t *Task, e record.Event) {
 		flow(t, e)
 		stamp(&t.Started, e.At)
 		stamp(&t.Since, e.At)
-	case kindPhaseStarted:
+	case record.PhaseStarted:
 		t.Phase = e.Phase
 		t.PhaseN = count(e.Data["n"])
 		// Assigned rather than merged: each phase declares its own engine
@@ -119,14 +97,18 @@ func fold(t *Task, e record.Event) {
 		t.state = stateRunning
 		t.Reason = Reason{}
 		stamp(&t.Since, e.At)
-	case kindPhaseFinished:
+	case record.PhaseFinished:
 		// Since is deliberately not moved. What the row says does not change
 		// when a phase ends — the task is still in the same run, and the
 		// elapsed number beside it is how long that run has been in this
 		// phase. The next phase.started moves it.
 		t.Phase = e.Phase
 		t.Cost += money(e.Data["cost"])
-	case kindPhaseFailed:
+	case record.PhaseFailed:
+		// Cost is summed from every event that ends a phase, not only the
+		// ones that ended well. A phase that ran for twenty minutes and
+		// then broke was paid for, and a total that quietly leaves it out
+		// is a number the reader will act on and be wrong about.
 		// phase.failed is the only place a failure's phase is written down;
 		// the task.failed that follows it never carries one. Recording the
 		// verdict here as well as there is what makes a log that ends at
@@ -140,62 +122,72 @@ func fold(t *Task, e record.Event) {
 		// is the whole difference between the two, and it is not otherwise
 		// in the record.
 		t.Phase = e.Phase
+		t.Cost += money(e.Data["cost"])
 		t.state = statePhaseFailed
 		t.Reason = failure(e.Phase)
 		stamp(&t.Since, e.At)
-	case kindFailed:
-		// One event, two situations, and internal/task writes the same thing
-		// for both from one function (run.go:108-111). Where the fold
-		// already is decides which this is.
+	case record.TaskFailed:
+		// One event, two situations, and internal/task writes the same
+		// thing for both from one function. Where the fold already is
+		// decides which this is.
 		if inAttempt(t.state) {
 			// A run was under way, so the phase it is holding is the phase
 			// it died in — phase.failed put it there a moment ago.
 			t.state = stateFailed
 			t.Reason = failure(t.Phase)
 		} else {
-			// Nothing was under way. An invalid flow, an engine nobody
-			// configured, a worktree that could not be made: all three
-			// return before task.started is emitted (run.go:31-43), so on a
-			// re-run this event lands on the end of a log whose last phase
-			// belongs to the attempt before it. Naming that phase would tell
-			// the reader a run died in review when it never started, so the
-			// phase goes with the attempt it belonged to.
+			// Nothing was under way, so this event landed on the end of a
+			// log whose last phase belongs to an attempt that is over.
+			// Naming that phase would tell the reader a run died in review
+			// when it never started, so the phase goes with the attempt it
+			// belonged to.
+			//
+			// Since internal/task began writing task.started first, a
+			// refused re-run reaches here with the phase already cleared and
+			// this branch changes nothing. It still matters for two logs:
+			// one written before that ordering changed, and one where the
+			// run that opened the attempt ended without a task-level event
+			// of its own — a phase.failed whose task.failed never got
+			// written, and then a re-run.
 			t.Phase, t.PhaseN, t.Engine, t.Model = "", 0, "", ""
 			t.state = stateFailed
 			t.Reason = Reason{Key: ReasonFailedToStart}
 		}
 		stamp(&t.Since, e.At)
-	case kindPhaseCancelled:
+	case record.PhaseCancelled:
+		// Cost again: a phase stopped halfway spent whatever it spent, and
+		// the reader who stopped it is the one most likely to be asking.
 		t.Phase = e.Phase
+		t.Cost += money(e.Data["cost"])
 		t.state = stateCancelled
 		t.Reason = Reason{Key: ReasonCancelled}
 		stamp(&t.Since, e.At)
-	case kindCancelled:
+	case record.TaskCancelled:
 		t.state = stateCancelled
 		t.Reason = Reason{Key: ReasonCancelled}
 		stamp(&t.Since, e.At)
-	case kindTimedOut:
+	case record.TaskTimedOut:
 		t.state = stateTimedOut
 		t.Reason = Reason{Key: ReasonTimedOut}
 		stamp(&t.Since, e.At)
-	case kindAbandoned:
+	case record.TaskAbandoned:
 		t.state = stateAbandoned
 		t.Reason = Reason{Key: ReasonAbandoned}
 		stamp(&t.Since, e.At)
-	case kindPhaseWaiting:
+	case record.PhaseWaiting:
 		t.Phase = e.Phase
 		t.state, t.Reason = waiting(e)
 		stamp(&t.Since, e.At)
-	case kindPhaseResumed:
+	case record.PhaseResumed:
 		t.Phase = e.Phase
 		t.state = stateRunning
 		t.Reason = Reason{}
 		stamp(&t.Since, e.At)
-	case kindFinished:
+	case record.TaskFinished:
 		t.state = stateFinished
 		t.Reason = Reason{}
 		stamp(&t.Since, e.At)
-	case kindRead:
+	case record.TaskRead:
 		// Read says task.read is in the log and nothing more. It does not
 		// move Since, because being read does not change what the row says
 		// about when this task got where it is.

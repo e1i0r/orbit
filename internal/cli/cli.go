@@ -24,6 +24,8 @@ var synopsis = [][2]string{
 	{"orbit run -repo <dir> <id>", "run a task through its flow"},
 	{"orbit list -repo <dir>", "list the tasks of a repository"},
 	{"orbit show -repo <dir> <id>", "print what happened to a task"},
+	{"orbit cancel -repo <dir> <id>", "stop a run, and say so in its record"},
+	{"orbit reconcile -repo <dir> [id]", "close the records of runs whose processes are gone"},
 }
 
 // usage is the whole of orbit on one screen.
@@ -102,6 +104,10 @@ func Run(args []string, out, errOut io.Writer) int {
 		err = list(args[1:], out)
 	case "show":
 		err = show(args[1:], out)
+	case "cancel":
+		err = cancelTask(args[1:], out)
+	case "reconcile":
+		err = reconcile(args[1:], out)
 	case "help", "-h", "--help":
 		fmt.Fprint(out, usage())
 		return 0

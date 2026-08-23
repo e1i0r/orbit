@@ -44,19 +44,20 @@ func TestRunRecordsTheDataKeysTheWindowWillRead(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Events: %v", err)
 	}
-	wt, err := s.WorktreeDir(r.Path, "ACME-1")
-	if err != nil {
-		t.Fatalf("WorktreeDir: %v", err)
-	}
-
-	started := find(t, events, "task.started")
-	for key, want := range map[string]string{"flow": "task", "worktree": wt} {
+	// task.started carries the flow and nothing else. It used to carry the
+	// worktree too, and stopped when it moved to the top of Run — before
+	// there is a worktree to name. Nothing read the key, and the path is a
+	// pure function of the state root, the repository and the id, so
+	// s.WorktreeDir answers it for anyone who wants it; an attempt with no
+	// line in the log was the thing that could not be recovered.
+	started := find(t, events, record.TaskStarted)
+	for key, want := range map[string]string{"flow": "task"} {
 		if started.Data[key] != want {
 			t.Errorf(`task.started Data[%q] = %q, want %q`, key, started.Data[key], want)
 		}
 	}
 
-	phase := find(t, events, "phase.started")
+	phase := find(t, events, record.PhaseStarted)
 	for key, want := range map[string]string{"engine": "fake", "model": "sonnet", "n": "1"} {
 		if phase.Data[key] != want {
 			t.Errorf(`phase.started Data[%q] = %q, want %q`, key, phase.Data[key], want)

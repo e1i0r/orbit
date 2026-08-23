@@ -24,9 +24,22 @@ import (
 // "The window derives everything and holds no authority" is those three
 // missing lines, and nothing else makes it true.
 var layers = map[string][]string{
-	"cmd/orbit":          {"internal/cli"},
-	"internal/arch":      {},
-	"internal/board":     {"internal/record", "internal/repo", "internal/store", "internal/view"},
+	"cmd/orbit":     {"internal/cli"},
+	"internal/arch": {},
+	// internal/task is on internal/board's list for one function: task.Alive,
+	// which reads the run marker and asks the operating system whether the
+	// pid it names is still there. It is a widening, and it was argued
+	// rather than assumed. The alternative was a second implementation of
+	// the marker's format and the liveness check living inside
+	// internal/board, and two readers of one file drift — the very class of
+	// defect the record exists to prevent, arriving through the back door.
+	// The direction is safe: nothing in internal/task imports
+	// internal/board, so there is no cycle, and internal/ui already lists
+	// internal/task because that is how every gesture reaches the function
+	// its subcommand calls. What is not widened is the line above:
+	// internal/board still does not append anything itself, and internal/ui
+	// still cannot reach internal/record, internal/store or internal/engine.
+	"internal/board":     {"internal/record", "internal/repo", "internal/store", "internal/task", "internal/view"},
 	"internal/cli":       {"internal/board", "internal/engine", "internal/flow", "internal/repo", "internal/store", "internal/task", "internal/ui", "internal/view", "internal/words"},
 	"internal/engine":    {},
 	"internal/flow":      {},
