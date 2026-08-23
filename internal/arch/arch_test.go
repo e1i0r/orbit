@@ -9,6 +9,7 @@ import (
 	"bufio"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -109,21 +110,56 @@ func TestNoJunkDrawerPackages(t *testing.T) {
 	}
 }
 
-// TestGoModTakesNoDependency enforces the plan's own constraint, which
-// nothing else checked: the spine is standard library only, and Charm — the
-// whole reason the constraint is temporary — arrives with the window in plan
-// 2. A constraint stated in a document and nowhere else is one an agent
-// executing a task at three in the morning will break with `go get`, in a
-// commit that otherwise looks fine.
-func TestGoModTakesNoDependency(t *testing.T) {
-	path := filepath.Join(root(t), "go.mod")
-	body, err := os.ReadFile(path)
+// approved is every module this repository may depend on directly, by path.
+//
+// The rule this replaces was "no require block at all". That was the right
+// rule for the spine and the wrong one the moment the window needed a
+// terminal library — but deleting it would have thrown away what it was
+// actually protecting. The property was never the absence of dependencies;
+// it was the absence of a dependency nobody decided on. Adding a line here
+// is that decision. Do it in its own commit, with the reason in the message.
+//
+// Indirect requires are not listed and not checked. They are chosen by the
+// modules above, not by whoever is editing this repository — which is only
+// true while go.mod is tidy, so `go mod tidy -diff` runs in `make check`
+// beside this test and the two are one guard.
+var approved = []string{
+	"charm.land/bubbles/v2",
+	"charm.land/bubbletea/v2",
+	"charm.land/lipgloss/v2",
+	"github.com/charmbracelet/colorprofile",
+	"github.com/charmbracelet/x/ansi",
+	"github.com/charmbracelet/x/exp/golden",
+}
+
+func TestGoModTakesOnlyApprovedDependencies(t *testing.T) {
+	body, err := os.ReadFile(filepath.Join(root(t), "go.mod"))
 	if err != nil {
-		t.Fatalf("read %s: %v", path, err)
+		t.Fatalf("read go.mod: %v", err)
 	}
+	found := map[string]bool{}
+	inBlock := false
 	for i, line := range strings.Split(string(body), "\n") {
-		if strings.HasPrefix(strings.TrimSpace(line), "require") {
-			t.Errorf("go.mod:%d is a dependency — %q — and plan 1 is standard library only", i+1, strings.TrimSpace(line))
+		text := strings.TrimSpace(line)
+		switch {
+		case text == "require (":
+			inBlock = true
+			continue
+		case inBlock && text == ")":
+			inBlock = false
+			continue
+		case strings.HasPrefix(text, "require "):
+			text = strings.TrimPrefix(text, "require ")
+		case !inBlock:
+			continue
+		}
+		if text == "" || strings.HasPrefix(text, "//") || strings.Contains(text, "// indirect") {
+			continue
+		}
+		path := strings.Fields(text)[0]
+		found[path] = true
+		if !slices.Contains(approved, path) {
+			t.Errorf("go.mod:%d requires %q, which nobody approved — add it to arch.approved in a commit that says why, or take it out", i+1, path)
 		}
 	}
 }
