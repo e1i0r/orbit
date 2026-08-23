@@ -41,7 +41,9 @@ const (
 	ReasonFailed = "reason.failed"
 	// ReasonFailedToStart is a run that never reached a phase — an invalid
 	// flow, an engine nobody configured, a worktree that could not be made.
-	// It names no phase because the record has none to name. Args: none.
+	// It names no phase because the record has none to name, and that holds
+	// on a second attempt too: the phase the attempt before died in is not
+	// this run's phase. Args: none.
 	ReasonFailedToStart = "reason.failed_to_start"
 	// ReasonGate is a phase stopped and waiting because the flow asked it
 	// to. Nothing moves until the reader answers. Args: phase.

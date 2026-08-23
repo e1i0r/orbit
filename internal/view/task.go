@@ -26,7 +26,13 @@ import (
 // field on Task are both Band.
 type Band int
 
-// The four bands, in the order they are drawn.
+// The four bands.
+//
+// ToDo is first so that it is the zero value: a Task nobody has folded is a
+// task written down and nothing more, which is exactly what ToDo means. Any
+// other order here would make an empty Task claim something it has not done.
+// The order the bands are *drawn* in is Bands's and not this block's, so this
+// one is free to be chosen for the zero value.
 //
 // Two memberships are worth stating here because they are decisions and not
 // definitions. A failed run is NeedsYou and not Done: to whoever is reading
@@ -37,9 +43,9 @@ type Band int
 // a channel stops being read. A timeout is not a cancellation; nobody chose
 // it, so it needs you.
 const (
-	NeedsYou Band = iota // failed, timed out, abandoned, or waiting at a gate
+	ToDo     Band = iota // written down and never started
+	NeedsYou             // failed, timed out, abandoned, or waiting at a gate
 	Running              // a live process holds it, paused included
-	ToDo                 // written down and never started
 	Done                 // finished or cancelled, and read or not
 )
 
@@ -69,14 +75,15 @@ func (b Band) String() string {
 	}
 }
 
-// state is where the record left a task: the one fact Fold decides and the
-// one fact BandOf reads.
+// state is where the record left a task: this package's working vocabulary
+// while it walks a log, and the thing Fold converts into a Band once at the
+// end.
 //
 // It is unexported because it is not something the window has any business
-// drawing — the window draws the band, the phase and the reason — and
-// because a value only this package can produce is a value only this
-// package can get wrong. The zero value is the state of a task that has
-// been written down and nothing more, so a Task nobody folded is ToDo.
+// drawing — the window draws the band, the phase and the reason. It decides
+// nothing on its own: bandOfState is read exactly once, by Fold, and what
+// leaves this package is the Band it produced. A caller who cannot see this
+// field is a caller who cannot be surprised by it.
 type state int
 
 const (
@@ -106,26 +113,39 @@ type Task struct {
 	Repo     string // the repository's name, for the column
 	RepoPath string // where it is, for the diff tab and $EDITOR
 	Title    string // the first line of task.md
-	// Band is BandOf(t) as of the fold, stored so a row and a header count
-	// read the same value instead of each deciding again. BandOf reads only
-	// state, which nothing outside this package can set, so no caller can
-	// leave this field disagreeing with the predicate.
-	Band    Band
-	Flow    string    // the flow it was written against, or the one a run overrode it with
-	Phase   string    // the phase now, or the phase it stopped in
-	PhaseN  int       // 1-based, from Data["n"]; 0 when the record does not say
-	Engine  string    // from Data["engine"]
-	Model   string    // from Data["model"]; empty is a fact, not a gap
-	Since   time.Time // when the state on screen began; zero if the record never carried an honest timestamp
-	Started time.Time // when the current run began; zero if never run
-	Reason  Reason    // the word the row needs beyond its phase; zero when there is none
-	Attempt int       // how many task.started blocks are in the log
-	Live    bool      // a process is believed to hold it; always false out of Fold, and board owns it
-	Read    bool      // task.read is in the log
-	Cost    float64   // summed from every phase.finished that reported one
-	Damaged int       // count of record.unreadable markers
-	// state is what BandOf switches on. It is last because it is the only
-	// field of this struct that is not something the window draws.
+	// Band is the band this task is drawn in. Fold writes it from the
+	// record and BandOf reads it, so the header counts and the list draws
+	// one value rather than two rules that agree by inspection. A Task
+	// built by hand — a fixture, a golden, a row a test types out — is
+	// answered as the band it was given, which is the whole reason this is
+	// an exported field and not a private conclusion.
+	Band   Band
+	Flow   string // the flow it was written against, or the one a run overrode it with
+	Phase  string // the phase now, or the phase it stopped in
+	PhaseN int    // 1-based, from Data["n"]; 0 when the record does not say
+	Engine string // from Data["engine"]
+	Model  string // from Data["model"]; empty is a fact, not a gap
+	// Since is when the state on screen began, as the record tells it, and
+	// zero if the record never carried an honest timestamp. It is the
+	// record's word and not a checked one: a log whose clock went backwards
+	// can put Since before Started, so a window subtracting the two clamps
+	// at zero rather than drawing a negative age. The fold does not clamp,
+	// because inventing a time is how a record stops being evidence.
+	Since time.Time
+	// Started is when the current run began, and zero if the record never
+	// carried an honest timestamp for it — which is not the same as never
+	// having run. Attempt is the has-it-run signal: Attempt > 0 means a
+	// task.started is in the log, whatever its clock said.
+	Started time.Time
+	Reason  Reason  // the word the row needs beyond its phase; zero when there is none
+	Attempt int     // how many task.started blocks are in the log
+	Live    bool    // a process is believed to hold it; always false out of Fold, and board owns it
+	Read    bool    // task.read is in the log
+	Cost    float64 // summed from every phase.finished that reported one
+	Damaged int     // count of record.unreadable markers
+	// state is what Fold folds into and what bandOfState reads. It is last
+	// because it is the only field of this struct that is not something the
+	// window draws, and it leaves this package only as the Band above.
 	state state
 }
 
@@ -133,19 +153,45 @@ type Task struct {
 // The header counts with it and the list draws with it, so the two cannot
 // disagree about a task the way v1's did.
 //
-// It reads state and nothing else. In particular it does not read Live: a run
-// whose process is gone is not abandoned until somebody writes task.abandoned
-// into the record, and a window that banded on liveness alone would know
-// something no other reader of the record could know — `orbit show` and `cat`
-// would still say the run was in a phase, and only the screen would say
-// otherwise. Reconciling is a supervisor's act and it belongs in a write, not
-// in a fold.
+// It reads Task.Band. That is the point: the value the row draws and the
+// value the header counts are one value. An earlier shape of this function
+// derived the answer from an unexported field instead, and it was wrong in
+// precisely the way this package exists to prevent — a Task built by hand as
+// `Task{Band: Running}` was counted as ToDo, because nothing outside this
+// package can set the field the predicate was reading. A golden fixture
+// written that way would have enshrined v1's bug in a test file.
 //
-// It is total: every value, including one no constant here names, comes back
-// as one of the four bands, which is what lets the partition hold for any
-// Task at all rather than only for a Task this package built.
+// It does not read Live: a run whose process is gone is not abandoned until
+// somebody writes task.abandoned into the record, and a window that banded on
+// liveness alone would know something no other reader of the record could
+// know — `orbit show` and `cat` would still say the run was in a phase, and
+// only the screen would say otherwise. Reconciling is a supervisor's act and
+// it belongs in a write, not in a fold.
+//
+// It is total. A Band no constant names — a fixture with an arithmetic slip
+// in it, a value read from a file somebody edited — comes back as NeedsYou
+// rather than as itself, so every task lands in one of the four lists the
+// window actually draws. NeedsYou is where a defect should surface: a task in
+// front of the reader is one somebody notices, and one filed under Done is
+// one nobody opens again.
 func BandOf(t Task) Band {
-	switch t.state {
+	switch t.Band {
+	case ToDo, NeedsYou, Running, Done:
+		return t.Band
+	default:
+		return NeedsYou
+	}
+}
+
+// bandOfState maps where the record left a task to the band it is drawn in.
+//
+// Fold is its only caller, and that is the whole design: the state is this
+// package's private vocabulary, the band is what leaves, and the conversion
+// happens once. Adding a state without adding it here is caught by
+// TestEveryStateHasABand rather than by a reader wondering why a task is in
+// the wrong list.
+func bandOfState(s state) Band {
+	switch s {
 	case stateNew:
 		return ToDo
 	case stateRunning, stateHeld:
@@ -155,10 +201,6 @@ func BandOf(t Task) Band {
 	case stateCancelled, stateFinished:
 		return Done
 	default:
-		// A state this function does not know is a defect in this package,
-		// and NeedsYou is where a defect should surface: a task that lands
-		// somewhere the reader looks is a task somebody notices, and one
-		// filed under Done is one nobody opens again.
 		return NeedsYou
 	}
 }

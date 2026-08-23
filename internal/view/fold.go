@@ -1,13 +1,6 @@
 package view
 
-import (
-	"math"
-	"strconv"
-	"strings"
-	"time"
-
-	"github.com/e1i0r/orbit/internal/record"
-)
+import "github.com/e1i0r/orbit/internal/record"
 
 // The kinds this fold understands. They are string constants here and string
 // literals in internal/task, which writes them, because the layering forbids
@@ -65,7 +58,10 @@ func Fold(events []record.Event) Task {
 	for _, e := range events {
 		fold(&t, e)
 	}
-	t.Band = BandOf(t)
+	// One conversion, at the end, in one place. The state above is this
+	// package's working vocabulary and the band is what leaves it, so Fold
+	// is the only thing that maps between them and BandOf reads the result.
+	t.Band = bandOfState(t.state)
 	return t
 }
 
@@ -96,6 +92,12 @@ func fold(t *Task, e record.Event) {
 		// that is over is a stale phase, and a reason that has been retried
 		// is not a reason any more. Cost and Read do not: cost is what the
 		// task has spent in total, and task.read is a fact about the log.
+		//
+		// Clearing the phase is what makes the window between this event
+		// and the first phase.started honest. Three of the four ways a run
+		// can fail happen inside it, and a task.failed arriving there has
+		// no phase to name — so it says the run never started rather than
+		// naming the phase the attempt before it died in.
 		t.Attempt++
 		t.state = stateRunning
 		t.Reason = Reason{}
@@ -179,88 +181,4 @@ func fold(t *Task, e record.Event) {
 		// be guessing. Damaged counts lines that are not JSON at all, which
 		// is a different fact and one somebody can act on.
 	}
-}
-
-// waiting decides which of the two stops this is. The flow asking a phase to
-// wait needs you: nothing moves until you answer. The reader asking for it
-// does not — a paused run still holds a worktree and still holds a slot, so
-// it stays in Running with a word that says it is held, and reporting the
-// operator's own pause as a warning is how a warning channel stops being
-// read.
-//
-// A phase.waiting that does not say why is treated as the flow's, because
-// the two mistakes are not equal: a held task shown as needing you is noise,
-// and a task that needs you shown as merely held is a task nobody comes back
-// to.
-func waiting(e record.Event) (state, Reason) {
-	args := []Arg{{Name: "phase", Value: e.Phase}}
-	if e.Data["why"] == whyPaused {
-		return stateHeld, Reason{Key: ReasonHeld, Args: args}
-	}
-	return stateWaiting, Reason{Key: ReasonGate, Args: args}
-}
-
-// failure names the phase a run stopped in, or says the run never got that
-// far. internal/task writes task.failed with no Phase on it in every case,
-// so the phase here is whatever the fold already knew — and when it knew
-// none, the run failed before any phase started.
-func failure(phase string) Reason {
-	if phase == "" {
-		return Reason{Key: ReasonFailedToStart}
-	}
-	return Reason{Key: ReasonFailed, Args: []Arg{{Name: "phase", Value: phase}}}
-}
-
-// flow takes the flow's name from an event that carries one. A missing key
-// leaves the last name standing: task.created says what the task was written
-// against and task.started says what a run overrode it with, and an event
-// that names neither is not an event saying the flow was withdrawn.
-func flow(t *Task, e record.Event) {
-	if name, ok := e.Data["flow"]; ok {
-		t.Flow = name
-	}
-}
-
-// stamp moves a time only when the event carried an honest one. A zero At is
-// a damaged timestamp, and it would draw as an elapsed of half a century;
-// the last real time this task had is a better answer than that, and a Task
-// that never had one keeps the zero so the window can say so.
-func stamp(when *time.Time, at time.Time) {
-	if !at.IsZero() {
-		*when = at
-	}
-}
-
-// count reads a 1-based phase number. Anything that is not one — absent,
-// misspelled, zero, negative — is 0, which is this package's way of saying
-// the record does not know. Guessing 1 would put `1/3` on a row whose record
-// never said which phase it was in.
-func count(s string) int {
-	n, err := strconv.Atoi(s)
-	if err != nil || n < 1 {
-		return 0
-	}
-	return n
-}
-
-// money reads one phase's cost. A value that will not parse contributes
-// nothing rather than poisoning the sum — and NaN and the infinities are
-// refused by name, because ParseFloat accepts all three and a single NaN
-// would make every total after it NaN for the rest of the log. A negative
-// cost is not a discount, it is a damaged field.
-func money(s string) float64 {
-	v, err := strconv.ParseFloat(s, 64)
-	if err != nil || v < 0 || math.IsNaN(v) || math.IsInf(v, 0) {
-		return 0
-	}
-	return v
-}
-
-// firstLine is the title: everything up to the first newline, trimmed. The
-// rest of task.md is the task itself and the window has a pane for it.
-func firstLine(s string) string {
-	if i := strings.IndexByte(s, '\n'); i >= 0 {
-		s = s[:i]
-	}
-	return strings.TrimSpace(s)
 }
