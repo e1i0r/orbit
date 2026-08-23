@@ -136,12 +136,18 @@ func TestNoBaseIsSaidOnlyWhenGitActuallySaidIt(t *testing.T) {
 	write(t, filepath.Join(tree, "retry.go"), "package retry\n\nfunc send() { backoff() }\n")
 	task := view.Task{ID: "ACME-2662", RepoPath: repoPath}
 
-	absent := diffOf(&fakeReader{worktree: tree}, task, baseRef{known: true})().(diffMsg)
+	absent, ok := diffOf(&fakeReader{worktree: tree}, task, baseRef{known: true})().(diffMsg)
+	if !ok {
+		t.Fatal("diffOf did not answer with a diff")
+	}
 	if absent.Err != nil || !absent.NoBase {
 		t.Errorf("a diff with no base to measure against said NoBase=%v (err %v), want it said plainly",
 			absent.NoBase, absent.Err)
 	}
-	silent := diffOf(&fakeReader{worktree: tree}, task, baseRef{known: true, timedOut: true})().(diffMsg)
+	silent, ok := diffOf(&fakeReader{worktree: tree}, task, baseRef{known: true, timedOut: true})().(diffMsg)
+	if !ok {
+		t.Fatal("diffOf did not answer with a diff")
+	}
 	if silent.Err != nil || silent.NoBase {
 		t.Errorf("a base that timed out was reported as no base at all (err %v), want the claim withheld", silent.Err)
 	}
@@ -167,7 +173,10 @@ func TestABaseAlreadyKnownIsNotLookedUpAgain(t *testing.T) {
 	write(t, filepath.Join(tree, "retry.go"), "package retry\n\nfunc send() { backoff() }\n")
 
 	task := view.Task{ID: "ACME-2662", RepoPath: t.TempDir()}
-	msg := diffOf(&fakeReader{worktree: tree}, task, baseRef{name: "main", known: true})().(diffMsg)
+	msg, ok := diffOf(&fakeReader{worktree: tree}, task, baseRef{name: "main", known: true})().(diffMsg)
+	if !ok {
+		t.Fatal("diffOf did not answer with a diff")
+	}
 	if msg.Err != nil {
 		t.Fatalf("diff against a base handed in: %v", msg.Err)
 	}
