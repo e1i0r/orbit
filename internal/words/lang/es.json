@@ -400,6 +400,130 @@
         "one": "{n} tarea te necesita",
         "other": "{n} tareas te necesitan"
       }
+    },
+    "key.scroll": {
+      "source": "scroll",
+      "value": "desplazar"
+    },
+    "key.sideways": {
+      "source": "scroll sideways",
+      "value": "desplazar en horizontal"
+    },
+    "tab.log": {
+      "source": "log",
+      "value": "registro"
+    },
+    "tab.diff": {
+      "source": "diff",
+      "value": "cambios"
+    },
+    "tab.evidence": {
+      "source": "evidence",
+      "value": "evidencia"
+    },
+    "log.attempt": {
+      "source": "attempt {n}",
+      "value": "intento {n}"
+    },
+    "log.written": {
+      "source": "written down",
+      "value": "anotada"
+    },
+    "log.started": {
+      "source": "started",
+      "value": "iniciada"
+    },
+    "log.finished": {
+      "source": "finished",
+      "value": "terminada"
+    },
+    "log.failed": {
+      "source": "failed",
+      "value": "fallida"
+    },
+    "log.cancelled": {
+      "source": "cancelled",
+      "value": "cancelada"
+    },
+    "log.timed_out": {
+      "source": "timed out",
+      "value": "plazo agotado"
+    },
+    "log.abandoned": {
+      "source": "abandoned",
+      "value": "abandonada"
+    },
+    "log.read": {
+      "source": "read",
+      "value": "leída"
+    },
+    "log.unreadable": {
+      "source": "this line could not be read",
+      "value": "no se pudo leer esta línea"
+    },
+    "log.waiting": {
+      "source": "waiting",
+      "value": "esperando"
+    },
+    "log.resumed": {
+      "source": "let go again",
+      "value": "reanudada"
+    },
+    "log.empty": {
+      "source": "nothing has been recorded about this task yet",
+      "value": "todavía no hay nada registrado sobre esta tarea"
+    },
+    "detail.following": {
+      "source": "following — {key} stops it",
+      "value": "siguiendo — {key} lo detiene"
+    },
+    "detail.scrolls": {
+      "source": "{keys} scrolls",
+      "value": "{keys} para desplazarte"
+    },
+    "diff.unchanged": {
+      "source": "no changes in this task's worktree",
+      "value": "sin cambios en el árbol de trabajo de esta tarea"
+    },
+    "evidence.empty": {
+      "source": "no phase of this task has run yet",
+      "value": "todavía no se ha ejecutado ninguna fase de esta tarea"
+    },
+    "evidence.cost": {
+      "source": "cost ${amount}",
+      "value": "coste ${amount}"
+    },
+    "evidence.session": {
+      "source": "session {id}",
+      "value": "sesión {id}"
+    },
+    "evidence.stopped": {
+      "source": "stopped: {why}",
+      "value": "se detuvo: {why}"
+    },
+    "evidence.truncated": {
+      "source": "{kept} of {full} bytes kept — the rest was not written down anywhere",
+      "value": "se guardaron {kept} de {full} bytes; el resto no se guardó en ninguna parte"
+    },
+    "evidence.silent": {
+      "source": "the engine printed nothing",
+      "value": "el motor no imprimió nada"
+    },
+    "msg.only_the_diff": {
+      "source": "{key} opens a file, and only the diff tab has one to open",
+      "value": "{key} abre un archivo, y solo la pestaña de cambios tiene alguno"
+    },
+    "msg.no_editor": {
+      "source": "no $EDITOR is set, so there is nothing to open the file with",
+      "value": "no hay ningún $EDITOR configurado, así que no hay con qué abrir el archivo"
+    },
+    "msg.no_file_here": {
+      "source": "there is no file on this line of the diff",
+      "value": "no hay ningún archivo en esta línea de los cambios"
+    },
+    "msg.no_worktree": {
+      "source": "this task has no worktree to open the file in",
+      "value": "esta tarea no tiene árbol de trabajo donde abrir el archivo"
     }
   }
 }

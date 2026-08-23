@@ -179,33 +179,6 @@ func (m Model) emptyRows(h, w int) []string {
 	return fill(out, h)
 }
 
-// detailRows is the task view, which this task leaves at what it can say
-// truthfully: the task's own facts and the diff its worktree is holding.
-// The tabs, the log tail and the plan pane arrive with the panes that scroll
-// them, one task down.
-func (m Model) detailRows(h, w int) []string {
-	if h <= 0 {
-		return nil
-	}
-	out := make([]string, 0, h)
-	if t, ok := m.task(m.detail); ok {
-		state, role := m.stateWord(t)
-		out = append(out,
-			fit(" "+Paint(Accent).Render(t.ID)+"  "+t.Title, w), "",
-			fit(" "+Paint(Dim).Render(t.Repo)+dot+Paint(role).Render(state), w), "")
-	} else {
-		out = append(out, fit(" "+Paint(Dim).Render(m.opts.Words.T("detail.gone",
-			"this task is no longer on the board")), w), "")
-	}
-	for _, line := range strings.Split(m.diff, "\n") {
-		if len(out) >= h {
-			break
-		}
-		out = append(out, fit(" "+line, w))
-	}
-	return fill(out, h)
-}
-
 // refusal is what a terminal narrower than the minimum gets instead of a
 // crooked table: one sentence, both numbers, and the rest of the rows blank.
 func (m Model) refusal() string {

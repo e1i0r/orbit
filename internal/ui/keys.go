@@ -23,7 +23,7 @@ import (
 // about any one task.
 type Keys struct {
 	Up, Down, First, Last, PageUp, PageDown key.Binding
-	Open, Back, NextTab, PrevTab            key.Binding
+	Open, Back, NextTab, PrevTab, Sideways  key.Binding
 	New, Pause, Resume, Cancel              key.Binding
 	Take, Hand, Ask, MarkRead, Edit         key.Binding
 	Filter, Autopilot, Language, Help, Quit key.Binding
@@ -44,10 +44,13 @@ type Keys struct {
 // width-constrained the way a column is.
 func NewKeys(p *words.Printer) Keys {
 	return Keys{
-		Up:       binding("↑", p.T("key.up", "up"), "up", "k"),
-		Down:     binding("↓", p.T("key.down", "down"), "down", "j"),
-		First:    binding("g", p.T("key.first", "first"), "g"),
-		Last:     binding("G", p.T("key.last", "last"), "G"),
+		Up:    binding("↑", p.T("key.up", "up"), "up", "k"),
+		Down:  binding("↓", p.T("key.down", "down"), "down", "j"),
+		First: binding("g", p.T("key.first", "first"), "g"),
+		// End is bound alongside G because one level down "last" means the
+		// newest entry in a live log, and End is the key a reader who has
+		// never used a modal editor reaches for to get there.
+		Last:     binding("G", p.T("key.last", "last"), "G", "end"),
 		PageUp:   binding("PgUp", p.T("key.page_up", "page up"), "pgup"),
 		PageDown: binding("PgDn", p.T("key.page_down", "page down"), "pgdown"),
 
@@ -58,6 +61,11 @@ func NewKeys(p *words.Printer) Keys {
 		Back:    binding("esc", p.T("key.back", "back"), "esc", "left"),
 		NextTab: binding("tab", p.T("key.next_tab", "next tab"), "tab"),
 		PrevTab: binding("⇧tab", p.T("key.prev_tab", "previous tab"), "shift+tab"),
+		// Sideways shares ← with Back, and detailKey matches it first: in a
+		// pane that scrolls horizontally ← has to be the scroll. Nothing is
+		// lost by it, because esc is the glyph the key bar and the help
+		// overlay have always printed for going back.
+		Sideways: binding("←→", p.T("key.sideways", "scroll sideways"), "left", "right"),
 
 		New:    binding("n", p.T("key.new", "new"), "n"),
 		Pause:  binding("p", p.T("key.pause", "pause"), "p"),

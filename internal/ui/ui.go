@@ -6,9 +6,9 @@ package ui
 // for is in msg.go.
 
 import (
-	"errors"
 	"time"
 
+	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/board"
@@ -28,8 +28,8 @@ const gutter = 3
 // thing on screen when something else starts.
 const messageLife = 20 * time.Second
 
-// screen is which of the window's two screens is on top. There are two in
-// this task; the task view fills out one level down.
+// screen is which of the window's two screens is on top: the board, and the
+// task view one level below it.
 type screen int
 
 const (
@@ -93,8 +93,26 @@ type Model struct {
 	messageAt time.Time
 	notified  bool // a crossing has rung the bell, and the tests can see it
 
-	detail string // the id the task view is open on
-	diff   string
+	// The task view, one level down. detail is the id it is open on, and
+	// every late answer is checked against it before it is written in.
+	//
+	// The panes are an array and not a map for the reason the maps above
+	// carry a warning: an array is copied with the model, so a Cmd that is
+	// still running cannot scroll a pane the renderer has already been
+	// handed. Their content is rebuilt by syncPanes whenever a fact behind
+	// them moves, and their scroll positions are the only thing on this
+	// screen the reader owns.
+	detail   string
+	tab      tab
+	entries  []view.Entry
+	logErr   error
+	diff     string
+	worktree string
+	// following is whether the log tab is taking every new entry as it
+	// arrives. It is armed when the view opens and released the moment the
+	// reader scrolls up, at the one site in scroll that reads the offset.
+	following bool
+	panes     [tabCount]viewport.Model
 }
 
 // New builds a window from its options. It reads nothing, asks the terminal
@@ -146,7 +164,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.dark = msg.IsDark()
 		return m, nil
 	case tickMsg:
-		return m, tea.Batch(refresh(m.opts.Reader), tick())
+		// The task view's log is on the same clock as the board, and for
+		// the same reason: an append-only file that did not grow costs one
+		// stat to find that out. A tail that only moved when the reader
+		// pressed a key would not be a tail.
+		cmds := []tea.Cmd{refresh(m.opts.Reader), tick()}
+		if m.screen == screenDetail {
+			cmds = append(cmds, logOf(m.opts.Reader, m.subject()))
+		}
+		return m, tea.Batch(cmds...)
 	case rescanMsg:
 		return m, tea.Batch(rescan(m.opts.Reader), rescanTick())
 	case elapsedMsg:
@@ -172,102 +198,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.ID != m.detail {
 			return m, nil
 		}
-		m.diff = msg.Text
+		m.diff, m.worktree = msg.Text, msg.Tree
 		if msg.Err != nil {
 			m.diff = msg.Err.Error()
 		}
-		return m, nil
+		return m.syncPanes(), nil
+	case logMsg:
+		// The same guard, for the same reason: a record that arrives for a
+		// task the reader has since left would put one task's history under
+		// another task's heading, and nothing on screen would say so.
+		if msg.ID != m.detail {
+			return m, nil
+		}
+		m.entries, m.logErr = msg.Entries, msg.Err
+		return m.syncPanes(), nil
 	case languageMsg:
 		return m.language(msg.Lang), nil
 	case tea.KeyPressMsg:
 		return m.key(msg)
 	}
 	return m, nil
-}
-
-// applyBoard takes the next board, or explains why there is not one.
-//
-// A boardMsg with a zero ReadAt is a read that failed or an enumeration that
-// found nothing to say. The board already on screen is kept in both cases: a
-// window that blanks because one stat failed has thrown away the answer it
-// spent the last half-second holding.
-func (m Model) applyBoard(msg boardMsg) (tea.Model, tea.Cmd) {
-	if msg.Board.ReadAt.IsZero() {
-		if len(msg.Board.Errs) > 0 {
-			return m.say(msg.Board.Errs[0].Error()), nil
-		}
-		return m, nil
-	}
-	first := !m.seen
-	m.board, m.seen = msg.Board, true
-	m.totals = phaseTotals(msg.Board.Tasks)
-	m = m.replan().clampCursor()
-	if first {
-		m.cursor = m.firstTask()
-		m = m.follow()
-	}
-	// A read failure is said when the count of them changes and not on
-	// every refresh, because the poll is twice a second and one unreadable
-	// log would otherwise own the band for as long as it stayed unreadable.
-	if n := len(msg.Board.Errs); n != m.errs {
-		m.errs = n
-		if n > 0 {
-			m = m.say(m.opts.Words.P("msg.unreadable", n, "{n} record could not be read", "{n} records could not be read"))
-		}
-	}
-	if first || len(msg.Changed.Entered) == 0 {
-		return m, nil
-	}
-	m.notified = true
-	m = m.say(m.opts.Words.P("msg.entered", len(msg.Changed.Entered), "{n} task needs you", "{n} tasks need you"))
-	return m, tea.Raw("\a")
-}
-
-// resize takes the new geometry, or refuses it with both numbers.
-func (m Model) resize(w, h int) Model {
-	m.width, m.height = w, h
-	f, err := layout.Fit(w, h)
-	if err != nil {
-		var narrow layout.TooNarrowError
-		if !errors.As(err, &narrow) {
-			narrow = layout.TooNarrowError{Need: layout.MinWidth, Got: w}
-		}
-		m.tooNarrow, m.narrow = true, narrow
-		return m
-	}
-	m.tooNarrow, m.frame = false, f
-	return m.replan().follow()
-}
-
-// replan re-plans the columns, from the whole board rather than from the
-// rows currently shown: a column that changed width while a filter was being
-// typed would move every field on screen between two keystrokes.
-func (m Model) replan() Model {
-	m.plan = layout.Columns(m.frame.Body.W-gutter, m.board.Tasks, m.opts.Words.Cells)
-	return m
-}
-
-// say puts one sentence in the activity band. An empty sentence is not a
-// sentence: it would blank the band, and a status area that goes blank reads
-// as broken.
-func (m Model) say(text string) Model {
-	if text == "" {
-		return m
-	}
-	m.message, m.messageAt = text, m.now
-	return m
-}
-
-// language rewrites the language, and everything built from it. The key map
-// is rebuilt because a binding carries its own help text, and the help
-// overlay reads the bindings.
-func (m Model) language(lang string) Model {
-	if m.opts.Settings != nil {
-		if err := m.opts.Settings.SetLanguage(lang); err != nil {
-			return m.say(err.Error())
-		}
-	}
-	m.opts.Words = words.For(lang)
-	m.keys = NewKeys(m.opts.Words)
-	return m.replan()
 }

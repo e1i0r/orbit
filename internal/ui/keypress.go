@@ -140,19 +140,6 @@ func (m Model) confirmKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, control(m.opts.Control, t, "cancel")
 }
 
-// detailKey is the task view's map, which this task leaves at two keys: the
-// tabs and their scrolling arrive with the panes they scroll.
-func (m Model) detailKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
-	switch {
-	case key.Matches(msg, m.keys.Back):
-		m.screen = screenList
-		return m, nil
-	case key.Matches(msg, m.keys.Quit):
-		return m, tea.Quit
-	}
-	return m, nil
-}
-
 // open is one key doing two things, and it is not an overload: on a band
 // header it opens the band in place, on a row it opens the task, and the
 // cursor is on exactly one of the two.
@@ -164,8 +151,7 @@ func (m Model) open() (tea.Model, tea.Cmd) {
 	if r.head {
 		return m.expand(r.band).clampCursor(), nil
 	}
-	m.screen, m.detail, m.diff = screenDetail, r.task.ID, ""
-	return m, diffOf(r.task)
+	return m.openDetail(r.task)
 }
 
 // verb asks the command behind one key to write one word.

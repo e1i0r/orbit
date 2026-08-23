@@ -14,8 +14,6 @@ package ui
 import (
 	"errors"
 	"fmt"
-	"os/exec"
-	"strings"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -54,9 +52,26 @@ type (
 	// diffMsg is the output of git diff for one task, or the reason there
 	// is none. Text is carried whole rather than pre-wrapped: how wide the
 	// pane is is not known to the process that ran git.
+	//
+	// Tree is where that diff was taken, and it comes back with the text
+	// rather than being asked for a second time when o is pressed. The
+	// window would otherwise have to reach the port from inside a
+	// keystroke, which is a read off the event loop; and the path the
+	// editor opens in has to be the path the diff was taken in, or the
+	// file under the cursor is a file in some other directory.
 	diffMsg struct {
-		ID, Text string
-		Err      error
+		ID, Text, Tree string
+		Err            error
+	}
+
+	// logMsg is one task's whole record, folded, or the reason there is
+	// none. It carries the entries and not the events: internal/ui is not
+	// allowed to know the record's own shape, and view.Entry is what it is
+	// allowed to know instead.
+	logMsg struct {
+		ID      string
+		Entries []view.Entry
+		Err     error
 	}
 
 	// controlMsg is what the control function said when it was asked to
@@ -107,12 +122,40 @@ type Settings interface {
 	UnreadCap() int
 }
 
+// Reader is the window's port to the state root, and everything it may ask
+// of it is on this list.
+//
+// It is an interface for the reason Settings is: internal/ui cannot name the
+// types the answers are made of. The board's own two methods would not have
+// needed one — board.Board is on the allowed list and *board.Reader could
+// have stayed a concrete type — but the two the task view adds do. A task's
+// record is []record.Event and its worktree is a path only internal/store
+// can compute, and neither package is on internal/ui's import list. The
+// alternative was to widen that list, which would have let the window reach
+// the writer as well as the reader; a port of four methods is the cheaper
+// half of that trade.
+//
+// It is declared here, at the consumer, as every other port in this
+// repository is: *board.Reader satisfies it without naming it, so the
+// package that does the reading owes nothing to the package that draws.
+type Reader interface {
+	// Refresh is the poll: the board as it is now, and what moved.
+	Refresh() (board.Board, board.Changed, error)
+	// Rescan is the enumeration: look for repositories and tasks that
+	// appeared since the window opened.
+	Rescan() error
+	// Log is one task's whole record, folded into entries.
+	Log(repoPath, id string) ([]view.Entry, error)
+	// Worktree is where that task's throwaway checkout lives.
+	Worktree(repoPath, id string) (string, error)
+}
+
 // Options is everything the window is handed. Every field is a value or a
 // port; none of them is a path, and none of them is a handle on the state
 // root.
 type Options struct {
 	Root     string // where the repositories are, for the header and the empty state
-	Reader   *board.Reader
+	Reader   Reader
 	Settings Settings
 	Words    *words.Printer
 	Width    int // 0 unless the caller is rendering one frame with --once
@@ -156,7 +199,7 @@ func elapsedTick() tea.Cmd {
 // rendering, or a frame drawn from a board handed straight in — and the
 // honest answer is an empty message rather than a panic inside a Cmd, where
 // the stack says nothing about which screen asked.
-func refresh(r *board.Reader) tea.Cmd {
+func refresh(r Reader) tea.Cmd {
 	return func() tea.Msg {
 		if r == nil {
 			return boardMsg{}
@@ -176,7 +219,7 @@ func refresh(r *board.Reader) tea.Cmd {
 // only what went wrong, which is the same shape a failed refresh has — one
 // case in Update handles both, and the band is the one place a read failure
 // is ever said.
-func rescan(r *board.Reader) tea.Cmd {
+func rescan(r Reader) tea.Cmd {
 	return func() tea.Msg {
 		if r == nil {
 			return boardMsg{}
@@ -202,31 +245,5 @@ func control(port func(view.Task, string) error, t view.Task, word string) tea.C
 			return controlMsg{ID: t.ID, Word: word, Err: errors.New("this window was opened without a way to control a task")}
 		}
 		return controlMsg{ID: t.ID, Word: word, Err: port(t, word)}
-	}
-}
-
-// diffOf runs git diff in the task's repository.
-//
-// It is the whole working tree's diff and not the diff against the base
-// branch, because the base branch is a fact about the worktree and the
-// worktree is internal/repo's answer, which the task view asks for one
-// level down. What this task needs is a pane with something true in it and
-// a Cmd whose Msg is handled; the honest diff arrives with the tab that is
-// about diffs.
-func diffOf(t view.Task) tea.Cmd {
-	return func() tea.Msg {
-		if t.RepoPath == "" {
-			return diffMsg{ID: t.ID, Err: errors.New("this task does not say where its repository is")}
-		}
-		out, err := exec.Command("git", "-C", t.RepoPath, "diff").CombinedOutput()
-		if err != nil {
-			// CombinedOutput is what git said; err is only "exit status
-			// 128". Dropping the bytes turns "not a git repository" into a
-			// number the reader has to go and look up somewhere else, so
-			// they go in the message and err stays wrapped underneath.
-			return diffMsg{ID: t.ID, Err: fmt.Errorf("git diff in %s: %w: %s",
-				t.RepoPath, err, strings.TrimSpace(string(out)))}
-		}
-		return diffMsg{ID: t.ID, Text: string(out)}
 	}
 }

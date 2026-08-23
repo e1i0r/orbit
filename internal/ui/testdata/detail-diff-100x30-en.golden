@@ -1,0 +1,30 @@
+ orbit  ~/work                                                  unread 3/5    autopilot ●    4 repos
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ ACME-2662  Retry the webhook on 5xx                                        payments · failed: gates
+  log  ▸diff   evidence                                                                    attempt 2
+ diff --git a/retry.go b/retry.go                                                                   
+ index 3f1c9a2..a77b104 100644                                                                      
+ --- a/retry.go                                                                                     
+ +++ b/retry.go                                                                                     
+ @@ -28,7 +28,12 @@ func send(req *http.Request) error {                                            
+      resp, err := do(req)                                                                          
+      if err != nil {                                                                               
+          return err                                                                                
+      }                                                                                             
+ +    if resp.StatusCode >= 500 {                                                                   
+ +        return backoff(req, resp)                                                                 
+ +    }                                                                                             
+      return nil                                                                                    
+  }                                                                                                 
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ ACME-2705 · implement · 8m in · claude/opus · careful
+ [esc] back  [tab] next tab  [o] open in $EDITOR  [↑↓] scroll  [?] [q]

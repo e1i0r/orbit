@@ -175,6 +175,9 @@ func (m Model) barLine(w int) string {
 // The bar shows what can be done; the menu, one level down, shows what
 // cannot and why.
 func (m Model) hints() []string {
+	if m.screen == screenDetail {
+		return m.detailHints()
+	}
 	var out []string
 	r, ok := m.selected()
 	if ok {
