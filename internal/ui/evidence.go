@@ -81,6 +81,14 @@ func (m Model) phaseHead(e, started view.Entry) string {
 		parts = append(parts, Paint(Dim).Render(engine))
 	}
 	if e.Cost > 0 {
+		// strconv.FormatFloat always writes a full stop; Spanish writes a
+		// comma here instead. group, below in this file, makes the
+		// identical simplification for thousands separators and defends it
+		// at length — this is the same trade over a different number: two
+		// fixed decimal places, read once, never summed against anything
+		// else on the row, so the wrong separator costs a moment's
+		// unfamiliarity rather than the table of rules a per-language
+		// formatter would need for one figure on one screen.
 		parts = append(parts, Paint(Dim).Render(p.T("evidence.cost", "cost ${amount}",
 			about("amount", strconv.FormatFloat(e.Cost, 'f', 2, 64)))))
 	}

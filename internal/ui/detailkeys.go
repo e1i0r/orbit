@@ -21,6 +21,7 @@ import (
 func (m Model) openDetail(t view.Task) (Model, tea.Cmd) {
 	m.screen, m.detail, m.tab = screenDetail, t.ID, tabLog
 	m.entries, m.logErr, m.diff, m.following = nil, nil, "", true
+	m.diffErr, m.diffKnown, m.diffNoBase = nil, false, false
 	for i := range m.panes {
 		m.panes[i] = viewport.New()
 	}
@@ -29,14 +30,18 @@ func (m Model) openDetail(t view.Task) (Model, tea.Cmd) {
 
 // detailKey is the task view's map.
 //
-// Sideways is matched before Back on purpose, and it is the one place in
-// this program where the order of two cases carries meaning: ← is bound to
-// both, and inside a pane that can scroll horizontally it has to be the
-// scroll. esc is the way out, and it is the glyph the key bar and the help
-// overlay both print for going back, so nothing on screen ever offered ←.
+// Sideways is gated on the diff tab rather than ordered before Back, because
+// ← means two different things depending on which pane is showing: on the
+// diff it scrolls a line too wide for the pane, and on the other two tabs it
+// is Back's own key, and pressing it there has to reach Back. Matching
+// Sideways first and unconditionally — the previous shape of this switch —
+// shadowed Back on every tab, not only the one that can scroll sideways, and
+// turned ← on the log and evidence tabs into a silent no-op. esc is still
+// the way out the key bar and the help overlay both print, so nothing on
+// screen ever advertised ←; but it used to work, and this restores it.
 func (m Model) detailKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
-	case key.Matches(msg, m.keys.Sideways):
+	case m.tab == tabDiff && key.Matches(msg, m.keys.Sideways):
 		return m.sideways(msg), nil
 	case key.Matches(msg, m.keys.Back):
 		m.screen = screenList

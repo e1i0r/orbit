@@ -118,8 +118,16 @@ func (m Model) tabStrip(w int) string {
 		parts = append(parts, Paint(Dim).Render(" "+n.text))
 	}
 	var right string
-	if a := m.attempt(); a > 0 {
-		right = Paint(Dim).Render(p.T("log.attempt", "attempt {n}", about("n", strconv.Itoa(a))))
+	switch {
+	case m.tab == tabDiff && m.diffKnown && m.diffErr == nil && m.diffNoBase:
+		// The comparison quietly changed shape: gitDiff had no base branch
+		// to measure against and fell back to a plain working-tree diff, so
+		// whatever the task committed is not in what is on screen, only
+		// what is still uncommitted. Saying so here is cheaper than a
+		// reader assuming a base that was never actually used.
+		right = Paint(Dim).Render(p.T("diff.no_base", "no base branch"))
+	case m.attempt() > 0:
+		right = Paint(Dim).Render(p.T("log.attempt", "attempt {n}", about("n", strconv.Itoa(m.attempt()))))
 	}
 	return spread(" "+strings.Join(parts, "  "), right, w)
 }

@@ -59,9 +59,16 @@ type (
 	// keystroke, which is a read off the event loop; and the path the
 	// editor opens in has to be the path the diff was taken in, or the
 	// file under the cursor is a file in some other directory.
+	//
+	// NoBase is whether gitDiff fell back to a plain working-tree diff
+	// because there was no base branch to compare against. Its zero value
+	// is false — "there was a base" — on purpose: every diffMsg a test
+	// builds by hand and never sets the field means the ordinary case, and
+	// only a message from an actual fallback has to say otherwise.
 	diffMsg struct {
 		ID, Text, Tree string
 		Err            error
+		NoBase         bool
 	}
 
 	// logMsg is one task's whole record, folded, or the reason there is

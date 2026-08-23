@@ -35,7 +35,27 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 				t.Errorf("screen=%v detail=%q tab=%v, want the task view open on the log", m.screen, m.detail, m.tab)
 			}
 			if cmd == nil {
-				t.Error("opening the task view asked for neither the log nor the diff")
+				t.Fatal("opening the task view asked for neither the log nor the diff")
+			}
+			// Both reads are asked for, not merely something. A batch that
+			// only ever ran the log would still pass a bare cmd != nil, and
+			// the diff pane would open on a screen it never actually asked
+			// about.
+			batch, ok := cmd().(tea.BatchMsg)
+			if !ok {
+				t.Fatalf("opening the task view returned %T, want a batch of commands", cmd())
+			}
+			var sawLog, sawDiff bool
+			for _, c := range batch {
+				switch c().(type) {
+				case logMsg:
+					sawLog = true
+				case diffMsg:
+					sawDiff = true
+				}
+			}
+			if !sawLog || !sawDiff {
+				t.Errorf("opening the task view asked for log=%v diff=%v, want both", sawLog, sawDiff)
 			}
 		},
 	}, {
@@ -209,13 +229,43 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 		name: "← comes back from a sideways scroll before it leaves the screen",
 		start: func(t *testing.T) Model {
 			m, _ := openIn(t, words.For("en"), "ACME-2662", fixtureEntries(), wideDiff())
-			return step(t, step(t, m, "tab"), "right")
+			scrolled := step(t, step(t, m, "tab"), "right")
+			// XOffset() == 0 is also what a ← that had silently gone dead
+			// would leave behind, so the row's own assertion cannot tell a
+			// working ← from a broken one unless the scroll it is meant to
+			// undo is known to have happened first.
+			if scrolled.panes[tabDiff].XOffset() == 0 {
+				t.Fatal("setup did not actually scroll the diff sideways before pressing ←")
+			}
+			return scrolled
 		},
 		msg: press("left"),
 		want: func(t *testing.T, m Model, _ tea.Cmd) {
 			if m.screen != screenDetail || m.panes[tabDiff].XOffset() != 0 {
 				t.Errorf("screen=%v x=%d, want the diff scrolled back and the view still open",
 					m.screen, m.panes[tabDiff].XOffset())
+			}
+		},
+	}, {
+		name:  "← is Back on the log tab, not a dead key",
+		start: func(t *testing.T) Model { m, _ := openDetail(t, "ACME-2662"); return m },
+		msg:   press("left"),
+		want: func(t *testing.T, m Model, _ tea.Cmd) {
+			if m.screen != screenList {
+				t.Errorf("screen is %v after ← on the log tab, want the list", m.screen)
+			}
+		},
+	}, {
+		name: "a rescan while the task view is open re-reads the diff",
+		start: func(t *testing.T) Model {
+			m, _ := openDetail(t, "ACME-2662")
+			return m
+		},
+		msg: rescanMsg(fixtureNow),
+		want: func(t *testing.T, _ Model, cmd tea.Cmd) {
+			batch, ok := cmd().(tea.BatchMsg)
+			if !ok || len(batch) != 3 {
+				t.Fatalf("a rescan under the task view returned %d commands, want the rescan, the next rescan tick and the diff", len(batch))
 			}
 		},
 	}}

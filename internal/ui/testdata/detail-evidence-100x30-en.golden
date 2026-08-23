@@ -12,7 +12,7 @@
  ── attempt 2 ────────────────────────────────────────────────────────────────────────── 14:30:00 ──
   failed  gates  claude opus  cost $0.09  session b41d07                                            
     stopped: the gates phase exited 1                                                               
-    38 of 1,048,583 bytes kept — the rest was not written down anywhere                             
+    37 of 1,048,583 bytes kept — the rest was not written down anywhere                             
     │ go vet: retry.go:31: unreachable code                                                         
                                                                                                     
                                                                                                     

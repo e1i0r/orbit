@@ -74,19 +74,19 @@ func fixtureEntries() []view.Entry {
 		{At: ago(66 * time.Minute), Kind: "phase.started", Phase: "implement", Attempt: 1,
 			PhaseN: 1, Engine: "claude", Model: "opus"},
 		{At: ago(52 * time.Minute), Kind: "phase.finished", Phase: "implement", Attempt: 1,
-			PhaseN: 1, Cost: 0.42, Session: "8f2c31", Kept: 29,
+			PhaseN: 1, Cost: 0.42, Session: "8f2c31", Kept: 30,
 			Text: "wrote retry.go\nadded a backoff"},
 		{At: ago(52 * time.Minute), Kind: "phase.started", Phase: "gates", Attempt: 1,
 			PhaseN: 2, Engine: "claude", Model: "opus"},
 		{At: ago(49 * time.Minute), Kind: "phase.failed", Phase: "gates", Attempt: 1,
-			PhaseN: 2, Cost: 0.11, Session: "8f2c31", Kept: 38,
+			PhaseN: 2, Cost: 0.11, Session: "8f2c31", Kept: 37,
 			Text: "go vet: retry.go:31: unreachable code", Cause: "the gates phase exited 1"},
 		{At: ago(49 * time.Minute), Kind: "task.failed", Attempt: 1, Text: "gates did not pass"},
 		{At: ago(34 * time.Minute), Kind: "task.started", Attempt: 2},
 		{At: ago(34 * time.Minute), Kind: "phase.started", Phase: "gates", Attempt: 2,
 			PhaseN: 2, Engine: "claude", Model: "opus"},
 		{At: ago(31 * time.Minute), Kind: "phase.failed", Phase: "gates", Attempt: 2,
-			PhaseN: 2, Cost: 0.09, Session: "b41d07", Kept: 38, Full: 1048583,
+			PhaseN: 2, Cost: 0.09, Session: "b41d07", Kept: 37, Full: 1048583,
 			Text: "go vet: retry.go:31: unreachable code", Cause: "the gates phase exited 1"},
 		{At: ago(31 * time.Minute), Kind: "task.failed", Attempt: 2, Text: "gates did not pass"},
 	}
@@ -110,6 +110,37 @@ index 3f1c9a2..a77b104 100644
 +	}
  	return nil
  }
+`
+
+// twoFileDiff is the same change to retry.go, in a diff that also touches a
+// second file. It exists for one reason: every other fixture in this file
+// is a single file, and fileAt's walk from the cursor up to the file it
+// belongs to has a bug that only a second file can expose — a line in the
+// furniture that introduces file two, met before file one's own hunk is,
+// used to be answered with file one's name and a line number counted from
+// file one's last hunk.
+const twoFileDiff = `diff --git a/retry.go b/retry.go
+index 3f1c9a2..a77b104 100644
+--- a/retry.go
++++ b/retry.go
+@@ -28,7 +28,12 @@ func send(req *http.Request) error {
+ 	resp, err := do(req)
+ 	if err != nil {
+ 		return err
+ 	}
++	if resp.StatusCode >= 500 {
++		return backoff(req, resp)
++	}
+ 	return nil
+ }
+diff --git a/webhook.go b/webhook.go
+index 9c1a2f0..1d4e6b3 100644
+--- a/webhook.go
++++ b/webhook.go
+@@ -1,3 +1,3 @@
+ package webhook
+-func old() {}
++func retry() {}
 `
 
 // tallDiff is the same change with a hunk long enough to run past any pane

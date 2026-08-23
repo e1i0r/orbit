@@ -123,7 +123,17 @@ func TestALongDiffLineNeverWidensTheFrame(t *testing.T) {
 	for _, size := range sizes {
 		t.Run(strconv.Itoa(size.w)+"x"+strconv.Itoa(size.h), func(t *testing.T) {
 			m, _ := openIn(t, words.For("en"), "ACME-2662", fixtureEntries(), wideDiff())
-			rows := renderAt(t, showing(t, m, tabDiff), size.w, size.h)
+			shown := showing(t, m, tabDiff)
+			// paneRows' own fit and fill would cut a wrapped line down to
+			// size just as surely as a scrolled one, so neither assertion
+			// below can tell wrapping from scrolling apart — both pass on a
+			// pane that wraps. What can tell the two apart is the field that
+			// decides which one happens, read directly rather than through
+			// what the render did with it.
+			if shown.panes[tabDiff].SoftWrap {
+				t.Fatal("the diff pane wraps a long line rather than scrolling past it")
+			}
+			rows := renderAt(t, shown, size.w, size.h)
 			for i, row := range rows {
 				if cells := ansi.StringWidth(row); cells > size.w {
 					t.Fatalf("row %d is %d cells wide against a terminal of %d — the diff widened the frame", i, cells, size.w)
@@ -171,6 +181,40 @@ func TestTheDiffKnowsWhichFileALineBelongsTo(t *testing.T) {
 		wide := strings.Split(strings.TrimSuffix(wideDiff(), "\n"), "\n")
 		if file, line, ok := fileAt(wide, 5); file != "bundle.js" || line != 1 || !ok {
 			t.Errorf("fileAt(5) = %q, %d, %v; want %q, 1, true", file, line, ok, "bundle.js")
+		}
+	})
+	// The bug I1 fixes needs two files in one diff, which every fixture
+	// above is not. Walking up from a line in the furniture that introduces
+	// the second file, fileAt used to meet that furniture before it met the
+	// first file's own hunk header, and answered with the first file's name
+	// at a line counted from the first file's last hunk — a file the cursor
+	// was never on, at a line invented for a different one.
+	t.Run("a second file's own furniture is answered with the second file", func(t *testing.T) {
+		two := strings.Split(strings.TrimSuffix(twoFileDiff, "\n"), "\n")
+		for _, c := range []struct {
+			name string
+			at   int
+		}{
+			{"diff --git a/webhook.go b/webhook.go", 14},
+			{"index 9c1a2f0..1d4e6b3 100644", 15},
+			{"--- a/webhook.go", 16},
+			{"+++ b/webhook.go", 17},
+		} {
+			t.Run(c.name, func(t *testing.T) {
+				file, line, ok := fileAt(two, c.at)
+				if file != "webhook.go" || line != 1 || !ok {
+					t.Errorf("fileAt(%d) = %q, %d, %v; want %q, 1, true", c.at, file, line, ok, "webhook.go")
+				}
+			})
+		}
+	})
+	// The first file is still itself: a cursor inside its hunk, or on its
+	// own furniture, must go on answering retry.go and not be pulled toward
+	// the second file that now follows it in the same diff.
+	t.Run("the first file is unaffected by a second file after it", func(t *testing.T) {
+		two := strings.Split(strings.TrimSuffix(twoFileDiff, "\n"), "\n")
+		if file, line, ok := fileAt(two, 9); file != "retry.go" || line != 32 || !ok {
+			t.Errorf("fileAt(9) = %q, %d, %v; want %q, 32, true", file, line, ok, "retry.go")
 		}
 	})
 }

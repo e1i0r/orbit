@@ -477,6 +477,14 @@
       "source": "no changes in this task's worktree",
       "value": "sin cambios en el árbol de trabajo de esta tarea"
     },
+    "diff.pending": {
+      "source": "reading this task's worktree…",
+      "value": "leyendo el árbol de trabajo de esta tarea…"
+    },
+    "diff.no_base": {
+      "source": "no base branch",
+      "value": "sin rama base"
+    },
     "evidence.empty": {
       "source": "no phase of this task has run yet",
       "value": "todavía no se ha ejecutado ninguna fase de esta tarea"

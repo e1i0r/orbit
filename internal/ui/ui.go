@@ -120,6 +120,14 @@ type Model struct {
 	logErr   error
 	diff     string
 	worktree string
+	// diffKnown is whether a diffMsg has landed at all, and diffErr is what
+	// it said if the answer was a failure. Neither is folded into diff
+	// itself: an empty diff before the first answer and an empty diff after
+	// a real "nothing changed" are two different facts, and collapsing them
+	// is how a hung git ends up asserting one it never observed.
+	diffErr    error
+	diffKnown  bool
+	diffNoBase bool
 	// following is whether the log tab is taking every new entry as it
 	// arrives. It is armed when the view opens and released the moment the
 	// reader scrolls up, at the one site in scroll that reads the offset.
@@ -187,7 +195,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, tea.Batch(cmds...)
 	case rescanMsg:
-		return m, tea.Batch(rescan(m.opts.Reader), rescanTick())
+		// The diff rides this clock rather than the log's tickMsg one,
+		// because git diff is heavier than the stat a tick costs: at
+		// board.RescanEvery this is a quarter the log's cadence, which is
+		// slow enough to be cheap and still lets a live task's diff change
+		// while the reader is looking at it, rather than only at the
+		// moment the view was opened.
+		cmds := []tea.Cmd{rescan(m.opts.Reader), rescanTick()}
+		if m.screen == screenDetail {
+			cmds = append(cmds, diffOf(m.opts.Reader, m.subject()))
+		}
+		return m, tea.Batch(cmds...)
 	case elapsedMsg:
 		m.now = time.Time(msg)
 		return m, elapsedTick()
@@ -218,9 +236,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		m.diff, m.worktree = msg.Text, msg.Tree
-		if msg.Err != nil {
-			m.diff = msg.Err.Error()
-		}
+		m.diffErr, m.diffKnown, m.diffNoBase = msg.Err, true, msg.NoBase
 		return m.syncPanes(), nil
 	case logMsg:
 		// The same guard, for the same reason: a record that arrives for a

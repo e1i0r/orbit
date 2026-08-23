@@ -14,11 +14,14 @@ package ui
 // TestMain has already moved HOME to a temporary directory.
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -113,5 +116,62 @@ func TestADiffWithoutAWorktreeSaysSo(t *testing.T) {
 	}
 	if msg.Err == nil {
 		t.Fatal("a worktree that could not be found came back as a diff")
+	}
+}
+
+// fakeGit puts a script standing in for git first on PATH: whatever it is
+// asked, it does the one thing this suite needs a hung git to do, which is
+// not answer. A lock left over from a crashed process, a filesystem that
+// stopped responding, a pager misconfigured into waiting — all of them look
+// like this from the caller's side, and none of them is worth reproducing
+// to prove the timeout that has to catch all three.
+func fakeGit(t *testing.T, seconds int) {
+	t.Helper()
+	bin := t.TempDir()
+	script := filepath.Join(bin, "git")
+	write(t, script, fmt.Sprintf("#!/bin/sh\nsleep %d\n", seconds))
+	if err := os.Chmod(script, 0o755); err != nil {
+		t.Fatalf("chmod fake git: %v", err)
+	}
+	t.Setenv("PATH", bin+":"+os.Getenv("PATH"))
+}
+
+// TestAHungGitTimesOutRatherThanHangingForever is I2's second requirement:
+// runGitDiff's own bound has to actually kill a git that does not answer,
+// and say that is what happened rather than repeat exec's own words for a
+// process that, as far as this program can prove, is still running.
+//
+// gitDiffTimeout is shrunk for the run and put back after, so the test
+// proves the bound is hit without the suite waiting out the real one.
+func TestAHungGitTimesOutRatherThanHangingForever(t *testing.T) {
+	old := gitDiffTimeout
+	gitDiffTimeout = 50 * time.Millisecond
+	t.Cleanup(func() { gitDiffTimeout = old })
+	fakeGit(t, 5)
+
+	_, err := runGitDiff(t.TempDir(), "diff")
+	if !errors.Is(err, errGitTimedOut) {
+		t.Fatalf("a hung git came back as %v, want the timeout error", err)
+	}
+}
+
+// TestABaseThatDoesNotAnswerFallsBackWithoutHanging is boundedBaseOf's own
+// half of the same requirement: what it is bounding is internal/repo's git,
+// which takes no context and cannot be killed, so what has to be proven is
+// the wait giving up on time — not the process, which this test leaves
+// running in the background the way production code already discloses it
+// will.
+func TestABaseThatDoesNotAnswerFallsBackWithoutHanging(t *testing.T) {
+	old := baseTimeout
+	baseTimeout = 20 * time.Millisecond
+	t.Cleanup(func() { baseTimeout = old })
+	fakeGit(t, 5)
+
+	start := time.Now()
+	if base := boundedBaseOf(t.TempDir()); base != "" {
+		t.Errorf("boundedBaseOf against a hung git answered %q, want empty", base)
+	}
+	if elapsed := time.Since(start); elapsed > time.Second {
+		t.Errorf("boundedBaseOf took %v to give up, want it bounded near baseTimeout", elapsed)
 	}
 }

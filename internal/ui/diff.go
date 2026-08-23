@@ -13,27 +13,42 @@ package ui
 // one line of several thousand cells, and wrapping it would push the rest of
 // the hunk off the bottom of the screen; the pane cuts, and ← and → move
 // along it.
+//
+// Running git and waiting for it is gitdiff.go's job, not this file's: what
+// is here reads the answer once there is one — which file a line belongs
+// to, what colour a line is, and which file and line the editor opens.
 
 import (
 	"cmp"
 	"errors"
-	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
-
-	"github.com/e1i0r/orbit/internal/repo"
-	"github.com/e1i0r/orbit/internal/view"
 )
 
 // diffLines is the diff tab's content, ready for the pane.
+//
+// It answers in one of three states, because there are three different true
+// things it can say. Before the first diffMsg lands there is no answer yet,
+// and that is not the same fact as an answer that came back empty —
+// collapsing the two, which this pane once did, is how a git that hangs
+// ends up asserting "no changes" on a question it was never actually
+// answered. An answer that came back as a failure is the third state, and
+// it is said rather than folded into the diff text.
 func (m Model) diffLines() []string {
+	p := m.opts.Words
+	if !m.diffKnown {
+		return []string{" " + Paint(Dim).Render(p.T("diff.pending", "reading this task's worktree…"))}
+	}
+	if m.diffErr != nil {
+		return []string{" " + Paint(Bad).Render(m.diffErr.Error())}
+	}
 	text := strings.TrimSuffix(m.diff, "\n")
 	if strings.TrimSpace(text) == "" {
-		return []string{" " + Paint(Dim).Render(m.opts.Words.T("diff.unchanged", "no changes in this task's worktree"))}
+		return []string{" " + Paint(Dim).Render(p.T("diff.unchanged", "no changes in this task's worktree"))}
 	}
 	raw := strings.Split(text, "\n")
 	out := make([]string, 0, len(raw))
@@ -129,14 +144,24 @@ func (m Model) editorFor() (*exec.Cmd, error) {
 // on `+++ b/x` and pressing the key means "open this file", and refusing
 // because there is no line number to be precise about would be refusing the
 // only thing the reader asked for; line 1 is the honest answer there.
+//
+// Walking up from the cursor, three things can be met first, and which one
+// is met decides everything: a file's own `+++` header answers directly; a
+// hunk header means the cursor is inside that hunk and the line has to be
+// counted from there; and a boundary line — `diff --git`, `index ` or
+// `--- ` — means the cursor is sitting in the furniture that introduces the
+// NEXT file, not inside the hunk of the file above it. In a diff of more
+// than one file, that boundary is met before the previous file's hunk
+// header is, and walking on through it to keep looking upward used to be
+// this function's bug: it would borrow the previous file's last hunk and
+// answer with a line counted for a file the cursor was never on. Stopping
+// at the boundary and handing off to fileBelow — which finds whichever
+// file's `+++` comes next — is what a boundary line answers with instead.
 func fileAt(lines []string, at int) (string, int, bool) {
 	if at < 0 || at >= len(lines) {
 		return "", 0, false
 	}
-	// Walking up, whichever comes first decides: a hunk header means the
-	// cursor is inside a hunk and the line has to be counted, and a file
-	// header means it is in the furniture between two files.
-	line, from := 1, at
+	line, from, boundary := 1, at, false
 	for i := at; i >= 0; i-- {
 		if name, ok := fileHeader(lines[i]); ok {
 			return name, 1, true
@@ -145,25 +170,50 @@ func fileAt(lines []string, at int) (string, int, bool) {
 			line, from = start, i
 			break
 		}
-	}
-	for i := from + 1; i < at; i++ {
-		if !strings.HasPrefix(lines[i], "-") && !strings.HasPrefix(lines[i], `\`) {
-			line++
+		if fileBoundary(lines[i]) {
+			boundary = true
+			break
 		}
 	}
-	for i := from; i >= 0; i-- {
-		if name, ok := fileHeader(lines[i]); ok {
-			return name, line, true
+	if !boundary {
+		for i := from + 1; i < at; i++ {
+			if !strings.HasPrefix(lines[i], "-") && !strings.HasPrefix(lines[i], `\`) {
+				line++
+			}
+		}
+		for i := from; i >= 0; i-- {
+			if name, ok := fileHeader(lines[i]); ok {
+				return name, line, true
+			}
 		}
 	}
-	// Above every file header there is still the `diff --git` line the
-	// pane opens on, and the file it announces is the one below it.
+	// Either the walk never found a hunk above the cursor at all, or it met
+	// a boundary line before it found one — either way the file above the
+	// cursor is not the file to answer with, and the honest answer is
+	// whichever file's `+++` comes next, at its own first line.
+	return fileBelow(lines, at)
+}
+
+// fileBelow is the file introduced by the next `+++` header at or after the
+// given line. It is what a cursor sitting in furniture that has not reached
+// its file's header yet answers with, and what fileAt hands off to once it
+// knows the file above the cursor is the wrong one to ask.
+func fileBelow(lines []string, at int) (string, int, bool) {
 	for i := at; i < len(lines); i++ {
 		if name, ok := fileHeader(lines[i]); ok {
 			return name, 1, true
 		}
 	}
 	return "", 0, false
+}
+
+// fileBoundary is a line that begins the furniture introducing a new file,
+// before that file's own `+++` header has been seen: `diff --git`, `index `,
+// or `--- `. Each of the three is unambiguous on sight — no hunk's content
+// line can start with any of them, because every content line is prefixed
+// with a space, a plus or a minus, and none of those three is any of them.
+func fileBoundary(s string) bool {
+	return strings.HasPrefix(s, "diff --git ") || strings.HasPrefix(s, "index ") || strings.HasPrefix(s, "--- ")
 }
 
 // fileHeader reads the new file's path out of a diff's `+++` line. The `b/`
@@ -195,72 +245,4 @@ func hunkStart(s string) (int, bool) {
 		return 0, false
 	}
 	return n, true
-}
-
-// diffOf runs git diff in the task's worktree, against the branch the
-// repository's work is measured from.
-//
-// The worktree is asked for through the port rather than worked out here.
-// Where a task's checkout lives is internal/store's answer — it is a hash of
-// the repository's path under the state root — and internal/ui may not name
-// that package. Running the diff in the repository instead, which is what
-// this did before the tab that draws it existed, shows the reader whatever
-// they happen to have uncommitted in their own checkout under the heading of
-// an agent's task.
-func diffOf(r Reader, t view.Task) tea.Cmd {
-	return func() tea.Msg {
-		if r == nil {
-			return diffMsg{ID: t.ID, Err: errors.New("this window was opened without a way to find the worktree")}
-		}
-		if t.RepoPath == "" {
-			return diffMsg{ID: t.ID, Err: errors.New("this task does not say where its repository is")}
-		}
-		dir, err := r.Worktree(t.RepoPath, t.ID)
-		if err != nil {
-			return diffMsg{ID: t.ID, Err: err}
-		}
-		out, err := gitDiff(dir, baseOf(t.RepoPath))
-		if err != nil {
-			return diffMsg{ID: t.ID, Tree: dir, Err: err}
-		}
-		return diffMsg{ID: t.ID, Tree: dir, Text: out}
-	}
-}
-
-// gitDiff asks git twice at most: once against the base branch, and once for
-// the working tree alone if that failed.
-//
-// The fallback is not a way of hiding an error. A worktree cut before its
-// base existed, or one whose base has been deleted since, still has changes
-// worth showing, and refusing to show them because the comparison is
-// unavailable would be refusing the reader the only view they have. If the
-// plain diff fails too, that failure is the one reported — it is the one
-// that says the worktree itself is not there.
-func gitDiff(dir, base string) (string, error) {
-	if base != "" {
-		if out, err := exec.Command("git", "-C", dir, "diff", "--merge-base", base).CombinedOutput(); err == nil {
-			return string(out), nil
-		}
-	}
-	out, err := exec.Command("git", "-C", dir, "diff").CombinedOutput()
-	if err != nil {
-		// CombinedOutput is what git said; err is only "exit status 128".
-		// Dropping the bytes turns "not a git repository" into a number the
-		// reader has to go and look up somewhere else, so they go in the
-		// message and err stays wrapped underneath.
-		return "", fmt.Errorf("git diff in %s: %w: %s", dir, err, strings.TrimSpace(string(out)))
-	}
-	return string(out), nil
-}
-
-// baseOf is the branch a repository's work is measured against, or nothing
-// when it cannot be read. Nothing is a usable answer — gitDiff falls back to
-// the working tree — so a repository that is detached, or gone, costs the
-// comparison and not the pane.
-func baseOf(repoPath string) string {
-	r, err := repo.Open(repoPath)
-	if err != nil {
-		return ""
-	}
-	return r.Base
 }
