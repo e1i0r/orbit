@@ -16,11 +16,9 @@ package cli
 // pipe, a log and a CI job get instead of a screenful of escape codes.
 
 import (
-	"flag"
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	tea "charm.land/bubbletea/v2"
 
@@ -40,22 +38,24 @@ import (
 // frame would replace the thing that was asked for with a complaint about a
 // record on the side.
 func top(args []string, out io.Writer) error {
-	fs := flag.NewFlagSet("top", flag.ContinueOnError)
-	fs.SetOutput(io.Discard)
-	once := fs.Bool("once", false, "draw one frame as plain text and exit — what a pipe, a log or CI reads")
-	lang := fs.String("lang", "", "draw in this language, e.g. es; otherwise $ORBIT_LANG, then the saved setting, then $LANG")
-	dir, err := parseTop(fs, args, out)
+	// The flags are read by a function of their own so that what they were
+	// set to is something a test can ask for. See topflags.go: every test in
+	// this package hands the command a buffer and therefore takes the plain
+	// branch below through interactive(out), so -once cannot be the deciding
+	// term in any of them, and asking parseTop directly is the only way this
+	// flag has a test that can fail.
+	dir, once, lang, err := parseTop(args, out)
 	if err != nil {
 		return err
 	}
 
-	opts, s, err := window(dir, *lang)
+	opts, s, err := window(dir, lang)
 	if err != nil {
 		return err
 	}
 	swept := reconcileAll(s)
 
-	if *once || !interactive(out) {
+	if drawsOneFrame(once, interactive(out)) {
 		frame, err := ui.Plain(opts)
 		if err != nil {
 			return err
@@ -67,47 +67,6 @@ func top(args []string, out io.Writer) error {
 		return fmt.Errorf("the window: %w", err)
 	}
 	return swept
-}
-
-// parseTop reads top's flags with the directory allowed on either side of
-// them.
-//
-// flag stops at the first argument that is not a flag, so `orbit top ~/work
-// -once` would leave -once unread — and the failure would not be a message
-// but a full-screen window where a frame was asked for, in a pipe, in CI.
-// Every other command in this program takes its directory as -repo and never
-// meets this; top's directory is the thing a person types most often, and
-// making them type a flag for it to be read is the wrong half of the trade.
-//
-// So: parse, take one positional, parse what is left, until nothing is left.
-// A second directory is refused rather than one of them being chosen
-// silently — two roots is a person meaning something this command cannot do,
-// and picking the first is how they find out an hour later.
-func parseTop(fs *flag.FlagSet, args []string, out io.Writer) (string, error) {
-	var dirs []string
-	rest := args
-	for {
-		if err := parse(fs, rest, out); err != nil {
-			return "", err
-		}
-		rest = fs.Args()
-		if len(rest) == 0 {
-			break
-		}
-		dirs = append(dirs, rest[0])
-		rest = rest[1:]
-	}
-	if len(dirs) > 1 {
-		return "", fmt.Errorf("top takes one directory, and was given %d: %s", len(dirs), strings.Join(dirs, " "))
-	}
-	if len(dirs) == 1 {
-		return dirs[0], nil
-	}
-	dir, err := os.Getwd()
-	if err != nil {
-		return "", fmt.Errorf("locate the working directory: %w", err)
-	}
-	return dir, nil
 }
 
 // window builds everything one window is made of.
@@ -141,8 +100,11 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 	// rather than by assumption.
 	engines := map[string]engine.Engine{"claude": engine.NewClaude()}
 	return ui.Options{
-		Root:     underHome(dir, os.Getenv("HOME")),
-		Reader:   r,
+		Root: underHome(dir, os.Getenv("HOME")),
+		// The board reader the window is handed carries the settings file on
+		// its clock: see poll. The settings adapter answers from memory, and
+		// this is what keeps what it holds in step with the file.
+		Reader:   poll{Reader: r, cfg: cfg},
 		Settings: cfg,
 		// Four sources, weighed once, here: the flag beats $ORBIT_LANG,
 		// which beats the saved setting, which beats the locale the process
@@ -176,6 +138,23 @@ func mustBeDirectory(dir string) error {
 		return fmt.Errorf("%q is not a directory", dir)
 	}
 	return nil
+}
+
+// drawsOneFrame is the choice between the two ways out of this command: one
+// frame of plain text, or the window.
+//
+// It is three words and a function of its own because the alternative — the
+// expression written inline in the if — is the one branch in this command
+// that no test can reach both sides of. interactive() is false for every
+// writer that is not the process's own os.Stdout, and every test hands the
+// command a buffer, so the second term is true in all of them and the first
+// decides nothing. Neutralising -once entirely left the whole suite green.
+//
+// Written as a function over two bools, the table has four rows and a test
+// can state all of them, including the one that matters: a terminal, and
+// -once typed anyway.
+func drawsOneFrame(once, terminal bool) bool {
+	return once || !terminal
 }
 
 // interactive is whether opening a full-screen program over this writer is
@@ -227,24 +206,4 @@ func (f fullScreen) View() tea.View {
 	v := f.Model.View()
 	v.AltScreen = true
 	return v
-}
-
-// underHome writes a path that starts at the home directory the way a person
-// says it, with a tilde. The window puts the root in its header on every
-// frame, and an absolute path there is both longer than the header can afford
-// and longer than anybody reads: the part that identifies a directory is the
-// end of it, and the home prefix is the part every path on the machine shares.
-//
-// It is done here rather than in internal/ui because it is a fact about the
-// environment this process runs in, and the window is handed facts rather than
-// reading them. An empty home, or a root outside it, comes back unchanged —
-// there is nothing to abbreviate and a bare "~" would name the wrong place.
-func underHome(dir, home string) string {
-	if home == "" || dir == home {
-		return dir
-	}
-	if rest, ok := strings.CutPrefix(dir, home+string(os.PathSeparator)); ok {
-		return "~" + string(os.PathSeparator) + rest
-	}
-	return dir
 }

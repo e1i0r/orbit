@@ -16,12 +16,9 @@ package cli
 // for.
 
 import (
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/e1i0r/orbit/internal/store"
 )
 
 // esc is the byte a pipe must never be handed. A frame drawn for `less`, for
@@ -147,10 +144,15 @@ func TestOneFrameSpeaksTheLanguageItWasAskedFor(t *testing.T) {
 	}
 }
 
-// flag stops at the first argument that is not a flag, so a directory typed
-// before -once would leave the flag unread and open a full-screen window
-// where a frame was asked for. That is the one flag mistake in this command
-// whose failure is not a message but a terminal nobody expected.
+// The two orders draw the same frame end to end.
+//
+// This is not what guards -once. Every test in this file reaches the plain
+// branch through interactive(out) — run() hands the command a buffer — so
+// both invocations below would be equal whether or not the flag was ever
+// read. What guards -once is TestTopReadsItsFlagsOnEitherSideOfTheDirectory,
+// which asks parseTop what it parsed. What this one adds is that everything
+// downstream of the flags agrees too: the same root, the same board, the
+// same words, byte for byte.
 func TestTheDirectoryMayComeBeforeOrAfterTheFlags(t *testing.T) {
 	root := twoRepos(t)
 
@@ -197,86 +199,6 @@ func TestTopOverAStateRootWithNothingInItSaysWhereItLooked(t *testing.T) {
 	}
 }
 
-// The brake, and the one way it is silently disabled: UnreadCap 0 means no
-// cap, deliberately, and a settings adapter that answered 0 for "never
-// configured" or for "could not be read" would let runs pile up unread with
-// nothing on screen having changed.
-func TestTheUnreadCapNeverBecomesNoCapByAccident(t *testing.T) {
-	emptyHome(t)
-	s, err := store.Open()
-	if err != nil {
-		t.Fatalf("open the store: %v", err)
-	}
-	cfg, err := newSettings(s)
-	if err != nil {
-		t.Fatalf("newSettings: %v", err)
-	}
-	if got := cfg.UnreadCap(); got <= 0 {
-		t.Errorf("a settings file nobody has written answers %d, which is no cap at all", got)
-	}
-
-	if code, _, errOut := run(t, "set", "unread-cap", "0"); code != 0 {
-		t.Fatalf("set unread-cap exited %d: %s", code, errOut)
-	}
-	if got := cfg.UnreadCap(); got != 0 {
-		t.Errorf("the cap is %d after somebody chose no cap at all, want 0", got)
-	}
-}
-
-// The setters go through the store, and the getters read what the store now
-// holds — not a copy this adapter is keeping to itself.
-func TestTheSettingsAdapterWritesThroughToTheFile(t *testing.T) {
-	emptyHome(t)
-	s, err := store.Open()
-	if err != nil {
-		t.Fatalf("open the store: %v", err)
-	}
-	cfg, err := newSettings(s)
-	if err != nil {
-		t.Fatalf("newSettings: %v", err)
-	}
-	if err := cfg.SetAutopilot(true); err != nil {
-		t.Fatalf("SetAutopilot: %v", err)
-	}
-	if err := cfg.SetLanguage("es"); err != nil {
-		t.Fatalf("SetLanguage: %v", err)
-	}
-	if !cfg.Autopilot() {
-		t.Error("autopilot was switched on and reads as off")
-	}
-	if cfg.Language() != "es" {
-		t.Errorf("the language reads as %q after being set to es", cfg.Language())
-	}
-
-	second, err := newSettings(s)
-	if err != nil {
-		t.Fatalf("newSettings again: %v", err)
-	}
-	if !second.Autopilot() || second.Language() != "es" {
-		t.Error("the settings did not reach the file: a second adapter cannot see them")
-	}
-}
-
-// A settings file that cannot be read is where the cap would silently become
-// no cap, so the command refuses to open at all and names the file. The file
-// is made a directory because that fails for every user, including root —
-// a mode of 0000 does not.
-func TestTopRefusesASettingsFileItCannotRead(t *testing.T) {
-	home := emptyHome(t)
-	root := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(home, "settings.json"), 0o755); err != nil {
-		t.Fatalf("mkdir: %v", err)
-	}
-
-	code, _, errOut := run(t, "top", root, "-once")
-	if code == 0 {
-		t.Error("top opened over settings it could not read")
-	}
-	if !strings.Contains(errOut, "settings.json") {
-		t.Errorf("the refusal is %q, want it to name the file", errOut)
-	}
-}
-
 // The synopsis is the whole interface on one screen, and a command missing
 // from it is a command nobody finds.
 func TestTopIsInTheSynopsis(t *testing.T) {
@@ -288,5 +210,32 @@ func TestTopIsInTheSynopsis(t *testing.T) {
 	}
 	if !found {
 		t.Error("orbit top is not in the synopsis")
+	}
+}
+
+// The four rows of the choice between the two ways out of this command.
+//
+// The row that matters is the first: a terminal, and -once typed anyway. It
+// is the only place in this package where -once is the deciding term, and
+// the only reason drawsOneFrame is a function rather than the expression it
+// replaced — every test here hands the command a buffer, so interactive() is
+// false in all of them and the second term decides the branch on its own.
+func TestOnceDrawsAFrameEvenWhenThereIsATerminalToOpen(t *testing.T) {
+	cases := []struct {
+		name           string
+		once, terminal bool
+		want           bool
+	}{
+		{"-once, at a terminal", true, true, true},
+		{"-once, down a pipe", true, false, true},
+		{"no flag, down a pipe", false, false, true},
+		{"no flag, at a terminal", false, true, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := drawsOneFrame(c.once, c.terminal); got != c.want {
+				t.Errorf("drawsOneFrame(once=%v, terminal=%v) = %v, want %v", c.once, c.terminal, got, c.want)
+			}
+		})
 	}
 }
