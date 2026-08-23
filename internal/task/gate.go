@@ -100,7 +100,13 @@ func (g fileGate) Before(ctx context.Context, t Task, p flow.Phase, _ int) (Go, 
 	case wordSkip:
 		return Skip, nil
 	case wordResume, wordContinue:
-		return Continue, nil
+		// Taken, and deliberately not acted on. A word that releases a wait
+		// means nothing when no wait is in progress, and `orbit resume` on a
+		// task no run holds writes exactly that word. Answering Continue here
+		// would let it sit in the file until the next run and wave that run's
+		// first gate through, with nothing in the record to say why a phase
+		// whose flow asked to stop did not. Consuming it and falling through
+		// to the ordinary decision is what makes a stale word harmless.
 	}
 	auto, err := autopilot(g.store)
 	if err != nil {
