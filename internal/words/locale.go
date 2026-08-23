@@ -49,20 +49,24 @@ func normalizeLocale(v string) string {
 	}
 }
 
+// pseudoCode is the language code the qps pseudolocale would use if it
+// were ever a file — it never is (pseudo_test.go builds it entirely
+// inside the test binary), but Available refuses this code by name too,
+// so a qps.json dropped into an overlay by mistake still could not reach
+// a real user, regardless of what display name that file claimed for
+// itself.
+const pseudoCode = "qps"
+
 // Available lists the languages the picker may offer: every catalogue this
 // binary embeds, plus any $ORBIT_HOME/lang/*.json overlay, each returned
 // the way a reader of that language writes its own name. Available reads
 // that name out of the file itself rather than a table baked into this
 // package — which is what keeps a third language to one file and no code.
-//
-// The qps pseudolocale never appears here: it is not a file under lang/,
-// it is built only inside the test binary (see words_test.go), so there is
-// nothing for Available to find.
 func Available() []string {
 	codes := map[string]bool{}
 	if entries, err := embedded.ReadDir("lang"); err == nil {
 		for _, e := range entries {
-			if code, ok := languageCode(e.Name()); ok {
+			if code, ok := languageCode(e.Name()); ok && code != pseudoCode {
 				codes[code] = true
 			}
 		}
@@ -73,7 +77,7 @@ func Available() []string {
 				if e.IsDir() {
 					continue
 				}
-				if code, ok := languageCode(e.Name()); ok {
+				if code, ok := languageCode(e.Name()); ok && code != pseudoCode {
 					codes[code] = true
 				}
 			}

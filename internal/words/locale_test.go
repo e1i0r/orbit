@@ -72,12 +72,28 @@ func TestAvailableNamesEachLanguageInItself(t *testing.T) {
 }
 
 // TestAvailableDoesNotOfferThePseudolocale confirms that qps, which exists
-// only inside the test binary, is never something Available offers a user.
+// only inside the test binary, is never something Available offers a user
+// — even if a qps.json file were dropped into an overlay by mistake.
+// Checking Available() against the literal string "qps" would not catch
+// that: Available returns each catalogue's self-declared display name, not
+// its code, so a qps.json claiming to be called "Pseudo" would sail
+// straight through a check that only ever looked for "qps". This test
+// plants exactly that file and asserts its display name never appears.
 func TestAvailableDoesNotOfferThePseudolocale(t *testing.T) {
-	t.Setenv("ORBIT_HOME", t.TempDir())
+	home := t.TempDir()
+	t.Setenv("ORBIT_HOME", home)
+	langDir := filepath.Join(home, "lang")
+	if err := os.MkdirAll(langDir, 0o700); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	body := `{"language": "Pseudo", "keys": {}}`
+	if err := os.WriteFile(filepath.Join(langDir, pseudoCode+".json"), []byte(body), 0o600); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
 	for _, name := range Available() {
-		if name == "qps" {
-			t.Errorf("Available() includes %q — the pseudolocale must never reach the picker", name)
+		if name == "Pseudo" {
+			t.Errorf("Available() = %v, includes the qps overlay's display name — the pseudolocale must never reach the picker, no matter what it calls itself", Available())
 		}
 	}
 }

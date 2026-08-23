@@ -17,7 +17,7 @@ import (
 // forPseudo builds a Printer that speaks qps: every string T or P would
 // otherwise show in English, expanded and accented instead.
 func forPseudo() *Printer {
-	return &Printer{lang: "qps", pseudo: pseudoTransform}
+	return &Printer{lang: pseudoCode, pseudo: pseudoTransform}
 }
 
 // pseudoTransform expands s by roughly 40%, replaces its vowels with

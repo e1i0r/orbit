@@ -7,7 +7,8 @@ package words
 import "testing"
 
 func TestTFallsBackToEnglishWithNoCatalogue(t *testing.T) {
-	p := For("xx") // no lang/xx.json exists, embedded or overlaid
+	t.Setenv("ORBIT_HOME", t.TempDir()) // For always resolves an overlay dir; never the real one
+	p := For("xx")                      // no lang/xx.json exists, embedded or overlaid
 	got := p.T("greeting.hello", "Hello, {name}!", Arg{Name: "name", Value: "World"})
 	if want := "Hello, World!"; got != want {
 		t.Errorf("T() = %q, want %q", got, want)
@@ -80,6 +81,7 @@ func TestCellsReadsTheDeclaredBudget(t *testing.T) {
 }
 
 func TestForNeverFailsOnAnUnknownLanguage(t *testing.T) {
+	t.Setenv("ORBIT_HOME", t.TempDir()) // For always resolves an overlay dir; never the real one
 	p := For("zz")
 	if p == nil {
 		t.Fatal("For returned nil")

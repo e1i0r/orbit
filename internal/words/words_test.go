@@ -71,9 +71,18 @@ func TestEveryTranslationKeyIsHonest(t *testing.T) {
 		if !used[key] {
 			t.Errorf("es.json has key %q, which no T or P call in the module uses", key)
 		}
-		checkQuality(t, key, "value.one", e.Value.One, en.keys[key].Cells)
-		checkQuality(t, key, "value.other", e.Value.Other, en.keys[key].Cells)
-		checkQuality(t, key, "value", e.Value.Single, en.keys[key].Cells)
+		budget := en.keys[key].Cells
+		checkQuality(t, "es.json", key, "value.one", e.Value.One, budget)
+		checkQuality(t, "es.json", key, "value.other", e.Value.Other, budget)
+		checkQuality(t, "es.json", key, "value", e.Value.Single, budget)
+	}
+	// Check 6 applies to every catalogue's values, not only es.json's — an
+	// en.json override is still a value a reader sees, and its budget is
+	// its own declared Cells, since en.json is where that number lives.
+	for key, e := range en.keys {
+		checkQuality(t, "en.json", key, "value.one", e.Value.One, e.Cells)
+		checkQuality(t, "en.json", key, "value.other", e.Value.Other, e.Cells)
+		checkQuality(t, "en.json", key, "value", e.Value.Single, e.Cells)
 	}
 }
 
@@ -127,19 +136,20 @@ func checkCallSite(t *testing.T, site callSite, es catalog, used map[string]bool
 	}
 }
 
-// checkQuality runs check 6 against one translated form: NFC always, and
-// the declared budget when en.json states one for this key.
-func checkQuality(t *testing.T, key, form, value string, budget int) {
+// checkQuality runs check 6 against one translated form, in whichever
+// catalogue it came from: NFC always, and the declared budget when one
+// applies to this key.
+func checkQuality(t *testing.T, catalogName, key, form, value string, budget int) {
 	t.Helper()
 	if value == "" {
 		return
 	}
 	if hasCombiningMark(value) {
-		t.Errorf("es.json key %q (%s) is not NFC — it contains a combining mark instead of a precomposed character", key, form)
+		t.Errorf("%s key %q (%s) is not NFC — it contains a combining mark instead of a precomposed character", catalogName, key, form)
 	}
 	if budget > 0 {
 		if n := utf8.RuneCountInString(value); n > budget {
-			t.Errorf("es.json key %q (%s) is %d cells, over its budget of %d — shorten the Spanish, not the column", key, form, n, budget)
+			t.Errorf("%s key %q (%s) is %d cells, over its budget of %d — shorten the translation, not the column", catalogName, key, form, n, budget)
 		}
 	}
 }
