@@ -143,6 +143,29 @@ func TestARepositoryThatIsNotThereStillListsItsTasks(t *testing.T) {
 // isolated to a row: with no enumeration there is no board at all, and
 // Refresh says so rather than returning an empty screen that a reader would
 // take for an empty root.
+// TestADamagedMarkerIsNotFatal: a marker nobody can parse is one repository
+// gone, not the board gone. It is the only fault that can leave the listing
+// empty and still be per-repository, so it is the one case where "nothing to
+// show" and "nothing was asked for" have to be told apart by something other
+// than the length of the list — and a marker stays damaged, so getting this
+// wrong draws an empty window for as long as the file is there.
+func TestADamagedMarkerIsNotFatal(t *testing.T) {
+	s := newRoot(t)
+	addTask(t, s, gitRepo(t, "payments"), "ACME-1", created("Retry the webhook on 5xx"))
+	damage(t, s)
+
+	b, _, err := NewReader(s).Refresh()
+	if err != nil {
+		t.Fatalf("Refresh: %v — a damaged marker must never be fatal", err)
+	}
+	if b.Repos != 0 || len(b.Tasks) != 0 {
+		t.Errorf("a damaged marker gave %d repos and %d tasks, want none of either", b.Repos, len(b.Tasks))
+	}
+	if len(b.Errs) != 1 {
+		t.Fatalf("Errs = %v, want one error naming the marker", b.Errs)
+	}
+}
+
 func TestARootThatCannotBeListedIsAnError(t *testing.T) {
 	s := newRoot(t)
 	if err := os.WriteFile(filepath.Join(s.Root(), "repos"), []byte("not a directory\n"), 0o600); err != nil {

@@ -13,6 +13,28 @@ import (
 	"strings"
 )
 
+// ReposError is the error Repos returns when the repos/ directory itself
+// could not be listed. It is the only failure that leaves a caller with no
+// list at all rather than a shorter one: every other fault costs a single
+// directory and is reported alongside the repositories that did read.
+//
+// It is a distinct type because the length of the returned slice cannot tell
+// the two apart. A root holding one repository whose marker is damaged
+// returns no repositories and a non-nil error, and so does a root that
+// cannot be listed at all — but the first is one repository to be repaired
+// and the second is the whole listing gone. A caller deciding whether to
+// keep drawing asks with errors.As rather than counting.
+type ReposError struct {
+	Dir string // the repos/ directory that could not be listed
+	Err error  // what os.ReadDir said about it
+}
+
+func (e *ReposError) Error() string {
+	return fmt.Sprintf("read %q: %v", e.Dir, e.Err)
+}
+
+func (e *ReposError) Unwrap() error { return e.Err }
+
 // RepoRef is one repository the store knows about: Key is the hashed
 // directory name under repos/, Path is the absolute path createRepoDir
 // wrote into that directory's marker.
@@ -44,6 +66,11 @@ type RepoRef struct {
 // wrong. A caller that only wants the list can use the slice as-is; a
 // caller that wants to know whether something needs attention checks the
 // error.
+//
+// The one failure that is not per-directory is repos/ itself refusing to be
+// listed, and that comes back as a *ReposError with no repositories at all.
+// It is the only error this function returns that means the listing did not
+// happen, as against happening and finding damage.
 func (s *Store) Repos() ([]RepoRef, error) {
 	dir := filepath.Join(s.root, "repos")
 	entries, err := os.ReadDir(dir)
@@ -51,7 +78,7 @@ func (s *Store) Repos() ([]RepoRef, error) {
 		return nil, nil
 	}
 	if err != nil {
-		return nil, fmt.Errorf("read %q: %w", dir, err)
+		return nil, &ReposError{Dir: dir, Err: err}
 	}
 
 	var repos []RepoRef

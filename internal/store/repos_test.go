@@ -1,6 +1,7 @@
 package store
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -189,5 +190,50 @@ func TestReposSurvivesARealIOErrorPartwayThroughTheListing(t *testing.T) {
 	}
 	if len(got) != 3 {
 		t.Fatalf("got %d repos, want 3 — every readable, parseable marker must still come back", len(got))
+	}
+}
+
+// TestReposTellsAnUnlistableDirectoryFromADamagedMarker: both come back with
+// no repositories and a non-nil error, so a caller that has to decide
+// whether an empty answer is the whole story cannot use the slice to tell
+// them apart. The type is what it asks instead.
+func TestReposTellsAnUnlistableDirectoryFromADamagedMarker(t *testing.T) {
+	unlistable, err := New(t.TempDir())
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	dir := filepath.Join(unlistable.Root(), "repos")
+	if err := os.WriteFile(dir, []byte("not a directory\n"), 0o600); err != nil {
+		t.Fatalf("write a file where repos/ goes: %v", err)
+	}
+
+	got, err := unlistable.Repos()
+	var listing *ReposError
+	if !errors.As(err, &listing) {
+		t.Fatalf("Repos on an unlistable directory gave %v, want a *ReposError", err)
+	}
+	if listing.Dir != dir {
+		t.Errorf("the error names %q, want %q", listing.Dir, dir)
+	}
+	if len(got) != 0 {
+		t.Errorf("got %d repos from a directory that could not be listed", len(got))
+	}
+
+	damaged, err := New(t.TempDir())
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	damagedDir := filepath.Join(damaged.Root(), "repos", "deadbeefcafe")
+	if err := os.MkdirAll(damagedDir, 0o700); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(damagedDir, "repo"), []byte("not the marker format"), 0o600); err != nil {
+		t.Fatalf("write damaged marker: %v", err)
+	}
+
+	if _, err := damaged.Repos(); errors.As(err, &listing) {
+		t.Errorf("a damaged marker came back as %T: it is one repository, not the listing", listing)
+	} else if err == nil {
+		t.Error("a damaged marker gave no error at all")
 	}
 }

@@ -76,6 +76,27 @@ func refresh(t *testing.T, r *Reader) (Board, Changed) {
 	return b, changed
 }
 
+// damage overwrites the marker of every repository in the state root with a
+// body parseRepoMarker will not take. The store hashes a repository's path
+// into a directory name, so a test cannot name that directory itself, and
+// walking to it is the only way in.
+func damage(t *testing.T, s *store.Store) {
+	t.Helper()
+	dirs, err := os.ReadDir(filepath.Join(s.Root(), "repos"))
+	if err != nil {
+		t.Fatalf("read the repos directory: %v", err)
+	}
+	if len(dirs) == 0 {
+		t.Fatal("there is no repository to damage")
+	}
+	for _, dir := range dirs {
+		marker := filepath.Join(s.Root(), "repos", dir.Name(), "repo")
+		if err := os.WriteFile(marker, []byte("this is not a marker\n"), 0o600); err != nil {
+			t.Fatalf("damage %q: %v", marker, err)
+		}
+	}
+}
+
 func addTask(t *testing.T, s *store.Store, repoPath, id string, events ...record.Event) {
 	t.Helper()
 	if _, err := s.CreateTaskDir(repoPath, id); err != nil {
