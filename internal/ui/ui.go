@@ -128,6 +128,15 @@ type Model struct {
 	diffErr    error
 	diffKnown  bool
 	diffNoBase bool
+	// diffBase is the branch the diff is measured against, looked up once
+	// when the view opens and carried from then on, and diffAsking is
+	// whether a diff is out at git right now. Both exist for the clock: a
+	// rescan every two seconds against a repository that takes twelve to
+	// answer would otherwise have six diffs in flight and pay for six base
+	// lookups, none of which can be cancelled. With these, at most one is
+	// out at a time and the base is asked for once per open.
+	diffBase   baseRef
+	diffAsking bool
 	// following is whether the log tab is taking every new entry as it
 	// arrives. It is armed when the view opens and released the moment the
 	// reader scrolls up, at the one site in scroll that reads the offset.
@@ -201,9 +210,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// slow enough to be cheap and still lets a live task's diff change
 		// while the reader is looking at it, rather than only at the
 		// moment the view was opened.
+		//
+		// The clock is slower than one diff's worst case all the same — up
+		// to five seconds for the diff itself — so a tick that finds the
+		// last one still out at git does not ask again. Without that, a
+		// repository slow enough to need the bound is the one that gets a
+		// second, third and sixth request piled on top of the first.
 		cmds := []tea.Cmd{rescan(m.opts.Reader), rescanTick()}
-		if m.screen == screenDetail {
-			cmds = append(cmds, diffOf(m.opts.Reader, m.subject()))
+		if m.screen == screenDetail && !m.diffAsking {
+			m.diffAsking = true
+			cmds = append(cmds, diffOf(m.opts.Reader, m.subject(), m.diffBase))
 		}
 		return m, tea.Batch(cmds...)
 	case elapsedMsg:
@@ -237,6 +253,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.diff, m.worktree = msg.Text, msg.Tree
 		m.diffErr, m.diffKnown, m.diffNoBase = msg.Err, true, msg.NoBase
+		m.diffBase, m.diffAsking = msg.Base, false
 		return m.syncPanes(), nil
 	case logMsg:
 		// The same guard, for the same reason: a record that arrives for a

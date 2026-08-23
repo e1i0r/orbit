@@ -87,7 +87,7 @@ func TestTheDiffIsTheWorktreesAndNotTheRepositorys(t *testing.T) {
 	write(t, filepath.Join(tree, "retry.go"), "package retry\n\nfunc send() { backoff() }\n")
 
 	r := &fakeReader{worktree: tree}
-	msg, ok := diffOf(r, view.Task{ID: "ACME-2662", RepoPath: repoPath})().(diffMsg)
+	msg, ok := diffOf(r, view.Task{ID: "ACME-2662", RepoPath: repoPath}, baseRef{})().(diffMsg)
 	if !ok {
 		t.Fatal("diffOf did not answer with a diff")
 	}
@@ -103,6 +103,77 @@ func TestTheDiffIsTheWorktreesAndNotTheRepositorys(t *testing.T) {
 	if msg.Tree != tree {
 		t.Errorf("the diff came back from %q, want %q", msg.Tree, tree)
 	}
+	// The two answers that ride back with the text, against a repository
+	// where both are knowable: this one is on main, so the comparison had a
+	// base and the flag that says otherwise must not be set. Both tests of
+	// the flag until now built a diffMsg by hand, which says nothing about
+	// the code that computes it — a gitDiff that always answered true, or
+	// always false, passed them.
+	if msg.NoBase {
+		t.Error("the diff says it had no base to measure against, in a repository whose branch is main")
+	}
+	// And the base it used comes back known, because that is what stops the
+	// next rescan two seconds from now from looking it up again.
+	if !msg.Base.known || msg.Base.name != "main" || msg.Base.timedOut {
+		t.Errorf("the diff came back with base %+v, want main, looked up and answered", msg.Base)
+	}
+}
+
+// TestNoBaseIsSaidOnlyWhenGitActuallySaidIt is the other direction of the
+// same flag, and the line between the two facts it used to conflate.
+//
+// A repository with nothing to measure against really has no base, and the
+// strip says so. A base lookup that ran out of time also comes back empty,
+// and the strip must not say so about it: the diff on screen is the same
+// plain working tree either way and is true either way, but one of the two
+// is a fact about the repository and the other is a fact about how long this
+// program was prepared to wait.
+func TestNoBaseIsSaidOnlyWhenGitActuallySaidIt(t *testing.T) {
+	t.Setenv("GIT_CONFIG_GLOBAL", "/dev/null")
+	t.Setenv("GIT_CONFIG_SYSTEM", "/dev/null")
+	repoPath := gitRepo(t)
+	tree := worktreeOf(t, repoPath, "ACME-2662")
+	write(t, filepath.Join(tree, "retry.go"), "package retry\n\nfunc send() { backoff() }\n")
+	task := view.Task{ID: "ACME-2662", RepoPath: repoPath}
+
+	absent := diffOf(&fakeReader{worktree: tree}, task, baseRef{known: true})().(diffMsg)
+	if absent.Err != nil || !absent.NoBase {
+		t.Errorf("a diff with no base to measure against said NoBase=%v (err %v), want it said plainly",
+			absent.NoBase, absent.Err)
+	}
+	silent := diffOf(&fakeReader{worktree: tree}, task, baseRef{known: true, timedOut: true})().(diffMsg)
+	if silent.Err != nil || silent.NoBase {
+		t.Errorf("a base that timed out was reported as no base at all (err %v), want the claim withheld", silent.Err)
+	}
+	if !strings.Contains(silent.Text, "backoff()") {
+		t.Errorf("the fallback diff says:\n%s\nwant the worktree's own change in it", silent.Text)
+	}
+}
+
+// TestABaseAlreadyKnownIsNotLookedUpAgain is the once-per-open rule, proved
+// by the only means a test has of seeing a subprocess that did not run.
+//
+// The task is pointed at a directory that is not a repository at all, so a
+// lookup would come back with nothing and the diff would fall back to the
+// plain working tree and say so. The base handed in is main, which the
+// worktree really does have, so a diff that used it compares against it and
+// says nothing about a fallback. The flag tells the two apart, and with it
+// the difference between asking git three times every two seconds and
+// asking it three times when the reader opens the view.
+func TestABaseAlreadyKnownIsNotLookedUpAgain(t *testing.T) {
+	t.Setenv("GIT_CONFIG_GLOBAL", "/dev/null")
+	t.Setenv("GIT_CONFIG_SYSTEM", "/dev/null")
+	tree := worktreeOf(t, gitRepo(t), "ACME-2662")
+	write(t, filepath.Join(tree, "retry.go"), "package retry\n\nfunc send() { backoff() }\n")
+
+	task := view.Task{ID: "ACME-2662", RepoPath: t.TempDir()}
+	msg := diffOf(&fakeReader{worktree: tree}, task, baseRef{name: "main", known: true})().(diffMsg)
+	if msg.Err != nil {
+		t.Fatalf("diff against a base handed in: %v", msg.Err)
+	}
+	if msg.NoBase {
+		t.Error("the diff fell back to the plain working tree, so it looked the base up again instead of using the one it was given")
+	}
 }
 
 // TestADiffWithoutAWorktreeSaysSo covers the other end: a task whose
@@ -110,7 +181,7 @@ func TestTheDiffIsTheWorktreesAndNotTheRepositorys(t *testing.T) {
 // that reads as "no changes".
 func TestADiffWithoutAWorktreeSaysSo(t *testing.T) {
 	r := &fakeReader{treeErr: os.ErrNotExist}
-	msg, ok := diffOf(r, view.Task{ID: "ACME-2662", RepoPath: "/nowhere"})().(diffMsg)
+	msg, ok := diffOf(r, view.Task{ID: "ACME-2662", RepoPath: "/nowhere"}, baseRef{})().(diffMsg)
 	if !ok {
 		t.Fatal("diffOf did not answer with a diff")
 	}
@@ -168,8 +239,12 @@ func TestABaseThatDoesNotAnswerFallsBackWithoutHanging(t *testing.T) {
 	fakeGit(t, 5)
 
 	start := time.Now()
-	if base := boundedBaseOf(t.TempDir()); base != "" {
-		t.Errorf("boundedBaseOf against a hung git answered %q, want empty", base)
+	base := boundedBaseOf(t.TempDir())
+	if base.name != "" || !base.timedOut {
+		t.Errorf("boundedBaseOf against a hung git answered %+v, want empty and marked as having given up", base)
+	}
+	if !base.known {
+		t.Error("boundedBaseOf came back unknown, so the next tick would ask a hung git all over again")
 	}
 	if elapsed := time.Since(start); elapsed > time.Second {
 		t.Errorf("boundedBaseOf took %v to give up, want it bounded near baseTimeout", elapsed)

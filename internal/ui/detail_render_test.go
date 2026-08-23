@@ -1,15 +1,17 @@
 package ui
 
 // detail_render_test.go is the measured render extended to the task view,
-// the three frames the task is specified by, and the two functions the diff
-// tab's editor is built out of.
+// and the three frames the task is specified by.
 //
 // The measured render is the same three assertions render_test.go makes —
 // the right number of rows, no row wider in cells than the terminal, and the
 // rows that must say something saying it — run over each of the three tabs
-// at each size in each language. The assertion this task adds is the last
-// test in the file: a diff line far wider than the pane must scroll inside
-// it, and must never widen the frame around it.
+// at each size in each language. The assertion this task adds is the wide
+// diff: a line far wider than the pane must scroll inside it, and must never
+// widen the frame around it.
+//
+// Which file a line of the diff belongs to is a different question, asked of
+// arithmetic rather than of a frame, and diffwalk_test.go asks it.
 
 import (
 	"strconv"
@@ -144,79 +146,6 @@ func TestALongDiffLineNeverWidensTheFrame(t *testing.T) {
 			}
 		})
 	}
-}
-
-// TestTheDiffKnowsWhichFileALineBelongsTo walks the pair of functions o is
-// built from. They are the only arithmetic in this screen, and getting them
-// wrong opens the right file at the wrong line — which is worse than not
-// opening it, because a reader believes what the editor shows them.
-func TestTheDiffKnowsWhichFileALineBelongsTo(t *testing.T) {
-	lines := strings.Split(strings.TrimSuffix(fixtureDiff, "\n"), "\n")
-	cases := []struct {
-		name string
-		at   int
-		file string
-		line int
-		ok   bool
-	}{
-		{"the first line of the hunk is the hunk's own start", 5, "retry.go", 28, true},
-		{"a context line counts towards the new file", 6, "retry.go", 29, true},
-		{"an added line is where it was added", 9, "retry.go", 32, true},
-		{"the furniture above the first hunk is that file at its top", 1, "retry.go", 1, true},
-		{"the line the pane opens on is the first file below it", 0, "retry.go", 1, true},
-		{"a row past the end of the diff is not a file", 99, "", 0, false},
-	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			file, line, ok := fileAt(lines, c.at)
-			if ok != c.ok || file != c.file || line != c.line {
-				t.Errorf("fileAt(%d) = %q, %d, %v; want %q, %d, %v", c.at, file, line, ok, c.file, c.line, c.ok)
-			}
-		})
-	}
-	// The removal rule needs a diff that removes something, and the fixture
-	// above only adds. A line that was taken out is not in the new file at
-	// all, so the line under the one that follows it has not moved.
-	t.Run("a removed line does not advance the new file's count", func(t *testing.T) {
-		wide := strings.Split(strings.TrimSuffix(wideDiff(), "\n"), "\n")
-		if file, line, ok := fileAt(wide, 5); file != "bundle.js" || line != 1 || !ok {
-			t.Errorf("fileAt(5) = %q, %d, %v; want %q, 1, true", file, line, ok, "bundle.js")
-		}
-	})
-	// The bug I1 fixes needs two files in one diff, which every fixture
-	// above is not. Walking up from a line in the furniture that introduces
-	// the second file, fileAt used to meet that furniture before it met the
-	// first file's own hunk header, and answered with the first file's name
-	// at a line counted from the first file's last hunk — a file the cursor
-	// was never on, at a line invented for a different one.
-	t.Run("a second file's own furniture is answered with the second file", func(t *testing.T) {
-		two := strings.Split(strings.TrimSuffix(twoFileDiff, "\n"), "\n")
-		for _, c := range []struct {
-			name string
-			at   int
-		}{
-			{"diff --git a/webhook.go b/webhook.go", 14},
-			{"index 9c1a2f0..1d4e6b3 100644", 15},
-			{"--- a/webhook.go", 16},
-			{"+++ b/webhook.go", 17},
-		} {
-			t.Run(c.name, func(t *testing.T) {
-				file, line, ok := fileAt(two, c.at)
-				if file != "webhook.go" || line != 1 || !ok {
-					t.Errorf("fileAt(%d) = %q, %d, %v; want %q, 1, true", c.at, file, line, ok, "webhook.go")
-				}
-			})
-		}
-	})
-	// The first file is still itself: a cursor inside its hunk, or on its
-	// own furniture, must go on answering retry.go and not be pulled toward
-	// the second file that now follows it in the same diff.
-	t.Run("the first file is unaffected by a second file after it", func(t *testing.T) {
-		two := strings.Split(strings.TrimSuffix(twoFileDiff, "\n"), "\n")
-		if file, line, ok := fileAt(two, 9); file != "retry.go" || line != 32 || !ok {
-			t.Errorf("fileAt(9) = %q, %d, %v; want %q, 32, true", file, line, ok, "retry.go")
-		}
-	})
 }
 
 // TestOOpensTheEditorInTheWorktreeAndNeverRunsIt builds the command and

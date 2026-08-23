@@ -34,7 +34,13 @@ import (
 //
 // It is a var and not a const because gitrepo_test.go shrinks it to put a
 // fake git that never answers under test without the suite actually
-// waiting five real seconds to see the bound hit.
+// waiting five real seconds to see the bound hit. Nothing in production
+// writes it; the two tests that do save and restore it under t.Cleanup, and
+// that is safe for exactly one reason — internal/ui has no t.Parallel
+// anywhere in it, so no other test can be reading this while one of them
+// holds it. Whoever adds the first parallel test to this package is the
+// person that sentence is addressed to: it would be a real data race, since
+// the value is read on a Cmd goroutine.
 var gitDiffTimeout = 5 * time.Second
 
 // baseTimeout bounds boundedBaseOf's own wait. What it is waiting on is two
@@ -62,7 +68,7 @@ var errGitTimedOut = errors.New("git did not answer in time")
 // this did before the tab that draws it existed, shows the reader whatever
 // they happen to have uncommitted in their own checkout under the heading of
 // an agent's task.
-func diffOf(r Reader, t view.Task) tea.Cmd {
+func diffOf(r Reader, t view.Task, base baseRef) tea.Cmd {
 	return func() tea.Msg {
 		if r == nil {
 			return diffMsg{ID: t.ID, Err: errors.New("this window was opened without a way to find the worktree")}
@@ -74,11 +80,20 @@ func diffOf(r Reader, t view.Task) tea.Cmd {
 		if err != nil {
 			return diffMsg{ID: t.ID, Err: err}
 		}
-		out, noBase, err := gitDiff(dir, boundedBaseOf(t.RepoPath))
-		if err != nil {
-			return diffMsg{ID: t.ID, Tree: dir, Err: err}
+		if !base.known {
+			base = boundedBaseOf(t.RepoPath)
 		}
-		return diffMsg{ID: t.ID, Tree: dir, Text: out, NoBase: noBase}
+		out, noBase, err := gitDiff(dir, base.name)
+		if err != nil {
+			return diffMsg{ID: t.ID, Tree: dir, Err: err, Base: base}
+		}
+		// A base that never answered is not a repository without a base,
+		// and the strip may only say the second. gitDiff fell back either
+		// way — the diff on screen is the plain working tree and is true —
+		// but labelling it would be asserting something about the
+		// repository that this program timed out before observing, which is
+		// the rule the pending state upstairs exists to keep.
+		return diffMsg{ID: t.ID, Tree: dir, Text: out, NoBase: noBase && !base.timedOut, Base: base}
 	}
 }
 
@@ -93,11 +108,12 @@ func diffOf(r Reader, t view.Task) tea.Cmd {
 // that says the worktree itself is not there.
 //
 // The bool says whether the text is that plain fallback rather than the
-// comparison against base — true whenever base was empty, or the
-// merge-base diff itself failed or timed out. A reader cannot tell "there is
-// no committed work" from "there was nothing to compare the commits
-// against" by reading the diff's text alone; the tabStrip is what says
-// which, and this is where that answer starts.
+// comparison against base — true whenever base was empty, or the merge-base
+// diff itself failed. A timeout is not one of those: it returns above,
+// without a fallback and without a text, so the bool never speaks for it.
+// A reader cannot tell "there is no committed work" from "there was nothing
+// to compare the commits against" by reading the diff's text alone; the
+// tabStrip is what says which, and this is where that answer starts.
 func gitDiff(dir, base string) (string, bool, error) {
 	if base != "" {
 		out, err := runGitDiff(dir, "diff", "--merge-base", base)
@@ -148,6 +164,28 @@ func baseOf(repoPath string) string {
 	return r.Base
 }
 
+// baseRef is a base branch and whether anybody has been asked for it yet.
+//
+// It exists because the lookup is the expensive, uncancellable end of this
+// file — three git subprocesses through a helper that takes no context — and
+// the answer does not change between two ticks of a clock. So it is looked
+// up once, when the task view opens, and rides back on the diffMsg to the
+// Model, which hands it to every rescan that follows. The zero value is
+// "nobody has asked yet", which is the state openDetail starts a view in and
+// the only state that spends anything.
+type baseRef struct {
+	// name is the branch to measure against, or "" when there is none: a
+	// detached checkout, or a repository that could not be read at all.
+	name string
+	// known is whether the lookup has happened. False means ask.
+	known bool
+	// timedOut is whether the lookup gave up rather than answered. It is
+	// not the same fact as "there is no base branch", and diffOf keeps the
+	// two apart: the tab strip may say a repository has no base only when
+	// git actually said so.
+	timedOut bool
+}
+
 // boundedBaseOf is baseOf with a deadline of its own, and a soft one rather
 // than a killing one.
 //
@@ -159,19 +197,24 @@ func baseOf(repoPath string) string {
 // package this task did not otherwise touch — to bound a read this function
 // only ever uses to decide gitDiff's second argument. What is bounded here
 // instead is the wait, not the call: the real read keeps running on its own
-// goroutine regardless of the deadline, and this function returns "" the
-// moment baseTimeout passes, which is exactly what baseOf already returns
-// for a base it could not read at all. The disclosed cost is a leaked
-// goroutine on the rare repository slow enough to trip this — it outlives
-// the function and finishes, or does not, on its own — traded against not
-// widening a helper every other caller in internal/repo shares.
-func boundedBaseOf(repoPath string) string {
+// goroutine regardless of the deadline, and this function answers the moment
+// baseTimeout passes.
+//
+// The disclosed cost is that a repository whose git never returns leaves the
+// goroutine, and the git process under it, running until it does. What
+// bounds that is the caller, and only the caller: diffOf asks exactly once
+// per opened task view, because the answer it gets is carried on the diffMsg
+// and handed back to every rescan afterwards. One goroutine per time a
+// reader opens a diff on a hung repository is a leak that stops growing when
+// they stop opening it. Once per two-second tick — which is what this cost
+// before the base was carried — was not.
+func boundedBaseOf(repoPath string) baseRef {
 	got := make(chan string, 1)
 	go func() { got <- baseOf(repoPath) }()
 	select {
-	case base := <-got:
-		return base
+	case name := <-got:
+		return baseRef{name: name, known: true}
 	case <-time.After(baseTimeout):
-		return ""
+		return baseRef{known: true, timedOut: true}
 	}
 }

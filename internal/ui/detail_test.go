@@ -262,10 +262,21 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 			return m
 		},
 		msg: rescanMsg(fixtureNow),
-		want: func(t *testing.T, _ Model, cmd tea.Cmd) {
+		want: func(t *testing.T, m Model, cmd tea.Cmd) {
 			batch, ok := cmd().(tea.BatchMsg)
 			if !ok || len(batch) != 3 {
 				t.Fatalf("a rescan under the task view returned %d commands, want the rescan, the next rescan tick and the diff", len(batch))
+			}
+			// The count is not the assertion. The tickMsg case directly
+			// above the line under test appends logOf under an identical
+			// condition, so the likeliest wrong build here is a copy-paste
+			// that asks for the log a second time — and it counts three
+			// just as well. diffAsking is written by the branch that asks
+			// for a diff and by nothing else, so it is what tells the two
+			// apart. Running the commands would not: one of the three is
+			// the next rescan tick, and calling it sits for two seconds.
+			if !m.diffAsking {
+				t.Error("a rescan under the task view left no diff outstanding, so the third command was not a diff")
 			}
 		},
 	}}

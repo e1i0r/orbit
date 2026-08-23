@@ -65,10 +65,17 @@ type (
 	// is false — "there was a base" — on purpose: every diffMsg a test
 	// builds by hand and never sets the field means the ordinary case, and
 	// only a message from an actual fallback has to say otherwise.
+	// Base is the branch this diff was measured against, and whether it
+	// had been looked up when the diff was taken. It comes back so the
+	// Model can hold it: the lookup costs three git subprocesses through a
+	// helper that cannot be cancelled, and putting it on the rescan clock
+	// was paying that every two seconds for an answer that does not change
+	// while a view is open.
 	diffMsg struct {
 		ID, Text, Tree string
 		Err            error
 		NoBase         bool
+		Base           baseRef
 	}
 
 	// logMsg is one task's whole record, folded, or the reason there is

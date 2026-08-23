@@ -44,7 +44,18 @@ func (m Model) diffLines() []string {
 		return []string{" " + Paint(Dim).Render(p.T("diff.pending", "reading this task's worktree…"))}
 	}
 	if m.diffErr != nil {
-		return []string{" " + Paint(Bad).Render(m.diffErr.Error())}
+		// The one failure with words of this window's own is the bound
+		// being hit, and those words are said here, in the reader's
+		// language: errGitTimedOut is carried as a sentinel to be
+		// recognised rather than as a sentence to be passed on, because an
+		// errors.New in gitdiff.go cannot be translated and the pseudolocale
+		// golden cannot see it. Every other failure is git's own output,
+		// which is not this program's to translate, and is shown as it came.
+		said := m.diffErr.Error()
+		if errors.Is(m.diffErr, errGitTimedOut) {
+			said = p.T("diff.timed_out", "git did not answer in time")
+		}
+		return []string{" " + Paint(Bad).Render(said)}
 	}
 	text := strings.TrimSuffix(m.diff, "\n")
 	if strings.TrimSpace(text) == "" {
@@ -63,6 +74,10 @@ func (m Model) diffLines() []string {
 // The order of the tests is what makes it correct rather than nearly
 // correct: `+++ b/x` starts with a plus and is not an added line, and a file
 // header painted green is a header a reader reads as content.
+//
+// It reads one line knowing nothing of the ones above it, which fileAt
+// cannot afford and this can: a removed `-- comment` is dimmed rather than
+// reddened, which costs a colour and not a file.
 func diffRole(line string) Role {
 	switch {
 	case strings.HasPrefix(line, "+++"), strings.HasPrefix(line, "---"),
@@ -134,6 +149,25 @@ func (m Model) editorFor() (*exec.Cmd, error) {
 // fileAt is the file one line of a diff belongs to, and the line of that
 // file it lands on.
 //
+// It reads the diff forward from the top rather than upward from the
+// cursor, because what a line of a diff means is not in the line: it is in
+// what the lines above it opened. `--- a/x` is a file's old-side header when
+// it stands in the furniture between two files, and the very same characters
+// are an ordinary removed line — `-- add the index`, the comment syntax of
+// SQL, Lua, Haskell and Ada, carrying the minus every removed line carries —
+// when a hunk is open. `+++ ` leads the same double life on the added side:
+// `++ xs` is Haskell, rendered `+++ xs`. Deciding from the prefix alone,
+// which a walk upward from the cursor has to, reads a deleted comment as the
+// start of the next file and takes every line under it in the hunk with it.
+//
+// So the scan carries one bit — is a hunk open — and exactly two lines can
+// change it: `@@`, which opens one, and `diff --git `, which begins the next
+// file's furniture. Neither can be forged from inside a hunk, because every
+// line inside one is rendered with a space, a plus, a minus or a backslash
+// in front of it, and neither prefix begins with any of those four. Outside
+// a hunk there is no content to be confused with furniture. The distinction
+// is structural, not a claim about what source text can look like.
+//
 // The line is counted rather than parsed, because a hunk header only says
 // where the hunk begins. A removed line is not in the new file and does not
 // advance the count; a context line and an added line both do. Getting this
@@ -142,78 +176,91 @@ func (m Model) editorFor() (*exec.Cmd, error) {
 //
 // A line that is not inside a hunk still answers. Sitting on `diff --git` or
 // on `+++ b/x` and pressing the key means "open this file", and refusing
-// because there is no line number to be precise about would be refusing the
-// only thing the reader asked for; line 1 is the honest answer there.
+// because there is no line number to be precise about would refuse the only
+// thing the reader asked for; line 1 is the honest answer there, and
+// fileBelow is what finds the file that furniture is introducing.
 //
-// Walking up from the cursor, three things can be met first, and which one
-// is met decides everything: a file's own `+++` header answers directly; a
-// hunk header means the cursor is inside that hunk and the line has to be
-// counted from there; and a boundary line — `diff --git`, `index ` or
-// `--- ` — means the cursor is sitting in the furniture that introduces the
-// NEXT file, not inside the hunk of the file above it. In a diff of more
-// than one file, that boundary is met before the previous file's hunk
-// header is, and walking on through it to keep looking upward used to be
-// this function's bug: it would borrow the previous file's last hunk and
-// answer with a line counted for a file the cursor was never on. Stopping
-// at the boundary and handing off to fileBelow — which finds whichever
-// file's `+++` comes next — is what a boundary line answers with instead.
+// A file git is deleting is where that stops: its new side is `/dev/null`,
+// so there is nothing in the worktree to open and no line to open it at.
+// Answering with whichever file comes next — what furniture with no header
+// of its own otherwise falls through to — is the one answer this function
+// must never give, so it refuses for the whole of that file, its furniture
+// and its removed lines alike.
 func fileAt(lines []string, at int) (string, int, bool) {
 	if at < 0 || at >= len(lines) {
 		return "", 0, false
 	}
-	line, from, boundary := 1, at, false
-	for i := at; i >= 0; i-- {
-		if name, ok := fileHeader(lines[i]); ok {
-			return name, 1, true
+	var (
+		file   string // the file whose `+++` header the scan last passed
+		line   int    // the line of that file the scan is standing on
+		inHunk bool   // a `@@` has opened a hunk and nothing has closed it
+		gone   bool   // this file's new side is /dev/null: git is deleting it
+	)
+	for i := 0; i <= at; i++ {
+		s := lines[i]
+		if strings.HasPrefix(s, "diff --git ") {
+			// The next file's furniture begins here, and nothing above it
+			// says anything about anything below it.
+			file, line, inHunk, gone = "", 0, false, false
+			continue
 		}
-		if start, ok := hunkStart(lines[i]); ok {
-			line, from = start, i
-			break
+		if start, ok := hunkStart(s); ok {
+			inHunk, line = true, start
+			continue
 		}
-		if fileBoundary(lines[i]) {
-			boundary = true
-			break
+		if !inHunk {
+			// Furniture. The only part of it that matters here is the new
+			// side's header: the path it names, or the fact that git is
+			// naming /dev/null because the file is being deleted.
+			if name, ok := fileHeader(s); ok {
+				file, line, gone = name, 1, false
+			} else if strings.HasPrefix(s, "+++ ") {
+				gone = true
+			}
+			continue
+		}
+		// Content. The line the cursor is on is the one being asked about,
+		// so the count stops under it rather than passing over it.
+		if i < at && !strings.HasPrefix(s, "-") && !strings.HasPrefix(s, `\`) {
+			line++
 		}
 	}
-	if !boundary {
-		for i := from + 1; i < at; i++ {
-			if !strings.HasPrefix(lines[i], "-") && !strings.HasPrefix(lines[i], `\`) {
-				line++
-			}
-		}
-		for i := from; i >= 0; i-- {
-			if name, ok := fileHeader(lines[i]); ok {
-				return name, line, true
-			}
-		}
+	if gone {
+		return "", 0, false
 	}
-	// Either the walk never found a hunk above the cursor at all, or it met
-	// a boundary line before it found one — either way the file above the
-	// cursor is not the file to answer with, and the honest answer is
-	// whichever file's `+++` comes next, at its own first line.
-	return fileBelow(lines, at)
+	if file == "" {
+		// Furniture the scan met before its own file's header: whichever
+		// file's `+++` comes next is the file it is introducing.
+		return fileBelow(lines, at)
+	}
+	return file, line, true
 }
 
 // fileBelow is the file introduced by the next `+++` header at or after the
 // given line. It is what a cursor sitting in furniture that has not reached
 // its file's header yet answers with, and what fileAt hands off to once it
-// knows the file above the cursor is the wrong one to ask.
+// knows there is no file above the cursor to ask about.
+//
+// It stops on two things rather than reading to the end of the diff. A `@@`
+// means the furniture is behind it and every `+++` after it is somebody's
+// content — the same double life fileAt tracks a hunk for. And
+// `+++ /dev/null` is git deleting the file whose furniture the cursor is in:
+// reading past it would answer with whatever file happens to come next, at a
+// line the reader never asked about, which is the one answer this pair must
+// never give.
 func fileBelow(lines []string, at int) (string, int, bool) {
 	for i := at; i < len(lines); i++ {
+		if _, ok := hunkStart(lines[i]); ok {
+			return "", 0, false
+		}
 		if name, ok := fileHeader(lines[i]); ok {
 			return name, 1, true
 		}
+		if strings.HasPrefix(lines[i], "+++ ") {
+			return "", 0, false
+		}
 	}
 	return "", 0, false
-}
-
-// fileBoundary is a line that begins the furniture introducing a new file,
-// before that file's own `+++` header has been seen: `diff --git`, `index `,
-// or `--- `. Each of the three is unambiguous on sight — no hunk's content
-// line can start with any of them, because every content line is prefixed
-// with a space, a plus or a minus, and none of those three is any of them.
-func fileBoundary(s string) bool {
-	return strings.HasPrefix(s, "diff --git ") || strings.HasPrefix(s, "index ") || strings.HasPrefix(s, "--- ")
 }
 
 // fileHeader reads the new file's path out of a diff's `+++` line. The `b/`

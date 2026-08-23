@@ -22,10 +22,14 @@ func (m Model) openDetail(t view.Task) (Model, tea.Cmd) {
 	m.screen, m.detail, m.tab = screenDetail, t.ID, tabLog
 	m.entries, m.logErr, m.diff, m.following = nil, nil, "", true
 	m.diffErr, m.diffKnown, m.diffNoBase = nil, false, false
+	// The base is one of the things an open forgets: it belongs to the
+	// repository this task is in, and asking for it again is the one thing
+	// this window does per open rather than per tick.
+	m.diffBase, m.diffAsking = baseRef{}, true
 	for i := range m.panes {
 		m.panes[i] = viewport.New()
 	}
-	return m.syncPanes(), tea.Batch(logOf(m.opts.Reader, t), diffOf(m.opts.Reader, t))
+	return m.syncPanes(), tea.Batch(logOf(m.opts.Reader, t), diffOf(m.opts.Reader, t, m.diffBase))
 }
 
 // detailKey is the task view's map.

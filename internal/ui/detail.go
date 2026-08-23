@@ -118,7 +118,12 @@ func (m Model) tabStrip(w int) string {
 		parts = append(parts, Paint(Dim).Render(" "+n.text))
 	}
 	var right string
-	switch {
+	// The slot holds one fact, and on the diff tab of a repository with no
+	// base branch that fact displaces "attempt N". That is a deliberate
+	// trade and not an oversight: the attempt count is on screen on the
+	// other two tabs and in the record itself, while the shape of the
+	// comparison is only knowable here, and only while the diff is showing.
+	switch attempt := m.attempt(); {
 	case m.tab == tabDiff && m.diffKnown && m.diffErr == nil && m.diffNoBase:
 		// The comparison quietly changed shape: gitDiff had no base branch
 		// to measure against and fell back to a plain working-tree diff, so
@@ -126,8 +131,8 @@ func (m Model) tabStrip(w int) string {
 		// what is still uncommitted. Saying so here is cheaper than a
 		// reader assuming a base that was never actually used.
 		right = Paint(Dim).Render(p.T("diff.no_base", "no base branch"))
-	case m.attempt() > 0:
-		right = Paint(Dim).Render(p.T("log.attempt", "attempt {n}", about("n", strconv.Itoa(m.attempt()))))
+	case attempt > 0:
+		right = Paint(Dim).Render(p.T("log.attempt", "attempt {n}", about("n", strconv.Itoa(attempt))))
 	}
 	return spread(" "+strings.Join(parts, "  "), right, w)
 }

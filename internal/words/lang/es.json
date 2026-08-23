@@ -485,6 +485,10 @@
       "source": "no base branch",
       "value": "sin rama base"
     },
+    "diff.timed_out": {
+      "source": "git did not answer in time",
+      "value": "git no respondió a tiempo"
+    },
     "evidence.empty": {
       "source": "no phase of this task has run yet",
       "value": "todavía no se ha ejecutado ninguna fase de esta tarea"
