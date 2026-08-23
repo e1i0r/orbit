@@ -135,3 +135,59 @@ func TestReposTreatsARelativePathMarkerAsDamaged(t *testing.T) {
 		t.Fatalf("got %d repos from a relative-path marker, want 0 — it must not be returned as a RepoRef", len(got))
 	}
 }
+
+func TestReposSurvivesARealIOErrorPartwayThroughTheListing(t *testing.T) {
+	s, err := New(t.TempDir())
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	root := filepath.Join(s.Root(), "repos")
+
+	writeMarker := func(name, path string) {
+		dir := filepath.Join(root, name)
+		if err := os.MkdirAll(dir, 0o700); err != nil {
+			t.Fatalf("mkdir %s: %v", name, err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "repo"), []byte("path: "+path+"\n"), 0o600); err != nil {
+			t.Fatalf("write marker %s: %v", name, err)
+		}
+	}
+
+	// Directory names are chosen so os.ReadDir's lexical order puts the
+	// broken one in the middle: a-first, b-second (broken), c-third,
+	// d-fourth. This is the ordering the reviewer's reproduction used —
+	// repos sorted after a real I/O error must still come back.
+	writeMarker("a-first", "/tmp/first")
+
+	// A marker path that is itself a directory: os.ReadFile on it fails with
+	// a genuine I/O error, not os.ErrNotExist.
+	brokenMarker := filepath.Join(root, "b-second", "repo")
+	if err := os.MkdirAll(brokenMarker, 0o700); err != nil {
+		t.Fatalf("mkdir broken marker: %v", err)
+	}
+
+	writeMarker("c-third", "/tmp/third")
+	writeMarker("d-fourth", "/tmp/fourth")
+
+	got, err := s.Repos()
+	if err == nil {
+		t.Fatal("Repos: got nil error with an unreadable marker present, want a non-nil error naming it")
+	}
+	if !strings.Contains(err.Error(), brokenMarker) {
+		t.Errorf("error %q does not name the unreadable marker %q", err.Error(), brokenMarker)
+	}
+
+	byKey := map[string]string{}
+	for _, r := range got {
+		byKey[r.Key] = r.Path
+	}
+	if byKey["a-first"] != "/tmp/first" {
+		t.Errorf("the repo before the I/O failure is missing: got %+v", got)
+	}
+	if byKey["c-third"] != "/tmp/third" || byKey["d-fourth"] != "/tmp/fourth" {
+		t.Errorf("the repos sorted after the I/O failure did not survive: got %+v", got)
+	}
+	if len(got) != 3 {
+		t.Fatalf("got %d repos, want 3 — every readable, parseable marker must still come back", len(got))
+	}
+}

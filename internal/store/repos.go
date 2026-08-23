@@ -30,15 +30,20 @@ type RepoRef struct {
 // reported: a half-created directory is not an error this reader can do
 // anything about.
 //
-// A directory whose marker exists but will not parse — including one that
-// names a path that is not absolute — is a different thing from a missing
-// marker: it is damage, not a write still in flight, and it is actionable.
-// Repos never lets one damaged marker blank the rest of the list: every
-// repository it could read still comes back in the returned slice. But when
-// it meets a marker like that, the returned error is non-nil and names the
-// offending directory, joined with any others found the same way. A caller
-// that only wants the list can use the slice as-is; a caller that wants to
-// know whether something needs attention checks the error.
+// A directory whose marker exists but could not be turned into a RepoRef —
+// whether because reading it hit a real I/O error (permission denied, or the
+// marker path turning out to be a directory) or because it read fine but
+// would not parse, including one that names a path that is not absolute —
+// is a different thing from a missing marker: it is damage or a fault, not
+// a write still in flight, and it is actionable. Either way, Repos never
+// lets that one directory stop it from reading the rest: it always finishes
+// the whole listing, and the returned slice is always every repository
+// whose marker was readable and parseable, regardless of what else failed.
+// When something did fail, the returned error is non-nil and joins one
+// entry per failing directory, each naming the directory and what went
+// wrong. A caller that only wants the list can use the slice as-is; a
+// caller that wants to know whether something needs attention checks the
+// error.
 func (s *Store) Repos() ([]RepoRef, error) {
 	dir := filepath.Join(s.root, "repos")
 	entries, err := os.ReadDir(dir)
@@ -50,7 +55,7 @@ func (s *Store) Repos() ([]RepoRef, error) {
 	}
 
 	var repos []RepoRef
-	var damaged []error
+	var failed []error
 	for _, entry := range entries {
 		if !entry.IsDir() {
 			continue
@@ -61,16 +66,17 @@ func (s *Store) Repos() ([]RepoRef, error) {
 			continue
 		}
 		if err != nil {
-			return repos, fmt.Errorf("read %q: %w", marker, err)
+			failed = append(failed, fmt.Errorf("read %q: %w", marker, err))
+			continue
 		}
 		path, ok := parseRepoMarker(string(body))
 		if !ok {
-			damaged = append(damaged, fmt.Errorf("repo marker %q is damaged", marker))
+			failed = append(failed, fmt.Errorf("repo marker %q is damaged", marker))
 			continue
 		}
 		repos = append(repos, RepoRef{Key: entry.Name(), Path: path})
 	}
-	return repos, errors.Join(damaged...)
+	return repos, errors.Join(failed...)
 }
 
 // parseRepoMarker reads back what createRepoDir wrote: "path: /abs/path\n".
