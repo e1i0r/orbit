@@ -1,8 +1,9 @@
 package board
 
 // What the board says about the whole state root: how many repositories are
-// in it, how many tasks are in each band, and what happens to the rest of it
-// when one repository is damaged. The polling itself is refresh_test.go.
+// in it, how many tasks are in each band, which of the finished ones nobody
+// has looked at, and what happens to the rest of it when one repository is
+// damaged. The polling itself is refresh_test.go.
 
 import (
 	"os"
@@ -201,4 +202,46 @@ func TestRefreshAndRescanMayRunTogether(t *testing.T) {
 		}()
 	}
 	wg.Wait()
+}
+
+// TestUnreadCountsOnlyFinishedWorkNobodyHasLookedAt walks the four bands and
+// the two exemptions. The rows are built by hand, which is exactly what
+// view.BandOf's exported field is for.
+func TestUnreadCountsOnlyFinishedWorkNobodyHasLookedAt(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		tasks []view.Task
+		want  int
+	}{
+		{"an empty board", nil, 0},
+		{"one finished task nobody read", []view.Task{{Band: view.Done}}, 1},
+		{"one finished task somebody read", []view.Task{{Band: view.Done, Read: true}}, 0},
+		{
+			"a cancelled run is not homework",
+			[]view.Task{{Band: view.Done, Reason: view.Reason{Key: view.ReasonCancelled}}},
+			0,
+		},
+		{
+			"a failure is already in front of the reader",
+			[]view.Task{{Band: view.NeedsYou, Reason: view.Reason{Key: view.ReasonFailed}}},
+			0,
+		},
+		{"nothing has run yet", []view.Task{{Band: view.ToDo}, {Band: view.Running}}, 0},
+		{
+			"three finished and one of them read",
+			[]view.Task{
+				{Band: view.Done},
+				{Band: view.Done, Read: true},
+				{Band: view.Done},
+				{Band: view.Done, Reason: view.Reason{Key: view.ReasonCancelled}},
+			},
+			2,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := Unread(Board{Tasks: tc.tasks}); got != tc.want {
+				t.Errorf("Unread is %d, want %d", got, tc.want)
+			}
+		})
+	}
 }

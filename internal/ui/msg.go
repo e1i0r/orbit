@@ -15,6 +15,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"strings"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -190,9 +191,9 @@ func rescan(r *board.Reader) tea.Cmd {
 // control writes one word through the port and reports what it said.
 //
 // The error is passed on exactly as it arrived. The temptation these
-// gestures have, and the one v1's window did not, is that they are Go
-// functions returning error rather than shell exit codes — so interpreting
-// the failure looks free. It is not: an interpretation is a second copy of
+// gestures have, and the one the window in the program this replaces did
+// not, is that they are Go functions returning error rather than shell exit
+// codes — so interpreting the failure looks free. It is not: an interpretation is a second copy of
 // the command's rules, and the two copies disagree the first time the
 // command changes its mind.
 func control(port func(view.Task, string) error, t view.Task, word string) tea.Cmd {
@@ -219,7 +220,12 @@ func diffOf(t view.Task) tea.Cmd {
 		}
 		out, err := exec.Command("git", "-C", t.RepoPath, "diff").CombinedOutput()
 		if err != nil {
-			return diffMsg{ID: t.ID, Err: fmt.Errorf("git diff in %s: %w", t.RepoPath, err)}
+			// CombinedOutput is what git said; err is only "exit status
+			// 128". Dropping the bytes turns "not a git repository" into a
+			// number the reader has to go and look up somewhere else, so
+			// they go in the message and err stays wrapped underneath.
+			return diffMsg{ID: t.ID, Err: fmt.Errorf("git diff in %s: %w: %s",
+				t.RepoPath, err, strings.TrimSpace(string(out)))}
 		}
 		return diffMsg{ID: t.ID, Text: string(out)}
 	}

@@ -2,11 +2,11 @@ package ui
 
 // The root model: what one window remembers, the messages that change it,
 // and the keystrokes that raise those messages. What it draws is in
-// header.go, rows.go and screen.go; what it can be asked for is in msg.go.
+// header.go, band.go, rows.go, cells.go and screen.go; what it can be asked
+// for is in msg.go.
 
 import (
 	"errors"
-	"strconv"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -164,7 +164,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	case diffMsg:
-		m.detail, m.diff = msg.ID, msg.Text
+		// A diff that arrives for a task the reader has since left is
+		// stale, and dropping it is the whole guard: openKey has already
+		// pointed m.detail at the new id and asked git about that one, so
+		// writing this text in would put one task's changes under another
+		// task's heading and nothing on screen would say so.
+		if msg.ID != m.detail {
+			return m, nil
+		}
+		m.diff = msg.Text
 		if msg.Err != nil {
 			m.diff = msg.Err.Error()
 		}
@@ -248,24 +256,6 @@ func (m Model) say(text string) Model {
 	}
 	m.message, m.messageAt = text, m.now
 	return m
-}
-
-// controlSaid is what the band says about a word that was written.
-func (m Model) controlSaid(msg controlMsg) string {
-	if msg.Err != nil {
-		return msg.Err.Error()
-	}
-	return m.opts.Words.T("msg.control_sent", "asked {id} to {word}",
-		about("id", msg.ID), about("word", msg.Word))
-}
-
-// startedSaid is what the band says about a run that began.
-func (m Model) startedSaid(msg startedMsg) string {
-	if msg.Err != nil {
-		return msg.Err.Error()
-	}
-	return m.opts.Words.T("msg.started", "{id} is running, as process {pid}",
-		about("id", msg.ID), about("pid", strconv.Itoa(msg.Pid)))
 }
 
 // language rewrites the language, and everything built from it. The key map

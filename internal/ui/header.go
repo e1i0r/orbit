@@ -1,9 +1,9 @@
 package ui
 
-// The window's furniture: the rule, the header line, the activity band and
-// the key bar. None of these is a list of tasks, and every one of them is a
-// pure function of the width it is given and the model it is called on —
-// nothing here asks the terminal anything.
+// The window's furniture: the rule, the header line and the key bar. None of
+// these is a list of tasks, and every one of them is a pure function of the
+// width it is given and the model it is called on — nothing here asks the
+// terminal anything. The fourth region, the activity band, is in band.go.
 
 import (
 	"strconv"
@@ -13,7 +13,6 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/board"
-	"github.com/e1i0r/orbit/internal/view"
 )
 
 const (
@@ -62,140 +61,93 @@ func (m Model) rule(w int) string {
 // headerLine is the program, the folder it was opened on, and the three
 // standing facts.
 //
-// The right-hand fields are dropped from the right when the terminal cannot
-// hold them all, which is why they are ordered least important last: the
-// repository count is a number a reader can get elsewhere, and the unread
-// pair is the brake that stops tasks from starting. Losing the brake to fit
-// a count would be losing the one field on this line that changes what
+// Two things are given up as the terminal narrows, and the order they go in
+// is the whole decision. The root path goes first, from the front, because a
+// reader who opened the folder knows which folder it is and the tail of a
+// path says more than its head. Then the right-hand fields go from the
+// right, which is why headerFields puts them in the order it does: a
+// repository count is a number a reader can get elsewhere, the pip is a
+// setting they just changed themselves, and the unread pair is the brake
+// that stops tasks from starting. Losing the brake to fit either of the
+// other two would be losing the one field on this line that changes what
 // happens next.
 func (m Model) headerLine(w int) string {
-	left := " " + Paint(Accent).Render("orbit") + "  " + Paint(Dim).Render(m.opts.Root)
 	fields := m.headerFields()
 	for {
 		right := strings.Join(fields, headerGap)
-		gap := w - lipgloss.Width(left) - lipgloss.Width(right)
-		if gap >= 1 {
-			return left + strings.Repeat(" ", gap) + right
+		if line, ok := m.headerLeft(w-lipgloss.Width(right), right != ""); ok {
+			gap := w - lipgloss.Width(line) - lipgloss.Width(right)
+			return line + strings.Repeat(" ", gap) + right
 		}
 		if len(fields) == 0 {
-			return fit(left, w)
+			return fit(m.name(), w)
 		}
 		fields = fields[:len(fields)-1]
 	}
 }
 
-// headerFields are the standing facts, most important first.
+// headerLeft is the program and the folder, shortened from the front of the
+// path until both fit in the cells the fields left over, or refused when
+// even the program's own name and a bare root will not.
+//
+// The path is cut at the front and marked with an ellipsis, which is the
+// opposite of what fit does everywhere else in this file and is right here
+// for one reason: the last two segments of a path identify it and the first
+// two rarely do.
+func (m Model) headerLeft(w int, spaced bool) (string, bool) {
+	if spaced {
+		w--
+	}
+	name := m.name()
+	for root := m.opts.Root; ; {
+		line := name
+		if root != "" {
+			line = name + "  " + Paint(Dim).Render(root)
+		}
+		if lipgloss.Width(line) <= w {
+			return line, true
+		}
+		if root == "" {
+			return "", false
+		}
+		root = shorten(root)
+	}
+}
+
+// name is the program's own name, which is never given up: a window that
+// cannot say what it is, is worse than a window showing less.
+func (m Model) name() string { return " " + Paint(Accent).Render("orbit") }
+
+// shorten drops one leading path segment and marks the cut, and returns ""
+// once there is nothing left worth showing.
+func shorten(root string) string {
+	trimmed := strings.TrimPrefix(root, "…/")
+	if i := strings.IndexByte(trimmed, '/'); i >= 0 && trimmed[i+1:] != "" {
+		return "…/" + trimmed[i+1:]
+	}
+	return ""
+}
+
+// headerFields are the standing facts, in the order they are given up
+// backwards: unread is never dropped while any field is shown, the pip goes
+// before it, and the repository count goes first.
 func (m Model) headerFields() []string {
 	p := m.opts.Words
 	unread, limit := board.Unread(m.board), m.unreadCap()
-
-	pip, role := pipOff, Dim
-	if m.autopilotOn() {
-		pip, role = pipOn, Live
-	}
-	autopilot := Paint(Dim).Render(p.T("header.autopilot", "autopilot")) + " " + Paint(role).Render(pip)
 
 	brake := Dim
 	if limit > 0 && unread >= limit {
 		brake = Warn
 	}
-	fields := []string{autopilot, Paint(brake).Render(p.T("header.unread", "unread {n}/{cap}",
+	fields := []string{Paint(brake).Render(p.T("header.unread", "unread {n}/{cap}",
 		about("n", strconv.Itoa(unread)), about("cap", strconv.Itoa(limit))))}
+
+	pip, role := pipOff, Dim
+	if m.autopilotOn() {
+		pip, role = pipOn, Live
+	}
+	fields = append(fields, Paint(Dim).Render(p.T("header.autopilot", "autopilot"))+" "+Paint(role).Render(pip))
 	return append(fields, Paint(Dim).Render(p.P("header.repos", m.board.Repos, "{n} repo", "{n} repos")))
-}
-
-// bandLine is the activity band, and it never comes back empty.
-//
-// The order is what makes that true: a message owns it while it is fresh,
-// then whatever is running owns it, and when nothing runs it says so. A
-// status area that goes blank reads as broken — that is the single most
-// valuable thing the program this replaces taught, because that is exactly
-// how it read to the person who reported it.
-func (m Model) bandLine(w int) string {
-	switch {
-	case m.filtering:
-		return fit(" "+m.filterLine(), w)
-	case m.confirm == confirmCancel:
-		return fit(" "+Paint(Warn).Render(m.opts.Words.T("msg.confirm_cancel",
-			"cancel {id}? press y to confirm, anything else to leave it running",
-			about("id", m.confirmID))), w)
-	case m.message != "" && m.now.Sub(m.messageAt) < messageLife:
-		return fit(" "+Paint(Accent).Render(m.message), w)
-	}
-	for _, t := range m.board.Tasks {
-		if view.BandOf(t) == view.Running {
-			return fit(" "+m.runningLine(t), w)
-		}
-	}
-	return fit(" "+Paint(Dim).Render(m.idleLine()), w)
-}
-
-// filterLine is what is being typed, and how much of the board it is
-// hiding. Saying the second half is the rule the plan states as "say it when
-// you show less than you have": a filter is the one thing on this screen
-// that can hide a task the reader is certain they wrote.
-func (m Model) filterLine() string {
-	p := m.opts.Words
-	typed := m.filter
-	if typed == "" {
-		typed = Paint(Dim).Render(p.T("filter.placeholder", "repository, id or title"))
-	}
-	shown := 0
-	for _, r := range m.rows() {
-		if !r.head && !r.blank {
-			shown++
-		}
-	}
-	return Paint(Accent).Render("/"+typed) + dot + Paint(Dim).Render(p.T("band.shown", "{n} of {total} shown",
-		about("n", strconv.Itoa(shown)), about("total", strconv.Itoa(len(m.board.Tasks)))))
-}
-
-// runningLine names the one task a process is holding right now.
-//
-// It is the first Running task in the board's order and not the one under
-// the cursor: the band answers "what is happening", which is a question
-// about the machine, and the row answers "what am I looking at". The record
-// cannot yet say more than the phase and how long it has been in it — there
-// are no per-tool events — so the band says that and stops rather than
-// guessing at what the engine is doing.
-func (m Model) runningLine(t view.Task) string {
-	p := m.opts.Words
-	pieces := []string{Paint(Accent).Render(t.ID), Paint(Live).Render(m.phaseWord(t))}
-	if age := elapsed(m.now, t.Since); age != "" {
-		pieces = append(pieces, p.T("band.elapsed", "{d} in", about("d", age)))
-	}
-	if engine := engineAndModel(t); engine != "" {
-		pieces = append(pieces, engine)
-	}
-	if t.Flow != "" {
-		pieces = append(pieces, t.Flow)
-	}
-	return strings.Join(pieces, dot)
-}
-
-// engineAndModel is which engine ran the phase and on which model, as one
-// field. Neither word is translated: they are names the record carries.
-func engineAndModel(t view.Task) string {
-	switch {
-	case t.Engine != "" && t.Model != "":
-		return t.Engine + "/" + t.Model
-	case t.Engine != "":
-		return t.Engine
-	}
-	return t.Model
-}
-
-// idleLine is what the band says when nothing is running, and it says what
-// there is instead rather than only what there is not.
-func (m Model) idleLine() string {
-	p := m.opts.Words
-	nothing := p.T("band.nothing_running", "nothing is running")
-	todo := m.board.Counts[view.ToDo]
-	if todo == 0 {
-		return nothing + dot + p.T("band.nothing_todo", "nothing to do")
-	}
-	return nothing + dot + p.P("band.todo", todo, "{n} to do", "{n} to do") +
-		dot + p.T("band.write_one", "press n to write one")
 }
 
 // barLine is what can be pressed right now.

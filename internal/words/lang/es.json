@@ -183,11 +183,15 @@
     },
     "band.unread_cap": {
       "source": "unread cap reached · {n} of {cap}",
-      "value": "límite de sin leer alcanzado · {n} de {cap}"
+      "value": "se alcanzó el límite de tareas sin leer · {n} de {cap}"
     },
     "band.shown": {
       "source": "{n} of {total} shown",
       "value": "se ven {n} de {total}"
+    },
+    "band.filter_clear": {
+      "source": "{key} clears it",
+      "value": "{key} lo quita"
     },
     "band.elapsed": {
       "source": "{d} in",
@@ -280,6 +284,22 @@
     "msg.control_sent": {
       "source": "asked {id} to {word}",
       "value": "se le pidió a {id} que {word}"
+    },
+    "msg.asked_pause": {
+      "source": "asked {id} to pause",
+      "value": "se pidió pausar {id}"
+    },
+    "msg.asked_resume": {
+      "source": "asked {id} to resume",
+      "value": "se pidió reanudar {id}"
+    },
+    "msg.asked_continue": {
+      "source": "asked {id} to continue",
+      "value": "se pidió continuar {id}"
+    },
+    "msg.asked_cancel": {
+      "source": "asked {id} to cancel",
+      "value": "se pidió cancelar {id}"
     },
     "msg.started": {
       "source": "{id} is running, as process {pid}",

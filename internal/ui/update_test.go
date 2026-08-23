@@ -3,11 +3,10 @@ package ui
 // update_test.go is the transition table from the plan, walked row by row.
 //
 // The table is the specification of Update: each row names a key or a
-// message, the precondition it arrives under, and what must be true
-// afterwards. A wrong row is visible as a wrong row; a wrong case in a
-// ninety-line switch is invisible. Every Cmd asserted on is either left
-// unexecuted or has a port this test supplied as its whole body, so walking
-// the table opens no terminal and starts nothing.
+// message, the precondition it arrives under, and what must be true after.
+// A wrong row is visible as a wrong row; a wrong case in a ninety-line
+// switch is invisible. Every Cmd asserted on is left unexecuted or has a
+// port supplied by this test, so walking the table opens and starts nothing.
 
 import (
 	"errors"
@@ -58,13 +57,9 @@ func TestTheTransitionTable(t *testing.T) {
 			}
 		},
 	}, {
-		name: "a boardMsg that loses the cursor's task clamps the cursor",
-		start: func(t *testing.T) Model {
-			m, _ := testModel(t, 100, 30)
-			m.cursor = len(m.rows()) - 1
-			return m
-		},
-		msg: boardMsg{Board: fixtureBoard(fixtureTasks()[:3], 4)},
+		name:  "a boardMsg that loses the cursor's task clamps the cursor",
+		start: lastRow,
+		msg:   boardMsg{Board: fixtureBoard(fixtureTasks()[:3], 4)},
 		want: func(t *testing.T, m Model, _ tea.Cmd) {
 			if m.cursor >= len(m.rows()) {
 				t.Errorf("cursor is %d of %d rows, want it clamped onto the list", m.cursor, len(m.rows()))
@@ -92,13 +87,9 @@ func TestTheTransitionTable(t *testing.T) {
 			}
 		},
 	}, {
-		name: "down on the last row does nothing, and does not wrap",
-		start: func(t *testing.T) Model {
-			m, _ := testModel(t, 100, 30)
-			m.cursor = len(m.rows()) - 1
-			return m
-		},
-		msg: press("j"),
+		name:  "down on the last row does nothing, and does not wrap",
+		start: lastRow,
+		msg:   press("j"),
 		want: func(t *testing.T, m Model, cmd tea.Cmd) {
 			if m.cursor != len(m.rows())-1 || cmd != nil {
 				t.Errorf("cursor is %d of %d and cmd=%v, want it held on the last row", m.cursor, len(m.rows()), cmd != nil)
@@ -113,6 +104,11 @@ func TestTheTransitionTable(t *testing.T) {
 				t.Errorf("screen=%v cmd=%v, want the task view and a diff command", m.screen, cmd != nil)
 			}
 		},
+	}, {
+		name:  "a diff for a task the reader has already left is dropped",
+		start: func(t *testing.T) Model { return openOn(t, "ACME-2701") },
+		msg:   diffMsg{ID: "ACME-2662", Text: "diff --git a/webhook.go b/webhook.go"},
+		want:  func(t *testing.T, m Model, _ tea.Cmd) { wantNoPane(t, m) },
 	}, {
 		name:  "enter on a collapsed band opens it in place",
 		start: func(t *testing.T) Model { m, _ := testModel(t, 100, 30); return at(t, m, view.Done, true) },
@@ -159,8 +155,9 @@ func TestTheTransitionTable(t *testing.T) {
 		start: func(t *testing.T) Model { m, _ := testModel(t, 100, 30); return m },
 		msg:   press("A"),
 		want: func(t *testing.T, m Model, _ tea.Cmd) {
-			if m.opts.Settings.Autopilot() || m.message == "" {
-				t.Errorf("autopilot=%v message=%q, want it off and said out loud", m.opts.Settings.Autopilot(), m.message)
+			off := words.For("en").T("msg.autopilot_off", "autopilot is off: every phase stops for you")
+			if m.opts.Settings.Autopilot() || m.message != off {
+				t.Errorf("autopilot=%v message=%q, want it off and %q", m.opts.Settings.Autopilot(), m.message, off)
 			}
 		},
 	}, {
@@ -232,8 +229,9 @@ func TestTheTransitionTable(t *testing.T) {
 // TestEveryMessageSaysSomething is the plan's one-screen question: does
 // every message this program has reach a case in Update? It is asked by
 // handing Update one of each and requiring an effect — a sentence in the
-// band, a diff in the pane, a language changed. A message with no case
-// reaches the default and changes nothing, which this table refuses.
+// band, a diff in the pane, a language changed. The task view is open
+// because a diff is only taken for the task it is open on; a message with
+// no case reaches the default and changes nothing, which this table refuses.
 func TestEveryMessageSaysSomething(t *testing.T) {
 	sent := errors.New("the runner is not listening")
 	cases := []struct {
@@ -263,11 +261,7 @@ func TestEveryMessageSaysSomething(t *testing.T) {
 	}, {
 		name: "a diff that arrived",
 		msg:  diffMsg{ID: "ACME-2662", Text: "diff --git a/webhook.go b/webhook.go"},
-		want: func(t *testing.T, m Model, _ tea.Cmd) {
-			if m.diff == "" {
-				t.Error("the diff pane is empty after a diffMsg carrying one")
-			}
-		},
+		want: func(t *testing.T, m Model, _ tea.Cmd) { wantPane(t, m, "diff --git") },
 	}, {
 		name: "a language the reader chose",
 		msg:  languageMsg{Lang: "es"},
@@ -288,7 +282,7 @@ func TestEveryMessageSaysSomething(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			m, _ := testModel(t, 100, 30)
+			m := openOn(t, "ACME-2662")
 			next, cmd := m.Update(c.msg)
 			after, ok := next.(Model)
 			if !ok {

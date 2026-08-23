@@ -6,7 +6,8 @@ package ui
 // A row here is a line of the body and not a task: the band headers and the
 // blank line between two bands are rows too. That is what makes the cursor
 // one index into one list — the alternative, a band index and a row index
-// inside it, is two numbers that have to agree, and v1's did not.
+// inside it, is two numbers that have to agree, and in the program this
+// replaces they did not.
 
 import (
 	"strings"

@@ -127,6 +127,29 @@ func testModel(t *testing.T, w, h int) (Model, *recorder) {
 	return m, got
 }
 
+// lastRow is the fixture window with the cursor on the final row of the
+// body, which is the precondition two rows of the transition table share:
+// the one that walks off the bottom and the one whose list shrinks under it.
+func lastRow(t *testing.T) Model {
+	t.Helper()
+	m, _ := testModel(t, 100, 30)
+	m.cursor = len(m.rows()) - 1
+	return m
+}
+
+// openOn is the same window with the task view already open on one id.
+//
+// A diff is only taken for the task the pane is open on — a late answer for
+// a task the reader has left would otherwise land under another task's
+// heading — so a test that hands Update a diffMsg has to be in this state
+// before the message means anything at all.
+func openOn(t *testing.T, id string) Model {
+	t.Helper()
+	m, _ := testModel(t, 100, 30)
+	m.screen, m.detail = screenDetail, id
+	return m
+}
+
 // modelWith is the same window in whatever language and over whatever board
 // a caller names. Every Options field the window has is filled here, so a
 // field added without a decision about what a test should pass shows up as a
@@ -187,6 +210,24 @@ func at(t *testing.T, m Model, b view.Band, head bool) Model {
 	}
 	t.Fatalf("no %v row in the body", b)
 	return m
+}
+
+// wantPane fails unless the task view's diff contains want, which is how a
+// message that lands in the pane rather than in the band is checked.
+func wantPane(t *testing.T, m Model, want string) {
+	t.Helper()
+	if !strings.Contains(m.diff, want) {
+		t.Errorf("the diff pane says %q, want it to mention %q", m.diff, want)
+	}
+}
+
+// wantNoPane fails unless the task view's diff is empty, which is what a
+// diff the window was right to drop leaves behind.
+func wantNoPane(t *testing.T, m Model) {
+	t.Helper()
+	if m.diff != "" {
+		t.Errorf("the diff pane says %q, want it left alone", m.diff)
+	}
 }
 
 // wantBand fails unless the activity band is saying something that contains
