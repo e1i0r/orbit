@@ -48,4 +48,16 @@ type Result struct {
 type Engine interface {
 	Name() string
 	Run(ctx context.Context, req Request) (Result, error)
+
+	// CanResume is whether this engine can carry on a session it started
+	// before, which is the difference the package comment above says
+	// belongs on the screen rather than behind a shim.
+	//
+	// It is a method and not a field on Request because it is a fact about
+	// the program, not about one phase, and because the window has to be
+	// able to ask it before there is a request at all: the gesture that
+	// takes the keyboard is offered or greyed out by this answer, and a
+	// greyed-out key that says why is the whole of what an honest
+	// difference between two engines looks like.
+	CanResume() bool
 }

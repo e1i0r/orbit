@@ -25,18 +25,20 @@ import (
 // says which key it is, and that sentence is translated.
 const confirmYes = "y"
 
-// key routes one keystroke to whichever of the window's four modes has it.
+// key routes one keystroke to whichever of the window's five modes has it.
 //
 // The order is the order things are on top of each other: a filter being
 // typed swallows every letter, a question waiting for an answer takes the
-// next key whatever it is, and the task view has its own small map. Only
-// what is left reaches the list.
+// next key whatever it is, and the two screens below the board have their own
+// small maps. Only what is left reaches the list.
 func (m Model) key(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
 	case m.filtering:
 		return m.filterKey(msg)
 	case m.confirm != confirmNone:
 		return m.confirmKey(msg)
+	case m.screen == screenStart:
+		return m.startKey(msg)
 	case m.screen == screenDetail:
 		return m.detailKey(msg)
 	}
@@ -74,11 +76,21 @@ func (m Model) listKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case key.Matches(msg, m.keys.Resume):
 		return m.verb(m.keys.Resume, "resume")
 	case key.Matches(msg, m.keys.Hand):
-		return m.verb(m.keys.Hand, "continue")
+		return m.handBack()
 	case key.Matches(msg, m.keys.Cancel):
 		return m.ask()
-	case key.Matches(msg, m.keys.New):
-		return m.notBuilt(m.keys.New), nil
+	case key.Matches(msg, m.keys.Take):
+		return m.takeKey()
+	case key.Matches(msg, m.keys.MarkRead):
+		return m.markReadKey()
+	case key.Matches(msg, m.keys.Ask):
+		// The one verb that is only ever its own reason. Orbit cannot put a
+		// question to an engine yet, so gesture refuses it and says so, and
+		// nothing here pretends otherwise with a stub.
+		_, next, _ := m.gesture(m.keys.Ask)
+		return next, nil
+	case key.Matches(msg, m.keys.Start):
+		return m.openStart()
 	case key.Matches(msg, m.keys.Help):
 		return m.notBuilt(m.keys.Help), nil
 	case key.Matches(msg, m.keys.Quit):
@@ -154,25 +166,14 @@ func (m Model) open() (tea.Model, tea.Cmd) {
 	return m.openDetail(r.task)
 }
 
-// verb asks the command behind one key to write one word.
-//
-// The refusal is the affordance's own sentence, said verbatim. This is the
-// place the window is most tempted to have an opinion — it knows the task,
-// it knows the rule, it could phrase it better — and the rule it knows is a
-// copy of the one internal/task enforces, which is the copy that goes stale.
-func (m Model) verb(b key.Binding, word string) (tea.Model, tea.Cmd) {
-	r, ok := m.selected()
-	if !ok || r.head {
-		return m, nil
-	}
-	a, ok := m.affordance(r.task, b)
+// verb asks the command behind one key to write one word. Whether the key is
+// allowed at all is gesture's answer, in gesture.go.
+func (m Model) verb(b key.Binding, word string) (Model, tea.Cmd) {
+	t, next, ok := m.gesture(b)
 	if !ok {
-		return m, nil
+		return next, nil
 	}
-	if !a.OK {
-		return m.say(a.Why(m.opts.Words)), nil
-	}
-	return m, control(m.opts.Control, r.task, word)
+	return next, control(next.opts.Control, t, word)
 }
 
 // ask opens the confirm in front of a cancel.
@@ -181,19 +182,12 @@ func (m Model) verb(b key.Binding, word string) (tea.Model, tea.Cmd) {
 // something else — a run that was ended did not keep going — so it is the
 // one that asks first.
 func (m Model) ask() (tea.Model, tea.Cmd) {
-	r, ok := m.selected()
-	if !ok || r.head {
-		return m, nil
-	}
-	a, ok := m.affordance(r.task, m.keys.Cancel)
+	t, next, ok := m.gesture(m.keys.Cancel)
 	if !ok {
-		return m, nil
+		return next, nil
 	}
-	if !a.OK {
-		return m.say(a.Why(m.opts.Words)), nil
-	}
-	m.confirm, m.confirmID = confirmCancel, r.task.ID
-	return m, nil
+	next.confirm, next.confirmID = confirmCancel, t.ID
+	return next, nil
 }
 
 // autopilot flips the standing switch and says which way it went.
@@ -215,21 +209,29 @@ func (m Model) autopilot() Model {
 	return m.say(m.opts.Words.T("msg.autopilot_off", "autopilot is off: every phase stops for you"))
 }
 
-// notBuilt answers a key the bar offers and this task does not implement.
+// notBuilt answers a key the bar offers and this window does not implement.
 //
-// Two keys are in that state — the start dialog and the help overlay are the
-// next task — and the bar shows them because the screen this window is
-// specified as shows them. Saying so is the honest half of that: a key that
-// silently does nothing is indistinguishable from a key that is broken, and
-// this sentence is one commit long.
+// One key is in that state — the help overlay is the next task — and the bar
+// shows it because the screen this window is specified as shows it. Saying so
+// is the honest half of that: a key that silently does nothing is
+// indistinguishable from a key that is broken, and this sentence is one
+// commit long.
 func (m Model) notBuilt(b key.Binding) Model {
 	return m.say(m.opts.Words.T("msg.not_built", "{key} is not wired up yet; this window is still being built",
 		about("key", b.Help().Key)))
 }
 
-// conditions is the standing state the verbs are asked about.
-func (m Model) conditions() Conditions {
-	return Conditions{Autopilot: m.autopilotOn(), CanResume: m.opts.CanResume}
+// conditions is the standing state the verbs are asked about, for one task.
+//
+// It takes the task because one of the three answers is about a particular
+// one: whether this window handed the terminal to an engine for it. The other
+// two are about the whole program.
+func (m Model) conditions(t view.Task) Conditions {
+	return Conditions{
+		Autopilot: m.autopilotOn(),
+		CanResume: m.opts.CanResume,
+		Taken:     m.taken[t.ID],
+	}
 }
 
 // autopilotOn reads the switch, and answers for a window opened without a
@@ -239,7 +241,8 @@ func (m Model) autopilotOn() bool {
 }
 
 // unreadCap is how many unread finished tasks may stand before nothing new
-// starts, and zero when there is no settings file to ask.
+// starts, and zero when there is no settings file to ask. Whether the brake
+// is actually on is atUnreadCap, beside the refusal it produces.
 func (m Model) unreadCap() int {
 	if m.opts.Settings == nil {
 		return 0
@@ -251,7 +254,7 @@ func (m Model) unreadCap() int {
 // prints. The glyph is the same in every language, which is what lets this
 // match a binding the key map may have rebuilt since.
 func (m Model) affordance(t view.Task, b key.Binding) (Affordance, bool) {
-	for _, a := range m.keys.Affordances(t, m.conditions()) {
+	for _, a := range m.keys.Affordances(t, m.conditions(t)) {
 		if a.Key.Help().Key == b.Help().Key {
 			return a, true
 		}

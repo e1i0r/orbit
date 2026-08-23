@@ -24,7 +24,8 @@ import (
 type Keys struct {
 	Up, Down, First, Last, PageUp, PageDown key.Binding
 	Open, Back, NextTab, PrevTab, Sideways  key.Binding
-	New, Pause, Resume, Cancel              key.Binding
+	Start, Run, ChangeFlow                  key.Binding
+	Pause, Resume, Cancel                   key.Binding
 	Take, Hand, Ask, MarkRead, Edit         key.Binding
 	Filter, Autopilot, Language, Help, Quit key.Binding
 }
@@ -67,7 +68,17 @@ func NewKeys(p *words.Printer) Keys {
 		// overlay have always printed for going back.
 		Sideways: binding("←→", p.T("key.sideways", "scroll sideways"), "left", "right"),
 
-		New:    binding("n", p.T("key.new", "new"), "n"),
+		// Start opens the dialog that decides what a run will be; it does
+		// not write a task. Writing one is `orbit new <id>`, which needs a
+		// title and a description and is a thing a person types rather than
+		// a thing a window guesses.
+		Start: binding("n", p.T("key.start", "start a run"), "n"),
+		// Run and ChangeFlow belong to that dialog and to nothing else.
+		// They share ⏎ and f with nothing on the board, because the dialog
+		// takes every keystroke while it is up.
+		Run:        binding("⏎", p.T("key.run", "run it"), "enter"),
+		ChangeFlow: binding("f", p.T("key.change_flow", "change flow"), "f"),
+
 		Pause:  binding("p", p.T("key.pause", "pause"), "p"),
 		Resume: binding("r", p.T("key.resume", "resume"), "r"),
 		Cancel: binding("x", p.T("key.cancel", "cancel"), "x"),

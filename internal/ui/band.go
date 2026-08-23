@@ -134,7 +134,7 @@ func (m Model) idleLine() string {
 		return nothing + dot + p.T("band.nothing_todo", "nothing to do")
 	}
 	return nothing + dot + p.P("band.todo", todo, "{n} to do", "{n} to do") +
-		dot + p.T("band.write_one", "press n to write one")
+		dot + p.T("band.write_one", "press n to start one")
 }
 
 // controlSaid is what the band says about a word that was written.

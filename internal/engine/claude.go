@@ -28,6 +28,11 @@ func NewClaude() Claude { return Claude{} }
 // Name identifies the engine in the record.
 func (Claude) Name() string { return "claude" }
 
+// CanResume is true because claudeArgs builds --resume, and because the
+// stream this adapter parses is where a session id comes from at all: a run
+// records one, so a person can carry it on.
+func (Claude) CanResume() bool { return true }
+
 // Run invokes claude in the worktree and returns what it reported.
 func (Claude) Run(ctx context.Context, req Request) (Result, error) {
 	args, err := claudeArgs(req)

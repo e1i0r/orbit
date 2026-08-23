@@ -34,9 +34,12 @@ func (m Model) View() tea.View {
 	}
 	lines := make([]string, 0, m.height)
 	lines = append(lines, m.headerRows()...)
-	if m.screen == screenDetail {
+	switch m.screen {
+	case screenDetail:
 		lines = append(lines, m.detailRows(m.frame.Body.H, m.frame.Body.W)...)
-	} else {
+	case screenStart:
+		lines = append(lines, m.startRows(m.frame.Body.H, m.frame.Body.W)...)
+	default:
 		lines = append(lines, m.bodyRows()...)
 	}
 	lines = append(lines, m.bandRows()...)
@@ -161,7 +164,7 @@ func (m Model) emptyRows(h, w int) []string {
 				"{n} repository, and no tasks written against it yet.",
 				"{n} repositories, and no tasks written against any of them yet.",
 				about("n", strconv.Itoa(m.board.Repos))),
-			p.T("empty.press_n", "Press n to write one."),
+			p.T("empty.write_one", "Write one with `orbit new <id>`, then press n to start it."),
 		}
 	}
 	out := []string{""}

@@ -14,16 +14,16 @@ package ui
 import (
 	"errors"
 	"fmt"
+	"os/exec"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/view"
-	"github.com/e1i0r/orbit/internal/words"
 )
 
-// The nine messages. Three of them are clocks, and they are separate
+// The twelve messages. Three of them are clocks, and they are separate
 // clocks on purpose: the board is read twice a second, the tree is walked
 // every two seconds because walking it is the expensive half, and the
 // elapsed column is redrawn once a second because a column that only moved
@@ -95,88 +95,44 @@ type (
 	// only the failure.
 	editorMsg struct{ Err error }
 
+	// readMsg is a finished task having been marked read, or the reason it
+	// was not. It is its own message rather than a controlMsg carrying the
+	// word "read" because "read" is not one of the five words a run
+	// understands: putting it on that wire would make the window the only
+	// place in Orbit where the control vocabulary has six.
+	readMsg struct {
+		ID  string
+		Err error
+	}
+
+	// sessionMsg is the interactive session t would open, as a command line
+	// nobody has run yet.
+	//
+	// The command is built off the event loop and handed back rather than
+	// started there, and the two halves are what make this gesture testable
+	// at all: a test can read the arguments — that --fork-session is on
+	// them — and stop, where a test of a gesture that ran the process would
+	// open a session and spend money.
+	sessionMsg struct {
+		ID  string
+		Cmd *exec.Cmd
+		Err error
+	}
+
+	// sessionEndedMsg is the reader having come back from one. The window
+	// was suspended for the whole of it, so this is also where the frame is
+	// redrawn.
+	sessionEndedMsg struct {
+		ID  string
+		Err error
+	}
+
 	// languageMsg is the reader having chosen a language. It is a message
 	// rather than a direct call because changing language rebuilds the key
 	// map, and a key map rebuilt outside the event loop is a key map the
 	// frame on screen was not drawn from.
 	languageMsg struct{ Lang string }
 )
-
-// Settings is the window's port to the settings file: the standing answers
-// it reads and the two it writes.
-//
-// It has five methods, where this repository's convention is one to three,
-// and that is deliberate. The alternative — an interface per answer — would
-// be five ports to one file, and a caller satisfying five ports with one
-// type learns nothing the compiler did not already know. It is a port to
-// one thing, and the thing has five questions.
-//
-// It is an interface and not a struct because internal/ui cannot name
-// store.Settings: the window is not allowed to know where the settings
-// live, only how to ask. internal/cli satisfies it over the store.
-type Settings interface {
-	Autopilot() bool
-	SetAutopilot(bool) error
-	Language() string
-	SetLanguage(string) error
-	UnreadCap() int
-}
-
-// Reader is the window's port to the state root, and everything it may ask
-// of it is on this list.
-//
-// It is an interface for the reason Settings is: internal/ui cannot name the
-// types the answers are made of. The board's own two methods would not have
-// needed one — board.Board is on the allowed list and *board.Reader could
-// have stayed a concrete type — but the two the task view adds do. A task's
-// record is []record.Event and its worktree is a path only internal/store
-// can compute, and neither package is on internal/ui's import list. The
-// alternative was to widen that list, which would have let the window reach
-// the writer as well as the reader; a port of four methods is the cheaper
-// half of that trade.
-//
-// It is declared here, at the consumer, as every other port in this
-// repository is: *board.Reader satisfies it without naming it, so the
-// package that does the reading owes nothing to the package that draws.
-type Reader interface {
-	// Refresh is the poll: the board as it is now, and what moved.
-	Refresh() (board.Board, board.Changed, error)
-	// Rescan is the enumeration: look for repositories and tasks that
-	// appeared since the window opened.
-	Rescan() error
-	// Log is one task's whole record, folded into entries.
-	Log(repoPath, id string) ([]view.Entry, error)
-	// Worktree is where that task's throwaway checkout lives.
-	Worktree(repoPath, id string) (string, error)
-}
-
-// Options is everything the window is handed. Every field is a value or a
-// port; none of them is a path, and none of them is a handle on the state
-// root.
-type Options struct {
-	Root     string // where the repositories are, for the header and the empty state
-	Reader   Reader
-	Settings Settings
-	Words    *words.Printer
-	Width    int // 0 unless the caller is rendering one frame with --once
-	Height   int
-
-	// Control is how a gesture reaches the function its subcommand calls.
-	// It is a port rather than a direct call to task.Control because every
-	// entry point in internal/task takes a *store.Store, and internal/ui
-	// cannot name that type — which is the arrangement arch.layers exists
-	// to hold, not a gap in it. internal/cli, where the store and the
-	// window are allowed to meet, supplies the closure.
-	Control func(t view.Task, word string) error
-
-	// CanResume is whether the configured engine can resume a session,
-	// which decides whether taking the keyboard is offered at all. It
-	// arrives as a bool for the same reason Control arrives as a function:
-	// internal/engine is not on internal/ui's import list, so the answer
-	// has to be carried in rather than asked for. It is what fills
-	// Conditions.CanResume, which task 10 declared and nothing yet set.
-	CanResume bool
-}
 
 // tick asks for the next board poll.
 func tick() tea.Cmd {
@@ -245,5 +201,46 @@ func control(port func(view.Task, string) error, t view.Task, word string) tea.C
 			return controlMsg{ID: t.ID, Word: word, Err: errors.New("this window was opened without a way to control a task")}
 		}
 		return controlMsg{ID: t.ID, Word: word, Err: port(t, word)}
+	}
+}
+
+// start asks the port to begin a run, off the event loop.
+//
+// The refusal comes back exactly as task.Start phrased it. The window has
+// already refused at the cap itself, with the ids of the tasks that are
+// waiting, and this is the second look — taken by the function that owns the
+// rule, against the settings file rather than against a board that may be
+// half a second old. Two answers to one question, and the authoritative one
+// is the one that is repeated verbatim.
+func start(port func(view.Task, string, int) (int, error), t view.Task, flowName string, unread int) tea.Cmd {
+	return func() tea.Msg {
+		if port == nil {
+			return startedMsg{ID: t.ID, Err: errors.New("this window was opened without a way to start a run")}
+		}
+		pid, err := port(t, flowName, unread)
+		return startedMsg{ID: t.ID, Pid: pid, Err: err}
+	}
+}
+
+// markRead moves the brake back by one, through the port.
+func markRead(port func(view.Task) error, t view.Task) tea.Cmd {
+	return func() tea.Msg {
+		if port == nil {
+			return readMsg{ID: t.ID, Err: errors.New("this window was opened without a way to mark a task read")}
+		}
+		return readMsg{ID: t.ID, Err: port(t)}
+	}
+}
+
+// takeSession builds the command line that carries on an engine's session,
+// and builds it here rather than inside the keystroke because finding the
+// session id means reading a record.
+func takeSession(port func(view.Task) (*exec.Cmd, error), t view.Task) tea.Cmd {
+	return func() tea.Msg {
+		if port == nil {
+			return sessionMsg{ID: t.ID, Err: errors.New("this window was opened without a way to take the keyboard")}
+		}
+		cmd, err := port(t)
+		return sessionMsg{ID: t.ID, Cmd: cmd, Err: err}
 	}
 }

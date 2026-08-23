@@ -27,6 +27,13 @@ import (
 type Conditions struct {
 	Autopilot bool // the switch; a paused task is still the reader's to lift
 	CanResume bool // whether the configured engine can resume a session
+
+	// Taken is whether the caller handed the terminal to an engine for this
+	// task and has not handed it back. It is per-task where the other two
+	// are per-program, and it is here rather than on view.Task because
+	// nothing in the record says it — the argument, and what it costs, is
+	// at took in gesture.go.
+	Taken bool
 }
 
 // Affordance is one verb and whether it can be done to the task under the
@@ -184,22 +191,23 @@ func whyNotTake(t view.Task, s Conditions) words.Arg {
 	return words.Arg{}
 }
 
-// whyNotHand answers for handing the keyboard back.
+// whyNotHand answers for handing the keyboard back, and it asks the one
+// question the previous plan could not: did this reader take it.
 //
-// It offers h for a task stopped at a phase boundary on an engine that can
-// resume, which is not the same question as "has this reader taken it".
-// Nothing in the record says a session was taken — engine.Request.Resume is
-// written and nothing sets it yet — so Orbit cannot tell a task somebody is
-// holding the keyboard on from one they merely paused. Refusing everything
-// would be honest and useless; offering it where taking it was possible is
-// the closest true answer available, and it stops being an approximation the
-// moment the record carries the fact.
+// Until Conditions carried Taken, h was offered on any parked run — including
+// one that was merely paused, where "hand the keyboard back" names a keyboard
+// nobody had. The three refusals are in the order a reader would hit them: an
+// engine that cannot resume can never have handed anything over, a run that
+// is not stopped is not somewhere a session could be open, and a run that is
+// stopped but was never taken wants r rather than h.
 func whyNotHand(t view.Task, s Conditions) words.Arg {
 	switch {
-	case !parked(t):
-		return because(whyHandBackNotTaken)
 	case !s.CanResume:
 		return about(whyHandBackEngineCannotResume, t.Engine)
+	case !parked(t):
+		return because(whyHandBackNotStopped)
+	case !s.Taken:
+		return because(whyHandBackNotTaken)
 	}
 	return words.Arg{}
 }

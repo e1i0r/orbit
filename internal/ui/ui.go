@@ -28,13 +28,15 @@ const gutter = 3
 // thing on screen when something else starts.
 const messageLife = 20 * time.Second
 
-// screen is which of the window's two screens is on top: the board, and the
-// task view one level below it.
+// screen is which of the window's three screens is on top: the board, the
+// task view one level below it, and the dialog that decides what a run will
+// be before anything runs.
 type screen int
 
 const (
 	screenList screen = iota
 	screenDetail
+	screenStart
 )
 
 // confirm is the question the window is waiting for an answer to, and there
@@ -51,10 +53,10 @@ const (
 // and nothing here is a pointer into something a Cmd could still be writing
 // to on another goroutine.
 //
-// The two maps are the exception and they are copied before they are
-// written, not mutated in place. A map field survives the copy Update makes,
-// so mutating one changes the model that was already handed to the renderer
-// — which is the one shape of shared state a value model can still have.
+// The maps are the exception and they are copied before they are written,
+// not mutated in place. A map field survives the copy Update makes, so
+// mutating one changes the model that was already handed to the renderer —
+// which is the one shape of shared state a value model can still have.
 type Model struct {
 	opts Options
 	keys Keys
@@ -88,6 +90,16 @@ type Model struct {
 	// day it needs selection or a cursor is the day the dependency is worth
 	// arguing for.
 	filter string
+
+	// start is the dialog that decides what a run will be, and taken is
+	// which tasks this window has handed the terminal to an engine for.
+	//
+	// taken is a map for the reason expanded is, and carries the same
+	// warning: it is cloned by took rather than written in place. Why the
+	// fact lives here at all — rather than in the record, where it would
+	// survive a restart — is argued at took, in gesture.go.
+	start startModel
+	taken map[string]bool
 
 	message   string
 	messageAt time.Time
@@ -135,6 +147,7 @@ func New(o Options) Model {
 		// that opens on forty finished tasks has answered a different one.
 		expanded: map[view.Band]bool{view.NeedsYou: true, view.Running: true},
 		totals:   map[string]int{},
+		taken:    map[string]bool{},
 	}
 	if o.Width > 0 && o.Height > 0 {
 		m = m.resize(o.Width, o.Height)
@@ -184,6 +197,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.say(m.controlSaid(msg)), nil
 	case startedMsg:
 		return m.say(m.startedSaid(msg)), nil
+	case readMsg:
+		return m.say(m.readSaid(msg)), nil
+	case sessionMsg:
+		return m.session(msg)
+	case sessionEndedMsg:
+		return m.sessionEnded(msg), nil
 	case editorMsg:
 		if msg.Err != nil {
 			return m.say(msg.Err.Error()), nil

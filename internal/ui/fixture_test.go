@@ -110,14 +110,6 @@ func fixtureBoard(tasks []view.Task, repos int) board.Board {
 	return b
 }
 
-// recorder records what a gesture asked for, so a Cmd can be executed in a
-// test without anything being controlled. It is not named control because
-// msg.go's control is the function it stands in for.
-type recorder struct {
-	id, word string
-	err      error
-}
-
 // testModel is a window of the given size with the fixture board already in
 // it, its clock stopped, and a control port that records rather than acts.
 func testModel(t *testing.T, w, h int) (Model, *recorder) {
@@ -151,26 +143,20 @@ func openOn(t *testing.T, id string) Model {
 }
 
 // modelWith is the same window in whatever language and over whatever board
-// a caller names. Every Options field the window has is filled here, so a
-// field added without a decision about what a test should pass shows up as a
-// compile failure in one place rather than as a zero value in twenty.
+// a caller names.
+//
+// The ports come from the recorder and the standing state is filled here, in
+// one place, so that a test which is about a keystroke does not also have to
+// decide what a settings file says. Flows is the one field left at its zero
+// value, and deliberately: nil is the built-ins and nothing else, which is
+// what a window opened without a state root has, and a test that is about a
+// reader's own flows sets it itself.
 func modelWith(t *testing.T, p *words.Printer, b board.Board, w, h int, got *recorder) Model {
 	t.Helper()
-	m := New(Options{
-		Root:      "~/work",
-		Settings:  &settings{autopilot: true, lang: "en", unread: 5},
-		Words:     p,
-		Width:     w,
-		Height:    h,
-		CanResume: true,
-		Control: func(task view.Task, word string) error {
-			if got == nil {
-				return nil
-			}
-			got.id, got.word = task.ID, word
-			return got.err
-		},
-	})
+	o := got.ports()
+	o.Root, o.Settings, o.Words = "~/work", &settings{autopilot: true, lang: "en", unread: 5}, p
+	o.Width, o.Height, o.CanResume = w, h, true
+	m := New(o)
 	m.now = fixtureNow
 	next, _ := m.Update(boardMsg{Board: b})
 	loaded, ok := next.(Model)

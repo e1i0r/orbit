@@ -1,0 +1,30 @@
+ orbit  ~/work                                                  unread 3/5    autopilot ●    4 repos
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ ACME-2662  Retry the webhook on 5xx                                                        payments
+
+   flow  careful                                                              quick · task · careful
+
+   ▸ implement   claude   opus   permissions: repo
+     review      claude   opus   permissions: repo · stops when it is done
+     fix         claude   opus   permissions: repo
+
+   autopilot  ● on    every phase runs without asking
+              ○ off   stops at each phase
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ ACME-2705 · implement · 8m in · claude/opus · careful
+ [⏎] run it  [f] change flow  [A] autopilot  [esc] back  [?] [q]

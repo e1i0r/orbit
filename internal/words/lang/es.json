@@ -41,10 +41,6 @@
       "source": "previous tab",
       "value": "pestaña anterior"
     },
-    "key.new": {
-      "source": "new",
-      "value": "nueva"
-    },
     "key.pause": {
       "source": "pause",
       "value": "pausar"
@@ -130,16 +126,16 @@
       "value": "tomar el teclado necesita una sesión; esta tarea nunca se ha ejecutado"
     },
     "why.take_still_running": {
-      "source": "taking the keyboard needs a phase that has stopped; press p first",
-      "value": "tomar el teclado necesita una fase detenida; pulsa p primero"
+      "source": "a phase is writing in this worktree; press p to stop it, then take the keyboard",
+      "value": "hay una fase escribiendo en este árbol de trabajo; pulsa p para detenerla y luego toma el teclado"
     },
     "why.take_engine_cannot_resume": {
       "source": "{engine} cannot resume a session, so there is nothing to take",
       "value": "{engine} no puede reanudar una sesión, así que no hay nada que tomar"
     },
     "why.hand_back_not_taken": {
-      "source": "handing the keyboard back needs a task you have taken; this one is not stopped at a phase",
-      "value": "devolver el teclado necesita una tarea que hayas tomado; esta no está detenida en una fase"
+      "source": "nobody took the keyboard here; press t to take it, or r to let this task go",
+      "value": "aquí nadie ha tomado el teclado; pulsa t para tomarlo, o r para soltar esta tarea"
     },
     "why.hand_back_engine_cannot_resume": {
       "source": "{engine} cannot resume a session, so nothing was taken",
@@ -206,8 +202,8 @@
       "value": "nada por hacer"
     },
     "band.write_one": {
-      "source": "press n to write one",
-      "value": "pulsa n para escribir una"
+      "source": "press n to start one",
+      "value": "pulsa n para poner una en marcha"
     },
     "filter.placeholder": {
       "source": "repository, id or title",
@@ -308,10 +304,6 @@
     "empty.needs_you": {
       "source": "Nothing needs you.",
       "value": "Nada te necesita."
-    },
-    "empty.press_n": {
-      "source": "Press n to write one.",
-      "value": "Pulsa n para escribir una."
     },
     "empty.no_repos": {
       "source": "No repositories under {root} yet.",
@@ -524,6 +516,104 @@
     "msg.no_worktree": {
       "source": "this task has no worktree to open the file in",
       "value": "esta tarea no tiene árbol de trabajo donde abrir el archivo"
+    },
+    "key.start": {
+      "source": "start a run",
+      "value": "poner en marcha"
+    },
+    "key.run": {
+      "source": "run it",
+      "value": "ejecutar"
+    },
+    "key.change_flow": {
+      "source": "change flow",
+      "value": "cambiar de flujo"
+    },
+    "empty.write_one": {
+      "source": "Write one with `orbit new <id>`, then press n to start it.",
+      "value": "Escribe una con `orbit new <id>` y luego pulsa n para ponerla en marcha."
+    },
+    "start.nothing_to_start": {
+      "source": "there is no task here to start; write one with `orbit new`",
+      "value": "aquí no hay ninguna tarea que poner en marcha; escribe una con `orbit new`"
+    },
+    "start.already_running": {
+      "source": "{id} is already running; press x to stop it first",
+      "value": "{id} ya está en marcha; pulsa x para detenerla primero"
+    },
+    "start.gone": {
+      "source": "{id} has left the board; nothing was started",
+      "value": "{id} ya no está en el tablero; no se puso nada en marcha"
+    },
+    "start.unread_cap": {
+      "source": {
+        "one": "{n} finished task is waiting to be read and the cap is {cap}: {ids} — press d on it",
+        "other": "{n} finished tasks are waiting to be read and the cap is {cap}: {ids} — press d on one"
+      },
+      "value": {
+        "one": "hay {n} tarea terminada sin leer y el límite es {cap}: {ids} — pulsa d sobre ella",
+        "other": "hay {n} tareas terminadas sin leer y el límite es {cap}: {ids} — pulsa d sobre una"
+      }
+    },
+    "start.flow": {
+      "source": "flow",
+      "value": "flujo"
+    },
+    "start.flow_shadowing": {
+      "source": "yours, shadowing the built-in",
+      "value": "tuyo, tapa el de serie"
+    },
+    "start.flow_yours": {
+      "source": "yours",
+      "value": "tuyo"
+    },
+    "start.asks_nothing": {
+      "source": "asks for nothing",
+      "value": "no pide nada"
+    },
+    "start.permissions": {
+      "source": "permissions: {list}",
+      "value": "permisos: {list}"
+    },
+    "start.stops": {
+      "source": "stops when it is done",
+      "value": "se detiene al terminar"
+    },
+    "start.on": {
+      "source": "on",
+      "value": "activado"
+    },
+    "start.autopilot_on": {
+      "source": "every phase runs without asking",
+      "value": "cada fase se ejecuta sin preguntar"
+    },
+    "start.off": {
+      "source": "off",
+      "value": "desactivado"
+    },
+    "start.autopilot_off": {
+      "source": "stops at each phase",
+      "value": "se detiene en cada fase"
+    },
+    "start.autopilot": {
+      "source": "autopilot",
+      "value": "piloto automático"
+    },
+    "msg.no_session": {
+      "source": "{id} has no session to carry on",
+      "value": "{id} no tiene ninguna sesión que continuar"
+    },
+    "msg.session_ended": {
+      "source": "{id} is still stopped and still yours; press h to hand it back",
+      "value": "{id} sigue detenida y sigue siendo tuya; pulsa h para devolverla"
+    },
+    "msg.marked_read": {
+      "source": "{id} is marked read",
+      "value": "{id} queda marcada como leída"
+    },
+    "why.hand_back_not_stopped": {
+      "source": "handing the keyboard back needs a run stopped at a phase; this one is not stopped",
+      "value": "devolver el teclado necesita una ejecución detenida en una fase; esta no lo está"
     }
   }
 }

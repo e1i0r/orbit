@@ -196,6 +196,8 @@ type resultEngine struct {
 
 func (e resultEngine) Name() string { return "fake" }
 
+func (e resultEngine) CanResume() bool { return false }
+
 func (e resultEngine) Run(context.Context, engine.Request) (engine.Result, error) {
 	return e.result, nil
 }

@@ -46,19 +46,31 @@ func everyCase() []affordanceCase {
 		settings: can,
 		offered:  []string{"enter", "p", "x"},
 	}, {
+		// h is not on these three lists, and that is the fix this plan
+		// made: handing the keyboard back is offered where a keyboard was
+		// taken, not wherever one could have been. A run the reader merely
+		// paused wants r.
 		name:     "a run the reader has paused",
 		task:     view.Task{ID: "ACME-3", Band: view.Running, Live: true, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonHeld}},
 		settings: can,
-		offered:  []string{"enter", "r", "x", "t", "h"},
+		offered:  []string{"enter", "r", "x", "t"},
 	}, {
 		name:     "a phase waiting at the gate its flow asked for",
 		task:     view.Task{ID: "ACME-4", Band: view.NeedsYou, Live: true, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonGate}},
 		settings: can,
-		offered:  []string{"enter", "r", "x", "t", "h"},
+		offered:  []string{"enter", "r", "x", "t"},
 	}, {
 		name:     "the same gate with autopilot on",
 		task:     view.Task{ID: "ACME-5", Band: view.NeedsYou, Live: true, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonGate}},
 		settings: Conditions{Autopilot: true, CanResume: true},
+		offered:  []string{"enter", "r", "x", "t"},
+	}, {
+		// The same paused run, with the keyboard actually taken. This is
+		// the only shape on the board where h means anything, and it is the
+		// one Conditions.Taken exists to tell apart from the one above.
+		name:     "a paused run whose keyboard this reader took",
+		task:     view.Task{ID: "ACME-10", Band: view.Running, Live: true, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonHeld}},
+		settings: Conditions{CanResume: true, Taken: true},
 		offered:  []string{"enter", "r", "x", "t", "h"},
 	}, {
 		name:     "a run that failed and whose process is gone",

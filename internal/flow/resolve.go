@@ -105,7 +105,7 @@ func Names(src Source) []string {
 	for _, n := range names {
 		marks[n] = markBuiltin
 	}
-	for _, n := range userNames(src) {
+	for _, n := range UserNames(src) {
 		if _, shadows := marks[n]; shadows {
 			marks[n] = markShadow
 		} else {
@@ -148,13 +148,21 @@ func dirOf(src Source) string {
 	return src.FlowDir()
 }
 
-// userNames lists the flows a user has written, by file name.
+// UserNames lists the flows a user has written, by file name.
 //
 // A directory that is not there is a user who has written none, which is
 // the ordinary case and not a fault: nothing creates $ORBIT_HOME/flows, and
 // a reader that failed because a folder was missing would make the whole
 // command unusable until somebody made one.
-func userNames(src Source) []string {
+//
+// It is exported for the window, which draws the flow cycle in the start
+// dialog and has to mark a user's flow the way `orbit flows` marks it. Names
+// is no use there: it returns each flow already written out as "name (built
+// in)", and reading a name back out of a formatted line is the kind of
+// parsing this repository refuses. So the two callers take what they need —
+// this one the bare names, Names the marked line — and the marking rule
+// stays here, in one function, above both.
+func UserNames(src Source) []string {
 	dir := dirOf(src)
 	if dir == "" {
 		return nil

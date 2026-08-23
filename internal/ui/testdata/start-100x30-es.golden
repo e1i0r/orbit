@@ -1,0 +1,30 @@
+ orbit  ~/work                                 sin leer 3/5    piloto automático ●    4 repositorios
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ ACME-2662  Retry the webhook on 5xx                                                        payments
+
+   flujo  careful                                                             quick · task · careful
+
+   ▸ implement   claude   opus   permisos: repo
+     review      claude   opus   permisos: repo · se detiene al terminar
+     fix         claude   opus   permisos: repo
+
+   piloto automático  ● activado      cada fase se ejecuta sin preguntar
+                      ○ desactivado   se detiene en cada fase
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ ACME-2705 · implement · lleva 8m · claude/opus · careful
+ [⏎] ejecutar  [f] cambiar de flujo  [A] piloto automático  [esc] volver  [?] [q]

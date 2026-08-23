@@ -32,6 +32,7 @@ const (
 	whyTakeStillRunning           = "why.take_still_running"
 	whyTakeEngineCannotResume     = "why.take_engine_cannot_resume"
 	whyHandBackNotTaken           = "why.hand_back_not_taken"
+	whyHandBackNotStopped         = "why.hand_back_not_stopped"
 	whyHandBackEngineCannotResume = "why.hand_back_engine_cannot_resume"
 
 	whyAskNotBuilt = "why.ask_not_built"
@@ -71,11 +72,13 @@ func (a Affordance) Why(p *words.Printer) string {
 	case whyTakeNeverRun:
 		return p.T("why.take_never_run", "taking the keyboard needs a session; this task has never run")
 	case whyTakeStillRunning:
-		return p.T("why.take_still_running", "taking the keyboard needs a phase that has stopped; press p first")
+		return p.T("why.take_still_running", "a phase is writing in this worktree; press p to stop it, then take the keyboard")
 	case whyTakeEngineCannotResume:
 		return p.T("why.take_engine_cannot_resume", "{engine} cannot resume a session, so there is nothing to take", a.engine())
 	case whyHandBackNotTaken:
-		return p.T("why.hand_back_not_taken", "handing the keyboard back needs a task you have taken; this one is not stopped at a phase")
+		return p.T("why.hand_back_not_taken", "nobody took the keyboard here; press t to take it, or r to let this task go")
+	case whyHandBackNotStopped:
+		return p.T("why.hand_back_not_stopped", "handing the keyboard back needs a run stopped at a phase; this one is not stopped")
 	case whyHandBackEngineCannotResume:
 		return p.T("why.hand_back_engine_cannot_resume", "{engine} cannot resume a session, so nothing was taken", a.engine())
 	case whyAskNotBuilt:

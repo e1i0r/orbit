@@ -142,8 +142,18 @@ func (e *TaskError) Unwrap() error { return e.Err }
 // failed run is not counted either, and for a different reason: it is not in
 // Done at all — internal/view bands it as NeedsYou, where it is already in
 // front of the reader without a counter's help.
-func Unread(b Board) int {
-	n := 0
+func Unread(b Board) int { return len(Unreads(b)) }
+
+// Unreads is the same answer as a list, in the board's own order.
+//
+// It exists because a brake that says only "no" is a brake people route
+// around: the window refuses to start a task at the cap and names the tasks
+// that are waiting, and naming them needs the tasks rather than the count.
+// Unread is defined as its length so that the number in the header and the
+// ids in the refusal can never come from two different rules — which is the
+// whole reason the count lives in this package at all.
+func Unreads(b Board) []view.Task {
+	var waiting []view.Task
 	for _, t := range b.Tasks {
 		if view.BandOf(t) != view.Done {
 			continue
@@ -151,9 +161,9 @@ func Unread(b Board) int {
 		if t.Read || t.Reason.Key == view.ReasonCancelled {
 			continue
 		}
-		n++
+		waiting = append(waiting, t)
 	}
-	return n
+	return waiting
 }
 
 // counts tallies the bands, and it is the only thing that does.

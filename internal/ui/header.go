@@ -175,17 +175,20 @@ func (m Model) barLine(w int) string {
 // The bar shows what can be done; the menu, one level down, shows what
 // cannot and why.
 func (m Model) hints() []string {
-	if m.screen == screenDetail {
+	switch m.screen {
+	case screenDetail:
 		return m.detailHints()
+	case screenStart:
+		return m.startHints()
 	}
 	var out []string
 	r, ok := m.selected()
 	if ok {
 		out = append(out, hint("↑↓", m.opts.Words.T("key.move", "move")), hintFor(m.keys.Open))
 	}
-	out = append(out, hintFor(m.keys.New))
+	out = append(out, hintFor(m.keys.Start))
 	if ok && !r.head {
-		for _, a := range m.keys.Affordances(r.task, m.conditions()) {
+		for _, a := range m.keys.Affordances(r.task, m.conditions(r.task)) {
 			if a.OK && a.Key.Help().Key != m.keys.Open.Help().Key {
 				out = append(out, hintFor(a.Key))
 			}
