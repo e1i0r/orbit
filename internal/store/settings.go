@@ -21,6 +21,14 @@ import (
 // having chosen at all.
 const defaultUnreadCap = 5
 
+// defaultFlow is which pipeline a task is written against when the user has
+// never chosen one. The word is also written down in internal/flow, as
+// flow.Default, because this package imports nothing of Orbit's — that
+// absence is what keeps the on-disk layout from depending on anything above
+// it. Two copies of a word drift, so a test in internal/task, which imports
+// both, is what holds them together.
+const defaultFlow = "task"
+
 // Settings is the user's persisted configuration.
 type Settings struct {
 	Language  string `json:"language,omitempty"`
@@ -28,6 +36,7 @@ type Settings struct {
 	UnreadCap int    `json:"unreadCap,omitempty"`
 	Engine    string `json:"engine,omitempty"`
 	Model     string `json:"model,omitempty"`
+	Flow      string `json:"flow,omitempty"`
 }
 
 // settingsPath is the one file settings live in, at the root of the state
@@ -46,7 +55,7 @@ func (s *Store) Settings() (Settings, error) {
 	path := s.settingsPath()
 	body, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
-		return Settings{UnreadCap: defaultUnreadCap}, nil
+		return Settings{UnreadCap: defaultUnreadCap, Flow: defaultFlow}, nil
 	}
 	if err != nil {
 		return Settings{}, fmt.Errorf("read %q: %w", path, err)
@@ -56,7 +65,7 @@ func (s *Store) Settings() (Settings, error) {
 		// A settings file that will not parse yields the defaults, not a
 		// failure — the same reasoning a broken catalogue answers with
 		// English rather than an error.
-		return Settings{UnreadCap: defaultUnreadCap}, nil //nolint:nilerr // deliberate: unparseable settings yield the defaults
+		return Settings{UnreadCap: defaultUnreadCap, Flow: defaultFlow}, nil //nolint:nilerr // deliberate: unparseable settings yield the defaults
 	}
 	return cfg, nil
 }

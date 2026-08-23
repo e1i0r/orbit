@@ -16,7 +16,7 @@ import (
 // written creates a task, or fails the test trying.
 func written(t *testing.T, s *store.Store, r repo.Repo) Task {
 	t.Helper()
-	tk, err := Create(s, r, "ACME-1", "retry the webhook on 5xx")
+	tk, err := Create(s, r, "ACME-1", "retry the webhook on 5xx", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}

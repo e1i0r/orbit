@@ -105,6 +105,7 @@ func TestEverySettingKeyCanBeSet(t *testing.T) {
 		"unread-cap": "3",
 		"engine":     "claude",
 		"model":      "sonnet",
+		"flow":       "careful",
 	}
 	for _, key := range settingKeys() {
 		value, ok := values[key]
@@ -118,6 +119,20 @@ func TestEverySettingKeyCanBeSet(t *testing.T) {
 	}
 }
 
+// The default flow is a setting like any other, and `orbit new` with no
+// -flow is what reads it.
+func TestSetChoosesTheFlowANewTaskIsWrittenAgainst(t *testing.T) {
+	_, orbitHome := workspace(t)
+	if code, out, errOut := run(t, "set", "flow", "careful"); code != 0 {
+		t.Fatalf("set flow careful exited %d: %s", code, errOut)
+	} else if !strings.Contains(out, "flow is now careful") {
+		t.Errorf("set said %q, which does not say what the setting now is", out)
+	}
+	if cfg := settings(t, orbitHome); cfg.Flow != "careful" {
+		t.Errorf("the default flow is %q on disk, want careful", cfg.Flow)
+	}
+}
+
 func TestSetRefusesWhatItCannotDoAndSaysWhy(t *testing.T) {
 	for _, tc := range []struct {
 		name string
@@ -128,6 +143,7 @@ func TestSetRefusesWhatItCannotDoAndSaysWhy(t *testing.T) {
 		{"a cap that is not a number", []string{"set", "unread-cap", "lots"}, "whole number"},
 		{"a cap below zero", []string{"set", "unread-cap", "-1"}, "negative"},
 		{"a switch that is neither", []string{"set", "autopilot", "maybe"}, "on or off"},
+		{"a flow name that is a path", []string{"set", "flow", "../task"}, "flow"},
 		{"no value at all", []string{"set", "autopilot"}, "key and a value"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

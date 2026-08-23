@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/store"
 )
 
@@ -57,7 +58,7 @@ func set(args []string, out io.Writer) error {
 // keeps none. assign below switches on the same strings, and
 // TestEverySettingKeyCanBeSet is what keeps the two lists honest.
 func settingKeys() []string {
-	return []string{"language", "autopilot", "unread-cap", "engine", "model"}
+	return []string{"language", "autopilot", "unread-cap", "engine", "model", "flow"}
 }
 
 // assign writes one value into the settings and gives back the form of it
@@ -101,6 +102,19 @@ func assign(cfg *store.Settings, key, value string) (string, error) {
 		return value, nil
 	case "model":
 		cfg.Model = value
+		return value, nil
+	case "flow":
+		// Checked for being a name and not for naming anything: a file
+		// dropped into $ORBIT_HOME/flows after this line is typed is a flow
+		// that works, so refusing a name nothing answers to yet would
+		// refuse a setting that is about to be right. What is refused is a
+		// name that could never be a flow at all — one that is a path —
+		// because that one is a typo in every possible future, and `orbit
+		// flows` is the command that says which names there are.
+		if err := flow.ValidName(value); err != nil {
+			return "", err
+		}
+		cfg.Flow = value
 		return value, nil
 	default:
 		return "", fmt.Errorf("%q is not a setting; the keys are %s", key, strings.Join(settingKeys(), ", "))

@@ -18,6 +18,9 @@ func TestSettingsDefaultUnreadCapWhenTheFileIsAbsent(t *testing.T) {
 	if got.UnreadCap != 5 {
 		t.Errorf("UnreadCap = %d, want 5 for a store that has never saved settings", got.UnreadCap)
 	}
+	if got.Flow != "task" {
+		t.Errorf("Flow = %q, want task for a store that has never saved settings", got.Flow)
+	}
 }
 
 func TestSettingsRoundTrips(t *testing.T) {
@@ -31,6 +34,7 @@ func TestSettingsRoundTrips(t *testing.T) {
 		UnreadCap: 20,
 		Engine:    "claude",
 		Model:     "opus",
+		Flow:      "careful",
 	}
 	if err := s.SaveSettings(want); err != nil {
 		t.Fatalf("SaveSettings: %v", err)
@@ -77,6 +81,9 @@ func TestSettingsThatWillNotParseYieldsTheDefaults(t *testing.T) {
 	}
 	if got.UnreadCap != 5 {
 		t.Errorf("UnreadCap = %d, want the default 5", got.UnreadCap)
+	}
+	if got.Flow != "task" {
+		t.Errorf("Flow = %q, want the default task", got.Flow)
 	}
 }
 

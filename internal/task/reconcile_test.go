@@ -46,7 +46,7 @@ func markerExists(t *testing.T, s *store.Store, tk Task) bool {
 
 func TestReconcileClosesTheRecordOfARunWhoseProcessIsGone(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -71,7 +71,7 @@ func TestReconcileClosesTheRecordOfARunWhoseProcessIsGone(t *testing.T) {
 
 func TestReconcileLeavesARunThatIsStillGoingAlone(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -97,7 +97,7 @@ func TestReconcileLeavesARunThatIsStillGoingAlone(t *testing.T) {
 
 func TestReconcileWritesNothingWhenTheLogAlreadyEnds(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -125,7 +125,7 @@ func TestReconcileWritesNothingWhenTheLogAlreadyEnds(t *testing.T) {
 
 func TestReconcileWritesNothingWhenNobodyClaimedTheTask(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -144,7 +144,7 @@ func TestReconcileWritesNothingWhenNobodyClaimedTheTask(t *testing.T) {
 
 func TestAliveTellsTheThreeAnswersApart(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -175,7 +175,7 @@ func TestAliveTellsTheThreeAnswersApart(t *testing.T) {
 
 func TestAliveRefusesAMarkerItCannotUnderstand(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}

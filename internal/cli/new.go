@@ -14,6 +14,10 @@ func newTask(args []string, out io.Writer) error {
 	fs.SetOutput(io.Discard)
 	dir := fs.String("repo", ".", "the repository the task is against")
 	id := fs.String("id", "", "the identifier of the task")
+	// No default here, and the empty string rather than "task": which flow
+	// a task walks when nobody says is the user's setting, and a default
+	// spelled out on this flag would quietly override it.
+	flowName := fs.String("flow", "", "which flow the task walks; the default is the one orbit set flow chose")
 	if err := parse(fs, args, out); err != nil {
 		return err
 	}
@@ -29,9 +33,13 @@ func newTask(args []string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	if _, err := task.Create(s, r, *id, text); err != nil {
+	t, err := task.Create(s, r, *id, text, *flowName)
+	if err != nil {
 		return err
 	}
-	fmt.Fprintf(out, "%s written against %s\n", *id, r.Name)
+	// The flow is echoed even when it was not typed. It was still chosen —
+	// by the settings, or by what this program ships — and a decision the
+	// user did not make is exactly the one worth showing them.
+	fmt.Fprintf(out, "%s written against %s, to walk the %s flow\n", t.ID, r.Name, t.Flow)
 	return nil
 }

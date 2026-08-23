@@ -33,7 +33,7 @@ func find(t *testing.T, events []record.Event, kind string) record.Event {
 // stops finding what it needs.
 func TestRunRecordsTheDataKeysTheWindowWillRead(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -67,7 +67,7 @@ func TestRunRecordsTheDataKeysTheWindowWillRead(t *testing.T) {
 
 func TestRunTruncatesAnEnormousOutputAndSaysSoInTheRecord(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -101,7 +101,7 @@ func TestRunTruncatesAnEnormousOutputAndSaysSoInTheRecord(t *testing.T) {
 
 func TestAnOrdinaryOutputIsRecordedWhole(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -130,7 +130,7 @@ func TestAnOrdinaryOutputIsRecordedWhole(t *testing.T) {
 
 func TestRunRecordsAFlowThatDoesNotValidate(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -146,7 +146,7 @@ func TestRunRecordsAFlowThatDoesNotValidate(t *testing.T) {
 
 func TestRunRecordsAnEngineNobodyConfigured(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}

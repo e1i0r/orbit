@@ -20,6 +20,7 @@ import (
 // spaces that once aligned them stopped aligning the moment it was written.
 var synopsis = [][2]string{
 	{"orbit repos [dir]", "list the repositories under a directory"},
+	{"orbit flows", "list the flows a task can be written against"},
 	{"orbit new -repo <dir> -id <id> <text>", "write a task down"},
 	{"orbit run -repo <dir> <id>", "run a task through its flow"},
 	{"orbit pause -repo <dir> <id>", "stop a run at its next phase"},
@@ -100,6 +101,8 @@ func Run(args []string, out, errOut io.Writer) int {
 	switch args[0] {
 	case "repos":
 		err = repos(args[1:], out)
+	case "flows":
+		err = flows(args[1:], out)
 	case "new":
 		err = newTask(args[1:], out)
 	case "run":

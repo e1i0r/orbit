@@ -112,13 +112,20 @@ func TestNewThenListThenShow(t *testing.T) {
 }
 
 // TestRunNeedsAnID, TestRunFailsOnAnUnknownFlow and
-// TestRunFailsOnATaskThatWasNeverCreated cover runTask's three early exits —
-// the guard rails on the one command that spends money. Each is built so it
-// returns from runTask before engine.NewClaude() is ever constructed:
-// no id fails at the `id == ""` check before openBoth is even called; an
-// unknown flow fails at flow.Builtin, before task.Load; and an id that was
-// never created fails inside task.Load, before the engines map is built.
+// TestRunFailsOnATaskThatWasNeverCreated cover runTask's early exits — the
+// guard rails on the one command that spends money. Each is built so it
+// returns from runTask before engine.NewClaude() is ever constructed: no id
+// fails at the `id == ""` check before openBoth is even called, and an id
+// that was never created fails inside task.Load, which now comes before the
+// flow is resolved — the run walks the task's own flow unless -flow says
+// otherwise, so which flow it is cannot be known until the task is loaded.
 // None of these tests may ever reach the real claude binary.
+//
+// That ordering is why the unknown-flow test below is also given an id that
+// was never created: it is refused twice over, and the second refusal is
+// what makes it safe. The refusal a reader actually meets — the name, and
+// the list of names that would have worked — is asserted in
+// internal/flow/resolve_test.go, where no engine exists to reach.
 
 func TestRunNeedsAnID(t *testing.T) {
 	root, _ := workspace(t)

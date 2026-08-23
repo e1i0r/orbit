@@ -37,11 +37,18 @@ import (
 // at the control file is a tenth of a human reaction and is only paid at a
 // phase boundary that is already stopped — a run nobody is holding never
 // reaches the loop that polls.
+//
+// -flow is an override and not the choice. The choice was made when the
+// task was written down, and this flag exists because re-running a task
+// through something else is a real thing to do the second time it fails.
+// It stops being invisible: the run records the flow it walked, so a
+// difference between the two is a decision somebody can see rather than a
+// bug that takes an afternoon.
 func runTask(args []string, out io.Writer) error {
 	fs := flag.NewFlagSet("run", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	dir := fs.String("repo", ".", "the repository the task is against")
-	name := fs.String("flow", "task", "which flow to walk")
+	name := fs.String("flow", "", "walk this flow instead of the one the task was written against")
 	timeout := fs.Duration("timeout", 0, "stop the run after this long, e.g. 45m; zero waits for as long as it takes")
 	if err := parse(fs, args, out); err != nil {
 		return err
@@ -55,11 +62,23 @@ func runTask(args []string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	f, err := flow.Builtin(*name)
+	t, err := task.Load(s, r, id)
 	if err != nil {
 		return err
 	}
-	t, err := task.Load(s, r, id)
+	// The task's own flow, unless this command overrode it — and the flow
+	// this program ships for a task written before the flow was recorded at
+	// all. Not the settings default: that is what the *next* task written
+	// gets, and applying it here would change what an old task walks
+	// because a setting moved after it was written.
+	chosen := *name
+	if chosen == "" {
+		chosen = t.Flow
+	}
+	if chosen == "" {
+		chosen = flow.Default
+	}
+	f, err := flow.Resolve(s, chosen)
 	if err != nil {
 		return err
 	}

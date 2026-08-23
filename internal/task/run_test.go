@@ -21,7 +21,7 @@ func oneFlow() flow.Flow {
 
 func TestRunWalksEveryPhaseAndRecordsIt(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "retry the webhook on 5xx")
+	tk, err := Create(s, r, "ACME-1", "retry the webhook on 5xx", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -63,7 +63,7 @@ func TestRunWalksEveryPhaseAndRecordsIt(t *testing.T) {
 
 func TestRunRunsInsideAWorktreeOnItsOwnBranch(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -104,7 +104,7 @@ func headOf(t *testing.T, dir string) string {
 
 func TestRunRecordsAFailureAndStops(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -143,7 +143,7 @@ func TestRunRecordsAFailureAndStops(t *testing.T) {
 
 func TestRunRecordsAPrepareFailureAndStops(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -178,7 +178,7 @@ func TestRunRecordsAPrepareFailureAndStops(t *testing.T) {
 
 func TestRunRejectsAnUnknownEngine(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -202,7 +202,7 @@ func (e resultEngine) Run(context.Context, engine.Request) (engine.Result, error
 
 func TestRunRecordsSessionAndCostWhenTheEngineReportsThem(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -235,7 +235,7 @@ func TestRunRecordsSessionAndCostWhenTheEngineReportsThem(t *testing.T) {
 
 func TestRunLeavesDataEmptyWhenTheEngineReportsNeither(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}

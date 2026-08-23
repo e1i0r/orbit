@@ -1,10 +1,10 @@
 {
-  "name": "task",
+  "name": "careful",
   "phases": [
     {
       "name": "implement",
       "engine": "claude",
-      "model": "sonnet",
+      "model": "opus",
       "wait": false,
       "permissions": ["repo"]
     },
@@ -13,6 +13,13 @@
       "engine": "claude",
       "model": "opus",
       "wait": true,
+      "permissions": ["repo"]
+    },
+    {
+      "name": "fix",
+      "engine": "claude",
+      "model": "opus",
+      "wait": false,
       "permissions": ["repo"]
     }
   ]
