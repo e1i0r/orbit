@@ -1,4 +1,8 @@
 {
   "language": "English",
-  "keys": {}
+  "keys": {
+    "col.state": {
+      "cells": 12
+    }
+  }
 }

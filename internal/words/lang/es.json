@@ -1,4 +1,161 @@
 {
   "language": "Español",
-  "keys": {}
+  "keys": {
+    "key.up": {
+      "source": "up",
+      "value": "arriba"
+    },
+    "key.down": {
+      "source": "down",
+      "value": "abajo"
+    },
+    "key.first": {
+      "source": "first",
+      "value": "primera"
+    },
+    "key.last": {
+      "source": "last",
+      "value": "última"
+    },
+    "key.page_up": {
+      "source": "page up",
+      "value": "página arriba"
+    },
+    "key.page_down": {
+      "source": "page down",
+      "value": "página abajo"
+    },
+    "key.open": {
+      "source": "open",
+      "value": "abrir"
+    },
+    "key.back": {
+      "source": "back",
+      "value": "volver"
+    },
+    "key.next_tab": {
+      "source": "next tab",
+      "value": "pestaña siguiente"
+    },
+    "key.prev_tab": {
+      "source": "previous tab",
+      "value": "pestaña anterior"
+    },
+    "key.new": {
+      "source": "new",
+      "value": "nueva"
+    },
+    "key.pause": {
+      "source": "pause",
+      "value": "pausar"
+    },
+    "key.resume": {
+      "source": "resume",
+      "value": "reanudar"
+    },
+    "key.cancel": {
+      "source": "cancel",
+      "value": "cancelar"
+    },
+    "key.take": {
+      "source": "take the keyboard",
+      "value": "tomar el teclado"
+    },
+    "key.hand": {
+      "source": "hand it back",
+      "value": "devolverlo"
+    },
+    "key.ask": {
+      "source": "ask",
+      "value": "preguntar"
+    },
+    "key.read": {
+      "source": "mark read",
+      "value": "marcar leída"
+    },
+    "key.edit": {
+      "source": "open in $EDITOR",
+      "value": "abrir en $EDITOR"
+    },
+    "key.filter": {
+      "source": "filter",
+      "value": "filtrar"
+    },
+    "key.autopilot": {
+      "source": "autopilot",
+      "value": "piloto automático"
+    },
+    "key.language": {
+      "source": "language",
+      "value": "idioma"
+    },
+    "key.help": {
+      "source": "help",
+      "value": "ayuda"
+    },
+    "key.quit": {
+      "source": "quit",
+      "value": "salir"
+    },
+    "why.pause_not_running": {
+      "source": "pausing needs a running task; nothing is running here",
+      "value": "pausar necesita una tarea en marcha; aquí no hay nada en marcha"
+    },
+    "why.pause_already_held": {
+      "source": "this task is already paused; press r to let it go",
+      "value": "esta tarea ya está en pausa; pulsa r para soltarla"
+    },
+    "why.pause_already_waiting": {
+      "source": "this phase is already waiting for you; press r to let it go",
+      "value": "esta fase ya te está esperando; pulsa r para soltarla"
+    },
+    "why.pause_autopilot_is_lifting": {
+      "source": "autopilot is lifting this gate; press A to turn it off",
+      "value": "el piloto automático está soltando esta puerta; pulsa A para apagarlo"
+    },
+    "why.resume_still_running": {
+      "source": "resuming needs a paused task; this one is running",
+      "value": "reanudar necesita una tarea en pausa; esta está en marcha"
+    },
+    "why.resume_not_running": {
+      "source": "resuming needs a paused task; nothing is running here",
+      "value": "reanudar necesita una tarea en pausa; aquí no hay nada en marcha"
+    },
+    "why.cancel_not_running": {
+      "source": "cancelling needs a running task; nothing is running here",
+      "value": "cancelar necesita una tarea en marcha; aquí no hay nada en marcha"
+    },
+    "why.take_never_run": {
+      "source": "taking the keyboard needs a session; this task has never run",
+      "value": "tomar el teclado necesita una sesión; esta tarea nunca se ha ejecutado"
+    },
+    "why.take_still_running": {
+      "source": "taking the keyboard needs a phase that has stopped; press p first",
+      "value": "tomar el teclado necesita una fase detenida; pulsa p primero"
+    },
+    "why.take_engine_cannot_resume": {
+      "source": "{engine} cannot resume a session, so there is nothing to take",
+      "value": "{engine} no puede reanudar una sesión, así que no hay nada que tomar"
+    },
+    "why.hand_back_not_taken": {
+      "source": "handing the keyboard back needs a task you have taken; this one is not stopped at a phase",
+      "value": "devolver el teclado necesita una tarea que hayas tomado; esta no está detenida en una fase"
+    },
+    "why.hand_back_engine_cannot_resume": {
+      "source": "{engine} cannot resume a session, so nothing was taken",
+      "value": "{engine} no puede reanudar una sesión, así que no se tomó nada"
+    },
+    "why.ask_not_built": {
+      "source": "orbit cannot ask an engine a question yet; take the keyboard with t and ask it there",
+      "value": "orbit todavía no puede preguntarle nada a un motor; toma el teclado con t y pregúntaselo ahí"
+    },
+    "why.read_not_finished": {
+      "source": "marking read needs a finished task; this one is not finished",
+      "value": "marcar como leída necesita una tarea terminada; esta no lo está"
+    },
+    "why.read_already_read": {
+      "source": "this task is already marked read",
+      "value": "esta tarea ya está marcada como leída"
+    }
+  }
 }
