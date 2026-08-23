@@ -62,11 +62,13 @@ func runTask(args []string, out io.Writer) error {
 	// SIGTERM as well as interrupt, because `orbit cancel` sends SIGTERM,
 	// and the two gestures — Ctrl-C at the terminal and cancel from the
 	// window — have to arrive at the same place and be written down the
-	// same way. stop is deferred so the handler is taken off again: a
-	// process that keeps swallowing signals after it is done cannot be
-	// killed by the ordinary means.
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	// same way.
+	signalled, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	// The first signal is Orbit's to handle. The second is not.
+	restoreOnCancel(signalled, stop)
+
+	ctx := signalled
 	if *timeout > 0 {
 		var done context.CancelFunc
 		ctx, done = context.WithTimeout(ctx, *timeout)
@@ -79,4 +81,27 @@ func runTask(args []string, out io.Writer) error {
 	}
 	fmt.Fprintf(out, "%s finished\n", id)
 	return nil
+}
+
+// restoreOnCancel hands the signals back to the operating system as soon as
+// the run is stopping, rather than when it has stopped.
+//
+// signal.NotifyContext cancels its context on the first signal and then goes
+// on relaying: the handler stays installed until stop is called, and the
+// deferred stop in runTask only runs after task.Run has returned. Everything
+// between the two is the unwind — writing phase.cancelled, waiting on an
+// engine that is taking its time about dying — and it is exactly when
+// somebody presses Ctrl-C a second time. Swallowed there, the second one
+// leaves `kill -9` as the only way out of a run that will not end.
+//
+// So: one goroutine, whose whole job is to take the handler off the moment
+// the context is done, which restores the default disposition — the next
+// interrupt kills the process outright, which is what pressing it twice
+// means. stop is idempotent, so the deferred call is still correct, and on a
+// run that is never signalled that deferred call is what ends this goroutine.
+func restoreOnCancel(ctx context.Context, stop func()) {
+	go func() {
+		<-ctx.Done()
+		stop()
+	}()
 }
