@@ -24,7 +24,7 @@ const (
 	TaskAbandoned = "task.abandoned" // its process is gone and a reader wrote that down
 	TaskRead      = "task.read"      // somebody has looked at it
 
-	PhaseStarted   = "phase.started"   // Data carries engine, model and n
+	PhaseStarted   = "phase.started"   // Data carries engine, model, n, and the permissions the phase was given
 	PhaseFinished  = "phase.finished"  // the phase ran through; Text is what the engine printed
 	PhaseFailed    = "phase.failed"    // the engine broke; Text is what it printed, Data["error"] why it stopped
 	PhaseCancelled = "phase.cancelled" // the phase was stopped from outside; Text is what it printed first

@@ -121,3 +121,58 @@ func TestLoadOfSomethingThatIsNotJSON(t *testing.T) {
 		t.Errorf("the error does not say which file will not parse: %v", err)
 	}
 }
+
+// TestValidateAcceptsTheWholeVocabulary pins the three names a flow file may
+// use. They are duplicated in internal/engine, which maps them to a real
+// command line; the duplication is deliberate — neither package may import
+// the other — and this test is half of what keeps the two copies honest.
+func TestValidateAcceptsTheWholeVocabulary(t *testing.T) {
+	f := Flow{Name: "x", Phases: []Phase{{
+		Name:        "implement",
+		Engine:      "claude",
+		Permissions: []string{PermissionRead, PermissionRepo, PermissionNetwork},
+	}}}
+	if err := f.Validate(); err != nil {
+		t.Errorf("Validate refused the vocabulary it defines: %v", err)
+	}
+}
+
+// TestValidateRejectsAPermissionNobodyDefined is this gap's exact failure
+// mode. A flow file that says "repository" where it meant "repo" used to be
+// accepted, granted nothing, and left the engine's own default in charge —
+// a wider posture than the file asked for, arriving through a typo, with
+// nothing anywhere saying it had happened.
+func TestValidateRejectsAPermissionNobodyDefined(t *testing.T) {
+	f := Flow{Name: "x", Phases: []Phase{{
+		Name:        "implement",
+		Engine:      "claude",
+		Permissions: []string{"repository"},
+	}}}
+	err := f.Validate()
+	if err == nil {
+		t.Fatal("a permission nobody defined validated")
+	}
+	if !strings.Contains(err.Error(), "repository") {
+		t.Errorf("the error does not name the permission it refused: %v", err)
+	}
+	if !strings.Contains(err.Error(), "implement") {
+		t.Errorf("the error does not say which phase carries it: %v", err)
+	}
+}
+
+// TestEveryBuiltinFlowStillValidates is the check that the three flows
+// shipped inside the binary did not become unloadable the day the
+// vocabulary was closed. Builtin validates as it decodes, so a name outside
+// the set turns every one of them into a run that cannot start.
+func TestEveryBuiltinFlowStillValidates(t *testing.T) {
+	for _, name := range BuiltinNames() {
+		f, err := Builtin(name)
+		if err != nil {
+			t.Errorf("the built-in flow %q no longer loads: %v", name, err)
+			continue
+		}
+		if err := f.Validate(); err != nil {
+			t.Errorf("the built-in flow %q no longer validates: %v", name, err)
+		}
+	}
+}

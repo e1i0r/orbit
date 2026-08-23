@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strconv"
 	"unicode/utf8"
 
 	"github.com/e1i0r/orbit/internal/engine"
@@ -105,11 +104,7 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 			continue
 		}
 
-		if err := emit(s, t, record.Event{
-			Kind:  record.PhaseStarted,
-			Phase: p.Name,
-			Data:  map[string]string{"engine": p.Engine, "model": p.Model, "n": strconv.Itoa(i + 1)},
-		}); err != nil {
+		if err := emit(s, t, phaseStart(p, i+1)); err != nil {
 			return err
 		}
 
@@ -117,6 +112,12 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 			Prompt: prompt(t, p),
 			Model:  p.Model,
 			Dir:    wt,
+			// The posture the flow file stated, carried to the process
+			// that will act under it. It was inert for two plans: the
+			// built-in flows all said ["repo"] and no engine could hear
+			// it, so the engine's own default was the real posture and it
+			// was written down nowhere.
+			Permissions: p.Permissions,
 		})
 		if runErr != nil {
 			// A context that is done is not an engine that broke. The engine
@@ -148,49 +149,6 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 	}
 
 	return emit(s, t, record.Event{Kind: record.TaskFinished})
-}
-
-// phaseEnd is the one event that ends a phase, whichever way it ended.
-//
-// The three endings carry the same facts because the same things are true of
-// all three: the engine printed something, it may have cost money, it may
-// have a session somebody wants to resume. Only the kind differs, and cause
-// — the reason a phase that did not finish stopped.
-//
-// That the ending carries the output at all is a fix. run.go bound the
-// engine's answer and then threw it away on the error path, so every failed
-// or cancelled phase lost everything the agent had printed before it died,
-// which is the case where a reader most wants it: on a cancellation it is
-// the only evidence of what the run did before it was stopped. Claude.Run
-// returns its captured stdout alongside its error precisely so this can keep
-// it (claude.go:45-51).
-func phaseEnd(kind, phase string, out engine.Result, cause error) record.Event {
-	text, full := captured(out.Output)
-	e := record.Event{Kind: kind, Phase: phase, Text: text}
-	data := map[string]string{}
-	if full > 0 {
-		data["output_bytes"] = strconv.Itoa(full)
-	}
-	if out.SessionID != "" {
-		data["session"] = out.SessionID
-	}
-	if out.Cost != 0 {
-		data["cost"] = strconv.FormatFloat(out.Cost, 'f', -1, 64)
-	}
-	if cause != nil {
-		// Why it stopped goes in Data rather than Text, because Text is now
-		// what the engine printed, and a log that ends at phase.failed — it
-		// can, the write after it is best-effort — must still say why. It is
-		// cut to the same length for the same reason: one event is one line
-		// and record.MaxLine is what a line may weigh, and an engine's error
-		// can carry the whole of its stderr.
-		msg, _ := captured(cause.Error())
-		data["error"] = msg
-	}
-	if len(data) > 0 {
-		e.Data = data
-	}
-	return e
 }
 
 // stopped writes down that a run was stopped from outside rather than broken

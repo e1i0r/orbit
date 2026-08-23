@@ -169,3 +169,82 @@ func mustEvents(t *testing.T, s *store.Store, tk Task) []record.Event {
 	}
 	return events
 }
+
+// permissionFlow is a one-phase flow that states a posture, so the tests
+// below can watch it travel from the flow file to the engine and into the
+// record.
+func permissionFlow(perms ...string) flow.Flow {
+	return flow.Flow{Name: "task", Phases: []flow.Phase{
+		{Name: "implement", Engine: "fake", Model: "sonnet", Permissions: perms},
+	}}
+}
+
+// TestPhaseStartedSaysWhatThePhaseWasAllowedToTouch puts the posture in the
+// record. The log is the only thing the window reads and the only account of
+// a run that survives it, so "what was this agent allowed to do?" has to be
+// answerable from the log rather than from whichever flow file happened to
+// be on disk at the time.
+func TestPhaseStartedSaysWhatThePhaseWasAllowedToTouch(t *testing.T) {
+	s, r := fixture(t)
+	tk, err := Create(s, r, "ACME-1", "x", "")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	f := permissionFlow(flow.PermissionRead, flow.PermissionNetwork)
+	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": engine.NewFake("done")}, nil); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	events, err := Events(s, tk)
+	if err != nil {
+		t.Fatalf("Events: %v", err)
+	}
+	if got := find(t, events, record.PhaseStarted).Data["permissions"]; got != "read,network" {
+		t.Errorf(`phase.started Data["permissions"] = %q, want "read,network"`, got)
+	}
+}
+
+// TestPhaseStartedOmitsPermissionsWhenThePhaseAsksForNothing matches how the
+// ending events omit session and cost: a key that is not there says nothing,
+// where a key holding an empty string would look like a posture somebody
+// wrote down.
+func TestPhaseStartedOmitsPermissionsWhenThePhaseAsksForNothing(t *testing.T) {
+	s, r := fixture(t)
+	tk, err := Create(s, r, "ACME-1", "x", "")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": engine.NewFake("done")}, nil); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	events, err := Events(s, tk)
+	if err != nil {
+		t.Fatalf("Events: %v", err)
+	}
+	if _, ok := find(t, events, record.PhaseStarted).Data["permissions"]; ok {
+		t.Error(`phase.started carries an empty "permissions" key`)
+	}
+}
+
+// TestTheEngineIsHandedThePhasesPermissions is the half of the change that
+// the record cannot show: the posture has to reach the process, not only the
+// log. Before this, the flow files shipped "permissions": ["repo"] and
+// engine.Request had no field that could carry it.
+func TestTheEngineIsHandedThePhasesPermissions(t *testing.T) {
+	s, r := fixture(t)
+	tk, err := Create(s, r, "ACME-1", "x", "")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	fake := engine.NewFake("done")
+	f := permissionFlow(flow.PermissionRepo)
+	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": fake}, nil); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if len(fake.Calls) != 1 {
+		t.Fatalf("the engine was called %d times, want 1", len(fake.Calls))
+	}
+	got := fake.Calls[0].Permissions
+	if len(got) != 1 || got[0] != flow.PermissionRepo {
+		t.Errorf("the engine was handed %v, want [repo]", got)
+	}
+}

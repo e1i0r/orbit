@@ -1,0 +1,3 @@
+{"type":"system","subtype":"init","cwd":"/work/acme/payments","session_id":"1b7d4e60-8c11-4f3e-b0a9-3d5c7e2a9f04","tools":["Read","Glob","Grep"],"model":"sonnet","permissionMode":"plan"}
+{"type":"assistant","message":{"id":"msg_01","type":"message","role":"assistant","model":"sonnet","content":[{"type":"text","text":"Opening the payments client."}]},"session_id":"1b7d4e60-8c11-4f3e-b0a9-3d5c7e2a9f04"}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_01","content":"payments/client.go"}]},"session_id":"1b7d4e60-8c11-4f3e-b0a9-3d5c7e2a9f04"}

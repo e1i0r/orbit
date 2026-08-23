@@ -1,0 +1,3 @@
+{"type":"system","subtype":"init","cwd":"/work/acme/payments","session_id":"4f2a1c88-6b5d-42e7-8c30-7ab19d0e5c62","tools":["Read","Glob","Grep"],"model":"sonnet","permissionMode":"plan"}
+{"type":"assistant","message":{"id":"msg_01","type":"message","role":"assistant","model":"sonnet","content":[{"type":"text","text":"ACME-1 needs no change to the payments client."}]},"session_id":"4f2a1c88-6b5d-42e7-8c30-7ab19d0e5c62"}
+{"type":"result","subtype":"success","is_error":false,"duration_ms":2140,"num_turns":1,"result":"ACME-1 needs no change to the payments client.","session_id":"4f2a1c88-6b5d-42e7-8c30-7ab19d0e5c62","usage":{"input_tokens":902,"output_tokens":41}}
