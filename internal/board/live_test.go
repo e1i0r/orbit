@@ -54,9 +54,9 @@ func oneRow(t *testing.T, b Board) view.Task {
 }
 
 func TestARowIsLiveOnlyWhileAProcessHoldsIt(t *testing.T) {
-	s, repoPath := oneRepo(t)
+	s, work, repoPath := oneRepo(t)
 	addTask(t, s, repoPath, "ACME-1", created("retry the webhook"), startedEvent())
-	r := NewReader(s)
+	r := NewReader(s, work)
 
 	if oneRow(t, first(t, r)).Live {
 		t.Error("a task no marker claims was drawn as live")
@@ -79,7 +79,7 @@ func first(t *testing.T, r *Reader) Board { t.Helper(); b, _ := refresh(t, r); r
 func next(t *testing.T, r *Reader) Board  { t.Helper(); b, _ := refresh(t, r); return b }
 
 func TestALiveRunIsStillBandedByTheRecord(t *testing.T) {
-	s, repoPath := oneRepo(t)
+	s, work, repoPath := oneRepo(t)
 	// A log that ends where SIGKILL leaves one, and a marker whose process
 	// is gone. The row is not live — and it is still Running, because
 	// task.abandoned is not in the log and no reader may draw a conclusion
@@ -87,7 +87,7 @@ func TestALiveRunIsStillBandedByTheRecord(t *testing.T) {
 	addTask(t, s, repoPath, "ACME-1", created("retry the webhook"), startedEvent())
 	claim(t, s, repoPath, "ACME-1", gonePid(t))
 
-	row := oneRow(t, first(t, NewReader(s)))
+	row := oneRow(t, first(t, NewReader(s, work)))
 	if row.Live {
 		t.Error("a task whose process is gone was drawn as live")
 	}
@@ -97,11 +97,11 @@ func TestALiveRunIsStillBandedByTheRecord(t *testing.T) {
 }
 
 func TestADamagedMarkerCostsAnErrorAndNotTheRow(t *testing.T) {
-	s, repoPath := oneRepo(t)
+	s, work, repoPath := oneRepo(t)
 	addTask(t, s, repoPath, "ACME-1", created("retry the webhook"), startedEvent())
 	writeMarker(t, s, repoPath, "ACME-1", "pid: not a number\n")
 
-	b := first(t, NewReader(s))
+	b := first(t, NewReader(s, work))
 	row := oneRow(t, b)
 	if row.Live {
 		t.Error("a marker nobody could read was taken as proof that a process is running")

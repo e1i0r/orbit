@@ -181,18 +181,23 @@ func TestTopRefusesASecondDirectory(t *testing.T) {
 	}
 }
 
-// A state root with nothing in it is the first thing a new reader sees, and
-// it has to be a sentence they can act on rather than a blank screen.
-func TestTopOverAStateRootWithNothingInItSaysWhereItLooked(t *testing.T) {
+// A directory with nothing in it is a sentence a reader can act on rather
+// than a blank screen — and it is the one case where "no repositories" is
+// the true thing to say. The other two empty states are next door in
+// topdir_test.go; this is the one that must survive them.
+func TestTopOverADirectoryWithNoRepositoryInItSaysWhereItLooked(t *testing.T) {
 	emptyHome(t)
 	root := t.TempDir()
 
 	code, out, errOut := run(t, "top", root, "-once")
 	if code != 0 {
-		t.Fatalf("top over an empty state root exited %d: %s", code, errOut)
+		t.Fatalf("top over an empty directory exited %d: %s", code, errOut)
 	}
 	if !strings.Contains(out, "No repositories under") {
 		t.Errorf("the empty frame does not say what is missing:\n%s", out)
+	}
+	if strings.Contains(out, "no tasks written") {
+		t.Errorf("the frame says there are repositories with no tasks, over a directory with no repository:\n%s", out)
 	}
 	if strings.TrimSpace(out) == "" {
 		t.Error("the frame is blank")

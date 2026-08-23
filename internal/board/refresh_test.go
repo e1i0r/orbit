@@ -14,11 +14,11 @@ import (
 // baseline; it does not announce twelve historic failures, which is how a
 // channel stops being trusted on its first use.
 func TestTheFirstRefreshRingsNoBell(t *testing.T) {
-	s, repoPath := oneRepo(t)
+	s, work, repoPath := oneRepo(t)
 	addTask(t, s, repoPath, "ACME-1", created("Retry the webhook on 5xx"), startedEvent(), failedEvent())
 	addTask(t, s, repoPath, "ACME-2", created("Fix the swagger lint"), startedEvent(), failedEvent())
 
-	b, changed := refresh(t, NewReader(s))
+	b, changed := refresh(t, NewReader(s, work))
 	if len(changed.Entered) != 0 {
 		t.Errorf("the first refresh announced %v, and it must announce nothing", changed.Entered)
 	}
@@ -34,9 +34,9 @@ func TestTheFirstRefreshRingsNoBell(t *testing.T) {
 // the state. The refresh that reads the failure announces it; the one after
 // has nothing to say about a task that has not moved.
 func TestCrossingIntoNeedsYouIsAnnouncedOnce(t *testing.T) {
-	s, repoPath := oneRepo(t)
+	s, work, repoPath := oneRepo(t)
 	addTask(t, s, repoPath, "ACME-1", created("Retry the webhook on 5xx"), startedEvent())
-	r := NewReader(s)
+	r := NewReader(s, work)
 	if _, changed := refresh(t, r); len(changed.Entered) != 0 {
 		t.Fatalf("a running task was announced: %v", changed.Entered)
 	}
@@ -67,11 +67,11 @@ func TestCrossingIntoNeedsYouIsAnnouncedOnce(t *testing.T) {
 // that started over would fold damaged lines and lose the title, and a
 // reader that starts at its stored offset never looks at them again.
 func TestTheSecondReadStartsWhereTheFirstStopped(t *testing.T) {
-	s, repoPath := oneRepo(t)
+	s, work, repoPath := oneRepo(t)
 	addTask(t, s, repoPath, "ACME-1", created("Retry the webhook on 5xx"), startedEvent())
 	path := eventsPath(t, s, repoPath, "ACME-1")
 
-	r := NewReader(s)
+	r := NewReader(s, work)
 	refresh(t, r)
 	first := r.tasks[0].offset
 	if want := sizeOf(t, path); first != want {
@@ -105,12 +105,12 @@ func TestTheSecondReadStartsWhereTheFirstStopped(t *testing.T) {
 // error names the task, because a window that had to match on the words of
 // an error message to find the row would be testing the message.
 func TestAnUnreadableLogDoesNotBlankTheBoard(t *testing.T) {
-	s, repoPath := oneRepo(t)
+	s, work, repoPath := oneRepo(t)
 	addTask(t, s, repoPath, "ACME-1", created("Retry the webhook on 5xx"), startedEvent())
 	addTask(t, s, repoPath, "ACME-2", created("Fix the swagger lint"), startedEvent())
 	tooLongLine(t, eventsPath(t, s, repoPath, "ACME-2"))
 
-	r := NewReader(s)
+	r := NewReader(s, work)
 	b, _ := refresh(t, r)
 	if len(b.Tasks) != 2 {
 		t.Fatalf("%d rows, want 2: an unreadable log took the other task with it", len(b.Tasks))
@@ -146,13 +146,13 @@ func TestAnUnreadableLogDoesNotBlankTheBoard(t *testing.T) {
 // as attempted twice when its record says once is the reader inventing
 // history out of two different logs.
 func TestALogThatWasReplacedIsReadAgainFromTheTop(t *testing.T) {
-	s, repoPath := oneRepo(t)
+	s, work, repoPath := oneRepo(t)
 	addTask(t, s, repoPath, "ACME-1",
 		created("Retry the webhook on 5xx, and stop pretending it is idempotent"),
 		startedEvent(), failedEvent())
 	path := eventsPath(t, s, repoPath, "ACME-1")
 
-	r := NewReader(s)
+	r := NewReader(s, work)
 	refresh(t, r)
 	read := r.tasks[0].offset
 

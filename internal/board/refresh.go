@@ -7,14 +7,12 @@ package board
 
 import (
 	"cmp"
-	"errors"
 	"fmt"
 	"slices"
 	"strings"
 	"time"
 
 	"github.com/e1i0r/orbit/internal/repo"
-	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/task"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -34,9 +32,9 @@ import (
 //
 // Per-task and per-repository failures are carried in Board.Errs rather
 // than returned: one task whose log is unreadable must not blank the other
-// nineteen. The returned error is reserved for a state root whose
-// repositories cannot be listed at all, where an empty board would be
-// indistinguishable from an empty root.
+// nineteen. The returned error is reserved for a root that cannot be walked
+// at all, where an empty board would be indistinguishable from an empty
+// directory.
 func (r *Reader) Refresh() (Board, Changed, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -125,8 +123,8 @@ func (r *Reader) Refresh() (Board, Changed, error) {
 	return b, changed, nil
 }
 
-// Rescan walks the tree again: every repository in the state root and every
-// task in each of them.
+// Rescan walks the tree again: every repository under the root and every
+// task the state root holds against each of them.
 //
 // It is separate from Refresh, and slower, because a new event is common
 // and a new task is rare. What it does that Refresh does not is find and
@@ -136,11 +134,12 @@ func (r *Reader) Refresh() (Board, Changed, error) {
 // offset above all, so a rescan costs no re-reading.
 //
 // A failure that concerns one repository is kept for the next board's Errs
-// and does not stop the rest of the walk — a damaged marker included, even
-// when it was the only repository there was. The one error returned is the
-// listing not happening at all: repos/ itself refusing to be read, as
-// against being read and found damaged. In that case the previous
-// enumeration is left standing rather than replaced with nothing.
+// and does not stop the rest of the walk — a repository whose tasks cannot
+// be listed included, even when it was the only repository there was. The
+// one error returned is the walk not happening at all: a root that is not
+// there, or one that cannot be read, as against one that was read and found
+// empty. In that case the previous enumeration is left standing rather than
+// replaced with nothing.
 func (r *Reader) Rescan() error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -150,32 +149,36 @@ func (r *Reader) Rescan() error {
 // rescan is Rescan with the lock already held, so Refresh can enumerate on
 // its first call without taking it twice.
 func (r *Reader) rescan() error {
-	// Repos always returns every repository whose marker was readable
-	// alongside its error, so a damaged marker costs one entry in Errs and
-	// never the board — including when it was the only repository there was,
-	// which is why this asks the error what happened rather than counting
-	// what came back. An empty list with a fault behind it is the ordinary
-	// shape of one damaged marker, and a board that went blank until someone
-	// repaired a file would be the fault made worse. Only repos/ itself
-	// refusing to be listed leaves nothing to enumerate, and store says so by
-	// type.
-	refs, err := r.store.Repos()
-	var unlistable *store.ReposError
-	if errors.As(err, &unlistable) {
-		return fmt.Errorf("list the repositories under %q: %w", r.store.Root(), err)
-	}
-	var errs []error
+	// The repositories are the ones under the root, and not the ones the
+	// state root happens to hold a directory for. Those two are different
+	// sets, and the difference is the whole of what a new reader sees: a
+	// repository gains a directory under repos/ only when the first task is
+	// written against it, so enumerating from there tells somebody who has
+	// just cloned three projects that there are no repositories at all, and
+	// offers them the one action — clone one — that would change nothing.
+	//
+	// repo.Discover is the walker, and it is the same one `orbit repos`
+	// uses rather than a second: it stops at the first .git instead of
+	// descending into it, skips dotted directories and the state root, and
+	// does not follow symlinks. A directory that looks like a repository and
+	// will not open is left out of the listing rather than failing the walk.
+	//
+	// The one error is the walk not happening: a root that is not there, or
+	// one that cannot be read. An empty board and a root nobody could look
+	// in are the same picture, and which one this is has to be said.
+	found, err := repo.Discover(r.root)
 	if err != nil {
-		errs = append(errs, err)
+		return fmt.Errorf("look for repositories under %q: %w", r.root, err)
 	}
 
-	repos := make([]*repoState, 0, len(refs))
-	for _, ref := range refs {
-		rs, openErr := r.open(ref)
-		if openErr != nil {
-			errs = append(errs, openErr)
-		}
-		repos = append(repos, rs)
+	var errs []error
+	repos := make([]*repoState, 0, len(found))
+	for _, rp := range found {
+		// The name is taken from the walk rather than asked for again.
+		// Discover has already run repo.Open on this path, and repo.Open is
+		// three git subprocesses; asking a second time would pay for them
+		// twice on every enumeration.
+		repos = append(repos, &repoState{path: rp.Path, name: rp.Name})
 	}
 	// Sorted by name so the rows are in an order a reader can predict —
 	// repos/ is named by hash and answers nothing on its own — and by path

@@ -14,10 +14,10 @@ import (
 // TestTheLogIsTheWholeRecordInOrder is the log tab's source, read the slow
 // way: a task the poller has never seen.
 func TestTheLogIsTheWholeRecordInOrder(t *testing.T) {
-	s, repoPath := oneRepo(t)
+	s, work, repoPath := oneRepo(t)
 	addTask(t, s, repoPath, "ACME-1", created("Retry the webhook on 5xx"), startedEvent(), failedEvent())
 
-	entries, err := NewReader(s).Log(repoPath, "ACME-1")
+	entries, err := NewReader(s, work).Log(repoPath, "ACME-1")
 	if err != nil {
 		t.Fatalf("Log: %v", err)
 	}
@@ -39,9 +39,9 @@ func TestTheLogIsTheWholeRecordInOrder(t *testing.T) {
 // is the reason this method is on the Reader at all: the log tab of a
 // running task is redrawn twice a second.
 func TestTheLogIsAnsweredFromWhatThePollerAlreadyRead(t *testing.T) {
-	s, repoPath := oneRepo(t)
+	s, work, repoPath := oneRepo(t)
 	addTask(t, s, repoPath, "ACME-1", created("Retry the webhook on 5xx"), startedEvent())
-	r := NewReader(s)
+	r := NewReader(s, work)
 	refresh(t, r)
 
 	appendTo(t, s, repoPath, "ACME-1", failedEvent())
@@ -71,11 +71,11 @@ func TestTheLogIsAnsweredFromWhatThePollerAlreadyRead(t *testing.T) {
 // an unreadable event and the rest of the log still reads, which is the
 // behaviour a log tab wants and not a failure at all.
 func TestALogNobodyCanReadSaysWhichTask(t *testing.T) {
-	s, repoPath := oneRepo(t)
+	s, work, repoPath := oneRepo(t)
 	addTask(t, s, repoPath, "ACME-404", created("Retry the webhook on 5xx"))
 	tooLongLine(t, eventsPath(t, s, repoPath, "ACME-404"))
 
-	if _, err := NewReader(s).Log(repoPath, "ACME-404"); err == nil {
+	if _, err := NewReader(s, work).Log(repoPath, "ACME-404"); err == nil {
 		t.Fatal("a record nobody can read came back as a record")
 	} else if !strings.Contains(err.Error(), "ACME-404") {
 		t.Errorf("the failure says %q, want it to name the task", err)
@@ -86,8 +86,8 @@ func TestALogNobodyCanReadSaysWhichTask(t *testing.T) {
 // an error: a task directory with no record yet is a task nothing has
 // happened to, and the pane says so in words rather than in a failure.
 func TestATaskNobodyHasWrittenDownIsAnEmptyLog(t *testing.T) {
-	s, repoPath := oneRepo(t)
-	entries, err := NewReader(s).Log(repoPath, "ACME-404")
+	s, work, repoPath := oneRepo(t)
+	entries, err := NewReader(s, work).Log(repoPath, "ACME-404")
 	if err != nil {
 		t.Fatalf("Log: %v", err)
 	}
@@ -101,8 +101,8 @@ func TestATaskNobodyHasWrittenDownIsAnEmptyLog(t *testing.T) {
 // the only place the two paths can be compared at all — and they must not be
 // the same path.
 func TestTheWorktreeIsTheStoresAnswerAndNotTheRepository(t *testing.T) {
-	s, repoPath := oneRepo(t)
-	got, err := NewReader(s).Worktree(repoPath, "ACME-1")
+	s, work, repoPath := oneRepo(t)
+	got, err := NewReader(s, work).Worktree(repoPath, "ACME-1")
 	if err != nil {
 		t.Fatalf("Worktree: %v", err)
 	}
@@ -125,8 +125,8 @@ func TestTheWorktreeIsTheStoresAnswerAndNotTheRepository(t *testing.T) {
 // directory name, so a store that took any string would take one that walks
 // out of the state root.
 func TestAWorktreeForATaskThatCannotBeNamedIsRefused(t *testing.T) {
-	s, repoPath := oneRepo(t)
-	if path, err := NewReader(s).Worktree(repoPath, "../../etc"); err == nil {
+	s, work, repoPath := oneRepo(t)
+	if path, err := NewReader(s, work).Worktree(repoPath, "../../etc"); err == nil {
 		t.Errorf("a task id that walks out of the root was answered with %q", path)
 	}
 }

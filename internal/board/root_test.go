@@ -13,16 +13,23 @@ import (
 	"time"
 
 	"github.com/e1i0r/orbit/internal/record"
+	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 )
 
 // newRoot roots a store in a temporary directory and points $ORBIT_HOME and
 // git's two configuration files at throwaway places. The board runs git
-// through repo.Open, which inherits this process's environment on purpose,
-// so it is this process's environment that has to be made safe: without
-// this a test would read the developer's real state root and their real
-// ~/.gitconfig, and would pass or fail depending on whose machine ran it.
-func newRoot(t *testing.T) *store.Store {
+// through repo.Discover, which inherits this process's environment on
+// purpose, so it is this process's environment that has to be made safe:
+// without this a test would read the developer's real state root and their
+// real ~/.gitconfig, and would pass or fail depending on whose machine ran
+// it.
+//
+// It answers the store beside the workspace, and they are two different
+// directories on purpose — the record lives under $ORBIT_HOME and the
+// checkouts do not. The workspace is what `orbit top` would be pointed at,
+// what gitRepo builds repositories in, and what a Reader is opened over.
+func newRoot(t *testing.T) (*store.Store, string) {
 	t.Helper()
 	root := t.TempDir()
 	t.Setenv("ORBIT_HOME", root)
@@ -33,14 +40,18 @@ func newRoot(t *testing.T) *store.Store {
 	if err != nil {
 		t.Fatalf("store.New: %v", err)
 	}
-	return s
+	return s, t.TempDir()
 }
 
 // gitRepo builds a real repository with one commit on it, because repo.Open
 // reads the current branch and a repository with no commits has none.
-func gitRepo(t *testing.T, name string) string {
+//
+// It goes under the workspace rather than in a temporary directory of its
+// own, because the walk that finds it starts there: a repository somewhere
+// else is a repository this board is not of.
+func gitRepo(t *testing.T, work, name string) string {
 	t.Helper()
-	dir := filepath.Join(t.TempDir(), name)
+	dir := filepath.Join(work, name)
 	if err := os.Mkdir(dir, 0o700); err != nil {
 		t.Fatalf("mkdir %q: %v", dir, err)
 	}
@@ -54,14 +65,26 @@ func gitRepo(t *testing.T, name string) string {
 			t.Fatalf("git %v: %v\n%s", args, err, out)
 		}
 	}
-	return dir
+	// The path git resolves to, and not the one the directory was made at.
+	// Everything else in Orbit reaches a repository through repo.Open, which
+	// resolves symlinks — and a temporary directory is behind one on macOS.
+	// A fixture that answered the unresolved path would file its tasks under
+	// a different hash from the one the walk makes the board look in, which
+	// is a disagreement between two halves of the fixture and not a finding
+	// about the code.
+	opened, err := repo.Open(dir)
+	if err != nil {
+		t.Fatalf("open the repository at %q: %v", dir, err)
+	}
+	return opened.Path
 }
 
-// oneRepo is the usual setting: a fresh state root and one repository.
-func oneRepo(t *testing.T) (*store.Store, string) {
+// oneRepo is the usual setting: a fresh state root, a workspace, and one
+// repository in it.
+func oneRepo(t *testing.T) (s *store.Store, work, repoPath string) {
 	t.Helper()
-	s := newRoot(t)
-	return s, gitRepo(t, "payments")
+	s, work = newRoot(t)
+	return s, work, gitRepo(t, work, "payments")
 }
 
 // refresh polls once and fails the test if it could not be done. Every test
@@ -74,27 +97,6 @@ func refresh(t *testing.T, r *Reader) (Board, Changed) {
 		t.Fatalf("Refresh: %v", err)
 	}
 	return b, changed
-}
-
-// damage overwrites the marker of every repository in the state root with a
-// body parseRepoMarker will not take. The store hashes a repository's path
-// into a directory name, so a test cannot name that directory itself, and
-// walking to it is the only way in.
-func damage(t *testing.T, s *store.Store) {
-	t.Helper()
-	dirs, err := os.ReadDir(filepath.Join(s.Root(), "repos"))
-	if err != nil {
-		t.Fatalf("read the repos directory: %v", err)
-	}
-	if len(dirs) == 0 {
-		t.Fatal("there is no repository to damage")
-	}
-	for _, dir := range dirs {
-		marker := filepath.Join(s.Root(), "repos", dir.Name(), "repo")
-		if err := os.WriteFile(marker, []byte("this is not a marker\n"), 0o600); err != nil {
-			t.Fatalf("damage %q: %v", marker, err)
-		}
-	}
 }
 
 func addTask(t *testing.T, s *store.Store, repoPath, id string, events ...record.Event) {

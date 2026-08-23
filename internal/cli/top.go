@@ -93,7 +93,12 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 	if err != nil {
 		return ui.Options{}, nil, err
 	}
-	r := board.NewReader(s)
+	// The directory is what the board is of, and not only what the header
+	// says. The reader walks it for repositories and asks the store what has
+	// been written against each; a reader given only the store would answer
+	// the same board for every directory on the machine, which is what this
+	// command used to do.
+	r := board.NewReader(s, dir)
 	// The engines this build can run, by the name a record carries. It is a
 	// map of one today, and it is a map because the record already names its
 	// engine and a task run by something else has to be answered by name
@@ -124,11 +129,11 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 
 // mustBeDirectory refuses a root that is not one.
 //
-// The board's repositories come from the state root rather than from this
-// path — what it is for is the header and the empty state — so a typo would
-// otherwise draw a perfectly good window saying "No repositories under
-// /wrok", which reads as "you have no work" rather than as "you typed that
-// wrong".
+// board.Reader would refuse it too — its walk of a path that is not there
+// fails, and Refresh carries that up — but the sentence it produces is about
+// a walk, and this one is about what was typed. A person who wrote /wrok
+// wants to be told that, on the spot, and not to read a window's refusal to
+// enumerate.
 func mustBeDirectory(dir string) error {
 	info, err := os.Stat(dir)
 	if err != nil {

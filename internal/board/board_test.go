@@ -1,9 +1,10 @@
 package board
 
-// What the board says about the whole state root: how many repositories are
-// in it, how many tasks are in each band, which of the finished ones nobody
-// has looked at, and what happens to the rest of it when one repository is
-// damaged. The polling itself is refresh_test.go.
+// What the board says about the directory it is of: how many repositories
+// are under it, how many tasks are in each band, which of the finished ones
+// nobody has looked at, and what happens to the rest of it when one
+// directory under the root will not open. The polling itself is
+// refresh_test.go.
 
 import (
 	"os"
@@ -15,10 +16,11 @@ import (
 	"github.com/e1i0r/orbit/internal/view"
 )
 
-// TestAnEmptyRootIsAnAnswer: a state root nobody has written a task against
-// is empty, not broken.
+// TestAnEmptyRootIsAnAnswer: a directory with no repository under it is
+// empty, not broken.
 func TestAnEmptyRootIsAnAnswer(t *testing.T) {
-	b, changed := refresh(t, NewReader(newRoot(t)))
+	s, work := newRoot(t)
+	b, changed := refresh(t, NewReader(s, work))
 	if len(b.Tasks) != 0 || b.Repos != 0 || len(b.Errs) != 0 {
 		t.Errorf("an empty root gave %d tasks in %d repos and %d errors, want none of any", len(b.Tasks), b.Repos, len(b.Errs))
 	}
@@ -33,33 +35,55 @@ func TestAnEmptyRootIsAnAnswer(t *testing.T) {
 	}
 }
 
-// TestARepositoryWithNoTasksIsStillARepository covers the two shapes a
-// directory under repos/ can have without producing a row: one with a
-// marker and no tasks, which is counted, and one with no marker at all,
-// which is a half-created directory and is skipped in silence.
+// TestARepositoryWithNoTasksIsStillARepository is the count in the header
+// and where it comes from.
+//
+// A repository gains a directory under repos/ only when the first task is
+// written against it, so a board that counted those would tell somebody who
+// has just cloned a project that there are no repositories at all — and
+// offer them the one action, clone one, that would change nothing. The count
+// is what the walk found and the rows are what the record holds, and a fresh
+// checkout is the first without the second.
 func TestARepositoryWithNoTasksIsStillARepository(t *testing.T) {
-	s, repoPath := oneRepo(t)
-	dir, err := s.CreateTaskDir(repoPath, "ACME-1")
-	if err != nil {
-		t.Fatalf("create the directory of task ACME-1: %v", err)
-	}
-	if err := os.RemoveAll(dir); err != nil {
-		t.Fatalf("take the task back out: %v", err)
-	}
-	unmarked := filepath.Join(s.Root(), "repos", "0123456789ab", "tasks", "ACME-9")
-	if err := os.MkdirAll(unmarked, 0o700); err != nil {
-		t.Fatalf("mkdir %q: %v", unmarked, err)
-	}
+	s, work, _ := oneRepo(t)
 
-	b, _ := refresh(t, NewReader(s))
+	b, _ := refresh(t, NewReader(s, work))
 	if b.Repos != 1 {
-		t.Errorf("Repos = %d, want 1: the marked repository counts and the unmarked directory does not", b.Repos)
+		t.Errorf("Repos = %d, want 1: a repository nobody has written a task against is still a repository", b.Repos)
 	}
 	if len(b.Tasks) != 0 {
-		t.Errorf("%d tasks were drawn from repositories that have none", len(b.Tasks))
+		t.Errorf("%d tasks were drawn from a repository that has none", len(b.Tasks))
 	}
 	if len(b.Errs) != 0 {
-		t.Errorf("a directory with no marker was reported as a fault: %v", b.Errs)
+		t.Errorf("a repository with no tasks was reported as a fault: %v", b.Errs)
+	}
+}
+
+// TestOnlyTheRepositoriesUnderTheRootAreOnTheBoard is the assertion the
+// finding needed: two readers over one state root, opened over two different
+// directories, answering two different boards.
+//
+// The record does not say where a window was pointed, so nothing about one
+// board on its own can show that the directory was used at all. Two of them
+// can.
+func TestOnlyTheRepositoriesUnderTheRootAreOnTheBoard(t *testing.T) {
+	s, work, payments := oneRepo(t)
+	addTask(t, s, payments, "ACME-1", created("Retry the webhook on 5xx"))
+	elsewhere := t.TempDir()
+	billing := gitRepo(t, elsewhere, "billing")
+	addTask(t, s, billing, "ACME-2", created("Reconcile the ledger nightly"))
+
+	here, _ := refresh(t, NewReader(s, work))
+	if here.Repos != 1 {
+		t.Errorf("Repos = %d over %q, want 1: the other repository is under another root", here.Repos, work)
+	}
+	if len(here.Tasks) != 1 || here.Tasks[0].ID != "ACME-1" {
+		t.Fatalf("the board over %q drew %+v, want only ACME-1", work, here.Tasks)
+	}
+
+	there, _ := refresh(t, NewReader(s, elsewhere))
+	if there.Repos != 1 || len(there.Tasks) != 1 || there.Tasks[0].ID != "ACME-2" {
+		t.Errorf("the board over %q drew %d repos and %+v, want 1 and only ACME-2", elsewhere, there.Repos, there.Tasks)
 	}
 }
 
@@ -67,13 +91,13 @@ func TestARepositoryWithNoTasksIsStillARepository(t *testing.T) {
 // by nothing else, so the number above a band and the rows inside it cannot
 // be two rules that agree by inspection.
 func TestTheHeaderCountsWhatTheListDraws(t *testing.T) {
-	s, repoPath := oneRepo(t)
+	s, work, repoPath := oneRepo(t)
 	addTask(t, s, repoPath, "ACME-1", created("Index on settlements"))
 	addTask(t, s, repoPath, "ACME-2", created("Reconciliation endpoint"), startedEvent())
 	addTask(t, s, repoPath, "ACME-3", created("Retry the webhook on 5xx"), startedEvent(), failedEvent())
 	addTask(t, s, repoPath, "ACME-4", created("Fix the swagger lint"), startedEvent(), finishedEvent())
 
-	b, _ := refresh(t, NewReader(s))
+	b, _ := refresh(t, NewReader(s, work))
 	var drawn [4]int
 	for _, task := range b.Tasks {
 		drawn[view.BandOf(task)]++
@@ -91,9 +115,9 @@ func TestTheHeaderCountsWhatTheListDraws(t *testing.T) {
 // written down after the window opened arrives on the next enumeration, and
 // the tasks that were already there keep the offsets they had.
 func TestRescanFindsWhatRefreshDoesNot(t *testing.T) {
-	s, repoPath := oneRepo(t)
+	s, work, repoPath := oneRepo(t)
 	addTask(t, s, repoPath, "ACME-1", created("Retry the webhook on 5xx"), startedEvent())
-	r := NewReader(s)
+	r := NewReader(s, work)
 	refresh(t, r)
 	carried := r.tasks[0].offset
 
@@ -117,63 +141,73 @@ func TestRescanFindsWhatRefreshDoesNot(t *testing.T) {
 	}
 }
 
-// TestARepositoryThatIsNotThereStillListsItsTasks: the record lives in the
-// state root and the checkout does not, so a repository that has been moved
-// or deleted takes nothing on screen with it. It is reported, and its tasks
-// fold exactly as before.
-func TestARepositoryThatIsNotThereStillListsItsTasks(t *testing.T) {
-	s, repoPath := oneRepo(t)
+// TestARepositoryTakenOutOfTheRootTakesItsRowsWithIt is the cost of counting
+// what the walk found rather than what the record holds, stated here rather
+// than left to be found.
+//
+// The board used to list the tasks of a repository that had been moved or
+// deleted, under the name its path ended in, because the record lives in the
+// state root and the checkout does not. It cannot any more: the repositories
+// are the ones under the root, and a checkout that is not there is not one
+// of them. Nothing is lost — the record is untouched, `orbit show` and
+// `orbit list` read it exactly as before — and the rows come back the moment
+// the checkout does.
+func TestARepositoryTakenOutOfTheRootTakesItsRowsWithIt(t *testing.T) {
+	s, work, repoPath := oneRepo(t)
 	addTask(t, s, repoPath, "ACME-1", created("Retry the webhook on 5xx"), startedEvent())
 	if err := os.RemoveAll(repoPath); err != nil {
 		t.Fatalf("remove the repository: %v", err)
 	}
 
-	b, _ := refresh(t, NewReader(s))
-	if len(b.Tasks) != 1 || b.Tasks[0].Title != "Retry the webhook on 5xx" {
-		t.Fatalf("the tasks of a missing repository were lost: %+v", b.Tasks)
-	}
-	if b.Tasks[0].Repo != "payments" || b.Tasks[0].RepoPath != repoPath {
-		t.Errorf("the row says %q at %q, want payments at %q", b.Tasks[0].Repo, b.Tasks[0].RepoPath, repoPath)
-	}
-	if len(b.Errs) != 1 {
-		t.Errorf("Errs = %v, want one error naming the repository", b.Errs)
-	}
-}
-
-// TestARootThatCannotBeListedIsAnError is the one failure that is not
-// isolated to a row: with no enumeration there is no board at all, and
-// Refresh says so rather than returning an empty screen that a reader would
-// take for an empty root.
-// TestADamagedMarkerIsNotFatal: a marker nobody can parse is one repository
-// gone, not the board gone. It is the only fault that can leave the listing
-// empty and still be per-repository, so it is the one case where "nothing to
-// show" and "nothing was asked for" have to be told apart by something other
-// than the length of the list — and a marker stays damaged, so getting this
-// wrong draws an empty window for as long as the file is there.
-func TestADamagedMarkerIsNotFatal(t *testing.T) {
-	s := newRoot(t)
-	addTask(t, s, gitRepo(t, "payments"), "ACME-1", created("Retry the webhook on 5xx"))
-	damage(t, s)
-
-	b, _, err := NewReader(s).Refresh()
-	if err != nil {
-		t.Fatalf("Refresh: %v — a damaged marker must never be fatal", err)
-	}
+	b, _ := refresh(t, NewReader(s, work))
 	if b.Repos != 0 || len(b.Tasks) != 0 {
-		t.Errorf("a damaged marker gave %d repos and %d tasks, want none of either", b.Repos, len(b.Tasks))
+		t.Errorf("a checkout that is no longer under the root gave %d repos and %d tasks, want none of either", b.Repos, len(b.Tasks))
 	}
-	if len(b.Errs) != 1 {
-		t.Fatalf("Errs = %v, want one error naming the marker", b.Errs)
+
+	if restored := gitRepo(t, work, "payments"); restored != repoPath {
+		t.Fatalf("the repository was rebuilt at %q, want %q", restored, repoPath)
+	}
+	back, _ := refresh(t, NewReader(s, work))
+	if len(back.Tasks) != 1 || back.Tasks[0].Title != "Retry the webhook on 5xx" {
+		t.Errorf("the record did not come back with the checkout: %+v", back.Tasks)
 	}
 }
 
-func TestARootThatCannotBeListedIsAnError(t *testing.T) {
-	s := newRoot(t)
-	if err := os.WriteFile(filepath.Join(s.Root(), "repos"), []byte("not a directory\n"), 0o600); err != nil {
-		t.Fatalf("write a file where repos/ goes: %v", err)
+// TestADirectoryThatWillNotOpenIsNotFatal: something under the root that
+// looks like a repository and is not — a .git that is neither a directory
+// nor a gitfile git will take — is one directory left out of the listing,
+// and not the board gone. It is the only fault the walk can meet that would
+// otherwise be indistinguishable from an empty root, and it does not clear
+// up on its own: getting it wrong draws an empty window for as long as the
+// directory is there.
+func TestADirectoryThatWillNotOpenIsNotFatal(t *testing.T) {
+	s, work, repoPath := oneRepo(t)
+	addTask(t, s, repoPath, "ACME-1", created("Retry the webhook on 5xx"))
+	broken := filepath.Join(work, "not-really")
+	if err := os.Mkdir(broken, 0o700); err != nil {
+		t.Fatalf("mkdir %q: %v", broken, err)
 	}
-	if _, _, err := NewReader(s).Refresh(); err == nil {
-		t.Error("Refresh accepted a state root whose repositories cannot be listed")
+	if err := os.WriteFile(filepath.Join(broken, ".git"), []byte("this is not a gitfile\n"), 0o600); err != nil {
+		t.Fatalf("write a .git nobody can open: %v", err)
+	}
+
+	b, _, err := NewReader(s, work).Refresh()
+	if err != nil {
+		t.Fatalf("Refresh: %v — one directory that will not open must never be fatal", err)
+	}
+	if b.Repos != 1 || len(b.Tasks) != 1 {
+		t.Errorf("a directory that will not open gave %d repos and %d tasks, want 1 of each", b.Repos, len(b.Tasks))
+	}
+}
+
+// TestARootThatCannotBeWalkedIsAnError is the one failure that is not
+// isolated to a row: with no enumeration there is no board at all, and
+// Refresh says so rather than answering an empty screen that a reader would
+// take for a directory with nothing in it.
+func TestARootThatCannotBeWalkedIsAnError(t *testing.T) {
+	s, work := newRoot(t)
+	if _, _, err := NewReader(s, filepath.Join(work, "nowhere")).Refresh(); err == nil {
+		t.Error("Refresh accepted a root that is not there")
 	}
 }
 
@@ -182,9 +216,9 @@ func TestARootThatCannotBeListedIsAnError(t *testing.T) {
 // so nothing outside the Reader serialises the 500 ms refresh against the
 // 2 s enumeration.
 func TestRefreshAndRescanMayRunTogether(t *testing.T) {
-	s, repoPath := oneRepo(t)
+	s, work, repoPath := oneRepo(t)
 	addTask(t, s, repoPath, "ACME-1", created("Retry the webhook on 5xx"), startedEvent())
-	r := NewReader(s)
+	r := NewReader(s, work)
 	var wg sync.WaitGroup
 	for range 4 {
 		wg.Add(2)

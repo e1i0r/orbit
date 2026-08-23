@@ -34,7 +34,10 @@ func openSettings(t *testing.T) (*settingsAdapter, poll) {
 	if err != nil {
 		t.Fatalf("newSettings: %v", err)
 	}
-	return cfg, poll{Reader: board.NewReader(s), cfg: cfg}
+	// An empty directory to be the board's root: these tests are about the
+	// settings file the poll carries, and a board with nothing on it is the
+	// cheapest one to poll.
+	return cfg, poll{Reader: board.NewReader(s, t.TempDir()), cfg: cfg}
 }
 
 // The header reads the cap once a frame, every band header reads it again

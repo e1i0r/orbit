@@ -1,6 +1,6 @@
-// Package board walks every repository in the state root, folds every
-// task's record, and answers what is on screen right now and what changed
-// since last time.
+// Package board walks every repository under the directory a window was
+// opened over, folds every task's record, and answers what is on screen
+// right now and what changed since last time.
 //
 // It sits between the readers and the window. Everything it hands out is
 // derived from the append-only record: it appends nothing and decides
@@ -64,8 +64,14 @@ type Board struct {
 	// and then by id. The order is stable across refreshes so that a cursor
 	// resting on a row stays on that row.
 	Tasks []view.Task
-	// Repos is how many repositories the state root has a readable record
-	// of — the number in the header, not the number of rows.
+	// Repos is how many repositories were found under the root this reader
+	// was opened over — the number in the header, not the number of rows.
+	//
+	// It counts a repository nobody has written a task against yet, and
+	// that is the point of it: the count comes from the walk and the rows
+	// come from the record, so a person who has just cloned three projects
+	// is told there are three and no tasks in them, rather than that there
+	// are no repositories at all.
 	Repos int
 	// Counts is how many tasks are in each band, indexed by the view.Band
 	// value. It is filled by calling view.BandOf on the very tasks in
@@ -178,13 +184,19 @@ func counts(tasks []view.Task) [4]int {
 	return n
 }
 
-// Reader is the window's view of the state root, and the only thing in
-// Orbit that remembers where it stopped reading.
+// Reader is the window's view of one directory and of what the state root
+// holds against it, and the only thing in Orbit that remembers where it
+// stopped reading.
 //
 // It is not a goroutine and it starts none: Refresh and Rescan are called
 // by whoever owns a clock, and in the window that is two tea.Cmds.
 type Reader struct {
 	store *store.Store
+
+	// root is the directory this window was opened over, and it is not the
+	// state root: the state root says what has been written down, and this
+	// says what is there to write against. See NewReader.
+	root string
 
 	// mu serialises Refresh against Rescan and against itself. Bubble Tea
 	// runs every Cmd on a goroutine of its own and the window has two
@@ -193,14 +205,11 @@ type Reader struct {
 	// from both would be a data race the day the window is wired up.
 	mu sync.Mutex
 
-	repos []*repoState
-	tasks []*taskState           // in the order Board.Tasks draws them
-	index map[taskKey]*taskState // the same states, to carry offsets across a rescan
-	// opened is the repositories repo.Open has already answered for. Only
-	// successes are kept; see open.
-	opened   map[string]*repoState
-	scanErrs []error // what the last enumeration could not do
-	scanned  bool    // an enumeration has completed
+	repos    []*repoState
+	tasks    []*taskState           // in the order Board.Tasks draws them
+	index    map[taskKey]*taskState // the same states, to carry offsets across a rescan
+	scanErrs []error                // what the last enumeration could not do
+	scanned  bool                   // an enumeration has completed
 	// baseline says a Refresh has completed, and it is the whole of the
 	// first-refresh-rings-no-bell rule.
 	baseline bool
@@ -211,24 +220,32 @@ type Reader struct {
 // repository and nowhere else.
 type taskKey struct{ repoPath, id string }
 
-// NewReader makes a reader of one state root. It touches no disk until it
-// is asked to.
-func NewReader(s *store.Store) *Reader {
+// NewReader makes a reader of one directory, folded against one state root.
+// It touches no disk until it is asked to.
+//
+// root is the directory `orbit top` was pointed at, and it is what decides
+// which repositories are on the board; the store is then asked what has been
+// written against each of them. They are separate arguments because they are
+// separate places — the record lives under $ORBIT_HOME and the checkouts do
+// not — and it is a parameter rather than a field set afterwards because a
+// Reader with no root cannot answer the first question it is asked. A zero
+// value meaning "nowhere" is a constructor that can be called wrong.
+func NewReader(s *store.Store, root string) *Reader {
 	return &Reader{
-		store:  s,
-		index:  make(map[taskKey]*taskState),
-		opened: make(map[string]*repoState),
+		store: s,
+		root:  root,
+		index: make(map[taskKey]*taskState),
 	}
 }
 
 // repoState is one repository the board knows about.
 //
-// path is the marker's path and not git's, deliberately. The store files a
-// repository's record under a hash of the path it was created with, so that
-// path is the key everything under repos/ is reached by; substituting the
-// top level git resolves to — which differs whenever the path passes
-// through a symlink — would look up a directory that does not exist and
-// lose every task in it. The only thing taken from repo.Open is the name.
+// path is git's top level, which is both what repo.Discover answers and what
+// task.Create filed this repository's record under. The store hashes that
+// path into the directory name everything under repos/ is reached by, so the
+// two have to be the same string: a path that had passed through a symlink
+// unresolved would look up a directory that does not exist and lose every
+// task in it. Both sides go through repo.Open, so both sides resolve.
 type repoState struct {
 	path string
 	name string
