@@ -1,0 +1,12 @@
+{
+  "name": "task",
+  "phases": [
+    {
+      "name": "implement",
+      "engine": "claude",
+      "model": "sonnet",
+      "wait": false,
+      "permissions": ["repo"]
+    }
+  ]
+}

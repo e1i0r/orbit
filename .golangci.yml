@@ -1,0 +1,42 @@
+version: "2"
+
+# The linter exists here for one reason: this repository has already shipped
+# the same defect four times — an error formatted with %s or %v instead of %w,
+# so the chain is lost and errors.Is can never reach the cause. A reviewer
+# caught each one. errorlint catches them before a reviewer has to.
+
+linters:
+  default: standard
+  enable:
+    - errorlint
+    - gocritic
+    - misspell
+    - nilerr
+    - revive
+    - unconvert
+    - usestdlibvars
+  settings:
+    errcheck:
+      # check-blank makes `_ = f()` a discard the author has to stand behind
+      # rather than a way to get past the linter. There were two of them, both
+      # on the path where a run is dying and the reason it is dying matters
+      # more than the failure to write it down; each now carries a
+      # //nolint:errcheck where it happens. The file-level exclusion this
+      # replaces switched errcheck off for the whole of internal/task/run.go,
+      # so a genuinely unchecked error there would never have been caught.
+      check-type-assertions: true
+      check-blank: true
+    revive:
+      rules:
+        - name: exported
+        - name: error-strings
+        - name: error-naming
+        - name: context-as-argument
+        - name: indent-error-flow
+  exclusions:
+    presets:
+      - std-error-handling
+
+formatters:
+  enable:
+    - gofmt

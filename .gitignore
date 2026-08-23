@@ -1,0 +1,11 @@
+/orbit
+/dist/
+*.out
+.DS_Store
+.idea/
+.vscode/
+
+# Working notes: the design, the plans and the session handoff are kept
+# alongside the code but are not published with it.
+/docs/
+/NEXT.md
