@@ -14,7 +14,8 @@ import "fmt"
 // rather than deleted: the design defines the five-field object, so removing
 // them would put the code out of step with the authority — but a field that
 // looks live and is not is a lie, and one of these two is the security
-// posture. Both gaps are written down in NEXT.md.
+// posture. Both are gaps, and both are named here rather than anywhere
+// else, because this struct is where a reader meets them.
 type Phase struct {
 	Name   string `json:"name"`
 	Engine string `json:"engine"`

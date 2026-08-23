@@ -26,8 +26,7 @@ import (
 // cleanup on success that does not exist: Orbit has no verb that removes a
 // settled worktree. repo.RemoveWorktree is written and nothing calls it, so
 // every run leaves a .git/worktrees entry behind in a repository Orbit does
-// not own, and `git worktree prune` by hand is the only remedy. NEXT.md
-// carries the gap.
+// not own, and `git worktree prune` by hand is the only remedy.
 func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[string]engine.Engine) error {
 	if err := f.Validate(); err != nil {
 		return failed(s, t, err)

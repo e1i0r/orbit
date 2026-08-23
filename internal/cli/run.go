@@ -17,7 +17,7 @@ import (
 // There is no timeout and no signal handling here yet. A hung engine hangs
 // orbit, and Ctrl-C kills it with phase.started as the last thing in the
 // record, which reads as a task still running. Cancellation belongs with the
-// window that will own it; NEXT.md carries the gap.
+// window that will own it.
 func runTask(args []string, out io.Writer) error {
 	fs := flag.NewFlagSet("run", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
