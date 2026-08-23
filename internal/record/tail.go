@@ -7,8 +7,6 @@ package record
 // filesystem.
 
 import (
-	"bufio"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -62,36 +60,8 @@ func ReadFrom(path string, offset int64) ([]Event, int64, error) {
 		return nil, 0, fmt.Errorf("seek %q: %w", path, err)
 	}
 
-	var events []Event
-	// pending mirrors Read's own pending: the line number of a line that
-	// would not parse, held back one turn in case it turns out to be the
-	// torn tail rather than genuine damage.
-	pending := 0
-	lastLen := 0
-	lastWasEvent := false
-	scanner := bufio.NewScanner(f)
-	scanner.Buffer(make([]byte, 0, 64*1024), MaxLine)
-	line := 0
-	for scanner.Scan() {
-		line++
-		lastLen = len(scanner.Bytes())
-		lastWasEvent = false
-		if pending > 0 {
-			events = append(events, unreadable(pending))
-			pending = 0
-		}
-		if lastLen == 0 {
-			continue
-		}
-		var e Event
-		if err := json.Unmarshal(scanner.Bytes(), &e); err != nil {
-			pending = line
-			continue
-		}
-		events = append(events, e)
-		lastWasEvent = true
-	}
-	if err := scanner.Err(); err != nil {
+	events, pending, lastLen, lastWasEvent, err := scanEvents(f)
+	if err != nil {
 		return nil, 0, fmt.Errorf("read %q: %w", path, err)
 	}
 
@@ -104,6 +74,11 @@ func ReadFrom(path string, offset int64) ([]Event, int64, error) {
 	// The final line has no newline yet. Whatever it produced — a parsed
 	// event, or nothing because it was left pending — is withheld until a
 	// later call sees it finished, and the offset stays at where it began.
+	//
+	// size - int64(lastLen) assumes the line is terminated by a bare '\n',
+	// which is the only terminator Append ever writes to this log; a '\r\n'
+	// writer would need this arithmetic adjusted, because bufio.ScanLines
+	// strips a trailing '\r' from the token before lastLen ever sees it.
 	if lastWasEvent {
 		events = events[:len(events)-1]
 	}

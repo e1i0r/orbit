@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 )
@@ -40,38 +41,56 @@ func Read(path string) ([]Event, error) {
 		return nil, fmt.Errorf("read %q: %w", path, err)
 	}
 
-	var events []Event
-	// pending holds the line number of a line that would not parse, kept
-	// back one turn because a bad line is only forgivable when it is the
-	// last one in an unterminated file. The next line to arrive proves it
-	// was not.
-	pending := 0
-	scanner := bufio.NewScanner(f)
-	scanner.Buffer(make([]byte, 0, 64*1024), MaxLine)
-	line := 0
-	for scanner.Scan() {
-		line++
-		if pending > 0 {
-			events = append(events, unreadable(pending))
-			pending = 0
-		}
-		if len(scanner.Bytes()) == 0 {
-			continue
-		}
-		var e Event
-		if err := json.Unmarshal(scanner.Bytes(), &e); err != nil {
-			pending = line
-			continue
-		}
-		events = append(events, e)
-	}
-	if err := scanner.Err(); err != nil {
+	events, pending, _, _, err := scanEvents(f)
+	if err != nil {
 		return nil, fmt.Errorf("read %q: %w", path, err)
 	}
 	if pending > 0 && whole {
 		events = append(events, unreadable(pending))
 	}
 	return events, nil
+}
+
+// scanEvents is the one place that turns a log's lines into events. Read and
+// ReadFrom each finish the job differently — Read decides whether a still-
+// pending line counts using whole-file knowledge, ReadFrom also needs to
+// know how the offset should move — but the classification itself, the part
+// most likely to drift if it existed twice, lives here and nowhere else.
+//
+// pending is the line number of the last line seen that would not parse,
+// held back one turn because a bad line is only forgivable when it is the
+// last one in an unterminated file; the caller decides what that means once
+// scanning is done. lastLen is the byte length of the final line scanned (0
+// if none), and lastWasEvent reports whether that final line produced an
+// event — both exist only for ReadFrom's offset arithmetic, and Read ignores
+// them.
+func scanEvents(r io.Reader) (events []Event, pending, lastLen int, lastWasEvent bool, err error) {
+	scanner := bufio.NewScanner(r)
+	scanner.Buffer(make([]byte, 0, 64*1024), MaxLine)
+	line := 0
+	for scanner.Scan() {
+		line++
+		lastLen = len(scanner.Bytes())
+		lastWasEvent = false
+		if pending > 0 {
+			events = append(events, unreadable(pending))
+			pending = 0
+		}
+		if lastLen == 0 {
+			continue
+		}
+		var e Event
+		if jerr := json.Unmarshal(scanner.Bytes(), &e); jerr != nil {
+			pending = line
+			continue
+		}
+		events = append(events, e)
+		lastWasEvent = true
+	}
+	if serr := scanner.Err(); serr != nil {
+		return nil, 0, 0, false, serr
+	}
+	return events, pending, lastLen, lastWasEvent, nil
 }
 
 // unreadable is the event that stands in for a line nobody can parse.
