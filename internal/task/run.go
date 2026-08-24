@@ -72,8 +72,40 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		return failed(s, t, err)
 	}
 	for _, p := range f.Phases {
-		if _, ok := engines[p.Engine]; !ok {
+		eng, ok := engines[p.Engine]
+		if !ok {
 			return failed(s, t, fmt.Errorf("phase %q wants the engine %q, which is not configured", p.Name, p.Engine))
+		}
+		if p.Model != "" && len(eng.Models()) > 0 {
+			var found bool
+			for _, m := range eng.Models() {
+				if m.ID == p.Model {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return failed(s, t, fmt.Errorf("phase %q names model %q, which engine %q does not offer", p.Name, p.Model, p.Engine))
+			}
+		}
+		if p.Effort != "" {
+			efforts := eng.Efforts()
+			if len(efforts) == 0 {
+				return failed(s, t, fmt.Errorf("phase %q names effort %q, but engine %q has no effort dial", p.Name, p.Effort, p.Engine))
+			}
+			var found bool
+			for _, e := range efforts {
+				if e.ID == p.Effort {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return failed(s, t, fmt.Errorf("phase %q names effort %q, which engine %q does not offer", p.Name, p.Effort, p.Engine))
+			}
+		}
+		if p.Thinking != "" && !eng.CanThink() {
+			return failed(s, t, fmt.Errorf("phase %q configures thinking %q, but engine %q does not support thinking mode", p.Name, p.Thinking, p.Engine))
 		}
 	}
 
@@ -109,14 +141,11 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		}
 
 		out, runErr := engines[p.Engine].Run(ctx, engine.Request{
-			Prompt: prompt(t, p),
-			Model:  p.Model,
-			Dir:    wt,
-			// The posture the flow file stated, carried to the process
-			// that will act under it. It was inert for two plans: the
-			// built-in flows all said ["repo"] and no engine could hear
-			// it, so the engine's own default was the real posture and it
-			// was written down nowhere.
+			Prompt:      prompt(t, p),
+			Model:       p.Model,
+			Effort:      p.Effort,
+			Thinking:    p.Thinking,
+			Dir:         wt,
 			Permissions: p.Permissions,
 		})
 		if runErr != nil {

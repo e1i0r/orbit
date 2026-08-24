@@ -11,9 +11,11 @@ import "context"
 
 // Request is everything an engine needs for one phase.
 type Request struct {
-	Prompt string
-	Model  string
-	Dir    string
+	Prompt   string
+	Model    string
+	Effort   string
+	Thinking string
+	Dir      string
 
 	// Permissions is what this phase is allowed to touch, in the closed
 	// vocabulary permission.go defines. An empty list is not "no opinion":

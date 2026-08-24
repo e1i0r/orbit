@@ -30,7 +30,16 @@ import (
 // cost they do not have. An empty string would read as a posture somebody
 // wrote down, and nobody did.
 func phaseStart(p flow.Phase, n int) record.Event {
-	data := map[string]string{"engine": p.Engine, "model": p.Model, "n": strconv.Itoa(n)}
+	data := map[string]string{"engine": p.Engine, "n": strconv.Itoa(n)}
+	if p.Model != "" {
+		data["model"] = p.Model
+	}
+	if p.Effort != "" {
+		data["effort"] = p.Effort
+	}
+	if p.Thinking != "" {
+		data["thinking"] = p.Thinking
+	}
 	if len(p.Permissions) > 0 {
 		data["permissions"] = strings.Join(p.Permissions, ",")
 	}

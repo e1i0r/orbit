@@ -69,6 +69,18 @@ func (Claude) Run(ctx context.Context, req Request) (Result, error) {
 		return Result{}, fmt.Errorf("claude in %q: %w", req.Dir, err)
 	}
 	cmd := exec.CommandContext(ctx, "claude", args...)
+	if req.Thinking != "" {
+		env := cmd.Environ()
+		switch req.Thinking {
+		case "off", "none", "0":
+			cmd.Env = append(env, "MAX_THINKING_TOKENS=0")
+		case "adaptive", "on":
+			// Unset leaves the adaptive default.
+		default:
+			// A positive integer pins a thinking budget.
+			cmd.Env = append(env, "MAX_THINKING_TOKENS="+req.Thinking)
+		}
+	}
 	// The engine's working directory is the task's worktree, which lives
 	// inside the Orbit state root by design. The record that is the
 	// product's whole trust model, and the credentials file the design puts
@@ -212,6 +224,9 @@ func claudeArgs(req Request) ([]string, error) {
 	args := []string{"-p", req.Prompt, "--output-format", "stream-json", "--verbose"}
 	if req.Model != "" {
 		args = append(args, "--model", req.Model)
+	}
+	if req.Effort != "" {
+		args = append(args, "--effort", req.Effort)
 	}
 	if req.Resume != "" {
 		args = append(args, "--resume", req.Resume)

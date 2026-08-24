@@ -35,9 +35,11 @@ const (
 
 // Phase is one step, and the five things that decide how it runs.
 type Phase struct {
-	Name   string `json:"name"`
-	Engine string `json:"engine"`
-	Model  string `json:"model,omitempty"`
+	Name     string `json:"name"`
+	Engine   string `json:"engine"`
+	Model    string `json:"model,omitempty"`
+	Effort   string `json:"effort,omitempty"`
+	Thinking string `json:"thinking,omitempty"`
 
 	// Wait is this phase's default answer to "should this stop for a human?".
 	// It is a default and not a switch, which is the distinction that took a
