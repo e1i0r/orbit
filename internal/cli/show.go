@@ -11,11 +11,11 @@ import (
 	"github.com/e1i0r/orbit/internal/task"
 )
 
-func show(args []string, out io.Writer) error {
+func show(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("show", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	dir := fs.String("repo", ".", "the repository the task is against")
-	if err := parse(fs, args, out); err != nil {
+	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
 	id := fs.Arg(0)
@@ -33,7 +33,7 @@ func show(args []string, out io.Writer) error {
 	if len(events) == 0 {
 		return fmt.Errorf("nothing recorded for %s in %s", id, r.Name)
 	}
-	w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
+	w := tabwriter.NewWriter(ctx.Out, 0, 0, 2, ' ', 0)
 	for _, e := range events {
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
 			stamp(e.At), e.Kind, e.Phase, firstLine(detail(e.Text, e.Data)))

@@ -21,10 +21,10 @@ import (
 //
 // There is no -repo flag: flows are the user's and not a repository's, and
 // they live at the root of the state tree beside the settings.
-func flows(args []string, out io.Writer) error {
+func flows(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("flows", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
-	if err := parse(fs, args, out); err != nil {
+	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
 	s, err := store.Open()
@@ -42,7 +42,7 @@ func flows(args []string, out io.Writer) error {
 	}
 	p := words.For(cfg.Language)
 	for _, f := range flow.List(s) {
-		fmt.Fprintf(out, "%s (%s)\n", f.Name, flowMark(p, f.Origin))
+		fmt.Fprintf(ctx.Out, "%s (%s)\n", f.Name, flowMark(p, f.Origin))
 	}
 	return nil
 }

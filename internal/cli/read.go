@@ -14,11 +14,11 @@ import (
 // nobody has read, and this is the only thing that lowers that count. A
 // brake with no release is a brake people disable, so the release is a
 // command and not a gesture only the window has.
-func readTask(args []string, out io.Writer) error {
+func readTask(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("read", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	dir := fs.String("repo", ".", "the repository the task is against")
-	if err := parse(fs, args, out); err != nil {
+	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
 	id := fs.Arg(0)
@@ -37,6 +37,6 @@ func readTask(args []string, out io.Writer) error {
 	if err := task.MarkRead(s, t); err != nil {
 		return err
 	}
-	fmt.Fprintf(out, "%s marked read\n", id)
+	fmt.Fprintf(ctx.Out, "%s marked read\n", id)
 	return nil
 }

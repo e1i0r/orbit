@@ -38,10 +38,11 @@ import (
 // silently — two roots is a person meaning something this command cannot do,
 // and picking the first is how they find out an hour later.
 //
-// out is where `orbit top -h` prints the flags, and nowhere else: the flag
-// set discards its own output so that flag's two failure modes come back as
-// errors this program words itself. See parse.
-func parseTop(args []string, out io.Writer) (dir string, once bool, lang string, err error) {
+// ctx is where `orbit top -h` prints the flags, and nothing else about the
+// command is read out of it: the flag set discards its own output so that
+// flag's two failure modes come back as errors this program words itself.
+// See parse.
+func parseTop(ctx Context, args []string) (dir string, once bool, lang string, err error) {
 	fs := flag.NewFlagSet("top", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	onceFlag := fs.Bool("once", false, "draw one frame as plain text and exit — what a pipe, a log or CI reads")
@@ -50,7 +51,7 @@ func parseTop(args []string, out io.Writer) (dir string, once bool, lang string,
 	var dirs []string
 	rest := args
 	for {
-		if perr := parse(fs, rest, out); perr != nil {
+		if perr := parse(ctx, fs, rest); perr != nil {
 			return "", false, "", perr
 		}
 		rest = fs.Args()

@@ -44,13 +44,13 @@ import (
 // It stops being invisible: the run records the flow it walked, so a
 // difference between the two is a decision somebody can see rather than a
 // bug that takes an afternoon.
-func runTask(args []string, out io.Writer) error {
+func runTask(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("run", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	dir := fs.String("repo", ".", "the repository the task is against")
 	name := fs.String("flow", "", "walk this flow instead of the one the task was written against")
 	timeout := fs.Duration("timeout", 0, "stop the run after this long, e.g. 45m; zero waits for as long as it takes")
-	if err := parse(fs, args, out); err != nil {
+	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
 	id := fs.Arg(0)
@@ -95,18 +95,22 @@ func runTask(args []string, out io.Writer) error {
 	// The first signal is Orbit's to handle. The second is not.
 	restoreOnCancel(signalled, stop)
 
-	ctx := signalled
+	// running is the context the run itself lives in, and it is not ctx:
+	// that name belongs to the command's own Context here, and one letter
+	// between a deadline and a pair of writers is not a distinction worth
+	// resting on.
+	running := signalled
 	if *timeout > 0 {
 		var done context.CancelFunc
-		ctx, done = context.WithTimeout(ctx, *timeout)
+		running, done = context.WithTimeout(running, *timeout)
 		defer done()
 	}
 
 	engines := map[string]engine.Engine{"claude": engine.NewClaude()}
-	if err := task.Run(ctx, s, t, f, engines, task.FileGate(s, time.Second)); err != nil {
+	if err := task.Run(running, s, t, f, engines, task.FileGate(s, time.Second)); err != nil {
 		return err
 	}
-	fmt.Fprintf(out, "%s finished\n", id)
+	fmt.Fprintf(ctx.Out, "%s finished\n", id)
 	return nil
 }
 

@@ -61,6 +61,11 @@ func run(t *testing.T, args ...string) (code int, stdout, stderr string) {
 }
 
 func TestNoArgumentsPrintsUsage(t *testing.T) {
+	// A state root of its own even for a command that reads no state: the
+	// usage screen is printed in the saved language now, so this one goes
+	// looking for a settings file, and the one it must never find is the
+	// developer's.
+	t.Setenv("ORBIT_HOME", t.TempDir())
 	code, out, _ := run(t)
 	if code == 0 {
 		t.Error("exit code 0 with no command")
@@ -71,6 +76,7 @@ func TestNoArgumentsPrintsUsage(t *testing.T) {
 }
 
 func TestUnknownCommandFails(t *testing.T) {
+	t.Setenv("ORBIT_HOME", t.TempDir())
 	code, _, errOut := run(t, "fly")
 	if code == 0 {
 		t.Error("an unknown command exited 0")

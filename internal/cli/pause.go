@@ -22,11 +22,11 @@ import (
 // "paused" would be claiming something that has not happened yet. A task
 // nobody is running keeps the word for the run that starts next, which is
 // the property that makes a file better than a signal here.
-func controlTask(word string, args []string, out io.Writer) error {
+func controlTask(word string, ctx Context, args []string) error {
 	fs := flag.NewFlagSet(word, flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	dir := fs.String("repo", ".", "the repository the task is against")
-	if err := parse(fs, args, out); err != nil {
+	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
 	id := fs.Arg(0)
@@ -45,6 +45,6 @@ func controlTask(word string, args []string, out io.Writer) error {
 	if err := task.Control(s, t, word); err != nil {
 		return err
 	}
-	fmt.Fprintf(out, "%s asked to %s — a run in flight notices at its next phase\n", id, word)
+	fmt.Fprintf(ctx.Out, "%s asked to %s — a run in flight notices at its next phase\n", id, word)
 	return nil
 }

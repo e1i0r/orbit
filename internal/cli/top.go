@@ -37,14 +37,14 @@ import (
 // screen wipes before anybody has read it, and one printed instead of the
 // frame would replace the thing that was asked for with a complaint about a
 // record on the side.
-func top(args []string, out io.Writer) error {
+func top(ctx Context, args []string) error {
 	// The flags are read by a function of their own so that what they were
 	// set to is something a test can ask for. See topflags.go: every test in
 	// this package hands the command a buffer and therefore takes the plain
-	// branch below through interactive(out), so -once cannot be the deciding
+	// branch below through interactive(ctx.Out), so -once cannot be the deciding
 	// term in any of them, and asking parseTop directly is the only way this
 	// flag has a test that can fail.
-	dir, once, lang, err := parseTop(args, out)
+	dir, once, lang, err := parseTop(ctx, args)
 	if err != nil {
 		return err
 	}
@@ -55,12 +55,12 @@ func top(args []string, out io.Writer) error {
 	}
 	swept := reconcileAll(s)
 
-	if drawsOneFrame(once, interactive(out)) {
+	if drawsOneFrame(once, interactive(ctx.Out)) {
 		frame, err := ui.Plain(opts)
 		if err != nil {
 			return err
 		}
-		fmt.Fprintln(out, frame)
+		fmt.Fprintln(ctx.Out, frame)
 		return swept
 	}
 	if _, err := tea.NewProgram(fullScreen{ui.New(opts)}).Run(); err != nil {

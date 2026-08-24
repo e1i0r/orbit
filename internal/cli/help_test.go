@@ -3,6 +3,8 @@ package cli
 import (
 	"strings"
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // Asking a program what it takes is not a failure. Both subcommands here go
@@ -49,30 +51,35 @@ func TestAMistypedFlagPrintsTheErrorAndTheFlags(t *testing.T) {
 
 // TestTheUsageTableLinesUp reads the columns rather than the spaces. The
 // table was aligned by hand and the `new` line is longer than the rest, so
-// its description started three columns to the right of everyone else's.
+// its description started three columns to the right of everyone else's. It
+// is printed from the command table now, and a translated description is a
+// width nobody can count in advance — which is the same failure with more
+// ways to reach it.
 func TestTheUsageTableLinesUp(t *testing.T) {
+	t.Setenv("ORBIT_HOME", t.TempDir())
 	_, out, _ := run(t, "help")
+	p := words.For("")
 	col := -1
-	for _, s := range synopsis {
+	for _, c := range commands() {
 		line := ""
 		for _, l := range strings.Split(out, "\n") {
-			if strings.Contains(l, s[0]) {
+			if strings.Contains(l, c.Usage()) {
 				line = l
 			}
 		}
 		if line == "" {
-			t.Fatalf("usage does not list %q:\n%s", s[0], out)
+			t.Fatalf("usage does not list %q:\n%s", c.Usage(), out)
 		}
-		at := strings.Index(line, s[1])
+		at := strings.Index(line, c.About(p))
 		if at < 0 {
-			t.Fatalf("usage does not say what %q does:\n%s", s[0], out)
+			t.Fatalf("usage does not say what %q does:\n%s", c.Usage(), out)
 		}
 		if col == -1 {
 			col = at
 			continue
 		}
 		if at != col {
-			t.Errorf("%q describes itself at column %d, the others at %d:\n%s", s[0], at, col, out)
+			t.Errorf("%q describes itself at column %d, the others at %d:\n%s", c.Usage(), at, col, out)
 		}
 	}
 }

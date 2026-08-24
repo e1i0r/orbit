@@ -630,6 +630,94 @@
     "why.hand_back_not_stopped": {
       "source": "handing the keyboard back needs a run stopped at a phase; this one is not stopped",
       "value": "devolver el teclado necesita una ejecución detenida en una fase; esta no lo está"
+    },
+    "cmd.top": {
+      "source": "watch every task in one window",
+      "value": "ver todas las tareas en una sola ventana"
+    },
+    "cmd.top.inside": {
+      "source": "you are already in it",
+      "value": "ya estás dentro"
+    },
+    "cmd.repos": {
+      "source": "list the repositories under a directory",
+      "value": "listar los repositorios que hay bajo un directorio"
+    },
+    "cmd.flows": {
+      "source": "list the flows a task can be written against",
+      "value": "listar los flujos contra los que se puede escribir una tarea"
+    },
+    "cmd.new": {
+      "source": "write a task down",
+      "value": "anotar una tarea"
+    },
+    "cmd.run": {
+      "source": "run a task through its flow",
+      "value": "llevar una tarea por su flujo"
+    },
+    "cmd.pause": {
+      "source": "stop a run at its next phase",
+      "value": "detener una ejecución en su siguiente fase"
+    },
+    "cmd.resume": {
+      "source": "let a stopped run carry on",
+      "value": "dejar que una ejecución detenida continúe"
+    },
+    "cmd.list": {
+      "source": "list the tasks of a repository",
+      "value": "listar las tareas de un repositorio"
+    },
+    "cmd.show": {
+      "source": "print what happened to a task",
+      "value": "contar qué le pasó a una tarea"
+    },
+    "cmd.read": {
+      "source": "mark a finished task as looked at",
+      "value": "marcar como leída una tarea terminada"
+    },
+    "cmd.cancel": {
+      "source": "stop a run, and say so in its record",
+      "value": "detener una ejecución y dejarlo dicho en su registro"
+    },
+    "cmd.reconcile": {
+      "source": "close the records of runs whose processes are gone",
+      "value": "cerrar los registros de las ejecuciones cuyos procesos ya no están"
+    },
+    "cmd.set": {
+      "source": "change a setting",
+      "value": "cambiar un ajuste"
+    },
+    "cli.tagline": {
+      "source": "orbit — a cockpit for supervising coding agents",
+      "value": "orbit — una cabina para supervisar agentes que programan"
+    },
+    "cli.state": {
+      "source": "State lives in $ORBIT_HOME, or ~/.orbit when that is unset.",
+      "value": "El estado vive en $ORBIT_HOME, o en ~/.orbit si no está definida."
+    },
+    "setting.language": {
+      "source": "the language orbit speaks",
+      "value": "el idioma en el que habla orbit"
+    },
+    "setting.autopilot": {
+      "source": "whether a run walks its whole flow without stopping",
+      "value": "si una ejecución recorre su flujo entero sin detenerse"
+    },
+    "setting.unread_cap": {
+      "source": "how many finished tasks may sit unread before nothing new starts",
+      "value": "cuántas tareas terminadas pueden quedar sin leer antes de que no arranque nada nuevo"
+    },
+    "setting.engine": {
+      "source": "the engine a task runs on when it names none",
+      "value": "el motor en el que se ejecuta una tarea cuando no nombra ninguno"
+    },
+    "setting.model": {
+      "source": "the model a phase asks for when it names none",
+      "value": "el modelo que pide una fase cuando no nombra ninguno"
+    },
+    "setting.flow": {
+      "source": "the flow a new task is written against",
+      "value": "el flujo contra el que se escribe una tarea nueva"
     }
   }
 }
