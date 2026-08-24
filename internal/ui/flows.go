@@ -122,7 +122,7 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	st.ensurePhase()
 	if st.confirmDiscard {
 		switch {
-		case msg.Text == "y" || msg.Text == "Y" || msg.Text == "s" || msg.Text == "S" || key.Matches(msg, m.keys.Open):
+		case msg.Text == "y" || msg.Text == "Y" || msg.Text == "s" || msg.Text == "S" || key.Matches(msg, m.keys.Open) || key.Matches(msg, m.keys.Back):
 			st.creating = false
 			st.confirmDiscard = false
 			return m.say("cambios descartados"), nil
@@ -137,7 +137,7 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case key.Matches(msg, m.keys.Back):
 		if st.flowName != "" || len(st.phases) > 1 || st.cur().Prompt != "" {
 			st.confirmDiscard = true
-			return m.say("¿Descartar cambios del flujo? [y] sí / [n] no"), nil
+			return m.say("¿Descartar cambios del flujo? [y] sí / [n] no (o presiona Esc otra vez)"), nil
 		}
 		st.creating = false
 		return m, nil
