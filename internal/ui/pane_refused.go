@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -14,37 +13,54 @@ func (m Model) refusedLines() []string {
 		return []string{"  " + Paint(Bad).Render(m.logErr.Error())}
 	}
 
-	var out []string
-	count := 0
+	var denials []view.Entry
 	for _, e := range m.entries {
 		if e.What() == view.EntryRefused {
-			count++
-			toolName := e.Tool
-			if toolName == "" {
-				toolName = "tool"
-			}
-			header := fmt.Sprintf("  [%s] %s · %s %s",
-				Paint(Bad).Render(p.T("refused.tag", "DENIED")),
-				Paint(Accent).Render(toolName),
-				Paint(Dim).Render(p.T("refused.phase", "phase")),
-				Paint(Dim).Render(e.Phase))
-			if e.Attempt > 0 {
-				header += " · " + Paint(Dim).Render(fmt.Sprintf("attempt %d", e.Attempt))
-			}
-			out = append(out, "", header)
-			if e.Text != "" {
-				for _, line := range strings.Split(e.Text, "\n") {
-					out = append(out, "    "+Paint(Dim).Render(quoteMark)+line)
-				}
-			}
+			denials = append(denials, e)
 		}
 	}
 
-	if count == 0 {
-		return []string{
-			"",
-			"  " + Paint(Dim).Render(p.T("refused.empty", "no actions were refused by permissions for this task")),
+	out := []string{
+		"",
+		"  " + Paint(Accent).Bold(true).Render(p.T("refused.title", "Permissions & Security Sandbox")),
+		"  " + Paint(Dim).Render(p.T("refused.subtitle", "what the sandbox forbids, and what it attempted")),
+		"",
+	}
+
+	// 1. En esta corrida
+	out = append(out, "  "+Paint(Accent).Render(p.T("refused.in_this_run", "IN THIS RUN")))
+	if len(denials) == 0 {
+		out = append(out,
+			"    "+Paint(OK).Render(p.T("refused.none_denied", "no commands or actions were denied")),
+			"    "+Paint(Dim).Render(p.T("refused.all_allowed", "everything it attempted was permitted to run")),
+		)
+	} else {
+		for _, d := range denials {
+			toolName := d.Tool
+			if toolName == "" {
+				toolName = "command"
+			}
+			out = append(out, fmt.Sprintf("    %s %s: %s",
+				Paint(Bad).Render("✗"),
+				Paint(Accent).Render(toolName),
+				Paint(Bad).Render(d.Text),
+			))
 		}
 	}
+	out = append(out, "")
+
+	// 2. Las reglas fijas del sandbox
+	out = append(out,
+		"  "+Paint(Accent).Render(p.T("refused.rules_title", "THE RULES · sandbox constraints")),
+		fmt.Sprintf("    %s %-24s %s", Paint(Dim).Render("✗"), "psql / mongosh", Paint(Dim).Render("bases de datos protegidas (solo lectura)")),
+		fmt.Sprintf("    %s %-24s %s", Paint(Dim).Render("✗"), "aws / cloud-cli", Paint(Dim).Render("servicios cloud y credenciales externas")),
+		fmt.Sprintf("    %s %-24s %s", Paint(Dim).Render("✗"), "git push", Paint(Dim).Render("la rama la gestiona el operador / runner")),
+		fmt.Sprintf("    %s %-24s %s", Paint(Dim).Render("✗"), "git remote / config", Paint(Dim).Render("configuración del repositorio")),
+		fmt.Sprintf("    %s %-24s %s", Paint(Dim).Render("✗"), "gh pr merge", Paint(Dim).Render("mezclar y publicar pull requests")),
+		"",
+		"  "+Paint(Dim).Render(p.T("refused.policy_note", "si intenta una acción prohibida, la llamada falla de inmediato y el modelo continúa")),
+		"",
+	)
+
 	return out
 }

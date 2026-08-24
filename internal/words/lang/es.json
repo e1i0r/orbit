@@ -517,49 +517,113 @@
       "source": "outcome",
       "value": "resultado"
     },
+    "gates.title": {
+      "source": "Verification Gates & Checks",
+      "value": "Chequeos y compuertas de verificación"
+    },
+    "gates.subtitle": {
+      "source": "what needs to pass — by attempt, and why it stopped",
+      "value": "lo que tiene que pasar — por intento, y por qué se detuvo"
+    },
+    "gates.attempt": {
+      "source": "intento 1",
+      "value": "intento 1"
+    },
+    "gates.passed_word": {
+      "source": "pasaron",
+      "value": "pasaron"
+    },
     "gates.empty": {
       "source": "no verification gates have run for this task",
       "value": "no se ejecutaron verificaciones para esta tarea"
-    },
-    "gates.passed": {
-      "source": "PASSED",
-      "value": "APROBADO"
-    },
-    "gates.failed": {
-      "source": "FAILED",
-      "value": "FALLADO"
-    },
-    "gates.phase": {
-      "source": "phase",
-      "value": "fase"
     },
     "cost.heading": {
       "source": "Cost & Resource Breakdown",
       "value": "Desglose de Costes y Recursos"
     },
-    "cost.total": {
-      "source": "Total spent on task:",
-      "value": "Total gastado en la tarea:"
+    "cost.subtitle": {
+      "source": "how much has been spent, stage by stage",
+      "value": "cuánto ha gastado, etapa por etapa"
     },
     "cost.empty": {
       "source": "no cost recorded for this task",
       "value": "no hay costes registrados para esta tarea"
     },
-    "refused.tag": {
-      "source": "DENIED",
-      "value": "DENEGADO"
+    "refused.title": {
+      "source": "Permissions & Security Sandbox",
+      "value": "Permisos y reglas del sandbox"
     },
-    "refused.phase": {
-      "source": "phase",
-      "value": "fase"
+    "refused.subtitle": {
+      "source": "what the sandbox forbids, and what it attempted",
+      "value": "lo que el sandbox le prohíbe, y lo que intentó igual"
     },
-    "refused.empty": {
-      "source": "no actions were refused by permissions for this task",
-      "value": "ninguna acción fue denegada por permisos para esta tarea"
+    "refused.in_this_run": {
+      "source": "IN THIS RUN",
+      "value": "EN ESTA CORRIDA"
+    },
+    "refused.none_denied": {
+      "source": "no commands or actions were denied",
+      "value": "no se le negó ningún comando"
+    },
+    "refused.all_allowed": {
+      "source": "everything it attempted was permitted to run",
+      "value": "todo lo que intentó, se le permitió correr"
+    },
+    "refused.rules_title": {
+      "source": "THE RULES · sandbox constraints",
+      "value": "LAS REGLAS · las mismas en toda corrida, haga lo que haga"
+    },
+    "refused.policy_note": {
+      "source": "si intenta una acción prohibida, la llamada falla de inmediato y el modelo continúa",
+      "value": "si intenta una acción prohibida, la llamada falla de inmediato y el modelo continúa"
+    },
+    "report.title": {
+      "source": "Summary Report & Review",
+      "value": "Informe de la revisión y cambios"
+    },
+    "report.subtitle": {
+      "source": "what it wrote about the change, and what the review concluded",
+      "value": "lo que escribió sobre el cambio, y lo que dijo la revisión"
     },
     "report.empty": {
       "source": "no engine report available for this task",
       "value": "no hay informe del motor disponible para esta tarea"
+    },
+    "notes.title": {
+      "source": "Operator Notes & Guidance",
+      "value": "Notas e indicaciones del operador"
+    },
+    "notes.subtitle": {
+      "source": "what you told it, and if anything has read it",
+      "value": "lo que le dijiste, y si algo ya lo leyó"
+    },
+    "notes.count": {
+      "source": "notes",
+      "value": "notas"
+    },
+    "notes.all_filed": {
+      "source": "all filed",
+      "value": "todas registradas"
+    },
+    "notes.empty": {
+      "source": "no notes recorded for this task · press a to leave one",
+      "value": "no hay notas registradas para esta tarea · pulsa a para dejar una"
+    },
+    "thinking.title": {
+      "source": "Agent Reasoning & Thinking",
+      "value": "Pensamiento y razonamiento del modelo"
+    },
+    "thinking.subtitle": {
+      "source": "its own words — what it saw, what it concluded and what it decided",
+      "value": "sus propias palabras — qué vio, qué concluyó y qué decidió"
+    },
+    "thinking.entries": {
+      "source": "entries",
+      "value": "entradas"
+    },
+    "thinking.empty": {
+      "source": "no thinking blocks captured for this task",
+      "value": "no hay bloques de razonamiento capturados para esta tarea"
     },
     "artifacts.title": {
       "source": "Files & Artifacts",
@@ -620,26 +684,6 @@
     "artifacts.group_accounting": {
       "source": "run accounting",
       "value": "la contabilidad del run"
-    },
-    "notes.note": {
-      "source": "NOTE",
-      "value": "NOTA"
-    },
-    "notes.empty": {
-      "source": "no notes recorded for this task · press a to leave one",
-      "value": "no hay notas registradas para esta tarea · pulsa a para dejar una"
-    },
-    "thinking.tag": {
-      "source": "THINKING",
-      "value": "THINKING"
-    },
-    "thinking.phase": {
-      "source": "phase",
-      "value": "fase"
-    },
-    "thinking.empty": {
-      "source": "no thinking blocks captured for this task",
-      "value": "no hay bloques de thinking registrados para esta tarea"
     },
     "plain.read_board": {
       "source": "read the board",

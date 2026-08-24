@@ -13,6 +13,13 @@ func (m Model) reportLines() []string {
 
 	w, blocks := max(m.frame.Body.W, 1), 0
 	var out []string
+	out = append(out,
+		"",
+		"  "+Paint(Accent).Bold(true).Render(p.T("report.title", "Summary Report & Review")),
+		"  "+Paint(Dim).Render(p.T("report.subtitle", "what it wrote about the change, and what the review concluded")),
+		"",
+	)
+
 	var started view.Entry
 	for _, e := range m.entries {
 		if e.Attempted() {
@@ -38,7 +45,7 @@ func (m Model) reportLines() []string {
 	}
 
 	if blocks == 0 {
-		return []string{"", "  " + Paint(Dim).Render(p.T("report.empty", "no engine report available for this task"))}
+		out = append(out, "  "+Paint(Dim).Render(p.T("report.empty", "no engine report available for this task")))
 	}
 
 	return out
