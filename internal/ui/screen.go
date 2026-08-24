@@ -34,13 +34,23 @@ func (m Model) View() tea.View {
 	}
 	lines := make([]string, 0, m.height)
 	lines = append(lines, m.headerRows()...)
-	switch m.screen {
-	case screenDetail:
-		lines = append(lines, m.detailRows(m.frame.Body.H, m.frame.Body.W)...)
-	case screenStart:
-		lines = append(lines, m.startRows(m.frame.Body.H, m.frame.Body.W)...)
+	// The palette and a watched run sit above every screen: the line owns
+	// the body while it is open, and the output of the command it raised
+	// keeps the body until esc takes it down.
+	switch {
+	case m.palette.open:
+		lines = append(lines, m.paletteRows(m.frame.Body.H, m.frame.Body.W)...)
+	case m.watchUp:
+		lines = append(lines, m.watchRows(m.frame.Body.H, m.frame.Body.W)...)
 	default:
-		lines = append(lines, m.bodyRows()...)
+		switch m.screen {
+		case screenDetail:
+			lines = append(lines, m.detailRows(m.frame.Body.H, m.frame.Body.W)...)
+		case screenStart:
+			lines = append(lines, m.startRows(m.frame.Body.H, m.frame.Body.W)...)
+		default:
+			lines = append(lines, m.bodyRows()...)
+		}
 	}
 	lines = append(lines, m.bandRows()...)
 	lines = append(lines, m.barRows()...)
@@ -81,11 +91,16 @@ func (m Model) bandRows() []string {
 	return fill([]string{m.rule(r.W), m.bandLine(r.W)}, r.H)
 }
 
-// barRows is the key bar, which is one row and has never wanted a second.
+// barRows is the key bar, which is one row and has never wanted a second —
+// unless the palette is up, when the row is the palette's line instead. The
+// hints it replaces belong to a keyboard the palette is holding.
 func (m Model) barRows() []string {
 	r := m.frame.Bar
 	if r.H <= 0 {
 		return nil
+	}
+	if m.palette.open {
+		return fill([]string{m.paletteInputLine(r.W)}, r.H)
 	}
 	return fill([]string{m.barLine(r.W)}, r.H)
 }

@@ -121,9 +121,14 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 		Take:     takePort(r, engines),
 		Flows:    s,
 		// canResume is asked per task rather than once for the build: the
-		// engine a task ran under is the one that decides whether its session
-		// can be carried on, and that name lives on the task.
+		// engine a task ran under is the one that decides whether its
+		// session can be carried on, and that name lives on the task.
 		CanResume: func(name string) bool { return canResume(engines, name) },
+		// The palette's two halves: the list it shows, read off the table,
+		// and the way it runs one, which is the table's own Run with the
+		// settings adapter answering what language the refusal is in.
+		Commands: commandTable(),
+		Do:       doPort(cfg),
 	}, s, nil
 }
 

@@ -139,6 +139,20 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		return m.showTab(tab(t.Pane)), nil
 	case TargetDialogSwitch:
 		return m.flip(t.Field), nil
+	case TargetCommand:
+		// The same two-step a task row takes: the first click selects,
+		// the second runs what was selected. Both arrive through the same
+		// methods the keyboard uses — there is no third path to a run.
+		i, ok := m.commandIndex(t.Key)
+		if !ok {
+			return m, nil
+		}
+		if i == m.palette.sel {
+			return m.runSelected()
+		}
+		next := m
+		next.palette.sel = i
+		return next.ensureVisible(), nil
 	}
 	// TargetPaneBody and TargetDialogPhase are pointed at and not acted on.
 	// The pane is already where the keyboard is, so a click in it has
@@ -233,6 +247,22 @@ func (m Model) wheel(e tea.Mouse) Model {
 		for range wheelRows {
 			m = m.scroll(k)
 		}
+		return m
+	}
+	if m.palette.open {
+		// The wheel moves the selection, which is what scrolling a list
+		// with one row chosen means; the list itself follows it through
+		// ensureVisible rather than the reader following the list.
+		d := wheelRows
+		if up {
+			d = -wheelRows
+		}
+		return m.pick(d)
+	}
+	if m.watchUp {
+		// A run's output keeps its own tail on screen and offers nothing
+		// to scroll back for yet, so the wheel does nothing here rather
+		// than scrolling something that is not being shown.
 		return m
 	}
 	if m.screen != screenList {

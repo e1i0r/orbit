@@ -22,12 +22,12 @@ import (
 // opening things, doing something to a task, and the settings that are not
 // about any one task.
 type Keys struct {
-	Up, Down, First, Last, PageUp, PageDown key.Binding
-	Open, Back, NextTab, PrevTab, Sideways  key.Binding
-	Start, Run, ChangeFlow                  key.Binding
-	Pause, Resume, Cancel                   key.Binding
-	Take, Hand, Ask, MarkRead, Edit         key.Binding
-	Filter, Autopilot, Language, Help, Quit key.Binding
+	Up, Down, First, Last, PageUp, PageDown           key.Binding
+	Open, Back, NextTab, PrevTab, Sideways            key.Binding
+	Start, Run, ChangeFlow                            key.Binding
+	Pause, Resume, Cancel                             key.Binding
+	Take, Hand, Ask, MarkRead, Edit                   key.Binding
+	Filter, Commands, Autopilot, Language, Help, Quit key.Binding
 }
 
 // NewKeys builds the key map, with every description translated.
@@ -89,7 +89,12 @@ func NewKeys(p *words.Printer) Keys {
 		MarkRead: binding("d", p.T("key.read", "mark read"), "d"),
 		Edit:     binding("o", p.T("key.edit", "open in $EDITOR"), "o"),
 
-		Filter:    binding("/", p.T("key.filter", "filter"), "/"),
+		Filter: binding("/", p.T("key.filter", "filter"), "/"),
+		// Commands is the palette, and it is bound beside the filter
+		// because the two are siblings: both are a line the reader types
+		// into, and one narrows what is already on screen while the other
+		// reaches everything no key was ever given to.
+		Commands:  binding(":", p.T("key.commands", "commands"), ":"),
 		Autopilot: binding("A", p.T("key.autopilot", "autopilot"), "A"),
 		Language:  binding("L", p.T("key.language", "language"), "L"),
 		Help:      binding("?", p.T("key.help", "help"), "?"),

@@ -91,6 +91,11 @@ type Model struct {
 	// arguing for.
 	filter string
 
+	// palette is the ':' line and the list above it, while it is up. Its
+	// input is a plain string for the same reason filter is, and its
+	// whole shape lives in palette.go.
+	palette paletteState
+
 	// start is the dialog that decides what a run will be, and taken is
 	// which tasks this window has handed the terminal to an engine for.
 	//
@@ -100,6 +105,18 @@ type Model struct {
 	// survive a restart — is argued at took, in gesture.go.
 	start startModel
 	taken map[string]bool
+
+	// watching is a palette command that is out running right now, and
+	// watchUp is whether its output is on screen. The watch is a pointer
+	// because the Cmd that runs the command and every poll that reads its
+	// buffer are outside the value model's copy discipline; the buffer is
+	// its own mutex-guarded thing precisely so that no field of the model
+	// is ever written from another goroutine. watchUp going down does not
+	// stop the run — Orbit cannot cancel what it did not spawn a handle
+	// for — so the done sentence still reaches the band afterwards.
+	watching *commandWatch
+	watchUp  bool
+	output   string
 
 	// held is the pointer's button, if one is down, and what it went down
 	// on. It is on the model rather than in the mouse handler because the
@@ -240,6 +257,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.say(m.startedSaid(msg)), nil
 	case readMsg:
 		return m.say(m.readSaid(msg)), nil
+	case outputMsg:
+		// A tick for a run this window already stopped watching, or one
+		// whose name does not match what is on screen, is dropped rather
+		// than painted; the pump is only re-armed while its own watch is
+		// still the one running.
+		if m.watching == nil || m.watching.name != msg.Name {
+			return m, nil
+		}
+		m.output = msg.Text
+		return m, outputPump(m.watching)
+	case commandMsg:
+		next := m
+		if m.watching != nil && m.watching.name == msg.Name {
+			next.output = msg.Text
+			next.watching = nil
+		}
+		if msg.Err != nil {
+			return next.say(msg.Err.Error()), nil
+		}
+		return next.say(next.commandSaid(msg)), nil
 	case sessionMsg:
 		return m.session(msg)
 	case sessionEndedMsg:

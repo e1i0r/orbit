@@ -93,6 +93,12 @@ func (m Model) hit(x, y int) Target {
 	}
 	switch m.frame.At(y) {
 	case layout.RegionBar:
+		if m.palette.open {
+			// The bar is the palette's line while the palette is up. A
+			// line being typed into has no fields worth pointing at yet;
+			// when it grows a cursor this is where its answer starts.
+			return Target{}
+		}
 		return m.hitBar(x, y)
 	case layout.RegionHeader:
 		// The header's standing fields — the unread pair, the autopilot
@@ -102,6 +108,15 @@ func (m Model) hit(x, y int) Target {
 		// the header carries a repository list.
 		return Target{}
 	case layout.RegionBody:
+		if m.palette.open {
+			return m.hitPalette(x, y)
+		}
+		if m.watchUp {
+			// The output of a command that is running is text to read,
+			// not rows to act on, and a click on it would otherwise fall
+			// through to whatever screen is underneath it.
+			return Target{}
+		}
 		switch m.screen {
 		case screenDetail:
 			return m.hitDetail(x, y)

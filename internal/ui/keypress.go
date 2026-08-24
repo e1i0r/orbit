@@ -26,18 +26,29 @@ import (
 // says which key it is, and that sentence is translated.
 const confirmYes = "y"
 
-// key routes one keystroke to whichever of the window's five modes has it.
+// key routes one keystroke to whichever of the window's modes has it.
 //
-// The order is the order things are on top of each other: a filter being
-// typed swallows every letter, a question waiting for an answer takes the
-// next key whatever it is, and the two screens below the board have their own
-// small maps. Only what is left reaches the list.
+// The order is the order things are on top of each other: a palette line or
+// a filter being typed swallows every letter, a question waiting for an
+// answer takes the next key whatever it is, and the two screens below the
+// board have their own small maps. Only what is left reaches the list.
+//
+// The ':' that opens the palette is matched here rather than in any one
+// screen's map because the palette is not the board's tool alone; a run's
+// output being up sits under it and above everything else, keeping only its
+// own way out.
 func (m Model) key(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
+	case m.palette.open:
+		return m.paletteKey(msg)
 	case m.filtering:
 		return m.filterKey(msg)
 	case m.confirm != confirmNone:
 		return m.confirmKey(msg)
+	case key.Matches(msg, m.keys.Commands):
+		return m.openPalette(), nil
+	case m.watchUp:
+		return m.watchKey(msg)
 	case m.screen == screenStart:
 		return m.startKey(msg)
 	case m.screen == screenDetail:
@@ -106,41 +117,6 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 	}
 	return m, nil
-}
-
-// filterKey feeds the text input, which owns every key it is not given a
-// reason to give up.
-func (m Model) filterKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
-	switch {
-	case key.Matches(msg, m.keys.Back):
-		m.filtering, m.filter = false, ""
-		return m.clampCursor(), nil
-	case key.Matches(msg, m.keys.Open):
-		// The filter stays applied and the keyboard goes back to the list.
-		// Closing it and clearing it are two different gestures because
-		// filtering to one repository and then working in it is the whole
-		// point of having filtered.
-		m.filtering = false
-		return m.clampCursor(), nil
-	case msg.Code == tea.KeyBackspace:
-		m.filter = trimLastRune(m.filter)
-		return m.clampCursor(), nil
-	}
-	if msg.Text != "" {
-		m.filter += msg.Text
-	}
-	return m.clampCursor(), nil
-}
-
-// trimLastRune removes the last character of the filter, counting runes and
-// never bytes: backspacing "café" a byte at a time leaves an invalid string
-// on screen, which is the same mistake as measuring a column in bytes.
-func trimLastRune(s string) string {
-	runes := []rune(s)
-	if len(runes) == 0 {
-		return s
-	}
-	return string(runes[:len(runes)-1])
 }
 
 // confirmKey answers the one question the window ever asks.

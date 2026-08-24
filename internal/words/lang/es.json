@@ -718,6 +718,46 @@
     "setting.flow": {
       "source": "the flow a new task is written against",
       "value": "el flujo contra el que se escribe una tarea nueva"
+    },
+    "key.commands": {
+      "source": "commands",
+      "value": "comandos"
+    },
+    "palette.placeholder": {
+      "source": "type a command",
+      "value": "escribe un comando"
+    },
+    "palette.none": {
+      "source": "no command starts with {typed}",
+      "value": "ningún comando empieza con {typed}"
+    },
+    "watch.busy": {
+      "source": "{name} is still running",
+      "value": "{name} sigue en marcha"
+    },
+    "watch.running": {
+      "source": "{name}: still running…",
+      "value": "{name}: todavía en marcha…"
+    },
+    "watch.finished_line": {
+      "source": "finished — {back} closes",
+      "value": "terminó — {back} cierra"
+    },
+    "watch.quiet": {
+      "source": "no output yet…",
+      "value": "todavía sin salida…"
+    },
+    "msg.command_done": {
+      "source": "{name} finished",
+      "value": "{name} terminó"
+    },
+    "msg.no_such_command": {
+      "source": "no such command: {name}",
+      "value": "no existe ningún comando: {name}"
+    },
+    "msg.no_screen_yet": {
+      "source": "{name} opens a screen this window does not have yet",
+      "value": "{name} abre una pantalla que esta ventana todavía no tiene"
     }
   }
 }

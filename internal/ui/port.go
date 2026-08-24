@@ -13,6 +13,7 @@ package ui
 // package that draws.
 
 import (
+	"io"
 	"os/exec"
 
 	"github.com/e1i0r/orbit/internal/board"
@@ -133,4 +134,45 @@ type Options struct {
 	// about engines, and a key that is offered and then refused is worse
 	// than one greyed out with its reason.
 	CanResume func(engine string) bool
+
+	// Commands is the command table the palette shows, carried in rather
+	// than reached for: internal/cli owns the table and internal/ui cannot
+	// import it, so the window is handed only what a reader must *see* —
+	// the name, the usage fragment, the description, and whether the
+	// window refuses the command here, with its reason.
+	//
+	// It deliberately does not carry Run. The window names a command; it
+	// does not call one — that is what Do is for, and the split is what
+	// keeps internal/ui from becoming a second copy of any command's rules.
+	Commands []Command
+
+	// Do runs one named command with its arguments, off in internal/cli
+	// where the table lives, writing whatever the command prints to out.
+	// It is how `orbit new` gets written from the window without
+	// internal/ui importing anything that appends. A nil port answers
+	// nothing: a window opened without one has no palette that can run,
+	// and says so if asked.
+	//
+	// out is what makes the run watchable: the window keeps reading it
+	// while the command runs, so a reader sees the work and not only the
+	// verdict. Elio asked for that outright on 2026-08-23 — see the work
+	// as it happens, then the result — and it overrides the band-only
+	// sentence the plan first described.
+	Do func(name string, args []string, out io.Writer) error
+}
+
+// Command is one row of the palette: what the window shows of a command,
+// and nothing of what the command does.
+//
+// About and Because are functions of a printer rather than strings because
+// both are sentences a reader reads, and sentences go through
+// internal/words like every other line this window draws — which also lets
+// them follow a language changed after this slice was handed over.
+type Command struct {
+	Name  string // as the reader types it
+	Args  string // the usage fragment after the name; empty when none
+	About func(*words.Printer) string
+
+	Refused bool                        // the window does not run it here
+	Because func(*words.Printer) string // why, when Refused is set
 }

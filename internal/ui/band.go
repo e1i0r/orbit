@@ -172,3 +172,16 @@ func (m Model) startedSaid(msg startedMsg) string {
 	return m.opts.Words.T("msg.started", "{id} is running, as process {pid}",
 		about("id", msg.ID), about("pid", strconv.Itoa(msg.Pid)))
 }
+
+// commandSaid is what the band says about a palette command that came back.
+//
+// The error is passed on exactly as the command phrased it — the same rule
+// controlSaid keeps, for the same reason. The success is one sentence per
+// nothing: unlike a control word, there is no verb to conjugate, only a
+// name that finished.
+func (m Model) commandSaid(msg commandMsg) string {
+	if msg.Err != nil {
+		return msg.Err.Error()
+	}
+	return m.opts.Words.T("msg.command_done", "{name} finished", about("name", msg.Name))
+}
