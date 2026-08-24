@@ -113,23 +113,33 @@ func (m Model) runSelected() (tea.Model, tea.Cmd) {
 		// open says "not yet" more honestly than closing would.
 		return m, nil
 	}
-	if m.watching != nil {
-		// One run at a time: a second interleaved into the first's output
-		// would be two answers to neither question. Choosing the running
-		// command again is not a second of anything — it is the way back
-		// to the output of the one already going.
-		if c.Name == m.watching.name {
-			return m.closePalette().reopenWatch(), nil
-		}
-		return m.say(m.opts.Words.T("watch.busy", "{name} is still running",
-			about("name", m.watching.name))), nil
+	if m.watching != nil && c.Name == m.watching.name {
+		// Choosing the running command again is not a second of anything
+		// — it is the way back to the output of the one already going.
+		return m.closePalette().reopenWatch(), nil
 	}
 	args := strings.Fields(m.palette.typed)
 	if len(args) > 0 {
 		args = args[1:]
 	}
+	return m.closePalette().launch(c, args)
+}
+
+// launch starts watching one command run, from either entry point that can
+// raise it — the palette's ⏎ and the board menu's entries. One run at a
+// time: a second interleaved into the first's output would be two answers
+// to neither question. The caller closes whatever list it was showing; the
+// watch itself opens here.
+func (m Model) launch(c Command, args []string) (tea.Model, tea.Cmd) {
+	if m.watching != nil {
+		if c.Name == m.watching.name {
+			return m.reopenWatch(), nil
+		}
+		return m.say(m.opts.Words.T("watch.busy", "{name} is still running",
+			about("name", m.watching.name))), nil
+	}
 	w := &commandWatch{name: c.Name}
-	next := m.closePalette()
+	next := m
 	next.watching, next.watchUp, next.output = w, true, ""
 	return next, tea.Batch(runCommand(m.opts.Do, w, args), outputPump(w))
 }

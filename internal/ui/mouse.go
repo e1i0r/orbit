@@ -153,6 +153,27 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		next := m
 		next.palette.sel = i
 		return next.ensureVisible(), nil
+	case TargetMenuEntry:
+		// The palette's two-step again, on the menu's list. The entry is
+		// found by what identifies it — glyph for a verb, name for a
+		// command — never by where it sat when the button went down: the
+		// list is recomputed between press and release.
+		for i, e := range m.menuEntries() {
+			id := e.glyph
+			if id == "" && e.cmd != nil {
+				id = e.cmd.Name
+			}
+			if id != t.Key {
+				continue
+			}
+			if i == m.menu.sel {
+				return m.chooseMenu()
+			}
+			next := m
+			next.menu.sel = i
+			return next, nil
+		}
+		return m, nil
 	}
 	// TargetPaneBody and TargetDialogPhase are pointed at and not acted on.
 	// The pane is already where the keyboard is, so a click in it has
@@ -198,18 +219,29 @@ func (m Model) flip(field string) Model {
 	return m
 }
 
-// rightClick moves the cursor to what was pointed at.
+// rightClick opens the menu for what was pointed at.
 //
-// The menu that belongs on the other end of this gesture — every verb for
-// this task, the refused ones greyed with their reason — is its own task.
-// Moving the cursor is the half that is right either way: the menu, when it
-// arrives, is the menu for the row under the cursor.
+// The cursor goes to the row first, so that what happens next is not a
+// surprise: the menu is the one the keyboard's m would have opened on that
+// row, and every key pressed afterwards acts where the reader just looked.
+// In the task view there is no row to move to — the pane is the task — so
+// the menu simply opens on the task being viewed.
 func (m Model) rightClick(t Target) (tea.Model, tea.Cmd) {
+	if t.Kind == TargetPaneBody {
+		if s := m.subject(); s.ID != "" {
+			return m.openMenu(s.ID), nil
+		}
+		return m, nil
+	}
 	i, ok := m.rowOf(t)
 	if !ok {
 		return m, nil
 	}
-	return m.moveTo(i), nil
+	next := m.moveTo(i)
+	if t.Kind == TargetTask {
+		return next.openMenu(t.ID), nil
+	}
+	return next, nil
 }
 
 // wheel scrolls whatever is under it, and only over the body.
@@ -248,6 +280,15 @@ func (m Model) wheel(e tea.Mouse) Model {
 			m = m.scroll(k)
 		}
 		return m
+	}
+	if m.menu.open {
+		// The menu's list moves its selection under the wheel, exactly as
+		// the palette's does.
+		d := wheelRows
+		if up {
+			d = -wheelRows
+		}
+		return m.menuPick(d)
 	}
 	if m.palette.open {
 		// The wheel moves the selection, which is what scrolling a list

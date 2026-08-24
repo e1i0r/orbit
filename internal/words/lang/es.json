@@ -723,6 +723,14 @@
       "source": "commands",
       "value": "comandos"
     },
+    "key.menu": {
+      "source": "menu",
+      "value": "menú"
+    },
+    "menu.gone": {
+      "source": "the task this menu was opened on is no longer on the board",
+      "value": "la tarea en la que se abrió este menú ya no está en el tablero"
+    },
     "palette.placeholder": {
       "source": "type a command",
       "value": "escribe un comando"

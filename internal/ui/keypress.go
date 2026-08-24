@@ -28,25 +28,34 @@ const confirmYes = "y"
 
 // key routes one keystroke to whichever of the window's modes has it.
 //
-// The order is the order things are on top of each other: a palette line or
-// a filter being typed swallows every letter, a question waiting for an
-// answer takes the next key whatever it is, and the two screens below the
-// board have their own small maps. Only what is left reaches the list.
+// The order is the order things are on top of each other: a palette line,
+// a menu or a filter being typed swallows every letter, a question waiting
+// for an answer takes the next key whatever it is, and the two screens
+// below the board have their own small maps. Only what is left reaches the
+// list.
 //
 // The ':' that opens the palette is matched here rather than in any one
-// screen's map because the palette is not the board's tool alone; a run's
-// output being up sits under it and above everything else, keeping only its
-// own way out.
+// screen's map because the palette is not the board's tool alone; so is m,
+// which opens the menu on whatever the context offers. A run's output being
+// up sits under both and above everything else, keeping only its own way
+// out.
 func (m Model) key(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
 	case m.palette.open:
 		return m.paletteKey(msg)
+	case m.menu.open:
+		return m.menuKey(msg)
 	case m.filtering:
 		return m.filterKey(msg)
 	case m.confirm != confirmNone:
 		return m.confirmKey(msg)
 	case key.Matches(msg, m.keys.Commands):
 		return m.openPalette(), nil
+	case key.Matches(msg, m.keys.Menu):
+		// The menu is not the board's tool alone, so its opening key sits
+		// beside the palette's here rather than inside any one screen's
+		// map; which menu opens is the context's answer.
+		return m.openMenuForContext(), nil
 	case m.watchUp:
 		return m.watchKey(msg)
 	case m.screen == screenStart:

@@ -34,12 +34,14 @@ func (m Model) View() tea.View {
 	}
 	lines := make([]string, 0, m.height)
 	lines = append(lines, m.headerRows()...)
-	// The palette and a watched run sit above every screen: the line owns
-	// the body while it is open, and the output of the command it raised
-	// keeps the body until esc takes it down.
+	// The palette, a menu and a watched run sit above every screen: the
+	// line and the list own the body while they are up, and the output of
+	// the command the line raised keeps the body until esc takes it down.
 	switch {
 	case m.palette.open:
 		lines = append(lines, m.paletteRows(m.frame.Body.H, m.frame.Body.W)...)
+	case m.menu.open:
+		lines = append(lines, m.menuRows(m.frame.Body.H, m.frame.Body.W)...)
 	case m.watchUp:
 		lines = append(lines, m.watchRows(m.frame.Body.H, m.frame.Body.W)...)
 	default:

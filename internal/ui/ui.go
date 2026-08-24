@@ -96,6 +96,13 @@ type Model struct {
 	// whole shape lives in palette.go.
 	palette paletteState
 
+	// menu is what can be done to the thing it was opened on — a task,
+	// or the board itself — including what cannot, with the reason. It
+	// lives in menu.go and owns the body while it is up, exactly as the
+	// palette does. The two never show at once: whichever is up owns the
+	// keyboard, and the other's opening key is swallowed by it.
+	menu menuState
+
 	// start is the dialog that decides what a run will be, and taken is
 	// which tasks this window has handed the terminal to an engine for.
 	//

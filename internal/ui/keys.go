@@ -24,7 +24,7 @@ import (
 type Keys struct {
 	Up, Down, First, Last, PageUp, PageDown           key.Binding
 	Open, Back, NextTab, PrevTab, Sideways            key.Binding
-	Start, Run, ChangeFlow                            key.Binding
+	Start, Run, ChangeFlow, Menu                      key.Binding
 	Pause, Resume, Cancel                             key.Binding
 	Take, Hand, Ask, MarkRead, Edit                   key.Binding
 	Filter, Commands, Autopilot, Language, Help, Quit key.Binding
@@ -78,6 +78,12 @@ func NewKeys(p *words.Printer) Keys {
 		// takes every keystroke while it is up.
 		Run:        binding("⏎", p.T("key.run", "run it"), "enter"),
 		ChangeFlow: binding("f", p.T("key.change_flow", "change flow"), "f"),
+
+		// Menu is the right-click's keyboard half: everything that can be
+		// done to the thing under the cursor, including what cannot, with
+		// the reason. It is bound beside Start because both are about the
+		// row, not about a standing setting.
+		Menu: binding("m", p.T("key.menu", "menu"), "m"),
 
 		Pause:  binding("p", p.T("key.pause", "pause"), "p"),
 		Resume: binding("r", p.T("key.resume", "resume"), "r"),
