@@ -30,6 +30,15 @@ func (f *Fake) Name() string { return "fake" }
 // window to offer the keyboard says so through the window's own port.
 func (f *Fake) CanResume() bool { return false }
 
+// Models returns nil for the fake engine.
+func (f *Fake) Models() []Choice { return nil }
+
+// Efforts returns nil for the fake engine.
+func (f *Fake) Efforts() []Choice { return nil }
+
+// CanThink returns false for the fake engine.
+func (f *Fake) CanThink() bool { return false }
+
 // Run records the request and returns whatever the fake was told to return.
 func (f *Fake) Run(ctx context.Context, req Request) (Result, error) {
 	if err := ctx.Err(); err != nil {

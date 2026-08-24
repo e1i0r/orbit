@@ -33,6 +33,31 @@ func (Claude) Name() string { return "claude" }
 // records one, so a person can carry it on.
 func (Claude) CanResume() bool { return true }
 
+// Models returns the models claude supports.
+func (Claude) Models() []Choice {
+	return []Choice{
+		{ID: "", Label: "default"},
+		{ID: "opus", Label: "opus"},
+		{ID: "sonnet", Label: "sonnet"},
+		{ID: "haiku", Label: "haiku"},
+	}
+}
+
+// Efforts returns the effort levels claude supports.
+func (Claude) Efforts() []Choice {
+	return []Choice{
+		{ID: "", Label: "default"},
+		{ID: "low", Label: "low"},
+		{ID: "medium", Label: "medium"},
+		{ID: "high", Label: "high"},
+		{ID: "xhigh", Label: "xhigh"},
+		{ID: "max", Label: "max"},
+	}
+}
+
+// CanThink is true because claude supports extended thinking mode.
+func (Claude) CanThink() bool { return true }
+
 // Run invokes claude in the worktree and returns what it reported.
 func (Claude) Run(ctx context.Context, req Request) (Result, error) {
 	args, err := claudeArgs(req)

@@ -41,6 +41,13 @@ type Result struct {
 	Cost      float64
 }
 
+// Choice is one selectable value for an engine dial (model or effort).
+// An empty ID means "default" (whatever the CLI/engine itself defaults to).
+type Choice struct {
+	ID    string
+	Label string
+}
+
 // Engine is one program that can be asked to do a phase.
 //
 // Declared here because this is where it is consumed; the concrete engines
@@ -60,4 +67,15 @@ type Engine interface {
 	// greyed-out key that says why is the whole of what an honest
 	// difference between two engines looks like.
 	CanResume() bool
+
+	// Models returns the choices this engine supports for its model dial.
+	// The zero-value choice has ID "" and Label "default".
+	Models() []Choice
+
+	// Efforts returns the choices this engine supports for its effort dial.
+	// An engine with no effort switch returns an empty slice.
+	Efforts() []Choice
+
+	// CanThink returns whether this engine supports an extended thinking mode.
+	CanThink() bool
 }
