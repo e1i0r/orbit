@@ -1,10 +1,7 @@
 package ui
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"charm.land/bubbles/v2/key"
@@ -14,7 +11,8 @@ import (
 )
 
 const (
-	flowFieldName = iota
+	flowFieldTemplate = iota
+	flowFieldName
 	flowFieldPhaseName
 	flowFieldEngine
 	flowFieldModel
@@ -29,24 +27,27 @@ const (
 )
 
 type flowsState struct {
-	sel        int
-	creating   bool
-	field      int
-	flowName   string
-	phases     []flow.Phase
-	phaseName  string
-	engine     string
-	model      string
-	effort     string
-	thinking   string
-	feedOutput bool
-	wait       bool
-	prompt     string
+	sel            int
+	creating       bool
+	confirmDiscard bool
+	field          int
+	template       string
+	flowName       string
+	phases         []flow.Phase
+	phaseName      string
+	engine         string
+	model          string
+	effort         string
+	thinking       string
+	feedOutput     bool
+	wait           bool
+	prompt         string
 }
 
 func (m Model) openFlows() Model {
 	m.screen = screenFlows
 	m.flows = flowsState{
+		template: "ninguna",
 		engine:   "claude",
 		model:    "sonnet",
 		effort:   "default",
@@ -100,19 +101,7 @@ func (m Model) flowsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case key.Matches(msg, m.keys.Back) || key.Matches(msg, m.keys.Quit):
 		return m.abandonFlows(), nil
 	case msg.Text == "n" || msg.Text == "N" || key.Matches(msg, m.keys.Start):
-		m.flows.creating = true
-		m.flows.field = 0
-		m.flows.flowName = ""
-		m.flows.phases = nil
-		m.flows.phaseName = "implement"
-		m.flows.engine = "claude"
-		m.flows.model = "sonnet"
-		m.flows.effort = "default"
-		m.flows.thinking = "adaptive"
-		m.flows.feedOutput = false
-		m.flows.wait = false
-		m.flows.prompt = ""
-		return m, nil
+		return m.startCreateFlow(), nil
 	case key.Matches(msg, m.keys.Up):
 		if len(list) > 0 {
 			m.flows.sel--
@@ -135,17 +124,34 @@ func (m Model) flowsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 
 func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	st := &m.flows
+	if st.confirmDiscard {
+		switch {
+		case msg.Text == "y" || msg.Text == "Y" || msg.Text == "s" || msg.Text == "S" || key.Matches(msg, m.keys.Open):
+			st.creating = false
+			st.confirmDiscard = false
+			return m.say("cambios descartados"), nil
+		default:
+			st.confirmDiscard = false
+			return m.say("edición reanudada"), nil
+		}
+	}
+
+	isText := st.field == flowFieldName || st.field == flowFieldPhaseName || st.field == flowFieldPrompt
 	switch {
 	case key.Matches(msg, m.keys.Back):
+		if st.flowName != "" || len(st.phases) > 0 || st.prompt != "" {
+			st.confirmDiscard = true
+			return m.say("¿Descartar cambios del flujo? [y] sí / [n] no"), nil
+		}
 		st.creating = false
 		return m, nil
-	case key.Matches(msg, m.keys.NextTab) || key.Matches(msg, m.keys.Down):
+	case key.Matches(msg, m.keys.NextTab) || (!isText && key.Matches(msg, m.keys.Down)):
 		st.field = (st.field + 1) % flowFieldCount
 		return m, nil
-	case key.Matches(msg, m.keys.PrevTab) || key.Matches(msg, m.keys.Up):
+	case key.Matches(msg, m.keys.PrevTab) || (!isText && key.Matches(msg, m.keys.Up)):
 		st.field = (st.field - 1 + flowFieldCount) % flowFieldCount
 		return m, nil
-	case key.Matches(msg, m.keys.Open) || msg.Text == " ":
+	case key.Matches(msg, m.keys.Open) || (!isText && msg.Text == " "):
 		return m.handleFlowFieldAction()
 	case msg.Code == tea.KeyBackspace:
 		switch st.field {
@@ -158,6 +164,7 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	}
+
 	if msg.Text != "" {
 		switch st.field {
 		case flowFieldName:
@@ -174,6 +181,10 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 func (m Model) handleFlowFieldAction() (Model, tea.Cmd) {
 	st := &m.flows
 	switch st.field {
+	case flowFieldTemplate:
+		tpls := []string{"ninguna", "TDD Cycle", "Security Audit", "Turbo Fix"}
+		st.template = nextOption(tpls, st.template, 1)
+		return m.applyFlowTemplate(st.template)
 	case flowFieldEngine:
 		engs := []string{"claude", "codex", "opencode"}
 		st.engine = nextOption(engs, st.engine, 1)
@@ -195,61 +206,18 @@ func (m Model) handleFlowFieldAction() (Model, tea.Cmd) {
 		st.phaseName = fmt.Sprintf("phase-%d", len(st.phases)+1)
 		st.prompt = ""
 		st.field = flowFieldPhaseName
-		return m.say(fmt.Sprintf("fase %d añadida", len(st.phases))), nil
+		return m.say(fmt.Sprintf("fase %d añadida al ciclo", len(st.phases))), nil
 	case flowFieldSave:
 		return m.saveCustomFlow()
 	}
 	return m, nil
 }
 
-func (m Model) saveCustomFlow() (Model, tea.Cmd) {
-	st := &m.flows
-	name := strings.TrimSpace(st.flowName)
-	if name == "" {
-		return m.say("indica un nombre para el flujo"), nil
-	}
-	phases := st.phases
-	if len(phases) == 0 && st.phaseName != "" {
-		phases = append(phases, st.currentPhase())
-	}
-	if len(phases) == 0 {
-		return m.say("el flujo debe tener al menos una fase"), nil
-	}
-	fl := flow.Flow{
-		Name:   name,
-		Phases: phases,
-	}
-	if err := fl.Validate(); err != nil {
-		return m.say(err.Error()), nil
-	}
-
-	dir := ""
-	if m.opts.Flows != nil {
-		dir = m.opts.Flows.FlowDir()
-	}
-	if dir == "" {
-		home, _ := os.UserHomeDir()
-		dir = filepath.Join(home, ".orbit", "flows")
-	}
-	_ = os.MkdirAll(dir, 0755)
-	data, err := json.MarshalIndent(fl, "", "  ")
-	if err != nil {
-		return m.say(err.Error()), nil
-	}
-	path := filepath.Join(dir, name+".json")
-	if err := os.WriteFile(path, data, 0644); err != nil {
-		return m.say(err.Error()), nil
-	}
-	m.flows.creating = false
-	m.flows.phases = nil
-	m.flows.flowName = ""
-	p := m.opts.Words
-	return m.say(p.T("flows.saved", "flow {name} saved", about("name", name))), nil
-}
-
 func (m Model) startCreateFlow() Model {
 	m.flows.creating = true
+	m.flows.confirmDiscard = false
 	m.flows.field = 0
+	m.flows.template = "ninguna"
 	m.flows.flowName = ""
 	m.flows.phases = nil
 	m.flows.phaseName = "implement"

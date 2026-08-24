@@ -118,6 +118,10 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 		return mark + lbl + " " + val
 	}
 
+	// 0. Preset Template
+	tplPills := renderComboPills([]string{"ninguna", "TDD Cycle", "Security Audit", "Turbo Fix"}, st.template)
+	out = append(out, renderField(flowFieldTemplate, "0. Plantilla / Preset", tplPills, true))
+
 	// 1. Flow Name
 	fNameVal := "[" + st.flowName + "_]"
 	if st.field != flowFieldName && st.flowName != "" {
@@ -219,24 +223,26 @@ func (m Model) hitFlows(x, y int) Target {
 	}
 	switch line {
 	case 4 + offset:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldName}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldTemplate}
 	case 5 + offset:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldPhaseName}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldName}
 	case 6 + offset:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldEngine}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldPhaseName}
 	case 7 + offset:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldModel}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldEngine}
 	case 8 + offset:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldEffort}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldModel}
 	case 9 + offset:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldThinking}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldEffort}
 	case 10 + offset:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldFeedOutput}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldThinking}
 	case 11 + offset:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldWait}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldFeedOutput}
 	case 12 + offset:
+		return Target{Kind: TargetFlowItem, Phase: flowFieldWait}
+	case 13 + offset:
 		return Target{Kind: TargetFlowItem, Phase: flowFieldPrompt}
-	case 14 + offset:
+	case 15 + offset:
 		if x < 35 {
 			return Target{Kind: TargetFlowItem, Field: "add_phase"}
 		}
