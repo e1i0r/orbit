@@ -1329,17 +1329,89 @@
       "source": "Lista",
       "value": "Lista"
     },
-    "overview.goal": {
-      "source": "qué es esta tarea, y hasta dónde llegó",
-      "value": "qué es esta tarea, y hasta dónde llegó"
-    },
     "overview.waiting_box": {
-      "source": "IT IS WAITING ON YOU / ACCIONES REQUERIDAS",
+      "source": "ACCIONES REQUERIDAS / ESPERANDO AL OPERADOR",
       "value": "ACCIONES REQUERIDAS / ESPERANDO AL OPERADOR"
     },
     "overview.resume_hint": {
       "source": "press 't' to open interactive session, 'r' to restart",
       "value": "presiona 't' para sesión interactiva, 'r' para reiniciar"
+    },
+    "overview.metrics": {
+      "source": "Status & Metrics",
+      "value": "Estado y métricas"
+    },
+    "overview.state": {
+      "source": "state",
+      "value": "estado"
+    },
+    "overview.duration": {
+      "source": "duration",
+      "value": "duración"
+    },
+    "overview.cost": {
+      "source": "cost",
+      "value": "coste"
+    },
+    "overview.engine": {
+      "source": "engine",
+      "value": "motor"
+    },
+    "overview.repo": {
+      "source": "repository",
+      "value": "repositorio"
+    },
+    "overview.flow": {
+      "source": "flow",
+      "value": "flujo"
+    },
+    "overview.execution_summary": {
+      "source": "Execution Summary",
+      "value": "Resumen de la ejecución"
+    },
+    "overview.not_started": {
+      "source": "task has not been started yet (press [n] to start)",
+      "value": "tarea pendiente de ejecución (presiona [n] para iniciar)"
+    },
+    "overview.in_flight": {
+      "source": "execution in flight...",
+      "value": "ejecución en curso..."
+    },
+    "overview.no_phases": {
+      "source": "no phase outputs recorded",
+      "value": "sin registros de fases todavía"
+    },
+    "overview.code_impact": {
+      "source": "Code Impact & Changes",
+      "value": "Archivos modificados e impacto"
+    },
+    "overview.lines_in_files": {
+      "source": "lines across {count} file(s)",
+      "value": "líneas en {count} archivo(s)"
+    },
+    "overview.no_diff": {
+      "source": "no working tree modifications recorded",
+      "value": "sin modificaciones en archivos del repositorio"
+    },
+    "overview.quick_actions": {
+      "source": "Quick Actions to Validate",
+      "value": "Accesos rápidos para validar"
+    },
+    "overview.action_diff": {
+      "source": "diff changes",
+      "value": "ver diff de cambios"
+    },
+    "overview.action_report": {
+      "source": "full report",
+      "value": "ver reporte completo"
+    },
+    "overview.action_timeline": {
+      "source": "timeline",
+      "value": "ver cronología"
+    },
+    "overview.action_read": {
+      "source": "mark read",
+      "value": "marcar como leída"
     }
   }
 }

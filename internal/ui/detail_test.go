@@ -1,14 +1,7 @@
 package ui
 
 // detail_test.go is the task view's half of the transition table, walked row
-// by row in the shape update_test.go established: each row names the key or
-// the message, the state it arrives in, and what must be true after.
-//
-// The rows here are the ones the list screen cannot have — three tabs behind
-// one key, a pane that scrolls, a tail that is followed until it is let go,
-// and an editor that is built and never run. No row executes the editor's
-// Cmd: it is asserted to exist and left alone, because running it would
-// launch $EDITOR out of a test binary.
+// by row in the shape update_test.go established.
 
 import (
 	"errors"
@@ -27,12 +20,12 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 		msg   tea.Msg
 		want  func(t *testing.T, m Model, cmd tea.Cmd)
 	}{{
-		name:  "⏎ on a task opens the task view on the log",
+		name:  "⏎ on a task opens the task view on the overview",
 		start: func(t *testing.T) Model { m, _ := testModel(t, 100, 30); return onto(t, m, "ACME-2662") },
 		msg:   press("enter"),
 		want: func(t *testing.T, m Model, cmd tea.Cmd) {
-			if m.screen != screenDetail || m.detail != "ACME-2662" || m.tab != tabLog {
-				t.Errorf("screen=%v detail=%q tab=%v, want the task view open on the log", m.screen, m.detail, m.tab)
+			if m.screen != screenDetail || m.detail != "ACME-2662" || m.tab != tabOverview {
+				t.Errorf("screen=%v detail=%q tab=%v, want the task view open on overview", m.screen, m.detail, m.tab)
 			}
 			if cmd == nil {
 				t.Fatal("opening the task view asked for neither the log nor the diff")
@@ -110,7 +103,7 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 		name: "scrolling up lets the tail go",
 		start: func(t *testing.T) Model {
 			m, _ := openWith(t, "ACME-2662", longLog())
-			return m
+			return showing(t, m, tabTimeline)
 		},
 		msg: press("up"),
 		want: func(t *testing.T, m Model, _ tea.Cmd) {
@@ -122,6 +115,7 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 		name: "scrolling back to the last line takes the tail again",
 		start: func(t *testing.T) Model {
 			m, _ := openWith(t, "ACME-2662", longLog())
+			m = showing(t, m, tabTimeline)
 			return step(t, m, "up")
 		},
 		msg: press("down"),
@@ -134,6 +128,7 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 		name: "⏎ jumps the log to the newest entry and arms the tail",
 		start: func(t *testing.T) Model {
 			m, _ := openWith(t, "ACME-2662", longLog())
+			m = showing(t, m, tabTimeline)
 			return step(t, step(t, m, "up"), "up")
 		},
 		msg: press("enter"),
