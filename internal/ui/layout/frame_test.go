@@ -15,11 +15,11 @@ import (
 // can walk them as a tiling rather than naming each one four times.
 func regionsOf(f Frame) []struct {
 	name string
-	r    Region
+	r    Strip
 } {
 	return []struct {
 		name string
-		r    Region
+		r    Strip
 	}{
 		{"header", f.Header},
 		{"body", f.Body},
