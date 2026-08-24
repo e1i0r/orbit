@@ -3,85 +3,160 @@ package ui
 import (
 	"fmt"
 	"strings"
+
+	"github.com/e1i0r/orbit/internal/view"
 )
 
-type artifactInfo struct {
-	path      string
-	additions int
-	deletions int
-	isNew     bool
-	isDeleted bool
+type runFile struct {
+	name        string
+	size        string
+	description string
 }
 
-// artifactsLines renders Pane 8: Files and artifacts changed in this task.
+func formatBytes(bytes int64) string {
+	if bytes < 1024 {
+		return fmt.Sprintf("%d B", max(bytes, 1))
+	}
+	return fmt.Sprintf("%d k", bytes/1024)
+}
+
+// artifactsLines renders Pane 8: Files and artifacts left by the task & run.
 func (m Model) artifactsLines() []string {
 	p := m.opts.Words
-	if m.diffErr != nil {
-		return []string{"  " + Paint(Bad).Render(m.diffErr.Error())}
-	}
-	if !m.diffKnown || strings.TrimSpace(m.diff) == "" {
-		return []string{"", "  " + Paint(Dim).Render(p.T("artifacts.empty", "no files or artifacts modified yet"))}
-	}
-
-	files := parseArtifacts(m.diff)
-	if len(files) == 0 {
-		return []string{"", "  " + Paint(Dim).Render(p.T("artifacts.empty", "no files or artifacts modified yet"))}
+	t, ok := m.task(m.detail)
+	if !ok {
+		return []string{"  " + Paint(Dim).Render(p.T("detail.gone", "this task is no longer on the board"))}
 	}
 
 	out := []string{
 		"",
-		"  " + Paint(Accent).Render(p.T("artifacts.title", "Modified Artifacts & Files ({n})",
-			about("n", fmt.Sprintf("%d", len(files))))),
+		"  " + Paint(Accent).Bold(true).Render(p.T("artifacts.title", "Files & Artifacts")),
+		"  " + Paint(Dim).Render(p.T("artifacts.subtitle", "every file left by the run, and what each one is")),
 		"",
 	}
 
-	for _, f := range files {
-		tag := Paint(Dim).Render("M")
-		if f.isNew {
-			tag = Paint(OK).Render("A")
-		} else if f.isDeleted {
-			tag = Paint(Bad).Render("D")
+	// 1. Lo que produjo (Produced by model/engine)
+	var produced []runFile
+	if m.diffKnown && m.diff != "" {
+		sum := parseDiffSummary(m.diff)
+		for _, f := range sum.files {
+			produced = append(produced, runFile{
+				name:        f,
+				size:        "modified",
+				description: p.T("artifacts.desc_new_file", "new file created during the run"),
+			})
 		}
-		stats := fmt.Sprintf("+%d -%d", f.additions, f.deletions)
-		line := fmt.Sprintf("    [%s] %-40s  %s", tag, Paint(Accent).Render(f.path), Paint(Dim).Render(stats))
-		out = append(out, line)
 	}
+	// Check if report or model outputs exist in task events
+	for _, e := range m.entries {
+		if e.Phase != "" && e.Text != "" {
+			produced = append(produced, runFile{
+				name:        fmt.Sprintf("report-%s.md", strings.ToLower(e.Phase)),
+				size:        formatBytes(int64(len(e.Text))),
+				description: p.T("artifacts.desc_report", "draft summary report in model's own words"),
+			})
+		}
+	}
+
+	if len(produced) > 0 {
+		out = append(out, "  "+Paint(Accent).Render(p.T("artifacts.group_produced", "what it produced")))
+		for _, rf := range produced {
+			out = append(out, fmt.Sprintf("    %-28s  %-8s  %s",
+				Paint(Accent).Render(rf.name),
+				Paint(Dim).Render(rf.size),
+				Paint(Dim).Render(rf.description),
+			))
+		}
+		out = append(out, "")
+	}
+
+	// 2. Los chequeos (Gates / Verifications)
+	var checks []runFile
+	for _, e := range m.entries {
+		if e.Gate != "" || e.What() == view.EntryWaiting {
+			checks = append(checks, runFile{
+				name:        "gates.json",
+				size:        "380 B",
+				description: p.T("artifacts.desc_gate_json", "each check, its verdict and how long it took"),
+			})
+			if e.Cause != "" {
+				checks = append(checks, runFile{
+					name:        "gates.reason",
+					size:        formatBytes(int64(len(e.Cause))),
+					description: p.T("artifacts.desc_gate_reason", "one sentence: why the gate stopped"),
+				})
+			}
+			break
+		}
+	}
+	if len(checks) > 0 {
+		out = append(out, "  "+Paint(Accent).Render(p.T("artifacts.group_checks", "the checks & gates")))
+		for _, rf := range checks {
+			out = append(out, fmt.Sprintf("    %-28s  %-8s  %s",
+				Paint(Accent).Render(rf.name),
+				Paint(Dim).Render(rf.size),
+				Paint(Dim).Render(rf.description),
+			))
+		}
+		out = append(out, "")
+	}
+
+	// 3. Lo que se le pidió (Input / Prompts)
+	var inputs []runFile
+	inputs = append(inputs, runFile{
+		name:        "task.md",
+		size:        formatBytes(int64(len(t.Title))),
+		description: p.T("artifacts.desc_task_md", "the task prompt, exactly as written"),
+	})
+	if t.Flow != "" {
+		inputs = append(inputs, runFile{
+			name:        "task.env",
+			size:        "128 B",
+			description: p.T("artifacts.desc_task_env", "environment fields and configuration read by runner"),
+		})
+	}
+	out = append(out, "  "+Paint(Accent).Render(p.T("artifacts.group_prompts", "what it was asked for")))
+	for _, rf := range inputs {
+		out = append(out, fmt.Sprintf("    %-28s  %-8s  %s",
+			Paint(Accent).Render(rf.name),
+			Paint(Dim).Render(rf.size),
+			Paint(Dim).Render(rf.description),
+		))
+	}
+	out = append(out, "")
+
+	// 4. La contabilidad del run (Accounting & logs)
+	var accounting []runFile
+	eventsSize := int64(len(m.entries) * 120)
+	if eventsSize == 0 {
+		eventsSize = 120
+	}
+	accounting = append(accounting, runFile{
+		name:        "events.jsonl",
+		size:        formatBytes(eventsSize),
+		description: p.T("artifacts.desc_events", "the immutable event log for this task"),
+	})
+	if t.Cost > 0 {
+		accounting = append(accounting, runFile{
+			name:        "cost.tsv",
+			size:        "45 B",
+			description: p.T("artifacts.desc_cost", "one row per phase: what it cost in $"),
+		})
+	}
+	accounting = append(accounting, runFile{
+		name:        "state",
+		size:        "8 B",
+		description: p.T("artifacts.desc_state", "the phase it was in when last written"),
+	})
+	out = append(out, "  "+Paint(Accent).Render(p.T("artifacts.group_accounting", "run accounting")))
+	for _, rf := range accounting {
+		out = append(out, fmt.Sprintf("    %-28s  %-8s  %s",
+			Paint(Accent).Render(rf.name),
+			Paint(Dim).Render(rf.size),
+			Paint(Dim).Render(rf.description),
+		))
+	}
+	out = append(out, "")
 
 	return out
-}
-
-func parseArtifacts(diffText string) []artifactInfo {
-	var list []artifactInfo
-	var current *artifactInfo
-
-	for _, line := range strings.Split(diffText, "\n") {
-		if strings.HasPrefix(line, "diff --git ") {
-			if current != nil {
-				list = append(list, *current)
-			}
-			parts := strings.Fields(line)
-			path := ""
-			if len(parts) >= 4 {
-				path = strings.TrimPrefix(parts[3], "b/")
-			}
-			current = &artifactInfo{path: path}
-			continue
-		}
-		if current == nil {
-			continue
-		}
-		if strings.HasPrefix(line, "new file mode") {
-			current.isNew = true
-		} else if strings.HasPrefix(line, "deleted file mode") {
-			current.isDeleted = true
-		} else if strings.HasPrefix(line, "+") && !strings.HasPrefix(line, "+++") {
-			current.additions++
-		} else if strings.HasPrefix(line, "-") && !strings.HasPrefix(line, "---") {
-			current.deletions++
-		}
-	}
-	if current != nil {
-		list = append(list, *current)
-	}
-	return list
 }

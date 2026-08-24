@@ -459,7 +459,7 @@
     },
     "tab.artifacts": {
       "source": "artifacts",
-      "value": "artefactos"
+      "value": "archivos"
     },
     "tab.notes": {
       "source": "notes",
@@ -562,12 +562,64 @@
       "value": "no hay informe del motor disponible para esta tarea"
     },
     "artifacts.title": {
-      "source": "Modified Artifacts & Files ({n})",
-      "value": "Artefactos y Archivos Modificados ({n})"
+      "source": "Files & Artifacts",
+      "value": "Archivos y artefactos"
     },
-    "artifacts.empty": {
-      "source": "no files or artifacts modified yet",
-      "value": "no hay archivos o artefactos modificados todavía"
+    "artifacts.subtitle": {
+      "source": "every file left by the run, and what each one is",
+      "value": "cada archivo que dejó el run, y qué es cada uno"
+    },
+    "artifacts.desc_new_file": {
+      "source": "new file created during the run",
+      "value": "archivo nuevo creado durante la ejecución"
+    },
+    "artifacts.desc_report": {
+      "source": "draft summary report in model's own words",
+      "value": "el borrador del informe, en palabras del modelo"
+    },
+    "artifacts.group_produced": {
+      "source": "what it produced",
+      "value": "lo que produjo"
+    },
+    "artifacts.desc_gate_json": {
+      "source": "each check, its verdict and how long it took",
+      "value": "cada chequeo, su veredicto y cuánto tardó"
+    },
+    "artifacts.desc_gate_reason": {
+      "source": "one sentence: why the gate stopped",
+      "value": "una frase: por qué se detuvo la compuerta"
+    },
+    "artifacts.group_checks": {
+      "source": "the checks & gates",
+      "value": "los chequeos"
+    },
+    "artifacts.desc_task_md": {
+      "source": "the task prompt, exactly as written",
+      "value": "la tarea, exactamente como se escribió"
+    },
+    "artifacts.desc_task_env": {
+      "source": "environment fields and configuration read by runner",
+      "value": "los campos de entorno que lee el ejecutor"
+    },
+    "artifacts.group_prompts": {
+      "source": "what it was asked for",
+      "value": "lo que se le pidió"
+    },
+    "artifacts.desc_events": {
+      "source": "the immutable event log for this task",
+      "value": "el registro inmutable de eventos"
+    },
+    "artifacts.desc_cost": {
+      "source": "one row per phase: what it cost in $",
+      "value": "una fila por etapa: lo que costó en $"
+    },
+    "artifacts.desc_state": {
+      "source": "the phase it was in when last written",
+      "value": "la etapa en la que estaba la última vez que se escribió"
+    },
+    "artifacts.group_accounting": {
+      "source": "run accounting",
+      "value": "la contabilidad del run"
     },
     "notes.note": {
       "source": "NOTE",
