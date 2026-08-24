@@ -1051,6 +1051,14 @@
       "source": "the visual color theme for the window",
       "value": "el tema de color visual para la ventana"
     },
+    "setting.effort": {
+      "source": "the default reasoning effort level for engine sessions",
+      "value": "el nivel de esfuerzo de razonamiento por defecto para el motor"
+    },
+    "setting.thinking": {
+      "source": "whether extended thinking mode is enabled for the engine",
+      "value": "si el modo de razonamiento extendido (thinking) está activado"
+    },
     "key.commands": {
       "source": "commands",
       "value": "comandos"

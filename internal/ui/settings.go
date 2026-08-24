@@ -72,6 +72,8 @@ func (m Model) settingRowsList() []settingRow {
 	if !slices.Contains(models, modelVal) && len(models) > 0 {
 		modelVal = models[0]
 	}
+	effortVal := orDef(m.knobs.Effort, "default")
+	thinkingVal := orDef(m.knobs.Thinking, "adaptive")
 
 	return []settingRow{
 		{key: "language", val: langVal, options: []string{"en", "es"}, about: p.T("setting.language", "the language orbit speaks")},
@@ -79,6 +81,8 @@ func (m Model) settingRowsList() []settingRow {
 		{key: "unread-cap", val: strconv.Itoa(s.UnreadCap()), options: []string{"0", "3", "5", "10", "20"}, about: p.T("setting.unread_cap", "how many finished tasks may sit unread before nothing new starts")},
 		{key: "engine", val: engineVal, options: []string{"claude", "codex", "opencode"}, about: p.T("setting.engine", "the engine a task runs on when it names none")},
 		{key: "model", val: modelVal, options: models, about: p.T("setting.model", "the model a phase asks for when it names none")},
+		{key: "effort", val: effortVal, options: []string{"default", "low", "medium", "high", "xhigh", "max"}, about: p.T("setting.effort", "the default reasoning effort level for engine sessions")},
+		{key: "thinking", val: thinkingVal, options: []string{"adaptive", "on", "off"}, about: p.T("setting.thinking", "whether extended thinking mode is enabled for the engine")},
 		{key: "flow", val: flowVal, options: []string{"task", "quick", "careful"}, about: p.T("setting.flow", "the flow a new task is written against")},
 		{key: "theme", val: themeVal, options: AvailableThemes(), about: p.T("setting.theme", "the visual color theme for the window")},
 	}
@@ -202,6 +206,10 @@ func (m Model) applySetting(keyName, val string) (tea.Model, tea.Cmd) {
 			}
 		case "model":
 			_ = s.SetModel(val)
+		case "effort":
+			m.knobs.Effort = val
+		case "thinking":
+			m.knobs.Thinking = val
 		case "flow":
 			_ = s.SetFlow(val)
 		case "theme":
