@@ -25,7 +25,7 @@ func (r *Reader) poll(st *taskState) ([]record.Event, error) {
 	if err != nil {
 		return nil, fmt.Errorf("stat %q: %w", st.path, err)
 	}
-
+	st.modTime = info.ModTime()
 	size := info.Size()
 	if size == st.size {
 		// The one stat this whole design is built on. Nothing was appended,
