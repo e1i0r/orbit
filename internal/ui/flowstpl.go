@@ -38,8 +38,12 @@ func (m Model) applyFlowTemplate(tpl string) (Model, tea.Cmd) {
 		st.phases = []flow.Phase{
 			{Name: "1-implement", Engine: "claude", Model: "sonnet", Effort: "high", Prompt: "Resuelve la tarea de forma directa.", Permissions: []string{"repo"}},
 		}
+	case "ninguna":
+		st.phases = []flow.Phase{
+			{Name: "1-implement", Engine: "claude", Model: "sonnet", Effort: "default", Thinking: "adaptive", Prompt: "", Permissions: []string{"repo"}},
+		}
 		st.activePhase = 0
-		return m.say("plantilla Turbo Fix cargada"), nil
+		return m.say("flujo en blanco (1 fase)"), nil
 	}
 	return m, nil
 }
