@@ -14,6 +14,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/board"
+	"github.com/e1i0r/orbit/internal/view"
 )
 
 const (
@@ -104,11 +105,18 @@ func (m Model) headerLeft(w int, spaced bool) (string, bool) {
 
 	// 1. Try full queue badges line if it fits
 	if len(m.board.Counts) >= 4 {
+		qPill := func(b view.Band, icon, label, fg, bg string, count int) string {
+			text := fmt.Sprintf("%s %s %d", icon, label, count)
+			if m.queueFilter != nil && *m.queueFilter == b {
+				return PillActive(text, fg, bg)
+			}
+			return Pill(text, fg, bg)
+		}
 		pills := []string{
-			Pill(fmt.Sprintf("📋 %s %d", p.T("queue.todo", "Por hacer"), m.board.Counts[0]), "#38BDF8", "#0C4A6E"),
-			Pill(fmt.Sprintf("⚡ %s %d", p.T("queue.in_flight", "En curso"), m.board.Counts[1]), "#2DD4BF", "#134E4A"),
-			Pill(fmt.Sprintf("💬 %s %d", p.T("queue.needs_you", "En revisión"), m.board.Counts[2]), "#FBBF24", "#78350F"),
-			Pill(fmt.Sprintf("🏁 %s %d", p.T("queue.done", "Lista"), m.board.Counts[3]), "#4ADE80", "#14532D"),
+			qPill(view.ToDo, "📋", p.T("queue.todo", "Por hacer"), "#38BDF8", "#0C4A6E", m.board.Counts[0]),
+			qPill(view.Running, "⚡", p.T("queue.in_flight", "En curso"), "#2DD4BF", "#134E4A", m.board.Counts[1]),
+			qPill(view.NeedsYou, "💬", p.T("queue.needs_you", "En revisión"), "#FBBF24", "#78350F", m.board.Counts[2]),
+			qPill(view.Done, "🏁", p.T("queue.done", "Lista"), "#4ADE80", "#14532D", m.board.Counts[3]),
 		}
 		full := name + "  " + strings.Join(pills, " ")
 		if lipgloss.Width(full) <= w {

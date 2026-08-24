@@ -129,6 +129,12 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		}
 		return m.sendKey(keystroke(t.Key))
 	case TargetHeaderField:
+		if t.Field == "orbit" {
+			m.queueFilter = nil
+			m.repoFilter = ""
+			m.filter = ""
+			return m.moveTo(0).clampCursor(), nil
+		}
 		if t.Field == "lang" {
 			nextLang := "en"
 			if m.opts.Words.T("header.lang_badge", "EN") == "EN" {
@@ -147,7 +153,14 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 			return m.openEngines(), nil
 		}
 	case TargetHeaderQueue:
-		return m.jumpToBand(t.Band)
+		if m.queueFilter != nil && *m.queueFilter == t.Band {
+			m.queueFilter = nil
+			return m.moveTo(0).clampCursor(), nil
+		}
+		band := t.Band
+		m.queueFilter = &band
+		m.expanded[band] = true
+		return m.jumpToBand(band)
 	case TargetSettingsRow:
 		m.settings.sel = t.Pane
 		return m.cycleSetting(1)

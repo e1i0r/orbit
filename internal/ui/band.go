@@ -43,7 +43,7 @@ func (m Model) bandLeft() string {
 			about("id", m.confirmID)))
 	case m.message != "" && m.now.Sub(m.messageAt) < messageLife:
 		return Paint(Accent).Render(m.message)
-	case m.filter != "" || m.repoFilter != "":
+	case m.filter != "" || m.repoFilter != "" || m.queueFilter != nil:
 		return m.filterLine()
 	}
 	for _, t := range m.board.Tasks {
@@ -79,29 +79,19 @@ func (m Model) bandRight() string {
 // hiding. Saying the second half is the rule the plan states as "say it when
 // you show less than you have": a filter is the one thing on this screen
 // that can hide a task the reader is certain they wrote.
-//
-// It has two forms because a filter has two lives. While it is being typed
-// the reader is looking straight at it and the line is a cursor with a
-// count. Once Enter hands the keyboard back the filter is still on, still
-// hiding rows and still shrinking every count on the screen, so the line
-// stays and gains the way out — the band is the only place on the frame
-// that says a filter exists at all, and a reader who set one an hour ago
-// should not have to open a help overlay to find out how to lift it.
-//
-// What is counted is the tasks the filter lets through and not the rows
-// drawn, because a collapsed band draws a header over its matches without
-// drawing them. Counting rows would say "two of fifteen" under a heading
-// that says four, and the two numbers on one screen would disagree.
 func (m Model) filterLine() string {
 	p := m.opts.Words
 	filter := strings.ToLower(strings.TrimSpace(m.filter))
 	shown := 0
 	for _, t := range m.board.Tasks {
-		if matches(t, filter) && matchesRepo(t, m.repoFilter) {
+		if matches(t, filter) && matchesRepo(t, m.repoFilter) && (m.queueFilter == nil || view.BandOf(t) == *m.queueFilter) {
 			shown++
 		}
 	}
 	var parts []string
+	if m.queueFilter != nil {
+		parts = append(parts, Paint(Accent).Render(m.bandName(*m.queueFilter)))
+	}
 	if m.filter != "" || m.filtering {
 		typed, role := m.filter, Accent
 		if typed == "" {

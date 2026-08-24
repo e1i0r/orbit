@@ -117,12 +117,13 @@ type Model struct {
 	pendingID string
 	pendTries int
 
-	settings   settingsState
-	flows      flowsState
-	repolist   repolistState
-	repoFilter string
-	engines    enginesState
-	knobs      Knobs
+	settings    settingsState
+	flows       flowsState
+	repolist    repolistState
+	repoFilter  string
+	queueFilter *view.Band
+	engines     enginesState
+	knobs       Knobs
 
 	// start is the dialog that decides what a run will be, and taken is
 	// which tasks this window has handed the terminal to an engine for.

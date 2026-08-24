@@ -32,7 +32,11 @@ type row struct {
 func (m Model) rows() []row {
 	filter := strings.ToLower(strings.TrimSpace(m.filter))
 	var out []row
-	for _, b := range view.Bands() {
+	bands := view.Bands()
+	if m.queueFilter != nil {
+		bands = []view.Band{*m.queueFilter}
+	}
+	for _, b := range bands {
 		tasks := m.tasksIn(b, filter)
 		// The count over a band is the board's own, computed by
 		// view.BandOf on the very tasks below it, so the number and the

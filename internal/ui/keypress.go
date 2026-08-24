@@ -93,8 +93,8 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	}
 	switch {
 	case key.Matches(k, m.keys.Back):
-		if m.filter != "" || m.repoFilter != "" {
-			m.filter, m.repoFilter = "", ""
+		if m.filter != "" || m.repoFilter != "" || m.queueFilter != nil {
+			m.filter, m.repoFilter, m.queueFilter = "", "", nil
 			return m.say(m.opts.Words.T("repos.filter_cleared", "showing all repositories")), nil
 		}
 		return m, nil

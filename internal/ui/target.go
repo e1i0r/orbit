@@ -235,22 +235,25 @@ func (m Model) hitHeader(x, y int) Target {
 	if y != m.frame.Header.Y {
 		return Target{}
 	}
+	if x < 10 {
+		return Target{Kind: TargetHeaderField, Field: "orbit"}
+	}
 	if x >= m.width-12 {
 		return Target{Kind: TargetHeaderField, Field: "lang"}
 	}
 	if x >= m.width-32 && x < m.width-12 {
 		return Target{Kind: TargetHeaderField, Field: "repos"}
 	}
-	if x >= 10 && x < 26 {
+	if x >= 10 && x < 28 {
 		return Target{Kind: TargetHeaderQueue, Band: view.ToDo}
 	}
-	if x >= 26 && x < 42 {
+	if x >= 28 && x < 44 {
 		return Target{Kind: TargetHeaderQueue, Band: view.Running}
 	}
-	if x >= 42 && x < 58 {
+	if x >= 44 && x < 62 {
 		return Target{Kind: TargetHeaderQueue, Band: view.NeedsYou}
 	}
-	if x >= 58 && x < 74 {
+	if x >= 62 && x < 78 {
 		return Target{Kind: TargetHeaderQueue, Band: view.Done}
 	}
 	return Target{}
