@@ -10,9 +10,9 @@ package ui
 // second set of them.
 
 import (
-	tea "charm.land/bubbletea/v2"
+	"strings"
 
-	"github.com/e1i0r/orbit/internal/view"
+	tea "charm.land/bubbletea/v2"
 )
 
 // hold is the button that is down and the cell it went down on.
@@ -145,6 +145,9 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		if t.Field == "repos" {
 			return m.openRepos(), nil
 		}
+		if t.Field == "engine" {
+			return m.openEngines(), nil
+		}
 	case TargetStatusField:
 		if t.Field == "autopilot" {
 			return m.autopilot()
@@ -215,76 +218,19 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		return m, nil
 	case TargetFlowItem:
 		return m.handleFlowClick(t)
-	}
-	// TargetPaneBody and TargetDialogPhase are pointed at and not acted on.
-	// The pane is already where the keyboard is, so a click in it has
-	// nothing to change; a phase becomes something to click when there is
-	// something to change about it.
-	return m, nil
-}
-
-// sendKey puts a keystroke through the same map a pressed key goes through,
-// which is how a clicked hint reaches the verb it names.
-//
-// It is the screen's map and not always the board's, because the key bar is
-// drawn on all three screens and says something different on each. The
-// filter is the one place a click cannot go: it is text being typed, and a
-// pointer has nothing to type.
-func (m Model) sendKey(k keystroke) (tea.Model, tea.Cmd) {
-	switch {
-	case m.filtering:
-		return m, nil
-	case m.screen == screenStart:
-		return m.startKey(k)
-	case m.screen == screenDetail:
-		return m.detailKey(k)
-	}
-	return m.listKey(k)
-}
-
-// flip is one of the start dialog's switches, clicked.
-//
-// The two positions of the autopilot switch are two rows, and clicking the
-// one that is already chosen does nothing. That is the difference between a
-// switch and a button: a reader who clicks "on" means on, not "the other
-// one", and a row that toggled whichever way it was pointed at would turn
-// autopilot off for the reader who clicked the word on.
-func (m Model) flip(field string) (tea.Model, tea.Cmd) {
-	on := m.autopilotOn()
-	switch {
-	case field == fieldFlow:
-		return m.cycleFlow(), nil
-	case field == fieldAutopilotOn && !on, field == fieldAutopilotOff && on:
-		return m.autopilot()
-	}
-	return m, nil
-}
-
-// rightClick opens the menu for what was pointed at.
-func (m Model) rightClick(t Target) (tea.Model, tea.Cmd) {
-	if t.Kind == TargetPaneBody {
-		if s := m.subject(); s.ID != "" {
-			return m.openMenu(s.ID), nil
-		}
-		return m, nil
-	}
-	i, ok := m.rowOf(t)
-	if !ok {
-		return m, nil
-	}
-	next := m.moveTo(i)
-	if t.Kind == TargetTask {
-		return next.openMenu(t.ID), nil
-	}
-	return next, nil
-}
-
-func (m Model) jumpToBand(b view.Band) (tea.Model, tea.Cmd) {
-	m = m.expand(b)
-	all := m.rows()
-	for i, r := range all {
-		if r.band == b && !r.blank {
-			return m.moveTo(i).clampCursor(), nil
+	case TargetRepo:
+		repos := m.collectRepos()
+		for i, r := range repos {
+			if strings.EqualFold(r.name, t.ID) {
+				m.repolist.sel = i
+				p := m.opts.Words
+				if strings.EqualFold(m.repoFilter, r.name) {
+					m.repoFilter = ""
+					return m.abandonRepos().say(p.T("repos.filter_cleared", "showing all repositories")), nil
+				}
+				m.repoFilter = r.name
+				return m.abandonRepos().say(p.T("repos.filtered", "filtered to {repo}", about("repo", r.name))), nil
+			}
 		}
 	}
 	return m, nil

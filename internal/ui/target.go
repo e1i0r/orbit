@@ -103,6 +103,8 @@ func (m Model) hit(x, y int) Target {
 			return m.hitEngines(x, y)
 		case screenFlows:
 			return m.hitFlows(x, y)
+		case screenRepos:
+			return m.hitRepos(x, y)
 		case screenCompose:
 			return Target{}
 		}
@@ -162,75 +164,25 @@ func (m Model) hitBar(x, y int) Target {
 		// rows under it, and nothing is on them.
 		return Target{}
 	}
+	// Right side execution chips in footer: [autopilot] [cli]
+	if m.screen == screenList {
+		if x >= m.width-28 {
+			return Target{Kind: TargetBarHint, Key: "c"}
+		}
+		if x >= m.width-60 && x < m.width-28 {
+			return Target{Kind: TargetStatusField, Field: "autopilot"}
+		}
+	} else {
+		if x >= m.width-32 {
+			return Target{Kind: TargetStatusField, Field: "autopilot"}
+		}
+	}
+
 	_, hints := m.barLayout(m.frame.Bar.W)
 	for _, h := range hints {
 		if x >= h.x && x < h.x+h.w {
 			return Target{Kind: TargetBarHint, Key: h.key}
 		}
-	}
-	return Target{}
-}
-
-// hitDetail is the task view, one level down: its heading, the tab strip,
-// and the pane under them.
-//
-// The rows are the ones detailRows draws, in that order, and paneHeight is
-// the same function that sized the viewport — so the last row of the pane is
-// the last row a reader can click on it, and the advice line below it
-// belongs to nobody.
-func (m Model) hitDetail(x, y int) Target {
-	line, ok := m.frame.BodyRow(y)
-	if !ok {
-		return Target{}
-	}
-	switch {
-	case line == 0:
-		// The heading names the task the pane is already about. There is
-		// nowhere to go from it.
-		return Target{}
-	case line == 1:
-		return m.hitTabs(x)
-	case line < 2+paneHeight(m.frame.Body.H):
-		return Target{Kind: TargetPaneBody, Pane: int(m.tab)}
-	}
-	return Target{}
-}
-
-// hitTabs is which tab of the strip a cell is in.
-func (m Model) hitTabs(x int) Target {
-	for _, t := range m.placeTabs() {
-		if x >= t.x && x < t.x+t.w {
-			return Target{Kind: TargetPaneTab, Pane: int(t.tab)}
-		}
-	}
-	return Target{}
-}
-
-// hitStart is the dialog that decides what a run will be: the flow line, the
-// phases it is made of, and the switch under them.
-//
-// Every row comes from startLayout, which is what the dialog was drawn from,
-// so a block that changes height moves for the pointer in the same frame it
-// moves on screen.
-func (m Model) hitStart(x, y int) Target {
-	line, ok := m.frame.BodyRow(y)
-	if !ok {
-		return Target{}
-	}
-	p := m.startLayout(m.frame.Body.W)
-	switch {
-	case line == p.flow:
-		return Target{Kind: TargetDialogSwitch, Field: fieldFlow}
-	case line >= p.phases && line < p.phases+p.nPhases:
-		// Which phase, counted from the top. Nothing acts on it yet: a
-		// phase becomes a thing to point at when there is something to
-		// change about it, and until then this is a target that says so
-		// rather than a row that swallows a click.
-		return Target{Kind: TargetDialogPhase, Phase: line - p.phases}
-	case line == p.autopilot:
-		return Target{Kind: TargetDialogSwitch, Field: fieldAutopilotOn}
-	case line == p.autopilot+1:
-		return Target{Kind: TargetDialogSwitch, Field: fieldAutopilotOff}
 	}
 	return Target{}
 }
@@ -241,12 +193,6 @@ func (m Model) hitHeader(x, y int) Target {
 	}
 	if x < 10 {
 		return Target{Kind: TargetHeaderField, Field: "orbit"}
-	}
-	if x >= m.width-12 {
-		return Target{Kind: TargetHeaderField, Field: "lang"}
-	}
-	if x >= m.width-32 && x < m.width-12 {
-		return Target{Kind: TargetHeaderField, Field: "repos"}
 	}
 	if x >= 10 && x < 28 {
 		return Target{Kind: TargetHeaderQueue, Band: view.ToDo}
@@ -260,28 +206,20 @@ func (m Model) hitHeader(x, y int) Target {
 	if x >= 62 && x < 78 {
 		return Target{Kind: TargetHeaderQueue, Band: view.Done}
 	}
+
+	// Right side of Header: [repos] [engine] [lang]
+	if x >= m.width-12 {
+		return Target{Kind: TargetHeaderField, Field: "lang"}
+	}
+	if x >= m.width-28 && x < m.width-12 {
+		return Target{Kind: TargetHeaderField, Field: "engine"}
+	}
+	if x >= m.width-56 && x < m.width-28 {
+		return Target{Kind: TargetHeaderField, Field: "repos"}
+	}
 	return Target{}
 }
 
 func (m Model) hitStatus(x, y int) Target {
-	if x >= m.width-16 {
-		return Target{Kind: TargetStatusField, Field: "engine"}
-	}
-	if x >= m.width-48 && x < m.width-16 {
-		return Target{Kind: TargetStatusField, Field: "autopilot"}
-	}
 	return Target{Kind: TargetStatusField}
-}
-
-func (m Model) hitSettings(x, y int) Target {
-	line, ok := m.frame.BodyRow(y)
-	if !ok {
-		return Target{}
-	}
-	rowIdx := line - 4
-	rows := m.settingRowsList()
-	if rowIdx >= 0 && rowIdx < len(rows) {
-		return Target{Kind: TargetSettingsRow, Pane: rowIdx}
-	}
-	return Target{}
 }
