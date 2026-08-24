@@ -1,18 +1,18 @@
  [orbit]   ~/work                        📦 4 repos    🌐 EN
 ────────────────────────────────────────────────────────────
   $0.00 spent  ·  15 tasks  ·  0 events  ·  0ms read
- 🛑 NEEDS YOU  3
-▸  ACME-2662  Retry the webhook o…  failed: gates        31m
-   ACME-2701  Move the assets cron  waiting: review       4m
-   ACME-2698  Fix the swagger lint  abandoned             3h
+  🛑 NEEDS YOU (3) ───────────────────────────────────────
+▸ ACME-2662  Retry the webhook o…  failed: gates        31m
+  ACME-2701  Move the assets cron  waiting: review       4m
+  ACME-2698  Fix the swagger lint  abandoned             3h
 
- ⚡ RUNNING  2
-   ACME-2705  Reconciliation endp…  implement             8m
-   ACME-2706  Index on settlements  review 2/3            3m
+  ⚡ RUNNING (2) ─────────────────────────────────────────
+  ACME-2705  Reconciliation endp…  implement             8m
+  ACME-2706  Index on settlements  review 2/3            3m
 
- 📋 TO DO  4                                          ⏎ open
+  📋 TO DO (4) ─────────────────────────────────────  ⏎ open
 
- 🏁 DONE TODAY  6                                     ⏎ open
+  🏁 DONE TODAY (6) ────────────────────────────────  ⏎ open
 
 
 ────────────────────────────────────────────────────────────

@@ -58,23 +58,18 @@ func (m Model) drawRow(r row, w int, selected bool) string {
 			continue
 		}
 		cell := pad(f.text, f.cells, f.right)
-		if !selected {
-			cell = Paint(f.role).Render(cell)
+		rendered := Paint(f.role).Render(cell)
+		if selected && f.role == Accent {
+			rendered = Paint(Accent).Bold(true).Render(cell)
 		}
-		parts = append(parts, cell)
+		parts = append(parts, rendered)
 	}
-	mark := strings.Repeat(" ", gutter)
+	mark := "  "
 	if selected {
-		mark = markGlyph + strings.Repeat(" ", gutter-1)
+		mark = Paint(Accent).Bold(true).Render("▸ ")
 	}
-	line := fit(mark+strings.Join(parts, strings.Repeat(" ", columnGap)), w)
-	if selected {
-		// The cursor's block is painted over the whole row rather than
-		// over each field, because a style nested inside another ends at
-		// the inner one's reset — and the block would stop halfway.
-		return Paint(Sel).Render(line)
-	}
-	return line
+	line := mark + strings.Join(parts, strings.Repeat(" ", columnGap))
+	return fit(line, w)
 }
 
 // stateWord is what the row says the task is doing, and the role it is
@@ -220,28 +215,18 @@ func pad(text string, cells int, right bool) string {
 // a cursor that had been lost.
 func (m Model) headRow(r row, selected bool, w int) string {
 	name, count, right := m.bandName(r.band), strconv.Itoa(r.n), m.headHint(r)
-	mark := " "
+	mark := "  "
 	if selected {
-		mark = markGlyph
-	} else {
-		// Painted only when the row is not the cursor's, for the reason
-		// drawRow gives: the cursor's block is one style over the whole
-		// line, and a style nested in it would end at the inner reset.
-		name = Paint(Accent).Render(name)
-		count = Paint(m.countRole(r)).Render(count)
-		if right != "" {
-			// Painting an empty string is not free: it renders as a pair
-			// of escape codes, which is zero cells and not zero bytes, and
-			// spread would then right-align nothing against the far edge
-			// and pad the whole line to get there.
-			right = Paint(Dim).Render(right)
-		}
+		mark = Paint(Accent).Bold(true).Render("▸ ")
 	}
-	line := spread(mark+name+"  "+count, right, w)
-	if selected {
-		return Paint(Sel).Render(line)
+	nameTag := Paint(Accent).Bold(true).Render(name) + " " + Paint(m.countRole(r)).Render("("+count+")")
+	left := mark + nameTag + " "
+	if right != "" {
+		right = Paint(Dim).Render(right)
 	}
-	return line
+	ruleW := max(0, w-lipgloss.Width(left)-lipgloss.Width(right)-2)
+	rule := Paint(Dim).Render(strings.Repeat("─", ruleW))
+	return spread(left+rule, right, w)
 }
 
 // bandName is the heading over one band.

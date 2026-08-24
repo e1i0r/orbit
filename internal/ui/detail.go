@@ -92,11 +92,10 @@ func (m Model) tabStrip(w int) string {
 	var fullParts []string
 	for _, n := range m.tabNames() {
 		k := paneKey(n.tab)
-		tag := "[" + k + " " + n.text + "]"
 		if n.tab == m.tab {
-			fullParts = append(fullParts, Paint(Accent).Render(tag))
+			fullParts = append(fullParts, Paint(Sel).Render(" "+n.text+" "))
 		} else {
-			fullParts = append(fullParts, Paint(Dim).Render(tag))
+			fullParts = append(fullParts, Paint(Dim).Render(" "+k+":"+n.text+" "))
 		}
 	}
 
@@ -107,9 +106,9 @@ func (m Model) tabStrip(w int) string {
 		for _, n := range m.tabNames() {
 			k := paneKey(n.tab)
 			if n.tab == m.tab {
-				parts = append(parts, Paint(Accent).Render("["+k+" "+n.text+"]"))
+				parts = append(parts, Paint(Sel).Render(" "+n.text+" "))
 			} else {
-				parts = append(parts, Paint(Dim).Render("["+k+"]"))
+				parts = append(parts, Paint(Dim).Render(" "+k+" "))
 			}
 		}
 	}
@@ -136,15 +135,17 @@ func (m Model) placeTabs() []placedTab {
 	x := 1
 	var fullWidth int
 	for _, n := range m.tabNames() {
-		fullWidth += lipgloss.Width("["+paneKey(n.tab)+" "+n.text+"]") + 1
+		fullWidth += lipgloss.Width(" "+paneKey(n.tab)+":"+n.text+" ") + 1
 	}
 	useFull := fullWidth+10 <= m.frame.Body.W
 
 	for _, n := range m.tabNames() {
 		k := paneKey(n.tab)
-		text := "[" + k + "]"
-		if useFull || n.tab == m.tab {
-			text = "[" + k + " " + n.text + "]"
+		text := " " + k + " "
+		if n.tab == m.tab {
+			text = " " + n.text + " "
+		} else if useFull {
+			text = " " + k + ":" + n.text + " "
 		}
 		cells := lipgloss.Width(text)
 		out = append(out, placedTab{tab: n.tab, x: x, w: cells})
