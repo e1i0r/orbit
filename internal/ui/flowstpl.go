@@ -105,6 +105,7 @@ func (m Model) editFlow(name string) (Model, tea.Cmd) {
 		return m.say(err.Error()), nil
 	}
 	m.flows.creating = true
+	m.flows.isEditing = true
 	m.flows.confirmDiscard = false
 	m.flows.confirmDelete = false
 	m.flows.field = 0

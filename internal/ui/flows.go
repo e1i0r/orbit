@@ -30,6 +30,7 @@ const (
 type flowsState struct {
 	sel            int
 	creating       bool
+	isEditing      bool
 	confirmDiscard bool
 	confirmDelete  bool
 	field          int
@@ -263,6 +264,7 @@ func (m Model) handleFlowFieldAction() (Model, tea.Cmd) {
 
 func (m Model) startCreateFlow() Model {
 	m.flows.creating = true
+	m.flows.isEditing = false
 	m.flows.confirmDiscard = false
 	m.flows.confirmDelete = false
 	m.flows.field = 0

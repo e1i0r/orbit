@@ -11,9 +11,13 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	st := &m.flows
 	st.ensurePhase()
 	p := m.opts.Words
+	title := "Diseñador de Flujos (Crear Nuevo Flujo)"
+	if st.isEditing {
+		title = fmt.Sprintf("Diseñador de Flujos (Editar: %s)", st.flowName)
+	}
 	out := []string{
 		"",
-		"  " + Paint(Accent).Bold(true).Render("Diseñador de Flujos (Crear Ciclo / Pipeline)"),
+		"  " + Paint(Accent).Bold(true).Render(title),
 		"  " + Paint(Dim).Render("configura las fases, modelos, esfuerzo, thinking, input chaining y prompts"),
 		"",
 	}
