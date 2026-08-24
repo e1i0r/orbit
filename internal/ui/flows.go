@@ -141,12 +141,18 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		}
 		st.creating = false
 		return m, nil
-	case key.Matches(msg, m.keys.NextTab) || (!isText && key.Matches(msg, m.keys.Down)):
+	case key.Matches(msg, m.keys.NextTab) || key.Matches(msg, m.keys.Down):
 		st.field = (st.field + 1) % flowFieldCount
 		return m, nil
-	case key.Matches(msg, m.keys.PrevTab) || (!isText && key.Matches(msg, m.keys.Up)):
+	case key.Matches(msg, m.keys.PrevTab) || key.Matches(msg, m.keys.Up):
 		st.field = (st.field - 1 + flowFieldCount) % flowFieldCount
 		return m, nil
+	case !isText && (msg.Code == tea.KeyLeft || msg.Code == tea.KeyRight):
+		delta := 1
+		if msg.Code == tea.KeyLeft {
+			delta = -1
+		}
+		return m.handleFlowFieldDelta(delta)
 	case key.Matches(msg, m.keys.Open) || (!isText && msg.Text == " "):
 		return m.handleFlowFieldAction()
 	case msg.Code == tea.KeyBackspace:
@@ -174,34 +180,58 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) handleFlowFieldAction() (Model, tea.Cmd) {
+func (m Model) handleFlowFieldDelta(delta int) (Model, tea.Cmd) {
 	st := &m.flows
 	st.ensurePhase()
 	switch st.field {
 	case flowFieldTemplate:
 		tpls := []string{"ninguna", "TDD Cycle", "Security Audit", "Turbo Fix"}
-		st.template = nextOption(tpls, st.template, 1)
+		st.template = nextOption(tpls, st.template, delta)
 		return m.applyFlowTemplate(st.template)
 	case flowFieldPhaseSelect:
 		if len(st.phases) > 0 {
-			st.activePhase = (st.activePhase + 1) % len(st.phases)
+			st.activePhase = (st.activePhase + delta + len(st.phases)) % len(st.phases)
 		}
 	case flowFieldEngine:
 		engs := []string{"claude", "codex", "opencode"}
-		st.cur().Engine = nextOption(engs, orDef(st.cur().Engine, "claude"), 1)
+		st.cur().Engine = nextOption(engs, orDef(st.cur().Engine, "claude"), delta)
 	case flowFieldModel:
 		mdls := []string{"sonnet", "opus", "haiku", "default"}
-		st.cur().Model = nextOption(mdls, orDef(st.cur().Model, "sonnet"), 1)
+		st.cur().Model = nextOption(mdls, orDef(st.cur().Model, "sonnet"), delta)
 	case flowFieldEffort:
 		effs := []string{"default", "low", "medium", "high", "xhigh", "max"}
-		st.cur().Effort = nextOption(effs, orDef(st.cur().Effort, "default"), 1)
+		st.cur().Effort = nextOption(effs, orDef(st.cur().Effort, "default"), delta)
 	case flowFieldThinking:
 		thks := []string{"adaptive", "on", "off"}
-		st.cur().Thinking = nextOption(thks, orDef(st.cur().Thinking, "adaptive"), 1)
+		st.cur().Thinking = nextOption(thks, orDef(st.cur().Thinking, "adaptive"), delta)
 	case flowFieldFeedOutput:
 		st.cur().FeedOutput = !st.cur().FeedOutput
 	case flowFieldWait:
 		st.cur().Wait = !st.cur().Wait
+	}
+	return m, nil
+}
+
+func (m Model) handleFlowFieldAction() (Model, tea.Cmd) {
+	st := &m.flows
+	st.ensurePhase()
+	switch st.field {
+	case flowFieldTemplate:
+		return m.handleFlowFieldDelta(1)
+	case flowFieldPhaseSelect:
+		return m.handleFlowFieldDelta(1)
+	case flowFieldEngine:
+		return m.handleFlowFieldDelta(1)
+	case flowFieldModel:
+		return m.handleFlowFieldDelta(1)
+	case flowFieldEffort:
+		return m.handleFlowFieldDelta(1)
+	case flowFieldThinking:
+		return m.handleFlowFieldDelta(1)
+	case flowFieldFeedOutput:
+		return m.handleFlowFieldDelta(1)
+	case flowFieldWait:
+		return m.handleFlowFieldDelta(1)
 	case flowFieldAddPhase:
 		st.phases = append(st.phases, flow.Phase{
 			Name:        fmt.Sprintf("%d-fase", len(st.phases)+1),
@@ -243,35 +273,4 @@ func (m Model) startCreateFlow() Model {
 	}
 	m.flows.activePhase = 0
 	return m
-}
-
-func (m Model) handleFlowClick(t Target) (tea.Model, tea.Cmd) {
-	if t.Field == "create" {
-		return m.startCreateFlow(), nil
-	}
-	if t.Field == "edit" {
-		return m.editFlow(t.ID)
-	}
-	if t.Field == "delete" {
-		return m.deleteFlow(t.ID, flow.OriginUser)
-	}
-	if t.Field == "add_phase" {
-		m.flows.field = flowFieldAddPhase
-		return m.handleFlowFieldAction()
-	}
-	if t.Field == "del_phase" {
-		m.flows.field = flowFieldDelPhase
-		return m.handleFlowFieldAction()
-	}
-	if t.Field == "save" {
-		m.flows.field = flowFieldSave
-		return m.handleFlowFieldAction()
-	}
-	if t.Field == "select_phase" {
-		m.flows.activePhase = t.Phase
-		m.flows.field = flowFieldPhaseSelect
-		return m, nil
-	}
-	m.flows.field = t.Phase
-	return m.handleFlowFieldAction()
 }

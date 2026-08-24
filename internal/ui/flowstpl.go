@@ -155,3 +155,34 @@ func (m Model) confirmDeleteFlow() (Model, tea.Cmd) {
 	p := m.opts.Words
 	return m.say(p.T("flows.deleted", "flow {name} deleted", about("name", d.Name))), nil
 }
+
+func (m Model) handleFlowClick(t Target) (tea.Model, tea.Cmd) {
+	if t.Field == "create" {
+		return m.startCreateFlow(), nil
+	}
+	if t.Field == "edit" {
+		return m.editFlow(t.ID)
+	}
+	if t.Field == "delete" {
+		return m.deleteFlow(t.ID, flow.OriginUser)
+	}
+	if t.Field == "add_phase" {
+		m.flows.field = flowFieldAddPhase
+		return m.handleFlowFieldAction()
+	}
+	if t.Field == "del_phase" {
+		m.flows.field = flowFieldDelPhase
+		return m.handleFlowFieldAction()
+	}
+	if t.Field == "save" {
+		m.flows.field = flowFieldSave
+		return m.handleFlowFieldAction()
+	}
+	if t.Field == "select_phase" {
+		m.flows.activePhase = t.Phase
+		m.flows.field = flowFieldPhaseSelect
+		return m, nil
+	}
+	m.flows.field = t.Phase
+	return m.handleFlowFieldAction()
+}

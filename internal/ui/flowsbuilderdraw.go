@@ -49,18 +49,7 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	}
 	out = append(out, "")
 
-	// 2. Interactive Phase Tabs
-	var tabPills []string
-	for i, ph := range st.phases {
-		label := fmt.Sprintf("%d.%s", i+1, ph.Name)
-		if i == st.activePhase {
-			tabPills = append(tabPills, Paint(Sel).Bold(true).Render(" ● "+label+" "))
-		} else {
-			tabPills = append(tabPills, Paint(Dim).Render(" "+label+" "))
-		}
-	}
-	tabLine := "  " + Paint(Live).Render("Fase en edición: ") + strings.Join(tabPills, " ")
-	out = append(out, fit(tabLine, w), "")
+	curPh := st.cur()
 
 	renderField := func(fieldIdx int, label string, val string) string {
 		mark := "  "
@@ -76,8 +65,6 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 		return mark + lbl + " " + val
 	}
 
-	curPh := st.cur()
-
 	// 0. Preset Template
 	tplPills := renderComboPills([]string{"ninguna", "TDD Cycle", "Security Audit", "Turbo Fix"}, st.template)
 	out = append(out, renderField(flowFieldTemplate, "0. Plantilla / Preset", tplPills))
@@ -89,30 +76,42 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	}
 	out = append(out, renderField(flowFieldName, "1. Nombre del Flujo", Paint(Accent).Render(fNameVal)))
 
-	// 2. Phase Name
+	// 2. Interactive Phase Tabs
+	var tabPills []string
+	for i, ph := range st.phases {
+		label := fmt.Sprintf("%d.%s", i+1, ph.Name)
+		if i == st.activePhase {
+			tabPills = append(tabPills, Paint(Sel).Bold(true).Render(" ● "+label+" "))
+		} else {
+			tabPills = append(tabPills, Paint(Dim).Render(" "+label+" "))
+		}
+	}
+	out = append(out, renderField(flowFieldPhaseSelect, "Fase en edición", strings.Join(tabPills, " ")))
+
+	// 3. Phase Name
 	pNameVal := "[" + curPh.Name + "_]"
 	if st.field != flowFieldPhaseName && curPh.Name != "" {
 		pNameVal = curPh.Name
 	}
 	out = append(out, renderField(flowFieldPhaseName, fmt.Sprintf("2. Nombre Fase %d", st.activePhase+1), Paint(Accent).Render(pNameVal)))
 
-	// 3. Engine
+	// 4. Engine
 	engPills := renderComboPills([]string{"claude", "codex", "opencode"}, orDef(curPh.Engine, "claude"))
 	out = append(out, renderField(flowFieldEngine, "3. Motor IA", engPills))
 
-	// 4. Model
+	// 5. Model
 	mdlPills := renderComboPills([]string{"sonnet", "opus", "haiku", "default"}, orDef(curPh.Model, "default"))
 	out = append(out, renderField(flowFieldModel, "4. Modelo", mdlPills))
 
-	// 5. Effort
+	// 6. Effort
 	effPills := renderComboPills([]string{"default", "low", "medium", "high", "xhigh", "max"}, orDef(curPh.Effort, "default"))
 	out = append(out, renderField(flowFieldEffort, "5. Esfuerzo", effPills))
 
-	// 6. Thinking Mode
+	// 7. Thinking Mode
 	thkPills := renderComboPills([]string{"adaptive", "on", "off"}, orDef(curPh.Thinking, "adaptive"))
 	out = append(out, renderField(flowFieldThinking, "6. Modo Thinking", thkPills))
 
-	// 7. Feed Output
+	// 8. Feed Output
 	feedVal := "off"
 	if curPh.FeedOutput {
 		feedVal = "on"
@@ -120,7 +119,7 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	feedPills := renderComboPills([]string{"off", "on"}, feedVal)
 	out = append(out, renderField(flowFieldFeedOutput, "7. Alimentar Output Anterior", feedPills))
 
-	// 8. Control
+	// 9. Control
 	waitVal := "auto"
 	if curPh.Wait {
 		waitVal = "wait (humano)"
@@ -128,7 +127,7 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	waitPills := renderComboPills([]string{"auto", "wait (humano)"}, waitVal)
 	out = append(out, renderField(flowFieldWait, "8. Control de Fase", waitPills))
 
-	// 9. Prompt
+	// 10. Prompt
 	prmVal := "[" + curPh.Prompt + "_]"
 	if st.field != flowFieldPrompt && curPh.Prompt != "" {
 		prmVal = `"` + curPh.Prompt + `"`
@@ -215,7 +214,7 @@ func (m Model) hitFlows(x, y int) Target {
 	}
 
 	st := &m.flows
-	// Count overview lines
+	// Overview lines
 	overviewLines := 4
 	for _, ph := range st.phases {
 		overviewLines++
@@ -223,7 +222,6 @@ func (m Model) hitFlows(x, y int) Target {
 			overviewLines++
 		}
 	}
-	overviewLines += 2 // empty line + tab line
 
 	if line >= 4 && line < 4+len(st.phases)*2 {
 		idx := (line - 4) / 2
@@ -239,22 +237,24 @@ func (m Model) hitFlows(x, y int) Target {
 	case 1:
 		return Target{Kind: TargetFlowItem, Phase: flowFieldName}
 	case 2:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldPhaseName}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldPhaseSelect}
 	case 3:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldEngine}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldPhaseName}
 	case 4:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldModel}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldEngine}
 	case 5:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldEffort}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldModel}
 	case 6:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldThinking}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldEffort}
 	case 7:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldFeedOutput}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldThinking}
 	case 8:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldWait}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldFeedOutput}
 	case 9:
+		return Target{Kind: TargetFlowItem, Phase: flowFieldWait}
+	case 10:
 		return Target{Kind: TargetFlowItem, Phase: flowFieldPrompt}
-	case 11:
+	case 12:
 		if x < 25 {
 			return Target{Kind: TargetFlowItem, Field: "add_phase"}
 		}
