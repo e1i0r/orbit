@@ -7,6 +7,13 @@
       "model": "sonnet",
       "wait": false,
       "permissions": ["repo"]
+    },
+    {
+      "name": "review",
+      "engine": "claude",
+      "model": "opus",
+      "wait": true,
+      "permissions": ["repo"]
     }
   ]
 }

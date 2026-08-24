@@ -8,33 +8,60 @@ package flow
 
 import "fmt"
 
-// Phase is one step, and the five things that decide how it runs.
+// The closed vocabulary a phase may use to say what it is allowed to touch.
 //
-// Two of the five are not read by anything yet. They are documented as inert
-// rather than deleted: the design defines the five-field object, so removing
-// them would put the code out of step with the authority — but a field that
-// looks live and is not is a lie, and one of these two is the security
-// posture. Both gaps are written down in NEXT.md.
+// A flow file is where a permission is declared, and Validate is what reads
+// that file, so the names live here. internal/engine spells the same three
+// out again, because that is where they become a real command line and the
+// two packages may not import each other — both have an empty row in the
+// layer table, which is what keeps the window from being able to start a
+// model. Three duplicated strings are the price of that, paid knowingly.
+//
+// The set is closed rather than open because the failure mode of an open one
+// is silent. A flow file that said "repository" where it meant "repo" used
+// to load, grant nothing, and leave the engine's own default posture in
+// charge — a wider grant than the file asked for, arriving through a typo,
+// with nothing anywhere saying so.
+const (
+	// PermissionRead may read the worktree and may run no command that
+	// writes.
+	PermissionRead = "read"
+	// PermissionRepo may read and write inside the worktree and run the
+	// repository's own commands.
+	PermissionRepo = "repo"
+	// PermissionNetwork may reach the network.
+	PermissionNetwork = "network"
+)
+
+// Phase is one step, and the five things that decide how it runs.
 type Phase struct {
 	Name   string `json:"name"`
 	Engine string `json:"engine"`
 	Model  string `json:"model,omitempty"`
 
-	// Wait is inert. task.Run walks every phase straight through and never
-	// consults it, so no phase can stop for a human yet. What is missing is
-	// a Run that can pause and a window to release it from — plan 2.
-	// WithAutopilot already clears this field, which is the whole of what
-	// the autopilot switch will mean once something reads it.
+	// Wait is this phase's default answer to "should this stop for a human?".
+	// It is a default and not a switch, which is the distinction that took a
+	// deleted function to learn. task.Run puts every phase to its gate, and
+	// the gate reads the autopilot setting and the reader's control word at
+	// that moment: a phase with Wait true stops unless autopilot is on, and a
+	// phase with Wait false runs unless the reader has pressed pause. A Flow
+	// is copied by value into a run, so anything decided about waiting before
+	// the run started could never hear about a switch flipped while it was
+	// going.
 	Wait bool `json:"wait,omitempty"`
 
-	// Permissions is inert, and it is the more serious of the two.
-	// engine.Request has no field that could carry it, so no engine could
-	// honour it even if Run passed it along: the built-in task flow ships
-	// "permissions": ["repo"] while claudeArgs passes no permission flag at
-	// all. The engine's own default is therefore the security posture, and
-	// it is stated nowhere. Mapping these names onto a real engine's flags
-	// decides what an agent is allowed to touch, so it belongs to the plan
-	// that builds it, decided deliberately and reviewed as such.
+	// Permissions is what this phase is allowed to touch, in the closed
+	// vocabulary above. It was inert for two plans — engine.Request had no
+	// field that could carry it, so the built-in flows shipped
+	// "permissions": ["repo"] while the adapter passed no permission flag
+	// at all and the engine's own default was the real posture, stated
+	// nowhere. It is now carried to the engine, mapped to that engine's
+	// flags, and written into phase.started so a run's posture is
+	// recoverable from the log.
+	//
+	// An empty list is not "no opinion". It is the phase that asks for
+	// nothing, and the engine turns it into the most restrictive posture it
+	// can state rather than into an absence of flags.
 	Permissions []string `json:"permissions,omitempty"`
 }
 
@@ -64,29 +91,17 @@ func (f Flow) Validate() error {
 			return fmt.Errorf("flow %q: two phases are called %q", f.Name, p.Name)
 		}
 		seen[p.Name] = true
-	}
-	return nil
-}
-
-// WithAutopilot returns a copy that stops for nobody.
-//
-// This is the whole of what the autopilot switch does. Night is not a second
-// system: it is this function applied to an ordinary flow.
-//
-// Copying the phase slice is not enough on its own. A copied Phase still
-// points at the same Permissions backing array as the phase it came from, so
-// writing through the copy would reach into the original — a flow the caller
-// still holds and believes is untouched.
-func (f Flow) WithAutopilot() Flow {
-	phases := make([]Phase, len(f.Phases))
-	copy(phases, f.Phases)
-	for i := range phases {
-		phases[i].Wait = false
-		if phases[i].Permissions != nil {
-			perms := make([]string, len(phases[i].Permissions))
-			copy(perms, phases[i].Permissions)
-			phases[i].Permissions = perms
+		// A permission nobody defined is refused here, at load, rather than
+		// where it would otherwise surface: after a worktree, a process and
+		// a bill. Load calls Validate as it decodes, so a flow file with a
+		// typo in it never becomes a run at all.
+		for _, perm := range p.Permissions {
+			switch perm {
+			case PermissionRead, PermissionRepo, PermissionNetwork:
+			default:
+				return fmt.Errorf("flow %q: phase %q asks for the permission %q, which is not one of %s, %s and %s", f.Name, p.Name, perm, PermissionRead, PermissionRepo, PermissionNetwork)
+			}
 		}
 	}
-	return Flow{Name: f.Name, Phases: phases}
+	return nil
 }

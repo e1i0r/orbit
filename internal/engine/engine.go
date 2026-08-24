@@ -14,6 +14,23 @@ type Request struct {
 	Prompt string
 	Model  string
 	Dir    string
+
+	// Permissions is what this phase is allowed to touch, in the closed
+	// vocabulary permission.go defines. An empty list is not "no opinion":
+	// it is the most restrictive posture the engine can state, which is the
+	// distinction the whole of permission.go exists to make. Whatever is
+	// here is passed to the engine and written into the record, so a run's
+	// posture is recoverable from the log rather than from whichever flow
+	// file was on disk that day.
+	Permissions []string
+
+	// Resume is a session id an engine may be asked to carry on from,
+	// empty for a fresh run. It is written and nothing sets it yet: the
+	// window's gesture for taking the keyboard is a later task, and the
+	// field exists now because the session id that feeds it only started
+	// being captured in this one. An engine that cannot resume says so
+	// rather than quietly starting over.
+	Resume string
 }
 
 // Result is what came back. SessionID and Cost are empty when an engine does
@@ -31,4 +48,16 @@ type Result struct {
 type Engine interface {
 	Name() string
 	Run(ctx context.Context, req Request) (Result, error)
+
+	// CanResume is whether this engine can carry on a session it started
+	// before, which is the difference the package comment above says
+	// belongs on the screen rather than behind a shim.
+	//
+	// It is a method and not a field on Request because it is a fact about
+	// the program, not about one phase, and because the window has to be
+	// able to ask it before there is a request at all: the gesture that
+	// takes the keyboard is offered or greyed out by this answer, and a
+	// greyed-out key that says why is the whole of what an honest
+	// difference between two engines looks like.
+	CanResume() bool
 }

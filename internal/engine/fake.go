@@ -25,6 +25,11 @@ func NewFake(output string) *Fake {
 // Name identifies the engine in the record.
 func (f *Fake) Name() string { return "fake" }
 
+// CanResume is false, and it is a fact about the fake rather than a stub: it
+// reports no session id, so there is nothing to resume. A test that wants the
+// window to offer the keyboard says so through the window's own port.
+func (f *Fake) CanResume() bool { return false }
+
 // Run records the request and returns whatever the fake was told to return.
 func (f *Fake) Run(ctx context.Context, req Request) (Result, error) {
 	if err := ctx.Err(); err != nil {

@@ -9,3 +9,7 @@
 # alongside the code but are not published with it.
 /docs/
 /NEXT.md
+
+# Agent worktrees: a full second copy of this module, created by the toolchain
+# that drives development. It is never part of the module and never committed.
+.claude/worktrees/

@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/record"
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
@@ -24,10 +25,16 @@ import (
 var ErrExists = errors.New("already exists")
 
 // Task is one piece of work against one repository.
+//
+// Flow is which pipeline it walks. It is a property of the task and not of
+// whoever typed the command that ran it: two runs of one task that walked
+// different pipelines would leave a record that cannot say which was meant,
+// and the sentence a person wrote is not the only thing they decided.
 type Task struct {
 	ID   string
 	Repo repo.Repo
 	Text string
+	Flow string
 }
 
 // Create writes the task down and records that it exists.
@@ -35,12 +42,23 @@ type Task struct {
 // The written task is the whole interface: everything the engines are told
 // comes from this file, and when it is ambiguous the right answer is to stop
 // and ask rather than to guess.
-func Create(s *store.Store, r repo.Repo, id, text string) (Task, error) {
+//
+// flowName is recorded and not resolved. A task written against a flow that
+// is later deleted is still a task, and refusing to write it down because a
+// JSON file is missing would lose the sentence the user typed — the one
+// thing in this system nobody can regenerate. Run is where a name is turned
+// into phases, and where a name nothing answers to is refused with the list
+// of names that would have worked.
+func Create(s *store.Store, r repo.Repo, id, text, flowName string) (Task, error) {
 	if id == "" {
 		return Task{}, fmt.Errorf("a task needs an id")
 	}
 	if text == "" {
 		return Task{}, fmt.Errorf("task %q has nothing written in it", id)
+	}
+	flowName, err := chosenFlow(s, flowName)
+	if err != nil {
+		return Task{}, err
 	}
 	path, err := s.TaskFilePath(r.Path, id)
 	if err != nil {
@@ -58,8 +76,8 @@ func Create(s *store.Store, r repo.Repo, id, text string) (Task, error) {
 	if err := os.WriteFile(path, []byte(text+"\n"), 0o600); err != nil {
 		return Task{}, fmt.Errorf("write %q: %w", path, err)
 	}
-	t := Task{ID: id, Repo: r, Text: text}
-	if err := emit(s, t, record.Event{Kind: "task.created", Text: text}); err != nil {
+	t := Task{ID: id, Repo: r, Text: text, Flow: flowName}
+	if err := emit(s, t, record.Event{Kind: record.TaskCreated, Text: text, Data: map[string]string{"flow": flowName}}); err != nil {
 		// The file landed and nothing was recorded. Left alone, that is the
 		// worst of both: the task exists to List, `orbit show` has nothing
 		// to show, and writing it again is refused as a duplicate — a task
@@ -115,7 +133,62 @@ func Load(s *store.Store, r repo.Repo, id string) (Task, error) {
 	}
 	// Create writes text+"\n"; strip exactly that trailing newline and
 	// nothing else, so a round trip returns the text unchanged.
-	return Task{ID: id, Repo: r, Text: strings.TrimSuffix(string(body), "\n")}, nil
+	t := Task{ID: id, Repo: r, Text: strings.TrimSuffix(string(body), "\n")}
+	t.Flow = writtenFlow(s, t)
+	return t, nil
+}
+
+// chosenFlow decides which flow a task is written against when the command
+// that wrote it named none: the user's default, and failing that the flow
+// this program ships.
+//
+// It is decided here, once, and then written down. A task that looked its
+// flow up at run time would walk a different pipeline every time the
+// settings moved, which is the property this whole design exists to remove.
+func chosenFlow(s *store.Store, name string) (string, error) {
+	if name != "" {
+		return name, nil
+	}
+	cfg, err := s.Settings()
+	if err != nil {
+		return "", err
+	}
+	if cfg.Flow != "" {
+		return cfg.Flow, nil
+	}
+	// A settings file saved before there was a flow to set — which is every
+	// settings file that already exists — says nothing here, and nothing is
+	// not a choice.
+	return flow.Default, nil
+}
+
+// writtenFlow is the flow a task was written against, read back out of the
+// one place it is recorded.
+//
+// task.created and not task.started: a run that overrode the flow once did
+// not change what the task was written against, and a second run with no
+// -flow should walk the task's own pipeline rather than the last one
+// somebody tried.
+//
+// It is best-effort on purpose. A record that cannot be read is not a task
+// that cannot be loaded — the written task is the thing worth having — so
+// an unreadable log answers the empty string, and the callers that need a
+// flow fall back exactly as Create did.
+func writtenFlow(s *store.Store, t Task) string {
+	events, err := Events(s, t)
+	if err != nil {
+		return ""
+	}
+	name := ""
+	for _, e := range events {
+		if e.Kind != record.TaskCreated {
+			continue
+		}
+		if recorded, ok := e.Data["flow"]; ok {
+			name = recorded
+		}
+	}
+	return name
 }
 
 // List returns the ids of every task recorded against a repository, sorted.

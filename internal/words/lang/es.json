@@ -1,0 +1,635 @@
+{
+  "language": "Español",
+  "keys": {
+    "key.up": {
+      "source": "up",
+      "value": "arriba"
+    },
+    "key.down": {
+      "source": "down",
+      "value": "abajo"
+    },
+    "key.first": {
+      "source": "first",
+      "value": "primera"
+    },
+    "key.last": {
+      "source": "last",
+      "value": "última"
+    },
+    "key.page_up": {
+      "source": "page up",
+      "value": "página arriba"
+    },
+    "key.page_down": {
+      "source": "page down",
+      "value": "página abajo"
+    },
+    "key.open": {
+      "source": "open",
+      "value": "abrir"
+    },
+    "key.back": {
+      "source": "back",
+      "value": "volver"
+    },
+    "key.next_tab": {
+      "source": "next tab",
+      "value": "pestaña siguiente"
+    },
+    "key.prev_tab": {
+      "source": "previous tab",
+      "value": "pestaña anterior"
+    },
+    "key.pause": {
+      "source": "pause",
+      "value": "pausar"
+    },
+    "key.resume": {
+      "source": "resume",
+      "value": "reanudar"
+    },
+    "key.cancel": {
+      "source": "cancel",
+      "value": "cancelar"
+    },
+    "key.take": {
+      "source": "take the keyboard",
+      "value": "tomar el teclado"
+    },
+    "key.hand": {
+      "source": "hand it back",
+      "value": "devolverlo"
+    },
+    "key.ask": {
+      "source": "ask",
+      "value": "preguntar"
+    },
+    "key.read": {
+      "source": "mark read",
+      "value": "marcar leída"
+    },
+    "key.edit": {
+      "source": "open in $EDITOR",
+      "value": "abrir en $EDITOR"
+    },
+    "key.filter": {
+      "source": "filter",
+      "value": "filtrar"
+    },
+    "key.autopilot": {
+      "source": "autopilot",
+      "value": "piloto automático"
+    },
+    "key.language": {
+      "source": "language",
+      "value": "idioma"
+    },
+    "key.help": {
+      "source": "help",
+      "value": "ayuda"
+    },
+    "key.quit": {
+      "source": "quit",
+      "value": "salir"
+    },
+    "why.pause_not_running": {
+      "source": "pausing needs a running task; nothing is running here",
+      "value": "pausar necesita una tarea en marcha; aquí no hay nada en marcha"
+    },
+    "why.pause_already_held": {
+      "source": "this task is already paused; press r to let it go",
+      "value": "esta tarea ya está en pausa; pulsa r para soltarla"
+    },
+    "why.pause_already_waiting": {
+      "source": "this phase is already waiting for you; press r to let it go",
+      "value": "esta fase ya te está esperando; pulsa r para soltarla"
+    },
+    "why.pause_autopilot_is_lifting": {
+      "source": "autopilot is lifting this gate; press A to turn it off",
+      "value": "el piloto automático está soltando esta puerta; pulsa A para apagarlo"
+    },
+    "why.resume_still_running": {
+      "source": "resuming needs a paused task; this one is running",
+      "value": "reanudar necesita una tarea en pausa; esta está en marcha"
+    },
+    "why.resume_not_running": {
+      "source": "resuming needs a paused task; nothing is running here",
+      "value": "reanudar necesita una tarea en pausa; aquí no hay nada en marcha"
+    },
+    "why.cancel_not_running": {
+      "source": "cancelling needs a running task; nothing is running here",
+      "value": "cancelar necesita una tarea en marcha; aquí no hay nada en marcha"
+    },
+    "why.take_never_run": {
+      "source": "taking the keyboard needs a session; this task has never run",
+      "value": "tomar el teclado necesita una sesión; esta tarea nunca se ha ejecutado"
+    },
+    "why.take_still_running": {
+      "source": "a phase is writing in this worktree; press p to stop it, then take the keyboard",
+      "value": "hay una fase escribiendo en este árbol de trabajo; pulsa p para detenerla y luego toma el teclado"
+    },
+    "why.take_engine_cannot_resume": {
+      "source": "{engine} cannot resume a session, so there is nothing to take",
+      "value": "{engine} no puede reanudar una sesión, así que no hay nada que tomar"
+    },
+    "why.hand_back_not_taken": {
+      "source": "nobody took the keyboard here; press t to take it, or r to let this task go",
+      "value": "aquí nadie ha tomado el teclado; pulsa t para tomarlo, o r para soltar esta tarea"
+    },
+    "why.hand_back_engine_cannot_resume": {
+      "source": "{engine} cannot resume a session, so nothing was taken",
+      "value": "{engine} no puede reanudar una sesión, así que no se tomó nada"
+    },
+    "why.ask_not_built": {
+      "source": "orbit cannot ask an engine a question yet; take the keyboard with t and ask it there",
+      "value": "orbit todavía no puede preguntarle nada a un motor; toma el teclado con t y pregúntaselo ahí"
+    },
+    "why.read_not_finished": {
+      "source": "marking read needs a finished task; this one is not finished",
+      "value": "marcar como leída necesita una tarea terminada; esta no lo está"
+    },
+    "why.read_already_read": {
+      "source": "this task is already marked read",
+      "value": "esta tarea ya está marcada como leída"
+    },
+    "header.autopilot": {
+      "source": "autopilot",
+      "value": "piloto automático"
+    },
+    "header.unread": {
+      "source": "unread {n}/{cap}",
+      "value": "sin leer {n}/{cap}"
+    },
+    "band.needs_you": {
+      "source": "NEEDS YOU",
+      "value": "TE NECESITAN"
+    },
+    "band.running": {
+      "source": "RUNNING",
+      "value": "EN MARCHA"
+    },
+    "band.to_do": {
+      "source": "TO DO",
+      "value": "POR HACER"
+    },
+    "band.done": {
+      "source": "DONE TODAY",
+      "value": "TERMINADAS HOY"
+    },
+    "band.unread_cap": {
+      "source": "unread cap reached · {n} of {cap}",
+      "value": "se alcanzó el límite de tareas sin leer · {n} de {cap}"
+    },
+    "band.shown": {
+      "source": "{n} of {total} shown",
+      "value": "se ven {n} de {total}"
+    },
+    "band.filter_clear": {
+      "source": "{key} clears it",
+      "value": "{key} lo quita"
+    },
+    "band.elapsed": {
+      "source": "{d} in",
+      "value": "lleva {d}"
+    },
+    "band.nothing_running": {
+      "source": "nothing is running",
+      "value": "no hay nada en marcha"
+    },
+    "band.nothing_todo": {
+      "source": "nothing to do",
+      "value": "nada por hacer"
+    },
+    "band.write_one": {
+      "source": "press n to start one",
+      "value": "pulsa n para poner una en marcha"
+    },
+    "filter.placeholder": {
+      "source": "repository, id or title",
+      "value": "repositorio, id o título"
+    },
+    "key.move": {
+      "source": "move",
+      "value": "moverse"
+    },
+    "reason.failed": {
+      "source": "failed: {phase}",
+      "value": "falló: {phase}"
+    },
+    "reason.failed_to_start": {
+      "source": "would not start",
+      "value": "no arrancó"
+    },
+    "reason.gate": {
+      "source": "waiting: {phase}",
+      "value": "espera: {phase}"
+    },
+    "reason.held": {
+      "source": "held: {phase}",
+      "value": "en pausa: {phase}"
+    },
+    "reason.timed_out": {
+      "source": "timed out",
+      "value": "se agotó el tiempo"
+    },
+    "reason.abandoned": {
+      "source": "abandoned",
+      "value": "abandonada"
+    },
+    "reason.cancelled": {
+      "source": "cancelled",
+      "value": "cancelada"
+    },
+    "state.unreadable": {
+      "source": "record unreadable",
+      "value": "registro ilegible"
+    },
+    "state.finished": {
+      "source": "finished",
+      "value": "terminada"
+    },
+    "state.not_started": {
+      "source": "not started",
+      "value": "sin empezar"
+    },
+    "state.running": {
+      "source": "running",
+      "value": "en marcha"
+    },
+    "state.phase_of": {
+      "source": "{phase} {n}/{total}",
+      "value": "{phase} {n}/{total}"
+    },
+    "msg.confirm_cancel": {
+      "source": "cancel {id}? press y to confirm, anything else to leave it running",
+      "value": "¿cancelar {id}? pulsa y para confirmar, cualquier otra tecla la deja en marcha"
+    },
+    "msg.autopilot_on": {
+      "source": "autopilot is on: every phase runs without asking",
+      "value": "el piloto automático está activado: cada fase se ejecuta sin preguntar"
+    },
+    "msg.autopilot_off": {
+      "source": "autopilot is off: every phase stops for you",
+      "value": "el piloto automático está desactivado: cada fase se detiene a esperarte"
+    },
+    "msg.not_built": {
+      "source": "{key} is not wired up yet; this window is still being built",
+      "value": "{key} todavía no está conectada; esta ventana aún se está construyendo"
+    },
+    "msg.control_sent": {
+      "source": "asked {id} to {word}",
+      "value": "se le pidió a {id} que {word}"
+    },
+    "msg.asked_pause": {
+      "source": "asked {id} to pause",
+      "value": "se pidió pausar {id}"
+    },
+    "msg.asked_resume": {
+      "source": "asked {id} to resume",
+      "value": "se pidió reanudar {id}"
+    },
+    "msg.asked_continue": {
+      "source": "asked {id} to continue",
+      "value": "se pidió continuar {id}"
+    },
+    "msg.asked_cancel": {
+      "source": "asked {id} to cancel",
+      "value": "se pidió cancelar {id}"
+    },
+    "msg.started": {
+      "source": "{id} is running, as process {pid}",
+      "value": "{id} está en marcha, como proceso {pid}"
+    },
+    "empty.needs_you": {
+      "source": "Nothing needs you.",
+      "value": "Nada te necesita."
+    },
+    "empty.no_repos": {
+      "source": "No repositories under {root} yet.",
+      "value": "Todavía no hay repositorios en {root}."
+    },
+    "empty.add_repo": {
+      "source": "Clone one into {root}, or start orbit in a folder that already has one.",
+      "value": "Clona uno en {root}, o arranca orbit en una carpeta que ya tenga uno."
+    },
+    "empty.filter": {
+      "source": "Nothing matches {filter}.",
+      "value": "Nada coincide con {filter}."
+    },
+    "empty.clear_filter": {
+      "source": "Press esc to clear the filter and see everything again.",
+      "value": "Pulsa esc para limpiar el filtro y volver a verlo todo."
+    },
+    "detail.gone": {
+      "source": "this task is no longer on the board",
+      "value": "esta tarea ya no está en el tablero"
+    },
+    "narrow.refused": {
+      "source": "orbit needs {need} columns.",
+      "value": "orbit necesita {need} columnas."
+    },
+    "narrow.got": {
+      "source": "this one has {got}.",
+      "value": "esta tiene {got}."
+    },
+    "header.repos": {
+      "source": {
+        "one": "{n} repo",
+        "other": "{n} repos"
+      },
+      "value": {
+        "one": "{n} repositorio",
+        "other": "{n} repositorios"
+      }
+    },
+    "band.todo": {
+      "source": {
+        "one": "{n} to do",
+        "other": "{n} to do"
+      },
+      "value": {
+        "one": "{n} por hacer",
+        "other": "{n} por hacer"
+      }
+    },
+    "body.more": {
+      "source": {
+        "one": "… and {n} more",
+        "other": "… and {n} more"
+      },
+      "value": {
+        "one": "… y {n} más",
+        "other": "… y {n} más"
+      }
+    },
+    "empty.no_tasks": {
+      "source": {
+        "one": "{n} repository, and no tasks written against it yet.",
+        "other": "{n} repositories, and no tasks written against any of them yet."
+      },
+      "value": {
+        "one": "{n} repositorio, y todavía ninguna tarea escrita contra él.",
+        "other": "{n} repositorios, y todavía ninguna tarea escrita contra ninguno de ellos."
+      }
+    },
+    "msg.unreadable": {
+      "source": {
+        "one": "{n} record could not be read",
+        "other": "{n} records could not be read"
+      },
+      "value": {
+        "one": "no se pudo leer {n} registro",
+        "other": "no se pudieron leer {n} registros"
+      }
+    },
+    "msg.entered": {
+      "source": {
+        "one": "{n} task needs you",
+        "other": "{n} tasks need you"
+      },
+      "value": {
+        "one": "{n} tarea te necesita",
+        "other": "{n} tareas te necesitan"
+      }
+    },
+    "key.scroll": {
+      "source": "scroll",
+      "value": "desplazar"
+    },
+    "key.sideways": {
+      "source": "scroll sideways",
+      "value": "desplazar en horizontal"
+    },
+    "tab.log": {
+      "source": "log",
+      "value": "registro"
+    },
+    "tab.diff": {
+      "source": "diff",
+      "value": "cambios"
+    },
+    "tab.evidence": {
+      "source": "evidence",
+      "value": "evidencia"
+    },
+    "log.attempt": {
+      "source": "attempt {n}",
+      "value": "intento {n}"
+    },
+    "log.written": {
+      "source": "written down",
+      "value": "anotada"
+    },
+    "log.started": {
+      "source": "started",
+      "value": "iniciada"
+    },
+    "log.finished": {
+      "source": "finished",
+      "value": "terminada"
+    },
+    "log.failed": {
+      "source": "failed",
+      "value": "fallida"
+    },
+    "log.cancelled": {
+      "source": "cancelled",
+      "value": "cancelada"
+    },
+    "log.timed_out": {
+      "source": "timed out",
+      "value": "plazo agotado"
+    },
+    "log.abandoned": {
+      "source": "abandoned",
+      "value": "abandonada"
+    },
+    "log.read": {
+      "source": "read",
+      "value": "leída"
+    },
+    "log.unreadable": {
+      "source": "this line could not be read",
+      "value": "no se pudo leer esta línea"
+    },
+    "log.waiting": {
+      "source": "waiting",
+      "value": "esperando"
+    },
+    "log.resumed": {
+      "source": "let go again",
+      "value": "reanudada"
+    },
+    "log.empty": {
+      "source": "nothing has been recorded about this task yet",
+      "value": "todavía no hay nada registrado sobre esta tarea"
+    },
+    "detail.following": {
+      "source": "following — {key} stops it",
+      "value": "siguiendo — {key} lo detiene"
+    },
+    "detail.scrolls": {
+      "source": "{keys} scrolls",
+      "value": "{keys} para desplazarte"
+    },
+    "diff.unchanged": {
+      "source": "no changes in this task's worktree",
+      "value": "sin cambios en el árbol de trabajo de esta tarea"
+    },
+    "diff.pending": {
+      "source": "reading this task's worktree…",
+      "value": "leyendo el árbol de trabajo de esta tarea…"
+    },
+    "diff.no_base": {
+      "source": "no base branch",
+      "value": "sin rama base"
+    },
+    "diff.timed_out": {
+      "source": "git did not answer in time",
+      "value": "git no respondió a tiempo"
+    },
+    "evidence.empty": {
+      "source": "no phase of this task has run yet",
+      "value": "todavía no se ha ejecutado ninguna fase de esta tarea"
+    },
+    "evidence.cost": {
+      "source": "cost ${amount}",
+      "value": "coste ${amount}"
+    },
+    "evidence.session": {
+      "source": "session {id}",
+      "value": "sesión {id}"
+    },
+    "evidence.stopped": {
+      "source": "stopped: {why}",
+      "value": "se detuvo: {why}"
+    },
+    "evidence.truncated": {
+      "source": "{kept} of {full} bytes kept — the rest was not written down anywhere",
+      "value": "se guardaron {kept} de {full} bytes; el resto no se guardó en ninguna parte"
+    },
+    "evidence.silent": {
+      "source": "the engine printed nothing",
+      "value": "el motor no imprimió nada"
+    },
+    "msg.only_the_diff": {
+      "source": "{key} opens a file, and only the diff tab has one to open",
+      "value": "{key} abre un archivo, y solo la pestaña de cambios tiene alguno"
+    },
+    "msg.no_editor": {
+      "source": "no $EDITOR is set, so there is nothing to open the file with",
+      "value": "no hay ningún $EDITOR configurado, así que no hay con qué abrir el archivo"
+    },
+    "msg.no_file_here": {
+      "source": "there is no file on this line of the diff",
+      "value": "no hay ningún archivo en esta línea de los cambios"
+    },
+    "msg.no_worktree": {
+      "source": "this task has no worktree to open the file in",
+      "value": "esta tarea no tiene árbol de trabajo donde abrir el archivo"
+    },
+    "key.start": {
+      "source": "start a run",
+      "value": "poner en marcha"
+    },
+    "key.run": {
+      "source": "run it",
+      "value": "ejecutar"
+    },
+    "key.change_flow": {
+      "source": "change flow",
+      "value": "cambiar de flujo"
+    },
+    "empty.write_one": {
+      "source": "Write one with `orbit new <id>`, then press n to start it.",
+      "value": "Escribe una con `orbit new <id>` y luego pulsa n para ponerla en marcha."
+    },
+    "start.nothing_to_start": {
+      "source": "there is no task here to start; write one with `orbit new`",
+      "value": "aquí no hay ninguna tarea que poner en marcha; escribe una con `orbit new`"
+    },
+    "start.already_running": {
+      "source": "{id} is already running; press x to stop it first",
+      "value": "{id} ya está en marcha; pulsa x para detenerla primero"
+    },
+    "start.gone": {
+      "source": "{id} has left the board; nothing was started",
+      "value": "{id} ya no está en el tablero; no se puso nada en marcha"
+    },
+    "start.unread_cap": {
+      "source": {
+        "one": "{n} finished task is waiting to be read and the cap is {cap}: {ids} — press esc, then d on it",
+        "other": "{n} finished tasks are waiting to be read and the cap is {cap}: {ids} — press esc, then d on one"
+      },
+      "value": {
+        "one": "hay {n} tarea terminada sin leer y el límite es {cap}: {ids} — pulsa esc y luego d sobre ella",
+        "other": "hay {n} tareas terminadas sin leer y el límite es {cap}: {ids} — pulsa esc y luego d sobre una"
+      }
+    },
+    "start.flow": {
+      "source": "flow",
+      "value": "flujo"
+    },
+    "flow.built_in": {
+      "source": "built in",
+      "value": "de serie"
+    },
+    "flow.shadowing": {
+      "source": "yours, shadowing the built-in",
+      "value": "tuyo, tapa el de serie"
+    },
+    "flow.yours": {
+      "source": "yours",
+      "value": "tuyo"
+    },
+    "start.asks_nothing": {
+      "source": "asks for nothing",
+      "value": "no pide nada"
+    },
+    "start.permissions": {
+      "source": "permissions: {list}",
+      "value": "permisos: {list}"
+    },
+    "start.stops": {
+      "source": "stops when it is done",
+      "value": "se detiene al terminar"
+    },
+    "start.on": {
+      "source": "on",
+      "value": "activado"
+    },
+    "start.autopilot_on": {
+      "source": "every phase runs without asking",
+      "value": "cada fase se ejecuta sin preguntar"
+    },
+    "start.off": {
+      "source": "off",
+      "value": "desactivado"
+    },
+    "start.autopilot_off": {
+      "source": "stops at each phase",
+      "value": "se detiene en cada fase"
+    },
+    "start.autopilot": {
+      "source": "autopilot",
+      "value": "piloto automático"
+    },
+    "msg.no_session": {
+      "source": "{id} has no session to carry on",
+      "value": "{id} no tiene ninguna sesión que continuar"
+    },
+    "msg.session_ended": {
+      "source": "{id} is still stopped and still yours; press h to hand it back",
+      "value": "{id} sigue detenida y sigue siendo tuya; pulsa h para devolverla"
+    },
+    "msg.marked_read": {
+      "source": "{id} is marked read",
+      "value": "{id} queda marcada como leída"
+    },
+    "why.hand_back_not_stopped": {
+      "source": "handing the keyboard back needs a run stopped at a phase; this one is not stopped",
+      "value": "devolver el teclado necesita una ejecución detenida en una fase; esta no lo está"
+    }
+  }
+}

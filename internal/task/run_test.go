@@ -21,14 +21,14 @@ func oneFlow() flow.Flow {
 
 func TestRunWalksEveryPhaseAndRecordsIt(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "retry the webhook on 5xx")
+	tk, err := Create(s, r, "ACME-1", "retry the webhook on 5xx", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
 	fake := engine.NewFake("wrote the retry")
 	engines := map[string]engine.Engine{"fake": fake}
 
-	if err := Run(context.Background(), s, tk, oneFlow(), engines); err != nil {
+	if err := Run(context.Background(), s, tk, oneFlow(), engines, nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -63,12 +63,12 @@ func TestRunWalksEveryPhaseAndRecordsIt(t *testing.T) {
 
 func TestRunRunsInsideAWorktreeOnItsOwnBranch(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
 	fake := engine.NewFake("ok")
-	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": fake}); err != nil {
+	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": fake}, nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 	wt, err := s.WorktreeDir(r.Path, "ACME-1")
@@ -104,7 +104,7 @@ func headOf(t *testing.T, dir string) string {
 
 func TestRunRecordsAFailureAndStops(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -115,7 +115,7 @@ func TestRunRecordsAFailureAndStops(t *testing.T) {
 		{Name: "second", Engine: "fake"},
 	}}
 
-	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": fake}); err == nil {
+	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": fake}, nil); err == nil {
 		t.Fatal("Run reported success after the engine failed")
 	}
 	if len(fake.Calls) != 1 {
@@ -143,7 +143,7 @@ func TestRunRecordsAFailureAndStops(t *testing.T) {
 
 func TestRunRecordsAPrepareFailureAndStops(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -154,7 +154,7 @@ func TestRunRecordsAPrepareFailureAndStops(t *testing.T) {
 	tk.Repo.Base = "no-such-branch"
 
 	fake := engine.NewFake("ok")
-	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": fake}); err == nil {
+	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": fake}, nil); err == nil {
 		t.Fatal("Run reported success though the worktree could not be created")
 	}
 	if len(fake.Calls) != 0 {
@@ -165,28 +165,25 @@ func TestRunRecordsAPrepareFailureAndStops(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Events: %v", err)
 	}
-	if len(events) != 2 {
-		t.Fatalf("events = %+v, want exactly [task.created, task.failed]", events)
-	}
-	if events[0].Kind != "task.created" {
-		t.Errorf("event 0 = %q, want task.created", events[0].Kind)
-	}
-	if events[1].Kind != "task.failed" {
-		t.Errorf("event 1 = %q, want task.failed", events[1].Kind)
-	}
-	if events[1].Text == "" {
+	// task.started is in the middle because an attempt that could not make
+	// a worktree is still an attempt, and the log says so. It is also what
+	// keeps a re-run honest: the event clears the phase the attempt before
+	// it died in, so the task.failed below is not read as a failure in that
+	// phase.
+	wantKinds(t, events, record.TaskCreated, record.TaskStarted, record.TaskFailed)
+	if events[2].Text == "" {
 		t.Error("the failure was recorded with no reason — evidence is never paraphrased away")
 	}
 }
 
 func TestRunRejectsAnUnknownEngine(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
 	f := flow.Flow{Name: "task", Phases: []flow.Phase{{Name: "implement", Engine: "opencode"}}}
-	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": engine.NewFake("")}); err == nil {
+	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": engine.NewFake("")}, nil); err == nil {
 		t.Error("Run accepted a phase naming an engine that is not configured")
 	}
 }
@@ -199,18 +196,20 @@ type resultEngine struct {
 
 func (e resultEngine) Name() string { return "fake" }
 
+func (e resultEngine) CanResume() bool { return false }
+
 func (e resultEngine) Run(context.Context, engine.Request) (engine.Result, error) {
 	return e.result, nil
 }
 
 func TestRunRecordsSessionAndCostWhenTheEngineReportsThem(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
 	eng := resultEngine{result: engine.Result{Output: "done", SessionID: "sess-1", Cost: 0.42}}
-	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": eng}); err != nil {
+	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": eng}, nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -238,12 +237,12 @@ func TestRunRecordsSessionAndCostWhenTheEngineReportsThem(t *testing.T) {
 
 func TestRunLeavesDataEmptyWhenTheEngineReportsNeither(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "x")
+	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
 	fake := engine.NewFake("done")
-	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": fake}); err != nil {
+	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": fake}, nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 

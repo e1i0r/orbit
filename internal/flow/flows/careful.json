@@ -1,0 +1,26 @@
+{
+  "name": "careful",
+  "phases": [
+    {
+      "name": "implement",
+      "engine": "claude",
+      "model": "opus",
+      "wait": false,
+      "permissions": ["repo"]
+    },
+    {
+      "name": "review",
+      "engine": "claude",
+      "model": "opus",
+      "wait": true,
+      "permissions": ["repo"]
+    },
+    {
+      "name": "fix",
+      "engine": "claude",
+      "model": "opus",
+      "wait": false,
+      "permissions": ["repo"]
+    }
+  ]
+}

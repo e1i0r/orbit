@@ -107,6 +107,18 @@ func New(root string) (*Store, error) {
 // Root is the absolute path of the folder holding everything.
 func (s *Store) Root() string { return s.root }
 
+// FlowDir is where a user's own flows live: one JSON file per flow, at the
+// root of the state tree rather than under any one repository, because a
+// flow is no more scoped to a repository than a setting is.
+//
+// It answers a plain string and not (string, error) because nothing about
+// it can fail — it is the root and one fixed segment, with no caller-
+// supplied component to resolve or reject. Like every path here it creates
+// nothing: a state root with no flows directory is a user who has written
+// none, and internal/flow reads that as "no flows of your own" rather than
+// as a fault.
+func (s *Store) FlowDir() string { return filepath.Join(s.root, "flows") }
+
 // repoKey is the directory name one repository is filed under: SHA-256 of
 // its absolute path, truncated to 12 hex characters.
 //

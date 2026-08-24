@@ -51,7 +51,10 @@ func TestEnginesAreNamed(t *testing.T) {
 }
 
 func TestClaudeArgsCarryThePrompt(t *testing.T) {
-	args := claudeArgs(Request{Prompt: "retry on 5xx", Model: "sonnet"})
+	args, err := claudeArgs(Request{Prompt: "retry on 5xx", Model: "sonnet"})
+	if err != nil {
+		t.Fatalf("claudeArgs: %v", err)
+	}
 	joined := strings.Join(args, " ")
 	if !strings.Contains(joined, "-p") {
 		t.Errorf("args %v do not run headless", args)
@@ -65,9 +68,58 @@ func TestClaudeArgsCarryThePrompt(t *testing.T) {
 }
 
 func TestClaudeArgsOmitAnEmptyModel(t *testing.T) {
-	for _, a := range claudeArgs(Request{Prompt: "x"}) {
+	args, err := claudeArgs(Request{Prompt: "x"})
+	if err != nil {
+		t.Fatalf("claudeArgs: %v", err)
+	}
+	for _, a := range args {
 		if a == "--model" {
 			t.Error("an empty model was passed as a flag with no value")
+		}
+	}
+}
+
+// TestClaudeArgsAskForTheStreamThatCarriesTheSessionAndTheCost pins the
+// output format, because it is not a preference. Plain text is prose and
+// nothing else; the session id and what the run cost are reported in the
+// JSON stream and nowhere else, and without a session id there is no taking
+// the keyboard.
+func TestClaudeArgsAskForTheStreamThatCarriesTheSessionAndTheCost(t *testing.T) {
+	args, err := claudeArgs(Request{Prompt: "x"})
+	if err != nil {
+		t.Fatalf("claudeArgs: %v", err)
+	}
+	joined := strings.Join(args, " ")
+	for _, want := range []string{"--output-format stream-json", "--verbose"} {
+		if !strings.Contains(joined, want) {
+			t.Errorf("args %q do not carry %q", joined, want)
+		}
+	}
+}
+
+// TestClaudeArgsCarryASessionToResume wires the field the window's take-the-
+// keyboard gesture will set. Nothing sets it yet, which is why it is tested
+// here rather than through a caller: the argv is the contract, and it is the
+// half that can be got wrong now and only discovered later.
+func TestClaudeArgsCarryASessionToResume(t *testing.T) {
+	args, err := claudeArgs(Request{Prompt: "x", Resume: "9c1f8f2a-4d3b-4a77-9a52-2f0f6f9b5c31"})
+	if err != nil {
+		t.Fatalf("claudeArgs: %v", err)
+	}
+	joined := strings.Join(args, " ")
+	if !strings.Contains(joined, "--resume 9c1f8f2a-4d3b-4a77-9a52-2f0f6f9b5c31") {
+		t.Errorf("args %q do not resume the session they were given", joined)
+	}
+}
+
+func TestClaudeArgsOmitAnEmptySession(t *testing.T) {
+	args, err := claudeArgs(Request{Prompt: "x"})
+	if err != nil {
+		t.Fatalf("claudeArgs: %v", err)
+	}
+	for _, a := range args {
+		if a == "--resume" {
+			t.Error("an empty session id was passed as a flag with no value")
 		}
 	}
 }

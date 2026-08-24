@@ -51,7 +51,7 @@ func fixture(t *testing.T) (*store.Store, repo.Repo) {
 
 func TestCreateWritesTheTaskAndAnEvent(t *testing.T) {
 	s, r := fixture(t)
-	tk, err := Create(s, r, "ACME-1", "retry the webhook on 5xx")
+	tk, err := Create(s, r, "ACME-1", "retry the webhook on 5xx", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -77,17 +77,17 @@ func TestCreateWritesTheTaskAndAnEvent(t *testing.T) {
 
 func TestCreateRefusesADuplicate(t *testing.T) {
 	s, r := fixture(t)
-	if _, err := Create(s, r, "ACME-1", "one"); err != nil {
+	if _, err := Create(s, r, "ACME-1", "one", ""); err != nil {
 		t.Fatalf("Create: %v", err)
 	}
-	if _, err := Create(s, r, "ACME-1", "two"); err == nil {
+	if _, err := Create(s, r, "ACME-1", "two", ""); err == nil {
 		t.Error("a second task with the same id was created, overwriting the first")
 	}
 }
 
 func TestLoadReturnsWhatWasCreated(t *testing.T) {
 	s, r := fixture(t)
-	if _, err := Create(s, r, "ACME-1", "retry the webhook on 5xx"); err != nil {
+	if _, err := Create(s, r, "ACME-1", "retry the webhook on 5xx", ""); err != nil {
 		t.Fatalf("Create: %v", err)
 	}
 	tk, err := Load(s, r, "ACME-1")
@@ -119,7 +119,7 @@ func TestListOfARepositoryWithNoTasksIsEmptyNotAnError(t *testing.T) {
 
 func TestListDoesNotInventATaskFromAMistypedID(t *testing.T) {
 	s, r := fixture(t)
-	if _, err := Create(s, r, "ACME-1", "x"); err != nil {
+	if _, err := Create(s, r, "ACME-1", "x", ""); err != nil {
 		t.Fatalf("Create: %v", err)
 	}
 	// Someone typed the id wrong. Nothing about looking may leave a mark.
@@ -141,7 +141,7 @@ func TestListDoesNotInventATaskFromAMistypedID(t *testing.T) {
 func TestListReturnsTheTaskIDs(t *testing.T) {
 	s, r := fixture(t)
 	for _, id := range []string{"ACME-2", "ACME-1"} {
-		if _, err := Create(s, r, id, "x"); err != nil {
+		if _, err := Create(s, r, id, "x", ""); err != nil {
 			t.Fatalf("Create %s: %v", id, err)
 		}
 	}
@@ -175,7 +175,7 @@ func TestCreateTakesTheFileBackOutWhenNothingCouldBeRecorded(t *testing.T) {
 	s, r := fixture(t)
 	blocked := blockTheLog(t, s, r, "ACME-1")
 
-	_, err := Create(s, r, "ACME-1", "one")
+	_, err := Create(s, r, "ACME-1", "one", "")
 	if err == nil {
 		t.Fatal("Create reported success with nothing in the record")
 	}
@@ -197,7 +197,7 @@ func TestCreateTakesTheFileBackOutWhenNothingCouldBeRecorded(t *testing.T) {
 	if err := os.Remove(blocked); err != nil {
 		t.Fatalf("unblock: %v", err)
 	}
-	if _, err := Create(s, r, "ACME-1", "one"); err != nil {
+	if _, err := Create(s, r, "ACME-1", "one", ""); err != nil {
 		t.Fatalf("the retry was refused after a rolled-back create: %v", err)
 	}
 }
@@ -215,7 +215,7 @@ func TestCreateTakesTheDirectoryBackOutTooSoListForgetsIt(t *testing.T) {
 	s, r := fixture(t)
 	oversized := strings.Repeat("x", 5<<20) // over record.MaxLine (4 MiB)
 
-	if _, err := Create(s, r, "ACME-1", oversized); err == nil {
+	if _, err := Create(s, r, "ACME-1", oversized, ""); err == nil {
 		t.Fatal("Create reported success with nothing in the record")
 	}
 
@@ -246,16 +246,16 @@ func TestCreateTakesTheDirectoryBackOutTooSoListForgetsIt(t *testing.T) {
 // error message.
 func TestADuplicateIsTellableFromEveryOtherFailure(t *testing.T) {
 	s, r := fixture(t)
-	if _, err := Create(s, r, "ACME-1", "one"); err != nil {
+	if _, err := Create(s, r, "ACME-1", "one", ""); err != nil {
 		t.Fatalf("Create: %v", err)
 	}
-	_, err := Create(s, r, "ACME-1", "two")
+	_, err := Create(s, r, "ACME-1", "two", "")
 	if !errors.Is(err, ErrExists) {
 		t.Errorf("a duplicate id did not come back as ErrExists: %v", err)
 	}
 
 	blockTheLog(t, s, r, "ACME-2")
-	if _, err := Create(s, r, "ACME-2", "one"); errors.Is(err, ErrExists) {
+	if _, err := Create(s, r, "ACME-2", "one", ""); errors.Is(err, ErrExists) {
 		t.Errorf("a record that could not be written came back as ErrExists: %v", err)
 	}
 }
