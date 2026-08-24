@@ -62,6 +62,8 @@ func (m Model) key(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.startKey(msg)
 	case m.screen == screenDetail:
 		return m.detailKey(msg)
+	case m.screen == screenCompose:
+		return m.composeKey(msg)
 	}
 	return m.listKey(msg)
 }
@@ -120,6 +122,8 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return next, nil
 	case key.Matches(k, m.keys.Start):
 		return m.openStart()
+	case key.Matches(k, m.keys.Compose):
+		return m.openCompose(), nil
 	case key.Matches(k, m.keys.Help):
 		return m.notBuilt(m.keys.Help), nil
 	case key.Matches(k, m.keys.Quit):

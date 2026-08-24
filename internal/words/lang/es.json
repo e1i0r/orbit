@@ -731,6 +731,38 @@
       "source": "the task this menu was opened on is no longer on the board",
       "value": "la tarea en la que se abrió este menú ya no está en el tablero"
     },
+    "key.compose": {
+      "source": "write a task",
+      "value": "escribir una tarea"
+    },
+    "compose.repo": {
+      "source": "repository",
+      "value": "repositorio"
+    },
+    "compose.id": {
+      "source": "id",
+      "value": "id"
+    },
+    "compose.text": {
+      "source": "task",
+      "value": "tarea"
+    },
+    "compose.repo_required": {
+      "source": "the repository is required; which one is this task against?",
+      "value": "el repositorio es obligatorio; ¿contra cuál es esta tarea?"
+    },
+    "compose.id_required": {
+      "source": "the id is required; what is this task called?",
+      "value": "el id es obligatorio; ¿cómo se llama esta tarea?"
+    },
+    "compose.text_required": {
+      "source": "the task needs something written in it",
+      "value": "la tarea necesita algo escrito dentro"
+    },
+    "compose.ways_out": {
+      "source": "{open} writes it · {back} abandons it — nothing is written until then",
+      "value": "{open} la guarda · {back} la abandona — hasta entonces no se escribe nada"
+    },
     "palette.placeholder": {
       "source": "type a command",
       "value": "escribe un comando"

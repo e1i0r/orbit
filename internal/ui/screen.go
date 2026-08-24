@@ -50,6 +50,8 @@ func (m Model) View() tea.View {
 			lines = append(lines, m.detailRows(m.frame.Body.H, m.frame.Body.W)...)
 		case screenStart:
 			lines = append(lines, m.startRows(m.frame.Body.H, m.frame.Body.W)...)
+		case screenCompose:
+			lines = append(lines, m.composeRows(m.frame.Body.H, m.frame.Body.W)...)
 		default:
 			lines = append(lines, m.bodyRows()...)
 		}

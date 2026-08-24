@@ -129,6 +129,9 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 		// settings adapter answering what language the refusal is in.
 		Commands: commandTable(),
 		Do:       doPort(cfg),
+		// The id rule the compose form types against: the store's own, the
+		// one every write goes through, and nobody's second copy of it.
+		ValidID: store.ValidTaskID,
 	}, s, nil
 }
 

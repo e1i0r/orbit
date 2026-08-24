@@ -24,7 +24,7 @@ import (
 type Keys struct {
 	Up, Down, First, Last, PageUp, PageDown           key.Binding
 	Open, Back, NextTab, PrevTab, Sideways            key.Binding
-	Start, Run, ChangeFlow, Menu                      key.Binding
+	Start, Run, ChangeFlow, Menu, Compose             key.Binding
 	Pause, Resume, Cancel                             key.Binding
 	Take, Hand, Ask, MarkRead, Edit                   key.Binding
 	Filter, Commands, Autopilot, Language, Help, Quit key.Binding
@@ -69,10 +69,10 @@ func NewKeys(p *words.Printer) Keys {
 		Sideways: binding("←→", p.T("key.sideways", "scroll sideways"), "left", "right"),
 
 		// Start opens the dialog that decides what a run will be; it does
-		// not write a task. Writing one is `orbit new <id>`, which needs a
-		// title and a description and is a thing a person types rather than
-		// a thing a window guesses.
-		Start: binding("n", p.T("key.start", "start a run"), "n"),
+		// not write a task. Writing one is N, which opens the compose form
+		// — the same screen :new and the board menu land on.
+		Start:   binding("n", p.T("key.start", "start a run"), "n"),
+		Compose: binding("N", p.T("key.compose", "write a task"), "N"),
 		// Run and ChangeFlow belong to that dialog and to nothing else.
 		// They share ⏎ and f with nothing on the board, because the dialog
 		// takes every keystroke while it is up.

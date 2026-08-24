@@ -40,6 +40,7 @@ func (m Model) applyBoard(msg boardMsg) (tea.Model, tea.Cmd) {
 		m.cursor = m.firstTask()
 		m = m.follow()
 	}
+	m = m.selectPending()
 	// A read failure is said when the count of them changes and not on
 	// every refresh, because the poll is twice a second and one unreadable
 	// log would otherwise own the band for as long as it stayed unreadable.

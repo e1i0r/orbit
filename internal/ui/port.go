@@ -159,6 +159,15 @@ type Options struct {
 	// as it happens, then the result — and it overrides the band-only
 	// sentence the plan first described.
 	Do func(name string, args []string, out io.Writer) error
+
+	// ValidID is the id rule the compose form types against, satisfied by
+	// the store's own validator — the same one `orbit new` hits on its way
+	// through Create. Two copies of an id rule is how an id the window
+	// accepts arrives at a store that refuses it, which is the failure the
+	// port exists to prevent. A nil port validates nothing: a window
+	// opened without one submits the id and lets the command's own answer
+	// come back verbatim.
+	ValidID func(id string) error
 }
 
 // Command is one row of the palette: what the window shows of a command,

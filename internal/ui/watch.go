@@ -113,11 +113,6 @@ func (m Model) runSelected() (tea.Model, tea.Cmd) {
 		// open says "not yet" more honestly than closing would.
 		return m, nil
 	}
-	if m.watching != nil && c.Name == m.watching.name {
-		// Choosing the running command again is not a second of anything
-		// — it is the way back to the output of the one already going.
-		return m.closePalette().reopenWatch(), nil
-	}
 	args := strings.Fields(m.palette.typed)
 	if len(args) > 0 {
 		args = args[1:]
@@ -125,12 +120,26 @@ func (m Model) runSelected() (tea.Model, tea.Cmd) {
 	return m.closePalette().launch(c, args)
 }
 
-// launch starts watching one command run, from either entry point that can
-// raise it — the palette's ⏎ and the board menu's entries. One run at a
-// time: a second interleaved into the first's output would be two answers
-// to neither question. The caller closes whatever list it was showing; the
-// watch itself opens here.
+// launch starts what a named command does from inside the window, and it
+// is the one door both entry points go through — the palette's ⏎ and the
+// board menu's entries.
+//
+// `new` is the exception and is answered with a screen: writing a task is
+// a form and not a flag line, and N, :new and the board menu all land on
+// the same one. The command itself still runs — the form submits through
+// it — so the table keeps its rule that no command exists in one entry
+// point and not the other.
 func (m Model) launch(c Command, args []string) (tea.Model, tea.Cmd) {
+	if c.Name == "new" {
+		return m.openCompose(), nil
+	}
+	return m.runWatched(c, args)
+}
+
+// runWatched runs one command under the watch: one at a time, its output
+// on screen while it works and its result left there when it lands. The
+// caller closes whatever list it was showing; the watch opens here.
+func (m Model) runWatched(c Command, args []string) (tea.Model, tea.Cmd) {
 	if m.watching != nil {
 		if c.Name == m.watching.name {
 			return m.reopenWatch(), nil
