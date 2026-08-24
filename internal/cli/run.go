@@ -106,7 +106,11 @@ func runTask(ctx Context, args []string) error {
 		defer done()
 	}
 
-	engines := map[string]engine.Engine{"claude": engine.NewClaude()}
+	engines := map[string]engine.Engine{
+		"claude":   engine.NewClaude(),
+		"codex":    engine.NewCodex(),
+		"opencode": engine.NewOpenCode(),
+	}
 	if err := task.Run(running, s, t, f, engines, task.FileGate(s, time.Second)); err != nil {
 		return err
 	}

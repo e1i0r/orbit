@@ -105,7 +105,11 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 	// map of one today, and it is a map because the record already names its
 	// engine and a task run by something else has to be answered by name
 	// rather than by assumption.
-	engines := map[string]engine.Engine{"claude": engine.NewClaude()}
+	engines := map[string]engine.Engine{
+		"claude":   engine.NewClaude(),
+		"codex":    engine.NewCodex(),
+		"opencode": engine.NewOpenCode(),
+	}
 	home, _ := os.UserHomeDir()
 	if home == "" {
 		home = os.Getenv("HOME")
