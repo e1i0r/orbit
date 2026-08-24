@@ -128,7 +128,7 @@ func (m Model) deleteSelectedFlow() (Model, tea.Cmd) {
 
 func (m Model) deleteFlow(name string, origin flow.Origin) (Model, tea.Cmd) {
 	if origin == flow.OriginBuiltin {
-		return m.say("los flujos de serie no se pueden borrar"), nil
+		return m.say("los flujos predeterminados no se pueden borrar"), nil
 	}
 	m.flows.confirmDelete = true
 	return m.say("¿Borrar flujo " + name + "? [y] sí / [n] no"), nil
@@ -143,7 +143,7 @@ func (m Model) confirmDeleteFlow() (Model, tea.Cmd) {
 	}
 	d := descriptors[st.sel]
 	if d.Origin == flow.OriginBuiltin {
-		return m.say("los flujos de serie no se pueden borrar"), nil
+		return m.say("los flujos predeterminados no se pueden borrar"), nil
 	}
 	dir := ""
 	if m.opts.Flows != nil {

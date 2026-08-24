@@ -106,7 +106,7 @@ func TestTheListingIsInTheReadersOwnLanguage(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("flows exited %d: %s", code, errOut)
 	}
-	for _, want := range []string{"careful (de serie)", "mine (tuyo)", "task (tuyo, tapa el de serie)"} {
+	for _, want := range []string{"careful (predeterminado)", "mine (tuyo)", "task (tuyo, reemplaza el predeterminado)"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("the listing does not say %q:\n%s", want, out)
 		}

@@ -693,11 +693,11 @@
     },
     "flow.built_in": {
       "source": "built in",
-      "value": "de serie"
+      "value": "predeterminado"
     },
     "flow.shadowing": {
       "source": "yours, shadowing the built-in",
-      "value": "tuyo, tapa el de serie"
+      "value": "tuyo, reemplaza el predeterminado"
     },
     "flow.yours": {
       "source": "yours",
