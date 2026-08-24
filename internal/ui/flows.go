@@ -30,6 +30,7 @@ type flowsState struct {
 	sel            int
 	creating       bool
 	confirmDiscard bool
+	confirmDelete  bool
 	field          int
 	template       string
 	flowName       string
@@ -96,12 +97,25 @@ func (m Model) flowsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if m.flows.creating {
 		return m.flowsFormKey(msg)
 	}
+	if m.flows.confirmDelete {
+		switch {
+		case msg.Text == "y" || msg.Text == "Y" || msg.Text == "s" || msg.Text == "S" || key.Matches(msg, m.keys.Open):
+			return m.confirmDeleteFlow()
+		default:
+			m.flows.confirmDelete = false
+			return m.say("borrado cancelado"), nil
+		}
+	}
 	list := flow.List(m.opts.Flows)
 	switch {
 	case key.Matches(msg, m.keys.Back) || key.Matches(msg, m.keys.Quit):
 		return m.abandonFlows(), nil
 	case msg.Text == "n" || msg.Text == "N" || key.Matches(msg, m.keys.Start):
 		return m.startCreateFlow(), nil
+	case msg.Text == "e" || msg.Text == "E" || key.Matches(msg, m.keys.Open):
+		return m.editSelectedFlow()
+	case msg.Text == "d" || msg.Text == "D" || msg.Code == tea.KeyDelete:
+		return m.deleteSelectedFlow()
 	case key.Matches(msg, m.keys.Up):
 		if len(list) > 0 {
 			m.flows.sel--
@@ -234,6 +248,12 @@ func (m Model) startCreateFlow() Model {
 func (m Model) handleFlowClick(t Target) (tea.Model, tea.Cmd) {
 	if t.Field == "create" {
 		return m.startCreateFlow(), nil
+	}
+	if t.Field == "edit" {
+		return m.editFlow(t.ID)
+	}
+	if t.Field == "delete" {
+		return m.deleteFlow(t.ID, flow.OriginUser)
 	}
 	if t.Field == "add_phase" {
 		m.flows.field = flowFieldAddPhase
