@@ -73,7 +73,10 @@ func (p paletteState) candidates(cmds []Command) []Command {
 	prefix := strings.ToLower(p.typed)
 	var out []Command
 	for _, c := range cmds {
-		if strings.HasPrefix(strings.ToLower(c.Name), prefix) {
+		name := strings.ToLower(c.Name)
+		if strings.HasPrefix(name, prefix) {
+			out = append(out, c)
+		} else if c.Name == "settings" && (strings.HasPrefix("configuraciones", prefix) || strings.HasPrefix("config", prefix) || strings.HasPrefix("set", prefix) || strings.HasPrefix("ajustes", prefix)) {
 			out = append(out, c)
 		}
 	}

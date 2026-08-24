@@ -827,9 +827,9 @@
       "source": "close the records of runs whose processes are gone",
       "value": "cerrar los registros de las ejecuciones cuyos procesos ya no están"
     },
-    "cmd.set": {
-      "source": "change a setting",
-      "value": "cambiar un ajuste"
+    "cmd.settings": {
+      "source": "view or change settings",
+      "value": "ver o cambiar configuraciones"
     },
     "cmd.note": {
       "source": "record a note for a task",

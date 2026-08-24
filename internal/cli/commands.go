@@ -157,8 +157,8 @@ func commands() []Command {
 		},
 		Run: reconcile,
 	}, {
-		Name: "set", Args: "<key> <value>",
-		About:    func(p *words.Printer) string { return p.T("cmd.set", "change a setting") },
+		Name: "settings", Args: "[key] [value]",
+		About:    func(p *words.Printer) string { return p.T("cmd.settings", "view or change settings") },
 		Run:      set,
 		InWindow: WindowOpens,
 	}, {
@@ -173,6 +173,13 @@ func lookup(name string) (Command, bool) {
 	for _, c := range commands() {
 		if c.Name == name {
 			return c, true
+		}
+	}
+	if name == "set" || name == "config" || name == "configuracion" || name == "configuraciones" {
+		for _, c := range commands() {
+			if c.Name == "settings" {
+				return c, true
+			}
 		}
 	}
 	return Command{}, false
