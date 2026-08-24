@@ -956,8 +956,20 @@
       "value": "no se encontraron flujos"
     },
     "flows.ways_out": {
-      "source": "{up_down} scroll · {back} back",
-      "value": "{up_down} desplazar · {back} volver"
+      "source": "[n] create · {up_down} scroll · {back} back",
+      "value": "[n] crear nuevo flujo · {up_down} desplazar · {back} volver"
+    },
+    "flows.ways_out_form": {
+      "source": "[tab] field · [enter] action · {back} back",
+      "value": "[tab] campo · [enter] acción · {back} volver"
+    },
+    "flows.saved": {
+      "source": "flow {name} saved",
+      "value": "flujo {name} guardado correctamente"
+    },
+    "flows.create_btn": {
+      "source": "+ Create Custom Flow",
+      "value": "+ Crear Flujo Personalizado"
     },
     "flow.runs_auto": {
       "source": "runs automatically",

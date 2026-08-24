@@ -213,6 +213,8 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 			return next, nil
 		}
 		return m, nil
+	case TargetFlowItem:
+		return m.handleFlowClick(t)
 	}
 	// TargetPaneBody and TargetDialogPhase are pointed at and not acted on.
 	// The pane is already where the keyboard is, so a click in it has
@@ -259,12 +261,6 @@ func (m Model) flip(field string) (tea.Model, tea.Cmd) {
 }
 
 // rightClick opens the menu for what was pointed at.
-//
-// The cursor goes to the row first, so that what happens next is not a
-// surprise: the menu is the one the keyboard's m would have opened on that
-// row, and every key pressed afterwards acts where the reader just looked.
-// In the task view there is no row to move to — the pane is the task — so
-// the menu simply opens on the task being viewed.
 func (m Model) rightClick(t Target) (tea.Model, tea.Cmd) {
 	if t.Kind == TargetPaneBody {
 		if s := m.subject(); s.ID != "" {
