@@ -1,4 +1,4 @@
- [orbit]    📋 Por hacer 4   ⚡ En curso 3   💬 En revisión 2   🏁 Lista 6       📦 4 repos    🌐 EN
+ [orbit]   ~/work                   📦 4 repos    ⚡ autopilot ●    💬 cli [c]    🧠 claude    🌐 EN
 ────────────────────────────────────────────────────────────────────────────────────────────────────
   $0.00 spent  ·  15 tasks  ·  0 events  ·  0ms read
  ACME-2662  Retry the webhook on 5xx                                        payments · failed: gates
@@ -27,4 +27,4 @@
 
 ────────────────────────────────────────────────────────────────────────────────────────────────────
  ACME-2705 · implement · 8m in · claude/opus · careful
- [esc] back  [tab] next tab  [↑↓] scroll  [?] [q]                        ⚡ autopilot ●    🧠 claude
+ [esc] back  [tab] next tab  [↑↓] scroll  [?] [q]

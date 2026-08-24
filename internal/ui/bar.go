@@ -26,52 +26,14 @@ func (m Model) barLine(w int) string {
 	return line
 }
 
-// statusChips renders the 3 status chips (autopilot, interactive CLI, and engine knob)
-func (m Model) statusChips() string {
-	p := m.opts.Words
-	var chips []string
-
-	// Autopilot chip
-	pip, role := pipOff, Dim
-	if m.autopilotOn() {
-		pip, role = pipOn, Live
-	}
-	chips = append(chips, Paint(Dim).Render("⚡ "+p.T("header.autopilot", "autopilot"))+" "+Paint(role).Render(pip))
-
-	// Interactive CLI chip
-	if m.screen == screenList {
-		chips = append(chips, Paint(Live).Render("💬 "+p.T("header.cli_chip", "cli"))+" "+Paint(Live).Bold(true).Render("[c]"))
-	}
-
-	// Model / knob chip
-	chip := m.knobChip()
-	if chip != "" {
-		chips = append(chips, Paint(Accent).Render("🧠 "+chip))
-	} else {
-		chips = append(chips, Paint(Dim).Render("🧠 claude"))
-	}
-	return strings.Join(chips, "    ")
-}
-
 // barLayout is the key bar, drawn, and where it put each hint.
 func (m Model) barLayout(w int) (string, []placedHint) {
 	tail := Paint(Dim).Render("[" + m.keys.Help.Help().Key + "] [" + m.keys.Quit.Help().Key + "]")
-	chips := m.statusChips()
-	chipsW := lipgloss.Width(chips)
 	hints := m.hints()
-
 	for {
-		leftStr := " " + strings.Join(append(drawn(hints), tail), hintGap)
-		leftW := lipgloss.Width(leftStr)
-		if leftW+chipsW+4 <= w {
-			space := w - leftW - chipsW
-			return leftStr + strings.Repeat(" ", space) + chips, place(hints)
-		}
-		if len(hints) == 0 {
-			if leftW <= w {
-				return fit(leftStr, w), place(hints)
-			}
-			return fit(leftStr, w), nil
+		line := " " + strings.Join(append(drawn(hints), tail), hintGap)
+		if lipgloss.Width(line) <= w || len(hints) == 0 {
+			return fit(line, w), place(hints)
 		}
 		hints = hints[:len(hints)-1]
 	}

@@ -160,6 +160,24 @@ func (m Model) headerFields() []string {
 	// Repos chip
 	fields = append(fields, Paint(Dim).Render("📦 "+p.P("header.repos", m.board.Repos, "{n} repo", "{n} repos")))
 
+	// Autopilot chip
+	pip, role := pipOff, Dim
+	if m.autopilotOn() {
+		pip, role = pipOn, Live
+	}
+	fields = append(fields, Paint(Dim).Render("⚡ "+p.T("header.autopilot", "autopilot"))+" "+Paint(role).Render(pip))
+
+	// Interactive CLI chip
+	fields = append(fields, Paint(Live).Render("💬 "+p.T("header.cli_chip", "cli"))+" "+Paint(Live).Bold(true).Render("[c]"))
+
+	// Model / knob chip
+	chip := m.knobChip()
+	if chip != "" {
+		fields = append(fields, Paint(Accent).Render("🧠 "+chip))
+	} else {
+		fields = append(fields, Paint(Dim).Render("🧠 claude"))
+	}
+
 	// Language chip
 	lang := p.T("header.lang_badge", "EN")
 	fields = append(fields, Paint(Dim).Render("🌐 "+lang))
@@ -192,7 +210,7 @@ func (m Model) hints() []barHint {
 	if ok {
 		out = append(out, hint("↑↓", m.opts.Words.T("key.move", "move")), hintFor(m.keys.Open))
 	}
-	out = append(out, hintFor(m.keys.Start))
+	out = append(out, hintFor(m.keys.Start), hintFor(m.keys.CLI))
 	if ok && !r.head {
 		for _, a := range m.keys.Affordances(r.task, m.conditions(r.task)) {
 			if a.OK && a.Key.Help().Key != m.keys.Open.Help().Key {
