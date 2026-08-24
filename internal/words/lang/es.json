@@ -1128,10 +1128,6 @@
     "overview.resume_hint": {
       "source": "press 't' to open interactive session, 'r' to restart",
       "value": "presiona 't' para sesión interactiva, 'r' para reiniciar"
-    },
-    "detail.select": {
-      "source": "Select a task on the left to inspect its cockpit.",
-      "value": "Selecciona una tarea a la izquierda para ver su panel en vivo."
     }
   }
 }
