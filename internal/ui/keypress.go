@@ -139,6 +139,8 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.openStart()
 	case key.Matches(k, m.keys.Compose):
 		return m.openCompose(), nil
+	case key.Matches(k, m.keys.CLI):
+		return m.launchInteractiveCLI()
 	case key.Matches(k, m.keys.Help):
 		return m.openHelp(), nil
 	case key.Matches(k, m.keys.Quit):
@@ -153,8 +155,20 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 // specific "no" closes is a question that traps a reader who has already
 // looked away, and the safe answer to "shall I cancel this run" is no.
 func (m Model) confirmKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	c := m.confirm
 	id := m.confirmID
 	m.confirm, m.confirmID = confirmNone, ""
+	if c == confirmPostCliTask {
+		if msg.String() == confirmYes || msg.String() == "s" || msg.String() == "S" || key.Matches(msg, m.keys.Open) {
+			m = m.openCompose()
+			if id != "" {
+				m.compose.repo = id
+				m.compose.field = composeText
+			}
+			return m.say(m.opts.Words.T("msg.compose_prompt", "write the task to run")), nil
+		}
+		return m.say(m.opts.Words.T("msg.cli_ended", "interactive session ended")), nil
+	}
 	if msg.String() != confirmYes {
 		return m, nil
 	}

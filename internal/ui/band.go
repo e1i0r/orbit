@@ -41,6 +41,9 @@ func (m Model) bandLeft() string {
 		return Paint(Warn).Render(m.opts.Words.T("msg.confirm_cancel",
 			"cancel {id}? press y to confirm, anything else to leave it running",
 			about("id", m.confirmID)))
+	case m.confirm == confirmPostCliTask:
+		return Paint(Live).Render(m.opts.Words.T("msg.confirm_post_cli",
+			"create a task in Orbit from this session? press y to confirm, anything else to skip"))
 	case m.message != "" && m.now.Sub(m.messageAt) < messageLife:
 		return Paint(Accent).Render(m.message)
 	case m.filter != "" || m.repoFilter != "" || m.queueFilter != nil:

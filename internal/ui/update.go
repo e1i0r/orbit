@@ -79,6 +79,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.session(msg)
 	case sessionEndedMsg:
 		return m.sessionEnded(msg), nil
+	case cliEndedMsg:
+		return m.handleCLIEnded(msg)
 	case editorMsg:
 		if msg.Err != nil {
 			return m.say(msg.Err.Error()), nil

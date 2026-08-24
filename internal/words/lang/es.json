@@ -269,6 +269,18 @@
       "source": "cancel {id}? press y to confirm, anything else to leave it running",
       "value": "¿cancelar {id}? pulsa y para confirmar, cualquier otra tecla la deja en marcha"
     },
+    "msg.confirm_post_cli": {
+      "source": "create a task in Orbit from this session? press y to confirm, anything else to skip",
+      "value": "¿crear una tarea en Orbit a partir de esta sesión? pulsa y para confirmar, cualquier otra tecla para saltar"
+    },
+    "msg.cli_ended": {
+      "source": "interactive session ended",
+      "value": "sesión interactiva finalizada"
+    },
+    "msg.compose_prompt": {
+      "source": "write the task to run",
+      "value": "escribe la tarea para ponerla en marcha"
+    },
     "msg.autopilot_on": {
       "source": "autopilot is on: every phase runs without asking",
       "value": "el piloto automático está activado: cada fase se ejecuta sin preguntar"
@@ -850,6 +862,10 @@
     "key.commands": {
       "source": "commands",
       "value": "comandos"
+    },
+    "key.cli": {
+      "source": "interactive CLI",
+      "value": "cli interactiva"
     },
     "key.menu": {
       "source": "menu",

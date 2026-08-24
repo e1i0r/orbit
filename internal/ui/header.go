@@ -192,7 +192,7 @@ func (m Model) hints() []barHint {
 	if ok {
 		out = append(out, hint("↑↓", m.opts.Words.T("key.move", "move")), hintFor(m.keys.Open))
 	}
-	out = append(out, hintFor(m.keys.Start))
+	out = append(out, hintFor(m.keys.Start), hintFor(m.keys.CLI))
 	if ok && !r.head {
 		for _, a := range m.keys.Affordances(r.task, m.conditions(r.task)) {
 			if a.OK && a.Key.Help().Key != m.keys.Open.Help().Key {
