@@ -5,6 +5,7 @@ package ui
 
 import (
 	"bytes"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -38,6 +39,19 @@ func (m Model) abandonSettings() Model {
 	return m
 }
 
+func modelsForEngine(eng string) []string {
+	switch strings.ToLower(eng) {
+	case "claude":
+		return []string{"sonnet", "opus", "haiku"}
+	case "codex":
+		return []string{"o3-mini", "o1", "gpt-4o", "gpt-4.5"}
+	case "opencode":
+		return []string{"sonnet", "opus", "deepseek-r1", "qwen-2.5-coder", "gemini-2.5-pro"}
+	default:
+		return []string{"sonnet", "opus", "haiku", "o3-mini", "o1", "deepseek-r1", "qwen-2.5-coder"}
+	}
+}
+
 func (m Model) settingRowsList() []settingRow {
 	p := m.opts.Words
 	s := m.opts.Settings
@@ -50,16 +64,21 @@ func (m Model) settingRowsList() []settingRow {
 	}
 	langVal := orDef(s.Language(), "en")
 	engineVal := orDef(s.Engine(), "claude")
-	modelVal := orDef(s.Model(), "opus")
+	modelVal := orDef(s.Model(), "sonnet")
 	flowVal := orDef(s.Flow(), "task")
-	themeVal := orDef(s.Theme(), "monokai")
+	themeVal := orDef(s.Theme(), "frauddi")
+
+	models := modelsForEngine(engineVal)
+	if !slices.Contains(models, modelVal) && len(models) > 0 {
+		modelVal = models[0]
+	}
 
 	return []settingRow{
 		{key: "language", val: langVal, options: []string{"en", "es"}, about: p.T("setting.language", "the language orbit speaks")},
 		{key: "autopilot", val: autopilotStr, options: []string{"off", "on"}, about: p.T("setting.autopilot", "whether a run walks its whole flow without stopping")},
 		{key: "unread-cap", val: strconv.Itoa(s.UnreadCap()), options: []string{"0", "3", "5", "10", "20"}, about: p.T("setting.unread_cap", "how many finished tasks may sit unread before nothing new starts")},
 		{key: "engine", val: engineVal, options: []string{"claude", "codex", "opencode"}, about: p.T("setting.engine", "the engine a task runs on when it names none")},
-		{key: "model", val: modelVal, options: []string{"opus", "sonnet", "haiku", "o3-mini", "o1", "deepseek-r1", "qwen-2.5-coder"}, about: p.T("setting.model", "the model a phase asks for when it names none")},
+		{key: "model", val: modelVal, options: models, about: p.T("setting.model", "the model a phase asks for when it names none")},
 		{key: "flow", val: flowVal, options: []string{"task", "quick", "careful"}, about: p.T("setting.flow", "the flow a new task is written against")},
 		{key: "theme", val: themeVal, options: AvailableThemes(), about: p.T("setting.theme", "the visual color theme for the window")},
 	}
@@ -177,6 +196,10 @@ func (m Model) applySetting(keyName, val string) (tea.Model, tea.Cmd) {
 			}
 		case "engine":
 			_ = s.SetEngine(val)
+			validModels := modelsForEngine(val)
+			if !slices.Contains(validModels, s.Model()) && len(validModels) > 0 {
+				_ = s.SetModel(validModels[0])
+			}
 		case "model":
 			_ = s.SetModel(val)
 		case "flow":

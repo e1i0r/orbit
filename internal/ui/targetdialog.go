@@ -1,5 +1,9 @@
 package ui
 
+import (
+	"charm.land/lipgloss/v2"
+)
+
 // Dialog and subscreen hit detection: task detail, start dialog, settings, repos.
 
 // hitDetail is the task view, one level down: its heading, the tab strip,
@@ -53,13 +57,28 @@ func (m Model) hitStart(x, y int) Target {
 
 func (m Model) hitSettings(x, y int) Target {
 	line, ok := m.frame.BodyRow(y)
-	if !ok {
+	if !ok || line < 4 {
 		return Target{}
 	}
-	rowIdx := line - 4
+	offset := line - 4
+	rowIdx := offset / 3
 	rows := m.settingRowsList()
 	if rowIdx >= 0 && rowIdx < len(rows) {
-		return Target{Kind: TargetSettingsRow, Pane: rowIdx}
+		r := rows[rowIdx]
+		if x >= 20 {
+			curX := 20
+			for _, opt := range r.options {
+				pillLen := lipgloss.Width(" "+opt+" ") + 1
+				if opt == r.val {
+					pillLen = lipgloss.Width(" ● "+opt+" ") + 1
+				}
+				if x >= curX && x < curX+pillLen {
+					return Target{Kind: TargetSettingsRow, Pane: rowIdx, Field: opt}
+				}
+				curX += pillLen
+			}
+		}
+		return Target{Kind: TargetSettingsRow, Pane: rowIdx, Field: ""}
 	}
 	return Target{}
 }

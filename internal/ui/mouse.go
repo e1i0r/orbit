@@ -10,6 +10,7 @@ package ui
 // second set of them.
 
 import (
+	"slices"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -166,6 +167,13 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		return m.jumpToBand(band)
 	case TargetSettingsRow:
 		m.settings.sel = t.Pane
+		rows := m.settingRowsList()
+		if t.Pane >= 0 && t.Pane < len(rows) {
+			r := rows[t.Pane]
+			if t.Field != "" && slices.Contains(r.options, t.Field) {
+				return m.applySetting(r.key, t.Field)
+			}
+		}
 		return m.cycleSetting(1)
 	case TargetEngineRow:
 		rows := m.collectEngineRows()
