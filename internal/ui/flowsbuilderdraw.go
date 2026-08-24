@@ -132,7 +132,9 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	if st.field != flowFieldPrompt && curPh.Prompt != "" {
 		prmVal = `"` + curPh.Prompt + `"`
 	}
-	out = append(out, renderField(flowFieldPrompt, "9. Prompt / Instrucciones", Paint(Accent).Render(prmVal)))
+	prmLine := renderField(flowFieldPrompt, "9. Prompt / Instrucciones", Paint(Accent).Render(prmVal))
+	prmLine += "  " + Pill("📋 Pegar", "#FFFFFF", "#0C4A6E") + " " + Pill("✨ Autogenerar", "#FFFFFF", "#581C87")
+	out = append(out, fit(prmLine, w))
 
 	// Actions
 	out = append(out, "")
@@ -253,6 +255,12 @@ func (m Model) hitFlows(x, y int) Target {
 	case 9:
 		return Target{Kind: TargetFlowItem, Phase: flowFieldWait}
 	case 10:
+		if x >= 55 && x < 68 {
+			return Target{Kind: TargetFlowItem, Field: "paste_prompt"}
+		}
+		if x >= 68 {
+			return Target{Kind: TargetFlowItem, Field: "autogen_prompt"}
+		}
 		return Target{Kind: TargetFlowItem, Phase: flowFieldPrompt}
 	case 12:
 		if x < 25 {

@@ -2,8 +2,11 @@ package ui
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -166,6 +169,21 @@ func (m Model) handleFlowClick(t Target) (tea.Model, tea.Cmd) {
 	if t.Field == "delete" {
 		return m.deleteFlow(t.ID, flow.OriginUser)
 	}
+	if t.Field == "paste_prompt" {
+		txt := strings.TrimSpace(readClipboard())
+		if txt != "" {
+			m.flows.cur().Prompt = txt
+			m.flows.field = flowFieldPrompt
+			return m.say("instrucciones pegadas desde el portapapeles"), nil
+		}
+		return m.say("portapapeles vacío"), nil
+	}
+	if t.Field == "autogen_prompt" {
+		cur := m.flows.cur()
+		cur.Prompt = generatePhasePrompt(cur.Name, m.flows.flowName)
+		m.flows.field = flowFieldPrompt
+		return m.say("prompt autogenerado para " + cur.Name), nil
+	}
 	if t.Field == "add_phase" {
 		m.flows.field = flowFieldAddPhase
 		return m.handleFlowFieldAction()
@@ -185,4 +203,40 @@ func (m Model) handleFlowClick(t Target) (tea.Model, tea.Cmd) {
 	}
 	m.flows.field = t.Phase
 	return m.handleFlowFieldAction()
+}
+
+func readClipboard() string {
+	if runtime.GOOS == "darwin" {
+		if out, err := exec.Command("pbpaste").Output(); err == nil {
+			return string(out)
+		}
+	}
+	if out, err := exec.Command("wl-paste").Output(); err == nil {
+		return string(out)
+	}
+	if out, err := exec.Command("xclip", "-out", "-selection", "clipboard").Output(); err == nil {
+		return string(out)
+	}
+	return ""
+}
+
+func generatePhasePrompt(phaseName, flowName string) string {
+	lower := strings.ToLower(phaseName)
+	switch {
+	case strings.Contains(lower, "plan") || strings.Contains(lower, "design") || strings.Contains(lower, "arch"):
+		return "Analiza en detalle los requisitos, examina el código y diseña un plan técnico estructurado con casos de prueba."
+	case strings.Contains(lower, "impl") || strings.Contains(lower, "code") || strings.Contains(lower, "dev") || strings.Contains(lower, "build"):
+		return "Implementa la solución completa siguiendo el plan acordado, asegurando calidad de código y buenas prácticas."
+	case strings.Contains(lower, "test") || strings.Contains(lower, "gate") || strings.Contains(lower, "check"):
+		return "Escribe y ejecuta pruebas automatizadas completas para verificar exhaustivamente la funcionalidad implementada."
+	case strings.Contains(lower, "review") || strings.Contains(lower, "audit") || strings.Contains(lower, "sec"):
+		return "Audita el diff de cambios generados, buscando posibles vulnerabilidades, fugas de recursos o regresiones."
+	case strings.Contains(lower, "fix") || strings.Contains(lower, "patch") || strings.Contains(lower, "remed"):
+		return "Corrige con precisión los errores y hallazgos reportados en la fase anterior hasta dejar el sistema impecable."
+	default:
+		if flowName != "" {
+			return fmt.Sprintf("Ejecuta la fase %s para el flujo %s con máxima rigurosidad técnica.", phaseName, flowName)
+		}
+		return fmt.Sprintf("Ejecuta las tareas correspondientes a la fase %s de forma autónoma y precisa.", phaseName)
+	}
 }
