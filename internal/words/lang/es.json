@@ -473,9 +473,49 @@
       "source": "thinking",
       "value": "thinking"
     },
-    "flow.title": {
-      "source": "Flow: {name}",
-      "value": "Flujo: {name}"
+    "flow.tree_title": {
+      "source": "Pipeline & Execution Tree",
+      "value": "Árbol de ejecución del flujo"
+    },
+    "flow.step_status_done": {
+      "source": "completed",
+      "value": "completado"
+    },
+    "flow.step_status_failed": {
+      "source": "failed",
+      "value": "falló"
+    },
+    "flow.step_status_in_flight": {
+      "source": "in progress",
+      "value": "en progreso"
+    },
+    "flow.step_status_pending": {
+      "source": "pending",
+      "value": "pendiente"
+    },
+    "flow.step_status_cancelled": {
+      "source": "cancelled",
+      "value": "cancelado"
+    },
+    "flow.step_status_waiting": {
+      "source": "waiting at gate",
+      "value": "esperando en compuerta"
+    },
+    "flow.tree_engine": {
+      "source": "engine",
+      "value": "motor"
+    },
+    "flow.tree_gate": {
+      "source": "gate",
+      "value": "compuerta"
+    },
+    "flow.tree_error": {
+      "source": "error details",
+      "value": "detalle del error"
+    },
+    "flow.tree_outcome": {
+      "source": "outcome",
+      "value": "resultado"
     },
     "gates.empty": {
       "source": "no verification gates have run for this task",
