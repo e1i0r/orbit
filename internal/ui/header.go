@@ -140,7 +140,7 @@ func (m Model) headerLeft(w int, spaced bool) (string, bool) {
 }
 
 // name is the program's own name badge.
-func (m Model) name() string { return Pill("[orbit]", "#FFFFFF", "#005F87") }
+func (m Model) name() string { return Pill("[orbit]", "#FFFFFF", "#0F766E") }
 
 // shorten drops one leading path segment and marks the cut, and returns ""
 // once there is nothing left worth showing.

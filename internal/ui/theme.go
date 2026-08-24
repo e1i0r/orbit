@@ -63,6 +63,16 @@ type Palette struct {
 }
 
 var themePalettes = map[string]Palette{
+	"frauddi": {
+		Accent:   "#38BDF8",
+		OK:       "#16B798",
+		Bad:      "#EF4444",
+		Warn:     "#F59E0B",
+		Live:     "#2DD4BF",
+		Dim:      "#64748B",
+		SelText:  "#FFFFFF",
+		SelBlock: "#0F766E",
+	},
 	"monokai": {
 		Accent:   "#66D9EF",
 		OK:       "#A6E22E",
@@ -115,11 +125,11 @@ var themePalettes = map[string]Palette{
 	},
 }
 
-var currentThemeName = "monokai"
+var currentThemeName = "frauddi"
 
 // AvailableThemes lists the default selectable themes.
 func AvailableThemes() []string {
-	return []string{"monokai", "tokyo-night", "dracula", "nord", "catppuccin"}
+	return []string{"frauddi", "monokai", "tokyo-night", "dracula", "nord", "catppuccin"}
 }
 
 // SetCurrentTheme sets the active theme for painting.
