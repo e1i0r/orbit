@@ -79,9 +79,7 @@ func (m Model) hit(x, y int) Target {
 		return m.hitBar(x, y)
 	case layout.RegionHeader:
 		return m.hitHeader(x, y)
-	case layout.RegionStatus:
-		return Target{Kind: TargetStatusField}
-	case layout.RegionBand:
+	case layout.RegionStatus, layout.RegionBand:
 		return m.hitStatus(x, y)
 	case layout.RegionBody:
 		if m.palette.open {
@@ -263,10 +261,10 @@ func (m Model) hitHeader(x, y int) Target {
 }
 
 func (m Model) hitStatus(x, y int) Target {
-	if x >= m.width-18 {
+	if x >= m.width-16 {
 		return Target{Kind: TargetStatusField, Field: "engine"}
 	}
-	if x >= m.width-38 && x < m.width-18 {
+	if x >= m.width-48 && x < m.width-16 {
 		return Target{Kind: TargetStatusField, Field: "autopilot"}
 	}
 	return Target{Kind: TargetStatusField}
