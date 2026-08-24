@@ -160,8 +160,7 @@ func (m Model) openStart() (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// startKey is the dialog's own map, and it is short on purpose: four keys,
-// and every one of them is in the footer.
+// startKey is the dialog's own map.
 func (m Model) startKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	switch {
 	case key.Matches(k, m.keys.Back):
@@ -171,6 +170,14 @@ func (m Model) startKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.runIt()
 	case key.Matches(k, m.keys.ChangeFlow):
 		return m.cycleFlow(), nil
+	case key.Matches(k, key.NewBinding(key.WithKeys("+", "F"))):
+		return m.openFlows(), nil
+	case key.Matches(k, key.NewBinding(key.WithKeys("m", "e"))):
+		return m.openEngines(), nil
+	case key.Matches(k, key.NewBinding(key.WithKeys("o", "E"))):
+		return m.cycleEffort(), nil
+	case key.Matches(k, key.NewBinding(key.WithKeys("t", "w"))):
+		return m.cycleThinking(), nil
 	case key.Matches(k, m.keys.EngineKnobs):
 		return m.openEngines(), nil
 	case key.Matches(k, m.keys.Autopilot):
@@ -192,13 +199,6 @@ func (m Model) cycleFlow() Model {
 }
 
 // runIt starts the flow on screen, or refuses and says why.
-//
-// The cap is checked here as well as inside task.Start, and the duplication
-// is deliberate: this one names the tasks that are waiting, which needs the
-// board the reader is looking at, and the one inside task.Start is the
-// authoritative one — it reads the settings file rather than a board that may
-// be half a second old. When they disagree the second answer wins and is
-// repeated verbatim, because it is the one that actually decided.
 func (m Model) runIt() (tea.Model, tea.Cmd) {
 	p := m.opts.Words
 	t, ok := m.task(m.start.id)
@@ -210,10 +210,6 @@ func (m Model) runIt() (tea.Model, tea.Cmd) {
 	if chosen.err != nil {
 		return m.say(chosen.err.Error()), nil
 	}
-	// The board is walked once. The unread tasks are the count, the
-	// colour and the ids in the refusal all at once, and reading it three
-	// times to answer one question was three answers that could disagree
-	// if a refresh landed between them.
 	waiting := board.Unreads(m.board)
 	if m.atUnreadCap(len(waiting)) {
 		return m.say(m.unreadRefusal(waiting)), nil
@@ -222,30 +218,13 @@ func (m Model) runIt() (tea.Model, tea.Cmd) {
 	return m, start(m.opts.Start, t, chosen.name, len(waiting))
 }
 
-// atUnreadCap is whether the brake is on: as many finished tasks unread as
-// the settings file allows, or more. A cap of zero is no cap, which is what
-// a window opened without a settings file has.
-//
-// It takes the count rather than reading the board, for two reasons. A
-// caller that already holds the unread tasks does not walk the board again
-// to be told how many it found. And this is the only spelling of the
-// predicate in this package: the header's warning colour and the ToDo band's
-// hint had each inlined `limit > 0 && unread >= limit` at the site, so the
-// rule that decides whether anything may start was written three times on
-// three screens. There is a fourth in internal/task, and that one stays —
-// it reads the settings file rather than a board, and it is the one that
-// actually decides.
+// atUnreadCap is whether the brake is on.
 func (m Model) atUnreadCap(unread int) bool {
 	limit := m.unreadCap()
 	return limit > 0 && unread >= limit
 }
 
 // unreadRefusal is the sentence the brake says, and it names names.
-//
-// A brake that says only "no" is a brake people route around. The ids are
-// what turn "the cap is reached" into a next move — press d on one of these
-// — and they come from board.Unreads so that the number in the header and
-// the ids in this sentence can never be two different rules.
 func (m Model) unreadRefusal(waiting []view.Task) string {
 	ids := make([]string, 0, namedInRefusal)
 	for _, t := range waiting {
@@ -255,10 +234,6 @@ func (m Model) unreadRefusal(waiting []view.Task) string {
 		}
 		ids = append(ids, t.ID)
 	}
-	// esc first, and then d. The refusal is only ever said from this
-	// dialog, and the dialog does not handle d — it takes every keystroke
-	// while it is up. A sentence that names a key the screen it is printed
-	// on will not answer is worse than one that names no key at all.
 	return m.opts.Words.P("start.unread_cap", len(waiting),
 		"{n} finished task is waiting to be read and the cap is {cap}: {ids} — press esc, then d on it",
 		"{n} finished tasks are waiting to be read and the cap is {cap}: {ids} — press esc, then d on one",
@@ -268,17 +243,21 @@ func (m Model) unreadRefusal(waiting []view.Task) string {
 }
 
 // startBindings is the dialog's footer, and its key map, as one list.
-//
-// The footer is built from these rather than written out, which is the whole
-// guarantee: a key printed under the phases is a key startKey matches on,
-// and the two cannot drift apart because there is only one of them. f is
-// dropped when there is nothing to cycle to.
 func (m Model) startBindings() []key.Binding {
+	p := m.opts.Words
 	out := []key.Binding{m.keys.Run}
 	if len(m.start.flows) > 1 {
 		out = append(out, m.keys.ChangeFlow)
 	}
-	return append(out, m.keys.Autopilot, m.keys.Back)
+	out = append(out,
+		key.NewBinding(key.WithKeys("+"), key.WithHelp("+", p.T("start.new_flow_hint", "crear flujo"))),
+		key.NewBinding(key.WithKeys("m"), key.WithHelp("m", p.T("start.model_hint", "modelo"))),
+		key.NewBinding(key.WithKeys("o"), key.WithHelp("o", p.T("start.effort_hint", "esfuerzo"))),
+		key.NewBinding(key.WithKeys("t"), key.WithHelp("t", p.T("start.thinking_hint", "thinking"))),
+		m.keys.Autopilot,
+		m.keys.Back,
+	)
+	return out
 }
 
 // startHints is that same list as the bar prints it.

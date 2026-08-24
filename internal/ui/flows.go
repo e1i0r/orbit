@@ -29,6 +29,7 @@ const (
 )
 
 type flowsState struct {
+	fromScreen     screen
 	sel            int
 	creating       bool
 	isEditing      bool
@@ -62,17 +63,24 @@ func (st *flowsState) cur() *flow.Phase {
 }
 
 func (m Model) openFlows() Model {
+	prev := m.screen
 	m.screen = screenFlows
 	m.flows = flowsState{
-		template: "ninguna",
-		sel:      -1,
+		fromScreen: prev,
+		template:   "ninguna",
+		sel:        -1,
 	}
 	m.flows.ensurePhase()
 	return m
 }
 
 func (m Model) abandonFlows() Model {
+	prev := m.flows.fromScreen
 	m.flows = flowsState{}
+	if prev == screenStart {
+		m.screen = screenStart
+		return m
+	}
 	m.screen = screenList
 	return m
 }

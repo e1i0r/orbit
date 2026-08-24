@@ -867,6 +867,34 @@
       "source": "flow",
       "value": "flujo"
     },
+    "start.engine_config": {
+      "source": "motor",
+      "value": "motor"
+    },
+    "start.dials_hint": {
+      "source": "[m] modelo  [o] esfuerzo  [t] thinking",
+      "value": "[m] modelo  [o] esfuerzo  [t] thinking"
+    },
+    "start.new_flow_tag": {
+      "source": "[+] nuevo flujo",
+      "value": "[+] nuevo flujo"
+    },
+    "start.new_flow_hint": {
+      "source": "crear flujo",
+      "value": "crear flujo"
+    },
+    "start.model_hint": {
+      "source": "modelo",
+      "value": "modelo"
+    },
+    "start.effort_hint": {
+      "source": "esfuerzo",
+      "value": "esfuerzo"
+    },
+    "start.thinking_hint": {
+      "source": "thinking",
+      "value": "thinking"
+    },
     "flow.built_in": {
       "source": "built in",
       "value": "predeterminado"

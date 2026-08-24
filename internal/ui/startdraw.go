@@ -38,30 +38,20 @@ const startGap = 3
 // Head is row zero and is not here, because nothing is ever pointed at it.
 type startPlan struct {
 	flow      int // the flow line
+	config    int // engine dials line
 	phases    int // the first phase row
 	nPhases   int // how many rows the phases took, error line included
 	autopilot int // the switch's first row; its second is the next one
 }
 
 // startLayout works out where the blocks go at width w.
-//
-// The blanks between the blocks are what the gaps in the numbers are: a row
-// nothing was placed on is a row with nothing on it, which is also what
-// makes the sparse slice startRows builds come out identical to the four
-// appends it used to be.
 func (m Model) startLayout(w int) startPlan {
-	p := startPlan{flow: 2, phases: 4, nPhases: len(m.phaseRows(w))}
+	p := startPlan{flow: 2, config: 4, phases: 6, nPhases: len(m.phaseRows(w))}
 	p.autopilot = p.phases + p.nPhases + 1
 	return p
 }
 
 // startRows draws the dialog into the body region.
-//
-// The order the blocks are placed in is the order they are given up as the
-// terminal shortens, because fill cuts from the end. That is the right
-// order: a reader who cannot see the switch can still press A and read the
-// band, and a reader who cannot see which task they are about to start has
-// no other way to find that out.
 func (m Model) startRows(h, w int) []string {
 	if h <= 0 || w <= 0 {
 		return nil
@@ -71,6 +61,7 @@ func (m Model) startRows(h, w int) []string {
 	out := make([]string, p.autopilot+len(auto))
 	out[0] = m.startHead(w)
 	out[p.flow] = m.flowLine(w)
+	out[p.config] = m.configLine(w)
 	copy(out[p.phases:], m.phaseRows(w))
 	copy(out[p.autopilot:], auto)
 	return fill(out, h)
@@ -78,11 +69,6 @@ func (m Model) startRows(h, w int) []string {
 
 // startHead names the task the run would be: its id and title on the left,
 // the repository on the right.
-//
-// It is detailHead's shape on purpose. These are the two things one row can
-// open into, and a heading that moved between them would be a heading nobody
-// reads — which is how, in the program this replaces, a diff got applied to
-// the wrong branch.
 func (m Model) startHead(w int) string {
 	t, ok := m.task(m.start.id)
 	left := Paint(Accent).Render(m.start.id)
@@ -118,7 +104,8 @@ func (m Model) flowLine(w int) string {
 		}
 		parts = append(parts, Paint(role).Render(f.name))
 	}
-	return spread(left, strings.Join(parts, Paint(Dim).Render(dot)), w)
+	right := strings.Join(parts, Paint(Dim).Render(dot)) + "  " + Paint(Dim).Render(p.T("start.new_flow_tag", "[+] nuevo flujo"))
+	return spread(left, right, w)
 }
 
 // flowMark says where a flow came from, in the words `orbit flows` uses.
