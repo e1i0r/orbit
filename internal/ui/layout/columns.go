@@ -191,3 +191,74 @@ func repoColumn(tasks []view.Task) int {
 	}
 	return cells
 }
+
+// Column names one field of a task's row. ColumnNone is the zero value and
+// means no field: the gap between two of them, or a cell past the end of
+// the last.
+type Column int
+
+const (
+	ColumnNone Column = iota
+	ColumnRepo
+	ColumnID
+	ColumnTitle
+	ColumnState
+	ColumnModel
+	ColumnElapsed
+)
+
+// ColumnAt says which field of a row the cell x falls in, and whether it
+// fell in one at all.
+//
+// x is counted from the first cell of the row, which is not the first cell
+// of the terminal: the caller subtracts whatever gutter it draws the cursor
+// mark in first, exactly as it already does before calling Columns.
+//
+// It walks the widths the plan handed out and never the text that was drawn
+// into them, and that is the whole of why it lives here. Every field is cut
+// to its budget and padded back out to it, so the plan's numbers are where
+// the columns actually are; measuring the drawn row would find the end of a
+// word rather than the end of a column, and would find it in bytes rather
+// than in cells, which are two different places the moment a title carries
+// an accent.
+//
+// The order is the order Width sums and the order the row is drawn in, and
+// the three have to stay the same list. A field of zero cells is skipped
+// and takes no gap with it, which is what makes a dropped column give its
+// space to the title rather than leave a hole where it was.
+//
+// A gap belongs to neither of the columns it separates. Two cells wide, it
+// answers ColumnNone — a caller that wants to treat a click there as a
+// click on the row is free to, and this function will not decide it for it.
+func (p Plan) ColumnAt(x int) (Column, bool) {
+	if x < 0 {
+		return ColumnNone, false
+	}
+	at, first := 0, true
+	for _, c := range []struct {
+		cells  int
+		column Column
+	}{
+		{p.Repo, ColumnRepo},
+		{p.ID, ColumnID},
+		{p.Title, ColumnTitle},
+		{p.State, ColumnState},
+		{p.Model, ColumnModel},
+		{p.Elapsed, ColumnElapsed},
+	} {
+		if c.cells <= 0 {
+			continue
+		}
+		if !first {
+			if at += gap; x < at {
+				return ColumnNone, false
+			}
+		}
+		first = false
+		if x < at+c.cells {
+			return c.column, true
+		}
+		at += c.cells
+	}
+	return ColumnNone, false
+}

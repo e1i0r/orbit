@@ -1,7 +1,8 @@
  orbit  ~/work                                                  unread 3/5    autopilot ●    4 repos
 ────────────────────────────────────────────────────────────────────────────────────────────────────
+  $0.00 spent  ·  4 todo · 3 in flight · 2 needs you · 6 done  ·  0 events  ·  0ms read
  ACME-2662  Retry the webhook on 5xx                                        payments · failed: gates
-  log   diff  ▸evidence                                                                    attempt 2
+  1   2   3   4   5   6  ▸7 report   8   9   0   w                                         attempt 2
  ── attempt 1 ────────────────────────────────────────────────────────────────────────── 13:58:00 ──
   finished  implement  claude opus  cost $0.42  session 8f2c31                                      
     │ wrote retry.go                                                                                
@@ -14,7 +15,6 @@
     stopped: the gates phase exited 1                                                               
     37 of 1,048,583 bytes kept — the rest was not written down anywhere                             
     │ go vet: retry.go:31: unreachable code                                                         
-                                                                                                    
                                                                                                     
                                                                                                     
                                                                                                     

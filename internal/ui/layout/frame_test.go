@@ -15,13 +15,14 @@ import (
 // can walk them as a tiling rather than naming each one four times.
 func regionsOf(f Frame) []struct {
 	name string
-	r    Region
+	r    Strip
 } {
 	return []struct {
 		name string
-		r    Region
+		r    Strip
 	}{
 		{"header", f.Header},
+		{"status", f.Status},
 		{"body", f.Body},
 		{"band", f.Band},
 		{"bar", f.Bar},
@@ -49,7 +50,7 @@ func checkTiling(t *testing.T, f Frame, w, h int) {
 		y += reg.r.H
 	}
 	if y != h {
-		t.Errorf("the four regions cover %d rows of %d — the frame must tile the height exactly", y, h)
+		t.Errorf("the five regions cover %d rows of %d — the frame must tile the height exactly", y, h)
 	}
 }
 
@@ -59,12 +60,12 @@ func TestFrameTilesEveryTerminalItAccepts(t *testing.T) {
 		w, h     int
 		wantBody int
 	}{
-		{"a large terminal", 200, 60, 55},
-		{"a laptop", 120, 40, 35},
-		{"a half screen", 100, 30, 25},
-		{"the classic eighty by twenty-four", 80, 24, 19},
-		{"the narrowest terminal orbit draws", 60, 20, 15},
-		{"a shell pane with eight rows", 100, 8, 3},
+		{"a large terminal", 200, 60, 54},
+		{"a laptop", 120, 40, 34},
+		{"a half screen", 100, 30, 24},
+		{"the classic eighty by twenty-four", 80, 24, 18},
+		{"the narrowest terminal orbit draws", 60, 20, 14},
+		{"a shell pane with eight rows", 100, 8, 2},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -124,25 +125,25 @@ func TestFrameStaysTotalOnAShortTerminal(t *testing.T) {
 // cannot say what it is showing is worse than one showing less.
 func TestFrameGivesUpTheBandBeforeTheBody(t *testing.T) {
 	cases := []struct {
-		h                       int
-		header, body, band, bar int
+		h                               int
+		header, status, body, band, bar int
 	}{
-		{8, 2, 3, 2, 1},
-		{6, 2, 1, 2, 1},
-		{5, 2, 1, 1, 1},
-		{4, 2, 1, 0, 1},
-		{3, 2, 1, 0, 0},
-		{2, 1, 1, 0, 0},
-		{1, 1, 0, 0, 0},
-		{0, 0, 0, 0, 0},
+		{8, 2, 1, 2, 2, 1},
+		{6, 2, 0, 1, 2, 1},
+		{5, 2, 0, 1, 1, 1},
+		{4, 2, 0, 1, 0, 1},
+		{3, 2, 0, 1, 0, 0},
+		{2, 1, 0, 1, 0, 0},
+		{1, 1, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0},
 	}
 	for _, c := range cases {
 		f, err := Fit(MinWidth, c.h)
 		if err != nil {
 			t.Fatalf("Fit(%d, %d): %v", MinWidth, c.h, err)
 		}
-		got := []int{f.Header.H, f.Body.H, f.Band.H, f.Bar.H}
-		want := []int{c.header, c.body, c.band, c.bar}
+		got := []int{f.Header.H, f.Status.H, f.Body.H, f.Band.H, f.Bar.H}
+		want := []int{c.header, c.status, c.body, c.band, c.bar}
 		for i := range got {
 			if got[i] != want[i] {
 				t.Errorf("at height %d the regions are %v, want %v", c.h, got, want)

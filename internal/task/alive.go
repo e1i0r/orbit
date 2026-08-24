@@ -51,17 +51,56 @@ import (
 // The window for that is narrow and it is real: a marker outlives its run
 // (SIGKILL, or the machine went down), the number is recycled by something
 // unrelated, and a cancel arrives before Reconcile has swept the marker
-// away. Closing it means checking the claim's identity rather than its
-// number — a start time, or the name of the executable, written into the
-// marker and compared here — which is a change to what the marker records
-// and is not made yet. What is done instead is narrowing what a marker may
-// name at all: see parsePid, and killTarget in cancel.go.
+// away.
+//
+// The larger half of that window is closed here, by the marker's own start
+// time. A machine that went down and came back has renumbered everything:
+// pids are handed out from the low numbers again, so a marker written before
+// the last boot names a number that now belongs to whatever happened to take
+// it — very often something that started early and is still running, which
+// is the worst case, because it answers yes. So a marker older than the boot
+// is not consulted about its pid at all. It is a claim from a previous life
+// of this machine, and the honest answer is that its run is gone.
+//
+// What is left open is a pid recycled without a reboot, on a machine up long
+// enough to wrap the number round. That is rarer by orders of magnitude, and
+// closing it needs the start time of the process rather than of the machine —
+// which the standard library does not expose on darwin, and this build takes
+// no dependency to reach. What guards it meanwhile is narrowing what a
+// marker may name at all: see parsePid, and killTarget in cancel.go.
 func Alive(s *store.Store, t Task) (pid int, ok bool, err error) {
-	pid, found, err := readMarker(s, t)
+	pid, started, found, err := readMarker(s, t)
 	if err != nil || !found {
 		return 0, false, err
 	}
+	if staleAcrossBoot(started) {
+		return pid, false, nil
+	}
 	return pid, running(pid), nil
+}
+
+// staleAcrossBoot is whether a marker was written before the machine last
+// started.
+//
+// Both unknowns answer false, and both are deliberate. A marker with no
+// start time was written by a version of Orbit that did not record one, and
+// declaring every one of those dead would abandon runs that are working. A
+// machine that cannot say when it booted is the same shape of ignorance from
+// the other side. In both cases Alive falls back to asking the pid, which is
+// what it did before this check existed.
+func staleAcrossBoot(started time.Time) bool {
+	if started.IsZero() {
+		return false
+	}
+	boot, ok := bootTime()
+	if !ok {
+		return false
+	}
+	// A second of slack, because the marker's timestamp is written to the
+	// second and the boot time is read to the second: a run that began in
+	// the same second the machine finished booting must not be read as
+	// having begun before it.
+	return started.Before(boot.Add(-time.Second))
 }
 
 // running asks the operating system whether a pid is still there. Signal 0
@@ -120,23 +159,46 @@ func removeMarker(s *store.Store, t Task) error {
 // cannot be understood is an error rather than a silent "not running": the
 // file is one line of text this package wrote, and a reader that shrugs at
 // damage it cannot explain is how a running task gets declared abandoned.
-func readMarker(s *store.Store, t Task) (pid int, found bool, err error) {
+func readMarker(s *store.Store, t Task) (pid int, started time.Time, found bool, err error) {
 	path, err := s.RunPath(t.Repo.Path, t.ID)
 	if err != nil {
-		return 0, false, err
+		return 0, time.Time{}, false, err
 	}
 	body, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
-		return 0, false, nil
+		return 0, time.Time{}, false, nil
 	}
 	if err != nil {
-		return 0, false, fmt.Errorf("read the run marker of task %s: %w", t.ID, err)
+		return 0, time.Time{}, false, fmt.Errorf("read the run marker of task %s: %w", t.ID, err)
 	}
 	pid, err = parsePid(string(body))
 	if err != nil {
-		return 0, false, fmt.Errorf("read the run marker of task %s: %w", t.ID, err)
+		return 0, time.Time{}, false, fmt.Errorf("read the run marker of task %s: %w", t.ID, err)
 	}
-	return pid, true, nil
+	return pid, parseStarted(string(body)), true, nil
+}
+
+// parseStarted picks the start time out of a marker, and answers the zero
+// time when there is not one to pick.
+//
+// Unlike parsePid this never fails. A missing or unreadable start time is a
+// marker from before Orbit wrote one, or a marker somebody edited, and the
+// caller's answer to "I do not know when this began" is already written: it
+// falls back to asking the pid. Turning it into an error would make an old
+// marker unreadable, which would declare a running task damaged.
+func parseStarted(body string) time.Time {
+	for line := range strings.SplitSeq(body, "\n") {
+		rest, ok := strings.CutPrefix(line, "started: ")
+		if !ok {
+			continue
+		}
+		at, err := time.Parse(time.RFC3339, strings.TrimSpace(rest))
+		if err != nil {
+			return time.Time{}
+		}
+		return at.UTC()
+	}
+	return time.Time{}
 }
 
 // parsePid picks the pid line out of a marker.

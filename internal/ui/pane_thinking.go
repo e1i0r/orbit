@@ -1,0 +1,102 @@
+package ui
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/e1i0r/orbit/internal/view"
+)
+
+type thoughtBlock struct {
+	at      string
+	phase   string
+	attempt int
+	lines   []string
+}
+
+// formatThoughtLine formats a thought line into a clean, concise decision bullet.
+func formatThoughtLine(l string) (string, Role) {
+	lower := strings.ToLower(l)
+	switch {
+	case strings.Contains(lower, "decid") || strings.Contains(lower, "conclu") || strings.Contains(lower, "opt"):
+		return "🎯 " + l, OK
+	case strings.Contains(lower, "descart") || strings.Contains(lower, "turn down") || strings.Contains(lower, "reject") || strings.Contains(lower, "avoid"):
+		return "🚫 " + l, Warn
+	case strings.Contains(lower, "investig") || strings.Contains(lower, "check") || strings.Contains(lower, "find") || strings.Contains(lower, "encontr") || strings.Contains(lower, "analiz"):
+		return "🔍 " + l, Live
+	case strings.Contains(lower, "porqu") || strings.Contains(lower, "becaus") || strings.Contains(lower, "razon") || strings.Contains(lower, "reason"):
+		return "💡 " + l, Accent
+	default:
+		return "• " + l, Dim
+	}
+}
+
+// thinkingLines renders Pane 11: Concise decision reasoning and analysis captured from the model.
+func (m Model) thinkingLines() []string {
+	p := m.opts.Words
+	if m.logErr != nil {
+		return []string{"  " + Paint(Bad).Render(m.logErr.Error())}
+	}
+
+	var blocks []thoughtBlock
+	for _, e := range m.entries {
+		if e.What() == view.EntryThought {
+			timeStr := ""
+			if !e.At.IsZero() {
+				timeStr = e.At.Format("15:04:05")
+			}
+			var lines []string
+			for _, l := range strings.Split(e.Text, "\n") {
+				l = strings.TrimSpace(l)
+				if l != "" {
+					lines = append(lines, l)
+				}
+			}
+			if len(lines) > 0 {
+				blocks = append(blocks, thoughtBlock{
+					at:      timeStr,
+					phase:   e.Phase,
+					attempt: e.Attempt,
+					lines:   lines,
+				})
+			}
+		}
+	}
+
+	out := []string{
+		"",
+		"  " + Paint(Accent).Bold(true).Render(p.T("thinking.title", "Decision Analysis & Agent Thinking")),
+		"  " + Paint(Dim).Render(p.T("thinking.subtitle", "why it made each decision, what it evaluated and what it turned down")),
+		"",
+	}
+
+	if len(blocks) == 0 {
+		out = append(out, "  "+Paint(Dim).Render(p.T("thinking.empty", "no thinking blocks or decision logs captured for this task")))
+		return out
+	}
+
+	out = append(out, fmt.Sprintf("  %d %s",
+		len(blocks),
+		p.T("thinking.entries_count", "análisis de razonamiento y decisiones"),
+	))
+	out = append(out, "")
+
+	for _, b := range blocks {
+		head := fmt.Sprintf("  %s %s", Paint(Accent).Render("●"), Paint(Dim).Render(b.at))
+		if b.phase != "" {
+			head += "  " + Paint(Accent).Render(b.phase)
+		}
+		if b.attempt > 0 {
+			head += "  " + Paint(Dim).Render(fmt.Sprintf("intento %d", b.attempt))
+		}
+		out = append(out, head)
+
+		for _, l := range b.lines {
+			formatted, role := formatThoughtLine(l)
+			out = append(out, "      "+Paint(role).Render(formatted))
+		}
+		out = append(out, "")
+	}
+
+	return out
+}

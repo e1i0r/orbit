@@ -17,28 +17,16 @@ import (
 	"strconv"
 	"strings"
 
+	"charm.land/lipgloss/v2"
+
 	"github.com/e1i0r/orbit/internal/view"
-)
-
-// tab is which of the three panes is on top. The order is the order they are
-// read in: what happened, what changed, what was said.
-type tab int
-
-const (
-	tabLog tab = iota
-	tabDiff
-	tabEvidence
-	tabCount
 )
 
 // paneHeight is how many rows of a body of h the pane itself gets.
 //
 // Two rows always go to the heading and the tab strip: a screen that does
-// not say which task it is open on, and which of three tabs is showing, is
-// worse than a screen with two fewer rows of content. The advice line at the
-// bottom is given up first, at three rows and under, because it is the only
-// one of the four that says nothing a reader cannot find out by pressing a
-// key.
+// not say which task it is open on, and which of the tabs is showing, is
+// worse than a screen with two fewer rows of content.
 func paneHeight(h int) int {
 	if h >= 4 {
 		return h - 3
@@ -93,57 +81,81 @@ func (m Model) detailHead(w int) string {
 	return spread(" "+left, right, w)
 }
 
-// tabStrip is the three tabs, with the one showing marked.
+// tabStrip renders the eleven tabs.
 //
-// The mark is the same glyph the cursor uses on the board, for the same
-// reason: it survives a terminal that has no colour at all, where a tab
-// distinguished only by being brighter is a tab nobody can tell from the
-// other two.
+// The tab strip at narrow columns cannot fit eleven names. It shows the
+// key numbers (1-9, 0, w) with only the active pane's name spelled out, and
+// the full catalogue is accessible via the help overlay [?].
+// tabStrip renders the eleven tabs.
 func (m Model) tabStrip(w int) string {
 	p := m.opts.Words
-	names := []struct {
-		tab  tab
-		text string
-	}{
-		{tabLog, p.T("tab.log", "log")},
-		{tabDiff, p.T("tab.diff", "diff")},
-		{tabEvidence, p.T("tab.evidence", "evidence")},
-	}
-	var parts []string
-	for _, n := range names {
+	var fullParts []string
+	for _, n := range m.tabNames() {
+		k := paneKey(n.tab)
+		tag := "[" + k + " " + n.text + "]"
 		if n.tab == m.tab {
-			parts = append(parts, Paint(Accent).Render(markGlyph+n.text))
-			continue
+			fullParts = append(fullParts, Paint(Sel).Render(" "+tag+" "))
+		} else {
+			fullParts = append(fullParts, Paint(Dim).Render(tag))
 		}
-		parts = append(parts, Paint(Dim).Render(" "+n.text))
 	}
+
+	var parts []string
+	if lipgloss.Width(strings.Join(fullParts, " "))+10 <= w {
+		parts = fullParts
+	} else {
+		for _, n := range m.tabNames() {
+			k := paneKey(n.tab)
+			if n.tab == m.tab {
+				parts = append(parts, Paint(Sel).Render(" ["+k+" "+n.text+"] "))
+			} else {
+				parts = append(parts, Paint(Dim).Render("["+k+"]"))
+			}
+		}
+	}
+
 	var right string
-	// The slot holds one fact, and on the diff tab of a repository with no
-	// base branch that fact displaces "attempt N". That is a deliberate
-	// trade and not an oversight: the attempt count is on screen on the
-	// other two tabs and in the record itself, while the shape of the
-	// comparison is only knowable here, and only while the diff is showing.
 	switch attempt := m.attempt(); {
 	case m.tab == tabDiff && m.diffKnown && m.diffErr == nil && m.diffNoBase:
-		// The comparison quietly changed shape: gitDiff had no base branch
-		// to measure against and fell back to a plain working-tree diff, so
-		// whatever the task committed is not in what is on screen, only
-		// what is still uncommitted. Saying so here is cheaper than a
-		// reader assuming a base that was never actually used.
 		right = Paint(Dim).Render(p.T("diff.no_base", "no base branch"))
 	case attempt > 0:
 		right = Paint(Dim).Render(p.T("log.attempt", "attempt {n}", about("n", strconv.Itoa(attempt))))
 	}
-	return spread(" "+strings.Join(parts, "  "), right, w)
+	return spread(" "+strings.Join(parts, " "), right, w)
+}
+
+// placedTab is one tab of the drawn strip and the cells it occupies.
+type placedTab struct {
+	tab  tab
+	x, w int
+}
+
+// placeTabs walks the strip matching what tabStrip drew.
+func (m Model) placeTabs() []placedTab {
+	out := make([]placedTab, 0, tabCount)
+	x := 1
+	var fullWidth int
+	for _, n := range m.tabNames() {
+		fullWidth += lipgloss.Width("["+paneKey(n.tab)+" "+n.text+"]") + 1
+	}
+	useFull := fullWidth+10 <= m.frame.Body.W
+
+	for _, n := range m.tabNames() {
+		k := paneKey(n.tab)
+		text := "[" + k + "]"
+		if n.tab == m.tab {
+			text = " [" + k + " " + n.text + "] "
+		} else if useFull {
+			text = "[" + k + " " + n.text + "]"
+		}
+		cells := lipgloss.Width(text)
+		out = append(out, placedTab{tab: n.tab, x: x, w: cells})
+		x += cells + 1
+	}
+	return out
 }
 
 // paneRows is the pane itself, cut to the region it was given.
-//
-// Every line is passed through fit even though the viewport already cut it
-// to its own width. The two widths are the same number arrived at twice, and
-// the assertion the measured render makes is about this frame rather than
-// about the viewport's arithmetic: a diff line of four thousand cells must
-// scroll inside the pane and must never widen the window around it.
 func (m Model) paneRows(h, w int) []string {
 	lines := strings.Split(m.panes[m.tab].View(), "\n")
 	out := make([]string, 0, h)
@@ -153,28 +165,14 @@ func (m Model) paneRows(h, w int) []string {
 	return fill(out[:min(len(out), h)], h)
 }
 
-// moreLine is the "there is more" line, and it says something different
-// depending on what the pane is doing.
-//
-// A pane whose content fits says nothing at all. Advice about scrolling on a
-// screen with nothing below the fold is furniture, and furniture in the one
-// row that is supposed to mean "there is more down there" is how that row
-// stops being read.
-//
-// The brief asks for a third sentence — how to reach the pane at all, for a
-// reader whose keystrokes are going somewhere else. Nothing in this window
-// can be in that state: the two things that take the keyboard first, the
-// filter prompt and a confirmation, are both raised from the board and
-// neither can be raised from here, and this line is only ever drawn with the
-// task view on top. It is left out rather than written unreachable, and the
-// day a verb here raises a question is the day it comes back with it.
+// moreLine is the "there is more" scroll advice line.
 func (m Model) moreLine() string {
 	vp := m.panes[m.tab]
 	if vp.AtTop() && vp.AtBottom() {
 		return ""
 	}
 	p := m.opts.Words
-	if m.tab == tabLog && m.following {
+	if m.tab == tabTimeline && m.following {
 		return " " + Paint(Live).Render(p.T("detail.following", "following — {key} stops it",
 			about("key", m.keys.Up.Help().Key)))
 	}
@@ -182,14 +180,7 @@ func (m Model) moreLine() string {
 		about("keys", m.keys.Up.Help().Key+m.keys.Down.Help().Key)))
 }
 
-// subject is the task the view is open on, taken from the board every frame
-// rather than copied when the view opened.
-//
-// That is what makes the heading move: a task that finishes while its log is
-// on screen changes its own row on the next refresh, and this screen has to
-// say the same thing that row says. A task that has left the board entirely
-// leaves the id standing on its own, which is the honest answer — the record
-// is still readable, and the heading says which one it is.
+// subject is the task the view is open on.
 func (m Model) subject() view.Task {
 	if t, ok := m.task(m.detail); ok {
 		return t
@@ -197,8 +188,7 @@ func (m Model) subject() view.Task {
 	return view.Task{ID: m.detail}
 }
 
-// attempt is which run the newest entry belongs to, which is what the strip
-// says on the right. It is 0 for a task nobody has run.
+// attempt is which run the newest entry belongs to.
 func (m Model) attempt() int {
 	if len(m.entries) == 0 {
 		return 0
@@ -206,44 +196,12 @@ func (m Model) attempt() int {
 	return m.entries[len(m.entries)-1].Attempt
 }
 
-// detailHints is the key bar under the task view. It is a different list
-// from the board's because every verb on the board acts on the row under the
-// cursor, and there is no cursor here.
-func (m Model) detailHints() []string {
-	out := []string{hintFor(m.keys.Back), hintFor(m.keys.NextTab)}
+// detailHints is the key bar under the task view.
+func (m Model) detailHints() []barHint {
+	out := []barHint{hintFor(m.keys.Back), hintFor(m.keys.NextTab)}
 	if m.tab == tabDiff {
 		out = append(out, hintFor(m.keys.Edit))
 	}
 	return append(out, hint(m.keys.Up.Help().Key+m.keys.Down.Help().Key,
 		m.opts.Words.T("key.scroll", "scroll")))
-}
-
-// syncPanes rebuilds all three panes and re-sizes them to the region.
-//
-// All three are rebuilt whenever any of the facts behind them changes, which
-// costs a walk of a few dozen lines and buys the thing tabbing has to be:
-// instant, and the same content it would have had if the reader had been
-// looking at it all along. A pane built lazily on the first tab to it is a
-// pane whose scroll position resets every time a message arrives.
-func (m Model) syncPanes() Model {
-	w, h := max(m.frame.Body.W, 1), max(paneHeight(m.frame.Body.H), 1)
-	content := [tabCount][]string{
-		tabLog:      m.logLines(),
-		tabDiff:     m.diffLines(),
-		tabEvidence: m.evidenceLines(),
-	}
-	for i := range m.panes {
-		vp := m.panes[i]
-		vp.SoftWrap = false
-		vp.SetWidth(w)
-		vp.SetHeight(h)
-		vp.SetContentLines(content[i])
-		m.panes[i] = vp
-	}
-	if m.following {
-		vp := m.panes[tabLog]
-		vp.GotoBottom()
-		m.panes[tabLog] = vp
-	}
-	return m
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/e1i0r/orbit/internal/task"
 )
 
-func newTask(args []string, out io.Writer) error {
+func newTask(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("new", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	dir := fs.String("repo", ".", "the repository the task is against")
@@ -18,7 +18,7 @@ func newTask(args []string, out io.Writer) error {
 	// a task walks when nobody says is the user's setting, and a default
 	// spelled out on this flag would quietly override it.
 	flowName := fs.String("flow", "", "which flow the task walks; the default is the one orbit set flow chose")
-	if err := parse(fs, args, out); err != nil {
+	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
 	text := strings.TrimSpace(strings.Join(fs.Args(), " "))
@@ -40,6 +40,6 @@ func newTask(args []string, out io.Writer) error {
 	// The flow is echoed even when it was not typed. It was still chosen —
 	// by the settings, or by what this program ships — and a decision the
 	// user did not make is exactly the one worth showing them.
-	fmt.Fprintf(out, "%s written against %s, to walk the %s flow\n", t.ID, r.Name, t.Flow)
+	fmt.Fprintf(ctx.Out, "%s written against %s, to walk the %s flow\n", t.ID, r.Name, t.Flow)
 	return nil
 }

@@ -22,11 +22,11 @@ import (
 // A task that cannot be reconciled does not stop the others: the point of
 // the sweep is the tasks it can close, and one damaged marker holding up the
 // rest would make the command useless exactly when it is needed.
-func reconcile(args []string, out io.Writer) error {
+func reconcile(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("reconcile", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	dir := fs.String("repo", ".", "the repository the tasks are against")
-	if err := parse(fs, args, out); err != nil {
+	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
 	s, r, err := openBoth(*dir)
@@ -51,11 +51,11 @@ func reconcile(args []string, out io.Writer) error {
 		}
 		if wrote {
 			closed++
-			fmt.Fprintf(out, "%s was abandoned; its record says so now\n", id)
+			fmt.Fprintf(ctx.Out, "%s was abandoned; its record says so now\n", id)
 		}
 	}
 	if closed == 0 && len(errs) == 0 {
-		fmt.Fprintln(out, "every run is accounted for")
+		fmt.Fprintln(ctx.Out, "every run is accounted for")
 	}
 	return errors.Join(errs...)
 }

@@ -27,7 +27,7 @@ import (
 var tabNames = []struct {
 	name string
 	tab  tab
-}{{"log", tabLog}, {"diff", tabDiff}, {"evidence", tabEvidence}}
+}{{"timeline", tabTimeline}, {"diff", tabDiff}, {"report", tabReport}}
 
 func TestEveryTaskViewFrameFitsTheTerminalItWasGiven(t *testing.T) {
 	for _, lang := range []string{"en", "es", "qps"} {
@@ -207,6 +207,7 @@ func TestTheEditorRefusesWithoutOne(t *testing.T) {
 // in this window can put it in that state; moreLine's own comment says so.
 func TestTheMoreLineSaysWhatToDoAboutIt(t *testing.T) {
 	m, _ := openWith(t, "ACME-2662", longLog())
+	m = showing(t, m, tabTimeline)
 	tail := paneText(t, m)
 	wantIn(t, tail, "following")
 	wantIn(t, tail, m.keys.Up.Help().Key)

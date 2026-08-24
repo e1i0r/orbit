@@ -1,18 +1,18 @@
- orbit  ~/work                                                  úñŕéáð 3/5    áúţópíłóţ ●    4 ŕépóš
+ [orbit]   ~/work                                                   📦 4 ŕépóš    🧠 claude    🌐 ÉÑ
 ────────────────────────────────────────────────────────────────────────────────────────────────────
- ÑÉÉÐŠ ÝÓÚ  3
-▸  payments  ACME-2662  Retry the webhook on 5xx                      fáíłéð: gates              31m
-   app       ACME-2701  Move the assets cron                          wáíţíñg: review             4m
-   payments  ACME-2698  Fix the swagger lint                          ábáñðóñéð                   3h
+  $0.00 špéñţ  ·  15 ţáškš  ·  0 évéñţš  ·  0mš ŕéáð
+  🛑 ÑÉÉÐŠ ÝÓÚ (3) ───────────────────────────────────────────────────────────────────────────────
+▸ payments  ACME-2662  Retry the webhook on 5xx                      fáíłéð: gates              31m
+  app       ACME-2701  Move the assets cron                          wáíţíñg: review             4m
+  payments  ACME-2698  Fix the swagger lint                          ábáñðóñéð                   3h
 
- ŔÚÑÑÍÑG  2
-   app       ACME-2705  Reconciliation endpoint                       implement        opus       8m
-   payments  ACME-2706  Index on settlements                          review 2/3       opus       3m
+  ⚡ ŔÚÑÑÍÑG (2) ─────────────────────────────────────────────────────────────────────────────────
+  app       ACME-2705  Reconciliation endpoint                       implement        opus       8m
+  payments  ACME-2706  Index on settlements                          review 2/3       opus       3m
 
- ŢÓ ÐÓ  4                                                                                     ⏎ ópéñ
+  📋 ŢÓ ÐÓ (4) ─────────────────────────────────────────────────────────────────────────────  ⏎ ópéñ
 
- ÐÓÑÉ ŢÓÐÁÝ  6                                                                                ⏎ ópéñ
-
+  🏁 ÐÓÑÉ ŢÓÐÁÝ (6) ────────────────────────────────────────────────────────────────────────  ⏎ ópéñ
 
 
 
@@ -27,4 +27,4 @@
 
 ────────────────────────────────────────────────────────────────────────────────────────────────────
  ACME-2705 · implement · 8m íñ · claude/opus · careful
- [↑↓] móvé  [⏎] ópéñ  [n] šţáŕţ á ŕúñ  [t] ţáké ţhé kéýbóáŕð  [/] fíłţéŕ  [?] [q]
+ [↑↓] móvé  [⏎] ópéñ  [n] šţáŕţ á ŕúñ  [?] [q]                      ⚡ áúţópíłóţ ● [A]    💬 çłí [c]

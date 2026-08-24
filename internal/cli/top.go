@@ -24,6 +24,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/engine"
+	"github.com/e1i0r/orbit/internal/quota"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/ui"
 	"github.com/e1i0r/orbit/internal/words"
@@ -37,14 +38,14 @@ import (
 // screen wipes before anybody has read it, and one printed instead of the
 // frame would replace the thing that was asked for with a complaint about a
 // record on the side.
-func top(args []string, out io.Writer) error {
+func top(ctx Context, args []string) error {
 	// The flags are read by a function of their own so that what they were
 	// set to is something a test can ask for. See topflags.go: every test in
 	// this package hands the command a buffer and therefore takes the plain
-	// branch below through interactive(out), so -once cannot be the deciding
+	// branch below through interactive(ctx.Out), so -once cannot be the deciding
 	// term in any of them, and asking parseTop directly is the only way this
 	// flag has a test that can fail.
-	dir, once, lang, err := parseTop(args, out)
+	dir, once, lang, err := parseTop(ctx, args)
 	if err != nil {
 		return err
 	}
@@ -55,12 +56,13 @@ func top(args []string, out io.Writer) error {
 	}
 	swept := reconcileAll(s)
 
-	if drawsOneFrame(once, interactive(out)) {
+	if drawsOneFrame(once, interactive(ctx.Out)) {
+		opts.Quota = quotaPort(quota.FromEnv(), true)
 		frame, err := ui.Plain(opts)
 		if err != nil {
 			return err
 		}
-		fmt.Fprintln(out, frame)
+		fmt.Fprintln(ctx.Out, frame)
 		return swept
 	}
 	if _, err := tea.NewProgram(fullScreen{ui.New(opts)}).Run(); err != nil {
@@ -103,9 +105,17 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 	// map of one today, and it is a map because the record already names its
 	// engine and a task run by something else has to be answered by name
 	// rather than by assumption.
-	engines := map[string]engine.Engine{"claude": engine.NewClaude()}
+	engines := map[string]engine.Engine{
+		"claude":   engine.NewClaude(),
+		"codex":    engine.NewCodex(),
+		"opencode": engine.NewOpenCode(),
+	}
+	home, _ := os.UserHomeDir()
+	if home == "" {
+		home = os.Getenv("HOME")
+	}
 	return ui.Options{
-		Root: underHome(dir, os.Getenv("HOME")),
+		Root: underHome(dir, home),
 		// The board reader the window is handed carries the settings file on
 		// its clock: see poll. The settings adapter answers from memory, and
 		// this is what keeps what it holds in step with the file.
@@ -121,10 +131,43 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 		Take:     takePort(r, engines),
 		Flows:    s,
 		// canResume is asked per task rather than once for the build: the
-		// engine a task ran under is the one that decides whether its session
-		// can be carried on, and that name lives on the task.
+		// engine a task ran under is the one that decides whether its
+		// session can be carried on, and that name lives on the task.
 		CanResume: func(name string) bool { return canResume(engines, name) },
+		// The palette's two halves: the list it shows, read off the table,
+		// and the way it runs one, which is the table's own Run with the
+		// settings adapter answering what language the refusal is in.
+		Commands: commandTable(),
+		Do:       doPort(cfg),
+		// The id rule the compose form types against: the store's own, the
+		// one every write goes through, and nobody's second copy of it.
+		ValidID: store.ValidTaskID,
+		Quota:   quotaPort(quota.FromEnv(), false),
+		Engines: enginesPort(engines),
 	}, s, nil
+}
+
+// quotaPort adapts quota.Client to ui.Options.Quota.
+func quotaPort(qc *quota.Client, syncWait bool) func() []ui.QuotaWindow {
+	if qc == nil {
+		return nil
+	}
+	return func() []ui.QuotaWindow {
+		windows := qc.Quota(syncWait)
+		if len(windows) == 0 {
+			return nil
+		}
+		out := make([]ui.QuotaWindow, len(windows))
+		for i, w := range windows {
+			out[i] = ui.QuotaWindow{
+				Key:      w.Key,
+				Label:    w.Label,
+				Pct:      w.Pct,
+				ResetsIn: w.ResetsIn,
+			}
+		}
+		return out
+	}
 }
 
 // mustBeDirectory refuses a root that is not one.

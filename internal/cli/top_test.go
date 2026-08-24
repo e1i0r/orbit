@@ -17,6 +17,7 @@ package cli
 
 import (
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -164,9 +165,14 @@ func TestTheDirectoryMayComeBeforeOrAfterTheFlags(t *testing.T) {
 	if after != 0 {
 		t.Fatalf("top -once <dir> exited %d: %s", after, errOut)
 	}
-	if first != second {
+	if stripReadTime(first) != stripReadTime(second) {
 		t.Errorf("the two orders drew different frames:\n%s\n---\n%s", first, second)
 	}
+}
+
+func stripReadTime(s string) string {
+	re := regexp.MustCompile(`\d+ms read`)
+	return re.ReplaceAllString(s, "Xms read")
 }
 
 func TestTopRefusesASecondDirectory(t *testing.T) {
@@ -204,17 +210,11 @@ func TestTopOverADirectoryWithNoRepositoryInItSaysWhereItLooked(t *testing.T) {
 	}
 }
 
-// The synopsis is the whole interface on one screen, and a command missing
-// from it is a command nobody finds.
-func TestTopIsInTheSynopsis(t *testing.T) {
-	var found bool
-	for _, s := range synopsis {
-		if strings.HasPrefix(s[0], "orbit top") {
-			found = true
-		}
-	}
-	if !found {
-		t.Error("orbit top is not in the synopsis")
+// The table is the whole interface on one screen, and a command missing from
+// it is a command nobody finds and nothing dispatches.
+func TestTopIsInTheTable(t *testing.T) {
+	if _, ok := lookup("top"); !ok {
+		t.Error("orbit top is not in the command table")
 	}
 }
 

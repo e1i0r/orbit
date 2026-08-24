@@ -23,6 +23,7 @@ import (
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/task"
+	"github.com/e1i0r/orbit/internal/ui"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -188,4 +189,59 @@ func reconcileAll(s *store.Store) error {
 		}
 	}
 	return errors.Join(errs...)
+}
+
+// enginesPort adapts the engine map and declared engines to ui.Options.Engines.
+func enginesPort(engines map[string]engine.Engine) func() []ui.EngineInfo {
+	return func() []ui.EngineInfo {
+		var list []ui.EngineInfo
+		names := []string{"claude", "codex", "opencode"}
+		setupGuides := map[string][]string{
+			"claude": {
+				"1. Install Claude Code: npm install -g @anthropic-ai/claude-code",
+				"2. Run 'claude' in a terminal to authenticate",
+				"3. Ensure 'claude' is in your PATH",
+			},
+			"codex": {
+				"1. Install Codex CLI: npm install -g @openai/codex",
+				"2. Export OPENAI_API_KEY in your environment",
+				"3. Ensure 'codex' is in your PATH",
+			},
+			"opencode": {
+				"1. Install OpenCode CLI binary",
+				"2. Configure local model endpoint or API keys",
+				"3. Ensure 'opencode' is in your PATH",
+			},
+		}
+
+		for _, name := range names {
+			eng, hasEng := engines[name]
+			_, pathErr := exec.LookPath(name)
+			available := hasEng && pathErr == nil
+			if available {
+				var models []ui.ChoiceInfo
+				for _, m := range eng.Models() {
+					models = append(models, ui.ChoiceInfo{ID: m.ID, Label: m.Label})
+				}
+				var efforts []ui.ChoiceInfo
+				for _, e := range eng.Efforts() {
+					efforts = append(efforts, ui.ChoiceInfo{ID: e.ID, Label: e.Label})
+				}
+				list = append(list, ui.EngineInfo{
+					Name:      name,
+					Available: true,
+					Models:    models,
+					Efforts:   efforts,
+					CanThink:  eng.CanThink(),
+				})
+			} else {
+				list = append(list, ui.EngineInfo{
+					Name:      name,
+					Available: false,
+					Setup:     setupGuides[name],
+				})
+			}
+		}
+		return list
+	}
 }

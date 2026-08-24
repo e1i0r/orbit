@@ -6,6 +6,7 @@ package ui
 // terminal anything. The fourth region, the activity band, is in band.go.
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -13,6 +14,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/board"
+	"github.com/e1i0r/orbit/internal/view"
 )
 
 const (
@@ -98,7 +100,30 @@ func (m Model) headerLeft(w int, spaced bool) (string, bool) {
 	if spaced {
 		w--
 	}
+	p := m.opts.Words
 	name := m.name()
+
+	// 1. Try full queue badges line if it fits
+	if len(m.board.Counts) >= 4 {
+		qPill := func(b view.Band, icon, label, fg, bg string, count int) string {
+			text := fmt.Sprintf("%s %s %d", icon, label, count)
+			if m.queueFilter != nil && *m.queueFilter == b {
+				return PillActive(text, fg, bg)
+			}
+			return Pill(text, fg, bg)
+		}
+		pills := []string{
+			qPill(view.ToDo, "📋", p.T("queue.todo", "Por hacer"), "#38BDF8", "#0C4A6E", m.board.Counts[0]),
+			qPill(view.Running, "⚡", p.T("queue.in_flight", "En curso"), "#2DD4BF", "#134E4A", m.board.Counts[1]),
+			qPill(view.NeedsYou, "💬", p.T("queue.needs_you", "En revisión"), "#FBBF24", "#78350F", m.board.Counts[2]),
+			qPill(view.Done, "🏁", p.T("queue.done", "Lista"), "#4ADE80", "#14532D", m.board.Counts[3]),
+		}
+		full := name + "  " + strings.Join(pills, " ")
+		if lipgloss.Width(full) <= w {
+			return full, true
+		}
+	}
+
 	for root := m.opts.Root; ; {
 		line := name
 		if root != "" {
@@ -114,9 +139,8 @@ func (m Model) headerLeft(w int, spaced bool) (string, bool) {
 	}
 }
 
-// name is the program's own name, which is never given up: a window that
-// cannot say what it is, is worse than a window showing less.
-func (m Model) name() string { return " " + Paint(Accent).Render("orbit") }
+// name is the program's own name badge.
+func (m Model) name() string { return Pill("[orbit]", "#FFFFFF", "#0F766E") }
 
 // shorten drops one leading path segment and marks the cut, and returns ""
 // once there is nothing left worth showing.
@@ -128,44 +152,34 @@ func shorten(root string) string {
 	return ""
 }
 
-// headerFields are the standing facts, in the order they are given up
-// backwards: unread is never dropped while any field is shown, the pip goes
-// before it, and the repository count goes first.
+// headerFields are the standing facts with emoji chips in Monokai theme.
 func (m Model) headerFields() []string {
 	p := m.opts.Words
-	unread, limit := board.Unread(m.board), m.unreadCap()
+	var fields []string
 
-	brake := Dim
+	// Repos chip
+	fields = append(fields, Paint(Dim).Render("📦 "+p.P("header.repos", m.board.Repos, "{n} repo", "{n} repos")))
+
+	// Model / knob chip
+	chip := m.knobChip()
+	if chip != "" {
+		fields = append(fields, Paint(Accent).Render("🧠 "+chip))
+	} else {
+		fields = append(fields, Paint(Dim).Render("🧠 claude"))
+	}
+
+	// Language chip
+	lang := p.T("header.lang_badge", "EN")
+	fields = append(fields, Paint(Dim).Render("🌐 "+lang))
+
+	// Unread brake warning (shown when brake is engaged)
+	unread := board.Unread(m.board)
 	if m.atUnreadCap(unread) {
-		brake = Warn
+		fields = append(fields, Paint(Warn).Render("⚠️ "+p.T("header.unread_brake", "brake ({n} unread)",
+			about("n", strconv.Itoa(unread)))))
 	}
-	fields := []string{Paint(brake).Render(p.T("header.unread", "unread {n}/{cap}",
-		about("n", strconv.Itoa(unread)), about("cap", strconv.Itoa(limit))))}
 
-	pip, role := pipOff, Dim
-	if m.autopilotOn() {
-		pip, role = pipOn, Live
-	}
-	fields = append(fields, Paint(Dim).Render(p.T("header.autopilot", "autopilot"))+" "+Paint(role).Render(pip))
-	return append(fields, Paint(Dim).Render(p.P("header.repos", m.board.Repos, "{n} repo", "{n} repos")))
-}
-
-// barLine is what can be pressed right now.
-//
-// It drops whole hints from the right rather than truncating them, because
-// half a hint is a key a reader has to guess the rest of. Help and quit are
-// never dropped: they are how a reader who is lost gets out, and a bar that
-// drops them is a bar that fails exactly when it is needed.
-func (m Model) barLine(w int) string {
-	tail := Paint(Dim).Render("[" + m.keys.Help.Help().Key + "] [" + m.keys.Quit.Help().Key + "]")
-	hints := m.hints()
-	for {
-		line := " " + strings.Join(append(hints, tail), hintGap)
-		if lipgloss.Width(line) <= w || len(hints) == 0 {
-			return fit(line, w)
-		}
-		hints = hints[:len(hints)-1]
-	}
+	return fields
 }
 
 // hints are the bar's entries, in the order they are given up backwards.
@@ -174,14 +188,14 @@ func (m Model) barLine(w int) string {
 // key the bar offers is a key that will not be refused when it is pressed.
 // The bar shows what can be done; the menu, one level down, shows what
 // cannot and why.
-func (m Model) hints() []string {
+func (m Model) hints() []barHint {
 	switch m.screen {
 	case screenDetail:
 		return m.detailHints()
 	case screenStart:
 		return m.startHints()
 	}
-	var out []string
+	var out []barHint
 	r, ok := m.selected()
 	if ok {
 		out = append(out, hint("↑↓", m.opts.Words.T("key.move", "move")), hintFor(m.keys.Open))
@@ -197,11 +211,23 @@ func (m Model) hints() []string {
 	return append(out, hintFor(m.keys.Filter))
 }
 
-// hintFor is one binding as the bar prints it, and hint is the same for the
-// arrow pair, which is two keys with one meaning and so has no binding of
-// its own.
-func hintFor(b key.Binding) string { return hint(b.Help().Key, b.Help().Desc) }
+// hintFor is one binding as the bar prints it: the glyph a reader sees, the
+// description beside it, and the keystroke a click on it would send.
+//
+// The keystroke is the binding's own first key rather than the glyph, and
+// the two are not the same string — ⏎ is drawn and enter is pressed. Taking
+// it from the binding is also what keeps a clicked hint and a pressed key on
+// one path: both arrive at the board's map as the same keystroke, so a verb
+// cannot be reachable by one and not by the other.
+func hintFor(b key.Binding) barHint {
+	h := hint(b.Help().Key, b.Help().Desc)
+	h.key = string(firstKey(b))
+	return h
+}
 
-func hint(glyph, desc string) string {
-	return Paint(Accent).Render("["+glyph+"]") + " " + Paint(Dim).Render(desc)
+// hint is the same for a pair of keys with one meaning — the arrows — which
+// has no binding of its own and so no single keystroke to send. It is drawn
+// and it is inert.
+func hint(glyph, desc string) barHint {
+	return barHint{text: Paint(Accent).Render("["+glyph+"]") + " " + Paint(Dim).Render(desc)}
 }

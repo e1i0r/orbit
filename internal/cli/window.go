@@ -10,15 +10,18 @@ package cli
 // back; the window is what suspends the terminal for it.
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"os/exec"
 
 	"github.com/e1i0r/orbit/internal/engine"
+	"github.com/e1i0r/orbit/internal/ui"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // canResume is whether one named engine can carry on a session it started
 // before.
-//
 // It answers about one engine because the window asks about one task, and
 // because the refusal it produces names an engine. It used to be an AND over
 // every engine configured — a standing fact for the whole program — and that
@@ -74,4 +77,66 @@ func takeCommand(eng engine.Engine, session, dir string) (*exec.Cmd, error) {
 	cmd := exec.Command(eng.Name(), "--resume", session, "--fork-session")
 	cmd.Dir = dir
 	return cmd, nil
+}
+
+// commandTable is what the window's palette shows of the command list: the
+// name, the usage fragment and the description, plus the refusal with its
+// reason for a command that makes no sense from inside.
+//
+// It is a copy in the window's shape rather than the table itself because
+// ui.Command deliberately carries no Run — the window names a command, it
+// does not call one — and because WindowOpens is not a refusal: those are
+// commands the window will answer with screens of their own, and showing
+// them greyed would say something untrue about them.
+func commandTable() []ui.Command {
+	cs := commands()
+	out := make([]ui.Command, 0, len(cs))
+	for _, c := range cs {
+		uc := ui.Command{Name: c.Name, Args: c.Args, About: c.About}
+		if c.InWindow == WindowRefuses {
+			uc.Refused = true
+			uc.Because = c.Because
+		}
+		out = append(out, uc)
+	}
+	return out
+}
+
+// doPort is how a named command is run from inside the window, and it is
+// the same table `orbit` dispatches from — which is the whole constraint:
+// no command exists in one entry point and not the other.
+//
+// The printer is resolved per run rather than captured once, because the
+// reader can change language while the window is open; a refusal sentence
+// frozen at startup would come back in a language nobody on screen speaks
+// any more. The command's output goes to out whole, so the window can watch
+// the work as it happens; its own rules about what to print where are the
+// commands', unchanged.
+func doPort(lang interface{ Language() string }) func(string, []string, io.Writer) error {
+	return func(name string, args []string, out io.Writer) error {
+		c, ok := lookup(name)
+		if !ok {
+			p := words.For(lang.Language())
+			return errors.New(p.T("msg.no_such_command", "no such command: {name}",
+				about(name)))
+		}
+		p := words.For(lang.Language())
+		switch c.InWindow {
+		case WindowRefuses:
+			// The table owns the reason; this only delivers it.
+			return errors.New(c.Because(p))
+		case WindowOpens:
+			// The screens these commands open are tasks 9 and 13, and
+			// until they exist an honest nothing is better than a table
+			// printed into a pane nobody asked for.
+			return errors.New(p.T("msg.no_screen_yet",
+				"{name} opens a screen this window does not have yet", about(name)))
+		}
+		return c.Run(Context{Out: out, Err: out, Words: p}, args)
+	}
+}
+
+// about is the one substitution doPort's two sentences share.
+func about(name string) words.Arg {
+	return words.Arg{Name: "name", Value: name}
 }

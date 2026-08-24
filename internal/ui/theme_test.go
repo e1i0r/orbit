@@ -86,3 +86,23 @@ func TestAnUnknownRolePaintsNothing(t *testing.T) {
 		t.Errorf("an unnamed role painted %q, want the text unstyled", painted)
 	}
 }
+
+func TestAvailableThemes(t *testing.T) {
+	themes := AvailableThemes()
+	if len(themes) < 5 {
+		t.Errorf("got %d themes, want at least 5", len(themes))
+	}
+	for _, name := range themes {
+		SetCurrentTheme(name)
+		if CurrentTheme() != name {
+			t.Errorf("CurrentTheme() = %q, want %q", CurrentTheme(), name)
+		}
+		for _, r := range Roles() {
+			s := Paint(r).Render("orbit")
+			if s == "" {
+				t.Errorf("theme %s role %d painted empty string", name, r)
+			}
+		}
+	}
+	SetCurrentTheme("monokai")
+}

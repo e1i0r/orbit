@@ -34,17 +34,49 @@ func (m Model) View() tea.View {
 	}
 	lines := make([]string, 0, m.height)
 	lines = append(lines, m.headerRows()...)
-	switch m.screen {
-	case screenDetail:
-		lines = append(lines, m.detailRows(m.frame.Body.H, m.frame.Body.W)...)
-	case screenStart:
-		lines = append(lines, m.startRows(m.frame.Body.H, m.frame.Body.W)...)
+	lines = append(lines, m.statusRows()...)
+	// The palette, a menu and a watched run sit above every screen: the
+	// line and the list own the body while they are up, and the output of
+	// the command the line raised keeps the body until esc takes it down.
+	switch {
+	case m.palette.open:
+		lines = append(lines, m.paletteRows(m.frame.Body.H, m.frame.Body.W)...)
+	case m.menu.open:
+		lines = append(lines, m.menuRows(m.frame.Body.H, m.frame.Body.W)...)
+	case m.watchUp:
+		lines = append(lines, m.watchRows(m.frame.Body.H, m.frame.Body.W)...)
 	default:
-		lines = append(lines, m.bodyRows()...)
+		switch m.screen {
+		case screenDetail:
+			lines = append(lines, m.detailRows(m.frame.Body.H, m.frame.Body.W)...)
+		case screenStart:
+			lines = append(lines, m.startRows(m.frame.Body.H, m.frame.Body.W)...)
+		case screenCompose:
+			lines = append(lines, m.composeRows(m.frame.Body.H, m.frame.Body.W)...)
+		case screenSettings:
+			lines = append(lines, m.settingsRows(m.frame.Body.H, m.frame.Body.W)...)
+		case screenFlows:
+			lines = append(lines, m.flowsRows(m.frame.Body.H, m.frame.Body.W)...)
+		case screenRepos:
+			lines = append(lines, m.repolistRows(m.frame.Body.H, m.frame.Body.W)...)
+		case screenEngines:
+			lines = append(lines, m.enginesRows(m.frame.Body.H, m.frame.Body.W)...)
+		case screenHelp:
+			lines = append(lines, m.helpRows(m.frame.Body.H, m.frame.Body.W)...)
+		default:
+			lines = append(lines, m.bodyRows()...)
+		}
 	}
 	lines = append(lines, m.bandRows()...)
 	lines = append(lines, m.barRows()...)
-	return tea.NewView(strings.Join(lines, "\n"))
+	v := tea.NewView(strings.Join(lines, "\n"))
+	// CellMotion and not AllMotion: the window is told about a moved
+	// pointer only while a button is down, which is what a drag needs and
+	// all it needs. AllMotion is a message for every cell the pointer
+	// crosses whether or not anything is being done with it, and it buys
+	// nothing until a row is drawn differently for being hovered over.
+	v.MouseMode = tea.MouseModeCellMotion
+	return v
 }
 
 // headerRows is the header region: the line, then its rule.
@@ -74,11 +106,16 @@ func (m Model) bandRows() []string {
 	return fill([]string{m.rule(r.W), m.bandLine(r.W)}, r.H)
 }
 
-// barRows is the key bar, which is one row and has never wanted a second.
+// barRows is the key bar, which is one row and has never wanted a second —
+// unless the palette is up, when the row is the palette's line instead. The
+// hints it replaces belong to a keyboard the palette is holding.
 func (m Model) barRows() []string {
 	r := m.frame.Bar
 	if r.H <= 0 {
 		return nil
+	}
+	if m.palette.open {
+		return fill([]string{m.paletteInputLine(r.W)}, r.H)
 	}
 	return fill([]string{m.barLine(r.W)}, r.H)
 }

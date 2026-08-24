@@ -11,9 +11,11 @@ import "context"
 
 // Request is everything an engine needs for one phase.
 type Request struct {
-	Prompt string
-	Model  string
-	Dir    string
+	Prompt   string
+	Model    string
+	Effort   string
+	Thinking string
+	Dir      string
 
 	// Permissions is what this phase is allowed to touch, in the closed
 	// vocabulary permission.go defines. An empty list is not "no opinion":
@@ -33,12 +35,34 @@ type Request struct {
 	Resume string
 }
 
+// StreamRefusal is a tool call denied by permissions.
+type StreamRefusal struct {
+	Tool  string
+	Input string
+}
+
+// StreamToolCall is a tool call invoked by the model.
+type StreamToolCall struct {
+	Name string
+	Args string
+}
+
 // Result is what came back. SessionID and Cost are empty when an engine does
 // not report them, which is a fact about that engine and not a failure.
 type Result struct {
 	Output    string
 	SessionID string
 	Cost      float64
+	Thoughts  []string
+	Refusals  []StreamRefusal
+	ToolCalls []StreamToolCall
+}
+
+// Choice is one selectable value for an engine dial (model or effort).
+// An empty ID means "default" (whatever the CLI/engine itself defaults to).
+type Choice struct {
+	ID    string
+	Label string
 }
 
 // Engine is one program that can be asked to do a phase.
@@ -60,4 +84,15 @@ type Engine interface {
 	// greyed-out key that says why is the whole of what an honest
 	// difference between two engines looks like.
 	CanResume() bool
+
+	// Models returns the choices this engine supports for its model dial.
+	// The zero-value choice has ID "" and Label "default".
+	Models() []Choice
+
+	// Efforts returns the choices this engine supports for its effort dial.
+	// An engine with no effort switch returns an empty slice.
+	Efforts() []Choice
+
+	// CanThink returns whether this engine supports an extended thinking mode.
+	CanThink() bool
 }

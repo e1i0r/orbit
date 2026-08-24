@@ -157,9 +157,17 @@
       "source": "autopilot",
       "value": "piloto automático"
     },
-    "header.unread": {
-      "source": "unread {n}/{cap}",
-      "value": "sin leer {n}/{cap}"
+    "header.cli_chip": {
+      "source": "cli",
+      "value": "cli interactiva"
+    },
+    "header.lang_badge": {
+      "source": "EN",
+      "value": "ES"
+    },
+    "header.unread_brake": {
+      "source": "brake ({n} unread)",
+      "value": "freno activo ({n} sin leer)"
     },
     "band.needs_you": {
       "source": "NEEDS YOU",
@@ -264,6 +272,26 @@
     "msg.confirm_cancel": {
       "source": "cancel {id}? press y to confirm, anything else to leave it running",
       "value": "¿cancelar {id}? pulsa y para confirmar, cualquier otra tecla la deja en marcha"
+    },
+    "msg.confirm_post_cli": {
+      "source": "create a task in Orbit from this session? press y to confirm, anything else to skip",
+      "value": "¿crear una tarea en Orbit a partir de esta sesión? pulsa y para confirmar, cualquier otra tecla para saltar"
+    },
+    "msg.cli_ended": {
+      "source": "interactive session ended",
+      "value": "sesión interactiva finalizada"
+    },
+    "msg.opening_cli": {
+      "source": "opening interactive session with {engine}...",
+      "value": "abriendo sesión interactiva con {engine}..."
+    },
+    "msg.cli_exec_error": {
+      "source": "error running {engine}: {err}",
+      "value": "error al ejecutar {engine}: {err}"
+    },
+    "msg.compose_prompt": {
+      "source": "write the task to run",
+      "value": "escribe la tarea para ponerla en marcha"
     },
     "msg.autopilot_on": {
       "source": "autopilot is on: every phase runs without asking",
@@ -401,17 +429,285 @@
       "source": "scroll sideways",
       "value": "desplazar en horizontal"
     },
-    "tab.log": {
-      "source": "log",
-      "value": "registro"
+    "tab.overview": {
+      "source": "overview",
+      "value": "resumen"
+    },
+    "tab.flow": {
+      "source": "flow",
+      "value": "flujo"
+    },
+    "tab.gates": {
+      "source": "gates",
+      "value": "gates"
+    },
+    "tab.cost": {
+      "source": "cost",
+      "value": "coste"
+    },
+    "tab.refused": {
+      "source": "refused",
+      "value": "rechazado"
+    },
+    "tab.timeline": {
+      "source": "timeline",
+      "value": "cronología"
+    },
+    "tab.report": {
+      "source": "report",
+      "value": "informe"
+    },
+    "tab.artifacts": {
+      "source": "artifacts",
+      "value": "archivos"
+    },
+    "tab.notes": {
+      "source": "notes",
+      "value": "notas"
     },
     "tab.diff": {
       "source": "diff",
       "value": "cambios"
     },
-    "tab.evidence": {
-      "source": "evidence",
-      "value": "evidencia"
+    "tab.thinking": {
+      "source": "thinking",
+      "value": "thinking"
+    },
+    "flow.tree_title": {
+      "source": "Pipeline & Execution Tree",
+      "value": "Árbol de ejecución del flujo"
+    },
+    "flow.step_status_done": {
+      "source": "completed",
+      "value": "completado"
+    },
+    "flow.step_status_failed": {
+      "source": "failed",
+      "value": "falló"
+    },
+    "flow.step_status_in_flight": {
+      "source": "in progress",
+      "value": "en progreso"
+    },
+    "flow.step_status_pending": {
+      "source": "pending",
+      "value": "pendiente"
+    },
+    "flow.step_status_cancelled": {
+      "source": "cancelled",
+      "value": "cancelado"
+    },
+    "flow.step_status_waiting": {
+      "source": "waiting at gate",
+      "value": "esperando en compuerta"
+    },
+    "flow.tree_engine": {
+      "source": "engine",
+      "value": "motor"
+    },
+    "flow.tree_gate": {
+      "source": "gate",
+      "value": "compuerta"
+    },
+    "flow.tree_error": {
+      "source": "error details",
+      "value": "detalle del error"
+    },
+    "flow.tree_outcome": {
+      "source": "outcome",
+      "value": "resultado"
+    },
+    "gates.title": {
+      "source": "Verification Gates & Checks",
+      "value": "Chequeos y compuertas de verificación"
+    },
+    "gates.subtitle": {
+      "source": "what needs to pass — by attempt, and why it stopped",
+      "value": "lo que tiene que pasar — por intento, y por qué se detuvo"
+    },
+    "gates.attempt": {
+      "source": "intento 1",
+      "value": "intento 1"
+    },
+    "gates.passed_word": {
+      "source": "pasaron",
+      "value": "pasaron"
+    },
+    "gates.empty": {
+      "source": "no verification gates have run for this task",
+      "value": "no se ejecutaron verificaciones para esta tarea"
+    },
+    "cost.heading": {
+      "source": "Cost & Resource Breakdown",
+      "value": "Desglose de Costes y Recursos"
+    },
+    "cost.subtitle": {
+      "source": "how much has been spent, stage by stage",
+      "value": "cuánto ha gastado, etapa por etapa"
+    },
+    "cost.empty": {
+      "source": "no cost recorded for this task",
+      "value": "no hay costes registrados para esta tarea"
+    },
+    "refused.title": {
+      "source": "Permissions & Security Sandbox",
+      "value": "Permisos y reglas del sandbox"
+    },
+    "refused.subtitle": {
+      "source": "what the sandbox forbids, and what it attempted",
+      "value": "lo que el sandbox le prohíbe, y lo que intentó igual"
+    },
+    "refused.in_this_run": {
+      "source": "IN THIS RUN",
+      "value": "EN ESTA CORRIDA"
+    },
+    "refused.none_denied": {
+      "source": "no commands or actions were denied",
+      "value": "no se le negó ningún comando"
+    },
+    "refused.all_allowed": {
+      "source": "everything it attempted was permitted to run",
+      "value": "todo lo que intentó, se le permitió correr"
+    },
+    "refused.rules_title": {
+      "source": "THE RULES · sandbox constraints",
+      "value": "LAS REGLAS · las mismas en toda corrida, haga lo que haga"
+    },
+    "refused.policy_note": {
+      "source": "si intenta una acción prohibida, la llamada falla de inmediato y el modelo continúa",
+      "value": "si intenta una acción prohibida, la llamada falla de inmediato y el modelo continúa"
+    },
+    "report.title": {
+      "source": "Summary Report & Review",
+      "value": "Informe de la revisión y cambios"
+    },
+    "report.subtitle": {
+      "source": "what it wrote about the change, and what the review concluded",
+      "value": "lo que escribió sobre el cambio, y lo que dijo la revisión"
+    },
+    "report.empty": {
+      "source": "no engine report available for this task",
+      "value": "no hay informe del motor disponible para esta tarea"
+    },
+    "notes.title": {
+      "source": "Operator Notes & LLM Dialogue",
+      "value": "Notas y diálogo con el modelo"
+    },
+    "notes.subtitle": {
+      "source": "everything spoken with the model, notes filed and interactive sessions",
+      "value": "lo que le dijiste, respuestas del modelo y sesiones de CLI interactiva"
+    },
+    "notes.operator": {
+      "source": "OPERADOR",
+      "value": "OPERADOR"
+    },
+    "notes.llm_prompt": {
+      "source": "MODELO (consulta al operador)",
+      "value": "MODELO (consulta al operador)"
+    },
+    "notes.count": {
+      "source": "entradas en el diálogo",
+      "value": "entradas en el diálogo"
+    },
+    "notes.all_filed": {
+      "source": "sincronizado con el modelo",
+      "value": "sincronizado con el modelo"
+    },
+    "notes.empty": {
+      "source": "no notes or dialogue recorded for this task",
+      "value": "no hay notas ni diálogo registrado para esta tarea"
+    },
+    "notes.hint_action": {
+      "source": "pulsa 'a' para dejar una nota · pulsa 'c' para abrir la CLI interactiva",
+      "value": "pulsa 'a' para dejar una nota · pulsa 'c' para abrir la CLI interactiva"
+    },
+    "notes.hint_footer": {
+      "source": "pulsa 'a' para agregar una nota · pulsa 'c' o 't' para entrar a la CLI interactiva",
+      "value": "pulsa 'a' para agregar una nota · pulsa 'c' o 't' para entrar a la CLI interactiva"
+    },
+    "thinking.title": {
+      "source": "Decision Analysis & Agent Thinking",
+      "value": "Análisis de decisiones y pensamiento del modelo"
+    },
+    "thinking.subtitle": {
+      "source": "why it made each decision, what it evaluated and what it turned down",
+      "value": "por qué tomó cada decisión, qué evaluó y qué descartó"
+    },
+    "thinking.entries_count": {
+      "source": "análisis de razonamiento y decisiones",
+      "value": "análisis de razonamiento y decisiones"
+    },
+    "thinking.empty": {
+      "source": "no thinking blocks or decision logs captured for this task",
+      "value": "no hay bloques de razonamiento o registro de decisiones para esta tarea"
+    },
+    "artifacts.title": {
+      "source": "Files & Artifacts",
+      "value": "Archivos y artefactos"
+    },
+    "artifacts.subtitle": {
+      "source": "every file left by the run, and what each one is",
+      "value": "cada archivo que dejó el run, y qué es cada uno"
+    },
+    "artifacts.desc_new_file": {
+      "source": "new file created during the run",
+      "value": "archivo nuevo creado durante la ejecución"
+    },
+    "artifacts.desc_report": {
+      "source": "draft summary report in model's own words",
+      "value": "el borrador del informe, en palabras del modelo"
+    },
+    "artifacts.group_produced": {
+      "source": "what it produced",
+      "value": "lo que produjo"
+    },
+    "artifacts.desc_gate_json": {
+      "source": "each check, its verdict and how long it took",
+      "value": "cada chequeo, su veredicto y cuánto tardó"
+    },
+    "artifacts.desc_gate_reason": {
+      "source": "one sentence: why the gate stopped",
+      "value": "una frase: por qué se detuvo la compuerta"
+    },
+    "artifacts.group_checks": {
+      "source": "the checks & gates",
+      "value": "los chequeos"
+    },
+    "artifacts.desc_task_md": {
+      "source": "the task prompt, exactly as written",
+      "value": "la tarea, exactamente como se escribió"
+    },
+    "artifacts.desc_task_env": {
+      "source": "environment fields and configuration read by runner",
+      "value": "los campos de entorno que lee el ejecutor"
+    },
+    "artifacts.group_prompts": {
+      "source": "what it was asked for",
+      "value": "lo que se le pidió"
+    },
+    "artifacts.desc_events": {
+      "source": "the immutable event log for this task",
+      "value": "el registro inmutable de eventos"
+    },
+    "artifacts.desc_cost": {
+      "source": "one row per phase: what it cost in $",
+      "value": "una fila por etapa: lo que costó en $"
+    },
+    "artifacts.desc_state": {
+      "source": "the phase it was in when last written",
+      "value": "la etapa en la que estaba la última vez que se escribió"
+    },
+    "artifacts.group_accounting": {
+      "source": "run accounting",
+      "value": "la contabilidad del run"
+    },
+    "plain.read_board": {
+      "source": "read the board",
+      "value": "leer el tablero"
+    },
+    "plain.not_model": {
+      "source": "the window answered with an unexpected type",
+      "value": "la ventana respondió con un tipo no esperado"
     },
     "log.attempt": {
       "source": "attempt {n}",
@@ -571,13 +867,41 @@
       "source": "flow",
       "value": "flujo"
     },
+    "start.engine_config": {
+      "source": "motor",
+      "value": "motor"
+    },
+    "start.dials_hint": {
+      "source": "[m] modelo  [o] esfuerzo  [t] thinking",
+      "value": "[m] modelo  [o] esfuerzo  [t] thinking"
+    },
+    "start.new_flow_tag": {
+      "source": "[+] nuevo flujo",
+      "value": "[+] nuevo flujo"
+    },
+    "start.new_flow_hint": {
+      "source": "crear flujo",
+      "value": "crear flujo"
+    },
+    "start.model_hint": {
+      "source": "modelo",
+      "value": "modelo"
+    },
+    "start.effort_hint": {
+      "source": "esfuerzo",
+      "value": "esfuerzo"
+    },
+    "start.thinking_hint": {
+      "source": "thinking",
+      "value": "thinking"
+    },
     "flow.built_in": {
       "source": "built in",
-      "value": "de serie"
+      "value": "predeterminado"
     },
     "flow.shadowing": {
       "source": "yours, shadowing the built-in",
-      "value": "tuyo, tapa el de serie"
+      "value": "tuyo, reemplaza el predeterminado"
     },
     "flow.yours": {
       "source": "yours",
@@ -630,6 +954,652 @@
     "why.hand_back_not_stopped": {
       "source": "handing the keyboard back needs a run stopped at a phase; this one is not stopped",
       "value": "devolver el teclado necesita una ejecución detenida en una fase; esta no lo está"
+    },
+    "cmd.top": {
+      "source": "watch every task in one window",
+      "value": "ver todas las tareas en una sola ventana"
+    },
+    "cmd.top.inside": {
+      "source": "you are already in it",
+      "value": "ya estás dentro"
+    },
+    "cmd.repos": {
+      "source": "list the repositories under a directory",
+      "value": "listar los repositorios que hay bajo un directorio"
+    },
+    "cmd.flows": {
+      "source": "list the flows a task can be written against",
+      "value": "listar los flujos contra los que se puede escribir una tarea"
+    },
+    "cmd.new": {
+      "source": "write a task down",
+      "value": "anotar una tarea"
+    },
+    "cmd.run": {
+      "source": "run a task through its flow",
+      "value": "llevar una tarea por su flujo"
+    },
+    "cmd.pause": {
+      "source": "stop a run at its next phase",
+      "value": "detener una ejecución en su siguiente fase"
+    },
+    "cmd.resume": {
+      "source": "let a stopped run carry on",
+      "value": "dejar que una ejecución detenida continúe"
+    },
+    "cmd.list": {
+      "source": "list the tasks of a repository",
+      "value": "listar las tareas de un repositorio"
+    },
+    "cmd.show": {
+      "source": "print what happened to a task",
+      "value": "contar qué le pasó a una tarea"
+    },
+    "cmd.read": {
+      "source": "mark a finished task as looked at",
+      "value": "marcar como leída una tarea terminada"
+    },
+    "cmd.cancel": {
+      "source": "stop a run, and say so in its record",
+      "value": "detener una ejecución y dejarlo dicho en su registro"
+    },
+    "cmd.reconcile": {
+      "source": "close the records of runs whose processes are gone",
+      "value": "cerrar los registros de las ejecuciones cuyos procesos ya no están"
+    },
+    "cmd.settings": {
+      "source": "view or change settings",
+      "value": "ver o cambiar configuraciones"
+    },
+    "cmd.note": {
+      "source": "record a note for a task",
+      "value": "dejar una nota para una tarea"
+    },
+    "cli.tagline": {
+      "source": "orbit — a cockpit for supervising coding agents",
+      "value": "orbit — una cabina para supervisar agentes que programan"
+    },
+    "cli.state": {
+      "source": "State lives in $ORBIT_HOME, or ~/.orbit when that is unset.",
+      "value": "El estado vive en $ORBIT_HOME, o en ~/.orbit si no está definida."
+    },
+    "setting.language": {
+      "source": "the language orbit speaks",
+      "value": "el idioma en el que habla orbit"
+    },
+    "setting.autopilot": {
+      "source": "whether a run walks its whole flow without stopping",
+      "value": "si una ejecución recorre su flujo entero sin detenerse"
+    },
+    "setting.unread_cap": {
+      "source": "how many finished tasks may sit unread before nothing new starts",
+      "value": "cuántas tareas terminadas pueden quedar sin leer antes de que no arranque nada nuevo"
+    },
+    "setting.engine": {
+      "source": "the engine a task runs on when it names none",
+      "value": "el motor en el que se ejecuta una tarea cuando no nombra ninguno"
+    },
+    "setting.model": {
+      "source": "the model a phase asks for when it names none",
+      "value": "el modelo que pide una fase cuando no nombra ninguno"
+    },
+    "setting.flow": {
+      "source": "the flow a new task is written against",
+      "value": "el flujo contra el que se escribe una tarea nueva"
+    },
+    "setting.theme": {
+      "source": "the visual color theme for the window",
+      "value": "el tema de color visual para la ventana"
+    },
+    "setting.effort": {
+      "source": "the default reasoning effort level for engine sessions",
+      "value": "el nivel de esfuerzo de razonamiento por defecto para el motor"
+    },
+    "setting.thinking": {
+      "source": "whether extended thinking mode is enabled for the engine",
+      "value": "si el modo de razonamiento extendido (thinking) está activado"
+    },
+    "key.commands": {
+      "source": "commands",
+      "value": "comandos"
+    },
+    "key.cli": {
+      "source": "interactive CLI",
+      "value": "cli interactiva"
+    },
+    "key.menu": {
+      "source": "menu",
+      "value": "menú"
+    },
+    "menu.gone": {
+      "source": "the task this menu was opened on is no longer on the board",
+      "value": "la tarea en la que se abrió este menú ya no está en el tablero"
+    },
+    "key.compose": {
+      "source": "write a task",
+      "value": "escribir una tarea"
+    },
+    "compose.repo": {
+      "source": "repository",
+      "value": "repositorio"
+    },
+    "compose.id": {
+      "source": "id",
+      "value": "id"
+    },
+    "compose.text": {
+      "source": "task",
+      "value": "tarea"
+    },
+    "compose.repo_required": {
+      "source": "the repository is required; which one is this task against?",
+      "value": "el repositorio es obligatorio; ¿contra cuál es esta tarea?"
+    },
+    "compose.id_required": {
+      "source": "the id is required; what is this task called?",
+      "value": "el id es obligatorio; ¿cómo se llama esta tarea?"
+    },
+    "compose.text_required": {
+      "source": "the task needs something written in it",
+      "value": "la tarea necesita algo escrito dentro"
+    },
+    "compose.ways_out": {
+      "source": "{open} writes it · {back} abandons it — nothing is written until then",
+      "value": "{open} la guarda · {back} la abandona — hasta entonces no se escribe nada"
+    },
+    "palette.placeholder": {
+      "source": "type a command",
+      "value": "escribe un comando"
+    },
+    "palette.none": {
+      "source": "no command starts with {typed}",
+      "value": "ningún comando empieza con {typed}"
+    },
+    "watch.busy": {
+      "source": "{name} is still running",
+      "value": "{name} sigue en marcha"
+    },
+    "watch.running": {
+      "source": "{name}: still running…",
+      "value": "{name}: todavía en marcha…"
+    },
+    "watch.finished_line": {
+      "source": "finished — {back} closes",
+      "value": "terminó — {back} cierra"
+    },
+    "watch.quiet": {
+      "source": "no output yet…",
+      "value": "todavía sin salida…"
+    },
+    "msg.command_done": {
+      "source": "{name} finished",
+      "value": "{name} terminó"
+    },
+    "msg.no_such_command": {
+      "source": "no such command: {name}",
+      "value": "no existe ningún comando: {name}"
+    },
+    "msg.no_screen_yet": {
+      "source": "{name} opens a screen this window does not have yet",
+      "value": "{name} abre una pantalla que esta ventana todavía no tiene"
+    },
+    "settings.title": {
+      "source": "Settings",
+      "value": "Configuración"
+    },
+    "settings.subtitle": {
+      "source": "changes take effect immediately",
+      "value": "los cambios tienen efecto de inmediato"
+    },
+    "settings.ways_out": {
+      "source": "{open} edit · {up_down} move · {back} back",
+      "value": "{open} editar · {up_down} mover · {back} volver"
+    },
+    "settings.ways_out_edit": {
+      "source": "{open} save · {back} cancel",
+      "value": "{open} guardar · {back} cancelar"
+    },
+    "flows.title": {
+      "source": "Flows",
+      "value": "Flujos"
+    },
+    "flows.read_only": {
+      "source": "flows are read-only; edit flow files under $ORBIT_HOME/flows/ to change them",
+      "value": "los flujos son de solo lectura; edita los archivos en $ORBIT_HOME/flows/ para cambiarlos"
+    },
+    "flows.none": {
+      "source": "no flows found",
+      "value": "no se encontraron flujos"
+    },
+    "flows.ways_out": {
+      "source": "[n] create · [e] edit · [d] delete · {up_down} scroll · {back} back",
+      "value": "[n] nuevo · [e] editar · [d] borrar · {up_down} desplazar · {back} volver"
+    },
+    "flows.ways_out_form": {
+      "source": "[tab] field · [enter] action · {back} back",
+      "value": "[tab] campo · [enter] acción · {back} volver"
+    },
+    "flows.saved": {
+      "source": "flow {name} saved",
+      "value": "flujo {name} guardado correctamente"
+    },
+    "flows.deleted": {
+      "source": "flow {name} deleted",
+      "value": "flujo {name} eliminado"
+    },
+    "flows.create_btn": {
+      "source": "+ Create Custom Flow",
+      "value": "+ Crear Flujo Personalizado"
+    },
+    "flows.create_btn_idle": {
+      "source": "[+ Create Custom Flow] (press n)",
+      "value": "[+ Crear Flujo Personalizado] (pulsa n)"
+    },
+    "flows.builder_create_title": {
+      "source": "Flow Designer (Create New Flow)",
+      "value": "Diseñador de Flujos (Crear Nuevo Flujo)"
+    },
+    "flows.builder_edit_title": {
+      "source": "Flow Designer (Edit: {name})",
+      "value": "Diseñador de Flujos (Editar: {name})"
+    },
+    "flows.builder_subtitle": {
+      "source": "configure phases, models, effort, thinking, input chaining and prompts",
+      "value": "configura las fases, modelos, esfuerzo, thinking, input chaining y prompts"
+    },
+    "flows.builder_pipeline_title": {
+      "source": "Pipeline (Click on a phase to edit it):",
+      "value": "Pipeline del Ciclo (Haz clic en una fase para editarla):"
+    },
+    "flows.feeds_input": {
+      "source": "[feeds input]",
+      "value": "[feeds input]"
+    },
+    "flows.stops_human": {
+      "source": "(stops for human)",
+      "value": "(se detiene para un humano)"
+    },
+    "flows.field_template": {
+      "source": "0. Template / Preset",
+      "value": "0. Plantilla / Preset"
+    },
+    "flows.field_flow_name": {
+      "source": "1. Flow Name",
+      "value": "1. Nombre del Flujo"
+    },
+    "flows.field_editing_phase": {
+      "source": "Editing Phase",
+      "value": "Fase en edición"
+    },
+    "flows.field_phase_name": {
+      "source": "2. Phase {n} Name",
+      "value": "2. Nombre Fase {n}"
+    },
+    "flows.field_engine": {
+      "source": "3. AI Engine",
+      "value": "3. Motor IA"
+    },
+    "flows.field_model": {
+      "source": "4. Model",
+      "value": "4. Modelo"
+    },
+    "flows.field_effort": {
+      "source": "5. Effort",
+      "value": "5. Esfuerzo"
+    },
+    "flows.field_thinking": {
+      "source": "6. Thinking Mode",
+      "value": "6. Modo Thinking"
+    },
+    "flows.field_feed_output": {
+      "source": "7. Feed Previous Output",
+      "value": "7. Alimentar Output Anterior"
+    },
+    "flows.field_wait": {
+      "source": "8. Phase Control",
+      "value": "8. Control de Fase"
+    },
+    "flows.field_prompt": {
+      "source": "9. Prompt / Instructions",
+      "value": "9. Prompt / Instrucciones"
+    },
+    "flows.btn_paste": {
+      "source": "📋 Paste",
+      "value": "📋 Pegar"
+    },
+    "flows.btn_autogen": {
+      "source": "✨ Autogenerate",
+      "value": "✨ Autogenerar"
+    },
+    "flows.btn_clear": {
+      "source": "🗑 Clear",
+      "value": "🗑 Limpiar"
+    },
+    "flows.prompt_placeholder": {
+      "source": "(type instructions here or click ✨ Autogenerate)...",
+      "value": "(escribe aquí las instrucciones o pulsa ✨ Autogenerar)..."
+    },
+    "flows.btn_add_phase": {
+      "source": "+ Add Phase",
+      "value": "+ Añadir Fase"
+    },
+    "flows.btn_del_phase": {
+      "source": "🗑 Delete Phase",
+      "value": "🗑 Borrar Fase"
+    },
+    "flows.btn_save_flow": {
+      "source": "✔ Save Flow",
+      "value": "✔ Guardar Flujo"
+    },
+    "flows.editing_resumed": {
+      "source": "editing resumed",
+      "value": "edición reanudada"
+    },
+    "flows.deletion_cancelled": {
+      "source": "deletion cancelled",
+      "value": "borrado cancelado"
+    },
+    "flows.changes_discarded": {
+      "source": "changes discarded",
+      "value": "cambios descartados"
+    },
+    "flows.confirm_discard": {
+      "source": "discard flow changes? [y] yes / [n] no (or press Esc again)",
+      "value": "¿Descartar cambios del flujo? [y] sí / [n] no (o presiona Esc otra vez)"
+    },
+    "flows.phase_added": {
+      "source": "phase {n} added",
+      "value": "fase {n} añadida"
+    },
+    "flows.min_phases_required": {
+      "source": "the flow must have at least one phase",
+      "value": "el flujo debe tener al menos una fase"
+    },
+    "flows.phase_deleted": {
+      "source": "phase deleted",
+      "value": "fase eliminada"
+    },
+    "flows.editing": {
+      "source": "editing flow {name}",
+      "value": "editando flujo {name}"
+    },
+    "flows.cannot_delete_builtin": {
+      "source": "built-in flows cannot be deleted",
+      "value": "los flujos predeterminados no se pueden borrar"
+    },
+    "flows.confirm_delete": {
+      "source": "delete flow {name}? [y] yes / [n] no",
+      "value": "¿Borrar flujo {name}? [y] sí / [n] no"
+    },
+    "flows.paste_done": {
+      "source": "📋 pasted {n} chars into phase {phase}",
+      "value": "📋 texto pegado ({n} chars) en fase {phase}"
+    },
+    "flows.clipboard_empty": {
+      "source": "clipboard empty",
+      "value": "portapapeles vacío"
+    },
+    "flows.autogen_custom": {
+      "source": "✨ prompt generated from your draft for phase {phase}",
+      "value": "✨ prompt generado a partir de tu texto para fase {phase}"
+    },
+    "flows.autogen_role": {
+      "source": "✨ prompt generated for role in phase {phase}",
+      "value": "✨ prompt generado según el rol de la fase {phase}"
+    },
+    "flows.prompt_cleared": {
+      "source": "🗑 prompt cleared for phase {phase}",
+      "value": "🗑 prompt de fase {phase} borrado"
+    },
+    "flows.phase_selected": {
+      "source": "phase {n} selected: {phase} ({engine}/{model})",
+      "value": "fase {n} seleccionada: {phase} ({engine}/{model})"
+    },
+    "help.ways_out": {
+      "source": "{up_down} scroll · {back} back",
+      "value": "{up_down} desplazar · {back} volver"
+    },
+    "flow.runs_auto": {
+      "source": "runs automatically",
+      "value": "se ejecuta automáticamente"
+    },
+    "flow.stops_for_human": {
+      "source": "stops for human",
+      "value": "se detiene para un humano"
+    },
+    "status.spent": {
+      "source": "{cost} spent",
+      "value": "{cost} gastado"
+    },
+    "status.total_tasks": {
+      "source": {
+        "one": "{n} task",
+        "other": "{n} tasks"
+      },
+      "value": {
+        "one": "{n} tarea",
+        "other": "{n} tareas"
+      }
+    },
+    "status.events": {
+      "source": "{events} events",
+      "value": "{events} eventos"
+    },
+    "status.read_time": {
+      "source": "{ms}ms read",
+      "value": "{ms}ms lectura"
+    },
+    "status.quota": {
+      "source": "{pct} left in {label} · resets in {resets}",
+      "value": "{pct} restante en {label} · reinicia en {resets}"
+    },
+    "key.repos": {
+      "source": "repositories",
+      "value": "repositorios"
+    },
+    "repos.title": {
+      "source": "Repositories",
+      "value": "Repositorios"
+    },
+    "repos.subtitle": {
+      "source": "choose a repository to filter the board",
+      "value": "elige un repositorio para filtrar el tablero"
+    },
+    "repos.none": {
+      "source": "no repositories found",
+      "value": "no se encontraron repositorios"
+    },
+    "repos.active": {
+      "source": "[filtered]",
+      "value": "[filtrado]"
+    },
+    "repos.ways_out": {
+      "source": "{open} filter · {up_down} move · {back} back",
+      "value": "{open} filtrar · {up_down} mover · {back} volver"
+    },
+    "repos.filtered": {
+      "source": "filtered to {repo}",
+      "value": "filtrado a {repo}"
+    },
+    "repos.filter_cleared": {
+      "source": "showing all repositories",
+      "value": "mostrando todos los repositorios"
+    },
+    "band.repo_filter_tag": {
+      "source": "repo:{repo}",
+      "value": "repo:{repo}"
+    },
+    "key.engines": {
+      "source": "engine & model knobs",
+      "value": "ajustes de modelo y motor"
+    },
+    "engines.title": {
+      "source": "Engine & Model Knobs",
+      "value": "Ajustes de Motor y Modelo"
+    },
+    "engines.subtitle": {
+      "source": "choose model, effort and thinking for this run",
+      "value": "elige modelo, esfuerzo y modo thinking para esta corrida"
+    },
+    "engines.section_model": {
+      "source": "Engine & Model",
+      "value": "Motor y Modelo"
+    },
+    "engines.section_effort": {
+      "source": "Effort",
+      "value": "Nivel de Esfuerzo"
+    },
+    "engines.section_thinking": {
+      "source": "Thinking Mode",
+      "value": "Modo Thinking"
+    },
+    "engines.setup_tag": {
+      "source": "[setup required]",
+      "value": "[configuración requerida]"
+    },
+    "engines.default": {
+      "source": "default",
+      "value": "por defecto"
+    },
+    "engines.no_effort": {
+      "source": "{engine} has no effort dial",
+      "value": "{engine} no tiene selector de esfuerzo"
+    },
+    "engines.no_thinking": {
+      "source": "{engine} has no thinking mode",
+      "value": "{engine} no soporta modo thinking"
+    },
+    "engines.thinking_adaptive": {
+      "source": "adaptive (default)",
+      "value": "adaptativo (por defecto)"
+    },
+    "engines.thinking_on": {
+      "source": "on",
+      "value": "activado"
+    },
+    "engines.thinking_off": {
+      "source": "off",
+      "value": "desactivado"
+    },
+    "engines.updated": {
+      "source": "updated dials: {chip}",
+      "value": "ajustes actualizados: {chip}"
+    },
+    "engines.setup_title": {
+      "source": "Setup Steps for {engine}",
+      "value": "Pasos de Configuración para {engine}"
+    },
+    "engines.setup_notice": {
+      "source": "Orbit verifies setup steps but executes nothing.",
+      "value": "Orbit verifica los pasos de configuración pero no ejecuta nada."
+    },
+    "engines.setup_back": {
+      "source": "{back} back",
+      "value": "{back} volver"
+    },
+    "engines.ways_out": {
+      "source": "{open} select · {up_down} move · {back} back",
+      "value": "{open} seleccionar · {up_down} mover · {back} volver"
+    },
+    "queue.todo": {
+      "source": "Por hacer",
+      "value": "Por hacer"
+    },
+    "queue.in_flight": {
+      "source": "En curso",
+      "value": "En curso"
+    },
+    "queue.needs_you": {
+      "source": "En revisión",
+      "value": "En revisión"
+    },
+    "queue.done": {
+      "source": "Lista",
+      "value": "Lista"
+    },
+    "overview.waiting_box": {
+      "source": "ACCIONES REQUERIDAS / ESPERANDO AL OPERADOR",
+      "value": "ACCIONES REQUERIDAS / ESPERANDO AL OPERADOR"
+    },
+    "overview.resume_hint": {
+      "source": "press 't' to open interactive session, 'r' to restart",
+      "value": "presiona 't' para sesión interactiva, 'r' para reiniciar"
+    },
+    "overview.metrics": {
+      "source": "Status & Metrics",
+      "value": "Estado y métricas"
+    },
+    "overview.state": {
+      "source": "state",
+      "value": "estado"
+    },
+    "overview.duration": {
+      "source": "duration",
+      "value": "duración"
+    },
+    "overview.cost": {
+      "source": "cost",
+      "value": "coste"
+    },
+    "overview.engine": {
+      "source": "engine",
+      "value": "motor"
+    },
+    "overview.repo": {
+      "source": "repository",
+      "value": "repositorio"
+    },
+    "overview.flow": {
+      "source": "flow",
+      "value": "flujo"
+    },
+    "overview.execution_summary": {
+      "source": "Execution Summary",
+      "value": "Resumen de la ejecución"
+    },
+    "overview.not_started": {
+      "source": "task has not been started yet (press [n] to start)",
+      "value": "tarea pendiente de ejecución (presiona [n] para iniciar)"
+    },
+    "overview.in_flight": {
+      "source": "execution in flight...",
+      "value": "ejecución en curso..."
+    },
+    "overview.no_phases": {
+      "source": "no phase outputs recorded",
+      "value": "sin registros de fases todavía"
+    },
+    "overview.code_impact": {
+      "source": "Code Impact & Changes",
+      "value": "Archivos modificados e impacto"
+    },
+    "overview.lines_in_files": {
+      "source": "lines across {count} file(s)",
+      "value": "líneas en {count} archivo(s)"
+    },
+    "overview.no_diff": {
+      "source": "no working tree modifications recorded",
+      "value": "sin modificaciones en archivos del repositorio"
+    },
+    "overview.quick_actions": {
+      "source": "Quick Actions to Validate",
+      "value": "Accesos rápidos para validar"
+    },
+    "overview.action_diff": {
+      "source": "diff changes",
+      "value": "ver diff de cambios"
+    },
+    "overview.action_report": {
+      "source": "full report",
+      "value": "ver reporte completo"
+    },
+    "overview.action_timeline": {
+      "source": "timeline",
+      "value": "ver cronología"
+    },
+    "overview.action_read": {
+      "source": "mark read",
+      "value": "marcar como leída"
     }
   }
 }

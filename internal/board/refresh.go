@@ -36,25 +36,52 @@ import (
 // at all, where an empty board would be indistinguishable from an empty
 // directory.
 func (r *Reader) Refresh() (Board, Changed, error) {
+	start := time.Now()
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	root := ""
+	if r.store != nil {
+		root = r.store.Root()
+	}
+
 	if !r.scanned {
 		if err := r.rescan(); err != nil {
-			return Board{}, Changed{}, err
+			return Board{
+				Health: Health{
+					Root:     root,
+					Duration: time.Since(start),
+					Errs:     1,
+				},
+			}, Changed{}, err
 		}
 	}
 
+	repoList := make([]RepoInfo, len(r.repos))
+	for i, rs := range r.repos {
+		repoList[i] = RepoInfo{Name: rs.name, Path: rs.path}
+	}
+
 	b := Board{
-		Tasks:  make([]view.Task, 0, len(r.tasks)),
-		Repos:  len(r.repos),
-		ReadAt: time.Now(),
+		Tasks:    make([]view.Task, 0, len(r.tasks)),
+		Repos:    len(r.repos),
+		RepoList: repoList,
+		ReadAt:   time.Now(),
 	}
 	b.Errs = append(b.Errs, r.scanErrs...)
 
 	var changed Changed
+	var totalBytes int64
+	var eventsRead int
+	var lastWrite time.Time
+
 	for _, st := range r.tasks {
 		fresh, err := r.poll(st)
+		totalBytes += st.size
+		eventsRead += len(fresh)
+		if st.modTime.After(lastWrite) {
+			lastWrite = st.modTime
+		}
 		moved := len(fresh) > 0
 		// A log that has just started or just stopped being readable is a
 		// row that changes even though no event arrived.
@@ -119,6 +146,16 @@ func (r *Reader) Refresh() (Board, Changed, error) {
 		b.Tasks = append(b.Tasks, st.task)
 	}
 	b.Counts = counts(b.Tasks)
+	b.Health = Health{
+		Root:       root,
+		Repos:      len(r.repos),
+		Tasks:      len(r.tasks),
+		Bytes:      totalBytes,
+		EventsRead: eventsRead,
+		LastWrite:  lastWrite,
+		Duration:   time.Since(start),
+		Errs:       len(b.Errs),
+	}
 	r.baseline = true
 	return b, changed, nil
 }

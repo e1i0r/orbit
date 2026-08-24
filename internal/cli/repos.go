@@ -10,10 +10,10 @@ import (
 	"github.com/e1i0r/orbit/internal/repo"
 )
 
-func repos(args []string, out io.Writer) error {
+func repos(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("repos", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
-	if err := parse(fs, args, out); err != nil {
+	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
 	root := fs.Arg(0)
@@ -28,10 +28,10 @@ func repos(args []string, out io.Writer) error {
 		return err
 	}
 	if len(found) == 0 {
-		fmt.Fprintf(out, "no repositories under %s\n", root)
+		fmt.Fprintf(ctx.Out, "no repositories under %s\n", root)
 		return nil
 	}
-	w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
+	w := tabwriter.NewWriter(ctx.Out, 0, 0, 2, ' ', 0)
 	for _, r := range found {
 		remote := r.Remote
 		if remote == "" {

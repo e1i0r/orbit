@@ -39,7 +39,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/e1i0r/orbit/internal/record"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -55,6 +54,12 @@ const (
 	RescanEvery  = 2 * time.Second
 )
 
+// RepoInfo is one repository the board knows about.
+type RepoInfo struct {
+	Name string
+	Path string
+}
+
 // Board is one answer to "what is on screen right now".
 //
 // It is a value and not a handle: the window keeps the one it was given
@@ -66,13 +71,9 @@ type Board struct {
 	Tasks []view.Task
 	// Repos is how many repositories were found under the root this reader
 	// was opened over — the number in the header, not the number of rows.
-	//
-	// It counts a repository nobody has written a task against yet, and
-	// that is the point of it: the count comes from the walk and the rows
-	// come from the record, so a person who has just cloned three projects
-	// is told there are three and no tasks in them, rather than that there
-	// are no repositories at all.
 	Repos int
+	// RepoList is every repository found under the root, with its name and path.
+	RepoList []RepoInfo
 	// Counts is how many tasks are in each band, indexed by the view.Band
 	// value. It is filled by calling view.BandOf on the very tasks in
 	// Tasks, so the number above a band and the rows inside it are one
@@ -81,6 +82,9 @@ type Board struct {
 	// ReadAt is when this board was read, so the window can age its elapsed
 	// column against one time rather than against time.Now per row.
 	ReadAt time.Time
+	// Health is the status of the .jsonl database and store, measured during
+	// the refresh.
+	Health Health
 	// Errs is what went wrong, per task and per repository, without the
 	// board failing as a whole. One task whose log is unreadable must not
 	// blank the other nineteen: it is a row that says the record could not
@@ -236,56 +240,4 @@ func NewReader(s *store.Store, root string) *Reader {
 		root:  root,
 		index: make(map[taskKey]*taskState),
 	}
-}
-
-// repoState is one repository the board knows about.
-//
-// path is git's top level, which is both what repo.Discover answers and what
-// task.Create filed this repository's record under. The store hashes that
-// path into the directory name everything under repos/ is reached by, so the
-// two have to be the same string: a path that had passed through a symlink
-// unresolved would look up a directory that does not exist and lose every
-// task in it. Both sides go through repo.Open, so both sides resolve.
-type repoState struct {
-	path string
-	name string
-}
-
-// taskState is what the Reader remembers about one task between refreshes.
-// It is the whole of the polling design: an offset, the size the last stat
-// saw, and the events read so far.
-type taskState struct {
-	repo *repoState
-	id   string
-	path string // the task's events.jsonl
-	// offset is the next byte to read, and it is only ever what
-	// record.ReadFrom answered — never arithmetic of this package's own.
-	// That matters because ReadFrom advances the offset past a complete,
-	// newline-terminated line and no further: a torn final line is a write
-	// in flight rather than damage, and holding the offset before it is
-	// what makes the next read pick the line up once it lands.
-	offset int64
-	// size is the file size the last stat saw. An unchanged size is the
-	// cheap answer this design is built on: nothing was appended, so there
-	// is nothing to open, read or parse.
-	size int64
-	// events is everything read so far, oldest first. view.Fold is a
-	// function of the whole log and holds nothing between calls, so the
-	// delta is appended here and the fold re-run over the total — which
-	// costs a walk of a slice already in memory, and never a re-read of the
-	// file. That is the trade the offsets buy: the I/O and the JSON are
-	// what polling has to avoid, not the switch statement.
-	events []record.Event
-	task   view.Task
-	// band is the band at the previous refresh, and it is what Entered is a
-	// crossing of. A task the reader has not folded yet has the zero Band,
-	// view.ToDo, so a task that arrives already needing you does cross.
-	band view.Band
-	// err is the last read's verdict, kept so that a log nobody can read
-	// keeps saying so on the refreshes that skip it for being unchanged.
-	err error
-	// seen says a refresh has folded this task at least once. It is what
-	// makes a task with an empty log — written down and never run — fold
-	// once rather than never.
-	seen bool
 }

@@ -41,7 +41,7 @@ func TestTopReadsItsFlagsOnEitherSideOfTheDirectory(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			got, once, lang, err := parseTop(c.args, io.Discard)
+			got, once, lang, err := parseTop(Context{Out: io.Discard}, c.args)
 			if err != nil {
 				t.Fatalf("parseTop(%q): %v", c.args, err)
 			}
@@ -65,7 +65,7 @@ func TestTopWithNoDirectoryWatchesTheOneYouAreIn(t *testing.T) {
 	if err != nil {
 		t.Fatalf("getwd: %v", err)
 	}
-	dir, once, lang, err := parseTop([]string{"-once"}, io.Discard)
+	dir, once, lang, err := parseTop(Context{Out: io.Discard}, []string{"-once"})
 	if err != nil {
 		t.Fatalf("parseTop: %v", err)
 	}
@@ -77,7 +77,7 @@ func TestTopWithNoDirectoryWatchesTheOneYouAreIn(t *testing.T) {
 // Two directories is a person meaning something this command cannot do, and
 // picking the first is how they find out an hour later.
 func TestTopRefusesTwoDirectoriesRatherThanPickingOne(t *testing.T) {
-	_, _, _, err := parseTop([]string{"/work/one", "/work/two", "-once"}, io.Discard)
+	_, _, _, err := parseTop(Context{Out: io.Discard}, []string{"/work/one", "/work/two", "-once"})
 	if err == nil {
 		t.Fatal("two directories were accepted and one of them chosen silently")
 	}
@@ -90,7 +90,7 @@ func TestTopRefusesTwoDirectoriesRatherThanPickingOne(t *testing.T) {
 // the dispatcher turns errHelpShown into exit 0.
 func TestTopPrintsItsFlagsWhenAsked(t *testing.T) {
 	var b strings.Builder
-	_, _, _, err := parseTop([]string{"-h"}, &b)
+	_, _, _, err := parseTop(Context{Out: &b}, []string{"-h"})
 	if !errors.Is(err, errHelpShown) {
 		t.Fatalf("parseTop(-h) answered %v, want errHelpShown", err)
 	}
@@ -104,7 +104,7 @@ func TestTopPrintsItsFlagsWhenAsked(t *testing.T) {
 // A flag nobody declared comes back as an error with the flags beside it,
 // rather than as flag's own message on a stream this program does not own.
 func TestTopRefusesAFlagItDoesNotHave(t *testing.T) {
-	_, _, _, err := parseTop([]string{"-onec"}, io.Discard)
+	_, _, _, err := parseTop(Context{Out: io.Discard}, []string{"-onec"})
 	if err == nil {
 		t.Fatal("an undeclared flag was accepted")
 	}

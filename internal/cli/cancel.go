@@ -18,12 +18,12 @@ import (
 // whatever it said — nothing written by a process being killed can be
 // relied on. `orbit reconcile` is what closes that record afterwards, and
 // the message says so rather than leaving the reader to find out.
-func cancelTask(args []string, out io.Writer) error {
+func cancelTask(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("cancel", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	dir := fs.String("repo", ".", "the repository the task is against")
 	now := fs.Bool("now", false, "kill the run and everything it started, without waiting for it to write anything down")
-	if err := parse(fs, args, out); err != nil {
+	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
 	id := fs.Arg(0)
@@ -43,12 +43,12 @@ func cancelTask(args []string, out io.Writer) error {
 		if err := task.Kill(s, t); err != nil {
 			return err
 		}
-		fmt.Fprintf(out, "%s killed — run `orbit reconcile -repo %s` to close its record\n", id, *dir)
+		fmt.Fprintf(ctx.Out, "%s killed — run `orbit reconcile -repo %s` to close its record\n", id, *dir)
 		return nil
 	}
 	if err := task.Cancel(s, t); err != nil {
 		return err
 	}
-	fmt.Fprintf(out, "%s asked to stop\n", id)
+	fmt.Fprintf(ctx.Out, "%s asked to stop\n", id)
 	return nil
 }

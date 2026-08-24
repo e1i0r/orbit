@@ -23,6 +23,7 @@ const (
 	TaskTimedOut  = "task.timedout"  // it outlived the deadline it was given
 	TaskAbandoned = "task.abandoned" // its process is gone and a reader wrote that down
 	TaskRead      = "task.read"      // somebody has looked at it
+	TaskNoted     = "task.noted"     // a user note left for the task
 
 	PhaseStarted   = "phase.started"   // Data carries engine, model, n, and the permissions the phase was given
 	PhaseFinished  = "phase.finished"  // the phase ran through; Text is what the engine printed
@@ -30,4 +31,9 @@ const (
 	PhaseCancelled = "phase.cancelled" // the phase was stopped from outside; Text is what it printed first
 	PhaseWaiting   = "phase.waiting"   // stopped at a gate; Data["why"] says whose gate
 	PhaseResumed   = "phase.resumed"   // let go again
+	PhaseThought   = "phase.thought"   // a thinking block from the engine stream
+	PhaseRefused   = "phase.refused"   // a tool call the engine was denied by permissions
+
+	GatePassed = "gate.passed" // a phase gate verification check passed
+	GateFailed = "gate.failed" // a phase gate verification check failed
 )

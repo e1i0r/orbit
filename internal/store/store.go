@@ -55,6 +55,15 @@ func validateTaskID(taskID string) error {
 	return nil
 }
 
+// ValidTaskID is validateTaskID, exported for the one caller outside this
+// package that needs the rule and not the write: the window's compose form
+// asks the same question `orbit new` ends up asking, and asking it twice
+// with two answers is how an id the window accepts arrives at a store that
+// refuses it.
+func ValidTaskID(taskID string) error {
+	return validateTaskID(taskID)
+}
+
 // RootPath says where the state root is — $ORBIT_HOME, or ~/.orbit when
 // that is unset — and creates nothing.
 //

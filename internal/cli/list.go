@@ -8,11 +8,11 @@ import (
 	"github.com/e1i0r/orbit/internal/task"
 )
 
-func list(args []string, out io.Writer) error {
+func list(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("list", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	dir := fs.String("repo", ".", "the repository to list")
-	if err := parse(fs, args, out); err != nil {
+	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
 	s, r, err := openBoth(*dir)
@@ -24,11 +24,11 @@ func list(args []string, out io.Writer) error {
 		return err
 	}
 	if len(ids) == 0 {
-		fmt.Fprintf(out, "no tasks against %s\n", r.Name)
+		fmt.Fprintf(ctx.Out, "no tasks against %s\n", r.Name)
 		return nil
 	}
 	for _, id := range ids {
-		fmt.Fprintln(out, id)
+		fmt.Fprintln(ctx.Out, id)
 	}
 	return nil
 }

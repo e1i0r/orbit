@@ -9,12 +9,10 @@ package ui
 // affordance.go, and this file only ever asks it.
 
 import (
-	"maps"
+	"fmt"
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
-
-	"github.com/e1i0r/orbit/internal/view"
 )
 
 // confirmYes is the one keystroke that answers a question with yes.
@@ -25,22 +23,51 @@ import (
 // says which key it is, and that sentence is translated.
 const confirmYes = "y"
 
-// key routes one keystroke to whichever of the window's five modes has it.
+// key routes one keystroke to whichever of the window's modes has it.
 //
-// The order is the order things are on top of each other: a filter being
-// typed swallows every letter, a question waiting for an answer takes the
-// next key whatever it is, and the two screens below the board have their own
-// small maps. Only what is left reaches the list.
+// The order is the order things are on top of each other: a palette line,
+// a menu or a filter being typed swallows every letter, a question waiting
+// for an answer takes the next key whatever it is, and the two screens
+// below the board have their own small maps. Only what is left reaches the
+// list.
+//
+// The ':' that opens the palette is matched here rather than in any one
+// screen's map because the palette is not the board's tool alone; so is m,
+// which opens the menu on whatever the context offers. A run's output being
+// up sits under both and above everything else, keeping only its own way
+// out.
 func (m Model) key(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
+	case m.palette.open:
+		return m.paletteKey(msg)
+	case m.menu.open:
+		return m.menuKey(msg)
 	case m.filtering:
 		return m.filterKey(msg)
 	case m.confirm != confirmNone:
 		return m.confirmKey(msg)
+	case m.watchUp:
+		return m.watchKey(msg)
 	case m.screen == screenStart:
 		return m.startKey(msg)
 	case m.screen == screenDetail:
 		return m.detailKey(msg)
+	case m.screen == screenCompose:
+		return m.composeKey(msg)
+	case m.screen == screenSettings:
+		return m.settingsKey(msg)
+	case m.screen == screenFlows:
+		return m.flowsKey(msg)
+	case m.screen == screenRepos:
+		return m.repolistKey(msg)
+	case m.screen == screenEngines:
+		return m.enginesKey(msg)
+	case m.screen == screenHelp:
+		return m.helpKey(msg)
+	case key.Matches(msg, m.keys.Commands):
+		return m.openPalette(), nil
+	case key.Matches(msg, m.keys.Menu):
+		return m.openMenuForContext(), nil
 	}
 	return m.listKey(msg)
 }
@@ -50,88 +77,76 @@ func (m Model) key(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 // Every verb here goes through affordance first, so a key that the task
 // under the cursor cannot take says why rather than doing nothing. Doing
 // nothing is what a reader reads as a broken keyboard.
-func (m Model) listKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+//
+// It takes a fmt.Stringer and not a tea.KeyPressMsg, which is what
+// key.Matches has always wanted, and the reason is the mouse: a hint clicked
+// in the key bar arrives here as the keystroke that hint names, through this
+// same map, so a verb cannot be reachable by the keyboard and not by the
+// pointer. The alternative was a second switch over the same bindings, and
+// two copies of a dispatch table disagree the first time one of them gains a
+// verb.
+func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
+	if targetTab, ok := keyToPane(k.String()); ok {
+		m = m.showTab(targetTab)
+		return m, nil
+	}
 	switch {
-	case key.Matches(msg, m.keys.Up):
+	case key.Matches(k, m.keys.Back):
+		if m.filter != "" || m.repoFilter != "" || m.queueFilter != nil {
+			m.filter, m.repoFilter, m.queueFilter = "", "", nil
+			return m.say(m.opts.Words.T("repos.filter_cleared", "showing all repositories")), nil
+		}
+		return m, nil
+	case key.Matches(k, m.keys.Up):
 		return m.move(-1), nil
-	case key.Matches(msg, m.keys.Down):
+	case key.Matches(k, m.keys.Down):
 		return m.move(1), nil
-	case key.Matches(msg, m.keys.First):
+	case key.Matches(k, m.keys.First):
 		return m.moveTo(0), nil
-	case key.Matches(msg, m.keys.Last):
+	case key.Matches(k, m.keys.Last):
 		return m.moveTo(len(m.rows()) - 1), nil
-	case key.Matches(msg, m.keys.PageUp):
+	case key.Matches(k, m.keys.PageUp):
 		return m.move(-m.frame.Body.H), nil
-	case key.Matches(msg, m.keys.PageDown):
+	case key.Matches(k, m.keys.PageDown):
 		return m.move(m.frame.Body.H), nil
-	case key.Matches(msg, m.keys.Open):
+	case key.Matches(k, m.keys.Open):
 		return m.open()
-	case key.Matches(msg, m.keys.Filter):
+	case key.Matches(k, m.keys.Filter):
 		m.filtering = true
 		return m, nil
-	case key.Matches(msg, m.keys.Autopilot):
-		return m.autopilot(), nil
-	case key.Matches(msg, m.keys.Pause):
+	case key.Matches(k, m.keys.Repos):
+		return m.openRepos(), nil
+	case key.Matches(k, m.keys.EngineKnobs):
+		return m.openEngines(), nil
+	case key.Matches(k, m.keys.Autopilot):
+		return m.autopilot()
+	case key.Matches(k, m.keys.Pause):
 		return m.verb(m.keys.Pause, "pause")
-	case key.Matches(msg, m.keys.Resume):
+	case key.Matches(k, m.keys.Resume):
 		return m.verb(m.keys.Resume, "resume")
-	case key.Matches(msg, m.keys.Hand):
+	case key.Matches(k, m.keys.Hand):
 		return m.handBack()
-	case key.Matches(msg, m.keys.Cancel):
+	case key.Matches(k, m.keys.Cancel):
 		return m.ask()
-	case key.Matches(msg, m.keys.Take):
+	case key.Matches(k, m.keys.Take):
 		return m.takeKey()
-	case key.Matches(msg, m.keys.MarkRead):
+	case key.Matches(k, m.keys.MarkRead):
 		return m.markReadKey()
-	case key.Matches(msg, m.keys.Ask):
-		// The one verb that is only ever its own reason. Orbit cannot put a
-		// question to an engine yet, so gesture refuses it and says so, and
-		// nothing here pretends otherwise with a stub.
+	case key.Matches(k, m.keys.Ask):
 		_, next, _ := m.gesture(m.keys.Ask)
 		return next, nil
-	case key.Matches(msg, m.keys.Start):
+	case key.Matches(k, m.keys.Start):
 		return m.openStart()
-	case key.Matches(msg, m.keys.Help):
-		return m.notBuilt(m.keys.Help), nil
-	case key.Matches(msg, m.keys.Quit):
+	case key.Matches(k, m.keys.Compose):
+		return m.openCompose(), nil
+	case key.Matches(k, m.keys.CLI):
+		return m.launchInteractiveCLI()
+	case key.Matches(k, m.keys.Help):
+		return m.openHelp(), nil
+	case key.Matches(k, m.keys.Quit):
 		return m, tea.Quit
 	}
 	return m, nil
-}
-
-// filterKey feeds the text input, which owns every key it is not given a
-// reason to give up.
-func (m Model) filterKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
-	switch {
-	case key.Matches(msg, m.keys.Back):
-		m.filtering, m.filter = false, ""
-		return m.clampCursor(), nil
-	case key.Matches(msg, m.keys.Open):
-		// The filter stays applied and the keyboard goes back to the list.
-		// Closing it and clearing it are two different gestures because
-		// filtering to one repository and then working in it is the whole
-		// point of having filtered.
-		m.filtering = false
-		return m.clampCursor(), nil
-	case msg.Code == tea.KeyBackspace:
-		m.filter = trimLastRune(m.filter)
-		return m.clampCursor(), nil
-	}
-	if msg.Text != "" {
-		m.filter += msg.Text
-	}
-	return m.clampCursor(), nil
-}
-
-// trimLastRune removes the last character of the filter, counting runes and
-// never bytes: backspacing "café" a byte at a time leaves an invalid string
-// on screen, which is the same mistake as measuring a column in bytes.
-func trimLastRune(s string) string {
-	runes := []rune(s)
-	if len(runes) == 0 {
-		return s
-	}
-	return string(runes[:len(runes)-1])
 }
 
 // confirmKey answers the one question the window ever asks.
@@ -140,8 +155,20 @@ func trimLastRune(s string) string {
 // specific "no" closes is a question that traps a reader who has already
 // looked away, and the safe answer to "shall I cancel this run" is no.
 func (m Model) confirmKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	c := m.confirm
 	id := m.confirmID
 	m.confirm, m.confirmID = confirmNone, ""
+	if c == confirmPostCliTask {
+		if msg.String() == confirmYes || msg.String() == "s" || msg.String() == "S" || key.Matches(msg, m.keys.Open) {
+			m = m.openCompose()
+			if id != "" {
+				m.compose.repo = id
+				m.compose.field = composeText
+			}
+			return m.say(m.opts.Words.T("msg.compose_prompt", "write the task to run")), nil
+		}
+		return m.say(m.opts.Words.T("msg.cli_ended", "interactive session ended")), nil
+	}
 	if msg.String() != confirmYes {
 		return m, nil
 	}
@@ -195,18 +222,20 @@ func (m Model) ask() (tea.Model, tea.Cmd) {
 // It says what it just did rather than what it undid. The program this
 // replaces printed "autopilot was off" after turning it on, and the sentence
 // is ambiguous in exactly the moment a reader needs it not to be.
-func (m Model) autopilot() Model {
+func (m Model) autopilot() (tea.Model, tea.Cmd) {
 	if m.opts.Settings == nil {
-		return m
+		return m, nil
 	}
 	on := !m.opts.Settings.Autopilot()
 	if err := m.opts.Settings.SetAutopilot(on); err != nil {
-		return m.say(err.Error())
+		return m.say(err.Error()), nil
 	}
 	if on {
-		return m.say(m.opts.Words.T("msg.autopilot_on", "autopilot is on: every phase runs without asking"))
+		m = m.say(m.opts.Words.T("msg.autopilot_on", "autopilot is on: every phase runs without asking"))
+		nextM, cmd := m.autoStartNext()
+		return nextM, cmd
 	}
-	return m.say(m.opts.Words.T("msg.autopilot_off", "autopilot is off: every phase stops for you"))
+	return m.say(m.opts.Words.T("msg.autopilot_off", "autopilot is off: every phase stops for you")), nil
 }
 
 // notBuilt answers a key the bar offers and this window does not implement.
@@ -219,71 +248,4 @@ func (m Model) autopilot() Model {
 func (m Model) notBuilt(b key.Binding) Model {
 	return m.say(m.opts.Words.T("msg.not_built", "{key} is not wired up yet; this window is still being built",
 		about("key", b.Help().Key)))
-}
-
-// conditions is the standing state the verbs are asked about, for one task.
-//
-// It takes the task because two of the three answers are about a particular
-// one: whether this window handed the terminal to an engine for it, and
-// whether the engine that ran it can carry a session on at all. Only the
-// autopilot switch is about the whole program.
-func (m Model) conditions(t view.Task) Conditions {
-	return Conditions{
-		Autopilot: m.autopilotOn(),
-		CanResume: m.canResume(t.Engine),
-		Taken:     m.taken[t.ID],
-	}
-}
-
-// canResume asks the port about one engine by name, and answers no for a
-// window that was handed no way to ask — a rendering test, or a window built
-// before the composition root knows what it can run.
-func (m Model) canResume(engine string) bool {
-	return m.opts.CanResume != nil && m.opts.CanResume(engine)
-}
-
-// autopilotOn reads the switch, and answers for a window opened without a
-// settings file at all — which is what a rendering test hands it.
-func (m Model) autopilotOn() bool {
-	return m.opts.Settings != nil && m.opts.Settings.Autopilot()
-}
-
-// unreadCap is how many unread finished tasks may stand before nothing new
-// starts, and zero when there is no settings file to ask. Whether the brake
-// is actually on is atUnreadCap, beside the refusal it produces.
-func (m Model) unreadCap() int {
-	if m.opts.Settings == nil {
-		return 0
-	}
-	return m.opts.Settings.UnreadCap()
-}
-
-// affordance finds one verb's answer for one task, by the glyph its binding
-// prints. The glyph is the same in every language, which is what lets this
-// match a binding the key map may have rebuilt since.
-func (m Model) affordance(t view.Task, b key.Binding) (Affordance, bool) {
-	for _, a := range m.keys.Affordances(t, m.conditions(t)) {
-		if a.Key.Help().Key == b.Help().Key {
-			return a, true
-		}
-	}
-	return Affordance{}, false
-}
-
-// task finds one task on the board by id.
-func (m Model) task(id string) (view.Task, bool) {
-	for _, t := range m.board.Tasks {
-		if t.ID == id {
-			return t, true
-		}
-	}
-	return view.Task{}, false
-}
-
-// expand toggles one band open or shut, on a copy of the map.
-func (m Model) expand(b view.Band) Model {
-	open := maps.Clone(m.expanded)
-	open[b] = !open[b]
-	m.expanded = open
-	return m
 }

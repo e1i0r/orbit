@@ -64,12 +64,12 @@ func Plain(o Options) (string, error) {
 	if o.Reader != nil {
 		b, changed, err := o.Reader.Refresh()
 		if err != nil {
-			return "", fmt.Errorf("read the board: %w", err)
+			return "", fmt.Errorf("%s: %w", m.opts.Words.T("plain.read_board", "read the board"), err)
 		}
 		next, _ := m.Update(boardMsg{Board: b, Changed: changed})
 		loaded, ok := next.(Model)
 		if !ok {
-			return "", fmt.Errorf("the window answered with a %T rather than a model", next)
+			return "", fmt.Errorf("%s: %T", m.opts.Words.T("plain.not_model", "the window answered with an unexpected type"), next)
 		}
 		m = loaded
 	}

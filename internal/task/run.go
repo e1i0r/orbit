@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"unicode/utf8"
 
 	"github.com/e1i0r/orbit/internal/engine"
@@ -72,8 +73,40 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		return failed(s, t, err)
 	}
 	for _, p := range f.Phases {
-		if _, ok := engines[p.Engine]; !ok {
+		eng, ok := engines[p.Engine]
+		if !ok {
 			return failed(s, t, fmt.Errorf("phase %q wants the engine %q, which is not configured", p.Name, p.Engine))
+		}
+		if p.Model != "" && len(eng.Models()) > 0 {
+			var found bool
+			for _, m := range eng.Models() {
+				if m.ID == p.Model {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return failed(s, t, fmt.Errorf("phase %q names model %q, which engine %q does not offer", p.Name, p.Model, p.Engine))
+			}
+		}
+		if p.Effort != "" {
+			efforts := eng.Efforts()
+			if len(efforts) == 0 {
+				return failed(s, t, fmt.Errorf("phase %q names effort %q, but engine %q has no effort dial", p.Name, p.Effort, p.Engine))
+			}
+			var found bool
+			for _, e := range efforts {
+				if e.ID == p.Effort {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return failed(s, t, fmt.Errorf("phase %q names effort %q, which engine %q does not offer", p.Name, p.Effort, p.Engine))
+			}
+		}
+		if p.Thinking != "" && !eng.CanThink() {
+			return failed(s, t, fmt.Errorf("phase %q configures thinking %q, but engine %q does not support thinking mode", p.Name, p.Thinking, p.Engine))
 		}
 	}
 
@@ -82,6 +115,7 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		return failed(s, t, err)
 	}
 
+	var prevOutput string
 	for i, p := range f.Phases {
 		// Every phase is put to the gate, not only the ones whose Wait says
 		// so; Gate says why. A gate that cannot read what it needs is a
@@ -104,21 +138,29 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 			continue
 		}
 
-		if err := emit(s, t, phaseStart(p, i+1)); err != nil {
+		notes := unconsumedNotes(s, t)
+		if err := emit(s, t, phaseStart(p, i+1, notes)); err != nil {
 			return err
 		}
 
+		inputPrev := ""
+		if p.FeedOutput {
+			inputPrev = prevOutput
+		}
 		out, runErr := engines[p.Engine].Run(ctx, engine.Request{
-			Prompt: prompt(t, p),
-			Model:  p.Model,
-			Dir:    wt,
-			// The posture the flow file stated, carried to the process
-			// that will act under it. It was inert for two plans: the
-			// built-in flows all said ["repo"] and no engine could hear
-			// it, so the engine's own default was the real posture and it
-			// was written down nowhere.
+			Prompt:      prompt(t, p, notes, inputPrev),
+			Model:       p.Model,
+			Effort:      p.Effort,
+			Thinking:    p.Thinking,
+			Dir:         wt,
 			Permissions: p.Permissions,
 		})
+		for _, thought := range out.Thoughts {
+			_ = emit(s, t, phaseThought(p.Name, i+1, thought))
+		}
+		for _, ref := range out.Refusals {
+			_ = emit(s, t, phaseRefused(p.Name, i+1, ref))
+		}
 		if runErr != nil {
 			// A context that is done is not an engine that broke. The engine
 			// reports being killed the same way it reports falling over —
@@ -143,54 +185,36 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 			return failed(s, t, fmt.Errorf("task %s, phase %q: %w", t.ID, p.Name, runErr))
 		}
 
+		if err := runGates(ctx, s, t, p, i+1, wt, out); err != nil {
+			return err
+		}
+
 		if err := emit(s, t, phaseEnd(record.PhaseFinished, p.Name, out, nil)); err != nil {
 			return err
+		}
+		if out.Output != "" {
+			prevOutput = out.Output
 		}
 	}
 
 	return emit(s, t, record.Event{Kind: record.TaskFinished})
 }
 
-// stopped writes down that a run was stopped from outside rather than broken
-// from inside, and hands back the context's error so the caller sees which.
-//
-// A cancellation and a timeout are different facts and the window bands them
-// differently — you stopped this one, and this one outlived its deadline and
-// wants you — so they are different kinds rather than one kind with a
-// reason. Both are terminal: whichever wrote the phase, the attempt is over.
+// stopped writes down that a run was stopped from outside.
 func stopped(s *store.Store, t Task, phase string, out engine.Result, cause error) error {
-	// Best-effort, and the errors discarded, for the same reason as in
-	// failed below: what stopped the run matters more than a failure to
-	// write it down, and there is nobody left to hand a second error to.
-	_ = emit(s, t, phaseEnd(record.PhaseCancelled, phase, out, nil)) //nolint:errcheck // deliberate: see failed
+	_ = emit(s, t, phaseEnd(record.PhaseCancelled, phase, out, nil)) //nolint:errcheck
 	kind := record.TaskCancelled
 	if errors.Is(cause, context.DeadlineExceeded) {
 		kind = record.TaskTimedOut
 	}
-	_ = emit(s, t, record.Event{Kind: kind}) //nolint:errcheck // deliberate: see failed
+	_ = emit(s, t, record.Event{Kind: kind}) //nolint:errcheck
 	return fmt.Errorf("task %s, phase %q: %w", t.ID, phase, cause)
 }
 
-// failed writes down that the run stopped and why, then hands the error back
-// unchanged so the caller sees exactly what went wrong.
-//
-// Every way out of Run goes through here or through the phase-failure path
-// above, because a run has four ways to fail and two of them used to return
-// before anything was written: an invalid flow and an engine nobody
-// configured both left a task that had no record at all, while a bad
-// worktree left one that said task.failed. "Did this task fail?" has to be
-// answerable from the log, since the log is the only thing the window will
-// read.
-//
-// Recording is best-effort and its own error is discarded on purpose: a
-// failure to write down why a run died must never replace the error that
-// killed it.
+// failed writes down that the run stopped and why.
 func failed(s *store.Store, t Task, err error) error {
-	// Cut for the same reason phaseEnd cuts: this text can be an engine's
-	// error with the whole of its stderr inside it, and an event too large
-	// to write is a failure nobody can read afterwards.
 	text, _ := captured(err.Error())
-	_ = emit(s, t, record.Event{Kind: record.TaskFailed, Text: text}) //nolint:errcheck // deliberate: see above
+	_ = emit(s, t, record.Event{Kind: record.TaskFailed, Text: text}) //nolint:errcheck
 	return err
 }
 
@@ -237,10 +261,21 @@ func prepare(s *store.Store, t Task) (string, error) {
 }
 
 // prompt is what the engine is told for one phase.
-//
-// It is deliberately thin. Real prompts per phase, loaded from files and
-// embedded in the binary, arrive with the rest of the flow catalogue; putting
-// them here now would bury them in Go.
-func prompt(t Task, p flow.Phase) string {
-	return fmt.Sprintf("Phase: %s\nRepository: %s\n\nTask %s:\n%s\n", p.Name, t.Repo.Name, t.ID, t.Text)
+func prompt(t Task, p flow.Phase, notes []string, prevOutput string) string {
+	base := fmt.Sprintf("Phase: %s\nRepository: %s\n\nTask %s:\n%s\n", p.Name, t.Repo.Name, t.ID, t.Text)
+	if p.Prompt != "" {
+		base += fmt.Sprintf("\nPhase Instructions:\n%s\n", p.Prompt)
+	}
+	if prevOutput != "" {
+		base += fmt.Sprintf("\nPrevious Phase Output:\n%s\n", prevOutput)
+	}
+	if len(notes) == 0 {
+		return base
+	}
+	var sb strings.Builder
+	sb.WriteString(base + "\nOperator Notes:\n")
+	for _, n := range notes {
+		sb.WriteString("- " + n + "\n")
+	}
+	return sb.String()
 }

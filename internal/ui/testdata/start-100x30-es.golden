@@ -1,8 +1,11 @@
- orbit  ~/work                                 sin leer 3/5    piloto automático ●    4 repositorios
+ [orbit]   ~/work                                            📦 4 repositorios    🧠 claude    🌐 ES
 ────────────────────────────────────────────────────────────────────────────────────────────────────
+  $0.00 gastado  ·  15 tareas  ·  0 eventos  ·  0ms lectura
  ACME-2662  Retry the webhook on 5xx                                                        payments
 
-   flujo  careful                                                             quick · task · careful
+   flujo  careful                                            quick · task · careful  [+] nuevo flujo
+
+   motor     claude · sonnet · effort:high · thinking: on     [m] modelo  [o] esfuerzo  [t] thinking
 
    ▸ implement   claude   opus   permisos: repo
      review      claude   opus   permisos: repo · se detiene al terminar
@@ -22,9 +25,6 @@
 
 
 
-
-
-
 ────────────────────────────────────────────────────────────────────────────────────────────────────
  ACME-2705 · implement · lleva 8m · claude/opus · careful
- [⏎] ejecutar  [f] cambiar de flujo  [A] piloto automático  [esc] volver  [?] [q]
+ [⏎] ejecutar  [f] cambiar de flujo  [+] crear flujo  [?] [q]             ⚡ piloto automático ● [A]

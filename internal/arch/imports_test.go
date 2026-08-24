@@ -40,9 +40,10 @@ var layers = map[string][]string{
 	// internal/board still does not append anything itself, and internal/ui
 	// still cannot reach internal/record, internal/store or internal/engine.
 	"internal/board":  {"internal/record", "internal/repo", "internal/store", "internal/task", "internal/view"},
-	"internal/cli":    {"internal/board", "internal/engine", "internal/flow", "internal/repo", "internal/store", "internal/task", "internal/ui", "internal/view", "internal/words"},
+	"internal/cli":    {"internal/board", "internal/engine", "internal/flow", "internal/quota", "internal/repo", "internal/store", "internal/task", "internal/ui", "internal/view", "internal/words"},
 	"internal/engine": {},
 	"internal/flow":   {},
+	"internal/quota":  {},
 	"internal/record": {},
 	"internal/repo":   {"internal/store"},
 	"internal/store":  {},

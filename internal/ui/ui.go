@@ -37,6 +37,12 @@ const (
 	screenList screen = iota
 	screenDetail
 	screenStart
+	screenCompose
+	screenSettings
+	screenFlows
+	screenRepos
+	screenEngines
+	screenHelp
 )
 
 // confirm is the question the window is waiting for an answer to, and there
@@ -47,6 +53,7 @@ type confirm int
 const (
 	confirmNone confirm = iota
 	confirmCancel
+	confirmPostCliTask
 )
 
 // Model is one window. It is a value: Update takes one and returns the next,
@@ -91,6 +98,36 @@ type Model struct {
 	// arguing for.
 	filter string
 
+	// palette is the ':' line and the list above it, while it is up. Its
+	// input is a plain string for the same reason filter is, and its
+	// whole shape lives in palette.go.
+	palette paletteState
+
+	// menu is what can be done to the thing it was opened on — a task,
+	// or the board itself — including what cannot, with the reason. It
+	// lives in menu.go and owns the body while it is up, exactly as the
+	// palette does. The two never show at once: whichever is up owns the
+	// keyboard, and the other's opening key is swallowed by it.
+	menu menuState
+
+	// compose is the form a task is written into, and pendingID is the id
+	// it just wrote: the board polls twice a second, so the new task is
+	// selected the moment it shows up — and if it has not arrived after
+	// two refreshes, nothing is said, because a write that answered no
+	// error has nothing to apologise for. Both live in compose.go.
+	compose   composeState
+	pendingID string
+	pendTries int
+
+	settings    settingsState
+	flows       flowsState
+	repolist    repolistState
+	repoFilter  string
+	queueFilter *view.Band
+	engines     enginesState
+	knobs       Knobs
+	help        helpState
+
 	// start is the dialog that decides what a run will be, and taken is
 	// which tasks this window has handed the terminal to an engine for.
 	//
@@ -100,6 +137,25 @@ type Model struct {
 	// survive a restart — is argued at took, in gesture.go.
 	start startModel
 	taken map[string]bool
+
+	// watching is a palette command that is out running right now, and
+	// watchUp is whether its output is on screen. The watch is a pointer
+	// because the Cmd that runs the command and every poll that reads its
+	// buffer are outside the value model's copy discipline; the buffer is
+	// its own mutex-guarded thing precisely so that no field of the model
+	// is ever written from another goroutine. watchUp going down does not
+	// stop the run — Orbit cannot cancel what it did not spawn a handle
+	// for — so the done sentence still reaches the band afterwards.
+	watching *commandWatch
+	watchUp  bool
+	output   string
+
+	// held is the pointer's button, if one is down, and what it went down
+	// on. It is on the model rather than in the mouse handler because the
+	// press and the release are two messages, and what happens between them
+	// — a refresh, a resize, a task finishing — goes through Update like
+	// everything else.
+	held hold
 
 	message   string
 	messageAt time.Time
@@ -182,92 +238,4 @@ func New(o Options) Model {
 // in the middle of a frame.
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(tea.RequestBackgroundColor, refresh(m.opts.Reader), tick(), rescanTick(), elapsedTick())
-}
-
-// Update is the whole of the window's behaviour, and every case in it is a
-// row of the transition table in update_test.go.
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		return m.resize(msg.Width, msg.Height), nil
-	case tea.BackgroundColorMsg:
-		m.dark = msg.IsDark()
-		return m, nil
-	case tickMsg:
-		// The task view's log is on the same clock as the board, and for
-		// the same reason: an append-only file that did not grow costs one
-		// stat to find that out. A tail that only moved when the reader
-		// pressed a key would not be a tail.
-		cmds := []tea.Cmd{refresh(m.opts.Reader), tick()}
-		if m.screen == screenDetail {
-			cmds = append(cmds, logOf(m.opts.Reader, m.subject()))
-		}
-		return m, tea.Batch(cmds...)
-	case rescanMsg:
-		// The diff rides this clock rather than the log's tickMsg one,
-		// because git diff is heavier than the stat a tick costs: at
-		// board.RescanEvery this is a quarter the log's cadence, which is
-		// slow enough to be cheap and still lets a live task's diff change
-		// while the reader is looking at it, rather than only at the
-		// moment the view was opened.
-		//
-		// The clock is slower than one diff's worst case all the same — up
-		// to five seconds for the diff itself — so a tick that finds the
-		// last one still out at git does not ask again. Without that, a
-		// repository slow enough to need the bound is the one that gets a
-		// second, third and sixth request piled on top of the first.
-		cmds := []tea.Cmd{rescan(m.opts.Reader), rescanTick()}
-		if m.screen == screenDetail && !m.diffAsking {
-			m.diffAsking = true
-			cmds = append(cmds, diffOf(m.opts.Reader, m.subject(), m.diffBase))
-		}
-		return m, tea.Batch(cmds...)
-	case elapsedMsg:
-		m.now = time.Time(msg)
-		return m, elapsedTick()
-	case boardMsg:
-		return m.applyBoard(msg)
-	case controlMsg:
-		return m.say(m.controlSaid(msg)), nil
-	case startedMsg:
-		return m.say(m.startedSaid(msg)), nil
-	case readMsg:
-		return m.say(m.readSaid(msg)), nil
-	case sessionMsg:
-		return m.session(msg)
-	case sessionEndedMsg:
-		return m.sessionEnded(msg), nil
-	case editorMsg:
-		if msg.Err != nil {
-			return m.say(msg.Err.Error()), nil
-		}
-		return m, nil
-	case diffMsg:
-		// A diff that arrives for a task the reader has since left is
-		// stale, and dropping it is the whole guard: openKey has already
-		// pointed m.detail at the new id and asked git about that one, so
-		// writing this text in would put one task's changes under another
-		// task's heading and nothing on screen would say so.
-		if msg.ID != m.detail {
-			return m, nil
-		}
-		m.diff, m.worktree = msg.Text, msg.Tree
-		m.diffErr, m.diffKnown, m.diffNoBase = msg.Err, true, msg.NoBase
-		m.diffBase, m.diffAsking = msg.Base, false
-		return m.syncPanes(), nil
-	case logMsg:
-		// The same guard, for the same reason: a record that arrives for a
-		// task the reader has since left would put one task's history under
-		// another task's heading, and nothing on screen would say so.
-		if msg.ID != m.detail {
-			return m, nil
-		}
-		m.entries, m.logErr = msg.Entries, msg.Err
-		return m.syncPanes(), nil
-	case languageMsg:
-		return m.language(msg.Lang), nil
-	case tea.KeyPressMsg:
-		return m.key(msg)
-	}
-	return m, nil
 }
