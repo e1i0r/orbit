@@ -115,6 +115,7 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		return failed(s, t, err)
 	}
 
+	var prevOutput string
 	for i, p := range f.Phases {
 		// Every phase is put to the gate, not only the ones whose Wait says
 		// so; Gate says why. A gate that cannot read what it needs is a
@@ -143,7 +144,7 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		}
 
 		out, runErr := engines[p.Engine].Run(ctx, engine.Request{
-			Prompt:      prompt(t, p, notes),
+			Prompt:      prompt(t, p, notes, prevOutput),
 			Model:       p.Model,
 			Effort:      p.Effort,
 			Thinking:    p.Thinking,
@@ -187,51 +188,29 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		if err := emit(s, t, phaseEnd(record.PhaseFinished, p.Name, out, nil)); err != nil {
 			return err
 		}
+		if out.Output != "" {
+			prevOutput = out.Output
+		}
 	}
 
 	return emit(s, t, record.Event{Kind: record.TaskFinished})
 }
 
-// stopped writes down that a run was stopped from outside rather than broken
-// from inside, and hands back the context's error so the caller sees which.
-//
-// A cancellation and a timeout are different facts and the window bands them
-// differently — you stopped this one, and this one outlived its deadline and
-// wants you — so they are different kinds rather than one kind with a
-// reason. Both are terminal: whichever wrote the phase, the attempt is over.
+// stopped writes down that a run was stopped from outside.
 func stopped(s *store.Store, t Task, phase string, out engine.Result, cause error) error {
-	// Best-effort, and the errors discarded, for the same reason as in
-	// failed below: what stopped the run matters more than a failure to
-	// write it down, and there is nobody left to hand a second error to.
-	_ = emit(s, t, phaseEnd(record.PhaseCancelled, phase, out, nil)) //nolint:errcheck // deliberate: see failed
+	_ = emit(s, t, phaseEnd(record.PhaseCancelled, phase, out, nil)) //nolint:errcheck
 	kind := record.TaskCancelled
 	if errors.Is(cause, context.DeadlineExceeded) {
 		kind = record.TaskTimedOut
 	}
-	_ = emit(s, t, record.Event{Kind: kind}) //nolint:errcheck // deliberate: see failed
+	_ = emit(s, t, record.Event{Kind: kind}) //nolint:errcheck
 	return fmt.Errorf("task %s, phase %q: %w", t.ID, phase, cause)
 }
 
-// failed writes down that the run stopped and why, then hands the error back
-// unchanged so the caller sees exactly what went wrong.
-//
-// Every way out of Run goes through here or through the phase-failure path
-// above, because a run has four ways to fail and two of them used to return
-// before anything was written: an invalid flow and an engine nobody
-// configured both left a task that had no record at all, while a bad
-// worktree left one that said task.failed. "Did this task fail?" has to be
-// answerable from the log, since the log is the only thing the window will
-// read.
-//
-// Recording is best-effort and its own error is discarded on purpose: a
-// failure to write down why a run died must never replace the error that
-// killed it.
+// failed writes down that the run stopped and why.
 func failed(s *store.Store, t Task, err error) error {
-	// Cut for the same reason phaseEnd cuts: this text can be an engine's
-	// error with the whole of its stderr inside it, and an event too large
-	// to write is a failure nobody can read afterwards.
 	text, _ := captured(err.Error())
-	_ = emit(s, t, record.Event{Kind: record.TaskFailed, Text: text}) //nolint:errcheck // deliberate: see above
+	_ = emit(s, t, record.Event{Kind: record.TaskFailed, Text: text}) //nolint:errcheck
 	return err
 }
 
@@ -278,10 +257,13 @@ func prepare(s *store.Store, t Task) (string, error) {
 }
 
 // prompt is what the engine is told for one phase.
-func prompt(t Task, p flow.Phase, notes []string) string {
+func prompt(t Task, p flow.Phase, notes []string, prevOutput string) string {
 	base := fmt.Sprintf("Phase: %s\nRepository: %s\n\nTask %s:\n%s\n", p.Name, t.Repo.Name, t.ID, t.Text)
 	if p.Prompt != "" {
 		base += fmt.Sprintf("\nPhase Instructions:\n%s\n", p.Prompt)
+	}
+	if prevOutput != "" {
+		base += fmt.Sprintf("\nPrevious Phase Output:\n%s\n", prevOutput)
 	}
 	if len(notes) == 0 {
 		return base
