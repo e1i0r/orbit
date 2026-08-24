@@ -9,6 +9,7 @@ package ui
 
 import (
 	"errors"
+	"fmt"
 
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/viewport"
@@ -43,33 +44,41 @@ func (m Model) openDetail(t view.Task) (Model, tea.Cmd) {
 // turned ← on the log and evidence tabs into a silent no-op. esc is still
 // the way out the key bar and the help overlay both print, so nothing on
 // screen ever advertised ←; but it used to work, and this restores it.
-func (m Model) detailKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	switch {
-	case m.tab == tabDiff && key.Matches(msg, m.keys.Sideways):
-		return m.sideways(msg), nil
-	case key.Matches(msg, m.keys.Back):
+	case m.tab == tabDiff && key.Matches(k, m.keys.Sideways):
+		return m.sideways(k), nil
+	case key.Matches(k, m.keys.Back):
 		m.screen = screenList
 		return m, nil
-	case key.Matches(msg, m.keys.NextTab):
-		m.tab = (m.tab + 1) % tabCount
-		return m, nil
-	case key.Matches(msg, m.keys.PrevTab):
-		m.tab = (m.tab + tabCount - 1) % tabCount
-		return m, nil
-	case key.Matches(msg, m.keys.Edit):
+	case key.Matches(k, m.keys.NextTab):
+		return m.showTab((m.tab + 1) % tabCount), nil
+	case key.Matches(k, m.keys.PrevTab):
+		return m.showTab((m.tab + tabCount - 1) % tabCount), nil
+	case key.Matches(k, m.keys.Edit):
 		return m.edit()
-	case key.Matches(msg, m.keys.Open), key.Matches(msg, m.keys.Last):
+	case key.Matches(k, m.keys.Open), key.Matches(k, m.keys.Last):
 		return m.newest(), nil
-	case key.Matches(msg, m.keys.Help):
+	case key.Matches(k, m.keys.Help):
 		// Answered here for the reason startKey answers it: the bar prints
 		// [?] on every screen and never drops it, so every screen owes the
 		// reader the same sentence back. Without this arm ? fell through to
 		// scroll, which moves nothing and says nothing.
 		return m.notBuilt(m.keys.Help), nil
-	case key.Matches(msg, m.keys.Quit):
+	case key.Matches(k, m.keys.Quit):
 		return m, tea.Quit
 	}
-	return m.scroll(msg), nil
+	return m.scroll(k), nil
+}
+
+// showTab puts one pane on top.
+//
+// It is a method rather than an assignment at each site because there are
+// three of them now — next, previous, and a tab that was clicked — and a
+// pane brought forward may one day need more than a number changed.
+func (m Model) showTab(t tab) Model {
+	m.tab = t
+	return m
 }
 
 // scroll moves the pane, and is the one site the follow rule lives at.
@@ -80,19 +89,19 @@ func (m Model) detailKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 // seeing new output for the rest of the run and had no way to know. Here
 // every key that can move the pane comes through this function, and the rule
 // is read off the offset afterwards rather than written into each key.
-func (m Model) scroll(msg tea.KeyPressMsg) Model {
+func (m Model) scroll(k fmt.Stringer) Model {
 	vp := m.panes[m.tab]
 	was := vp.YOffset()
 	switch {
-	case key.Matches(msg, m.keys.Up):
+	case key.Matches(k, m.keys.Up):
 		vp.ScrollUp(1)
-	case key.Matches(msg, m.keys.Down):
+	case key.Matches(k, m.keys.Down):
 		vp.ScrollDown(1)
-	case key.Matches(msg, m.keys.PageUp):
+	case key.Matches(k, m.keys.PageUp):
 		vp.PageUp()
-	case key.Matches(msg, m.keys.PageDown):
+	case key.Matches(k, m.keys.PageDown):
 		vp.PageDown()
-	case key.Matches(msg, m.keys.First):
+	case key.Matches(k, m.keys.First):
 		vp.GotoTop()
 	default:
 		return m
@@ -111,9 +120,15 @@ func (m Model) scroll(msg tea.KeyPressMsg) Model {
 
 // sideways scrolls the pane along a line too wide for it, which only the
 // diff ever is.
-func (m Model) sideways(msg tea.KeyPressMsg) Model {
+//
+// The key is read by name rather than by code because that is all a
+// keystroke is by the time it gets here: key.Matches has already agreed it
+// is one of Sideways' own two keys, so the name is exactly "left" or
+// "right", and a hint clicked in the key bar arrives as the same string a
+// pressed key does.
+func (m Model) sideways(k fmt.Stringer) Model {
 	vp := m.panes[m.tab]
-	if msg.Code == tea.KeyLeft {
+	if k.String() == "left" {
 		vp.ScrollLeft(sidewaysStep)
 	} else {
 		vp.ScrollRight(sidewaysStep)

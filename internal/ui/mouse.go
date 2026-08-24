@@ -10,6 +10,7 @@ package ui
 // second set of them.
 
 import (
+	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/ui/layout"
@@ -133,9 +134,54 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		if t.Key == "" {
 			return m, nil
 		}
-		return m.listKey(keystroke(t.Key))
+		return m.sendKey(keystroke(t.Key))
+	case TargetPaneTab:
+		return m.showTab(tab(t.Pane)), nil
+	case TargetDialogSwitch:
+		return m.flip(t.Field), nil
 	}
+	// TargetPaneBody and TargetDialogPhase are pointed at and not acted on.
+	// The pane is already where the keyboard is, so a click in it has
+	// nothing to change; a phase becomes something to click when there is
+	// something to change about it.
 	return m, nil
+}
+
+// sendKey puts a keystroke through the same map a pressed key goes through,
+// which is how a clicked hint reaches the verb it names.
+//
+// It is the screen's map and not always the board's, because the key bar is
+// drawn on all three screens and says something different on each. The
+// filter is the one place a click cannot go: it is text being typed, and a
+// pointer has nothing to type.
+func (m Model) sendKey(k keystroke) (tea.Model, tea.Cmd) {
+	switch {
+	case m.filtering:
+		return m, nil
+	case m.screen == screenStart:
+		return m.startKey(k)
+	case m.screen == screenDetail:
+		return m.detailKey(k)
+	}
+	return m.listKey(k)
+}
+
+// flip is one of the start dialog's switches, clicked.
+//
+// The two positions of the autopilot switch are two rows, and clicking the
+// one that is already chosen does nothing. That is the difference between a
+// switch and a button: a reader who clicks "on" means on, not "the other
+// one", and a row that toggled whichever way it was pointed at would turn
+// autopilot off for the reader who clicked the word on.
+func (m Model) flip(field string) Model {
+	on := m.autopilotOn()
+	switch {
+	case field == fieldFlow:
+		return m.cycleFlow()
+	case field == fieldAutopilotOn && !on, field == fieldAutopilotOff && on:
+		return m.autopilot()
+	}
+	return m
 }
 
 // rightClick moves the cursor to what was pointed at.
@@ -152,24 +198,61 @@ func (m Model) rightClick(t Target) (tea.Model, tea.Cmd) {
 	return m.moveTo(i), nil
 }
 
-// wheel scrolls the list, and only over the list.
+// wheel scrolls whatever is under it, and only over the body.
 //
-// It moves the cursor rather than the offset, because the offset is not the
-// window's to set: follow owns it, and it is what keeps the cursor on screen
-// and the last page from scrolling past its end. A second way to move the
-// offset would be a second clamp, and the two would disagree at the bottom
-// of a list that is exactly one page long.
+// On the board it moves the cursor rather than the offset, because the
+// offset is not the caller's to set: follow owns it, and it is what keeps
+// the cursor on screen and the last page from scrolling past its end. In a
+// pane it goes through the same scroll the arrow keys do, which is the one
+// site the follow rule lives at — so a reader who wheels up a live log stops
+// following it, exactly as a reader who presses ↑ does.
+//
+// Three notches of one row rather than one of three, so that a wheel and a
+// held arrow key are the same gesture as far as everything downstream is
+// concerned.
 func (m Model) wheel(e tea.Mouse) Model {
-	if m.screen != screenList || m.frame.At(e.Y) != layout.RegionBody {
+	if m.frame.At(e.Y) != layout.RegionBody {
 		return m
 	}
-	switch e.Button {
-	case tea.MouseWheelUp:
-		return m.move(-wheelRows)
-	case tea.MouseWheelDown:
-		return m.move(wheelRows)
+	up := e.Button == tea.MouseWheelUp
+	if !up && e.Button != tea.MouseWheelDown {
+		// The wheel pushes sideways too, and nothing here scrolls that
+		// way. The pane that can — a diff wider than the terminal — is
+		// scrolled with ←→, and a sideways wheel is a gesture few mice
+		// have and fewer readers expect.
+		return m
 	}
-	return m
+	if m.screen == screenDetail {
+		if m.hit(e.X, e.Y).Kind != TargetPaneBody {
+			return m
+		}
+		k := firstKey(m.keys.Down)
+		if up {
+			k = firstKey(m.keys.Up)
+		}
+		for range wheelRows {
+			m = m.scroll(k)
+		}
+		return m
+	}
+	if m.screen != screenList {
+		return m
+	}
+	if up {
+		return m.move(-wheelRows)
+	}
+	return m.move(wheelRows)
+}
+
+// firstKey is the keystroke a binding is reached by, which is the one a
+// clicked hint sends and the one the wheel sends. A binding with no keys at
+// all sends nothing rather than an empty keystroke every map would ignore
+// anyway — the difference is that this one says so.
+func firstKey(b key.Binding) keystroke {
+	if keys := b.Keys(); len(keys) > 0 {
+		return keystroke(keys[0])
+	}
+	return ""
 }
 
 // rowOf is which line of the body a target is on, by what it is rather than

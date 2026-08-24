@@ -26,9 +26,38 @@ const startIndent = "   "
 // short model name and the column after it are not read as one word.
 const startGap = 3
 
+// startPlan is where each of the dialog's blocks begins, counted in rows of
+// the body region.
+//
+// It is a value both the drawing and the pointing read, which is the whole
+// reason it exists: a reader clicking the autopilot switch is clicking the
+// row the switch was drawn on, and two separate pieces of arithmetic for
+// where that row is would agree until the day a block above it changed
+// height.
+//
+// Head is row zero and is not here, because nothing is ever pointed at it.
+type startPlan struct {
+	flow      int // the flow line
+	phases    int // the first phase row
+	nPhases   int // how many rows the phases took, error line included
+	autopilot int // the switch's first row; its second is the next one
+}
+
+// startLayout works out where the blocks go at width w.
+//
+// The blanks between the blocks are what the gaps in the numbers are: a row
+// nothing was placed on is a row with nothing on it, which is also what
+// makes the sparse slice startRows builds come out identical to the four
+// appends it used to be.
+func (m Model) startLayout(w int) startPlan {
+	p := startPlan{flow: 2, phases: 4, nPhases: len(m.phaseRows(w))}
+	p.autopilot = p.phases + p.nPhases + 1
+	return p
+}
+
 // startRows draws the dialog into the body region.
 //
-// The order the blocks are appended in is the order they are given up as the
+// The order the blocks are placed in is the order they are given up as the
 // terminal shortens, because fill cuts from the end. That is the right
 // order: a reader who cannot see the switch can still press A and read the
 // band, and a reader who cannot see which task they are about to start has
@@ -37,10 +66,14 @@ func (m Model) startRows(h, w int) []string {
 	if h <= 0 || w <= 0 {
 		return nil
 	}
-	out := []string{m.startHead(w), "", m.flowLine(w), ""}
-	out = append(out, m.phaseRows(w)...)
-	out = append(out, "")
-	return fill(append(out, m.autopilotRows(w)...), h)
+	p := m.startLayout(w)
+	auto := m.autopilotRows(w)
+	out := make([]string, p.autopilot+len(auto))
+	out[0] = m.startHead(w)
+	out[p.flow] = m.flowLine(w)
+	copy(out[p.phases:], m.phaseRows(w))
+	copy(out[p.autopilot:], auto)
+	return fill(out, h)
 }
 
 // startHead names the task the run would be: its id and title on the left,

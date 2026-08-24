@@ -28,6 +28,7 @@ package ui
 // against.
 
 import (
+	"fmt"
 	"slices"
 	"strconv"
 	"strings"
@@ -161,24 +162,24 @@ func (m Model) openStart() (tea.Model, tea.Cmd) {
 
 // startKey is the dialog's own map, and it is short on purpose: four keys,
 // and every one of them is in the footer.
-func (m Model) startKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+func (m Model) startKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	switch {
-	case key.Matches(msg, m.keys.Back):
+	case key.Matches(k, m.keys.Back):
 		m.screen, m.start = screenList, startModel{}
 		return m, nil
-	case key.Matches(msg, m.keys.Run):
+	case key.Matches(k, m.keys.Run):
 		return m.runIt()
-	case key.Matches(msg, m.keys.ChangeFlow):
+	case key.Matches(k, m.keys.ChangeFlow):
 		return m.cycleFlow(), nil
-	case key.Matches(msg, m.keys.Autopilot):
+	case key.Matches(k, m.keys.Autopilot):
 		return m.autopilot(), nil
-	case key.Matches(msg, m.keys.Help):
+	case key.Matches(k, m.keys.Help):
 		// The bar prints [?] on every screen, because help and quit are the
 		// two things a reader who is lost reaches for and barLine never
 		// drops them. A key the bar offers has to do something, and what ?
 		// does everywhere in this window is say it is not built yet.
 		return m.notBuilt(m.keys.Help), nil
-	case key.Matches(msg, m.keys.Quit):
+	case key.Matches(k, m.keys.Quit):
 		return m, tea.Quit
 	}
 	return m, nil

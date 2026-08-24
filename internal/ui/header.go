@@ -269,9 +269,7 @@ func (m Model) hints() []barHint {
 // cannot be reachable by one and not by the other.
 func hintFor(b key.Binding) barHint {
 	h := hint(b.Help().Key, b.Help().Desc)
-	if keys := b.Keys(); len(keys) > 0 {
-		h.key = keys[0]
-	}
+	h.key = string(firstKey(b))
 	return h
 }
 

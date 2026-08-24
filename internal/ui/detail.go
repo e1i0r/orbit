@@ -17,6 +17,8 @@ import (
 	"strconv"
 	"strings"
 
+	"charm.land/lipgloss/v2"
+
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -101,16 +103,8 @@ func (m Model) detailHead(w int) string {
 // other two.
 func (m Model) tabStrip(w int) string {
 	p := m.opts.Words
-	names := []struct {
-		tab  tab
-		text string
-	}{
-		{tabLog, p.T("tab.log", "log")},
-		{tabDiff, p.T("tab.diff", "diff")},
-		{tabEvidence, p.T("tab.evidence", "evidence")},
-	}
 	var parts []string
-	for _, n := range names {
+	for _, n := range m.tabNames() {
 		if n.tab == m.tab {
 			parts = append(parts, Paint(Accent).Render(markGlyph+n.text))
 			continue
@@ -135,6 +129,51 @@ func (m Model) tabStrip(w int) string {
 		right = Paint(Dim).Render(p.T("log.attempt", "attempt {n}", about("n", strconv.Itoa(attempt))))
 	}
 	return spread(" "+strings.Join(parts, "  "), right, w)
+}
+
+// tabName is one tab and what it is called in the reader's language.
+type tabName struct {
+	tab  tab
+	text string
+}
+
+// tabNames is the three tabs in the order the strip draws them.
+//
+// The strip is drawn from this and a click is resolved against it, so a tab
+// that is renamed, reordered or added moves for the pointer at the same
+// moment it moves on screen.
+func (m Model) tabNames() []tabName {
+	p := m.opts.Words
+	return []tabName{
+		{tabLog, p.T("tab.log", "log")},
+		{tabDiff, p.T("tab.diff", "diff")},
+		{tabEvidence, p.T("tab.evidence", "evidence")},
+	}
+}
+
+// placedTab is one tab of the drawn strip and the cells it occupies, counted
+// from the left edge of the terminal.
+type placedTab struct {
+	tab  tab
+	x, w int
+}
+
+// placeTabs walks the strip the way tabStrip joins it: one leading space, a
+// one-cell mark in front of every name whether or not it is the current one,
+// and two cells between.
+//
+// The mark is counted as part of the tab rather than as furniture beside it,
+// because a reader aiming at a tab aims at the word and its mark together —
+// and because the mark is where the current tab's own glyph is.
+func (m Model) placeTabs() []placedTab {
+	out := make([]placedTab, 0, tabCount)
+	x := 1
+	for _, n := range m.tabNames() {
+		cells := 1 + lipgloss.Width(n.text)
+		out = append(out, placedTab{tab: n.tab, x: x, w: cells})
+		x += cells + 2
+	}
+	return out
 }
 
 // paneRows is the pane itself, cut to the region it was given.

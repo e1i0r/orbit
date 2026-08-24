@@ -64,35 +64,36 @@ type Target struct {
 	Phase  int           // TargetDialogPhase
 }
 
+// The names of the two switches on the start dialog. They are constants
+// because the same string is written where the target is made and where it
+// is acted on, and a typo in either one is a switch that silently stops
+// working rather than a build that fails.
+const (
+	fieldFlow         = "flow"
+	fieldAutopilotOn  = "autopilot.on"
+	fieldAutopilotOff = "autopilot.off"
+)
+
 // hit is what is at cell (x, y), counted from the top left of the terminal.
 //
-// The routing is by screen first and by region second, in that order,
-// because that is the order View builds a frame in: the header, the band and
-// the bar are drawn the same way on all three screens, and only the body
-// changes with the screen. An arm that has nothing to answer yet answers
-// TargetNone rather than guessing, so a cell whose meaning has not been
-// decided does nothing when it is clicked — which is the one behaviour a
-// reader can safely be wrong about.
+// The routing is by region first and by screen second, and that order is the
+// frame's own: the header, the activity band and the key bar are drawn the
+// same way whichever screen is up, and only the body changes with it. Asking
+// the screen first would put three copies of the key bar's answer in three
+// arms, and the third one would be the one that got forgotten.
+//
+// An arm with nothing to answer yet answers TargetNone rather than guessing,
+// so a cell whose meaning has not been decided does nothing when it is
+// clicked — the one behaviour a reader can safely be wrong about.
 func (m Model) hit(x, y int) Target {
 	if m.width <= 0 || m.height <= 0 || m.tooNarrow {
 		// A refusal is one sentence and two numbers, and there is nothing
 		// on it to point at.
 		return Target{}
 	}
-	switch m.screen {
-	case screenDetail:
-		return m.hitDetail(x, y)
-	case screenStart:
-		return m.hitStart(x, y)
-	}
-	return m.hitBoard(x, y)
-}
-
-// hitBoard is the list screen.
-func (m Model) hitBoard(x, y int) Target {
 	switch m.frame.At(y) {
-	case layout.RegionBody:
-		return m.hitRow(x, y)
+	case layout.RegionBar:
+		return m.hitBar(x, y)
 	case layout.RegionHeader:
 		// The header's standing fields — the unread pair, the autopilot
 		// pip, the repository count — are each a switch a reader will
@@ -100,8 +101,14 @@ func (m Model) hitBoard(x, y int) Target {
 		// decided where they are laid out, and that is not settled until
 		// the header carries a repository list.
 		return Target{}
-	case layout.RegionBar:
-		return m.hitBar(x, y)
+	case layout.RegionBody:
+		switch m.screen {
+		case screenDetail:
+			return m.hitDetail(x, y)
+		case screenStart:
+			return m.hitStart(x, y)
+		}
+		return m.hitRow(x, y)
 	}
 	return Target{}
 }
@@ -166,10 +173,66 @@ func (m Model) hitBar(x, y int) Target {
 	return Target{}
 }
 
-// hitDetail is the task view, one level down: its tabs, the pane under them,
-// and the key bar. Nothing is pointed at there yet.
-func (m Model) hitDetail(x, y int) Target { return Target{} }
+// hitDetail is the task view, one level down: its heading, the tab strip,
+// and the pane under them.
+//
+// The rows are the ones detailRows draws, in that order, and paneHeight is
+// the same function that sized the viewport — so the last row of the pane is
+// the last row a reader can click on it, and the advice line below it
+// belongs to nobody.
+func (m Model) hitDetail(x, y int) Target {
+	line, ok := m.frame.BodyRow(y)
+	if !ok {
+		return Target{}
+	}
+	switch {
+	case line == 0:
+		// The heading names the task the pane is already about. There is
+		// nowhere to go from it.
+		return Target{}
+	case line == 1:
+		return m.hitTabs(x)
+	case line < 2+paneHeight(m.frame.Body.H):
+		return Target{Kind: TargetPaneBody, Pane: int(m.tab)}
+	}
+	return Target{}
+}
 
-// hitStart is the dialog that decides what a run will be: its phases, its
-// switches, and the flow along the top. Nothing is pointed at there yet.
-func (m Model) hitStart(x, y int) Target { return Target{} }
+// hitTabs is which tab of the strip a cell is in.
+func (m Model) hitTabs(x int) Target {
+	for _, t := range m.placeTabs() {
+		if x >= t.x && x < t.x+t.w {
+			return Target{Kind: TargetPaneTab, Pane: int(t.tab)}
+		}
+	}
+	return Target{}
+}
+
+// hitStart is the dialog that decides what a run will be: the flow line, the
+// phases it is made of, and the switch under them.
+//
+// Every row comes from startLayout, which is what the dialog was drawn from,
+// so a block that changes height moves for the pointer in the same frame it
+// moves on screen.
+func (m Model) hitStart(x, y int) Target {
+	line, ok := m.frame.BodyRow(y)
+	if !ok {
+		return Target{}
+	}
+	p := m.startLayout(m.frame.Body.W)
+	switch {
+	case line == p.flow:
+		return Target{Kind: TargetDialogSwitch, Field: fieldFlow}
+	case line >= p.phases && line < p.phases+p.nPhases:
+		// Which phase, counted from the top. Nothing acts on it yet: a
+		// phase becomes a thing to point at when there is something to
+		// change about it, and until then this is a target that says so
+		// rather than a row that swallows a click.
+		return Target{Kind: TargetDialogPhase, Phase: line - p.phases}
+	case line == p.autopilot:
+		return Target{Kind: TargetDialogSwitch, Field: fieldAutopilotOn}
+	case line == p.autopilot+1:
+		return Target{Kind: TargetDialogSwitch, Field: fieldAutopilotOff}
+	}
+	return Target{}
+}
