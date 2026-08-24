@@ -15,6 +15,7 @@ package ui
 import (
 	"io"
 	"os/exec"
+	"time"
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/flow"
@@ -171,6 +172,18 @@ type Options struct {
 	// opened without one submits the id and lets the command's own answer
 	// come back verbatim.
 	ValidID func(id string) error
+
+	// Quota asks about proxy quota windows. A nil port answers nothing,
+	// and the quota field is not drawn.
+	Quota func() []QuotaWindow
+}
+
+// QuotaWindow is what the window learns about remaining quota.
+type QuotaWindow struct {
+	Key      string
+	Label    string
+	Pct      float64
+	ResetsIn time.Duration
 }
 
 // Command is one row of the palette: what the window shows of a command,

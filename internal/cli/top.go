@@ -24,6 +24,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/engine"
+	"github.com/e1i0r/orbit/internal/quota"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/ui"
 	"github.com/e1i0r/orbit/internal/words"
@@ -56,6 +57,7 @@ func top(ctx Context, args []string) error {
 	swept := reconcileAll(s)
 
 	if drawsOneFrame(once, interactive(ctx.Out)) {
+		opts.Quota = quotaPort(quota.FromEnv(), true)
 		frame, err := ui.Plain(opts)
 		if err != nil {
 			return err
@@ -132,7 +134,31 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 		// The id rule the compose form types against: the store's own, the
 		// one every write goes through, and nobody's second copy of it.
 		ValidID: store.ValidTaskID,
+		Quota:   quotaPort(quota.FromEnv(), false),
 	}, s, nil
+}
+
+// quotaPort adapts quota.Client to ui.Options.Quota.
+func quotaPort(qc *quota.Client, syncWait bool) func() []ui.QuotaWindow {
+	if qc == nil {
+		return nil
+	}
+	return func() []ui.QuotaWindow {
+		windows := qc.Quota(syncWait)
+		if len(windows) == 0 {
+			return nil
+		}
+		out := make([]ui.QuotaWindow, len(windows))
+		for i, w := range windows {
+			out[i] = ui.QuotaWindow{
+				Key:      w.Key,
+				Label:    w.Label,
+				Pct:      w.Pct,
+				ResetsIn: w.ResetsIn,
+			}
+		}
+		return out
+	}
 }
 
 // mustBeDirectory refuses a root that is not one.
