@@ -204,34 +204,41 @@ func (m Model) settingsRows(h, w int) []string {
 	rows := m.settingRowsList()
 	out := []string{
 		"",
-		"  " + Paint(Accent).Render(p.T("settings.title", "Settings")),
+		"  " + Paint(Accent).Bold(true).Render(p.T("settings.title", "Settings")),
 		"  " + Paint(Dim).Render(p.T("settings.subtitle", "changes take effect immediately")),
 		"",
 	}
 
 	for i, r := range rows {
+		isSelected := i == m.settings.sel
 		mark := "    "
-		if i == m.settings.sel {
-			mark = "  " + Paint(Accent).Render("▸ ")
+		keyRole := Accent
+		descRole := Dim
+		if isSelected {
+			mark = "  " + Paint(Live).Bold(true).Render("▸ ")
+			keyRole = Live
+			descRole = Accent
 		}
 
 		var optViews []string
-		if i == m.settings.sel && m.settings.editing {
+		if isSelected && m.settings.editing {
 			optViews = append(optViews, Paint(Accent).Render(m.settings.typed)+Paint(Sel).Render(" "))
 		} else {
 			for _, opt := range r.options {
 				if opt == r.val {
-					optViews = append(optViews, Paint(Sel).Render(" "+opt+" "))
+					optViews = append(optViews, Paint(Sel).Bold(true).Render(" ● "+opt+" "))
 				} else {
-					optViews = append(optViews, Paint(Dim).Render(opt))
+					optViews = append(optViews, Paint(Dim).Render(" "+opt+" "))
 				}
 			}
 		}
 		optsFormatted := strings.Join(optViews, " ")
 
-		keyCol := padRight(r.key, 12)
-		line := mark + Paint(Accent).Render(keyCol) + "  " + padRight(optsFormatted, 40) + "  " + Paint(Dim).Render(r.about)
-		out = append(out, fit(line, w))
+		keyCol := padRight(r.key, 14)
+		headerLine := mark + Paint(keyRole).Bold(true).Render(keyCol) + "  " + optsFormatted
+		descLine := "      " + Paint(descRole).Render(r.about)
+
+		out = append(out, fit(headerLine, w), fit(descLine, w), "")
 	}
 
 	waysOut := p.T("settings.ways_out", "{open} edit · {up_down} move · {back} back",
@@ -243,7 +250,7 @@ func (m Model) settingsRows(h, w int) []string {
 			about("open", m.keys.Open.Help().Key),
 			about("back", m.keys.Back.Help().Key))
 	}
-	out = append(out, "", fit("  "+Paint(Dim).Render(waysOut), w))
+	out = append(out, fit("  "+Paint(Dim).Render(waysOut), w))
 	return fill(out, h)
 }
 
