@@ -1,28 +1,11 @@
 package ui
 
-// What is under one cell of the terminal. A single question — "what did the
-// reader point at?" — answered from the same facts View draws from, and from
-// nothing else.
-//
-// It is a file of its own, and a pure function, because of the shape the
-// alternative takes. The program this replaces answered this question inside
-// its mouse handler, from offsets written a second time next to the ones the
-// renderer used; the two drifted the first time a region changed height, and
-// a click then landed one row above the row the reader had aimed at. Here
-// there is one set of numbers — the frame's and the column plan's — and both
-// the drawing and the pointing read it.
-
 import (
 	"github.com/e1i0r/orbit/internal/ui/layout"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
 // TargetKind is what sort of thing a cell holds.
-//
-// TargetNone is the zero value and means nothing actionable is there: a
-// blank line, the gap between two columns, a rule, a cell past the end of
-// the frame. A caller that ignores the kind acts on nothing rather than on
-// whatever happened to be first.
 type TargetKind int
 
 const (
@@ -32,6 +15,8 @@ const (
 	TargetBarHint
 	TargetHeaderField
 	TargetStatusField
+	TargetHeaderQueue
+	TargetSettingsRow
 	TargetPaneTab
 	TargetPaneBody
 	TargetDialogPhase
@@ -41,24 +26,13 @@ const (
 	TargetRepo
 )
 
-// Target is one cell's answer: what kind of thing is there, and enough to
-// act on it without asking the geometry a second time.
-//
-// It is a struct rather than a bare kind because acting needs the thing
-// itself — a task's id, a band's name, a pane's number — and a handler
-// handed only a kind would have to go back to the rows and the offsets to
-// find out which one, which is the re-derivation this file exists to remove.
-//
-// Only the fields its Kind names are set; every other one is zero, and Band
-// in particular is a real band at zero — so read it when the kind says to
-// and never to ask whether it was set.
+// Target is one cell's hit target.
 type Target struct {
-	Kind TargetKind
-
+	Kind   TargetKind
 	ID     string        // TargetTask, TargetRepo
 	Band   view.Band     // TargetTask, TargetBandHeader
 	Column layout.Column // TargetTask: which field of the row was pointed at
-	Pane   int           // TargetPaneTab, TargetPaneBody
+	Pane   int           // TargetPaneTab, TargetPaneBody, TargetSettingsRow
 	Key    string        // TargetBarHint, TargetMenuEntry, TargetCommand
 	Field  string        // TargetHeaderField, TargetStatusField
 	Phase  int           // TargetDialogPhase
@@ -103,14 +77,11 @@ func (m Model) hit(x, y int) Target {
 		}
 		return m.hitBar(x, y)
 	case layout.RegionHeader:
-		// The header's standing fields — the unread pair, the autopilot
-		// pip, the repository count — are each a switch a reader will
-		// expect to be able to click. Which cells each one occupies is
-		// decided where they are laid out, and that is not settled until
-		// the header carries a repository list.
-		return Target{}
+		return m.hitHeader(x, y)
 	case layout.RegionStatus:
 		return Target{Kind: TargetStatusField}
+	case layout.RegionBand:
+		return m.hitStatus(x, y)
 	case layout.RegionBody:
 		if m.palette.open {
 			return m.hitPalette(x, y)
@@ -119,9 +90,6 @@ func (m Model) hit(x, y int) Target {
 			return m.hitMenu(x, y)
 		}
 		if m.watchUp {
-			// The output of a command that is running is text to read,
-			// not rows to act on, and a click on it would otherwise fall
-			// through to whatever screen is underneath it.
 			return Target{}
 		}
 		switch m.screen {
@@ -129,8 +97,9 @@ func (m Model) hit(x, y int) Target {
 			return m.hitDetail(x, y)
 		case screenStart:
 			return m.hitStart(x, y)
-		case screenCompose, screenSettings, screenFlows:
-			// The forms/screens are typed into, not pointed at.
+		case screenSettings:
+			return m.hitSettings(x, y)
+		case screenCompose, screenFlows:
 			return Target{}
 		}
 		return m.hitRow(x, y)
@@ -258,6 +227,54 @@ func (m Model) hitStart(x, y int) Target {
 		return Target{Kind: TargetDialogSwitch, Field: fieldAutopilotOn}
 	case line == p.autopilot+1:
 		return Target{Kind: TargetDialogSwitch, Field: fieldAutopilotOff}
+	}
+	return Target{}
+}
+
+func (m Model) hitHeader(x, y int) Target {
+	if y != m.frame.Header.Y {
+		return Target{}
+	}
+	if x >= m.width-12 {
+		return Target{Kind: TargetHeaderField, Field: "lang"}
+	}
+	if x >= m.width-32 && x < m.width-12 {
+		return Target{Kind: TargetHeaderField, Field: "repos"}
+	}
+	if x >= 10 && x < 26 {
+		return Target{Kind: TargetHeaderQueue, Band: view.ToDo}
+	}
+	if x >= 26 && x < 42 {
+		return Target{Kind: TargetHeaderQueue, Band: view.Running}
+	}
+	if x >= 42 && x < 58 {
+		return Target{Kind: TargetHeaderQueue, Band: view.NeedsYou}
+	}
+	if x >= 58 && x < 74 {
+		return Target{Kind: TargetHeaderQueue, Band: view.Done}
+	}
+	return Target{}
+}
+
+func (m Model) hitStatus(x, y int) Target {
+	if x >= m.width-18 {
+		return Target{Kind: TargetStatusField, Field: "engine"}
+	}
+	if x >= m.width-38 && x < m.width-18 {
+		return Target{Kind: TargetStatusField, Field: "autopilot"}
+	}
+	return Target{Kind: TargetStatusField}
+}
+
+func (m Model) hitSettings(x, y int) Target {
+	line, ok := m.frame.BodyRow(y)
+	if !ok {
+		return Target{}
+	}
+	rowIdx := line - 4
+	rows := m.settingRowsList()
+	if rowIdx >= 0 && rowIdx < len(rows) {
+		return Target{Kind: TargetSettingsRow, Pane: rowIdx}
 	}
 	return Target{}
 }

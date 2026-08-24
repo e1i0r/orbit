@@ -11,6 +11,8 @@ package ui
 
 import (
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/view"
 )
 
 // hold is the button that is down and the cell it went down on.
@@ -126,6 +128,29 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		return m.sendKey(keystroke(t.Key))
+	case TargetHeaderField:
+		if t.Field == "lang" {
+			nextLang := "en"
+			if m.opts.Words.T("header.lang_badge", "EN") == "EN" {
+				nextLang = "es"
+			}
+			return m.applySetting("language", nextLang)
+		}
+		if t.Field == "repos" {
+			return m.openRepos(), nil
+		}
+	case TargetStatusField:
+		if t.Field == "autopilot" {
+			return m.autopilot()
+		}
+		if t.Field == "engine" {
+			return m.openEngines(), nil
+		}
+	case TargetHeaderQueue:
+		return m.jumpToBand(t.Band)
+	case TargetSettingsRow:
+		m.settings.sel = t.Pane
+		return m.cycleSetting(1)
 	case TargetPaneTab:
 		return m.showTab(tab(t.Pane)), nil
 	case TargetDialogSwitch:
@@ -235,4 +260,15 @@ func (m Model) rightClick(t Target) (tea.Model, tea.Cmd) {
 		return next.openMenu(t.ID), nil
 	}
 	return next, nil
+}
+
+func (m Model) jumpToBand(b view.Band) (tea.Model, tea.Cmd) {
+	m = m.expand(b)
+	all := m.rows()
+	for i, r := range all {
+		if r.band == b && !r.blank {
+			return m.moveTo(i).clampCursor(), nil
+		}
+	}
+	return m, nil
 }
