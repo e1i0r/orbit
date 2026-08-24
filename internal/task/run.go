@@ -148,6 +148,12 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 			Dir:         wt,
 			Permissions: p.Permissions,
 		})
+		for _, thought := range out.Thoughts {
+			_ = emit(s, t, phaseThought(p.Name, i+1, thought))
+		}
+		for _, ref := range out.Refusals {
+			_ = emit(s, t, phaseRefused(p.Name, i+1, ref))
+		}
 		if runErr != nil {
 			// A context that is done is not an engine that broke. The engine
 			// reports being killed the same way it reports falling over —

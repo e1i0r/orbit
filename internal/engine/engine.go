@@ -35,12 +35,27 @@ type Request struct {
 	Resume string
 }
 
+// StreamRefusal is a tool call denied by permissions.
+type StreamRefusal struct {
+	Tool  string
+	Input string
+}
+
+// StreamToolCall is a tool call invoked by the model.
+type StreamToolCall struct {
+	Name string
+	Args string
+}
+
 // Result is what came back. SessionID and Cost are empty when an engine does
 // not report them, which is a fact about that engine and not a failure.
 type Result struct {
 	Output    string
 	SessionID string
 	Cost      float64
+	Thoughts  []string
+	Refusals  []StreamRefusal
+	ToolCalls []StreamToolCall
 }
 
 // Choice is one selectable value for an engine dial (model or effort).

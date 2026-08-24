@@ -30,4 +30,6 @@ const (
 	PhaseCancelled = "phase.cancelled" // the phase was stopped from outside; Text is what it printed first
 	PhaseWaiting   = "phase.waiting"   // stopped at a gate; Data["why"] says whose gate
 	PhaseResumed   = "phase.resumed"   // let go again
+	PhaseThought   = "phase.thought"   // a thinking block from the engine stream
+	PhaseRefused   = "phase.refused"   // a tool call the engine was denied by permissions
 )

@@ -88,3 +88,24 @@ func phaseEnd(kind, phase string, out engine.Result, cause error) record.Event {
 	}
 	return e
 }
+
+func phaseThought(phase string, n int, text string) record.Event {
+	c, full := captured(text)
+	data := map[string]string{"n": strconv.Itoa(n)}
+	if full > 0 {
+		data["bytes"] = strconv.Itoa(full)
+	}
+	return record.Event{Kind: record.PhaseThought, Phase: phase, Text: c, Data: data}
+}
+
+func phaseRefused(phase string, n int, r engine.StreamRefusal) record.Event {
+	c, full := captured(r.Input)
+	data := map[string]string{
+		"n":    strconv.Itoa(n),
+		"tool": r.Tool,
+	}
+	if full > 0 {
+		data["bytes"] = strconv.Itoa(full)
+	}
+	return record.Event{Kind: record.PhaseRefused, Phase: phase, Text: c, Data: data}
+}

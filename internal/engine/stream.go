@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 )
 
 // maxStreamLine is the longest single line ParseStream will read.
@@ -26,34 +27,32 @@ const maxStreamLine = 4 << 20
 // the number and one that reports zero are the same fact to a reader of the
 // record, which Result's own doc comment already states — an engine that
 // does not report a cost is a fact about that engine, not a failure.
-type terminalResult struct {
-	Type      string  `json:"type"`
-	Result    string  `json:"result"`
-	SessionID string  `json:"session_id"`
-	Cost      float64 `json:"total_cost_usd"`
+type streamEnvelope struct {
+	Type      string         `json:"type"`
+	Subtype   string         `json:"subtype"`
+	Result    string         `json:"result"`
+	SessionID string         `json:"session_id"`
+	Cost      float64        `json:"total_cost_usd"`
+	Message   *streamMessage `json:"message"`
+}
+
+type streamMessage struct {
+	Content []streamContent `json:"content"`
+}
+
+type streamContent struct {
+	Type     string          `json:"type"`
+	Text     string          `json:"text"`
+	Thinking string          `json:"thinking"`
+	Name     string          `json:"name"`
+	Input    json.RawMessage `json:"input"`
+	Content  string          `json:"content"`
+	IsError  bool            `json:"is_error"`
 }
 
 // ParseStream reads claude's streaming JSON and returns what the record
-// keeps: the human-readable answer, the session id, and what it cost.
-//
-// It is a function taking an io.Reader rather than a few lines inside
-// Claude.Run so that it can be tested against checked-in bytes with no
-// binary present — the same reason claudeArgs was split out. A real headless
-// run spends real money, and a suite that spends money is a suite nobody
-// runs.
-//
-// Only the terminal result object is read. The stream also carries every
-// assistant turn and every tool result, and none of that belongs in an event
-// the window will print in a pane: the result field is claude's own summary
-// of the run, in prose, which is what a reader of phase.finished wants. If
-// two result objects somehow arrive, the last one wins, because the last one
-// is the terminal one.
-//
-// A stream that ends without a result object is an error naming what was
-// missing rather than a zero Result. The session id and the cost live
-// nowhere else, so a silent empty answer would write "this phase cost
-// nothing and can never be resumed" into an append-only log, which is a lie
-// that outlives the run that told it.
+// keeps: the human-readable answer, session id, cost, thinking blocks,
+// tool calls, and permission refusals.
 func ParseStream(r io.Reader) (Result, error) {
 	sc := bufio.NewScanner(r)
 	sc.Buffer(make([]byte, 0, 64<<10), maxStreamLine)
@@ -64,22 +63,59 @@ func ParseStream(r io.Reader) (Result, error) {
 	for sc.Scan() {
 		lines++
 		line := bytes.TrimSpace(sc.Bytes())
-		// A binary that prints a warning before it starts streaming is not
-		// this function's failure to report. The failure it reports is the
-		// absence of a result object, and a stream of nothing but noise
-		// still hits it.
 		if len(line) == 0 || line[0] != '{' {
 			continue
 		}
-		var obj terminalResult
-		if err := json.Unmarshal(line, &obj); err != nil {
+		var env streamEnvelope
+		if err := json.Unmarshal(line, &env); err != nil {
 			continue
 		}
-		if obj.Type != "result" {
-			continue
+
+		switch env.Type {
+		case "result":
+			found = true
+			out.Output = env.Result
+			out.SessionID = env.SessionID
+			out.Cost = env.Cost
+		case "assistant":
+			if env.Message != nil {
+				for _, block := range env.Message.Content {
+					switch block.Type {
+					case "thinking":
+						t := block.Thinking
+						if t == "" {
+							t = block.Text
+						}
+						if t != "" {
+							out.Thoughts = append(out.Thoughts, t)
+						}
+					case "tool_use":
+						out.ToolCalls = append(out.ToolCalls, StreamToolCall{
+							Name: block.Name,
+							Args: string(block.Input),
+						})
+					}
+				}
+			}
+		case "user":
+			if env.Message != nil {
+				for _, block := range env.Message.Content {
+					if block.Type == "tool_result" && block.IsError {
+						if isPermissionRefusal(block.Content) {
+							out.Refusals = append(out.Refusals, StreamRefusal{
+								Tool:  block.Name,
+								Input: block.Content,
+							})
+						}
+					}
+				}
+			}
+		case "refusal", "permission_denied":
+			out.Refusals = append(out.Refusals, StreamRefusal{
+				Tool:  env.Subtype,
+				Input: env.Result,
+			})
 		}
-		found = true
-		out = Result{Output: obj.Result, SessionID: obj.SessionID, Cost: obj.Cost}
 	}
 	if err := sc.Err(); err != nil {
 		return Result{}, fmt.Errorf("reading the engine's stream after %d lines: %w", lines, err)
@@ -88,4 +124,13 @@ func ParseStream(r io.Reader) (Result, error) {
 		return Result{}, fmt.Errorf("the engine's stream ended after %d lines with no result object: the session id and the cost are reported only there, so this phase has no answer, nothing to resume from and no price", lines)
 	}
 	return out, nil
+}
+
+func isPermissionRefusal(s string) bool {
+	lower := strings.ToLower(s)
+	return strings.Contains(lower, "permission denied") ||
+		strings.Contains(lower, "not permitted") ||
+		strings.Contains(lower, "permission refused") ||
+		strings.Contains(lower, "refused") ||
+		strings.Contains(lower, "is not allowed")
 }
