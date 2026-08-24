@@ -53,11 +53,7 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	case key.Matches(k, m.keys.Open), key.Matches(k, m.keys.Last):
 		return m.newest(), nil
 	case key.Matches(k, m.keys.Help):
-		// Answered here for the reason startKey answers it: the bar prints
-		// [?] on every screen and never drops it, so every screen owes the
-		// reader the same sentence back. Without this arm ? fell through to
-		// scroll, which moves nothing and says nothing.
-		return m.notBuilt(m.keys.Help), nil
+		return m.openHelp(), nil
 	case key.Matches(k, m.keys.Quit):
 		return m, tea.Quit
 	}

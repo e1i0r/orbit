@@ -42,6 +42,7 @@ const (
 	screenFlows
 	screenRepos
 	screenEngines
+	screenHelp
 )
 
 // confirm is the question the window is waiting for an answer to, and there
@@ -124,6 +125,7 @@ type Model struct {
 	queueFilter *view.Band
 	engines     enginesState
 	knobs       Knobs
+	help        helpState
 
 	// start is the dialog that decides what a run will be, and taken is
 	// which tasks this window has handed the terminal to an engine for.
