@@ -16,12 +16,16 @@ func (m Model) flowsRows(h, w int) []string {
 		return m.flowsBuilderRows(h, w)
 	}
 	p := m.opts.Words
+	createBtn := "  " + Paint(Dim).Render(p.T("flows.create_btn_idle", "[+ Create Custom Flow] (press n)"))
+	if m.flows.sel == -1 {
+		createBtn = "▸ " + Pill(p.T("flows.create_btn", "+ Create Custom Flow"), "#FFFFFF", "#005F87") + "  " + Paint(Live).Render("(pulsa ⏎)")
+	}
 	out := []string{
 		"",
 		"  " + Paint(Accent).Render(p.T("flows.title", "Flows")),
 		"  " + Paint(Dim).Render(p.T("flows.read_only", "flows are read-only; edit flow files under $ORBIT_HOME/flows/ to change them")),
 		"",
-		"  " + Pill(p.T("flows.create_btn", "+ Create Custom Flow"), "#FFFFFF", "#005F87") + "  " + Paint(Dim).Render("(press n)"),
+		createBtn,
 		"",
 	}
 

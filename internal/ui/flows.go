@@ -94,14 +94,24 @@ func (m Model) flowsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.abandonFlows(), nil
 	case msg.Text == "n" || msg.Text == "N" || key.Matches(msg, m.keys.Start):
 		return m.startCreateFlow(), nil
-	case msg.Text == "e" || msg.Text == "E" || key.Matches(msg, m.keys.Open):
+	case key.Matches(msg, m.keys.Open):
+		if m.flows.sel == -1 {
+			return m.startCreateFlow(), nil
+		}
 		return m.editSelectedFlow()
+	case msg.Text == "e" || msg.Text == "E":
+		if m.flows.sel >= 0 {
+			return m.editSelectedFlow()
+		}
+		return m.startCreateFlow(), nil
 	case msg.Text == "d" || msg.Text == "D" || msg.Code == tea.KeyDelete:
-		return m.deleteSelectedFlow()
+		if m.flows.sel >= 0 {
+			return m.deleteSelectedFlow()
+		}
 	case key.Matches(msg, m.keys.Up):
 		if len(list) > 0 {
 			m.flows.sel--
-			if m.flows.sel < 0 {
+			if m.flows.sel < -1 {
 				m.flows.sel = len(list) - 1
 			}
 		}
@@ -110,7 +120,7 @@ func (m Model) flowsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if len(list) > 0 {
 			m.flows.sel++
 			if m.flows.sel >= len(list) {
-				m.flows.sel = 0
+				m.flows.sel = -1
 			}
 		}
 		return m, nil

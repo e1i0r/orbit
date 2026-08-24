@@ -975,6 +975,10 @@
       "source": "+ Create Custom Flow",
       "value": "+ Crear Flujo Personalizado"
     },
+    "flows.create_btn_idle": {
+      "source": "[+ Create Custom Flow] (press n)",
+      "value": "[+ Crear Flujo Personalizado] (pulsa n)"
+    },
     "help.ways_out": {
       "source": "{up_down} scroll · {back} back",
       "value": "{up_down} desplazar · {back} volver"
