@@ -38,13 +38,8 @@ func (m Model) statusLine(w int) string {
 	spentStr := p.T("status.spent", "{cost} spent", about("cost", fmt.Sprintf("$%.2f", totalCost)))
 	segments = append(segments, statusSegment{text: spentStr, role: Accent})
 
-	// 2. Tasks (tareas)
-	tasksStr := p.T("status.tasks", "{todo} todo · {in_progress} in flight · {needs_you} needs you · {done} done",
-		about("todo", strconv.Itoa(m.board.Counts[0])),
-		about("in_progress", strconv.Itoa(m.board.Counts[1])),
-		about("needs_you", strconv.Itoa(m.board.Counts[2])),
-		about("done", strconv.Itoa(m.board.Counts[3])),
-	)
+	// 2. Tasks (tareas totales)
+	tasksStr := p.P("status.total_tasks", len(m.board.Tasks), "{n} task", "{n} tasks")
 	segments = append(segments, statusSegment{text: tasksStr, role: Dim})
 
 	// 3. Events (eventos)

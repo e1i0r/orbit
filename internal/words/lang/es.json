@@ -161,9 +161,9 @@
       "source": "EN",
       "value": "ES"
     },
-    "header.unread": {
-      "source": "unread {n}/{cap}",
-      "value": "sin leer {n}/{cap}"
+    "header.unread_brake": {
+      "source": "brake ({n} unread)",
+      "value": "freno activo ({n} sin leer)"
     },
     "band.needs_you": {
       "source": "NEEDS YOU",
@@ -971,9 +971,15 @@
       "source": "{cost} spent",
       "value": "{cost} gastado"
     },
-    "status.tasks": {
-      "source": "{todo} todo · {in_progress} in flight · {needs_you} needs you · {done} done",
-      "value": "{todo} por hacer · {in_progress} en marcha · {needs_you} te necesita · {done} hecho"
+    "status.total_tasks": {
+      "source": {
+        "one": "{n} task",
+        "other": "{n} tasks"
+      },
+      "value": {
+        "one": "{n} tarea",
+        "other": "{n} tareas"
+      }
     },
     "status.events": {
       "source": "{events} events",

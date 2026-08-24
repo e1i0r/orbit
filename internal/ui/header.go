@@ -156,14 +156,12 @@ func (m Model) headerFields() []string {
 	lang := p.T("header.lang_badge", "EN")
 	fields = append(fields, Paint(Dim).Render("🌐 "+lang))
 
-	// Unread / brake chip
-	unread, limit := board.Unread(m.board), m.unreadCap()
-	brake := Dim
+	// Unread brake warning (shown when brake is engaged)
+	unread := board.Unread(m.board)
 	if m.atUnreadCap(unread) {
-		brake = Warn
+		fields = append(fields, Paint(Warn).Render("⚠️ "+p.T("header.unread_brake", "brake ({n} unread)",
+			about("n", strconv.Itoa(unread)))))
 	}
-	fields = append(fields, Paint(brake).Render(p.T("header.unread", "unread {n}/{cap}",
-		about("n", strconv.Itoa(unread)), about("cap", strconv.Itoa(limit)))))
 
 	return fields
 }
