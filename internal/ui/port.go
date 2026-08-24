@@ -139,6 +139,9 @@ type Options struct {
 	// than one greyed out with its reason.
 	CanResume func(engine string) bool
 
+	// Engines returns the engines the UI offers dials and setup steps for.
+	Engines func() []EngineInfo
+
 	// Commands is the command table the palette shows, carried in rather
 	// than reached for: internal/cli owns the table and internal/ui cannot
 	// import it, so the window is handed only what a reader must *see* —
@@ -184,6 +187,22 @@ type QuotaWindow struct {
 	Label    string
 	Pct      float64
 	ResetsIn time.Duration
+}
+
+// EngineInfo is what the window knows about an engine's dials and setup.
+type EngineInfo struct {
+	Name      string
+	Available bool
+	Setup     []string
+	Models    []ChoiceInfo
+	Efforts   []ChoiceInfo
+	CanThink  bool
+}
+
+// ChoiceInfo is one selectable value for an engine dial.
+type ChoiceInfo struct {
+	ID    string
+	Label string
 }
 
 // Command is one row of the palette: what the window shows of a command,

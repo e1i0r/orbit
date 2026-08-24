@@ -135,6 +135,7 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 		// one every write goes through, and nobody's second copy of it.
 		ValidID: store.ValidTaskID,
 		Quota:   quotaPort(quota.FromEnv(), false),
+		Engines: enginesPort(engines),
 	}, s, nil
 }
 

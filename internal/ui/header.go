@@ -147,6 +147,10 @@ func (m Model) headerFields() []string {
 		pip, role = pipOn, Live
 	}
 	fields = append(fields, Paint(Dim).Render(p.T("header.autopilot", "autopilot"))+" "+Paint(role).Render(pip))
+	chip := m.knobChip()
+	if chip != "" {
+		fields = append(fields, Paint(Dim).Render(chip))
+	}
 	return append(fields, Paint(Dim).Render(p.P("header.repos", m.board.Repos, "{n} repo", "{n} repos")))
 }
 

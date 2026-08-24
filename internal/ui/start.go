@@ -171,6 +171,8 @@ func (m Model) startKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.runIt()
 	case key.Matches(k, m.keys.ChangeFlow):
 		return m.cycleFlow(), nil
+	case key.Matches(k, m.keys.EngineKnobs):
+		return m.openEngines(), nil
 	case key.Matches(k, m.keys.Autopilot):
 		return m.autopilot(), nil
 	case key.Matches(k, m.keys.Help):

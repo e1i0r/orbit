@@ -27,7 +27,7 @@ type Keys struct {
 	Start, Run, ChangeFlow, Menu, Compose             key.Binding
 	Pause, Resume, Cancel                             key.Binding
 	Take, Hand, Ask, MarkRead, Edit                   key.Binding
-	Filter, Commands, Repos, Autopilot, Language, Help, Quit key.Binding
+	Filter, Commands, Repos, EngineKnobs, Autopilot, Language, Help, Quit key.Binding
 }
 
 // NewKeys builds the key map, with every description translated.
@@ -100,9 +100,10 @@ func NewKeys(p *words.Printer) Keys {
 		// because the two are siblings: both are a line the reader types
 		// into, and one narrows what is already on screen while the other
 		// reaches everything no key was ever given to.
-		Commands:  binding(":", p.T("key.commands", "commands"), ":"),
-		Repos:     binding("R", p.T("key.repos", "repositories"), "R"),
-		Autopilot: binding("A", p.T("key.autopilot", "autopilot"), "A"),
+		Commands:    binding(":", p.T("key.commands", "commands"), ":"),
+		Repos:       binding("R", p.T("key.repos", "repositories"), "R"),
+		EngineKnobs: binding("M", p.T("key.engines", "engine & model knobs"), "M"),
+		Autopilot:   binding("A", p.T("key.autopilot", "autopilot"), "A"),
 		Language:  binding("L", p.T("key.language", "language"), "L"),
 		Help:      binding("?", p.T("key.help", "help"), "?"),
 		Quit:      binding("q", p.T("key.quit", "quit"), "q"),

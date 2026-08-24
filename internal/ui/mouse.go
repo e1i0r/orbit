@@ -130,6 +130,8 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		return m.showTab(tab(t.Pane)), nil
 	case TargetDialogSwitch:
 		return m.flip(t.Field), nil
+	case TargetDialogPhase:
+		return m.openEngines(), nil
 	case TargetCommand:
 		// The same two-step a task row takes: the first click selects,
 		// the second runs what was selected. Both arrive through the same

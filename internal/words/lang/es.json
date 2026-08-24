@@ -894,6 +894,78 @@
     "band.repo_filter_tag": {
       "source": "repo:{repo}",
       "value": "repo:{repo}"
+    },
+    "key.engines": {
+      "source": "engine & model knobs",
+      "value": "ajustes de modelo y motor"
+    },
+    "engines.title": {
+      "source": "Engine & Model Knobs",
+      "value": "Ajustes de Motor y Modelo"
+    },
+    "engines.subtitle": {
+      "source": "choose model, effort and thinking for this run",
+      "value": "elige modelo, esfuerzo y modo thinking para esta corrida"
+    },
+    "engines.section_model": {
+      "source": "Engine & Model",
+      "value": "Motor y Modelo"
+    },
+    "engines.section_effort": {
+      "source": "Effort",
+      "value": "Nivel de Esfuerzo"
+    },
+    "engines.section_thinking": {
+      "source": "Thinking Mode",
+      "value": "Modo Thinking"
+    },
+    "engines.setup_tag": {
+      "source": "[setup required]",
+      "value": "[configuración requerida]"
+    },
+    "engines.default": {
+      "source": "default",
+      "value": "por defecto"
+    },
+    "engines.no_effort": {
+      "source": "{engine} has no effort dial",
+      "value": "{engine} no tiene selector de esfuerzo"
+    },
+    "engines.no_thinking": {
+      "source": "{engine} has no thinking mode",
+      "value": "{engine} no soporta modo thinking"
+    },
+    "engines.thinking_adaptive": {
+      "source": "adaptive (default)",
+      "value": "adaptativo (por defecto)"
+    },
+    "engines.thinking_on": {
+      "source": "on",
+      "value": "activado"
+    },
+    "engines.thinking_off": {
+      "source": "off",
+      "value": "desactivado"
+    },
+    "engines.updated": {
+      "source": "updated dials: {chip}",
+      "value": "ajustes actualizados: {chip}"
+    },
+    "engines.setup_title": {
+      "source": "Setup Steps for {engine}",
+      "value": "Pasos de Configuración para {engine}"
+    },
+    "engines.setup_notice": {
+      "source": "Orbit verifies setup steps but executes nothing.",
+      "value": "Orbit verifica los pasos de configuración pero no ejecuta nada."
+    },
+    "engines.setup_back": {
+      "source": "{back} back",
+      "value": "{back} volver"
+    },
+    "engines.ways_out": {
+      "source": "{open} select · {up_down} move · {back} back",
+      "value": "{open} seleccionar · {up_down} mover · {back} volver"
     }
   }
 }
