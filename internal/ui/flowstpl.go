@@ -18,39 +18,24 @@ func (m Model) applyFlowTemplate(tpl string) (Model, tea.Cmd) {
 		st.phases = []flow.Phase{
 			{Name: "1-plan", Engine: "claude", Model: "opus", Effort: "high", Thinking: "on", Prompt: "Analiza el problema y diseña el plan técnico.", Permissions: []string{"read"}},
 			{Name: "2-implement", Engine: "claude", Model: "sonnet", Effort: "high", FeedOutput: true, Prompt: "Implementa el código y pruebas unitarias.", Permissions: []string{"repo"}},
+			{Name: "3-review", Engine: "claude", Model: "opus", Effort: "max", Thinking: "on", FeedOutput: true, Wait: true, Prompt: "Audita el diff final y valida los chequeos.", Permissions: []string{"repo"}},
 		}
-		st.phaseName = "3-review"
-		st.engine = "claude"
-		st.model = "opus"
-		st.effort = "max"
-		st.thinking = "on"
-		st.feedOutput = true
-		st.wait = true
-		st.prompt = "Audita el diff final y valida los chequeos."
-		return m.say("plantilla TDD Cycle cargada"), nil
+		st.activePhase = 0
+		return m.say("plantilla TDD Cycle cargada (3 fases)"), nil
 	case "Security Audit":
 		st.flowName = "security-audit"
 		st.phases = []flow.Phase{
 			{Name: "1-investigate", Engine: "claude", Model: "opus", Effort: "max", Thinking: "on", Prompt: "Inspecciona el repositorio por vulnerabilidades.", Permissions: []string{"read"}},
+			{Name: "2-remediate", Engine: "claude", Model: "opus", Effort: "high", FeedOutput: true, Prompt: "Aplica parches para los hallazgos.", Permissions: []string{"repo"}},
 		}
-		st.phaseName = "2-remediate"
-		st.engine = "claude"
-		st.model = "opus"
-		st.effort = "high"
-		st.feedOutput = true
-		st.wait = false
-		st.prompt = "Aplica parches para los hallazgos."
-		return m.say("plantilla Security Audit cargada"), nil
+		st.activePhase = 0
+		return m.say("plantilla Security Audit cargada (2 fases)"), nil
 	case "Turbo Fix":
 		st.flowName = "turbo-fix"
-		st.phases = nil
-		st.phaseName = "implement"
-		st.engine = "claude"
-		st.model = "sonnet"
-		st.effort = "high"
-		st.feedOutput = false
-		st.wait = false
-		st.prompt = "Resuelve la tarea de forma directa."
+		st.phases = []flow.Phase{
+			{Name: "1-implement", Engine: "claude", Model: "sonnet", Effort: "high", Prompt: "Resuelve la tarea de forma directa.", Permissions: []string{"repo"}},
+		}
+		st.activePhase = 0
 		return m.say("plantilla Turbo Fix cargada"), nil
 	}
 	return m, nil
@@ -62,16 +47,13 @@ func (m Model) saveCustomFlow() (Model, tea.Cmd) {
 	if name == "" {
 		return m.say("indica un nombre para el flujo"), nil
 	}
-	phases := st.phases
-	if len(phases) == 0 && st.phaseName != "" {
-		phases = append(phases, st.currentPhase())
-	}
-	if len(phases) == 0 {
+	st.ensurePhase()
+	if len(st.phases) == 0 {
 		return m.say("el flujo debe tener al menos una fase"), nil
 	}
 	fl := flow.Flow{
 		Name:   name,
-		Phases: phases,
+		Phases: st.phases,
 	}
 	if err := fl.Validate(); err != nil {
 		return m.say(err.Error()), nil
@@ -121,29 +103,9 @@ func (m Model) editFlow(name string) (Model, tea.Cmd) {
 	m.flows.field = 0
 	m.flows.template = "ninguna"
 	m.flows.flowName = fl.Name
-	if len(fl.Phases) > 1 {
-		m.flows.phases = fl.Phases[:len(fl.Phases)-1]
-		last := fl.Phases[len(fl.Phases)-1]
-		m.flows.phaseName = last.Name
-		m.flows.engine = orDef(last.Engine, "claude")
-		m.flows.model = orDef(last.Model, "sonnet")
-		m.flows.effort = orDef(last.Effort, "default")
-		m.flows.thinking = orDef(last.Thinking, "adaptive")
-		m.flows.feedOutput = last.FeedOutput
-		m.flows.wait = last.Wait
-		m.flows.prompt = last.Prompt
-	} else if len(fl.Phases) == 1 {
-		m.flows.phases = nil
-		p0 := fl.Phases[0]
-		m.flows.phaseName = p0.Name
-		m.flows.engine = orDef(p0.Engine, "claude")
-		m.flows.model = orDef(p0.Model, "sonnet")
-		m.flows.effort = orDef(p0.Effort, "default")
-		m.flows.thinking = orDef(p0.Thinking, "adaptive")
-		m.flows.feedOutput = p0.FeedOutput
-		m.flows.wait = p0.Wait
-		m.flows.prompt = p0.Prompt
-	}
+	m.flows.phases = fl.Phases
+	m.flows.activePhase = 0
+	m.flows.ensurePhase()
 	return m.say("editando flujo " + fl.Name), nil
 }
 

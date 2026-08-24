@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"strings"
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
@@ -13,6 +12,7 @@ import (
 const (
 	flowFieldTemplate = iota
 	flowFieldName
+	flowFieldPhaseSelect
 	flowFieldPhaseName
 	flowFieldEngine
 	flowFieldModel
@@ -22,6 +22,7 @@ const (
 	flowFieldWait
 	flowFieldPrompt
 	flowFieldAddPhase
+	flowFieldDelPhase
 	flowFieldSave
 	flowFieldCount
 )
@@ -34,26 +35,36 @@ type flowsState struct {
 	field          int
 	template       string
 	flowName       string
+	activePhase    int
 	phases         []flow.Phase
-	phaseName      string
-	engine         string
-	model          string
-	effort         string
-	thinking       string
-	feedOutput     bool
-	wait           bool
-	prompt         string
+}
+
+func (st *flowsState) ensurePhase() {
+	if len(st.phases) == 0 {
+		st.phases = []flow.Phase{
+			{Name: "1-implement", Engine: "claude", Model: "sonnet", Effort: "default", Thinking: "adaptive", Permissions: []string{"repo"}},
+		}
+		st.activePhase = 0
+	}
+	if st.activePhase < 0 {
+		st.activePhase = 0
+	}
+	if st.activePhase >= len(st.phases) {
+		st.activePhase = len(st.phases) - 1
+	}
+}
+
+func (st *flowsState) cur() *flow.Phase {
+	st.ensurePhase()
+	return &st.phases[st.activePhase]
 }
 
 func (m Model) openFlows() Model {
 	m.screen = screenFlows
 	m.flows = flowsState{
 		template: "ninguna",
-		engine:   "claude",
-		model:    "sonnet",
-		effort:   "default",
-		thinking: "adaptive",
 	}
+	m.flows.ensurePhase()
 	return m
 }
 
@@ -61,36 +72,6 @@ func (m Model) abandonFlows() Model {
 	m.flows = flowsState{}
 	m.screen = screenList
 	return m
-}
-
-func (st *flowsState) currentPhase() flow.Phase {
-	pName := strings.TrimSpace(st.phaseName)
-	if pName == "" {
-		pName = fmt.Sprintf("phase-%d", len(st.phases)+1)
-	}
-	mdl := st.model
-	if mdl == "default" {
-		mdl = ""
-	}
-	eff := st.effort
-	if eff == "default" {
-		eff = ""
-	}
-	thk := st.thinking
-	if thk == "adaptive" {
-		thk = ""
-	}
-	return flow.Phase{
-		Name:        pName,
-		Engine:      st.engine,
-		Model:       mdl,
-		Effort:      eff,
-		Thinking:    thk,
-		Prompt:      strings.TrimSpace(st.prompt),
-		FeedOutput:  st.feedOutput,
-		Wait:        st.wait,
-		Permissions: []string{"repo"},
-	}
 }
 
 func (m Model) flowsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
@@ -138,6 +119,7 @@ func (m Model) flowsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 
 func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	st := &m.flows
+	st.ensurePhase()
 	if st.confirmDiscard {
 		switch {
 		case msg.Text == "y" || msg.Text == "Y" || msg.Text == "s" || msg.Text == "S" || key.Matches(msg, m.keys.Open):
@@ -153,7 +135,7 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	isText := st.field == flowFieldName || st.field == flowFieldPhaseName || st.field == flowFieldPrompt
 	switch {
 	case key.Matches(msg, m.keys.Back):
-		if st.flowName != "" || len(st.phases) > 0 || st.prompt != "" {
+		if st.flowName != "" || len(st.phases) > 1 || st.cur().Prompt != "" {
 			st.confirmDiscard = true
 			return m.say("¿Descartar cambios del flujo? [y] sí / [n] no"), nil
 		}
@@ -172,9 +154,9 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		case flowFieldName:
 			st.flowName = trimLastRune(st.flowName)
 		case flowFieldPhaseName:
-			st.phaseName = trimLastRune(st.phaseName)
+			st.cur().Name = trimLastRune(st.cur().Name)
 		case flowFieldPrompt:
-			st.prompt = trimLastRune(st.prompt)
+			st.cur().Prompt = trimLastRune(st.cur().Prompt)
 		}
 		return m, nil
 	}
@@ -184,9 +166,9 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		case flowFieldName:
 			st.flowName += msg.Text
 		case flowFieldPhaseName:
-			st.phaseName += msg.Text
+			st.cur().Name += msg.Text
 		case flowFieldPrompt:
-			st.prompt += msg.Text
+			st.cur().Prompt += msg.Text
 		}
 	}
 	return m, nil
@@ -194,33 +176,55 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 
 func (m Model) handleFlowFieldAction() (Model, tea.Cmd) {
 	st := &m.flows
+	st.ensurePhase()
 	switch st.field {
 	case flowFieldTemplate:
 		tpls := []string{"ninguna", "TDD Cycle", "Security Audit", "Turbo Fix"}
 		st.template = nextOption(tpls, st.template, 1)
 		return m.applyFlowTemplate(st.template)
+	case flowFieldPhaseSelect:
+		if len(st.phases) > 0 {
+			st.activePhase = (st.activePhase + 1) % len(st.phases)
+		}
 	case flowFieldEngine:
 		engs := []string{"claude", "codex", "opencode"}
-		st.engine = nextOption(engs, st.engine, 1)
+		st.cur().Engine = nextOption(engs, orDef(st.cur().Engine, "claude"), 1)
 	case flowFieldModel:
 		mdls := []string{"sonnet", "opus", "haiku", "default"}
-		st.model = nextOption(mdls, st.model, 1)
+		st.cur().Model = nextOption(mdls, orDef(st.cur().Model, "sonnet"), 1)
 	case flowFieldEffort:
 		effs := []string{"default", "low", "medium", "high", "xhigh", "max"}
-		st.effort = nextOption(effs, st.effort, 1)
+		st.cur().Effort = nextOption(effs, orDef(st.cur().Effort, "default"), 1)
 	case flowFieldThinking:
 		thks := []string{"adaptive", "on", "off"}
-		st.thinking = nextOption(thks, st.thinking, 1)
+		st.cur().Thinking = nextOption(thks, orDef(st.cur().Thinking, "adaptive"), 1)
 	case flowFieldFeedOutput:
-		st.feedOutput = !st.feedOutput
+		st.cur().FeedOutput = !st.cur().FeedOutput
 	case flowFieldWait:
-		st.wait = !st.wait
+		st.cur().Wait = !st.cur().Wait
 	case flowFieldAddPhase:
-		st.phases = append(st.phases, st.currentPhase())
-		st.phaseName = fmt.Sprintf("phase-%d", len(st.phases)+1)
-		st.prompt = ""
+		st.phases = append(st.phases, flow.Phase{
+			Name:        fmt.Sprintf("%d-fase", len(st.phases)+1),
+			Engine:      "claude",
+			Model:       "sonnet",
+			Effort:      "default",
+			Thinking:    "adaptive",
+			FeedOutput:  true,
+			Permissions: []string{"repo"},
+		})
+		st.activePhase = len(st.phases) - 1
 		st.field = flowFieldPhaseName
-		return m.say(fmt.Sprintf("fase %d añadida al ciclo", len(st.phases))), nil
+		return m.say(fmt.Sprintf("fase %d añadida", len(st.phases))), nil
+	case flowFieldDelPhase:
+		if len(st.phases) <= 1 {
+			return m.say("el flujo debe tener al menos una fase"), nil
+		}
+		idx := st.activePhase
+		st.phases = append(st.phases[:idx], st.phases[idx+1:]...)
+		if st.activePhase >= len(st.phases) {
+			st.activePhase = len(st.phases) - 1
+		}
+		return m.say("fase eliminada"), nil
 	case flowFieldSave:
 		return m.saveCustomFlow()
 	}
@@ -230,18 +234,14 @@ func (m Model) handleFlowFieldAction() (Model, tea.Cmd) {
 func (m Model) startCreateFlow() Model {
 	m.flows.creating = true
 	m.flows.confirmDiscard = false
+	m.flows.confirmDelete = false
 	m.flows.field = 0
 	m.flows.template = "ninguna"
 	m.flows.flowName = ""
-	m.flows.phases = nil
-	m.flows.phaseName = "implement"
-	m.flows.engine = "claude"
-	m.flows.model = "sonnet"
-	m.flows.effort = "default"
-	m.flows.thinking = "adaptive"
-	m.flows.feedOutput = false
-	m.flows.wait = false
-	m.flows.prompt = ""
+	m.flows.phases = []flow.Phase{
+		{Name: "1-implement", Engine: "claude", Model: "sonnet", Effort: "default", Thinking: "adaptive", Permissions: []string{"repo"}},
+	}
+	m.flows.activePhase = 0
 	return m
 }
 
@@ -259,9 +259,18 @@ func (m Model) handleFlowClick(t Target) (tea.Model, tea.Cmd) {
 		m.flows.field = flowFieldAddPhase
 		return m.handleFlowFieldAction()
 	}
+	if t.Field == "del_phase" {
+		m.flows.field = flowFieldDelPhase
+		return m.handleFlowFieldAction()
+	}
 	if t.Field == "save" {
 		m.flows.field = flowFieldSave
 		return m.handleFlowFieldAction()
+	}
+	if t.Field == "select_phase" {
+		m.flows.activePhase = t.Phase
+		m.flows.field = flowFieldPhaseSelect
+		return m, nil
 	}
 	m.flows.field = t.Phase
 	return m.handleFlowFieldAction()
