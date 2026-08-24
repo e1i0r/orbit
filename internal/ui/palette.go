@@ -51,6 +51,11 @@ func (m Model) openPalette() Model {
 	return m
 }
 
+func (m Model) openPaletteWith(initial string) Model {
+	m.palette = paletteState{open: true, typed: initial}
+	return m
+}
+
 // closePalette takes the line down and gives the keyboard back.
 func (m Model) closePalette() Model {
 	m.palette = paletteState{}

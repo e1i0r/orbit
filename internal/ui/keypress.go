@@ -130,11 +130,11 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	case key.Matches(k, m.keys.MarkRead):
 		return m.markReadKey()
 	case key.Matches(k, m.keys.Ask):
-		// The one verb that is only ever its own reason. Orbit cannot put a
-		// question to an engine yet, so gesture refuses it and says so, and
-		// nothing here pretends otherwise with a stub.
-		_, next, _ := m.gesture(m.keys.Ask)
-		return next, nil
+		r, ok := m.selected()
+		if !ok || r.head {
+			return m, nil
+		}
+		return m.openPaletteWith("note " + r.task.ID + " "), nil
 	case key.Matches(k, m.keys.Start):
 		return m.openStart()
 	case key.Matches(k, m.keys.Compose):

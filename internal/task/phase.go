@@ -34,7 +34,7 @@ import (
 // nothing, which is how the ending events already treat a session id and a
 // cost they do not have. An empty string would read as a posture somebody
 // wrote down, and nobody did.
-func phaseStart(p flow.Phase, n int) record.Event {
+func phaseStart(p flow.Phase, n int, notes []string) record.Event {
 	data := map[string]string{"engine": p.Engine, "n": strconv.Itoa(n)}
 	if p.Model != "" {
 		data["model"] = p.Model
@@ -47,6 +47,9 @@ func phaseStart(p flow.Phase, n int) record.Event {
 	}
 	if len(p.Permissions) > 0 {
 		data["permissions"] = strings.Join(p.Permissions, ",")
+	}
+	if len(notes) > 0 {
+		data["notes"] = strconv.Itoa(len(notes))
 	}
 	return record.Event{Kind: record.PhaseStarted, Phase: p.Name, Data: data}
 }

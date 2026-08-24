@@ -687,6 +687,10 @@
       "source": "change a setting",
       "value": "cambiar un ajuste"
     },
+    "cmd.note": {
+      "source": "record a note for a task",
+      "value": "dejar una nota para una tarea"
+    },
     "cli.tagline": {
       "source": "orbit — a cockpit for supervising coding agents",
       "value": "orbit — una cabina para supervisar agentes que programan"

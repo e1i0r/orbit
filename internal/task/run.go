@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"unicode/utf8"
 
 	"github.com/e1i0r/orbit/internal/engine"
@@ -136,12 +137,13 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 			continue
 		}
 
-		if err := emit(s, t, phaseStart(p, i+1)); err != nil {
+		notes := unconsumedNotes(s, t)
+		if err := emit(s, t, phaseStart(p, i+1, notes)); err != nil {
 			return err
 		}
 
 		out, runErr := engines[p.Engine].Run(ctx, engine.Request{
-			Prompt:      prompt(t, p),
+			Prompt:      prompt(t, p, notes),
 			Model:       p.Model,
 			Effort:      p.Effort,
 			Thinking:    p.Thinking,
@@ -277,9 +279,18 @@ func prepare(s *store.Store, t Task) (string, error) {
 
 // prompt is what the engine is told for one phase.
 //
-// It is deliberately thin. Real prompts per phase, loaded from files and
-// embedded in the binary, arrive with the rest of the flow catalogue; putting
-// them here now would bury them in Go.
-func prompt(t Task, p flow.Phase) string {
-	return fmt.Sprintf("Phase: %s\nRepository: %s\n\nTask %s:\n%s\n", p.Name, t.Repo.Name, t.ID, t.Text)
+func prompt(t Task, p flow.Phase, notes []string) string {
+	base := fmt.Sprintf("Phase: %s\nRepository: %s\n\nTask %s:\n%s\n", p.Name, t.Repo.Name, t.ID, t.Text)
+	if len(notes) == 0 {
+		return base
+	}
+	var sb strings.Builder
+	sb.WriteString(base)
+	sb.WriteString("\nOperator Notes:\n")
+	for _, n := range notes {
+		sb.WriteString("- ")
+		sb.WriteString(n)
+		sb.WriteString("\n")
+	}
+	return sb.String()
 }

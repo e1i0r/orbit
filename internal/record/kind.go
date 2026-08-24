@@ -23,6 +23,7 @@ const (
 	TaskTimedOut  = "task.timedout"  // it outlived the deadline it was given
 	TaskAbandoned = "task.abandoned" // its process is gone and a reader wrote that down
 	TaskRead      = "task.read"      // somebody has looked at it
+	TaskNoted     = "task.noted"     // a user note left for the task
 
 	PhaseStarted   = "phase.started"   // Data carries engine, model, n, and the permissions the phase was given
 	PhaseFinished  = "phase.finished"  // the phase ran through; Text is what the engine printed

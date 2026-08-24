@@ -161,6 +161,10 @@ func commands() []Command {
 		About:    func(p *words.Printer) string { return p.T("cmd.set", "change a setting") },
 		Run:      set,
 		InWindow: WindowOpens,
+	}, {
+		Name: "note", Args: "-repo <dir> <id> <text>",
+		About: func(p *words.Printer) string { return p.T("cmd.note", "record a note for a task") },
+		Run:   noteTask,
 	}}
 }
 
