@@ -20,7 +20,7 @@ import (
 
 // openDetail opens the task view on one task, from the board.
 func (m Model) openDetail(t view.Task) (Model, tea.Cmd) {
-	m.screen, m.detail, m.tab = screenDetail, t.ID, tabLog
+	m.screen, m.detail, m.tab = screenDetail, t.ID, tabOverview
 	m.entries, m.logErr, m.diff, m.following = nil, nil, "", true
 	m.diffErr, m.diffKnown, m.diffNoBase = nil, false, false
 	// The base is one of the things an open forgets: it belongs to the
@@ -34,17 +34,10 @@ func (m Model) openDetail(t view.Task) (Model, tea.Cmd) {
 }
 
 // detailKey is the task view's map.
-//
-// Sideways is gated on the diff tab rather than ordered before Back, because
-// ← means two different things depending on which pane is showing: on the
-// diff it scrolls a line too wide for the pane, and on the other two tabs it
-// is Back's own key, and pressing it there has to reach Back. Matching
-// Sideways first and unconditionally — the previous shape of this switch —
-// shadowed Back on every tab, not only the one that can scroll sideways, and
-// turned ← on the log and evidence tabs into a silent no-op. esc is still
-// the way out the key bar and the help overlay both print, so nothing on
-// screen ever advertised ←; but it used to work, and this restores it.
 func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
+	if targetTab, ok := keyToPane(k.String()); ok {
+		return m.showTab(targetTab), nil
+	}
 	switch {
 	case m.tab == tabDiff && key.Matches(k, m.keys.Sideways):
 		return m.sideways(k), nil
@@ -72,23 +65,12 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 }
 
 // showTab puts one pane on top.
-//
-// It is a method rather than an assignment at each site because there are
-// three of them now — next, previous, and a tab that was clicked — and a
-// pane brought forward may one day need more than a number changed.
 func (m Model) showTab(t tab) Model {
 	m.tab = t
 	return m
 }
 
 // scroll moves the pane, and is the one site the follow rule lives at.
-//
-// In the program this replaces the same rule was written at six places — one
-// per key that could move the log — and they drifted: two of them let the
-// tail go and never took it back, so a reader who pressed PgUp once stopped
-// seeing new output for the rest of the run and had no way to know. Here
-// every key that can move the pane comes through this function, and the rule
-// is read off the offset afterwards rather than written into each key.
 func (m Model) scroll(k fmt.Stringer) Model {
 	vp := m.panes[m.tab]
 	was := vp.YOffset()
@@ -98,34 +80,29 @@ func (m Model) scroll(k fmt.Stringer) Model {
 	case key.Matches(k, m.keys.Down):
 		vp.ScrollDown(1)
 	case key.Matches(k, m.keys.PageUp):
-		vp.PageUp()
+		vp.ScrollUp(m.frame.Body.H)
 	case key.Matches(k, m.keys.PageDown):
-		vp.PageDown()
+		vp.ScrollDown(m.frame.Body.H)
 	case key.Matches(k, m.keys.First):
 		vp.GotoTop()
+	case key.Matches(k, m.keys.Last):
+		vp.GotoBottom()
 	default:
 		return m
 	}
 	m.panes[m.tab] = vp
-	if m.tab != tabLog {
-		return m
-	}
-	if vp.YOffset() < was {
-		m.following = false
-	} else if vp.AtBottom() {
-		m.following = true
+	if m.tab == tabTimeline {
+		if vp.AtBottom() {
+			m.following = true
+		} else if vp.YOffset() < was {
+			m.following = false
+		}
 	}
 	return m
 }
 
 // sideways scrolls the pane along a line too wide for it, which only the
 // diff ever is.
-//
-// The key is read by name rather than by code because that is all a
-// keystroke is by the time it gets here: key.Matches has already agreed it
-// is one of Sideways' own two keys, so the name is exactly "left" or
-// "right", and a hint clicked in the key bar arrives as the same string a
-// pressed key does.
 func (m Model) sideways(k fmt.Stringer) Model {
 	vp := m.panes[m.tab]
 	if k.String() == "left" {
@@ -137,19 +114,15 @@ func (m Model) sideways(k fmt.Stringer) Model {
 	return m
 }
 
-// sidewaysStep is how far one press moves along a line. Eight cells is one
-// level of indentation in most of what a diff contains, and one cell at a
-// time across a four-thousand-cell line is not scrolling.
+// sidewaysStep is how far one press moves along a line.
 const sidewaysStep = 8
 
-// newest jumps to the end of the pane and arms the tail again. It is what ⏎
-// does here, which is the same thing it does on the board: go to the thing
-// that is happening now.
+// newest jumps to the end of the pane and arms the tail again.
 func (m Model) newest() Model {
 	vp := m.panes[m.tab]
 	vp.GotoBottom()
 	m.panes[m.tab] = vp
-	if m.tab == tabLog {
+	if m.tab == tabTimeline {
 		m.following = true
 	}
 	return m

@@ -401,17 +401,157 @@
       "source": "scroll sideways",
       "value": "desplazar en horizontal"
     },
-    "tab.log": {
-      "source": "log",
-      "value": "registro"
+    "tab.overview": {
+      "source": "overview",
+      "value": "resumen"
+    },
+    "tab.flow": {
+      "source": "flow",
+      "value": "flujo"
+    },
+    "tab.gates": {
+      "source": "gates",
+      "value": "gates"
+    },
+    "tab.cost": {
+      "source": "cost",
+      "value": "coste"
+    },
+    "tab.refused": {
+      "source": "refused",
+      "value": "rechazado"
+    },
+    "tab.timeline": {
+      "source": "timeline",
+      "value": "cronología"
+    },
+    "tab.report": {
+      "source": "report",
+      "value": "informe"
+    },
+    "tab.artifacts": {
+      "source": "artifacts",
+      "value": "artefactos"
+    },
+    "tab.notes": {
+      "source": "notes",
+      "value": "notas"
     },
     "tab.diff": {
       "source": "diff",
       "value": "cambios"
     },
-    "tab.evidence": {
-      "source": "evidence",
-      "value": "evidencia"
+    "tab.thinking": {
+      "source": "thinking",
+      "value": "thinking"
+    },
+    "overview.heading": {
+      "source": "Task Overview",
+      "value": "Resumen de la Tarea"
+    },
+    "overview.id": {
+      "source": "ID:",
+      "value": "ID:"
+    },
+    "overview.repo": {
+      "source": "Repository:",
+      "value": "Repositorio:"
+    },
+    "overview.status": {
+      "source": "Status:",
+      "value": "Estado:"
+    },
+    "overview.flow": {
+      "source": "Flow:",
+      "value": "Flujo:"
+    },
+    "overview.cost": {
+      "source": "Cost:",
+      "value": "Coste:"
+    },
+    "overview.title": {
+      "source": "Title:",
+      "value": "Título:"
+    },
+    "overview.description": {
+      "source": "Description:",
+      "value": "Descripción:"
+    },
+    "flow.title": {
+      "source": "Flow: {name}",
+      "value": "Flujo: {name}"
+    },
+    "gates.empty": {
+      "source": "no verification gates have run for this task",
+      "value": "no se ejecutaron verificaciones para esta tarea"
+    },
+    "gates.passed": {
+      "source": "PASSED",
+      "value": "APROBADO"
+    },
+    "gates.failed": {
+      "source": "FAILED",
+      "value": "FALLADO"
+    },
+    "gates.phase": {
+      "source": "phase",
+      "value": "fase"
+    },
+    "cost.heading": {
+      "source": "Cost & Resource Breakdown",
+      "value": "Desglose de Costes y Recursos"
+    },
+    "cost.total": {
+      "source": "Total spent on task:",
+      "value": "Total gastado en la tarea:"
+    },
+    "cost.empty": {
+      "source": "no cost recorded for this task",
+      "value": "no hay costes registrados para esta tarea"
+    },
+    "refused.tag": {
+      "source": "DENIED",
+      "value": "DENEGADO"
+    },
+    "refused.phase": {
+      "source": "phase",
+      "value": "fase"
+    },
+    "refused.empty": {
+      "source": "no actions were refused by permissions for this task",
+      "value": "ninguna acción fue denegada por permisos para esta tarea"
+    },
+    "report.empty": {
+      "source": "no engine report available for this task",
+      "value": "no hay informe del motor disponible para esta tarea"
+    },
+    "artifacts.title": {
+      "source": "Modified Artifacts & Files ({n})",
+      "value": "Artefactos y Archivos Modificados ({n})"
+    },
+    "artifacts.empty": {
+      "source": "no files or artifacts modified yet",
+      "value": "no hay archivos o artefactos modificados todavía"
+    },
+    "notes.note": {
+      "source": "NOTE",
+      "value": "NOTA"
+    },
+    "notes.empty": {
+      "source": "no notes recorded for this task · press a to leave one",
+      "value": "no hay notas registradas para esta tarea · pulsa a para dejar una"
+    },
+    "thinking.tag": {
+      "source": "THINKING",
+      "value": "THINKING"
+    },
+    "thinking.phase": {
+      "source": "phase",
+      "value": "fase"
+    },
+    "thinking.empty": {
+      "source": "no thinking blocks captured for this task",
+      "value": "no hay bloques de thinking registrados para esta tarea"
     },
     "log.attempt": {
       "source": "attempt {n}",

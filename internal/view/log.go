@@ -51,6 +51,10 @@ type Entry struct {
 	Session string  // the engine's session id, for resuming by hand
 	Cause   string  // why a phase stopped, from Data["error"]
 	Cost    float64 // what the phase cost
+	Gate    string  // gate name, from Data["gate"]
+	Exit    string  // exit code, from Data["exit"]
+	Tool    string  // tool name, from Data["tool"]
+	Notes   string  // note count or info, from Data["notes"]
 
 	// Kept and Full are the size of the engine's output as it was written
 	// and as it actually was. They differ only when internal/task cut it,
@@ -95,6 +99,11 @@ const (
 	EntryRead                        // somebody has looked at it
 	EntryWaiting                     // it stopped at a gate
 	EntryResumed                     // it was let go again
+	EntryGatePassed                  // verification gate passed
+	EntryGateFailed                  // verification gate failed
+	EntryThought                     // thinking block
+	EntryRefused                     // permission refused
+	EntryNoted                       // user note
 	EntryUnreadable                  // this line of the record itself is damaged
 )
 
@@ -128,6 +137,16 @@ func (e Entry) What() EntryKind {
 		return EntryWaiting
 	case record.PhaseResumed:
 		return EntryResumed
+	case record.GatePassed:
+		return EntryGatePassed
+	case record.GateFailed:
+		return EntryGateFailed
+	case record.PhaseThought:
+		return EntryThought
+	case record.PhaseRefused:
+		return EntryRefused
+	case record.TaskNoted:
+		return EntryNoted
 	case record.Unreadable:
 		// Not a kind anything wrote: the reader synthesises it where a line
 		// would not parse, and it is a fact about the log rather than about
@@ -177,6 +196,10 @@ func entry(e record.Event, attempt int) Entry {
 		Session: e.Data["session"],
 		Cause:   e.Data["error"],
 		Cost:    money(e.Data["cost"]),
+		Gate:    e.Data["gate"],
+		Exit:    e.Data["exit"],
+		Tool:    e.Data["tool"],
+		Notes:   e.Data["notes"],
 		Kept:    len(e.Text),
 		Full:    count(e.Data["output_bytes"]),
 	}
