@@ -32,4 +32,7 @@ const (
 	PhaseResumed   = "phase.resumed"   // let go again
 	PhaseThought   = "phase.thought"   // a thinking block from the engine stream
 	PhaseRefused   = "phase.refused"   // a tool call the engine was denied by permissions
+
+	GatePassed = "gate.passed" // a phase gate verification check passed
+	GateFailed = "gate.failed" // a phase gate verification check failed
 )

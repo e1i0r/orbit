@@ -178,6 +178,10 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 			return failed(s, t, fmt.Errorf("task %s, phase %q: %w", t.ID, p.Name, runErr))
 		}
 
+		if err := runGates(ctx, s, t, p, i+1, wt, out); err != nil {
+			return err
+		}
+
 		if err := emit(s, t, phaseEnd(record.PhaseFinished, p.Name, out, nil)); err != nil {
 			return err
 		}

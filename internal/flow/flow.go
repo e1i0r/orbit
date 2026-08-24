@@ -65,6 +65,13 @@ type Phase struct {
 	// nothing, and the engine turns it into the most restrictive posture it
 	// can state rather than into an absence of flags.
 	Permissions []string `json:"permissions,omitempty"`
+	Gates       []Gate   `json:"gates,omitempty"`
+}
+
+// Gate is a named verification check run after a phase engine finishes.
+type Gate struct {
+	Name    string `json:"name"`
+	Command string `json:"command"`
 }
 
 // Flow is an ordered list of phases under a name.
@@ -90,7 +97,7 @@ func (f Flow) Validate() error {
 			return fmt.Errorf("flow %q: phase %q names no engine", f.Name, p.Name)
 		}
 		if seen[p.Name] {
-			return fmt.Errorf("flow %q: two phases are called %q", f.Name, p.Name)
+			return fmt.Errorf("flow %q: phase %q appears more than once", f.Name, p.Name)
 		}
 		seen[p.Name] = true
 		// A permission nobody defined is refused here, at load, rather than
@@ -101,7 +108,15 @@ func (f Flow) Validate() error {
 			switch perm {
 			case PermissionRead, PermissionRepo, PermissionNetwork:
 			default:
-				return fmt.Errorf("flow %q: phase %q asks for the permission %q, which is not one of %s, %s and %s", f.Name, p.Name, perm, PermissionRead, PermissionRepo, PermissionNetwork)
+				return fmt.Errorf("flow %q: phase %q asks for unknown permission %q", f.Name, p.Name, perm)
+			}
+		}
+		for gi, g := range p.Gates {
+			if g.Name == "" {
+				return fmt.Errorf("flow %q: phase %q has a gate at position %d with no name", f.Name, p.Name, gi+1)
+			}
+			if g.Command == "" {
+				return fmt.Errorf("flow %q: phase %q gate %q has no command", f.Name, p.Name, g.Name)
 			}
 		}
 	}

@@ -1,12 +1,17 @@
 package task
 
 import (
+	"context"
+	"errors"
+	"fmt"
+	"os/exec"
 	"strconv"
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/record"
+	"github.com/e1i0r/orbit/internal/store"
 )
 
 // The two events that bracket a phase.
@@ -108,4 +113,39 @@ func phaseRefused(phase string, n int, r engine.StreamRefusal) record.Event {
 		data["bytes"] = strconv.Itoa(full)
 	}
 	return record.Event{Kind: record.PhaseRefused, Phase: phase, Text: c, Data: data}
+}
+
+func runGates(ctx context.Context, s *store.Store, t Task, p flow.Phase, n int, wt string, out engine.Result) error {
+	for _, g := range p.Gates {
+		cmd := exec.CommandContext(ctx, "sh", "-c", g.Command)
+		cmd.Dir = wt
+		combined, err := cmd.CombinedOutput()
+		text, full := captured(string(combined))
+		data := map[string]string{
+			"gate": g.Name,
+			"n":    strconv.Itoa(n),
+		}
+		if full > 0 {
+			data["bytes"] = strconv.Itoa(full)
+		}
+		if err == nil {
+			data["exit"] = "0"
+			if emitErr := emit(s, t, record.Event{Kind: record.GatePassed, Phase: p.Name, Text: text, Data: data}); emitErr != nil {
+				return emitErr
+			}
+			continue
+		}
+
+		exitCode := 1
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			exitCode = exitErr.ExitCode()
+		}
+		data["exit"] = strconv.Itoa(exitCode)
+		_ = emit(s, t, record.Event{Kind: record.GateFailed, Phase: p.Name, Text: text, Data: data})
+		gateCause := fmt.Errorf("gate %q failed (exit %d)", g.Name, exitCode)
+		_ = emit(s, t, phaseEnd(record.PhaseFailed, p.Name, out, gateCause))
+		return failed(s, t, fmt.Errorf("task %s, phase %q: %w", t.ID, p.Name, gateCause))
+	}
+	return nil
 }
