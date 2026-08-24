@@ -14,40 +14,65 @@ import (
 	"strconv"
 	"strings"
 
+	"charm.land/lipgloss/v2"
+
 	"github.com/e1i0r/orbit/internal/view"
 )
 
 // bandLine is the activity band, and it never comes back empty.
-//
-// The order is what makes that true: a message owns it while it is fresh,
-// then whatever is running owns it, and when nothing runs it says so. A
-// status area that goes blank reads as broken — that is the single most
-// valuable thing the program this replaces taught, because that is exactly
-// how it read to the person who reported it.
 func (m Model) bandLine(w int) string {
+	left := " " + m.bandLeft()
+	right := m.bandRight()
+	leftW := lipgloss.Width(left)
+	rightW := lipgloss.Width(right)
+
+	if leftW+rightW+4 <= w {
+		space := w - leftW - rightW
+		return left + strings.Repeat(" ", space) + right
+	}
+	return fit(left, w)
+}
+
+func (m Model) bandLeft() string {
 	switch {
 	case m.filtering:
-		return fit(" "+m.filterLine(), w)
+		return m.filterLine()
 	case m.confirm == confirmCancel:
-		return fit(" "+Paint(Warn).Render(m.opts.Words.T("msg.confirm_cancel",
+		return Paint(Warn).Render(m.opts.Words.T("msg.confirm_cancel",
 			"cancel {id}? press y to confirm, anything else to leave it running",
-			about("id", m.confirmID))), w)
+			about("id", m.confirmID)))
 	case m.message != "" && m.now.Sub(m.messageAt) < messageLife:
-		return fit(" "+Paint(Accent).Render(m.message), w)
+		return Paint(Accent).Render(m.message)
 	case m.filter != "" || m.repoFilter != "":
-		// A filter that is applied but no longer being typed. It sits below
-		// the message and above what is running, because it qualifies the
-		// list rather than reporting an event: while one is on, every count
-		// on the screen is smaller than the board's own and the band is the
-		// only place that says so.
-		return fit(" "+m.filterLine(), w)
+		return m.filterLine()
 	}
 	for _, t := range m.board.Tasks {
 		if view.BandOf(t) == view.Running {
-			return fit(" "+m.runningLine(t), w)
+			return m.runningLine(t)
 		}
 	}
-	return fit(" "+Paint(Dim).Render(m.idleLine()), w)
+	return Paint(Dim).Render(m.idleLine())
+}
+
+func (m Model) bandRight() string {
+	p := m.opts.Words
+	var chips []string
+
+	// Autopilot chip
+	pip, role := pipOff, Dim
+	if m.autopilotOn() {
+		pip, role = pipOn, Live
+	}
+	chips = append(chips, Paint(Dim).Render("⚡ "+p.T("header.autopilot", "autopilot"))+" "+Paint(role).Render(pip))
+
+	// Model / knob chip
+	chip := m.knobChip()
+	if chip != "" {
+		chips = append(chips, Paint(Accent).Render("🧠 "+chip))
+	} else {
+		chips = append(chips, Paint(Dim).Render("🧠 claude"))
+	}
+	return strings.Join(chips, "    ")
 }
 
 // filterLine is what is being typed, and how much of the board it is

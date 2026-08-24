@@ -152,21 +152,6 @@ func (m Model) headerFields() []string {
 	// Repos chip
 	fields = append(fields, Paint(Dim).Render("📦 "+p.P("header.repos", m.board.Repos, "{n} repo", "{n} repos")))
 
-	// Autopilot chip
-	pip, role := pipOff, Dim
-	if m.autopilotOn() {
-		pip, role = pipOn, Live
-	}
-	fields = append(fields, Paint(Dim).Render("⚡ "+p.T("header.autopilot", "autopilot"))+" "+Paint(role).Render(pip))
-
-	// Model / knob chip
-	chip := m.knobChip()
-	if chip != "" {
-		fields = append(fields, Paint(Accent).Render("🧠 "+chip))
-	} else {
-		fields = append(fields, Paint(Dim).Render("🧠 claude"))
-	}
-
 	// Language chip
 	lang := p.T("header.lang_badge", "EN")
 	fields = append(fields, Paint(Dim).Render("🌐 "+lang))
