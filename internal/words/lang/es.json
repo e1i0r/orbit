@@ -838,6 +838,26 @@
     "flow.stops_for_human": {
       "source": "stops for human",
       "value": "se detiene para un humano"
+    },
+    "status.spent": {
+      "source": "{cost} spent",
+      "value": "{cost} gastado"
+    },
+    "status.tasks": {
+      "source": "{todo} todo · {in_progress} in flight · {needs_you} needs you · {done} done",
+      "value": "{todo} por hacer · {in_progress} en marcha · {needs_you} te necesita · {done} hecho"
+    },
+    "status.events": {
+      "source": "{events} events",
+      "value": "{events} eventos"
+    },
+    "status.read_time": {
+      "source": "{ms}ms read",
+      "value": "{ms}ms lectura"
+    },
+    "status.quota": {
+      "source": "{pct} left in {label} · resets in {resets}",
+      "value": "{pct} restante en {label} · reinicia en {resets}"
     }
   }
 }

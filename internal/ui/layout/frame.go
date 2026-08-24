@@ -37,12 +37,13 @@ type Strip struct {
 	Y, H, W int
 }
 
-// Frame is the screen as four regions stacked from the top.
+// Frame is the screen as five regions stacked from the top.
 //
 // The order of the fields is the order they are drawn in, and the order the
 // window gives them up in as the terminal shrinks is Fit's, not this one's.
 type Frame struct {
 	Header Strip // product, folder, and the standing settings
+	Status Strip // the status line: spent, tasks, events, read time, quota
 	Body   Strip // the bands and their rows: the only region measured in tasks
 	Band   Strip // the activity band, which never empties
 	Bar    Strip // the keys that can be pressed right now
@@ -65,7 +66,7 @@ func (e TooNarrowError) Error() string {
 	return fmt.Sprintf("orbit needs %d columns; this terminal has %d", e.Need, e.Got)
 }
 
-// Fit lays a terminal of w by h out as four regions, or refuses it.
+// Fit lays a terminal of w by h out as five regions, or refuses it.
 //
 // It is called Fit and not Frame because Go will not let a function and a
 // type share a name, and Frame is the noun the window passes around —
@@ -87,7 +88,7 @@ func Fit(w, h int) (Frame, error) {
 	if w < MinWidth {
 		return Frame{}, TooNarrowError{Need: MinWidth, Got: w}
 	}
-	header, body, band, bar := rows(h)
+	header, status, body, band, bar := rows(h)
 
 	var f Frame
 	y := 0
@@ -96,6 +97,7 @@ func Fit(w, h int) (Frame, error) {
 		into   *Strip
 	}{
 		{header, &f.Header},
+		{status, &f.Status},
 		{body, &f.Body},
 		{band, &f.Band},
 		{bar, &f.Bar},
@@ -119,13 +121,7 @@ func Fit(w, h int) (Frame, error) {
 // and that a row of tasks outranks the key bar, which outranks the activity
 // band, which outranks the header's rule. Everything past the frame's own
 // furniture is a task.
-//
-// At full height that is a header of two rows — the header line and the rule
-// under it — a band of two — the rule above it and the band itself — and a
-// bar of one, which is where the body's h-5 comes from. Those three numbers
-// are written nowhere else: they are how many times each region appears in
-// the list below.
-func rows(h int) (header, body, band, bar int) {
+func rows(h int) (header, status, body, band, bar int) {
 	if h < 0 {
 		// A negative height is not a terminal. It is arithmetic that went
 		// wrong somewhere above, and the honest answer is an empty frame
@@ -133,7 +129,7 @@ func rows(h int) (header, body, band, bar int) {
 		// pane that eats the one below it.
 		h = 0
 	}
-	for _, claim := range []*int{&header, &body, &header, &bar, &band, &band} {
+	for _, claim := range []*int{&header, &body, &header, &bar, &band, &band, &status} {
 		if h == 0 {
 			return
 		}
@@ -187,6 +183,7 @@ func (f Frame) At(y int) Region {
 		region Region
 	}{
 		{f.Header, RegionHeader},
+		{f.Status, RegionStatus},
 		{f.Body, RegionBody},
 		{f.Band, RegionBand},
 		{f.Bar, RegionBar},

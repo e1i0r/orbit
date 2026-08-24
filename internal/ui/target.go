@@ -109,6 +109,8 @@ func (m Model) hit(x, y int) Target {
 		// decided where they are laid out, and that is not settled until
 		// the header carries a repository list.
 		return Target{}
+	case layout.RegionStatus:
+		return Target{Kind: TargetStatusField}
 	case layout.RegionBody:
 		if m.palette.open {
 			return m.hitPalette(x, y)
