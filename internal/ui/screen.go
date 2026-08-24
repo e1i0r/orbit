@@ -57,6 +57,8 @@ func (m Model) View() tea.View {
 			lines = append(lines, m.settingsRows(m.frame.Body.H, m.frame.Body.W)...)
 		case screenFlows:
 			lines = append(lines, m.flowsRows(m.frame.Body.H, m.frame.Body.W)...)
+		case screenRepos:
+			lines = append(lines, m.repolistRows(m.frame.Body.H, m.frame.Body.W)...)
 		default:
 			lines = append(lines, m.bodyRows()...)
 		}

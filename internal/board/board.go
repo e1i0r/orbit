@@ -54,6 +54,12 @@ const (
 	RescanEvery  = 2 * time.Second
 )
 
+// RepoInfo is one repository the board knows about.
+type RepoInfo struct {
+	Name string
+	Path string
+}
+
 // Board is one answer to "what is on screen right now".
 //
 // It is a value and not a handle: the window keeps the one it was given
@@ -65,13 +71,9 @@ type Board struct {
 	Tasks []view.Task
 	// Repos is how many repositories were found under the root this reader
 	// was opened over — the number in the header, not the number of rows.
-	//
-	// It counts a repository nobody has written a task against yet, and
-	// that is the point of it: the count comes from the walk and the rows
-	// come from the record, so a person who has just cloned three projects
-	// is told there are three and no tasks in them, rather than that there
-	// are no repositories at all.
 	Repos int
+	// RepoList is every repository found under the root, with its name and path.
+	RepoList []RepoInfo
 	// Counts is how many tasks are in each band, indexed by the view.Band
 	// value. It is filled by calling view.BandOf on the very tasks in
 	// Tasks, so the number above a band and the rows inside it are one

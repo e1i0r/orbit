@@ -57,10 +57,16 @@ func (r *Reader) Refresh() (Board, Changed, error) {
 		}
 	}
 
+	repoList := make([]RepoInfo, len(r.repos))
+	for i, rs := range r.repos {
+		repoList[i] = RepoInfo{Name: rs.name, Path: rs.path}
+	}
+
 	b := Board{
-		Tasks:  make([]view.Task, 0, len(r.tasks)),
-		Repos:  len(r.repos),
-		ReadAt: time.Now(),
+		Tasks:    make([]view.Task, 0, len(r.tasks)),
+		Repos:    len(r.repos),
+		RepoList: repoList,
+		ReadAt:   time.Now(),
 	}
 	b.Errs = append(b.Errs, r.scanErrs...)
 

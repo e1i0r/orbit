@@ -40,7 +40,7 @@ func (m Model) rows() []row {
 		// them, and then the count is what is shown rather than what
 		// exists — because that is what the reader is looking at.
 		count := m.board.Counts[b]
-		if filter != "" {
+		if filter != "" || m.repoFilter != "" {
 			count = len(tasks)
 		}
 		if count == 0 {
@@ -66,11 +66,19 @@ func (m Model) rows() []row {
 func (m Model) tasksIn(b view.Band, filter string) []view.Task {
 	var out []view.Task
 	for _, t := range m.board.Tasks {
-		if view.BandOf(t) == b && matches(t, filter) {
+		if view.BandOf(t) == b && matches(t, filter) && matchesRepo(t, m.repoFilter) {
 			out = append(out, t)
 		}
 	}
 	return out
+}
+
+// matchesRepo is whether the task belongs to the filtered repository.
+func matchesRepo(t view.Task, repoFilter string) bool {
+	if repoFilter == "" {
+		return true
+	}
+	return strings.EqualFold(t.Repo, repoFilter)
 }
 
 // matches is the filter, over the three fields a reader would type: the

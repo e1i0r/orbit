@@ -858,6 +858,42 @@
     "status.quota": {
       "source": "{pct} left in {label} · resets in {resets}",
       "value": "{pct} restante en {label} · reinicia en {resets}"
+    },
+    "key.repos": {
+      "source": "repositories",
+      "value": "repositorios"
+    },
+    "repos.title": {
+      "source": "Repositories",
+      "value": "Repositorios"
+    },
+    "repos.subtitle": {
+      "source": "choose a repository to filter the board",
+      "value": "elige un repositorio para filtrar el tablero"
+    },
+    "repos.none": {
+      "source": "no repositories found",
+      "value": "no se encontraron repositorios"
+    },
+    "repos.active": {
+      "source": "[filtered]",
+      "value": "[filtrado]"
+    },
+    "repos.ways_out": {
+      "source": "{open} filter · {up_down} move · {back} back",
+      "value": "{open} filtrar · {up_down} mover · {back} volver"
+    },
+    "repos.filtered": {
+      "source": "filtered to {repo}",
+      "value": "filtrado a {repo}"
+    },
+    "repos.filter_cleared": {
+      "source": "showing all repositories",
+      "value": "mostrando todos los repositorios"
+    },
+    "band.repo_filter_tag": {
+      "source": "repo:{repo}",
+      "value": "repo:{repo}"
     }
   }
 }

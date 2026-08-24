@@ -40,6 +40,7 @@ const (
 	screenCompose
 	screenSettings
 	screenFlows
+	screenRepos
 )
 
 // confirm is the question the window is waiting for an answer to, and there
@@ -115,8 +116,10 @@ type Model struct {
 	pendingID string
 	pendTries int
 
-	settings settingsState
-	flows    flowsState
+	settings   settingsState
+	flows      flowsState
+	repolist   repolistState
+	repoFilter string
 
 	// start is the dialog that decides what a run will be, and taken is
 	// which tasks this window has handed the terminal to an engine for.

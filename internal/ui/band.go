@@ -34,7 +34,7 @@ func (m Model) bandLine(w int) string {
 			about("id", m.confirmID))), w)
 	case m.message != "" && m.now.Sub(m.messageAt) < messageLife:
 		return fit(" "+Paint(Accent).Render(m.message), w)
-	case m.filter != "":
+	case m.filter != "" || m.repoFilter != "":
 		// A filter that is applied but no longer being typed. It sits below
 		// the message and above what is running, because it qualifies the
 		// list rather than reporting an event: while one is on, every count
@@ -72,16 +72,24 @@ func (m Model) filterLine() string {
 	filter := strings.ToLower(strings.TrimSpace(m.filter))
 	shown := 0
 	for _, t := range m.board.Tasks {
-		if matches(t, filter) {
+		if matches(t, filter) && matchesRepo(t, m.repoFilter) {
 			shown++
 		}
 	}
-	typed, role := m.filter, Accent
-	if typed == "" {
-		typed, role = p.T("filter.placeholder", "repository, id or title"), Dim
+	var parts []string
+	if m.filter != "" || m.filtering {
+		typed, role := m.filter, Accent
+		if typed == "" {
+			typed, role = p.T("filter.placeholder", "repository, id or title"), Dim
+		}
+		parts = append(parts, Paint(role).Render("/"+typed))
 	}
-	line := Paint(role).Render("/"+typed) + dot + Paint(Dim).Render(p.T("band.shown", "{n} of {total} shown",
-		about("n", strconv.Itoa(shown)), about("total", strconv.Itoa(len(m.board.Tasks)))))
+	if m.repoFilter != "" {
+		parts = append(parts, Paint(Accent).Render(p.T("band.repo_filter_tag", "repo:{repo}", about("repo", m.repoFilter))))
+	}
+	parts = append(parts, Paint(Dim).Render(p.T("band.shown", "{n} of {total} shown",
+		about("n", strconv.Itoa(shown)), about("total", strconv.Itoa(len(m.board.Tasks))))))
+	line := strings.Join(parts, dot)
 	if m.filtering {
 		return line
 	}
