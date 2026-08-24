@@ -2,7 +2,7 @@
 ────────────────────────────────────────────────────────────────────────────────────────────────────
   $0.00 spent  ·  15 tasks  ·  0 events  ·  0ms read
  ACME-2662  Retry the webhook on 5xx                                        payments · failed: gates
-  1   2   3   4   5   6   report   8   9   0   w                                           attempt 2
+ [1] [2] [3] [4] [5] [6]  [7 report]  [8] [9] [0] [w]                                      attempt 2
  ── attempt 1 ────────────────────────────────────────────────────────────────────────── 13:58:00 ──
   finished  implement  claude opus  cost $0.42  session 8f2c31                                      
     │ wrote retry.go                                                                                
