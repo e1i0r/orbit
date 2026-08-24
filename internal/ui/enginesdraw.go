@@ -76,3 +76,25 @@ func (m Model) enginesRows(h, w int) []string {
 	out = append(out, "", fit("  "+Paint(Dim).Render(waysOut), w))
 	return fill(out, h)
 }
+
+func (m Model) hitEngines(x, y int) Target {
+	line, ok := m.frame.BodyRow(y)
+	if !ok {
+		return Target{}
+	}
+	rows := m.collectEngineRows()
+	lineIdx := 4
+	sIdx := 0
+	for _, r := range rows {
+		if r.kind == rowHeader {
+			lineIdx += 2
+			continue
+		}
+		if line == lineIdx {
+			return Target{Kind: TargetEngineRow, Pane: sIdx}
+		}
+		lineIdx++
+		sIdx++
+	}
+	return Target{}
+}

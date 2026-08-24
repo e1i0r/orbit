@@ -164,6 +164,14 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 	case TargetSettingsRow:
 		m.settings.sel = t.Pane
 		return m.cycleSetting(1)
+	case TargetEngineRow:
+		rows := m.collectEngineRows()
+		idxs := m.selectableEngineIndices(rows)
+		if t.Pane >= 0 && t.Pane < len(idxs) {
+			m.engines.sel = t.Pane
+			selectedRow := rows[idxs[t.Pane]]
+			return m.applyEngineChoice(selectedRow), nil
+		}
 	case TargetPaneTab:
 		return m.showTab(tab(t.Pane)), nil
 	case TargetDialogSwitch:

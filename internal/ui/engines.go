@@ -191,24 +191,9 @@ func (m Model) collectEngineRows() []engineRow {
 		})
 	} else {
 		rows = append(rows,
-			engineRow{
-				kind:     rowThinking,
-				title:    "  " + p.T("engines.thinking_adaptive", "adaptive (default)"),
-				id:       "",
-				selected: m.knobs.Thinking == "" || m.knobs.Thinking == "adaptive",
-			},
-			engineRow{
-				kind:     rowThinking,
-				title:    "  " + p.T("engines.thinking_on", "on"),
-				id:       "on",
-				selected: m.knobs.Thinking == "on",
-			},
-			engineRow{
-				kind:     rowThinking,
-				title:    "  " + p.T("engines.thinking_off", "off"),
-				id:       "off",
-				selected: m.knobs.Thinking == "off",
-			},
+			engineRow{kind: rowThinking, title: "  " + p.T("engines.thinking_adaptive", "adaptive (default)"), id: "", selected: m.knobs.Thinking == "" || m.knobs.Thinking == "adaptive"},
+			engineRow{kind: rowThinking, title: "  " + p.T("engines.thinking_on", "on"), id: "on", selected: m.knobs.Thinking == "on"},
+			engineRow{kind: rowThinking, title: "  " + p.T("engines.thinking_off", "off"), id: "off", selected: m.knobs.Thinking == "off"},
 		)
 	}
 
@@ -245,7 +230,9 @@ func (m Model) enginesKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 
 	switch {
 	case key.Matches(msg, m.keys.Back) || key.Matches(msg, m.keys.Quit):
-		return m.abandonEngines(), nil
+		p := m.opts.Words
+		return m.abandonEngines().say(p.T("engines.updated", "updated dials: {chip}",
+			about("chip", m.knobChip()))), nil
 	case key.Matches(msg, m.keys.Up):
 		m.engines.sel--
 		if m.engines.sel < 0 {
@@ -260,25 +247,36 @@ func (m Model) enginesKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case key.Matches(msg, m.keys.Open), msg.Text == " ":
 		selectedRow := rows[idxs[m.engines.sel]]
-		if selectedRow.disabled {
-			m.engines.showingSetup = true
-			m.engines.setupEngine = selectedRow.engine
-			return m, nil
-		}
-		switch selectedRow.kind {
-		case rowEngine:
-			m.knobs.Engine = selectedRow.engine
-		case rowModel:
-			m.knobs.Engine = selectedRow.engine
-			m.knobs.Model = selectedRow.id
-		case rowEffort:
-			m.knobs.Effort = selectedRow.id
-		case rowThinking:
-			m.knobs.Thinking = selectedRow.id
-		}
-		p := m.opts.Words
-		return m.abandonEngines().say(p.T("engines.updated", "updated dials: {chip}",
-			about("chip", m.knobChip()))), nil
+		return m.applyEngineChoice(selectedRow), nil
 	}
 	return m, nil
+}
+
+func (m Model) applyEngineChoice(selectedRow engineRow) Model {
+	if selectedRow.disabled {
+		m.engines.showingSetup = true
+		m.engines.setupEngine = selectedRow.engine
+		return m
+	}
+	switch selectedRow.kind {
+	case rowEngine:
+		m.knobs.Engine, m.knobs.Model = selectedRow.engine, ""
+		m = m.setOpt("engine", selectedRow.engine)
+	case rowModel:
+		m.knobs.Engine, m.knobs.Model = selectedRow.engine, selectedRow.id
+		m = m.setOpt("model", selectedRow.id)
+	case rowEffort:
+		m.knobs.Effort = selectedRow.id
+	case rowThinking:
+		m.knobs.Thinking = selectedRow.id
+	}
+	return m
+}
+
+func (m Model) setOpt(k, v string) Model {
+	m2, _ := m.applySetting(k, v)
+	if mod, ok := m2.(Model); ok {
+		return mod
+	}
+	return m
 }

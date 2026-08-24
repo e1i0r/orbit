@@ -17,6 +17,7 @@ const (
 	TargetStatusField
 	TargetHeaderQueue
 	TargetSettingsRow
+	TargetEngineRow
 	TargetPaneTab
 	TargetPaneBody
 	TargetDialogPhase
@@ -99,6 +100,8 @@ func (m Model) hit(x, y int) Target {
 			return m.hitStart(x, y)
 		case screenSettings:
 			return m.hitSettings(x, y)
+		case screenEngines:
+			return m.hitEngines(x, y)
 		case screenCompose, screenFlows:
 			return Target{}
 		}
