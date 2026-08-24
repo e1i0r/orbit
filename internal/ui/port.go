@@ -41,9 +41,13 @@ type Settings interface {
 	Language() string
 	SetLanguage(string) error
 	UnreadCap() int
+	SetUnreadCap(int) error
 	Engine() string
+	SetEngine(string) error
 	Model() string
+	SetModel(string) error
 	Flow() string
+	SetFlow(string) error
 	Theme() string
 	SetTheme(string) error
 }

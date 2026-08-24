@@ -200,14 +200,34 @@ func (a *settingsAdapter) SetLanguage(lang string) error {
 // chose it — see the type's own comment.
 func (a *settingsAdapter) UnreadCap() int { return a.read().UnreadCap }
 
+// SetUnreadCap writes that limit down.
+func (a *settingsAdapter) SetUnreadCap(n int) error {
+	return a.write(func(cfg *store.Settings) { cfg.UnreadCap = n })
+}
+
 // Engine is the default engine when a task names none.
 func (a *settingsAdapter) Engine() string { return a.read().Engine }
+
+// SetEngine writes the default engine down.
+func (a *settingsAdapter) SetEngine(engine string) error {
+	return a.write(func(cfg *store.Settings) { cfg.Engine = engine })
+}
 
 // Model is the default model when a phase names none.
 func (a *settingsAdapter) Model() string { return a.read().Model }
 
+// SetModel writes the default model down.
+func (a *settingsAdapter) SetModel(model string) error {
+	return a.write(func(cfg *store.Settings) { cfg.Model = model })
+}
+
 // Flow is the flow a new task is written against.
 func (a *settingsAdapter) Flow() string { return a.read().Flow }
+
+// SetFlow writes the default flow down.
+func (a *settingsAdapter) SetFlow(flow string) error {
+	return a.write(func(cfg *store.Settings) { cfg.Flow = flow })
+}
 
 // Theme is the color theme chosen for the window.
 func (a *settingsAdapter) Theme() string {

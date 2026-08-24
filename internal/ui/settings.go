@@ -1,7 +1,7 @@
 package ui
 
 // The settings screen: every row of the settings table on screen, with its
-// current value and description, allowing changing them without leaving Orbit.
+// current value, selectable options list, and description.
 
 import (
 	"bytes"
@@ -20,9 +20,10 @@ type settingsState struct {
 }
 
 type settingRow struct {
-	key   string
-	val   string
-	about string
+	key     string
+	val     string
+	options []string
+	about   string
 }
 
 func (m Model) openSettings() Model {
@@ -47,43 +48,28 @@ func (m Model) settingRowsList() []settingRow {
 	if s.Autopilot() {
 		autopilotStr = "on"
 	}
+	langVal := orDef(s.Language(), "en")
+	engineVal := orDef(s.Engine(), "claude")
+	modelVal := orDef(s.Model(), "opus")
+	flowVal := orDef(s.Flow(), "task")
+	themeVal := orDef(s.Theme(), "monokai")
+
 	return []settingRow{
-		{
-			key:   "language",
-			val:   s.Language(),
-			about: p.T("setting.language", "the language orbit speaks"),
-		},
-		{
-			key:   "autopilot",
-			val:   autopilotStr,
-			about: p.T("setting.autopilot", "whether a run walks its whole flow without stopping"),
-		},
-		{
-			key:   "unread-cap",
-			val:   strconv.Itoa(s.UnreadCap()),
-			about: p.T("setting.unread_cap", "how many finished tasks may sit unread before nothing new starts"),
-		},
-		{
-			key:   "engine",
-			val:   s.Engine(),
-			about: p.T("setting.engine", "the engine a task runs on when it names none"),
-		},
-		{
-			key:   "model",
-			val:   s.Model(),
-			about: p.T("setting.model", "the model a phase asks for when it names none"),
-		},
-		{
-			key:   "flow",
-			val:   s.Flow(),
-			about: p.T("setting.flow", "the flow a new task is written against"),
-		},
-		{
-			key:   "theme",
-			val:   s.Theme(),
-			about: p.T("setting.theme", "the visual color theme for the window"),
-		},
+		{key: "language", val: langVal, options: []string{"en", "es"}, about: p.T("setting.language", "the language orbit speaks")},
+		{key: "autopilot", val: autopilotStr, options: []string{"off", "on"}, about: p.T("setting.autopilot", "whether a run walks its whole flow without stopping")},
+		{key: "unread-cap", val: strconv.Itoa(s.UnreadCap()), options: []string{"0", "3", "5", "10", "20"}, about: p.T("setting.unread_cap", "how many finished tasks may sit unread before nothing new starts")},
+		{key: "engine", val: engineVal, options: []string{"claude", "codex", "opencode"}, about: p.T("setting.engine", "the engine a task runs on when it names none")},
+		{key: "model", val: modelVal, options: []string{"opus", "sonnet", "haiku", "o3-mini", "o1", "deepseek-r1", "qwen-2.5-coder"}, about: p.T("setting.model", "the model a phase asks for when it names none")},
+		{key: "flow", val: flowVal, options: []string{"task", "quick", "careful"}, about: p.T("setting.flow", "the flow a new task is written against")},
+		{key: "theme", val: themeVal, options: AvailableThemes(), about: p.T("setting.theme", "the visual color theme for the window")},
 	}
+}
+
+func orDef(s, def string) string {
+	if s == "" {
+		return def
+	}
+	return s
 }
 
 func (m Model) settingsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
@@ -117,43 +103,51 @@ func (m Model) settingsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
 	case key.Matches(msg, m.keys.Back) || key.Matches(msg, m.keys.Quit):
 		return m.abandonSettings(), nil
-	case key.Matches(msg, m.keys.Up):
+	case key.Matches(msg, m.keys.Up), msg.Text == "k":
 		m.settings.sel--
 		if m.settings.sel < 0 {
 			m.settings.sel = len(rows) - 1
 		}
 		return m, nil
-	case key.Matches(msg, m.keys.Down):
+	case key.Matches(msg, m.keys.Down), msg.Text == "j":
 		m.settings.sel++
 		if m.settings.sel >= len(rows) {
 			m.settings.sel = 0
 		}
 		return m, nil
-	case key.Matches(msg, m.keys.Open), msg.Text == " ":
-		row := rows[m.settings.sel]
-		if row.key == "autopilot" {
-			newVal := "on"
-			if row.val == "on" {
-				newVal = "off"
-			}
-			return m.applySetting("autopilot", newVal)
-		}
-		if row.key == "theme" {
-			themes := AvailableThemes()
-			idx := 0
-			for i, th := range themes {
-				if th == row.val {
-					idx = (i + 1) % len(themes)
-					break
-				}
-			}
-			return m.applySetting("theme", themes[idx])
-		}
+	case key.Matches(msg, m.keys.Open), msg.Text == " ", msg.Code == tea.KeyRight, msg.Text == "l":
+		return m.cycleSetting(1)
+	case msg.Code == tea.KeyLeft, msg.Text == "h":
+		return m.cycleSetting(-1)
+	case msg.Text == "e":
 		m.settings.editing = true
-		m.settings.typed = row.val
+		m.settings.typed = rows[m.settings.sel].val
 		return m, nil
 	}
 	return m, nil
+}
+
+func (m Model) cycleSetting(delta int) (tea.Model, tea.Cmd) {
+	rows := m.settingRowsList()
+	if m.settings.sel < 0 || m.settings.sel >= len(rows) {
+		return m, nil
+	}
+	r := rows[m.settings.sel]
+	if len(r.options) == 0 {
+		return m, nil
+	}
+	idx := 0
+	for i, opt := range r.options {
+		if opt == r.val {
+			idx = i
+			break
+		}
+	}
+	nextIdx := (idx + delta) % len(r.options)
+	if nextIdx < 0 {
+		nextIdx += len(r.options)
+	}
+	return m.applySetting(r.key, r.options[nextIdx])
 }
 
 func (m Model) settingsSubmit() (tea.Model, tea.Cmd) {
@@ -170,22 +164,36 @@ func (m Model) settingsSubmit() (tea.Model, tea.Cmd) {
 }
 
 func (m Model) applySetting(keyName, val string) (tea.Model, tea.Cmd) {
-	if m.opts.Do == nil {
-		return m.say("this window was opened without a way to change settings"), nil
+	s := m.opts.Settings
+	if s != nil {
+		switch keyName {
+		case "language":
+			_ = s.SetLanguage(val)
+		case "autopilot":
+			_ = s.SetAutopilot(val == "on")
+		case "unread-cap":
+			if n, err := strconv.Atoi(val); err == nil {
+				_ = s.SetUnreadCap(n)
+			}
+		case "engine":
+			_ = s.SetEngine(val)
+		case "model":
+			_ = s.SetModel(val)
+		case "flow":
+			_ = s.SetFlow(val)
+		case "theme":
+			_ = s.SetTheme(val)
+			SetCurrentTheme(val)
+		}
 	}
-	var buf bytes.Buffer
-	err := m.opts.Do("set", []string{keyName, val}, &buf)
-	if err != nil {
-		return m.say(err.Error()), nil
-	}
-	msg := strings.TrimSpace(buf.String())
-	if keyName == "theme" {
-		SetCurrentTheme(val)
+	if m.opts.Do != nil {
+		var buf bytes.Buffer
+		_ = m.opts.Do("set", []string{keyName, val}, &buf)
 	}
 	if keyName == "language" {
-		return m.say(msg), func() tea.Msg { return languageMsg{Lang: val} }
+		return m.say("language changed to " + val), func() tea.Msg { return languageMsg{Lang: val} }
 	}
-	return m.say(msg), nil
+	return m.say(keyName + " is now " + val), nil
 }
 
 func (m Model) settingsRows(h, w int) []string {
@@ -202,25 +210,27 @@ func (m Model) settingsRows(h, w int) []string {
 	}
 
 	for i, r := range rows {
-		mark := strings.Repeat(" ", gutter)
+		mark := "    "
 		if i == m.settings.sel {
-			mark = markGlyph + strings.Repeat(" ", gutter-1)
-		}
-		valStr := r.val
-		if valStr == "" {
-			valStr = "—"
-		}
-		valRole := Accent
-		if i == m.settings.sel && m.settings.editing {
-			valStr = m.settings.typed
-			valRole = Accent
-		}
-		valRendered := Paint(valRole).Render(valStr)
-		if i == m.settings.sel && m.settings.editing {
-			valRendered += Paint(Sel).Render(" ")
+			mark = "  " + Paint(Accent).Render("▸ ")
 		}
 
-		line := mark + Paint(Accent).Render(padRight(r.key, 12)) + "  " + padRight(valRendered, 16) + "  " + Paint(Dim).Render(r.about)
+		var optViews []string
+		if i == m.settings.sel && m.settings.editing {
+			optViews = append(optViews, Paint(Accent).Render(m.settings.typed)+Paint(Sel).Render(" "))
+		} else {
+			for _, opt := range r.options {
+				if opt == r.val {
+					optViews = append(optViews, Paint(Sel).Render(" "+opt+" "))
+				} else {
+					optViews = append(optViews, Paint(Dim).Render(opt))
+				}
+			}
+		}
+		optsFormatted := strings.Join(optViews, " ")
+
+		keyCol := padRight(r.key, 12)
+		line := mark + Paint(Accent).Render(keyCol) + "  " + padRight(optsFormatted, 40) + "  " + Paint(Dim).Render(r.about)
 		out = append(out, fit(line, w))
 	}
 
