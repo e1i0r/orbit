@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/flow"
-	"github.com/e1i0r/orbit/internal/view"
 )
 
 // overviewLines renders Pane 1: Overview of the task.
@@ -20,42 +19,53 @@ func (m Model) overviewLines() []string {
 	}
 
 	word, role := m.stateWord(t)
-	out := []string{
+	var out []string
+
+	// Title / Goal header
+	out = append(out,
 		"",
-		"  " + Paint(Accent).Render(p.T("overview.heading", "Task Overview")),
-		"",
-		fmt.Sprintf("    %-16s %s", Paint(Dim).Render(p.T("overview.id", "ID:")), Paint(Accent).Render(t.ID)),
-		fmt.Sprintf("    %-16s %s", Paint(Dim).Render(p.T("overview.repo", "Repository:")), t.Repo+" ("+t.RepoPath+")"),
-		fmt.Sprintf("    %-16s %s", Paint(Dim).Render(p.T("overview.status", "Status:")), Paint(role).Render(word)),
+		"  "+Paint(Accent).Render(t.ID)+" "+Paint(Dim).Render("·")+" "+Paint(role).Render(word),
+		"  "+Paint(Dim).Render(p.T("overview.goal", "qué es esta tarea, y hasta dónde llegó")),
+	)
+	if t.Title != "" {
+		out = append(out, "", "  "+t.Title)
+	}
+	out = append(out, "")
+
+	// 1. Qué pasó (What happened)
+	out = append(out,
+		"  "+Paint(Accent).Render("qué pasó"),
+		fmt.Sprintf("    %-12s %s", Paint(Dim).Render("duró"), elapsed(m.now, t.Since)),
+		fmt.Sprintf("    %-12s %s", Paint(Dim).Render("terminó"), Paint(role).Render(word)),
+	)
+	if t.Cost > 0 {
+		out = append(out, fmt.Sprintf("    %-12s %s", Paint(Dim).Render("gastó"), fmt.Sprintf("$%.4f", t.Cost)))
+	}
+	out = append(out, "")
+
+	// 2. Dónde está (Where it is)
+	out = append(out,
+		"  "+Paint(Accent).Render("dónde está"),
+		fmt.Sprintf("    %-12s %s", Paint(Dim).Render("repo"), t.Repo),
+	)
+	if t.RepoPath != "" {
+		out = append(out, fmt.Sprintf("    %-12s %s", Paint(Dim).Render("worktree"), t.RepoPath))
 	}
 	if t.Flow != "" {
-		out = append(out, fmt.Sprintf("    %-16s %s", Paint(Dim).Render(p.T("overview.flow", "Flow:")), t.Flow))
+		out = append(out, fmt.Sprintf("    %-12s %s", Paint(Dim).Render("flujo"), t.Flow))
 	}
-	if t.Cost > 0 {
-		out = append(out, fmt.Sprintf("    %-16s %s", Paint(Dim).Render(p.T("overview.cost", "Cost:")),
-			fmt.Sprintf("$%.4f", t.Cost)))
-	}
-	if t.Title != "" {
-		out = append(out, fmt.Sprintf("    %-16s %s", Paint(Dim).Render(p.T("overview.title", "Title:")), t.Title))
-	}
+	out = append(out, "")
 
-	var taskText string
-	for _, e := range m.entries {
-		if e.What() == view.EntryWritten {
-			taskText = e.Text
-			break
-		}
-	}
-	if taskText != "" {
+	// 3. Waiting / Attention Block
+	if role == Warn || role == Bad {
 		out = append(out,
-			"",
-			"  "+Paint(Accent).Render(p.T("overview.description", "Description:")),
+			"  "+Pill("⚠️ "+p.T("overview.waiting_box", "IT IS WAITING ON YOU / ACCIONES REQUERIDAS"), "#000000", "#FBBF24"),
+			"  "+Paint(Warn).Render("status: "+word),
+			"  "+Paint(Dim).Render(p.T("overview.resume_hint", "press 't' to open interactive session, 'r' to restart")),
 			"",
 		)
-		for _, line := range strings.Split(taskText, "\n") {
-			out = append(out, "    "+line)
-		}
 	}
+
 	return out
 }
 

@@ -153,9 +153,9 @@
       "source": "this task is already marked read",
       "value": "esta tarea ya está marcada como leída"
     },
-    "header.autopilot": {
-      "source": "autopilot",
-      "value": "piloto automático"
+    "header.lang_badge": {
+      "source": "EN",
+      "value": "ES"
     },
     "header.unread": {
       "source": "unread {n}/{cap}",
@@ -444,38 +444,6 @@
     "tab.thinking": {
       "source": "thinking",
       "value": "thinking"
-    },
-    "overview.heading": {
-      "source": "Task Overview",
-      "value": "Resumen de la Tarea"
-    },
-    "overview.id": {
-      "source": "ID:",
-      "value": "ID:"
-    },
-    "overview.repo": {
-      "source": "Repository:",
-      "value": "Repositorio:"
-    },
-    "overview.status": {
-      "source": "Status:",
-      "value": "Estado:"
-    },
-    "overview.flow": {
-      "source": "Flow:",
-      "value": "Flujo:"
-    },
-    "overview.cost": {
-      "source": "Cost:",
-      "value": "Coste:"
-    },
-    "overview.title": {
-      "source": "Title:",
-      "value": "Título:"
-    },
-    "overview.description": {
-      "source": "Description:",
-      "value": "Descripción:"
     },
     "flow.title": {
       "source": "Flow: {name}",
@@ -1118,6 +1086,38 @@
     "engines.ways_out": {
       "source": "{open} select · {up_down} move · {back} back",
       "value": "{open} seleccionar · {up_down} mover · {back} volver"
+    },
+    "queue.todo": {
+      "source": "Por hacer",
+      "value": "Por hacer"
+    },
+    "queue.in_flight": {
+      "source": "En curso",
+      "value": "En curso"
+    },
+    "queue.needs_you": {
+      "source": "En revisión",
+      "value": "En revisión"
+    },
+    "queue.done": {
+      "source": "Lista",
+      "value": "Lista"
+    },
+    "overview.goal": {
+      "source": "qué es esta tarea, y hasta dónde llegó",
+      "value": "qué es esta tarea, y hasta dónde llegó"
+    },
+    "overview.waiting_box": {
+      "source": "IT IS WAITING ON YOU / ACCIONES REQUERIDAS",
+      "value": "ACCIONES REQUERIDAS / ESPERANDO AL OPERADOR"
+    },
+    "overview.resume_hint": {
+      "source": "press 't' to open interactive session, 'r' to restart",
+      "value": "presiona 't' para sesión interactiva, 'r' para reiniciar"
+    },
+    "detail.select": {
+      "source": "Select a task on the left to inspect its cockpit.",
+      "value": "Selecciona una tarea a la izquierda para ver su panel en vivo."
     }
   }
 }

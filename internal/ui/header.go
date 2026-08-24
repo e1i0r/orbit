@@ -6,6 +6,7 @@ package ui
 // terminal anything. The fourth region, the activity band, is in band.go.
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -98,7 +99,23 @@ func (m Model) headerLeft(w int, spaced bool) (string, bool) {
 	if spaced {
 		w--
 	}
+	p := m.opts.Words
 	name := m.name()
+
+	// 1. Try full queue badges line if it fits
+	if len(m.board.Counts) >= 4 {
+		pills := []string{
+			Pill(fmt.Sprintf("📋 %s %d", p.T("queue.todo", "Por hacer"), m.board.Counts[0]), "#38BDF8", "#0C4A6E"),
+			Pill(fmt.Sprintf("⚡ %s %d", p.T("queue.in_flight", "En curso"), m.board.Counts[1]), "#2DD4BF", "#134E4A"),
+			Pill(fmt.Sprintf("💬 %s %d", p.T("queue.needs_you", "En revisión"), m.board.Counts[2]), "#FBBF24", "#78350F"),
+			Pill(fmt.Sprintf("🏁 %s %d", p.T("queue.done", "Lista"), m.board.Counts[3]), "#4ADE80", "#14532D"),
+		}
+		full := name + "  " + strings.Join(pills, " ")
+		if lipgloss.Width(full) <= w {
+			return full, true
+		}
+	}
+
 	for root := m.opts.Root; ; {
 		line := name
 		if root != "" {
@@ -114,9 +131,8 @@ func (m Model) headerLeft(w int, spaced bool) (string, bool) {
 	}
 }
 
-// name is the program's own name, which is never given up: a window that
-// cannot say what it is, is worse than a window showing less.
-func (m Model) name() string { return " " + Paint(Accent).Render("orbit") }
+// name is the program's own name badge.
+func (m Model) name() string { return Pill("[orbit]", "#FFFFFF", "#005F87") }
 
 // shorten drops one leading path segment and marks the cut, and returns ""
 // once there is nothing left worth showing.
@@ -128,110 +144,36 @@ func shorten(root string) string {
 	return ""
 }
 
-// headerFields are the standing facts, in the order they are given up
-// backwards: unread is never dropped while any field is shown, the pip goes
-// before it, and the repository count goes first.
+// headerFields are the standing facts with emoji chips in Monokai theme.
 func (m Model) headerFields() []string {
 	p := m.opts.Words
-	unread, limit := board.Unread(m.board), m.unreadCap()
+	var fields []string
 
+	// Repos chip
+	fields = append(fields, Paint(Dim).Render("📦 "+p.P("header.repos", m.board.Repos, "{n} repo", "{n} repos")))
+
+	// Model / knob chip
+	chip := m.knobChip()
+	if chip != "" {
+		fields = append(fields, Paint(Accent).Render("🧠 "+chip))
+	} else {
+		fields = append(fields, Paint(Dim).Render("🧠 claude"))
+	}
+
+	// Language chip
+	lang := p.T("header.lang_badge", "EN")
+	fields = append(fields, Paint(Dim).Render("🌐 "+lang))
+
+	// Unread / brake chip
+	unread, limit := board.Unread(m.board), m.unreadCap()
 	brake := Dim
 	if m.atUnreadCap(unread) {
 		brake = Warn
 	}
-	fields := []string{Paint(brake).Render(p.T("header.unread", "unread {n}/{cap}",
-		about("n", strconv.Itoa(unread)), about("cap", strconv.Itoa(limit))))}
+	fields = append(fields, Paint(brake).Render(p.T("header.unread", "unread {n}/{cap}",
+		about("n", strconv.Itoa(unread)), about("cap", strconv.Itoa(limit)))))
 
-	pip, role := pipOff, Dim
-	if m.autopilotOn() {
-		pip, role = pipOn, Live
-	}
-	fields = append(fields, Paint(Dim).Render(p.T("header.autopilot", "autopilot"))+" "+Paint(role).Render(pip))
-	chip := m.knobChip()
-	if chip != "" {
-		fields = append(fields, Paint(Dim).Render(chip))
-	}
-	return append(fields, Paint(Dim).Render(p.P("header.repos", m.board.Repos, "{n} repo", "{n} repos")))
-}
-
-// barHint is one entry of the key bar: the hint as it is drawn, and the
-// keystroke it stands for.
-//
-// The keystroke is carried rather than recovered later, and that is the
-// whole reason this is a struct and not a string. A bar that hands back only
-// what it drew leaves a mouse handler reading the glyph back out of a
-// painted, possibly truncated string to find out what was clicked — which is
-// parsing the rendering, and is wrong the first time a hint is translated or
-// a glyph is not a key's name.
-//
-// Key is empty for a hint that names no single keystroke — the arrow pair —
-// and a hint with no key does nothing when it is clicked.
-type barHint struct {
-	key  string
-	text string
-}
-
-// placedHint is one hint of the drawn bar and the cells it occupies, counted
-// from the left edge of the terminal.
-type placedHint struct {
-	key  string
-	x, w int
-}
-
-// barLine is what can be pressed right now.
-func (m Model) barLine(w int) string {
-	line, _ := m.barLayout(w)
-	return line
-}
-
-// barLayout is the key bar, drawn, and where it put each hint.
-//
-// The two answers come out of one function because they have to agree: a
-// click is on the hint the reader can see, so the list of hints that fit and
-// the line that was drawn have to be the same list. Computing them apart is
-// how a bar that dropped its last hint hands a click the key of a hint that
-// is no longer on screen.
-//
-// It drops whole hints from the right rather than truncating them, because
-// half a hint is a key a reader has to guess the rest of. Help and quit are
-// never dropped: they are how a reader who is lost gets out, and a bar that
-// drops them is a bar that fails exactly when it is needed.
-func (m Model) barLayout(w int) (string, []placedHint) {
-	tail := Paint(Dim).Render("[" + m.keys.Help.Help().Key + "] [" + m.keys.Quit.Help().Key + "]")
-	hints := m.hints()
-	for {
-		line := " " + strings.Join(append(drawn(hints), tail), hintGap)
-		if lipgloss.Width(line) <= w || len(hints) == 0 {
-			return fit(line, w), place(hints)
-		}
-		hints = hints[:len(hints)-1]
-	}
-}
-
-// drawn is the hints as barLine joins them.
-func drawn(hints []barHint) []string {
-	out := make([]string, 0, len(hints)+1)
-	for _, h := range hints {
-		out = append(out, h.text)
-	}
-	return out
-}
-
-// place walks the hints the way the line was joined and says where each one
-// starts, measuring in cells: a hint whose description carries an accent is
-// one column narrower than its bytes, and a bar placed in bytes hands the
-// wrong key back for every hint after the first accented one.
-//
-// The one is the space barLayout begins the line with.
-func place(hints []barHint) []placedHint {
-	out := make([]placedHint, 0, len(hints))
-	x := 1
-	for _, h := range hints {
-		cells := lipgloss.Width(h.text)
-		out = append(out, placedHint{key: h.key, x: x, w: cells})
-		x += cells + lipgloss.Width(hintGap)
-	}
-	return out
+	return fields
 }
 
 // hints are the bar's entries, in the order they are given up backwards.

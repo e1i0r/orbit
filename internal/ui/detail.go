@@ -86,17 +86,34 @@ func (m Model) detailHead(w int) string {
 // The tab strip at narrow columns cannot fit eleven names. It shows the
 // key numbers (1-9, 0, w) with only the active pane's name spelled out, and
 // the full catalogue is accessible via the help overlay [?].
+// tabStrip renders the eleven tabs.
 func (m Model) tabStrip(w int) string {
 	p := m.opts.Words
-	var parts []string
+	var fullParts []string
 	for _, n := range m.tabNames() {
 		k := paneKey(n.tab)
+		tag := "[" + k + " " + n.text + "]"
 		if n.tab == m.tab {
-			parts = append(parts, Paint(Accent).Render(markGlyph+k+" "+n.text))
-			continue
+			fullParts = append(fullParts, Paint(Accent).Render(tag))
+		} else {
+			fullParts = append(fullParts, Paint(Dim).Render(tag))
 		}
-		parts = append(parts, Paint(Dim).Render(" "+k))
 	}
+
+	var parts []string
+	if lipgloss.Width(strings.Join(fullParts, " "))+10 <= w {
+		parts = fullParts
+	} else {
+		for _, n := range m.tabNames() {
+			k := paneKey(n.tab)
+			if n.tab == m.tab {
+				parts = append(parts, Paint(Accent).Render("["+k+" "+n.text+"]"))
+			} else {
+				parts = append(parts, Paint(Dim).Render("["+k+"]"))
+			}
+		}
+	}
+
 	var right string
 	switch attempt := m.attempt(); {
 	case m.tab == tabDiff && m.diffKnown && m.diffErr == nil && m.diffNoBase:
@@ -104,7 +121,7 @@ func (m Model) tabStrip(w int) string {
 	case attempt > 0:
 		right = Paint(Dim).Render(p.T("log.attempt", "attempt {n}", about("n", strconv.Itoa(attempt))))
 	}
-	return spread(" "+strings.Join(parts, "  "), right, w)
+	return spread(" "+strings.Join(parts, " "), right, w)
 }
 
 // placedTab is one tab of the drawn strip and the cells it occupies.
@@ -117,15 +134,21 @@ type placedTab struct {
 func (m Model) placeTabs() []placedTab {
 	out := make([]placedTab, 0, tabCount)
 	x := 1
+	var fullWidth int
+	for _, n := range m.tabNames() {
+		fullWidth += lipgloss.Width("["+paneKey(n.tab)+" "+n.text+"]") + 1
+	}
+	useFull := fullWidth+10 <= m.frame.Body.W
+
 	for _, n := range m.tabNames() {
 		k := paneKey(n.tab)
-		text := " " + k
-		if n.tab == m.tab {
-			text = markGlyph + k + " " + n.text
+		text := "[" + k + "]"
+		if useFull || n.tab == m.tab {
+			text = "[" + k + " " + n.text + "]"
 		}
 		cells := lipgloss.Width(text)
 		out = append(out, placedTab{tab: n.tab, x: x, w: cells})
-		x += cells + 2
+		x += cells + 1
 	}
 	return out
 }

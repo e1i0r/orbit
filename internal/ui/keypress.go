@@ -87,6 +87,10 @@ func (m Model) key(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 // two copies of a dispatch table disagree the first time one of them gains a
 // verb.
 func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
+	if targetTab, ok := keyToPane(k.String()); ok {
+		m = m.showTab(targetTab)
+		return m, nil
+	}
 	switch {
 	case key.Matches(k, m.keys.Back):
 		if m.filter != "" || m.repoFilter != "" {

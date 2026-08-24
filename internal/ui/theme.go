@@ -51,15 +51,35 @@ const (
 // receives, fed to lipgloss.LightDark and passed down as a parameter, and
 // never a package variable Paint consults behind its caller's back.
 const (
-	accentColor = "39"  // a blue that is neither the terminal's nor a state's
-	okColor     = "71"  // green, muted enough not to compete with bad
-	badColor    = "167" // red, and the only red
-	warnColor   = "179" // amber: attention, not alarm
-	liveColor   = "37"  // teal, and it means one thing only
-	dimColor    = "245" // grey, and a real step away from body text
-	selColor    = "252" // the cursor block's text
-	selBlock    = "240" // the cursor block itself
+	accentColor = "#66D9EF" // Monokai electric cyan
+	okColor     = "#A6E22E" // Monokai vibrant green
+	badColor    = "#F92672" // Monokai hot pink / error red
+	warnColor   = "#FD971F" // Monokai amber / warning orange
+	liveColor   = "#00E5FF" // Monokai bright cyan / in flight
+	dimColor    = "#75715E" // Monokai muted stone
+	selColor    = "#FFFFFF" // Crisp white cursor text
+	selBlock    = "#005F87" // High-contrast navy/slate selection block
 )
+
+// Pill renders text as a styled badge with background and padding.
+func Pill(text string, fg, bg string) string {
+	return lipgloss.NewStyle().
+		Foreground(lipgloss.Color(fg)).
+		Background(lipgloss.Color(bg)).
+		Bold(true).
+		Padding(0, 1).
+		Render(text)
+}
+
+// PillActive renders an active/focused badge with inverted contrast.
+func PillActive(text string, fg, bg string) string {
+	return lipgloss.NewStyle().
+		Foreground(lipgloss.Color(bg)).
+		Background(lipgloss.Color(fg)).
+		Bold(true).
+		Padding(0, 1).
+		Render("▶ " + text)
+}
 
 // Roles returns every role, in the order they are declared.
 //

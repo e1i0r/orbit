@@ -254,13 +254,13 @@ func (m Model) bandName(b view.Band) string {
 	p := m.opts.Words
 	switch b {
 	case view.NeedsYou:
-		return p.T("band.needs_you", "NEEDS YOU")
+		return "🛑 " + p.T("band.needs_you", "NEEDS YOU")
 	case view.Running:
-		return p.T("band.running", "RUNNING")
+		return "⚡ " + p.T("band.running", "RUNNING")
 	case view.ToDo:
-		return p.T("band.to_do", "TO DO")
+		return "📋 " + p.T("band.to_do", "TO DO")
 	case view.Done:
-		return p.T("band.done", "DONE TODAY")
+		return "🏁 " + p.T("band.done", "DONE TODAY")
 	}
 	return ""
 }

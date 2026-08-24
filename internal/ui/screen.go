@@ -129,6 +129,9 @@ func (m Model) bodyRows() []string {
 	if len(all) == 0 {
 		return m.emptyRows(h, w)
 	}
+	if w >= 90 {
+		return m.cockpitSplitRows(h, w, all)
+	}
 	out := make([]string, 0, h)
 	shown := page(h, len(all), m.offset)
 	for i := m.offset; i < len(all) && len(out) < shown; i++ {
