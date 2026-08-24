@@ -153,6 +153,10 @@
       "source": "this task is already marked read",
       "value": "esta tarea ya está marcada como leída"
     },
+    "header.autopilot": {
+      "source": "autopilot",
+      "value": "piloto automático"
+    },
     "header.lang_badge": {
       "source": "EN",
       "value": "ES"
