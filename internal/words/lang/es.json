@@ -626,20 +626,20 @@
       "value": "pulsa 'a' para agregar una nota · pulsa 'c' o 't' para entrar a la CLI interactiva"
     },
     "thinking.title": {
-      "source": "Agent Reasoning & Thinking",
-      "value": "Pensamiento y razonamiento del modelo"
+      "source": "Decision Analysis & Agent Thinking",
+      "value": "Análisis de decisiones y pensamiento del modelo"
     },
     "thinking.subtitle": {
-      "source": "its own words — what it saw, what it concluded and what it decided",
-      "value": "sus propias palabras — qué vio, qué concluyó y qué decidió"
+      "source": "why it made each decision, what it evaluated and what it turned down",
+      "value": "por qué tomó cada decisión, qué evaluó y qué descartó"
     },
-    "thinking.entries": {
-      "source": "entries",
-      "value": "entradas"
+    "thinking.entries_count": {
+      "source": "análisis de razonamiento y decisiones",
+      "value": "análisis de razonamiento y decisiones"
     },
     "thinking.empty": {
-      "source": "no thinking blocks captured for this task",
-      "value": "no hay bloques de razonamiento capturados para esta tarea"
+      "source": "no thinking blocks or decision logs captured for this task",
+      "value": "no hay bloques de razonamiento o registro de decisiones para esta tarea"
     },
     "artifacts.title": {
       "source": "Files & Artifacts",
