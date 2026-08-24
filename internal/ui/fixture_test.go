@@ -63,9 +63,11 @@ func (s *settings) SetLanguage(v string) error {
 
 func (s *settings) UnreadCap() int { return s.unread }
 
-func (s *settings) Engine() string { return "" }
-func (s *settings) Model() string  { return "" }
-func (s *settings) Flow() string   { return "task" }
+func (s *settings) Engine() string        { return "" }
+func (s *settings) Model() string         { return "" }
+func (s *settings) Flow() string          { return "task" }
+func (s *settings) Theme() string         { return "monokai" }
+func (s *settings) SetTheme(string) error { return nil }
 
 // arg is one placeholder for a reason, spelled the way internal/view spells
 // it so a fixture reads like the record it stands for.

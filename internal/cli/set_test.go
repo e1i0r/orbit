@@ -106,6 +106,7 @@ func TestEverySettingKeyCanBeSet(t *testing.T) {
 		"engine":     "claude",
 		"model":      "sonnet",
 		"flow":       "careful",
+		"theme":      "tokyo-night",
 	}
 	for _, key := range settingKeys() {
 		value, ok := values[key]

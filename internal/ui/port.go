@@ -44,6 +44,8 @@ type Settings interface {
 	Engine() string
 	Model() string
 	Flow() string
+	Theme() string
+	SetTheme(string) error
 }
 
 // Reader is the window's port to the state root, and everything it may ask

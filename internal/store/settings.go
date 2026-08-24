@@ -37,6 +37,7 @@ type Settings struct {
 	Engine    string `json:"engine,omitempty"`
 	Model     string `json:"model,omitempty"`
 	Flow      string `json:"flow,omitempty"`
+	Theme     string `json:"theme,omitempty"`
 }
 
 // settingsPath is the one file settings live in, at the root of the state

@@ -209,6 +209,20 @@ func (a *settingsAdapter) Model() string { return a.read().Model }
 // Flow is the flow a new task is written against.
 func (a *settingsAdapter) Flow() string { return a.read().Flow }
 
+// Theme is the color theme chosen for the window.
+func (a *settingsAdapter) Theme() string {
+	t := a.read().Theme
+	if t == "" {
+		return "monokai"
+	}
+	return t
+}
+
+// SetTheme writes the color theme down.
+func (a *settingsAdapter) SetTheme(theme string) error {
+	return a.write(func(cfg *store.Settings) { cfg.Theme = theme })
+}
+
 // poll is the window's Reader with the settings file on the same clock.
 //
 // internal/ui asks its Reader for the board every board.RefreshEvery, from a

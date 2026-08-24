@@ -78,6 +78,11 @@ func (m Model) settingRowsList() []settingRow {
 			val:   s.Flow(),
 			about: p.T("setting.flow", "the flow a new task is written against"),
 		},
+		{
+			key:   "theme",
+			val:   s.Theme(),
+			about: p.T("setting.theme", "the visual color theme for the window"),
+		},
 	}
 }
 
@@ -133,6 +138,17 @@ func (m Model) settingsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			}
 			return m.applySetting("autopilot", newVal)
 		}
+		if row.key == "theme" {
+			themes := AvailableThemes()
+			idx := 0
+			for i, th := range themes {
+				if th == row.val {
+					idx = (i + 1) % len(themes)
+					break
+				}
+			}
+			return m.applySetting("theme", themes[idx])
+		}
 		m.settings.editing = true
 		m.settings.typed = row.val
 		return m, nil
@@ -163,6 +179,9 @@ func (m Model) applySetting(keyName, val string) (tea.Model, tea.Cmd) {
 		return m.say(err.Error()), nil
 	}
 	msg := strings.TrimSpace(buf.String())
+	if keyName == "theme" {
+		SetCurrentTheme(val)
+	}
 	if keyName == "language" {
 		return m.say(msg), func() tea.Msg { return languageMsg{Lang: val} }
 	}

@@ -50,16 +50,96 @@ const (
 // value built once from a tea.BackgroundColorMsg the event loop already
 // receives, fed to lipgloss.LightDark and passed down as a parameter, and
 // never a package variable Paint consults behind its caller's back.
-const (
-	accentColor = "#66D9EF" // Monokai electric cyan
-	okColor     = "#A6E22E" // Monokai vibrant green
-	badColor    = "#F92672" // Monokai hot pink / error red
-	warnColor   = "#FD971F" // Monokai amber / warning orange
-	liveColor   = "#00E5FF" // Monokai bright cyan / in flight
-	dimColor    = "#75715E" // Monokai muted stone
-	selColor    = "#FFFFFF" // Crisp white cursor text
-	selBlock    = "#005F87" // High-contrast navy/slate selection block
-)
+// Palette holds the color tokens for one visual theme.
+type Palette struct {
+	Accent   string
+	OK       string
+	Bad      string
+	Warn     string
+	Live     string
+	Dim      string
+	SelText  string
+	SelBlock string
+}
+
+var themePalettes = map[string]Palette{
+	"monokai": {
+		Accent:   "#66D9EF",
+		OK:       "#A6E22E",
+		Bad:      "#F92672",
+		Warn:     "#FD971F",
+		Live:     "#00E5FF",
+		Dim:      "#75715E",
+		SelText:  "#FFFFFF",
+		SelBlock: "#005F87",
+	},
+	"tokyo-night": {
+		Accent:   "#7AA2F7",
+		OK:       "#9ECE6A",
+		Bad:      "#F7768E",
+		Warn:     "#FF9E64",
+		Live:     "#7DCFFF",
+		Dim:      "#565F89",
+		SelText:  "#FFFFFF",
+		SelBlock: "#283457",
+	},
+	"dracula": {
+		Accent:   "#BD93F9",
+		OK:       "#50FA7B",
+		Bad:      "#FF5555",
+		Warn:     "#FFB86C",
+		Live:     "#8BE9FD",
+		Dim:      "#6272A4",
+		SelText:  "#FFFFFF",
+		SelBlock: "#44475A",
+	},
+	"nord": {
+		Accent:   "#88C0D0",
+		OK:       "#A3BE8C",
+		Bad:      "#BF616A",
+		Warn:     "#EBCB8B",
+		Live:     "#81A1C1",
+		Dim:      "#4C566A",
+		SelText:  "#ECEFF4",
+		SelBlock: "#3B4252",
+	},
+	"catppuccin": {
+		Accent:   "#89B4FA",
+		OK:       "#A6E3A1",
+		Bad:      "#F38BA8",
+		Warn:     "#FAB387",
+		Live:     "#94E2D5",
+		Dim:      "#6C7086",
+		SelText:  "#CDD6F4",
+		SelBlock: "#313244",
+	},
+}
+
+var currentThemeName = "monokai"
+
+// AvailableThemes lists the default selectable themes.
+func AvailableThemes() []string {
+	return []string{"monokai", "tokyo-night", "dracula", "nord", "catppuccin"}
+}
+
+// SetCurrentTheme sets the active theme for painting.
+func SetCurrentTheme(name string) {
+	if _, ok := themePalettes[name]; ok {
+		currentThemeName = name
+	}
+}
+
+// CurrentTheme returns the active theme name.
+func CurrentTheme() string {
+	return currentThemeName
+}
+
+func currentPalette() Palette {
+	if p, ok := themePalettes[currentThemeName]; ok {
+		return p
+	}
+	return themePalettes["monokai"]
+}
 
 // Pill renders text as a styled badge with background and padding.
 func Pill(text string, fg, bg string) string {
@@ -82,54 +162,29 @@ func PillActive(text string, fg, bg string) string {
 }
 
 // Roles returns every role, in the order they are declared.
-//
-// It builds a new slice on every call rather than handing out a package
-// variable, for the reason internal/view gives about Bands: a slice a caller
-// can reorder is package state, and this package holds none.
 func Roles() []Role {
 	return []Role{Accent, OK, Bad, Warn, Live, Dim, Sel}
 }
 
-// Paint is the style for one role, and it is a pure function of that role:
-// no setting is read, no terminal is asked anything, no answer is cached.
-// That is what lets a test build all seven with no terminal in the room, and
-// it is what keeps a colour decision out of the event loop.
-//
-// Weight is applied before colour, and it carries the hierarchy on its own.
-// A NO_COLOR terminal, a monochrome ssh session and `--once` piped into a
-// file all lose every colour here and keep bold, faint and the cursor block
-// — so the screen still has three levels rather than one. Bold is spent on
-// the three things worth interrupting a scan for: the program's own accent,
-// a failure, and the thing happening right now. Green and amber are colour
-// alone, because a row of bold green ticks shouts as loudly as a failure and
-// then nothing on the screen is loud.
-//
-// It is total. A Role no constant names — arithmetic that went wrong, a
-// value read from somewhere it should not have been — paints as plain text
-// rather than panicking in the middle of a frame or borrowing a colour that
-// already means something else.
+// Paint is the style for one role in the current theme.
 func Paint(r Role) lipgloss.Style {
 	style := lipgloss.NewStyle()
+	pal := currentPalette()
 	switch r {
 	case Accent:
-		return style.Bold(true).Foreground(lipgloss.Color(accentColor))
+		return style.Bold(true).Foreground(lipgloss.Color(pal.Accent))
 	case OK:
-		return style.Foreground(lipgloss.Color(okColor))
+		return style.Foreground(lipgloss.Color(pal.OK))
 	case Bad:
-		return style.Bold(true).Foreground(lipgloss.Color(badColor))
+		return style.Bold(true).Foreground(lipgloss.Color(pal.Bad))
 	case Warn:
-		return style.Foreground(lipgloss.Color(warnColor))
+		return style.Foreground(lipgloss.Color(pal.Warn))
 	case Live:
-		return style.Bold(true).Foreground(lipgloss.Color(liveColor))
+		return style.Bold(true).Foreground(lipgloss.Color(pal.Live))
 	case Dim:
-		return style.Faint(true).Foreground(lipgloss.Color(dimColor))
+		return style.Faint(true).Foreground(lipgloss.Color(pal.Dim))
 	case Sel:
-		// A block, and not inverse video. The cursor is on screen at all
-		// times, and reverse swaps whatever the terminal's own two colours
-		// are — which on most terminals is the loudest thing the screen can
-		// do. A stated background is quieter and, unlike reverse, it is the
-		// same shade on everybody's terminal.
-		return style.Foreground(lipgloss.Color(selColor)).Background(lipgloss.Color(selBlock))
+		return style.Foreground(lipgloss.Color(pal.SelText)).Background(lipgloss.Color(pal.SelBlock))
 	}
 	return style
 }

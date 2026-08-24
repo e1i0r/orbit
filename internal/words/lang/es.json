@@ -839,6 +839,10 @@
       "source": "the flow a new task is written against",
       "value": "el flujo contra el que se escribe una tarea nueva"
     },
+    "setting.theme": {
+      "source": "the visual color theme for the window",
+      "value": "el tema de color visual para la ventana"
+    },
     "key.commands": {
       "source": "commands",
       "value": "comandos"

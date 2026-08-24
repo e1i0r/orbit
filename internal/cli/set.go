@@ -126,6 +126,19 @@ func settingTable() []Setting {
 			return value, nil
 		},
 		Value: func(cfg store.Settings) string { return cfg.Flow },
+	}, {
+		Name:  "theme",
+		About: func(p *words.Printer) string { return p.T("setting.theme", "the visual color theme for the window") },
+		Set: func(cfg *store.Settings, value string) (string, error) {
+			cfg.Theme = value
+			return value, nil
+		},
+		Value: func(cfg store.Settings) string {
+			if cfg.Theme == "" {
+				return "monokai"
+			}
+			return cfg.Theme
+		},
 	}}
 }
 
