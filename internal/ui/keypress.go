@@ -46,13 +46,6 @@ func (m Model) key(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.filterKey(msg)
 	case m.confirm != confirmNone:
 		return m.confirmKey(msg)
-	case key.Matches(msg, m.keys.Commands):
-		return m.openPalette(), nil
-	case key.Matches(msg, m.keys.Menu):
-		// The menu is not the board's tool alone, so its opening key sits
-		// beside the palette's here rather than inside any one screen's
-		// map; which menu opens is the context's answer.
-		return m.openMenuForContext(), nil
 	case m.watchUp:
 		return m.watchKey(msg)
 	case m.screen == screenStart:
@@ -71,6 +64,10 @@ func (m Model) key(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.enginesKey(msg)
 	case m.screen == screenHelp:
 		return m.helpKey(msg)
+	case key.Matches(msg, m.keys.Commands):
+		return m.openPalette(), nil
+	case key.Matches(msg, m.keys.Menu):
+		return m.openMenuForContext(), nil
 	}
 	return m.listKey(msg)
 }
