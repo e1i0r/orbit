@@ -36,7 +36,7 @@ func (m Model) barFooterChips() string {
 	if m.autopilotOn() {
 		pip, role = pipOn, Live
 	}
-	chips = append(chips, Paint(Dim).Render("⚡ "+p.T("header.autopilot", "autopilot"))+" "+Paint(role).Render(pip))
+	chips = append(chips, Paint(role).Render("⚡ "+p.T("header.autopilot", "autopilot"))+" "+Paint(role).Render(pip)+" "+Paint(role).Bold(true).Render("["+m.keys.Autopilot.Help().Key+"]"))
 
 	// Interactive CLI chip
 	if m.screen == screenList {
