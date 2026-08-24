@@ -15,7 +15,9 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/ui/layout"
+	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -51,11 +53,39 @@ func (m Model) applyBoard(msg boardMsg) (tea.Model, tea.Cmd) {
 		}
 	}
 	if first || len(msg.Changed.Entered) == 0 {
+		if nextM, cmd := m.autoStartNext(); cmd != nil {
+			return nextM, cmd
+		}
 		return m, nil
 	}
 	m.notified = true
 	m = m.say(m.opts.Words.P("msg.entered", len(msg.Changed.Entered), "{n} task needs you", "{n} tasks need you"))
+	if nextM, cmd := m.autoStartNext(); cmd != nil {
+		return nextM, tea.Batch(tea.Raw("\a"), cmd)
+	}
 	return m, tea.Raw("\a")
+}
+
+// autoStartNext picks the first task in To Do and starts it under autopilot.
+func (m Model) autoStartNext() (Model, tea.Cmd) {
+	if !m.autopilotOn() || m.opts.Start == nil {
+		return m, nil
+	}
+	waiting := board.Unreads(m.board)
+	if m.atUnreadCap(len(waiting)) {
+		return m, nil
+	}
+	flowName := "task"
+	if m.opts.Settings != nil && m.opts.Settings.Flow() != "" {
+		flowName = m.opts.Settings.Flow()
+	}
+	for _, t := range m.board.Tasks {
+		if view.BandOf(t) == view.ToDo && !m.taken[t.ID] {
+			m = m.took(t.ID, true)
+			return m, start(m.opts.Start, t, flowName, len(waiting))
+		}
+	}
+	return m, nil
 }
 
 // resize takes the new geometry, or refuses it with both numbers.

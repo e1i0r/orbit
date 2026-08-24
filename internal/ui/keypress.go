@@ -120,7 +120,7 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	case key.Matches(k, m.keys.EngineKnobs):
 		return m.openEngines(), nil
 	case key.Matches(k, m.keys.Autopilot):
-		return m.autopilot(), nil
+		return m.autopilot()
 	case key.Matches(k, m.keys.Pause):
 		return m.verb(m.keys.Pause, "pause")
 	case key.Matches(k, m.keys.Resume):
@@ -209,18 +209,20 @@ func (m Model) ask() (tea.Model, tea.Cmd) {
 // It says what it just did rather than what it undid. The program this
 // replaces printed "autopilot was off" after turning it on, and the sentence
 // is ambiguous in exactly the moment a reader needs it not to be.
-func (m Model) autopilot() Model {
+func (m Model) autopilot() (tea.Model, tea.Cmd) {
 	if m.opts.Settings == nil {
-		return m
+		return m, nil
 	}
 	on := !m.opts.Settings.Autopilot()
 	if err := m.opts.Settings.SetAutopilot(on); err != nil {
-		return m.say(err.Error())
+		return m.say(err.Error()), nil
 	}
 	if on {
-		return m.say(m.opts.Words.T("msg.autopilot_on", "autopilot is on: every phase runs without asking"))
+		m = m.say(m.opts.Words.T("msg.autopilot_on", "autopilot is on: every phase runs without asking"))
+		nextM, cmd := m.autoStartNext()
+		return nextM, cmd
 	}
-	return m.say(m.opts.Words.T("msg.autopilot_off", "autopilot is off: every phase stops for you"))
+	return m.say(m.opts.Words.T("msg.autopilot_off", "autopilot is off: every phase stops for you")), nil
 }
 
 // notBuilt answers a key the bar offers and this window does not implement.

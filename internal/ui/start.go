@@ -174,7 +174,7 @@ func (m Model) startKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	case key.Matches(k, m.keys.EngineKnobs):
 		return m.openEngines(), nil
 	case key.Matches(k, m.keys.Autopilot):
-		return m.autopilot(), nil
+		return m.autopilot()
 	case key.Matches(k, m.keys.Help):
 		// The bar prints [?] on every screen, because help and quit are the
 		// two things a reader who is lost reaches for and barLine never

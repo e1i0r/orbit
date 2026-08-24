@@ -129,7 +129,7 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 	case TargetPaneTab:
 		return m.showTab(tab(t.Pane)), nil
 	case TargetDialogSwitch:
-		return m.flip(t.Field), nil
+		return m.flip(t.Field)
 	case TargetDialogPhase:
 		return m.openEngines(), nil
 	case TargetCommand:
@@ -201,15 +201,15 @@ func (m Model) sendKey(k keystroke) (tea.Model, tea.Cmd) {
 // switch and a button: a reader who clicks "on" means on, not "the other
 // one", and a row that toggled whichever way it was pointed at would turn
 // autopilot off for the reader who clicked the word on.
-func (m Model) flip(field string) Model {
+func (m Model) flip(field string) (tea.Model, tea.Cmd) {
 	on := m.autopilotOn()
 	switch {
 	case field == fieldFlow:
-		return m.cycleFlow()
+		return m.cycleFlow(), nil
 	case field == fieldAutopilotOn && !on, field == fieldAutopilotOff && on:
 		return m.autopilot()
 	}
-	return m
+	return m, nil
 }
 
 // rightClick opens the menu for what was pointed at.
