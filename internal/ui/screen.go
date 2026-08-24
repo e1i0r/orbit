@@ -44,7 +44,14 @@ func (m Model) View() tea.View {
 	}
 	lines = append(lines, m.bandRows()...)
 	lines = append(lines, m.barRows()...)
-	return tea.NewView(strings.Join(lines, "\n"))
+	v := tea.NewView(strings.Join(lines, "\n"))
+	// CellMotion and not AllMotion: the window is told about a moved
+	// pointer only while a button is down, which is what a drag needs and
+	// all it needs. AllMotion is a message for every cell the pointer
+	// crosses whether or not anything is being done with it, and it buys
+	// nothing until a row is drawn differently for being hovered over.
+	v.MouseMode = tea.MouseModeCellMotion
+	return v
 }
 
 // headerRows is the header region: the line, then its rule.

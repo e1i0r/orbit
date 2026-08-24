@@ -283,8 +283,8 @@ func (m Model) startBindings() []key.Binding {
 }
 
 // startHints is that same list as the bar prints it.
-func (m Model) startHints() []string {
-	out := make([]string, 0, len(m.startBindings()))
+func (m Model) startHints() []barHint {
+	out := make([]barHint, 0, len(m.startBindings()))
 	for _, b := range m.startBindings() {
 		out = append(out, hintFor(b))
 	}

@@ -9,6 +9,7 @@ package ui
 // affordance.go, and this file only ever asks it.
 
 import (
+	"fmt"
 	"maps"
 
 	"charm.land/bubbles/v2/key"
@@ -50,50 +51,58 @@ func (m Model) key(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 // Every verb here goes through affordance first, so a key that the task
 // under the cursor cannot take says why rather than doing nothing. Doing
 // nothing is what a reader reads as a broken keyboard.
-func (m Model) listKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+//
+// It takes a fmt.Stringer and not a tea.KeyPressMsg, which is what
+// key.Matches has always wanted, and the reason is the mouse: a hint clicked
+// in the key bar arrives here as the keystroke that hint names, through this
+// same map, so a verb cannot be reachable by the keyboard and not by the
+// pointer. The alternative was a second switch over the same bindings, and
+// two copies of a dispatch table disagree the first time one of them gains a
+// verb.
+func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	switch {
-	case key.Matches(msg, m.keys.Up):
+	case key.Matches(k, m.keys.Up):
 		return m.move(-1), nil
-	case key.Matches(msg, m.keys.Down):
+	case key.Matches(k, m.keys.Down):
 		return m.move(1), nil
-	case key.Matches(msg, m.keys.First):
+	case key.Matches(k, m.keys.First):
 		return m.moveTo(0), nil
-	case key.Matches(msg, m.keys.Last):
+	case key.Matches(k, m.keys.Last):
 		return m.moveTo(len(m.rows()) - 1), nil
-	case key.Matches(msg, m.keys.PageUp):
+	case key.Matches(k, m.keys.PageUp):
 		return m.move(-m.frame.Body.H), nil
-	case key.Matches(msg, m.keys.PageDown):
+	case key.Matches(k, m.keys.PageDown):
 		return m.move(m.frame.Body.H), nil
-	case key.Matches(msg, m.keys.Open):
+	case key.Matches(k, m.keys.Open):
 		return m.open()
-	case key.Matches(msg, m.keys.Filter):
+	case key.Matches(k, m.keys.Filter):
 		m.filtering = true
 		return m, nil
-	case key.Matches(msg, m.keys.Autopilot):
+	case key.Matches(k, m.keys.Autopilot):
 		return m.autopilot(), nil
-	case key.Matches(msg, m.keys.Pause):
+	case key.Matches(k, m.keys.Pause):
 		return m.verb(m.keys.Pause, "pause")
-	case key.Matches(msg, m.keys.Resume):
+	case key.Matches(k, m.keys.Resume):
 		return m.verb(m.keys.Resume, "resume")
-	case key.Matches(msg, m.keys.Hand):
+	case key.Matches(k, m.keys.Hand):
 		return m.handBack()
-	case key.Matches(msg, m.keys.Cancel):
+	case key.Matches(k, m.keys.Cancel):
 		return m.ask()
-	case key.Matches(msg, m.keys.Take):
+	case key.Matches(k, m.keys.Take):
 		return m.takeKey()
-	case key.Matches(msg, m.keys.MarkRead):
+	case key.Matches(k, m.keys.MarkRead):
 		return m.markReadKey()
-	case key.Matches(msg, m.keys.Ask):
+	case key.Matches(k, m.keys.Ask):
 		// The one verb that is only ever its own reason. Orbit cannot put a
 		// question to an engine yet, so gesture refuses it and says so, and
 		// nothing here pretends otherwise with a stub.
 		_, next, _ := m.gesture(m.keys.Ask)
 		return next, nil
-	case key.Matches(msg, m.keys.Start):
+	case key.Matches(k, m.keys.Start):
 		return m.openStart()
-	case key.Matches(msg, m.keys.Help):
+	case key.Matches(k, m.keys.Help):
 		return m.notBuilt(m.keys.Help), nil
-	case key.Matches(msg, m.keys.Quit):
+	case key.Matches(k, m.keys.Quit):
 		return m, tea.Quit
 	}
 	return m, nil

@@ -101,6 +101,13 @@ type Model struct {
 	start startModel
 	taken map[string]bool
 
+	// held is the pointer's button, if one is down, and what it went down
+	// on. It is on the model rather than in the mouse handler because the
+	// press and the release are two messages, and what happens between them
+	// — a refresh, a resize, a task finishing — goes through Update like
+	// everything else.
+	held hold
+
 	message   string
 	messageAt time.Time
 	notified  bool // a crossing has rung the bell, and the tests can see it
@@ -268,6 +275,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.language(msg.Lang), nil
 	case tea.KeyPressMsg:
 		return m.key(msg)
+	case tea.MouseMsg:
+		// One case for all four pointer messages, which is what the
+		// interface is for. Which of them this is, and what it means, is
+		// mouse.go's question.
+		return m.mouse(msg)
 	}
 	return m, nil
 }

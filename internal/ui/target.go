@@ -101,10 +101,7 @@ func (m Model) hitBoard(x, y int) Target {
 		// the header carries a repository list.
 		return Target{}
 	case layout.RegionBar:
-		// A hint in the key bar is the key it names, and finding out which
-		// hint a cell is in means the bar handing back where it put them
-		// rather than only the line it drew.
-		return Target{}
+		return m.hitBar(x, y)
 	}
 	return Target{}
 }
@@ -146,6 +143,27 @@ func (m Model) hitRow(x, y int) Target {
 		t.Column, _ = m.plan.ColumnAt(x - gutter)
 		return t
 	}
+}
+
+// hitBar is a hint in the key bar, and which key it names.
+//
+// The bar hands back where it put each hint rather than being measured
+// again here, so what is clickable is exactly what was drawn — including
+// the hints it dropped for want of width, which are not clickable because
+// they are not there.
+func (m Model) hitBar(x, y int) Target {
+	if y != m.frame.Bar.Y {
+		// The bar is one row. A region taller than its content has blank
+		// rows under it, and nothing is on them.
+		return Target{}
+	}
+	_, hints := m.barLayout(m.frame.Bar.W)
+	for _, h := range hints {
+		if x >= h.x && x < h.x+h.w {
+			return Target{Kind: TargetBarHint, Key: h.key}
+		}
+	}
+	return Target{}
 }
 
 // hitDetail is the task view, one level down: its tabs, the pane under them,

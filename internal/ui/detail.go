@@ -209,8 +209,8 @@ func (m Model) attempt() int {
 // detailHints is the key bar under the task view. It is a different list
 // from the board's because every verb on the board acts on the row under the
 // cursor, and there is no cursor here.
-func (m Model) detailHints() []string {
-	out := []string{hintFor(m.keys.Back), hintFor(m.keys.NextTab)}
+func (m Model) detailHints() []barHint {
+	out := []barHint{hintFor(m.keys.Back), hintFor(m.keys.NextTab)}
 	if m.tab == tabDiff {
 		out = append(out, hintFor(m.keys.Edit))
 	}
