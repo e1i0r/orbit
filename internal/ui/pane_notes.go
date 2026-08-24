@@ -7,74 +7,119 @@ import (
 	"github.com/e1i0r/orbit/internal/view"
 )
 
-// notesLines renders Pane 9: Operator notes left for this task.
+type noteItem struct {
+	at      string
+	sender  string
+	role    Role
+	status  string
+	content []string
+}
+
+// notesLines renders Pane 9: Full operator dialogue, notes, and interactive CLI history.
 func (m Model) notesLines() []string {
 	p := m.opts.Words
 	if m.logErr != nil {
 		return []string{"  " + Paint(Bad).Render(m.logErr.Error())}
 	}
 
-	var notes []view.Entry
+	var items []noteItem
+	noteIndex := 0
+
 	for _, e := range m.entries {
-		if e.What() == view.EntryNoted {
-			notes = append(notes, e)
+		timeStr := ""
+		if !e.At.IsZero() {
+			timeStr = e.At.Format("15:04:05")
+		}
+
+		switch e.What() {
+		case view.EntryNoted:
+			noteIndex++
+			statusNote := "read by run"
+			if e.Attempt > 0 {
+				statusNote = fmt.Sprintf("read by run %d", e.Attempt)
+			}
+			senderLabel := fmt.Sprintf("● %d  %s", noteIndex, p.T("notes.operator", "OPERADOR"))
+			var lines []string
+			for _, l := range strings.Split(e.Text, "\n") {
+				l = strings.TrimSpace(l)
+				if l != "" {
+					lines = append(lines, l)
+				}
+			}
+			items = append(items, noteItem{
+				at:      timeStr,
+				sender:  senderLabel,
+				role:    Accent,
+				status:  statusNote,
+				content: lines,
+			})
+
+		case view.EntryWaiting:
+			if e.Cause != "" || e.Text != "" {
+				msg := e.Cause
+				if msg == "" {
+					msg = e.Text
+				}
+				items = append(items, noteItem{
+					at:      timeStr,
+					sender:  fmt.Sprintf("🤖 %s", p.T("notes.llm_prompt", "MODELO (consulta al operador)")),
+					role:    Warn,
+					status:  e.Phase,
+					content: []string{"? " + msg},
+				})
+			}
 		}
 	}
 
 	out := []string{
 		"",
-		"  " + Paint(Accent).Bold(true).Render(p.T("notes.title", "Operator Notes & Guidance")),
-		"  " + Paint(Dim).Render(p.T("notes.subtitle", "what you told it, and if anything has read it")),
+		"  " + Paint(Accent).Bold(true).Render(p.T("notes.title", "Operator Notes & LLM Dialogue")),
+		"  " + Paint(Dim).Render(p.T("notes.subtitle", "everything spoken with the model, notes filed and interactive sessions")),
 		"",
 	}
 
-	if len(notes) == 0 {
-		out = append(out, "  "+Paint(Dim).Render(p.T("notes.empty", "no notes recorded for this task · press a to leave one")))
+	if len(items) == 0 {
+		out = append(out,
+			"  "+Paint(Dim).Render(p.T("notes.empty", "no notes or dialogue recorded for this task")),
+			"",
+			"  "+Paint(Dim).Render(p.T("notes.hint_action", "pulsa 'a' para dejar una nota · pulsa 'c' para abrir la CLI interactiva")),
+		)
 		return out
 	}
 
 	out = append(out, fmt.Sprintf("  %d %s · %s",
-		len(notes),
-		p.T("notes.count", "notes"),
-		Paint(OK).Render(p.T("notes.all_filed", "all filed")),
+		len(items),
+		p.T("notes.count", "entradas en el diálogo"),
+		Paint(OK).Render(p.T("notes.all_filed", "sincronizado con el modelo")),
 	))
 	out = append(out, "")
 
-	for i, e := range notes {
-		timeStr := ""
-		if !e.At.IsZero() {
-			timeStr = e.At.Format("15:04:05")
-		}
-		statusNote := "read by run"
-		if e.Attempt > 0 {
-			statusNote = fmt.Sprintf("read by run %d", e.Attempt)
-		}
-
-		bullet := fmt.Sprintf("  %s %d  %s  %s",
-			Paint(Accent).Render("●"),
-			i+1,
-			Paint(Dim).Render(timeStr),
-			Paint(Dim).Render(statusNote),
+	for _, item := range items {
+		header := fmt.Sprintf("  %s  %s  %s",
+			Paint(item.role).Render(item.sender),
+			Paint(Dim).Render(item.at),
+			Paint(Dim).Render(item.status),
 		)
-		out = append(out, bullet)
+		out = append(out, header)
 
-		if e.Text != "" {
-			for _, line := range strings.Split(e.Text, "\n") {
-				line = strings.TrimSpace(line)
-				if line == "" {
-					continue
-				}
-				if strings.HasPrefix(line, "?") {
-					out = append(out, "      "+Paint(Warn).Render(line))
-				} else if strings.HasPrefix(line, "→") {
-					out = append(out, "      "+Paint(OK).Render(line))
-				} else {
-					out = append(out, "      "+line)
-				}
+		for _, l := range item.content {
+			if strings.HasPrefix(l, "?") {
+				out = append(out, "      "+Paint(Warn).Render(l))
+			} else if strings.HasPrefix(l, "→") {
+				out = append(out, "      "+Paint(OK).Render(l))
+			} else if strings.HasPrefix(l, "[cli]") {
+				out = append(out, "      "+Paint(Live).Render(l))
+			} else {
+				out = append(out, "      "+l)
 			}
 		}
 		out = append(out, "")
 	}
+
+	out = append(out,
+		"  "+Paint(Dim).Render(p.T("notes.hint_footer", "pulsa 'a' para agregar una nota · pulsa 'c' o 't' para entrar a la CLI interactiva")),
+		"",
+	)
 
 	return out
 }

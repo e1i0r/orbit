@@ -590,24 +590,40 @@
       "value": "no hay informe del motor disponible para esta tarea"
     },
     "notes.title": {
-      "source": "Operator Notes & Guidance",
-      "value": "Notas e indicaciones del operador"
+      "source": "Operator Notes & LLM Dialogue",
+      "value": "Notas y diálogo con el modelo"
     },
     "notes.subtitle": {
-      "source": "what you told it, and if anything has read it",
-      "value": "lo que le dijiste, y si algo ya lo leyó"
+      "source": "everything spoken with the model, notes filed and interactive sessions",
+      "value": "lo que le dijiste, respuestas del modelo y sesiones de CLI interactiva"
+    },
+    "notes.operator": {
+      "source": "OPERADOR",
+      "value": "OPERADOR"
+    },
+    "notes.llm_prompt": {
+      "source": "MODELO (consulta al operador)",
+      "value": "MODELO (consulta al operador)"
     },
     "notes.count": {
-      "source": "notes",
-      "value": "notas"
+      "source": "entradas en el diálogo",
+      "value": "entradas en el diálogo"
     },
     "notes.all_filed": {
-      "source": "all filed",
-      "value": "todas registradas"
+      "source": "sincronizado con el modelo",
+      "value": "sincronizado con el modelo"
     },
     "notes.empty": {
-      "source": "no notes recorded for this task · press a to leave one",
-      "value": "no hay notas registradas para esta tarea · pulsa a para dejar una"
+      "source": "no notes or dialogue recorded for this task",
+      "value": "no hay notas ni diálogo registrado para esta tarea"
+    },
+    "notes.hint_action": {
+      "source": "pulsa 'a' para dejar una nota · pulsa 'c' para abrir la CLI interactiva",
+      "value": "pulsa 'a' para dejar una nota · pulsa 'c' para abrir la CLI interactiva"
+    },
+    "notes.hint_footer": {
+      "source": "pulsa 'a' para agregar una nota · pulsa 'c' o 't' para entrar a la CLI interactiva",
+      "value": "pulsa 'a' para agregar una nota · pulsa 'c' o 't' para entrar a la CLI interactiva"
     },
     "thinking.title": {
       "source": "Agent Reasoning & Thinking",
