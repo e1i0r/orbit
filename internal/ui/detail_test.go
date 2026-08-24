@@ -59,9 +59,9 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 			}
 		},
 	}, {
-		name:  "tab moves from the log to the diff",
+		name:  "0 moves directly to the diff tab",
 		start: func(t *testing.T) Model { m, _ := openDetail(t, "ACME-2662"); return m },
-		msg:   press("tab"),
+		msg:   press("0"),
 		want: func(t *testing.T, m Model, _ tea.Cmd) {
 			if m.tab != tabDiff {
 				t.Errorf("tab is %v, want the diff", m.tab)
@@ -71,21 +71,26 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 		name: "tab wraps from the last tab back to the first",
 		start: func(t *testing.T) Model {
 			m, _ := openDetail(t, "ACME-2662")
-			return step(t, step(t, m, "tab"), "tab")
+			m.tab = tabCount - 1
+			return m
 		},
 		msg: press("tab"),
 		want: func(t *testing.T, m Model, _ tea.Cmd) {
-			if m.tab != tabLog {
-				t.Errorf("tab is %v, want it wrapped round to the log", m.tab)
+			if m.tab != 0 {
+				t.Errorf("tab is %v, want it wrapped round to the first tab", m.tab)
 			}
 		},
 	}, {
-		name:  "shift+tab wraps backwards from the first tab to the last",
-		start: func(t *testing.T) Model { m, _ := openDetail(t, "ACME-2662"); return m },
-		msg:   press("shift+tab"),
+		name: "shift+tab wraps backwards from the first tab to the last",
+		start: func(t *testing.T) Model {
+			m, _ := openDetail(t, "ACME-2662")
+			m.tab = 0
+			return m
+		},
+		msg: press("shift+tab"),
 		want: func(t *testing.T, m Model, _ tea.Cmd) {
-			if m.tab != tabEvidence {
-				t.Errorf("tab is %v, want it wrapped back to the evidence", m.tab)
+			if m.tab != tabCount-1 {
+				t.Errorf("tab is %v, want it wrapped back to the last tab", m.tab)
 			}
 		},
 	}, {
@@ -202,7 +207,7 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 		start: func(t *testing.T) Model {
 			t.Setenv("EDITOR", "vi")
 			m, _ := openDetail(t, "ACME-2662")
-			return step(t, m, "tab")
+			return step(t, m, "0")
 		},
 		msg: press("o"),
 		want: func(t *testing.T, _ Model, cmd tea.Cmd) {
@@ -214,7 +219,7 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 		name: "→ scrolls the diff sideways rather than leaving the screen",
 		start: func(t *testing.T) Model {
 			m, _ := openIn(t, words.For("en"), "ACME-2662", fixtureEntries(), wideDiff())
-			return step(t, m, "tab")
+			return step(t, m, "0")
 		},
 		msg: press("right"),
 		want: func(t *testing.T, m Model, _ tea.Cmd) {
@@ -229,7 +234,7 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 		name: "← comes back from a sideways scroll before it leaves the screen",
 		start: func(t *testing.T) Model {
 			m, _ := openIn(t, words.For("en"), "ACME-2662", fixtureEntries(), wideDiff())
-			scrolled := step(t, step(t, m, "tab"), "right")
+			scrolled := step(t, step(t, m, "0"), "right")
 			// XOffset() == 0 is also what a ← that had silently gone dead
 			// would leave behind, so the row's own assertion cannot tell a
 			// working ← from a broken one unless the scroll it is meant to

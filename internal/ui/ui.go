@@ -235,4 +235,3 @@ func New(o Options) Model {
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(tea.RequestBackgroundColor, refresh(m.opts.Reader), tick(), rescanTick(), elapsedTick())
 }
-

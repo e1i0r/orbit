@@ -553,6 +553,14 @@
       "source": "no thinking blocks captured for this task",
       "value": "no hay bloques de thinking registrados para esta tarea"
     },
+    "plain.read_board": {
+      "source": "read the board",
+      "value": "leer el tablero"
+    },
+    "plain.not_model": {
+      "source": "the window answered with an unexpected type",
+      "value": "la ventana respondió con un tipo no esperado"
+    },
     "log.attempt": {
       "source": "attempt {n}",
       "value": "intento {n}"

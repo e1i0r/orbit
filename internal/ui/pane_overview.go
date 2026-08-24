@@ -11,6 +11,9 @@ import (
 // overviewLines renders Pane 1: Overview of the task.
 func (m Model) overviewLines() []string {
 	p := m.opts.Words
+	if m.logErr != nil {
+		return []string{"  " + Paint(Bad).Render(m.logErr.Error())}
+	}
 	t, ok := m.task(m.detail)
 	if !ok {
 		return []string{"  " + Paint(Dim).Render(p.T("detail.gone", "this task is no longer on the board"))}

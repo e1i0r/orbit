@@ -278,7 +278,6 @@ func prepare(s *store.Store, t Task) (string, error) {
 }
 
 // prompt is what the engine is told for one phase.
-//
 func prompt(t Task, p flow.Phase, notes []string) string {
 	base := fmt.Sprintf("Phase: %s\nRepository: %s\n\nTask %s:\n%s\n", p.Name, t.Repo.Name, t.ID, t.Text)
 	if len(notes) == 0 {

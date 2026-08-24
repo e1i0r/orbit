@@ -15,7 +15,7 @@ func TestTheRootIsWrittenTheWayAPersonSaysIt(t *testing.T) {
 		name, dir, home, want string
 	}{
 		{"under home", "/Users/x/work/repos", "/Users/x", "~" + sep + "work/repos"},
-		{"the home itself", "/Users/x", "/Users/x", "/Users/x"},
+		{"the home itself", "/Users/x", "/Users/x", "~"},
 		{"outside home", "/srv/repos", "/Users/x", "/srv/repos"},
 		{"no home to speak of", "/srv/repos", "", "/srv/repos"},
 		// A sibling whose name merely starts with the home path is not

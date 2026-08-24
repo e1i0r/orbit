@@ -20,7 +20,10 @@ import (
 // An empty home, or a root outside it, comes back unchanged — there is
 // nothing to abbreviate and a bare "~" would name the wrong place.
 func underHome(dir, home string) string {
-	if home == "" || dir == home {
+	if dir == home && dir != "" {
+		return "~"
+	}
+	if home == "" {
 		return dir
 	}
 	if rest, ok := strings.CutPrefix(dir, home+string(os.PathSeparator)); ok {

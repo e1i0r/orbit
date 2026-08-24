@@ -241,4 +241,3 @@ func NewReader(s *store.Store, root string) *Reader {
 		index: make(map[taskKey]*taskState),
 	}
 }
-

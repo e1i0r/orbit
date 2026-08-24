@@ -1,5 +1,6 @@
  orbit  ~/work                                                  unread 3/5    autopilot ●    4 repos
 ────────────────────────────────────────────────────────────────────────────────────────────────────
+  $0.00 spent  ·  4 todo · 3 in flight · 2 needs you · 6 done  ·  0 events  ·  0ms read
  ACME-2662  Retry the webhook on 5xx                                                        payments
 
    flow  careful                                                              quick · task · careful
@@ -10,7 +11,6 @@
 
    autopilot  ● on    every phase runs without asking
               ○ off   stops at each phase
-
 
 
 

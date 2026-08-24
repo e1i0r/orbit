@@ -130,11 +130,8 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	case key.Matches(k, m.keys.MarkRead):
 		return m.markReadKey()
 	case key.Matches(k, m.keys.Ask):
-		r, ok := m.selected()
-		if !ok || r.head {
-			return m, nil
-		}
-		return m.openPaletteWith("note " + r.task.ID + " "), nil
+		_, next, _ := m.gesture(m.keys.Ask)
+		return next, nil
 	case key.Matches(k, m.keys.Start):
 		return m.openStart()
 	case key.Matches(k, m.keys.Compose):

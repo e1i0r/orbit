@@ -27,7 +27,7 @@ import (
 var tabNames = []struct {
 	name string
 	tab  tab
-}{{"log", tabLog}, {"diff", tabDiff}, {"evidence", tabEvidence}}
+}{{"timeline", tabTimeline}, {"diff", tabDiff}, {"report", tabReport}}
 
 func TestEveryTaskViewFrameFitsTheTerminalItWasGiven(t *testing.T) {
 	for _, lang := range []string{"en", "es", "qps"} {

@@ -236,4 +236,3 @@ func (m Model) rightClick(t Target) (tea.Model, tea.Cmd) {
 	}
 	return next, nil
 }
-

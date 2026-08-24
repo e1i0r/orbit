@@ -17,6 +17,7 @@ package cli
 
 import (
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -164,9 +165,14 @@ func TestTheDirectoryMayComeBeforeOrAfterTheFlags(t *testing.T) {
 	if after != 0 {
 		t.Fatalf("top -once <dir> exited %d: %s", after, errOut)
 	}
-	if first != second {
+	if stripReadTime(first) != stripReadTime(second) {
 		t.Errorf("the two orders drew different frames:\n%s\n---\n%s", first, second)
 	}
+}
+
+func stripReadTime(s string) string {
+	re := regexp.MustCompile(`\d+ms read`)
+	return re.ReplaceAllString(s, "Xms read")
 }
 
 func TestTopRefusesASecondDirectory(t *testing.T) {

@@ -106,8 +106,12 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 	// engine and a task run by something else has to be answered by name
 	// rather than by assumption.
 	engines := map[string]engine.Engine{"claude": engine.NewClaude()}
+	home, _ := os.UserHomeDir()
+	if home == "" {
+		home = os.Getenv("HOME")
+	}
 	return ui.Options{
-		Root: underHome(dir, os.Getenv("HOME")),
+		Root: underHome(dir, home),
 		// The board reader the window is handed carries the settings file on
 		// its clock: see poll. The settings adapter answers from memory, and
 		// this is what keeps what it holds in step with the file.

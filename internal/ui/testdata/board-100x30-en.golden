@@ -1,5 +1,6 @@
  orbit  ~/work                                                  unread 3/5    autopilot ●    4 repos
 ────────────────────────────────────────────────────────────────────────────────────────────────────
+  $0.00 spent  ·  4 todo · 3 in flight · 2 needs you · 6 done  ·  0 events  ·  0ms read
  NEEDS YOU  3
 ▸  payments  ACME-2662  Retry the webhook on 5xx                      failed: gates              31m
    app       ACME-2701  Move the assets cron                          waiting: review             4m
@@ -12,7 +13,6 @@
  TO DO  4                                                                                     ⏎ open
 
  DONE TODAY  6                                                                                ⏎ open
-
 
 
 
