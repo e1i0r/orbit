@@ -40,6 +40,7 @@ type Phase struct {
 	Model    string `json:"model,omitempty"`
 	Effort   string `json:"effort,omitempty"`
 	Thinking string `json:"thinking,omitempty"`
+	Prompt   string `json:"prompt,omitempty"`
 
 	// Wait is this phase's default answer to "should this stop for a human?".
 	// It is a default and not a switch, which is the distinction that took a
