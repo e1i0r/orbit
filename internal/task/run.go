@@ -143,8 +143,12 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 			return err
 		}
 
+		inputPrev := ""
+		if p.FeedOutput {
+			inputPrev = prevOutput
+		}
 		out, runErr := engines[p.Engine].Run(ctx, engine.Request{
-			Prompt:      prompt(t, p, notes, prevOutput),
+			Prompt:      prompt(t, p, notes, inputPrev),
 			Model:       p.Model,
 			Effort:      p.Effort,
 			Thinking:    p.Thinking,
