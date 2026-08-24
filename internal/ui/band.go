@@ -14,23 +14,12 @@ import (
 	"strconv"
 	"strings"
 
-	"charm.land/lipgloss/v2"
-
 	"github.com/e1i0r/orbit/internal/view"
 )
 
 // bandLine is the activity band, and it never comes back empty.
 func (m Model) bandLine(w int) string {
-	left := " " + m.bandLeft()
-	right := m.bandRight()
-	leftW := lipgloss.Width(left)
-	rightW := lipgloss.Width(right)
-
-	if leftW+rightW+4 <= w {
-		space := w - leftW - rightW
-		return left + strings.Repeat(" ", space) + right
-	}
-	return fit(left, w)
+	return fit(" "+m.bandLeft(), w)
 }
 
 func (m Model) bandLeft() string {
@@ -55,27 +44,6 @@ func (m Model) bandLeft() string {
 		}
 	}
 	return Paint(Dim).Render(m.idleLine())
-}
-
-func (m Model) bandRight() string {
-	p := m.opts.Words
-	var chips []string
-
-	// Autopilot chip
-	pip, role := pipOff, Dim
-	if m.autopilotOn() {
-		pip, role = pipOn, Live
-	}
-	chips = append(chips, Paint(Dim).Render("⚡ "+p.T("header.autopilot", "autopilot"))+" "+Paint(role).Render(pip))
-
-	// Model / knob chip
-	chip := m.knobChip()
-	if chip != "" {
-		chips = append(chips, Paint(Accent).Render("🧠 "+chip))
-	} else {
-		chips = append(chips, Paint(Dim).Render("🧠 claude"))
-	}
-	return strings.Join(chips, "    ")
 }
 
 // filterLine is what is being typed, and how much of the board it is

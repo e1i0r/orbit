@@ -157,6 +157,10 @@
       "source": "autopilot",
       "value": "piloto automático"
     },
+    "header.cli_chip": {
+      "source": "cli",
+      "value": "cli interactiva"
+    },
     "header.lang_badge": {
       "source": "EN",
       "value": "ES"
