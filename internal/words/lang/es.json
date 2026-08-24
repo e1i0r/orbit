@@ -281,6 +281,14 @@
       "source": "interactive session ended",
       "value": "sesión interactiva finalizada"
     },
+    "msg.opening_cli": {
+      "source": "opening interactive session with {engine}...",
+      "value": "abriendo sesión interactiva con {engine}..."
+    },
+    "msg.cli_exec_error": {
+      "source": "error running {engine}: {err}",
+      "value": "error al ejecutar {engine}: {err}"
+    },
     "msg.compose_prompt": {
       "source": "write the task to run",
       "value": "escribe la tarea para ponerla en marcha"
@@ -998,6 +1006,166 @@
     "flows.create_btn_idle": {
       "source": "[+ Create Custom Flow] (press n)",
       "value": "[+ Crear Flujo Personalizado] (pulsa n)"
+    },
+    "flows.builder_create_title": {
+      "source": "Flow Designer (Create New Flow)",
+      "value": "Diseñador de Flujos (Crear Nuevo Flujo)"
+    },
+    "flows.builder_edit_title": {
+      "source": "Flow Designer (Edit: {name})",
+      "value": "Diseñador de Flujos (Editar: {name})"
+    },
+    "flows.builder_subtitle": {
+      "source": "configure phases, models, effort, thinking, input chaining and prompts",
+      "value": "configura las fases, modelos, esfuerzo, thinking, input chaining y prompts"
+    },
+    "flows.builder_pipeline_title": {
+      "source": "Pipeline (Click on a phase to edit it):",
+      "value": "Pipeline del Ciclo (Haz clic en una fase para editarla):"
+    },
+    "flows.feeds_input": {
+      "source": "[feeds input]",
+      "value": "[feeds input]"
+    },
+    "flows.stops_human": {
+      "source": "(stops for human)",
+      "value": "(se detiene para un humano)"
+    },
+    "flows.field_template": {
+      "source": "0. Template / Preset",
+      "value": "0. Plantilla / Preset"
+    },
+    "flows.field_flow_name": {
+      "source": "1. Flow Name",
+      "value": "1. Nombre del Flujo"
+    },
+    "flows.field_editing_phase": {
+      "source": "Editing Phase",
+      "value": "Fase en edición"
+    },
+    "flows.field_phase_name": {
+      "source": "2. Phase {n} Name",
+      "value": "2. Nombre Fase {n}"
+    },
+    "flows.field_engine": {
+      "source": "3. AI Engine",
+      "value": "3. Motor IA"
+    },
+    "flows.field_model": {
+      "source": "4. Model",
+      "value": "4. Modelo"
+    },
+    "flows.field_effort": {
+      "source": "5. Effort",
+      "value": "5. Esfuerzo"
+    },
+    "flows.field_thinking": {
+      "source": "6. Thinking Mode",
+      "value": "6. Modo Thinking"
+    },
+    "flows.field_feed_output": {
+      "source": "7. Feed Previous Output",
+      "value": "7. Alimentar Output Anterior"
+    },
+    "flows.field_wait": {
+      "source": "8. Phase Control",
+      "value": "8. Control de Fase"
+    },
+    "flows.field_prompt": {
+      "source": "9. Prompt / Instructions",
+      "value": "9. Prompt / Instrucciones"
+    },
+    "flows.btn_paste": {
+      "source": "📋 Paste",
+      "value": "📋 Pegar"
+    },
+    "flows.btn_autogen": {
+      "source": "✨ Autogenerate",
+      "value": "✨ Autogenerar"
+    },
+    "flows.btn_clear": {
+      "source": "🗑 Clear",
+      "value": "🗑 Limpiar"
+    },
+    "flows.prompt_placeholder": {
+      "source": "(type instructions here or click ✨ Autogenerate)...",
+      "value": "(escribe aquí las instrucciones o pulsa ✨ Autogenerar)..."
+    },
+    "flows.btn_add_phase": {
+      "source": "+ Add Phase",
+      "value": "+ Añadir Fase"
+    },
+    "flows.btn_del_phase": {
+      "source": "🗑 Delete Phase",
+      "value": "🗑 Borrar Fase"
+    },
+    "flows.btn_save_flow": {
+      "source": "✔ Save Flow",
+      "value": "✔ Guardar Flujo"
+    },
+    "flows.editing_resumed": {
+      "source": "editing resumed",
+      "value": "edición reanudada"
+    },
+    "flows.deletion_cancelled": {
+      "source": "deletion cancelled",
+      "value": "borrado cancelado"
+    },
+    "flows.changes_discarded": {
+      "source": "changes discarded",
+      "value": "cambios descartados"
+    },
+    "flows.confirm_discard": {
+      "source": "discard flow changes? [y] yes / [n] no (or press Esc again)",
+      "value": "¿Descartar cambios del flujo? [y] sí / [n] no (o presiona Esc otra vez)"
+    },
+    "flows.phase_added": {
+      "source": "phase {n} added",
+      "value": "fase {n} añadida"
+    },
+    "flows.min_phases_required": {
+      "source": "the flow must have at least one phase",
+      "value": "el flujo debe tener al menos una fase"
+    },
+    "flows.phase_deleted": {
+      "source": "phase deleted",
+      "value": "fase eliminada"
+    },
+    "flows.editing": {
+      "source": "editing flow {name}",
+      "value": "editando flujo {name}"
+    },
+    "flows.cannot_delete_builtin": {
+      "source": "built-in flows cannot be deleted",
+      "value": "los flujos predeterminados no se pueden borrar"
+    },
+    "flows.confirm_delete": {
+      "source": "delete flow {name}? [y] yes / [n] no",
+      "value": "¿Borrar flujo {name}? [y] sí / [n] no"
+    },
+    "flows.paste_done": {
+      "source": "📋 pasted {n} chars into phase {phase}",
+      "value": "📋 texto pegado ({n} chars) en fase {phase}"
+    },
+    "flows.clipboard_empty": {
+      "source": "clipboard empty",
+      "value": "portapapeles vacío"
+    },
+    "flows.autogen_custom": {
+      "source": "✨ prompt generated from your draft for phase {phase}",
+      "value": "✨ prompt generado a partir de tu texto para fase {phase}"
+    },
+    "flows.autogen_role": {
+      "source": "✨ prompt generated for role in phase {phase}",
+      "value": "✨ prompt generado según el rol de la fase {phase}"
+    },
+    "flows.prompt_cleared": {
+      "source": "🗑 prompt cleared for phase {phase}",
+      "value": "🗑 prompt de fase {phase} borrado"
+    },
+    "flows.phase_selected": {
+      "source": "phase {n} selected: {phase} ({engine}/{model})",
+      "value": "fase {n} seleccionada: {phase} ({engine}/{model})"
     },
     "help.ways_out": {
       "source": "{up_down} scroll · {back} back",

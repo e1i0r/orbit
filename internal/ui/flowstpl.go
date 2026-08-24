@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -114,7 +115,8 @@ func (m Model) editFlow(name string) (Model, tea.Cmd) {
 	m.flows.phases = fl.Phases
 	m.flows.activePhase = 0
 	m.flows.ensurePhase()
-	return m.say("editando flujo " + fl.Name), nil
+	p := m.opts.Words
+	return m.say(p.T("flows.editing", "editing flow {name}", about("name", fl.Name))), nil
 }
 
 func (m Model) deleteSelectedFlow() (Model, tea.Cmd) {
@@ -127,11 +129,12 @@ func (m Model) deleteSelectedFlow() (Model, tea.Cmd) {
 }
 
 func (m Model) deleteFlow(name string, origin flow.Origin) (Model, tea.Cmd) {
+	p := m.opts.Words
 	if origin == flow.OriginBuiltin {
-		return m.say("los flujos predeterminados no se pueden borrar"), nil
+		return m.say(p.T("flows.cannot_delete_builtin", "built-in flows cannot be deleted")), nil
 	}
 	m.flows.confirmDelete = true
-	return m.say("¿Borrar flujo " + name + "? [y] sí / [n] no"), nil
+	return m.say(p.T("flows.confirm_delete", "delete flow {name}? [y] yes / [n] no", about("name", name))), nil
 }
 
 func (m Model) confirmDeleteFlow() (Model, tea.Cmd) {
@@ -142,8 +145,9 @@ func (m Model) confirmDeleteFlow() (Model, tea.Cmd) {
 		return m, nil
 	}
 	d := descriptors[st.sel]
+	p := m.opts.Words
 	if d.Origin == flow.OriginBuiltin {
-		return m.say("los flujos predeterminados no se pueden borrar"), nil
+		return m.say(p.T("flows.cannot_delete_builtin", "built-in flows cannot be deleted")), nil
 	}
 	dir := ""
 	if m.opts.Flows != nil {
@@ -160,11 +164,11 @@ func (m Model) confirmDeleteFlow() (Model, tea.Cmd) {
 	if st.sel > 0 {
 		st.sel--
 	}
-	p := m.opts.Words
 	return m.say(p.T("flows.deleted", "flow {name} deleted", about("name", d.Name))), nil
 }
 
 func (m Model) handleFlowClick(t Target) (tea.Model, tea.Cmd) {
+	p := m.opts.Words
 	if t.Field == "create" {
 		return m.startCreateFlow(), nil
 	}
@@ -179,9 +183,9 @@ func (m Model) handleFlowClick(t Target) (tea.Model, tea.Cmd) {
 		if txt != "" {
 			m.flows.cur().Prompt = txt
 			m.flows.field = flowFieldPrompt
-			return m.say(fmt.Sprintf("📋 texto pegado (%d chars) en fase %s", len(txt), m.flows.cur().Name)), nil
+			return m.say(p.T("flows.paste_done", "📋 pasted {n} chars into phase {phase}", about("n", strconv.Itoa(len(txt))), about("phase", m.flows.cur().Name))), nil
 		}
-		return m.say("portapapeles vacío"), nil
+		return m.say(p.T("flows.clipboard_empty", "clipboard empty")), nil
 	}
 	if t.Field == "autogen_prompt" {
 		cur := m.flows.cur()
@@ -189,14 +193,14 @@ func (m Model) handleFlowClick(t Target) (tea.Model, tea.Cmd) {
 		cur.Prompt = generatePhasePrompt(draft, cur.Name, m.flows.flowName)
 		m.flows.field = flowFieldPrompt
 		if draft != "" {
-			return m.say(fmt.Sprintf("✨ prompt generado a partir de tu texto para fase %s", cur.Name)), nil
+			return m.say(p.T("flows.autogen_custom", "✨ prompt generated from your draft for phase {phase}", about("phase", cur.Name))), nil
 		}
-		return m.say(fmt.Sprintf("✨ prompt generado según el rol de la fase %s", cur.Name)), nil
+		return m.say(p.T("flows.autogen_role", "✨ prompt generated for role in phase {phase}", about("phase", cur.Name))), nil
 	}
 	if t.Field == "clear_prompt" {
 		m.flows.cur().Prompt = ""
 		m.flows.field = flowFieldPrompt
-		return m.say(fmt.Sprintf("🗑 prompt de fase %s borrado", m.flows.cur().Name)), nil
+		return m.say(p.T("flows.prompt_cleared", "🗑 prompt cleared for phase {phase}", about("phase", m.flows.cur().Name))), nil
 	}
 	if t.Field == "add_phase" {
 		m.flows.field = flowFieldAddPhase
@@ -214,7 +218,7 @@ func (m Model) handleFlowClick(t Target) (tea.Model, tea.Cmd) {
 		m.flows.activePhase = t.Phase
 		m.flows.field = flowFieldPhaseSelect
 		cur := m.flows.cur()
-		return m.say(fmt.Sprintf("fase %d seleccionada: %s (%s/%s)", t.Phase+1, cur.Name, cur.Engine, cur.Model)), nil
+		return m.say(p.T("flows.phase_selected", "phase {n} selected: {phase} ({engine}/{model})", about("n", strconv.Itoa(t.Phase+1)), about("phase", cur.Name), about("engine", cur.Engine), about("model", cur.Model))), nil
 	}
 	m.flows.field = t.Phase
 	return m.handleFlowFieldAction()

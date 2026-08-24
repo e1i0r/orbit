@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -9,19 +10,19 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	st := &m.flows
 	st.ensurePhase()
 	p := m.opts.Words
-	title := "Diseñador de Flujos (Crear Nuevo Flujo)"
+	title := p.T("flows.builder_create_title", "Flow Designer (Create New Flow)")
 	if st.isEditing {
-		title = fmt.Sprintf("Diseñador de Flujos (Editar: %s)", st.flowName)
+		title = p.T("flows.builder_edit_title", "Flow Designer (Edit: {name})", about("name", st.flowName))
 	}
 	out := []string{
 		"",
 		"  " + Paint(Accent).Bold(true).Render(title),
-		"  " + Paint(Dim).Render("configura las fases, modelos, esfuerzo, thinking, input chaining y prompts"),
+		"  " + Paint(Dim).Render(p.T("flows.builder_subtitle", "configure phases, models, effort, thinking, input chaining and prompts")),
 		"",
 	}
 
 	// 1. Visual Pipeline Overview
-	out = append(out, "  "+Paint(Live).Bold(true).Render("Pipeline del Ciclo (Haz clic en una fase para editarla):"))
+	out = append(out, "  "+Paint(Live).Bold(true).Render(p.T("flows.builder_pipeline_title", "Pipeline (Click on a phase to edit it):")))
 	for i, ph := range st.phases {
 		prefix := "    ➔ "
 		if i == 0 {
@@ -33,10 +34,10 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 		}
 		title := fmt.Sprintf("%sFase %d: %s (%s/%s)", curMark, i+1, ph.Name, ph.Engine, orDef(ph.Model, "default"))
 		if ph.FeedOutput {
-			title += " [feeds input]"
+			title += " " + p.T("flows.feeds_input", "[feeds input]")
 		}
 		if ph.Wait {
-			title += " (stops for human)"
+			title += " " + p.T("flows.stops_human", "(stops for human)")
 		}
 
 		if i == st.activePhase {
@@ -69,14 +70,14 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 
 	// 0. Preset Template
 	tplPills := renderComboPills([]string{"ninguna", "TDD Cycle", "Security Audit", "Turbo Fix"}, st.template)
-	out = append(out, renderField(flowFieldTemplate, "0. Plantilla / Preset", tplPills))
+	out = append(out, renderField(flowFieldTemplate, p.T("flows.field_template", "0. Template / Preset"), tplPills))
 
 	// 1. Flow Name
 	fNameVal := "[" + st.flowName + "_]"
 	if st.field != flowFieldName && st.flowName != "" {
 		fNameVal = st.flowName
 	}
-	out = append(out, renderField(flowFieldName, "1. Nombre del Flujo", Paint(Accent).Render(fNameVal)))
+	out = append(out, renderField(flowFieldName, p.T("flows.field_flow_name", "1. Flow Name"), Paint(Accent).Render(fNameVal)))
 
 	// 2. Interactive Phase Tabs
 	var tabPills []string
@@ -88,30 +89,30 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 			tabPills = append(tabPills, Paint(Dim).Render(" "+label+" "))
 		}
 	}
-	out = append(out, renderField(flowFieldPhaseSelect, "Fase en edición", strings.Join(tabPills, " ")))
+	out = append(out, renderField(flowFieldPhaseSelect, p.T("flows.field_editing_phase", "Editing Phase"), strings.Join(tabPills, " ")))
 
 	// 3. Phase Name
 	pNameVal := "[" + curPh.Name + "_]"
 	if st.field != flowFieldPhaseName && curPh.Name != "" {
 		pNameVal = curPh.Name
 	}
-	out = append(out, renderField(flowFieldPhaseName, fmt.Sprintf("2. Nombre Fase %d", st.activePhase+1), Paint(Accent).Render(pNameVal)))
+	out = append(out, renderField(flowFieldPhaseName, p.T("flows.field_phase_name", "2. Phase {n} Name", about("n", strconv.Itoa(st.activePhase+1))), Paint(Accent).Render(pNameVal)))
 
 	// 4. Engine
 	engPills := renderComboPills([]string{"claude", "codex", "opencode"}, orDef(curPh.Engine, "claude"))
-	out = append(out, renderField(flowFieldEngine, "3. Motor IA", engPills))
+	out = append(out, renderField(flowFieldEngine, p.T("flows.field_engine", "3. AI Engine"), engPills))
 
 	// 5. Model
 	mdlPills := renderComboPills([]string{"sonnet", "opus", "haiku", "default"}, orDef(curPh.Model, "default"))
-	out = append(out, renderField(flowFieldModel, "4. Modelo", mdlPills))
+	out = append(out, renderField(flowFieldModel, p.T("flows.field_model", "4. Model"), mdlPills))
 
 	// 6. Effort
 	effPills := renderComboPills([]string{"default", "low", "medium", "high", "xhigh", "max"}, orDef(curPh.Effort, "default"))
-	out = append(out, renderField(flowFieldEffort, "5. Esfuerzo", effPills))
+	out = append(out, renderField(flowFieldEffort, p.T("flows.field_effort", "5. Effort"), effPills))
 
 	// 7. Thinking Mode
 	thkPills := renderComboPills([]string{"adaptive", "on", "off"}, orDef(curPh.Thinking, "adaptive"))
-	out = append(out, renderField(flowFieldThinking, "6. Modo Thinking", thkPills))
+	out = append(out, renderField(flowFieldThinking, p.T("flows.field_thinking", "6. Thinking Mode"), thkPills))
 
 	// 8. Feed Output
 	feedVal := "off"
@@ -119,7 +120,7 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 		feedVal = "on"
 	}
 	feedPills := renderComboPills([]string{"off", "on"}, feedVal)
-	out = append(out, renderField(flowFieldFeedOutput, "7. Alimentar Output Anterior", feedPills))
+	out = append(out, renderField(flowFieldFeedOutput, p.T("flows.field_feed_output", "7. Feed Previous Output"), feedPills))
 
 	// 9. Control
 	waitVal := "auto"
@@ -127,11 +128,11 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 		waitVal = "wait (humano)"
 	}
 	waitPills := renderComboPills([]string{"auto", "wait (humano)"}, waitVal)
-	out = append(out, renderField(flowFieldWait, "8. Control de Fase", waitPills))
+	out = append(out, renderField(flowFieldWait, p.T("flows.field_wait", "8. Phase Control"), waitPills))
 
 	// 10. Prompt
-	prmHdr := renderField(flowFieldPrompt, "9. Prompt / Instrucciones", "")
-	prmHdr += " " + Pill("📋 Pegar", "#FFFFFF", "#0C4A6E") + " " + Pill("✨ Autogenerar", "#FFFFFF", "#581C87") + " " + Pill("🗑 Limpiar", "#FFFFFF", "#374151")
+	prmHdr := renderField(flowFieldPrompt, p.T("flows.field_prompt", "9. Prompt / Instructions"), "")
+	prmHdr += " " + Pill(p.T("flows.btn_paste", "📋 Paste"), "#FFFFFF", "#0C4A6E") + " " + Pill(p.T("flows.btn_autogen", "✨ Autogenerate"), "#FFFFFF", "#581C87") + " " + Pill(p.T("flows.btn_clear", "🗑 Clear"), "#FFFFFF", "#374151")
 	out = append(out, fit(prmHdr, w))
 
 	boxWidth := w - 6
@@ -148,7 +149,7 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	}
 	wrapped := wrapPromptText(content, boxWidth-4)
 	if len(wrapped) == 0 {
-		wrapped = []string{"(escribe aquí las instrucciones o pulsa ✨ Autogenerar)..."}
+		wrapped = []string{p.T("flows.prompt_placeholder", "(type instructions here or click ✨ Autogenerate)...")}
 	}
 	if len(wrapped) > 4 {
 		wrapped = wrapped[:4]
@@ -182,9 +183,9 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	if st.field == flowFieldSave {
 		btnMark3 = Paint(Accent).Bold(true).Render("▸ ")
 	}
-	btn1 := btnMark1 + Pill("+ Añadir Fase", "#FFFFFF", "#0C4A6E")
-	btn2 := btnMark2 + Pill("🗑 Borrar Fase", "#FFFFFF", "#7F1D1D")
-	btn3 := btnMark3 + Pill("✔ Guardar Flujo", "#FFFFFF", "#14532D")
+	btn1 := btnMark1 + Pill(p.T("flows.btn_add_phase", "+ Add Phase"), "#FFFFFF", "#0C4A6E")
+	btn2 := btnMark2 + Pill(p.T("flows.btn_del_phase", "🗑 Delete Phase"), "#FFFFFF", "#7F1D1D")
+	btn3 := btnMark3 + Pill(p.T("flows.btn_save_flow", "✔ Save Flow"), "#FFFFFF", "#14532D")
 	out = append(out, "  "+btn1+"    "+btn2+"    "+btn3, "")
 
 	waysOut := p.T("flows.ways_out_form", "[tab] field · [enter] action · {back} back",

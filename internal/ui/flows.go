@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"strconv"
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
@@ -64,6 +65,7 @@ func (m Model) openFlows() Model {
 	m.screen = screenFlows
 	m.flows = flowsState{
 		template: "ninguna",
+		sel:      -1,
 	}
 	m.flows.ensurePhase()
 	return m
@@ -79,51 +81,49 @@ func (m Model) flowsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if m.flows.creating {
 		return m.flowsFormKey(msg)
 	}
-	if m.flows.confirmDelete {
+	return m.flowsListKey(msg)
+}
+
+func (m Model) flowsListKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	st := &m.flows
+	p := m.opts.Words
+	if st.confirmDelete {
 		switch {
 		case msg.Text == "y" || msg.Text == "Y" || msg.Text == "s" || msg.Text == "S" || key.Matches(msg, m.keys.Open):
 			return m.confirmDeleteFlow()
 		default:
-			m.flows.confirmDelete = false
-			return m.say("borrado cancelado"), nil
+			st.confirmDelete = false
+			return m.say(p.T("flows.deletion_cancelled", "deletion cancelled")), nil
 		}
 	}
-	list := flow.List(m.opts.Flows)
+	descriptors := flow.List(m.opts.Flows)
 	switch {
-	case key.Matches(msg, m.keys.Back) || key.Matches(msg, m.keys.Quit):
-		return m.abandonFlows(), nil
-	case msg.Text == "n" || msg.Text == "N" || key.Matches(msg, m.keys.Start):
+	case key.Matches(msg, m.keys.Back):
+		m.screen = screenList
+		return m, nil
+	case key.Matches(msg, m.keys.Up):
+		if st.sel > -1 {
+			st.sel--
+		}
+		return m, nil
+	case key.Matches(msg, m.keys.Down):
+		if st.sel < len(descriptors)-1 {
+			st.sel++
+		}
+		return m, nil
+	case key.Matches(msg, m.keys.Start):
 		return m.startCreateFlow(), nil
 	case key.Matches(msg, m.keys.Open):
-		if m.flows.sel == -1 {
+		if st.sel == -1 {
 			return m.startCreateFlow(), nil
 		}
 		return m.editSelectedFlow()
 	case msg.Text == "e" || msg.Text == "E":
-		if m.flows.sel >= 0 {
-			return m.editSelectedFlow()
-		}
+		return m.editSelectedFlow()
+	case msg.Text == "d" || msg.Text == "D":
+		return m.deleteSelectedFlow()
+	case msg.Text == "n" || msg.Text == "N":
 		return m.startCreateFlow(), nil
-	case msg.Text == "d" || msg.Text == "D" || msg.Code == tea.KeyDelete:
-		if m.flows.sel >= 0 {
-			return m.deleteSelectedFlow()
-		}
-	case key.Matches(msg, m.keys.Up):
-		if len(list) > 0 {
-			m.flows.sel--
-			if m.flows.sel < -1 {
-				m.flows.sel = len(list) - 1
-			}
-		}
-		return m, nil
-	case key.Matches(msg, m.keys.Down):
-		if len(list) > 0 {
-			m.flows.sel++
-			if m.flows.sel >= len(list) {
-				m.flows.sel = -1
-			}
-		}
-		return m, nil
 	}
 	return m, nil
 }
@@ -131,15 +131,16 @@ func (m Model) flowsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	st := &m.flows
 	st.ensurePhase()
+	p := m.opts.Words
 	if st.confirmDiscard {
 		switch {
 		case msg.Text == "y" || msg.Text == "Y" || msg.Text == "s" || msg.Text == "S" || key.Matches(msg, m.keys.Open) || key.Matches(msg, m.keys.Back):
 			st.creating = false
 			st.confirmDiscard = false
-			return m.say("cambios descartados"), nil
+			return m.say(p.T("flows.changes_discarded", "changes discarded")), nil
 		default:
 			st.confirmDiscard = false
-			return m.say("edición reanudada"), nil
+			return m.say(p.T("flows.editing_resumed", "editing resumed")), nil
 		}
 	}
 
@@ -148,7 +149,7 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case key.Matches(msg, m.keys.Back):
 		if st.flowName != "" || len(st.phases) > 1 || st.cur().Prompt != "" {
 			st.confirmDiscard = true
-			return m.say("¿Descartar cambios del flujo? [y] sí / [n] no (o presiona Esc otra vez)"), nil
+			return m.say(p.T("flows.confirm_discard", "discard flow changes? [y] yes / [n] no (or press Esc again)")), nil
 		}
 		st.creating = false
 		return m, nil
@@ -200,21 +201,22 @@ func (m Model) handleFlowFieldDelta(delta int) (Model, tea.Cmd) {
 		st.template = nextOption(tpls, st.template, delta)
 		return m.applyFlowTemplate(st.template)
 	case flowFieldPhaseSelect:
-		if len(st.phases) > 0 {
-			st.activePhase = (st.activePhase + delta + len(st.phases)) % len(st.phases)
+		n := len(st.phases)
+		if n > 0 {
+			st.activePhase = (st.activePhase + delta + n) % n
 		}
 	case flowFieldEngine:
 		engs := []string{"claude", "codex", "opencode"}
-		st.cur().Engine = nextOption(engs, orDef(st.cur().Engine, "claude"), delta)
+		st.cur().Engine = nextOption(engs, st.cur().Engine, delta)
 	case flowFieldModel:
 		mdls := []string{"sonnet", "opus", "haiku", "default"}
-		st.cur().Model = nextOption(mdls, orDef(st.cur().Model, "sonnet"), delta)
+		st.cur().Model = nextOption(mdls, st.cur().Model, delta)
 	case flowFieldEffort:
 		effs := []string{"default", "low", "medium", "high", "xhigh", "max"}
-		st.cur().Effort = nextOption(effs, orDef(st.cur().Effort, "default"), delta)
+		st.cur().Effort = nextOption(effs, st.cur().Effort, delta)
 	case flowFieldThinking:
 		thks := []string{"adaptive", "on", "off"}
-		st.cur().Thinking = nextOption(thks, orDef(st.cur().Thinking, "adaptive"), delta)
+		st.cur().Thinking = nextOption(thks, st.cur().Thinking, delta)
 	case flowFieldFeedOutput:
 		st.cur().FeedOutput = !st.cur().FeedOutput
 	case flowFieldWait:
@@ -226,6 +228,7 @@ func (m Model) handleFlowFieldDelta(delta int) (Model, tea.Cmd) {
 func (m Model) handleFlowFieldAction() (Model, tea.Cmd) {
 	st := &m.flows
 	st.ensurePhase()
+	p := m.opts.Words
 	switch st.field {
 	case flowFieldTemplate:
 		return m.handleFlowFieldDelta(1)
@@ -245,7 +248,7 @@ func (m Model) handleFlowFieldAction() (Model, tea.Cmd) {
 		return m.handleFlowFieldDelta(1)
 	case flowFieldAddPhase:
 		st.phases = append(st.phases, flow.Phase{
-			Name:        fmt.Sprintf("%d-fase", len(st.phases)+1),
+			Name:        fmt.Sprintf("%d-phase", len(st.phases)+1),
 			Engine:      "claude",
 			Model:       "sonnet",
 			Effort:      "default",
@@ -255,17 +258,17 @@ func (m Model) handleFlowFieldAction() (Model, tea.Cmd) {
 		})
 		st.activePhase = len(st.phases) - 1
 		st.field = flowFieldPhaseName
-		return m.say(fmt.Sprintf("fase %d añadida", len(st.phases))), nil
+		return m.say(p.T("flows.phase_added", "phase {n} added", about("n", strconv.Itoa(len(st.phases))))), nil
 	case flowFieldDelPhase:
 		if len(st.phases) <= 1 {
-			return m.say("el flujo debe tener al menos una fase"), nil
+			return m.say(p.T("flows.min_phases_required", "the flow must have at least one phase")), nil
 		}
 		idx := st.activePhase
 		st.phases = append(st.phases[:idx], st.phases[idx+1:]...)
 		if st.activePhase >= len(st.phases) {
 			st.activePhase = len(st.phases) - 1
 		}
-		return m.say("fase eliminada"), nil
+		return m.say(p.T("flows.phase_deleted", "phase deleted")), nil
 	case flowFieldSave:
 		return m.saveCustomFlow()
 	}

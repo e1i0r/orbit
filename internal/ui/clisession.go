@@ -2,7 +2,6 @@ package ui
 
 import (
 	"errors"
-	"fmt"
 	"os/exec"
 
 	tea "charm.land/bubbletea/v2"
@@ -30,7 +29,7 @@ func (m Model) launchInteractiveCLI() (Model, tea.Cmd) {
 	if repoDir != "" {
 		cmd.Dir = repoDir
 	}
-	return m.say(fmt.Sprintf("abriendo sesión interactiva con %s...", eng)), tea.ExecProcess(cmd, func(err error) tea.Msg {
+	return m.say(m.opts.Words.T("msg.opening_cli", "opening interactive session with {engine}...", about("engine", eng))), tea.ExecProcess(cmd, func(err error) tea.Msg {
 		return cliEndedMsg{Engine: eng, Repo: repoDir, Err: err}
 	})
 }
@@ -39,7 +38,7 @@ func (m Model) handleCLIEnded(msg cliEndedMsg) (Model, tea.Cmd) {
 	if msg.Err != nil {
 		var exitErr *exec.ExitError
 		if !errors.As(msg.Err, &exitErr) {
-			return m.say(fmt.Sprintf("error al ejecutar %s: %s", msg.Engine, msg.Err.Error())), nil
+			return m.say(m.opts.Words.T("msg.cli_exec_error", "error running {engine}: {err}", about("engine", msg.Engine), about("err", msg.Err.Error()))), nil
 		}
 	}
 	m.confirm = confirmPostCliTask
