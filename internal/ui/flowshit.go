@@ -91,20 +91,18 @@ func (m Model) hitFlows(x, y int) Target {
 
 	st := &m.flows
 	// Overview lines
-	overviewLines := 4
-	for _, ph := range st.phases {
-		overviewLines++
+	curL := 5
+	for idx, ph := range st.phases {
+		startL := curL
+		curL++
 		if ph.Prompt != "" {
-			overviewLines++
+			curL++
 		}
-	}
-
-	if line >= 4 && line < 4+len(st.phases)*2 {
-		idx := (line - 4) / 2
-		if idx >= 0 && idx < len(st.phases) {
+		if line >= startL && line < curL {
 			return Target{Kind: TargetFlowItem, Field: "select_phase", Phase: idx}
 		}
 	}
+	overviewLines := curL + 1
 
 	pLines := len(wrapPromptText(st.cur().Prompt, 76))
 	if pLines < 1 {
@@ -137,13 +135,13 @@ func (m Model) hitFlows(x, y int) Target {
 	case fLine == 9:
 		return Target{Kind: TargetFlowItem, Phase: flowFieldWait}
 	case fLine == 10:
-		if x >= 30 && x < 44 {
+		if x >= 27 && x < 39 {
 			return Target{Kind: TargetFlowItem, Field: "paste_prompt"}
 		}
-		if x >= 44 && x < 62 {
+		if x >= 39 && x < 57 {
 			return Target{Kind: TargetFlowItem, Field: "autogen_prompt"}
 		}
-		if x >= 62 {
+		if x >= 57 {
 			return Target{Kind: TargetFlowItem, Field: "clear_prompt"}
 		}
 		return Target{Kind: TargetFlowItem, Phase: flowFieldPrompt}
