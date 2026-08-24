@@ -130,8 +130,13 @@ func (m Model) runSelected() (tea.Model, tea.Cmd) {
 // it — so the table keeps its rule that no command exists in one entry
 // point and not the other.
 func (m Model) launch(c Command, args []string) (tea.Model, tea.Cmd) {
-	if c.Name == "new" {
+	switch c.Name {
+	case "new":
 		return m.openCompose(), nil
+	case "set", "settings":
+		return m.openSettings(), nil
+	case "flows":
+		return m.openFlows(), nil
 	}
 	return m.runWatched(c, args)
 }

@@ -64,6 +64,10 @@ func (m Model) key(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.detailKey(msg)
 	case m.screen == screenCompose:
 		return m.composeKey(msg)
+	case m.screen == screenSettings:
+		return m.settingsKey(msg)
+	case m.screen == screenFlows:
+		return m.flowsKey(msg)
 	}
 	return m.listKey(msg)
 }

@@ -158,8 +158,9 @@ func commands() []Command {
 		Run: reconcile,
 	}, {
 		Name: "set", Args: "<key> <value>",
-		About: func(p *words.Printer) string { return p.T("cmd.set", "change a setting") },
-		Run:   set,
+		About:    func(p *words.Printer) string { return p.T("cmd.set", "change a setting") },
+		Run:      set,
+		InWindow: WindowOpens,
 	}}
 }
 

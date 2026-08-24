@@ -127,11 +127,8 @@ func (m Model) hit(x, y int) Target {
 			return m.hitDetail(x, y)
 		case screenStart:
 			return m.hitStart(x, y)
-		case screenCompose:
-			// The form is typed into, not pointed at: three fields and a
-			// caret move faster than a pointer can. When a field grows
-			// something to click — the repository's list, say — this arm
-			// is where its answer starts.
+		case screenCompose, screenSettings, screenFlows:
+			// The forms/screens are typed into, not pointed at.
 			return Target{}
 		}
 		return m.hitRow(x, y)

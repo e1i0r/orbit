@@ -200,6 +200,15 @@ func (a *settingsAdapter) SetLanguage(lang string) error {
 // chose it — see the type's own comment.
 func (a *settingsAdapter) UnreadCap() int { return a.read().UnreadCap }
 
+// Engine is the default engine when a task names none.
+func (a *settingsAdapter) Engine() string { return a.read().Engine }
+
+// Model is the default model when a phase names none.
+func (a *settingsAdapter) Model() string { return a.read().Model }
+
+// Flow is the flow a new task is written against.
+func (a *settingsAdapter) Flow() string { return a.read().Flow }
+
 // poll is the window's Reader with the settings file on the same clock.
 //
 // internal/ui asks its Reader for the board every board.RefreshEvery, from a

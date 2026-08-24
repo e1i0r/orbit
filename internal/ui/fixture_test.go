@@ -63,6 +63,10 @@ func (s *settings) SetLanguage(v string) error {
 
 func (s *settings) UnreadCap() int { return s.unread }
 
+func (s *settings) Engine() string { return "" }
+func (s *settings) Model() string  { return "" }
+func (s *settings) Flow() string   { return "task" }
+
 // arg is one placeholder for a reason, spelled the way internal/view spells
 // it so a fixture reads like the record it stands for.
 func arg(name, value string) view.Arg { return view.Arg{Name: name, Value: value} }

@@ -40,6 +40,9 @@ type Settings interface {
 	Language() string
 	SetLanguage(string) error
 	UnreadCap() int
+	Engine() string
+	Model() string
+	Flow() string
 }
 
 // Reader is the window's port to the state root, and everything it may ask

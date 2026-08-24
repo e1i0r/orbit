@@ -798,6 +798,46 @@
     "msg.no_screen_yet": {
       "source": "{name} opens a screen this window does not have yet",
       "value": "{name} abre una pantalla que esta ventana todavía no tiene"
+    },
+    "settings.title": {
+      "source": "Settings",
+      "value": "Configuración"
+    },
+    "settings.subtitle": {
+      "source": "changes take effect immediately",
+      "value": "los cambios tienen efecto de inmediato"
+    },
+    "settings.ways_out": {
+      "source": "{open} edit · {up_down} move · {back} back",
+      "value": "{open} editar · {up_down} mover · {back} volver"
+    },
+    "settings.ways_out_edit": {
+      "source": "{open} save · {back} cancel",
+      "value": "{open} guardar · {back} cancelar"
+    },
+    "flows.title": {
+      "source": "Flows",
+      "value": "Flujos"
+    },
+    "flows.read_only": {
+      "source": "flows are read-only; edit flow files under $ORBIT_HOME/flows/ to change them",
+      "value": "los flujos son de solo lectura; edita los archivos en $ORBIT_HOME/flows/ para cambiarlos"
+    },
+    "flows.none": {
+      "source": "no flows found",
+      "value": "no se encontraron flujos"
+    },
+    "flows.ways_out": {
+      "source": "{up_down} scroll · {back} back",
+      "value": "{up_down} desplazar · {back} volver"
+    },
+    "flow.runs_auto": {
+      "source": "runs automatically",
+      "value": "se ejecuta automáticamente"
+    },
+    "flow.stops_for_human": {
+      "source": "stops for human",
+      "value": "se detiene para un humano"
     }
   }
 }
