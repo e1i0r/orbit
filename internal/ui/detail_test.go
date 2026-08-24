@@ -252,12 +252,12 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 			}
 		},
 	}, {
-		name:  "← is Back on the log tab, not a dead key",
+		name:  "esc is Back on the log tab",
 		start: func(t *testing.T) Model { m, _ := openDetail(t, "ACME-2662"); return m },
-		msg:   press("left"),
+		msg:   press("esc"),
 		want: func(t *testing.T, m Model, _ tea.Cmd) {
 			if m.screen != screenList {
-				t.Errorf("screen is %v after ← on the log tab, want the list", m.screen)
+				t.Errorf("screen is %v after esc on the log tab, want the list", m.screen)
 			}
 		},
 	}, {

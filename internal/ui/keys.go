@@ -59,7 +59,7 @@ func NewKeys(p *words.Printer) Keys {
 		// it expands the band in place and on a row it opens the task, and
 		// the cursor is on exactly one of the two.
 		Open:    binding("⏎", p.T("key.open", "open"), "enter"),
-		Back:    binding("esc", p.T("key.back", "back"), "esc", "left"),
+		Back:    binding("esc", p.T("key.back", "back"), "esc"),
 		NextTab: binding("tab", p.T("key.next_tab", "next tab"), "tab"),
 		PrevTab: binding("⇧tab", p.T("key.prev_tab", "previous tab"), "shift+tab"),
 		// Sideways shares ← with Back, and detailKey matches it first: in a
