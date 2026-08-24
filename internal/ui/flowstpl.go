@@ -189,6 +189,11 @@ func (m Model) handleFlowClick(t Target) (tea.Model, tea.Cmd) {
 		m.flows.field = flowFieldPrompt
 		return m.say("prompt autogenerado para " + cur.Name), nil
 	}
+	if t.Field == "clear_prompt" {
+		m.flows.cur().Prompt = ""
+		m.flows.field = flowFieldPrompt
+		return m.say("instrucciones borradas"), nil
+	}
 	if t.Field == "add_phase" {
 		m.flows.field = flowFieldAddPhase
 		return m.handleFlowFieldAction()

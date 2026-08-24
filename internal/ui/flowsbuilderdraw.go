@@ -3,8 +3,6 @@ package ui
 import (
 	"fmt"
 	"strings"
-
-	"github.com/e1i0r/orbit/internal/flow"
 )
 
 func (m Model) flowsBuilderRows(h, w int) []string {
@@ -132,13 +130,45 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	out = append(out, renderField(flowFieldWait, "8. Control de Fase", waitPills))
 
 	// 10. Prompt
-	prmVal := "[" + curPh.Prompt + "_]"
-	if st.field != flowFieldPrompt && curPh.Prompt != "" {
-		prmVal = `"` + curPh.Prompt + `"`
+	prmHdr := renderField(flowFieldPrompt, "9. Prompt / Instrucciones", "")
+	prmHdr += " " + Pill("📋 Pegar", "#FFFFFF", "#0C4A6E") + " " + Pill("✨ Autogenerar", "#FFFFFF", "#581C87") + " " + Pill("🗑 Limpiar", "#FFFFFF", "#374151")
+	out = append(out, fit(prmHdr, w))
+
+	boxWidth := w - 6
+	if boxWidth > 80 {
+		boxWidth = 80
 	}
-	prmLine := renderField(flowFieldPrompt, "9. Prompt / Instrucciones", Paint(Accent).Render(prmVal))
-	prmLine += "  " + Pill("📋 Pegar", "#FFFFFF", "#0C4A6E") + " " + Pill("✨ Autogenerar", "#FFFFFF", "#581C87")
-	out = append(out, fit(prmLine, w))
+	if boxWidth < 36 {
+		boxWidth = 36
+	}
+
+	content := curPh.Prompt
+	if st.field == flowFieldPrompt {
+		content += "_"
+	}
+	wrapped := wrapPromptText(content, boxWidth-4)
+	if len(wrapped) == 0 {
+		wrapped = []string{"(escribe aquí las instrucciones o pulsa ✨ Autogenerar)..."}
+	}
+	if len(wrapped) > 4 {
+		wrapped = wrapped[:4]
+	}
+
+	boxBorderColor := Dim
+	if st.field == flowFieldPrompt {
+		boxBorderColor = Accent
+	}
+
+	out = append(out, Paint(boxBorderColor).Render("    ┌"+strings.Repeat("─", boxWidth-2)+"┐"))
+	for _, l := range wrapped {
+		linePad := pad(l, boxWidth-4, false)
+		txtStyle := Paint(Dim)
+		if st.field == flowFieldPrompt {
+			txtStyle = Paint(Accent)
+		}
+		out = append(out, "    "+Paint(boxBorderColor).Render("│ ")+txtStyle.Render(linePad)+Paint(boxBorderColor).Render(" │"))
+	}
+	out = append(out, Paint(boxBorderColor).Render("    └"+strings.Repeat("─", boxWidth-2)+"┘"))
 
 	// Actions
 	out = append(out, "")
@@ -161,119 +191,4 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 		about("back", m.keys.Back.Help().Key))
 	out = append(out, fit("  "+Paint(Dim).Render(waysOut), w))
 	return fill(out, h)
-}
-
-func renderComboPills(options []string, current string) string {
-	var views []string
-	for _, opt := range options {
-		if opt == current {
-			views = append(views, Paint(Sel).Render(" "+opt+" "))
-		} else {
-			views = append(views, Paint(Dim).Render(opt))
-		}
-	}
-	return strings.Join(views, " ")
-}
-
-func nextOption(options []string, current string, delta int) string {
-	if len(options) == 0 {
-		return current
-	}
-	idx := 0
-	for i, opt := range options {
-		if opt == current {
-			idx = i
-			break
-		}
-	}
-	nextIdx := (idx + delta) % len(options)
-	if nextIdx < 0 {
-		nextIdx += len(options)
-	}
-	return options[nextIdx]
-}
-
-func (m Model) hitFlows(x, y int) Target {
-	line, ok := m.frame.BodyRow(y)
-	if !ok {
-		return Target{}
-	}
-	if !m.flows.creating {
-		if line == 4 {
-			return Target{Kind: TargetFlowItem, Field: "create"}
-		}
-		descriptors := flow.List(m.opts.Flows)
-		curLine := 6
-		for i, d := range descriptors {
-			fl, _ := flow.Resolve(m.opts.Flows, d.Name)
-			phaseCount := len(fl.Phases)
-			if line >= curLine && line <= curLine+phaseCount {
-				m.flows.sel = i
-				if d.Origin != flow.OriginBuiltin && x >= 32 {
-					return Target{Kind: TargetFlowItem, Field: "delete", ID: d.Name}
-				}
-				return Target{Kind: TargetFlowItem, Field: "edit", ID: d.Name}
-			}
-			curLine += 1 + phaseCount + 1
-		}
-		return Target{}
-	}
-
-	st := &m.flows
-	// Overview lines
-	overviewLines := 4
-	for _, ph := range st.phases {
-		overviewLines++
-		if ph.Prompt != "" {
-			overviewLines++
-		}
-	}
-
-	if line >= 4 && line < 4+len(st.phases)*2 {
-		idx := (line - 4) / 2
-		if idx >= 0 && idx < len(st.phases) {
-			return Target{Kind: TargetFlowItem, Field: "select_phase", Phase: idx}
-		}
-	}
-
-	fLine := line - overviewLines
-	switch fLine {
-	case 0:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldTemplate}
-	case 1:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldName}
-	case 2:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldPhaseSelect}
-	case 3:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldPhaseName}
-	case 4:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldEngine}
-	case 5:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldModel}
-	case 6:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldEffort}
-	case 7:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldThinking}
-	case 8:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldFeedOutput}
-	case 9:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldWait}
-	case 10:
-		if x >= 55 && x < 68 {
-			return Target{Kind: TargetFlowItem, Field: "paste_prompt"}
-		}
-		if x >= 68 {
-			return Target{Kind: TargetFlowItem, Field: "autogen_prompt"}
-		}
-		return Target{Kind: TargetFlowItem, Phase: flowFieldPrompt}
-	case 12:
-		if x < 25 {
-			return Target{Kind: TargetFlowItem, Field: "add_phase"}
-		}
-		if x < 45 {
-			return Target{Kind: TargetFlowItem, Field: "del_phase"}
-		}
-		return Target{Kind: TargetFlowItem, Field: "save"}
-	}
-	return Target{}
 }
