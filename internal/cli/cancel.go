@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/task"
 )
 
@@ -33,22 +34,28 @@ func cancelTask(ctx Context, args []string) error {
 
 	s, r, err := openBoth(*dir)
 	if err != nil {
+		logger.Error("cli/cancel", "open repository %q failed: %v", *dir, err)
 		return err
 	}
 	t, err := task.Load(s, r, id)
 	if err != nil {
+		logger.Error("cli/cancel", "load task %q in %q failed: %v", id, r.Name, err)
 		return err
 	}
 	if *now {
 		if err := task.Kill(s, t); err != nil {
+			logger.Error("cli/cancel", "kill task %q in %q failed: %v", id, r.Name, err)
 			return err
 		}
+		logger.Warn("cli/cancel", "task %s in %s killed outright", id, r.Name)
 		fmt.Fprintf(ctx.Out, "%s killed — run `orbit reconcile -repo %s` to close its record\n", id, *dir)
 		return nil
 	}
 	if err := task.Cancel(s, t); err != nil {
+		logger.Error("cli/cancel", "cancel task %q in %q failed: %v", id, r.Name, err)
 		return err
 	}
+	logger.Info("cli/cancel", "task %s in %s requested to stop gracefully", id, r.Name)
 	fmt.Fprintf(ctx.Out, "%s asked to stop\n", id)
 	return nil
 }

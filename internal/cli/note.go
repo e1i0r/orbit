@@ -6,6 +6,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/task"
 )
 
@@ -28,15 +29,19 @@ func noteTask(ctx Context, args []string) error {
 
 	s, r, err := openBoth(*dir)
 	if err != nil {
+		logger.Error("cli/note", "open repository %q failed: %v", *dir, err)
 		return err
 	}
 	t, err := task.Load(s, r, id)
 	if err != nil {
+		logger.Error("cli/note", "load task %q in %q failed: %v", id, r.Name, err)
 		return err
 	}
 	if err := task.Note(s, t, text); err != nil {
+		logger.Error("cli/note", "append note to %q in %q failed: %v", id, r.Name, err)
 		return err
 	}
+	logger.Info("cli/note", "note added to task %s in repo %s", id, r.Name)
 	fmt.Fprintf(ctx.Out, "note recorded for %s — read by the next phase that starts\n", id)
 	return nil
 }

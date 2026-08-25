@@ -6,22 +6,11 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/task"
 )
 
 // reconcile closes the records of runs whose processes are gone.
-//
-// A run that was killed outright, or a machine that went down mid-phase,
-// leaves a log whose last event is phase.started — which reads for ever as a
-// task still running, because the process that could have said otherwise was
-// not given the chance. This is the reader that says otherwise, and it is
-// the same function the window calls when it opens. Naming a task does one;
-// naming none does every task in the repository, which is the usual way to
-// use it after a laptop has been closed on a run.
-//
-// A task that cannot be reconciled does not stop the others: the point of
-// the sweep is the tasks it can close, and one damaged marker holding up the
-// rest would make the command useless exactly when it is needed.
 func reconcile(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("reconcile", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
@@ -31,12 +20,14 @@ func reconcile(ctx Context, args []string) error {
 	}
 	s, r, err := openBoth(*dir)
 	if err != nil {
+		logger.Error("cli/reconcile", "open repository %q failed: %v", *dir, err)
 		return err
 	}
 
 	ids := []string{fs.Arg(0)}
 	if fs.Arg(0) == "" {
 		if ids, err = task.List(s, r); err != nil {
+			logger.Error("cli/reconcile", "list tasks in repo %q failed: %v", r.Name, err)
 			return err
 		}
 	}
@@ -46,11 +37,13 @@ func reconcile(ctx Context, args []string) error {
 	for _, id := range ids {
 		wrote, err := task.Reconcile(s, task.Task{ID: id, Repo: r})
 		if err != nil {
+			logger.Error("cli/reconcile", "reconcile task %q in repo %q failed: %v", id, r.Name, err)
 			errs = append(errs, err)
 			continue
 		}
 		if wrote {
 			closed++
+			logger.Info("cli/reconcile", "reconciled and marked abandoned: task %s in repo %s", id, r.Name)
 			fmt.Fprintf(ctx.Out, "%s was abandoned; its record says so now\n", id)
 		}
 	}

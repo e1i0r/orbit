@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/task"
 )
 
@@ -36,15 +37,19 @@ func controlTask(word string, ctx Context, args []string) error {
 
 	s, r, err := openBoth(*dir)
 	if err != nil {
+		logger.Error("cli/pause", "open repository %q failed: %v", *dir, err)
 		return err
 	}
 	t, err := task.Load(s, r, id)
 	if err != nil {
+		logger.Error("cli/pause", "load task %q in %q failed: %v", id, r.Name, err)
 		return err
 	}
 	if err := task.Control(s, t, word); err != nil {
+		logger.Error("cli/pause", "control task %q in %q (%s) failed: %v", id, r.Name, word, err)
 		return err
 	}
+	logger.Info("cli/pause", "task %s in %s requested to %s", id, r.Name, word)
 	fmt.Fprintf(ctx.Out, "%s asked to %s — a run in flight notices at its next phase\n", id, word)
 	return nil
 }

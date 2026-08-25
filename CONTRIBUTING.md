@@ -21,11 +21,15 @@ Before submitting code, please review our core architectural tenets:
 4. **Explicit Error Handling:**
    - **Never ignore or silence errors silently.** Always check `if err != nil` and propagate errors with `%w` wrapping.
    - Avoid `_ = f()` discards. If a discard is strictly intentional (e.g. best-effort closing of an already-errored reader), document it explicitly with a clear `//nolint:errcheck // reason` comment.
-5. **No Paraphrasing / Evidence Integrity:**
+5. **Transparent Diagnostic Logging:**
+   - Always log actionable errors and lifecycle events through `internal/logger` (`logger.Error`, `logger.Warn`, `logger.Info`).
+   - Every log entry must include a precise subsystem tag (e.g. `cli/run`, `cli/new`, `engine/claude`, `task/executor`, `board/refresh`).
+   - Keep log messages concise, transparent, and direct so issues are easy to pinpoint and debug.
+6. **No Paraphrasing / Evidence Integrity:**
    - LLM and tool outputs are recorded verbatim in append-only JSONLines event logs (`events.jsonl`).
-6. **Pure Layout Calculations:**
+7. **Pure Layout Calculations:**
    - `internal/ui/layout` performs pure geometric calculations without side effects or styling.
-7. **Internationalization & Translation Honesty:**
+8. **Internationalization & Translation Honesty:**
    - All user-facing UI text goes through `words.Printer` (`p.T(...)`).
    - Every key declared in `es.json` / `en.json` must be used in Go code (`TestEveryTranslationKeyIsHonest`).
 

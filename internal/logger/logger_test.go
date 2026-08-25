@@ -16,10 +16,10 @@ func TestLoggerLifecycleAndLevels(t *testing.T) {
 		t.Fatalf("failed to create logger: %v", err)
 	}
 
-	l.Log(LevelDebug, "debug event %d", 1)
-	l.Log(LevelInfo, "info event %s", "started")
-	l.Log(LevelWarn, "warn event")
-	l.Log(LevelError, "error occurred: %v", "fatal")
+	l.Log(LevelDebug, "cli/test", "debug event %d", 1)
+	l.Log(LevelInfo, "task/runner", "info event %s", "started")
+	l.Log(LevelWarn, "board/poll", "warn event")
+	l.Log(LevelError, "engine/claude", "error occurred: %v", "fatal")
 
 	if err := l.Close(); err != nil {
 		t.Errorf("error closing logger: %v", err)
@@ -31,7 +31,7 @@ func TestLoggerLifecycleAndLevels(t *testing.T) {
 	}
 
 	content := string(data)
-	for _, expected := range []string{"[DEBUG]", "[INFO]", "[WARN]", "[ERROR]", "debug event 1", "info event started"} {
+	for _, expected := range []string{"[DEBUG]", "[INFO]", "[WARN]", "[ERROR]", "[cli/test]", "[task/runner]", "[board/poll]", "[engine/claude]", "debug event 1", "info event started"} {
 		if !strings.Contains(content, expected) {
 			t.Errorf("expected log file to contain %q, got:\n%s", expected, content)
 		}
@@ -51,10 +51,10 @@ func TestGlobalLogger(t *testing.T) {
 		}
 	}()
 
-	Debug("global debug")
-	Info("global info")
-	Warn("global warn")
-	Error("global error")
+	Debug("cli/top", "global debug")
+	Info("cli/run", "global info")
+	Warn("task/gate", "global warn")
+	Error("engine/exec", "global error")
 
 	if err := CloseGlobal(); err != nil {
 		t.Errorf("error closing global logger: %v", err)
@@ -66,7 +66,7 @@ func TestGlobalLogger(t *testing.T) {
 	}
 
 	content := string(data)
-	if !strings.Contains(content, "global info") || !strings.Contains(content, "global error") {
+	if !strings.Contains(content, "[cli/run] global info") || !strings.Contains(content, "[engine/exec] global error") {
 		t.Errorf("global logger missing entries, got:\n%s", content)
 	}
 }
@@ -95,7 +95,7 @@ func TestNilLoggerSafety(t *testing.T) {
 	if err := l.Close(); err != nil {
 		t.Errorf("nil logger close should not error: %v", err)
 	}
-	l.Log(LevelInfo, "should not panic")
+	l.Log(LevelInfo, "test", "should not panic")
 }
 
 func TestLoggerErrorPaths(t *testing.T) {
@@ -114,5 +114,5 @@ func TestLoggerErrorPaths(t *testing.T) {
 		t.Errorf("failed to close logger: %v", err)
 	}
 	// Log on closed file should be safe
-	l.Log(LevelInfo, "entry on closed file")
+	l.Log(LevelInfo, "", "entry on closed file")
 }

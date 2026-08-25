@@ -2,6 +2,10 @@
 //
 // All logs are written to an internal file (e.g. ~/.orbit/logs/orbit.log)
 // rather than polluting terminal standard output, ensuring clean TUI rendering.
+//
+// Format:
+//
+//	[2026-08-25T00:54:12.123Z] [INFO] [cli/run] starting task ACME-1 in repo payments on flow careful
 package logger
 
 import (
@@ -22,6 +26,8 @@ const (
 	LevelWarn
 	LevelError
 )
+
+const timeFormat = "2006-01-02T15:04:05.000Z07:00"
 
 func (l Level) String() string {
 	switch l {
@@ -105,8 +111,8 @@ func (l *Logger) Close() error {
 	return nil
 }
 
-// Log writes a leveled log entry with an RFC3339 timestamp.
-func (l *Logger) Log(lvl Level, format string, args ...any) {
+// Log writes a leveled log entry with timestamp, level, module tag, and formatted message.
+func (l *Logger) Log(lvl Level, module, format string, args ...any) {
 	if l == nil {
 		return
 	}
@@ -117,48 +123,50 @@ func (l *Logger) Log(lvl Level, format string, args ...any) {
 		return
 	}
 
-	ts := time.Now().UTC().Format(time.RFC3339)
+	if module == "" {
+		module = "orbit"
+	}
+	ts := time.Now().UTC().Format(timeFormat)
 	msg := fmt.Sprintf(format, args...)
-	entry := fmt.Sprintf("[%s] [%s] %s\n", ts, lvl.String(), msg)
+	entry := fmt.Sprintf("[%s] [%s] [%s] %s\n", ts, lvl.String(), module, msg)
 	if _, err := l.file.WriteString(entry); err != nil {
-		// drop entry if disk write fails
 		return
 	}
 }
 
-// Debug logs a debug message to the default logger.
-func Debug(format string, args ...any) {
+// Debug logs a debug message with module tag to the default logger.
+func Debug(module, format string, args ...any) {
 	globalMu.RLock()
 	defer globalMu.RUnlock()
 	if global != nil {
-		global.Log(LevelDebug, format, args...)
+		global.Log(LevelDebug, module, format, args...)
 	}
 }
 
-// Info logs an informational message to the default logger.
-func Info(format string, args ...any) {
+// Info logs an informational message with module tag to the default logger.
+func Info(module, format string, args ...any) {
 	globalMu.RLock()
 	defer globalMu.RUnlock()
 	if global != nil {
-		global.Log(LevelInfo, format, args...)
+		global.Log(LevelInfo, module, format, args...)
 	}
 }
 
-// Warn logs a warning message to the default logger.
-func Warn(format string, args ...any) {
+// Warn logs a warning message with module tag to the default logger.
+func Warn(module, format string, args ...any) {
 	globalMu.RLock()
 	defer globalMu.RUnlock()
 	if global != nil {
-		global.Log(LevelWarn, format, args...)
+		global.Log(LevelWarn, module, format, args...)
 	}
 }
 
-// Error logs an error message to the default logger.
-func Error(format string, args ...any) {
+// Error logs an error message with module tag to the default logger.
+func Error(module, format string, args ...any) {
 	globalMu.RLock()
 	defer globalMu.RUnlock()
 	if global != nil {
-		global.Log(LevelError, format, args...)
+		global.Log(LevelError, module, format, args...)
 	}
 }
 
