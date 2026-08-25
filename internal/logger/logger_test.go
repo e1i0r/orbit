@@ -31,7 +31,12 @@ func TestLoggerLifecycleAndLevels(t *testing.T) {
 	}
 
 	content := string(data)
-	for _, expected := range []string{"[DEBUG]", "[INFO]", "[WARN]", "[ERROR]", "[cli/test]", "[task/runner]", "[board/poll]", "[engine/claude]", "debug event 1", "info event started"} {
+	expectedTokens := []string{
+		"[DEBUG]", "[INFO]", "[WARN]", "[ERROR]",
+		"[cli/test]", "[task/runner]", "[board/poll]", "[engine/claude]",
+		"debug event 1", "info event started",
+	}
+	for _, expected := range expectedTokens {
 		if !strings.Contains(content, expected) {
 			t.Errorf("expected log file to contain %q, got:\n%s", expected, content)
 		}
