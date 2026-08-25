@@ -10,15 +10,22 @@ Before submitting code, please review our core architectural tenets:
 
 1. **Strict File Size Limit ($< 300$ lines):**
    - Every Go file (`*.go`) must strictly stay under **300 lines** (target $\le 295$ lines).
-   - If a file grows beyond 300 lines, extract cohesive sub-responsibilities into adjacent focused files (e.g. `settingsdials.go`, `flowsmouse.go`, `mouseroute.go`).
-2. **Explicit Error Handling:**
-   - **Never ignore or silence errors silently.** Always check `if err != nil` and propagate with `%w` for error wrapping.
-   - Avoid `_ = f()` discards unless explicitly documented and marked with `//nolint:errcheck // reason`.
-3. **No Paraphrasing / Evidence Integrity:**
+   - If a file approaches or grows beyond 300 lines, split cohesive sub-responsibilities into adjacent focused files (e.g. `settingsdials.go`, `flowsmouse.go`, `mouseroute.go`).
+2. **File Naming & Component Structure:**
+   - Use clear, lower-case, cohesive file names (`snake_case` or compact compound nouns, e.g. `pane_overview.go`, `settings_dials.go`, `flow_template.go`).
+   - Group package code logically: data structures and interfaces first, followed by implementation, message handlers, and view renderers.
+   - Keep domain packages decoupled: `internal/board` owns task queue state, `internal/task` owns execution, `internal/record` owns append-only logs, and `internal/ui` owns TUI rendering.
+3. **$\ge 90\%$ Test Coverage Standard:**
+   - All contributions must maintain or improve repository test coverage, targeting **$\ge 90\%$ total coverage**.
+   - Include unit tests, full multi-phase task lifecycle E2E tests, and property/fuzz tests where input parsers or event streams are modified.
+4. **Explicit Error Handling:**
+   - **Never ignore or silence errors silently.** Always check `if err != nil` and propagate errors with `%w` wrapping.
+   - Avoid `_ = f()` discards. If a discard is strictly intentional (e.g. best-effort closing of an already-errored reader), document it explicitly with a clear `//nolint:errcheck // reason` comment.
+5. **No Paraphrasing / Evidence Integrity:**
    - LLM and tool outputs are recorded verbatim in append-only JSONLines event logs (`events.jsonl`).
-4. **Pure Layout Calculations:**
+6. **Pure Layout Calculations:**
    - `internal/ui/layout` performs pure geometric calculations without side effects or styling.
-5. **Internationalization & Translation Honesty:**
+7. **Internationalization & Translation Honesty:**
    - All user-facing UI text goes through `words.Printer` (`p.T(...)`).
    - Every key declared in `es.json` / `en.json` must be used in Go code (`TestEveryTranslationKeyIsHonest`).
 

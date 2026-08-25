@@ -24,6 +24,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/engine"
+	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/quota"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/ui"
@@ -53,6 +54,10 @@ func top(ctx Context, args []string) error {
 	opts, s, err := window(dir, lang)
 	if err != nil {
 		return err
+	}
+	if logErr := logger.Init(s.LogPath()); logErr == nil {
+		defer func() { _ = logger.CloseGlobal() }() //nolint:errcheck // best-effort logger flush on process exit
+		logger.Info("orbit top started on %q (once=%v, lang=%q)", dir, once, lang)
 	}
 	swept := reconcileAll(s)
 
