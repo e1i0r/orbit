@@ -1,15 +1,13 @@
 <div align="center">
 
-# 🛰️ Orbit
+<img src="assets/logo.png" alt="Orbit" width="360">
 
-**A Cockpit for Supervising Autonomous Coding Agents**
+*Supervise, steer, and verify multi-agent software development at terminal velocity.*
 
 [![CI](https://github.com/e1i0r/orbit/actions/workflows/check.yml/badge.svg)](https://github.com/e1i0r/orbit/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Go Version](https://img.shields.io/badge/Go-1.26+-00ADD8.svg?logo=go)](https://go.dev)
 [![TUI](https://img.shields.io/badge/TUI-Bubble%20Tea%20v2-FF5F87.svg)](https://charm.sh)
-
-*A body in orbit spends no fuel. You burn the motor only to change course, then coast again.*
 
 </div>
 
@@ -17,9 +15,13 @@
 
 ## ⚡ What is Orbit?
 
-**Orbit** is a terminal-based cockpit (`TUI`) and orchestration engine designed to supervise, inspect, and steer autonomous coding agents (**Claude Code**, **Codex**, **OpenCode**, and local LLMs) across complex software engineering workflows.
+**Orbit** is a high-performance terminal flight deck (`TUI`) built to transform autonomous AI coding from an uncontrolled gamble into a **disciplined, production-grade engineering pipeline**.
 
-Unlike standalone CLI agents that run in uncontrolled loops, Orbit provides a **central flight deck** where multiple tasks run concurrently in isolated Git worktrees, walking structured multi-phase pipelines with human-in-the-loop verification gates and append-only evidence logs.
+While running raw CLI agents in standalone tabs quickly leads to branch pollution, silent failures, and burned API budgets, Orbit gives you **centralized command and real-time observability** over fleets of concurrent agents (**Claude Code**, **Codex**, **OpenCode**, and local models).
+
+- 🌲 **Zero Working-Tree Pollution:** Every task executes inside an isolated, throwaway Git worktree.
+- 🛡️ **Autonomous Gates & Human Sign-Offs:** Multi-stage pipelines (`plan` $\rightarrow$ `build` $\rightarrow$ `test` $\rightarrow$ `audit`) with automated test verification and mid-flight steering.
+- 🔍 **Deep Flight Telemetry:** 11 real-time inspector tabs covering live Git diffs, chain-of-thought traces, token economics, tool refusals, and operator notes.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐

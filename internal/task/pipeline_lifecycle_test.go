@@ -2,12 +2,15 @@ package task
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/record"
+	"github.com/e1i0r/orbit/internal/repo"
 )
 
 // TestPipelineThoughtsAndRefusalsEmitted tests that thoughts and tool refusals are properly recorded.
@@ -210,6 +213,36 @@ func TestAliveMarkersAndBoot(t *testing.T) {
 	// Stale across boot for zero time
 	if staleAcrossBoot(time.Time{}) {
 		t.Error("expected staleAcrossBoot(zero) to be false")
+	}
+}
+
+// TestStartErrorPaths covers Start's own error returns: the settings file
+// cannot be read, and the child process cannot start.
+func TestStartErrorPaths(t *testing.T) {
+	s, r := fixture(t)
+	tk, err := Create(s, r, "START-ERR-1", "start error test", "quick")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	// 1. Settings unreadable.
+	settingsPath := filepath.Join(s.Root(), "settings.json")
+	if err := os.Mkdir(settingsPath, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Start(s, tk, "quick", 0); err == nil {
+		t.Error("Start should have failed when settings.json cannot be read")
+	}
+	if err := os.Remove(settingsPath); err != nil {
+		t.Fatal(err)
+	}
+
+	// 2. cmd.Start fails: the repository's own directory does not exist,
+	// which is where the child is told to run.
+	gone := repo.Repo{Path: filepath.Join(t.TempDir(), "does-not-exist"), Name: "gone"}
+	tkGone := Task{ID: "START-ERR-2", Repo: gone}
+	if _, err := Start(s, tkGone, "quick", 0); err == nil {
+		t.Error("Start should have failed to spawn a child in a directory that does not exist")
 	}
 }
 

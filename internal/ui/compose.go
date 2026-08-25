@@ -110,8 +110,8 @@ func (c *composeState) set(v string) {
 // completion earns its keep.
 func (m Model) composeTab(d int) Model {
 	if d > 0 && m.compose.field == composeRepo {
-		if done := m.composeComplete(); done {
-			return m
+		if completed, done := m.composeComplete(); done {
+			return completed
 		}
 	}
 	m.compose.field += d
@@ -131,15 +131,15 @@ func (m Model) composeTab(d int) Model {
 // The names come off the tasks the board is holding, which is the list the
 // reader can already see; the walk's own count is a number, and a number
 // completes nothing.
-func (m Model) composeComplete() bool {
+func (m Model) composeComplete() (Model, bool) {
 	prefix := strings.ToLower(m.compose.repo)
 	for _, t := range m.board.Tasks {
 		if strings.HasPrefix(strings.ToLower(t.Repo), prefix) {
 			m.compose.repo = t.Repo
-			return true
+			return m, true
 		}
 	}
-	return false
+	return m, false
 }
 
 // composeNext moves to the following field, and on the last one submits.
