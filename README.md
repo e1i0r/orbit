@@ -24,17 +24,18 @@ While running raw CLI agents in standalone tabs quickly leads to branch pollutio
 - 🔍 **Deep Flight Telemetry:** 11 real-time inspector tabs covering live Git diffs, chain-of-thought traces, token economics, tool refusals, and operator notes.
 
 ```
-┌────────────────────────────────────────────────────────────────────────────┐
-│ ORBIT  ~/projects/payments    ● 2 running · 3 to do · 12 done   ⚡ autopilot │
-├────────────────────────────────────────────────────────────────────────────┤
-│  ▸ payments  ACME-2662  Retry webhook on 5xx     failed (gates)    14m ago │
-│    app       ACME-2705  Reconciliation endpoint  ⚡ claude · opus   8m ago  │
-│    payments  ACME-2706  Index on settlements     ⚡ claude · opus   3m ago  │
-│    app       ACME-2710  Add audit trail logger   to do             1h ago  │
-├────────────────────────────────────────────────────────────────────────────┤
-│ [1] Overview  [2] Flow  [3] Gates  [4] Cost  [5] Refused  [6] Timeline     │
-│ [7] Report    [8] Artifacts  [9] Notes  [0] Diff  [w] Thinking             │
-└────────────────────────────────────────────────────────────────────────────┘
+ [orbit]   ~/projects/payments                     📦 2 repos   🧠 claude   🌐 EN
+──────────────────────────────────────────────────────────────────────────────────
+  $2.14 spent  ·  4 tasks  ·  17 events  ·  1ms read
+  🛑 NEEDS YOU (1) ─────────────────────────────────────────────────────────────
+▸ payments  ACME-2662  Retry the webhook on 5xx        failed: gates         14m
+  ⚡ RUNNING (2) ───────────────────────────────────────────────────────────────
+  app       ACME-2705  Reconciliation endpoint         implement    opus      8m
+  payments  ACME-2706  Index on settlements            review 2/3   opus      3m
+  📋 TO DO (1) ─────────────────────────────────────────────────────────────────
+  app       ACME-2710  Add audit trail logger          not started            1h
+──────────────────────────────────────────────────────────────────────────────────
+ [↑↓] move  [⏎] open  [n] start  [/] filter  [?] [q]      ⚡ autopilot ● [A]  💬 cli [c]
 ```
 
 ---

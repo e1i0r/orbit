@@ -1,7 +1,7 @@
 export PATH := /usr/local/go/bin:$(HOME)/go/bin:$(PATH)
 GO ?= $(shell which go 2>/dev/null || echo /usr/local/go/bin/go)
 
-.PHONY: check fmt vet lint test coverage tidy build install
+.PHONY: check fmt vet lint test coverage tidy build install run
 
 # check is what a contributor runs before pushing, so it has to be what CI
 # runs: lint used to be in CI and not here, which meant a green local check
@@ -53,3 +53,9 @@ install: build
 	@mkdir -p "$(BINDIR)"
 	install -m 0755 orbit "$(BINDIR)/orbit"
 	@echo "installed $(BINDIR)/orbit"
+
+# run opens the cockpit over the current directory. ARGS is the escape hatch
+# for everything top takes — a different root, or none of this and a flag
+# instead — so this stays the one command a contributor needs to remember.
+run:
+	$(GO) run ./cmd/orbit top $(ARGS)
