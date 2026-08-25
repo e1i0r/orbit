@@ -115,27 +115,29 @@ func (m Model) hitCompose(x, y int) Target {
 		case line == 3:
 			return m.hitComposeFlowPills(x, composeFlow)
 		case line == 4:
-			return m.hitComposeModelPills(x, composeModel)
+			return m.hitComposeEnginePills(x, composeEngine)
 		case line == 5:
-			return m.hitComposeThinkingPills(x, composeThinking)
+			return m.hitComposeModelPills(x, composeModel)
 		case line == 6:
-			return m.hitComposeEffortPills(x, composeEffort)
+			return m.hitComposeThinkingPills(x, composeThinking)
 		case line == 7:
-			return Target{Kind: TargetComposeField, Pane: composeID}
+			return m.hitComposeEffortPills(x, composeEffort)
 		case line == 8:
-			if x >= 10 && x <= 30 {
+			return Target{Kind: TargetComposeField, Pane: composeID}
+		case line == 9:
+			if x >= 17 && x <= 37 {
 				return Target{Kind: TargetComposePaste}
 			}
 			return Target{Kind: TargetComposeField, Pane: composeText}
-		case line >= 9 && line <= 15:
+		case line >= 10 && line <= 16:
 			return Target{Kind: TargetComposeField, Pane: composeText}
-		case line >= 16:
+		case line >= 17:
 			return hitComposeActions(x)
 		}
 	} else {
 		switch {
 		case line == 2:
-			if x >= 12 && x <= 32 {
+			if x >= 17 && x <= 37 {
 				return Target{Kind: TargetComposePaste}
 			}
 			return Target{Kind: TargetComposeField, Pane: composeURL}
@@ -144,12 +146,14 @@ func (m Model) hitCompose(x, y int) Target {
 		case line == 4:
 			return m.hitComposeFlowPills(x, composeURLFlow)
 		case line == 5:
-			return m.hitComposeModelPills(x, composeURLModel)
+			return m.hitComposeEnginePills(x, composeURLEngine)
 		case line == 6:
-			return m.hitComposeThinkingPills(x, composeURLThinking)
+			return m.hitComposeModelPills(x, composeURLModel)
 		case line == 7:
+			return m.hitComposeThinkingPills(x, composeURLThinking)
+		case line == 8:
 			return m.hitComposeEffortPills(x, composeURLEffort)
-		case line >= 9:
+		case line >= 10:
 			return hitComposeActions(x)
 		}
 	}
@@ -157,7 +161,7 @@ func (m Model) hitCompose(x, y int) Target {
 }
 
 func (m Model) hitComposeRepoPills(x int, field int) Target {
-	curX := 15
+	curX := 17
 	for i, r := range m.compose.repos {
 		pillWidth := composePillWidth(r.name, i == m.compose.repoIdx)
 		if x >= curX && x < curX+pillWidth {
@@ -169,7 +173,7 @@ func (m Model) hitComposeRepoPills(x int, field int) Target {
 }
 
 func (m Model) hitComposeFlowPills(x int, field int) Target {
-	curX := 12
+	curX := 17
 	for i, f := range m.compose.flows {
 		pillWidth := composePillWidth("⚡ "+f, i == m.compose.flowIdx)
 		if x >= curX && x < curX+pillWidth {
@@ -183,8 +187,20 @@ func (m Model) hitComposeFlowPills(x int, field int) Target {
 	return Target{Kind: TargetComposeField, Pane: field}
 }
 
+func (m Model) hitComposeEnginePills(x int, field int) Target {
+	curX := 17
+	for i, eng := range m.compose.engines {
+		pillWidth := composePillWidth(eng, i == m.compose.engineIdx)
+		if x >= curX && x < curX+pillWidth {
+			return Target{Kind: TargetComposeEngineChoice, Pane: i}
+		}
+		curX += pillWidth + 1
+	}
+	return Target{Kind: TargetComposeField, Pane: field}
+}
+
 func (m Model) hitComposeModelPills(x int, field int) Target {
-	curX := 12
+	curX := 17
 	for i, mod := range m.compose.models {
 		pillWidth := composePillWidth(mod, i == m.compose.modelIdx)
 		if x >= curX && x < curX+pillWidth {
@@ -196,7 +212,7 @@ func (m Model) hitComposeModelPills(x int, field int) Target {
 }
 
 func (m Model) hitComposeThinkingPills(x int, field int) Target {
-	curX := 14
+	curX := 17
 	for i, th := range m.compose.thinkings {
 		pillWidth := composePillWidth(th, i == m.compose.thinkingIdx)
 		if x >= curX && x < curX+pillWidth {
@@ -208,7 +224,7 @@ func (m Model) hitComposeThinkingPills(x int, field int) Target {
 }
 
 func (m Model) hitComposeEffortPills(x int, field int) Target {
-	curX := 14
+	curX := 17
 	for i, ef := range m.compose.efforts {
 		pillWidth := composePillWidth(ef, i == m.compose.effortIdx)
 		if x >= curX && x < curX+pillWidth {

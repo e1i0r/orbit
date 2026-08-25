@@ -7,7 +7,7 @@ import (
 )
 
 // composeRows draws the compose screen: top tabs, fields, repository selector,
-// flow, model, thinking, effort selectors, issue preview, and action buttons.
+// flow, engine, model, thinking, effort selectors, issue preview, and action buttons.
 func (m Model) composeRows(h, w int) []string {
 	if h <= 0 {
 		return nil
@@ -53,6 +53,7 @@ func (m Model) composeManualRows(w int) []string {
 
 	out = append(out, m.composeRepoLine(m.compose.field == composeRepo, w))
 	out = append(out, m.composeFlowLine(m.compose.field == composeFlow, w))
+	out = append(out, m.composeEngineLine(m.compose.field == composeEngine, w))
 	out = append(out, m.composeModelLine(m.compose.field == composeModel, w))
 	out = append(out, m.composeThinkingLine(m.compose.field == composeThinking, w))
 	out = append(out, m.composeEffortLine(m.compose.field == composeEffort, w))
@@ -86,6 +87,7 @@ func (m Model) composeURLRows(w int) []string {
 
 	out = append(out, m.composeRepoLine(m.compose.field == composeURLRepo, w))
 	out = append(out, m.composeFlowLine(m.compose.field == composeURLFlow, w))
+	out = append(out, m.composeEngineLine(m.compose.field == composeURLEngine, w))
 	out = append(out, m.composeModelLine(m.compose.field == composeURLModel, w))
 	out = append(out, m.composeThinkingLine(m.compose.field == composeURLThinking, w))
 	out = append(out, m.composeEffortLine(m.compose.field == composeURLEffort, w))
@@ -105,13 +107,9 @@ func (m Model) composeURLRows(w int) []string {
 func (m Model) composeTextArea(w int) []string {
 	p := m.opts.Words
 	active := m.compose.field == composeText
-	mark := strings.Repeat(" ", gutter)
-	if active {
-		mark = markGlyph + strings.Repeat(" ", gutter-1)
-	}
-	header := mark + Paint(Dim).Render(p.T("compose.text", "task")+":")
+	header := composeLabel(p.T("compose.text", "task"), active)
 	pastePill := Pill(" 📋 "+p.T("compose.btn_paste", "Paste (^V)")+" ", "#FFFFFF", "#0369A1")
-	header += " " + pastePill
+	header += pastePill
 	if active {
 		header += " " + Paint(Dim).Render(p.T("compose.text_hint", "(Shift+↵ para nueva línea)"))
 	}
@@ -159,11 +157,11 @@ func (m Model) composeTextArea(w int) []string {
 			content += Paint(Sel).Render(" ")
 		}
 		wLine := lipgloss.Width(content)
-		pad := innerW - wLine
-		if pad < 0 {
-			pad = 0
+		padW := innerW - wLine
+		if padW < 0 {
+			padW = 0
 		}
-		row := "  " + borderStyle.Render("│ ") + content + strings.Repeat(" ", pad) + borderStyle.Render(" │")
+		row := "  " + borderStyle.Render("│ ") + content + strings.Repeat(" ", padW) + borderStyle.Render(" │")
 		out = append(out, fit(row, w))
 	}
 	out = append(out, fit("  "+borderStyle.Render("└"+strings.Repeat("─", boxW-2)+"┘"), w))
@@ -172,16 +170,13 @@ func (m Model) composeTextArea(w int) []string {
 
 func (m Model) composeFieldLine(fieldIdx int, label, val, placeholder string, w int) string {
 	active := m.compose.field == fieldIdx
-	mark := strings.Repeat(" ", gutter)
-	if active {
-		mark = markGlyph + strings.Repeat(" ", gutter-1)
-	}
+	prefix := composeLabel(label, active)
 	role := Accent
 	if val == "" {
 		val = placeholder
 		role = Dim
 	}
-	line := mark + Paint(Dim).Render(label+": ") + Paint(role).Render(val)
+	line := prefix + Paint(role).Render(val)
 	if active {
 		line += Paint(Sel).Render(" ")
 	}

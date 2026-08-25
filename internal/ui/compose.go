@@ -20,6 +20,7 @@ const (
 const (
 	composeRepo = iota
 	composeFlow
+	composeEngine
 	composeModel
 	composeThinking
 	composeEffort
@@ -32,6 +33,7 @@ const (
 	composeURL = iota
 	composeURLRepo
 	composeURLFlow
+	composeURLEngine
 	composeURLModel
 	composeURLThinking
 	composeURLEffort
@@ -49,14 +51,17 @@ type composeState struct {
 	repoIdx     int
 	parsedIssue *tracker.Issue
 
-	flows       []string
-	flowIdx     int
-	models      []string
-	modelIdx    int
-	thinkings   []string
-	thinkingIdx int
-	efforts     []string
-	effortIdx   int
+	flows          []string
+	flowIdx        int
+	engines        []string
+	engineIdx      int
+	modelsByEngine map[string][]string
+	models         []string
+	modelIdx       int
+	thinkings      []string
+	thinkingIdx    int
+	efforts        []string
+	effortIdx      int
 }
 
 // openCompose brings the form up with the repository defaulted to the current task's repo.
@@ -90,19 +95,27 @@ func (m Model) openCompose() Model {
 		flows = []string{"task", "quick", "careful"}
 	}
 
-	models := []string{"sonnet", "opus", "haiku", "gpt-4o"}
+	engines := []string{"claude", "codex", "opencode"}
+	modelsByEngine := map[string][]string{
+		"claude":   {"sonnet", "opus", "haiku"},
+		"codex":    {"gpt-4o", "o1", "o3-mini"},
+		"opencode": {"qwen-2.5-coder", "deepseek-r1", "llama-3.3"},
+	}
+	models := modelsByEngine["claude"]
 	thinkings := []string{"adaptive", "off", "4000", "8000", "max"}
 	efforts := []string{"default", "low", "medium", "high", "max"}
 
 	m.compose = composeState{
-		tab:       composeTabManual,
-		repo:      initialRepo,
-		repos:     repos,
-		repoIdx:   repoIdx,
-		flows:     flows,
-		models:    models,
-		thinkings: thinkings,
-		efforts:   efforts,
+		tab:            composeTabManual,
+		repo:           initialRepo,
+		repos:          repos,
+		repoIdx:        repoIdx,
+		flows:          flows,
+		engines:        engines,
+		modelsByEngine: modelsByEngine,
+		models:         models,
+		thinkings:      thinkings,
+		efforts:        efforts,
 	}
 	return m
 }

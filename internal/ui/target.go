@@ -31,6 +31,7 @@ const (
 	TargetComposeTab
 	TargetComposeRepoChoice
 	TargetComposeFlowChoice
+	TargetComposeEngineChoice
 	TargetComposeModelChoice
 	TargetComposeThinkingChoice
 	TargetComposeEffortChoice

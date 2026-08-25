@@ -6,13 +6,20 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-func (m Model) composeRepoLine(active bool, w int) string {
-	p := m.opts.Words
+const composeLabelWidth = 14
+
+func composeLabel(label string, active bool) string {
 	mark := strings.Repeat(" ", gutter)
 	if active {
 		mark = markGlyph + strings.Repeat(" ", gutter-1)
 	}
-	prefix := mark + Paint(Dim).Render(p.T("compose.repo", "repository")+": ")
+	padded := pad(label+":", composeLabelWidth, false)
+	return mark + Paint(Dim).Render(padded) + " "
+}
+
+func (m Model) composeRepoLine(active bool, w int) string {
+	p := m.opts.Words
+	prefix := composeLabel(p.T("compose.repo", "repository"), active)
 
 	if len(m.compose.repos) == 0 {
 		val := m.compose.repo
@@ -46,11 +53,7 @@ func (m Model) composeRepoLine(active bool, w int) string {
 
 func (m Model) composeFlowLine(active bool, w int) string {
 	p := m.opts.Words
-	mark := strings.Repeat(" ", gutter)
-	if active {
-		mark = markGlyph + strings.Repeat(" ", gutter-1)
-	}
-	prefix := mark + Paint(Dim).Render(p.T("compose.flow", "flujo")+": ")
+	prefix := composeLabel(p.T("compose.flow", "flujo"), active)
 
 	var pills []string
 	for i, f := range m.compose.flows {
@@ -78,13 +81,29 @@ func (m Model) composeFlowLine(active bool, w int) string {
 	return fit(line, w)
 }
 
+func (m Model) composeEngineLine(active bool, w int) string {
+	p := m.opts.Words
+	prefix := composeLabel(p.T("compose.engine", "motor"), active)
+
+	var pills []string
+	for i, eng := range m.compose.engines {
+		selected := i == m.compose.engineIdx
+		if selected {
+			pills = append(pills, Pill(" ● "+eng+" ", "#000000", "#EC4899"))
+		} else {
+			pills = append(pills, Pill(" "+eng+" ", "#94A3B8", "#1E293B"))
+		}
+	}
+	line := prefix + strings.Join(pills, " ")
+	if active {
+		line += " " + Paint(Dim).Render(p.T("compose.engine_hint", "(←/→ para cambiar)"))
+	}
+	return fit(line, w)
+}
+
 func (m Model) composeModelLine(active bool, w int) string {
 	p := m.opts.Words
-	mark := strings.Repeat(" ", gutter)
-	if active {
-		mark = markGlyph + strings.Repeat(" ", gutter-1)
-	}
-	prefix := mark + Paint(Dim).Render(p.T("compose.model", "modelo")+": ")
+	prefix := composeLabel(p.T("compose.model", "modelo"), active)
 
 	var pills []string
 	for i, mod := range m.compose.models {
@@ -104,11 +123,7 @@ func (m Model) composeModelLine(active bool, w int) string {
 
 func (m Model) composeThinkingLine(active bool, w int) string {
 	p := m.opts.Words
-	mark := strings.Repeat(" ", gutter)
-	if active {
-		mark = markGlyph + strings.Repeat(" ", gutter-1)
-	}
-	prefix := mark + Paint(Dim).Render(p.T("compose.thinking", "thinking")+": ")
+	prefix := composeLabel(p.T("compose.thinking", "thinking"), active)
 
 	var pills []string
 	for i, th := range m.compose.thinkings {
@@ -128,11 +143,7 @@ func (m Model) composeThinkingLine(active bool, w int) string {
 
 func (m Model) composeEffortLine(active bool, w int) string {
 	p := m.opts.Words
-	mark := strings.Repeat(" ", gutter)
-	if active {
-		mark = markGlyph + strings.Repeat(" ", gutter-1)
-	}
-	prefix := mark + Paint(Dim).Render(p.T("compose.effort", "esfuerzo")+": ")
+	prefix := composeLabel(p.T("compose.effort", "esfuerzo"), active)
 
 	var pills []string
 	for i, ef := range m.compose.efforts {

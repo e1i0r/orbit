@@ -1187,6 +1187,14 @@
       "source": "(←/→ o + nuevo)",
       "value": "(←/→ o + nuevo)"
     },
+    "compose.engine": {
+      "source": "motor",
+      "value": "motor"
+    },
+    "compose.engine_hint": {
+      "source": "(←/→ para cambiar)",
+      "value": "(←/→ para cambiar)"
+    },
     "compose.model": {
       "source": "modelo",
       "value": "modelo"

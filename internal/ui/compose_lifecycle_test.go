@@ -160,7 +160,18 @@ func TestComposePillsCycle(t *testing.T) {
 		t.Errorf("expected flow to cycle from %s", oldFlow)
 	}
 
-	// 3. Model cycle
+	// 3. Engine / Provider cycle
+	m.compose.field = composeEngine
+	oldEng := m.compose.chosenEngine()
+	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyRight}))
+	if m.compose.chosenEngine() == oldEng {
+		t.Errorf("expected engine to cycle from %s", oldEng)
+	}
+	if m.compose.chosenEngine() == "codex" && m.compose.chosenModel() != "gpt-4o" {
+		t.Errorf("expected model to default to gpt-4o for codex, got %s", m.compose.chosenModel())
+	}
+
+	// 4. Model cycle
 	m.compose.field = composeModel
 	oldMod := m.compose.chosenModel()
 	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyRight}))
@@ -168,7 +179,7 @@ func TestComposePillsCycle(t *testing.T) {
 		t.Errorf("expected model to cycle from %s", oldMod)
 	}
 
-	// 4. Thinking cycle
+	// 5. Thinking cycle
 	m.compose.field = composeThinking
 	oldThk := m.compose.chosenThinking()
 	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyRight}))
@@ -176,7 +187,7 @@ func TestComposePillsCycle(t *testing.T) {
 		t.Errorf("expected thinking to cycle from %s", oldThk)
 	}
 
-	// 5. Effort cycle
+	// 6. Effort cycle
 	m.compose.field = composeEffort
 	oldEff := m.compose.chosenEffort()
 	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyRight}))
@@ -219,11 +230,19 @@ func TestComposeUpDownAndMouseClicks(t *testing.T) {
 		t.Fatalf("field after down arrow = %d, want composeFlow", m.compose.field)
 	}
 	m = asModel(t, mustUpdate(m, press("down")))
+	if m.compose.field != composeEngine {
+		t.Fatalf("field after second down arrow = %d, want composeEngine", m.compose.field)
+	}
+	m = asModel(t, mustUpdate(m, press("down")))
 	if m.compose.field != composeModel {
-		t.Fatalf("field after second down arrow = %d, want composeModel", m.compose.field)
+		t.Fatalf("field after third down arrow = %d, want composeModel", m.compose.field)
 	}
 
 	// 2. Arrow up moves back up
+	m = asModel(t, mustUpdate(m, press("up")))
+	if m.compose.field != composeEngine {
+		t.Fatalf("field after up arrow = %d, want composeEngine", m.compose.field)
+	}
 	m = asModel(t, mustUpdate(m, press("up")))
 	if m.compose.field != composeFlow {
 		t.Fatalf("field after up arrow = %d, want composeFlow", m.compose.field)
@@ -236,7 +255,8 @@ func TestComposeUpDownAndMouseClicks(t *testing.T) {
 	// 3. Mouse clicks directly focus fields
 	yRepo := m.frame.Body.Y + 2
 	yFlow := m.frame.Body.Y + 3
-	yID := m.frame.Body.Y + 7
+	yEngine := m.frame.Body.Y + 4
+	yID := m.frame.Body.Y + 8
 
 	clickField := func(y int) {
 		res, _ := m.mouse(tea.MouseClickMsg{X: 10, Y: y, Button: tea.MouseLeft})
@@ -248,6 +268,11 @@ func TestComposeUpDownAndMouseClicks(t *testing.T) {
 	clickField(yID)
 	if m.compose.field != composeID {
 		t.Errorf("field after click on ID = %d, want composeID", m.compose.field)
+	}
+
+	clickField(yEngine)
+	if m.compose.field != composeEngine {
+		t.Errorf("field after click on Engine = %d, want composeEngine", m.compose.field)
 	}
 
 	clickField(yFlow)

@@ -72,6 +72,11 @@ func (m Model) composeSubmit(startNow bool) (tea.Model, tea.Cmd) {
 	}
 
 	flowName := m.compose.chosenFlow()
+	m.knobs.Engine = m.compose.chosenEngine()
+	m.knobs.Model = m.compose.chosenModel()
+	m.knobs.Thinking = m.compose.chosenThinking()
+	m.knobs.Effort = m.compose.chosenEffort()
+
 	args := []string{"-repo", path, "-id", id}
 	if flowName != "" {
 		args = append(args, "-flow", flowName)

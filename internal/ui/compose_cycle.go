@@ -14,6 +14,11 @@ func (m Model) isComposeFlowField() bool {
 		(m.compose.tab == composeTabURL && m.compose.field == composeURLFlow)
 }
 
+func (m Model) isComposeEngineField() bool {
+	return (m.compose.tab == composeTabManual && m.compose.field == composeEngine) ||
+		(m.compose.tab == composeTabURL && m.compose.field == composeURLEngine)
+}
+
 func (m Model) isComposeModelField() bool {
 	return (m.compose.tab == composeTabManual && m.compose.field == composeModel) ||
 		(m.compose.tab == composeTabURL && m.compose.field == composeURLModel)
@@ -30,8 +35,8 @@ func (m Model) isComposeEffortField() bool {
 }
 
 func (m Model) isPillField() bool {
-	return m.isComposeRepoField() || m.isComposeFlowField() || m.isComposeModelField() ||
-		m.isComposeThinkingField() || m.isComposeEffortField()
+	return m.isComposeRepoField() || m.isComposeFlowField() || m.isComposeEngineField() ||
+		m.isComposeModelField() || m.isComposeThinkingField() || m.isComposeEffortField()
 }
 
 func (m Model) handleComposeLeft() Model {
@@ -40,6 +45,8 @@ func (m Model) handleComposeLeft() Model {
 		return m.cycleComposeRepo(-1)
 	case m.isComposeFlowField():
 		return m.cycleComposeFlow(-1)
+	case m.isComposeEngineField():
+		return m.cycleComposeEngine(-1)
 	case m.isComposeModelField():
 		return m.cycleComposeModel(-1)
 	case m.isComposeThinkingField():
@@ -56,6 +63,8 @@ func (m Model) handleComposeRight() Model {
 		return m.cycleComposeRepo(1)
 	case m.isComposeFlowField():
 		return m.cycleComposeFlow(1)
+	case m.isComposeEngineField():
+		return m.cycleComposeEngine(1)
 	case m.isComposeModelField():
 		return m.cycleComposeModel(1)
 	case m.isComposeThinkingField():
@@ -82,6 +91,22 @@ func (m Model) cycleComposeFlow(d int) Model {
 	}
 	n := len(m.compose.flows)
 	m.compose.flowIdx = (m.compose.flowIdx + d + n) % n
+	return m
+}
+
+func (m Model) cycleComposeEngine(d int) Model {
+	if len(m.compose.engines) == 0 {
+		return m
+	}
+	n := len(m.compose.engines)
+	m.compose.engineIdx = (m.compose.engineIdx + d + n) % n
+	eng := m.compose.engines[m.compose.engineIdx]
+	if models, ok := m.compose.modelsByEngine[eng]; ok && len(models) > 0 {
+		m.compose.models = models
+		if m.compose.modelIdx >= len(models) {
+			m.compose.modelIdx = 0
+		}
+	}
 	return m
 }
 
@@ -132,6 +157,13 @@ func (c composeState) chosenFlow() string {
 		return "task"
 	}
 	return c.flows[c.flowIdx]
+}
+
+func (c composeState) chosenEngine() string {
+	if len(c.engines) == 0 || c.engineIdx < 0 || c.engineIdx >= len(c.engines) {
+		return "claude"
+	}
+	return c.engines[c.engineIdx]
 }
 
 func (c composeState) chosenModel() string {
