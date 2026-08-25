@@ -113,13 +113,13 @@ func (m Model) headerLeft(w int, spaced bool) (string, bool) {
 			return Pill(text, fg, bg)
 		}
 		pills := []string{
-			qPill(view.ToDo, "📋", p.T("queue.todo", "Por hacer"),
+			qPill(view.ToDo, "📋", p.T("queue.todo", "To Do"),
 				"#38BDF8", "#0C4A6E", m.board.Counts[0]),
-			qPill(view.Running, "⚡", p.T("queue.in_flight", "En curso"),
+			qPill(view.Running, "⚡", p.T("queue.in_flight", "Running"),
 				"#2DD4BF", "#134E4A", m.board.Counts[1]),
-			qPill(view.NeedsYou, "💬", p.T("queue.needs_you", "En revisión"),
+			qPill(view.NeedsYou, "💬", p.T("queue.needs_you", "Needs You"),
 				"#FBBF24", "#78350F", m.board.Counts[2]),
-			qPill(view.Done, "🏁", p.T("queue.done", "Lista"),
+			qPill(view.Done, "🏁", p.T("queue.done", "Done"),
 				"#4ADE80", "#14532D", m.board.Counts[3]),
 		}
 		full := name + "  " + strings.Join(pills, " ")

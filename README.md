@@ -23,20 +23,7 @@ While running raw CLI agents in standalone tabs quickly leads to branch pollutio
 - 🛡️ **Autonomous Gates & Human Sign-Offs:** Multi-stage pipelines (`plan` $\rightarrow$ `build` $\rightarrow$ `test` $\rightarrow$ `audit`) with automated test verification and mid-flight steering.
 - 🔍 **Deep Flight Telemetry:** 11 real-time inspector tabs covering live Git diffs, chain-of-thought traces, token economics, tool refusals, and operator notes.
 
-```
- [orbit]   ~/projects/payments                     📦 2 repos   🧠 claude   🌐 EN
-──────────────────────────────────────────────────────────────────────────────────
-  $2.14 spent  ·  4 tasks  ·  17 events  ·  1ms read
-  🛑 NEEDS YOU (1) ─────────────────────────────────────────────────────────────
-▸ payments  ACME-2662  Retry the webhook on 5xx        failed: gates         14m
-  ⚡ RUNNING (2) ───────────────────────────────────────────────────────────────
-  app       ACME-2705  Reconciliation endpoint         implement    opus      8m
-  payments  ACME-2706  Index on settlements            review 2/3   opus      3m
-  📋 TO DO (1) ─────────────────────────────────────────────────────────────────
-  app       ACME-2710  Add audit trail logger          not started            1h
-──────────────────────────────────────────────────────────────────────────────────
- [↑↓] move  [⏎] open  [n] start  [/] filter  [?] [q]      ⚡ autopilot ● [A]  💬 cli [c]
-```
+<img src="assets/screenshot.png" alt="orbit top, the interactive cockpit" width="720">
 
 ---
 

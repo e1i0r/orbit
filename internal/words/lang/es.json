@@ -1494,19 +1494,19 @@
       "value": "{open} seleccionar · {up_down} mover · {back} volver"
     },
     "queue.todo": {
-      "source": "Por hacer",
+      "source": "To Do",
       "value": "Por hacer"
     },
     "queue.in_flight": {
-      "source": "En curso",
+      "source": "Running",
       "value": "En curso"
     },
     "queue.needs_you": {
-      "source": "En revisión",
+      "source": "Needs You",
       "value": "En revisión"
     },
     "queue.done": {
-      "source": "Lista",
+      "source": "Done",
       "value": "Lista"
     },
     "overview.waiting_box": {
