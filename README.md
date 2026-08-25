@@ -5,7 +5,7 @@
 *Supervise, steer, and verify multi-agent software development at terminal velocity.*
 
 [![CI](https://github.com/e1i0r/orbit/actions/workflows/check.yml/badge.svg)](https://github.com/e1i0r/orbit/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Go Version](https://img.shields.io/badge/Go-1.26+-00ADD8.svg?logo=go)](https://go.dev)
 [![TUI](https://img.shields.io/badge/TUI-Bubble%20Tea%20v2-FF5F87.svg)](https://charm.sh)
 
@@ -23,20 +23,7 @@ While running raw CLI agents in standalone tabs quickly leads to branch pollutio
 - 🛡️ **Autonomous Gates & Human Sign-Offs:** Multi-stage pipelines (`plan` $\rightarrow$ `build` $\rightarrow$ `test` $\rightarrow$ `audit`) with automated test verification and mid-flight steering.
 - 🔍 **Deep Flight Telemetry:** 11 real-time inspector tabs covering live Git diffs, chain-of-thought traces, token economics, tool refusals, and operator notes.
 
-```
- [orbit]   ~/projects/payments                     📦 2 repos   🧠 claude   🌐 EN
-──────────────────────────────────────────────────────────────────────────────────
-  $2.14 spent  ·  4 tasks  ·  17 events  ·  1ms read
-  🛑 NEEDS YOU (1) ─────────────────────────────────────────────────────────────
-▸ payments  ACME-2662  Retry the webhook on 5xx        failed: gates         14m
-  ⚡ RUNNING (2) ───────────────────────────────────────────────────────────────
-  app       ACME-2705  Reconciliation endpoint         implement    opus      8m
-  payments  ACME-2706  Index on settlements            review 2/3   opus      3m
-  📋 TO DO (1) ─────────────────────────────────────────────────────────────────
-  app       ACME-2710  Add audit trail logger          not started            1h
-──────────────────────────────────────────────────────────────────────────────────
- [↑↓] move  [⏎] open  [n] start  [/] filter  [?] [q]      ⚡ autopilot ● [A]  💬 cli [c]
-```
+<img src="assets/screenshot.png" alt="orbit top, the interactive cockpit" width="720">
 
 ---
 
@@ -213,4 +200,4 @@ For security vulnerability reports, please review our [Security Policy](SECURITY
 
 ## 📄 License
 
-Orbit is open-source software licensed under the [MIT License](LICENSE).
+Orbit is open-source software licensed under the [Apache License 2.0](LICENSE).
