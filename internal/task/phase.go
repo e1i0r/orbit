@@ -106,6 +106,19 @@ func phaseThought(phase string, n int, text string) record.Event {
 	return record.Event{Kind: record.PhaseThought, Phase: phase, Text: c, Data: data}
 }
 
+func phaseToolCall(phase string, n int, tc engine.StreamToolCall) record.Event {
+	c, full := captured(tc.Args)
+	data := map[string]string{
+		"n":    strconv.Itoa(n),
+		"tool": tc.Name,
+		"args": c,
+	}
+	if full > 0 {
+		data["bytes"] = strconv.Itoa(full)
+	}
+	return record.Event{Kind: record.PhaseToolCall, Phase: phase, Text: c, Data: data}
+}
+
 func phaseRefused(phase string, n int, r engine.StreamRefusal) record.Event {
 	c, full := captured(r.Input)
 	data := map[string]string{

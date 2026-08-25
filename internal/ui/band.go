@@ -38,6 +38,13 @@ func (m Model) bandLeft() string {
 	case m.filter != "" || m.repoFilter != "" || m.queueFilter != nil:
 		return m.filterLine()
 	}
+	if m.screen == screenDetail {
+		if t, ok := m.task(m.detail); ok && view.BandOf(t) == view.Running {
+			return m.runningLine(t)
+		}
+	} else if r, ok := m.selected(); ok && !r.head && view.BandOf(r.task) == view.Running {
+		return m.runningLine(r.task)
+	}
 	for _, t := range m.board.Tasks {
 		if view.BandOf(t) == view.Running {
 			return m.runningLine(t)
@@ -85,19 +92,15 @@ func (m Model) filterLine() string {
 		about("key", m.keys.Back.Help().Key)))
 }
 
-// runningLine names the one task a process is holding right now.
-//
-// It is the first Running task in the board's order and not the one under
-// the cursor: the band answers "what is happening", which is a question
-// about the machine, and the row answers "what am I looking at". The record
-// cannot yet say more than the phase and how long it has been in it — there
-// are no per-tool events — so the band says that and stops rather than
-// guessing at what the engine is doing.
+// runningLine names the one task a process is holding right now, including its live action.
 func (m Model) runningLine(t view.Task) string {
 	p := m.opts.Words
 	pieces := []string{Paint(Accent).Render(t.ID), Paint(Live).Render(m.phaseWord(t))}
 	if age := elapsed(m.now, t.Since); age != "" {
 		pieces = append(pieces, p.T("band.elapsed", "{d} in", about("d", age)))
+	}
+	if t.CurrentAction != "" {
+		pieces = append(pieces, Paint(Live).Render(t.CurrentAction))
 	}
 	if engine := engineAndModel(t); engine != "" {
 		pieces = append(pieces, engine)

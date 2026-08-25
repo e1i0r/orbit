@@ -108,6 +108,16 @@ func (m Model) logWord(e view.Entry) (string, Role) {
 		return p.T("log.waiting", "waiting"), Warn
 	case view.EntryResumed:
 		return p.T("log.resumed", "let go again"), Accent
+	case view.EntryGatePassed:
+		return p.T("log.gate_passed", "gate passed"), OK
+	case view.EntryGateFailed:
+		return p.T("log.gate_failed", "gate failed"), Bad
+	case view.EntryThought:
+		return p.T("log.thought", "thought"), Dim
+	case view.EntryToolCall:
+		return p.T("log.tool_call", "tool call"), Accent
+	case view.EntryRefused:
+		return p.T("log.refused", "refused"), Bad
 	case view.EntryUnreadable:
 		return p.T("log.unreadable", "this line could not be read"), Bad
 	}
@@ -122,12 +132,51 @@ func logDetail(e view.Entry) string {
 	switch e.What() {
 	case view.EntryStarted:
 		return strings.TrimSpace(e.Engine + " " + e.Model)
+	case view.EntryToolCall:
+		if e.Args != "" {
+			return formatLogTool(e.Tool, e.Args)
+		}
+		return e.Tool
+	case view.EntryRefused:
+		return e.Tool + ": " + firstLine(e.Text)
+	case view.EntryGatePassed, view.EntryGateFailed:
+		if e.Gate != "" {
+			return e.Gate
+		}
 	case view.EntryFailed, view.EntryCancelled, view.EntryTimedOut:
 		if e.Cause != "" {
 			return firstLine(e.Cause)
 		}
 	}
 	return firstLine(e.Text)
+}
+
+func formatLogTool(tool, args string) string {
+	head := firstLine(args)
+	if strings.HasPrefix(head, "{") {
+		if idx := strings.Index(head, `"command"`); idx >= 0 {
+			if after := strings.Index(head[idx:], `:"`); after >= 0 {
+				val := head[idx+after+2:]
+				if end := strings.Index(val, `"`); end >= 0 {
+					head = val[:end]
+				}
+			}
+		} else if idx := strings.Index(head, `"file_path"`); idx >= 0 {
+			if after := strings.Index(head[idx:], `:"`); after >= 0 {
+				val := head[idx+after+2:]
+				if end := strings.Index(val, `"`); end >= 0 {
+					head = val[:end]
+				}
+			}
+		}
+	}
+	if len(head) > 60 {
+		head = head[:57] + "…"
+	}
+	if head != "" {
+		return tool + ": " + head
+	}
+	return tool
 }
 
 // firstLine is everything up to the first newline. A multi-line Text on a

@@ -33,6 +33,18 @@ type Request struct {
 	// being captured in this one. An engine that cannot resume says so
 	// rather than quietly starting over.
 	Resume string
+
+	// OnEvent receives streaming events in real time as the engine emits them.
+	OnEvent func(StreamEvent)
+}
+
+// StreamEvent is a real-time event emitted during engine execution.
+type StreamEvent struct {
+	Type     string // "thought", "tool_call", "refusal", "result"
+	Thought  string
+	ToolCall StreamToolCall
+	Refusal  StreamRefusal
+	Cost     float64
 }
 
 // StreamRefusal is a tool call denied by permissions.

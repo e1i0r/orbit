@@ -32,6 +32,7 @@ const (
 	PhaseWaiting   = "phase.waiting"   // stopped at a gate; Data["why"] says whose gate
 	PhaseResumed   = "phase.resumed"   // let go again
 	PhaseThought   = "phase.thought"   // a thinking block from the engine stream
+	PhaseToolCall  = "phase.tool_call" // a tool call invoked by the engine (Bash, Edit, Read, etc.)
 	PhaseRefused   = "phase.refused"   // a tool call the engine was denied by permissions
 
 	GatePassed = "gate.passed" // a phase gate verification check passed

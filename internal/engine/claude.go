@@ -1,9 +1,9 @@
 package engine
 
 import (
-	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os/exec"
 	"strings"
 )
@@ -95,10 +95,28 @@ func (Claude) Run(ctx context.Context, req Request) (Result, error) {
 	cmd.Dir = req.Dir
 	stdout := &boundedBuffer{max: maxStream}
 	stderr := &boundedBuffer{max: maxStderr}
-	cmd.Stdout = stdout
+	pr, pw := io.Pipe()
+	cmd.Stdout = io.MultiWriter(stdout, pw)
 	cmd.Stderr = stderr
+
+	var streamResult Result
+	var parseErr error
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		streamResult, parseErr = ParseStreamWithCallback(pr, req.OnEvent)
+		if closeErr := pr.Close(); closeErr != nil && parseErr == nil {
+			parseErr = closeErr
+		}
+	}()
+
 	runErr := cmd.Run()
-	out, parseErr := ParseStream(bytes.NewReader(stdout.Bytes()))
+	if closeErr := pw.Close(); closeErr != nil && runErr == nil {
+		runErr = closeErr
+	}
+	<-done
+	out := streamResult
+
 	if runErr != nil {
 		if parseErr != nil {
 			// The run died before claude summarised it, so there is no

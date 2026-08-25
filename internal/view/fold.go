@@ -82,6 +82,8 @@ func fold(t *Task, e record.Event) {
 		t.state = stateRunning
 		t.Reason = Reason{}
 		t.Phase, t.PhaseN, t.Engine, t.Model = "", 0, "", ""
+		t.CurrentAction, t.CurrentThought = "", ""
+		t.ToolCallCount = 0
 		flow(t, e)
 		stamp(&t.Started, e.At)
 		stamp(&t.Since, e.At)
@@ -96,7 +98,18 @@ func fold(t *Task, e record.Event) {
 		t.Model = e.Data["model"]
 		t.state = stateRunning
 		t.Reason = Reason{}
+		t.CurrentAction, t.CurrentThought = "", ""
 		stamp(&t.Since, e.At)
+	case record.PhaseThought:
+		t.CurrentThought = firstLine(e.Text)
+		if t.CurrentAction == "" {
+			t.CurrentAction = "🧠 " + firstLine(e.Text)
+		}
+	case record.PhaseToolCall:
+		t.ToolCallCount++
+		if act := formatAction(e.Data["tool"], e.Data["args"]); act != "" {
+			t.CurrentAction = "🛠️ " + act
+		}
 	case record.PhaseFinished:
 		// Since is deliberately not moved. What the row says does not change
 		// when a phase ends — the task is still in the same run, and the
@@ -104,6 +117,7 @@ func fold(t *Task, e record.Event) {
 		// phase. The next phase.started moves it.
 		t.Phase = e.Phase
 		t.Cost += money(e.Data["cost"])
+		t.CurrentAction, t.CurrentThought = "", ""
 	case record.PhaseFailed:
 		// Cost is summed from every event that ends a phase, not only the
 		// ones that ended well. A phase that ran for twenty minutes and

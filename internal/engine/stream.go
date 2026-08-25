@@ -54,6 +54,12 @@ type streamContent struct {
 // keeps: the human-readable answer, session id, cost, thinking blocks,
 // tool calls, and permission refusals.
 func ParseStream(r io.Reader) (Result, error) {
+	return ParseStreamWithCallback(r, nil)
+}
+
+// ParseStreamWithCallback reads claude's streaming JSON, invokes onEvent on each
+// incremental event, and returns the aggregated Result.
+func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, error) {
 	sc := bufio.NewScanner(r)
 	sc.Buffer(make([]byte, 0, 64<<10), maxStreamLine)
 
@@ -77,6 +83,9 @@ func ParseStream(r io.Reader) (Result, error) {
 			out.Output = env.Result
 			out.SessionID = env.SessionID
 			out.Cost = env.Cost
+			if onEvent != nil {
+				onEvent(StreamEvent{Type: "result", Cost: env.Cost})
+			}
 		case "assistant":
 			if env.Message != nil {
 				for _, block := range env.Message.Content {
@@ -88,12 +97,19 @@ func ParseStream(r io.Reader) (Result, error) {
 						}
 						if t != "" {
 							out.Thoughts = append(out.Thoughts, t)
+							if onEvent != nil {
+								onEvent(StreamEvent{Type: "thought", Thought: t})
+							}
 						}
 					case "tool_use":
-						out.ToolCalls = append(out.ToolCalls, StreamToolCall{
+						tc := StreamToolCall{
 							Name: block.Name,
 							Args: string(block.Input),
-						})
+						}
+						out.ToolCalls = append(out.ToolCalls, tc)
+						if onEvent != nil {
+							onEvent(StreamEvent{Type: "tool_call", ToolCall: tc})
+						}
 					}
 				}
 			}
@@ -102,19 +118,27 @@ func ParseStream(r io.Reader) (Result, error) {
 				for _, block := range env.Message.Content {
 					if block.Type == "tool_result" && block.IsError {
 						if isPermissionRefusal(block.Content) {
-							out.Refusals = append(out.Refusals, StreamRefusal{
+							ref := StreamRefusal{
 								Tool:  block.Name,
 								Input: block.Content,
-							})
+							}
+							out.Refusals = append(out.Refusals, ref)
+							if onEvent != nil {
+								onEvent(StreamEvent{Type: "refusal", Refusal: ref})
+							}
 						}
 					}
 				}
 			}
 		case "refusal", "permission_denied":
-			out.Refusals = append(out.Refusals, StreamRefusal{
+			ref := StreamRefusal{
 				Tool:  env.Subtype,
 				Input: env.Result,
-			})
+			}
+			out.Refusals = append(out.Refusals, ref)
+			if onEvent != nil {
+				onEvent(StreamEvent{Type: "refusal", Refusal: ref})
+			}
 		}
 	}
 	if err := sc.Err(); err != nil {

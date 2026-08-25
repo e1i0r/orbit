@@ -11,6 +11,7 @@ type Fake struct {
 	Output string
 	Err    error
 	Calls  []Request
+	Events []StreamEvent
 }
 
 // The compiler is the right reviewer for this: an engine that stops
@@ -45,6 +46,11 @@ func (f *Fake) Run(ctx context.Context, req Request) (Result, error) {
 		return Result{}, err
 	}
 	f.Calls = append(f.Calls, req)
+	if req.OnEvent != nil {
+		for _, ev := range f.Events {
+			req.OnEvent(ev)
+		}
+	}
 	if f.Err != nil {
 		return Result{}, f.Err
 	}

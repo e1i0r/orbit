@@ -54,6 +54,7 @@ type Entry struct {
 	Gate    string  // gate name, from Data["gate"]
 	Exit    string  // exit code, from Data["exit"]
 	Tool    string  // tool name, from Data["tool"]
+	Args    string  // tool arguments, from Data["args"]
 	Notes   string  // note count or info, from Data["notes"]
 
 	// Kept and Full are the size of the engine's output as it was written
@@ -102,6 +103,7 @@ const (
 	EntryGatePassed                  // verification gate passed
 	EntryGateFailed                  // verification gate failed
 	EntryThought                     // thinking block
+	EntryToolCall                    // tool call invocation
 	EntryRefused                     // permission refused
 	EntryNoted                       // user note
 	EntryUnreadable                  // this line of the record itself is damaged
@@ -143,6 +145,8 @@ func (e Entry) What() EntryKind {
 		return EntryGateFailed
 	case record.PhaseThought:
 		return EntryThought
+	case record.PhaseToolCall:
+		return EntryToolCall
 	case record.PhaseRefused:
 		return EntryRefused
 	case record.TaskNoted:
@@ -199,6 +203,7 @@ func entry(e record.Event, attempt int) Entry {
 		Gate:    e.Data["gate"],
 		Exit:    e.Data["exit"],
 		Tool:    e.Data["tool"],
+		Args:    e.Data["args"],
 		Notes:   e.Data["notes"],
 		Kept:    len(e.Text),
 		Full:    count(e.Data["output_bytes"]),
