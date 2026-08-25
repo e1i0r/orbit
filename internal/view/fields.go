@@ -99,3 +99,43 @@ func firstLine(s string) string {
 	}
 	return strings.TrimSpace(s)
 }
+
+// formatAction formats a tool call into a readable, concise single-line action summary.
+func formatAction(tool, args string) string {
+	tool = strings.TrimSpace(tool)
+	if tool == "" {
+		return ""
+	}
+	args = strings.TrimSpace(args)
+	if strings.HasPrefix(args, "{") {
+		if idx := strings.Index(args, `"command"`); idx >= 0 {
+			if after := strings.Index(args[idx:], `:"`); after >= 0 {
+				val := args[idx+after+2:]
+				if end := strings.Index(val, `"`); end >= 0 {
+					args = val[:end]
+				}
+			}
+		} else if idx := strings.Index(args, `"file_path"`); idx >= 0 {
+			if after := strings.Index(args[idx:], `:"`); after >= 0 {
+				val := args[idx+after+2:]
+				if end := strings.Index(val, `"`); end >= 0 {
+					args = val[:end]
+				}
+			}
+		} else if idx := strings.Index(args, `"path"`); idx >= 0 {
+			if after := strings.Index(args[idx:], `:"`); after >= 0 {
+				val := args[idx+after+2:]
+				if end := strings.Index(val, `"`); end >= 0 {
+					args = val[:end]
+				}
+			}
+		}
+	}
+	if head := firstLine(args); head != "" {
+		if len(head) > 50 {
+			head = head[:47] + "…"
+		}
+		return tool + ": " + head
+	}
+	return tool
+}

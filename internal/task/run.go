@@ -4,9 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"strings"
-	"unicode/utf8"
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
@@ -147,6 +144,8 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		if p.FeedOutput {
 			inputPrev = prevOutput
 		}
+		var streamErr error
+		var streamedThoughts, streamedRefusals, streamedToolCalls int
 		out, runErr := engines[p.Engine].Run(ctx, engine.Request{
 			Prompt:      prompt(t, p, notes, inputPrev),
 			Model:       p.Model,
@@ -154,12 +153,49 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 			Thinking:    p.Thinking,
 			Dir:         wt,
 			Permissions: p.Permissions,
+			OnEvent: func(ev engine.StreamEvent) {
+				switch ev.Type {
+				case "thought":
+					streamedThoughts++
+					if err := emit(s, t, phaseThought(p.Name, i+1, ev.Thought)); err != nil && streamErr == nil {
+						streamErr = err
+					}
+				case "tool_call":
+					streamedToolCalls++
+					if err := emit(s, t, phaseToolCall(p.Name, i+1, ev.ToolCall)); err != nil && streamErr == nil {
+						streamErr = err
+					}
+				case "refusal":
+					streamedRefusals++
+					if err := emit(s, t, phaseRefused(p.Name, i+1, ev.Refusal)); err != nil && streamErr == nil {
+						streamErr = err
+					}
+				}
+			},
 		})
-		for _, thought := range out.Thoughts {
-			_ = emit(s, t, phaseThought(p.Name, i+1, thought)) //nolint:errcheck // best-effort event emission
+		if streamErr != nil {
+			return failed(s, t, fmt.Errorf("task %s, phase %q stream event emit: %w", t.ID, p.Name, streamErr))
 		}
-		for _, ref := range out.Refusals {
-			_ = emit(s, t, phaseRefused(p.Name, i+1, ref)) //nolint:errcheck // best-effort event emission
+		if streamedThoughts == 0 {
+			for _, th := range out.Thoughts {
+				if err := emit(s, t, phaseThought(p.Name, i+1, th)); err != nil {
+					return failed(s, t, fmt.Errorf("task %s, phase %q fallback thought emit: %w", t.ID, p.Name, err))
+				}
+			}
+		}
+		if streamedRefusals == 0 {
+			for _, ref := range out.Refusals {
+				if err := emit(s, t, phaseRefused(p.Name, i+1, ref)); err != nil {
+					return failed(s, t, fmt.Errorf("task %s, phase %q fallback refusal emit: %w", t.ID, p.Name, err))
+				}
+			}
+		}
+		if streamedToolCalls == 0 {
+			for _, tc := range out.ToolCalls {
+				if err := emit(s, t, phaseToolCall(p.Name, i+1, tc)); err != nil {
+					return failed(s, t, fmt.Errorf("task %s, phase %q fallback tool call emit: %w", t.ID, p.Name, err))
+				}
+			}
 		}
 		if runErr != nil {
 			// A context that is done is not an engine that broke. The engine
@@ -216,66 +252,4 @@ func failed(s *store.Store, t Task, err error) error {
 	text, _ := captured(err.Error())
 	_ = emit(s, t, record.Event{Kind: record.TaskFailed, Text: text}) //nolint:errcheck
 	return err
-}
-
-// maxOutput is how much of an engine's answer is kept in the record.
-//
-// One event is one line of JSON and record.MaxLine is what a line may weigh,
-// so an unbounded stdout in Event.Text is a refused write waiting to happen
-// — and a refused write is a phase that finished with nothing recorded. A
-// megabyte is generous for a phase's last word. The design's home for the
-// whole of it is phases/<n>/, which this plan does not build.
-const maxOutput = 1 << 20
-
-// captured cuts an engine's output down to what the record can hold and says
-// in the text when it had to. Truncation that announces itself is honest;
-// silent loss is not. The second return is the size of what was said, zero
-// when nothing was cut.
-func captured(out string) (text string, full int) {
-	if len(out) <= maxOutput {
-		return out, 0
-	}
-	n := maxOutput
-	// Never cut a rune in half: the record is UTF-8, and a severed tail
-	// would come back from the log as a replacement character.
-	for n > 0 && !utf8.RuneStart(out[n]) {
-		n--
-	}
-	return out[:n] + fmt.Sprintf("\n…[truncated, full output was %d bytes]", len(out)), len(out)
-}
-
-// prepare makes the worktree, reusing one that is already there so that a
-// re-run picks up where the last one stopped rather than starting over.
-func prepare(s *store.Store, t Task) (string, error) {
-	wt, err := s.CreateWorktreeParent(t.Repo.Path, t.ID)
-	if err != nil {
-		return "", err
-	}
-	if _, statErr := os.Stat(wt); statErr == nil {
-		return wt, nil
-	}
-	if err := t.Repo.AddWorktree(wt, "orbit/"+t.ID); err != nil {
-		return "", err
-	}
-	return wt, nil
-}
-
-// prompt is what the engine is told for one phase.
-func prompt(t Task, p flow.Phase, notes []string, prevOutput string) string {
-	base := fmt.Sprintf("Phase: %s\nRepository: %s\n\nTask %s:\n%s\n", p.Name, t.Repo.Name, t.ID, t.Text)
-	if p.Prompt != "" {
-		base += fmt.Sprintf("\nPhase Instructions:\n%s\n", p.Prompt)
-	}
-	if prevOutput != "" {
-		base += fmt.Sprintf("\nPrevious Phase Output:\n%s\n", prevOutput)
-	}
-	if len(notes) == 0 {
-		return base
-	}
-	var sb strings.Builder
-	sb.WriteString(base + "\nOperator Notes:\n")
-	for _, n := range notes {
-		sb.WriteString("- " + n + "\n")
-	}
-	return sb.String()
 }

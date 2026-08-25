@@ -137,13 +137,16 @@ type Task struct {
 	// carried an honest timestamp for it — which is not the same as never
 	// having run. Attempt is the has-it-run signal: Attempt > 0 means a
 	// task.started is in the log, whatever its clock said.
-	Started time.Time
-	Reason  Reason  // the word the row needs beyond its phase; zero when there is none
-	Attempt int     // how many task.started blocks are in the log
-	Live    bool    // a process is believed to hold it; always false out of Fold, and board owns it
-	Read    bool    // task.read is in the log
-	Cost    float64 // summed from every phase.finished that reported one
-	Damaged int     // count of record.unreadable markers
+	Started        time.Time
+	Reason         Reason  // the word the row needs beyond its phase; zero when there is none
+	Attempt        int     // how many task.started blocks are in the log
+	Live           bool    // a process is believed to hold it; always false out of Fold, and board owns it
+	Read           bool    // task.read is in the log
+	Cost           float64 // summed from every phase.finished that reported one
+	Damaged        int     // count of record.unreadable markers
+	CurrentAction  string  // formatted live action or tool call currently running
+	CurrentThought string  // latest live thinking block from the model
+	ToolCallCount  int     // total tool calls invoked in the current attempt
 	// state is what Fold folds into and what bandOfState reads. It is last
 	// because it is the only field of this struct that is not something the
 	// window draws, and it leaves this package only as the Band above.

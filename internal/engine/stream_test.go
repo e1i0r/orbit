@@ -136,3 +136,32 @@ func TestParseStreamTakesTheLastResultObject(t *testing.T) {
 		t.Errorf("took %+v, want the terminal result object", got)
 	}
 }
+
+func TestParseStreamWithCallbackEmitsEvents(t *testing.T) {
+	streamData := `{"type":"assistant","message":{"content":[{"type":"thinking","thinking":"analyzing code"}]}}` + "\n" +
+		`{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"ls -la"}}]}}` + "\n" +
+		`{"type":"result","subtype":"success","result":"done","session_id":"sess-123","total_cost_usd":0.05}` + "\n"
+
+	var received []StreamEvent
+	res, err := ParseStreamWithCallback(strings.NewReader(streamData), func(ev StreamEvent) {
+		received = append(received, ev)
+	})
+	if err != nil {
+		t.Fatalf("ParseStreamWithCallback: %v", err)
+	}
+	if res.Output != "done" {
+		t.Errorf("Output = %q, want 'done'", res.Output)
+	}
+	if len(received) != 3 {
+		t.Fatalf("received %d events, want 3", len(received))
+	}
+	if received[0].Type != "thought" || received[0].Thought != "analyzing code" {
+		t.Errorf("received[0] = %+v, want thought", received[0])
+	}
+	if received[1].Type != "tool_call" || received[1].ToolCall.Name != "Bash" {
+		t.Errorf("received[1] = %+v, want tool_call Bash", received[1])
+	}
+	if received[2].Type != "result" || received[2].Cost != 0.05 {
+		t.Errorf("received[2] = %+v, want result cost 0.05", received[2])
+	}
+}

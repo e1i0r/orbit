@@ -95,3 +95,21 @@ func (m Model) hitRepos(x, y int) Target {
 	}
 	return Target{}
 }
+
+func (m Model) hitCompose(x, y int) Target {
+	line, ok := m.frame.BodyRow(y)
+	if !ok {
+		return Target{}
+	}
+	switch line {
+	case 1:
+		return Target{Kind: TargetComposeField, Pane: composeRepo}
+	case 2:
+		return Target{Kind: TargetComposeField, Pane: composeID}
+	case 3:
+		return Target{Kind: TargetComposeField, Pane: composeText}
+	case 5:
+		return Target{Kind: TargetComposeField, Pane: -1, Key: "submit"}
+	}
+	return Target{}
+}

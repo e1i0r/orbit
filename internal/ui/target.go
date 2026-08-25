@@ -27,6 +27,7 @@ const (
 	TargetMenuEntry
 	TargetRepo
 	TargetFlowItem
+	TargetComposeField
 )
 
 // Target is one cell's hit target.
@@ -107,7 +108,7 @@ func (m Model) hit(x, y int) Target {
 		case screenRepos:
 			return m.hitRepos(x, y)
 		case screenCompose:
-			return Target{}
+			return m.hitCompose(x, y)
 		}
 		return m.hitRow(x, y)
 	}

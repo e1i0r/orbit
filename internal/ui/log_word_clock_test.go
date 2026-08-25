@@ -37,6 +37,11 @@ func TestLogWordCoversEveryKnownKindAndTheUnknownOne(t *testing.T) {
 		{"task.read", "read"},
 		{"phase.waiting", "waiting"},
 		{"phase.resumed", "let go again"},
+		{"gate.passed", "gate passed"},
+		{"gate.failed", "gate failed"},
+		{"phase.thought", "thought"},
+		{"phase.tool_call", "tool call"},
+		{"phase.refused", "refused"},
 		{"record.unreadable", "could not be read"},
 	}
 	for _, c := range cases {
@@ -48,8 +53,8 @@ func TestLogWordCoversEveryKnownKindAndTheUnknownOne(t *testing.T) {
 
 	// A kind this build has never heard of is drawn exactly as the record
 	// spelled it, and not translated.
-	word, role := m.logWord(view.Entry{Kind: "gate.passed"})
-	if word != "gate.passed" {
+	word, role := m.logWord(view.Entry{Kind: "custom.unknown.kind"})
+	if word != "custom.unknown.kind" {
 		t.Errorf("logWord on an unrecognised kind = %q, want the kind verbatim", word)
 	}
 	if role != Dim {

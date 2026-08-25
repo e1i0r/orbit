@@ -62,15 +62,22 @@ func (m Model) abandonCompose() Model {
 // to give up.
 func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
-	case key.Matches(msg, m.keys.Back):
+	case msg.Code == tea.KeyEscape || key.Matches(msg, m.keys.Back):
 		return m.abandonCompose(), nil
-	case key.Matches(msg, m.keys.Open):
+	case msg.Code == tea.KeyEnter || key.Matches(msg, m.keys.Open):
 		return m.composeNext()
-	case key.Matches(msg, m.keys.NextTab):
-		return m.composeTab(1), nil
+	case msg.Code == tea.KeyUp || key.Matches(msg, m.keys.Up):
+		return m.composeMove(-1), nil
+	case msg.Code == tea.KeyDown || key.Matches(msg, m.keys.Down):
+		return m.composeMove(1), nil
 	case key.Matches(msg, m.keys.PrevTab):
-		return m.composeTab(-1), nil
-	case msg.Code == tea.KeyBackspace:
+		return m.composeMove(-1), nil
+	case msg.Code == tea.KeyTab || key.Matches(msg, m.keys.NextTab):
+		if msg.Mod&tea.ModShift != 0 {
+			return m.composeMove(-1), nil
+		}
+		return m.composeTab(1), nil
+	case msg.Code == tea.KeyBackspace || msg.Code == tea.KeyDelete:
 		m.compose.set(trimLastRune(m.compose.get()))
 		return m, nil
 	}
@@ -104,16 +111,8 @@ func (c *composeState) set(v string) {
 	}
 }
 
-// composeTab moves the caret between fields. On the repository field, tab
-// completes first and moves only when nothing matches what is typed — the
-// one field whose answer is a name somebody else chose, which is where
-// completion earns its keep.
-func (m Model) composeTab(d int) Model {
-	if d > 0 && m.compose.field == composeRepo {
-		if completed, done := m.composeComplete(); done {
-			return completed
-		}
-	}
+// composeMove moves the caret between fields unconditionally.
+func (m Model) composeMove(d int) Model {
 	m.compose.field += d
 	if m.compose.field < 0 {
 		m.compose.field = 0
@@ -124,17 +123,24 @@ func (m Model) composeTab(d int) Model {
 	return m
 }
 
-// composeComplete finishes the repository's name from the board's own list,
-// and answers whether it did — a prefix that matches nothing leaves the
-// caret where it is and lets tab mean move.
-//
-// The names come off the tasks the board is holding, which is the list the
-// reader can already see; the walk's own count is a number, and a number
-// completes nothing.
+// composeTab moves the caret between fields, attempting autocomplete first on repo.
+func (m Model) composeTab(d int) Model {
+	if d > 0 && m.compose.field == composeRepo {
+		if completed, done := m.composeComplete(); done {
+			return completed
+		}
+	}
+	return m.composeMove(d)
+}
+
+// composeComplete finishes the repository's name from the board's own list when partially typed.
 func (m Model) composeComplete() (Model, bool) {
-	prefix := strings.ToLower(m.compose.repo)
+	prefix := strings.ToLower(strings.TrimSpace(m.compose.repo))
+	if prefix == "" {
+		return m, false
+	}
 	for _, t := range m.board.Tasks {
-		if strings.HasPrefix(strings.ToLower(t.Repo), prefix) {
+		if strings.HasPrefix(strings.ToLower(t.Repo), prefix) && !strings.EqualFold(t.Repo, prefix) {
 			m.compose.repo = t.Repo
 			return m, true
 		}

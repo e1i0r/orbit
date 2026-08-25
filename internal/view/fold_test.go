@@ -80,6 +80,24 @@ func foldCases() []foldCase {
 			},
 		},
 		{
+			name: "a run in flight with live thought and tool call",
+			events: []record.Event{
+				{At: at(0), Kind: "task.created", Text: "Live action task"},
+				{At: at(1), Kind: "task.started", Data: data("flow", "task")},
+				{At: at(2), Kind: "phase.started", Phase: "implement", Data: data("engine", "claude", "model", "opus", "n", "1")},
+				{At: at(3), Kind: "phase.thought", Phase: "implement", Text: "investigating tests"},
+				{At: at(4), Kind: "phase.tool_call", Phase: "implement", Data: data("tool", "Bash", "args", "go test ./...")},
+			},
+			want: Task{
+				Title: "Live action task", Band: Running, Flow: "task",
+				Phase: "implement", PhaseN: 1, Engine: "claude", Model: "opus",
+				Since: at(2), Started: at(1), Attempt: 1,
+				CurrentAction:  "🛠️ Bash: go test ./...",
+				CurrentThought: "investigating tests",
+				ToolCallCount:  1, state: stateRunning,
+			},
+		},
+		{
 			name: "between two phases, the cost of each one summed",
 			events: []record.Event{
 				{At: at(0), Kind: "task.created", Text: "Index on settlements"},

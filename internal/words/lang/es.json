@@ -753,6 +753,26 @@
       "source": "let go again",
       "value": "reanudada"
     },
+    "log.gate_passed": {
+      "source": "gate passed",
+      "value": "gate superado"
+    },
+    "log.gate_failed": {
+      "source": "gate failed",
+      "value": "gate fallido"
+    },
+    "log.thought": {
+      "source": "thought",
+      "value": "pensamiento"
+    },
+    "log.tool_call": {
+      "source": "tool call",
+      "value": "llamada a herramienta"
+    },
+    "log.refused": {
+      "source": "refused",
+      "value": "rechazado"
+    },
     "log.empty": {
       "source": "nothing has been recorded about this task yet",
       "value": "todavía no hay nada registrado sobre esta tarea"
@@ -1592,6 +1612,22 @@
     "overview.action_read": {
       "source": "mark read",
       "value": "marcar como leída"
+    },
+    "overview.live_activity": {
+      "source": "Live LLM Activity",
+      "value": "Actividad en Vivo (LLM)"
+    },
+    "overview.live_action": {
+      "source": "action",
+      "value": "acción"
+    },
+    "overview.live_thought": {
+      "source": "thinking",
+      "value": "pensamiento"
+    },
+    "overview.live_tools_count": {
+      "source": "tool calls",
+      "value": "llamadas a herramientas"
     }
   }
 }

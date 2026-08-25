@@ -97,6 +97,27 @@ func (m Model) overviewLines() []string {
 		"",
 	)
 
+	// Live LLM Activity box when running
+	if t.Band == view.Running {
+		liveTitle := p.T("overview.live_activity", "Live LLM Activity")
+		out = append(out,
+			"  "+Paint(Live).Bold(true).Render("⚡ "+liveTitle),
+		)
+		if t.CurrentAction != "" {
+			actionLabel := p.T("overview.live_action", "action")
+			out = append(out, fmt.Sprintf("    %-14s %s", Paint(Dim).Render(actionLabel), Paint(Accent).Render(t.CurrentAction)))
+		}
+		if t.CurrentThought != "" {
+			thoughtLabel := p.T("overview.live_thought", "thinking")
+			out = append(out, fmt.Sprintf("    %-14s %s", Paint(Dim).Render(thoughtLabel), Paint(Dim).Render(t.CurrentThought)))
+		}
+		if t.ToolCallCount > 0 {
+			toolsLabel := p.T("overview.live_tools_count", "tool calls")
+			out = append(out, fmt.Sprintf("    %-14s %s", Paint(Dim).Render(toolsLabel), Paint(Accent).Render(strconv.Itoa(t.ToolCallCount))))
+		}
+		out = append(out, "")
+	}
+
 	// 3. Execution Summary & Outcomes
 	out = append(out, "  "+Paint(Accent).Bold(true).Render(p.T("overview.execution_summary", "Execution Summary")))
 	var finishedPhases []view.Entry
