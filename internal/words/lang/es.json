@@ -1031,6 +1031,10 @@
       "source": "print the version orbit was built at",
       "value": "mostrar la versión con la que se compiló orbit"
     },
+    "cmd.update": {
+      "source": "check for updates and upgrade orbit",
+      "value": "buscar actualizaciones y actualizar orbit"
+    },
     "cli.tagline": {
       "source": "orbit — a cockpit for supervising coding agents",
       "value": "orbit — una cabina para supervisar agentes que programan"
@@ -1776,6 +1780,26 @@
     "detail.mode_raw": {
       "source": "plain text view (raw)",
       "value": "vista texto plano (raw)"
+    },
+    "update.checking": {
+      "source": "checking for updates...",
+      "value": "buscando actualizaciones..."
+    },
+    "update.already_latest": {
+      "source": "orbit is already on the latest version ({version})",
+      "value": "orbit ya está en la última versión ({version})"
+    },
+    "update.available": {
+      "source": "new version available: {latest} (current: {current})",
+      "value": "nueva versión disponible: {latest} (actual: {current})"
+    },
+    "update.installing": {
+      "source": "updating orbit from {current} to {latest}...",
+      "value": "actualizando orbit de {current} a {latest}..."
+    },
+    "update.success": {
+      "source": "successfully updated orbit to {version}!",
+      "value": "¡orbit se actualizó con éxito a {version}!"
     }
   }
 }

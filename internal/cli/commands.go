@@ -169,6 +169,10 @@ func commands() []Command {
 		Name:  "version",
 		About: func(p *words.Printer) string { return p.T("cmd.version", "print the version orbit was built at") },
 		Run:   version,
+	}, {
+		Name:  "update",
+		About: func(p *words.Printer) string { return p.T("cmd.update", "check for updates and upgrade orbit") },
+		Run:   update,
 	}}
 }
 
