@@ -69,6 +69,11 @@ While running raw CLI agents in standalone tabs quickly leads to branch pollutio
 
 ### Installation
 
+#### Quick install (macOS, Linux)
+```bash
+curl -fsSL https://raw.githubusercontent.com/e1i0r/orbit/main/install.sh | bash
+```
+
 #### Using `go install` (Go 1.26+)
 ```bash
 go install github.com/e1i0r/orbit/cmd/orbit@latest
