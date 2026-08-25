@@ -85,6 +85,12 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if msg.Mod&tea.ModCtrl != 0 {
 			return m.composeSubmit(true)
 		}
+		if msg.Mod&tea.ModShift != 0 || msg.Mod&tea.ModAlt != 0 {
+			if m.compose.tab == composeTabManual && m.compose.field == composeText {
+				m.compose.text += "\n"
+				return m, nil
+			}
+		}
 		return m.composeNext(false)
 	case (msg.Code == 'r' || msg.Code == 'R') && msg.Mod&tea.ModCtrl != 0:
 		return m.composeSubmit(true)

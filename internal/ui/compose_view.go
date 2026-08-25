@@ -62,15 +62,73 @@ func (m Model) composeManualRows(w int) []string {
 		w,
 	)
 	out = append(out, idLine)
+	out = append(out, m.composeTextArea(w)...)
+	return out
+}
 
-	textLine := m.composeFieldLine(
-		composeText,
-		p.T("compose.text", "task"),
-		m.compose.text,
-		p.T("compose.text_placeholder", "what is to be done?"),
-		w,
-	)
-	out = append(out, textLine)
+func (m Model) composeTextArea(w int) []string {
+	p := m.opts.Words
+	active := m.compose.field == composeText
+	mark := strings.Repeat(" ", gutter)
+	if active {
+		mark = markGlyph + strings.Repeat(" ", gutter-1)
+	}
+	header := mark + Paint(Dim).Render(p.T("compose.text", "task")+":")
+	if active {
+		header += " " + Paint(Dim).Render(p.T("compose.text_hint", "(Shift+↵ para nueva línea)"))
+	}
+
+	boxW := w - 8
+	if boxW < 24 {
+		boxW = 24
+	}
+	if boxW > 84 {
+		boxW = 84
+	}
+	innerW := boxW - 4
+
+	raw := m.compose.text
+	var lines []string
+	if raw == "" {
+		lines = []string{Paint(Dim).Render(p.T("compose.text_placeholder", "what is to be done?"))}
+	} else {
+		for _, part := range strings.Split(raw, "\n") {
+			if part == "" {
+				lines = append(lines, "")
+			} else {
+				lines = append(lines, splitIntoLines(part, innerW)...)
+			}
+		}
+	}
+	for len(lines) < 4 {
+		lines = append(lines, "")
+	}
+	if len(lines) > 8 {
+		lines = lines[len(lines)-8:]
+	}
+
+	borderStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#334155"))
+	if active {
+		borderStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#38BDF8"))
+	}
+
+	var out []string
+	out = append(out, header)
+	out = append(out, fit("  "+borderStyle.Render("┌"+strings.Repeat("─", boxW-2)+"┐"), w))
+	for i, l := range lines {
+		content := l
+		if active && i == len(lines)-1 && raw != "" {
+			content += Paint(Sel).Render(" ")
+		}
+		wLine := lipgloss.Width(content)
+		pad := innerW - wLine
+		if pad < 0 {
+			pad = 0
+		}
+		row := "  " + borderStyle.Render("│ ") + content + strings.Repeat(" ", pad) + borderStyle.Render(" │")
+		out = append(out, fit(row, w))
+	}
+	out = append(out, fit("  "+borderStyle.Render("└"+strings.Repeat("─", boxW-2)+"┘"), w))
 	return out
 }
 
@@ -156,6 +214,34 @@ func (m Model) composeFieldLine(fieldIdx int, label, val, placeholder string, w 
 		line += Paint(Sel).Render(" ")
 	}
 	return fit(line, w)
+}
+
+func splitIntoLines(text string, maxW int) []string {
+	if maxW <= 0 {
+		return []string{text}
+	}
+	var res []string
+	words := strings.Fields(text)
+	if len(words) == 0 {
+		return []string{""}
+	}
+	var cur strings.Builder
+	for _, w := range words {
+		switch {
+		case cur.Len() == 0:
+			cur.WriteString(w)
+		case cur.Len()+1+lipgloss.Width(w) <= maxW:
+			cur.WriteString(" " + w)
+		default:
+			res = append(res, cur.String())
+			cur.Reset()
+			cur.WriteString(w)
+		}
+	}
+	if cur.Len() > 0 {
+		res = append(res, cur.String())
+	}
+	return res
 }
 
 // composeRepoPillLen returns the rendered width of a repo pill.

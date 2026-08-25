@@ -109,8 +109,8 @@ func (m Model) hitCompose(x, y int) Target {
 	}
 
 	if m.compose.tab == composeTabManual {
-		switch line {
-		case 2:
+		switch {
+		case line == 2:
 			curX := 15
 			for i, r := range m.compose.repos {
 				pillWidth := composeRepoPillLen(r.name, i == m.compose.repoIdx)
@@ -120,11 +120,11 @@ func (m Model) hitCompose(x, y int) Target {
 				curX += pillWidth + 1
 			}
 			return Target{Kind: TargetComposeField, Pane: composeRepo}
-		case 3:
+		case line == 3:
 			return Target{Kind: TargetComposeField, Pane: composeID}
-		case 4:
+		case line >= 4 && line <= 11:
 			return Target{Kind: TargetComposeField, Pane: composeText}
-		case 6:
+		case line >= 12:
 			if x < 20 {
 				return Target{Kind: TargetComposeAction, Key: "save"}
 			} else if x < 50 {
@@ -133,10 +133,10 @@ func (m Model) hitCompose(x, y int) Target {
 			return Target{Kind: TargetComposeAction, Key: "cancel"}
 		}
 	} else {
-		switch line {
-		case 2:
+		switch {
+		case line == 2:
 			return Target{Kind: TargetComposeField, Pane: composeURL}
-		case 3:
+		case line == 3:
 			curX := 15
 			for i, r := range m.compose.repos {
 				pillWidth := composeRepoPillLen(r.name, i == m.compose.repoIdx)
@@ -146,7 +146,7 @@ func (m Model) hitCompose(x, y int) Target {
 				curX += pillWidth + 1
 			}
 			return Target{Kind: TargetComposeField, Pane: composeURLRepo}
-		case 6, 7:
+		case line >= 5:
 			if x < 20 {
 				return Target{Kind: TargetComposeAction, Key: "save"}
 			} else if x < 50 {

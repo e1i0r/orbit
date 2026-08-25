@@ -1159,6 +1159,10 @@
       "source": "(←/→ para cambiar)",
       "value": "(←/→ para cambiar)"
     },
+    "compose.text_hint": {
+      "source": "(Shift+↵ para nueva línea)",
+      "value": "(Shift+↵ para nueva línea)"
+    },
     "palette.placeholder": {
       "source": "type a command",
       "value": "escribe un comando"
