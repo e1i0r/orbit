@@ -72,10 +72,15 @@ func (m Model) saveCustomFlow() (Model, tea.Cmd) {
 		dir = m.opts.Flows.FlowDir()
 	}
 	if dir == "" {
-		home, _ := os.UserHomeDir() //nolint:errcheck // fallback to home path
+		home, err := os.UserHomeDir()
+		if err != nil || home == "" {
+			home = os.Getenv("HOME")
+		}
 		dir = filepath.Join(home, ".orbit", "flows")
 	}
-	_ = os.MkdirAll(dir, 0755) //nolint:errcheck // directory creation before write
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return m.say(err.Error()), nil
+	}
 	data, err := json.MarshalIndent(fl, "", "  ")
 	if err != nil {
 		return m.say(err.Error()), nil
@@ -154,7 +159,10 @@ func (m Model) confirmDeleteFlow() (Model, tea.Cmd) {
 		dir = m.opts.Flows.FlowDir()
 	}
 	if dir == "" {
-		home, _ := os.UserHomeDir() //nolint:errcheck // fallback to home path
+		home, err := os.UserHomeDir()
+		if err != nil || home == "" {
+			home = os.Getenv("HOME")
+		}
 		dir = filepath.Join(home, ".orbit", "flows")
 	}
 	path := filepath.Join(dir, d.Name+".json")

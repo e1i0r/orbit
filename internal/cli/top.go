@@ -110,8 +110,8 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 		"codex":    engine.NewCodex(),
 		"opencode": engine.NewOpenCode(),
 	}
-	home, _ := os.UserHomeDir() //nolint:errcheck // fallback to HOME env below
-	if home == "" {
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
 		home = os.Getenv("HOME")
 	}
 	return ui.Options{
