@@ -12,6 +12,9 @@ func (m Model) paste(content string) Model {
 	}
 
 	switch {
+	case m.note.open:
+		m.note.text += trimmed
+		return m
 	case m.screen == screenCompose:
 		m.compose.set(m.compose.get() + trimmed)
 		m.onComposeChanged()

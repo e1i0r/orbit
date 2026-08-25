@@ -50,6 +50,10 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.showTab((m.tab + tabCount - 1) % tabCount), nil
 	case key.Matches(k, m.keys.Edit):
 		return m.edit()
+	case key.Matches(k, m.keys.Ask):
+		return m.openNote(), nil
+	case key.Matches(k, m.keys.CLI):
+		return m.launchInteractiveCLI()
 	case key.Matches(k, m.keys.Open), key.Matches(k, m.keys.Last):
 		return m.newest(), nil
 	case key.Matches(k, m.keys.Help):

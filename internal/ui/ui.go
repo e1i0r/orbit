@@ -119,6 +119,7 @@ type Model struct {
 	pendingID string
 	pendTries int
 
+	note        noteState
 	settings    settingsState
 	flows       flowsState
 	repolist    repolistState

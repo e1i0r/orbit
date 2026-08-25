@@ -1167,6 +1167,30 @@
       "source": "Paste (^V)",
       "value": "Pegar (^V)"
     },
+    "note.empty": {
+      "source": "the note cannot be empty",
+      "value": "la nota no puede estar vacía"
+    },
+    "note.recorded": {
+      "source": "note recorded for {id}",
+      "value": "nota guardada para {id}"
+    },
+    "note.dialog_title": {
+      "source": "leave a note for {id}",
+      "value": "dejar una nota para {id}"
+    },
+    "note.prompt": {
+      "source": "note",
+      "value": "nota"
+    },
+    "note.placeholder": {
+      "source": "instructions or context for the next phase...",
+      "value": "instrucciones o contexto para la siguiente fase..."
+    },
+    "note.actions": {
+      "source": "↵ save note · esc cancel · ^V paste",
+      "value": "↵ guardar nota · esc cancelar · ^V pegar"
+    },
     "palette.placeholder": {
       "source": "type a command",
       "value": "escribe un comando"
