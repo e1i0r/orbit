@@ -79,6 +79,7 @@ func (m Model) helpRows(h, w int) []string {
 		{"[📋⚡💬🏁] (clic)", "Filtrar para ver únicamente las tareas de esa cola"},
 	})
 
+	//nolint:misspell // Spanish help items
 	renderSection("⚡ 2. CONTROL Y CONFIGURACIÓN EN VIVO", [][2]string{
 		{"[A] o ⚡ clic", "Alternar Autopilot (ejecución autónoma de tareas en To Do)"},
 		{"[M] o 🧠 clic", "Selector de Motor IA (claude, codex, opencode, esfuerzo y thinking)"},
@@ -100,6 +101,7 @@ func (m Model) helpRows(h, w int) []string {
 		{"[p] / [u] / [s]", "Pausar / Desbloquear / Añadir notas de operador"},
 	})
 
+	//nolint:misspell // Spanish help items
 	renderSection("⌨️ 4. COMANDOS GLOBALES", [][2]string{
 		{"[:]", "Abrir paleta de comandos interactiva (orbit new, flows, set...)"},
 		{"[?]", "Abrir o cerrar esta ventana de ayuda"},

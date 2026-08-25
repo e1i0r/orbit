@@ -33,23 +33,6 @@ const (
 	Sel                // the cursor's row
 )
 
-// The palette, as ANSI 256 colour numbers.
-//
-// They are constants rather than package variables because a package
-// variable is state, and state a caller can reach is state a caller can
-// change halfway through a frame.
-//
-// Every one of them is chosen to read on a light terminal and on a dark one,
-// which is what lets Paint be a pure function of its Role. That is a real
-// constraint and it costs something: a palette free to know the background
-// could use a deeper red on white and a brighter one on black. It was taken
-// anyway, because the alternative is asking the terminal what colour it is
-// from inside the paint function — and the only synchronous way to do that
-// blocks on terminal I/O outside the event loop, which is a hang, not a
-// colour. When the window does want a light/dark pair, the shape is a Theme
-// value built once from a tea.BackgroundColorMsg the event loop already
-// receives, fed to lipgloss.LightDark and passed down as a parameter, and
-// never a package variable Paint consults behind its caller's back.
 // Palette holds the color tokens for one visual theme.
 type Palette struct {
 	Accent   string

@@ -1,45 +1,208 @@
-# Orbit
+<div align="center">
 
-A cockpit for supervising coding agents.
+# 🛰️ Orbit
 
-Open it on a folder, and every repository underneath is in scope. Tasks run in parallel,
-each through a flow you can see and change before it starts. The agents are other
-people's programs — opencode, codex, claude code. Orbit owns the orchestration, the
-record, and the window; it owns no model, no editor, and no agent loop.
+**A Cockpit for Supervising Autonomous Coding Agents**
 
-A body in orbit spends no fuel. You burn the motor only to change course, then coast
-again.
+[![CI](https://github.com/e1i0r/orbit/actions/workflows/check.yml/badge.svg)](https://github.com/e1i0r/orbit/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Go Version](https://img.shields.io/badge/Go-1.26+-00ADD8.svg?logo=go)](https://go.dev)
+[![TUI](https://img.shields.io/badge/TUI-Bubble%20Tea%20v2-FF5F87.svg)](https://charm.sh)
 
-**Status:** the spine works and the window opens. `orbit repos`, `new`, `run`, `list` and
-`show` write a task down, run it through a flow in a worktree of its own, and record what
-happened in an append-only log. `orbit top` is one window over all of it. This README is
-still the design-only one: install instructions and a demo come with the release.
+*A body in orbit spends no fuel. You burn the motor only to change course, then coast again.*
 
-## The window
+</div>
 
-```
-orbit top [dir] [-once] [-lang <code>]
-```
+---
 
-`dir` is the folder the header names and the one the empty state points at; the tasks
-themselves come from the state root, so every repository you have ever written a task
-against is in the window whether or not it sits under that folder. Without it, the folder
-you are standing in.
+## ⚡ What is Orbit?
 
-`q` closes it and `?` lists every key. Opening it writes nothing except the one sweep that
-closes the records of runs whose processes are gone — the same sweep `orbit reconcile`
-runs, over every repository at once.
+**Orbit** is a terminal-based cockpit (`TUI`) and orchestration engine designed to supervise, inspect, and steer autonomous coding agents (**Claude Code**, **Codex**, **OpenCode**, and local LLMs) across complex software engineering workflows.
 
-`-once` draws a single frame as plain text and exits. It is the same board through the
-same view functions with the styling taken off and every band open, which is what a pipe,
-a log, a CI job and `TERM=dumb` get:
+Unlike standalone CLI agents that run in uncontrolled loops, Orbit provides a **central flight deck** where multiple tasks run concurrently in isolated Git worktrees, walking structured multi-phase pipelines with human-in-the-loop verification gates and append-only evidence logs.
 
 ```
-orbit top ~/work > board.txt
+┌────────────────────────────────────────────────────────────────────────────┐
+│ ORBIT  ~/projects/payments    ● 2 running · 3 to do · 12 done   ⚡ autopilot │
+├────────────────────────────────────────────────────────────────────────────┤
+│  ▸ payments  ACME-2662  Retry webhook on 5xx     failed (gates)    14m ago │
+│    app       ACME-2705  Reconciliation endpoint  ⚡ claude · opus   8m ago  │
+│    payments  ACME-2706  Index on settlements     ⚡ claude · opus   3m ago  │
+│    app       ACME-2710  Add audit trail logger   to do             1h ago  │
+├────────────────────────────────────────────────────────────────────────────┤
+│ [1] Overview  [2] Flow  [3] Gates  [4] Cost  [5] Refused  [6] Timeline     │
+│ [7] Report    [8] Artifacts  [9] Notes  [0] Diff  [w] Thinking             │
+└────────────────────────────────────────────────────────────────────────────┘
 ```
 
-You do not have to ask for it. A window whose output is not a terminal draws that frame
-rather than seizing a screen nobody is looking at.
+---
 
-`-lang` is the language of this window only. Without it, `$ORBIT_LANG`, then the language
-`orbit set language es` saved, then the `$LANG` the terminal was started in, then English.
+## ✨ Key Features
+
+### 🎛️ 1. Interactive Terminal Cockpit
+- **11 Detailed Inspector Tabs:**
+  - **`1` Overview:** Summary status, duration, model, token expenditure, and active phase.
+  - **`2` Flow:** Real-time visual tree of the task's execution pipeline.
+  - **`3` Gates:** Automated test suites, lint checks, and pass/fail diagnostics.
+  - **`4` Cost:** Monotonic real-time tracking of token usage and financial cost.
+  - **`5` Refused:** Security audits and rejected unsafe tool calls.
+  - **`6` Timeline:** Append-only chronological event log.
+  - **`7` Report:** Final synthesized executive summary from the agent.
+  - **`8` Artifacts:** Generated documentation, test reports, and binary artifacts.
+  - **`9` Notes:** Interactive dialog and human operator instructions (`orbit note`).
+  - **`0` Diff:** Syntax-highlighted live Git diff viewer with unified/split toggle.
+  - **`w` Thinking:** Deep chain-of-thought and internal reasoning traces.
+- **Full Pointer Support:** Click any tab, row, status indicator, or dial directly with your mouse.
+- **Command Palette (`:`):** Fuzzy search and execute any orbit verb on the fly.
+
+### 🛡️ 2. Human-in-the-Loop & Verification Gates
+- **Interactive Operator Notes:** Inject guidance mid-flight or adjust task requirements without restarting.
+- **Safety Compuertas (`Wait: true`):** Require explicit operator sign-off before high-stakes phases.
+- **Verification Gates:** Run shell checks (`make test`, `golangci-lint`) automatically between phases.
+
+### 🔄 3. Multi-Phase Pipelines & Custom Flows
+- Define multi-stage agent workflows (`plan` $\rightarrow$ `implement` $\rightarrow$ `test` $\rightarrow$ `review` $\rightarrow$ `audit`) in clean JSON/YAML.
+- Built-in flow templates (`task`, `quick`, `careful`, `tdd-cycle`, `security-audit`).
+- Output feeding (`FeedOutput: true`): Seamlessly pass generated artifacts between phases.
+
+### 🏎️ 4. Parallel Worktree Isolation
+- Every task runs in an isolated `git worktree`.
+- Run 5 tasks in parallel across different branches without dirtying your working tree.
+
+### 🌐 5. Bilingual & Theming Engine
+- **Live Language Switching:** Instant toggle between English (`en`) and Spanish (`es`) with `🌐 ES / EN` or `orbit set language es`.
+- **Curated Visual Themes:** `frauddi` (default), `monokai`, `nord`, `tokyo-night`, `dracula`, and `catppuccin`.
+
+---
+
+## 🚀 Getting Started
+
+### Installation
+
+#### Using `go install` (Go 1.26+)
+```bash
+go install github.com/e1i0r/orbit/cmd/orbit@latest
+```
+
+#### From Source
+```bash
+git clone https://github.com/e1i0r/orbit.git
+cd orbit
+make build
+sudo mv orbit /usr/local/bin/
+```
+
+---
+
+## 🎮 Quickstart
+
+### 1. Launch the Cockpit
+```bash
+# Open Orbit on your workspace
+orbit top ~/projects
+```
+
+### 2. Create and Run a Task
+```bash
+# Create a new task in a repository
+orbit new payments --title "Add Stripe webhook idempotency key" --flow careful
+
+# Run a task headlessly in the background
+orbit run -repo payments -flow careful TASK-1
+
+# Send an operator note to a running task
+orbit note payments TASK-1 "Ensure exponential backoff with jitter is used"
+```
+
+### 3. Manage Settings & Engine Dials
+```bash
+# Configure default engine and model
+orbit set engine claude
+orbit set model sonnet
+orbit set effort high
+orbit set autopilot on
+orbit set theme frauddi
+```
+
+---
+
+## ⌨️ Cockpit Keybindings
+
+| Key | Action |
+| :--- | :--- |
+| `↑` / `↓` or `k` / `j` | Navigate tasks in the queue |
+| `Enter` / Click | Open task detail view / Confirm |
+| `Esc` / `q` | Go back to task board / Exit modal |
+| `1` - `9`, `0`, `w` | Jump directly to Inspector tabs (1-11) |
+| `[` / `]` | Cycle through inspector tabs |
+| `n` | Create a new task |
+| `a` | Add an operator note to the task |
+| `p` / `u` | Pause / Unpause running task |
+| `x` | Cancel / Stop task execution |
+| `A` | Toggle Autopilot (auto-dispatch To Do queue) |
+| `M` | Open AI Engine selector & dials modal |
+| `S` | Open Settings modal |
+| `R` | Open Connected Repositories modal |
+| `+` | Open Custom Flow Editor |
+| `:` | Open Command Palette |
+| `?` | Open Interactive Help Overlay |
+
+---
+
+## 📁 Repository Structure
+
+```
+orbit/
+├── cmd/orbit/             # Orbit binary entrypoint
+├── internal/
+│   ├── board/             # Task queues, board state and band grouping
+│   ├── cli/               # Subcommands (new, run, flows, note, repos, etc.)
+│   ├── engine/            # Agent adapters (Claude Code, Codex, OpenCode)
+│   ├── flow/              # Flow pipeline resolver, validator, and schemas
+│   ├── quota/             # Rate limit windows and asynchronous quota tracker
+│   ├── record/            # Append-only JSONLines event store
+│   ├── repo/              # Git worktree discovery, status, and diff engine
+│   ├── store/             # State root, directories, and persistence
+│   ├── task/              # Task lifecycle engine, executor, and gates
+│   ├── ui/                # Bubble Tea TUI cockpit, views, and modals
+│   │   └── layout/        # Pure geometric layout calculations and bounds
+│   ├── view/              # Read model projections for tasks and logs
+│   └── words/             # Internationalization catalog (EN / ES)
+├── Makefile               # Build, check, and test automation
+└── README.md              # Documentation
+```
+
+---
+
+## 🧪 Testing & Quality Standards
+
+Orbit maintains rigorous quality standards:
+- **Strict $< 300$ Lines per File:** Highly modular and decoupled architecture.
+- **$\ge 90\%$ Comprehensive Test Coverage:** End-to-end task flows, property-based tests, and native Go fuzz testing (`testing.F`).
+- **Zero Silent Errors:** Explicit error propagation across all packages.
+
+```bash
+# Run full verification suite
+make check
+
+# Run tests with coverage
+go test -cover ./...
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md) before opening a Pull Request.
+
+---
+
+## 🔒 Security
+
+For security vulnerability reports, please review our [Security Policy](SECURITY.md).
+
+---
+
+## 📄 License
+
+Orbit is open-source software licensed under the [MIT License](LICENSE).

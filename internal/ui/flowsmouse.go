@@ -18,11 +18,12 @@ func wrapPromptText(text string, maxLen int) []string {
 	var lines []string
 	curr := ""
 	for _, wd := range wordsList {
-		if curr == "" {
+		switch {
+		case curr == "":
 			curr = wd
-		} else if lipgloss.Width(curr)+1+lipgloss.Width(wd) <= maxLen {
+		case lipgloss.Width(curr)+1+lipgloss.Width(wd) <= maxLen:
 			curr += " " + wd
-		} else {
+		default:
 			lines = append(lines, curr)
 			curr = wd
 		}
@@ -75,6 +76,7 @@ func (m Model) hitFlows(x, y int) Target {
 		descriptors := flow.List(m.opts.Flows)
 		curLine := 6
 		for i, d := range descriptors {
+			//nolint:errcheck // best-effort flow descriptor resolution
 			fl, _ := flow.Resolve(m.opts.Flows, d.Name)
 			phaseCount := len(fl.Phases)
 			if line >= curLine && line <= curLine+phaseCount {

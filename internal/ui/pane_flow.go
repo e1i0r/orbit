@@ -76,7 +76,8 @@ func (m Model) flowLines() []string {
 	p := m.opts.Words
 	t, ok := m.task(m.detail)
 	if !ok {
-		return []string{"  " + Paint(Dim).Render(p.T("detail.gone", "this task is no longer on the board"))}
+		return []string{"  " + Paint(Dim).Render(
+			p.T("detail.gone", "this task is no longer on the board"))}
 	}
 
 	flowName := t.Flow
@@ -88,9 +89,10 @@ func (m Model) flowLines() []string {
 		return []string{"  " + Paint(Bad).Render(fmt.Sprintf("flow %q: %v", flowName, err))}
 	}
 
+	title := Paint(Accent).Bold(true).Render(p.T("flow.tree_title", "Pipeline & Execution Tree") + " · ")
 	out := []string{
 		"",
-		"  " + Paint(Accent).Bold(true).Render(p.T("flow.tree_title", "Pipeline & Execution Tree")+" · ") + Paint(Live).Render(f.Name),
+		"  " + title + Paint(Live).Render(f.Name),
 		"",
 	}
 
@@ -109,7 +111,7 @@ func (m Model) flowLines() []string {
 
 		// Determine step icon and badge
 		var icon, statusStr string
-		var role Role = Dim
+		role := Dim
 		switch {
 		case ex.failed:
 			icon = Paint(Bad).Render("✗")

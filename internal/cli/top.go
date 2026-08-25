@@ -24,6 +24,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/engine"
+	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/quota"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/ui"
@@ -53,6 +54,10 @@ func top(ctx Context, args []string) error {
 	opts, s, err := window(dir, lang)
 	if err != nil {
 		return err
+	}
+	if logErr := logger.Init(s.LogPath()); logErr == nil {
+		defer func() { _ = logger.CloseGlobal() }() //nolint:errcheck // best-effort logger flush on process exit
+		logger.Info("cli/top", "orbit top started on %q (once=%v, lang=%q)", dir, once, lang)
 	}
 	swept := reconcileAll(s)
 
@@ -110,8 +115,8 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 		"codex":    engine.NewCodex(),
 		"opencode": engine.NewOpenCode(),
 	}
-	home, _ := os.UserHomeDir()
-	if home == "" {
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
 		home = os.Getenv("HOME")
 	}
 	return ui.Options{

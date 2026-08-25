@@ -217,3 +217,9 @@ func (s *Store) EventsPath(repoPath, taskID string) (string, error) {
 	}
 	return filepath.Join(dir, "events.jsonl"), nil
 }
+
+// LogDir is where internal diagnostic logs of Orbit live.
+func (s *Store) LogDir() string { return filepath.Join(s.root, "logs") }
+
+// LogPath is the file path for Orbit's internal diagnostic log.
+func (s *Store) LogPath() string { return filepath.Join(s.root, "logs", "orbit.log") }

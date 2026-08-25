@@ -12,6 +12,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/task"
 )
 
@@ -60,10 +61,12 @@ func runTask(ctx Context, args []string) error {
 
 	s, r, err := openBoth(*dir)
 	if err != nil {
+		logger.Error("cli/run", "open repository %q failed: %v", *dir, err)
 		return err
 	}
 	t, err := task.Load(s, r, id)
 	if err != nil {
+		logger.Error("cli/run", "load task %q in %q failed: %v", id, r.Name, err)
 		return err
 	}
 	// The task's own flow, unless this command overrode it — and the flow
@@ -80,6 +83,7 @@ func runTask(ctx Context, args []string) error {
 	}
 	f, err := flow.Resolve(s, chosen)
 	if err != nil {
+		logger.Error("cli/run", "resolve flow %q for task %q failed: %v", chosen, id, err)
 		return err
 	}
 	// Installed here, after everything that can be wrong about the command
@@ -111,9 +115,12 @@ func runTask(ctx Context, args []string) error {
 		"codex":    engine.NewCodex(),
 		"opencode": engine.NewOpenCode(),
 	}
+	logger.Info("cli/run", "starting task %s in repo %s on flow %s (timeout=%v)", id, r.Name, chosen, *timeout)
 	if err := task.Run(running, s, t, f, engines, task.FileGate(s, time.Second)); err != nil {
+		logger.Error("cli/run", "task %s execution failed: %v", id, err)
 		return err
 	}
+	logger.Info("cli/run", "task %s execution finished successfully", id)
 	fmt.Fprintf(ctx.Out, "%s finished\n", id)
 	return nil
 }

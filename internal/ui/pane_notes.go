@@ -103,13 +103,14 @@ func (m Model) notesLines() []string {
 		out = append(out, header)
 
 		for _, l := range item.content {
-			if strings.HasPrefix(l, "?") {
+			switch {
+			case strings.HasPrefix(l, "?"):
 				out = append(out, "      "+Paint(Warn).Render(l))
-			} else if strings.HasPrefix(l, "→") {
+			case strings.HasPrefix(l, "→"):
 				out = append(out, "      "+Paint(OK).Render(l))
-			} else if strings.HasPrefix(l, "[cli]") {
+			case strings.HasPrefix(l, "[cli]"):
 				out = append(out, "      "+Paint(Live).Render(l))
-			} else {
+			default:
 				out = append(out, "      "+l)
 			}
 		}

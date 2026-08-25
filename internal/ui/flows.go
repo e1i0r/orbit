@@ -107,8 +107,7 @@ func (m Model) flowsListKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	descriptors := flow.List(m.opts.Flows)
 	switch {
 	case key.Matches(msg, m.keys.Back):
-		m.screen = screenList
-		return m, nil
+		return m.abandonFlows(), nil
 	case key.Matches(msg, m.keys.Up):
 		if st.sel > -1 {
 			st.sel--

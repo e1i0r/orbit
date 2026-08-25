@@ -301,10 +301,6 @@
       "source": "autopilot is off: every phase stops for you",
       "value": "el piloto automático está desactivado: cada fase se detiene a esperarte"
     },
-    "msg.not_built": {
-      "source": "{key} is not wired up yet; this window is still being built",
-      "value": "{key} todavía no está conectada; esta ventana aún se está construyendo"
-    },
     "msg.control_sent": {
       "source": "asked {id} to {word}",
       "value": "se le pidió a {id} que {word}"
@@ -784,10 +780,6 @@
     "diff.timed_out": {
       "source": "git did not answer in time",
       "value": "git no respondió a tiempo"
-    },
-    "evidence.empty": {
-      "source": "no phase of this task has run yet",
-      "value": "todavía no se ha ejecutado ninguna fase de esta tarea"
     },
     "evidence.cost": {
       "source": "cost ${amount}",

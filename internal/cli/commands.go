@@ -175,6 +175,7 @@ func lookup(name string) (Command, bool) {
 			return c, true
 		}
 	}
+	//nolint:misspell // Spanish aliases for settings command
 	if name == "set" || name == "config" || name == "configuracion" || name == "configuraciones" {
 		for _, c := range commands() {
 			if c.Name == "settings" {

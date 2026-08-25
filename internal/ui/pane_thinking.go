@@ -77,7 +77,7 @@ func (m Model) thinkingLines() []string {
 
 	out = append(out, fmt.Sprintf("  %d %s",
 		len(blocks),
-		p.T("thinking.entries_count", "análisis de razonamiento y decisiones"),
+		p.T("thinking.entries_count", "análisis de razonamiento y decisiones"), //nolint:misspell // Spanish text
 	))
 	out = append(out, "")
 

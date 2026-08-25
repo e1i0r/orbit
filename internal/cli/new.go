@@ -6,6 +6,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/task"
 )
 
@@ -31,15 +32,15 @@ func newTask(ctx Context, args []string) error {
 
 	s, r, err := openBoth(*dir)
 	if err != nil {
+		logger.Error("cli/new", "open repository %q failed: %v", *dir, err)
 		return err
 	}
 	t, err := task.Create(s, r, *id, text, *flowName)
 	if err != nil {
+		logger.Error("cli/new", "create task %q in %q failed: %v", *id, r.Name, err)
 		return err
 	}
-	// The flow is echoed even when it was not typed. It was still chosen —
-	// by the settings, or by what this program ships — and a decision the
-	// user did not make is exactly the one worth showing them.
+	logger.Info("cli/new", "created task %s in repo %s (flow=%s)", t.ID, r.Name, t.Flow)
 	fmt.Fprintf(ctx.Out, "%s written against %s, to walk the %s flow\n", t.ID, r.Name, t.Flow)
 	return nil
 }

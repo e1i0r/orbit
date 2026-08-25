@@ -113,10 +113,14 @@ func (m Model) headerLeft(w int, spaced bool) (string, bool) {
 			return Pill(text, fg, bg)
 		}
 		pills := []string{
-			qPill(view.ToDo, "📋", p.T("queue.todo", "Por hacer"), "#38BDF8", "#0C4A6E", m.board.Counts[0]),
-			qPill(view.Running, "⚡", p.T("queue.in_flight", "En curso"), "#2DD4BF", "#134E4A", m.board.Counts[1]),
-			qPill(view.NeedsYou, "💬", p.T("queue.needs_you", "En revisión"), "#FBBF24", "#78350F", m.board.Counts[2]),
-			qPill(view.Done, "🏁", p.T("queue.done", "Lista"), "#4ADE80", "#14532D", m.board.Counts[3]),
+			qPill(view.ToDo, "📋", p.T("queue.todo", "Por hacer"),
+				"#38BDF8", "#0C4A6E", m.board.Counts[0]),
+			qPill(view.Running, "⚡", p.T("queue.in_flight", "En curso"),
+				"#2DD4BF", "#134E4A", m.board.Counts[1]),
+			qPill(view.NeedsYou, "💬", p.T("queue.needs_you", "En revisión"),
+				"#FBBF24", "#78350F", m.board.Counts[2]),
+			qPill(view.Done, "🏁", p.T("queue.done", "Lista"),
+				"#4ADE80", "#14532D", m.board.Counts[3]),
 		}
 		full := name + "  " + strings.Join(pills, " ")
 		if lipgloss.Width(full) <= w {
@@ -158,7 +162,8 @@ func (m Model) headerFields() []string {
 	var fields []string
 
 	// Repos chip
-	fields = append(fields, Paint(Dim).Render("📦 "+p.P("header.repos", m.board.Repos, "{n} repo", "{n} repos")))
+	reposText := p.P("header.repos", m.board.Repos, "{n} repo", "{n} repos")
+	fields = append(fields, Paint(Dim).Render("📦 "+reposText))
 
 	// Model / knob chip
 	chip := m.knobChip()
@@ -175,8 +180,9 @@ func (m Model) headerFields() []string {
 	// Unread brake warning (shown when brake is engaged)
 	unread := board.Unread(m.board)
 	if m.atUnreadCap(unread) {
-		fields = append(fields, Paint(Warn).Render("⚠️ "+p.T("header.unread_brake", "brake ({n} unread)",
-			about("n", strconv.Itoa(unread)))))
+		brakeText := p.T("header.unread_brake", "brake ({n} unread)",
+			about("n", strconv.Itoa(unread)))
+		fields = append(fields, Paint(Warn).Render("⚠️ "+brakeText))
 	}
 
 	return fields

@@ -23,15 +23,16 @@ func parseDiffSummary(diff string) diffSummary {
 	seenFiles := make(map[string]bool)
 	lines := strings.Split(diff, "\n")
 	for _, l := range lines {
-		if strings.HasPrefix(l, "+++ b/") {
+		switch {
+		case strings.HasPrefix(l, "+++ b/"):
 			f := strings.TrimPrefix(l, "+++ b/")
 			if f != "" && f != "/dev/null" && !seenFiles[f] {
 				seenFiles[f] = true
 				sum.files = append(sum.files, f)
 			}
-		} else if strings.HasPrefix(l, "+") && !strings.HasPrefix(l, "+++") {
+		case strings.HasPrefix(l, "+") && !strings.HasPrefix(l, "+++"):
 			sum.added++
-		} else if strings.HasPrefix(l, "-") && !strings.HasPrefix(l, "---") {
+		case strings.HasPrefix(l, "-") && !strings.HasPrefix(l, "---"):
 			sum.deleted++
 		}
 	}
@@ -106,19 +107,21 @@ func (m Model) overviewLines() []string {
 	}
 
 	if len(finishedPhases) == 0 {
-		if t.Band == view.ToDo {
+		switch t.Band {
+		case view.ToDo:
 			out = append(out, "    "+Paint(Dim).Render(p.T("overview.not_started", "task has not been started yet (press [n] to start)")))
-		} else if t.Band == view.Running {
+		case view.Running:
 			out = append(out, "    "+Paint(Live).Render("⚡ "+p.T("overview.in_flight", "execution in flight...")))
-		} else {
+		default:
 			out = append(out, "    "+Paint(Dim).Render(p.T("overview.no_phases", "no phase outputs recorded")))
 		}
 	} else {
 		for _, ph := range finishedPhases {
 			icon := Paint(OK).Render("✓")
-			if ph.What() == view.EntryFailed {
+			switch ph.What() {
+			case view.EntryFailed:
 				icon = Paint(Bad).Render("✗")
-			} else if ph.What() == view.EntryCancelled {
+			case view.EntryCancelled:
 				icon = Paint(Warn).Render("⏹")
 			}
 			phLine := fmt.Sprintf("    %s %s", icon, Paint(Accent).Render(ph.Phase))

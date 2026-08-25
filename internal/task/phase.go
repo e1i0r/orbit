@@ -145,9 +145,9 @@ func runGates(ctx context.Context, s *store.Store, t Task, p flow.Phase, n int, 
 			exitCode = exitErr.ExitCode()
 		}
 		data["exit"] = strconv.Itoa(exitCode)
-		_ = emit(s, t, record.Event{Kind: record.GateFailed, Phase: p.Name, Text: text, Data: data})
+		_ = emit(s, t, record.Event{Kind: record.GateFailed, Phase: p.Name, Text: text, Data: data}) //nolint:errcheck // best-effort event emission on gate failure
 		gateCause := fmt.Errorf("gate %q failed (exit %d)", g.Name, exitCode)
-		_ = emit(s, t, phaseEnd(record.PhaseFailed, p.Name, out, gateCause))
+		_ = emit(s, t, phaseEnd(record.PhaseFailed, p.Name, out, gateCause)) //nolint:errcheck // best-effort event emission on gate failure
 		return failed(s, t, fmt.Errorf("task %s, phase %q: %w", t.ID, p.Name, gateCause))
 	}
 	return nil

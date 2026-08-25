@@ -25,7 +25,7 @@ func TestQuotaFetchArray(t *testing.T) {
 			http.NotFound(w, r)
 			return
 		}
-		json.NewEncoder(w).Encode([]wireWindow{
+		_ = json.NewEncoder(w).Encode([]wireWindow{ //nolint:errcheck // test HTTP handler response
 			{
 				Key:       "sk-ant-1234567890extra",
 				Label:     "5h",
@@ -65,7 +65,7 @@ func TestQuotaFetchArray(t *testing.T) {
 func TestQuotaFetchWrapped(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"windows":[{"label":"7d","pct":45.5,"resets_in":3600}]}`))
+		_, _ = w.Write([]byte(`{"windows":[{"label":"7d","pct":45.5,"resets_in":3600}]}`)) //nolint:errcheck // test HTTP handler response
 	}))
 	defer ts.Close()
 
@@ -84,7 +84,7 @@ func TestQuotaFetchWrapped(t *testing.T) {
 
 func TestQuotaSyncWait(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode([]wireWindow{
+		_ = json.NewEncoder(w).Encode([]wireWindow{ //nolint:errcheck // test HTTP handler response
 			{Label: "day", Pct: 10.0, ResetsInS: 60},
 		})
 	}))

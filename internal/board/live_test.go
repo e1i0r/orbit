@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/view"
@@ -19,7 +20,7 @@ import (
 // holds a task.
 func claim(t *testing.T, s *store.Store, repoPath, id string, pid int) {
 	t.Helper()
-	body := "pid: " + strconv.Itoa(pid) + "\nstarted: 2026-08-23T09:00:00Z\n"
+	body := "pid: " + strconv.Itoa(pid) + "\nstarted: " + time.Now().UTC().Format(time.RFC3339) + "\n"
 	writeMarker(t, s, repoPath, id, body)
 }
 
