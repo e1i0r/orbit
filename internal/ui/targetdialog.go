@@ -101,15 +101,59 @@ func (m Model) hitCompose(x, y int) Target {
 	if !ok {
 		return Target{}
 	}
-	switch line {
-	case 1:
-		return Target{Kind: TargetComposeField, Pane: composeRepo}
-	case 2:
-		return Target{Kind: TargetComposeField, Pane: composeID}
-	case 3:
-		return Target{Kind: TargetComposeField, Pane: composeText}
-	case 5:
-		return Target{Kind: TargetComposeField, Pane: -1, Key: "submit"}
+	if line == 0 {
+		if x < 20 {
+			return Target{Kind: TargetComposeTab, Pane: composeTabManual}
+		}
+		return Target{Kind: TargetComposeTab, Pane: composeTabURL}
+	}
+
+	if m.compose.tab == composeTabManual {
+		switch line {
+		case 2:
+			curX := 15
+			for i, r := range m.compose.repos {
+				pillWidth := composeRepoPillLen(r.name, i == m.compose.repoIdx)
+				if x >= curX && x < curX+pillWidth {
+					return Target{Kind: TargetComposeRepoChoice, Pane: i}
+				}
+				curX += pillWidth + 1
+			}
+			return Target{Kind: TargetComposeField, Pane: composeRepo}
+		case 3:
+			return Target{Kind: TargetComposeField, Pane: composeID}
+		case 4:
+			return Target{Kind: TargetComposeField, Pane: composeText}
+		case 6:
+			if x < 20 {
+				return Target{Kind: TargetComposeAction, Key: "save"}
+			} else if x < 50 {
+				return Target{Kind: TargetComposeAction, Key: "save_and_run"}
+			}
+			return Target{Kind: TargetComposeAction, Key: "cancel"}
+		}
+	} else {
+		switch line {
+		case 2:
+			return Target{Kind: TargetComposeField, Pane: composeURL}
+		case 3:
+			curX := 15
+			for i, r := range m.compose.repos {
+				pillWidth := composeRepoPillLen(r.name, i == m.compose.repoIdx)
+				if x >= curX && x < curX+pillWidth {
+					return Target{Kind: TargetComposeRepoChoice, Pane: i}
+				}
+				curX += pillWidth + 1
+			}
+			return Target{Kind: TargetComposeField, Pane: composeURLRepo}
+		case 6, 7:
+			if x < 20 {
+				return Target{Kind: TargetComposeAction, Key: "save"}
+			} else if x < 50 {
+				return Target{Kind: TargetComposeAction, Key: "save_and_run"}
+			}
+			return Target{Kind: TargetComposeAction, Key: "cancel"}
+		}
 	}
 	return Target{}
 }

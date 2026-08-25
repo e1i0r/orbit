@@ -28,6 +28,9 @@ const (
 	TargetRepo
 	TargetFlowItem
 	TargetComposeField
+	TargetComposeTab
+	TargetComposeRepoChoice
+	TargetComposeAction
 )
 
 // Target is one cell's hit target.
