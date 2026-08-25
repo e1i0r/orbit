@@ -1175,6 +1175,42 @@
       "source": "Paste (^V)",
       "value": "Pegar (^V)"
     },
+    "compose.flow": {
+      "source": "flujo",
+      "value": "flujo"
+    },
+    "compose.new_flow_btn": {
+      "source": "Nuevo",
+      "value": "Nuevo"
+    },
+    "compose.flow_hint": {
+      "source": "(←/→ o + nuevo)",
+      "value": "(←/→ o + nuevo)"
+    },
+    "compose.model": {
+      "source": "modelo",
+      "value": "modelo"
+    },
+    "compose.model_hint": {
+      "source": "(←/→ para cambiar)",
+      "value": "(←/→ para cambiar)"
+    },
+    "compose.thinking": {
+      "source": "thinking",
+      "value": "thinking"
+    },
+    "compose.thinking_hint": {
+      "source": "(←/→ para cambiar)",
+      "value": "(←/→ para cambiar)"
+    },
+    "compose.effort": {
+      "source": "esfuerzo",
+      "value": "esfuerzo"
+    },
+    "compose.effort_hint": {
+      "source": "(←/→ para cambiar)",
+      "value": "(←/→ para cambiar)"
+    },
     "note.empty": {
       "source": "the note cannot be empty",
       "value": "la nota no puede estar vacía"

@@ -7,7 +7,7 @@ import (
 )
 
 // composeRows draws the compose screen: top tabs, fields, repository selector,
-// issue preview, and action buttons.
+// flow, model, thinking, effort selectors, issue preview, and action buttons.
 func (m Model) composeRows(h, w int) []string {
 	if h <= 0 {
 		return nil
@@ -51,8 +51,11 @@ func (m Model) composeManualRows(w int) []string {
 	p := m.opts.Words
 	var out []string
 
-	repoLine := m.composeRepoLine(m.compose.field == composeRepo, w)
-	out = append(out, repoLine)
+	out = append(out, m.composeRepoLine(m.compose.field == composeRepo, w))
+	out = append(out, m.composeFlowLine(m.compose.field == composeFlow, w))
+	out = append(out, m.composeModelLine(m.compose.field == composeModel, w))
+	out = append(out, m.composeThinkingLine(m.compose.field == composeThinking, w))
+	out = append(out, m.composeEffortLine(m.compose.field == composeEffort, w))
 
 	idLine := m.composeFieldLine(
 		composeID,
@@ -63,6 +66,39 @@ func (m Model) composeManualRows(w int) []string {
 	)
 	out = append(out, idLine)
 	out = append(out, m.composeTextArea(w)...)
+	return out
+}
+
+func (m Model) composeURLRows(w int) []string {
+	p := m.opts.Words
+	var out []string
+
+	urlLine := m.composeFieldLine(
+		composeURL,
+		p.T("compose.url", "url"),
+		m.compose.url,
+		p.T("compose.url_placeholder", "https://linear.app/... o https://...atlassian.net/..."),
+		w,
+	)
+	pastePill := Pill(" 📋 "+p.T("compose.btn_paste", "Paste (^V)")+" ", "#FFFFFF", "#0369A1")
+	urlLine += " " + pastePill
+	out = append(out, urlLine)
+
+	out = append(out, m.composeRepoLine(m.compose.field == composeURLRepo, w))
+	out = append(out, m.composeFlowLine(m.compose.field == composeURLFlow, w))
+	out = append(out, m.composeModelLine(m.compose.field == composeURLModel, w))
+	out = append(out, m.composeThinkingLine(m.compose.field == composeURLThinking, w))
+	out = append(out, m.composeEffortLine(m.compose.field == composeURLEffort, w))
+
+	if m.compose.parsedIssue != nil {
+		iss := m.compose.parsedIssue
+		preview := "  " + Paint(OK).Render("✓ "+strings.ToUpper(iss.Kind)) +
+			" · " + Paint(Accent).Render(iss.ID)
+		if iss.Title != "" {
+			preview += " · " + Paint(Dim).Render(iss.Title)
+		}
+		out = append(out, "", fit(preview, w))
+	}
 	return out
 }
 
@@ -102,11 +138,11 @@ func (m Model) composeTextArea(w int) []string {
 			}
 		}
 	}
-	for len(lines) < 4 {
+	for len(lines) < 3 {
 		lines = append(lines, "")
 	}
-	if len(lines) > 8 {
-		lines = lines[len(lines)-8:]
+	if len(lines) > 6 {
+		lines = lines[len(lines)-6:]
 	}
 
 	borderStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#334155"))
@@ -132,74 +168,6 @@ func (m Model) composeTextArea(w int) []string {
 	}
 	out = append(out, fit("  "+borderStyle.Render("└"+strings.Repeat("─", boxW-2)+"┘"), w))
 	return out
-}
-
-func (m Model) composeURLRows(w int) []string {
-	p := m.opts.Words
-	var out []string
-
-	urlLine := m.composeFieldLine(
-		composeURL,
-		p.T("compose.url", "url"),
-		m.compose.url,
-		p.T("compose.url_placeholder", "https://linear.app/... o https://...atlassian.net/..."),
-		w,
-	)
-	pastePill := Pill(" 📋 "+p.T("compose.btn_paste", "Paste (^V)")+" ", "#FFFFFF", "#0369A1")
-	urlLine += " " + pastePill
-	out = append(out, urlLine)
-
-	repoLine := m.composeRepoLine(m.compose.field == composeURLRepo, w)
-	out = append(out, repoLine)
-
-	if m.compose.parsedIssue != nil {
-		iss := m.compose.parsedIssue
-		preview := "  " + Paint(OK).Render("✓ "+strings.ToUpper(iss.Kind)) +
-			" · " + Paint(Accent).Render(iss.ID)
-		if iss.Title != "" {
-			preview += " · " + Paint(Dim).Render(iss.Title)
-		}
-		out = append(out, "", fit(preview, w))
-	}
-	return out
-}
-
-func (m Model) composeRepoLine(active bool, w int) string {
-	p := m.opts.Words
-	mark := strings.Repeat(" ", gutter)
-	if active {
-		mark = markGlyph + strings.Repeat(" ", gutter-1)
-	}
-	prefix := mark + Paint(Dim).Render(p.T("compose.repo", "repository")+": ")
-
-	if len(m.compose.repos) == 0 {
-		val := m.compose.repo
-		role := Accent
-		if val == "" {
-			val = p.T("compose.repo_placeholder", "which repository?")
-			role = Dim
-		}
-		line := prefix + Paint(role).Render(val)
-		if active {
-			line += Paint(Sel).Render(" ")
-		}
-		return fit(line, w)
-	}
-
-	var pills []string
-	for i, r := range m.compose.repos {
-		selected := i == m.compose.repoIdx
-		if selected {
-			pills = append(pills, Pill(" ● "+r.name+" ", "#000000", "#38BDF8"))
-		} else {
-			pills = append(pills, Pill(" "+r.name+" ", "#94A3B8", "#1E293B"))
-		}
-	}
-	line := prefix + strings.Join(pills, " ")
-	if active {
-		line += " " + Paint(Dim).Render(p.T("compose.repo_hint", "(←/→ para cambiar)"))
-	}
-	return fit(line, w)
 }
 
 func (m Model) composeFieldLine(fieldIdx int, label, val, placeholder string, w int) string {
@@ -238,20 +206,10 @@ func splitIntoLines(text string, maxW int) []string {
 			cur.WriteString(" " + w)
 		default:
 			res = append(res, cur.String())
-			cur.Reset()
-			cur.WriteString(w)
 		}
 	}
 	if cur.Len() > 0 {
 		res = append(res, cur.String())
 	}
 	return res
-}
-
-// composeRepoPillLen returns the rendered width of a repo pill.
-func composeRepoPillLen(name string, selected bool) int {
-	if selected {
-		return lipgloss.Width(" ● "+name+" ") + 1
-	}
-	return lipgloss.Width(" "+name+" ") + 1
 }

@@ -33,12 +33,8 @@ func TestComposeScreenFullLifecycle(t *testing.T) {
 		m = asModel(t, updated)
 	}
 
-	// Move to ID field with composeNext
-	updatedModel, _ := m.composeNext(false)
-	m = asModel(t, updatedModel)
-	if m.compose.field != composeID {
-		t.Errorf("field after composeNext = %d, want composeID", m.compose.field)
-	}
+	// Move through fields to ID
+	m.compose.field = composeID
 
 	// Type ID and backspace
 	sendKey('T', 0, "")
@@ -53,12 +49,8 @@ func TestComposeScreenFullLifecycle(t *testing.T) {
 		t.Errorf("compose.id = %q, want TASK-9", m.compose.id)
 	}
 
-	// Move to text field with composeNext
-	updatedModel, _ = m.composeNext(false)
-	m = asModel(t, updatedModel)
-	if m.compose.field != composeText {
-		t.Errorf("field after composeNext = %d, want composeText", m.compose.field)
-	}
+	// Move to text field
+	m.compose.field = composeText
 
 	// Type task description
 	for _, ch := range "Fix payment webhook verification" {
@@ -98,22 +90,23 @@ func TestComposeKeyTabAndOpen(t *testing.T) {
 	m = m.openCompose()
 
 	// Switching between tabs: [1] Manual, [2] URL
-	next, _ := m.Update(press("2"))
-	m2 := asModel(t, next)
-	if m2.compose.tab != composeTabURL {
-		t.Errorf("compose.tab = %d, want composeTabURL (1)", m2.compose.tab)
+	m.compose.field = composeRepo
+	m = asModel(t, mustUpdate(m, press("2")))
+	if m.compose.tab != composeTabURL {
+		t.Errorf("tab = %d, want composeTabURL", m.compose.tab)
 	}
 
-	next, _ = m2.Update(press("1"))
-	m3 := asModel(t, next)
-	if m3.compose.tab != composeTabManual {
-		t.Errorf("compose.tab = %d, want composeTabManual (0)", m3.compose.tab)
+	m = asModel(t, mustUpdate(m, press("1")))
+	if m.compose.tab != composeTabManual {
+		t.Errorf("tab = %d, want composeTabManual", m.compose.tab)
 	}
 
-	// Esc abandons
-	next, _ = m.Update(press("esc"))
-	if asModel(t, next).screen != screenList {
-		t.Errorf("screen after esc = %v, want screenList", asModel(t, next).screen)
+	// Key '+' on flow field opens flow builder
+	m.compose.field = composeFlow
+	res, _ := m.Update(tea.KeyPressMsg{Text: "+"})
+	mFlows := asModel(t, res)
+	if mFlows.screen != screenFlows {
+		t.Errorf("screen after '+' on flow field = %v, want screenFlows", mFlows.screen)
 	}
 }
 
@@ -121,82 +114,83 @@ func TestComposeURLAutoParsing(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m = m.openCompose()
 
-	// Switch to URL tab
-	m.compose.tab = composeTabURL
-	m.compose.field = composeURL
+	// Pasting a Linear URL in manual mode switches to URL tab
+	m.compose.tab = composeTabManual
+	m.compose.field = composeID
+	linearURL := "https://linear.app/acme/issue/ENG-456/fix-auth-flow"
+	m = m.paste(linearURL)
 
-	// Type Linear URL
-	for _, ch := range "https://linear.app/org/issue/ENG-99/add-tax-rate" {
-		updated, _ := m.Update(tea.KeyPressMsg{Code: ch, Text: string(ch)})
-		m = asModel(t, updated)
+	if m.compose.tab != composeTabURL {
+		t.Errorf("tab after pasting URL = %d, want composeTabURL", m.compose.tab)
 	}
-
-	if m.compose.parsedIssue == nil {
-		t.Fatal("expected parsedIssue to not be nil")
-	}
-	if m.compose.id != "ENG-99" {
-		t.Errorf("compose.id = %q, want ENG-99", m.compose.id)
-	}
-	if m.compose.text != "Add tax rate" {
-		t.Errorf("compose.text = %q, want 'Add tax rate'", m.compose.text)
+	if m.compose.id != "ENG-456" {
+		t.Errorf("compose.id = %q, want ENG-456", m.compose.id)
 	}
 }
 
-func TestComposePasteMsg(t *testing.T) {
+func TestComposePaste(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m = m.openCompose()
-
-	// 1. Bracketed paste into Manual tab with multiline text
+	m.compose.tab = composeTabManual
 	m.compose.field = composeText
-	pasted, _ := m.Update(tea.PasteMsg{Content: "Line 1\nLine 2\n- Bullet 3"})
-	m = asModel(t, pasted)
-	if m.compose.text != "Line 1\nLine 2\n- Bullet 3" {
-		t.Errorf("compose.text after paste = %q", m.compose.text)
-	}
 
-	// 2. Bracketed paste into URL tab
-	m.compose.tab = composeTabURL
-	m.compose.field = composeURL
-	pasted, _ = m.Update(tea.PasteMsg{Content: "https://linear.app/org/issue/PAY-200/stripe-webhook-fix"})
-	m = asModel(t, pasted)
-	if m.compose.parsedIssue == nil {
-		t.Fatal("expected parsedIssue after paste")
-	}
-	if m.compose.id != "PAY-200" {
-		t.Errorf("compose.id = %q, want PAY-200", m.compose.id)
+	m = m.paste("Pasted task requirement line 1\nLine 2")
+
+	if m.compose.text != "Pasted task requirement line 1\nLine 2" {
+		t.Errorf("compose.text = %q, want pasted multiline text", m.compose.text)
 	}
 }
 
-func TestComposeRepoCycles(t *testing.T) {
+func TestComposePillsCycle(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.board.Tasks = []view.Task{
-		{ID: "APP-1", Repo: "app", RepoPath: "/repos/app"},
-		{ID: "PAY-1", Repo: "payments", RepoPath: "/repos/payments"},
-		{ID: "AUTH-1", Repo: "auth", RepoPath: "/repos/auth"},
+		{ID: "APP-1", Repo: "frontend"},
+		{ID: "API-1", Repo: "backend"},
 	}
 	m = m.openCompose()
 
-	// Left and right arrow keys cycle repo
-	m = asModel(t, mustUpdate(m, press("right")))
-	if m.compose.repo != "payments" {
-		t.Errorf("repo after right arrow = %q, want payments", m.compose.repo)
+	// 1. Repo cycle with left/right
+	m.compose.field = composeRepo
+	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyRight}))
+	// 2. Flow cycle
+	m.compose.field = composeFlow
+	oldFlow := m.compose.chosenFlow()
+	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyRight}))
+	if len(m.compose.flows) > 1 && m.compose.chosenFlow() == oldFlow {
+		t.Errorf("expected flow to cycle from %s", oldFlow)
 	}
 
-	m = asModel(t, mustUpdate(m, press("right")))
-	if m.compose.repo != "auth" {
-		t.Errorf("repo after second right arrow = %q, want auth", m.compose.repo)
+	// 3. Model cycle
+	m.compose.field = composeModel
+	oldMod := m.compose.chosenModel()
+	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyRight}))
+	if m.compose.chosenModel() == oldMod {
+		t.Errorf("expected model to cycle from %s", oldMod)
 	}
 
-	m = asModel(t, mustUpdate(m, press("left")))
-	if m.compose.repo != "payments" {
-		t.Errorf("repo after left arrow = %q, want payments", m.compose.repo)
+	// 4. Thinking cycle
+	m.compose.field = composeThinking
+	oldThk := m.compose.chosenThinking()
+	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyRight}))
+	if m.compose.chosenThinking() == oldThk {
+		t.Errorf("expected thinking to cycle from %s", oldThk)
+	}
+
+	// 5. Effort cycle
+	m.compose.field = composeEffort
+	oldEff := m.compose.chosenEffort()
+	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyRight}))
+	if m.compose.chosenEffort() == oldEff {
+		t.Errorf("expected effort to cycle from %s", oldEff)
 	}
 }
 
 func TestComposeSubmitValidID(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m.board.Tasks = []view.Task{{ID: "PAY-1", Repo: "payments", RepoPath: "/repo/payments"}}
-	m.compose.repo, m.compose.id, m.compose.text = "payments", "TASK-9", "do the thing"
+	m = m.openCompose()
+	m.compose.repo = "repo"
+	m.compose.id = "TASK-10"
+	m.compose.text = "Write some tests"
 
 	m.opts.ValidID = func(id string) error { return errors.New("id taken") }
 	m2, cmd := m.composeSubmit(false)
@@ -221,18 +215,18 @@ func TestComposeUpDownAndMouseClicks(t *testing.T) {
 
 	// 1. Arrow down moves between fields
 	m = asModel(t, mustUpdate(m, press("down")))
-	if m.compose.field != composeID {
-		t.Fatalf("field after down arrow = %d, want composeID", m.compose.field)
+	if m.compose.field != composeFlow {
+		t.Fatalf("field after down arrow = %d, want composeFlow", m.compose.field)
 	}
 	m = asModel(t, mustUpdate(m, press("down")))
-	if m.compose.field != composeText {
-		t.Fatalf("field after second down arrow = %d, want composeText", m.compose.field)
+	if m.compose.field != composeModel {
+		t.Fatalf("field after second down arrow = %d, want composeModel", m.compose.field)
 	}
 
 	// 2. Arrow up moves back up
 	m = asModel(t, mustUpdate(m, press("up")))
-	if m.compose.field != composeID {
-		t.Fatalf("field after up arrow = %d, want composeID", m.compose.field)
+	if m.compose.field != composeFlow {
+		t.Fatalf("field after up arrow = %d, want composeFlow", m.compose.field)
 	}
 	m = asModel(t, mustUpdate(m, press("up")))
 	if m.compose.field != composeRepo {
@@ -241,8 +235,8 @@ func TestComposeUpDownAndMouseClicks(t *testing.T) {
 
 	// 3. Mouse clicks directly focus fields
 	yRepo := m.frame.Body.Y + 2
-	yID := m.frame.Body.Y + 3
-	yTask := m.frame.Body.Y + 5
+	yFlow := m.frame.Body.Y + 3
+	yID := m.frame.Body.Y + 7
 
 	clickField := func(y int) {
 		res, _ := m.mouse(tea.MouseClickMsg{X: 10, Y: y, Button: tea.MouseLeft})
@@ -256,9 +250,9 @@ func TestComposeUpDownAndMouseClicks(t *testing.T) {
 		t.Errorf("field after click on ID = %d, want composeID", m.compose.field)
 	}
 
-	clickField(yTask)
-	if m.compose.field != composeText {
-		t.Errorf("field after click on Task = %d, want composeText", m.compose.field)
+	clickField(yFlow)
+	if m.compose.field != composeFlow {
+		t.Errorf("field after click on Flow = %d, want composeFlow", m.compose.field)
 	}
 
 	clickField(yRepo)

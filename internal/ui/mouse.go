@@ -197,6 +197,28 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 			m.compose.repo = m.compose.repos[t.Pane].name
 		}
 		return m, nil
+	case TargetComposeFlowChoice:
+		if t.Pane >= 0 && t.Pane < len(m.compose.flows) {
+			m.compose.flowIdx = t.Pane
+		}
+		return m, nil
+	case TargetComposeModelChoice:
+		if t.Pane >= 0 && t.Pane < len(m.compose.models) {
+			m.compose.modelIdx = t.Pane
+		}
+		return m, nil
+	case TargetComposeThinkingChoice:
+		if t.Pane >= 0 && t.Pane < len(m.compose.thinkings) {
+			m.compose.thinkingIdx = t.Pane
+		}
+		return m, nil
+	case TargetComposeEffortChoice:
+		if t.Pane >= 0 && t.Pane < len(m.compose.efforts) {
+			m.compose.effortIdx = t.Pane
+		}
+		return m, nil
+	case TargetComposeNewFlow:
+		return m.openFlows(), nil
 	case TargetComposeField:
 		m.compose.field = t.Pane
 		return m, nil

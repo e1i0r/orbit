@@ -81,6 +81,11 @@ func (m Model) abandonFlows() Model {
 		m.screen = screenStart
 		return m
 	}
+	if prev == screenCompose {
+		m.screen = screenCompose
+		m.compose.refreshFlows(m.opts.Flows)
+		return m
+	}
 	m.screen = screenList
 	return m
 }
@@ -280,19 +285,4 @@ func (m Model) handleFlowFieldAction() (Model, tea.Cmd) {
 		return m.saveCustomFlow()
 	}
 	return m, nil
-}
-
-func (m Model) startCreateFlow() Model {
-	m.flows.creating = true
-	m.flows.isEditing = false
-	m.flows.confirmDiscard = false
-	m.flows.confirmDelete = false
-	m.flows.field = 0
-	m.flows.template = "ninguna"
-	m.flows.flowName = ""
-	m.flows.phases = []flow.Phase{
-		{Name: "1-implement", Engine: "claude", Model: "sonnet", Effort: "default", Thinking: "adaptive", Permissions: []string{"repo"}},
-	}
-	m.flows.activePhase = 0
-	return m
 }

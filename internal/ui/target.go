@@ -30,6 +30,11 @@ const (
 	TargetComposeField
 	TargetComposeTab
 	TargetComposeRepoChoice
+	TargetComposeFlowChoice
+	TargetComposeModelChoice
+	TargetComposeThinkingChoice
+	TargetComposeEffortChoice
+	TargetComposeNewFlow
 	TargetComposeAction
 	TargetComposePaste
 )

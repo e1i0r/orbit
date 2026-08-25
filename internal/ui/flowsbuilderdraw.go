@@ -4,7 +4,24 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/e1i0r/orbit/internal/flow"
 )
+
+func (m Model) startCreateFlow() Model {
+	m.flows.creating = true
+	m.flows.isEditing = false
+	m.flows.confirmDiscard = false
+	m.flows.confirmDelete = false
+	m.flows.field = 0
+	m.flows.template = "ninguna"
+	m.flows.flowName = ""
+	m.flows.phases = []flow.Phase{
+		{Name: "1-implement", Engine: "claude", Model: "sonnet", Effort: "default", Thinking: "adaptive", Permissions: []string{"repo"}},
+	}
+	m.flows.activePhase = 0
+	return m
+}
 
 func (m Model) flowsBuilderRows(h, w int) []string {
 	st := &m.flows

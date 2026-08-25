@@ -4,7 +4,7 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-// Dialog and subscreen hit detection: task detail, start dialog, settings, repos.
+// Dialog and subscreen hit detection: task detail, start dialog, settings, repos, compose.
 
 // hitDetail is the task view, one level down: its heading, the tab strip,
 // and the pane under them.
@@ -111,31 +111,26 @@ func (m Model) hitCompose(x, y int) Target {
 	if m.compose.tab == composeTabManual {
 		switch {
 		case line == 2:
-			curX := 15
-			for i, r := range m.compose.repos {
-				pillWidth := composeRepoPillLen(r.name, i == m.compose.repoIdx)
-				if x >= curX && x < curX+pillWidth {
-					return Target{Kind: TargetComposeRepoChoice, Pane: i}
-				}
-				curX += pillWidth + 1
-			}
-			return Target{Kind: TargetComposeField, Pane: composeRepo}
+			return m.hitComposeRepoPills(x, composeRepo)
 		case line == 3:
-			return Target{Kind: TargetComposeField, Pane: composeID}
+			return m.hitComposeFlowPills(x, composeFlow)
 		case line == 4:
+			return m.hitComposeModelPills(x, composeModel)
+		case line == 5:
+			return m.hitComposeThinkingPills(x, composeThinking)
+		case line == 6:
+			return m.hitComposeEffortPills(x, composeEffort)
+		case line == 7:
+			return Target{Kind: TargetComposeField, Pane: composeID}
+		case line == 8:
 			if x >= 10 && x <= 30 {
 				return Target{Kind: TargetComposePaste}
 			}
 			return Target{Kind: TargetComposeField, Pane: composeText}
-		case line >= 5 && line <= 11:
+		case line >= 9 && line <= 15:
 			return Target{Kind: TargetComposeField, Pane: composeText}
-		case line >= 12:
-			if x < 20 {
-				return Target{Kind: TargetComposeAction, Key: "save"}
-			} else if x < 50 {
-				return Target{Kind: TargetComposeAction, Key: "save_and_run"}
-			}
-			return Target{Kind: TargetComposeAction, Key: "cancel"}
+		case line >= 16:
+			return hitComposeActions(x)
 		}
 	} else {
 		switch {
@@ -145,23 +140,90 @@ func (m Model) hitCompose(x, y int) Target {
 			}
 			return Target{Kind: TargetComposeField, Pane: composeURL}
 		case line == 3:
-			curX := 15
-			for i, r := range m.compose.repos {
-				pillWidth := composeRepoPillLen(r.name, i == m.compose.repoIdx)
-				if x >= curX && x < curX+pillWidth {
-					return Target{Kind: TargetComposeRepoChoice, Pane: i}
-				}
-				curX += pillWidth + 1
-			}
-			return Target{Kind: TargetComposeField, Pane: composeURLRepo}
-		case line >= 5:
-			if x < 20 {
-				return Target{Kind: TargetComposeAction, Key: "save"}
-			} else if x < 50 {
-				return Target{Kind: TargetComposeAction, Key: "save_and_run"}
-			}
-			return Target{Kind: TargetComposeAction, Key: "cancel"}
+			return m.hitComposeRepoPills(x, composeURLRepo)
+		case line == 4:
+			return m.hitComposeFlowPills(x, composeURLFlow)
+		case line == 5:
+			return m.hitComposeModelPills(x, composeURLModel)
+		case line == 6:
+			return m.hitComposeThinkingPills(x, composeURLThinking)
+		case line == 7:
+			return m.hitComposeEffortPills(x, composeURLEffort)
+		case line >= 9:
+			return hitComposeActions(x)
 		}
 	}
 	return Target{}
+}
+
+func (m Model) hitComposeRepoPills(x int, field int) Target {
+	curX := 15
+	for i, r := range m.compose.repos {
+		pillWidth := composePillWidth(r.name, i == m.compose.repoIdx)
+		if x >= curX && x < curX+pillWidth {
+			return Target{Kind: TargetComposeRepoChoice, Pane: i}
+		}
+		curX += pillWidth + 1
+	}
+	return Target{Kind: TargetComposeField, Pane: field}
+}
+
+func (m Model) hitComposeFlowPills(x int, field int) Target {
+	curX := 12
+	for i, f := range m.compose.flows {
+		pillWidth := composePillWidth("⚡ "+f, i == m.compose.flowIdx)
+		if x >= curX && x < curX+pillWidth {
+			return Target{Kind: TargetComposeFlowChoice, Pane: i}
+		}
+		curX += pillWidth + 1
+	}
+	if x >= curX && x < curX+12 {
+		return Target{Kind: TargetComposeNewFlow}
+	}
+	return Target{Kind: TargetComposeField, Pane: field}
+}
+
+func (m Model) hitComposeModelPills(x int, field int) Target {
+	curX := 12
+	for i, mod := range m.compose.models {
+		pillWidth := composePillWidth(mod, i == m.compose.modelIdx)
+		if x >= curX && x < curX+pillWidth {
+			return Target{Kind: TargetComposeModelChoice, Pane: i}
+		}
+		curX += pillWidth + 1
+	}
+	return Target{Kind: TargetComposeField, Pane: field}
+}
+
+func (m Model) hitComposeThinkingPills(x int, field int) Target {
+	curX := 14
+	for i, th := range m.compose.thinkings {
+		pillWidth := composePillWidth(th, i == m.compose.thinkingIdx)
+		if x >= curX && x < curX+pillWidth {
+			return Target{Kind: TargetComposeThinkingChoice, Pane: i}
+		}
+		curX += pillWidth + 1
+	}
+	return Target{Kind: TargetComposeField, Pane: field}
+}
+
+func (m Model) hitComposeEffortPills(x int, field int) Target {
+	curX := 14
+	for i, ef := range m.compose.efforts {
+		pillWidth := composePillWidth(ef, i == m.compose.effortIdx)
+		if x >= curX && x < curX+pillWidth {
+			return Target{Kind: TargetComposeEffortChoice, Pane: i}
+		}
+		curX += pillWidth + 1
+	}
+	return Target{Kind: TargetComposeField, Pane: field}
+}
+
+func hitComposeActions(x int) Target {
+	if x < 20 {
+		return Target{Kind: TargetComposeAction, Key: "save"}
+	} else if x < 50 {
+		return Target{Kind: TargetComposeAction, Key: "save_and_run"}
+	}
+	return Target{Kind: TargetComposeAction, Key: "cancel"}
 }
