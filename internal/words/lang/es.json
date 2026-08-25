@@ -1836,6 +1836,22 @@
     "update.success": {
       "source": "successfully updated orbit to {version}!",
       "value": "¡orbit se actualizó con éxito a {version}!"
+    },
+    "overview.thinking": {
+      "source": "thinking",
+      "value": "thinking"
+    },
+    "overview.effort": {
+      "source": "effort",
+      "value": "esfuerzo"
+    },
+    "detail.thinking_changed": {
+      "source": "thinking mode set to {mode}",
+      "value": "modo de pensamiento cambiado a {mode}"
+    },
+    "detail.effort_changed": {
+      "source": "effort level set to {effort}",
+      "value": "nivel de esfuerzo cambiado a {effort}"
     }
   }
 }
