@@ -76,7 +76,8 @@ func (m Model) hitFlows(x, y int) Target {
 		descriptors := flow.List(m.opts.Flows)
 		curLine := 6
 		for i, d := range descriptors {
-			fl, _ := flow.Resolve(m.opts.Flows, d.Name) //nolint:errcheck // best-effort flow descriptor resolution
+			//nolint:errcheck // best-effort flow descriptor resolution
+			fl, _ := flow.Resolve(m.opts.Flows, d.Name)
 			phaseCount := len(fl.Phases)
 			if line >= curLine && line <= curLine+phaseCount {
 				m.flows.sel = i

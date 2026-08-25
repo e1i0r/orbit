@@ -55,7 +55,8 @@ func (m Model) filterLine() string {
 	filter := strings.ToLower(strings.TrimSpace(m.filter))
 	shown := 0
 	for _, t := range m.board.Tasks {
-		if matches(t, filter) && matchesRepo(t, m.repoFilter) && (m.queueFilter == nil || view.BandOf(t) == *m.queueFilter) {
+		matchesQueue := m.queueFilter == nil || view.BandOf(t) == *m.queueFilter
+		if matches(t, filter) && matchesRepo(t, m.repoFilter) && matchesQueue {
 			shown++
 		}
 	}
@@ -71,7 +72,8 @@ func (m Model) filterLine() string {
 		parts = append(parts, Paint(role).Render("/"+typed))
 	}
 	if m.repoFilter != "" {
-		parts = append(parts, Paint(Accent).Render(p.T("band.repo_filter_tag", "repo:{repo}", about("repo", m.repoFilter))))
+		repoTag := p.T("band.repo_filter_tag", "repo:{repo}", about("repo", m.repoFilter))
+		parts = append(parts, Paint(Accent).Render(repoTag))
 	}
 	parts = append(parts, Paint(Dim).Render(p.T("band.shown", "{n} of {total} shown",
 		about("n", strconv.Itoa(shown)), about("total", strconv.Itoa(len(m.board.Tasks))))))

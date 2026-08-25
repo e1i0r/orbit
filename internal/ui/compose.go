@@ -162,11 +162,14 @@ func (m Model) composeSubmit() (tea.Model, tea.Cmd) {
 	text := strings.TrimSpace(m.compose.text)
 	switch {
 	case repo == "":
-		return m.say(p.T("compose.repo_required", "the repository is required; which one is this task against?")), nil
+		return m.say(p.T("compose.repo_required",
+			"the repository is required; which one is this task against?")), nil
 	case id == "":
-		return m.say(p.T("compose.id_required", "the id is required; what is this task called?")), nil
+		return m.say(p.T("compose.id_required",
+			"the id is required; what is this task called?")), nil
 	case text == "":
-		return m.say(p.T("compose.text_required", "the task needs something written in it")), nil
+		return m.say(p.T("compose.text_required",
+			"the task needs something written in it")), nil
 	}
 	if m.opts.ValidID != nil {
 		if err := m.opts.ValidID(id); err != nil {

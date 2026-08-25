@@ -127,8 +127,10 @@ func (m Model) sessionEnded(msg sessionEndedMsg) Model {
 		}
 		return m.say(msg.Err.Error())
 	}
-	return m.say(m.opts.Words.T("msg.session_ended", "{id} is still stopped and still yours; press h to hand it back",
-		about("id", msg.ID)))
+	msgText := m.opts.Words.T("msg.session_ended",
+		"{id} is still stopped and still yours; press h to hand it back",
+		about("id", msg.ID))
+	return m.say(msgText)
 }
 
 // readSaid is what the band says about a task that was marked read.
