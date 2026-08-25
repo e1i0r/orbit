@@ -1649,6 +1649,14 @@
       "source": "execution in flight...",
       "value": "ejecución en curso..."
     },
+    "overview.running_model": {
+      "source": "running model...",
+      "value": "ejecutando modelo..."
+    },
+    "overview.stream_hint": {
+      "source": "press [6] for live timeline or [8] for raw stream output",
+      "value": "presiona [6] para cronología en vivo o [8] para salida cruda"
+    },
     "overview.no_phases": {
       "source": "no phase outputs recorded",
       "value": "sin registros de fases todavía"

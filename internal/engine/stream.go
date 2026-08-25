@@ -10,30 +10,21 @@ import (
 )
 
 // maxStreamLine is the longest single line ParseStream will read.
-//
-// One line of claude's stream is one message, and a message carrying a whole
-// file can be large; a scanner with the default 64KiB limit would stop part
-// way through a run and report a truncated stream as a broken one. Four
-// mebibytes is the same order as the record's own line limit, which is what
-// bounds the event this ends up in, so nothing survives here that the log
-// could not hold anyway. It is a constant rather than a borrowed one because
-// internal/engine imports nothing of Orbit's.
 const maxStreamLine = 4 << 20
 
-// terminalResult is the object claude prints last, and the only one this
-// package reads.
-//
-// Cost is a plain float64 rather than a pointer: a result object that omits
-// the number and one that reports zero are the same fact to a reader of the
-// record, which Result's own doc comment already states — an engine that
-// does not report a cost is a fact about that engine, not a failure.
 type streamEnvelope struct {
-	Type      string         `json:"type"`
-	Subtype   string         `json:"subtype"`
-	Result    string         `json:"result"`
-	SessionID string         `json:"session_id"`
-	Cost      float64        `json:"total_cost_usd"`
-	Message   *streamMessage `json:"message"`
+	Type         string          `json:"type"`
+	Subtype      string          `json:"subtype"`
+	Result       string          `json:"result"`
+	SessionID    string          `json:"session_id"`
+	Cost         float64         `json:"total_cost_usd"`
+	Message      *streamMessage  `json:"message"`
+	ContentBlock *streamContent  `json:"content_block"`
+	Delta        *streamDelta    `json:"delta"`
+	Name         string          `json:"name"`
+	Input        json.RawMessage `json:"input"`
+	Text         string          `json:"text"`
+	Thinking     string          `json:"thinking"`
 }
 
 type streamMessage struct {
@@ -50,9 +41,13 @@ type streamContent struct {
 	IsError  bool            `json:"is_error"`
 }
 
-// ParseStream reads claude's streaming JSON and returns what the record
-// keeps: the human-readable answer, session id, cost, thinking blocks,
-// tool calls, and permission refusals.
+type streamDelta struct {
+	Type     string `json:"type"`
+	Text     string `json:"text"`
+	Thinking string `json:"thinking"`
+}
+
+// ParseStream reads claude's streaming JSON and returns what the record keeps.
 func ParseStream(r io.Reader) (Result, error) {
 	return ParseStreamWithCallback(r, nil)
 }
@@ -85,6 +80,53 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 			out.Cost = env.Cost
 			if onEvent != nil {
 				onEvent(StreamEvent{Type: "result", Cost: env.Cost})
+			}
+		case "content_block_start":
+			if env.ContentBlock != nil {
+				switch env.ContentBlock.Type {
+				case "thinking":
+					th := env.ContentBlock.Thinking
+					if th == "" {
+						th = env.ContentBlock.Text
+					}
+					if th != "" {
+						out.Thoughts = append(out.Thoughts, th)
+						if onEvent != nil {
+							onEvent(StreamEvent{Type: "thought", Thought: th})
+						}
+					}
+				case "tool_use":
+					tc := StreamToolCall{
+						Name: env.ContentBlock.Name,
+						Args: string(env.ContentBlock.Input),
+					}
+					out.ToolCalls = append(out.ToolCalls, tc)
+					if onEvent != nil {
+						onEvent(StreamEvent{Type: "tool_call", ToolCall: tc})
+					}
+				}
+			}
+		case "content_block_delta":
+			if env.Delta != nil {
+				switch env.Delta.Type {
+				case "thinking_delta":
+					if env.Delta.Thinking != "" && onEvent != nil {
+						onEvent(StreamEvent{Type: "thought", Thought: env.Delta.Thinking})
+					}
+				case "text_delta":
+					if env.Delta.Text != "" && onEvent != nil {
+						onEvent(StreamEvent{Type: "thought", Thought: env.Delta.Text})
+					}
+				}
+			}
+		case "tool_use", "tool_call":
+			tc := StreamToolCall{
+				Name: env.Name,
+				Args: string(env.Input),
+			}
+			out.ToolCalls = append(out.ToolCalls, tc)
+			if onEvent != nil {
+				onEvent(StreamEvent{Type: "tool_call", ToolCall: tc})
 			}
 		case "assistant":
 			if env.Message != nil {
