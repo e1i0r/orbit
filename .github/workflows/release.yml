@@ -1,0 +1,42 @@
+name: release
+
+on:
+  workflow_run:
+    workflows: ["check"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.next.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Compute next version
+        id: next
+        run: |
+          latest=$(git tag --list 'v*' --sort=-v:refname | head -n1)
+          if [ -z "$latest" ]; then
+            next="v0.1.0"
+          else
+            IFS='.' read -r major minor patch <<< "${latest#v}"
+            next="v${major}.${minor}.$((patch + 1))"
+          fi
+          echo "version=${next}" >> "$GITHUB_OUTPUT"
+
+      - name: Tag it
+        run: |
+          git config user.name "orbit-release"
+          git config user.email "actions@github.com"
+          git tag -a "${{ steps.next.outputs.version }}" -m "${{ steps.next.outputs.version }}"
+          git push origin "${{ steps.next.outputs.version }}"
