@@ -1128,19 +1128,19 @@
       "value": "1 Manual"
     },
     "compose.tab_url": {
-      "source": "2 Desde URL (Linear / Jira / GitHub)",
+      "source": "2 From URL (Linear / Jira / GitHub)",
       "value": "2 Desde URL (Linear / Jira / GitHub)"
     },
     "compose.save_btn": {
-      "source": "↵ Guardar",
+      "source": "↵ Save",
       "value": "↵ Guardar"
     },
     "compose.save_run_btn": {
-      "source": "^R Guardar y Ejecutar",
+      "source": "^R Save & Run",
       "value": "^R Guardar y Ejecutar"
     },
     "compose.cancel_btn": {
-      "source": "esc Cancelar",
+      "source": "esc Cancel",
       "value": "esc Cancelar"
     },
     "compose.url": {
@@ -1148,7 +1148,7 @@
       "value": "url"
     },
     "compose.url_placeholder": {
-      "source": "https://linear.app/... o https://...atlassian.net/...",
+      "source": "https://linear.app/... or https://...atlassian.net/...",
       "value": "https://linear.app/... o https://...atlassian.net/..."
     },
     "compose.id_placeholder": {
@@ -1164,11 +1164,11 @@
       "value": "¿cuál repositorio?"
     },
     "compose.repo_hint": {
-      "source": "(←/→ para cambiar)",
+      "source": "(←/→ to cycle)",
       "value": "(←/→ para cambiar)"
     },
     "compose.text_hint": {
-      "source": "(Shift+↵ para nueva línea)",
+      "source": "(Shift+↵ for newline)",
       "value": "(Shift+↵ para nueva línea)"
     },
     "compose.btn_paste": {
@@ -1176,31 +1176,31 @@
       "value": "Pegar (^V)"
     },
     "compose.flow": {
-      "source": "flujo",
+      "source": "flow",
       "value": "flujo"
     },
     "compose.new_flow_btn": {
-      "source": "Nuevo",
+      "source": "New",
       "value": "Nuevo"
     },
     "compose.flow_hint": {
-      "source": "(←/→ o + nuevo)",
+      "source": "(←/→ or + new)",
       "value": "(←/→ o + nuevo)"
     },
     "compose.engine": {
-      "source": "motor",
+      "source": "engine",
       "value": "motor"
     },
     "compose.engine_hint": {
-      "source": "(←/→ para cambiar)",
+      "source": "(←/→ to cycle)",
       "value": "(←/→ para cambiar)"
     },
     "compose.model": {
-      "source": "modelo",
+      "source": "model",
       "value": "modelo"
     },
     "compose.model_hint": {
-      "source": "(←/→ para cambiar)",
+      "source": "(←/→ to cycle)",
       "value": "(←/→ para cambiar)"
     },
     "compose.thinking": {
@@ -1208,15 +1208,15 @@
       "value": "thinking"
     },
     "compose.thinking_hint": {
-      "source": "(←/→ para cambiar)",
+      "source": "(←/→ to cycle)",
       "value": "(←/→ para cambiar)"
     },
     "compose.effort": {
-      "source": "esfuerzo",
+      "source": "effort",
       "value": "esfuerzo"
     },
     "compose.effort_hint": {
-      "source": "(←/→ para cambiar)",
+      "source": "(←/→ to cycle)",
       "value": "(←/→ para cambiar)"
     },
     "note.empty": {
@@ -1346,6 +1346,10 @@
     "flows.builder_pipeline_title": {
       "source": "Pipeline (Click on a phase to edit it):",
       "value": "Pipeline del Ciclo (Haz clic en una fase para editarla):"
+    },
+    "flows.phase_label": {
+      "source": "Phase",
+      "value": "Fase"
     },
     "flows.feeds_input": {
       "source": "[feeds input]",

@@ -46,14 +46,14 @@ func (m Model) composeRepoLine(active bool, w int) string {
 	}
 	line := prefix + strings.Join(pills, " ")
 	if active {
-		line += " " + Paint(Dim).Render(p.T("compose.repo_hint", "(←/→ para cambiar)"))
+		line += " " + Paint(Dim).Render(p.T("compose.repo_hint", "(←/→ to cycle)"))
 	}
 	return fit(line, w)
 }
 
 func (m Model) composeFlowLine(active bool, w int) string {
 	p := m.opts.Words
-	prefix := composeLabel(p.T("compose.flow", "flujo"), active)
+	prefix := composeLabel(p.T("compose.flow", "flow"), active)
 
 	var pills []string
 	for i, f := range m.compose.flows {
@@ -71,19 +71,19 @@ func (m Model) composeFlowLine(active bool, w int) string {
 			pills = append(pills, Pill(" "+glyph+f+" ", "#94A3B8", "#1E293B"))
 		}
 	}
-	newBtn := Pill(" ➕ "+p.T("compose.new_flow_btn", "Nuevo")+" ", "#FFFFFF", "#6366F1")
+	newBtn := Pill(" ➕ "+p.T("compose.new_flow_btn", "New")+" ", "#FFFFFF", "#6366F1")
 	pills = append(pills, newBtn)
 
 	line := prefix + strings.Join(pills, " ")
 	if active {
-		line += " " + Paint(Dim).Render(p.T("compose.flow_hint", "(←/→ o + nuevo)"))
+		line += " " + Paint(Dim).Render(p.T("compose.flow_hint", "(←/→ or + new)"))
 	}
 	return fit(line, w)
 }
 
 func (m Model) composeEngineLine(active bool, w int) string {
 	p := m.opts.Words
-	prefix := composeLabel(p.T("compose.engine", "motor"), active)
+	prefix := composeLabel(p.T("compose.engine", "engine"), active)
 
 	var pills []string
 	for i, eng := range m.compose.engines {
@@ -96,14 +96,14 @@ func (m Model) composeEngineLine(active bool, w int) string {
 	}
 	line := prefix + strings.Join(pills, " ")
 	if active {
-		line += " " + Paint(Dim).Render(p.T("compose.engine_hint", "(←/→ para cambiar)"))
+		line += " " + Paint(Dim).Render(p.T("compose.engine_hint", "(←/→ to cycle)"))
 	}
 	return fit(line, w)
 }
 
 func (m Model) composeModelLine(active bool, w int) string {
 	p := m.opts.Words
-	prefix := composeLabel(p.T("compose.model", "modelo"), active)
+	prefix := composeLabel(p.T("compose.model", "model"), active)
 
 	var pills []string
 	for i, mod := range m.compose.models {
@@ -116,7 +116,7 @@ func (m Model) composeModelLine(active bool, w int) string {
 	}
 	line := prefix + strings.Join(pills, " ")
 	if active {
-		line += " " + Paint(Dim).Render(p.T("compose.model_hint", "(←/→ para cambiar)"))
+		line += " " + Paint(Dim).Render(p.T("compose.model_hint", "(←/→ to cycle)"))
 	}
 	return fit(line, w)
 }
@@ -136,14 +136,14 @@ func (m Model) composeThinkingLine(active bool, w int) string {
 	}
 	line := prefix + strings.Join(pills, " ")
 	if active {
-		line += " " + Paint(Dim).Render(p.T("compose.thinking_hint", "(←/→ para cambiar)"))
+		line += " " + Paint(Dim).Render(p.T("compose.thinking_hint", "(←/→ to cycle)"))
 	}
 	return fit(line, w)
 }
 
 func (m Model) composeEffortLine(active bool, w int) string {
 	p := m.opts.Words
-	prefix := composeLabel(p.T("compose.effort", "esfuerzo"), active)
+	prefix := composeLabel(p.T("compose.effort", "effort"), active)
 
 	var pills []string
 	for i, ef := range m.compose.efforts {
@@ -156,7 +156,7 @@ func (m Model) composeEffortLine(active bool, w int) string {
 	}
 	line := prefix + strings.Join(pills, " ")
 	if active {
-		line += " " + Paint(Dim).Render(p.T("compose.effort_hint", "(←/→ para cambiar)"))
+		line += " " + Paint(Dim).Render(p.T("compose.effort_hint", "(←/→ to cycle)"))
 	}
 	return fit(line, w)
 }

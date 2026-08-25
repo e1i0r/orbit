@@ -49,7 +49,8 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 		if i == st.activePhase {
 			curMark = "● "
 		}
-		title := fmt.Sprintf("%sFase %d: %s (%s/%s)", curMark, i+1, ph.Name, ph.Engine, orDef(ph.Model, "default"))
+		phaseLabel := p.T("flows.phase_label", "Phase")
+		title := fmt.Sprintf("%s%s %d: %s (%s/%s)", curMark, phaseLabel, i+1, ph.Name, ph.Engine, orDef(ph.Model, "default"))
 		if ph.FeedOutput {
 			title += " " + p.T("flows.feeds_input", "[feeds input]")
 		}

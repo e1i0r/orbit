@@ -16,7 +16,7 @@ func (m Model) composeRows(h, w int) []string {
 	var out []string
 
 	tabManual := p.T("compose.tab_manual", "1 Manual")
-	tabURL := p.T("compose.tab_url", "2 Desde URL (Linear / Jira / GitHub)")
+	tabURL := p.T("compose.tab_url", "2 From URL (Linear / Jira / GitHub)")
 
 	renderTab := func(name string, active bool) string {
 		if active {
@@ -35,9 +35,9 @@ func (m Model) composeRows(h, w int) []string {
 		out = append(out, m.composeURLRows(w)...)
 	}
 
-	saveBtn := p.T("compose.save_btn", "↵ Guardar")
-	runBtn := p.T("compose.save_run_btn", "^R Guardar y Ejecutar")
-	cancelBtn := p.T("compose.cancel_btn", "esc Cancelar")
+	saveBtn := p.T("compose.save_btn", "↵ Save")
+	runBtn := p.T("compose.save_run_btn", "^R Save & Run")
+	cancelBtn := p.T("compose.cancel_btn", "esc Cancel")
 
 	actions := "  " + Paint(OK).Render("[ "+saveBtn+" ]") +
 		"   " + Paint(Accent).Render("[ "+runBtn+" ]") +
@@ -78,7 +78,7 @@ func (m Model) composeURLRows(w int) []string {
 		composeURL,
 		p.T("compose.url", "url"),
 		m.compose.url,
-		p.T("compose.url_placeholder", "https://linear.app/... o https://...atlassian.net/..."),
+		p.T("compose.url_placeholder", "https://linear.app/... or https://...atlassian.net/..."),
 		w,
 	)
 	pastePill := Pill(" 📋 "+p.T("compose.btn_paste", "Paste (^V)")+" ", "#FFFFFF", "#0369A1")
@@ -111,7 +111,7 @@ func (m Model) composeTextArea(w int) []string {
 	pastePill := Pill(" 📋 "+p.T("compose.btn_paste", "Paste (^V)")+" ", "#FFFFFF", "#0369A1")
 	header += pastePill
 	if active {
-		header += " " + Paint(Dim).Render(p.T("compose.text_hint", "(Shift+↵ para nueva línea)"))
+		header += " " + Paint(Dim).Render(p.T("compose.text_hint", "(Shift+↵ for newline)"))
 	}
 
 	boxW := w - 8
