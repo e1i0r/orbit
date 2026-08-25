@@ -95,6 +95,13 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 							onEvent(StreamEvent{Type: "thought", Thought: th})
 						}
 					}
+				case "text":
+					if env.ContentBlock.Text != "" {
+						out.Thoughts = append(out.Thoughts, env.ContentBlock.Text)
+						if onEvent != nil {
+							onEvent(StreamEvent{Type: "thought", Thought: env.ContentBlock.Text})
+						}
+					}
 				case "tool_use":
 					tc := StreamToolCall{
 						Name: env.ContentBlock.Name,
@@ -141,6 +148,13 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 							out.Thoughts = append(out.Thoughts, t)
 							if onEvent != nil {
 								onEvent(StreamEvent{Type: "thought", Thought: t})
+							}
+						}
+					case "text":
+						if block.Text != "" {
+							out.Thoughts = append(out.Thoughts, block.Text)
+							if onEvent != nil {
+								onEvent(StreamEvent{Type: "thought", Thought: block.Text})
 							}
 						}
 					case "tool_use":

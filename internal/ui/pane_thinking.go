@@ -18,13 +18,21 @@ type thoughtBlock struct {
 func formatThoughtLine(l string) (string, Role) {
 	lower := strings.ToLower(l)
 	switch {
-	case strings.Contains(lower, "decid") || strings.Contains(lower, "conclu") || strings.Contains(lower, "opt"):
+	case strings.Contains(lower, "decid") || strings.Contains(lower, "conclu") ||
+		strings.Contains(lower, "opt") || strings.Contains(lower, "resolv") ||
+		strings.Contains(lower, "implement"):
 		return "🎯 " + l, OK
-	case strings.Contains(lower, "descart") || strings.Contains(lower, "turn down") || strings.Contains(lower, "reject") || strings.Contains(lower, "avoid"):
+	case strings.Contains(lower, "descart") || strings.Contains(lower, "turn down") ||
+		strings.Contains(lower, "reject") || strings.Contains(lower, "avoid") ||
+		strings.Contains(lower, "evit"):
 		return "🚫 " + l, Warn
-	case strings.Contains(lower, "investig") || strings.Contains(lower, "check") || strings.Contains(lower, "find") || strings.Contains(lower, "encontr") || strings.Contains(lower, "analiz"):
+	case strings.Contains(lower, "investig") || strings.Contains(lower, "check") ||
+		strings.Contains(lower, "find") || strings.Contains(lower, "encontr") ||
+		strings.Contains(lower, "analiz") || strings.Contains(lower, "evalu"):
 		return "🔍 " + l, Live
-	case strings.Contains(lower, "porqu") || strings.Contains(lower, "becaus") || strings.Contains(lower, "razon") || strings.Contains(lower, "reason"):
+	case strings.Contains(lower, "porqu") || strings.Contains(lower, "becaus") ||
+		strings.Contains(lower, "razon") || strings.Contains(lower, "reason") ||
+		strings.Contains(lower, "motivo"):
 		return "💡 " + l, Accent
 	default:
 		return "• " + l, Dim
@@ -40,7 +48,10 @@ func (m Model) thinkingLines() []string {
 
 	var blocks []thoughtBlock
 	for _, e := range m.entries {
-		if e.What() == view.EntryThought {
+		isThought := e.What() == view.EntryThought
+		isPhaseSummary := (e.What() == view.EntryFinished || e.What() == view.EntryFailed) &&
+			strings.TrimSpace(e.Text) != ""
+		if isThought || isPhaseSummary {
 			timeStr := ""
 			if !e.At.IsZero() {
 				timeStr = e.At.Format("15:04:05")
@@ -61,6 +72,15 @@ func (m Model) thinkingLines() []string {
 				})
 			}
 		}
+	}
+
+	t, ok := m.task(m.detail)
+	if ok && t.CurrentThought != "" {
+		blocks = append(blocks, thoughtBlock{
+			at:    p.T("thinking.live_now", "live / in flight"),
+			phase: t.Phase,
+			lines: []string{t.CurrentThought},
+		})
 	}
 
 	out := []string{

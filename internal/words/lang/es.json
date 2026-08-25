@@ -1756,6 +1756,10 @@
     "tab_desc.thinking": {
       "source": "extended model thinking, chain of thought and reasoning",
       "value": "razonamiento extendido del modelo LLM"
+    },
+    "thinking.live_now": {
+      "source": "live / in flight",
+      "value": "en curso / en vivo"
     }
   }
 }
