@@ -1,6 +1,7 @@
-GO ?= go
+export PATH := /usr/local/go/bin:$(HOME)/go/bin:$(PATH)
+GO ?= $(shell which go 2>/dev/null || echo /usr/local/go/bin/go)
 
-.PHONY: check fmt vet lint test tidy build install
+.PHONY: check fmt vet lint test coverage tidy build install
 
 # check is what a contributor runs before pushing, so it has to be what CI
 # runs: lint used to be in CI and not here, which meant a green local check
@@ -25,6 +26,13 @@ lint:
 
 test:
 	$(GO) test ./...
+
+coverage:
+	@mkdir -p .coverage
+	@$(GO) test -count=1 -coverprofile=.coverage/coverage.out -covermode=atomic ./...
+	@echo ""
+	@echo "🎯 Total Project Statement Coverage:"
+	@$(GO) tool cover -func=.coverage/coverage.out | tail -n 1
 
 # go.mod is tidy or arch.approved's guarantee about indirect requires does
 # not hold: an untidy go.mod can carry a module that no import justifies.
