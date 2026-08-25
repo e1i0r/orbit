@@ -39,17 +39,18 @@ var layers = map[string][]string{
 	// its subcommand calls. What is not widened is the line above:
 	// internal/board still does not append anything itself, and internal/ui
 	// still cannot reach internal/record, internal/store or internal/engine.
-	"internal/board":  {"internal/record", "internal/repo", "internal/store", "internal/task", "internal/view"},
-	"internal/cli":    {"internal/board", "internal/engine", "internal/flow", "internal/logger", "internal/quota", "internal/repo", "internal/store", "internal/task", "internal/ui", "internal/view", "internal/words"},
-	"internal/engine": {},
-	"internal/flow":   {},
-	"internal/logger": {},
-	"internal/quota":  {},
-	"internal/record": {},
-	"internal/repo":   {"internal/store"},
-	"internal/store":  {},
-	"internal/task":   {"internal/engine", "internal/flow", "internal/record", "internal/repo", "internal/store"},
-	"internal/ui":     {"internal/board", "internal/flow", "internal/repo", "internal/task", "internal/ui/layout", "internal/view", "internal/words"},
+	"internal/board":   {"internal/record", "internal/repo", "internal/store", "internal/task", "internal/view"},
+	"internal/cli":     {"internal/board", "internal/engine", "internal/flow", "internal/logger", "internal/quota", "internal/repo", "internal/store", "internal/task", "internal/tracker", "internal/ui", "internal/view", "internal/words"},
+	"internal/engine":  {},
+	"internal/flow":    {},
+	"internal/logger":  {},
+	"internal/quota":   {},
+	"internal/record":  {},
+	"internal/repo":    {"internal/store"},
+	"internal/store":   {},
+	"internal/task":    {"internal/engine", "internal/flow", "internal/record", "internal/repo", "internal/store"},
+	"internal/tracker": {},
+	"internal/ui":      {"internal/board", "internal/flow", "internal/repo", "internal/task", "internal/tracker", "internal/ui/layout", "internal/view", "internal/words"},
 	// internal/ui/layout is widened to internal/view for one reason:
 	// layout.Columns plans a row's columns from the board it is about to
 	// draw, and the board is []view.Task. It is a widening, and it was

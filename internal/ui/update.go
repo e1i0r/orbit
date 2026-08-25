@@ -110,6 +110,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.syncPanes(), nil
 	case languageMsg:
 		return m.language(msg.Lang), nil
+	case tea.PasteMsg:
+		return m.paste(msg.Content), nil
 	case tea.KeyPressMsg:
 		return m.key(msg)
 	case tea.MouseMsg:

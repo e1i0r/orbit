@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 
@@ -230,21 +228,6 @@ func (m Model) handleFlowClick(t Target) (tea.Model, tea.Cmd) {
 	}
 	m.flows.field = t.Phase
 	return m.handleFlowFieldAction()
-}
-
-func readClipboard() string {
-	if runtime.GOOS == "darwin" {
-		if out, err := exec.Command("pbpaste").Output(); err == nil {
-			return string(out)
-		}
-	}
-	if out, err := exec.Command("wl-paste").Output(); err == nil {
-		return string(out)
-	}
-	if out, err := exec.Command("xclip", "-out", "-selection", "clipboard").Output(); err == nil {
-		return string(out)
-	}
-	return ""
 }
 
 func generatePhasePrompt(userInput, phaseName, flowName string) string {

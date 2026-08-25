@@ -68,6 +68,7 @@ type menuEntry struct {
 
 	aff *Affordance
 	cmd *Command
+	tab *tab
 }
 
 // menuEntries is the menu as it stands right now, recomputed from the board
@@ -79,6 +80,9 @@ type menuEntry struct {
 // more than hiding it would.
 func (m Model) menuEntries() []menuEntry {
 	p := m.opts.Words
+	if m.screen == screenDetail {
+		return m.tabMenuEntries()
+	}
 	if m.menu.taskID == "" {
 		out := make([]menuEntry, 0, len(m.opts.Commands))
 		for i := range m.opts.Commands {
@@ -119,18 +123,54 @@ func (m Model) menuEntries() []menuEntry {
 	return out
 }
 
+func (m Model) tabMenuEntries() []menuEntry {
+	p := m.opts.Words
+	descs := map[tab]string{
+		tabOverview:  p.T("tab_desc.overview", "general status, live activity and metrics summary"),
+		tabFlow:      p.T("tab_desc.flow", "task pipeline phases and execution plan"),
+		tabGates:     p.T("tab_desc.gates", "automated quality gates, linters and validation status"),
+		tabCost:      p.T("tab_desc.cost", "token usage and monetary cost breakdown per phase"),
+		tabRefused:   p.T("tab_desc.refused", "denied tool invocations and permission rejections"),
+		tabTimeline:  p.T("tab_desc.timeline", "complete live event timeline and phase history"),
+		tabReport:    p.T("tab_desc.report", "final solution report, summary and review conclusions"),
+		tabArtifacts: p.T("tab_desc.artifacts", "raw tool output and generated artifacts"),
+		tabNotes:     p.T("tab_desc.notes", "operator notes and interactive dialogue history"),
+		tabDiff:      p.T("tab_desc.diff", "git working tree diff and code modifications"),
+		tabThinking:  p.T("tab_desc.thinking", "extended model thinking, chain of thought and reasoning"),
+	}
+
+	var out []menuEntry
+	for _, n := range m.tabNames() {
+		tVal := n.tab
+		k := paneKey(tVal)
+		out = append(out, menuEntry{
+			glyph:  "[" + k + "]",
+			title:  n.text,
+			detail: descs[tVal],
+			tab:    &tVal,
+		})
+	}
+	return out
+}
+
 // menuKey answers the keyboard while the menu is up: pick, choose, leave.
 // Every other key does nothing rather than reaching past a menu the reader
 // is looking at.
 func (m Model) menuKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	if m.screen == screenDetail {
+		if targetTab, ok := keyToPane(msg.String()); ok {
+			m = m.showTab(targetTab)
+			return m.closeMenu(), nil
+		}
+	}
 	switch {
 	case key.Matches(msg, m.keys.Back):
 		return m.closeMenu(), nil
 	case key.Matches(msg, m.keys.Open):
 		return m.chooseMenu()
-	case msg.String() == "up":
+	case msg.String() == "up" || key.Matches(msg, m.keys.Up):
 		return m.menuPick(-1), nil
-	case msg.String() == "down":
+	case msg.String() == "down" || key.Matches(msg, m.keys.Down):
 		return m.menuPick(1), nil
 	}
 	return m, nil
@@ -158,11 +198,15 @@ func (m Model) menuPick(d int) Model {
 // refuses here with the same sentence it refuses everywhere else; a
 // command runs through launch, so its output is watched like any other.
 func (m Model) chooseMenu() (tea.Model, tea.Cmd) {
-	es := m.menuEntries()
-	if m.menu.sel < 0 || m.menu.sel >= len(es) {
+	entries := m.menuEntries()
+	if m.menu.sel < 0 || m.menu.sel >= len(entries) {
 		return m, nil
 	}
-	e := es[m.menu.sel]
+	e := entries[m.menu.sel]
+	if e.tab != nil {
+		m = m.showTab(*e.tab)
+		return m.closeMenu(), nil
+	}
 	next := m.closeMenu()
 	if e.cmd != nil {
 		return next.launch(*e.cmd, nil)

@@ -91,10 +91,7 @@ func (m Model) phaseBody(e view.Entry) []string {
 	if strings.TrimSpace(e.Text) == "" {
 		return append(out, "    "+Paint(Dim).Render(p.T("evidence.silent", "the engine printed nothing")))
 	}
-	for _, line := range strings.Split(strings.TrimSuffix(e.Text, "\n"), "\n") {
-		out = append(out, "    "+Paint(Dim).Render(quoteMark)+line)
-	}
-	return out
+	return append(out, renderMarkdown(e.Text, m.frame.Body.W, m.rawText)...)
 }
 
 func group(n int) string {

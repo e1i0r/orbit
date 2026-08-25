@@ -115,6 +115,13 @@ func (m Model) overviewLines() []string {
 			toolsLabel := p.T("overview.live_tools_count", "tool calls")
 			out = append(out, fmt.Sprintf("    %-14s %s", Paint(Dim).Render(toolsLabel), Paint(Accent).Render(strconv.Itoa(t.ToolCallCount))))
 		}
+		if t.CurrentAction == "" && t.CurrentThought == "" {
+			statusLabel := p.T("overview.state", "state")
+			out = append(out,
+				fmt.Sprintf("    %-14s %s", Paint(Dim).Render(statusLabel), Paint(Live).Render(p.T("overview.running_model", "running model..."))),
+				"    "+Paint(Dim).Render(p.T("overview.stream_hint", "press [6] for live timeline or [8] for raw stream output")),
+			)
+		}
 		out = append(out, "")
 	}
 

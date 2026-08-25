@@ -141,17 +141,19 @@ func TestTheGesturesReachTheFunctionsTheSubcommandsCall(t *testing.T) {
 			wantBand(t, m, "autopilot")
 		},
 	}, {
-		name: "a is offered nowhere and refused with its reason",
+		name: "a opens the note dialog for the selected task",
 		start: func(t *testing.T) (Model, *recorder) {
 			m, got := testModel(t, 100, 30)
 			return onRow(t, m, "ACME-2705"), got
 		},
 		keys: []string{"a"},
 		want: func(t *testing.T, m Model, cmd tea.Cmd, _ *recorder) {
-			if cmd != nil {
-				t.Fatal("a produced a command, and orbit cannot ask an engine anything yet")
+			if !m.note.open {
+				t.Fatal("expected note dialog to be open after pressing 'a'")
 			}
-			wantBand(t, m, "cannot ask an engine a question yet")
+			if m.note.taskID != "ACME-2705" {
+				t.Errorf("note.taskID = %q, want ACME-2705", m.note.taskID)
+			}
 		},
 	}}
 

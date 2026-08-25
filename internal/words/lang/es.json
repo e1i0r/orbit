@@ -1027,6 +1027,14 @@
       "source": "record a note for a task",
       "value": "dejar una nota para una tarea"
     },
+    "cmd.version": {
+      "source": "print the version orbit was built at",
+      "value": "mostrar la versión con la que se compiló orbit"
+    },
+    "cmd.update": {
+      "source": "check for updates and upgrade orbit",
+      "value": "buscar actualizaciones y actualizar orbit"
+    },
     "cli.tagline": {
       "source": "orbit — a cockpit for supervising coding agents",
       "value": "orbit — una cabina para supervisar agentes que programan"
@@ -1115,9 +1123,81 @@
       "source": "the task needs something written in it",
       "value": "la tarea necesita algo escrito dentro"
     },
-    "compose.ways_out": {
-      "source": "{open} writes it · {back} abandons it — nothing is written until then",
-      "value": "{open} la guarda · {back} la abandona — hasta entonces no se escribe nada"
+    "compose.tab_manual": {
+      "source": "1 Manual",
+      "value": "1 Manual"
+    },
+    "compose.tab_url": {
+      "source": "2 Desde URL (Linear / Jira / GitHub)",
+      "value": "2 Desde URL (Linear / Jira / GitHub)"
+    },
+    "compose.save_btn": {
+      "source": "↵ Guardar",
+      "value": "↵ Guardar"
+    },
+    "compose.save_run_btn": {
+      "source": "^R Guardar y Ejecutar",
+      "value": "^R Guardar y Ejecutar"
+    },
+    "compose.cancel_btn": {
+      "source": "esc Cancelar",
+      "value": "esc Cancelar"
+    },
+    "compose.url": {
+      "source": "url",
+      "value": "url"
+    },
+    "compose.url_placeholder": {
+      "source": "https://linear.app/... o https://...atlassian.net/...",
+      "value": "https://linear.app/... o https://...atlassian.net/..."
+    },
+    "compose.id_placeholder": {
+      "source": "what is it called? (e.g. ORBIT-42)",
+      "value": "¿cómo se llama? (ej. ORBIT-42)"
+    },
+    "compose.text_placeholder": {
+      "source": "what is to be done?",
+      "value": "¿qué hay que hacer?"
+    },
+    "compose.repo_placeholder": {
+      "source": "which repository?",
+      "value": "¿cuál repositorio?"
+    },
+    "compose.repo_hint": {
+      "source": "(←/→ para cambiar)",
+      "value": "(←/→ para cambiar)"
+    },
+    "compose.text_hint": {
+      "source": "(Shift+↵ para nueva línea)",
+      "value": "(Shift+↵ para nueva línea)"
+    },
+    "compose.btn_paste": {
+      "source": "Paste (^V)",
+      "value": "Pegar (^V)"
+    },
+    "note.empty": {
+      "source": "the note cannot be empty",
+      "value": "la nota no puede estar vacía"
+    },
+    "note.recorded": {
+      "source": "note recorded for {id}",
+      "value": "nota guardada para {id}"
+    },
+    "note.dialog_title": {
+      "source": "leave a note for {id}",
+      "value": "dejar una nota para {id}"
+    },
+    "note.prompt": {
+      "source": "note",
+      "value": "nota"
+    },
+    "note.placeholder": {
+      "source": "instructions or context for the next phase...",
+      "value": "instrucciones o contexto para la siguiente fase..."
+    },
+    "note.actions": {
+      "source": "↵ save note · esc cancel · ^V paste",
+      "value": "↵ guardar nota · esc cancelar · ^V pegar"
     },
     "palette.placeholder": {
       "source": "type a command",
@@ -1577,6 +1657,14 @@
       "source": "execution in flight...",
       "value": "ejecución en curso..."
     },
+    "overview.running_model": {
+      "source": "running model...",
+      "value": "ejecutando modelo..."
+    },
+    "overview.stream_hint": {
+      "source": "press [6] for live timeline or [8] for raw stream output",
+      "value": "presiona [6] para cronología en vivo o [8] para salida cruda"
+    },
     "overview.no_phases": {
       "source": "no phase outputs recorded",
       "value": "sin registros de fases todavía"
@@ -1628,6 +1716,90 @@
     "overview.live_tools_count": {
       "source": "tool calls",
       "value": "llamadas a herramientas"
+    },
+    "key.tab_menu": {
+      "source": "tab menu",
+      "value": "menú de pestañas"
+    },
+    "tab_desc.overview": {
+      "source": "general status, live activity and metrics summary",
+      "value": "vista general, actividad en vivo y métricas"
+    },
+    "tab_desc.flow": {
+      "source": "task pipeline phases and execution plan",
+      "value": "fases del flujo de trabajo y plan de ejecución"
+    },
+    "tab_desc.gates": {
+      "source": "automated quality gates, linters and validation status",
+      "value": "verificaciones de calidad, linters y validaciones"
+    },
+    "tab_desc.cost": {
+      "source": "token usage and monetary cost breakdown per phase",
+      "value": "consumo de tokens y desglose de costos por fase"
+    },
+    "tab_desc.refused": {
+      "source": "denied tool invocations and permission rejections",
+      "value": "llamadas a herramientas o permisos denegados"
+    },
+    "tab_desc.timeline": {
+      "source": "complete live event timeline and phase history",
+      "value": "cronología completa de eventos en tiempo real"
+    },
+    "tab_desc.report": {
+      "source": "final solution report, summary and review conclusions",
+      "value": "reporte final de la solución y conclusiones"
+    },
+    "tab_desc.artifacts": {
+      "source": "raw tool output and generated artifacts",
+      "value": "salida cruda y artefactos generados"
+    },
+    "tab_desc.notes": {
+      "source": "operator notes and interactive dialogue history",
+      "value": "notas del operador y diálogo interactivo"
+    },
+    "tab_desc.diff": {
+      "source": "git working tree diff and code modifications",
+      "value": "diferencias git (diff) en el árbol de trabajo"
+    },
+    "tab_desc.thinking": {
+      "source": "extended model thinking, chain of thought and reasoning",
+      "value": "razonamiento extendido del modelo LLM"
+    },
+    "thinking.live_now": {
+      "source": "live / in flight",
+      "value": "en curso / en vivo"
+    },
+    "key.toggle_markdown": {
+      "source": "md / raw",
+      "value": "md / texto plano"
+    },
+    "detail.mode_markdown": {
+      "source": "formatted view (markdown)",
+      "value": "vista enriquecida (markdown)"
+    },
+    "detail.mode_raw": {
+      "source": "plain text view (raw)",
+      "value": "vista texto plano (raw)"
+    },
+    "update.checking": {
+      "source": "checking for updates...",
+      "value": "buscando actualizaciones..."
+    },
+    "update.already_latest": {
+      "source": "orbit is already on the latest version ({version})",
+      "value": "orbit ya está en la última versión ({version})"
+    },
+    "update.available": {
+      "source": "new version available: {latest} (current: {current})",
+      "value": "nueva versión disponible: {latest} (actual: {current})"
+    },
+    "update.installing": {
+      "source": "updating orbit from {current} to {latest}...",
+      "value": "actualizando orbit de {current} a {latest}..."
+    },
+    "update.success": {
+      "source": "successfully updated orbit to {version}!",
+      "value": "¡orbit se actualizó con éxito a {version}!"
     }
   }
 }

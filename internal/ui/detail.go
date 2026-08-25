@@ -198,7 +198,14 @@ func (m Model) attempt() int {
 
 // detailHints is the key bar under the task view.
 func (m Model) detailHints() []barHint {
-	out := []barHint{hintFor(m.keys.Back), hintFor(m.keys.NextTab)}
+	out := []barHint{
+		hintFor(m.keys.Back),
+		hintFor(m.keys.NextTab),
+		hint("m", m.opts.Words.T("key.tab_menu", "tab menu")),
+		hint("v", m.opts.Words.T("key.toggle_markdown", "md / raw")),
+		hintFor(m.keys.Ask),
+		hintFor(m.keys.CLI),
+	}
 	if m.tab == tabDiff {
 		out = append(out, hintFor(m.keys.Edit))
 	}
