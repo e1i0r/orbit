@@ -14,6 +14,8 @@ builds:
       - arm64
     env:
       - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X github.com/e1i0r/orbit/internal/cli.Version={{ .Version }}
 
 archives:
   - id: orbit

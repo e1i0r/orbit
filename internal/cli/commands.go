@@ -165,6 +165,10 @@ func commands() []Command {
 		Name: "note", Args: "-repo <dir> <id> <text>",
 		About: func(p *words.Printer) string { return p.T("cmd.note", "record a note for a task") },
 		Run:   noteTask,
+	}, {
+		Name:  "version",
+		About: func(p *words.Printer) string { return p.T("cmd.version", "print the version orbit was built at") },
+		Run:   version,
 	}}
 }
 

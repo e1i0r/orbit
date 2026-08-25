@@ -1027,6 +1027,10 @@
       "source": "record a note for a task",
       "value": "dejar una nota para una tarea"
     },
+    "cmd.version": {
+      "source": "print the version orbit was built at",
+      "value": "mostrar la versión con la que se compiló orbit"
+    },
     "cli.tagline": {
       "source": "orbit — a cockpit for supervising coding agents",
       "value": "orbit — una cabina para supervisar agentes que programan"
