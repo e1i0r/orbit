@@ -73,7 +73,7 @@ func (m Model) composeSubmit(startNow bool) (tea.Model, tea.Cmd) {
 
 	m.screen = screenList
 	m.pendingID, m.pendTries = id, 0
-	return m.runWatched(Command{Name: "new"}, []string{"-repo", path, "-id", id, text})
+	return m.runWatched(Command{Name: "new"}, []string{"-repo", path, "-id", id, "--", text})
 }
 
 // selectPending waits for newly created task to appear on the board.
