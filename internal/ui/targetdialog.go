@@ -122,7 +122,12 @@ func (m Model) hitCompose(x, y int) Target {
 			return Target{Kind: TargetComposeField, Pane: composeRepo}
 		case line == 3:
 			return Target{Kind: TargetComposeField, Pane: composeID}
-		case line >= 4 && line <= 11:
+		case line == 4:
+			if x >= 10 && x <= 30 {
+				return Target{Kind: TargetComposePaste}
+			}
+			return Target{Kind: TargetComposeField, Pane: composeText}
+		case line >= 5 && line <= 11:
 			return Target{Kind: TargetComposeField, Pane: composeText}
 		case line >= 12:
 			if x < 20 {
@@ -135,6 +140,9 @@ func (m Model) hitCompose(x, y int) Target {
 	} else {
 		switch {
 		case line == 2:
+			if x >= 12 && x <= 32 {
+				return Target{Kind: TargetComposePaste}
+			}
 			return Target{Kind: TargetComposeField, Pane: composeURL}
 		case line == 3:
 			curX := 15

@@ -31,6 +31,7 @@ const (
 	TargetComposeTab
 	TargetComposeRepoChoice
 	TargetComposeAction
+	TargetComposePaste
 )
 
 // Target is one cell's hit target.

@@ -94,6 +94,11 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.composeNext(false)
 	case (msg.Code == 'r' || msg.Code == 'R') && msg.Mod&tea.ModCtrl != 0:
 		return m.composeSubmit(true)
+	case (msg.Code == 'v' || msg.Code == 'V') && msg.Mod&tea.ModCtrl != 0:
+		if clip := readClipboard(); clip != "" {
+			return m.paste(clip), nil
+		}
+		return m, nil
 	case msg.Code == tea.KeyUp || key.Matches(msg, m.keys.Up):
 		return m.composeMove(-1), nil
 	case msg.Code == tea.KeyDown || key.Matches(msg, m.keys.Down):

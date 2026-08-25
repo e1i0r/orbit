@@ -142,6 +142,31 @@ func TestComposeURLAutoParsing(t *testing.T) {
 	}
 }
 
+func TestComposePasteMsg(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+	m = m.openCompose()
+
+	// 1. Bracketed paste into Manual tab with multiline text
+	m.compose.field = composeText
+	pasted, _ := m.Update(tea.PasteMsg{Content: "Line 1\nLine 2\n- Bullet 3"})
+	m = asModel(t, pasted)
+	if m.compose.text != "Line 1\nLine 2\n- Bullet 3" {
+		t.Errorf("compose.text after paste = %q", m.compose.text)
+	}
+
+	// 2. Bracketed paste into URL tab
+	m.compose.tab = composeTabURL
+	m.compose.field = composeURL
+	pasted, _ = m.Update(tea.PasteMsg{Content: "https://linear.app/org/issue/PAY-200/stripe-webhook-fix"})
+	m = asModel(t, pasted)
+	if m.compose.parsedIssue == nil {
+		t.Fatal("expected parsedIssue after paste")
+	}
+	if m.compose.id != "PAY-200" {
+		t.Errorf("compose.id = %q, want PAY-200", m.compose.id)
+	}
+}
+
 func TestComposeRepoCycles(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.board.Tasks = []view.Task{
@@ -215,9 +240,9 @@ func TestComposeUpDownAndMouseClicks(t *testing.T) {
 	}
 
 	// 3. Mouse clicks directly focus fields
-	yID := m.frame.Body.Y + 3
-	yTask := m.frame.Body.Y + 4
 	yRepo := m.frame.Body.Y + 2
+	yID := m.frame.Body.Y + 3
+	yTask := m.frame.Body.Y + 5
 
 	clickField := func(y int) {
 		res, _ := m.mouse(tea.MouseClickMsg{X: 10, Y: y, Button: tea.MouseLeft})

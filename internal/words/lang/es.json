@@ -1163,6 +1163,10 @@
       "source": "(Shift+↵ para nueva línea)",
       "value": "(Shift+↵ para nueva línea)"
     },
+    "compose.btn_paste": {
+      "source": "Paste (^V)",
+      "value": "Pegar (^V)"
+    },
     "palette.placeholder": {
       "source": "type a command",
       "value": "escribe un comando"

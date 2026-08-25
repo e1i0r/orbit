@@ -209,6 +209,11 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		case "cancel":
 			return m.abandonCompose(), nil
 		}
+	case TargetComposePaste:
+		if clip := readClipboard(); clip != "" {
+			return m.paste(clip), nil
+		}
+		return m, nil
 	case TargetCommand:
 		// The same two-step a task row takes: the first click selects,
 		// the second runs what was selected. Both arrive through the same

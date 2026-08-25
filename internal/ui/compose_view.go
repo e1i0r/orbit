@@ -74,6 +74,8 @@ func (m Model) composeTextArea(w int) []string {
 		mark = markGlyph + strings.Repeat(" ", gutter-1)
 	}
 	header := mark + Paint(Dim).Render(p.T("compose.text", "task")+":")
+	pastePill := Pill(" 📋 "+p.T("compose.btn_paste", "Paste (^V)")+" ", "#FFFFFF", "#0369A1")
+	header += " " + pastePill
 	if active {
 		header += " " + Paint(Dim).Render(p.T("compose.text_hint", "(Shift+↵ para nueva línea)"))
 	}
@@ -143,6 +145,8 @@ func (m Model) composeURLRows(w int) []string {
 		p.T("compose.url_placeholder", "https://linear.app/... o https://...atlassian.net/..."),
 		w,
 	)
+	pastePill := Pill(" 📋 "+p.T("compose.btn_paste", "Paste (^V)")+" ", "#FFFFFF", "#0369A1")
+	urlLine += " " + pastePill
 	out = append(out, urlLine)
 
 	repoLine := m.composeRepoLine(m.compose.field == composeURLRepo, w)
