@@ -1,8 +1,6 @@
 <div align="center">
 
-# 🛰️ Orbit
-
-**Mission Control for Autonomous Coding Agents**
+<img src="assets/logo.png" alt="Orbit" width="360">
 
 *Supervise, steer, and verify multi-agent software development at terminal velocity.*
 
