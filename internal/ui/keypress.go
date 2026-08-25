@@ -237,15 +237,3 @@ func (m Model) autopilot() (tea.Model, tea.Cmd) {
 	}
 	return m.say(m.opts.Words.T("msg.autopilot_off", "autopilot is off: every phase stops for you")), nil
 }
-
-// notBuilt answers a key the bar offers and this window does not implement.
-//
-// One key is in that state — the help overlay is the next task — and the bar
-// shows it because the screen this window is specified as shows it. Saying so
-// is the honest half of that: a key that silently does nothing is
-// indistinguishable from a key that is broken, and this sentence is one
-// commit long.
-func (m Model) notBuilt(b key.Binding) Model {
-	return m.say(m.opts.Words.T("msg.not_built", "{key} is not wired up yet; this window is still being built",
-		about("key", b.Help().Key)))
-}

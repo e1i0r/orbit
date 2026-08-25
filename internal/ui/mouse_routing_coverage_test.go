@@ -12,49 +12,49 @@ func TestMouseClickRoutingAcrossViews(t *testing.T) {
 
 	// 1. Click on header fields
 	newM, _ := m.leftClick(Target{Kind: TargetHeaderField, Field: "autopilot"})
-	m = newM.(Model)
+	m = asModel(t, newM)
 
 	newM, _ = m.leftClick(Target{Kind: TargetHeaderField, Field: "lang"})
-	m = newM.(Model)
+	m = asModel(t, newM)
 
 	newM, _ = m.leftClick(Target{Kind: TargetHeaderField, Field: "orbit"})
-	m = newM.(Model)
+	m = asModel(t, newM)
 
 	// 2. Click on task row to move and open
 	newM, _ = m.leftClick(Target{Kind: TargetTask, ID: "ACME-2662"})
-	m = newM.(Model)
+	m = asModel(t, newM)
 	newM, _ = m.leftClick(Target{Kind: TargetTask, ID: "ACME-2662"})
-	m = newM.(Model)
+	m = asModel(t, newM)
 	if m.screen != screenDetail || m.detail != "ACME-2662" {
 		t.Fatalf("expected screenDetail on ACME-2662, got screen=%v, detail=%q", m.screen, m.detail)
 	}
 
 	// 3. Click on tabs in detail
 	newM, _ = m.leftClick(Target{Kind: TargetPaneTab, Pane: int(tabFlow)})
-	m = newM.(Model)
+	m = asModel(t, newM)
 	if m.tab != tabFlow {
 		t.Errorf("expected tabFlow, got %v", m.tab)
 	}
 
 	newM, _ = m.leftClick(Target{Kind: TargetPaneTab, Pane: int(tabCost)})
-	m = newM.(Model)
+	m = asModel(t, newM)
 	if m.tab != tabCost {
 		t.Errorf("expected tabCost, got %v", m.tab)
 	}
 
 	// 4. Click band header to toggle fold
 	newM, _ = m.leftClick(Target{Kind: TargetBandHeader, Band: view.NeedsYou})
-	m = newM.(Model)
+	m = asModel(t, newM)
 
 	// 5. Open settings screen and click option pill
 	m.screen = screenSettings
 	newM, _ = m.leftClick(Target{Kind: TargetSettingsRow, Pane: 0, Field: "es"})
-	m = newM.(Model)
+	m = asModel(t, newM)
 
 	// 6. Right click on task opens menu
 	m.screen = screenList
 	newM, _ = m.rightClick(Target{Kind: TargetTask, ID: "ACME-2662"})
-	m = newM.(Model)
+	m = asModel(t, newM)
 }
 
 func TestMouseWheelAndKeyHintClick(t *testing.T) {
@@ -62,7 +62,7 @@ func TestMouseWheelAndKeyHintClick(t *testing.T) {
 
 	// Key hint click
 	newM, _ := m.leftClick(Target{Kind: TargetBarHint, Key: "?"})
-	m = newM.(Model)
+	m = asModel(t, newM)
 
 	// Wheel scrolling
 	wheelDown := tea.MouseWheelMsg{

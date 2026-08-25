@@ -192,11 +192,10 @@ func repoColumn(tasks []view.Task) int {
 	return cells
 }
 
-// Column names one field of a task's row. ColumnNone is the zero value and
-// means no field: the gap between two of them, or a cell past the end of
-// the last.
+// Column names one field of a task's row.
 type Column int
 
+// Column values name the available fields of a task's row.
 const (
 	ColumnNone Column = iota
 	ColumnRepo

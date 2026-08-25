@@ -156,10 +156,10 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 			Permissions: p.Permissions,
 		})
 		for _, thought := range out.Thoughts {
-			_ = emit(s, t, phaseThought(p.Name, i+1, thought))
+			_ = emit(s, t, phaseThought(p.Name, i+1, thought)) //nolint:errcheck // best-effort event emission
 		}
 		for _, ref := range out.Refusals {
-			_ = emit(s, t, phaseRefused(p.Name, i+1, ref))
+			_ = emit(s, t, phaseRefused(p.Name, i+1, ref)) //nolint:errcheck // best-effort event emission
 		}
 		if runErr != nil {
 			// A context that is done is not an engine that broke. The engine

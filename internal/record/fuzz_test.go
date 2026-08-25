@@ -120,6 +120,6 @@ func FuzzRecordScanner(f *testing.F) {
 	f.Add([]byte("\n\n\n"))
 
 	f.Fuzz(func(t *testing.T, data []byte) {
-		_, _, _, _, _ = scanEvents(bytes.NewReader(data))
+		_, _, _, _, _ = scanEvents(bytes.NewReader(data)) //nolint:errcheck // fuzz scanner against arbitrary data
 	})
 }

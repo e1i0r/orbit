@@ -109,7 +109,7 @@ func (m Model) flowLines() []string {
 
 		// Determine step icon and badge
 		var icon, statusStr string
-		var role Role = Dim
+		role := Dim
 		switch {
 		case ex.failed:
 			icon = Paint(Bad).Render("✗")

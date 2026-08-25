@@ -153,20 +153,17 @@ func rows(h int) (header, status, body, band, bar int) {
 type Region int
 
 const (
-	// RegionNone is a row outside the frame — above it, below it, or inside
-	// a strip a short terminal could not afford any rows for. It is the
-	// zero value on purpose: a caller that forgets to look at the answer
-	// gets nothing rather than the header.
+	// RegionNone is a row outside the frame.
 	RegionNone Region = iota
+	// RegionHeader is the header region.
 	RegionHeader
+	// RegionBody is the main body region.
 	RegionBody
+	// RegionBand is the activity band region.
 	RegionBand
-	// RegionStatus is the status line — spent, tasks, events, read time,
-	// quota. It is named here and answered by nothing yet, because the
-	// frame has no status strip until the task that adds one; naming it now
-	// is what keeps that task from having to reopen this file and renumber
-	// a constant every switch in the window is written against.
+	// RegionStatus is the status line region.
 	RegionStatus
+	// RegionBar is the key bar region.
 	RegionBar
 )
 

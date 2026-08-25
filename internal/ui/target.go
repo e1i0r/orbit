@@ -8,6 +8,7 @@ import (
 // TargetKind is what sort of thing a cell holds.
 type TargetKind int
 
+// TargetKind values specify interactive screen target kinds.
 const (
 	TargetNone TargetKind = iota
 	TargetTask
@@ -172,10 +173,8 @@ func (m Model) hitBar(x, y int) Target {
 		if x >= m.width-60 && x < m.width-28 {
 			return Target{Kind: TargetStatusField, Field: "autopilot"}
 		}
-	} else {
-		if x >= m.width-32 {
-			return Target{Kind: TargetStatusField, Field: "autopilot"}
-		}
+	} else if x >= m.width-32 {
+		return Target{Kind: TargetStatusField, Field: "autopilot"}
 	}
 
 	_, hints := m.barLayout(m.frame.Bar.W)

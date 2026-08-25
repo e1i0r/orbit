@@ -121,6 +121,6 @@ func FuzzParseStream(f *testing.F) {
 	f.Add([]byte("random unformatted byte stream\n"))
 
 	f.Fuzz(func(t *testing.T, data []byte) {
-		_, _ = ParseStream(bytes.NewReader(data))
+		_, _ = ParseStream(bytes.NewReader(data)) //nolint:errcheck // fuzz testing against arbitrary input
 	})
 }

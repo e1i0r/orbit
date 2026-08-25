@@ -12,7 +12,7 @@ func TestQuotaAsyncFetchAndCache(t *testing.T) {
 	called := 0
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called++
-		json.NewEncoder(w).Encode([]wireWindow{
+		_ = json.NewEncoder(w).Encode([]wireWindow{ //nolint:errcheck // test HTTP handler response
 			{Label: "monthly", Pct: 25.0, ResetsIn: 1800},
 		})
 	}))
@@ -81,6 +81,6 @@ func FuzzParseWindows(f *testing.F) {
 	f.Add([]byte(`random corrupt payload`))
 
 	f.Fuzz(func(t *testing.T, data []byte) {
-		_, _ = parseWindows(data)
+		_, _ = parseWindows(data) //nolint:errcheck // fuzz testing against arbitrary payloads
 	})
 }

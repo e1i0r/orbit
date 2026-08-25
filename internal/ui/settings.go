@@ -182,39 +182,39 @@ func (m Model) applySetting(keyName, val string) (tea.Model, tea.Cmd) {
 	if s != nil {
 		switch keyName {
 		case "language":
-			_ = s.SetLanguage(val)
+			_ = s.SetLanguage(val) //nolint:errcheck // best-effort setting update
 		case "autopilot":
-			_ = s.SetAutopilot(val == "on")
+			_ = s.SetAutopilot(val == "on") //nolint:errcheck // best-effort setting update
 		case "unread-cap":
 			if n, err := strconv.Atoi(val); err == nil {
-				_ = s.SetUnreadCap(n)
+				_ = s.SetUnreadCap(n) //nolint:errcheck // best-effort setting update
 			}
 		case "engine":
-			_ = s.SetEngine(val)
+			_ = s.SetEngine(val) //nolint:errcheck // best-effort setting update
 			validModels := modelsForEngine(val)
 			if !slices.Contains(validModels, s.Model()) && len(validModels) > 0 {
-				_ = s.SetModel(validModels[0])
+				_ = s.SetModel(validModels[0]) //nolint:errcheck // best-effort setting update
 			}
 			validEfforts := effortsForEngine(val)
 			if !slices.Contains(validEfforts, m.knobs.Effort) && len(validEfforts) > 0 {
 				m.knobs.Effort = validEfforts[0]
 			}
 		case "model":
-			_ = s.SetModel(val)
+			_ = s.SetModel(val) //nolint:errcheck // best-effort setting update
 		case "effort":
 			m.knobs.Effort = val
 		case "thinking":
 			m.knobs.Thinking = val
 		case "flow":
-			_ = s.SetFlow(val)
+			_ = s.SetFlow(val) //nolint:errcheck // best-effort setting update
 		case "theme":
-			_ = s.SetTheme(val)
+			_ = s.SetTheme(val) //nolint:errcheck // best-effort setting update
 			SetCurrentTheme(val)
 		}
 	}
 	if m.opts.Do != nil {
 		var buf bytes.Buffer
-		_ = m.opts.Do("set", []string{keyName, val}, &buf)
+		_ = m.opts.Do("set", []string{keyName, val}, &buf) //nolint:errcheck // best-effort setting execution
 	}
 	if keyName == "language" {
 		return m.say("language changed to " + val), func() tea.Msg { return languageMsg{Lang: val} }

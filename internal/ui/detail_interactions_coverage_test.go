@@ -13,28 +13,28 @@ func TestDetailKeyInteractionsAndTabSwitching(t *testing.T) {
 	for _, k := range []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "w"} {
 		keyMsg := keystroke(k)
 		newM, _ := m.detailKey(keyMsg)
-		m = newM.(Model)
+		m = asModel(t, newM)
 	}
 
 	// 2. Next tab and Prev tab
 	nextKey := keystroke("]")
 	newM, _ := m.detailKey(nextKey)
-	m = newM.(Model)
+	m = asModel(t, newM)
 
 	prevKey := keystroke("[")
 	newM, _ = m.detailKey(prevKey)
-	m = newM.(Model)
+	m = asModel(t, newM)
 
 	// 3. Diff sideways toggle on diff tab
 	m.tab = tabDiff
 	sideKey := keystroke("s")
 	newM, _ = m.detailKey(sideKey)
-	m = newM.(Model)
+	m = asModel(t, newM)
 
 	// 4. Help overlay from detail
 	helpKey := keystroke("?")
 	newM, _ = m.detailKey(helpKey)
-	m = newM.(Model)
+	m = asModel(t, newM)
 	if m.screen != screenHelp {
 		t.Errorf("expected screenHelp after '?', got %v", m.screen)
 	}
@@ -43,7 +43,7 @@ func TestDetailKeyInteractionsAndTabSwitching(t *testing.T) {
 	m.screen = screenDetail
 	escKey := keystroke("esc")
 	newM, _ = m.detailKey(escKey)
-	m = newM.(Model)
+	m = asModel(t, newM)
 	if m.screen != screenList {
 		t.Errorf("expected screenList after Esc from detail, got %v", m.screen)
 	}

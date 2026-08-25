@@ -70,15 +70,14 @@ func (Claude) Run(ctx context.Context, req Request) (Result, error) {
 	}
 	cmd := exec.CommandContext(ctx, "claude", args...)
 	if req.Thinking != "" {
-		env := cmd.Environ()
 		switch req.Thinking {
 		case "off", "none", "0":
-			cmd.Env = append(env, "MAX_THINKING_TOKENS=0")
+			cmd.Env = append(cmd.Environ(), "MAX_THINKING_TOKENS=0")
 		case "adaptive", "on":
 			// Unset leaves the adaptive default.
 		default:
 			// A positive integer pins a thinking budget.
-			cmd.Env = append(env, "MAX_THINKING_TOKENS="+req.Thinking)
+			cmd.Env = append(cmd.Environ(), "MAX_THINKING_TOKENS="+req.Thinking)
 		}
 	}
 	// The engine's working directory is the task's worktree, which lives

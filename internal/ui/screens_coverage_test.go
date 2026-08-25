@@ -61,7 +61,7 @@ func TestModalScreensNavigationAndRender(t *testing.T) {
 func TestStartDialogDialsAndKeys(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	newM, _ := m.openStart()
-	m = newM.(Model)
+	m = asModel(t, newM)
 
 	if m.screen == screenStart {
 		// Cycle dials

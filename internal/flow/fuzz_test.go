@@ -28,7 +28,7 @@ func FuzzFlowValidation(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		var fl Flow
 		if err := json.Unmarshal(data, &fl); err == nil {
-			_ = fl.Validate()
+			_ = fl.Validate() //nolint:errcheck // fuzz testing against arbitrary flow specs
 		}
 	})
 }

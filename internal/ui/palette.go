@@ -51,15 +51,19 @@ func (m Model) openPalette() Model {
 	return m
 }
 
-func (m Model) openPaletteWith(initial string) Model {
-	m.palette = paletteState{open: true, typed: initial}
-	return m
-}
-
 // closePalette takes the line down and gives the keyboard back.
 func (m Model) closePalette() Model {
 	m.palette = paletteState{}
 	return m
+}
+
+func matchesSettingsAlias(prefix string) bool {
+	for _, alias := range []string{"configuraciones", "config", "set", "ajustes"} {
+		if strings.HasPrefix(alias, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 // candidates is every command whose name starts with what has been typed,
@@ -76,7 +80,7 @@ func (p paletteState) candidates(cmds []Command) []Command {
 		name := strings.ToLower(c.Name)
 		if strings.HasPrefix(name, prefix) {
 			out = append(out, c)
-		} else if c.Name == "settings" && (strings.HasPrefix("configuraciones", prefix) || strings.HasPrefix("config", prefix) || strings.HasPrefix("set", prefix) || strings.HasPrefix("ajustes", prefix)) {
+		} else if c.Name == "settings" && matchesSettingsAlias(prefix) {
 			out = append(out, c)
 		}
 	}

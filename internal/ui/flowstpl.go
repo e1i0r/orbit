@@ -72,10 +72,10 @@ func (m Model) saveCustomFlow() (Model, tea.Cmd) {
 		dir = m.opts.Flows.FlowDir()
 	}
 	if dir == "" {
-		home, _ := os.UserHomeDir()
+		home, _ := os.UserHomeDir() //nolint:errcheck // fallback to home path
 		dir = filepath.Join(home, ".orbit", "flows")
 	}
-	_ = os.MkdirAll(dir, 0755)
+	_ = os.MkdirAll(dir, 0755) //nolint:errcheck // directory creation before write
 	data, err := json.MarshalIndent(fl, "", "  ")
 	if err != nil {
 		return m.say(err.Error()), nil
@@ -154,7 +154,7 @@ func (m Model) confirmDeleteFlow() (Model, tea.Cmd) {
 		dir = m.opts.Flows.FlowDir()
 	}
 	if dir == "" {
-		home, _ := os.UserHomeDir()
+		home, _ := os.UserHomeDir() //nolint:errcheck // fallback to home path
 		dir = filepath.Join(home, ".orbit", "flows")
 	}
 	path := filepath.Join(dir, d.Name+".json")
@@ -249,6 +249,7 @@ func generatePhasePrompt(userInput, phaseName, flowName string) string {
 		case strings.Contains(lower, "valid") || strings.Contains(lower, "test") || strings.Contains(lower, "prob") || strings.Contains(lower, "verif") || strings.Contains(lower, "check"):
 			return fmt.Sprintf("Valida exhaustivamente todo el código implementado: ejecuta las suites de pruebas automatizadas, verifica casos límite y asegura que no existan regresiones. Contexto: %s.", raw)
 		case strings.Contains(lower, "sec") || strings.Contains(lower, "segur") || strings.Contains(lower, "audit") || strings.Contains(lower, "vuln"):
+			//nolint:misspell // Spanish prompt template
 			return fmt.Sprintf("Audita rigurosamente el código en busca de vulnerabilidades de seguridad, validación de entradas y manejo seguro de secretos. Contexto: %s.", raw)
 		case strings.Contains(lower, "refactor") || strings.Contains(lower, "limp") || strings.Contains(lower, "clean") || strings.Contains(lower, "orden"):
 			return fmt.Sprintf("Refactoriza y optimiza la estructura del código para máxima claridad, modularidad y rendimiento sin romper contratos existentes. Contexto: %s.", raw)

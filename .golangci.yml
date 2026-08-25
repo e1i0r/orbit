@@ -16,6 +16,23 @@ linters:
     - unconvert
     - usestdlibvars
   settings:
+    misspell:
+      ignore-words:
+        - configuracion
+        - configuraciones
+        - secretos
+        - Alternar
+        - alternar
+        - COMANDOS
+        - comandos
+        - decisiones
+        - ayuda
+        - tareas
+        - flujos
+        - motores
+        - Neutralising
+        - neutralising
+        - neutralised
     errcheck:
       # check-blank makes `_ = f()` a discard the author has to stand behind
       # rather than a way to get past the linter. There were two of them, both
