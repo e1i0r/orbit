@@ -189,6 +189,14 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		return m.flip(t.Field)
 	case TargetDialogPhase:
 		return m.openEngines(), nil
+	case TargetComposeField:
+		if t.Key == "submit" {
+			return m.composeSubmit()
+		}
+		if t.Pane >= 0 && t.Pane < composeFields {
+			m.compose.field = t.Pane
+			return m, nil
+		}
 	case TargetCommand:
 		// The same two-step a task row takes: the first click selects,
 		// the second runs what was selected. Both arrive through the same

@@ -226,3 +226,61 @@ func TestSelectPending(t *testing.T) {
 		t.Errorf("expected selectPending to give up after a few misses, still pending %q", m3.pendingID)
 	}
 }
+
+func TestComposeUpDownAndMouseClicks(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+	m = m.openCompose()
+
+	// 1. Arrow down moves between fields
+	m = asModel(t, mustUpdate(m, press("down")))
+	if m.compose.field != composeID {
+		t.Fatalf("field after down arrow = %d, want composeID", m.compose.field)
+	}
+	m = asModel(t, mustUpdate(m, press("down")))
+	if m.compose.field != composeText {
+		t.Fatalf("field after second down arrow = %d, want composeText", m.compose.field)
+	}
+
+	// 2. Arrow up moves back up
+	m = asModel(t, mustUpdate(m, press("up")))
+	if m.compose.field != composeID {
+		t.Fatalf("field after up arrow = %d, want composeID", m.compose.field)
+	}
+	m = asModel(t, mustUpdate(m, press("up")))
+	if m.compose.field != composeRepo {
+		t.Fatalf("field after second up arrow = %d, want composeRepo", m.compose.field)
+	}
+
+	// 3. Mouse clicks directly focus fields
+	// Line 1 in body is repo, line 2 is id, line 3 is task
+	yRepo := m.frame.Body.Y + 1
+	yID := m.frame.Body.Y + 2
+	yTask := m.frame.Body.Y + 3
+
+	clickField := func(y int) {
+		res, _ := m.mouse(tea.MouseClickMsg{X: 10, Y: y, Button: tea.MouseLeft})
+		m = asModel(t, res)
+		res, _ = m.mouse(tea.MouseReleaseMsg{X: 10, Y: y, Button: tea.MouseLeft})
+		m = asModel(t, res)
+	}
+
+	clickField(yID)
+	if m.compose.field != composeID {
+		t.Errorf("field after click on ID = %d, want composeID", m.compose.field)
+	}
+
+	clickField(yTask)
+	if m.compose.field != composeText {
+		t.Errorf("field after click on Task = %d, want composeText", m.compose.field)
+	}
+
+	clickField(yRepo)
+	if m.compose.field != composeRepo {
+		t.Errorf("field after click on Repo = %d, want composeRepo", m.compose.field)
+	}
+}
+
+func mustUpdate(m Model, msg tea.Msg) tea.Model {
+	next, _ := m.Update(msg)
+	return next
+}
