@@ -14,7 +14,7 @@
 
 set -euo pipefail
 
-ORBIT_REPO="e1i0r/orbit"
+ORBIT_REPO="${ORBIT_REPO:-e1i0r/orbit}"
 ORBIT_INSTALL_DIR="${ORBIT_INSTALL_DIR:-$HOME/.local/bin}"
 ORBIT_BASE_URL="${ORBIT_BASE_URL:-https://github.com/${ORBIT_REPO}/releases/download}"
 
