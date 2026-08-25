@@ -5,7 +5,7 @@
 *Supervise, steer, and verify multi-agent software development at terminal velocity.*
 
 [![CI](https://github.com/e1i0r/orbit/actions/workflows/check.yml/badge.svg)](https://github.com/e1i0r/orbit/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Go Version](https://img.shields.io/badge/Go-1.26+-00ADD8.svg?logo=go)](https://go.dev)
 [![TUI](https://img.shields.io/badge/TUI-Bubble%20Tea%20v2-FF5F87.svg)](https://charm.sh)
 
@@ -195,4 +195,4 @@ For security vulnerability reports, please review our [Security Policy](SECURITY
 
 ## 📄 License
 
-Orbit is open-source software licensed under the [MIT License](LICENSE).
+Orbit is open-source software licensed under the [Apache License 2.0](LICENSE).
