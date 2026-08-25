@@ -128,6 +128,7 @@ type Model struct {
 	engines     enginesState
 	knobs       Knobs
 	help        helpState
+	rawText     bool
 
 	// start is the dialog that decides what a run will be, and taken is
 	// which tasks this window has handed the terminal to an engine for.

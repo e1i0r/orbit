@@ -9,16 +9,16 @@
                                                                                                     
  ── attempt 1 ────────────────────────────────────────────────────────────────────────── 13:58:00 ──
   finished  implement  claude opus  cost $0.42  session 8f2c31                                      
-    │ wrote retry.go                                                                                
-    │ added a backoff                                                                               
+    wrote retry.go                                                                                  
+    added a backoff                                                                                 
   failed  gates  claude opus  cost $0.11  session 8f2c31                                            
     stopped: the gates phase exited 1                                                               
-    │ go vet: retry.go:31: unreachable code                                                         
+    go vet: retry.go:31: unreachable code                                                           
  ── attempt 2 ────────────────────────────────────────────────────────────────────────── 14:30:00 ──
   failed  gates  claude opus  cost $0.09  session b41d07                                            
     stopped: the gates phase exited 1                                                               
     37 of 1,048,583 bytes kept — the rest was not written down anywhere                             
-    │ go vet: retry.go:31: unreachable code                                                         
+    go vet: retry.go:31: unreachable code                                                           
                                                                                                     
                                                                                                     
                                                                                                     
@@ -27,4 +27,4 @@
 
 ────────────────────────────────────────────────────────────────────────────────────────────────────
  ACME-2705 · implement · 8m in · claude/opus · careful
- [esc] back  [tab] next tab  [m] tab menu  [a] ask  [?] [q]                       ⚡ autopilot ● [A]
+ [esc] back  [tab] next tab  [m] tab menu  [v] md / raw  [a] ask  [?] [q]         ⚡ autopilot ● [A]

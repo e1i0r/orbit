@@ -39,19 +39,13 @@ func (m Model) notesLines() []string {
 				statusNote = fmt.Sprintf("read by run %d", e.Attempt)
 			}
 			senderLabel := fmt.Sprintf("● %d  %s", noteIndex, p.T("notes.operator", "OPERADOR"))
-			var lines []string
-			for _, l := range strings.Split(e.Text, "\n") {
-				l = strings.TrimSpace(l)
-				if l != "" {
-					lines = append(lines, l)
-				}
-			}
+			content := renderMarkdown(e.Text, m.frame.Body.W, m.rawText)
 			items = append(items, noteItem{
 				at:      timeStr,
 				sender:  senderLabel,
 				role:    Accent,
 				status:  statusNote,
-				content: lines,
+				content: content,
 			})
 
 		case view.EntryWaiting:

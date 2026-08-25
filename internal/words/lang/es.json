@@ -1760,6 +1760,18 @@
     "thinking.live_now": {
       "source": "live / in flight",
       "value": "en curso / en vivo"
+    },
+    "key.toggle_markdown": {
+      "source": "md / raw",
+      "value": "md / texto plano"
+    },
+    "detail.mode_markdown": {
+      "source": "formatted view (markdown)",
+      "value": "vista enriquecida (markdown)"
+    },
+    "detail.mode_raw": {
+      "source": "plain text view (raw)",
+      "value": "vista texto plano (raw)"
     }
   }
 }

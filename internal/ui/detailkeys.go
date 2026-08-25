@@ -52,6 +52,14 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.edit()
 	case key.Matches(k, m.keys.Menu), k.String() == "m", k.String() == "M":
 		return m.openMenuForContext(), nil
+	case k.String() == "v" || k.String() == "V":
+		m.rawText = !m.rawText
+		p := m.opts.Words
+		msg := p.T("detail.mode_markdown", "formatted view (markdown)")
+		if m.rawText {
+			msg = p.T("detail.mode_raw", "plain text view (raw)")
+		}
+		return m.syncPanes().say(msg), nil
 	case key.Matches(k, m.keys.Ask):
 		return m.openNote(), nil
 	case key.Matches(k, m.keys.CLI):
