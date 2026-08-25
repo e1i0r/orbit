@@ -1708,6 +1708,54 @@
     "overview.live_tools_count": {
       "source": "tool calls",
       "value": "llamadas a herramientas"
+    },
+    "key.tab_menu": {
+      "source": "tab menu",
+      "value": "menú de pestañas"
+    },
+    "tab_desc.overview": {
+      "source": "general status, live activity and metrics summary",
+      "value": "vista general, actividad en vivo y métricas"
+    },
+    "tab_desc.flow": {
+      "source": "task pipeline phases and execution plan",
+      "value": "fases del flujo de trabajo y plan de ejecución"
+    },
+    "tab_desc.gates": {
+      "source": "automated quality gates, linters and validation status",
+      "value": "verificaciones de calidad, linters y validaciones"
+    },
+    "tab_desc.cost": {
+      "source": "token usage and monetary cost breakdown per phase",
+      "value": "consumo de tokens y desglose de costos por fase"
+    },
+    "tab_desc.refused": {
+      "source": "denied tool invocations and permission rejections",
+      "value": "llamadas a herramientas o permisos denegados"
+    },
+    "tab_desc.timeline": {
+      "source": "complete live event timeline and phase history",
+      "value": "cronología completa de eventos en tiempo real"
+    },
+    "tab_desc.report": {
+      "source": "final solution report, summary and review conclusions",
+      "value": "reporte final de la solución y conclusiones"
+    },
+    "tab_desc.artifacts": {
+      "source": "raw tool output and generated artifacts",
+      "value": "salida cruda y artefactos generados"
+    },
+    "tab_desc.notes": {
+      "source": "operator notes and interactive dialogue history",
+      "value": "notas del operador y diálogo interactivo"
+    },
+    "tab_desc.diff": {
+      "source": "git working tree diff and code modifications",
+      "value": "diferencias git (diff) en el árbol de trabajo"
+    },
+    "tab_desc.thinking": {
+      "source": "extended model thinking, chain of thought and reasoning",
+      "value": "razonamiento extendido del modelo LLM"
     }
   }
 }

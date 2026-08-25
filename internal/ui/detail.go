@@ -201,6 +201,7 @@ func (m Model) detailHints() []barHint {
 	out := []barHint{
 		hintFor(m.keys.Back),
 		hintFor(m.keys.NextTab),
+		hint("m", m.opts.Words.T("key.tab_menu", "tab menu")),
 		hintFor(m.keys.Ask),
 		hintFor(m.keys.CLI),
 	}
