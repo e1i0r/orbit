@@ -40,3 +40,24 @@ jobs:
           git config user.email "actions@github.com"
           git tag -a "${{ steps.next.outputs.version }}" -m "${{ steps.next.outputs.version }}"
           git push origin "${{ steps.next.outputs.version }}"
+
+  release:
+    needs: tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.tag.outputs.version }}
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
