@@ -36,6 +36,7 @@ const (
 	TargetComposeThinkingChoice
 	TargetComposeEffortChoice
 	TargetComposeNewFlow
+	TargetComposeInspectFlow
 	TargetComposeAction
 	TargetComposePaste
 )

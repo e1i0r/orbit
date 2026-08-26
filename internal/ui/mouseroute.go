@@ -107,6 +107,8 @@ func (m Model) handleComposeClick(t Target) (tea.Model, tea.Cmd) {
 		return m, nil
 	case TargetComposeNewFlow:
 		return m.openFlows(), nil
+	case TargetComposeInspectFlow:
+		return m.openFlowPreview(m.compose.chosenFlow()), nil
 	case TargetComposeField:
 		m.compose.field = t.Pane
 		return m, nil

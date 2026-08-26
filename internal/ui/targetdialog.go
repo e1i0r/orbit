@@ -181,6 +181,10 @@ func (m Model) hitComposeFlowPills(x int, field int) Target {
 		}
 		curX += pillWidth + 1
 	}
+	if x >= curX && x < curX+14 {
+		return Target{Kind: TargetComposeInspectFlow}
+	}
+	curX += 15
 	if x >= curX && x < curX+12 {
 		return Target{Kind: TargetComposeNewFlow}
 	}

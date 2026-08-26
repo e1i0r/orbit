@@ -1179,13 +1179,17 @@
       "source": "flow",
       "value": "flujo"
     },
+    "compose.inspect_flow_btn": {
+      "source": "inspect",
+      "value": "inspeccionar"
+    },
     "compose.new_flow_btn": {
       "source": "New",
       "value": "Nuevo"
     },
     "compose.flow_hint": {
-      "source": "(←/→ or + new)",
-      "value": "(←/→ o + nuevo)"
+      "source": "(←/→ to cycle, i to inspect, + new)",
+      "value": "(←/→ para cambiar, i para inspeccionar, + nuevo)"
     },
     "compose.engine": {
       "source": "engine",
@@ -1454,6 +1458,18 @@
     "flows.min_phases_required": {
       "source": "the flow must have at least one phase",
       "value": "el flujo debe tener al menos una fase"
+    },
+    "flows.builder_preview_title": {
+      "source": "Flow Inspector (Read-Only: {name})",
+      "value": "Inspector de Flujo (Solo Lectura: {name})"
+    },
+    "flows.btn_return": {
+      "source": "Return",
+      "value": "Volver"
+    },
+    "flows.ways_out_preview": {
+      "source": "[←/→ / tab] inspect phase · [enter / esc] return",
+      "value": "[←/→ / tab] inspeccionar fase · [enter / esc] volver"
     },
     "flows.phase_deleted": {
       "source": "phase deleted",

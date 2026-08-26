@@ -28,7 +28,9 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	st.ensurePhase()
 	p := m.opts.Words
 	title := p.T("flows.builder_create_title", "Flow Designer (Create New Flow)")
-	if st.isEditing {
+	if st.readOnly {
+		title = p.T("flows.builder_preview_title", "Flow Inspector (Read-Only: {name})", about("name", st.flowName))
+	} else if st.isEditing {
 		title = p.T("flows.builder_edit_title", "Flow Designer (Edit: {name})", about("name", st.flowName))
 	}
 	out := []string{
@@ -191,6 +193,14 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 
 	// Actions
 	out = append(out, "")
+	if st.readOnly {
+		returnBtn := Pill(" ↵ "+p.T("flows.btn_return", "Return")+" ", "#FFFFFF", "#2563EB")
+		out = append(out, "  "+returnBtn, "")
+		waysOut := p.T("flows.ways_out_preview", "[←/→ / tab] inspect phase · [enter / esc] return")
+		out = append(out, fit("  "+Paint(Dim).Render(waysOut), w))
+		return fill(out, h)
+	}
+
 	btnMark1, btnMark2, btnMark3 := "  ", "  ", "  "
 	if st.field == flowFieldAddPhase {
 		btnMark1 = Paint(Accent).Bold(true).Render("▸ ")
