@@ -159,6 +159,12 @@ func commands() []Command {
 		},
 		Run: mergePR,
 	}, {
+		Name: "close-pr", Args: "-repo <dir> <id>",
+		About: func(p *words.Printer) string {
+			return p.T("cmd.close_pr", "close a task's pull request on GitHub")
+		},
+		Run: closePR,
+	}, {
 		Name: "cancel", Args: "-repo <dir> <id>",
 		About: func(p *words.Printer) string { return p.T("cmd.cancel", "stop a run, and say so in its record") },
 		Run:   cancelTask,

@@ -28,3 +28,7 @@ Welcome to Orbit. When contributing or modifying code in this repository, you mu
    - Every translation key in `es.json` and `en.json` must be actively referenced in Go code (`TestEveryTranslationKeyIsHonest`).
 7. **Pure Layout Calculations (`internal/ui/layout`):**
    - Layout geometry calculations must remain pure functions without styling, escape codes, or side effects.
+8. **Strict Local-First Git Discipline (Zero Unsolicited Pushes):**
+   - Never execute `git push` or push changes to remote branches unless the user explicitly requests it.
+   - Keep all development, builds, and test validations strictly local for the user's manual review.
+

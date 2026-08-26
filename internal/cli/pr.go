@@ -52,6 +52,10 @@ func createPR(ctx Context, args []string) error {
 		}
 	}
 
+	if err := r.SyncBaseBranch(wtDir, r.Base); err != nil {
+		logger.Warn("cli/pr", "sync base branch %q into %q: %v", r.Base, wtDir, err)
+	}
+
 	if err := r.CommitWorktree(wtDir, commitMsg); err != nil {
 		logger.Error("cli/pr", "commit worktree %q failed: %v", wtDir, err)
 		return err

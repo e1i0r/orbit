@@ -62,6 +62,8 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.openMenuForContext(), nil
 	case k.String() == "M":
 		return m.mergePR()
+	case k.String() == "X":
+		return m.closePR()
 	case k.String() == "u" || k.String() == "U":
 		return m.updatePRBranch()
 	case k.String() == "v" || k.String() == "V":

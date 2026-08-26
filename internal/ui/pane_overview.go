@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"charm.land/lipgloss/v2"
+
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -228,19 +230,34 @@ func (m Model) overviewLines() []string {
 	}
 	out = append(out, "")
 
-	// 5. Quick Actions for validation and delivery
+	// 5. Quick Actions for validation and delivery in an aligned 4x2 grid
+	colWidth := 24
+	row1 := "    " +
+		formatActionCell("p", p.T("overview.action_pr", "create PR"), colWidth) +
+		formatActionCell("u", p.T("overview.action_update_pr", "update PR"), colWidth) +
+		formatActionCell("M", p.T("overview.action_merge_pr", "merge PR"), colWidth) +
+		formatActionCell("X", p.T("overview.action_close_pr", "close PR"), colWidth)
+
+	row2 := "    " +
+		formatActionCell("c", p.T("overview.action_checks", "fix checks"), colWidth) +
+		formatActionCell("T", p.T("overview.action_tests", "more tests"), colWidth) +
+		formatActionCell("a", p.T("overview.action_feedback", "feedback"), colWidth) +
+		formatActionCell("0", p.T("overview.action_diff", "diff"), colWidth)
+
 	out = append(out,
 		"  "+Paint(Accent).Bold(true).Render(p.T("overview.quick_actions", "Quick Actions to Deliver & Validate")),
-		"    "+Paint(Live).Render("[p]")+Paint(Dim).Render(" "+p.T("overview.action_pr", "create PR"))+"    "+
-			Paint(Live).Render("[u]")+Paint(Dim).Render(" "+p.T("overview.action_update_pr", "update PR"))+"    "+
-			Paint(Live).Render("[M]")+Paint(Dim).Render(" "+p.T("overview.action_merge_pr", "merge PR"))+"    "+
-			Paint(Live).Render("[c]")+Paint(Dim).Render(" "+p.T("overview.action_checks", "fix checks"))+"    "+
-			Paint(Live).Render("[T]")+Paint(Dim).Render(" "+p.T("overview.action_tests", "more tests"))+"    "+
-			Paint(Live).Render("[a]")+Paint(Dim).Render(" "+p.T("overview.action_feedback", "feedback"))+"    "+
-			Paint(Live).Render("[0]")+Paint(Dim).Render(" "+p.T("overview.action_diff", "diff"))+"    "+
-			Paint(Live).Render("[d]")+Paint(Dim).Render(" "+p.T("overview.action_read", "mark read")),
+		row1,
+		row2,
 		"",
 	)
 
 	return out
+}
+
+func formatActionCell(key, label string, width int) string {
+	btn := Paint(Live).Render("[" + key + "]")
+	txt := Paint(Dim).Render(" " + label)
+	cell := btn + txt
+	pad := max(0, width-lipgloss.Width(cell))
+	return cell + strings.Repeat(" ", pad)
 }
