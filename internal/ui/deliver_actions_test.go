@@ -28,6 +28,18 @@ func TestDeliverActionsNoTask(t *testing.T) {
 	if nextM == nil || cmd != nil {
 		t.Errorf("addMoreTests with no task = (%v, %v), want say message", nextM, cmd)
 	}
+
+	// updatePRBranch with no selected task
+	nextM, cmd = m.updatePRBranch()
+	if nextM == nil || cmd != nil {
+		t.Errorf("updatePRBranch with no task = (%v, %v), want say message", nextM, cmd)
+	}
+
+	// mergePR with no selected task
+	nextM, cmd = m.mergePR()
+	if nextM == nil || cmd != nil {
+		t.Errorf("mergePR with no task = (%v, %v), want say message", nextM, cmd)
+	}
 }
 
 func TestDeliverActionsSelectedTask(t *testing.T) {
@@ -51,5 +63,15 @@ func TestDeliverActionsSelectedTask(t *testing.T) {
 	nextM, cmd = m.addMoreTests()
 	if nextM == nil || cmd == nil {
 		t.Errorf("addMoreTests on selected task should return non-nil cmd")
+	}
+
+	nextM, cmd = m.updatePRBranch()
+	if nextM == nil || cmd == nil {
+		t.Errorf("updatePRBranch on selected task should return non-nil cmd")
+	}
+
+	nextM, cmd = m.mergePR()
+	if nextM == nil || cmd == nil {
+		t.Errorf("mergePR on selected task should return non-nil cmd")
 	}
 }

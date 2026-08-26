@@ -58,8 +58,12 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.showTab((m.tab + tabCount - 1) % tabCount), nil
 	case key.Matches(k, m.keys.Edit):
 		return m.edit()
-	case key.Matches(k, m.keys.Menu), k.String() == "m", k.String() == "M":
+	case key.Matches(k, m.keys.Menu), k.String() == "m":
 		return m.openMenuForContext(), nil
+	case k.String() == "M":
+		return m.mergePR()
+	case k.String() == "u" || k.String() == "U":
+		return m.updatePRBranch()
 	case k.String() == "v" || k.String() == "V":
 		m.rawText = !m.rawText
 		p := m.opts.Words

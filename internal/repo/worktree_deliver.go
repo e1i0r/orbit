@@ -47,3 +47,15 @@ func (r Repo) CreatePR(wtDir, title, body, headBranch, baseBranch string) (strin
 	}
 	return outputStr, nil
 }
+
+// MergePR merges the GitHub Pull Request for the task using the GitHub CLI.
+func (r Repo) MergePR(wtDir, branch string) (string, error) {
+	cmd := exec.Command("gh", "pr", "merge", branch, "--squash", "--delete-branch")
+	cmd.Dir = wtDir
+	out, err := cmd.CombinedOutput()
+	outputStr := strings.TrimSpace(string(out))
+	if err != nil {
+		return "", fmt.Errorf("gh pr merge: %s: %w", outputStr, err)
+	}
+	return outputStr, nil
+}

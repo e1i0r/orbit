@@ -68,3 +68,37 @@ func (m Model) addMoreTests() (tea.Model, tea.Cmd) {
 	m = m.say(p.T("deliver.adding_tests", "generating unit and fuzz tests for {id}...", about("id", taskID)))
 	return m.runWatched(Command{Name: "note"}, []string{"-repo", path, taskID, "--", instruction})
 }
+
+// updatePRBranch commits any pending worktree modifications and pushes them to update the PR.
+func (m Model) updatePRBranch() (tea.Model, tea.Cmd) {
+	p := m.opts.Words
+	taskID := m.detail
+	if taskID == "" {
+		if r, ok := m.selected(); ok && !r.head {
+			taskID = r.task.ID
+		}
+	}
+	if taskID == "" {
+		return m.say(p.T("deliver.no_task", "select a task to continue")), nil
+	}
+	path := m.taskRepoPath(taskID)
+	m = m.say(p.T("deliver.updating_pr", "updating branch and PR for {id}...", about("id", taskID)))
+	return m.runWatched(Command{Name: "pr"}, []string{"-repo", path, taskID})
+}
+
+// mergePR merges the GitHub Pull Request and cleans up the remote branch.
+func (m Model) mergePR() (tea.Model, tea.Cmd) {
+	p := m.opts.Words
+	taskID := m.detail
+	if taskID == "" {
+		if r, ok := m.selected(); ok && !r.head {
+			taskID = r.task.ID
+		}
+	}
+	if taskID == "" {
+		return m.say(p.T("deliver.no_task", "select a task to continue")), nil
+	}
+	path := m.taskRepoPath(taskID)
+	m = m.say(p.T("deliver.merging_pr", "merging pull request for {id}...", about("id", taskID)))
+	return m.runWatched(Command{Name: "merge"}, []string{"-repo", path, taskID})
+}

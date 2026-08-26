@@ -1019,6 +1019,10 @@
       "source": "create a pull request from a task's worktree",
       "value": "crear un pull request desde el worktree de una tarea"
     },
+    "cmd.merge": {
+      "source": "merge a task's pull request and delete its branch",
+      "value": "fusionar el pull request de una tarea y borrar su rama"
+    },
     "deliver.no_task": {
       "source": "select a task to continue",
       "value": "selecciona una tarea para continuar"
@@ -1026,6 +1030,14 @@
     "deliver.creating_pr": {
       "source": "creating pull request for {id}...",
       "value": "creando pull request para {id}..."
+    },
+    "deliver.updating_pr": {
+      "source": "updating branch and PR for {id}...",
+      "value": "actualizando rama y PR para {id}..."
+    },
+    "deliver.merging_pr": {
+      "source": "merging pull request for {id}...",
+      "value": "fusionando pull request para {id}..."
     },
     "deliver.fixing_checks": {
       "source": "running checks and fixing issues for {id}...",
@@ -1848,6 +1860,14 @@
     "overview.action_pr": {
       "source": "create PR",
       "value": "crear PR"
+    },
+    "overview.action_update_pr": {
+      "source": "update PR",
+      "value": "actualizar PR"
+    },
+    "overview.action_merge_pr": {
+      "source": "merge PR",
+      "value": "merge PR"
     },
     "overview.action_checks": {
       "source": "fix checks",
