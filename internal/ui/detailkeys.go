@@ -60,9 +60,13 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 			msg = p.T("detail.mode_raw", "plain text view (raw)")
 		}
 		return m.syncPanes().say(msg), nil
-	case k.String() == "k" || k.String() == "K":
-		return m.openEngines(), nil
-	case k.String() == "t" || k.String() == "T":
+	case k.String() == "p" || k.String() == "P":
+		return m.deliverPR()
+	case k.String() == "c" || k.String() == "C":
+		return m.fixChecks()
+	case k.String() == "T":
+		return m.addMoreTests()
+	case k.String() == "t":
 		m = m.cycleThinking()
 		thk := m.knobs.Thinking
 		if thk == "" {
@@ -71,6 +75,8 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		p := m.opts.Words
 		return m.syncPanes().say(p.T("detail.thinking_changed",
 			"thinking mode set to {mode}", about("mode", thk))), nil
+	case k.String() == "k" || k.String() == "K":
+		return m.openEngines(), nil
 	case k.String() == "E":
 		m = m.cycleEffort()
 		eff := m.knobs.Effort

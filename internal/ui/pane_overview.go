@@ -228,12 +228,14 @@ func (m Model) overviewLines() []string {
 	}
 	out = append(out, "")
 
-	// 5. Quick Actions for validation
+	// 5. Quick Actions for validation and delivery
 	out = append(out,
-		"  "+Paint(Accent).Bold(true).Render(p.T("overview.quick_actions", "Quick Actions to Validate")),
-		"    "+Paint(Live).Render("[0]")+Paint(Dim).Render(" "+p.T("overview.action_diff", "diff changes"))+"    "+
-			Paint(Live).Render("[7]")+Paint(Dim).Render(" "+p.T("overview.action_report", "full report"))+"    "+
-			Paint(Live).Render("[6]")+Paint(Dim).Render(" "+p.T("overview.action_timeline", "timeline"))+"    "+
+		"  "+Paint(Accent).Bold(true).Render(p.T("overview.quick_actions", "Quick Actions to Deliver & Validate")),
+		"    "+Paint(Live).Render("[p]")+Paint(Dim).Render(" "+p.T("overview.action_pr", "create PR"))+"    "+
+			Paint(Live).Render("[c]")+Paint(Dim).Render(" "+p.T("overview.action_checks", "fix checks"))+"    "+
+			Paint(Live).Render("[t]")+Paint(Dim).Render(" "+p.T("overview.action_tests", "more tests"))+"    "+
+			Paint(Live).Render("[a]")+Paint(Dim).Render(" "+p.T("overview.action_feedback", "feedback"))+"    "+
+			Paint(Live).Render("[0]")+Paint(Dim).Render(" "+p.T("overview.action_diff", "diff"))+"    "+
 			Paint(Live).Render("[d]")+Paint(Dim).Render(" "+p.T("overview.action_read", "mark read")),
 		"",
 	)

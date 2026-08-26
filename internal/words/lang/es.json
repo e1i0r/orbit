@@ -1011,6 +1011,26 @@
       "source": "mark a finished task as looked at",
       "value": "marcar como leída una tarea terminada"
     },
+    "cmd.pr": {
+      "source": "create a pull request from a task's worktree",
+      "value": "crear un pull request desde el worktree de una tarea"
+    },
+    "deliver.no_task": {
+      "source": "select a task to continue",
+      "value": "selecciona una tarea para continuar"
+    },
+    "deliver.creating_pr": {
+      "source": "creating pull request for {id}...",
+      "value": "creando pull request para {id}..."
+    },
+    "deliver.fixing_checks": {
+      "source": "running checks and fixing issues for {id}...",
+      "value": "ejecutando checks y corrigiendo errores para {id}..."
+    },
+    "deliver.adding_tests": {
+      "source": "generating unit and fuzz tests for {id}...",
+      "value": "generando pruebas unitarias y fuzzing para {id}..."
+    },
     "cmd.cancel": {
       "source": "stop a run, and say so in its record",
       "value": "detener una ejecución y dejarlo dicho en su registro"
@@ -1818,20 +1838,28 @@
       "value": "sin modificaciones en archivos del repositorio"
     },
     "overview.quick_actions": {
-      "source": "Quick Actions to Validate",
-      "value": "Accesos rápidos para validar"
+      "source": "Quick Actions to Deliver & Validate",
+      "value": "Acciones de Entrega y Validación"
+    },
+    "overview.action_pr": {
+      "source": "create PR",
+      "value": "crear PR"
+    },
+    "overview.action_checks": {
+      "source": "fix checks",
+      "value": "corregir checks"
+    },
+    "overview.action_tests": {
+      "source": "more tests",
+      "value": "más pruebas"
+    },
+    "overview.action_feedback": {
+      "source": "feedback",
+      "value": "dar feedback"
     },
     "overview.action_diff": {
-      "source": "diff changes",
-      "value": "ver diff de cambios"
-    },
-    "overview.action_report": {
-      "source": "full report",
-      "value": "ver reporte completo"
-    },
-    "overview.action_timeline": {
-      "source": "timeline",
-      "value": "ver cronología"
+      "source": "diff",
+      "value": "ver diff"
     },
     "overview.action_read": {
       "source": "mark read",
