@@ -4,14 +4,33 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/e1i0r/orbit/internal/flow"
 )
+
+func (m Model) startCreateFlow() Model {
+	m.flows.creating = true
+	m.flows.isEditing = false
+	m.flows.confirmDiscard = false
+	m.flows.confirmDelete = false
+	m.flows.field = 0
+	m.flows.template = "ninguna"
+	m.flows.flowName = ""
+	m.flows.phases = []flow.Phase{
+		{Name: "1-implement", Engine: "claude", Model: "sonnet", Effort: "default", Thinking: "adaptive", Permissions: []string{"repo"}},
+	}
+	m.flows.activePhase = 0
+	return m
+}
 
 func (m Model) flowsBuilderRows(h, w int) []string {
 	st := &m.flows
 	st.ensurePhase()
 	p := m.opts.Words
 	title := p.T("flows.builder_create_title", "Flow Designer (Create New Flow)")
-	if st.isEditing {
+	if st.readOnly {
+		title = p.T("flows.builder_preview_title", "Flow Inspector (Read-Only: {name})", about("name", st.flowName))
+	} else if st.isEditing {
 		title = p.T("flows.builder_edit_title", "Flow Designer (Edit: {name})", about("name", st.flowName))
 	}
 	out := []string{
@@ -32,7 +51,8 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 		if i == st.activePhase {
 			curMark = "● "
 		}
-		title := fmt.Sprintf("%sFase %d: %s (%s/%s)", curMark, i+1, ph.Name, ph.Engine, orDef(ph.Model, "default"))
+		phaseLabel := p.T("flows.phase_label", "Phase")
+		title := fmt.Sprintf("%s%s %d: %s (%s/%s)", curMark, phaseLabel, i+1, ph.Name, ph.Engine, orDef(ph.Model, "default"))
 		if ph.FeedOutput {
 			title += " " + p.T("flows.feeds_input", "[feeds input]")
 		}
@@ -173,6 +193,14 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 
 	// Actions
 	out = append(out, "")
+	if st.readOnly {
+		returnBtn := Pill(" ↵ "+p.T("flows.btn_return", "Return")+" ", "#FFFFFF", "#2563EB")
+		out = append(out, "  "+returnBtn, "")
+		waysOut := p.T("flows.ways_out_preview", "[←/→ / tab] inspect phase · [enter / esc] return")
+		out = append(out, fit("  "+Paint(Dim).Render(waysOut), w))
+		return fill(out, h)
+	}
+
 	btnMark1, btnMark2, btnMark3 := "  ", "  ", "  "
 	if st.field == flowFieldAddPhase {
 		btnMark1 = Paint(Accent).Bold(true).Render("▸ ")

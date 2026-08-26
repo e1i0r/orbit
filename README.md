@@ -29,7 +29,7 @@ While running raw CLI agents in standalone tabs quickly leads to branch pollutio
 
 ## ✨ Key Features
 
-### 🎛️ 1. Interactive Terminal Cockpit
+### 🎛️ 1. Interactive Terminal Cockpit & Live Dials
 - **11 Detailed Inspector Tabs:**
   - **`1` Overview:** Summary status, duration, model, token expenditure, and active phase.
   - **`2` Flow:** Real-time visual tree of the task's execution pipeline.
@@ -42,22 +42,24 @@ While running raw CLI agents in standalone tabs quickly leads to branch pollutio
   - **`9` Notes:** Interactive dialog and human operator instructions (`orbit note`).
   - **`0` Diff:** Syntax-highlighted live Git diff viewer with unified/split toggle.
   - **`w` Thinking:** Deep chain-of-thought and internal reasoning traces.
-- **Full Pointer Support:** Click any tab, row, status indicator, or dial directly with your mouse.
+- **Mid-Flight Hot Dial Overrides:** Adjust engine/model (`k`), toggle thinking mode (`t`), cycle reasoning effort (`E`), or inspect flow (`F`) live while a task runs.
+- **Full Pointer Support:** Click any tab, row, status indicator, or pill dial directly with your mouse.
 - **Command Palette (`:`):** Fuzzy search and execute any orbit verb on the fly.
 
-### 🛡️ 2. Human-in-the-Loop & Verification Gates
-- **Interactive Operator Notes:** Inject guidance mid-flight or adjust task requirements without restarting.
-- **Safety Compuertas (`Wait: true`):** Require explicit operator sign-off before high-stakes phases.
-- **Verification Gates:** Run shell checks (`make test`, `golangci-lint`) automatically between phases.
+### 📝 2. Intelligent Task Composer & URL Ingestion
+- **Contextual Engine & Model Selector:** Choose providers (**Claude**, **Codex**, **OpenCode**) with dynamic model cascading (`sonnet`, `opus`, `gpt-4o`, `o1`, `qwen`, `deepseek`).
+- **Reasoning Controls:** Fine-tune thinking modes (`adaptive`, `on`, `off`) and effort levels (`low`, `medium`, `high`, `xhigh`).
+- **Inline Flow Previews & Inspector:** Live pipeline preview (`1-plan ⏸ ➔ 2-implement ➔ 3-review`) and 1-click read-only Flow Inspector (`i`).
+- **Instant URL Issue Parsing:** Paste Linear, Jira, or GitHub issue links (`^V`) to automatically populate task metadata and scope.
 
-### 🔄 3. Multi-Phase Pipelines & Custom Flows
-- Define multi-stage agent workflows (`plan` $\rightarrow$ `implement` $\rightarrow$ `test` $\rightarrow$ `review` $\rightarrow$ `audit`) in clean JSON/YAML.
-- Built-in flow templates (`task`, `quick`, `careful`, `tdd-cycle`, `security-audit`).
-- Output feeding (`FeedOutput: true`): Seamlessly pass generated artifacts between phases.
+### 🔄 3. Multi-Phase Pipelines & Flow Designer
+- **Visual Flow Designer (`+`):** Build custom pipelines visually or select presets (`TDD Cycle`, `Security Audit`, `Turbo Fix`).
+- **Safety Gates (`Wait: true`):** Require explicit operator sign-off before high-stakes phases.
+- **Output Chaining (`FeedOutput: true`):** Seamlessly pass generated artifacts and diffs between consecutive phases.
 
 ### 🏎️ 4. Parallel Worktree Isolation
 - Every task runs in an isolated `git worktree`.
-- Run 5 tasks in parallel across different branches without dirtying your working tree.
+- Run multiple tasks concurrently across branches without dirtying your working tree.
 
 ### 🌐 5. Bilingual & Theming Engine
 - **Live Language Switching:** Instant toggle between English (`en`) and Spanish (`es`) with `🌐 ES / EN` or `orbit set language es`.
@@ -123,24 +125,30 @@ orbit set theme frauddi
 
 ## ⌨️ Cockpit Keybindings
 
-| Key | Action |
-| :--- | :--- |
-| `↑` / `↓` or `k` / `j` | Navigate tasks in the queue |
-| `Enter` / Click | Open task detail view / Confirm |
-| `Esc` / `q` | Go back to task board / Exit modal |
-| `1` - `9`, `0`, `w` | Jump directly to Inspector tabs (1-11) |
-| `[` / `]` | Cycle through inspector tabs |
-| `n` | Create a new task |
-| `a` | Add an operator note to the task |
-| `p` / `u` | Pause / Unpause running task |
-| `x` | Cancel / Stop task execution |
-| `A` | Toggle Autopilot (auto-dispatch To Do queue) |
-| `M` | Open AI Engine selector & dials modal |
-| `S` | Open Settings modal |
-| `R` | Open Connected Repositories modal |
-| `+` | Open Custom Flow Editor |
-| `:` | Open Command Palette |
-| `?` | Open Interactive Help Overlay |
+| Key | Context | Action |
+| :--- | :--- | :--- |
+| `↑` / `↓` or `k` / `j` | Board / Lists | Navigate tasks in the queue |
+| `Enter` / Click | Global | Open task detail view / Confirm selection |
+| `Esc` / `q` | Global | Go back to task board / Exit modal |
+| `1` - `9`, `0`, `w` | Detail View | Jump directly to Inspector tabs (1-11) |
+| `[` / `]` | Detail View | Cycle through inspector tabs |
+| `k` / `M` | Board / Detail | Open AI Engine & Model dials modal |
+| `t` | Detail View | Toggle reasoning thinking mode (`adaptive` $\leftrightarrow$ `off`) |
+| `E` | Detail View | Cycle reasoning effort (`low` $\rightarrow$ `medium` $\rightarrow$ `high` $\rightarrow$ `xhigh`) |
+| `F` | Detail View | Open Flow Designer / inspect current pipeline |
+| `n` | Board | Create a new task (Compose screen) |
+| `i` | Compose | Inspect selected flow in read-only mode |
+| `+` | Compose / Board | Open Custom Flow Designer |
+| `Ctrl+R` | Compose | Save and immediately dispatch task run |
+| `Ctrl+V` | Compose | Paste clipboard text or URL into field |
+| `a` | Detail View | Add an operator note to the task (`orbit note`) |
+| `p` / `u` | Detail View | Pause / Unpause running task |
+| `x` | Detail View | Cancel / Stop task execution |
+| `A` | Board | Toggle Autopilot (auto-dispatch To Do queue) |
+| `S` | Board | Open Settings modal |
+| `R` | Board | Open Connected Repositories modal |
+| `:` | Global | Open Command Palette |
+| `?` | Global | Open Interactive Help Overlay |
 
 ---
 

@@ -89,3 +89,35 @@ func TestDetailWhyRefusalFormatting(t *testing.T) {
 	tk.Reason = r
 	_ = m.drawRow(row{task: tk}, 100, true)
 }
+
+func TestDetailMidTaskDialChanges(t *testing.T) {
+	m := openOn(t, "ACME-2662")
+
+	// 1. Press 't' toggles thinking
+	newM, _ := m.detailKey(keystroke("t"))
+	m = asModel(t, newM)
+	if m.knobs.Thinking == "" {
+		t.Error("expected thinking to be updated after 't'")
+	}
+
+	// 2. Press 'E' cycles effort
+	newM, _ = m.detailKey(keystroke("E"))
+	m = asModel(t, newM)
+	if m.knobs.Effort == "" {
+		t.Error("expected effort to be updated after 'E'")
+	}
+
+	// 3. Press 'k' opens engines screen
+	newM, _ = m.detailKey(keystroke("k"))
+	mEngines := asModel(t, newM)
+	if mEngines.screen != screenEngines {
+		t.Errorf("expected screenEngines after 'k', got %v", mEngines.screen)
+	}
+
+	// 4. Press 'F' opens flows screen
+	newM, _ = m.detailKey(keystroke("F"))
+	mFlows := asModel(t, newM)
+	if mFlows.screen != screenFlows {
+		t.Errorf("expected screenFlows after 'F', got %v", mFlows.screen)
+	}
+}

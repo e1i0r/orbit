@@ -60,3 +60,71 @@ func (m Model) jumpToBand(b view.Band) (tea.Model, tea.Cmd) {
 	}
 	return m, nil
 }
+
+func (m Model) handleComposeClick(t Target) (tea.Model, tea.Cmd) {
+	switch t.Kind {
+	case TargetComposeTab:
+		m.compose.tab = t.Pane
+		m.compose.field = 0
+		return m, nil
+	case TargetComposeRepoChoice:
+		if t.Pane >= 0 && t.Pane < len(m.compose.repos) {
+			m.compose.repoIdx = t.Pane
+			m.compose.repo = m.compose.repos[t.Pane].name
+		}
+		return m, nil
+	case TargetComposeFlowChoice:
+		if t.Pane >= 0 && t.Pane < len(m.compose.flows) {
+			m.compose.flowIdx = t.Pane
+		}
+		return m, nil
+	case TargetComposeEngineChoice:
+		if t.Pane >= 0 && t.Pane < len(m.compose.engines) {
+			m.compose.engineIdx = t.Pane
+			eng := m.compose.engines[t.Pane]
+			if models, ok := m.compose.modelsByEngine[eng]; ok && len(models) > 0 {
+				m.compose.models = models
+				if m.compose.modelIdx >= len(models) {
+					m.compose.modelIdx = 0
+				}
+			}
+		}
+		return m, nil
+	case TargetComposeModelChoice:
+		if t.Pane >= 0 && t.Pane < len(m.compose.models) {
+			m.compose.modelIdx = t.Pane
+		}
+		return m, nil
+	case TargetComposeThinkingChoice:
+		if t.Pane >= 0 && t.Pane < len(m.compose.thinkings) {
+			m.compose.thinkingIdx = t.Pane
+		}
+		return m, nil
+	case TargetComposeEffortChoice:
+		if t.Pane >= 0 && t.Pane < len(m.compose.efforts) {
+			m.compose.effortIdx = t.Pane
+		}
+		return m, nil
+	case TargetComposeNewFlow:
+		return m.openFlows(), nil
+	case TargetComposeInspectFlow:
+		return m.openFlowPreview(m.compose.chosenFlow()), nil
+	case TargetComposeField:
+		m.compose.field = t.Pane
+		return m, nil
+	case TargetComposeAction:
+		switch t.Key {
+		case "save":
+			return m.composeSubmit(false)
+		case "save_and_run":
+			return m.composeSubmit(true)
+		case "cancel":
+			return m.abandonCompose(), nil
+		}
+	case TargetComposePaste:
+		if clip := readClipboard(); clip != "" {
+			return m.paste(clip), nil
+		}
+	}
+	return m, nil
+}

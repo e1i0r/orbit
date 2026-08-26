@@ -187,33 +187,11 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		return m.showTab(tab(t.Pane)), nil
 	case TargetDialogSwitch:
 		return m.flip(t.Field)
-	case TargetComposeTab:
-		m.compose.tab = t.Pane
-		m.compose.field = 0
-		return m, nil
-	case TargetComposeRepoChoice:
-		if t.Pane >= 0 && t.Pane < len(m.compose.repos) {
-			m.compose.repoIdx = t.Pane
-			m.compose.repo = m.compose.repos[t.Pane].name
-		}
-		return m, nil
-	case TargetComposeField:
-		m.compose.field = t.Pane
-		return m, nil
-	case TargetComposeAction:
-		switch t.Key {
-		case "save":
-			return m.composeSubmit(false)
-		case "save_and_run":
-			return m.composeSubmit(true)
-		case "cancel":
-			return m.abandonCompose(), nil
-		}
-	case TargetComposePaste:
-		if clip := readClipboard(); clip != "" {
-			return m.paste(clip), nil
-		}
-		return m, nil
+	case TargetComposeTab, TargetComposeRepoChoice, TargetComposeFlowChoice,
+		TargetComposeEngineChoice, TargetComposeModelChoice, TargetComposeThinkingChoice,
+		TargetComposeEffortChoice, TargetComposeNewFlow, TargetComposeField,
+		TargetComposeAction, TargetComposePaste:
+		return m.handleComposeClick(t)
 	case TargetCommand:
 		// The same two-step a task row takes: the first click selects,
 		// the second runs what was selected. Both arrive through the same

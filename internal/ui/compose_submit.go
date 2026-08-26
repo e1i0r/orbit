@@ -71,9 +71,21 @@ func (m Model) composeSubmit(startNow bool) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	flowName := m.compose.chosenFlow()
+	m.knobs.Engine = m.compose.chosenEngine()
+	m.knobs.Model = m.compose.chosenModel()
+	m.knobs.Thinking = m.compose.chosenThinking()
+	m.knobs.Effort = m.compose.chosenEffort()
+
+	args := []string{"-repo", path, "-id", id}
+	if flowName != "" {
+		args = append(args, "-flow", flowName)
+	}
+	args = append(args, "--", text)
+
 	m.screen = screenList
 	m.pendingID, m.pendTries = id, 0
-	return m.runWatched(Command{Name: "new"}, []string{"-repo", path, "-id", id, "--", text})
+	return m.runWatched(Command{Name: "new"}, args)
 }
 
 // selectPending waits for newly created task to appear on the board.

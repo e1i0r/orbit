@@ -3,10 +3,12 @@ package ui
 // The form a task is written into, either manually or by importing from an issue tracker URL.
 
 import (
-	"charm.land/bubbles/v2/key"
-	tea "charm.land/bubbletea/v2"
 	"strings"
 
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/tracker"
 )
 
@@ -17,6 +19,11 @@ const (
 
 const (
 	composeRepo = iota
+	composeFlow
+	composeEngine
+	composeModel
+	composeThinking
+	composeEffort
 	composeID
 	composeText
 	composeFields
@@ -25,6 +32,11 @@ const (
 const (
 	composeURL = iota
 	composeURLRepo
+	composeURLFlow
+	composeURLEngine
+	composeURLModel
+	composeURLThinking
+	composeURLEffort
 	composeURLFields
 )
 
@@ -38,6 +50,18 @@ type composeState struct {
 	repos       []repoItem
 	repoIdx     int
 	parsedIssue *tracker.Issue
+
+	flows          []string
+	flowIdx        int
+	engines        []string
+	engineIdx      int
+	modelsByEngine map[string][]string
+	models         []string
+	modelIdx       int
+	thinkings      []string
+	thinkingIdx    int
+	efforts        []string
+	effortIdx      int
 }
 
 // openCompose brings the form up with the repository defaulted to the current task's repo.
@@ -62,11 +86,36 @@ func (m Model) openCompose() Model {
 		initialRepo = selectedRepo
 	}
 
+	flowsListed := flow.List(m.opts.Flows)
+	var flows []string
+	for _, f := range flowsListed {
+		flows = append(flows, f.Name)
+	}
+	if len(flows) == 0 {
+		flows = []string{"task", "quick", "careful"}
+	}
+
+	engines := []string{"claude", "codex", "opencode"}
+	modelsByEngine := map[string][]string{
+		"claude":   {"sonnet", "opus", "haiku"},
+		"codex":    {"gpt-4o", "o1", "o3-mini"},
+		"opencode": {"qwen-2.5-coder", "deepseek-r1", "llama-3.3"},
+	}
+	models := modelsByEngine["claude"]
+	thinkings := []string{"adaptive", "off", "4000", "8000", "max"}
+	efforts := []string{"default", "low", "medium", "high", "max"}
+
 	m.compose = composeState{
-		tab:     composeTabManual,
-		repo:    initialRepo,
-		repos:   repos,
-		repoIdx: repoIdx,
+		tab:            composeTabManual,
+		repo:           initialRepo,
+		repos:          repos,
+		repoIdx:        repoIdx,
+		flows:          flows,
+		engines:        engines,
+		modelsByEngine: modelsByEngine,
+		models:         models,
+		thinkings:      thinkings,
+		efforts:        efforts,
 	}
 	return m
 }
@@ -99,18 +148,22 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			return m.paste(clip), nil
 		}
 		return m, nil
+	case msg.Text == "+":
+		if m.isComposeFlowField() {
+			return m.openFlows(), nil
+		}
+	case msg.Text == "i" || msg.Text == "I":
+		if m.isComposeFlowField() {
+			return m.openFlowPreview(m.compose.chosenFlow()), nil
+		}
 	case msg.Code == tea.KeyUp || key.Matches(msg, m.keys.Up):
 		return m.composeMove(-1), nil
 	case msg.Code == tea.KeyDown || key.Matches(msg, m.keys.Down):
 		return m.composeMove(1), nil
 	case msg.Code == tea.KeyLeft:
-		if m.isComposeRepoField() {
-			return m.cycleComposeRepo(-1), nil
-		}
+		return m.handleComposeLeft(), nil
 	case msg.Code == tea.KeyRight:
-		if m.isComposeRepoField() {
-			return m.cycleComposeRepo(1), nil
-		}
+		return m.handleComposeRight(), nil
 	case key.Matches(msg, m.keys.PrevTab):
 		return m.composeMove(-1), nil
 	case msg.Code == tea.KeyTab || key.Matches(msg, m.keys.NextTab):
@@ -124,7 +177,7 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	if (msg.Text == "1" || msg.Text == "2") && (m.isComposeRepoField() || m.compose.get() == "") {
+	if (msg.Text == "1" || msg.Text == "2") && (m.isPillField() || m.compose.get() == "") {
 		if msg.Text == "1" {
 			m.compose.tab = composeTabManual
 		} else {
@@ -134,7 +187,7 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	if msg.Text != "" {
+	if msg.Text != "" && !m.isPillField() {
 		m.compose.set(m.compose.get() + msg.Text)
 		m.onComposeChanged()
 		return m, nil
@@ -160,7 +213,8 @@ func (m *Model) onComposeChanged() {
 		}
 	} else if m.compose.tab == composeTabManual {
 		cur := strings.TrimSpace(m.compose.get())
-		if strings.HasPrefix(cur, "http://") || strings.HasPrefix(cur, "https://") || strings.HasPrefix(cur, "linear.app/") {
+		if strings.HasPrefix(cur, "http://") || strings.HasPrefix(cur, "https://") ||
+			strings.HasPrefix(cur, "linear.app/") {
 			if issue, err := tracker.Parse(cur); err == nil {
 				m.compose.tab = composeTabURL
 				m.compose.url = cur
@@ -174,51 +228,33 @@ func (m *Model) onComposeChanged() {
 	}
 }
 
-func (m Model) isComposeRepoField() bool {
-	return (m.compose.tab == composeTabManual && m.compose.field == composeRepo) ||
-		(m.compose.tab == composeTabURL && m.compose.field == composeURLRepo)
-}
-
-func (m Model) cycleComposeRepo(d int) Model {
-	if len(m.compose.repos) == 0 {
-		return m
-	}
-	m.compose.repoIdx = (m.compose.repoIdx + d + len(m.compose.repos)) % len(m.compose.repos)
-	m.compose.repo = m.compose.repos[m.compose.repoIdx].name
-	return m
-}
-
 func (c *composeState) get() string {
 	if c.tab == composeTabURL {
 		if c.field == composeURL {
 			return c.url
 		}
-		return c.repo
+		return ""
 	}
 	switch c.field {
-	case composeRepo:
-		return c.repo
 	case composeID:
 		return c.id
+	case composeText:
+		return c.text
 	}
-	return c.text
+	return ""
 }
 
 func (c *composeState) set(v string) {
 	if c.tab == composeTabURL {
 		if c.field == composeURL {
 			c.url = v
-		} else {
-			c.repo = v
 		}
 		return
 	}
 	switch c.field {
-	case composeRepo:
-		c.repo = v
 	case composeID:
 		c.id = v
-	default:
+	case composeText:
 		c.text = v
 	}
 }
@@ -239,32 +275,13 @@ func (m Model) composeMove(d int) Model {
 }
 
 func (m Model) composeTab(d int) Model {
-	if d > 0 && m.compose.field == composeRepo && m.compose.tab == composeTabManual {
-		if completed, done := m.composeComplete(); done {
-			return completed
-		}
-	}
 	return m.composeMove(d)
-}
-
-func (m Model) composeComplete() (Model, bool) {
-	prefix := strings.ToLower(strings.TrimSpace(m.compose.repo))
-	if prefix == "" {
-		return m, false
-	}
-	for _, t := range m.board.Tasks {
-		if strings.HasPrefix(strings.ToLower(t.Repo), prefix) && !strings.EqualFold(t.Repo, prefix) {
-			m.compose.repo = t.Repo
-			return m, true
-		}
-	}
-	return m, false
 }
 
 func (m Model) composeNext(startNow bool) (tea.Model, tea.Cmd) {
 	limit := composeText
 	if m.compose.tab == composeTabURL {
-		limit = composeURLRepo
+		limit = composeURLEffort
 	}
 	if m.compose.field < limit {
 		m.compose.field++

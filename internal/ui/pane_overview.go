@@ -84,16 +84,45 @@ func (m Model) overviewLines() []string {
 	if t.Cost > 0 {
 		out = append(out, fmt.Sprintf("    %-14s %s", Paint(Dim).Render(p.T("overview.cost", "cost")), fmt.Sprintf("$%.4f", t.Cost)))
 	}
-	if t.Engine != "" || t.Model != "" {
-		engStr := t.Engine
-		if t.Model != "" {
-			engStr += " (" + t.Model + ")"
+	// Engine, Model, Effort, Thinking & Flow live indicators
+	eng := t.Engine
+	if eng == "" {
+		eng = m.knobs.Engine
+		if eng == "" {
+			eng = "claude"
 		}
-		out = append(out, fmt.Sprintf("    %-14s %s", Paint(Dim).Render(p.T("overview.engine", "engine")), engStr))
 	}
+	mod := t.Model
+	if mod == "" {
+		mod = m.knobs.Model
+		if mod == "" {
+			mod = "sonnet"
+		}
+	}
+	eff := m.knobs.Effort
+	if eff == "" {
+		eff = "high"
+	}
+	thk := m.knobs.Thinking
+	if thk == "" {
+		thk = "adaptive"
+	}
+	flowName := t.Flow
+	if flowName == "" {
+		flowName = "task"
+	}
+
 	out = append(out,
-		fmt.Sprintf("    %-14s %s", Paint(Dim).Render(p.T("overview.repo", "repository")), t.Repo+" ("+t.RepoPath+")"),
-		fmt.Sprintf("    %-14s %s", Paint(Dim).Render(p.T("overview.flow", "flow")), t.Flow),
+		fmt.Sprintf("    %-14s %s", Paint(Dim).Render(p.T("overview.engine", "engine")),
+			Paint(Live).Render(eng)+" · "+Paint(Accent).Render(mod)+" "+Paint(Dim).Render("[k]")),
+		fmt.Sprintf("    %-14s %s", Paint(Dim).Render(p.T("overview.thinking", "thinking")),
+			Paint(OK).Render(thk)+" "+Paint(Dim).Render("[t]")),
+		fmt.Sprintf("    %-14s %s", Paint(Dim).Render(p.T("overview.effort", "effort")),
+			Paint(Accent).Render(eff)+" "+Paint(Dim).Render("[E]")),
+		fmt.Sprintf("    %-14s %s", Paint(Dim).Render(p.T("overview.flow", "flow")),
+			Paint(Accent).Render(flowName)+" "+Paint(Dim).Render("[F]")),
+		fmt.Sprintf("    %-14s %s", Paint(Dim).Render(p.T("overview.repo", "repository")),
+			t.Repo+" ("+t.RepoPath+")"),
 		"",
 	)
 

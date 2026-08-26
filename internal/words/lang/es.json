@@ -1128,19 +1128,19 @@
       "value": "1 Manual"
     },
     "compose.tab_url": {
-      "source": "2 Desde URL (Linear / Jira / GitHub)",
+      "source": "2 From URL (Linear / Jira / GitHub)",
       "value": "2 Desde URL (Linear / Jira / GitHub)"
     },
     "compose.save_btn": {
-      "source": "↵ Guardar",
+      "source": "↵ Save",
       "value": "↵ Guardar"
     },
     "compose.save_run_btn": {
-      "source": "^R Guardar y Ejecutar",
+      "source": "^R Save & Run",
       "value": "^R Guardar y Ejecutar"
     },
     "compose.cancel_btn": {
-      "source": "esc Cancelar",
+      "source": "esc Cancel",
       "value": "esc Cancelar"
     },
     "compose.url": {
@@ -1148,7 +1148,7 @@
       "value": "url"
     },
     "compose.url_placeholder": {
-      "source": "https://linear.app/... o https://...atlassian.net/...",
+      "source": "https://linear.app/... or https://...atlassian.net/...",
       "value": "https://linear.app/... o https://...atlassian.net/..."
     },
     "compose.id_placeholder": {
@@ -1164,16 +1164,64 @@
       "value": "¿cuál repositorio?"
     },
     "compose.repo_hint": {
-      "source": "(←/→ para cambiar)",
+      "source": "(←/→ to cycle)",
       "value": "(←/→ para cambiar)"
     },
     "compose.text_hint": {
-      "source": "(Shift+↵ para nueva línea)",
+      "source": "(Shift+↵ for newline)",
       "value": "(Shift+↵ para nueva línea)"
     },
     "compose.btn_paste": {
       "source": "Paste (^V)",
       "value": "Pegar (^V)"
+    },
+    "compose.flow": {
+      "source": "flow",
+      "value": "flujo"
+    },
+    "compose.inspect_flow_btn": {
+      "source": "inspect",
+      "value": "inspeccionar"
+    },
+    "compose.new_flow_btn": {
+      "source": "New",
+      "value": "Nuevo"
+    },
+    "compose.flow_hint": {
+      "source": "(←/→ to cycle, i to inspect, + new)",
+      "value": "(←/→ para cambiar, i para inspeccionar, + nuevo)"
+    },
+    "compose.engine": {
+      "source": "engine",
+      "value": "motor"
+    },
+    "compose.engine_hint": {
+      "source": "(←/→ to cycle)",
+      "value": "(←/→ para cambiar)"
+    },
+    "compose.model": {
+      "source": "model",
+      "value": "modelo"
+    },
+    "compose.model_hint": {
+      "source": "(←/→ to cycle)",
+      "value": "(←/→ para cambiar)"
+    },
+    "compose.thinking": {
+      "source": "thinking",
+      "value": "thinking"
+    },
+    "compose.thinking_hint": {
+      "source": "(←/→ to cycle)",
+      "value": "(←/→ para cambiar)"
+    },
+    "compose.effort": {
+      "source": "effort",
+      "value": "esfuerzo"
+    },
+    "compose.effort_hint": {
+      "source": "(←/→ to cycle)",
+      "value": "(←/→ para cambiar)"
     },
     "note.empty": {
       "source": "the note cannot be empty",
@@ -1303,6 +1351,10 @@
       "source": "Pipeline (Click on a phase to edit it):",
       "value": "Pipeline del Ciclo (Haz clic en una fase para editarla):"
     },
+    "flows.phase_label": {
+      "source": "Phase",
+      "value": "Fase"
+    },
     "flows.feeds_input": {
       "source": "[feeds input]",
       "value": "[feeds input]"
@@ -1406,6 +1458,18 @@
     "flows.min_phases_required": {
       "source": "the flow must have at least one phase",
       "value": "el flujo debe tener al menos una fase"
+    },
+    "flows.builder_preview_title": {
+      "source": "Flow Inspector (Read-Only: {name})",
+      "value": "Inspector de Flujo (Solo Lectura: {name})"
+    },
+    "flows.btn_return": {
+      "source": "Return",
+      "value": "Volver"
+    },
+    "flows.ways_out_preview": {
+      "source": "[←/→ / tab] inspect phase · [enter / esc] return",
+      "value": "[←/→ / tab] inspeccionar fase · [enter / esc] volver"
     },
     "flows.phase_deleted": {
       "source": "phase deleted",
@@ -1800,6 +1864,22 @@
     "update.success": {
       "source": "successfully updated orbit to {version}!",
       "value": "¡orbit se actualizó con éxito a {version}!"
+    },
+    "overview.thinking": {
+      "source": "thinking",
+      "value": "thinking"
+    },
+    "overview.effort": {
+      "source": "effort",
+      "value": "esfuerzo"
+    },
+    "detail.thinking_changed": {
+      "source": "thinking mode set to {mode}",
+      "value": "modo de pensamiento cambiado a {mode}"
+    },
+    "detail.effort_changed": {
+      "source": "effort level set to {effort}",
+      "value": "nivel de esfuerzo cambiado a {effort}"
     }
   }
 }
