@@ -186,3 +186,12 @@ func (c composeState) chosenEffort() string {
 	}
 	return c.efforts[c.effortIdx]
 }
+
+func (c *composeState) setFlow(name string) {
+	for i, f := range c.flows {
+		if f == name {
+			c.flowIdx = i
+			return
+		}
+	}
+}

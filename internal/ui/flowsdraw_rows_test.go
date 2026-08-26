@@ -42,17 +42,17 @@ func TestFlowsRowsSelectedUserFlow(t *testing.T) {
 	dir := t.TempDir()
 	writeFlowFile(t, dir, "zzz-mine", `{"name":"zzz-mine","phases":[{"name":"implement","engine":"claude"}]}`)
 
-	m, _ := testModel(t, 100, 30)
+	m, _ := testModel(t, 100, 50)
 	m.opts.Flows = flowsTestDir(dir)
 	m = m.openFlows()
-	m.flows.sel = 3 // careful, quick, task, zzz-mine
+	m.flows.sel = 4 // careful, quick, task, tdd-fuzz-pr, zzz-mine
 
 	rows := m.flowsRows(m.frame.Body.H, m.frame.Body.W)
 	joined := strings.Join(rows, "\n")
-	if !strings.Contains(joined, "Borrar") {
+	if !strings.Contains(joined, "Borrar") && !strings.Contains(joined, "Delete") {
 		t.Errorf("expected a delete pill on a selected reader's-own flow")
 	}
-	if !strings.Contains(joined, "Editar") {
+	if !strings.Contains(joined, "Editar") && !strings.Contains(joined, "Edit") {
 		t.Errorf("expected an edit pill on the selected flow")
 	}
 }

@@ -81,42 +81,50 @@ func TestHitFlowsListEntries(t *testing.T) {
 		name string
 	}{
 		{6, "careful"},
-		{11, "quick"},
-		{14, "task"},
+		{12, "quick"},
+		{16, "task"},
+		{21, "tdd-fuzz-pr"},
 	}
 	for _, c := range cases {
 		got := m.hitFlows(10, base+c.line)
-		if got.Kind != TargetFlowItem || got.Field != "edit" || got.ID != c.name {
-			t.Errorf("hitFlows at line %d = %+v, want an edit click on %q", c.line, got, c.name)
+		if got.Kind != TargetFlowItem || got.Field != "details" || got.ID != c.name {
+			t.Errorf("hitFlows at line %d = %+v, want a details click on %q", c.line, got, c.name)
 		}
 	}
 
 	// Past every listed flow, there is nothing to click.
-	if got := m.hitFlows(10, base+19); got.Kind != TargetNone {
+	if got := m.hitFlows(10, base+30); got.Kind != TargetNone {
 		t.Errorf("hitFlows past the last flow = %+v, want the zero Target", got)
 	}
 }
 
-// TestHitFlowsListDeleteVsEdit is a reader's own flow, which offers delete
-// to the right of its name and edit everywhere else on the same line.
+// TestHitFlowsListDeleteVsEdit is a reader's own flow, which offers details,
+// edit, and delete buttons when selected.
 func TestHitFlowsListDeleteVsEdit(t *testing.T) {
 	dir := t.TempDir()
 	writeFlowFile(t, dir, "zzz-mine", `{"name":"zzz-mine","phases":[{"name":"implement","engine":"claude"}]}`)
 
-	m, _ := testModel(t, 100, 30)
+	m, _ := testModel(t, 100, 50)
 	m.opts.Flows = flowsTestDir(dir)
 	m = m.openFlows()
+	m.flows.sel = 4 // select zzz-mine
 	base := m.frame.Body.Y
-	// careful(6..9) quick(11..12) task(14..16) zzz-mine(18..19)
-	line := base + 18
+	// careful(6..10) quick(12..14) task(16..19) tdd-fuzz-pr(21..25) zzz-mine(27..28)
+	line := base + 27
 
-	if got := m.hitFlows(10, line); got.Field != "edit" || got.ID != "zzz-mine" {
-		t.Errorf("hitFlows left of the delete pill = %+v, want an edit click", got)
+	// Clicking flow name opens details
+	if got := m.hitFlows(10, line); got.Field != "details" || got.ID != "zzz-mine" {
+		t.Errorf("hitFlows on flow name = %+v, want a details click", got)
 	}
-	if got := m.hitFlows(40, line); got.Field != "delete" || got.ID != "zzz-mine" {
+	// Clicking Edit button
+	if got := m.hitFlows(44, line); got.Field != "edit" || got.ID != "zzz-mine" {
+		t.Errorf("hitFlows on the edit pill = %+v, want an edit click", got)
+	}
+	// Clicking Delete button
+	if got := m.hitFlows(56, line); got.Field != "delete" || got.ID != "zzz-mine" {
 		t.Errorf("hitFlows on the delete pill = %+v, want a delete click", got)
 	}
-	if got := flow.List(m.opts.Flows); len(got) != 4 {
-		t.Fatalf("expected 4 flows listed, got %d", len(got))
+	if got := flow.List(m.opts.Flows); len(got) != 5 {
+		t.Fatalf("expected 5 flows listed, got %d", len(got))
 	}
 }

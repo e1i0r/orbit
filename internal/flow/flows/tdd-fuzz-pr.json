@@ -1,0 +1,36 @@
+{
+  "name": "tdd-fuzz-pr",
+  "description": "Rigorous 3-step test-driven workflow with native Go fuzzing, property invariants (>=90% coverage), and automated PR creation on success.",
+  "phases": [
+    {
+      "name": "1-plan",
+      "engine": "claude",
+      "model": "opus",
+      "effort": "high",
+      "thinking": "adaptive",
+      "prompt": "Analyze the task, architecture constraints (<300 lines/file), and design the test matrix with property invariants and edge cases.",
+      "permissions": ["repo"]
+    },
+    {
+      "name": "2-implement-fuzz",
+      "engine": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "thinking": "adaptive",
+      "feed_output": true,
+      "prompt": "Implement the feature and write unit tests, property tests, and Go fuzz tests (testing.F) achieving >=90% test coverage. Verify with make check.",
+      "permissions": ["repo"]
+    },
+    {
+      "name": "3-review-pr",
+      "engine": "claude",
+      "model": "opus",
+      "effort": "high",
+      "thinking": "adaptive",
+      "feed_output": true,
+      "wait": true,
+      "prompt": "Review final diff, ensure zero lint errors, commit to branch orbit/<ID>, push to origin, and create a GitHub PR with gh pr create.",
+      "permissions": ["repo"]
+    }
+  ]
+}

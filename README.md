@@ -53,7 +53,12 @@ While running raw CLI agents in standalone tabs quickly leads to branch pollutio
 - **Instant URL Issue Parsing:** Paste Linear, Jira, or GitHub issue links (`^V`) to automatically populate task metadata and scope.
 
 ### 🔄 3. Multi-Phase Pipelines & Flow Designer
-- **Visual Flow Designer (`+`):** Build custom pipelines visually or select presets (`TDD Cycle`, `Security Audit`, `Turbo Fix`).
+- **Visual Flow Designer & Detail View (`+` / `i` / `⏎`):** Inspect workflows with ASCII flowchart diagrams (`┌───┐ ──▶ ┌───┐`), purpose explanations, and full phase parameter breakdown cards.
+- **Built-in Engineering Presets:**
+  - `tdd-fuzz-pr`: 3-phase rigorous flow (`1-plan` $\rightarrow$ `2-implement-fuzz` $\rightarrow$ `3-review-pr`) with native Go fuzzing (`testing.F`), property invariants ($\ge 90\%$ coverage), and automated PR creation via `gh pr create`.
+  - `careful`: Thorough multiphase workflow with human review gates and fix cycles.
+  - `task`: Standard two-phase workflow with implementation and human verification gate.
+  - `quick`: Fast single-phase flow with minimal overhead for quick bug fixes or docs.
 - **Safety Gates (`Wait: true`):** Require explicit operator sign-off before high-stakes phases.
 - **Output Chaining (`FeedOutput: true`):** Seamlessly pass generated artifacts and diffs between consecutive phases.
 

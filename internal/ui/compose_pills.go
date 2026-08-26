@@ -73,13 +73,12 @@ func (m Model) composeFlowLine(active bool, w int) string {
 			pills = append(pills, Pill(" "+glyph+f+" ", "#94A3B8", "#1E293B"))
 		}
 	}
-	inspectBtn := Pill(" 👁️ "+p.T("compose.inspect_flow_btn", "inspect")+" ", "#FFFFFF", "#0284C7")
 	newBtn := Pill(" ➕ "+p.T("compose.new_flow_btn", "New")+" ", "#FFFFFF", "#6366F1")
-	pills = append(pills, inspectBtn, newBtn)
+	pills = append(pills, newBtn)
 
 	line := prefix + strings.Join(pills, " ")
 	if active {
-		line += " " + Paint(Dim).Render(p.T("compose.flow_hint", "(←/→ to cycle, i to inspect, + new)"))
+		line += " " + Paint(Dim).Render(p.T("compose.flow_hint", "(←/→ to cycle, click again/i for details, + new)"))
 	}
 	return fit(line, w)
 }
@@ -104,7 +103,11 @@ func (m Model) flowSummary(name string) string {
 		}
 		phaseDescs = append(phaseDescs, desc)
 	}
-	return strings.Join(phaseDescs, " ➔ ")
+	pipeline := strings.Join(phaseDescs, " ➔ ")
+	if fl.Description != "" {
+		return pipeline + " · " + fl.Description
+	}
+	return pipeline
 }
 
 func (m Model) composeEngineLine(active bool, w int) string {
@@ -187,9 +190,11 @@ func (m Model) composeEffortLine(active bool, w int) string {
 	return fit(line, w)
 }
 
+const composeLabelStart = gutter + composeLabelWidth + 1
+
 func composePillWidth(name string, selected bool) int {
 	if selected {
-		return lipgloss.Width(" ● "+name+" ") + 1
+		return lipgloss.Width(Pill(" ● "+name+" ", "#000000", "#FFFFFF"))
 	}
-	return lipgloss.Width(" "+name+" ") + 1
+	return lipgloss.Width(Pill(" "+name+" ", "#94A3B8", "#1E293B"))
 }

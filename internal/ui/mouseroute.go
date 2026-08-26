@@ -75,6 +75,9 @@ func (m Model) handleComposeClick(t Target) (tea.Model, tea.Cmd) {
 		return m, nil
 	case TargetComposeFlowChoice:
 		if t.Pane >= 0 && t.Pane < len(m.compose.flows) {
+			if m.compose.flowIdx == t.Pane {
+				return m.openFlowPreview(m.compose.flows[t.Pane]), nil
+			}
 			m.compose.flowIdx = t.Pane
 		}
 		return m, nil

@@ -53,8 +53,8 @@ func TestDeleteSelectedFlowAndDeleteFlow(t *testing.T) {
 	dir := t.TempDir()
 	writeFlowFile(t, dir, "zzz-mine", `{"name":"zzz-mine","phases":[{"name":"implement","engine":"claude"}]}`)
 	m.opts.Flows = flowsTestDir(dir)
-	// Sorted: careful, quick, task, zzz-mine.
-	m.flows.sel = 3
+	// Sorted: careful, quick, task, tdd-fuzz-pr, zzz-mine.
+	m.flows.sel = 4
 	m2, _ = m.deleteSelectedFlow()
 	if !m2.flows.confirmDelete {
 		t.Fatalf("expected confirmDelete after asking to delete a reader's own flow")
@@ -91,11 +91,11 @@ func TestConfirmDeleteFlow(t *testing.T) {
 	dir := t.TempDir()
 	writeFlowFile(t, dir, "zzz-mine", `{"name":"zzz-mine","phases":[{"name":"implement","engine":"claude"}]}`)
 	m.opts.Flows = flowsTestDir(dir)
-	m.flows.sel = 3 // careful, quick, task, zzz-mine
+	m.flows.sel = 4 // careful, quick, task, tdd-fuzz-pr, zzz-mine
 	m2, _ = m.confirmDeleteFlow()
 	wantBand(t, m2, "zzz-mine")
-	if m2.flows.sel != 2 {
-		t.Errorf("sel after delete = %d, want 2 (stepped back)", m2.flows.sel)
+	if m2.flows.sel != 3 {
+		t.Errorf("sel after delete = %d, want 3 (stepped back)", m2.flows.sel)
 	}
 	if _, err := os.Stat(filepath.Join(dir, "zzz-mine.json")); !os.IsNotExist(err) {
 		t.Errorf("expected zzz-mine.json to be gone, stat err = %v", err)

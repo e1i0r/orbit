@@ -57,16 +57,8 @@ func (m Model) diffLines() []string {
 		}
 		return []string{" " + Paint(Bad).Render(said)}
 	}
-	text := strings.TrimSuffix(m.diff, "\n")
-	if strings.TrimSpace(text) == "" {
-		return []string{" " + Paint(Dim).Render(p.T("diff.unchanged", "no changes in this task's worktree"))}
-	}
-	raw := strings.Split(text, "\n")
-	out := make([]string, 0, len(raw))
-	for _, line := range raw {
-		out = append(out, " "+Paint(diffRole(line)).Render(line))
-	}
-	return out
+	lines, _ := formatStructuredDiff(m.diff, m.width, p)
+	return lines
 }
 
 // diffRole is the colour of one diff line.

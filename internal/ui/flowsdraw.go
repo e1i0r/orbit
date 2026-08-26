@@ -15,6 +15,9 @@ func (m Model) flowsRows(h, w int) []string {
 	if m.flows.creating {
 		return m.flowsBuilderRows(h, w)
 	}
+	if m.flows.showingDetail {
+		return m.flowDetailRows(h, w)
+	}
 	p := m.opts.Words
 	createBtn := "  " + Paint(Dim).Render(p.T("flows.create_btn_idle", "[+ Create Custom Flow] (press n)"))
 	if m.flows.sel == -1 {
@@ -45,9 +48,10 @@ func (m Model) flowsRows(h, w int) []string {
 			headerLine += "  " + Paint(Dim).Render("("+originStr+")")
 		}
 		if i == m.flows.sel {
-			headerLine += "   " + Pill("✏ Editar", "#FFFFFF", "#0C4A6E")
+			headerLine += "   " + Pill("👁 "+p.T("flows.btn_view_details", "Details"), "#FFFFFF", "#0284C7")
+			headerLine += " " + Pill("✏ "+p.T("flows.btn_edit", "Edit"), "#FFFFFF", "#0C4A6E")
 			if d.Origin != flow.OriginBuiltin {
-				headerLine += " " + Pill("🗑 Borrar", "#FFFFFF", "#7F1D1D")
+				headerLine += " " + Pill("🗑 "+p.T("flows.btn_delete", "Delete"), "#FFFFFF", "#7F1D1D")
 			}
 		}
 		out = append(out, fit(headerLine, w))
@@ -57,6 +61,11 @@ func (m Model) flowsRows(h, w int) []string {
 			errLine := strings.Repeat(" ", gutter+2) + Paint(Bad).Render(err.Error())
 			out = append(out, fit(errLine, w))
 			continue
+		}
+
+		if fl.Description != "" {
+			descLine := strings.Repeat(" ", gutter+2) + Paint(OK).Render("↳ ") + Paint(Dim).Render(fl.Description)
+			out = append(out, fit(descLine, w))
 		}
 
 		for idx, ph := range fl.Phases {
@@ -89,7 +98,7 @@ func (m Model) flowsRows(h, w int) []string {
 		out = append(out, "")
 	}
 
-	waysOut := p.T("flows.ways_out", "[n] create · [e] edit · [d] delete · {up_down} scroll · {back} back",
+	waysOut := p.T("flows.ways_out", "[⏎] inspect · [n] create · [e] edit · [d] delete · {up_down} scroll · {back} back",
 		about("up_down", m.keys.Up.Help().Key+m.keys.Down.Help().Key),
 		about("back", m.keys.Back.Help().Key))
 	out = append(out, fit("  "+Paint(Dim).Render(waysOut), w))

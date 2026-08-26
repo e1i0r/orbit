@@ -41,6 +41,14 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	switch {
 	case m.tab == tabDiff && key.Matches(k, m.keys.Sideways):
 		return m.sideways(k), nil
+	case m.tab == tabDiff && (k.String() == "]" || k.String() == ">"):
+		return m.jumpNextDiffFile(), nil
+	case m.tab == tabDiff && (k.String() == "[" || k.String() == "<"):
+		return m.jumpPrevDiffFile(), nil
+	case m.tab == tabDiff && k.String() == "n":
+		return m.jumpNextDiffHunk(), nil
+	case m.tab == tabDiff && k.String() == "N":
+		return m.jumpPrevDiffHunk(), nil
 	case key.Matches(k, m.keys.Back):
 		m.screen = screenList
 		return m, nil
@@ -50,8 +58,14 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.showTab((m.tab + tabCount - 1) % tabCount), nil
 	case key.Matches(k, m.keys.Edit):
 		return m.edit()
-	case key.Matches(k, m.keys.Menu), k.String() == "m", k.String() == "M":
+	case key.Matches(k, m.keys.Menu), k.String() == "m":
 		return m.openMenuForContext(), nil
+	case k.String() == "M":
+		return m.mergePR()
+	case k.String() == "X":
+		return m.closePR()
+	case k.String() == "u" || k.String() == "U":
+		return m.updatePRBranch()
 	case k.String() == "v" || k.String() == "V":
 		m.rawText = !m.rawText
 		p := m.opts.Words
@@ -60,9 +74,13 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 			msg = p.T("detail.mode_raw", "plain text view (raw)")
 		}
 		return m.syncPanes().say(msg), nil
-	case k.String() == "k" || k.String() == "K":
-		return m.openEngines(), nil
-	case k.String() == "t" || k.String() == "T":
+	case k.String() == "p" || k.String() == "P":
+		return m.deliverPR()
+	case k.String() == "c" || k.String() == "C":
+		return m.fixChecks()
+	case k.String() == "T":
+		return m.addMoreTests()
+	case k.String() == "t":
 		m = m.cycleThinking()
 		thk := m.knobs.Thinking
 		if thk == "" {
@@ -71,6 +89,8 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		p := m.opts.Words
 		return m.syncPanes().say(p.T("detail.thinking_changed",
 			"thinking mode set to {mode}", about("mode", thk))), nil
+	case k.String() == "k" || k.String() == "K":
+		return m.openEngines(), nil
 	case k.String() == "E":
 		m = m.cycleEffort()
 		eff := m.knobs.Effort

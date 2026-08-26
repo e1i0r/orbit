@@ -115,6 +115,11 @@ func diffOf(r Reader, t view.Task, base baseRef) tea.Cmd {
 // to compare the commits against" by reading the diff's text alone; the
 // tabStrip is what says which, and this is where that answer starts.
 func gitDiff(dir, base string) (string, bool, error) {
+	// Mark untracked files with intent-to-add so git diff includes them.
+	if _, err := runGitDiff(dir, "add", "-N", "--ignore-errors", "."); err != nil && errors.Is(err, errGitTimedOut) {
+		return "", false, err
+	}
+
 	if base != "" {
 		out, err := runGitDiff(dir, "diff", "--merge-base", base)
 		if err == nil {

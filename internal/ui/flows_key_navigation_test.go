@@ -62,7 +62,7 @@ func TestFlowsListKeyConfirmDelete(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.opts.Flows = flowsTestDir(dir)
 	m = m.openFlows()
-	m.flows.sel, m.flows.confirmDelete = 3, true
+	m.flows.sel, m.flows.confirmDelete = 4, true
 
 	// A key other than yes cancels the deletion.
 	m2raw, _ := m.flowsListKey(press("x"))
@@ -90,8 +90,8 @@ func TestFlowsListKeyNavigationBoundaries(t *testing.T) {
 	}
 
 	// Down walks off the end of the descriptor list and no further. The
-	// fixture ships exactly three built-in flows and no flow directory.
-	const builtinCount = 3
+	// fixture ships exactly four built-in flows and no flow directory.
+	const builtinCount = 4
 	m2 := asModel(t, m2raw)
 	for range builtinCount + 2 {
 		next, _ := m2.flowsListKey(press("down"))

@@ -801,6 +801,10 @@
       "source": "git did not answer in time",
       "value": "git no respondió a tiempo"
     },
+    "diff.nav_help": {
+      "source": "(] / [ next/prev file · n / N next/prev hunk · o editor)",
+      "value": "(] / [ arch sig/ant · n / N hunk sig/ant · o editor)"
+    },
     "evidence.cost": {
       "source": "cost ${amount}",
       "value": "coste ${amount}"
@@ -1011,6 +1015,46 @@
       "source": "mark a finished task as looked at",
       "value": "marcar como leída una tarea terminada"
     },
+    "cmd.pr": {
+      "source": "create a pull request from a task's worktree",
+      "value": "crear un pull request desde el worktree de una tarea"
+    },
+    "cmd.merge": {
+      "source": "merge a task's pull request and delete its branch",
+      "value": "fusionar el pull request de una tarea y borrar su rama"
+    },
+    "cmd.close_pr": {
+      "source": "close a task's pull request on GitHub",
+      "value": "cerrar el pull request de una tarea en GitHub"
+    },
+    "deliver.no_task": {
+      "source": "select a task to continue",
+      "value": "selecciona una tarea para continuar"
+    },
+    "deliver.creating_pr": {
+      "source": "creating pull request for {id}...",
+      "value": "creando pull request para {id}..."
+    },
+    "deliver.updating_pr": {
+      "source": "updating branch and PR for {id}...",
+      "value": "actualizando rama y PR para {id}..."
+    },
+    "deliver.merging_pr": {
+      "source": "merging pull request for {id}...",
+      "value": "fusionando pull request para {id}..."
+    },
+    "deliver.closing_pr": {
+      "source": "closing pull request for {id}...",
+      "value": "cerrando pull request para {id}..."
+    },
+    "deliver.fixing_checks": {
+      "source": "running checks and fixing issues for {id}...",
+      "value": "ejecutando checks y corrigiendo errores para {id}..."
+    },
+    "deliver.adding_tests": {
+      "source": "generating unit and fuzz tests for {id}...",
+      "value": "generando pruebas unitarias y fuzzing para {id}..."
+    },
     "cmd.cancel": {
       "source": "stop a run, and say so in its record",
       "value": "detener una ejecución y dejarlo dicho en su registro"
@@ -1143,6 +1187,14 @@
       "source": "esc Cancel",
       "value": "esc Cancelar"
     },
+    "compose.autopilot_on_note": {
+      "source": "autopilot is ON: starts automatically [A to toggle]",
+      "value": "piloto automático ACTIVO: se iniciará automáticamente [A para cambiar]"
+    },
+    "compose.autopilot_off_note": {
+      "source": "autopilot is OFF: saves to To Do backlog",
+      "value": "piloto automático APAGADO: se guardará en Por hacer / backlog"
+    },
     "compose.url": {
       "source": "url",
       "value": "url"
@@ -1179,17 +1231,13 @@
       "source": "flow",
       "value": "flujo"
     },
-    "compose.inspect_flow_btn": {
-      "source": "inspect",
-      "value": "inspeccionar"
-    },
     "compose.new_flow_btn": {
       "source": "New",
       "value": "Nuevo"
     },
     "compose.flow_hint": {
-      "source": "(←/→ to cycle, i to inspect, + new)",
-      "value": "(←/→ para cambiar, i para inspeccionar, + nuevo)"
+      "source": "(←/→ to cycle, click again/i for details, + new)",
+      "value": "(←/→ para cambiar, clic de nuevo/i para detalles, + nuevo)"
     },
     "compose.engine": {
       "source": "engine",
@@ -1312,8 +1360,8 @@
       "value": "no se encontraron flujos"
     },
     "flows.ways_out": {
-      "source": "[n] create · [e] edit · [d] delete · {up_down} scroll · {back} back",
-      "value": "[n] nuevo · [e] editar · [d] borrar · {up_down} desplazar · {back} volver"
+      "source": "[⏎] inspect · [n] create · [e] edit · [d] delete · {up_down} scroll · {back} back",
+      "value": "[⏎] inspeccionar · [n] nuevo · [e] editar · [d] borrar · {up_down} desplazar · {back} volver"
     },
     "flows.ways_out_form": {
       "source": "[tab] field · [enter] action · {back} back",
@@ -1370,6 +1418,10 @@
     "flows.field_flow_name": {
       "source": "1. Flow Name",
       "value": "1. Nombre del Flujo"
+    },
+    "flows.field_description": {
+      "source": "2. Purpose / Desc",
+      "value": "2. Propósito / Desc"
     },
     "flows.field_editing_phase": {
       "source": "Editing Phase",
@@ -1466,6 +1518,70 @@
     "flows.btn_return": {
       "source": "Return",
       "value": "Volver"
+    },
+    "flows.btn_view_details": {
+      "source": "Details",
+      "value": "Detalles"
+    },
+    "flows.btn_edit": {
+      "source": "Edit",
+      "value": "Editar"
+    },
+    "flows.btn_delete": {
+      "source": "Delete",
+      "value": "Borrar"
+    },
+    "flows.badge_custom": {
+      "source": "Custom",
+      "value": "Personalizado"
+    },
+    "flows.badge_builtin": {
+      "source": "Built-in",
+      "value": "Predeterminado"
+    },
+    "flows.workflow_title": {
+      "source": "Workflow",
+      "value": "Flujo"
+    },
+    "flows.no_description": {
+      "source": "No description provided for this workflow.",
+      "value": "Sin descripción disponible para este flujo."
+    },
+    "flows.purpose_label": {
+      "source": "Purpose & When to Use:",
+      "value": "Propósito y Cuándo Usar:"
+    },
+    "flows.pipeline_diagram": {
+      "source": "Pipeline Flowchart:",
+      "value": "Diagrama del Pipeline:"
+    },
+    "flows.phase_breakdown": {
+      "source": "Phases Breakdown:",
+      "value": "Desglose de Fases:"
+    },
+    "flows.feed_badge": {
+      "source": "feeds output",
+      "value": "alimenta output"
+    },
+    "flows.gate_badge": {
+      "source": "⏸ human gate",
+      "value": "⏸ compuerta humana"
+    },
+    "flows.btn_select_return": {
+      "source": "Select & Return",
+      "value": "Seleccionar y Volver"
+    },
+    "flows.btn_edit_designer": {
+      "source": "Edit in Designer",
+      "value": "Editar en Diseñador"
+    },
+    "flows.btn_back": {
+      "source": "Back",
+      "value": "Volver"
+    },
+    "flows.detail_hints": {
+      "source": "[enter] select · [e] edit · [esc] return",
+      "value": "[enter] seleccionar · [e] editar · [esc] volver"
     },
     "flows.ways_out_preview": {
       "source": "[←/→ / tab] inspect phase · [enter / esc] return",
@@ -1746,24 +1862,40 @@
       "value": "sin modificaciones en archivos del repositorio"
     },
     "overview.quick_actions": {
-      "source": "Quick Actions to Validate",
-      "value": "Accesos rápidos para validar"
+      "source": "Quick Actions to Deliver & Validate",
+      "value": "Acciones de Entrega y Validación"
+    },
+    "overview.action_pr": {
+      "source": "create PR",
+      "value": "crear PR"
+    },
+    "overview.action_update_pr": {
+      "source": "update PR",
+      "value": "actualizar PR"
+    },
+    "overview.action_merge_pr": {
+      "source": "merge PR",
+      "value": "merge PR"
+    },
+    "overview.action_close_pr": {
+      "source": "close PR",
+      "value": "cerrar PR"
+    },
+    "overview.action_checks": {
+      "source": "fix checks",
+      "value": "corregir checks"
+    },
+    "overview.action_tests": {
+      "source": "more tests",
+      "value": "más pruebas"
+    },
+    "overview.action_feedback": {
+      "source": "feedback",
+      "value": "dar feedback"
     },
     "overview.action_diff": {
-      "source": "diff changes",
-      "value": "ver diff de cambios"
-    },
-    "overview.action_report": {
-      "source": "full report",
-      "value": "ver reporte completo"
-    },
-    "overview.action_timeline": {
-      "source": "timeline",
-      "value": "ver cronología"
-    },
-    "overview.action_read": {
-      "source": "mark read",
-      "value": "marcar como leída"
+      "source": "diff",
+      "value": "ver diff"
     },
     "overview.live_activity": {
       "source": "Live LLM Activity",

@@ -40,11 +40,11 @@ func onePhase(name string) string {
 	return `{"name":"` + name + `","phases":[{"name":"implement","engine":"claude"}]}`
 }
 
-func TestThreeBuiltinsShip(t *testing.T) {
-	want := []string{"careful", "quick", "task"}
+func TestBuiltinFlowsShip(t *testing.T) {
+	want := []string{"careful", "quick", "task", "tdd-fuzz-pr"}
 	got := BuiltinNames()
 	if strings.Join(got, ",") != strings.Join(want, ",") {
-		t.Errorf("BuiltinNames() = %v, want %v — one flow is a default with no alternative, not a library", got, want)
+		t.Errorf("BuiltinNames() = %v, want %v", got, want)
 	}
 }
 
@@ -239,6 +239,7 @@ func TestListSaysWhereEachFlowCameFromAndSortsThem(t *testing.T) {
 		{Name: "mine", Origin: OriginUser},
 		{Name: "quick", Origin: OriginBuiltin},
 		{Name: "task", Origin: OriginShadow},
+		{Name: "tdd-fuzz-pr", Origin: OriginBuiltin},
 	}
 	if !slices.Equal(got, want) {
 		t.Errorf("List() =\n%v\nwant\n%v", got, want)
@@ -250,6 +251,7 @@ func TestListOnAStateRootWithNoFlowsOfItsOwn(t *testing.T) {
 		{Name: "careful", Origin: OriginBuiltin},
 		{Name: "quick", Origin: OriginBuiltin},
 		{Name: "task", Origin: OriginBuiltin},
+		{Name: "tdd-fuzz-pr", Origin: OriginBuiltin},
 	}
 	for _, src := range []Source{flowsIn(t), homeDir(filepath.Join(t.TempDir(), "never-made")), nil} {
 		if got := List(src); !slices.Equal(got, want) {
@@ -267,7 +269,7 @@ func TestNamesAreBareNamesAndTheRefusalOffersThem(t *testing.T) {
 	writeFlow(t, src, "mine", onePhase("mine"))
 
 	got := strings.Join(Names(src), ", ")
-	want := "careful, mine, quick, task"
+	want := "careful, mine, quick, task, tdd-fuzz-pr"
 	if got != want {
 		t.Fatalf("Names() = %q, want %q", got, want)
 	}

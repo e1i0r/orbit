@@ -43,6 +43,12 @@ func (m Model) composeRows(h, w int) []string {
 		"   " + Paint(Accent).Render("[ "+runBtn+" ]") +
 		"   " + Paint(Dim).Render("[ "+cancelBtn+" ]")
 
+	if m.autopilotOn() {
+		actions += "   " + Paint(Accent).Render("⚡ "+p.T("compose.autopilot_on_note", "autopilot is ON: starts automatically [A to toggle]"))
+	} else {
+		actions += "   " + Paint(Dim).Render("⚡ "+p.T("compose.autopilot_off_note", "autopilot is OFF: saves to To Do backlog"))
+	}
+
 	out = append(out, "", fit(actions, w))
 	return fill(out, h)
 }
@@ -205,10 +211,12 @@ func splitIntoLines(text string, maxW int) []string {
 		switch {
 		case cur.Len() == 0:
 			cur.WriteString(w)
-		case cur.Len()+1+lipgloss.Width(w) <= maxW:
+		case lipgloss.Width(cur.String())+1+lipgloss.Width(w) <= maxW:
 			cur.WriteString(" " + w)
 		default:
 			res = append(res, cur.String())
+			cur.Reset()
+			cur.WriteString(w)
 		}
 	}
 	if cur.Len() > 0 {
