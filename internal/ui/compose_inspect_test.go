@@ -14,9 +14,9 @@ func TestComposeInspectFlow(t *testing.T) {
 	// 1. Pressing 'i' opens flow inspector preview
 	res, _ := m.composeKey(tea.KeyPressMsg{Text: "i"})
 	mInspector := asModel(t, res)
-	if mInspector.screen != screenFlows || !mInspector.flows.readOnly {
-		t.Fatalf("expected screenFlows with readOnly, got screen=%v readOnly=%v",
-			mInspector.screen, mInspector.flows.readOnly)
+	if mInspector.screen != screenFlows || !mInspector.flows.showingDetail {
+		t.Fatalf("expected screenFlows with showingDetail, got screen=%v showingDetail=%v",
+			mInspector.screen, mInspector.flows.showingDetail)
 	}
 
 	// 2. Pressing Esc returns to screenCompose
@@ -35,7 +35,7 @@ func TestComposeInspectFlowMouseClick(t *testing.T) {
 	target := Target{Kind: TargetComposeInspectFlow}
 	res, _ := m.handleComposeClick(target)
 	mInspector := asModel(t, res)
-	if mInspector.screen != screenFlows || !mInspector.flows.readOnly {
-		t.Fatalf("expected screenFlows with readOnly after click, got screen=%v", mInspector.screen)
+	if mInspector.screen != screenFlows || !mInspector.flows.showingDetail {
+		t.Fatalf("expected screenFlows with showingDetail after click, got screen=%v", mInspector.screen)
 	}
 }

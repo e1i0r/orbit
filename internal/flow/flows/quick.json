@@ -1,5 +1,6 @@
 {
   "name": "quick",
+  "description": "Fast single-phase flow with minimal overhead. Best for small bug fixes, documentation, or straightforward tweaks where human review gates are unnecessary.",
   "phases": [
     {
       "name": "implement",

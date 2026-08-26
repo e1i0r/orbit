@@ -104,7 +104,11 @@ func (m Model) flowSummary(name string) string {
 		}
 		phaseDescs = append(phaseDescs, desc)
 	}
-	return strings.Join(phaseDescs, " ➔ ")
+	pipeline := strings.Join(phaseDescs, " ➔ ")
+	if fl.Description != "" {
+		return pipeline + " · " + fl.Description
+	}
+	return pipeline
 }
 
 func (m Model) composeEngineLine(active bool, w int) string {

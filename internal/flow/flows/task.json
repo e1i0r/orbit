@@ -1,5 +1,6 @@
 {
   "name": "task",
+  "description": "Standard two-phase workflow with implementation and human review gate. Recommended default for everyday engineering tasks.",
   "phases": [
     {
       "name": "implement",

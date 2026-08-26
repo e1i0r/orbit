@@ -40,10 +40,10 @@ func TestFlowsListsTheBuiltinsOnACleanStateRoot(t *testing.T) {
 		t.Fatalf("flows exited %d: %s", code, errOut)
 	}
 	lines := listed(t, out)
-	if len(lines) != 3 {
-		t.Fatalf("flows listed %d flows, want the three builtins:\n%s", len(lines), out)
+	if len(lines) != 4 {
+		t.Fatalf("flows listed %d flows, want the four builtins:\n%s", len(lines), out)
 	}
-	for _, name := range []string{"careful", "quick", "task"} {
+	for _, name := range []string{"careful", "quick", "task", "tdd-fuzz-pr"} {
 		if !strings.Contains(out, name+" (built in)") {
 			t.Errorf("flows does not offer %q as a built-in:\n%s", name, out)
 		}
@@ -58,8 +58,8 @@ func TestAFlowFileIsListedBesideTheBuiltins(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("flows exited %d: %s", code, errOut)
 	}
-	if lines := listed(t, out); len(lines) != 4 {
-		t.Fatalf("flows listed %d flows, want four:\n%s", len(lines), out)
+	if lines := listed(t, out); len(lines) != 5 {
+		t.Fatalf("flows listed %d flows, want five:\n%s", len(lines), out)
 	}
 	if !strings.Contains(out, "mine (yours)") {
 		t.Errorf("flows does not say where mine came from:\n%s", out)
@@ -77,7 +77,7 @@ func TestAFileThatShadowsABuiltinSaysSo(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("flows exited %d: %s", code, errOut)
 	}
-	if lines := listed(t, out); len(lines) != 3 {
+	if lines := listed(t, out); len(lines) != 4 {
 		t.Fatalf("a shadowed built-in was listed twice:\n%s", out)
 	}
 	if !strings.Contains(out, "task (yours, shadowing the built-in)") {

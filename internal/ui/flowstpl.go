@@ -15,8 +15,19 @@ import (
 func (m Model) applyFlowTemplate(tpl string) (Model, tea.Cmd) {
 	st := &m.flows
 	switch tpl {
+	case "TDD Fuzz & PR":
+		st.flowName = "tdd-fuzz-pr"
+		st.description = "Rigorous 3-step test-driven workflow with native Go fuzzing, property invariants (>=90% coverage), and automated PR creation on success."
+		st.phases = []flow.Phase{
+			{Name: "1-plan", Engine: "claude", Model: "opus", Effort: "high", Thinking: "adaptive", Prompt: "Analyze the task, architecture constraints (<300 lines/file), and design the test matrix with property invariants and edge cases.", Permissions: []string{"repo"}},
+			{Name: "2-implement-fuzz", Engine: "claude", Model: "sonnet", Effort: "high", Thinking: "adaptive", FeedOutput: true, Prompt: "Implement the feature and write unit tests, property tests, and Go fuzz tests (testing.F) achieving >=90% test coverage. Verify with make check.", Permissions: []string{"repo"}},
+			{Name: "3-review-pr", Engine: "claude", Model: "opus", Effort: "high", Thinking: "adaptive", FeedOutput: true, Wait: true, Prompt: "Review final diff, ensure zero lint errors, commit to branch orbit/<ID>, push to origin, and create a GitHub PR with gh pr create.", Permissions: []string{"repo"}},
+		}
+		st.activePhase = 0
+		return m.say("plantilla TDD Fuzz & PR cargada (3 fases)"), nil
 	case "TDD Cycle":
 		st.flowName = "tdd-cycle"
+		st.description = "TDD cycle: 1. plan technical design, 2. implement unit tests and code, 3. review diff with human gate."
 		st.phases = []flow.Phase{
 			{Name: "1-plan", Engine: "claude", Model: "opus", Effort: "high", Thinking: "on", Prompt: "Analiza el problema y diseña el plan técnico.", Permissions: []string{"read"}},
 			{Name: "2-implement", Engine: "claude", Model: "sonnet", Effort: "high", FeedOutput: true, Prompt: "Implementa el código y pruebas unitarias.", Permissions: []string{"repo"}},
@@ -26,6 +37,7 @@ func (m Model) applyFlowTemplate(tpl string) (Model, tea.Cmd) {
 		return m.say("plantilla TDD Cycle cargada (3 fases)"), nil
 	case "Security Audit":
 		st.flowName = "security-audit"
+		st.description = "Security audit: 1. investigate repository vulnerabilities, 2. apply remediation patches."
 		st.phases = []flow.Phase{
 			{Name: "1-investigate", Engine: "claude", Model: "opus", Effort: "max", Thinking: "on", Prompt: "Inspecciona el repositorio por vulnerabilidades.", Permissions: []string{"read"}},
 			{Name: "2-remediate", Engine: "claude", Model: "opus", Effort: "high", FeedOutput: true, Prompt: "Aplica parches para los hallazgos.", Permissions: []string{"repo"}},
@@ -34,10 +46,12 @@ func (m Model) applyFlowTemplate(tpl string) (Model, tea.Cmd) {
 		return m.say("plantilla Security Audit cargada (2 fases)"), nil
 	case "Turbo Fix":
 		st.flowName = "turbo-fix"
+		st.description = "Fast single-shot direct execution with sonnet and high effort."
 		st.phases = []flow.Phase{
 			{Name: "1-implement", Engine: "claude", Model: "sonnet", Effort: "high", Prompt: "Resuelve la tarea de forma directa.", Permissions: []string{"repo"}},
 		}
 	case "ninguna":
+		st.description = ""
 		st.phases = []flow.Phase{
 			{Name: "1-implement", Engine: "claude", Model: "sonnet", Effort: "default", Thinking: "adaptive", Prompt: "", Permissions: []string{"repo"}},
 		}
@@ -58,8 +72,9 @@ func (m Model) saveCustomFlow() (Model, tea.Cmd) {
 		return m.say("el flujo debe tener al menos una fase"), nil
 	}
 	fl := flow.Flow{
-		Name:   name,
-		Phases: st.phases,
+		Name:        name,
+		Description: strings.TrimSpace(st.description),
+		Phases:      st.phases,
 	}
 	if err := fl.Validate(); err != nil {
 		return m.say(err.Error()), nil
@@ -90,6 +105,7 @@ func (m Model) saveCustomFlow() (Model, tea.Cmd) {
 	m.flows.creating = false
 	m.flows.phases = nil
 	m.flows.flowName = ""
+	m.flows.description = ""
 	p := m.opts.Words
 	return m.say(p.T("flows.saved", "flow {name} saved", about("name", name))), nil
 }
@@ -103,6 +119,10 @@ func (m Model) editSelectedFlow() (Model, tea.Cmd) {
 	return m.editFlow(d.Name)
 }
 
+func (m Model) editNamedFlow(name string) (Model, tea.Cmd) {
+	return m.editFlow(name)
+}
+
 func (m Model) editFlow(name string) (Model, tea.Cmd) {
 	fl, err := flow.Resolve(m.opts.Flows, name)
 	if err != nil {
@@ -110,11 +130,13 @@ func (m Model) editFlow(name string) (Model, tea.Cmd) {
 	}
 	m.flows.creating = true
 	m.flows.isEditing = true
+	m.flows.showingDetail = false
 	m.flows.confirmDiscard = false
 	m.flows.confirmDelete = false
 	m.flows.field = 0
 	m.flows.template = "ninguna"
 	m.flows.flowName = fl.Name
+	m.flows.description = fl.Description
 	m.flows.phases = fl.Phases
 	m.flows.activePhase = 0
 	m.flows.ensurePhase()

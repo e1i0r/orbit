@@ -89,7 +89,7 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	}
 
 	// 0. Preset Template
-	tplPills := renderComboPills([]string{"ninguna", "TDD Cycle", "Security Audit", "Turbo Fix"}, st.template)
+	tplPills := renderComboPills([]string{"ninguna", "TDD Fuzz & PR", "TDD Cycle", "Security Audit", "Turbo Fix"}, st.template)
 	out = append(out, renderField(flowFieldTemplate, p.T("flows.field_template", "0. Template / Preset"), tplPills))
 
 	// 1. Flow Name
@@ -99,7 +99,14 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	}
 	out = append(out, renderField(flowFieldName, p.T("flows.field_flow_name", "1. Flow Name"), Paint(Accent).Render(fNameVal)))
 
-	// 2. Interactive Phase Tabs
+	// 2. Purpose & Description
+	descVal := "[" + st.description + "_]"
+	if st.field != flowFieldDescription && st.description != "" {
+		descVal = st.description
+	}
+	out = append(out, renderField(flowFieldDescription, p.T("flows.field_description", "2. Purpose / Desc"), Paint(Accent).Render(descVal)))
+
+	// 3. Interactive Phase Tabs
 	var tabPills []string
 	for i, ph := range st.phases {
 		label := fmt.Sprintf("%d.%s", i+1, ph.Name)

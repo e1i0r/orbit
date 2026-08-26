@@ -78,8 +78,9 @@ type Gate struct {
 
 // Flow is an ordered list of phases under a name.
 type Flow struct {
-	Name   string  `json:"name"`
-	Phases []Phase `json:"phases"`
+	Name        string  `json:"name"`
+	Description string  `json:"description,omitempty"`
+	Phases      []Phase `json:"phases"`
 }
 
 // Validate reports the first thing that would make a flow unrunnable.

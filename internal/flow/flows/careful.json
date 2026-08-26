@@ -1,5 +1,6 @@
 {
   "name": "careful",
+  "description": "Thorough multiphase workflow with human review gates and fix cycles. Best for complex, mission-critical features where code quality and careful verification are essential.",
   "phases": [
     {
       "name": "implement",

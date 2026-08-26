@@ -1312,8 +1312,8 @@
       "value": "no se encontraron flujos"
     },
     "flows.ways_out": {
-      "source": "[n] create · [e] edit · [d] delete · {up_down} scroll · {back} back",
-      "value": "[n] nuevo · [e] editar · [d] borrar · {up_down} desplazar · {back} volver"
+      "source": "[⏎] inspect · [n] create · [e] edit · [d] delete · {up_down} scroll · {back} back",
+      "value": "[⏎] inspeccionar · [n] nuevo · [e] editar · [d] borrar · {up_down} desplazar · {back} volver"
     },
     "flows.ways_out_form": {
       "source": "[tab] field · [enter] action · {back} back",
@@ -1370,6 +1370,10 @@
     "flows.field_flow_name": {
       "source": "1. Flow Name",
       "value": "1. Nombre del Flujo"
+    },
+    "flows.field_description": {
+      "source": "2. Purpose / Desc",
+      "value": "2. Propósito / Desc"
     },
     "flows.field_editing_phase": {
       "source": "Editing Phase",
@@ -1466,6 +1470,70 @@
     "flows.btn_return": {
       "source": "Return",
       "value": "Volver"
+    },
+    "flows.btn_view_details": {
+      "source": "Details",
+      "value": "Detalles"
+    },
+    "flows.btn_edit": {
+      "source": "Edit",
+      "value": "Editar"
+    },
+    "flows.btn_delete": {
+      "source": "Delete",
+      "value": "Borrar"
+    },
+    "flows.badge_custom": {
+      "source": "Custom",
+      "value": "Personalizado"
+    },
+    "flows.badge_builtin": {
+      "source": "Built-in",
+      "value": "Predeterminado"
+    },
+    "flows.workflow_title": {
+      "source": "Workflow",
+      "value": "Flujo"
+    },
+    "flows.no_description": {
+      "source": "No description provided for this workflow.",
+      "value": "Sin descripción disponible para este flujo."
+    },
+    "flows.purpose_label": {
+      "source": "Purpose & When to Use:",
+      "value": "Propósito y Cuándo Usar:"
+    },
+    "flows.pipeline_diagram": {
+      "source": "Pipeline Flowchart:",
+      "value": "Diagrama del Pipeline:"
+    },
+    "flows.phase_breakdown": {
+      "source": "Phases Breakdown:",
+      "value": "Desglose de Fases:"
+    },
+    "flows.feed_badge": {
+      "source": "feeds output",
+      "value": "alimenta output"
+    },
+    "flows.gate_badge": {
+      "source": "⏸ human gate",
+      "value": "⏸ compuerta humana"
+    },
+    "flows.btn_select_return": {
+      "source": "Select & Return",
+      "value": "Seleccionar y Volver"
+    },
+    "flows.btn_edit_designer": {
+      "source": "Edit in Designer",
+      "value": "Editar en Diseñador"
+    },
+    "flows.btn_back": {
+      "source": "Back",
+      "value": "Volver"
+    },
+    "flows.detail_hints": {
+      "source": "[enter] select · [e] edit · [esc] return",
+      "value": "[enter] seleccionar · [e] editar · [esc] volver"
     },
     "flows.ways_out_preview": {
       "source": "[←/→ / tab] inspect phase · [enter / esc] return",

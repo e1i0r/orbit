@@ -81,8 +81,9 @@ func TestHitFlowsListEntries(t *testing.T) {
 		name string
 	}{
 		{6, "careful"},
-		{11, "quick"},
-		{14, "task"},
+		{12, "quick"},
+		{16, "task"},
+		{21, "tdd-fuzz-pr"},
 	}
 	for _, c := range cases {
 		got := m.hitFlows(10, base+c.line)
@@ -92,7 +93,7 @@ func TestHitFlowsListEntries(t *testing.T) {
 	}
 
 	// Past every listed flow, there is nothing to click.
-	if got := m.hitFlows(10, base+19); got.Kind != TargetNone {
+	if got := m.hitFlows(10, base+30); got.Kind != TargetNone {
 		t.Errorf("hitFlows past the last flow = %+v, want the zero Target", got)
 	}
 }
@@ -103,12 +104,12 @@ func TestHitFlowsListDeleteVsEdit(t *testing.T) {
 	dir := t.TempDir()
 	writeFlowFile(t, dir, "zzz-mine", `{"name":"zzz-mine","phases":[{"name":"implement","engine":"claude"}]}`)
 
-	m, _ := testModel(t, 100, 30)
+	m, _ := testModel(t, 100, 50)
 	m.opts.Flows = flowsTestDir(dir)
 	m = m.openFlows()
 	base := m.frame.Body.Y
-	// careful(6..9) quick(11..12) task(14..16) zzz-mine(18..19)
-	line := base + 18
+	// careful(6..10) quick(12..14) task(16..19) tdd-fuzz-pr(21..25) zzz-mine(27..28)
+	line := base + 27
 
 	if got := m.hitFlows(10, line); got.Field != "edit" || got.ID != "zzz-mine" {
 		t.Errorf("hitFlows left of the delete pill = %+v, want an edit click", got)
@@ -116,7 +117,7 @@ func TestHitFlowsListDeleteVsEdit(t *testing.T) {
 	if got := m.hitFlows(40, line); got.Field != "delete" || got.ID != "zzz-mine" {
 		t.Errorf("hitFlows on the delete pill = %+v, want a delete click", got)
 	}
-	if got := flow.List(m.opts.Flows); len(got) != 4 {
-		t.Fatalf("expected 4 flows listed, got %d", len(got))
+	if got := flow.List(m.opts.Flows); len(got) != 5 {
+		t.Fatalf("expected 5 flows listed, got %d", len(got))
 	}
 }

@@ -69,7 +69,7 @@ func (m Model) hitFlows(x, y int) Target {
 	if !ok {
 		return Target{}
 	}
-	if !m.flows.creating {
+	if !m.flows.creating && !m.flows.showingDetail {
 		if line == 4 {
 			return Target{Kind: TargetFlowItem, Field: "create"}
 		}
@@ -79,14 +79,18 @@ func (m Model) hitFlows(x, y int) Target {
 			//nolint:errcheck // best-effort flow descriptor resolution
 			fl, _ := flow.Resolve(m.opts.Flows, d.Name)
 			phaseCount := len(fl.Phases)
-			if line >= curLine && line <= curLine+phaseCount {
+			extraDesc := 0
+			if fl.Description != "" {
+				extraDesc = 1
+			}
+			if line >= curLine && line <= curLine+phaseCount+extraDesc {
 				m.flows.sel = i
 				if d.Origin != flow.OriginBuiltin && x >= 32 {
 					return Target{Kind: TargetFlowItem, Field: "delete", ID: d.Name}
 				}
 				return Target{Kind: TargetFlowItem, Field: "edit", ID: d.Name}
 			}
-			curLine += 1 + phaseCount + 1
+			curLine += 1 + extraDesc + phaseCount + 1
 		}
 		return Target{}
 	}

@@ -14,7 +14,7 @@ func (m Model) handleFlowFieldDelta(delta int) (Model, tea.Cmd) {
 	st.ensurePhase()
 	switch st.field {
 	case flowFieldTemplate:
-		tpls := []string{"ninguna", "TDD Cycle", "Security Audit", "Turbo Fix"}
+		tpls := []string{"ninguna", "TDD Fuzz & PR", "TDD Cycle", "Security Audit", "Turbo Fix"}
 		st.template = nextOption(tpls, st.template, delta)
 		return m.applyFlowTemplate(st.template)
 	case flowFieldPhaseSelect:

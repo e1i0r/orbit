@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"slices"
+
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 
@@ -10,6 +12,7 @@ import (
 const (
 	flowFieldTemplate = iota
 	flowFieldName
+	flowFieldDescription
 	flowFieldPhaseSelect
 	flowFieldPhaseName
 	flowFieldEngine
@@ -31,11 +34,14 @@ type flowsState struct {
 	creating       bool
 	isEditing      bool
 	readOnly       bool
+	showingDetail  bool
+	isBuiltin      bool
 	confirmDiscard bool
 	confirmDelete  bool
 	field          int
 	template       string
 	flowName       string
+	description    string
 	activePhase    int
 	phases         []flow.Phase
 }
@@ -80,13 +86,13 @@ func (m Model) openFlowPreview(name string) Model {
 	prev := m.screen
 	m.screen = screenFlows
 	m.flows = flowsState{
-		fromScreen:  prev,
-		creating:    true,
-		isEditing:   false,
-		readOnly:    true,
-		flowName:    name,
-		phases:      fl.Phases,
-		activePhase: 0,
+		fromScreen:    prev,
+		showingDetail: true,
+		flowName:      name,
+		description:   fl.Description,
+		phases:        fl.Phases,
+		isBuiltin:     slices.Contains(flow.BuiltinNames(), name),
+		activePhase:   0,
 	}
 	m.flows.ensurePhase()
 	return m
@@ -112,7 +118,31 @@ func (m Model) flowsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if m.flows.creating {
 		return m.flowsFormKey(msg)
 	}
+	if m.flows.showingDetail {
+		return m.flowDetailKey(msg)
+	}
 	return m.flowsListKey(msg)
+}
+
+func (m Model) flowDetailKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	switch {
+	case key.Matches(msg, m.keys.Back):
+		if m.flows.fromScreen == screenCompose {
+			return m.abandonFlows(), nil
+		}
+		m.flows.showingDetail = false
+		return m, nil
+	case key.Matches(msg, m.keys.Open):
+		if m.flows.fromScreen == screenCompose {
+			m.compose.setFlow(m.flows.flowName)
+			return m.abandonFlows(), nil
+		}
+		m.flows.showingDetail = false
+		return m, nil
+	case msg.Text == "e" || msg.Text == "E":
+		return m.editNamedFlow(m.flows.flowName)
+	}
+	return m, nil
 }
 
 func (m Model) flowsListKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
@@ -147,6 +177,9 @@ func (m Model) flowsListKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if st.sel == -1 {
 			return m.startCreateFlow(), nil
 		}
+		if st.sel >= 0 && st.sel < len(descriptors) {
+			return m.openFlowPreview(descriptors[st.sel].Name), nil
+		}
 		return m.editSelectedFlow()
 	case msg.Text == "e" || msg.Text == "E":
 		return m.editSelectedFlow()
@@ -162,19 +195,6 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	st := &m.flows
 	st.ensurePhase()
 	p := m.opts.Words
-	if st.readOnly {
-		switch {
-		case key.Matches(msg, m.keys.Back), key.Matches(msg, m.keys.Open):
-			return m.abandonFlows(), nil
-		case key.Matches(msg, m.keys.NextTab), msg.Code == tea.KeyRight:
-			st.activePhase = (st.activePhase + 1) % len(st.phases)
-			return m, nil
-		case key.Matches(msg, m.keys.PrevTab), msg.Code == tea.KeyLeft:
-			st.activePhase = (st.activePhase - 1 + len(st.phases)) % len(st.phases)
-			return m, nil
-		}
-		return m, nil
-	}
 	if st.confirmDiscard {
 		switch {
 		case msg.Text == "y" || msg.Text == "Y" || msg.Text == "s" || msg.Text == "S" || key.Matches(msg, m.keys.Open) || key.Matches(msg, m.keys.Back):
@@ -187,12 +207,14 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	isText := st.field == flowFieldName || st.field == flowFieldPhaseName || st.field == flowFieldPrompt
+	isText := st.field == flowFieldName || st.field == flowFieldDescription ||
+		st.field == flowFieldPhaseName || st.field == flowFieldPrompt
 	switch {
 	case key.Matches(msg, m.keys.Back):
-		if st.flowName != "" || len(st.phases) > 1 || st.cur().Prompt != "" {
+		if st.flowName != "" || st.description != "" || len(st.phases) > 1 || st.cur().Prompt != "" {
 			st.confirmDiscard = true
-			return m.say(p.T("flows.confirm_discard", "discard flow changes? [y] yes / [n] no (or press Esc again)")), nil
+			return m.say(p.T("flows.confirm_discard",
+				"discard flow changes? [y] yes / [n] no (or press Esc again)")), nil
 		}
 		st.creating = false
 		return m, nil
@@ -214,6 +236,8 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		switch st.field {
 		case flowFieldName:
 			st.flowName = trimLastRune(st.flowName)
+		case flowFieldDescription:
+			st.description = trimLastRune(st.description)
 		case flowFieldPhaseName:
 			st.cur().Name = trimLastRune(st.cur().Name)
 		case flowFieldPrompt:
@@ -226,6 +250,8 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		switch st.field {
 		case flowFieldName:
 			st.flowName += msg.Text
+		case flowFieldDescription:
+			st.description += msg.Text
 		case flowFieldPhaseName:
 			st.cur().Name += msg.Text
 		case flowFieldPrompt:
