@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 
+	"strings"
+
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/task"
 )
@@ -39,9 +41,15 @@ func createPR(ctx Context, args []string) error {
 		return err
 	}
 	branch := "orbit/" + taskID
-	commitMsg := fmt.Sprintf("feat(%s): %s", taskID, t.Text)
+
+	firstLine := strings.SplitN(strings.TrimSpace(t.Text), "\n", 2)[0]
+	commitMsg := fmt.Sprintf("feat(%s): %s", taskID, firstLine)
 	if len(commitMsg) > 72 {
-		commitMsg = commitMsg[:72]
+		if idx := strings.LastIndex(commitMsg[:72], " "); idx > 20 {
+			commitMsg = commitMsg[:idx]
+		} else {
+			commitMsg = commitMsg[:72]
+		}
 	}
 
 	if err := r.CommitWorktree(wtDir, commitMsg); err != nil {
@@ -55,17 +63,21 @@ func createPR(ctx Context, args []string) error {
 	}
 
 	body := fmt.Sprintf("## Orbit Task: %s\n\n%s\n\nGenerated automatically by Orbit.", taskID, t.Text)
-	title := fmt.Sprintf("%s: %s", taskID, t.Text)
-	if len(title) > 72 {
-		title = title[:72]
+	title := fmt.Sprintf("%s: %s", taskID, firstLine)
+	if len(title) > 90 {
+		if idx := strings.LastIndex(title[:90], " "); idx > 20 {
+			title = title[:idx] + "..."
+		} else {
+			title = title[:87] + "..."
+		}
 	}
-	prURL, err := r.CreatePR(wtDir, title, body, branch)
+	prURL, err := r.CreatePR(wtDir, title, body, branch, r.Base)
 	if err != nil {
 		logger.Error("cli/pr", "gh pr create failed: %v", err)
 		return fmt.Errorf("branch %q pushed, but gh pr create failed: %w", branch, err)
 	}
 
-	logger.Info("cli/pr", "created pull request %s for task %s", prURL, taskID)
+	logger.Info("cli/pr", "created pull request %s for task %s (base=%s)", prURL, taskID, r.Base)
 	fmt.Fprintf(ctx.Out, "Pull Request created: %s\n", prURL)
 	return nil
 }

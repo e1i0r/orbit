@@ -33,8 +33,12 @@ func (r Repo) PushBranch(wtDir, branch string) error {
 }
 
 // CreatePR invokes the GitHub CLI `gh pr create` inside the worktree directory.
-func (r Repo) CreatePR(wtDir, title, body, headBranch string) (string, error) {
-	cmd := exec.Command("gh", "pr", "create", "--head", headBranch, "--title", title, "--body", body)
+func (r Repo) CreatePR(wtDir, title, body, headBranch, baseBranch string) (string, error) {
+	args := []string{"pr", "create", "--head", headBranch, "--title", title, "--body", body}
+	if baseBranch != "" {
+		args = append(args, "--base", baseBranch)
+	}
+	cmd := exec.Command("gh", args...)
 	cmd.Dir = wtDir
 	out, err := cmd.CombinedOutput()
 	outputStr := strings.TrimSpace(string(out))
