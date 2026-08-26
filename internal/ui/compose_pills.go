@@ -191,9 +191,11 @@ func (m Model) composeEffortLine(active bool, w int) string {
 	return fit(line, w)
 }
 
+const composeLabelStart = gutter + composeLabelWidth + 1
+
 func composePillWidth(name string, selected bool) int {
 	if selected {
-		return lipgloss.Width(" ● "+name+" ") + 1
+		return lipgloss.Width(Pill(" ● "+name+" ", "#000000", "#FFFFFF"))
 	}
-	return lipgloss.Width(" "+name+" ") + 1
+	return lipgloss.Width(Pill(" "+name+" ", "#94A3B8", "#1E293B"))
 }

@@ -167,7 +167,7 @@ func (m Model) hitCompose(x, y int) Target {
 }
 
 func (m Model) hitComposeRepoPills(x int, field int) Target {
-	curX := 17
+	curX := composeLabelStart
 	for i, r := range m.compose.repos {
 		pillWidth := composePillWidth(r.name, i == m.compose.repoIdx)
 		if x >= curX && x < curX+pillWidth {
@@ -180,7 +180,7 @@ func (m Model) hitComposeRepoPills(x int, field int) Target {
 
 func (m Model) hitComposeFlowPills(x int, field int) Target {
 	p := m.opts.Words
-	curX := 17
+	curX := composeLabelStart
 	for i, f := range m.compose.flows {
 		glyph := "⚡ "
 		switch f {
@@ -196,15 +196,15 @@ func (m Model) hitComposeFlowPills(x int, field int) Target {
 		curX += pillWidth + 1
 	}
 
-	inspectText := " 👁️ " + p.T("compose.inspect_flow_btn", "inspect") + " "
-	inspectWidth := lipgloss.Width(inspectText) + 2
+	inspectBtn := Pill(" 👁️ "+p.T("compose.inspect_flow_btn", "inspect")+" ", "#FFFFFF", "#0284C7")
+	inspectWidth := lipgloss.Width(inspectBtn)
 	if x >= curX && x < curX+inspectWidth {
 		return Target{Kind: TargetComposeInspectFlow}
 	}
 	curX += inspectWidth + 1
 
-	newText := " ➕ " + p.T("compose.new_flow_btn", "New") + " "
-	newWidth := lipgloss.Width(newText) + 2
+	newBtn := Pill(" ➕ "+p.T("compose.new_flow_btn", "New")+" ", "#FFFFFF", "#6366F1")
+	newWidth := lipgloss.Width(newBtn)
 	if x >= curX && x < curX+newWidth {
 		return Target{Kind: TargetComposeNewFlow}
 	}
@@ -212,7 +212,7 @@ func (m Model) hitComposeFlowPills(x int, field int) Target {
 }
 
 func (m Model) hitComposeEnginePills(x int, field int) Target {
-	curX := 17
+	curX := composeLabelStart
 	for i, eng := range m.compose.engines {
 		pillWidth := composePillWidth(eng, i == m.compose.engineIdx)
 		if x >= curX && x < curX+pillWidth {
@@ -224,7 +224,7 @@ func (m Model) hitComposeEnginePills(x int, field int) Target {
 }
 
 func (m Model) hitComposeModelPills(x int, field int) Target {
-	curX := 17
+	curX := composeLabelStart
 	for i, mod := range m.compose.models {
 		pillWidth := composePillWidth(mod, i == m.compose.modelIdx)
 		if x >= curX && x < curX+pillWidth {
@@ -236,7 +236,7 @@ func (m Model) hitComposeModelPills(x int, field int) Target {
 }
 
 func (m Model) hitComposeThinkingPills(x int, field int) Target {
-	curX := 17
+	curX := composeLabelStart
 	for i, th := range m.compose.thinkings {
 		pillWidth := composePillWidth(th, i == m.compose.thinkingIdx)
 		if x >= curX && x < curX+pillWidth {
@@ -248,7 +248,7 @@ func (m Model) hitComposeThinkingPills(x int, field int) Target {
 }
 
 func (m Model) hitComposeEffortPills(x int, field int) Target {
-	curX := 17
+	curX := composeLabelStart
 	for i, ef := range m.compose.efforts {
 		pillWidth := composePillWidth(ef, i == m.compose.effortIdx)
 		if x >= curX && x < curX+pillWidth {
