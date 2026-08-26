@@ -108,30 +108,38 @@ func (m Model) hitCompose(x, y int) Target {
 		return Target{Kind: TargetComposeTab, Pane: composeTabURL}
 	}
 
+	hasSum := m.flowSummary(m.compose.chosenFlow()) != ""
+	extraSum := 0
+	if hasSum {
+		extraSum = 1
+	}
+
 	if m.compose.tab == composeTabManual {
 		switch {
 		case line == 2:
 			return m.hitComposeRepoPills(x, composeRepo)
 		case line == 3:
 			return m.hitComposeFlowPills(x, composeFlow)
-		case line == 4:
+		case line == 4 && hasSum:
+			return Target{Kind: TargetComposeInspectFlow}
+		case line == 4+extraSum:
 			return m.hitComposeEnginePills(x, composeEngine)
-		case line == 5:
+		case line == 5+extraSum:
 			return m.hitComposeModelPills(x, composeModel)
-		case line == 6:
+		case line == 6+extraSum:
 			return m.hitComposeThinkingPills(x, composeThinking)
-		case line == 7:
+		case line == 7+extraSum:
 			return m.hitComposeEffortPills(x, composeEffort)
-		case line == 8:
+		case line == 8+extraSum:
 			return Target{Kind: TargetComposeField, Pane: composeID}
-		case line == 9:
+		case line == 9+extraSum:
 			if x >= 17 && x <= 37 {
 				return Target{Kind: TargetComposePaste}
 			}
 			return Target{Kind: TargetComposeField, Pane: composeText}
-		case line >= 10 && line <= 16:
+		case line >= 10+extraSum && line <= 16+extraSum:
 			return Target{Kind: TargetComposeField, Pane: composeText}
-		case line >= 17:
+		case line >= 17+extraSum:
 			return hitComposeActions(x)
 		}
 	} else {
@@ -145,15 +153,17 @@ func (m Model) hitCompose(x, y int) Target {
 			return m.hitComposeRepoPills(x, composeURLRepo)
 		case line == 4:
 			return m.hitComposeFlowPills(x, composeURLFlow)
-		case line == 5:
+		case line == 5 && hasSum:
+			return Target{Kind: TargetComposeInspectFlow}
+		case line == 5+extraSum:
 			return m.hitComposeEnginePills(x, composeURLEngine)
-		case line == 6:
+		case line == 6+extraSum:
 			return m.hitComposeModelPills(x, composeURLModel)
-		case line == 7:
+		case line == 7+extraSum:
 			return m.hitComposeThinkingPills(x, composeURLThinking)
-		case line == 8:
+		case line == 8+extraSum:
 			return m.hitComposeEffortPills(x, composeURLEffort)
-		case line >= 10:
+		case line >= 10+extraSum:
 			return hitComposeActions(x)
 		}
 	}
@@ -173,19 +183,33 @@ func (m Model) hitComposeRepoPills(x int, field int) Target {
 }
 
 func (m Model) hitComposeFlowPills(x int, field int) Target {
+	p := m.opts.Words
 	curX := 17
 	for i, f := range m.compose.flows {
-		pillWidth := composePillWidth("⚡ "+f, i == m.compose.flowIdx)
+		glyph := "⚡ "
+		switch f {
+		case "quick":
+			glyph = "🚀 "
+		case "careful":
+			glyph = "🛡️ "
+		}
+		pillWidth := composePillWidth(glyph+f, i == m.compose.flowIdx)
 		if x >= curX && x < curX+pillWidth {
 			return Target{Kind: TargetComposeFlowChoice, Pane: i}
 		}
 		curX += pillWidth + 1
 	}
-	if x >= curX && x < curX+14 {
+
+	inspectText := " 👁️ " + p.T("compose.inspect_flow_btn", "inspect") + " "
+	inspectWidth := lipgloss.Width(inspectText) + 2
+	if x >= curX && x < curX+inspectWidth {
 		return Target{Kind: TargetComposeInspectFlow}
 	}
-	curX += 15
-	if x >= curX && x < curX+12 {
+	curX += inspectWidth + 1
+
+	newText := " ➕ " + p.T("compose.new_flow_btn", "New") + " "
+	newWidth := lipgloss.Width(newText) + 2
+	if x >= curX && x < curX+newWidth {
 		return Target{Kind: TargetComposeNewFlow}
 	}
 	return Target{Kind: TargetComposeField, Pane: field}
