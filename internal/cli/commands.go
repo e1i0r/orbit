@@ -147,6 +147,18 @@ func commands() []Command {
 		About: func(p *words.Printer) string { return p.T("cmd.read", "mark a finished task as looked at") },
 		Run:   readTask,
 	}, {
+		Name: "pr", Args: "-repo <dir> <id>",
+		About: func(p *words.Printer) string {
+			return p.T("cmd.pr", "create a pull request from a task's worktree")
+		},
+		Run: createPR,
+	}, {
+		Name: "merge", Args: "-repo <dir> <id>",
+		About: func(p *words.Printer) string {
+			return p.T("cmd.merge", "merge a task's pull request and delete its branch")
+		},
+		Run: mergePR,
+	}, {
 		Name: "cancel", Args: "-repo <dir> <id>",
 		About: func(p *words.Printer) string { return p.T("cmd.cancel", "stop a run, and say so in its record") },
 		Run:   cancelTask,

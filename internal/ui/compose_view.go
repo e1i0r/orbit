@@ -43,6 +43,12 @@ func (m Model) composeRows(h, w int) []string {
 		"   " + Paint(Accent).Render("[ "+runBtn+" ]") +
 		"   " + Paint(Dim).Render("[ "+cancelBtn+" ]")
 
+	if m.autopilotOn() {
+		actions += "   " + Paint(Accent).Render("⚡ "+p.T("compose.autopilot_on_note", "autopilot is ON: starts automatically [A to toggle]"))
+	} else {
+		actions += "   " + Paint(Dim).Render("⚡ "+p.T("compose.autopilot_off_note", "autopilot is OFF: saves to To Do backlog"))
+	}
+
 	out = append(out, "", fit(actions, w))
 	return fill(out, h)
 }

@@ -156,6 +156,8 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if m.isComposeFlowField() {
 			return m.openFlowPreview(m.compose.chosenFlow()), nil
 		}
+	case (msg.Text == "a" || msg.Text == "A" || key.Matches(msg, m.keys.Autopilot)) && m.isPillField():
+		return m.autopilot()
 	case msg.Code == tea.KeyUp || key.Matches(msg, m.keys.Up):
 		return m.composeMove(-1), nil
 	case msg.Code == tea.KeyDown || key.Matches(msg, m.keys.Down):
