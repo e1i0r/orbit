@@ -1143,6 +1143,14 @@
       "source": "esc Cancel",
       "value": "esc Cancelar"
     },
+    "compose.autopilot_on_note": {
+      "source": "autopilot is ON: starts automatically [A to toggle]",
+      "value": "piloto automático ACTIVO: se iniciará automáticamente [A para cambiar]"
+    },
+    "compose.autopilot_off_note": {
+      "source": "autopilot is OFF: saves to To Do backlog",
+      "value": "piloto automático APAGADO: se guardará en Por hacer / backlog"
+    },
     "compose.url": {
       "source": "url",
       "value": "url"
