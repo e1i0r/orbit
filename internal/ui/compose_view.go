@@ -205,10 +205,12 @@ func splitIntoLines(text string, maxW int) []string {
 		switch {
 		case cur.Len() == 0:
 			cur.WriteString(w)
-		case cur.Len()+1+lipgloss.Width(w) <= maxW:
+		case lipgloss.Width(cur.String())+1+lipgloss.Width(w) <= maxW:
 			cur.WriteString(" " + w)
 		default:
 			res = append(res, cur.String())
+			cur.Reset()
+			cur.WriteString(w)
 		}
 	}
 	if cur.Len() > 0 {
