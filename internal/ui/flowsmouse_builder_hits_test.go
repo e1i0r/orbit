@@ -72,14 +72,15 @@ func TestHitFlowsBuilderFields(t *testing.T) {
 	}{
 		{7, flowFieldTemplate},
 		{8, flowFieldName},
-		{9, flowFieldPhaseSelect},
-		{10, flowFieldPhaseName},
-		{11, flowFieldEngine},
-		{12, flowFieldModel},
-		{13, flowFieldEffort},
-		{14, flowFieldThinking},
-		{15, flowFieldFeedOutput},
-		{16, flowFieldWait},
+		{9, flowFieldDescription},
+		{10, flowFieldPhaseSelect},
+		{11, flowFieldPhaseName},
+		{12, flowFieldEngine},
+		{13, flowFieldModel},
+		{14, flowFieldEffort},
+		{15, flowFieldThinking},
+		{16, flowFieldFeedOutput},
+		{17, flowFieldWait},
 	}
 	for _, c := range cases {
 		got := m.hitFlows(10, base+c.dy)
@@ -94,7 +95,7 @@ func TestHitFlowsBuilderFields(t *testing.T) {
 // their left.
 func TestHitFlowsBuilderPromptRowButtons(t *testing.T) {
 	m := builderModel(t)
-	y := m.frame.Body.Y + 17
+	y := m.frame.Body.Y + 18
 
 	if got := m.hitFlows(10, y); got.Kind != TargetFlowItem || got.Field != "" || got.Phase != flowFieldPrompt {
 		t.Errorf("hitFlows left of the prompt row's pills = %+v, want the prompt field", got)
@@ -115,7 +116,7 @@ func TestHitFlowsBuilderPromptRowButtons(t *testing.T) {
 func TestHitFlowsBuilderPromptBox(t *testing.T) {
 	m := builderModel(t)
 	base := m.frame.Body.Y
-	for _, dy := range []int{18, 19, 20} {
+	for _, dy := range []int{19, 20, 21} {
 		if got := m.hitFlows(10, base+dy); got.Kind != TargetFlowItem || got.Field != "" || got.Phase != flowFieldPrompt {
 			t.Errorf("hitFlows in the prompt box at line %d = %+v, want the prompt field", dy, got)
 		}
@@ -126,7 +127,7 @@ func TestHitFlowsBuilderPromptBox(t *testing.T) {
 // order along the row under the prompt box.
 func TestHitFlowsBuilderButtonsRow(t *testing.T) {
 	m := builderModel(t)
-	y := m.frame.Body.Y + 21
+	y := m.frame.Body.Y + 22
 
 	if got := m.hitFlows(10, y); got.Field != "add_phase" {
 		t.Errorf("hitFlows on add_phase = %+v", got)

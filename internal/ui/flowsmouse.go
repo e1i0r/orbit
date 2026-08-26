@@ -69,7 +69,19 @@ func (m Model) hitFlows(x, y int) Target {
 	if !ok {
 		return Target{}
 	}
-	if !m.flows.creating && !m.flows.showingDetail {
+	if m.flows.showingDetail {
+		rows := m.flowDetailRows(m.frame.Body.H, m.frame.Body.W)
+		if line >= len(rows)-3 {
+			if x < 25 {
+				return Target{Kind: TargetFlowItem, Field: "detail_select"}
+			} else if x < 50 {
+				return Target{Kind: TargetFlowItem, Field: "edit", ID: m.flows.flowName}
+			}
+			return Target{Kind: TargetFlowItem, Field: "detail_back"}
+		}
+		return Target{}
+	}
+	if !m.flows.creating {
 		if line == 4 {
 			return Target{Kind: TargetFlowItem, Field: "create"}
 		}
@@ -85,10 +97,25 @@ func (m Model) hitFlows(x, y int) Target {
 			}
 			if line >= curLine && line <= curLine+phaseCount+extraDesc {
 				m.flows.sel = i
-				if d.Origin != flow.OriginBuiltin && x >= 32 {
-					return Target{Kind: TargetFlowItem, Field: "delete", ID: d.Name}
+				if line == curLine {
+					originStr := flowOriginString(m.opts.Words, d.Origin)
+					offset := gutter + lipgloss.Width(d.Name)
+					if originStr != "" {
+						offset += 2 + lipgloss.Width(originStr) + 2
+					}
+					offset += 3
+
+					detW := lipgloss.Width("👁 "+m.opts.Words.T("flows.btn_view_details", "Details")) + 4
+					editW := lipgloss.Width("✏ "+m.opts.Words.T("flows.btn_edit", "Edit")) + 4
+
+					if x >= offset+detW && x < offset+detW+editW {
+						return Target{Kind: TargetFlowItem, Field: "edit", ID: d.Name}
+					}
+					if d.Origin != flow.OriginBuiltin && x >= offset+detW+editW {
+						return Target{Kind: TargetFlowItem, Field: "delete", ID: d.Name}
+					}
 				}
-				return Target{Kind: TargetFlowItem, Field: "edit", ID: d.Name}
+				return Target{Kind: TargetFlowItem, Field: "details", ID: d.Name}
 			}
 			curLine += 1 + extraDesc + phaseCount + 1
 		}
@@ -125,22 +152,24 @@ func (m Model) hitFlows(x, y int) Target {
 	case fLine == 1:
 		return Target{Kind: TargetFlowItem, Phase: flowFieldName}
 	case fLine == 2:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldPhaseSelect}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldDescription}
 	case fLine == 3:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldPhaseName}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldPhaseSelect}
 	case fLine == 4:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldEngine}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldPhaseName}
 	case fLine == 5:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldModel}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldEngine}
 	case fLine == 6:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldEffort}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldModel}
 	case fLine == 7:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldThinking}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldEffort}
 	case fLine == 8:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldFeedOutput}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldThinking}
 	case fLine == 9:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldWait}
+		return Target{Kind: TargetFlowItem, Phase: flowFieldFeedOutput}
 	case fLine == 10:
+		return Target{Kind: TargetFlowItem, Phase: flowFieldWait}
+	case fLine == 11:
 		if x >= 27 && x < 39 {
 			return Target{Kind: TargetFlowItem, Field: "paste_prompt"}
 		}
@@ -151,9 +180,9 @@ func (m Model) hitFlows(x, y int) Target {
 			return Target{Kind: TargetFlowItem, Field: "clear_prompt"}
 		}
 		return Target{Kind: TargetFlowItem, Phase: flowFieldPrompt}
-	case fLine > 10 && fLine <= 10+pLines+2:
+	case fLine > 11 && fLine <= 11+pLines+2:
 		return Target{Kind: TargetFlowItem, Phase: flowFieldPrompt}
-	case fLine >= 10+pLines+3:
+	case fLine >= 11+pLines+3:
 		if x < 25 {
 			return Target{Kind: TargetFlowItem, Field: "add_phase"}
 		}

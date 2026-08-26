@@ -87,8 +87,8 @@ func TestHitFlowsListEntries(t *testing.T) {
 	}
 	for _, c := range cases {
 		got := m.hitFlows(10, base+c.line)
-		if got.Kind != TargetFlowItem || got.Field != "edit" || got.ID != c.name {
-			t.Errorf("hitFlows at line %d = %+v, want an edit click on %q", c.line, got, c.name)
+		if got.Kind != TargetFlowItem || got.Field != "details" || got.ID != c.name {
+			t.Errorf("hitFlows at line %d = %+v, want a details click on %q", c.line, got, c.name)
 		}
 	}
 
@@ -98,8 +98,8 @@ func TestHitFlowsListEntries(t *testing.T) {
 	}
 }
 
-// TestHitFlowsListDeleteVsEdit is a reader's own flow, which offers delete
-// to the right of its name and edit everywhere else on the same line.
+// TestHitFlowsListDeleteVsEdit is a reader's own flow, which offers details,
+// edit, and delete buttons when selected.
 func TestHitFlowsListDeleteVsEdit(t *testing.T) {
 	dir := t.TempDir()
 	writeFlowFile(t, dir, "zzz-mine", `{"name":"zzz-mine","phases":[{"name":"implement","engine":"claude"}]}`)
@@ -107,14 +107,21 @@ func TestHitFlowsListDeleteVsEdit(t *testing.T) {
 	m, _ := testModel(t, 100, 50)
 	m.opts.Flows = flowsTestDir(dir)
 	m = m.openFlows()
+	m.flows.sel = 4 // select zzz-mine
 	base := m.frame.Body.Y
 	// careful(6..10) quick(12..14) task(16..19) tdd-fuzz-pr(21..25) zzz-mine(27..28)
 	line := base + 27
 
-	if got := m.hitFlows(10, line); got.Field != "edit" || got.ID != "zzz-mine" {
-		t.Errorf("hitFlows left of the delete pill = %+v, want an edit click", got)
+	// Clicking flow name opens details
+	if got := m.hitFlows(10, line); got.Field != "details" || got.ID != "zzz-mine" {
+		t.Errorf("hitFlows on flow name = %+v, want a details click", got)
 	}
-	if got := m.hitFlows(40, line); got.Field != "delete" || got.ID != "zzz-mine" {
+	// Clicking Edit button
+	if got := m.hitFlows(44, line); got.Field != "edit" || got.ID != "zzz-mine" {
+		t.Errorf("hitFlows on the edit pill = %+v, want an edit click", got)
+	}
+	// Clicking Delete button
+	if got := m.hitFlows(56, line); got.Field != "delete" || got.ID != "zzz-mine" {
 		t.Errorf("hitFlows on the delete pill = %+v, want a delete click", got)
 	}
 	if got := flow.List(m.opts.Flows); len(got) != 5 {
