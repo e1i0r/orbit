@@ -101,70 +101,66 @@ func (m Model) hitCompose(x, y int) Target {
 	if !ok {
 		return Target{}
 	}
-	if line == 0 {
+	plan := m.composeLayout()
+
+	if line == plan.tabLine {
 		if x < 20 {
 			return Target{Kind: TargetComposeTab, Pane: composeTabManual}
 		}
 		return Target{Kind: TargetComposeTab, Pane: composeTabURL}
 	}
 
-	hasSum := m.flowSummary(m.compose.chosenFlow()) != ""
-	extraSum := 0
-	if hasSum {
-		extraSum = 1
-	}
-
 	if m.compose.tab == composeTabManual {
 		switch {
-		case line == 2:
+		case line == plan.repo:
 			return m.hitComposeRepoPills(x, composeRepo)
-		case line == 3:
+		case line == plan.flow:
 			return m.hitComposeFlowPills(x, composeFlow)
-		case line == 4 && hasSum:
+		case plan.flowSum != -1 && line == plan.flowSum:
 			return Target{Kind: TargetComposeInspectFlow}
-		case line == 4+extraSum:
+		case line == plan.engine:
 			return m.hitComposeEnginePills(x, composeEngine)
-		case line == 5+extraSum:
+		case line == plan.model:
 			return m.hitComposeModelPills(x, composeModel)
-		case line == 6+extraSum:
+		case line == plan.thinking:
 			return m.hitComposeThinkingPills(x, composeThinking)
-		case line == 7+extraSum:
+		case line == plan.effort:
 			return m.hitComposeEffortPills(x, composeEffort)
-		case line == 8+extraSum:
+		case line == plan.id:
 			return Target{Kind: TargetComposeField, Pane: composeID}
-		case line == 9+extraSum:
+		case line == plan.textHeader:
 			if x >= 17 && x <= 37 {
 				return Target{Kind: TargetComposePaste}
 			}
 			return Target{Kind: TargetComposeField, Pane: composeText}
-		case line >= 10+extraSum && line <= 16+extraSum:
+		case line >= plan.textBoxTop && line <= plan.textBoxBot:
 			return Target{Kind: TargetComposeField, Pane: composeText}
-		case line >= 17+extraSum:
-			return hitComposeActions(x)
+		case line >= plan.actions:
+			return hitComposeActions(m.opts.Words, x)
 		}
 	} else {
 		switch {
-		case line == 2:
+		case line == plan.url:
 			if x >= 17 && x <= 37 {
 				return Target{Kind: TargetComposePaste}
 			}
 			return Target{Kind: TargetComposeField, Pane: composeURL}
-		case line == 3:
+		case line == plan.repo:
 			return m.hitComposeRepoPills(x, composeURLRepo)
-		case line == 4:
+		case line == plan.flow:
 			return m.hitComposeFlowPills(x, composeURLFlow)
-		case line == 5 && hasSum:
+		case plan.flowSum != -1 && line == plan.flowSum:
 			return Target{Kind: TargetComposeInspectFlow}
-		case line == 5+extraSum:
+		case line == plan.engine:
 			return m.hitComposeEnginePills(x, composeURLEngine)
-		case line == 6+extraSum:
+		case line == plan.model:
 			return m.hitComposeModelPills(x, composeURLModel)
-		case line == 7+extraSum:
+		case line == plan.thinking:
 			return m.hitComposeThinkingPills(x, composeURLThinking)
-		case line == 8+extraSum:
+		case line == plan.effort:
 			return m.hitComposeEffortPills(x, composeURLEffort)
-		case line >= 10+extraSum:
-			return hitComposeActions(x)
+		case line >= plan.actions:
+			return hitComposeActions(m.opts.Words, x)
 		}
 	}
 	return Target{}
@@ -261,13 +257,4 @@ func (m Model) hitComposeEffortPills(x int, field int) Target {
 		curX += pillWidth + 1
 	}
 	return Target{Kind: TargetComposeField, Pane: field}
-}
-
-func hitComposeActions(x int) Target {
-	if x < 20 {
-		return Target{Kind: TargetComposeAction, Key: "save"}
-	} else if x < 50 {
-		return Target{Kind: TargetComposeAction, Key: "save_and_run"}
-	}
-	return Target{Kind: TargetComposeAction, Key: "cancel"}
 }
