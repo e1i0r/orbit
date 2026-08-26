@@ -73,13 +73,12 @@ func (m Model) composeFlowLine(active bool, w int) string {
 			pills = append(pills, Pill(" "+glyph+f+" ", "#94A3B8", "#1E293B"))
 		}
 	}
-	inspectBtn := Pill(" 👁️ "+p.T("compose.inspect_flow_btn", "inspect")+" ", "#FFFFFF", "#0284C7")
 	newBtn := Pill(" ➕ "+p.T("compose.new_flow_btn", "New")+" ", "#FFFFFF", "#6366F1")
-	pills = append(pills, inspectBtn, newBtn)
+	pills = append(pills, newBtn)
 
 	line := prefix + strings.Join(pills, " ")
 	if active {
-		line += " " + Paint(Dim).Render(p.T("compose.flow_hint", "(←/→ to cycle, i to inspect, + new)"))
+		line += " " + Paint(Dim).Render(p.T("compose.flow_hint", "(←/→ to cycle, click again/i for details, + new)"))
 	}
 	return fit(line, w)
 }

@@ -1179,17 +1179,13 @@
       "source": "flow",
       "value": "flujo"
     },
-    "compose.inspect_flow_btn": {
-      "source": "inspect",
-      "value": "inspeccionar"
-    },
     "compose.new_flow_btn": {
       "source": "New",
       "value": "Nuevo"
     },
     "compose.flow_hint": {
-      "source": "(←/→ to cycle, i to inspect, + new)",
-      "value": "(←/→ para cambiar, i para inspeccionar, + nuevo)"
+      "source": "(←/→ to cycle, click again/i for details, + new)",
+      "value": "(←/→ para cambiar, clic de nuevo/i para detalles, + nuevo)"
     },
     "compose.engine": {
       "source": "engine",

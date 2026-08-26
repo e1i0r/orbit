@@ -196,13 +196,6 @@ func (m Model) hitComposeFlowPills(x int, field int) Target {
 		curX += pillWidth + 1
 	}
 
-	inspectBtn := Pill(" 👁️ "+p.T("compose.inspect_flow_btn", "inspect")+" ", "#FFFFFF", "#0284C7")
-	inspectWidth := lipgloss.Width(inspectBtn)
-	if x >= curX && x < curX+inspectWidth {
-		return Target{Kind: TargetComposeInspectFlow}
-	}
-	curX += inspectWidth + 1
-
 	newBtn := Pill(" ➕ "+p.T("compose.new_flow_btn", "New")+" ", "#FFFFFF", "#6366F1")
 	newWidth := lipgloss.Width(newBtn)
 	if x >= curX && x < curX+newWidth {
