@@ -801,6 +801,10 @@
       "source": "git did not answer in time",
       "value": "git no respondió a tiempo"
     },
+    "diff.nav_help": {
+      "source": "(] / [ next/prev file · n / N next/prev hunk · o editor)",
+      "value": "(] / [ arch sig/ant · n / N hunk sig/ant · o editor)"
+    },
     "evidence.cost": {
       "source": "cost ${amount}",
       "value": "coste ${amount}"

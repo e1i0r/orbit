@@ -41,6 +41,14 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	switch {
 	case m.tab == tabDiff && key.Matches(k, m.keys.Sideways):
 		return m.sideways(k), nil
+	case m.tab == tabDiff && (k.String() == "]" || k.String() == ">"):
+		return m.jumpNextDiffFile(), nil
+	case m.tab == tabDiff && (k.String() == "[" || k.String() == "<"):
+		return m.jumpPrevDiffFile(), nil
+	case m.tab == tabDiff && k.String() == "n":
+		return m.jumpNextDiffHunk(), nil
+	case m.tab == tabDiff && k.String() == "N":
+		return m.jumpPrevDiffHunk(), nil
 	case key.Matches(k, m.keys.Back):
 		m.screen = screenList
 		return m, nil
