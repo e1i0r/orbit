@@ -209,13 +209,6 @@ func lookup(name string) (Command, bool) {
 			}
 		}
 	}
-	if name == "update" || name == "actualizar" {
-		for _, c := range commands() {
-			if c.Name == "upgrade" {
-				return c, true
-			}
-		}
-	}
 	return Command{}, false
 }
 

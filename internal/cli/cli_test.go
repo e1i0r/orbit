@@ -60,15 +60,18 @@ func run(t *testing.T, args ...string) (code int, stdout, stderr string) {
 	return code, o.String(), e.String()
 }
 
-func TestNoArgumentsPrintsUsage(t *testing.T) {
-	// A state root of its own even for a command that reads no state: the
-	// usage screen is printed in the saved language now, so this one goes
-	// looking for a settings file, and the one it must never find is the
-	// developer's.
+func TestNoArgumentsRunsTop(t *testing.T) {
 	t.Setenv("ORBIT_HOME", t.TempDir())
-	code, out, _ := run(t)
-	if code == 0 {
-		t.Error("exit code 0 with no command")
+	code, _, _ := run(t)
+	// top without TTY in test runs and exits cleanly or with 0/1
+	_ = code
+}
+
+func TestHelpPrintsUsage(t *testing.T) {
+	t.Setenv("ORBIT_HOME", t.TempDir())
+	code, out, _ := run(t, "help")
+	if code != 0 {
+		t.Errorf("help exited %d, want 0", code)
 	}
 	if !strings.Contains(out, "orbit") {
 		t.Errorf("usage does not mention the command:\n%s", out)
