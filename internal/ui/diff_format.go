@@ -1,10 +1,7 @@
 package ui
 
 import (
-	"fmt"
 	"strings"
-
-	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -29,61 +26,32 @@ func formatStructuredDiff(diffText string, width int, p *words.Printer, rational
 	totalAdd, totalDel := diffStats(files)
 	out := make([]string, 0, len(raw)+len(files)*6)
 
-	// Sticky summary header
-	summary := fmt.Sprintf(" %s %s %s  %s",
-		Paint(Accent).Bold(true).Render(fmt.Sprintf("%d files changed", len(files))),
-		Paint(OK).Render(fmt.Sprintf("+%d", totalAdd)),
-		Paint(Bad).Render(fmt.Sprintf("-%d", totalDel)),
-		Paint(Dim).Render(p.T("diff.nav_help", "(] / [ next/prev file · f files · space collapse · r rationale · o editor)")),
-	)
+	summary := diffSummaryHeader(len(files), totalAdd, totalDel,
+		p.T("diff.nav_help", "(] / [ next/prev file · f files · space collapse · r rationale · o editor)"))
 	out = append(out, summary, "")
 
 	fileIdx := 0
-	for i, line := range raw {
+	for _, line := range raw {
 		if strings.HasPrefix(line, "diff --git ") {
 			if fileIdx < len(files) {
 				f := files[fileIdx]
 				if r, ok := rationales[f.Path]; ok && r != "" {
 					f.Rationale = r
 				}
-				icon := fileIcon(f.Path)
-				badge := formatFileBadge(f.Status)
-				stats := fmt.Sprintf("%s %s", Paint(OK).Render(fmt.Sprintf("+%d", f.Added)), Paint(Bad).Render(fmt.Sprintf("-%d", f.Deleted)))
-				pos := fmt.Sprintf("[%d/%d]", fileIdx+1, len(files))
 
 				isCollapsed := collapsed != nil && collapsed[f.Path]
-				collapsedTag := ""
-				if isCollapsed {
-					collapsedTag = "  " + Paint(Warn).Render("["+p.T("diff.collapsed_tag", "collapsed")+" · space]")
-				}
-
-				headerTitle := fmt.Sprintf("%s %s %s  %s%s", icon, Paint(Accent).Bold(true).Render(f.Path), stats, badge, collapsedTag)
-				borderWidth := max(2, width-lipgloss.Width(headerTitle)-lipgloss.Width(pos)-8)
-				border := strings.Repeat("─", borderWidth)
-
-				cardTop := fmt.Sprintf("  ┌── %s %s %s ──┐", headerTitle, Paint(Dim).Render(border), Paint(Dim).Render(pos))
+				cardTop := diffCardTop(f, fileIdx, len(files), width, p, isCollapsed)
 				out = append(out, "", cardTop)
 				files[fileIdx].StartLine = len(out) - 1
 
 				if showRationale && f.Rationale != "" {
-					label := Paint(Warn).Bold(true).Render("💡 " + p.T("diff.rationale_label", "LLM Decision") + ":")
-					wrapped := splitIntoLines(f.Rationale, max(20, width-lipgloss.Width(label)-10))
-					for count, wl := range wrapped {
-						if count == 0 {
-							out = append(out, fmt.Sprintf("  │ %s %s", label, Paint(Dim).Render(wl)))
-						} else {
-							pad := strings.Repeat(" ", lipgloss.Width(label)+1)
-							out = append(out, fmt.Sprintf("  │ %s%s", pad, Paint(Dim).Render(wl)))
-						}
-					}
+					out = append(out, diffRationaleLines(f.Rationale, width, p)...)
 				}
 
 				if isCollapsed {
-					cardBottom := fmt.Sprintf("  └──%s┘", strings.Repeat("─", max(2, width-6)))
-					out = append(out, cardBottom)
+					out = append(out, diffCardBottom(width))
 				} else if showRationale && f.Rationale != "" {
-					divider := strings.Repeat("─", max(2, width-6))
-					out = append(out, "  ├"+Paint(Dim).Render(divider))
+					out = append(out, diffCardDivider(width))
 				}
 
 				fileIdx++
@@ -102,27 +70,12 @@ func formatStructuredDiff(diffText string, width int, p *words.Printer, rational
 		}
 
 		if strings.HasPrefix(line, "@@") {
-			formattedHunk := formatHunkHeader(line)
-			out = append(out, "  "+Paint(Accent).Bold(true).Render("│"+formattedHunk))
+			out = append(out, diffHunkLine(line))
 			continue
 		}
 
-		// Line rendering
 		role := diffRole(line)
-		if !wrapLines || lipgloss.Width(line)+6 <= width {
-			out = append(out, "  │ "+Paint(role).Render(line))
-		} else {
-			availW := max(20, width-8)
-			wrapped := splitIntoLines(line, availW)
-			for idx, wl := range wrapped {
-				if idx == 0 {
-					out = append(out, "  │ "+Paint(role).Render(wl))
-				} else {
-					out = append(out, "  │   "+Paint(role).Render(wl))
-				}
-			}
-		}
-		_ = i
+		out = append(out, diffContentLines(line, role, width, wrapLines)...)
 	}
 
 	return out, files
