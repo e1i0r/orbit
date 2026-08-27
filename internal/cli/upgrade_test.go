@@ -59,13 +59,19 @@ func TestUpdateCheckAlreadyLatest(t *testing.T) {
 	})
 
 	t.Setenv("ORBIT_HOME", t.TempDir())
-	code, out, errOut := run(t, "update")
+	code, out, errOut := run(t, "upgrade")
 	if code != 0 {
-		t.Fatalf("update exited %d: %s", code, errOut)
+		t.Fatalf("upgrade exited %d: %s", code, errOut)
 	}
 	if !strings.Contains(out, "already on the latest version") &&
 		!strings.Contains(out, "última versión") {
 		t.Errorf("expected up to date message, got:\n%s", out)
+	}
+
+	// Alias check
+	code, _, errOut = run(t, "update")
+	if code != 0 {
+		t.Fatalf("update alias exited %d: %s", code, errOut)
 	}
 }
 
@@ -90,9 +96,9 @@ func TestUpdateCheckAvailable(t *testing.T) {
 	})
 
 	t.Setenv("ORBIT_HOME", t.TempDir())
-	code, out, errOut := run(t, "update", "-check")
+	code, out, errOut := run(t, "upgrade", "-check")
 	if code != 0 {
-		t.Fatalf("update -check exited %d: %s", code, errOut)
+		t.Fatalf("upgrade -check exited %d: %s", code, errOut)
 	}
 	if !strings.Contains(out, "v2.0.0") {
 		t.Errorf("expected new version v2.0.0 in output, got:\n%s", out)
@@ -144,17 +150,17 @@ func TestUpdateDownloadArchive(t *testing.T) {
 
 func TestUpdateHelpAndUnknownFlag(t *testing.T) {
 	t.Setenv("ORBIT_HOME", t.TempDir())
-	code, out, errOut := run(t, "update", "-h")
+	code, out, errOut := run(t, "upgrade", "-h")
 	if code != 0 {
-		t.Errorf("update -h exited %d, want 0: %s", code, errOut)
+		t.Errorf("upgrade -h exited %d, want 0: %s", code, errOut)
 	}
-	if !strings.Contains(out, "orbit update") {
-		t.Errorf("update -h does not describe command:\n%s", out)
+	if !strings.Contains(out, "orbit upgrade") {
+		t.Errorf("upgrade -h does not describe command:\n%s", out)
 	}
 
-	code, _, errOut = run(t, "update", "-bogus")
+	code, _, errOut = run(t, "upgrade", "-bogus")
 	if code == 0 {
-		t.Error("update -bogus exited 0, want refusal")
+		t.Error("upgrade -bogus exited 0, want refusal")
 	}
 	if !strings.Contains(errOut, "-bogus") {
 		t.Errorf("error did not name unknown flag:\n%s", errOut)

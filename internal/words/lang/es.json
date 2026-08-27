@@ -1199,7 +1199,7 @@
       "source": "print the version orbit was built at",
       "value": "mostrar la versión con la que se compiló orbit"
     },
-    "cmd.update": {
+    "cmd.upgrade": {
       "source": "check for updates and upgrade orbit",
       "value": "buscar actualizaciones y actualizar orbit"
     },
@@ -2117,23 +2117,23 @@
       "source": "collapse",
       "value": "colapsar"
     },
-    "update.checking": {
+    "upgrade.checking": {
       "source": "checking for updates...",
       "value": "buscando actualizaciones..."
     },
-    "update.already_latest": {
+    "upgrade.already_latest": {
       "source": "orbit is already on the latest version ({version})",
       "value": "orbit ya está en la última versión ({version})"
     },
-    "update.available": {
+    "upgrade.available": {
       "source": "new version available: {latest} (current: {current})",
       "value": "nueva versión disponible: {latest} (actual: {current})"
     },
-    "update.installing": {
+    "upgrade.installing": {
       "source": "updating orbit from {current} to {latest}...",
       "value": "actualizando orbit de {current} a {latest}..."
     },
-    "update.success": {
+    "upgrade.success": {
       "source": "successfully updated orbit to {version}!",
       "value": "orbit se actualizó con éxito a {version}!"
     },
