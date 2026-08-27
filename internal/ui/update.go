@@ -47,6 +47,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case elapsedMsg:
 		m.now = time.Time(msg)
 		return m, elapsedTick()
+	case upgradeTickMsg:
+		return m, tea.Batch(checkUpgradeCmd, upgradeTick())
 	case boardMsg:
 		return m.applyBoard(msg)
 	case controlMsg:

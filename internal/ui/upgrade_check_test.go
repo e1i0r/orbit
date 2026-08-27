@@ -45,3 +45,10 @@ func TestCheckUpgradeCmdFailure(t *testing.T) {
 		t.Errorf("expected nil on error, got: %+v", msg)
 	}
 }
+
+func TestUpgradeTickCmd(t *testing.T) {
+	cmd := upgradeTick()
+	if cmd == nil {
+		t.Fatal("expected non-nil cmd from upgradeTick")
+	}
+}
