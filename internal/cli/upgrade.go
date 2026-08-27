@@ -33,8 +33,8 @@ type asset struct {
 	URL  string `json:"browser_download_url"`
 }
 
-func update(ctx Context, args []string) error {
-	fs := flag.NewFlagSet("update", flag.ContinueOnError)
+func upgrade(ctx Context, args []string) error {
+	fs := flag.NewFlagSet("upgrade", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	check := fs.Bool("check", false, "check for updates without installing")
 	force := fs.Bool("force", false, "force update even if up to date")
@@ -43,7 +43,7 @@ func update(ctx Context, args []string) error {
 	}
 
 	p := ctx.Words
-	fmt.Fprintf(ctx.Out, "%s\n", p.T("update.checking", "checking for updates..."))
+	fmt.Fprintf(ctx.Out, "%s\n", p.T("upgrade.checking", "checking for updates..."))
 
 	reqCtx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
@@ -57,20 +57,20 @@ func update(ctx Context, args []string) error {
 	curVer := strings.TrimPrefix(Version, "v")
 
 	if !*force && curVer != "dev" && curVer == latestVer {
-		fmt.Fprintf(ctx.Out, "%s\n", p.T("update.already_latest",
+		fmt.Fprintf(ctx.Out, "%s\n", p.T("upgrade.already_latest",
 			"orbit is already on the latest version ({version})",
 			updateArg("version", rel.TagName)))
 		return nil
 	}
 
 	if *check {
-		fmt.Fprintf(ctx.Out, "%s\n", p.T("update.available",
+		fmt.Fprintf(ctx.Out, "%s\n", p.T("upgrade.available",
 			"new version available: {latest} (current: {current})",
 			updateArg("latest", rel.TagName), updateArg("current", Version)))
 		return nil
 	}
 
-	fmt.Fprintf(ctx.Out, "%s\n", p.T("update.installing",
+	fmt.Fprintf(ctx.Out, "%s\n", p.T("upgrade.installing",
 		"updating orbit from {current} to {latest}...",
 		updateArg("current", Version), updateArg("latest", rel.TagName)))
 
@@ -78,7 +78,7 @@ func update(ctx Context, args []string) error {
 	assetURL := findAssetURL(rel.Assets, runtime.GOOS, runtime.GOARCH)
 	if assetURL != "" {
 		if err := selfUpdate(reqCtx, assetURL); err == nil {
-			fmt.Fprintf(ctx.Out, "%s\n", p.T("update.success",
+			fmt.Fprintf(ctx.Out, "%s\n", p.T("upgrade.success",
 				"successfully updated orbit to {version}!",
 				updateArg("version", rel.TagName)))
 			return nil
@@ -90,7 +90,7 @@ func update(ctx Context, args []string) error {
 		return fmt.Errorf("update orbit: %w", err)
 	}
 
-	fmt.Fprintf(ctx.Out, "%s\n", p.T("update.success",
+	fmt.Fprintf(ctx.Out, "%s\n", p.T("upgrade.success",
 		"successfully updated orbit to {version}!",
 		updateArg("version", rel.TagName)))
 	return nil

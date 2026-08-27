@@ -188,9 +188,9 @@ func commands() []Command {
 		About: func(p *words.Printer) string { return p.T("cmd.version", "print the version orbit was built at") },
 		Run:   version,
 	}, {
-		Name:  "update",
-		About: func(p *words.Printer) string { return p.T("cmd.update", "check for updates and upgrade orbit") },
-		Run:   update,
+		Name:  "upgrade",
+		About: func(p *words.Printer) string { return p.T("cmd.upgrade", "check for updates and upgrade orbit") },
+		Run:   upgrade,
 	}}
 }
 
@@ -205,6 +205,13 @@ func lookup(name string) (Command, bool) {
 	if name == "set" || name == "config" || name == "configuracion" || name == "configuraciones" {
 		for _, c := range commands() {
 			if c.Name == "settings" {
+				return c, true
+			}
+		}
+	}
+	if name == "update" || name == "actualizar" {
+		for _, c := range commands() {
+			if c.Name == "upgrade" {
 				return c, true
 			}
 		}
