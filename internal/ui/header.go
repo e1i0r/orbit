@@ -161,11 +161,12 @@ func (m Model) headerFields() []string {
 	p := m.opts.Words
 	var fields []string
 
-	// Upgrade available notice (prominently shown on the left of standing facts)
+	// Upgrade available notice (soft pastel styling)
 	if m.upgradeAvailable != "" {
-		notice := p.T("header.upgrade_notice", "v{version} available · orbit upgrade",
-			about("version", m.upgradeAvailable))
-		fields = append(fields, Pill(" ✨ "+notice+" ", "#000000", "#F59E0B"))
+		ver := "v" + strings.TrimPrefix(m.upgradeAvailable, "v")
+		notice := p.T("header.upgrade_notice", "{version} available · orbit upgrade",
+			about("version", ver))
+		fields = append(fields, Pill(" ✨ "+notice+" ", "#FDE68A", "#451A03"))
 	}
 
 	// Repos chip

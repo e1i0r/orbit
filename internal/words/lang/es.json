@@ -174,8 +174,8 @@
       "value": "ES"
     },
     "header.upgrade_notice": {
-      "source": "v{version} available · orbit upgrade",
-      "value": "v{version} disponible · orbit upgrade"
+      "source": "{version} available · orbit upgrade",
+      "value": "{version} disponible · orbit upgrade"
     },
     "header.unread_brake": {
       "source": "brake ({n} unread)",
