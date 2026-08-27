@@ -54,6 +54,7 @@ const (
 	confirmNone confirm = iota
 	confirmCancel
 	confirmPostCliTask
+	confirmDeleteTask
 )
 
 // Model is one window. It is a value: Update takes one and returns the next,
@@ -119,16 +120,17 @@ type Model struct {
 	pendingID string
 	pendTries int
 
-	note        noteState
-	settings    settingsState
-	flows       flowsState
-	repolist    repolistState
-	repoFilter  string
-	queueFilter *view.Band
-	engines     enginesState
-	knobs       Knobs
-	help        helpState
-	rawText     bool
+	note           noteState
+	settings       settingsState
+	flows          flowsState
+	repolist       repolistState
+	repoFilter     string
+	queueFilter    *view.Band
+	engines        enginesState
+	knobs          Knobs
+	help           helpState
+	rawText        bool
+	expandedDetail bool
 
 	// start is the dialog that decides what a run will be, and taken is
 	// which tasks this window has handed the terminal to an engine for.
@@ -193,8 +195,12 @@ type Model struct {
 	// answer would otherwise have six diffs in flight and pay for six base
 	// lookups, none of which can be cancelled. With these, at most one is
 	// out at a time and the base is asked for once per open.
-	diffBase   baseRef
-	diffAsking bool
+	diffBase          baseRef
+	diffAsking        bool
+	hideDiffRationale bool
+	collapsedFiles    map[string]bool
+	diffFilePicker    bool
+	diffFileCursor    int
 	// following is whether the log tab is taking every new entry as it
 	// arrives. It is armed when the view opens and released the moment the
 	// reader scrolls up, at the one site in scroll that reads the offset.

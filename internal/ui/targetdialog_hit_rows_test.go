@@ -19,7 +19,7 @@ func TestHitDetailAndTabs(t *testing.T) {
 	if got := m.hitDetail(5, bodyY); got.Kind != TargetNone {
 		t.Errorf("hitDetail on the heading row = %+v, want TargetNone", got)
 	}
-	if got := m.hitDetail(5, bodyY+2); got.Kind != TargetPaneBody {
+	if got := m.hitDetail(5, bodyY+3); got.Kind != TargetPaneBody {
 		t.Errorf("hitDetail inside the pane = %+v, want TargetPaneBody", got)
 	}
 	if got := m.hitDetail(5, bodyY+m.frame.Body.H-1); got.Kind != TargetNone {

@@ -167,8 +167,10 @@ func TestHitRowEveryOutcome(t *testing.T) {
 	// drawn — reachable with a body too short for the fixture's list.
 	short := m
 	short.frame.Body.H = 2
-	if got := short.hitRow(5, short.frame.Body.Y+1); got.Kind != TargetNone {
-		t.Errorf("hitRow past the shown rows = %+v, want TargetNone", got)
+	if short.frame.Body.H > 0 {
+		if got := short.hitRow(5, short.frame.Body.Y); got.Kind != TargetNone {
+			t.Errorf("hitRow on table header row = %+v, want TargetNone", got)
+		}
 	}
 
 	// 3. A blank separator row.
@@ -187,17 +189,17 @@ func TestHitRowEveryOutcome(t *testing.T) {
 	if blankIdx < 0 || headIdx < 0 || taskIdx < 0 {
 		t.Fatal("the fixture body is missing a blank, a header or a task row to test against")
 	}
-	if got := m.hitRow(5, m.frame.Body.Y+blankIdx); got.Kind != TargetNone {
+	if got := m.hitRow(5, m.frame.Body.Y+1+blankIdx); got.Kind != TargetNone {
 		t.Errorf("hitRow on a blank row = %+v, want TargetNone", got)
 	}
 
 	// 4. A band header.
-	if got := m.hitRow(5, m.frame.Body.Y+headIdx); got.Kind != TargetBandHeader {
+	if got := m.hitRow(5, m.frame.Body.Y+1+headIdx); got.Kind != TargetBandHeader {
 		t.Errorf("hitRow on a band header = %+v, want TargetBandHeader", got)
 	}
 
 	// 5. A task row, with the column carried from x.
-	got := m.hitRow(gutter+2, m.frame.Body.Y+taskIdx)
+	got := m.hitRow(gutter+2, m.frame.Body.Y+1+taskIdx)
 	if got.Kind != TargetTask || got.ID != rows[taskIdx].task.ID {
 		t.Errorf("hitRow on a task row = %+v, want TargetTask for %q", got, rows[taskIdx].task.ID)
 	}

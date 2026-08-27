@@ -16,6 +16,7 @@ package cli
 
 import (
 	"errors"
+	"os"
 	"os/exec"
 
 	"github.com/e1i0r/orbit/internal/board"
@@ -51,6 +52,24 @@ func controlPort(s *store.Store) func(view.Task, string) error {
 func markReadPort(s *store.Store) func(view.Task) error {
 	return func(t view.Task) error {
 		return task.MarkRead(s, subject(t))
+	}
+}
+
+// deleteTaskPort permanently removes a task's record directory and worktree.
+func deleteTaskPort(s *store.Store) func(view.Task) error {
+	if s == nil {
+		return nil
+	}
+	return func(t view.Task) error {
+		taskDir, err := s.TaskDir(t.Repo, t.ID)
+		if err == nil {
+			_ = os.RemoveAll(taskDir)
+		}
+		wtDir, err := s.WorktreeDir(t.Repo, t.ID)
+		if err == nil {
+			_ = os.RemoveAll(wtDir)
+		}
+		return nil
 	}
 }
 

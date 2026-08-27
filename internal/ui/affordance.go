@@ -96,6 +96,7 @@ func (k Keys) Affordances(t view.Task, s Conditions) []Affordance {
 		// that does nothing.
 		answer(k.Ask, because(whyAskNotBuilt)),
 		answer(k.MarkRead, whyNotMarkRead(t)),
+		answer(k.Delete, whyNotDelete(t)),
 	}
 }
 
@@ -229,6 +230,14 @@ func whyNotMarkRead(t view.Task) words.Arg {
 		return because(whyReadNotFinished)
 	case t.Read:
 		return because(whyReadAlreadyRead)
+	}
+	return words.Arg{}
+}
+
+// whyNotDelete answers for deleting a task. A running task must be cancelled first.
+func whyNotDelete(t view.Task) words.Arg {
+	if t.Live {
+		return because(whyDeleteRunning)
 	}
 	return words.Arg{}
 }

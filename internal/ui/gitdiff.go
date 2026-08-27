@@ -122,20 +122,21 @@ func gitDiff(dir, base string) (string, bool, error) {
 
 	if base != "" {
 		out, err := runGitDiff(dir, "diff", "--merge-base", base)
-		if err == nil {
+		if err == nil && strings.TrimSpace(out) != "" {
 			return out, false, nil
 		}
 		if errors.Is(err, errGitTimedOut) {
-			// A second git diff, on the same worktree, is not a fresh
-			// chance — it is the same hang again. Reporting the timeout
-			// directly is more honest than a retry that is likely to sit
-			// for another five seconds before it, too, gives up.
 			return "", false, err
 		}
 	}
 	out, err := runGitDiff(dir, "diff")
 	if err != nil {
 		return "", false, err
+	}
+	if strings.TrimSpace(out) == "" {
+		if headDiff, hErr := runGitDiff(dir, "diff", "HEAD~1..HEAD"); hErr == nil && strings.TrimSpace(headDiff) != "" {
+			return headDiff, false, nil
+		}
 	}
 	return out, true, nil
 }

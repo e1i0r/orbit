@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"strings"
+
 	"charm.land/lipgloss/v2"
 )
 
@@ -13,12 +15,49 @@ func (m Model) hitDetail(x, y int) Target {
 	if !ok {
 		return Target{}
 	}
+	headLen := len(m.detailHeadLines(m.frame.Body.W))
+	tabLine := headLen
+	if m.frame.Body.H >= headLen+3 {
+		tabLine = headLen + 1
+	}
+	bodyStart := tabLine + 1
 	switch {
-	case line == 0:
+	case line < tabLine:
 		return Target{}
-	case line == 1:
+	case line == tabLine:
 		return m.hitTabs(x)
-	case line < 2+paneHeight(m.frame.Body.H):
+	case m.tab == tabDiff:
+		raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
+		files := parseDiffFiles(raw)
+		if len(files) > 0 {
+			if !m.diffFilePicker {
+				if line >= bodyStart && line <= bodyStart+2 {
+					return Target{Kind: TargetDiffSelectToggle}
+				}
+			} else {
+				maxItems := 7
+				start := 0
+				if m.diffFileCursor >= maxItems {
+					start = m.diffFileCursor - maxItems + 1
+				}
+				end := min(len(files), start+maxItems)
+				numItems := end - start
+
+				if line == bodyStart {
+					return Target{Kind: TargetDiffSelectToggle}
+				}
+				if line >= bodyStart+1 && line < bodyStart+1+numItems {
+					return Target{Kind: TargetDiffFile, Pane: start + (line - (bodyStart + 1))}
+				}
+				if line >= bodyStart+1+numItems && line <= bodyStart+1+numItems+1 {
+					return Target{Kind: TargetDiffSelectToggle}
+				}
+			}
+		}
+		if line < m.frame.Body.H-1 {
+			return Target{Kind: TargetPaneBody, Pane: int(m.tab)}
+		}
+	case line < m.frame.Body.H-1:
 		return Target{Kind: TargetPaneBody, Pane: int(m.tab)}
 	}
 	return Target{}

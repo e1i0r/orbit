@@ -69,6 +69,10 @@
       "source": "mark read",
       "value": "marcar leída"
     },
+    "key.delete_task": {
+      "source": "delete task",
+      "value": "eliminar tarea"
+    },
     "key.edit": {
       "source": "open in $EDITOR",
       "value": "abrir en $EDITOR"
@@ -152,6 +156,10 @@
     "why.read_already_read": {
       "source": "this task is already marked read",
       "value": "esta tarea ya está marcada como leída"
+    },
+    "why.delete_running": {
+      "source": "cannot delete a running task; cancel it first",
+      "value": "no se puede eliminar una tarea en marcha; cancélala primero"
     },
     "header.autopilot": {
       "source": "autopilot",
@@ -272,6 +280,18 @@
     "msg.confirm_cancel": {
       "source": "cancel {id}? press y to confirm, anything else to leave it running",
       "value": "¿cancelar {id}? pulsa y para confirmar, cualquier otra tecla la deja en marcha"
+    },
+    "msg.confirm_delete_task": {
+      "source": "delete task {id}? press y or ⏎ to confirm deletion, any other key to cancel",
+      "value": "¿eliminar la tarea {id}? pulsa y o ⏎ para confirmar, cualquier otra tecla para cancelar"
+    },
+    "msg.task_deleted": {
+      "source": "task {id} deleted",
+      "value": "tarea {id} eliminada"
+    },
+    "msg.delete_cancelled": {
+      "source": "deletion cancelled",
+      "value": "eliminación cancelada"
     },
     "msg.confirm_post_cli": {
       "source": "create a task in Orbit from this session? press y to confirm, anything else to skip",
@@ -789,6 +809,14 @@
       "source": "no changes in this task's worktree",
       "value": "sin cambios en el árbol de trabajo de esta tarea"
     },
+    "diff.empty_todo": {
+      "source": "no changes yet — task is in the todo queue (press [n] to start)",
+      "value": "aún no hay cambios — la tarea está en cola por hacer (pulsa [n] para iniciar)"
+    },
+    "diff.empty_no_worktree": {
+      "source": "no working tree modifications recorded",
+      "value": "no hay modificaciones en el árbol de trabajo"
+    },
     "diff.pending": {
       "source": "reading this task's worktree…",
       "value": "leyendo el árbol de trabajo de esta tarea…"
@@ -802,8 +830,104 @@
       "value": "git no respondió a tiempo"
     },
     "diff.nav_help": {
-      "source": "(] / [ next/prev file · n / N next/prev hunk · o editor)",
-      "value": "(] / [ arch sig/ant · n / N hunk sig/ant · o editor)"
+      "source": "(] / [ next/prev file · f files · space collapse · r rationale · o editor)",
+      "value": "(] / [ arch sig/ant · f archivos · espacio colapsar · r razones · o editor)"
+    },
+    "diff.rationale_label": {
+      "source": "LLM Decision",
+      "value": "Decisión del LLM"
+    },
+    "diff.rationale_shown": {
+      "source": "💡 LLM decisions and reasoning: visible",
+      "value": "💡 decisiones y razones del LLM: visibles"
+    },
+    "diff.rationale_hidden": {
+      "source": "💡 LLM decisions and reasoning: hidden",
+      "value": "💡 decisiones y razones del LLM: ocultas"
+    },
+    "diff.rationale_tests": {
+      "source": "unit and property testing suite verifying behavior and boundary invariants",
+      "value": "suite de pruebas unitarias e invariantes que verifican el comportamiento y los límites"
+    },
+    "diff.rationale_new": {
+      "source": "new implementation file created to fulfill task requirements",
+      "value": "nuevo archivo de implementación creado para cumplir con los requisitos de la tarea"
+    },
+    "diff.rationale_del": {
+      "source": "removed deprecated or redundant file",
+      "value": "archivo obsoleto o redundante eliminado"
+    },
+    "diff.rationale_mod": {
+      "source": "updated logic and signatures to fulfill task requirements",
+      "value": "lógica y firmas actualizadas para cumplir con los requisitos de la tarea"
+    },
+    "diff.file_expanded": {
+      "source": "expanded",
+      "value": "expandido"
+    },
+    "diff.file_collapsed": {
+      "source": "collapsed",
+      "value": "colapsado"
+    },
+    "diff.all_expanded": {
+      "source": "all files expanded",
+      "value": "todos los archivos expandidos"
+    },
+    "diff.all_collapsed": {
+      "source": "all files collapsed",
+      "value": "todos los archivos colapsados"
+    },
+    "diff.collapsed_tag": {
+      "source": "collapsed",
+      "value": "plegado"
+    },
+    "diff.select_title": {
+      "source": "File",
+      "value": "Archivo"
+    },
+    "diff.select_hint": {
+      "source": "[▾ select / f]",
+      "value": "[▾ desplegar / f]"
+    },
+    "diff.select_nav": {
+      "source": "(] next · [ prev · space fold)",
+      "value": "(] sig · [ ant · space plegar)"
+    },
+    "diff.select_open_title": {
+      "source": "Select File",
+      "value": "Seleccionar Archivo"
+    },
+    "diff.select_close_hint": {
+      "source": "[▴ close / esc]",
+      "value": "[▴ cerrar / esc]"
+    },
+    "diff.select_help": {
+      "source": "  [↑↓] navigate  [⏎ / click] select  [space] fold  [esc] close",
+      "value": "  [↑↓] navegar  [⏎ / clic] seleccionar  [espacio] plegar  [esc] cerrar"
+    },
+    "board.col_repo": {
+      "source": "REPO",
+      "value": "REPO"
+    },
+    "board.col_id": {
+      "source": "ID",
+      "value": "ID"
+    },
+    "board.col_title": {
+      "source": "TASK",
+      "value": "TAREA"
+    },
+    "board.col_state": {
+      "source": "STATUS",
+      "value": "ESTADO"
+    },
+    "board.col_model": {
+      "source": "MODEL",
+      "value": "MOTOR"
+    },
+    "board.col_elapsed": {
+      "source": "TIME",
+      "value": "TIEMPO"
     },
     "evidence.cost": {
       "source": "cost ${amount}",
@@ -1977,6 +2101,22 @@
       "source": "plain text view (raw)",
       "value": "vista texto plano (raw)"
     },
+    "detail.mode_expanded": {
+      "source": "expanded view (all fields unwrapped)",
+      "value": "vista expandida (campos completos)"
+    },
+    "detail.mode_compact": {
+      "source": "compact view (single-line summary)",
+      "value": "vista compacta (resumen)"
+    },
+    "detail.hint_expand": {
+      "source": "expand",
+      "value": "expandir"
+    },
+    "detail.hint_collapse": {
+      "source": "collapse",
+      "value": "colapsar"
+    },
     "update.checking": {
       "source": "checking for updates...",
       "value": "buscando actualizaciones..."
@@ -1995,7 +2135,7 @@
     },
     "update.success": {
       "source": "successfully updated orbit to {version}!",
-      "value": "¡orbit se actualizó con éxito a {version}!"
+      "value": "orbit se actualizó con éxito a {version}!"
     },
     "overview.thinking": {
       "source": "thinking",

@@ -114,6 +114,9 @@ type Options struct {
 	// and the only thing on this screen that decrements unread 3/5.
 	MarkRead func(t view.Task) error
 
+	// DeleteTask permanently deletes a task record and its worktree from the store.
+	DeleteTask func(t view.Task) error
+
 	// Take builds the interactive session t suspends the window for, and
 	// does not run it. It comes back as a command line so that the window
 	// hands it straight to tea.ExecProcess and never has to know what

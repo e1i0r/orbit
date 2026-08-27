@@ -39,6 +39,8 @@ const (
 	TargetComposeInspectFlow
 	TargetComposeAction
 	TargetComposePaste
+	TargetDiffFile
+	TargetDiffSelectToggle
 )
 
 // Target is one cell's hit target.
@@ -134,18 +136,15 @@ func (m Model) hit(x, y int) Target {
 // a list shorter than the region.
 func (m Model) hitRow(x, y int) Target {
 	line, ok := m.frame.BodyRow(y)
-	if !ok {
+	if !ok || line == 0 {
 		return Target{}
 	}
+	taskLine := line - 1
 	all := m.rows()
-	// page is what the body itself drew with, so the row it gave up to say
-	// how many are hidden is out of reach here by the same arithmetic that
-	// put it there — rather than by a second subtraction that has to be
-	// kept in step with the first.
-	if line >= page(m.frame.Body.H, len(all), m.offset) {
+	if taskLine >= page(m.frame.Body.H-1, len(all), m.offset) {
 		return Target{}
 	}
-	i := m.offset + line
+	i := m.offset + taskLine
 	if i < 0 || i >= len(all) {
 		return Target{}
 	}
@@ -156,10 +155,6 @@ func (m Model) hitRow(x, y int) Target {
 		return Target{Kind: TargetBandHeader, Band: r.band}
 	default:
 		t := Target{Kind: TargetTask, ID: r.task.ID, Band: r.band}
-		// The gutter the cursor's mark is drawn in is not part of a row,
-		// which is why the plan was made without it and why it comes off
-		// again here. A cell in the gutter is still the task's row — the
-		// reader aimed at the line — it is simply not one of its fields.
 		t.Column, _ = m.plan.ColumnAt(x - gutter)
 		return t
 	}

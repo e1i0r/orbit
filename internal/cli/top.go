@@ -129,12 +129,13 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 		// Four sources, weighed once, here: the flag beats $ORBIT_LANG,
 		// which beats the saved setting, which beats the locale the process
 		// was started in. The window is handed the answer, not the question.
-		Words:    words.For(words.Resolve(lang, os.Getenv("ORBIT_LANG"), cfg.Language())),
-		Control:  controlPort(s),
-		Start:    startPort(s),
-		MarkRead: markReadPort(s),
-		Take:     takePort(r, engines),
-		Flows:    s,
+		Words:      words.For(words.Resolve(lang, os.Getenv("ORBIT_LANG"), cfg.Language())),
+		Control:    controlPort(s),
+		Start:      startPort(s),
+		MarkRead:   markReadPort(s),
+		DeleteTask: deleteTaskPort(s),
+		Take:       takePort(r, engines),
+		Flows:      s,
 		// canResume is asked per task rather than once for the build: the
 		// engine a task ran under is the one that decides whether its
 		// session can be carried on, and that name lives on the task.

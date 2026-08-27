@@ -46,7 +46,7 @@ func (m Model) logLines() []string {
 		if e.Attempted() {
 			out = append(out, m.seam(e, w))
 		}
-		out = append(out, m.logEntry(e))
+		out = append(out, m.logEntryLines(e, w)...)
 	}
 	return out
 }
@@ -66,17 +66,35 @@ func (m Model) seam(e view.Entry, w int) string {
 	return " " + Paint(Dim).Render(head+strings.Repeat("─", rule)+tail)
 }
 
-// logEntry is one event as one line: when, which phase, what happened, and
-// the one fact worth carrying beside it.
-func (m Model) logEntry(e view.Entry) string {
+// logEntryLines formats one event, wrapping long details across multiple aligned rows.
+func (m Model) logEntryLines(e view.Entry, w int) []string {
 	word, role := m.logWord(e)
-	line := Paint(Dim).Render(pad(clock(e.At), clockCells, false)) + "  " +
+	prefix := Paint(Dim).Render(pad(clock(e.At), clockCells, false)) + "  " +
 		Paint(Dim).Render(pad(e.Phase, phaseCells, false)) + "  " +
 		Paint(role).Render(word)
-	if detail := logDetail(e); detail != "" {
-		line += Paint(Dim).Render("  " + detail)
+	detail := m.logDetail(e)
+	if detail == "" {
+		return []string{" " + prefix}
 	}
-	return " " + line
+
+	if !m.expandedDetail {
+		return []string{" " + prefix + "  " + Paint(Dim).Render(detail)}
+	}
+
+	prefixW := clockCells + 2 + phaseCells + 2 + lipgloss.Width(word) + 2
+	availW := max(20, w-prefixW-4)
+	wrapped := splitIntoLines(detail, availW)
+	if len(wrapped) <= 1 {
+		return []string{" " + prefix + "  " + Paint(Dim).Render(detail)}
+	}
+
+	var out []string
+	out = append(out, " "+prefix+"  "+Paint(Dim).Render(wrapped[0]))
+	indent := strings.Repeat(" ", prefixW+1)
+	for _, wl := range wrapped[1:] {
+		out = append(out, indent+Paint(Dim).Render(wl))
+	}
+	return out
 }
 
 // logWord is what the entry says happened, and the role it is painted in.
@@ -111,13 +129,13 @@ func (m Model) logWord(e view.Entry) (string, Role) {
 	case view.EntryGatePassed:
 		return p.T("log.gate_passed", "gate passed"), OK
 	case view.EntryGateFailed:
-		return p.T("log.gate_failed", "gate failed"), Bad
-	case view.EntryThought:
-		return p.T("log.thought", "thought"), Dim
-	case view.EntryToolCall:
-		return p.T("log.tool_call", "tool call"), Accent
+		return p.T("log.gate_failed", "gate failed"), Warn
 	case view.EntryRefused:
 		return p.T("log.refused", "refused"), Bad
+	case view.EntryToolCall:
+		return p.T("log.tool_call", "tool call"), Live
+	case view.EntryThought:
+		return p.T("log.thought", "thought"), Dim
 	case view.EntryUnreadable:
 		return p.T("log.unreadable", "this line could not be read"), Bad
 	}
@@ -128,13 +146,13 @@ func (m Model) logWord(e view.Entry) (string, Role) {
 // something the record said rather than something this package composed: the
 // engine that was asked, the reason a phase stopped, or the first line of
 // whatever was written down.
-func logDetail(e view.Entry) string {
+func (m Model) logDetail(e view.Entry) string {
 	switch e.What() {
 	case view.EntryStarted:
 		return strings.TrimSpace(e.Engine + " " + e.Model)
 	case view.EntryToolCall:
 		if e.Args != "" {
-			return formatLogTool(e.Tool, e.Args)
+			return formatLogTool(e.Tool, e.Args, m.expandedDetail)
 		}
 		return e.Tool
 	case view.EntryRefused:
@@ -145,13 +163,19 @@ func logDetail(e view.Entry) string {
 		}
 	case view.EntryFailed, view.EntryCancelled, view.EntryTimedOut:
 		if e.Cause != "" {
+			if m.expandedDetail {
+				return e.Cause
+			}
 			return firstLine(e.Cause)
 		}
+	}
+	if m.expandedDetail {
+		return e.Text
 	}
 	return firstLine(e.Text)
 }
 
-func formatLogTool(tool, args string) string {
+func formatLogTool(tool, args string, expanded bool) string {
 	head := firstLine(args)
 	if strings.HasPrefix(head, "{") {
 		if idx := strings.Index(head, `"command"`); idx >= 0 {
@@ -161,7 +185,7 @@ func formatLogTool(tool, args string) string {
 					head = val[:end]
 				}
 			}
-		} else if idx := strings.Index(head, `"file_path"`); idx >= 0 {
+		} else if idx := strings.Index(head, `"path"`); idx >= 0 {
 			if after := strings.Index(head[idx:], `:"`); after >= 0 {
 				val := head[idx+after+2:]
 				if end := strings.Index(val, `"`); end >= 0 {
@@ -170,7 +194,7 @@ func formatLogTool(tool, args string) string {
 			}
 		}
 	}
-	if len(head) > 60 {
+	if !expanded && len(head) > 60 {
 		head = head[:57] + "…"
 	}
 	if head != "" {

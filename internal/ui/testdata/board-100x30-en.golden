@@ -1,6 +1,7 @@
  [orbit]    📋 To Do 4   ⚡ Running 3   💬 Needs You 2   🏁 Done 6  📦 4 repos    🧠 claude    🌐 EN
 ────────────────────────────────────────────────────────────────────────────────────────────────────
   $0.00 spent  ·  15 tasks  ·  0 events  ·  0ms read
+  REPO      ID         TASK                                          STATUS           MOD…     TIME
   🛑 NEEDS YOU (3) ───────────────────────────────────────────────────────────────────────────────
 ▸ payments  ACME-2662  Retry the webhook on 5xx                      failed: gates              31m
   app       ACME-2701  Move the assets cron                          waiting: review             4m
@@ -13,7 +14,6 @@
   📋 TO DO (4) ─────────────────────────────────────────────────────────────────────────────  ⏎ open
 
   🏁 DONE TODAY (6) ────────────────────────────────────────────────────────────────────────  ⏎ open
-
 
 
 

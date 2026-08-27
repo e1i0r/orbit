@@ -134,6 +134,8 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.takeKey()
 	case key.Matches(k, m.keys.MarkRead):
 		return m.markReadKey()
+	case key.Matches(k, m.keys.Delete):
+		return m.askDeleteTask()
 	case key.Matches(k, m.keys.Ask):
 		return m.openNote(), nil
 	case key.Matches(k, m.keys.Start):
@@ -148,6 +150,16 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 	}
 	return m, nil
+}
+
+func (m Model) askDeleteTask() (tea.Model, tea.Cmd) {
+	r, ok := m.selected()
+	if !ok || r.head || r.blank {
+		return m, nil
+	}
+	m.confirm = confirmDeleteTask
+	m.confirmID = r.task.ID
+	return m.say(m.opts.Words.T("msg.confirm_delete_task", "delete task {id}? press y or ⏎ to confirm deletion, any other key to cancel", about("id", r.task.ID))), nil
 }
 
 // confirmKey answers the one question the window ever asks.
@@ -169,6 +181,23 @@ func (m Model) confirmKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			return m.say(m.opts.Words.T("msg.compose_prompt", "write the task to run")), nil
 		}
 		return m.say(m.opts.Words.T("msg.cli_ended", "interactive session ended")), nil
+	}
+	if c == confirmDeleteTask {
+		if msg.String() == confirmYes || msg.String() == "s" || msg.String() == "S" || key.Matches(msg, m.keys.Open) {
+			t, ok := m.task(id)
+			if ok && m.opts.DeleteTask != nil {
+				if err := m.opts.DeleteTask(t); err != nil {
+					return m.say(Paint(Bad).Render(err.Error())), nil
+				}
+			}
+			if m.opts.Reader != nil {
+				if err := m.opts.Reader.Rescan(); err != nil {
+					return m.say(Paint(Bad).Render(err.Error())), nil
+				}
+			}
+			return m.say(m.opts.Words.T("msg.task_deleted", "task {id} deleted", about("id", id))), nil
+		}
+		return m.say(m.opts.Words.T("msg.delete_cancelled", "deletion cancelled")), nil
 	}
 	if msg.String() != confirmYes {
 		return m, nil
