@@ -161,6 +161,13 @@ func (m Model) headerFields() []string {
 	p := m.opts.Words
 	var fields []string
 
+	// Upgrade available notice (prominently shown on the left of standing facts)
+	if m.upgradeAvailable != "" {
+		notice := p.T("header.upgrade_notice", "v{version} available · orbit upgrade",
+			about("version", m.upgradeAvailable))
+		fields = append(fields, Pill(" ✨ "+notice+" ", "#000000", "#F59E0B"))
+	}
+
 	// Repos chip
 	reposText := p.P("header.repos", m.board.Repos, "{n} repo", "{n} repos")
 	fields = append(fields, Paint(Dim).Render("📦 "+reposText))

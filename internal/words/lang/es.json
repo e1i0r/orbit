@@ -173,6 +173,10 @@
       "source": "EN",
       "value": "ES"
     },
+    "header.upgrade_notice": {
+      "source": "v{version} available · orbit upgrade",
+      "value": "v{version} disponible · orbit upgrade"
+    },
     "header.unread_brake": {
       "source": "brake ({n} unread)",
       "value": "freno activo ({n} sin leer)"
