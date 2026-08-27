@@ -48,3 +48,16 @@ func checkUpgradeCmd() tea.Msg {
 
 	return upgradeAvailableMsg{Version: rel.TagName}
 }
+
+// upgradeCheckInterval is the cadence at which Orbit checks for new releases.
+const upgradeCheckInterval = 1 * time.Hour
+
+// upgradeTickMsg triggers periodic release checks.
+type upgradeTickMsg time.Time
+
+// upgradeTick schedules the next periodic check.
+func upgradeTick() tea.Cmd {
+	return tea.Tick(upgradeCheckInterval, func(t time.Time) tea.Msg {
+		return upgradeTickMsg(t)
+	})
+}
