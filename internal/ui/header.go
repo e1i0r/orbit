@@ -161,12 +161,12 @@ func (m Model) headerFields() []string {
 	p := m.opts.Words
 	var fields []string
 
-	// Upgrade available notice (soft pastel styling)
+	// Upgrade available notice (pastel mint on deep emerald)
 	if m.upgradeAvailable != "" {
 		ver := "v" + strings.TrimPrefix(m.upgradeAvailable, "v")
 		notice := p.T("header.upgrade_notice", "{version} available · orbit upgrade",
 			about("version", ver))
-		fields = append(fields, Pill(" ✨ "+notice+" ", "#FDE68A", "#451A03"))
+		fields = append(fields, Pill(" ✨ "+notice+" ", "#86EFAC", "#064E3B"))
 	}
 
 	// Repos chip
