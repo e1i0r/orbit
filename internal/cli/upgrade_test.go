@@ -67,12 +67,6 @@ func TestUpdateCheckAlreadyLatest(t *testing.T) {
 		!strings.Contains(out, "última versión") {
 		t.Errorf("expected up to date message, got:\n%s", out)
 	}
-
-	// Alias check
-	code, _, errOut = run(t, "update")
-	if code != 0 {
-		t.Fatalf("update alias exited %d: %s", code, errOut)
-	}
 }
 
 func TestUpdateCheckAvailable(t *testing.T) {

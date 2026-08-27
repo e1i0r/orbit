@@ -18,9 +18,9 @@ func TestLanguageAnswersEmptyWhenNoHomeCanBeFound(t *testing.T) {
 	// Any command exercises language() through Run's own ctx.Words; the
 	// usage screen is printed in English (language() answered "") rather
 	// than the command failing outright.
-	code, out, _ := run(t)
-	if code == 0 {
-		t.Error("no command still exits non-zero even with no home to find")
+	code, out, _ := run(t, "help")
+	if code != 0 {
+		t.Errorf("help with no home exited %d, want 0", code)
 	}
 	if out == "" {
 		t.Error("usage was not printed even though language() has a fallback")
@@ -59,9 +59,9 @@ func TestLanguageAnswersEmptyWhenTheStateRootIsAFile(t *testing.T) {
 	}
 	t.Setenv("ORBIT_HOME", blocker)
 
-	code, out, _ := run(t)
-	if code == 0 {
-		t.Error("no command still exits non-zero with a state root that is a file")
+	code, out, _ := run(t, "help")
+	if code != 0 {
+		t.Errorf("help with blocked root exited %d, want 0", code)
 	}
 	if out == "" {
 		t.Error("usage was not printed even though language() has a fallback")

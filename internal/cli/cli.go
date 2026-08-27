@@ -67,8 +67,7 @@ func help(ctx Context, fs *flag.FlagSet) {
 func Run(args []string, out, errOut io.Writer) int {
 	ctx := Context{Out: out, Err: errOut, Words: printer()}
 	if len(args) == 0 {
-		fmt.Fprint(out, usage(ctx.Words))
-		return 2
+		return Run([]string{"top"}, out, errOut)
 	}
 	switch args[0] {
 	case "help", "-h", "--help":
