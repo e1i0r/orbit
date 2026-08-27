@@ -70,7 +70,9 @@ func renderMarkdown(text string, width int, raw bool) []string {
 		// 3. Blockquotes
 		if strings.HasPrefix(trimmed, "> ") {
 			q := strings.TrimPrefix(trimmed, "> ")
-			out = append(out, "    "+Paint(Dim).Render("▎ ")+Paint(Dim).Render(formatInlineMarkdown(q)))
+			for _, wl := range splitIntoLines(formatInlineMarkdown(q), max(20, width-10)) {
+				out = append(out, "    "+Paint(Dim).Render("▎ ")+Paint(Dim).Render(wl))
+			}
 			continue
 		}
 
@@ -83,19 +85,25 @@ func renderMarkdown(text string, width int, raw bool) []string {
 		// 5. Checklist items
 		if strings.HasPrefix(trimmed, "- [x] ") || strings.HasPrefix(trimmed, "* [x] ") {
 			item := trimmed[6:]
-			out = append(out, "    "+Paint(OK).Render("✔ ")+formatInlineMarkdown(item))
+			for _, wl := range splitIntoLines(formatInlineMarkdown(item), max(20, width-10)) {
+				out = append(out, "    "+Paint(OK).Render("✔ ")+wl)
+			}
 			continue
 		}
 		if strings.HasPrefix(trimmed, "- [ ] ") || strings.HasPrefix(trimmed, "* [ ] ") {
 			item := trimmed[6:]
-			out = append(out, "    "+Paint(Dim).Render("☐ ")+formatInlineMarkdown(item))
+			for _, wl := range splitIntoLines(formatInlineMarkdown(item), max(20, width-10)) {
+				out = append(out, "    "+Paint(Dim).Render("☐ ")+wl)
+			}
 			continue
 		}
 
 		// 6. Bullet lists
 		if strings.HasPrefix(trimmed, "- ") || strings.HasPrefix(trimmed, "* ") {
 			item := strings.TrimPrefix(strings.TrimPrefix(trimmed, "- "), "* ")
-			out = append(out, "    "+Paint(OK).Render("• ")+formatInlineMarkdown(item))
+			for _, wl := range splitIntoLines(formatInlineMarkdown(item), max(20, width-10)) {
+				out = append(out, "    "+Paint(OK).Render("• ")+wl)
+			}
 			continue
 		}
 
@@ -103,7 +111,9 @@ func renderMarkdown(text string, width int, raw bool) []string {
 		if len(trimmed) >= 3 && trimmed[0] >= '0' && trimmed[0] <= '9' && trimmed[1] == '.' && trimmed[2] == ' ' {
 			num := trimmed[:2]
 			item := trimmed[3:]
-			out = append(out, "    "+Paint(Live).Render(num+" ")+formatInlineMarkdown(item))
+			for _, wl := range splitIntoLines(formatInlineMarkdown(item), max(20, width-10)) {
+				out = append(out, "    "+Paint(Live).Render(num+" ")+wl)
+			}
 			continue
 		}
 
@@ -112,7 +122,9 @@ func renderMarkdown(text string, width int, raw bool) []string {
 			continue
 		}
 
-		out = append(out, "    "+formatInlineMarkdown(l))
+		for _, wl := range splitIntoLines(formatInlineMarkdown(l), max(20, width-8)) {
+			out = append(out, "    "+wl)
+		}
 	}
 	return out
 }

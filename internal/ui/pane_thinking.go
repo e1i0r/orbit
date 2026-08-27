@@ -113,7 +113,14 @@ func (m Model) thinkingLines() []string {
 
 		for _, l := range b.lines {
 			formatted, role := formatThoughtLine(l)
-			out = append(out, "      "+Paint(role).Render(formatted))
+			if !m.expandedDetail {
+				out = append(out, "      "+Paint(role).Render(formatted))
+				continue
+			}
+			wrapped := splitIntoLines(formatted, max(20, m.frame.Body.W-10))
+			for _, wl := range wrapped {
+				out = append(out, "      "+Paint(role).Render(wl))
+			}
 		}
 		out = append(out, "")
 	}

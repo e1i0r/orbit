@@ -1,16 +1,13 @@
 package ui
 
 import (
-	"fmt"
 	"strings"
-
-	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/words"
 )
 
-// formatStructuredDiff renders a rich, scalable diff view with file cards and hunk tags.
-func formatStructuredDiff(diffText string, width int, p *words.Printer) ([]string, []diffFile) {
+// formatStructuredDiff renders a rich, scalable diff view with file cards, hunk tags, LLM rationale, and collapse states.
+func formatStructuredDiff(diffText string, width int, p *words.Printer, rationales map[string]string, showRationale bool, collapsed map[string]bool, wrapLines bool) ([]string, []diffFile) {
 	text := strings.TrimSuffix(diffText, "\n")
 	if strings.TrimSpace(text) == "" {
 		return []string{" " + Paint(Dim).Render(p.T("diff.unchanged", "no changes in this task's worktree"))}, nil
@@ -27,55 +24,58 @@ func formatStructuredDiff(diffText string, width int, p *words.Printer) ([]strin
 	}
 
 	totalAdd, totalDel := diffStats(files)
-	out := make([]string, 0, len(raw)+len(files)*4)
+	out := make([]string, 0, len(raw)+len(files)*6)
 
-	// Sticky summary header
-	summary := fmt.Sprintf(" %s %s %s  %s",
-		Paint(Accent).Bold(true).Render(fmt.Sprintf("%d files changed", len(files))),
-		Paint(OK).Render(fmt.Sprintf("+%d", totalAdd)),
-		Paint(Bad).Render(fmt.Sprintf("-%d", totalDel)),
-		Paint(Dim).Render(p.T("diff.nav_help", "(] / [ next/prev file · n / N next/prev hunk · o editor)")),
-	)
+	summary := diffSummaryHeader(len(files), totalAdd, totalDel,
+		p.T("diff.nav_help", "(] / [ next/prev file · f files · space collapse · r rationale · o editor)"))
 	out = append(out, summary, "")
 
 	fileIdx := 0
-	for i, line := range raw {
+	for _, line := range raw {
 		if strings.HasPrefix(line, "diff --git ") {
 			if fileIdx < len(files) {
 				f := files[fileIdx]
-				icon := fileIcon(f.Path)
-				badge := formatFileBadge(f.Status)
-				stats := fmt.Sprintf("%s %s", Paint(OK).Render(fmt.Sprintf("+%d", f.Added)), Paint(Bad).Render(fmt.Sprintf("-%d", f.Deleted)))
-				pos := fmt.Sprintf("[%d/%d]", fileIdx+1, len(files))
+				if r, ok := rationales[f.Path]; ok && r != "" {
+					f.Rationale = r
+				}
 
-				headerTitle := fmt.Sprintf("%s %s %s  %s", icon, Paint(Accent).Bold(true).Render(f.Path), stats, badge)
-				border := strings.Repeat("─", max(2, width-lipgloss.Width(headerTitle)-lipgloss.Width(pos)-8))
-
-				cardTop := fmt.Sprintf("  ┌── %s %s %s ──┐", headerTitle, Paint(Dim).Render(border), Paint(Dim).Render(pos))
+				isCollapsed := collapsed != nil && collapsed[f.Path]
+				cardTop := diffCardTop(f, fileIdx, len(files), width, p, isCollapsed)
 				out = append(out, "", cardTop)
 				files[fileIdx].StartLine = len(out) - 1
+
+				if showRationale && f.Rationale != "" {
+					out = append(out, diffRationaleLines(f.Rationale, width, p)...)
+				}
+
+				if isCollapsed {
+					out = append(out, diffCardBottom(width))
+				} else if showRationale && f.Rationale != "" {
+					out = append(out, diffCardDivider(width))
+				}
+
 				fileIdx++
 			}
+			continue
+		}
+
+		if fileIdx > 0 && collapsed != nil && collapsed[files[fileIdx-1].Path] {
 			continue
 		}
 
 		if strings.HasPrefix(line, "index ") || strings.HasPrefix(line, "new file ") ||
 			strings.HasPrefix(line, "deleted file ") || strings.HasPrefix(line, "--- ") ||
 			strings.HasPrefix(line, "+++ ") {
-			// Skip redundant raw diff header lines inside card
 			continue
 		}
 
 		if strings.HasPrefix(line, "@@") {
-			formattedHunk := formatHunkHeader(line)
-			out = append(out, "  "+Paint(Accent).Bold(true).Render("│"+formattedHunk))
+			out = append(out, diffHunkLine(line))
 			continue
 		}
 
-		// Line rendering
 		role := diffRole(line)
-		out = append(out, "  │ "+Paint(role).Render(line))
-		_ = i
+		out = append(out, diffContentLines(line, role, width, wrapLines)...)
 	}
 
 	return out, files

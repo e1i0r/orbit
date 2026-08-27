@@ -23,6 +23,7 @@ func (m Model) openDetail(t view.Task) (Model, tea.Cmd) {
 	m.screen, m.detail, m.tab = screenDetail, t.ID, tabOverview
 	m.entries, m.logErr, m.diff, m.following = nil, nil, "", true
 	m.diffErr, m.diffKnown, m.diffNoBase = nil, false, false
+	m.expandedDetail = true
 	// The base is one of the things an open forgets: it belongs to the
 	// repository this task is in, and asking for it again is the one thing
 	// this window does per open rather than per tick.
@@ -35,6 +36,9 @@ func (m Model) openDetail(t view.Task) (Model, tea.Cmd) {
 
 // detailKey is the task view's map.
 func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
+	if m.diffFilePicker {
+		return m.handleDiffFilePickerKey(k)
+	}
 	if targetTab, ok := keyToPane(k.String()); ok {
 		return m.showTab(targetTab), nil
 	}
@@ -49,6 +53,20 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.jumpNextDiffHunk(), nil
 	case m.tab == tabDiff && k.String() == "N":
 		return m.jumpPrevDiffHunk(), nil
+	case m.tab == tabDiff && k.String() == "f":
+		return m.openDiffFilePicker(), nil
+	case m.tab == tabDiff && (k.String() == " " || k.String() == "space" || k.String() == "z"):
+		return m.toggleCollapseCurrentFile(), nil
+	case m.tab == tabDiff && k.String() == "Z":
+		return m.toggleCollapseAll(), nil
+	case m.tab == tabDiff && (k.String() == "r" || k.String() == "R"):
+		m.hideDiffRationale = !m.hideDiffRationale
+		p := m.opts.Words
+		msg := p.T("diff.rationale_shown", "💡 LLM decisions and reasoning: visible")
+		if m.hideDiffRationale {
+			msg = p.T("diff.rationale_hidden", "💡 LLM decisions and reasoning: hidden")
+		}
+		return m.syncPanes().say(msg), nil
 	case key.Matches(k, m.keys.Back):
 		m.screen = screenList
 		return m, nil
@@ -66,6 +84,14 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.closePR()
 	case k.String() == "u" || k.String() == "U":
 		return m.updatePRBranch()
+	case k.String() == "e" || k.String() == "w" || k.String() == "W":
+		m.expandedDetail = !m.expandedDetail
+		p := m.opts.Words
+		msg := p.T("detail.mode_expanded", "expanded view (all fields unwrapped)")
+		if !m.expandedDetail {
+			msg = p.T("detail.mode_compact", "compact view (single-line summary)")
+		}
+		return m.syncPanes().say(msg), nil
 	case k.String() == "v" || k.String() == "V":
 		m.rawText = !m.rawText
 		p := m.opts.Words

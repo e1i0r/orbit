@@ -185,6 +185,23 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		}
 	case TargetPaneTab:
 		return m.showTab(tab(t.Pane)), nil
+	case TargetDiffSelectToggle:
+		m.diffFilePicker = !m.diffFilePicker
+		if m.diffFilePicker {
+			raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
+			files := parseDiffFiles(raw)
+			m.diffFileCursor = fileIndexAtOffset(files, m.panes[tabDiff].YOffset())
+		}
+		return m, nil
+	case TargetDiffFile:
+		raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
+		files := parseDiffFiles(raw)
+		if t.Pane >= 0 && t.Pane < len(files) {
+			m.panes[tabDiff].SetYOffset(files[t.Pane].StartLine)
+			m.diffFilePicker = false
+			m = m.syncPanes()
+		}
+		return m, nil
 	case TargetDialogSwitch:
 		return m.flip(t.Field)
 	case TargetComposeTab, TargetComposeRepoChoice, TargetComposeFlowChoice,

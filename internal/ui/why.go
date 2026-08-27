@@ -39,6 +39,8 @@ const (
 
 	whyReadNotFinished = "why.read_not_finished"
 	whyReadAlreadyRead = "why.read_already_read"
+
+	whyDeleteRunning = "why.delete_running"
 )
 
 // engineArg names the one placeholder any of these sentences uses.
@@ -87,6 +89,8 @@ func (a Affordance) Why(p *words.Printer) string {
 		return p.T("why.read_not_finished", "marking read needs a finished task; this one is not finished")
 	case whyReadAlreadyRead:
 		return p.T("why.read_already_read", "this task is already marked read")
+	case whyDeleteRunning:
+		return p.T("why.delete_running", "cannot delete a running task; cancel it first")
 	}
 	return ""
 }

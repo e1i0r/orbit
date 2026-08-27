@@ -134,11 +134,12 @@ func (m Model) bodyRows() []string {
 		return m.emptyRows(h, w)
 	}
 	out := make([]string, 0, h)
-	shown := page(h, len(all), m.offset)
-	for i := m.offset; i < len(all) && len(out) < shown; i++ {
+	out = append(out, m.tableHeader(w))
+	shown := page(h-1, len(all), m.offset)
+	for i := m.offset; i < len(all) && len(out) < shown+1; i++ {
 		out = append(out, m.bodyRow(all[i], i, w))
 	}
-	if hidden := len(all) - m.offset - len(out); hidden > 0 {
+	if hidden := len(all) - m.offset - (len(out) - 1); hidden > 0 {
 		more := m.opts.Words.P("body.more", hidden, "… and {n} more", "… and {n} more",
 			about("n", strconv.Itoa(hidden)))
 		out = append(out, fit(strings.Repeat(" ", gutter)+Paint(Dim).Render(more), w))

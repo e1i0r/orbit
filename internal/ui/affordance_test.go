@@ -39,7 +39,7 @@ func everyCase() []affordanceCase {
 		name:     "a task written down and never started",
 		task:     view.Task{ID: "ACME-1", Band: view.ToDo},
 		settings: can,
-		offered:  []string{"enter"},
+		offered:  []string{"enter", "D"},
 	}, {
 		name:     "a run working in a phase",
 		task:     view.Task{ID: "ACME-2", Band: view.Running, Phase: "implement", Live: true, Attempt: 1, Engine: "claude"},
@@ -76,17 +76,17 @@ func everyCase() []affordanceCase {
 		name:     "a run that failed and whose process is gone",
 		task:     view.Task{ID: "ACME-6", Band: view.NeedsYou, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonFailed}},
 		settings: can,
-		offered:  []string{"enter", "t"},
+		offered:  []string{"enter", "t", "D"},
 	}, {
 		name:     "a finished task nobody has read",
 		task:     view.Task{ID: "ACME-7", Band: view.Done, Attempt: 1, Engine: "claude"},
 		settings: can,
-		offered:  []string{"enter", "t", "d"},
+		offered:  []string{"enter", "t", "d", "D"},
 	}, {
 		name:     "a finished task already read",
 		task:     view.Task{ID: "ACME-8", Band: view.Done, Attempt: 1, Engine: "claude", Read: true},
 		settings: can,
-		offered:  []string{"enter", "t"},
+		offered:  []string{"enter", "t", "D"},
 	}, {
 		name:     "a paused run on an engine that cannot resume a session",
 		task:     view.Task{ID: "ACME-9", Band: view.Running, Live: true, Attempt: 1, Engine: "codex", Reason: view.Reason{Key: view.ReasonHeld}},

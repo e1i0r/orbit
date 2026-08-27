@@ -213,18 +213,36 @@ func (m Model) flowLines() []string {
 		// 4. Outcome text
 		if ex.text != "" {
 			lines := strings.Split(strings.TrimSpace(ex.text), "\n")
-			for count, l := range lines {
-				l = strings.TrimSpace(l)
-				if l == "" {
-					continue
+			if !m.expandedDetail {
+				for _, l := range lines {
+					l = strings.TrimSpace(l)
+					if l != "" {
+						subItems = append(subItems, fmt.Sprintf("📋 %s: %s",
+							p.T("flow.tree_outcome", "outcome"),
+							l,
+						))
+						break
+					}
 				}
-				if count == 0 {
-					subItems = append(subItems, fmt.Sprintf("📋 %s: %s",
-						p.T("flow.tree_outcome", "outcome"),
-						l,
-					))
-				} else if count < 3 {
-					subItems = append(subItems, fmt.Sprintf("   %s", l))
+			} else {
+				first := true
+				for _, l := range lines {
+					l = strings.TrimSpace(l)
+					if l == "" {
+						continue
+					}
+					wrapped := splitIntoLines(l, max(20, m.frame.Body.W-16))
+					for _, wl := range wrapped {
+						if first {
+							subItems = append(subItems, fmt.Sprintf("📋 %s: %s",
+								p.T("flow.tree_outcome", "outcome"),
+								wl,
+							))
+							first = false
+						} else {
+							subItems = append(subItems, fmt.Sprintf("   %s", wl))
+						}
+					}
 				}
 			}
 		}

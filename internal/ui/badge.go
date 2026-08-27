@@ -18,3 +18,13 @@ func FormatLatency(ms int64) string {
 		return Paint(Bad).Render(text)
 	}
 }
+
+// ActiveTabBadge formats an active inspector tab badge with high-contrast theme selection styling.
+func ActiveTabBadge(tag string) string {
+	return Paint(Sel).Bold(true).Render(tag)
+}
+
+// InactiveTabBadge formats an inactive inspector tab with subtle muted contrast.
+func InactiveTabBadge(tag string) string {
+	return Paint(Dim).Render(tag)
+}

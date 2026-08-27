@@ -39,11 +39,33 @@ func (m Model) detailRows(h, w int) []string {
 	if h <= 0 || w <= 0 {
 		return nil
 	}
-	out := []string{m.detailHead(w)}
-	if h > 1 {
+	head := m.detailHeadLines(w)
+	out := append([]string{}, head...)
+	if h >= len(head)+3 {
+		out = append(out, "")
+	}
+	tabLine := len(out)
+	if h > tabLine {
 		out = append(out, m.tabStrip(w))
 	}
-	if n := paneHeight(h); n > 0 {
+	if m.tab == tabDiff && m.diffKnown && m.diffErr == nil {
+		raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
+		files := parseDiffFiles(raw)
+		if len(files) > 0 {
+			activeIdx := fileIndexAtOffset(files, m.panes[tabDiff].YOffset())
+			cursor := activeIdx
+			if m.diffFilePicker {
+				cursor = m.diffFileCursor
+			}
+			combo := renderDiffFileSelect(files, activeIdx, w, m.opts.Words, m.collapsedFiles, m.diffFilePicker, cursor)
+			if combo != "" {
+				parts := strings.Split(combo, "\n")
+				out = append(out, parts...)
+			}
+		}
+	}
+	topUsed := len(out)
+	if n := max(0, h-topUsed-1); n > 0 {
 		out = append(out, m.paneRows(n, w)...)
 	}
 	if h >= 4 {
@@ -52,69 +74,127 @@ func (m Model) detailRows(h, w int) []string {
 	return fill(out, h)
 }
 
-// detailHead names the task the view is open on: its id and title on the
+// detailHeadLines names the task the view is open on: its id and title on the
 // left, the repository and what the row said about it on the right.
-//
-// It repeats the row the reader pressed ⏎ on, and that is the point. A pane
-// with no heading is a pane a reader can leave open, look away from, and
-// come back to believing it is about a different task — which in the program
-// this replaces was how a diff got applied to the wrong branch.
-func (m Model) detailHead(w int) string {
+func (m Model) detailHeadLines(w int) []string {
 	t, ok := m.task(m.detail)
-	left := Paint(Accent).Render(m.detail)
+	left := Paint(Accent).Bold(true).Render(m.detail)
 	if !ok {
-		// The record outlives the board: a task filtered out, or finished
-		// and rolled off, is still perfectly readable one level down. Saying
-		// so is better than a heading that quietly loses its right-hand half
-		// while the pane below it goes on showing history.
-		return spread(" "+left, Paint(Dim).Render(m.opts.Words.T("detail.gone",
-			"this task is no longer on the board")), w)
-	}
-	if t.Title != "" {
-		left += "  " + Paint(Dim).Render(t.Title)
+		return []string{
+			spread(" "+left, Paint(Dim).Render(m.opts.Words.T("detail.gone",
+				"this task is no longer on the board")), w),
+		}
 	}
 	word, role := m.stateWord(t)
 	right := Paint(Dim).Render(t.Repo)
 	if word != "" {
 		right += Paint(Dim).Render(dot) + Paint(role).Render(word)
 	}
-	return spread(" "+left, right, w)
+
+	if t.Title == "" {
+		return []string{spread(" "+left, right, w)}
+	}
+
+	rightW := lipgloss.Width(right)
+	availW := max(20, w-lipgloss.Width(m.detail)-rightW-6)
+
+	if !m.expandedDetail || lipgloss.Width(t.Title) <= availW {
+		return []string{spread(" "+left+"  "+Paint(Dim).Render(t.Title), right, w)}
+	}
+
+	wrapped := splitIntoLines(t.Title, availW)
+	var out []string
+	out = append(out, spread(" "+left+"  "+Paint(Dim).Render(wrapped[0]), right, w))
+	indent := strings.Repeat(" ", lipgloss.Width(m.detail)+3)
+	for _, wl := range wrapped[1:] {
+		out = append(out, " "+indent+Paint(Dim).Render(wl))
+	}
+	return out
+}
+
+// tabTagInfo is one tab's layout representation in the strip.
+type tabTagInfo struct {
+	tab      tab
+	key      string
+	text     string
+	rendered string
+	width    int
+}
+
+func (m Model) tabTags(w int) []tabTagInfo {
+	names := m.tabNames()
+	tags := make([]tabTagInfo, len(names))
+
+	var fullWidth int
+	for i, n := range names {
+		k := paneKey(n.tab)
+		tagText := "[" + k + " " + n.text + "]"
+		var rend string
+		if n.tab == m.tab {
+			rend = Paint(Sel).Bold(true).Render(tagText)
+		} else {
+			rend = Paint(Dim).Render("[") + Paint(Accent).Bold(true).Render(k) +
+				Paint(Dim).Render(" "+n.text+"]")
+		}
+		tw := lipgloss.Width(tagText)
+		tags[i] = tabTagInfo{tab: n.tab, key: k, text: tagText, rendered: rend, width: tw}
+		fullWidth += tw + 1
+	}
+	if fullWidth+10 <= w {
+		return tags
+	}
+
+	var compactWidth int
+	for i, n := range names {
+		k := paneKey(n.tab)
+		text := n.text
+		if n.tab != m.tab {
+			text = fit(text, 4)
+		}
+		tagText := "[" + k + " " + text + "]"
+		var rend string
+		if n.tab == m.tab {
+			rend = Paint(Sel).Bold(true).Render(tagText)
+		} else {
+			rend = Paint(Dim).Render("[") + Paint(Accent).Bold(true).Render(k) +
+				Paint(Dim).Render(" "+text+"]")
+		}
+		tw := lipgloss.Width(tagText)
+		tags[i] = tabTagInfo{tab: n.tab, key: k, text: tagText, rendered: rend, width: tw}
+		compactWidth += tw + 1
+	}
+	if compactWidth+10 <= w {
+		return tags
+	}
+
+	for i, n := range names {
+		k := paneKey(n.tab)
+		tagText := "[" + k + "]"
+		if n.tab == m.tab {
+			tagText = "[" + k + " " + n.text + "]"
+		}
+		var rend string
+		if n.tab == m.tab {
+			rend = Paint(Sel).Bold(true).Render(tagText)
+		} else {
+			rend = Paint(Dim).Render("[") + Paint(Accent).Bold(true).Render(k) + Paint(Dim).Render("]")
+		}
+		tw := lipgloss.Width(tagText)
+		tags[i] = tabTagInfo{tab: n.tab, key: k, text: tagText, rendered: rend, width: tw}
+	}
+	return tags
 }
 
 // tabStrip renders the eleven tabs.
-//
-// The tab strip at narrow columns cannot fit eleven names. It shows the
-// key numbers (1-9, 0, w) with only the active pane's name spelled out, and
-// the full catalogue is accessible via the help overlay [?].
-// tabStrip renders the eleven tabs.
 func (m Model) tabStrip(w int) string {
-	p := m.opts.Words
-	var fullParts []string
-	for _, n := range m.tabNames() {
-		k := paneKey(n.tab)
-		tag := "[" + k + " " + n.text + "]"
-		if n.tab == m.tab {
-			fullParts = append(fullParts, Paint(Sel).Render(" "+tag+" "))
-		} else {
-			fullParts = append(fullParts, Paint(Dim).Render(tag))
-		}
-	}
-
+	tags := m.tabTags(w)
 	var parts []string
-	if lipgloss.Width(strings.Join(fullParts, " "))+10 <= w {
-		parts = fullParts
-	} else {
-		for _, n := range m.tabNames() {
-			k := paneKey(n.tab)
-			if n.tab == m.tab {
-				parts = append(parts, Paint(Sel).Render(" ["+k+" "+n.text+"] "))
-			} else {
-				parts = append(parts, Paint(Dim).Render("["+k+"]"))
-			}
-		}
+	for _, t := range tags {
+		parts = append(parts, t.rendered)
 	}
 
 	var right string
+	p := m.opts.Words
 	switch attempt := m.attempt(); {
 	case m.tab == tabDiff && m.diffKnown && m.diffErr == nil && m.diffNoBase:
 		right = Paint(Dim).Render(p.T("diff.no_base", "no base branch"))
@@ -132,25 +212,12 @@ type placedTab struct {
 
 // placeTabs walks the strip matching what tabStrip drew.
 func (m Model) placeTabs() []placedTab {
-	out := make([]placedTab, 0, tabCount)
+	tags := m.tabTags(m.frame.Body.W)
+	out := make([]placedTab, len(tags))
 	x := 1
-	var fullWidth int
-	for _, n := range m.tabNames() {
-		fullWidth += lipgloss.Width("["+paneKey(n.tab)+" "+n.text+"]") + 1
-	}
-	useFull := fullWidth+10 <= m.frame.Body.W
-
-	for _, n := range m.tabNames() {
-		k := paneKey(n.tab)
-		text := "[" + k + "]"
-		if n.tab == m.tab {
-			text = " [" + k + " " + n.text + "] "
-		} else if useFull {
-			text = "[" + k + " " + n.text + "]"
-		}
-		cells := lipgloss.Width(text)
-		out = append(out, placedTab{tab: n.tab, x: x, w: cells})
-		x += cells + 1
+	for i, t := range tags {
+		out[i] = placedTab{tab: t.tab, x: x, w: t.width}
+		x += t.width + 1
 	}
 	return out
 }
@@ -206,6 +273,11 @@ func (m Model) detailHints() []barHint {
 		hintFor(m.keys.Ask),
 		hintFor(m.keys.CLI),
 	}
+	wrapHint := m.opts.Words.T("detail.hint_expand", "expand")
+	if m.expandedDetail {
+		wrapHint = m.opts.Words.T("detail.hint_collapse", "collapse")
+	}
+	out = append(out, hint("e", wrapHint))
 	if m.tab == tabDiff {
 		out = append(out, hintFor(m.keys.Edit))
 	}

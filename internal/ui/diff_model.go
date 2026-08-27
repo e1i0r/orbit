@@ -13,6 +13,7 @@ type diffFile struct {
 	StartLine int
 	EndLine   int
 	Hunks     []int
+	Rationale string
 }
 
 // parseDiffFiles parses raw diff lines into structured files and hunks.

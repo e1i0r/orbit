@@ -129,12 +129,12 @@ func wantRows(t *testing.T, m Model, rows []string) {
 		t.Errorf("the header row is %q, want it to name the program", rows[0])
 	}
 	list := m.rows()
-	shown := page(m.frame.Body.H, len(list), m.offset)
+	shown := page(m.frame.Body.H-1, len(list), m.offset)
 	for i := m.offset; i < len(list) && i-m.offset < shown; i++ {
 		if list[i].head || list[i].blank {
 			continue
 		}
-		row := m.frame.Body.Y + i - m.offset
+		row := m.frame.Body.Y + 1 + i - m.offset
 		if !strings.Contains(rows[row], list[i].task.ID) {
 			t.Errorf("row %d is %q, want the first task, %s, on it", row, rows[row], list[i].task.ID)
 		}

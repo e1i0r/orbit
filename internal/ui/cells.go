@@ -59,14 +59,21 @@ func (m Model) drawRow(r row, w int, selected bool) string {
 		}
 		cell := pad(f.text, f.cells, f.right)
 		rendered := Paint(f.role).Render(cell)
-		if selected && f.role == Accent {
-			rendered = Paint(Accent).Bold(true).Render(cell)
+		if selected {
+			switch f.role {
+			case Accent:
+				rendered = Paint(Live).Bold(true).Render(cell)
+			case Dim:
+				rendered = Paint(Accent).Bold(true).Render(cell)
+			default:
+				rendered = Paint(f.role).Bold(true).Render(cell)
+			}
 		}
 		parts = append(parts, rendered)
 	}
 	mark := "  "
 	if selected {
-		mark = Paint(Accent).Bold(true).Render("▸ ")
+		mark = Paint(Live).Bold(true).Render("▸ ")
 	}
 	line := mark + strings.Join(parts, strings.Repeat(" ", columnGap))
 	return fit(line, w)

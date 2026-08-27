@@ -27,6 +27,8 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/view"
 )
 
 // diffLines is the diff tab's content, ready for the pane.
@@ -40,24 +42,30 @@ import (
 // it is said rather than folded into the diff text.
 func (m Model) diffLines() []string {
 	p := m.opts.Words
+	t, isTask := m.task(m.detail)
+	if isTask && view.BandOf(t) == view.ToDo {
+		return []string{" " + Paint(Dim).Render(p.T("diff.empty_todo", "no changes yet — task is in the todo queue (press [n] to start)"))}
+	}
 	if !m.diffKnown {
 		return []string{" " + Paint(Dim).Render(p.T("diff.pending", "reading this task's worktree…"))}
 	}
 	if m.diffErr != nil {
-		// The one failure with words of this window's own is the bound
-		// being hit, and those words are said here, in the reader's
-		// language: errGitTimedOut is carried as a sentinel to be
-		// recognised rather than as a sentence to be passed on, because an
-		// errors.New in gitdiff.go cannot be translated and the pseudolocale
-		// golden cannot see it. Every other failure is git's own output,
-		// which is not this program's to translate, and is shown as it came.
-		said := m.diffErr.Error()
+		errStr := m.diffErr.Error()
+		if strings.Contains(errStr, "cannot change to") || strings.Contains(errStr, "no such file or directory") {
+			return []string{" " + Paint(Dim).Render(p.T("diff.empty_no_worktree", "no working tree modifications recorded"))}
+		}
+		said := errStr
 		if errors.Is(m.diffErr, errGitTimedOut) {
 			said = p.T("diff.timed_out", "git did not answer in time")
 		}
 		return []string{" " + Paint(Bad).Render(said)}
 	}
-	lines, _ := formatStructuredDiff(m.diff, m.width, p)
+	if strings.TrimSpace(m.diff) == "" {
+		return []string{" " + Paint(Dim).Render(p.T("diff.unchanged", "no changes in this task's worktree"))}
+	}
+	files := parseDiffFiles(strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n"))
+	rationales := extractFileRationales(m.entries, files, p)
+	lines, _ := formatStructuredDiff(m.diff, m.width, p, rationales, !m.hideDiffRationale, m.collapsedFiles, m.expandedDetail)
 	return lines
 }
 

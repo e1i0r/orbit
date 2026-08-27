@@ -62,7 +62,13 @@ func (m Model) overviewLines() []string {
 		"  "+Paint(Accent).Bold(true).Render(t.ID)+"  "+statusBadge,
 	)
 	if t.Title != "" {
-		out = append(out, "  "+Paint(Accent).Render(t.Title))
+		if m.expandedDetail {
+			for _, tl := range splitIntoLines(t.Title, max(20, m.frame.Body.W-6)) {
+				out = append(out, "  "+Paint(Accent).Render(tl))
+			}
+		} else {
+			out = append(out, "  "+Paint(Accent).Render(t.Title))
+		}
 	}
 	out = append(out, "")
 
@@ -192,16 +198,24 @@ func (m Model) overviewLines() []string {
 			// Clean excerpt of text output
 			if ph.Text != "" {
 				textLines := strings.Split(strings.TrimSpace(ph.Text), "\n")
-				count := 0
-				for _, tl := range textLines {
-					tl = strings.TrimSpace(tl)
-					if tl == "" {
-						continue
+				if !m.expandedDetail {
+					for _, tl := range textLines {
+						tl = strings.TrimSpace(tl)
+						if tl != "" {
+							out = append(out, "      "+Paint(Dim).Render("• ")+tl)
+							break
+						}
 					}
-					out = append(out, "      "+Paint(Dim).Render("• ")+tl)
-					count++
-					if count >= 3 {
-						break
+				} else {
+					for _, tl := range textLines {
+						tl = strings.TrimSpace(tl)
+						if tl == "" {
+							continue
+						}
+						wrapped := splitIntoLines(tl, max(20, m.frame.Body.W-10))
+						for _, wl := range wrapped {
+							out = append(out, "      "+Paint(Dim).Render("• ")+wl)
+						}
 					}
 				}
 			}

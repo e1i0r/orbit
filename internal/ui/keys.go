@@ -26,7 +26,7 @@ type Keys struct {
 	Open, Back, NextTab, PrevTab, Sideways                                     key.Binding
 	Start, Run, ChangeFlow, Menu, Compose                                      key.Binding
 	Pause, Resume, Cancel                                                      key.Binding
-	Take, Hand, Ask, MarkRead, Edit                                            key.Binding
+	Take, Hand, Ask, MarkRead, Delete, Edit                                    key.Binding
 	Filter, Commands, CLI, Repos, EngineKnobs, Autopilot, Language, Help, Quit key.Binding
 }
 
@@ -93,6 +93,7 @@ func NewKeys(p *words.Printer) Keys {
 		Hand:     binding("h", p.T("key.hand", "hand it back"), "h"),
 		Ask:      binding("a", p.T("key.ask", "ask"), "a"),
 		MarkRead: binding("d", p.T("key.read", "mark read"), "d"),
+		Delete:   binding("D", p.T("key.delete_task", "delete task"), "D", "delete"),
 		Edit:     binding("o", p.T("key.edit", "open in $EDITOR"), "o"),
 
 		Filter: binding("/", p.T("key.filter", "filter"), "/"),
