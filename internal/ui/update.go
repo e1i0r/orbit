@@ -86,6 +86,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.say(msg.Err.Error()), nil
 		}
 		return m, nil
+	case upgradeAvailableMsg:
+		m.upgradeAvailable = msg.Version
+		return m, nil
 	case diffMsg:
 		// A diff that arrives for a task the reader has since left is
 		// stale, and dropping it is the whole guard: openKey has already

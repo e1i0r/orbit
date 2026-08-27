@@ -120,17 +120,18 @@ type Model struct {
 	pendingID string
 	pendTries int
 
-	note           noteState
-	settings       settingsState
-	flows          flowsState
-	repolist       repolistState
-	repoFilter     string
-	queueFilter    *view.Band
-	engines        enginesState
-	knobs          Knobs
-	help           helpState
-	rawText        bool
-	expandedDetail bool
+	note             noteState
+	settings         settingsState
+	flows            flowsState
+	repolist         repolistState
+	repoFilter       string
+	queueFilter      *view.Band
+	engines          enginesState
+	knobs            Knobs
+	help             helpState
+	rawText          bool
+	expandedDetail   bool
+	upgradeAvailable string
 
 	// start is the dialog that decides what a run will be, and taken is
 	// which tasks this window has handed the terminal to an engine for.
@@ -245,5 +246,5 @@ func New(o Options) Model {
 // from wherever they are called, which inside a render is a blocking read
 // in the middle of a frame.
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(tea.RequestBackgroundColor, refresh(m.opts.Reader), tick(), rescanTick(), elapsedTick())
+	return tea.Batch(tea.RequestBackgroundColor, refresh(m.opts.Reader), tick(), rescanTick(), elapsedTick(), checkUpgradeCmd)
 }
