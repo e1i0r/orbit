@@ -53,6 +53,10 @@ func (sn Session) Call(name string, args map[string]any) CallToolResult {
 		return sn.addRepo(args)
 	case "orbit_forget_repo":
 		return sn.forgetRepo(args)
+	case "orbit_supervisor_say":
+		return sn.supervisorSay(args)
+	case "orbit_supervisor_history":
+		return sn.supervisorHistory(args)
 	default:
 		return refuse(fmt.Errorf("no tool is called %q; the tools are %s", name, strings.Join(toolNames(), ", ")))
 	}

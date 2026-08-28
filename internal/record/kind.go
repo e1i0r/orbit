@@ -38,4 +38,9 @@ const (
 
 	GatePassed = "gate.passed" // a phase gate verification check passed
 	GateFailed = "gate.failed" // a phase gate verification check failed
+
+	SupervisorMessage    = "supervisor.message"    // a dialogue turn in the global supervisor thread
+	SupervisorBriefing   = "supervisor.briefing"   // directive / briefing from the operator
+	SupervisorDebriefing = "supervisor.debriefing" // summary / status report from the supervisor
+	SupervisorAction     = "supervisor.action"     // autonomous action taken by the supervisor
 )

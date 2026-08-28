@@ -1219,6 +1219,10 @@
       "source": "check for updates and upgrade orbit",
       "value": "buscar actualizaciones y actualizar orbit"
     },
+    "cmd.supervisor": {
+      "source": "read or write to the persistent supervisor conversation thread",
+      "value": "leer o escribir en el hilo persistente de conversación del supervisor"
+    },
     "cmd.mcp": {
       "source": "run the model context protocol server, or register it in the clients that speak it",
       "value": "ejecutar el servidor del protocolo de contexto de modelo, o registrarlo en los clientes que lo hablan"

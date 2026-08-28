@@ -223,3 +223,6 @@ func (s *Store) LogDir() string { return filepath.Join(s.root, "logs") }
 
 // LogPath is the file path for Orbit's internal diagnostic log.
 func (s *Store) LogPath() string { return filepath.Join(s.root, "logs", "orbit.log") }
+
+// SupervisorLogPath is the global conversation thread and persistent memory of the supervisor.
+func (s *Store) SupervisorLogPath() string { return filepath.Join(s.root, "supervisor.jsonl") }
