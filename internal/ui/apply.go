@@ -22,13 +22,27 @@ import (
 	"github.com/e1i0r/orbit/internal/words"
 )
 
-// applyBoard takes the next board, or explains why there is not one.
+// applyBoard takes the next board and, with it, whatever the new board asks
+// the window to do — including turn the spinner.
+//
+// The frame clock is started here rather than only by a gesture because a
+// run started from a terminal is not a gesture: the first this window hears
+// of it is a board arriving with a live task on it, and if that board does
+// not ask for a frame nothing on screen ever moves.
+func (m Model) applyBoard(msg boardMsg) (tea.Model, tea.Cmd) {
+	next, cmd := m.takeBoard(msg)
+	next, frame := next.nextFrame()
+	return next, tea.Batch(cmd, frame)
+}
+
+// takeBoard is applyBoard's decision about the board itself, kept apart from
+// the animation so that neither has to be read to change the other.
 //
 // A boardMsg with a zero ReadAt is a read that failed or an enumeration that
 // found nothing to say. The board already on screen is kept in both cases: a
 // window that blanks because one stat failed has thrown away the answer it
 // spent the last half-second holding.
-func (m Model) applyBoard(msg boardMsg) (tea.Model, tea.Cmd) {
+func (m Model) takeBoard(msg boardMsg) (Model, tea.Cmd) {
 	if msg.Board.ReadAt.IsZero() {
 		if len(msg.Board.Errs) > 0 {
 			return m.say(msg.Board.Errs[0].Error()), nil
@@ -121,7 +135,8 @@ func (m Model) autoSuperviseNeedsYou() (Model, tea.Cmd) {
 		ans, err := m.opts.AutoSupervise(eng, needing)
 		return supervisorReplyMsg{Text: ans, Err: err}
 	}
-	return m.say(m.opts.Words.T("supervisor.acting", "supervisor is autonomously inspecting {n} task(s)...", about("n", strconv.Itoa(len(needing))))), tea.Batch(cmd, spinnerTick())
+	m, frame := m.say(m.opts.Words.T("supervisor.acting", "supervisor is autonomously inspecting {n} task(s)...", about("n", strconv.Itoa(len(needing))))).nextFrame()
+	return m, tea.Batch(cmd, frame)
 }
 
 // resize takes the new geometry, or refuses it with both numbers.

@@ -7,8 +7,6 @@ import (
 	"github.com/e1i0r/orbit/internal/view"
 )
 
-var spinnerFrames = []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
-
 // supervisorRows draws the whole screen: the thread in one box and what you
 // are about to say in another, both of one width.
 //
@@ -203,9 +201,8 @@ func (m Model) supervisorThinking(cw int) []string {
 		eng = "claude"
 	}
 	rail := Paint(Live).Render("▎")
-	spin := spinnerFrames[int(m.now.UnixMilli()/120)%len(spinnerFrames)]
 	head := railed(rail, Paint(Dim).Render(m.now.Format("15:04:05"))+"  "+Paint(Live).Bold(true).Render(eng)+" "+Paint(Dim).Render("[supervisor]"))
-	body := railed(rail, Paint(Live).Render(spin+" ")+Paint(Dim).Render(m.opts.Words.T("supervisor.thinking", "supervisor is thinking...")))
+	body := railed(rail, m.spinner(Live)+Paint(Dim).Render(m.opts.Words.T("supervisor.thinking", "supervisor is thinking...")))
 	return []string{fit(head, cw), fit(body, cw), ""}
 }
 

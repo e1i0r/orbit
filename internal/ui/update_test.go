@@ -51,9 +51,12 @@ func TestTheTransitionTable(t *testing.T) {
 			return New(Options{Words: words.For("en"), Settings: &settings{}, Width: 100, Height: 30})
 		},
 		msg: boardMsg{Board: fixtureBoard(fixtureTasks(), 4)},
-		want: func(t *testing.T, m Model, cmd tea.Cmd) {
-			if m.notified || cmd != nil {
-				t.Errorf("notified=%v cmd=%v, want silence on the first refresh", m.notified, cmd != nil)
+		want: func(t *testing.T, m Model, _ tea.Cmd) {
+			// There is a command — the frame clock, started by the live run
+			// on this board — but no bell. notified is what the bell goes
+			// out with, from one branch, so it is what silence is read off.
+			if m.notified {
+				t.Errorf("notified=%v, want silence on the first refresh", m.notified)
 			}
 		},
 	}, {

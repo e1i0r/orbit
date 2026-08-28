@@ -1,8 +1,8 @@
 package ui
 
 // The status line: five fields across the terminal — spent, tasks, events,
-// read time, quota remaining — giving up fields from the right as the terminal
-// narrows, and disappearing entirely on a short terminal.
+// the heartbeat, quota remaining — giving up fields from the right as the
+// terminal narrows, and disappearing entirely on a short terminal.
 
 import (
 	"fmt"
@@ -46,14 +46,23 @@ func (m Model) statusLine(w int) string {
 	eventsStr := p.T("status.events", "{events} events", about("events", strconv.Itoa(m.board.Health.EventsRead)))
 	segments = append(segments, statusSegment{text: eventsStr, role: Dim})
 
-	// 4. Read time (ms de lectura)
-	ms := m.board.Health.Duration.Milliseconds()
-	readRole := Dim
-	if ms > 100 {
-		readRole = Bad
+	// 4. Heartbeat (latido)
+	//
+	// This was "{ms}ms read": how long the last board read took, painted red
+	// past 100ms. Three things were wrong with it. There is no screen that
+	// puts the number in context, so it was a measurement with nothing to
+	// measure against; a rescan that takes 182ms because the board is large
+	// is not a fault, so the red said something had broken when nothing had;
+	// and the number changed on every refresh, which made the one part of
+	// the status line that moves the one part that means least.
+	//
+	// What that corner is for is whether anything is happening, and that is
+	// one glyph. It is absent rather than frozen when nothing is running,
+	// because the frame clock stops then and a spinner standing still is a
+	// worse lie than no spinner at all.
+	if m.moving() {
+		segments = append(segments, statusSegment{text: m.spin(), role: Dim})
 	}
-	readStr := p.T("status.read_time", "{ms}ms read", about("ms", strconv.FormatInt(ms, 10)))
-	segments = append(segments, statusSegment{text: readStr, role: readRole})
 
 	// 5. Quota remaining (quota restante)
 	if m.opts.Quota != nil {
