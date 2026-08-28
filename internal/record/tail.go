@@ -24,6 +24,14 @@ import (
 // at wherever that line began and drops any event it would otherwise have
 // produced for it. The next call rereads it once the newline lands.
 //
+// One size, taken once, decides all three things: which bytes are read, what
+// the last byte is checked to be, and what offset comes back. It used to be
+// two — the size that was returned was measured before the last byte was
+// looked at, and the scan then ran to whatever the end had become — so a log
+// appended to in between returned an offset behind what had already been
+// handed out, and the next call read those events a second time. A poller
+// that folds what it is given saw one attempt twice.
+//
 // offset == 0 on a file that does not exist yet returns (nil, 0, nil),
 // matching Read: nothing has happened yet, which is not an error. An offset
 // past the end of a file that has shrunk means the log was replaced under
@@ -52,7 +60,7 @@ func ReadFrom(path string, offset int64) ([]Event, int64, error) {
 		return nil, offset, nil
 	}
 
-	whole, err := endsWithNewline(f)
+	whole, err := endsWithNewline(f, size)
 	if err != nil {
 		return nil, 0, fmt.Errorf("read %q: %w", path, err)
 	}
@@ -60,27 +68,22 @@ func ReadFrom(path string, offset int64) ([]Event, int64, error) {
 		return nil, 0, fmt.Errorf("seek %q: %w", path, err)
 	}
 
-	events, pending, lastLen, lastWasEvent, err := scanEvents(f)
+	s, err := scanEvents(io.LimitReader(f, size-offset), offset)
 	if err != nil {
 		return nil, 0, fmt.Errorf("read %q: %w", path, err)
 	}
 
 	if whole {
-		if pending > 0 {
-			events = append(events, unreadable(pending))
+		if s.hasPending {
+			s.events = append(s.events, unreadable(s.pending))
 		}
-		return events, size, nil
+		return s.events, size, nil
 	}
 	// The final line has no newline yet. Whatever it produced — a parsed
 	// event, or nothing because it was left pending — is withheld until a
 	// later call sees it finished, and the offset stays at where it began.
-	//
-	// size - int64(lastLen) assumes the line is terminated by a bare '\n',
-	// which is the only terminator Append ever writes to this log; a '\r\n'
-	// writer would need this arithmetic adjusted, because bufio.ScanLines
-	// strips a trailing '\r' from the token before lastLen ever sees it.
-	if lastWasEvent {
-		events = events[:len(events)-1]
+	if s.lastWasEvent {
+		s.events = s.events[:len(s.events)-1]
 	}
-	return events, size - int64(lastLen), nil
+	return s.events, s.lastStart, nil
 }
