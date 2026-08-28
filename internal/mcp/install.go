@@ -112,7 +112,9 @@ func clientConfigs(home string) []clientConfig {
 	}
 	targets = append(targets,
 		clientConfig{name: "Claude Code", path: filepath.Join(home, ".claude.json")},
-		clientConfig{name: "Cursor", path: filepath.Join(home, ".cursor", "mcp.json")},
+		clientConfig{name: "OpenCode", path: filepath.Join(home, ".config", "opencode", "opencode.json")},
+		clientConfig{name: "Codex", path: filepath.Join(home, ".codex", "config.json")},
+		clientConfig{name: "Gemini", path: filepath.Join(home, ".gemini", "config.json")},
 	)
 	return targets
 }

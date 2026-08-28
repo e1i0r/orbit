@@ -33,6 +33,8 @@ func (sn Session) Call(name string, args map[string]any) CallToolResult {
 		return sn.addNote(args)
 	case "orbit_pause_task":
 		return sn.control(args, "pause", "paused")
+	case "orbit_direct_task":
+		return sn.directTask(args)
 	case "orbit_cancel_task":
 		return sn.cancelTask(args)
 	case "orbit_list_flows":
@@ -51,6 +53,10 @@ func (sn Session) Call(name string, args map[string]any) CallToolResult {
 		return sn.addRepo(args)
 	case "orbit_forget_repo":
 		return sn.forgetRepo(args)
+	case "orbit_supervisor_say":
+		return sn.supervisorSay(args)
+	case "orbit_supervisor_history":
+		return sn.supervisorHistory(args)
 	default:
 		return refuse(fmt.Errorf("no tool is called %q; the tools are %s", name, strings.Join(toolNames(), ", ")))
 	}

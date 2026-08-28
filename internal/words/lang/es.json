@@ -1207,6 +1207,10 @@
       "source": "record a note for a task",
       "value": "dejar una nota para una tarea"
     },
+    "cmd.direct": {
+      "source": "interrupt or redirect a task and record the directive",
+      "value": "interrumpir o redirigir una tarea y registrar la directiva"
+    },
     "cmd.version": {
       "source": "print the version orbit was built at",
       "value": "mostrar la versión con la que se compiló orbit"
@@ -1214,6 +1218,10 @@
     "cmd.upgrade": {
       "source": "check for updates and upgrade orbit",
       "value": "buscar actualizaciones y actualizar orbit"
+    },
+    "cmd.supervisor": {
+      "source": "read or write to the persistent supervisor conversation thread",
+      "value": "leer o escribir en el hilo persistente de conversación del supervisor"
     },
     "cmd.mcp": {
       "source": "run the model context protocol server, or register it in the clients that speak it",
@@ -2188,6 +2196,46 @@
     "cmd.mcp.inside": {
       "source": "it speaks over this terminal, which the window is already using",
       "value": "habla por esta terminal, que la ventana ya está usando"
+    },
+    "key.supervisor": {
+      "source": "supervisor",
+      "value": "supervisor"
+    },
+    "supervisor.title": {
+      "source": "Supervisor & Cockpit Memory",
+      "value": "Supervisor y Memoria del Cockpit"
+    },
+    "supervisor.input_prompt": {
+      "source": "Say to Supervisor / Directive:",
+      "value": "Hablar al Supervisor / Directiva:"
+    },
+    "supervisor.placeholder": {
+      "source": "type a briefing, question or standing directive...",
+      "value": "escribe un briefing, consulta o directiva permanente..."
+    },
+    "supervisor.ways_out": {
+      "source": "[Shift+↵] newline · [↵] send · [esc] back · [↑↓] scroll · [^V] paste",
+      "value": "[Shift+↵] nueva línea · [↵] enviar · [esc] volver · [↑↓] desplazar · [^V] pegar"
+    },
+    "supervisor.empty": {
+      "source": "No messages in supervisor thread yet. Type a briefing or instruction below.",
+      "value": "Aún no hay mensajes en el hilo del supervisor. Escribe un briefing o instrucción abajo."
+    },
+    "supervisor.thinking": {
+      "source": "supervisor is thinking...",
+      "value": "el supervisor está pensando..."
+    },
+    "supervisor.replied": {
+      "source": "supervisor replied in thread",
+      "value": "el supervisor respondió en el hilo"
+    },
+    "supervisor.error": {
+      "source": "supervisor error: {err}",
+      "value": "error del supervisor: {err}"
+    },
+    "supervisor.acting": {
+      "source": "supervisor is autonomously inspecting {n} task(s)...",
+      "value": "el supervisor está inspeccionando autónomamente {n} tarea(s)..."
     }
   }
 }

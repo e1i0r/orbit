@@ -12,6 +12,7 @@ package ui
 
 import (
 	"errors"
+	"strconv"
 
 	tea "charm.land/bubbletea/v2"
 
@@ -56,10 +57,16 @@ func (m Model) applyBoard(msg boardMsg) (tea.Model, tea.Cmd) {
 		if nextM, cmd := m.autoStartNext(); cmd != nil {
 			return nextM, cmd
 		}
+		if nextM, cmd := m.autoSuperviseNeedsYou(); cmd != nil {
+			return nextM, cmd
+		}
 		return m, nil
 	}
 	m.notified = true
 	m = m.say(m.opts.Words.P("msg.entered", len(msg.Changed.Entered), "{n} task needs you", "{n} tasks need you"))
+	if nextM, cmd := m.autoSuperviseNeedsYou(); cmd != nil {
+		return nextM, tea.Batch(tea.Raw("\a"), cmd)
+	}
 	if nextM, cmd := m.autoStartNext(); cmd != nil {
 		return nextM, tea.Batch(tea.Raw("\a"), cmd)
 	}
@@ -86,6 +93,35 @@ func (m Model) autoStartNext() (Model, tea.Cmd) {
 		}
 	}
 	return m, nil
+}
+
+// autoSuperviseNeedsYou inspects and remediates tasks needing attention under autopilot.
+func (m Model) autoSuperviseNeedsYou() (Model, tea.Cmd) {
+	if !m.autopilotOn() || m.opts.AutoSupervise == nil || m.supervisorBusy {
+		return m, nil
+	}
+	var needing []string
+	for _, t := range m.board.Tasks {
+		if view.BandOf(t) == view.NeedsYou && !m.taken[t.ID+"-sup"] {
+			needing = append(needing, t.ID)
+		}
+	}
+	if len(needing) == 0 {
+		return m, nil
+	}
+	for _, id := range needing {
+		m = m.took(id+"-sup", true)
+	}
+	m.supervisorBusy = true
+	eng := m.knobs.Engine
+	if eng == "" {
+		eng = "claude"
+	}
+	cmd := func() tea.Msg {
+		ans, err := m.opts.AutoSupervise(eng, needing)
+		return supervisorReplyMsg{Text: ans, Err: err}
+	}
+	return m.say(m.opts.Words.T("supervisor.acting", "supervisor is autonomously inspecting {n} task(s)...", about("n", strconv.Itoa(len(needing))))), tea.Batch(cmd, spinnerTick())
 }
 
 // resize takes the new geometry, or refuses it with both numbers.

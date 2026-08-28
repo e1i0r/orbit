@@ -13,7 +13,7 @@ import "strings"
 // from the phase of the flow, so both are gone rather than accepted and
 // dropped.
 func Tools() []Tool {
-	return append(taskTools(), workspaceTools()...)
+	return append(append(taskTools(), workspaceTools()...), supervisorTools()...)
 }
 
 // taskTools is everything a supervisor does to a task: read the board, write
@@ -80,12 +80,46 @@ func taskTools() []Tool {
 			}, "task_id"),
 		},
 		{
+			Name:        "orbit_direct_task",
+			Description: "Direct a task with an instruction: stops any active process while preserving worktree and session memory, and records the directive. If restart is true, immediately starts a new attempt with the directive.",
+			InputSchema: object(map[string]Property{
+				"task_id": {Type: "string", Description: "The task's id."},
+				"repo":    {Type: "string", Description: "Which repository, when two of them hold a task under this id."},
+				"message": {Type: "string", Description: "The directive or feedback for the task."},
+				"restart": {Type: "boolean", Description: "Whether to immediately start the task again with the directive."},
+			}, "task_id", "message"),
+		},
+		{
 			Name:        "orbit_cancel_task",
 			Description: "Stop a run where it stands. The cancellation is written into the task's record.",
 			InputSchema: object(map[string]Property{
 				"task_id": {Type: "string", Description: "The task's id."},
 				"repo":    {Type: "string", Description: "Which repository, when two of them hold a task under this id."},
 			}, "task_id"),
+		},
+	}
+}
+
+// supervisorTools is what a supervisor uses to read and write to the global cockpit thread.
+func supervisorTools() []Tool {
+	return []Tool{
+		{
+			Name:        "orbit_supervisor_say",
+			Description: "Post a message or directive to the cockpit's persistent supervisor thread. Use this for briefings, debriefings, status summaries, and general guidance that applies across all tasks.",
+			InputSchema: object(map[string]Property{
+				"message": {Type: "string", Description: "What to say in the supervisor thread."},
+				"by":      {Type: "string", Description: "Who is speaking (e.g. 'supervisor', 'claude', 'codex', 'opencode', 'gemini'). Defaults to 'supervisor'."},
+				"channel": {Type: "string", Description: "Where this was said ('mcp', 'cli', 'autopilot'). Defaults to 'mcp'."},
+				"task_id": {Type: "string", Description: "Optional task id if referring to a specific task."},
+				"repo":    {Type: "string", Description: "Optional repository name if referring to a specific repository."},
+			}, "message"),
+		},
+		{
+			Name:        "orbit_supervisor_history",
+			Description: "Read the conversation history and briefing thread of the supervisor, in chronological order.",
+			InputSchema: object(map[string]Property{
+				"limit": {Type: "integer", Description: "Maximum number of most recent messages to return. Defaults to all."},
+			}),
 		},
 	}
 }

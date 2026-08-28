@@ -78,6 +78,8 @@ type Reader interface {
 	Log(repoPath, id string) ([]view.Entry, error)
 	// Worktree is where that task's throwaway checkout lives.
 	Worktree(repoPath, id string) (string, error)
+	// SupervisorLog is the cockpit's persistent supervisor conversation thread.
+	SupervisorLog() ([]view.SupervisorLine, error)
 }
 
 // Options is everything the window is handed. Every field is a value or a
@@ -113,6 +115,15 @@ type Options struct {
 	// MarkRead is what moves that same brake back: the gesture behind d,
 	// and the only thing on this screen that decrements unread 3/5.
 	MarkRead func(t view.Task) error
+
+	// RecordSupervisor records a message into the global supervisor conversation thread.
+	RecordSupervisor func(by, channel, message string) error
+
+	// AskSupervisor asks the active engine to process and reply to the supervisor thread.
+	AskSupervisor func(engineName, prompt string) (string, error)
+
+	// AutoSupervise triggers the supervisor autonomously for tasks needing attention.
+	AutoSupervise func(engineName string, taskIDs []string) (string, error)
 
 	// DeleteTask permanently deletes a task record and its worktree from the store.
 	DeleteTask func(t view.Task) error

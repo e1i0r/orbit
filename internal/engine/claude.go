@@ -120,13 +120,13 @@ func (Claude) Run(ctx context.Context, req Request) (Result, error) {
 	if runErr != nil {
 		if parseErr != nil {
 			// The run died before claude summarised it, so there is no
-			// result object and the raw stream is the only evidence of what
-			// happened before it stopped. That evidence matters most on the
-			// cancellation path, where it is the only account of a run
-			// somebody interrupted, so it is kept — as JSON lines, which is
-			// worse to read than the prose this used to hand back, and far
-			// better than the nothing the alternative records.
-			out = Result{Output: strings.TrimSpace(stdout.String())}
+			// terminal result object and the raw stream is the only evidence of what
+			// happened before it stopped. We keep whatever the stream parsed
+			// (such as session id and thoughts) and fall back to raw output.
+			if streamResult.Output == "" {
+				streamResult.Output = strings.TrimSpace(stdout.String())
+			}
+			out = streamResult
 		}
 		out.Output = noteDropped(out.Output, stdout.dropped)
 		if msg := strings.TrimSpace(stderr.String()); msg != "" {

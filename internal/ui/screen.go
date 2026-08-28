@@ -65,6 +65,8 @@ func (m Model) View() tea.View {
 			lines = append(lines, m.enginesRows(m.frame.Body.H, m.frame.Body.W)...)
 		case screenHelp:
 			lines = append(lines, m.helpRows(m.frame.Body.H, m.frame.Body.W)...)
+		case screenSupervisor:
+			lines = append(lines, m.supervisorRows(m.frame.Body.H, m.frame.Body.W)...)
 		default:
 			lines = append(lines, m.bodyRows()...)
 		}

@@ -16,6 +16,7 @@ package cli
 // pipe, a log and a CI job get instead of a screenful of escape codes.
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -27,6 +28,7 @@ import (
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/quota"
 	"github.com/e1i0r/orbit/internal/store"
+	"github.com/e1i0r/orbit/internal/task"
 	"github.com/e1i0r/orbit/internal/ui"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -129,10 +131,27 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 		// Four sources, weighed once, here: the flag beats $ORBIT_LANG,
 		// which beats the saved setting, which beats the locale the process
 		// was started in. The window is handed the answer, not the question.
-		Words:      words.For(words.Resolve(lang, os.Getenv("ORBIT_LANG"), cfg.Language())),
-		Control:    controlPort(s),
-		Start:      startPort(s),
-		MarkRead:   markReadPort(s),
+		Words:    words.For(words.Resolve(lang, os.Getenv("ORBIT_LANG"), cfg.Language())),
+		Control:  controlPort(s),
+		Start:    startPort(s),
+		MarkRead: markReadPort(s),
+		RecordSupervisor: func(by, channel, message string) error {
+			return task.RecordSupervisor(s, "", by, channel, "", "", message)
+		},
+		AskSupervisor: func(engineName, prompt string) (string, error) {
+			eng, ok := engines[engineName]
+			if !ok {
+				eng = engines["claude"]
+			}
+			return task.Supervise(context.Background(), s, eng, prompt)
+		},
+		AutoSupervise: func(engineName string, taskIDs []string) (string, error) {
+			eng, ok := engines[engineName]
+			if !ok {
+				eng = engines["claude"]
+			}
+			return task.AutoSupervise(context.Background(), s, eng, taskIDs)
+		},
 		DeleteTask: deleteTaskPort(s),
 		Take:       takePort(r, engines),
 		Open:       openPort(s, r),

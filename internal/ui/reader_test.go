@@ -57,6 +57,10 @@ func (f *fakeReader) Worktree(_, _ string) (string, error) {
 	return f.worktree, nil
 }
 
+func (f *fakeReader) SupervisorLog() ([]view.SupervisorLine, error) {
+	return nil, nil
+}
+
 // fixtureEntries is the record of ACME-2662, which fixtureTasks bands as
 // needing you after two attempts. It is written out rather than folded from
 // a log on disk for the same reason the board fixture is: what the pane

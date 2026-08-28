@@ -146,7 +146,21 @@ type (
 	// map, and a key map rebuilt outside the event loop is a key map the
 	// frame on screen was not drawn from.
 	languageMsg struct{ Lang string }
+
+	// supervisorReplyMsg is the response the supervisor engine produced.
+	supervisorReplyMsg struct {
+		Text string
+		Err  error
+	}
+
+	// spinnerTickMsg powers the live animated thinking indicator at 100ms.
+	spinnerTickMsg time.Time
 )
+
+// spinnerTick asks for the next animation frame at 100ms.
+func spinnerTick() tea.Cmd {
+	return tea.Tick(100*time.Millisecond, func(t time.Time) tea.Msg { return spinnerTickMsg(t) })
+}
 
 // tick asks for the next board poll.
 func tick() tea.Cmd {
@@ -256,5 +270,16 @@ func takeSession(port func(view.Task) (*exec.Cmd, error), t view.Task) tea.Cmd {
 		}
 		cmd, err := port(t)
 		return sessionMsg{ID: t.ID, Cmd: cmd, Err: err}
+	}
+}
+
+// askSupervisorCmd queries the supervisor model in the background.
+func askSupervisorCmd(ask func(string, string) (string, error), engineName, prompt string) tea.Cmd {
+	return func() tea.Msg {
+		if ask == nil {
+			return supervisorReplyMsg{Err: errors.New("supervisor engine is not configured")}
+		}
+		ans, err := ask(engineName, prompt)
+		return supervisorReplyMsg{Text: ans, Err: err}
 	}
 }
