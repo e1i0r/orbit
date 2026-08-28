@@ -1715,6 +1715,24 @@
       "source": "the flow must have at least one phase",
       "value": "el flujo debe tener al menos una fase"
     },
+    "flows.name_required": {
+      "source": "give the flow a name",
+      "value": "indica un nombre para el flujo"
+    },
+    "flows.template_loaded": {
+      "source": {
+        "one": "template {name} loaded ({n} phase)",
+        "other": "template {name} loaded ({n} phases)"
+      },
+      "value": {
+        "one": "plantilla {name} cargada ({n} fase)",
+        "other": "plantilla {name} cargada ({n} fases)"
+      }
+    },
+    "flows.template_blank": {
+      "source": "blank flow (1 phase)",
+      "value": "flujo en blanco (1 fase)"
+    },
     "flows.builder_preview_title": {
       "source": "Flow Inspector (Read-Only: {name})",
       "value": "Inspector de Flujo (Solo Lectura: {name})"

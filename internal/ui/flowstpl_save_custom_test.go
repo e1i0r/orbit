@@ -26,7 +26,7 @@ func TestSaveCustomFlowNoName(t *testing.T) {
 		t.Fatalf("a rejected save should leave the builder open")
 	}
 
-	wantBand(t, m2, "nombre")
+	wantBand(t, m2, "give the flow a name")
 }
 
 func TestSaveCustomFlowInvalid(t *testing.T) {
