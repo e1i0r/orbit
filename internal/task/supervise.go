@@ -30,24 +30,8 @@ func Supervise(ctx context.Context, s *store.Store, eng engine.Engine, prompt st
 	if err != nil {
 		events = nil
 	}
-	var historyBuilder strings.Builder
-	for _, e := range events {
-		by := e.Data["by"]
-		if by == "" {
-			by = "operator"
-		}
-		channel := e.Data["channel"]
-		if channel == "" {
-			channel = "tui"
-		}
-		taskID := ""
-		if e.Data["task_id"] != "" {
-			taskID = " (" + e.Data["task_id"] + ")"
-		}
-		fmt.Fprintf(&historyBuilder, "[%s via %s]%s: %s\n", by, channel, taskID, e.Text)
-	}
 
-	fullPrompt := buildSupervisorPrompt(historyBuilder.String(), prompt)
+	fullPrompt := buildSupervisorPrompt(history(events), prompt)
 	req := engine.Request{
 		Prompt:      fullPrompt,
 		Dir:         s.Root(),
@@ -89,4 +73,62 @@ func buildSupervisorPrompt(history, newPrompt string) string {
 	b.WriteString(newPrompt)
 	b.WriteString("\n\nRespond concisely with your assessment, conclusions, or actions taken.")
 	return b.String()
+}
+
+// maxHistory is how much of the thread is put in front of the model.
+//
+// The thread is global, append-only, and nothing prunes it. Without a
+// ceiling every call carries every call before it: the prompt grows without
+// bound, the bill grows with it, and past some length the engine refuses the
+// request outright — so the supervisor would stop answering at all, and the
+// reason would be a number nobody was watching.
+const maxHistory = 32 << 10
+
+// history is the thread as the model is shown it: the most recent turns that
+// fit, oldest first, and a line saying how many were left out.
+//
+// The most recent rather than the first, because the turn being answered is
+// a reply to the last ones. Saying how many were dropped is the same rule
+// captured follows for an engine's output: truncation that announces itself
+// is honest, and silent loss is not — a model that cannot see it is missing
+// context will speak as though it has all of it.
+func history(events []record.Event) string {
+	lines := make([]string, 0, len(events))
+	for _, e := range events {
+		lines = append(lines, historyLine(e))
+	}
+	kept, budget := 0, maxHistory
+	for i := len(lines) - 1; i >= 0; i-- {
+		if budget -= len(lines[i]); budget < 0 {
+			break
+		}
+		kept++
+	}
+	var b strings.Builder
+	if dropped := len(lines) - kept; dropped > 0 {
+		fmt.Fprintf(&b, "…[%d earlier turns are not shown; the thread is longer than this]\n", dropped)
+	}
+	for _, l := range lines[len(lines)-kept:] {
+		b.WriteString(l)
+	}
+	return b.String()
+}
+
+// historyLine is one turn as the model reads it. Who said it and through
+// which door are part of the turn: an instruction from the operator and a
+// note the supervisor left itself are not the same kind of sentence.
+func historyLine(e record.Event) string {
+	by := e.Data["by"]
+	if by == "" {
+		by = "operator"
+	}
+	channel := e.Data["channel"]
+	if channel == "" {
+		channel = "tui"
+	}
+	taskID := ""
+	if e.Data["task_id"] != "" {
+		taskID = " (" + e.Data["task_id"] + ")"
+	}
+	return fmt.Sprintf("[%s via %s]%s: %s\n", by, channel, taskID, e.Text)
 }
