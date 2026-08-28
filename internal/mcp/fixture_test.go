@@ -6,7 +6,7 @@ package mcp
 //
 // HOME is redirected here as well as ORBIT_HOME. That is not tidiness: the
 // installer this package ships writes into the home directory's Claude and
-// Cursor configuration, and the first version of these tests ran it against
+// Codex configuration, and the first version of these tests ran it against
 // the real one — `go test ./...` rewrote a working orbit entry to point at a
 // binary that does not exist. A test in this package must not be able to
 // reach the reader's home even by mistake.

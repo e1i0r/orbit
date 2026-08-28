@@ -4,7 +4,7 @@ package cli
 // client runs, and the installer, which is what tells the client to run it.
 //
 // Every test here redirects the home directory first. The installer writes
-// into Claude's and Cursor's real configuration, and the first version of
+// into Claude's and Codex's real configuration, and the first version of
 // this file did not: `go test ./...` rewrote a working orbit entry to point
 // at the test binary, which is a path that stops existing when the test ends.
 
@@ -14,6 +14,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/mcp"
 )
 
 // installHome points everything the installer reads at a directory of the
@@ -130,5 +132,28 @@ func TestMCPTakesNoOtherArgument(t *testing.T) {
 
 	if !strings.Contains(errOut, "serve") {
 		t.Errorf("the error does not name the argument it did not understand: %s", errOut)
+	}
+}
+
+// TestTheInstallHelpNamesTheClientsItWritesTo. The flag carried a list of
+// its own and it had drifted from the installer twice over: it offered
+// Cursor, which this installer has never written a line of configuration
+// for, and it named none of the three clients added since. Somebody read
+// that help, installed for a client that was not touched, and never heard
+// about the ones that were.
+func TestTheInstallHelpNamesTheClientsItWritesTo(t *testing.T) {
+	installHome(t)
+
+	_, out, errOut := run(t, "mcp", "-h")
+
+	help := out + errOut
+	for _, name := range mcp.ClientNames() {
+		if !strings.Contains(help, name) {
+			t.Errorf("the help does not name %q, which `orbit mcp install` writes to:\n%s", name, help)
+		}
+	}
+
+	if strings.Contains(help, "Cursor") {
+		t.Errorf("the help offers Cursor and the installer does not write to it:\n%s", help)
 	}
 }
