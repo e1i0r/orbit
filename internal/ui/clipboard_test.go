@@ -35,7 +35,11 @@ func helperNamed(t *testing.T, name, script string) {
 // that never replies takes for ever. The window stopped rendering and
 // stopped answering keys, and the only way out was killing it.
 func TestAClipboardThatNeverAnswersDoesNotFreezeTheWindow(t *testing.T) {
-	helperNamed(t, "wl-paste", "sleep 5")
+	// The helper leaves a child of its own holding the standard output
+	// pipe and exits. Killing what was started is not enough to end that
+	// read: CI on Linux waited the full five seconds where darwin returned
+	// at once, so the deadline has to bound the wait and not only the call.
+	helperNamed(t, "wl-paste", "sleep 5 &")
 
 	clipboardTimeout = 150 * time.Millisecond
 
