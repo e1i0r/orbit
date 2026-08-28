@@ -1535,6 +1535,22 @@
       "source": "{open} save · {back} cancel",
       "value": "{open} guardar · {back} cancelar"
     },
+    "settings.now": {
+      "source": "{key} is now {val}",
+      "value": "{key} ahora es {val}"
+    },
+    "settings.language_changed": {
+      "source": "language changed to {lang}",
+      "value": "idioma cambiado a {lang}"
+    },
+    "settings.not_a_number": {
+      "source": "{val} is not a whole number",
+      "value": "{val} no es un número entero"
+    },
+    "settings.negative_cap": {
+      "source": "the unread cap cannot be negative; zero is no cap at all",
+      "value": "el tope de no leídos no puede ser negativo; cero es sin tope"
+    },
     "flows.title": {
       "source": "Flows",
       "value": "Flujos"

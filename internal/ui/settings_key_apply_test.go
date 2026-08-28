@@ -89,15 +89,22 @@ func TestApplySettingEveryKey(t *testing.T) {
 		t.Error("applySetting(autopilot, off) left autopilot on")
 	}
 
-	// 3. unread-cap: a number is taken, a non-number is silently ignored —
-	// both still narrate the same way, since applySetting's sentence names
-	// what was typed rather than what stuck.
+	// 3. unread-cap is the one setting a number is typed into. A number is
+	// taken; what is not a number is refused in words. It used to be
+	// dropped on the floor under a band saying "unread-cap is now
+	// not-a-number", which named a cap that was nowhere.
 	next, _ = m.applySetting("unread-cap", "7")
 	m = asModel(t, next)
 	wantBand(t, m, "unread-cap is now 7")
 	next, _ = m.applySetting("unread-cap", "not-a-number")
 	m = asModel(t, next)
-	wantBand(t, m, "unread-cap is now not-a-number")
+	wantBand(t, m, "not a whole number")
+
+	// A negative cap is no cap at all to every reader of it, so setting one
+	// turned the brake off while looking like it set one.
+	next, _ = m.applySetting("unread-cap", "-1")
+	m = asModel(t, next)
+	wantBand(t, m, "cannot be negative")
 
 	// 4. engine, with an effort that no longer validates for it, resets the
 	// effort to the new engine's first option; an effort that still
@@ -159,21 +166,27 @@ func TestApplySettingEveryKey(t *testing.T) {
 		t.Errorf("applySetting(theme) left the live theme %q, want nord", CurrentTheme())
 	}
 
-	// 7. a settings port that is nil, and a Do port that is not: the
-	// switch is skipped, but the palette command still runs.
+	// 7. a settings port that is nil: there is nowhere to write, and the
+	// screen says what it would have said rather than falling over.
+	//
+	// Nothing is shelled out to either. Every setting used to be written
+	// twice — once through this port and once by running `orbit set` — so
+	// the file was opened, locked and rewritten twice per keystroke, and
+	// whatever the second one had to say was thrown away.
 	m.opts.Settings = nil
 
-	var ranArgs []string
-
-	m.opts.Do = func(_ string, args []string, _ io.Writer) error {
-		ranArgs = args
+	ran := false
+	m.opts.Do = func(string, []string, io.Writer) error {
+		ran = true
 		return nil
 	}
 	next, _ = m.applySetting("unread-cap", "3")
 
 	m = asModel(t, next)
-	if len(ranArgs) != 2 || ranArgs[0] != "unread-cap" || ranArgs[1] != "3" {
-		t.Errorf("applySetting with a nil settings port ran Do with args %v, want [unread-cap 3]", ranArgs)
+	wantBand(t, m, "unread-cap is now 3")
+
+	if ran {
+		t.Error("applySetting shelled out to `orbit set` as well as writing the setting itself")
 	}
 }
 
