@@ -29,7 +29,29 @@ import (
 // every run leaves a .git/worktrees entry behind in a repository Orbit does
 // not own, and `git worktree prune` by hand is the only remedy.
 func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[string]engine.Engine, g Gate) error {
-	// task.started is written first — before the flow is validated, before
+	// The run marker goes down before anything is written, and comes off on
+	// every way out of here. It is what lets any reader tell a phase still
+	// running from a phase whose process is gone, and it is also the only
+	// thing that can say a task is already taken — so a second run of one
+	// task is refused here, before this attempt has put a single line in a
+	// log that belongs to the run already walking it. hold says why.
+	//
+	// Nothing is recorded when it refuses, and that is the point. The log
+	// already describes the run that is happening; an attempt that never
+	// began has nothing to add to it, and a task.started followed by a
+	// task.failed would tell every reader that the *other* run had ended.
+	//
+	// The marker cannot survive SIGKILL — nothing written by the dying
+	// process can — so the invariant a reader may rely on is the weaker,
+	// true one: a task's log ends in a terminal event, or a reader appends
+	// one. Reconcile is the reader that appends it.
+	release, err := hold(s, t)
+	if err != nil {
+		return err
+	}
+	defer release()
+
+	// task.started is written next — before the flow is validated, before
 	// the engines are checked, before the worktree exists — and the ordering
 	// is load-bearing rather than tidy.
 	//
@@ -53,18 +75,6 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 	if err := emit(s, t, record.Event{Kind: record.TaskStarted, Data: map[string]string{"flow": f.Name}}); err != nil {
 		return err
 	}
-
-	// The run marker goes down next and comes off on every way out of here,
-	// which is what lets any reader tell a phase still running from a phase
-	// whose process is gone. It cannot survive SIGKILL — nothing written by
-	// the dying process can — so the invariant a reader may rely on is the
-	// weaker, true one: a task's log ends in a terminal event, or a reader
-	// appends one. Reconcile is the reader that appends it.
-	release, err := hold(s, t)
-	if err != nil {
-		return failed(s, t, err)
-	}
-	defer release()
 
 	if err := f.Validate(); err != nil {
 		return failed(s, t, err)

@@ -116,13 +116,48 @@ func running(pid int) bool {
 // hold claims a task for this process and hands back the one way to let go.
 // The release is safe to call twice and says nothing when there was never a
 // marker, because unwinding is not the moment to start reporting problems.
+//
+// A task something else is already running is refused. Two runs of one task
+// share a worktree, a branch and a log: their phases interleave in the
+// record, and the first of them to finish used to take the other's marker
+// off on its way out, leaving a live run that nothing claimed and nobody
+// could cancel. The marker is the only thing that can say a task is taken,
+// so this is the only place it can be caught.
+//
+// It is not a lock and does not pretend to be. Two processes arriving here
+// in the same instant both see no marker and both go on. What it stops is
+// the case that actually happens: a second run started seconds or minutes
+// after the first, by a window, a tool call, or a person.
+//
+// A marker that will not parse is refused too, by way of Alive's error. That
+// is the stance readMarker already takes and the reason it gives holds here
+// more strongly, not less: a claim that cannot be read is a claim that
+// cannot be ruled out, and starting a second run over one is the mistake
+// this function exists to prevent.
 func hold(s *store.Store, t Task) (release func(), err error) {
+	pid, alive, err := Alive(s, t)
+	if err != nil {
+		return nil, err
+	}
+	if alive {
+		return nil, fmt.Errorf("task %s is already being run by process %d", t.ID, pid)
+	}
 	return mark(s, t, os.Getpid())
 }
 
 // mark writes the marker naming a pid. It is separate from hold so a test
 // can plant a marker for a process that is not this one.
 func mark(s *store.Store, t Task, pid int) (func(), error) {
+	// The task's directory has to exist before a marker can go in it. It is
+	// normally there already, made when the task was written — but the
+	// marker is now the first thing a run puts on disk, ahead of the
+	// task.started that used to make it, so the run has to be able to make
+	// it itself. This is the store's own verb for that and not a MkdirAll on
+	// a path taken apart here: which directories exist under the state root
+	// is that package's business, not this one's.
+	if _, err := s.CreateTaskDir(t.Repo.Path, t.ID); err != nil {
+		return nil, err
+	}
 	path, err := s.RunPath(t.Repo.Path, t.ID)
 	if err != nil {
 		return nil, err
@@ -132,6 +167,20 @@ func mark(s *store.Store, t Task, pid int) (func(), error) {
 		return nil, fmt.Errorf("claim task %s for this process: %w", t.ID, err)
 	}
 	return func() {
+		// Only a marker that still names this process. A run asked to stop
+		// takes as long to die as the engine it is waiting on, and another
+		// run may have claimed the task in between; removing the marker
+		// blindly took that claim off instead, which left a live run that
+		// nothing claimed and nobody could cancel.
+		//
+		// The read and the remove are not one step, so a claim made between
+		// the two is still taken off. That window is a file read wide,
+		// against a shutdown measured in seconds, and closing it needs a
+		// lock this design does not have. A claim lost that way is a stale
+		// marker in reverse, and Reconcile is already the answer to it.
+		if held, _, found, readErr := readMarker(s, t); readErr != nil || !found || held != pid {
+			return
+		}
 		// Nobody is left to hand an error to: this runs while Run is
 		// returning, on top of whatever answer Run already has, and a
 		// failure to remove the marker must not become the run's verdict.
