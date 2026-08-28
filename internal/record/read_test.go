@@ -7,6 +7,8 @@ package record
 import (
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -96,8 +98,23 @@ func TestReadMarksAMalformedLineInTheMiddle(t *testing.T) {
 	if got[1].Kind != Unreadable {
 		t.Fatalf("event 1 = %q, want %q in the dropped line's position", got[1].Kind, Unreadable)
 	}
-	if got[1].Data["line"] != "2" {
-		t.Errorf(`Data["line"] = %q, want "2" — the mark must say which line to go and look at`, got[1].Data["line"])
+	// The mark says where to go and look, and the only useful test of that
+	// is to go and look: the byte it names has to be the first byte of the
+	// line nobody could parse.
+	at, err := strconv.ParseInt(got[1].Data["byte"], 10, 64)
+	if err != nil {
+		t.Fatalf(`Data["byte"] = %q: %v`, got[1].Data["byte"], err)
+	}
+	whole, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	if at < 0 || at >= int64(len(whole)) {
+		t.Fatalf("the mark names byte %d of a %d byte log", at, len(whole))
+	}
+	line, _, _ := strings.Cut(string(whole[at:]), "\n")
+	if line != "{this is not json}" {
+		t.Errorf("byte %d begins %q, want the malformed line", at, line)
 	}
 }
 

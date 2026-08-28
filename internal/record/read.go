@@ -22,10 +22,17 @@ const Unreadable = "record.unreadable"
 // A line that will not parse is not silently dropped. Returning fewer events
 // than the file holds, with nothing to say so, is a reader lying about its
 // own completeness — so the gap is filled with a record.unreadable event
-// carrying the line number, and whoever is looking can go and read that line
-// with their own eyes. The one exception is a last line with no newline
-// after it: that is a write interrupted mid-flight rather than damage, and
-// it stays dropped.
+// carrying where in the file the line begins, and whoever is looking can go
+// and read that line with their own eyes. The one exception is a last line
+// with no newline after it: that is a write interrupted mid-flight rather
+// than damage, and it stays dropped.
+//
+// Everything below works from one size, taken once. A log being appended to
+// while it is read used to be measured twice — the last byte was checked
+// against the file as it was then, and the scan ran to whatever the end had
+// become since — so a write that landed in between was read as a torn line
+// in a file that had already been declared whole, and a record.unreadable
+// was synthesised for a line that was merely still being written.
 func Read(path string) ([]Event, error) {
 	f, err := os.Open(path)
 	if errors.Is(err, os.ErrNotExist) {
@@ -36,19 +43,46 @@ func Read(path string) ([]Event, error) {
 	}
 	defer f.Close()
 
-	whole, err := endsWithNewline(f)
+	info, err := f.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("stat %q: %w", path, err)
+	}
+	size := info.Size()
+
+	whole, err := endsWithNewline(f, size)
 	if err != nil {
 		return nil, fmt.Errorf("read %q: %w", path, err)
 	}
 
-	events, pending, _, _, err := scanEvents(f)
+	s, err := scanEvents(io.LimitReader(f, size), 0)
 	if err != nil {
 		return nil, fmt.Errorf("read %q: %w", path, err)
 	}
-	if pending > 0 && whole {
-		events = append(events, unreadable(pending))
+	if s.hasPending && whole {
+		s.events = append(s.events, unreadable(s.pending))
 	}
-	return events, nil
+	return s.events, nil
+}
+
+// scan is what one pass over a log's lines produced.
+//
+// It is a struct rather than five return values because ReadFrom needs four
+// of them and Read needs two, and a signature nobody can read at the call
+// site is how the two sides start disagreeing about which is which.
+type scan struct {
+	events []Event
+	// pending is where the last line that would not parse begins, held back
+	// one turn because a bad line is only forgivable when it is the last one
+	// in an unterminated file; the caller decides what that means once
+	// scanning is done. hasPending is whether there is one, which a byte
+	// offset of zero cannot say on its own.
+	pending    int64
+	hasPending bool
+	// lastStart is where the final line scanned begins, and lastWasEvent
+	// whether that line produced an event. Both exist only for ReadFrom's
+	// offset arithmetic, and Read ignores them.
+	lastStart    int64
+	lastWasEvent bool
 }
 
 // scanEvents is the one place that turns a log's lines into events. Read and
@@ -57,65 +91,75 @@ func Read(path string) ([]Event, error) {
 // know how the offset should move — but the classification itself, the part
 // most likely to drift if it existed twice, lives here and nowhere else.
 //
-// pending is the line number of the last line seen that would not parse,
-// held back one turn because a bad line is only forgivable when it is the
-// last one in an unterminated file; the caller decides what that means once
-// scanning is done. lastLen is the byte length of the final line scanned (0
-// if none), and lastWasEvent reports whether that final line produced an
-// event — both exist only for ReadFrom's offset arithmetic, and Read ignores
-// them.
-func scanEvents(r io.Reader) (events []Event, pending, lastLen int, lastWasEvent bool, err error) {
-	scanner := bufio.NewScanner(r)
-	scanner.Buffer(make([]byte, 0, 64*1024), MaxLine)
-	line := 0
-	for scanner.Scan() {
-		line++
-		lastLen = len(scanner.Bytes())
-		lastWasEvent = false
-		if pending > 0 {
-			events = append(events, unreadable(pending))
-			pending = 0
+// base is where in the file r starts, so that every offset this hands back
+// names a place in the log rather than a place in whatever slice of it the
+// caller happened to read. ReadFrom passes its offset; Read passes zero.
+//
+// The arithmetic assumes a line is terminated by a bare '\n', which is the
+// only terminator Append ever writes to this log; a '\r\n' writer would need
+// it adjusted, because bufio.ScanLines strips a trailing '\r' from the token
+// before its length is ever measured.
+func scanEvents(r io.Reader, base int64) (scan, error) {
+	s := scan{lastStart: base}
+	sc := bufio.NewScanner(r)
+	sc.Buffer(make([]byte, 0, 64*1024), MaxLine)
+	at := base
+	for sc.Scan() {
+		s.lastStart, s.lastWasEvent = at, false
+		at += int64(len(sc.Bytes())) + 1
+		if s.hasPending {
+			s.events = append(s.events, unreadable(s.pending))
+			s.hasPending = false
 		}
-		if lastLen == 0 {
+		if len(sc.Bytes()) == 0 {
 			continue
 		}
 		var e Event
-		if jerr := json.Unmarshal(scanner.Bytes(), &e); jerr != nil {
-			pending = line
+		if jerr := json.Unmarshal(sc.Bytes(), &e); jerr != nil {
+			s.pending, s.hasPending = s.lastStart, true
 			continue
 		}
-		events = append(events, e)
-		lastWasEvent = true
+		s.events = append(s.events, e)
+		s.lastWasEvent = true
 	}
-	if serr := scanner.Err(); serr != nil {
-		return nil, 0, 0, false, serr
+	if serr := sc.Err(); serr != nil {
+		return scan{}, serr
 	}
-	return events, pending, lastLen, lastWasEvent, nil
+	return s, nil
 }
 
 // unreadable is the event that stands in for a line nobody can parse.
-func unreadable(line int) Event {
+//
+// It names the byte the line begins at rather than counting lines, because a
+// count is only true of a reader that started at the top. ReadFrom starts
+// wherever it left off, so a line number from it meant "the third line of
+// what I happened to read this time" — a number that pointed at nothing and
+// looked like it pointed at something. A byte offset is the same fact for
+// both readers, and `tail -c +N` opens on it.
+func unreadable(at int64) Event {
 	return Event{
 		Kind: Unreadable,
 		Text: "this line of the record is not valid JSON and was skipped",
-		Data: map[string]string{"line": strconv.Itoa(line)},
+		Data: map[string]string{"byte": strconv.FormatInt(at, 10)},
 	}
 }
 
-// endsWithNewline reports whether the last line of the file was finished.
+// endsWithNewline reports whether the last line of the file was finished, as
+// of the size the caller measured.
 //
-// It reads one byte at the end and leaves the read offset alone, so the
-// scanner still starts from the beginning.
-func endsWithNewline(f *os.File) (bool, error) {
-	info, err := f.Stat()
-	if err != nil {
-		return false, err
-	}
-	if info.Size() == 0 {
+// The size is a parameter rather than a stat of its own so that every
+// question this package asks of a log that is being appended to is asked
+// about the same file: a second stat here is a second file, and the two
+// answers together describe one that never existed.
+//
+// It reads one byte and leaves the read offset alone, so the scanner still
+// starts from the beginning.
+func endsWithNewline(f *os.File, size int64) (bool, error) {
+	if size == 0 {
 		return false, nil
 	}
 	last := make([]byte, 1)
-	if _, err := f.ReadAt(last, info.Size()-1); err != nil {
+	if _, err := f.ReadAt(last, size-1); err != nil {
 		return false, err
 	}
 	return last[0] == '\n', nil

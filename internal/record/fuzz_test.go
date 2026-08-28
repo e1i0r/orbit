@@ -81,7 +81,7 @@ func TestRecordUnreadableLineTracking(t *testing.T) {
 		t.Fatalf("expected 3 events including unreadable line, got %d", len(events))
 	}
 
-	if events[1].Kind != Unreadable || events[1].Data["line"] != "2" {
+	if events[1].Kind != Unreadable || events[1].Data["byte"] != "52" {
 		t.Errorf("expected unreadable line 2, got %+v", events[1])
 	}
 }
@@ -120,6 +120,6 @@ func FuzzRecordScanner(f *testing.F) {
 	f.Add([]byte("\n\n\n"))
 
 	f.Fuzz(func(t *testing.T, data []byte) {
-		_, _, _, _, _ = scanEvents(bytes.NewReader(data)) //nolint:errcheck // fuzz scanner against arbitrary data
+		_, _ = scanEvents(bytes.NewReader(data), 0) //nolint:errcheck // fuzz scanner against arbitrary data
 	})
 }

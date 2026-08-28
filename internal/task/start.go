@@ -39,7 +39,25 @@ import (
 // The cap itself comes from the settings file and is read here, so that a
 // caller cannot forget it. At the cap Start refuses and says the two numbers,
 // because a brake that says only "no" is a brake people route around.
+//
+// A task something else is already running is refused too, in the same words
+// the run itself would use. Run's hold is still the authority and this is
+// still not a lock — a run that begins in the instant between the look and
+// the spawn is caught there, not here. What this closes is that hold's
+// refusal is invisible from out here by design: it writes nothing to the
+// record, because the log already describes the run that is happening, and
+// its stderr goes nowhere by the paragraph above. So the caller was handed a
+// pid and no error for a child that had already exited, and both callers say
+// the same thing with it — the window draws the task as running again, and
+// mcp answers "task X is running again" — over a run that never began.
 func Start(s *store.Store, t Task, flowName string, unread int) (int, error) {
+	holder, alive, err := Alive(s, t)
+	if err != nil {
+		return 0, err
+	}
+	if alive {
+		return 0, fmt.Errorf("task %s is already being run by process %d", t.ID, holder)
+	}
 	cfg, err := s.Settings()
 	if err != nil {
 		return 0, err

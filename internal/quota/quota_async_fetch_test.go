@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -83,4 +84,79 @@ func FuzzParseWindows(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		_, _ = parseWindows(data) //nolint:errcheck // fuzz testing against arbitrary payloads
 	})
+}
+
+// TestAProxyThatIsDownIsNotAskedOnEveryFrame is the regression. The status
+// bar calls Quota on every frame it draws, and a failure used to leave
+// nothing behind: the cache stayed cold, so the next frame started another
+// request, and a proxy that was down turned the corner of the status bar into
+// a connection attempt several times a second for as long as the window
+// stayed open.
+func TestAProxyThatIsDownIsNotAskedOnEveryFrame(t *testing.T) {
+	var calls atomic.Int64
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		calls.Add(1)
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer ts.Close()
+
+	c := New(ts.URL)
+	if got := c.Quota(true); got != nil {
+		t.Fatalf("Quota = %+v, want nothing from a proxy answering 500", got)
+	}
+	if got := calls.Load(); got != 1 {
+		t.Fatalf("the first read asked %d times, want 1", got)
+	}
+
+	// Two seconds of frames, at the rate the spinner draws them.
+	for range 50 {
+		c.Quota(false)
+	}
+	time.Sleep(50 * time.Millisecond) // let any fetch that did go out land
+	if got := calls.Load(); got != 1 {
+		t.Errorf("the proxy was asked %d times over 50 frames, want the one read that failed", got)
+	}
+	if c.backoff != firstBackoff {
+		t.Errorf("backoff = %s, want the first step of %s", c.backoff, firstBackoff)
+	}
+}
+
+// TestTheBackoffGrowsAndThenGivesWayToAGoodRead. Reaching in to expire the
+// hold-off is what a test can do instead of waiting five seconds for it, and
+// the field is the whole mechanism: nothing else decides when the next
+// request goes out.
+func TestTheBackoffGrowsAndThenGivesWayToAGoodRead(t *testing.T) {
+	var up atomic.Bool
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if !up.Load() {
+			w.WriteHeader(http.StatusBadGateway)
+			return
+		}
+		_ = json.NewEncoder(w).Encode([]wireWindow{ //nolint:errcheck // test HTTP handler response
+			{Label: "weekly", Pct: 40.0, ResetsIn: 3600},
+		})
+	}))
+	defer ts.Close()
+
+	c := New(ts.URL)
+	want := []time.Duration{firstBackoff, 2 * firstBackoff, 4 * firstBackoff}
+	for i, step := range want {
+		c.Quota(true)
+		if c.backoff != step {
+			t.Fatalf("failure %d left a backoff of %s, want %s", i+1, c.backoff, step)
+		}
+		c.nextTry = time.Now() // the hold-off, expired
+	}
+
+	up.Store(true)
+	windows := c.Quota(true)
+	if len(windows) != 1 || windows[0].Label != "weekly" {
+		t.Fatalf("Quota = %+v, want the window the proxy is now serving", windows)
+	}
+	if c.backoff != 0 {
+		t.Errorf("backoff = %s after a good read, want it back to nothing", c.backoff)
+	}
+	if d := time.Until(c.nextTry); d < CacheDuration-time.Second {
+		t.Errorf("the next read is due in %s, want it held for the cache duration of %s", d, CacheDuration)
+	}
 }

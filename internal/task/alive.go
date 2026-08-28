@@ -163,7 +163,16 @@ func mark(s *store.Store, t Task, pid int) (func(), error) {
 		return nil, err
 	}
 	body := fmt.Sprintf("pid: %d\nstarted: %s\n", pid, time.Now().UTC().Format(time.RFC3339))
-	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+	// In one step, because this file is read while it is being written. A
+	// plain write truncates first and writes second, and a marker caught
+	// between the two has no pid line — which readMarker calls damage rather
+	// than "not running", on purpose. The board asks Alive about every task
+	// twice a second, so that instant is sampled constantly: it shows up as
+	// an error under a run that is starting normally, and, worse, as hold
+	// refusing to start a run over a claim it could not rule out. A rename is
+	// atomic within a directory, so a reader sees the old marker or the new
+	// one and never half of either.
+	if err := store.WriteAtomically(path, []byte(body)); err != nil {
 		return nil, fmt.Errorf("claim task %s for this process: %w", t.ID, err)
 	}
 	return func() {

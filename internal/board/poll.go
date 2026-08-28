@@ -35,7 +35,6 @@ func (r *Reader) poll(st *taskState) ([]record.Event, error) {
 		// reported.
 		return nil, st.err
 	}
-	st.size = size
 
 	if size < st.offset {
 		// Shorter than what has already been read, so this log was replaced
@@ -55,9 +54,32 @@ func (r *Reader) poll(st *taskState) ([]record.Event, error) {
 	// exactly that property.
 	events, next, err := record.ReadFrom(st.path, st.offset)
 	if err != nil {
+		// A read that failed gets exactly one more try, on the next
+		// refresh, and then the size is committed and the verdict stands.
+		//
+		// Both halves are needed and they pull opposite ways. The size used
+		// to be committed before the read was attempted, so a failure was
+		// never retried at all: the bytes it did not read stayed stranded
+		// until something else was appended, and if the write that failed
+		// was a run's last one, its ending never appeared — the row went on
+		// saying "running" over a log that says "finished", and the error
+		// beside it went on blaming a fault that may have lasted a
+		// millisecond.
+		//
+		// Retrying forever is the other mistake. A line longer than
+		// record.MaxLine — four megabytes — is a log no later read will get
+		// past, and re-reading it twice a second is four megabytes of
+		// pointless I/O per second per damaged task, for as long as the
+		// window is open. One retry recovers a filesystem that blinked and
+		// bounds the other case at two.
+		if !st.retried {
+			st.retried = true
+			return nil, err
+		}
+		st.size, st.retried = size, false
 		return nil, err
 	}
-	st.offset = next
+	st.size, st.offset, st.retried = size, next, false
 	return events, nil
 }
 

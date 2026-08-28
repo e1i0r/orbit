@@ -1,6 +1,8 @@
 package task
 
 import (
+	"os"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -66,5 +68,40 @@ func TestTheUnreadCap(t *testing.T) {
 				t.Errorf("atCap(%d, %d) = %v, want %v", tc.unread, tc.limit, got, tc.want)
 			}
 		})
+	}
+}
+
+// TestStartingATaskAnotherRunHoldsIsRefused is the regression, and what makes
+// it one is how quiet the old answer was.
+//
+// Run refuses a task that is already claimed and writes nothing about it —
+// deliberately, since the log already describes the run that is happening —
+// and Start wires the child's stderr to nothing. So the spawn succeeded, the
+// pid came back with a nil error, the child died a moment later, and the only
+// trace of any of it was a window that said the task was running again.
+func TestStartingATaskAnotherRunHoldsIsRefused(t *testing.T) {
+	s, r := fixture(t)
+	tk := written(t, s, r)
+	// This test process is the live claim: Alive asks the kernel about the
+	// pid, and there is no more certainly running process to name.
+	release, err := mark(s, tk, os.Getpid())
+	if err != nil {
+		t.Fatalf("mark: %v", err)
+	}
+	defer release()
+
+	pid, err := Start(s, tk, "task", 0)
+
+	if err == nil {
+		t.Fatal("Start spawned a second run of a task that is already running")
+	}
+	if pid != 0 {
+		t.Errorf("Start returned pid %d alongside its refusal", pid)
+	}
+	// The same sentence hold would have given, so that a person is told the
+	// same thing whichever door refused them, and it names the process so
+	// they can go and look at it.
+	if got := err.Error(); !strings.Contains(got, "already being run") || !strings.Contains(got, strconv.Itoa(os.Getpid())) {
+		t.Errorf("the refusal reads %q, want hold's own words and the pid holding the task", got)
 	}
 }
