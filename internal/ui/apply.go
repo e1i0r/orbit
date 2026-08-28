@@ -149,10 +149,7 @@ func (m Model) autoSuperviseNeedsYou() (Model, tea.Cmd) {
 
 	m.supervisorBusy = true
 
-	eng := m.knobs.Engine
-	if eng == "" {
-		eng = "claude"
-	}
+	eng := m.dialEngine(m.knobs.Engine)
 
 	cmd := func() tea.Msg {
 		ans, err := m.opts.AutoSupervise(eng, needing)

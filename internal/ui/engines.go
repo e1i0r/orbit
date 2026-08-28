@@ -71,10 +71,7 @@ func (m Model) knobChip() string {
 		return ""
 	}
 
-	engineName := m.knobs.Engine
-	if engineName == "" {
-		engineName = "claude"
-	}
+	engineName := m.dialEngine(m.knobs.Engine)
 
 	var parts []string
 
@@ -101,10 +98,7 @@ func (m Model) collectEngineRows() []engineRow {
 
 	engineList := m.engineTable()
 
-	activeEngine := m.knobs.Engine
-	if activeEngine == "" {
-		activeEngine = "claude"
-	}
+	activeEngine := m.dialEngine(m.knobs.Engine)
 
 	// 1. Model & Engine Section
 	rows = append(rows, engineRow{kind: rowHeader, title: p.T("engines.section_model", "Engine & Model")})

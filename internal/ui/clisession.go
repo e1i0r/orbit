@@ -16,10 +16,7 @@ type cliEndedMsg struct {
 }
 
 func (m Model) launchInteractiveCLI() (Model, tea.Cmd) {
-	eng := m.knobs.Engine
-	if eng == "" {
-		eng = "claude"
-	}
+	eng := m.dialEngine(m.knobs.Engine)
 	// The path and not the name. This read r.task.Repo — the column, which
 	// is what the repository is called — and handed it to exec as a working
 	// directory, so every session opened on a task started in a directory

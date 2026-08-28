@@ -61,10 +61,12 @@ func (m Model) handleFlowFieldAction() (Model, tea.Cmd) {
 		return m.handleFlowFieldDelta(1)
 	case flowFieldAddPhase:
 		st.phases = append(st.phases, flow.Phase{
+			// A new phase is born on the window's engine and names no
+			// model and no effort. It used to be born holding claude and
+			// sonnet, which is a choice nobody made and a model claude
+			// alone has.
 			Name:        fmt.Sprintf("%d-phase", len(st.phases)+1),
-			Engine:      "claude",
-			Model:       "sonnet",
-			Effort:      "default",
+			Engine:      st.engine,
 			Thinking:    "adaptive",
 			FeedOutput:  true,
 			Permissions: []string{"repo"},

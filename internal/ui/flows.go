@@ -38,18 +38,30 @@ type flowsState struct {
 	isBuiltin      bool
 	confirmDiscard bool
 	confirmDelete  bool
-	field          int
-	template       string
-	flowName       string
-	description    string
-	activePhase    int
-	phases         []flow.Phase
+	// engine is the one a phase this editor invents is born on. It is
+	// carried here because ensurePhase is reached from cur(), which has no
+	// Model to ask, and internal/flow refuses a phase that names no engine
+	// — so it is this or a name made up in a package that cannot know one.
+	engine      string
+	field       int
+	template    string
+	flowName    string
+	description string
+	activePhase int
+	phases      []flow.Phase
 }
 
+// ensurePhase gives an editor with no phases one, on the engine the editor
+// was opened with.
+//
+// It used to be born holding claude and sonnet: a choice nobody made, on a
+// build that may have neither, and sonnet is claude's model alone. It now
+// names only the engine — internal/flow refuses a phase that names none —
+// and leaves the model and the effort to whatever the run is set to.
 func (st *flowsState) ensurePhase() {
 	if len(st.phases) == 0 {
 		st.phases = []flow.Phase{
-			{Name: "1-implement", Engine: "claude", Model: "sonnet", Effort: "default", Thinking: "adaptive", Permissions: []string{"repo"}},
+			{Name: "1-implement", Engine: st.engine, Thinking: "adaptive", Permissions: []string{"repo"}},
 		}
 		st.activePhase = 0
 	}

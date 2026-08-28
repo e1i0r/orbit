@@ -101,21 +101,18 @@ func (m Model) overviewLines() []string {
 		out = append(out, fmt.Sprintf("    %-14s %s", Paint(Dim).Render(p.T("overview.cost", "cost")), fmt.Sprintf("$%.4f", t.Cost)))
 	}
 	// Engine, Model, Effort, Thinking & Flow live indicators
-	eng := t.Engine
-	if eng == "" {
-		eng = m.knobs.Engine
-		if eng == "" {
-			eng = "claude"
-		}
-	}
+	// A task that has run carries its own engine and model. One that has
+	// not shows what it would run on, which is the knob and then the
+	// setting behind it — not the words claude and sonnet, which were the
+	// answer here on builds that have neither.
+	eng := orDef(t.Engine, m.dialEngine(m.knobs.Engine))
 
-	mod := t.Model
-	if mod == "" {
-		mod = m.knobs.Model
-		if mod == "" {
-			mod = "sonnet"
-		}
-	}
+	models, _ := m.modelsFor(eng)
+	mod := orDef(t.Model, orDef(m.knobs.Model, first(models)))
+
+	// A window whose engines port answers nothing has no engine and no
+	// model to name here, and a dash says so without naming one it has not.
+	eng, mod = orDef(eng, unsetDial), orDef(mod, unsetDial)
 
 	eff := m.knobs.Effort
 	if eff == "" {

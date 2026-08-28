@@ -148,6 +148,7 @@ func (m Model) editFlow(name string) (Model, tea.Cmd) {
 	}
 
 	m.flows.creating = true
+	m.flows.engine = m.dialEngine("")
 	m.flows.isEditing = true
 	m.flows.showingDetail = false
 	m.flows.confirmDiscard = false
