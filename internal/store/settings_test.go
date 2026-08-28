@@ -162,3 +162,34 @@ func TestSaveSettingsLeavesAReadableFileWhereItIs(t *testing.T) {
 		t.Errorf("a settings file that parses was moved aside: %v", err)
 	}
 }
+
+func TestSaveSettingsLeavesNoTemporaryFileBehind(t *testing.T) {
+	root := t.TempDir()
+	s, err := New(root)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	for _, engine := range []string{"claude", "codex", "opencode"} {
+		if err := s.SaveSettings(Settings{Engine: engine}); err != nil {
+			t.Fatalf("SaveSettings %q: %v", engine, err)
+		}
+	}
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		t.Fatalf("read root: %v", err)
+	}
+	var names []string
+	for _, e := range entries {
+		names = append(names, e.Name())
+	}
+	if len(names) != 1 || names[0] != "settings.json" {
+		t.Errorf("state root holds %v, want only settings.json: the write goes through a temporary and has to take it with it", names)
+	}
+	info, err := os.Stat(filepath.Join(root, "settings.json"))
+	if err != nil {
+		t.Fatalf("stat settings: %v", err)
+	}
+	if info.Mode().Perm() != 0o600 {
+		t.Errorf("mode = %v, want 0600: a file arriving by rename must not be more open than one written in place", info.Mode().Perm())
+	}
+}
