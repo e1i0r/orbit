@@ -138,7 +138,7 @@ func (m Model) overviewLines() []string {
 	if t.Band == view.Running {
 		liveTitle := p.T("overview.live_activity", "Live LLM Activity")
 		out = append(out,
-			"  "+Paint(Live).Bold(true).Render("⚡ "+liveTitle),
+			"  "+Paint(Live).Bold(true).Render(m.runGlyph(working(t))+liveTitle),
 		)
 		if t.CurrentAction != "" {
 			actionLabel := p.T("overview.live_action", "action")
@@ -155,7 +155,7 @@ func (m Model) overviewLines() []string {
 		if t.CurrentAction == "" && t.CurrentThought == "" {
 			statusLabel := p.T("overview.state", "state")
 			out = append(out,
-				fmt.Sprintf("    %-14s %s", Paint(Dim).Render(statusLabel), Paint(Live).Render(p.T("overview.running_model", "running model..."))),
+				fmt.Sprintf("    %-14s %s", Paint(Dim).Render(statusLabel), Paint(Live).Render(m.runGlyph(working(t))+p.T("overview.running_model", "running model..."))),
 				"    "+Paint(Dim).Render(p.T("overview.stream_hint", "press [6] for live timeline or [8] for raw stream output")),
 			)
 		}
@@ -176,7 +176,7 @@ func (m Model) overviewLines() []string {
 		case view.ToDo:
 			out = append(out, "    "+Paint(Dim).Render(p.T("overview.not_started", "task has not been started yet (press [n] to start)")))
 		case view.Running:
-			out = append(out, "    "+Paint(Live).Render("⚡ "+p.T("overview.in_flight", "execution in flight...")))
+			out = append(out, "    "+Paint(Live).Render(m.runGlyph(working(t))+p.T("overview.in_flight", "execution in flight...")))
 		default:
 			out = append(out, "    "+Paint(Dim).Render(p.T("overview.no_phases", "no phase outputs recorded")))
 		}

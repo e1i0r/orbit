@@ -121,17 +121,23 @@ type Model struct {
 	pendingID string
 	pendTries int
 
-	note             noteState
-	settings         settingsState
-	flows            flowsState
-	repolist         repolistState
-	repoFilter       string
-	queueFilter      *view.Band
-	engines          enginesState
-	knobs            Knobs
-	help             helpState
-	supervisor       supervisorState
-	supervisorBusy   bool
+	note           noteState
+	settings       settingsState
+	flows          flowsState
+	repolist       repolistState
+	repoFilter     string
+	queueFilter    *view.Band
+	engines        enginesState
+	knobs          Knobs
+	help           helpState
+	supervisor     supervisorState
+	supervisorBusy bool
+	// spinning is whether an animation frame is already on its way.
+	// The frame clock is a chain of one-shot ticks, so two starters
+	// mean two chains and a spinner that turns twice as fast for the
+	// rest of the session. nextFrame, in spinner.go, is the only thing
+	// that sets this and the tick is the only thing that clears it.
+	spinning         bool
 	rawText          bool
 	expandedDetail   bool
 	upgradeAvailable string

@@ -48,11 +48,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.now = time.Time(msg)
 		return m, elapsedTick()
 	case spinnerTickMsg:
+		// The frame that was asked for has landed, so the chain is free to
+		// be extended — by this, if anything is still moving, and by
+		// nobody else while it is.
 		m.now = time.Time(msg)
-		if m.supervisorBusy {
-			return m, spinnerTick()
-		}
-		return m, nil
+		m.spinning = false
+		m, next := m.nextFrame()
+		return m, next
 	case upgradeTickMsg:
 		return m, tea.Batch(checkUpgradeCmd(m.opts.Version), upgradeTick())
 	case boardMsg:
