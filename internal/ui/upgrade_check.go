@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -38,6 +39,10 @@ type latestRelease struct {
 // telling somebody who built from source to upgrade to the last release is
 // usually advice to go backwards.
 func checkUpgradeCmd(current string) tea.Cmd {
+	if !comparableVersion(current) {
+		return nil
+	}
+
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
@@ -73,6 +78,19 @@ func checkUpgradeCmd(current string) tea.Cmd {
 	}
 }
 
+// comparableVersion is whether the running build has a version a release
+// tag could be compared against.
+//
+// It is asked before the request goes out, not after the answer comes back.
+// A build from source calls itself dev and is never offered an upgrade, and
+// it used to reach GitHub every hour for an answer worthOffering then threw
+// away — one request an hour, for the whole time the window is open, to
+// learn something already known before it was sent.
+func comparableVersion(current string) bool {
+	cur := strings.TrimPrefix(strings.TrimSpace(current), "v")
+	return cur != "" && cur != "dev"
+}
+
 // worthOffering is whether a released tag is worth putting on the header,
 // given what is running.
 //
@@ -80,15 +98,88 @@ func checkUpgradeCmd(current string) tea.Cmd {
 // itself dev — is not an upgrade anybody can act on, so it is left alone.
 // The leading v is stripped from both sides because a tag carries one and a
 // version string may not, and "v0.1.12" and "0.1.12" are the same release.
+//
+// What is offered is a release *after* this one. This was "different from
+// this one", which is the same answer for both directions: a build ahead of
+// the last published tag — the one anybody working on orbit is running the
+// day after a release, and anybody on a release candidate — was told a
+// lower version was available, and pressing the banner would have taken
+// them backwards.
 func worthOffering(current, latest string) bool {
-	cur := strings.TrimPrefix(strings.TrimSpace(current), "v")
-
-	rel := strings.TrimPrefix(strings.TrimSpace(latest), "v")
-	if cur == "" || cur == "dev" || rel == "" {
+	if !comparableVersion(current) {
 		return false
 	}
 
-	return cur != rel
+	return laterThan(strings.TrimSpace(latest), strings.TrimSpace(current))
+}
+
+// laterThan is whether version a names a release later than b.
+//
+// A version this cannot read is not offered. Saying nothing about a pair
+// that cannot be ordered is the same choice made for a dev build, and for
+// the same reason: the cost of a wrong yes is a reader sent backwards, and
+// the cost of a wrong no is a banner that does not appear.
+func laterThan(a, b string) bool {
+	an, apre, aok := versionParts(a)
+
+	bn, bpre, bok := versionParts(b)
+	if !aok || !bok {
+		return false
+	}
+
+	for i := range max(len(an), len(bn)) {
+		x, y := numberAt(an, i), numberAt(bn, i)
+		if x != y {
+			return x > y
+		}
+	}
+
+	// Same numbers: 1.2.0 is the release the candidates 1.2.0-rc1 were
+	// leading to, so it is later than any of them, and no candidate is
+	// ever offered over the release itself.
+	return apre == "" && bpre != ""
+}
+
+// numberAt is the i-th number of a version, counting an absent one as zero, so
+// that 1.2 and 1.2.0 are the same release.
+func numberAt(nums []int, i int) int {
+	if i < len(nums) {
+		return nums[i]
+	}
+
+	return 0
+}
+
+// versionParts splits a version into its numbers and whatever pre-release
+// suffix follows them. It reports false for anything it cannot read as a
+// dotted run of numbers.
+func versionParts(v string) (nums []int, pre string, ok bool) {
+	v = strings.TrimPrefix(v, "v")
+
+	// Cut rather than slice: internal/arch forbids slicing a string in this
+	// package, and the reason holds here — the separator is found by index
+	// and the index is a byte offset.
+	for _, sep := range []string{"-", "+"} {
+		if head, tail, found := strings.Cut(v, sep); found {
+			v, pre = head, sep+tail
+			break
+		}
+	}
+
+	if v == "" {
+		return nil, "", false
+	}
+
+	for _, part := range strings.Split(v, ".") {
+		n, err := strconv.Atoi(part)
+		if err != nil || n < 0 {
+			return nil, "", false
+		}
+
+		nums = append(nums, n)
+	}
+
+	return nums, pre, true
 }
 
 // upgradeCheckInterval is the cadence at which Orbit checks for new releases.
