@@ -93,8 +93,17 @@ const maxHistory = 32 << 10
 // is honest, and silent loss is not — a model that cannot see it is missing
 // context will speak as though it has all of it.
 func history(events []record.Event) string {
+	// A turn somebody took back is not repeated to the model, and neither
+	// is the line that took it back: the model is being shown a
+	// conversation, and "that message is withdrawn" is bookkeeping about the
+	// conversation rather than part of it. Both are still in the log, which
+	// is where a person goes to see what was said.
+	gone := record.Retracted(events)
 	lines := make([]string, 0, len(events))
 	for _, e := range events {
+		if e.Kind == record.SupervisorRetracted || gone[record.Stamp(e.At)] {
+			continue
+		}
 		lines = append(lines, historyLine(e))
 	}
 	kept, budget := 0, maxHistory

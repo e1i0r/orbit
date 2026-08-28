@@ -43,4 +43,9 @@ const (
 	SupervisorBriefing   = "supervisor.briefing"   // directive / briefing from the operator
 	SupervisorDebriefing = "supervisor.debriefing" // summary / status report from the supervisor
 	SupervisorAction     = "supervisor.action"     // autonomous action taken by the supervisor
+	// SupervisorRetracted takes back an earlier line of the thread, naming
+	// it in data.at with record.Stamp. It is how somebody unsays something
+	// in a log that cannot erase: the withdrawn line stays where it is, and
+	// stops being repeated into the model's prompt.
+	SupervisorRetracted = "supervisor.retracted"
 )

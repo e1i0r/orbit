@@ -2233,6 +2233,10 @@
       "source": "supervisor error: {err}",
       "value": "error del supervisor: {err}"
     },
+    "supervisor.retracted": {
+      "source": "(retracted)",
+      "value": "(retractado)"
+    },
     "supervisor.acting": {
       "source": "supervisor is autonomously inspecting {n} task(s)...",
       "value": "el supervisor está inspeccionando autónomamente {n} tarea(s)..."

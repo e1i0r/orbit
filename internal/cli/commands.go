@@ -198,7 +198,7 @@ func commands() []Command {
 		About: func(p *words.Printer) string { return p.T("cmd.upgrade", "check for updates and upgrade orbit") },
 		Run:   upgrade,
 	}, {
-		Name: "supervisor", Args: "[-by <author>] [text]",
+		Name: "supervisor", Args: "[-by <author>] [-retract <n>] [text]",
 		About: func(p *words.Printer) string {
 			return p.T("cmd.supervisor", "read or write to the persistent supervisor conversation thread")
 		},

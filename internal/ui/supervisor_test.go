@@ -126,3 +126,26 @@ func TestSupervisorReplyMsgHandling(t *testing.T) {
 		t.Errorf("expected message notification, got: %q", m.message)
 	}
 }
+
+// TestSupervisorRenderingMarksAWithdrawnLine: the window shows the same
+// thread the supervisor's prompt is built from, so a line that no longer
+// steers the supervisor must not read on screen like one that does.
+func TestSupervisorRenderingMarksAWithdrawnLine(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+	m = m.openSupervisor()
+	m.supervisor.lines = []view.SupervisorLine{{
+		At:        time.Date(2026, 8, 28, 9, 0, 0, 0, time.UTC),
+		By:        "elio",
+		Channel:   "tui",
+		Text:      "the one I regret",
+		Retracted: true,
+	}}
+
+	full := strings.Join(m.supervisorRows(25, 100), "\n")
+	if !strings.Contains(full, "retract") {
+		t.Errorf("a withdrawn line is drawn like any other:\n%s", full)
+	}
+	if !strings.Contains(full, "the one I regret") {
+		t.Errorf("a withdrawn line was hidden instead of marked:\n%s", full)
+	}
+}

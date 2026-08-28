@@ -70,17 +70,28 @@ func (m Model) drawSupervisorStream(lines []view.SupervisorLine, maxRows, w int)
 			if l.TaskID != "" {
 				taskTag = " " + Paint(Accent).Render("("+l.TaskID+")")
 			}
+			// A withdrawn line stays on screen: it was said, and the
+			// lines under it are answering it. What it stops being is
+			// advice, so it is marked and dimmed rather than hidden.
+			if l.Retracted {
+				taskTag += " " + Paint(Dim).Render(p.T("supervisor.retracted", "(retracted)"))
+			}
 
 			rendered = append(rendered, fit(fmt.Sprintf("  %s  ❯ %s%s", timeStr, badge, taskTag), w))
 
-			if isSupervisor {
-				mdLines := renderMarkdown(l.Text, w, false)
-				for _, mdl := range mdLines {
+			switch {
+			case l.Retracted:
+				for _, rl := range plainLines(l.Text) {
+					for _, wl := range splitIntoLines(rl, max(20, w-6)) {
+						rendered = append(rendered, fit("    "+Paint(Dim).Render(wl), w))
+					}
+				}
+			case isSupervisor:
+				for _, mdl := range renderMarkdown(l.Text, w, false) {
 					rendered = append(rendered, fit(mdl, w))
 				}
-			} else {
-				rawLines := strings.Split(strings.ReplaceAll(l.Text, "\r\n", "\n"), "\n")
-				for _, rl := range rawLines {
+			default:
+				for _, rl := range plainLines(l.Text) {
 					for _, wl := range splitIntoLines(formatInlineMarkdown(rl), max(20, w-6)) {
 						rendered = append(rendered, fit("    "+wl, w))
 					}
@@ -160,4 +171,9 @@ func (m Model) drawSupervisorTextarea(w int) []string {
 	}
 	out = append(out, fit(bottomBorder, w))
 	return out
+}
+
+// plainLines is one message's text as lines, whatever wrote the newlines.
+func plainLines(text string) []string {
+	return strings.Split(strings.ReplaceAll(text, "\r\n", "\n"), "\n")
 }
