@@ -34,7 +34,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # install.sh is served at getorbit.sh/install.sh, which is the command
       # the README tells people to curl. It is copied from the root rather
@@ -51,9 +51,16 @@ jobs:
           grep -q '^getorbit.sh$' site/CNAME || { echo "site/CNAME is not getorbit.sh"; exit 1; }
           sh -n site/install.sh || { echo "site/install.sh is not valid shell"; exit 1; }
 
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v6
+
+      # upload-pages-artifact leaves dotfiles out of the artifact from v4 on,
+      # so site/.nojekyll is not in what gets served. Nothing is lost by that:
+      # .nojekyll asks a branch-served site not to run Jekyll over it, and an
+      # artifact is served as uploaded. The file stays because it is what makes
+      # branch serving safe if this ever has to go back to it, and the check
+      # above stays with it, so a truncated site/ is still caught.
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
