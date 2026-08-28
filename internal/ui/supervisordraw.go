@@ -20,21 +20,24 @@ func (m Model) supervisorRows(h, w int) []string {
 	if h <= 0 {
 		return nil
 	}
-	boxW := supervisorBoxWidth(w)
-	input := m.drawSupervisorTextarea(boxW)
-
-	threadH := h - len(input) - 1
-	if threadH < 3 {
-		threadH = 3
-	}
-
+	boxW, threadH := m.supervisorLayout(h, w)
 	out := m.drawSupervisorThread(threadH, boxW)
 	out = append(out, "")
-	out = append(out, input...)
+	out = append(out, m.drawSupervisorTextarea(boxW)...)
 	for i, row := range out {
 		out[i] = fit("  "+row, w)
 	}
 	return fill(out, h)
+}
+
+// supervisorLayout is the screen's arithmetic, in one place: how wide both
+// boxes are, and how tall the thread is once the input has taken what it
+// needs. The keys ask it the same question the drawing does — a scroll that
+// clamped against a different height from the one on screen is a scroll
+// that stops a row early, or does nothing for the first ten presses.
+func (m Model) supervisorLayout(h, w int) (boxW, threadH int) {
+	boxW = supervisorBoxWidth(w)
+	return boxW, max(h-len(m.drawSupervisorTextarea(boxW))-1, 3)
 }
 
 // drawSupervisorThread is the conversation, framed.
@@ -111,6 +114,9 @@ func (m Model) threadLines(cw int) (rows []string, starts []int) {
 // scroll position is not something the reader has to manage as well.
 func (m Model) threadOffset(total, maxRows int, starts []int) int {
 	offset := m.supervisor.offset
+	if m.supervisor.follow {
+		offset = max(total-maxRows, 0)
+	}
 	if m.supervisor.picking && m.supervisor.pick < len(starts) {
 		start := starts[m.supervisor.pick]
 		end := total

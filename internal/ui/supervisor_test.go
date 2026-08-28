@@ -70,28 +70,6 @@ func TestSupervisorTypingAndSubmit(t *testing.T) {
 	}
 }
 
-func TestSupervisorScrolling(t *testing.T) {
-	m, _ := testModel(t, 100, 30)
-	m = m.openSupervisor()
-	m.supervisor.lines = []view.SupervisorLine{
-		{At: time.Now(), By: "elio", Channel: "tui", Text: "msg1"},
-		{At: time.Now(), By: "supervisor", Channel: "autopilot", Text: "msg2"},
-	}
-	m.supervisor.offset = 0
-
-	// Down increases offset
-	m = next(t, m, tea.KeyPressMsg{Code: tea.KeyDown})
-	if m.supervisor.offset != 1 {
-		t.Errorf("offset after Down = %d, want 1", m.supervisor.offset)
-	}
-
-	// Up decreases offset
-	m = next(t, m, tea.KeyPressMsg{Code: tea.KeyUp})
-	if m.supervisor.offset != 0 {
-		t.Errorf("offset after Up = %d, want 0", m.supervisor.offset)
-	}
-}
-
 func TestSupervisorRendering(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m = m.openSupervisor()

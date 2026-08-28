@@ -75,6 +75,21 @@ func (m Model) wheel(e tea.Mouse) Model {
 		// than scrolling something that is not being shown.
 		return m
 	}
+	if m.screen == screenSupervisor {
+		// The thread scrolls under the wheel, and while a line is being
+		// picked the wheel moves the pick instead — the same rule the
+		// arrows follow on this screen, so the hand does not have to know
+		// which of the two it is holding.
+		d := wheelRows
+		if up {
+			d = -wheelRows
+		}
+		if m.supervisor.picking {
+			m.supervisor.pick = min(max(m.supervisor.pick+d, 0), max(len(m.supervisor.lines)-1, 0))
+			return m
+		}
+		return m.scrollThread(d)
+	}
 	if m.screen != screenList {
 		return m
 	}
