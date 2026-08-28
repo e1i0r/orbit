@@ -1,7 +1,8 @@
 package cli
 
-// The four things the window is allowed to do, as closures, and the one
-// sweep that runs before its first frame.
+// What the window is allowed to do, as closures, and the one sweep that runs
+// before its first frame. The ports that take an engine are in engines.go,
+// beside the table they read.
 //
 // Every one of them is here rather than in internal/ui for the same reason:
 // they all take a *store.Store, and internal/ui cannot name that type.
@@ -17,14 +18,11 @@ package cli
 import (
 	"errors"
 	"os"
-	"os/exec"
 
 	"github.com/e1i0r/orbit/internal/board"
-	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/task"
-	"github.com/e1i0r/orbit/internal/ui"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -138,56 +136,6 @@ func startPort(s *store.Store) func(view.Task, string, int) (int, error) {
 	}
 }
 
-// takePort builds the interactive session the window suspends itself for,
-// and runs nothing.
-//
-// A task that has never run has no engine and no session, and that is not a
-// failure: it is answered with no command and no error, which is what makes
-// the window say so in the reader's own language rather than in this
-// package's English. An engine this build does not have is a different
-// thing, and it is named — that one is a fact about the binary, and a reader
-// who is told which engine is missing can do something about it.
-func takePort(r *board.Reader, engines map[string]engine.Engine) func(view.Task) (*exec.Cmd, error) {
-	return func(t view.Task) (*exec.Cmd, error) {
-		if t.Engine == "" {
-			return nil, nil
-		}
-
-		eng, ok := engines[t.Engine]
-		if !ok {
-			return nil, &unknownEngineError{Name: t.Engine, ID: t.ID}
-		}
-
-		session, err := lastSession(r, t)
-		if err != nil {
-			return nil, err
-		}
-
-		dir, err := r.Worktree(t.RepoPath, t.ID)
-		if err != nil {
-			return nil, err
-		}
-		// A session of "" is takeCommand's rule and not this function's:
-		// it answers with no command, and the window has one sentence for
-		// a task there is nothing to carry on for.
-		return takeCommand(eng, session, dir)
-	}
-}
-
-// unknownEngineError is a record naming an engine this build cannot run.
-//
-// It is a type rather than fmt.Errorf because the window puts it in the
-// activity band verbatim, and a sentence a reader is expected to act on is
-// worth being able to test by name.
-type unknownEngineError struct {
-	Name string // the engine the record names
-	ID   string // the task whose record names it
-}
-
-func (e *unknownEngineError) Error() string {
-	return "task " + e.ID + " ran on " + e.Name + ", which this build of orbit cannot run"
-}
-
 // lastSession is the newest session id one task's record carries, or "" for
 // a task whose engine never reported one.
 //
@@ -260,64 +208,4 @@ func reconcileAll(s *store.Store) error {
 	}
 
 	return errors.Join(errs...)
-}
-
-// enginesPort adapts the engine map and declared engines to ui.Options.Engines.
-func enginesPort(engines map[string]engine.Engine) func() []ui.EngineInfo {
-	return func() []ui.EngineInfo {
-		var list []ui.EngineInfo
-
-		names := []string{"claude", "codex", "opencode"}
-		setupGuides := map[string][]string{
-			"claude": {
-				"1. Install Claude Code: npm install -g @anthropic-ai/claude-code",
-				"2. Run 'claude' in a terminal to authenticate",
-				"3. Ensure 'claude' is in your PATH",
-			},
-			"codex": {
-				"1. Install Codex CLI: npm install -g @openai/codex",
-				"2. Export OPENAI_API_KEY in your environment",
-				"3. Ensure 'codex' is in your PATH",
-			},
-			"opencode": {
-				"1. Install OpenCode CLI binary",
-				"2. Configure local model endpoint or API keys",
-				"3. Ensure 'opencode' is in your PATH",
-			},
-		}
-
-		for _, name := range names {
-			eng, hasEng := engines[name]
-			_, pathErr := exec.LookPath(name)
-
-			available := hasEng && pathErr == nil
-			if available {
-				var models []ui.ChoiceInfo
-				for _, m := range eng.Models() {
-					models = append(models, ui.ChoiceInfo{ID: m.ID, Label: m.Label})
-				}
-
-				var efforts []ui.ChoiceInfo
-				for _, e := range eng.Efforts() {
-					efforts = append(efforts, ui.ChoiceInfo{ID: e.ID, Label: e.Label})
-				}
-
-				list = append(list, ui.EngineInfo{
-					Name:      name,
-					Available: true,
-					Models:    models,
-					Efforts:   efforts,
-					CanThink:  eng.CanThink(),
-				})
-			} else {
-				list = append(list, ui.EngineInfo{
-					Name:      name,
-					Available: false,
-					Setup:     setupGuides[name],
-				})
-			}
-		}
-
-		return list
-	}
 }

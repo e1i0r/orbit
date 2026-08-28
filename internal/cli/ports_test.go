@@ -21,6 +21,7 @@ import (
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/task"
 	"github.com/e1i0r/orbit/internal/view"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 func TestStartPortReachesTaskStartOnceLoaded(t *testing.T) {
@@ -150,8 +151,13 @@ func TestEnginesPortMarksEveryEngineUnavailableWithNoPath(t *testing.T) {
 			t.Errorf("engine %q reported available with an empty $PATH", info.Name)
 		}
 
-		if len(info.Setup) == 0 {
+		if info.Setup == nil {
 			t.Errorf("engine %q reported unavailable with no setup guide", info.Name)
+			continue
+		}
+
+		if len(info.Setup(words.For("en"))) == 0 {
+			t.Errorf("engine %q reported unavailable with an empty setup guide", info.Name)
 		}
 	}
 }

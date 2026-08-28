@@ -183,16 +183,18 @@ func set(ctx Context, args []string) error {
 		return err
 	}
 
-	cfg, err := s.Settings()
-	if err != nil {
-		return err
-	}
 	// No argument at all is a question, not a mistake: it is the only way
 	// to see what the settings are without opening the file, and a reader
 	// who has forgotten a key's name is asking exactly this. One argument
 	// is still a mistake — half a change is not a question.
 	if fs.NArg() == 0 {
+		cfg, err := s.Settings()
+		if err != nil {
+			return err
+		}
+
 		printSettings(ctx, cfg)
+
 		return nil
 	}
 
@@ -201,17 +203,25 @@ func set(ctx Context, args []string) error {
 	}
 
 	key, value := fs.Arg(0), fs.Arg(1)
+	// The read, the change and the write are one step. Between them, the
+	// window is another process writing the whole of this file back from a
+	// copy it read before this line ran: two settings changed at once used
+	// to be one setting changed and one silently discarded.
+	var shown string
 
-	shown, err := assign(&cfg, key, value)
+	err = s.UpdateSettings(func(cfg *store.Settings) error {
+		var err error
+
+		shown, err = assign(cfg, key, value)
+
+		return err
+	})
 	if err != nil {
 		return err
 	}
 
-	if err := s.SaveSettings(cfg); err != nil {
-		return err
-	}
-
-	fmt.Fprintf(ctx.Out, "%s is now %s\n", key, shown)
+	fmt.Fprintf(ctx.Out, "%s\n", ctx.printer().T("set.now", "{key} is now {value}",
+		words.Arg{Name: "key", Value: key}, words.Arg{Name: "value", Value: shown}))
 
 	return nil
 }

@@ -238,10 +238,15 @@ type QuotaWindow struct {
 }
 
 // EngineInfo is what the window knows about an engine's dials and setup.
+//
+// Setup is a function of a printer for the reason Command.About is: the
+// steps are sentences a reader reads, so they go through internal/words like
+// every other line on this screen, and they follow a language changed after
+// this slice was handed over.
 type EngineInfo struct {
 	Name      string
 	Available bool
-	Setup     []string
+	Setup     func(*words.Printer) []string
 	Models    []ChoiceInfo
 	Efforts   []ChoiceInfo
 	CanThink  bool

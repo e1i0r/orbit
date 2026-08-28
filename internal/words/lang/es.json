@@ -1235,6 +1235,46 @@
       "source": "State lives in $ORBIT_HOME, or ~/.orbit when that is unset.",
       "value": "El estado vive en $ORBIT_HOME, o en ~/.orbit si no está definida."
     },
+    "set.now": {
+      "source": "{key} is now {value}",
+      "value": "{key} ahora es {value}"
+    },
+    "engine.setup.claude.install": {
+      "source": "1. Install Claude Code: npm install -g @anthropic-ai/claude-code",
+      "value": "1. Instala Claude Code: npm install -g @anthropic-ai/claude-code"
+    },
+    "engine.setup.claude.login": {
+      "source": "2. Run 'claude' in a terminal to authenticate",
+      "value": "2. Ejecuta 'claude' en una terminal para autenticarte"
+    },
+    "engine.setup.claude.path": {
+      "source": "3. Ensure 'claude' is in your PATH",
+      "value": "3. Asegúrate de que 'claude' esté en tu PATH"
+    },
+    "engine.setup.codex.install": {
+      "source": "1. Install Codex CLI: npm install -g @openai/codex",
+      "value": "1. Instala Codex CLI: npm install -g @openai/codex"
+    },
+    "engine.setup.codex.key": {
+      "source": "2. Export OPENAI_API_KEY in your environment",
+      "value": "2. Exporta OPENAI_API_KEY en tu entorno"
+    },
+    "engine.setup.codex.path": {
+      "source": "3. Ensure 'codex' is in your PATH",
+      "value": "3. Asegúrate de que 'codex' esté en tu PATH"
+    },
+    "engine.setup.opencode.install": {
+      "source": "1. Install OpenCode CLI binary",
+      "value": "1. Instala el binario de OpenCode CLI"
+    },
+    "engine.setup.opencode.configure": {
+      "source": "2. Configure local model endpoint or API keys",
+      "value": "2. Configura el endpoint del modelo local o las claves de API"
+    },
+    "engine.setup.opencode.path": {
+      "source": "3. Ensure 'opencode' is in your PATH",
+      "value": "3. Asegúrate de que 'opencode' esté en tu PATH"
+    },
     "setting.language": {
       "source": "the language orbit speaks",
       "value": "el idioma en el que habla orbit"
