@@ -86,6 +86,13 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 			return failed(s, t, fmt.Errorf("phase %q wants the engine %q, which is not configured", p.Name, p.Engine))
 		}
 
+		// The empty catalogue is not checked, and that is the difference
+		// between this and the two checks below. Models() empty means an
+		// engine that does not publish its names, not one that has none — so
+		// whatever the phase named goes through to the command line and the
+		// engine answers for it. Efforts() empty and CanThink() false are
+		// claims about a dial the engine does not have at all, which is why
+		// those two refuse.
 		if p.Model != "" && len(eng.Models()) > 0 {
 			var found bool
 
@@ -157,8 +164,22 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		}
 
 		notes := unconsumedNotes(s, t)
+		// Through failed, and not returned bare. Every other way out of
+		// this loop writes a terminal event, and the reason is the
+		// invariant hold's comment states: a task's log ends in a terminal
+		// event, or a reader appends one. Reconcile is that reader, and it
+		// cannot be here — it acts on a stale marker, and the marker of
+		// this run is about to be released cleanly by the defer above. So
+		// an emit that failed left task.started with nothing after it and
+		// nothing that would ever close it: a task that reads as running
+		// for ever, in every reader of the record.
+		//
+		// The write may well fail too — it is the same log, usually for the
+		// same reason — which is why failed discards its own error. It
+		// costs nothing and it closes the log whenever the failure was
+		// transient, which is the case worth having.
 		if err := emit(s, t, phaseStart(p, i+1, notes)); err != nil {
-			return err
+			return failed(s, t, err)
 		}
 
 		inputPrev := ""
@@ -262,15 +283,33 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		}
 
 		if err := emit(s, t, phaseEnd(record.PhaseFinished, p.Name, out, nil)); err != nil {
-			return err
+			return failed(s, t, err)
 		}
 
+		// Only when there is something to carry. A phase that finished
+		// silently leaves the last real answer standing rather than blanking
+		// it, so the "Previous Phase Output" the next prompt shows can be two
+		// phases back. That is the intended trade and it is worth stating,
+		// because the label does not: the alternative hands a phase that asked
+		// to be fed nothing at all, and a stale answer is worth more to it
+		// than an empty one. Which phase actually said it is in the log, where
+		// every phase's output is a line of its own.
 		if out.Output != "" {
 			prevOutput = out.Output
 		}
 	}
 
-	return emit(s, t, record.Event{Kind: record.TaskFinished})
+	// Every phase ran and every one of them was written down; only the line
+	// that says so did not land. Calling that a failure is the closest true
+	// thing the record can say — the run did not complete, because
+	// completing includes being able to report it — and it is far better
+	// than the alternative, which is a finished run whose log stays open for
+	// ever because its last write was the one that failed.
+	if err := emit(s, t, record.Event{Kind: record.TaskFinished}); err != nil {
+		return failed(s, t, err)
+	}
+
+	return nil
 }
 
 // stopped writes down that a run was stopped from outside.

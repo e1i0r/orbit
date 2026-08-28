@@ -2,6 +2,7 @@ package tracker
 
 import (
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -84,4 +85,29 @@ func TestIsTrackerURL(t *testing.T) {
 	if IsTrackerURL("https://example.com/not/an/issue") {
 		t.Error("expected non-tracker URL to not match")
 	}
+}
+
+// TestRegisterIsSafeUnderTheRaceDetector. Register appended to a
+// package-level slice while every reader ranged over the same one, with
+// nothing serialising them.
+func TestRegisterIsSafeUnderTheRaceDetector(t *testing.T) {
+	var wg sync.WaitGroup
+
+	for range 8 {
+		wg.Add(2)
+
+		go func() {
+			defer wg.Done()
+
+			Register(LinearProvider{})
+		}()
+
+		go func() {
+			defer wg.Done()
+
+			IsTrackerURL("https://linear.app/acme/issue/ENG-1")
+		}()
+	}
+
+	wg.Wait()
 }

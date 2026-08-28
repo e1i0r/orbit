@@ -15,6 +15,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/record"
 )
 
 // capableEngine is a fake with a model and an effort a phase can actually
@@ -193,4 +194,70 @@ func TestRunHoldFailureAfterTaskStarted(t *testing.T) {
 	if err := Run(context.Background(), s, tk, f, engines, nil); err == nil {
 		t.Error("Run should have failed when the run marker cannot be created")
 	}
+}
+
+// unrecordableEngine answers with an output the record cannot hold.
+//
+// captured cuts an engine's answer to a megabyte, and record.MaxLine is four
+// — but a megabyte of control characters is six megabytes once JSON has
+// escaped every one of them to \u0000. So phase.finished is refused by the
+// log while the short task.failed after it fits easily: one event that
+// cannot be written, in a log that is otherwise perfectly writable.
+type unrecordableEngine struct{}
+
+func (unrecordableEngine) Name() string             { return "unrecordable" }
+func (unrecordableEngine) CanResume() bool          { return false }
+func (unrecordableEngine) CanThink() bool           { return false }
+func (unrecordableEngine) Models() []engine.Choice  { return nil }
+func (unrecordableEngine) Efforts() []engine.Choice { return nil }
+func (unrecordableEngine) Locate() (string, error)  { return "unrecordable", nil }
+
+func (unrecordableEngine) Run(_ context.Context, _ engine.Request) (engine.Result, error) {
+	return engine.Result{Output: strings.Repeat("\x00", maxOutput)}, nil
+}
+
+// TestALogThatCannotBeWrittenIsStillClosed is the fix.
+//
+// The three emits on Run's success path returned their error bare. The
+// deferred release then took the marker off cleanly, so the log was left
+// ending at phase.started with no terminal event and no stale marker — the
+// one state Reconcile cannot repair, because it acts on a marker that is
+// still there. Every reader of that record shows the task as running, for
+// ever, and nothing will ever say otherwise.
+func TestALogThatCannotBeWrittenIsStillClosed(t *testing.T) {
+	s, r := fixture(t)
+
+	tk, err := Create(s, r, "RUN-CLOSE-1", "an answer the record cannot hold", "")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	f := flow.Flow{Name: "one", Phases: []flow.Phase{{Name: "implement", Engine: "unrecordable"}}}
+
+	engines := map[string]engine.Engine{"unrecordable": unrecordableEngine{}}
+	if runErr := Run(context.Background(), s, tk, f, engines, nil); runErr == nil {
+		t.Fatal("Run returned nil after the phase's ending was refused by the log")
+	}
+
+	got, err := Events(s, tk)
+	if err != nil {
+		t.Fatalf("Events: %v", err)
+	}
+
+	if inFlight(got) {
+		t.Errorf("the log is still open after the run returned; kinds are %v", kindsOf(got))
+	}
+
+	if _, alive, err := Alive(s, tk); err != nil || alive {
+		t.Errorf("Alive = (%v, %v), want the marker released", alive, err)
+	}
+}
+
+func kindsOf(events []record.Event) []string {
+	out := make([]string, 0, len(events))
+	for _, e := range events {
+		out = append(out, e.Kind)
+	}
+
+	return out
 }

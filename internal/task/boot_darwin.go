@@ -13,8 +13,11 @@ import (
 // bootTime asks the kernel when it came up.
 //
 // kern.boottime is a struct timeval — a seconds field and a microseconds
-// field, in the machine's own byte order — and syscall.Sysctl hands it back
-// as the raw bytes in a string. Only the seconds are read: this is compared
+// field — and syscall.Sysctl hands it back as the raw bytes in a string.
+// They are read little-endian, which this comment used to describe as the
+// machine's own byte order while the code below named one: every darwin Go
+// builds for is little-endian (amd64 and arm64), so the two agree, and
+// saying which one is being assumed is the point. Only the seconds are read: this is compared
 // against a timestamp Orbit wrote to the second, so microseconds would be
 // precision with nothing on the other side to match it.
 //

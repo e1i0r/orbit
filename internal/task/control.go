@@ -58,7 +58,23 @@ func Control(s *store.Store, t Task, word string) error {
 	}
 	// 0600 like everything else under the state root, and one line, so that
 	// `cat control` is a supported way of answering "what did I ask for?".
-	if err := os.WriteFile(path, []byte(word+"\n"), 0o600); err != nil {
+	//
+	// In one step, because take reads this file while it is being written.
+	// os.WriteFile truncates and then writes; take reading between the two
+	// got an empty file, which is not one of the five words, so take did
+	// what it does with a word it does not know — removed it. The word was
+	// unlinked before it was ever whole on disk and the run never saw it: a
+	// cancel somebody typed, swallowed, with nothing anywhere saying so. The
+	// gate calls take once per poll for as long as a phase waits, so that
+	// instant is sampled constantly rather than rarely. mark (alive.go)
+	// writes the run marker this way for exactly this reason.
+	//
+	// What it costs is that a control.tmp-* can be left beside the word if
+	// this process dies mid-write. That is a stray file and not a stuck
+	// state: nothing reads it, nothing keys on it, and the next Control
+	// makes its own. It is not the case take's own comment rules out — a
+	// half-taken word that nothing would ever clear.
+	if err := store.WriteAtomically(path, []byte(word+"\n")); err != nil {
 		return fmt.Errorf("tell task %s to %s: %w", t.ID, word, err)
 	}
 

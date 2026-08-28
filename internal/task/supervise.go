@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/record"
@@ -124,6 +125,17 @@ func history(events []record.Event) string {
 
 		kept++
 	}
+	// At least the newest turn, whatever it weighs. One answer longer than
+	// the whole budget left kept at zero, and the model was then shown a
+	// history made entirely of the line saying how many turns it was not
+	// being shown — the turn it is replying to included. A supervisor that
+	// writes one long answer blinds itself to the conversation on the very
+	// next call. Cutting that turn down is worse than showing it whole and
+	// much better than showing nothing.
+	if kept == 0 && len(lines) > 0 {
+		kept = 1
+		lines[len(lines)-1] = trimmed(lines[len(lines)-1], maxHistory)
+	}
 
 	var b strings.Builder
 	if dropped := len(lines) - kept; dropped > 0 {
@@ -157,4 +169,20 @@ func historyLine(e record.Event) string {
 	}
 
 	return fmt.Sprintf("[%s via %s]%s: %s\n", by, channel, taskID, e.Text)
+}
+
+// trimmed cuts one turn down to n bytes and says in the turn that it had to,
+// which is the rule captured follows for an engine's output: truncation that
+// announces itself is honest, and silent loss is not.
+func trimmed(line string, n int) string {
+	if len(line) <= n {
+		return line
+	}
+	// Never sever a rune: this goes into a prompt, and half a character
+	// reads to the model as a character it does not know.
+	for n > 0 && !utf8.RuneStart(line[n]) {
+		n--
+	}
+
+	return line[:n] + fmt.Sprintf("…[this turn is %d bytes and is cut here]\n", len(line))
 }
