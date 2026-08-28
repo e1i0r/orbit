@@ -71,9 +71,17 @@ func (m Model) drawRow(r row, w int, selected bool) string {
 		}
 		parts = append(parts, rendered)
 	}
+	// The gutter says one of two things and the cursor wins, because a
+	// cursor that vanished when it stepped onto a working row would read as
+	// a cursor that had been lost. It is also the only two cells on the row
+	// that are free: the state column is the narrowest field there is, and
+	// a spinner in front of the phase word would cost it a fifth of itself.
 	mark := "  "
-	if selected {
+	switch {
+	case selected:
 		mark = Paint(Live).Bold(true).Render("▸ ")
+	case working(r.task):
+		mark = Paint(Live).Render(m.spin() + " ")
 	}
 	line := mark + strings.Join(parts, strings.Repeat(" ", columnGap))
 	return fit(line, w)
@@ -248,7 +256,7 @@ func (m Model) bandName(b view.Band) string {
 	case view.NeedsYou:
 		return "🛑 " + p.T("band.needs_you", "NEEDS YOU")
 	case view.Running:
-		return "⚡ " + p.T("band.running", "RUNNING")
+		return m.runGlyph(m.anyWorking()) + p.T("band.running", "RUNNING")
 	case view.ToDo:
 		return "📋 " + p.T("band.to_do", "TO DO")
 	case view.Done:

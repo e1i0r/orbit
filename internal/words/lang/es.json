@@ -1805,10 +1805,6 @@
       "source": "{events} events",
       "value": "{events} eventos"
     },
-    "status.read_time": {
-      "source": "{ms}ms read",
-      "value": "{ms}ms lectura"
-    },
     "status.quota": {
       "source": "{pct} left in {label} · resets in {resets}",
       "value": "{pct} restante en {label} · reinicia en {resets}"

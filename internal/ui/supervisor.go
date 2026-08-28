@@ -142,7 +142,8 @@ func (m Model) sendSupervisorMessage(text string) (tea.Model, tea.Cmd) {
 		eng = "claude"
 	}
 	cmd := askSupervisorCmd(m.opts.AskSupervisor, eng, text)
-	return m.say(m.opts.Words.T("supervisor.thinking", "supervisor is thinking...")), tea.Batch(cmd, spinnerTick())
+	m, frame := m.say(m.opts.Words.T("supervisor.thinking", "supervisor is thinking...")).nextFrame()
+	return m, tea.Batch(cmd, frame)
 }
 
 // startPicking opens the mode that takes a turn back, on the last line said

@@ -1,15 +1,15 @@
  [orbit]    📋 To Do 4   ⚡ Running 3   💬 Needs You 2   🏁 Done 6  📦 4 repos    🧠 claude    🌐 EN
 ────────────────────────────────────────────────────────────────────────────────────────────────────
-  $0.00 spent  ·  15 tasks  ·  0 events  ·  0ms read
+  $0.00 spent  ·  15 tasks  ·  0 events  ·  ⠋
   REPO      ID         TASK                                          STATUS           MOD…     TIME
   🛑 NEEDS YOU (3) ───────────────────────────────────────────────────────────────────────────────
 ▸ payments  ACME-2662  Retry the webhook on 5xx                      failed: gates              31m
   app       ACME-2701  Move the assets cron                          waiting: review             4m
   payments  ACME-2698  Fix the swagger lint                          abandoned                   3h
 
-  ⚡ RUNNING (2) ─────────────────────────────────────────────────────────────────────────────────
-  app       ACME-2705  Reconciliation endpoint                       implement        opus       8m
-  payments  ACME-2706  Index on settlements                          review 2/3       opus       3m
+  ⠋ RUNNING (2) ──────────────────────────────────────────────────────────────────────────────────
+⠋ app       ACME-2705  Reconciliation endpoint                       implement        opus       8m
+⠋ payments  ACME-2706  Index on settlements                          review 2/3       opus       3m
 
   📋 TO DO (4) ─────────────────────────────────────────────────────────────────────────────  ⏎ open
 
