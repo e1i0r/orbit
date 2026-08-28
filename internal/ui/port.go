@@ -86,7 +86,12 @@ type Reader interface {
 // port; none of them is a path, and none of them is a handle on the state
 // root.
 type Options struct {
-	Root     string // where the repositories are, for the header and the empty state
+	Root string // where the repositories are, for the header and the empty state
+	// Version is the running build's own version, and it is here for one
+	// question: whether the release GitHub reports is news. internal/ui
+	// cannot name internal/cli, where the version is stamped in, so it
+	// arrives the way every other fact from outside does.
+	Version  string
 	Reader   Reader
 	Settings Settings
 	Words    *words.Printer

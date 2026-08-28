@@ -54,7 +54,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	case upgradeTickMsg:
-		return m, tea.Batch(checkUpgradeCmd, upgradeTick())
+		return m, tea.Batch(checkUpgradeCmd(m.opts.Version), upgradeTick())
 	case boardMsg:
 		return m.applyBoard(msg)
 	case controlMsg:

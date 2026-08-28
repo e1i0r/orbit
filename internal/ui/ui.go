@@ -249,5 +249,5 @@ func New(o Options) Model {
 // from wherever they are called, which inside a render is a blocking read
 // in the middle of a frame.
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(tea.RequestBackgroundColor, refresh(m.opts.Reader), tick(), rescanTick(), elapsedTick(), checkUpgradeCmd, upgradeTick())
+	return tea.Batch(tea.RequestBackgroundColor, refresh(m.opts.Reader), tick(), rescanTick(), elapsedTick(), checkUpgradeCmd(m.opts.Version), upgradeTick())
 }
