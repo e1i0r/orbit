@@ -136,8 +136,9 @@ func (s *Store) FlowDir() string { return filepath.Join(s.root, "flows") }
 // deeply nested the repository is. It lives in one function because it was
 // written out twice and two copies of a key can drift apart. Twelve
 // characters is 48 bits, which over a handful of paths will not collide;
-// create.go writes the path beside the hash so a collision would at least
-// be visible to anyone who looks.
+// create.go writes the path beside the hash and refuses to file a second
+// repository under a key whose marker already names another one, so a
+// collision is an error somebody reads rather than two records merged.
 func repoKey(abs string) string {
 	sum := sha256.Sum256([]byte(abs))
 	return hex.EncodeToString(sum[:])[:12]

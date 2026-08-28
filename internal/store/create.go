@@ -58,9 +58,16 @@ func (s *Store) CreateWorktreeParent(repoPath, taskID string) (string, error) {
 // the file that says which repository it is.
 //
 // The directory is named by a truncated hash, which answers no questions on
-// its own. `cat repos/<hash>/repo` now answers the only one that matters —
-// and if two repositories ever did land on one key, the mismatch would be
-// visible in that file instead of silently sharing a record.
+// its own. `cat repos/<hash>/repo` answers the only one that matters.
+//
+// And when that file already names a different repository, this refuses.
+// Twelve hex characters is 48 bits, which will not collide over a handful of
+// paths — but "will not" is not "cannot", and the cost of being wrong is
+// silent: two repositories filed under one record, each shown the other's
+// tasks, with the marker still naming whichever of them got there first.
+// Writing the marker only when it was missing never protected against that;
+// it is what made it quiet. The refusal names both paths, which is what
+// whoever reads it needs in order to move one of them.
 func (s *Store) createRepoDir(repoPath string) (string, error) {
 	abs, err := filepath.Abs(repoPath)
 	if err != nil {
@@ -74,9 +81,21 @@ func (s *Store) createRepoDir(repoPath string) (string, error) {
 		return "", fmt.Errorf("create %q: %w", dir, err)
 	}
 	marker := filepath.Join(dir, "repo")
-	if _, statErr := os.Stat(marker); errors.Is(statErr, os.ErrNotExist) {
+	body, readErr := os.ReadFile(marker)
+	switch {
+	case errors.Is(readErr, os.ErrNotExist):
 		if err := os.WriteFile(marker, []byte("path: "+abs+"\n"), fileMode); err != nil {
 			return "", fmt.Errorf("write %q: %w", marker, err)
+		}
+	case readErr != nil:
+		return "", fmt.Errorf("read %q: %w", marker, readErr)
+	default:
+		// A marker that will not parse is damage, and Repos already
+		// reports it as damage; rewriting it here would erase the only
+		// trace of it. Only a marker that reads cleanly and names
+		// somewhere else is a collision.
+		if known, ok := parseRepoMarker(string(body)); ok && known != abs {
+			return "", fmt.Errorf("%q and %q both hash to the store key %q, so orbit would file them under one record: move one of the two, or remove %q if it is stale", abs, known, filepath.Base(dir), dir)
 		}
 	}
 	return dir, nil
