@@ -63,11 +63,13 @@ func TestSettingsAdapterWriteFailsWhenSettingsCannotBeSaved(t *testing.T) {
 		t.Fatalf("SetAutopilot: %v", err)
 	}
 
-	settingsFile := filepath.Join(home, "settings.json")
-	if err := os.Chmod(settingsFile, 0o400); err != nil {
+	// The directory, not the file: settings are replaced by renaming a
+	// temporary over the top, and a rename asks the directory for
+	// permission rather than the file it replaces.
+	if err := os.Chmod(home, 0o500); err != nil {
 		t.Fatalf("chmod: %v", err)
 	}
-	defer func() { _ = os.Chmod(settingsFile, 0o600) }() //nolint:errcheck
+	defer func() { _ = os.Chmod(home, 0o700) }() //nolint:errcheck
 
 	if err := cfg.SetLanguage("es"); err == nil {
 		t.Error("SetLanguage succeeded while settings.json could not be written")
@@ -116,17 +118,18 @@ func TestSetFailsWhenSettingsCannotBeSaved(t *testing.T) {
 		t.Fatalf("set autopilot on exited %d: %s", code, errOut)
 	}
 
-	settingsFile := filepath.Join(home, "settings.json")
-	if err := os.Chmod(settingsFile, 0o400); err != nil {
+	// See the note above: the write goes through a rename, so it is the
+	// directory that has to refuse.
+	if err := os.Chmod(home, 0o500); err != nil {
 		t.Fatalf("chmod: %v", err)
 	}
-	defer func() { _ = os.Chmod(settingsFile, 0o600) }() //nolint:errcheck
+	defer func() { _ = os.Chmod(home, 0o700) }() //nolint:errcheck
 
 	code, _, errOut := run(t, "set", "autopilot", "off")
 	if code == 0 {
-		t.Error("set over a read-only settings file exited 0")
+		t.Error("set into a directory that refuses writes exited 0")
 	}
 	if errOut == "" {
-		t.Error("set failed silently over a read-only settings file")
+		t.Error("set failed silently into a directory that refuses writes")
 	}
 }

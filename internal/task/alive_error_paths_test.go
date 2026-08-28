@@ -7,7 +7,9 @@ package task
 
 import (
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 )
@@ -49,8 +51,7 @@ func TestAliveReturnsDeadForAMarkerWrittenBeforeThisBoot(t *testing.T) {
 }
 
 // TestMarkErrorPaths covers mark's two error returns: an id the store
-// refuses, and a task directory that was never created so the marker has
-// nowhere to land.
+// refuses, and a task directory it cannot make.
 func TestMarkErrorPaths(t *testing.T) {
 	s, r := fixture(t)
 
@@ -61,11 +62,119 @@ func TestMarkErrorPaths(t *testing.T) {
 		t.Error("mark with a slash in the id should have failed")
 	}
 
-	// 2. A well-formed id whose directory was never created: RunPath
-	// resolves fine, but the write has nowhere to land.
-	neverCreated := Task{ID: "NEVER-CREATED-1", Repo: r}
-	if _, err := mark(s, neverCreated, 123); err == nil {
-		t.Error("mark into a task directory that does not exist should have failed")
+	// 2. A regular file where the task's directory would go. mark makes the
+	// directory itself now — the marker is the first thing a run writes —
+	// so the failure to reach is the one where making it is impossible.
+	blocked := Task{ID: "BLOCKED-1", Repo: r}
+	dir, err := s.TaskDir(r.Path, blocked.ID)
+	if err != nil {
+		t.Fatalf("TaskDir: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Dir(dir), 0o700); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.WriteFile(dir, []byte("not a directory"), 0o600); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	if _, err := mark(s, blocked, 123); err == nil {
+		t.Error("mark should have failed where the task directory cannot be made")
+	}
+}
+
+// TestMarkMakesTheTaskDirectoryItself pins the other half of that change.
+// The marker goes down before task.started, so a run whose task directory
+// is not there yet has to be able to make it — otherwise no run could ever
+// claim a task before writing to its log.
+func TestMarkMakesTheTaskDirectoryItself(t *testing.T) {
+	s, r := fixture(t)
+	fresh := Task{ID: "NEVER-CREATED-1", Repo: r}
+	release, err := mark(s, fresh, os.Getpid())
+	if err != nil {
+		t.Fatalf("mark into a task directory that does not exist yet: %v", err)
+	}
+	defer release()
+	if _, alive, err := Alive(s, fresh); err != nil || !alive {
+		t.Errorf("Alive = (_, %v, %v), want the marker mark just wrote", alive, err)
+	}
+}
+
+// TestHoldRefusesATaskAnotherRunIsWalking is the whole of the fix.
+//
+// Two runs of one task share a worktree, a branch and a log. Nothing used to
+// stop the second one: hold overwrote the marker, both walked the flow, and
+// whichever finished first took the other's claim off on its way out.
+func TestHoldRefusesATaskAnotherRunIsWalking(t *testing.T) {
+	s, r := fixture(t)
+	held := Task{ID: "HELD-1", Repo: r}
+	// A marker naming this process, which is alive by construction.
+	release, err := mark(s, held, os.Getpid())
+	if err != nil {
+		t.Fatalf("mark: %v", err)
+	}
+	defer release()
+
+	if _, err := hold(s, held); err == nil {
+		t.Fatal("hold claimed a task another live run is already walking")
+	} else if !strings.Contains(err.Error(), held.ID) {
+		t.Errorf("the refusal reads %q; it has to name the task", err)
+	}
+}
+
+// TestHoldClaimsATaskWhoseRunIsGone is the other side of it: a marker left
+// behind by a run that died is not a reason to refuse for ever.
+func TestHoldClaimsATaskWhoseRunIsGone(t *testing.T) {
+	s, r := fixture(t)
+	stale := Task{ID: "STALE-1", Repo: r}
+	// A pid no process can hold: mark refuses nothing, and Alive reports it
+	// as a claim whose process is gone.
+	if _, err := mark(s, stale, deadPid(t)); err != nil {
+		t.Fatalf("mark: %v", err)
+	}
+	release, err := hold(s, stale)
+	if err != nil {
+		t.Fatalf("hold over a stale marker: %v", err)
+	}
+	defer release()
+	pid, alive, err := Alive(s, stale)
+	if err != nil {
+		t.Fatalf("Alive: %v", err)
+	}
+	if !alive || pid != os.Getpid() {
+		t.Errorf("Alive = (%d, %v), want this process holding it", pid, alive)
+	}
+}
+
+// TestReleaseLeavesAMarkerThatNamesSomebodyElse is the second half of the
+// same bug. A run asked to stop takes as long to die as its engine does, and
+// the run that replaces it claims the task in the meantime; a release that
+// removed the marker blindly took that claim off instead, leaving a live run
+// nothing claimed and nobody could cancel.
+func TestReleaseLeavesAMarkerThatNamesSomebodyElse(t *testing.T) {
+	s, r := fixture(t)
+	shared := Task{ID: "SHARED-1", Repo: r}
+
+	// The dying run's claim, and the release it is holding.
+	release, err := mark(s, shared, os.Getpid())
+	if err != nil {
+		t.Fatalf("mark: %v", err)
+	}
+	// The replacement run claims it while the first is still unwinding.
+	successor := os.Getpid() + 1
+	if _, err := mark(s, shared, successor); err != nil {
+		t.Fatalf("mark successor: %v", err)
+	}
+
+	release()
+
+	pid, _, found, err := readMarker(s, shared)
+	if err != nil {
+		t.Fatalf("readMarker: %v", err)
+	}
+	if !found {
+		t.Fatal("the first run's release took the successor's claim off with it")
+	}
+	if pid != successor {
+		t.Errorf("the marker names %d, want the successor %d", pid, successor)
 	}
 }
 

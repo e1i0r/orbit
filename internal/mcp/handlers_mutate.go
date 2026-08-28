@@ -203,21 +203,27 @@ func (sn Session) directTask(args map[string]any) CallToolResult {
 	if res != nil {
 		return *res
 	}
-	if err := task.Direct(sb.store, t, "mcp", message); err != nil {
-		return refuse(fmt.Errorf("direct task %s: %w", t.ID, err))
-	}
-	trace := journal(sb.store, t, "a model directed this task over mcp")
+	// Directing and restarting is one verb — task.Reopen — and not the two
+	// halves of it done here in a row. Reopen waits for the run it stopped
+	// to actually be gone before starting the next; spelling the pair out a
+	// second time is how this path came to skip that wait and put two runs
+	// on one task.
 	if boolArg(args, "restart") {
-		pid, err := task.Start(sb.store, t, t.Flow, board.Unread(sb.board))
+		pid, err := task.Reopen(sb.store, t, "mcp", message, t.Flow, board.Unread(sb.board))
 		if err != nil {
 			return refuse(fmt.Errorf("restart task %s after directing it: %w", t.ID, err))
 		}
+		trace := journal(sb.store, t, "a model directed this task over mcp and started it again")
 		return reply(map[string]any{
 			"id":      t.ID,
 			"pid":     pid,
 			"message": fmt.Sprintf("task %s was directed and restarted with pid %d%s", t.ID, pid, trace),
 		})
 	}
+	if err := task.Direct(sb.store, t, "mcp", message); err != nil {
+		return refuse(fmt.Errorf("direct task %s: %w", t.ID, err))
+	}
+	trace := journal(sb.store, t, "a model directed this task over mcp")
 	return done("task %s was directed; the directive is recorded%s", t.ID, trace)
 }
 

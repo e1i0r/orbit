@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 
@@ -123,6 +124,11 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 	}
 	return ui.Options{
 		Root: underHome(dir, home),
+		// What this build calls itself, so the header can tell a release
+		// that is news from the one already running. cli/upgrade.go asks the
+		// same question of the same variable; the window has to be handed it
+		// because internal/ui cannot reach in here for it.
+		Version: Version,
 		// The board reader the window is handed carries the settings file on
 		// its clock: see poll. The settings adapter answers from memory, and
 		// this is what keeps what it holds in step with the file.
@@ -137,6 +143,9 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 		MarkRead: markReadPort(s),
 		RecordSupervisor: func(by, channel, message string) error {
 			return task.RecordSupervisor(s, "", by, channel, "", "", message)
+		},
+		RetractSupervisor: func(at time.Time) error {
+			return task.RetractSupervisor(s, at)
 		},
 		AskSupervisor: func(engineName, prompt string) (string, error) {
 			eng, ok := engines[engineName]

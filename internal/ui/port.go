@@ -86,7 +86,12 @@ type Reader interface {
 // port; none of them is a path, and none of them is a handle on the state
 // root.
 type Options struct {
-	Root     string // where the repositories are, for the header and the empty state
+	Root string // where the repositories are, for the header and the empty state
+	// Version is the running build's own version, and it is here for one
+	// question: whether the release GitHub reports is news. internal/ui
+	// cannot name internal/cli, where the version is stamped in, so it
+	// arrives the way every other fact from outside does.
+	Version  string
 	Reader   Reader
 	Settings Settings
 	Words    *words.Printer
@@ -118,6 +123,13 @@ type Options struct {
 
 	// RecordSupervisor records a message into the global supervisor conversation thread.
 	RecordSupervisor func(by, channel, message string) error
+
+	// RetractSupervisor takes back one turn of that thread, named by the
+	// moment it was written — an event carries no id, so its timestamp is
+	// the only thing that already tells one line from another. Nothing is
+	// erased: the line stays in the thread, marked, and stops being put in
+	// front of the model.
+	RetractSupervisor func(at time.Time) error
 
 	// AskSupervisor asks the active engine to process and reply to the supervisor thread.
 	AskSupervisor func(engineName, prompt string) (string, error)

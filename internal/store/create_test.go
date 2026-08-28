@@ -7,6 +7,7 @@ package store
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -165,5 +166,68 @@ func TestRegisterRepoTwiceLeavesTheRecordAlone(t *testing.T) {
 	}
 	if _, err := os.Stat(task); err != nil {
 		t.Errorf("registering an already-known repository disturbed its tasks: %v", err)
+	}
+}
+
+// A hash collision cannot be produced on purpose, so these two stand in for
+// one the way the code sees it: a repository directory whose marker names
+// somewhere else. createRepoDir cannot tell this apart from the real thing.
+
+func TestCreateRepoDirRefusesADirectoryThatNamesAnotherRepository(t *testing.T) {
+	s, err := New(t.TempDir())
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	dir, err := s.RepoDir("/tmp/one")
+	if err != nil {
+		t.Fatalf("RepoDir: %v", err)
+	}
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "repo"), []byte("path: /tmp/two\n"), 0o600); err != nil {
+		t.Fatalf("write marker: %v", err)
+	}
+
+	_, err = s.RegisterRepo("/tmp/one")
+	if err == nil {
+		t.Fatal("RegisterRepo filed a repository under a key whose marker names another one")
+	}
+	for _, want := range []string{"/tmp/one", "/tmp/two"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("error %q does not name %q, so nobody can tell which two collided", err, want)
+		}
+	}
+	if _, err := s.CreateTaskDir("/tmp/one", "ACME-1"); err == nil {
+		t.Error("CreateTaskDir wrote a task into a record belonging to another repository")
+	}
+}
+
+func TestCreateRepoDirLeavesADamagedMarkerAlone(t *testing.T) {
+	s, err := New(t.TempDir())
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	dir, err := s.RepoDir("/tmp/one")
+	if err != nil {
+		t.Fatalf("RepoDir: %v", err)
+	}
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	marker := filepath.Join(dir, "repo")
+	if err := os.WriteFile(marker, []byte("nonsense\n"), 0o600); err != nil {
+		t.Fatalf("write marker: %v", err)
+	}
+
+	if _, err := s.RegisterRepo("/tmp/one"); err != nil {
+		t.Fatalf("RegisterRepo refused a damaged marker instead of leaving it: %v", err)
+	}
+	body, err := os.ReadFile(marker)
+	if err != nil {
+		t.Fatalf("read marker: %v", err)
+	}
+	if string(body) != "nonsense\n" {
+		t.Errorf("marker = %q, want it untouched: Repos is what reports damage, and a rewrite erases it", body)
 	}
 }

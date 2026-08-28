@@ -16,8 +16,13 @@ func TestStoreTaskIDValidationComprehensive(t *testing.T) {
 		}
 	}
 
-	// Invalid IDs
-	for _, id := range []string{"", ".", "..", "a/b", "../escape", "foo..bar"} {
+	// Invalid IDs. The second row is the fix: an id does not have to escape
+	// the tree to be unusable. Each of these could be created and then not
+	// opened, run or cancelled — a name three audiences read differently.
+	for _, id := range []string{
+		"", ".", "..", "a/b", "../escape", "foo..bar",
+		" ", "\t", "PAY-1 ", " PAY-1", "-fix", "--force", "PAY\n1", "PAY\x1b[2J1",
+	} {
 		if err := ValidTaskID(id); err == nil {
 			t.Errorf("ValidTaskID(%q) should have failed", id)
 		}

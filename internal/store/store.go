@@ -18,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode"
 )
 
 // dirMode and fileMode keep the state root to its owner.
@@ -39,9 +40,37 @@ type Store struct {
 
 // validateTaskID rejects taskIDs that could escape or traverse the store.
 // This package is the only thing standing between a typed id and the filesystem.
+//
+// Escaping the tree is not the only way an id can be wrong. An id is a name
+// three audiences have to agree on — a directory on disk, an argument on a
+// command line, and a line of the record read months later — and the rules
+// below are the ones that keep those three readings the same. Each is here
+// because breaking it produces a task that can be created and then not used:
+//
+//   - whitespace at either end, or nothing but whitespace: "PAY-1" and
+//     "PAY-1 " print identically and are two different directories, and a
+//     task named " " cannot be picked out of a listing at all.
+//   - a leading dash: every command takes the id as a positional argument,
+//     so "-fix" is read as a flag. The task is made and then nothing can
+//     open, run or cancel it.
+//   - a control character: the id is written into the JSONL record and
+//     printed on a terminal. A newline splits one log line into two, and an
+//     escape sequence rewrites the screen around it.
 func validateTaskID(taskID string) error {
 	if taskID == "" {
 		return fmt.Errorf("task id cannot be empty")
+	}
+	if strings.TrimSpace(taskID) == "" {
+		return fmt.Errorf("task id cannot be only whitespace")
+	}
+	if strings.TrimSpace(taskID) != taskID {
+		return fmt.Errorf("task id %q has whitespace at the start or the end", taskID)
+	}
+	if strings.HasPrefix(taskID, "-") {
+		return fmt.Errorf("task id %q starts with a dash, so every command would read it as a flag", taskID)
+	}
+	if strings.ContainsFunc(taskID, unicode.IsControl) {
+		return fmt.Errorf("task id %q contains a control character", taskID)
 	}
 	if strings.Contains(taskID, "/") || strings.Contains(taskID, string(os.PathSeparator)) {
 		return fmt.Errorf("task id %q contains path separator", taskID)
@@ -136,8 +165,9 @@ func (s *Store) FlowDir() string { return filepath.Join(s.root, "flows") }
 // deeply nested the repository is. It lives in one function because it was
 // written out twice and two copies of a key can drift apart. Twelve
 // characters is 48 bits, which over a handful of paths will not collide;
-// create.go writes the path beside the hash so a collision would at least
-// be visible to anyone who looks.
+// create.go writes the path beside the hash and refuses to file a second
+// repository under a key whose marker already names another one, so a
+// collision is an error somebody reads rather than two records merged.
 func repoKey(abs string) string {
 	sum := sha256.Sum256([]byte(abs))
 	return hex.EncodeToString(sum[:])[:12]

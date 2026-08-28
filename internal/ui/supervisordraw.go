@@ -1,22 +1,48 @@
 package ui
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
-	"charm.land/lipgloss/v2"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
 var spinnerFrames = []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
 
+// supervisorRows draws the whole screen: the thread in one box and what you
+// are about to say in another, both of one width.
+//
+// The two boxes are sized from each other rather than from constants. The
+// input grows with what has been typed into it, and the thread is whatever
+// is left, so a long directive eats the conversation instead of being
+// clipped against a fixed six rows.
 func (m Model) supervisorRows(h, w int) []string {
 	if h <= 0 {
 		return nil
 	}
-	p := m.opts.Words
+	boxW, threadH := m.supervisorLayout(h, w)
+	out := m.drawSupervisorThread(threadH, boxW)
+	out = append(out, "")
+	out = append(out, m.drawSupervisorTextarea(boxW)...)
+	for i, row := range out {
+		out[i] = fit("  "+row, w)
+	}
+	return fill(out, h)
+}
 
+// supervisorLayout is the screen's arithmetic, in one place: how wide both
+// boxes are, and how tall the thread is once the input has taken what it
+// needs. The keys ask it the same question the drawing does — a scroll that
+// clamped against a different height from the one on screen is a scroll
+// that stops a row early, or does nothing for the first ten presses.
+func (m Model) supervisorLayout(h, w int) (boxW, threadH int) {
+	boxW = supervisorBoxWidth(w)
+	return boxW, max(h-len(m.drawSupervisorTextarea(boxW))-1, 3)
+}
+
+// drawSupervisorThread is the conversation, framed.
+func (m Model) drawSupervisorThread(h, boxW int) []string {
+	p := m.opts.Words
 	eng := m.knobs.Engine
 	if eng == "" {
 		eng = "claude"
@@ -25,139 +51,174 @@ func (m Model) supervisorRows(h, w int) []string {
 	if m.autopilotOn() {
 		autoPip = Paint(Live).Render("● on")
 	}
-	headerLine := fmt.Sprintf("  %s %s %s %s %s %s",
-		Paint(Accent).Bold(true).Render("🛸 "+p.T("supervisor.title", "Supervisor & Cockpit Memory")),
-		Paint(Dim).Render("·"),
-		Paint(Accent).Render("["+eng+"]"),
-		Paint(Dim).Render("· ⚡ autopilot: "+autoPip),
-		Paint(Dim).Render("· messages: "+strconv.Itoa(len(m.supervisor.lines))),
-		"",
-	)
-	out := []string{"", fit(headerLine, w), "  " + Paint(Dim).Render(strings.Repeat("─", min(w-4, 110))), ""}
 
-	inputBoxHeight := 6
-	threadHeight := h - len(out) - inputBoxHeight
-	if threadHeight < 4 {
-		threadHeight = 4
+	// The border says which mode the screen is in. Picking a line to take
+	// back changes what every key does, and a mode you cannot see is a mode
+	// you press keys into by accident.
+	frame := Dim
+	right := Paint(Dim).Render("⚡ ") + autoPip + Paint(Dim).Render(" · "+strconv.Itoa(len(m.supervisor.lines))+" msg")
+	if m.supervisor.picking {
+		frame = Accent
+		right = Paint(Accent).Bold(true).Render(p.T("supervisor.picking", "pick a line to take back"))
 	}
 
-	threadRows := m.drawSupervisorStream(m.supervisor.lines, threadHeight, w-6)
-	out = append(out, threadRows...)
+	title := Paint(Accent).Bold(true).Render("🛸 "+p.T("supervisor.title", "Supervisor & Cockpit Memory")) +
+		" " + Paint(Dim).Render("·") + " " + Paint(Accent).Render("["+eng+"]")
 
-	out = append(out, m.drawSupervisorTextarea(w-4)...)
-	return fill(out, h)
+	rows := []string{boxTop(frame, title, right, boxW)}
+	for _, body := range m.supervisorBody(h-2, boxContentWidth(boxW)) {
+		rows = append(rows, boxRow(frame, body, boxW))
+	}
+	return append(rows, boxBottom(frame, "", "", boxW))
 }
 
-func (m Model) drawSupervisorStream(lines []view.SupervisorLine, maxRows, w int) []string {
-	p := m.opts.Words
-	var rendered []string
-
-	if len(lines) == 0 && !m.supervisorBusy {
-		emptyMsg := p.T("supervisor.empty", "No messages in supervisor thread yet. Type a briefing or instruction below.")
-		rendered = append(rendered, "  "+Paint(Dim).Render(emptyMsg), "")
-	} else {
-		for _, l := range lines {
-			isSupervisor := l.By == "supervisor" || l.By == "claude" || l.By == "codex" || l.By == "opencode" || l.By == "gemini"
-			timeStr := Paint(Dim).Render(l.At.Format("15:04:05"))
-			actorRole := Accent
-			icon := "🧑‍💻"
-			if isSupervisor {
-				actorRole = Live
-				icon = "🛸"
-			}
-			badge := Paint(actorRole).Bold(true).Render(icon + " " + l.By + " [" + l.Channel + "]")
-			taskTag := ""
-			if l.TaskID != "" {
-				taskTag = " " + Paint(Accent).Render("("+l.TaskID+")")
-			}
-
-			rendered = append(rendered, fit(fmt.Sprintf("  %s  ❯ %s%s", timeStr, badge, taskTag), w))
-
-			if isSupervisor {
-				mdLines := renderMarkdown(l.Text, w, false)
-				for _, mdl := range mdLines {
-					rendered = append(rendered, fit(mdl, w))
-				}
-			} else {
-				rawLines := strings.Split(strings.ReplaceAll(l.Text, "\r\n", "\n"), "\n")
-				for _, rl := range rawLines {
-					for _, wl := range splitIntoLines(formatInlineMarkdown(rl), max(20, w-6)) {
-						rendered = append(rendered, fit("    "+wl, w))
-					}
-				}
-			}
-			rendered = append(rendered, "")
-		}
+// supervisorBody is the thread's content: every message, then the window of
+// it that fits, chosen by the scroll offset or by what is being picked.
+//
+// A thread shorter than the box is padded above rather than below, so the
+// last thing said sits against the box you answer it in. Padding underneath
+// left a conversation of two lines stranded at the top of a tall terminal
+// with a field of nothing between it and the cursor.
+func (m Model) supervisorBody(maxRows, cw int) []string {
+	rendered, starts := m.threadLines(cw)
+	if len(rendered) < maxRows {
+		return append(make([]string, maxRows-len(rendered)), rendered...)
 	}
-
-	if m.supervisorBusy {
-		eng := m.knobs.Engine
-		if eng == "" {
-			eng = "claude"
-		}
-		frameIdx := int(m.now.UnixMilli()/120) % len(spinnerFrames)
-		spin := spinnerFrames[frameIdx]
-		timeStr := Paint(Dim).Render(m.now.Format("15:04:05"))
-		spinLine := fmt.Sprintf("  %s  ❯ %s  %s %s",
-			timeStr,
-			Paint(Live).Bold(true).Render("🧠 "+eng+" [supervisor]"),
-			Paint(Live).Render(spin),
-			Paint(Live).Render("thinking & analyzing telemetry..."),
-		)
-		rendered = append(rendered, fit(spinLine, w), "")
-	}
-
-	if len(rendered) <= maxRows {
-		return rendered
-	}
-
-	offset := m.supervisor.offset
-	maxOffset := len(rendered) - maxRows
-	if offset > maxOffset {
-		offset = maxOffset
-	}
-	if offset < 0 {
-		offset = 0
-	}
+	offset := m.threadOffset(len(rendered), maxRows, starts)
 	return rendered[offset : offset+maxRows]
 }
 
-func (m Model) drawSupervisorTextarea(w int) []string {
+// threadLines renders every message, and says which row each one starts on
+// so that picking one can scroll to it.
+func (m Model) threadLines(cw int) (rows []string, starts []int) {
 	p := m.opts.Words
-	boxW := min(w, 110)
-	title := p.T("supervisor.input_prompt", "Say to Supervisor / Directive:")
-	topBorder := "  " + Paint(Accent).Bold(true).Render("┌─ 💬 "+title+" ") +
-		Paint(Dim).Render(strings.Repeat("─", max(boxW-lipgloss.Width(title)-10, 4))+"┐")
+	if len(m.supervisor.lines) == 0 && !m.supervisorBusy {
+		empty := p.T("supervisor.empty", "No messages in supervisor thread yet. Type a briefing or instruction below.")
+		return append([]string{""}, splitIntoLines(Paint(Dim).Render(empty), cw)...), nil
+	}
+	for i, l := range m.supervisor.lines {
+		starts = append(starts, len(rows))
+		rows = append(rows, m.messageLines(l, cw, m.supervisor.picking && m.supervisor.pick == i)...)
+		rows = append(rows, "")
+	}
+	if m.supervisorBusy {
+		rows = append(rows, m.supervisorThinking(cw)...)
+	}
+	return rows, starts
+}
 
-	var inputLines []string
-	rawInput := m.supervisor.input
-	if rawInput == "" {
-		placeholder := p.T("supervisor.placeholder", "type a briefing, question or standing directive...")
-		inputLines = append(inputLines, "  "+Paint(Dim).Render("│ ")+Paint(Dim).Render(placeholder))
-	} else {
-		lines := strings.Split(rawInput, "\n")
-		for i, l := range lines {
-			cursor := ""
-			if i == len(lines)-1 {
-				cursor = Paint(Accent).Render("█")
-			}
-			inputLines = append(inputLines, "  "+Paint(Dim).Render("│ ")+Paint(Accent).Render("> ")+l+cursor)
+// threadOffset is which row the window starts at.
+//
+// Scrolling and picking are the same movement seen from two sides: when a
+// line is being picked the offset is whatever keeps it on screen, and the
+// scroll position is not something the reader has to manage as well.
+func (m Model) threadOffset(total, maxRows int, starts []int) int {
+	offset := m.supervisor.offset
+	if m.supervisor.follow {
+		offset = max(total-maxRows, 0)
+	}
+	if m.supervisor.picking && m.supervisor.pick < len(starts) {
+		start := starts[m.supervisor.pick]
+		end := total
+		if m.supervisor.pick+1 < len(starts) {
+			end = starts[m.supervisor.pick+1]
+		}
+		switch {
+		case start < offset:
+			offset = start
+		case end > offset+maxRows:
+			offset = end - maxRows
 		}
 	}
+	return min(max(offset, 0), max(total-maxRows, 0))
+}
 
-	for len(inputLines) < 2 {
-		inputLines = append(inputLines, "  "+Paint(Dim).Render("│ "))
+// messageLines is one message: who said it, and what they said under a rail
+// in their colour.
+func (m Model) messageLines(l view.SupervisorLine, cw int, selected bool) []string {
+	p := m.opts.Words
+	role := Accent
+	if isEngineName(l.By) {
+		role = Live
+	}
+	if l.Retracted {
+		role = Dim
+	}
+	rail := Paint(role).Render("▎")
+	if selected {
+		rail = Paint(Accent).Bold(true).Render("▶")
 	}
 
-	bottomText := p.T("supervisor.ways_out", "[Shift+↵] newline · [↵] send · [esc] back · [↑↓] scroll · [^V] paste",
-		about("up_down", m.keys.Up.Help().Key+m.keys.Down.Help().Key))
-	bottomBorder := "  " + Paint(Dim).Render("└─ ") + Paint(Dim).Render(bottomText) + " " +
-		Paint(Dim).Render(strings.Repeat("─", max(boxW-lipgloss.Width(bottomText)-6, 4))+"┘")
-
-	out := []string{"", fit(topBorder, w)}
-	for _, il := range inputLines {
-		out = append(out, fit(il, w))
+	who := Paint(role).Bold(true).Render(l.By) + " " + Paint(Dim).Render("["+l.Channel+"]")
+	tag := ""
+	if l.TaskID != "" {
+		tag = Paint(Accent).Render("(" + l.TaskID + ")")
 	}
-	out = append(out, fit(bottomBorder, w))
+	if l.Retracted {
+		tag = strings.TrimSpace(tag + " " + Paint(Dim).Render(p.T("supervisor.retracted", "(retracted)")))
+	}
+	if selected {
+		tag = Paint(Accent).Bold(true).Render(p.T("supervisor.take_back", "[↵] take this one back"))
+	}
+
+	head := railed(rail, Paint(Dim).Render(l.At.Format("15:04:05"))+"  "+who)
+	rows := []string{spread(head, tag, cw)}
+	for _, body := range m.messageBody(l, cw) {
+		rows = append(rows, railed(rail, body))
+	}
+	return rows
+}
+
+// messageBody is what was said, wrapped to the rail's column.
+//
+// Only the engine's own replies are read as Markdown. What an operator types
+// is a sentence, and a sentence that happens to start with a dash is not a
+// bullet.
+func (m Model) messageBody(l view.SupervisorLine, cw int) []string {
+	text := max(cw-2, 8)
+	var out []string
+	switch {
+	case l.Retracted:
+		for _, raw := range plainLines(l.Text) {
+			for _, wrapped := range splitIntoLines(raw, text) {
+				out = append(out, Paint(Dim).Render(wrapped))
+			}
+		}
+	case isEngineName(l.By):
+		for _, md := range renderMarkdown(l.Text, text, false) {
+			out = append(out, strings.TrimPrefix(md, markdownIndent))
+		}
+	default:
+		for _, raw := range plainLines(l.Text) {
+			out = append(out, splitIntoLines(formatInlineMarkdown(raw), text)...)
+		}
+	}
 	return out
+}
+
+// supervisorThinking is the engine's turn before it has said anything.
+func (m Model) supervisorThinking(cw int) []string {
+	eng := m.knobs.Engine
+	if eng == "" {
+		eng = "claude"
+	}
+	rail := Paint(Live).Render("▎")
+	spin := spinnerFrames[int(m.now.UnixMilli()/120)%len(spinnerFrames)]
+	head := railed(rail, Paint(Dim).Render(m.now.Format("15:04:05"))+"  "+Paint(Live).Bold(true).Render(eng)+" "+Paint(Dim).Render("[supervisor]"))
+	body := railed(rail, Paint(Live).Render(spin+" ")+Paint(Dim).Render(m.opts.Words.T("supervisor.thinking", "supervisor is thinking...")))
+	return []string{fit(head, cw), fit(body, cw), ""}
+}
+
+// isEngineName is whether a line was written by a model rather than a person.
+func isEngineName(by string) bool {
+	switch by {
+	case "supervisor", "claude", "codex", "opencode", "gemini":
+		return true
+	}
+	return false
+}
+
+// plainLines is one message's text as lines, whatever wrote the newlines.
+func plainLines(text string) []string {
+	return strings.Split(strings.ReplaceAll(text, "\r\n", "\n"), "\n")
 }

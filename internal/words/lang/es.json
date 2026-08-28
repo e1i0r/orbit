@@ -2206,16 +2206,40 @@
       "value": "Supervisor y Memoria del Cockpit"
     },
     "supervisor.input_prompt": {
-      "source": "Say to Supervisor / Directive:",
-      "value": "Hablar al Supervisor / Directiva:"
+      "source": "Say to Supervisor / Directive",
+      "value": "Hablar al Supervisor / Directiva"
     },
     "supervisor.placeholder": {
       "source": "type a briefing, question or standing directive...",
       "value": "escribe un briefing, consulta o directiva permanente..."
     },
     "supervisor.ways_out": {
-      "source": "[Shift+↵] newline · [↵] send · [esc] back · [↑↓] scroll · [^V] paste",
-      "value": "[Shift+↵] nueva línea · [↵] enviar · [esc] volver · [↑↓] desplazar · [^V] pegar"
+      "source": "[Shift+↵] newline · [↵] send · [esc] back · [↑↓] scroll · [^R] retract · [^V] paste",
+      "value": "[Shift+↵] nueva línea · [↵] enviar · [esc] volver · [↑↓] desplazar · [^R] retractar · [^V] pegar"
+    },
+    "supervisor.picking": {
+      "source": "pick a line to take back",
+      "value": "elige una línea para retractar"
+    },
+    "supervisor.picking_ways": {
+      "source": "[↑↓] pick · [↵] take it back · [esc] cancel",
+      "value": "[↑↓] elegir · [↵] retractar · [esc] cancelar"
+    },
+    "supervisor.picking_note": {
+      "source": "the line stays in the thread, marked; the supervisor stops being told it",
+      "value": "la línea sigue en el hilo, marcada; el supervisor deja de recibirla"
+    },
+    "supervisor.take_back": {
+      "source": "[↵] take this one back",
+      "value": "[↵] retractar esta"
+    },
+    "supervisor.already_back": {
+      "source": "that line was already taken back",
+      "value": "esa línea ya estaba retractada"
+    },
+    "supervisor.took_back": {
+      "source": "took that line back; the supervisor is no longer told it",
+      "value": "línea retractada; el supervisor ya no la recibe"
     },
     "supervisor.empty": {
       "source": "No messages in supervisor thread yet. Type a briefing or instruction below.",
@@ -2232,6 +2256,10 @@
     "supervisor.error": {
       "source": "supervisor error: {err}",
       "value": "error del supervisor: {err}"
+    },
+    "supervisor.retracted": {
+      "source": "(retracted)",
+      "value": "(retractado)"
     },
     "supervisor.acting": {
       "source": "supervisor is autonomously inspecting {n} task(s)...",
