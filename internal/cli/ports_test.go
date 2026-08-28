@@ -159,6 +159,14 @@ func TestEnginesPortMarksEveryEngineUnavailableWithNoPath(t *testing.T) {
 		if len(info.Setup(words.For("en"))) == 0 {
 			t.Errorf("engine %q reported unavailable with an empty setup guide", info.Name)
 		}
+		// What an engine offers and whether this machine can run it are
+		// two facts. The dials used to be filled in only for engines that
+		// were installed, which left the window with nothing to draw from
+		// unless the reader already had the engine — so the window kept a
+		// copy of the catalogue, and the copy is what drifted.
+		if len(info.Models) == 0 || len(info.Efforts) == 0 {
+			t.Errorf("engine %q offers no models or efforts because it is not installed; both are facts about the engine, not about $PATH", info.Name)
+		}
 	}
 }
 

@@ -79,6 +79,12 @@ func (got *recorder) ports() Options {
 
 			return sessionCommand(t), nil
 		},
+		// Engines is the table internal/cli builds out of internal/engine,
+		// in the shape the port carries it: one engine installed, one not,
+		// and one with no dials at all. The window has no table of its own
+		// to fall back on, so a fixture without this one has no engines —
+		// which is exactly what a window whose port is nil should show.
+		Engines: enginesTestList,
 		// Flows is nil, which is the built-ins and nothing else — the same
 		// answer a window opened without a state root gets, and the right
 		// default for every test that is about something else. The two that

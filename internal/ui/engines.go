@@ -99,32 +99,7 @@ func (m Model) collectEngineRows() []engineRow {
 
 	var rows []engineRow
 
-	var engineList []EngineInfo
-	if m.opts.Engines != nil {
-		engineList = m.opts.Engines()
-	}
-
-	if len(engineList) == 0 {
-		engineList = []EngineInfo{{
-			Name:      "claude",
-			Available: true,
-			Models: []ChoiceInfo{
-				{ID: "", Label: "default"},
-				{ID: "opus", Label: "opus"},
-				{ID: "sonnet", Label: "sonnet"},
-				{ID: "haiku", Label: "haiku"},
-			},
-			Efforts: []ChoiceInfo{
-				{ID: "", Label: "default"},
-				{ID: "low", Label: "low"},
-				{ID: "medium", Label: "medium"},
-				{ID: "high", Label: "high"},
-				{ID: "xhigh", Label: "xhigh"},
-				{ID: "max", Label: "max"},
-			},
-			CanThink: true,
-		}}
-	}
+	engineList := m.engineTable()
 
 	activeEngine := m.knobs.Engine
 	if activeEngine == "" {
