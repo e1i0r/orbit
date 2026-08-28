@@ -72,8 +72,23 @@ func (s *Store) Settings() (Settings, error) {
 }
 
 // SaveSettings writes the configuration, replacing whatever was there.
+//
+// A file that is there but will not parse is moved aside first rather than
+// overwritten. Settings answers an unparseable file with the defaults —
+// deliberately, so a reader always has something usable — and every setter
+// above this one is a read-modify-write. Without this, one switch flipped on
+// screen would replace a whole configuration with the defaults plus that
+// switch, and the engine, model and theme somebody chose would be gone with
+// nothing anywhere to say they had ever been set.
+//
+// Moving it aside is not repair and does not pretend to be. Whatever was in
+// there is left where a person can read it, and the write goes ahead, so a
+// file nobody can parse cannot lock the settings screen either.
 func (s *Store) SaveSettings(cfg Settings) error {
 	path := s.settingsPath()
+	if err := keepUnreadable(path); err != nil {
+		return err
+	}
 	body, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return fmt.Errorf("encode settings: %w", err)
@@ -84,6 +99,39 @@ func (s *Store) SaveSettings(cfg Settings) error {
 	}
 	if err := os.WriteFile(path, body, fileMode); err != nil {
 		return fmt.Errorf("write %q: %w", path, err)
+	}
+	return nil
+}
+
+// unreadableSuffix is what an unparseable settings file is renamed with. It
+// is a suffix rather than a directory so the two sit side by side: whoever
+// opens the state root to find out why their engine reset sees both files in
+// the same listing.
+const unreadableSuffix = ".unreadable"
+
+// keepUnreadable moves a settings file that will not parse out of the way,
+// and leaves every other file exactly where it is.
+//
+// The parse it does is the same one Settings does — unmarshalling into
+// Settings, not merely checking the JSON is well formed — because the two
+// have to agree on what "unreadable" means. A file that is valid JSON but
+// has a string where the unread cap goes is a file Settings answers with the
+// defaults, so it is a file this has to keep.
+//
+// A file that cannot be read at all is not this function's problem: the
+// write that follows will hit the same fault and report it in its own terms.
+func keepUnreadable(path string) error {
+	body, err := os.ReadFile(path)
+	if err != nil {
+		return nil //nolint:nilerr // a file that is absent or unreadable is the write's problem, not this one's
+	}
+	var probe Settings
+	if json.Unmarshal(body, &probe) == nil {
+		return nil
+	}
+	aside := path + unreadableSuffix
+	if err := os.Rename(path, aside); err != nil {
+		return fmt.Errorf("move the unreadable %q aside to %q: %w", path, aside, err)
 	}
 	return nil
 }

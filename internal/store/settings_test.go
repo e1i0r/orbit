@@ -1,6 +1,7 @@
 package store
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -101,5 +102,63 @@ func TestSettingsFileIsPrivate(t *testing.T) {
 	}
 	if perm := info.Mode().Perm(); perm != 0o600 {
 		t.Errorf("settings file is %o, want 600", perm)
+	}
+}
+
+func TestSaveSettingsMovesAnUnreadableFileAsideRatherThanOverwritingIt(t *testing.T) {
+	root := t.TempDir()
+	s, err := New(root)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	path := filepath.Join(root, "settings.json")
+	broken := `{"engine": "codex", "model": "gpt-5", "theme": "mid`
+	if err := os.WriteFile(path, []byte(broken), 0o600); err != nil {
+		t.Fatalf("write broken settings: %v", err)
+	}
+
+	// What a switch flipped on screen does: read (which yields the
+	// defaults, because the file will not parse), change one field, write
+	// the whole thing back.
+	cfg, err := s.Settings()
+	if err != nil {
+		t.Fatalf("Settings: %v", err)
+	}
+	cfg.Autopilot = true
+	if err := s.SaveSettings(cfg); err != nil {
+		t.Fatalf("SaveSettings: %v", err)
+	}
+
+	kept, err := os.ReadFile(path + unreadableSuffix)
+	if err != nil {
+		t.Fatalf("the unreadable settings were overwritten instead of kept: %v", err)
+	}
+	if string(kept) != broken {
+		t.Errorf("kept %q, want the file exactly as it was: %q", kept, broken)
+	}
+	got, err := s.Settings()
+	if err != nil {
+		t.Fatalf("Settings after save: %v", err)
+	}
+	if !got.Autopilot {
+		t.Error("the save did not go through; a file nobody can parse must not lock the settings")
+	}
+}
+
+func TestSaveSettingsLeavesAReadableFileWhereItIs(t *testing.T) {
+	root := t.TempDir()
+	s, err := New(root)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if err := s.SaveSettings(Settings{Engine: "claude"}); err != nil {
+		t.Fatalf("SaveSettings: %v", err)
+	}
+	if err := s.SaveSettings(Settings{Engine: "codex"}); err != nil {
+		t.Fatalf("SaveSettings: %v", err)
+	}
+	aside := filepath.Join(root, "settings.json"+unreadableSuffix)
+	if _, err := os.Stat(aside); !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("a settings file that parses was moved aside: %v", err)
 	}
 }
