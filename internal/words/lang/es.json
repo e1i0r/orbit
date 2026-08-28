@@ -2157,6 +2157,10 @@
       "source": "successfully updated orbit to {version}!",
       "value": "orbit se actualizó con éxito a {version}!"
     },
+    "upgrade.fell_back": {
+      "source": "could not install the release archive ({reason}); trying go install instead",
+      "value": "no se pudo instalar el archivo de la release ({reason}); probando con go install"
+    },
     "overview.thinking": {
       "source": "thinking",
       "value": "thinking"

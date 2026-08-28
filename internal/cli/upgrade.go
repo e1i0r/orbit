@@ -1,17 +1,13 @@
 package cli
 
 import (
-	"archive/tar"
-	"compress/gzip"
 	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -77,21 +73,28 @@ func upgrade(ctx Context, args []string) error {
 		"updating orbit from {current} to {latest}...",
 		updateArg("current", Version), updateArg("latest", rel.TagName)))
 
-	// Find matching binary asset
-	assetURL := findAssetURL(rel.Assets, runtime.GOOS, runtime.GOARCH)
-	if assetURL != "" {
-		if err := selfUpdate(reqCtx, assetURL); err == nil {
-			fmt.Fprintf(ctx.Out, "%s\n", p.T("upgrade.success",
-				"successfully updated orbit to {version}!",
-				updateArg("version", rel.TagName)))
+	// The release archive first, and — if it could not be used — the reason,
+	// out loud. `go install` is a real second way, but it needs a Go
+	// toolchain and it writes into GOBIN rather than over this binary, so a
+	// reader whose archive quietly failed ends up with a newer orbit
+	// somewhere else on their $PATH and the old one still in front of it.
+	// That sentence used to be dropped by an `if err == nil`, and the fallback
+	// then reported success for having updated a different file.
+	failed := installRelease(reqCtx, rel)
+	if failed == nil {
+		fmt.Fprintf(ctx.Out, "%s\n", p.T("upgrade.success",
+			"successfully updated orbit to {version}!",
+			updateArg("version", rel.TagName)))
 
-			return nil
-		}
+		return nil
 	}
 
-	// Fallback to go install if asset not found or binary replacement failed
+	fmt.Fprintf(ctx.Err, "%s\n", p.T("upgrade.fell_back",
+		"could not install the release archive ({reason}); trying go install instead",
+		updateArg("reason", failed.Error())))
+
 	if err := goInstall(reqCtx); err != nil {
-		return fmt.Errorf("update orbit: %w", err)
+		return fmt.Errorf("update orbit: %w; the release archive was not installed either: %w", err, failed)
 	}
 
 	fmt.Fprintf(ctx.Out, "%s\n", p.T("upgrade.success",
@@ -99,6 +102,26 @@ func upgrade(ctx Context, args []string) error {
 		updateArg("version", rel.TagName)))
 
 	return nil
+}
+
+// installRelease puts the binary this release publishes for this machine over
+// the one that is running.
+//
+// Both halves can say no, and both refusals are the caller's to report: a
+// release with nothing for this machine, and a release whose archive does not
+// hash to what it said it would.
+func installRelease(ctx context.Context, rel releaseInfo) error {
+	bin, ok := findAsset(rel.Assets, runtime.GOOS, runtime.GOARCH)
+	if !ok {
+		return fmt.Errorf("release %s publishes no %s %s archive", rel.TagName, runtime.GOOS, runtime.GOARCH)
+	}
+
+	sums, ok := findChecksums(rel.Assets)
+	if !ok {
+		return fmt.Errorf("release %s publishes no checksums.txt, so %s cannot be checked", rel.TagName, bin.Name)
+	}
+
+	return selfUpdate(ctx, bin, sums)
 }
 
 func updateArg(k, v string) words.Arg {
@@ -136,109 +159,58 @@ func fetchRelease(ctx context.Context) (releaseInfo, error) {
 	return rel, nil
 }
 
-func findAssetURL(assets []asset, goos, goarch string) string {
+// findAsset is the archive a release publishes for one operating system on
+// one architecture.
+//
+// The name is matched on "_goos_goarch." rather than on the two words
+// appearing anywhere in it, which is what this did: strings.Contains(name,
+// "arm") is true of orbit_1.2.3_linux_arm64.tar.gz, so a 32-bit machine
+// downloaded the 64-bit build, wrote it over the running orbit and left the
+// reader with an executable their kernel refuses — and no orbit to run
+// `orbit upgrade` with. Publishing nothing for a machine is not a problem;
+// go install builds for the machine it is on.
+func findAsset(assets []asset, goos, goarch string) (asset, bool) {
+	want := fmt.Sprintf("_%s_%s.", strings.ToLower(goos), strings.ToLower(goarch))
 	for _, a := range assets {
 		name := strings.ToLower(a.Name)
-		if strings.Contains(name, goos) && strings.Contains(name, goarch) &&
-			strings.HasSuffix(name, ".tar.gz") {
-			return a.URL
+		if strings.Contains(name, want) && strings.HasSuffix(name, ".tar.gz") {
+			return a, true
 		}
 	}
 
-	return ""
+	return asset{}, false
 }
 
-func selfUpdate(ctx context.Context, downloadURL string) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, downloadURL, nil)
-	if err != nil {
-		return err
-	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("download responded %d", resp.StatusCode)
-	}
-
-	gzr, err := gzip.NewReader(resp.Body)
-	if err != nil {
-		return err
-	}
-	defer gzr.Close()
-
-	tr := tar.NewReader(gzr)
-	for {
-		header, err := tr.Next()
-		if err == io.EOF {
-			break
-		}
-
-		if err != nil {
-			return err
-		}
-
-		if header.Name == "orbit" || strings.HasSuffix(header.Name, "/orbit") {
-			binBytes, err := io.ReadAll(tr)
-			if err != nil {
-				return err
-			}
-
-			return replaceExecutable(binBytes)
+// findChecksums is the file a release publishes its hashes in. There is one
+// per release rather than one per archive, which is why it is looked for by
+// name and not beside the archive.
+func findChecksums(assets []asset) (asset, bool) {
+	for _, a := range assets {
+		if strings.EqualFold(a.Name, "checksums.txt") {
+			return a, true
 		}
 	}
 
-	return fmt.Errorf("executable not found in archive")
+	return asset{}, false
 }
 
-func replaceExecutable(newBytes []byte) error {
-	execPath, err := os.Executable()
-	if err != nil {
-		return err
-	}
-
-	execPath, err = filepath.EvalSymlinks(execPath)
-	if err != nil {
-		return err
-	}
-
-	dir := filepath.Dir(execPath)
-
-	tmpFile, err := os.CreateTemp(dir, "orbit-update-*")
-	if err != nil {
-		return err
-	}
-
-	tmpName := tmpFile.Name()
-
-	if _, err := tmpFile.Write(newBytes); err != nil {
-		tmpFile.Close()
-
-		_ = os.Remove(tmpName)
-
-		return err
-	}
-
-	if err := tmpFile.Chmod(0o755); err != nil {
-		tmpFile.Close()
-
-		_ = os.Remove(tmpName)
-
-		return err
-	}
-
-	if err := tmpFile.Close(); err != nil {
-		_ = os.Remove(tmpName)
-		return err
-	}
-
-	return os.Rename(tmpName, execPath)
-}
-
+// goInstall builds the latest release on this machine, which is the way out
+// for a release that published nothing this machine can run.
+//
+// What go said comes back with it. This was cmd.Run(), so a missing toolchain,
+// a module proxy that would not answer and a compile error all reached the
+// reader as the same three words: exit status 1.
 func goInstall(ctx context.Context) error {
 	cmd := exec.CommandContext(ctx, "go", "install", "github.com/"+defaultRepo+"/cmd/orbit@latest")
-	return cmd.Run()
+
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		if said := strings.TrimSpace(string(out)); said != "" {
+			return fmt.Errorf("go install: %w: %s", err, said)
+		}
+
+		return fmt.Errorf("go install: %w", err)
+	}
+
+	return nil
 }

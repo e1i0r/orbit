@@ -5,8 +5,12 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -112,49 +116,64 @@ func TestUpdateCheckAvailable(t *testing.T) {
 	}
 }
 
-func TestUpdateDownloadArchive(t *testing.T) {
-	downloadServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		archive := createFakeArchive(t, "#!/bin/sh\necho updated\n")
-
-		w.Header().Set("Content-Type", "application/gzip")
-
-		if _, err := w.Write(archive); err != nil {
-			t.Errorf("write archive: %v", err)
-		}
+// TestWhyTheReleaseCouldNotBeInstalledIsSaidOutLoud.
+//
+// An upgrade has two ways of working and they are not the same thing: the
+// release archive is written over this binary, while `go install` builds into
+// GOBIN and leaves this one where it is. So a reader whose archive failed and
+// whose fallback worked has a newer orbit somewhere on their $PATH, the old
+// one still in front of it, and a message saying they were updated. The
+// reason the first way failed used to be dropped by an `if err == nil`; here
+// it is a 404 on the download, and it has to reach them.
+//
+// go is taken off the PATH so the fallback fails at once rather than building
+// orbit from the network in the middle of a test.
+func TestWhyTheReleaseCouldNotBeInstalledIsSaidOutLoud(t *testing.T) {
+	downloads := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "no such release asset", http.StatusNotFound)
 	}))
-	defer downloadServer.Close()
+	defer downloads.Close()
 
-	apiServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		rel := releaseInfo{
 			TagName: "v2.0.0",
 			Assets: []asset{
 				{
-					Name: "orbit_2.0.0_darwin_arm64.tar.gz",
-					URL:  downloadServer.URL,
+					Name: fmt.Sprintf("orbit_2.0.0_%s_%s.tar.gz", runtime.GOOS, runtime.GOARCH),
+					URL:  downloads.URL,
 				},
-				{
-					Name: "orbit_2.0.0_linux_amd64.tar.gz",
-					URL:  downloadServer.URL,
-				},
+				{Name: "checksums.txt", URL: downloads.URL},
 			},
 		}
 		if err := json.NewEncoder(w).Encode(rel); err != nil {
 			t.Errorf("encode release: %v", err)
 		}
 	}))
-	defer apiServer.Close()
+	defer api.Close()
 
-	oldEndpoint := updateEndpoint
-	updateEndpoint = apiServer.URL
+	oldEndpoint, oldVersion := updateEndpoint, Version
+	updateEndpoint, Version = api.URL, "1.0.0"
 
-	t.Cleanup(func() { updateEndpoint = oldEndpoint })
+	t.Cleanup(func() { updateEndpoint, Version = oldEndpoint, oldVersion })
 
-	// Test findAssetURL logic
-	url := findAssetURL([]asset{
-		{Name: "orbit_2.0.0_darwin_arm64.tar.gz", URL: "https://example.com/darwin"},
-	}, "darwin", "arm64")
-	if url != "https://example.com/darwin" {
-		t.Errorf("findAssetURL = %q, want darwin asset", url)
+	t.Setenv("ORBIT_HOME", t.TempDir())
+	t.Setenv("PATH", t.TempDir())
+
+	code, out, errOut := run(t, "upgrade")
+	if code == 0 {
+		t.Fatalf("an upgrade that installed nothing exited 0:\n%s\n%s", out, errOut)
+	}
+
+	if !strings.Contains(errOut, "404") {
+		t.Errorf("the reason the archive could not be installed was not reported:\n%s", errOut)
+	}
+
+	if !strings.Contains(errOut, "go install") {
+		t.Errorf("the reason the fallback failed was not reported:\n%s", errOut)
+	}
+
+	if strings.Contains(out, "successfully updated") {
+		t.Errorf("an upgrade that installed nothing reported success:\n%s", out)
 	}
 }
 
@@ -177,5 +196,29 @@ func TestUpdateHelpAndUnknownFlag(t *testing.T) {
 
 	if !strings.Contains(errOut, "-bogus") {
 		t.Errorf("error did not name unknown flag:\n%s", errOut)
+	}
+}
+
+// TestWhatGoSaidComesBackWithIt. The fallback shells out, and this was
+// cmd.Run(): a missing toolchain, a proxy that would not answer and a compile
+// error all reached the reader as the same three words, "exit status 1", with
+// the sentence that would have told them which one on a pipe nobody read.
+func TestWhatGoSaidComesBackWithIt(t *testing.T) {
+	dir := t.TempDir()
+
+	script := "#!/bin/sh\necho 'go: module lookup disabled by GOPROXY=off' >&2\nexit 1\n"
+	if err := os.WriteFile(filepath.Join(dir, "go"), []byte(script), 0o755); err != nil {
+		t.Fatalf("write the go this test stands in for: %v", err)
+	}
+
+	t.Setenv("PATH", dir)
+
+	err := goInstall(t.Context())
+	if err == nil {
+		t.Fatal("a go install that failed came back as a success")
+	}
+
+	if !strings.Contains(err.Error(), "module lookup disabled") {
+		t.Errorf("what go said did not come back with the failure: %v", err)
 	}
 }
