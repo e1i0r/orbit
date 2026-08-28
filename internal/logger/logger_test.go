@@ -125,3 +125,89 @@ func TestLoggerErrorPaths(t *testing.T) {
 	// Log on closed file should be safe
 	l.Log(LevelInfo, "", "entry on closed file")
 }
+
+// readOnly replaces the logger's descriptor with one that cannot be written
+// to and can still be closed. That combination is the point: a test that
+// simply closes the file underneath the logger passes whether or not the
+// failed write was kept, because closing an already-closed file fails on its
+// own and the error looks the same from outside.
+func readOnly(t *testing.T, l *Logger) {
+	t.Helper()
+
+	if err := l.file.Close(); err != nil {
+		t.Fatalf("close the writable descriptor: %v", err)
+	}
+
+	f, err := os.Open(l.path)
+	if err != nil {
+		t.Fatalf("reopen %q read-only: %v", l.path, err)
+	}
+
+	l.file = f
+}
+
+// TestAWriteThatFailedIsNotSwallowed. Log cannot return an error, and the
+// version this replaces therefore discarded one: a log whose file had gone
+// away carried on looking healthy for the rest of the process, and every
+// diagnostic written to it after the first failure was lost in silence.
+// The failure is kept and handed to whoever closes the logger.
+func TestAWriteThatFailedIsNotSwallowed(t *testing.T) {
+	logPath := filepath.Join(t.TempDir(), "broken.log")
+
+	l, err := New(logPath)
+	if err != nil {
+		t.Fatalf("failed to create logger: %v", err)
+	}
+
+	readOnly(t, l)
+
+	l.Log(LevelError, "cli/test", "an entry that cannot land")
+
+	closeErr := l.Close()
+	if closeErr == nil {
+		t.Fatal("a write that failed was swallowed: Close answered nil")
+	}
+
+	if !strings.Contains(closeErr.Error(), "write to the log") || !strings.Contains(closeErr.Error(), logPath) {
+		t.Errorf("the failure does not say a write to that log is what went wrong: %v", closeErr)
+	}
+}
+
+// TestInitSaysWhatTheLogItReplacesCouldNot. Re-initialising is where a
+// failed log is most likely to be noticed and was most likely to be lost:
+// the old logger is closed on the way past, and its answer used to go
+// straight into the blank identifier.
+func TestInitSaysWhatTheLogItReplacesCouldNot(t *testing.T) {
+	dir := t.TempDir()
+	first := filepath.Join(dir, "first.log")
+	second := filepath.Join(dir, "second.log")
+
+	if err := Init(first); err != nil {
+		t.Fatalf("init the first logger: %v", err)
+	}
+
+	globalMu.RLock()
+	readOnly(t, global)
+	globalMu.RUnlock()
+
+	Error("cli/test", "an entry that cannot land")
+
+	if err := Init(second); err != nil {
+		t.Fatalf("init the second logger: %v", err)
+	}
+
+	defer func() {
+		if err := CloseGlobal(); err != nil {
+			t.Errorf("error closing global logger: %v", err)
+		}
+	}()
+
+	data, err := os.ReadFile(second)
+	if err != nil {
+		t.Fatalf("failed to read the second log: %v", err)
+	}
+
+	if !strings.Contains(string(data), first) {
+		t.Errorf("the new log does not say the old one was in trouble, got:\n%s", data)
+	}
+}

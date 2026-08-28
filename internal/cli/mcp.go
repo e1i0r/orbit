@@ -60,7 +60,16 @@ func serveMCP(ctx Context, root string) error {
 	}
 
 	if logErr := logger.Init(s.LogPath()); logErr == nil {
-		defer func() { _ = logger.CloseGlobal() }() //nolint:errcheck // best-effort logger flush on process exit
+		// Closing answers what the log could not write, and that is said
+		// on the error stream rather than swallowed: this runs after the
+		// window has given the terminal back and the mcp client is not
+		// reading this stream, so it is the one place the sentence can be
+		// printed without ruining what it is printed next to.
+		defer func() {
+			if err := logger.CloseGlobal(); err != nil {
+				fmt.Fprintln(ctx.Err, "orbit:", err)
+			}
+		}()
 
 		logger.Info("cli/mcp", "mcp server started (root=%q, version=%s)", root, Version)
 	}

@@ -9,6 +9,7 @@
 package logger
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -49,6 +50,14 @@ type Logger struct {
 	mu   sync.Mutex
 	file *os.File
 	path string
+	// failed is the first write that did not land, kept because Log has
+	// nowhere to return one: it is called from everywhere, on paths whose
+	// callers have no business handling a logging fault, and the two
+	// descriptors that are left — a cockpit redrawing the terminal, an mcp
+	// server whose stdout is a client's JSON-RPC stream — are ones a stray
+	// line would corrupt. So the failure waits here and leaves through
+	// Close, which is somebody asking.
+	failed error
 }
 
 var (
@@ -61,8 +70,12 @@ func Init(logPath string) error {
 	globalMu.Lock()
 	defer globalMu.Unlock()
 
+	// What the log being replaced has to say is said into the log replacing
+	// it, below. Dropping it here would throw away, one line before the new
+	// file is open, the very failures the field above exists to keep.
+	var previous error
 	if global != nil {
-		_ = global.Close()
+		previous = global.Close()
 	}
 
 	l, err := New(logPath)
@@ -71,6 +84,10 @@ func Init(logPath string) error {
 	}
 
 	global = l
+
+	if previous != nil {
+		l.Log(LevelWarn, "logger", "the log this one replaces did not close cleanly: %v", previous)
+	}
 
 	return nil
 }
@@ -97,7 +114,11 @@ func New(logPath string) (*Logger, error) {
 	}, nil
 }
 
-// Close closes the logger and its underlying file descriptor.
+// Close closes the logger and its underlying file descriptor, and answers
+// what went wrong on the way: the first entry that could not be written, as
+// well as the close itself. A caller that only wanted the descriptor back
+// gets told, at the one moment it can still be told, that the log it has
+// been writing all along has been going nowhere.
 func (l *Logger) Close() error {
 	if l == nil {
 		return nil
@@ -106,14 +127,17 @@ func (l *Logger) Close() error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	if l.file != nil {
-		err := l.file.Close()
-		l.file = nil
+	failed := l.failed
+	l.failed = nil
 
-		return err
+	if l.file == nil {
+		return failed
 	}
 
-	return nil
+	err := l.file.Close()
+	l.file = nil
+
+	return errors.Join(failed, err)
 }
 
 // Log writes a leveled log entry with timestamp, level, module tag, and formatted message.
@@ -137,8 +161,11 @@ func (l *Logger) Log(lvl Level, module, format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
 
 	entry := fmt.Sprintf("[%s] [%s] [%s] %s\n", ts, lvl.String(), module, msg)
-	if _, err := l.file.WriteString(entry); err != nil {
-		return
+	// The first failure is the one kept: a log that has stopped working
+	// fails on every line after it, and the hundredth message would say
+	// nothing the first does not.
+	if _, err := l.file.WriteString(entry); err != nil && l.failed == nil {
+		l.failed = fmt.Errorf("write to the log at %q: %w", l.path, err)
 	}
 }
 
