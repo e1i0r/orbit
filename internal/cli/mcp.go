@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/mcp"
@@ -23,7 +24,7 @@ import (
 func runMCP(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("mcp", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
-	install := fs.Bool("install", false, "register orbit as an MCP server in Claude Desktop, Claude Code and Cursor")
+	install := fs.Bool("install", false, "register orbit as an MCP server in "+strings.Join(mcp.ClientNames(), ", "))
 	// The root is the answer to the one thing a client gets wrong. A desktop
 	// application spawns this process with a working directory of its own
 	// bundle, so the default is not the working directory: it is every
@@ -60,7 +61,16 @@ func serveMCP(ctx Context, root string) error {
 	}
 
 	if logErr := logger.Init(s.LogPath()); logErr == nil {
-		defer func() { _ = logger.CloseGlobal() }() //nolint:errcheck // best-effort logger flush on process exit
+		// Closing answers what the log could not write, and that is said
+		// on the error stream rather than swallowed: this runs after the
+		// window has given the terminal back and the mcp client is not
+		// reading this stream, so it is the one place the sentence can be
+		// printed without ruining what it is printed next to.
+		defer func() {
+			if err := logger.CloseGlobal(); err != nil {
+				fmt.Fprintln(ctx.Err, "orbit:", err)
+			}
+		}()
 
 		logger.Info("cli/mcp", "mcp server started (root=%q, version=%s)", root, Version)
 	}
@@ -79,7 +89,7 @@ func serveMCP(ctx Context, root string) error {
 // installMCP registers this binary in every client configuration it finds.
 //
 // A client that could not be written is reported and does not stop the
-// others: somebody with Cursor and no Claude Desktop should not have the
+// others: somebody with Codex and no Claude Desktop should not have the
 // install fail over an application they have never had.
 func installMCP(ctx Context) error {
 	p := ctx.Words

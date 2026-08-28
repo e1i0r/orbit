@@ -6,7 +6,10 @@
 // the interpreter that walks it is a few dozen lines.
 package flow
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 // The closed vocabulary a phase may use to say what it is allowed to touch.
 //
@@ -32,6 +35,19 @@ const (
 	// PermissionNetwork may reach the network.
 	PermissionNetwork = "network"
 )
+
+// Permissions is the whole vocabulary, in the order a reader meets it.
+//
+// It exists for the caller that has to offer the set rather than check one
+// of it: internal/mcp declares these as the enum of a tool argument, and it
+// used to declare them as three string literals of its own. That is a
+// different duplication from the one above — internal/mcp may import this
+// package, and does — so it bought nothing and would have gone stale on the
+// day a fourth permission was added, telling a supervising model the set was
+// three long when it was four.
+func Permissions() []string {
+	return []string{PermissionRead, PermissionRepo, PermissionNetwork}
+}
 
 // Phase is one step, and the five things that decide how it runs.
 type Phase struct {
@@ -113,9 +129,7 @@ func (f Flow) Validate() error {
 		// a bill. Load calls Validate as it decodes, so a flow file with a
 		// typo in it never becomes a run at all.
 		for _, perm := range p.Permissions {
-			switch perm {
-			case PermissionRead, PermissionRepo, PermissionNetwork:
-			default:
+			if !slices.Contains(Permissions(), perm) {
 				return fmt.Errorf("flow %q: phase %q asks for unknown permission %q", f.Name, p.Name, perm)
 			}
 		}

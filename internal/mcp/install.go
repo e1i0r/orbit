@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 )
 
 // serverName is the key Orbit registers itself under in every client's
@@ -34,7 +33,7 @@ type InstallResult struct {
 // home is a parameter rather than something this function asks the operating
 // system for, and that is the whole reason it is one. An installer that
 // finds its own home directory cannot be exercised without writing into the
-// reader's real Claude and Cursor configuration — which is not hypothetical:
+// reader's real Claude and Codex configuration — which is not hypothetical:
 // the first version of this file shipped a test that did exactly that, and
 // `go test ./...` replaced a working orbit entry with a path to a binary
 // that does not exist.
@@ -49,7 +48,7 @@ func Install(binaryPath, home string) []InstallResult {
 	results := make([]InstallResult, 0, len(targets))
 	for _, t := range targets {
 		res := InstallResult{Target: t.name, Path: t.path, Status: StatusInstalled}
-		if err := register(t.path, binaryPath); err != nil {
+		if err := t.register(t.path, binaryPath); err != nil {
 			res.Status = StatusFailed
 			res.Err = err
 		}
@@ -94,68 +93,20 @@ func entry(binaryPath string) map[string]any {
 	}
 }
 
-// clientConfig is one file an MCP client reads its server list from.
-type clientConfig struct {
-	name string
-	path string
-}
-
-// clientConfigs is where each supported client keeps its MCP server list.
-//
-// Claude Code is the one worth writing down, because the obvious guess is
-// wrong: it does not read ~/.claude/mcp.json. Its user-scope servers live in
-// ~/.claude.json under the same mcpServers key the other two use, alongside
-// the rest of that file's state — which is why register merges rather than
-// writes, and why it writes through a temporary file.
-func clientConfigs(home string) []clientConfig {
-	if home == "" {
-		return nil
-	}
-
-	var targets []clientConfig
-	if p := claudeDesktopConfig(home); p != "" {
-		targets = append(targets, clientConfig{name: "Claude Desktop", path: p})
-	}
-
-	targets = append(targets,
-		clientConfig{name: "Claude Code", path: filepath.Join(home, ".claude.json")},
-		clientConfig{name: "OpenCode", path: filepath.Join(home, ".config", "opencode", "opencode.json")},
-		clientConfig{name: "Codex", path: filepath.Join(home, ".codex", "config.json")},
-		clientConfig{name: "Gemini", path: filepath.Join(home, ".gemini", "config.json")},
-	)
-
-	return targets
-}
-
-// claudeDesktopConfig is where Claude Desktop keeps its configuration on
-// this operating system, or the empty string when there is nowhere to look —
-// a Windows without APPDATA set, which is the one case where guessing a path
-// would create a file no application will ever read.
-func claudeDesktopConfig(home string) string {
-	switch runtime.GOOS {
-	case "darwin":
-		return filepath.Join(home, "Library", "Application Support", "Claude", "claude_desktop_config.json")
-	case "windows":
-		appData := os.Getenv("APPDATA")
-		if appData == "" {
-			return ""
-		}
-
-		return filepath.Join(appData, "Claude", "claude_desktop_config.json")
-	default:
-		return filepath.Join(home, ".config", "Claude", "claude_desktop_config.json")
-	}
-}
-
-// register merges Orbit into the mcpServers map of one configuration file,
+// registerJSON merges Orbit into one map of a JSON configuration file,
 // leaving every other key and every other server exactly as it found them.
+//
+// Which map, and what Orbit looks like inside it, are the client's to say:
+// Claude keeps servers under mcpServers as a command and its arguments,
+// OpenCode keeps them under mcp as a type and one argv. A single hardcoded
+// shape is what made the OpenCode file this installer wrote inert.
 //
 // A file that will not parse is a file somebody else is responsible for, and
 // it is refused rather than replaced. The earlier version of this function
 // started from an empty map when the decode failed, which turned one
 // unreadable ~/.claude.json — a hundred kilobytes of a client's own state —
 // into a file holding nothing but an orbit entry.
-func register(configPath, binaryPath string) error {
+func registerJSON(configPath, key string, value map[string]any) error {
 	if err := os.MkdirAll(filepath.Dir(configPath), 0o755); err != nil {
 		return fmt.Errorf("create config directory for %q: %w", configPath, err)
 	}
@@ -182,33 +133,37 @@ func register(configPath, binaryPath string) error {
 		return fmt.Errorf("read %q: %w", configPath, err)
 	}
 
-	servers, ok := config["mcpServers"].(map[string]any)
+	servers, ok := config[key].(map[string]any)
 	if !ok {
 		servers = map[string]any{}
 	}
 
-	servers[serverName] = entry(binaryPath)
-	config["mcpServers"] = servers
+	servers[serverName] = value
+	config[key] = servers
 
 	return writeJSON(configPath, config, mode)
 }
 
-// writeJSON writes the configuration through a temporary file in the same
-// directory and renames it into place.
-//
-// The rename is the point. These files hold state the client wrote and Orbit
-// only borrows — ~/.claude.json is the largest of them — and a process that
-// dies between truncating one and finishing the write has destroyed
-// something it does not own. A rename either happened or did not.
+// writeJSON encodes the configuration and hands it to writeAtomically.
 func writeJSON(path string, config map[string]any, mode os.FileMode) error {
 	data, err := json.MarshalIndent(config, "", "  ")
 	if err != nil {
 		return fmt.Errorf("encode config for %q: %w", path, err)
 	}
 
-	data = append(data, '\n')
+	return writeAtomically(path, append(data, '\n'), mode, ".orbit-mcp-*.json")
+}
 
-	tmp, err := os.CreateTemp(filepath.Dir(path), ".orbit-mcp-*.json")
+// writeAtomically writes through a temporary file in the same directory and
+// renames it into place.
+//
+// The rename is the point. These files hold state the client wrote and Orbit
+// only borrows — ~/.claude.json is the largest of them, and a Codex
+// config.toml holds somebody's model and their trusted projects — and a
+// process that dies between truncating one and finishing the write has
+// destroyed something it does not own. A rename either happened or did not.
+func writeAtomically(path string, data []byte, mode os.FileMode, pattern string) error {
+	tmp, err := os.CreateTemp(filepath.Dir(path), pattern)
 	if err != nil {
 		return fmt.Errorf("create temporary file beside %q: %w", path, err)
 	}

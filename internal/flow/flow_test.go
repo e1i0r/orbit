@@ -3,6 +3,7 @@ package flow
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -139,14 +140,23 @@ func TestLoadOfSomethingThatIsNotJSON(t *testing.T) {
 // use. They are duplicated in internal/engine, which maps them to a real
 // command line; the duplication is deliberate — neither package may import
 // the other — and this test is half of what keeps the two copies honest.
+//
+// The second half is Permissions(), which is the set as a caller is offered
+// it rather than as one value is checked against it. A list that lost a name
+// would leave Validate accepting a permission nothing ever told anybody
+// about.
 func TestValidateAcceptsTheWholeVocabulary(t *testing.T) {
 	f := Flow{Name: "x", Phases: []Phase{{
 		Name:        "implement",
 		Engine:      "claude",
-		Permissions: []string{PermissionRead, PermissionRepo, PermissionNetwork},
+		Permissions: Permissions(),
 	}}}
 	if err := f.Validate(); err != nil {
 		t.Errorf("Validate refused the vocabulary it defines: %v", err)
+	}
+
+	if want := []string{PermissionRead, PermissionRepo, PermissionNetwork}; !slices.Equal(Permissions(), want) {
+		t.Errorf("Permissions() is %v, want %v — a schema built from it would offer the wrong set", Permissions(), want)
 	}
 }
 

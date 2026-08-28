@@ -3,6 +3,7 @@ package mcp
 import (
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/e1i0r/orbit/internal/record"
 	"github.com/e1i0r/orbit/internal/task"
@@ -248,7 +249,7 @@ func lastOutputOf(events []record.Event) map[string]any {
 				"phase":    e.Phase,
 				"kind":     e.Kind,
 				"text":     tail(e.Text, outputChars),
-				"complete": len(e.Text) <= outputChars,
+				"complete": utf8.RuneCountInString(e.Text) <= outputChars,
 			}
 		}
 	}
@@ -256,22 +257,49 @@ func lastOutputOf(events []record.Event) map[string]any {
 	return nil
 }
 
+// The budgets above are characters, and these three functions are what makes
+// that true. Cutting a Go string at a byte offset splits whatever character
+// spans it, and the half-character left behind is not valid UTF-8: the
+// encoder replaces it with U+FFFD, so a supervisor reading an engine's
+// thinking in any language but English gets a replacement mark where a word
+// was, and no field says anything was damaged. internal/ui has a test that
+// bans exactly this and it stops at that package's door; this is the other
+// side of the same house, and its output is read by a model rather than by
+// somebody who can see the mark and squint at it.
+
+// runeIndex is the byte offset where the nth character of s begins, or the
+// length of s when it has fewer than n.
+func runeIndex(s string, n int) int {
+	seen := 0
+	for i := range s {
+		if seen == n {
+			return i
+		}
+
+		seen++
+	}
+
+	return len(s)
+}
+
 // clip shortens from the front, for text whose beginning is the point.
 func clip(s string, n int) string {
-	if len(s) <= n {
+	cut := runeIndex(s, n)
+	if cut == len(s) {
 		return s
 	}
 
-	return s[:n] + fmt.Sprintf("… (%d more characters)", len(s)-n)
+	return s[:cut] + fmt.Sprintf("… (%d more characters)", utf8.RuneCountInString(s[cut:]))
 }
 
 // tail shortens from the back, for a log whose end is the point — an engine
 // that failed says why in its last lines, and a head-truncated log is the
 // half that does not contain the answer.
 func tail(s string, n int) string {
-	if len(s) <= n {
+	dropped := utf8.RuneCountInString(s) - n
+	if dropped <= 0 {
 		return s
 	}
 
-	return fmt.Sprintf("(%d earlier characters omitted) …", len(s)-n) + s[len(s)-n:]
+	return fmt.Sprintf("(%d earlier characters omitted) …", dropped) + s[runeIndex(s, dropped):]
 }

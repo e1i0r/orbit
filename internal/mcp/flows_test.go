@@ -259,3 +259,58 @@ func TestDeleteFlowSaysWhenThereIsNoSuchFlow(t *testing.T) {
 		t.Errorf("the refusal does not name the flow: %s", said)
 	}
 }
+
+// TestEveryPermissionTheSchemaOffersIsOneAFlowCanBeSavedWith is the promise
+// tools.go states in words: a schema here is a promise the handler keeps.
+//
+// The enum is read out of the tool list rather than out of internal/flow,
+// because what is being tested is what a model is shown. A list of literals
+// that has drifted from the vocabulary would pass a test that asked
+// internal/flow what the permissions are, and fail this one — the caller
+// offered a word, passed it back, and had the save refused.
+func TestEveryPermissionTheSchemaOffersIsOneAFlowCanBeSavedWith(t *testing.T) {
+	_, sn, _ := oneRepo(t)
+
+	offered := permissionEnum(t)
+	if len(offered) == 0 {
+		t.Fatal("orbit_save_flow offers no permissions at all, so a model composing a phase has to invent them")
+	}
+
+	for _, perm := range offered {
+		phase := map[string]any{"name": "implement", "engine": "claude", "permissions": []any{perm}}
+
+		got := call(t, sn, "orbit_save_flow", map[string]any{"name": "perm-" + perm, "phases": []any{phase}})
+		if got["saved"] != true {
+			t.Errorf("a phase asking for %q was not saved: %v", perm, got)
+		}
+	}
+}
+
+// permissionEnum digs the permissions a phase may ask for out of the schema
+// of orbit_save_flow, which is three levels down: the phases array, one
+// phase, its permissions array.
+func permissionEnum(t *testing.T) []string {
+	t.Helper()
+
+	for _, tool := range Tools() {
+		if tool.Name != "orbit_save_flow" {
+			continue
+		}
+
+		phases, ok := tool.InputSchema.Properties["phases"]
+		if !ok || phases.Items == nil {
+			t.Fatal("orbit_save_flow declares no phases array")
+		}
+
+		perms, ok := phases.Items.Properties["permissions"]
+		if !ok || perms.Items == nil {
+			t.Fatal("a phase declares no permissions array")
+		}
+
+		return perms.Items.Enum
+	}
+
+	t.Fatal("orbit_save_flow is not in the tool list")
+
+	return nil
+}

@@ -115,3 +115,27 @@ func TestCreateSaysWhichRepositoryWhenThereIsMoreThanOne(t *testing.T) {
 		t.Errorf("the task was written against %v, want ledger", got["repo"])
 	}
 }
+
+// TestAnIdTooLongToBeANumberIsNotOne. The number was read by multiplying
+// through the digits, which ran an int past its width without saying so:
+// a directory named PAYMENTS-99999999999999999999 came back as some
+// unrelated number, nextTaskID took that for the highest id in the
+// repository, and the next task was minted with a number nobody had written.
+func TestAnIdTooLongToBeANumberIsNotOne(t *testing.T) {
+	for _, id := range []string{
+		"PAYMENTS-99999999999999999999",
+		"PAYMENTS-",
+		"PAYMENTS--1",
+		"PAYMENTS-+1",
+		"PAYMENTS-1a",
+		"OTHER-1",
+	} {
+		if n, ok := suffixNumber(id, "PAYMENTS"); ok {
+			t.Errorf("suffixNumber read %q as %d; it is not an id this package mints", id, n)
+		}
+	}
+
+	if n, ok := suffixNumber("PAYMENTS-7", "PAYMENTS"); !ok || n != 7 {
+		t.Errorf("suffixNumber(\"PAYMENTS-7\") = %d, %v; want 7, true", n, ok)
+	}
+}
