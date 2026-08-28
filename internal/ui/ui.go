@@ -43,6 +43,7 @@ const (
 	screenRepos
 	screenEngines
 	screenHelp
+	screenSupervisor
 )
 
 // confirm is the question the window is waiting for an answer to, and there
@@ -129,6 +130,7 @@ type Model struct {
 	engines          enginesState
 	knobs            Knobs
 	help             helpState
+	supervisor       supervisorState
 	rawText          bool
 	expandedDetail   bool
 	upgradeAvailable string

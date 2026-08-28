@@ -32,9 +32,10 @@ type msgReader struct {
 func (r *msgReader) Refresh() (board.Board, board.Changed, error) {
 	return r.board, r.changed, r.refreshErr
 }
-func (r *msgReader) Rescan() error                            { return r.rescanErr }
-func (r *msgReader) Log(string, string) ([]view.Entry, error) { return nil, nil }
-func (r *msgReader) Worktree(string, string) (string, error)  { return "", nil }
+func (r *msgReader) Rescan() error                                 { return r.rescanErr }
+func (r *msgReader) Log(string, string) ([]view.Entry, error)      { return nil, nil }
+func (r *msgReader) Worktree(string, string) (string, error)       { return "", nil }
+func (r *msgReader) SupervisorLog() ([]view.SupervisorLine, error) { return nil, nil }
 
 func TestTheThreeClocksEachRaiseTheirOwnMessage(t *testing.T) {
 	if _, ok := tick()().(tickMsg); !ok {

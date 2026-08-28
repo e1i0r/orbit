@@ -122,6 +122,8 @@ func (m Model) hit(x, y int) Target {
 			return m.hitRepos(x, y)
 		case screenCompose:
 			return m.hitCompose(x, y)
+		case screenSupervisor:
+			return Target{}
 		}
 		return m.hitRow(x, y)
 	}

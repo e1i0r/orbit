@@ -139,6 +139,8 @@ func (m Model) launch(c Command, args []string) (tea.Model, tea.Cmd) {
 		return m.openFlows(), nil
 	case "repos":
 		return m.openRepos(), nil
+	case "supervisor":
+		return m.openSupervisor(), nil
 	}
 	return m.runWatched(c, args)
 }

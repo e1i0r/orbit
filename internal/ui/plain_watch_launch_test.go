@@ -33,6 +33,10 @@ func (r *mockRefreshReader) Worktree(repoPath, id string) (string, error) {
 	return "", nil
 }
 
+func (r *mockRefreshReader) SupervisorLog() ([]view.SupervisorLine, error) {
+	return nil, nil
+}
+
 func TestPlainFunctionEdgeCases(t *testing.T) {
 	// 1. Plain with nil Reader
 	rendered, err := Plain(Options{Width: 100, Height: 30})

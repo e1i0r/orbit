@@ -2196,6 +2196,38 @@
     "cmd.mcp.inside": {
       "source": "it speaks over this terminal, which the window is already using",
       "value": "habla por esta terminal, que la ventana ya está usando"
+    },
+    "key.supervisor": {
+      "source": "supervisor",
+      "value": "supervisor"
+    },
+    "supervisor.title": {
+      "source": "Supervisor & Cockpit Memory",
+      "value": "Supervisor y Memoria del Cockpit"
+    },
+    "supervisor.subtitle": {
+      "source": "briefing, debriefing, autonomous feedback and standing directives",
+      "value": "briefing, debriefing, feedback autónomo y directivas permanentes"
+    },
+    "supervisor.input_prompt": {
+      "source": "Say to Supervisor / Directive:",
+      "value": "Hablar al Supervisor / Directiva:"
+    },
+    "supervisor.placeholder": {
+      "source": "type a briefing, question or standing directive...",
+      "value": "escribe un briefing, consulta o directiva permanente..."
+    },
+    "supervisor.ways_out": {
+      "source": "[⏎] send · [esc] back · {up_down} scroll",
+      "value": "[⏎] enviar · [esc] volver · {up_down} desplazar"
+    },
+    "supervisor.empty": {
+      "source": "No messages in supervisor thread yet. Type a briefing or instruction below.",
+      "value": "Aún no hay mensajes en el hilo del supervisor. Escribe un briefing o instrucción abajo."
+    },
+    "supervisor.sent": {
+      "source": "message recorded in supervisor thread",
+      "value": "mensaje guardado en el hilo del supervisor"
     }
   }
 }
