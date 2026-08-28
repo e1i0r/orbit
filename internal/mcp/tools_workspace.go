@@ -9,6 +9,8 @@ package mcp
 // the difference between a model that files tasks and one that can be handed
 // a machine.
 
+import "github.com/e1i0r/orbit/internal/flow"
+
 // workspaceTools is the flow and repository half of the tool list.
 func workspaceTools() []Tool {
 	return append(flowTools(), repoTools()...)
@@ -72,7 +74,7 @@ func phasesProperty() Property {
 				"permissions": {
 					Type:        "array",
 					Description: "What this step may touch. An empty list is the step that asks for nothing, and gets the most restrictive posture the engine can state.",
-					Items:       &Property{Type: "string", Description: "One permission.", Enum: []string{"read", "repo", "network"}},
+					Items:       &Property{Type: "string", Description: "One permission.", Enum: flow.Permissions()},
 				},
 				"gates": {
 					Type:        "array",
