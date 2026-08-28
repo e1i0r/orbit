@@ -97,53 +97,7 @@ func (s *Store) SaveSettings(cfg Settings) error {
 	if err := os.MkdirAll(filepath.Dir(path), dirMode); err != nil {
 		return fmt.Errorf("create %q: %w", filepath.Dir(path), err)
 	}
-	return writeAtomically(path, body)
-}
-
-// writeAtomically puts body at path in one step: a temporary file beside it,
-// flushed, then renamed over the top.
-//
-// os.WriteFile truncates first and writes second, and everything between
-// those two is a settings.json that exists, is shorter than it should be and
-// will not parse. A process killed there — or a machine that loses power —
-// leaves exactly the file keepUnreadable above was written to cope with, so
-// this is the other half of the same fix: one stops the loss, this stops the
-// damage that causes it.
-//
-// The temporary is made in the same directory rather than in the system's
-// temp dir, because a rename is atomic only within one filesystem; across
-// two it is a copy, which is the thing being avoided.
-func writeAtomically(path string, body []byte) (err error) {
-	f, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path)+".tmp-*")
-	if err != nil {
-		return fmt.Errorf("create a temporary file beside %q: %w", path, err)
-	}
-	tmp := f.Name()
-	// Every path that does not end in the rename takes the temporary with
-	// it, so a save that failed leaves the directory as it found it rather
-	// than littered with half-written settings.
-	defer func() {
-		if err != nil {
-			_ = f.Close()
-			_ = os.Remove(tmp)
-		}
-	}()
-	if err = f.Chmod(fileMode); err != nil {
-		return fmt.Errorf("set the mode of %q: %w", tmp, err)
-	}
-	if _, err = f.Write(body); err != nil {
-		return fmt.Errorf("write %q: %w", tmp, err)
-	}
-	if err = f.Sync(); err != nil {
-		return fmt.Errorf("flush %q: %w", tmp, err)
-	}
-	if err = f.Close(); err != nil {
-		return fmt.Errorf("close %q: %w", tmp, err)
-	}
-	if err = os.Rename(tmp, path); err != nil {
-		return fmt.Errorf("replace %q with %q: %w", path, tmp, err)
-	}
-	return nil
+	return WriteAtomically(path, body)
 }
 
 // unreadableSuffix is what an unparseable settings file is renamed with. It
