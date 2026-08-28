@@ -10,7 +10,13 @@
 # OS and IDE configuration
 .DS_Store
 .idea/
-.vscode/
+# The directory's contents, not the directory itself: git never looks inside
+# a directory it has excluded, so an exception under `.vscode/` would never
+# be read.
+.vscode/*
+# ...except the one file that makes the editor and the linter agree: which
+# formatter runs on save is a fact about the project, not a preference.
+!.vscode/settings.json
 
 # Local agent artifacts & superpowers
 .claude/

@@ -17,6 +17,12 @@ import (
 // maxLines is the ceiling for any single Go file. It exists because the
 // project this replaces had one file of 6,014 lines and another of 2,842,
 // which together were a third of its running code for a single window.
+//
+// Blank lines do not count against it. The linter decides where those go —
+// wsl and nlreturn put one between blocks and before a return — so counting
+// them would make a file fail for being easier to read, and would leave a
+// contributor choosing between the two rules. What the ceiling is about is
+// how much a file does, and a blank line does nothing.
 const maxLines = 300
 
 // junk names that invite a file to become a drawer for anything that did not
@@ -26,41 +32,52 @@ var banned = []string{"utils", "util", "helpers", "helper", "common", "misc", "b
 // root walks up from the test's working directory to the module root.
 func root(t *testing.T) string {
 	t.Helper()
+
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("getwd: %v", err)
 	}
+
 	for {
 		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
 			return dir
 		}
+
 		parent := filepath.Dir(dir)
 		if parent == dir {
 			t.Fatal("go.mod not found above the working directory")
 		}
+
 		dir = parent
 	}
 }
 
 func goFiles(t *testing.T) []string {
 	t.Helper()
+
 	var found []string
+
 	r := root(t)
+
 	err := filepath.WalkDir(r, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
+
 		if outsideTheModule(r, path, d) {
 			return filepath.SkipDir
 		}
+
 		if !d.IsDir() && strings.HasSuffix(path, ".go") {
 			found = append(found, path)
 		}
+
 		return nil
 	})
 	if err != nil {
 		t.Fatalf("walk: %v", err)
 	}
+
 	return found
 }
 
@@ -70,41 +87,54 @@ func TestNoFileOverTheCeiling(t *testing.T) {
 		if err != nil {
 			t.Fatalf("open %s: %v", path, err)
 		}
+
 		n := 0
+
 		scanner := bufio.NewScanner(f)
 		for scanner.Scan() {
-			n++
+			if strings.TrimSpace(scanner.Text()) != "" {
+				n++
+			}
 		}
+
 		closeErr := f.Close()
+
 		if err := scanner.Err(); err != nil {
 			t.Fatalf("read %s: %v", path, err)
 		}
+
 		if closeErr != nil {
 			t.Fatalf("close %s: %v", path, closeErr)
 		}
+
 		if n > maxLines {
-			t.Errorf("%s is %d lines, over the ceiling of %d — split it", path, n, maxLines)
+			t.Errorf("%s is %d lines of code and comment, over the ceiling of %d — split it", path, n, maxLines)
 		}
 	}
 }
 
 func TestNoJunkDrawerPackages(t *testing.T) {
 	r2 := root(t)
+
 	err := filepath.WalkDir(r2, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
+
 		if !d.IsDir() {
 			return nil
 		}
+
 		if outsideTheModule(r2, path, d) {
 			return filepath.SkipDir
 		}
+
 		for _, bad := range banned {
 			if strings.EqualFold(d.Name(), bad) {
 				t.Errorf("%s is a junk drawer with a tidy name — give it the noun of its domain", path)
 			}
 		}
+
 		return nil
 	})
 	if err != nil {
@@ -139,8 +169,10 @@ func TestGoModTakesOnlyApprovedDependencies(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read go.mod: %v", err)
 	}
+
 	found := map[string]bool{}
 	inBlock := false
+
 	for i, line := range strings.Split(string(body), "\n") {
 		text := strings.TrimSpace(line)
 		switch {
@@ -155,10 +187,13 @@ func TestGoModTakesOnlyApprovedDependencies(t *testing.T) {
 		case !inBlock:
 			continue
 		}
+
 		if text == "" || strings.HasPrefix(text, "//") || strings.Contains(text, "// indirect") {
 			continue
 		}
+
 		path := strings.Fields(text)[0]
+
 		found[path] = true
 		if !slices.Contains(approved, path) {
 			t.Errorf("go.mod:%d requires %q, which nobody approved — add it to arch.approved in a commit that says why, or take it out", i+1, path)
@@ -179,6 +214,8 @@ func outsideTheModule(root, path string, d os.DirEntry) bool {
 	if path == root || !d.IsDir() {
 		return false
 	}
+
 	n := d.Name()
+
 	return n == "vendor" || strings.HasPrefix(n, ".") || strings.HasPrefix(n, "_")
 }
