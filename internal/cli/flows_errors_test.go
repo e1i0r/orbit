@@ -16,6 +16,7 @@ import (
 
 func TestFlowsEarlyExitOnBadFlag(t *testing.T) {
 	t.Setenv("ORBIT_HOME", t.TempDir())
+
 	if code, _, errOut := run(t, "flows", "-nosuchflag"); code == 0 {
 		t.Error("flows with an unknown flag exited 0")
 	} else if errOut == "" {
@@ -30,12 +31,14 @@ func TestFlowsFailsWhenTheStateRootCannotBeCreated(t *testing.T) {
 	if err := os.WriteFile(blocker, []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
+
 	t.Setenv("ORBIT_HOME", filepath.Join(blocker, "orbit"))
 
 	code, _, errOut := run(t, "flows")
 	if code == 0 {
 		t.Error("flows over an unmakeable state root exited 0")
 	}
+
 	if errOut == "" {
 		t.Error("flows failed silently over an unmakeable state root")
 	}
@@ -53,6 +56,7 @@ func TestFlowsFailsWhenSettingsCannotBeRead(t *testing.T) {
 	if code == 0 {
 		t.Error("flows over unreadable settings exited 0")
 	}
+
 	if errOut == "" {
 		t.Error("flows failed silently over unreadable settings")
 	}

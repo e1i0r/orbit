@@ -27,9 +27,11 @@ func bootTime() (time.Time, bool) {
 	if err != nil || len(raw) < 8 {
 		return time.Time{}, false
 	}
+
 	sec := binary.LittleEndian.Uint64([]byte(raw)[:8])
 	if sec == 0 {
 		return time.Time{}, false
 	}
+
 	return time.Unix(int64(sec), 0).UTC(), true
 }

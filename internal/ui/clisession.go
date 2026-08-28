@@ -28,6 +28,7 @@ func (m Model) launchInteractiveCLI() (Model, tea.Cmd) {
 	if r, ok := m.selected(); ok && !r.head {
 		t = r.task
 	}
+
 	repoDir := t.RepoPath
 	if repoDir == "" && len(m.board.RepoList) > 0 {
 		repoDir = m.board.RepoList[0].Path
@@ -37,6 +38,7 @@ func (m Model) launchInteractiveCLI() (Model, tea.Cmd) {
 	if err != nil {
 		return m.say(m.opts.Words.T("msg.cli_exec_error", "error running {engine}: {err}", about("engine", eng), about("err", err.Error()))), nil
 	}
+
 	return m.say(m.opts.Words.T("msg.opening_cli", "opening interactive session with {engine}...", about("engine", eng))), tea.ExecProcess(cmd, func(err error) tea.Msg {
 		return cliEndedMsg{Engine: eng, Repo: repoDir, Err: err}
 	})
@@ -51,12 +53,15 @@ func (m Model) openSession(t view.Task, engineName, dir string) (*exec.Cmd, erro
 		if err != nil {
 			return nil, err
 		}
+
 		if cmd != nil {
 			return cmd, nil
 		}
 	}
+
 	cmd := exec.Command(engineName)
 	cmd.Dir = dir
+
 	return cmd, nil
 }
 
@@ -67,7 +72,9 @@ func (m Model) handleCLIEnded(msg cliEndedMsg) (Model, tea.Cmd) {
 			return m.say(m.opts.Words.T("msg.cli_exec_error", "error running {engine}: {err}", about("engine", msg.Engine), about("err", msg.Err.Error()))), nil
 		}
 	}
+
 	m.confirm = confirmPostCliTask
 	m.confirmID = msg.Repo
+
 	return m.say(m.opts.Words.T("msg.confirm_post_cli", "create a task in Orbit from this session? press y to confirm, anything else to skip")), nil
 }

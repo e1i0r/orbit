@@ -34,6 +34,7 @@ func gitRepo(t *testing.T) string {
 	write(t, filepath.Join(dir, "retry.go"), "package retry\n\nfunc send() {}\n")
 	git(t, dir, "add", ".")
 	git(t, dir, "commit", "-q", "-m", "first")
+
 	return dir
 }
 
@@ -42,6 +43,7 @@ func worktreeOf(t *testing.T, repoPath, id string) string {
 	t.Helper()
 	dir := filepath.Join(t.TempDir(), id)
 	git(t, repoPath, "worktree", "add", "-q", "-b", id, dir, "main")
+
 	return dir
 }
 
@@ -51,8 +53,10 @@ func worktreeOf(t *testing.T, repoPath, id string) string {
 // contributor's hooks inside it.
 func git(t *testing.T, dir string, args ...string) {
 	t.Helper()
+
 	cmd := exec.Command("git", args...)
 	cmd.Dir = dir
+
 	cmd.Env = append(cmd.Environ(),
 		"GIT_AUTHOR_NAME=t", "GIT_AUTHOR_EMAIL=t@t",
 		"GIT_COMMITTER_NAME=t", "GIT_COMMITTER_EMAIL=t@t",
@@ -65,6 +69,7 @@ func git(t *testing.T, dir string, args ...string) {
 
 func write(t *testing.T, path, text string) {
 	t.Helper()
+
 	if err := os.WriteFile(path, []byte(text), 0o644); err != nil {
 		t.Fatalf("write %s: %v", path, err)
 	}
@@ -87,19 +92,24 @@ func TestTheDiffIsTheWorktreesAndNotTheRepositorys(t *testing.T) {
 	write(t, filepath.Join(tree, "retry.go"), "package retry\n\nfunc send() { backoff() }\n")
 
 	r := &fakeReader{worktree: tree}
+
 	msg, ok := diffOf(r, view.Task{ID: "ACME-2662", RepoPath: repoPath}, baseRef{})().(diffMsg)
 	if !ok {
 		t.Fatal("diffOf did not answer with a diff")
 	}
+
 	if msg.Err != nil {
 		t.Fatalf("diff the worktree: %v", msg.Err)
 	}
+
 	if !strings.Contains(msg.Text, "backoff()") {
 		t.Errorf("the diff says:\n%s\nwant the change made in the worktree", msg.Text)
 	}
+
 	if strings.Contains(msg.Text, "theReadersOwnEdit") {
 		t.Errorf("the diff says:\n%s\nwant the reader's own checkout left out of it", msg.Text)
 	}
+
 	if msg.Tree != tree {
 		t.Errorf("the diff came back from %q, want %q", msg.Tree, tree)
 	}
@@ -134,23 +144,28 @@ func TestNoBaseIsSaidOnlyWhenGitActuallySaidIt(t *testing.T) {
 	repoPath := gitRepo(t)
 	tree := worktreeOf(t, repoPath, "ACME-2662")
 	write(t, filepath.Join(tree, "retry.go"), "package retry\n\nfunc send() { backoff() }\n")
+
 	task := view.Task{ID: "ACME-2662", RepoPath: repoPath}
 
 	absent, ok := diffOf(&fakeReader{worktree: tree}, task, baseRef{known: true})().(diffMsg)
 	if !ok {
 		t.Fatal("diffOf did not answer with a diff")
 	}
+
 	if absent.Err != nil || !absent.NoBase {
 		t.Errorf("a diff with no base to measure against said NoBase=%v (err %v), want it said plainly",
 			absent.NoBase, absent.Err)
 	}
+
 	silent, ok := diffOf(&fakeReader{worktree: tree}, task, baseRef{known: true, timedOut: true})().(diffMsg)
 	if !ok {
 		t.Fatal("diffOf did not answer with a diff")
 	}
+
 	if silent.Err != nil || silent.NoBase {
 		t.Errorf("a base that timed out was reported as no base at all (err %v), want the claim withheld", silent.Err)
 	}
+
 	if !strings.Contains(silent.Text, "backoff()") {
 		t.Errorf("the fallback diff says:\n%s\nwant the worktree's own change in it", silent.Text)
 	}
@@ -173,13 +188,16 @@ func TestABaseAlreadyKnownIsNotLookedUpAgain(t *testing.T) {
 	write(t, filepath.Join(tree, "retry.go"), "package retry\n\nfunc send() { backoff() }\n")
 
 	task := view.Task{ID: "ACME-2662", RepoPath: t.TempDir()}
+
 	msg, ok := diffOf(&fakeReader{worktree: tree}, task, baseRef{name: "main", known: true})().(diffMsg)
 	if !ok {
 		t.Fatal("diffOf did not answer with a diff")
 	}
+
 	if msg.Err != nil {
 		t.Fatalf("diff against a base handed in: %v", msg.Err)
 	}
+
 	if msg.NoBase {
 		t.Error("the diff fell back to the plain working tree, so it looked the base up again instead of using the one it was given")
 	}
@@ -190,10 +208,12 @@ func TestABaseAlreadyKnownIsNotLookedUpAgain(t *testing.T) {
 // that reads as "no changes".
 func TestADiffWithoutAWorktreeSaysSo(t *testing.T) {
 	r := &fakeReader{treeErr: os.ErrNotExist}
+
 	msg, ok := diffOf(r, view.Task{ID: "ACME-2662", RepoPath: "/nowhere"}, baseRef{})().(diffMsg)
 	if !ok {
 		t.Fatal("diffOf did not answer with a diff")
 	}
+
 	if msg.Err == nil {
 		t.Fatal("a worktree that could not be found came back as a diff")
 	}
@@ -210,9 +230,11 @@ func fakeGit(t *testing.T, seconds int) {
 	bin := t.TempDir()
 	script := filepath.Join(bin, "git")
 	write(t, script, fmt.Sprintf("#!/bin/sh\nsleep %d\n", seconds))
+
 	if err := os.Chmod(script, 0o755); err != nil {
 		t.Fatalf("chmod fake git: %v", err)
 	}
+
 	t.Setenv("PATH", bin+":"+os.Getenv("PATH"))
 }
 
@@ -226,6 +248,7 @@ func fakeGit(t *testing.T, seconds int) {
 func TestAHungGitTimesOutRatherThanHangingForever(t *testing.T) {
 	old := gitDiffTimeout
 	gitDiffTimeout = 50 * time.Millisecond
+
 	t.Cleanup(func() { gitDiffTimeout = old })
 	fakeGit(t, 5)
 
@@ -244,17 +267,21 @@ func TestAHungGitTimesOutRatherThanHangingForever(t *testing.T) {
 func TestABaseThatDoesNotAnswerFallsBackWithoutHanging(t *testing.T) {
 	old := baseTimeout
 	baseTimeout = 20 * time.Millisecond
+
 	t.Cleanup(func() { baseTimeout = old })
 	fakeGit(t, 5)
 
 	start := time.Now()
+
 	base := boundedBaseOf(t.TempDir())
 	if base.name != "" || !base.timedOut {
 		t.Errorf("boundedBaseOf against a hung git answered %+v, want empty and marked as having given up", base)
 	}
+
 	if !base.known {
 		t.Error("boundedBaseOf came back unknown, so the next tick would ask a hung git all over again")
 	}
+
 	if elapsed := time.Since(start); elapsed > time.Second {
 		t.Errorf("boundedBaseOf took %v to give up, want it bounded near baseTimeout", elapsed)
 	}

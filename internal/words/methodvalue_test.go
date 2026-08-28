@@ -45,47 +45,61 @@ func collectMethodValueUses(t *testing.T) []methodValueUse {
 	modRoot := root(t)
 
 	var uses []methodValueUse
+
 	err := filepath.WalkDir(modRoot, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
+
 		if d.IsDir() {
 			if outsideTheModule(modRoot, path, d) {
 				return filepath.SkipDir
 			}
+
 			return nil
 		}
+
 		if !strings.HasSuffix(path, ".go") {
 			return nil
 		}
+
 		fset := token.NewFileSet()
+
 		f, err := parser.ParseFile(fset, path, nil, 0)
 		if err != nil {
 			t.Fatalf("parse %s: %v", path, err)
 		}
+
 		rel, err := filepath.Rel(modRoot, path)
 		if err != nil {
 			t.Fatalf("rel %s: %v", path, err)
 		}
+
 		uses = append(uses, scanFileForMethodValues(fset, f, filepath.ToSlash(rel))...)
+
 		return nil
 	})
 	if err != nil {
 		t.Fatalf("walk: %v", err)
 	}
+
 	return uses
 }
 
 // scanFileForMethodValues reports every SelectorExpr named T or P in f
 // that is neither called directly nor a type reference.
 func scanFileForMethodValues(fset *token.FileSet, f *ast.File, rel string) []methodValueUse {
-	var uses []methodValueUse
-	var stack []ast.Node
+	var (
+		uses  []methodValueUse
+		stack []ast.Node
+	)
+
 	ast.Inspect(f, func(n ast.Node) bool {
 		if n == nil {
 			stack = stack[:len(stack)-1]
 			return true
 		}
+
 		if sel, ok := n.(*ast.SelectorExpr); ok && (sel.Sel.Name == "T" || sel.Sel.Name == "P") {
 			if !calledDirectly(sel, stack) && !typePosition(sel, stack) {
 				uses = append(uses, methodValueUse{
@@ -95,9 +109,12 @@ func scanFileForMethodValues(fset *token.FileSet, f *ast.File, rel string) []met
 				})
 			}
 		}
+
 		stack = append(stack, n)
+
 		return true
 	})
+
 	return uses
 }
 
@@ -107,7 +124,9 @@ func calledDirectly(sel *ast.SelectorExpr, stack []ast.Node) bool {
 	if len(stack) == 0 {
 		return false
 	}
+
 	call, ok := stack[len(stack)-1].(*ast.CallExpr)
+
 	return ok && call.Fun == sel
 }
 
@@ -121,12 +140,14 @@ func calledDirectly(sel *ast.SelectorExpr, stack []ast.Node) bool {
 // that field rather than merely its presence.
 func typePosition(sel *ast.SelectorExpr, stack []ast.Node) bool {
 	child := ast.Expr(sel)
+
 	for i := len(stack) - 1; i >= 0; i-- {
 		switch p := stack[i].(type) {
 		case *ast.StarExpr:
 			if p.X != child {
 				return false
 			}
+
 			child = p
 		case *ast.ArrayType:
 			return p.Elt == child
@@ -150,6 +171,7 @@ func typePosition(sel *ast.SelectorExpr, stack []ast.Node) bool {
 			return false
 		}
 	}
+
 	return false
 }
 
@@ -158,11 +180,14 @@ func typePosition(sel *ast.SelectorExpr, stack []ast.Node) bool {
 // filesystem or walking the module.
 func parseSnippet(t *testing.T, src string) (*token.FileSet, *ast.File) {
 	t.Helper()
+
 	fset := token.NewFileSet()
+
 	f, err := parser.ParseFile(fset, "snippet.go", src, 0)
 	if err != nil {
 		t.Fatalf("parse snippet: %v", err)
 	}
+
 	return fset, f
 }
 
@@ -179,13 +204,16 @@ func use(p *Printer) string {
 }
 `
 	fset, f := parseSnippet(t, src)
+
 	uses := scanFileForMethodValues(fset, f, "demo.go")
 	if len(uses) != 1 {
 		t.Fatalf("got %d method-value uses, want 1: %+v", len(uses), uses)
 	}
+
 	if uses[0].method != "T" {
 		t.Errorf("method = %q, want T", uses[0].method)
 	}
+
 	if uses[0].line == 0 {
 		t.Errorf("line = 0, want the line p.T appears on")
 	}
@@ -205,6 +233,7 @@ func TestSomething(t *testing.T) {
 }
 `
 	fset, f := parseSnippet(t, src)
+
 	uses := scanFileForMethodValues(fset, f, "demo_test.go")
 	if len(uses) != 0 {
 		t.Errorf("got %d method-value uses on a *testing.T parameter, want 0: %+v", len(uses), uses)

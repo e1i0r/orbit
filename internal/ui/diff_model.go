@@ -18,8 +18,10 @@ type diffFile struct {
 
 // parseDiffFiles parses raw diff lines into structured files and hunks.
 func parseDiffFiles(lines []string) []diffFile {
-	var files []diffFile
-	var cur *diffFile
+	var (
+		files []diffFile
+		cur   *diffFile
+	)
 
 	for i, s := range lines {
 		if strings.HasPrefix(s, "diff --git ") {
@@ -27,6 +29,7 @@ func parseDiffFiles(lines []string) []diffFile {
 				cur.EndLine = i - 1
 				files = append(files, *cur)
 			}
+
 			cur = &diffFile{
 				Status:    "MOD",
 				StartLine: i,
@@ -37,6 +40,7 @@ func parseDiffFiles(lines []string) []diffFile {
 			if len(parts) >= 4 {
 				cur.Path = strings.TrimPrefix(parts[3], "b/")
 			}
+
 			continue
 		}
 
@@ -76,6 +80,7 @@ func diffStats(files []diffFile) (totalAdded, totalDeleted int) {
 		totalAdded += f.Added
 		totalDeleted += f.Deleted
 	}
+
 	return totalAdded, totalDeleted
 }
 
@@ -113,20 +118,24 @@ func fileIcon(path string) string {
 	}
 }
 
-// formatHunkHeader parses hunk header line numbers: @@ -oldStart,oldLen +newStart,newLen @@
+// formatHunkHeader parses hunk header line numbers: @@ -oldStart,oldLen +newStart,newLen @@.
 func formatHunkHeader(hunk string) string {
 	parts := strings.SplitN(hunk, "@@", 3)
 	if len(parts) < 2 {
 		return hunk
 	}
+
 	tag := strings.TrimSpace(parts[1])
+
 	context := ""
 	if len(parts) > 2 {
 		context = strings.TrimSpace(parts[2])
 	}
+
 	res := " @@ " + tag + " @@"
 	if context != "" {
 		res += " " + context
 	}
+
 	return res
 }

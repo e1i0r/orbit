@@ -29,9 +29,11 @@ func (m Model) View() tea.View {
 	if m.height <= 0 || m.width <= 0 {
 		return tea.NewView("")
 	}
+
 	if m.tooNarrow {
 		return tea.NewView(m.refusal())
 	}
+
 	lines := make([]string, 0, m.height)
 	lines = append(lines, m.headerRows()...)
 	lines = append(lines, m.statusRows()...)
@@ -71,6 +73,7 @@ func (m Model) View() tea.View {
 			lines = append(lines, m.bodyRows()...)
 		}
 	}
+
 	lines = append(lines, m.bandRows()...)
 	lines = append(lines, m.barRows()...)
 	v := tea.NewView(strings.Join(lines, "\n"))
@@ -80,6 +83,7 @@ func (m Model) View() tea.View {
 	// crosses whether or not anything is being done with it, and it buys
 	// nothing until a row is drawn differently for being hovered over.
 	v.MouseMode = tea.MouseModeCellMotion
+
 	return v
 }
 
@@ -89,10 +93,12 @@ func (m Model) headerRows() []string {
 	if r.H <= 0 {
 		return nil
 	}
+
 	out := []string{m.headerLine(r.W)}
 	if r.H > 1 {
 		out = append(out, m.rule(r.W))
 	}
+
 	return fill(out, r.H)
 }
 
@@ -104,9 +110,11 @@ func (m Model) bandRows() []string {
 	if r.H <= 0 {
 		return nil
 	}
+
 	if r.H == 1 {
 		return []string{m.bandLine(r.W)}
 	}
+
 	return fill([]string{m.rule(r.W), m.bandLine(r.W)}, r.H)
 }
 
@@ -118,9 +126,11 @@ func (m Model) barRows() []string {
 	if r.H <= 0 {
 		return nil
 	}
+
 	if m.palette.open {
 		return fill([]string{m.paletteInputLine(r.W)}, r.H)
 	}
+
 	return fill([]string{m.barLine(r.W)}, r.H)
 }
 
@@ -131,21 +141,26 @@ func (m Model) bodyRows() []string {
 	if h <= 0 {
 		return nil
 	}
+
 	all := m.rows()
 	if len(all) == 0 {
 		return m.emptyRows(h, w)
 	}
+
 	out := make([]string, 0, h)
 	out = append(out, m.tableHeader(w))
+
 	shown := page(h-1, len(all), m.offset)
 	for i := m.offset; i < len(all) && len(out) < shown+1; i++ {
 		out = append(out, m.bodyRow(all[i], i, w))
 	}
+
 	if hidden := len(all) - m.offset - (len(out) - 1); hidden > 0 {
 		more := m.opts.Words.P("body.more", hidden, "… and {n} more", "… and {n} more",
 			about("n", strconv.Itoa(hidden)))
 		out = append(out, fit(strings.Repeat(" ", gutter)+Paint(Dim).Render(more), w))
 	}
+
 	return fill(out, h)
 }
 
@@ -160,9 +175,11 @@ func page(h, rows, offset int) int {
 	if h <= 0 {
 		return 0
 	}
+
 	if offset+h >= rows {
 		return h
 	}
+
 	return h - 1
 }
 
@@ -174,6 +191,7 @@ func (m Model) bodyRow(r row, i, w int) string {
 	case r.head:
 		return m.headRow(r, i == m.cursor, w)
 	}
+
 	return m.drawRow(r, w, i == m.cursor)
 }
 
@@ -186,7 +204,9 @@ func (m Model) bodyRow(r row, i, w int) string {
 // go looking for a task they were certain they had written.
 func (m Model) emptyRows(h, w int) []string {
 	p := m.opts.Words
+
 	var lines []string
+
 	switch typed := strings.TrimSpace(m.filter); {
 	case typed != "":
 		lines = []string{
@@ -209,18 +229,23 @@ func (m Model) emptyRows(h, w int) []string {
 			p.T("empty.write_one", "Write one with `orbit new <id>`, then press n to start it."),
 		}
 	}
+
 	out := []string{""}
+
 	for i, line := range lines {
 		if line == "" {
 			out = append(out, "")
 			continue
 		}
+
 		role := Dim
 		if i == 0 {
 			role = Accent
 		}
+
 		out = append(out, fit("  "+Paint(role).Render(line), w))
 	}
+
 	return fill(out, h)
 }
 
@@ -235,6 +260,7 @@ func (m Model) refusal() string {
 		fit(Paint(Dim).Render(p.T("narrow.got", "this one has {got}.",
 			about("got", strconv.Itoa(m.narrow.Got)))), w),
 	}
+
 	return strings.Join(fill(out, max(m.height, 1)), "\n")
 }
 
@@ -246,9 +272,11 @@ func fill(lines []string, h int) []string {
 	for len(lines) < h {
 		lines = append(lines, "")
 	}
+
 	if len(lines) > h {
 		return lines[:max(h, 0)]
 	}
+
 	return lines
 }
 
@@ -261,9 +289,11 @@ func fit(text string, w int) string {
 	if w <= 0 {
 		return ""
 	}
+
 	if lipgloss.Width(text) <= w {
 		return text
 	}
+
 	return ansi.Truncate(text, w, "…")
 }
 
@@ -278,9 +308,11 @@ func spread(left, right string, w int) string {
 	if right == "" {
 		return fit(left, w)
 	}
+
 	gap := w - lipgloss.Width(left) - lipgloss.Width(right)
 	if gap < 1 {
 		return fit(left, w)
 	}
+
 	return left + strings.Repeat(" ", gap) + right
 }

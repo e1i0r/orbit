@@ -32,9 +32,11 @@ func (m Model) filterKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		m.filter = trimLastRune(m.filter)
 		return m.clampCursor(), nil
 	}
+
 	if msg.Text != "" {
 		m.filter += msg.Text
 	}
+
 	return m.clampCursor(), nil
 }
 
@@ -47,5 +49,6 @@ func trimLastRune(s string) string {
 	if len(runes) == 0 {
 		return s
 	}
+
 	return string(runes[:len(runes)-1])
 }

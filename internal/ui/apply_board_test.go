@@ -16,10 +16,12 @@ func TestSayIgnoresAnEmptySentence(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.message, m.messageAt = "kept", m.now
 	before := m.messageAt
+
 	got := m.say("")
 	if got.message != "kept" || got.messageAt != before {
 		t.Errorf("say(\"\") changed the band to %+v, want it left alone", got)
 	}
+
 	got = m.say("a new sentence")
 	if got.message != "a new sentence" {
 		t.Errorf("say(...) = %q, want the new sentence", got.message)
@@ -35,6 +37,7 @@ func langBadge(m Model) string {
 
 func TestLanguageSwitchesAndReportsFailure(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
+
 	got := m.language("es")
 	if langBadge(got) != "ES" {
 		t.Errorf("language(es) left the badge %q, want ES", langBadge(got))
@@ -45,12 +48,14 @@ func TestLanguageSwitchesAndReportsFailure(t *testing.T) {
 	m.opts.Settings = &settings{fail: errors.New("disk full")}
 	got = m.language("es")
 	wantBand(t, got, "disk full")
+
 	if langBadge(got) == "ES" {
 		t.Error("language(es) rebuilt the key map even though the settings write failed")
 	}
 
 	// No settings port at all: the language still changes.
 	m.opts.Settings = nil
+
 	got = m.language("es")
 	if langBadge(got) != "ES" {
 		t.Errorf("language(es) with no settings port left the badge %q, want ES", langBadge(got))
@@ -64,6 +69,7 @@ func TestApplyBoardFailedRead(t *testing.T) {
 	// A zero ReadAt with no errors is a read that simply did not happen:
 	// the board on screen is kept, and nothing is said.
 	next, cmd := m.applyBoard(boardMsg{})
+
 	got := asModel(t, next)
 	if got.board.ReadAt != before.ReadAt || cmd != nil {
 		t.Errorf("applyBoard({}) changed the board or returned a command")
@@ -73,6 +79,7 @@ func TestApplyBoardFailedRead(t *testing.T) {
 	next, _ = m.applyBoard(boardMsg{Board: board.Board{Errs: []error{errors.New("stat: permission denied")}}})
 	got = asModel(t, next)
 	wantBand(t, got, "permission denied")
+
 	if got.board.ReadAt != before.ReadAt {
 		t.Error("applyBoard with a read failure replaced the board on screen")
 	}
@@ -90,10 +97,12 @@ func TestApplyBoardEnteredRingsTheBellOnlyAfterTheFirst(t *testing.T) {
 		Board:   fixtureBoard(fixtureTasks(), 4),
 		Changed: board.Changed{Entered: []string{"ACME-2662"}},
 	})
+
 	got := asModel(t, next)
 	if !got.seen {
 		t.Error("applyBoard did not mark the board as seen")
 	}
+
 	if got.notified {
 		t.Error("the first board rang the bell")
 	}
@@ -103,11 +112,14 @@ func TestApplyBoardEnteredRingsTheBellOnlyAfterTheFirst(t *testing.T) {
 		Board:   fixtureBoard(fixtureTasks(), 4),
 		Changed: board.Changed{Entered: []string{"ACME-2662", "ACME-2701"}},
 	})
+
 	got = asModel(t, next)
 	if !got.notified {
 		t.Error("a later crossing did not ring the bell")
 	}
+
 	wantBand(t, got, "need you")
+
 	if cmd == nil {
 		t.Error("a crossing produced no command at all, want at least the bell")
 	}
@@ -125,6 +137,7 @@ func TestApplyBoardReadFailureCountOnlySpeaksWhenItMoves(t *testing.T) {
 	next, _ := m.applyBoard(boardMsg{Board: board1})
 	got := asModel(t, next)
 	wantBand(t, got, "could not be read")
+
 	if got.errs != 1 {
 		t.Errorf("applyBoard left errs=%d, want 1", got.errs)
 	}
@@ -133,6 +146,7 @@ func TestApplyBoardReadFailureCountOnlySpeaksWhenItMoves(t *testing.T) {
 	// sentence rather than repeating the same one.
 	got.message = "untouched"
 	next, _ = got.applyBoard(boardMsg{Board: board1})
+
 	got2 := asModel(t, next)
 	if got2.message != "untouched" {
 		t.Errorf("applyBoard repeated the read-failure count, band now %q", got2.message)
@@ -142,6 +156,7 @@ func TestApplyBoardReadFailureCountOnlySpeaksWhenItMoves(t *testing.T) {
 	// change either way.
 	board0 := board.Board{Tasks: fixtureTasks(), ReadAt: fixtureNow}
 	next, _ = got2.applyBoard(boardMsg{Board: board0})
+
 	got3 := asModel(t, next)
 	if got3.errs != 0 {
 		t.Errorf("applyBoard left errs=%d after a clean read, want 0", got3.errs)
@@ -157,7 +172,9 @@ func TestApplyBoardAutopilotStartsAWaitingTask(t *testing.T) {
 	if cmd == nil {
 		t.Fatal("applyBoard under autopilot with a To Do task returned no command")
 	}
+
 	cmd()
+
 	if rec.flow == "" {
 		t.Error("autopilot did not start a task through the port")
 	}

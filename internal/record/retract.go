@@ -30,18 +30,23 @@ func Stamp(at time.Time) string {
 // stops being repeated into the next prompt — and not whether it happened.
 func Retracted(events []Event) map[string]bool {
 	var gone map[string]bool
+
 	for _, e := range events {
 		if e.Kind != SupervisorRetracted {
 			continue
 		}
+
 		at := e.Data["at"]
 		if at == "" {
 			continue
 		}
+
 		if gone == nil {
 			gone = map[string]bool{}
 		}
+
 		gone[at] = true
 	}
+
 	return gone
 }

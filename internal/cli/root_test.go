@@ -11,6 +11,7 @@ import (
 // produced rather than assumed.
 func TestTheRootIsWrittenTheWayAPersonSaysIt(t *testing.T) {
 	sep := string(os.PathSeparator)
+
 	cases := []struct {
 		name, dir, home, want string
 	}{

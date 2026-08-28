@@ -38,15 +38,18 @@ func Read(path string) ([]Event, error) {
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, fmt.Errorf("open %q: %w", path, err)
 	}
+
 	defer f.Close()
 
 	info, err := f.Stat()
 	if err != nil {
 		return nil, fmt.Errorf("stat %q: %w", path, err)
 	}
+
 	size := info.Size()
 
 	whole, err := endsWithNewline(f, size)
@@ -58,9 +61,11 @@ func Read(path string) ([]Event, error) {
 	if err != nil {
 		return nil, fmt.Errorf("read %q: %w", path, err)
 	}
+
 	if s.hasPending && whole {
 		s.events = append(s.events, unreadable(s.pending))
 	}
+
 	return s.events, nil
 }
 
@@ -103,28 +108,35 @@ func scanEvents(r io.Reader, base int64) (scan, error) {
 	s := scan{lastStart: base}
 	sc := bufio.NewScanner(r)
 	sc.Buffer(make([]byte, 0, 64*1024), MaxLine)
+
 	at := base
 	for sc.Scan() {
 		s.lastStart, s.lastWasEvent = at, false
 		at += int64(len(sc.Bytes())) + 1
+
 		if s.hasPending {
 			s.events = append(s.events, unreadable(s.pending))
 			s.hasPending = false
 		}
+
 		if len(sc.Bytes()) == 0 {
 			continue
 		}
+
 		var e Event
 		if jerr := json.Unmarshal(sc.Bytes(), &e); jerr != nil {
 			s.pending, s.hasPending = s.lastStart, true
 			continue
 		}
+
 		s.events = append(s.events, e)
 		s.lastWasEvent = true
 	}
+
 	if serr := sc.Err(); serr != nil {
 		return scan{}, serr
 	}
+
 	return s, nil
 }
 
@@ -158,9 +170,11 @@ func endsWithNewline(f *os.File, size int64) (bool, error) {
 	if size == 0 {
 		return false, nil
 	}
+
 	last := make([]byte, 1)
 	if _, err := f.ReadAt(last, size-1); err != nil {
 		return false, err
 	}
+
 	return last[0] == '\n', nil
 }

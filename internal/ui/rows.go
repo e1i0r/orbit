@@ -31,11 +31,14 @@ type row struct {
 // says nothing four times.
 func (m Model) rows() []row {
 	filter := strings.ToLower(strings.TrimSpace(m.filter))
+
 	var out []row
+
 	bands := view.Bands()
 	if m.queueFilter != nil {
 		bands = []view.Band{*m.queueFilter}
 	}
+
 	for _, b := range bands {
 		tasks := m.tasksIn(b, filter)
 		// The count over a band is the board's own, computed by
@@ -47,20 +50,25 @@ func (m Model) rows() []row {
 		if filter != "" || m.repoFilter != "" {
 			count = len(tasks)
 		}
+
 		if count == 0 {
 			continue
 		}
+
 		if len(out) > 0 {
 			out = append(out, row{blank: true})
 		}
+
 		out = append(out, row{band: b, head: true, n: count})
 		if !m.expanded[b] {
 			continue
 		}
+
 		for _, t := range tasks {
 			out = append(out, row{band: b, task: t})
 		}
 	}
+
 	return out
 }
 
@@ -69,11 +77,13 @@ func (m Model) rows() []row {
 // stays on that row.
 func (m Model) tasksIn(b view.Band, filter string) []view.Task {
 	var out []view.Task
+
 	for _, t := range m.board.Tasks {
 		if view.BandOf(t) == b && matches(t, filter) && matchesRepo(t, m.repoFilter) {
 			out = append(out, t)
 		}
 	}
+
 	return out
 }
 
@@ -82,6 +92,7 @@ func matchesRepo(t view.Task, repoFilter string) bool {
 	if repoFilter == "" {
 		return true
 	}
+
 	return strings.EqualFold(t.Repo, repoFilter)
 }
 
@@ -91,11 +102,13 @@ func matches(t view.Task, filter string) bool {
 	if filter == "" {
 		return true
 	}
+
 	for _, field := range []string{t.Repo, t.ID, t.Title} {
 		if strings.Contains(strings.ToLower(field), filter) {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -105,6 +118,7 @@ func (m Model) selected() (row, bool) {
 	if m.cursor < 0 || m.cursor >= len(rows) || rows[m.cursor].blank {
 		return row{}, false
 	}
+
 	return rows[m.cursor], true
 }
 
@@ -117,6 +131,7 @@ func (m Model) firstTask() int {
 			return i
 		}
 	}
+
 	return 0
 }
 
@@ -125,17 +140,21 @@ func (m Model) firstTask() int {
 // end of the screen for a keystroke that meant "next".
 func (m Model) move(n int) Model {
 	rows := m.rows()
+
 	step := 1
 	if n < 0 {
 		step = -1
 	}
+
 	for range n * step {
 		next := seek(rows, m.cursor, step)
 		if next == m.cursor {
 			break
 		}
+
 		m.cursor = next
 	}
+
 	return m.follow()
 }
 
@@ -143,6 +162,7 @@ func (m Model) move(n int) Model {
 func (m Model) moveTo(i int) Model {
 	rows := m.rows()
 	m.cursor = min(max(i, 0), max(len(rows)-1, 0))
+
 	return m.clampCursor()
 }
 
@@ -154,6 +174,7 @@ func seek(rows []row, from, step int) int {
 			return i
 		}
 	}
+
 	return from
 }
 
@@ -167,10 +188,12 @@ func (m Model) clampCursor() Model {
 		m.cursor, m.offset = 0, 0
 		return m
 	}
+
 	m.cursor = min(max(m.cursor, 0), len(rows)-1)
 	if rows[m.cursor].blank {
 		m.cursor = seek(rows, m.cursor, -1)
 	}
+
 	return m.follow()
 }
 
@@ -180,11 +203,13 @@ func (m Model) clampCursor() Model {
 // rows stay where they were.
 func (m Model) follow() Model {
 	h := m.frame.Body.H
+
 	rows := len(m.rows())
 	if h <= 0 || rows <= h {
 		m.offset = 0
 		return m
 	}
+
 	if m.cursor < m.offset {
 		m.offset = m.cursor
 	}
@@ -194,6 +219,8 @@ func (m Model) follow() Model {
 	if shown := page(h, rows, m.offset); m.cursor >= m.offset+shown {
 		m.offset = min(m.cursor-shown+1, rows-h)
 	}
+
 	m.offset = min(max(m.offset, 0), rows-h)
+
 	return m
 }

@@ -17,6 +17,7 @@ func TestTabMenuInDetailView(t *testing.T) {
 
 	// 1. Press 'm' in detail view to open tab menu
 	res, _ := m.Update(tea.KeyPressMsg{Code: 'm', Text: "m"})
+
 	m = asModel(t, res)
 	if !m.menu.open {
 		t.Fatal("expected menu to be open after pressing 'm' in detail view")
@@ -37,11 +38,14 @@ func TestTabMenuInDetailView(t *testing.T) {
 		res, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 		m = asModel(t, res)
 	}
+
 	res, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+
 	m = asModel(t, res)
 	if m.menu.open {
 		t.Error("expected menu to close after selection")
 	}
+
 	if m.tab != tabDiff {
 		t.Errorf("active tab = %v, want tabDiff", m.tab)
 	}
@@ -50,10 +54,12 @@ func TestTabMenuInDetailView(t *testing.T) {
 	res, _ = m.Update(tea.KeyPressMsg{Code: 'm', Text: "m"})
 	m = asModel(t, res)
 	res, _ = m.Update(tea.KeyPressMsg{Code: '6', Text: "6"})
+
 	m = asModel(t, res)
 	if m.menu.open {
 		t.Error("expected menu to close after direct key shortcut")
 	}
+
 	if m.tab != tabTimeline {
 		t.Errorf("active tab after '6' = %v, want tabTimeline", m.tab)
 	}

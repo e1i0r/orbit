@@ -13,19 +13,24 @@ import (
 
 func TestLastSessionReturnsEmptyWhenNilOrNotResumable(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "SESS-1", "session test", "quick")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	if sess := lastSession(nil, tk, "fake", &engine.Fake{}); sess != "" {
 		t.Errorf("lastSession on nil store = %q, want empty", sess)
 	}
+
 	if sess := lastSession(s, tk, "fake", nil); sess != "" {
 		t.Errorf("lastSession on nil engine = %q, want empty", sess)
 	}
+
 	if sess := lastSession(s, tk, "fake", &engine.Fake{Resumable: false}); sess != "" {
 		t.Errorf("lastSession on non-resumable fake = %q, want empty", sess)
 	}
+
 	if sess := lastSession(s, tk, "", &engine.Fake{Resumable: true}); sess != "" {
 		t.Errorf("lastSession with no engine named = %q, want empty", sess)
 	}
@@ -33,10 +38,12 @@ func TestLastSessionReturnsEmptyWhenNilOrNotResumable(t *testing.T) {
 
 func TestLastSessionFindsMostRecentSessionID(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "SESS-2", "session test", "quick")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	fake := &engine.Fake{Resumable: true}
 
 	// No session events yet
@@ -47,11 +54,13 @@ func TestLastSessionFindsMostRecentSessionID(t *testing.T) {
 	// A phase, as a run writes one: started, naming the engine, then ended,
 	// carrying the session. The pair is what the walk reads.
 	phase(t, s, tk, "plan", "fake", record.PhaseFinished, "sess-alpha")
+
 	if sess := lastSession(s, tk, "fake", fake); sess != "sess-alpha" {
 		t.Errorf("lastSession = %q, want sess-alpha", sess)
 	}
 
 	phase(t, s, tk, "impl", "fake", record.PhaseCancelled, "sess-beta")
+
 	if sess := lastSession(s, tk, "fake", fake); sess != "sess-beta" {
 		t.Errorf("lastSession after cancel = %q, want sess-beta", sess)
 	}
@@ -63,16 +72,20 @@ func TestLastSessionFindsMostRecentSessionID(t *testing.T) {
 // to decipher or a silent fresh start reported as a resume.
 func TestLastSessionIgnoresAnotherEnginesSession(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "SESS-4", "two engines, one task", "quick")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	fake := &engine.Fake{Resumable: true}
 
 	phase(t, s, tk, "plan", "claude", record.PhaseFinished, "claude-sess")
+
 	if sess := lastSession(s, tk, "codex", fake); sess != "" {
 		t.Errorf("lastSession for codex = %q, want empty — that session is claude's", sess)
 	}
+
 	if sess := lastSession(s, tk, "claude", fake); sess != "claude-sess" {
 		t.Errorf("lastSession for claude = %q, want claude-sess", sess)
 	}
@@ -80,9 +93,11 @@ func TestLastSessionIgnoresAnotherEnginesSession(t *testing.T) {
 	// Now codex runs a phase of its own. Each engine keeps its own thread,
 	// and the later one does not shadow the earlier.
 	phase(t, s, tk, "check", "codex", record.PhaseFinished, "codex-sess")
+
 	if sess := lastSession(s, tk, "codex", fake); sess != "codex-sess" {
 		t.Errorf("lastSession for codex = %q, want codex-sess", sess)
 	}
+
 	if sess := lastSession(s, tk, "claude", fake); sess != "claude-sess" {
 		t.Errorf("lastSession for claude = %q, want claude-sess — codex's phase is not claude's", sess)
 	}
@@ -92,6 +107,7 @@ func TestLastSessionIgnoresAnotherEnginesSession(t *testing.T) {
 // names the engine, and the ending that carries the session.
 func phase(t *testing.T, s *store.Store, tk Task, name, eng, ending, session string) {
 	t.Helper()
+
 	for _, e := range []record.Event{
 		{Kind: record.PhaseStarted, Phase: name, Data: map[string]string{"engine": eng, "n": "1"}},
 		{Kind: ending, Phase: name, Data: map[string]string{"session": session}},
@@ -104,6 +120,7 @@ func phase(t *testing.T, s *store.Store, tk Task, name, eng, ending, session str
 
 func TestRunPassesLastSessionToResumableEngine(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "SESS-3", "run session test", "quick")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
@@ -133,6 +150,7 @@ func TestRunPassesLastSessionToResumableEngine(t *testing.T) {
 	if len(fake.Calls) != 1 {
 		t.Fatalf("fake.Calls length = %d, want 1", len(fake.Calls))
 	}
+
 	if fake.Calls[0].Resume != "sess-existing" {
 		t.Errorf("fake.Calls[0].Resume = %q, want sess-existing", fake.Calls[0].Resume)
 	}

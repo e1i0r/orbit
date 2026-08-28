@@ -32,14 +32,17 @@ func (LinearProvider) Parse(rawURL string) (Issue, error) {
 	if err != nil {
 		return Issue{}, err
 	}
+
 	m := linearPattern.FindStringSubmatch(u.Host + u.Path)
 	if len(m) < 3 {
 		return Issue{}, fmt.Errorf("invalid linear url: %s", rawURL)
 	}
+
 	title := ""
 	if len(m) > 3 && m[3] != "" {
 		title = cleanSlug(m[3])
 	}
+
 	return Issue{
 		Kind:   "linear",
 		ID:     strings.ToUpper(m[2]),
@@ -55,8 +58,10 @@ func (LinearProvider) FormatPrompt(iss Issue) string {
 	if iss.Title != "" {
 		b.WriteString(iss.Title + "\n\n")
 	}
+
 	fmt.Fprintf(&b, "Issue Tracker: Linear (%s)\nURL: %s\n\n", iss.ID, iss.RawURL)
 	b.WriteString("Please inspect the issue details using Linear MCP tools (e.g. linear_get_issue) or review the requirement and implement the requested changes.")
+
 	return b.String()
 }
 
@@ -78,10 +83,12 @@ func (JiraProvider) Parse(rawURL string) (Issue, error) {
 	if err != nil {
 		return Issue{}, err
 	}
+
 	m := jiraPattern.FindStringSubmatch(u.Host + u.Path)
 	if len(m) < 3 {
 		return Issue{}, fmt.Errorf("invalid jira url: %s", rawURL)
 	}
+
 	return Issue{
 		Kind:   "jira",
 		ID:     strings.ToUpper(m[2]),
@@ -96,8 +103,10 @@ func (JiraProvider) FormatPrompt(iss Issue) string {
 	if iss.Title != "" {
 		b.WriteString(iss.Title + "\n\n")
 	}
+
 	fmt.Fprintf(&b, "Issue Tracker: Jira (%s)\nURL: %s\n\n", iss.ID, iss.RawURL)
 	b.WriteString("Please inspect the issue details using Jira MCP tools or review the requirement and implement the requested changes.")
+
 	return b.String()
 }
 
@@ -118,10 +127,12 @@ func (GitHubProvider) Parse(rawURL string) (Issue, error) {
 	if err != nil {
 		return Issue{}, err
 	}
+
 	m := githubPattern.FindStringSubmatch(u.Host + u.Path)
 	if len(m) < 4 {
 		return Issue{}, fmt.Errorf("invalid github issue url: %s", rawURL)
 	}
+
 	return Issue{
 		Kind:   "github",
 		ID:     "GH-" + m[3],
@@ -137,8 +148,10 @@ func (GitHubProvider) FormatPrompt(iss Issue) string {
 	if iss.Title != "" {
 		b.WriteString(iss.Title + "\n\n")
 	}
+
 	fmt.Fprintf(&b, "Issue Tracker: GitHub (#%s)\nURL: %s\n\n", strings.TrimPrefix(iss.ID, "GH-"), iss.RawURL)
 	b.WriteString("Please inspect the issue details using GitHub MCP tools or `gh issue view` and implement the requested changes.")
+
 	return b.String()
 }
 
@@ -159,10 +172,12 @@ func (GitLabProvider) Parse(rawURL string) (Issue, error) {
 	if err != nil {
 		return Issue{}, err
 	}
+
 	m := gitlabPattern.FindStringSubmatch(u.Host + u.Path)
 	if len(m) < 4 {
 		return Issue{}, fmt.Errorf("invalid gitlab issue url: %s", rawURL)
 	}
+
 	return Issue{
 		Kind:   "gitlab",
 		ID:     "GL-" + m[3],
@@ -178,8 +193,10 @@ func (GitLabProvider) FormatPrompt(iss Issue) string {
 	if iss.Title != "" {
 		b.WriteString(iss.Title + "\n\n")
 	}
+
 	fmt.Fprintf(&b, "Issue Tracker: GitLab (#%s)\nURL: %s\n\n", strings.TrimPrefix(iss.ID, "GL-"), iss.RawURL)
 	b.WriteString("Please inspect the issue details using GitLab tools and implement the requested changes.")
+
 	return b.String()
 }
 
@@ -188,25 +205,32 @@ func normalizeURL(raw string) (*url.URL, error) {
 	if !strings.HasPrefix(trimmed, "http://") && !strings.HasPrefix(trimmed, "https://") {
 		trimmed = "https://" + trimmed
 	}
+
 	return url.Parse(trimmed)
 }
 
 func cleanSlug(slug string) string {
 	parts := strings.Split(slug, "-")
+
 	var words []string
+
 	for _, p := range parts {
 		p = strings.TrimSpace(p)
 		if p != "" {
 			words = append(words, p)
 		}
 	}
+
 	if len(words) == 0 {
 		return ""
 	}
+
 	res := strings.Join(words, " ")
+
 	runes := []rune(res)
 	if len(runes) > 0 {
 		runes[0] = unicode.ToUpper(runes[0])
 	}
+
 	return string(runes)
 }

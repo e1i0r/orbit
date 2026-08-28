@@ -22,21 +22,26 @@ func TestCreateMintsAnIdFromTheRepositoryAndTheNextFreeNumber(t *testing.T) {
 	if first["id"] == second["id"] {
 		t.Fatalf("two tasks were both minted %v", first["id"])
 	}
+
 	for _, got := range []any{first["id"], second["id"]} {
 		id, ok := got.(string)
 		if !ok {
 			t.Fatalf("an id came back as %#v, want a string", got)
 		}
+
 		if !strings.HasPrefix(id, "PAYMENTS-") {
 			t.Errorf("id %q does not name the repository it was written against", id)
 		}
+
 		if err := store.ValidTaskID(id); err != nil {
 			t.Errorf("id %q is not one the store will accept: %v", id, err)
 		}
 	}
+
 	if first["repo"] != r.Name {
 		t.Errorf("the task was written against %v, want %q", first["repo"], r.Name)
 	}
+
 	if first["started"] != false {
 		t.Error("orbit_create_task reports the task as started; writing one down and spending money on it are two decisions")
 	}
@@ -44,6 +49,7 @@ func TestCreateMintsAnIdFromTheRepositoryAndTheNextFreeNumber(t *testing.T) {
 
 func TestCreateHonoursAnIdTheCallerChose(t *testing.T) {
 	_, sn, _ := oneRepo(t)
+
 	got := call(t, sn, "orbit_create_task", map[string]any{"title": "one", "id": "ACME-7"})
 	if got["id"] != "ACME-7" {
 		t.Errorf("the caller asked for ACME-7 and got %v", got["id"])
@@ -77,10 +83,12 @@ func TestCreateJoinsTheTitleAndThePromptIntoTheTask(t *testing.T) {
 	_, sn, _ := oneRepo(t)
 	created := call(t, sn, "orbit_create_task", map[string]any{"title": "fix the parser", "prompt": "start from the failing test"})
 	got := call(t, sn, "orbit_inspect_task", map[string]any{"task_id": created["id"]})
+
 	body, ok := got["text"].(string)
 	if !ok {
 		t.Fatalf("the inspection carries the task as %#v, want a string", got["text"])
 	}
+
 	if !strings.Contains(body, "fix the parser") || !strings.Contains(body, "start from the failing test") {
 		t.Errorf("the task was written as %q, want both the title and the prompt", body)
 	}
@@ -101,6 +109,7 @@ func TestCreateSaysWhichRepositoryWhenThereIsMoreThanOne(t *testing.T) {
 			t.Errorf("the refusal does not offer %q: %s", name, said)
 		}
 	}
+
 	got := call(t, sn, "orbit_create_task", map[string]any{"title": "one", "repo": "ledger"})
 	if got["repo"] != "ledger" {
 		t.Errorf("the task was written against %v, want ledger", got["repo"])

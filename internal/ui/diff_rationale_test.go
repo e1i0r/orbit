@@ -23,6 +23,7 @@ func TestExtractFileRationales(t *testing.T) {
 	}
 
 	p := words.For("en")
+
 	rationales := extractFileRationales(entries, files, p)
 	if len(rationales) != 2 {
 		t.Fatalf("expected 2 rationales, got %d", len(rationales))

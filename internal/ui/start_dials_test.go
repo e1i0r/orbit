@@ -38,6 +38,7 @@ func TestStartKeyEveryBinding(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m = onto(t, m, "ACME-2698") // a NeedsYou task, expanded by default and not live
 	next, _ := m.openStart()
+
 	m = asModel(t, next)
 	if m.screen != screenStart {
 		t.Fatalf("openStart left screen %v, want screenStart", m.screen)
@@ -54,6 +55,7 @@ func TestStartKeyEveryBinding(t *testing.T) {
 
 	before := m.start.at
 	next, _ = m.startKey(keystroke("f"))
+
 	m = asModel(t, next)
 	if len(m.start.flows) > 1 && m.start.at == before {
 		t.Error("ChangeFlow ('f') did not move the cycle")
@@ -67,19 +69,23 @@ func TestStartKeyEveryBinding(t *testing.T) {
 	m = asModel(t, next)
 
 	next, _ = m.startKey(keystroke("?"))
+
 	m = asModel(t, next)
 	if m.screen != screenHelp {
 		t.Errorf("Help ('?') left screen %v, want screenHelp", m.screen)
 	}
+
 	m.screen = screenStart
 
 	next, cmd := m.startKey(tea.KeyPressMsg{Code: 'q', Text: "q"})
+
 	m = asModel(t, next)
 	if cmd == nil {
 		t.Error("Quit did not produce a command")
 	}
 
 	next, _ = m.startKey(keystroke("esc"))
+
 	m = asModel(t, next)
 	if m.screen != screenList || m.start.id != "" {
 		t.Errorf("Back left screen=%v start=%+v, want screenList and a cleared dialog", m.screen, m.start)
@@ -92,10 +98,12 @@ func TestRunItRefusesAtTheCapAndOnAGoneTask(t *testing.T) {
 	// 1. The task named on the dialog has since left the board.
 	m.start = startModel{id: "no-such-task"}
 	next, cmd := m.runIt()
+
 	got := asModel(t, next)
 	if cmd != nil {
 		t.Error("runIt on a gone task produced a command")
 	}
+
 	wantBand(t, got, "has left the board")
 
 	// 2. The unread cap refuses, and names the waiting tasks.
@@ -104,10 +112,12 @@ func TestRunItRefusesAtTheCapAndOnAGoneTask(t *testing.T) {
 	m = asModel(t, next)
 	m.opts.Settings = &settings{autopilot: true, lang: "en", unread: 1}
 	next, cmd = m.runIt()
+
 	got = asModel(t, next)
 	if cmd != nil {
 		t.Error("runIt at the unread cap produced a command")
 	}
+
 	if !strings.Contains(got.message, "press esc") {
 		t.Errorf("runIt at the cap said %q, want the refusal naming the escape route", got.message)
 	}
@@ -115,6 +125,7 @@ func TestRunItRefusesAtTheCapAndOnAGoneTask(t *testing.T) {
 
 func TestCycleThinkingToggles(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
+
 	tests := []struct {
 		start, want string
 	}{
@@ -125,6 +136,7 @@ func TestCycleThinkingToggles(t *testing.T) {
 	}
 	for _, tt := range tests {
 		m.knobs.Thinking = tt.start
+
 		got := m.cycleThinking()
 		if got.knobs.Thinking != tt.want {
 			t.Errorf("cycleThinking from %q = %q, want %q", tt.start, got.knobs.Thinking, tt.want)

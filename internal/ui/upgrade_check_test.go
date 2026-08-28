@@ -18,13 +18,16 @@ func TestCheckUpgradeCmd(t *testing.T) {
 
 	old := upgradeCheckEndpoint
 	upgradeCheckEndpoint = ts.URL
+
 	t.Cleanup(func() { upgradeCheckEndpoint = old })
 
 	msg := checkUpgradeCmd("v0.1.0")()
+
 	upMsg, ok := msg.(upgradeAvailableMsg)
 	if !ok {
 		t.Fatalf("expected upgradeAvailableMsg, got: %T", msg)
 	}
+
 	if upMsg.Version != "v0.2.0" {
 		t.Errorf("Version = %q, want v0.2.0", upMsg.Version)
 	}
@@ -44,6 +47,7 @@ func TestCheckUpgradeCmdSaysNothingOnTheLatestVersion(t *testing.T) {
 
 	old := upgradeCheckEndpoint
 	upgradeCheckEndpoint = ts.URL
+
 	t.Cleanup(func() { upgradeCheckEndpoint = old })
 
 	// Both spellings, because a tag carries a leading v and the version
@@ -83,6 +87,7 @@ func TestCheckUpgradeCmdFailure(t *testing.T) {
 
 	old := upgradeCheckEndpoint
 	upgradeCheckEndpoint = ts.URL
+
 	t.Cleanup(func() { upgradeCheckEndpoint = old })
 
 	msg := checkUpgradeCmd("v0.1.0")()

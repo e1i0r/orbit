@@ -17,6 +17,7 @@ func TestHistoryKeepsTheWholeThreadWhenItFits(t *testing.T) {
 		{Kind: record.SupervisorMessage, Text: "first", Data: map[string]string{"by": "elio", "channel": "tui"}},
 		{Kind: record.SupervisorMessage, Text: "second", Data: map[string]string{"by": "claude", "channel": "supervisor"}},
 	})
+
 	want := "[elio via tui]: first\n[claude via supervisor]: second\n"
 	if got != want {
 		t.Errorf("history = %q, want %q", got, want)
@@ -53,6 +54,7 @@ func TestHistoryNamesTheTaskATurnIsAbout(t *testing.T) {
 func TestHistoryKeepsTheRecentTurnsAndSaysHowManyItDropped(t *testing.T) {
 	// Turns of about a kilobyte each, far past the ceiling in total.
 	body := strings.Repeat("x", 1024)
+
 	var events []record.Event
 	for i := range 200 {
 		events = append(events, record.Event{
@@ -66,12 +68,15 @@ func TestHistoryKeepsTheRecentTurnsAndSaysHowManyItDropped(t *testing.T) {
 	if len(got) > maxHistory+200 {
 		t.Errorf("history is %d bytes, over the %d ceiling", len(got), maxHistory)
 	}
+
 	if !strings.Contains(got, "turn-199") {
 		t.Error("the most recent turn was dropped; the cap has to keep the end of the conversation")
 	}
+
 	if strings.Contains(got, "turn-000") {
 		t.Error("the oldest turn survived a thread far past the ceiling")
 	}
+
 	if !strings.Contains(got, "earlier turns are not shown") {
 		t.Errorf("history dropped turns without saying so: %.120q", got)
 	}

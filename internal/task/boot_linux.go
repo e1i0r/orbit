@@ -22,16 +22,20 @@ func bootTime() (time.Time, bool) {
 	if err != nil {
 		return time.Time{}, false
 	}
+
 	for line := range strings.SplitSeq(string(body), "\n") {
 		rest, ok := strings.CutPrefix(line, "btime ")
 		if !ok {
 			continue
 		}
+
 		sec, err := strconv.ParseInt(strings.TrimSpace(rest), 10, 64)
 		if err != nil || sec == 0 {
 			return time.Time{}, false
 		}
+
 		return time.Unix(sec, 0).UTC(), true
 	}
+
 	return time.Time{}, false
 }

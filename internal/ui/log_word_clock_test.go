@@ -19,6 +19,7 @@ import (
 
 func TestLogWordCoversEveryKnownKindAndTheUnknownOne(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
+
 	cases := []struct {
 		kind string
 		want string
@@ -57,6 +58,7 @@ func TestLogWordCoversEveryKnownKindAndTheUnknownOne(t *testing.T) {
 	if word != "custom.unknown.kind" {
 		t.Errorf("logWord on an unrecognised kind = %q, want the kind verbatim", word)
 	}
+
 	if role != Dim {
 		t.Errorf("logWord on an unrecognised kind painted %v, want Dim", role)
 	}
@@ -66,6 +68,7 @@ func TestClockFormatsOrLeavesADamagedTimeBlank(t *testing.T) {
 	if got := clock(time.Time{}); got != "" {
 		t.Errorf("clock(zero time) = %q, want empty", got)
 	}
+
 	at := time.Date(2026, 8, 23, 9, 5, 3, 0, time.UTC)
 	if got := clock(at); got != "09:05:03" {
 		t.Errorf("clock(9:05:03) = %q, want \"09:05:03\"", got)

@@ -26,9 +26,10 @@ func (m Model) barLine(w int) string {
 	return line
 }
 
-// barFooterChips renders autopilot and interactive CLI on the footer right side
+// barFooterChips renders autopilot and interactive CLI on the footer right side.
 func (m Model) barFooterChips() string {
 	p := m.opts.Words
+
 	var chips []string
 
 	// Autopilot chip
@@ -36,6 +37,7 @@ func (m Model) barFooterChips() string {
 	if m.autopilotOn() {
 		pip, role = pipOn, Live
 	}
+
 	chips = append(chips, Paint(role).Render("⚡ "+p.T("header.autopilot", "autopilot"))+" "+Paint(role).Render(pip)+" "+Paint(role).Bold(true).Render("["+m.keys.Autopilot.Help().Key+"]"))
 
 	// Interactive CLI chip
@@ -55,17 +57,21 @@ func (m Model) barLayout(w int) (string, []placedHint) {
 
 	for {
 		leftStr := " " + strings.Join(append(drawn(hints), tail), hintGap)
+
 		leftW := lipgloss.Width(leftStr)
 		if leftW+chipsW+4 <= w && chips != "" {
 			space := w - leftW - chipsW
 			return leftStr + strings.Repeat(" ", space) + chips, place(hints)
 		}
+
 		if len(hints) == 0 {
 			if leftW <= w {
 				return fit(leftStr, w), place(hints)
 			}
+
 			return fit(leftStr, w), nil
 		}
+
 		hints = hints[:len(hints)-1]
 	}
 }
@@ -76,6 +82,7 @@ func drawn(hints []barHint) []string {
 	for _, h := range hints {
 		out = append(out, h.text)
 	}
+
 	return out
 }
 
@@ -84,10 +91,12 @@ func drawn(hints []barHint) []string {
 func place(hints []barHint) []placedHint {
 	out := make([]placedHint, 0, len(hints))
 	x := 1
+
 	for _, h := range hints {
 		cells := lipgloss.Width(h.text)
 		out = append(out, placedHint{key: h.key, x: x, w: cells})
 		x += cells + lipgloss.Width(hintGap)
 	}
+
 	return out
 }

@@ -33,12 +33,15 @@ func runMCP(ctx Context, args []string) error {
 	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
+
 	if *install || fs.Arg(0) == "install" {
 		return installMCP(ctx)
 	}
+
 	if rest := fs.Arg(0); rest != "" {
 		return fmt.Errorf("mcp takes no arguments but %q; `orbit mcp` is the server and `orbit mcp install` registers it", rest)
 	}
+
 	return serveMCP(ctx, *root)
 }
 
@@ -55,16 +58,21 @@ func serveMCP(ctx Context, root string) error {
 	if err != nil {
 		return err
 	}
+
 	if logErr := logger.Init(s.LogPath()); logErr == nil {
 		defer func() { _ = logger.CloseGlobal() }() //nolint:errcheck // best-effort logger flush on process exit
+
 		logger.Info("cli/mcp", "mcp server started (root=%q, version=%s)", root, Version)
 	}
+
 	session := mcp.Session{Root: root, Version: Version}
 	if err := mcp.NewServer(os.Stdin, os.Stdout, session).Serve(); err != nil {
 		logger.Error("cli/mcp", "mcp server stopped: %v", err)
 		return fmt.Errorf("the mcp server: %w", err)
 	}
+
 	logger.Info("cli/mcp", "mcp server stopped: the client closed the connection")
+
 	return nil
 }
 
@@ -75,27 +83,37 @@ func serveMCP(ctx Context, root string) error {
 // install fail over an application they have never had.
 func installMCP(ctx Context) error {
 	p := ctx.Words
+
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("find the home directory the clients keep their configuration in: %w", err)
 	}
+
 	fmt.Fprintln(ctx.Out, p.T("mcp.installing", "registering orbit as an mcp server"))
+
 	failed := 0
+
 	for _, res := range mcp.Install("", home) {
 		if res.Err != nil {
 			failed++
+
 			logger.Error("cli/mcp", "register in %s at %q failed: %v", res.Target, res.Path, res.Err)
 			fmt.Fprintf(ctx.Out, "  %s\n", p.T("mcp.install_failed", "{client}: {err}",
 				words.Arg{Name: "client", Value: res.Target}, words.Arg{Name: "err", Value: res.Err.Error()}))
+
 			continue
 		}
+
 		logger.Info("cli/mcp", "registered in %s at %q", res.Target, res.Path)
 		fmt.Fprintf(ctx.Out, "  %s\n", p.T("mcp.install_wrote", "{client} — {path}",
 			words.Arg{Name: "client", Value: res.Target}, words.Arg{Name: "path", Value: res.Path}))
 	}
+
 	if failed > 0 {
 		return fmt.Errorf("%d client configurations could not be written", failed)
 	}
+
 	fmt.Fprintln(ctx.Out, p.T("mcp.install_restart", "restart the client to connect; it will run `orbit mcp`"))
+
 	return nil
 }

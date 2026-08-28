@@ -82,6 +82,7 @@ func (m Model) hit(x, y int) Target {
 		// on it to point at.
 		return Target{}
 	}
+
 	switch m.frame.At(y) {
 	case layout.RegionBar:
 		if m.palette.open || m.menu.open {
@@ -92,6 +93,7 @@ func (m Model) hit(x, y int) Target {
 			// starts.
 			return Target{}
 		}
+
 		return m.hitBar(x, y)
 	case layout.RegionHeader:
 		return m.hitHeader(x, y)
@@ -101,12 +103,15 @@ func (m Model) hit(x, y int) Target {
 		if m.palette.open {
 			return m.hitPalette(x, y)
 		}
+
 		if m.menu.open {
 			return m.hitMenu(x, y)
 		}
+
 		if m.watchUp {
 			return Target{}
 		}
+
 		switch m.screen {
 		case screenDetail:
 			return m.hitDetail(x, y)
@@ -125,8 +130,10 @@ func (m Model) hit(x, y int) Target {
 		case screenSupervisor:
 			return Target{}
 		}
+
 		return m.hitRow(x, y)
 	}
+
 	return Target{}
 }
 
@@ -141,15 +148,19 @@ func (m Model) hitRow(x, y int) Target {
 	if !ok || line == 0 {
 		return Target{}
 	}
+
 	taskLine := line - 1
+
 	all := m.rows()
 	if taskLine >= page(m.frame.Body.H-1, len(all), m.offset) {
 		return Target{}
 	}
+
 	i := m.offset + taskLine
 	if i < 0 || i >= len(all) {
 		return Target{}
 	}
+
 	switch r := all[i]; {
 	case r.blank:
 		return Target{}
@@ -158,6 +169,7 @@ func (m Model) hitRow(x, y int) Target {
 	default:
 		t := Target{Kind: TargetTask, ID: r.task.ID, Band: r.band}
 		t.Column, _ = m.plan.ColumnAt(x - gutter)
+
 		return t
 	}
 }
@@ -179,6 +191,7 @@ func (m Model) hitBar(x, y int) Target {
 		if x >= m.width-28 {
 			return Target{Kind: TargetBarHint, Key: "c"}
 		}
+
 		if x >= m.width-60 && x < m.width-28 {
 			return Target{Kind: TargetStatusField, Field: "autopilot"}
 		}
@@ -192,6 +205,7 @@ func (m Model) hitBar(x, y int) Target {
 			return Target{Kind: TargetBarHint, Key: h.key}
 		}
 	}
+
 	return Target{}
 }
 
@@ -199,18 +213,23 @@ func (m Model) hitHeader(x, y int) Target {
 	if y != m.frame.Header.Y {
 		return Target{}
 	}
+
 	if x < 10 {
 		return Target{Kind: TargetHeaderField, Field: "orbit"}
 	}
+
 	if x >= 10 && x < 28 {
 		return Target{Kind: TargetHeaderQueue, Band: view.ToDo}
 	}
+
 	if x >= 28 && x < 44 {
 		return Target{Kind: TargetHeaderQueue, Band: view.Running}
 	}
+
 	if x >= 44 && x < 62 {
 		return Target{Kind: TargetHeaderQueue, Band: view.NeedsYou}
 	}
+
 	if x >= 62 && x < 78 {
 		return Target{Kind: TargetHeaderQueue, Band: view.Done}
 	}
@@ -219,12 +238,15 @@ func (m Model) hitHeader(x, y int) Target {
 	if x >= m.width-12 {
 		return Target{Kind: TargetHeaderField, Field: "lang"}
 	}
+
 	if x >= m.width-28 && x < m.width-12 {
 		return Target{Kind: TargetHeaderField, Field: "engine"}
 	}
+
 	if x >= m.width-56 && x < m.width-28 {
 		return Target{Kind: TargetHeaderField, Field: "repos"}
 	}
+
 	return Target{}
 }
 

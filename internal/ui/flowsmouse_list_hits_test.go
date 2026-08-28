@@ -15,19 +15,24 @@ func TestWrapPromptText(t *testing.T) {
 	if got := wrapPromptText("", 10); got != nil {
 		t.Errorf("wrapPromptText(\"\", 10) = %v, want nil", got)
 	}
+
 	if got := wrapPromptText("hello", 0); got != nil {
 		t.Errorf("wrapPromptText with maxLen 0 = %v, want nil", got)
 	}
+
 	if got := wrapPromptText("   ", 10); got != nil {
 		t.Errorf("wrapPromptText of only whitespace = %v, want nil", got)
 	}
+
 	if got := wrapPromptText("hello world", 100); len(got) != 1 || got[0] != "hello world" {
 		t.Errorf("wrapPromptText that fits on one line = %v", got)
 	}
+
 	got := wrapPromptText("aaaaaaaaaa bbbbbbbbbb cccccccccc", 12)
 	if len(got) != 3 {
 		t.Fatalf("expected 3 wrapped lines, got %d: %v", len(got), got)
 	}
+
 	for i, l := range got {
 		if l == "" {
 			t.Errorf("line %d is empty", i)
@@ -39,12 +44,15 @@ func TestNextOption(t *testing.T) {
 	if got := nextOption(nil, "x", 1); got != "x" {
 		t.Errorf("nextOption with no options = %q, want the current value unchanged", got)
 	}
+
 	if got := nextOption([]string{"a", "b", "c"}, "not-there", 1); got != "b" {
 		t.Errorf("nextOption with an unmatched current = %q, want it to treat the start as index 0", got)
 	}
+
 	if got := nextOption([]string{"a", "b", "c"}, "a", -1); got != "c" {
 		t.Errorf("nextOption wrapping backward past the start = %q, want c", got)
 	}
+
 	if got := nextOption([]string{"a", "b", "c"}, "c", 1); got != "a" {
 		t.Errorf("nextOption wrapping forward past the end = %q, want a", got)
 	}
@@ -52,6 +60,7 @@ func TestNextOption(t *testing.T) {
 
 func TestHitFlowsOutsideBody(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
+
 	m = m.openFlows()
 	if got := m.hitFlows(10, 0); got.Kind != TargetNone {
 		t.Errorf("hitFlows outside the body = %+v, want the zero Target", got)
@@ -62,6 +71,7 @@ func TestHitFlowsListCreateButton(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m = m.openFlows()
 	y := m.frame.Body.Y + 4
+
 	got := m.hitFlows(10, y)
 	if got.Kind != TargetFlowItem || got.Field != "create" {
 		t.Errorf("hitFlows at the create row = %+v, want Field \"create\"", got)
@@ -124,6 +134,7 @@ func TestHitFlowsListDeleteVsEdit(t *testing.T) {
 	if got := m.hitFlows(56, line); got.Field != "delete" || got.ID != "zzz-mine" {
 		t.Errorf("hitFlows on the delete pill = %+v, want a delete click", got)
 	}
+
 	if got := flow.List(m.opts.Flows); len(got) != 5 {
 		t.Fatalf("expected 5 flows listed, got %d", len(got))
 	}

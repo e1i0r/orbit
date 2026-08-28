@@ -50,21 +50,27 @@ func Save(src Source, f Flow) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	if err := f.Validate(); err != nil {
 		return "", err
 	}
+
 	body, err := json.MarshalIndent(f, "", "  ")
 	if err != nil {
 		return "", fmt.Errorf("encode the flow %q: %w", f.Name, err)
 	}
+
 	body = append(body, '\n')
+
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, dirMode); err != nil {
 		return "", fmt.Errorf("create %q: %w", dir, err)
 	}
+
 	if err := os.WriteFile(path, body, fileMode); err != nil {
 		return "", fmt.Errorf("write %q: %w", path, err)
 	}
+
 	return path, nil
 }
 
@@ -82,15 +88,19 @@ func Delete(src Source, name string) (revealed bool, err error) {
 	if err != nil {
 		return false, err
 	}
+
 	if err := os.Remove(path); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			if slices.Contains(BuiltinNames(), name) {
 				return false, fmt.Errorf("the flow %q is built into orbit and cannot be deleted; write your own of that name to change what it does", name)
 			}
+
 			return false, fmt.Errorf("there is no flow of your own called %q", name)
 		}
+
 		return false, fmt.Errorf("remove %q: %w", path, err)
 	}
+
 	return slices.Contains(BuiltinNames(), name), nil
 }
 
@@ -100,9 +110,11 @@ func UserPath(src Source, name string) (string, error) {
 	if err := ValidName(name); err != nil {
 		return "", err
 	}
+
 	dir := dirOf(src)
 	if dir == "" {
 		return "", fmt.Errorf("there is nowhere to keep a flow: this caller has no flow directory")
 	}
+
 	return filepath.Join(dir, name+".json"), nil
 }

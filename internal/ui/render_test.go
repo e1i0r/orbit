@@ -39,16 +39,21 @@ import (
 // what is measured is the text a terminal would actually paint cells with.
 func renderAt(t *testing.T, m Model, w, h int) []string {
 	t.Helper()
+
 	next, _ := m.Update(tea.WindowSizeMsg{Width: w, Height: h})
+
 	sized, ok := next.(Model)
 	if !ok {
 		t.Fatalf("Update returned %T, want ui.Model", next)
 	}
+
 	var buf bytes.Buffer
+
 	writer := &colorprofile.Writer{Forward: &buf, Profile: colorprofile.Ascii}
 	if _, err := writer.WriteString(sized.View().Content); err != nil {
 		t.Fatalf("write the frame: %v", err)
 	}
+
 	return strings.Split(ansi.Strip(buf.String()), "\n")
 }
 
@@ -59,17 +64,21 @@ func boards() []struct {
 	board board.Board
 } {
 	one := fixtureTasks()[3:4]
+
 	sameRepo := fixtureTasks()
 	for i := range sameRepo {
 		sameRepo[i].Repo = "payments"
 	}
+
 	var thirty []view.Task
+
 	for i, t := range fixtureTasks() {
 		for n := range 6 {
 			t.ID = "ACME-" + string(rune('2'+n)) + "70" + string(rune('0'+i))
 			thirty = append(thirty, t)
 		}
 	}
+
 	return []struct {
 		name  string
 		board board.Board
@@ -89,20 +98,24 @@ var sizes = []struct{ w, h int }{{200, 60}, {100, 30}, {80, 24}, {60, 20}}
 func TestEveryFrameFitsTheTerminalItWasGiven(t *testing.T) {
 	for _, lang := range []string{"en", "es", "qps"} {
 		printer := printerFor(t, lang)
+
 		for _, b := range boards() {
 			for _, size := range sizes {
 				name := lang + "/" + b.name + "/" + strconv.Itoa(size.w) + "x" + strconv.Itoa(size.h)
 				t.Run(name, func(t *testing.T) {
 					m := modelWith(t, printer, b.board, size.w, size.h, nil)
+
 					rows := renderAt(t, m, size.w, size.h)
 					if len(rows) != size.h {
 						t.Fatalf("the frame is %d rows, want %d", len(rows), size.h)
 					}
+
 					for i, row := range rows {
 						if cells := ansi.StringWidth(row); cells > size.w {
 							t.Errorf("row %d is %d cells wide, want at most %d: %q", i, cells, size.w, row)
 						}
 					}
+
 					wantRows(t, m, rows)
 				})
 			}
@@ -125,25 +138,32 @@ func TestEveryFrameFitsTheTerminalItWasGiven(t *testing.T) {
 // id column and no translation touches it.
 func wantRows(t *testing.T, m Model, rows []string) {
 	t.Helper()
+
 	if !strings.Contains(rows[0], "orbit") {
 		t.Errorf("the header row is %q, want it to name the program", rows[0])
 	}
+
 	list := m.rows()
+
 	shown := page(m.frame.Body.H-1, len(list), m.offset)
 	for i := m.offset; i < len(list) && i-m.offset < shown; i++ {
 		if list[i].head || list[i].blank {
 			continue
 		}
+
 		row := m.frame.Body.Y + 1 + i - m.offset
 		if !strings.Contains(rows[row], list[i].task.ID) {
 			t.Errorf("row %d is %q, want the first task, %s, on it", row, rows[row], list[i].task.ID)
 		}
+
 		break
 	}
+
 	band := rows[len(rows)-2]
 	if strings.TrimSpace(band) == "" {
 		t.Error("the activity band is blank, and a status area that goes blank reads as broken")
 	}
+
 	bar := rows[len(rows)-1]
 	if !strings.Contains(bar, "[") {
 		t.Errorf("the key bar is %q, want it to offer at least one key", bar)
@@ -160,15 +180,19 @@ func TestAnAppliedFilterKeepsSayingSoAfterTheTypingStops(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	for _, k := range []string{"/", "a", "p", "p", "enter"} {
 		next, _ := m.Update(press(k))
+
 		typed, ok := next.(Model)
 		if !ok {
 			t.Fatalf("Update returned %T, want ui.Model", next)
 		}
+
 		m = typed
 	}
+
 	if m.filtering || m.filter != "app" {
 		t.Fatalf("filtering=%v filter=%q, want the prompt closed and the filter kept", m.filtering, m.filter)
 	}
+
 	rows := renderAt(t, m, 100, 30)
 	band := rows[len(rows)-2]
 	// Six of the fifteen fixture tasks are in the app repository, two of
@@ -186,16 +210,19 @@ func TestAnAppliedFilterKeepsSayingSoAfterTheTypingStops(t *testing.T) {
 // how many columns it needed, rather than drawing a broken one.
 func TestATerminalUnderTheMinimumIsRefusedWithTheNumber(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
+
 	rows := renderAt(t, m, 40, 20)
 	if len(rows) != 20 {
 		t.Fatalf("the refusal is %d rows, want 20", len(rows))
 	}
+
 	joined := strings.Join(rows, "\n")
 	for _, want := range []string{"60", "40"} {
 		if !strings.Contains(joined, want) {
 			t.Errorf("the refusal does not carry %q: %q", want, strings.TrimSpace(joined))
 		}
 	}
+
 	for i, row := range rows {
 		if cells := ansi.StringWidth(row); cells > 40 {
 			t.Errorf("row %d of the refusal is %d cells wide, want at most 40", i, cells)
@@ -227,6 +254,7 @@ func TestTheEmptyStateSaysWhichKindOfEmpty(t *testing.T) {
 			m := modelWith(t, printer, fixtureBoard(fixtureTasks(), 4), 100, 30, nil)
 			m.filtering = true
 			m.filter = "nothing matches this"
+
 			return m
 		},
 		want: "nothing matches this",

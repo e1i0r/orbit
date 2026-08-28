@@ -15,11 +15,14 @@ func (m Model) hitDetail(x, y int) Target {
 	if !ok {
 		return Target{}
 	}
+
 	headLen := len(m.detailHeadLines(m.frame.Body.W))
+
 	tabLine := headLen
 	if m.frame.Body.H >= headLen+3 {
 		tabLine = headLen + 1
 	}
+
 	bodyStart := tabLine + 1
 	switch {
 	case line < tabLine:
@@ -28,6 +31,7 @@ func (m Model) hitDetail(x, y int) Target {
 		return m.hitTabs(x)
 	case m.tab == tabDiff:
 		raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
+
 		files := parseDiffFiles(raw)
 		if len(files) > 0 {
 			if !m.diffFilePicker {
@@ -36,30 +40,36 @@ func (m Model) hitDetail(x, y int) Target {
 				}
 			} else {
 				maxItems := 7
+
 				start := 0
 				if m.diffFileCursor >= maxItems {
 					start = m.diffFileCursor - maxItems + 1
 				}
+
 				end := min(len(files), start+maxItems)
 				numItems := end - start
 
 				if line == bodyStart {
 					return Target{Kind: TargetDiffSelectToggle}
 				}
+
 				if line >= bodyStart+1 && line < bodyStart+1+numItems {
 					return Target{Kind: TargetDiffFile, Pane: start + (line - (bodyStart + 1))}
 				}
+
 				if line >= bodyStart+1+numItems && line <= bodyStart+1+numItems+1 {
 					return Target{Kind: TargetDiffSelectToggle}
 				}
 			}
 		}
+
 		if line < m.frame.Body.H-1 {
 			return Target{Kind: TargetPaneBody, Pane: int(m.tab)}
 		}
 	case line < m.frame.Body.H-1:
 		return Target{Kind: TargetPaneBody, Pane: int(m.tab)}
 	}
+
 	return Target{}
 }
 
@@ -70,6 +80,7 @@ func (m Model) hitTabs(x int) Target {
 			return Target{Kind: TargetPaneTab, Pane: int(t.tab)}
 		}
 	}
+
 	return Target{}
 }
 
@@ -80,6 +91,7 @@ func (m Model) hitStart(x, y int) Target {
 	if !ok {
 		return Target{}
 	}
+
 	p := m.startLayout(m.frame.Body.W)
 	switch {
 	case line == p.flow:
@@ -91,6 +103,7 @@ func (m Model) hitStart(x, y int) Target {
 	case line == p.autopilot+1:
 		return Target{Kind: TargetDialogSwitch, Field: fieldAutopilotOff}
 	}
+
 	return Target{}
 }
 
@@ -99,26 +112,34 @@ func (m Model) hitSettings(x, y int) Target {
 	if !ok || line < 4 {
 		return Target{}
 	}
+
 	offset := line - 4
 	rowIdx := offset / 3
+
 	rows := m.settingRowsList()
 	if rowIdx >= 0 && rowIdx < len(rows) {
 		r := rows[rowIdx]
+
 		if x >= 20 {
 			curX := 20
+
 			for _, opt := range r.options {
 				pillLen := lipgloss.Width(" "+opt+" ") + 1
 				if opt == r.val {
 					pillLen = lipgloss.Width(" ● "+opt+" ") + 1
 				}
+
 				if x >= curX && x < curX+pillLen {
 					return Target{Kind: TargetSettingsRow, Pane: rowIdx, Field: opt}
 				}
+
 				curX += pillLen
 			}
 		}
+
 		return Target{Kind: TargetSettingsRow, Pane: rowIdx, Field: ""}
 	}
+
 	return Target{}
 }
 
@@ -127,11 +148,14 @@ func (m Model) hitRepos(x, y int) Target {
 	if !ok {
 		return Target{}
 	}
+
 	rowIdx := line - 4
+
 	repos := m.collectRepos()
 	if rowIdx >= 0 && rowIdx < len(repos) {
 		return Target{Kind: TargetRepo, ID: repos[rowIdx].name}
 	}
+
 	return Target{}
 }
 
@@ -140,12 +164,14 @@ func (m Model) hitCompose(x, y int) Target {
 	if !ok {
 		return Target{}
 	}
+
 	plan := m.composeLayout()
 
 	if line == plan.tabLine {
 		if x < 20 {
 			return Target{Kind: TargetComposeTab, Pane: composeTabManual}
 		}
+
 		return Target{Kind: TargetComposeTab, Pane: composeTabURL}
 	}
 
@@ -171,6 +197,7 @@ func (m Model) hitCompose(x, y int) Target {
 			if x >= 17 && x <= 37 {
 				return Target{Kind: TargetComposePaste}
 			}
+
 			return Target{Kind: TargetComposeField, Pane: composeText}
 		case line >= plan.textBoxTop && line <= plan.textBoxBot:
 			return Target{Kind: TargetComposeField, Pane: composeText}
@@ -183,6 +210,7 @@ func (m Model) hitCompose(x, y int) Target {
 			if x >= 17 && x <= 37 {
 				return Target{Kind: TargetComposePaste}
 			}
+
 			return Target{Kind: TargetComposeField, Pane: composeURL}
 		case line == plan.repo:
 			return m.hitComposeRepoPills(x, composeURLRepo)
@@ -202,91 +230,113 @@ func (m Model) hitCompose(x, y int) Target {
 			return hitComposeActions(m.opts.Words, x)
 		}
 	}
+
 	return Target{}
 }
 
 func (m Model) hitComposeRepoPills(x int, field int) Target {
 	curX := composeLabelStart
+
 	for i, r := range m.compose.repos {
 		pillWidth := composePillWidth(r.name, i == m.compose.repoIdx)
 		if x >= curX && x < curX+pillWidth {
 			return Target{Kind: TargetComposeRepoChoice, Pane: i}
 		}
+
 		curX += pillWidth + 1
 	}
+
 	return Target{Kind: TargetComposeField, Pane: field}
 }
 
 func (m Model) hitComposeFlowPills(x int, field int) Target {
 	p := m.opts.Words
 	curX := composeLabelStart
+
 	for i, f := range m.compose.flows {
 		glyph := "⚡ "
+
 		switch f {
 		case "quick":
 			glyph = "🚀 "
 		case "careful":
 			glyph = "🛡️ "
 		}
+
 		pillWidth := composePillWidth(glyph+f, i == m.compose.flowIdx)
 		if x >= curX && x < curX+pillWidth {
 			return Target{Kind: TargetComposeFlowChoice, Pane: i}
 		}
+
 		curX += pillWidth + 1
 	}
 
 	newBtn := Pill(" ➕ "+p.T("compose.new_flow_btn", "New")+" ", "#FFFFFF", "#6366F1")
+
 	newWidth := lipgloss.Width(newBtn)
 	if x >= curX && x < curX+newWidth {
 		return Target{Kind: TargetComposeNewFlow}
 	}
+
 	return Target{Kind: TargetComposeField, Pane: field}
 }
 
 func (m Model) hitComposeEnginePills(x int, field int) Target {
 	curX := composeLabelStart
+
 	for i, eng := range m.compose.engines {
 		pillWidth := composePillWidth(eng, i == m.compose.engineIdx)
 		if x >= curX && x < curX+pillWidth {
 			return Target{Kind: TargetComposeEngineChoice, Pane: i}
 		}
+
 		curX += pillWidth + 1
 	}
+
 	return Target{Kind: TargetComposeField, Pane: field}
 }
 
 func (m Model) hitComposeModelPills(x int, field int) Target {
 	curX := composeLabelStart
+
 	for i, mod := range m.compose.models {
 		pillWidth := composePillWidth(mod, i == m.compose.modelIdx)
 		if x >= curX && x < curX+pillWidth {
 			return Target{Kind: TargetComposeModelChoice, Pane: i}
 		}
+
 		curX += pillWidth + 1
 	}
+
 	return Target{Kind: TargetComposeField, Pane: field}
 }
 
 func (m Model) hitComposeThinkingPills(x int, field int) Target {
 	curX := composeLabelStart
+
 	for i, th := range m.compose.thinkings {
 		pillWidth := composePillWidth(th, i == m.compose.thinkingIdx)
 		if x >= curX && x < curX+pillWidth {
 			return Target{Kind: TargetComposeThinkingChoice, Pane: i}
 		}
+
 		curX += pillWidth + 1
 	}
+
 	return Target{Kind: TargetComposeField, Pane: field}
 }
 
 func (m Model) hitComposeEffortPills(x int, field int) Target {
 	curX := composeLabelStart
+
 	for i, ef := range m.compose.efforts {
 		pillWidth := composePillWidth(ef, i == m.compose.effortIdx)
 		if x >= curX && x < curX+pillWidth {
 			return Target{Kind: TargetComposeEffortChoice, Pane: i}
 		}
+
 		curX += pillWidth + 1
 	}
+
 	return Target{Kind: TargetComposeField, Pane: field}
 }

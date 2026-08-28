@@ -79,39 +79,48 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 	if err := f.Validate(); err != nil {
 		return failed(s, t, err)
 	}
+
 	for _, p := range f.Phases {
 		eng, ok := engines[p.Engine]
 		if !ok {
 			return failed(s, t, fmt.Errorf("phase %q wants the engine %q, which is not configured", p.Name, p.Engine))
 		}
+
 		if p.Model != "" && len(eng.Models()) > 0 {
 			var found bool
+
 			for _, m := range eng.Models() {
 				if m.ID == p.Model {
 					found = true
 					break
 				}
 			}
+
 			if !found {
 				return failed(s, t, fmt.Errorf("phase %q names model %q, which engine %q does not offer", p.Name, p.Model, p.Engine))
 			}
 		}
+
 		if p.Effort != "" {
 			efforts := eng.Efforts()
 			if len(efforts) == 0 {
 				return failed(s, t, fmt.Errorf("phase %q names effort %q, but engine %q has no effort dial", p.Name, p.Effort, p.Engine))
 			}
+
 			var found bool
+
 			for _, e := range efforts {
 				if e.ID == p.Effort {
 					found = true
 					break
 				}
 			}
+
 			if !found {
 				return failed(s, t, fmt.Errorf("phase %q names effort %q, which engine %q does not offer", p.Name, p.Effort, p.Engine))
 			}
 		}
+
 		if p.Thinking != "" && !eng.CanThink() {
 			return failed(s, t, fmt.Errorf("phase %q configures thinking %q, but engine %q does not support thinking mode", p.Name, p.Thinking, p.Engine))
 		}
@@ -123,6 +132,7 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 	}
 
 	var prevOutput string
+
 	for i, p := range f.Phases {
 		// Every phase is put to the gate, not only the ones whose Wait says
 		// so; Gate says why. A gate that cannot read what it needs is a
@@ -132,6 +142,7 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		if gateErr != nil {
 			return failed(s, t, fmt.Errorf("task %s, before phase %q: %w", t.ID, p.Name, gateErr))
 		}
+
 		switch decision {
 		case Stop:
 			// A context that is done is not a reader who said cancel, and
@@ -154,9 +165,14 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		if p.FeedOutput {
 			inputPrev = prevOutput
 		}
-		var streamErr error
-		var streamedThoughts, streamedRefusals, streamedToolCalls int
+
+		var (
+			streamErr                                             error
+			streamedThoughts, streamedRefusals, streamedToolCalls int
+		)
+
 		resumeSess := lastSession(s, t, p.Engine, engines[p.Engine])
+
 		out, runErr := engines[p.Engine].Run(ctx, engine.Request{
 			Prompt:      prompt(t, p, notes, inputPrev),
 			Model:       p.Model,
@@ -169,16 +185,19 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 				switch ev.Type {
 				case "thought":
 					streamedThoughts++
+
 					if err := emit(s, t, phaseThought(p.Name, i+1, ev.Thought)); err != nil && streamErr == nil {
 						streamErr = err
 					}
 				case "tool_call":
 					streamedToolCalls++
+
 					if err := emit(s, t, phaseToolCall(p.Name, i+1, ev.ToolCall)); err != nil && streamErr == nil {
 						streamErr = err
 					}
 				case "refusal":
 					streamedRefusals++
+
 					if err := emit(s, t, phaseRefused(p.Name, i+1, ev.Refusal)); err != nil && streamErr == nil {
 						streamErr = err
 					}
@@ -188,6 +207,7 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		if streamErr != nil {
 			return failed(s, t, fmt.Errorf("task %s, phase %q stream event emit: %w", t.ID, p.Name, streamErr))
 		}
+
 		if streamedThoughts == 0 {
 			for _, th := range out.Thoughts {
 				if err := emit(s, t, phaseThought(p.Name, i+1, th)); err != nil {
@@ -195,6 +215,7 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 				}
 			}
 		}
+
 		if streamedRefusals == 0 {
 			for _, ref := range out.Refusals {
 				if err := emit(s, t, phaseRefused(p.Name, i+1, ref)); err != nil {
@@ -202,6 +223,7 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 				}
 			}
 		}
+
 		if streamedToolCalls == 0 {
 			for _, tc := range out.ToolCalls {
 				if err := emit(s, t, phaseToolCall(p.Name, i+1, tc)); err != nil {
@@ -209,6 +231,7 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 				}
 			}
 		}
+
 		if runErr != nil {
 			// A context that is done is not an engine that broke. The engine
 			// reports being killed the same way it reports falling over —
@@ -230,6 +253,7 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 			// best-effort and its own error is discarded, for the same
 			// reason as the one in failed below.
 			_ = emit(s, t, phaseEnd(record.PhaseFailed, p.Name, out, runErr)) //nolint:errcheck // deliberate: see above
+
 			return failed(s, t, fmt.Errorf("task %s, phase %q: %w", t.ID, p.Name, runErr))
 		}
 
@@ -240,6 +264,7 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		if err := emit(s, t, phaseEnd(record.PhaseFinished, p.Name, out, nil)); err != nil {
 			return err
 		}
+
 		if out.Output != "" {
 			prevOutput = out.Output
 		}
@@ -251,11 +276,14 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 // stopped writes down that a run was stopped from outside.
 func stopped(s *store.Store, t Task, phase string, out engine.Result, cause error) error {
 	_ = emit(s, t, phaseEnd(record.PhaseCancelled, phase, out, nil)) //nolint:errcheck
+
 	kind := record.TaskCancelled
 	if errors.Is(cause, context.DeadlineExceeded) {
 		kind = record.TaskTimedOut
 	}
+
 	_ = emit(s, t, record.Event{Kind: kind}) //nolint:errcheck
+
 	return fmt.Errorf("task %s, phase %q: %w", t.ID, phase, cause)
 }
 
@@ -263,5 +291,6 @@ func stopped(s *store.Store, t Task, phase string, out engine.Result, cause erro
 func failed(s *store.Store, t Task, err error) error {
 	text, _ := captured(err.Error())
 	_ = emit(s, t, record.Event{Kind: record.TaskFailed, Text: text}) //nolint:errcheck
+
 	return err
 }

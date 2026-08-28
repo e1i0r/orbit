@@ -21,6 +21,7 @@ func budget(key string) int {
 	if key == StateKey {
 		return stateBudget
 	}
+
 	return 0
 }
 
@@ -89,13 +90,16 @@ func TestTheRepositoryColumnIsAbsentForOneRepository(t *testing.T) {
 	if one.Repo != 0 {
 		t.Errorf("Columns over one repository gave the repo column %d cells, want none", one.Repo)
 	}
+
 	two := Columns(200, board(), budget)
 	if two.Repo == 0 {
 		t.Error("Columns over two repositories dropped the repo column — which repository a task is in is the whole point of the board")
 	}
+
 	if one.Title <= two.Title {
 		t.Errorf("the title got %d cells with the repo column gone and %d with it there — the title absorbs what a dropped column leaves", one.Title, two.Title)
 	}
+
 	if none := Columns(200, nil, budget); none.Repo != 0 {
 		t.Errorf("Columns over an empty board gave the repo column %d cells, want none", none.Repo)
 	}
@@ -112,6 +116,7 @@ func TestThePlanNeverExceedsTheWidthItWasGiven(t *testing.T) {
 			if p.Width() > w {
 				t.Fatalf("%s at width %d: the plan %+v is %d cells wide", name, w, p, p.Width())
 			}
+
 			for _, col := range []struct {
 				name  string
 				cells int
@@ -120,6 +125,7 @@ func TestThePlanNeverExceedsTheWidthItWasGiven(t *testing.T) {
 					t.Fatalf("%s at width %d: the %s column is %d cells", name, w, col.name, col.cells)
 				}
 			}
+
 			if w < MinWidth {
 				continue
 			}
@@ -131,9 +137,11 @@ func TestThePlanNeverExceedsTheWidthItWasGiven(t *testing.T) {
 			if p.Elapsed < 1 {
 				t.Errorf("%s at width %d: elapsed is %d — it never drops, because it is the only number on the row", name, w, p.Elapsed)
 			}
+
 			if len(tasks) > 0 && p.ID < 1 {
 				t.Errorf("%s at width %d: id is %d — it never drops, because it is how a reader says which task", name, w, p.ID)
 			}
+
 			if p.State != stateBudget {
 				t.Errorf("%s at width %d: the state word got %d cells against a declared budget of %d", name, w, p.State, stateBudget)
 			}
@@ -149,6 +157,7 @@ func TestFallbackIsSetExactlyWhenTheAlignedRowCannotBeAfforded(t *testing.T) {
 	if p := Columns(54, board(), budget); p.Fallback {
 		t.Errorf("Columns(54) fell back with %+v — an aligned row still fits here", p)
 	}
+
 	if p := Columns(53, board(), budget); !p.Fallback {
 		t.Errorf("Columns(53) = %+v, want Fallback — the state word cannot have its budget beside a readable title", p)
 	}
@@ -158,20 +167,24 @@ func TestFallbackIsSetExactlyWhenTheAlignedRowCannotBeAfforded(t *testing.T) {
 	if !narrow.Fallback {
 		t.Errorf("Columns(%d) over long ids = %+v, want Fallback", MinWidth, narrow)
 	}
+
 	if narrow.State != stateBudget {
 		t.Errorf("the fallback row gave the state word %d cells against a budget of %d — the state word is what the fallback protects", narrow.State, stateBudget)
 	}
+
 	if narrow.Repo != 0 || narrow.Title != 0 || narrow.Model != 0 {
 		t.Errorf("the fallback row is %+v, want only id, state and elapsed", narrow)
 	}
 	// Monotone in the width: a wider terminal never falls back where a
 	// narrower one did not.
 	sawAligned := false
+
 	for w := 0; w <= 300; w++ {
 		if !Columns(w, board(), budget).Fallback {
 			sawAligned = true
 			continue
 		}
+
 		if sawAligned {
 			t.Fatalf("Columns(%d) fell back at a width wider than one that did not — Fallback must be monotone in the width", w)
 		}

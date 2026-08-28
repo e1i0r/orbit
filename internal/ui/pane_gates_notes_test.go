@@ -18,10 +18,12 @@ func TestGatesLinesAllStates(t *testing.T) {
 
 	// 1. A record that could not be read.
 	m.logErr = errors.New("record damaged")
+
 	lines := m.gatesLines()
 	if len(lines) != 1 || !strings.Contains(lines[0], "record damaged") {
 		t.Errorf("gatesLines with logErr = %v, want one line naming the error", lines)
 	}
+
 	m.logErr = nil
 
 	// 2. No gate entries at all: the empty sentence.
@@ -36,6 +38,7 @@ func TestGatesLinesAllStates(t *testing.T) {
 		{Kind: "gate.passed", Gate: "lint", Text: "make lint"},
 		{Kind: "gate.failed", Tool: "go test", Cause: "tests failed"},
 	}
+
 	joined := strings.Join(m.gatesLines(), "\n")
 	for _, want := range []string{"lint", "check", "go test", "tests failed", "1/2"} {
 		if !strings.Contains(joined, want) {
@@ -45,6 +48,7 @@ func TestGatesLinesAllStates(t *testing.T) {
 
 	// 4. Every check passed: the summary is the OK word, not the failure count.
 	m.entries = []view.Entry{{Kind: "gate.passed", Gate: "vet", Text: "go vet"}}
+
 	joined = strings.Join(m.gatesLines(), "\n")
 	if !strings.Contains(joined, "1/1") {
 		t.Errorf("gatesLines all-pass = %q, want the passed count to say 1/1", joined)
@@ -56,10 +60,12 @@ func TestNotesLinesAllStates(t *testing.T) {
 
 	// 1. A record that could not be read.
 	m.logErr = errors.New("record damaged")
+
 	lines := m.notesLines()
 	if len(lines) != 1 || !strings.Contains(lines[0], "record damaged") {
 		t.Errorf("notesLines with logErr = %v, want one line naming the error", lines)
 	}
+
 	m.logErr = nil
 
 	// 2. No notes and no dialogue: the empty sentence and its hint.
@@ -78,6 +84,7 @@ func TestNotesLinesAllStates(t *testing.T) {
 		{Kind: "phase.waiting", Phase: "gates", Text: "needs a decision"},
 		{Kind: "phase.waiting", Phase: "gates"},
 	}
+
 	joined := strings.Join(m.notesLines(), "\n")
 	for _, want := range []string{
 		"read by run 2", "did the thing", "ran ls", "plain note",
@@ -91,6 +98,7 @@ func TestNotesLinesAllStates(t *testing.T) {
 	// 4. A note with no attempt: the plain "read by run" status, without a
 	// number.
 	m.entries = []view.Entry{{Kind: "task.noted", Text: "one line"}}
+
 	joined = strings.Join(m.notesLines(), "\n")
 	if !strings.Contains(joined, "read by run") || strings.Contains(joined, "read by run 0") {
 		t.Errorf("notesLines with attempt 0 = %q, want the plain status", joined)
@@ -106,6 +114,7 @@ func TestNotesLinesDrawsWhatActedFromOutsideTheRun(t *testing.T) {
 		{Kind: "task.dialogue", By: "mcp", Text: "a model cancelled this task over mcp"},
 		{Kind: "task.dialogue", Text: "the cockpit handed the terminal to a session"},
 	}
+
 	joined := strings.Join(m.notesLines(), "\n")
 	for _, want := range []string{
 		"MCP", "a model cancelled this task over mcp",
@@ -115,6 +124,7 @@ func TestNotesLinesDrawsWhatActedFromOutsideTheRun(t *testing.T) {
 			t.Errorf("notesLines = %q, want it to mention %q", joined, want)
 		}
 	}
+
 	if strings.Contains(joined, "read by run") {
 		t.Errorf("notesLines = %q, want no claim that a run reads these", joined)
 	}

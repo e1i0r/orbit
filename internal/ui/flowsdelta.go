@@ -12,10 +12,12 @@ import (
 func (m Model) handleFlowFieldDelta(delta int) (Model, tea.Cmd) {
 	st := &m.flows
 	st.ensurePhase()
+
 	switch st.field {
 	case flowFieldTemplate:
 		tpls := []string{"ninguna", "TDD Fuzz & PR", "TDD Cycle", "Security Audit", "Turbo Fix"}
 		st.template = nextOption(tpls, st.template, delta)
+
 		return m.applyFlowTemplate(st.template)
 	case flowFieldPhaseSelect:
 		n := len(st.phases)
@@ -39,13 +41,16 @@ func (m Model) handleFlowFieldDelta(delta int) (Model, tea.Cmd) {
 	case flowFieldWait:
 		st.cur().Wait = !st.cur().Wait
 	}
+
 	return m, nil
 }
 
 func (m Model) handleFlowFieldAction() (Model, tea.Cmd) {
 	st := &m.flows
 	st.ensurePhase()
+
 	p := m.opts.Words
+
 	switch st.field {
 	case flowFieldTemplate, flowFieldPhaseSelect, flowFieldEngine,
 		flowFieldModel, flowFieldEffort, flowFieldThinking,
@@ -63,6 +68,7 @@ func (m Model) handleFlowFieldAction() (Model, tea.Cmd) {
 		})
 		st.activePhase = len(st.phases) - 1
 		st.field = flowFieldPhaseName
+
 		return m.say(p.T("flows.phase_added", "phase {n} added",
 			about("n", strconv.Itoa(len(st.phases))))), nil
 	case flowFieldDelPhase:
@@ -70,14 +76,18 @@ func (m Model) handleFlowFieldAction() (Model, tea.Cmd) {
 			return m.say(p.T("flows.min_phases_required",
 				"the flow must have at least one phase")), nil
 		}
+
 		idx := st.activePhase
+
 		st.phases = append(st.phases[:idx], st.phases[idx+1:]...)
 		if st.activePhase >= len(st.phases) {
 			st.activePhase = len(st.phases) - 1
 		}
+
 		return m.say(p.T("flows.phase_deleted", "phase deleted")), nil
 	case flowFieldSave:
 		return m.saveCustomFlow()
 	}
+
 	return m, nil
 }

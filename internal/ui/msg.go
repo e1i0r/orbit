@@ -188,10 +188,12 @@ func refresh(r Reader) tea.Cmd {
 		if r == nil {
 			return boardMsg{}
 		}
+
 		b, changed, err := r.Refresh()
 		if err != nil {
 			return boardMsg{Board: board.Board{Errs: []error{fmt.Errorf("read the board: %w", err)}}}
 		}
+
 		return boardMsg{Board: b, Changed: changed}
 	}
 }
@@ -208,9 +210,11 @@ func rescan(r Reader) tea.Cmd {
 		if r == nil {
 			return boardMsg{}
 		}
+
 		if err := r.Rescan(); err != nil {
 			return boardMsg{Board: board.Board{Errs: []error{fmt.Errorf("look for new repositories: %w", err)}}}
 		}
+
 		return boardMsg{}
 	}
 }
@@ -228,6 +232,7 @@ func control(port func(view.Task, string) error, t view.Task, word string) tea.C
 		if port == nil {
 			return controlMsg{ID: t.ID, Word: word, Err: errors.New("this window was opened without a way to control a task")}
 		}
+
 		return controlMsg{ID: t.ID, Word: word, Err: port(t, word)}
 	}
 }
@@ -245,7 +250,9 @@ func start(port func(view.Task, string, int) (int, error), t view.Task, flowName
 		if port == nil {
 			return startedMsg{ID: t.ID, Err: errors.New("this window was opened without a way to start a run")}
 		}
+
 		pid, err := port(t, flowName, unread)
+
 		return startedMsg{ID: t.ID, Pid: pid, Err: err}
 	}
 }
@@ -256,6 +263,7 @@ func markRead(port func(view.Task) error, t view.Task) tea.Cmd {
 		if port == nil {
 			return readMsg{ID: t.ID, Err: errors.New("this window was opened without a way to mark a task read")}
 		}
+
 		return readMsg{ID: t.ID, Err: port(t)}
 	}
 }
@@ -268,7 +276,9 @@ func takeSession(port func(view.Task) (*exec.Cmd, error), t view.Task) tea.Cmd {
 		if port == nil {
 			return sessionMsg{ID: t.ID, Err: errors.New("this window was opened without a way to take the keyboard")}
 		}
+
 		cmd, err := port(t)
+
 		return sessionMsg{ID: t.ID, Cmd: cmd, Err: err}
 	}
 }
@@ -279,7 +289,9 @@ func askSupervisorCmd(ask func(string, string) (string, error), engineName, prom
 		if ask == nil {
 			return supervisorReplyMsg{Err: errors.New("supervisor engine is not configured")}
 		}
+
 		ans, err := ask(engineName, prompt)
+
 		return supervisorReplyMsg{Text: ans, Err: err}
 	}
 }

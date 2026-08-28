@@ -28,12 +28,15 @@ func TestParseDiffFiles(t *testing.T) {
 	if len(lines) != 2 {
 		t.Fatalf("expected 2 files parsed, got %d", len(lines))
 	}
+
 	if lines[0].Path != "internal/ui/badge.go" {
 		t.Errorf("file 0 path = %q, want internal/ui/badge.go", lines[0].Path)
 	}
+
 	if lines[0].Status != "NEW" {
 		t.Errorf("file 0 status = %q, want NEW", lines[0].Status)
 	}
+
 	if lines[1].Path != "internal/ui/badge_test.go" {
 		t.Errorf("file 1 path = %q, want internal/ui/badge_test.go", lines[1].Path)
 	}
@@ -42,6 +45,7 @@ func TestParseDiffFiles(t *testing.T) {
 	if add == 0 {
 		t.Errorf("expected added lines > 0, got %d", add)
 	}
+
 	if del != 0 {
 		t.Errorf("expected deleted lines == 0, got %d", del)
 	}

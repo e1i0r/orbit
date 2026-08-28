@@ -60,27 +60,35 @@ func validateTaskID(taskID string) error {
 	if taskID == "" {
 		return fmt.Errorf("task id cannot be empty")
 	}
+
 	if strings.TrimSpace(taskID) == "" {
 		return fmt.Errorf("task id cannot be only whitespace")
 	}
+
 	if strings.TrimSpace(taskID) != taskID {
 		return fmt.Errorf("task id %q has whitespace at the start or the end", taskID)
 	}
+
 	if strings.HasPrefix(taskID, "-") {
 		return fmt.Errorf("task id %q starts with a dash, so every command would read it as a flag", taskID)
 	}
+
 	if strings.ContainsFunc(taskID, unicode.IsControl) {
 		return fmt.Errorf("task id %q contains a control character", taskID)
 	}
+
 	if strings.Contains(taskID, "/") || strings.Contains(taskID, string(os.PathSeparator)) {
 		return fmt.Errorf("task id %q contains path separator", taskID)
 	}
+
 	if taskID == "." || taskID == ".." {
 		return fmt.Errorf("task id %q is not allowed", taskID)
 	}
+
 	if strings.Contains(taskID, "..") {
 		return fmt.Errorf("task id %q contains path traversal", taskID)
 	}
+
 	return nil
 }
 
@@ -107,12 +115,15 @@ func RootPath() (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("locate home directory: %w", err)
 		}
+
 		root = filepath.Join(home, ".orbit")
 	}
+
 	abs, err := filepath.Abs(root)
 	if err != nil {
 		return "", fmt.Errorf("resolve %q: %w", root, err)
 	}
+
 	return abs, nil
 }
 
@@ -124,6 +135,7 @@ func Open() (*Store, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return New(root)
 }
 
@@ -136,9 +148,11 @@ func New(root string) (*Store, error) {
 	if err != nil {
 		return nil, fmt.Errorf("resolve %q: %w", root, err)
 	}
+
 	if err := os.MkdirAll(abs, dirMode); err != nil {
 		return nil, fmt.Errorf("create %q: %w", abs, err)
 	}
+
 	return &Store{root: abs}, nil
 }
 
@@ -180,6 +194,7 @@ func (s *Store) RepoDir(repoPath string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("resolve %q: %w", repoPath, err)
 	}
+
 	return filepath.Join(s.root, "repos", repoKey(abs)), nil
 }
 
@@ -191,6 +206,7 @@ func (s *Store) TasksDir(repoPath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return filepath.Join(repoDir, "tasks"), nil
 }
 
@@ -199,10 +215,12 @@ func (s *Store) TaskDir(repoPath, taskID string) (string, error) {
 	if err := validateTaskID(taskID); err != nil {
 		return "", err
 	}
+
 	tasksDir, err := s.TasksDir(repoPath)
 	if err != nil {
 		return "", err
 	}
+
 	return filepath.Join(tasksDir, taskID), nil
 }
 
@@ -212,6 +230,7 @@ func (s *Store) TaskFilePath(repoPath, taskID string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return filepath.Join(dir, "task.md"), nil
 }
 
@@ -232,10 +251,12 @@ func (s *Store) WorktreeDir(repoPath, taskID string) (string, error) {
 	if err := validateTaskID(taskID); err != nil {
 		return "", err
 	}
+
 	abs, err := filepath.Abs(repoPath)
 	if err != nil {
 		return "", fmt.Errorf("resolve %q: %w", repoPath, err)
 	}
+
 	return filepath.Join(s.root, "worktrees", repoKey(abs), taskID), nil
 }
 
@@ -245,6 +266,7 @@ func (s *Store) EventsPath(repoPath, taskID string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return filepath.Join(dir, "events.jsonl"), nil
 }
 

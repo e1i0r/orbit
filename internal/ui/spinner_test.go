@@ -25,11 +25,14 @@ func blank() Model {
 // after is the window a board left behind.
 func after(t *testing.T, m Model, msg tea.Msg) (Model, tea.Cmd) {
 	t.Helper()
+
 	next, cmd := m.Update(msg)
+
 	got, ok := next.(Model)
 	if !ok {
 		t.Fatalf("Update returned %T, want a Model", next)
 	}
+
 	return got, cmd
 }
 
@@ -54,6 +57,7 @@ func TestTheFrameClockRunsOnlyWhileSomethingIsMoving(t *testing.T) {
 			if m.spinning != c.want {
 				t.Errorf("spinning=%v, want %v", m.spinning, c.want)
 			}
+
 			if m.moving() != c.want {
 				t.Errorf("moving=%v, want %v", m.moving(), c.want)
 			}
@@ -66,20 +70,25 @@ func TestTheFrameClockRunsOnlyWhileSomethingIsMoving(t *testing.T) {
 // it would say the opposite of what the pause said.
 func TestAHeldRunIsNotAnimated(t *testing.T) {
 	tasks := fixtureTasks()
+
 	var held int
+
 	for i := range tasks {
 		if tasks[i].Live {
 			tasks[i].Reason = view.Reason{Key: view.ReasonHeld, Args: []view.Arg{arg("phase", tasks[i].Phase)}}
 			held++
 		}
 	}
+
 	if held == 0 {
 		t.Fatal("the fixtures have no live task to hold")
 	}
+
 	m, _ := after(t, blank(), boardMsg{Board: fixtureBoard(tasks, 4)})
 	if m.moving() || m.spinning {
 		t.Errorf("moving=%v spinning=%v, want a board of held runs to be still", m.moving(), m.spinning)
 	}
+
 	if got := m.runGlyph(m.anyWorking()); got != "⚡ " {
 		t.Errorf("the RUNNING band is headed %q, want the static bolt", got)
 	}
@@ -94,6 +103,7 @@ func TestTheFrameClockIsNeverAskedForTwice(t *testing.T) {
 	if !m.spinning {
 		t.Fatal("a board with a live run did not start the frame clock")
 	}
+
 	if _, cmd := m.nextFrame(); cmd != nil {
 		t.Error("a second asker got a second frame while one was already on its way")
 	}
@@ -120,6 +130,7 @@ func TestTheStatusHeartbeatIsAbsentRatherThanFrozen(t *testing.T) {
 				return true
 			}
 		}
+
 		return false
 	}
 
@@ -127,10 +138,12 @@ func TestTheStatusHeartbeatIsAbsentRatherThanFrozen(t *testing.T) {
 	if !beat(live) {
 		t.Error("the status line has no heartbeat while a run is working")
 	}
+
 	still, _ := after(t, blank(), boardMsg{Board: fixtureBoard(fixtureTasks()[:3], 4)})
 	if beat(still) {
 		t.Error("the status line is beating over a board where nothing is running")
 	}
+
 	if strings.Contains(live.statusLine(100), "ms read") {
 		t.Error("the read time came back")
 	}

@@ -29,6 +29,7 @@ func (m Model) wheel(e tea.Mouse) Model {
 	if m.frame.At(e.Y) != layout.RegionBody {
 		return m
 	}
+
 	up := e.Button == tea.MouseWheelUp
 	if !up && e.Button != tea.MouseWheelDown {
 		// The wheel pushes sideways too, and nothing here scrolls that
@@ -37,19 +38,24 @@ func (m Model) wheel(e tea.Mouse) Model {
 		// have and fewer readers expect.
 		return m
 	}
+
 	if m.screen == screenDetail {
 		if m.hit(e.X, e.Y).Kind != TargetPaneBody {
 			return m
 		}
+
 		k := firstKey(m.keys.Down)
 		if up {
 			k = firstKey(m.keys.Up)
 		}
+
 		for range wheelRows {
 			m = m.scroll(k)
 		}
+
 		return m
 	}
+
 	if m.menu.open {
 		// The menu's list moves its selection under the wheel, exactly as
 		// the palette's does.
@@ -57,8 +63,10 @@ func (m Model) wheel(e tea.Mouse) Model {
 		if up {
 			d = -wheelRows
 		}
+
 		return m.menuPick(d)
 	}
+
 	if m.palette.open {
 		// The wheel moves the selection, which is what scrolling a list
 		// with one row chosen means; the list itself follows it through
@@ -67,14 +75,17 @@ func (m Model) wheel(e tea.Mouse) Model {
 		if up {
 			d = -wheelRows
 		}
+
 		return m.pick(d)
 	}
+
 	if m.watchUp {
 		// A run's output keeps its own tail on screen and offers nothing
 		// to scroll back for yet, so the wheel does nothing here rather
 		// than scrolling something that is not being shown.
 		return m
 	}
+
 	if m.screen == screenSupervisor {
 		// The thread scrolls under the wheel, and while a line is being
 		// picked the wheel moves the pick instead — the same rule the
@@ -84,18 +95,23 @@ func (m Model) wheel(e tea.Mouse) Model {
 		if up {
 			d = -wheelRows
 		}
+
 		if m.supervisor.picking {
 			m.supervisor.pick = min(max(m.supervisor.pick+d, 0), max(len(m.supervisor.lines)-1, 0))
 			return m
 		}
+
 		return m.scrollThread(d)
 	}
+
 	if m.screen != screenList {
 		return m
 	}
+
 	if up {
 		return m.move(-wheelRows)
 	}
+
 	return m.move(wheelRows)
 }
 
@@ -107,6 +123,7 @@ func firstKey(b key.Binding) keystroke {
 	if keys := b.Keys(); len(keys) > 0 {
 		return keystroke(keys[0])
 	}
+
 	return ""
 }
 
@@ -123,6 +140,7 @@ func (m Model) rowOf(t Target) (int, bool) {
 			return i, true
 		}
 	}
+
 	return 0, false
 }
 

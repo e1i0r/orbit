@@ -80,6 +80,7 @@ func (s startModel) chosen() startFlow {
 	if len(s.flows) == 0 {
 		return startFlow{}
 	}
+
 	return s.flows[s.at%len(s.flows)]
 }
 
@@ -89,7 +90,9 @@ func (s startModel) cycle() []startFlow {
 	if len(s.flows) == 0 {
 		return nil
 	}
+
 	at := s.at % len(s.flows)
+
 	return append(slices.Clone(s.flows[at+1:]), s.flows[:at+1]...)
 }
 
@@ -114,15 +117,18 @@ func newStart(src flow.Source, t view.Task) startModel {
 	if own == "" {
 		own = flow.Default
 	}
+
 	listed := flow.List(src)
 	if !slices.ContainsFunc(listed, func(l flow.Listed) bool { return l.Name == own }) {
 		listed = append([]flow.Listed{{Name: own}}, listed...)
 	}
+
 	s := startModel{id: t.ID, flows: make([]startFlow, 0, len(listed))}
 	for i, l := range listed {
 		if l.Name == own {
 			s.at = i
 		}
+
 		f, err := flow.Resolve(src, l.Name)
 		s.flows = append(s.flows, startFlow{
 			name:   l.Name,
@@ -131,6 +137,7 @@ func newStart(src flow.Source, t view.Task) startModel {
 			err:    err,
 		})
 	}
+
 	return s
 }
 
@@ -144,19 +151,24 @@ func newStart(src flow.Source, t view.Task) startModel {
 // can see are not there.
 func (m Model) openStart() (tea.Model, tea.Cmd) {
 	p := m.opts.Words
+
 	r, ok := m.selected()
 	if !ok {
 		return m.say(p.T("start.nothing_to_start",
 			"there is no task here to start; write one with `orbit new`")), nil
 	}
+
 	if r.head {
 		return m, nil
 	}
+
 	if r.task.Live {
 		return m.say(p.T("start.already_running", "{id} is already running; press x to stop it first",
 			about("id", r.task.ID))), nil
 	}
+
 	m.screen, m.start = screenStart, newStart(m.opts.Flows, r.task)
+
 	return m, nil
 }
 
@@ -187,6 +199,7 @@ func (m Model) startKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	case key.Matches(k, m.keys.Quit):
 		return m, tea.Quit
 	}
+
 	return m, nil
 }
 
@@ -195,26 +208,32 @@ func (m Model) cycleFlow() Model {
 	if n := len(m.start.flows); n > 1 {
 		m.start.at = (m.start.at + 1) % n
 	}
+
 	return m
 }
 
 // runIt starts the flow on screen, or refuses and says why.
 func (m Model) runIt() (tea.Model, tea.Cmd) {
 	p := m.opts.Words
+
 	t, ok := m.task(m.start.id)
 	if !ok {
 		return m.say(p.T("start.gone", "{id} has left the board; nothing was started",
 			about("id", m.start.id))), nil
 	}
+
 	chosen := m.start.chosen()
 	if chosen.err != nil {
 		return m.say(chosen.err.Error()), nil
 	}
+
 	waiting := board.Unreads(m.board)
 	if m.atUnreadCap(len(waiting)) {
 		return m.say(m.unreadRefusal(waiting)), nil
 	}
+
 	m.screen, m.start = screenList, startModel{}
+
 	return m, start(m.opts.Start, t, chosen.name, len(waiting))
 }
 
@@ -232,8 +251,10 @@ func (m Model) unreadRefusal(waiting []view.Task) string {
 			ids = append(ids, "…")
 			break
 		}
+
 		ids = append(ids, t.ID)
 	}
+
 	return m.opts.Words.P("start.unread_cap", len(waiting),
 		"{n} finished task is waiting to be read and the cap is {cap}: {ids} — press esc, then d on it",
 		"{n} finished tasks are waiting to be read and the cap is {cap}: {ids} — press esc, then d on one",
@@ -245,10 +266,12 @@ func (m Model) unreadRefusal(waiting []view.Task) string {
 // startBindings is the dialog's footer, and its key map, as one list.
 func (m Model) startBindings() []key.Binding {
 	p := m.opts.Words
+
 	out := []key.Binding{m.keys.Run}
 	if len(m.start.flows) > 1 {
 		out = append(out, m.keys.ChangeFlow)
 	}
+
 	out = append(out,
 		key.NewBinding(key.WithKeys("+"), key.WithHelp("+", p.T("start.new_flow_hint", "crear flujo"))),
 		key.NewBinding(key.WithKeys("m"), key.WithHelp("m", p.T("start.model_hint", "modelo"))),
@@ -257,6 +280,7 @@ func (m Model) startBindings() []key.Binding {
 		m.keys.Autopilot,
 		m.keys.Back,
 	)
+
 	return out
 }
 
@@ -266,5 +290,6 @@ func (m Model) startHints() []barHint {
 	for _, b := range m.startBindings() {
 		out = append(out, hintFor(b))
 	}
+
 	return out
 }

@@ -23,16 +23,19 @@ func (m Model) gatesLines() []string {
 	}
 
 	var checks []gateCheck
+
 	for _, e := range m.entries {
 		if e.What() == view.EntryGatePassed || e.What() == view.EntryGateFailed {
 			gName := e.Gate
 			if gName == "" {
 				gName = "check"
 			}
+
 			cmd := e.Text
 			if cmd == "" {
 				cmd = e.Tool
 			}
+
 			checks = append(checks, gateCheck{
 				name:     gName,
 				passed:   e.What() == view.EntryGatePassed,
@@ -57,6 +60,7 @@ func (m Model) gatesLines() []string {
 	}
 
 	passedCount := 0
+
 	for _, c := range checks {
 		if c.passed {
 			passedCount++
@@ -65,6 +69,7 @@ func (m Model) gatesLines() []string {
 
 	summaryRole := OK
 	summaryWord := "pass"
+
 	if passedCount < len(checks) {
 		summaryRole = Bad
 		summaryWord = fmt.Sprintf("falló %d", len(checks)-passedCount)
@@ -81,21 +86,25 @@ func (m Model) gatesLines() []string {
 
 	for _, c := range checks {
 		icon := Paint(OK).Render("✅")
+
 		statusStr := Paint(OK).Render("pass")
 		if !c.passed {
 			icon = Paint(Bad).Render("❌")
 			statusStr = Paint(Bad).Render("fail")
 		}
+
 		cmdStr := c.command
 		if cmdStr != "" {
 			cmdStr = Paint(Dim).Render(cmdStr)
 		}
+
 		line := fmt.Sprintf("    %s %-16s %-8s %s",
 			icon,
 			Paint(Accent).Render(c.name),
 			statusStr,
 			cmdStr,
 		)
+
 		out = append(out, line)
 		if !c.passed && c.reason != "" {
 			out = append(out, fmt.Sprintf("       %s %s",
@@ -104,6 +113,7 @@ func (m Model) gatesLines() []string {
 			))
 		}
 	}
+
 	out = append(out, "")
 
 	return out

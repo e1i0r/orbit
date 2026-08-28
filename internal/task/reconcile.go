@@ -47,6 +47,7 @@ func Reconcile(s *store.Store, t Task) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	if pid == 0 || alive {
 		return false, nil
 	}
@@ -55,6 +56,7 @@ func Reconcile(s *store.Store, t Task) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	if !inFlight(events) {
 		return false, removeMarker(s, t)
 	}
@@ -78,6 +80,7 @@ func Reconcile(s *store.Store, t Task) (bool, error) {
 // what closes it is any of the five ways a run can end.
 func inFlight(events []record.Event) bool {
 	open := false
+
 	for _, e := range events {
 		switch e.Kind {
 		case record.TaskStarted:
@@ -87,5 +90,6 @@ func inFlight(events []record.Event) bool {
 			open = false
 		}
 	}
+
 	return open
 }

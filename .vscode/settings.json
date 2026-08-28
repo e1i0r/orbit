@@ -1,0 +1,18 @@
+{
+  // The editor formats with the same tool the linter checks with. Without
+  // this, gopls formats on save with gofmt, golangci-lint asks for gofumpt,
+  // and every save undoes what the last lint asked for.
+  "gopls": {
+    "formatting.gofumpt": true
+  },
+  "[go]": {
+    "editor.defaultFormatter": "golang.go",
+    "editor.formatOnSave": true
+  },
+  // The blank lines wsl and nlreturn ask for are not something gopls knows
+  // about, so the linter itself runs on save and reports them where they
+  // are. It reads .golangci.yml, so there is one list of rules and not two.
+  "go.lintTool": "golangci-lint",
+  "go.lintOnSave": "package",
+  "go.vetOnSave": "package"
+}

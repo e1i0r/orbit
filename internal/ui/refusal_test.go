@@ -35,13 +35,16 @@ import (
 // this arm it was a promise about the port's failure only.
 func TestASessionThatNeverOpenedIsForgotten(t *testing.T) {
 	m, _ := takenModel(t)
+
 	after, cmd := advance(t, m, sessionEndedMsg{ID: "ACME-2705", Err: errors.New("fork/exec claude: no such file or directory")})
 	if cmd != nil {
 		t.Error("a session that failed to start produced a command")
 	}
+
 	if after.taken["ACME-2705"] {
 		t.Error("the window still believes the keyboard was taken for a session that never opened")
 	}
+
 	wantBand(t, after, "no such file or directory")
 }
 
@@ -51,6 +54,7 @@ func TestASessionThatNeverOpenedIsForgotten(t *testing.T) {
 // sessionEnded is for.
 func TestASessionThatRanAndExitedBadlyIsStillTheReaders(t *testing.T) {
 	m, _ := takenModel(t)
+
 	after, _ := advance(t, m, sessionEndedMsg{
 		ID:  "ACME-2705",
 		Err: fmt.Errorf("claude exited: %w", &exec.ExitError{}),
@@ -58,6 +62,7 @@ func TestASessionThatRanAndExitedBadlyIsStillTheReaders(t *testing.T) {
 	if !after.taken["ACME-2705"] {
 		t.Error("the window forgot a session the reader was actually sitting in front of")
 	}
+
 	wantBand(t, after, "claude exited")
 }
 
@@ -66,10 +71,12 @@ func TestASessionThatRanAndExitedBadlyIsStillTheReaders(t *testing.T) {
 // they hand it back.
 func TestComingBackFromASessionSaysWhatIsStillTrue(t *testing.T) {
 	m, _ := takenModel(t)
+
 	after, _ := advance(t, m, sessionEndedMsg{ID: "ACME-2705"})
 	if !after.taken["ACME-2705"] {
 		t.Error("the window forgot the session as soon as the reader came back")
 	}
+
 	wantBand(t, after, "still stopped and still yours")
 }
 
@@ -78,26 +85,32 @@ func TestComingBackFromASessionSaysWhatIsStillTrue(t *testing.T) {
 // says so rather than suspending itself for nothing.
 func TestTakingTheKeyboardWithNoSessionToCarryOnSaysSo(t *testing.T) {
 	m, _ := parkedModel(t)
+
 	after, cmd := advance(t, m, sessionMsg{ID: "ACME-2705"})
 	if cmd != nil {
 		t.Error("the window suspended itself for a session that does not exist")
 	}
+
 	if after.taken["ACME-2705"] {
 		t.Error("the window remembers a keyboard nobody was handed")
 	}
+
 	wantBand(t, after, "has no session to carry on")
 }
 
 // A port that refuses says why, in its own words, and nothing is remembered.
 func TestTakingTheKeyboardWhenThePortRefusesSaysWhy(t *testing.T) {
 	m, _ := parkedModel(t)
+
 	after, cmd := advance(t, m, sessionMsg{ID: "ACME-2705", Err: errors.New("this task has no worktree")})
 	if cmd != nil {
 		t.Error("a refused take produced a command")
 	}
+
 	if after.taken["ACME-2705"] {
 		t.Error("the window remembers a keyboard nobody was handed")
 	}
+
 	wantBand(t, after, "no worktree")
 }
 
@@ -109,16 +122,20 @@ func TestStartingATaskThatLeftTheBoardStartsNothing(t *testing.T) {
 	m, _ = dialog(t, m, "ACME-2662")
 
 	var left []view.Task
+
 	for _, task := range fixtureTasks() {
 		if task.ID != "ACME-2662" {
 			left = append(left, task)
 		}
 	}
+
 	m, _ = advance(t, m, boardMsg{Board: fixtureBoard(left, 4)})
+
 	after, cmd := advance(t, m, press("enter"))
 	if cmd != nil || got.flow != "" {
 		t.Fatalf("cmd=%v flow=%q, want nothing started for a task that is gone", cmd != nil, got.flow)
 	}
+
 	wantBand(t, after, "has left the board")
 }
 
@@ -127,13 +144,16 @@ func TestStartingATaskThatLeftTheBoardStartsNothing(t *testing.T) {
 // to say what to do next rather than only that nothing happened.
 func TestStartingWithNoTaskUnderTheCursorSaysWhatToDo(t *testing.T) {
 	m := modelWith(t, printerFor(t, "en"), fixtureBoard(nil, 0), 100, 30, nil)
+
 	after, cmd := advance(t, m, press("n"))
 	if cmd != nil {
 		t.Error("n on an empty board produced a command")
 	}
+
 	if after.screen == screenStart {
 		t.Error("the dialog opened for a task that is not there")
 	}
+
 	wantBand(t, after, "orbit new")
 }
 
@@ -143,10 +163,12 @@ func TestStartingWithNoTaskUnderTheCursorSaysWhatToDo(t *testing.T) {
 func TestStartingATaskThatIsAlreadyRunningIsRefused(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m = onRow(t, m, "ACME-2705")
+
 	after, cmd := advance(t, m, press("n"))
 	if cmd != nil || after.screen == screenStart {
 		t.Errorf("screen=%v cmd=%v, want the dialog refused", after.screen, cmd != nil)
 	}
+
 	wantBand(t, after, "is already running; press x")
 }
 
@@ -160,14 +182,17 @@ func TestTheCapRefusalNamesThreeAndSaysHowManyMoreThereAre(t *testing.T) {
 			tasks[i].Read = false
 		}
 	}
+
 	m := modelWith(t, printerFor(t, "en"), fixtureBoard(tasks, 4), 100, 30, nil)
 	m.opts.Settings = &settings{autopilot: true, lang: "en", unread: 3}
+
 	unread := board.Unread(m.board)
 	if unread <= namedInRefusal {
 		t.Fatalf("%d finished tasks are unread, want more than the %d the sentence names", unread, namedInRefusal)
 	}
 
 	m, _ = dialog(t, m, "ACME-2662")
+
 	after, cmd := advance(t, m, press("enter"))
 	if cmd != nil {
 		t.Fatal("a run started at the cap")
@@ -177,6 +202,7 @@ func TestTheCapRefusalNamesThreeAndSaysHowManyMoreThereAre(t *testing.T) {
 	for _, want := range []string{"ACME-2690, ACME-2691, ACME-2692, …", "6 finished tasks"} {
 		wantBand(t, after, want)
 	}
+
 	if strings.Contains(after.message, "ACME-2693") {
 		t.Errorf("the refusal names a fourth task, and the band is one row: %q", after.message)
 	}
@@ -189,10 +215,12 @@ func TestTheCapRefusalNamesThreeAndSaysHowManyMoreThereAre(t *testing.T) {
 func TestTheCapRefusalNamesAKeyTheReaderCanActuallyPressNext(t *testing.T) {
 	m, got := cappedModel(t)
 	m, _ = dialog(t, m, "ACME-2662")
+
 	after, _ := advance(t, m, press("enter"))
 	if after.screen != screenStart {
 		t.Fatalf("screen is %v after a refusal, want the dialog still up", after.screen)
 	}
+
 	wantBand(t, after, "press esc, then d")
 
 	// And the two keys it names are the ones that get there: esc closes the
@@ -205,11 +233,14 @@ func TestTheCapRefusalNamesAKeyTheReaderCanActuallyPressNext(t *testing.T) {
 	if back.screen != screenList {
 		t.Fatalf("esc left the reader on %v, want the board", back.screen)
 	}
+
 	back, _ = advance(t, onHead(t, back, view.Done), press("enter"))
+
 	_, cmd := advance(t, onRow(t, back, "ACME-2690"), press("d"))
 	if cmd == nil {
 		t.Fatal("d answered with no command on the screen the refusal sends the reader to")
 	}
+
 	if _, ok := cmd().(readMsg); !ok || got.read != "ACME-2690" {
 		t.Errorf("d marked %q read, want the first task the refusal named", got.read)
 	}
@@ -218,13 +249,16 @@ func TestTheCapRefusalNamesAKeyTheReaderCanActuallyPressNext(t *testing.T) {
 // onHead puts the cursor on one band's header row.
 func onHead(t *testing.T, m Model, band view.Band) Model {
 	t.Helper()
+
 	for i, r := range m.rows() {
 		if r.head && r.band == band {
 			m.cursor = i
 			return m
 		}
 	}
+
 	t.Fatalf("no header for %v", band)
+
 	return m
 }
 
@@ -236,6 +270,7 @@ func TestAFlowFileThatWillNotParseIsRefusedWhenItIsRun(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "careful.json"), []byte("{not json"), 0o600); err != nil {
 		t.Fatalf("write: %v", err)
 	}
+
 	m, got := testModel(t, 100, 30)
 	m.opts.Flows = flowDir(dir)
 	m, _ = dialog(t, m, "ACME-2662") // written against careful
@@ -243,10 +278,12 @@ func TestAFlowFileThatWillNotParseIsRefusedWhenItIsRun(t *testing.T) {
 	if chosen := m.start.chosen(); chosen.name != "careful" || chosen.err == nil {
 		t.Fatalf("the dialog opened on %q with err=%v, want careful carrying its parse error", chosen.name, chosen.err)
 	}
+
 	after, cmd := advance(t, m, press("enter"))
 	if cmd != nil || got.flow != "" {
 		t.Fatalf("cmd=%v flow=%q, want nothing started for a flow that will not load", cmd != nil, got.flow)
 	}
+
 	wantBand(t, after, "careful.json")
 }
 
@@ -256,12 +293,14 @@ func TestAFlowFileThatWillNotParseIsRefusedWhenItIsRun(t *testing.T) {
 // ship inside the binary — so it is asserted where it is decided.
 func TestOneFlowIsNotACycle(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
+
 	m.start = startModel{id: "ACME-2662", flows: []startFlow{{name: "task"}}}
 	for _, b := range m.startBindings() {
 		if b.Help().Key == m.keys.ChangeFlow.Help().Key {
 			t.Error("the dialog offers f with one flow, and f would move nothing")
 		}
 	}
+
 	if after := m.cycleFlow(); after.start.at != 0 {
 		t.Errorf("f moved the cycle to %d, and there is one flow to be on", after.start.at)
 	}

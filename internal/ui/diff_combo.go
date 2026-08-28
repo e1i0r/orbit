@@ -22,6 +22,7 @@ func renderDiffFileSelect(files []diffFile, activeIdx int, width int, p *words.P
 		if activeIdx < 0 || activeIdx >= len(files) {
 			activeIdx = 0
 		}
+
 		curr := files[activeIdx]
 		icon := fileIcon(curr.Path)
 		badge := formatFileBadge(curr.Status)
@@ -73,18 +74,22 @@ func renderDiffFileSelect(files []diffFile, activeIdx int, width int, p *words.P
 	)
 
 	var lines []string
+
 	lines = append(lines, cardTop)
 
 	maxItems := 7
+
 	start := 0
 	if cursorIdx >= maxItems {
 		start = cursorIdx - maxItems + 1
 	}
+
 	end := min(len(files), start+maxItems)
 
 	for i := start; i < end; i++ {
 		f := files[i]
 		isSel := i == cursorIdx
+
 		cursor := "   "
 		if isSel {
 			cursor = Paint(Live).Bold(true).Render(" ▸ ")
@@ -100,6 +105,7 @@ func renderDiffFileSelect(files []diffFile, activeIdx int, width int, p *words.P
 		}
 
 		num := fmt.Sprintf("%2d.", i+1)
+
 		var name string
 		if isSel {
 			name = Paint(Live).Bold(true).Render(f.Path)

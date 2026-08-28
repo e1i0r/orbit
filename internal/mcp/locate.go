@@ -33,6 +33,7 @@ func bandSlug(b view.Band) string {
 	if s, ok := bandSlugs[b]; ok {
 		return s
 	}
+
 	return b.String()
 }
 
@@ -40,10 +41,12 @@ func bandSlug(b view.Band) string {
 // drawn, so the schema and a refusal list them the same way.
 func bandNames() []string {
 	bands := view.Bands()
+
 	names := make([]string, 0, len(bands))
 	for _, b := range bands {
 		names = append(names, bandSlug(b))
 	}
+
 	return names
 }
 
@@ -54,6 +57,7 @@ func parseBand(slug string) (view.Band, error) {
 			return b, nil
 		}
 	}
+
 	return 0, fmt.Errorf("%q is not a band; the bands are %s", slug, strings.Join(bandNames(), ", "))
 }
 
@@ -68,16 +72,21 @@ func findTask(b board.Board, id, repoHint string) (view.Task, error) {
 	if id == "" {
 		return view.Task{}, fmt.Errorf("this tool needs task_id")
 	}
+
 	var matches []view.Task
+
 	for _, t := range b.Tasks {
 		if t.ID != id {
 			continue
 		}
+
 		if repoHint != "" && !sameRepo(t, repoHint) {
 			continue
 		}
+
 		matches = append(matches, t)
 	}
+
 	switch len(matches) {
 	case 1:
 		return matches[0], nil
@@ -88,6 +97,7 @@ func findTask(b board.Board, id, repoHint string) (view.Task, error) {
 		for _, t := range matches {
 			where = append(where, t.Repo)
 		}
+
 		return view.Task{}, fmt.Errorf("task %q is in %s; say which with repo", id, strings.Join(where, ", "))
 	}
 }
@@ -105,6 +115,7 @@ func inRepo(hint string) string {
 	if hint == "" {
 		return ""
 	}
+
 	return fmt.Sprintf(" in %q", hint)
 }
 
@@ -118,6 +129,7 @@ func openTaskRepo(t view.Task) (repo.Repo, error) {
 	if err != nil {
 		return repo.Repo{}, fmt.Errorf("open the repository of task %s at %q: %w", t.ID, t.RepoPath, err)
 	}
+
 	return r, nil
 }
 
@@ -141,8 +153,10 @@ func pickRepo(b board.Board, hint string) (repo.Repo, error) {
 		if err != nil {
 			return repo.Repo{}, fmt.Errorf("no repository named or at %q: %w", hint, err)
 		}
+
 		return r, nil
 	}
+
 	switch len(b.RepoList) {
 	case 1:
 		return repo.Open(b.RepoList[0].Path)
@@ -160,7 +174,9 @@ func repoNames(b board.Board) []string {
 	for _, r := range b.RepoList {
 		names = append(names, r.Name)
 	}
+
 	sort.Strings(names)
+
 	return names
 }
 
@@ -173,21 +189,26 @@ func repoNames(b board.Board) []string {
 // name is not a legal id fragment is refused here rather than at the write.
 func nextTaskID(s *store.Store, r repo.Repo) (string, error) {
 	prefix := idPrefix(r.Name)
+
 	existing, err := task.List(s, r)
 	if err != nil {
 		return "", fmt.Errorf("list the tasks already in %s: %w", r.Name, err)
 	}
+
 	highest := 0
+
 	for _, id := range existing {
 		n, ok := suffixNumber(id, prefix)
 		if ok && n > highest {
 			highest = n
 		}
 	}
+
 	id := fmt.Sprintf("%s-%d", prefix, highest+1)
 	if err := store.ValidTaskID(id); err != nil {
 		return "", fmt.Errorf("an id built from repository %q is not usable: %w", r.Name, err)
 	}
+
 	return id, nil
 }
 
@@ -197,14 +218,17 @@ func nextTaskID(s *store.Store, r repo.Repo) (string, error) {
 // legal one.
 func idPrefix(name string) string {
 	var b strings.Builder
+
 	for _, r := range strings.ToUpper(name) {
 		if (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
 			b.WriteRune(r)
 		}
 	}
+
 	if b.Len() == 0 {
 		return "TASK"
 	}
+
 	return b.String()
 }
 
@@ -215,15 +239,20 @@ func suffixNumber(id, prefix string) (int, bool) {
 	if !ok {
 		return 0, false
 	}
+
 	n := 0
+
 	for _, c := range rest {
 		if c < '0' || c > '9' {
 			return 0, false
 		}
+
 		n = n*10 + int(c-'0')
 	}
+
 	if rest == "" {
 		return 0, false
 	}
+
 	return n, true
 }

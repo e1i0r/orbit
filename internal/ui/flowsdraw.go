@@ -12,17 +12,22 @@ func (m Model) flowsRows(h, w int) []string {
 	if h <= 0 {
 		return nil
 	}
+
 	if m.flows.creating {
 		return m.flowsBuilderRows(h, w)
 	}
+
 	if m.flows.showingDetail {
 		return m.flowDetailRows(h, w)
 	}
+
 	p := m.opts.Words
+
 	createBtn := "  " + Paint(Dim).Render(p.T("flows.create_btn_idle", "[+ Create Custom Flow] (press n)"))
 	if m.flows.sel == -1 {
 		createBtn = "▸ " + Pill(p.T("flows.create_btn", "+ Create Custom Flow"), "#FFFFFF", "#005F87") + "  " + Paint(Live).Render("(pulsa ⏎)")
 	}
+
 	out := []string{
 		"",
 		"  " + Paint(Accent).Render(p.T("flows.title", "Flows")),
@@ -42,24 +47,30 @@ func (m Model) flowsRows(h, w int) []string {
 		if i == m.flows.sel {
 			mark = markGlyph + strings.Repeat(" ", gutter-1)
 		}
+
 		originStr := flowOriginString(p, d.Origin)
+
 		headerLine := mark + Paint(Accent).Render(d.Name)
 		if originStr != "" {
 			headerLine += "  " + Paint(Dim).Render("("+originStr+")")
 		}
+
 		if i == m.flows.sel {
 			headerLine += "   " + Pill("👁 "+p.T("flows.btn_view_details", "Details"), "#FFFFFF", "#0284C7")
+
 			headerLine += " " + Pill("✏ "+p.T("flows.btn_edit", "Edit"), "#FFFFFF", "#0C4A6E")
 			if d.Origin != flow.OriginBuiltin {
 				headerLine += " " + Pill("🗑 "+p.T("flows.btn_delete", "Delete"), "#FFFFFF", "#7F1D1D")
 			}
 		}
+
 		out = append(out, fit(headerLine, w))
 
 		fl, err := flow.Resolve(m.opts.Flows, d.Name)
 		if err != nil {
 			errLine := strings.Repeat(" ", gutter+2) + Paint(Bad).Render(err.Error())
 			out = append(out, fit(errLine, w))
+
 			continue
 		}
 
@@ -73,10 +84,12 @@ func (m Model) flowsRows(h, w int) []string {
 			if ph.Model != "" {
 				engineModel += " / " + ph.Model
 			}
+
 			feed := ""
 			if ph.FeedOutput {
 				feed = " [feeds input]"
 			}
+
 			waitStr := p.T("flow.runs_auto", "runs automatically")
 			if ph.Wait {
 				waitStr = p.T("flow.stops_for_human", "stops for human")
@@ -93,8 +106,10 @@ func (m Model) flowsRows(h, w int) []string {
 			if ph.Prompt != "" {
 				phaseLine += "  " + Paint(Dim).Render(`"`+ph.Prompt+`"`)
 			}
+
 			out = append(out, fit(phaseLine, w))
 		}
+
 		out = append(out, "")
 	}
 
@@ -102,6 +117,7 @@ func (m Model) flowsRows(h, w int) []string {
 		about("up_down", m.keys.Up.Help().Key+m.keys.Down.Help().Key),
 		about("back", m.keys.Back.Help().Key))
 	out = append(out, fit("  "+Paint(Dim).Render(waysOut), w))
+
 	return fill(out, h)
 }
 
@@ -114,5 +130,6 @@ func flowOriginString(p *words.Printer, o flow.Origin) string {
 	case flow.OriginShadow:
 		return p.T("flow.shadowing", "yours, shadowing the built-in")
 	}
+
 	return ""
 }

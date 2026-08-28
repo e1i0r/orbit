@@ -32,7 +32,9 @@ func TestSupervisorSayAndHistoryTools(t *testing.T) {
 	if hRes.IsError {
 		t.Fatalf("orbit_supervisor_history failed: %s", text(t, hRes))
 	}
+
 	history := call(t, sn, "orbit_supervisor_history", nil)
+
 	msgs, ok := history["messages"].([]any)
 	if !ok || len(msgs) != 2 {
 		t.Fatalf("history messages = %v, want 2", history["messages"])
@@ -40,6 +42,7 @@ func TestSupervisorSayAndHistoryTools(t *testing.T) {
 
 	// Read with limit 1
 	hLimit := call(t, sn, "orbit_supervisor_history", map[string]any{"limit": float64(1)})
+
 	limitMsgs, ok := hLimit["messages"].([]any)
 	if !ok || len(limitMsgs) != 1 {
 		t.Fatalf("history with limit 1 = %v, want 1", hLimit["messages"])
@@ -48,6 +51,7 @@ func TestSupervisorSayAndHistoryTools(t *testing.T) {
 
 func TestSupervisorSayRefusesEmptyMessage(t *testing.T) {
 	_, sn, _ := oneRepo(t)
+
 	res := sn.Call("orbit_supervisor_say", map[string]any{
 		"message": "   ",
 	})

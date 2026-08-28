@@ -24,6 +24,7 @@ func TestResolveStripsAPOSIXLocale(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			t.Setenv("LANG", "")
+
 			if got := Resolve(c.value, "", ""); got != c.want {
 				t.Errorf("Resolve(%q, \"\", \"\") = %q, want %q", c.value, got, c.want)
 			}
@@ -35,20 +36,25 @@ func TestResolveStripsAPOSIXLocale(t *testing.T) {
 // beats $LANG, and that an unset chain falls back to English.
 func TestResolveFollowsPrecedence(t *testing.T) {
 	t.Setenv("LANG", "es_ES.UTF-8")
+
 	if got := Resolve("", "", ""); got != "es" {
 		t.Errorf("Resolve with only $LANG set = %q, want es", got)
 	}
+
 	if got := Resolve("", "", "fr"); got != "fr" {
 		t.Errorf("setting did not override $LANG: got %q, want fr", got)
 	}
+
 	if got := Resolve("", "de", "fr"); got != "de" {
 		t.Errorf("env did not override setting: got %q, want de", got)
 	}
+
 	if got := Resolve("it", "de", "fr"); got != "it" {
 		t.Errorf("flag did not override env: got %q, want it", got)
 	}
 
 	t.Setenv("LANG", "")
+
 	if got := Resolve("", "", ""); got != "en" {
 		t.Errorf("Resolve with nothing set = %q, want en", got)
 	}
@@ -59,11 +65,14 @@ func TestResolveFollowsPrecedence(t *testing.T) {
 // "English" and "Español", not "en" and "es".
 func TestAvailableNamesEachLanguageInItself(t *testing.T) {
 	t.Setenv("ORBIT_HOME", t.TempDir())
+
 	got := Available()
+
 	want := []string{"English", "Español"}
 	if len(got) != len(want) {
 		t.Fatalf("Available() = %v, want %v", got, want)
 	}
+
 	for i := range want {
 		if got[i] != want[i] {
 			t.Errorf("Available()[%d] = %q, want %q", i, got[i], want[i])
@@ -82,10 +91,12 @@ func TestAvailableNamesEachLanguageInItself(t *testing.T) {
 func TestAvailableDoesNotOfferThePseudolocale(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("ORBIT_HOME", home)
+
 	langDir := filepath.Join(home, "lang")
 	if err := os.MkdirAll(langDir, 0o700); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
+
 	body := `{"language": "Pseudo", "keys": {}}`
 	if err := os.WriteFile(filepath.Join(langDir, pseudoCode+".json"), []byte(body), 0o600); err != nil {
 		t.Fatalf("write: %v", err)
@@ -104,10 +115,12 @@ func TestAvailableDoesNotOfferThePseudolocale(t *testing.T) {
 func TestAvailableFindsAnOverlaidThirdLanguage(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("ORBIT_HOME", home)
+
 	langDir := filepath.Join(home, "lang")
 	if err := os.MkdirAll(langDir, 0o700); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
+
 	body := `{"language": "Français", "keys": {}}`
 	if err := os.WriteFile(filepath.Join(langDir, "fr.json"), []byte(body), 0o600); err != nil {
 		t.Fatalf("write: %v", err)
@@ -115,11 +128,13 @@ func TestAvailableFindsAnOverlaidThirdLanguage(t *testing.T) {
 
 	got := Available()
 	found := false
+
 	for _, name := range got {
 		if name == "Français" {
 			found = true
 		}
 	}
+
 	if !found {
 		t.Errorf("Available() = %v, want it to include Français from the overlay", got)
 	}

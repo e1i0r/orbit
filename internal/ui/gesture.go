@@ -44,13 +44,16 @@ func (m Model) gesture(b key.Binding) (view.Task, Model, bool) {
 	if !ok || r.head {
 		return view.Task{}, m, false
 	}
+
 	a, ok := m.affordance(r.task, b)
 	if !ok {
 		return view.Task{}, m, false
 	}
+
 	if !a.OK {
 		return view.Task{}, m.say(a.Why(m.opts.Words)), false
 	}
+
 	return r.task, m, true
 }
 
@@ -60,6 +63,7 @@ func (m Model) markReadKey() (tea.Model, tea.Cmd) {
 	if !ok {
 		return next, nil
 	}
+
 	return next, markRead(next.opts.MarkRead, t)
 }
 
@@ -74,6 +78,7 @@ func (m Model) takeKey() (tea.Model, tea.Cmd) {
 	if !ok {
 		return next, nil
 	}
+
 	return next, takeSession(next.opts.Take, t)
 }
 
@@ -84,6 +89,7 @@ func (m Model) handBack() (tea.Model, tea.Cmd) {
 	if !ok {
 		return next, nil
 	}
+
 	return next.took(t.ID, false), control(next.opts.Control, t, "continue")
 }
 
@@ -98,11 +104,14 @@ func (m Model) session(msg sessionMsg) (tea.Model, tea.Cmd) {
 	if msg.Err != nil {
 		return m.say(msg.Err.Error()), nil
 	}
+
 	if msg.Cmd == nil {
 		return m.say(m.opts.Words.T("msg.no_session", "{id} has no session to carry on",
 			about("id", msg.ID))), nil
 	}
+
 	id := msg.ID
+
 	return m.took(id, true), tea.ExecProcess(msg.Cmd, func(err error) tea.Msg {
 		return sessionEndedMsg{ID: id, Err: err}
 	})
@@ -125,11 +134,14 @@ func (m Model) sessionEnded(msg sessionEndedMsg) Model {
 		if !errors.As(msg.Err, &exited) {
 			m = m.took(msg.ID, false)
 		}
+
 		return m.say(msg.Err.Error())
 	}
+
 	msgText := m.opts.Words.T("msg.session_ended",
 		"{id} is still stopped and still yours; press h to hand it back",
 		about("id", msg.ID))
+
 	return m.say(msgText)
 }
 
@@ -138,6 +150,7 @@ func (m Model) readSaid(msg readMsg) string {
 	if msg.Err != nil {
 		return msg.Err.Error()
 	}
+
 	return m.opts.Words.T("msg.marked_read", "{id} is marked read", about("id", msg.ID))
 }
 
@@ -161,13 +174,16 @@ func (m Model) stillTaken() Model {
 	if len(m.taken) == 0 {
 		return m
 	}
+
 	held := make(map[string]bool, len(m.taken))
 	for _, t := range m.board.Tasks {
 		if m.taken[t.ID] && parked(t) {
 			held[t.ID] = true
 		}
 	}
+
 	m.taken = held
+
 	return m
 }
 
@@ -200,11 +216,14 @@ func (m Model) took(id string, yes bool) Model {
 	if held == nil {
 		held = map[string]bool{}
 	}
+
 	if yes {
 		held[id] = true
 	} else {
 		delete(held, id)
 	}
+
 	m.taken = held
+
 	return m
 }

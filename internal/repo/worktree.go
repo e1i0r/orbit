@@ -21,9 +21,11 @@ func (r Repo) AddWorktree(dir, branch string) error {
 	if r.Base == "" {
 		return fmt.Errorf("%q is not on a branch — check one out before starting a task against it", r.Path)
 	}
+
 	if err := mkdir(filepath.Dir(dir)); err != nil {
 		return err
 	}
+
 	args := []string{"worktree", "add", "-b", branch, dir, r.Base}
 	if r.hasBranch(branch) {
 		// Clear the bookkeeping git keeps for a worktree whose directory
@@ -34,11 +36,14 @@ func (r Repo) AddWorktree(dir, branch string) error {
 		if _, err := git(r.Path, "worktree", "prune"); err != nil {
 			return fmt.Errorf("prune worktrees of %q: %w", r.Path, err)
 		}
+
 		args = []string{"worktree", "add", dir, branch}
 	}
+
 	if _, err := git(r.Path, args...); err != nil {
 		return fmt.Errorf("create a worktree for %q at %q: %w", branch, dir, err)
 	}
+
 	return nil
 }
 
@@ -62,8 +67,10 @@ func (r Repo) RemoveWorktree(dir string) error {
 	if _, err := git(r.Path, "worktree", "remove", "--force", dir); err != nil {
 		return fmt.Errorf("remove the worktree at %q: %w", dir, err)
 	}
+
 	if _, err := git(r.Path, "worktree", "prune"); err != nil {
 		return fmt.Errorf("prune worktrees of %q: %w", r.Path, err)
 	}
+
 	return nil
 }

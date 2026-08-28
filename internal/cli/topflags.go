@@ -49,15 +49,18 @@ func parseTop(ctx Context, args []string) (dir string, once bool, lang string, e
 	langFlag := fs.String("lang", "", "draw in this language, e.g. es; otherwise $ORBIT_LANG, then the saved setting, then $LANG")
 
 	var dirs []string
+
 	rest := args
 	for {
 		if perr := parse(ctx, fs, rest); perr != nil {
 			return "", false, "", perr
 		}
+
 		rest = fs.Args()
 		if len(rest) == 0 {
 			break
 		}
+
 		dirs = append(dirs, rest[0])
 		rest = rest[1:]
 	}
@@ -68,11 +71,13 @@ func parseTop(ctx Context, args []string) (dir string, once bool, lang string, e
 		if werr != nil {
 			return "", false, "", fmt.Errorf("locate the working directory: %w", werr)
 		}
+
 		dir = cwd
 	case 1:
 		dir = dirs[0]
 	default:
 		return "", false, "", fmt.Errorf("top takes one directory, and was given %d: %s", len(dirs), strings.Join(dirs, " "))
 	}
+
 	return dir, *onceFlag, *langFlag, nil
 }

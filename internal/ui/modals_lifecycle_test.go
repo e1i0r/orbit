@@ -22,6 +22,7 @@ func TestPaletteOperations(t *testing.T) {
 
 	// 2. Typing into palette
 	m.palette.typed = "set"
+
 	cands := m.palette.candidates(m.opts.Commands)
 	if len(cands) == 0 {
 		t.Error("expected candidates for 'set'")
@@ -134,6 +135,7 @@ func TestWatchSessionOperations(t *testing.T) {
 	if _, err := w.Write([]byte("compiling packages...\nall tests passed\n")); err != nil {
 		t.Fatal(err)
 	}
+
 	out, done := w.snapshot()
 	if out == "" || done {
 		t.Errorf("unexpected snapshot: out=%q, done=%v", out, done)
@@ -141,6 +143,7 @@ func TestWatchSessionOperations(t *testing.T) {
 
 	// 2. Finish watch
 	w.finish()
+
 	_, done = w.snapshot()
 	if !done {
 		t.Error("expected done=true after finish")
@@ -154,6 +157,7 @@ func TestWatchSessionOperations(t *testing.T) {
 
 	// 4. Close and reopen watch
 	m = m.closeWatch()
+
 	m = m.reopenWatch()
 	if m.screen != screenList {
 		t.Errorf("unexpected screen after reopenWatch: %v", m.screen)

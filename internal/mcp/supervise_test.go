@@ -21,10 +21,12 @@ func TestANoteWrittenThroughMCPComesBackFromTheRecord(t *testing.T) {
 	if res := sn.Call("orbit_add_note", map[string]any{"task_id": "PAY-1", "text": "the failure is in the retry loop"}); res.IsError {
 		t.Fatalf("orbit_add_note refused: %s", text(t, res))
 	}
+
 	notes, ok := call(t, sn, "orbit_inspect_task", map[string]any{"task_id": "PAY-1"})["notes"].([]any)
 	if !ok || len(notes) != 1 {
 		t.Fatalf("a note written through the tool is not in the record: %v", notes)
 	}
+
 	wrote := str(t, obj(t, notes[0])["text"])
 	if !strings.Contains(wrote, "the failure is in the retry loop") {
 		t.Errorf("the note reads %q, want the text it was given", wrote)
@@ -39,6 +41,7 @@ func TestANoteWrittenThroughMCPComesBackFromTheRecord(t *testing.T) {
 func TestAddNoteNeedsSomethingToSay(t *testing.T) {
 	s, sn, r := oneRepo(t)
 	addTask(t, s, r, "PAY-1", record.Event{At: at(1), Kind: record.TaskCreated, Text: "written"})
+
 	if said := refused(t, sn, "orbit_add_note", map[string]any{"task_id": "PAY-1", "text": "   "}); !strings.Contains(said, "text") {
 		t.Errorf("the refusal does not say what is missing: %s", said)
 	}
@@ -81,6 +84,7 @@ func TestTheCorrectionIsInTheRecord(t *testing.T) {
 	if len(notes) != 1 {
 		t.Fatalf("the correction is not in the record: %v", notes)
 	}
+
 	got := str(t, obj(t, notes[0])["text"])
 	if !strings.Contains(got, "start from the failing test") || !strings.HasPrefix(got, "[supervisor] ") {
 		t.Errorf("the correction reads %q, want the supervisor's text", got)
@@ -100,6 +104,7 @@ func TestPauseSaysWhatItHasAndHasNotDone(t *testing.T) {
 	if res.IsError {
 		t.Fatalf("orbit_pause_task refused: %s", text(t, res))
 	}
+
 	said := text(t, res)
 	if !strings.Contains(said, "will be paused") || !strings.Contains(said, "PAY-9") {
 		t.Errorf("pause answered %q, want it to say the word was left rather than that the run has stopped", said)

@@ -73,16 +73,20 @@ func diffOf(r Reader, t view.Task, base baseRef) tea.Cmd {
 		if r == nil {
 			return diffMsg{ID: t.ID, Err: errors.New("this window was opened without a way to find the worktree")}
 		}
+
 		if t.RepoPath == "" {
 			return diffMsg{ID: t.ID, Err: errors.New("this task does not say where its repository is")}
 		}
+
 		dir, err := r.Worktree(t.RepoPath, t.ID)
 		if err != nil {
 			return diffMsg{ID: t.ID, Err: err}
 		}
+
 		if !base.known {
 			base = boundedBaseOf(t.RepoPath)
 		}
+
 		out, noBase, err := gitDiff(dir, base.name)
 		if err != nil {
 			return diffMsg{ID: t.ID, Tree: dir, Err: err, Base: base}
@@ -125,19 +129,23 @@ func gitDiff(dir, base string) (string, bool, error) {
 		if err == nil && strings.TrimSpace(out) != "" {
 			return out, false, nil
 		}
+
 		if errors.Is(err, errGitTimedOut) {
 			return "", false, err
 		}
 	}
+
 	out, err := runGitDiff(dir, "diff")
 	if err != nil {
 		return "", false, err
 	}
+
 	if strings.TrimSpace(out) == "" {
 		if headDiff, hErr := runGitDiff(dir, "diff", "HEAD~1..HEAD"); hErr == nil && strings.TrimSpace(headDiff) != "" {
 			return headDiff, false, nil
 		}
 	}
+
 	return out, true, nil
 }
 
@@ -147,14 +155,18 @@ func gitDiff(dir, base string) (string, bool, error) {
 func runGitDiff(dir string, args ...string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), gitDiffTimeout)
 	defer cancel()
+
 	cmd := exec.CommandContext(ctx, "git", append([]string{"-C", dir}, args...)...)
+
 	out, err := cmd.CombinedOutput()
 	if err != nil && ctx.Err() != nil {
 		return "", fmt.Errorf("%w: git %s in %s", errGitTimedOut, strings.Join(args, " "), dir)
 	}
+
 	if err != nil {
 		return "", fmt.Errorf("git %s in %s: %w: %s", strings.Join(args, " "), dir, err, strings.TrimSpace(string(out)))
 	}
+
 	return string(out), nil
 }
 
@@ -167,6 +179,7 @@ func baseOf(repoPath string) string {
 	if err != nil {
 		return ""
 	}
+
 	return r.Base
 }
 
@@ -217,6 +230,7 @@ type baseRef struct {
 func boundedBaseOf(repoPath string) baseRef {
 	got := make(chan string, 1)
 	go func() { got <- baseOf(repoPath) }()
+
 	select {
 	case name := <-got:
 		return baseRef{name: name, known: true}

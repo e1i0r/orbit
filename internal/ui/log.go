@@ -38,16 +38,20 @@ func (m Model) logLines() []string {
 	if m.logErr != nil {
 		return []string{" " + Paint(Bad).Render(m.logErr.Error())}
 	}
+
 	if len(m.entries) == 0 {
 		return []string{" " + Paint(Dim).Render(m.opts.Words.T("log.empty", "nothing has been recorded about this task yet"))}
 	}
+
 	out := make([]string, 0, len(m.entries)+4)
 	for _, e := range m.entries {
 		if e.Attempted() {
 			out = append(out, m.seam(e, w))
 		}
+
 		out = append(out, m.logEntryLines(e, w)...)
 	}
+
 	return out
 }
 
@@ -58,11 +62,14 @@ func (m Model) logLines() []string {
 // first: which one this is, and how long ago it started.
 func (m Model) seam(e view.Entry, w int) string {
 	label := m.opts.Words.T("log.attempt", "attempt {n}", about("n", strconv.Itoa(e.Attempt)))
+
 	head, tail := "── "+label+" ", ""
 	if at := clock(e.At); at != "" {
 		tail = " " + at + " ──"
 	}
+
 	rule := max(w-lipgloss.Width(head)-lipgloss.Width(tail)-1, 0)
+
 	return " " + Paint(Dim).Render(head+strings.Repeat("─", rule)+tail)
 }
 
@@ -72,6 +79,7 @@ func (m Model) logEntryLines(e view.Entry, w int) []string {
 	prefix := Paint(Dim).Render(pad(clock(e.At), clockCells, false)) + "  " +
 		Paint(Dim).Render(pad(e.Phase, phaseCells, false)) + "  " +
 		Paint(role).Render(word)
+
 	detail := m.logDetail(e)
 	if detail == "" {
 		return []string{" " + prefix}
@@ -83,17 +91,21 @@ func (m Model) logEntryLines(e view.Entry, w int) []string {
 
 	prefixW := clockCells + 2 + phaseCells + 2 + lipgloss.Width(word) + 2
 	availW := max(20, w-prefixW-4)
+
 	wrapped := splitIntoLines(detail, availW)
 	if len(wrapped) <= 1 {
 		return []string{" " + prefix + "  " + Paint(Dim).Render(detail)}
 	}
 
 	var out []string
+
 	out = append(out, " "+prefix+"  "+Paint(Dim).Render(wrapped[0]))
+
 	indent := strings.Repeat(" ", prefixW+1)
 	for _, wl := range wrapped[1:] {
 		out = append(out, indent+Paint(Dim).Render(wl))
 	}
+
 	return out
 }
 
@@ -105,6 +117,7 @@ func (m Model) logEntryLines(e view.Entry, w int) []string {
 // sentence for it would be inventing the meaning too.
 func (m Model) logWord(e view.Entry) (string, Role) {
 	p := m.opts.Words
+
 	switch e.What() {
 	case view.EntryWritten:
 		return p.T("log.written", "written down"), Dim
@@ -139,6 +152,7 @@ func (m Model) logWord(e view.Entry) (string, Role) {
 	case view.EntryUnreadable:
 		return p.T("log.unreadable", "this line could not be read"), Bad
 	}
+
 	return e.Kind, Dim
 }
 
@@ -154,6 +168,7 @@ func (m Model) logDetail(e view.Entry) string {
 		if e.Args != "" {
 			return formatLogTool(e.Tool, e.Args, m.expandedDetail)
 		}
+
 		return e.Tool
 	case view.EntryRefused:
 		return e.Tool + ": " + firstLine(e.Text)
@@ -166,12 +181,15 @@ func (m Model) logDetail(e view.Entry) string {
 			if m.expandedDetail {
 				return e.Cause
 			}
+
 			return firstLine(e.Cause)
 		}
 	}
+
 	if m.expandedDetail {
 		return e.Text
 	}
+
 	return firstLine(e.Text)
 }
 
@@ -194,12 +212,15 @@ func formatLogTool(tool, args string, expanded bool) string {
 			}
 		}
 	}
+
 	if !expanded && len(head) > 60 {
 		head = head[:57] + "…"
 	}
+
 	if head != "" {
 		return tool + ": " + head
 	}
+
 	return tool
 }
 
@@ -217,5 +238,6 @@ func clock(at time.Time) string {
 	if at.IsZero() {
 		return ""
 	}
+
 	return at.Format("15:04:05")
 }

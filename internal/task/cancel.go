@@ -27,12 +27,15 @@ func Cancel(s *store.Store, t Task) error {
 	if err != nil {
 		return err
 	}
+
 	if !ok {
 		return notRunning(t, pid)
 	}
+
 	if err := syscall.Kill(pid, syscall.SIGTERM); err != nil {
 		return fmt.Errorf("ask process %d holding task %s to stop: %w", pid, t.ID, err)
 	}
+
 	return nil
 }
 
@@ -49,6 +52,7 @@ func Kill(s *store.Store, t Task) error {
 	if err != nil {
 		return err
 	}
+
 	if !ok {
 		return notRunning(t, pid)
 	}
@@ -69,6 +73,7 @@ func Kill(s *store.Store, t Task) error {
 	if err := syscall.Kill(killTarget(pid, pgid, gerr), syscall.SIGKILL); err != nil {
 		return fmt.Errorf("stop process %d holding task %s: %w", pid, t.ID, err)
 	}
+
 	return nil
 }
 
@@ -88,6 +93,7 @@ func killTarget(pid, pgid int, gerr error) int {
 	if gerr != nil || pgid != pid || pgid <= 1 {
 		return pid
 	}
+
 	return -pid
 }
 
@@ -98,5 +104,6 @@ func notRunning(t Task, pid int) error {
 	if pid > 0 {
 		return fmt.Errorf("task %s is not running: process %d, which held it, is gone — run `orbit reconcile` to close its record", t.ID, pid)
 	}
+
 	return fmt.Errorf("task %s is not running", t.ID)
 }

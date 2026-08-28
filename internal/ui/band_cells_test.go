@@ -32,6 +32,7 @@ func TestEngineAndModel(t *testing.T) {
 
 func TestControlSaid(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
+
 	tests := []struct {
 		word, want string
 	}{
@@ -47,6 +48,7 @@ func TestControlSaid(t *testing.T) {
 			t.Errorf("controlSaid(%q) = %q, want %q", tt.word, got, tt.want)
 		}
 	}
+
 	if got := m.controlSaid(controlMsg{ID: "X-1", Word: "pause", Err: errors.New("denied")}); got != "denied" {
 		t.Errorf("controlSaid with an error = %q, want the error verbatim", got)
 	}
@@ -57,6 +59,7 @@ func TestCommandSaid(t *testing.T) {
 	if got := m.commandSaid(commandMsg{Name: "sync"}); got != "sync finished" {
 		t.Errorf("commandSaid = %q, want %q", got, "sync finished")
 	}
+
 	if got := m.commandSaid(commandMsg{Name: "sync", Err: errors.New("broke")}); got != "broke" {
 		t.Errorf("commandSaid with an error = %q, want the error verbatim", got)
 	}
@@ -78,6 +81,7 @@ func TestFilterLineBranches(t *testing.T) {
 	band := view.Running
 	m.queueFilter = &band
 	m.repoFilter = "payments"
+
 	got := m.filterLine()
 	for _, want := range []string{"RUNNING", "acme", "payments", "clears it"} {
 		if !strings.Contains(got, want) {
@@ -96,28 +100,33 @@ func TestBandLeftPriority(t *testing.T) {
 	if !strings.Contains(m.bandLeft(), "repository") {
 		t.Errorf("bandLeft while filtering = %q, want the filter line", m.bandLeft())
 	}
+
 	m.filtering = false
 
 	m.confirm, m.confirmID = confirmCancel, "X-1"
 	if !strings.Contains(m.bandLeft(), "X-1") {
 		t.Errorf("bandLeft with confirmCancel = %q, want it to name X-1", m.bandLeft())
 	}
+
 	m.confirm = confirmPostCliTask
 	if !strings.Contains(m.bandLeft(), "press y") {
 		t.Errorf("bandLeft with confirmPostCliTask = %q, want the confirmation sentence", m.bandLeft())
 	}
+
 	m.confirm = confirmNone
 
 	m.message, m.messageAt = "a fresh message", m.now
 	if m.bandLeft() != Paint(Accent).Render("a fresh message") {
 		t.Errorf("bandLeft with a fresh message = %q, want it painted and shown", m.bandLeft())
 	}
+
 	m.message = ""
 
 	m.filter = "acme"
 	if !strings.Contains(m.bandLeft(), "acme") {
 		t.Errorf("bandLeft with a filter set = %q, want the filter line", m.bandLeft())
 	}
+
 	m.filter = ""
 
 	// A running task in the board takes priority over the idle line.
@@ -128,6 +137,7 @@ func TestBandLeftPriority(t *testing.T) {
 
 func TestStateWordEveryReason(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
+
 	tests := []struct {
 		task view.Task
 		want string
@@ -159,12 +169,15 @@ func TestPhaseWordWithAndWithoutFraction(t *testing.T) {
 	if got := m.phaseWord(view.Task{Flow: "careful"}); !strings.Contains(got, "running") {
 		t.Errorf("phaseWord with no phase = %q, want the plain running word", got)
 	}
+
 	if got := m.phaseWord(view.Task{Flow: "careful", Phase: "review", PhaseN: 1}); got != "review" {
 		t.Errorf("phaseWord on the first phase = %q, want the bare phase name", got)
 	}
+
 	if got := m.phaseWord(view.Task{Flow: "careful", Phase: "review", PhaseN: 2}); !strings.Contains(got, "2/3") {
 		t.Errorf("phaseWord past the first phase = %q, want a 2/3 fraction", got)
 	}
+
 	if got := m.phaseWord(view.Task{Flow: "unknown-flow", Phase: "review", PhaseN: 2}); got != "review" {
 		t.Errorf("phaseWord with no known total = %q, want the bare phase name", got)
 	}
@@ -172,6 +185,7 @@ func TestPhaseWordWithAndWithoutFraction(t *testing.T) {
 
 func TestElapsedEveryUnit(t *testing.T) {
 	now := fixtureNow
+
 	tests := []struct {
 		since time.Time
 		want  string
@@ -194,9 +208,11 @@ func TestPadEdgeCases(t *testing.T) {
 	if got := pad("x", 0, false); got != "" {
 		t.Errorf("pad with 0 cells = %q, want empty", got)
 	}
+
 	if got := pad("hi", 5, true); got != "   hi" {
 		t.Errorf("pad right-aligned = %q, want %q", got, "   hi")
 	}
+
 	if got := pad("hi", 5, false); got != "hi   " {
 		t.Errorf("pad left-aligned = %q, want %q", got, "hi   ")
 	}
@@ -209,6 +225,7 @@ func TestBandNameEveryBand(t *testing.T) {
 			t.Errorf("bandName(%v) is empty", b)
 		}
 	}
+
 	if got := m.bandName(view.Band(99)); got != "" {
 		t.Errorf("bandName(99) = %q, want empty for an unknown band", got)
 	}
@@ -231,6 +248,7 @@ func TestHeadHintBranches(t *testing.T) {
 
 	// 3. The To Do band at the unread cap says so, ahead of the open hint.
 	m.expanded[view.ToDo] = false
+
 	m.opts.Settings = &settings{autopilot: true, lang: "en", unread: 1}
 	if got := m.headHint(row{band: view.ToDo, n: 4}); !strings.Contains(got, "unread cap") {
 		t.Errorf("headHint on To Do at the cap = %q, want the unread cap sentence", got)
@@ -247,6 +265,7 @@ func TestPhaseTotalsUnknownFlow(t *testing.T) {
 	if _, ok := totals["not-a-real-flow"]; ok {
 		t.Error("phaseTotals resolved a flow name that does not exist")
 	}
+
 	if totals["task"] == 0 {
 		t.Error("phaseTotals did not resolve the built-in task flow")
 	}

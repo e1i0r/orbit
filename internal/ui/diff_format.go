@@ -14,12 +14,14 @@ func formatStructuredDiff(diffText string, width int, p *words.Printer, rational
 	}
 
 	raw := strings.Split(text, "\n")
+
 	files := parseDiffFiles(raw)
 	if len(files) == 0 {
 		out := make([]string, 0, len(raw))
 		for _, line := range raw {
 			out = append(out, " "+Paint(diffRole(line)).Render(line))
 		}
+
 		return out, files
 	}
 
@@ -31,6 +33,7 @@ func formatStructuredDiff(diffText string, width int, p *words.Printer, rational
 	out = append(out, summary, "")
 
 	fileIdx := 0
+
 	for _, line := range raw {
 		if strings.HasPrefix(line, "diff --git ") {
 			if fileIdx < len(files) {
@@ -56,6 +59,7 @@ func formatStructuredDiff(diffText string, width int, p *words.Printer, rational
 
 				fileIdx++
 			}
+
 			continue
 		}
 

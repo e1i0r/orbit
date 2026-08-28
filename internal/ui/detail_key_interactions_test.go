@@ -34,6 +34,7 @@ func TestDetailKeyInteractionsAndTabSwitching(t *testing.T) {
 	// 4. Help overlay from detail
 	helpKey := keystroke("?")
 	newM, _ = m.detailKey(helpKey)
+
 	m = asModel(t, newM)
 	if m.screen != screenHelp {
 		t.Errorf("expected screenHelp after '?', got %v", m.screen)
@@ -43,6 +44,7 @@ func TestDetailKeyInteractionsAndTabSwitching(t *testing.T) {
 	m.screen = screenDetail
 	escKey := keystroke("esc")
 	newM, _ = m.detailKey(escKey)
+
 	m = asModel(t, newM)
 	if m.screen != screenList {
 		t.Errorf("expected screenList after Esc from detail, got %v", m.screen)
@@ -55,6 +57,7 @@ func TestDetailTaskViewRenderingEmptyAndFull(t *testing.T) {
 	// Empty task view
 	m.screen = screenDetail
 	m.detail = ""
+
 	renderedEmpty := m.detailRows(20, 100)
 	if len(renderedEmpty) == 0 {
 		t.Error("expected detailRows on empty task to render something")
@@ -62,6 +65,7 @@ func TestDetailTaskViewRenderingEmptyAndFull(t *testing.T) {
 
 	// Task with live run
 	m = openOn(t, "ACME-2705")
+
 	renderedLive := m.detailRows(20, 100)
 	if len(renderedLive) == 0 {
 		t.Error("expected detailRows on live task to render")
@@ -95,6 +99,7 @@ func TestDetailMidTaskDialChanges(t *testing.T) {
 
 	// 1. Press 't' toggles thinking
 	newM, _ := m.detailKey(keystroke("t"))
+
 	m = asModel(t, newM)
 	if m.knobs.Thinking == "" {
 		t.Error("expected thinking to be updated after 't'")
@@ -102,6 +107,7 @@ func TestDetailMidTaskDialChanges(t *testing.T) {
 
 	// 2. Press 'E' cycles effort
 	newM, _ = m.detailKey(keystroke("E"))
+
 	m = asModel(t, newM)
 	if m.knobs.Effort == "" {
 		t.Error("expected effort to be updated after 'E'")
@@ -109,6 +115,7 @@ func TestDetailMidTaskDialChanges(t *testing.T) {
 
 	// 3. Press 'k' opens engines screen
 	newM, _ = m.detailKey(keystroke("k"))
+
 	mEngines := asModel(t, newM)
 	if mEngines.screen != screenEngines {
 		t.Errorf("expected screenEngines after 'k', got %v", mEngines.screen)
@@ -116,6 +123,7 @@ func TestDetailMidTaskDialChanges(t *testing.T) {
 
 	// 4. Press 'F' opens flows screen
 	newM, _ = m.detailKey(keystroke("F"))
+
 	mFlows := asModel(t, newM)
 	if mFlows.screen != screenFlows {
 		t.Errorf("expected screenFlows after 'F', got %v", mFlows.screen)

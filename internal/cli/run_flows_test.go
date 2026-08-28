@@ -31,6 +31,7 @@ func TestRunWalksAChosenFlowAndFailsInsideTaskRun(t *testing.T) {
 	if err := os.MkdirAll(flowsDir, 0o700); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
+
 	body := `{"name":"nope","phases":[{"name":"implement","engine":"nonexistent-engine"}]}`
 	if err := os.WriteFile(filepath.Join(flowsDir, "nope.json"), []byte(body), 0o600); err != nil {
 		t.Fatalf("write flow: %v", err)
@@ -53,6 +54,7 @@ func TestRunWalksAChosenFlowAndFailsInsideTaskRun(t *testing.T) {
 	if code == 0 {
 		t.Error("run with an unconfigured engine exited 0")
 	}
+
 	if !strings.Contains(errOut, "nonexistent-engine") {
 		t.Errorf("the refusal does not name the engine:\n%s", errOut)
 	}
@@ -70,6 +72,7 @@ func TestRunWithExplicitFlowAndTimeoutReachesTaskRun(t *testing.T) {
 	if err := os.MkdirAll(flowsDir, 0o700); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
+
 	body := `{"name":"nope2","phases":[{"name":"implement","engine":"nonexistent-engine"}]}`
 	if err := os.WriteFile(filepath.Join(flowsDir, "nope2.json"), []byte(body), 0o600); err != nil {
 		t.Fatalf("write flow: %v", err)
@@ -83,6 +86,7 @@ func TestRunWithExplicitFlowAndTimeoutReachesTaskRun(t *testing.T) {
 	if code == 0 {
 		t.Error("run with an unconfigured engine exited 0")
 	}
+
 	if !strings.Contains(errOut, "nonexistent-engine") {
 		t.Errorf("the refusal does not name the engine:\n%s", errOut)
 	}

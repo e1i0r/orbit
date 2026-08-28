@@ -15,6 +15,7 @@ import (
 
 func TestSettingsAdapterComprehensive(t *testing.T) {
 	root := t.TempDir()
+
 	s, err := store.New(root)
 	if err != nil {
 		t.Fatal(err)
@@ -29,6 +30,7 @@ func TestSettingsAdapterComprehensive(t *testing.T) {
 	if err := adapter.SetAutopilot(true); err != nil {
 		t.Errorf("SetAutopilot: %v", err)
 	}
+
 	if !adapter.Autopilot() {
 		t.Error("Autopilot() = false, want true")
 	}
@@ -37,6 +39,7 @@ func TestSettingsAdapterComprehensive(t *testing.T) {
 	if err := adapter.SetLanguage("es"); err != nil {
 		t.Errorf("SetLanguage: %v", err)
 	}
+
 	if adapter.Language() != "es" {
 		t.Errorf("Language() = %q, want es", adapter.Language())
 	}
@@ -45,6 +48,7 @@ func TestSettingsAdapterComprehensive(t *testing.T) {
 	if err := adapter.SetUnreadCap(42); err != nil {
 		t.Errorf("SetUnreadCap: %v", err)
 	}
+
 	if adapter.UnreadCap() != 42 {
 		t.Errorf("UnreadCap() = %d, want 42", adapter.UnreadCap())
 	}
@@ -53,6 +57,7 @@ func TestSettingsAdapterComprehensive(t *testing.T) {
 	if err := adapter.SetEngine("codex"); err != nil {
 		t.Errorf("SetEngine: %v", err)
 	}
+
 	if adapter.Engine() != "codex" {
 		t.Errorf("Engine() = %q, want codex", adapter.Engine())
 	}
@@ -61,6 +66,7 @@ func TestSettingsAdapterComprehensive(t *testing.T) {
 	if err := adapter.SetModel("gpt-4o"); err != nil {
 		t.Errorf("SetModel: %v", err)
 	}
+
 	if adapter.Model() != "gpt-4o" {
 		t.Errorf("Model() = %q, want gpt-4o", adapter.Model())
 	}
@@ -69,6 +75,7 @@ func TestSettingsAdapterComprehensive(t *testing.T) {
 	if err := adapter.SetFlow("careful"); err != nil {
 		t.Errorf("SetFlow: %v", err)
 	}
+
 	if adapter.Flow() != "careful" {
 		t.Errorf("Flow() = %q, want careful", adapter.Flow())
 	}
@@ -77,6 +84,7 @@ func TestSettingsAdapterComprehensive(t *testing.T) {
 	if err := adapter.SetTheme("nord"); err != nil {
 		t.Errorf("SetTheme: %v", err)
 	}
+
 	if adapter.Theme() != "nord" {
 		t.Errorf("Theme() = %q, want nord", adapter.Theme())
 	}
@@ -88,10 +96,12 @@ func TestSetCommandInvocations(t *testing.T) {
 
 	// 1. Print all settings (0 args)
 	var out, errOut bytes.Buffer
+
 	code := Run([]string{"set"}, &out, &errOut)
 	if code != 0 {
 		t.Errorf("expected exit code 0 for `orbit set`, got %d: %s", code, errOut.String())
 	}
+
 	if !strings.Contains(out.String(), "language") || !strings.Contains(out.String(), "theme") {
 		t.Errorf("output missing setting keys:\n%s", out.String())
 	}
@@ -99,6 +109,7 @@ func TestSetCommandInvocations(t *testing.T) {
 	// 2. Set with 1 arg (error)
 	out.Reset()
 	errOut.Reset()
+
 	code = Run([]string{"set", "theme"}, &out, &errOut)
 	if code == 0 {
 		t.Error("expected error for `orbit set theme` without value")
@@ -107,6 +118,7 @@ func TestSetCommandInvocations(t *testing.T) {
 	// 3. Set with invalid key
 	out.Reset()
 	errOut.Reset()
+
 	code = Run([]string{"set", "nonexistent-key", "val"}, &out, &errOut)
 	if code == 0 {
 		t.Error("expected error for unknown setting key")
@@ -124,6 +136,7 @@ func TestSetCommandInvocations(t *testing.T) {
 	} {
 		out.Reset()
 		errOut.Reset()
+
 		code = Run([]string{"set", pair[0], pair[1]}, &out, &errOut)
 		if code != 0 {
 			t.Errorf("failed setting %s to %s: %s", pair[0], pair[1], errOut.String())
@@ -133,6 +146,7 @@ func TestSetCommandInvocations(t *testing.T) {
 
 func TestPortsHelpers(t *testing.T) {
 	root := t.TempDir()
+
 	s, err := store.New(root)
 	if err != nil {
 		t.Fatal(err)
@@ -177,6 +191,7 @@ func TestPortsHelpers(t *testing.T) {
 		"codex":    engine.NewCodex(),
 		"opencode": engine.NewOpenCode(),
 	})
+
 	engList := engFn()
 	if len(engList) == 0 {
 		t.Error("enginesPort returned empty engines list")
@@ -184,6 +199,7 @@ func TestPortsHelpers(t *testing.T) {
 
 	// 6. takePort with empty engine
 	takeP := takePort(nil, map[string]engine.Engine{"fake": engine.NewFake("ok")})
+
 	cmd, err := takeP(view.Task{ID: "TASK-1"})
 	if err != nil || cmd != nil {
 		t.Errorf("takePort on empty engine = (%v, %v), want (nil, nil)", cmd, err)
@@ -207,16 +223,19 @@ func TestPortsHelpers(t *testing.T) {
 
 func TestDoPortAndTopHelpers(t *testing.T) {
 	root := t.TempDir()
+
 	s, err := store.New(root)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	adapter, err := newSettings(s)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	dp := doPort(adapter)
+
 	var buf bytes.Buffer
 
 	// 1. Unknown command
@@ -231,6 +250,7 @@ func TestDoPortAndTopHelpers(t *testing.T) {
 
 	// 3. Command opening screen (set)
 	buf.Reset()
+
 	if err := dp("set", []string{"language", "en"}, &buf); err == nil || !strings.Contains(err.Error(), "opens a screen") {
 		t.Errorf("expected WindowOpens error for set in doPort, got %v", err)
 	}
@@ -243,10 +263,12 @@ func TestDoPortAndTopHelpers(t *testing.T) {
 	if err := mustBeDirectory("/nonexistent/directory/path"); err == nil {
 		t.Error("expected error on nonexistent directory")
 	}
+
 	fileBlocker := filepath.Join(t.TempDir(), "file.txt")
 	if err := os.WriteFile(fileBlocker, []byte("data"), 0o600); err != nil {
 		t.Fatal(err)
 	}
+
 	if err := mustBeDirectory(fileBlocker); err == nil {
 		t.Error("expected error on regular file passed to mustBeDirectory")
 	}
@@ -260,6 +282,7 @@ func TestDoPortAndTopHelpers(t *testing.T) {
 	if qp := quotaPort(nil, false); qp != nil {
 		t.Error("expected quotaPort(nil) to be nil")
 	}
+
 	qc := quota.FromEnv()
 	if qp := quotaPort(qc, false); qc != nil && qp == nil {
 		t.Error("expected quotaPort(client) to be non-nil")

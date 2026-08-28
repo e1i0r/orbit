@@ -26,6 +26,7 @@ func TestAllListKeypressActions(t *testing.T) {
 
 	sendKey := func(k rune, code rune, text string) {
 		var msg tea.Msg
+
 		switch {
 		case text != "":
 			msg = tea.KeyPressMsg{Code: code, Text: text}
@@ -34,6 +35,7 @@ func TestAllListKeypressActions(t *testing.T) {
 		default:
 			msg = tea.KeyPressMsg{Code: k, Text: string(k)}
 		}
+
 		updated, _ := m.Update(msg)
 		m = asModel(t, updated)
 	}
@@ -53,23 +55,29 @@ func TestAllListKeypressActions(t *testing.T) {
 
 	// 3. Modals and switches
 	sendKey('/', 0, "") // Filter
+
 	if !m.filtering {
 		t.Error("expected filtering to be true")
 	}
+
 	sendKey(0, tea.KeyEsc, "esc") // cancel filter
 
 	sendKey('a', 0, "") // Autopilot toggle
 	sendKey('L', 0, "") // Language toggle
 	sendKey('?', 0, "") // Help screen
+
 	if m.screen != screenHelp {
 		t.Errorf("screen after ? = %v, want screenHelp", m.screen)
 	}
+
 	sendKey(0, tea.KeyEsc, "esc") // back to list
 
 	sendKey('M', 0, "") // EngineKnobs (capital 'M')
+
 	if m.screen != screenEngines {
 		t.Errorf("screen after M = %v, want screenEngines", m.screen)
 	}
+
 	sendKey(0, tea.KeyEsc, "esc") // back to list
 
 	// 4. Task actions

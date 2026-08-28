@@ -18,10 +18,12 @@ import (
 // opinion about the layout.
 func controlPath(t *testing.T, s *store.Store, tk Task) string {
 	t.Helper()
+
 	path, err := s.ControlPath(tk.Repo.Path, tk.ID)
 	if err != nil {
 		t.Fatalf("ControlPath: %v", err)
 	}
+
 	return path
 }
 
@@ -34,17 +36,21 @@ func TestAControlWordIsOneLineOfTextAnybodyCanRead(t *testing.T) {
 	}
 
 	path := controlPath(t, s, tk)
+
 	body, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("read the control file: %v", err)
 	}
+
 	if string(body) != "pause\n" {
 		t.Errorf("the control file holds %q, want %q — one word, one line, cat-able", body, "pause\n")
 	}
+
 	info, err := os.Stat(path)
 	if err != nil {
 		t.Fatalf("stat the control file: %v", err)
 	}
+
 	if info.Mode().Perm() != 0o600 {
 		t.Errorf("the control file is mode %v, want 0600 like everything else under the state root", info.Mode().Perm())
 	}
@@ -55,13 +61,14 @@ func TestAWordNoRunUnderstandsIsRefusedAtTheDoor(t *testing.T) {
 	tk := written(t, s, r)
 
 	err := Control(s, tk, "halt")
-
 	if err == nil {
 		t.Fatal("Control accepted a word no run understands")
 	}
+
 	if !strings.Contains(err.Error(), "halt") {
 		t.Errorf("the refusal does not name the word that was wrong: %v", err)
 	}
+
 	if _, statErr := os.Stat(controlPath(t, s, tk)); !os.IsNotExist(statErr) {
 		t.Error("a refused word was written down anyway")
 	}
@@ -69,6 +76,7 @@ func TestAWordNoRunUnderstandsIsRefusedAtTheDoor(t *testing.T) {
 
 func TestEveryWordTheGateActsOnIsAWordControlAccepts(t *testing.T) {
 	s, r := fixture(t)
+
 	tk := written(t, s, r)
 	for _, word := range []string{"pause", "resume", "cancel", "continue", "skip"} {
 		if err := Control(s, tk, word); err != nil {
@@ -85,6 +93,7 @@ func TestAPauseWordStopsTheRunAndAResumeWordLetsItGo(t *testing.T) {
 	if err := Control(s, tk, "pause"); err != nil {
 		t.Fatalf("Control: %v", err)
 	}
+
 	fake := engine.NewFake("wrote the retry")
 
 	synctest.Test(t, func(t *testing.T) {
@@ -92,12 +101,14 @@ func TestAPauseWordStopsTheRunAndAResumeWordLetsItGo(t *testing.T) {
 		go func() {
 			done <- Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": fake}, FileGate(s, time.Second))
 		}()
+
 		synctest.Wait()
 
 		waiting := find(t, eventsOf(t, s, tk), record.PhaseWaiting)
 		if got := waiting.Data["why"]; got != "paused" {
 			t.Errorf("phase.waiting says why=%q, want paused — the reader's own pause is not a warning", got)
 		}
+
 		if _, statErr := os.Stat(controlPath(t, s, tk)); !os.IsNotExist(statErr) {
 			t.Error("the control word is still there after it was consumed — one word moves a run once")
 		}
@@ -105,6 +116,7 @@ func TestAPauseWordStopsTheRunAndAResumeWordLetsItGo(t *testing.T) {
 		if err := Control(s, tk, "resume"); err != nil {
 			t.Fatalf("Control: %v", err)
 		}
+
 		if err := <-done; err != nil {
 			t.Fatalf("Run: %v", err)
 		}
@@ -116,9 +128,11 @@ func TestAPauseWordStopsTheRunAndAResumeWordLetsItGo(t *testing.T) {
 		record.PhaseWaiting, record.PhaseResumed,
 		record.PhaseStarted, record.PhaseFinished,
 		record.TaskFinished)
+
 	if got := find(t, events, record.PhaseResumed).Data["how"]; got != "resume" {
 		t.Errorf("phase.resumed says how=%q, want resume", got)
 	}
+
 	if len(fake.Calls) != 1 {
 		t.Errorf("the engine was called %d times, want 1", len(fake.Calls))
 	}
@@ -126,38 +140,46 @@ func TestAPauseWordStopsTheRunAndAResumeWordLetsItGo(t *testing.T) {
 
 func TestACancelWordAtAGateIsACancellationAndNotAFailure(t *testing.T) {
 	s, r := fixture(t)
+
 	tk := written(t, s, r)
 	if err := Control(s, tk, "pause"); err != nil {
 		t.Fatalf("Control: %v", err)
 	}
+
 	fake := engine.NewFake("")
 
 	var runErr error
+
 	synctest.Test(t, func(t *testing.T) {
 		done := make(chan error, 1)
 		go func() {
 			done <- Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": fake}, FileGate(s, time.Second))
 		}()
+
 		synctest.Wait()
 
 		if err := Control(s, tk, "cancel"); err != nil {
 			t.Fatalf("Control: %v", err)
 		}
+
 		runErr = <-done
 	})
 
 	if runErr == nil {
 		t.Fatal("Run reported success after it was cancelled at its gate")
 	}
+
 	events := eventsOf(t, s, tk)
 	wantKinds(t, events,
 		record.TaskCreated, record.TaskStarted,
 		record.PhaseWaiting, record.TaskCancelled)
+
 	for _, e := range events {
 		if e.Kind == record.TaskFailed {
 			t.Error("a run cancelled at its gate was written down as failed")
 		}
 	}
+
 	if len(fake.Calls) != 0 {
 		t.Errorf("the engine was called %d times after the run was cancelled, want 0", len(fake.Calls))
 	}
@@ -165,10 +187,12 @@ func TestACancelWordAtAGateIsACancellationAndNotAFailure(t *testing.T) {
 
 func TestAutopilotDoesNotReleaseARunTheReaderPaused(t *testing.T) {
 	s, r := fixture(t)
+
 	tk := written(t, s, r)
 	if err := Control(s, tk, "pause"); err != nil {
 		t.Fatalf("Control: %v", err)
 	}
+
 	fake := engine.NewFake("wrote the retry")
 
 	synctest.Test(t, func(t *testing.T) {
@@ -176,6 +200,7 @@ func TestAutopilotDoesNotReleaseARunTheReaderPaused(t *testing.T) {
 		go func() {
 			done <- Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": fake}, FileGate(s, time.Second))
 		}()
+
 		synctest.Wait()
 
 		// Autopilot answers the flow's gates. It is not an answer to the
@@ -187,6 +212,7 @@ func TestAutopilotDoesNotReleaseARunTheReaderPaused(t *testing.T) {
 		// the switch on before the record is asked what happened.
 		time.Sleep(3 * time.Second)
 		synctest.Wait()
+
 		for _, e := range eventsOf(t, s, tk) {
 			if e.Kind == record.PhaseResumed {
 				t.Fatal("autopilot released a run the reader had paused; the reader's pause is theirs to lift")
@@ -196,6 +222,7 @@ func TestAutopilotDoesNotReleaseARunTheReaderPaused(t *testing.T) {
 		if err := Control(s, tk, "resume"); err != nil {
 			t.Fatalf("Control: %v", err)
 		}
+
 		if err := <-done; err != nil {
 			t.Fatalf("Run: %v", err)
 		}
@@ -208,10 +235,12 @@ func TestAutopilotDoesNotReleaseARunTheReaderPaused(t *testing.T) {
 // next. One word moves a run once, which is why the second phase runs.
 func TestASkipWordPutsTheRunPastTheNextPhaseAndNoFurther(t *testing.T) {
 	s, r := fixture(t)
+
 	tk := written(t, s, r)
 	if err := Control(s, tk, "skip"); err != nil {
 		t.Fatalf("Control: %v", err)
 	}
+
 	fake := engine.NewFake("done")
 
 	if err := Run(context.Background(), s, tk, twoFlow(), map[string]engine.Engine{"fake": fake}, FileGate(s, time.Second)); err != nil {
@@ -222,11 +251,13 @@ func TestASkipWordPutsTheRunPastTheNextPhaseAndNoFurther(t *testing.T) {
 	wantKinds(t, events,
 		record.TaskCreated, record.TaskStarted,
 		record.PhaseStarted, record.PhaseFinished, record.TaskFinished)
+
 	for _, e := range events {
 		if e.Phase == "implement" {
 			t.Errorf("the skipped phase left %s in the record; a phase that did not run records nothing", e.Kind)
 		}
 	}
+
 	if len(fake.Calls) != 1 {
 		t.Fatalf("the engine was called %d times, want 1 — the skip word moved the run past one phase, not past the flow", len(fake.Calls))
 	}

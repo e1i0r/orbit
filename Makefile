@@ -11,15 +11,24 @@ check: fmt vet lint test tidy
 fmt:
 	@test -z "$$($(GO) fmt ./...)" || { echo "gofmt made changes — commit them"; exit 1; }
 
+# Twice, because a build constraint hides code from whichever platform is not
+# running: internal/task has three bootTime implementations behind //go:build,
+# and a mac compiles exactly one of them. CI runs on Linux, so the pass below
+# is the one that makes a green check here mean a green check there.
 vet:
 	$(GO) vet ./...
+	GOOS=linux $(GO) vet ./...
 
+# The Linux pass is here for the reason it is on vet, and it is where the
+# blank-line rules were first felt: the fixer never saw boot_linux.go.
+#
 # A missing golangci-lint skips, loudly, rather than failing: a contributor
 # without the binary still gets the whole of the rest of check, and CI — where
 # the binary is always there — still enforces it.
 lint:
 	@if command -v golangci-lint >/dev/null; then \
 		golangci-lint run ./...; \
+		GOOS=linux golangci-lint run ./...; \
 	else \
 		echo "golangci-lint is not installed — skipping lint; CI runs it (go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest)"; \
 	fi

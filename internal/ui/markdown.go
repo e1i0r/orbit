@@ -13,16 +13,20 @@ func renderMarkdown(text string, width int, raw bool) []string {
 	if text == "" {
 		return nil
 	}
+
 	lines := strings.Split(strings.TrimSuffix(text, "\n"), "\n")
+
 	if raw {
 		var out []string
 		for _, l := range lines {
 			out = append(out, "    "+Paint(Dim).Render(quoteMark)+l)
 		}
+
 		return out
 	}
 
 	var out []string
+
 	inCodeBlock := false
 
 	for _, l := range lines {
@@ -33,15 +37,18 @@ func renderMarkdown(text string, width int, raw bool) []string {
 			inCodeBlock = !inCodeBlock
 			if inCodeBlock {
 				lang := strings.TrimPrefix(trimmed, "```")
+
 				badge := " [code"
 				if lang != "" {
 					badge += " · " + lang
 				}
+
 				badge += "] "
 				out = append(out, "    "+Paint(Dim).Render("┌─"+badge+strings.Repeat("─", max(width-lipgloss.Width(badge)-10, 4))))
 			} else {
 				out = append(out, "    "+Paint(Dim).Render("└"+strings.Repeat("─", max(width-10, 4))))
 			}
+
 			continue
 		}
 
@@ -54,16 +61,21 @@ func renderMarkdown(text string, width int, raw bool) []string {
 		if strings.HasPrefix(trimmed, "# ") {
 			title := strings.TrimPrefix(trimmed, "# ")
 			out = append(out, "", "    "+Paint(Accent).Bold(true).Render("◆ "+title))
+
 			continue
 		}
+
 		if strings.HasPrefix(trimmed, "## ") {
 			title := strings.TrimPrefix(trimmed, "## ")
 			out = append(out, "", "    "+Paint(Live).Bold(true).Render("▶ "+title))
+
 			continue
 		}
+
 		if strings.HasPrefix(trimmed, "### ") {
 			title := strings.TrimPrefix(trimmed, "### ")
 			out = append(out, "    "+Paint(Accent).Render("● "+title))
+
 			continue
 		}
 
@@ -73,6 +85,7 @@ func renderMarkdown(text string, width int, raw bool) []string {
 			for _, wl := range splitIntoLines(formatInlineMarkdown(q), max(20, width-10)) {
 				out = append(out, "    "+Paint(Dim).Render("▎ ")+Paint(Dim).Render(wl))
 			}
+
 			continue
 		}
 
@@ -88,13 +101,16 @@ func renderMarkdown(text string, width int, raw bool) []string {
 			for _, wl := range splitIntoLines(formatInlineMarkdown(item), max(20, width-10)) {
 				out = append(out, "    "+Paint(OK).Render("✔ ")+wl)
 			}
+
 			continue
 		}
+
 		if strings.HasPrefix(trimmed, "- [ ] ") || strings.HasPrefix(trimmed, "* [ ] ") {
 			item := trimmed[6:]
 			for _, wl := range splitIntoLines(formatInlineMarkdown(item), max(20, width-10)) {
 				out = append(out, "    "+Paint(Dim).Render("☐ ")+wl)
 			}
+
 			continue
 		}
 
@@ -104,16 +120,19 @@ func renderMarkdown(text string, width int, raw bool) []string {
 			for _, wl := range splitIntoLines(formatInlineMarkdown(item), max(20, width-10)) {
 				out = append(out, "    "+Paint(OK).Render("• ")+wl)
 			}
+
 			continue
 		}
 
 		// 7. Numbered lists (1. , 2. etc.)
 		if len(trimmed) >= 3 && trimmed[0] >= '0' && trimmed[0] <= '9' && trimmed[1] == '.' && trimmed[2] == ' ' {
 			num := trimmed[:2]
+
 			item := trimmed[3:]
 			for _, wl := range splitIntoLines(formatInlineMarkdown(item), max(20, width-10)) {
 				out = append(out, "    "+Paint(Live).Render(num+" ")+wl)
 			}
+
 			continue
 		}
 
@@ -126,6 +145,7 @@ func renderMarkdown(text string, width int, raw bool) []string {
 			out = append(out, "    "+wl)
 		}
 	}
+
 	return out
 }
 
@@ -138,10 +158,12 @@ func formatInlineMarkdown(s string) string {
 		if start == -1 {
 			break
 		}
+
 		end := strings.Index(res[start+2:], "**")
 		if end == -1 {
 			break
 		}
+
 		end += start + 2
 		boldText := res[start+2 : end]
 		styled := Paint(Accent).Bold(true).Render(boldText)
@@ -153,14 +175,17 @@ func formatInlineMarkdown(s string) string {
 		if start == -1 {
 			break
 		}
+
 		end := strings.Index(res[start+1:], "`")
 		if end == -1 {
 			break
 		}
+
 		end += start + 1
 		code := res[start+1 : end]
 		styled := Paint(Accent).Render(code)
 		res = res[:start] + styled + res[end+1:]
 	}
+
 	return res
 }

@@ -16,6 +16,7 @@ func TestAllScreensAndPanesViewRendering(t *testing.T) {
 
 	// 1. screenList (Default board view)
 	m.screen = screenList
+
 	vList := m.View()
 	if vList.Content == "" {
 		t.Error("screenList View returned empty string")
@@ -23,12 +24,14 @@ func TestAllScreensAndPanesViewRendering(t *testing.T) {
 
 	// 2. screenDetail across ALL 11 tabs
 	m.screen = screenDetail
+
 	allTabs := []tab{
 		tabOverview, tabFlow, tabGates, tabCost, tabRefused,
 		tabTimeline, tabReport, tabArtifacts, tabNotes, tabDiff, tabThinking,
 	}
 	for _, tb := range allTabs {
 		m.tab = tb
+
 		vTab := m.View()
 		if vTab.Content == "" {
 			t.Errorf("screenDetail tab %d View returned empty string", tb)
@@ -81,10 +84,12 @@ func TestAllScreensAndPanesViewRendering(t *testing.T) {
 	m.screen = screenList
 	// Palette modal open
 	m = m.openPalette()
+
 	m.palette.typed = "rec"
 	if v := m.View(); v.Content == "" {
 		t.Error("palette modal View returned empty string")
 	}
+
 	m = m.closePalette()
 
 	// Menu modal open
@@ -92,6 +97,7 @@ func TestAllScreensAndPanesViewRendering(t *testing.T) {
 	if v := m.View(); v.Content == "" {
 		t.Error("menu modal View returned empty string")
 	}
+
 	m = m.closeMenu()
 
 	// Confirmation modal open
@@ -99,5 +105,6 @@ func TestAllScreensAndPanesViewRendering(t *testing.T) {
 	if v := m.View(); v.Content == "" {
 		t.Error("confirmCancel modal View returned empty string")
 	}
+
 	m.confirm = confirmNone
 }

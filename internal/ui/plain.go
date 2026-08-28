@@ -51,9 +51,11 @@ func Plain(o Options) (string, error) {
 	if o.Width <= 0 {
 		o.Width = plainWidth
 	}
+
 	if o.Height <= 0 {
 		o.Height = plainHeight
 	}
+
 	m := New(o)
 	// Every band open. The window opens on NEEDS YOU and RUNNING and leaves
 	// the other two shut because the reader can press o — and there is no o
@@ -61,18 +63,23 @@ func Plain(o Options) (string, error) {
 	// ever see. A frame of four headings over nothing would be the wiring
 	// looking correct while showing none of it.
 	m.expanded = everyBand()
+
 	if o.Reader != nil {
 		b, changed, err := o.Reader.Refresh()
 		if err != nil {
 			return "", fmt.Errorf("%s: %w", m.opts.Words.T("plain.read_board", "read the board"), err)
 		}
+
 		next, _ := m.Update(boardMsg{Board: b, Changed: changed})
+
 		loaded, ok := next.(Model)
 		if !ok {
 			return "", fmt.Errorf("%s: %T", m.opts.Words.T("plain.not_model", "the window answered with an unexpected type"), next)
 		}
+
 		m = loaded
 	}
+
 	return plainText(m.grown().View().Content), nil
 }
 
@@ -86,6 +93,7 @@ func everyBand() map[view.Band]bool {
 	for _, b := range view.Bands() {
 		open[b] = true
 	}
+
 	return open
 }
 
@@ -106,10 +114,12 @@ func (m Model) grown() Model {
 	if m.tooNarrow {
 		return m
 	}
+
 	extra := len(m.rows()) - m.frame.Body.H
 	if extra <= 0 {
 		return m
 	}
+
 	return m.resize(m.width, m.height+extra)
 }
 
@@ -126,5 +136,6 @@ func plainText(frame string) string {
 	for i, line := range lines {
 		lines[i] = strings.TrimRight(line, " ")
 	}
+
 	return strings.Join(lines, "\n")
 }

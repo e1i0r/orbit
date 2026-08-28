@@ -26,10 +26,12 @@ import (
 // an adapter with nothing polling it never sees the file change again.
 func openSettings(t *testing.T) (*settingsAdapter, poll) {
 	t.Helper()
+
 	s, err := store.Open()
 	if err != nil {
 		t.Fatalf("open the store: %v", err)
 	}
+
 	cfg, err := newSettings(s)
 	if err != nil {
 		t.Fatalf("newSettings: %v", err)
@@ -70,6 +72,7 @@ func TestTheGettersAnswerFromMemoryAndThePollIsWhatRefreshesThem(t *testing.T) {
 	if _, _, err := p.Refresh(); err != nil {
 		t.Fatalf("the poll: %v", err)
 	}
+
 	if got := cfg.UnreadCap(); got != 9 {
 		t.Errorf("the cap is %d after a poll over a file another process changed, want 9", got)
 	}
@@ -87,12 +90,15 @@ func TestTheWindowIsHandedAReaderThatKeepsItsSettingsInStep(t *testing.T) {
 	if err != nil {
 		t.Fatalf("window: %v", err)
 	}
+
 	if code, _, errOut := run(t, "set", "unread-cap", "7"); code != 0 {
 		t.Fatalf("set unread-cap exited %d: %s", code, errOut)
 	}
+
 	if _, _, err := opts.Reader.Refresh(); err != nil {
 		t.Fatalf("the window's poll: %v", err)
 	}
+
 	if got := opts.Settings.UnreadCap(); got != 7 {
 		t.Errorf("the cap is %d after the window polled, want 7", got)
 	}
@@ -105,6 +111,7 @@ func TestTheWindowIsHandedAReaderThatKeepsItsSettingsInStep(t *testing.T) {
 func TestASettingsReadThatFailsLeavesTheLastGoodAnswerStanding(t *testing.T) {
 	home := emptyHome(t)
 	cfg, p := openSettings(t)
+
 	good := cfg.UnreadCap()
 	if good <= 0 {
 		t.Fatalf("the fixture starts at %d, which is no cap at all", good)
@@ -115,9 +122,11 @@ func TestASettingsReadThatFailsLeavesTheLastGoodAnswerStanding(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(home, "settings.json"), 0o755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
+
 	if _, _, err := p.Refresh(); err != nil {
 		t.Fatalf("the poll: %v", err)
 	}
+
 	if got := cfg.UnreadCap(); got != good {
 		t.Errorf("the cap is %d after a read that failed, want the last good answer %d", got, good)
 	}
@@ -141,7 +150,9 @@ func TestAPollThatStraddledAWriteDropsWhatItRead(t *testing.T) {
 	if err := cfg.SetAutopilot(true); err != nil {
 		t.Fatalf("SetAutopilot: %v", err)
 	}
+
 	cfg.keep(stale, 0)
+
 	if !cfg.Autopilot() {
 		t.Error("a poll whose read straddled the write put the switch back")
 	}
@@ -149,6 +160,7 @@ func TestAPollThatStraddledAWriteDropsWhatItRead(t *testing.T) {
 	// And the guard is what dropped it, rather than something else: the same
 	// value, offered against the generation the write left behind, is taken.
 	cfg.keep(stale, 1)
+
 	if cfg.Autopilot() {
 		t.Error("keep refused a read that no write straddled; the poll would never see the file again")
 	}
@@ -167,17 +179,20 @@ func TestTheSettingsAreReadWrittenAndPolledAtOnce(t *testing.T) {
 		go func() { defer wg.Done(); _, _ = cfg.UnreadCap(), cfg.Autopilot() }()
 		go func() {
 			defer wg.Done()
+
 			if _, _, err := p.Refresh(); err != nil {
 				t.Errorf("the poll: %v", err)
 			}
 		}()
 		go func() {
 			defer wg.Done()
+
 			if err := cfg.SetAutopilot(true); err != nil {
 				t.Errorf("SetAutopilot: %v", err)
 			}
 		}()
 	}
+
 	wg.Wait()
 
 	if !cfg.Autopilot() {
@@ -191,6 +206,7 @@ func TestTheSettingsAreReadWrittenAndPolledAtOnce(t *testing.T) {
 // nothing on screen having changed.
 func TestTheUnreadCapNeverBecomesNoCapByAccident(t *testing.T) {
 	emptyHome(t)
+
 	cfg, p := openSettings(t)
 	if got := cfg.UnreadCap(); got <= 0 {
 		t.Errorf("a settings file nobody has written answers %d, which is no cap at all", got)
@@ -199,9 +215,11 @@ func TestTheUnreadCapNeverBecomesNoCapByAccident(t *testing.T) {
 	if code, _, errOut := run(t, "set", "unread-cap", "0"); code != 0 {
 		t.Fatalf("set unread-cap exited %d: %s", code, errOut)
 	}
+
 	if _, _, err := p.Refresh(); err != nil {
 		t.Fatalf("the poll: %v", err)
 	}
+
 	if got := cfg.UnreadCap(); got != 0 {
 		t.Errorf("the cap is %d after somebody chose no cap at all, want 0", got)
 	}
@@ -212,16 +230,20 @@ func TestTheUnreadCapNeverBecomesNoCapByAccident(t *testing.T) {
 // to read back as flipped would be a window arguing with the reader.
 func TestTheSettingsAdapterWritesThroughToTheFile(t *testing.T) {
 	emptyHome(t)
+
 	cfg, _ := openSettings(t)
 	if err := cfg.SetAutopilot(true); err != nil {
 		t.Fatalf("SetAutopilot: %v", err)
 	}
+
 	if err := cfg.SetLanguage("es"); err != nil {
 		t.Fatalf("SetLanguage: %v", err)
 	}
+
 	if !cfg.Autopilot() {
 		t.Error("autopilot was switched on and reads as off")
 	}
+
 	if cfg.Language() != "es" {
 		t.Errorf("the language reads as %q after being set to es", cfg.Language())
 	}
@@ -232,10 +254,12 @@ func TestTheSettingsAdapterWritesThroughToTheFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open the store again: %v", err)
 	}
+
 	other, err := newSettings(second)
 	if err != nil {
 		t.Fatalf("newSettings again: %v", err)
 	}
+
 	if !other.Autopilot() || other.Language() != "es" {
 		t.Error("the settings did not reach the file: a second adapter cannot see them")
 	}
@@ -247,6 +271,7 @@ func TestTheSettingsAdapterWritesThroughToTheFile(t *testing.T) {
 // a mode of 0000 does not.
 func TestTopRefusesASettingsFileItCannotRead(t *testing.T) {
 	home := emptyHome(t)
+
 	root := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(home, "settings.json"), 0o755); err != nil {
 		t.Fatalf("mkdir: %v", err)
@@ -256,6 +281,7 @@ func TestTopRefusesASettingsFileItCannotRead(t *testing.T) {
 	if code == 0 {
 		t.Error("top opened over settings it could not read")
 	}
+
 	if !strings.Contains(errOut, "settings.json") {
 		t.Errorf("the refusal is %q, want it to name the file", errOut)
 	}

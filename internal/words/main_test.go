@@ -28,10 +28,12 @@ func TestMain(m *testing.M) {
 		fmt.Fprintln(os.Stderr, "words: TestMain: mkdtemp:", err)
 		os.Exit(1)
 	}
+
 	os.Setenv("HOME", home)
 	os.Unsetenv("ORBIT_HOME")
 
 	code := m.Run()
+
 	os.RemoveAll(home)
 	os.Exit(code)
 }

@@ -16,13 +16,16 @@ func (s *Store) CreateTaskDir(repoPath, taskID string) (string, error) {
 	if _, err := s.createRepoDir(repoPath); err != nil {
 		return "", err
 	}
+
 	dir, err := s.TaskDir(repoPath, taskID)
 	if err != nil {
 		return "", err
 	}
+
 	if err := os.MkdirAll(dir, dirMode); err != nil {
 		return "", fmt.Errorf("create %q: %w", dir, err)
 	}
+
 	return dir, nil
 }
 
@@ -47,10 +50,12 @@ func (s *Store) CreateWorktreeParent(repoPath, taskID string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	parent := filepath.Dir(dir)
 	if err := os.MkdirAll(parent, dirMode); err != nil {
 		return "", fmt.Errorf("create %q: %w", parent, err)
 	}
+
 	return dir, nil
 }
 
@@ -73,14 +78,18 @@ func (s *Store) createRepoDir(repoPath string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("resolve %q: %w", repoPath, err)
 	}
+
 	dir, err := s.RepoDir(abs)
 	if err != nil {
 		return "", err
 	}
+
 	if err := os.MkdirAll(dir, dirMode); err != nil {
 		return "", fmt.Errorf("create %q: %w", dir, err)
 	}
+
 	marker := filepath.Join(dir, "repo")
+
 	body, readErr := os.ReadFile(marker)
 	switch {
 	case errors.Is(readErr, os.ErrNotExist):
@@ -98,5 +107,6 @@ func (s *Store) createRepoDir(repoPath string) (string, error) {
 			return "", fmt.Errorf("%q and %q both hash to the store key %q, so orbit would file them under one record: move one of the two, or remove %q if it is stale", abs, known, filepath.Base(dir), dir)
 		}
 	}
+
 	return dir, nil
 }

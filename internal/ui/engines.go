@@ -48,17 +48,21 @@ type engineRow struct {
 func (m Model) openEngines() Model {
 	m.engines = enginesState{fromScreen: m.screen}
 	m.screen = screenEngines
+
 	return m
 }
 
 func (m Model) abandonEngines() Model {
 	prev := m.engines.fromScreen
+
 	m.engines = enginesState{}
 	if prev == screenStart {
 		m.screen = screenStart
 		return m
 	}
+
 	m.screen = screenList
+
 	return m
 }
 
@@ -66,32 +70,40 @@ func (m Model) knobChip() string {
 	if m.knobs.Engine == "" && m.knobs.Model == "" && m.knobs.Effort == "" && m.knobs.Thinking == "" {
 		return ""
 	}
+
 	engineName := m.knobs.Engine
 	if engineName == "" {
 		engineName = "claude"
 	}
+
 	var parts []string
+
 	parts = append(parts, engineName)
 	if m.knobs.Model != "" {
 		parts = append(parts, m.knobs.Model)
 	}
+
 	if m.knobs.Effort != "" {
 		parts = append(parts, m.knobs.Effort)
 	}
+
 	if m.knobs.Thinking != "" && m.knobs.Thinking != "off" {
 		parts = append(parts, "thinking")
 	}
+
 	return strings.Join(parts, " · ")
 }
 
 func (m Model) collectEngineRows() []engineRow {
 	p := m.opts.Words
+
 	var rows []engineRow
 
 	var engineList []EngineInfo
 	if m.opts.Engines != nil {
 		engineList = m.opts.Engines()
 	}
+
 	if len(engineList) == 0 {
 		engineList = []EngineInfo{{
 			Name:      "claude",
@@ -121,11 +133,14 @@ func (m Model) collectEngineRows() []engineRow {
 
 	// 1. Model & Engine Section
 	rows = append(rows, engineRow{kind: rowHeader, title: p.T("engines.section_model", "Engine & Model")})
+
 	var currentEng EngineInfo
+
 	for _, eng := range engineList {
 		if eng.Name == activeEngine {
 			currentEng = eng
 		}
+
 		if !eng.Available {
 			rows = append(rows, engineRow{
 				kind:     rowEngine,
@@ -134,8 +149,10 @@ func (m Model) collectEngineRows() []engineRow {
 				disabled: true,
 				setup:    eng.Setup,
 			})
+
 			continue
 		}
+
 		rows = append(rows, engineRow{
 			kind:     rowEngine,
 			title:    eng.Name,
@@ -148,6 +165,7 @@ func (m Model) collectEngineRows() []engineRow {
 				if mdl.ID == "" {
 					lbl = p.T("engines.default", "default")
 				}
+
 				rows = append(rows, engineRow{
 					kind:     rowModel,
 					title:    "  " + lbl,
@@ -172,6 +190,7 @@ func (m Model) collectEngineRows() []engineRow {
 			if eff.ID == "" {
 				lbl = p.T("engines.default", "default")
 			}
+
 			rows = append(rows, engineRow{
 				kind:     rowEffort,
 				title:    "  " + lbl,
@@ -202,11 +221,13 @@ func (m Model) collectEngineRows() []engineRow {
 
 func (m Model) selectableEngineIndices(rows []engineRow) []int {
 	var idxs []int
+
 	for i, r := range rows {
 		if r.kind != rowHeader {
 			idxs = append(idxs, i)
 		}
 	}
+
 	return idxs
 }
 
@@ -216,21 +237,25 @@ func (m Model) enginesKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			m.engines.showingSetup = false
 			return m, nil
 		}
+
 		return m, nil
 	}
 
 	rows := m.collectEngineRows()
+
 	idxs := m.selectableEngineIndices(rows)
 	if len(idxs) == 0 {
 		if key.Matches(msg, m.keys.Back) || key.Matches(msg, m.keys.Quit) {
 			return m.abandonEngines(), nil
 		}
+
 		return m, nil
 	}
 
 	switch {
 	case key.Matches(msg, m.keys.Back) || key.Matches(msg, m.keys.Quit):
 		p := m.opts.Words
+
 		return m.abandonEngines().say(p.T("engines.updated", "updated dials: {chip}",
 			about("chip", m.knobChip()))), nil
 	case key.Matches(msg, m.keys.Up):
@@ -238,17 +263,20 @@ func (m Model) enginesKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if m.engines.sel < 0 {
 			m.engines.sel = len(idxs) - 1
 		}
+
 		return m, nil
 	case key.Matches(msg, m.keys.Down):
 		m.engines.sel++
 		if m.engines.sel >= len(idxs) {
 			m.engines.sel = 0
 		}
+
 		return m, nil
 	case key.Matches(msg, m.keys.Open), msg.Text == " ":
 		selectedRow := rows[idxs[m.engines.sel]]
 		return m.applyEngineChoice(selectedRow), nil
 	}
+
 	return m, nil
 }
 
@@ -256,8 +284,10 @@ func (m Model) applyEngineChoice(selectedRow engineRow) Model {
 	if selectedRow.disabled {
 		m.engines.showingSetup = true
 		m.engines.setupEngine = selectedRow.engine
+
 		return m
 	}
+
 	switch selectedRow.kind {
 	case rowEngine:
 		m.knobs.Engine, m.knobs.Model = selectedRow.engine, ""
@@ -270,6 +300,7 @@ func (m Model) applyEngineChoice(selectedRow engineRow) Model {
 	case rowThinking:
 		m.knobs.Thinking = selectedRow.id
 	}
+
 	return m
 }
 
@@ -278,5 +309,6 @@ func (m Model) setOpt(k, v string) Model {
 	if mod, ok := m2.(Model); ok {
 		return mod
 	}
+
 	return m
 }

@@ -11,16 +11,20 @@ func (r Repo) CommitWorktree(wtDir, message string) error {
 	if _, err := git(wtDir, "add", "-A"); err != nil {
 		return fmt.Errorf("stage changes in %q: %w", wtDir, err)
 	}
+
 	status, err := git(wtDir, "status", "--porcelain")
 	if err != nil {
 		return fmt.Errorf("check status in %q: %w", wtDir, err)
 	}
+
 	if strings.TrimSpace(status) == "" {
 		return nil // nothing to commit
 	}
+
 	if _, err := git(wtDir, "commit", "-m", message); err != nil {
 		return fmt.Errorf("commit in %q: %w", wtDir, err)
 	}
+
 	return nil
 }
 
@@ -41,9 +45,11 @@ func (r Repo) PushBranch(wtDir, branch string) error {
 	if r.Remote == "" {
 		return fmt.Errorf("push branch %q: %q has no remote to push to", branch, r.Name)
 	}
+
 	if _, err := git(wtDir, "push", "-u", r.Remote, "HEAD:"+branch); err != nil {
 		return fmt.Errorf("push branch %q to %s: %w", branch, r.Remote, err)
 	}
+
 	return nil
 }
 
@@ -65,12 +71,15 @@ func (r Repo) SyncBaseBranch(wtDir, baseBranch string) error {
 	if baseBranch == "" || r.Remote == "" {
 		return nil
 	}
+
 	if _, err := git(wtDir, "fetch", r.Remote, baseBranch); err != nil {
 		return fmt.Errorf("fetch %s %q: %w", r.Remote, baseBranch, err)
 	}
+
 	if _, err := git(wtDir, "merge", "--no-edit", r.Remote+"/"+baseBranch); err != nil {
 		return fmt.Errorf("sync base branch %q into worktree: %w", baseBranch, err)
 	}
+
 	return nil
 }
 
@@ -81,14 +90,17 @@ func (r Repo) CreatePR(wtDir, title, body, headBranch, baseBranch string) (strin
 	if baseBranch != "" {
 		args = append(args, "--base", baseBranch)
 	}
+
 	cmd := exec.Command("gh", args...)
 	cmd.Dir = wtDir
 	out, err := cmd.CombinedOutput()
+
 	outputStr := strings.TrimSpace(string(out))
 	if err != nil {
 		if strings.Contains(outputStr, "already exists") {
 			viewCmd := exec.Command("gh", "pr", "view", headBranch, "--json", "url", "-q", ".url")
 			viewCmd.Dir = wtDir
+
 			viewOut, viewErr := viewCmd.CombinedOutput()
 			if viewErr != nil {
 				// The old answer here was the text gh had printed while
@@ -99,10 +111,13 @@ func (r Repo) CreatePR(wtDir, title, body, headBranch, baseBranch string) (strin
 				return "", fmt.Errorf("a pull request for %q already exists, but gh pr view could not say where: %s: %w",
 					headBranch, strings.TrimSpace(string(viewOut)), viewErr)
 			}
+
 			return strings.TrimSpace(string(viewOut)), nil
 		}
+
 		return "", fmt.Errorf("gh pr create: %s: %w", outputStr, err)
 	}
+
 	return outputStr, nil
 }
 
@@ -111,10 +126,12 @@ func (r Repo) MergePR(wtDir, branch string) (string, error) {
 	cmd := exec.Command("gh", "pr", "merge", branch, "--squash", "--delete-branch")
 	cmd.Dir = wtDir
 	out, err := cmd.CombinedOutput()
+
 	outputStr := strings.TrimSpace(string(out))
 	if err != nil {
 		return "", fmt.Errorf("gh pr merge: %s: %w", outputStr, err)
 	}
+
 	return outputStr, nil
 }
 
@@ -123,9 +140,11 @@ func (r Repo) ClosePR(wtDir, branch string) (string, error) {
 	cmd := exec.Command("gh", "pr", "close", branch, "--comment", "Closed from Orbit.")
 	cmd.Dir = wtDir
 	out, err := cmd.CombinedOutput()
+
 	outputStr := strings.TrimSpace(string(out))
 	if err != nil {
 		return "", fmt.Errorf("gh pr close: %s: %w", outputStr, err)
 	}
+
 	return outputStr, nil
 }

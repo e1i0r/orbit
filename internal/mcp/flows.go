@@ -33,6 +33,7 @@ func originName(o flow.Origin) string {
 	if name, ok := originNames[o]; ok {
 		return name
 	}
+
 	return "unknown"
 }
 
@@ -41,7 +42,9 @@ func (sn Session) listFlows() CallToolResult {
 	if err != nil {
 		return refuse(err)
 	}
+
 	listed := flow.List(s)
+
 	flows := make([]map[string]any, 0, len(listed))
 	for _, entry := range listed {
 		f, err := flow.Resolve(s, entry.Name)
@@ -51,6 +54,7 @@ func (sn Session) listFlows() CallToolResult {
 			flows = append(flows, map[string]any{"name": entry.Name, "origin": originName(entry.Origin), "error": err.Error()})
 			continue
 		}
+
 		flows = append(flows, map[string]any{
 			"name":        entry.Name,
 			"origin":      originName(entry.Origin),
@@ -58,6 +62,7 @@ func (sn Session) listFlows() CallToolResult {
 			"phases":      phaseNames(f),
 		})
 	}
+
 	return reply(map[string]any{"flows": flows, "dir": s.FlowDir()})
 }
 
@@ -69,22 +74,27 @@ func (sn Session) getFlow(args map[string]any) CallToolResult {
 	if err != nil {
 		return refuse(err)
 	}
+
 	name := strings.TrimSpace(stringArg(args, "name"))
 	if name == "" {
 		return refuse(fmt.Errorf("this tool needs name"))
 	}
+
 	f, err := flow.Resolve(s, name)
 	if err != nil {
 		return refuse(err)
 	}
+
 	doc, err := flowDoc(f)
 	if err != nil {
 		return refuse(err)
 	}
+
 	answer := map[string]any{"flow": doc, "origin": originName(originOf(s, name))}
 	if path, err := flow.UserPath(s, name); err == nil {
 		answer["path"] = path
 	}
+
 	return reply(answer)
 }
 
@@ -95,14 +105,17 @@ func (sn Session) saveFlow(args map[string]any) CallToolResult {
 	if err != nil {
 		return refuse(err)
 	}
+
 	name := strings.TrimSpace(stringArg(args, "name"))
 	if name == "" {
 		return refuse(fmt.Errorf("this tool needs name"))
 	}
+
 	doc, err := flowDocument(s, name, args)
 	if err != nil {
 		return refuse(err)
 	}
+
 	raw, err := json.Marshal(doc)
 	if err != nil {
 		return refuse(fmt.Errorf("encode the flow %q: %w", name, err))
@@ -115,10 +128,12 @@ func (sn Session) saveFlow(args map[string]any) CallToolResult {
 	if err != nil {
 		return refuse(err)
 	}
+
 	path, err := flow.Save(s, f)
 	if err != nil {
 		return refuse(err)
 	}
+
 	return reply(map[string]any{
 		"name":     f.Name,
 		"path":     path,
@@ -137,22 +152,27 @@ func flowDocument(s flowSource, name string, args map[string]any) (map[string]an
 	if description := strings.TrimSpace(stringArg(args, "description")); description != "" {
 		doc["description"] = description
 	}
+
 	if phases, ok := args["phases"]; ok && phases != nil {
 		doc["phases"] = phases
 		return doc, nil
 	}
+
 	from := strings.TrimSpace(stringArg(args, "from"))
 	if from == "" {
 		return nil, fmt.Errorf("a flow needs phases: either give phases, or name a flow to copy with from")
 	}
+
 	base, err := flow.Resolve(s, from)
 	if err != nil {
 		return nil, err
 	}
+
 	doc["phases"] = base.Phases
 	if _, ok := doc["description"]; !ok && base.Description != "" {
 		doc["description"] = base.Description
 	}
+
 	return doc, nil
 }
 
@@ -166,6 +186,7 @@ func (sn Session) deleteFlow(args map[string]any) CallToolResult {
 	if err != nil {
 		return refuse(err)
 	}
+
 	name := strings.TrimSpace(stringArg(args, "name"))
 	if name == "" {
 		return refuse(fmt.Errorf("this tool needs name"))
@@ -174,14 +195,17 @@ func (sn Session) deleteFlow(args map[string]any) CallToolResult {
 	// resolving, to what Orbit ships. Without one, a task written against
 	// this name has nothing left to walk.
 	shipped := slices.Contains(flow.BuiltinNames(), name)
+
 	users := sn.flowUsers(name)
 	if !shipped && len(users) > 0 && !boolArg(args, "force") {
 		return refuse(fmt.Errorf("%d tasks are written against %q (%s) and nothing would resolve that name once it is gone; pass force to remove it anyway, or write the tasks against another flow first", len(users), name, strings.Join(users, ", ")))
 	}
+
 	revealed, err := flow.Delete(s, name)
 	if err != nil {
 		return refuse(err)
 	}
+
 	return reply(map[string]any{
 		"name":             name,
 		"deleted":          true,
@@ -200,12 +224,15 @@ func (sn Session) flowUsers(name string) []string {
 	if err != nil {
 		return nil
 	}
+
 	var users []string
+
 	for _, t := range sb.board.Tasks {
 		if t.Flow == name {
 			users = append(users, t.Repo+"/"+t.ID)
 		}
 	}
+
 	return users
 }
 
@@ -216,6 +243,7 @@ func originOf(s flowSource, name string) flow.Origin {
 			return entry.Origin
 		}
 	}
+
 	return flow.OriginUnknown
 }
 
@@ -228,9 +256,11 @@ func flowDoc(f flow.Flow) (map[string]any, error) {
 	if err != nil {
 		return nil, fmt.Errorf("encode the flow %q: %w", f.Name, err)
 	}
+
 	var doc map[string]any
 	if err := json.Unmarshal(raw, &doc); err != nil {
 		return nil, fmt.Errorf("read back the flow %q: %w", f.Name, err)
 	}
+
 	return doc, nil
 }

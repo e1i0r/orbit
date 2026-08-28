@@ -44,6 +44,7 @@ func emptyHome(t *testing.T) string {
 	quietLocale(t)
 	home := filepath.Join(t.TempDir(), "orbit")
 	t.Setenv("ORBIT_HOME", home)
+
 	return home
 }
 
@@ -57,16 +58,19 @@ func twoRepos(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
 	emptyHome(t)
+
 	for _, r := range []struct{ dir, id, text string }{
 		{"billing", "ACME-2", "reconcile the ledger nightly"},
 		{"payments", "ACME-1", "retry the webhook on 5xx"},
 	} {
 		dir := filepath.Join(root, r.dir)
 		initRepo(t, dir)
+
 		if code, _, errOut := run(t, "new", "-repo", dir, "-id", r.id, r.text); code != 0 {
 			t.Fatalf("new %s exited %d: %s", r.id, code, errOut)
 		}
 	}
+
 	return root
 }
 
@@ -78,6 +82,7 @@ func bandLine(frame, band string) string {
 			return line
 		}
 	}
+
 	return ""
 }
 
@@ -88,14 +93,17 @@ func TestTopDrawsOneFrameOverEveryRepository(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("top exited %d: %s", code, errOut)
 	}
+
 	for _, want := range []string{"payments", "billing", "ACME-1", "ACME-2", "TO DO"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("the frame does not mention %q:\n%s", want, out)
 		}
 	}
+
 	if line := bandLine(out, "TO DO"); !strings.Contains(line, "2") {
 		t.Errorf("the band over two tasks says %q, want the count in it", line)
 	}
+
 	if strings.ContainsRune(out, esc) {
 		t.Error("the frame carries terminal escapes; -once is what a pipe reads")
 	}
@@ -112,19 +120,26 @@ func TestOneFrameOpensEveryBandBecauseAPipeHasNoKeyboard(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("top exited %d: %s", code, errOut)
 	}
+
 	head := bandLine(out, "TO DO")
 	rows := strings.Split(out, "\n")
-	var after int
-	var seen bool
+
+	var (
+		after int
+		seen  bool
+	)
+
 	for _, line := range rows {
 		if line == head {
 			seen = true
 			continue
 		}
+
 		if seen && strings.Contains(line, "ACME-") {
 			after++
 		}
 	}
+
 	if after != 2 {
 		t.Errorf("%d task rows under the band, want 2:\n%s", after, out)
 	}
@@ -137,9 +152,11 @@ func TestOneFrameSpeaksTheLanguageItWasAskedFor(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("top exited %d: %s", code, errOut)
 	}
+
 	if !strings.Contains(out, "POR HACER") {
 		t.Errorf("the frame is not in Spanish:\n%s", out)
 	}
+
 	if strings.Contains(out, "TO DO") {
 		t.Errorf("the frame is in two languages at once:\n%s", out)
 	}
@@ -161,10 +178,12 @@ func TestTheDirectoryMayComeBeforeOrAfterTheFlags(t *testing.T) {
 	if before != 0 {
 		t.Fatalf("top <dir> -once exited %d: %s", before, errOut)
 	}
+
 	after, second, errOut := run(t, "top", "-once", root)
 	if after != 0 {
 		t.Fatalf("top -once <dir> exited %d: %s", after, errOut)
 	}
+
 	if stripReadTime(first) != stripReadTime(second) {
 		t.Errorf("the two orders drew different frames:\n%s\n---\n%s", first, second)
 	}
@@ -182,6 +201,7 @@ func TestTopRefusesASecondDirectory(t *testing.T) {
 	if code == 0 {
 		t.Error("top took two directories and picked one of them silently")
 	}
+
 	if !strings.Contains(errOut, "one directory") {
 		t.Errorf("the refusal is %q, want it to say how many directories it takes", errOut)
 	}
@@ -199,12 +219,15 @@ func TestTopOverADirectoryWithNoRepositoryInItSaysWhereItLooked(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("top over an empty directory exited %d: %s", code, errOut)
 	}
+
 	if !strings.Contains(out, "No repositories under") {
 		t.Errorf("the empty frame does not say what is missing:\n%s", out)
 	}
+
 	if strings.Contains(out, "no tasks written") {
 		t.Errorf("the frame says there are repositories with no tasks, over a directory with no repository:\n%s", out)
 	}
+
 	if strings.TrimSpace(out) == "" {
 		t.Error("the frame is blank")
 	}

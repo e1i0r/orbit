@@ -15,6 +15,7 @@ func TestPaletteAndMenuFullLifecycle(t *testing.T) {
 
 	sendKey := func(k rune, code rune, text string) {
 		var msg tea.Msg
+
 		switch {
 		case text != "":
 			msg = tea.KeyPressMsg{Code: code, Text: text}
@@ -23,12 +24,14 @@ func TestPaletteAndMenuFullLifecycle(t *testing.T) {
 		default:
 			msg = tea.KeyPressMsg{Code: k, Text: string(k)}
 		}
+
 		updated, _ := m.Update(msg)
 		m = asModel(t, updated)
 	}
 
 	// 1. Open Palette with ':'
 	sendKey(':', 0, "")
+
 	if !m.palette.open {
 		t.Error("expected palette to be open")
 	}
@@ -57,12 +60,14 @@ func TestPaletteAndMenuFullLifecycle(t *testing.T) {
 
 	// Close palette with Esc
 	sendKey(0, tea.KeyEsc, "esc")
+
 	if m.palette.open {
 		t.Error("expected palette to be closed")
 	}
 
 	// 2. Open Menu with 'm'
 	sendKey('m', 0, "")
+
 	if !m.menu.open {
 		t.Error("expected menu to be open")
 	}
@@ -82,6 +87,7 @@ func TestPaletteAndMenuFullLifecycle(t *testing.T) {
 
 	// Close menu with Esc
 	sendKey(0, tea.KeyEsc, "esc")
+
 	if m.menu.open {
 		t.Error("expected menu to be closed")
 	}

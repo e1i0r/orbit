@@ -20,6 +20,7 @@ func TestGestureRefusesWithNoSelectionOrNoSuchAffordance(t *testing.T) {
 	// 1. Nothing under the cursor at all.
 	m, _ := testModel(t, 100, 30)
 	m.cursor = -1
+
 	_, _, ok := m.gesture(m.keys.Pause)
 	if ok {
 		t.Error("gesture with nothing selected answered true")
@@ -28,6 +29,7 @@ func TestGestureRefusesWithNoSelectionOrNoSuchAffordance(t *testing.T) {
 	// 2. The cursor is on a band header, not a task.
 	m2, _ := testModel(t, 100, 30)
 	m2 = at(t, m2, view.Done, true)
+
 	_, _, ok = m2.gesture(m2.keys.Pause)
 	if ok {
 		t.Error("gesture on a band header answered true")
@@ -36,6 +38,7 @@ func TestGestureRefusesWithNoSelectionOrNoSuchAffordance(t *testing.T) {
 	// 3. A binding that is not one of the affordances at all.
 	m3, _ := testModel(t, 100, 30)
 	m3 = onRow(t, m3, "ACME-2705")
+
 	_, _, ok = m3.gesture(m3.keys.Filter)
 	if ok {
 		t.Error("gesture for a binding with no affordance answered true")
@@ -45,36 +48,44 @@ func TestGestureRefusesWithNoSelectionOrNoSuchAffordance(t *testing.T) {
 func TestMarkReadKeyIsRefusedOnAnUnfinishedTask(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m = onRow(t, m, "ACME-2705") // Running, not Done
+
 	next, cmd := m.markReadKey()
 	if cmd != nil {
 		t.Error("markReadKey on a task that has not finished produced a command")
 	}
+
 	wantBand(t, asModel(t, next), "not finished")
 }
 
 func TestSessionAnswersAnErrorOrNothingToCarryOn(t *testing.T) {
 	// 1. The port itself failed.
 	m, _ := testModel(t, 100, 30)
+
 	next, cmd := m.session(sessionMsg{ID: "ACME-2705", Err: errors.New("no worktree for ACME-2705")})
 	if cmd != nil {
 		t.Error("session with a port error produced a command")
 	}
+
 	wantBand(t, asModel(t, next), "no worktree for ACME-2705")
 
 	// 2. The port answered with nothing to run at all.
 	m2, _ := testModel(t, 100, 30)
+
 	next2, cmd2 := m2.session(sessionMsg{ID: "ACME-2705"})
 	if cmd2 != nil {
 		t.Error("session with no command line produced a command")
 	}
+
 	wantBand(t, asModel(t, next2), "has no session to carry on")
 
 	// 3. A real command line: the window suspends for it.
 	m3, _ := testModel(t, 100, 30)
+
 	next3, cmd3 := m3.session(sessionMsg{ID: "ACME-2705", Cmd: &exec.Cmd{Path: "claude"}})
 	if cmd3 == nil {
 		t.Fatal("session with a command line answered with no command to suspend for")
 	}
+
 	if !asModel(t, next3).taken["ACME-2705"] {
 		t.Error("session did not remember that the keyboard was taken")
 	}
@@ -103,17 +114,21 @@ func TestStillTakenDropsWhatTheBoardNoLongerHolds(t *testing.T) {
 			tasks[i].Reason = view.Reason{Key: view.ReasonHeld}
 		}
 	}
+
 	m2 := modelWith(t, printerFor(t, "en"), fixtureBoard(tasks, 4), 100, 30, nil)
 	m2 = m2.took("ACME-2705", true) // still parked: kept
 	m2 = m2.took("ACME-2706", true) // running, not parked: dropped
 	m2 = m2.took("ACME-GONE", true) // not on the board at all: dropped
+
 	after2 := m2.stillTaken()
 	if !after2.taken["ACME-2705"] {
 		t.Error("stillTaken forgot a task that is still parked")
 	}
+
 	if after2.taken["ACME-2706"] {
 		t.Error("stillTaken kept a task that is not parked")
 	}
+
 	if after2.taken["ACME-GONE"] {
 		t.Error("stillTaken kept a task no longer on the board")
 	}
@@ -122,10 +137,12 @@ func TestStillTakenDropsWhatTheBoardNoLongerHolds(t *testing.T) {
 func TestTookClonesANilMapTheFirstTime(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.taken = nil // New() starts with an empty map rather than nil; force the case took must also handle
+
 	after := m.took("ACME-2705", true)
 	if !after.taken["ACME-2705"] {
 		t.Error("took(id, true) on a nil map did not record the id")
 	}
+
 	released := after.took("ACME-2705", false)
 	if released.taken["ACME-2705"] {
 		t.Error("took(id, false) did not release the id")

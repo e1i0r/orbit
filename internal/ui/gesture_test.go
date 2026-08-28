@@ -24,13 +24,16 @@ import (
 // the shipped fixture is in.
 func parkedModel(t *testing.T) (Model, *recorder) {
 	t.Helper()
+
 	tasks := fixtureTasks()
 	for i := range tasks {
 		if tasks[i].ID == "ACME-2705" {
 			tasks[i].Reason = view.Reason{Key: view.ReasonHeld}
 		}
 	}
+
 	got := &recorder{}
+
 	return modelWith(t, printerFor(t, "en"), fixtureBoard(tasks, 4), 100, 30, got), got
 }
 
@@ -40,14 +43,17 @@ func takenModel(t *testing.T) (Model, *recorder) {
 	t.Helper()
 	m, got := parkedModel(t)
 	m = onRow(t, m, "ACME-2705")
+
 	after, cmd := advance(t, m, press("t"))
 	if cmd == nil {
 		t.Fatal("t on a parked task answered with no command")
 	}
+
 	after, _ = advance(t, after, cmd())
 	if !after.taken["ACME-2705"] {
 		t.Fatal("the window does not remember that the keyboard was taken")
 	}
+
 	return after, got
 }
 
@@ -121,10 +127,12 @@ func TestTheGesturesReachTheFunctionsTheSubcommandsCall(t *testing.T) {
 			if cmd == nil {
 				t.Fatal("d answered with no command")
 			}
+
 			after, _ := advance(t, m, cmd())
 			if got.read != "ACME-2690" {
 				t.Errorf("the read port was asked for %q, want ACME-2690", got.read)
 			}
+
 			wantBand(t, after, "ACME-2690")
 		},
 	}, {
@@ -138,6 +146,7 @@ func TestTheGesturesReachTheFunctionsTheSubcommandsCall(t *testing.T) {
 			if m.autopilotOn() {
 				t.Error("autopilot is still on, want it flipped off")
 			}
+
 			wantBand(t, m, "autopilot")
 		},
 	}, {
@@ -151,6 +160,7 @@ func TestTheGesturesReachTheFunctionsTheSubcommandsCall(t *testing.T) {
 			if !m.note.open {
 				t.Fatal("expected note dialog to be open after pressing 'a'")
 			}
+
 			if m.note.taskID != "ACME-2705" {
 				t.Errorf("note.taskID = %q, want ACME-2705", m.note.taskID)
 			}
@@ -160,10 +170,12 @@ func TestTheGesturesReachTheFunctionsTheSubcommandsCall(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			m, got := c.start(t)
+
 			var cmd tea.Cmd
 			for _, k := range c.keys {
 				m, cmd = advance(t, m, press(k))
 			}
+
 			c.want(t, m, cmd, got)
 		})
 	}
@@ -172,12 +184,15 @@ func TestTheGesturesReachTheFunctionsTheSubcommandsCall(t *testing.T) {
 // wantControl executes one gesture's command and checks the word it wrote.
 func wantControl(t *testing.T, cmd tea.Cmd, got *recorder, id, word string) {
 	t.Helper()
+
 	if cmd == nil {
 		t.Fatalf("the gesture for %q answered with no command", word)
 	}
+
 	if _, ok := cmd().(controlMsg); !ok {
 		t.Fatalf("the gesture for %q raised something other than a controlMsg", word)
 	}
+
 	if got.id != id || got.word != word {
 		t.Errorf("the control port was asked to write %q on %q, want %q on %q", got.word, got.id, word, id)
 	}
@@ -188,10 +203,12 @@ func wantControl(t *testing.T, cmd tea.Cmd, got *recorder, id, word string) {
 func TestTakingTheKeyboardIsRefusedWhileARunnerHoldsTheWorktree(t *testing.T) {
 	m, got := testModel(t, 100, 30)
 	m = onRow(t, m, "ACME-2705")
+
 	after, cmd := advance(t, m, press("t"))
 	if cmd != nil {
 		t.Fatal("t on a live task produced a command, and no session may be opened in a worktree a phase is writing in")
 	}
+
 	if got.taken != "" {
 		t.Errorf("the take port was asked about %q, want it never reached", got.taken)
 	}
@@ -211,22 +228,27 @@ func TestTakingTheKeyboardIsRefusedWhileARunnerHoldsTheWorktree(t *testing.T) {
 func TestTakingTheKeyboardForksTheSessionAndRunsNothing(t *testing.T) {
 	m, _ := parkedModel(t)
 	m = onRow(t, m, "ACME-2705")
+
 	after, cmd := advance(t, m, press("t"))
 	if cmd == nil {
 		t.Fatal("t on a parked task answered with no command")
 	}
+
 	msg, ok := cmd().(sessionMsg)
 	if !ok {
 		t.Fatalf("t raised %T, want a sessionMsg carrying the command line", cmd())
 	}
+
 	if msg.Err != nil || msg.Cmd == nil {
 		t.Fatalf("err=%v cmd=%v, want a command line to look at", msg.Err, msg.Cmd != nil)
 	}
+
 	for _, want := range []string{"--resume", "--fork-session"} {
 		if !slices.Contains(msg.Cmd.Args, want) {
 			t.Errorf("the session command is %v, want %q in it", msg.Cmd.Args, want)
 		}
 	}
+
 	if msg.Cmd.Dir == "" {
 		t.Error("the session would run in whatever directory the window was started in, want the task's worktree")
 	}
@@ -237,6 +259,7 @@ func TestTakingTheKeyboardForksTheSessionAndRunsNothing(t *testing.T) {
 	if exec == nil {
 		t.Fatal("the window did not answer the session with a command to suspend for")
 	}
+
 	if !next.taken["ACME-2705"] {
 		t.Error("the window did not remember that the keyboard was taken, so h will refuse")
 	}

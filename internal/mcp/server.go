@@ -55,11 +55,13 @@ func NewServer(in io.Reader, out io.Writer, session Session) *Server {
 func (s *Server) Serve() error {
 	scanner := bufio.NewScanner(s.in)
 	scanner.Buffer(make([]byte, 0, 64*1024), maxLine)
+
 	for scanner.Scan() {
 		line := scanner.Bytes()
 		if len(line) == 0 {
 			continue
 		}
+
 		var req JSONRPCRequest
 		if err := json.Unmarshal(line, &req); err != nil {
 			// The id is unknown — that is what failed to parse — so the
@@ -68,15 +70,19 @@ func (s *Server) Serve() error {
 			if err := s.send(JSONRPCResponse{JSONRPC: "2.0", Error: &JSONRPCError{Code: CodeParseError, Message: err.Error()}}); err != nil {
 				return err
 			}
+
 			continue
 		}
+
 		if err := s.answer(req); err != nil {
 			return err
 		}
 	}
+
 	if err := scanner.Err(); err != nil {
 		return fmt.Errorf("read from the client: %w", err)
 	}
+
 	return nil
 }
 
@@ -87,6 +93,7 @@ func (s *Server) answer(req JSONRPCRequest) error {
 	if req.ID == nil {
 		return nil
 	}
+
 	switch req.Method {
 	case "initialize":
 		return s.send(result(req.ID, InitializeResult{
@@ -120,9 +127,11 @@ func (s *Server) call(req JSONRPCRequest) error {
 			return s.send(fault(req.ID, CodeInvalidParams, err.Error()))
 		}
 	}
+
 	if params.Name == "" {
 		return s.send(fault(req.ID, CodeInvalidParams, "tools/call needs a tool name"))
 	}
+
 	return s.send(result(req.ID, s.session.Call(params.Name, params.Arguments)))
 }
 
@@ -146,8 +155,10 @@ func (s *Server) send(resp JSONRPCResponse) error {
 	if err != nil {
 		return fmt.Errorf("encode a response to request %v: %w", resp.ID, err)
 	}
+
 	if _, err := fmt.Fprintf(s.out, "%s\n", data); err != nil {
 		return fmt.Errorf("write a response to the client: %w", err)
 	}
+
 	return nil
 }

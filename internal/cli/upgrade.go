@@ -37,6 +37,7 @@ func upgrade(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("upgrade", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	check := fs.Bool("check", false, "check for updates without installing")
+
 	force := fs.Bool("force", false, "force update even if up to date")
 	if err := parse(ctx, fs, args); err != nil {
 		return err
@@ -60,6 +61,7 @@ func upgrade(ctx Context, args []string) error {
 		fmt.Fprintf(ctx.Out, "%s\n", p.T("upgrade.already_latest",
 			"orbit is already on the latest version ({version})",
 			updateArg("version", rel.TagName)))
+
 		return nil
 	}
 
@@ -67,6 +69,7 @@ func upgrade(ctx Context, args []string) error {
 		fmt.Fprintf(ctx.Out, "%s\n", p.T("upgrade.available",
 			"new version available: {latest} (current: {current})",
 			updateArg("latest", rel.TagName), updateArg("current", Version)))
+
 		return nil
 	}
 
@@ -81,6 +84,7 @@ func upgrade(ctx Context, args []string) error {
 			fmt.Fprintf(ctx.Out, "%s\n", p.T("upgrade.success",
 				"successfully updated orbit to {version}!",
 				updateArg("version", rel.TagName)))
+
 			return nil
 		}
 	}
@@ -93,6 +97,7 @@ func upgrade(ctx Context, args []string) error {
 	fmt.Fprintf(ctx.Out, "%s\n", p.T("upgrade.success",
 		"successfully updated orbit to {version}!",
 		updateArg("version", rel.TagName)))
+
 	return nil
 }
 
@@ -110,6 +115,7 @@ func fetchRelease(ctx context.Context) (releaseInfo, error) {
 	if err != nil {
 		return releaseInfo{}, err
 	}
+
 	req.Header.Set("User-Agent", "orbit/"+Version)
 
 	resp, err := http.DefaultClient.Do(req)
@@ -126,6 +132,7 @@ func fetchRelease(ctx context.Context) (releaseInfo, error) {
 	if err := json.NewDecoder(resp.Body).Decode(&rel); err != nil {
 		return releaseInfo{}, err
 	}
+
 	return rel, nil
 }
 
@@ -137,6 +144,7 @@ func findAssetURL(assets []asset, goos, goarch string) string {
 			return a.URL
 		}
 	}
+
 	return ""
 }
 
@@ -145,6 +153,7 @@ func selfUpdate(ctx context.Context, downloadURL string) error {
 	if err != nil {
 		return err
 	}
+
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
@@ -167,17 +176,21 @@ func selfUpdate(ctx context.Context, downloadURL string) error {
 		if err == io.EOF {
 			break
 		}
+
 		if err != nil {
 			return err
 		}
+
 		if header.Name == "orbit" || strings.HasSuffix(header.Name, "/orbit") {
 			binBytes, err := io.ReadAll(tr)
 			if err != nil {
 				return err
 			}
+
 			return replaceExecutable(binBytes)
 		}
 	}
+
 	return fmt.Errorf("executable not found in archive")
 }
 
@@ -186,28 +199,37 @@ func replaceExecutable(newBytes []byte) error {
 	if err != nil {
 		return err
 	}
+
 	execPath, err = filepath.EvalSymlinks(execPath)
 	if err != nil {
 		return err
 	}
 
 	dir := filepath.Dir(execPath)
+
 	tmpFile, err := os.CreateTemp(dir, "orbit-update-*")
 	if err != nil {
 		return err
 	}
+
 	tmpName := tmpFile.Name()
 
 	if _, err := tmpFile.Write(newBytes); err != nil {
 		tmpFile.Close()
+
 		_ = os.Remove(tmpName)
+
 		return err
 	}
-	if err := tmpFile.Chmod(0755); err != nil {
+
+	if err := tmpFile.Chmod(0o755); err != nil {
 		tmpFile.Close()
+
 		_ = os.Remove(tmpName)
+
 		return err
 	}
+
 	if err := tmpFile.Close(); err != nil {
 		_ = os.Remove(tmpName)
 		return err

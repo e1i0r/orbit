@@ -99,6 +99,7 @@ type tabName struct {
 // tabNames returns the eleven tabs in order.
 func (m Model) tabNames() []tabName {
 	p := m.opts.Words
+
 	return []tabName{
 		{tabOverview, p.T("tab.overview", "overview")},
 		{tabFlow, p.T("tab.flow", "flow")},
@@ -117,6 +118,7 @@ func (m Model) tabNames() []tabName {
 // syncPanes rebuilds all eleven panes and resizes them to the detail body region.
 func (m Model) syncPanes() Model {
 	w, h := max(m.frame.Body.W, 1), max(paneHeight(m.frame.Body.H), 1)
+
 	content := [tabCount][]string{
 		tabOverview:  m.overviewLines(),
 		tabFlow:      m.flowLines(),
@@ -138,10 +140,12 @@ func (m Model) syncPanes() Model {
 		vp.SetContentLines(content[i])
 		m.panes[i] = vp
 	}
+
 	if m.following {
 		vp := m.panes[tabTimeline]
 		vp.GotoBottom()
 		m.panes[tabTimeline] = vp
 	}
+
 	return m
 }

@@ -27,6 +27,7 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 			if m.screen != screenDetail || m.detail != "ACME-2662" || m.tab != tabOverview {
 				t.Errorf("screen=%v detail=%q tab=%v, want the task view open on overview", m.screen, m.detail, m.tab)
 			}
+
 			if cmd == nil {
 				t.Fatal("opening the task view asked for neither the log nor the diff")
 			}
@@ -38,7 +39,9 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 			if !ok {
 				t.Fatalf("opening the task view returned %T, want a batch of commands", cmd())
 			}
+
 			var sawLog, sawDiff bool
+
 			for _, c := range batch {
 				switch c().(type) {
 				case logMsg:
@@ -47,6 +50,7 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 					sawDiff = true
 				}
 			}
+
 			if !sawLog || !sawDiff {
 				t.Errorf("opening the task view asked for log=%v diff=%v, want both", sawLog, sawDiff)
 			}
@@ -65,6 +69,7 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 		start: func(t *testing.T) Model {
 			m, _ := openDetail(t, "ACME-2662")
 			m.tab = tabCount - 1
+
 			return m
 		},
 		msg: press("tab"),
@@ -78,6 +83,7 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 		start: func(t *testing.T) Model {
 			m, _ := openDetail(t, "ACME-2662")
 			m.tab = 0
+
 			return m
 		},
 		msg: press("shift+tab"),
@@ -94,6 +100,7 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 			if m.screen != screenList {
 				t.Fatalf("screen is %v, want the list", m.screen)
 			}
+
 			r, ok := m.selected()
 			if !ok || r.task.ID != "ACME-2698" {
 				t.Errorf("the cursor came back on %+v, want the row it left from", r.task.ID)
@@ -116,6 +123,7 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 		start: func(t *testing.T) Model {
 			m, _ := openWith(t, "ACME-2662", longLog())
 			m = showing(t, m, tabTimeline)
+
 			return step(t, m, "up")
 		},
 		msg: press("down"),
@@ -129,6 +137,7 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 		start: func(t *testing.T) Model {
 			m, _ := openWith(t, "ACME-2662", longLog())
 			m = showing(t, m, tabTimeline)
+
 			return step(t, step(t, m, "up"), "up")
 		},
 		msg: press("enter"),
@@ -195,6 +204,7 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 			if cmd != nil {
 				t.Error("o opened an editor from a tab that has no file in it")
 			}
+
 			wantBand(t, m, "diff")
 		},
 	}, {
@@ -202,6 +212,7 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 		start: func(t *testing.T) Model {
 			t.Setenv("EDITOR", "vi")
 			m, _ := openDetail(t, "ACME-2662")
+
 			return step(t, m, "0")
 		},
 		msg: press("o"),
@@ -221,6 +232,7 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 			if m.screen != screenDetail {
 				t.Fatalf("screen is %v, want the task view still open", m.screen)
 			}
+
 			if m.panes[tabDiff].XOffset() == 0 {
 				t.Error("the diff did not scroll sideways")
 			}
@@ -237,6 +249,7 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 			if scrolled.panes[tabDiff].XOffset() == 0 {
 				t.Fatal("setup did not actually scroll the diff sideways before pressing ←")
 			}
+
 			return scrolled
 		},
 		msg: press("left"),
@@ -285,10 +298,12 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			m := c.start(t)
 			after, cmd := m.Update(c.msg)
+
 			got, ok := after.(Model)
 			if !ok {
 				t.Fatalf("Update returned %T, want ui.Model", after)
 			}
+
 			c.want(t, got, cmd)
 		})
 	}

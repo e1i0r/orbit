@@ -1,7 +1,7 @@
 version: "2"
 
-# The linter exists here for one reason: this repository has already shipped
-# the same defect four times — an error formatted with %s or %v instead of %w,
+# The linter does two jobs. It catches the defect this repository has already
+# shipped four times — an error formatted with %s or %v instead of %w,
 # so the chain is lost and errors.Is can never reach the cause. A reviewer
 # caught each one. errorlint catches them before a reviewer has to.
 
@@ -10,11 +10,22 @@ linters:
   enable:
     - errorlint
     - gocritic
+    # godot: a sentence of prose ends in a full stop. This repository's
+    # comments are prose and already do; the rule is here so they stay that
+    # way, and it only looks at declarations, not at every line of a
+    # paragraph inside a function.
+    - godot
     - misspell
     - nilerr
     - revive
+    - nlreturn
     - unconvert
     - usestdlibvars
+    # whitespace is the other half of wsl: it takes out the blank line right
+    # after a `{` or right before a `}`, which is space that separates
+    # nothing.
+    - whitespace
+    - wsl_v5
   settings:
     errcheck:
       # check-blank makes `_ = f()` a discard the author has to stand behind
@@ -26,6 +37,13 @@ linters:
       # so a genuinely unchecked error there would never have been caught.
       check-type-assertions: true
       check-blank: true
+    godot:
+      scope: declarations
+    nlreturn:
+      # A return that is the whole of a short block needs no line above it:
+      # `if err != nil { return err }` is already one thought. Past that,
+      # the return is a conclusion and gets the space to look like one.
+      block-size: 2
     revive:
       rules:
         - name: exported
@@ -39,4 +57,8 @@ linters:
 
 formatters:
   enable:
-    - gofmt
+    # gofumpt is gofmt plus the decisions gofmt leaves open — no blank line
+    # after an opening brace, no needless parentheses around a single import,
+    # composite literals that do not repeat a type the compiler already
+    # knows. It is a superset, so `go fmt` and this cannot disagree.
+    - gofumpt

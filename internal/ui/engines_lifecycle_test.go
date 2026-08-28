@@ -17,6 +17,7 @@ func TestEnginesScreenFullLifecycle(t *testing.T) {
 
 	sendKey := func(k rune, code rune, text string) {
 		var msg tea.Msg
+
 		switch {
 		case text != "":
 			msg = tea.KeyPressMsg{Code: code, Text: text}
@@ -25,6 +26,7 @@ func TestEnginesScreenFullLifecycle(t *testing.T) {
 		default:
 			msg = tea.KeyPressMsg{Code: k, Text: string(k)}
 		}
+
 		updated, _ := m.Update(msg)
 		m = asModel(t, updated)
 	}
@@ -44,6 +46,7 @@ func TestEnginesScreenFullLifecycle(t *testing.T) {
 		Effort:   "high",
 		Thinking: "adaptive",
 	}
+
 	chip := m.knobChip()
 	if chip == "" {
 		t.Error("expected non-empty knobChip with overrides")
@@ -61,6 +64,7 @@ func TestEnginesScreenFullLifecycle(t *testing.T) {
 
 	// 7. Escape to close
 	sendKey(0, tea.KeyEsc, "esc")
+
 	if m.screen != screenList {
 		t.Errorf("screen after Esc = %v, want screenList", m.screen)
 	}

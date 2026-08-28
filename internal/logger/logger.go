@@ -69,7 +69,9 @@ func Init(logPath string) error {
 	if err != nil {
 		return fmt.Errorf("init logger at %q: %w", logPath, err)
 	}
+
 	global = l
+
 	return nil
 }
 
@@ -100,14 +102,17 @@ func (l *Logger) Close() error {
 	if l == nil {
 		return nil
 	}
+
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
 	if l.file != nil {
 		err := l.file.Close()
 		l.file = nil
+
 		return err
 	}
+
 	return nil
 }
 
@@ -116,6 +121,7 @@ func (l *Logger) Log(lvl Level, module, format string, args ...any) {
 	if l == nil {
 		return
 	}
+
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -126,8 +132,10 @@ func (l *Logger) Log(lvl Level, module, format string, args ...any) {
 	if module == "" {
 		module = "orbit"
 	}
+
 	ts := time.Now().UTC().Format(timeFormat)
 	msg := fmt.Sprintf(format, args...)
+
 	entry := fmt.Sprintf("[%s] [%s] [%s] %s\n", ts, lvl.String(), module, msg)
 	if _, err := l.file.WriteString(entry); err != nil {
 		return
@@ -138,6 +146,7 @@ func (l *Logger) Log(lvl Level, module, format string, args ...any) {
 func Debug(module, format string, args ...any) {
 	globalMu.RLock()
 	defer globalMu.RUnlock()
+
 	if global != nil {
 		global.Log(LevelDebug, module, format, args...)
 	}
@@ -147,6 +156,7 @@ func Debug(module, format string, args ...any) {
 func Info(module, format string, args ...any) {
 	globalMu.RLock()
 	defer globalMu.RUnlock()
+
 	if global != nil {
 		global.Log(LevelInfo, module, format, args...)
 	}
@@ -156,6 +166,7 @@ func Info(module, format string, args ...any) {
 func Warn(module, format string, args ...any) {
 	globalMu.RLock()
 	defer globalMu.RUnlock()
+
 	if global != nil {
 		global.Log(LevelWarn, module, format, args...)
 	}
@@ -165,6 +176,7 @@ func Warn(module, format string, args ...any) {
 func Error(module, format string, args ...any) {
 	globalMu.RLock()
 	defer globalMu.RUnlock()
+
 	if global != nil {
 		global.Log(LevelError, module, format, args...)
 	}
@@ -174,10 +186,13 @@ func Error(module, format string, args ...any) {
 func CloseGlobal() error {
 	globalMu.Lock()
 	defer globalMu.Unlock()
+
 	if global != nil {
 		err := global.Close()
 		global = nil
+
 		return err
 	}
+
 	return nil
 }

@@ -28,6 +28,7 @@ func failedRun(t *testing.T) (Session, string) {
 		record.Event{At: at(8), Kind: record.TaskFailed, Text: "the implement phase failed", Data: map[string]string{"error": "the gate said no"}},
 		record.Event{At: at(9), Kind: record.TaskNoted, Text: "[supervisor] start from the failing test"},
 	)
+
 	return sn, "PAY-1"
 }
 
@@ -40,9 +41,11 @@ func TestInspectCarriesTheEvidenceAndNotJustTheRow(t *testing.T) {
 			t.Errorf("the inspection carries no %q, and its description promises it", key)
 		}
 	}
+
 	if got["id"] != id || got["band"] != "needs_you" {
 		t.Errorf("the inspection describes %v in band %v, want %s in needs_you", got["id"], got["band"], id)
 	}
+
 	if got["events_total"] != float64(9) {
 		t.Errorf("events_total = %v, want 9 — the count is of the record, not of the tail that was carried", got["events_total"])
 	}
@@ -53,15 +56,19 @@ func TestInspectCarriesTheEvidenceAndNotJustTheRow(t *testing.T) {
 // instruction the rest are answers to, so this field is never tailed.
 func TestInspectCarriesEveryNoteOldestFirst(t *testing.T) {
 	sn, id := failedRun(t)
+
 	notes, ok := call(t, sn, "orbit_inspect_task", map[string]any{"task_id": id})["notes"].([]any)
 	if !ok || len(notes) != 2 {
 		t.Fatalf("the inspection carries %v, want both notes", notes)
 	}
+
 	first := obj(t, notes[0])
+
 	second := obj(t, notes[1])
 	if !strings.Contains(str(t, first["text"]), "retry storm") {
 		t.Errorf("the first note is %v, want the oldest one", first["text"])
 	}
+
 	if !strings.Contains(str(t, second["text"]), "start from the failing test") {
 		t.Errorf("the second note is %v", second["text"])
 	}
@@ -70,13 +77,16 @@ func TestInspectCarriesEveryNoteOldestFirst(t *testing.T) {
 func TestInspectCarriesTheLastThingThatWentWrong(t *testing.T) {
 	sn, id := failedRun(t)
 	got := call(t, sn, "orbit_inspect_task", map[string]any{"task_id": id})
+
 	last, ok := got["last_error"].(map[string]any)
 	if !ok {
 		t.Fatalf("a task that failed reports last_error as %v", got["last_error"])
 	}
+
 	if last["kind"] != record.TaskFailed {
 		t.Errorf("last_error is the %v event, want the most recent failure", last["kind"])
 	}
+
 	if last["reason"] != "the gate said no" {
 		t.Errorf("last_error reason = %v, want the one in the record's data", last["reason"])
 	}
@@ -99,14 +109,17 @@ func TestNothingWentWrongIsNullAndNotEmpty(t *testing.T) {
 
 func TestInspectCarriesTheGatesAndHowTheyAnswered(t *testing.T) {
 	sn, id := failedRun(t)
+
 	gates, ok := call(t, sn, "orbit_inspect_task", map[string]any{"task_id": id})["gates"].([]any)
 	if !ok || len(gates) != 1 {
 		t.Fatalf("the inspection carries %v, want the one gate that ran", gates)
 	}
+
 	gate := obj(t, gates[0])
 	if gate["passed"] != false {
 		t.Errorf("the gate is reported as passed = %v, and it failed", gate["passed"])
 	}
+
 	if !strings.Contains(str(t, gate["text"]), "go test") {
 		t.Errorf("the gate carries %v, want what it ran", gate["text"])
 	}
@@ -117,17 +130,21 @@ func TestInspectCarriesTheGatesAndHowTheyAnswered(t *testing.T) {
 // the summary of it.
 func TestInspectSaysWhatEachPhaseDid(t *testing.T) {
 	sn, id := failedRun(t)
+
 	phases, ok := call(t, sn, "orbit_inspect_task", map[string]any{"task_id": id})["phases"].([]any)
 	if !ok || len(phases) != 1 {
 		t.Fatalf("the inspection carries %v, want one entry for the one phase that ran", phases)
 	}
+
 	got := obj(t, phases[0])
 	if got["phase"] != "implement" || got["state"] != "failed" {
 		t.Errorf("the phase is reported as %v/%v, want implement/failed", got["phase"], got["state"])
 	}
+
 	if got["engine"] != "claude" || got["model"] != "opus" {
 		t.Errorf("the phase ran on %v/%v, want the engine and model the record names", got["engine"], got["model"])
 	}
+
 	if got["error"] != "the gate said no" {
 		t.Errorf("the phase carries error %v, want the one in its data", got["error"])
 	}
@@ -138,20 +155,24 @@ func TestInspectSaysWhatEachPhaseDid(t *testing.T) {
 // stated near the end.
 func TestTheThinkingIsTheLastFewBlocks(t *testing.T) {
 	s, sn, r := oneRepo(t)
+
 	events := []record.Event{{At: at(1), Kind: record.TaskCreated, Text: "written"}}
 	for i := range 12 {
 		events = append(events, record.Event{At: at(2 + i), Kind: record.PhaseThought, Phase: "implement", Text: thoughtNumber(i)})
 	}
+
 	addTask(t, s, r, "PAY-3", events...)
 
 	thinking, ok := call(t, sn, "orbit_inspect_task", map[string]any{"task_id": "PAY-3"})["thinking"].([]any)
 	if !ok || len(thinking) != thoughtTail {
 		t.Fatalf("the inspection carries %d thinking blocks, want the last %d", len(thinking), thoughtTail)
 	}
+
 	last := obj(t, thinking[len(thinking)-1])
 	if last["text"] != thoughtNumber(11) {
 		t.Errorf("the last block carried is %v, want the last one written", last["text"])
 	}
+
 	first := obj(t, thinking[0])
 	if first["text"] != thoughtNumber(7) {
 		t.Errorf("the tail starts at %v, want the fifth from the end", first["text"])
@@ -166,17 +187,21 @@ func thoughtNumber(i int) string {
 // caller can tell a short task from a long one whose beginning was cut.
 func TestTheTimelineIsTailedAndTheCountIsNot(t *testing.T) {
 	s, sn, r := oneRepo(t)
+
 	events := []record.Event{{At: at(1), Kind: record.TaskCreated, Text: "written"}}
 	for i := range timelineTail + 10 {
 		events = append(events, record.Event{At: at(2 + i), Kind: record.PhaseThought, Phase: "implement", Text: "thinking"})
 	}
+
 	addTask(t, s, r, "PAY-4", events...)
 
 	got := call(t, sn, "orbit_inspect_task", map[string]any{"task_id": "PAY-4"})
+
 	timeline, ok := got["timeline"].([]any)
 	if !ok || len(timeline) != timelineTail {
 		t.Fatalf("the timeline carries %d entries, want the last %d", len(timeline), timelineTail)
 	}
+
 	if got["events_total"] != float64(len(events)) {
 		t.Errorf("events_total = %v, want %d — the total is of the record and not of the tail", got["events_total"], len(events))
 	}
@@ -198,13 +223,16 @@ func TestALongLogIsCutFromTheFrontAndSaysThatItWas(t *testing.T) {
 	if !ok {
 		t.Fatal("a phase that printed a log reports no last_output")
 	}
+
 	body := str(t, out["text"])
 	if !strings.HasSuffix(body, "THE ACTUAL ERROR") {
 		t.Error("the log was cut from the end, which is where the error is")
 	}
+
 	if len(body) > outputChars+120 {
 		t.Errorf("the log came back at %d characters, want about %d", len(body), outputChars)
 	}
+
 	if out["complete"] != false {
 		t.Error("a log that was cut reports itself as complete; a model that believes it read the whole thing will conclude from the half it got")
 	}
@@ -229,6 +257,7 @@ func TestAShortLogComesBackWholeAndSaysSo(t *testing.T) {
 func TestInspectCarriesTheTaskItself(t *testing.T) {
 	_, sn, _ := oneRepo(t)
 	created := call(t, sn, "orbit_create_task", map[string]any{"title": "make the webhook idempotent"})
+
 	got := call(t, sn, "orbit_inspect_task", map[string]any{"task_id": created["id"]})
 	if body := str(t, got["text"]); !strings.Contains(body, "make the webhook idempotent") {
 		t.Errorf("the inspection carries the task as %q, want what was written", body)

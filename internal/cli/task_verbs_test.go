@@ -63,33 +63,40 @@ func TestCancelTaskEarlyExits(t *testing.T) {
 // own directory on disk rather than recomputing the store's hash.
 func plantLiveMarker(t *testing.T, orbitHome string) *exec.Cmd {
 	t.Helper()
+
 	cmd := exec.Command("sleep", "5")
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("start a background process: %v", err)
 	}
+
 	t.Cleanup(func() { _ = cmd.Process.Kill() }) //nolint:errcheck
 
 	events := findFile(t, orbitHome, "events.jsonl")
 	marker := filepath.Join(filepath.Dir(events), "run")
+
 	body := fmt.Sprintf("pid: %d\nstarted: %s\n", cmd.Process.Pid, time.Now().UTC().Format(time.RFC3339))
 	if err := os.WriteFile(marker, []byte(body), 0o600); err != nil {
 		t.Fatalf("write the run marker: %v", err)
 	}
+
 	return cmd
 }
 
 func TestCancelNowKillsALiveProcess(t *testing.T) {
 	root, orbitHome := workspace(t)
+
 	repoDir := filepath.Join(root, "payments")
 	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-KILL", "kill me"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
+
 	plantLiveMarker(t, orbitHome)
 
 	code, out, errOut := run(t, "cancel", "-now", "-repo", repoDir, "ACME-KILL")
 	if code != 0 {
 		t.Fatalf("cancel -now on a live process exited %d: %s", code, errOut)
 	}
+
 	if !strings.Contains(out, "killed") {
 		t.Errorf("cancel -now did not say it killed the task:\n%s", out)
 	}
@@ -97,16 +104,19 @@ func TestCancelNowKillsALiveProcess(t *testing.T) {
 
 func TestCancelGracefullyAsksALiveProcess(t *testing.T) {
 	root, orbitHome := workspace(t)
+
 	repoDir := filepath.Join(root, "payments")
 	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-ASK", "ask me"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
+
 	plantLiveMarker(t, orbitHome)
 
 	code, out, errOut := run(t, "cancel", "-repo", repoDir, "ACME-ASK")
 	if code != 0 {
 		t.Fatalf("cancel on a live process exited %d: %s", code, errOut)
 	}
+
 	if !strings.Contains(out, "asked to stop") {
 		t.Errorf("cancel did not say it asked the task to stop:\n%s", out)
 	}
@@ -145,6 +155,7 @@ func TestControlTaskFailsWhenTheTaskDirCannotBeWrittenTo(t *testing.T) {
 	if code == 0 {
 		t.Error("pause over a read-only task directory exited 0")
 	}
+
 	if errOut == "" {
 		t.Error("pause failed silently over a read-only task directory")
 	}
@@ -190,6 +201,7 @@ func TestNoteTaskFailsWhenTheLogCannotBeAppendedTo(t *testing.T) {
 	if code == 0 {
 		t.Error("note over a read-only log exited 0")
 	}
+
 	if errOut == "" {
 		t.Error("note failed silently over a read-only log")
 	}

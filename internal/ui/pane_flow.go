@@ -23,57 +23,71 @@ type phaseExec struct {
 	duration  string
 }
 
-// findPhaseExec finds recorded execution metrics for a phase in m.entries
+// findPhaseExec finds recorded execution metrics for a phase in m.entries.
 func (m Model) findPhaseExec(phaseName string) phaseExec {
-	var exec phaseExec
-	var startEntry view.Entry
+	var (
+		exec       phaseExec
+		startEntry view.Entry
+	)
+
 	for _, e := range m.entries {
 		if !strings.EqualFold(e.Phase, phaseName) {
 			continue
 		}
+
 		if e.What() == view.EntryStarted {
 			exec.started = true
+
 			startEntry = e
 			if e.Engine != "" {
 				exec.engine = e.Engine
 			}
+
 			if e.Model != "" {
 				exec.model = e.Model
 			}
 		}
+
 		if e.What() == view.EntryFinished {
 			exec.finished = true
 			exec.cost = e.Cost
+
 			exec.text = e.Text
 			if !startEntry.At.IsZero() && !e.At.IsZero() {
 				exec.duration = elapsed(e.At, startEntry.At)
 			}
 		}
+
 		if e.What() == view.EntryFailed {
 			exec.failed = true
 			exec.cause = e.Cause
 			exec.exit = e.Exit
 			exec.cost = e.Cost
+
 			exec.text = e.Text
 			if !startEntry.At.IsZero() && !e.At.IsZero() {
 				exec.duration = elapsed(e.At, startEntry.At)
 			}
 		}
+
 		if e.What() == view.EntryCancelled {
 			exec.cancelled = true
 			exec.text = e.Text
 		}
+
 		if e.What() == view.EntryWaiting {
 			exec.waiting = true
 			exec.cause = e.Cause
 		}
 	}
+
 	return exec
 }
 
 // flowLines renders Pane 2: Tree view of Flow & Step Results.
 func (m Model) flowLines() []string {
 	p := m.opts.Words
+
 	t, ok := m.task(m.detail)
 	if !ok {
 		return []string{"  " + Paint(Dim).Render(
@@ -84,6 +98,7 @@ func (m Model) flowLines() []string {
 	if flowName == "" {
 		flowName = "quick"
 	}
+
 	f, err := flow.Resolve(m.opts.Flows, flowName)
 	if err != nil {
 		return []string{"  " + Paint(Bad).Render(fmt.Sprintf("flow %q: %v", flowName, err))}
@@ -101,6 +116,7 @@ func (m Model) flowLines() []string {
 		isLast := i == totalPhases-1
 		branch := "├──"
 		subBranch := "│  "
+
 		if isLast {
 			branch = "└──"
 			subBranch = "   "
@@ -111,7 +127,9 @@ func (m Model) flowLines() []string {
 
 		// Determine step icon and badge
 		var icon, statusStr string
+
 		role := Dim
+
 		switch {
 		case ex.failed:
 			icon = Paint(Bad).Render("✗")
@@ -150,9 +168,11 @@ func (m Model) flowLines() []string {
 		if ex.cost > 0 {
 			nodeHeader += " " + Paint(Dim).Render(fmt.Sprintf("($%.4f)", ex.cost))
 		}
+
 		if ex.duration != "" {
 			nodeHeader += " " + Paint(Dim).Render(fmt.Sprintf("(%s)", ex.duration))
 		}
+
 		out = append(out, nodeHeader)
 
 		// Sub-tree items
@@ -163,23 +183,29 @@ func (m Model) flowLines() []string {
 		if ex.engine != "" {
 			engName = ex.engine
 		}
+
 		modelName := phase.Model
 		if ex.model != "" {
 			modelName = ex.model
 		}
+
 		var cfg []string
 		if engName != "" {
 			cfg = append(cfg, engName)
 		}
+
 		if modelName != "" {
 			cfg = append(cfg, modelName)
 		}
+
 		if phase.Effort != "" {
 			cfg = append(cfg, "effort:"+phase.Effort)
 		}
+
 		if phase.Thinking != "" {
 			cfg = append(cfg, "thinking:"+phase.Thinking)
 		}
+
 		if len(cfg) > 0 {
 			subItems = append(subItems, fmt.Sprintf("⚙️ %s: %s",
 				p.T("flow.tree_engine", "engine"),
@@ -202,6 +228,7 @@ func (m Model) flowLines() []string {
 			if errMsg == "" && ex.exit != "" {
 				errMsg = "exit code: " + ex.exit
 			}
+
 			if errMsg != "" {
 				subItems = append(subItems, fmt.Sprintf("❌ %s: %s",
 					Paint(Bad).Bold(true).Render(p.T("flow.tree_error", "error details")),
@@ -221,16 +248,19 @@ func (m Model) flowLines() []string {
 							p.T("flow.tree_outcome", "outcome"),
 							l,
 						))
+
 						break
 					}
 				}
 			} else {
 				first := true
+
 				for _, l := range lines {
 					l = strings.TrimSpace(l)
 					if l == "" {
 						continue
 					}
+
 					wrapped := splitIntoLines(l, max(20, m.frame.Body.W-16))
 					for _, wl := range wrapped {
 						if first {
@@ -253,6 +283,7 @@ func (m Model) flowLines() []string {
 			if j == len(subItems)-1 {
 				subSym = "└──"
 			}
+
 			out = append(out, fmt.Sprintf("  %s %s %s",
 				Paint(Dim).Render(subBranch),
 				Paint(Dim).Render(subSym),

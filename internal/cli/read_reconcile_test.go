@@ -61,6 +61,7 @@ func TestReadTaskFailsWhenTheLogCannotBeAppendedTo(t *testing.T) {
 	if code == 0 {
 		t.Error("read over a read-only log exited 0")
 	}
+
 	if errOut == "" {
 		t.Error("read failed silently over a read-only log")
 	}
@@ -68,6 +69,7 @@ func TestReadTaskFailsWhenTheLogCannotBeAppendedTo(t *testing.T) {
 
 func TestReconcileEarlyExitOnBadFlag(t *testing.T) {
 	root, _ := workspace(t)
+
 	repoDir := filepath.Join(root, "payments")
 	if code, _, errOut := run(t, "reconcile", "-repo", repoDir, "-nosuchflag"); code == 0 {
 		t.Error("reconcile with an unknown flag exited 0")
@@ -90,6 +92,7 @@ func TestReconcileFailsWhenTheTasksDirCannotBeListed(t *testing.T) {
 	if code == 0 {
 		t.Error("reconcile over an unlistable tasks directory exited 0")
 	}
+
 	if errOut == "" {
 		t.Error("reconcile failed silently over an unlistable tasks directory")
 	}
@@ -103,6 +106,7 @@ func TestReconcileReportsAPerTaskFailureAndKeepsGoing(t *testing.T) {
 	// Alive fails parsing the pid line, rather than reporting the task as
 	// abandoned or as still running.
 	events := findFile(t, orbitHome, "events.jsonl")
+
 	marker := filepath.Join(filepath.Dir(events), "run")
 	if err := os.WriteFile(marker, []byte("pid: not-a-number\nstarted: 2026-08-24T12:00:00Z\n"), 0o600); err != nil {
 		t.Fatalf("write the run marker: %v", err)
@@ -112,6 +116,7 @@ func TestReconcileReportsAPerTaskFailureAndKeepsGoing(t *testing.T) {
 	if code == 0 {
 		t.Error("reconcile over a damaged run marker exited 0")
 	}
+
 	if !strings.Contains(errOut, "ACME-1") {
 		t.Errorf("the refusal does not name the task:\n%s", errOut)
 	}

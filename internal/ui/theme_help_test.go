@@ -13,14 +13,17 @@ import (
 
 func TestCurrentPaletteFallsBackOnAnUnknownTheme(t *testing.T) {
 	old := currentThemeName
+
 	t.Cleanup(func() { currentThemeName = old })
 
 	currentThemeName = "not-a-real-theme"
+
 	if got := currentPalette(); got != themePalettes["monokai"] {
 		t.Errorf("currentPalette with an unknown theme name = %+v, want the monokai fallback", got)
 	}
 
 	currentThemeName = "nord"
+
 	if got := currentPalette(); got != themePalettes["nord"] {
 		t.Errorf("currentPalette(nord) = %+v, want the nord palette", got)
 	}
@@ -31,6 +34,7 @@ func TestOpenAndAbandonHelpRememberTheScreen(t *testing.T) {
 
 	// 1. Opening from an ordinary screen remembers it.
 	m.screen = screenSettings
+
 	got := m.openHelp()
 	if got.screen != screenHelp || got.help.prevScreen != screenSettings {
 		t.Errorf("openHelp from settings = %+v, want screenHelp remembering settings", got)
@@ -38,6 +42,7 @@ func TestOpenAndAbandonHelpRememberTheScreen(t *testing.T) {
 
 	// 2. Opening help while already on help does not remember help itself.
 	got.screen = screenHelp
+
 	got = got.openHelp()
 	if got.help.prevScreen != screenList {
 		t.Errorf("openHelp from help = %v, want it to fall back to screenList", got.help.prevScreen)
@@ -45,6 +50,7 @@ func TestOpenAndAbandonHelpRememberTheScreen(t *testing.T) {
 
 	// 3. Abandoning returns to the remembered screen, and clears the state.
 	got.help.prevScreen = screenStart
+
 	got = got.abandonHelp()
 	if got.screen != screenStart || got.help != (helpState{}) {
 		t.Errorf("abandonHelp = screen %v help %+v, want screenStart and cleared state", got.screen, got.help)
@@ -53,6 +59,7 @@ func TestOpenAndAbandonHelpRememberTheScreen(t *testing.T) {
 	// 4. A prevScreen that is itself screenHelp — reachable only by writing
 	// the field directly, never by openHelp — still resolves to the list.
 	got.help.prevScreen = screenHelp
+
 	got = got.abandonHelp()
 	if got.screen != screenList {
 		t.Errorf("abandonHelp with prevScreen=screenHelp = %v, want screenList", got.screen)
@@ -66,6 +73,7 @@ func TestHelpKeyEveryBinding(t *testing.T) {
 	// 1. Down increments the offset with no ceiling of its own — helpRows
 	// is what clamps it.
 	next, _ := m.helpKey(tea.KeyPressMsg{Code: tea.KeyDown})
+
 	got := asModel(t, next)
 	if got.help.offset != 1 {
 		t.Errorf("helpKey(down) offset = %d, want 1", got.help.offset)
@@ -73,11 +81,14 @@ func TestHelpKeyEveryBinding(t *testing.T) {
 
 	// 2. Up decrements, and refuses to go below zero.
 	next, _ = got.helpKey(tea.KeyPressMsg{Code: tea.KeyUp})
+
 	got = asModel(t, next)
 	if got.help.offset != 0 {
 		t.Errorf("helpKey(up) offset = %d, want 0", got.help.offset)
 	}
+
 	next, _ = got.helpKey(tea.KeyPressMsg{Code: tea.KeyUp})
+
 	got = asModel(t, next)
 	if got.help.offset != 0 {
 		t.Errorf("helpKey(up) at zero = %d, want it to stay at 0", got.help.offset)
@@ -87,13 +98,16 @@ func TestHelpKeyEveryBinding(t *testing.T) {
 	for _, code := range []rune{tea.KeyEscape, tea.KeyEnter} {
 		got = got.openHelp()
 		next, _ = got.helpKey(tea.KeyPressMsg{Code: code})
+
 		got = asModel(t, next)
 		if got.screen == screenHelp {
 			t.Errorf("helpKey(%v) did not close the overlay", code)
 		}
 	}
+
 	got = got.openHelp()
 	next, _ = got.helpKey(tea.KeyPressMsg{Code: '?', Text: "?"})
+
 	got = asModel(t, next)
 	if got.screen == screenHelp {
 		t.Error("helpKey('?') did not close the overlay")
@@ -102,6 +116,7 @@ func TestHelpKeyEveryBinding(t *testing.T) {
 	// 4. An unmatched key is a no-op.
 	got = got.openHelp()
 	next, _ = got.helpKey(tea.KeyPressMsg{Code: 'z', Text: "z"})
+
 	got = asModel(t, next)
 	if got.screen != screenHelp {
 		t.Error("an unmatched key closed the help overlay")
@@ -118,10 +133,12 @@ func TestHelpRowsOffsetClampsToTheLastLine(t *testing.T) {
 	}
 
 	m.help.offset = 3
+
 	scrolled := m.helpRows(40, 100)
 	if len(scrolled) != len(full) {
 		t.Errorf("helpRows at offset 3 has %d lines, want it padded back to %d like offset 0", len(scrolled), len(full))
 	}
+
 	if strings.Contains(strings.Join(scrolled, "\n"), "Ayuda y Atajos") {
 		t.Error("helpRows at offset 3 still shows the title, want it scrolled past")
 	}

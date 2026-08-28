@@ -16,6 +16,7 @@ func generated() []Task {
 	for _, c := range allCases() {
 		tasks = append(tasks, Fold(c.events))
 	}
+
 	for _, band := range append(Bands(), Band(17), Band(-1)) {
 		for _, live := range []bool{false, true} {
 			for _, read := range []bool{false, true} {
@@ -25,6 +26,7 @@ func generated() []Task {
 			}
 		}
 	}
+
 	return tasks
 }
 
@@ -60,22 +62,28 @@ func TestBandsPartitionEveryTask(t *testing.T) {
 
 	answers := make([]int, len(tasks))
 	total := 0
+
 	for _, band := range Bands() {
 		drawn := 0
+
 		for i, task := range tasks {
 			if BandOf(task) == band {
 				answers[i]++
 				drawn++
 			}
 		}
+
 		if drawn != header[band] {
 			t.Errorf("the header says %d tasks are %s and the list draws %d of them", header[band], band, drawn)
 		}
+
 		total += drawn
 	}
+
 	if total != len(tasks) {
 		t.Errorf("the four bands hold %d tasks between them, and there are %d", total, len(tasks))
 	}
+
 	for i, n := range answers {
 		if n != 1 {
 			t.Errorf("task %d answers %d bands, want exactly one: %+v", i, n, tasks[i])
@@ -96,6 +104,7 @@ func TestABandWrittenDownIsTheBandAnswered(t *testing.T) {
 		if got := BandOf(Task{Band: band}); got != band {
 			t.Errorf("a task written down as %s is banded %s", band, got)
 		}
+
 		for s := state(0); s < stateCount; s++ {
 			if got := BandOf(Task{Band: band, state: s}); got != band {
 				t.Errorf("state %d moved a task written down as %s to %s", s, band, got)
@@ -129,6 +138,7 @@ func TestFoldStoresTheAnswerThePredicateGives(t *testing.T) {
 		if want := bandOfState(got.state); got.Band != want {
 			t.Errorf("%s: Fold stored band %s and the state it folded into is banded %s", c.name, got.Band, want)
 		}
+
 		if got.Band != BandOf(got) {
 			t.Errorf("%s: Fold stored band %s and BandOf answers %s, so it stored one of no band", c.name, got.Band, BandOf(got))
 		}
@@ -154,6 +164,7 @@ func TestEveryStateHasABand(t *testing.T) {
 	if len(want) != int(stateCount) {
 		t.Fatalf("this test names %d states and the fold has %d — place the new one in a band", len(want), stateCount)
 	}
+
 	for s, band := range want {
 		if got := bandOfState(s); got != band {
 			t.Errorf("state %d is banded %s, want %s", s, got, band)
@@ -180,6 +191,7 @@ func TestLiveDoesNotDecideTheBand(t *testing.T) {
 	for _, c := range allCases() {
 		dead := Fold(c.events)
 		alive := dead
+
 		alive.Live = true
 		if BandOf(alive) != BandOf(dead) {
 			t.Errorf("%s: setting Live moved the task from %s to %s", c.name, BandOf(dead), BandOf(alive))
@@ -196,8 +208,10 @@ func TestBandsAreDrawnInOrder(t *testing.T) {
 	if got := Bands(); !reflect.DeepEqual(got, want) {
 		t.Fatalf("Bands = %v, want %v", got, want)
 	}
+
 	scribbled := Bands()
 	scribbled[0] = Done
+
 	if got := Bands(); !reflect.DeepEqual(got, want) {
 		t.Errorf("Bands = %v after a caller wrote to a previous result, want %v", got, want)
 	}

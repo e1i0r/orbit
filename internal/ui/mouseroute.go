@@ -16,6 +16,7 @@ func (m Model) sendKey(k keystroke) (tea.Model, tea.Cmd) {
 	case m.screen == screenDetail:
 		return m.detailKey(k)
 	}
+
 	return m.listKey(k)
 }
 
@@ -28,6 +29,7 @@ func (m Model) flip(field string) (tea.Model, tea.Cmd) {
 	case field == fieldAutopilotOn && !on, field == fieldAutopilotOff && on:
 		return m.autopilot()
 	}
+
 	return m, nil
 }
 
@@ -37,27 +39,33 @@ func (m Model) rightClick(t Target) (tea.Model, tea.Cmd) {
 		if s := m.subject(); s.ID != "" {
 			return m.openMenu(s.ID), nil
 		}
+
 		return m, nil
 	}
+
 	i, ok := m.rowOf(t)
 	if !ok {
 		return m, nil
 	}
+
 	next := m.moveTo(i)
 	if t.Kind == TargetTask {
 		return next.openMenu(t.ID), nil
 	}
+
 	return next, nil
 }
 
 func (m Model) jumpToBand(b view.Band) (tea.Model, tea.Cmd) {
 	m = m.expand(b)
+
 	all := m.rows()
 	for i, r := range all {
 		if r.band == b && !r.blank {
 			return m.moveTo(i).clampCursor(), nil
 		}
 	}
+
 	return m, nil
 }
 
@@ -66,24 +74,29 @@ func (m Model) handleComposeClick(t Target) (tea.Model, tea.Cmd) {
 	case TargetComposeTab:
 		m.compose.tab = t.Pane
 		m.compose.field = 0
+
 		return m, nil
 	case TargetComposeRepoChoice:
 		if t.Pane >= 0 && t.Pane < len(m.compose.repos) {
 			m.compose.repoIdx = t.Pane
 			m.compose.repo = m.compose.repos[t.Pane].name
 		}
+
 		return m, nil
 	case TargetComposeFlowChoice:
 		if t.Pane >= 0 && t.Pane < len(m.compose.flows) {
 			if m.compose.flowIdx == t.Pane {
 				return m.openFlowPreview(m.compose.flows[t.Pane]), nil
 			}
+
 			m.compose.flowIdx = t.Pane
 		}
+
 		return m, nil
 	case TargetComposeEngineChoice:
 		if t.Pane >= 0 && t.Pane < len(m.compose.engines) {
 			m.compose.engineIdx = t.Pane
+
 			eng := m.compose.engines[t.Pane]
 			if models, ok := m.compose.modelsByEngine[eng]; ok && len(models) > 0 {
 				m.compose.models = models
@@ -92,21 +105,25 @@ func (m Model) handleComposeClick(t Target) (tea.Model, tea.Cmd) {
 				}
 			}
 		}
+
 		return m, nil
 	case TargetComposeModelChoice:
 		if t.Pane >= 0 && t.Pane < len(m.compose.models) {
 			m.compose.modelIdx = t.Pane
 		}
+
 		return m, nil
 	case TargetComposeThinkingChoice:
 		if t.Pane >= 0 && t.Pane < len(m.compose.thinkings) {
 			m.compose.thinkingIdx = t.Pane
 		}
+
 		return m, nil
 	case TargetComposeEffortChoice:
 		if t.Pane >= 0 && t.Pane < len(m.compose.efforts) {
 			m.compose.effortIdx = t.Pane
 		}
+
 		return m, nil
 	case TargetComposeNewFlow:
 		return m.openFlows(), nil
@@ -129,5 +146,6 @@ func (m Model) handleComposeClick(t Target) (tea.Model, tea.Cmd) {
 			return m.paste(clip), nil
 		}
 	}
+
 	return m, nil
 }

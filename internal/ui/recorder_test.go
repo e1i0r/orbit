@@ -48,13 +48,16 @@ func (got *recorder) ports() Options {
 			if got == nil {
 				return nil
 			}
+
 			got.id, got.word = t.ID, word
+
 			return got.err
 		},
 		Start: func(t view.Task, flowName string, unread int) (int, error) {
 			if got == nil {
 				return 0, nil
 			}
+
 			got.id, got.flow, got.unread = t.ID, flowName, unread
 			// A pid rather than a zero, because the band says which process
 			// a run was given and a zero there would read as "none".
@@ -64,13 +67,16 @@ func (got *recorder) ports() Options {
 			if got == nil {
 				return nil
 			}
+
 			got.read = t.ID
+
 			return got.err
 		},
 		Take: func(t view.Task) (*exec.Cmd, error) {
 			if got != nil {
 				got.taken = t.ID
 			}
+
 			return sessionCommand(t), nil
 		},
 		// Flows is nil, which is the built-ins and nothing else — the same

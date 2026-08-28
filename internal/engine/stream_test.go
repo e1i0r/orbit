@@ -19,10 +19,12 @@ import (
 // out before it.
 func stream(t *testing.T, name string) *bytes.Reader {
 	t.Helper()
+
 	raw, err := os.ReadFile(filepath.Join("testdata", name))
 	if err != nil {
 		t.Fatalf("read fixture: %v", err)
 	}
+
 	return bytes.NewReader(raw)
 }
 
@@ -31,12 +33,15 @@ func TestParseStreamReadsTheSessionAndTheCostFromTheResultObject(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseStream: %v", err)
 	}
+
 	if got.SessionID != "9c1f8f2a-4d3b-4a77-9a52-2f0f6f9b5c31" {
 		t.Errorf("SessionID = %q — without it there is no taking the keyboard", got.SessionID)
 	}
+
 	if got.Cost != 0.0431 {
 		t.Errorf("Cost = %v, want 0.0431", got.Cost)
 	}
+
 	if got.Output != "ACME-1: retries on 5xx are in place in the payments client." {
 		t.Errorf("Output = %q — the record keeps the result field, not the whole stream", got.Output)
 	}
@@ -52,9 +57,11 @@ func TestParseStreamKeepsOnlyTheResultTextNotTheWholeStream(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseStream: %v", err)
 	}
+
 	if strings.Contains(got.Output, `"type"`) {
 		t.Errorf("Output carries raw stream JSON: %q", got.Output)
 	}
+
 	if strings.Contains(got.Output, "Reading the payments client") {
 		t.Errorf("Output carries an intermediate assistant turn: %q", got.Output)
 	}
@@ -71,6 +78,7 @@ func TestParseStreamRefusesAStreamThatEndsWithNoResultObject(t *testing.T) {
 	if err == nil {
 		t.Fatal("a stream with no result object parsed as a success")
 	}
+
 	if !strings.Contains(err.Error(), "result") {
 		t.Errorf("the error does not name what was missing: %v", err)
 	}
@@ -85,12 +93,15 @@ func TestParseStreamAcceptsAResultObjectWithNoCost(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseStream refused a result object that reported no cost: %v", err)
 	}
+
 	if got.Cost != 0 {
 		t.Errorf("Cost = %v, want 0 — nothing in the fixture says what it cost", got.Cost)
 	}
+
 	if got.SessionID != "4f2a1c88-6b5d-42e7-8c30-7ab19d0e5c62" {
 		t.Errorf("SessionID = %q — a missing cost lost the session id with it", got.SessionID)
 	}
+
 	if got.Output == "" {
 		t.Error("Output is empty — a missing cost lost the answer with it")
 	}
@@ -112,11 +123,14 @@ func TestParseStreamIgnoresLinesThatAreNotJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read fixture: %v", err)
 	}
+
 	noisy := "warning: a newer version is available\n\n" + string(raw)
+
 	got, err := ParseStream(strings.NewReader(noisy))
 	if err != nil {
 		t.Fatalf("ParseStream: %v", err)
 	}
+
 	if got.SessionID == "" {
 		t.Error("a line of noise before the stream lost the whole result")
 	}
@@ -128,10 +142,12 @@ func TestParseStreamIgnoresLinesThatAreNotJSON(t *testing.T) {
 func TestParseStreamTakesTheLastResultObject(t *testing.T) {
 	two := `{"type":"result","subtype":"success","result":"first","session_id":"aaa","total_cost_usd":0.01}` + "\n" +
 		`{"type":"result","subtype":"success","result":"second","session_id":"bbb","total_cost_usd":0.02}` + "\n"
+
 	got, err := ParseStream(strings.NewReader(two))
 	if err != nil {
 		t.Fatalf("ParseStream: %v", err)
 	}
+
 	if got.SessionID != "bbb" || got.Output != "second" {
 		t.Errorf("took %+v, want the terminal result object", got)
 	}
@@ -143,24 +159,30 @@ func TestParseStreamWithCallbackEmitsEvents(t *testing.T) {
 		`{"type":"result","subtype":"success","result":"done","session_id":"sess-123","total_cost_usd":0.05}` + "\n"
 
 	var received []StreamEvent
+
 	res, err := ParseStreamWithCallback(strings.NewReader(streamData), func(ev StreamEvent) {
 		received = append(received, ev)
 	})
 	if err != nil {
 		t.Fatalf("ParseStreamWithCallback: %v", err)
 	}
+
 	if res.Output != "done" {
 		t.Errorf("Output = %q, want 'done'", res.Output)
 	}
+
 	if len(received) != 3 {
 		t.Fatalf("received %d events, want 3", len(received))
 	}
+
 	if received[0].Type != "thought" || received[0].Thought != "analyzing code" {
 		t.Errorf("received[0] = %+v, want thought", received[0])
 	}
+
 	if received[1].Type != "tool_call" || received[1].ToolCall.Name != "Bash" {
 		t.Errorf("received[1] = %+v, want tool_call Bash", received[1])
 	}
+
 	if received[2].Type != "result" || received[2].Cost != 0.05 {
 		t.Errorf("received[2] = %+v, want result cost 0.05", received[2])
 	}
@@ -169,13 +191,16 @@ func TestParseStreamWithCallbackEmitsEvents(t *testing.T) {
 func TestParseStreamCapturesEarlySessionIDOnInterruptedStream(t *testing.T) {
 	cutStream := `{"type":"init","session_id":"sess-early-999"}` + "\n" +
 		`{"type":"assistant","message":{"content":[{"type":"thinking","thinking":"pondering"}]}}` + "\n"
+
 	res, err := ParseStream(strings.NewReader(cutStream))
 	if err == nil {
 		t.Fatal("expected error on stream with no terminal result")
 	}
+
 	if res.SessionID != "sess-early-999" {
 		t.Errorf("SessionID = %q, want sess-early-999 to be preserved on interrupted stream", res.SessionID)
 	}
+
 	if len(res.Thoughts) != 1 || res.Thoughts[0] != "pondering" {
 		t.Errorf("Thoughts = %v, want ['pondering']", res.Thoughts)
 	}

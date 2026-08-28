@@ -23,6 +23,7 @@ func (m Model) notesLines() []string {
 	}
 
 	var items []noteItem
+
 	noteIndex := 0
 
 	for _, e := range m.entries {
@@ -34,10 +35,12 @@ func (m Model) notesLines() []string {
 		switch e.What() {
 		case view.EntryNoted:
 			noteIndex++
+
 			statusNote := "read by run"
 			if e.Attempt > 0 {
 				statusNote = fmt.Sprintf("read by run %d", e.Attempt)
 			}
+
 			senderLabel := fmt.Sprintf("● %d  %s", noteIndex, p.T("notes.operator", "OPERADOR"))
 			content := renderMarkdown(e.Text, m.frame.Body.W, m.rawText)
 			items = append(items, noteItem{
@@ -58,6 +61,7 @@ func (m Model) notesLines() []string {
 			if who == "" {
 				who = p.T("notes.outsider", "fuera de la ejecución")
 			}
+
 			items = append(items, noteItem{
 				at:      timeStr,
 				sender:  fmt.Sprintf("↔ %s", strings.ToUpper(who)),
@@ -72,6 +76,7 @@ func (m Model) notesLines() []string {
 				if msg == "" {
 					msg = e.Text
 				}
+
 				items = append(items, noteItem{
 					at:      timeStr,
 					sender:  fmt.Sprintf("🤖 %s", p.T("notes.llm_prompt", "MODELO (consulta al operador)")),
@@ -96,6 +101,7 @@ func (m Model) notesLines() []string {
 			"",
 			"  "+Paint(Dim).Render(p.T("notes.hint_action", "pulsa 'a' para dejar una nota · pulsa 'c' para abrir la CLI interactiva")),
 		)
+
 		return out
 	}
 
@@ -126,6 +132,7 @@ func (m Model) notesLines() []string {
 				out = append(out, "      "+l)
 			}
 		}
+
 		out = append(out, "")
 	}
 

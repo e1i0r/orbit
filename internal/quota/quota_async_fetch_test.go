@@ -11,6 +11,7 @@ import (
 
 func TestQuotaAsyncFetchAndCache(t *testing.T) {
 	called := 0
+
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called++
 		_ = json.NewEncoder(w).Encode([]wireWindow{ //nolint:errcheck // test HTTP handler response
@@ -33,6 +34,7 @@ func TestQuotaAsyncFetchAndCache(t *testing.T) {
 
 	// 3. Cache duration hit
 	c.Quota(true)
+
 	if len(c.cached) != 1 {
 		t.Error("expected cache to remain populated")
 	}
@@ -62,6 +64,7 @@ func TestQuotaErrorStatusesAndFormats(t *testing.T) {
 
 	// 4. Wrapper with "quota" key format
 	quotaJSON := []byte(`{"quota":[{"label":"daily","pct":80.0,"resets_in":600}]}`)
+
 	windows, err := parseWindows(quotaJSON)
 	if err != nil || len(windows) != 1 || windows[0].Label != "daily" {
 		t.Errorf("parseWindows wrapper quota failed: %v, windows=%+v", err, windows)
@@ -69,6 +72,7 @@ func TestQuotaErrorStatusesAndFormats(t *testing.T) {
 
 	// 5. Single object format
 	singleJSON := []byte(`{"label":"hourly","pct":12.5,"resets_in_s":120}`)
+
 	windowsSingle, err := parseWindows(singleJSON)
 	if err != nil || len(windowsSingle) != 1 || windowsSingle[0].Label != "hourly" {
 		t.Errorf("parseWindows single failed: %v, windows=%+v", err, windowsSingle)
@@ -94,6 +98,7 @@ func FuzzParseWindows(f *testing.F) {
 // stayed open.
 func TestAProxyThatIsDownIsNotAskedOnEveryFrame(t *testing.T) {
 	var calls atomic.Int64
+
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		calls.Add(1)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -104,6 +109,7 @@ func TestAProxyThatIsDownIsNotAskedOnEveryFrame(t *testing.T) {
 	if got := c.Quota(true); got != nil {
 		t.Fatalf("Quota = %+v, want nothing from a proxy answering 500", got)
 	}
+
 	if got := calls.Load(); got != 1 {
 		t.Fatalf("the first read asked %d times, want 1", got)
 	}
@@ -112,10 +118,13 @@ func TestAProxyThatIsDownIsNotAskedOnEveryFrame(t *testing.T) {
 	for range 50 {
 		c.Quota(false)
 	}
+
 	time.Sleep(50 * time.Millisecond) // let any fetch that did go out land
+
 	if got := calls.Load(); got != 1 {
 		t.Errorf("the proxy was asked %d times over 50 frames, want the one read that failed", got)
 	}
+
 	if c.backoff != firstBackoff {
 		t.Errorf("backoff = %s, want the first step of %s", c.backoff, firstBackoff)
 	}
@@ -127,11 +136,13 @@ func TestAProxyThatIsDownIsNotAskedOnEveryFrame(t *testing.T) {
 // request goes out.
 func TestTheBackoffGrowsAndThenGivesWayToAGoodRead(t *testing.T) {
 	var up atomic.Bool
+
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		if !up.Load() {
 			w.WriteHeader(http.StatusBadGateway)
 			return
 		}
+
 		_ = json.NewEncoder(w).Encode([]wireWindow{ //nolint:errcheck // test HTTP handler response
 			{Label: "weekly", Pct: 40.0, ResetsIn: 3600},
 		})
@@ -139,23 +150,29 @@ func TestTheBackoffGrowsAndThenGivesWayToAGoodRead(t *testing.T) {
 	defer ts.Close()
 
 	c := New(ts.URL)
+
 	want := []time.Duration{firstBackoff, 2 * firstBackoff, 4 * firstBackoff}
 	for i, step := range want {
 		c.Quota(true)
+
 		if c.backoff != step {
 			t.Fatalf("failure %d left a backoff of %s, want %s", i+1, c.backoff, step)
 		}
+
 		c.nextTry = time.Now() // the hold-off, expired
 	}
 
 	up.Store(true)
+
 	windows := c.Quota(true)
 	if len(windows) != 1 || windows[0].Label != "weekly" {
 		t.Fatalf("Quota = %+v, want the window the proxy is now serving", windows)
 	}
+
 	if c.backoff != 0 {
 		t.Errorf("backoff = %s after a good read, want it back to nothing", c.backoff)
 	}
+
 	if d := time.Until(c.nextTry); d < CacheDuration-time.Second {
 		t.Errorf("the next read is due in %s, want it held for the cache duration of %s", d, CacheDuration)
 	}

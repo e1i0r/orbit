@@ -12,12 +12,15 @@ func TestBuiltinTaskFlowLoads(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Builtin: %v", err)
 	}
+
 	if f.Name != "task" {
 		t.Errorf("Name = %q, want task", f.Name)
 	}
+
 	if len(f.Phases) == 0 {
 		t.Fatal("the built-in task flow has no phases")
 	}
+
 	if f.Phases[0].Name != "implement" {
 		t.Errorf("first phase is %q, want implement", f.Phases[0].Name)
 	}
@@ -34,12 +37,15 @@ func TestBuiltinNamesListsWhatExists(t *testing.T) {
 	if len(names) == 0 {
 		t.Fatal("no built-in flows")
 	}
+
 	found := false
+
 	for _, n := range names {
 		if n == "task" {
 			found = true
 		}
 	}
+
 	if !found {
 		t.Errorf("BuiltinNames() = %v, expected it to contain task", names)
 	}
@@ -47,14 +53,17 @@ func TestBuiltinNamesListsWhatExists(t *testing.T) {
 
 func TestLoadReadsAFlowFromDisk(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "mine.json")
+
 	body := `{"name":"mine","phases":[{"name":"implement","engine":"claude","model":"sonnet","wait":false}]}`
 	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
 		t.Fatalf("write: %v", err)
 	}
+
 	f, err := Load(path)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
+
 	if f.Name != "mine" || len(f.Phases) != 1 || f.Phases[0].Engine != "claude" {
 		t.Errorf("loaded %+v", f)
 	}
@@ -93,10 +102,12 @@ func TestValidateRejectsTwoPhasesWithOneName(t *testing.T) {
 
 func TestLoadRejectsUnknownFields(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "typo.json")
+
 	body := `{"name":"mine","phases":[{"name":"implement","engine":"claude","mdoel":"sonnet"}]}`
 	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
 		t.Fatalf("write: %v", err)
 	}
+
 	if _, err := Load(path); err == nil {
 		t.Error("Load succeeded despite unknown field mdoel")
 	}
@@ -113,10 +124,12 @@ func TestLoadOfSomethingThatIsNotJSON(t *testing.T) {
 	if err := os.WriteFile(path, []byte("{\"name\": \"mine\", \"phases\": ["), 0o600); err != nil {
 		t.Fatalf("write: %v", err)
 	}
+
 	_, err := Load(path)
 	if err == nil {
 		t.Fatal("Load accepted a file of broken JSON")
 	}
+
 	if !strings.Contains(err.Error(), path) {
 		t.Errorf("the error does not say which file will not parse: %v", err)
 	}
@@ -148,13 +161,16 @@ func TestValidateRejectsAPermissionNobodyDefined(t *testing.T) {
 		Engine:      "claude",
 		Permissions: []string{"repository"},
 	}}}
+
 	err := f.Validate()
 	if err == nil {
 		t.Fatal("a permission nobody defined validated")
 	}
+
 	if !strings.Contains(err.Error(), "repository") {
 		t.Errorf("the error does not name the permission it refused: %v", err)
 	}
+
 	if !strings.Contains(err.Error(), "implement") {
 		t.Errorf("the error does not say which phase carries it: %v", err)
 	}
@@ -171,6 +187,7 @@ func TestEveryBuiltinFlowStillValidates(t *testing.T) {
 			t.Errorf("the built-in flow %q no longer loads: %v", name, err)
 			continue
 		}
+
 		if err := f.Validate(); err != nil {
 			t.Errorf("the built-in flow %q no longer validates: %v", name, err)
 		}

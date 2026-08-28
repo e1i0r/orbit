@@ -53,6 +53,7 @@ func (OpenCode) Run(ctx context.Context, req Request) (Result, error) {
 	if err != nil {
 		return Result{}, fmt.Errorf("opencode in %q: %w", req.Dir, err)
 	}
+
 	cmd := exec.CommandContext(ctx, "opencode", args...)
 	cmd.Dir = req.Dir
 	stdout := &boundedBuffer{max: maxStream}
@@ -61,11 +62,15 @@ func (OpenCode) Run(ctx context.Context, req Request) (Result, error) {
 	cmd.Stdout = io.MultiWriter(stdout, pw)
 	cmd.Stderr = stderr
 
-	var streamResult Result
-	var parseErr error
+	var (
+		streamResult Result
+		parseErr     error
+	)
+
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
+
 		streamResult, parseErr = ParseStreamWithCallback(pr, req.OnEvent)
 		if closeErr := pr.Close(); closeErr != nil && parseErr == nil {
 			parseErr = closeErr
@@ -76,7 +81,9 @@ func (OpenCode) Run(ctx context.Context, req Request) (Result, error) {
 	if closeErr := pw.Close(); closeErr != nil && runErr == nil {
 		runErr = closeErr
 	}
+
 	<-done
+
 	out := streamResult
 
 	if runErr != nil {
@@ -84,22 +91,29 @@ func (OpenCode) Run(ctx context.Context, req Request) (Result, error) {
 			if streamResult.Output == "" {
 				streamResult.Output = strings.TrimSpace(stdout.String())
 			}
+
 			out = streamResult
 		}
+
 		out.Output = noteDropped(out.Output, stdout.dropped)
 		if msg := strings.TrimSpace(stderr.String()); msg != "" {
 			return out, fmt.Errorf("opencode in %q: %s: %w", req.Dir, msg, runErr)
 		}
+
 		return out, fmt.Errorf("opencode in %q: %w", req.Dir, runErr)
 	}
+
 	if parseErr != nil {
 		raw := strings.TrimSpace(stdout.String())
 		if raw != "" {
 			return Result{Output: noteDropped(raw, stdout.dropped)}, nil
 		}
+
 		return Result{}, fmt.Errorf("opencode in %q: %w", req.Dir, parseErr)
 	}
+
 	out.Output = noteDropped(out.Output, stdout.dropped)
+
 	return out, nil
 }
 
@@ -108,16 +122,21 @@ func openCodeArgs(req Request) ([]string, error) {
 	if err := Permitted(req.Permissions); err != nil {
 		return nil, err
 	}
+
 	args := []string{"run"}
 	if req.Model != "" {
 		args = append(args, "--model", req.Model)
 	}
+
 	if req.Effort != "" {
 		args = append(args, "--effort", req.Effort)
 	}
+
 	if req.Resume != "" {
 		args = append(args, "--session", req.Resume)
 	}
+
 	args = append(args, req.Prompt)
+
 	return args, nil
 }

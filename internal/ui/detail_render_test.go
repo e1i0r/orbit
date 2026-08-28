@@ -32,20 +32,24 @@ var tabNames = []struct {
 func TestEveryTaskViewFrameFitsTheTerminalItWasGiven(t *testing.T) {
 	for _, lang := range []string{"en", "es", "qps"} {
 		printer := printerFor(t, lang)
+
 		for _, which := range tabNames {
 			for _, size := range sizes {
 				name := lang + "/" + which.name + "/" + strconv.Itoa(size.w) + "x" + strconv.Itoa(size.h)
 				t.Run(name, func(t *testing.T) {
 					m, _ := openIn(t, printer, "ACME-2662", fixtureEntries(), fixtureDiff)
+
 					rows := renderAt(t, showing(t, m, which.tab), size.w, size.h)
 					if len(rows) != size.h {
 						t.Fatalf("the frame is %d rows, want %d", len(rows), size.h)
 					}
+
 					for i, row := range rows {
 						if cells := ansi.StringWidth(row); cells > size.w {
 							t.Errorf("row %d is %d cells wide, want at most %d: %q", i, cells, size.w, row)
 						}
 					}
+
 					wantTaskRows(t, rows)
 				})
 			}
@@ -62,13 +66,16 @@ func TestEveryTaskViewFrameFitsTheTerminalItWasGiven(t *testing.T) {
 // tells a reader whose changes they are looking at.
 func wantTaskRows(t *testing.T, rows []string) {
 	t.Helper()
+
 	frame := strings.Join(rows, "\n")
 	if !strings.Contains(frame, "ACME-2662") {
 		t.Errorf("no row names the task the view is open on:\n%s", frame)
 	}
+
 	if strings.TrimSpace(rows[len(rows)-2]) == "" {
 		t.Error("the activity band is blank under the task view")
 	}
+
 	if !strings.Contains(rows[len(rows)-1], "[") {
 		t.Errorf("the key bar is %q, want it to offer at least one key", rows[len(rows)-1])
 	}
@@ -135,12 +142,14 @@ func TestALongDiffLineNeverWidensTheFrame(t *testing.T) {
 			if shown.panes[tabDiff].SoftWrap {
 				t.Fatal("the diff pane wraps a long line rather than scrolling past it")
 			}
+
 			rows := renderAt(t, shown, size.w, size.h)
 			for i, row := range rows {
 				if cells := ansi.StringWidth(row); cells > size.w {
 					t.Fatalf("row %d is %d cells wide against a terminal of %d — the diff widened the frame", i, cells, size.w)
 				}
 			}
+
 			if len(rows) != size.h {
 				t.Fatalf("the frame is %d rows, want %d", len(rows), size.h)
 			}
@@ -164,13 +173,16 @@ func TestOOpensTheEditorInTheWorktreeAndNeverRunsIt(t *testing.T) {
 	for range 8 {
 		m = step(t, m, "down")
 	}
+
 	cmd, err := m.editorFor()
 	if err != nil {
 		t.Fatalf("build the editor command: %v", err)
 	}
+
 	if cmd.Dir != "/w/ACME-2662" {
 		t.Errorf("the editor would run in %q, want the task's worktree", cmd.Dir)
 	}
+
 	args := strings.Join(cmd.Args, " ")
 	for _, want := range []string{"+31", "retry.go"} {
 		if !strings.Contains(args, want) {
@@ -187,13 +199,16 @@ func TestTheEditorRefusesWithoutOne(t *testing.T) {
 	t.Setenv("VISUAL", "")
 	m, _ := openDetail(t, "ACME-2662")
 	after, cmd := showing(t, m, tabDiff).Update(press("o"))
+
 	got, ok := after.(Model)
 	if !ok {
 		t.Fatalf("Update returned %T, want ui.Model", after)
 	}
+
 	if cmd != nil {
 		t.Error("o ran something with no editor configured")
 	}
+
 	wantBand(t, got, "EDITOR")
 }
 
@@ -214,6 +229,7 @@ func TestTheMoreLineSaysWhatToDoAboutIt(t *testing.T) {
 
 	let := paneText(t, step(t, m, "up"))
 	wantIn(t, let, "scrolls")
+
 	if strings.Contains(let, "following") {
 		t.Errorf("the frame still claims to be following after the reader scrolled up:\n%s", let)
 	}

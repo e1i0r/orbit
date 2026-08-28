@@ -53,9 +53,11 @@ func (st *flowsState) ensurePhase() {
 		}
 		st.activePhase = 0
 	}
+
 	if st.activePhase < 0 {
 		st.activePhase = 0
 	}
+
 	if st.activePhase >= len(st.phases) {
 		st.activePhase = len(st.phases) - 1
 	}
@@ -75,6 +77,7 @@ func (m Model) openFlows() Model {
 		sel:        -1,
 	}
 	m.flows.ensurePhase()
+
 	return m
 }
 
@@ -83,6 +86,7 @@ func (m Model) openFlowPreview(name string) Model {
 	if err != nil {
 		return m.openFlows()
 	}
+
 	prev := m.screen
 	m.screen = screenFlows
 	m.flows = flowsState{
@@ -95,22 +99,28 @@ func (m Model) openFlowPreview(name string) Model {
 		activePhase:   0,
 	}
 	m.flows.ensurePhase()
+
 	return m
 }
 
 func (m Model) abandonFlows() Model {
 	prev := m.flows.fromScreen
+
 	m.flows = flowsState{}
 	if prev == screenStart {
 		m.screen = screenStart
 		return m
 	}
+
 	if prev == screenCompose {
 		m.screen = screenCompose
 		m.compose.refreshFlows(m.opts.Flows)
+
 		return m
 	}
+
 	m.screen = screenList
+
 	return m
 }
 
@@ -118,9 +128,11 @@ func (m Model) flowsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if m.flows.creating {
 		return m.flowsFormKey(msg)
 	}
+
 	if m.flows.showingDetail {
 		return m.flowDetailKey(msg)
 	}
+
 	return m.flowsListKey(msg)
 }
 
@@ -130,24 +142,30 @@ func (m Model) flowDetailKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if m.flows.fromScreen == screenCompose {
 			return m.abandonFlows(), nil
 		}
+
 		m.flows.showingDetail = false
+
 		return m, nil
 	case key.Matches(msg, m.keys.Open):
 		if m.flows.fromScreen == screenCompose {
 			m.compose.setFlow(m.flows.flowName)
 			return m.abandonFlows(), nil
 		}
+
 		m.flows.showingDetail = false
+
 		return m, nil
 	case msg.Text == "e" || msg.Text == "E":
 		return m.editNamedFlow(m.flows.flowName)
 	}
+
 	return m, nil
 }
 
 func (m Model) flowsListKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	st := &m.flows
 	p := m.opts.Words
+
 	if st.confirmDelete {
 		switch {
 		case msg.Text == "y" || msg.Text == "Y" || msg.Text == "s" || msg.Text == "S" || key.Matches(msg, m.keys.Open):
@@ -157,6 +175,7 @@ func (m Model) flowsListKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			return m.say(p.T("flows.deletion_cancelled", "deletion cancelled")), nil
 		}
 	}
+
 	descriptors := flow.List(m.opts.Flows)
 	switch {
 	case key.Matches(msg, m.keys.Back):
@@ -165,11 +184,13 @@ func (m Model) flowsListKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if st.sel > -1 {
 			st.sel--
 		}
+
 		return m, nil
 	case key.Matches(msg, m.keys.Down):
 		if st.sel < len(descriptors)-1 {
 			st.sel++
 		}
+
 		return m, nil
 	case key.Matches(msg, m.keys.Start):
 		return m.startCreateFlow(), nil
@@ -177,9 +198,11 @@ func (m Model) flowsListKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if st.sel == -1 {
 			return m.startCreateFlow(), nil
 		}
+
 		if st.sel >= 0 && st.sel < len(descriptors) {
 			return m.openFlowPreview(descriptors[st.sel].Name), nil
 		}
+
 		return m.editSelectedFlow()
 	case msg.Text == "e" || msg.Text == "E":
 		return m.editSelectedFlow()
@@ -188,18 +211,22 @@ func (m Model) flowsListKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case msg.Text == "n" || msg.Text == "N":
 		return m.startCreateFlow(), nil
 	}
+
 	return m, nil
 }
 
 func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	st := &m.flows
 	st.ensurePhase()
+
 	p := m.opts.Words
+
 	if st.confirmDiscard {
 		switch {
 		case msg.Text == "y" || msg.Text == "Y" || msg.Text == "s" || msg.Text == "S" || key.Matches(msg, m.keys.Open) || key.Matches(msg, m.keys.Back):
 			st.creating = false
 			st.confirmDiscard = false
+
 			return m.say(p.T("flows.changes_discarded", "changes discarded")), nil
 		default:
 			st.confirmDiscard = false
@@ -213,10 +240,13 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case key.Matches(msg, m.keys.Back):
 		if st.flowName != "" || st.description != "" || len(st.phases) > 1 || st.cur().Prompt != "" {
 			st.confirmDiscard = true
+
 			return m.say(p.T("flows.confirm_discard",
 				"discard flow changes? [y] yes / [n] no (or press Esc again)")), nil
 		}
+
 		st.creating = false
+
 		return m, nil
 	case key.Matches(msg, m.keys.NextTab) || key.Matches(msg, m.keys.Down):
 		st.field = (st.field + 1) % flowFieldCount
@@ -229,6 +259,7 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if msg.Code == tea.KeyLeft {
 			delta = -1
 		}
+
 		return m.handleFlowFieldDelta(delta)
 	case key.Matches(msg, m.keys.Open) || (!isText && msg.Text == " "):
 		return m.handleFlowFieldAction()
@@ -243,6 +274,7 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		case flowFieldPrompt:
 			st.cur().Prompt = trimLastRune(st.cur().Prompt)
 		}
+
 		return m, nil
 	}
 
@@ -258,5 +290,6 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			st.cur().Prompt += msg.Text
 		}
 	}
+
 	return m, nil
 }

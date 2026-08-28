@@ -55,16 +55,20 @@ func boxEdge(role Role, corner, endCorner, label, right string, w int) string {
 	rule := Paint(role)
 	head := rule.Render(corner + boxH)
 	used := 2
+
 	if label != "" {
 		head += " " + label + " "
 		used += lipgloss.Width(label) + 2
 	}
+
 	tail := rule.Render(boxH + endCorner)
 	tailCells := 2
+
 	if right != "" {
 		tail = " " + right + " " + tail
 		tailCells += lipgloss.Width(right) + 2
 	}
+
 	return fit(head+rule.Render(strings.Repeat(boxH, max(w-used-tailCells, 1)))+tail, w)
 }
 
@@ -103,6 +107,7 @@ func (m Model) drawSupervisorTextarea(boxW int) []string {
 	// to type, so the box says what the keys do instead of pretending.
 	if m.supervisor.picking {
 		ways := p.T("supervisor.picking_ways", "[↑↓] pick · [↵] take it back · [esc] cancel")
+
 		return []string{
 			boxTop(Accent, Paint(Accent).Bold(true).Render("✂ "+p.T("supervisor.picking", "pick a line to take back")), "", boxW),
 			boxRow(Accent, Paint(Dim).Render(p.T("supervisor.picking_note", "the line stays in the thread, marked; the supervisor stops being told it")), boxW),
@@ -111,12 +116,15 @@ func (m Model) drawSupervisorTextarea(boxW int) []string {
 	}
 
 	title := Paint(Accent).Bold(true).Render("💬 " + p.T("supervisor.input_prompt", "Say to Supervisor / Directive"))
+
 	rows := []string{boxTop(Accent, title, "", boxW)}
 	for _, l := range m.inputLines(cw) {
 		rows = append(rows, boxRow(Accent, l, boxW))
 	}
+
 	ways := p.T("supervisor.ways_out", "[Shift+↵] newline · [↵] send · [esc] back · [↑↓] scroll · [^R] retract · [^V] paste",
 		about("up_down", m.keys.Up.Help().Key+m.keys.Down.Help().Key))
+
 	return append(rows, boxBottom(Accent, Paint(Dim).Render(ways), "", boxW))
 }
 
@@ -125,23 +133,29 @@ func (m Model) drawSupervisorTextarea(boxW int) []string {
 // under the first character.
 func (m Model) inputLines(cw int) []string {
 	prompt := Paint(Accent).Render("❯ ")
+
 	if m.supervisor.input == "" {
 		placeholder := m.opts.Words.T("supervisor.placeholder", "type a briefing, question or standing directive...")
 		return []string{prompt + Paint(Dim).Render(placeholder) + Paint(Accent).Render("█"), ""}
 	}
+
 	var rows []string
+
 	for _, raw := range plainLines(m.supervisor.input) {
 		wrapped := splitIntoLines(raw, max(cw-2, 8))
 		if len(wrapped) == 0 {
 			wrapped = []string{""}
 		}
+
 		for _, l := range wrapped {
 			rows = append(rows, prompt+l)
 		}
 	}
+
 	rows[len(rows)-1] += Paint(Accent).Render("█")
 	for len(rows) < 2 {
 		rows = append(rows, "")
 	}
+
 	return rows
 }

@@ -26,10 +26,12 @@ import (
 func controlTask(word string, ctx Context, args []string) error {
 	fs := flag.NewFlagSet(word, flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
+
 	dir := fs.String("repo", ".", "the repository the task is against")
 	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
+
 	id := fs.Arg(0)
 	if id == "" {
 		return fmt.Errorf("%s needs the id of a task", word)
@@ -40,16 +42,20 @@ func controlTask(word string, ctx Context, args []string) error {
 		logger.Error("cli/pause", "open repository %q failed: %v", *dir, err)
 		return err
 	}
+
 	t, err := task.Load(s, r, id)
 	if err != nil {
 		logger.Error("cli/pause", "load task %q in %q failed: %v", id, r.Name, err)
 		return err
 	}
+
 	if err := task.Control(s, t, word); err != nil {
 		logger.Error("cli/pause", "control task %q in %q (%s) failed: %v", id, r.Name, word, err)
 		return err
 	}
+
 	logger.Info("cli/pause", "task %s in %s requested to %s", id, r.Name, word)
 	fmt.Fprintf(ctx.Out, "%s asked to %s — a run in flight notices at its next phase\n", id, word)
+
 	return nil
 }

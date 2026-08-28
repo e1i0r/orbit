@@ -12,10 +12,12 @@ func TestAppendMaxLineExceeded(t *testing.T) {
 	logPath := filepath.Join(tmpDir, "events.jsonl")
 
 	hugeText := strings.Repeat("A", MaxLine+100)
+
 	err := Append(logPath, Event{Kind: TaskCreated, Text: hugeText})
 	if err == nil {
 		t.Fatal("expected error appending line exceeding MaxLine")
 	}
+
 	if !strings.Contains(err.Error(), "refusing to write a line") {
 		t.Errorf("unexpected error message: %v", err)
 	}
@@ -34,9 +36,11 @@ func TestAppendZeroTimeDefaultsToNow(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Read failed: %v", err)
 	}
+
 	if len(events) != 1 {
 		t.Fatalf("expected 1 event, got %d", len(events))
 	}
+
 	if events[0].At.IsZero() {
 		t.Error("expected non-zero timestamp on read event")
 	}
@@ -58,12 +62,14 @@ func TestAppendToReadOnlyFile(t *testing.T) {
 
 func TestAppendToInvalidPath(t *testing.T) {
 	tmpDir := t.TempDir()
+
 	blocker := filepath.Join(tmpDir, "file_blocker")
 	if err := os.WriteFile(blocker, []byte("blocker"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
 	invalidPath := filepath.Join(blocker, "sub", "events.jsonl")
+
 	err := Append(invalidPath, Event{Kind: TaskCreated})
 	if err == nil {
 		t.Fatal("expected error appending to invalid nested path")
@@ -72,12 +78,14 @@ func TestAppendToInvalidPath(t *testing.T) {
 
 func TestReadOpenError(t *testing.T) {
 	tmpDir := t.TempDir()
+
 	blocker := filepath.Join(tmpDir, "file_blocker")
 	if err := os.WriteFile(blocker, []byte("data\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
 	invalidPath := filepath.Join(blocker, "child.jsonl")
+
 	_, err := Read(invalidPath)
 	if err == nil {
 		t.Fatal("expected error reading through non-directory path")
@@ -102,6 +110,7 @@ func TestReadEmptyFileAndBlanks(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Read failed on blank file: %v", err)
 	}
+
 	if len(events) != 0 {
 		t.Errorf("expected 0 events, got %d", len(events))
 	}
@@ -121,19 +130,23 @@ func TestScanEventsMultipleBadLinesAndScannerError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Read failed: %v", err)
 	}
+
 	if len(events) != 3 {
 		t.Fatalf("expected 3 events (2 unreadable + 1 created), got %d", len(events))
 	}
+
 	if events[0].Kind != Unreadable || events[1].Kind != Unreadable || events[2].Kind != TaskCreated {
 		t.Errorf("unexpected event sequence: %+v", events)
 	}
 
 	// 2. Line exceeding buffer size causing scanner error
 	hugePath := filepath.Join(tmpDir, "huge.jsonl")
+
 	hugeLine := strings.Repeat("x", MaxLine+100) + "\n"
 	if err := os.WriteFile(hugePath, []byte(hugeLine), 0o600); err != nil {
 		t.Fatal(err)
 	}
+
 	_, err = Read(hugePath)
 	if err == nil {
 		t.Fatal("expected scanner error reading line > MaxLine")
@@ -172,10 +185,12 @@ func TestReadFromOffsetEqualsSizeAndNonExistent(t *testing.T) {
 	if err := os.WriteFile(logPath, []byte("{\"kind\":\"task.created\"}\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
+
 	info, err := os.Stat(logPath)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	size := info.Size()
 
 	// Call with offset == size
@@ -195,13 +210,16 @@ func TestReadFromOffsetEqualsSizeAndNonExistent(t *testing.T) {
 	if err := os.WriteFile(logPath, []byte(multi), 0o600); err != nil {
 		t.Fatal(err)
 	}
+
 	events, offset, err = ReadFrom(logPath, 0)
 	if err != nil {
 		t.Fatalf("ReadFrom failed: %v", err)
 	}
+
 	if len(events) != 1 {
 		t.Errorf("expected 1 event, got %d", len(events))
 	}
+
 	if offset != int64(len("{\"kind\":\"task.created\"}\n")) {
 		t.Errorf("unexpected offset: %d", offset)
 	}
@@ -211,13 +229,16 @@ func TestReadFromOffsetEqualsSizeAndNonExistent(t *testing.T) {
 	if err := os.WriteFile(logPath, []byte(multiLastValid), 0o600); err != nil {
 		t.Fatal(err)
 	}
+
 	events, offset, err = ReadFrom(logPath, 0)
 	if err != nil {
 		t.Fatalf("ReadFrom failed: %v", err)
 	}
+
 	if len(events) != 1 {
 		t.Errorf("expected 1 event, got %d", len(events))
 	}
+
 	if offset != int64(len("{\"kind\":\"task.created\"}\n")) {
 		t.Errorf("unexpected offset: %d", offset)
 	}
@@ -227,13 +248,16 @@ func TestReadFromOffsetEqualsSizeAndNonExistent(t *testing.T) {
 	if err := os.WriteFile(logPath, []byte(multiBad), 0o600); err != nil {
 		t.Fatal(err)
 	}
+
 	events, offset, err = ReadFrom(logPath, 0)
 	if err != nil {
 		t.Fatalf("ReadFrom failed on incomplete bad line: %v", err)
 	}
+
 	if len(events) != 1 {
 		t.Errorf("expected 1 event, got %d", len(events))
 	}
+
 	if offset != int64(len("{\"kind\":\"task.created\"}\n")) {
 		t.Errorf("unexpected offset: %d", offset)
 	}
@@ -247,6 +271,7 @@ func TestAppendAndReadErrorPaths(t *testing.T) {
 	if err := os.WriteFile(blocker, []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
+
 	err := Append(filepath.Join(blocker, "sub", "events.jsonl"), Event{Kind: TaskCreated})
 	if err == nil {
 		t.Error("expected error appending under regular file")
@@ -257,6 +282,7 @@ func TestAppendAndReadErrorPaths(t *testing.T) {
 	if err := os.MkdirAll(dirPath, 0o700); err != nil {
 		t.Fatal(err)
 	}
+
 	err = Append(dirPath, Event{Kind: TaskCreated})
 	if err == nil {
 		t.Error("expected error opening directory for append")

@@ -31,6 +31,7 @@ func (m Model) openDetail(t view.Task) (Model, tea.Cmd) {
 	for i := range m.panes {
 		m.panes[i] = viewport.New()
 	}
+
 	return m.syncPanes(), tea.Batch(logOf(m.opts.Reader, t), diffOf(m.opts.Reader, t, m.diffBase))
 }
 
@@ -39,9 +40,11 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	if m.diffFilePicker {
 		return m.handleDiffFilePickerKey(k)
 	}
+
 	if targetTab, ok := keyToPane(k.String()); ok {
 		return m.showTab(targetTab), nil
 	}
+
 	switch {
 	case m.tab == tabDiff && key.Matches(k, m.keys.Sideways):
 		return m.sideways(k), nil
@@ -62,10 +65,12 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	case m.tab == tabDiff && (k.String() == "r" || k.String() == "R"):
 		m.hideDiffRationale = !m.hideDiffRationale
 		p := m.opts.Words
+
 		msg := p.T("diff.rationale_shown", "💡 LLM decisions and reasoning: visible")
 		if m.hideDiffRationale {
 			msg = p.T("diff.rationale_hidden", "💡 LLM decisions and reasoning: hidden")
 		}
+
 		return m.syncPanes().say(msg), nil
 	case key.Matches(k, m.keys.Back):
 		m.screen = screenList
@@ -87,18 +92,22 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	case k.String() == "e" || k.String() == "w" || k.String() == "W":
 		m.expandedDetail = !m.expandedDetail
 		p := m.opts.Words
+
 		msg := p.T("detail.mode_expanded", "expanded view (all fields unwrapped)")
 		if !m.expandedDetail {
 			msg = p.T("detail.mode_compact", "compact view (single-line summary)")
 		}
+
 		return m.syncPanes().say(msg), nil
 	case k.String() == "v" || k.String() == "V":
 		m.rawText = !m.rawText
 		p := m.opts.Words
+
 		msg := p.T("detail.mode_markdown", "formatted view (markdown)")
 		if m.rawText {
 			msg = p.T("detail.mode_raw", "plain text view (raw)")
 		}
+
 		return m.syncPanes().say(msg), nil
 	case k.String() == "p" || k.String() == "P":
 		return m.deliverPR()
@@ -108,22 +117,28 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.addMoreTests()
 	case k.String() == "t":
 		m = m.cycleThinking()
+
 		thk := m.knobs.Thinking
 		if thk == "" {
 			thk = "adaptive"
 		}
+
 		p := m.opts.Words
+
 		return m.syncPanes().say(p.T("detail.thinking_changed",
 			"thinking mode set to {mode}", about("mode", thk))), nil
 	case k.String() == "k" || k.String() == "K":
 		return m.openEngines(), nil
 	case k.String() == "E":
 		m = m.cycleEffort()
+
 		eff := m.knobs.Effort
 		if eff == "" {
 			eff = "high"
 		}
+
 		p := m.opts.Words
+
 		return m.syncPanes().say(p.T("detail.effort_changed",
 			"effort level set to {effort}", about("effort", eff))), nil
 	case k.String() == "F":
@@ -139,6 +154,7 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	case key.Matches(k, m.keys.Quit):
 		return m, tea.Quit
 	}
+
 	return m.scroll(k), nil
 }
 
@@ -152,6 +168,7 @@ func (m Model) showTab(t tab) Model {
 func (m Model) scroll(k fmt.Stringer) Model {
 	vp := m.panes[m.tab]
 	was := vp.YOffset()
+
 	switch {
 	case key.Matches(k, m.keys.Up):
 		vp.ScrollUp(1)
@@ -168,6 +185,7 @@ func (m Model) scroll(k fmt.Stringer) Model {
 	default:
 		return m
 	}
+
 	m.panes[m.tab] = vp
 	if m.tab == tabTimeline {
 		if vp.AtBottom() {
@@ -176,6 +194,7 @@ func (m Model) scroll(k fmt.Stringer) Model {
 			m.following = false
 		}
 	}
+
 	return m
 }
 
@@ -188,7 +207,9 @@ func (m Model) sideways(k fmt.Stringer) Model {
 	} else {
 		vp.ScrollRight(sidewaysStep)
 	}
+
 	m.panes[m.tab] = vp
+
 	return m
 }
 
@@ -199,10 +220,12 @@ const sidewaysStep = 8
 func (m Model) newest() Model {
 	vp := m.panes[m.tab]
 	vp.GotoBottom()
+
 	m.panes[m.tab] = vp
 	if m.tab == tabTimeline {
 		m.following = true
 	}
+
 	return m
 }
 
@@ -212,10 +235,12 @@ func logOf(r Reader, t view.Task) tea.Cmd {
 		if r == nil {
 			return logMsg{ID: t.ID, Err: errors.New("this window was opened without a way to read the record")}
 		}
+
 		entries, err := r.Log(t.RepoPath, t.ID)
 		if err != nil {
 			return logMsg{ID: t.ID, Err: err}
 		}
+
 		return logMsg{ID: t.ID, Entries: entries}
 	}
 }

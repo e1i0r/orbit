@@ -11,10 +11,12 @@ import (
 // of the extension mechanism: a file, and no code.
 func userFlow(t *testing.T, orbitHome, name string) {
 	t.Helper()
+
 	dir := filepath.Join(orbitHome, "flows")
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
+
 	body := `{"name":"` + name + `","phases":[{"name":"implement","engine":"claude","model":"sonnet"}]}`
 	if err := os.WriteFile(filepath.Join(dir, name+".json"), []byte(body), 0o600); err != nil {
 		t.Fatalf("write %s: %v", name, err)
@@ -24,25 +26,31 @@ func userFlow(t *testing.T, orbitHome, name string) {
 // listed is the flows one line each, with the blank tail dropped.
 func listed(t *testing.T, out string) []string {
 	t.Helper()
+
 	var lines []string
+
 	for _, l := range strings.Split(out, "\n") {
 		if strings.TrimSpace(l) != "" {
 			lines = append(lines, l)
 		}
 	}
+
 	return lines
 }
 
 func TestFlowsListsTheBuiltinsOnACleanStateRoot(t *testing.T) {
 	workspace(t)
+
 	code, out, errOut := run(t, "flows")
 	if code != 0 {
 		t.Fatalf("flows exited %d: %s", code, errOut)
 	}
+
 	lines := listed(t, out)
 	if len(lines) != 4 {
 		t.Fatalf("flows listed %d flows, want the four builtins:\n%s", len(lines), out)
 	}
+
 	for _, name := range []string{"careful", "quick", "task", "tdd-fuzz-pr"} {
 		if !strings.Contains(out, name+" (built in)") {
 			t.Errorf("flows does not offer %q as a built-in:\n%s", name, out)
@@ -58,9 +66,11 @@ func TestAFlowFileIsListedBesideTheBuiltins(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("flows exited %d: %s", code, errOut)
 	}
+
 	if lines := listed(t, out); len(lines) != 5 {
 		t.Fatalf("flows listed %d flows, want five:\n%s", len(lines), out)
 	}
+
 	if !strings.Contains(out, "mine (yours)") {
 		t.Errorf("flows does not say where mine came from:\n%s", out)
 	}
@@ -77,9 +87,11 @@ func TestAFileThatShadowsABuiltinSaysSo(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("flows exited %d: %s", code, errOut)
 	}
+
 	if lines := listed(t, out); len(lines) != 4 {
 		t.Fatalf("a shadowed built-in was listed twice:\n%s", out)
 	}
+
 	if !strings.Contains(out, "task (yours, shadowing the built-in)") {
 		t.Errorf("flows does not mark the shadow:\n%s", out)
 	}
@@ -98,6 +110,7 @@ func TestTheListingIsInTheReadersOwnLanguage(t *testing.T) {
 	_, orbitHome := workspace(t)
 	userFlow(t, orbitHome, "mine")
 	userFlow(t, orbitHome, "task")
+
 	if code, _, errOut := run(t, "set", "language", "es"); code != 0 {
 		t.Fatalf("set language exited %d: %s", code, errOut)
 	}
@@ -106,6 +119,7 @@ func TestTheListingIsInTheReadersOwnLanguage(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("flows exited %d: %s", code, errOut)
 	}
+
 	for _, want := range []string{"careful (predeterminado)", "mine (tuyo)", "task (tuyo, reemplaza el predeterminado)"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("the listing does not say %q:\n%s", want, out)
@@ -121,6 +135,7 @@ func TestNewSaysWhichFlowTheTaskWasWrittenAgainst(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
+
 	if !strings.Contains(out, "careful") {
 		t.Errorf("new does not say which flow the task will walk:\n%s", out)
 	}
@@ -136,10 +151,12 @@ func TestNewAgainstAFlowThatDoesNotExistStillWritesTheTaskDown(t *testing.T) {
 	if code, _, errOut := run(t, "new", "-repo", repoDir, "-flow", "nonesuch", "-id", "ACME-1", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
+
 	code, out, errOut := run(t, "list", "-repo", repoDir)
 	if code != 0 {
 		t.Fatalf("list exited %d: %s", code, errOut)
 	}
+
 	if !strings.Contains(out, "ACME-1") {
 		t.Errorf("the task was not written down:\n%s", out)
 	}

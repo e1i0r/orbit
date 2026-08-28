@@ -21,12 +21,14 @@ func captured(out string) (text string, full int) {
 	if len(out) <= maxOutput {
 		return out, 0
 	}
+
 	n := maxOutput
 	// Never cut a rune in half: the record is UTF-8, and a severed tail
 	// would come back from the log as a replacement character.
 	for n > 0 && !utf8.RuneStart(out[n]) {
 		n--
 	}
+
 	return out[:n] + fmt.Sprintf("\n…[truncated, full output was %d bytes]", len(out)), len(out)
 }
 
@@ -37,12 +39,15 @@ func prepare(s *store.Store, t Task) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	if _, statErr := os.Stat(wt); statErr == nil {
 		return wt, nil
 	}
+
 	if err := t.Repo.AddWorktree(wt, "orbit/"+t.ID); err != nil {
 		return "", err
 	}
+
 	return wt, nil
 }
 
@@ -52,16 +57,21 @@ func prompt(t Task, p flow.Phase, notes []string, prevOutput string) string {
 	if p.Prompt != "" {
 		base += fmt.Sprintf("\nPhase Instructions:\n%s\n", p.Prompt)
 	}
+
 	if prevOutput != "" {
 		base += fmt.Sprintf("\nPrevious Phase Output:\n%s\n", prevOutput)
 	}
+
 	if len(notes) == 0 {
 		return base
 	}
+
 	var sb strings.Builder
 	sb.WriteString(base + "\nOperator Notes:\n")
+
 	for _, n := range notes {
 		sb.WriteString("- " + n + "\n")
 	}
+
 	return sb.String()
 }

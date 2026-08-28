@@ -23,11 +23,14 @@ func underHome(dir, home string) string {
 	if dir == home && dir != "" {
 		return "~"
 	}
+
 	if home == "" {
 		return dir
 	}
+
 	if rest, ok := strings.CutPrefix(dir, home+string(os.PathSeparator)); ok {
 		return "~" + string(os.PathSeparator) + rest
 	}
+
 	return dir
 }

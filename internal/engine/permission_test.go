@@ -14,15 +14,19 @@ import (
 func postures() [][]string {
 	names := []string{PermissionRead, PermissionRepo, PermissionNetwork}
 	all := [][]string{}
+
 	for mask := 0; mask < 1<<len(names); mask++ {
 		var set []string
+
 		for i, n := range names {
 			if mask&(1<<i) != 0 {
 				set = append(set, n)
 			}
 		}
+
 		all = append(all, set)
 	}
+
 	return all
 }
 
@@ -31,10 +35,12 @@ func postures() [][]string {
 // rather than about what is rejected.
 func argvFor(t *testing.T, perms []string) []string {
 	t.Helper()
+
 	got, err := claudeArgs(Request{Prompt: "retry on 5xx", Permissions: perms})
 	if err != nil {
 		t.Fatalf("claudeArgs(%v): %v", perms, err)
 	}
+
 	return got
 }
 
@@ -55,6 +61,7 @@ func TestPermittedRefusesANameNobodyDefined(t *testing.T) {
 	if err == nil {
 		t.Fatal("a permission nobody defined was accepted")
 	}
+
 	if !strings.Contains(err.Error(), "repository") {
 		t.Errorf("the error does not name the permission it refused: %v", err)
 	}
@@ -99,20 +106,25 @@ func TestEveryPermissionMapsToAStatedArgv(t *testing.T) {
 // handed to whatever the machine's settings files happened to say.
 func TestAnEmptyPostureIsTheMostRestrictiveArgvRatherThanNone(t *testing.T) {
 	got := argvFor(t, nil)
+
 	joined := strings.Join(got, " ")
 	if !strings.Contains(joined, "--permission-mode") {
 		t.Errorf("the empty posture produced %q, which states no posture at all", joined)
 	}
+
 	if !slices.Contains(got, "plan") {
 		t.Errorf("the empty posture produced %q, want the strictest mode claude names", joined)
 	}
+
 	at := slices.Index(got, "--allowedTools")
 	if at < 0 || at == len(got)-1 {
 		t.Fatalf("the empty posture produced %q, which leaves the tool half to the machine's settings", joined)
 	}
+
 	if got[at+1] != noTools {
 		t.Errorf("the empty posture allowed %q, want %q — the list is stated and grants nothing", got[at+1], noTools)
 	}
+
 	for _, forbidden := range []string{"Edit", "Write", "Bash", "WebFetch", "WebSearch"} {
 		if strings.Contains(joined, forbidden) {
 			t.Errorf("the empty posture allowed %s: %q", forbidden, joined)
@@ -138,11 +150,13 @@ func TestTheEmptySentinelNamesNoToolThisPackageGrants(t *testing.T) {
 func TestEveryPostureStatesItsToolList(t *testing.T) {
 	for _, set := range postures() {
 		got := argvFor(t, set)
+
 		at := slices.Index(got, "--allowedTools")
 		if at < 0 || at == len(got)-1 {
 			t.Errorf("posture %v produced %q, which states no tool list", set, strings.Join(got, " "))
 			continue
 		}
+
 		if got[at+1] == "" {
 			t.Errorf("posture %v produced an empty tool list, which a binary may read as no list at all", set)
 		}
@@ -154,6 +168,7 @@ func TestEveryPostureStatesItsToolList(t *testing.T) {
 func TestOnlyRepoCanWrite(t *testing.T) {
 	for _, set := range postures() {
 		joined := strings.Join(argvFor(t, set), " ")
+
 		writes := strings.Contains(joined, "Edit") || strings.Contains(joined, "Write") || strings.Contains(joined, "Bash")
 		if slices.Contains(set, PermissionRepo) != writes {
 			t.Errorf("posture %v produced %q — repo is the only name that may write", set, joined)
@@ -164,6 +179,7 @@ func TestOnlyRepoCanWrite(t *testing.T) {
 func TestOnlyNetworkReachesTheWeb(t *testing.T) {
 	for _, set := range postures() {
 		joined := strings.Join(argvFor(t, set), " ")
+
 		web := strings.Contains(joined, "WebFetch") || strings.Contains(joined, "WebSearch")
 		if slices.Contains(set, PermissionNetwork) != web {
 			t.Errorf("posture %v produced %q — network is the only name that reaches the web", set, joined)
@@ -219,6 +235,7 @@ func TestClaudeArgsRefuseAPostureNobodyDefined(t *testing.T) {
 // it, so two flows that grant the same thing produce the same command line.
 func TestThePostureDoesNotDependOnTheOrderItWasWritten(t *testing.T) {
 	one := strings.Join(argvFor(t, []string{PermissionNetwork, PermissionRead}), " ")
+
 	two := strings.Join(argvFor(t, []string{PermissionRead, PermissionNetwork}), " ")
 	if one != two {
 		t.Errorf("the same posture produced two command lines:\n%s\n%s", one, two)

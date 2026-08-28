@@ -58,15 +58,20 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 	sc := bufio.NewScanner(r)
 	sc.Buffer(make([]byte, 0, 64<<10), maxStreamLine)
 
-	var out Result
-	var lines int
-	var found bool
+	var (
+		out   Result
+		lines int
+		found bool
+	)
+
 	for sc.Scan() {
 		lines++
+
 		line := bytes.TrimSpace(sc.Bytes())
 		if len(line) == 0 || line[0] != '{' {
 			continue
 		}
+
 		var env streamEnvelope
 		if err := json.Unmarshal(line, &env); err != nil {
 			continue
@@ -81,6 +86,7 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 			found = true
 			out.Output = env.Result
 			out.SessionID = env.SessionID
+
 			out.Cost = env.Cost
 			if onEvent != nil {
 				onEvent(StreamEvent{Type: "result", Cost: env.Cost})
@@ -93,6 +99,7 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 					if th == "" {
 						th = env.ContentBlock.Text
 					}
+
 					if th != "" {
 						out.Thoughts = append(out.Thoughts, th)
 						if onEvent != nil {
@@ -111,6 +118,7 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 						Name: env.ContentBlock.Name,
 						Args: string(env.ContentBlock.Input),
 					}
+
 					out.ToolCalls = append(out.ToolCalls, tc)
 					if onEvent != nil {
 						onEvent(StreamEvent{Type: "tool_call", ToolCall: tc})
@@ -135,6 +143,7 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 				Name: env.Name,
 				Args: string(env.Input),
 			}
+
 			out.ToolCalls = append(out.ToolCalls, tc)
 			if onEvent != nil {
 				onEvent(StreamEvent{Type: "tool_call", ToolCall: tc})
@@ -148,6 +157,7 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 						if t == "" {
 							t = block.Text
 						}
+
 						if t != "" {
 							out.Thoughts = append(out.Thoughts, t)
 							if onEvent != nil {
@@ -166,6 +176,7 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 							Name: block.Name,
 							Args: string(block.Input),
 						}
+
 						out.ToolCalls = append(out.ToolCalls, tc)
 						if onEvent != nil {
 							onEvent(StreamEvent{Type: "tool_call", ToolCall: tc})
@@ -182,6 +193,7 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 								Tool:  block.Name,
 								Input: block.Content,
 							}
+
 							out.Refusals = append(out.Refusals, ref)
 							if onEvent != nil {
 								onEvent(StreamEvent{Type: "refusal", Refusal: ref})
@@ -195,23 +207,28 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 				Tool:  env.Subtype,
 				Input: env.Result,
 			}
+
 			out.Refusals = append(out.Refusals, ref)
 			if onEvent != nil {
 				onEvent(StreamEvent{Type: "refusal", Refusal: ref})
 			}
 		}
 	}
+
 	if err := sc.Err(); err != nil {
 		return Result{}, fmt.Errorf("reading the engine's stream after %d lines: %w", lines, err)
 	}
+
 	if !found {
 		return out, fmt.Errorf("the engine's stream ended after %d lines with no result object: the session id and the cost are reported only there, so this phase has no answer, nothing to resume from and no price", lines)
 	}
+
 	return out, nil
 }
 
 func isPermissionRefusal(s string) bool {
 	lower := strings.ToLower(s)
+
 	return strings.Contains(lower, "permission denied") ||
 		strings.Contains(lower, "not permitted") ||
 		strings.Contains(lower, "permission refused") ||

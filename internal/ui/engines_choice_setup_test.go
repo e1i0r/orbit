@@ -73,6 +73,7 @@ func TestApplyEngineChoiceEveryRowKind(t *testing.T) {
 func TestKnobChipDefaultsEngineName(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.knobs = Knobs{Model: "opus"}
+
 	got := m.knobChip()
 	if !strings.Contains(got, "claude") {
 		t.Errorf("knobChip() = %q, want it to default the engine name to claude", got)
@@ -86,6 +87,7 @@ func TestEnginesKeyUnmatchedKey(t *testing.T) {
 	m = m.openEngines()
 	before := m.engines.sel
 	m2raw, cmd := m.enginesKey(press("z"))
+
 	m2 := asModel(t, m2raw)
 	if cmd != nil || m2.engines.sel != before || m2.screen != screenEngines {
 		t.Errorf("expected an unmatched key to change nothing, got sel=%d screen=%v cmd=%v", m2.engines.sel, m2.screen, cmd)
@@ -104,6 +106,7 @@ func TestAbandonEnginesFromStart(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.screen = screenStart
 	m = m.openEngines()
+
 	m2 := m.abandonEngines()
 	if m2.screen != screenStart {
 		t.Errorf("abandonEngines from the start dialog = %v, want screenStart", m2.screen)
@@ -116,6 +119,7 @@ func TestEnginesKeyShowingSetup(t *testing.T) {
 
 	// Any other key does nothing while setup steps are up.
 	m2raw, _ := m.enginesKey(press("x"))
+
 	m2 := asModel(t, m2raw)
 	if !m2.engines.showingSetup {
 		t.Errorf("expected an unrelated key to leave the setup screen up")
@@ -123,6 +127,7 @@ func TestEnginesKeyShowingSetup(t *testing.T) {
 
 	// Back closes it.
 	m3raw, _ := m.enginesKey(press("esc"))
+
 	m3 := asModel(t, m3raw)
 	if m3.engines.showingSetup {
 		t.Errorf("expected Back to close the setup screen")
@@ -135,6 +140,7 @@ func TestEnginesKeyNavigationAndChoice(t *testing.T) {
 	m = m.openEngines()
 
 	rows := m.collectEngineRows()
+
 	idxs := m.selectableEngineIndices(rows)
 	if len(idxs) == 0 {
 		t.Fatalf("expected at least one selectable row")
@@ -143,6 +149,7 @@ func TestEnginesKeyNavigationAndChoice(t *testing.T) {
 	// Up from the first row wraps to the last.
 	m.engines.sel = 0
 	m2raw, _ := m.enginesKey(press("up"))
+
 	m2 := asModel(t, m2raw)
 	if m2.engines.sel != len(idxs)-1 {
 		t.Errorf("Up from the first row = %d, want %d", m2.engines.sel, len(idxs)-1)
@@ -151,6 +158,7 @@ func TestEnginesKeyNavigationAndChoice(t *testing.T) {
 	// Down from the last row wraps to the first.
 	m.engines.sel = len(idxs) - 1
 	m3raw, _ := m.enginesKey(press("down"))
+
 	m3 := asModel(t, m3raw)
 	if m3.engines.sel != 0 {
 		t.Errorf("Down from the last row = %d, want 0", m3.engines.sel)
@@ -159,6 +167,7 @@ func TestEnginesKeyNavigationAndChoice(t *testing.T) {
 	// Open applies whatever row is under the cursor.
 	m.engines.sel = 0
 	m4raw, _ := m.enginesKey(press("enter"))
+
 	m4 := asModel(t, m4raw)
 	if m4.knobs.Engine == "" && !m4.engines.showingSetup {
 		t.Errorf("expected Open to either apply a choice or open setup")
@@ -166,6 +175,7 @@ func TestEnginesKeyNavigationAndChoice(t *testing.T) {
 
 	// Back leaves the screen and reports the dials in the band.
 	m5raw, _ := m.enginesKey(press("esc"))
+
 	m5 := asModel(t, m5raw)
 	if m5.screen == screenEngines {
 		t.Errorf("expected Back to leave the engines screen")
@@ -182,20 +192,25 @@ func TestCollectEngineRowsNoDialsSections(t *testing.T) {
 	m.knobs.Engine = "bare"
 
 	rows := m.collectEngineRows()
+
 	var sawNoEffort, sawNoThinking bool
+
 	for _, r := range rows {
 		if r.kind == rowHeader {
 			if strings.Contains(r.title, "no effort dial") {
 				sawNoEffort = true
 			}
+
 			if strings.Contains(r.title, "no thinking mode") {
 				sawNoThinking = true
 			}
 		}
 	}
+
 	if !sawNoEffort {
 		t.Errorf("expected a 'no effort dial' row for an engine with no efforts")
 	}
+
 	if !sawNoThinking {
 		t.Errorf("expected a 'no thinking mode' row for an engine that cannot think")
 	}

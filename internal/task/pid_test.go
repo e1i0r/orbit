@@ -24,6 +24,7 @@ func TestAMarkerMayNotNameAPidThatIsNotARunToSignal(t *testing.T) {
 		{"-4711", "a group named by a negative number"},
 	} {
 		body := "pid: " + tc.pid + "\nstarted: 2026-08-23T09:14:02Z\n"
+
 		got, err := parsePid(body)
 		if err == nil {
 			t.Errorf("parsePid(%q) = %d with no error, want a refusal: %s", body, got, tc.why)
@@ -39,6 +40,7 @@ func TestAMarkerMayNotNameAPidThatIsNotARunToSignal(t *testing.T) {
 
 func TestAMarkerNamingARealProcessIsRead(t *testing.T) {
 	body := "pid: 4711\nstarted: 2026-08-23T09:14:02Z\n"
+
 	pid, err := parsePid(body)
 	if err != nil || pid != 4711 {
 		t.Errorf("parsePid(%q) = (%d, %v), want (4711, nil)", body, pid, err)

@@ -45,14 +45,17 @@ func (f *Fake) Run(ctx context.Context, req Request) (Result, error) {
 	if err := ctx.Err(); err != nil {
 		return Result{}, err
 	}
+
 	f.Calls = append(f.Calls, req)
 	if req.OnEvent != nil {
 		for _, ev := range f.Events {
 			req.OnEvent(ev)
 		}
 	}
+
 	if f.Err != nil {
 		return Result{SessionID: f.SessionID}, f.Err
 	}
+
 	return Result{Output: f.Output, SessionID: f.SessionID}, nil
 }

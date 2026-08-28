@@ -10,6 +10,7 @@ import (
 
 func TestReaderSupervisorLog(t *testing.T) {
 	root := t.TempDir()
+
 	s, err := store.New(filepath.Join(root, ".orbit"))
 	if err != nil {
 		t.Fatalf("store.New: %v", err)
@@ -22,6 +23,7 @@ func TestReaderSupervisorLog(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SupervisorLog on non-existing: %v", err)
 	}
+
 	if len(lines) != 0 {
 		t.Errorf("lines len = %d, want 0", len(lines))
 	}
@@ -43,9 +45,11 @@ func TestReaderSupervisorLog(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SupervisorLog: %v", err)
 	}
+
 	if len(lines) != 1 {
 		t.Fatalf("lines len = %d, want 1", len(lines))
 	}
+
 	if lines[0].Text != "running smoothly" || lines[0].By != "supervisor" || lines[0].Channel != "autopilot" {
 		t.Errorf("lines[0] = %+v", lines[0])
 	}

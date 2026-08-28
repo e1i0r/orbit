@@ -32,24 +32,29 @@ func Open(path string) (Repo, error) {
 	if err != nil {
 		return Repo{}, fmt.Errorf("resolve %q: %w", path, err)
 	}
+
 	top, err := git(abs, "rev-parse", "--show-toplevel")
 	if err != nil {
 		return Repo{}, fmt.Errorf("%q is not a repository: %w", abs, err)
 	}
+
 	remote, err := pickRemote(top)
 	if err != nil {
 		return Repo{}, err
 	}
+
 	base, err := git(top, "rev-parse", "--abbrev-ref", "HEAD")
 	if err != nil {
 		return Repo{}, fmt.Errorf("read the current branch of %q: %w", top, err)
 	}
+
 	if base == "HEAD" {
 		// Detached: git has no branch name to give, so neither have we.
 		// The repository is still worth listing — it is only starting a
 		// task against it that cannot work, and AddWorktree says so.
 		base = ""
 	}
+
 	return Repo{
 		Path:   top,
 		Name:   filepath.Base(top),
@@ -66,25 +71,30 @@ func pickRemote(dir string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("list the remotes of %q: %w", dir, err)
 	}
+
 	if out == "" {
 		return "", nil
 	}
+
 	names := splitLines(out)
 	for _, n := range names {
 		if n == "origin" {
 			return "origin", nil
 		}
 	}
+
 	return names[0], nil
 }
 
 // splitLines turns git's output into a slice, dropping the blanks.
 func splitLines(s string) []string {
 	var out []string
+
 	for _, line := range strings.Split(s, "\n") {
 		if line = strings.TrimSpace(line); line != "" {
 			out = append(out, line)
 		}
 	}
+
 	return out
 }

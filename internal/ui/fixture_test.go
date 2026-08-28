@@ -47,7 +47,9 @@ func (s *settings) SetAutopilot(v bool) error {
 	if s.fail != nil {
 		return s.fail
 	}
+
 	s.autopilot = v
+
 	return nil
 }
 
@@ -57,7 +59,9 @@ func (s *settings) SetLanguage(v string) error {
 	if s.fail != nil {
 		return s.fail
 	}
+
 	s.lang = v
+
 	return nil
 }
 
@@ -80,31 +84,47 @@ func arg(name, value string) view.Arg { return view.Arg{Name: name, Value: value
 // order that screen draws it.
 func fixtureTasks() []view.Task {
 	tasks := []view.Task{
-		{Repo: "payments", ID: "ACME-2662", Title: "Retry the webhook on 5xx", Band: view.NeedsYou,
+		{
+			Repo: "payments", ID: "ACME-2662", Title: "Retry the webhook on 5xx", Band: view.NeedsYou,
 			Flow: "careful", Phase: "gates", Attempt: 2, Since: ago(31 * time.Minute),
-			Reason: view.Reason{Key: view.ReasonFailed, Args: []view.Arg{arg("phase", "gates")}}},
-		{Repo: "app", ID: "ACME-2701", Title: "Move the assets cron", Band: view.NeedsYou,
+			Reason: view.Reason{Key: view.ReasonFailed, Args: []view.Arg{arg("phase", "gates")}},
+		},
+		{
+			Repo: "app", ID: "ACME-2701", Title: "Move the assets cron", Band: view.NeedsYou,
 			Flow: "task", Phase: "review", Attempt: 1, Since: ago(4 * time.Minute),
-			Reason: view.Reason{Key: view.ReasonGate, Args: []view.Arg{arg("phase", "review")}}},
-		{Repo: "payments", ID: "ACME-2698", Title: "Fix the swagger lint", Band: view.NeedsYou,
+			Reason: view.Reason{Key: view.ReasonGate, Args: []view.Arg{arg("phase", "review")}},
+		},
+		{
+			Repo: "payments", ID: "ACME-2698", Title: "Fix the swagger lint", Band: view.NeedsYou,
 			Flow: "task", Attempt: 1, Since: ago(3 * time.Hour),
-			Reason: view.Reason{Key: view.ReasonAbandoned}},
-		{Repo: "app", ID: "ACME-2705", Title: "Reconciliation endpoint", Band: view.Running,
+			Reason: view.Reason{Key: view.ReasonAbandoned},
+		},
+		{
+			Repo: "app", ID: "ACME-2705", Title: "Reconciliation endpoint", Band: view.Running,
 			Flow: "careful", Phase: "implement", PhaseN: 1, Engine: "claude", Model: "opus",
-			Live: true, Attempt: 1, Since: ago(8 * time.Minute), Started: ago(8 * time.Minute)},
-		{Repo: "payments", ID: "ACME-2706", Title: "Index on settlements", Band: view.Running,
+			Live: true, Attempt: 1, Since: ago(8 * time.Minute), Started: ago(8 * time.Minute),
+		},
+		{
+			Repo: "payments", ID: "ACME-2706", Title: "Index on settlements", Band: view.Running,
 			Flow: "careful", Phase: "review", PhaseN: 2, Engine: "claude", Model: "opus",
-			Live: true, Attempt: 1, Since: ago(3 * time.Minute), Started: ago(40 * time.Minute)},
+			Live: true, Attempt: 1, Since: ago(3 * time.Minute), Started: ago(40 * time.Minute),
+		},
 	}
 	for _, id := range []string{"ACME-2710", "ACME-2711", "ACME-2712", "ACME-2713"} {
-		tasks = append(tasks, view.Task{Repo: "app", ID: id, Title: "Written down and not started",
-			Band: view.ToDo, Flow: "task", Since: ago(2 * time.Hour)})
+		tasks = append(tasks, view.Task{
+			Repo: "app", ID: id, Title: "Written down and not started",
+			Band: view.ToDo, Flow: "task", Since: ago(2 * time.Hour),
+		})
 	}
+
 	for i, id := range []string{"ACME-2690", "ACME-2691", "ACME-2692", "ACME-2693", "ACME-2694", "ACME-2695"} {
-		tasks = append(tasks, view.Task{Repo: "payments", ID: id, Title: "Finished earlier today",
+		tasks = append(tasks, view.Task{
+			Repo: "payments", ID: id, Title: "Finished earlier today",
 			Band: view.Done, Flow: "task", Phase: "review", Engine: "claude", Model: "opus",
-			Attempt: 1, Read: i >= 3, Since: ago(time.Duration(i+1) * time.Hour)})
+			Attempt: 1, Read: i >= 3, Since: ago(time.Duration(i+1) * time.Hour),
+		})
 	}
+
 	return tasks
 }
 
@@ -117,6 +137,7 @@ func fixtureBoard(tasks []view.Task, repos int) board.Board {
 	for _, t := range tasks {
 		b.Counts[view.BandOf(t)]++
 	}
+
 	return b
 }
 
@@ -124,8 +145,10 @@ func fixtureBoard(tasks []view.Task, repos int) board.Board {
 // it, its clock stopped, and a control port that records rather than acts.
 func testModel(t *testing.T, w, h int) (Model, *recorder) {
 	t.Helper()
+
 	got := &recorder{}
 	m := modelWith(t, words.For("en"), fixtureBoard(fixtureTasks(), 4), w, h, got)
+
 	return m, got
 }
 
@@ -136,6 +159,7 @@ func lastRow(t *testing.T) Model {
 	t.Helper()
 	m, _ := testModel(t, 100, 30)
 	m.cursor = len(m.rows()) - 1
+
 	return m
 }
 
@@ -149,6 +173,7 @@ func openOn(t *testing.T, id string) Model {
 	t.Helper()
 	m, _ := testModel(t, 100, 30)
 	m.screen, m.detail = screenDetail, id
+
 	return m
 }
 
@@ -163,6 +188,7 @@ func openOn(t *testing.T, id string) Model {
 // reader's own flows sets it itself.
 func modelWith(t *testing.T, p *words.Printer, b board.Board, w, h int, got *recorder) Model {
 	t.Helper()
+
 	o := got.ports()
 	o.Root, o.Settings, o.Words = "~/work", &settings{autopilot: true, lang: "en", unread: 5}, p
 	o.Width, o.Height = w, h
@@ -173,11 +199,14 @@ func modelWith(t *testing.T, p *words.Printer, b board.Board, w, h int, got *rec
 	m := New(o)
 	m.now = fixtureNow
 	next, _ := m.Update(boardMsg{Board: b})
+
 	loaded, ok := next.(Model)
 	if !ok {
 		t.Fatalf("Update returned %T, want ui.Model", next)
 	}
+
 	loaded.now = fixtureNow
+
 	return loaded
 }
 
@@ -205,7 +234,9 @@ func press(keystroke string) tea.KeyPressMsg {
 	case "shift+tab":
 		return tea.KeyPressMsg{Code: tea.KeyTab, Mod: tea.ModShift}
 	}
+
 	r := []rune(keystroke)[0]
+
 	return tea.KeyPressMsg{Code: r, Text: string(r)}
 }
 
@@ -216,13 +247,16 @@ func press(keystroke string) tea.KeyPressMsg {
 // cursor on a blank line and every assertion after it would be about nothing.
 func at(t *testing.T, m Model, b view.Band, head bool) Model {
 	t.Helper()
+
 	for i, r := range m.rows() {
 		if r.band == b && r.head == head && !r.blank {
 			m.cursor = i
 			return m
 		}
 	}
+
 	t.Fatalf("no %v row in the body", b)
+
 	return m
 }
 
@@ -230,6 +264,7 @@ func at(t *testing.T, m Model, b view.Band, head bool) Model {
 // message that lands in the pane rather than in the band is checked.
 func wantPane(t *testing.T, m Model, want string) {
 	t.Helper()
+
 	if !strings.Contains(m.diff, want) {
 		t.Errorf("the diff pane says %q, want it to mention %q", m.diff, want)
 	}
@@ -239,6 +274,7 @@ func wantPane(t *testing.T, m Model, want string) {
 // diff the window was right to drop leaves behind.
 func wantNoPane(t *testing.T, m Model) {
 	t.Helper()
+
 	if m.diff != "" {
 		t.Errorf("the diff pane says %q, want it left alone", m.diff)
 	}
@@ -265,9 +301,11 @@ const discriminatingWant = 4
 // leaving the next reader to notice.
 func wantBand(t *testing.T, m Model, want string) {
 	t.Helper()
+
 	if utf8.RuneCountInString(want) < discriminatingWant {
 		t.Fatalf("wantBand(%q) would pass on almost any sentence; assert a phrase only the right message contains", want)
 	}
+
 	if !strings.Contains(m.message, want) {
 		t.Errorf("the band says %q, want it to mention %q", m.message, want)
 	}

@@ -92,6 +92,7 @@ func (a Affordance) Why(p *words.Printer) string {
 	case whyDeleteRunning:
 		return p.T("why.delete_running", "cannot delete a running task; cancel it first")
 	}
+
 	return ""
 }
 

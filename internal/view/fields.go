@@ -30,6 +30,7 @@ func waiting(e record.Event) (state, Reason) {
 	if e.Data["why"] == whyPaused {
 		return stateHeld, Reason{Key: ReasonHeld, Args: args}
 	}
+
 	return stateWaiting, Reason{Key: ReasonGate, Args: args}
 }
 
@@ -43,6 +44,7 @@ func failure(phase string) Reason {
 	if phase == "" {
 		return Reason{Key: ReasonFailedToStart}
 	}
+
 	return Reason{Key: ReasonFailed, Args: []Arg{{Name: "phase", Value: phase}}}
 }
 
@@ -75,6 +77,7 @@ func count(s string) int {
 	if err != nil || n < 1 {
 		return 0
 	}
+
 	return n
 }
 
@@ -88,6 +91,7 @@ func money(s string) float64 {
 	if err != nil || v < 0 || math.IsNaN(v) || math.IsInf(v, 0) {
 		return 0
 	}
+
 	return v
 }
 
@@ -97,6 +101,7 @@ func firstLine(s string) string {
 	if i := strings.IndexByte(s, '\n'); i >= 0 {
 		s = s[:i]
 	}
+
 	return strings.TrimSpace(s)
 }
 
@@ -106,6 +111,7 @@ func formatAction(tool, args string) string {
 	if tool == "" {
 		return ""
 	}
+
 	args = strings.TrimSpace(args)
 	if strings.HasPrefix(args, "{") {
 		if idx := strings.Index(args, `"command"`); idx >= 0 {
@@ -131,11 +137,14 @@ func formatAction(tool, args string) string {
 			}
 		}
 	}
+
 	if head := firstLine(args); head != "" {
 		if len(head) > 50 {
 			head = head[:47] + "…"
 		}
+
 		return tool + ": " + head
 	}
+
 	return tool
 }

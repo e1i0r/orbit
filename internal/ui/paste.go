@@ -18,6 +18,7 @@ func (m Model) paste(content string) Model {
 	case m.screen == screenCompose:
 		m.compose.set(m.compose.get() + trimmed)
 		m.onComposeChanged()
+
 		return m
 	case m.filtering:
 		m.filter += trimmed
@@ -29,7 +30,9 @@ func (m Model) paste(content string) Model {
 		if m.flows.creating {
 			m.flows.cur().Prompt += trimmed
 		}
+
 		return m
 	}
+
 	return m
 }

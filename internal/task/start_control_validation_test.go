@@ -15,6 +15,7 @@ import (
 
 func TestStartCapAndRunCommand(t *testing.T) {
 	root := t.TempDir()
+
 	s, err := store.New(root)
 	if err != nil {
 		t.Fatal(err)
@@ -41,10 +42,12 @@ func TestStartCapAndRunCommand(t *testing.T) {
 		ID:   "TASK-1",
 		Repo: repo.Repo{Path: t.TempDir(), Name: "repo"},
 	}
+
 	pid, startErr := Start(s, tkValidDir, "quick", 0)
 	if startErr != nil {
 		t.Fatalf("Start failed: %v", startErr)
 	}
+
 	if pid <= 0 {
 		t.Errorf("expected positive PID from Start, got %d", pid)
 	}
@@ -54,6 +57,7 @@ func TestStartCapAndRunCommand(t *testing.T) {
 	if cmd.Path != "/bin/orbit" {
 		t.Errorf("cmd.Path = %q, want /bin/orbit", cmd.Path)
 	}
+
 	if cmd.Dir != "/path/to/repo" {
 		t.Errorf("cmd.Dir = %q, want /path/to/repo", cmd.Dir)
 	}
@@ -66,12 +70,14 @@ func TestStartCapAndRunCommand(t *testing.T) {
 	}
 
 	foundOrbitHome := false
+
 	for _, env := range cmd.Env {
 		if strings.HasPrefix(env, "ORBIT_HOME="+root) {
 			foundOrbitHome = true
 			break
 		}
 	}
+
 	if !foundOrbitHome {
 		t.Error("cmd.Env missing ORBIT_HOME")
 	}
@@ -79,10 +85,12 @@ func TestStartCapAndRunCommand(t *testing.T) {
 
 func TestControlInvalidWord(t *testing.T) {
 	root := t.TempDir()
+
 	s, err := store.New(root)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	tk := Task{ID: "TASK-1", Repo: repo.Repo{Path: "/tmp/repo"}}
 
 	err = Control(s, tk, "invalid-word-123")
@@ -96,12 +104,15 @@ func TestAliveMarkerParsingEdgeCases(t *testing.T) {
 	if _, err := parsePid("not_a_number"); err == nil {
 		t.Error("expected error on missing pid line")
 	}
+
 	if _, err := parsePid("pid: abc"); err == nil {
 		t.Error("expected error on non-numeric pid")
 	}
+
 	if _, err := parsePid("pid: -5"); err == nil {
 		t.Error("expected error on negative pid")
 	}
+
 	if pid, err := parsePid("pid: 12345"); err != nil || pid != 12345 {
 		t.Errorf("parsePid(pid: 12345) = (%d, %v), want (12345, nil)", pid, err)
 	}
@@ -110,9 +121,11 @@ func TestAliveMarkerParsingEdgeCases(t *testing.T) {
 	if parsed := parseStarted("not-a-timestamp"); !parsed.IsZero() {
 		t.Errorf("expected zero time on missing started line, got %v", parsed)
 	}
+
 	if parsed := parseStarted("started: bad-format"); !parsed.IsZero() {
 		t.Errorf("expected zero time on invalid timestamp, got %v", parsed)
 	}
+
 	nowStr := "started: " + time.Now().UTC().Format(time.RFC3339)
 	if parsed := parseStarted(nowStr); parsed.IsZero() {
 		t.Errorf("parseStarted(%q) returned zero time", nowStr)
@@ -121,10 +134,12 @@ func TestAliveMarkerParsingEdgeCases(t *testing.T) {
 
 func TestTaskCreateValidation(t *testing.T) {
 	root := t.TempDir()
+
 	s, err := store.New(root)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	r := repo.Repo{Path: filepath.Join(t.TempDir(), "repo"), Name: "repo"}
 
 	// Empty ID
@@ -142,6 +157,7 @@ func TestTaskCreateValidation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Create failed: %v", err)
 	}
+
 	if created.ID != "TASK-1" {
 		t.Errorf("created.ID = %q, want TASK-1", created.ID)
 	}
@@ -154,6 +170,7 @@ func TestTaskCreateValidation(t *testing.T) {
 
 func TestRunEngineAndModelValidations(t *testing.T) {
 	root := t.TempDir()
+
 	s, err := store.New(root)
 	if err != nil {
 		t.Fatal(err)
@@ -168,6 +185,7 @@ func TestRunEngineAndModelValidations(t *testing.T) {
 			{Name: "phase-1", Engine: "nonexistent"},
 		},
 	}
+
 	err = Run(context.Background(), s, tk, fMissingEngine, map[string]engine.Engine{}, nil)
 	if err == nil || !strings.Contains(err.Error(), "which is not configured") {
 		t.Errorf("expected unconfigured engine error, got %v", err)
@@ -184,6 +202,7 @@ func TestRunEngineAndModelValidations(t *testing.T) {
 			{Name: "phase-1", Engine: "claude", Model: "nonexistent-model"},
 		},
 	}
+
 	err = Run(context.Background(), s, tk, fBadModel, engines, nil)
 	if err == nil || !strings.Contains(err.Error(), "does not offer") {
 		t.Errorf("expected unsupported model error, got %v", err)
@@ -196,6 +215,7 @@ func TestRunEngineAndModelValidations(t *testing.T) {
 			{Name: "phase-1", Engine: "claude", Effort: "ultra-high"},
 		},
 	}
+
 	err = Run(context.Background(), s, tk, fBadEffort, engines, nil)
 	if err == nil || !strings.Contains(err.Error(), "effort") {
 		t.Errorf("expected unsupported effort error, got %v", err)
@@ -210,6 +230,7 @@ func TestRunEngineAndModelValidations(t *testing.T) {
 			{Name: "phase-1", Engine: "fake", Thinking: "high"},
 		},
 	}
+
 	err = Run(context.Background(), s, tk, fBadThinking, enginesFake, nil)
 	if err == nil || !strings.Contains(err.Error(), "does not support thinking") {
 		t.Errorf("expected unsupported thinking error, got %v", err)
@@ -218,10 +239,12 @@ func TestRunEngineAndModelValidations(t *testing.T) {
 
 func TestTaskLoadAndFlowChoice(t *testing.T) {
 	root := t.TempDir()
+
 	s, err := store.New(root)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	r := repo.Repo{Path: filepath.Join(t.TempDir(), "repo"), Name: "repo"}
 
 	// 1. Load non-existent task
@@ -234,13 +257,16 @@ func TestTaskLoadAndFlowChoice(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Create failed: %v", err)
 	}
+
 	loaded, err := Load(s, r, "TASK-CUSTOM")
 	if err != nil {
 		t.Fatalf("Load failed: %v", err)
 	}
+
 	if loaded.Flow != "custom-flow" || loaded.Text != "test task" {
 		t.Errorf("loaded task = %+v, want flow=custom-flow", loaded)
 	}
+
 	if created.ID != loaded.ID {
 		t.Errorf("created ID %q != loaded ID %q", created.ID, loaded.ID)
 	}

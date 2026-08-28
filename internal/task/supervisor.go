@@ -14,23 +14,29 @@ func RecordSupervisor(s *store.Store, kind, by, channel, taskID, repo, text stri
 	if s == nil {
 		return fmt.Errorf("store cannot be nil")
 	}
+
 	text = strings.TrimSpace(text)
 	if text == "" {
 		return fmt.Errorf("supervisor message cannot be empty")
 	}
+
 	if kind == "" {
 		kind = record.SupervisorMessage
 	}
+
 	data := map[string]string{}
 	if by = strings.TrimSpace(by); by != "" {
 		data["by"] = by
 	}
+
 	if channel = strings.TrimSpace(channel); channel != "" {
 		data["channel"] = channel
 	}
+
 	if taskID = strings.TrimSpace(taskID); taskID != "" {
 		data["task_id"] = taskID
 	}
+
 	if repo = strings.TrimSpace(repo); repo != "" {
 		data["repo"] = repo
 	}
@@ -41,6 +47,7 @@ func RecordSupervisor(s *store.Store, kind, by, channel, taskID, repo, text stri
 		Text: text,
 		Data: data,
 	}
+
 	return record.Append(s.SupervisorLogPath(), e)
 }
 
@@ -49,6 +56,7 @@ func SupervisorEvents(s *store.Store) ([]record.Event, error) {
 	if s == nil {
 		return nil, fmt.Errorf("store cannot be nil")
 	}
+
 	return record.Read(s.SupervisorLogPath())
 }
 
@@ -69,23 +77,28 @@ func RetractSupervisor(s *store.Store, at time.Time) error {
 	if s == nil {
 		return fmt.Errorf("store cannot be nil")
 	}
+
 	if at.IsZero() {
 		return fmt.Errorf("a retraction has to name the turn it takes back")
 	}
+
 	events, err := SupervisorEvents(s)
 	if err != nil {
 		return err
 	}
+
 	want := record.Stamp(at)
 	for _, e := range events {
 		if e.Kind == record.SupervisorRetracted || record.Stamp(e.At) != want {
 			continue
 		}
+
 		return record.Append(s.SupervisorLogPath(), record.Event{
 			At:   time.Now().UTC(),
 			Kind: record.SupervisorRetracted,
 			Data: map[string]string{"at": want},
 		})
 	}
+
 	return fmt.Errorf("nothing in the supervisor thread was written at %s", want)
 }

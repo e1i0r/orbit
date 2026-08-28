@@ -18,13 +18,16 @@ func (m Model) supervisorRows(h, w int) []string {
 	if h <= 0 {
 		return nil
 	}
+
 	boxW, threadH := m.supervisorLayout(h, w)
 	out := m.drawSupervisorThread(threadH, boxW)
 	out = append(out, "")
+
 	out = append(out, m.drawSupervisorTextarea(boxW)...)
 	for i, row := range out {
 		out[i] = fit("  "+row, w)
 	}
+
 	return fill(out, h)
 }
 
@@ -41,10 +44,12 @@ func (m Model) supervisorLayout(h, w int) (boxW, threadH int) {
 // drawSupervisorThread is the conversation, framed.
 func (m Model) drawSupervisorThread(h, boxW int) []string {
 	p := m.opts.Words
+
 	eng := m.knobs.Engine
 	if eng == "" {
 		eng = "claude"
 	}
+
 	autoPip := Paint(Dim).Render("○ off")
 	if m.autopilotOn() {
 		autoPip = Paint(Live).Render("● on")
@@ -54,6 +59,7 @@ func (m Model) drawSupervisorThread(h, boxW int) []string {
 	// back changes what every key does, and a mode you cannot see is a mode
 	// you press keys into by accident.
 	frame := Dim
+
 	right := Paint(Dim).Render("⚡ ") + autoPip + Paint(Dim).Render(" · "+strconv.Itoa(len(m.supervisor.lines))+" msg")
 	if m.supervisor.picking {
 		frame = Accent
@@ -67,6 +73,7 @@ func (m Model) drawSupervisorThread(h, boxW int) []string {
 	for _, body := range m.supervisorBody(h-2, boxContentWidth(boxW)) {
 		rows = append(rows, boxRow(frame, body, boxW))
 	}
+
 	return append(rows, boxBottom(frame, "", "", boxW))
 }
 
@@ -82,7 +89,9 @@ func (m Model) supervisorBody(maxRows, cw int) []string {
 	if len(rendered) < maxRows {
 		return append(make([]string, maxRows-len(rendered)), rendered...)
 	}
+
 	offset := m.threadOffset(len(rendered), maxRows, starts)
+
 	return rendered[offset : offset+maxRows]
 }
 
@@ -94,14 +103,17 @@ func (m Model) threadLines(cw int) (rows []string, starts []int) {
 		empty := p.T("supervisor.empty", "No messages in supervisor thread yet. Type a briefing or instruction below.")
 		return append([]string{""}, splitIntoLines(Paint(Dim).Render(empty), cw)...), nil
 	}
+
 	for i, l := range m.supervisor.lines {
 		starts = append(starts, len(rows))
 		rows = append(rows, m.messageLines(l, cw, m.supervisor.picking && m.supervisor.pick == i)...)
 		rows = append(rows, "")
 	}
+
 	if m.supervisorBusy {
 		rows = append(rows, m.supervisorThinking(cw)...)
 	}
+
 	return rows, starts
 }
 
@@ -115,12 +127,15 @@ func (m Model) threadOffset(total, maxRows int, starts []int) int {
 	if m.supervisor.follow {
 		offset = max(total-maxRows, 0)
 	}
+
 	if m.supervisor.picking && m.supervisor.pick < len(starts) {
 		start := starts[m.supervisor.pick]
+
 		end := total
 		if m.supervisor.pick+1 < len(starts) {
 			end = starts[m.supervisor.pick+1]
 		}
+
 		switch {
 		case start < offset:
 			offset = start
@@ -128,6 +143,7 @@ func (m Model) threadOffset(total, maxRows int, starts []int) int {
 			offset = end - maxRows
 		}
 	}
+
 	return min(max(offset, 0), max(total-maxRows, 0))
 }
 
@@ -135,35 +151,43 @@ func (m Model) threadOffset(total, maxRows int, starts []int) int {
 // in their colour.
 func (m Model) messageLines(l view.SupervisorLine, cw int, selected bool) []string {
 	p := m.opts.Words
+
 	role := Accent
 	if isEngineName(l.By) {
 		role = Live
 	}
+
 	if l.Retracted {
 		role = Dim
 	}
+
 	rail := Paint(role).Render("▎")
 	if selected {
 		rail = Paint(Accent).Bold(true).Render("▶")
 	}
 
 	who := Paint(role).Bold(true).Render(l.By) + " " + Paint(Dim).Render("["+l.Channel+"]")
+
 	tag := ""
 	if l.TaskID != "" {
 		tag = Paint(Accent).Render("(" + l.TaskID + ")")
 	}
+
 	if l.Retracted {
 		tag = strings.TrimSpace(tag + " " + Paint(Dim).Render(p.T("supervisor.retracted", "(retracted)")))
 	}
+
 	if selected {
 		tag = Paint(Accent).Bold(true).Render(p.T("supervisor.take_back", "[↵] take this one back"))
 	}
 
 	head := railed(rail, Paint(Dim).Render(l.At.Format("15:04:05"))+"  "+who)
+
 	rows := []string{spread(head, tag, cw)}
 	for _, body := range m.messageBody(l, cw) {
 		rows = append(rows, railed(rail, body))
 	}
+
 	return rows
 }
 
@@ -174,7 +198,9 @@ func (m Model) messageLines(l view.SupervisorLine, cw int, selected bool) []stri
 // bullet.
 func (m Model) messageBody(l view.SupervisorLine, cw int) []string {
 	text := max(cw-2, 8)
+
 	var out []string
+
 	switch {
 	case l.Retracted:
 		for _, raw := range plainLines(l.Text) {
@@ -191,6 +217,7 @@ func (m Model) messageBody(l view.SupervisorLine, cw int) []string {
 			out = append(out, splitIntoLines(formatInlineMarkdown(raw), text)...)
 		}
 	}
+
 	return out
 }
 
@@ -200,9 +227,11 @@ func (m Model) supervisorThinking(cw int) []string {
 	if eng == "" {
 		eng = "claude"
 	}
+
 	rail := Paint(Live).Render("▎")
 	head := railed(rail, Paint(Dim).Render(m.now.Format("15:04:05"))+"  "+Paint(Live).Bold(true).Render(eng)+" "+Paint(Dim).Render("[supervisor]"))
 	body := railed(rail, m.spinner(Live)+Paint(Dim).Render(m.opts.Words.T("supervisor.thinking", "supervisor is thinking...")))
+
 	return []string{fit(head, cw), fit(body, cw), ""}
 }
 
@@ -212,6 +241,7 @@ func isEngineName(by string) bool {
 	case "supervisor", "claude", "codex", "opencode", "gemini":
 		return true
 	}
+
 	return false
 }
 

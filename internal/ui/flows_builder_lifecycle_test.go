@@ -17,6 +17,7 @@ func TestFlowsBuilderFullLifecycle(t *testing.T) {
 
 	sendKey := func(k rune, code rune, text string) {
 		var msg tea.Msg
+
 		switch {
 		case text != "":
 			msg = tea.KeyPressMsg{Code: code, Text: text}
@@ -25,12 +26,14 @@ func TestFlowsBuilderFullLifecycle(t *testing.T) {
 		default:
 			msg = tea.KeyPressMsg{Code: k, Text: string(k)}
 		}
+
 		updated, _ := m.Update(msg)
 		m = asModel(t, updated)
 	}
 
 	// 2. Press 'n' to enter flow builder (creating = true)
 	sendKey('n', 0, "")
+
 	if !m.flows.creating {
 		t.Error("expected creating to be true in flowsState")
 	}
@@ -53,33 +56,41 @@ func TestFlowsBuilderFullLifecycle(t *testing.T) {
 
 	// 6. Left / Right on fields to cycle options
 	m.flows.field = flowFieldTemplate
+
 	sendKey(0, tea.KeyRight, "")
 	sendKey(0, tea.KeyLeft, "")
 
 	m.flows.field = flowFieldEngine
+
 	sendKey(0, tea.KeyRight, "")
 	sendKey(0, tea.KeyLeft, "")
 
 	m.flows.field = flowFieldFeedOutput
+
 	sendKey(0, tea.KeyRight, "")
 
 	m.flows.field = flowFieldWait
+
 	sendKey(0, tea.KeyRight, "")
 
 	// 7. Add a phase
 	m.flows.field = flowFieldAddPhase
+
 	sendKey(0, tea.KeyEnter, "")
+
 	if len(m.flows.phases) < 2 {
 		t.Errorf("expected at least 2 phases after AddPhase, got %d", len(m.flows.phases))
 	}
 
 	// 8. Delete a phase
 	m.flows.field = flowFieldDelPhase
+
 	sendKey(0, tea.KeyEnter, "")
 
 	// 9. Save flow
 	m.flows.field = flowFieldSave
 	m.flows.flowName = "my-custom-test-flow"
+
 	sendKey(0, tea.KeyEnter, "")
 
 	// 10. Escape to close
@@ -103,6 +114,7 @@ func TestFlowsBuilderRowsEditingWithPromptAndToggles(t *testing.T) {
 	if len(rows) == 0 {
 		t.Fatal("expected a non-empty render")
 	}
+
 	v := m2.View()
 	if len(v.Content) == 0 {
 		t.Error("expected non-empty view content while editing")

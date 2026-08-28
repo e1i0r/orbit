@@ -32,11 +32,13 @@ func (m Model) composeLayout() composePlan {
 	if m.compose.tab == composeTabManual {
 		p.repo = 2
 		p.flow = 3
+
 		cur := 4
 		if hasSum {
 			p.flowSum = cur
 			cur++
 		}
+
 		p.engine = cur
 		cur++
 		p.model = cur
@@ -55,11 +57,13 @@ func (m Model) composeLayout() composePlan {
 		p.url = 2
 		p.repo = 3
 		p.flow = 4
+
 		cur := 5
 		if hasSum {
 			p.flowSum = cur
 			cur++
 		}
+
 		p.engine = cur
 		cur++
 		p.model = cur
@@ -67,12 +71,15 @@ func (m Model) composeLayout() composePlan {
 		p.thinking = cur
 		cur++
 		p.effort = cur
+
 		cur++
 		if m.compose.parsedIssue != nil {
 			cur += 2
 		}
+
 		p.actions = cur + 1
 	}
+
 	return p
 }
 
@@ -89,5 +96,6 @@ func hitComposeActions(p *words.Printer, x int) Target {
 	} else if x < saveW+runW {
 		return Target{Kind: TargetComposeAction, Key: "save_and_run"}
 	}
+
 	return Target{Kind: TargetComposeAction, Key: "cancel"}
 }

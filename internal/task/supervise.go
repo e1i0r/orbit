@@ -18,9 +18,11 @@ func Supervise(ctx context.Context, s *store.Store, eng engine.Engine, prompt st
 	if s == nil {
 		return "", fmt.Errorf("store cannot be nil")
 	}
+
 	if eng == nil {
 		return "", fmt.Errorf("engine cannot be nil")
 	}
+
 	prompt = strings.TrimSpace(prompt)
 	if prompt == "" {
 		return "", fmt.Errorf("supervise prompt cannot be empty")
@@ -39,6 +41,7 @@ func Supervise(ctx context.Context, s *store.Store, eng engine.Engine, prompt st
 	}
 
 	out, runErr := eng.Run(ctx, req)
+
 	ans := strings.TrimSpace(out.Output)
 	if runErr != nil && ans == "" {
 		return "", fmt.Errorf("supervisor engine %s failed: %w", eng.Name(), runErr)
@@ -49,6 +52,7 @@ func Supervise(ctx context.Context, s *store.Store, eng engine.Engine, prompt st
 			return ans, recErr
 		}
 	}
+
 	return ans, nil
 }
 
@@ -64,14 +68,17 @@ func buildSupervisorPrompt(history, newPrompt string) string {
 	b.WriteString("You are Orbit's Supervisor sitting at the cockpit seat.\n")
 	b.WriteString("You have full authority to inspect all repositories, tasks, and flows via Orbit MCP tools.\n")
 	b.WriteString("Answer the operator directly, take corrective actions on tasks when needed, and report clearly.\n\n")
+
 	if history != "" {
 		b.WriteString("## Supervisor Thread History:\n")
 		b.WriteString(history)
 		b.WriteString("\n")
 	}
+
 	b.WriteString("## Operator Directive / Message:\n")
 	b.WriteString(newPrompt)
 	b.WriteString("\n\nRespond concisely with your assessment, conclusions, or actions taken.")
+
 	return b.String()
 }
 
@@ -99,27 +106,34 @@ func history(events []record.Event) string {
 	// conversation rather than part of it. Both are still in the log, which
 	// is where a person goes to see what was said.
 	gone := record.Retracted(events)
+
 	lines := make([]string, 0, len(events))
 	for _, e := range events {
 		if e.Kind == record.SupervisorRetracted || gone[record.Stamp(e.At)] {
 			continue
 		}
+
 		lines = append(lines, historyLine(e))
 	}
+
 	kept, budget := 0, maxHistory
 	for i := len(lines) - 1; i >= 0; i-- {
 		if budget -= len(lines[i]); budget < 0 {
 			break
 		}
+
 		kept++
 	}
+
 	var b strings.Builder
 	if dropped := len(lines) - kept; dropped > 0 {
 		fmt.Fprintf(&b, "…[%d earlier turns are not shown; the thread is longer than this]\n", dropped)
 	}
+
 	for _, l := range lines[len(lines)-kept:] {
 		b.WriteString(l)
 	}
+
 	return b.String()
 }
 
@@ -131,13 +145,16 @@ func historyLine(e record.Event) string {
 	if by == "" {
 		by = "operator"
 	}
+
 	channel := e.Data["channel"]
 	if channel == "" {
 		channel = "tui"
 	}
+
 	taskID := ""
 	if e.Data["task_id"] != "" {
 		taskID = " (" + e.Data["task_id"] + ")"
 	}
+
 	return fmt.Sprintf("[%s via %s]%s: %s\n", by, channel, taskID, e.Text)
 }

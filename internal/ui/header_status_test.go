@@ -33,9 +33,11 @@ func TestRule(t *testing.T) {
 	if got := m.rule(0); got != "" {
 		t.Errorf("rule(0) = %q, want empty", got)
 	}
+
 	if got := m.rule(-3); got != "" {
 		t.Errorf("rule(-3) = %q, want empty", got)
 	}
+
 	if got := m.rule(10); got == "" {
 		t.Error("rule(10) = empty, want a line")
 	}
@@ -52,10 +54,12 @@ func TestHeaderLineShrinksAndRefuses(t *testing.T) {
 	if wide == "" {
 		t.Fatal("headerLine(200) is empty")
 	}
+
 	narrow := m.headerLine(30)
 	if narrow == "" {
 		t.Fatal("headerLine(30) is empty")
 	}
+
 	tiny := m.headerLine(6)
 	if tiny == "" {
 		t.Fatal("headerLine(6) is empty, want the bare program name")
@@ -70,6 +74,7 @@ func TestHeaderLeftQueueBadges(t *testing.T) {
 	if len(m.board.Counts) < 4 {
 		t.Fatalf("fixture board has %d counts, want at least 4", len(m.board.Counts))
 	}
+
 	line, ok := m.headerLeft(120, false)
 	if !ok || !strings.Contains(line, "📋") {
 		t.Errorf("headerLeft(120, false) = %q, ok=%v, want the queue badges", line, ok)
@@ -111,6 +116,7 @@ func TestHeaderFieldsUnreadBrake(t *testing.T) {
 	if fields := m.headerFields(); !strings.Contains(strings.Join(fields, " "), "claude") {
 		t.Errorf("headerFields with no knobs set = %v, want the default claude chip", fields)
 	}
+
 	m.knobs.Engine, m.knobs.Model = "codex", "o1"
 	if fields := m.headerFields(); !strings.Contains(strings.Join(fields, " "), "o1") {
 		t.Errorf("headerFields with knobs set = %v, want the chip to mention o1", fields)
@@ -148,6 +154,7 @@ func TestStatusLineSegmentsAndQuota(t *testing.T) {
 	if !strings.Contains(wide, "%") {
 		t.Errorf("statusLine(200) = %q, want the quota segment", wide)
 	}
+
 	narrow := m.statusLine(10)
 	if narrow == "" {
 		t.Error("statusLine(10) is empty, want at least one segment fitted")
@@ -179,6 +186,7 @@ func TestStatusRows(t *testing.T) {
 	if rows := m.statusRows(); len(rows) == 0 {
 		t.Error("statusRows on a sized frame returned nothing")
 	}
+
 	m.frame.Status.H = 0
 	if rows := m.statusRows(); rows != nil {
 		t.Errorf("statusRows with H=0 = %v, want nil", rows)

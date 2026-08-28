@@ -37,6 +37,7 @@ import (
 // directory.
 func (r *Reader) Refresh() (Board, Changed, error) {
 	start := time.Now()
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -70,26 +71,32 @@ func (r *Reader) Refresh() (Board, Changed, error) {
 	}
 	b.Errs = append(b.Errs, r.scanErrs...)
 
-	var changed Changed
-	var totalBytes int64
-	var eventsRead int
-	var lastWrite time.Time
+	var (
+		changed    Changed
+		totalBytes int64
+		eventsRead int
+		lastWrite  time.Time
+	)
 
 	for _, st := range r.tasks {
 		fresh, err := r.poll(st)
 		totalBytes += st.size
 		eventsRead += len(fresh)
+
 		if st.modTime.After(lastWrite) {
 			lastWrite = st.modTime
 		}
+
 		moved := len(fresh) > 0
 		// A log that has just started or just stopped being readable is a
 		// row that changes even though no event arrived.
 		flipped := (err != nil) != (st.err != nil)
+
 		st.err = err
 		if err != nil {
 			b.Errs = append(b.Errs, &TaskError{Repo: st.repo.name, ID: st.id, Err: err})
 		}
+
 		if moved || !st.seen {
 			st.events = append(st.events, fresh...)
 			st.task = view.Fold(st.events)
@@ -131,6 +138,7 @@ func (r *Reader) Refresh() (Board, Changed, error) {
 			// reported where a reader can see it.
 			b.Errs = append(b.Errs, fmt.Errorf("task %s in %s: %w", st.id, st.repo.name, aliveErr))
 		}
+
 		st.task.Live = alive
 
 		// One call to view.BandOf, answering both the crossing and — via
@@ -139,12 +147,15 @@ func (r *Reader) Refresh() (Board, Changed, error) {
 		if r.baseline && band == view.NeedsYou && st.band != view.NeedsYou {
 			changed.Entered = append(changed.Entered, st.id)
 		}
+
 		if moved || flipped || !st.seen {
 			changed.Tasks = append(changed.Tasks, st.id)
 		}
+
 		st.band, st.seen = band, true
 		b.Tasks = append(b.Tasks, st.task)
 	}
+
 	b.Counts = counts(b.Tasks)
 	b.Health = Health{
 		Root:       root,
@@ -157,6 +168,7 @@ func (r *Reader) Refresh() (Board, Changed, error) {
 		Errs:       len(b.Errs),
 	}
 	r.baseline = true
+
 	return b, changed, nil
 }
 
@@ -180,6 +192,7 @@ func (r *Reader) Refresh() (Board, Changed, error) {
 func (r *Reader) Rescan() error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
 	return r.rescan()
 }
 
@@ -209,6 +222,7 @@ func (r *Reader) rescan() error {
 	}
 
 	var errs []error
+
 	repos := make([]*repoState, 0, len(found))
 	for _, rp := range found {
 		// The name is taken from the walk rather than asked for again.
@@ -225,6 +239,7 @@ func (r *Reader) rescan() error {
 	})
 
 	index := make(map[taskKey]*taskState, len(r.index))
+
 	tasks := make([]*taskState, 0, len(r.tasks))
 	for _, rs := range repos {
 		ids, listErr := r.list(rs)
@@ -234,6 +249,7 @@ func (r *Reader) rescan() error {
 			errs = append(errs, listErr)
 			continue
 		}
+
 		for _, id := range ids {
 			st, keep := r.index[taskKey{rs.path, id}]
 			if !keep {
@@ -242,6 +258,7 @@ func (r *Reader) rescan() error {
 					errs = append(errs, pathErr)
 					continue
 				}
+
 				st = &taskState{id: id, path: path}
 			}
 
@@ -250,6 +267,8 @@ func (r *Reader) rescan() error {
 			tasks = append(tasks, st)
 		}
 	}
+
 	r.repos, r.tasks, r.index, r.scanErrs, r.scanned = repos, tasks, index, errs, true
+
 	return nil
 }

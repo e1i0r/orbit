@@ -21,14 +21,17 @@ import (
 // kindsOn is one task's record, by kind, in the order it was written.
 func kindsOn(t *testing.T, s *store.Store, r repo.Repo, id string) []record.Event {
 	t.Helper()
+
 	path, err := s.EventsPath(r.Path, id)
 	if err != nil {
 		t.Fatalf("events path of task %s: %v", id, err)
 	}
+
 	events, err := record.Read(path)
 	if err != nil {
 		t.Fatalf("read the record of task %s: %v", id, err)
 	}
+
 	return events
 }
 
@@ -36,15 +39,19 @@ func kindsOn(t *testing.T, s *store.Store, r repo.Repo, id string) []record.Even
 // there is not exactly one.
 func only(t *testing.T, events []record.Event, kind string) record.Event {
 	t.Helper()
+
 	var found []record.Event
+
 	for _, e := range events {
 		if e.Kind == kind {
 			found = append(found, e)
 		}
 	}
+
 	if len(found) != 1 {
 		t.Fatalf("the record has %d %s events, want exactly 1: %v", len(found), kind, events)
 	}
+
 	return found[0]
 }
 
@@ -59,11 +66,14 @@ func TestAPauseAskedForOverMCPIsInTheTasksHistory(t *testing.T) {
 	if res := sn.Call("orbit_pause_task", map[string]any{"task_id": "PAY-9"}); res.IsError {
 		t.Fatalf("orbit_pause_task refused: %s", text(t, res))
 	}
+
 	events := kindsOn(t, s, r, "PAY-9")
+
 	wrote := only(t, events, record.TaskDialogue)
 	if wrote.Data["by"] != "mcp" {
 		t.Errorf("by = %q, want the server that acted", wrote.Data["by"])
 	}
+
 	if !strings.Contains(wrote.Text, "pause") {
 		t.Errorf("the record says %q, want it to say what was asked for", wrote.Text)
 	}
@@ -83,19 +93,24 @@ func TestAPauseAskedForOverMCPIsInTheTasksHistory(t *testing.T) {
 // only reads the marker and fatal for the one that sends it SIGTERM.
 func heldTask(t *testing.T, s *store.Store, r repo.Repo, id string) {
 	t.Helper()
+
 	cmd := exec.Command("/bin/sh", "-c", "sleep 30")
+
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("start a process to signal: %v", err)
 	}
+
 	t.Cleanup(func() {
 		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL) //nolint:errcheck // best effort: the test is over
 		_ = cmd.Wait()                                      //nolint:errcheck // best effort: the test is over
 	})
+
 	path, err := s.RunPath(r.Path, id)
 	if err != nil {
 		t.Fatalf("run marker path of task %s: %v", id, err)
 	}
+
 	body := fmt.Sprintf("pid: %d\nstarted: %s\n", cmd.Process.Pid, time.Now().UTC().Format(time.RFC3339))
 	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
 		t.Fatalf("plant the run marker of task %s: %v", id, err)
@@ -112,6 +127,7 @@ func TestACancelIsInTheTasksHistory(t *testing.T) {
 	if res := sn.Call("orbit_cancel_task", map[string]any{"task_id": "PAY-10"}); res.IsError {
 		t.Fatalf("orbit_cancel_task refused: %s", text(t, res))
 	}
+
 	if got := only(t, kindsOn(t, s, r, "PAY-10"), record.TaskDialogue); !strings.Contains(got.Text, "cancelled") {
 		t.Errorf("the record says %q, want it to say the task was cancelled", got.Text)
 	}
@@ -132,15 +148,19 @@ func TestARestartIsInTheTasksHistoryBesideItsCorrection(t *testing.T) {
 	if res.IsError {
 		t.Fatalf("orbit_retry_task refused: %s", text(t, res))
 	}
+
 	events := kindsOn(t, s, r, "PAY-12")
+
 	note := only(t, events, record.TaskNoted)
 	if !strings.Contains(note.Text, "start from the failing test") {
 		t.Errorf("the note reads %q, want the correction and nothing else", note.Text)
 	}
+
 	restart := only(t, events, record.TaskDialogue)
 	if !strings.Contains(restart.Text, "started this task again") || !strings.Contains(restart.Text, "correction") {
 		t.Errorf("the record says %q, want the restart and that it carried an instruction", restart.Text)
 	}
+
 	if strings.Contains(restart.Text, "start from the failing test") {
 		t.Errorf("the record says %q, want the correction kept to the one line that is it", restart.Text)
 	}
@@ -157,6 +177,7 @@ func TestANewTaskSaysAModelWroteIt(t *testing.T) {
 	if wrote.Data["by"] != "mcp" || !strings.Contains(wrote.Text, "over mcp") {
 		t.Errorf("the record says %q by %q, want it to say a model wrote the task over mcp", wrote.Text, wrote.Data["by"])
 	}
+
 	if msg := str(t, answer["message"]); strings.Contains(msg, "not in the task's history") {
 		t.Errorf("the tool says the trace could not be kept: %s", msg)
 	}
@@ -187,13 +208,16 @@ func TestReadingTheBoardLeavesNothingBehind(t *testing.T) {
 // cockpit will show a call that is nowhere.
 func TestATraceThatCouldNotBeWrittenIsSaid(t *testing.T) {
 	s, _, r := oneRepo(t)
+
 	got := journal(s, task.Task{ID: "has/slash", Repo: r}, "a model did something over mcp")
 	if !strings.Contains(got, "not in the task's history") {
 		t.Errorf("journal answered %q, want the clause a tool adds to its own sentence", got)
 	}
+
 	if said := journal(s, task.Task{ID: "PAY-1", Repo: r}, "a model did something over mcp"); said != "" {
 		t.Errorf("journal answered %q on a trace it wrote, want nothing to add", said)
 	}
+
 	if correction("") != "" {
 		t.Errorf("a restart with no instruction claims to have carried one: %q", correction(""))
 	}
@@ -210,14 +234,18 @@ func TestInspectReportsWhatWasAlreadyDoneToTheTask(t *testing.T) {
 	if res := sn.Call("orbit_pause_task", map[string]any{"task_id": "PAY-13"}); res.IsError {
 		t.Fatalf("orbit_pause_task refused: %s", text(t, res))
 	}
+
 	answer := call(t, sn, "orbit_inspect_task", map[string]any{"task_id": "PAY-13"})
+
 	said := list(t, answer["dialogue"])
 	if len(said) != 1 {
 		t.Fatalf("inspect reports %d things done from outside a run, want the pause: %v", len(said), said)
 	}
+
 	if by := str(t, obj(t, said[0])["by"]); by != "mcp" {
 		t.Errorf("by = %q, want what acted", by)
 	}
+
 	if what := str(t, obj(t, said[0])["text"]); !strings.Contains(what, "pause") {
 		t.Errorf("the entry reads %q, want what was done", what)
 	}

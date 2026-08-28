@@ -13,6 +13,7 @@ func TestAllScreensKeyboardFlows(t *testing.T) {
 	m.screen = screenHelp
 	mNext, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Code: tea.KeyUp})
+
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Code: tea.KeyEsc})
 	if asModel(t, mNext).screen != screenList {
 		t.Error("expected Esc from help screen to return to screenList")
@@ -22,6 +23,7 @@ func TestAllScreensKeyboardFlows(t *testing.T) {
 	m.screen = screenEngines
 	mNext, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Code: tea.KeyUp})
+
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Code: tea.KeyEsc})
 	if asModel(t, mNext).screen != screenList {
 		t.Error("expected Esc from engines screen to return to screenList")
@@ -32,6 +34,7 @@ func TestAllScreensKeyboardFlows(t *testing.T) {
 	mNext, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Code: tea.KeyUp})
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Code: tea.KeyEsc})
 	if asModel(t, mNext).screen != screenList {
 		t.Error("expected Esc from repos screen to return to screenList")
@@ -44,6 +47,7 @@ func TestAllScreensKeyboardFlows(t *testing.T) {
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Code: tea.KeyEsc}) // confirm discard prompt
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Text: "y"})        // confirm discard
+
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Code: tea.KeyEsc}) // exits screenFlows
 	if asModel(t, mNext).screen != screenList {
 		t.Error("expected Esc from flows screen to return to screenList")
@@ -55,6 +59,7 @@ func TestAllScreensKeyboardFlows(t *testing.T) {
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Code: tea.KeyRight})
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Code: tea.KeyEsc})
 	if asModel(t, mNext).screen != screenList {
 		t.Error("expected Esc from settings screen to return to screenList")
@@ -64,6 +69,7 @@ func TestAllScreensKeyboardFlows(t *testing.T) {
 	m.screen = screenStart
 	mNext, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyTab})
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Text: " "}) // toggle autopilot
+
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Code: tea.KeyEsc})
 	if asModel(t, mNext).screen != screenList {
 		t.Error("expected Esc from start dialog to return to screenList")
@@ -79,6 +85,7 @@ func TestAllScreensKeyboardFlows(t *testing.T) {
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Text: "a"})
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Text: "s"})
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Text: "k"})
+
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Code: tea.KeyEsc})
 	if asModel(t, mNext).screen != screenList {
 		t.Error("expected Esc from compose dialog to return to screenList")
@@ -89,8 +96,10 @@ func TestAllScreensKeyboardFlows(t *testing.T) {
 	for _, keyStr := range []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "w"} {
 		mNext, _ = m.Update(tea.KeyPressMsg{Text: keyStr})
 	}
+
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Code: tea.KeyUp})
+
 	mNext, _ = mNext.Update(tea.KeyPressMsg{Code: tea.KeyEsc})
 	if asModel(t, mNext).screen != screenList {
 		t.Error("expected Esc from detail screen to return to screenList")
@@ -104,6 +113,7 @@ func TestAllScreensKeyboardFlows(t *testing.T) {
 	mFilter, _ = mFilter.Update(tea.KeyPressMsg{Text: "y"})
 	mFilter, _ = mFilter.Update(tea.KeyPressMsg{Code: tea.KeyBackspace})
 	mFilter, _ = mFilter.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+
 	mFilterTyped := asModel(t, mFilter)
 	if mFilterTyped.filtering {
 		t.Error("expected filtering to end on Enter")

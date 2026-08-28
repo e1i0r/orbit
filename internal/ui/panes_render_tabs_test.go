@@ -69,6 +69,7 @@ func TestDetailTabsCyclingAndKeys(t *testing.T) {
 	// Select tab directly by index and render body
 	for i := 0; i < int(tabCount); i++ {
 		m.tab = tab(i)
+
 		rendered := m.detailRows(20, 100)
 		if len(rendered) == 0 {
 			t.Errorf("detailRows on tab %v returned empty output", i)

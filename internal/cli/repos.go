@@ -13,9 +13,11 @@ import (
 func repos(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("repos", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
+
 	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
+
 	root := fs.Arg(0)
 	if root == "" {
 		var err error
@@ -23,27 +25,34 @@ func repos(ctx Context, args []string) error {
 			return fmt.Errorf("locate the working directory: %w", err)
 		}
 	}
+
 	found, err := repo.Discover(root)
 	if err != nil {
 		return err
 	}
+
 	if len(found) == 0 {
 		fmt.Fprintf(ctx.Out, "no repositories under %s\n", root)
 		return nil
 	}
+
 	w := tabwriter.NewWriter(ctx.Out, 0, 0, 2, ' ', 0)
+
 	for _, r := range found {
 		remote := r.Remote
 		if remote == "" {
 			remote = "—"
 		}
+
 		base := r.Base
 		if base == "" {
 			// An empty Base is repo.Open saying the checkout is not on a
 			// branch. Saying so is the point; a blank column is not.
 			base = "detached"
 		}
+
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", r.Name, remote, base, r.Path)
 	}
+
 	return w.Flush()
 }

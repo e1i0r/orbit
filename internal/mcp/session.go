@@ -41,6 +41,7 @@ func (sn Session) open() (*store.Store, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open the state root: %w", err)
 	}
+
 	return s, nil
 }
 
@@ -56,19 +57,25 @@ func (sn Session) board(s *store.Store) (board.Board, error) {
 	if err != nil {
 		return board.Board{}, err
 	}
-	var merged board.Board
-	var errs []error
+
+	var (
+		merged board.Board
+		errs   []error
+	)
+
 	for _, root := range roots {
 		r := board.NewReader(s, root)
 		if err := r.Rescan(); err != nil {
 			errs = append(errs, err)
 			continue
 		}
+
 		b, _, err := r.Refresh()
 		if err != nil {
 			errs = append(errs, err)
 			continue
 		}
+
 		merged = mergeBoards(merged, b)
 	}
 	// A root that would not be read is a shorter board, not a failed one —
@@ -78,12 +85,15 @@ func (sn Session) board(s *store.Store) (board.Board, error) {
 	if len(merged.RepoList) == 0 && len(errs) > 0 {
 		return board.Board{}, errors.Join(errs...)
 	}
+
 	slices.SortFunc(merged.Tasks, func(a, b view.Task) int {
 		if c := strings.Compare(a.Repo, b.Repo); c != 0 {
 			return c
 		}
+
 		return strings.Compare(a.ID, b.ID)
 	})
+
 	return merged, nil
 }
 
@@ -94,6 +104,7 @@ func (sn Session) roots(s *store.Store) ([]string, error) {
 		if err != nil {
 			return nil, fmt.Errorf("resolve %q: %w", sn.Root, err)
 		}
+
 		return []string{abs}, nil
 	}
 	// Repos reports damage alongside the list it did manage to read, so a
@@ -111,12 +122,15 @@ func (sn Session) roots(s *store.Store) ([]string, error) {
 		if wdErr != nil {
 			return nil, fmt.Errorf("resolve the working directory: %w", wdErr)
 		}
+
 		return []string{wd}, nil
 	}
+
 	paths := make([]string, 0, len(refs))
 	for _, ref := range refs {
 		paths = append(paths, ref.Path)
 	}
+
 	return paths, nil
 }
 
@@ -129,13 +143,16 @@ func (sn Session) roots(s *store.Store) ([]string, error) {
 func mergeBoards(into, b board.Board) board.Board {
 	into.Tasks = append(into.Tasks, b.Tasks...)
 	into.RepoList = append(into.RepoList, b.RepoList...)
+
 	into.Repos += b.Repos
 	for i, n := range b.Counts {
 		into.Counts[i] += n
 	}
+
 	into.Errs = append(into.Errs, b.Errs...)
 	if b.ReadAt.After(into.ReadAt) {
 		into.ReadAt = b.ReadAt
 	}
+
 	return into
 }

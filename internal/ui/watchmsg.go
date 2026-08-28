@@ -39,8 +39,10 @@ func runCommand(port func(string, []string, io.Writer) error, w *commandWatch, a
 		if port != nil {
 			err = port(w.name, args, w)
 		}
+
 		w.finish()
 		text, _ := w.snapshot()
+
 		return commandMsg{Name: w.name, Text: text, Err: err}
 	}
 }

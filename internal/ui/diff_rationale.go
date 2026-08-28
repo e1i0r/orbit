@@ -29,10 +29,12 @@ func extractFileRationales(entries []view.Entry, files []diffFile, p *words.Prin
 				if trimmed == "" {
 					continue
 				}
+
 				for _, f := range files {
 					if rationales[f.Path] != "" {
 						continue // Already found a specific description
 					}
+
 					if strings.Contains(trimmed, f.Path) || strings.Contains(trimmed, filepath.Base(f.Path)) {
 						if reason := extractReasonFromLine(trimmed); reason != "" {
 							rationales[f.Path] = reason
@@ -73,15 +75,18 @@ func extractReasonFromLine(line string) string {
 	if w > 15 && w < 160 {
 		return cleanRationale(line)
 	}
+
 	return ""
 }
 
 func cleanRationale(text string) string {
 	text = strings.TrimSpace(text)
+
 	text = strings.Trim(text, "`\"'")
 	if lipgloss.Width(text) > 180 {
 		text = ansi.Truncate(text, 180, "…")
 	}
+
 	return text
 }
 

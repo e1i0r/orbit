@@ -20,19 +20,23 @@ func (m Model) startCreateFlow() Model {
 		{Name: "1-implement", Engine: "claude", Model: "sonnet", Effort: "default", Thinking: "adaptive", Permissions: []string{"repo"}},
 	}
 	m.flows.activePhase = 0
+
 	return m
 }
 
 func (m Model) flowsBuilderRows(h, w int) []string {
 	st := &m.flows
 	st.ensurePhase()
+
 	p := m.opts.Words
+
 	title := p.T("flows.builder_create_title", "Flow Designer (Create New Flow)")
 	if st.readOnly {
 		title = p.T("flows.builder_preview_title", "Flow Inspector (Read-Only: {name})", about("name", st.flowName))
 	} else if st.isEditing {
 		title = p.T("flows.builder_edit_title", "Flow Designer (Edit: {name})", about("name", st.flowName))
 	}
+
 	out := []string{
 		"",
 		"  " + Paint(Accent).Bold(true).Render(title),
@@ -42,20 +46,25 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 
 	// 1. Visual Pipeline Overview
 	out = append(out, "  "+Paint(Live).Bold(true).Render(p.T("flows.builder_pipeline_title", "Pipeline (Click on a phase to edit it):")))
+
 	for i, ph := range st.phases {
 		prefix := "    ➔ "
 		if i == 0 {
 			prefix = "    "
 		}
+
 		curMark := "○ "
 		if i == st.activePhase {
 			curMark = "● "
 		}
+
 		phaseLabel := p.T("flows.phase_label", "Phase")
+
 		title := fmt.Sprintf("%s%s %d: %s (%s/%s)", curMark, phaseLabel, i+1, ph.Name, ph.Engine, orDef(ph.Model, "default"))
 		if ph.FeedOutput {
 			title += " " + p.T("flows.feeds_input", "[feeds input]")
 		}
+
 		if ph.Wait {
 			title += " " + p.T("flows.stops_human", "(stops for human)")
 		}
@@ -65,11 +74,13 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 		} else {
 			out = append(out, prefix+Paint(Dim).Render(title))
 		}
+
 		if ph.Prompt != "" {
 			prmStr := fit(`"`+ph.Prompt+`"`, w-14)
 			out = append(out, "       "+Paint(Dim).Render(prmStr))
 		}
 	}
+
 	out = append(out, "")
 
 	curPh := st.cur()
@@ -79,12 +90,14 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 		if st.field == fieldIdx {
 			mark = Paint(Accent).Bold(true).Render("▸ ")
 		}
+
 		lbl := pad(label, 26, false)
 		if st.field == fieldIdx {
 			lbl = Paint(Accent).Bold(true).Render(lbl)
 		} else {
 			lbl = Paint(Dim).Render(lbl)
 		}
+
 		return mark + lbl + " " + val
 	}
 
@@ -97,6 +110,7 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	if st.field != flowFieldName && st.flowName != "" {
 		fNameVal = st.flowName
 	}
+
 	out = append(out, renderField(flowFieldName, p.T("flows.field_flow_name", "1. Flow Name"), Paint(Accent).Render(fNameVal)))
 
 	// 2. Purpose & Description
@@ -104,10 +118,12 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	if st.field != flowFieldDescription && st.description != "" {
 		descVal = st.description
 	}
+
 	out = append(out, renderField(flowFieldDescription, p.T("flows.field_description", "2. Purpose / Desc"), Paint(Accent).Render(descVal)))
 
 	// 3. Interactive Phase Tabs
 	var tabPills []string
+
 	for i, ph := range st.phases {
 		label := fmt.Sprintf("%d.%s", i+1, ph.Name)
 		if i == st.activePhase {
@@ -116,6 +132,7 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 			tabPills = append(tabPills, Paint(Dim).Render(" "+label+" "))
 		}
 	}
+
 	out = append(out, renderField(flowFieldPhaseSelect, p.T("flows.field_editing_phase", "Editing Phase"), strings.Join(tabPills, " ")))
 
 	// 3. Phase Name
@@ -123,6 +140,7 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	if st.field != flowFieldPhaseName && curPh.Name != "" {
 		pNameVal = curPh.Name
 	}
+
 	out = append(out, renderField(flowFieldPhaseName, p.T("flows.field_phase_name", "2. Phase {n} Name", about("n", strconv.Itoa(st.activePhase+1))), Paint(Accent).Render(pNameVal)))
 
 	// 4. Engine
@@ -146,6 +164,7 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	if curPh.FeedOutput {
 		feedVal = "on"
 	}
+
 	feedPills := renderComboPills([]string{"off", "on"}, feedVal)
 	out = append(out, renderField(flowFieldFeedOutput, p.T("flows.field_feed_output", "7. Feed Previous Output"), feedPills))
 
@@ -154,6 +173,7 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	if curPh.Wait {
 		waitVal = "wait (humano)"
 	}
+
 	waitPills := renderComboPills([]string{"auto", "wait (humano)"}, waitVal)
 	out = append(out, renderField(flowFieldWait, p.T("flows.field_wait", "8. Phase Control"), waitPills))
 
@@ -166,6 +186,7 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	if boxWidth > 80 {
 		boxWidth = 80
 	}
+
 	if boxWidth < 36 {
 		boxWidth = 36
 	}
@@ -174,10 +195,12 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	if st.field == flowFieldPrompt {
 		content += "_"
 	}
+
 	wrapped := wrapPromptText(content, boxWidth-4)
 	if len(wrapped) == 0 {
 		wrapped = []string{p.T("flows.prompt_placeholder", "(type instructions here or click ✨ Autogenerate)...")}
 	}
+
 	if len(wrapped) > 4 {
 		wrapped = wrapped[:4]
 	}
@@ -190,21 +213,26 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	out = append(out, Paint(boxBorderColor).Render("    ┌"+strings.Repeat("─", boxWidth-2)+"┐"))
 	for _, l := range wrapped {
 		linePad := pad(l, boxWidth-4, false)
+
 		txtStyle := Paint(Dim)
 		if st.field == flowFieldPrompt {
 			txtStyle = Paint(Accent)
 		}
+
 		out = append(out, "    "+Paint(boxBorderColor).Render("│ ")+txtStyle.Render(linePad)+Paint(boxBorderColor).Render(" │"))
 	}
+
 	out = append(out, Paint(boxBorderColor).Render("    └"+strings.Repeat("─", boxWidth-2)+"┘"))
 
 	// Actions
 	out = append(out, "")
+
 	if st.readOnly {
 		returnBtn := Pill(" ↵ "+p.T("flows.btn_return", "Return")+" ", "#FFFFFF", "#2563EB")
 		out = append(out, "  "+returnBtn, "")
 		waysOut := p.T("flows.ways_out_preview", "[←/→ / tab] inspect phase · [enter / esc] return")
 		out = append(out, fit("  "+Paint(Dim).Render(waysOut), w))
+
 		return fill(out, h)
 	}
 
@@ -212,12 +240,15 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	if st.field == flowFieldAddPhase {
 		btnMark1 = Paint(Accent).Bold(true).Render("▸ ")
 	}
+
 	if st.field == flowFieldDelPhase {
 		btnMark2 = Paint(Accent).Bold(true).Render("▸ ")
 	}
+
 	if st.field == flowFieldSave {
 		btnMark3 = Paint(Accent).Bold(true).Render("▸ ")
 	}
+
 	btn1 := btnMark1 + Pill(p.T("flows.btn_add_phase", "+ Add Phase"), "#FFFFFF", "#0C4A6E")
 	btn2 := btnMark2 + Pill(p.T("flows.btn_del_phase", "🗑 Delete Phase"), "#FFFFFF", "#7F1D1D")
 	btn3 := btnMark3 + Pill(p.T("flows.btn_save_flow", "✔ Save Flow"), "#FFFFFF", "#14532D")
@@ -226,5 +257,6 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	waysOut := p.T("flows.ways_out_form", "[tab] field · [enter] action · {back} back",
 		about("back", m.keys.Back.Help().Key))
 	out = append(out, fit("  "+Paint(Dim).Render(waysOut), w))
+
 	return fill(out, h)
 }

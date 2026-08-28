@@ -52,12 +52,16 @@ func (m Model) drawRow(r row, w int, selected bool) string {
 		{m.plan.Model, r.task.Model, Dim, false},
 		{m.plan.Elapsed, elapsed(m.now, r.task.Since), Dim, true},
 	}
+
 	var parts []string
+
 	for _, f := range fields {
 		if f.cells <= 0 {
 			continue
 		}
+
 		cell := pad(f.text, f.cells, f.right)
+
 		rendered := Paint(f.role).Render(cell)
 		if selected {
 			switch f.role {
@@ -69,6 +73,7 @@ func (m Model) drawRow(r row, w int, selected bool) string {
 				rendered = Paint(f.role).Bold(true).Render(cell)
 			}
 		}
+
 		parts = append(parts, rendered)
 	}
 	// The gutter says one of two things and the cursor wins, because a
@@ -77,13 +82,16 @@ func (m Model) drawRow(r row, w int, selected bool) string {
 	// that are free: the state column is the narrowest field there is, and
 	// a spinner in front of the phase word would cost it a fifth of itself.
 	mark := "  "
+
 	switch {
 	case selected:
 		mark = Paint(Live).Bold(true).Render("▸ ")
 	case working(r.task):
 		mark = Paint(Live).Render(m.spin() + " ")
 	}
+
 	line := mark + strings.Join(parts, strings.Repeat(" ", columnGap))
+
 	return fit(line, w)
 }
 
@@ -97,6 +105,7 @@ func (m Model) drawRow(r row, w int, selected bool) string {
 // down.
 func (m Model) stateWord(t view.Task) (string, Role) {
 	p := m.opts.Words
+
 	switch t.Reason.Key {
 	case view.ReasonFailed:
 		return p.T("reason.failed", "failed: {phase}", reasonArgs(t.Reason)...), Bad
@@ -113,9 +122,11 @@ func (m Model) stateWord(t view.Task) (string, Role) {
 	case view.ReasonCancelled:
 		return p.T("reason.cancelled", "cancelled"), Dim
 	}
+
 	if t.Damaged > 0 {
 		return p.T("state.unreadable", "record unreadable"), Bad
 	}
+
 	switch view.BandOf(t) {
 	case view.Running:
 		return m.phaseWord(t), Live
@@ -124,6 +135,7 @@ func (m Model) stateWord(t view.Task) (string, Role) {
 	case view.ToDo:
 		return p.T("state.not_started", "not started"), Dim
 	}
+
 	return "", Dim
 }
 
@@ -137,10 +149,12 @@ func (m Model) phaseWord(t view.Task) string {
 	if t.Phase == "" {
 		return m.opts.Words.T("state.running", "running")
 	}
+
 	if total := m.totals[t.Flow]; t.PhaseN > 1 && total > 0 {
 		return m.opts.Words.T("state.phase_of", "{phase} {n}/{total}",
 			about("phase", t.Phase), about("n", strconv.Itoa(t.PhaseN)), about("total", strconv.Itoa(total)))
 	}
+
 	return t.Phase
 }
 
@@ -154,17 +168,21 @@ func (m Model) phaseWord(t view.Task) string {
 // fraction of a total that was guessed.
 func phaseTotals(tasks []view.Task) map[string]int {
 	totals := map[string]int{}
+
 	for _, t := range tasks {
 		if t.Flow == "" {
 			continue
 		}
+
 		if _, done := totals[t.Flow]; done {
 			continue
 		}
+
 		if f, err := flow.Builtin(t.Flow); err == nil {
 			totals[t.Flow] = len(f.Phases)
 		}
 	}
+
 	return totals
 }
 
@@ -177,6 +195,7 @@ func reasonArgs(r view.Reason) []words.Arg {
 	for _, a := range r.Args {
 		args = append(args, words.Arg{Name: a.Name, Value: a.Value})
 	}
+
 	return args
 }
 
@@ -193,6 +212,7 @@ func elapsed(now, since time.Time) string {
 	if since.IsZero() {
 		return ""
 	}
+
 	d := max(now.Sub(since), 0)
 	switch {
 	case d < time.Minute:
@@ -202,6 +222,7 @@ func elapsed(now, since time.Time) string {
 	case d < 24*time.Hour:
 		return strconv.Itoa(int(d.Hours())) + "h"
 	}
+
 	return strconv.Itoa(int(d.Hours()/24)) + "d"
 }
 
@@ -213,11 +234,14 @@ func pad(text string, cells int, right bool) string {
 	if cells <= 0 {
 		return ""
 	}
+
 	text = ansi.Truncate(text, cells, "…")
+
 	space := strings.Repeat(" ", max(cells-lipgloss.Width(text), 0))
 	if right {
 		return space + text
 	}
+
 	return text + space
 }
 
@@ -230,17 +254,22 @@ func pad(text string, cells int, right bool) string {
 // a cursor that had been lost.
 func (m Model) headRow(r row, selected bool, w int) string {
 	name, count, right := m.bandName(r.band), strconv.Itoa(r.n), m.headHint(r)
+
 	mark := "  "
 	if selected {
 		mark = Paint(Accent).Bold(true).Render("▸ ")
 	}
+
 	nameTag := Paint(Accent).Bold(true).Render(name) + " " + Paint(m.countRole(r)).Render("("+count+")")
 	left := mark + nameTag + " "
+
 	if right != "" {
 		right = Paint(Dim).Render(right)
 	}
+
 	ruleW := max(0, w-lipgloss.Width(left)-lipgloss.Width(right)-2)
 	rule := Paint(Dim).Render(strings.Repeat("─", ruleW))
+
 	return spread(left+rule, right, w)
 }
 
@@ -252,6 +281,7 @@ func (m Model) headRow(r row, selected bool, w int) string {
 // actually failed has nothing left to be louder than.
 func (m Model) bandName(b view.Band) string {
 	p := m.opts.Words
+
 	switch b {
 	case view.NeedsYou:
 		return "🛑 " + p.T("band.needs_you", "NEEDS YOU")
@@ -262,6 +292,7 @@ func (m Model) bandName(b view.Band) string {
 	case view.Done:
 		return "🏁 " + p.T("band.done", "DONE TODAY")
 	}
+
 	return ""
 }
 
@@ -271,6 +302,7 @@ func (m Model) countRole(r row) Role {
 	if r.band == view.NeedsYou && r.n > 0 {
 		return Warn
 	}
+
 	return Dim
 }
 
@@ -285,12 +317,15 @@ func (m Model) headHint(r row) string {
 	if r.band == view.ToDo {
 		if unread := board.Unread(m.board); m.atUnreadCap(unread) {
 			limit := m.unreadCap()
+
 			return m.opts.Words.T("band.unread_cap", "unread cap reached · {n} of {cap}",
 				about("n", strconv.Itoa(unread)), about("cap", strconv.Itoa(limit)))
 		}
 	}
+
 	if !m.expanded[r.band] {
 		return m.keys.Open.Help().Key + " " + m.keys.Open.Help().Desc
 	}
+
 	return ""
 }

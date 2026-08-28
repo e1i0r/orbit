@@ -23,6 +23,7 @@ func reply(v any) CallToolResult {
 		// than unhandled, and it says so instead of dropping the error.
 		return refuse(fmt.Errorf("encode the answer: %w", err))
 	}
+
 	return CallToolResult{Content: []ContentItem{{Type: "text", Text: string(data)}}}
 }
 
@@ -52,10 +53,12 @@ func stringArg(args map[string]any, key string) string {
 	if args == nil {
 		return ""
 	}
+
 	s, ok := args[key].(string)
 	if !ok {
 		return ""
 	}
+
 	return s
 }
 
@@ -71,6 +74,7 @@ func phaseNames(f flow.Flow) []map[string]any {
 			"waits":  p.Wait,
 		})
 	}
+
 	return phases
 }
 

@@ -32,6 +32,7 @@ import (
 func (m Model) applyBoard(msg boardMsg) (tea.Model, tea.Cmd) {
 	next, cmd := m.takeBoard(msg)
 	next, frame := next.nextFrame()
+
 	return next, tea.Batch(cmd, frame)
 }
 
@@ -47,16 +48,20 @@ func (m Model) takeBoard(msg boardMsg) (Model, tea.Cmd) {
 		if len(msg.Board.Errs) > 0 {
 			return m.say(msg.Board.Errs[0].Error()), nil
 		}
+
 		return m, nil
 	}
+
 	first := !m.seen
 	m.board, m.seen = msg.Board, true
 	m.totals = phaseTotals(msg.Board.Tasks)
+
 	m = m.stillTaken().replan().clampCursor()
 	if first {
 		m.cursor = m.firstTask()
 		m = m.follow()
 	}
+
 	m = m.selectPending()
 	// A read failure is said when the count of them changes and not on
 	// every refresh, because the poll is twice a second and one unreadable
@@ -67,23 +72,30 @@ func (m Model) takeBoard(msg boardMsg) (Model, tea.Cmd) {
 			m = m.say(m.opts.Words.P("msg.unreadable", n, "{n} record could not be read", "{n} records could not be read"))
 		}
 	}
+
 	if first || len(msg.Changed.Entered) == 0 {
 		if nextM, cmd := m.autoStartNext(); cmd != nil {
 			return nextM, cmd
 		}
+
 		if nextM, cmd := m.autoSuperviseNeedsYou(); cmd != nil {
 			return nextM, cmd
 		}
+
 		return m, nil
 	}
+
 	m.notified = true
+
 	m = m.say(m.opts.Words.P("msg.entered", len(msg.Changed.Entered), "{n} task needs you", "{n} tasks need you"))
 	if nextM, cmd := m.autoSuperviseNeedsYou(); cmd != nil {
 		return nextM, tea.Batch(tea.Raw("\a"), cmd)
 	}
+
 	if nextM, cmd := m.autoStartNext(); cmd != nil {
 		return nextM, tea.Batch(tea.Raw("\a"), cmd)
 	}
+
 	return m, tea.Raw("\a")
 }
 
@@ -92,20 +104,24 @@ func (m Model) autoStartNext() (Model, tea.Cmd) {
 	if !m.autopilotOn() || m.opts.Start == nil {
 		return m, nil
 	}
+
 	waiting := board.Unreads(m.board)
 	if m.atUnreadCap(len(waiting)) {
 		return m, nil
 	}
+
 	flowName := "task"
 	if m.opts.Settings != nil && m.opts.Settings.Flow() != "" {
 		flowName = m.opts.Settings.Flow()
 	}
+
 	for _, t := range m.board.Tasks {
 		if view.BandOf(t) == view.ToDo && !m.taken[t.ID] {
 			m = m.took(t.ID, true)
 			return m, start(m.opts.Start, t, flowName, len(waiting))
 		}
 	}
+
 	return m, nil
 }
 
@@ -114,44 +130,57 @@ func (m Model) autoSuperviseNeedsYou() (Model, tea.Cmd) {
 	if !m.autopilotOn() || m.opts.AutoSupervise == nil || m.supervisorBusy {
 		return m, nil
 	}
+
 	var needing []string
+
 	for _, t := range m.board.Tasks {
 		if view.BandOf(t) == view.NeedsYou && !m.taken[t.ID+"-sup"] {
 			needing = append(needing, t.ID)
 		}
 	}
+
 	if len(needing) == 0 {
 		return m, nil
 	}
+
 	for _, id := range needing {
 		m = m.took(id+"-sup", true)
 	}
+
 	m.supervisorBusy = true
+
 	eng := m.knobs.Engine
 	if eng == "" {
 		eng = "claude"
 	}
+
 	cmd := func() tea.Msg {
 		ans, err := m.opts.AutoSupervise(eng, needing)
 		return supervisorReplyMsg{Text: ans, Err: err}
 	}
 	m, frame := m.say(m.opts.Words.T("supervisor.acting", "supervisor is autonomously inspecting {n} task(s)...", about("n", strconv.Itoa(len(needing))))).nextFrame()
+
 	return m, tea.Batch(cmd, frame)
 }
 
 // resize takes the new geometry, or refuses it with both numbers.
 func (m Model) resize(w, h int) Model {
 	m.width, m.height = w, h
+
 	f, err := layout.Fit(w, h)
 	if err != nil {
 		var narrow layout.TooNarrowError
 		if !errors.As(err, &narrow) {
 			narrow = layout.TooNarrowError{Need: layout.MinWidth, Got: w}
 		}
+
 		m.tooNarrow, m.narrow = true, narrow
+
 		return m
 	}
+
 	m.tooNarrow, m.frame = false, f
+
 	return m.replan().follow().syncPanes()
 }
 
@@ -170,7 +199,9 @@ func (m Model) say(text string) Model {
 	if text == "" {
 		return m
 	}
+
 	m.message, m.messageAt = text, m.now
+
 	return m
 }
 
@@ -183,7 +214,9 @@ func (m Model) language(lang string) Model {
 			return m.say(err.Error())
 		}
 	}
+
 	m.opts.Words = words.For(lang)
 	m.keys = NewKeys(m.opts.Words)
+
 	return m.replan().syncPanes()
 }

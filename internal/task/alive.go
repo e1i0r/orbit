@@ -73,9 +73,11 @@ func Alive(s *store.Store, t Task) (pid int, ok bool, err error) {
 	if err != nil || !found {
 		return 0, false, err
 	}
+
 	if staleAcrossBoot(started) {
 		return pid, false, nil
 	}
+
 	return pid, running(pid), nil
 }
 
@@ -92,6 +94,7 @@ func staleAcrossBoot(started time.Time) bool {
 	if started.IsZero() {
 		return false
 	}
+
 	boot, ok := bootTime()
 	if !ok {
 		return false
@@ -139,9 +142,11 @@ func hold(s *store.Store, t Task) (release func(), err error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if alive {
 		return nil, fmt.Errorf("task %s is already being run by process %d", t.ID, pid)
 	}
+
 	return mark(s, t, os.Getpid())
 }
 
@@ -158,10 +163,12 @@ func mark(s *store.Store, t Task, pid int) (func(), error) {
 	if _, err := s.CreateTaskDir(t.Repo.Path, t.ID); err != nil {
 		return nil, err
 	}
+
 	path, err := s.RunPath(t.Repo.Path, t.ID)
 	if err != nil {
 		return nil, err
 	}
+
 	body := fmt.Sprintf("pid: %d\nstarted: %s\n", pid, time.Now().UTC().Format(time.RFC3339))
 	// In one step, because this file is read while it is being written. A
 	// plain write truncates first and writes second, and a marker caught
@@ -175,6 +182,7 @@ func mark(s *store.Store, t Task, pid int) (func(), error) {
 	if err := store.WriteAtomically(path, []byte(body)); err != nil {
 		return nil, fmt.Errorf("claim task %s for this process: %w", t.ID, err)
 	}
+
 	return func() {
 		// Only a marker that still names this process. A run asked to stop
 		// takes as long to die as the engine it is waiting on, and another
@@ -207,9 +215,11 @@ func removeMarker(s *store.Store, t Task) error {
 	if err != nil {
 		return err
 	}
+
 	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("clear the run marker of task %s: %w", t.ID, err)
 	}
+
 	return nil
 }
 
@@ -222,17 +232,21 @@ func readMarker(s *store.Store, t Task) (pid int, started time.Time, found bool,
 	if err != nil {
 		return 0, time.Time{}, false, err
 	}
+
 	body, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
 		return 0, time.Time{}, false, nil
 	}
+
 	if err != nil {
 		return 0, time.Time{}, false, fmt.Errorf("read the run marker of task %s: %w", t.ID, err)
 	}
+
 	pid, err = parsePid(string(body))
 	if err != nil {
 		return 0, time.Time{}, false, fmt.Errorf("read the run marker of task %s: %w", t.ID, err)
 	}
+
 	return pid, parseStarted(string(body)), true, nil
 }
 
@@ -250,12 +264,15 @@ func parseStarted(body string) time.Time {
 		if !ok {
 			continue
 		}
+
 		at, err := time.Parse(time.RFC3339, strings.TrimSpace(rest))
 		if err != nil {
 			return time.Time{}
 		}
+
 		return at.UTC()
 	}
+
 	return time.Time{}
 }
 
@@ -266,6 +283,7 @@ func parsePid(body string) (int, error) {
 		if !ok {
 			continue
 		}
+
 		pid, err := strconv.Atoi(strings.TrimSpace(rest))
 		if err != nil {
 			return 0, fmt.Errorf("the pid line reads %q: %w", line, err)
@@ -282,7 +300,9 @@ func parsePid(body string) (int, error) {
 		if pid <= 1 {
 			return 0, fmt.Errorf("the marker names pid %d, which is not a process this may signal", pid)
 		}
+
 		return pid, nil
 	}
+
 	return 0, errors.New("the marker has no pid line")
 }

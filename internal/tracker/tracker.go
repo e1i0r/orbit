@@ -10,5 +10,6 @@ func IsTrackerURL(rawURL string) bool {
 			return true
 		}
 	}
+
 	return false
 }

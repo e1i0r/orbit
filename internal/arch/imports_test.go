@@ -97,22 +97,28 @@ func TestImportsFollowTheLayers(t *testing.T) {
 		if err != nil {
 			t.Fatalf("rel %s: %v", path, err)
 		}
+
 		pkg := filepath.ToSlash(rel)
+
 		allowed, ok := layers[pkg]
 		if !ok {
 			t.Errorf("%s belongs to package %q, which has no entry in arch.layers — place it in the layering", path, pkg)
 			continue
 		}
+
 		fset := token.NewFileSet()
+
 		f, err := parser.ParseFile(fset, path, nil, parser.ImportsOnly)
 		if err != nil {
 			t.Fatalf("parse %s: %v", path, err)
 		}
+
 		for _, imp := range f.Imports {
 			importPath := strings.Trim(imp.Path.Value, `"`)
 			if importPath == modulePath || !strings.HasPrefix(importPath, modulePath+"/") {
 				continue
 			}
+
 			target := strings.TrimPrefix(importPath, modulePath+"/")
 			if !slices.Contains(allowed, target) {
 				t.Errorf("%s imports %q, which %s does not list in arch.layers", path, importPath, pkg)
@@ -148,14 +154,18 @@ func TestLayoutNeverImportsTheEventLoop(t *testing.T) {
 		if err != nil {
 			t.Fatalf("rel %s: %v", path, err)
 		}
+
 		if !strings.HasPrefix(filepath.ToSlash(rel), "internal/ui/layout/") {
 			continue
 		}
+
 		fset := token.NewFileSet()
+
 		f, err := parser.ParseFile(fset, path, nil, parser.ImportsOnly)
 		if err != nil {
 			t.Fatalf("parse %s: %v", path, err)
 		}
+
 		for _, imp := range f.Imports {
 			importPath := strings.Trim(imp.Path.Value, `"`)
 			if importPath == teaModule || strings.HasPrefix(importPath, teaModule+"/") {
@@ -187,15 +197,19 @@ func TestUIMeasuresCellsNotBytes(t *testing.T) {
 		if err != nil {
 			t.Fatalf("rel %s: %v", path, err)
 		}
+
 		rel = filepath.ToSlash(rel)
 		if !strings.HasPrefix(rel, "internal/ui/") {
 			continue
 		}
+
 		fset := token.NewFileSet()
+
 		f, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
 		if err != nil {
 			t.Fatalf("parse %s: %v", path, err)
 		}
+
 		checkWidthDiscipline(t, fset, f, rel)
 	}
 }
@@ -204,6 +218,7 @@ func TestUIMeasuresCellsNotBytes(t *testing.T) {
 // expressions whose operand is unambiguously a string.
 func checkWidthDiscipline(t *testing.T, fset *token.FileSet, f *ast.File, rel string) {
 	t.Helper()
+
 	strIdents := stringTypedNames(f)
 	ast.Inspect(f, func(n ast.Node) bool {
 		switch expr := n.(type) {
@@ -219,6 +234,7 @@ func checkWidthDiscipline(t *testing.T, fset *token.FileSet, f *ast.File, rel st
 				t.Errorf("%s:%d slices a string with [a:b] — use ansi.Truncate; the terminal counts cells, not bytes", rel, pos.Line)
 			}
 		}
+
 		return true
 	})
 }
@@ -230,6 +246,7 @@ func checkWidthDiscipline(t *testing.T, fset *token.FileSet, f *ast.File, rel st
 // and a false positive is the one failure mode this rule cannot afford.
 func stringTypedNames(f *ast.File) map[string]bool {
 	names := map[string]bool{}
+
 	ast.Inspect(f, func(n ast.Node) bool {
 		switch decl := n.(type) {
 		case *ast.Field:
@@ -242,10 +259,12 @@ func stringTypedNames(f *ast.File) map[string]bool {
 			if decl.Tok != token.DEFINE {
 				return true
 			}
+
 			for i, lhs := range decl.Lhs {
 				if i >= len(decl.Rhs) {
 					continue
 				}
+
 				if lit, ok := decl.Rhs[i].(*ast.BasicLit); ok && lit.Kind == token.STRING {
 					if id, ok := lhs.(*ast.Ident); ok {
 						names[id.Name] = true
@@ -253,8 +272,10 @@ func stringTypedNames(f *ast.File) map[string]bool {
 				}
 			}
 		}
+
 		return true
 	})
+
 	return names
 }
 
@@ -272,6 +293,7 @@ func isStringExpr(strIdents map[string]bool, e ast.Expr) bool {
 		if !ok {
 			return false
 		}
+
 		switch fn.Sel.Name {
 		case "String", "Sprintf", "Sprint", "Sprintln":
 			return true

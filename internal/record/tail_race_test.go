@@ -25,12 +25,15 @@ import (
 // what it was given saw one attempt twice.
 func TestReadFromHandsBackEveryEventExactlyOnce(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "events.jsonl")
+
 	const total = 300
 
 	var wg sync.WaitGroup
+
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+
 		for i := range total {
 			if err := Append(path, Event{
 				Kind: TaskNoted,
@@ -42,30 +45,38 @@ func TestReadFromHandsBackEveryEventExactlyOnce(t *testing.T) {
 	}()
 
 	seen := map[string]int{}
+
 	var offset int64
+
 	deadline := time.Now().Add(20 * time.Second)
 	for len(seen) < total {
 		if time.Now().After(deadline) {
 			t.Fatalf("only %d of %d events arrived", len(seen), total)
 		}
+
 		events, next, err := ReadFrom(path, offset)
 		if err != nil {
 			t.Fatalf("ReadFrom at %d: %v", offset, err)
 		}
+
 		if next < offset {
 			t.Fatalf("the offset went backwards, %d to %d, on a log that only grew", offset, next)
 		}
+
 		offset = next
+
 		for _, e := range events {
 			if e.Kind == Unreadable {
 				t.Fatalf("a write in flight was reported as damage at byte %s", e.Data["byte"])
 			}
+
 			seen[e.Text]++
 			if seen[e.Text] > 1 {
 				t.Fatalf("event %q came back %d times", e.Text, seen[e.Text])
 			}
 		}
 	}
+
 	wg.Wait()
 
 	// And nothing was skipped on the way, which is the other half of
@@ -84,11 +95,13 @@ func TestReadFromHandsBackEveryEventExactlyOnce(t *testing.T) {
 // flight. A reader would have gone looking for damage that was never there.
 func TestReadOfALogBeingWrittenReportsNoDamage(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "events.jsonl")
+
 	const total = 300
 
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
+
 		for i := range total {
 			if err := Append(path, Event{Kind: TaskNoted, Text: strconv.Itoa(i)}); err != nil {
 				panic(err)
@@ -101,11 +114,13 @@ func TestReadOfALogBeingWrittenReportsNoDamage(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Read: %v", err)
 		}
+
 		for _, e := range events {
 			if e.Kind == Unreadable {
 				t.Fatalf("read %d called a write in flight damage at byte %s", reads, e.Data["byte"])
 			}
 		}
+
 		select {
 		case <-done:
 			return
@@ -125,6 +140,7 @@ func TestReadFromNamesTheDamagedLineByWhereItIsInTheLog(t *testing.T) {
 			t.Fatalf("Append: %v", err)
 		}
 	}
+
 	_, offset, err := ReadFrom(path, 0)
 	if err != nil {
 		t.Fatalf("ReadFrom: %v", err)
@@ -134,9 +150,11 @@ func TestReadFromNamesTheDamagedLineByWhereItIsInTheLog(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open: %v", err)
 	}
+
 	if _, err := fmt.Fprintln(f, "{not json}"); err != nil {
 		t.Fatalf("write: %v", err)
 	}
+
 	if err := f.Close(); err != nil {
 		t.Fatalf("close: %v", err)
 	}
@@ -145,9 +163,11 @@ func TestReadFromNamesTheDamagedLineByWhereItIsInTheLog(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ReadFrom at %d: %v", offset, err)
 	}
+
 	if len(events) != 1 || events[0].Kind != Unreadable {
 		t.Fatalf("events = %+v, want one mark", events)
 	}
+
 	if got := events[0].Data["byte"]; got != strconv.FormatInt(offset, 10) {
 		t.Errorf("the mark names byte %s, want %d — where the line begins in the log", got, offset)
 	}

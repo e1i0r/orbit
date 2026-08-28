@@ -40,6 +40,7 @@ func TestStartPortReachesTaskStartOnceLoaded(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	sp := startPort(s)
 	// The load succeeds (the task was written down above), so this reaches
 	// task.Start rather than returning at the `if err != nil` guard —
@@ -50,10 +51,12 @@ func TestStartPortReachesTaskStartOnceLoaded(t *testing.T) {
 
 func TestLastSessionFailsOnAnInvalidTaskID(t *testing.T) {
 	root, _ := workspace(t)
+
 	s, err := store.Open()
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	rdr := board.NewReader(s, root)
 	if _, err := lastSession(rdr, view.Task{ID: "bad/id", RepoPath: root}); err == nil {
 		t.Error("lastSession on an id with a path separator succeeded")
@@ -62,14 +65,17 @@ func TestLastSessionFailsOnAnInvalidTaskID(t *testing.T) {
 
 func TestReconcileAllFailsWhenRepositoriesCannotBeListed(t *testing.T) {
 	home := t.TempDir()
+
 	s, err := store.New(home)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	reposDir := filepath.Join(home, "repos")
 	if err := os.MkdirAll(reposDir, 0o000); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
+
 	defer func() { _ = os.Chmod(reposDir, 0o700) }() //nolint:errcheck
 
 	if err := reconcileAll(s); err == nil {
@@ -90,6 +96,7 @@ func TestReconcileAllReportsPerRepositoryAndPerTaskFailures(t *testing.T) {
 	// without stopping the sweep over whatever else the state root knows
 	// about.
 	events := findFile(t, orbitHome, "events.jsonl")
+
 	marker := filepath.Join(filepath.Dir(events), "run")
 	if err := os.WriteFile(marker, []byte("pid: not-a-number\nstarted: 2026-08-24T12:00:00Z\n"), 0o600); err != nil {
 		t.Fatalf("write the run marker: %v", err)
@@ -103,17 +110,21 @@ func TestReconcileAllReportsPerRepositoryAndPerTaskFailures(t *testing.T) {
 	// so the same sweep also takes the task.List error branch.
 	second := filepath.Join(root, "second")
 	initRepo(t, second)
+
 	r, err := repo.Open(second)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if _, err := task.Create(s, r, "SECOND-1", "text", "quick"); err != nil {
 		t.Fatal(err)
 	}
+
 	tasksDir, err := s.TasksDir(r.Path)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if err := os.Chmod(tasksDir, 0o000); err != nil {
 		t.Fatalf("chmod: %v", err)
 	}
@@ -126,6 +137,7 @@ func TestReconcileAllReportsPerRepositoryAndPerTaskFailures(t *testing.T) {
 
 func TestEnginesPortMarksEveryEngineUnavailableWithNoPath(t *testing.T) {
 	t.Setenv("PATH", "")
+
 	engFn := enginesPort(map[string]engine.Engine{
 		"claude":   engine.NewClaude(),
 		"codex":    engine.NewCodex(),
@@ -135,6 +147,7 @@ func TestEnginesPortMarksEveryEngineUnavailableWithNoPath(t *testing.T) {
 		if info.Available {
 			t.Errorf("engine %q reported available with an empty $PATH", info.Name)
 		}
+
 		if len(info.Setup) == 0 {
 			t.Errorf("engine %q reported unavailable with no setup guide", info.Name)
 		}

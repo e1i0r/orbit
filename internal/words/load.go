@@ -43,6 +43,7 @@ func (t *text) UnmarshalJSON(data []byte) error {
 		t.Single = single
 		return nil
 	}
+
 	var forms struct {
 		One   string `json:"one"`
 		Other string `json:"other"`
@@ -50,9 +51,11 @@ func (t *text) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &forms); err != nil {
 		return fmt.Errorf("decode catalogue text %s: %w", data, err)
 	}
+
 	t.One = forms.One
 	t.Other = forms.Other
 	t.IsPlural = true
+
 	return nil
 }
 
@@ -71,11 +74,14 @@ func parseCatalog(raw []byte) (catalog, error) {
 		Language string           `json:"language"`
 		Keys     map[string]entry `json:"keys"`
 	}
+
 	dec := json.NewDecoder(bytes.NewReader(raw))
 	dec.DisallowUnknownFields()
+
 	if err := dec.Decode(&f); err != nil {
 		return catalog{}, fmt.Errorf("parse catalogue: %w", err)
 	}
+
 	return catalog{language: f.Language, keys: f.Keys}, nil
 }
 
@@ -90,6 +96,7 @@ func parseCatalog(raw []byte) (catalog, error) {
 // trailing comma is a worse outcome than a window in English.
 func loadCatalog(lang string) catalog {
 	result := catalog{keys: map[string]entry{}}
+
 	if raw, err := embedded.ReadFile(path.Join("lang", lang+".json")); err == nil {
 		if c, err := parseCatalog(raw); err == nil {
 			result = c
@@ -98,18 +105,21 @@ func loadCatalog(lang string) catalog {
 			}
 		}
 	}
+
 	if p, ok := overlayPath(lang); ok {
 		if raw, err := os.ReadFile(p); err == nil {
 			if c, err := parseCatalog(raw); err == nil {
 				if c.language != "" {
 					result.language = c.language
 				}
+
 				for k, v := range c.keys {
 					result.keys[k] = v
 				}
 			}
 		}
 	}
+
 	return result
 }
 
@@ -119,12 +129,14 @@ func loadCatalog(lang string) catalog {
 // file whose job is to say how wide a column may be, not es.json's.
 func loadBudgets() map[string]int {
 	en := loadCatalog("en")
+
 	budgets := make(map[string]int, len(en.keys))
 	for k, e := range en.keys {
 		if e.Cells > 0 {
 			budgets[k] = e.Cells
 		}
 	}
+
 	return budgets
 }
 
@@ -137,6 +149,7 @@ func overlayPath(lang string) (string, bool) {
 	if !ok {
 		return "", false
 	}
+
 	return filepath.Join(dir, lang+".json"), true
 }
 
@@ -150,7 +163,9 @@ func overlayDir() (string, bool) {
 		if err != nil {
 			return "", false
 		}
+
 		root = filepath.Join(home, ".orbit")
 	}
+
 	return filepath.Join(root, "lang"), true
 }

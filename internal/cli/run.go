@@ -50,10 +50,12 @@ func runTask(ctx Context, args []string) error {
 	fs.SetOutput(io.Discard)
 	dir := fs.String("repo", ".", "the repository the task is against")
 	name := fs.String("flow", "", "walk this flow instead of the one the task was written against")
+
 	timeout := fs.Duration("timeout", 0, "stop the run after this long, e.g. 45m; zero waits for as long as it takes")
 	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
+
 	id := fs.Arg(0)
 	if id == "" {
 		return fmt.Errorf("run needs the id of a task")
@@ -64,6 +66,7 @@ func runTask(ctx Context, args []string) error {
 		logger.Error("cli/run", "open repository %q failed: %v", *dir, err)
 		return err
 	}
+
 	t, err := task.Load(s, r, id)
 	if err != nil {
 		logger.Error("cli/run", "load task %q in %q failed: %v", id, r.Name, err)
@@ -78,9 +81,11 @@ func runTask(ctx Context, args []string) error {
 	if chosen == "" {
 		chosen = t.Flow
 	}
+
 	if chosen == "" {
 		chosen = flow.Default
 	}
+
 	f, err := flow.Resolve(s, chosen)
 	if err != nil {
 		logger.Error("cli/run", "resolve flow %q for task %q failed: %v", chosen, id, err)
@@ -104,8 +109,10 @@ func runTask(ctx Context, args []string) error {
 	// between a deadline and a pair of writers is not a distinction worth
 	// resting on.
 	running := signalled
+
 	if *timeout > 0 {
 		var done context.CancelFunc
+
 		running, done = context.WithTimeout(running, *timeout)
 		defer done()
 	}
@@ -115,13 +122,17 @@ func runTask(ctx Context, args []string) error {
 		"codex":    engine.NewCodex(),
 		"opencode": engine.NewOpenCode(),
 	}
+
 	logger.Info("cli/run", "starting task %s in repo %s on flow %s (timeout=%v)", id, r.Name, chosen, *timeout)
+
 	if err := task.Run(running, s, t, f, engines, task.FileGate(s, time.Second)); err != nil {
 		logger.Error("cli/run", "task %s execution failed: %v", id, err)
 		return err
 	}
+
 	logger.Info("cli/run", "task %s execution finished successfully", id)
 	fmt.Fprintf(ctx.Out, "%s finished\n", id)
+
 	return nil
 }
 

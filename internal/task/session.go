@@ -32,25 +32,32 @@ func lastSession(s *store.Store, t Task, engineName string, eng engine.Engine) s
 	if s == nil || eng == nil || engineName == "" || !eng.CanResume() {
 		return ""
 	}
+
 	path, err := s.EventsPath(t.Repo.Path, t.ID)
 	if err != nil {
 		return ""
 	}
+
 	events, err := record.Read(path)
 	if err != nil {
 		return ""
 	}
+
 	var running, found string
+
 	for _, e := range events {
 		if e.Kind == record.PhaseStarted {
 			running = e.Data["engine"]
 		}
+
 		if running != engineName {
 			continue
 		}
+
 		if sess := strings.TrimSpace(e.Data["session"]); sess != "" {
 			found = sess
 		}
 	}
+
 	return found
 }

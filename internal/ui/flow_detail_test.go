@@ -54,10 +54,12 @@ func TestFlowDetailKeyNavigation(t *testing.T) {
 
 	// 2. Select & Return with Enter
 	res, _ := m.flowsKey(tea.KeyPressMsg{Code: tea.KeyEnter})
+
 	mSelected := asModel(t, res)
 	if mSelected.screen != screenCompose {
 		t.Errorf("expected return to compose after Enter, got %v", mSelected.screen)
 	}
+
 	if mSelected.compose.flows[mSelected.compose.flowIdx] != "careful" {
 		t.Errorf("expected compose flow to be set to careful, got %s",
 			mSelected.compose.flows[mSelected.compose.flowIdx])
@@ -66,10 +68,12 @@ func TestFlowDetailKeyNavigation(t *testing.T) {
 	// 3. Edit with 'e'
 	m = m.openFlowPreview("quick")
 	resEdit, _ := m.flowsKey(tea.KeyPressMsg{Text: "e"})
+
 	mEditing := asModel(t, resEdit)
 	if !mEditing.flows.creating || !mEditing.flows.isEditing {
 		t.Errorf("expected creating & isEditing after pressing 'e'")
 	}
+
 	if mEditing.flows.flowName != "quick" {
 		t.Errorf("expected flowName 'quick', got %s", mEditing.flows.flowName)
 	}
@@ -78,6 +82,7 @@ func TestFlowDetailKeyNavigation(t *testing.T) {
 	mList := m.openFlows()
 	mList = mList.openFlowPreview("task")
 	resBack, _ := mList.flowsKey(tea.KeyPressMsg{Code: tea.KeyEscape})
+
 	mBack := asModel(t, resBack)
 	if mBack.flows.showingDetail {
 		t.Errorf("expected showingDetail to be false after Esc from flow list")
@@ -93,10 +98,12 @@ func FuzzRenderFlowDiagram(f *testing.F) {
 		if width < 10 || width > 300 {
 			return
 		}
+
 		phases := []flow.Phase{
 			{Name: name, Engine: engine, Model: model, FeedOutput: feed, Wait: wait},
 			{Name: "2-" + name, Engine: engine, Model: model, FeedOutput: !feed, Wait: !wait},
 		}
+
 		lines := renderFlowDiagram(phases, width)
 		if len(lines) == 0 {
 			t.Errorf("expected diagram lines, got 0")

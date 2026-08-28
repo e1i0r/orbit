@@ -42,6 +42,7 @@ func requests() []Request {
 	full.Permissions = []string{PermissionRead, PermissionRepo, PermissionNetwork}
 	resumed := full
 	resumed.Resume = "9c1f8f2a-4d3b-4a77-9a52-2f0f6f9b5c31"
+
 	return []Request{base, full, resumed}
 }
 
@@ -63,10 +64,12 @@ func TestNoEngineArgvNamesTheStateRootOrAnAncestorOfIt(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s: building the command line failed: %v", name, err)
 			}
+
 			for _, arg := range got {
 				if arg == "" {
 					continue
 				}
+
 				if arg == syntheticRoot {
 					t.Errorf("%s was handed the state root itself: %v", name, got)
 					continue
@@ -95,12 +98,14 @@ func TestNoEngineArgvNamesAnAncestorDirectoryByName(t *testing.T) {
 			break
 		}
 	}
+
 	for name, build := range argvBuilders() {
 		for _, req := range requests() {
 			got, err := build(req)
 			if err != nil {
 				t.Fatalf("%s: building the command line failed: %v", name, err)
 			}
+
 			for _, arg := range got {
 				for _, up := range ancestors {
 					if arg == up {
@@ -124,6 +129,7 @@ func TestNoEngineIsHandedADirectoryGrant(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s: building the command line failed: %v", name, err)
 			}
+
 			joined := strings.Join(got, " ")
 			for _, forbidden := range []string{"--add-dir", "--addDir"} {
 				if strings.Contains(joined, forbidden) {
@@ -145,6 +151,7 @@ func TestTheWorktreeIsPassedAsTheWorkingDirectoryNotAsAnArgument(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s: building the command line failed: %v", name, err)
 			}
+
 			for _, arg := range got {
 				if arg == req.Dir {
 					t.Errorf("%s names the worktree on its command line: %v", name, got)

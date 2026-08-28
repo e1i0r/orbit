@@ -94,6 +94,7 @@ func Permitted(names []string) error {
 			return fmt.Errorf("no engine here knows the permission %q; the vocabulary is %s, %s and %s", n, PermissionRead, PermissionRepo, PermissionNetwork)
 		}
 	}
+
 	return nil
 }
 
@@ -164,8 +165,10 @@ func claudePermissionArgs(names []string) ([]string, error) {
 	if err := Permitted(names); err != nil {
 		return nil, err
 	}
+
 	mode := "plan"
 	allowed := map[string]bool{}
+
 	for _, n := range names {
 		switch n {
 		case PermissionRead:
@@ -174,23 +177,30 @@ func claudePermissionArgs(names []string) ([]string, error) {
 			// repo implies read: a posture that may rewrite a file it
 			// cannot open is not a posture, it is a bug report.
 			mode = "default"
+
 			allow(allowed, readTools)
 			allow(allowed, writeTools)
 		case PermissionNetwork:
 			allow(allowed, networkTools)
 		}
 	}
+
 	args := []string{"--permission-mode", mode}
+
 	var tools []string
+
 	for _, t := range toolOrder {
 		if allowed[t] {
 			tools = append(tools, t)
 		}
 	}
+
 	if len(tools) == 0 {
 		tools = []string{noTools}
 	}
+
 	args = append(args, "--allowedTools", strings.Join(tools, ","))
+
 	return args, nil
 }
 

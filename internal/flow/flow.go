@@ -88,20 +88,25 @@ func (f Flow) Validate() error {
 	if f.Name == "" {
 		return fmt.Errorf("the flow has no name")
 	}
+
 	if len(f.Phases) == 0 {
 		return fmt.Errorf("flow %q has no phases", f.Name)
 	}
+
 	seen := make(map[string]bool, len(f.Phases))
 	for i, p := range f.Phases {
 		if p.Name == "" {
 			return fmt.Errorf("flow %q: phase %d has no name", f.Name, i+1)
 		}
+
 		if p.Engine == "" {
 			return fmt.Errorf("flow %q: phase %q names no engine", f.Name, p.Name)
 		}
+
 		if seen[p.Name] {
 			return fmt.Errorf("flow %q: phase %q appears more than once", f.Name, p.Name)
 		}
+
 		seen[p.Name] = true
 		// A permission nobody defined is refused here, at load, rather than
 		// where it would otherwise surface: after a worktree, a process and
@@ -114,14 +119,17 @@ func (f Flow) Validate() error {
 				return fmt.Errorf("flow %q: phase %q asks for unknown permission %q", f.Name, p.Name, perm)
 			}
 		}
+
 		for gi, g := range p.Gates {
 			if g.Name == "" {
 				return fmt.Errorf("flow %q: phase %q has a gate at position %d with no name", f.Name, p.Name, gi+1)
 			}
+
 			if g.Command == "" {
 				return fmt.Errorf("flow %q: phase %q gate %q has no command", f.Name, p.Name, g.Name)
 			}
 		}
 	}
+
 	return nil
 }

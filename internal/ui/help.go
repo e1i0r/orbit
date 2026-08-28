@@ -15,8 +15,10 @@ func (m Model) openHelp() Model {
 	if prev == screenHelp {
 		prev = screenList
 	}
+
 	m.screen = screenHelp
 	m.help = helpState{prevScreen: prev}
+
 	return m
 }
 
@@ -25,8 +27,10 @@ func (m Model) abandonHelp() Model {
 	if target == screenHelp {
 		target = screenList
 	}
+
 	m.help = helpState{}
 	m.screen = target
+
 	return m
 }
 
@@ -38,11 +42,13 @@ func (m Model) helpKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if m.help.offset > 0 {
 			m.help.offset--
 		}
+
 		return m, nil
 	case key.Matches(msg, m.keys.Down):
 		m.help.offset++
 		return m, nil
 	}
+
 	return m, nil
 }
 
@@ -50,6 +56,7 @@ func (m Model) helpRows(h, w int) []string {
 	if h <= 0 {
 		return nil
 	}
+
 	p := m.opts.Words
 	out := []string{
 		"",
@@ -60,11 +67,13 @@ func (m Model) helpRows(h, w int) []string {
 
 	renderSection := func(title string, items [][2]string) {
 		out = append(out, "  "+Paint(Live).Bold(true).Render(title))
+
 		for _, item := range items {
 			k := pad(item[0], 28, false)
 			line := "    " + Paint(Accent).Render(k) + " " + Paint(Dim).Render(item[1])
 			out = append(out, fit(line, w))
 		}
+
 		out = append(out, "")
 	}
 
@@ -118,7 +127,9 @@ func (m Model) helpRows(h, w int) []string {
 		if m.help.offset >= len(out) {
 			m.help.offset = len(out) - 1
 		}
+
 		out = out[m.help.offset:]
 	}
+
 	return fill(out, h)
 }

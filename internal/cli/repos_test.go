@@ -38,9 +38,11 @@ func TestReposEarlyExitAndNoArgument(t *testing.T) {
 // "detached" base column.
 func noRemoteDetachedRepo(t *testing.T, dir string) {
 	t.Helper()
+
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
+
 	home := t.TempDir()
 	env := append(os.Environ(),
 		"GIT_AUTHOR_NAME=t", "GIT_AUTHOR_EMAIL=t@t",
@@ -48,6 +50,7 @@ func noRemoteDetachedRepo(t *testing.T, dir string) {
 		"GIT_CONFIG_GLOBAL=/dev/null", "GIT_CONFIG_SYSTEM=/dev/null",
 		"HOME="+home,
 	)
+
 	for _, args := range [][]string{
 		{"init", "-q", "-b", "main"},
 		{"commit", "-q", "--allow-empty", "-m", "first"},
@@ -55,6 +58,7 @@ func noRemoteDetachedRepo(t *testing.T, dir string) {
 	} {
 		cmd := exec.Command("git", args...)
 		cmd.Dir = dir
+
 		cmd.Env = env
 		if out, err := cmd.CombinedOutput(); err != nil {
 			t.Fatalf("git %v: %v\n%s", args, err, out)
@@ -65,6 +69,7 @@ func noRemoteDetachedRepo(t *testing.T, dir string) {
 func TestReposShowsNoRemoteAndDetachedAsPlaceholders(t *testing.T) {
 	root := t.TempDir()
 	t.Setenv("ORBIT_HOME", t.TempDir())
+
 	dir := filepath.Join(root, "orphan")
 	noRemoteDetachedRepo(t, dir)
 
@@ -72,9 +77,11 @@ func TestReposShowsNoRemoteAndDetachedAsPlaceholders(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("repos exited %d: %s", code, errOut)
 	}
+
 	if !strings.Contains(out, "—") {
 		t.Errorf("repos did not print the no-remote placeholder:\n%s", out)
 	}
+
 	if !strings.Contains(out, "detached") {
 		t.Errorf("repos did not print the detached-HEAD placeholder:\n%s", out)
 	}

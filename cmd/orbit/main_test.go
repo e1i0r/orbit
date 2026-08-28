@@ -10,6 +10,7 @@ import (
 
 func TestMainRunInvocation(t *testing.T) {
 	var out, errOut bytes.Buffer
+
 	code := cli.Run([]string{"--help"}, &out, &errOut)
 	if code != 0 {
 		t.Errorf("expected exit code 0 on --help, got %d", code)
@@ -23,6 +24,7 @@ func TestMainCallsExitWithRunCode(t *testing.T) {
 	defer func() { os.Args, exit = oldArgs, oldExit }()
 
 	var code int
+
 	exit = func(c int) { code = c }
 	os.Args = []string{"orbit", "--help"}
 

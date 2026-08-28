@@ -54,13 +54,16 @@ func (s *Store) settingsPath() string {
 // is nothing here yet" and not "what is here is not JSON" — is returned.
 func (s *Store) Settings() (Settings, error) {
 	path := s.settingsPath()
+
 	body, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
 		return Settings{UnreadCap: defaultUnreadCap, Flow: defaultFlow}, nil
 	}
+
 	if err != nil {
 		return Settings{}, fmt.Errorf("read %q: %w", path, err)
 	}
+
 	var cfg Settings
 	if err := json.Unmarshal(body, &cfg); err != nil {
 		// A settings file that will not parse yields the defaults, not a
@@ -68,6 +71,7 @@ func (s *Store) Settings() (Settings, error) {
 		// English rather than an error.
 		return Settings{UnreadCap: defaultUnreadCap, Flow: defaultFlow}, nil //nolint:nilerr // deliberate: unparseable settings yield the defaults
 	}
+
 	return cfg, nil
 }
 
@@ -89,14 +93,18 @@ func (s *Store) SaveSettings(cfg Settings) error {
 	if err := keepUnreadable(path); err != nil {
 		return err
 	}
+
 	body, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return fmt.Errorf("encode settings: %w", err)
 	}
+
 	body = append(body, '\n')
+
 	if err := os.MkdirAll(filepath.Dir(path), dirMode); err != nil {
 		return fmt.Errorf("create %q: %w", filepath.Dir(path), err)
 	}
+
 	return WriteAtomically(path, body)
 }
 
@@ -122,13 +130,16 @@ func keepUnreadable(path string) error {
 	if err != nil {
 		return nil //nolint:nilerr // a file that is absent or unreadable is the write's problem, not this one's
 	}
+
 	var probe Settings
 	if json.Unmarshal(body, &probe) == nil {
 		return nil
 	}
+
 	aside := path + unreadableSuffix
 	if err := os.Rename(path, aside); err != nil {
 		return fmt.Errorf("move the unreadable %q aside to %q: %w", path, aside, err)
 	}
+
 	return nil
 }

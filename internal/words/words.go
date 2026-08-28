@@ -64,6 +64,7 @@ func (p *Printer) T(key, english string, args ...Arg) string {
 	if e, ok := p.strs.keys[key]; ok && !e.Value.IsPlural && e.Value.Single != "" {
 		template = e.Value.Single
 	}
+
 	return p.finish(expand(template, args))
 }
 
@@ -76,6 +77,7 @@ func (p *Printer) P(key string, n int, one, other string, args ...Arg) string {
 	if n == 1 {
 		template = one
 	}
+
 	if e, ok := p.strs.keys[key]; ok && e.Value.IsPlural {
 		switch {
 		case n == 1 && e.Value.One != "":
@@ -84,6 +86,7 @@ func (p *Printer) P(key string, n int, one, other string, args ...Arg) string {
 			template = e.Value.Other
 		}
 	}
+
 	return p.finish(expand(template, withCount(args, n)))
 }
 
@@ -101,6 +104,7 @@ func (p *Printer) finish(s string) string {
 	if p.pseudo == nil {
 		return s
 	}
+
 	return p.pseudo(s)
 }
 
@@ -111,6 +115,7 @@ func withCount(args []Arg, n int) []Arg {
 			return args
 		}
 	}
+
 	return append(args, Arg{Name: "n", Value: strconv.Itoa(n)})
 }
 
@@ -121,9 +126,11 @@ func expand(template string, args []Arg) string {
 	if len(args) == 0 {
 		return template
 	}
+
 	pairs := make([]string, 0, len(args)*2)
 	for _, a := range args {
 		pairs = append(pairs, "{"+a.Name+"}", a.Value)
 	}
+
 	return strings.NewReplacer(pairs...).Replace(template)
 }

@@ -43,6 +43,7 @@ func TestTakeErrorPaths(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	path, err := s.ControlPath(r.Path, tk.ID)
 	if err != nil {
 		t.Fatalf("ControlPath: %v", err)
@@ -53,9 +54,11 @@ func TestTakeErrorPaths(t *testing.T) {
 	if err := os.Mkdir(path, 0o700); err != nil {
 		t.Fatalf("Mkdir: %v", err)
 	}
+
 	if _, err := take(s, tk); err == nil {
 		t.Error("take over a directory should have failed")
 	}
+
 	if err := os.Remove(path); err != nil {
 		t.Fatalf("Remove: %v", err)
 	}
@@ -66,13 +69,16 @@ func TestTakeErrorPaths(t *testing.T) {
 	if err := os.WriteFile(path, []byte("not-a-real-word\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile: %v", err)
 	}
+
 	word, err := take(s, tk)
 	if err != nil {
 		t.Fatalf("take: %v", err)
 	}
+
 	if word != "" {
 		t.Errorf("take on an unknown word = %q, want empty", word)
 	}
+
 	if _, statErr := os.Stat(path); !os.IsNotExist(statErr) {
 		t.Error("take left the unknown word's file behind")
 	}
@@ -82,14 +88,18 @@ func TestTakeErrorPaths(t *testing.T) {
 	if err := os.WriteFile(path, []byte("pause\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile: %v", err)
 	}
+
 	dir, err := s.TaskDir(r.Path, tk.ID)
 	if err != nil {
 		t.Fatalf("TaskDir: %v", err)
 	}
+
 	if err := os.Chmod(dir, 0o500); err != nil {
 		t.Fatalf("chmod: %v", err)
 	}
+
 	t.Cleanup(func() { _ = os.Chmod(dir, 0o700) }) //nolint:errcheck
+
 	if _, err := take(s, tk); err == nil {
 		t.Error("take on a read-only directory should have failed to clear the word")
 	}

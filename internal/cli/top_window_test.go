@@ -18,6 +18,7 @@ import (
 
 func TestWindowRefusesADirectoryThatIsNotOne(t *testing.T) {
 	t.Setenv("ORBIT_HOME", t.TempDir())
+
 	if _, _, err := window(filepath.Join(t.TempDir(), "does-not-exist"), ""); err == nil {
 		t.Error("window over a directory that does not exist succeeded")
 	}
@@ -25,10 +26,12 @@ func TestWindowRefusesADirectoryThatIsNotOne(t *testing.T) {
 
 func TestWindowFailsWhenTheStateRootCannotBeCreated(t *testing.T) {
 	repoRoot := t.TempDir()
+
 	blocker := filepath.Join(t.TempDir(), "blocker")
 	if err := os.WriteFile(blocker, []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
+
 	t.Setenv("ORBIT_HOME", filepath.Join(blocker, "orbit"))
 
 	if _, _, err := window(repoRoot, ""); err == nil {
@@ -60,14 +63,17 @@ func TestQuotaPortMapsRealWindows(t *testing.T) {
 	defer srv.Close()
 
 	qc := quota.New(srv.URL)
+
 	qp := quotaPort(qc, true)
 	if qp == nil {
 		t.Fatal("quotaPort(client, true) returned nil")
 	}
+
 	windows := qp()
 	if len(windows) != 1 {
 		t.Fatalf("got %d windows, want 1", len(windows))
 	}
+
 	if windows[0].Key != "acct-1" || windows[0].Label != "5h" {
 		t.Errorf("unexpected window: %+v", windows[0])
 	}

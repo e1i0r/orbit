@@ -32,6 +32,7 @@ func TestRecordAppendReadRoundTripProperty(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Read: %v", err)
 	}
+
 	if len(readEvents) != len(events) {
 		t.Fatalf("read %d events, want %d", len(readEvents), len(events))
 	}
@@ -41,6 +42,7 @@ func TestRecordAppendReadRoundTripProperty(t *testing.T) {
 		if got.Kind != want.Kind || got.Phase != want.Phase || got.Text != want.Text {
 			t.Errorf("event %d = %+v, want %+v", i, got, want)
 		}
+
 		if len(want.Data) > 0 && !reflect.DeepEqual(got.Data, want.Data) {
 			t.Errorf("event %d data = %+v, want %+v", i, got.Data, want.Data)
 		}
@@ -77,6 +79,7 @@ func TestRecordUnreadableLineTracking(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Read: %v", err)
 	}
+
 	if len(events) != 3 {
 		t.Fatalf("expected 3 events including unreadable line, got %d", len(events))
 	}
@@ -97,6 +100,7 @@ func TestRecordMaxLineAndEmptyFile(t *testing.T) {
 
 	// 2. Line over MaxLine gets rejected
 	hugeText := string(make([]byte, MaxLine+100))
+
 	err := Append(path, Event{Kind: TaskCreated, Text: hugeText})
 	if err == nil {
 		t.Error("expected Append with huge text over MaxLine to fail")
@@ -107,6 +111,7 @@ func TestRecordMaxLineAndEmptyFile(t *testing.T) {
 	if err := os.WriteFile(emptyPath, nil, 0o644); err != nil {
 		t.Fatalf("WriteFile empty: %v", err)
 	}
+
 	events, err := Read(emptyPath)
 	if err != nil || len(events) != 0 {
 		t.Errorf("Read empty file failed: %v, events=%+v", err, events)

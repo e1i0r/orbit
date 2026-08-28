@@ -33,11 +33,14 @@ func TestPhaseThoughtAndRefusedReportTruncation(t *testing.T) {
 // GatePassed branch where the gate's own combined output is over maxOutput.
 func TestRunGatesPassingGateWithOversizedOutputReportsBytes(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "GATES-BIG-OUT-1", "gates big output test", "quick")
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	wt := t.TempDir()
+
 	p := flow.Phase{
 		Name: "test",
 		Gates: []flow.Gate{
@@ -48,19 +51,24 @@ func TestRunGatesPassingGateWithOversizedOutputReportsBytes(t *testing.T) {
 	if err := runGates(context.Background(), s, tk, p, 1, wt, engine.Result{}); err != nil {
 		t.Fatalf("runGates: %v", err)
 	}
+
 	events, err := Events(s, tk)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	var found bool
+
 	for _, e := range events {
 		if e.Data["gate"] == "big" {
 			found = true
+
 			if e.Data["bytes"] == "" {
 				t.Error("GatePassed for an oversized gate output did not report bytes")
 			}
 		}
 	}
+
 	if !found {
 		t.Error("no GatePassed event recorded for the big gate")
 	}
@@ -73,6 +81,7 @@ func TestRunGatesPassedEmitFailure(t *testing.T) {
 	s, r := fixture(t)
 	bad := Task{ID: "has/slash", Repo: r}
 	wt := t.TempDir()
+
 	p := flow.Phase{
 		Name:  "test",
 		Gates: []flow.Gate{{Name: "ok", Command: "true"}},

@@ -26,6 +26,7 @@ func TestGeneratePhasePromptFromDraft(t *testing.T) {
 		if !strings.Contains(got, c.wantSub) {
 			t.Errorf("%s: generatePhasePrompt(%q) = %q, want it to contain %q", c.name, c.input, got, c.wantSub)
 		}
+
 		if !strings.Contains(got, c.input) {
 			t.Errorf("%s: expected the draft %q to survive into the generated prompt %q", c.name, c.input, got)
 		}
@@ -65,6 +66,7 @@ func TestGeneratePhasePromptDefaultFallback(t *testing.T) {
 	if !strings.Contains(withoutFlow, "mystery-phase") {
 		t.Errorf("expected the phase name in the fallback, got %q", withoutFlow)
 	}
+
 	if strings.Contains(withoutFlow, "para el flujo") {
 		t.Errorf("expected no flow clause when flowName is empty, got %q", withoutFlow)
 	}

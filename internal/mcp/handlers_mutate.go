@@ -20,14 +20,17 @@ func (sn Session) createTask(args map[string]any) CallToolResult {
 	if title == "" {
 		return refuse(fmt.Errorf("this tool needs title"))
 	}
+
 	sb, err := sn.readBoard()
 	if err != nil {
 		return refuse(err)
 	}
+
 	r, err := pickRepo(sb.board, stringArg(args, "repo"))
 	if err != nil {
 		return refuse(err)
 	}
+
 	id, err := taskID(sb.store, r, stringArg(args, "id"))
 	if err != nil {
 		return refuse(err)
@@ -40,11 +43,14 @@ func (sn Session) createTask(args map[string]any) CallToolResult {
 	if prompt := strings.TrimSpace(stringArg(args, "prompt")); prompt != "" {
 		text = title + "\n\n" + prompt
 	}
+
 	t, err := task.Create(sb.store, r, id, text, stringArg(args, "flow"))
 	if err != nil {
 		return refuse(fmt.Errorf("write task %s down in %s: %w", id, r.Name, err))
 	}
+
 	trace := journal(sb.store, t, "a model wrote this task down over mcp; nobody has started it")
+
 	return reply(map[string]any{
 		"id":        t.ID,
 		"repo":      r.Name,
@@ -62,9 +68,11 @@ func taskID(s *store.Store, r repo.Repo, chosen string) (string, error) {
 	if chosen == "" {
 		return nextTaskID(s, r)
 	}
+
 	if err := store.ValidTaskID(chosen); err != nil {
 		return "", fmt.Errorf("id %q cannot be used: %w", chosen, err)
 	}
+
 	return chosen, nil
 }
 
@@ -80,17 +88,21 @@ func (sn Session) retryTask(args map[string]any) CallToolResult {
 	if err != nil {
 		return refuse(err)
 	}
+
 	row0, err := findTask(sb.board, stringArg(args, "task_id"), stringArg(args, "repo"))
 	if err != nil {
 		return refuse(err)
 	}
+
 	if row0.Live {
 		return refuse(fmt.Errorf("task %s is running; pause it with orbit_pause_task or stop it with orbit_cancel_task before starting it again", row0.ID))
 	}
+
 	r, err := openTaskRepo(row0)
 	if err != nil {
 		return refuse(err)
 	}
+
 	t, err := task.Load(sb.store, r, row0.ID)
 	if err != nil {
 		return refuse(fmt.Errorf("load task %s: %w", row0.ID, err))
@@ -105,15 +117,19 @@ func (sn Session) retryTask(args map[string]any) CallToolResult {
 			return refuse(fmt.Errorf("record the correction on task %s: %w", t.ID, err))
 		}
 	}
+
 	chosen := stringArg(args, "flow")
 	if chosen == "" {
 		chosen = t.Flow
 	}
+
 	pid, err := task.Start(sb.store, t, chosen, board.Unread(sb.board))
 	if err != nil {
 		return refuse(fmt.Errorf("start task %s: %w", t.ID, err))
 	}
+
 	trace := journal(sb.store, t, "a model started this task again over mcp, on the %s flow%s", chosen, correction(corrective))
+
 	return reply(map[string]any{
 		"id":                t.ID,
 		"repo":              r.Name,
@@ -141,6 +157,7 @@ func correction(corrective string) string {
 	if corrective == "" {
 		return ""
 	}
+
 	return ", after leaving it a correction"
 }
 
@@ -151,14 +168,17 @@ func (sn Session) addNote(args map[string]any) CallToolResult {
 	if text == "" {
 		return refuse(fmt.Errorf("this tool needs text"))
 	}
+
 	sb, t, res := sn.loadFor(args)
 	if res != nil {
 		return *res
 	}
+
 	note := supervisorNote(text)
 	if err := task.Note(sb.store, t, note); err != nil {
 		return refuse(fmt.Errorf("record a note on task %s: %w", t.ID, err))
 	}
+
 	return done("noted on task %s: %s", t.ID, note)
 }
 
@@ -169,9 +189,11 @@ func (sn Session) control(args map[string]any, word, past string) CallToolResult
 	if res != nil {
 		return *res
 	}
+
 	if err := task.Control(sb.store, t, word); err != nil {
 		return refuse(fmt.Errorf("tell task %s to %s: %w", t.ID, word, err))
 	}
+
 	trace := journal(sb.store, t, "a model asked this task to %s over mcp", word)
 	// The word is on disk and the run reads it at its next phase boundary,
 	// which has not happened yet. Saying it is paused would be a claim about
@@ -185,10 +207,13 @@ func (sn Session) cancelTask(args map[string]any) CallToolResult {
 	if res != nil {
 		return *res
 	}
+
 	if err := task.Cancel(sb.store, t); err != nil {
 		return refuse(fmt.Errorf("cancel task %s: %w", t.ID, err))
 	}
+
 	trace := journal(sb.store, t, "a model cancelled this task over mcp")
+
 	return done("task %s was told to stop; the record carries the outcome%s", t.ID, trace)
 }
 
@@ -199,6 +224,7 @@ func (sn Session) directTask(args map[string]any) CallToolResult {
 	if message == "" {
 		return refuse(fmt.Errorf("this tool needs message"))
 	}
+
 	sb, t, res := sn.loadFor(args)
 	if res != nil {
 		return *res
@@ -213,17 +239,22 @@ func (sn Session) directTask(args map[string]any) CallToolResult {
 		if err != nil {
 			return refuse(fmt.Errorf("restart task %s after directing it: %w", t.ID, err))
 		}
+
 		trace := journal(sb.store, t, "a model directed this task over mcp and started it again")
+
 		return reply(map[string]any{
 			"id":      t.ID,
 			"pid":     pid,
 			"message": fmt.Sprintf("task %s was directed and restarted with pid %d%s", t.ID, pid, trace),
 		})
 	}
+
 	if err := task.Direct(sb.store, t, "mcp", message); err != nil {
 		return refuse(fmt.Errorf("direct task %s: %w", t.ID, err))
 	}
+
 	trace := journal(sb.store, t, "a model directed this task over mcp")
+
 	return done("task %s was directed; the directive is recorded%s", t.ID, trace)
 }
 
@@ -239,20 +270,24 @@ func (sn Session) loadFor(args map[string]any) (*storeAndBoard, task.Task, *Call
 		res := refuse(err)
 		return nil, task.Task{}, &res
 	}
+
 	row0, err := findTask(sb.board, stringArg(args, "task_id"), stringArg(args, "repo"))
 	if err != nil {
 		res := refuse(err)
 		return nil, task.Task{}, &res
 	}
+
 	r, err := openTaskRepo(row0)
 	if err != nil {
 		res := refuse(err)
 		return nil, task.Task{}, &res
 	}
+
 	t, err := task.Load(sb.store, r, row0.ID)
 	if err != nil {
 		res := refuse(fmt.Errorf("load task %s: %w", row0.ID, err))
 		return nil, task.Task{}, &res
 	}
+
 	return sb, t, nil
 }

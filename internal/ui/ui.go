@@ -229,6 +229,7 @@ func New(o Options) Model {
 	if o.Words == nil {
 		o.Words = words.For("en")
 	}
+
 	m := Model{
 		opts: o,
 		keys: NewKeys(o.Words),
@@ -243,6 +244,7 @@ func New(o Options) Model {
 	if o.Width > 0 && o.Height > 0 {
 		m = m.resize(o.Width, o.Height)
 	}
+
 	return m
 }
 

@@ -46,6 +46,7 @@ func checkUpgradeCmd(current string) tea.Cmd {
 		if err != nil {
 			return nil
 		}
+
 		req.Header.Set("User-Agent", "orbit-cockpit")
 		req.Header.Set("Accept", "application/vnd.github.v3+json")
 
@@ -54,6 +55,7 @@ func checkUpgradeCmd(current string) tea.Cmd {
 			if resp != nil && resp.Body != nil {
 				_ = resp.Body.Close()
 			}
+
 			return nil
 		}
 		defer resp.Body.Close()
@@ -62,9 +64,11 @@ func checkUpgradeCmd(current string) tea.Cmd {
 		if err := json.NewDecoder(resp.Body).Decode(&rel); err != nil || rel.TagName == "" {
 			return nil
 		}
+
 		if !worthOffering(current, rel.TagName) {
 			return nil
 		}
+
 		return upgradeAvailableMsg{Version: rel.TagName}
 	}
 }
@@ -78,10 +82,12 @@ func checkUpgradeCmd(current string) tea.Cmd {
 // version string may not, and "v0.1.12" and "0.1.12" are the same release.
 func worthOffering(current, latest string) bool {
 	cur := strings.TrimPrefix(strings.TrimSpace(current), "v")
+
 	rel := strings.TrimPrefix(strings.TrimSpace(latest), "v")
 	if cur == "" || cur == "dev" || rel == "" {
 		return false
 	}
+
 	return cur != rel
 }
 
