@@ -31,13 +31,20 @@ func (m Model) flowsRows(h, w int) []string {
 	out := []string{
 		"",
 		"  " + Paint(Accent).Render(p.T("flows.title", "Flows")),
-		"  " + Paint(Dim).Render(p.T("flows.read_only", "flows are read-only; edit flow files under $ORBIT_HOME/flows/ to change them")),
+		// This line said flows were read-only and to go edit the files by
+		// hand — printed directly above a Create button, and above an Edit
+		// and a Delete pill on every row the cursor is on. What is true is
+		// the half about where they live, and that a built-in is inside the
+		// binary: saving one of your own under its name covers it, which is
+		// the only way a shipped flow changes.
+		"  " + Paint(Dim).Render(p.T("flows.where_they_live",
+			"your own flows are files under $ORBIT_HOME/flows/; a built-in is inside orbit, and saving your own under its name covers it")),
 		"",
 		createBtn,
 		"",
 	}
 
-	descriptors := flow.List(m.opts.Flows)
+	descriptors := m.flows.listed
 	if len(descriptors) == 0 {
 		out = append(out, "  "+Paint(Dim).Render(p.T("flows.none", "no flows found")))
 	}
@@ -66,7 +73,9 @@ func (m Model) flowsRows(h, w int) []string {
 
 		out = append(out, fit(headerLine, w))
 
-		fl, err := flow.Resolve(m.opts.Flows, d.Name)
+		got := m.flows.shown(d.Name)
+
+		fl, err := got.flow, got.err
 		if err != nil {
 			errLine := strings.Repeat(" ", gutter+2) + Paint(Bad).Render(err.Error())
 			out = append(out, fit(errLine, w))

@@ -110,12 +110,11 @@ func (m Model) hitFlows(x, y int) Target {
 			return Target{Kind: TargetFlowItem, Field: "create"}
 		}
 
-		descriptors := flow.List(m.opts.Flows)
+		descriptors := m.flows.listed
 		curLine := 6
 
 		for i, d := range descriptors {
-			//nolint:errcheck // best-effort flow descriptor resolution
-			fl, _ := flow.Resolve(m.opts.Flows, d.Name)
+			fl := m.flows.shown(d.Name).flow
 			phaseCount := len(fl.Phases)
 
 			extraDesc := 0
