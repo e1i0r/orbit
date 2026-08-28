@@ -42,7 +42,21 @@ type flowsState struct {
 	// carried here because ensurePhase is reached from cur(), which has no
 	// Model to ask, and internal/flow refuses a phase that names no engine
 	// — so it is this or a name made up in a package that cannot know one.
-	engine      string
+	engine string
+	// listed and detail are what this screen is showing: read when the
+	// screen opens, and again whenever it changes something.
+	//
+	// They used to be read where they were drawn. flowsRows is called from
+	// View, so every frame of this screen was one os.ReadDir plus one
+	// os.ReadFile per flow, on the thread that draws — and hitFlows walked
+	// the very same directory again, on every mouse event, to work out
+	// where the rows it had not drawn would be. Two readings of one
+	// directory, taken at two moments, deciding the same layout: a flow
+	// saved between the draw and the click moved every row under the
+	// cursor, and the click landed on a different flow than the one the
+	// reader was pointing at.
+	listed      []flow.Listed
+	detail      map[string]resolved
 	field       int
 	template    string
 	flowName    string
@@ -89,8 +103,35 @@ func (m Model) openFlows() Model {
 		sel:        -1,
 	}
 	m.flows.ensurePhase()
+	m.flows.refresh(m.opts.Flows)
 
 	return m
+}
+
+// resolved is one flow as this screen holds it: what Resolve answered, or
+// the error when it could not. The error is kept because the list names a
+// file that does not parse rather than hiding it — "there is a file called
+// that" is what the reader is asking — and the row says why.
+type resolved struct {
+	flow flow.Flow
+	err  error
+}
+
+// refresh reads the flow directory once, for the screen to draw from and to
+// hit-test against.
+func (st *flowsState) refresh(src flow.Source) {
+	st.listed = flow.List(src)
+	st.detail = make(map[string]resolved, len(st.listed))
+
+	for _, d := range st.listed {
+		fl, err := flow.Resolve(src, d.Name)
+		st.detail[d.Name] = resolved{flow: fl, err: err}
+	}
+}
+
+// shown is the flow of that name as the screen last read it.
+func (st *flowsState) shown(name string) resolved {
+	return st.detail[name]
 }
 
 func (m Model) openFlowPreview(name string) Model {
@@ -188,7 +229,8 @@ func (m Model) flowsListKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	descriptors := flow.List(m.opts.Flows)
+	descriptors := st.listed
+
 	switch {
 	case key.Matches(msg, m.keys.Back):
 		return m.abandonFlows(), nil

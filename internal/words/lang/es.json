@@ -1555,9 +1555,9 @@
       "source": "Flows",
       "value": "Flujos"
     },
-    "flows.read_only": {
-      "source": "flows are read-only; edit flow files under $ORBIT_HOME/flows/ to change them",
-      "value": "los flujos son de solo lectura; edita los archivos en $ORBIT_HOME/flows/ para cambiarlos"
+    "flows.where_they_live": {
+      "source": "your own flows are files under $ORBIT_HOME/flows/; a built-in is inside orbit, and saving your own under its name covers it",
+      "value": "tus flujos son archivos en $ORBIT_HOME/flows/; los integrados van dentro de orbit, y guardar uno tuyo con su nombre lo tapa"
     },
     "flows.none": {
       "source": "no flows found",
@@ -1578,6 +1578,10 @@
     "flows.deleted": {
       "source": "flow {name} deleted",
       "value": "flujo {name} eliminado"
+    },
+    "flows.deleted_revealed": {
+      "source": "flow {name} deleted; the built-in of that name is showing again",
+      "value": "flujo {name} eliminado; vuelve a verse el integrado con ese nombre"
     },
     "flows.create_btn": {
       "source": "+ Create Custom Flow",

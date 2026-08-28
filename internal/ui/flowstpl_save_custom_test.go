@@ -31,6 +31,7 @@ func TestSaveCustomFlowNoName(t *testing.T) {
 
 func TestSaveCustomFlowInvalid(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
+	m.opts.Flows = flowsTestDir(t.TempDir())
 	m = m.startCreateFlow()
 	m.flows.flowName = "no-engine"
 	m.flows.phases[0].Engine = ""
@@ -125,14 +126,22 @@ func TestSaveCustomFlowSucceeds(t *testing.T) {
 	}
 }
 
-// TestSaveCustomFlowDefaultHomeDir is a window opened without a state root
-// at all — m.opts.Flows is nil, the same as the fixture's own default — so
-// saveCustomFlow falls back to $HOME/.orbit/flows. HOME is redirected to a
-// temp dir for the length of the test, so the fallback is exercised without
-// writing anywhere near the machine's real home directory.
-func TestSaveCustomFlowDefaultHomeDir(t *testing.T) {
+// TestAWindowWithNowhereToSaveSaysSoInsteadOfGuessing.
+//
+// A window opened without a state root — m.opts.Flows nil, which is the
+// fixture's own default — used to fall back to $HOME/.orbit/flows and
+// report the flow saved. On any machine with $ORBIT_HOME pointed elsewhere,
+// and that is the whole reason the variable exists, the flow went into a
+// directory nothing reads: the band said saved, the list never showed it
+// again, and no error was ever raised. Refusing is the honest answer, and it
+// is the one internal/flow already gives.
+//
+// HOME is redirected for the length of the test so that a regression writes
+// into a temp directory rather than the machine's real home.
+func TestAWindowWithNowhereToSaveSaysSoInsteadOfGuessing(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("ORBIT_HOME", filepath.Join(home, "elsewhere"))
 
 	m, _ := testModel(t, 100, 30)
 	m = m.startCreateFlow()
@@ -140,12 +149,81 @@ func TestSaveCustomFlowDefaultHomeDir(t *testing.T) {
 
 	m2, cmd := m.saveCustomFlow()
 	if cmd != nil {
+		t.Fatalf("expected nil cmd")
+	}
+
+	wantBand(t, m2, "nowhere to keep a flow")
+
+	if m2.flows.creating != true {
+		t.Error("a save that did not happen has to leave the builder open")
+	}
+
+	if _, err := os.Stat(filepath.Join(home, ".orbit", "flows", "home-fallback-flow.json")); err == nil {
+		t.Error("the flow was written under ~/.orbit/flows, a directory this window has no business naming")
+	}
+}
+
+// TestAFlowNameCannotClimbOutOfTheFlowDirectory.
+//
+// The name is a text field, and it was joined onto the flow directory and
+// written with no check at all. filepath.Join resolves the .. as it goes, so
+// a flow called ../notes was written one level above the flows directory —
+// over whatever was there. flow.ValidName refuses the name instead, and it
+// is the same check `orbit set` and the MCP server already make.
+func TestAFlowNameCannotClimbOutOfTheFlowDirectory(t *testing.T) {
+	root := t.TempDir()
+
+	flows := filepath.Join(root, "flows")
+	if err := os.MkdirAll(flows, 0o700); err != nil {
+		t.Fatalf("seed the flow dir: %v", err)
+	}
+
+	for _, name := range []string{"../escaped", "sub/escaped", ".."} {
+		m, _ := testModel(t, 100, 30)
+		m.opts.Flows = flowsTestDir(flows)
+		m = m.startCreateFlow()
+		m.flows.flowName = name
+
+		if _, cmd := m.saveCustomFlow(); cmd != nil {
+			t.Fatalf("expected nil cmd for %q", name)
+		}
+
+		if _, err := os.Stat(filepath.Join(root, "escaped.json")); err == nil {
+			t.Fatalf("the flow named %q was written outside the flow directory", name)
+		}
+	}
+}
+
+// TestASavedFlowIsNoWiderThanTheStateRoot. internal/flow spells out 0700 and
+// 0600 and says why: a flow directory that ended up group-readable because
+// two packages disagreed about a number would be a quiet widening. The
+// window was the second package, and it disagreed — 0755 and 0644.
+func TestASavedFlowIsNoWiderThanTheStateRoot(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "flows")
+
+	m, _ := testModel(t, 100, 30)
+	m.opts.Flows = flowsTestDir(dir)
+	m = m.startCreateFlow()
+	m.flows.flowName = "narrow"
+
+	if _, cmd := m.saveCustomFlow(); cmd != nil {
 		t.Fatalf("expected nil cmd on a successful save")
 	}
 
-	wantBand(t, m2, "home-fallback-flow")
+	for _, c := range []struct {
+		path string
+		want os.FileMode
+	}{
+		{dir, 0o700},
+		{filepath.Join(dir, "narrow.json"), 0o600},
+	} {
+		info, err := os.Stat(c.path)
+		if err != nil {
+			t.Fatalf("stat %s: %v", c.path, err)
+		}
 
-	if _, err := os.Stat(filepath.Join(home, ".orbit", "flows", "home-fallback-flow.json")); err != nil {
-		t.Errorf("expected the flow saved under the redirected home dir: %v", err)
+		if got := info.Mode().Perm(); got != c.want {
+			t.Errorf("%s is %o, want %o", c.path, got, c.want)
+		}
 	}
 }

@@ -33,6 +33,7 @@ func writeFlowFile(t *testing.T, dir, name, body string) {
 
 func TestDeleteSelectedFlowAndDeleteFlow(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
+	m.flows.refresh(m.opts.Flows)
 
 	// 1. Nothing selected: a no-op.
 	m.flows.sel = -1
@@ -56,6 +57,7 @@ func TestDeleteSelectedFlowAndDeleteFlow(t *testing.T) {
 	dir := t.TempDir()
 	writeFlowFile(t, dir, "zzz-mine", `{"name":"zzz-mine","phases":[{"name":"implement","engine":"claude"}]}`)
 	m.opts.Flows = flowsTestDir(dir)
+	m.flows.refresh(m.opts.Flows)
 	// Sorted: careful, quick, task, tdd-fuzz-pr, zzz-mine.
 	m.flows.sel = 4
 
@@ -78,6 +80,7 @@ func TestDeleteSelectedFlowAndDeleteFlow(t *testing.T) {
 
 func TestConfirmDeleteFlow(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
+	m.flows.refresh(m.opts.Flows)
 
 	// 1. Out of range: a no-op that still clears confirmDelete.
 	m.flows.confirmDelete = true
@@ -98,6 +101,7 @@ func TestConfirmDeleteFlow(t *testing.T) {
 	dir := t.TempDir()
 	writeFlowFile(t, dir, "zzz-mine", `{"name":"zzz-mine","phases":[{"name":"implement","engine":"claude"}]}`)
 	m.opts.Flows = flowsTestDir(dir)
+	m.flows.refresh(m.opts.Flows)
 	m.flows.sel = 4 // careful, quick, task, tdd-fuzz-pr, zzz-mine
 	m2, _ = m.confirmDeleteFlow()
 	wantBand(t, m2, "zzz-mine")
@@ -115,6 +119,7 @@ func TestConfirmDeleteFlow(t *testing.T) {
 	dir2 := t.TempDir()
 	writeFlowFile(t, dir2, "aaa-mine", `{"name":"aaa-mine","phases":[{"name":"implement","engine":"claude"}]}`)
 	m.opts.Flows = flowsTestDir(dir2)
+	m.flows.refresh(m.opts.Flows)
 	m.flows.sel = 0 // aaa-mine sorts before every built-in
 	m2, _ = m.confirmDeleteFlow()
 	wantBand(t, m2, "aaa-mine")
@@ -139,6 +144,7 @@ func TestConfirmDeleteFlowRemoveError(t *testing.T) {
 
 	m, _ := testModel(t, 100, 30)
 	m.opts.Flows = flowsTestDir(dir)
+	m.flows.refresh(m.opts.Flows)
 	descriptors := flow.List(m.opts.Flows)
 	idx := -1
 
@@ -180,6 +186,7 @@ func TestEditSelectedFlowOutOfRange(t *testing.T) {
 
 func TestEditSelectedFlowOpensTheBuilder(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
+	m.flows.refresh(m.opts.Flows)
 	m.flows.sel = 0 // "careful"
 
 	m2, _ := m.editSelectedFlow()
@@ -229,4 +236,39 @@ func TestApplyFlowTemplate(t *testing.T) {
 	if len(m2.flows.phases) != len(before.phases) || m2.flows.flowName != before.flowName {
 		t.Errorf("an unknown template should leave the form alone")
 	}
+}
+
+// TestDeletingAShadowSaysTheBuiltInIsBack.
+//
+// A flow of the reader's own named after a built-in does not replace it, it
+// covers it. Deleting the file therefore does not remove the flow — it
+// restores the shipped one, and every task written against that name goes on
+// running, differently. The window removed the file with os.Remove, which
+// cannot report that, so the band said "deleted" and left the reader to
+// discover the change by running it. flow.Delete has always answered this
+// question; nothing was asking it.
+func TestDeletingAShadowSaysTheBuiltInIsBack(t *testing.T) {
+	dir := t.TempDir()
+	writeFlowFile(t, dir, "quick", `{"name":"quick","phases":[{"name":"implement","engine":"claude"}]}`)
+
+	m, _ := testModel(t, 100, 30)
+	m.opts.Flows = flowsTestDir(dir)
+	m.flows.refresh(m.opts.Flows)
+
+	sel := -1
+
+	for i, d := range flow.List(m.opts.Flows) {
+		if d.Name == "quick" {
+			sel = i
+		}
+	}
+
+	if sel < 0 {
+		t.Fatal("the flow shadowing quick is not in the list")
+	}
+
+	m.flows.sel = sel
+
+	m2, _ := m.confirmDeleteFlow()
+	wantBand(t, m2, "showing again")
 }

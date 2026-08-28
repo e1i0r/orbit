@@ -1,9 +1,6 @@
 package ui
 
 import (
-	"encoding/json"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -107,35 +104,21 @@ func (m Model) saveCustomFlow() (Model, tea.Cmd) {
 		Description: strings.TrimSpace(st.description),
 		Phases:      st.phases,
 	}
-	if err := fl.Validate(); err != nil {
-		return m.say(err.Error()), nil
-	}
 
-	dir := ""
-	if m.opts.Flows != nil {
-		dir = m.opts.Flows.FlowDir()
-	}
-
-	if dir == "" {
-		home, err := os.UserHomeDir()
-		if err != nil || home == "" {
-			home = os.Getenv("HOME")
-		}
-
-		dir = filepath.Join(home, ".orbit", "flows")
-	}
-
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return m.say(err.Error()), nil
-	}
-
-	data, err := json.MarshalIndent(fl, "", "  ")
-	if err != nil {
-		return m.say(err.Error()), nil
-	}
-
-	path := filepath.Join(dir, name+".json")
-	if err := os.WriteFile(path, data, 0o644); err != nil {
+	// flow.Save, and not a second copy of it here.
+	//
+	// This encoded the flow, made the directory and wrote the file itself,
+	// and every one of those steps disagreed with the package that owns
+	// them. It never asked flow.ValidName, so a flow named ../notes was
+	// filepath.Join'd straight out of the flow directory and written
+	// wherever that landed. It made the directory 0755 and the file 0644
+	// where internal/flow spells out 0700 and 0600 — the quiet widening
+	// that package's own comment warns about, arriving from the one place
+	// it could not see. And when the window was given no flow source it
+	// invented ~/.orbit/flows, which is the wrong directory on any machine
+	// with $ORBIT_HOME set: the flow saved, said so, and was never listed
+	// again. flow.Save refuses that case instead of guessing.
+	if _, err := flow.Save(m.opts.Flows, fl); err != nil {
 		return m.say(err.Error()), nil
 	}
 
@@ -143,12 +126,13 @@ func (m Model) saveCustomFlow() (Model, tea.Cmd) {
 	m.flows.phases = nil
 	m.flows.flowName = ""
 	m.flows.description = ""
+	m.flows.refresh(m.opts.Flows)
 
 	return m.say(p.T("flows.saved", "flow {name} saved", about("name", name))), nil
 }
 
 func (m Model) editSelectedFlow() (Model, tea.Cmd) {
-	descriptors := flow.List(m.opts.Flows)
+	descriptors := m.flows.listed
 	if len(descriptors) == 0 || m.flows.sel < 0 || m.flows.sel >= len(descriptors) {
 		return m, nil
 	}
@@ -187,7 +171,7 @@ func (m Model) editFlow(name string) (Model, tea.Cmd) {
 }
 
 func (m Model) deleteSelectedFlow() (Model, tea.Cmd) {
-	descriptors := flow.List(m.opts.Flows)
+	descriptors := m.flows.listed
 	if len(descriptors) == 0 || m.flows.sel < 0 || m.flows.sel >= len(descriptors) {
 		return m, nil
 	}
@@ -212,7 +196,7 @@ func (m Model) confirmDeleteFlow() (Model, tea.Cmd) {
 	st := &m.flows
 	st.confirmDelete = false
 
-	descriptors := flow.List(m.opts.Flows)
+	descriptors := m.flows.listed
 	if len(descriptors) == 0 || st.sel < 0 || st.sel >= len(descriptors) {
 		return m, nil
 	}
@@ -224,27 +208,27 @@ func (m Model) confirmDeleteFlow() (Model, tea.Cmd) {
 		return m.say(p.T("flows.cannot_delete_builtin", "built-in flows cannot be deleted")), nil
 	}
 
-	dir := ""
-	if m.opts.Flows != nil {
-		dir = m.opts.Flows.FlowDir()
-	}
-
-	if dir == "" {
-		home, err := os.UserHomeDir()
-		if err != nil || home == "" {
-			home = os.Getenv("HOME")
-		}
-
-		dir = filepath.Join(home, ".orbit", "flows")
-	}
-
-	path := filepath.Join(dir, d.Name+".json")
-	if err := os.Remove(path); err != nil {
+	// flow.Delete, for the reasons saveCustomFlow gives, and for one more
+	// of its own: it says whether a built-in of that name was underneath.
+	// Removing a shadow does not remove the flow, it restores the shipped
+	// one, and a task written against that name goes on running —
+	// differently. os.Remove cannot report that, so the window said
+	// "deleted" and left the reader to find out by running it.
+	revealed, err := flow.Delete(m.opts.Flows, d.Name)
+	if err != nil {
 		return m.say(err.Error()), nil
 	}
 
 	if st.sel > 0 {
 		st.sel--
+	}
+
+	st.refresh(m.opts.Flows)
+
+	if revealed {
+		return m.say(p.T("flows.deleted_revealed",
+			"flow {name} deleted; the built-in of that name is showing again",
+			about("name", d.Name))), nil
 	}
 
 	return m.say(p.T("flows.deleted", "flow {name} deleted", about("name", d.Name))), nil
