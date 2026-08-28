@@ -3,6 +3,7 @@ package mcp
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/board"
@@ -234,23 +235,28 @@ func idPrefix(name string) string {
 
 // suffixNumber reads the number off an id this package would have minted,
 // and says so when the id is not one.
+//
+// The digits are counted by strconv rather than by multiplying through them,
+// which is what this did and is where it went wrong: a directory named
+// ORB-99999999999999999999 ran an int past its width and came back as some
+// unrelated number, so nextTaskID took that for the highest id in the
+// repository and minted its successor. Out of range is not a number this
+// package minted, and the answer to that is no.
 func suffixNumber(id, prefix string) (int, bool) {
 	rest, ok := strings.CutPrefix(id, prefix+"-")
 	if !ok {
 		return 0, false
 	}
-
-	n := 0
-
+	// strconv accepts a sign and this must not: ORB--1 and ORB-+1 are not
+	// ids this package has ever written.
 	for _, c := range rest {
 		if c < '0' || c > '9' {
 			return 0, false
 		}
-
-		n = n*10 + int(c-'0')
 	}
 
-	if rest == "" {
+	n, err := strconv.Atoi(rest)
+	if err != nil {
 		return 0, false
 	}
 
