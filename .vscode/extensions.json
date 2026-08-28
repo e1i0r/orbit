@@ -1,0 +1,8 @@
+{
+  // settings.json points at golang.go by name, so an editor without it opens
+  // this project and quietly formats with something else. This turns that
+  // into a prompt the first time the folder is opened.
+  "recommendations": [
+    "golang.go"
+  ]
+}
