@@ -23,14 +23,40 @@ func (OpenCode) Name() string { return "opencode" }
 func (OpenCode) CanResume() bool { return true }
 
 // Models returns the models opencode supports.
+//
+// The IDs are what `opencode models` prints and what --model takes:
+// provider-qualified, and rejected by opencode without the qualifier. The
+// list this replaced carried five bare names — deepseek-r1, qwen-2.5-coder,
+// llama-3.3-70b, claude-3-5-sonnet, gemini-2.5-flash — none of which
+// opencode has ever accepted, and internal/task checks a phase's model
+// against this list before running anything, so the only models a phase
+// could name on opencode were five that could not work.
+//
+// Half of them are free, and they say so in their own names rather than in
+// a mark this program invents: the label is the ID without the provider, so
+// what a reader picks from and what opencode is told are the same string
+// with nothing in between deciding.
+//
+// It is a written-down copy of a catalogue that moves, which is a cost taken
+// deliberately: reading it at run time means shelling out to opencode before
+// a dial can be drawn, on a machine where opencode may not be installed at
+// all. Refresh it with `opencode models`.
 func (OpenCode) Models() []Choice {
 	return []Choice{
 		{ID: "", Label: "default"},
-		{ID: "deepseek-r1", Label: "deepseek-r1"},
-		{ID: "qwen-2.5-coder", Label: "qwen-2.5-coder"},
-		{ID: "llama-3.3-70b", Label: "llama-3.3-70b"},
-		{ID: "claude-3-5-sonnet", Label: "claude-3-5-sonnet"},
-		{ID: "gemini-2.5-flash", Label: "gemini-2.5-flash"},
+		// Paid.
+		{ID: "opencode/claude-opus-5", Label: "claude-opus-5"},
+		{ID: "opencode/claude-sonnet-5", Label: "claude-sonnet-5"},
+		{ID: "opencode/gpt-5.3-codex", Label: "gpt-5.3-codex"},
+		{ID: "opencode/gemini-3.1-pro", Label: "gemini-3.1-pro"},
+		{ID: "opencode/grok-4.6", Label: "grok-4.6"},
+		// Free.
+		{ID: "opencode/nemotron-3-ultra-free", Label: "nemotron-3-ultra-free"},
+		{ID: "opencode/nemotron-3.5-lightning-free", Label: "nemotron-3.5-lightning-free"},
+		{ID: "opencode/mimo-v2.5-free", Label: "mimo-v2.5-free"},
+		{ID: "opencode/ling-3.0-flash-fin-free", Label: "ling-3.0-flash-fin-free"},
+		{ID: "opencode/hy3-free", Label: "hy3-free"},
+		{ID: "opencode/muse-spark-1.2-contributor-free", Label: "muse-spark-1.2-contributor-free"},
 	}
 }
 
