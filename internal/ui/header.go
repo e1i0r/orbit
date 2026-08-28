@@ -6,7 +6,6 @@ package ui
 // terminal anything. The fourth region, the activity band, is in band.go.
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -14,7 +13,6 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/board"
-	"github.com/e1i0r/orbit/internal/view"
 )
 
 const (
@@ -76,16 +74,39 @@ func (m Model) rule(w int) string {
 // other two would be losing the one field on this line that changes what
 // happens next.
 func (m Model) headerLine(w int) string {
+	line, _ := m.headerLayout(w)
+	return line
+}
+
+// headerLayout is that line, drawn, and where it put each thing a reader can
+// click.
+//
+// The zones come out of the pass that builds the line, which is the whole
+// point of returning them. hitHeader used to carry its own column numbers —
+// under 10 is the badge, 28 to 44 is Running — written down once against a
+// header that has been laid out again several times since. Measured against
+// what is actually drawn, the left third of Running filtered by To Do and
+// Needs You filtered by Running; and because the badge of the queue being
+// filtered on is two cells wider than the others, selecting one moved every
+// band after it a second time without hitHeader hearing about it.
+func (m Model) headerLayout(w int) (string, []headerZone) {
 	fields := m.headerFields()
 	for {
-		right := strings.Join(fields, headerGap)
-		if line, ok := m.headerLeft(w-lipgloss.Width(right), right != ""); ok {
+		right := strings.Join(fieldTexts(fields), headerGap)
+		if line, zones, ok := m.headerLeft(w-lipgloss.Width(right), right != ""); ok {
 			gap := w - lipgloss.Width(line) - lipgloss.Width(right)
-			return line + strings.Repeat(" ", gap) + right
+
+			return line + strings.Repeat(" ", gap) + right,
+				append(zones, placeFields(fields, lipgloss.Width(line)+gap)...)
 		}
 
 		if len(fields) == 0 {
-			return fit(m.name(), w)
+			line := fit(m.name(), w)
+
+			return line, []headerZone{{
+				target: Target{Kind: TargetHeaderField, Field: "orbit"},
+				w:      lipgloss.Width(line),
+			}}
 		}
 
 		fields = fields[:len(fields)-1]
@@ -100,38 +121,22 @@ func (m Model) headerLine(w int) string {
 // opposite of what fit does everywhere else in this file and is right here
 // for one reason: the last two segments of a path identify it and the first
 // two rarely do.
-func (m Model) headerLeft(w int, spaced bool) (string, bool) {
+func (m Model) headerLeft(w int, spaced bool) (string, []headerZone, bool) {
 	if spaced {
 		w--
 	}
 
-	p := m.opts.Words
 	name := m.name()
+	zones := []headerZone{{
+		target: Target{Kind: TargetHeaderField, Field: "orbit"},
+		w:      lipgloss.Width(name),
+	}}
 
 	// 1. Try full queue badges line if it fits
-	if len(m.board.Counts) >= 4 {
-		qPill := func(b view.Band, icon, label, fg, bg string, count int) string {
-			text := fmt.Sprintf("%s %s %d", icon, label, count)
-			if m.queueFilter != nil && *m.queueFilter == b {
-				return PillActive(text, fg, bg)
-			}
-
-			return Pill(text, fg, bg)
-		}
-		pills := []string{
-			qPill(view.ToDo, "📋", p.T("queue.todo", "To Do"),
-				"#38BDF8", "#0C4A6E", m.board.Counts[0]),
-			qPill(view.Running, "⚡", p.T("queue.in_flight", "Running"),
-				"#2DD4BF", "#134E4A", m.board.Counts[1]),
-			qPill(view.NeedsYou, "💬", p.T("queue.needs_you", "Needs You"),
-				"#FBBF24", "#78350F", m.board.Counts[2]),
-			qPill(view.Done, "🏁", p.T("queue.done", "Done"),
-				"#4ADE80", "#14532D", m.board.Counts[3]),
-		}
-
-		full := name + "  " + strings.Join(pills, " ")
+	if badges := m.queueBadges(); len(badges) > 0 {
+		full := name + "  " + strings.Join(badgeTexts(badges), " ")
 		if lipgloss.Width(full) <= w {
-			return full, true
+			return full, append(zones, placeBadges(badges, lipgloss.Width(name)+2)...), true
 		}
 	}
 
@@ -142,11 +147,11 @@ func (m Model) headerLeft(w int, spaced bool) (string, bool) {
 		}
 
 		if lipgloss.Width(line) <= w {
-			return line, true
+			return line, zones, true
 		}
 
 		if root == "" {
-			return "", false
+			return "", nil, false
 		}
 
 		root = shorten(root)
@@ -168,41 +173,46 @@ func shorten(root string) string {
 }
 
 // headerFields are the standing facts with emoji chips in Monokai theme.
-func (m Model) headerFields() []string {
+//
+// Three of them carry a name, and those are the three a click on the header
+// opens something for. The upgrade notice and the brake are read and not
+// pressed: one names a command to run, the other names a limit to clear, and
+// neither has a screen behind it to open.
+func (m Model) headerFields() []headerField {
 	p := m.opts.Words
 
-	var fields []string
+	var fields []headerField
 
 	// Upgrade available notice (pastel mint on deep emerald)
 	if m.upgradeAvailable != "" {
 		ver := "v" + strings.TrimPrefix(m.upgradeAvailable, "v")
 		notice := p.T("header.upgrade_notice", "{version} available · orbit upgrade",
 			about("version", ver))
-		fields = append(fields, Pill(" ✨ "+notice+" ", "#86EFAC", "#064E3B"))
+		fields = append(fields, headerField{text: Pill(" ✨ "+notice+" ", inkUpgrade.fg, inkUpgrade.bg)})
 	}
 
 	// Repos chip
 	reposText := p.P("header.repos", m.board.Repos, "{n} repo", "{n} repos")
-	fields = append(fields, Paint(Dim).Render("📦 "+reposText))
+	fields = append(fields, headerField{"repos", Paint(Dim).Render("📦 " + reposText)})
 
 	// Model / knob chip
 	chip := m.knobChip()
 	if chip != "" {
-		fields = append(fields, Paint(Accent).Render("🧠 "+chip))
+		fields = append(fields, headerField{"engine", Paint(Accent).Render("🧠 " + chip)})
 	} else {
-		fields = append(fields, Paint(Dim).Render("🧠 claude"))
+		fields = append(fields, headerField{"engine", Paint(Dim).Render("🧠 claude")})
 	}
 
 	// Language chip
 	lang := p.T("header.lang_badge", "EN")
-	fields = append(fields, Paint(Dim).Render("🌐 "+lang))
+	fields = append(fields, headerField{"lang", Paint(Dim).Render("🌐 " + lang)})
 
 	// Unread brake warning (shown when brake is engaged)
 	unread := board.Unread(m.board)
 	if m.atUnreadCap(unread) {
 		brakeText := p.T("header.unread_brake", "brake ({n} unread)",
 			about("n", strconv.Itoa(unread)))
-		fields = append(fields, Paint(Warn).Render("⚠️ "+brakeText))
+		fields = append(fields, headerField{text: Paint(Warn).Render("⚠️ " + brakeText)})
 	}
 
 	return fields

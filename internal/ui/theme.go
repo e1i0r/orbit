@@ -135,6 +135,31 @@ func currentPalette() Palette {
 	return themePalettes["monokai"]
 }
 
+// ink is a badge's two colours together: what its text is painted, and what
+// that text sits on. Pill takes them apart because lipgloss does, but a
+// badge is only legible as a pair, and half a pair is how you get white on
+// white.
+type ink struct{ fg, bg string }
+
+// The queue badges' inks.
+//
+// These were eight hex literals spread across four argument lists in the
+// header, which is the one thing the top of this file says does not happen
+// anywhere in the window. They are the same in every theme on purpose: the
+// four queues are the program's own vocabulary, not decoration, and a reader
+// who learns that amber means "needs you" should not have to learn it again
+// after changing the theme.
+var (
+	inkToDo     = ink{"#38BDF8", "#0C4A6E"}
+	inkRunning  = ink{"#2DD4BF", "#134E4A"}
+	inkNeedsYou = ink{"#FBBF24", "#78350F"}
+	inkDone     = ink{"#4ADE80", "#14532D"}
+
+	// inkUpgrade is the notice that a newer orbit is out: pastel mint on
+	// deep emerald.
+	inkUpgrade = ink{"#86EFAC", "#064E3B"}
+)
+
 // Pill renders text as a styled badge with background and padding.
 func Pill(text string, fg, bg string) string {
 	return lipgloss.NewStyle().
