@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/e1i0r/orbit/internal/store"
+
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/record"
@@ -15,14 +17,17 @@ func TestLastSessionReturnsEmptyWhenNilOrNotResumable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
-	if sess := lastSession(nil, tk, &engine.Fake{}); sess != "" {
+	if sess := lastSession(nil, tk, "fake", &engine.Fake{}); sess != "" {
 		t.Errorf("lastSession on nil store = %q, want empty", sess)
 	}
-	if sess := lastSession(s, tk, nil); sess != "" {
+	if sess := lastSession(s, tk, "fake", nil); sess != "" {
 		t.Errorf("lastSession on nil engine = %q, want empty", sess)
 	}
-	if sess := lastSession(s, tk, &engine.Fake{Resumable: false}); sess != "" {
+	if sess := lastSession(s, tk, "fake", &engine.Fake{Resumable: false}); sess != "" {
 		t.Errorf("lastSession on non-resumable fake = %q, want empty", sess)
+	}
+	if sess := lastSession(s, tk, "", &engine.Fake{Resumable: true}); sess != "" {
+		t.Errorf("lastSession with no engine named = %q, want empty", sess)
 	}
 }
 
@@ -35,34 +40,65 @@ func TestLastSessionFindsMostRecentSessionID(t *testing.T) {
 	fake := &engine.Fake{Resumable: true}
 
 	// No session events yet
-	if sess := lastSession(s, tk, fake); sess != "" {
+	if sess := lastSession(s, tk, "fake", fake); sess != "" {
 		t.Errorf("lastSession before runs = %q, want empty", sess)
 	}
 
-	// Emit PhaseFinished with session "sess-alpha"
-	ev1 := record.Event{
-		Kind:  record.PhaseFinished,
-		Phase: "plan",
-		Data:  map[string]string{"session": "sess-alpha"},
-	}
-	if err := emit(s, tk, ev1); err != nil {
-		t.Fatalf("emit ev1: %v", err)
-	}
-	if sess := lastSession(s, tk, fake); sess != "sess-alpha" {
+	// A phase, as a run writes one: started, naming the engine, then ended,
+	// carrying the session. The pair is what the walk reads.
+	phase(t, s, tk, "plan", "fake", record.PhaseFinished, "sess-alpha")
+	if sess := lastSession(s, tk, "fake", fake); sess != "sess-alpha" {
 		t.Errorf("lastSession = %q, want sess-alpha", sess)
 	}
 
-	// Emit PhaseCancelled with session "sess-beta"
-	ev2 := record.Event{
-		Kind:  record.PhaseCancelled,
-		Phase: "impl",
-		Data:  map[string]string{"session": "sess-beta"},
-	}
-	if err := emit(s, tk, ev2); err != nil {
-		t.Fatalf("emit ev2: %v", err)
-	}
-	if sess := lastSession(s, tk, fake); sess != "sess-beta" {
+	phase(t, s, tk, "impl", "fake", record.PhaseCancelled, "sess-beta")
+	if sess := lastSession(s, tk, "fake", fake); sess != "sess-beta" {
 		t.Errorf("lastSession after cancel = %q, want sess-beta", sess)
+	}
+}
+
+// TestLastSessionIgnoresAnotherEnginesSession is the fix. A flow may name a
+// different engine on each phase, and a session id belongs to the tool that
+// issued it: handing codex a claude session is either an error the user has
+// to decipher or a silent fresh start reported as a resume.
+func TestLastSessionIgnoresAnotherEnginesSession(t *testing.T) {
+	s, r := fixture(t)
+	tk, err := Create(s, r, "SESS-4", "two engines, one task", "quick")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	fake := &engine.Fake{Resumable: true}
+
+	phase(t, s, tk, "plan", "claude", record.PhaseFinished, "claude-sess")
+	if sess := lastSession(s, tk, "codex", fake); sess != "" {
+		t.Errorf("lastSession for codex = %q, want empty — that session is claude's", sess)
+	}
+	if sess := lastSession(s, tk, "claude", fake); sess != "claude-sess" {
+		t.Errorf("lastSession for claude = %q, want claude-sess", sess)
+	}
+
+	// Now codex runs a phase of its own. Each engine keeps its own thread,
+	// and the later one does not shadow the earlier.
+	phase(t, s, tk, "check", "codex", record.PhaseFinished, "codex-sess")
+	if sess := lastSession(s, tk, "codex", fake); sess != "codex-sess" {
+		t.Errorf("lastSession for codex = %q, want codex-sess", sess)
+	}
+	if sess := lastSession(s, tk, "claude", fake); sess != "claude-sess" {
+		t.Errorf("lastSession for claude = %q, want claude-sess — codex's phase is not claude's", sess)
+	}
+}
+
+// phase writes the two events a run writes around one phase: the start that
+// names the engine, and the ending that carries the session.
+func phase(t *testing.T, s *store.Store, tk Task, name, eng, ending, session string) {
+	t.Helper()
+	for _, e := range []record.Event{
+		{Kind: record.PhaseStarted, Phase: name, Data: map[string]string{"engine": eng, "n": "1"}},
+		{Kind: ending, Phase: name, Data: map[string]string{"session": session}},
+	} {
+		if err := emit(s, tk, e); err != nil {
+			t.Fatalf("emit %s: %v", e.Kind, err)
+		}
 	}
 }
 
@@ -73,15 +109,9 @@ func TestRunPassesLastSessionToResumableEngine(t *testing.T) {
 		t.Fatalf("Create: %v", err)
 	}
 
-	// Emit an initial session
-	ev := record.Event{
-		Kind:  record.PhaseFinished,
-		Phase: "setup",
-		Data:  map[string]string{"session": "sess-existing"},
-	}
-	if err := emit(s, tk, ev); err != nil {
-		t.Fatalf("emit ev: %v", err)
-	}
+	// An earlier phase of this task, run by the same engine the flow below
+	// names, so its session is one this run may pick up.
+	phase(t, s, tk, "setup", "fake", record.PhaseFinished, "sess-existing")
 
 	fake := &engine.Fake{
 		Output:    "all done",

@@ -156,7 +156,7 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		}
 		var streamErr error
 		var streamedThoughts, streamedRefusals, streamedToolCalls int
-		resumeSess := lastSession(s, t, engines[p.Engine])
+		resumeSess := lastSession(s, t, p.Engine, engines[p.Engine])
 		out, runErr := engines[p.Engine].Run(ctx, engine.Request{
 			Prompt:      prompt(t, p, notes, inputPrev),
 			Model:       p.Model,
