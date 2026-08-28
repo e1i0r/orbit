@@ -29,6 +29,7 @@ func (capableEngine) Run(ctx context.Context, req engine.Request) (engine.Result
 func (capableEngine) Models() []engine.Choice  { return []engine.Choice{{ID: "model-a"}} }
 func (capableEngine) Efforts() []engine.Choice { return []engine.Choice{{ID: "effort-a"}} }
 func (capableEngine) CanThink() bool           { return true }
+func (capableEngine) Locate() (string, error)  { return "capable", nil }
 func (capableEngine) CanResume() bool          { return false }
 
 func TestRunModelAndEffortMatchesRunTheEngine(t *testing.T) {
@@ -129,6 +130,7 @@ func (oversizedSessionEngine) Run(ctx context.Context, req engine.Request) (engi
 func (oversizedSessionEngine) Models() []engine.Choice  { return nil }
 func (oversizedSessionEngine) Efforts() []engine.Choice { return nil }
 func (oversizedSessionEngine) CanThink() bool           { return false }
+func (oversizedSessionEngine) Locate() (string, error)  { return "oversized", nil }
 func (oversizedSessionEngine) CanResume() bool          { return false }
 
 func TestRunPhaseFinishedEmitFailure(t *testing.T) {

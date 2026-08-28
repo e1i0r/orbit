@@ -3,9 +3,7 @@ package engine
 import (
 	"context"
 	"fmt"
-	"io"
-	"os/exec"
-	"strings"
+	"strconv"
 )
 
 // Claude runs the claude command line in headless mode.
@@ -58,105 +56,63 @@ func (Claude) Efforts() []Choice {
 // CanThink is true because claude supports extended thinking mode.
 func (Claude) CanThink() bool { return true }
 
+// spec is how claude is driven: where it lives, what its argv looks like,
+// what thinking budget it is given, and the stream shape it prints.
+func (Claude) spec() spec {
+	return spec{
+		name:  "claude",
+		dirs:  []string{".local/bin", ".claude/local", "bin"},
+		args:  claudeArgs,
+		env:   claudeEnv,
+		parse: ParseStreamWithCallback,
+	}
+}
+
+// Locate is where this machine keeps claude.
+func (c Claude) Locate() (string, error) { return c.spec().locate() }
+
 // Run invokes claude in the worktree and returns what it reported.
-func (Claude) Run(ctx context.Context, req Request) (Result, error) {
-	args, err := claudeArgs(req)
-	if err != nil {
-		// A posture this adapter cannot state is a run that does not
-		// start. Widening it to whatever the binary does by default would
-		// be the one failure mode the vocabulary exists to prevent, and it
-		// would happen at the moment nobody is looking.
-		return Result{}, fmt.Errorf("claude in %q: %w", req.Dir, err)
+//
+// The engine's working directory is the task's worktree, which lives inside
+// the Orbit state root by design. The record that is the product's whole
+// trust model, and the credentials file the design puts in the same root,
+// are therefore reachable from here by relative path. The control is not the
+// layout, which buys nothing against a process running as the same user: it
+// is that no engine is ever handed a directory permission at or above the
+// state root. No --add-dir, and no equivalent on any engine added later, at
+// store.Root() or above it. root_test.go is where that stopped being a
+// comment and became a rule. That rule contains the tools that name a path;
+// it does not contain a shell, and what repo really grants is written out in
+// claudePermissionArgs.
+func (c Claude) Run(ctx context.Context, req Request) (Result, error) {
+	return c.spec().run(ctx, req)
+}
+
+// claudeEnv is the thinking budget, as the one environment variable claude
+// reads it from.
+//
+// A budget is a number of tokens, and anything else was passed through to
+// the binary as if it were one: MAX_THINKING_TOKENS=lots is not a budget,
+// and claude's own answer to it is not something this adapter should be
+// choosing on a reader's behalf. A word this switch does not know is left
+// alone, which lands on claude's adaptive default — the same place an empty
+// thinking dial lands, and the only other honest option.
+func claudeEnv(req Request) []string {
+	switch req.Thinking {
+	case "":
+		return nil
+	case "off", "none", "0":
+		return []string{"MAX_THINKING_TOKENS=0"}
+	case "adaptive", "on":
+		// Unset leaves the adaptive default.
+		return nil
 	}
 
-	cmd := exec.CommandContext(ctx, "claude", args...)
-
-	if req.Thinking != "" {
-		switch req.Thinking {
-		case "off", "none", "0":
-			cmd.Env = append(cmd.Environ(), "MAX_THINKING_TOKENS=0")
-		case "adaptive", "on":
-			// Unset leaves the adaptive default.
-		default:
-			// A positive integer pins a thinking budget.
-			cmd.Env = append(cmd.Environ(), "MAX_THINKING_TOKENS="+req.Thinking)
-		}
-	}
-	// The engine's working directory is the task's worktree, which lives
-	// inside the Orbit state root by design. The record that is the
-	// product's whole trust model, and the credentials file the design puts
-	// in the same root, are therefore reachable from here by relative path.
-	// The control is not the layout, which buys nothing against a process
-	// running as the same user: it is that no engine is ever handed a
-	// directory permission at or above the state root. No --add-dir, and no
-	// equivalent on any engine added later, at store.Root() or above it.
-	// root_test.go is where that stopped being a comment and became a rule.
-	// That rule contains the tools that name a path; it does not contain a
-	// shell, and what repo really grants is written out in
-	// claudePermissionArgs.
-	cmd.Dir = req.Dir
-	stdout := &boundedBuffer{max: maxStream}
-	stderr := &boundedBuffer{max: maxStderr}
-	pr, pw := io.Pipe()
-	cmd.Stdout = io.MultiWriter(stdout, pw)
-	cmd.Stderr = stderr
-
-	var (
-		streamResult Result
-		parseErr     error
-	)
-
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-
-		streamResult, parseErr = ParseStreamWithCallback(pr, req.OnEvent)
-		if closeErr := pr.Close(); closeErr != nil && parseErr == nil {
-			parseErr = closeErr
-		}
-	}()
-
-	runErr := cmd.Run()
-	if closeErr := pw.Close(); closeErr != nil && runErr == nil {
-		runErr = closeErr
+	if n, err := strconv.Atoi(req.Thinking); err == nil && n > 0 {
+		return []string{"MAX_THINKING_TOKENS=" + req.Thinking}
 	}
 
-	<-done
-
-	out := streamResult
-
-	if runErr != nil {
-		if parseErr != nil {
-			// The run died before claude summarised it, so there is no
-			// terminal result object and the raw stream is the only evidence of what
-			// happened before it stopped. We keep whatever the stream parsed
-			// (such as session id and thoughts) and fall back to raw output.
-			if streamResult.Output == "" {
-				streamResult.Output = strings.TrimSpace(stdout.String())
-			}
-
-			out = streamResult
-		}
-
-		out.Output = noteDropped(out.Output, stdout.dropped)
-		if msg := strings.TrimSpace(stderr.String()); msg != "" {
-			return out, fmt.Errorf("claude in %q: %s: %w", req.Dir, msg, runErr)
-		}
-
-		return out, fmt.Errorf("claude in %q: %w", req.Dir, runErr)
-	}
-
-	if parseErr != nil {
-		// The process exited zero and still said nothing this adapter
-		// understands, which means the stream's shape has moved under us.
-		// Reporting it is the only way that is ever noticed; a zero Result
-		// would look exactly like a quiet phase.
-		return Result{}, fmt.Errorf("claude in %q: %w", req.Dir, parseErr)
-	}
-
-	out.Output = noteDropped(out.Output, stdout.dropped)
-
-	return out, nil
+	return nil
 }
 
 // maxStream is how much of an engine's stdout this adapter will hold.

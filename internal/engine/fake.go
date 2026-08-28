@@ -40,6 +40,10 @@ func (f *Fake) Efforts() []Choice { return nil }
 // CanThink returns false for the fake engine.
 func (f *Fake) CanThink() bool { return false }
 
+// Locate answers with the fake's own name and no error: a test engine is
+// always installed, because it is this process.
+func (f *Fake) Locate() (string, error) { return "fake", nil }
+
 // Run records the request and returns whatever the fake was told to return.
 func (f *Fake) Run(ctx context.Context, req Request) (Result, error) {
 	if err := ctx.Err(); err != nil {

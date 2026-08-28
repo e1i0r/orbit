@@ -8,12 +8,48 @@ import (
 	"unicode"
 )
 
+// The patterns are anchored to the start of the host.
+//
+// Unanchored, every one of them matched its tracker's name anywhere in a
+// URL, and the Match functions below asked the same question with
+// strings.Contains over the whole string. So
+// https://evil.example/linear.app/issue/ENG-1/x was a Linear issue: it was
+// recognised as one on the paste, parsed as one, and the prompt handed to an
+// engine said Linear and carried a link somewhere else entirely. The host is
+// the only part of a URL that says who is answering.
 var (
-	linearPattern = regexp.MustCompile(`(?i)linear\.app/([^/]+)/issue/([A-Za-z0-9]+-[0-9]+)(?:/([^/?#]+))?`)
-	jiraPattern   = regexp.MustCompile(`(?i)([a-zA-Z0-9.-]+\.atlassian\.net|jira\.[a-zA-Z0-9.-]+)/browse/([A-Za-z0-9]+-[0-9]+)`)
-	githubPattern = regexp.MustCompile(`(?i)github\.com/([^/]+)/([^/]+)/issues/([0-9]+)`)
-	gitlabPattern = regexp.MustCompile(`(?i)gitlab\.com/([^/]+)/([^/]+)/-/issues/([0-9]+)`)
+	linearPattern = regexp.MustCompile(`(?i)^(?:[a-z0-9-]+\.)*linear\.app/([^/]+)/issue/([A-Za-z0-9]+-[0-9]+)(?:/([^/?#]+))?`)
+	jiraPattern   = regexp.MustCompile(`(?i)^([a-zA-Z0-9.-]+\.atlassian\.net|jira\.[a-zA-Z0-9.-]+)/browse/([A-Za-z0-9]+-[0-9]+)`)
+	githubPattern = regexp.MustCompile(`(?i)^(?:www\.)?github\.com/([^/]+)/([^/]+)/issues/([0-9]+)`)
+	gitlabPattern = regexp.MustCompile(`(?i)^(?:www\.)?gitlab\.com/([^/]+)/([^/]+)/-/issues/([0-9]+)`)
 )
+
+// hostUnder reports whether rawURL is served by domain or a subdomain of it.
+//
+// This is what the Match functions ask instead of searching the whole URL
+// for a substring. A path, a query string and a fragment are all attacker
+// controlled on a link somebody was sent; the host is not.
+func hostUnder(rawURL, domain string) bool {
+	u, err := normalizeURL(rawURL)
+	if err != nil {
+		return false
+	}
+
+	host := strings.ToLower(u.Hostname())
+
+	return host == domain || strings.HasSuffix(host, "."+domain)
+}
+
+// pathHas reports whether rawURL's path contains seg, which the GitHub and
+// GitLab providers use to tell an issue from the rest of a forge.
+func pathHas(rawURL, seg string) bool {
+	u, err := normalizeURL(rawURL)
+	if err != nil {
+		return false
+	}
+
+	return strings.Contains(u.Path, seg)
+}
 
 // LinearProvider handles linear.app URLs.
 type LinearProvider struct{}
@@ -23,7 +59,7 @@ func (LinearProvider) Name() string { return "linear" }
 
 // Match reports whether the URL belongs to Linear.
 func (LinearProvider) Match(rawURL string) bool {
-	return strings.Contains(strings.ToLower(rawURL), "linear.app")
+	return hostUnder(rawURL, "linear.app")
 }
 
 // Parse extracts issue details from a Linear URL.
@@ -72,9 +108,21 @@ type JiraProvider struct{}
 func (JiraProvider) Name() string { return "jira" }
 
 // Match reports whether the URL belongs to Jira.
+//
+// Jira is the one tracker here with no single domain: a cloud instance sits
+// under atlassian.net and a self-hosted one is whatever the company called
+// it, so the second half is a host that begins with jira. That is a guess,
+// and it is kept narrow — a host, not the string "jira." found anywhere in
+// a link.
 func (JiraProvider) Match(rawURL string) bool {
-	lower := strings.ToLower(rawURL)
-	return strings.Contains(lower, ".atlassian.net") || strings.Contains(lower, "jira.")
+	u, err := normalizeURL(rawURL)
+	if err != nil {
+		return false
+	}
+
+	host := strings.ToLower(u.Hostname())
+
+	return hostUnder(rawURL, "atlassian.net") || strings.HasPrefix(host, "jira.")
 }
 
 // Parse extracts issue details from a Jira URL.
@@ -118,7 +166,7 @@ func (GitHubProvider) Name() string { return "github" }
 
 // Match reports whether the URL belongs to GitHub Issues.
 func (GitHubProvider) Match(rawURL string) bool {
-	return strings.Contains(strings.ToLower(rawURL), "github.com") && strings.Contains(rawURL, "/issues/")
+	return hostUnder(rawURL, "github.com") && pathHas(rawURL, "/issues/")
 }
 
 // Parse extracts issue details from a GitHub Issue URL.
@@ -163,7 +211,7 @@ func (GitLabProvider) Name() string { return "gitlab" }
 
 // Match reports whether the URL belongs to GitLab Issues.
 func (GitLabProvider) Match(rawURL string) bool {
-	return strings.Contains(strings.ToLower(rawURL), "gitlab.com") && strings.Contains(rawURL, "/issues/")
+	return hostUnder(rawURL, "gitlab.com") && pathHas(rawURL, "/issues/")
 }
 
 // Parse extracts issue details from a GitLab Issue URL.

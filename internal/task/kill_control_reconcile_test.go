@@ -277,4 +277,5 @@ func (e *failingEngine) Run(ctx context.Context, req engine.Request) (engine.Res
 func (e *failingEngine) Models() []engine.Choice  { return nil }
 func (e *failingEngine) Efforts() []engine.Choice { return nil }
 func (e *failingEngine) CanThink() bool           { return true }
+func (e *failingEngine) Locate() (string, error)  { return "failing", nil }
 func (e *failingEngine) CanResume() bool          { return false }

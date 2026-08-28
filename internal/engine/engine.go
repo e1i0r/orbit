@@ -85,6 +85,17 @@ type Engine interface {
 	Name() string
 	Run(ctx context.Context, req Request) (Result, error)
 
+	// Locate is the program this engine runs, as an absolute path, or a
+	// refusal saying this machine cannot run it.
+	//
+	// The engine screen asks it to decide whether to draw dials or setup
+	// steps, and Run asks it to decide what to execute, so the two cannot
+	// disagree. It used to be neither: the screen ran exec.LookPath on the
+	// engine's name and Run ran exec.Command on the same bare name, which
+	// meant an engine installed somewhere PATH did not mention was drawn as
+	// "[setup required]" to a reader who had it open in the next window.
+	Locate() (string, error)
+
 	// CanResume is whether this engine can carry on a session it started
 	// before, which is the difference the package comment above says
 	// belongs on the screen rather than behind a shim.
