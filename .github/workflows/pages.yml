@@ -1,0 +1,59 @@
+# The landing page at getorbit.sh, built from site/ and published by this
+# workflow.
+#
+# It used to be a gh-pages branch holding the only copy of the site: nothing
+# in main referenced it, no review ever saw it, and deleting that branch
+# would have lost the page. The source lives here now, and Pages is served
+# from an artifact this builds, so there is no second branch to lose.
+name: pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - 'install.sh'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time, and a queued one is not cancelled: the last push to
+# main is what getorbit.sh has to end up serving.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # install.sh is served at getorbit.sh/install.sh, which is the command
+      # the README tells people to curl. It is copied from the root rather
+      # than kept twice: the two copies were identical the day this moved,
+      # and nothing was keeping them that way.
+      - name: Assemble the site
+        run: cp install.sh site/install.sh
+
+      - name: Check the site is whole
+        run: |
+          for f in index.html install.sh CNAME .nojekyll; do
+            test -s "site/$f" || { echo "site/$f is missing or empty"; exit 1; }
+          done
+          grep -q '^getorbit.sh$' site/CNAME || { echo "site/CNAME is not getorbit.sh"; exit 1; }
+          sh -n site/install.sh || { echo "site/install.sh is not valid shell"; exit 1; }
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4

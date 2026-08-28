@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orbit — Mission Control for Autonomous Coding Agents</title>
+<meta name="description" content="Supervise, steer, and verify multi-agent software development at terminal velocity.">
+<meta name="author" content="Elio Rincón — e1i0.com">
+<link rel="icon" href="icon.png">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-N9D1HEEMRD"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-N9D1HEEMRD');
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg-page: #0a0e14;
+    --surface: #111726;
+    --bg-lighter: #161d2e;
+    --border: #1f2937;
+    --border-light: #18202f;
+
+    --text-loudest: #f1f5f9;
+    --text: #c7d0e0;
+    --text-medium: #94a3b8;
+    --text-muted: #64748b;
+
+    --primary: #2dd4bf;
+    --primary-dark: #14b8a6;
+    --primary-light: rgba(45, 212, 191, 0.14);
+    --primary-very-light: rgba(45, 212, 191, 0.08);
+    --primary-shadow: rgba(45, 212, 191, 0.25);
+
+    --pink: #ec4899;
+    --amber: #f59e0b;
+
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-xl: 14px;
+    --radius-pill: 99px;
+
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.45);
+    --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.55);
+
+    --ease: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+    --font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html { color-scheme: dark; }
+  body {
+    margin: 0;
+    background: var(--bg-page);
+    color: var(--text);
+    font-family: var(--font);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { color: var(--primary-dark); }
+  code, .mono { font-family: var(--mono); }
+
+  /* — Hero — */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    padding: 108px 24px 72px;
+    background: linear-gradient(180deg, var(--bg-page) 0%, var(--surface) 100%);
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 22% 15%, rgba(45, 212, 191, 0.10) 0%, transparent 45%),
+      radial-gradient(circle at 78% 30%, rgba(236, 72, 153, 0.05) 0%, transparent 40%),
+      radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.04) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .hero__content {
+    position: relative;
+    z-index: 1;
+    max-width: 640px;
+    margin: 0 auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--primary-very-light);
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 5px 14px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--primary-light);
+    margin-bottom: 28px;
+  }
+  .badge__dot {
+    width: 6px;
+    height: 6px;
+    background: var(--primary);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+  .hero__icon { width: 84px; height: 84px; margin-bottom: 24px; filter: drop-shadow(0 0 32px rgba(45, 212, 191, 0.25)); }
+
+  .hero__title {
+    margin: 0;
+    font-size: clamp(38px, 6vw, 60px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    color: var(--text-loudest);
+  }
+  .hero__eyebrow {
+    margin: 14px 0 0;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-medium);
+  }
+  .hero__subtitle {
+    margin: 18px 0 0;
+    font-size: clamp(15px, 1.8vw, 17px);
+    line-height: 1.65;
+    color: var(--text-medium);
+    max-width: 480px;
+  }
+
+  .install {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 32px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 13px 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .install__prompt { color: var(--primary); font-size: 14px; }
+  .install code { font-size: 13.5px; color: var(--text-loudest); }
+  .install__copy {
+    border: none; background: none; color: var(--text-muted); cursor: pointer;
+    font-family: var(--font); font-size: 12px; padding: 4px 8px; border-radius: var(--radius-sm);
+    transition: var(--ease);
+  }
+  .install__copy:hover { background: var(--bg-lighter); color: var(--text); }
+
+  .hero__ctas { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--font); font-weight: 600; font-size: 13.5px;
+    padding: 10px 20px; border-radius: var(--radius-sm);
+    transition: var(--ease); cursor: pointer; white-space: nowrap;
+  }
+  .btn--primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #04211d; border: 1px solid var(--primary);
+  }
+  .btn--primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px var(--primary-shadow); color: #04211d; }
+  .btn--outline { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  .btn--outline:hover { border-color: var(--border-light); background: var(--bg-lighter); color: var(--text); }
+
+  .hero__facts {
+    display: flex; gap: 32px; justify-content: center;
+    margin-top: 40px; padding-top: 28px;
+    border-top: 1px solid var(--border);
+    max-width: 420px; width: 100%;
+  }
+  .fact { text-align: center; }
+  .fact__num { font-size: 20px; font-weight: 700; color: var(--text-loudest); letter-spacing: -0.01em; }
+  .fact__label { margin-top: 3px; font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* — Screenshot — */
+  .shot { max-width: 960px; margin: 64px auto 96px; padding: 0 24px; }
+  .shot__frame {
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-xl);
+  }
+  .shot__frame img { width: 100%; display: block; cursor: zoom-in; }
+
+  /* — Lightbox — */
+  .lightbox {
+    position: fixed; inset: 0; z-index: 999;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(4, 6, 10, 0.75);
+    padding: 32px;
+    opacity: 0; visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    cursor: zoom-out;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  }
+  .lightbox.active { opacity: 1; visibility: visible; }
+  .lightbox__card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 16px;
+    box-shadow: 0 32px 64px rgba(0, 0, 0, 0.5);
+    max-width: min(92vw, 1200px);
+    max-height: 90vh;
+    transform: scale(0.96) translateY(10px);
+    transition: transform 0.3s ease;
+    cursor: default;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .lightbox.active .lightbox__card { transform: scale(1) translateY(0); }
+  .lightbox__card img {
+    width: 100%; height: auto; max-height: calc(90vh - 32px);
+    object-fit: contain; border-radius: var(--radius-md); display: block;
+  }
+  .lightbox__close {
+    position: absolute; top: 10px; right: 10px;
+    width: 32px; height: 32px; border: none;
+    background: var(--bg-lighter); border-radius: 50%;
+    color: var(--text-medium); font-size: 18px; line-height: 1; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: var(--ease); z-index: 1;
+  }
+  .lightbox__close:hover { background: var(--border-light); color: var(--text-loudest); }
+
+  /* — Features — */
+  .features {
+    max-width: 1000px; margin: 0 auto; padding: 0 24px 120px;
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px;
+  }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 26px; transition: var(--ease);
+  }
+  .card:hover { border-color: var(--border-light); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .card__dot { width: 10px; height: 10px; border-radius: 50%; margin-bottom: 16px; }
+  .card__dot--teal { background: var(--primary); box-shadow: 0 0 12px var(--primary-shadow); }
+  .card__dot--pink { background: var(--pink); box-shadow: 0 0 12px rgba(236, 72, 153, 0.35); }
+  .card__dot--amber { background: var(--amber); box-shadow: 0 0 12px rgba(245, 158, 11, 0.35); }
+  .card h3 { margin: 0 0 8px; font-size: 15.5px; font-weight: 600; color: var(--text-loudest); }
+  .card p { margin: 0; font-size: 13.5px; line-height: 1.65; color: var(--text-medium); }
+
+  @media (max-width: 720px) {
+    .features { grid-template-columns: 1fr; }
+    .hero__facts { gap: 20px; }
+  }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 36px 24px;
+    text-align: center;
+  }
+  footer p { margin: 0; font-size: 13px; color: var(--text-muted); }
+  footer a { color: var(--text-medium); }
+  footer a:hover { color: var(--primary); }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero__content">
+    <span class="badge"><span class="badge__dot"></span>OPEN SOURCE · APACHE 2.0</span>
+
+    <img class="hero__icon" src="icon.png" alt="Orbit">
+    <h1 class="hero__title">ORBIT</h1>
+    <p class="hero__eyebrow">Mission Control for Autonomous Coding Agents</p>
+    <p class="hero__subtitle">Supervise, steer, and verify multi-agent software development at terminal velocity.</p>
+
+    <div class="install">
+      <span class="install__prompt mono">$</span>
+      <code class="mono" id="install-cmd">curl -fsSL https://getorbit.sh/install.sh | bash</code>
+      <button class="install__copy mono" id="install-copy" type="button">copy</button>
+    </div>
+
+    <div class="hero__ctas">
+      <a class="btn btn--primary" href="https://github.com/e1i0r/orbit" onclick="gtag('event','cta_click',{button:'hero_github'})">View on GitHub</a>
+      <a class="btn btn--outline" href="https://github.com/e1i0r/orbit#-getting-started" onclick="gtag('event','cta_click',{button:'hero_docs'})">Read the Docs</a>
+    </div>
+
+    <div class="hero__facts">
+      <div class="fact"><div class="fact__num">4</div><div class="fact__label">Platforms</div></div>
+      <div class="fact"><div class="fact__num">0</div><div class="fact__label">Sudo Required</div></div>
+      <div class="fact"><div class="fact__num">11</div><div class="fact__label">Inspector Tabs</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="shot">
+  <div class="shot__frame">
+    <img src="screenshot.png" alt="Orbit cockpit">
+  </div>
+</div>
+
+<div class="features">
+  <div class="card">
+    <div class="card__dot card__dot--teal"></div>
+    <h3>Zero Working-Tree Pollution</h3>
+    <p>Every task gets its own throwaway worktree. Run several at once, same repo. Your checkout never moves.</p>
+  </div>
+  <div class="card">
+    <div class="card__dot card__dot--pink"></div>
+    <h3>Custom Flows &amp; Pipelines</h3>
+    <p>Build your pipeline right in the cockpit, no config file needed. Or start from a template: task, quick, careful, tdd-cycle, security-audit.</p>
+  </div>
+  <div class="card">
+    <div class="card__dot card__dot--amber"></div>
+    <h3>Bidirectional CLI Integrations</h3>
+    <p>Claude Code is live today, streaming output back in real time. Codex and OpenCode are next, Gemini after that.</p>
+  </div>
+  <div class="card">
+    <div class="card__dot card__dot--teal"></div>
+    <h3>Human-in-the-Loop Gates</h3>
+    <p>Approve, redirect, or override any phase mid-run. No restart required.</p>
+  </div>
+  <div class="card">
+    <div class="card__dot card__dot--pink"></div>
+    <h3>Full Audit Trail</h3>
+    <p>Every phase, tool call, and decision lands in an append-only log. Nothing an agent does stays hidden.</p>
+  </div>
+  <div class="card">
+    <div class="card__dot card__dot--amber"></div>
+    <h3>Deep Flight Telemetry</h3>
+    <p>11 live inspector tabs. Diffs, reasoning traces, tool refusals, cost.</p>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox">
+  <div class="lightbox__card">
+    <button class="lightbox__close" aria-label="Close">&times;</button>
+    <img src="" alt="">
+  </div>
+</div>
+
+<footer>
+  <p>Apache 2.0 License · <a href="https://github.com/e1i0r/orbit" onclick="gtag('event','cta_click',{button:'footer_github'})">github.com/e1i0r/orbit</a></p>
+  <p style="margin-top:6px;">Contributions welcome — <a href="https://github.com/e1i0r/orbit/blob/main/CONTRIBUTING.md" onclick="gtag('event','cta_click',{button:'footer_contributing'})">read the guide</a> and jump in.</p>
+  <p style="margin-top:6px;">Built by <a href="https://e1i0.com" onclick="gtag('event','cta_click',{button:'footer_author'})">Elio Rincón</a></p>
+</footer>
+
+<script>
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = lightbox.querySelector('.lightbox__card img');
+  const lightboxClose = lightbox.querySelector('.lightbox__close');
+
+  function closeLightbox() {
+    lightbox.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('.shot__frame img').forEach((img) => {
+    img.addEventListener('click', () => {
+      lightboxImg.src = img.src;
+      lightboxImg.alt = img.alt;
+      lightbox.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    });
+  });
+
+  lightbox.addEventListener('click', (e) => {
+    if (e.target === lightbox) closeLightbox();
+  });
+  lightboxClose.addEventListener('click', closeLightbox);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeLightbox();
+  });
+
+  const copyBtn = document.getElementById('install-copy');
+  copyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(document.getElementById('install-cmd').textContent).then(() => {
+      copyBtn.textContent = 'copied';
+      setTimeout(() => { copyBtn.textContent = 'copy'; }, 1500);
+    });
+  });
+</script>
+
+</body>
+</html>

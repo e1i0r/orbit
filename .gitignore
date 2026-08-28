@@ -29,3 +29,4 @@
 # alongside the code but are not published with it.
 /docs/
 /NEXT.md
+site/install.sh
