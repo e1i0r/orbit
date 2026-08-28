@@ -59,4 +59,7 @@ type taskState struct {
 	// makes a task with an empty log — written down and never run — fold
 	// once rather than never.
 	seen bool
+	// retried is whether the read that failed has already had its second
+	// chance at this size. poll argues why there is exactly one.
+	retried bool
 }
