@@ -27,6 +27,7 @@ import (
 	"github.com/e1i0r/orbit/internal/task"
 	"github.com/e1i0r/orbit/internal/ui"
 	"github.com/e1i0r/orbit/internal/view"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // newEngines is every engine this build can run, by the name a record
@@ -154,24 +155,6 @@ func enginesPort(engines map[string]engine.Engine) func() []ui.EngineInfo {
 	return func() []ui.EngineInfo {
 		var list []ui.EngineInfo
 
-		setupGuides := map[string][]string{
-			"claude": {
-				"1. Install Claude Code: npm install -g @anthropic-ai/claude-code",
-				"2. Run 'claude' in a terminal to authenticate",
-				"3. Ensure 'claude' is in your PATH",
-			},
-			"codex": {
-				"1. Install Codex CLI: npm install -g @openai/codex",
-				"2. Export OPENAI_API_KEY in your environment",
-				"3. Ensure 'codex' is in your PATH",
-			},
-			"opencode": {
-				"1. Install OpenCode CLI binary",
-				"2. Configure local model endpoint or API keys",
-				"3. Ensure 'opencode' is in your PATH",
-			},
-		}
-
 		for _, name := range engineNames(engines) {
 			eng, hasEng := engines[name]
 			_, pathErr := exec.LookPath(name)
@@ -199,11 +182,57 @@ func enginesPort(engines map[string]engine.Engine) func() []ui.EngineInfo {
 				list = append(list, ui.EngineInfo{
 					Name:      name,
 					Available: false,
-					Setup:     setupGuides[name],
+					Setup:     setupGuide(name),
 				})
 			}
 		}
 
 		return list
 	}
+}
+
+// setupGuide is what to do about an engine this machine cannot run yet.
+//
+// It is a function of a printer and not three strings because these are
+// sentences a reader reads, and every other line of that screen — its title,
+// its notice, the way back out of it — is already in their language. Three
+// English steps in the middle of it were the only thing on the screen that
+// was not, and they are the one part a reader has to follow.
+//
+// What is translated is the instruction and not the command: `npm install -g
+// @anthropic-ai/claude-code` is typed, not read, and a translated command is
+// a command that does not run.
+//
+// An engine with no guide answers nil, and the screen shows its heading with
+// no steps under it. That is the honest answer for an engine nobody has
+// written the steps for yet — better than three lines of somebody else's.
+func setupGuide(name string) func(*words.Printer) []string {
+	switch name {
+	case "claude":
+		return func(p *words.Printer) []string {
+			return []string{
+				p.T("engine.setup.claude.install", "1. Install Claude Code: npm install -g @anthropic-ai/claude-code"),
+				p.T("engine.setup.claude.login", "2. Run 'claude' in a terminal to authenticate"),
+				p.T("engine.setup.claude.path", "3. Ensure 'claude' is in your PATH"),
+			}
+		}
+	case "codex":
+		return func(p *words.Printer) []string {
+			return []string{
+				p.T("engine.setup.codex.install", "1. Install Codex CLI: npm install -g @openai/codex"),
+				p.T("engine.setup.codex.key", "2. Export OPENAI_API_KEY in your environment"),
+				p.T("engine.setup.codex.path", "3. Ensure 'codex' is in your PATH"),
+			}
+		}
+	case "opencode":
+		return func(p *words.Printer) []string {
+			return []string{
+				p.T("engine.setup.opencode.install", "1. Install OpenCode CLI binary"),
+				p.T("engine.setup.opencode.configure", "2. Configure local model endpoint or API keys"),
+				p.T("engine.setup.opencode.path", "3. Ensure 'opencode' is in your PATH"),
+			}
+		}
+	}
+
+	return nil
 }

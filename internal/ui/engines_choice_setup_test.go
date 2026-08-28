@@ -9,6 +9,8 @@ package ui
 import (
 	"strings"
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // enginesTestList is a small engine roster with one available engine that
@@ -27,7 +29,7 @@ func enginesTestList() []EngineInfo {
 		{
 			Name:      "codex",
 			Available: false,
-			Setup:     []string{"install codex", "run codex login"},
+			Setup:     func(*words.Printer) []string { return []string{"install codex", "run codex login"} },
 		},
 		{
 			Name:      "bare",

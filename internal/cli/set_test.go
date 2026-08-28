@@ -191,3 +191,27 @@ func TestARefusedKeyListsTheKeysThereAre(t *testing.T) {
 		}
 	}
 }
+
+// TestTheConfirmationIsInTheReadersLanguage. `orbit set` is the command a
+// reader uses to choose their language, and the line confirming that choice
+// was the one line of it written in English no matter what they chose.
+func TestTheConfirmationIsInTheReadersLanguage(t *testing.T) {
+	t.Setenv("ORBIT_HOME", t.TempDir())
+
+	if code, _, errOut := run(t, "set", "language", "es"); code != 0 {
+		t.Fatalf("set language es exited %d: %s", code, errOut)
+	}
+
+	code, out, errOut := run(t, "set", "autopilot", "on")
+	if code != 0 {
+		t.Fatalf("set autopilot on exited %d: %s", code, errOut)
+	}
+
+	if strings.Contains(out, "is now") {
+		t.Errorf("the confirmation is in English for a reader who chose Spanish:\n%s", out)
+	}
+
+	if !strings.Contains(out, "autopilot") || !strings.Contains(out, "on") {
+		t.Errorf("the confirmation does not say what the setting is now:\n%s", out)
+	}
+}

@@ -142,12 +142,17 @@ func (m Model) collectEngineRows() []engineRow {
 		}
 
 		if !eng.Available {
+			var steps []string
+			if eng.Setup != nil {
+				steps = eng.Setup(p)
+			}
+
 			rows = append(rows, engineRow{
 				kind:     rowEngine,
 				title:    eng.Name + " " + p.T("engines.setup_tag", "[setup required]"),
 				engine:   eng.Name,
 				disabled: true,
-				setup:    eng.Setup,
+				setup:    steps,
 			})
 
 			continue

@@ -9,6 +9,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/store"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // TestTheWindowOffersEveryEngineThisBuildCanRun is the promise the table
@@ -109,5 +110,50 @@ func TestARefusalReadsAsASentenceWithOrWithoutATask(t *testing.T) {
 
 	if !strings.Contains(alone, "codex") {
 		t.Errorf("the refusal does not name the engine: %q", alone)
+	}
+}
+
+// TestTheSetupStepsAreInTheReadersLanguage. The engines screen puts three
+// steps under an engine this machine cannot run yet — and its title, its
+// notice and the way back out of it were already translated, so the steps
+// were the only English left on a screen a reader is expected to follow.
+func TestTheSetupStepsAreInTheReadersLanguage(t *testing.T) {
+	for _, name := range engineNames(newEngines()) {
+		guide := setupGuide(name)
+		if guide == nil {
+			t.Errorf("%s is an engine this build offers and nobody wrote the steps for", name)
+			continue
+		}
+
+		english, spanish := guide(words.For("en")), guide(words.For("es"))
+		if len(spanish) != len(english) {
+			t.Errorf("%s has %d steps in English and %d in Spanish", name, len(english), len(spanish))
+			continue
+		}
+
+		for i := range english {
+			if english[i] == spanish[i] {
+				t.Errorf("%s step %d is the same sentence in both languages: %q", name, i+1, english[i])
+			}
+		}
+	}
+}
+
+// TestTheCommandToTypeIsNotTranslated is the other half of it. The steps are
+// read; the command in them is typed, and a translated command does not run.
+func TestTheCommandToTypeIsNotTranslated(t *testing.T) {
+	for name, command := range map[string]string{
+		"claude": "npm install -g @anthropic-ai/claude-code",
+		"codex":  "npm install -g @openai/codex",
+	} {
+		var found bool
+
+		for _, step := range setupGuide(name)(words.For("es")) {
+			found = found || strings.Contains(step, command)
+		}
+
+		if !found {
+			t.Errorf("the Spanish steps for %s do not carry %q for the reader to type", name, command)
+		}
 	}
 }

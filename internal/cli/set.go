@@ -211,7 +211,8 @@ func set(ctx Context, args []string) error {
 		return err
 	}
 
-	fmt.Fprintf(ctx.Out, "%s is now %s\n", key, shown)
+	fmt.Fprintf(ctx.Out, "%s\n", ctx.printer().T("set.now", "{key} is now {value}",
+		words.Arg{Name: "key", Value: key}, words.Arg{Name: "value", Value: shown}))
 
 	return nil
 }
