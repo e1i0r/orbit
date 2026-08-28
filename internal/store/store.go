@@ -18,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode"
 )
 
 // dirMode and fileMode keep the state root to its owner.
@@ -39,9 +40,37 @@ type Store struct {
 
 // validateTaskID rejects taskIDs that could escape or traverse the store.
 // This package is the only thing standing between a typed id and the filesystem.
+//
+// Escaping the tree is not the only way an id can be wrong. An id is a name
+// three audiences have to agree on — a directory on disk, an argument on a
+// command line, and a line of the record read months later — and the rules
+// below are the ones that keep those three readings the same. Each is here
+// because breaking it produces a task that can be created and then not used:
+//
+//   - whitespace at either end, or nothing but whitespace: "PAY-1" and
+//     "PAY-1 " print identically and are two different directories, and a
+//     task named " " cannot be picked out of a listing at all.
+//   - a leading dash: every command takes the id as a positional argument,
+//     so "-fix" is read as a flag. The task is made and then nothing can
+//     open, run or cancel it.
+//   - a control character: the id is written into the JSONL record and
+//     printed on a terminal. A newline splits one log line into two, and an
+//     escape sequence rewrites the screen around it.
 func validateTaskID(taskID string) error {
 	if taskID == "" {
 		return fmt.Errorf("task id cannot be empty")
+	}
+	if strings.TrimSpace(taskID) == "" {
+		return fmt.Errorf("task id cannot be only whitespace")
+	}
+	if strings.TrimSpace(taskID) != taskID {
+		return fmt.Errorf("task id %q has whitespace at the start or the end", taskID)
+	}
+	if strings.HasPrefix(taskID, "-") {
+		return fmt.Errorf("task id %q starts with a dash, so every command would read it as a flag", taskID)
+	}
+	if strings.ContainsFunc(taskID, unicode.IsControl) {
+		return fmt.Errorf("task id %q contains a control character", taskID)
 	}
 	if strings.Contains(taskID, "/") || strings.Contains(taskID, string(os.PathSeparator)) {
 		return fmt.Errorf("task id %q contains path separator", taskID)
