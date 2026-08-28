@@ -39,11 +39,22 @@ var layers = map[string][]string{
 	// its subcommand calls. What is not widened is the line above:
 	// internal/board still does not append anything itself, and internal/ui
 	// still cannot reach internal/record, internal/store or internal/engine.
-	"internal/board":   {"internal/record", "internal/repo", "internal/store", "internal/task", "internal/view"},
-	"internal/cli":     {"internal/board", "internal/engine", "internal/flow", "internal/logger", "internal/quota", "internal/repo", "internal/store", "internal/task", "internal/tracker", "internal/ui", "internal/view", "internal/words"},
-	"internal/engine":  {},
-	"internal/flow":    {},
-	"internal/logger":  {},
+	"internal/board":  {"internal/record", "internal/repo", "internal/store", "internal/task", "internal/view"},
+	"internal/cli":    {"internal/board", "internal/engine", "internal/flow", "internal/logger", "internal/mcp", "internal/quota", "internal/repo", "internal/store", "internal/task", "internal/tracker", "internal/ui", "internal/view", "internal/words"},
+	"internal/engine": {},
+	"internal/flow":   {},
+	"internal/logger": {},
+	// internal/mcp is the widest list on this map, and it is the same
+	// width as internal/cli's for the same reason: it is a second front
+	// door onto the very functions the command line calls, so it reaches
+	// internal/task to act and internal/board to read. internal/record is
+	// on it for one tool — orbit_inspect_task folds a task's events into
+	// the answer the cockpit's inspector draws — and it is a read of the
+	// vocabulary rather than a write: nothing here appends, because
+	// appending is internal/task's and this package holds no authority of
+	// its own. What is absent is internal/engine: a supervising model can
+	// start a run and cannot start a model.
+	"internal/mcp":     {"internal/board", "internal/flow", "internal/record", "internal/repo", "internal/store", "internal/task", "internal/view"},
 	"internal/quota":   {},
 	"internal/record":  {},
 	"internal/repo":    {"internal/store"},

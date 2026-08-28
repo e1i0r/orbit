@@ -191,6 +191,20 @@ func commands() []Command {
 		Name:  "upgrade",
 		About: func(p *words.Printer) string { return p.T("cmd.upgrade", "check for updates and upgrade orbit") },
 		Run:   upgrade,
+	}, {
+		Name: "mcp", Args: "[install] [-root <dir>]",
+		About: func(p *words.Printer) string {
+			return p.T("cmd.mcp", "run the model context protocol server, or register it in the clients that speak it")
+		},
+		Run: runMCP,
+		// The server owns this process's standard input and output for as
+		// long as it runs, and the window owns the terminal those are
+		// attached to. Running it from inside would hand the client the
+		// window's screen and the window the client's requests.
+		InWindow: WindowRefuses,
+		Because: func(p *words.Printer) string {
+			return p.T("cmd.mcp.inside", "it speaks over this terminal, which the window is already using")
+		},
 	}}
 }
 

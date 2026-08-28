@@ -625,6 +625,14 @@
       "source": "MODELO (consulta al operador)",
       "value": "MODELO (consulta al operador)"
     },
+    "notes.outsider": {
+      "source": "fuera de la ejecución",
+      "value": "fuera de la ejecución"
+    },
+    "notes.unread_by_run": {
+      "source": "no lo lee la ejecución",
+      "value": "no lo lee la ejecución"
+    },
     "notes.count": {
       "source": "entradas en el diálogo",
       "value": "entradas en el diálogo"
@@ -1206,6 +1214,10 @@
     "cmd.upgrade": {
       "source": "check for updates and upgrade orbit",
       "value": "buscar actualizaciones y actualizar orbit"
+    },
+    "cmd.mcp": {
+      "source": "run the model context protocol server, or register it in the clients that speak it",
+      "value": "ejecutar el servidor del protocolo de contexto de modelo, o registrarlo en los clientes que lo hablan"
     },
     "cli.tagline": {
       "source": "orbit — a cockpit for supervising coding agents",
@@ -2156,6 +2168,26 @@
     "detail.effort_changed": {
       "source": "effort level set to {effort}",
       "value": "nivel de esfuerzo cambiado a {effort}"
+    },
+    "mcp.installing": {
+      "source": "registering orbit as an mcp server",
+      "value": "registrando orbit como servidor mcp"
+    },
+    "mcp.install_wrote": {
+      "source": "{client} — {path}",
+      "value": "{client} — {path}"
+    },
+    "mcp.install_failed": {
+      "source": "{client}: {err}",
+      "value": "{client}: {err}"
+    },
+    "mcp.install_restart": {
+      "source": "restart the client to connect; it will run `orbit mcp`",
+      "value": "reinicia el cliente para conectar; ejecutará `orbit mcp`"
+    },
+    "cmd.mcp.inside": {
+      "source": "it speaks over this terminal, which the window is already using",
+      "value": "habla por esta terminal, que la ventana ya está usando"
     }
   }
 }

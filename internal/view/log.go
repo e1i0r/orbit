@@ -56,6 +56,7 @@ type Entry struct {
 	Tool    string  // tool name, from Data["tool"]
 	Args    string  // tool arguments, from Data["args"]
 	Notes   string  // note count or info, from Data["notes"]
+	By      string  // what acted on the task from outside a run, from Data["by"]
 
 	// Kept and Full are the size of the engine's output as it was written
 	// and as it actually was. They differ only when internal/task cut it,
@@ -85,9 +86,9 @@ func (e Entry) Truncated() bool { return e.Full > e.Kept }
 // a translator writes "finished" once.
 type EntryKind int
 
-// The twelve kinds an entry can be read as. Their trailing comments are the
-// whole of what each one means; a doc comment per constant would say the
-// same twelve things twice.
+// The kinds an entry can be read as. Their trailing comments are the whole
+// of what each one means; a doc comment per constant would say the same
+// things twice.
 const (
 	EntryUnknown    EntryKind = iota // a kind this build does not know; draw Kind itself
 	EntryWritten                     // the task was written down
@@ -106,6 +107,7 @@ const (
 	EntryToolCall                    // tool call invocation
 	EntryRefused                     // permission refused
 	EntryNoted                       // user note
+	EntryDialogue                    // something outside a run acted on the task
 	EntryUnreadable                  // this line of the record itself is damaged
 )
 
@@ -151,6 +153,8 @@ func (e Entry) What() EntryKind {
 		return EntryRefused
 	case record.TaskNoted:
 		return EntryNoted
+	case record.TaskDialogue:
+		return EntryDialogue
 	case record.Unreadable:
 		// Not a kind anything wrote: the reader synthesises it where a line
 		// would not parse, and it is a fact about the log rather than about
@@ -205,6 +209,7 @@ func entry(e record.Event, attempt int) Entry {
 		Tool:    e.Data["tool"],
 		Args:    e.Data["args"],
 		Notes:   e.Data["notes"],
+		By:      e.Data["by"],
 		Kept:    len(e.Text),
 		Full:    count(e.Data["output_bytes"]),
 	}

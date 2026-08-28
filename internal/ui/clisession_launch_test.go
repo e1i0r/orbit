@@ -110,3 +110,69 @@ func TestHandleCLIEndedSaysWhenTheProcessNeverRan(t *testing.T) {
 	}
 	wantBand(t, next, "error running claude")
 }
+
+// The window hands the port the task the cursor is on and the directory it
+// believes the session belongs in — and that directory is the repository's
+// path. It used to be the repository's name, which is a column and not a
+// place: every session opened on a task was started in a directory that does
+// not exist, or, worse, in one that happened to.
+func TestLaunchInteractiveCLIAsksThePortForTheSession(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+	for i := range m.board.Tasks {
+		m.board.Tasks[i].RepoPath = "/checkouts/" + m.board.Tasks[i].Repo
+	}
+	m = onRow(t, m, "ACME-2662")
+
+	var gotTask view.Task
+	var gotEngine, gotDir string
+	m.opts.Open = func(task view.Task, engineName, dir string) (*exec.Cmd, error) {
+		gotTask, gotEngine, gotDir = task, engineName, dir
+		return exec.Command("true"), nil
+	}
+	next, cmd := m.launchInteractiveCLI()
+	if cmd == nil {
+		t.Fatal("launchInteractiveCLI answered with no command")
+	}
+	if gotTask.ID != "ACME-2662" {
+		t.Errorf("the port was asked about %q, want the task the cursor is on", gotTask.ID)
+	}
+	if gotEngine != "claude" {
+		t.Errorf("the port was asked for %q, want the engine the knob names", gotEngine)
+	}
+	if gotDir != "/checkouts/payments" {
+		t.Errorf("the port was given %q, want the repository's path", gotDir)
+	}
+	wantBand(t, asModel(t, next), "opening interactive session")
+}
+
+// A session that could not be built is said and not started: the reader
+// pressed a key and the terminal stayed where it was, so the window owes
+// them the reason.
+func TestLaunchInteractiveCLISaysWhenTheSessionCouldNotBeBuilt(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+	m = onRow(t, m, "ACME-2662")
+	m.opts.Open = func(view.Task, string, string) (*exec.Cmd, error) {
+		return nil, errors.New("opening an interactive session needs an engine")
+	}
+	next, cmd := m.launchInteractiveCLI()
+	if cmd != nil {
+		t.Error("a session that could not be built was started anyway")
+	}
+	wantBand(t, asModel(t, next), "error running claude")
+}
+
+// A window with no port opens the engine itself, which is what it did before
+// there was one.
+func TestOpenSessionWithoutAPortIsABareEngine(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+	cmd, err := m.openSession(view.Task{}, "codex", "/checkouts/app")
+	if err != nil {
+		t.Fatalf("openSession: %v", err)
+	}
+	if len(cmd.Args) != 1 {
+		t.Errorf("args = %v, want the engine and nothing else", cmd.Args)
+	}
+	if cmd.Dir != "/checkouts/app" {
+		t.Errorf("Dir = %q, want the directory it was given", cmd.Dir)
+	}
+}

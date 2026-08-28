@@ -118,6 +118,7 @@ func TestEveryKindTheRecordWritesHasAWord(t *testing.T) {
 	kinds := []string{
 		record.TaskCreated, record.TaskStarted, record.TaskFinished, record.TaskFailed,
 		record.TaskCancelled, record.TaskTimedOut, record.TaskAbandoned, record.TaskRead,
+		record.TaskNoted, record.TaskDialogue,
 		record.PhaseStarted, record.PhaseFinished, record.PhaseFailed, record.PhaseCancelled,
 		record.PhaseWaiting, record.PhaseResumed,
 		// Not written by anything: the reader puts it where a line of the
@@ -129,5 +130,26 @@ func TestEveryKindTheRecordWritesHasAWord(t *testing.T) {
 		if got := (Entry{Kind: kind}).What(); got == EntryUnknown {
 			t.Errorf("the record writes %q and the task view has no word for it", kind)
 		}
+	}
+}
+
+// A dialogue entry says what acted on the task as well as what it did. The
+// notes tab draws that name, and an entry that lost it would be drawn as
+// having come from nowhere.
+func TestADialogueEntryCarriesWhatActed(t *testing.T) {
+	got := Log([]record.Event{{
+		At:   at(1),
+		Kind: record.TaskDialogue,
+		Text: "a model cancelled this task over mcp",
+		Data: map[string]string{"by": "mcp"},
+	}})[0]
+	if got.What() != EntryDialogue {
+		t.Errorf("a dialogue event reads as %v, want EntryDialogue", got.What())
+	}
+	if got.By != "mcp" {
+		t.Errorf("By = %q, want what the record says acted", got.By)
+	}
+	if bare := (Entry{Kind: record.TaskDialogue}); bare.By != "" {
+		t.Errorf("By = %q on an event that named nothing, want empty and not a guess", bare.By)
 	}
 }

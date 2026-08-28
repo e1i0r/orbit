@@ -120,3 +120,39 @@ func parseRepoMarker(body string) (string, bool) {
 	}
 	return rest, true
 }
+
+// ForgetRepo removes one repository's record from the state root, and
+// answers the directory it removed.
+//
+// What goes is the record and only the record: every task's events.jsonl,
+// task.md, run marker and control file for that repository. It is the one
+// operation in Orbit that deletes from the append-only log, so it is spelled
+// as its own verb rather than reached by removing a directory, and the
+// caller is the one that has to decide there is nothing there worth keeping.
+//
+// What stays is the worktrees. They live under worktrees/ rather than under
+// repos/ — see WorktreeDir — and they are checkouts git itself has
+// registered in the repository; removing them from underneath it would leave
+// the repository's worktree list naming directories that are not there. A
+// caller that wants them gone runs `orbit cancel` first, which is what
+// removes a worktree through git.
+//
+// A repository the root has no record of is an error rather than a silent
+// success: "forgotten" and "never known" are different answers, and a caller
+// that misspelled a path deserves to hear which one it got.
+func (s *Store) ForgetRepo(repoPath string) (string, error) {
+	dir, err := s.RepoDir(repoPath)
+	if err != nil {
+		return "", err
+	}
+	if _, err := os.Stat(dir); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return "", fmt.Errorf("orbit has no record of a repository at %q", repoPath)
+		}
+		return "", fmt.Errorf("read %q: %w", dir, err)
+	}
+	if err := os.RemoveAll(dir); err != nil {
+		return "", fmt.Errorf("remove %q: %w", dir, err)
+	}
+	return dir, nil
+}

@@ -96,3 +96,26 @@ func TestNotesLinesAllStates(t *testing.T) {
 		t.Errorf("notesLines with attempt 0 = %q, want the plain status", joined)
 	}
 }
+
+// The other half of the dialogue: what a model or a session did to this
+// task, drawn beside the notes and marked as the one thing here the next
+// run is not handed.
+func TestNotesLinesDrawsWhatActedFromOutsideTheRun(t *testing.T) {
+	m, _ := testModel(t, 120, 30)
+	m.entries = []view.Entry{
+		{Kind: "task.dialogue", By: "mcp", Text: "a model cancelled this task over mcp"},
+		{Kind: "task.dialogue", Text: "the cockpit handed the terminal to a session"},
+	}
+	joined := strings.Join(m.notesLines(), "\n")
+	for _, want := range []string{
+		"MCP", "a model cancelled this task over mcp",
+		"handed the terminal", "2 entradas",
+	} {
+		if !strings.Contains(joined, want) {
+			t.Errorf("notesLines = %q, want it to mention %q", joined, want)
+		}
+	}
+	if strings.Contains(joined, "read by run") {
+		t.Errorf("notesLines = %q, want no claim that a run reads these", joined)
+	}
+}

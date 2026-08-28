@@ -108,3 +108,62 @@ func TestTheRootIsPrivate(t *testing.T) {
 		t.Errorf("the state root is %o, want 700 — it holds checkouts of private repositories, every task, and one day credentials", perm)
 	}
 }
+
+// RegisterRepo is the same directory CreateTaskDir would have made, made
+// without a task: the listing was a side effect of running something, and a
+// caller that cannot walk a directory needs to be able to say "know about
+// this one" on its own.
+func TestRegisterRepoPutsARepositoryInTheListing(t *testing.T) {
+	s, err := New(t.TempDir())
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	dir, err := s.RegisterRepo("/tmp/one")
+	if err != nil {
+		t.Fatalf("RegisterRepo: %v", err)
+	}
+	want, err := s.RepoDir("/tmp/one")
+	if err != nil {
+		t.Fatalf("RepoDir: %v", err)
+	}
+	if dir != want {
+		t.Errorf("RegisterRepo made %q, want %q", dir, want)
+	}
+	marker, err := os.ReadFile(filepath.Join(dir, "repo"))
+	if err != nil {
+		t.Fatalf("read the marker: %v", err)
+	}
+	if string(marker) != "path: /tmp/one\n" {
+		t.Errorf("marker = %q, want it to name the repository", marker)
+	}
+	repos, err := s.Repos()
+	if err != nil {
+		t.Fatalf("Repos: %v", err)
+	}
+	if len(repos) != 1 || repos[0].Path != "/tmp/one" {
+		t.Errorf("Repos() = %+v, want the one repository that was registered", repos)
+	}
+}
+
+// Registering twice is not an error and does not rewrite the marker: a
+// caller registering a repository that already has tasks is the ordinary
+// case, and it must not disturb what is already recorded there.
+func TestRegisterRepoTwiceLeavesTheRecordAlone(t *testing.T) {
+	s, err := New(t.TempDir())
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if _, err := s.CreateTaskDir("/tmp/one", "ACME-1"); err != nil {
+		t.Fatalf("CreateTaskDir: %v", err)
+	}
+	if _, err := s.RegisterRepo("/tmp/one"); err != nil {
+		t.Fatalf("RegisterRepo: %v", err)
+	}
+	task, err := s.TaskDir("/tmp/one", "ACME-1")
+	if err != nil {
+		t.Fatalf("TaskDir: %v", err)
+	}
+	if _, err := os.Stat(task); err != nil {
+		t.Errorf("registering an already-known repository disturbed its tasks: %v", err)
+	}
+}

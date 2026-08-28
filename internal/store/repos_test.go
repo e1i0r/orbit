@@ -237,3 +237,58 @@ func TestReposTellsAnUnlistableDirectoryFromADamagedMarker(t *testing.T) {
 		t.Error("a damaged marker gave no error at all")
 	}
 }
+
+func TestForgetRepoRemovesTheRecordAndNothingElse(t *testing.T) {
+	s, err := New(t.TempDir())
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if _, err := s.CreateTaskDir("/tmp/one", "ACME-1"); err != nil {
+		t.Fatalf("CreateTaskDir: %v", err)
+	}
+	if _, err := s.CreateTaskDir("/tmp/two", "ACME-2"); err != nil {
+		t.Fatalf("CreateTaskDir: %v", err)
+	}
+	// The worktree of the repository being forgotten: it is a checkout git
+	// has registered, and it lives outside repos/ so that forgetting the
+	// record cannot take it with it.
+	worktree, err := s.CreateWorktreeParent("/tmp/one", "ACME-1")
+	if err != nil {
+		t.Fatalf("CreateWorktreeParent: %v", err)
+	}
+
+	dir, err := s.ForgetRepo("/tmp/one")
+	if err != nil {
+		t.Fatalf("ForgetRepo: %v", err)
+	}
+	if _, err := os.Stat(dir); !os.IsNotExist(err) {
+		t.Errorf("the record is still at %q after ForgetRepo: %v", dir, err)
+	}
+	if _, err := os.Stat(filepath.Dir(worktree)); err != nil {
+		t.Errorf("forgetting the record took the worktree with it: %v", err)
+	}
+
+	rest, err := s.Repos()
+	if err != nil {
+		t.Fatalf("Repos: %v", err)
+	}
+	if len(rest) != 1 || rest[0].Path != "/tmp/two" {
+		t.Errorf("Repos() = %+v, want only the repository that was not forgotten", rest)
+	}
+}
+
+// "Forgotten" and "never known" are different answers, and a caller that
+// misspelled a path deserves to hear which one it got.
+func TestForgetRepoSaysWhenThereIsNoRecord(t *testing.T) {
+	s, err := New(t.TempDir())
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	_, err = s.ForgetRepo("/tmp/never")
+	if err == nil {
+		t.Fatal("forgetting a repository the root never knew was reported as a success")
+	}
+	if !strings.Contains(err.Error(), "/tmp/never") {
+		t.Errorf("the error does not name the repository: %v", err)
+	}
+}

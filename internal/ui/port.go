@@ -124,6 +124,22 @@ type Options struct {
 	// is — three facts internal/ui is not allowed to reach.
 	Take func(t view.Task) (*exec.Cmd, error)
 
+	// Open is the session the c gesture hands the terminal to: a plain
+	// interactive engine rather than a run, opened on a task rather than on
+	// nothing.
+	//
+	// It is a port for the same reason Take is, and for one more. The
+	// session it builds is handed Orbit's own MCP server, so the window
+	// would otherwise have to name internal/mcp — a package that can write
+	// to the record through internal/task, which is precisely the authority
+	// arch.layers keeps out of here. The window says which task and where
+	// it thinks the session belongs; the other side decides what the
+	// session can reach.
+	//
+	// A window given no port opens the engine on its own, which is what it
+	// did before there was one.
+	Open func(t view.Task, engineName, dir string) (*exec.Cmd, error)
+
 	// Flows is where a user's own flows live, for the cycle the start
 	// dialog offers. A nil Source is the built-ins and nothing else, which
 	// is what flow.Resolve already documents and what a window opened
