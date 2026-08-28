@@ -33,6 +33,8 @@ func (sn Session) Call(name string, args map[string]any) CallToolResult {
 		return sn.addNote(args)
 	case "orbit_pause_task":
 		return sn.control(args, "pause", "paused")
+	case "orbit_direct_task":
+		return sn.directTask(args)
 	case "orbit_cancel_task":
 		return sn.cancelTask(args)
 	case "orbit_list_flows":

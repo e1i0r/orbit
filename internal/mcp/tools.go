@@ -80,6 +80,16 @@ func taskTools() []Tool {
 			}, "task_id"),
 		},
 		{
+			Name:        "orbit_direct_task",
+			Description: "Direct a task with an instruction: stops any active process while preserving worktree and session memory, and records the directive. If restart is true, immediately starts a new attempt with the directive.",
+			InputSchema: object(map[string]Property{
+				"task_id": {Type: "string", Description: "The task's id."},
+				"repo":    {Type: "string", Description: "Which repository, when two of them hold a task under this id."},
+				"message": {Type: "string", Description: "The directive or feedback for the task."},
+				"restart": {Type: "boolean", Description: "Whether to immediately start the task again with the directive."},
+			}, "task_id", "message"),
+		},
+		{
 			Name:        "orbit_cancel_task",
 			Description: "Stop a run where it stands. The cancellation is written into the task's record.",
 			InputSchema: object(map[string]Property{

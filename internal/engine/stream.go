@@ -72,6 +72,10 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 			continue
 		}
 
+		if env.SessionID != "" {
+			out.SessionID = env.SessionID
+		}
+
 		switch env.Type {
 		case "result":
 			found = true
@@ -201,7 +205,7 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 		return Result{}, fmt.Errorf("reading the engine's stream after %d lines: %w", lines, err)
 	}
 	if !found {
-		return Result{}, fmt.Errorf("the engine's stream ended after %d lines with no result object: the session id and the cost are reported only there, so this phase has no answer, nothing to resume from and no price", lines)
+		return out, fmt.Errorf("the engine's stream ended after %d lines with no result object: the session id and the cost are reported only there, so this phase has no answer, nothing to resume from and no price", lines)
 	}
 	return out, nil
 }

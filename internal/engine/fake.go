@@ -8,10 +8,12 @@ import "context"
 // program this replaces had a test that fired a real paid call, which made
 // its own suite unsafe to run.
 type Fake struct {
-	Output string
-	Err    error
-	Calls  []Request
-	Events []StreamEvent
+	Output    string
+	SessionID string
+	Resumable bool
+	Err       error
+	Calls     []Request
+	Events    []StreamEvent
 }
 
 // The compiler is the right reviewer for this: an engine that stops
@@ -26,10 +28,8 @@ func NewFake(output string) *Fake {
 // Name identifies the engine in the record.
 func (f *Fake) Name() string { return "fake" }
 
-// CanResume is false, and it is a fact about the fake rather than a stub: it
-// reports no session id, so there is nothing to resume. A test that wants the
-// window to offer the keyboard says so through the window's own port.
-func (f *Fake) CanResume() bool { return false }
+// CanResume reports whether the fake is configured to support resumption.
+func (f *Fake) CanResume() bool { return f.Resumable }
 
 // Models returns nil for the fake engine.
 func (f *Fake) Models() []Choice { return nil }
@@ -52,7 +52,7 @@ func (f *Fake) Run(ctx context.Context, req Request) (Result, error) {
 		}
 	}
 	if f.Err != nil {
-		return Result{}, f.Err
+		return Result{SessionID: f.SessionID}, f.Err
 	}
-	return Result{Output: f.Output}, nil
+	return Result{Output: f.Output, SessionID: f.SessionID}, nil
 }

@@ -1207,6 +1207,10 @@
       "source": "record a note for a task",
       "value": "dejar una nota para una tarea"
     },
+    "cmd.direct": {
+      "source": "interrupt or redirect a task and record the directive",
+      "value": "interrumpir o redirigir una tarea y registrar la directiva"
+    },
     "cmd.version": {
       "source": "print the version orbit was built at",
       "value": "mostrar la versión con la que se compiló orbit"

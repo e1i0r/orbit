@@ -81,7 +81,10 @@ func (OpenCode) Run(ctx context.Context, req Request) (Result, error) {
 
 	if runErr != nil {
 		if parseErr != nil {
-			out = Result{Output: strings.TrimSpace(stdout.String())}
+			if streamResult.Output == "" {
+				streamResult.Output = strings.TrimSpace(stdout.String())
+			}
+			out = streamResult
 		}
 		out.Output = noteDropped(out.Output, stdout.dropped)
 		if msg := strings.TrimSpace(stderr.String()); msg != "" {

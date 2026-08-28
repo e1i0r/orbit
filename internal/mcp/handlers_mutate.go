@@ -192,6 +192,35 @@ func (sn Session) cancelTask(args map[string]any) CallToolResult {
 	return done("task %s was told to stop; the record carries the outcome%s", t.ID, trace)
 }
 
+// directTask interrupts an in-flight run while preserving memory, records the
+// directive and note, and optionally restarts the task.
+func (sn Session) directTask(args map[string]any) CallToolResult {
+	message := strings.TrimSpace(stringArg(args, "message"))
+	if message == "" {
+		return refuse(fmt.Errorf("this tool needs message"))
+	}
+	sb, t, res := sn.loadFor(args)
+	if res != nil {
+		return *res
+	}
+	if err := task.Direct(sb.store, t, "mcp", message); err != nil {
+		return refuse(fmt.Errorf("direct task %s: %w", t.ID, err))
+	}
+	trace := journal(sb.store, t, "a model directed this task over mcp")
+	if boolArg(args, "restart") {
+		pid, err := task.Start(sb.store, t, t.Flow, board.Unread(sb.board))
+		if err != nil {
+			return refuse(fmt.Errorf("restart task %s after directing it: %w", t.ID, err))
+		}
+		return reply(map[string]any{
+			"id":      t.ID,
+			"pid":     pid,
+			"message": fmt.Sprintf("task %s was directed and restarted with pid %d%s", t.ID, pid, trace),
+		})
+	}
+	return done("task %s was directed; the directive is recorded%s", t.ID, trace)
+}
+
 // loadFor is the three steps every tool that writes to a task takes: fold
 // the board, find the row the caller named, and load the task behind it.
 //

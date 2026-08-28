@@ -165,3 +165,18 @@ func TestParseStreamWithCallbackEmitsEvents(t *testing.T) {
 		t.Errorf("received[2] = %+v, want result cost 0.05", received[2])
 	}
 }
+
+func TestParseStreamCapturesEarlySessionIDOnInterruptedStream(t *testing.T) {
+	cutStream := `{"type":"init","session_id":"sess-early-999"}` + "\n" +
+		`{"type":"assistant","message":{"content":[{"type":"thinking","thinking":"pondering"}]}}` + "\n"
+	res, err := ParseStream(strings.NewReader(cutStream))
+	if err == nil {
+		t.Fatal("expected error on stream with no terminal result")
+	}
+	if res.SessionID != "sess-early-999" {
+		t.Errorf("SessionID = %q, want sess-early-999 to be preserved on interrupted stream", res.SessionID)
+	}
+	if len(res.Thoughts) != 1 || res.Thoughts[0] != "pondering" {
+		t.Errorf("Thoughts = %v, want ['pondering']", res.Thoughts)
+	}
+}

@@ -180,6 +180,12 @@ func commands() []Command {
 		Run:      set,
 		InWindow: WindowOpens,
 	}, {
+		Name: "direct", Args: "-repo <dir> [-restart] <id> <message>",
+		About: func(p *words.Printer) string {
+			return p.T("cmd.direct", "interrupt or redirect a task and record the directive")
+		},
+		Run: directTask,
+	}, {
 		Name: "note", Args: "-repo <dir> <id> <text>",
 		About: func(p *words.Printer) string { return p.T("cmd.note", "record a note for a task") },
 		Run:   noteTask,

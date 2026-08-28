@@ -163,7 +163,7 @@ func TestInstallWritesEveryClientUnderTheGivenHome(t *testing.T) {
 	home := t.TempDir()
 	results := Install("/opt/orbit/orbit", home)
 	if len(results) < 2 {
-		t.Fatalf("Install touched %d clients, want at least Claude Code and Cursor", len(results))
+		t.Fatalf("Install touched %d clients, want at least Claude Code and OpenCode", len(results))
 	}
 	for _, res := range results {
 		if res.Status != StatusInstalled || res.Err != nil {
