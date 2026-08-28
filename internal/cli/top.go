@@ -16,6 +16,7 @@ package cli
 // pipe, a log and a CI job get instead of a screenful of escape codes.
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -136,6 +137,20 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 		MarkRead: markReadPort(s),
 		RecordSupervisor: func(by, channel, message string) error {
 			return task.RecordSupervisor(s, "", by, channel, "", "", message)
+		},
+		AskSupervisor: func(engineName, prompt string) (string, error) {
+			eng, ok := engines[engineName]
+			if !ok {
+				eng = engines["claude"]
+			}
+			return task.Supervise(context.Background(), s, eng, prompt)
+		},
+		AutoSupervise: func(engineName string, taskIDs []string) (string, error) {
+			eng, ok := engines[engineName]
+			if !ok {
+				eng = engines["claude"]
+			}
+			return task.AutoSupervise(context.Background(), s, eng, taskIDs)
 		},
 		DeleteTask: deleteTaskPort(s),
 		Take:       takePort(r, engines),

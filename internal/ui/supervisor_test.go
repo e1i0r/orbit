@@ -67,6 +67,7 @@ func TestSupervisorScrolling(t *testing.T) {
 		{At: time.Now(), By: "elio", Channel: "tui", Text: "msg1"},
 		{At: time.Now(), By: "supervisor", Channel: "autopilot", Text: "msg2"},
 	}
+	m.supervisor.offset = 0
 
 	// Down increases offset
 	m = next(t, m, tea.KeyPressMsg{Code: tea.KeyDown})
@@ -109,5 +110,19 @@ func TestSupervisorRendering(t *testing.T) {
 	fullPopulated := strings.Join(rowsPopulated, "\n")
 	if !strings.Contains(fullPopulated, "ORB-1") || !strings.Contains(fullPopulated, "completed all gates") {
 		t.Errorf("render with lines missing content:\n%s", fullPopulated)
+	}
+}
+
+func TestSupervisorReplyMsgHandling(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+	m = m.openSupervisor()
+
+	// Reply msg
+	m = next(t, m, supervisorReplyMsg{Text: "all tasks healthy"})
+	if m.supervisorBusy {
+		t.Error("expected supervisorBusy to be false after reply")
+	}
+	if !strings.Contains(m.message, "supervisor replied") {
+		t.Errorf("expected message notification, got: %q", m.message)
 	}
 }

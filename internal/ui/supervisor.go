@@ -26,7 +26,7 @@ func (m Model) openSupervisor() Model {
 	m.supervisor = supervisorState{
 		prevScreen: prev,
 		input:      "",
-		offset:     0,
+		offset:     999999,
 	}
 	return m.syncSupervisor()
 }
@@ -53,38 +53,44 @@ func (m Model) syncSupervisor() Model {
 
 func (m Model) supervisorKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
-	case key.Matches(msg, m.keys.Back):
+	case msg.Code == tea.KeyEscape || key.Matches(msg, m.keys.Back):
 		return m.abandonSupervisor(), nil
-	case key.Matches(msg, m.keys.Up):
+	case msg.Code == tea.KeyUp:
 		if m.supervisor.offset > 0 {
 			m.supervisor.offset--
 		}
 		return m, nil
-	case key.Matches(msg, m.keys.Down):
+	case msg.Code == tea.KeyDown:
 		m.supervisor.offset++
 		return m, nil
-	case key.Matches(msg, m.keys.Open):
+	case msg.Code == tea.KeyEnter || key.Matches(msg, m.keys.Open):
+		if msg.Mod&tea.ModShift != 0 || msg.Mod&tea.ModAlt != 0 {
+			m.supervisor.input += "\n"
+			return m, nil
+		}
 		text := strings.TrimSpace(m.supervisor.input)
 		if text == "" {
 			return m, nil
 		}
 		m.supervisor.input = ""
 		return m.sendSupervisorMessage(text)
-	}
-
-	switch msg.String() {
-	case "backspace", "ctrl+h":
+	case (msg.Code == 'v' || msg.Code == 'V') && msg.Mod&tea.ModCtrl != 0:
+		if clip := readClipboard(); clip != "" {
+			m.supervisor.input += clip
+		}
+		return m, nil
+	case msg.Code == tea.KeyBackspace || msg.Code == tea.KeyDelete:
 		if len(m.supervisor.input) > 0 {
 			runes := []rune(m.supervisor.input)
 			m.supervisor.input = string(runes[:len(runes)-1])
 		}
 		return m, nil
-	case "ctrl+u":
+	case (msg.Code == 'u' || msg.Code == 'U') && msg.Mod&tea.ModCtrl != 0:
 		m.supervisor.input = ""
 		return m, nil
 	default:
-		if r := msg.Text; r != "" {
-			m.supervisor.input += r
+		if msg.Text != "" {
+			m.supervisor.input += msg.Text
 			return m, nil
 		}
 	}
@@ -98,8 +104,12 @@ func (m Model) sendSupervisorMessage(text string) (tea.Model, tea.Cmd) {
 		}
 	}
 	m = m.syncSupervisor()
-	if len(m.supervisor.lines) > 0 {
-		m.supervisor.offset = len(m.supervisor.lines)
+	m.supervisor.offset = 999999
+	m.supervisorBusy = true
+	eng := m.knobs.Engine
+	if eng == "" {
+		eng = "claude"
 	}
-	return m.say(m.opts.Words.T("supervisor.sent", "message recorded in supervisor thread")), nil
+	cmd := askSupervisorCmd(m.opts.AskSupervisor, eng, text)
+	return m.say(m.opts.Words.T("supervisor.thinking", "supervisor is thinking...")), tea.Batch(cmd, spinnerTick())
 }

@@ -47,6 +47,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case elapsedMsg:
 		m.now = time.Time(msg)
 		return m, elapsedTick()
+	case spinnerTickMsg:
+		m.now = time.Time(msg)
+		if m.supervisorBusy {
+			return m, spinnerTick()
+		}
+		return m, nil
 	case upgradeTickMsg:
 		return m, tea.Batch(checkUpgradeCmd, upgradeTick())
 	case boardMsg:
@@ -81,6 +87,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.session(msg)
 	case sessionEndedMsg:
 		return m.sessionEnded(msg), nil
+	case supervisorReplyMsg:
+		m.supervisorBusy = false
+		m = m.syncSupervisor()
+		m.supervisor.offset = 999999
+		if msg.Err != nil {
+			return m.say(m.opts.Words.T("supervisor.error", "supervisor error: {err}", about("err", msg.Err.Error()))), nil
+		}
+		return m.say(m.opts.Words.T("supervisor.replied", "supervisor replied in thread")), nil
 	case cliEndedMsg:
 		return m.handleCLIEnded(msg)
 	case editorMsg:

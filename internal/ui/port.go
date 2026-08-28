@@ -119,6 +119,12 @@ type Options struct {
 	// RecordSupervisor records a message into the global supervisor conversation thread.
 	RecordSupervisor func(by, channel, message string) error
 
+	// AskSupervisor asks the active engine to process and reply to the supervisor thread.
+	AskSupervisor func(engineName, prompt string) (string, error)
+
+	// AutoSupervise triggers the supervisor autonomously for tasks needing attention.
+	AutoSupervise func(engineName string, taskIDs []string) (string, error)
+
 	// DeleteTask permanently deletes a task record and its worktree from the store.
 	DeleteTask func(t view.Task) error
 

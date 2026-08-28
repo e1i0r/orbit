@@ -132,6 +132,22 @@ func renderMarkdown(text string, width int, raw bool) []string {
 // formatInlineMarkdown formats bold (**text**), code (`text`), italic (*text*).
 func formatInlineMarkdown(s string) string {
 	res := s
+	// Bold **text**
+	for {
+		start := strings.Index(res, "**")
+		if start == -1 {
+			break
+		}
+		end := strings.Index(res[start+2:], "**")
+		if end == -1 {
+			break
+		}
+		end += start + 2
+		boldText := res[start+2 : end]
+		styled := Paint(Accent).Bold(true).Render(boldText)
+		res = res[:start] + styled + res[end+2:]
+	}
+	// Inline code `text`
 	for {
 		start := strings.Index(res, "`")
 		if start == -1 {

@@ -131,6 +131,7 @@ type Model struct {
 	knobs            Knobs
 	help             helpState
 	supervisor       supervisorState
+	supervisorBusy   bool
 	rawText          bool
 	expandedDetail   bool
 	upgradeAvailable string

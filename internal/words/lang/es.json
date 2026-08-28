@@ -2205,10 +2205,6 @@
       "source": "Supervisor & Cockpit Memory",
       "value": "Supervisor y Memoria del Cockpit"
     },
-    "supervisor.subtitle": {
-      "source": "briefing, debriefing, autonomous feedback and standing directives",
-      "value": "briefing, debriefing, feedback autónomo y directivas permanentes"
-    },
     "supervisor.input_prompt": {
       "source": "Say to Supervisor / Directive:",
       "value": "Hablar al Supervisor / Directiva:"
@@ -2218,16 +2214,28 @@
       "value": "escribe un briefing, consulta o directiva permanente..."
     },
     "supervisor.ways_out": {
-      "source": "[⏎] send · [esc] back · {up_down} scroll",
-      "value": "[⏎] enviar · [esc] volver · {up_down} desplazar"
+      "source": "[Shift+↵] newline · [↵] send · [esc] back · [↑↓] scroll · [^V] paste",
+      "value": "[Shift+↵] nueva línea · [↵] enviar · [esc] volver · [↑↓] desplazar · [^V] pegar"
     },
     "supervisor.empty": {
       "source": "No messages in supervisor thread yet. Type a briefing or instruction below.",
       "value": "Aún no hay mensajes en el hilo del supervisor. Escribe un briefing o instrucción abajo."
     },
-    "supervisor.sent": {
-      "source": "message recorded in supervisor thread",
-      "value": "mensaje guardado en el hilo del supervisor"
+    "supervisor.thinking": {
+      "source": "supervisor is thinking...",
+      "value": "el supervisor está pensando..."
+    },
+    "supervisor.replied": {
+      "source": "supervisor replied in thread",
+      "value": "el supervisor respondió en el hilo"
+    },
+    "supervisor.error": {
+      "source": "supervisor error: {err}",
+      "value": "error del supervisor: {err}"
+    },
+    "supervisor.acting": {
+      "source": "supervisor is autonomously inspecting {n} task(s)...",
+      "value": "el supervisor está inspeccionando autónomamente {n} tarea(s)..."
     }
   }
 }
