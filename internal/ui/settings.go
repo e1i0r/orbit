@@ -24,7 +24,21 @@ type settingRow struct {
 	key     string
 	val     string
 	options []string
-	about   string
+	// labels is what each option is drawn as, when that is not the option
+	// itself. Only the model dial needs it — opencode's models are stored
+	// provider-qualified and shown without the provider — and every other
+	// row leaves it nil.
+	labels []string
+	about  string
+}
+
+// label is what the option at i is drawn as.
+func (r settingRow) label(i int) string {
+	if i < len(r.labels) {
+		return r.labels[i]
+	}
+
+	return r.options[i]
 }
 
 func (m Model) openSettings() Model {
@@ -55,19 +69,26 @@ func (m Model) settingRowsList() []settingRow {
 	}
 
 	langVal := orDef(s.Language(), "en")
-	engineVal := orDef(s.Engine(), "claude")
-	modelVal := orDef(s.Model(), "sonnet")
+	// The engines, the models and the efforts are the build's, not this
+	// screen's: see engine_table.go. A settings file naming an engine this
+	// build does not have keeps its own word rather than being quietly
+	// moved onto the first one — that is the reader's setting, and the
+	// dial simply has no pill lit.
+	engines := m.engineNames()
+	engineVal := orDef(s.Engine(), first(engines))
 	flowVal := orDef(s.Flow(), "task")
 	themeVal := orDef(s.Theme(), "frauddi")
 
-	models := modelsForEngine(engineVal)
+	models, modelLabels := m.modelsFor(engineVal)
+
+	modelVal := s.Model()
 	if !slices.Contains(models, modelVal) && len(models) > 0 {
 		modelVal = models[0]
 	}
 
-	efforts := effortsForEngine(engineVal)
+	efforts, effortLabels := m.effortsFor(engineVal)
 
-	effortVal := orDef(m.knobs.Effort, "default")
+	effortVal := m.knobs.Effort
 	if !slices.Contains(efforts, effortVal) && len(efforts) > 0 {
 		effortVal = efforts[0]
 	}
@@ -78,13 +99,22 @@ func (m Model) settingRowsList() []settingRow {
 		{key: "language", val: langVal, options: []string{"en", "es"}, about: p.T("setting.language", "the language orbit speaks")},
 		{key: "autopilot", val: autopilotStr, options: []string{"off", "on"}, about: p.T("setting.autopilot", "whether a run walks its whole flow without stopping")},
 		{key: "unread-cap", val: strconv.Itoa(s.UnreadCap()), options: []string{"0", "3", "5", "10", "20"}, about: p.T("setting.unread_cap", "how many finished tasks may sit unread before nothing new starts")},
-		{key: "engine", val: engineVal, options: []string{"claude", "codex", "opencode"}, about: p.T("setting.engine", "the engine a task runs on when it names none")},
-		{key: "model", val: modelVal, options: models, about: p.T("setting.model", "the model a phase asks for when it names none")},
-		{key: "effort", val: effortVal, options: efforts, about: p.T("setting.effort", "the default reasoning effort level for engine sessions")},
+		{key: "engine", val: engineVal, options: engines, about: p.T("setting.engine", "the engine a task runs on when it names none")},
+		{key: "model", val: modelVal, options: models, labels: modelLabels, about: p.T("setting.model", "the model a phase asks for when it names none")},
+		{key: "effort", val: effortVal, options: efforts, labels: effortLabels, about: p.T("setting.effort", "the default reasoning effort level for engine sessions")},
 		{key: "thinking", val: thinkingVal, options: []string{"adaptive", "on", "off"}, about: p.T("setting.thinking", "whether extended thinking mode is enabled for the engine")},
 		{key: "flow", val: flowVal, options: []string{"task", "quick", "careful"}, about: p.T("setting.flow", "the flow a new task is written against")},
 		{key: "theme", val: themeVal, options: AvailableThemes(), about: p.T("setting.theme", "the visual color theme for the window")},
 	}
+}
+
+// first is the head of a list, or "" when there is none.
+func first(list []string) string {
+	if len(list) == 0 {
+		return ""
+	}
+
+	return list[0]
 }
 
 func orDef(s, def string) string {
@@ -216,12 +246,12 @@ func (m Model) applySetting(keyName, val string) (tea.Model, tea.Cmd) {
 		case "engine":
 			_ = s.SetEngine(val) //nolint:errcheck // best-effort setting update
 
-			validModels := modelsForEngine(val)
+			validModels, _ := m.modelsFor(val)
 			if !slices.Contains(validModels, s.Model()) && len(validModels) > 0 {
 				_ = s.SetModel(validModels[0]) //nolint:errcheck // best-effort setting update
 			}
 
-			validEfforts := effortsForEngine(val)
+			validEfforts, _ := m.effortsFor(val)
 			if !slices.Contains(validEfforts, m.knobs.Effort) && len(validEfforts) > 0 {
 				m.knobs.Effort = validEfforts[0]
 			}
@@ -282,11 +312,11 @@ func (m Model) settingsRows(h, w int) []string {
 		if isSelected && m.settings.editing {
 			optViews = append(optViews, Paint(Accent).Render(m.settings.typed)+Paint(Sel).Render(" "))
 		} else {
-			for _, opt := range r.options {
+			for i, opt := range r.options {
 				if opt == r.val {
-					optViews = append(optViews, Paint(Sel).Bold(true).Render(" ● "+opt+" "))
+					optViews = append(optViews, Paint(Sel).Bold(true).Render(" ● "+r.label(i)+" "))
 				} else {
-					optViews = append(optViews, Paint(Dim).Render(" "+opt+" "))
+					optViews = append(optViews, Paint(Dim).Render(" "+r.label(i)+" "))
 				}
 			}
 		}

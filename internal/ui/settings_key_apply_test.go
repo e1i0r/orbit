@@ -6,10 +6,58 @@ package ui
 
 import (
 	"io"
+	"slices"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
 )
+
+// TestTheSettingsDialsAreTheEnginesOwn. The three dials were a switch on the
+// engine's name written in this package, and it offered opencode a model
+// called gemini-2.5-pro, which opencode has never had. A made-up engine is
+// what proves the table is the port's: nothing in this package could have
+// guessed it.
+func TestTheSettingsDialsAreTheEnginesOwn(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+	m.opts.Engines = func() []EngineInfo {
+		return []EngineInfo{{
+			Name:      "zeta",
+			Available: true,
+			Models:    []ChoiceInfo{{ID: "", Label: "default"}, {ID: "zeta/one", Label: "one"}},
+			Efforts:   []ChoiceInfo{{ID: "", Label: "default"}, {ID: "brisk", Label: "brisk"}},
+		}}
+	}
+
+	if err := m.opts.Settings.SetEngine("zeta"); err != nil {
+		t.Fatalf("choose the engine: %v", err)
+	}
+
+	rows := map[string]settingRow{}
+	for _, r := range m.settingRowsList() {
+		rows[r.key] = r
+	}
+
+	if got := rows["engine"].options; !slices.Equal(got, []string{"zeta"}) {
+		t.Errorf("the engine dial offers %v, want only what the port answered", got)
+	}
+
+	// The id is what the setting holds and the label is what the reader
+	// picks from. They are two strings for opencode — the id is
+	// provider-qualified — and drawing the id would put the provider in
+	// front of every position on the dial.
+	model := rows["model"]
+	if !slices.Equal(model.options, []string{"zeta/one"}) {
+		t.Errorf("the model dial holds %v, want zeta's own ids", model.options)
+	}
+
+	if got := model.label(0); got != "one" {
+		t.Errorf("the model dial draws %q, want the label the port gave it", got)
+	}
+
+	if got := rows["effort"].options; !slices.Equal(got, []string{"brisk"}) {
+		t.Errorf("the effort dial offers %v, want zeta's own", got)
+	}
+}
 
 func TestApplySettingEveryKey(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
@@ -57,12 +105,15 @@ func TestApplySettingEveryKey(t *testing.T) {
 	// SetModel/SetEngine do not persist, so the model half of the reset is
 	// exercised without being independently observable — knobs.Effort is a
 	// real field on Model and is.
+	// "default" is not among them, and deliberately: the engines answer
+	// that choice with an empty id, and an effort of the literal word
+	// "default" is one internal/task refuses before a run starts.
 	m.knobs.Effort = "xhigh" // not valid for codex
 	next, _ = m.applySetting("engine", "codex")
 
 	m = asModel(t, next)
-	if m.knobs.Effort != "default" {
-		t.Errorf("applySetting(engine, codex) left effort %q, want it reset to default", m.knobs.Effort)
+	if m.knobs.Effort != "low" {
+		t.Errorf("applySetting(engine, codex) left effort %q, want it reset to codex's first", m.knobs.Effort)
 	}
 
 	m.knobs.Effort = "low" // valid for every engine

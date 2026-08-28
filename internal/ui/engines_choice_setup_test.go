@@ -24,13 +24,18 @@ func enginesTestList() []EngineInfo {
 			Name:      "claude",
 			Available: true,
 			Models:    []ChoiceInfo{{ID: "", Label: "default"}, {ID: "opus", Label: "opus"}},
-			Efforts:   []ChoiceInfo{{ID: "", Label: "default"}, {ID: "high", Label: "high"}},
+			Efforts:   []ChoiceInfo{{ID: "", Label: "default"}, {ID: "low", Label: "low"}, {ID: "high", Label: "high"}},
 			CanThink:  true,
 		},
 		{
+			// Not installed, and still carrying its dials: what an engine
+			// offers and whether this machine can run it are two facts,
+			// and the port answers both for every engine.
 			Name:      "codex",
 			Available: false,
 			Setup:     func(*words.Printer) []string { return []string{"install codex", "run codex login"} },
+			Models:    []ChoiceInfo{{ID: "", Label: "default"}, {ID: "o3", Label: "o3"}},
+			Efforts:   []ChoiceInfo{{ID: "", Label: "default"}, {ID: "low", Label: "low"}, {ID: "high", Label: "high"}},
 		},
 		{
 			Name:      "bare",

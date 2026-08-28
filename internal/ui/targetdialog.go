@@ -123,10 +123,10 @@ func (m Model) hitSettings(x, y int) Target {
 		if x >= 20 {
 			curX := 20
 
-			for _, opt := range r.options {
-				pillLen := lipgloss.Width(" "+opt+" ") + 1
+			for i, opt := range r.options {
+				pillLen := lipgloss.Width(" "+r.label(i)+" ") + 1
 				if opt == r.val {
-					pillLen = lipgloss.Width(" ● "+opt+" ") + 1
+					pillLen = lipgloss.Width(" ● "+r.label(i)+" ") + 1
 				}
 
 				if x >= curX && x < curX+pillLen {
