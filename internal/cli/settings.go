@@ -159,6 +159,10 @@ func (a *settingsAdapter) keep(cfg store.Settings, gen uint64) {
 // a setting this window does not know about — an engine, a model — from
 // being erased by a switch being flipped on screen.
 //
+// It goes through the store's own update rather than reading and saving
+// here, so the read and the write are one step against every other process
+// that writes this file.
+//
 // It refreshes the cache itself rather than waiting for the next poll: a
 // switch flipped on screen that took half a second to read back as flipped
 // would be a window arguing with the reader.
@@ -166,14 +170,17 @@ func (a *settingsAdapter) write(change func(*store.Settings)) error {
 	a.writing.Lock()
 	defer a.writing.Unlock()
 
-	cfg, err := a.store.Settings()
+	var cfg store.Settings
+	// The mutex above serialises this window's own setters; the store's
+	// update serialises them against the other processes writing the same
+	// file — an `orbit set` in a terminal, a second window.
+	err := a.store.UpdateSettings(func(c *store.Settings) error {
+		change(c)
+		cfg = *c
+
+		return nil
+	})
 	if err != nil {
-		return err
-	}
-
-	change(&cfg)
-
-	if err := a.store.SaveSettings(cfg); err != nil {
 		return err
 	}
 
