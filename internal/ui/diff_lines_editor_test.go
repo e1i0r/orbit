@@ -11,6 +11,7 @@ func TestDiffLinesAllStates(t *testing.T) {
 
 	// 1. Pending state (!diffKnown)
 	m.diffKnown = false
+
 	lines := m.diffLines()
 	if len(lines) == 0 || !strings.Contains(lines[0], "reading") {
 		t.Errorf("expected pending message, got %v", lines)
@@ -19,6 +20,7 @@ func TestDiffLinesAllStates(t *testing.T) {
 	// 2. Timed out error
 	m.diffKnown = true
 	m.diffErr = errGitTimedOut
+
 	lines = m.diffLines()
 	if len(lines) == 0 || !strings.Contains(lines[0], "in time") {
 		t.Errorf("expected timed out message, got %v", lines)
@@ -26,6 +28,7 @@ func TestDiffLinesAllStates(t *testing.T) {
 
 	// 3. Other error
 	m.diffErr = errors.New("custom git failure")
+
 	lines = m.diffLines()
 	if len(lines) == 0 || !strings.Contains(lines[0], "custom git failure") {
 		t.Errorf("expected custom error message, got %v", lines)
@@ -34,6 +37,7 @@ func TestDiffLinesAllStates(t *testing.T) {
 	// 4. Empty diff (no changes)
 	m.diffErr = nil
 	m.diff = ""
+
 	lines = m.diffLines()
 	if len(lines) == 0 || !strings.Contains(lines[0], "no changes") {
 		t.Errorf("expected no changes message, got %v", lines)
@@ -51,6 +55,7 @@ index 1234567..89abcdef 100644
 +import "strings"
 `
 	m.diff = sampleDiff
+
 	lines = m.diffLines()
 	if len(lines) < 5 {
 		t.Errorf("expected formatted diff lines, got %d lines", len(lines))
@@ -108,14 +113,17 @@ func TestEditorForEveryRefusal(t *testing.T) {
 	// 1. No $EDITOR and no $VISUAL.
 	t.Setenv("EDITOR", "")
 	t.Setenv("VISUAL", "")
+
 	if _, err := m.editorFor(); err == nil {
 		t.Error("editorFor with no editor set returned no error")
 	}
 
 	// 2. An editor is set, but the cursor's line names no file at all.
 	t.Setenv("EDITOR", "vim")
+
 	deleted := m
 	deleted.diff = "diff --git a/gone.go b/gone.go\n--- a/gone.go\n+++ /dev/null\n@@ -1,3 +0,0 @@\n-package gone\n"
+
 	deleted = deleted.syncPanes()
 	if _, err := deleted.editorFor(); err == nil {
 		t.Error("editorFor on a deleted file's furniture returned no error")
@@ -123,6 +131,7 @@ func TestEditorForEveryRefusal(t *testing.T) {
 
 	// 3. A file is found, but the task has no worktree to open it in.
 	noTree := m
+
 	noTree.worktree = ""
 	if _, err := noTree.editorFor(); err == nil {
 		t.Error("editorFor with no worktree returned no error")
@@ -130,10 +139,12 @@ func TestEditorForEveryRefusal(t *testing.T) {
 
 	// 4. Success: the file at the top of the pane, in the task's worktree.
 	m.worktree = "/w/ACME-2662"
+
 	cmd, err := m.editorFor()
 	if err != nil {
 		t.Fatalf("editorFor: %v", err)
 	}
+
 	if cmd.Dir != "/w/ACME-2662" {
 		t.Errorf("editorFor built a command in %q, want the worktree", cmd.Dir)
 	}
@@ -143,17 +154,22 @@ func TestEditRefusesOffTheDiffTab(t *testing.T) {
 	m := openOn(t, "ACME-2662")
 	m.tab = tabOverview
 	next, cmd := m.edit()
+
 	got := asModel(t, next)
 	if cmd != nil {
 		t.Error("edit() off the diff tab produced a command")
 	}
+
 	wantBand(t, got, "only the diff tab")
 
 	m.tab, m.diff, m.diffKnown, m.worktree = tabDiff, fixtureDiff, true, "/w/ACME-2662"
 	m = m.syncPanes()
+
 	t.Setenv("EDITOR", "vim")
 	t.Setenv("VISUAL", "")
+
 	next, cmd = m.edit()
+
 	_ = asModel(t, next)
 	if cmd == nil {
 		t.Error("edit() on the diff tab with an editor available produced no command")

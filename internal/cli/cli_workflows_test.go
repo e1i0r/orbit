@@ -23,6 +23,7 @@ import (
 func TestCancelTaskExecution(t *testing.T) {
 	root := t.TempDir()
 	t.Setenv("ORBIT_HOME", root)
+
 	s, err := store.New(root)
 	if err != nil {
 		t.Fatal(err)
@@ -32,6 +33,7 @@ func TestCancelTaskExecution(t *testing.T) {
 	if err := os.MkdirAll(repoPath, 0o700); err != nil {
 		t.Fatal(err)
 	}
+
 	for _, args := range [][]string{
 		{"init", "-q", "-b", "main"},
 		{"config", "user.email", "test@orbit.local"},
@@ -39,11 +41,13 @@ func TestCancelTaskExecution(t *testing.T) {
 		{"commit", "-q", "--allow-empty", "-m", "init"},
 	} {
 		cmd := exec.Command("git", args...)
+
 		cmd.Dir = repoPath
 		if err := cmd.Run(); err != nil {
 			t.Fatalf("git %v failed: %v", args, err)
 		}
 	}
+
 	r, err := repo.Open(repoPath)
 	if err != nil {
 		t.Fatal(err)
@@ -65,9 +69,11 @@ func TestCancelTaskExecution(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if err := os.MkdirAll(filepath.Dir(runPath), 0o700); err != nil {
 		t.Fatal(err)
 	}
+
 	body := fmt.Sprintf("pid: %d\nstarted: 2026-08-24T12:00:00Z\n", cmd.Process.Pid)
 	if err := os.WriteFile(runPath, []byte(body), 0o600); err != nil {
 		t.Fatal(err)
@@ -88,10 +94,12 @@ func TestCancelTaskExecution(t *testing.T) {
 
 func TestFullScreenAndTakePortWithReader(t *testing.T) {
 	root := t.TempDir()
+
 	s, err := store.New(root)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	rdr := board.NewReader(s, root)
 	engines := map[string]engine.Engine{
 		"claude": engine.NewClaude(),
@@ -105,6 +113,7 @@ func TestFullScreenAndTakePortWithReader(t *testing.T) {
 		Engine:   "fake",
 	}
 	tp := takePort(rdr, engines)
+
 	_, err = tp(tView)
 	if err == nil || !strings.Contains(err.Error(), "cannot resume") {
 		t.Errorf("expected cannot resume error for fake engine, got %v", err)
@@ -116,6 +125,7 @@ func TestFullScreenAndTakePortWithReader(t *testing.T) {
 		RepoPath: root,
 		Engine:   "claude",
 	}
+
 	cmd, err := tp(tViewClaude)
 	if err != nil || cmd != nil {
 		t.Errorf("takePort claude with empty session = (%v, %v), want (nil, nil)", cmd, err)
@@ -134,6 +144,7 @@ func TestFullScreenAndTakePortWithReader(t *testing.T) {
 	if next == nil {
 		t.Error("expected non-nil model from fullScreen.Update")
 	}
+
 	v := fs.View()
 	if !v.AltScreen {
 		t.Error("expected AltScreen to be true in fullScreen.View")
@@ -143,6 +154,7 @@ func TestFullScreenAndTakePortWithReader(t *testing.T) {
 func TestNotePauseResumeReadShowCommands(t *testing.T) {
 	root := t.TempDir()
 	t.Setenv("ORBIT_HOME", root)
+
 	s, err := store.New(root)
 	if err != nil {
 		t.Fatal(err)
@@ -152,6 +164,7 @@ func TestNotePauseResumeReadShowCommands(t *testing.T) {
 	if err := os.MkdirAll(repoPath, 0o700); err != nil {
 		t.Fatal(err)
 	}
+
 	for _, args := range [][]string{
 		{"init", "-q", "-b", "main"},
 		{"config", "user.email", "test@orbit.local"},
@@ -159,11 +172,13 @@ func TestNotePauseResumeReadShowCommands(t *testing.T) {
 		{"commit", "-q", "--allow-empty", "-m", "init"},
 	} {
 		cmd := exec.Command("git", args...)
+
 		cmd.Dir = repoPath
 		if err := cmd.Run(); err != nil {
 			t.Fatalf("git %v failed: %v", args, err)
 		}
 	}
+
 	r, err := repo.Open(repoPath)
 	if err != nil {
 		t.Fatal(err)
@@ -180,8 +195,10 @@ func TestNotePauseResumeReadShowCommands(t *testing.T) {
 	if code := Run([]string{"note", "-repo", repoPath, tk.ID, "A", "helpful", "operator", "note"}, &out, &errOut); code != 0 {
 		t.Errorf("orbit note failed: %d: %s", code, errOut.String())
 	}
+
 	out.Reset()
 	errOut.Reset()
+
 	if code := Run([]string{"note", "-repo", repoPath, tk.ID}, &out, &errOut); code == 0 {
 		t.Error("expected error on note with empty text")
 	}
@@ -189,11 +206,14 @@ func TestNotePauseResumeReadShowCommands(t *testing.T) {
 	// 2. orbit pause & resume
 	out.Reset()
 	errOut.Reset()
+
 	if code := Run([]string{"pause", "-repo", repoPath, tk.ID}, &out, &errOut); code != 0 {
 		t.Errorf("orbit pause failed: %d: %s", code, errOut.String())
 	}
+
 	out.Reset()
 	errOut.Reset()
+
 	if code := Run([]string{"resume", "-repo", repoPath, tk.ID}, &out, &errOut); code != 0 {
 		t.Errorf("orbit resume failed: %d: %s", code, errOut.String())
 	}
@@ -201,6 +221,7 @@ func TestNotePauseResumeReadShowCommands(t *testing.T) {
 	// 3. orbit read
 	out.Reset()
 	errOut.Reset()
+
 	if code := Run([]string{"read", "-repo", repoPath, tk.ID}, &out, &errOut); code != 0 {
 		t.Errorf("orbit read failed: %d: %s", code, errOut.String())
 	}
@@ -208,9 +229,11 @@ func TestNotePauseResumeReadShowCommands(t *testing.T) {
 	// 4. orbit show
 	out.Reset()
 	errOut.Reset()
+
 	if code := Run([]string{"show", "-repo", repoPath, tk.ID}, &out, &errOut); code != 0 {
 		t.Errorf("orbit show failed: %d: %s", code, errOut.String())
 	}
+
 	if !strings.Contains(out.String(), tk.ID) && !strings.Contains(out.String(), "task.created") {
 		t.Errorf("expected show output to contain events, got %s", out.String())
 	}
@@ -231,6 +254,7 @@ func TestSetCommandComprehensive(t *testing.T) {
 	if code := Run([]string{"set"}, &out, &errOut); code != 0 {
 		t.Errorf("orbit set failed: %d: %s", code, errOut.String())
 	}
+
 	if !strings.Contains(out.String(), "language") || !strings.Contains(out.String(), "autopilot") {
 		t.Errorf("expected settings table in output: %s", out.String())
 	}
@@ -238,6 +262,7 @@ func TestSetCommandComprehensive(t *testing.T) {
 	// 2. orbit set with 1 arg (error)
 	out.Reset()
 	errOut.Reset()
+
 	if code := Run([]string{"set", "autopilot"}, &out, &errOut); code == 0 {
 		t.Error("expected error on set with missing value")
 	}
@@ -245,6 +270,7 @@ func TestSetCommandComprehensive(t *testing.T) {
 	// 3. orbit set with unknown key
 	out.Reset()
 	errOut.Reset()
+
 	if code := Run([]string{"set", "unknown_key_99", "value"}, &out, &errOut); code == 0 {
 		t.Error("expected error on set with unknown key")
 	}
@@ -262,6 +288,7 @@ func TestSetCommandComprehensive(t *testing.T) {
 	} {
 		out.Reset()
 		errOut.Reset()
+
 		if code := Run([]string{"set", pair[0], pair[1]}, &out, &errOut); code != 0 {
 			t.Errorf("orbit set %s %s failed: %d: %s", pair[0], pair[1], code, errOut.String())
 		}

@@ -23,25 +23,31 @@ func Direct(s *store.Store, t Task, by, message string) error {
 	if message == "" {
 		return fmt.Errorf("task %s: directive message cannot be empty", t.ID)
 	}
+
 	if by == "" {
 		by = "supervisor"
 	}
+
 	if err := Dialogue(s, t, by, message); err != nil {
 		return fmt.Errorf("task %s dialogue: %w", t.ID, err)
 	}
+
 	noteText := fmt.Sprintf("[%s] %s", by, message)
 	if err := Note(s, t, noteText); err != nil {
 		return fmt.Errorf("task %s note: %w", t.ID, err)
 	}
+
 	pid, ok, err := Alive(s, t)
 	if err != nil {
 		return fmt.Errorf("check liveness for task %s: %w", t.ID, err)
 	}
+
 	if ok && pid > 0 {
 		if err := Cancel(s, t); err != nil {
 			return fmt.Errorf("stop task %s: %w", t.ID, err)
 		}
 	}
+
 	return nil
 }
 
@@ -67,13 +73,16 @@ func Reopen(s *store.Store, t Task, by, message, flowName string, unread int) (i
 	if err := Direct(s, t, by, message); err != nil {
 		return 0, err
 	}
+
 	if err := awaitStopped(s, t, stopWait); err != nil {
 		return 0, err
 	}
+
 	chosen := flowName
 	if chosen == "" {
 		chosen = t.Flow
 	}
+
 	return Start(s, t, chosen, unread)
 }
 
@@ -85,17 +94,21 @@ func Reopen(s *store.Store, t Task, by, message, flowName string, unread int) (i
 // being waited on is a process unwinding, not a person deciding.
 func awaitStopped(s *store.Store, t Task, within time.Duration) error {
 	deadline := time.Now().Add(within)
+
 	for {
 		pid, alive, err := Alive(s, t)
 		if err != nil {
 			return err
 		}
+
 		if !alive {
 			return nil
 		}
+
 		if !time.Now().Before(deadline) {
 			return fmt.Errorf("task %s was asked to stop, but process %d is still running after %s; end it with `orbit cancel -now %s` and start it again", t.ID, pid, within, t.ID)
 		}
+
 		time.Sleep(50 * time.Millisecond)
 	}
 }

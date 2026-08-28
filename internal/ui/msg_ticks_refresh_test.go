@@ -41,9 +41,11 @@ func TestTheThreeClocksEachRaiseTheirOwnMessage(t *testing.T) {
 	if _, ok := tick()().(tickMsg); !ok {
 		t.Error("tick's command did not raise a tickMsg")
 	}
+
 	if _, ok := elapsedTick()().(elapsedMsg); !ok {
 		t.Error("elapsedTick's command did not raise an elapsedMsg")
 	}
+
 	if _, ok := rescanTick()().(rescanMsg); !ok {
 		t.Error("rescanTick's command did not raise a rescanMsg")
 	}
@@ -60,10 +62,12 @@ func TestRefreshReadsTheBoardOrSaysWhyNot(t *testing.T) {
 	// 2. A read that fails carries the failure and nothing else.
 	failing := &msgReader{refreshErr: errors.New("disk is gone")}
 	msg = refresh(failing)()
+
 	bm, ok := msg.(boardMsg)
 	if !ok || len(bm.Board.Errs) == 0 {
 		t.Fatalf("refresh with a failing reader = %#v, want a boardMsg carrying the error", msg)
 	}
+
 	if !errorsAnyContains(bm.Board.Errs, "disk is gone") {
 		t.Errorf("boardMsg.Board.Errs = %v, want it to mention %q", bm.Board.Errs, "disk is gone")
 	}
@@ -72,6 +76,7 @@ func TestRefreshReadsTheBoardOrSaysWhyNot(t *testing.T) {
 	want := board.Board{Repos: 3}
 	ok2 := board.Changed{Tasks: []string{"ACME-1"}}
 	msg = refresh(&msgReader{board: want, changed: ok2})()
+
 	bm, ok = msg.(boardMsg)
 	if !ok || bm.Board.Repos != 3 || len(bm.Changed.Tasks) != 1 {
 		t.Errorf("refresh with a working reader = %#v, want the board and its Changed handed back whole", msg)
@@ -87,6 +92,7 @@ func TestRescanWalksTheTreeOrSaysWhyNot(t *testing.T) {
 	// 2. A failed walk carries the failure.
 	failing := &msgReader{rescanErr: errors.New("root is not a directory")}
 	msg := rescan(failing)()
+
 	bm, ok := msg.(boardMsg)
 	if !ok || len(bm.Board.Errs) == 0 {
 		t.Fatalf("rescan with a failing reader = %#v, want a boardMsg carrying the error", msg)
@@ -104,11 +110,14 @@ func TestControlMarkReadAndTakeSessionRefuseANilPort(t *testing.T) {
 
 	// control
 	msg := control(nil, task, "pause")()
+
 	cm, ok := msg.(controlMsg)
 	if !ok || cm.Err == nil || cm.ID != task.ID || cm.Word != "pause" {
 		t.Errorf("control(nil, ...) = %#v, want a controlMsg refusing for want of a port", msg)
 	}
+
 	okPort := func(view.Task, string) error { return nil }
+
 	msg = control(okPort, task, "pause")()
 	if cm, ok := msg.(controlMsg); !ok || cm.Err != nil {
 		t.Errorf("control with a working port = %#v, want no error", msg)
@@ -116,10 +125,12 @@ func TestControlMarkReadAndTakeSessionRefuseANilPort(t *testing.T) {
 
 	// markRead
 	msg = markRead(nil, task)()
+
 	rm, ok := msg.(readMsg)
 	if !ok || rm.Err == nil || rm.ID != task.ID {
 		t.Errorf("markRead(nil, ...) = %#v, want a readMsg refusing for want of a port", msg)
 	}
+
 	msg = markRead(func(view.Task) error { return nil }, task)()
 	if rm, ok := msg.(readMsg); !ok || rm.Err != nil {
 		t.Errorf("markRead with a working port = %#v, want no error", msg)
@@ -127,6 +138,7 @@ func TestControlMarkReadAndTakeSessionRefuseANilPort(t *testing.T) {
 
 	// takeSession
 	msg = takeSession(nil, task)()
+
 	sm, ok := msg.(sessionMsg)
 	if !ok || sm.Err == nil || sm.ID != task.ID {
 		t.Errorf("takeSession(nil, ...) = %#v, want a sessionMsg refusing for want of a port", msg)
@@ -141,5 +153,6 @@ func errorsAnyContains(errs []error, want string) bool {
 			return true
 		}
 	}
+
 	return false
 }

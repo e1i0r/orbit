@@ -47,6 +47,7 @@ func (f *fakeReader) Log(_, _ string) ([]view.Entry, error) {
 	if f.logErr != nil {
 		return nil, f.logErr
 	}
+
 	return f.entries, nil
 }
 
@@ -54,6 +55,7 @@ func (f *fakeReader) Worktree(_, _ string) (string, error) {
 	if f.treeErr != nil {
 		return "", f.treeErr
 	}
+
 	return f.worktree, nil
 }
 
@@ -72,26 +74,40 @@ func (f *fakeReader) SupervisorLog() ([]view.SupervisorLine, error) {
 // the state a reader most often opens this screen in.
 func fixtureEntries() []view.Entry {
 	return []view.Entry{
-		{At: ago(70 * time.Minute), Kind: "task.created", Attempt: 0,
-			Text: "Retry the webhook on 5xx"},
+		{
+			At: ago(70 * time.Minute), Kind: "task.created", Attempt: 0,
+			Text: "Retry the webhook on 5xx",
+		},
 		{At: ago(66 * time.Minute), Kind: "task.started", Attempt: 1},
-		{At: ago(66 * time.Minute), Kind: "phase.started", Phase: "implement", Attempt: 1,
-			PhaseN: 1, Engine: "claude", Model: "opus"},
-		{At: ago(52 * time.Minute), Kind: "phase.finished", Phase: "implement", Attempt: 1,
+		{
+			At: ago(66 * time.Minute), Kind: "phase.started", Phase: "implement", Attempt: 1,
+			PhaseN: 1, Engine: "claude", Model: "opus",
+		},
+		{
+			At: ago(52 * time.Minute), Kind: "phase.finished", Phase: "implement", Attempt: 1,
 			PhaseN: 1, Cost: 0.42, Session: "8f2c31", Kept: 30,
-			Text: "wrote retry.go\nadded a backoff"},
-		{At: ago(52 * time.Minute), Kind: "phase.started", Phase: "gates", Attempt: 1,
-			PhaseN: 2, Engine: "claude", Model: "opus"},
-		{At: ago(49 * time.Minute), Kind: "phase.failed", Phase: "gates", Attempt: 1,
+			Text: "wrote retry.go\nadded a backoff",
+		},
+		{
+			At: ago(52 * time.Minute), Kind: "phase.started", Phase: "gates", Attempt: 1,
+			PhaseN: 2, Engine: "claude", Model: "opus",
+		},
+		{
+			At: ago(49 * time.Minute), Kind: "phase.failed", Phase: "gates", Attempt: 1,
 			PhaseN: 2, Cost: 0.11, Session: "8f2c31", Kept: 37,
-			Text: "go vet: retry.go:31: unreachable code", Cause: "the gates phase exited 1"},
+			Text: "go vet: retry.go:31: unreachable code", Cause: "the gates phase exited 1",
+		},
 		{At: ago(49 * time.Minute), Kind: "task.failed", Attempt: 1, Text: "gates did not pass"},
 		{At: ago(34 * time.Minute), Kind: "task.started", Attempt: 2},
-		{At: ago(34 * time.Minute), Kind: "phase.started", Phase: "gates", Attempt: 2,
-			PhaseN: 2, Engine: "claude", Model: "opus"},
-		{At: ago(31 * time.Minute), Kind: "phase.failed", Phase: "gates", Attempt: 2,
+		{
+			At: ago(34 * time.Minute), Kind: "phase.started", Phase: "gates", Attempt: 2,
+			PhaseN: 2, Engine: "claude", Model: "opus",
+		},
+		{
+			At: ago(31 * time.Minute), Kind: "phase.failed", Phase: "gates", Attempt: 2,
 			PhaseN: 2, Cost: 0.09, Session: "b41d07", Kept: 37, Full: 1048583,
-			Text: "go vet: retry.go:31: unreachable code", Cause: "the gates phase exited 1"},
+			Text: "go vet: retry.go:31: unreachable code", Cause: "the gates phase exited 1",
+		},
 		{At: ago(31 * time.Minute), Kind: "task.failed", Attempt: 2, Text: "gates did not pass"},
 	}
 }
@@ -158,9 +174,11 @@ func tallDiff() string {
 	b.WriteString("--- a/retry.go\n")
 	b.WriteString("+++ b/retry.go\n")
 	b.WriteString("@@ -28,60 +28,60 @@ func send(req *http.Request) error {\n")
+
 	for i := range 60 {
 		b.WriteString(" \tattempt(" + strconv.Itoa(i) + ")\n")
 	}
+
 	return b.String()
 }
 
@@ -185,11 +203,14 @@ func step(t *testing.T, m Model, keystroke string) Model {
 // next delivers one message and returns the window it left behind.
 func next(t *testing.T, m Model, msg tea.Msg) Model {
 	t.Helper()
+
 	after, _ := m.Update(msg)
+
 	got, ok := after.(Model)
 	if !ok {
 		t.Fatalf("Update returned %T, want ui.Model", after)
 	}
+
 	return got
 }
 
@@ -197,13 +218,16 @@ func next(t *testing.T, m Model, msg tea.Msg) Model {
 // gesture into the task view arrives under.
 func onto(t *testing.T, m Model, id string) Model {
 	t.Helper()
+
 	for i, r := range m.rows() {
 		if !r.head && !r.blank && r.task.ID == id {
 			m.cursor = i
 			return m
 		}
 	}
+
 	t.Fatalf("no row for task %s in the body", id)
+
 	return m
 }
 
@@ -226,11 +250,13 @@ func openWith(t *testing.T, id string, entries []view.Entry) (Model, *fakeReader
 // openIn is the general form: a language, a record and a diff.
 func openIn(t *testing.T, p *words.Printer, id string, entries []view.Entry, diff string) (Model, *fakeReader) {
 	t.Helper()
+
 	r := &fakeReader{entries: entries, worktree: "/w/" + id}
 	m := modelWith(t, p, fixtureBoard(fixtureTasks(), 4), 100, 30, nil)
 	m.opts.Reader = r
 	m = step(t, onto(t, m, id), "enter")
 	m = next(t, m, logMsg{ID: id, Entries: r.entries})
+
 	return next(t, m, diffMsg{ID: id, Text: diff, Tree: r.worktree}), r
 }
 
@@ -238,13 +264,17 @@ func openIn(t *testing.T, p *words.Printer, id string, entries []view.Entry, dif
 // it rather than by writing the field.
 func showing(t *testing.T, m Model, which tab) Model {
 	t.Helper()
+
 	for range int(tabCount) {
 		if m.tab == which {
 			return m
 		}
+
 		m = step(t, m, "tab")
 	}
+
 	t.Fatalf("the task view will not tab round to %v", which)
+
 	return m
 }
 
@@ -257,8 +287,10 @@ func longLog() []view.Entry {
 	for i := range 40 {
 		entries = append(entries, view.Entry{
 			At: ago(time.Duration(30-i) * time.Minute), Kind: "phase.started",
-			Phase: "gates", Attempt: 2, PhaseN: 2, Engine: "claude", Model: "opus"})
+			Phase: "gates", Attempt: 2, PhaseN: 2, Engine: "claude", Model: "opus",
+		})
 	}
+
 	return entries
 }
 
@@ -274,6 +306,7 @@ func paneText(t *testing.T, m Model) string {
 // not — a pane assertion that fails without showing the pane costs a rerun.
 func wantIn(t *testing.T, text, want string) {
 	t.Helper()
+
 	if !strings.Contains(text, want) {
 		t.Errorf("the task view drew:\n%s\nwant it to mention %q", text, want)
 	}

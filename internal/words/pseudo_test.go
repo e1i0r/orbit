@@ -43,26 +43,32 @@ func pad(s string, ratio float64) string {
 	if len(runes) == 0 {
 		return s
 	}
+
 	extra := int(float64(len(runes)) * ratio)
 	if extra == 0 {
 		extra = 1
 	}
+
 	fill := make([]rune, extra)
 	for i := range fill {
 		fill[i] = runes[i%len(runes)]
 	}
+
 	return s + string(fill)
 }
 
 func TestPseudolocaleWrapsAndAccentsAndGrows(t *testing.T) {
 	p := forPseudo()
+
 	got := p.T("band.needs", "NEEDS YOU")
 	if !strings.HasPrefix(got, "[") || !strings.HasSuffix(got, "]") {
 		t.Errorf("T() = %q, want it wrapped in brackets", got)
 	}
+
 	if got == "["+"NEEDS YOU"+"]" {
 		t.Errorf("T() = %q, want vowels replaced with accented lookalikes", got)
 	}
+
 	inner := strings.TrimSuffix(strings.TrimPrefix(got, "["), "]")
 	if len(inner) <= len("NEEDS YOU") {
 		t.Errorf("T() = %q, want it longer than the English original", got)
@@ -71,10 +77,12 @@ func TestPseudolocaleWrapsAndAccentsAndGrows(t *testing.T) {
 
 func TestPseudolocaleStillExpandsPlaceholders(t *testing.T) {
 	p := forPseudo()
+
 	got := p.T("repo.tasks", "{repo} · {n} tasks", Arg{Name: "repo", Value: "orbit"}, Arg{Name: "n", Value: "4"})
 	if strings.Contains(got, "{repo}") || strings.Contains(got, "{n}") {
 		t.Errorf("T() = %q, a placeholder was never substituted", got)
 	}
+
 	if !strings.Contains(got, "órbít") {
 		t.Errorf("T() = %q, want it to contain the substituted repo name, itself pseudo-transformed", got)
 	}
@@ -82,6 +90,7 @@ func TestPseudolocaleStillExpandsPlaceholders(t *testing.T) {
 
 func TestPseudolocaleAffectsPToo(t *testing.T) {
 	p := forPseudo()
+
 	got := p.P("task.count", 2, "{n} task", "{n} tasks")
 	if !strings.HasPrefix(got, "[") || !strings.HasSuffix(got, "]") {
 		t.Errorf("P() = %q, want it wrapped in brackets", got)

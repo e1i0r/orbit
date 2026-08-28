@@ -21,23 +21,27 @@ func TestDiscoverSkipsOrbitsOwnStateRoot(t *testing.T) {
 	if err := mkdir(worktree); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
+
 	makeRepo(t, worktree, "orbit/ACME-1", "origin")
 
 	real := filepath.Join(root, "payments")
 	if err := mkdir(real); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
+
 	makeRepo(t, real, "main", "origin")
 
 	found, err := Discover(root)
 	if err != nil {
 		t.Fatalf("Discover: %v", err)
 	}
+
 	if len(found) != 1 || found[0].Name != "payments" {
 		names := make([]string, len(found))
 		for i, r := range found {
 			names[i] = r.Name
 		}
+
 		t.Fatalf("found %v, want only [payments] — Orbit's own throwaway checkouts are not projects to start tasks against", names)
 	}
 }
@@ -47,15 +51,19 @@ func TestOpenReportsADetachedHeadAsNoBranch(t *testing.T) {
 	// makeRepo's own isolated env — so it needs the same isolation at the
 	// process level.
 	isolateGitConfig(t)
+
 	dir := filepath.Join(t.TempDir(), "src")
 	if err := mkdir(dir); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
+
 	makeRepo(t, dir, "main", "origin")
+
 	head, err := git(dir, "rev-parse", "HEAD")
 	if err != nil {
 		t.Fatalf("rev-parse: %v", err)
 	}
+
 	if _, err := git(dir, "checkout", "--detach", head); err != nil {
 		t.Fatalf("detach: %v", err)
 	}
@@ -64,9 +72,11 @@ func TestOpenReportsADetachedHeadAsNoBranch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v — a detached checkout is still a repository worth listing", err)
 	}
+
 	if r.Base == "HEAD" {
 		t.Error(`Base = "HEAD" — that is git saying there is no branch, not a branch named HEAD`)
 	}
+
 	if r.Base != "" {
 		t.Errorf("Base = %q, want empty: there is no branch here", r.Base)
 	}

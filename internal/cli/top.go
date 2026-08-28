@@ -58,24 +58,32 @@ func top(ctx Context, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	if logErr := logger.Init(s.LogPath()); logErr == nil {
 		defer func() { _ = logger.CloseGlobal() }() //nolint:errcheck // best-effort logger flush on process exit
+
 		logger.Info("cli/top", "orbit top started on %q (once=%v, lang=%q)", dir, once, lang)
 	}
+
 	swept := reconcileAll(s)
 
 	if drawsOneFrame(once, interactive(ctx.Out)) {
 		opts.Quota = quotaPort(quota.FromEnv(), true)
+
 		frame, err := ui.Plain(opts)
 		if err != nil {
 			return err
 		}
+
 		fmt.Fprintln(ctx.Out, frame)
+
 		return swept
 	}
+
 	if _, err := tea.NewProgram(fullScreen{ui.New(opts)}).Run(); err != nil {
 		return fmt.Errorf("the window: %w", err)
 	}
+
 	return swept
 }
 
@@ -95,10 +103,12 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 	if err := mustBeDirectory(dir); err != nil {
 		return ui.Options{}, nil, err
 	}
+
 	s, err := store.Open()
 	if err != nil {
 		return ui.Options{}, nil, err
 	}
+
 	cfg, err := newSettings(s)
 	if err != nil {
 		return ui.Options{}, nil, err
@@ -118,10 +128,12 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 		"codex":    engine.NewCodex(),
 		"opencode": engine.NewOpenCode(),
 	}
+
 	home, err := os.UserHomeDir()
 	if err != nil || home == "" {
 		home = os.Getenv("HOME")
 	}
+
 	return ui.Options{
 		Root: underHome(dir, home),
 		// What this build calls itself, so the header can tell a release
@@ -152,6 +164,7 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 			if !ok {
 				eng = engines["claude"]
 			}
+
 			return task.Supervise(context.Background(), s, eng, prompt)
 		},
 		AutoSupervise: func(engineName string, taskIDs []string) (string, error) {
@@ -159,6 +172,7 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 			if !ok {
 				eng = engines["claude"]
 			}
+
 			return task.AutoSupervise(context.Background(), s, eng, taskIDs)
 		},
 		DeleteTask: deleteTaskPort(s),
@@ -187,11 +201,13 @@ func quotaPort(qc *quota.Client, syncWait bool) func() []ui.QuotaWindow {
 	if qc == nil {
 		return nil
 	}
+
 	return func() []ui.QuotaWindow {
 		windows := qc.Quota(syncWait)
 		if len(windows) == 0 {
 			return nil
 		}
+
 		out := make([]ui.QuotaWindow, len(windows))
 		for i, w := range windows {
 			out[i] = ui.QuotaWindow{
@@ -201,6 +217,7 @@ func quotaPort(qc *quota.Client, syncWait bool) func() []ui.QuotaWindow {
 				ResetsIn: w.ResetsIn,
 			}
 		}
+
 		return out
 	}
 }
@@ -217,9 +234,11 @@ func mustBeDirectory(dir string) error {
 	if err != nil {
 		return fmt.Errorf("look at %q: %w", dir, err)
 	}
+
 	if !info.IsDir() {
 		return fmt.Errorf("%q is not a directory", dir)
 	}
+
 	return nil
 }
 
@@ -254,10 +273,12 @@ func interactive(out io.Writer) bool {
 	if out != io.Writer(os.Stdout) {
 		return false
 	}
+
 	info, err := os.Stdout.Stat()
 	if err != nil {
 		return false
 	}
+
 	return info.Mode()&os.ModeCharDevice != 0
 }
 
@@ -288,5 +309,6 @@ func (f fullScreen) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (f fullScreen) View() tea.View {
 	v := f.Model.View()
 	v.AltScreen = true
+
 	return v
 }

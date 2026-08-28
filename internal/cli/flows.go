@@ -24,9 +24,11 @@ import (
 func flows(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("flows", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
+
 	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
+
 	s, err := store.Open()
 	if err != nil {
 		return err
@@ -40,10 +42,12 @@ func flows(ctx Context, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	p := words.For(cfg.Language)
 	for _, f := range flow.List(s) {
 		fmt.Fprintf(ctx.Out, "%s (%s)\n", f.Name, flowMark(p, f.Origin))
 	}
+
 	return nil
 }
 
@@ -69,5 +73,6 @@ func flowMark(p *words.Printer, o flow.Origin) string {
 	case flow.OriginShadow:
 		return p.T("flow.shadowing", "yours, shadowing the built-in")
 	}
+
 	return ""
 }

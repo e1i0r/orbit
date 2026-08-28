@@ -20,16 +20,20 @@ import (
 // empty, not broken.
 func TestAnEmptyRootIsAnAnswer(t *testing.T) {
 	s, work := newRoot(t)
+
 	b, changed := refresh(t, NewReader(s, work))
 	if len(b.Tasks) != 0 || b.Repos != 0 || len(b.Errs) != 0 {
 		t.Errorf("an empty root gave %d tasks in %d repos and %d errors, want none of any", len(b.Tasks), b.Repos, len(b.Errs))
 	}
+
 	if b.Counts != ([4]int{}) {
 		t.Errorf("an empty root counted %v", b.Counts)
 	}
+
 	if b.ReadAt.IsZero() {
 		t.Error("the board does not say when it was read")
 	}
+
 	if len(changed.Tasks) != 0 || len(changed.Entered) != 0 {
 		t.Errorf("an empty root changed something: %+v", changed)
 	}
@@ -51,9 +55,11 @@ func TestARepositoryWithNoTasksIsStillARepository(t *testing.T) {
 	if b.Repos != 1 {
 		t.Errorf("Repos = %d, want 1: a repository nobody has written a task against is still a repository", b.Repos)
 	}
+
 	if len(b.Tasks) != 0 {
 		t.Errorf("%d tasks were drawn from a repository that has none", len(b.Tasks))
 	}
+
 	if len(b.Errs) != 0 {
 		t.Errorf("a repository with no tasks was reported as a fault: %v", b.Errs)
 	}
@@ -77,6 +83,7 @@ func TestOnlyTheRepositoriesUnderTheRootAreOnTheBoard(t *testing.T) {
 	if here.Repos != 1 {
 		t.Errorf("Repos = %d over %q, want 1: the other repository is under another root", here.Repos, work)
 	}
+
 	if len(here.Tasks) != 1 || here.Tasks[0].ID != "ACME-1" {
 		t.Fatalf("the board over %q drew %+v, want only ACME-1", work, here.Tasks)
 	}
@@ -98,13 +105,16 @@ func TestTheHeaderCountsWhatTheListDraws(t *testing.T) {
 	addTask(t, s, repoPath, "ACME-4", created("Fix the swagger lint"), startedEvent(), finishedEvent())
 
 	b, _ := refresh(t, NewReader(s, work))
+
 	var drawn [4]int
 	for _, task := range b.Tasks {
 		drawn[view.BandOf(task)]++
 	}
+
 	if b.Counts != drawn {
 		t.Errorf("the header counts %v and the list draws %v", b.Counts, drawn)
 	}
+
 	if want := ([4]int{view.ToDo: 1, view.NeedsYou: 1, view.Running: 1, view.Done: 1}); b.Counts != want {
 		t.Errorf("Counts = %v, want %v", b.Counts, want)
 	}
@@ -122,6 +132,7 @@ func TestRescanFindsWhatRefreshDoesNot(t *testing.T) {
 	carried := r.tasks[0].offset
 
 	addTask(t, s, repoPath, "ACME-2", created("Fix the swagger lint"))
+
 	if b, _ := refresh(t, r); len(b.Tasks) != 1 {
 		t.Errorf("Refresh found %d tasks: it re-walked the tree, which is the 2 s clock's job", len(b.Tasks))
 	}
@@ -129,13 +140,16 @@ func TestRescanFindsWhatRefreshDoesNot(t *testing.T) {
 	if err := r.Rescan(); err != nil {
 		t.Fatalf("Rescan: %v", err)
 	}
+
 	if r.tasks[0].offset != carried {
 		t.Errorf("a task that was already there has offset %d after a rescan, want %d", r.tasks[0].offset, carried)
 	}
+
 	b, changed := refresh(t, r)
 	if len(b.Tasks) != 2 {
 		t.Fatalf("after a rescan there are %d tasks, want 2", len(b.Tasks))
 	}
+
 	if !slices.Equal(changed.Tasks, []string{"ACME-2"}) {
 		t.Errorf("Changed.Tasks = %v, want only the task the rescan found", changed.Tasks)
 	}
@@ -155,6 +169,7 @@ func TestRescanFindsWhatRefreshDoesNot(t *testing.T) {
 func TestARepositoryTakenOutOfTheRootTakesItsRowsWithIt(t *testing.T) {
 	s, work, repoPath := oneRepo(t)
 	addTask(t, s, repoPath, "ACME-1", created("Retry the webhook on 5xx"), startedEvent())
+
 	if err := os.RemoveAll(repoPath); err != nil {
 		t.Fatalf("remove the repository: %v", err)
 	}
@@ -167,6 +182,7 @@ func TestARepositoryTakenOutOfTheRootTakesItsRowsWithIt(t *testing.T) {
 	if restored := gitRepo(t, work, "payments"); restored != repoPath {
 		t.Fatalf("the repository was rebuilt at %q, want %q", restored, repoPath)
 	}
+
 	back, _ := refresh(t, NewReader(s, work))
 	if len(back.Tasks) != 1 || back.Tasks[0].Title != "Retry the webhook on 5xx" {
 		t.Errorf("the record did not come back with the checkout: %+v", back.Tasks)
@@ -183,10 +199,12 @@ func TestARepositoryTakenOutOfTheRootTakesItsRowsWithIt(t *testing.T) {
 func TestADirectoryThatWillNotOpenIsNotFatal(t *testing.T) {
 	s, work, repoPath := oneRepo(t)
 	addTask(t, s, repoPath, "ACME-1", created("Retry the webhook on 5xx"))
+
 	broken := filepath.Join(work, "not-really")
 	if err := os.Mkdir(broken, 0o700); err != nil {
 		t.Fatalf("mkdir %q: %v", broken, err)
 	}
+
 	if err := os.WriteFile(filepath.Join(broken, ".git"), []byte("this is not a gitfile\n"), 0o600); err != nil {
 		t.Fatalf("write a .git nobody can open: %v", err)
 	}
@@ -195,6 +213,7 @@ func TestADirectoryThatWillNotOpenIsNotFatal(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Refresh: %v — one directory that will not open must never be fatal", err)
 	}
+
 	if b.Repos != 1 || len(b.Tasks) != 1 {
 		t.Errorf("a directory that will not open gave %d repos and %d tasks, want 1 of each", b.Repos, len(b.Tasks))
 	}
@@ -219,22 +238,26 @@ func TestRefreshAndRescanMayRunTogether(t *testing.T) {
 	s, work, repoPath := oneRepo(t)
 	addTask(t, s, repoPath, "ACME-1", created("Retry the webhook on 5xx"), startedEvent())
 	r := NewReader(s, work)
+
 	var wg sync.WaitGroup
 	for range 4 {
 		wg.Add(2)
 		go func() {
 			defer wg.Done()
+
 			if _, _, err := r.Refresh(); err != nil {
 				t.Errorf("Refresh: %v", err)
 			}
 		}()
 		go func() {
 			defer wg.Done()
+
 			if err := r.Rescan(); err != nil {
 				t.Errorf("Rescan: %v", err)
 			}
 		}()
 	}
+
 	wg.Wait()
 }
 

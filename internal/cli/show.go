@@ -14,30 +14,37 @@ import (
 func show(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("show", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
+
 	dir := fs.String("repo", ".", "the repository the task is against")
 	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
+
 	id := fs.Arg(0)
 	if id == "" {
 		return fmt.Errorf("show needs the id of a task")
 	}
+
 	s, r, err := openBoth(*dir)
 	if err != nil {
 		return err
 	}
+
 	events, err := task.Events(s, task.Task{ID: id, Repo: r})
 	if err != nil {
 		return err
 	}
+
 	if len(events) == 0 {
 		return fmt.Errorf("nothing recorded for %s in %s", id, r.Name)
 	}
+
 	w := tabwriter.NewWriter(ctx.Out, 0, 0, 2, ' ', 0)
 	for _, e := range events {
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
 			stamp(e.At), e.Kind, e.Phase, firstLine(detail(e.Text, e.Data)))
 	}
+
 	return w.Flush()
 }
 
@@ -51,6 +58,7 @@ func stamp(t time.Time) string {
 	if t.IsZero() {
 		return "—"
 	}
+
 	return t.Format("2006-01-02 15:04:05")
 }
 
@@ -72,6 +80,7 @@ func detail(text string, data map[string]string) string {
 	if reason := data["error"]; reason != "" {
 		return reason
 	}
+
 	return text
 }
 
@@ -85,5 +94,6 @@ func firstLine(s string) string {
 	if i := strings.IndexByte(s, '\n'); i >= 0 {
 		s = s[:i] + " …"
 	}
+
 	return strings.NewReplacer("\t", " ", "\r", " ").Replace(s)
 }

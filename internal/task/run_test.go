@@ -21,10 +21,12 @@ func oneFlow() flow.Flow {
 
 func TestRunWalksEveryPhaseAndRecordsIt(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "ACME-1", "retry the webhook on 5xx", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	fake := engine.NewFake("wrote the retry")
 	engines := map[string]engine.Engine{"fake": fake}
 
@@ -35,9 +37,11 @@ func TestRunWalksEveryPhaseAndRecordsIt(t *testing.T) {
 	if len(fake.Calls) != 1 {
 		t.Fatalf("the engine was called %d times, want 1", len(fake.Calls))
 	}
+
 	if fake.Calls[0].Model != "sonnet" {
 		t.Errorf("model = %q, want sonnet", fake.Calls[0].Model)
 	}
+
 	if fake.Calls[0].Prompt == "" {
 		t.Error("the engine was called with an empty prompt")
 	}
@@ -46,14 +50,17 @@ func TestRunWalksEveryPhaseAndRecordsIt(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Events: %v", err)
 	}
+
 	var kinds []string
 	for _, e := range events {
 		kinds = append(kinds, e.Kind)
 	}
+
 	want := []string{"task.created", "task.started", "phase.started", "phase.finished", "task.finished"}
 	if len(kinds) != len(want) {
 		t.Fatalf("events = %v, want %v", kinds, want)
 	}
+
 	for i := range want {
 		if kinds[i] != want[i] {
 			t.Errorf("event %d = %q, want %q", i, kinds[i], want[i])
@@ -63,21 +70,26 @@ func TestRunWalksEveryPhaseAndRecordsIt(t *testing.T) {
 
 func TestRunRunsInsideAWorktreeOnItsOwnBranch(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	fake := engine.NewFake("ok")
 	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": fake}, nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
+
 	wt, err := s.WorktreeDir(r.Path, "ACME-1")
 	if err != nil {
 		t.Fatalf("WorktreeDir: %v", err)
 	}
+
 	if fake.Calls[0].Dir != wt {
 		t.Errorf("the engine ran in %q, want the worktree %q", fake.Calls[0].Dir, wt)
 	}
+
 	if _, statErr := os.Stat(wt); statErr != nil {
 		t.Errorf("the worktree was removed after a successful run: %v", statErr)
 	}
@@ -93,21 +105,26 @@ func TestRunRunsInsideAWorktreeOnItsOwnBranch(t *testing.T) {
 // headOf is the branch a checkout is on, or "HEAD" when it is on none.
 func headOf(t *testing.T, dir string) string {
 	t.Helper()
+
 	cmd := exec.Command("git", "-C", dir, "rev-parse", "--abbrev-ref", "HEAD")
 	cmd.Env = append(cmd.Environ(), "GIT_CONFIG_GLOBAL=/dev/null", "GIT_CONFIG_SYSTEM=/dev/null")
+
 	out, err := cmd.Output()
 	if err != nil {
 		t.Fatalf("git rev-parse in %q: %v", dir, err)
 	}
+
 	return strings.TrimSpace(string(out))
 }
 
 func TestRunRecordsAFailureAndStops(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	fake := engine.NewFake("")
 	fake.Err = errors.New("the model fell over")
 	f := flow.Flow{Name: "task", Phases: []flow.Phase{
@@ -118,23 +135,29 @@ func TestRunRecordsAFailureAndStops(t *testing.T) {
 	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": fake}, nil); err == nil {
 		t.Fatal("Run reported success after the engine failed")
 	}
+
 	if len(fake.Calls) != 1 {
 		t.Errorf("the engine was called %d times — the flow carried on past a failure", len(fake.Calls))
 	}
+
 	events, err := Events(s, tk)
 	if err != nil {
 		t.Fatalf("Events: %v", err)
 	}
+
 	if len(events) < 2 {
 		t.Fatalf("events = %+v, want at least [phase.failed, task.failed] at the tail", events)
 	}
+
 	tail := events[len(events)-2:]
+
 	wantTail := []string{"phase.failed", "task.failed"}
 	for i, e := range tail {
 		if e.Kind != wantTail[i] {
 			t.Errorf("tail event %d = %q, want %q", i, e.Kind, wantTail[i])
 		}
 	}
+
 	last := events[len(events)-1]
 	if last.Text == "" {
 		t.Error("the failure was recorded with no reason — evidence is never paraphrased away")
@@ -143,6 +166,7 @@ func TestRunRecordsAFailureAndStops(t *testing.T) {
 
 func TestRunRecordsAPrepareFailureAndStops(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
@@ -157,6 +181,7 @@ func TestRunRecordsAPrepareFailureAndStops(t *testing.T) {
 	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": fake}, nil); err == nil {
 		t.Fatal("Run reported success though the worktree could not be created")
 	}
+
 	if len(fake.Calls) != 0 {
 		t.Errorf("the engine was called %d times though the worktree was never prepared", len(fake.Calls))
 	}
@@ -171,6 +196,7 @@ func TestRunRecordsAPrepareFailureAndStops(t *testing.T) {
 	// it died in, so the task.failed below is not read as a failure in that
 	// phase.
 	wantKinds(t, events, record.TaskCreated, record.TaskStarted, record.TaskFailed)
+
 	if events[2].Text == "" {
 		t.Error("the failure was recorded with no reason — evidence is never paraphrased away")
 	}
@@ -178,10 +204,12 @@ func TestRunRecordsAPrepareFailureAndStops(t *testing.T) {
 
 func TestRunRejectsAnUnknownEngine(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	f := flow.Flow{Name: "task", Phases: []flow.Phase{{Name: "implement", Engine: "opencode"}}}
 	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": engine.NewFake("")}, nil); err == nil {
 		t.Error("Run accepted a phase naming an engine that is not configured")
@@ -207,10 +235,12 @@ func (e resultEngine) Run(context.Context, engine.Request) (engine.Result, error
 
 func TestRunRecordsSessionAndCostWhenTheEngineReportsThem(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	eng := resultEngine{result: engine.Result{Output: "done", SessionID: "sess-1", Cost: 0.42}}
 	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": eng}, nil); err != nil {
 		t.Fatalf("Run: %v", err)
@@ -220,19 +250,25 @@ func TestRunRecordsSessionAndCostWhenTheEngineReportsThem(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Events: %v", err)
 	}
+
 	var finished record.Event
+
 	found := false
+
 	for _, e := range events {
 		if e.Kind == "phase.finished" {
 			finished, found = e, true
 		}
 	}
+
 	if !found {
 		t.Fatal("no phase.finished event was recorded")
 	}
+
 	if finished.Data["session"] != "sess-1" {
 		t.Errorf(`Data["session"] = %q, want "sess-1"`, finished.Data["session"])
 	}
+
 	if finished.Data["cost"] != "0.42" {
 		t.Errorf(`Data["cost"] = %q, want "0.42"`, finished.Data["cost"])
 	}
@@ -240,10 +276,12 @@ func TestRunRecordsSessionAndCostWhenTheEngineReportsThem(t *testing.T) {
 
 func TestRunLeavesDataEmptyWhenTheEngineReportsNeither(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	fake := engine.NewFake("done")
 	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": fake}, nil); err != nil {
 		t.Fatalf("Run: %v", err)
@@ -253,6 +291,7 @@ func TestRunLeavesDataEmptyWhenTheEngineReportsNeither(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Events: %v", err)
 	}
+
 	for _, e := range events {
 		if e.Kind == "phase.finished" && e.Data != nil {
 			t.Errorf("phase.finished has Data = %+v, want nil when the engine reports neither session nor cost", e.Data)

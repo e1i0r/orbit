@@ -22,9 +22,11 @@ import (
 // talks to the same server a client configured by `orbit mcp install` does.
 func LaunchConfig(binaryPath string) (string, error) {
 	doc := map[string]any{"mcpServers": map[string]any{serverName: entry(binary(binaryPath))}}
+
 	raw, err := json.Marshal(doc)
 	if err != nil {
 		return "", fmt.Errorf("encode the mcp configuration for an interactive session: %w", err)
 	}
+
 	return string(raw), nil
 }

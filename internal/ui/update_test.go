@@ -67,6 +67,7 @@ func TestTheTransitionTable(t *testing.T) {
 			if m.cursor >= len(m.rows()) {
 				t.Errorf("cursor is %d of %d rows, want it clamped onto the list", m.cursor, len(m.rows()))
 			}
+
 			if _, ok := m.selected(); !ok {
 				t.Error("the cursor is on nothing selectable after the list shrank")
 			}
@@ -129,6 +130,7 @@ func TestTheTransitionTable(t *testing.T) {
 			if cmd == nil {
 				t.Fatal("pause on a live task returned no command")
 			}
+
 			got, ok := cmd().(controlMsg)
 			if !ok || got.ID != "ACME-2705" || got.Word != "pause" {
 				t.Errorf("the command produced %#v, want a controlMsg pausing ACME-2705", cmd())
@@ -180,6 +182,7 @@ func TestTheTransitionTable(t *testing.T) {
 			if cmd == nil {
 				t.Fatal("q returned no command")
 			}
+
 			if _, ok := cmd().(tea.QuitMsg); !ok {
 				t.Errorf("q produced %T, want tea.QuitMsg", cmd())
 			}
@@ -189,6 +192,7 @@ func TestTheTransitionTable(t *testing.T) {
 		start: func(t *testing.T) Model {
 			m, _ := testModel(t, 100, 30)
 			m.confirm, m.confirmID = confirmCancel, "ACME-2705"
+
 			return m
 		},
 		msg: press("q"),
@@ -220,10 +224,12 @@ func TestTheTransitionTable(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			next, cmd := c.start(t).Update(c.msg)
+
 			m, ok := next.(Model)
 			if !ok {
 				t.Fatalf("Update returned %T, want ui.Model", next)
 			}
+
 			c.want(t, m, cmd)
 		})
 	}
@@ -287,10 +293,12 @@ func TestEveryMessageSaysSomething(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			m := openOn(t, "ACME-2662")
 			next, cmd := m.Update(c.msg)
+
 			after, ok := next.(Model)
 			if !ok {
 				t.Fatalf("Update returned %T, want ui.Model", next)
 			}
+
 			c.want(t, after, cmd)
 		})
 	}

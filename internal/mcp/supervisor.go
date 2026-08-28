@@ -15,14 +15,17 @@ func (sn Session) supervisorSay(args map[string]any) CallToolResult {
 	if message == "" {
 		return refuse(fmt.Errorf("this tool needs message"))
 	}
+
 	by := strings.TrimSpace(stringArg(args, "by"))
 	if by == "" {
 		by = "supervisor"
 	}
+
 	channel := strings.TrimSpace(stringArg(args, "channel"))
 	if channel == "" {
 		channel = "mcp"
 	}
+
 	taskID := strings.TrimSpace(stringArg(args, "task_id"))
 	repo := strings.TrimSpace(stringArg(args, "repo"))
 
@@ -30,9 +33,11 @@ func (sn Session) supervisorSay(args map[string]any) CallToolResult {
 	if err != nil {
 		return refuse(err)
 	}
+
 	if err := task.RecordSupervisor(s, record.SupervisorMessage, by, channel, taskID, repo, message); err != nil {
 		return refuse(fmt.Errorf("record supervisor message: %w", err))
 	}
+
 	return reply(map[string]any{
 		"by":      by,
 		"channel": channel,
@@ -49,18 +54,23 @@ func (sn Session) supervisorHistory(args map[string]any) CallToolResult {
 	if err != nil {
 		return refuse(err)
 	}
+
 	r := board.NewReader(s, sn.Root)
+
 	lines, err := r.SupervisorLog()
 	if err != nil {
 		return refuse(fmt.Errorf("read supervisor history: %w", err))
 	}
+
 	limit := 0
 	if l, ok := args["limit"].(float64); ok && l > 0 {
 		limit = int(l)
 	}
+
 	if limit > 0 && len(lines) > limit {
 		lines = lines[len(lines)-limit:]
 	}
+
 	return reply(map[string]any{
 		"count":    len(lines),
 		"messages": lines,

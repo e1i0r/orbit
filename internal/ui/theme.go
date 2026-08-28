@@ -131,6 +131,7 @@ func currentPalette() Palette {
 	if p, ok := themePalettes[currentThemeName]; ok {
 		return p
 	}
+
 	return themePalettes["monokai"]
 }
 
@@ -163,6 +164,7 @@ func Roles() []Role {
 func Paint(r Role) lipgloss.Style {
 	style := lipgloss.NewStyle()
 	pal := currentPalette()
+
 	switch r {
 	case Accent:
 		return style.Bold(true).Foreground(lipgloss.Color(pal.Accent))
@@ -179,5 +181,6 @@ func Paint(r Role) lipgloss.Style {
 	case Sel:
 		return style.Foreground(lipgloss.Color(pal.SelText)).Background(lipgloss.Color(pal.SelBlock))
 	}
+
 	return style
 }

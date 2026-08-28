@@ -85,6 +85,7 @@ func (c Context) printer() *words.Printer {
 	if c.Words == nil {
 		return words.For("")
 	}
+
 	return c.Words
 }
 
@@ -93,6 +94,7 @@ func (c Command) Usage() string {
 	if c.Args == "" {
 		return "orbit " + c.Name
 	}
+
 	return "orbit " + c.Name + " " + c.Args
 }
 
@@ -235,6 +237,7 @@ func lookup(name string) (Command, bool) {
 			}
 		}
 	}
+
 	return Command{}, false
 }
 
@@ -248,11 +251,15 @@ func lookup(name string) (Command, bool) {
 func usage(p *words.Printer) string {
 	var b strings.Builder
 	b.WriteString(p.T("cli.tagline", "orbit — a cockpit for supervising coding agents") + "\n\n")
+
 	w := tabwriter.NewWriter(&b, 0, 0, 2, ' ', 0)
 	for _, c := range commands() {
 		fmt.Fprintf(w, "  %s\t%s\n", c.Usage(), c.About(p))
 	}
+
 	_ = w.Flush() // a strings.Builder cannot fail to be written to
+
 	b.WriteString("\n" + p.T("cli.state", "State lives in $ORBIT_HOME, or ~/.orbit when that is unset.") + "\n")
+
 	return b.String()
 }

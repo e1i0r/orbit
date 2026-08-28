@@ -21,8 +21,11 @@ func parseDiffSummary(diff string) diffSummary {
 	if diff == "" {
 		return diffSummary{}
 	}
+
 	var sum diffSummary
+
 	seenFiles := make(map[string]bool)
+
 	lines := strings.Split(diff, "\n")
 	for _, l := range lines {
 		switch {
@@ -38,6 +41,7 @@ func parseDiffSummary(diff string) diffSummary {
 			sum.deleted++
 		}
 	}
+
 	return sum
 }
 
@@ -47,16 +51,19 @@ func (m Model) overviewLines() []string {
 	if m.logErr != nil {
 		return []string{"  " + Paint(Bad).Render(m.logErr.Error())}
 	}
+
 	t, ok := m.task(m.detail)
 	if !ok {
 		return []string{"  " + Paint(Dim).Render(p.T("detail.gone", "this task is no longer on the board"))}
 	}
 
 	word, role := m.stateWord(t)
+
 	var out []string
 
 	// Header: Task ID, status badge and title
 	statusBadge := Paint(role).Bold(true).Render("[" + word + "]")
+
 	out = append(out,
 		"",
 		"  "+Paint(Accent).Bold(true).Render(t.ID)+"  "+statusBadge,
@@ -70,6 +77,7 @@ func (m Model) overviewLines() []string {
 			out = append(out, "  "+Paint(Accent).Render(t.Title))
 		}
 	}
+
 	out = append(out, "")
 
 	// 1. Attention/Gate banner (if waiting on user or failed)
@@ -100,6 +108,7 @@ func (m Model) overviewLines() []string {
 			eng = "claude"
 		}
 	}
+
 	mod := t.Model
 	if mod == "" {
 		mod = m.knobs.Model
@@ -107,14 +116,17 @@ func (m Model) overviewLines() []string {
 			mod = "sonnet"
 		}
 	}
+
 	eff := m.knobs.Effort
 	if eff == "" {
 		eff = "high"
 	}
+
 	thk := m.knobs.Thinking
 	if thk == "" {
 		thk = "adaptive"
 	}
+
 	flowName := t.Flow
 	if flowName == "" {
 		flowName = "task"
@@ -137,6 +149,7 @@ func (m Model) overviewLines() []string {
 	// Live LLM Activity box when running
 	if t.Band == view.Running {
 		liveTitle := p.T("overview.live_activity", "Live LLM Activity")
+
 		out = append(out,
 			"  "+Paint(Live).Bold(true).Render(m.runGlyph(working(t))+liveTitle),
 		)
@@ -144,14 +157,17 @@ func (m Model) overviewLines() []string {
 			actionLabel := p.T("overview.live_action", "action")
 			out = append(out, fmt.Sprintf("    %-14s %s", Paint(Dim).Render(actionLabel), Paint(Accent).Render(t.CurrentAction)))
 		}
+
 		if t.CurrentThought != "" {
 			thoughtLabel := p.T("overview.live_thought", "thinking")
 			out = append(out, fmt.Sprintf("    %-14s %s", Paint(Dim).Render(thoughtLabel), Paint(Dim).Render(t.CurrentThought)))
 		}
+
 		if t.ToolCallCount > 0 {
 			toolsLabel := p.T("overview.live_tools_count", "tool calls")
 			out = append(out, fmt.Sprintf("    %-14s %s", Paint(Dim).Render(toolsLabel), Paint(Accent).Render(strconv.Itoa(t.ToolCallCount))))
 		}
+
 		if t.CurrentAction == "" && t.CurrentThought == "" {
 			statusLabel := p.T("overview.state", "state")
 			out = append(out,
@@ -159,12 +175,15 @@ func (m Model) overviewLines() []string {
 				"    "+Paint(Dim).Render(p.T("overview.stream_hint", "press [6] for live timeline or [8] for raw stream output")),
 			)
 		}
+
 		out = append(out, "")
 	}
 
 	// 3. Execution Summary & Outcomes
 	out = append(out, "  "+Paint(Accent).Bold(true).Render(p.T("overview.execution_summary", "Execution Summary")))
+
 	var finishedPhases []view.Entry
+
 	for _, e := range m.entries {
 		if e.Phase != "" && (e.What() == view.EntryFinished || e.What() == view.EntryFailed || e.What() == view.EntryCancelled) {
 			finishedPhases = append(finishedPhases, e)
@@ -183,16 +202,19 @@ func (m Model) overviewLines() []string {
 	} else {
 		for _, ph := range finishedPhases {
 			icon := Paint(OK).Render("✓")
+
 			switch ph.What() {
 			case view.EntryFailed:
 				icon = Paint(Bad).Render("✗")
 			case view.EntryCancelled:
 				icon = Paint(Warn).Render("⏹")
 			}
+
 			phLine := fmt.Sprintf("    %s %s", icon, Paint(Accent).Render(ph.Phase))
 			if ph.Cost > 0 {
 				phLine += " " + Paint(Dim).Render(fmt.Sprintf("($%.4f)", ph.Cost))
 			}
+
 			out = append(out, phLine)
 
 			// Clean excerpt of text output
@@ -212,6 +234,7 @@ func (m Model) overviewLines() []string {
 						if tl == "" {
 							continue
 						}
+
 						wrapped := splitIntoLines(tl, max(20, m.frame.Body.W-10))
 						for _, wl := range wrapped {
 							out = append(out, "      "+Paint(Dim).Render("• ")+wl)
@@ -221,10 +244,12 @@ func (m Model) overviewLines() []string {
 			}
 		}
 	}
+
 	out = append(out, "")
 
 	// 4. Code Changes & Impact
 	diffSum := parseDiffSummary(m.diff)
+
 	out = append(out, "  "+Paint(Accent).Bold(true).Render(p.T("overview.code_impact", "Code Impact & Changes")))
 	if len(diffSum.files) > 0 || diffSum.added > 0 || diffSum.deleted > 0 {
 		out = append(out, fmt.Sprintf("    %s %s %s",
@@ -237,11 +262,13 @@ func (m Model) overviewLines() []string {
 				out = append(out, "      "+Paint(Dim).Render(fmt.Sprintf("… and %d more files", len(diffSum.files)-4)))
 				break
 			}
+
 			out = append(out, "      "+Paint(Dim).Render("• ")+Paint(Accent).Render(f))
 		}
 	} else {
 		out = append(out, "    "+Paint(Dim).Render(p.T("overview.no_diff", "no working tree modifications recorded")))
 	}
+
 	out = append(out, "")
 
 	// 5. Quick Actions for validation and delivery in an aligned 4x2 grid
@@ -273,5 +300,6 @@ func formatActionCell(key, label string, width int) string {
 	txt := Paint(Dim).Render(" " + label)
 	cell := btn + txt
 	pad := max(0, width-lipgloss.Width(cell))
+
 	return cell + strings.Repeat(" ", pad)
 }

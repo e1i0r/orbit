@@ -14,6 +14,7 @@ import (
 // TestE2EMultiPhaseFlowFeedsOutput tests a 2-phase pipeline where phase 2 receives phase 1's output.
 func TestE2EMultiPhaseFlowFeedsOutput(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "E2E-1", "Design and review API", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
@@ -46,15 +47,19 @@ func TestE2EMultiPhaseFlowFeedsOutput(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Events: %v", err)
 	}
+
 	var phaseStarts, phaseFinishes int
+
 	for _, e := range events {
 		if e.Kind == record.PhaseStarted {
 			phaseStarts++
 		}
+
 		if e.Kind == record.PhaseFinished {
 			phaseFinishes++
 		}
 	}
+
 	if phaseStarts != 2 || phaseFinishes != 2 {
 		t.Errorf("expected 2 phase starts and finishes, got starts=%d finishes=%d", phaseStarts, phaseFinishes)
 	}
@@ -63,6 +68,7 @@ func TestE2EMultiPhaseFlowFeedsOutput(t *testing.T) {
 // TestE2EPhaseWithOperatorNotes tests that operator notes left before/during run are recorded and unconsumed notes are passed to the phase.
 func TestE2EPhaseWithOperatorNotes(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "E2E-2", "Task with operator instructions", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
@@ -98,13 +104,16 @@ func TestE2EPhaseWithOperatorNotes(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Events: %v", err)
 	}
+
 	var hasNoteEvent bool
+
 	for _, e := range events {
 		if e.Kind == record.TaskNoted && strings.Contains(e.Text, "SQL migrations") {
 			hasNoteEvent = true
 			break
 		}
 	}
+
 	if !hasNoteEvent {
 		t.Error("expected TaskNoted event in event stream")
 	}
@@ -113,6 +122,7 @@ func TestE2EPhaseWithOperatorNotes(t *testing.T) {
 // TestE2ECostMonotonicityProperty verifies the property that total recorded task cost is non-negative and non-decreasing.
 func TestE2ECostMonotonicityProperty(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "E2E-3", "Property test for cost accumulation", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
@@ -140,6 +150,7 @@ func TestE2ECostMonotonicityProperty(t *testing.T) {
 	}
 
 	var cumulativeCost float64
+
 	for _, e := range events {
 		if e.Kind == record.PhaseFinished {
 			if costStr, ok := e.Data["cost"]; ok && costStr != "" {
@@ -147,13 +158,16 @@ func TestE2ECostMonotonicityProperty(t *testing.T) {
 				if err != nil {
 					t.Fatalf("invalid cost float string %q: %v", costStr, err)
 				}
+
 				if c < 0 {
 					t.Errorf("negative phase cost: %f", c)
 				}
+
 				cumulativeCost += c
 			}
 		}
 	}
+
 	if cumulativeCost < 0 {
 		t.Errorf("total cumulative cost is negative: %f", cumulativeCost)
 	}
@@ -162,6 +176,7 @@ func TestE2ECostMonotonicityProperty(t *testing.T) {
 // TestE2EGateDecisionsPipeline tests how scripted gates control phase execution.
 func TestE2EGateDecisionsPipeline(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "E2E-4", "Gate pipeline test", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)

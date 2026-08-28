@@ -20,16 +20,19 @@ import (
 // holds a task.
 func claim(t *testing.T, s *store.Store, repoPath, id string, pid int) {
 	t.Helper()
+
 	body := "pid: " + strconv.Itoa(pid) + "\nstarted: " + time.Now().UTC().Format(time.RFC3339) + "\n"
 	writeMarker(t, s, repoPath, id, body)
 }
 
 func writeMarker(t *testing.T, s *store.Store, repoPath, id, body string) {
 	t.Helper()
+
 	path, err := s.RunPath(repoPath, id)
 	if err != nil {
 		t.Fatalf("run path of task %s: %v", id, err)
 	}
+
 	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
 		t.Fatalf("write the marker of task %s: %v", id, err)
 	}
@@ -39,18 +42,22 @@ func writeMarker(t *testing.T, s *store.Store, repoPath, id, body string) {
 // killed outright leaves behind in its marker.
 func gonePid(t *testing.T) int {
 	t.Helper()
+
 	cmd := exec.Command("/bin/sh", "-c", "exit 0")
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("run a process that exits immediately: %v", err)
 	}
+
 	return cmd.ProcessState.Pid()
 }
 
 func oneRow(t *testing.T, b Board) view.Task {
 	t.Helper()
+
 	if len(b.Tasks) != 1 {
 		t.Fatalf("%d tasks on the board, want 1", len(b.Tasks))
 	}
+
 	return b.Tasks[0]
 }
 
@@ -64,11 +71,13 @@ func TestARowIsLiveOnlyWhileAProcessHoldsIt(t *testing.T) {
 	}
 
 	claim(t, s, repoPath, "ACME-1", os.Getpid())
+
 	if !oneRow(t, next(t, r)).Live {
 		t.Error("a task whose process is running was not drawn as live — its log did not move, and a marker appearing is not an event, so this has to be asked on every refresh")
 	}
 
 	claim(t, s, repoPath, "ACME-1", gonePid(t))
+
 	if oneRow(t, next(t, r)).Live {
 		t.Error("a task whose process is gone was still drawn as live — a process dying changes no file, so a poll that only watches the log will never notice")
 	}
@@ -92,6 +101,7 @@ func TestALiveRunIsStillBandedByTheRecord(t *testing.T) {
 	if row.Live {
 		t.Error("a task whose process is gone was drawn as live")
 	}
+
 	if row.Band != view.Running {
 		t.Errorf("band = %v, want Running — a board that banded on liveness would be the only reader of the record that knew", row.Band)
 	}
@@ -103,16 +113,20 @@ func TestADamagedMarkerCostsAnErrorAndNotTheRow(t *testing.T) {
 	writeMarker(t, s, repoPath, "ACME-1", "pid: not a number\n")
 
 	b := first(t, NewReader(s, work))
+
 	row := oneRow(t, b)
 	if row.Live {
 		t.Error("a marker nobody could read was taken as proof that a process is running")
 	}
+
 	if row.Band != view.Running {
 		t.Errorf("band = %v, want Running — the row is drawn from its log, which is undamaged", row.Band)
 	}
+
 	if len(b.Errs) == 0 {
 		t.Fatal("a damaged marker was passed over in silence")
 	}
+
 	if !strings.Contains(b.Errs[0].Error(), "ACME-1") {
 		t.Errorf("the fault does not say which task it is about: %v", b.Errs[0])
 	}

@@ -19,6 +19,7 @@ func TestDiffSelectRenderAndMouseHit(t *testing.T) {
 	if !strings.Contains(closed, "badge.go") {
 		t.Errorf("renderDiffFileSelect closed state missing badge.go, got %q", closed)
 	}
+
 	if !strings.Contains(closed, "[▾ select / f]") {
 		t.Errorf("renderDiffFileSelect closed state missing dropdown hint, got %q", closed)
 	}
@@ -28,6 +29,7 @@ func TestDiffSelectRenderAndMouseHit(t *testing.T) {
 	if !strings.Contains(open, "badge.go") || !strings.Contains(open, "screen.go") {
 		t.Errorf("renderDiffFileSelect open state missing files, got %q", open)
 	}
+
 	if !strings.Contains(open, "[▴ close / esc]") {
 		t.Errorf("renderDiffFileSelect open state missing close hint, got %q", open)
 	}
@@ -40,6 +42,7 @@ func TestDiffSelectRenderAndMouseHit(t *testing.T) {
 
 	// Click to open
 	res, _ := m.leftClick(Target{Kind: TargetDiffSelectToggle})
+
 	mRes, ok := res.(Model)
 	if !ok || !mRes.diffFilePicker {
 		t.Fatal("expected diffFilePicker to be true after toggle")
@@ -47,6 +50,7 @@ func TestDiffSelectRenderAndMouseHit(t *testing.T) {
 
 	// Click to select file 0
 	res2, _ := mRes.leftClick(Target{Kind: TargetDiffFile, Pane: 0})
+
 	mRes2, ok2 := res2.(Model)
 	if !ok2 || mRes2.diffFilePicker {
 		t.Fatal("expected diffFilePicker to close after file selection")

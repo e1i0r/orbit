@@ -44,9 +44,12 @@ func diffRationaleLines(rationale string, width int, p *words.Printer) []string 
 	if rationale == "" {
 		return nil
 	}
+
 	label := Paint(Warn).Bold(true).Render("💡 " + p.T("diff.rationale_label", "LLM Decision") + ":")
 	wrapped := splitIntoLines(rationale, max(20, width-lipgloss.Width(label)-10))
+
 	var out []string
+
 	for count, wl := range wrapped {
 		if count == 0 {
 			out = append(out, fmt.Sprintf("  │ %s %s", label, Paint(Dim).Render(wl)))
@@ -55,6 +58,7 @@ func diffRationaleLines(rationale string, width int, p *words.Printer) []string 
 			out = append(out, fmt.Sprintf("  │ %s%s", pad, Paint(Dim).Render(wl)))
 		}
 	}
+
 	return out
 }
 
@@ -78,9 +82,12 @@ func diffContentLines(line string, role Role, width int, wrapLines bool) []strin
 	if !wrapLines || lipgloss.Width(line)+6 <= width {
 		return []string{"  │ " + Paint(role).Render(line)}
 	}
+
 	availW := max(20, width-8)
 	wrapped := splitIntoLines(line, availW)
+
 	var out []string
+
 	for idx, wl := range wrapped {
 		if idx == 0 {
 			out = append(out, "  │ "+Paint(role).Render(wl))
@@ -88,5 +95,6 @@ func diffContentLines(line string, role Role, width int, wrapLines bool) []strin
 			out = append(out, "  │   "+Paint(role).Render(wl))
 		}
 	}
+
 	return out
 }

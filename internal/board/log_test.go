@@ -21,9 +21,11 @@ func TestTheLogIsTheWholeRecordInOrder(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Log: %v", err)
 	}
+
 	if len(entries) != 3 {
 		t.Fatalf("the record folded to %d entries, want 3", len(entries))
 	}
+
 	if entries[0].Text != "Retry the webhook on 5xx" {
 		t.Errorf("the first entry says %q, want the title it was written down with", entries[0].Text)
 	}
@@ -45,18 +47,23 @@ func TestTheLogIsAnsweredFromWhatThePollerAlreadyRead(t *testing.T) {
 	refresh(t, r)
 
 	appendTo(t, s, repoPath, "ACME-1", failedEvent())
+
 	before, err := r.Log(repoPath, "ACME-1")
 	if err != nil {
 		t.Fatalf("Log: %v", err)
 	}
+
 	if len(before) != 2 {
 		t.Fatalf("the cached record folded to %d entries, want the 2 the poll had read", len(before))
 	}
+
 	refresh(t, r)
+
 	after, err := r.Log(repoPath, "ACME-1")
 	if err != nil {
 		t.Fatalf("Log: %v", err)
 	}
+
 	if len(after) != 3 {
 		t.Errorf("after another poll the record folded to %d entries, want 3", len(after))
 	}
@@ -87,10 +94,12 @@ func TestALogNobodyCanReadSaysWhichTask(t *testing.T) {
 // happened to, and the pane says so in words rather than in a failure.
 func TestATaskNobodyHasWrittenDownIsAnEmptyLog(t *testing.T) {
 	s, work, repoPath := oneRepo(t)
+
 	entries, err := NewReader(s, work).Log(repoPath, "ACME-404")
 	if err != nil {
 		t.Fatalf("Log: %v", err)
 	}
+
 	if len(entries) != 0 {
 		t.Errorf("a task nothing has happened to folded to %d entries", len(entries))
 	}
@@ -102,20 +111,25 @@ func TestATaskNobodyHasWrittenDownIsAnEmptyLog(t *testing.T) {
 // the same path.
 func TestTheWorktreeIsTheStoresAnswerAndNotTheRepository(t *testing.T) {
 	s, work, repoPath := oneRepo(t)
+
 	got, err := NewReader(s, work).Worktree(repoPath, "ACME-1")
 	if err != nil {
 		t.Fatalf("Worktree: %v", err)
 	}
+
 	want, err := s.WorktreeDir(repoPath, "ACME-1")
 	if err != nil {
 		t.Fatalf("WorktreeDir: %v", err)
 	}
+
 	if got != want {
 		t.Errorf("Worktree = %q, want the store's own answer %q", got, want)
 	}
+
 	if got == repoPath || strings.HasPrefix(got, repoPath+string(filepath.Separator)) {
 		t.Errorf("Worktree = %q, which is inside the repository at %q", got, repoPath)
 	}
+
 	if !strings.HasSuffix(got, filepath.Join("worktrees", filepath.Base(filepath.Dir(got)), "ACME-1")) {
 		t.Errorf("Worktree = %q, want it under the state root's worktrees", got)
 	}

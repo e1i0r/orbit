@@ -38,12 +38,14 @@ func (m Model) openSupervisor() Model {
 	if prev == screenSupervisor {
 		prev = screenList
 	}
+
 	m.screen = screenSupervisor
 	m.supervisor = supervisorState{
 		prevScreen: prev,
 		input:      "",
 		follow:     true,
 	}
+
 	return m.syncSupervisor()
 }
 
@@ -52,8 +54,10 @@ func (m Model) abandonSupervisor() Model {
 	if target == screenSupervisor {
 		target = screenList
 	}
+
 	m.supervisor = supervisorState{}
 	m.screen = target
+
 	return m
 }
 
@@ -61,9 +65,11 @@ func (m Model) syncSupervisor() Model {
 	if m.opts.Reader == nil {
 		return m
 	}
+
 	lines, err := m.opts.Reader.SupervisorLog()
 	m.supervisor.lines = lines
 	m.supervisor.err = err
+
 	return m
 }
 
@@ -94,22 +100,27 @@ func (m Model) supervisorKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			m.supervisor.input += "\n"
 			return m, nil
 		}
+
 		text := strings.TrimSpace(m.supervisor.input)
 		if text == "" {
 			return m, nil
 		}
+
 		m.supervisor.input = ""
+
 		return m.sendSupervisorMessage(text)
 	case (msg.Code == 'v' || msg.Code == 'V') && msg.Mod&tea.ModCtrl != 0:
 		if clip := readClipboard(); clip != "" {
 			m.supervisor.input += clip
 		}
+
 		return m, nil
 	case msg.Code == tea.KeyBackspace || msg.Code == tea.KeyDelete:
 		if len(m.supervisor.input) > 0 {
 			runes := []rune(m.supervisor.input)
 			m.supervisor.input = string(runes[:len(runes)-1])
 		}
+
 		return m, nil
 	case (msg.Code == 'u' || msg.Code == 'U') && msg.Mod&tea.ModCtrl != 0:
 		m.supervisor.input = ""
@@ -120,6 +131,7 @@ func (m Model) supervisorKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 	}
+
 	return m, nil
 }
 
@@ -134,15 +146,19 @@ func (m Model) sendSupervisorMessage(text string) (tea.Model, tea.Cmd) {
 			return m.say(err.Error()), nil
 		}
 	}
+
 	m = m.syncSupervisor()
 	m.supervisor.follow = true
 	m.supervisorBusy = true
+
 	eng := m.knobs.Engine
 	if eng == "" {
 		eng = "claude"
 	}
+
 	cmd := askSupervisorCmd(m.opts.AskSupervisor, eng, text)
 	m, frame := m.say(m.opts.Words.T("supervisor.thinking", "supervisor is thinking...")).nextFrame()
+
 	return m, tea.Batch(cmd, frame)
 }
 
@@ -152,8 +168,10 @@ func (m Model) startPicking() Model {
 	if len(m.supervisor.lines) == 0 || m.opts.RetractSupervisor == nil {
 		return m
 	}
+
 	m.supervisor.picking = true
 	m.supervisor.pick = len(m.supervisor.lines) - 1
+
 	return m
 }
 
@@ -173,6 +191,7 @@ func (m Model) pickingKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case msg.Code == tea.KeyEnter || key.Matches(msg, m.keys.Open):
 		return m.retractPicked(), nil
 	}
+
 	return m, nil
 }
 
@@ -182,14 +201,18 @@ func (m Model) retractPicked() Model {
 	if m.opts.RetractSupervisor == nil || m.supervisor.pick >= len(m.supervisor.lines) {
 		return m
 	}
+
 	l := m.supervisor.lines[m.supervisor.pick]
 	if l.Retracted {
 		return m.say(m.opts.Words.T("supervisor.already_back", "that line was already taken back"))
 	}
+
 	if err := m.opts.RetractSupervisor(l.At); err != nil {
 		return m.say(err.Error())
 	}
+
 	m = m.syncSupervisor()
+
 	return m.say(m.opts.Words.T("supervisor.took_back", "took that line back; the supervisor is no longer told it"))
 }
 
@@ -206,13 +229,16 @@ func (m Model) retractPicked() Model {
 func (m Model) scrollThread(d int) Model {
 	total, view := m.threadSize()
 	last := max(total-view, 0)
+
 	offset := m.supervisor.offset
 	if m.supervisor.follow {
 		offset = last
 	}
+
 	offset = min(max(offset+d, 0), last)
 	m.supervisor.offset = offset
 	m.supervisor.follow = offset >= last
+
 	return m
 }
 
@@ -221,6 +247,7 @@ func (m Model) scrollThread(d int) Model {
 func (m Model) threadSize() (total, view int) {
 	boxW, threadH := m.supervisorLayout(max(m.frame.Body.H, 1), max(m.frame.Body.W, 1))
 	rows, _ := m.threadLines(boxContentWidth(boxW))
+
 	return len(rows), max(threadH-2, 1)
 }
 

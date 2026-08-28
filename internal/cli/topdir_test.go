@@ -23,6 +23,7 @@ func oneRepoNoTasks(t *testing.T) string {
 	root := t.TempDir()
 	emptyHome(t)
 	initRepo(t, filepath.Join(root, "payments"))
+
 	return root
 }
 
@@ -42,11 +43,13 @@ func TestARepositoryWithNoTasksIsCountedAndSaysToWriteOne(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("top exited %d: %s", code, errOut)
 	}
+
 	for _, want := range []string{"1 repository", "no tasks written", "orbit new"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("the frame does not say %q:\n%s", want, out)
 		}
 	}
+
 	if strings.Contains(out, "No repositories under") {
 		t.Errorf("the frame says there are no repositories, over a root that holds one:\n%s", out)
 	}
@@ -73,6 +76,7 @@ func TestTopOnOneDirectoryDoesNotShowAnothers(t *testing.T) {
 	} {
 		dir := filepath.Join(r.root, r.dir)
 		initRepo(t, dir)
+
 		if code, _, errOut := run(t, "new", "-repo", dir, "-id", r.id, r.text); code != 0 {
 			t.Fatalf("new %s exited %d: %s", r.id, code, errOut)
 		}
@@ -82,11 +86,13 @@ func TestTopOnOneDirectoryDoesNotShowAnothers(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("top exited %d: %s", code, errOut)
 	}
+
 	for _, want := range []string{"payments", "shipping", "ACME-1", "ACME-3", "2 repos"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("the frame over the first root does not mention %q:\n%s", want, out)
 		}
 	}
+
 	for _, other := range []string{"billing", "ACME-2"} {
 		if strings.Contains(out, other) {
 			t.Errorf("the frame over the first root mentions %q, which is under the second:\n%s", other, out)

@@ -52,10 +52,12 @@ type commandWatch struct {
 func (w *commandWatch) Write(p []byte) (int, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
+
 	w.buf = append(w.buf, p...)
 	if len(w.buf) > outputCap {
 		w.buf = w.buf[len(w.buf)-outputCap:]
 	}
+
 	return len(p), nil
 }
 
@@ -64,6 +66,7 @@ func (w *commandWatch) Write(p []byte) (int, error) {
 func (w *commandWatch) finish() {
 	w.mu.Lock()
 	defer w.mu.Unlock()
+
 	w.done = true
 }
 
@@ -71,6 +74,7 @@ func (w *commandWatch) finish() {
 func (w *commandWatch) snapshot() (string, bool) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
+
 	return string(w.buf), w.done
 }
 
@@ -113,10 +117,12 @@ func (m Model) runSelected() (tea.Model, tea.Cmd) {
 		// open says "not yet" more honestly than closing would.
 		return m, nil
 	}
+
 	args := strings.Fields(m.palette.typed)
 	if len(args) > 0 {
 		args = args[1:]
 	}
+
 	return m.closePalette().launch(c, args)
 }
 
@@ -142,6 +148,7 @@ func (m Model) launch(c Command, args []string) (tea.Model, tea.Cmd) {
 	case "supervisor":
 		return m.openSupervisor(), nil
 	}
+
 	return m.runWatched(c, args)
 }
 
@@ -153,12 +160,15 @@ func (m Model) runWatched(c Command, args []string) (tea.Model, tea.Cmd) {
 		if c.Name == m.watching.name {
 			return m.reopenWatch(), nil
 		}
+
 		return m.say(m.opts.Words.T("watch.busy", "{name} is still running",
 			about("name", m.watching.name))), nil
 	}
+
 	w := &commandWatch{name: c.Name}
 	next := m
 	next.watching, next.watchUp, next.output = w, true, ""
+
 	return next, tea.Batch(runCommand(m.opts.Do, w, args), outputPump(w))
 }
 
@@ -171,7 +181,9 @@ func (m Model) watchRows(h, w int) []string {
 	if h <= 0 {
 		return nil
 	}
+
 	p := m.opts.Words
+
 	var status string
 	if m.watching != nil {
 		status = Paint(Dim).Render(p.T("watch.running", "{name}: still running…", about("name", m.watching.name)))
@@ -179,17 +191,21 @@ func (m Model) watchRows(h, w int) []string {
 		status = Paint(Dim).Render(p.T("watch.finished_line", "finished — {back} closes",
 			about("back", m.keys.Back.Help().Key)))
 	}
+
 	lines := strings.Split(strings.TrimRight(strings.ReplaceAll(m.output, "\r\n", "\n"), "\n"), "\n")
 	if len(lines) == 1 && lines[0] == "" {
 		lines = []string{p.T("watch.quiet", "no output yet…")}
 	}
+
 	if len(lines) > h-1 {
 		lines = lines[len(lines)-(h-1):]
 	}
+
 	out := make([]string, 0, h)
 	for _, l := range lines {
 		out = append(out, fit("  "+l, w))
 	}
+
 	return fill(append(out, "  "+status), h)
 }
 
@@ -201,5 +217,6 @@ func (m Model) watchKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case key.Matches(msg, m.keys.Back), key.Matches(msg, m.keys.Open):
 		return m.closeWatch(), nil
 	}
+
 	return m, nil
 }

@@ -40,10 +40,12 @@ func (r *Reader) Log(repoPath, id string) ([]view.Entry, error) {
 	if st, ok := r.index[taskKey{repoPath, id}]; ok && st.seen {
 		return view.Log(st.events), nil
 	}
+
 	events, err := task.Events(r.store, task.Task{ID: id, Repo: repo.Repo{Path: repoPath}})
 	if err != nil {
 		return nil, fmt.Errorf("read the record of task %s: %w", id, err)
 	}
+
 	return view.Log(events), nil
 }
 
@@ -61,5 +63,6 @@ func (r *Reader) Worktree(repoPath, id string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("locate the worktree of task %s: %w", id, err)
 	}
+
 	return path, nil
 }

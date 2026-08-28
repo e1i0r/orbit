@@ -15,12 +15,14 @@ import (
 
 func TestFileGateComprehensive(t *testing.T) {
 	root := t.TempDir()
+
 	s, err := store.New(root)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	r := repo.Repo{Path: filepath.Join(t.TempDir(), "repo"), Name: "repo"}
+
 	tk, err := Create(s, r, "TASK-GATE", "Gate testing", "quick")
 	if err != nil {
 		t.Fatal(err)
@@ -32,6 +34,7 @@ func TestFileGateComprehensive(t *testing.T) {
 	// 1. Context already cancelled before gate
 	cancCtx, cancel := context.WithCancel(context.Background())
 	cancel()
+
 	action, err := gate.Before(cancCtx, tk, p, 0)
 	if err != nil || action != Stop {
 		t.Errorf("Before on cancelled context = (%v, %v), want Stop", action, err)
@@ -41,6 +44,7 @@ func TestFileGateComprehensive(t *testing.T) {
 	if err := Control(s, tk, "cancel"); err != nil {
 		t.Fatal(err)
 	}
+
 	action, err = gate.Before(context.Background(), tk, p, 0)
 	if err != nil || action != Stop {
 		t.Errorf("Before on cancel control = (%v, %v), want Stop", action, err)
@@ -50,6 +54,7 @@ func TestFileGateComprehensive(t *testing.T) {
 	if err := Control(s, tk, "skip"); err != nil {
 		t.Fatal(err)
 	}
+
 	action, err = gate.Before(context.Background(), tk, p, 0)
 	if err != nil || action != Skip {
 		t.Errorf("Before on skip control = (%v, %v), want Skip", action, err)
@@ -59,6 +64,7 @@ func TestFileGateComprehensive(t *testing.T) {
 	if err := Control(s, tk, "resume"); err != nil {
 		t.Fatal(err)
 	}
+
 	action, err = gate.Before(context.Background(), tk, p, 0)
 	if err != nil || action != Continue {
 		t.Errorf("Before on resume control = (%v, %v), want Continue", action, err)
@@ -68,10 +74,13 @@ func TestFileGateComprehensive(t *testing.T) {
 	if err := Control(s, tk, "pause"); err != nil {
 		t.Fatal(err)
 	}
+
 	go func() {
 		time.Sleep(20 * time.Millisecond)
+
 		_ = Control(s, tk, "resume") //nolint:errcheck
 	}()
+
 	action, err = gate.Before(context.Background(), tk, p, 0)
 	if err != nil || action != Continue {
 		t.Errorf("Before on pause released by resume = (%v, %v), want Continue", action, err)
@@ -83,10 +92,13 @@ func TestFileGateComprehensive(t *testing.T) {
 	if err := s.SaveSettings(store.Settings{Autopilot: false}); err != nil {
 		t.Fatal(err)
 	}
+
 	go func() {
 		time.Sleep(20 * time.Millisecond)
+
 		_ = Control(s, tk, "skip") //nolint:errcheck
 	}()
+
 	action, err = gate.Before(context.Background(), tk, pWait, 0)
 	if err != nil || action != Skip {
 		t.Errorf("Before on p.Wait released by skip = (%v, %v), want Skip", action, err)
@@ -95,8 +107,10 @@ func TestFileGateComprehensive(t *testing.T) {
 	// 7. Wait with p.Wait=true released by autopilot setting flipped
 	go func() {
 		time.Sleep(20 * time.Millisecond)
+
 		_ = s.SaveSettings(store.Settings{Autopilot: true}) //nolint:errcheck
 	}()
+
 	action, err = gate.Before(context.Background(), tk, pWait, 0)
 	if err != nil || action != Continue {
 		t.Errorf("Before on p.Wait released by autopilot = (%v, %v), want Continue", action, err)
@@ -107,10 +121,12 @@ func TestFileGateComprehensive(t *testing.T) {
 // autopilot failing once take answered with nothing to act on.
 func TestBeforeErrorPaths(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "GATE-BEFORE-ERR", "gate before error test", "quick")
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	gate := FileGate(s, 10*time.Millisecond).(fileGate) //nolint:errcheck
 	p := flow.Phase{Name: "plan", Wait: false}
 
@@ -119,12 +135,15 @@ func TestBeforeErrorPaths(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if err := os.Mkdir(controlPath, 0o700); err != nil {
 		t.Fatal(err)
 	}
+
 	if _, err := gate.Before(context.Background(), tk, p, 0); err == nil {
 		t.Error("Before should have failed when take cannot read the control word")
 	}
+
 	if err := os.Remove(controlPath); err != nil {
 		t.Fatal(err)
 	}
@@ -135,6 +154,7 @@ func TestBeforeErrorPaths(t *testing.T) {
 	if err := os.Mkdir(settingsPath, 0o700); err != nil {
 		t.Fatal(err)
 	}
+
 	if _, err := gate.Before(context.Background(), tk, p, 0); err == nil {
 		t.Error("Before should have failed when the autopilot switch cannot be read")
 	}
@@ -159,16 +179,20 @@ func TestWaitErrorPaths(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	controlPath, err := s.ControlPath(r.Path, tk.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if err := os.Mkdir(controlPath, 0o700); err != nil {
 		t.Fatal(err)
 	}
+
 	if _, err := gate.wait(context.Background(), tk, p, whyFlow, false); err == nil {
 		t.Error("wait should have failed when take cannot read the control word")
 	}
+
 	if err := os.Remove(controlPath); err != nil {
 		t.Fatal(err)
 	}
@@ -179,10 +203,12 @@ func TestWaitErrorPaths(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	settingsPath := filepath.Join(s.Root(), "settings.json")
 	if err := os.Mkdir(settingsPath, 0o700); err != nil {
 		t.Fatal(err)
 	}
+
 	if _, err := gate.wait(context.Background(), tk2, p, whyFlow, false); err == nil {
 		t.Error("wait should have failed when the autopilot switch cannot be read")
 	}
@@ -192,19 +218,23 @@ func TestWaitErrorPaths(t *testing.T) {
 // that releases it was taken cleanly, but recording that release fails.
 func TestWaitResumedEmitFailure(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "GATE-WAIT-RESUME-ERR", "gate wait resumed error test", "quick")
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	eventsPath, err := s.EventsPath(r.Path, tk.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	gate := FileGate(s, 5*time.Millisecond).(fileGate) //nolint:errcheck
 	p := flow.Phase{Name: "review"}
 
 	synctest.Test(t, func(t *testing.T) {
 		done := make(chan error, 1)
+
 		go func() {
 			_, err := gate.wait(context.Background(), tk, p, whyFlow, false)
 			done <- err
@@ -213,13 +243,17 @@ func TestWaitResumedEmitFailure(t *testing.T) {
 		// the goroutine is parked on its first poll — at which point the log
 		// is made unwritable before the word that would release it arrives.
 		synctest.Wait()
+
 		if err := os.Chmod(eventsPath, 0o400); err != nil {
 			t.Fatal(err)
 		}
+
 		t.Cleanup(func() { _ = os.Chmod(eventsPath, 0o600) }) //nolint:errcheck
+
 		if err := Control(s, tk, "resume"); err != nil {
 			t.Fatal(err)
 		}
+
 		if err := <-done; err == nil {
 			t.Error("wait should have failed when phase.resumed could not be recorded")
 		}

@@ -17,6 +17,7 @@ import (
 // longThread is a conversation taller than any window in these tests.
 func longThread(n int) []view.SupervisorLine {
 	at := time.Date(2026, 8, 28, 9, 0, 0, 0, time.UTC)
+
 	lines := make([]view.SupervisorLine, 0, n)
 	for i := range n {
 		lines = append(lines, view.SupervisorLine{
@@ -24,6 +25,7 @@ func longThread(n int) []view.SupervisorLine {
 			Text: fmt.Sprintf("turn %02d", i),
 		})
 	}
+
 	return lines
 }
 
@@ -35,11 +37,14 @@ func longThread(n int) []view.SupervisorLine {
 func TestSupervisorScrolling(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m = m.openSupervisor()
+
 	m.supervisor.lines = longThread(40)
 	if !m.supervisor.follow {
 		t.Fatal("the screen did not open at the newest message")
 	}
+
 	total, view := m.threadSize()
+
 	last := total - view
 	if last <= 0 {
 		t.Fatalf("the fixture thread fits on screen (%d rows in %d), so nothing here is scrolling", total, view)
@@ -62,9 +67,11 @@ func TestSupervisorScrolling(t *testing.T) {
 	for range 10 {
 		m = next(t, m, tea.KeyPressMsg{Code: tea.KeyDown})
 	}
+
 	if m.supervisor.offset != last {
 		t.Errorf("pressing down at the end ran the offset to %d, past %d", m.supervisor.offset, last)
 	}
+
 	m = next(t, m, tea.KeyPressMsg{Code: tea.KeyUp})
 	if m.supervisor.offset != last-1 {
 		t.Errorf("up after ten downs at the end = %d, want %d", m.supervisor.offset, last-1)
@@ -74,9 +81,11 @@ func TestSupervisorScrolling(t *testing.T) {
 	for range total + 5 {
 		m = next(t, m, tea.KeyPressMsg{Code: tea.KeyUp})
 	}
+
 	if m.supervisor.offset != 0 {
 		t.Errorf("up past the first row = %d, want 0", m.supervisor.offset)
 	}
+
 	m = next(t, m, tea.KeyPressMsg{Code: tea.KeyDown})
 	if m.supervisor.offset != 1 {
 		t.Errorf("down after walking off the top = %d, want 1", m.supervisor.offset)
@@ -94,6 +103,7 @@ func TestSupervisorScrollPagesAndEnds(t *testing.T) {
 	if want := last - (view - 1); m.supervisor.offset != want {
 		t.Errorf("page up = %d, want %d", m.supervisor.offset, want)
 	}
+
 	m = next(t, m, tea.KeyPressMsg{Code: tea.KeyPgDown})
 	if m.supervisor.offset != last || !m.supervisor.follow {
 		t.Errorf("page down = %d follow %v, want %d and following", m.supervisor.offset, m.supervisor.follow, last)
@@ -103,6 +113,7 @@ func TestSupervisorScrollPagesAndEnds(t *testing.T) {
 	if m.supervisor.offset != 0 || m.supervisor.follow {
 		t.Errorf("home = %d follow %v, want 0 and not following", m.supervisor.offset, m.supervisor.follow)
 	}
+
 	m = next(t, m, tea.KeyPressMsg{Code: tea.KeyEnd})
 	if !m.supervisor.follow {
 		t.Error("end did not go back to following the newest message")
@@ -131,6 +142,7 @@ func TestSupervisorScrollStaysWhereYouWereReading(t *testing.T) {
 	parked := m.supervisor.offset
 
 	r.lines = longThread(48)
+
 	m = m.syncSupervisor()
 	if m.supervisor.offset != parked || m.supervisor.follow {
 		t.Errorf("eight replies arrived and moved the reader to %d, from %d", m.supervisor.offset, parked)
@@ -142,10 +154,12 @@ func TestSupervisorScrollStaysWhereYouWereReading(t *testing.T) {
 	before, rows := m.threadSize()
 	r.lines = longThread(56)
 	m = m.syncSupervisor()
+
 	after, _ := m.threadSize()
 	if after <= before {
 		t.Fatalf("the thread did not grow: %d rows then %d", before, after)
 	}
+
 	if got := m.threadOffset(after, rows, nil); got != after-rows {
 		t.Errorf("following, the window starts at row %d, want the end at %d", got, after-rows)
 	}
@@ -162,10 +176,12 @@ func TestSupervisorWheelScrollsTheThread(t *testing.T) {
 	last := total - view
 
 	y := m.frame.Body.Y
+
 	m = m.wheel(tea.Mouse{X: 10, Y: y, Button: tea.MouseWheelUp})
 	if want := last - wheelRows; m.supervisor.offset != want {
 		t.Errorf("one notch up = %d, want %d", m.supervisor.offset, want)
 	}
+
 	m = m.wheel(tea.Mouse{X: 10, Y: y, Button: tea.MouseWheelDown})
 	if m.supervisor.offset != last || !m.supervisor.follow {
 		t.Errorf("one notch down = %d follow %v, want %d and following", m.supervisor.offset, m.supervisor.follow, last)
@@ -174,6 +190,7 @@ func TestSupervisorWheelScrollsTheThread(t *testing.T) {
 	// While picking, the wheel moves the pick instead.
 	m.opts.RetractSupervisor = func(time.Time) error { return nil }
 	m = m.startPicking()
+
 	m = m.wheel(tea.Mouse{X: 10, Y: y, Button: tea.MouseWheelUp})
 	if want := len(m.supervisor.lines) - 1 - wheelRows; m.supervisor.pick != want {
 		t.Errorf("wheeling while picking chose %d, want %d", m.supervisor.pick, want)

@@ -15,5 +15,6 @@ func (s *Store) RunPath(repoPath, taskID string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return filepath.Join(dir, "run"), nil
 }

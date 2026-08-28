@@ -41,6 +41,7 @@ func parse(ctx Context, fs *flag.FlagSet, args []string) error {
 	default:
 		var b strings.Builder
 		help(Context{Out: &b, Words: ctx.Words}, fs)
+
 		return fmt.Errorf("%w\n\n%s", err, strings.TrimRight(b.String(), "\n"))
 	}
 }
@@ -54,6 +55,7 @@ func help(ctx Context, fs *flag.FlagSet) {
 	if c, ok := lookup(fs.Name()); ok {
 		fmt.Fprintf(ctx.Out, "%s — %s\n\n", c.Usage(), c.About(ctx.printer()))
 	}
+
 	fs.SetOutput(ctx.Out)
 	fs.PrintDefaults()
 	fs.SetOutput(io.Discard)
@@ -69,24 +71,29 @@ func Run(args []string, out, errOut io.Writer) int {
 	if len(args) == 0 {
 		return Run([]string{"top"}, out, errOut)
 	}
+
 	switch args[0] {
 	case "help", "-h", "--help":
 		fmt.Fprint(out, usage(ctx.Words))
 		return 0
 	}
+
 	c, ok := lookup(args[0])
 	if !ok {
 		fmt.Fprintf(errOut, "orbit: %q is not a command\n\n%s", args[0], usage(ctx.Words))
 		return 2
 	}
+
 	err := c.Run(ctx, args[1:])
 	if errors.Is(err, errHelpShown) {
 		return 0
 	}
+
 	if err != nil {
 		fmt.Fprintf(errOut, "orbit: %v\n", err)
 		return 1
 	}
+
 	return 0
 }
 
@@ -113,17 +120,21 @@ func language() string {
 	if err != nil {
 		return ""
 	}
+
 	if _, err := os.Stat(root); err != nil {
 		return ""
 	}
+
 	s, err := store.Open()
 	if err != nil {
 		return ""
 	}
+
 	cfg, err := s.Settings()
 	if err != nil {
 		return ""
 	}
+
 	return cfg.Language
 }
 
@@ -137,9 +148,11 @@ func openBoth(dir string) (*store.Store, repo.Repo, error) {
 	if err != nil {
 		return nil, repo.Repo{}, err
 	}
+
 	s, err := store.Open()
 	if err != nil {
 		return nil, repo.Repo{}, err
 	}
+
 	return s, r, nil
 }

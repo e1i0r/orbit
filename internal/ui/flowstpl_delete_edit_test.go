@@ -25,6 +25,7 @@ func (d flowsTestDir) FlowDir() string { return string(d) }
 // expects.
 func writeFlowFile(t *testing.T, dir, name, body string) {
 	t.Helper()
+
 	if err := os.WriteFile(filepath.Join(dir, name+".json"), []byte(body), 0o600); err != nil {
 		t.Fatalf("write %s: %v", name, err)
 	}
@@ -35,6 +36,7 @@ func TestDeleteSelectedFlowAndDeleteFlow(t *testing.T) {
 
 	// 1. Nothing selected: a no-op.
 	m.flows.sel = -1
+
 	m2, cmd := m.deleteSelectedFlow()
 	if cmd != nil || m2.flows.confirmDelete {
 		t.Fatalf("expected a no-op with nothing selected, got confirmDelete=%v cmd=%v", m2.flows.confirmDelete, cmd)
@@ -45,6 +47,7 @@ func TestDeleteSelectedFlowAndDeleteFlow(t *testing.T) {
 	m.flows.sel = 0
 	m2, _ = m.deleteSelectedFlow()
 	wantBand(t, m2, "cannot be deleted")
+
 	if m2.flows.confirmDelete {
 		t.Fatalf("a built-in should never reach the confirmation")
 	}
@@ -55,15 +58,18 @@ func TestDeleteSelectedFlowAndDeleteFlow(t *testing.T) {
 	m.opts.Flows = flowsTestDir(dir)
 	// Sorted: careful, quick, task, tdd-fuzz-pr, zzz-mine.
 	m.flows.sel = 4
+
 	m2, _ = m.deleteSelectedFlow()
 	if !m2.flows.confirmDelete {
 		t.Fatalf("expected confirmDelete after asking to delete a reader's own flow")
 	}
+
 	wantBand(t, m2, "zzz-mine")
 
 	// 4. deleteFlow itself, called directly for each origin.
 	m3, _ := m.deleteFlow("built-in-name", flow.OriginBuiltin)
 	wantBand(t, m3, "cannot be deleted")
+
 	m4, _ := m.deleteFlow("zzz-mine", flow.OriginUser)
 	if !m4.flows.confirmDelete {
 		t.Fatalf("expected confirmDelete for a user-origin flow")
@@ -76,6 +82,7 @@ func TestConfirmDeleteFlow(t *testing.T) {
 	// 1. Out of range: a no-op that still clears confirmDelete.
 	m.flows.confirmDelete = true
 	m.flows.sel = 99
+
 	m2, cmd := m.confirmDeleteFlow()
 	if cmd != nil || m2.flows.confirmDelete {
 		t.Fatalf("expected confirmDelete cleared and no cmd for an out-of-range selection")
@@ -94,9 +101,11 @@ func TestConfirmDeleteFlow(t *testing.T) {
 	m.flows.sel = 4 // careful, quick, task, tdd-fuzz-pr, zzz-mine
 	m2, _ = m.confirmDeleteFlow()
 	wantBand(t, m2, "zzz-mine")
+
 	if m2.flows.sel != 3 {
 		t.Errorf("sel after delete = %d, want 3 (stepped back)", m2.flows.sel)
 	}
+
 	if _, err := os.Stat(filepath.Join(dir, "zzz-mine.json")); !os.IsNotExist(err) {
 		t.Errorf("expected zzz-mine.json to be gone, stat err = %v", err)
 	}
@@ -109,6 +118,7 @@ func TestConfirmDeleteFlow(t *testing.T) {
 	m.flows.sel = 0 // aaa-mine sorts before every built-in
 	m2, _ = m.confirmDeleteFlow()
 	wantBand(t, m2, "aaa-mine")
+
 	if m2.flows.sel != 0 {
 		t.Errorf("sel after delete = %d, want 0", m2.flows.sel)
 	}
@@ -122,6 +132,7 @@ func TestConfirmDeleteFlowRemoveError(t *testing.T) {
 	dir := t.TempDir()
 	writeFlowFile(t, dir, "blocked-mine", `{"name":"blocked-mine","phases":[{"name":"implement","engine":"claude"}]}`)
 	t.Cleanup(func() { _ = os.Chmod(dir, 0o755) }) //nolint:errcheck
+
 	if err := os.Chmod(dir, 0o555); err != nil {
 		t.Fatalf("chmod: %v", err)
 	}
@@ -130,22 +141,28 @@ func TestConfirmDeleteFlowRemoveError(t *testing.T) {
 	m.opts.Flows = flowsTestDir(dir)
 	descriptors := flow.List(m.opts.Flows)
 	idx := -1
+
 	for i, d := range descriptors {
 		if d.Name == "blocked-mine" {
 			idx = i
 		}
 	}
+
 	if idx == -1 {
 		t.Fatalf("blocked-mine not listed among %v", descriptors)
 	}
+
 	m.flows.sel = idx
+
 	m2, cmd := m.confirmDeleteFlow()
 	if cmd != nil {
 		t.Fatalf("expected nil cmd on a remove failure")
 	}
+
 	if m2.message == "" {
 		t.Fatalf("expected the removal error to reach the band")
 	}
+
 	if _, err := os.Stat(filepath.Join(dir, "blocked-mine.json")); err != nil {
 		t.Errorf("file should still be there after a failed remove: %v", err)
 	}
@@ -154,6 +171,7 @@ func TestConfirmDeleteFlowRemoveError(t *testing.T) {
 func TestEditSelectedFlowOutOfRange(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.flows.sel = -1
+
 	m2, cmd := m.editSelectedFlow()
 	if cmd != nil || m2.flows.creating {
 		t.Fatalf("expected a no-op with nothing selected")
@@ -163,13 +181,16 @@ func TestEditSelectedFlowOutOfRange(t *testing.T) {
 func TestEditSelectedFlowOpensTheBuilder(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.flows.sel = 0 // "careful"
+
 	m2, _ := m.editSelectedFlow()
 	if !m2.flows.creating || !m2.flows.isEditing {
 		t.Fatalf("expected the builder open in edit mode")
 	}
+
 	if m2.flows.flowName != "careful" {
 		t.Errorf("flowName = %q, want careful", m2.flows.flowName)
 	}
+
 	wantBand(t, m2, "careful")
 }
 
@@ -191,6 +212,7 @@ func TestApplyFlowTemplate(t *testing.T) {
 		if m2.flows.flowName != c.wantName {
 			t.Errorf("applyFlowTemplate(%q).flowName = %q, want %q", c.tpl, m2.flows.flowName, c.wantName)
 		}
+
 		if len(m2.flows.phases) != c.wantPhases {
 			t.Errorf("applyFlowTemplate(%q) has %d phases, want %d", c.tpl, len(m2.flows.phases), c.wantPhases)
 		}
@@ -198,10 +220,12 @@ func TestApplyFlowTemplate(t *testing.T) {
 
 	// An unrecognised preset changes nothing.
 	before := m.flows
+
 	m2, cmd := m.applyFlowTemplate("not-a-real-preset")
 	if cmd != nil {
 		t.Errorf("expected nil cmd for an unknown template")
 	}
+
 	if len(m2.flows.phases) != len(before.phases) || m2.flows.flowName != before.flowName {
 		t.Errorf("an unknown template should leave the form alone")
 	}

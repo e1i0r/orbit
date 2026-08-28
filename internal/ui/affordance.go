@@ -156,6 +156,7 @@ func whyNotPause(t view.Task, s Conditions) words.Arg {
 	case t.Reason.Key == view.ReasonGate:
 		return because(whyPauseAlreadyWaiting)
 	}
+
 	return words.Arg{}
 }
 
@@ -168,6 +169,7 @@ func whyNotResume(t view.Task) words.Arg {
 	case t.Live:
 		return because(whyResumeStillRunning)
 	}
+
 	return because(whyResumeNotRunning)
 }
 
@@ -178,6 +180,7 @@ func whyNotCancel(t view.Task) words.Arg {
 	if t.Live {
 		return words.Arg{}
 	}
+
 	return because(whyCancelNotRunning)
 }
 
@@ -194,6 +197,7 @@ func whyNotTake(t view.Task, s Conditions) words.Arg {
 	case !s.CanResume:
 		return about(whyTakeEngineCannotResume, t.Engine)
 	}
+
 	return words.Arg{}
 }
 
@@ -219,6 +223,7 @@ func whyNotHand(t view.Task, s Conditions) words.Arg {
 	case !s.Taken:
 		return because(whyHandBackNotTaken)
 	}
+
 	return words.Arg{}
 }
 
@@ -231,6 +236,7 @@ func whyNotMarkRead(t view.Task) words.Arg {
 	case t.Read:
 		return because(whyReadAlreadyRead)
 	}
+
 	return words.Arg{}
 }
 
@@ -239,5 +245,6 @@ func whyNotDelete(t view.Task) words.Arg {
 	if t.Live {
 		return because(whyDeleteRunning)
 	}
+
 	return words.Arg{}
 }

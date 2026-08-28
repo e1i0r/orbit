@@ -73,36 +73,47 @@ type RepoRef struct {
 // happen, as against happening and finding damage.
 func (s *Store) Repos() ([]RepoRef, error) {
 	dir := filepath.Join(s.root, "repos")
+
 	entries, err := os.ReadDir(dir)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, &ReposError{Dir: dir, Err: err}
 	}
 
-	var repos []RepoRef
-	var failed []error
+	var (
+		repos  []RepoRef
+		failed []error
+	)
+
 	for _, entry := range entries {
 		if !entry.IsDir() {
 			continue
 		}
+
 		marker := filepath.Join(dir, entry.Name(), "repo")
+
 		body, err := os.ReadFile(marker)
 		if errors.Is(err, os.ErrNotExist) {
 			continue
 		}
+
 		if err != nil {
 			failed = append(failed, fmt.Errorf("read %q: %w", marker, err))
 			continue
 		}
+
 		path, ok := parseRepoMarker(string(body))
 		if !ok {
 			failed = append(failed, fmt.Errorf("repo marker %q is damaged", marker))
 			continue
 		}
+
 		repos = append(repos, RepoRef{Key: entry.Name(), Path: path})
 	}
+
 	return repos, errors.Join(failed...)
 }
 
@@ -114,10 +125,12 @@ func parseRepoMarker(body string) (string, bool) {
 	if !ok {
 		return "", false
 	}
+
 	rest = strings.TrimSuffix(rest, "\n")
 	if rest == "" || !filepath.IsAbs(rest) {
 		return "", false
 	}
+
 	return rest, true
 }
 
@@ -145,14 +158,18 @@ func (s *Store) ForgetRepo(repoPath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	if _, err := os.Stat(dir); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return "", fmt.Errorf("orbit has no record of a repository at %q", repoPath)
 		}
+
 		return "", fmt.Errorf("read %q: %w", dir, err)
 	}
+
 	if err := os.RemoveAll(dir); err != nil {
 		return "", fmt.Errorf("remove %q: %w", dir, err)
 	}
+
 	return dir, nil
 }

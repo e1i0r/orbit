@@ -33,13 +33,16 @@ func (capableEngine) CanResume() bool          { return false }
 
 func TestRunModelAndEffortMatchesRunTheEngine(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "RUN-MATCH-1", "model and effort match test", "quick")
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	f := flow.Flow{Name: "match", Phases: []flow.Phase{
 		{Name: "phase-1", Engine: "capable", Model: "model-a", Effort: "effort-a"},
 	}}
+
 	engines := map[string]engine.Engine{"capable": capableEngine{}}
 	if err := Run(context.Background(), s, tk, f, engines, nil); err != nil {
 		t.Fatalf("Run: %v", err)
@@ -48,14 +51,17 @@ func TestRunModelAndEffortMatchesRunTheEngine(t *testing.T) {
 
 func TestRunEffortNamedOnAnEngineWithNoEffortDial(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "RUN-NO-EFFORT-1", "no effort dial test", "quick")
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	f := flow.Flow{Name: "no-effort", Phases: []flow.Phase{
 		{Name: "phase-1", Engine: "fake", Effort: "high"},
 	}}
 	engines := map[string]engine.Engine{"fake": engine.NewFake("out")}
+
 	err = Run(context.Background(), s, tk, f, engines, nil)
 	if err == nil || !strings.Contains(err.Error(), "has no effort dial") {
 		t.Errorf("Run = %v, want a \"has no effort dial\" error", err)
@@ -72,15 +78,18 @@ func (g erroringGate) Before(context.Context, Task, flow.Phase, int) (Go, error)
 
 func TestRunGateErrorIsReportedAsFailure(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "RUN-GATE-ERR-1", "gate error test", "quick")
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	f := flow.Flow{Name: "gate-err", Phases: []flow.Phase{
 		{Name: "phase-1", Engine: "fake"},
 	}}
 	engines := map[string]engine.Engine{"fake": engine.NewFake("out")}
 	g := erroringGate{err: errors.New("boom")}
+
 	err = Run(context.Background(), s, tk, f, engines, g)
 	if err == nil || !strings.Contains(err.Error(), "boom") {
 		t.Errorf("Run = %v, want the gate's own error wrapped in", err)
@@ -92,13 +101,16 @@ func TestRunGateErrorIsReportedAsFailure(t *testing.T) {
 // before anything is run.
 func TestRunPhaseStartedEmitFailure(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "RUN-PSTART-ERR-1", "phase started emit error test", "quick")
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	f := flow.Flow{Name: "oversized-name", Phases: []flow.Phase{
 		{Name: strings.Repeat("N", 5<<20), Engine: "fake"},
 	}}
+
 	engines := map[string]engine.Engine{"fake": engine.NewFake("out")}
 	if err := Run(context.Background(), s, tk, f, engines, nil); err == nil {
 		t.Error("Run should have failed to record an oversized phase.started event")
@@ -121,13 +133,16 @@ func (oversizedSessionEngine) CanResume() bool          { return false }
 
 func TestRunPhaseFinishedEmitFailure(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "RUN-PFINISH-ERR-1", "phase finished emit error test", "quick")
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	f := flow.Flow{Name: "oversized-session", Phases: []flow.Phase{
 		{Name: "phase-1", Engine: "sess"},
 	}}
+
 	engines := map[string]engine.Engine{"sess": oversizedSessionEngine{}}
 	if err := Run(context.Background(), s, tk, f, engines, nil); err == nil {
 		t.Error("Run should have failed to record an oversized phase.finished event")
@@ -140,6 +155,7 @@ func TestRunTaskStartedEmitFailure(t *testing.T) {
 	s, r := fixture(t)
 	bad := Task{ID: "has/slash", Repo: r}
 	f := flow.Flow{Name: "f", Phases: []flow.Phase{{Name: "p", Engine: "fake"}}}
+
 	engines := map[string]engine.Engine{"fake": engine.NewFake("out")}
 	if err := Run(context.Background(), s, bad, f, engines, nil); err == nil {
 		t.Error("Run should have failed to record task.started for a bad task id")
@@ -152,20 +168,25 @@ func TestRunTaskStartedEmitFailure(t *testing.T) {
 // create the new "run" marker file the hold needs.
 func TestRunHoldFailureAfterTaskStarted(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "RUN-HOLD-ERR-1", "run hold error test", "quick")
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	dir, err := s.TaskDir(r.Path, tk.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if err := os.Chmod(dir, 0o500); err != nil {
 		t.Fatal(err)
 	}
+
 	t.Cleanup(func() { _ = os.Chmod(dir, 0o700) }) //nolint:errcheck
 
 	f := flow.Flow{Name: "f", Phases: []flow.Phase{{Name: "p", Engine: "fake"}}}
+
 	engines := map[string]engine.Engine{"fake": engine.NewFake("out")}
 	if err := Run(context.Background(), s, tk, f, engines, nil); err == nil {
 		t.Error("Run should have failed when the run marker cannot be created")

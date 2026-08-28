@@ -55,24 +55,30 @@ func Start(s *store.Store, t Task, flowName string, unread int) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	if alive {
 		return 0, fmt.Errorf("task %s is already being run by process %d", t.ID, holder)
 	}
+
 	cfg, err := s.Settings()
 	if err != nil {
 		return 0, err
 	}
+
 	if atCap(unread, cfg.UnreadCap) {
 		return 0, fmt.Errorf("task %s was not started: %d finished tasks are unread and the cap is %d — read one with `orbit read`, or change the cap with `orbit set unread-cap <n>`", t.ID, unread, cfg.UnreadCap)
 	}
+
 	exe, err := os.Executable()
 	if err != nil {
 		return 0, fmt.Errorf("find the orbit binary to start task %s: %w", t.ID, err)
 	}
+
 	cmd := runCommand(exe, s.Root(), t, flowName)
 	if err := cmd.Start(); err != nil {
 		return 0, fmt.Errorf("start a run of task %s: %w", t.ID, err)
 	}
+
 	pid := cmd.Process.Pid
 	// The child is waited on in a goroutine, and its verdict is thrown
 	// away. Nothing here wants the exit status — the record carries the
@@ -84,6 +90,7 @@ func Start(s *store.Store, t Task, flowName string, unread int) (int, error) {
 	go func() {
 		_ = cmd.Wait() //nolint:errcheck // deliberate: see above
 	}()
+
 	return pid, nil
 }
 
@@ -110,5 +117,6 @@ func runCommand(exe, root string, t Task, flowName string) *exec.Cmd {
 	// time to write. In a group of its own it survives, and `orbit cancel
 	// -now` has one group to signal rather than a process tree to walk.
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+
 	return cmd
 }

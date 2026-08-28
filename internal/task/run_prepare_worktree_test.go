@@ -26,6 +26,7 @@ func TestPromptAndCapturedHelpers(t *testing.T) {
 
 	// 1. Full prompt with notes, instructions, previous output
 	notes := []string{"First note", "Second note"}
+
 	fullPrompt := prompt(tk, p, notes, "Previous output text")
 	if !strings.Contains(fullPrompt, "Main task body") ||
 		!strings.Contains(fullPrompt, "Extra phase prompt") ||
@@ -42,6 +43,7 @@ func TestPromptAndCapturedHelpers(t *testing.T) {
 
 	// 3. captured with string > 1MB
 	bigStr := strings.Repeat("A", maxOutput+100)
+
 	truncated, fullBig := captured(bigStr)
 	if fullBig != len(bigStr) || !strings.Contains(truncated, "truncated") {
 		t.Errorf("captured big string failed to truncate: full=%d", fullBig)
@@ -51,14 +53,17 @@ func TestPromptAndCapturedHelpers(t *testing.T) {
 	// than split it: "é" is two bytes, placed so the cut point at maxOutput
 	// lands on its second, continuation byte.
 	withRune := strings.Repeat("A", maxOutput-1) + "é" + "tail"
+
 	cut, fullRune := captured(withRune)
 	if fullRune != len(withRune) {
 		t.Errorf("captured rune-boundary full = %d, want %d", fullRune, len(withRune))
 	}
+
 	kept := strings.SplitN(cut, "\n…", 2)[0]
 	if !utf8.ValidString(kept) {
 		t.Errorf("captured split a rune in half: %q", kept)
 	}
+
 	if strings.Contains(kept, "é") {
 		t.Error("captured kept a rune that straddled the cut point rather than backing up before it")
 	}
@@ -66,6 +71,7 @@ func TestPromptAndCapturedHelpers(t *testing.T) {
 
 func TestRunMultiPhaseFeedOutputAndThoughts(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "RUN-FEED-1", "Feed output test", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
@@ -107,17 +113,21 @@ func TestRunMultiPhaseFeedOutputAndThoughts(t *testing.T) {
 	}
 
 	var hasThought, hasRefusal, hasFinished bool
+
 	for _, e := range events {
 		if e.Kind == record.PhaseThought {
 			hasThought = true
 		}
+
 		if e.Kind == record.PhaseRefused {
 			hasRefusal = true
 		}
+
 		if e.Kind == record.TaskFinished {
 			hasFinished = true
 		}
 	}
+
 	if !hasThought || !hasRefusal || !hasFinished {
 		t.Errorf("missing expected events: thought=%v, refusal=%v, finished=%v",
 			hasThought, hasRefusal, hasFinished)
@@ -126,6 +136,7 @@ func TestRunMultiPhaseFeedOutputAndThoughts(t *testing.T) {
 
 func TestStoppedHelper(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "STOP-1", "Stopped test", "")
 	if err != nil {
 		t.Fatal(err)
@@ -152,6 +163,7 @@ func TestReconcileAllCases(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	_ = emit(s, tk1, record.Event{Kind: record.TaskStarted}) //nolint:errcheck
 	_, _ = mark(s, tk1, 9999999)                             //nolint:errcheck
 
@@ -165,6 +177,7 @@ func TestReconcileAllCases(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	_ = emit(s, tk2, record.Event{Kind: record.TaskStarted})  //nolint:errcheck
 	_ = emit(s, tk2, record.Event{Kind: record.TaskFinished}) //nolint:errcheck
 	_, _ = mark(s, tk2, 9999999)                              //nolint:errcheck
@@ -202,8 +215,10 @@ func (m *streamMockEngine) Run(ctx context.Context, req engine.Request) (engine.
 	if m.callIdx < len(m.results) {
 		res := m.results[m.callIdx]
 		m.callIdx++
+
 		return res, nil
 	}
+
 	return engine.Result{Output: "default"}, nil
 }
 func (m *streamMockEngine) Models() []engine.Choice  { return nil }
@@ -231,6 +246,7 @@ func TestPrepareErrorPaths(t *testing.T) {
 	// AddWorktree refuses before it ever runs git.
 	detached := r
 	detached.Base = ""
+
 	tk := Task{ID: "PREPARE-ERR-1", Repo: detached}
 	if _, err := prepare(s, tk); err == nil {
 		t.Error("prepare should have failed against a repository with no base branch")
@@ -243,14 +259,17 @@ func TestPrepareErrorPaths(t *testing.T) {
 func TestPrepareReusesAnExistingWorktree(t *testing.T) {
 	s, r := fixture(t)
 	tk := Task{ID: "PREPARE-REUSE-1", Repo: r}
+
 	first, err := prepare(s, tk)
 	if err != nil {
 		t.Fatalf("prepare (first): %v", err)
 	}
+
 	second, err := prepare(s, tk)
 	if err != nil {
 		t.Fatalf("prepare (second): %v", err)
 	}
+
 	if first != second {
 		t.Errorf("prepare returned %q then %q for the same task", first, second)
 	}

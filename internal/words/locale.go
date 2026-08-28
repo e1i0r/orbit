@@ -22,6 +22,7 @@ func Resolve(flag, env, setting string) string {
 			return lang
 		}
 	}
+
 	return "en"
 }
 
@@ -35,12 +36,15 @@ func normalizeLocale(v string) string {
 	if i := strings.IndexByte(v, '@'); i >= 0 {
 		v = v[:i]
 	}
+
 	if i := strings.IndexByte(v, '.'); i >= 0 {
 		v = v[:i]
 	}
+
 	if i := strings.IndexAny(v, "_-"); i >= 0 {
 		v = v[:i]
 	}
+
 	switch strings.ToLower(v) {
 	case "", "c", "posix":
 		return ""
@@ -64,6 +68,7 @@ const pseudoCode = "qps"
 // package — which is what keeps a third language to one file and no code.
 func Available() []string {
 	codes := map[string]bool{}
+
 	if entries, err := embedded.ReadDir("lang"); err == nil {
 		for _, e := range entries {
 			if code, ok := languageCode(e.Name()); ok && code != pseudoCode {
@@ -71,22 +76,26 @@ func Available() []string {
 			}
 		}
 	}
+
 	if dir, ok := overlayDir(); ok {
 		if entries, err := os.ReadDir(dir); err == nil {
 			for _, e := range entries {
 				if e.IsDir() {
 					continue
 				}
+
 				if code, ok := languageCode(e.Name()); ok && code != pseudoCode {
 					codes[code] = true
 				}
 			}
 		}
 	}
+
 	sorted := make([]string, 0, len(codes))
 	for code := range codes {
 		sorted = append(sorted, code)
 	}
+
 	sort.Strings(sorted)
 
 	names := make([]string, 0, len(sorted))
@@ -95,8 +104,10 @@ func Available() []string {
 		if name == "" {
 			name = code
 		}
+
 		names = append(names, name)
 	}
+
 	return names
 }
 
@@ -106,5 +117,6 @@ func languageCode(filename string) (string, bool) {
 	if !strings.HasSuffix(filename, ".json") {
 		return "", false
 	}
+
 	return strings.TrimSuffix(filename, ".json"), true
 }

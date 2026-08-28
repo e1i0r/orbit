@@ -11,6 +11,7 @@ import (
 // two ever disagree the retraction points at nothing.
 func TestStampIsTheSameNameFromEitherSide(t *testing.T) {
 	at := time.Date(2026, 8, 28, 9, 15, 0, 123456789, time.UTC)
+
 	local := at.In(time.FixedZone("somewhere", 5*3600))
 	if Stamp(at) != Stamp(local) {
 		t.Errorf("Stamp differs by zone: %q vs %q", Stamp(at), Stamp(local))
@@ -33,6 +34,7 @@ func TestRetractedCollectsWhatLaterLinesTookBack(t *testing.T) {
 	if !gone[Stamp(first)] {
 		t.Error("the retracted line is not in the set")
 	}
+
 	if gone[Stamp(second)] {
 		t.Error("a line nobody took back is in the set")
 	}
@@ -46,6 +48,7 @@ func TestRetractedIgnoresARetractionThatNamesNothing(t *testing.T) {
 	if len(gone) != 0 {
 		t.Errorf("Retracted = %v, want nothing: neither line names a turn", gone)
 	}
+
 	if Retracted(nil) == nil {
 		return // a nil set reads false for every key, which is the answer.
 	}

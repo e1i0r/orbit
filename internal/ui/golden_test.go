@@ -34,20 +34,25 @@ var update = flag.Bool("update", false, "rewrite the golden frames in testdata")
 // golden compares one rendered frame against the file it is specified by.
 func golden(t *testing.T, name string, rows []string) {
 	t.Helper()
+
 	path := filepath.Join("testdata", name+".golden")
 	got := strings.Join(rows, "\n") + "\n"
+
 	if *update {
 		if err := os.MkdirAll("testdata", 0o750); err != nil {
 			t.Fatalf("make testdata: %v", err)
 		}
+
 		if err := os.WriteFile(path, []byte(got), 0o600); err != nil {
 			t.Fatalf("write %s: %v", path, err)
 		}
 	}
+
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("read %s: %v — run the suite with -update to write it", path, err)
 	}
+
 	if want := string(raw); want != got {
 		t.Errorf("%s does not match the frame.\nwant:\n%s\ngot:\n%s", path, want, got)
 	}
@@ -72,6 +77,7 @@ func TestTheBoardIsTheScreenItWasSpecifiedAs(t *testing.T) {
 			if c.full {
 				b = fixtureBoard(fixtureTasks(), 4)
 			}
+
 			m := modelWith(t, printerFor(t, c.lang), b, c.w, c.h, nil)
 			golden(t, c.name, renderAt(t, m, c.w, c.h))
 		})
@@ -86,6 +92,7 @@ func TestTheBoardIsTheScreenItWasSpecifiedAs(t *testing.T) {
 // never went through T, which is the one defect no reviewer reliably finds.
 func TestNoEnglishSurvivesThePseudolocale(t *testing.T) {
 	m := modelWith(t, printerFor(t, "qps"), fixtureBoard(fixtureTasks(), 4), 100, 30, nil)
+
 	frame := strings.Join(renderAt(t, m, 100, 30), "\n")
 	for _, english := range []string{
 		"NEEDS YOU", "RUNNING", "TO DO", "DONE TODAY",
@@ -102,9 +109,11 @@ func TestNoEnglishSurvivesThePseudolocale(t *testing.T) {
 // embedded in internal/words; qps is generated below.
 func printerFor(t *testing.T, lang string) *words.Printer {
 	t.Helper()
+
 	if lang == "qps" {
 		writePseudoCatalogue(t)
 	}
+
 	return words.For(lang)
 }
 
@@ -120,10 +129,12 @@ func printerFor(t *testing.T, lang string) *words.Printer {
 // no entry for, and so stays English on screen.
 func writePseudoCatalogue(t *testing.T) {
 	t.Helper()
+
 	raw, err := os.ReadFile(filepath.Join("..", "words", "lang", "es.json"))
 	if err != nil {
 		t.Fatalf("read the Spanish catalogue: %v", err)
 	}
+
 	var file struct {
 		Keys map[string]struct {
 			Source json.RawMessage `json:"source"`
@@ -137,6 +148,7 @@ func writePseudoCatalogue(t *testing.T) {
 	for key, entry := range file.Keys {
 		keys[key] = map[string]any{"value": pseudoValue(t, entry.Source)}
 	}
+
 	out, err := json.Marshal(map[string]any{"language": "Pseudo", "keys": keys})
 	if err != nil {
 		t.Fatalf("encode the pseudolocale: %v", err)
@@ -146,9 +158,11 @@ func writePseudoCatalogue(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(home, "lang"), 0o750); err != nil {
 		t.Fatalf("make the overlay directory: %v", err)
 	}
+
 	if err := os.WriteFile(filepath.Join(home, "lang", "qps.json"), out, 0o600); err != nil {
 		t.Fatalf("write the pseudolocale: %v", err)
 	}
+
 	t.Setenv("ORBIT_HOME", home)
 }
 
@@ -156,18 +170,22 @@ func writePseudoCatalogue(t *testing.T) {
 // the {one, other} object a plural key carries.
 func pseudoValue(t *testing.T, source json.RawMessage) any {
 	t.Helper()
+
 	var single string
 	if err := json.Unmarshal(source, &single); err == nil {
 		return pseudo(single)
 	}
+
 	var forms map[string]string
 	if err := json.Unmarshal(source, &forms); err != nil {
 		t.Fatalf("parse a catalogue source: %v", err)
 	}
+
 	out := map[string]any{}
 	for form, text := range forms {
 		out[form] = pseudo(text)
 	}
+
 	return out
 }
 
@@ -185,7 +203,9 @@ var accents = map[rune]rune{
 // substituted into them stay readable.
 func pseudo(s string) string {
 	var out strings.Builder
+
 	inside := false
+
 	for _, r := range s {
 		switch r {
 		case '{':
@@ -193,11 +213,14 @@ func pseudo(s string) string {
 		case '}':
 			inside = false
 		}
+
 		if sub, ok := accents[r]; ok && !inside {
 			out.WriteRune(sub)
 			continue
 		}
+
 		out.WriteRune(r)
 	}
+
 	return out.String()
 }

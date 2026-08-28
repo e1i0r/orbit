@@ -61,6 +61,7 @@ func (m Model) anyWorking() bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -76,6 +77,7 @@ func (m Model) runGlyph(spinning bool) string {
 	if spinning {
 		return m.spin() + " "
 	}
+
 	return "⚡ "
 }
 
@@ -91,6 +93,8 @@ func (m Model) nextFrame() (Model, tea.Cmd) {
 	if m.spinning || !m.moving() {
 		return m, nil
 	}
+
 	m.spinning = true
+
 	return m, spinnerTick()
 }

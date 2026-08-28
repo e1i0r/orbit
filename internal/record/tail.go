@@ -43,19 +43,23 @@ func ReadFrom(path string, offset int64) ([]Event, int64, error) {
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, 0, nil
 	}
+
 	if err != nil {
 		return nil, 0, fmt.Errorf("open %q: %w", path, err)
 	}
+
 	defer f.Close()
 
 	info, err := f.Stat()
 	if err != nil {
 		return nil, 0, fmt.Errorf("stat %q: %w", path, err)
 	}
+
 	size := info.Size()
 	if offset > size {
 		offset = 0
 	}
+
 	if offset == size {
 		return nil, offset, nil
 	}
@@ -64,6 +68,7 @@ func ReadFrom(path string, offset int64) ([]Event, int64, error) {
 	if err != nil {
 		return nil, 0, fmt.Errorf("read %q: %w", path, err)
 	}
+
 	if _, err := f.Seek(offset, io.SeekStart); err != nil {
 		return nil, 0, fmt.Errorf("seek %q: %w", path, err)
 	}
@@ -77,6 +82,7 @@ func ReadFrom(path string, offset int64) ([]Event, int64, error) {
 		if s.hasPending {
 			s.events = append(s.events, unreadable(s.pending))
 		}
+
 		return s.events, size, nil
 	}
 	// The final line has no newline yet. Whatever it produced — a parsed
@@ -85,5 +91,6 @@ func ReadFrom(path string, offset int64) ([]Event, int64, error) {
 	if s.lastWasEvent {
 		s.events = s.events[:len(s.events)-1]
 	}
+
 	return s.events, s.lastStart, nil
 }

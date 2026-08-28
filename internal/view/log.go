@@ -162,6 +162,7 @@ func (e Entry) What() EntryKind {
 		// reader's own language, instead of printing a key from a file.
 		return EntryUnreadable
 	}
+
 	return EntryUnknown
 }
 
@@ -180,12 +181,15 @@ func (e Entry) Attempted() bool { return e.Kind == record.TaskStarted }
 func Log(events []record.Event) []Entry {
 	out := make([]Entry, 0, len(events))
 	attempt := 0
+
 	for _, e := range events {
 		if e.Kind == record.TaskStarted {
 			attempt++
 		}
+
 		out = append(out, entry(e, attempt))
 	}
+
 	return out
 }
 

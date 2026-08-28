@@ -26,6 +26,7 @@ func TestFormatLatencyPicksRoleByThreshold(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			got := FormatLatency(c.ms)
+
 			want := Paint(c.role).Render(fmt.Sprintf("%dms", c.ms))
 			if got != want {
 				t.Errorf("FormatLatency(%d) = %q, want %q", c.ms, got, want)

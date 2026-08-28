@@ -14,6 +14,7 @@ import (
 // itself cannot answer.
 func TestReconcileAliveErrorPropagates(t *testing.T) {
 	s, r := fixture(t)
+
 	bad := Task{ID: "has/slash", Repo: r}
 	if _, err := Reconcile(s, bad); err == nil {
 		t.Error("Reconcile with a slash in the id should have failed")
@@ -25,10 +26,12 @@ func TestReconcileAliveErrorPropagates(t *testing.T) {
 // whether it was in flight, and the log itself cannot be read back.
 func TestReconcileEventsUnreadablePropagates(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "REC-EVT-ERR-1", "reconcile events error test", "quick")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	if _, err := mark(s, tk, deadPid(t)); err != nil {
 		t.Fatalf("mark: %v", err)
 	}
@@ -37,6 +40,7 @@ func TestReconcileEventsUnreadablePropagates(t *testing.T) {
 	if err != nil {
 		t.Fatalf("EventsPath: %v", err)
 	}
+
 	oversized := strings.Repeat("x", 5<<20) // over record.MaxLine (4 MiB)
 	if err := os.WriteFile(path, []byte(oversized+"\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile: %v", err)
@@ -52,11 +56,14 @@ func TestReconcileEventsUnreadablePropagates(t *testing.T) {
 // the write that closes the record fails.
 func TestReconcileAbandonedEmitFailurePropagates(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "REC-EMIT-ERR-1", "reconcile emit error test", "quick")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	openRun(t, s, tk)
+
 	if _, err := mark(s, tk, deadPid(t)); err != nil {
 		t.Fatalf("mark: %v", err)
 	}
@@ -67,9 +74,11 @@ func TestReconcileAbandonedEmitFailurePropagates(t *testing.T) {
 	if err != nil {
 		t.Fatalf("EventsPath: %v", err)
 	}
+
 	if err := os.Chmod(path, 0o400); err != nil {
 		t.Fatalf("chmod: %v", err)
 	}
+
 	t.Cleanup(func() { _ = os.Chmod(path, 0o600) }) //nolint:errcheck
 
 	if _, err := Reconcile(s, tk); err == nil {

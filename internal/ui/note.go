@@ -20,14 +20,17 @@ func (m Model) openNote() Model {
 			taskID = r.task.ID
 		}
 	}
+
 	if taskID == "" {
 		return m
 	}
+
 	m.note = noteState{
 		open:   true,
 		taskID: taskID,
 		text:   "",
 	}
+
 	return m
 }
 
@@ -46,43 +49,54 @@ func (m Model) noteKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if clip := readClipboard(); clip != "" {
 			m.note.text += clip
 		}
+
 		return m, nil
 	case msg.Code == tea.KeyBackspace || msg.Code == tea.KeyDelete:
 		m.note.text = trimLastRune(m.note.text)
 		return m, nil
 	}
+
 	if msg.Text != "" {
 		m.note.text += msg.Text
 	}
+
 	return m, nil
 }
 
 func (m Model) submitNote() (tea.Model, tea.Cmd) {
 	p := m.opts.Words
+
 	text := strings.TrimSpace(m.note.text)
 	if text == "" {
 		return m.say(p.T("note.empty", "the note cannot be empty")), nil
 	}
+
 	taskID := m.note.taskID
 	path := "."
+
 	for _, t := range m.board.Tasks {
 		if t.ID == taskID {
 			path = t.RepoPath
 			if path == "" {
 				path = t.Repo
 			}
+
 			break
 		}
 	}
+
 	m.note = noteState{}
 	m = m.say(p.T("note.recorded", "note recorded for {id}", about("id", taskID)))
+
 	var cmds []tea.Cmd
 	if m.opts.Reader != nil && m.screen == screenDetail {
 		cmds = append(cmds, logOf(m.opts.Reader, m.subject()))
 	}
+
 	nextM, runCmd := m.runWatched(Command{Name: "note"}, []string{"-repo", path, taskID, "--", text})
 	if runCmd != nil {
 		cmds = append(cmds, runCmd)
 	}
+
 	return nextM, tea.Batch(cmds...)
 }

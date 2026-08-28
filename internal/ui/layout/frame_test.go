@@ -36,19 +36,25 @@ func regionsOf(f Frame) []struct {
 // produces, and it draws as a pane that eats the one below it.
 func checkTiling(t *testing.T, f Frame, w, h int) {
 	t.Helper()
+
 	y := 0
+
 	for _, reg := range regionsOf(f) {
 		if reg.r.H < 0 {
 			t.Errorf("%s has height %d — no region may be negative", reg.name, reg.r.H)
 		}
+
 		if reg.r.Y != y {
 			t.Errorf("%s starts at row %d, want %d — the regions must tile with no gap and no overlap", reg.name, reg.r.Y, y)
 		}
+
 		if reg.r.W != w {
 			t.Errorf("%s is %d columns wide, want %d — every region spans the terminal", reg.name, reg.r.W, w)
 		}
+
 		y += reg.r.H
 	}
+
 	if y != h {
 		t.Errorf("the five regions cover %d rows of %d — the frame must tile the height exactly", y, h)
 	}
@@ -73,10 +79,13 @@ func TestFrameTilesEveryTerminalItAccepts(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Fit(%d, %d): %v", c.w, c.h, err)
 			}
+
 			checkTiling(t, f, c.w, c.h)
+
 			if f.Body.H != c.wantBody {
 				t.Errorf("body is %d rows, want %d — the body is what is left after the header, the band and the bar", f.Body.H, c.wantBody)
 			}
+
 			if f.Body.H < 1 {
 				t.Errorf("body is %d rows — a terminal this size must still show a task", f.Body.H)
 			}
@@ -92,9 +101,11 @@ func TestFrameRefusesATerminalUnderTheMinimum(t *testing.T) {
 	if err == nil {
 		t.Fatalf("Fit(59, 20) = %+v, want an error naming the minimum", f)
 	}
+
 	if f != (Frame{}) {
 		t.Errorf("Fit(59, 20) returned %+v beside its error — a refused frame has no regions", f)
 	}
+
 	for _, want := range []string{"60", "59"} {
 		if !strings.Contains(err.Error(), want) {
 			t.Errorf("Fit(59, 20) said %q, want it to name %s — the reader has to know how far off they are", err.Error(), want)
@@ -112,7 +123,9 @@ func TestFrameStaysTotalOnAShortTerminal(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Fit(%d, %d): %v", MinWidth, h, err)
 		}
+
 		checkTiling(t, f, MinWidth, h)
+
 		if h >= 6 && f.Body.H < 1 {
 			t.Errorf("at height %d the body is %d rows — the body is the last thing to give up a row", h, f.Body.H)
 		}
@@ -142,7 +155,9 @@ func TestFrameGivesUpTheBandBeforeTheBody(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Fit(%d, %d): %v", MinWidth, c.h, err)
 		}
+
 		got := []int{f.Header.H, f.Status.H, f.Body.H, f.Band.H, f.Bar.H}
+
 		want := []int{c.header, c.status, c.body, c.band, c.bar}
 		for i := range got {
 			if got[i] != want[i] {

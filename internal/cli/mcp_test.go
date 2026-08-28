@@ -25,6 +25,7 @@ func installHome(t *testing.T) string {
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
 	t.Setenv("APPDATA", filepath.Join(home, "AppData", "Roaming"))
+
 	return home
 }
 
@@ -32,10 +33,12 @@ func installHome(t *testing.T) string {
 // its server list in one file at the top of the home directory.
 func claudeCode(t *testing.T, home string) {
 	t.Helper()
+
 	raw, err := os.ReadFile(filepath.Join(home, ".claude.json"))
 	if err != nil {
 		t.Fatalf("read the configuration the installer wrote: %v", err)
 	}
+
 	var config struct {
 		Servers map[string]struct {
 			Command string   `json:"command"`
@@ -45,13 +48,16 @@ func claudeCode(t *testing.T, home string) {
 	if err := json.Unmarshal(raw, &config); err != nil {
 		t.Fatalf("the installer wrote something that is not JSON: %v\n%s", err, raw)
 	}
+
 	entry, ok := config.Servers["orbit"]
 	if !ok {
 		t.Fatalf("the configuration has no orbit entry:\n%s", raw)
 	}
+
 	if !filepath.IsAbs(entry.Command) {
 		t.Errorf("command = %q, want an absolute path: a client spawns this years later, from a working directory of its own", entry.Command)
 	}
+
 	if len(entry.Args) != 1 || entry.Args[0] != "mcp" {
 		t.Errorf("args = %v, want [mcp] — that is the command the server is", entry.Args)
 	}
@@ -59,22 +65,27 @@ func claudeCode(t *testing.T, home string) {
 
 func TestMCPInstallFlagRegistersTheServer(t *testing.T) {
 	home := installHome(t)
+
 	code, out, errOut := run(t, "mcp", "-install")
 	if code != 0 {
 		t.Fatalf("mcp -install exited %d: %s", code, errOut)
 	}
+
 	if !strings.Contains(out, filepath.Join(home, ".claude.json")) {
 		t.Errorf("the output does not say where it wrote:\n%s", out)
 	}
+
 	claudeCode(t, home)
 }
 
 func TestMCPInstallSubcommandDoesTheSameThing(t *testing.T) {
 	home := installHome(t)
+
 	code, _, errOut := run(t, "mcp", "install")
 	if code != 0 {
 		t.Fatalf("mcp install exited %d: %s", code, errOut)
 	}
+
 	claudeCode(t, home)
 }
 
@@ -82,20 +93,25 @@ func TestMCPInstallSubcommandDoesTheSameThing(t *testing.T) {
 // property the whole redirection above exists to check.
 func TestMCPInstallTouchesNothingElse(t *testing.T) {
 	home := installHome(t)
+
 	elsewhere := filepath.Join(t.TempDir(), "claude.json")
 	if err := os.WriteFile(elsewhere, []byte("{}\n"), 0o600); err != nil {
 		t.Fatalf("write: %v", err)
 	}
+
 	if code, _, errOut := run(t, "mcp", "install"); code != 0 {
 		t.Fatalf("mcp install exited %d: %s", code, errOut)
 	}
+
 	got, err := os.ReadFile(elsewhere)
 	if err != nil {
 		t.Fatalf("read: %v", err)
 	}
+
 	if string(got) != "{}\n" {
 		t.Errorf("a configuration outside the home directory was rewritten:\n%s", got)
 	}
+
 	if _, err := os.Stat(filepath.Join(home, ".claude.json")); err != nil {
 		t.Errorf("the one inside it was not: %v", err)
 	}
@@ -106,10 +122,12 @@ func TestMCPInstallTouchesNothingElse(t *testing.T) {
 // mistake and not a new subcommand.
 func TestMCPTakesNoOtherArgument(t *testing.T) {
 	installHome(t)
+
 	code, _, errOut := run(t, "mcp", "serve")
 	if code == 0 {
 		t.Fatal("mcp serve exited 0, want it refused")
 	}
+
 	if !strings.Contains(errOut, "serve") {
 		t.Errorf("the error does not name the argument it did not understand: %s", errOut)
 	}

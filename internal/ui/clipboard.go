@@ -12,11 +12,14 @@ func readClipboard() string {
 			return string(out)
 		}
 	}
+
 	if out, err := exec.Command("wl-paste").Output(); err == nil {
 		return string(out)
 	}
+
 	if out, err := exec.Command("xclip", "-out", "-selection", "clipboard").Output(); err == nil {
 		return string(out)
 	}
+
 	return ""
 }

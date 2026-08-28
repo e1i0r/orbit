@@ -18,20 +18,24 @@ func (d homeDir) FlowDir() string { return string(d) }
 // flowsIn makes an empty flow directory and answers a Source for it.
 func flowsIn(t *testing.T) homeDir {
 	t.Helper()
+
 	dir := filepath.Join(t.TempDir(), "flows")
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
+
 	return homeDir(dir)
 }
 
 // writeFlow puts one flow file in a flow directory.
 func writeFlow(t *testing.T, src homeDir, file, body string) string {
 	t.Helper()
+
 	path := filepath.Join(src.FlowDir(), file+".json")
 	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
 		t.Fatalf("write %s: %v", path, err)
 	}
+
 	return path
 }
 
@@ -42,6 +46,7 @@ func onePhase(name string) string {
 
 func TestBuiltinFlowsShip(t *testing.T) {
 	want := []string{"careful", "quick", "task", "tdd-fuzz-pr"}
+
 	got := BuiltinNames()
 	if strings.Join(got, ",") != strings.Join(want, ",") {
 		t.Errorf("BuiltinNames() = %v, want %v", got, want)
@@ -55,9 +60,11 @@ func TestEveryBuiltinIsAFlowThatCouldRun(t *testing.T) {
 			t.Errorf("Builtin(%q): %v", name, err)
 			continue
 		}
+
 		if f.Name != name {
 			t.Errorf("%s.json calls itself %q — the file name is what a task records", name, f.Name)
 		}
+
 		if err := f.Validate(); err != nil {
 			t.Errorf("the built-in %q does not validate: %v", name, err)
 		}
@@ -82,20 +89,26 @@ func TestTheBuiltinsAreTheThreeShapesAChangeHas(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Builtin: %v", err)
 			}
+
 			var names []string
+
 			waits := ""
+
 			for _, p := range f.Phases {
 				names = append(names, p.Name)
 				if p.Wait {
 					waits += p.Name
 				}
+
 				if p.Engine == "" || p.Model == "" {
 					t.Errorf("phase %q names engine %q and model %q; a phase with no model runs on whatever the engine defaults to", p.Name, p.Engine, p.Model)
 				}
 			}
+
 			if strings.Join(names, ",") != strings.Join(tc.phases, ",") {
 				t.Errorf("phases = %v, want %v", names, tc.phases)
 			}
+
 			if waits != tc.waits {
 				t.Errorf("the phases that wait are %q, want %q", waits, tc.waits)
 			}
@@ -107,6 +120,7 @@ func TestTheDefaultIsTheTaskFlow(t *testing.T) {
 	if Default != "task" {
 		t.Errorf("Default = %q, want task — every task already recorded was written against that name", Default)
 	}
+
 	if _, err := Builtin(Default); err != nil {
 		t.Errorf("the default flow does not ship: %v", err)
 	}
@@ -117,6 +131,7 @@ func TestResolveFindsABuiltin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
+
 	if f.Name != "careful" || len(f.Phases) != 3 {
 		t.Errorf("resolved %+v, want the built-in careful", f)
 	}
@@ -127,6 +142,7 @@ func TestResolveWithoutASourceIsTheBuiltins(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
+
 	if f.Name != "quick" {
 		t.Errorf("resolved %+v, want the built-in quick", f)
 	}
@@ -142,9 +158,11 @@ func TestResolveSaysWhatThereIsWhenTheNameIsUnknown(t *testing.T) {
 	if err == nil {
 		t.Fatal("Resolve found a flow that does not exist")
 	}
+
 	if !strings.Contains(err.Error(), "nonesuch") {
 		t.Errorf("the refusal does not name what was asked for: %v", err)
 	}
+
 	for _, name := range append(BuiltinNames(), "mine") {
 		if !strings.Contains(err.Error(), name) {
 			t.Errorf("the refusal does not offer %q: %v", name, err)
@@ -160,6 +178,7 @@ func TestAFileInTheFlowDirectoryResolves(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
+
 	if f.Name != "mine" || len(f.Phases) != 1 {
 		t.Errorf("resolved %+v, want the flow the file holds", f)
 	}
@@ -173,6 +192,7 @@ func TestAUserFlowBeatsTheBuiltinItShadows(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
+
 	if len(f.Phases) != 1 || f.Phases[0].Name != "mine" {
 		t.Errorf("resolved %+v, want the file rather than the built-in it shadows", f)
 	}
@@ -188,6 +208,7 @@ func TestAMalformedUserFlowFailsRatherThanFallingBackToTheBuiltin(t *testing.T) 
 	if err == nil {
 		t.Fatalf("a shadow that will not parse resolved to %+v", f)
 	}
+
 	if !strings.Contains(err.Error(), path) {
 		t.Errorf("the refusal does not say which file will not parse: %v", err)
 	}
@@ -203,6 +224,7 @@ func TestAUserFlowThatCallsItselfSomethingElseIsRefused(t *testing.T) {
 	if err == nil {
 		t.Fatal("a flow whose file name and whose own name disagree resolved")
 	}
+
 	if !strings.Contains(err.Error(), "mine") || !strings.Contains(err.Error(), "other") {
 		t.Errorf("the refusal does not say which two names disagree: %v", err)
 	}
@@ -234,6 +256,7 @@ func TestListSaysWhereEachFlowCameFromAndSortsThem(t *testing.T) {
 	}
 
 	got := List(src)
+
 	want := []Listed{
 		{Name: "careful", Origin: OriginBuiltin},
 		{Name: "mine", Origin: OriginUser},
@@ -269,14 +292,17 @@ func TestNamesAreBareNamesAndTheRefusalOffersThem(t *testing.T) {
 	writeFlow(t, src, "mine", onePhase("mine"))
 
 	got := strings.Join(Names(src), ", ")
+
 	want := "careful, mine, quick, task, tdd-fuzz-pr"
 	if got != want {
 		t.Fatalf("Names() = %q, want %q", got, want)
 	}
+
 	_, err := Resolve(src, "nope")
 	if err == nil {
 		t.Fatal("a name nothing answers to resolved")
 	}
+
 	if !strings.Contains(err.Error(), want) {
 		t.Errorf("the refusal does not offer the names there are: %v", err)
 	}

@@ -31,6 +31,7 @@ func TestLoggerLifecycleAndLevels(t *testing.T) {
 	}
 
 	content := string(data)
+
 	expectedTokens := []string{
 		"[DEBUG]", "[INFO]", "[WARN]", "[ERROR]",
 		"[cli/test]", "[task/runner]", "[board/poll]", "[engine/claude]",
@@ -100,6 +101,7 @@ func TestNilLoggerSafety(t *testing.T) {
 	if err := l.Close(); err != nil {
 		t.Errorf("nil logger close should not error: %v", err)
 	}
+
 	l.Log(LevelInfo, "test", "should not panic")
 }
 
@@ -107,6 +109,7 @@ func TestLoggerErrorPaths(t *testing.T) {
 	if _, err := New(""); err == nil {
 		t.Error("expected error creating logger with empty path")
 	}
+
 	if err := Init(""); err == nil {
 		t.Error("expected error initializing global logger with empty path")
 	}
@@ -115,6 +118,7 @@ func TestLoggerErrorPaths(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create logger: %v", err)
 	}
+
 	if err := l.Close(); err != nil {
 		t.Errorf("failed to close logger: %v", err)
 	}

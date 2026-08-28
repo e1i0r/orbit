@@ -18,10 +18,12 @@ import (
 // read.
 func TestCreateChosenFlowErrorPropagates(t *testing.T) {
 	s, r := fixture(t)
+
 	settingsPath := filepath.Join(s.Root(), "settings.json")
 	if err := os.Mkdir(settingsPath, 0o700); err != nil {
 		t.Fatalf("Mkdir: %v", err)
 	}
+
 	if _, err := Create(s, r, "CREATE-FLOW-ERR-1", "text", ""); err == nil {
 		t.Error("Create should have failed when settings.json cannot be read")
 	}
@@ -41,16 +43,20 @@ func TestCreateTaskFilePathErrorPropagates(t *testing.T) {
 // cannot make the tree Create needs underneath it.
 func TestCreateTaskDirErrorPropagates(t *testing.T) {
 	s, r := fixture(t)
+
 	repoDir, err := s.RepoDir(r.Path)
 	if err != nil {
 		t.Fatalf("RepoDir: %v", err)
 	}
+
 	if err := os.MkdirAll(filepath.Dir(repoDir), 0o700); err != nil {
 		t.Fatalf("MkdirAll: %v", err)
 	}
+
 	if err := os.WriteFile(repoDir, []byte("blocking"), 0o600); err != nil {
 		t.Fatalf("WriteFile: %v", err)
 	}
+
 	if _, err := Create(s, r, "CREATE-DIR-ERR-1", "text", "quick"); err == nil {
 		t.Error("Create should have failed when the repo directory is blocked by a file")
 	}
@@ -61,14 +67,18 @@ func TestCreateTaskDirErrorPropagates(t *testing.T) {
 func TestCreateWriteFileErrorPropagates(t *testing.T) {
 	s, r := fixture(t)
 	id := "CREATE-WRITE-ERR-1"
+
 	dir, err := s.CreateTaskDir(r.Path, id)
 	if err != nil {
 		t.Fatalf("CreateTaskDir: %v", err)
 	}
+
 	if err := os.Chmod(dir, 0o500); err != nil {
 		t.Fatalf("chmod: %v", err)
 	}
+
 	t.Cleanup(func() { _ = os.Chmod(dir, 0o700) }) //nolint:errcheck
+
 	if _, err := Create(s, r, id, "text", "quick"); err == nil {
 		t.Error("Create should have failed writing task.md into a read-only directory")
 	}
@@ -87,13 +97,16 @@ func TestLoadTaskFilePathErrorPropagates(t *testing.T) {
 func TestLoadReadFileErrorPropagates(t *testing.T) {
 	s, r := fixture(t)
 	id := "LOAD-READ-ERR-1"
+
 	path, err := s.TaskFilePath(r.Path, id)
 	if err != nil {
 		t.Fatalf("TaskFilePath: %v", err)
 	}
+
 	if err := os.MkdirAll(path, 0o700); err != nil {
 		t.Fatalf("MkdirAll: %v", err)
 	}
+
 	if _, err := Load(s, r, id); err == nil {
 		t.Error("Load over a directory should have failed")
 	}
@@ -103,10 +116,12 @@ func TestLoadReadFileErrorPropagates(t *testing.T) {
 // settings error is asserted without Create's own wrapping in the way.
 func TestChosenFlowSettingsErrorPropagates(t *testing.T) {
 	s, _ := fixture(t)
+
 	settingsPath := filepath.Join(s.Root(), "settings.json")
 	if err := os.Mkdir(settingsPath, 0o700); err != nil {
 		t.Fatalf("Mkdir: %v", err)
 	}
+
 	if _, err := chosenFlow(s, ""); err == nil {
 		t.Error("chosenFlow should have failed when settings.json cannot be read")
 	}
@@ -117,13 +132,16 @@ func TestChosenFlowSettingsErrorPropagates(t *testing.T) {
 // later, unrelated event overwrite the flow name task.created recorded.
 func TestWrittenFlowSkipsEventsThatAreNotTaskCreated(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "WRITTEN-FLOW-1", "text", "quick")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	if err := emit(s, tk, record.Event{Kind: record.TaskStarted, Data: map[string]string{"flow": "task"}}); err != nil {
 		t.Fatalf("emit: %v", err)
 	}
+
 	if got := writtenFlow(s, tk); got != "quick" {
 		t.Errorf("writtenFlow = %q, want quick — a later event overwrote what task.created said", got)
 	}
@@ -133,6 +151,7 @@ func TestWrittenFlowSkipsEventsThatAreNotTaskCreated(t *testing.T) {
 // return: a log that cannot be read answers "" rather than failing Load.
 func TestWrittenFlowEventsErrorAnswersEmpty(t *testing.T) {
 	s, r := fixture(t)
+
 	bad := Task{ID: "has/slash", Repo: r}
 	if got := writtenFlow(s, bad); got != "" {
 		t.Errorf("writtenFlow on a bad id = %q, want empty", got)
@@ -143,16 +162,20 @@ func TestWrittenFlowEventsErrorAnswersEmpty(t *testing.T) {
 // the tasks directory exists as a plain file.
 func TestListTasksDirReadDirErrorPropagates(t *testing.T) {
 	s, r := fixture(t)
+
 	tasksDir, err := s.TasksDir(r.Path)
 	if err != nil {
 		t.Fatalf("TasksDir: %v", err)
 	}
+
 	if err := os.MkdirAll(filepath.Dir(tasksDir), 0o700); err != nil {
 		t.Fatalf("MkdirAll: %v", err)
 	}
+
 	if err := os.WriteFile(tasksDir, []byte("blocking"), 0o600); err != nil {
 		t.Fatalf("WriteFile: %v", err)
 	}
+
 	if _, err := List(s, r); err == nil {
 		t.Error("List should have failed when the tasks directory is blocked by a file")
 	}
@@ -161,6 +184,7 @@ func TestListTasksDirReadDirErrorPropagates(t *testing.T) {
 // TestEventsErrorPathPropagates covers Events' own EventsPath error return.
 func TestEventsErrorPathPropagates(t *testing.T) {
 	s, r := fixture(t)
+
 	bad := Task{ID: "has/slash", Repo: r}
 	if _, err := Events(s, bad); err == nil {
 		t.Error("Events with a slash in the id should have failed")
@@ -170,6 +194,7 @@ func TestEventsErrorPathPropagates(t *testing.T) {
 // TestEmitErrorPathPropagates covers emit's own EventsPath error return.
 func TestEmitErrorPathPropagates(t *testing.T) {
 	s, r := fixture(t)
+
 	bad := Task{ID: "has/slash", Repo: r}
 	if err := emit(s, bad, record.Event{Kind: record.TaskCreated}); err == nil {
 		t.Error("emit with a slash in the id should have failed")

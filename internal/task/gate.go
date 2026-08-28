@@ -90,10 +90,12 @@ func (g fileGate) Before(ctx context.Context, t Task, p flow.Phase, _ int) (Go, 
 		// broke.
 		return Stop, nil //nolint:nilerr // deliberate: see above
 	}
+
 	word, err := take(g.store, t)
 	if err != nil {
 		return Continue, err
 	}
+
 	switch word {
 	case wordCancel:
 		return Stop, nil
@@ -108,6 +110,7 @@ func (g fileGate) Before(ctx context.Context, t Task, p flow.Phase, _ int) (Go, 
 		// whose flow asked to stop did not. Consuming it and falling through
 		// to the ordinary decision is what makes a stale word harmless.
 	}
+
 	auto, err := autopilot(g.store)
 	if err != nil {
 		return Continue, err
@@ -123,6 +126,7 @@ func (g fileGate) Before(ctx context.Context, t Task, p flow.Phase, _ int) (Go, 
 	case word == wordPause:
 		return g.wait(ctx, t, p, whyPaused, true)
 	}
+
 	return Continue, nil
 }
 
@@ -141,11 +145,13 @@ func (g fileGate) wait(ctx context.Context, t Task, p flow.Phase, why string, by
 	}); err != nil {
 		return Continue, err
 	}
+
 	for {
 		word, err := take(g.store, t)
 		if err != nil {
 			return Continue, err
 		}
+
 		switch word {
 		case wordCancel:
 			// No phase.resumed: nothing was let go. The run ends where it
@@ -155,20 +161,25 @@ func (g fileGate) wait(ctx context.Context, t Task, p flow.Phase, why string, by
 			if err := g.resumed(t, p, word); err != nil {
 				return Continue, err
 			}
+
 			if word == wordSkip {
 				return Skip, nil
 			}
+
 			return Continue, nil
 		}
+
 		if !byReader {
 			auto, err := autopilot(g.store)
 			if err != nil {
 				return Continue, err
 			}
+
 			if auto {
 				return Continue, g.resumed(t, p, howAutopilot)
 			}
 		}
+
 		select {
 		case <-ctx.Done():
 			return Stop, nil
@@ -195,6 +206,7 @@ func autopilot(s *store.Store) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	return cfg.Autopilot, nil
 }
 
@@ -207,6 +219,7 @@ func ask(ctx context.Context, g Gate, t Task, p flow.Phase, n int) (Go, error) {
 	if g == nil {
 		return Continue, nil
 	}
+
 	return g.Before(ctx, t, p, n)
 }
 
@@ -227,9 +240,11 @@ func gateStop(s *store.Store, t Task, phase string, ctxErr error) error {
 	if errors.Is(ctxErr, context.DeadlineExceeded) {
 		kind = record.TaskTimedOut
 	}
+
 	_ = emit(s, t, record.Event{Kind: kind}) //nolint:errcheck // deliberate: see failed
 	if ctxErr != nil {
 		return fmt.Errorf("task %s, waiting to start phase %q: %w", t.ID, phase, ctxErr)
 	}
+
 	return fmt.Errorf("task %s was stopped before phase %q", t.ID, phase)
 }

@@ -22,10 +22,13 @@ func newTask(ctx Context, args []string) error {
 	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
+
 	text := strings.TrimSpace(strings.Join(fs.Args(), " "))
+
 	if *id == "" {
 		return fmt.Errorf("new needs -id")
 	}
+
 	if text == "" {
 		return fmt.Errorf("new needs the task written out after the flags")
 	}
@@ -35,12 +38,15 @@ func newTask(ctx Context, args []string) error {
 		logger.Error("cli/new", "open repository %q failed: %v", *dir, err)
 		return err
 	}
+
 	t, err := task.Create(s, r, *id, text, *flowName)
 	if err != nil {
 		logger.Error("cli/new", "create task %q in %q failed: %v", *id, r.Name, err)
 		return err
 	}
+
 	logger.Info("cli/new", "created task %s in repo %s (flow=%s)", t.ID, r.Name, t.Flow)
 	fmt.Fprintf(ctx.Out, "%s written against %s, to walk the %s flow\n", t.ID, r.Name, t.Flow)
+
 	return nil
 }

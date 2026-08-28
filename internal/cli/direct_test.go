@@ -48,6 +48,7 @@ func TestDirectTaskEarlyExits(t *testing.T) {
 
 func TestDirectTaskRecordsDirective(t *testing.T) {
 	root, _ := workspace(t)
+
 	repoDir := filepath.Join(root, "payments")
 	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-DIR", "direct me"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
@@ -57,6 +58,7 @@ func TestDirectTaskRecordsDirective(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("direct exited %d: %s", code, errOut)
 	}
+
 	if !strings.Contains(out, "ACME-DIR redirected") {
 		t.Errorf("direct did not say it redirected the task: %s", out)
 	}
@@ -64,6 +66,7 @@ func TestDirectTaskRecordsDirective(t *testing.T) {
 
 func TestDirectTaskWithRestartFlag(t *testing.T) {
 	root, _ := workspace(t)
+
 	repoDir := filepath.Join(root, "payments")
 	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-REOPEN", "reopen me"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
@@ -73,6 +76,7 @@ func TestDirectTaskWithRestartFlag(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("direct -restart exited %d: %s", code, errOut)
 	}
+
 	if !strings.Contains(out, "restarted") {
 		t.Errorf("direct -restart did not report restart: %s", out)
 	}

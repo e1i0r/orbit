@@ -10,10 +10,12 @@ import (
 
 func TestQuotaFromEnvEmpty(t *testing.T) {
 	t.Setenv("ANTHROPIC_BASE_URL", "")
+
 	c := FromEnv()
 	if c != nil {
 		t.Fatalf("want nil client when ANTHROPIC_BASE_URL is empty, got %+v", c)
 	}
+
 	if got := c.Quota(true); got != nil {
 		t.Fatalf("want nil quota from nil client, got %+v", got)
 	}
@@ -25,6 +27,7 @@ func TestQuotaFetchArray(t *testing.T) {
 			http.NotFound(w, r)
 			return
 		}
+
 		_ = json.NewEncoder(w).Encode([]wireWindow{ //nolint:errcheck // test HTTP handler response
 			{
 				Key:       "sk-ant-1234567890extra",
@@ -37,26 +40,33 @@ func TestQuotaFetchArray(t *testing.T) {
 	defer ts.Close()
 
 	c := New(ts.URL)
+
 	windows, err := c.Fetch()
 	if err != nil {
 		t.Fatalf("fetch quota: %v", err)
 	}
+
 	if len(windows) != 1 {
 		t.Fatalf("want 1 window, got %d", len(windows))
 	}
+
 	w := windows[0]
 	if len(w.Key) > MaxKeyLen {
 		t.Errorf("key %q exceeds MaxKeyLen %d", w.Key, MaxKeyLen)
 	}
+
 	if w.Key != "sk-ant-12345" {
 		t.Errorf("key = %q, want %q", w.Key, "sk-ant-12345")
 	}
+
 	if w.Label != "5h" {
 		t.Errorf("label = %q, want %q", w.Label, "5h")
 	}
+
 	if w.Pct != 62.0 {
 		t.Errorf("pct = %v, want 62.0", w.Pct)
 	}
+
 	if w.ResetsIn != 8040*time.Second {
 		t.Errorf("resetsIn = %v, want %v", w.ResetsIn, 8040*time.Second)
 	}
@@ -70,13 +80,16 @@ func TestQuotaFetchWrapped(t *testing.T) {
 	defer ts.Close()
 
 	c := New(ts.URL)
+
 	windows, err := c.Fetch()
 	if err != nil {
 		t.Fatalf("fetch quota: %v", err)
 	}
+
 	if len(windows) != 1 {
 		t.Fatalf("want 1 window, got %d", len(windows))
 	}
+
 	if windows[0].Label != "7d" || windows[0].Pct != 45.5 || windows[0].ResetsIn != 3600*time.Second {
 		t.Errorf("unexpected window: %+v", windows[0])
 	}
@@ -91,10 +104,12 @@ func TestQuotaSyncWait(t *testing.T) {
 	defer ts.Close()
 
 	c := New(ts.URL)
+
 	windows := c.Quota(true)
 	if len(windows) != 1 {
 		t.Fatalf("want 1 window on sync wait, got %d", len(windows))
 	}
+
 	if windows[0].Label != "day" {
 		t.Errorf("label = %q, want day", windows[0].Label)
 	}
@@ -110,6 +125,7 @@ func TestQuotaErrorHandling(t *testing.T) {
 	if _, err := c.Fetch(); err == nil {
 		t.Error("want error on 503, got nil")
 	}
+
 	if got := c.Quota(true); got != nil {
 		t.Errorf("want nil quota on error, got %+v", got)
 	}

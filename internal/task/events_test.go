@@ -15,15 +15,19 @@ import (
 // find returns the one event of a kind, failing if there is not exactly one.
 func find(t *testing.T, events []record.Event, kind string) record.Event {
 	t.Helper()
+
 	var got []record.Event
+
 	for _, e := range events {
 		if e.Kind == kind {
 			got = append(got, e)
 		}
 	}
+
 	if len(got) != 1 {
 		t.Fatalf("found %d %s events, want 1", len(got), kind)
 	}
+
 	return got[0]
 }
 
@@ -33,13 +37,16 @@ func find(t *testing.T, events []record.Event, kind string) record.Event {
 // stops finding what it needs.
 func TestRunRecordsTheDataKeysTheWindowWillRead(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": engine.NewFake("done")}, nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
+
 	events, err := Events(s, tk)
 	if err != nil {
 		t.Fatalf("Events: %v", err)
@@ -67,6 +74,7 @@ func TestRunRecordsTheDataKeysTheWindowWillRead(t *testing.T) {
 
 func TestRunTruncatesAnEnormousOutputAndSaysSoInTheRecord(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
@@ -75,6 +83,7 @@ func TestRunTruncatesAnEnormousOutputAndSaysSoInTheRecord(t *testing.T) {
 	// it verbatim would be refused and the phase would finish with nothing
 	// written down at all.
 	huge := strings.Repeat("x", 5<<20)
+
 	eng := resultEngine{result: engine.Result{Output: huge}}
 	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": eng}, nil); err != nil {
 		t.Fatalf("Run: %v", err)
@@ -84,16 +93,20 @@ func TestRunTruncatesAnEnormousOutputAndSaysSoInTheRecord(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Events: %v — an enormous phase output made the whole record unreadable", err)
 	}
+
 	finished := find(t, events, "phase.finished")
 	if len(finished.Text) >= len(huge) {
 		t.Errorf("recorded %d bytes of a %d byte output — nothing was cut", len(finished.Text), len(huge))
 	}
+
 	if !strings.HasSuffix(finished.Text, "…[truncated, full output was "+strconv.Itoa(len(huge))+" bytes]") {
 		t.Errorf("the text ends %q — truncation must announce itself", finished.Text[max(0, len(finished.Text)-60):])
 	}
+
 	if finished.Data["output_bytes"] != strconv.Itoa(len(huge)) {
 		t.Errorf(`Data["output_bytes"] = %q, want %q`, finished.Data["output_bytes"], strconv.Itoa(len(huge)))
 	}
+
 	if find(t, events, "task.finished").Kind != "task.finished" {
 		t.Error("the run did not finish")
 	}
@@ -101,21 +114,26 @@ func TestRunTruncatesAnEnormousOutputAndSaysSoInTheRecord(t *testing.T) {
 
 func TestAnOrdinaryOutputIsRecordedWhole(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": engine.NewFake("wrote the retry")}, nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
+
 	events, err := Events(s, tk)
 	if err != nil {
 		t.Fatalf("Events: %v", err)
 	}
+
 	finished := find(t, events, "phase.finished")
 	if finished.Text != "wrote the retry" {
 		t.Errorf("phase.finished text = %q, want it word for word", finished.Text)
 	}
+
 	if _, ok := finished.Data["output_bytes"]; ok {
 		t.Error("output_bytes was recorded though nothing was truncated")
 	}
@@ -130,14 +148,17 @@ func TestAnOrdinaryOutputIsRecordedWhole(t *testing.T) {
 
 func TestRunRecordsAFlowThatDoesNotValidate(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	f := flow.Flow{Name: "task"} // no phases
 	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": engine.NewFake("")}, nil); err == nil {
 		t.Fatal("Run walked a flow with no phases")
 	}
+
 	failed := find(t, mustEvents(t, s, tk), "task.failed")
 	if !strings.Contains(failed.Text, "no phases") {
 		t.Errorf("task.failed does not say what was wrong with the flow: %q", failed.Text)
@@ -146,14 +167,17 @@ func TestRunRecordsAFlowThatDoesNotValidate(t *testing.T) {
 
 func TestRunRecordsAnEngineNobodyConfigured(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	f := flow.Flow{Name: "task", Phases: []flow.Phase{{Name: "implement", Engine: "opencode"}}}
 	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": engine.NewFake("")}, nil); err == nil {
 		t.Fatal("Run accepted a phase naming an engine that is not configured")
 	}
+
 	failed := find(t, mustEvents(t, s, tk), "task.failed")
 	if !strings.Contains(failed.Text, "opencode") {
 		t.Errorf("task.failed does not name the missing engine: %q", failed.Text)
@@ -163,10 +187,12 @@ func TestRunRecordsAnEngineNobodyConfigured(t *testing.T) {
 // mustEvents reads a task's record or fails the test.
 func mustEvents(t *testing.T, s *store.Store, tk Task) []record.Event {
 	t.Helper()
+
 	events, err := Events(s, tk)
 	if err != nil {
 		t.Fatalf("Events: %v", err)
 	}
+
 	return events
 }
 
@@ -186,18 +212,22 @@ func permissionFlow(perms ...string) flow.Flow {
 // be on disk at the time.
 func TestPhaseStartedSaysWhatThePhaseWasAllowedToTouch(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	f := permissionFlow(flow.PermissionRead, flow.PermissionNetwork)
 	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": engine.NewFake("done")}, nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
+
 	events, err := Events(s, tk)
 	if err != nil {
 		t.Fatalf("Events: %v", err)
 	}
+
 	if got := find(t, events, record.PhaseStarted).Data["permissions"]; got != "read,network" {
 		t.Errorf(`phase.started Data["permissions"] = %q, want "read,network"`, got)
 	}
@@ -209,17 +239,21 @@ func TestPhaseStartedSaysWhatThePhaseWasAllowedToTouch(t *testing.T) {
 // wrote down.
 func TestPhaseStartedOmitsPermissionsWhenThePhaseAsksForNothing(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": engine.NewFake("done")}, nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
+
 	events, err := Events(s, tk)
 	if err != nil {
 		t.Fatalf("Events: %v", err)
 	}
+
 	if _, ok := find(t, events, record.PhaseStarted).Data["permissions"]; ok {
 		t.Error(`phase.started carries an empty "permissions" key`)
 	}
@@ -231,18 +265,23 @@ func TestPhaseStartedOmitsPermissionsWhenThePhaseAsksForNothing(t *testing.T) {
 // engine.Request had no field that could carry it.
 func TestTheEngineIsHandedThePhasesPermissions(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	fake := engine.NewFake("done")
+
 	f := permissionFlow(flow.PermissionRepo)
 	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": fake}, nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
+
 	if len(fake.Calls) != 1 {
 		t.Fatalf("the engine was called %d times, want 1", len(fake.Calls))
 	}
+
 	got := fake.Calls[0].Permissions
 	if len(got) != 1 || got[0] != flow.PermissionRepo {
 		t.Errorf("the engine was handed %v, want [repo]", got)

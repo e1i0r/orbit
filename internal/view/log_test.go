@@ -23,12 +23,15 @@ func TestTheLogIsEveryEventInTheOrderItWasWritten(t *testing.T) {
 	if len(entries) != 3 {
 		t.Fatalf("three events folded to %d entries, want 3", len(entries))
 	}
+
 	if got := entries[1].What(); got != EntryUnknown {
 		t.Errorf("a kind this build does not know reads as %v, want EntryUnknown", got)
 	}
+
 	if entries[1].Kind != "task.teleported" {
 		t.Errorf("the unknown entry says %q, want the record's own word kept", entries[1].Kind)
 	}
+
 	if !entries[2].At.Equal(at(2)) {
 		t.Errorf("the third entry is timed %v, want %v", entries[2].At, at(2))
 	}
@@ -47,6 +50,7 @@ func TestTheAttemptIsAPropertyOfTheEntry(t *testing.T) {
 		{At: at(4), Kind: record.TaskStarted},
 		{At: at(5), Kind: record.PhaseFinished, Phase: "gates"},
 	})
+
 	want := []int{0, 1, 1, 1, 2, 2}
 	for i, n := range want {
 		if entries[i].Attempt != n {
@@ -70,16 +74,20 @@ func TestAnEntryReadsThePhaseOutOfItsData(t *testing.T) {
 		Data: data("n", "1", "engine", "claude", "model", "opus",
 			"session", "8f2c31", "cost", "0.42", "error", "none of it"),
 	}})
+
 	got := entries[0]
 	if got.PhaseN != 1 || got.Engine != "claude" || got.Model != "opus" || got.Session != "8f2c31" {
 		t.Errorf("the entry reads %+v, want the phase, engine, model and session out of Data", got)
 	}
+
 	if got.Cost != 0.42 {
 		t.Errorf("the cost reads %v, want 0.42", got.Cost)
 	}
+
 	if got.Cause != "none of it" {
 		t.Errorf("the cause reads %q, want what Data[\"error\"] said", got.Cause)
 	}
+
 	if got.What() != EntryFinished {
 		t.Errorf("a finished phase reads as %v, want EntryFinished", got.What())
 	}
@@ -90,20 +98,26 @@ func TestAnEntryReadsThePhaseOutOfItsData(t *testing.T) {
 // written only when the output was actually cut, so its absence is not a
 // missing fact — it is the fact that nothing was lost.
 func TestTruncationIsAnswerableWithoutReadingTheText(t *testing.T) {
-	cut := Log([]record.Event{{At: at(1), Kind: record.PhaseFailed, Phase: "gates",
-		Text: "go vet: unreachable code", Data: data("output_bytes", "1048583")}})[0]
+	cut := Log([]record.Event{{
+		At: at(1), Kind: record.PhaseFailed, Phase: "gates",
+		Text: "go vet: unreachable code", Data: data("output_bytes", "1048583"),
+	}})[0]
 	if !cut.Truncated() {
 		t.Error("an output the record cut does not say so")
 	}
+
 	if cut.Kept != len("go vet: unreachable code") || cut.Full != 1048583 {
 		t.Errorf("kept %d of %d, want %d of 1048583", cut.Kept, cut.Full, len("go vet: unreachable code"))
 	}
 
-	whole := Log([]record.Event{{At: at(1), Kind: record.PhaseFailed, Phase: "gates",
-		Text: "go vet: unreachable code"}})[0]
+	whole := Log([]record.Event{{
+		At: at(1), Kind: record.PhaseFailed, Phase: "gates",
+		Text: "go vet: unreachable code",
+	}})[0]
 	if whole.Truncated() {
 		t.Error("an output nothing cut claims to have been cut")
 	}
+
 	if whole.Full != 0 {
 		t.Errorf("Full = %d on an output nothing cut, want 0", whole.Full)
 	}
@@ -146,9 +160,11 @@ func TestADialogueEntryCarriesWhatActed(t *testing.T) {
 	if got.What() != EntryDialogue {
 		t.Errorf("a dialogue event reads as %v, want EntryDialogue", got.What())
 	}
+
 	if got.By != "mcp" {
 		t.Errorf("By = %q, want what the record says acted", got.By)
 	}
+
 	if bare := (Entry{Kind: record.TaskDialogue}); bare.By != "" {
 		t.Errorf("By = %q on an event that named nothing, want empty and not a guess", bare.By)
 	}

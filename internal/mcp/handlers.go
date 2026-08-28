@@ -69,10 +69,12 @@ func (sn Session) readBoard() (*storeAndBoard, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	b, err := sn.board(s)
 	if err != nil {
 		return nil, fmt.Errorf("read the board: %w", err)
 	}
+
 	return &storeAndBoard{store: s, board: b}, nil
 }
 
@@ -88,15 +90,19 @@ func (sn Session) boardSummary() CallToolResult {
 	if err != nil {
 		return refuse(err)
 	}
+
 	b := sb.board
+
 	counts := map[string]int{}
 	for _, band := range view.Bands() {
 		counts[bandSlug(band)] = b.Counts[band]
 	}
+
 	spend := 0.0
 	for _, t := range b.Tasks {
 		spend += t.Cost
 	}
+
 	return reply(map[string]any{
 		"repos":       reposOf(b),
 		"repos_count": len(b.RepoList),
@@ -110,29 +116,38 @@ func (sn Session) boardSummary() CallToolResult {
 
 func (sn Session) listTasks(args map[string]any) CallToolResult {
 	bandFilter := stringArg(args, "band")
+
 	var want view.Band
+
 	if bandFilter != "" {
 		parsed, err := parseBand(bandFilter)
 		if err != nil {
 			return refuse(err)
 		}
+
 		want = parsed
 	}
+
 	sb, err := sn.readBoard()
 	if err != nil {
 		return refuse(err)
 	}
+
 	repoFilter := stringArg(args, "repo")
+
 	rows := make([]map[string]any, 0, len(sb.board.Tasks))
 	for _, t := range sb.board.Tasks {
 		if bandFilter != "" && t.Band != want {
 			continue
 		}
+
 		if repoFilter != "" && !sameRepo(t, repoFilter) {
 			continue
 		}
+
 		rows = append(rows, row(t))
 	}
+
 	return reply(map[string]any{"tasks": rows, "count": len(rows)})
 }
 
@@ -165,6 +180,7 @@ func reposOf(b board.Board) []map[string]string {
 	for _, r := range b.RepoList {
 		repos = append(repos, map[string]string{"name": r.Name, "path": r.Path})
 	}
+
 	return repos
 }
 
@@ -175,13 +191,16 @@ func (sn Session) describeRoots() []string {
 	if sn.Root != "" {
 		return []string{sn.Root}
 	}
+
 	s, err := sn.open()
 	if err != nil {
 		return nil
 	}
+
 	roots, err := sn.roots(s)
 	if err != nil {
 		return nil
 	}
+
 	return roots
 }

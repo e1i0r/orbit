@@ -69,6 +69,7 @@ func New(baseURL string) *Client {
 	if baseURL == "" {
 		return nil
 	}
+
 	return &Client{
 		baseURL: strings.TrimRight(baseURL, "/"),
 		client:  &http.Client{Timeout: 1 * time.Second},
@@ -85,22 +86,27 @@ func (c *Client) Fetch() ([]Window, error) {
 	if c == nil || c.baseURL == "" {
 		return nil, nil
 	}
+
 	req, err := http.NewRequest(http.MethodGet, c.baseURL+"/quota", nil)
 	if err != nil {
 		return nil, fmt.Errorf("build quota request: %w", err)
 	}
+
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("fetch quota: %w", err)
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("quota HTTP %d", resp.StatusCode)
 	}
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("read quota body: %w", err)
 	}
+
 	return parseWindows(body)
 }
 
@@ -116,37 +122,48 @@ func (c *Client) Quota(wait bool) []Window {
 	if c == nil || c.baseURL == "" {
 		return nil
 	}
+
 	c.mu.Lock()
 	if time.Now().Before(c.nextTry) {
 		cached := c.cached
 		c.mu.Unlock()
+
 		return cached
 	}
+
 	if wait {
 		c.mu.Unlock()
 		windows, err := c.Fetch()
 		c.mu.Lock()
 		c.keep(windows, err)
 		c.mu.Unlock()
+
 		if err != nil {
 			return nil
 		}
+
 		return windows
 	}
+
 	if !c.fetching {
 		c.fetching = true
+
 		c.mu.Unlock()
 		go func() {
 			windows, err := c.Fetch()
 			c.mu.Lock()
 			defer c.mu.Unlock()
+
 			c.fetching = false
 			c.keep(windows, err)
 		}()
+
 		c.mu.Lock()
 	}
+
 	cached := c.cached
 	c.mu.Unlock()
+
 	return cached
 }
 
@@ -161,8 +178,10 @@ func (c *Client) keep(windows []Window, err error) {
 	if err != nil || windows == nil {
 		c.backoff = min(max(c.backoff*2, firstBackoff), maxBackoff)
 		c.nextTry = time.Now().Add(c.backoff)
+
 		return
 	}
+
 	c.cached, c.backoff = windows, 0
 	c.nextTry = time.Now().Add(CacheDuration)
 }
@@ -180,6 +199,7 @@ func parseWindows(body []byte) ([]Window, error) {
 	if err := json.Unmarshal(body, &list); err == nil {
 		return toWindows(list), nil
 	}
+
 	var wrapper struct {
 		Windows []wireWindow `json:"windows"`
 		Quota   []wireWindow `json:"quota"`
@@ -188,14 +208,17 @@ func parseWindows(body []byte) ([]Window, error) {
 		if len(wrapper.Windows) > 0 {
 			return toWindows(wrapper.Windows), nil
 		}
+
 		if len(wrapper.Quota) > 0 {
 			return toWindows(wrapper.Quota), nil
 		}
 	}
+
 	var single wireWindow
 	if err := json.Unmarshal(body, &single); err == nil && (single.Label != "" || single.Pct > 0) {
 		return toWindows([]wireWindow{single}), nil
 	}
+
 	return nil, errors.New("unrecognised quota response format")
 }
 
@@ -206,10 +229,12 @@ func toWindows(list []wireWindow) []Window {
 		if len(key) > MaxKeyLen {
 			key = key[:MaxKeyLen]
 		}
+
 		res := w.ResetsInS
 		if res == 0 {
 			res = w.ResetsIn
 		}
+
 		out = append(out, Window{
 			Key:      key,
 			Label:    w.Label,
@@ -217,5 +242,6 @@ func toWindows(list []wireWindow) []Window {
 			ResetsIn: time.Duration(res) * time.Second,
 		})
 	}
+
 	return out
 }

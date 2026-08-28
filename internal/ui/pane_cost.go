@@ -18,6 +18,7 @@ type costRow struct {
 // costLines renders Pane 4: Cost Breakdown per phase and total.
 func (m Model) costLines() []string {
 	p := m.opts.Words
+
 	t, ok := m.task(m.detail)
 	if !ok {
 		return []string{"  " + Paint(Dim).Render(p.T("detail.gone", "this task is no longer on the board"))}
@@ -30,27 +31,34 @@ func (m Model) costLines() []string {
 		"",
 	}
 
-	var rows []costRow
-	var started view.Entry
+	var (
+		rows    []costRow
+		started view.Entry
+	)
+
 	for _, e := range m.entries {
 		if e.What() == view.EntryStarted {
 			started = e
 			continue
 		}
+
 		if e.What() == view.EntryFinished || e.What() == view.EntryFailed || e.What() == view.EntryCancelled {
 			if e.Cost > 0 || e.Phase != "" {
 				eng := started.Engine
 				if eng == "" {
 					eng = t.Engine
 				}
+
 				mod := started.Model
 				if mod == "" {
 					mod = t.Model
 				}
+
 				dur := ""
 				if !started.At.IsZero() && !e.At.IsZero() {
 					dur = elapsed(e.At, started.At)
 				}
+
 				rows = append(rows, costRow{
 					phase:    e.Phase,
 					cost:     e.Cost,
@@ -81,6 +89,7 @@ func (m Model) costLines() []string {
 		if r.model != "" {
 			modStr += " (" + r.model + ")"
 		}
+
 		out = append(out, fmt.Sprintf("    %-24s %-12s %-12s %s",
 			Paint(Accent).Render(r.phase),
 			Paint(OK).Render(fmt.Sprintf("$%.4f", r.cost)),
@@ -88,6 +97,7 @@ func (m Model) costLines() []string {
 			Paint(Dim).Render(modStr),
 		))
 	}
+
 	out = append(out, "")
 
 	// Budget and totals box

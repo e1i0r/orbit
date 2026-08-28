@@ -44,6 +44,7 @@ func Register(p Provider) {
 func Providers() []Provider {
 	out := make([]Provider, len(registry))
 	copy(out, registry)
+
 	return out
 }
 
@@ -53,11 +54,13 @@ func Parse(rawURL string) (Issue, error) {
 	if trimmed == "" {
 		return Issue{}, errors.New("empty url")
 	}
+
 	for _, p := range registry {
 		if p.Match(trimmed) {
 			return p.Parse(trimmed)
 		}
 	}
+
 	return Issue{}, fmt.Errorf("no tracker provider matched url: %s", rawURL)
 }
 
@@ -68,6 +71,7 @@ func FormatPrompt(issue Issue) string {
 			return p.FormatPrompt(issue)
 		}
 	}
+
 	return defaultPrompt(issue)
 }
 
@@ -77,6 +81,7 @@ func defaultPrompt(iss Issue) string {
 		b.WriteString(iss.Title)
 		b.WriteString("\n\n")
 	}
+
 	b.WriteString("Issue Tracker: ")
 	b.WriteString(strings.ToUpper(iss.Kind))
 	b.WriteString(" (")
@@ -84,5 +89,6 @@ func defaultPrompt(iss Issue) string {
 	b.WriteString(")\nURL: ")
 	b.WriteString(iss.RawURL)
 	b.WriteString("\n\nPlease inspect the issue details using available MCP tools and implement the requested changes.")
+
 	return b.String()
 }

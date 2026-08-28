@@ -48,6 +48,7 @@ type startPlan struct {
 func (m Model) startLayout(w int) startPlan {
 	p := startPlan{flow: 2, config: 4, phases: 6, nPhases: len(m.phaseRows(w))}
 	p.autopilot = p.phases + p.nPhases + 1
+
 	return p
 }
 
@@ -56,6 +57,7 @@ func (m Model) startRows(h, w int) []string {
 	if h <= 0 || w <= 0 {
 		return nil
 	}
+
 	p := m.startLayout(w)
 	auto := m.autopilotRows(w)
 	out := make([]string, p.autopilot+len(auto))
@@ -64,6 +66,7 @@ func (m Model) startRows(h, w int) []string {
 	out[p.config] = m.configLine(w)
 	copy(out[p.phases:], m.phaseRows(w))
 	copy(out[p.autopilot:], auto)
+
 	return fill(out, h)
 }
 
@@ -71,14 +74,17 @@ func (m Model) startRows(h, w int) []string {
 // the repository on the right.
 func (m Model) startHead(w int) string {
 	t, ok := m.task(m.start.id)
+
 	left := Paint(Accent).Render(m.start.id)
 	if !ok {
 		return spread(" "+left, Paint(Dim).Render(m.opts.Words.T("detail.gone",
 			"this task is no longer on the board")), w)
 	}
+
 	if t.Title != "" {
 		left += "  " + Paint(Dim).Render(t.Title)
 	}
+
 	return spread(" "+left, Paint(Dim).Render(t.Repo), w)
 }
 
@@ -87,24 +93,30 @@ func (m Model) startHead(w int) string {
 func (m Model) flowLine(w int) string {
 	p := m.opts.Words
 	chosen := m.start.chosen()
+
 	left := startIndent + Paint(Dim).Render(p.T("start.flow", "flow")) + "  " +
 		Paint(Accent).Render(chosen.name)
 	if mark := m.flowMark(chosen); mark != "" {
 		left += "  " + Paint(Dim).Render(mark)
 	}
+
 	cycle := m.start.cycle()
 	if len(cycle) < 2 {
 		return fit(left, w)
 	}
+
 	parts := make([]string, 0, len(cycle))
 	for i, f := range cycle {
 		role := Dim
 		if i == len(cycle)-1 {
 			role = Accent
 		}
+
 		parts = append(parts, Paint(role).Render(f.name))
 	}
+
 	right := strings.Join(parts, Paint(Dim).Render(dot)) + "  " + Paint(Dim).Render(p.T("start.new_flow_tag", "[+] nuevo flujo"))
+
 	return spread(left, right, w)
 }
 
@@ -126,12 +138,14 @@ func (m Model) flowLine(w int) string {
 // with it in the error line below, which is a sentence and not a mark.
 func (m Model) flowMark(f startFlow) string {
 	p := m.opts.Words
+
 	switch f.origin {
 	case flow.OriginShadow:
 		return p.T("flow.shadowing", "yours, shadowing the built-in")
 	case flow.OriginUser:
 		return p.T("flow.yours", "yours")
 	}
+
 	return ""
 }
 
@@ -146,32 +160,40 @@ func (m Model) phaseRows(w int) []string {
 	if f.err != nil {
 		return []string{fit(startIndent+Paint(Bad).Render(f.err.Error()), w)}
 	}
+
 	var nameW, engineW, modelW int
 	for _, ph := range f.flow.Phases {
 		nameW = max(nameW, lipgloss.Width(ph.Name))
 		engineW = max(engineW, lipgloss.Width(ph.Engine))
 		modelW = max(modelW, lipgloss.Width(ph.Model))
 	}
+
 	out := make([]string, 0, len(f.flow.Phases))
 	for i, ph := range f.flow.Phases {
 		mark := " "
 		if i == 0 {
 			mark = markGlyph
 		}
+
 		fields := []struct {
 			cells int
 			text  string
 		}{{nameW, ph.Name}, {engineW, ph.Engine}, {modelW, ph.Model}, {0, m.phaseNote(ph)}}
+
 		var parts []string
+
 		for _, field := range fields {
 			if field.cells == 0 && field.text == "" {
 				continue
 			}
+
 			parts = append(parts, Paint(Dim).Render(pad(field.text, max(field.cells, lipgloss.Width(field.text)), false)))
 		}
+
 		out = append(out, fit(startIndent+Paint(Accent).Render(mark)+" "+
 			strings.Join(parts, strings.Repeat(" ", startGap)), w))
 	}
+
 	return out
 }
 
@@ -185,14 +207,17 @@ func (m Model) phaseRows(w int) []string {
 // should not have to know that one fact hides the other.
 func (m Model) phaseNote(ph flow.Phase) string {
 	p := m.opts.Words
+
 	note := p.T("start.asks_nothing", "asks for nothing")
 	if len(ph.Permissions) > 0 {
 		note = p.T("start.permissions", "permissions: {list}",
 			about("list", strings.Join(ph.Permissions, ", ")))
 	}
+
 	if ph.Wait {
 		note += dot + p.T("start.stops", "stops when it is done")
 	}
+
 	return note
 }
 
@@ -219,18 +244,22 @@ func (m Model) autopilotRows(w int) []string {
 		startIndent + Paint(Dim).Render(label) + "  ",
 		startIndent + strings.Repeat(" ", lipgloss.Width(label)+2),
 	}
+
 	var wordW int
 	for _, r := range rows {
 		wordW = max(wordW, lipgloss.Width(r.word))
 	}
+
 	out := make([]string, 0, len(rows))
 	for i, r := range rows {
 		pip, role := pipOff, Dim
 		if r.picked {
 			pip, role = pipOn, Live
 		}
+
 		out = append(out, fit(lead[i]+Paint(role).Render(pip+" "+pad(r.word, wordW, false))+
 			strings.Repeat(" ", startGap)+Paint(Dim).Render(r.what), w))
 	}
+
 	return out
 }

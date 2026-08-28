@@ -27,6 +27,7 @@ func TestMatchesSettingsAliasAndCandidatesFindTheAlias(t *testing.T) {
 			t.Errorf("matchesSettingsAlias(%q) = false, want true", want)
 		}
 	}
+
 	if matchesSettingsAlias("zzz") {
 		t.Error("matchesSettingsAlias(\"zzz\") = true, want false")
 	}
@@ -36,11 +37,13 @@ func TestMatchesSettingsAliasAndCandidatesFindTheAlias(t *testing.T) {
 	m.palette.open, m.palette.typed = true, "conf"
 	all := m.palette.candidates(m.opts.Commands)
 	found := false
+
 	for _, c := range all {
 		if c.Name == "settings" {
 			found = true
 		}
 	}
+
 	if !found {
 		t.Errorf("candidates(%q) = %v, want settings reached through its alias", m.palette.typed, all)
 	}
@@ -54,6 +57,7 @@ func TestCommandIndexFindsAPositionOrSaysThereIsNone(t *testing.T) {
 	if i, ok := m.commandIndex("settings"); !ok || i != 1 {
 		t.Errorf("commandIndex(\"settings\") = %d,%v, want 1,true", i, ok)
 	}
+
 	if _, ok := m.commandIndex("no-such-command"); ok {
 		t.Error("commandIndex on a name not in the table answered true")
 	}
@@ -65,6 +69,7 @@ func TestEnsureVisibleKeepsTheSelectionOnScreen(t *testing.T) {
 	// 1. h<=0: the offset collapses to zero.
 	m.frame.Body.H = 0
 	m.palette.offset = 4
+
 	after := m.ensureVisible()
 	if after.palette.offset != 0 {
 		t.Errorf("ensureVisible with h<=0 left offset=%d, want 0", after.palette.offset)
@@ -73,6 +78,7 @@ func TestEnsureVisibleKeepsTheSelectionOnScreen(t *testing.T) {
 	// 2. The selection above the window pulls the offset up to it.
 	m.frame.Body.H = 5
 	m.palette.sel, m.palette.offset = 1, 6
+
 	after = m.ensureVisible()
 	if after.palette.offset != 1 {
 		t.Errorf("ensureVisible with sel above the window = offset %d, want 1", after.palette.offset)
@@ -80,6 +86,7 @@ func TestEnsureVisibleKeepsTheSelectionOnScreen(t *testing.T) {
 
 	// 3. The selection below the window pushes the offset down to it.
 	m.palette.sel, m.palette.offset = 10, 0
+
 	after = m.ensureVisible()
 	if want := 10 - 5 + 1; after.palette.offset != want {
 		t.Errorf("ensureVisible with sel below the window = offset %d, want %d", after.palette.offset, want)
@@ -87,6 +94,7 @@ func TestEnsureVisibleKeepsTheSelectionOnScreen(t *testing.T) {
 
 	// 4. Already on screen: nothing moves.
 	m.palette.sel, m.palette.offset = 2, 1
+
 	after = m.ensureVisible()
 	if after.palette.offset != 1 {
 		t.Errorf("ensureVisible with sel already visible = offset %d, want 1 unchanged", after.palette.offset)
@@ -97,6 +105,7 @@ func TestEnsureVisibleKeepsTheSelectionOnScreen(t *testing.T) {
 	// the final clamp catches it.
 	m.frame.Body.H = 1000
 	m.palette.sel, m.palette.offset = 5, -2000
+
 	after = m.ensureVisible()
 	if after.palette.offset != 0 {
 		t.Errorf("ensureVisible with a window taller than sel = %d, want it clamped to 0", after.palette.offset)
@@ -112,12 +121,14 @@ func TestCompleteFillsTheLineWithTheSelection(t *testing.T) {
 	if after.palette.typed != "new" {
 		t.Errorf("complete() typed=%q, want \"new\"", after.palette.typed)
 	}
+
 	if after.palette.sel != 0 || after.palette.offset != 0 {
 		t.Errorf("complete() left sel=%d offset=%d, want both reset to 0", after.palette.sel, after.palette.offset)
 	}
 
 	// Nothing selected: the line is left exactly as it was.
 	m.palette.typed, m.palette.sel = "zzz-no-match", 0
+
 	after = m.complete()
 	if after.palette.typed != "zzz-no-match" {
 		t.Errorf("complete() with nothing selected changed typed to %q", after.palette.typed)
@@ -129,6 +140,7 @@ func TestPaletteInputLineDrawsThePlaceholderOrTheTyped(t *testing.T) {
 	if line := m.paletteInputLine(40); !strings.Contains(line, "type a command") {
 		t.Errorf("paletteInputLine on an empty line = %q, want the placeholder", line)
 	}
+
 	m.palette.typed = "set"
 	if line := m.paletteInputLine(40); !strings.Contains(line, "set") {
 		t.Errorf("paletteInputLine on %q = %q, want it to contain what was typed", m.palette.typed, line)

@@ -30,19 +30,23 @@ type SupervisorLine struct {
 // it marks that line and does not become one of its own.
 func SupervisorThread(events []record.Event) []SupervisorLine {
 	gone := record.Retracted(events)
+
 	lines := make([]SupervisorLine, 0, len(events))
 	for _, e := range events {
 		if e.Kind == record.SupervisorRetracted {
 			continue
 		}
+
 		by := e.Data["by"]
 		if by == "" {
 			by = "operator"
 		}
+
 		channel := e.Data["channel"]
 		if channel == "" {
 			channel = "tui"
 		}
+
 		lines = append(lines, SupervisorLine{
 			At:        e.At,
 			Kind:      e.Kind,
@@ -54,5 +58,6 @@ func SupervisorThread(events []record.Event) []SupervisorLine {
 			Retracted: gone[record.Stamp(e.At)],
 		})
 	}
+
 	return lines
 }

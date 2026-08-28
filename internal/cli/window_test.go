@@ -21,6 +21,7 @@ import (
 func TestOnlyEnginesThatCarryOnASessionSayTheyCan(t *testing.T) {
 	claude := engine.NewClaude()
 	fake := engine.NewFake("")
+
 	both := map[string]engine.Engine{"claude": claude, "fake": fake}
 	for _, c := range []struct {
 		name    string
@@ -51,16 +52,20 @@ func TestTakingTheKeyboardResumesAForkAndNotTheRunnersSession(t *testing.T) {
 	if err != nil {
 		t.Fatalf("takeCommand: %v", err)
 	}
+
 	if cmd == nil {
 		t.Fatal("takeCommand built no command for a session that exists")
 	}
+
 	want := []string{"claude", "--resume", "sess-1", "--fork-session"}
 	if strings.Join(cmd.Args, " ") != strings.Join(want, " ") {
 		t.Errorf("argv is %q, want %q", cmd.Args, want)
 	}
+
 	if cmd.Dir != "/w/.orbit/worktrees/ACME-1" {
 		t.Errorf("the session would open in %q, want the task's worktree", cmd.Dir)
 	}
+
 	if cmd.Process != nil {
 		t.Fatal("takeCommand started the command; it must only build one")
 	}
@@ -74,12 +79,15 @@ func TestTheResumedSessionIsAlwaysForked(t *testing.T) {
 	if err != nil {
 		t.Fatalf("takeCommand: %v", err)
 	}
+
 	var forked bool
+
 	for _, a := range cmd.Args {
 		if a == "--fork-session" {
 			forked = true
 		}
 	}
+
 	if !forked {
 		t.Error("the command would write into the session the runner recorded")
 	}
@@ -102,9 +110,11 @@ func TestTakingTheKeyboardIsRefusedWhereThereIsNothingToResume(t *testing.T) {
 			if err == nil {
 				t.Fatalf("takeCommand built %v, want a refusal", cmd)
 			}
+
 			if !strings.Contains(err.Error(), c.wantErr) {
 				t.Errorf("the refusal is %q, want it to mention %q", err, c.wantErr)
 			}
+
 			if cmd != nil {
 				t.Error("a refused takeCommand still handed back a command")
 			}
@@ -120,6 +130,7 @@ func TestATaskWithNoSessionIsNotARefusal(t *testing.T) {
 	if err != nil {
 		t.Fatalf("takeCommand: %v", err)
 	}
+
 	if cmd != nil {
 		t.Errorf("takeCommand built %v for a task with no session", cmd.Args)
 	}

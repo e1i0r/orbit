@@ -42,6 +42,7 @@ func (m Model) unreadCap() int {
 	if m.opts.Settings == nil {
 		return 0
 	}
+
 	return m.opts.Settings.UnreadCap()
 }
 
@@ -54,6 +55,7 @@ func (m Model) affordance(t view.Task, b key.Binding) (Affordance, bool) {
 			return a, true
 		}
 	}
+
 	return Affordance{}, false
 }
 
@@ -64,6 +66,7 @@ func (m Model) task(id string) (view.Task, bool) {
 			return t, true
 		}
 	}
+
 	return view.Task{}, false
 }
 
@@ -72,5 +75,6 @@ func (m Model) expand(b view.Band) Model {
 	open := maps.Clone(m.expanded)
 	open[b] = !open[b]
 	m.expanded = open
+
 	return m
 }

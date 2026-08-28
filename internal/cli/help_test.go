@@ -14,16 +14,20 @@ import (
 func TestTheHelpFlagPrintsTheFlagsAndSucceeds(t *testing.T) {
 	for _, cmd := range []string{"new", "run"} {
 		t.Setenv("ORBIT_HOME", t.TempDir())
+
 		code, out, errOut := run(t, cmd, "-h")
 		if code != 0 {
 			t.Errorf("%s -h exited %d, want 0: %s", cmd, code, errOut)
 		}
+
 		if errOut != "" {
 			t.Errorf("%s -h wrote to stderr: %s", cmd, errOut)
 		}
+
 		if !strings.Contains(out, "-repo") {
 			t.Errorf("%s -h does not show its flags:\n%s", cmd, out)
 		}
+
 		if !strings.Contains(out, "orbit "+cmd) {
 			t.Errorf("%s -h does not show the shape of the command:\n%s", cmd, out)
 		}
@@ -36,13 +40,16 @@ func TestAMistypedFlagPrintsTheErrorAndTheFlags(t *testing.T) {
 		{"show", "-r"},
 	} {
 		t.Setenv("ORBIT_HOME", t.TempDir())
+
 		code, _, errOut := run(t, tc.cmd, tc.bad, ".")
 		if code == 0 {
 			t.Errorf("%s %s exited 0", tc.cmd, tc.bad)
 		}
+
 		if !strings.Contains(errOut, tc.bad) {
 			t.Errorf("the error does not name the flag that was wrong:\n%s", errOut)
 		}
+
 		if !strings.Contains(errOut, "-repo string") {
 			t.Errorf("%s %s says what was wrong and then offers nothing:\n%s", tc.cmd, tc.bad, errOut)
 		}
@@ -60,24 +67,30 @@ func TestTheUsageTableLinesUp(t *testing.T) {
 	_, out, _ := run(t, "help")
 	p := words.For("")
 	col := -1
+
 	for _, c := range commands() {
 		line := ""
+
 		for _, l := range strings.Split(out, "\n") {
 			if strings.Contains(l, c.Usage()) {
 				line = l
 			}
 		}
+
 		if line == "" {
 			t.Fatalf("usage does not list %q:\n%s", c.Usage(), out)
 		}
+
 		at := strings.Index(line, c.About(p))
 		if at < 0 {
 			t.Fatalf("usage does not say what %q does:\n%s", c.Usage(), out)
 		}
+
 		if col == -1 {
 			col = at
 			continue
 		}
+
 		if at != col {
 			t.Errorf("%q describes itself at column %d, the others at %d:\n%s", c.Usage(), at, col, out)
 		}

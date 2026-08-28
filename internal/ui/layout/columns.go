@@ -66,16 +66,20 @@ type Plan struct {
 // give its space back to the title rather than leaving a hole where it was.
 func (p Plan) Width() int {
 	total, columns := 0, 0
+
 	for _, cells := range []int{p.Repo, p.ID, p.Title, p.State, p.Model, p.Elapsed} {
 		if cells <= 0 {
 			continue
 		}
+
 		total += cells
 		columns++
 	}
+
 	if columns > 1 {
 		total += gap * (columns - 1)
 	}
+
 	return total
 }
 
@@ -104,6 +108,7 @@ func Columns(w int, tasks []view.Task, budgets func(string) int) Plan {
 	if state <= 0 {
 		state = defaultStateCells
 	}
+
 	id := widest(tasks, func(t view.Task) string { return t.ID })
 	model := widest(tasks, func(t view.Task) string { return t.Model })
 	repo := repoColumn(tasks)
@@ -121,6 +126,7 @@ func Columns(w int, tasks []view.Task, budgets func(string) int) Plan {
 			return try
 		}
 	}
+
 	return unaligned(w, id, state)
 }
 
@@ -146,12 +152,15 @@ func unaligned(w, id, state int) Plan {
 		// says nothing and half a state word is a different word.
 		p.ID = max(p.ID-over, 0)
 	}
+
 	for _, cells := range []*int{&p.Elapsed, &p.State, &p.ID} {
 		if p.Width() <= w {
 			break
 		}
+
 		*cells = 0
 	}
+
 	return p
 }
 
@@ -164,6 +173,7 @@ func widest(tasks []view.Task, field func(view.Task) string) int {
 	for _, t := range tasks {
 		cells = max(cells, lipgloss.Width(field(t)))
 	}
+
 	return cells
 }
 
@@ -179,16 +189,20 @@ func widest(tasks []view.Task, field func(view.Task) string) int {
 func repoColumn(tasks []view.Task) int {
 	seen := map[string]bool{}
 	cells := 0
+
 	for _, t := range tasks {
 		if t.Repo == "" {
 			continue
 		}
+
 		seen[t.Repo] = true
 		cells = max(cells, lipgloss.Width(t.Repo))
 	}
+
 	if len(seen) < 2 {
 		return 0
 	}
+
 	return cells
 }
 
@@ -233,7 +247,9 @@ func (p Plan) ColumnAt(x int) (Column, bool) {
 	if x < 0 {
 		return ColumnNone, false
 	}
+
 	at, first := 0, true
+
 	for _, c := range []struct {
 		cells  int
 		column Column
@@ -248,16 +264,21 @@ func (p Plan) ColumnAt(x int) (Column, bool) {
 		if c.cells <= 0 {
 			continue
 		}
+
 		if !first {
 			if at += gap; x < at {
 				return ColumnNone, false
 			}
 		}
+
 		first = false
+
 		if x < at+c.cells {
 			return c.column, true
 		}
+
 		at += c.cells
 	}
+
 	return ColumnNone, false
 }

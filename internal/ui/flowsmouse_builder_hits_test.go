@@ -14,6 +14,7 @@ import "testing"
 func builderModel(t *testing.T) Model {
 	t.Helper()
 	m, _ := testModel(t, 100, 30)
+
 	return m.startCreateFlow()
 }
 
@@ -54,6 +55,7 @@ func TestHitFlowsBuilderSecondPhase(t *testing.T) {
 	if got := m.hitFlows(10, base+5); got.Phase != 0 {
 		t.Errorf("first phase overview row = %+v, want phase 0", got)
 	}
+
 	if got := m.hitFlows(10, base+6); got.Kind != TargetFlowItem || got.Field != "select_phase" || got.Phase != 1 {
 		t.Errorf("second phase overview row = %+v, want select_phase 1", got)
 	}
@@ -100,12 +102,15 @@ func TestHitFlowsBuilderPromptRowButtons(t *testing.T) {
 	if got := m.hitFlows(10, y); got.Kind != TargetFlowItem || got.Field != "" || got.Phase != flowFieldPrompt {
 		t.Errorf("hitFlows left of the prompt row's pills = %+v, want the prompt field", got)
 	}
+
 	if got := m.hitFlows(30, y); got.Field != "paste_prompt" {
 		t.Errorf("hitFlows on the paste pill = %+v, want paste_prompt", got)
 	}
+
 	if got := m.hitFlows(45, y); got.Field != "autogen_prompt" {
 		t.Errorf("hitFlows on the autogenerate pill = %+v, want autogen_prompt", got)
 	}
+
 	if got := m.hitFlows(60, y); got.Field != "clear_prompt" {
 		t.Errorf("hitFlows on the clear pill = %+v, want clear_prompt", got)
 	}
@@ -115,6 +120,7 @@ func TestHitFlowsBuilderPromptRowButtons(t *testing.T) {
 // which is still the prompt field wherever inside it the reader clicks.
 func TestHitFlowsBuilderPromptBox(t *testing.T) {
 	m := builderModel(t)
+
 	base := m.frame.Body.Y
 	for _, dy := range []int{19, 20, 21} {
 		if got := m.hitFlows(10, base+dy); got.Kind != TargetFlowItem || got.Field != "" || got.Phase != flowFieldPrompt {
@@ -132,9 +138,11 @@ func TestHitFlowsBuilderButtonsRow(t *testing.T) {
 	if got := m.hitFlows(10, y); got.Field != "add_phase" {
 		t.Errorf("hitFlows on add_phase = %+v", got)
 	}
+
 	if got := m.hitFlows(30, y); got.Field != "del_phase" {
 		t.Errorf("hitFlows on del_phase = %+v", got)
 	}
+
 	if got := m.hitFlows(50, y); got.Field != "save" {
 		t.Errorf("hitFlows on save = %+v", got)
 	}

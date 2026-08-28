@@ -19,6 +19,7 @@ func TestPlainRenderingComprehensive(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Plain failed: %v", err)
 	}
+
 	if output == "" {
 		t.Fatal("Plain returned empty string")
 	}

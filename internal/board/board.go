@@ -164,15 +164,19 @@ func Unread(b Board) int { return len(Unreads(b)) }
 // whole reason the count lives in this package at all.
 func Unreads(b Board) []view.Task {
 	var waiting []view.Task
+
 	for _, t := range b.Tasks {
 		if view.BandOf(t) != view.Done {
 			continue
 		}
+
 		if t.Read || t.Reason.Key == view.ReasonCancelled {
 			continue
 		}
+
 		waiting = append(waiting, t)
 	}
+
 	return waiting
 }
 
@@ -185,6 +189,7 @@ func counts(tasks []view.Task) [4]int {
 	for _, t := range tasks {
 		n[view.BandOf(t)]++
 	}
+
 	return n
 }
 

@@ -31,6 +31,7 @@ func paneHeight(h int) int {
 	if h >= 4 {
 		return h - 3
 	}
+
 	return max(h-2, 0)
 }
 
@@ -39,24 +40,31 @@ func (m Model) detailRows(h, w int) []string {
 	if h <= 0 || w <= 0 {
 		return nil
 	}
+
 	head := m.detailHeadLines(w)
+
 	out := append([]string{}, head...)
 	if h >= len(head)+3 {
 		out = append(out, "")
 	}
+
 	tabLine := len(out)
 	if h > tabLine {
 		out = append(out, m.tabStrip(w))
 	}
+
 	if m.tab == tabDiff && m.diffKnown && m.diffErr == nil {
 		raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
+
 		files := parseDiffFiles(raw)
 		if len(files) > 0 {
 			activeIdx := fileIndexAtOffset(files, m.panes[tabDiff].YOffset())
+
 			cursor := activeIdx
 			if m.diffFilePicker {
 				cursor = m.diffFileCursor
 			}
+
 			combo := renderDiffFileSelect(files, activeIdx, w, m.opts.Words, m.collapsedFiles, m.diffFilePicker, cursor)
 			if combo != "" {
 				parts := strings.Split(combo, "\n")
@@ -64,13 +72,16 @@ func (m Model) detailRows(h, w int) []string {
 			}
 		}
 	}
+
 	topUsed := len(out)
 	if n := max(0, h-topUsed-1); n > 0 {
 		out = append(out, m.paneRows(n, w)...)
 	}
+
 	if h >= 4 {
 		out = append(out, fit(m.moreLine(), w))
 	}
+
 	return fill(out, h)
 }
 
@@ -78,6 +89,7 @@ func (m Model) detailRows(h, w int) []string {
 // left, the repository and what the row said about it on the right.
 func (m Model) detailHeadLines(w int) []string {
 	t, ok := m.task(m.detail)
+
 	left := Paint(Accent).Bold(true).Render(m.detail)
 	if !ok {
 		return []string{
@@ -85,7 +97,9 @@ func (m Model) detailHeadLines(w int) []string {
 				"this task is no longer on the board")), w),
 		}
 	}
+
 	word, role := m.stateWord(t)
+
 	right := Paint(Dim).Render(t.Repo)
 	if word != "" {
 		right += Paint(Dim).Render(dot) + Paint(role).Render(word)
@@ -103,12 +117,16 @@ func (m Model) detailHeadLines(w int) []string {
 	}
 
 	wrapped := splitIntoLines(t.Title, availW)
+
 	var out []string
+
 	out = append(out, spread(" "+left+"  "+Paint(Dim).Render(wrapped[0]), right, w))
+
 	indent := strings.Repeat(" ", lipgloss.Width(m.detail)+3)
 	for _, wl := range wrapped[1:] {
 		out = append(out, " "+indent+Paint(Dim).Render(wl))
 	}
+
 	return out
 }
 
@@ -126,9 +144,11 @@ func (m Model) tabTags(w int) []tabTagInfo {
 	tags := make([]tabTagInfo, len(names))
 
 	var fullWidth int
+
 	for i, n := range names {
 		k := paneKey(n.tab)
 		tagText := "[" + k + " " + n.text + "]"
+
 		var rend string
 		if n.tab == m.tab {
 			rend = Paint(Sel).Bold(true).Render(tagText)
@@ -136,22 +156,28 @@ func (m Model) tabTags(w int) []tabTagInfo {
 			rend = Paint(Dim).Render("[") + Paint(Accent).Bold(true).Render(k) +
 				Paint(Dim).Render(" "+n.text+"]")
 		}
+
 		tw := lipgloss.Width(tagText)
 		tags[i] = tabTagInfo{tab: n.tab, key: k, text: tagText, rendered: rend, width: tw}
 		fullWidth += tw + 1
 	}
+
 	if fullWidth+10 <= w {
 		return tags
 	}
 
 	var compactWidth int
+
 	for i, n := range names {
 		k := paneKey(n.tab)
+
 		text := n.text
 		if n.tab != m.tab {
 			text = fit(text, 4)
 		}
+
 		tagText := "[" + k + " " + text + "]"
+
 		var rend string
 		if n.tab == m.tab {
 			rend = Paint(Sel).Bold(true).Render(tagText)
@@ -159,41 +185,49 @@ func (m Model) tabTags(w int) []tabTagInfo {
 			rend = Paint(Dim).Render("[") + Paint(Accent).Bold(true).Render(k) +
 				Paint(Dim).Render(" "+text+"]")
 		}
+
 		tw := lipgloss.Width(tagText)
 		tags[i] = tabTagInfo{tab: n.tab, key: k, text: tagText, rendered: rend, width: tw}
 		compactWidth += tw + 1
 	}
+
 	if compactWidth+10 <= w {
 		return tags
 	}
 
 	for i, n := range names {
 		k := paneKey(n.tab)
+
 		tagText := "[" + k + "]"
 		if n.tab == m.tab {
 			tagText = "[" + k + " " + n.text + "]"
 		}
+
 		var rend string
 		if n.tab == m.tab {
 			rend = Paint(Sel).Bold(true).Render(tagText)
 		} else {
 			rend = Paint(Dim).Render("[") + Paint(Accent).Bold(true).Render(k) + Paint(Dim).Render("]")
 		}
+
 		tw := lipgloss.Width(tagText)
 		tags[i] = tabTagInfo{tab: n.tab, key: k, text: tagText, rendered: rend, width: tw}
 	}
+
 	return tags
 }
 
 // tabStrip renders the eleven tabs.
 func (m Model) tabStrip(w int) string {
 	tags := m.tabTags(w)
+
 	var parts []string
 	for _, t := range tags {
 		parts = append(parts, t.rendered)
 	}
 
 	var right string
+
 	p := m.opts.Words
 	switch attempt := m.attempt(); {
 	case m.tab == tabDiff && m.diffKnown && m.diffErr == nil && m.diffNoBase:
@@ -201,6 +235,7 @@ func (m Model) tabStrip(w int) string {
 	case attempt > 0:
 		right = Paint(Dim).Render(p.T("log.attempt", "attempt {n}", about("n", strconv.Itoa(attempt))))
 	}
+
 	return spread(" "+strings.Join(parts, " "), right, w)
 }
 
@@ -214,21 +249,25 @@ type placedTab struct {
 func (m Model) placeTabs() []placedTab {
 	tags := m.tabTags(m.frame.Body.W)
 	out := make([]placedTab, len(tags))
+
 	x := 1
 	for i, t := range tags {
 		out[i] = placedTab{tab: t.tab, x: x, w: t.width}
 		x += t.width + 1
 	}
+
 	return out
 }
 
 // paneRows is the pane itself, cut to the region it was given.
 func (m Model) paneRows(h, w int) []string {
 	lines := strings.Split(m.panes[m.tab].View(), "\n")
+
 	out := make([]string, 0, h)
 	for _, line := range lines {
 		out = append(out, fit(line, w))
 	}
+
 	return fill(out[:min(len(out), h)], h)
 }
 
@@ -238,11 +277,13 @@ func (m Model) moreLine() string {
 	if vp.AtTop() && vp.AtBottom() {
 		return ""
 	}
+
 	p := m.opts.Words
 	if m.tab == tabTimeline && m.following {
 		return " " + Paint(Live).Render(p.T("detail.following", "following — {key} stops it",
 			about("key", m.keys.Up.Help().Key)))
 	}
+
 	return " " + Paint(Dim).Render(p.T("detail.scrolls", "{keys} scrolls",
 		about("keys", m.keys.Up.Help().Key+m.keys.Down.Help().Key)))
 }
@@ -252,6 +293,7 @@ func (m Model) subject() view.Task {
 	if t, ok := m.task(m.detail); ok {
 		return t
 	}
+
 	return view.Task{ID: m.detail}
 }
 
@@ -260,6 +302,7 @@ func (m Model) attempt() int {
 	if len(m.entries) == 0 {
 		return 0
 	}
+
 	return m.entries[len(m.entries)-1].Attempt
 }
 
@@ -273,14 +316,17 @@ func (m Model) detailHints() []barHint {
 		hintFor(m.keys.Ask),
 		hintFor(m.keys.CLI),
 	}
+
 	wrapHint := m.opts.Words.T("detail.hint_expand", "expand")
 	if m.expandedDetail {
 		wrapHint = m.opts.Words.T("detail.hint_collapse", "collapse")
 	}
+
 	out = append(out, hint("e", wrapHint))
 	if m.tab == tabDiff {
 		out = append(out, hintFor(m.keys.Edit))
 	}
+
 	return append(out, hint(m.keys.Up.Help().Key+m.keys.Down.Help().Key,
 		m.opts.Words.T("key.scroll", "scroll")))
 }

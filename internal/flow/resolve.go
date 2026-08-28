@@ -82,8 +82,10 @@ func Resolve(src Source, name string) (Flow, error) {
 	if err := ValidName(name); err != nil {
 		return Flow{}, err
 	}
+
 	if dir := dirOf(src); dir != "" {
 		path := filepath.Join(dir, name+".json")
+
 		f, err := Load(path)
 		switch {
 		case err == nil:
@@ -95,13 +97,16 @@ func Resolve(src Source, name string) (Flow, error) {
 			return Flow{}, err
 		}
 	}
+
 	if !slices.Contains(BuiltinNames(), name) {
 		return Flow{}, fmt.Errorf("no flow called %q; there is %s", name, strings.Join(Names(src), ", "))
 	}
+
 	f, err := Builtin(name)
 	if err != nil {
 		return Flow{}, err
 	}
+
 	return named(f, name, name+".json")
 }
 
@@ -115,6 +120,7 @@ func named(f Flow, want, source string) (Flow, error) {
 	if f.Name != want {
 		return Flow{}, fmt.Errorf("the flow in %s is called %q, not %q; a flow is named by its file", source, f.Name, want)
 	}
+
 	return f, nil
 }
 
@@ -133,10 +139,12 @@ func named(f Flow, want, source string) (Flow, error) {
 // thing a reader is asking, and Resolve is what says whether it is a flow.
 func List(src Source) []Listed {
 	origins := make(map[string]Origin)
+
 	names := BuiltinNames()
 	for _, n := range names {
 		origins[n] = OriginBuiltin
 	}
+
 	for _, n := range userNames(src) {
 		if _, shadows := origins[n]; shadows {
 			origins[n] = OriginShadow
@@ -145,11 +153,14 @@ func List(src Source) []Listed {
 			names = append(names, n)
 		}
 	}
+
 	sort.Strings(names)
+
 	listed := make([]Listed, 0, len(names))
 	for _, n := range names {
 		listed = append(listed, Listed{Name: n, Origin: origins[n]})
 	}
+
 	return listed
 }
 
@@ -160,10 +171,12 @@ func List(src Source) []Listed {
 // question somebody who just misspelled a flow name is asking.
 func Names(src Source) []string {
 	listed := List(src)
+
 	names := make([]string, 0, len(listed))
 	for _, l := range listed {
 		names = append(names, l.Name)
 	}
+
 	return names
 }
 
@@ -182,6 +195,7 @@ func ValidName(name string) error {
 	case name == ".", strings.Contains(name, ".."):
 		return fmt.Errorf("the flow name %q is not a name", name)
 	}
+
 	return nil
 }
 
@@ -191,6 +205,7 @@ func dirOf(src Source) string {
 	if src == nil {
 		return ""
 	}
+
 	return src.FlowDir()
 }
 
@@ -212,20 +227,26 @@ func userNames(src Source) []string {
 	if dir == "" {
 		return nil
 	}
+
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil
 	}
+
 	var names []string
+
 	for _, e := range entries {
 		if e.IsDir() || !strings.HasSuffix(e.Name(), ".json") {
 			continue
 		}
+
 		name := strings.TrimSuffix(e.Name(), ".json")
 		if ValidName(name) != nil {
 			continue
 		}
+
 		names = append(names, name)
 	}
+
 	return names
 }

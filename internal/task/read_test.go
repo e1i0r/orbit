@@ -19,6 +19,7 @@ func TestMarkReadWritesDownThatSomebodyLooked(t *testing.T) {
 	}
 
 	events := eventsOf(t, s, tk)
+
 	got := find(t, events, record.TaskRead)
 	if got.Phase != "" {
 		t.Errorf("task.read names phase %q — being read is a fact about the task, not about a phase", got.Phase)
@@ -27,16 +28,17 @@ func TestMarkReadWritesDownThatSomebodyLooked(t *testing.T) {
 
 func TestStartRefusesAtTheUnreadCapAndSaysWhy(t *testing.T) {
 	s, r := fixture(t)
+
 	tk := written(t, s, r)
 	if err := s.SaveSettings(store.Settings{UnreadCap: 3}); err != nil {
 		t.Fatalf("SaveSettings: %v", err)
 	}
 
 	pid, err := Start(s, tk, "task", 3)
-
 	if err == nil {
 		t.Fatal("Start spawned a run at the unread cap — the one brake in the product did nothing")
 	}
+
 	if pid != 0 {
 		t.Errorf("Start returned pid %d alongside its refusal", pid)
 	}
@@ -91,10 +93,10 @@ func TestStartingATaskAnotherRunHoldsIsRefused(t *testing.T) {
 	defer release()
 
 	pid, err := Start(s, tk, "task", 0)
-
 	if err == nil {
 		t.Fatal("Start spawned a second run of a task that is already running")
 	}
+
 	if pid != 0 {
 		t.Errorf("Start returned pid %d alongside its refusal", pid)
 	}

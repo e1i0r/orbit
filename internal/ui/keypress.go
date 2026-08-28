@@ -73,6 +73,7 @@ func (m Model) key(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case key.Matches(msg, m.keys.Menu):
 		return m.openMenuForContext(), nil
 	}
+
 	return m.listKey(msg)
 }
 
@@ -94,12 +95,14 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		m = m.showTab(targetTab)
 		return m, nil
 	}
+
 	switch {
 	case key.Matches(k, m.keys.Back):
 		if m.filter != "" || m.repoFilter != "" || m.queueFilter != nil {
 			m.filter, m.repoFilter, m.queueFilter = "", "", nil
 			return m.say(m.opts.Words.T("repos.filter_cleared", "showing all repositories")), nil
 		}
+
 		return m, nil
 	case key.Matches(k, m.keys.Up):
 		return m.move(-1), nil
@@ -153,6 +156,7 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	case key.Matches(k, m.keys.Quit):
 		return m, tea.Quit
 	}
+
 	return m, nil
 }
 
@@ -161,8 +165,10 @@ func (m Model) askDeleteTask() (tea.Model, tea.Cmd) {
 	if !ok || r.head || r.blank {
 		return m, nil
 	}
+
 	m.confirm = confirmDeleteTask
 	m.confirmID = r.task.ID
+
 	return m.say(m.opts.Words.T("msg.confirm_delete_task", "delete task {id}? press y or ⏎ to confirm deletion, any other key to cancel", about("id", r.task.ID))), nil
 }
 
@@ -174,6 +180,7 @@ func (m Model) askDeleteTask() (tea.Model, tea.Cmd) {
 func (m Model) confirmKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	c := m.confirm
 	id := m.confirmID
+
 	m.confirm, m.confirmID = confirmNone, ""
 	if c == confirmPostCliTask {
 		if msg.String() == confirmYes || msg.String() == "s" || msg.String() == "S" || key.Matches(msg, m.keys.Open) {
@@ -182,10 +189,13 @@ func (m Model) confirmKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 				m.compose.repo = id
 				m.compose.field = composeText
 			}
+
 			return m.say(m.opts.Words.T("msg.compose_prompt", "write the task to run")), nil
 		}
+
 		return m.say(m.opts.Words.T("msg.cli_ended", "interactive session ended")), nil
 	}
+
 	if c == confirmDeleteTask {
 		if msg.String() == confirmYes || msg.String() == "s" || msg.String() == "S" || key.Matches(msg, m.keys.Open) {
 			t, ok := m.task(id)
@@ -194,22 +204,28 @@ func (m Model) confirmKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 					return m.say(Paint(Bad).Render(err.Error())), nil
 				}
 			}
+
 			if m.opts.Reader != nil {
 				if err := m.opts.Reader.Rescan(); err != nil {
 					return m.say(Paint(Bad).Render(err.Error())), nil
 				}
 			}
+
 			return m.say(m.opts.Words.T("msg.task_deleted", "task {id} deleted", about("id", id))), nil
 		}
+
 		return m.say(m.opts.Words.T("msg.delete_cancelled", "deletion cancelled")), nil
 	}
+
 	if msg.String() != confirmYes {
 		return m, nil
 	}
+
 	t, ok := m.task(id)
 	if !ok {
 		return m, nil
 	}
+
 	return m, control(m.opts.Control, t, "cancel")
 }
 
@@ -221,9 +237,11 @@ func (m Model) open() (tea.Model, tea.Cmd) {
 	if !ok {
 		return m, nil
 	}
+
 	if r.head {
 		return m.expand(r.band).clampCursor(), nil
 	}
+
 	return m.openDetail(r.task)
 }
 
@@ -234,6 +252,7 @@ func (m Model) verb(b key.Binding, word string) (Model, tea.Cmd) {
 	if !ok {
 		return next, nil
 	}
+
 	return next, control(next.opts.Control, t, word)
 }
 
@@ -247,7 +266,9 @@ func (m Model) ask() (tea.Model, tea.Cmd) {
 	if !ok {
 		return next, nil
 	}
+
 	next.confirm, next.confirmID = confirmCancel, t.ID
+
 	return next, nil
 }
 
@@ -260,14 +281,18 @@ func (m Model) autopilot() (tea.Model, tea.Cmd) {
 	if m.opts.Settings == nil {
 		return m, nil
 	}
+
 	on := !m.opts.Settings.Autopilot()
 	if err := m.opts.Settings.SetAutopilot(on); err != nil {
 		return m.say(err.Error()), nil
 	}
+
 	if on {
 		m = m.say(m.opts.Words.T("msg.autopilot_on", "autopilot is on: every phase runs without asking"))
 		nextM, cmd := m.autoStartNext()
+
 		return nextM, cmd
 	}
+
 	return m.say(m.opts.Words.T("msg.autopilot_off", "autopilot is off: every phase stops for you")), nil
 }

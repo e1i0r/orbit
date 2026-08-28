@@ -40,6 +40,7 @@ func TestFormatThoughtLineAndThinkingLines(t *testing.T) {
 			Text:    "decided to implement caching\nreject memory bloat\ninvestigate patterns\nbecause it is faster",
 		},
 	}
+
 	lines := m.thinkingLines()
 	if len(lines) == 0 {
 		t.Error("expected thinkingLines to render output blocks")

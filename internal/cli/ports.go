@@ -60,15 +60,18 @@ func deleteTaskPort(s *store.Store) func(view.Task) error {
 	if s == nil {
 		return nil
 	}
+
 	return func(t view.Task) error {
 		taskDir, err := s.TaskDir(t.Repo, t.ID)
 		if err == nil {
 			_ = os.RemoveAll(taskDir)
 		}
+
 		wtDir, err := s.WorktreeDir(t.Repo, t.ID)
 		if err == nil {
 			_ = os.RemoveAll(wtDir)
 		}
+
 		return nil
 	}
 }
@@ -93,6 +96,7 @@ func startPort(s *store.Store) func(view.Task, string, int) (int, error) {
 		if err != nil {
 			return 0, err
 		}
+
 		return task.Start(s, loaded, flowName, unread)
 	}
 }
@@ -111,14 +115,17 @@ func takePort(r *board.Reader, engines map[string]engine.Engine) func(view.Task)
 		if t.Engine == "" {
 			return nil, nil
 		}
+
 		eng, ok := engines[t.Engine]
 		if !ok {
 			return nil, &unknownEngineError{Name: t.Engine, ID: t.ID}
 		}
+
 		session, err := lastSession(r, t)
 		if err != nil {
 			return nil, err
 		}
+
 		dir, err := r.Worktree(t.RepoPath, t.ID)
 		if err != nil {
 			return nil, err
@@ -157,12 +164,15 @@ func lastSession(r *board.Reader, t view.Task) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	var session string
+
 	for _, e := range entries {
 		if e.Session != "" {
 			session = e.Session
 		}
 	}
+
 	return session, nil
 }
 
@@ -187,26 +197,31 @@ func lastSession(r *board.Reader, t view.Task) (string, error) {
 // program starts is a sentence nobody reads.
 func reconcileAll(s *store.Store) error {
 	refs, err := s.Repos()
+
 	var errs []error
 	if err != nil {
 		errs = append(errs, err)
 	}
+
 	for _, ref := range refs {
 		// Path only: everything below it hashes the path, and the name a
 		// row displays comes from the board's own read of the repository
 		// rather than from here.
 		r := repo.Repo{Path: ref.Path}
+
 		ids, listErr := task.List(s, r)
 		if listErr != nil {
 			errs = append(errs, listErr)
 			continue
 		}
+
 		for _, id := range ids {
 			if _, wroteErr := task.Reconcile(s, task.Task{ID: id, Repo: r}); wroteErr != nil {
 				errs = append(errs, wroteErr)
 			}
 		}
 	}
+
 	return errors.Join(errs...)
 }
 
@@ -214,6 +229,7 @@ func reconcileAll(s *store.Store) error {
 func enginesPort(engines map[string]engine.Engine) func() []ui.EngineInfo {
 	return func() []ui.EngineInfo {
 		var list []ui.EngineInfo
+
 		names := []string{"claude", "codex", "opencode"}
 		setupGuides := map[string][]string{
 			"claude": {
@@ -236,16 +252,19 @@ func enginesPort(engines map[string]engine.Engine) func() []ui.EngineInfo {
 		for _, name := range names {
 			eng, hasEng := engines[name]
 			_, pathErr := exec.LookPath(name)
+
 			available := hasEng && pathErr == nil
 			if available {
 				var models []ui.ChoiceInfo
 				for _, m := range eng.Models() {
 					models = append(models, ui.ChoiceInfo{ID: m.ID, Label: m.Label})
 				}
+
 				var efforts []ui.ChoiceInfo
 				for _, e := range eng.Efforts() {
 					efforts = append(efforts, ui.ChoiceInfo{ID: e.ID, Label: e.Label})
 				}
+
 				list = append(list, ui.EngineInfo{
 					Name:      name,
 					Available: true,
@@ -261,6 +280,7 @@ func enginesPort(engines map[string]engine.Engine) func() []ui.EngineInfo {
 				})
 			}
 		}
+
 		return list
 	}
 }

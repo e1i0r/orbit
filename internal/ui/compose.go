@@ -68,17 +68,21 @@ type composeState struct {
 func (m Model) openCompose() Model {
 	m.screen = screenCompose
 	repos := m.collectRepos()
+
 	selectedRepo := ""
 	if r, ok := m.selected(); ok && !r.head {
 		selectedRepo = r.task.Repo
 	}
+
 	repoIdx := 0
+
 	for i, r := range repos {
 		if strings.EqualFold(r.name, selectedRepo) {
 			repoIdx = i
 			break
 		}
 	}
+
 	initialRepo := ""
 	if len(repos) > 0 {
 		initialRepo = repos[repoIdx].name
@@ -87,10 +91,12 @@ func (m Model) openCompose() Model {
 	}
 
 	flowsListed := flow.List(m.opts.Flows)
+
 	var flows []string
 	for _, f := range flowsListed {
 		flows = append(flows, f.Name)
 	}
+
 	if len(flows) == 0 {
 		flows = []string{"task", "quick", "careful"}
 	}
@@ -117,12 +123,14 @@ func (m Model) openCompose() Model {
 		thinkings:      thinkings,
 		efforts:        efforts,
 	}
+
 	return m
 }
 
 func (m Model) abandonCompose() Model {
 	m.compose = composeState{}
 	m.screen = screenList
+
 	return m
 }
 
@@ -134,12 +142,14 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if msg.Mod&tea.ModCtrl != 0 {
 			return m.composeSubmit(true)
 		}
+
 		if msg.Mod&tea.ModShift != 0 || msg.Mod&tea.ModAlt != 0 {
 			if m.compose.tab == composeTabManual && m.compose.field == composeText {
 				m.compose.text += "\n"
 				return m, nil
 			}
 		}
+
 		return m.composeNext(false)
 	case (msg.Code == 'r' || msg.Code == 'R') && msg.Mod&tea.ModCtrl != 0:
 		return m.composeSubmit(true)
@@ -147,6 +157,7 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if clip := readClipboard(); clip != "" {
 			return m.paste(clip), nil
 		}
+
 		return m, nil
 	case msg.Text == "+":
 		if m.isComposeFlowField() {
@@ -172,10 +183,12 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if msg.Mod&tea.ModShift != 0 {
 			return m.composeMove(-1), nil
 		}
+
 		return m.composeTab(1), nil
 	case msg.Code == tea.KeyBackspace || msg.Code == tea.KeyDelete:
 		m.compose.set(trimLastRune(m.compose.get()))
 		m.onComposeChanged()
+
 		return m, nil
 	}
 
@@ -185,15 +198,19 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		} else {
 			m.compose.tab = composeTabURL
 		}
+
 		m.compose.field = 0
+
 		return m, nil
 	}
 
 	if msg.Text != "" && !m.isPillField() {
 		m.compose.set(m.compose.get() + msg.Text)
 		m.onComposeChanged()
+
 		return m, nil
 	}
+
 	return m, nil
 }
 
@@ -203,6 +220,7 @@ func (m *Model) onComposeChanged() {
 		if raw != "" {
 			if issue, err := tracker.Parse(raw); err == nil {
 				m.compose.parsedIssue = &issue
+
 				m.compose.id = issue.ID
 				if issue.Title != "" {
 					m.compose.text = issue.Title
@@ -221,6 +239,7 @@ func (m *Model) onComposeChanged() {
 				m.compose.tab = composeTabURL
 				m.compose.url = cur
 				m.compose.parsedIssue = &issue
+
 				m.compose.id = issue.ID
 				if issue.Title != "" {
 					m.compose.text = issue.Title
@@ -235,14 +254,17 @@ func (c *composeState) get() string {
 		if c.field == composeURL {
 			return c.url
 		}
+
 		return ""
 	}
+
 	switch c.field {
 	case composeID:
 		return c.id
 	case composeText:
 		return c.text
 	}
+
 	return ""
 }
 
@@ -251,8 +273,10 @@ func (c *composeState) set(v string) {
 		if c.field == composeURL {
 			c.url = v
 		}
+
 		return
 	}
+
 	switch c.field {
 	case composeID:
 		c.id = v
@@ -266,13 +290,16 @@ func (m Model) composeMove(d int) Model {
 	if m.compose.tab == composeTabURL {
 		maxFields = composeURLFields
 	}
+
 	m.compose.field += d
 	if m.compose.field < 0 {
 		m.compose.field = 0
 	}
+
 	if m.compose.field >= maxFields {
 		m.compose.field = maxFields - 1
 	}
+
 	return m
 }
 
@@ -285,9 +312,11 @@ func (m Model) composeNext(startNow bool) (tea.Model, tea.Cmd) {
 	if m.compose.tab == composeTabURL {
 		limit = composeURLEffort
 	}
+
 	if m.compose.field < limit {
 		m.compose.field++
 		return m, nil
 	}
+
 	return m.composeSubmit(startNow)
 }

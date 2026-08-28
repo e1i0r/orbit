@@ -31,6 +31,7 @@ func WriteAtomically(path string, body []byte) (err error) {
 	if err != nil {
 		return fmt.Errorf("create a temporary file beside %q: %w", path, err)
 	}
+
 	tmp := f.Name()
 	// Every path that does not end in the rename takes the temporary with
 	// it, so a write that failed leaves the directory as it found it rather
@@ -41,20 +42,26 @@ func WriteAtomically(path string, body []byte) (err error) {
 			_ = os.Remove(tmp)
 		}
 	}()
+
 	if err = f.Chmod(fileMode); err != nil {
 		return fmt.Errorf("set the mode of %q: %w", tmp, err)
 	}
+
 	if _, err = f.Write(body); err != nil {
 		return fmt.Errorf("write %q: %w", tmp, err)
 	}
+
 	if err = f.Sync(); err != nil {
 		return fmt.Errorf("flush %q: %w", tmp, err)
 	}
+
 	if err = f.Close(); err != nil {
 		return fmt.Errorf("close %q: %w", tmp, err)
 	}
+
 	if err = os.Rename(tmp, path); err != nil {
 		return fmt.Errorf("replace %q with %q: %w", path, tmp, err)
 	}
+
 	return nil
 }

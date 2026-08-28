@@ -20,6 +20,7 @@ var placeholderPattern = regexp.MustCompile(`\{[a-zA-Z0-9_]+\}`)
 func placeholders(s string) []string {
 	found := placeholderPattern.FindAllString(s, -1)
 	slices.Sort(found)
+
 	return found
 }
 
@@ -34,6 +35,7 @@ func hasCombiningMark(s string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -42,17 +44,21 @@ func hasCombiningMark(s string) bool {
 // about whatever a developer's $ORBIT_HOME happens to overlay on top.
 func loadRepoCatalog(t *testing.T, filename string) catalog {
 	t.Helper()
+
 	raw, err := os.ReadFile(filepath.Join(root(t), "internal", "words", "lang", filename))
 	if err != nil {
 		t.Fatalf("read %s: %v", filename, err)
 	}
+
 	cat, err := parseCatalog(raw)
 	if err != nil {
 		t.Fatalf("parse %s: %v", filename, err)
 	}
+
 	if cat.keys == nil {
 		cat.keys = map[string]entry{}
 	}
+
 	return cat
 }
 
@@ -67,10 +73,12 @@ func TestEveryTranslationKeyIsHonest(t *testing.T) {
 	for _, site := range sites {
 		checkCallSite(t, site, es, used)
 	}
+
 	for key, e := range es.keys {
 		if !used[key] {
 			t.Errorf("es.json has key %q, which no T or P call in the module uses", key)
 		}
+
 		budget := en.keys[key].Cells
 		checkQuality(t, "es.json", key, "value.one", e.Value.One, budget)
 		checkQuality(t, "es.json", key, "value.other", e.Value.Other, budget)
@@ -89,10 +97,12 @@ func TestEveryTranslationKeyIsHonest(t *testing.T) {
 // checkCallSite runs checks 1, 2, 4 and 5 against one call site.
 func checkCallSite(t *testing.T, site callSite, es catalog, used map[string]bool) {
 	t.Helper()
+
 	if !site.keyOK {
 		t.Errorf("%s:%d: %s's key argument is not a string literal — a dynamic key cannot be verified against es.json", site.file, site.line, site.method)
 		return
 	}
+
 	used[site.key] = true
 
 	e, ok := es.keys[site.key]
@@ -100,6 +110,7 @@ func checkCallSite(t *testing.T, site callSite, es catalog, used map[string]bool
 		t.Errorf("%s:%d: key %q is used but has no entry in es.json", site.file, site.line, site.key)
 		return
 	}
+
 	if !site.literal {
 		// The English at this call site is computed, not written out, so
 		// there is nothing left to compare it against statically.
@@ -111,10 +122,12 @@ func checkCallSite(t *testing.T, site callSite, es catalog, used map[string]bool
 		if e.Source.Single != site.english {
 			t.Errorf("%s:%d: es.json source for %q is %q, want %q — the English changed and the Spanish was not revisited", site.file, site.line, site.key, e.Source.Single, site.english)
 		}
+
 		if e.Value.Single == "" {
 			t.Errorf("%s:%d: key %q has no Spanish translation in es.json", site.file, site.line, site.key)
 			return
 		}
+
 		want, got := placeholders(site.english), placeholders(e.Value.Single)
 		if !slices.Equal(want, got) {
 			t.Errorf("%s:%d: es.json placeholders for %q are %v, want %v", site.file, site.line, site.key, got, want)
@@ -123,13 +136,16 @@ func checkCallSite(t *testing.T, site callSite, es catalog, used map[string]bool
 		if e.Source.One != site.english || e.Source.Other != site.other {
 			t.Errorf("%s:%d: es.json source for %q does not match the English at the call site", site.file, site.line, site.key)
 		}
+
 		if e.Value.One == "" || e.Value.Other == "" {
 			t.Errorf("%s:%d: key %q has no Spanish translation in es.json for both plural forms", site.file, site.line, site.key)
 			return
 		}
+
 		if want, got := placeholders(site.english), placeholders(e.Value.One); !slices.Equal(want, got) {
 			t.Errorf("%s:%d: es.json placeholders for %q (one) are %v, want %v", site.file, site.line, site.key, got, want)
 		}
+
 		if want, got := placeholders(site.other), placeholders(e.Value.Other); !slices.Equal(want, got) {
 			t.Errorf("%s:%d: es.json placeholders for %q (other) are %v, want %v", site.file, site.line, site.key, got, want)
 		}
@@ -141,12 +157,15 @@ func checkCallSite(t *testing.T, site callSite, es catalog, used map[string]bool
 // applies to this key.
 func checkQuality(t *testing.T, catalogName, key, form, value string, budget int) {
 	t.Helper()
+
 	if value == "" {
 		return
 	}
+
 	if hasCombiningMark(value) {
 		t.Errorf("%s key %q (%s) is not NFC — it contains a combining mark instead of a precomposed character", catalogName, key, form)
 	}
+
 	if budget > 0 {
 		if n := utf8.RuneCountInString(value); n > budget {
 			t.Errorf("%s key %q (%s) is %d cells, over its budget of %d — shorten the translation, not the column", catalogName, key, form, n, budget)

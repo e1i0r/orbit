@@ -36,12 +36,15 @@ func TestEveryRoleIsAStyleAndSaysSoWithoutColour(t *testing.T) {
 			if style.GetBold() != c.bold {
 				t.Errorf("bold is %v, want %v", style.GetBold(), c.bold)
 			}
+
 			if style.GetFaint() != c.faint {
 				t.Errorf("faint is %v, want %v", style.GetFaint(), c.faint)
 			}
+
 			if unset(style.GetForeground()) {
 				t.Error("no foreground — every role is a colour as well as a weight")
 			}
+
 			if unset(style.GetBackground()) == c.background {
 				t.Errorf("background set is %v, want %v — only the cursor's role is a block", !unset(style.GetBackground()), c.background)
 			}
@@ -66,12 +69,15 @@ func TestPaintIsAPureFunctionOfItsRole(t *testing.T) {
 			t.Errorf("role %d painted %q and then %q", role, first, second)
 		}
 	}
+
 	seen := map[string]Role{}
+
 	for _, role := range Roles() {
 		painted := Paint(role).Render("orbit")
 		if other, ok := seen[painted]; ok {
 			t.Errorf("roles %d and %d paint identically — a role that cannot be told from another is not a level", other, role)
 		}
+
 		seen[painted] = role
 	}
 }
@@ -92,11 +98,14 @@ func TestAvailableThemes(t *testing.T) {
 	if len(themes) < 5 {
 		t.Errorf("got %d themes, want at least 5", len(themes))
 	}
+
 	for _, name := range themes {
 		SetCurrentTheme(name)
+
 		if CurrentTheme() != name {
 			t.Errorf("CurrentTheme() = %q, want %q", CurrentTheme(), name)
 		}
+
 		for _, r := range Roles() {
 			s := Paint(r).Render("orbit")
 			if s == "" {
@@ -104,5 +113,6 @@ func TestAvailableThemes(t *testing.T) {
 			}
 		}
 	}
+
 	SetCurrentTheme("monokai")
 }

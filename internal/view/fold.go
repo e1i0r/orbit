@@ -37,6 +37,7 @@ func Fold(events []record.Event) Task {
 	// package's working vocabulary and the band is what leaves it, so Fold
 	// is the only thing that maps between them and BandOf reads the result.
 	t.Band = bandOfState(t.state)
+
 	return t
 }
 
@@ -167,6 +168,7 @@ func fold(t *Task, e record.Event) {
 			t.state = stateFailed
 			t.Reason = Reason{Key: ReasonFailedToStart}
 		}
+
 		stamp(&t.Since, e.At)
 	case record.PhaseCancelled:
 		// Cost again: a phase stopped halfway spent whatever it spent, and

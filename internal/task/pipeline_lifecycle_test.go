@@ -16,6 +16,7 @@ import (
 // TestPipelineThoughtsAndRefusalsEmitted tests that thoughts and tool refusals are properly recorded.
 func TestPipelineThoughtsAndRefusalsEmitted(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "COV-1", "Emit thoughts and refusals", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
@@ -48,12 +49,15 @@ func TestPipelineThoughtsAndRefusalsEmitted(t *testing.T) {
 	}
 
 	var thoughtCount, refusalCount int
+
 	for _, e := range events {
 		if e.Kind == record.PhaseThought {
 			thoughtCount++
 		}
+
 		if e.Kind == record.PhaseRefused {
 			refusalCount++
+
 			if e.Data["tool"] != "psql" {
 				t.Errorf("refusal tool = %q, want psql", e.Data["tool"])
 			}
@@ -63,6 +67,7 @@ func TestPipelineThoughtsAndRefusalsEmitted(t *testing.T) {
 	if thoughtCount != 2 {
 		t.Errorf("expected 2 thought events, got %d", thoughtCount)
 	}
+
 	if refusalCount != 1 {
 		t.Errorf("expected 1 refusal event, got %d", refusalCount)
 	}
@@ -71,6 +76,7 @@ func TestPipelineThoughtsAndRefusalsEmitted(t *testing.T) {
 // TestPipelineGatesPassingAndFailing tests runGates with real shell commands.
 func TestPipelineGatesPassingAndFailing(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "COV-2", "Gates test", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
@@ -99,13 +105,16 @@ func TestPipelineGatesPassingAndFailing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Events: %v", err)
 	}
+
 	var gatePassedFound bool
+
 	for _, e := range events {
 		if e.Kind == record.GatePassed && e.Data["gate"] == "lint" {
 			gatePassedFound = true
 			break
 		}
 	}
+
 	if !gatePassedFound {
 		t.Error("expected GatePassed event for lint gate")
 	}
@@ -115,6 +124,7 @@ func TestPipelineGatesPassingAndFailing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Create tk2: %v", err)
 	}
+
 	failFlow := flow.Flow{
 		Name: "fail-gate-flow",
 		Phases: []flow.Phase{
@@ -125,6 +135,7 @@ func TestPipelineGatesPassingAndFailing(t *testing.T) {
 			},
 		},
 	}
+
 	err = Run(context.Background(), s, tk2, failFlow, engines, nil)
 	if err == nil {
 		t.Fatal("expected Run to fail on failing gate command")
@@ -134,13 +145,16 @@ func TestPipelineGatesPassingAndFailing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Events tk2: %v", err)
 	}
+
 	var gateFailedFound bool
+
 	for _, e := range events2 {
 		if e.Kind == record.GateFailed && e.Data["gate"] == "typecheck" {
 			gateFailedFound = true
 			break
 		}
 	}
+
 	if !gateFailedFound {
 		t.Error("expected GateFailed event for typecheck gate")
 	}
@@ -149,6 +163,7 @@ func TestPipelineGatesPassingAndFailing(t *testing.T) {
 // TestStartCapAndCommand asserts runCommand properties and start unread cap.
 func TestStartCapAndCommand(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "COV-3", "Start test", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
@@ -159,6 +174,7 @@ func TestStartCapAndCommand(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Settings: %v", err)
 	}
+
 	cfg.UnreadCap = 2
 	if err := s.SaveSettings(cfg); err != nil {
 		t.Fatalf("SaveSettings: %v", err)
@@ -175,6 +191,7 @@ func TestStartCapAndCommand(t *testing.T) {
 	if cmd.Dir != tk.Repo.Path {
 		t.Errorf("cmd.Dir = %q, want %q", cmd.Dir, tk.Repo.Path)
 	}
+
 	if cmd.SysProcAttr == nil || !cmd.SysProcAttr.Setpgid {
 		t.Error("expected cmd.SysProcAttr.Setpgid to be true")
 	}
@@ -183,6 +200,7 @@ func TestStartCapAndCommand(t *testing.T) {
 // TestAliveMarkersAndBoot asserts marker reading, pid parsing, and stale detection.
 func TestAliveMarkersAndBoot(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "COV-4", "Alive markers test", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
@@ -198,6 +216,7 @@ func TestAliveMarkersAndBoot(t *testing.T) {
 	if err != nil || !found {
 		t.Fatalf("readMarker: found=%v, err=%v", found, err)
 	}
+
 	if pid != 99999999 {
 		t.Errorf("pid = %d, want 99999999", pid)
 	}
@@ -206,6 +225,7 @@ func TestAliveMarkersAndBoot(t *testing.T) {
 	if _, err := parsePid("not-a-pid"); err == nil {
 		t.Error("expected parsePid to fail on non-integer")
 	}
+
 	if started := parseStarted("started: not-a-date"); !started.IsZero() {
 		t.Error("expected parseStarted to return zero time on invalid date")
 	}
@@ -220,6 +240,7 @@ func TestAliveMarkersAndBoot(t *testing.T) {
 // cannot be read, and the child process cannot start.
 func TestStartErrorPaths(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "START-ERR-1", "start error test", "quick")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
@@ -230,9 +251,11 @@ func TestStartErrorPaths(t *testing.T) {
 	if err := os.Mkdir(settingsPath, 0o700); err != nil {
 		t.Fatal(err)
 	}
+
 	if _, err := Start(s, tk, "quick", 0); err == nil {
 		t.Error("Start should have failed when settings.json cannot be read")
 	}
+
 	if err := os.Remove(settingsPath); err != nil {
 		t.Fatal(err)
 	}
@@ -240,6 +263,7 @@ func TestStartErrorPaths(t *testing.T) {
 	// 2. cmd.Start fails: the repository's own directory does not exist,
 	// which is where the child is told to run.
 	gone := repo.Repo{Path: filepath.Join(t.TempDir(), "does-not-exist"), Name: "gone"}
+
 	tkGone := Task{ID: "START-ERR-2", Repo: gone}
 	if _, err := Start(s, tkGone, "quick", 0); err == nil {
 		t.Error("Start should have failed to spawn a child in a directory that does not exist")

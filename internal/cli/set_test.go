@@ -15,26 +15,32 @@ import (
 func settings(t *testing.T, orbitHome string) store.Settings {
 	t.Helper()
 	t.Setenv("ORBIT_HOME", orbitHome)
+
 	s, err := store.Open()
 	if err != nil {
 		t.Fatalf("open the store: %v", err)
 	}
+
 	cfg, err := s.Settings()
 	if err != nil {
 		t.Fatalf("read the settings: %v", err)
 	}
+
 	return cfg
 }
 
 func TestSetTurnsAutopilotOnAndSaysWhatItNowIs(t *testing.T) {
 	_, orbitHome := workspace(t)
+
 	code, out, errOut := run(t, "set", "autopilot", "on")
 	if code != 0 {
 		t.Fatalf("set autopilot on exited %d: %s", code, errOut)
 	}
+
 	if !strings.Contains(out, "autopilot is now on") {
 		t.Errorf("set said %q, which does not say what the setting now is", out)
 	}
+
 	if cfg := settings(t, orbitHome); !cfg.Autopilot {
 		t.Errorf("autopilot is %v on disk, want true", cfg.Autopilot)
 	}
@@ -49,14 +55,17 @@ func TestSetSpeaksTheSwitchInTheWordsTheWindowUses(t *testing.T) {
 	} else if !strings.Contains(out, "autopilot is now on") {
 		t.Errorf("set said %q, want it to say on", out)
 	}
+
 	if cfg := settings(t, orbitHome); !cfg.Autopilot {
 		t.Errorf("autopilot is %v on disk, want true", cfg.Autopilot)
 	}
+
 	if code, out, errOut := run(t, "set", "autopilot", "off"); code != 0 {
 		t.Fatalf("set autopilot off exited %d: %s", code, errOut)
 	} else if !strings.Contains(out, "autopilot is now off") {
 		t.Errorf("set said %q, want it to say off", out)
 	}
+
 	if cfg := settings(t, orbitHome); cfg.Autopilot {
 		t.Errorf("autopilot is %v on disk, want false", cfg.Autopilot)
 	}
@@ -76,6 +85,7 @@ func TestSetLeavesEverySettingItWasNotAskedAboutAlone(t *testing.T) {
 			t.Fatalf("%v exited %d: %s", args, code, errOut)
 		}
 	}
+
 	cfg := settings(t, orbitHome)
 	if cfg.UnreadCap != 9 || cfg.Language != "es" || !cfg.Autopilot || cfg.Model != "sonnet" {
 		t.Errorf("the settings are %+v, and one of them was written over", cfg)
@@ -90,6 +100,7 @@ func TestSetCanTurnTheUnreadCapOff(t *testing.T) {
 	if code, _, errOut := run(t, "set", "unread-cap", "0"); code != 0 {
 		t.Fatalf("set unread-cap 0 exited %d: %s", code, errOut)
 	}
+
 	if cfg := settings(t, orbitHome); cfg.UnreadCap != 0 {
 		t.Errorf("the unread cap is %d, want 0", cfg.UnreadCap)
 	}
@@ -113,6 +124,7 @@ func TestEverySettingKeyCanBeSet(t *testing.T) {
 		if !ok {
 			t.Fatalf("%q is offered as a key and this test has no value for it", key)
 		}
+
 		var cfg store.Settings
 		if _, err := assign(&cfg, key, value); err != nil {
 			t.Errorf("set %s %s: %v", key, value, err)
@@ -129,6 +141,7 @@ func TestSetChoosesTheFlowANewTaskIsWrittenAgainst(t *testing.T) {
 	} else if !strings.Contains(out, "flow is now careful") {
 		t.Errorf("set said %q, which does not say what the setting now is", out)
 	}
+
 	if cfg := settings(t, orbitHome); cfg.Flow != "careful" {
 		t.Errorf("the default flow is %q on disk, want careful", cfg.Flow)
 	}
@@ -149,13 +162,16 @@ func TestSetRefusesWhatItCannotDoAndSaysWhy(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			_, orbitHome := workspace(t)
+
 			code, _, errOut := run(t, tc.args...)
 			if code == 0 {
 				t.Fatalf("%v exited 0", tc.args)
 			}
+
 			if !strings.Contains(errOut, tc.says) {
 				t.Errorf("the refusal is %q, and does not say %q", errOut, tc.says)
 			}
+
 			if _, err := os.Stat(filepath.Join(orbitHome, "settings.json")); err == nil {
 				t.Errorf("a refused setting wrote the settings file anyway")
 			}
@@ -167,6 +183,7 @@ func TestSetRefusesWhatItCannotDoAndSaysWhy(t *testing.T) {
 // guessing, and `orbit set -h` shows flags this command does not have.
 func TestARefusedKeyListsTheKeysThereAre(t *testing.T) {
 	workspace(t)
+
 	_, _, errOut := run(t, "set", "colour", "blue")
 	for _, key := range settingKeys() {
 		if !strings.Contains(errOut, key) {

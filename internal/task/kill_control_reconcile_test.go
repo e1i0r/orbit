@@ -14,6 +14,7 @@ import (
 // TestKillAndCancelEdgeCases tests Kill, Cancel and killTarget.
 func TestKillAndCancelEdgeCases(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "KILL-1", "Kill test", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
@@ -39,12 +40,15 @@ func TestKillAndCancelEdgeCases(t *testing.T) {
 	if got := killTarget(100, 100, nil); got != -100 {
 		t.Errorf("killTarget(100, 100, nil) = %d, want -100", got)
 	}
+
 	if got := killTarget(100, 50, nil); got != 100 {
 		t.Errorf("killTarget(100, 50, nil) = %d, want 100", got)
 	}
+
 	if got := killTarget(100, 1, nil); got != 100 {
 		t.Errorf("killTarget(100, 1, nil) = %d, want 100", got)
 	}
+
 	if got := killTarget(100, 100, errors.New("err")); got != 100 {
 		t.Errorf("killTarget with error = %d, want 100", got)
 	}
@@ -53,6 +57,7 @@ func TestKillAndCancelEdgeCases(t *testing.T) {
 // TestControlAndTakeCommands tests writing and taking control words.
 func TestControlAndTakeCommands(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "CTRL-1", "Control test", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
@@ -68,6 +73,7 @@ func TestControlAndTakeCommands(t *testing.T) {
 	if err != nil {
 		t.Fatalf("take: %v", err)
 	}
+
 	if word != "pause" {
 		t.Errorf("take word = %q, want pause", word)
 	}
@@ -77,6 +83,7 @@ func TestControlAndTakeCommands(t *testing.T) {
 	if err != nil {
 		t.Fatalf("second take: %v", err)
 	}
+
 	if second != "" {
 		t.Errorf("second take word = %q, want empty", second)
 	}
@@ -85,6 +92,7 @@ func TestControlAndTakeCommands(t *testing.T) {
 // TestReconcileAbandonedTasks tests reconciling dead processes and clearing markers.
 func TestReconcileAbandonedTasks(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "REC-1", "Reconcile test", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
@@ -106,6 +114,7 @@ func TestReconcileAbandonedTasks(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Reconcile: %v", err)
 	}
+
 	if !reconciled {
 		t.Error("expected Reconcile to return true for in-flight dead task")
 	}
@@ -115,6 +124,7 @@ func TestReconcileAbandonedTasks(t *testing.T) {
 	if err != nil {
 		t.Fatalf("readMarker: %v", err)
 	}
+
 	if found {
 		t.Error("expected marker to be removed after Reconcile")
 	}
@@ -123,13 +133,16 @@ func TestReconcileAbandonedTasks(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Events: %v", err)
 	}
+
 	var abandonedFound bool
+
 	for _, e := range events {
 		if e.Kind == record.TaskAbandoned {
 			abandonedFound = true
 			break
 		}
 	}
+
 	if !abandonedFound {
 		t.Error("expected TaskAbandoned event emitted by Reconcile")
 	}
@@ -144,6 +157,7 @@ func TestTaskListAndFlowDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Create tk1: %v", err)
 	}
+
 	tk2, err := Create(s, r, "LST-2", "Task two", "")
 	if err != nil {
 		t.Fatalf("Create tk2: %v", err)
@@ -153,6 +167,7 @@ func TestTaskListAndFlowDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatalf("List: %v", err)
 	}
+
 	if len(tasks) != 2 {
 		t.Errorf("List returned %d tasks, want 2", len(tasks))
 	}
@@ -162,6 +177,7 @@ func TestTaskListAndFlowDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load tk1: %v", err)
 	}
+
 	if loaded.Flow != "quick" {
 		t.Errorf("loaded.Flow = %q, want quick", loaded.Flow)
 	}
@@ -176,6 +192,7 @@ func TestTaskListAndFlowDefaults(t *testing.T) {
 	if err != nil || chosen != "custom" {
 		t.Errorf("chosenFlow(custom) = %q, want custom", chosen)
 	}
+
 	chosenDef, err := chosenFlow(s, "")
 	if err != nil || chosenDef != flow.Default {
 		t.Errorf("chosenFlow(\"\") = %q, want %q", chosenDef, flow.Default)
@@ -191,6 +208,7 @@ func TestTaskListAndFlowDefaults(t *testing.T) {
 // TestEventsReadingAndCorruptedLines tests event retrieval and corrupted line toleration.
 func TestEventsReadingAndCorruptedLines(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "EVT-1", "Events test", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
@@ -211,6 +229,7 @@ func TestEventsReadingAndCorruptedLines(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Events with unreadable line: %v", err)
 	}
+
 	if len(events) != 3 {
 		t.Errorf("expected 3 events (including unreadable marker), got %d: %v", len(events), events)
 	}
@@ -219,6 +238,7 @@ func TestEventsReadingAndCorruptedLines(t *testing.T) {
 // TestRunPrepareAndErrorReturns tests Run execution when engine returns error.
 func TestRunPrepareAndErrorReturns(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "RUN-ERR-1", "Run error test", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
@@ -239,6 +259,7 @@ func TestRunPrepareAndErrorReturns(t *testing.T) {
 
 	// Engine returning error
 	errEngineFail := &failingEngine{err: os.ErrPermission}
+
 	err = Run(context.Background(), s, tk, testFlow, map[string]engine.Engine{"fail": errEngineFail}, nil)
 	if err == nil {
 		t.Error("expected Run to fail when engine returns error")

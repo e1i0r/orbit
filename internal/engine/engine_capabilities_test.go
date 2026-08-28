@@ -13,9 +13,11 @@ func TestEngineCapabilitiesAndMetadata(t *testing.T) {
 	if !cl.CanResume() || !cl.CanThink() {
 		t.Error("Claude should support CanResume and CanThink")
 	}
+
 	if len(cl.Models()) != 4 {
 		t.Errorf("Claude Models = %v, want 4 choices", cl.Models())
 	}
+
 	if len(cl.Efforts()) != 6 {
 		t.Errorf("Claude Efforts = %v, want 6 choices", cl.Efforts())
 	}
@@ -25,6 +27,7 @@ func TestEngineCapabilitiesAndMetadata(t *testing.T) {
 	if fk.CanResume() || fk.CanThink() {
 		t.Error("Fake should return false for CanResume and CanThink")
 	}
+
 	if fk.Models() != nil || fk.Efforts() != nil {
 		t.Error("Fake should return nil for Models and Efforts")
 	}
@@ -49,9 +52,11 @@ func TestClaudeArgsComprehensive(t *testing.T) {
 	if !contains(argStr, "--model") || !contains(argStr, "sonnet") {
 		t.Errorf("missing model arg in %v", args)
 	}
+
 	if !contains(argStr, "--effort") || !contains(argStr, "high") {
 		t.Errorf("missing effort arg in %v", args)
 	}
+
 	if !contains(argStr, "--resume") || !contains(argStr, "sess-abc") {
 		t.Errorf("missing resume arg in %v", args)
 	}
@@ -65,12 +70,14 @@ func TestEngineExecutionErrors(t *testing.T) {
 
 	// Running in non-existent directory exercises command failure
 	cl := NewClaude()
+
 	_, err := cl.Run(context.Background(), req)
 	if err == nil {
 		t.Error("expected Claude.Run to fail in non-existent dir")
 	}
 
 	co := NewCodex()
+
 	_, err = co.Run(context.Background(), req)
 	if err == nil {
 		t.Error("expected Codex.Run to fail in non-existent dir")
@@ -98,6 +105,7 @@ func TestEngineMockSuccessfulRun(t *testing.T) {
 
 	// 1. Claude
 	cl := NewClaude()
+
 	resCl, err := cl.Run(context.Background(), req)
 	if err != nil || resCl.Output != "mock success" {
 		t.Errorf("Claude.Run mock failed: %v, res=%+v", err, resCl)
@@ -105,6 +113,7 @@ func TestEngineMockSuccessfulRun(t *testing.T) {
 
 	// 2. Codex
 	co := NewCodex()
+
 	resCo, err := co.Run(context.Background(), req)
 	if err != nil || resCo.Output != "mock success" {
 		t.Errorf("Codex.Run mock failed: %v, res=%+v", err, resCo)
@@ -112,6 +121,7 @@ func TestEngineMockSuccessfulRun(t *testing.T) {
 
 	// 3. OpenCode
 	op := NewOpenCode()
+
 	resOp, err := op.Run(context.Background(), req)
 	if err != nil || resOp.Output != "mock success" {
 		t.Errorf("OpenCode.Run mock failed: %v, res=%+v", err, resOp)
@@ -123,6 +133,7 @@ func argsToString(args []string) string {
 	for _, a := range args {
 		s += " " + a
 	}
+
 	return s
 }
 
@@ -132,5 +143,6 @@ func contains(haystack, needle string) bool {
 			return true
 		}
 	}
+
 	return false
 }

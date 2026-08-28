@@ -50,9 +50,11 @@ func (m Model) openMenuForContext() Model {
 	if m.screen == screenDetail && m.detail != "" {
 		return m.openMenu(m.detail)
 	}
+
 	if r, ok := m.selected(); ok && !r.head {
 		return m.openMenu(r.task.ID)
 	}
+
 	return m.openMenu("")
 }
 
@@ -83,32 +85,41 @@ func (m Model) menuEntries() []menuEntry {
 	if m.screen == screenDetail {
 		return m.tabMenuEntries()
 	}
+
 	if m.menu.taskID == "" {
 		out := make([]menuEntry, 0, len(m.opts.Commands))
 		for i := range m.opts.Commands {
 			c := &m.opts.Commands[i]
+
 			e := menuEntry{title: c.Name, cmd: c}
 			if c.About != nil {
 				e.detail = c.About(p)
 			}
+
 			if c.Refused && c.Because != nil {
 				e.dim = true
 				e.detail = ""
 				e.reason = c.Because(p)
 			}
+
 			out = append(out, e)
 		}
+
 		return out
 	}
+
 	t, ok := m.task(m.menu.taskID)
 	if !ok {
 		// The run the menu was opened on left the board while it was up.
 		return nil
 	}
+
 	all := m.keys.Affordances(t, m.conditions(t))
+
 	out := make([]menuEntry, 0, len(all))
 	for i := range all {
 		a := &all[i]
+
 		e := menuEntry{
 			glyph: a.Key.Help().Key,
 			title: a.Key.Help().Desc,
@@ -118,8 +129,10 @@ func (m Model) menuEntries() []menuEntry {
 			e.dim = true
 			e.reason = a.Why(p)
 		}
+
 		out = append(out, e)
 	}
+
 	return out
 }
 
@@ -140,6 +153,7 @@ func (m Model) tabMenuEntries() []menuEntry {
 	}
 
 	var out []menuEntry
+
 	for _, n := range m.tabNames() {
 		tVal := n.tab
 		k := paneKey(tVal)
@@ -150,6 +164,7 @@ func (m Model) tabMenuEntries() []menuEntry {
 			tab:    &tVal,
 		})
 	}
+
 	return out
 }
 
@@ -163,6 +178,7 @@ func (m Model) menuKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			return m.closeMenu(), nil
 		}
 	}
+
 	switch {
 	case key.Matches(msg, m.keys.Back):
 		return m.closeMenu(), nil
@@ -173,6 +189,7 @@ func (m Model) menuKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case msg.String() == "down" || key.Matches(msg, m.keys.Down):
 		return m.menuPick(1), nil
 	}
+
 	return m, nil
 }
 
@@ -183,13 +200,16 @@ func (m Model) menuPick(d int) Model {
 		m.menu.sel = 0
 		return m
 	}
+
 	m.menu.sel += d
 	if m.menu.sel < 0 {
 		m.menu.sel = 0
 	}
+
 	if m.menu.sel >= n {
 		m.menu.sel = n - 1
 	}
+
 	return m
 }
 
@@ -202,15 +222,18 @@ func (m Model) chooseMenu() (tea.Model, tea.Cmd) {
 	if m.menu.sel < 0 || m.menu.sel >= len(entries) {
 		return m, nil
 	}
+
 	e := entries[m.menu.sel]
 	if e.tab != nil {
 		m = m.showTab(*e.tab)
 		return m.closeMenu(), nil
 	}
+
 	next := m.closeMenu()
 	if e.cmd != nil {
 		return next.launch(*e.cmd, nil)
 	}
+
 	return next.sendKey(keystroke(e.glyph))
 }
 
@@ -220,19 +243,24 @@ func (m Model) menuRows(h, w int) []string {
 	if h <= 0 {
 		return nil
 	}
+
 	p := m.opts.Words
+
 	es := m.menuEntries()
 	if len(es) == 0 {
 		return fill([]string{"", fit("  "+Paint(Dim).Render(
 			p.T("menu.gone", "the task this menu was opened on is no longer on the board")), w)}, h)
 	}
+
 	out := make([]string, 0, h)
 	for i, e := range es {
 		if len(out) >= h {
 			break
 		}
+
 		out = append(out, m.menuRow(e, i == m.menu.sel, w))
 	}
+
 	return fill(out, h)
 }
 
@@ -247,20 +275,24 @@ func (m Model) menuRow(e menuEntry, selected bool, w int) string {
 	} else {
 		line = "   " + line
 	}
+
 	switch {
 	case e.reason != "":
 		line += dot + Paint(Dim).Render(" "+e.reason)
 	case e.detail != "":
 		line += dot + Paint(Dim).Render(" "+e.detail)
 	}
+
 	mark := strings.Repeat(" ", gutter)
 	if selected {
 		mark = markGlyph + strings.Repeat(" ", gutter-1)
 		return Paint(Sel).Render(fit(mark+line, w))
 	}
+
 	if e.dim {
 		return fit(mark+Paint(Dim).Render(line), w)
 	}
+
 	return fit(mark+line, w)
 }
 
@@ -275,16 +307,20 @@ func (m Model) hitMenu(x, y int) Target {
 	if !ok {
 		return Target{}
 	}
+
 	es := m.menuEntries()
 	if line < 0 || line >= len(es) {
 		return Target{}
 	}
+
 	e := es[line]
 	if e.glyph != "" {
 		return Target{Kind: TargetMenuEntry, Key: e.glyph}
 	}
+
 	if e.cmd != nil {
 		return Target{Kind: TargetMenuEntry, Key: e.cmd.Name}
 	}
+
 	return Target{}
 }

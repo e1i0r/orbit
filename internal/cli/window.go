@@ -65,17 +65,22 @@ func takeCommand(eng engine.Engine, session, dir string) (*exec.Cmd, error) {
 	if eng == nil {
 		return nil, fmt.Errorf("taking the keyboard needs an engine")
 	}
+
 	if !eng.CanResume() {
 		return nil, fmt.Errorf("%s cannot resume a session", eng.Name())
 	}
+
 	if dir == "" {
 		return nil, fmt.Errorf("taking the keyboard for a %s session needs a worktree to open it in", eng.Name())
 	}
+
 	if session == "" {
 		return nil, nil
 	}
+
 	cmd := exec.Command(eng.Name(), "--resume", session, "--fork-session")
 	cmd.Dir = dir
+
 	return cmd, nil
 }
 
@@ -90,6 +95,7 @@ func takeCommand(eng engine.Engine, session, dir string) (*exec.Cmd, error) {
 // them greyed would say something untrue about them.
 func commandTable() []ui.Command {
 	cs := commands()
+
 	out := make([]ui.Command, 0, len(cs))
 	for _, c := range cs {
 		uc := ui.Command{Name: c.Name, Args: c.Args, About: c.About}
@@ -97,8 +103,10 @@ func commandTable() []ui.Command {
 			uc.Refused = true
 			uc.Because = c.Because
 		}
+
 		out = append(out, uc)
 	}
+
 	return out
 }
 
@@ -117,10 +125,13 @@ func doPort(lang interface{ Language() string }) func(string, []string, io.Write
 		c, ok := lookup(name)
 		if !ok {
 			p := words.For(lang.Language())
+
 			return errors.New(p.T("msg.no_such_command", "no such command: {name}",
 				about(name)))
 		}
+
 		p := words.For(lang.Language())
+
 		switch c.InWindow {
 		case WindowRefuses:
 			// The table owns the reason; this only delivers it.
@@ -132,6 +143,7 @@ func doPort(lang interface{ Language() string }) func(string, []string, io.Write
 			return errors.New(p.T("msg.no_screen_yet",
 				"{name} opens a screen this window does not have yet", about(name)))
 		}
+
 		return c.Run(Context{Out: out, Err: out, Words: p}, args)
 	}
 }

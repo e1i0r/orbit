@@ -68,6 +68,7 @@ func generatePhasePrompt(userInput, phaseName, flowName string) string {
 			return fmt.Sprintf("Ejecuta la fase %s para el flujo %s con máxima rigurosidad técnica.",
 				phaseName, flowName)
 		}
+
 		return fmt.Sprintf("Ejecuta las tareas correspondientes a la fase %s de forma autónoma "+
 			"y precisa.", phaseName)
 	}

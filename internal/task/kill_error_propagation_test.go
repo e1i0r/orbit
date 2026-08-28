@@ -8,6 +8,7 @@ import "testing"
 
 func TestKillAliveErrorPropagates(t *testing.T) {
 	s, r := fixture(t)
+
 	bad := Task{ID: "has/slash", Repo: r}
 	if err := Kill(s, bad); err == nil {
 		t.Error("Kill with a slash in the id should have failed")

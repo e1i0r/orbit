@@ -30,25 +30,30 @@ type settingRow struct {
 func (m Model) openSettings() Model {
 	m.screen = screenSettings
 	m.settings = settingsState{}
+
 	return m
 }
 
 func (m Model) abandonSettings() Model {
 	m.settings = settingsState{}
 	m.screen = screenList
+
 	return m
 }
 
 func (m Model) settingRowsList() []settingRow {
 	p := m.opts.Words
+
 	s := m.opts.Settings
 	if s == nil {
 		return nil
 	}
+
 	autopilotStr := "off"
 	if s.Autopilot() {
 		autopilotStr = "on"
 	}
+
 	langVal := orDef(s.Language(), "en")
 	engineVal := orDef(s.Engine(), "claude")
 	modelVal := orDef(s.Model(), "sonnet")
@@ -59,11 +64,14 @@ func (m Model) settingRowsList() []settingRow {
 	if !slices.Contains(models, modelVal) && len(models) > 0 {
 		modelVal = models[0]
 	}
+
 	efforts := effortsForEngine(engineVal)
+
 	effortVal := orDef(m.knobs.Effort, "default")
 	if !slices.Contains(efforts, effortVal) && len(efforts) > 0 {
 		effortVal = efforts[0]
 	}
+
 	thinkingVal := orDef(m.knobs.Thinking, "adaptive")
 
 	return []settingRow{
@@ -83,6 +91,7 @@ func orDef(s, def string) string {
 	if s == "" {
 		return def
 	}
+
 	return s
 }
 
@@ -92,6 +101,7 @@ func (m Model) settingsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if key.Matches(msg, m.keys.Back) || key.Matches(msg, m.keys.Quit) {
 			return m.abandonSettings(), nil
 		}
+
 		return m, nil
 	}
 
@@ -100,6 +110,7 @@ func (m Model) settingsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Back):
 			m.settings.editing = false
 			m.settings.typed = ""
+
 			return m, nil
 		case key.Matches(msg, m.keys.Open):
 			return m.settingsSubmit()
@@ -107,10 +118,12 @@ func (m Model) settingsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			m.settings.typed = trimLastRune(m.settings.typed)
 			return m, nil
 		}
+
 		if msg.Text != "" {
 			m.settings.typed += msg.Text
 			return m, nil
 		}
+
 		return m, nil
 	}
 
@@ -122,12 +135,14 @@ func (m Model) settingsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if m.settings.sel < 0 {
 			m.settings.sel = len(rows) - 1
 		}
+
 		return m, nil
 	case key.Matches(msg, m.keys.Down), msg.Text == "j":
 		m.settings.sel++
 		if m.settings.sel >= len(rows) {
 			m.settings.sel = 0
 		}
+
 		return m, nil
 	case key.Matches(msg, m.keys.Open), msg.Text == " ", msg.Code == tea.KeyRight, msg.Text == "l":
 		return m.cycleSetting(1)
@@ -136,8 +151,10 @@ func (m Model) settingsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case msg.Text == "e":
 		m.settings.editing = true
 		m.settings.typed = rows[m.settings.sel].val
+
 		return m, nil
 	}
+
 	return m, nil
 }
 
@@ -146,21 +163,26 @@ func (m Model) cycleSetting(delta int) (tea.Model, tea.Cmd) {
 	if m.settings.sel < 0 || m.settings.sel >= len(rows) {
 		return m, nil
 	}
+
 	r := rows[m.settings.sel]
 	if len(r.options) == 0 {
 		return m, nil
 	}
+
 	idx := 0
+
 	for i, opt := range r.options {
 		if opt == r.val {
 			idx = i
 			break
 		}
 	}
+
 	nextIdx := (idx + delta) % len(r.options)
 	if nextIdx < 0 {
 		nextIdx += len(r.options)
 	}
+
 	return m.applySetting(r.key, r.options[nextIdx])
 }
 
@@ -170,10 +192,12 @@ func (m Model) settingsSubmit() (tea.Model, tea.Cmd) {
 		m.settings.editing = false
 		return m, nil
 	}
+
 	keyName := rows[m.settings.sel].key
 	val := strings.TrimSpace(m.settings.typed)
 	m.settings.editing = false
 	m.settings.typed = ""
+
 	return m.applySetting(keyName, val)
 }
 
@@ -191,10 +215,12 @@ func (m Model) applySetting(keyName, val string) (tea.Model, tea.Cmd) {
 			}
 		case "engine":
 			_ = s.SetEngine(val) //nolint:errcheck // best-effort setting update
+
 			validModels := modelsForEngine(val)
 			if !slices.Contains(validModels, s.Model()) && len(validModels) > 0 {
 				_ = s.SetModel(validModels[0]) //nolint:errcheck // best-effort setting update
 			}
+
 			validEfforts := effortsForEngine(val)
 			if !slices.Contains(validEfforts, m.knobs.Effort) && len(validEfforts) > 0 {
 				m.knobs.Effort = validEfforts[0]
@@ -212,13 +238,17 @@ func (m Model) applySetting(keyName, val string) (tea.Model, tea.Cmd) {
 			SetCurrentTheme(val)
 		}
 	}
+
 	if m.opts.Do != nil {
 		var buf bytes.Buffer
+
 		_ = m.opts.Do("set", []string{keyName, val}, &buf) //nolint:errcheck // best-effort setting execution
 	}
+
 	if keyName == "language" {
 		return m.say("language changed to " + val), func() tea.Msg { return languageMsg{Lang: val} }
 	}
+
 	return m.say(keyName + " is now " + val), nil
 }
 
@@ -226,6 +256,7 @@ func (m Model) settingsRows(h, w int) []string {
 	if h <= 0 {
 		return nil
 	}
+
 	p := m.opts.Words
 	rows := m.settingRowsList()
 	out := []string{
@@ -240,6 +271,7 @@ func (m Model) settingsRows(h, w int) []string {
 		mark := "    "
 		keyRole := Accent
 		descRole := Dim
+
 		if isSelected {
 			mark = "  " + Paint(Live).Bold(true).Render("▸ ")
 			keyRole = Live
@@ -258,6 +290,7 @@ func (m Model) settingsRows(h, w int) []string {
 				}
 			}
 		}
+
 		optsFormatted := strings.Join(optViews, " ")
 
 		keyCol := padRight(r.key, 14)
@@ -276,7 +309,9 @@ func (m Model) settingsRows(h, w int) []string {
 			about("open", m.keys.Open.Help().Key),
 			about("back", m.keys.Back.Help().Key))
 	}
+
 	out = append(out, fit("  "+Paint(Dim).Render(waysOut), w))
+
 	return fill(out, h)
 }
 
@@ -285,5 +320,6 @@ func padRight(s string, width int) string {
 	if w >= width {
 		return s
 	}
+
 	return s + strings.Repeat(" ", width-w)
 }

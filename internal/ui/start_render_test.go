@@ -51,15 +51,18 @@ func TestEveryStartDialogFitsTheTerminalItWasGiven(t *testing.T) {
 			t.Run(name, func(t *testing.T) {
 				m := modelWith(t, printer, fixtureBoard(fixtureTasks(), 4), size.w, size.h, nil)
 				m, _ = dialog(t, m, "ACME-2662")
+
 				rows := renderAt(t, m, size.w, size.h)
 				if len(rows) != size.h {
 					t.Fatalf("the dialog is %d rows, want %d", len(rows), size.h)
 				}
+
 				for i, row := range rows {
 					if cells := ansi.StringWidth(row); cells > size.w {
 						t.Errorf("row %d is %d cells wide, want at most %d: %q", i, cells, size.w, row)
 					}
 				}
+
 				if !strings.Contains(strings.Join(rows, "\n"), "ACME-2662") {
 					t.Error("the dialog does not say which task it would start")
 				}
@@ -88,16 +91,19 @@ func TestTheStartDialogOffersOnlyKeysItHandles(t *testing.T) {
 	for _, b := range append(m.startBindings(), m.keys.Help, m.keys.Quit) {
 		handled[b.Help().Key] = b
 	}
+
 	glyphs := inBrackets(bar)
 	if len(glyphs) == 0 {
 		t.Fatalf("the bar offers no keys at all, so this test asserts nothing: %q", bar)
 	}
+
 	for _, glyph := range glyphs {
 		b, ok := handled[glyph]
 		if !ok {
 			t.Errorf("the bar offers %q, which this dialog does not handle: %q", glyph, bar)
 			continue
 		}
+
 		for _, keystroke := range b.Keys() {
 			after, cmd := advance(t, m, press(keystroke))
 			if cmd == nil && after.screen == m.screen && after.start.at == m.start.at &&
@@ -117,6 +123,7 @@ func inBrackets(line string) []string {
 	for _, m := range bracketed.FindAllStringSubmatch(line, -1) {
 		out = append(out, m[1])
 	}
+
 	return out
 }
 
@@ -136,12 +143,14 @@ func (d flowDir) FlowDir() string { return string(d) }
 func userFlows(t *testing.T, names ...string) flow.Source {
 	t.Helper()
 	dir := t.TempDir()
+
 	for _, n := range names {
 		body := `{"name":"` + n + `","phases":[{"name":"implement","engine":"claude","model":"sonnet"}]}`
 		if err := os.WriteFile(filepath.Join(dir, n+".json"), []byte(body), 0o600); err != nil {
 			t.Fatalf("write %s: %v", n, err)
 		}
 	}
+
 	return flowDir(dir)
 }
 
@@ -179,22 +188,27 @@ func TestAFlowOfTheReadersOwnIsMarkedTheWayOrbitFlowsMarksIt(t *testing.T) {
 			for _, f := range m.start.flows {
 				marks[f.name], seen[f.name] = m.flowMark(f), seen[f.name]+1
 			}
+
 			listed := flow.List(m.opts.Flows)
 			if len(listed) == 0 {
 				t.Fatal("flow.List offers nothing, so the comparison would assert nothing")
 			}
+
 			for _, l := range listed {
 				var want string
+
 				switch l.Origin {
 				case flow.OriginUser:
 					want = p.T("flow.yours", "yours")
 				case flow.OriginShadow:
 					want = p.T("flow.shadowing", "yours, shadowing the built-in")
 				}
+
 				if seen[l.Name] == 0 {
 					t.Errorf("the cycle does not offer %q at all, so its mark says nothing", l.Name)
 					continue
 				}
+
 				if marks[l.Name] != want {
 					t.Errorf("the cycle marks %q as %q, want %q", l.Name, marks[l.Name], want)
 				}
@@ -205,9 +219,11 @@ func TestAFlowOfTheReadersOwnIsMarkedTheWayOrbitFlowsMarksIt(t *testing.T) {
 					t.Errorf("the cycle lists %q %d times, want once", l.Name, seen[l.Name])
 				}
 			}
+
 			if marks["task"] == marks["mine"] {
 				t.Errorf("a shadowing flow and an ordinary one of the reader's own are marked the same: %q", marks["task"])
 			}
+
 			if marks["careful"] != "" {
 				t.Errorf("a built-in is marked %q; a mark on every line is not a mark", marks["careful"])
 			}
@@ -219,16 +235,20 @@ func TestAFlowOfTheReadersOwnIsMarkedTheWayOrbitFlowsMarksIt(t *testing.T) {
 func TestTheDialogSaysAFlowIsTheReadersOwn(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.opts.Flows = userFlows(t, "mine")
+
 	m, _ = dialog(t, m, "ACME-2662")
 	for range m.start.flows {
 		if m.start.chosen().name == "mine" {
 			break
 		}
+
 		m = m.cycleFlow()
 	}
+
 	if m.start.chosen().name != "mine" {
 		t.Fatalf("f never reaches the reader's own flow; the cycle is %v", m.start.flows)
 	}
+
 	if line := ansi.Strip(m.flowLine(100)); !strings.Contains(line, "yours") {
 		t.Errorf("the flow line is %q, want it to say the flow is the reader's own", line)
 	}

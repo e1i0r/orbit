@@ -40,6 +40,7 @@ func TestTheCountsAreOfTheBandsTheyName(t *testing.T) {
 	if !ok {
 		t.Fatal("the summary carries no counts")
 	}
+
 	for band, want := range map[string]float64{"todo": 1, "needs_you": 1, "done": 1, "running": 0} {
 		if counts[band] != want {
 			t.Errorf("counts[%q] = %v, want %v — the whole counts map is %v", band, counts[band], want, counts)
@@ -60,14 +61,17 @@ func TestTheBandFilterFindsTheBandItNames(t *testing.T) {
 		record.Event{At: at(3), Kind: record.TaskFailed, Text: "broke"})
 
 	got := call(t, sn, "orbit_list_tasks", map[string]any{"band": "needs_you"})
+
 	tasks, ok := got["tasks"].([]any)
 	if !ok || len(tasks) != 1 {
 		t.Fatalf("the needs_you band answered %v, want exactly PAY-2", got["tasks"])
 	}
+
 	row0, ok := tasks[0].(map[string]any)
 	if !ok || row0["id"] != "PAY-2" {
 		t.Fatalf("the needs_you band answered %v, want PAY-2", tasks[0])
 	}
+
 	if row0["band"] != "needs_you" {
 		t.Errorf("the row names its band %q, want the same token the filter takes", row0["band"])
 	}
@@ -78,6 +82,7 @@ func TestTheBandFilterFindsTheBandItNames(t *testing.T) {
 // board.
 func TestAnUnknownBandIsRefusedWithTheOnesThatWork(t *testing.T) {
 	_, sn, _ := oneRepo(t)
+
 	said := refused(t, sn, "orbit_list_tasks", map[string]any{"band": "in_progress"})
 	for _, name := range bandNames() {
 		if !strings.Contains(said, name) {
@@ -99,10 +104,12 @@ func TestTasksAreFoundThroughTheRepositoriesOrbitKnows(t *testing.T) {
 	// is the test binary's, which holds no repository of this fixture's.
 	rootless := Session{Version: "test"}
 	got := call(t, rootless, "orbit_list_tasks", nil)
+
 	tasks, ok := got["tasks"].([]any)
 	if !ok || len(tasks) != 1 {
 		t.Fatalf("a session with no root found %v, want the one task in the repository orbit knows", got["tasks"])
 	}
+
 	alsoFound, ok := call(t, rooted, "orbit_list_tasks", nil)["tasks"].([]any)
 	if !ok || len(alsoFound) != 1 {
 		t.Errorf("the rooted session found %v, and the rootless one found the task", alsoFound)
@@ -114,10 +121,12 @@ func TestTasksAreFoundThroughTheRepositoriesOrbitKnows(t *testing.T) {
 // actually has.
 func TestTheAnswerSaysWhereItLooked(t *testing.T) {
 	_, sn, _ := oneRepo(t)
+
 	roots, ok := call(t, sn, "orbit_list_repos", nil)["roots"].([]any)
 	if !ok || len(roots) == 0 {
 		t.Fatal("orbit_list_repos does not say which directories it looked in")
 	}
+
 	if roots[0] != sn.Root {
 		t.Errorf("it says it looked in %v, and it was pointed at %q", roots[0], sn.Root)
 	}
@@ -125,10 +134,12 @@ func TestTheAnswerSaysWhereItLooked(t *testing.T) {
 
 func TestListReposNamesTheRepositoryAndItsPath(t *testing.T) {
 	_, sn, r := oneRepo(t)
+
 	repos, ok := call(t, sn, "orbit_list_repos", nil)["repos"].([]any)
 	if !ok || len(repos) != 1 {
 		t.Fatalf("orbit_list_repos found %v, want the one repository in the workspace", repos)
 	}
+
 	got, ok := repos[0].(map[string]any)
 	if !ok || got["name"] != r.Name || got["path"] != r.Path {
 		t.Errorf("orbit_list_repos answered %v, want name %q at %q", repos[0], r.Name, r.Path)
@@ -137,18 +148,22 @@ func TestListReposNamesTheRepositoryAndItsPath(t *testing.T) {
 
 func TestListFlowsCarriesThePhasesEachOneWalks(t *testing.T) {
 	_, sn, _ := oneRepo(t)
+
 	flows, ok := call(t, sn, "orbit_list_flows", nil)["flows"].([]any)
 	if !ok || len(flows) == 0 {
 		t.Fatal("orbit_list_flows found no flows, and orbit ships several")
 	}
+
 	for _, entry := range flows {
 		f, ok := entry.(map[string]any)
 		if !ok || f["name"] == "" {
 			t.Fatalf("a flow came back as %#v", entry)
 		}
+
 		if f["error"] != nil {
 			continue
 		}
+
 		phases, ok := f["phases"].([]any)
 		if !ok || len(phases) == 0 {
 			t.Errorf("flow %v carries no phases, which is the only reason to ask for the list", f["name"])
@@ -164,6 +179,7 @@ func TestATaskIsFoundByIdAloneAcrossRepositories(t *testing.T) {
 	gitRepo(t, work, "payments")
 	ledger := gitRepo(t, work, "ledger")
 	sn := Session{Root: work, Version: "test"}
+
 	addTask(t, s, ledger, "LED-1", record.Event{At: at(1), Kind: record.TaskCreated, Text: "written"})
 
 	got := call(t, sn, "orbit_inspect_task", map[string]any{"task_id": "LED-1"})
@@ -179,6 +195,7 @@ func TestAnAmbiguousIdIsRefusedWithTheRepositoriesThatHoldIt(t *testing.T) {
 	payments := gitRepo(t, work, "payments")
 	ledger := gitRepo(t, work, "ledger")
 	sn := Session{Root: work, Version: "test"}
+
 	addTask(t, s, payments, "SHARED-1", record.Event{At: at(1), Kind: record.TaskCreated, Text: "one"})
 	addTask(t, s, ledger, "SHARED-1", record.Event{At: at(1), Kind: record.TaskCreated, Text: "two"})
 
@@ -188,6 +205,7 @@ func TestAnAmbiguousIdIsRefusedWithTheRepositoriesThatHoldIt(t *testing.T) {
 			t.Errorf("the refusal does not name %q: %s", name, said)
 		}
 	}
+
 	got := call(t, sn, "orbit_inspect_task", map[string]any{"task_id": "SHARED-1", "repo": "ledger"})
 	if got["repo"] != "ledger" {
 		t.Errorf("the disambiguated call answered %v, want ledger", got["repo"])
@@ -201,6 +219,7 @@ func TestAnUnknownTaskIsRefusedByName(t *testing.T) {
 			t.Errorf("%s refused without naming the task: %s", tool, said)
 		}
 	}
+
 	if said := refused(t, sn, "orbit_add_note", map[string]any{"task_id": "NOPE-1", "text": "hello"}); !strings.Contains(said, "NOPE-1") {
 		t.Errorf("orbit_add_note refused without naming the task: %s", said)
 	}
@@ -208,10 +227,12 @@ func TestAnUnknownTaskIsRefusedByName(t *testing.T) {
 
 func TestAToolNobodySpelledRightIsRefusedWithTheOnesThatExist(t *testing.T) {
 	_, sn, _ := oneRepo(t)
+
 	res := sn.Call("orbit_do_the_thing", nil)
 	if !res.IsError {
 		t.Fatal("an unknown tool did not refuse")
 	}
+
 	if !strings.Contains(text(t, res), "orbit_list_tasks") {
 		t.Errorf("the refusal does not name the tools that would have worked: %s", text(t, res))
 	}

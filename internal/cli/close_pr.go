@@ -11,13 +11,16 @@ import (
 func closePR(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("close-pr", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
+
 	dir := fs.String("repo", ".", "the repository the task is against")
 	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
+
 	if len(fs.Args()) < 1 {
 		return fmt.Errorf("close-pr needs the task identifier")
 	}
+
 	taskID := fs.Args()[0]
 
 	s, r, err := openBoth(*dir)
@@ -31,6 +34,7 @@ func closePR(ctx Context, args []string) error {
 		logger.Error("cli/close-pr", "get worktree for task %q failed: %v", taskID, err)
 		return err
 	}
+
 	branch := "orbit/" + taskID
 
 	out, err := r.ClosePR(wtDir, branch)
@@ -41,5 +45,6 @@ func closePR(ctx Context, args []string) error {
 
 	logger.Info("cli/close-pr", "closed pull request for task %s: %s", taskID, out)
 	fmt.Fprintf(ctx.Out, "Pull Request closed: %s\n", out)
+
 	return nil
 }

@@ -35,5 +35,6 @@ func journal(s *store.Store, t task.Task, format string, args ...any) string {
 	if err := task.Dialogue(s, t, journalBy, fmt.Sprintf(format, args...)); err != nil {
 		return fmt.Sprintf(" (this call is not in the task's history: %v)", err)
 	}
+
 	return ""
 }

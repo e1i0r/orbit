@@ -14,6 +14,7 @@ import (
 func (m Model) flowDetailRows(h, w int) []string {
 	st := &m.flows
 	p := m.opts.Words
+
 	var out []string
 
 	out = append(out, "")
@@ -22,6 +23,7 @@ func (m Model) flowDetailRows(h, w int) []string {
 	if st.isBuiltin {
 		originBadge = Pill(p.T("flows.badge_builtin", "Built-in"), "#FFFFFF", "#0284C7")
 	}
+
 	title := "  " + Paint(Live).Bold(true).Render("⚡ "+p.T("flows.workflow_title", "Workflow")+": ") +
 		Paint(Accent).Bold(true).Render(st.flowName) + "  " + originBadge
 	out = append(out, title)
@@ -31,8 +33,11 @@ func (m Model) flowDetailRows(h, w int) []string {
 	if desc == "" {
 		desc = p.T("flows.no_description", "No description provided for this workflow.")
 	}
+
 	descLines := wrapPromptText(desc, w-8)
+
 	out = append(out, "")
+
 	out = append(out, "  "+Paint(Dim).Bold(true).Render(p.T("flows.purpose_label", "Purpose & When to Use:")))
 	for _, dl := range descLines {
 		out = append(out, "    "+Paint(OK).Render("↳ ")+Paint(Dim).Render(dl))
@@ -41,6 +46,7 @@ func (m Model) flowDetailRows(h, w int) []string {
 	// 3. Visual Pipeline Flowchart Diagram
 	out = append(out, "")
 	out = append(out, "  "+Paint(Accent).Bold(true).Render(p.T("flows.pipeline_diagram", "Pipeline Flowchart:")))
+
 	diagramLines := renderFlowDiagram(st.phases, w-4)
 	for _, dl := range diagramLines {
 		out = append(out, "  "+dl)
@@ -49,17 +55,21 @@ func (m Model) flowDetailRows(h, w int) []string {
 	// 4. Phase Breakdown Cards
 	out = append(out, "")
 	out = append(out, "  "+Paint(Live).Bold(true).Render(p.T("flows.phase_breakdown", "Phases Breakdown:")))
+
 	for i, ph := range st.phases {
 		badgeText := fmt.Sprintf("%s/%s", ph.Engine, orDef(ph.Model, "default"))
 		if ph.Effort != "" && ph.Effort != "default" {
 			badgeText += " · effort: " + ph.Effort
 		}
+
 		if ph.Thinking != "" && ph.Thinking != "adaptive" {
 			badgeText += " · thinking: " + ph.Thinking
 		}
+
 		if ph.FeedOutput {
 			badgeText += " · " + p.T("flows.feed_badge", "feeds output")
 		}
+
 		if ph.Wait {
 			badgeText += " · " + p.T("flows.gate_badge", "⏸ human gate")
 		}
@@ -85,6 +95,7 @@ func (m Model) flowDetailRows(h, w int) []string {
 
 	hints := p.T("flows.detail_hints", "[enter] select · [e] edit · [esc] return")
 	out = append(out, fit("  "+Paint(Dim).Render(hints), w))
+
 	return fill(out, h)
 }
 
@@ -100,22 +111,27 @@ func renderFlowDiagram(phases []flow.Phase, maxW int) []string {
 	}
 
 	var boxes []box
+
 	for i, ph := range phases {
 		line1 := fmt.Sprintf("%d. %s", i+1, ph.Name)
+
 		line2 := fmt.Sprintf("%s/%s", ph.Engine, orDef(ph.Model, "def"))
 		if ph.FeedOutput {
 			line2 += " ➔"
 		}
+
 		if ph.Wait {
 			line2 += " ⏸"
 		}
 
 		w1 := lipgloss.Width(line1)
 		w2 := lipgloss.Width(line2)
+
 		boxW := w1
 		if w2 > boxW {
 			boxW = w2
 		}
+
 		boxW += 2
 		if boxW < 14 {
 			boxW = 14
@@ -138,6 +154,7 @@ func renderFlowDiagram(phases []flow.Phase, maxW int) []string {
 	arrowPad := "     "
 
 	var rowTop, rowMid1, rowMid2, rowBot string
+
 	for i, b := range boxes {
 		if i > 0 {
 			rowTop += arrowPad
@@ -145,6 +162,7 @@ func renderFlowDiagram(phases []flow.Phase, maxW int) []string {
 			rowMid2 += arrowPad
 			rowBot += arrowPad
 		}
+
 		rowTop += b.top
 		rowMid1 += b.mid1
 		rowMid2 += b.mid2
@@ -162,10 +180,12 @@ func renderFlowDiagram(phases []flow.Phase, maxW int) []string {
 
 	// Fallback to vertical stack when horizontal space is limited
 	var out []string
+
 	for i, b := range boxes {
 		if i > 0 {
 			out = append(out, "        │", "        ▼")
 		}
+
 		out = append(out,
 			Paint(Dim).Render("  "+b.top),
 			Paint(Accent).Render("  "+b.mid1),
@@ -173,5 +193,6 @@ func renderFlowDiagram(phases []flow.Phase, maxW int) []string {
 			Paint(Dim).Render("  "+b.bot),
 		)
 	}
+
 	return out
 }

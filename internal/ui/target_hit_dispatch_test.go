@@ -45,6 +45,7 @@ func TestSettingsScreenInteractions(t *testing.T) {
 		} else {
 			msg = tea.KeyPressMsg{Code: k, Text: string(k)}
 		}
+
 		updated, _ := m.Update(msg)
 		m = asModel(t, updated)
 	}
@@ -66,6 +67,7 @@ func TestSettingsScreenInteractions(t *testing.T) {
 
 	// Escape to close
 	sendKey(0, tea.KeyEsc)
+
 	if m.screen != screenList {
 		t.Errorf("screen after Esc = %v, want screenList", m.screen)
 	}
@@ -82,6 +84,7 @@ func TestStartScreenInteractions(t *testing.T) {
 		} else {
 			msg = tea.KeyPressMsg{Code: k, Text: string(k)}
 		}
+
 		updated, _ := m.Update(msg)
 		m = asModel(t, updated)
 	}
@@ -98,6 +101,7 @@ func TestStartScreenInteractions(t *testing.T) {
 
 	// Escape to close
 	sendKey(0, tea.KeyEsc)
+
 	if m.screen != screenList {
 		t.Errorf("screen after Esc = %v, want screenList", m.screen)
 	}
@@ -109,11 +113,14 @@ func TestHitTopLevelRefusalsAndDispatch(t *testing.T) {
 	// 1. A window with no geometry at all, or one narrower than the frame
 	// can be fit into, points at nothing.
 	zero := m
+
 	zero.width, zero.height = 0, 0
 	if got := zero.hit(5, 5); got.Kind != TargetNone {
 		t.Errorf("hit on a zero-sized window = %+v, want TargetNone", got)
 	}
+
 	narrow := m
+
 	narrow.tooNarrow = true
 	if got := narrow.hit(5, 5); got.Kind != TargetNone {
 		t.Errorf("hit while too narrow = %+v, want TargetNone", got)
@@ -125,17 +132,21 @@ func TestHitTopLevelRefusalsAndDispatch(t *testing.T) {
 	if got := m.hit(5, m.frame.Bar.Y); got.Kind != TargetNone {
 		t.Errorf("hit on the bar with the palette open = %+v, want TargetNone", got)
 	}
+
 	m.palette.open = false
+
 	m.menu.open = true
 	if got := m.hit(5, m.frame.Bar.Y); got.Kind != TargetNone {
 		t.Errorf("hit on the bar with the menu open = %+v, want TargetNone", got)
 	}
+
 	m.menu.open = false
 
 	// 3. Status and Band both answer through hitStatus.
 	if got := m.hit(5, m.frame.Status.Y); got.Kind != TargetStatusField {
 		t.Errorf("hit on the status row = %+v, want TargetStatusField", got)
 	}
+
 	if got := m.hit(5, m.frame.Band.Y); got.Kind != TargetStatusField {
 		t.Errorf("hit on the band row = %+v, want TargetStatusField", got)
 	}
@@ -148,6 +159,7 @@ func TestHitTopLevelRefusalsAndDispatch(t *testing.T) {
 	if got := m.hit(5, m.frame.Body.Y); got.Kind != TargetNone {
 		t.Errorf("hit in the body while a watch is up = %+v, want TargetNone", got)
 	}
+
 	m.watchUp = false
 	for _, scr := range []screen{screenDetail, screenStart, screenSettings, screenEngines, screenFlows, screenRepos, screenCompose, screenList} {
 		m.screen = scr
@@ -166,6 +178,7 @@ func TestHitRowEveryOutcome(t *testing.T) {
 	// 2. The "…and N more" line, and anything below the rows actually
 	// drawn — reachable with a body too short for the fixture's list.
 	short := m
+
 	short.frame.Body.H = 2
 	if short.frame.Body.H > 0 {
 		if got := short.hitRow(5, short.frame.Body.Y); got.Kind != TargetNone {
@@ -175,7 +188,8 @@ func TestHitRowEveryOutcome(t *testing.T) {
 
 	// 3. A blank separator row.
 	rows := m.rows()
-	var blankIdx, headIdx, taskIdx = -1, -1, -1
+	blankIdx, headIdx, taskIdx := -1, -1, -1
+
 	for i, r := range rows {
 		switch {
 		case r.blank && blankIdx < 0:
@@ -186,9 +200,11 @@ func TestHitRowEveryOutcome(t *testing.T) {
 			taskIdx = i
 		}
 	}
+
 	if blankIdx < 0 || headIdx < 0 || taskIdx < 0 {
 		t.Fatal("the fixture body is missing a blank, a header or a task row to test against")
 	}
+
 	if got := m.hitRow(5, m.frame.Body.Y+1+blankIdx); got.Kind != TargetNone {
 		t.Errorf("hitRow on a blank row = %+v, want TargetNone", got)
 	}
@@ -234,9 +250,11 @@ func TestHitHeaderEveryField(t *testing.T) {
 		if got.Kind != tt.want {
 			t.Errorf("hitHeader(%d) = %+v, want kind %v", tt.x, got, tt.want)
 		}
+
 		if tt.want == TargetHeaderQueue && got.Band != tt.band {
 			t.Errorf("hitHeader(%d) band = %v, want %v", tt.x, got.Band, tt.band)
 		}
+
 		if tt.want == TargetHeaderField && got.Field != tt.field {
 			t.Errorf("hitHeader(%d) field = %q, want %q", tt.x, got.Field, tt.field)
 		}
@@ -255,6 +273,7 @@ func TestHitBarBranches(t *testing.T) {
 	if got := m.hitBar(m.width-5, y); got.Kind != TargetBarHint || got.Key != "c" {
 		t.Errorf("hitBar on the cli chip = %+v, want the c hint", got)
 	}
+
 	if got := m.hitBar(m.width-45, y); got.Kind != TargetStatusField || got.Field != "autopilot" {
 		t.Errorf("hitBar on the autopilot chip (screenList) = %+v, want the autopilot field", got)
 	}
@@ -265,14 +284,17 @@ func TestHitBarBranches(t *testing.T) {
 	}
 
 	m.screen = screenList
+
 	_, hints := m.barLayout(m.frame.Bar.W)
 	if len(hints) == 0 {
 		t.Fatal("the fixture bar has no hints to test against")
 	}
+
 	first := hints[0]
 	if got := m.hitBar(first.x, y); got.Kind != TargetBarHint || got.Key != first.key {
 		t.Errorf("hitBar on the first hint = %+v, want key %q", got, first.key)
 	}
+
 	last := hints[len(hints)-1]
 	if gapX := last.x + last.w + 1; gapX < m.width-60 {
 		if got := m.hitBar(gapX, y); got.Kind != TargetNone {

@@ -132,16 +132,19 @@ func object(props map[string]Property, required ...string) InputSchema {
 	if props == nil {
 		props = map[string]Property{}
 	}
+
 	return InputSchema{Type: "object", Properties: props, Required: required}
 }
 
 // toolNames is every tool's name, for the refusal a misspelled call gets.
 func toolNames() []string {
 	tools := Tools()
+
 	names := make([]string, 0, len(tools))
 	for _, t := range tools {
 		names = append(names, t.Name)
 	}
+
 	return names
 }
 

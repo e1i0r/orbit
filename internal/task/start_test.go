@@ -11,11 +11,13 @@ import (
 // earlier one for the same name.
 func lastValue(env []string, name string) string {
 	value := ""
+
 	for _, entry := range env {
 		if rest, ok := strings.CutPrefix(entry, name+"="); ok {
 			value = rest
 		}
 	}
+
 	return value
 }
 
@@ -31,14 +33,17 @@ func TestAStartedRunIsTheSameSubcommandAPersonWouldType(t *testing.T) {
 	if len(cmd.Args) != len(want) {
 		t.Fatalf("argv = %q, want %q", cmd.Args, want)
 	}
+
 	for i := range want {
 		if cmd.Args[i] != want[i] {
 			t.Fatalf("argv = %q, want %q", cmd.Args, want)
 		}
 	}
+
 	if cmd.Path != "/usr/local/bin/orbit" {
 		t.Errorf("the run would be spawned from %q, want the orbit binary that started it", cmd.Path)
 	}
+
 	if cmd.Dir != "/repos/app" {
 		t.Errorf("working directory = %q, want the repository the task is against", cmd.Dir)
 	}
@@ -49,6 +54,7 @@ func TestAStartedRunIsToldWhereTheStateIs(t *testing.T) {
 	// child must be told is the root the caller is reading, not the one the
 	// environment happens to carry.
 	t.Setenv("ORBIT_HOME", "/somewhere/else")
+
 	tk := Task{ID: "ACME-1", Repo: repo.Repo{Name: "app", Path: "/repos/app"}}
 
 	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "task")
@@ -56,6 +62,7 @@ func TestAStartedRunIsToldWhereTheStateIs(t *testing.T) {
 	if got := lastValue(cmd.Env, "ORBIT_HOME"); got != "/state" {
 		t.Errorf("ORBIT_HOME = %q, want /state — a run writing into another root is a task that vanished", got)
 	}
+
 	if lastValue(cmd.Env, "PATH") == "" {
 		t.Error("the rest of the environment was dropped; a run with no PATH cannot find its engine")
 	}

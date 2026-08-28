@@ -85,6 +85,7 @@ func linesOf(diff string) []string {
 // opening it, because a reader believes what the editor shows them.
 func TestTheDiffKnowsWhichFileALineBelongsTo(t *testing.T) {
 	lines := strings.Split(strings.TrimSuffix(fixtureDiff, "\n"), "\n")
+
 	cases := []struct {
 		name string
 		at   int
@@ -124,6 +125,7 @@ func TestTheDiffKnowsWhichFileALineBelongsTo(t *testing.T) {
 	// was never on, at a line invented for a different one.
 	t.Run("a second file's own furniture is answered with the second file", func(t *testing.T) {
 		two := strings.Split(strings.TrimSuffix(twoFileDiff, "\n"), "\n")
+
 		for _, c := range []struct {
 			name string
 			at   int
@@ -158,6 +160,7 @@ func TestTheDiffKnowsWhichFileALineBelongsTo(t *testing.T) {
 	// line below it inherited the wrong file.
 	t.Run("a removed comment line is not a file boundary", func(t *testing.T) {
 		sql := linesOf(commentDiff)
+
 		for _, c := range []struct {
 			name string
 			at   int

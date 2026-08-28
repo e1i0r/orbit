@@ -88,9 +88,11 @@ func Fit(w, h int) (Frame, error) {
 	if w < MinWidth {
 		return Frame{}, TooNarrowError{Need: MinWidth, Got: w}
 	}
+
 	header, status, body, band, bar := rows(h)
 
 	var f Frame
+
 	y := 0
 	for _, region := range []struct {
 		height int
@@ -105,6 +107,7 @@ func Fit(w, h int) (Frame, error) {
 		*region.into = Strip{Y: y, H: region.height, W: w}
 		y += region.height
 	}
+
 	return f, nil
 }
 
@@ -129,14 +132,18 @@ func rows(h int) (header, status, body, band, bar int) {
 		// pane that eats the one below it.
 		h = 0
 	}
+
 	for _, claim := range []*int{&header, &body, &header, &bar, &band, &band, &status} {
 		if h == 0 {
 			return
 		}
+
 		*claim++
 		h--
 	}
+
 	body += h
+
 	return
 }
 
@@ -189,6 +196,7 @@ func (f Frame) At(y int) Region {
 			return s.region
 		}
 	}
+
 	return RegionNone
 }
 
@@ -205,5 +213,6 @@ func (f Frame) BodyRow(y int) (int, bool) {
 	if f.At(y) != RegionBody {
 		return 0, false
 	}
+
 	return y - f.Body.Y, true
 }

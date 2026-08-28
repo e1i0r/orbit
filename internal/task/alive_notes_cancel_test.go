@@ -19,12 +19,14 @@ import (
 
 func TestAliveMarkerAndNotes(t *testing.T) {
 	root := t.TempDir()
+
 	s, err := store.New(root)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	r := repo.Repo{Path: filepath.Join(t.TempDir(), "repo"), Name: "repo"}
+
 	tk, err := Create(s, r, "TASK-ALIVE", "Testing alive marker", "quick")
 	if err != nil {
 		t.Fatal(err)
@@ -41,16 +43,19 @@ func TestAliveMarkerAndNotes(t *testing.T) {
 	if err != nil {
 		t.Fatalf("mark failed: %v", err)
 	}
+
 	pid, ok, err = Alive(s, tk)
 	if err != nil || !ok || pid != os.Getpid() {
 		t.Errorf("Alive with active marker = (%d, %v, %v), want (%d, true, nil)", pid, ok, err, os.Getpid())
 	}
+
 	release()
 
 	// 3. removeMarker when marker is absent and present
 	if err := removeMarker(s, tk); err != nil {
 		t.Errorf("removeMarker on absent marker failed: %v", err)
 	}
+
 	_, _ = mark(s, tk, os.Getpid()) //nolint:errcheck
 	if err := removeMarker(s, tk); err != nil {
 		t.Errorf("removeMarker on present marker failed: %v", err)
@@ -64,6 +69,7 @@ func TestAliveMarkerAndNotes(t *testing.T) {
 			t.Error("expected staleAcrossBoot to be true for ancient time")
 		}
 	}
+
 	if staleAcrossBoot(time.Time{}) {
 		t.Error("expected staleAcrossBoot to be false for zero time")
 	}
@@ -72,20 +78,25 @@ func TestAliveMarkerAndNotes(t *testing.T) {
 	if err := Note(s, tk, "First operator note"); err != nil {
 		t.Fatalf("Note failed: %v", err)
 	}
+
 	events, err := Events(s, tk)
 	if err != nil {
 		t.Fatalf("Events failed: %v", err)
 	}
+
 	if len(events) < 2 { // TaskCreated + OperatorNote
 		t.Errorf("expected at least 2 events, got %d", len(events))
 	}
+
 	var foundNote bool
+
 	for _, e := range events {
 		if e.Kind == record.TaskNoted && e.Text == "First operator note" {
 			foundNote = true
 			break
 		}
 	}
+
 	if !foundNote {
 		t.Error("operator note event not found in Events()")
 	}
@@ -94,6 +105,7 @@ func TestAliveMarkerAndNotes(t *testing.T) {
 	if !running(os.Getpid()) {
 		t.Errorf("running(%d) = false, want true", os.Getpid())
 	}
+
 	if running(9999999) {
 		t.Error("running(9999999) = true, want false")
 	}
@@ -101,12 +113,14 @@ func TestAliveMarkerAndNotes(t *testing.T) {
 
 func TestPhaseHelpersAndRunGates(t *testing.T) {
 	root := t.TempDir()
+
 	s, err := store.New(root)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	r := repo.Repo{Path: filepath.Join(t.TempDir(), "repo"), Name: "repo"}
+
 	tk, err := Create(s, r, "TASK-PHASE", "Testing phase events", "quick")
 	if err != nil {
 		t.Fatal(err)
@@ -121,6 +135,7 @@ func TestPhaseHelpersAndRunGates(t *testing.T) {
 		Thinking:    "enabled",
 		Permissions: []string{"bash", "write"},
 	}
+
 	evStart := phaseStart(pFull, 2, []string{"note1", "note2"})
 	if evStart.Data["model"] != "sonnet" || evStart.Data["effort"] != "high" || evStart.Data["notes"] != "2" {
 		t.Errorf("unexpected phaseStart data: %+v", evStart.Data)
@@ -132,6 +147,7 @@ func TestPhaseHelpersAndRunGates(t *testing.T) {
 		SessionID: "sess-1234",
 		Cost:      0.045,
 	}
+
 	evEnd := phaseEnd(record.PhaseFailed, "build", res, errors.New("timeout reached"))
 	if evEnd.Data["session"] != "sess-1234" || evEnd.Data["error"] != "timeout reached" {
 		t.Errorf("unexpected phaseEnd data: %+v", evEnd.Data)
@@ -142,6 +158,7 @@ func TestPhaseHelpersAndRunGates(t *testing.T) {
 	if evTh.Kind != record.PhaseThought || evTh.Text != "Detailed thought trace" {
 		t.Errorf("unexpected phaseThought event: %+v", evTh)
 	}
+
 	evRef := phaseRefused("plan", 1, engine.StreamRefusal{Tool: "rm", Input: "-rf /"})
 	if evRef.Kind != record.PhaseRefused || evRef.Data["tool"] != "rm" {
 		t.Errorf("unexpected phaseRefused event: %+v", evRef)
@@ -156,6 +173,7 @@ func TestPhaseHelpersAndRunGates(t *testing.T) {
 		},
 	}
 	wtDir := t.TempDir()
+
 	err = runGates(context.Background(), s, tk, pGates, 1, wtDir, res)
 	if err == nil || !strings.Contains(err.Error(), "gate \"fail-gate\" failed") {
 		t.Errorf("expected gate failure error, got %v", err)
@@ -165,15 +183,18 @@ func TestPhaseHelpersAndRunGates(t *testing.T) {
 	if err := Note(s, tk, "   "); err == nil {
 		t.Error("expected error on whitespace note")
 	}
+
 	if err := Note(s, tk, "Note before phase"); err != nil {
 		t.Fatal(err)
 	}
+
 	notesBefore := unconsumedNotes(s, tk)
 	if len(notesBefore) == 0 {
 		t.Error("expected unconsumed notes before phase start")
 	}
 	// Simulate phase start
 	_ = emit(s, tk, record.Event{Kind: record.PhaseStarted, Phase: "build"}) //nolint:errcheck
+
 	notesAfter := unconsumedNotes(s, tk)
 	if len(notesAfter) != 0 {
 		t.Errorf("expected 0 notes after phase started, got %d", len(notesAfter))
@@ -181,6 +202,7 @@ func TestPhaseHelpersAndRunGates(t *testing.T) {
 
 	// 6. List on empty repo and repo with non-dir files
 	freshRepo := repo.Repo{Path: filepath.Join(t.TempDir(), "fresh"), Name: "fresh"}
+
 	ids, err := List(s, freshRepo)
 	if err != nil || len(ids) != 0 {
 		t.Errorf("List on fresh repo = (%v, %v), want (nil, nil)", ids, err)
@@ -189,12 +211,14 @@ func TestPhaseHelpersAndRunGates(t *testing.T) {
 
 func TestCancelAndKillProcessExecution(t *testing.T) {
 	root := t.TempDir()
+
 	s, err := store.New(root)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	r := repo.Repo{Path: filepath.Join(t.TempDir(), "repo"), Name: "repo"}
+
 	tk, err := Create(s, r, "TASK-KILL", "Testing kill and cancel", "quick")
 	if err != nil {
 		t.Fatal(err)
@@ -204,6 +228,7 @@ func TestCancelAndKillProcessExecution(t *testing.T) {
 	if _, err := mark(s, tk, 9999999); err != nil {
 		t.Fatal(err)
 	}
+
 	err = Cancel(s, tk)
 	if err == nil || !strings.Contains(err.Error(), "which held it, is gone") {
 		t.Errorf("expected gone process error on Cancel, got %v", err)
@@ -225,6 +250,7 @@ func TestCancelAndKillProcessExecution(t *testing.T) {
 	if _, err := mark(s, tk, cmd.Process.Pid); err != nil {
 		t.Fatal(err)
 	}
+
 	if err := Kill(s, tk); err != nil {
 		t.Fatalf("Kill failed: %v", err)
 	}

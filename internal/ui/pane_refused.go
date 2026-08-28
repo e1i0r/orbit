@@ -14,6 +14,7 @@ func (m Model) refusedLines() []string {
 	}
 
 	var denials []view.Entry
+
 	for _, e := range m.entries {
 		if e.What() == view.EntryRefused {
 			denials = append(denials, e)
@@ -40,6 +41,7 @@ func (m Model) refusedLines() []string {
 			if toolName == "" {
 				toolName = "command"
 			}
+
 			out = append(out, fmt.Sprintf("    %s %s: %s",
 				Paint(Bad).Render("✗"),
 				Paint(Accent).Render(toolName),
@@ -47,6 +49,7 @@ func (m Model) refusedLines() []string {
 			))
 		}
 	}
+
 	out = append(out, "")
 
 	// 2. Las reglas fijas del sandbox

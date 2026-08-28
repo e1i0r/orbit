@@ -56,7 +56,9 @@ func (m Model) rule(w int) string {
 	if w <= 0 {
 		return ""
 	}
+
 	shade := lipgloss.LightDark(m.dark)(lipgloss.Color(ruleOnLight), lipgloss.Color(ruleOnDark))
+
 	return lipgloss.NewStyle().Foreground(shade).Render(strings.Repeat("─", w))
 }
 
@@ -81,9 +83,11 @@ func (m Model) headerLine(w int) string {
 			gap := w - lipgloss.Width(line) - lipgloss.Width(right)
 			return line + strings.Repeat(" ", gap) + right
 		}
+
 		if len(fields) == 0 {
 			return fit(m.name(), w)
 		}
+
 		fields = fields[:len(fields)-1]
 	}
 }
@@ -100,6 +104,7 @@ func (m Model) headerLeft(w int, spaced bool) (string, bool) {
 	if spaced {
 		w--
 	}
+
 	p := m.opts.Words
 	name := m.name()
 
@@ -110,6 +115,7 @@ func (m Model) headerLeft(w int, spaced bool) (string, bool) {
 			if m.queueFilter != nil && *m.queueFilter == b {
 				return PillActive(text, fg, bg)
 			}
+
 			return Pill(text, fg, bg)
 		}
 		pills := []string{
@@ -122,6 +128,7 @@ func (m Model) headerLeft(w int, spaced bool) (string, bool) {
 			qPill(view.Done, "🏁", p.T("queue.done", "Done"),
 				"#4ADE80", "#14532D", m.board.Counts[3]),
 		}
+
 		full := name + "  " + strings.Join(pills, " ")
 		if lipgloss.Width(full) <= w {
 			return full, true
@@ -133,12 +140,15 @@ func (m Model) headerLeft(w int, spaced bool) (string, bool) {
 		if root != "" {
 			line = name + "  " + Paint(Dim).Render(root)
 		}
+
 		if lipgloss.Width(line) <= w {
 			return line, true
 		}
+
 		if root == "" {
 			return "", false
 		}
+
 		root = shorten(root)
 	}
 }
@@ -153,12 +163,14 @@ func shorten(root string) string {
 	if i := strings.IndexByte(trimmed, '/'); i >= 0 && trimmed[i+1:] != "" {
 		return "…/" + trimmed[i+1:]
 	}
+
 	return ""
 }
 
 // headerFields are the standing facts with emoji chips in Monokai theme.
 func (m Model) headerFields() []string {
 	p := m.opts.Words
+
 	var fields []string
 
 	// Upgrade available notice (pastel mint on deep emerald)
@@ -209,11 +221,14 @@ func (m Model) hints() []barHint {
 	case screenStart:
 		return m.startHints()
 	}
+
 	var out []barHint
+
 	r, ok := m.selected()
 	if ok {
 		out = append(out, hint("↑↓", m.opts.Words.T("key.move", "move")), hintFor(m.keys.Open))
 	}
+
 	out = append(out, hintFor(m.keys.Start))
 	if ok && !r.head {
 		for _, a := range m.keys.Affordances(r.task, m.conditions(r.task)) {
@@ -222,6 +237,7 @@ func (m Model) hints() []barHint {
 			}
 		}
 	}
+
 	return append(out, hintFor(m.keys.Filter))
 }
 
@@ -236,6 +252,7 @@ func (m Model) hints() []barHint {
 func hintFor(b key.Binding) barHint {
 	h := hint(b.Help().Key, b.Help().Desc)
 	h.key = string(firstKey(b))
+
 	return h
 }
 

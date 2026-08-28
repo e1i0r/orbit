@@ -20,13 +20,16 @@ func createdFlow(t *testing.T, s *store.Store, tk Task) string {
 
 func TestTheFlowATaskIsWrittenAgainstIsRecorded(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "ACME-1", "retry the webhook on 5xx", "careful")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	if tk.Flow != "careful" {
 		t.Errorf("the task says its flow is %q, want careful", tk.Flow)
 	}
+
 	if got := createdFlow(t, s, tk); got != "careful" {
 		t.Errorf(`task.created Data["flow"] = %q, want careful`, got)
 	}
@@ -41,10 +44,12 @@ func TestAnEmptyFlowNameRecordsTheSettingsDefault(t *testing.T) {
 	if err := s.SaveSettings(store.Settings{Flow: "careful"}); err != nil {
 		t.Fatalf("SaveSettings: %v", err)
 	}
+
 	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	if tk.Flow != "careful" || createdFlow(t, s, tk) != "careful" {
 		t.Errorf("the task was written against %q, want the settings default careful", tk.Flow)
 	}
@@ -57,10 +62,12 @@ func TestASettingsFileWithNoDefaultRecordsTheTaskFlow(t *testing.T) {
 	if err := s.SaveSettings(store.Settings{Autopilot: true}); err != nil {
 		t.Fatalf("SaveSettings: %v", err)
 	}
+
 	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	if tk.Flow != flow.Default || createdFlow(t, s, tk) != flow.Default {
 		t.Errorf("the task was written against %q, want %q", tk.Flow, flow.Default)
 	}
@@ -68,10 +75,12 @@ func TestASettingsFileWithNoDefaultRecordsTheTaskFlow(t *testing.T) {
 
 func TestAStoreThatHasNeverSavedSettingsRecordsTheTaskFlow(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "ACME-1", "x", "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	if tk.Flow != flow.Default || createdFlow(t, s, tk) != flow.Default {
 		t.Errorf("the task was written against %q, want %q", tk.Flow, flow.Default)
 	}
@@ -82,10 +91,12 @@ func TestAStoreThatHasNeverSavedSettingsRecordsTheTaskFlow(t *testing.T) {
 // keeps the two copies from drifting apart.
 func TestTheStoresDefaultFlowIsTheFlowPackagesDefault(t *testing.T) {
 	s, _ := fixture(t)
+
 	cfg, err := s.Settings()
 	if err != nil {
 		t.Fatalf("Settings: %v", err)
 	}
+
 	if cfg.Flow != flow.Default {
 		t.Errorf("a store with no settings file defaults to flow %q, and internal/flow defaults to %q", cfg.Flow, flow.Default)
 	}
@@ -96,10 +107,12 @@ func TestTheStoresDefaultFlowIsTheFlowPackagesDefault(t *testing.T) {
 // regenerate. The name is validated where it is walked, and nowhere else.
 func TestNothingIsResolvedWhileTheTaskIsBeingWrittenDown(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "ACME-1", "retry the webhook on 5xx", "nonesuch")
 	if err != nil {
 		t.Fatalf("Create refused a flow it should not have resolved: %v", err)
 	}
+
 	if _, err := flow.Resolve(s, tk.Flow); err == nil {
 		t.Error("running the task would have walked something, and the flow does not exist")
 	}
@@ -110,10 +123,12 @@ func TestLoadRecoversTheFlowFromTheRecord(t *testing.T) {
 	if _, err := Create(s, r, "ACME-1", "x", "careful"); err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	tk, err := Load(s, r, "ACME-1")
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
+
 	if tk.Flow != "careful" {
 		t.Errorf("the loaded task says its flow is %q, want careful — a run in another process has only the record", tk.Flow)
 	}
@@ -127,20 +142,25 @@ func TestATaskWhoseRecordIsGoneStillLoads(t *testing.T) {
 	if _, err := Create(s, r, "ACME-1", "retry the webhook on 5xx", "careful"); err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	path, err := s.EventsPath(r.Path, "ACME-1")
 	if err != nil {
 		t.Fatalf("EventsPath: %v", err)
 	}
+
 	if err := os.Remove(path); err != nil {
 		t.Fatalf("remove the record: %v", err)
 	}
+
 	tk, err := Load(s, r, "ACME-1")
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
+
 	if tk.Text != "retry the webhook on 5xx" {
 		t.Errorf("the loaded task says %q", tk.Text)
 	}
+
 	if tk.Flow != "" {
 		t.Errorf("the loaded task claims flow %q from a record that is not there", tk.Flow)
 	}
@@ -151,6 +171,7 @@ func TestATaskWhoseRecordIsGoneStillLoads(t *testing.T) {
 // $ORBIT_HOME/flows to be a flow.
 func TestAStoreIsAFlowSource(t *testing.T) {
 	s, _ := fixture(t)
+
 	var src flow.Source = s
 	if src.FlowDir() == "" {
 		t.Error("a store has no flow directory")

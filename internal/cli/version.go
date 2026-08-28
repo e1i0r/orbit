@@ -18,9 +18,12 @@ var Version = "dev"
 func version(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("version", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
+
 	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
+
 	fmt.Fprintf(ctx.Out, "orbit %s\n", Version)
+
 	return nil
 }

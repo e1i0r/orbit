@@ -22,9 +22,11 @@ func TestTheFirstRefreshRingsNoBell(t *testing.T) {
 	if len(changed.Entered) != 0 {
 		t.Errorf("the first refresh announced %v, and it must announce nothing", changed.Entered)
 	}
+
 	if b.Counts[view.NeedsYou] != 2 {
 		t.Errorf("Counts[NeedsYou] = %d, want 2 — it found them, it just does not ring", b.Counts[view.NeedsYou])
 	}
+
 	if !slices.Equal(changed.Tasks, []string{"ACME-1", "ACME-2"}) {
 		t.Errorf("Changed.Tasks = %v, want both tasks: they are new to this reader", changed.Tasks)
 	}
@@ -36,16 +38,19 @@ func TestTheFirstRefreshRingsNoBell(t *testing.T) {
 func TestCrossingIntoNeedsYouIsAnnouncedOnce(t *testing.T) {
 	s, work, repoPath := oneRepo(t)
 	addTask(t, s, repoPath, "ACME-1", created("Retry the webhook on 5xx"), startedEvent())
+
 	r := NewReader(s, work)
 	if _, changed := refresh(t, r); len(changed.Entered) != 0 {
 		t.Fatalf("a running task was announced: %v", changed.Entered)
 	}
 
 	appendTo(t, s, repoPath, "ACME-1", failedEvent())
+
 	b, changed := refresh(t, r)
 	if !slices.Equal(changed.Entered, []string{"ACME-1"}) {
 		t.Errorf("Entered = %v on the refresh that read the failure, want [ACME-1]", changed.Entered)
 	}
+
 	if got := view.BandOf(b.Tasks[0]); got != view.NeedsYou {
 		t.Errorf("the task is banded %s, want %s", got, view.NeedsYou)
 	}
@@ -54,6 +59,7 @@ func TestCrossingIntoNeedsYouIsAnnouncedOnce(t *testing.T) {
 	if len(changed.Entered) != 0 {
 		t.Errorf("Entered = %v on a refresh where nothing crossed, want nothing", changed.Entered)
 	}
+
 	if len(changed.Tasks) != 0 {
 		t.Errorf("Changed.Tasks = %v for a log that did not move", changed.Tasks)
 	}
@@ -73,6 +79,7 @@ func TestTheSecondReadStartsWhereTheFirstStopped(t *testing.T) {
 
 	r := NewReader(s, work)
 	refresh(t, r)
+
 	first := r.tasks[0].offset
 	if want := sizeOf(t, path); first != want {
 		t.Fatalf("after one refresh the offset is %d and the log is %d bytes long", first, want)
@@ -85,16 +92,20 @@ func TestTheSecondReadStartsWhereTheFirstStopped(t *testing.T) {
 	if want := sizeOf(t, path); r.tasks[0].offset != want {
 		t.Errorf("after the second refresh the offset is %d and the log is %d bytes long", r.tasks[0].offset, want)
 	}
+
 	got := b.Tasks[0]
 	if got.Damaged != 0 {
 		t.Errorf("Damaged = %d: the second refresh re-read bytes it had already read", got.Damaged)
 	}
+
 	if got.Title != "Retry the webhook on 5xx" {
 		t.Errorf("Title = %q: what the first refresh read was not kept", got.Title)
 	}
+
 	if view.BandOf(got) != view.NeedsYou {
 		t.Errorf("the task is banded %s: the appended failure was not read at all", view.BandOf(got))
 	}
+
 	if !slices.Equal(changed.Tasks, []string{"ACME-1"}) {
 		t.Errorf("Changed.Tasks = %v, want [ACME-1]", changed.Tasks)
 	}
@@ -111,17 +122,21 @@ func TestAnUnreadableLogDoesNotBlankTheBoard(t *testing.T) {
 	tooLongLine(t, eventsPath(t, s, repoPath, "ACME-2"))
 
 	r := NewReader(s, work)
+
 	b, _ := refresh(t, r)
 	if len(b.Tasks) != 2 {
 		t.Fatalf("%d rows, want 2: an unreadable log took the other task with it", len(b.Tasks))
 	}
+
 	if b.Tasks[0].Title != "Retry the webhook on 5xx" || view.BandOf(b.Tasks[0]) != view.Running {
 		t.Errorf("the readable task folded to %+v", b.Tasks[0])
 	}
+
 	var unreadable *TaskError
 	if len(b.Errs) != 1 || !errors.As(b.Errs[0], &unreadable) {
 		t.Fatalf("Errs = %v, want one TaskError", b.Errs)
 	}
+
 	if unreadable.ID != "ACME-2" || unreadable.Repo != "payments" {
 		t.Errorf("the error names task %q in %q, want ACME-2 in payments", unreadable.ID, unreadable.Repo)
 	}
@@ -134,6 +149,7 @@ func TestAnUnreadableLogDoesNotBlankTheBoard(t *testing.T) {
 	if len(b.Errs) != 1 || !errors.As(b.Errs[0], &unreadable) {
 		t.Errorf("Errs = %v on the second refresh, want the same failure still reported", b.Errs)
 	}
+
 	if len(changed.Tasks) != 0 {
 		t.Errorf("Changed.Tasks = %v: neither log moved and neither verdict flipped", changed.Tasks)
 	}
@@ -159,22 +175,28 @@ func TestALogThatWasReplacedIsReadAgainFromTheTop(t *testing.T) {
 	if err := os.Remove(path); err != nil {
 		t.Fatalf("remove %q: %v", path, err)
 	}
+
 	appendTo(t, s, repoPath, "ACME-1", created("Index on settlements"), startedEvent())
+
 	if size := sizeOf(t, path); size >= read {
 		t.Fatalf("the replacement is %d bytes and %d had been read: this test needs a shorter log", size, read)
 	}
 
 	b, changed := refresh(t, r)
+
 	got := b.Tasks[0]
 	if got.Title != "Index on settlements" {
 		t.Errorf("Title = %q, want the replacement's title", got.Title)
 	}
+
 	if got.Attempt != 1 {
 		t.Errorf("Attempt = %d, want 1: the log that was replaced was folded in with the one that replaced it", got.Attempt)
 	}
+
 	if want := sizeOf(t, path); r.tasks[0].offset != want {
 		t.Errorf("the offset is %d and the replacement is %d bytes long", r.tasks[0].offset, want)
 	}
+
 	if !slices.Equal(changed.Tasks, []string{"ACME-1"}) {
 		t.Errorf("Changed.Tasks = %v, want [ACME-1]", changed.Tasks)
 	}

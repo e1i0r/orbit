@@ -19,6 +19,7 @@ func TestRefusedLinesWithAndWithoutDenials(t *testing.T) {
 	if joined := strings.Join(m.refusedLines(), "\n"); !strings.Contains(joined, "record damaged") {
 		t.Errorf("refusedLines with logErr = %q, want it to name the error", joined)
 	}
+
 	m.logErr = nil
 
 	if joined := strings.Join(m.refusedLines(), "\n"); !strings.Contains(joined, "no commands or actions were denied") {
@@ -29,6 +30,7 @@ func TestRefusedLinesWithAndWithoutDenials(t *testing.T) {
 		{Kind: "phase.refused", Tool: "psql", Text: "psql -c 'drop table tasks'"},
 		{Kind: "phase.refused", Text: "rm -rf /"}, // no tool named: falls back to "command"
 	}
+
 	joined := strings.Join(m.refusedLines(), "\n")
 	for _, want := range []string{"psql", "drop table", "command", "rm -rf"} {
 		if !strings.Contains(joined, want) {
@@ -52,6 +54,7 @@ func TestFlowLinesEveryPhaseState(t *testing.T) {
 		{Kind: "phase.failed", Phase: "review", Attempt: 1, Cause: "tests failed", Exit: "1"},
 		{Kind: "phase.cancelled", Phase: "fix", Attempt: 1, Text: "stopped by the reader"},
 	}
+
 	joined := strings.Join(m.flowLines(), "\n")
 	for _, want := range []string{"implement", "review", "fix", "tests failed", "wrote the code", "stopped by the reader"} {
 		if !strings.Contains(joined, want) {
@@ -62,12 +65,15 @@ func TestFlowLinesEveryPhaseState(t *testing.T) {
 	// A phase waiting at a gate, and one still in flight because the task's
 	// own Band and Phase point at it with no entries of its own yet.
 	m.entries = []view.Entry{{Kind: "phase.waiting", Phase: "implement", Attempt: 1, Cause: "needs sign-off"}}
+
 	tk, ok := m.task(m.detail)
 	if !ok {
 		t.Fatal("fixture task not found")
 	}
+
 	tk.Band, tk.Phase = view.Running, "review"
 	m.board.Tasks = replaceTask(m.board.Tasks, tk)
+
 	joined = strings.Join(m.flowLines(), "\n")
 	for _, want := range []string{"waiting at gate", "in progress"} {
 		if !strings.Contains(joined, want) {
@@ -78,6 +84,7 @@ func TestFlowLinesEveryPhaseState(t *testing.T) {
 	// A flow that does not resolve is a sentence, not a crash.
 	tk.Flow = "not-a-real-flow"
 	m.board.Tasks = replaceTask(m.board.Tasks, tk)
+
 	joined = strings.Join(m.flowLines(), "\n")
 	if !strings.Contains(joined, "not-a-real-flow") {
 		t.Errorf("flowLines with an unresolved flow = %q, want it to name the flow", joined)
@@ -99,8 +106,10 @@ func replaceTask(tasks []view.Task, t view.Task) []view.Task {
 			out[i] = t
 			continue
 		}
+
 		out[i] = existing
 	}
+
 	return out
 }
 
@@ -112,10 +121,12 @@ func TestArtifactsLinesGroupsAndFormatBytes(t *testing.T) {
 		{Kind: "phase.finished", Phase: "implement", Text: "wrote retry.go"},
 		{Kind: "gate.failed", Gate: "vet", Cause: "unreachable code"},
 	}
+
 	tk, ok := m.task(m.detail)
 	if !ok {
 		t.Fatal("fixture task not found")
 	}
+
 	tk.Flow, tk.Cost = "careful", 1.25
 	m.board.Tasks = replaceTask(m.board.Tasks, tk)
 
@@ -140,9 +151,11 @@ func TestFormatBytesBothSides(t *testing.T) {
 	if got := formatBytes(0); got != "1 B" {
 		t.Errorf("formatBytes(0) = %q, want %q (clamped to at least one byte)", got, "1 B")
 	}
+
 	if got := formatBytes(512); got != "512 B" {
 		t.Errorf("formatBytes(512) = %q, want %q", got, "512 B")
 	}
+
 	if got := formatBytes(2048); got != "2 k" {
 		t.Errorf("formatBytes(2048) = %q, want %q", got, "2 k")
 	}

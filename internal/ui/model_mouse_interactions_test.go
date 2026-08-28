@@ -8,6 +8,7 @@ import (
 
 func TestModelInit(t *testing.T) {
 	m, _ := testModel(t, 120, 40)
+
 	cmd := m.Init()
 	if cmd == nil {
 		t.Error("expected non-nil tea.Cmd from Init()")
@@ -42,6 +43,7 @@ func TestModelMouseInteractions(t *testing.T) {
 		Y:      5,
 		Button: tea.MouseLeft,
 	})
+
 	mRowRel, _ := mRowClick.Update(tea.MouseReleaseMsg{
 		X:      15,
 		Y:      5,
@@ -62,6 +64,7 @@ func TestModelMouseInteractions(t *testing.T) {
 		Y:      5,
 		Button: tea.MouseRight,
 	})
+
 	mRightTyped := asModel(t, mRightRel)
 	if mRightTyped.menu.open {
 		// Context menu opened!
@@ -90,6 +93,7 @@ func TestDetailMouseTabsAndButtons(t *testing.T) {
 		Y:      2,
 		Button: tea.MouseLeft,
 	})
+
 	mTabRel, _ := mTabClick.Update(tea.MouseReleaseMsg{
 		X:      20,
 		Y:      2,
@@ -109,6 +113,7 @@ func TestSettingsSubmitAndEditing(t *testing.T) {
 
 	// Press Enter to submit edited setting
 	mSub, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+
 	mSubTyped := asModel(t, mSub)
 	if mSubTyped.settings.editing {
 		t.Error("expected editing to be false after submit")

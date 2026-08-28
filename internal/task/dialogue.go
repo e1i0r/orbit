@@ -28,9 +28,11 @@ func Dialogue(s *store.Store, t Task, by, text string) error {
 	if text == "" {
 		return fmt.Errorf("task %s: dialogue text cannot be empty", t.ID)
 	}
+
 	e := record.Event{Kind: record.TaskDialogue, Text: text}
 	if by = strings.TrimSpace(by); by != "" {
 		e.Data = map[string]string{"by": by}
 	}
+
 	return emit(s, t, e)
 }

@@ -41,6 +41,7 @@ func TestFrameAtAndBodyRow(t *testing.T) {
 	if reg := frame.At(-5); reg != RegionNone {
 		t.Errorf("At(-5) = %v, want %v", reg, RegionNone)
 	}
+
 	if reg := frame.At(100); reg != RegionNone {
 		t.Errorf("At(100) = %v, want %v", reg, RegionNone)
 	}

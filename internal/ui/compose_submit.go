@@ -11,10 +11,12 @@ import (
 // composeSubmit validates task fields and runs the new task creation command.
 func (m Model) composeSubmit(startNow bool) (tea.Model, tea.Cmd) {
 	p := m.opts.Words
+
 	repo := strings.TrimSpace(m.compose.repo)
 	if repo == "" && len(m.compose.repos) > 0 {
 		repo = m.compose.repos[m.compose.repoIdx].name
 	}
+
 	id := strings.TrimSpace(m.compose.id)
 	text := strings.TrimSpace(m.compose.text)
 
@@ -23,6 +25,7 @@ func (m Model) composeSubmit(startNow bool) (tea.Model, tea.Cmd) {
 			if id == "" {
 				id = m.compose.parsedIssue.ID
 			}
+
 			if text == "" {
 				text = tracker.FormatPrompt(*m.compose.parsedIssue)
 			}
@@ -31,6 +34,7 @@ func (m Model) composeSubmit(startNow bool) (tea.Model, tea.Cmd) {
 				if id == "" {
 					id = issue.ID
 				}
+
 				if text == "" {
 					text = tracker.FormatPrompt(issue)
 				}
@@ -49,6 +53,7 @@ func (m Model) composeSubmit(startNow bool) (tea.Model, tea.Cmd) {
 		return m.say(p.T("compose.text_required",
 			"the task needs something written in it")), nil
 	}
+
 	if m.opts.ValidID != nil {
 		if err := m.opts.ValidID(id); err != nil {
 			return m.say(err.Error()), nil
@@ -62,6 +67,7 @@ func (m Model) composeSubmit(startNow bool) (tea.Model, tea.Cmd) {
 			break
 		}
 	}
+
 	if path == repo {
 		for _, t := range m.board.Tasks {
 			if t.Repo == repo {
@@ -81,10 +87,12 @@ func (m Model) composeSubmit(startNow bool) (tea.Model, tea.Cmd) {
 	if flowName != "" {
 		args = append(args, "-flow", flowName)
 	}
+
 	args = append(args, "--", text)
 
 	m.screen = screenList
 	m.pendingID, m.pendTries = id, 0
+
 	return m.runWatched(Command{Name: "new"}, args)
 }
 
@@ -93,15 +101,18 @@ func (m Model) selectPending() Model {
 	if m.pendingID == "" {
 		return m
 	}
+
 	for i, r := range m.rows() {
 		if !r.head && !r.blank && r.task.ID == m.pendingID {
 			m.pendingID, m.pendTries = "", 0
 			return m.moveTo(i)
 		}
 	}
+
 	m.pendTries++
 	if m.pendTries > 2 {
 		m.pendingID, m.pendTries = "", 0
 	}
+
 	return m
 }

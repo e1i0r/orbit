@@ -22,10 +22,13 @@ func (r *Reader) poll(st *taskState) ([]record.Event, error) {
 		// treatment record.Read gives it.
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, fmt.Errorf("stat %q: %w", st.path, err)
 	}
+
 	st.modTime = info.ModTime()
+
 	size := info.Size()
 	if size == st.size {
 		// The one stat this whole design is built on. Nothing was appended,
@@ -76,10 +79,14 @@ func (r *Reader) poll(st *taskState) ([]record.Event, error) {
 			st.retried = true
 			return nil, err
 		}
+
 		st.size, st.retried = size, false
+
 		return nil, err
 	}
+
 	st.size, st.offset, st.retried = size, next, false
+
 	return events, nil
 }
 
@@ -91,6 +98,7 @@ func (r *Reader) list(rs *repoState) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	entries, err := os.ReadDir(dir)
 	if errors.Is(err, os.ErrNotExist) {
 		// A repository nobody has written a task against yet. Computing a
@@ -98,14 +106,17 @@ func (r *Reader) list(rs *repoState) ([]string, error) {
 		// the first task, and "no tasks" is an answer rather than a fault.
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, fmt.Errorf("list the tasks of %q: %w", rs.name, err)
 	}
+
 	ids := make([]string, 0, len(entries))
 	for _, e := range entries {
 		if e.IsDir() {
 			ids = append(ids, e.Name())
 		}
 	}
+
 	return ids, nil
 }

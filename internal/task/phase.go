@@ -39,18 +39,23 @@ func phaseStart(p flow.Phase, n int, notes []string) record.Event {
 	if p.Model != "" {
 		data["model"] = p.Model
 	}
+
 	if p.Effort != "" {
 		data["effort"] = p.Effort
 	}
+
 	if p.Thinking != "" {
 		data["thinking"] = p.Thinking
 	}
+
 	if len(p.Permissions) > 0 {
 		data["permissions"] = strings.Join(p.Permissions, ",")
 	}
+
 	if len(notes) > 0 {
 		data["notes"] = strconv.Itoa(len(notes))
 	}
+
 	return record.Event{Kind: record.PhaseStarted, Phase: p.Name, Data: data}
 }
 
@@ -71,16 +76,20 @@ func phaseStart(p flow.Phase, n int, notes []string) record.Event {
 func phaseEnd(kind, phase string, out engine.Result, cause error) record.Event {
 	text, full := captured(out.Output)
 	e := record.Event{Kind: kind, Phase: phase, Text: text}
+
 	data := map[string]string{}
 	if full > 0 {
 		data["output_bytes"] = strconv.Itoa(full)
 	}
+
 	if out.SessionID != "" {
 		data["session"] = out.SessionID
 	}
+
 	if out.Cost != 0 {
 		data["cost"] = strconv.FormatFloat(out.Cost, 'f', -1, 64)
 	}
+
 	if cause != nil {
 		// Why it stopped goes in Data rather than Text, because Text is now
 		// what the engine printed, and a log that ends at phase.failed — it
@@ -91,23 +100,28 @@ func phaseEnd(kind, phase string, out engine.Result, cause error) record.Event {
 		msg, _ := captured(cause.Error())
 		data["error"] = msg
 	}
+
 	if len(data) > 0 {
 		e.Data = data
 	}
+
 	return e
 }
 
 func phaseThought(phase string, n int, text string) record.Event {
 	c, full := captured(text)
+
 	data := map[string]string{"n": strconv.Itoa(n)}
 	if full > 0 {
 		data["bytes"] = strconv.Itoa(full)
 	}
+
 	return record.Event{Kind: record.PhaseThought, Phase: phase, Text: c, Data: data}
 }
 
 func phaseToolCall(phase string, n int, tc engine.StreamToolCall) record.Event {
 	c, full := captured(tc.Args)
+
 	data := map[string]string{
 		"n":    strconv.Itoa(n),
 		"tool": tc.Name,
@@ -116,11 +130,13 @@ func phaseToolCall(phase string, n int, tc engine.StreamToolCall) record.Event {
 	if full > 0 {
 		data["bytes"] = strconv.Itoa(full)
 	}
+
 	return record.Event{Kind: record.PhaseToolCall, Phase: phase, Text: c, Data: data}
 }
 
 func phaseRefused(phase string, n int, r engine.StreamRefusal) record.Event {
 	c, full := captured(r.Input)
+
 	data := map[string]string{
 		"n":    strconv.Itoa(n),
 		"tool": r.Tool,
@@ -128,6 +144,7 @@ func phaseRefused(phase string, n int, r engine.StreamRefusal) record.Event {
 	if full > 0 {
 		data["bytes"] = strconv.Itoa(full)
 	}
+
 	return record.Event{Kind: record.PhaseRefused, Phase: phase, Text: c, Data: data}
 }
 
@@ -137,6 +154,7 @@ func runGates(ctx context.Context, s *store.Store, t Task, p flow.Phase, n int, 
 		cmd.Dir = wt
 		combined, err := cmd.CombinedOutput()
 		text, full := captured(string(combined))
+
 		data := map[string]string{
 			"gate": g.Name,
 			"n":    strconv.Itoa(n),
@@ -144,24 +162,30 @@ func runGates(ctx context.Context, s *store.Store, t Task, p flow.Phase, n int, 
 		if full > 0 {
 			data["bytes"] = strconv.Itoa(full)
 		}
+
 		if err == nil {
 			data["exit"] = "0"
 			if emitErr := emit(s, t, record.Event{Kind: record.GatePassed, Phase: p.Name, Text: text, Data: data}); emitErr != nil {
 				return emitErr
 			}
+
 			continue
 		}
 
 		exitCode := 1
+
 		var exitErr *exec.ExitError
 		if errors.As(err, &exitErr) {
 			exitCode = exitErr.ExitCode()
 		}
+
 		data["exit"] = strconv.Itoa(exitCode)
 		_ = emit(s, t, record.Event{Kind: record.GateFailed, Phase: p.Name, Text: text, Data: data}) //nolint:errcheck // best-effort event emission on gate failure
 		gateCause := fmt.Errorf("gate %q failed (exit %d)", g.Name, exitCode)
 		_ = emit(s, t, phaseEnd(record.PhaseFailed, p.Name, out, gateCause)) //nolint:errcheck // best-effort event emission on gate failure
+
 		return failed(s, t, fmt.Errorf("task %s, phase %q: %w", t.ID, p.Name, gateCause))
 	}
+
 	return nil
 }

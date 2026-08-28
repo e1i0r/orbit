@@ -45,6 +45,7 @@ type InstallResult struct {
 func Install(binaryPath, home string) []InstallResult {
 	binaryPath = binary(binaryPath)
 	targets := clientConfigs(home)
+
 	results := make([]InstallResult, 0, len(targets))
 	for _, t := range targets {
 		res := InstallResult{Target: t.name, Path: t.path, Status: StatusInstalled}
@@ -52,8 +53,10 @@ func Install(binaryPath, home string) []InstallResult {
 			res.Status = StatusFailed
 			res.Err = err
 		}
+
 		results = append(results, res)
 	}
+
 	return results
 }
 
@@ -68,10 +71,12 @@ func binary(chosen string) string {
 	if chosen != "" {
 		return chosen
 	}
+
 	exe, err := os.Executable()
 	if err != nil {
 		return "orbit"
 	}
+
 	return exe
 }
 
@@ -106,16 +111,19 @@ func clientConfigs(home string) []clientConfig {
 	if home == "" {
 		return nil
 	}
+
 	var targets []clientConfig
 	if p := claudeDesktopConfig(home); p != "" {
 		targets = append(targets, clientConfig{name: "Claude Desktop", path: p})
 	}
+
 	targets = append(targets,
 		clientConfig{name: "Claude Code", path: filepath.Join(home, ".claude.json")},
 		clientConfig{name: "OpenCode", path: filepath.Join(home, ".config", "opencode", "opencode.json")},
 		clientConfig{name: "Codex", path: filepath.Join(home, ".codex", "config.json")},
 		clientConfig{name: "Gemini", path: filepath.Join(home, ".gemini", "config.json")},
 	)
+
 	return targets
 }
 
@@ -132,6 +140,7 @@ func claudeDesktopConfig(home string) string {
 		if appData == "" {
 			return ""
 		}
+
 		return filepath.Join(appData, "Claude", "claude_desktop_config.json")
 	default:
 		return filepath.Join(home, ".config", "Claude", "claude_desktop_config.json")
@@ -150,8 +159,10 @@ func register(configPath, binaryPath string) error {
 	if err := os.MkdirAll(filepath.Dir(configPath), 0o755); err != nil {
 		return fmt.Errorf("create config directory for %q: %w", configPath, err)
 	}
+
 	config := map[string]any{}
 	mode := os.FileMode(0o600)
+
 	data, err := os.ReadFile(configPath)
 	switch {
 	case err == nil:
@@ -160,6 +171,7 @@ func register(configPath, binaryPath string) error {
 				return fmt.Errorf("read %q: %w", configPath, err)
 			}
 		}
+
 		if info, statErr := os.Stat(configPath); statErr == nil {
 			mode = info.Mode().Perm()
 		}
@@ -174,8 +186,10 @@ func register(configPath, binaryPath string) error {
 	if !ok {
 		servers = map[string]any{}
 	}
+
 	servers[serverName] = entry(binaryPath)
 	config["mcpServers"] = servers
+
 	return writeJSON(configPath, config, mode)
 }
 
@@ -191,29 +205,36 @@ func writeJSON(path string, config map[string]any, mode os.FileMode) error {
 	if err != nil {
 		return fmt.Errorf("encode config for %q: %w", path, err)
 	}
+
 	data = append(data, '\n')
 
 	tmp, err := os.CreateTemp(filepath.Dir(path), ".orbit-mcp-*.json")
 	if err != nil {
 		return fmt.Errorf("create temporary file beside %q: %w", path, err)
 	}
+
 	name := tmp.Name()
 	if _, err := tmp.Write(data); err != nil {
 		_ = tmp.Close()     //nolint:errcheck // the write already failed; the close cannot add to it
 		_ = os.Remove(name) //nolint:errcheck // best-effort cleanup of a file nothing points at
+
 		return fmt.Errorf("write %q: %w", name, err)
 	}
+
 	if err := tmp.Close(); err != nil {
 		_ = os.Remove(name) //nolint:errcheck // best-effort cleanup of a file nothing points at
 		return fmt.Errorf("close %q: %w", name, err)
 	}
+
 	if err := os.Chmod(name, mode); err != nil {
 		_ = os.Remove(name) //nolint:errcheck // best-effort cleanup of a file nothing points at
 		return fmt.Errorf("set mode on %q: %w", name, err)
 	}
+
 	if err := os.Rename(name, path); err != nil {
 		_ = os.Remove(name) //nolint:errcheck // best-effort cleanup of a file nothing points at
 		return fmt.Errorf("move %q into place at %q: %w", name, path, err)
 	}
+
 	return nil
 }

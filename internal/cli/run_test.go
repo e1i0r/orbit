@@ -21,6 +21,7 @@ func TestTheSignalHandlerComesOffWhenTheRunIsCancelled(t *testing.T) {
 	// Two deep, so a stop called twice cannot block or panic the test: what
 	// is under test is when it is called, not how often.
 	stopped := make(chan struct{}, 2)
+
 	restoreOnCancel(ctx, func() { stopped <- struct{}{} })
 
 	select {
@@ -30,6 +31,7 @@ func TestTheSignalHandlerComesOffWhenTheRunIsCancelled(t *testing.T) {
 	}
 
 	cancel()
+
 	select {
 	case <-stopped:
 	case <-time.After(2 * time.Second):

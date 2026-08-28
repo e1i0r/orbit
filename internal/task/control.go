@@ -51,6 +51,7 @@ func Control(s *store.Store, t Task, word string) error {
 	if !slices.Contains(controlWords, word) {
 		return fmt.Errorf("%q is not something a run understands; the words are %s", word, strings.Join(controlWords, ", "))
 	}
+
 	path, err := s.ControlPath(t.Repo.Path, t.ID)
 	if err != nil {
 		return err
@@ -60,6 +61,7 @@ func Control(s *store.Store, t Task, word string) error {
 	if err := os.WriteFile(path, []byte(word+"\n"), 0o600); err != nil {
 		return fmt.Errorf("tell task %s to %s: %w", t.ID, word, err)
 	}
+
 	return nil
 }
 
@@ -89,19 +91,24 @@ func take(s *store.Store, t Task) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	body, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
 		return "", nil
 	}
+
 	if err != nil {
 		return "", fmt.Errorf("read the control word of task %s: %w", t.ID, err)
 	}
+
 	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return "", fmt.Errorf("clear the control word of task %s: %w", t.ID, err)
 	}
+
 	word := strings.TrimSpace(string(body))
 	if !slices.Contains(controlWords, word) {
 		return "", nil
 	}
+
 	return word, nil
 }

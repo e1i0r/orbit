@@ -25,6 +25,7 @@ import (
 // back with the flag set.
 func TestTopReadsItsFlagsOnEitherSideOfTheDirectory(t *testing.T) {
 	const dir = "/work/repos"
+
 	cases := []struct {
 		name string
 		args []string
@@ -45,12 +46,15 @@ func TestTopReadsItsFlagsOnEitherSideOfTheDirectory(t *testing.T) {
 			if err != nil {
 				t.Fatalf("parseTop(%q): %v", c.args, err)
 			}
+
 			if got != dir {
 				t.Errorf("parseTop(%q) watched %q, want %q", c.args, got, dir)
 			}
+
 			if once != c.once {
 				t.Errorf("parseTop(%q) read -once as %v, want %v", c.args, once, c.once)
 			}
+
 			if lang != c.lang {
 				t.Errorf("parseTop(%q) read -lang as %q, want %q", c.args, lang, c.lang)
 			}
@@ -65,10 +69,12 @@ func TestTopWithNoDirectoryWatchesTheOneYouAreIn(t *testing.T) {
 	if err != nil {
 		t.Fatalf("getwd: %v", err)
 	}
+
 	dir, once, lang, err := parseTop(Context{Out: io.Discard}, []string{"-once"})
 	if err != nil {
 		t.Fatalf("parseTop: %v", err)
 	}
+
 	if dir != want || !once || lang != "" {
 		t.Errorf("parseTop(-once) = (%q, %v, %q), want (%q, true, \"\")", dir, once, lang, want)
 	}
@@ -81,6 +87,7 @@ func TestTopRefusesTwoDirectoriesRatherThanPickingOne(t *testing.T) {
 	if err == nil {
 		t.Fatal("two directories were accepted and one of them chosen silently")
 	}
+
 	if !strings.Contains(err.Error(), "one directory") {
 		t.Errorf("the refusal is %q, want it to say how many directories it takes", err)
 	}
@@ -90,10 +97,12 @@ func TestTopRefusesTwoDirectoriesRatherThanPickingOne(t *testing.T) {
 // the dispatcher turns errHelpShown into exit 0.
 func TestTopPrintsItsFlagsWhenAsked(t *testing.T) {
 	var b strings.Builder
+
 	_, _, _, err := parseTop(Context{Out: &b}, []string{"-h"})
 	if !errors.Is(err, errHelpShown) {
 		t.Fatalf("parseTop(-h) answered %v, want errHelpShown", err)
 	}
+
 	for _, want := range []string{"-once", "-lang"} {
 		if !strings.Contains(b.String(), want) {
 			t.Errorf("the help does not mention %q:\n%s", want, b.String())
@@ -108,6 +117,7 @@ func TestTopRefusesAFlagItDoesNotHave(t *testing.T) {
 	if err == nil {
 		t.Fatal("an undeclared flag was accepted")
 	}
+
 	if !strings.Contains(err.Error(), "onec") {
 		t.Errorf("the refusal is %q, want it to name the flag", err)
 	}

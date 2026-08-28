@@ -31,6 +31,7 @@ func data(pairs ...string) map[string]string {
 	for i := 0; i+1 < len(pairs); i += 2 {
 		m[pairs[i]] = pairs[i+1]
 	}
+
 	return m
 }
 
@@ -197,10 +198,12 @@ func TestFold(t *testing.T) {
 // that remembers.
 func TestFoldRemembersNothingBetweenCalls(t *testing.T) {
 	cases := allCases()
+
 	first := make([]Task, len(cases))
 	for i, c := range cases {
 		first[i] = Fold(c.events)
 	}
+
 	for i := len(cases) - 1; i >= 0; i-- {
 		if got := Fold(cases[i].events); !reflect.DeepEqual(got, first[i]) {
 			t.Errorf("%s: folded twice and disagreed:\n\t%+v\nand\n\t%+v", cases[i].name, first[i], got)
@@ -216,5 +219,6 @@ func allCases() []foldCase {
 	all = append(all, stoppedCases()...)
 	all = append(all, stoppedByHandCases()...)
 	all = append(all, damageCases()...)
+
 	return all
 }

@@ -29,11 +29,16 @@ func TestSupervisorScreenOpenAndAbandon(t *testing.T) {
 
 func TestSupervisorTypingAndSubmit(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	var recorded []string
-	var signedBy []string
+
+	var (
+		recorded []string
+		signedBy []string
+	)
+
 	m.opts.RecordSupervisor = func(by, channel, message string) error {
 		recorded = append(recorded, message)
 		signedBy = append(signedBy, by)
+
 		return nil
 	}
 
@@ -42,6 +47,7 @@ func TestSupervisorTypingAndSubmit(t *testing.T) {
 	// Type message
 	m = next(t, m, tea.KeyPressMsg{Text: "keep"})
 	m = next(t, m, tea.KeyPressMsg{Text: " "})
+
 	m = next(t, m, tea.KeyPressMsg{Text: "going"})
 	if m.supervisor.input != "keep going" {
 		t.Errorf("supervisor.input = %q, want 'keep going'", m.supervisor.input)
@@ -58,6 +64,7 @@ func TestSupervisorTypingAndSubmit(t *testing.T) {
 	if len(recorded) != 1 || recorded[0] != "keep goin" {
 		t.Errorf("recorded = %v, want ['keep goin']", recorded)
 	}
+
 	if m.supervisor.input != "" {
 		t.Errorf("input not cleared after enter: %q", m.supervisor.input)
 	}
@@ -79,6 +86,7 @@ func TestSupervisorRendering(t *testing.T) {
 	if len(rows) != 25 {
 		t.Errorf("rows count = %d, want 25", len(rows))
 	}
+
 	full := strings.Join(rows, "\n")
 	if !strings.Contains(full, "Supervisor") {
 		t.Errorf("render did not contain Supervisor title: %s", full)
@@ -95,6 +103,7 @@ func TestSupervisorRendering(t *testing.T) {
 		},
 	}
 	rowsPopulated := m.supervisorRows(25, 100)
+
 	fullPopulated := strings.Join(rowsPopulated, "\n")
 	if !strings.Contains(fullPopulated, "ORB-1") || !strings.Contains(fullPopulated, "completed all gates") {
 		t.Errorf("render with lines missing content:\n%s", fullPopulated)
@@ -110,6 +119,7 @@ func TestSupervisorReplyMsgHandling(t *testing.T) {
 	if m.supervisorBusy {
 		t.Error("expected supervisorBusy to be false after reply")
 	}
+
 	if !strings.Contains(m.message, "supervisor replied") {
 		t.Errorf("expected message notification, got: %q", m.message)
 	}
@@ -133,6 +143,7 @@ func TestSupervisorRenderingMarksAWithdrawnLine(t *testing.T) {
 	if !strings.Contains(full, "retract") {
 		t.Errorf("a withdrawn line is drawn like any other:\n%s", full)
 	}
+
 	if !strings.Contains(full, "the one I regret") {
 		t.Errorf("a withdrawn line was hidden instead of marked:\n%s", full)
 	}
@@ -156,18 +167,23 @@ func TestSupervisorScreenIsSquare(t *testing.T) {
 		if len(rows) != size.h {
 			t.Errorf("%dx%d: %d rows, want %d", size.w, size.h, len(rows), size.h)
 		}
+
 		want := -1
+
 		for i, r := range rows {
 			got := lipgloss.Width(r)
 			if strings.TrimSpace(r) == "" {
 				continue
 			}
+
 			if want == -1 {
 				want = got
 			}
+
 			if got != want {
 				t.Errorf("%dx%d: row %d is %d cells, the rest are %d: %q", size.w, size.h, i, got, want, r)
 			}
+
 			if got > size.w {
 				t.Errorf("%dx%d: row %d is %d cells, wider than the terminal", size.w, size.h, i, got)
 			}
@@ -181,7 +197,9 @@ func TestSupervisorPickingTakesTheChosenLineBack(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	first := time.Date(2026, 8, 28, 9, 0, 0, 0, time.UTC)
 	second := first.Add(time.Minute)
+
 	var asked []time.Time
+
 	m.opts.RetractSupervisor = func(at time.Time) error {
 		asked = append(asked, at)
 		return nil
@@ -197,6 +215,7 @@ func TestSupervisorPickingTakesTheChosenLineBack(t *testing.T) {
 	if !m.supervisor.picking {
 		t.Fatal("^R did not open the picker")
 	}
+
 	if m.supervisor.pick != 1 {
 		t.Errorf("picker opened on line %d, want the last one", m.supervisor.pick)
 	}
@@ -215,9 +234,11 @@ func TestSupervisorPickingTakesTheChosenLineBack(t *testing.T) {
 	if len(asked) != 1 || !asked[0].Equal(first) {
 		t.Errorf("retracted %v, want [%v]", asked, first)
 	}
+
 	if m.supervisor.picking {
 		t.Error("the picker stayed open after taking a line back")
 	}
+
 	if m.supervisor.input != "" {
 		t.Errorf("picking typed into the message box: %q", m.supervisor.input)
 	}
@@ -239,16 +260,19 @@ func TestSupervisorPickingCancelsAndRefusesWhatItCannotDo(t *testing.T) {
 		{At: time.Date(2026, 8, 28, 9, 0, 0, 0, time.UTC), By: "operator", Channel: "tui", Text: "said once", Retracted: true},
 	}
 	m = next(t, m, tea.KeyPressMsg{Code: 'r', Mod: tea.ModCtrl})
+
 	m = next(t, m, tea.KeyPressMsg{Code: tea.KeyEscape})
 	if m.supervisor.picking {
 		t.Error("esc left the picker open")
 	}
+
 	if called != 0 {
 		t.Error("esc took a line back")
 	}
 
 	// A line already withdrawn is not withdrawn twice.
 	m = next(t, m, tea.KeyPressMsg{Code: 'r', Mod: tea.ModCtrl})
+
 	m = next(t, m, tea.KeyPressMsg{Code: tea.KeyEnter})
 	if called != 0 {
 		t.Errorf("a line already taken back was retracted again (%d calls)", called)

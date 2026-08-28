@@ -36,18 +36,22 @@ func (sn Session) inspectTask(args map[string]any) CallToolResult {
 	if err != nil {
 		return refuse(err)
 	}
+
 	row0, err := findTask(sb.board, stringArg(args, "task_id"), stringArg(args, "repo"))
 	if err != nil {
 		return refuse(err)
 	}
+
 	r, err := openTaskRepo(row0)
 	if err != nil {
 		return refuse(err)
 	}
+
 	t, err := task.Load(sb.store, r, row0.ID)
 	if err != nil {
 		return refuse(fmt.Errorf("load task %s: %w", row0.ID, err))
 	}
+
 	events, err := task.Events(sb.store, t)
 	if err != nil {
 		return refuse(fmt.Errorf("read the record of task %s: %w", row0.ID, err))
@@ -64,6 +68,7 @@ func (sn Session) inspectTask(args map[string]any) CallToolResult {
 	answer["gates"] = gatesOf(events)
 	answer["last_error"] = lastErrorOf(events)
 	answer["last_output"] = lastOutputOf(events)
+
 	return reply(answer)
 }
 
@@ -72,17 +77,21 @@ func (sn Session) inspectTask(args map[string]any) CallToolResult {
 func timelineOf(events []record.Event) []map[string]any {
 	from := max(len(events)-timelineTail, 0)
 	tail := events[from:]
+
 	out := make([]map[string]any, 0, len(tail))
 	for _, e := range tail {
 		entry := map[string]any{"at": e.At, "kind": e.Kind}
 		if e.Phase != "" {
 			entry["phase"] = e.Phase
 		}
+
 		if e.Text != "" {
 			entry["text"] = clip(e.Text, thoughtChars)
 		}
+
 		out = append(out, entry)
 	}
+
 	return out
 }
 
@@ -92,12 +101,15 @@ func timelineOf(events []record.Event) []map[string]any {
 // instruction the rest were responses to.
 func notesOf(events []record.Event) []map[string]any {
 	var notes []map[string]any
+
 	for _, e := range events {
 		if e.Kind != record.TaskNoted {
 			continue
 		}
+
 		notes = append(notes, map[string]any{"at": e.At, "text": e.Text})
 	}
+
 	return notes
 }
 
@@ -111,12 +123,15 @@ func notesOf(events []record.Event) []map[string]any {
 // twice — whether it, or the reader, has already tried this.
 func dialogueOf(events []record.Event) []map[string]any {
 	var out []map[string]any
+
 	for _, e := range events {
 		if e.Kind != record.TaskDialogue {
 			continue
 		}
+
 		out = append(out, map[string]any{"at": e.At, "by": e.Data["by"], "text": e.Text})
 	}
+
 	return out
 }
 
@@ -124,22 +139,27 @@ func dialogueOf(events []record.Event) []map[string]any {
 // where the reason a task went wrong is usually stated before it goes wrong.
 func thinkingOf(events []record.Event) []map[string]any {
 	var all []record.Event
+
 	for _, e := range events {
 		if e.Kind == record.PhaseThought {
 			all = append(all, e)
 		}
 	}
+
 	from := max(len(all)-thoughtTail, 0)
+
 	out := make([]map[string]any, 0, len(all)-from)
 	for _, e := range all[from:] {
 		out = append(out, map[string]any{"at": e.At, "phase": e.Phase, "text": clip(e.Text, thoughtChars)})
 	}
+
 	return out
 }
 
 // phaseOutcomes is what happened to each phase, in the order they ran.
 func phaseOutcomes(events []record.Event) []map[string]any {
 	var out []map[string]any
+
 	for _, e := range events {
 		switch e.Kind {
 		case record.PhaseStarted:
@@ -157,24 +177,30 @@ func phaseOutcomes(events []record.Event) []map[string]any {
 				if why := e.Data["error"]; why != "" {
 					out[n]["error"] = why
 				}
+
 				if why := e.Data["why"]; why != "" {
 					out[n]["waiting_on"] = why
 				}
+
 				continue
 			}
+
 			out = append(out, map[string]any{"phase": e.Phase, "at": e.At, "state": state})
 		}
 	}
+
 	return out
 }
 
 // gatesOf is every gate check this task's phases ran, and how each answered.
 func gatesOf(events []record.Event) []map[string]any {
 	var gates []map[string]any
+
 	for _, e := range events {
 		if e.Kind != record.GatePassed && e.Kind != record.GateFailed {
 			continue
 		}
+
 		gates = append(gates, map[string]any{
 			"at":     e.At,
 			"phase":  e.Phase,
@@ -182,6 +208,7 @@ func gatesOf(events []record.Event) []map[string]any {
 			"text":   clip(e.Text, thoughtChars),
 		})
 	}
+
 	return gates
 }
 
@@ -202,6 +229,7 @@ func lastErrorOf(events []record.Event) map[string]any {
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -215,6 +243,7 @@ func lastOutputOf(events []record.Event) map[string]any {
 			if e.Text == "" {
 				continue
 			}
+
 			return map[string]any{
 				"phase":    e.Phase,
 				"kind":     e.Kind,
@@ -223,6 +252,7 @@ func lastOutputOf(events []record.Event) map[string]any {
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -231,6 +261,7 @@ func clip(s string, n int) string {
 	if len(s) <= n {
 		return s
 	}
+
 	return s[:n] + fmt.Sprintf("… (%d more characters)", len(s)-n)
 }
 
@@ -241,5 +272,6 @@ func tail(s string, n int) string {
 	if len(s) <= n {
 		return s
 	}
+
 	return fmt.Sprintf("(%d earlier characters omitted) …", len(s)-n) + s[len(s)-n:]
 }

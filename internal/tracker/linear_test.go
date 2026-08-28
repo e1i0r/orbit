@@ -15,11 +15,13 @@ func TestFetchLinear(t *testing.T) {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
+
 		var req map[string]any
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
+
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{ //nolint:errcheck
 			"data": map[string]any{
@@ -36,6 +38,7 @@ func TestFetchLinear(t *testing.T) {
 	if _, _, err := FetchLinear(context.Background(), "", "ID"); err == nil {
 		t.Error("expected error with empty apiKey")
 	}
+
 	if _, _, err := FetchLinear(context.Background(), "key", ""); err == nil {
 		t.Error("expected error with empty id")
 	}

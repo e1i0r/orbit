@@ -27,6 +27,7 @@ func (sn Session) listRepos() CallToolResult {
 	if err != nil {
 		return refuse(err)
 	}
+
 	return reply(map[string]any{
 		"repos": reposOf(sb.board),
 		"roots": sn.describeRoots(),
@@ -48,14 +49,17 @@ func (sn Session) inspectRepo(args map[string]any) CallToolResult {
 	if hint == "" {
 		return refuse(fmt.Errorf("this tool needs repo"))
 	}
+
 	s, err := sn.open()
 	if err != nil {
 		return refuse(err)
 	}
+
 	path, err := sn.repoPath(s, hint)
 	if err != nil {
 		return refuse(err)
 	}
+
 	answer := map[string]any{"name": filepath.Base(path), "path": path}
 	if r, err := repo.Open(path); err == nil {
 		answer["name"] = r.Name
@@ -64,6 +68,7 @@ func (sn Session) inspectRepo(args map[string]any) CallToolResult {
 	} else {
 		answer["checkout_error"] = err.Error()
 	}
+
 	b, boardErr := sn.board(s)
 	if boardErr == nil {
 		maps.Copy(answer, repoTally(b, path))
@@ -73,12 +78,15 @@ func (sn Session) inspectRepo(args map[string]any) CallToolResult {
 	// a time, and a count with the reason for its missing neighbours is worth
 	// more than a refusal.
 	answer["board_error"] = boardErr.Error()
+
 	ids, err := task.List(s, repo.Repo{Path: path, Name: filepath.Base(path)})
 	if err != nil {
 		answer["tasks_error"] = err.Error()
 		return reply(answer)
 	}
+
 	answer["tasks"] = len(ids)
+
 	return reply(answer)
 }
 
@@ -94,21 +102,26 @@ func (sn Session) addRepo(args map[string]any) CallToolResult {
 	if path == "" {
 		return refuse(fmt.Errorf("this tool needs path"))
 	}
+
 	s, err := sn.open()
 	if err != nil {
 		return refuse(err)
 	}
+
 	r, err := repo.Open(path)
 	if err != nil {
 		return refuse(err)
 	}
+
 	if _, err := s.RegisterRepo(r.Path); err != nil {
 		return refuse(fmt.Errorf("record the repository at %q: %w", r.Path, err))
 	}
+
 	ids, err := task.List(s, r)
 	if err != nil {
 		return refuse(fmt.Errorf("list the tasks already in %s: %w", r.Name, err))
 	}
+
 	return reply(map[string]any{
 		"name":    r.Name,
 		"path":    r.Path,
@@ -130,25 +143,31 @@ func (sn Session) forgetRepo(args map[string]any) CallToolResult {
 	if hint == "" {
 		return refuse(fmt.Errorf("this tool needs repo"))
 	}
+
 	s, err := sn.open()
 	if err != nil {
 		return refuse(err)
 	}
+
 	ref, err := knownRepo(s, hint)
 	if err != nil {
 		return refuse(err)
 	}
+
 	ids, err := task.List(s, repo.Repo{Path: ref.Path, Name: filepath.Base(ref.Path)})
 	if err != nil {
 		return refuse(fmt.Errorf("list the tasks of %q: %w", ref.Path, err))
 	}
+
 	if len(ids) > 0 && !boolArg(args, "delete_tasks") {
 		return refuse(fmt.Errorf("%q holds %d tasks (%s), and forgetting it deletes their whole record — the only account of what those runs did; pass delete_tasks to do it anyway", ref.Path, len(ids), strings.Join(ids, ", ")))
 	}
+
 	dir, err := s.ForgetRepo(ref.Path)
 	if err != nil {
 		return refuse(err)
 	}
+
 	return reply(map[string]any{
 		"path":          ref.Path,
 		"removed":       dir,
@@ -167,6 +186,7 @@ func (sn Session) repoPath(s *store.Store, hint string) (string, error) {
 	if ref, err := knownRepo(s, hint); err == nil {
 		return ref.Path, nil
 	}
+
 	if b, err := sn.board(s); err == nil {
 		for _, r := range b.RepoList {
 			if strings.EqualFold(r.Name, hint) || r.Path == hint {
@@ -174,10 +194,12 @@ func (sn Session) repoPath(s *store.Store, hint string) (string, error) {
 			}
 		}
 	}
+
 	r, err := repo.Open(hint)
 	if err != nil {
 		return "", fmt.Errorf("no repository named or at %q: %w", hint, err)
 	}
+
 	return r.Path, nil
 }
 
@@ -188,16 +210,21 @@ func knownRepo(s *store.Store, hint string) (store.RepoRef, error) {
 	if len(refs) == 0 && err != nil {
 		return store.RepoRef{}, fmt.Errorf("list the repositories orbit knows: %w", err)
 	}
+
 	abs, absErr := filepath.Abs(hint)
+
 	var named []store.RepoRef
+
 	for _, ref := range refs {
 		if ref.Path == hint || (absErr == nil && ref.Path == abs) {
 			return ref, nil
 		}
+
 		if strings.EqualFold(filepath.Base(ref.Path), hint) {
 			named = append(named, ref)
 		}
 	}
+
 	switch len(named) {
 	case 1:
 		return named[0], nil
@@ -213,6 +240,7 @@ func pathsOf(refs []store.RepoRef) []string {
 	for _, ref := range refs {
 		paths = append(paths, ref.Path)
 	}
+
 	return paths
 }
 
@@ -223,24 +251,30 @@ func repoTally(b board.Board, path string) map[string]any {
 	for _, band := range view.Bands() {
 		counts[bandSlug(band)] = 0
 	}
+
 	tally := map[string]any{}
 	tasks, unread, spend := 0, 0, 0.0
+
 	for _, t := range b.Tasks {
 		if t.RepoPath != path {
 			continue
 		}
+
 		tasks++
 		counts[bandSlug(t.Band)]++
 		spend += t.Cost
 	}
+
 	for _, t := range board.Unreads(b) {
 		if t.RepoPath == path {
 			unread++
 		}
 	}
+
 	tally["tasks"] = tasks
 	tally["counts"] = counts
 	tally["unread"] = unread
 	tally["spend"] = spend
+
 	return tally
 }

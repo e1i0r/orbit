@@ -7,10 +7,12 @@ import (
 
 func TestSupervisorCommandReadEmptyHistory(t *testing.T) {
 	_, _ = workspace(t)
+
 	code, out, errOut := run(t, "supervisor")
 	if code != 0 {
 		t.Fatalf("supervisor exited %d: %s", code, errOut)
 	}
+
 	if !strings.Contains(out, "empty") {
 		t.Errorf("expected empty message, got: %s", out)
 	}
@@ -18,10 +20,12 @@ func TestSupervisorCommandReadEmptyHistory(t *testing.T) {
 
 func TestSupervisorCommandWriteAndReadHistory(t *testing.T) {
 	_, _ = workspace(t)
+
 	code, out, errOut := run(t, "supervisor", "-by", "elio", "please focus on unit tests")
 	if code != 0 {
 		t.Fatalf("supervisor post exited %d: %s", code, errOut)
 	}
+
 	if !strings.Contains(out, "recorded in supervisor thread") {
 		t.Errorf("unexpected post response: %s", out)
 	}
@@ -30,6 +34,7 @@ func TestSupervisorCommandWriteAndReadHistory(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("supervisor list exited %d: %s", code, errOut)
 	}
+
 	if !strings.Contains(out, "please focus on unit tests") || !strings.Contains(out, "[elio via cli]") {
 		t.Errorf("unexpected history output: %s", out)
 	}
@@ -50,6 +55,7 @@ func TestSupervisorCommandNumbersLinesAndTakesOneBack(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("supervisor list exited %d: %s", code, errOut)
 	}
+
 	for _, want := range []string{"1  ", "2  ", "3  "} {
 		if !strings.Contains(out, want) {
 			t.Errorf("the listing is not numbered; %q is missing from:\n%s", want, out)
@@ -60,6 +66,7 @@ func TestSupervisorCommandNumbersLinesAndTakesOneBack(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("supervisor -retract 2 exited %d: %s", code, errOut)
 	}
+
 	if !strings.Contains(out, "took back line 2") {
 		t.Errorf("unexpected retract response: %s", out)
 	}
@@ -72,6 +79,7 @@ func TestSupervisorCommandNumbersLinesAndTakesOneBack(t *testing.T) {
 	if !strings.Contains(out, "the one I regret") || !strings.Contains(out, "(retracted)") {
 		t.Errorf("the withdrawn line is not listed as withdrawn:\n%s", out)
 	}
+
 	if strings.Count(out, "\n") != 3 {
 		t.Errorf("the retraction became a line of the conversation:\n%s", out)
 	}
@@ -89,6 +97,7 @@ func TestSupervisorCommandRefusesARetractionItCannotPlace(t *testing.T) {
 	if code, _, errOut := run(t, "supervisor", "-by", "elio", "the only turn"); code != 0 {
 		t.Fatalf("supervisor post exited %d: %s", code, errOut)
 	}
+
 	for _, n := range []string{"0", "-1", "2"} {
 		if code, _, errOut := run(t, "supervisor", "-retract", n); code == 0 {
 			t.Errorf("supervisor -retract %s exited 0 over a thread of one line", n)

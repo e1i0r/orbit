@@ -26,6 +26,7 @@ func TestColumnAtBoundsAndGaps(t *testing.T) {
 	if col, ok := plan.ColumnAt(0); !ok || col != ColumnRepo {
 		t.Errorf("ColumnAt(0) = (%v, %v), want (ColumnRepo, true)", col, ok)
 	}
+
 	if col, ok := plan.ColumnAt(9); !ok || col != ColumnRepo {
 		t.Errorf("ColumnAt(9) = (%v, %v), want (ColumnRepo, true)", col, ok)
 	}
@@ -34,6 +35,7 @@ func TestColumnAtBoundsAndGaps(t *testing.T) {
 	if col, ok := plan.ColumnAt(10); ok || col != ColumnNone {
 		t.Errorf("ColumnAt(10) in gap = (%v, %v), want (ColumnNone, false)", col, ok)
 	}
+
 	if col, ok := plan.ColumnAt(11); ok || col != ColumnNone {
 		t.Errorf("ColumnAt(11) in gap = (%v, %v), want (ColumnNone, false)", col, ok)
 	}
@@ -75,6 +77,7 @@ func FuzzFitLayout(f *testing.F) {
 			if totH != h {
 				t.Errorf("Fit(%d, %d) total height %d != %d", w, h, totH, h)
 			}
+
 			if frame.Header.H < 0 || frame.Status.H < 0 || frame.Body.H < 0 || frame.Band.H < 0 || frame.Bar.H < 0 {
 				t.Errorf("Fit(%d, %d) produced negative height: %+v", w, h, frame)
 			}
@@ -91,6 +94,7 @@ func FuzzColumnPlan(f *testing.F) {
 		tasks := []view.Task{
 			{Repo: r, ID: id, Title: title, Model: model},
 		}
+
 		p := Columns(w, tasks, func(k string) int { return 10 })
 		if p.Width() > w && !p.Fallback && w >= MinWidth {
 			t.Errorf("Columns width %d > %d", p.Width(), w)

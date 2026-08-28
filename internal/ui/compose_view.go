@@ -12,7 +12,9 @@ func (m Model) composeRows(h, w int) []string {
 	if h <= 0 {
 		return nil
 	}
+
 	p := m.opts.Words
+
 	var out []string
 
 	tabManual := p.T("compose.tab_manual", "1 Manual")
@@ -22,6 +24,7 @@ func (m Model) composeRows(h, w int) []string {
 		if active {
 			return Paint(Sel).Bold(true).Render(" [ " + name + " ] ")
 		}
+
 		return Paint(Dim).Render("   " + name + "   ")
 	}
 
@@ -50,19 +53,23 @@ func (m Model) composeRows(h, w int) []string {
 	}
 
 	out = append(out, "", fit(actions, w))
+
 	return fill(out, h)
 }
 
 func (m Model) composeManualRows(w int) []string {
 	p := m.opts.Words
+
 	var out []string
 
 	out = append(out, m.composeRepoLine(m.compose.field == composeRepo, w))
+
 	out = append(out, m.composeFlowLine(m.compose.field == composeFlow, w))
 	if sum := m.flowSummary(m.compose.chosenFlow()); sum != "" {
 		padded := strings.Repeat(" ", gutter+composeLabelWidth+1)
 		out = append(out, fit(padded+Paint(Dim).Render("↳ "+sum), w))
 	}
+
 	out = append(out, m.composeEngineLine(m.compose.field == composeEngine, w))
 	out = append(out, m.composeModelLine(m.compose.field == composeModel, w))
 	out = append(out, m.composeThinkingLine(m.compose.field == composeThinking, w))
@@ -77,11 +84,13 @@ func (m Model) composeManualRows(w int) []string {
 	)
 	out = append(out, idLine)
 	out = append(out, m.composeTextArea(w)...)
+
 	return out
 }
 
 func (m Model) composeURLRows(w int) []string {
 	p := m.opts.Words
+
 	var out []string
 
 	urlLine := m.composeFieldLine(
@@ -96,11 +105,13 @@ func (m Model) composeURLRows(w int) []string {
 	out = append(out, urlLine)
 
 	out = append(out, m.composeRepoLine(m.compose.field == composeURLRepo, w))
+
 	out = append(out, m.composeFlowLine(m.compose.field == composeURLFlow, w))
 	if sum := m.flowSummary(m.compose.chosenFlow()); sum != "" {
 		padded := strings.Repeat(" ", gutter+composeLabelWidth+1)
 		out = append(out, fit(padded+Paint(Dim).Render("↳ "+sum), w))
 	}
+
 	out = append(out, m.composeEngineLine(m.compose.field == composeURLEngine, w))
 	out = append(out, m.composeModelLine(m.compose.field == composeURLModel, w))
 	out = append(out, m.composeThinkingLine(m.compose.field == composeURLThinking, w))
@@ -108,13 +119,16 @@ func (m Model) composeURLRows(w int) []string {
 
 	if m.compose.parsedIssue != nil {
 		iss := m.compose.parsedIssue
+
 		preview := "  " + Paint(OK).Render("✓ "+strings.ToUpper(iss.Kind)) +
 			" · " + Paint(Accent).Render(iss.ID)
 		if iss.Title != "" {
 			preview += " · " + Paint(Dim).Render(iss.Title)
 		}
+
 		out = append(out, "", fit(preview, w))
 	}
+
 	return out
 }
 
@@ -123,6 +137,7 @@ func (m Model) composeTextArea(w int) []string {
 	active := m.compose.field == composeText
 	header := composeLabel(p.T("compose.text", "task"), active)
 	pastePill := Pill(" 📋 "+p.T("compose.btn_paste", "Paste (^V)")+" ", "#FFFFFF", "#0369A1")
+
 	header += pastePill
 	if active {
 		header += " " + Paint(Dim).Render(p.T("compose.text_hint", "(Shift+↵ for newline)"))
@@ -132,12 +147,15 @@ func (m Model) composeTextArea(w int) []string {
 	if boxW < 24 {
 		boxW = 24
 	}
+
 	if boxW > 84 {
 		boxW = 84
 	}
+
 	innerW := boxW - 4
 
 	raw := m.compose.text
+
 	var lines []string
 	if raw == "" {
 		lines = []string{Paint(Dim).Render(p.T("compose.text_placeholder", "what is to be done?"))}
@@ -150,9 +168,11 @@ func (m Model) composeTextArea(w int) []string {
 			}
 		}
 	}
+
 	for len(lines) < 3 {
 		lines = append(lines, "")
 	}
+
 	if len(lines) > 6 {
 		lines = lines[len(lines)-6:]
 	}
@@ -163,22 +183,29 @@ func (m Model) composeTextArea(w int) []string {
 	}
 
 	var out []string
+
 	out = append(out, header)
 	out = append(out, fit("  "+borderStyle.Render("┌"+strings.Repeat("─", boxW-2)+"┐"), w))
+
 	for i, l := range lines {
 		content := l
 		if active && i == len(lines)-1 && raw != "" {
 			content += Paint(Sel).Render(" ")
 		}
+
 		wLine := lipgloss.Width(content)
+
 		padW := innerW - wLine
 		if padW < 0 {
 			padW = 0
 		}
+
 		row := "  " + borderStyle.Render("│ ") + content + strings.Repeat(" ", padW) + borderStyle.Render(" │")
 		out = append(out, fit(row, w))
 	}
+
 	out = append(out, fit("  "+borderStyle.Render("└"+strings.Repeat("─", boxW-2)+"┘"), w))
+
 	return out
 }
 
@@ -186,14 +213,17 @@ func (m Model) composeFieldLine(fieldIdx int, label, val, placeholder string, w 
 	active := m.compose.field == fieldIdx
 	prefix := composeLabel(label, active)
 	role := Accent
+
 	if val == "" {
 		val = placeholder
 		role = Dim
 	}
+
 	line := prefix + Paint(role).Render(val)
 	if active {
 		line += Paint(Sel).Render(" ")
 	}
+
 	return fit(line, w)
 }
 
@@ -201,12 +231,16 @@ func splitIntoLines(text string, maxW int) []string {
 	if maxW <= 0 {
 		return []string{text}
 	}
+
 	var res []string
+
 	words := strings.Fields(text)
 	if len(words) == 0 {
 		return []string{""}
 	}
+
 	var cur strings.Builder
+
 	for _, w := range words {
 		switch {
 		case cur.Len() == 0:
@@ -219,8 +253,10 @@ func splitIntoLines(text string, maxW int) []string {
 			cur.WriteString(w)
 		}
 	}
+
 	if cur.Len() > 0 {
 		res = append(res, cur.String())
 	}
+
 	return res
 }

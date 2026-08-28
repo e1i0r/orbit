@@ -10,16 +10,20 @@ import (
 
 func TestCommandsTableIntegrity(t *testing.T) {
 	p := words.For("en")
+
 	for _, cmd := range commands() {
 		if cmd.Name == "" {
 			t.Error("command table contains command with empty Name")
 		}
+
 		if cmd.About == nil || cmd.About(p) == "" {
 			t.Errorf("command %q has missing or empty About description", cmd.Name)
 		}
+
 		if cmd.InWindow == WindowRefuses && (cmd.Because == nil || cmd.Because(p) == "") {
 			t.Errorf("command %q is WindowRefuses but has empty Because description", cmd.Name)
 		}
+
 		if cmd.Usage() == "" {
 			t.Errorf("command %q has empty Usage()", cmd.Name)
 		}
@@ -41,6 +45,7 @@ func TestNoteSubcommandExecution(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("note failed (exit %d): out=%q err=%q", code, out, errOut)
 	}
+
 	if !strings.Contains(out, "note recorded for PAY-100") {
 		t.Errorf("unexpected note output: %q", out)
 	}
@@ -49,6 +54,7 @@ func TestNoteSubcommandExecution(t *testing.T) {
 	if c, _, _ := run(t, "note"); c == 0 {
 		t.Error("expected note without args to fail")
 	}
+
 	if c, _, _ := run(t, "note", "-repo", repoDir, "PAY-100"); c == 0 {
 		t.Error("expected note without text to fail")
 	}
@@ -63,6 +69,7 @@ func TestReposAndReconcileSubcommands(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("repos failed (exit %d): out=%q err=%q", code, out, errOut)
 	}
+
 	if !strings.Contains(out, "payments") {
 		t.Errorf("expected repos output to list 'payments', got: %q", out)
 	}
@@ -79,6 +86,7 @@ func TestFlowsSubcommandDetails(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("flows failed (exit %d): out=%q err=%q", code, out, errOut)
 	}
+
 	if !strings.Contains(out, "task") && !strings.Contains(out, "quick") {
 		t.Errorf("expected flows output to mention built-in flows, got: %q", out)
 	}

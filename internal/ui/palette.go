@@ -63,6 +63,7 @@ func matchesSettingsAlias(prefix string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -75,7 +76,9 @@ func matchesSettingsAlias(prefix string) bool {
 // capital because a sentence started with one still means the command.
 func (p paletteState) candidates(cmds []Command) []Command {
 	prefix := strings.ToLower(p.typed)
+
 	var out []Command
+
 	for _, c := range cmds {
 		name := strings.ToLower(c.Name)
 		if strings.HasPrefix(name, prefix) {
@@ -84,6 +87,7 @@ func (p paletteState) candidates(cmds []Command) []Command {
 			out = append(out, c)
 		}
 	}
+
 	return out
 }
 
@@ -95,6 +99,7 @@ func (p paletteState) selected(cmds []Command) (Command, bool) {
 	if p.sel < 0 || p.sel >= len(all) {
 		return Command{}, false
 	}
+
 	return all[p.sel], true
 }
 
@@ -121,10 +126,12 @@ func (m Model) paletteKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		m.palette.typed = trimLastRune(m.palette.typed)
 		return m.reselect(), nil
 	}
+
 	if msg.Text != "" {
 		m.palette.typed += msg.Text
 		return m.reselect(), nil
 	}
+
 	return m, nil
 }
 
@@ -144,10 +151,12 @@ func (m Model) pick(d int) Model {
 		if m.palette.sel < 0 {
 			m.palette.sel = 0
 		}
+
 		if m.palette.sel >= n {
 			m.palette.sel = n - 1
 		}
 	}
+
 	return m.ensureVisible()
 }
 
@@ -165,9 +174,11 @@ func (m Model) ensureVisible() Model {
 	case m.palette.sel >= m.palette.offset+h:
 		m.palette.offset = m.palette.sel - h + 1
 	}
+
 	if m.palette.offset < 0 {
 		m.palette.offset = 0
 	}
+
 	return m
 }
 
@@ -183,6 +194,7 @@ func (m Model) complete() Model {
 		m.palette.typed = c.Name
 		return m.reselect()
 	}
+
 	return m
 }
 
@@ -195,6 +207,7 @@ func (m Model) commandIndex(name string) (int, bool) {
 			return i, true
 		}
 	}
+
 	return 0, false
 }
 
@@ -205,16 +218,20 @@ func (m Model) paletteRows(h, w int) []string {
 	if h <= 0 {
 		return nil
 	}
+
 	all := m.palette.candidates(m.opts.Commands)
 	if len(all) == 0 {
 		line := Paint(Dim).Render(m.opts.Words.T("palette.none",
 			"no command starts with {typed}", about("typed", m.palette.typed)))
+
 		return fill([]string{"", fit("  "+line, w)}, h)
 	}
+
 	out := make([]string, 0, h)
 	for i := m.palette.offset; i < len(all) && len(out) < h; i++ {
 		out = append(out, m.paletteRow(all[i], i == m.palette.sel, w))
 	}
+
 	return fill(out, h)
 }
 
@@ -227,6 +244,7 @@ func (m Model) paletteRows(h, w int) []string {
 // line that gets truncated to lose whichever mattered.
 func (m Model) paletteRow(c Command, selected bool, w int) string {
 	p := m.opts.Words
+
 	tail := ""
 	if c.Refused && c.Because != nil {
 		tail = Paint(Dim).Render(dot + " " + c.Because(p))
@@ -234,17 +252,22 @@ func (m Model) paletteRow(c Command, selected bool, w int) string {
 		if c.Args != "" {
 			tail += Paint(Dim).Render(" " + c.Args)
 		}
+
 		if c.About != nil {
 			tail += Paint(Dim).Render(dot + " " + c.About(p))
 		}
 	}
+
 	line := "  " + c.Name + tail
+
 	mark := strings.Repeat(" ", gutter)
 	if selected {
 		mark = markGlyph + strings.Repeat(" ", gutter-1)
 		line = fit(mark+line, w)
+
 		return Paint(Sel).Render(line)
 	}
+
 	return fit(mark+c.Name+tail, w)
 }
 
@@ -256,6 +279,7 @@ func (m Model) paletteInputLine(w int) string {
 		placeholder := Paint(Dim).Render(": " + m.opts.Words.T("palette.placeholder", "type a command"))
 		return fit(" "+placeholder, w)
 	}
+
 	return fit(" :"+m.palette.typed+Paint(Sel).Render(" "), w)
 }
 
@@ -270,10 +294,13 @@ func (m Model) hitPalette(x, y int) Target {
 	if !ok {
 		return Target{}
 	}
+
 	all := m.palette.candidates(m.opts.Commands)
+
 	i := m.palette.offset + line
 	if line >= m.frame.Body.H || i < 0 || i >= len(all) {
 		return Target{}
 	}
+
 	return Target{Kind: TargetCommand, Key: all[i].Name}
 }

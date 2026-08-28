@@ -20,10 +20,12 @@ import (
 // ever asking the kernel about the pid.
 func TestAliveReturnsDeadForAMarkerWrittenBeforeThisBoot(t *testing.T) {
 	s, r := fixture(t)
+
 	tk, err := Create(s, r, "STALE-BOOT-1", "stale boot test", "quick")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	if _, ok := bootTime(); !ok {
 		t.Skip("this machine cannot report a boot time")
 	}
@@ -32,7 +34,9 @@ func TestAliveReturnsDeadForAMarkerWrittenBeforeThisBoot(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RunPath: %v", err)
 	}
+
 	ancient := time.Unix(0, 0).UTC().Format(time.RFC3339)
+
 	body := "pid: " + strconv.Itoa(os.Getpid()) + "\nstarted: " + ancient + "\n"
 	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
 		t.Fatalf("WriteFile: %v", err)
@@ -42,9 +46,11 @@ func TestAliveReturnsDeadForAMarkerWrittenBeforeThisBoot(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Alive: %v", err)
 	}
+
 	if ok {
 		t.Error("Alive said a marker from before this boot is still running")
 	}
+
 	if pid != os.Getpid() {
 		t.Errorf("Alive pid = %d, want %d — the pid is still reported even when stale", pid, os.Getpid())
 	}
@@ -66,16 +72,20 @@ func TestMarkErrorPaths(t *testing.T) {
 	// directory itself now — the marker is the first thing a run writes —
 	// so the failure to reach is the one where making it is impossible.
 	blocked := Task{ID: "BLOCKED-1", Repo: r}
+
 	dir, err := s.TaskDir(r.Path, blocked.ID)
 	if err != nil {
 		t.Fatalf("TaskDir: %v", err)
 	}
+
 	if err := os.MkdirAll(filepath.Dir(dir), 0o700); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
+
 	if err := os.WriteFile(dir, []byte("not a directory"), 0o600); err != nil {
 		t.Fatalf("write: %v", err)
 	}
+
 	if _, err := mark(s, blocked, 123); err == nil {
 		t.Error("mark should have failed where the task directory cannot be made")
 	}
@@ -88,11 +98,13 @@ func TestMarkErrorPaths(t *testing.T) {
 func TestMarkMakesTheTaskDirectoryItself(t *testing.T) {
 	s, r := fixture(t)
 	fresh := Task{ID: "NEVER-CREATED-1", Repo: r}
+
 	release, err := mark(s, fresh, os.Getpid())
 	if err != nil {
 		t.Fatalf("mark into a task directory that does not exist yet: %v", err)
 	}
 	defer release()
+
 	if _, alive, err := Alive(s, fresh); err != nil || !alive {
 		t.Errorf("Alive = (_, %v, %v), want the marker mark just wrote", alive, err)
 	}
@@ -130,15 +142,18 @@ func TestHoldClaimsATaskWhoseRunIsGone(t *testing.T) {
 	if _, err := mark(s, stale, deadPid(t)); err != nil {
 		t.Fatalf("mark: %v", err)
 	}
+
 	release, err := hold(s, stale)
 	if err != nil {
 		t.Fatalf("hold over a stale marker: %v", err)
 	}
 	defer release()
+
 	pid, alive, err := Alive(s, stale)
 	if err != nil {
 		t.Fatalf("Alive: %v", err)
 	}
+
 	if !alive || pid != os.Getpid() {
 		t.Errorf("Alive = (%d, %v), want this process holding it", pid, alive)
 	}
@@ -170,9 +185,11 @@ func TestReleaseLeavesAMarkerThatNamesSomebodyElse(t *testing.T) {
 	if err != nil {
 		t.Fatalf("readMarker: %v", err)
 	}
+
 	if !found {
 		t.Fatal("the first run's release took the successor's claim off with it")
 	}
+
 	if pid != successor {
 		t.Errorf("the marker names %d, want the successor %d", pid, successor)
 	}
@@ -194,16 +211,20 @@ func TestRemoveMarkerErrorPaths(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	if _, err := mark(s, tk, os.Getpid()); err != nil {
 		t.Fatalf("mark: %v", err)
 	}
+
 	dir, err := s.TaskDir(r.Path, tk.ID)
 	if err != nil {
 		t.Fatalf("TaskDir: %v", err)
 	}
+
 	if err := os.Chmod(dir, 0o500); err != nil {
 		t.Fatalf("chmod: %v", err)
 	}
+
 	t.Cleanup(func() { _ = os.Chmod(dir, 0o700) }) //nolint:errcheck
 
 	if err := removeMarker(s, tk); err == nil {
@@ -227,10 +248,12 @@ func TestReadMarkerErrorPaths(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	path, err := s.RunPath(r.Path, tk.ID)
 	if err != nil {
 		t.Fatalf("RunPath: %v", err)
 	}
+
 	if err := os.Mkdir(path, 0o700); err != nil {
 		t.Fatalf("Mkdir: %v", err)
 	}

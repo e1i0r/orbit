@@ -17,12 +17,14 @@ func formatBytes(bytes int64) string {
 	if bytes < 1024 {
 		return fmt.Sprintf("%d B", max(bytes, 1))
 	}
+
 	return fmt.Sprintf("%d k", bytes/1024)
 }
 
 // artifactsLines renders Pane 8: Files and artifacts left by the task & run.
 func (m Model) artifactsLines() []string {
 	p := m.opts.Words
+
 	t, ok := m.task(m.detail)
 	if !ok {
 		return []string{"  " + Paint(Dim).Render(p.T("detail.gone", "this task is no longer on the board"))}
@@ -37,6 +39,7 @@ func (m Model) artifactsLines() []string {
 
 	// 1. Lo que produjo (Produced by model/engine)
 	var produced []runFile
+
 	if m.diffKnown && m.diff != "" {
 		sum := parseDiffSummary(m.diff)
 		for _, f := range sum.files {
@@ -67,11 +70,13 @@ func (m Model) artifactsLines() []string {
 				Paint(Dim).Render(rf.description),
 			))
 		}
+
 		out = append(out, "")
 	}
 
 	// 2. Los chequeos (Gates / Verifications)
 	var checks []runFile
+
 	for _, e := range m.entries {
 		if e.Gate != "" || e.What() == view.EntryWaiting {
 			checks = append(checks, runFile{
@@ -86,9 +91,11 @@ func (m Model) artifactsLines() []string {
 					description: p.T("artifacts.desc_gate_reason", "one sentence: why the gate stopped"),
 				})
 			}
+
 			break
 		}
 	}
+
 	if len(checks) > 0 {
 		out = append(out, "  "+Paint(Accent).Render(p.T("artifacts.group_checks", "the checks & gates")))
 		for _, rf := range checks {
@@ -98,11 +105,13 @@ func (m Model) artifactsLines() []string {
 				Paint(Dim).Render(rf.description),
 			))
 		}
+
 		out = append(out, "")
 	}
 
 	// 3. Lo que se le pidió (Input / Prompts)
 	var inputs []runFile
+
 	inputs = append(inputs, runFile{
 		name:        "task.md",
 		size:        formatBytes(int64(len(t.Title))),
@@ -115,6 +124,7 @@ func (m Model) artifactsLines() []string {
 			description: p.T("artifacts.desc_task_env", "environment fields and configuration read by runner"),
 		})
 	}
+
 	out = append(out, "  "+Paint(Accent).Render(p.T("artifacts.group_prompts", "what it was asked for")))
 	for _, rf := range inputs {
 		out = append(out, fmt.Sprintf("    %-28s  %-8s  %s",
@@ -123,14 +133,17 @@ func (m Model) artifactsLines() []string {
 			Paint(Dim).Render(rf.description),
 		))
 	}
+
 	out = append(out, "")
 
 	// 4. La contabilidad del run (Accounting & logs)
 	var accounting []runFile
+
 	eventsSize := int64(len(m.entries) * 120)
 	if eventsSize == 0 {
 		eventsSize = 120
 	}
+
 	accounting = append(accounting, runFile{
 		name:        "events.jsonl",
 		size:        formatBytes(eventsSize),
@@ -143,11 +156,13 @@ func (m Model) artifactsLines() []string {
 			description: p.T("artifacts.desc_cost", "one row per phase: what it cost in $"),
 		})
 	}
+
 	accounting = append(accounting, runFile{
 		name:        "state",
 		size:        "8 B",
 		description: p.T("artifacts.desc_state", "the phase it was in when last written"),
 	})
+
 	out = append(out, "  "+Paint(Accent).Render(p.T("artifacts.group_accounting", "run accounting")))
 	for _, rf := range accounting {
 		out = append(out, fmt.Sprintf("    %-28s  %-8s  %s",
@@ -156,6 +171,7 @@ func (m Model) artifactsLines() []string {
 			Paint(Dim).Render(rf.description),
 		))
 	}
+
 	out = append(out, "")
 
 	return out

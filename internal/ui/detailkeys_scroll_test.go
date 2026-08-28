@@ -18,6 +18,7 @@ func TestLogOfEveryAnswer(t *testing.T) {
 
 	// 1. No reader at all.
 	msg := logOf(nil, tk)()
+
 	lm, ok := msg.(logMsg)
 	if !ok || lm.Err == nil {
 		t.Fatalf("logOf(nil, ...) = %#v, want a logMsg carrying an error", msg)
@@ -26,6 +27,7 @@ func TestLogOfEveryAnswer(t *testing.T) {
 	// 2. A reader that fails.
 	r := &fakeReader{logErr: errors.New("record damaged")}
 	msg = logOf(r, tk)()
+
 	lm, ok = msg.(logMsg)
 	if !ok || lm.Err == nil {
 		t.Fatalf("logOf with a failing reader = %#v, want the error carried", msg)
@@ -34,6 +36,7 @@ func TestLogOfEveryAnswer(t *testing.T) {
 	// 3. A reader that answers.
 	r = &fakeReader{entries: fixtureEntries()}
 	msg = logOf(r, tk)()
+
 	lm, ok = msg.(logMsg)
 	if !ok || lm.Err != nil || len(lm.Entries) == 0 {
 		t.Fatalf("logOf with a working reader = %#v, want the entries carried with no error", msg)
@@ -51,6 +54,7 @@ func TestScrollFollowReleaseOnTheTimeline(t *testing.T) {
 
 	// Scrolling to the very bottom re-arms following.
 	m.panes[tabTimeline].GotoBottom()
+
 	got := m.scroll(tea.KeyPressMsg{Code: tea.KeyDown})
 	if !got.following {
 		t.Error("scrolling to the bottom of the timeline did not re-arm following")
@@ -65,6 +69,7 @@ func TestScrollFollowReleaseOnTheTimeline(t *testing.T) {
 	// The same scroll up on a different tab never touches following at all.
 	m2 := showing(t, m, tabOverview)
 	m2.following = true
+
 	got2 := m2.scroll(tea.KeyPressMsg{Code: tea.KeyUp})
 	if !got2.following {
 		t.Error("scrolling on a pane other than the timeline changed following")
@@ -78,6 +83,7 @@ func TestScrollFollowReleaseOnTheTimeline(t *testing.T) {
 	_ = m.scroll(tea.KeyPressMsg{Code: tea.KeyEnd})
 
 	before := m.panes[m.tab].YOffset()
+
 	after := m.scroll(tea.KeyPressMsg{Code: 'z', Text: "z"})
 	if after.panes[after.tab].YOffset() != before {
 		t.Error("an unmatched key moved the pane")

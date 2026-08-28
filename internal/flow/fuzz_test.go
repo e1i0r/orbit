@@ -11,9 +11,11 @@ func TestBuiltinFlowsValidityProperty(t *testing.T) {
 		if err != nil {
 			t.Errorf("builtin flow %q failed to resolve: %v", name, err)
 		}
+
 		if len(f.Phases) == 0 {
 			t.Errorf("builtin flow %q has 0 phases", name)
 		}
+
 		if f.Name != name {
 			t.Errorf("builtin flow Name = %q, want %q", f.Name, name)
 		}

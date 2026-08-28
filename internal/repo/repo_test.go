@@ -15,8 +15,10 @@ func makeRepo(t *testing.T, dir, branch, remote string) {
 	home := t.TempDir()
 	run := func(args ...string) {
 		t.Helper()
+
 		cmd := exec.Command("git", args...)
 		cmd.Dir = dir
+
 		cmd.Env = append(cmd.Environ(),
 			"GIT_AUTHOR_NAME=t", "GIT_AUTHOR_EMAIL=t@t",
 			"GIT_COMMITTER_NAME=t", "GIT_COMMITTER_EMAIL=t@t",
@@ -33,6 +35,7 @@ func makeRepo(t *testing.T, dir, branch, remote string) {
 	}
 	run("init", "-q", "-b", branch)
 	run("commit", "-q", "--allow-empty", "-m", "first")
+
 	if remote != "" {
 		run("remote", "add", remote, "https://example.invalid/x.git")
 	}
@@ -62,18 +65,22 @@ func TestOpenReadsNameRemoteAndBase(t *testing.T) {
 	if err := mkdir(dir); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
+
 	makeRepo(t, dir, "develop", "acme")
 
 	r, err := Open(dir)
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
+
 	if r.Name != "payments" {
 		t.Errorf("Name = %q, want payments", r.Name)
 	}
+
 	if r.Remote != "acme" {
 		t.Errorf("Remote = %q, want acme — the remote is not always called origin", r.Remote)
 	}
+
 	if r.Base != "develop" {
 		t.Errorf("Base = %q, want develop", r.Base)
 	}
@@ -84,8 +91,11 @@ func TestOpenPrefersOriginWhenThereAreSeveral(t *testing.T) {
 	if err := mkdir(dir); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
+
 	makeRepo(t, dir, "main", "upstream")
+
 	cmd := exec.Command("git", "remote", "add", "origin", "https://example.invalid/y.git")
+
 	cmd.Dir = dir
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("add origin: %v\n%s", err, out)
@@ -95,6 +105,7 @@ func TestOpenPrefersOriginWhenThereAreSeveral(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
+
 	if r.Remote != "origin" {
 		t.Errorf("Remote = %q, want origin", r.Remote)
 	}
@@ -105,12 +116,14 @@ func TestOpenWithNoRemote(t *testing.T) {
 	if err := mkdir(dir); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
+
 	makeRepo(t, dir, "main", "")
 
 	r, err := Open(dir)
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
+
 	if r.Remote != "" {
 		t.Errorf("Remote = %q, want empty", r.Remote)
 	}
@@ -129,8 +142,10 @@ func TestDiscoverFindsEveryRepositoryBelow(t *testing.T) {
 		if err := mkdir(dir); err != nil {
 			t.Fatalf("mkdir: %v", err)
 		}
+
 		makeRepo(t, dir, "main", "origin")
 	}
+
 	if err := mkdir(filepath.Join(root, "notarepo")); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
@@ -139,32 +154,39 @@ func TestDiscoverFindsEveryRepositoryBelow(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Discover: %v", err)
 	}
+
 	if len(found) != 3 {
 		names := make([]string, len(found))
 		for i, r := range found {
 			names[i] = r.Name
 		}
+
 		t.Fatalf("found %d repositories %v, want 3", len(found), names)
 	}
 }
 
 func TestDiscoverDoesNotDescendIntoARepository(t *testing.T) {
 	root := t.TempDir()
+
 	outer := filepath.Join(root, "outer")
 	if err := mkdir(outer); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
+
 	makeRepo(t, outer, "main", "origin")
+
 	inner := filepath.Join(outer, "vendor", "inner")
 	if err := mkdir(inner); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
+
 	makeRepo(t, inner, "main", "origin")
 
 	found, err := Discover(root)
 	if err != nil {
 		t.Fatalf("Discover: %v", err)
 	}
+
 	if len(found) != 1 {
 		t.Errorf("found %d repositories, want 1 — a repository inside a repository is not a separate project", len(found))
 	}
@@ -172,10 +194,12 @@ func TestDiscoverDoesNotDescendIntoARepository(t *testing.T) {
 
 func TestGitErrorChainSurvives(t *testing.T) {
 	dir := t.TempDir()
+
 	_, err := git(dir, "rev-parse", "--show-toplevel")
 	if err == nil {
 		t.Fatal("git succeeded on a non-repository, expected failure")
 	}
+
 	var exitErr *exec.ExitError
 	if !errors.As(err, &exitErr) {
 		t.Errorf("error chain was lost: %v cannot be recovered as *exec.ExitError", err)

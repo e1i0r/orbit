@@ -33,13 +33,16 @@ import (
 // drift that would hide from it.
 func TestEveryMessageTheWindowRaisesIsHandledInUpdate(t *testing.T) {
 	files := packageFiles(t)
+
 	var declared []string
 	for _, f := range files {
 		declared = append(declared, declaredMessages(t, f)...)
 	}
+
 	if len(declared) == 0 {
 		t.Fatal("this package declares no messages, so this test is checking nothing")
 	}
+
 	handled := handledMessages(t, files)
 	for _, name := range declared {
 		if !handled[name] {
@@ -55,33 +58,42 @@ func TestEveryMessageTheWindowRaisesIsHandledInUpdate(t *testing.T) {
 // reading itself.
 func packageFiles(t *testing.T) []string {
 	t.Helper()
+
 	all, err := filepath.Glob("*.go")
 	if err != nil {
 		t.Fatalf("glob: %v", err)
 	}
+
 	var files []string
+
 	for _, f := range all {
 		if !strings.HasSuffix(f, "_test.go") {
 			files = append(files, f)
 		}
 	}
+
 	if len(files) == 0 {
 		t.Fatal("no source files found beside this test")
 	}
+
 	return files
 }
 
 // declaredMessages is every type in one file whose name ends in Msg.
 func declaredMessages(t *testing.T, file string) []string {
 	t.Helper()
+
 	var names []string
+
 	ast.Inspect(parse(t, file), func(n ast.Node) bool {
 		spec, ok := n.(*ast.TypeSpec)
 		if ok && strings.HasSuffix(spec.Name.Name, "Msg") {
 			names = append(names, spec.Name.Name)
 		}
+
 		return true
 	})
+
 	return names
 }
 
@@ -95,46 +107,57 @@ func declaredMessages(t *testing.T, file string) []string {
 // sees.
 func handledMessages(t *testing.T, files []string) map[string]bool {
 	t.Helper()
+
 	handled := map[string]bool{}
 	found := false
+
 	for _, file := range files {
 		for _, decl := range parse(t, file).Decls {
 			fn, ok := decl.(*ast.FuncDecl)
 			if !ok || fn.Name.Name != "Update" {
 				continue
 			}
+
 			found = true
+
 			ast.Inspect(fn, func(n ast.Node) bool {
 				sw, ok := n.(*ast.TypeSwitchStmt)
 				if !ok {
 					return true
 				}
+
 				for _, stmt := range sw.Body.List {
 					clause, ok := stmt.(*ast.CaseClause)
 					if !ok {
 						continue
 					}
+
 					for _, expr := range clause.List {
 						if ident, ok := expr.(*ast.Ident); ok {
 							handled[ident.Name] = true
 						}
 					}
 				}
+
 				return true
 			})
 		}
 	}
+
 	if !found {
 		t.Fatal("no Update in this package, so this test is checking nothing")
 	}
+
 	return handled
 }
 
 func parse(t *testing.T, file string) *ast.File {
 	t.Helper()
+
 	f, err := parser.ParseFile(token.NewFileSet(), file, nil, parser.SkipObjectResolution)
 	if err != nil {
 		t.Fatalf("parse %s: %v", file, err)
 	}
+
 	return f
 }

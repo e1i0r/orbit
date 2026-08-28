@@ -53,20 +53,25 @@ func Create(s *store.Store, r repo.Repo, id, text, flowName string) (Task, error
 	if id == "" {
 		return Task{}, fmt.Errorf("a task needs an id")
 	}
+
 	if text == "" {
 		return Task{}, fmt.Errorf("task %q has nothing written in it", id)
 	}
+
 	flowName, err := chosenFlow(s, flowName)
 	if err != nil {
 		return Task{}, err
 	}
+
 	path, err := s.TaskFilePath(r.Path, id)
 	if err != nil {
 		return Task{}, err
 	}
+
 	if _, statErr := os.Stat(path); statErr == nil {
 		return Task{}, fmt.Errorf("task %q in %s %w", id, r.Name, ErrExists)
 	}
+
 	dir, err := s.CreateTaskDir(r.Path, id)
 	if err != nil {
 		return Task{}, err
@@ -76,6 +81,7 @@ func Create(s *store.Store, r repo.Repo, id, text, flowName string) (Task, error
 	if err := os.WriteFile(path, []byte(text+"\n"), 0o600); err != nil {
 		return Task{}, fmt.Errorf("write %q: %w", path, err)
 	}
+
 	t := Task{ID: id, Repo: r, Text: text, Flow: flowName}
 	if err := emit(s, t, record.Event{Kind: record.TaskCreated, Text: text, Data: map[string]string{"flow": flowName}}); err != nil {
 		// The file landed and nothing was recorded. Left alone, that is the
@@ -109,8 +115,10 @@ func Create(s *store.Store, r repo.Repo, id, text, flowName string) (Task, error
 		// give them anything to act on beyond what the emit error already
 		// says.
 		_ = os.Remove(dir)
+
 		return Task{}, fmt.Errorf("%w; task %q was not created", err, id)
 	}
+
 	return t, nil
 }
 
@@ -124,17 +132,20 @@ func Load(s *store.Store, r repo.Repo, id string) (Task, error) {
 	if err != nil {
 		return Task{}, err
 	}
+
 	body, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return Task{}, fmt.Errorf("task %q does not exist in %s", id, r.Name)
 		}
+
 		return Task{}, fmt.Errorf("read %q: %w", path, err)
 	}
 	// Create writes text+"\n"; strip exactly that trailing newline and
 	// nothing else, so a round trip returns the text unchanged.
 	t := Task{ID: id, Repo: r, Text: strings.TrimSuffix(string(body), "\n")}
 	t.Flow = writtenFlow(s, t)
+
 	return t, nil
 }
 
@@ -149,10 +160,12 @@ func chosenFlow(s *store.Store, name string) (string, error) {
 	if name != "" {
 		return name, nil
 	}
+
 	cfg, err := s.Settings()
 	if err != nil {
 		return "", err
 	}
+
 	if cfg.Flow != "" {
 		return cfg.Flow, nil
 	}
@@ -179,15 +192,19 @@ func writtenFlow(s *store.Store, t Task) string {
 	if err != nil {
 		return ""
 	}
+
 	name := ""
+
 	for _, e := range events {
 		if e.Kind != record.TaskCreated {
 			continue
 		}
+
 		if recorded, ok := e.Data["flow"]; ok {
 			name = recorded
 		}
 	}
+
 	return name
 }
 
@@ -197,6 +214,7 @@ func List(s *store.Store, r repo.Repo) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	entries, err := os.ReadDir(tasksDir)
 	if errors.Is(err, os.ErrNotExist) {
 		// A repository nobody has written a task against yet. Reading a
@@ -205,16 +223,20 @@ func List(s *store.Store, r repo.Repo) ([]string, error) {
 		// not a fault.
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, fmt.Errorf("list the tasks of %q: %w", r.Name, err)
 	}
+
 	ids := make([]string, 0, len(entries))
 	for _, e := range entries {
 		if e.IsDir() {
 			ids = append(ids, e.Name())
 		}
 	}
+
 	sort.Strings(ids)
+
 	return ids, nil
 }
 
@@ -224,6 +246,7 @@ func Events(s *store.Store, t Task) ([]record.Event, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return record.Read(path)
 }
 
@@ -233,8 +256,10 @@ func emit(s *store.Store, t Task, e record.Event) error {
 	if err != nil {
 		return err
 	}
+
 	if err := record.Append(path, e); err != nil {
 		return fmt.Errorf("record %q for task %s: %w", e.Kind, t.ID, err)
 	}
+
 	return nil
 }

@@ -20,6 +20,7 @@ import (
 func printers(t *testing.T) (english, spanish *words.Printer) {
 	t.Helper()
 	t.Setenv("ORBIT_HOME", t.TempDir())
+
 	return words.For("en"), words.For("es")
 }
 
@@ -35,6 +36,7 @@ type affordanceCase struct {
 // greyed with a reason.
 func everyCase() []affordanceCase {
 	can := Conditions{CanResume: true}
+
 	return []affordanceCase{{
 		name:     "a task written down and never started",
 		task:     view.Task{ID: "ACME-1", Band: view.ToDo},
@@ -99,17 +101,20 @@ func everyCase() []affordanceCase {
 // the order Affordances returned them.
 func verbsOffered(as []Affordance) []string {
 	var offered []string
+
 	for _, a := range as {
 		if a.OK {
 			offered = append(offered, a.Key.Keys()[0])
 		}
 	}
+
 	return offered
 }
 
 func TestEachBandOffersTheVerbsThatMeanSomethingForIt(t *testing.T) {
 	english, _ := printers(t)
 	keys := NewKeys(english)
+
 	for _, c := range everyCase() {
 		t.Run(c.name, func(t *testing.T) {
 			got := verbsOffered(keys.Affordances(c.task, c.settings))
@@ -126,16 +131,20 @@ func TestEachBandOffersTheVerbsThatMeanSomethingForIt(t *testing.T) {
 func TestTheMenuIsTheSameListForEveryTask(t *testing.T) {
 	english, _ := printers(t)
 	keys := NewKeys(english)
+
 	var want []string
+
 	for _, c := range everyCase() {
 		var got []string
 		for _, a := range keys.Affordances(c.task, c.settings) {
 			got = append(got, a.Key.Keys()[0])
 		}
+
 		if want == nil {
 			want = got
 			continue
 		}
+
 		if strings.Join(got, " ") != strings.Join(want, " ") {
 			t.Fatalf("%s lists %v, want %v", c.name, got, want)
 		}
@@ -148,6 +157,7 @@ func TestTheMenuIsTheSameListForEveryTask(t *testing.T) {
 // identical to it is a key es.json never gained.
 func TestEveryRefusalCarriesAReasonBothCataloguesCanSay(t *testing.T) {
 	english, spanish := printers(t)
+
 	keys := NewKeys(english)
 	for _, c := range everyCase() {
 		for _, a := range keys.Affordances(c.task, c.settings) {
@@ -156,19 +166,24 @@ func TestEveryRefusalCarriesAReasonBothCataloguesCanSay(t *testing.T) {
 				if a.WhyNot != (words.Arg{}) {
 					t.Errorf("%s: %q is offered and still carries %+v", c.name, verb, a.WhyNot)
 				}
+
 				if said := a.Why(english); said != "" {
 					t.Errorf("%s: %q is offered and says %q", c.name, verb, said)
 				}
+
 				continue
 			}
+
 			if a.WhyNot.Name == "" {
 				t.Errorf("%s: %q is refused with no reason — the menu would grey it and say nothing", c.name, verb)
 				continue
 			}
+
 			said, dicho := a.Why(english), a.Why(spanish)
 			if said == "" {
 				t.Errorf("%s: %q is refused with reason %q and no sentence", c.name, verb, a.WhyNot.Name)
 			}
+
 			if dicho == said {
 				t.Errorf("%s: %q is refused with reason %q, which es.json does not carry — a Spanish reader gets %q", c.name, verb, a.WhyNot.Name, dicho)
 			}
@@ -184,6 +199,7 @@ func find(as []Affordance, verb string) Affordance {
 			return a
 		}
 	}
+
 	return Affordance{}
 }
 
@@ -201,10 +217,12 @@ func TestARefusalNamesWhatToDoNext(t *testing.T) {
 	if held.WhyNot.Name != whyPauseAlreadyHeld {
 		t.Errorf("pausing a paused run says %q, want %q", held.WhyNot.Name, whyPauseAlreadyHeld)
 	}
+
 	waiting := find(keys.Affordances(gate, Conditions{}), "p")
 	if waiting.WhyNot.Name != whyPauseAlreadyWaiting {
 		t.Errorf("pausing a run waiting at a gate says %q, want %q", waiting.WhyNot.Name, whyPauseAlreadyWaiting)
 	}
+
 	lifting := find(keys.Affordances(gate, Conditions{Autopilot: true}), "p")
 	if lifting.WhyNot.Name != whyPauseAutopilotIsLifting {
 		t.Errorf("pausing a gate autopilot is lifting says %q, want %q — the switch is what the reader has to reach for", lifting.WhyNot.Name, whyPauseAutopilotIsLifting)
@@ -217,15 +235,18 @@ func TestARefusalNamesWhatToDoNext(t *testing.T) {
 func TestTheEngineThatCannotResumeIsNamed(t *testing.T) {
 	english, spanish := printers(t)
 	keys := NewKeys(english)
+
 	paused := view.Task{Band: view.Running, Live: true, Attempt: 1, Engine: "codex", Reason: view.Reason{Key: view.ReasonHeld}}
 	for _, verb := range []string{"t", "h"} {
 		a := find(keys.Affordances(paused, Conditions{}), verb)
 		if a.OK {
 			t.Fatalf("%q is offered on an engine that cannot resume a session", verb)
 		}
+
 		if a.WhyNot.Value != "codex" {
 			t.Errorf("%q refuses with value %q, want the engine's name", verb, a.WhyNot.Value)
 		}
+
 		for _, p := range []*words.Printer{english, spanish} {
 			if said := a.Why(p); !strings.Contains(said, "codex") {
 				t.Errorf("%q says %q, which does not name the engine", verb, said)
@@ -242,12 +263,14 @@ func TestTheEngineThatCannotResumeIsNamed(t *testing.T) {
 // one at fault.
 func TestTheEngineIsAskedAboutOneTaskAtATime(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
+
 	m.opts.CanResume = func(engine string) bool { return engine == "claude" }
 	for engine, want := range map[string]bool{"claude": true, "codex": false, "": false} {
 		if got := m.conditions(view.Task{ID: "ACME-1", Engine: engine}).CanResume; got != want {
 			t.Errorf("a task on %q is told CanResume=%v, want %v", engine, got, want)
 		}
 	}
+
 	m.opts.CanResume = nil
 	if m.conditions(view.Task{ID: "ACME-1", Engine: "claude"}).CanResume {
 		t.Error("a window with no way to ask about engines answered yes")
@@ -259,12 +282,14 @@ func TestTheEngineIsAskedAboutOneTaskAtATime(t *testing.T) {
 // is refused, and the reason says what to do instead.
 func TestAskIsListedAndRefused(t *testing.T) {
 	english, _ := printers(t)
+
 	keys := NewKeys(english)
 	for _, c := range everyCase() {
 		ask := find(keys.Affordances(c.task, c.settings), "a")
 		if ask.OK {
 			t.Fatalf("%s: ask is offered, and nothing implements it", c.name)
 		}
+
 		if ask.WhyNot.Name != whyAskNotBuilt {
 			t.Fatalf("%s: ask refuses with %q, want %q", c.name, ask.WhyNot.Name, whyAskNotBuilt)
 		}

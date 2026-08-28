@@ -20,6 +20,7 @@ func Load(filePath string) (Flow, error) {
 	if err != nil {
 		return Flow{}, fmt.Errorf("read %q: %w", filePath, err)
 	}
+
 	return decode(raw, filePath)
 }
 
@@ -29,6 +30,7 @@ func Builtin(name string) (Flow, error) {
 	if err != nil {
 		return Flow{}, fmt.Errorf("no built-in flow called %q (have: %s): %w", name, strings.Join(BuiltinNames(), ", "), err)
 	}
+
 	return decode(raw, name)
 }
 
@@ -38,23 +40,30 @@ func BuiltinNames() []string {
 	if err != nil {
 		return nil
 	}
+
 	names := make([]string, 0, len(entries))
 	for _, e := range entries {
 		names = append(names, strings.TrimSuffix(e.Name(), ".json"))
 	}
+
 	sort.Strings(names)
+
 	return names
 }
 
 func decode(raw []byte, source string) (Flow, error) {
 	var f Flow
+
 	dec := json.NewDecoder(bytes.NewReader(raw))
 	dec.DisallowUnknownFields()
+
 	if err := dec.Decode(&f); err != nil {
 		return Flow{}, fmt.Errorf("parse flow %q: %w", source, err)
 	}
+
 	if err := f.Validate(); err != nil {
 		return Flow{}, err
 	}
+
 	return f, nil
 }

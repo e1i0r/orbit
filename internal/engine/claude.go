@@ -68,7 +68,9 @@ func (Claude) Run(ctx context.Context, req Request) (Result, error) {
 		// would happen at the moment nobody is looking.
 		return Result{}, fmt.Errorf("claude in %q: %w", req.Dir, err)
 	}
+
 	cmd := exec.CommandContext(ctx, "claude", args...)
+
 	if req.Thinking != "" {
 		switch req.Thinking {
 		case "off", "none", "0":
@@ -99,11 +101,15 @@ func (Claude) Run(ctx context.Context, req Request) (Result, error) {
 	cmd.Stdout = io.MultiWriter(stdout, pw)
 	cmd.Stderr = stderr
 
-	var streamResult Result
-	var parseErr error
+	var (
+		streamResult Result
+		parseErr     error
+	)
+
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
+
 		streamResult, parseErr = ParseStreamWithCallback(pr, req.OnEvent)
 		if closeErr := pr.Close(); closeErr != nil && parseErr == nil {
 			parseErr = closeErr
@@ -114,7 +120,9 @@ func (Claude) Run(ctx context.Context, req Request) (Result, error) {
 	if closeErr := pw.Close(); closeErr != nil && runErr == nil {
 		runErr = closeErr
 	}
+
 	<-done
+
 	out := streamResult
 
 	if runErr != nil {
@@ -126,14 +134,18 @@ func (Claude) Run(ctx context.Context, req Request) (Result, error) {
 			if streamResult.Output == "" {
 				streamResult.Output = strings.TrimSpace(stdout.String())
 			}
+
 			out = streamResult
 		}
+
 		out.Output = noteDropped(out.Output, stdout.dropped)
 		if msg := strings.TrimSpace(stderr.String()); msg != "" {
 			return out, fmt.Errorf("claude in %q: %s: %w", req.Dir, msg, runErr)
 		}
+
 		return out, fmt.Errorf("claude in %q: %w", req.Dir, runErr)
 	}
+
 	if parseErr != nil {
 		// The process exited zero and still said nothing this adapter
 		// understands, which means the stream's shape has moved under us.
@@ -141,7 +153,9 @@ func (Claude) Run(ctx context.Context, req Request) (Result, error) {
 		// would look exactly like a quiet phase.
 		return Result{}, fmt.Errorf("claude in %q: %w", req.Dir, parseErr)
 	}
+
 	out.Output = noteDropped(out.Output, stdout.dropped)
+
 	return out, nil
 }
 
@@ -188,8 +202,10 @@ func (b *boundedBuffer) Write(p []byte) (int, error) {
 	if n >= b.max {
 		b.dropped += len(b.buf) + n - b.max
 		b.buf = append(b.buf[:0], p[n-b.max:]...)
+
 		return n, nil
 	}
+
 	if over := len(b.buf) + n - b.max; over > 0 {
 		b.dropped += over
 		// Slide the tail down in place rather than reslicing: a reslice
@@ -197,7 +213,9 @@ func (b *boundedBuffer) Write(p []byte) (int, error) {
 		// which is the leak this type exists to stop.
 		b.buf = b.buf[:copy(b.buf, b.buf[over:])]
 	}
+
 	b.buf = append(b.buf, p...)
+
 	return n, nil
 }
 
@@ -215,10 +233,12 @@ func noteDropped(text string, dropped int) string {
 	if dropped <= 0 {
 		return text
 	}
+
 	note := fmt.Sprintf("…[the engine's stream ran past %d bytes; the %d earliest were dropped]", maxStream, dropped)
 	if text == "" {
 		return note
 	}
+
 	return text + "\n" + note
 }
 
@@ -242,11 +262,14 @@ func claudeArgs(req Request) ([]string, error) {
 	if req.Model != "" {
 		args = append(args, "--model", req.Model)
 	}
+
 	if req.Effort != "" {
 		args = append(args, "--effort", req.Effort)
 	}
+
 	if req.Resume != "" {
 		args = append(args, "--resume", req.Resume)
 	}
+
 	return append(args, perms...), nil
 }

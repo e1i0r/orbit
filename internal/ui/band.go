@@ -38,6 +38,7 @@ func (m Model) bandLeft() string {
 	case m.filter != "" || m.repoFilter != "" || m.queueFilter != nil:
 		return m.filterLine()
 	}
+
 	if m.screen == screenDetail {
 		if t, ok := m.task(m.detail); ok && view.BandOf(t) == view.Running {
 			return m.runningLine(t)
@@ -45,11 +46,13 @@ func (m Model) bandLeft() string {
 	} else if r, ok := m.selected(); ok && !r.head && view.BandOf(r.task) == view.Running {
 		return m.runningLine(r.task)
 	}
+
 	for _, t := range m.board.Tasks {
 		if view.BandOf(t) == view.Running {
 			return m.runningLine(t)
 		}
 	}
+
 	return Paint(Dim).Render(m.idleLine())
 }
 
@@ -61,33 +64,41 @@ func (m Model) filterLine() string {
 	p := m.opts.Words
 	filter := strings.ToLower(strings.TrimSpace(m.filter))
 	shown := 0
+
 	for _, t := range m.board.Tasks {
 		matchesQueue := m.queueFilter == nil || view.BandOf(t) == *m.queueFilter
 		if matches(t, filter) && matchesRepo(t, m.repoFilter) && matchesQueue {
 			shown++
 		}
 	}
+
 	var parts []string
 	if m.queueFilter != nil {
 		parts = append(parts, Paint(Accent).Render(m.bandName(*m.queueFilter)))
 	}
+
 	if m.filter != "" || m.filtering {
 		typed, role := m.filter, Accent
 		if typed == "" {
 			typed, role = p.T("filter.placeholder", "repository, id or title"), Dim
 		}
+
 		parts = append(parts, Paint(role).Render("/"+typed))
 	}
+
 	if m.repoFilter != "" {
 		repoTag := p.T("band.repo_filter_tag", "repo:{repo}", about("repo", m.repoFilter))
 		parts = append(parts, Paint(Accent).Render(repoTag))
 	}
+
 	parts = append(parts, Paint(Dim).Render(p.T("band.shown", "{n} of {total} shown",
 		about("n", strconv.Itoa(shown)), about("total", strconv.Itoa(len(m.board.Tasks))))))
+
 	line := strings.Join(parts, dot)
 	if m.filtering {
 		return line
 	}
+
 	return line + dot + Paint(Dim).Render(p.T("band.filter_clear", "{key} clears it",
 		about("key", m.keys.Back.Help().Key)))
 }
@@ -95,19 +106,24 @@ func (m Model) filterLine() string {
 // runningLine names the one task a process is holding right now, including its live action.
 func (m Model) runningLine(t view.Task) string {
 	p := m.opts.Words
+
 	pieces := []string{Paint(Accent).Render(t.ID), Paint(Live).Render(m.phaseWord(t))}
 	if age := elapsed(m.now, t.Since); age != "" {
 		pieces = append(pieces, p.T("band.elapsed", "{d} in", about("d", age)))
 	}
+
 	if t.CurrentAction != "" {
 		pieces = append(pieces, Paint(Live).Render(t.CurrentAction))
 	}
+
 	if engine := engineAndModel(t); engine != "" {
 		pieces = append(pieces, engine)
 	}
+
 	if t.Flow != "" {
 		pieces = append(pieces, t.Flow)
 	}
+
 	return strings.Join(pieces, dot)
 }
 
@@ -120,6 +136,7 @@ func engineAndModel(t view.Task) string {
 	case t.Engine != "":
 		return t.Engine
 	}
+
 	return t.Model
 }
 
@@ -128,10 +145,12 @@ func engineAndModel(t view.Task) string {
 func (m Model) idleLine() string {
 	p := m.opts.Words
 	nothing := p.T("band.nothing_running", "nothing is running")
+
 	todo := m.board.Counts[view.ToDo]
 	if todo == 0 {
 		return nothing + dot + p.T("band.nothing_todo", "nothing to do")
 	}
+
 	return nothing + dot + p.P("band.todo", todo, "{n} to do", "{n} to do") +
 		dot + p.T("band.write_one", "press n to start one")
 }
@@ -149,6 +168,7 @@ func (m Model) controlSaid(msg controlMsg) string {
 	if msg.Err != nil {
 		return msg.Err.Error()
 	}
+
 	p, id := m.opts.Words, about("id", msg.ID)
 	switch msg.Word {
 	case "pause":
@@ -160,6 +180,7 @@ func (m Model) controlSaid(msg controlMsg) string {
 	case "cancel":
 		return p.T("msg.asked_cancel", "asked {id} to cancel", id)
 	}
+
 	return p.T("msg.control_sent", "asked {id} to {word}", id, about("word", msg.Word))
 }
 
@@ -168,6 +189,7 @@ func (m Model) startedSaid(msg startedMsg) string {
 	if msg.Err != nil {
 		return msg.Err.Error()
 	}
+
 	return m.opts.Words.T("msg.started", "{id} is running, as process {pid}",
 		about("id", msg.ID), about("pid", strconv.Itoa(msg.Pid)))
 }
@@ -182,5 +204,6 @@ func (m Model) commandSaid(msg commandMsg) string {
 	if msg.Err != nil {
 		return msg.Err.Error()
 	}
+
 	return m.opts.Words.T("msg.command_done", "{name} finished", about("name", msg.Name))
 }

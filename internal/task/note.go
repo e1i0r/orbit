@@ -20,6 +20,7 @@ func Note(s *store.Store, t Task, text string) error {
 	if text == "" {
 		return fmt.Errorf("task %s: note text cannot be empty", t.ID)
 	}
+
 	return emit(s, t, record.Event{
 		Kind: record.TaskNoted,
 		Text: text,
@@ -32,11 +33,14 @@ func unconsumedNotes(s *store.Store, t Task) []string {
 	if err != nil {
 		return nil
 	}
+
 	events, err := record.Read(path)
 	if err != nil {
 		return nil
 	}
+
 	var notes []string
+
 	for _, e := range events {
 		switch e.Kind {
 		case record.PhaseStarted:
@@ -47,5 +51,6 @@ func unconsumedNotes(s *store.Store, t Task) []string {
 			}
 		}
 	}
+
 	return notes
 }

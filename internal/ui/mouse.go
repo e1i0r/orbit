@@ -49,10 +49,12 @@ func (m Model) mouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 	if m.confirm != confirmNone {
 		return m, nil
 	}
+
 	switch msg := msg.(type) {
 	case tea.MouseClickMsg:
 		e := msg.Mouse()
 		m.held = hold{target: m.hit(e.X, e.Y), button: e.Button, down: true}
+
 		return m, nil
 	case tea.MouseReleaseMsg:
 		return m.release(msg.Mouse())
@@ -67,6 +69,7 @@ func (m Model) mouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 		// a hovered row, a drag that reorders — this is where it starts.
 		return m, nil
 	}
+
 	return m, nil
 }
 
@@ -79,19 +82,23 @@ func (m Model) mouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 // release on its title never left the row.
 func (m Model) release(e tea.Mouse) (tea.Model, tea.Cmd) {
 	held := m.held
+
 	m.held = hold{}
 	if !held.down || held.target.Kind == TargetNone {
 		return m, nil
 	}
+
 	if !m.hit(e.X, e.Y).same(held.target) {
 		return m, nil
 	}
+
 	switch held.button {
 	case tea.MouseLeft:
 		return m.leftClick(held.target)
 	case tea.MouseRight:
 		return m.rightClick(held.target)
 	}
+
 	return m, nil
 }
 
@@ -109,9 +116,11 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		if !ok {
 			return m, nil
 		}
+
 		if i == m.cursor {
 			return m.open()
 		}
+
 		return m.moveTo(i), nil
 	case TargetBandHeader:
 		// The band folds and unfolds, which is item five of what this
@@ -123,29 +132,36 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		if !ok {
 			return m, nil
 		}
+
 		return m.moveTo(i).expand(t.Band).clampCursor(), nil
 	case TargetBarHint:
 		if t.Key == "" {
 			return m, nil
 		}
+
 		return m.sendKey(keystroke(t.Key))
 	case TargetHeaderField:
 		if t.Field == "orbit" {
 			m.queueFilter = nil
 			m.repoFilter = ""
 			m.filter = ""
+
 			return m.moveTo(0).clampCursor(), nil
 		}
+
 		if t.Field == "lang" {
 			nextLang := "en"
 			if m.opts.Words.T("header.lang_badge", "EN") == "EN" {
 				nextLang = "es"
 			}
+
 			return m.applySetting("language", nextLang)
 		}
+
 		if t.Field == "repos" {
 			return m.openRepos(), nil
 		}
+
 		if t.Field == "engine" {
 			return m.openEngines(), nil
 		}
@@ -153,6 +169,7 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		if t.Field == "autopilot" {
 			return m.autopilot()
 		}
+
 		if t.Field == "engine" {
 			return m.openEngines(), nil
 		}
@@ -161,12 +178,15 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 			m.queueFilter = nil
 			return m.moveTo(0).clampCursor(), nil
 		}
+
 		band := t.Band
 		m.queueFilter = &band
 		m.expanded[band] = true
+
 		return m.jumpToBand(band)
 	case TargetSettingsRow:
 		m.settings.sel = t.Pane
+
 		rows := m.settingRowsList()
 		if t.Pane >= 0 && t.Pane < len(rows) {
 			r := rows[t.Pane]
@@ -174,13 +194,16 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 				return m.applySetting(r.key, t.Field)
 			}
 		}
+
 		return m.cycleSetting(1)
 	case TargetEngineRow:
 		rows := m.collectEngineRows()
+
 		idxs := m.selectableEngineIndices(rows)
 		if t.Pane >= 0 && t.Pane < len(idxs) {
 			m.engines.sel = t.Pane
 			selectedRow := rows[idxs[t.Pane]]
+
 			return m.applyEngineChoice(selectedRow), nil
 		}
 	case TargetPaneTab:
@@ -192,15 +215,18 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 			files := parseDiffFiles(raw)
 			m.diffFileCursor = fileIndexAtOffset(files, m.panes[tabDiff].YOffset())
 		}
+
 		return m, nil
 	case TargetDiffFile:
 		raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
+
 		files := parseDiffFiles(raw)
 		if t.Pane >= 0 && t.Pane < len(files) {
 			m.panes[tabDiff].SetYOffset(files[t.Pane].StartLine)
 			m.diffFilePicker = false
 			m = m.syncPanes()
 		}
+
 		return m, nil
 	case TargetDialogSwitch:
 		return m.flip(t.Field)
@@ -217,11 +243,14 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		if !ok {
 			return m, nil
 		}
+
 		if i == m.palette.sel {
 			return m.runSelected()
 		}
+
 		next := m
 		next.palette.sel = i
+
 		return next.ensureVisible(), nil
 	case TargetMenuEntry:
 		// The palette's two-step again, on the menu's list. The entry is
@@ -233,16 +262,21 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 			if id == "" && e.cmd != nil {
 				id = e.cmd.Name
 			}
+
 			if id != t.Key {
 				continue
 			}
+
 			if i == m.menu.sel {
 				return m.chooseMenu()
 			}
+
 			next := m
 			next.menu.sel = i
+
 			return next, nil
 		}
+
 		return m, nil
 	case TargetFlowItem:
 		return m.handleFlowClick(t)
@@ -251,15 +285,19 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		for i, r := range repos {
 			if strings.EqualFold(r.name, t.ID) {
 				m.repolist.sel = i
+
 				p := m.opts.Words
 				if strings.EqualFold(m.repoFilter, r.name) {
 					m.repoFilter = ""
 					return m.abandonRepos().say(p.T("repos.filter_cleared", "showing all repositories")), nil
 				}
+
 				m.repoFilter = r.name
+
 				return m.abandonRepos().say(p.T("repos.filtered", "filtered to {repo}", about("repo", r.name))), nil
 			}
 		}
 	}
+
 	return m, nil
 }

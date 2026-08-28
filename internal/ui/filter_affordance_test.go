@@ -15,6 +15,7 @@ func TestTrimLastRune(t *testing.T) {
 	if got := trimLastRune(""); got != "" {
 		t.Errorf("trimLastRune(\"\") = %q, want empty", got)
 	}
+
 	if got := trimLastRune("café"); got != "caf" {
 		t.Errorf("trimLastRune(\"café\") = %q, want \"caf\" (a rune, not a byte, trimmed)", got)
 	}
@@ -25,6 +26,7 @@ func TestAffordanceNotFound(t *testing.T) {
 	// NeedsYou is expanded by default; a collapsed band has no task rows
 	// to put the cursor on at all.
 	m = at(t, m, view.NeedsYou, false)
+
 	row, ok := m.selected()
 	if !ok {
 		t.Fatalf("expected a selected task row")

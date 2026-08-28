@@ -38,10 +38,12 @@ func Append(path string, e Event) (err error) {
 	if e.At.IsZero() {
 		e.At = time.Now()
 	}
+
 	line, err := json.Marshal(e)
 	if err != nil {
 		return fmt.Errorf("encode event %q: %w", e.Kind, err)
 	}
+
 	line = append(line, '\n')
 	if len(line) > MaxLine {
 		return fmt.Errorf("event %q is %d bytes, over the %d the record can read back: refusing to write a line that would make the whole log unreadable", e.Kind, len(line), MaxLine)
@@ -50,6 +52,7 @@ func Append(path string, e Event) (err error) {
 	if err := os.MkdirAll(filepath.Dir(path), dirMode); err != nil {
 		return fmt.Errorf("create %q: %w", filepath.Dir(path), err)
 	}
+
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, fileMode)
 	if err != nil {
 		return fmt.Errorf("open %q: %w", path, err)
@@ -67,8 +70,10 @@ func Append(path string, e Event) (err error) {
 	if _, err := f.Write(line); err != nil {
 		return fmt.Errorf("append to %q: %w", path, err)
 	}
+
 	if err := f.Sync(); err != nil {
 		return fmt.Errorf("flush %q: %w", path, err)
 	}
+
 	return nil
 }

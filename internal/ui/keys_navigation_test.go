@@ -36,6 +36,7 @@ func TestPaletteKeyNavigationAndExecution(t *testing.T) {
 	m.palette.open = true
 	escKey := tea.KeyPressMsg{Code: tea.KeyEsc}
 	newM, _ = m.paletteKey(escKey)
+
 	m = asModel(t, newM)
 	if m.palette.open {
 		t.Error("expected palette to be closed after Esc")
@@ -59,6 +60,7 @@ func TestEnginesKeyNavigationAndToggles(t *testing.T) {
 	// Back key closes engines
 	escKey := tea.KeyPressMsg{Code: tea.KeyEsc}
 	newM, _ = m.enginesKey(escKey)
+
 	m = asModel(t, newM)
 	if m.screen == screenEngines {
 		t.Error("expected screenEngines to close after Esc")
@@ -77,6 +79,7 @@ func TestFlowsKeyNavigationAndEditor(t *testing.T) {
 	// 2. Open flows builder with 'n'
 	nKey := tea.KeyPressMsg{Code: 'n', Text: "n"}
 	newM, _ = m.flowsKey(nKey)
+
 	m = asModel(t, newM)
 	if !m.flows.creating {
 		t.Error("expected m.flows.creating to be true after 'n'")
@@ -113,6 +116,7 @@ func TestSettingsKeyNavigationAndToggles(t *testing.T) {
 	// Esc closes settings
 	escKey := tea.KeyPressMsg{Code: tea.KeyEsc}
 	newM, _ = m.settingsKey(escKey)
+
 	m = asModel(t, newM)
 	if m.screen == screenSettings {
 		t.Error("expected screenSettings to close after Esc")
@@ -154,6 +158,7 @@ func TestFilterAndComposeKeys(t *testing.T) {
 
 	escKey := tea.KeyPressMsg{Code: tea.KeyEsc}
 	newM, _ = m.filterKey(escKey)
+
 	m = asModel(t, newM)
 	if m.filtering {
 		t.Error("expected filtering to be false after Esc")

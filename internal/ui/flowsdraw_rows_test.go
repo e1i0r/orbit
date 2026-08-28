@@ -15,6 +15,7 @@ import (
 func TestFlowOriginString(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	p := m.opts.Words
+
 	cases := []struct {
 		origin flow.Origin
 		want   string
@@ -30,8 +31,10 @@ func TestFlowOriginString(t *testing.T) {
 			if got != "" {
 				t.Errorf("flowOriginString(%v) = %q, want empty", c.origin, got)
 			}
+
 			continue
 		}
+
 		if !strings.Contains(got, c.want) {
 			t.Errorf("flowOriginString(%v) = %q, want it to mention %q", c.origin, got, c.want)
 		}
@@ -48,10 +51,12 @@ func TestFlowsRowsSelectedUserFlow(t *testing.T) {
 	m.flows.sel = 4 // careful, quick, task, tdd-fuzz-pr, zzz-mine
 
 	rows := m.flowsRows(m.frame.Body.H, m.frame.Body.W)
+
 	joined := strings.Join(rows, "\n")
 	if !strings.Contains(joined, "Borrar") && !strings.Contains(joined, "Delete") {
 		t.Errorf("expected a delete pill on a selected reader's-own flow")
 	}
+
 	if !strings.Contains(joined, "Editar") && !strings.Contains(joined, "Edit") {
 		t.Errorf("expected an edit pill on the selected flow")
 	}
@@ -69,6 +74,7 @@ func TestFlowsRowsResolveError(t *testing.T) {
 	m = m.openFlows()
 
 	rows := m.flowsRows(m.frame.Body.H, m.frame.Body.W)
+
 	joined := strings.Join(rows, "\n")
 	if !strings.Contains(joined, "mismatched") {
 		t.Errorf("expected the broken flow's name in the listing")

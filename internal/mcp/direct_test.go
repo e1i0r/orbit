@@ -22,23 +22,28 @@ func TestDirectTaskRecordsDirectiveAndNote(t *testing.T) {
 	if err != nil {
 		t.Fatalf("EventsPath: %v", err)
 	}
+
 	events, err := record.Read(path)
 	if err != nil {
 		t.Fatalf("record.Read: %v", err)
 	}
 
 	var foundDialogue, foundNote bool
+
 	for _, e := range events {
 		if e.Kind == record.TaskDialogue && e.Data["by"] == "mcp" {
 			foundDialogue = true
 		}
+
 		if e.Kind == record.TaskNoted && e.Text == "[mcp] please use context timeout here" {
 			foundNote = true
 		}
 	}
+
 	if !foundDialogue {
 		t.Error("orbit_direct_task did not record task.dialogue")
 	}
+
 	if !foundNote {
 		t.Error("orbit_direct_task did not record task.noted")
 	}

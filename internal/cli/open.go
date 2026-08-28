@@ -36,7 +36,9 @@ func openPort(s *store.Store, r *board.Reader) func(t view.Task, engineName, dir
 		if err != nil {
 			return nil, err
 		}
+
 		openJournal(s, t, engineName)
+
 		return cmd, nil
 	}
 }
@@ -62,6 +64,7 @@ func openJournal(s *store.Store, t view.Task, engineName string) {
 	if s == nil || t.ID == "" {
 		return
 	}
+
 	if err := task.Dialogue(s, subject(t), engineName, "the cockpit handed the terminal to an interactive session on this task"); err != nil {
 		logger.Error("cli/open", "record the session opened on %s: %v", t.ID, err)
 	}
@@ -79,13 +82,16 @@ func openDir(r *board.Reader, t view.Task, fallback string) string {
 	if r == nil || t.ID == "" || t.RepoPath == "" {
 		return fallback
 	}
+
 	worktree, err := r.Worktree(t.RepoPath, t.ID)
 	if err != nil {
 		return fallback
 	}
+
 	if info, err := os.Stat(worktree); err != nil || !info.IsDir() {
 		return fallback
 	}
+
 	return worktree
 }
 
@@ -102,19 +108,25 @@ func openCommand(engineName, dir, context string) (*exec.Cmd, error) {
 	if engineName == "" {
 		return nil, fmt.Errorf("opening an interactive session needs an engine")
 	}
+
 	var args []string
+
 	if flag := mcpConfigFlag(engineName); flag != "" {
 		config, err := mcp.LaunchConfig("")
 		if err != nil {
 			return nil, err
 		}
+
 		args = append(args, flag, config)
 	}
+
 	if context != "" {
 		args = append(args, context)
 	}
+
 	cmd := exec.Command(engineName, args...)
 	cmd.Dir = dir
+
 	return cmd, nil
 }
 
@@ -131,6 +143,7 @@ func mcpConfigFlag(engineName string) string {
 	if engineName == "claude" {
 		return "--mcp-config"
 	}
+
 	return ""
 }
 
@@ -143,18 +156,25 @@ func openContext(t view.Task) string {
 	if t.ID == "" {
 		return ""
 	}
+
 	var b strings.Builder
 	fmt.Fprintf(&b, "I am looking at orbit task %s", t.ID)
+
 	if t.Repo != "" {
 		fmt.Fprintf(&b, " in %s", t.Repo)
 	}
+
 	if t.Title != "" {
 		fmt.Fprintf(&b, ": %s", t.Title)
 	}
+
 	fmt.Fprintf(&b, ". It is %s", t.Band)
+
 	if t.Phase != "" {
 		fmt.Fprintf(&b, ", in the %s phase", t.Phase)
 	}
+
 	b.WriteString(". Orbit's own mcp server is configured in this session: orbit_inspect_task reads this task's record — its notes, its gates and the last thing that went wrong — and orbit_add_note writes back to it, where the cockpit will show it. Read the record before changing anything.")
+
 	return b.String()
 }

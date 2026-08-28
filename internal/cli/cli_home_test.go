@@ -22,6 +22,7 @@ func TestLanguageAnswersEmptyWhenNoHomeCanBeFound(t *testing.T) {
 	if code != 0 {
 		t.Errorf("help with no home exited %d, want 0", code)
 	}
+
 	if out == "" {
 		t.Error("usage was not printed even though language() has a fallback")
 	}
@@ -35,12 +36,14 @@ func TestOpenBothFailsWhenTheStateRootCannotBeCreated(t *testing.T) {
 	if err := os.WriteFile(blocker, []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
+
 	t.Setenv("ORBIT_HOME", filepath.Join(blocker, "orbit"))
 
 	code, _, errOut := run(t, "list", "-repo", repoDir)
 	if code == 0 {
 		t.Error("list with an unmakeable state root exited 0")
 	}
+
 	if errOut == "" {
 		t.Error("list failed silently with an unmakeable state root")
 	}
@@ -57,12 +60,14 @@ func TestLanguageAnswersEmptyWhenTheStateRootIsAFile(t *testing.T) {
 	if err := os.WriteFile(blocker, []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
+
 	t.Setenv("ORBIT_HOME", blocker)
 
 	code, out, _ := run(t, "help")
 	if code != 0 {
 		t.Errorf("help with blocked root exited %d, want 0", code)
 	}
+
 	if out == "" {
 		t.Error("usage was not printed even though language() has a fallback")
 	}

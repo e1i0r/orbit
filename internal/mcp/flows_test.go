@@ -35,24 +35,29 @@ func taskOnFlow(t *testing.T, s *store.Store, r repo.Repo, id, name string) {
 
 func TestGetFlowIsTheDocumentSaveTakes(t *testing.T) {
 	_, sn, _ := oneRepo(t)
+
 	got := call(t, sn, "orbit_get_flow", map[string]any{"name": "quick"})
 	if got["origin"] != "builtin" {
 		t.Errorf("origin = %v, want builtin", got["origin"])
 	}
+
 	doc := obj(t, got["flow"])
 	if doc["name"] != "quick" {
 		t.Errorf("the flow calls itself %v, want quick", doc["name"])
 	}
+
 	phases := list(t, doc["phases"])
 	if len(phases) == 0 {
 		t.Fatal("the flow came back with no phases, and phases are the flow")
 	}
+
 	if engine := obj(t, phases[0])["engine"]; engine == nil || engine == "" {
 		t.Errorf("phase 1 names no engine: %#v", phases[0])
 	}
 
 	// The round trip the tool exists for: what get answers is what save takes.
 	doc["name"] = "quick-mine"
+
 	saved := call(t, sn, "orbit_save_flow", map[string]any{"name": "quick-mine", "phases": doc["phases"]})
 	if saved["saved"] != true {
 		t.Errorf("saving the document orbit_get_flow answered with was refused: %v", saved)
@@ -61,6 +66,7 @@ func TestGetFlowIsTheDocumentSaveTakes(t *testing.T) {
 
 func TestSaveFlowWritesOneTheListingThenNames(t *testing.T) {
 	s, sn, _ := oneRepo(t)
+
 	got := call(t, sn, "orbit_save_flow", map[string]any{
 		"name":        "review",
 		"description": "one pass over somebody else's work",
@@ -69,6 +75,7 @@ func TestSaveFlowWritesOneTheListingThenNames(t *testing.T) {
 	if got["saved"] != true || got["shadows"] != false {
 		t.Errorf("orbit_save_flow answered %v, want a save that shadows nothing", got)
 	}
+
 	if want := s.FlowDir() + "/review.json"; got["path"] != want {
 		t.Errorf("saved at %v, want %q", got["path"], want)
 	}
@@ -78,31 +85,40 @@ func TestSaveFlowWritesOneTheListingThenNames(t *testing.T) {
 		if f["name"] != "review" {
 			continue
 		}
+
 		if f["origin"] != "user" {
 			t.Errorf("review is listed as %v, want user", f["origin"])
 		}
+
 		if f["description"] != "one pass over somebody else's work" {
 			t.Errorf("description = %v, want the one that was saved", f["description"])
 		}
+
 		return
 	}
+
 	t.Error("orbit_list_flows does not name the flow that was just saved")
 }
 
 func TestSaveFlowCopiesTheFlowItWasToldToStartFrom(t *testing.T) {
 	_, sn, _ := oneRepo(t)
+
 	careful, err := flow.Resolve(nil, "careful")
 	if err != nil {
 		t.Fatalf("resolve the built-in careful: %v", err)
 	}
+
 	got := call(t, sn, "orbit_save_flow", map[string]any{"name": "careful-mine", "from": "careful"})
+
 	phases := list(t, got["phases"])
 	if len(phases) != len(careful.Phases) {
 		t.Fatalf("the copy walks %d phases, want the %d careful walks", len(phases), len(careful.Phases))
 	}
+
 	if name := obj(t, phases[0])["name"]; name != careful.Phases[0].Name {
 		t.Errorf("phase 1 is %v, want %q", name, careful.Phases[0].Name)
 	}
+
 	if doc := obj(t, call(t, sn, "orbit_get_flow", map[string]any{"name": "careful-mine"})["flow"]); doc["description"] != careful.Description {
 		t.Errorf("description = %v, want the one careful carries", doc["description"])
 	}
@@ -110,10 +126,12 @@ func TestSaveFlowCopiesTheFlowItWasToldToStartFrom(t *testing.T) {
 
 func TestSaveFlowNeedsPhasesOrAFlowToCopy(t *testing.T) {
 	_, sn, _ := oneRepo(t)
+
 	said := refused(t, sn, "orbit_save_flow", map[string]any{"name": "review"})
 	if !strings.Contains(said, "from") {
 		t.Errorf("the refusal does not say how to give it phases: %s", said)
 	}
+
 	if said := refused(t, sn, "orbit_save_flow", map[string]any{"name": "review", "from": "nothing-ships-this"}); !strings.Contains(said, "nothing-ships-this") {
 		t.Errorf("the refusal does not name the flow it could not copy: %s", said)
 	}
@@ -124,6 +142,7 @@ func TestSaveFlowNeedsPhasesOrAFlowToCopy(t *testing.T) {
 // is after a worktree and a process.
 func TestSaveFlowRefusesAPhaseFieldNobodyDeclared(t *testing.T) {
 	_, sn, _ := oneRepo(t)
+
 	said := refused(t, sn, "orbit_save_flow", map[string]any{
 		"name":   "review",
 		"phases": []any{map[string]any{"name": "read", "engines": "claude"}},
@@ -131,6 +150,7 @@ func TestSaveFlowRefusesAPhaseFieldNobodyDeclared(t *testing.T) {
 	if !strings.Contains(said, "engines") {
 		t.Errorf("the refusal does not name the field that was wrong: %s", said)
 	}
+
 	if refused(t, sn, "orbit_get_flow", map[string]any{"name": "review"}) == "" {
 		t.Error("the refused flow was saved anyway")
 	}
@@ -150,10 +170,12 @@ func TestFlowToolsNeedAName(t *testing.T) {
 // already-written task will do, so the answer says so.
 func TestSaveFlowUnderABuiltinNameSaysItShadowsIt(t *testing.T) {
 	_, sn, _ := oneRepo(t)
+
 	got := call(t, sn, "orbit_save_flow", map[string]any{"name": "quick", "phases": onePhase("mine", "codex")})
 	if got["shadows"] != true {
 		t.Errorf("orbit_save_flow answered %v, want it to say the save shadows a flow orbit ships", got)
 	}
+
 	if origin := call(t, sn, "orbit_get_flow", map[string]any{"name": "quick"})["origin"]; origin != "shadow" {
 		t.Errorf("quick now resolves as %v, want shadow", origin)
 	}
@@ -162,14 +184,17 @@ func TestSaveFlowUnderABuiltinNameSaysItShadowsIt(t *testing.T) {
 func TestDeleteFlowPutsTheBuiltinBack(t *testing.T) {
 	_, sn, _ := oneRepo(t)
 	call(t, sn, "orbit_save_flow", map[string]any{"name": "quick", "phases": onePhase("mine", "codex")})
+
 	got := call(t, sn, "orbit_delete_flow", map[string]any{"name": "quick"})
 	if got["deleted"] != true || got["restored_builtin"] != true {
 		t.Errorf("orbit_delete_flow answered %v, want a delete that put the shipped flow back", got)
 	}
+
 	after := call(t, sn, "orbit_get_flow", map[string]any{"name": "quick"})
 	if after["origin"] != "builtin" {
 		t.Errorf("quick resolves as %v after its shadow was deleted, want builtin", after["origin"])
 	}
+
 	if name := obj(t, list(t, obj(t, after["flow"])["phases"])[0])["name"]; name == "mine" {
 		t.Error("quick still walks the phase of the deleted shadow")
 	}
@@ -196,6 +221,7 @@ func TestDeleteFlowRefusesWhileTasksAreWrittenAgainstIt(t *testing.T) {
 			t.Errorf("the refusal does not mention %q: %s", want, said)
 		}
 	}
+
 	if call(t, sn, "orbit_get_flow", map[string]any{"name": "review"})["origin"] != "user" {
 		t.Error("the flow is gone after a refused delete")
 	}
@@ -204,9 +230,11 @@ func TestDeleteFlowRefusesWhileTasksAreWrittenAgainstIt(t *testing.T) {
 	if got["deleted"] != true {
 		t.Fatalf("a forced delete answered %v, want it done", got)
 	}
+
 	if users := list(t, got["used_by"]); len(users) != 1 || str(t, users[0]) != r.Name+"/PAY-1" {
 		t.Errorf("used_by = %v, want the task that is now stranded", got["used_by"])
 	}
+
 	if refused(t, sn, "orbit_get_flow", map[string]any{"name": "review"}) == "" {
 		t.Error("the name still resolves after a forced delete")
 	}
@@ -219,6 +247,7 @@ func TestDeleteFlowDoesNotAskAboutTasksWhenAShippedFlowIsUnderneath(t *testing.T
 	s, sn, r := oneRepo(t)
 	call(t, sn, "orbit_save_flow", map[string]any{"name": "quick", "phases": onePhase("mine", "codex")})
 	taskOnFlow(t, s, r, "PAY-1", "quick")
+
 	if got := call(t, sn, "orbit_delete_flow", map[string]any{"name": "quick"}); got["deleted"] != true {
 		t.Errorf("orbit_delete_flow answered %v, want it done: quick goes on resolving", got)
 	}

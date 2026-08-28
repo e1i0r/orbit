@@ -22,6 +22,7 @@ func supervisorCommand(ctx Context, args []string) error {
 	channel := fs.String("channel", "cli", "channel where the message originated")
 	taskID := fs.String("task", "", "task id if this message refers to a specific task")
 	repoName := fs.String("repo", "", "repository name if this message refers to a specific repo")
+
 	retract := fs.String("retract", "", "take back the line with this `number`, as `orbit supervisor` numbers them")
 	if err := parse(ctx, fs, args); err != nil {
 		return err
@@ -40,6 +41,7 @@ func supervisorCommand(ctx Context, args []string) error {
 		if err != nil {
 			return fmt.Errorf("-retract takes the number of a line in the thread, not %q", *retract)
 		}
+
 		return retractLine(ctx, s, n)
 	}
 
@@ -53,8 +55,10 @@ func supervisorCommand(ctx Context, args []string) error {
 		logger.Error("cli/supervisor", "record supervisor message failed: %v", err)
 		return err
 	}
+
 	logger.Info("cli/supervisor", "recorded supervisor message by %s", *by)
 	fmt.Fprintf(ctx.Out, "recorded in supervisor thread: %s\n", text)
+
 	return nil
 }
 
@@ -68,13 +72,16 @@ func printThread(ctx Context, s *store.Store) error {
 	if err != nil {
 		return err
 	}
+
 	if len(lines) == 0 {
 		fmt.Fprintln(ctx.Out, "the supervisor thread is empty")
 		return nil
 	}
+
 	for i, l := range lines {
 		fmt.Fprintf(ctx.Out, "%3d  %s\n", i+1, line(l))
 	}
+
 	return nil
 }
 
@@ -89,6 +96,7 @@ func line(l view.SupervisorLine) string {
 	if l.Retracted {
 		tag += " (retracted)"
 	}
+
 	return fmt.Sprintf("%s %s %s", l.At.Format("15:04:05"), tag, l.Text)
 }
 
@@ -98,19 +106,24 @@ func retractLine(ctx Context, s *store.Store, n int) error {
 	if err != nil {
 		return err
 	}
+
 	if n < 1 || n > len(lines) {
 		return fmt.Errorf("there is no line %d in the supervisor thread; it has %d", n, len(lines))
 	}
+
 	l := lines[n-1]
 	if l.Retracted {
 		return fmt.Errorf("line %d was already taken back", n)
 	}
+
 	if err := task.RetractSupervisor(s, l.At); err != nil {
 		logger.Error("cli/supervisor", "retract supervisor message failed: %v", err)
 		return err
 	}
+
 	logger.Info("cli/supervisor", "retracted supervisor line %d", n)
 	fmt.Fprintf(ctx.Out, "took back line %d: %s\n", n, l.Text)
+
 	return nil
 }
 
@@ -120,5 +133,6 @@ func thread(s *store.Store) ([]view.SupervisorLine, error) {
 		logger.Error("cli/supervisor", "read supervisor history failed: %v", err)
 		return nil, err
 	}
+
 	return lines, nil
 }

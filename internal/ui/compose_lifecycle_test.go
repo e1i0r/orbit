@@ -21,6 +21,7 @@ func TestComposeScreenFullLifecycle(t *testing.T) {
 
 	sendKey := func(k rune, code rune, text string) {
 		var msg tea.Msg
+
 		switch {
 		case text != "":
 			msg = tea.KeyPressMsg{Code: code, Text: text}
@@ -29,6 +30,7 @@ func TestComposeScreenFullLifecycle(t *testing.T) {
 		default:
 			msg = tea.KeyPressMsg{Code: k, Text: string(k)}
 		}
+
 		updated, _ := m.Update(msg)
 		m = asModel(t, updated)
 	}
@@ -45,6 +47,7 @@ func TestComposeScreenFullLifecycle(t *testing.T) {
 	sendKey('9', 0, "")
 	sendKey('X', 0, "")
 	sendKey(0, tea.KeyBackspace, "")
+
 	if m.compose.id != "TASK-9" {
 		t.Errorf("compose.id = %q, want TASK-9", m.compose.id)
 	}
@@ -64,6 +67,7 @@ func TestComposeScreenFullLifecycle(t *testing.T) {
 
 	// Submit with composeSubmit
 	updatedModel, cmd := m.composeSubmit(false)
+
 	m = asModel(t, updatedModel)
 	if cmd == nil {
 		t.Error("expected non-nil cmd from composeSubmit")
@@ -91,6 +95,7 @@ func TestComposeKeyTabAndOpen(t *testing.T) {
 
 	// Switching between tabs: [1] Manual, [2] URL
 	m.compose.field = composeRepo
+
 	m = asModel(t, mustUpdate(m, press("2")))
 	if m.compose.tab != composeTabURL {
 		t.Errorf("tab = %d, want composeTabURL", m.compose.tab)
@@ -104,6 +109,7 @@ func TestComposeKeyTabAndOpen(t *testing.T) {
 	// Key '+' on flow field opens flow builder
 	m.compose.field = composeFlow
 	res, _ := m.Update(tea.KeyPressMsg{Text: "+"})
+
 	mFlows := asModel(t, res)
 	if mFlows.screen != screenFlows {
 		t.Errorf("screen after '+' on flow field = %v, want screenFlows", mFlows.screen)
@@ -123,6 +129,7 @@ func TestComposeURLAutoParsing(t *testing.T) {
 	if m.compose.tab != composeTabURL {
 		t.Errorf("tab after pasting URL = %d, want composeTabURL", m.compose.tab)
 	}
+
 	if m.compose.id != "ENG-456" {
 		t.Errorf("compose.id = %q, want ENG-456", m.compose.id)
 	}
@@ -155,6 +162,7 @@ func TestComposePillsCycle(t *testing.T) {
 	// 2. Flow cycle
 	m.compose.field = composeFlow
 	oldFlow := m.compose.chosenFlow()
+
 	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyRight}))
 	if len(m.compose.flows) > 1 && m.compose.chosenFlow() == oldFlow {
 		t.Errorf("expected flow to cycle from %s", oldFlow)
@@ -163,10 +171,12 @@ func TestComposePillsCycle(t *testing.T) {
 	// 3. Engine / Provider cycle
 	m.compose.field = composeEngine
 	oldEng := m.compose.chosenEngine()
+
 	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyRight}))
 	if m.compose.chosenEngine() == oldEng {
 		t.Errorf("expected engine to cycle from %s", oldEng)
 	}
+
 	if m.compose.chosenEngine() == "codex" && m.compose.chosenModel() != "gpt-4o" {
 		t.Errorf("expected model to default to gpt-4o for codex, got %s", m.compose.chosenModel())
 	}
@@ -174,6 +184,7 @@ func TestComposePillsCycle(t *testing.T) {
 	// 4. Model cycle
 	m.compose.field = composeModel
 	oldMod := m.compose.chosenModel()
+
 	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyRight}))
 	if m.compose.chosenModel() == oldMod {
 		t.Errorf("expected model to cycle from %s", oldMod)
@@ -182,6 +193,7 @@ func TestComposePillsCycle(t *testing.T) {
 	// 5. Thinking cycle
 	m.compose.field = composeThinking
 	oldThk := m.compose.chosenThinking()
+
 	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyRight}))
 	if m.compose.chosenThinking() == oldThk {
 		t.Errorf("expected thinking to cycle from %s", oldThk)
@@ -190,6 +202,7 @@ func TestComposePillsCycle(t *testing.T) {
 	// 6. Effort cycle
 	m.compose.field = composeEffort
 	oldEff := m.compose.chosenEffort()
+
 	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyRight}))
 	if m.compose.chosenEffort() == oldEff {
 		t.Errorf("expected effort to cycle from %s", oldEff)
@@ -204,17 +217,21 @@ func TestComposeSubmitValidID(t *testing.T) {
 	m.compose.text = "Write some tests"
 
 	m.opts.ValidID = func(id string) error { return errors.New("id taken") }
+
 	m2, cmd := m.composeSubmit(false)
 	if cmd != nil {
 		t.Fatalf("expected a rejected id to produce no cmd")
 	}
+
 	wantBand(t, asModel(t, m2), "id taken")
 
 	m.opts.ValidID = func(id string) error { return nil }
+
 	m3, cmd := m.composeSubmit(false)
 	if cmd == nil {
 		t.Fatalf("expected an accepted id to submit")
 	}
+
 	if asModel(t, m3).screen != screenList {
 		t.Errorf("expected a submitted compose to return to the list")
 	}
@@ -229,10 +246,12 @@ func TestComposeUpDownAndMouseClicks(t *testing.T) {
 	if m.compose.field != composeFlow {
 		t.Fatalf("field after down arrow = %d, want composeFlow", m.compose.field)
 	}
+
 	m = asModel(t, mustUpdate(m, press("down")))
 	if m.compose.field != composeEngine {
 		t.Fatalf("field after second down arrow = %d, want composeEngine", m.compose.field)
 	}
+
 	m = asModel(t, mustUpdate(m, press("down")))
 	if m.compose.field != composeModel {
 		t.Fatalf("field after third down arrow = %d, want composeModel", m.compose.field)
@@ -243,10 +262,12 @@ func TestComposeUpDownAndMouseClicks(t *testing.T) {
 	if m.compose.field != composeEngine {
 		t.Fatalf("field after up arrow = %d, want composeEngine", m.compose.field)
 	}
+
 	m = asModel(t, mustUpdate(m, press("up")))
 	if m.compose.field != composeFlow {
 		t.Fatalf("field after up arrow = %d, want composeFlow", m.compose.field)
 	}
+
 	m = asModel(t, mustUpdate(m, press("up")))
 	if m.compose.field != composeRepo {
 		t.Fatalf("field after second up arrow = %d, want composeRepo", m.compose.field)
@@ -257,6 +278,7 @@ func TestComposeUpDownAndMouseClicks(t *testing.T) {
 	if m.flowSummary(m.compose.chosenFlow()) != "" {
 		extra = 1
 	}
+
 	yRepo := m.frame.Body.Y + 2
 	yFlow := m.frame.Body.Y + 3
 	yEngine := m.frame.Body.Y + 4 + extra
@@ -270,21 +292,25 @@ func TestComposeUpDownAndMouseClicks(t *testing.T) {
 	}
 
 	clickField(yID)
+
 	if m.compose.field != composeID {
 		t.Errorf("field after click on ID = %d, want composeID", m.compose.field)
 	}
 
 	clickField(yEngine)
+
 	if m.compose.field != composeEngine {
 		t.Errorf("field after click on Engine = %d, want composeEngine", m.compose.field)
 	}
 
 	clickField(yFlow)
+
 	if m.compose.field != composeFlow {
 		t.Errorf("field after click on Flow = %d, want composeFlow", m.compose.field)
 	}
 
 	clickField(yRepo)
+
 	if m.compose.field != composeRepo {
 		t.Errorf("field after click on Repo = %d, want composeRepo", m.compose.field)
 	}

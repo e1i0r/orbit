@@ -47,8 +47,10 @@ func (m Model) thinkingLines() []string {
 	}
 
 	var blocks []thoughtBlock
+
 	for _, e := range m.entries {
 		isThought := e.What() == view.EntryThought
+
 		isPhaseSummary := (e.What() == view.EntryFinished || e.What() == view.EntryFailed) &&
 			strings.TrimSpace(e.Text) != ""
 		if isThought || isPhaseSummary {
@@ -56,13 +58,16 @@ func (m Model) thinkingLines() []string {
 			if !e.At.IsZero() {
 				timeStr = e.At.Format("15:04:05")
 			}
+
 			var lines []string
+
 			for _, l := range strings.Split(e.Text, "\n") {
 				l = strings.TrimSpace(l)
 				if l != "" {
 					lines = append(lines, l)
 				}
 			}
+
 			if len(lines) > 0 {
 				blocks = append(blocks, thoughtBlock{
 					at:      timeStr,
@@ -106,9 +111,11 @@ func (m Model) thinkingLines() []string {
 		if b.phase != "" {
 			head += "  " + Paint(Accent).Render(b.phase)
 		}
+
 		if b.attempt > 0 {
 			head += "  " + Paint(Dim).Render(fmt.Sprintf("intento %d", b.attempt))
 		}
+
 		out = append(out, head)
 
 		for _, l := range b.lines {
@@ -117,11 +124,13 @@ func (m Model) thinkingLines() []string {
 				out = append(out, "      "+Paint(role).Render(formatted))
 				continue
 			}
+
 			wrapped := splitIntoLines(formatted, max(20, m.frame.Body.W-10))
 			for _, wl := range wrapped {
 				out = append(out, "      "+Paint(role).Render(wl))
 			}
 		}
+
 		out = append(out, "")
 	}
 

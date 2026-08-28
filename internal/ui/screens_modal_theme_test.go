@@ -12,6 +12,7 @@ func TestModalScreensNavigationAndRender(t *testing.T) {
 	if lines := m.paletteRows(20, 100); len(lines) == 0 {
 		t.Error("expected paletteRows to render")
 	}
+
 	m.palette.open = false
 
 	// 2. Menu Rows
@@ -19,6 +20,7 @@ func TestModalScreensNavigationAndRender(t *testing.T) {
 	if lines := m.menuRows(20, 100); len(lines) == 0 {
 		t.Error("expected menuRows to render")
 	}
+
 	m.menu.open = false
 
 	// 3. Engines screen
@@ -80,6 +82,7 @@ func TestStartDialogDialsAndKeys(t *testing.T) {
 func TestThemeSwitchingAndPalettes(t *testing.T) {
 	for _, themeName := range AvailableThemes() {
 		SetCurrentTheme(themeName)
+
 		palette := currentPalette()
 		if palette.OK == "" || palette.Accent == "" {
 			t.Errorf("theme %q has empty OK or Accent tokens", themeName)

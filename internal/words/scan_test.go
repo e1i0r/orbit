@@ -21,18 +21,22 @@ import (
 // own, and a rule that exempted its own tests would not be much of a rule.
 func root(t *testing.T) string {
 	t.Helper()
+
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("getwd: %v", err)
 	}
+
 	for {
 		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
 			return dir
 		}
+
 		parent := filepath.Dir(dir)
 		if parent == dir {
 			t.Fatal("go.mod not found above the working directory")
 		}
+
 		dir = parent
 	}
 }
@@ -69,52 +73,66 @@ func collectCallSites(t *testing.T) []callSite {
 	wordsDir := filepath.Join(modRoot, "internal", "words")
 
 	var sites []callSite
+
 	err := filepath.WalkDir(modRoot, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
+
 		if d.IsDir() {
 			if outsideTheModule(modRoot, path, d) || path == wordsDir {
 				return filepath.SkipDir
 			}
+
 			return nil
 		}
+
 		if !strings.HasSuffix(path, ".go") {
 			return nil
 		}
+
 		sites = append(sites, scanFile(t, modRoot, path)...)
+
 		return nil
 	})
 	if err != nil {
 		t.Fatalf("walk: %v", err)
 	}
+
 	return sites
 }
 
 // scanFile parses one file and returns every T or P call it contains.
 func scanFile(t *testing.T, modRoot, path string) []callSite {
 	t.Helper()
+
 	fset := token.NewFileSet()
+
 	f, err := parser.ParseFile(fset, path, nil, 0)
 	if err != nil {
 		t.Fatalf("parse %s: %v", path, err)
 	}
+
 	rel, err := filepath.Rel(modRoot, path)
 	if err != nil {
 		t.Fatalf("rel %s: %v", path, err)
 	}
+
 	rel = filepath.ToSlash(rel)
 
 	var sites []callSite
+
 	ast.Inspect(f, func(n ast.Node) bool {
 		call, ok := n.(*ast.CallExpr)
 		if !ok {
 			return true
 		}
+
 		sel, ok := call.Fun.(*ast.SelectorExpr)
 		if !ok || (sel.Sel.Name != "T" && sel.Sel.Name != "P") {
 			return true
 		}
+
 		site := callSite{
 			file:   rel,
 			line:   fset.Position(call.Pos()).Line,
@@ -123,6 +141,7 @@ func scanFile(t *testing.T, modRoot, path string) []callSite {
 		if len(call.Args) > 0 {
 			site.key, site.keyOK = stringLiteral(call.Args[0])
 		}
+
 		switch site.method {
 		case "T":
 			if len(call.Args) > 1 {
@@ -135,9 +154,12 @@ func scanFile(t *testing.T, modRoot, path string) []callSite {
 				site.english, site.other, site.literal = eng, oth, engOK && othOK
 			}
 		}
+
 		sites = append(sites, site)
+
 		return true
 	})
+
 	return sites
 }
 
@@ -147,10 +169,12 @@ func stringLiteral(e ast.Expr) (string, bool) {
 	if !ok || lit.Kind != token.STRING {
 		return "", false
 	}
+
 	v, err := strconv.Unquote(lit.Value)
 	if err != nil {
 		return "", false
 	}
+
 	return v, true
 }
 
@@ -167,6 +191,8 @@ func outsideTheModule(root, path string, d os.DirEntry) bool {
 	if path == root || !d.IsDir() {
 		return false
 	}
+
 	n := d.Name()
+
 	return n == "vendor" || strings.HasPrefix(n, ".") || strings.HasPrefix(n, "_")
 }

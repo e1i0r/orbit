@@ -95,6 +95,7 @@ func newSettings(s *store.Store) (*settingsAdapter, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &settingsAdapter{store: s, last: cfg}, nil
 }
 
@@ -102,6 +103,7 @@ func newSettings(s *store.Store) (*settingsAdapter, error) {
 func (a *settingsAdapter) read() store.Settings {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+
 	return a.last
 }
 
@@ -125,6 +127,7 @@ func (a *settingsAdapter) reread() {
 	if err != nil {
 		return
 	}
+
 	a.keep(cfg, gen)
 }
 
@@ -144,9 +147,11 @@ func (a *settingsAdapter) reread() {
 func (a *settingsAdapter) keep(cfg store.Settings, gen uint64) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+
 	if a.gen != gen {
 		return
 	}
+
 	a.last = cfg
 }
 
@@ -165,15 +170,19 @@ func (a *settingsAdapter) write(change func(*store.Settings)) error {
 	if err != nil {
 		return err
 	}
+
 	change(&cfg)
+
 	if err := a.store.SaveSettings(cfg); err != nil {
 		return err
 	}
 
 	a.mu.Lock()
 	defer a.mu.Unlock()
+
 	a.gen++
 	a.last = cfg
+
 	return nil
 }
 
@@ -235,6 +244,7 @@ func (a *settingsAdapter) Theme() string {
 	if t == "" {
 		return "monokai"
 	}
+
 	return t
 }
 

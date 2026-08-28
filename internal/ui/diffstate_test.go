@@ -33,6 +33,7 @@ func TestTheDiffPaneSaysNotYetBeforeItKnows(t *testing.T) {
 	// way it would be for the seconds a reader's own git actually takes.
 	text := paneText(t, showing(t, m, tabDiff))
 	wantIn(t, text, "reading this task's worktree")
+
 	if strings.Contains(text, "no changes in this task's worktree") {
 		t.Errorf("the diff pane asserts no changes before any diffMsg has landed:\n%s", text)
 	}
@@ -67,6 +68,7 @@ func TestANoBaseDiffSaysSoInTheStrip(t *testing.T) {
 func TestAnOrdinaryDiffSaysNothingAboutTheBase(t *testing.T) {
 	m := openOn(t, "ACME-2662")
 	m = next(t, m, diffMsg{ID: "ACME-2662", Text: fixtureDiff})
+
 	text := paneText(t, showing(t, m, tabDiff))
 	if strings.Contains(text, "no base branch") {
 		t.Errorf("the strip says %q for an ordinary diff, want no mention of the base", text)
@@ -86,16 +88,20 @@ func TestAnOrdinaryDiffSaysNothingAboutTheBase(t *testing.T) {
 func TestARescanDoesNotPileOnADiffThatIsStillOut(t *testing.T) {
 	m := openOn(t, "ACME-2662")
 	asked, cmd := m.Update(rescanMsg(fixtureNow))
+
 	m = asModel(t, asked)
 	if !m.diffAsking || len(commandsIn(t, cmd)) != 3 {
 		t.Fatalf("the first rescan asked for %d commands with diffAsking=%v, want the diff among three",
 			len(commandsIn(t, cmd)), m.diffAsking)
 	}
+
 	again, cmd := m.Update(rescanMsg(fixtureNow))
+
 	m = asModel(t, again)
 	if n := len(commandsIn(t, cmd)); n != 2 {
 		t.Errorf("a second rescan asked for %d commands while the first diff was still out, want the rescan and the tick alone", n)
 	}
+
 	if !m.diffAsking {
 		t.Error("the second rescan cleared the outstanding diff without an answer having landed")
 	}
@@ -105,6 +111,7 @@ func TestARescanDoesNotPileOnADiffThatIsStillOut(t *testing.T) {
 	if m.diffAsking {
 		t.Fatal("a diff that landed left the view still believing one was out")
 	}
+
 	after, cmd := m.Update(rescanMsg(fixtureNow))
 	if n := len(commandsIn(t, cmd)); n != 3 || !asModel(t, after).diffAsking {
 		t.Errorf("the rescan after an answer asked for %d commands, want the diff asked for again", n)
@@ -117,6 +124,7 @@ func TestARescanDoesNotPileOnADiffThatIsStillOut(t *testing.T) {
 // reader looks at one task. So it rides back on the diffMsg and is held.
 func TestTheBaseComesBackAndStays(t *testing.T) {
 	m := openOn(t, "ACME-2662")
+
 	m = next(t, m, diffMsg{ID: "ACME-2662", Text: fixtureDiff, Base: baseRef{name: "main", known: true}})
 	if m.diffBase.name != "main" || !m.diffBase.known {
 		t.Fatalf("the view kept base %+v, want the one the diff came back with", m.diffBase)
@@ -132,10 +140,12 @@ func TestTheBaseComesBackAndStays(t *testing.T) {
 // asModel is the type assertion every transition makes, written once.
 func asModel(t *testing.T, m tea.Model) Model {
 	t.Helper()
+
 	got, ok := m.(Model)
 	if !ok {
 		t.Fatalf("Update returned %T, want ui.Model", m)
 	}
+
 	return got
 }
 
@@ -144,12 +154,15 @@ func asModel(t *testing.T, m tea.Model) Model {
 // board.RescanEvery.
 func commandsIn(t *testing.T, cmd tea.Cmd) tea.BatchMsg {
 	t.Helper()
+
 	if cmd == nil {
 		return nil
 	}
+
 	batch, ok := cmd().(tea.BatchMsg)
 	if !ok {
 		t.Fatalf("the transition returned %T, want a batch of commands", cmd())
 	}
+
 	return batch
 }

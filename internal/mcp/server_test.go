@@ -14,51 +14,65 @@ import (
 // responses that came back, decoded.
 func exchange(t *testing.T, sn Session, lines ...string) []JSONRPCResponse {
 	t.Helper()
+
 	var in, out bytes.Buffer
 	for _, line := range lines {
 		in.WriteString(line + "\n")
 	}
+
 	if err := NewServer(&in, &out, sn).Serve(); err != nil {
 		t.Fatalf("Serve: %v", err)
 	}
+
 	var responses []JSONRPCResponse
+
 	for line := range strings.SplitSeq(strings.TrimSpace(out.String()), "\n") {
 		if line == "" {
 			continue
 		}
+
 		var resp JSONRPCResponse
 		if err := json.Unmarshal([]byte(line), &resp); err != nil {
 			t.Fatalf("a response is not JSON: %v\n%s", err, line)
 		}
+
 		responses = append(responses, resp)
 	}
+
 	return responses
 }
 
 func TestInitializeAnswersTheHandshake(t *testing.T) {
 	_, sn, _ := oneRepo(t)
+
 	got := exchange(t, sn, `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}`)
 	if len(got) != 1 {
 		t.Fatalf("initialize drew %d responses, want 1", len(got))
 	}
+
 	result, ok := got[0].Result.(map[string]any)
 	if !ok {
 		t.Fatalf("initialize answered %#v", got[0])
 	}
+
 	if result["protocolVersion"] != protocolVersion {
 		t.Errorf("protocolVersion = %v, want %q", result["protocolVersion"], protocolVersion)
 	}
+
 	info, ok := result["serverInfo"].(map[string]any)
 	if !ok || info["name"] != "orbit" {
 		t.Errorf("serverInfo = %v, want it to name orbit", result["serverInfo"])
 	}
+
 	if info["version"] != "test" {
 		t.Errorf("serverInfo version = %v, want the version the session was built with", info["version"])
 	}
+
 	caps, ok := result["capabilities"].(map[string]any)
 	if !ok {
 		t.Fatalf("capabilities = %#v, want an object", result["capabilities"])
 	}
+
 	if _, ok := caps["tools"]; !ok {
 		t.Errorf("the handshake does not declare the tools capability: %v", caps)
 	}
@@ -69,6 +83,7 @@ func TestInitializeAnswersTheHandshake(t *testing.T) {
 // back, not even a refusal.
 func TestNotificationsAreNotAnswered(t *testing.T) {
 	_, sn, _ := oneRepo(t)
+
 	got := exchange(t, sn,
 		`{"jsonrpc":"2.0","method":"notifications/initialized"}`,
 		`{"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":1}}`,
@@ -82,30 +97,37 @@ func TestNotificationsAreNotAnswered(t *testing.T) {
 func TestToolsListNamesEveryTool(t *testing.T) {
 	_, sn, _ := oneRepo(t)
 	got := exchange(t, sn, `{"jsonrpc":"2.0","id":2,"method":"tools/list"}`)
+
 	result, ok := got[0].Result.(map[string]any)
 	if !ok {
 		t.Fatalf("tools/list answered %#v", got[0])
 	}
+
 	listed, ok := result["tools"].([]any)
 	if !ok {
 		t.Fatalf("tools/list carried no tools: %v", result)
 	}
+
 	if len(listed) != len(Tools()) {
 		t.Errorf("tools/list carried %d tools, want %d", len(listed), len(Tools()))
 	}
+
 	for _, entry := range listed {
 		tool, ok := entry.(map[string]any)
 		if !ok {
 			t.Fatalf("a tool is not an object: %#v", entry)
 		}
+
 		if tool["description"] == "" || tool["description"] == nil {
 			t.Errorf("tool %v has no description; a tool a model cannot tell apart from another is a tool it will call wrongly", tool["name"])
 		}
+
 		schema, ok := tool["inputSchema"].(map[string]any)
 		if !ok || schema["type"] != "object" {
 			t.Errorf("tool %v has no object input schema: %v", tool["name"], tool["inputSchema"])
 			continue
 		}
+
 		if _, ok := schema["properties"].(map[string]any); !ok {
 			t.Errorf("tool %v encodes no properties object; a client reading null has to guess whether that means none", tool["name"])
 		}
@@ -157,11 +179,13 @@ func TestEveryDeclaredArgumentIsOneAHandlerReads(t *testing.T) {
 			t.Errorf("tool %s is advertised and this test does not say which of its arguments a handler reads", tool.Name)
 			continue
 		}
+
 		for name := range tool.InputSchema.Properties {
 			if !handled[name] {
 				t.Errorf("%s declares %q and no handler reads it", tool.Name, name)
 			}
 		}
+
 		for _, name := range tool.InputSchema.Required {
 			if _, ok := tool.InputSchema.Properties[name]; !ok {
 				t.Errorf("%s requires %q and does not declare it", tool.Name, name)
@@ -179,19 +203,23 @@ func TestNoToolIsListedTwice(t *testing.T) {
 		if seen[tool.Name] {
 			t.Errorf("%s is listed twice", tool.Name)
 		}
+
 		seen[tool.Name] = true
 	}
 }
 
 func TestUnparseableJSONIsAParseError(t *testing.T) {
 	_, sn, _ := oneRepo(t)
+
 	got := exchange(t, sn, `{not json at all`)
 	if len(got) != 1 {
 		t.Fatalf("a broken line drew %d responses, want 1", len(got))
 	}
+
 	if got[0].Error == nil || got[0].Error.Code != CodeParseError {
 		t.Errorf("a broken line answered %+v, want a parse error", got[0])
 	}
+
 	if got[0].ID != nil {
 		t.Errorf("a parse error answered with id %v, want null: the id is what failed to parse", got[0].ID)
 	}
@@ -199,10 +227,12 @@ func TestUnparseableJSONIsAParseError(t *testing.T) {
 
 func TestAnUnknownMethodIsRefusedByName(t *testing.T) {
 	_, sn, _ := oneRepo(t)
+
 	got := exchange(t, sn, `{"jsonrpc":"2.0","id":9,"method":"tools/invent"}`)
 	if got[0].Error == nil || got[0].Error.Code != CodeMethodNotFound {
 		t.Fatalf("an unknown method answered %+v, want method-not-found", got[0])
 	}
+
 	if !strings.Contains(got[0].Error.Message, "tools/invent") {
 		t.Errorf("the refusal does not name the method: %q", got[0].Error.Message)
 	}
@@ -214,10 +244,12 @@ func TestAnUnknownMethodIsRefusedByName(t *testing.T) {
 // is exactly the thing the model has to read and correct.
 func TestAToolThatSaysNoIsNotATransportError(t *testing.T) {
 	_, sn, _ := oneRepo(t)
+
 	got := exchange(t, sn, `{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"orbit_inspect_task","arguments":{"task_id":"NOPE-1"}}}`)
 	if got[0].Error != nil {
 		t.Fatalf("a tool that refused came back as a transport error: %+v", got[0].Error)
 	}
+
 	result, ok := got[0].Result.(map[string]any)
 	if !ok || result["isError"] != true {
 		t.Errorf("a refusal did not set isError: %v", got[0].Result)
@@ -226,6 +258,7 @@ func TestAToolThatSaysNoIsNotATransportError(t *testing.T) {
 
 func TestACallWithNoToolNameIsInvalidParams(t *testing.T) {
 	_, sn, _ := oneRepo(t)
+
 	got := exchange(t, sn, `{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"arguments":{}}}`)
 	if got[0].Error == nil || got[0].Error.Code != CodeInvalidParams {
 		t.Errorf("a nameless call answered %+v, want invalid params", got[0])
@@ -234,6 +267,7 @@ func TestACallWithNoToolNameIsInvalidParams(t *testing.T) {
 
 func TestPingIsAnswered(t *testing.T) {
 	_, sn, _ := oneRepo(t)
+
 	got := exchange(t, sn, `{"jsonrpc":"2.0","id":5,"method":"ping"}`)
 	if got[0].Error != nil {
 		t.Errorf("ping answered %+v", got[0].Error)
@@ -244,6 +278,7 @@ func TestPingIsAnswered(t *testing.T) {
 // not end the session with a parse error.
 func TestBlankLinesAreSkipped(t *testing.T) {
 	_, sn, _ := oneRepo(t)
+
 	got := exchange(t, sn, ``, `{"jsonrpc":"2.0","id":6,"method":"ping"}`, ``)
 	if len(got) != 1 {
 		t.Errorf("blank lines drew %d responses, want 1", len(got))
@@ -255,6 +290,7 @@ func TestBlankLinesAreSkipped(t *testing.T) {
 func TestAWriteThatFailsEndsTheSession(t *testing.T) {
 	_, sn, _ := oneRepo(t)
 	in := strings.NewReader(`{"jsonrpc":"2.0","id":7,"method":"ping"}` + "\n")
+
 	err := NewServer(in, brokenWriter{}, sn).Serve()
 	if err == nil {
 		t.Error("a response that could not be written was dropped and the session carried on")

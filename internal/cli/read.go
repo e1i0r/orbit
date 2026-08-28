@@ -17,10 +17,12 @@ import (
 func readTask(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("read", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
+
 	dir := fs.String("repo", ".", "the repository the task is against")
 	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
+
 	id := fs.Arg(0)
 	if id == "" {
 		return fmt.Errorf("read needs the id of a task")
@@ -30,13 +32,17 @@ func readTask(ctx Context, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	t, err := task.Load(s, r, id)
 	if err != nil {
 		return err
 	}
+
 	if err := task.MarkRead(s, t); err != nil {
 		return err
 	}
+
 	fmt.Fprintf(ctx.Out, "%s marked read\n", id)
+
 	return nil
 }

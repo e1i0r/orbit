@@ -66,7 +66,9 @@ func settingTable() []Setting {
 			if err != nil {
 				return "", err
 			}
+
 			cfg.Autopilot = on
+
 			return offOn(on), nil
 		},
 		Value: func(cfg store.Settings) string { return offOn(cfg.Autopilot) },
@@ -80,10 +82,13 @@ func settingTable() []Setting {
 			if err != nil {
 				return "", fmt.Errorf("unread-cap wants a whole number, not %q", value)
 			}
+
 			if n < 0 {
 				return "", fmt.Errorf("unread-cap cannot be negative; zero is no cap at all")
 			}
+
 			cfg.UnreadCap = n
+
 			return value, nil
 		},
 		Value: func(cfg store.Settings) string { return strconv.Itoa(cfg.UnreadCap) },
@@ -122,7 +127,9 @@ func settingTable() []Setting {
 			if err := flow.ValidName(value); err != nil {
 				return "", err
 			}
+
 			cfg.Flow = value
+
 			return value, nil
 		},
 		Value: func(cfg store.Settings) string { return cfg.Flow },
@@ -137,6 +144,7 @@ func settingTable() []Setting {
 			if cfg.Theme == "" {
 				return "monokai"
 			}
+
 			return cfg.Theme
 		},
 	}}
@@ -148,6 +156,7 @@ func settingKeys() []string {
 	for _, s := range settingTable() {
 		out = append(out, s.Name)
 	}
+
 	return out
 }
 
@@ -164,13 +173,16 @@ func settingKeys() []string {
 func set(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("set", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
+
 	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
+
 	s, err := store.Open()
 	if err != nil {
 		return err
 	}
+
 	cfg, err := s.Settings()
 	if err != nil {
 		return err
@@ -183,28 +195,36 @@ func set(ctx Context, args []string) error {
 		printSettings(ctx, cfg)
 		return nil
 	}
+
 	if fs.NArg() < 2 {
 		return fmt.Errorf("set needs a key and a value; the keys are %s", strings.Join(settingKeys(), ", "))
 	}
+
 	key, value := fs.Arg(0), fs.Arg(1)
+
 	shown, err := assign(&cfg, key, value)
 	if err != nil {
 		return err
 	}
+
 	if err := s.SaveSettings(cfg); err != nil {
 		return err
 	}
+
 	fmt.Fprintf(ctx.Out, "%s is now %s\n", key, shown)
+
 	return nil
 }
 
 // printSettings is every setting, what it is now, and what it means.
 func printSettings(ctx Context, cfg store.Settings) {
 	p := ctx.printer()
+
 	w := tabwriter.NewWriter(ctx.Out, 0, 0, 2, ' ', 0)
 	for _, s := range settingTable() {
 		fmt.Fprintf(w, "  %s\t%s\t%s\n", s.Name, unset(s.Value(cfg)), s.About(p))
 	}
+
 	_ = w.Flush() // the writer under it is the one Run was handed
 }
 
@@ -214,6 +234,7 @@ func unset(value string) string {
 	if value == "" {
 		return "—"
 	}
+
 	return value
 }
 
@@ -231,6 +252,7 @@ func assign(cfg *store.Settings, key, value string) (string, error) {
 			return s.Set(cfg, value)
 		}
 	}
+
 	return "", fmt.Errorf("%q is not a setting; the keys are %s", key, strings.Join(settingKeys(), ", "))
 }
 
@@ -247,10 +269,12 @@ func onOff(value string) (bool, error) {
 	case "off":
 		return false, nil
 	}
+
 	on, err := strconv.ParseBool(value)
 	if err != nil {
 		return false, fmt.Errorf("autopilot is on or off, not %q", value)
 	}
+
 	return on, nil
 }
 
@@ -259,5 +283,6 @@ func offOn(on bool) string {
 	if on {
 		return "on"
 	}
+
 	return "off"
 }

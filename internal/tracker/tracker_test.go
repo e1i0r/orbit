@@ -51,15 +51,19 @@ func TestParseAllProviders(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Parse(%q) error = %v", tt.url, err)
 			}
+
 			if iss.Kind != tt.wantKind {
 				t.Errorf("Kind = %q, want %q", iss.Kind, tt.wantKind)
 			}
+
 			if iss.ID != tt.wantID {
 				t.Errorf("ID = %q, want %q", iss.ID, tt.wantID)
 			}
+
 			if tt.wantTitle != "" && iss.Title != tt.wantTitle {
 				t.Errorf("Title = %q, want %q", iss.Title, tt.wantTitle)
 			}
+
 			prompt := FormatPrompt(iss)
 			if !strings.Contains(prompt, tt.wantPromptM) {
 				t.Errorf("FormatPrompt(%v) = %q, want to contain %q", iss, prompt, tt.wantPromptM)
@@ -72,9 +76,11 @@ func TestIsTrackerURL(t *testing.T) {
 	if !IsTrackerURL("https://linear.app/org/issue/ENG-1/foo") {
 		t.Error("expected linear URL to match")
 	}
+
 	if !IsTrackerURL("https://jira.corp.com/browse/ENG-1") {
 		t.Error("expected jira URL to match")
 	}
+
 	if IsTrackerURL("https://example.com/not/an/issue") {
 		t.Error("expected non-tracker URL to not match")
 	}

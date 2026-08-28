@@ -42,30 +42,38 @@ import (
 // it is said rather than folded into the diff text.
 func (m Model) diffLines() []string {
 	p := m.opts.Words
+
 	t, isTask := m.task(m.detail)
 	if isTask && view.BandOf(t) == view.ToDo {
 		return []string{" " + Paint(Dim).Render(p.T("diff.empty_todo", "no changes yet — task is in the todo queue (press [n] to start)"))}
 	}
+
 	if !m.diffKnown {
 		return []string{" " + Paint(Dim).Render(p.T("diff.pending", "reading this task's worktree…"))}
 	}
+
 	if m.diffErr != nil {
 		errStr := m.diffErr.Error()
 		if strings.Contains(errStr, "cannot change to") || strings.Contains(errStr, "no such file or directory") {
 			return []string{" " + Paint(Dim).Render(p.T("diff.empty_no_worktree", "no working tree modifications recorded"))}
 		}
+
 		said := errStr
 		if errors.Is(m.diffErr, errGitTimedOut) {
 			said = p.T("diff.timed_out", "git did not answer in time")
 		}
+
 		return []string{" " + Paint(Bad).Render(said)}
 	}
+
 	if strings.TrimSpace(m.diff) == "" {
 		return []string{" " + Paint(Dim).Render(p.T("diff.unchanged", "no changes in this task's worktree"))}
 	}
+
 	files := parseDiffFiles(strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n"))
 	rationales := extractFileRationales(m.entries, files, p)
 	lines, _ := formatStructuredDiff(m.diff, m.width, p, rationales, !m.hideDiffRationale, m.collapsedFiles, m.expandedDetail)
+
 	return lines
 }
 
@@ -90,6 +98,7 @@ func diffRole(line string) Role {
 	case strings.HasPrefix(line, "-"):
 		return Bad
 	}
+
 	return Dim
 }
 
@@ -104,6 +113,7 @@ func (m Model) edit() (tea.Model, tea.Cmd) {
 		return m.say(p.T("msg.only_the_diff", "{key} opens a file, and only the diff tab has one to open",
 			about("key", m.keys.Edit.Help().Key))), nil
 	}
+
 	cmd, err := m.editorFor()
 	if err != nil {
 		return m.say(err.Error()), nil
@@ -130,19 +140,24 @@ func (m Model) edit() (tea.Model, tea.Cmd) {
 // verdict — so there is nothing upstream whose words could go stale.
 func (m Model) editorFor() (*exec.Cmd, error) {
 	p := m.opts.Words
+
 	editor := cmp.Or(os.Getenv("VISUAL"), os.Getenv("EDITOR"))
 	if editor == "" {
 		return nil, errors.New(p.T("msg.no_editor", "no $EDITOR is set, so there is nothing to open the file with"))
 	}
+
 	file, line, ok := fileAt(strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n"), m.panes[tabDiff].YOffset())
 	if !ok {
 		return nil, errors.New(p.T("msg.no_file_here", "there is no file on this line of the diff"))
 	}
+
 	if m.worktree == "" {
 		return nil, errors.New(p.T("msg.no_worktree", "this task has no worktree to open the file in"))
 	}
+
 	cmd := exec.Command(editor, "+"+strconv.Itoa(line), file)
 	cmd.Dir = m.worktree
+
 	return cmd, nil
 }
 
@@ -190,12 +205,14 @@ func fileAt(lines []string, at int) (string, int, bool) {
 	if at < 0 || at >= len(lines) {
 		return "", 0, false
 	}
+
 	var (
 		file   string // the file whose `+++` header the scan last passed
 		line   int    // the line of that file the scan is standing on
 		inHunk bool   // a `@@` has opened a hunk and nothing has closed it
 		gone   bool   // this file's new side is /dev/null: git is deleting it
 	)
+
 	for i := 0; i <= at; i++ {
 		s := lines[i]
 		if strings.HasPrefix(s, "diff --git ") {
@@ -204,10 +221,12 @@ func fileAt(lines []string, at int) (string, int, bool) {
 			file, line, inHunk, gone = "", 0, false, false
 			continue
 		}
+
 		if start, ok := hunkStart(s); ok {
 			inHunk, line = true, start
 			continue
 		}
+
 		if !inHunk {
 			// Furniture. The only part of it that matters here is the new
 			// side's header: the path it names, or the fact that git is
@@ -217,6 +236,7 @@ func fileAt(lines []string, at int) (string, int, bool) {
 			} else if strings.HasPrefix(s, "+++ ") {
 				gone = true
 			}
+
 			continue
 		}
 		// Content. The line the cursor is on is the one being asked about,
@@ -225,14 +245,17 @@ func fileAt(lines []string, at int) (string, int, bool) {
 			line++
 		}
 	}
+
 	if gone {
 		return "", 0, false
 	}
+
 	if file == "" {
 		// Furniture the scan met before its own file's header: whichever
 		// file's `+++` comes next is the file it is introducing.
 		return fileBelow(lines, at)
 	}
+
 	return file, line, true
 }
 
@@ -253,13 +276,16 @@ func fileBelow(lines []string, at int) (string, int, bool) {
 		if _, ok := hunkStart(lines[i]); ok {
 			return "", 0, false
 		}
+
 		if name, ok := fileHeader(lines[i]); ok {
 			return name, 1, true
 		}
+
 		if strings.HasPrefix(lines[i], "+++ ") {
 			return "", 0, false
 		}
 	}
+
 	return "", 0, false
 }
 
@@ -269,9 +295,11 @@ func fileHeader(s string) (string, bool) {
 	if name, ok := strings.CutPrefix(s, "+++ b/"); ok {
 		return name, true
 	}
+
 	if name, ok := strings.CutPrefix(s, "+++ "); ok && name != "/dev/null" {
 		return name, true
 	}
+
 	return "", false
 }
 
@@ -281,15 +309,19 @@ func hunkStart(s string) (int, bool) {
 	if !strings.HasPrefix(s, "@@") {
 		return 0, false
 	}
+
 	_, after, ok := strings.Cut(s, "+")
 	if !ok {
 		return 0, false
 	}
+
 	digits, _, _ := strings.Cut(after, ",")
 	digits, _, _ = strings.Cut(digits, " ")
+
 	n, err := strconv.Atoi(digits)
 	if err != nil || n < 1 {
 		return 0, false
 	}
+
 	return n, true
 }

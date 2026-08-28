@@ -31,16 +31,19 @@ func TestARunParkedAtAGateStillDiesWhenItsDeadlinePasses(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
+
 		done := make(chan error, 1)
 		go func() {
 			done <- Run(ctx, s, tk, gatedFlow(), map[string]engine.Engine{"fake": fake}, FileGate(s, time.Second))
 		}()
+
 		synctest.Wait()
 
 		// Parked, and nobody is coming.
 		find(t, eventsOf(t, s, tk), record.PhaseWaiting)
 
 		time.Sleep(3 * time.Second)
+
 		err := <-done
 		if !errors.Is(err, context.DeadlineExceeded) {
 			t.Fatalf("Run returned %v, want context.DeadlineExceeded — a run parked at a gate has to die when its deadline passes", err)
@@ -51,6 +54,7 @@ func TestARunParkedAtAGateStillDiesWhenItsDeadlinePasses(t *testing.T) {
 	wantKinds(t, events,
 		record.TaskCreated, record.TaskStarted,
 		record.PhaseWaiting, record.TaskTimedOut)
+
 	if len(fake.Calls) != 0 {
 		t.Errorf("the engine was called %d times, want 0 — the phase was never let go", len(fake.Calls))
 	}
@@ -76,12 +80,14 @@ func TestAStaleResumeDoesNotWaveThroughTheNextRunsFirstGate(t *testing.T) {
 		go func() {
 			done <- Run(context.Background(), s, tk, gatedFlow(), map[string]engine.Engine{"fake": fake}, FileGate(s, time.Second))
 		}()
+
 		synctest.Wait()
 
 		waiting := find(t, eventsOf(t, s, tk), record.PhaseWaiting)
 		if got := waiting.Data["why"]; got != "flow" {
 			t.Errorf("phase.waiting says why=%q, want flow — the stale word must not stand in for the flow's own ask", got)
 		}
+
 		if len(fake.Calls) != 0 {
 			t.Fatalf("the engine was called %d times, want 0 — a leftover resume let the review phase run unasked", len(fake.Calls))
 		}
@@ -89,6 +95,7 @@ func TestAStaleResumeDoesNotWaveThroughTheNextRunsFirstGate(t *testing.T) {
 		if err := Control(s, tk, "continue"); err != nil {
 			t.Fatalf("Control: %v", err)
 		}
+
 		if err := <-done; err != nil {
 			t.Fatalf("Run: %v", err)
 		}

@@ -68,10 +68,12 @@ diff --git a/b.go b/b.go
 
 	// Down arrow
 	res, _ := m.handleDiffFilePickerKey(keystroke("down"))
+
 	var ok bool
 	if m, ok = res.(Model); !ok {
 		t.Fatal("expected Model from handleDiffFilePickerKey")
 	}
+
 	if m.diffFileCursor != 1 {
 		t.Errorf("expected cursor=1, got %d", m.diffFileCursor)
 	}
@@ -81,6 +83,7 @@ diff --git a/b.go b/b.go
 	if m, ok = res.(Model); !ok {
 		t.Fatal("expected Model from handleDiffFilePickerKey")
 	}
+
 	if !m.collapsedFiles["b.go"] {
 		t.Errorf("expected b.go to be collapsed")
 	}
@@ -90,6 +93,7 @@ diff --git a/b.go b/b.go
 	if m, ok = res.(Model); !ok {
 		t.Fatal("expected Model from handleDiffFilePickerKey")
 	}
+
 	if m.diffFilePicker {
 		t.Errorf("expected diffFilePicker to be closed")
 	}

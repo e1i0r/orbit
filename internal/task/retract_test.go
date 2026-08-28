@@ -24,6 +24,7 @@ func TestRetractSupervisorStopsRepeatingATurnWithoutErasingIt(t *testing.T) {
 			t.Fatalf("RecordSupervisor %q: %v", text, err)
 		}
 	}
+
 	events, err := SupervisorEvents(s)
 	if err != nil {
 		t.Fatalf("SupervisorEvents: %v", err)
@@ -37,9 +38,11 @@ func TestRetractSupervisorStopsRepeatingATurnWithoutErasingIt(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SupervisorEvents: %v", err)
 	}
+
 	if len(events) != 4 {
 		t.Fatalf("the log holds %d events, want 4: three turns and the line that takes one back", len(events))
 	}
+
 	if events[1].Text != "the one I regret" {
 		t.Errorf("the retracted turn is gone from the log; events[1] = %+v", events[1])
 	}
@@ -48,9 +51,11 @@ func TestRetractSupervisorStopsRepeatingATurnWithoutErasingIt(t *testing.T) {
 	if strings.Contains(got, "the one I regret") {
 		t.Errorf("the retracted turn is still in the prompt: %q", got)
 	}
+
 	if !strings.Contains(got, "first thing") || !strings.Contains(got, "third thing") {
 		t.Errorf("a retraction took more than its own line with it: %q", got)
 	}
+
 	if strings.Contains(got, record.SupervisorRetracted) {
 		t.Errorf("the retraction itself became a turn of the conversation: %q", got)
 	}
@@ -64,9 +69,11 @@ func TestRetractSupervisorRefusesWhatItCannotFind(t *testing.T) {
 	if err := RetractSupervisor(nil, time.Now()); err == nil {
 		t.Error("RetractSupervisor on a nil store answered nil, want error")
 	}
+
 	if err := RetractSupervisor(s, time.Time{}); err == nil {
 		t.Error("RetractSupervisor with no timestamp answered nil, want error")
 	}
+
 	if err := RetractSupervisor(s, time.Now()); err == nil {
 		t.Error("RetractSupervisor over an empty thread answered nil, want error")
 	}
@@ -74,10 +81,12 @@ func TestRetractSupervisorRefusesWhatItCannotFind(t *testing.T) {
 	if err := RecordSupervisor(s, "", "elio", "cli", "", "", "the only turn"); err != nil {
 		t.Fatalf("RecordSupervisor: %v", err)
 	}
+
 	events, err := SupervisorEvents(s)
 	if err != nil {
 		t.Fatalf("SupervisorEvents: %v", err)
 	}
+
 	if err := RetractSupervisor(s, events[0].At.Add(time.Nanosecond)); err == nil {
 		t.Error("RetractSupervisor a nanosecond off the turn answered nil, want error")
 	}
@@ -86,10 +95,12 @@ func TestRetractSupervisorRefusesWhatItCannotFind(t *testing.T) {
 	if err := RetractSupervisor(s, events[0].At); err != nil {
 		t.Fatalf("RetractSupervisor: %v", err)
 	}
+
 	events, err = SupervisorEvents(s)
 	if err != nil {
 		t.Fatalf("SupervisorEvents: %v", err)
 	}
+
 	if err := RetractSupervisor(s, events[1].At); err == nil {
 		t.Error("retracting a retraction answered nil, want error")
 	}
