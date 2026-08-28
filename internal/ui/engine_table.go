@@ -119,3 +119,24 @@ func dialLabel(ids, labels []string, i int) string {
 
 	return ids[i]
 }
+
+// dialEngine is whose dials to offer when nothing names an engine: the
+// window's setting, and failing that the first engine this build has.
+//
+// A phase inherits its engine, and so does the start dialog, so "" is the
+// ordinary case here and not a fault. What it must not become is a name
+// picked out of the air — the dials in this package used to answer claude
+// to it, on a build where claude may not even be installed.
+func (m Model) dialEngine(named string) string {
+	if named != "" {
+		return named
+	}
+
+	if s := m.opts.Settings; s != nil {
+		if set := s.Engine(); set != "" {
+			return set
+		}
+	}
+
+	return first(m.engineNames())
+}

@@ -96,3 +96,49 @@ func TestAComposeFormWithNoEnginesPortInventsNone(t *testing.T) {
 		t.Errorf("the form composes with %q with no engines port, want nothing", got)
 	}
 }
+
+// The flow editor's per-phase dials. They were three lists written out in
+// flowsdelta.go, and the model one offered every engine sonnet — claude's
+// alone — so a codex phase could be built holding a model codex refuses.
+func TestTheFlowEditorDialsAreTheEnginesOwn(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+	m.opts.Engines = zetaEngines
+	m = m.startCreateFlow()
+
+	for _, tc := range []struct {
+		field int
+		got   func(Model) string
+		want  []string
+	}{
+		{flowFieldEngine, func(m Model) string { return m.flows.cur().Engine }, []string{"zeta"}},
+		{flowFieldModel, func(m Model) string { return m.flows.cur().Model }, []string{"zeta/one", "zeta/two"}},
+		{flowFieldEffort, func(m Model) string { return m.flows.cur().Effort }, []string{"brisk"}},
+	} {
+		m.flows.field = tc.field
+		// Around the dial twice, so a list longer than the engine's would
+		// show up as a value that is not on it rather than as an order.
+		for range 2 * len(tc.want) {
+			next, _ := m.handleFlowFieldDelta(1)
+			m = next
+
+			if got := tc.got(m); !slices.Contains(tc.want, got) {
+				t.Errorf("field %d cycled onto %q, which is not one of zeta's %v", tc.field, got, tc.want)
+			}
+		}
+	}
+}
+
+// The effort knob on the start dialog. Its list was written out in
+// startdials.go and held xhigh, which codex does not have.
+func TestCyclingTheEffortKnobStaysOnTheEnginesOwn(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+	m.opts.Engines = zetaEngines
+
+	efforts, _ := m.effortsFor("zeta")
+	for range 2 * len(efforts) {
+		m = m.cycleEffort()
+		if !slices.Contains(efforts, m.knobs.Effort) {
+			t.Fatalf("the effort knob cycled onto %q, which is not one of zeta's %v", m.knobs.Effort, efforts)
+		}
+	}
+}

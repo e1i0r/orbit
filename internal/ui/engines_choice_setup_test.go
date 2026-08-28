@@ -23,7 +23,7 @@ func enginesTestList() []EngineInfo {
 		{
 			Name:      "claude",
 			Available: true,
-			Models:    []ChoiceInfo{{ID: "", Label: "default"}, {ID: "opus", Label: "opus"}},
+			Models:    []ChoiceInfo{{ID: "", Label: "default"}, {ID: "opus", Label: "opus"}, {ID: "sonnet", Label: "sonnet"}},
 			Efforts:   []ChoiceInfo{{ID: "", Label: "default"}, {ID: "low", Label: "low"}, {ID: "high", Label: "high"}},
 			CanThink:  true,
 		},
