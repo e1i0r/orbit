@@ -16,6 +16,7 @@ package cli
 // for.
 
 import (
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -265,5 +266,37 @@ func TestOnceDrawsAFrameEvenWhenThereIsATerminalToOpen(t *testing.T) {
 				t.Errorf("drawsOneFrame(once=%v, terminal=%v) = %v, want %v", c.once, c.terminal, got, c.want)
 			}
 		})
+	}
+}
+
+// TestTopSaysWhenItCouldNotOpenItsLog. The window is drawn either way —
+// nothing on it is read out of the log — but a diagnostic log that has been
+// going nowhere since the first frame is the thing a reader finds out about a
+// week later, from an empty file, while looking for why something else broke.
+func TestTopSaysWhenItCouldNotOpenItsLog(t *testing.T) {
+	root, orbitHome := workspace(t)
+	// A file where the log directory goes. os.MkdirAll refuses to make a
+	// directory over one, which is the way to make Init fail that does not
+	// depend on being able to take a permission away from whoever is running
+	// the tests.
+	if err := os.MkdirAll(orbitHome, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(filepath.Join(orbitHome, "logs"), []byte("not a directory\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	code, out, errOut := run(t, "top", "-once", root)
+	if !strings.Contains(errOut, "logs") {
+		t.Errorf("top opened no log and said nothing about it: %q", errOut)
+	}
+
+	if !strings.Contains(out, "1 repo") {
+		t.Errorf("a log that would not open took the board with it: %q", out)
+	}
+
+	if code == 0 {
+		t.Error("top exited 0 with a log that was never opened")
 	}
 }
