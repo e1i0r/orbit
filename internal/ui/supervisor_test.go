@@ -29,8 +29,10 @@ func TestSupervisorScreenOpenAndAbandon(t *testing.T) {
 func TestSupervisorTypingAndSubmit(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	var recorded []string
+	var signedBy []string
 	m.opts.RecordSupervisor = func(by, channel, message string) error {
 		recorded = append(recorded, message)
+		signedBy = append(signedBy, by)
 		return nil
 	}
 
@@ -57,6 +59,13 @@ func TestSupervisorTypingAndSubmit(t *testing.T) {
 	}
 	if m.supervisor.input != "" {
 		t.Errorf("input not cleared after enter: %q", m.supervisor.input)
+	}
+	// The window used to sign every message with one particular person's
+	// name. The thread is one conversation and every other door writes
+	// "operator": a name hardcoded here made the same person read as two
+	// participants depending on which door they came through.
+	if len(signedBy) != 1 || signedBy[0] != "operator" {
+		t.Errorf("signed by %v, want [operator]", signedBy)
 	}
 }
 

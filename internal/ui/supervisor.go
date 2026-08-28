@@ -99,7 +99,12 @@ func (m Model) supervisorKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 
 func (m Model) sendSupervisorMessage(text string) (tea.Model, tea.Cmd) {
 	if m.opts.RecordSupervisor != nil {
-		if err := m.opts.RecordSupervisor("elio", "tui", text); err != nil {
+		// "operator" is who every other door writes, and the thread is one
+		// conversation: a name hardcoded here made the same person read as
+		// two participants depending on whether they typed in the window or
+		// in a terminal, and put somebody else's name on the messages of
+		// anyone who is not the author of this program.
+		if err := m.opts.RecordSupervisor("operator", "tui", text); err != nil {
 			return m.say(err.Error()), nil
 		}
 	}

@@ -10,7 +10,7 @@ import (
 type SupervisorLine struct {
 	At      time.Time `json:"at"`
 	Kind    string    `json:"kind"`
-	By      string    `json:"by"`      // "elio", "operator", "supervisor", "claude", "opencode", "codex"
+	By      string    `json:"by"`      // "operator", "supervisor", "claude", "opencode", "codex"
 	Channel string    `json:"channel"` // "tui", "cli", "autopilot", "mcp"
 	TaskID  string    `json:"task_id,omitempty"`
 	Repo    string    `json:"repo,omitempty"`
