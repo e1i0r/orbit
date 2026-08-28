@@ -1,12 +1,18 @@
+// Package tracker turns an issue tracker URL a reader pasted into a task
+// description, through a registry of providers — Linear, Jira, GitHub,
+// GitLab — that each recognise their own URLs and write their own prompt.
+//
+// The sentence above is a doc comment because it sits above the package
+// clause. It used to sit below it, here and in tracker.go both, which makes
+// it an ordinary comment attached to nothing: `go doc` showed this package
+// with no description at all, twice over.
 package tracker
-
-// Package tracker provides an extensible registry of issue tracker providers
-// (Linear, Jira, GitHub, GitLab, etc.) to parse task URLs and format prompts.
 
 import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 )
 
 // Provider defines the extensible contract for any issue tracking platform.
@@ -28,6 +34,15 @@ type Issue struct {
 	RawURL      string // original URL provided by the user
 }
 
+// registryMu guards registry.
+//
+// Register appends to a package-level slice and every reader below ranges
+// over it. Nothing serialised the two, so a provider registered while a
+// paste was being parsed is a data race — the kind the race detector calls
+// and the kind that, unluckily, hands a reader of the slice a header that no
+// longer describes the array behind it.
+var registryMu sync.RWMutex
+
 var registry = []Provider{
 	LinearProvider{},
 	JiraProvider{},
@@ -37,11 +52,17 @@ var registry = []Provider{
 
 // Register registers a new tracker provider.
 func Register(p Provider) {
+	registryMu.Lock()
+	defer registryMu.Unlock()
+
 	registry = append(registry, p)
 }
 
 // Providers returns a copy of all registered tracker providers.
 func Providers() []Provider {
+	registryMu.RLock()
+	defer registryMu.RUnlock()
+
 	out := make([]Provider, len(registry))
 	copy(out, registry)
 
@@ -55,7 +76,7 @@ func Parse(rawURL string) (Issue, error) {
 		return Issue{}, errors.New("empty url")
 	}
 
-	for _, p := range registry {
+	for _, p := range Providers() {
 		if p.Match(trimmed) {
 			return p.Parse(trimmed)
 		}
@@ -66,7 +87,7 @@ func Parse(rawURL string) (Issue, error) {
 
 // FormatPrompt generates the task description prompt with MCP hints.
 func FormatPrompt(issue Issue) string {
-	for _, p := range registry {
+	for _, p := range Providers() {
 		if strings.EqualFold(p.Name(), issue.Kind) {
 			return p.FormatPrompt(issue)
 		}
