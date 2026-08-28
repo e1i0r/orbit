@@ -10,7 +10,9 @@ package cli
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/board"
@@ -152,4 +154,116 @@ func TestEnginesPortMarksEveryEngineUnavailableWithNoPath(t *testing.T) {
 			t.Errorf("engine %q reported unavailable with no setup guide", info.Name)
 		}
 	}
+}
+
+// The delete gesture. It asked the store for both of its directories by the
+// repository's name, and the store keys everything by the repository's path:
+// what it removed was a hash of "payments" resolved against whatever
+// directory the process happened to be started in — nothing, in every test
+// here and on every machine where the window was not opened from the
+// workspace root — and it answered nil regardless, so the window said "task
+// deleted" over a task that was still there.
+
+func TestDeletingATaskRemovesTheRecordTheStoreActuallyWrote(t *testing.T) {
+	root, _ := workspace(t)
+	dir := writeTask(t, root)
+
+	s, err := store.Open()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	r, err := repo.Open(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	taskDir, err := s.TaskDir(r.Path, "ACME-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !exists(taskDir) {
+		t.Fatalf("the fixture wrote no record at %q", taskDir)
+	}
+
+	if err := deleteTaskPort(s)(view.Task{ID: "ACME-1", Repo: r.Name, RepoPath: r.Path}); err != nil {
+		t.Fatalf("delete: %v", err)
+	}
+
+	if exists(taskDir) {
+		t.Errorf("the record at %q is still there and the gesture reported success", taskDir)
+	}
+}
+
+// TestDeletingATaskGivesTheWorktreeBackToGit. os.RemoveAll takes the checkout
+// away and leaves the entry under .git/worktrees behind, in a repository
+// Orbit does not own — and the next `git worktree add` on that branch meets
+// it.
+func TestDeletingATaskGivesTheWorktreeBackToGit(t *testing.T) {
+	root, _ := workspace(t)
+	dir := writeTask(t, root)
+
+	s, err := store.Open()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	r, err := repo.Open(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	wtDir, err := s.WorktreeDir(r.Path, "ACME-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := r.AddWorktree(wtDir, "orbit/ACME-1"); err != nil {
+		t.Fatalf("add a worktree: %v", err)
+	}
+
+	if err := deleteTaskPort(s)(view.Task{ID: "ACME-1", Repo: r.Name, RepoPath: r.Path}); err != nil {
+		t.Fatalf("delete: %v", err)
+	}
+
+	if exists(wtDir) {
+		t.Errorf("the checkout at %q is still there", wtDir)
+	}
+
+	if listed := worktrees(t, r.Path); strings.Contains(listed, wtDir) {
+		t.Errorf("git still lists the worktree that was deleted:\n%s", listed)
+	}
+}
+
+// TestADeleteThatCouldNotHappenSaysSo. An id the store refuses is the one
+// failure this port can be handed on purpose, and the window has a band to
+// put the sentence in.
+func TestADeleteThatCouldNotHappenSaysSo(t *testing.T) {
+	workspace(t)
+
+	s, err := store.Open()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := deleteTaskPort(s)(view.Task{ID: "../etc", Repo: "payments", RepoPath: "payments"}); err == nil {
+		t.Error("a delete the store refused came back as a success")
+	}
+}
+
+// worktrees is what git says the repository has, which is the half of a
+// worktree that lives inside the repository rather than in the state root.
+func worktrees(t *testing.T, repoPath string) string {
+	t.Helper()
+
+	cmd := exec.Command("git", "worktree", "list")
+	cmd.Dir = repoPath
+
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("git worktree list: %v\n%s", err, out)
+	}
+
+	return string(out)
 }

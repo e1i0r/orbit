@@ -17,6 +17,7 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -36,10 +37,10 @@ import (
 
 // top opens the window, or draws one frame of it.
 //
-// The sweep runs before either. Its errors are carried past the frame and
-// past the window rather than returned on the spot: a sentence printed
-// immediately before a full-screen program starts is a sentence the alt
-// screen wipes before anybody has read it, and one printed instead of the
+// The sweep runs before either. Its errors, and the log's, are carried past
+// the frame and past the window rather than returned on the spot: a sentence
+// printed immediately before a full-screen program starts is a sentence the
+// alt screen wipes before anybody has read it, and one printed instead of the
 // frame would replace the thing that was asked for with a complaint about a
 // record on the side.
 func top(ctx Context, args []string) error {
@@ -59,7 +60,14 @@ func top(ctx Context, args []string) error {
 		return err
 	}
 
-	if logErr := logger.Init(s.LogPath()); logErr == nil {
+	// A log that cannot be opened is not a reason to refuse a window — the
+	// window is the thing that was asked for and none of it is drawn from
+	// the log. It is a reason to say so, and the sentence leaves the same way
+	// the sweep's does: out of the bottom of this function, once the terminal
+	// is back. Printed here it would be printed into the frame the alternate
+	// screen is about to wipe.
+	logErr := logger.Init(s.LogPath())
+	if logErr == nil {
 		// Closing answers what the log could not write, and that is said
 		// on the error stream rather than swallowed: this runs after the
 		// window has given the terminal back and the mcp client is not
@@ -74,7 +82,7 @@ func top(ctx Context, args []string) error {
 		logger.Info("cli/top", "orbit top started on %q (once=%v, lang=%q)", dir, once, lang)
 	}
 
-	swept := reconcileAll(s)
+	trouble := errors.Join(logErr, reconcileAll(s))
 
 	if drawsOneFrame(once, interactive(ctx.Out)) {
 		opts.Quota = quotaPort(quota.FromEnv(), true)
@@ -86,14 +94,14 @@ func top(ctx Context, args []string) error {
 
 		fmt.Fprintln(ctx.Out, frame)
 
-		return swept
+		return trouble
 	}
 
 	if _, err := tea.NewProgram(fullScreen{ui.New(opts)}).Run(); err != nil {
 		return fmt.Errorf("the window: %w", err)
 	}
 
-	return swept
+	return trouble
 }
 
 // window builds everything one window is made of.

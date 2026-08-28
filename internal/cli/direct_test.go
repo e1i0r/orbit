@@ -4,6 +4,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/store"
 )
 
 func TestDirectTaskEarlyExits(t *testing.T) {
@@ -79,5 +81,37 @@ func TestDirectTaskWithRestartFlag(t *testing.T) {
 
 	if !strings.Contains(out, "restarted") {
 		t.Errorf("direct -restart did not report restart: %s", out)
+	}
+}
+
+// TestUnreadCannotBeGuessedAtZero. What is unread is the brake on starting a
+// run, and zero is the one count atCap never refuses: a board that could not
+// be read used to be reported as zero unread, so `direct -restart` started a
+// run the cap existed to stop and nothing said why.
+//
+// It is asked of the function rather than of the command because the only
+// board Refresh refuses is one whose root cannot be walked, and by the time
+// the command reaches this line it has already opened that root as a
+// repository — there is no way to take it away in between from inside one
+// process.
+func TestUnreadCannotBeGuessedAtZero(t *testing.T) {
+	root, _ := workspace(t)
+
+	s, err := store.Open()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := unreadCount(s, filepath.Join(root, "no-such-directory")); err == nil {
+		t.Error("a board that could not be read was counted as nothing unread")
+	}
+
+	n, err := unreadCount(s, filepath.Join(root, "payments"))
+	if err != nil {
+		t.Fatalf("count what is unread in a repository that is there: %v", err)
+	}
+
+	if n != 0 {
+		t.Errorf("a repository with no finished tasks has %d unread, want 0", n)
 	}
 }

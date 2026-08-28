@@ -47,14 +47,7 @@ func createPR(ctx Context, args []string) error {
 
 	firstLine := strings.SplitN(strings.TrimSpace(t.Text), "\n", 2)[0]
 
-	commitMsg := fmt.Sprintf("feat(%s): %s", taskID, firstLine)
-	if len(commitMsg) > 72 {
-		if idx := strings.LastIndex(commitMsg[:72], " "); idx > 20 {
-			commitMsg = commitMsg[:idx]
-		} else {
-			commitMsg = commitMsg[:72]
-		}
-	}
+	commitMsg := clipWords(fmt.Sprintf("feat(%s): %s", taskID, firstLine), 72)
 
 	if err := r.SyncBaseBranch(wtDir, r.Base); err != nil {
 		logger.Warn("cli/pr", "sync base branch %q into %q: %v", r.Base, wtDir, err)
@@ -73,12 +66,11 @@ func createPR(ctx Context, args []string) error {
 	body := fmt.Sprintf("## Orbit Task: %s\n\n%s\n\nGenerated automatically by Orbit.", taskID, t.Text)
 
 	title := fmt.Sprintf("%s: %s", taskID, firstLine)
-	if len(title) > 90 {
-		if idx := strings.LastIndex(title[:90], " "); idx > 20 {
-			title = title[:idx] + "..."
-		} else {
-			title = title[:87] + "..."
-		}
+	// 87 and not 90, because the three dots are part of what a reader sees:
+	// the branch that cut at a space used to append them to a title already
+	// at the limit and hand 93 characters to a field meant to hold 90.
+	if short := clipWords(title, 87); short != title {
+		title = short + "..."
 	}
 
 	prURL, err := r.CreatePR(wtDir, title, body, branch, r.Base)
@@ -91,4 +83,31 @@ func createPR(ctx Context, args []string) error {
 	fmt.Fprintf(ctx.Out, "Pull Request created: %s\n", prURL)
 
 	return nil
+}
+
+// clipWords cuts s down to at most limit characters, at the last space when
+// there is a reasonable one, and never through the middle of a character.
+//
+// Characters and not bytes. len counts bytes, so a title written in a script
+// whose letters take more than one — an accent, a kanji — is cut halfway
+// through a letter: git records the half, the pull request title carries
+// U+FFFD, and nothing on the way said anything had gone wrong. Cutting on
+// runes costs one conversion and cannot do that.
+//
+// The last space is preferred so a subject ends on a whole word, and a space
+// too near the start is ignored — a title whose first word is longer than the
+// limit would otherwise be cut down to almost nothing.
+func clipWords(s string, limit int) string {
+	r := []rune(s)
+	if len(r) <= limit {
+		return s
+	}
+	// A space is one byte and always a boundary, so a byte index into the
+	// already-shortened string is a safe place to cut it a second time.
+	cut := string(r[:limit])
+	if i := strings.LastIndex(cut, " "); i > 20 {
+		return cut[:i]
+	}
+
+	return cut
 }
