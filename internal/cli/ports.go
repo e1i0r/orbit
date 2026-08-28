@@ -56,24 +56,61 @@ func markReadPort(s *store.Store) func(view.Task) error {
 }
 
 // deleteTaskPort permanently removes a task's record directory and worktree.
+//
+// The path and not the name. Every directory the store keeps is under a hash
+// of the repository's path, and this asked for both of them by the name a row
+// displays: filepath.Abs("payments") is whatever directory orbit was started
+// in plus "payments", so the gesture deleted the right task when the window
+// happened to be opened from the workspace root and silently deleted nothing
+// anywhere else. It said "task deleted" either way.
+//
+// The worktree goes through git rather than through os.RemoveAll, because the
+// bookkeeping under .git/worktrees is the one thing Orbit writes into a
+// repository it does not own, and a checkout removed by hand leaves an entry
+// behind that only `git worktree prune` clears. It goes first, so that a task
+// whose checkout could not be given up still has a record and can be asked
+// again; and it goes only if it is there, since a task that never ran has no
+// worktree and git refuses to remove one that is missing.
+//
+// What went wrong comes back. The window puts it in the activity band, which
+// is the difference between a row that returns on the next poll for a reason
+// and one that returns for none.
 func deleteTaskPort(s *store.Store) func(view.Task) error {
 	if s == nil {
 		return nil
 	}
 
 	return func(t view.Task) error {
-		taskDir, err := s.TaskDir(t.Repo, t.ID)
-		if err == nil {
-			_ = os.RemoveAll(taskDir)
+		var errs []error
+
+		wtDir, err := s.WorktreeDir(t.RepoPath, t.ID)
+
+		switch {
+		case err != nil:
+			errs = append(errs, err)
+		case exists(wtDir):
+			if err := (repo.Repo{Path: t.RepoPath}).RemoveWorktree(wtDir); err != nil {
+				errs = append(errs, err)
+			}
 		}
 
-		wtDir, err := s.WorktreeDir(t.Repo, t.ID)
-		if err == nil {
-			_ = os.RemoveAll(wtDir)
+		taskDir, err := s.TaskDir(t.RepoPath, t.ID)
+		if err != nil {
+			errs = append(errs, err)
+		} else if err := os.RemoveAll(taskDir); err != nil {
+			errs = append(errs, err)
 		}
 
-		return nil
+		return errors.Join(errs...)
 	}
+}
+
+// exists is whether there is anything at path. A stat that failed for any
+// other reason answers false: what follows it is a removal, and git says
+// what it could not read better than this line could.
+func exists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }
 
 // startPort is the only thing in this program that a window can do which
