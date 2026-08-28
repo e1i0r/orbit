@@ -15,6 +15,14 @@ type supervisorState struct {
 	offset     int
 	lines      []view.SupervisorLine
 	err        error
+
+	// picking is the mode that takes a turn back: ↑↓ choose a line instead
+	// of scrolling and ↵ withdraws it instead of sending. It is a mode
+	// rather than a key on its own because on this screen every printable
+	// key already types, and the arrows already scroll — there was no free
+	// gesture left for "which line".
+	picking bool
+	pick    int
 }
 
 func (m Model) openSupervisor() Model {
@@ -53,8 +61,12 @@ func (m Model) syncSupervisor() Model {
 
 func (m Model) supervisorKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
+	case m.supervisor.picking:
+		return m.pickingKey(msg)
 	case msg.Code == tea.KeyEscape || key.Matches(msg, m.keys.Back):
 		return m.abandonSupervisor(), nil
+	case (msg.Code == 'r' || msg.Code == 'R') && msg.Mod&tea.ModCtrl != 0:
+		return m.startPicking(), nil
 	case msg.Code == tea.KeyUp:
 		if m.supervisor.offset > 0 {
 			m.supervisor.offset--
@@ -117,4 +129,51 @@ func (m Model) sendSupervisorMessage(text string) (tea.Model, tea.Cmd) {
 	}
 	cmd := askSupervisorCmd(m.opts.AskSupervisor, eng, text)
 	return m.say(m.opts.Words.T("supervisor.thinking", "supervisor is thinking...")), tea.Batch(cmd, spinnerTick())
+}
+
+// startPicking opens the mode that takes a turn back, on the last line said
+// — which is the one somebody has just regretted nine times out of ten.
+func (m Model) startPicking() Model {
+	if len(m.supervisor.lines) == 0 || m.opts.RetractSupervisor == nil {
+		return m
+	}
+	m.supervisor.picking = true
+	m.supervisor.pick = len(m.supervisor.lines) - 1
+	return m
+}
+
+// pickingKey is every key while a line is being picked.
+func (m Model) pickingKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	switch {
+	case msg.Code == tea.KeyEscape || key.Matches(msg, m.keys.Back) ||
+		((msg.Code == 'r' || msg.Code == 'R') && msg.Mod&tea.ModCtrl != 0):
+		m.supervisor.picking = false
+		return m, nil
+	case msg.Code == tea.KeyUp:
+		m.supervisor.pick = max(m.supervisor.pick-1, 0)
+		return m, nil
+	case msg.Code == tea.KeyDown:
+		m.supervisor.pick = min(m.supervisor.pick+1, len(m.supervisor.lines)-1)
+		return m, nil
+	case msg.Code == tea.KeyEnter || key.Matches(msg, m.keys.Open):
+		return m.retractPicked(), nil
+	}
+	return m, nil
+}
+
+// retractPicked takes back the line under the cursor.
+func (m Model) retractPicked() Model {
+	m.supervisor.picking = false
+	if m.opts.RetractSupervisor == nil || m.supervisor.pick >= len(m.supervisor.lines) {
+		return m
+	}
+	l := m.supervisor.lines[m.supervisor.pick]
+	if l.Retracted {
+		return m.say(m.opts.Words.T("supervisor.already_back", "that line was already taken back"))
+	}
+	if err := m.opts.RetractSupervisor(l.At); err != nil {
+		return m.say(err.Error())
+	}
+	m = m.syncSupervisor()
+	return m.say(m.opts.Words.T("supervisor.took_back", "took that line back; the supervisor is no longer told it"))
 }

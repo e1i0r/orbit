@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 
@@ -142,6 +143,9 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 		MarkRead: markReadPort(s),
 		RecordSupervisor: func(by, channel, message string) error {
 			return task.RecordSupervisor(s, "", by, channel, "", "", message)
+		},
+		RetractSupervisor: func(at time.Time) error {
+			return task.RetractSupervisor(s, at)
 		},
 		AskSupervisor: func(engineName, prompt string) (string, error) {
 			eng, ok := engines[engineName]

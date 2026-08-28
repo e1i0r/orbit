@@ -124,6 +124,13 @@ type Options struct {
 	// RecordSupervisor records a message into the global supervisor conversation thread.
 	RecordSupervisor func(by, channel, message string) error
 
+	// RetractSupervisor takes back one turn of that thread, named by the
+	// moment it was written — an event carries no id, so its timestamp is
+	// the only thing that already tells one line from another. Nothing is
+	// erased: the line stays in the thread, marked, and stops being put in
+	// front of the model.
+	RetractSupervisor func(at time.Time) error
+
 	// AskSupervisor asks the active engine to process and reply to the supervisor thread.
 	AskSupervisor func(engineName, prompt string) (string, error)
 
