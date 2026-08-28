@@ -28,35 +28,50 @@ func (Codex) CanResume() bool { return true }
 
 // Models returns the models codex supports.
 //
-// Empty on purpose, which leaves the dial at "default" and lets codex use
-// whatever ~/.codex/config.toml names. The list this replaced was o3-mini,
-// o3, o1, gpt-4o and gpt-4.5-preview — five names from before codex shipped,
-// and internal/task checks a phase's model against this list before running
-// anything, so the only models a phase could name on codex were five the
-// account behind the CLI answers "not supported" to.
+// The five names this replaced were o3-mini, o3, o1, gpt-4o and
+// gpt-4.5-preview — a list from before codex shipped. internal/task checks a
+// phase's model against this one before it runs anything, so the only models
+// a phase could name on codex were five the account answers "not supported"
+// to. It was then cut to nothing at all, which was the opposite mistake: the
+// dial had one position and codex has four.
 //
-// A written-down catalogue is what went stale, and codex's own catalogue is
-// a function of the account rather than of the binary: the same `codex exec`
-// on two logins takes different names. There is no list this package can
-// hold that is true for both, so it holds none and asks for nothing.
+// These four are what `codex exec --model` was actually run with, one at a
+// time, on codex-cli 0.150.1. The other slugs in the binary — gpt-5.6-sol,
+// gpt-5.6-pro, gpt-5.4, gpt-5.3-codex, gpt-5.2, gpt-5.2-codex — are the
+// legacy names its own picker points at config.toml for, and every one of
+// them came back "not supported". Refresh this the same way, by running
+// them; codex has no verb that lists them.
 func (Codex) Models() []Choice {
-	return []Choice{{ID: "", Label: "default"}}
+	return []Choice{
+		{ID: "", Label: "default"},
+		{ID: "gpt-5.6-terra", Label: "gpt-5.6-terra"},
+		{ID: "gpt-5.6-luna", Label: "gpt-5.6-luna"},
+		{ID: "gpt-5.5", Label: "gpt-5.5"},
+		{ID: "gpt-5.4-mini", Label: "gpt-5.4-mini"},
+	}
 }
 
 // Efforts returns the reasoning effort levels codex supports.
 //
-// Three, and they are the intersection of two gates rather than of one.
-// codex parses the value against its own enum — minimal, low, medium, high —
-// and then the model behind it answers with its own vocabulary, which for
-// gpt-5.6 is none, low, medium, high, xhigh and max. minimal passes the
-// first gate and fails the second; xhigh and max pass the second and fail
-// the first. What survives both is what is offered here.
+// Verified by running each one, because the value passes two gates: codex's
+// own config enum and then the model's vocabulary. On 0.46.0 the first gate
+// was minimal|low|medium|high and this list was cut to three; on 0.150.1 the
+// enum has widened and minimal is the one word now rejected by every model
+// tried.
+//
+// max is left out although it works, and that is the one judgement here.
+// This list is not per-model — the dial offers it whichever model is chosen —
+// so a value that works on gpt-5.6-terra and gpt-5.6-luna and is refused by
+// gpt-5.5 and gpt-5.4-mini would be a position on the dial that fails
+// depending on a different dial. The five below were accepted by all four.
 func (Codex) Efforts() []Choice {
 	return []Choice{
 		{ID: "", Label: "default"},
+		{ID: "none", Label: "none"},
 		{ID: "low", Label: "low"},
 		{ID: "medium", Label: "medium"},
 		{ID: "high", Label: "high"},
+		{ID: "xhigh", Label: "xhigh"},
 	}
 }
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/e1i0r/orbit/internal/record"
 )
@@ -87,5 +88,33 @@ func TestHistoryKeepsTheRecentTurnsAndSaysHowManyItDropped(t *testing.T) {
 func TestHistoryOfAnEmptyThreadIsEmpty(t *testing.T) {
 	if got := history(nil); got != "" {
 		t.Errorf("history(nil) = %q, want empty", got)
+	}
+}
+
+// TestOneLongTurnDoesNotBlankTheThread is the fix.
+//
+// history counted backwards from the newest turn and stopped at the first
+// one that did not fit. A turn longer than the whole budget stopped it at
+// zero, so the model was shown nothing but the line saying how many turns
+// it was not being shown — the turn it is answering included.
+func TestOneLongTurnDoesNotBlankTheThread(t *testing.T) {
+	huge := strings.Repeat("x", maxHistory+1024)
+	at := time.Date(2026, 8, 28, 9, 0, 0, 0, time.UTC)
+
+	got := history([]record.Event{
+		{At: at, Kind: record.SupervisorMessage, Text: "an earlier turn"},
+		{At: at.Add(time.Minute), Kind: record.SupervisorMessage, Text: huge},
+	})
+
+	if !strings.Contains(got, "is cut here") {
+		t.Errorf("the long turn was not cut and announced; got %d bytes", len(got))
+	}
+
+	if len(got) > maxHistory+512 {
+		t.Errorf("history is %d bytes, over the %d budget", len(got), maxHistory)
+	}
+
+	if !strings.Contains(got, "xxxx") {
+		t.Error("the newest turn is missing entirely; the model is answering a thread it cannot see")
 	}
 }

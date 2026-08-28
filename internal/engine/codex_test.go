@@ -19,11 +19,17 @@ func TestCodexInterface(t *testing.T) {
 		t.Error("CanThink() = false, want true")
 	}
 
-	// Models is deliberately just "default": codex's catalogue is a fact
-	// about the account behind the login, not about the binary, so this
-	// package holds no list of its own to go stale.
-	if len(c.Models()) != 1 || c.Models()[0].ID != "" {
-		t.Errorf("Models() = %v, want only the default choice", c.Models())
+	// Every model the dial offers was run. A list nobody ran is what put
+	// o3-mini and gpt-4o on this dial in the first place.
+	want := []string{"", "gpt-5.6-terra", "gpt-5.6-luna", "gpt-5.5", "gpt-5.4-mini"}
+	got := make([]string, 0, len(c.Models()))
+
+	for _, m := range c.Models() {
+		got = append(got, m.ID)
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("Models() = %v, want %v", got, want)
 	}
 
 	if len(c.Efforts()) == 0 {
@@ -31,26 +37,40 @@ func TestCodexInterface(t *testing.T) {
 	}
 }
 
-// TestCodexEffortsAreOnesCodexTakes. The values pass two gates, not one:
-// codex parses them against its own enum — minimal, low, medium, high — and
-// the model behind it answers with its own, which for gpt-5.6 is none, low,
-// medium, high, xhigh and max. Only the overlap can ever run.
-func TestCodexEffortsAreOnesCodexTakes(t *testing.T) {
-	codexTakes := map[string]bool{"minimal": true, "low": true, "medium": true, "high": true}
-	modelTakes := map[string]bool{"none": true, "low": true, "medium": true, "high": true, "xhigh": true, "max": true}
+// TestCodexEffortsAreOnesEveryModelTakes.
+//
+// An effort passes two gates: codex's own config enum, and then the model's
+// vocabulary. The dial is not per-model, so a value only some models accept
+// is a position that fails depending on a different dial — which is why max
+// is absent although codex takes it on gpt-5.6-terra and gpt-5.6-luna.
+//
+// Both maps are what `codex exec` answered on 0.150.1, one run per value.
+func TestCodexEffortsAreOnesEveryModelTakes(t *testing.T) {
+	everyModelTakes := map[string]bool{
+		"none": true, "low": true, "medium": true, "high": true, "xhigh": true,
+	}
+	someModelsRefuse := map[string]string{
+		"minimal": "unknown variant",
+		"max":     "only gpt-5.6-terra and gpt-5.6-luna take it",
+	}
 
 	for _, e := range NewCodex().Efforts() {
 		if e.ID == "" {
 			continue
 		}
 
-		if !codexTakes[e.ID] {
-			t.Errorf("effort %q is offered, and codex answers it with `unknown variant`", e.ID)
+		if why, refused := someModelsRefuse[e.ID]; refused {
+			t.Errorf("effort %q is offered, and %s", e.ID, why)
+			continue
 		}
 
-		if !modelTakes[e.ID] {
-			t.Errorf("effort %q parses, and then the model answers it with `unsupported value`", e.ID)
+		if !everyModelTakes[e.ID] {
+			t.Errorf("effort %q is offered and was never run against codex", e.ID)
 		}
+	}
+
+	if len(NewCodex().Efforts()) != len(everyModelTakes)+1 {
+		t.Errorf("Efforts() offers %d, want the default plus %d verified", len(NewCodex().Efforts()), len(everyModelTakes))
 	}
 }
 

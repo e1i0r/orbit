@@ -5,7 +5,9 @@ package task
 // of a word this version does not know.
 
 import (
+	"io"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -102,5 +104,106 @@ func TestTakeErrorPaths(t *testing.T) {
 
 	if _, err := take(s, tk); err == nil {
 		t.Error("take on a read-only directory should have failed to clear the word")
+	}
+}
+
+// TestAWordIsNeverHalfWritten is the fix.
+//
+// Control wrote with os.WriteFile, which truncates the file and then writes
+// into it. take, reading in that instant, got an empty file — not one of the
+// five words — and did what it does with a word it does not know: removed
+// it. The word was unlinked before it was ever whole, and the run never saw
+// the cancel somebody typed. The gate calls take once per poll for as long
+// as a phase waits, so that instant is sampled constantly rather than never.
+//
+// The race itself is microseconds wide and a test that tries to land inside
+// it proves nothing when it misses. What is asserted instead is the property
+// that closes it, and it is exactly the one mark's comment claims for the
+// run marker: a reader sees the old word or the new one and never half of
+// either. A reader that opened the file before the write still holds the old
+// word afterwards, because the write replaced the file rather than emptying
+// and refilling the one in its hand.
+func TestAWordIsNeverHalfWritten(t *testing.T) {
+	s, r := fixture(t)
+
+	tk, err := Create(s, r, "CTRL-1", "a word must survive being read", "")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	if err := Control(s, tk, wordPause); err != nil {
+		t.Fatalf("Control(pause): %v", err)
+	}
+
+	path, err := s.ControlPath(tk.Repo.Path, tk.ID)
+	if err != nil {
+		t.Fatalf("ControlPath: %v", err)
+	}
+	// A reader in the middle of take: it has the file open and has not read
+	// from it yet.
+	reader, err := os.Open(path)
+	if err != nil {
+		t.Fatalf("open the control file: %v", err)
+	}
+
+	defer func() {
+		if err := reader.Close(); err != nil {
+			t.Errorf("close: %v", err)
+		}
+	}()
+
+	if err := Control(s, tk, wordCancel); err != nil {
+		t.Fatalf("Control(cancel): %v", err)
+	}
+
+	body, err := io.ReadAll(reader)
+	if err != nil {
+		t.Fatalf("read what the reader was holding: %v", err)
+	}
+
+	if got := strings.TrimSpace(string(body)); got != wordPause {
+		t.Errorf("a reader holding the file read %q; it must read %q, the whole word that was there when it opened", got, wordPause)
+	}
+	// And the word on disk is the new one, whole.
+	onDisk, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read the control file: %v", err)
+	}
+
+	if got := strings.TrimSpace(string(onDisk)); got != wordCancel {
+		t.Errorf("the control file holds %q, want %q", got, wordCancel)
+	}
+}
+
+// TestNoStrayFilesAreLeftBesideTheWord. Writing atomically buys the fix
+// above at the price of a temporary beside the target, so the price is
+// asserted: a Control that returned nil leaves the control file and nothing
+// else in the task's directory.
+func TestNoStrayFilesAreLeftBesideTheWord(t *testing.T) {
+	s, r := fixture(t)
+
+	tk, err := Create(s, r, "CTRL-2", "no litter", "")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	if err := Control(s, tk, wordPause); err != nil {
+		t.Fatalf("Control: %v", err)
+	}
+
+	dir, err := s.CreateTaskDir(tk.Repo.Path, tk.ID)
+	if err != nil {
+		t.Fatalf("CreateTaskDir: %v", err)
+	}
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatalf("ReadDir: %v", err)
+	}
+
+	for _, e := range entries {
+		if strings.Contains(e.Name(), ".tmp-") {
+			t.Errorf("a temporary was left behind: %s", e.Name())
+		}
 	}
 }
