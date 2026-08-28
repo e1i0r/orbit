@@ -101,19 +101,37 @@ func (m Model) cycleComposeFlow(d int) Model {
 }
 
 func (m Model) cycleComposeEngine(d int) Model {
-	if len(m.compose.engines) == 0 {
+	n := len(m.compose.engines)
+	if n == 0 {
 		return m
 	}
 
-	n := len(m.compose.engines)
-	m.compose.engineIdx = (m.compose.engineIdx + d + n) % n
+	return m.chooseComposeEngine((m.compose.engineIdx + d + n) % n)
+}
 
-	eng := m.compose.engines[m.compose.engineIdx]
-	if models, ok := m.compose.modelsByEngine[eng]; ok && len(models) > 0 {
-		m.compose.models = models
-		if m.compose.modelIdx >= len(models) {
-			m.compose.modelIdx = 0
-		}
+// chooseComposeEngine moves the engine dial and refills the two dials that
+// hang off it.
+//
+// Three gestures land here — opening the form, the arrow keys, a click on a
+// pill — and the first two of them used to carry their own copy of this,
+// which is why a click could leave the model dial showing another engine's
+// models.
+func (m Model) chooseComposeEngine(i int) Model {
+	if i < 0 || i >= len(m.compose.engines) {
+		return m
+	}
+
+	m.compose.engineIdx = i
+	eng := m.compose.engines[i]
+
+	m.compose.models, m.compose.modelLabels = m.modelsFor(eng)
+	if m.compose.modelIdx >= len(m.compose.models) {
+		m.compose.modelIdx = 0
+	}
+
+	m.compose.efforts, m.compose.effortLabels = m.effortsFor(eng)
+	if m.compose.effortIdx >= len(m.compose.efforts) {
+		m.compose.effortIdx = 0
 	}
 
 	return m
@@ -180,7 +198,7 @@ func (c composeState) chosenFlow() string {
 
 func (c composeState) chosenEngine() string {
 	if len(c.engines) == 0 || c.engineIdx < 0 || c.engineIdx >= len(c.engines) {
-		return "claude"
+		return ""
 	}
 
 	return c.engines[c.engineIdx]
@@ -188,7 +206,7 @@ func (c composeState) chosenEngine() string {
 
 func (c composeState) chosenModel() string {
 	if len(c.models) == 0 || c.modelIdx < 0 || c.modelIdx >= len(c.models) {
-		return "sonnet"
+		return ""
 	}
 
 	return c.models[c.modelIdx]
@@ -204,7 +222,7 @@ func (c composeState) chosenThinking() string {
 
 func (c composeState) chosenEffort() string {
 	if len(c.efforts) == 0 || c.effortIdx < 0 || c.effortIdx >= len(c.efforts) {
-		return "default"
+		return ""
 	}
 
 	return c.efforts[c.effortIdx]

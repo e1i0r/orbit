@@ -94,19 +94,7 @@ func (m Model) handleComposeClick(t Target) (tea.Model, tea.Cmd) {
 
 		return m, nil
 	case TargetComposeEngineChoice:
-		if t.Pane >= 0 && t.Pane < len(m.compose.engines) {
-			m.compose.engineIdx = t.Pane
-
-			eng := m.compose.engines[t.Pane]
-			if models, ok := m.compose.modelsByEngine[eng]; ok && len(models) > 0 {
-				m.compose.models = models
-				if m.compose.modelIdx >= len(models) {
-					m.compose.modelIdx = 0
-				}
-			}
-		}
-
-		return m, nil
+		return m.chooseComposeEngine(t.Pane), nil
 	case TargetComposeModelChoice:
 		if t.Pane >= 0 && t.Pane < len(m.compose.models) {
 			m.compose.modelIdx = t.Pane

@@ -41,13 +41,21 @@ func wrapPromptText(text string, maxLen int) []string {
 }
 
 func renderComboPills(options []string, current string) string {
+	return renderComboPillsLabelled(options, nil, current)
+}
+
+// renderComboPillsLabelled is the same row for a dial whose ids and labels
+// are not the same string, which is opencode's models: the id it is picked
+// by is opencode/claude-opus-5 and what belongs on a pill is the rest.
+func renderComboPillsLabelled(ids, labels []string, current string) string {
 	var views []string
 
-	for _, opt := range options {
-		if opt == current {
-			views = append(views, Paint(Sel).Render(" "+opt+" "))
+	for i, id := range ids {
+		label := dialLabel(ids, labels, i)
+		if id == current {
+			views = append(views, Paint(Sel).Render(" "+label+" "))
 		} else {
-			views = append(views, Paint(Dim).Render(opt))
+			views = append(views, Paint(Dim).Render(label))
 		}
 	}
 

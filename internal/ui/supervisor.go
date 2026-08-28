@@ -151,10 +151,7 @@ func (m Model) sendSupervisorMessage(text string) (tea.Model, tea.Cmd) {
 	m.supervisor.follow = true
 	m.supervisorBusy = true
 
-	eng := m.knobs.Engine
-	if eng == "" {
-		eng = "claude"
-	}
+	eng := m.dialEngine(m.knobs.Engine)
 
 	cmd := askSupervisorCmd(m.opts.AskSupervisor, eng, text)
 	m, frame := m.say(m.opts.Words.T("supervisor.thinking", "supervisor is thinking...")).nextFrame()

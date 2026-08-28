@@ -7,6 +7,7 @@ package ui
 // engine has no effort dial or no thinking mode.
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -22,14 +23,19 @@ func enginesTestList() []EngineInfo {
 		{
 			Name:      "claude",
 			Available: true,
-			Models:    []ChoiceInfo{{ID: "", Label: "default"}, {ID: "opus", Label: "opus"}},
-			Efforts:   []ChoiceInfo{{ID: "", Label: "default"}, {ID: "high", Label: "high"}},
+			Models:    []ChoiceInfo{{ID: "", Label: "default"}, {ID: "opus", Label: "opus"}, {ID: "sonnet", Label: "sonnet"}},
+			Efforts:   []ChoiceInfo{{ID: "", Label: "default"}, {ID: "low", Label: "low"}, {ID: "high", Label: "high"}},
 			CanThink:  true,
 		},
 		{
+			// Not installed, and still carrying its dials: what an engine
+			// offers and whether this machine can run it are two facts,
+			// and the port answers both for every engine.
 			Name:      "codex",
 			Available: false,
 			Setup:     func(*words.Printer) []string { return []string{"install codex", "run codex login"} },
+			Models:    []ChoiceInfo{{ID: "", Label: "default"}, {ID: "o3", Label: "o3"}, {ID: "o3-mini", Label: "o3-mini"}},
+			Efforts:   []ChoiceInfo{{ID: "", Label: "default"}, {ID: "low", Label: "low"}, {ID: "high", Label: "high"}},
 		},
 		{
 			Name:      "bare",
@@ -215,5 +221,57 @@ func TestCollectEngineRowsNoDialsSections(t *testing.T) {
 
 	if !sawNoThinking {
 		t.Errorf("expected a 'no thinking mode' row for an engine that cannot think")
+	}
+}
+
+// TestTheEnginesScreenShowsWhatThePortSaysAndNothingElse. The screen used to
+// keep a claude table to fall back on, so a port that answered nothing — or
+// answered something else — still drew claude, opus, sonnet, haiku. A window
+// that shows an engine the build cannot run, and hides one it can, is worse
+// than a window that shows nothing.
+func TestTheEnginesScreenShowsWhatThePortSaysAndNothingElse(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+	m.opts.Engines = func() []EngineInfo {
+		return []EngineInfo{{
+			Name:      "zeta",
+			Available: true,
+			Models:    []ChoiceInfo{{ID: "zeta/one", Label: "one"}, {ID: "zeta/two", Label: "two"}},
+			Efforts:   []ChoiceInfo{{ID: "high", Label: "high"}},
+		}}
+	}
+	m.knobs.Engine = "zeta"
+
+	var engines, models []string
+
+	for _, r := range m.collectEngineRows() {
+		switch r.kind {
+		case rowEngine:
+			engines = append(engines, r.engine)
+		case rowModel:
+			models = append(models, r.id)
+		case rowHeader, rowEffort, rowThinking:
+		}
+	}
+
+	if !slices.Equal(engines, []string{"zeta"}) {
+		t.Errorf("the screen offers %v, want only what the port answered", engines)
+	}
+
+	if !slices.Equal(models, []string{"zeta/one", "zeta/two"}) {
+		t.Errorf("the screen offers the models %v, want zeta's own", models)
+	}
+}
+
+// TestAWindowWithNoEnginesPortInventsNone. Saying nothing is the only honest
+// answer this package has: it may not name internal/engine, so any table it
+// carried would be a copy waiting to drift from the one the build runs.
+func TestAWindowWithNoEnginesPortInventsNone(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+	m.opts.Engines = nil
+
+	for _, r := range m.collectEngineRows() {
+		if r.kind == rowEngine || r.kind == rowModel {
+			t.Errorf("a window with no engines port offered %q", r.engine+r.id)
+		}
 	}
 }

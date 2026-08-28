@@ -6,10 +6,58 @@ package ui
 
 import (
 	"io"
+	"slices"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
 )
+
+// TestTheSettingsDialsAreTheEnginesOwn. The three dials were a switch on the
+// engine's name written in this package, and it offered opencode a model
+// called gemini-2.5-pro, which opencode has never had. A made-up engine is
+// what proves the table is the port's: nothing in this package could have
+// guessed it.
+func TestTheSettingsDialsAreTheEnginesOwn(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+	m.opts.Engines = func() []EngineInfo {
+		return []EngineInfo{{
+			Name:      "zeta",
+			Available: true,
+			Models:    []ChoiceInfo{{ID: "", Label: "default"}, {ID: "zeta/one", Label: "one"}},
+			Efforts:   []ChoiceInfo{{ID: "", Label: "default"}, {ID: "brisk", Label: "brisk"}},
+		}}
+	}
+
+	if err := m.opts.Settings.SetEngine("zeta"); err != nil {
+		t.Fatalf("choose the engine: %v", err)
+	}
+
+	rows := map[string]settingRow{}
+	for _, r := range m.settingRowsList() {
+		rows[r.key] = r
+	}
+
+	if got := rows["engine"].options; !slices.Equal(got, []string{"zeta"}) {
+		t.Errorf("the engine dial offers %v, want only what the port answered", got)
+	}
+
+	// The id is what the setting holds and the label is what the reader
+	// picks from. They are two strings for opencode — the id is
+	// provider-qualified — and drawing the id would put the provider in
+	// front of every position on the dial.
+	model := rows["model"]
+	if !slices.Equal(model.options, []string{"zeta/one"}) {
+		t.Errorf("the model dial holds %v, want zeta's own ids", model.options)
+	}
+
+	if got := model.label(0); got != "one" {
+		t.Errorf("the model dial draws %q, want the label the port gave it", got)
+	}
+
+	if got := rows["effort"].options; !slices.Equal(got, []string{"brisk"}) {
+		t.Errorf("the effort dial offers %v, want zeta's own", got)
+	}
+}
 
 func TestApplySettingEveryKey(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
@@ -41,15 +89,22 @@ func TestApplySettingEveryKey(t *testing.T) {
 		t.Error("applySetting(autopilot, off) left autopilot on")
 	}
 
-	// 3. unread-cap: a number is taken, a non-number is silently ignored —
-	// both still narrate the same way, since applySetting's sentence names
-	// what was typed rather than what stuck.
+	// 3. unread-cap is the one setting a number is typed into. A number is
+	// taken; what is not a number is refused in words. It used to be
+	// dropped on the floor under a band saying "unread-cap is now
+	// not-a-number", which named a cap that was nowhere.
 	next, _ = m.applySetting("unread-cap", "7")
 	m = asModel(t, next)
 	wantBand(t, m, "unread-cap is now 7")
 	next, _ = m.applySetting("unread-cap", "not-a-number")
 	m = asModel(t, next)
-	wantBand(t, m, "unread-cap is now not-a-number")
+	wantBand(t, m, "not a whole number")
+
+	// A negative cap is no cap at all to every reader of it, so setting one
+	// turned the brake off while looking like it set one.
+	next, _ = m.applySetting("unread-cap", "-1")
+	m = asModel(t, next)
+	wantBand(t, m, "cannot be negative")
 
 	// 4. engine, with an effort that no longer validates for it, resets the
 	// effort to the new engine's first option; an effort that still
@@ -57,12 +112,15 @@ func TestApplySettingEveryKey(t *testing.T) {
 	// SetModel/SetEngine do not persist, so the model half of the reset is
 	// exercised without being independently observable — knobs.Effort is a
 	// real field on Model and is.
+	// "default" is not among them, and deliberately: the engines answer
+	// that choice with an empty id, and an effort of the literal word
+	// "default" is one internal/task refuses before a run starts.
 	m.knobs.Effort = "xhigh" // not valid for codex
 	next, _ = m.applySetting("engine", "codex")
 
 	m = asModel(t, next)
-	if m.knobs.Effort != "default" {
-		t.Errorf("applySetting(engine, codex) left effort %q, want it reset to default", m.knobs.Effort)
+	if m.knobs.Effort != "low" {
+		t.Errorf("applySetting(engine, codex) left effort %q, want it reset to codex's first", m.knobs.Effort)
 	}
 
 	m.knobs.Effort = "low" // valid for every engine
@@ -108,21 +166,27 @@ func TestApplySettingEveryKey(t *testing.T) {
 		t.Errorf("applySetting(theme) left the live theme %q, want nord", CurrentTheme())
 	}
 
-	// 7. a settings port that is nil, and a Do port that is not: the
-	// switch is skipped, but the palette command still runs.
+	// 7. a settings port that is nil: there is nowhere to write, and the
+	// screen says what it would have said rather than falling over.
+	//
+	// Nothing is shelled out to either. Every setting used to be written
+	// twice — once through this port and once by running `orbit set` — so
+	// the file was opened, locked and rewritten twice per keystroke, and
+	// whatever the second one had to say was thrown away.
 	m.opts.Settings = nil
 
-	var ranArgs []string
-
-	m.opts.Do = func(_ string, args []string, _ io.Writer) error {
-		ranArgs = args
+	ran := false
+	m.opts.Do = func(string, []string, io.Writer) error {
+		ran = true
 		return nil
 	}
 	next, _ = m.applySetting("unread-cap", "3")
 
 	m = asModel(t, next)
-	if len(ranArgs) != 2 || ranArgs[0] != "unread-cap" || ranArgs[1] != "3" {
-		t.Errorf("applySetting with a nil settings port ran Do with args %v, want [unread-cap 3]", ranArgs)
+	wantBand(t, m, "unread-cap is now 3")
+
+	if ran {
+		t.Error("applySetting shelled out to `orbit set` as well as writing the setting itself")
 	}
 }
 

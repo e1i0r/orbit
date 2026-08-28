@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 
@@ -45,10 +46,7 @@ func (m Model) supervisorLayout(h, w int) (boxW, threadH int) {
 func (m Model) drawSupervisorThread(h, boxW int) []string {
 	p := m.opts.Words
 
-	eng := m.knobs.Engine
-	if eng == "" {
-		eng = "claude"
-	}
+	eng := m.dialEngine(m.knobs.Engine)
 
 	autoPip := Paint(Dim).Render("○ off")
 	if m.autopilotOn() {
@@ -153,7 +151,7 @@ func (m Model) messageLines(l view.SupervisorLine, cw int, selected bool) []stri
 	p := m.opts.Words
 
 	role := Accent
-	if isEngineName(l.By) {
+	if m.isEngineName(l.By) {
 		role = Live
 	}
 
@@ -208,7 +206,7 @@ func (m Model) messageBody(l view.SupervisorLine, cw int) []string {
 				out = append(out, Paint(Dim).Render(wrapped))
 			}
 		}
-	case isEngineName(l.By):
+	case m.isEngineName(l.By):
 		for _, md := range renderMarkdown(l.Text, text, false) {
 			out = append(out, strings.TrimPrefix(md, markdownIndent))
 		}
@@ -223,10 +221,7 @@ func (m Model) messageBody(l view.SupervisorLine, cw int) []string {
 
 // supervisorThinking is the engine's turn before it has said anything.
 func (m Model) supervisorThinking(cw int) []string {
-	eng := m.knobs.Engine
-	if eng == "" {
-		eng = "claude"
-	}
+	eng := m.dialEngine(m.knobs.Engine)
 
 	rail := Paint(Live).Render("▎")
 	head := railed(rail, Paint(Dim).Render(m.now.Format("15:04:05"))+"  "+Paint(Live).Bold(true).Render(eng)+" "+Paint(Dim).Render("[supervisor]"))
@@ -236,9 +231,22 @@ func (m Model) supervisorThinking(cw int) []string {
 }
 
 // isEngineName is whether a line was written by a model rather than a person.
-func isEngineName(by string) bool {
+//
+// The roster is asked first, so an engine added to internal/engine is
+// recognised here without a second edit. This was a list of five names, and
+// a sixth engine's answers were drawn in a person's colour and re-wrapped as
+// plain text rather than rendered as the markdown they are.
+//
+// The names below it stay, and are not the roster's job: a thread is a
+// record, it can hold lines written months ago by an engine this build no
+// longer has, and a person did not type those either.
+func (m Model) isEngineName(by string) bool {
+	if by == "supervisor" || slices.Contains(m.engineNames(), by) {
+		return true
+	}
+
 	switch by {
-	case "supervisor", "claude", "codex", "opencode", "gemini":
+	case "claude", "codex", "opencode", "gemini":
 		return true
 	}
 

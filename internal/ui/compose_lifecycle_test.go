@@ -2,6 +2,7 @@ package ui
 
 import (
 	"errors"
+	"slices"
 	"testing"
 
 	"charm.land/bubbletea/v2"
@@ -177,8 +178,13 @@ func TestComposePillsCycle(t *testing.T) {
 		t.Errorf("expected engine to cycle from %s", oldEng)
 	}
 
-	if m.compose.chosenEngine() == "codex" && m.compose.chosenModel() != "gpt-4o" {
-		t.Errorf("expected model to default to gpt-4o for codex, got %s", m.compose.chosenModel())
+	// The model dial follows the engine dial, and what it offers is the
+	// engine's own. The form used to carry a table of its own here, so
+	// cycling to opencode offered a model called llama-3.3 that no
+	// opencode answers to.
+	engModels, _ := m.modelsFor(m.compose.chosenEngine())
+	if !slices.Equal(m.compose.models, engModels) {
+		t.Errorf("the model dial offers %v after choosing %s, want %v", m.compose.models, m.compose.chosenEngine(), engModels)
 	}
 
 	// 4. Model cycle

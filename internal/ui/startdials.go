@@ -1,28 +1,13 @@
 package ui
 
-import (
-	"strings"
-)
-
-// cycleEffort cycles runtime effort setting across low, medium, high, xhigh.
+// cycleEffort moves the effort knob to the next one the engine offers.
+//
+// The list used to be written out here — low, medium, high, xhigh — so this
+// knob and the engine it was turned for disagreed: codex has no xhigh, and
+// a phase carrying one is a phase internal/task refuses before it runs.
 func (m Model) cycleEffort() Model {
-	efforts := []string{"low", "medium", "high", "xhigh"}
-
-	cur := m.knobs.Effort
-	if cur == "" {
-		cur = "high"
-	}
-
-	nextIdx := 0
-
-	for i, e := range efforts {
-		if strings.EqualFold(e, cur) {
-			nextIdx = (i + 1) % len(efforts)
-			break
-		}
-	}
-
-	m.knobs.Effort = efforts[nextIdx]
+	efforts, _ := m.effortsFor(m.dialEngine(m.knobs.Engine))
+	m.knobs.Effort = nextOption(efforts, m.knobs.Effort, 1)
 
 	return m
 }
@@ -43,20 +28,23 @@ func (m Model) cycleThinking() Model {
 func (m Model) configLine(w int) string {
 	p := m.opts.Words
 
-	eng := m.knobs.Engine
-	if eng == "" {
-		eng = "claude"
+	// What is drawn is what a run would actually use: the knob when one is
+	// turned, and what stands behind it when none is. It used to be the
+	// words claude, sonnet and high, which on a build without claude were
+	// true of none of the three.
+	eng := m.dialEngine(m.knobs.Engine)
+
+	models, _ := m.modelsFor(eng)
+	mod := orDef(m.knobs.Model, first(models))
+
+	if s := m.opts.Settings; s != nil && m.knobs.Model == "" {
+		mod = orDef(s.Model(), mod)
 	}
 
-	mod := m.knobs.Model
-	if mod == "" {
-		mod = "sonnet"
-	}
+	efforts, _ := m.effortsFor(eng)
+	eff := orDef(m.knobs.Effort, first(efforts))
 
-	eff := m.knobs.Effort
-	if eff == "" {
-		eff = "high"
-	}
+	eng, mod, eff = orDef(eng, unsetDial), orDef(mod, unsetDial), orDef(eff, unsetDial)
 
 	thk := m.knobs.Thinking
 
@@ -75,3 +63,8 @@ func (m Model) configLine(w int) string {
 
 	return spread(left, hints, w)
 }
+
+// unset is what a dial with nothing on it is drawn as. A window whose
+// engines port answers nothing has no engine, no model and no effort to
+// name, and a dash says that without naming one it does not have.
+const unsetDial = "—"

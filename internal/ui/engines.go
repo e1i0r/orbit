@@ -71,10 +71,7 @@ func (m Model) knobChip() string {
 		return ""
 	}
 
-	engineName := m.knobs.Engine
-	if engineName == "" {
-		engineName = "claude"
-	}
+	engineName := m.dialEngine(m.knobs.Engine)
 
 	var parts []string
 
@@ -99,37 +96,9 @@ func (m Model) collectEngineRows() []engineRow {
 
 	var rows []engineRow
 
-	var engineList []EngineInfo
-	if m.opts.Engines != nil {
-		engineList = m.opts.Engines()
-	}
+	engineList := m.engineTable()
 
-	if len(engineList) == 0 {
-		engineList = []EngineInfo{{
-			Name:      "claude",
-			Available: true,
-			Models: []ChoiceInfo{
-				{ID: "", Label: "default"},
-				{ID: "opus", Label: "opus"},
-				{ID: "sonnet", Label: "sonnet"},
-				{ID: "haiku", Label: "haiku"},
-			},
-			Efforts: []ChoiceInfo{
-				{ID: "", Label: "default"},
-				{ID: "low", Label: "low"},
-				{ID: "medium", Label: "medium"},
-				{ID: "high", Label: "high"},
-				{ID: "xhigh", Label: "xhigh"},
-				{ID: "max", Label: "max"},
-			},
-			CanThink: true,
-		}}
-	}
-
-	activeEngine := m.knobs.Engine
-	if activeEngine == "" {
-		activeEngine = "claude"
-	}
+	activeEngine := m.dialEngine(m.knobs.Engine)
 
 	// 1. Model & Engine Section
 	rows = append(rows, engineRow{kind: rowHeader, title: p.T("engines.section_model", "Engine & Model")})

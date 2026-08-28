@@ -51,17 +51,30 @@ type composeState struct {
 	repoIdx     int
 	parsedIssue *tracker.Issue
 
-	flows          []string
-	flowIdx        int
-	engines        []string
-	engineIdx      int
-	modelsByEngine map[string][]string
-	models         []string
-	modelIdx       int
-	thinkings      []string
-	thinkingIdx    int
-	efforts        []string
-	effortIdx      int
+	flows     []string
+	flowIdx   int
+	engines   []string
+	engineIdx int
+	// models and efforts are the ids these dials hold and modelLabels and
+	// effortLabels are what those positions are drawn as. The two differ
+	// for opencode, whose model ids are provider-qualified.
+	models       []string
+	modelLabels  []string
+	modelIdx     int
+	thinkings    []string
+	thinkingIdx  int
+	efforts      []string
+	effortLabels []string
+	effortIdx    int
+}
+
+// modelLabel and effortLabel are what the option at i is drawn as.
+func (c composeState) modelLabel(i int) string {
+	return dialLabel(c.models, c.modelLabels, i)
+}
+
+func (c composeState) effortLabel(i int) string {
+	return dialLabel(c.efforts, c.effortLabels, i)
 }
 
 // openCompose brings the form up with the repository defaulted to the current task's repo.
@@ -101,28 +114,24 @@ func (m Model) openCompose() Model {
 		flows = []string{"task", "quick", "careful"}
 	}
 
-	engines := []string{"claude", "codex", "opencode"}
-	modelsByEngine := map[string][]string{
-		"claude":   {"sonnet", "opus", "haiku"},
-		"codex":    {"gpt-4o", "o1", "o3-mini"},
-		"opencode": {"qwen-2.5-coder", "deepseek-r1", "llama-3.3"},
-	}
-	models := modelsByEngine["claude"]
+	// The engines and their two dials are the build's, not this form's:
+	// see engine_table.go. This form used to carry a table of its own, and
+	// it offered opencode a model called llama-3.3 — one no opencode has
+	// ever answered to, so a task composed with it could not run.
+	engines := m.engineNames()
 	thinkings := []string{"adaptive", "off", "4000", "8000", "max"}
-	efforts := []string{"default", "low", "medium", "high", "max"}
 
 	m.compose = composeState{
-		tab:            composeTabManual,
-		repo:           initialRepo,
-		repos:          repos,
-		repoIdx:        repoIdx,
-		flows:          flows,
-		engines:        engines,
-		modelsByEngine: modelsByEngine,
-		models:         models,
-		thinkings:      thinkings,
-		efforts:        efforts,
+		tab:       composeTabManual,
+		repo:      initialRepo,
+		repos:     repos,
+		repoIdx:   repoIdx,
+		flows:     flows,
+		engines:   engines,
+		thinkings: thinkings,
 	}
+
+	m = m.chooseComposeEngine(0)
 
 	return m
 }

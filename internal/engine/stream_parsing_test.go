@@ -110,7 +110,7 @@ func TestOpenCodeArgsAndOptions(t *testing.T) {
 
 	req := Request{
 		Prompt:      "build feature",
-		Model:       "qwen-2.5-coder",
+		Model:       "opencode/hy3-free",
 		Effort:      "high",
 		Resume:      "sess-99",
 		Permissions: []string{PermissionRead},

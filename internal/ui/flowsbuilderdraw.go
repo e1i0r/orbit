@@ -10,6 +10,7 @@ import (
 
 func (m Model) startCreateFlow() Model {
 	m.flows.creating = true
+	m.flows.engine = m.dialEngine("")
 	m.flows.isEditing = false
 	m.flows.confirmDiscard = false
 	m.flows.confirmDelete = false
@@ -17,7 +18,7 @@ func (m Model) startCreateFlow() Model {
 	m.flows.template = "ninguna"
 	m.flows.flowName = ""
 	m.flows.phases = []flow.Phase{
-		{Name: "1-implement", Engine: "claude", Model: "sonnet", Effort: "default", Thinking: "adaptive", Permissions: []string{"repo"}},
+		{Name: "1-implement", Engine: m.flows.engine, Thinking: "adaptive", Permissions: []string{"repo"}},
 	}
 	m.flows.activePhase = 0
 
@@ -143,17 +144,20 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 
 	out = append(out, renderField(flowFieldPhaseName, p.T("flows.field_phase_name", "2. Phase {n} Name", about("n", strconv.Itoa(st.activePhase+1))), Paint(Accent).Render(pNameVal)))
 
-	// 4. Engine
-	engPills := renderComboPills([]string{"claude", "codex", "opencode"}, orDef(curPh.Engine, "claude"))
-	out = append(out, renderField(flowFieldEngine, p.T("flows.field_engine", "3. AI Engine"), engPills))
+	// 4, 5, 6. Engine, model and effort, which are the build's and not this
+	// screen's: see engine_table.go. These three were drawn from literals
+	// here and cycled from three others in flowsdelta.go, so the two halves
+	// of one dial had to be kept in step by hand.
+	eng := m.dialEngine(curPh.Engine)
+	out = append(out, renderField(flowFieldEngine, p.T("flows.field_engine", "3. AI Engine"), renderComboPills(m.engineNames(), eng)))
 
 	// 5. Model
-	mdlPills := renderComboPills([]string{"sonnet", "opus", "haiku", "default"}, orDef(curPh.Model, "default"))
-	out = append(out, renderField(flowFieldModel, p.T("flows.field_model", "4. Model"), mdlPills))
+	mdls, mdlLabels := m.modelsFor(eng)
+	out = append(out, renderField(flowFieldModel, p.T("flows.field_model", "4. Model"), renderComboPillsLabelled(mdls, mdlLabels, curPh.Model)))
 
 	// 6. Effort
-	effPills := renderComboPills([]string{"default", "low", "medium", "high", "xhigh", "max"}, orDef(curPh.Effort, "default"))
-	out = append(out, renderField(flowFieldEffort, p.T("flows.field_effort", "5. Effort"), effPills))
+	effs, effLabels := m.effortsFor(eng)
+	out = append(out, renderField(flowFieldEffort, p.T("flows.field_effort", "5. Effort"), renderComboPillsLabelled(effs, effLabels, curPh.Effort)))
 
 	// 7. Thinking Mode
 	thkPills := renderComboPills([]string{"adaptive", "on", "off"}, orDef(curPh.Thinking, "adaptive"))

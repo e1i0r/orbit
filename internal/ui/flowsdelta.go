@@ -25,13 +25,16 @@ func (m Model) handleFlowFieldDelta(delta int) (Model, tea.Cmd) {
 			st.activePhase = (st.activePhase + delta + n) % n
 		}
 	case flowFieldEngine:
-		engs := []string{"claude", "codex", "opencode"}
-		st.cur().Engine = nextOption(engs, st.cur().Engine, delta)
+		// The three dials are the build's: see engine_table.go. This one
+		// offered every engine a model called sonnet, which is claude's
+		// alone, and an effort called default, which internal/task refuses
+		// by name before a run starts.
+		st.cur().Engine = nextOption(m.engineNames(), st.cur().Engine, delta)
 	case flowFieldModel:
-		mdls := []string{"sonnet", "opus", "haiku", "default"}
+		mdls, _ := m.modelsFor(m.dialEngine(st.cur().Engine))
 		st.cur().Model = nextOption(mdls, st.cur().Model, delta)
 	case flowFieldEffort:
-		effs := []string{"default", "low", "medium", "high", "xhigh", "max"}
+		effs, _ := m.effortsFor(m.dialEngine(st.cur().Engine))
 		st.cur().Effort = nextOption(effs, st.cur().Effort, delta)
 	case flowFieldThinking:
 		thks := []string{"adaptive", "on", "off"}
@@ -58,10 +61,12 @@ func (m Model) handleFlowFieldAction() (Model, tea.Cmd) {
 		return m.handleFlowFieldDelta(1)
 	case flowFieldAddPhase:
 		st.phases = append(st.phases, flow.Phase{
+			// A new phase is born on the window's engine and names no
+			// model and no effort. It used to be born holding claude and
+			// sonnet, which is a choice nobody made and a model claude
+			// alone has.
 			Name:        fmt.Sprintf("%d-phase", len(st.phases)+1),
-			Engine:      "claude",
-			Model:       "sonnet",
-			Effort:      "default",
+			Engine:      st.engine,
 			Thinking:    "adaptive",
 			FeedOutput:  true,
 			Permissions: []string{"repo"},

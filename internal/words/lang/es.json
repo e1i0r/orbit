@@ -1535,6 +1535,22 @@
       "source": "{open} save · {back} cancel",
       "value": "{open} guardar · {back} cancelar"
     },
+    "settings.now": {
+      "source": "{key} is now {val}",
+      "value": "{key} ahora es {val}"
+    },
+    "settings.language_changed": {
+      "source": "language changed to {lang}",
+      "value": "idioma cambiado a {lang}"
+    },
+    "settings.not_a_number": {
+      "source": "{val} is not a whole number",
+      "value": "{val} no es un número entero"
+    },
+    "settings.negative_cap": {
+      "source": "the unread cap cannot be negative; zero is no cap at all",
+      "value": "el tope de no leídos no puede ser negativo; cero es sin tope"
+    },
     "flows.title": {
       "source": "Flows",
       "value": "Flujos"
@@ -1698,6 +1714,24 @@
     "flows.min_phases_required": {
       "source": "the flow must have at least one phase",
       "value": "el flujo debe tener al menos una fase"
+    },
+    "flows.name_required": {
+      "source": "give the flow a name",
+      "value": "indica un nombre para el flujo"
+    },
+    "flows.template_loaded": {
+      "source": {
+        "one": "template {name} loaded ({n} phase)",
+        "other": "template {name} loaded ({n} phases)"
+      },
+      "value": {
+        "one": "plantilla {name} cargada ({n} fase)",
+        "other": "plantilla {name} cargada ({n} fases)"
+      }
+    },
+    "flows.template_blank": {
+      "source": "blank flow (1 phase)",
+      "value": "flujo en blanco (1 fase)"
     },
     "flows.builder_preview_title": {
       "source": "Flow Inspector (Read-Only: {name})",

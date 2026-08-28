@@ -151,44 +151,57 @@ func autoSupervisePort(s *store.Store, engines map[string]engine.Engine) func(st
 }
 
 // enginesPort adapts the engine map and declared engines to ui.Options.Engines.
+//
+// What an engine offers and whether this machine can run it are two separate
+// facts, and both are answered for every engine. The models and the efforts
+// come from the adapter in internal/engine, which knows them whether or not
+// the command line is installed; only Available is a fact about $PATH.
+//
+// They used to be filled in only for engines that were installed, which left
+// the window with nothing to draw a dial from unless the reader already had
+// the engine — so the window kept its own copy of the catalogue, and that
+// copy is what drifted.
 func enginesPort(engines map[string]engine.Engine) func() []ui.EngineInfo {
 	return func() []ui.EngineInfo {
 		var list []ui.EngineInfo
 
 		for _, name := range engineNames(engines) {
 			eng, hasEng := engines[name]
+			if !hasEng || eng == nil {
+				continue
+			}
+
 			_, pathErr := exec.LookPath(name)
 
-			available := hasEng && pathErr == nil
-			if available {
-				var models []ui.ChoiceInfo
-				for _, m := range eng.Models() {
-					models = append(models, ui.ChoiceInfo{ID: m.ID, Label: m.Label})
-				}
-
-				var efforts []ui.ChoiceInfo
-				for _, e := range eng.Efforts() {
-					efforts = append(efforts, ui.ChoiceInfo{ID: e.ID, Label: e.Label})
-				}
-
-				list = append(list, ui.EngineInfo{
-					Name:      name,
-					Available: true,
-					Models:    models,
-					Efforts:   efforts,
-					CanThink:  eng.CanThink(),
-				})
-			} else {
-				list = append(list, ui.EngineInfo{
-					Name:      name,
-					Available: false,
-					Setup:     setupGuide(name),
-				})
+			info := ui.EngineInfo{
+				Name:      name,
+				Available: pathErr == nil,
+				Models:    choices(eng.Models()),
+				Efforts:   choices(eng.Efforts()),
+				CanThink:  eng.CanThink(),
 			}
+			// The steps are only worth carrying for an engine that cannot
+			// run: the screen shows them in place of the dials.
+			if !info.Available {
+				info.Setup = setupGuide(name)
+			}
+
+			list = append(list, info)
 		}
 
 		return list
 	}
+}
+
+// choices carries one engine's dial across the port, which is a copy because
+// internal/ui may not name internal/engine.
+func choices(from []engine.Choice) []ui.ChoiceInfo {
+	var out []ui.ChoiceInfo
+	for _, c := range from {
+		out = append(out, ui.ChoiceInfo{ID: c.ID, Label: c.Label})
+	}
+
+	return out
 }
 
 // setupGuide is what to do about an engine this machine cannot run yet.
