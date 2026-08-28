@@ -113,7 +113,7 @@ func TestOpenCodeArgsAndOptions(t *testing.T) {
 		Model:       "opencode/hy3-free",
 		Effort:      "high",
 		Resume:      "sess-99",
-		Permissions: []string{PermissionRead},
+		Permissions: []string{PermissionRepo},
 	}
 
 	args, err := openCodeArgs(req)

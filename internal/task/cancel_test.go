@@ -42,6 +42,7 @@ func (e *blockingEngine) CanResume() bool          { return false }
 func (e *blockingEngine) Models() []engine.Choice  { return nil }
 func (e *blockingEngine) Efforts() []engine.Choice { return nil }
 func (e *blockingEngine) CanThink() bool           { return false }
+func (e *blockingEngine) Locate() (string, error)  { return "blocking", nil }
 
 func (e *blockingEngine) Run(ctx context.Context, _ engine.Request) (engine.Result, error) {
 	e.once.Do(func() { close(e.running) })

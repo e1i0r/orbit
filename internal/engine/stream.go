@@ -85,8 +85,14 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 		case "result":
 			found = true
 			out.Output = env.Result
-			out.SessionID = env.SessionID
-
+			// Not out.SessionID = env.SessionID. The guard above already
+			// took the id from whichever line carried one, and this line
+			// overwrote it with whatever the result object held —
+			// including nothing. A result without a session_id wiped the
+			// id captured off the init line, which is the only reason
+			// claude is asked for stream-json in the first place: the run
+			// finished, the record said it could not be resumed, and the
+			// evidence that it could had been read and thrown away.
 			out.Cost = env.Cost
 			if onEvent != nil {
 				onEvent(StreamEvent{Type: "result", Cost: env.Cost})
@@ -226,12 +232,27 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 	return out, nil
 }
 
+// isPermissionRefusal is whether a failed tool result is the sandbox saying
+// no, rather than the tool itself failing.
+//
+// Every phrase here names a permission. The bare word "refused" used to be
+// on the list, and it is the one thing a network stack says when nothing is
+// listening: "dial tcp 127.0.0.1:5432: connect: connection refused" was
+// recorded as a phase being denied permission, so a run that failed because
+// a database was down read, in the record and on the screen, as a run whose
+// posture was too narrow — pointing whoever debugged it at the permissions
+// and away from the port.
+//
+// Matching another program's prose is a guess whichever words are chosen.
+// The guess these make is narrow on purpose: a refusal this misses is a
+// refusal reported as a plain tool failure, which is the milder of the two
+// wrong answers.
 func isPermissionRefusal(s string) bool {
 	lower := strings.ToLower(s)
 
 	return strings.Contains(lower, "permission denied") ||
 		strings.Contains(lower, "not permitted") ||
 		strings.Contains(lower, "permission refused") ||
-		strings.Contains(lower, "refused") ||
+		strings.Contains(lower, "refused permission") ||
 		strings.Contains(lower, "is not allowed")
 }

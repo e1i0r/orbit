@@ -2,6 +2,7 @@ package engine
 
 import (
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -29,6 +30,14 @@ func TestOpenCodeInterface(t *testing.T) {
 	}
 }
 
+// TestOpenCodeArgs is the argv opencode 1.18.23 actually parses.
+//
+// Two of the flags it replaces were invented. opencode has no --effort — the
+// flag is --variant — and it answers --effort by printing its help and
+// exiting one, so every opencode phase that named an effort failed before a
+// model saw it. And nothing asked for JSON, so opencode printed formatted
+// prose which this adapter fed to claude's stream parser: every opencode run
+// recorded no session id and no cost.
 func TestOpenCodeArgs(t *testing.T) {
 	req := Request{
 		Prompt:      "refactor the handler",
@@ -43,9 +52,44 @@ func TestOpenCodeArgs(t *testing.T) {
 		t.Fatalf("openCodeArgs: %v", err)
 	}
 
-	want := []string{"run", "--model", "opencode/claude-sonnet-5", "--effort", "medium", "--session", "sess-456", "refactor the handler"}
+	want := []string{
+		"run", "--format", "json", "--auto",
+		"--model", "opencode/claude-sonnet-5",
+		"--variant", "medium",
+		"--session", "sess-456",
+		"refactor the handler",
+	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("openCodeArgs = %v, want %v", got, want)
+	}
+}
+
+// TestOpenCodeRefusesAPostureItCannotKeep.
+//
+// This was run against the binary rather than reasoned about: asked to
+// create a file, with no --auto and no terminal to prompt at, `opencode run`
+// created the file. Headless opencode approves everything, so a read phase
+// on opencode is a phase that can write — and running it would put a
+// sentence in the record that the engine had already contradicted.
+func TestOpenCodeRefusesAPostureItCannotKeep(t *testing.T) {
+	for _, perms := range [][]string{
+		nil,
+		{PermissionRead},
+		{PermissionNetwork},
+		{PermissionRead, PermissionNetwork},
+	} {
+		if _, err := openCodeArgs(Request{Prompt: "x", Permissions: perms}); err == nil {
+			t.Errorf("opencode accepted the posture %v, which it has no way to keep", perms)
+		}
+	}
+
+	got, err := openCodeArgs(Request{Prompt: "x", Permissions: []string{PermissionRepo}})
+	if err != nil {
+		t.Fatalf("opencode refused repo, the one posture it can carry: %v", err)
+	}
+
+	if !slices.Contains(got, "--auto") {
+		t.Errorf("args = %v, want --auto so the argv states what opencode does anyway", got)
 	}
 }
 

@@ -138,8 +138,13 @@ func TestReconcileAllReportsPerRepositoryAndPerTaskFailures(t *testing.T) {
 	}
 }
 
+// TestEnginesPortMarksEveryEngineUnavailableWithNoPath. An empty PATH is no
+// longer the whole question — the engines also look in the directories their
+// own installers use — so the home this runs against is emptied too, and
+// what it asserts is a machine with none of the three.
 func TestEnginesPortMarksEveryEngineUnavailableWithNoPath(t *testing.T) {
 	t.Setenv("PATH", "")
+	t.Setenv("HOME", t.TempDir())
 
 	engFn := enginesPort(map[string]engine.Engine{
 		"claude":   engine.NewClaude(),

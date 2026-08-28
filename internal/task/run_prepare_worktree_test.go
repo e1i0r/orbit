@@ -224,6 +224,7 @@ func (m *streamMockEngine) Run(ctx context.Context, req engine.Request) (engine.
 func (m *streamMockEngine) Models() []engine.Choice  { return nil }
 func (m *streamMockEngine) Efforts() []engine.Choice { return nil }
 func (m *streamMockEngine) CanThink() bool           { return true }
+func (m *streamMockEngine) Locate() (string, error)  { return "mock", nil }
 func (m *streamMockEngine) CanResume() bool          { return true }
 
 func repoTaskRepo(t *testing.T) repo.Repo {

@@ -84,47 +84,64 @@ func TestEngineExecutionErrors(t *testing.T) {
 	}
 }
 
+// TestEngineMockSuccessfulRun gives each engine a stand-in that prints that
+// engine's own event stream.
+//
+// One script printing claude's stream used to stand in for all three, and it
+// passed — because all three parsed with claude's parser, and the plain-text
+// fallback caught whatever did not. That is the bug in test form: codex says
+// thread_id, opencode says sessionID and claude says session_id, so a run on
+// codex or opencode recorded no session and no cost while looking exactly
+// like one that had.
 func TestEngineMockSuccessfulRun(t *testing.T) {
 	dir := t.TempDir()
-	mockScript := "#!/bin/sh\necho '{\"type\":\"result\",\"result\":\"mock success\",\"total_cost_usd\":0.05}'\n"
 
-	for _, name := range []string{"claude", "codex", "opencode"} {
-		path := filepath.Join(dir, name)
-		if err := os.WriteFile(path, []byte(mockScript), 0o755); err != nil {
-			t.Fatalf("WriteFile %s: %v", name, err)
+	for _, c := range []struct {
+		name, line string
+	}{
+		{"claude", `{"type":"result","result":"mock success","session_id":"claude-sess","total_cost_usd":0.05}`},
+		{"codex", `{"type":"thread.started","thread_id":"codex-sess"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"mock success"}}
+{"type":"turn.completed","usage":{"output_tokens":5}}`},
+		{"opencode", `{"type":"text","sessionID":"opencode-sess","part":{"type":"text","text":"mock success"}}
+{"type":"step_finish","sessionID":"opencode-sess","part":{"type":"step-finish","reason":"stop","cost":0.05}}`},
+	} {
+		script := "#!/bin/sh\ncat <<'EOF'\n" + c.line + "\nEOF\n"
+		if err := os.WriteFile(filepath.Join(dir, c.name), []byte(script), 0o755); err != nil {
+			t.Fatalf("WriteFile %s: %v", c.name, err)
 		}
 	}
 
 	t.Setenv("PATH", dir+":"+os.Getenv("PATH"))
 
-	req := Request{
-		Prompt:      "run test",
-		Dir:         dir,
-		Permissions: []string{PermissionRead},
-	}
+	for _, c := range []struct {
+		eng     Engine
+		session string
+	}{
+		{NewClaude(), "claude-sess"},
+		{NewCodex(), "codex-sess"},
+		{NewOpenCode(), "opencode-sess"},
+	} {
+		name := c.eng.Name()
 
-	// 1. Claude
-	cl := NewClaude()
+		res, err := c.eng.Run(context.Background(), Request{
+			Prompt:      "run test",
+			Dir:         dir,
+			Permissions: []string{PermissionRepo},
+		})
+		if err != nil {
+			t.Errorf("%s.Run: %v", name, err)
+			continue
+		}
 
-	resCl, err := cl.Run(context.Background(), req)
-	if err != nil || resCl.Output != "mock success" {
-		t.Errorf("Claude.Run mock failed: %v, res=%+v", err, resCl)
-	}
+		if res.Output != "mock success" {
+			t.Errorf("%s.Run output = %q, want %q", name, res.Output, "mock success")
+		}
 
-	// 2. Codex
-	co := NewCodex()
-
-	resCo, err := co.Run(context.Background(), req)
-	if err != nil || resCo.Output != "mock success" {
-		t.Errorf("Codex.Run mock failed: %v, res=%+v", err, resCo)
-	}
-
-	// 3. OpenCode
-	op := NewOpenCode()
-
-	resOp, err := op.Run(context.Background(), req)
-	if err != nil || resOp.Output != "mock success" {
-		t.Errorf("OpenCode.Run mock failed: %v, res=%+v", err, resOp)
+		if res.SessionID != c.session {
+			t.Errorf("%s.Run session = %q, want %q — without it there is nothing to resume from",
+				name, res.SessionID, c.session)
+		}
 	}
 }
 

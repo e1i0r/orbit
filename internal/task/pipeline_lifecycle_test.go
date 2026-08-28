@@ -283,4 +283,5 @@ func (e *richResultEngine) Run(ctx context.Context, req engine.Request) (engine.
 func (e *richResultEngine) Models() []engine.Choice  { return nil }
 func (e *richResultEngine) Efforts() []engine.Choice { return nil }
 func (e *richResultEngine) CanThink() bool           { return true }
+func (e *richResultEngine) Locate() (string, error)  { return "rich", nil }
 func (e *richResultEngine) CanResume() bool          { return false }

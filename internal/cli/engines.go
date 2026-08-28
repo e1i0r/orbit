@@ -171,7 +171,14 @@ func enginesPort(engines map[string]engine.Engine) func() []ui.EngineInfo {
 				continue
 			}
 
-			_, pathErr := exec.LookPath(name)
+			// The engine answers where its program is, rather than this
+			// package guessing that the name is the binary and PATH is
+			// the only place to look. opencode installs into
+			// ~/.opencode/bin and puts that on a shell profile, so a PATH
+			// exported before the install has no opencode in it — and
+			// this screen said "[setup required]" to readers who had
+			// opencode running in the next window.
+			_, pathErr := eng.Locate()
 
 			info := ui.EngineInfo{
 				Name:      name,

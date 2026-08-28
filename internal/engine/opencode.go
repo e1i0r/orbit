@@ -3,9 +3,7 @@ package engine
 import (
 	"context"
 	"fmt"
-	"io"
-	"os/exec"
-	"strings"
+	"slices"
 )
 
 // OpenCode runs the opencode command line in headless mode.
@@ -61,10 +59,16 @@ func (OpenCode) Models() []Choice {
 }
 
 // Efforts returns the effort choices opencode supports.
+//
+// opencode calls this a model variant and its own help names three — high,
+// max and minimal — but the word after --variant is handed to whichever
+// provider is behind the chosen model, so what is accepted moves with the
+// model rather than with opencode. These four are the ones every reasoning
+// provider behind opencode shares.
 func (OpenCode) Efforts() []Choice {
 	return []Choice{
 		{ID: "", Label: "default"},
-		{ID: "low", Label: "low"},
+		{ID: "minimal", Label: "minimal"},
 		{ID: "medium", Label: "medium"},
 		{ID: "high", Label: "high"},
 	}
@@ -73,96 +77,93 @@ func (OpenCode) Efforts() []Choice {
 // CanThink reports whether opencode supports thinking mode.
 func (OpenCode) CanThink() bool { return true }
 
+// spec is how opencode is driven.
+//
+// dirs carries .opencode/bin because that is where opencode's own installer
+// puts the binary, and it adds that directory to a shell profile — so a PATH
+// is only as current as the session that exported it. Orbit started from a
+// terminal older than the install drew "opencode [setup required]" on the
+// engine screen to a reader with opencode running in the next pane.
+func (OpenCode) spec() spec {
+	return spec{
+		name:  "opencode",
+		dirs:  []string{".opencode/bin", ".local/bin", "bin"},
+		args:  openCodeArgs,
+		parse: ParseOpenCodeStream,
+	}
+}
+
+// Locate is where this machine keeps opencode.
+func (o OpenCode) Locate() (string, error) { return o.spec().locate() }
+
 // Run invokes opencode in the worktree and returns what it reported.
-func (OpenCode) Run(ctx context.Context, req Request) (Result, error) {
-	args, err := openCodeArgs(req)
-	if err != nil {
-		return Result{}, fmt.Errorf("opencode in %q: %w", req.Dir, err)
-	}
-
-	cmd := exec.CommandContext(ctx, "opencode", args...)
-	cmd.Dir = req.Dir
-	stdout := &boundedBuffer{max: maxStream}
-	stderr := &boundedBuffer{max: maxStderr}
-	pr, pw := io.Pipe()
-	cmd.Stdout = io.MultiWriter(stdout, pw)
-	cmd.Stderr = stderr
-
-	var (
-		streamResult Result
-		parseErr     error
-	)
-
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-
-		streamResult, parseErr = ParseStreamWithCallback(pr, req.OnEvent)
-		if closeErr := pr.Close(); closeErr != nil && parseErr == nil {
-			parseErr = closeErr
-		}
-	}()
-
-	runErr := cmd.Run()
-	if closeErr := pw.Close(); closeErr != nil && runErr == nil {
-		runErr = closeErr
-	}
-
-	<-done
-
-	out := streamResult
-
-	if runErr != nil {
-		if parseErr != nil {
-			if streamResult.Output == "" {
-				streamResult.Output = strings.TrimSpace(stdout.String())
-			}
-
-			out = streamResult
-		}
-
-		out.Output = noteDropped(out.Output, stdout.dropped)
-		if msg := strings.TrimSpace(stderr.String()); msg != "" {
-			return out, fmt.Errorf("opencode in %q: %s: %w", req.Dir, msg, runErr)
-		}
-
-		return out, fmt.Errorf("opencode in %q: %w", req.Dir, runErr)
-	}
-
-	if parseErr != nil {
-		raw := strings.TrimSpace(stdout.String())
-		if raw != "" {
-			return Result{Output: noteDropped(raw, stdout.dropped)}, nil
-		}
-
-		return Result{}, fmt.Errorf("opencode in %q: %w", req.Dir, parseErr)
-	}
-
-	out.Output = noteDropped(out.Output, stdout.dropped)
-
-	return out, nil
+func (o OpenCode) Run(ctx context.Context, req Request) (Result, error) {
+	return o.spec().run(ctx, req)
 }
 
 // openCodeArgs builds the command line for opencode run.
+//
+// Three of these flags were wrong. Effort is --variant, not --effort, and
+// opencode answers --effort by printing its help and exiting one, so every
+// opencode phase that named an effort failed before a model saw it. The
+// output was left at opencode's default, which is formatted prose, and this
+// adapter piped that prose into claude's stream parser — so every opencode
+// run recorded no session and no cost. --format json is what makes those two
+// fields real, and ParseOpenCodeStream is what reads them.
 func openCodeArgs(req Request) ([]string, error) {
-	if err := Permitted(req.Permissions); err != nil {
+	perm, err := openCodePermissionArgs(req.Permissions)
+	if err != nil {
 		return nil, err
 	}
 
-	args := []string{"run"}
+	args := append([]string{"run", "--format", "json"}, perm...)
+
 	if req.Model != "" {
 		args = append(args, "--model", req.Model)
 	}
 
 	if req.Effort != "" {
-		args = append(args, "--effort", req.Effort)
+		args = append(args, "--variant", req.Effort)
 	}
 
 	if req.Resume != "" {
 		args = append(args, "--session", req.Resume)
 	}
 
-	args = append(args, req.Prompt)
+	return append(args, req.Prompt), nil
+}
 
-	return args, nil
+// openCodePermissionArgs turns a posture into what opencode can state, and
+// refuses the postures it cannot.
+//
+// This adapter used to validate the permission names and then emit nothing
+// about them, which is the silent widening the head of permission.go exists
+// to prevent. What makes it worse here than a missing flag is what opencode
+// does without one: asked to write a file with no --auto and no terminal to
+// prompt at, `opencode run` wrote the file. That was run against the binary,
+// not reasoned about. Headless opencode approves everything.
+//
+// So opencode has exactly one posture it can honestly carry, and it is the
+// wide one. A phase holding repo gets --auto, which changes nothing about
+// what opencode would have done and makes the argv say so, so that `ps` and
+// the record agree with the behaviour.
+//
+// Anything narrower is refused. A read phase on opencode is a phase that can
+// write, and running it would put a sentence in the record — "this phase was
+// allowed to read" — that the engine had already contradicted. There is no
+// flag to fix that with, so the run does not start. Every builtin flow ships
+// repo on every phase, so what this refuses is a posture nothing builds yet
+// and a reader would have had lied to them about.
+func openCodePermissionArgs(names []string) ([]string, error) {
+	if err := Permitted(names); err != nil {
+		return nil, err
+	}
+
+	if !slices.Contains(names, PermissionRepo) {
+		return nil, fmt.Errorf(
+			"opencode cannot run a phase narrower than %s: headless `opencode run` approves every tool it is asked for, so a posture of %v would be recorded and not enforced",
+			PermissionRepo, names)
+	}
+
+	return []string{"--auto"}, nil
 }
