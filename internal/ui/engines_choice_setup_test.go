@@ -34,7 +34,7 @@ func enginesTestList() []EngineInfo {
 			Name:      "codex",
 			Available: false,
 			Setup:     func(*words.Printer) []string { return []string{"install codex", "run codex login"} },
-			Models:    []ChoiceInfo{{ID: "", Label: "default"}, {ID: "o3", Label: "o3"}},
+			Models:    []ChoiceInfo{{ID: "", Label: "default"}, {ID: "o3", Label: "o3"}, {ID: "o3-mini", Label: "o3-mini"}},
 			Efforts:   []ChoiceInfo{{ID: "", Label: "default"}, {ID: "low", Label: "low"}, {ID: "high", Label: "high"}},
 		},
 		{

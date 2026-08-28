@@ -34,11 +34,7 @@ type settingRow struct {
 
 // label is what the option at i is drawn as.
 func (r settingRow) label(i int) string {
-	if i < len(r.labels) {
-		return r.labels[i]
-	}
-
-	return r.options[i]
+	return dialLabel(r.options, r.labels, i)
 }
 
 func (m Model) openSettings() Model {

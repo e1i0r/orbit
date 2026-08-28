@@ -159,12 +159,12 @@ func (m Model) composeModelLine(active bool, w int) string {
 
 	var pills []string
 
-	for i, mod := range m.compose.models {
+	for i := range m.compose.models {
 		selected := i == m.compose.modelIdx
 		if selected {
-			pills = append(pills, Pill(" ● "+mod+" ", "#000000", "#10B981"))
+			pills = append(pills, Pill(" ● "+m.compose.modelLabel(i)+" ", "#000000", "#10B981"))
 		} else {
-			pills = append(pills, Pill(" "+mod+" ", "#94A3B8", "#1E293B"))
+			pills = append(pills, Pill(" "+m.compose.modelLabel(i)+" ", "#94A3B8", "#1E293B"))
 		}
 	}
 
@@ -205,12 +205,12 @@ func (m Model) composeEffortLine(active bool, w int) string {
 
 	var pills []string
 
-	for i, ef := range m.compose.efforts {
+	for i := range m.compose.efforts {
 		selected := i == m.compose.effortIdx
 		if selected {
-			pills = append(pills, Pill(" ● "+ef+" ", "#000000", "#06B6D4"))
+			pills = append(pills, Pill(" ● "+m.compose.effortLabel(i)+" ", "#000000", "#06B6D4"))
 		} else {
-			pills = append(pills, Pill(" "+ef+" ", "#94A3B8", "#1E293B"))
+			pills = append(pills, Pill(" "+m.compose.effortLabel(i)+" ", "#94A3B8", "#1E293B"))
 		}
 	}
 

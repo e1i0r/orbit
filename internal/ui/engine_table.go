@@ -101,3 +101,21 @@ func dialOf(choices []ChoiceInfo) (ids, labels []string) {
 
 	return ids, labels
 }
+
+// dialLabel is what the option at i on a dial is drawn as: the label beside
+// it when there is one, and the option itself when there is not.
+//
+// It takes two slices rather than a slice of pairs because the ids are what
+// every dial in this package already holds, compares and stores, and the
+// labels are only ever read at the moment of drawing.
+func dialLabel(ids, labels []string, i int) string {
+	if i < 0 || i >= len(ids) {
+		return ""
+	}
+
+	if i < len(labels) {
+		return labels[i]
+	}
+
+	return ids[i]
+}

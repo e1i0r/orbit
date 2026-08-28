@@ -299,8 +299,8 @@ func (m Model) hitComposeEnginePills(x int, field int) Target {
 func (m Model) hitComposeModelPills(x int, field int) Target {
 	curX := composeLabelStart
 
-	for i, mod := range m.compose.models {
-		pillWidth := composePillWidth(mod, i == m.compose.modelIdx)
+	for i := range m.compose.models {
+		pillWidth := composePillWidth(m.compose.modelLabel(i), i == m.compose.modelIdx)
 		if x >= curX && x < curX+pillWidth {
 			return Target{Kind: TargetComposeModelChoice, Pane: i}
 		}
@@ -329,8 +329,8 @@ func (m Model) hitComposeThinkingPills(x int, field int) Target {
 func (m Model) hitComposeEffortPills(x int, field int) Target {
 	curX := composeLabelStart
 
-	for i, ef := range m.compose.efforts {
-		pillWidth := composePillWidth(ef, i == m.compose.effortIdx)
+	for i := range m.compose.efforts {
+		pillWidth := composePillWidth(m.compose.effortLabel(i), i == m.compose.effortIdx)
 		if x >= curX && x < curX+pillWidth {
 			return Target{Kind: TargetComposeEffortChoice, Pane: i}
 		}
