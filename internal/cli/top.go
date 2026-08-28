@@ -16,7 +16,6 @@ package cli
 // pipe, a log and a CI job get instead of a screenful of escape codes.
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -26,7 +25,6 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/board"
-	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/quota"
 	"github.com/e1i0r/orbit/internal/store"
@@ -140,11 +138,7 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 	// map of one today, and it is a map because the record already names its
 	// engine and a task run by something else has to be answered by name
 	// rather than by assumption.
-	engines := map[string]engine.Engine{
-		"claude":   engine.NewClaude(),
-		"codex":    engine.NewCodex(),
-		"opencode": engine.NewOpenCode(),
-	}
+	engines := newEngines()
 
 	home, err := os.UserHomeDir()
 	if err != nil || home == "" {
@@ -176,26 +170,12 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 		RetractSupervisor: func(at time.Time) error {
 			return task.RetractSupervisor(s, at)
 		},
-		AskSupervisor: func(engineName, prompt string) (string, error) {
-			eng, ok := engines[engineName]
-			if !ok {
-				eng = engines["claude"]
-			}
-
-			return task.Supervise(context.Background(), s, eng, prompt)
-		},
-		AutoSupervise: func(engineName string, taskIDs []string) (string, error) {
-			eng, ok := engines[engineName]
-			if !ok {
-				eng = engines["claude"]
-			}
-
-			return task.AutoSupervise(context.Background(), s, eng, taskIDs)
-		},
-		DeleteTask: deleteTaskPort(s),
-		Take:       takePort(r, engines),
-		Open:       openPort(s, r),
-		Flows:      s,
+		AskSupervisor: askSupervisorPort(s, engines),
+		AutoSupervise: autoSupervisePort(s, engines),
+		DeleteTask:    deleteTaskPort(s),
+		Take:          takePort(r, engines),
+		Open:          openPort(s, r),
+		Flows:         s,
 		// canResume is asked per task rather than once for the build: the
 		// engine a task ran under is the one that decides whether its
 		// session can be carried on, and that name lives on the task.

@@ -10,7 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/task"
@@ -117,11 +116,7 @@ func runTask(ctx Context, args []string) error {
 		defer done()
 	}
 
-	engines := map[string]engine.Engine{
-		"claude":   engine.NewClaude(),
-		"codex":    engine.NewCodex(),
-		"opencode": engine.NewOpenCode(),
-	}
+	engines := newEngines()
 
 	logger.Info("cli/run", "starting task %s in repo %s on flow %s (timeout=%v)", id, r.Name, chosen, *timeout)
 
