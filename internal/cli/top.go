@@ -135,6 +135,7 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 		MarkRead:   markReadPort(s),
 		DeleteTask: deleteTaskPort(s),
 		Take:       takePort(r, engines),
+		Open:       openPort(s, r),
 		Flows:      s,
 		// canResume is asked per task rather than once for the build: the
 		// engine a task ran under is the one that decides whether its

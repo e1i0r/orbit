@@ -26,6 +26,19 @@ func (s *Store) CreateTaskDir(repoPath, taskID string) (string, error) {
 	return dir, nil
 }
 
+// RegisterRepo records a repository in the state root without writing a task
+// against it.
+//
+// It exists because the repos/ listing was, until now, a side effect: a
+// repository appeared in it the first time somebody ran a task there, and
+// there was no way to say "orbit should know about this checkout" on its
+// own. Anything that walks a directory finds repositories by itself, so this
+// is for the callers that cannot walk — a server answering a tool call, told
+// a path by a model that is not in that directory and cannot cd to it.
+func (s *Store) RegisterRepo(repoPath string) (string, error) {
+	return s.createRepoDir(repoPath)
+}
+
 // CreateWorktreeParent makes the directory a task's checkout will sit in and
 // returns the path of the checkout itself, which it does not create: `git
 // worktree add` insists on making that leaf for itself.

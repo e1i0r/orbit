@@ -5,6 +5,8 @@ import (
 	"os/exec"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/view"
 )
 
 type cliEndedMsg struct {
@@ -18,20 +20,44 @@ func (m Model) launchInteractiveCLI() (Model, tea.Cmd) {
 	if eng == "" {
 		eng = "claude"
 	}
-	repoDir := ""
-	if r, ok := m.selected(); ok && !r.head && r.task.Repo != "" {
-		repoDir = r.task.Repo
-	} else if len(m.board.RepoList) > 0 {
+	// The path and not the name. This read r.task.Repo — the column, which
+	// is what the repository is called — and handed it to exec as a working
+	// directory, so every session opened on a task started in a directory
+	// that does not exist, or worse, in one that happened to.
+	var t view.Task
+	if r, ok := m.selected(); ok && !r.head {
+		t = r.task
+	}
+	repoDir := t.RepoPath
+	if repoDir == "" && len(m.board.RepoList) > 0 {
 		repoDir = m.board.RepoList[0].Path
 	}
 
-	cmd := exec.Command(eng)
-	if repoDir != "" {
-		cmd.Dir = repoDir
+	cmd, err := m.openSession(t, eng, repoDir)
+	if err != nil {
+		return m.say(m.opts.Words.T("msg.cli_exec_error", "error running {engine}: {err}", about("engine", eng), about("err", err.Error()))), nil
 	}
 	return m.say(m.opts.Words.T("msg.opening_cli", "opening interactive session with {engine}...", about("engine", eng))), tea.ExecProcess(cmd, func(err error) tea.Msg {
 		return cliEndedMsg{Engine: eng, Repo: repoDir, Err: err}
 	})
+}
+
+// openSession is the command line the terminal is handed: the port's, with
+// Orbit's own server configured in it, or a bare engine for a window that
+// was given no port.
+func (m Model) openSession(t view.Task, engineName, dir string) (*exec.Cmd, error) {
+	if m.opts.Open != nil {
+		cmd, err := m.opts.Open(t, engineName, dir)
+		if err != nil {
+			return nil, err
+		}
+		if cmd != nil {
+			return cmd, nil
+		}
+	}
+	cmd := exec.Command(engineName)
+	cmd.Dir = dir
+	return cmd, nil
 }
 
 func (m Model) handleCLIEnded(msg cliEndedMsg) (Model, tea.Cmd) {

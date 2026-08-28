@@ -48,6 +48,24 @@ func (m Model) notesLines() []string {
 				content: content,
 			})
 
+		case view.EntryDialogue:
+			// Beside the notes and not among them. This is what a model or
+			// a session did to the task, which is the other half of the
+			// dialogue the reader came to this tab for — and the half no
+			// phase is ever handed, so it is never mistaken for a note the
+			// next run will read.
+			who := e.By
+			if who == "" {
+				who = p.T("notes.outsider", "fuera de la ejecución")
+			}
+			items = append(items, noteItem{
+				at:      timeStr,
+				sender:  fmt.Sprintf("↔ %s", strings.ToUpper(who)),
+				role:    Live,
+				status:  p.T("notes.unread_by_run", "no lo lee la ejecución"),
+				content: []string{"→ " + e.Text},
+			})
+
 		case view.EntryWaiting:
 			if e.Cause != "" || e.Text != "" {
 				msg := e.Cause
