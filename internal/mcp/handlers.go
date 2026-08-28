@@ -70,12 +70,12 @@ func (sn Session) readBoard() (*storeAndBoard, error) {
 		return nil, err
 	}
 
-	b, err := sn.board(s)
+	b, roots, err := sn.board(s)
 	if err != nil {
 		return nil, fmt.Errorf("read the board: %w", err)
 	}
 
-	return &storeAndBoard{store: s, board: b}, nil
+	return &storeAndBoard{store: s, board: b, roots: roots}, nil
 }
 
 // storeAndBoard is what a tool needs to answer anything: somewhere to write
@@ -83,6 +83,12 @@ func (sn Session) readBoard() (*storeAndBoard, error) {
 type storeAndBoard struct {
 	store *store.Store
 	board board.Board
+	// roots is where the board above was folded from. It is carried rather
+	// than asked for a second time: the version this replaces reopened the
+	// state root to answer "where did you look?", and answered nil — an
+	// empty list, indistinguishable from having looked nowhere — when that
+	// second attempt failed.
+	roots []string
 }
 
 func (sn Session) boardSummary() CallToolResult {
@@ -110,7 +116,7 @@ func (sn Session) boardSummary() CallToolResult {
 		"tasks_total": len(b.Tasks),
 		"unread":      board.Unread(b),
 		"spend":       spend,
-		"roots":       sn.describeRoots(),
+		"roots":       sb.roots,
 	})
 }
 
@@ -182,25 +188,4 @@ func reposOf(b board.Board) []map[string]string {
 	}
 
 	return repos
-}
-
-// describeRoots says where this server looked, so a client that finds an
-// empty board can tell "nothing to do" from "looked in the wrong place" —
-// the failure a server spawned by a desktop application actually has.
-func (sn Session) describeRoots() []string {
-	if sn.Root != "" {
-		return []string{sn.Root}
-	}
-
-	s, err := sn.open()
-	if err != nil {
-		return nil
-	}
-
-	roots, err := sn.roots(s)
-	if err != nil {
-		return nil
-	}
-
-	return roots
 }

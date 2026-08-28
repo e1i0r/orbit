@@ -30,7 +30,7 @@ func (sn Session) listRepos() CallToolResult {
 
 	return reply(map[string]any{
 		"repos": reposOf(sb.board),
-		"roots": sn.describeRoots(),
+		"roots": sb.roots,
 	})
 }
 
@@ -69,7 +69,7 @@ func (sn Session) inspectRepo(args map[string]any) CallToolResult {
 		answer["checkout_error"] = err.Error()
 	}
 
-	b, boardErr := sn.board(s)
+	b, _, boardErr := sn.board(s)
 	if boardErr == nil {
 		maps.Copy(answer, repoTally(b, path))
 		return reply(answer)
@@ -187,7 +187,7 @@ func (sn Session) repoPath(s *store.Store, hint string) (string, error) {
 		return ref.Path, nil
 	}
 
-	if b, err := sn.board(s); err == nil {
+	if b, _, err := sn.board(s); err == nil {
 		for _, r := range b.RepoList {
 			if strings.EqualFold(r.Name, hint) || r.Path == hint {
 				return r.Path, nil

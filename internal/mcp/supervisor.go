@@ -55,6 +55,11 @@ func (sn Session) supervisorHistory(args map[string]any) CallToolResult {
 		return refuse(err)
 	}
 
+	// The root is handed over and not read. The supervisor thread is one
+	// file under the state root rather than something folded per repository,
+	// so this reader answers the same thread whatever it is pointed at — and
+	// passing the session's root is still what to do, because the day that
+	// stops being true the honest value is already here.
 	r := board.NewReader(s, sn.Root)
 
 	lines, err := r.SupervisorLog()

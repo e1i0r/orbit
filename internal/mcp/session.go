@@ -45,17 +45,22 @@ func (sn Session) open() (*store.Store, error) {
 	return s, nil
 }
 
-// board folds every record under every root this session looks in.
+// board folds every record under every root this session looks in, and says
+// which roots those were: a client that finds an empty board can then tell
+// "nothing to do" from "looked in the wrong place", which is the failure a
+// server spawned by a desktop application actually has. The list comes back
+// from here rather than being asked for again afterwards, so that what a
+// tool reports having looked in is what it did look in.
 //
 // One board.Reader is built per root and the results are merged, rather than
 // a single reader over some common ancestor: the repositories Orbit knows
 // are scattered wherever the reader keeps them, and the nearest directory
 // containing all of them is routinely the home directory — a walk that costs
 // minutes and turns up every checkout the reader has ever cloned.
-func (sn Session) board(s *store.Store) (board.Board, error) {
+func (sn Session) board(s *store.Store) (board.Board, []string, error) {
 	roots, err := sn.roots(s)
 	if err != nil {
-		return board.Board{}, err
+		return board.Board{}, nil, err
 	}
 
 	var (
@@ -83,7 +88,7 @@ func (sn Session) board(s *store.Store) (board.Board, error) {
 	// Every root failing is different: there is no board at all, and saying
 	// "no tasks" would be a lie about a directory nobody could look in.
 	if len(merged.RepoList) == 0 && len(errs) > 0 {
-		return board.Board{}, errors.Join(errs...)
+		return board.Board{}, roots, errors.Join(errs...)
 	}
 
 	slices.SortFunc(merged.Tasks, func(a, b view.Task) int {
@@ -94,7 +99,7 @@ func (sn Session) board(s *store.Store) (board.Board, error) {
 		return strings.Compare(a.ID, b.ID)
 	})
 
-	return merged, nil
+	return merged, roots, nil
 }
 
 // roots is every directory this session walks for repositories.

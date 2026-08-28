@@ -6,6 +6,7 @@ package mcp
 // every question was asked of the working directory.
 
 import (
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -235,5 +236,27 @@ func TestAToolNobodySpelledRightIsRefusedWithTheOnesThatExist(t *testing.T) {
 
 	if !strings.Contains(text(t, res), "orbit_list_tasks") {
 		t.Errorf("the refusal does not name the tools that would have worked: %s", text(t, res))
+	}
+}
+
+// TestASessionWithNoRootSaysWhereItLooked is the other half of the test
+// above, and the half that could answer nothing at all. Where it looked was
+// worked out a second time, by reopening the state root after the board had
+// already been folded, and a failure there came back as an empty list —
+// which a client reads as a server that looked nowhere. The roots now come
+// back from the fold itself, so what a tool reports is what it read.
+func TestASessionWithNoRootSaysWhereItLooked(t *testing.T) {
+	s, _, r := oneRepo(t)
+	addTask(t, s, r, "PAY-1", record.Event{At: at(1), Kind: record.TaskCreated, Text: "written"})
+
+	rootless := Session{Version: "test"}
+
+	roots, ok := call(t, rootless, "orbit_get_board_summary", nil)["roots"].([]any)
+	if !ok || len(roots) == 0 {
+		t.Fatal("a session with no root of its own does not say which directories it looked in")
+	}
+
+	if !slices.Contains(roots, any(r.Path)) {
+		t.Errorf("it says it looked in %v, and the task it found is in %q", roots, r.Path)
 	}
 }
