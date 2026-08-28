@@ -8,6 +8,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/logger"
+	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/task"
 )
 
@@ -47,11 +48,10 @@ func directTask(ctx Context, args []string) error {
 	}
 
 	if *restart {
-		unread := 0
-
-		rdr := board.NewReader(s, *dir)
-		if b, _, rErr := rdr.Refresh(); rErr == nil {
-			unread = board.Unread(b)
+		unread, err := unreadCount(s, *dir)
+		if err != nil {
+			logger.Error("cli/direct", "count what is unread before restarting %q: %v", id, err)
+			return err
 		}
 
 		pid, err := task.Reopen(s, t, *by, text, t.Flow, unread)
@@ -75,4 +75,28 @@ func directTask(ctx Context, args []string) error {
 	fmt.Fprintf(ctx.Out, "%s redirected: directive recorded\n", id)
 
 	return nil
+}
+
+// unreadCount is how many finished tasks nobody has looked at yet, which is
+// the brake `orbit run` and this command are both refused by.
+//
+// A board that could not be read is a refusal and not a zero. Zero is the one
+// number task.Start never stops for — atCap is written as limit > 0 && unread
+// >= limit — so a state root that failed to walk used to take the brake off
+// silently, at the moment it was least worth trusting. The reader is told
+// instead, and can restart the task again once the count can be taken.
+//
+// The count is of the repository this command was pointed at, and not of
+// every repository the state root knows about. The window counts over the
+// root it was opened on; here the only root anybody named is -repo, and
+// widening it to the whole machine would be this command inventing a root
+// nobody typed. It is the narrower number, and it is the honest one to take
+// from what was said.
+func unreadCount(s *store.Store, dir string) (int, error) {
+	b, _, err := board.NewReader(s, dir).Refresh()
+	if err != nil {
+		return 0, err
+	}
+
+	return board.Unread(b), nil
 }
