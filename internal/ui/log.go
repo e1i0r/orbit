@@ -36,7 +36,7 @@ const clockCells = 8
 func (m Model) logLines() []string {
 	w := max(m.frame.Body.W, 1)
 	if m.logErr != nil {
-		return []string{" " + Paint(Bad).Render(m.logErr.Error())}
+		return []string{" " + Paint(Bad).Render(m.errSaid(m.logErr))}
 	}
 
 	if len(m.entries) == 0 {

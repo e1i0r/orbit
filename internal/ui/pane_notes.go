@@ -20,7 +20,7 @@ type noteItem struct {
 func (m Model) notesLines() []string {
 	p := m.opts.Words
 	if m.logErr != nil {
-		return []string{"  " + Paint(Bad).Render(m.logErr.Error())}
+		return []string{"  " + Paint(Bad).Render(m.errSaid(m.logErr))}
 	}
 
 	var items []noteItem

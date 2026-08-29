@@ -19,7 +19,7 @@ type gateCheck struct {
 func (m Model) gatesLines() []string {
 	p := m.opts.Words
 	if m.logErr != nil {
-		return []string{"  " + Paint(Bad).Render(m.logErr.Error())}
+		return []string{"  " + Paint(Bad).Render(m.errSaid(m.logErr))}
 	}
 
 	var checks []gateCheck

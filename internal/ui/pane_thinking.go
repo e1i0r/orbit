@@ -43,7 +43,7 @@ func formatThoughtLine(l string) (string, Role) {
 func (m Model) thinkingLines() []string {
 	p := m.opts.Words
 	if m.logErr != nil {
-		return []string{"  " + Paint(Bad).Render(m.logErr.Error())}
+		return []string{"  " + Paint(Bad).Render(m.errSaid(m.logErr))}
 	}
 
 	var blocks []thoughtBlock

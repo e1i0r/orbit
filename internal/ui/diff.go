@@ -53,7 +53,7 @@ func (m Model) diffLines() []string {
 	}
 
 	if m.diffErr != nil {
-		errStr := m.diffErr.Error()
+		errStr := m.errSaid(m.diffErr)
 		if strings.Contains(errStr, "cannot change to") || strings.Contains(errStr, "no such file or directory") {
 			return []string{" " + Paint(Dim).Render(p.T("diff.empty_no_worktree", "no working tree modifications recorded"))}
 		}

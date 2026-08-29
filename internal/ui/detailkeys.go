@@ -8,7 +8,6 @@ package ui
 // same one keypress.go and screen.go already make on the board.
 
 import (
-	"errors"
 	"fmt"
 
 	"charm.land/bubbles/v2/key"
@@ -233,7 +232,7 @@ func (m Model) newest() Model {
 func logOf(r Reader, t view.Task) tea.Cmd {
 	return func() tea.Msg {
 		if r == nil {
-			return logMsg{ID: t.ID, Err: errors.New("this window was opened without a way to read the record")}
+			return logMsg{ID: t.ID, Err: errNoRecordPort}
 		}
 
 		entries, err := r.Log(t.RepoPath, t.ID)

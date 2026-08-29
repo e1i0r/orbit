@@ -88,7 +88,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if msg.Err != nil {
-			return next.say(msg.Err.Error()), nil
+			return next.say(m.errSaid(msg.Err)), nil
 		}
 
 		return next.say(next.commandSaid(msg)), nil
@@ -102,7 +102,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.supervisor.offset = 999999
 		if msg.Err != nil {
-			return m.say(m.opts.Words.T("supervisor.error", "supervisor error: {err}", about("err", msg.Err.Error()))), nil
+			return m.say(m.opts.Words.T("supervisor.error", "supervisor error: {err}", about("err", m.errSaid(msg.Err)))), nil
 		}
 
 		return m.say(m.opts.Words.T("supervisor.replied", "supervisor replied in thread")), nil
@@ -110,7 +110,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.handleCLIEnded(msg)
 	case editorMsg:
 		if msg.Err != nil {
-			return m.say(msg.Err.Error()), nil
+			return m.say(m.errSaid(msg.Err)), nil
 		}
 
 		return m, nil

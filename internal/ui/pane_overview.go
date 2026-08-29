@@ -50,7 +50,7 @@ func parseDiffSummary(diff string) diffSummary {
 func (m Model) overviewLines() []string {
 	p := m.opts.Words
 	if m.logErr != nil {
-		return []string{"  " + Paint(Bad).Render(m.logErr.Error())}
+		return []string{"  " + Paint(Bad).Render(m.errSaid(m.logErr))}
 	}
 
 	t, ok := m.task(m.detail)

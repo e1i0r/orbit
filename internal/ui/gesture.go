@@ -102,7 +102,7 @@ func (m Model) handBack() (tea.Model, tea.Cmd) {
 // viewport with somebody else's key map in front of it.
 func (m Model) session(msg sessionMsg) (tea.Model, tea.Cmd) {
 	if msg.Err != nil {
-		return m.say(msg.Err.Error()), nil
+		return m.say(m.errSaid(msg.Err)), nil
 	}
 
 	if msg.Cmd == nil {
@@ -135,7 +135,7 @@ func (m Model) sessionEnded(msg sessionEndedMsg) Model {
 			m = m.took(msg.ID, false)
 		}
 
-		return m.say(msg.Err.Error())
+		return m.say(m.errSaid(msg.Err))
 	}
 
 	msgText := m.opts.Words.T("msg.session_ended",
@@ -148,7 +148,7 @@ func (m Model) sessionEnded(msg sessionEndedMsg) Model {
 // readSaid is what the band says about a task that was marked read.
 func (m Model) readSaid(msg readMsg) string {
 	if msg.Err != nil {
-		return msg.Err.Error()
+		return m.errSaid(msg.Err)
 	}
 
 	return m.opts.Words.T("msg.marked_read", "{id} is marked read", about("id", msg.ID))

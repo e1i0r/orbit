@@ -2624,6 +2624,54 @@
     "supervisor.acting": {
       "source": "supervisor is autonomously inspecting {n} task(s)...",
       "value": "el supervisor está inspeccionando autónomamente {n} tarea(s)..."
+    },
+    "err.read_board": {
+      "source": "read the board",
+      "value": "leer el tablero"
+    },
+    "err.find_repos": {
+      "source": "look for new repositories",
+      "value": "buscar repositorios nuevos"
+    },
+    "err.no_control_port": {
+      "source": "this window was opened without a way to control a task",
+      "value": "esta ventana se abrió sin forma de controlar una tarea"
+    },
+    "err.no_start_port": {
+      "source": "this window was opened without a way to start a run",
+      "value": "esta ventana se abrió sin forma de arrancar una ejecución"
+    },
+    "err.no_read_port": {
+      "source": "this window was opened without a way to mark a task read",
+      "value": "esta ventana se abrió sin forma de marcar una tarea como leída"
+    },
+    "err.no_session_port": {
+      "source": "this window was opened without a way to take the keyboard",
+      "value": "esta ventana se abrió sin forma de tomar el teclado"
+    },
+    "err.no_worktree_port": {
+      "source": "this window was opened without a way to find the worktree",
+      "value": "esta ventana se abrió sin forma de encontrar el worktree"
+    },
+    "err.no_record_port": {
+      "source": "this window was opened without a way to read the record",
+      "value": "esta ventana se abrió sin forma de leer el registro"
+    },
+    "err.no_command_port": {
+      "source": "this window was opened without a way to run commands",
+      "value": "esta ventana se abrió sin forma de ejecutar comandos"
+    },
+    "err.no_repo_path": {
+      "source": "this task does not say where its repository is",
+      "value": "esta tarea no dice dónde está su repositorio"
+    },
+    "err.no_supervisor": {
+      "source": "supervisor engine is not configured",
+      "value": "el motor supervisor no está configurado"
+    },
+    "err.git_timeout": {
+      "source": "git did not answer in time",
+      "value": "git no respondió a tiempo"
     }
   }
 }
