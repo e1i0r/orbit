@@ -87,3 +87,28 @@ func TestTheFlowDialIsReadWhenTheScreenOpens(t *testing.T) {
 		t.Errorf("the flow dial is %v, so it is reading the directory while it draws", got)
 	}
 }
+
+// TestTheFlowDialPicksUpAFlowWrittenSinceItWasLastOpened.
+//
+// The flows are not a fixed set and never were: the reader writes them, from
+// the flows screen or by dropping a file in, and the dial has to be whatever
+// exists the moment they go looking. Reading on open is what makes that
+// true — a list built once at startup would go stale the first time somebody
+// saved a flow and went straight to settings to make it the default.
+func TestTheFlowDialPicksUpAFlowWrittenSinceItWasLastOpened(t *testing.T) {
+	m, _ := testModel(t, 120, 40)
+	m.opts.Flows = userFlows(t)
+
+	m = m.openSettings()
+	if got := flowDialOf(t, m).options; slices.Contains(got, "midnight") {
+		t.Fatalf("the flow dial already offers midnight before it was written: %v", got)
+	}
+
+	saveFlow(t, m.opts.Flows, "midnight")
+	m = m.abandonSettings()
+	m = m.openSettings()
+
+	if got := flowDialOf(t, m).options; !slices.Contains(got, "midnight") {
+		t.Errorf("the flow dial offers %v, and midnight was written before it was opened again", got)
+	}
+}
