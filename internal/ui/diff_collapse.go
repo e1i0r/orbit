@@ -2,17 +2,49 @@ package ui
 
 import (
 	"fmt"
+	"maps"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
 )
 
-// toggleCollapseCurrentFile toggles collapse state for the file currently in view.
-func (m Model) toggleCollapseCurrentFile() Model {
-	if m.collapsedFiles == nil {
-		m.collapsedFiles = make(map[string]bool)
+// collapseFile closes an open file of the diff and opens a closed one.
+//
+// The map is cloned rather than written in place: a Model is copied by every
+// method that returns one and a map is not, so a key written here would
+// collapse a file on windows this method never returned.
+func (m Model) collapseFile(path string) Model {
+	held := maps.Clone(m.collapsedFiles)
+	if held == nil {
+		held = map[string]bool{}
 	}
 
+	if held[path] {
+		delete(held, path)
+	} else {
+		held[path] = true
+	}
+
+	m.collapsedFiles = held
+
+	return m.syncPanes()
+}
+
+// collapseFileAt is the same for the file a hit test named. A row can only
+// carry the file's place in the diff, so that is what it is named by here —
+// and turned back into a path at once, because a rebuild moves the rows
+// under a file and does not move the file.
+func (m Model) collapseFileAt(i int) Model {
+	files := parseDiffFiles(strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n"))
+	if i < 0 || i >= len(files) {
+		return m
+	}
+
+	return m.collapseFile(files[i].Path)
+}
+
+// toggleCollapseCurrentFile toggles collapse state for the file currently in view.
+func (m Model) toggleCollapseCurrentFile() Model {
 	raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
 
 	files := parseDiffFiles(raw)
@@ -23,7 +55,7 @@ func (m Model) toggleCollapseCurrentFile() Model {
 	idx := fileIndexAtOffset(files, m.panes[tabDiff].YOffset())
 	if idx >= 0 && idx < len(files) {
 		path := files[idx].Path
-		m.collapsedFiles[path] = !m.collapsedFiles[path]
+		m = m.collapseFile(path)
 		p := m.opts.Words
 
 		status := p.T("diff.file_expanded", "expanded")
@@ -31,7 +63,7 @@ func (m Model) toggleCollapseCurrentFile() Model {
 			status = p.T("diff.file_collapsed", "collapsed")
 		}
 
-		m = m.syncPanes().say(fmt.Sprintf("%s: %s", path, status))
+		m = m.say(fmt.Sprintf("%s: %s", path, status))
 	}
 
 	return m
@@ -39,10 +71,6 @@ func (m Model) toggleCollapseCurrentFile() Model {
 
 // toggleCollapseAll toggles collapse state for all changed files.
 func (m Model) toggleCollapseAll() Model {
-	if m.collapsedFiles == nil {
-		m.collapsedFiles = make(map[string]bool)
-	}
-
 	raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
 
 	files := parseDiffFiles(raw)
@@ -61,9 +89,17 @@ func (m Model) toggleCollapseAll() Model {
 	}
 
 	target := !allCollapsed
-	for _, f := range files {
-		m.collapsedFiles[f.Path] = target
+
+	held := maps.Clone(m.collapsedFiles)
+	if held == nil {
+		held = map[string]bool{}
 	}
+
+	for _, f := range files {
+		held[f.Path] = target
+	}
+
+	m.collapsedFiles = held
 
 	p := m.opts.Words
 
@@ -125,13 +161,7 @@ func (m Model) handleDiffFilePickerKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m, nil
 	case " ", "space":
 		if m.diffFileCursor >= 0 && m.diffFileCursor < len(files) {
-			if m.collapsedFiles == nil {
-				m.collapsedFiles = make(map[string]bool)
-			}
-
-			path := files[m.diffFileCursor].Path
-			m.collapsedFiles[path] = !m.collapsedFiles[path]
-			m = m.syncPanes()
+			m = m.collapseFile(files[m.diffFileCursor].Path)
 		}
 
 		return m, nil

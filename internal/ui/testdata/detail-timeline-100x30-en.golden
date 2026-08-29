@@ -3,21 +3,21 @@
   $0.00 spent  ·  15 tasks  ·  0 events  ·  ⠋
  ACME-2662  Retry the webhook on 5xx                                        payments · failed: gates
 
- [1] [2] [3] [4] [5] [6 timeline] [7] [8] [9] [0] [w]                                      attempt 2
- 13:54:00              written down  Retry the webhook on 5xx                                       
- ── attempt 1 ────────────────────────────────────────────────────────────────────────── 13:58:00 ──
+ [1]  [2]  [3]  [4]  [5]  6 timeline  [7]  [8]  [9]  [0]  [w]                              attempt 2
+ 13:54:00              written down    Retry the webhook on 5xx                                     
+ ▾ ── attempt 1 ──────────────────────────────────────────────────────────────────────── 13:58:00 ──
  13:58:00              started                                                                      
- 13:58:00  implement   started  claude opus                                                         
- 14:12:00  implement   finished  wrote retry.go                                                     
-added a backoff                                                                                     
- 14:12:00  gates       started  claude opus                                                         
- 14:15:00  gates       failed  the gates phase exited 1                                             
- 14:15:00              failed  gates did not pass                                                   
- ── attempt 2 ────────────────────────────────────────────────────────────────────────── 14:30:00 ──
+ 13:58:00  implement   started    claude opus                                                       
+ 14:12:00  implement   finished    wrote retry.go added a backoff                                   
+ 14:12:00  gates       started    claude opus                                                       
+ 14:15:00  gates       failed    the gates phase exited 1                                           
+ 14:15:00              failed    gates did not pass                                                 
+ ▾ ── attempt 2 ──────────────────────────────────────────────────────────────────────── 14:30:00 ──
  14:30:00              started                                                                      
- 14:30:00  gates       started  claude opus                                                         
- 14:33:00  gates       failed  the gates phase exited 1                                             
- 14:33:00              failed  gates did not pass                                                   
+ 14:30:00  gates       started    claude opus                                                       
+ 14:33:00  gates       failed    the gates phase exited 1                                           
+ 14:33:00              failed    gates did not pass                                                 
+                                                                                                    
                                                                                                     
                                                                                                     
                                                                                                     

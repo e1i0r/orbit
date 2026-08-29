@@ -6,7 +6,10 @@ package ui
 // screen's option pills, and the repository picker.
 
 import (
+	"strings"
 	"testing"
+
+	"github.com/charmbracelet/x/ansi"
 )
 
 func TestHitDetailAndTabs(t *testing.T) {
@@ -40,6 +43,35 @@ func TestHitDetailAndTabs(t *testing.T) {
 
 	if got := m.hitTabs(-1); got.Kind != TargetNone {
 		t.Errorf("hitTabs off every tab = %+v, want TargetNone", got)
+	}
+}
+
+// TestEveryTabIsWhereTheStripDrewIt. A click is answered from placeTabs and
+// the strip is drawn by tabStrip, so the two agreeing is the whole of whether
+// pressing a tab opens the one under the pointer. They agree by both walking
+// the same widths, which is what makes a change to the separator — brackets
+// to none, one space to two — able to move every tab but the first.
+func TestEveryTabIsWhereTheStripDrewIt(t *testing.T) {
+	m := openOn(t, "ACME-2662")
+	m.frame.Body.W = 140
+
+	strip := ansi.Strip(m.tabStrip(m.frame.Body.W))
+	tags := m.tabTags(m.frame.Body.W)
+
+	placed := m.placeTabs()
+	if len(placed) != len(tags) {
+		t.Fatalf("the strip drew %d tabs and %d were placed", len(tags), len(placed))
+	}
+
+	for i, p := range placed {
+		at := strings.Index(strip, tags[i].text)
+		if at != p.x {
+			t.Errorf("%q is drawn at cell %d and clicked at %d", tags[i].text, at, p.x)
+		}
+
+		if got := m.hitTabs(p.x + p.w - 1); got.Pane != int(p.tab) {
+			t.Errorf("the last cell of %q opens pane %d, want %d", tags[i].text, got.Pane, p.tab)
+		}
 	}
 }
 

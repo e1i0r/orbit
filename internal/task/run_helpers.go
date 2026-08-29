@@ -6,6 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/store"
 )
@@ -51,27 +52,38 @@ func prepare(s *store.Store, t Task) (string, error) {
 	return wt, nil
 }
 
-// prompt is what the engine is told for one phase.
+// prompt is what the engine is told for one phase: the task, the phase it is
+// running, what the phase before it said, and whatever the operator has
+// added since.
+//
+// It is written in Markdown because the answer is asked for in Markdown, and
+// a prompt that asks in one shape for another is asking twice.
 func prompt(t Task, p flow.Phase, notes []string, prevOutput string) string {
-	base := fmt.Sprintf("Phase: %s\nRepository: %s\n\nTask %s:\n%s\n", p.Name, t.Repo.Name, t.ID, t.Text)
+	var b strings.Builder
+
+	fmt.Fprintf(&b, "# %s\n\n%s\n\n", t.ID, strings.TrimSpace(t.Text))
+	fmt.Fprintf(&b, "## Phase\n\n`%s`, in repository `%s`.\n", p.Name, t.Repo.Name)
+
 	if p.Prompt != "" {
-		base += fmt.Sprintf("\nPhase Instructions:\n%s\n", p.Prompt)
+		fmt.Fprintf(&b, "\n## Phase instructions\n\n%s\n", strings.TrimSpace(p.Prompt))
 	}
 
+	// Fenced rather than set as prose: what the phase before wrote is
+	// Markdown of its own, and its headings loose under a heading of this
+	// prompt would read as sections of the prompt.
 	if prevOutput != "" {
-		base += fmt.Sprintf("\nPrevious Phase Output:\n%s\n", prevOutput)
+		fmt.Fprintf(&b, "\n## Previous phase output\n\n%s\n", engine.Fenced(prevOutput))
 	}
 
-	if len(notes) == 0 {
-		return base
+	if len(notes) > 0 {
+		b.WriteString("\n## Operator notes\n\n")
+
+		for _, n := range notes {
+			fmt.Fprintf(&b, "- %s\n", n)
+		}
 	}
 
-	var sb strings.Builder
-	sb.WriteString(base + "\nOperator Notes:\n")
+	b.WriteString("\n" + engine.AnswerContract)
 
-	for _, n := range notes {
-		sb.WriteString("- " + n + "\n")
-	}
-
-	return sb.String()
+	return b.String()
 }

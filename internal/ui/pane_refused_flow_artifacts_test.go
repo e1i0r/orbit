@@ -1,13 +1,15 @@
 package ui
 
-// pane_refused_flow_artifacts_coverage_test.go covers the three remaining
-// panes with real branches left untested: refusedLines' denial list,
-// flowLines' per-phase execution states, and artifactsLines' four groups.
+// The three remaining panes and the branches of each: refusedLines' denial
+// list, flowLines' per-phase execution states, and what artifactsLines says
+// about a directory it has read, has not read yet, and could not read.
 
 import (
 	"errors"
 	"strings"
 	"testing"
+
+	"github.com/charmbracelet/x/ansi"
 
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -54,6 +56,21 @@ func TestFlowLinesEveryPhaseState(t *testing.T) {
 		{Kind: "phase.failed", Phase: "review", Attempt: 1, Cause: "tests failed", Exit: "1"},
 		{Kind: "phase.cancelled", Phase: "fix", Attempt: 1, Text: "stopped by the reader"},
 	}
+
+	// Closed, a node is the branch it hangs off and where it got to. What it
+	// was set up with and what it said is what opening one is for.
+	shut := strings.Join(m.flowLines(), "\n")
+	for _, want := range []string{"implement", "review", "fix", "completed", "failed", "cancelled"} {
+		if !strings.Contains(shut, want) {
+			t.Errorf("flowLines closed = %q, want it to mention %q", shut, want)
+		}
+	}
+
+	if strings.Contains(shut, "wrote the code") {
+		t.Errorf("a closed node printed what its phase said anyway: %q", shut)
+	}
+
+	m.expandedDetail = true
 
 	joined := strings.Join(m.flowLines(), "\n")
 	for _, want := range []string{"implement", "review", "fix", "tests failed", "wrote the code", "stopped by the reader"} {
@@ -113,50 +130,101 @@ func replaceTask(tasks []view.Task, t view.Task) []view.Task {
 	return out
 }
 
-func TestArtifactsLinesGroupsAndFormatBytes(t *testing.T) {
+// TestArtifactsNamesWhatIsOnDisk. Every row of this tab is read: the names
+// and the sizes come from the task's own directory and the changed files
+// from the diff, and a listing that cannot be checked against the disk is
+// worse than no listing — this is the one tab a reader goes to to check.
+func TestArtifactsNamesWhatIsOnDisk(t *testing.T) {
 	m := openOn(t, "ACME-2662")
 	m.diffKnown = true
 	m.diff = "diff --git a/retry.go b/retry.go\n--- a/retry.go\n+++ b/retry.go\n"
-	m.entries = []view.Entry{
-		{Kind: "phase.finished", Phase: "implement", Text: "wrote retry.go"},
-		{Kind: "gate.failed", Gate: "vet", Cause: "unreachable code"},
+	m.filesKnown = true
+	m.files = []view.File{
+		{Name: "task.md", Size: 512},
+		{Name: "events.jsonl", Size: 2048},
+		{Name: "notes.bin", Size: 3},
 	}
-
-	tk, ok := m.task(m.detail)
-	if !ok {
-		t.Fatal("fixture task not found")
-	}
-
-	tk.Flow, tk.Cost = "careful", 1.25
-	m.board.Tasks = replaceTask(m.board.Tasks, tk)
 
 	joined := strings.Join(m.artifactsLines(), "\n")
 	for _, want := range []string{
-		"what it produced", "the checks & gates", "gates.reason",
-		"what it was asked for", "task.env", "run accounting", "cost.tsv",
+		"what orbit wrote down", "3 files",
+		"task.md", "512 B", "the task as it was written",
+		"events.jsonl", "2 k", "one line per event",
+		"what the run changed", "1 file", "retry.go",
 	} {
 		if !strings.Contains(joined, want) {
 			t.Errorf("artifactsLines = %q, want it to mention %q", joined, want)
 		}
 	}
 
+	// A name this build does not know is listed and left at that. The name
+	// and the size were read and are true; a sentence invented beside them
+	// would be the one part of the row that is not.
+	row := rowOf(strings.Split(joined, "\n"), "notes.bin")
+	if row < 0 {
+		t.Fatalf("the file this build knows nothing about is not listed:\n%s", joined)
+	}
+
+	if plain := strings.TrimSpace(ansi.Strip(strings.Split(joined, "\n")[row])); !strings.HasSuffix(plain, "3 B") {
+		t.Errorf("the unknown file's row = %q, want it to end at its size", plain)
+	}
+}
+
+// TestArtifactsSaysWhichAnswerItIsWaitingFor. Nothing read yet, nothing
+// there, and a read that failed are three different facts, and a tab that
+// drew all three as an empty section would assert the second one it never
+// observed.
+func TestArtifactsSaysWhichAnswerItIsWaitingFor(t *testing.T) {
+	for _, c := range []struct {
+		name  string
+		on    func(m Model) Model
+		wants string
+	}{{
+		name:  "before the first answer",
+		on:    func(m Model) Model { return m },
+		wants: "reading the task's directory",
+	}, {
+		name:  "after an empty one",
+		on:    func(m Model) Model { m.filesKnown = true; return m },
+		wants: "has not run",
+	}, {
+		name:  "after a failure",
+		on:    func(m Model) Model { m.filesErr = errors.New("open: permission denied"); return m },
+		wants: "permission denied",
+	}} {
+		t.Run(c.name, func(t *testing.T) {
+			joined := strings.Join(c.on(openOn(t, "ACME-2662")).artifactsLines(), "\n")
+			if !strings.Contains(joined, c.wants) {
+				t.Errorf("artifactsLines = %q, want it to say %q", joined, c.wants)
+			}
+		})
+	}
+
 	// A gone task is a sentence, not a crash.
-	m2 := openOn(t, "no-such-task")
-	if joined := strings.Join(m2.artifactsLines(), "\n"); !strings.Contains(joined, "no longer on the board") {
+	m := openOn(t, "no-such-task")
+	if joined := strings.Join(m.artifactsLines(), "\n"); !strings.Contains(joined, "no longer on the board") {
 		t.Errorf("artifactsLines for a gone task = %q, want the gone sentence", joined)
 	}
 }
 
-func TestFormatBytesBothSides(t *testing.T) {
-	if got := formatBytes(0); got != "1 B" {
-		t.Errorf("formatBytes(0) = %q, want %q (clamped to at least one byte)", got, "1 B")
-	}
-
-	if got := formatBytes(512); got != "512 B" {
-		t.Errorf("formatBytes(512) = %q, want %q", got, "512 B")
-	}
-
-	if got := formatBytes(2048); got != "2 k" {
-		t.Errorf("formatBytes(2048) = %q, want %q", got, "2 k")
+// TestFormatBytesNamesItsUnit. A size is read off the disk now, so an empty
+// file is nought bytes and says so: the listing this replaces clamped every
+// size up to one byte because none of them had been measured.
+func TestFormatBytesNamesItsUnit(t *testing.T) {
+	for _, c := range []struct {
+		bytes int64
+		want  string
+	}{
+		{0, "0 B"},
+		{512, "512 B"},
+		{1023, "1023 B"},
+		{1024, "1 k"},
+		{2048, "2 k"},
+		{1024*1024 - 1, "1023 k"},
+		{3 * 1024 * 1024, "3 M"},
+	} {
+		if got := formatBytes(c.bytes); got != c.want {
+			t.Errorf("formatBytes(%d) = %q, want %q", c.bytes, got, c.want)
+		}
 	}
 }

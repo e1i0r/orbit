@@ -52,7 +52,7 @@ func (m Model) findPhaseExec(phaseName string) phaseExec {
 			exec.finished = true
 			exec.cost = e.Cost
 
-			exec.text = e.Text
+			exec.text = e.Said()
 			if !startEntry.At.IsZero() && !e.At.IsZero() {
 				exec.duration = elapsed(e.At, startEntry.At)
 			}
@@ -64,7 +64,7 @@ func (m Model) findPhaseExec(phaseName string) phaseExec {
 			exec.exit = e.Exit
 			exec.cost = e.Cost
 
-			exec.text = e.Text
+			exec.text = e.Said()
 			if !startEntry.At.IsZero() && !e.At.IsZero() {
 				exec.duration = elapsed(e.At, startEntry.At)
 			}
@@ -72,7 +72,7 @@ func (m Model) findPhaseExec(phaseName string) phaseExec {
 
 		if e.What() == view.EntryCancelled {
 			exec.cancelled = true
-			exec.text = e.Text
+			exec.text = e.Said()
 		}
 
 		if e.What() == view.EntryWaiting {
@@ -86,12 +86,24 @@ func (m Model) findPhaseExec(phaseName string) phaseExec {
 
 // flowLines renders Pane 2: Tree view of Flow & Step Results.
 func (m Model) flowLines() []string {
+	lines, _ := m.flowRows()
+
+	return lines
+}
+
+// flowRows is that tree and, beside it, which phase each node that folds
+// stands for, laid out in one pass for the reason logRows is.
+//
+// The tree is the pane and folding does not take it down: a closed node is
+// still a branch off the trunk with its standing on it, and what it hides is
+// how it was configured and what it said.
+func (m Model) flowRows() ([]string, map[int]int) {
 	p := m.opts.Words
 
 	t, ok := m.task(m.detail)
 	if !ok {
 		return []string{"  " + Paint(Dim).Render(
-			p.T("detail.gone", "this task is no longer on the board"))}
+			p.T("detail.gone", "this task is no longer on the board"))}, nil
 	}
 
 	flowName := t.Flow
@@ -101,7 +113,7 @@ func (m Model) flowLines() []string {
 
 	f, err := flow.Resolve(m.opts.Flows, flowName)
 	if err != nil {
-		return []string{"  " + Paint(Bad).Render(fmt.Sprintf("flow %q: %v", flowName, err))}
+		return []string{"  " + Paint(Bad).Render(fmt.Sprintf("flow %q: %v", flowName, err))}, nil
 	}
 
 	title := Paint(Accent).Bold(true).Render(p.T("flow.tree_title", "Pipeline & Execution Tree") + " · ")
@@ -111,187 +123,208 @@ func (m Model) flowLines() []string {
 		"",
 	}
 
-	totalPhases := len(f.Phases)
+	heads := map[int]int{}
+
+	// Every node opens onto something: a phase of a resolved flow always
+	// names an engine, because flow.Validate refuses a flow whose phases do
+	// not, so there is no node whose whole content is its own head.
 	for i, phase := range f.Phases {
-		isLast := i == totalPhases-1
-		branch := "├──"
-		subBranch := "│  "
+		heads[len(out)] = i
+		out = append(out, m.flowNode(t, phase, i, len(f.Phases))...)
+	}
 
-		if isLast {
-			branch = "└──"
-			subBranch = "   "
-		}
+	return out, heads
+}
 
-		ex := m.findPhaseExec(phase.Name)
-		isInFlight := t.Band == view.Running && strings.EqualFold(t.Phase, phase.Name)
+// flowNode is one phase of the tree: the branch it hangs off, what happened
+// to it, and — once the reader has opened it — how it was set up and what it
+// said.
+func (m Model) flowNode(t view.Task, phase flow.Phase, i, total int) []string {
+	branch, subBranch := "├──", "│  "
+	if i == total-1 {
+		branch, subBranch = "└──", "   "
+	}
 
-		// Determine step icon and badge
-		var icon, statusStr string
+	ex := m.findPhaseExec(phase.Name)
+	inFlight := t.Band == view.Running && strings.EqualFold(t.Phase, phase.Name)
+	icon, status, role := m.phaseStanding(ex, inFlight)
 
-		role := Dim
+	open := m.rowOpen(tabFlow, i)
 
-		switch {
-		case ex.failed:
-			icon = Paint(Bad).Render("✗")
-			statusStr = Paint(Bad).Render(p.T("flow.step_status_failed", "failed"))
-			role = Bad
-		case ex.cancelled:
-			icon = Paint(Warn).Render("⏹")
-			statusStr = Paint(Warn).Render(p.T("flow.step_status_cancelled", "cancelled"))
-			role = Warn
-		case ex.waiting:
-			icon = Paint(Warn).Render("⚠️")
-			statusStr = Paint(Warn).Render(p.T("flow.step_status_waiting", "waiting at gate"))
-			role = Warn
-		case ex.finished:
-			icon = Paint(OK).Render("✓")
-			statusStr = Paint(OK).Render(p.T("flow.step_status_done", "completed"))
-			role = OK
-		case isInFlight:
-			icon = Paint(Live).Render("⚡")
-			statusStr = Paint(Live).Bold(true).Render(p.T("flow.step_status_in_flight", "in progress"))
-			role = Live
-		default:
-			icon = Paint(Dim).Render("○")
-			statusStr = Paint(Dim).Render(p.T("flow.step_status_pending", "pending"))
-		}
+	// The arrow stands between the branch and the icon, where a tree's
+	// disclosure has always stood.
+	mark := Text(Tertiary).Render(foldMark(open))
 
-		// Node header
-		nodeHeader := fmt.Sprintf("  %s %s [%d/%d] %s · %s",
-			Paint(Dim).Render(branch),
-			icon,
-			i+1,
-			totalPhases,
-			Paint(role).Bold(true).Render(phase.Name),
-			statusStr,
-		)
-		if ex.cost > 0 {
-			nodeHeader += " " + Paint(Dim).Render(fmt.Sprintf("($%.4f)", ex.cost))
-		}
+	head := fmt.Sprintf("  %s %s%s [%d/%d] %s · %s",
+		Paint(Dim).Render(branch), mark, icon, i+1, total,
+		Paint(role).Bold(true).Render(phase.Name), status)
 
-		if ex.duration != "" {
-			nodeHeader += " " + Paint(Dim).Render(fmt.Sprintf("(%s)", ex.duration))
-		}
+	if ex.cost > 0 {
+		head += " " + Paint(Dim).Render(fmt.Sprintf("($%.4f)", ex.cost))
+	}
 
-		out = append(out, nodeHeader)
+	if ex.duration != "" {
+		head += " " + Paint(Dim).Render(fmt.Sprintf("(%s)", ex.duration))
+	}
 
-		// Sub-tree items
-		var subItems []string
+	out := []string{head}
 
-		// 1. Engine & config
-		engName := phase.Engine
-		if ex.engine != "" {
-			engName = ex.engine
-		}
+	if items := m.phaseSubItems(phase, ex); open {
+		last := lastStart(items)
 
-		modelName := phase.Model
-		if ex.model != "" {
-			modelName = ex.model
-		}
+		for j, item := range items {
+			// A row that carries on the row above it hangs off nothing of
+			// its own: a branch in front of it says a second thing is under
+			// this phase, and there is only the one.
+			sub := "├──"
 
-		var cfg []string
-		if engName != "" {
-			cfg = append(cfg, engName)
-		}
-
-		if modelName != "" {
-			cfg = append(cfg, modelName)
-		}
-
-		if phase.Effort != "" {
-			cfg = append(cfg, "effort:"+phase.Effort)
-		}
-
-		if phase.Thinking != "" {
-			cfg = append(cfg, "thinking:"+phase.Thinking)
-		}
-
-		if len(cfg) > 0 {
-			subItems = append(subItems, fmt.Sprintf("⚙️ %s: %s",
-				p.T("flow.tree_engine", "engine"),
-				strings.Join(cfg, " · "),
-			))
-		}
-
-		// 2. Gates / Verifications
-		for _, g := range phase.Gates {
-			subItems = append(subItems, fmt.Sprintf("🚪 %s [%s]: %s",
-				p.T("flow.tree_gate", "gate"),
-				g.Name,
-				g.Command,
-			))
-		}
-
-		// 3. Error details (if failed)
-		if ex.failed {
-			errMsg := ex.cause
-			if errMsg == "" && ex.exit != "" {
-				errMsg = p.T("flow.exit_code", "exit code: {code}", about("code", ex.exit))
-			}
-
-			if errMsg != "" {
-				subItems = append(subItems, fmt.Sprintf("❌ %s: %s",
-					Paint(Bad).Bold(true).Render(p.T("flow.tree_error", "error details")),
-					Paint(Bad).Render(errMsg),
-				))
-			}
-		}
-
-		// 4. Outcome text
-		if ex.text != "" {
-			lines := strings.Split(strings.TrimSpace(ex.text), "\n")
-			if !m.expandedDetail {
-				for _, l := range lines {
-					l = strings.TrimSpace(l)
-					if l != "" {
-						subItems = append(subItems, fmt.Sprintf("📋 %s: %s",
-							p.T("flow.tree_outcome", "outcome"),
-							l,
-						))
-
-						break
-					}
-				}
-			} else {
-				first := true
-
-				for _, l := range lines {
-					l = strings.TrimSpace(l)
-					if l == "" {
-						continue
-					}
-
-					wrapped := splitIntoLines(l, max(20, m.frame.Body.W-16))
-					for _, wl := range wrapped {
-						if first {
-							subItems = append(subItems, fmt.Sprintf("📋 %s: %s",
-								p.T("flow.tree_outcome", "outcome"),
-								wl,
-							))
-							first = false
-						} else {
-							subItems = append(subItems, fmt.Sprintf("   %s", wl))
-						}
-					}
-				}
-			}
-		}
-
-		// Render sub items with tree branches
-		for j, item := range subItems {
-			subSym := "├──"
-			if j == len(subItems)-1 {
-				subSym = "└──"
+			switch {
+			case item.cont:
+				sub = "   "
+			case j == last:
+				sub = "└──"
 			}
 
 			out = append(out, fmt.Sprintf("  %s %s %s",
-				Paint(Dim).Render(subBranch),
-				Paint(Dim).Render(subSym),
-				item,
-			))
+				Paint(Dim).Render(subBranch), Paint(Dim).Render(sub), item.text))
+		}
+	}
+
+	// The trunk carries on past the node whether it is open or shut, which
+	// is what keeps a folded tree a tree.
+	return append(out, "  "+Paint(Dim).Render(subBranch))
+}
+
+// phaseStanding is where a phase got to: the glyph it is marked with, the
+// word for it, and the role both are painted in.
+func (m Model) phaseStanding(ex phaseExec, inFlight bool) (string, string, Role) {
+	p := m.opts.Words
+
+	switch {
+	case ex.failed:
+		return Paint(Bad).Render("✗"), Paint(Bad).Render(p.T("flow.step_status_failed", "failed")), Bad
+	case ex.cancelled:
+		return Paint(Warn).Render("⏹"), Paint(Warn).Render(p.T("flow.step_status_cancelled", "cancelled")), Warn
+	case ex.waiting:
+		return Paint(Warn).Render("⚠️"), Paint(Warn).Render(p.T("flow.step_status_waiting", "waiting at gate")), Warn
+	case ex.finished:
+		return Paint(OK).Render("✓"), Paint(OK).Render(p.T("flow.step_status_done", "completed")), OK
+	case inFlight:
+		return Paint(Live).Render("⚡"),
+			Paint(Live).Bold(true).Render(p.T("flow.step_status_in_flight", "in progress")), Live
+	default:
+		return Paint(Dim).Render("○"), Paint(Dim).Render(p.T("flow.step_status_pending", "pending")), Dim
+	}
+}
+
+// subItem is one row hanging off a node: what it says, and whether it starts
+// something or carries on the row before it.
+type subItem struct {
+	text string
+	cont bool
+}
+
+// lastStart is the index of the final row that starts something, which is the
+// row the branch closes on. The rows after it, if any, are its own tail.
+func lastStart(items []subItem) int {
+	for i := len(items) - 1; i >= 0; i-- {
+		if !items[i].cont {
+			return i
+		}
+	}
+
+	return -1
+}
+
+// phaseSubItems is everything hanging off one node: how it was set up, what
+// it has to pass, why it broke, and what it wrote.
+func (m Model) phaseSubItems(phase flow.Phase, ex phaseExec) []subItem {
+	p := m.opts.Words
+
+	var items []subItem
+
+	if cfg := phaseConfig(phase, ex); len(cfg) > 0 {
+		items = append(items, subItem{text: fmt.Sprintf("⚙️ %s: %s",
+			p.T("flow.tree_engine", "engine"), strings.Join(cfg, " · "))})
+	}
+
+	for _, g := range phase.Gates {
+		items = append(items, subItem{text: fmt.Sprintf("🚪 %s [%s]: %s",
+			p.T("flow.tree_gate", "gate"), g.Name, g.Command)})
+	}
+
+	if ex.failed {
+		errMsg := ex.cause
+		if errMsg == "" && ex.exit != "" {
+			errMsg = p.T("flow.exit_code", "exit code: {code}", about("code", ex.exit))
 		}
 
-		out = append(out, fmt.Sprintf("  %s", Paint(Dim).Render(subBranch)))
+		if errMsg != "" {
+			items = append(items, subItem{text: fmt.Sprintf("❌ %s: %s",
+				Paint(Bad).Bold(true).Render(p.T("flow.tree_error", "error details")),
+				Paint(Bad).Render(errMsg))})
+		}
+	}
+
+	return append(items, m.phaseOutcome(ex.text)...)
+}
+
+// phaseConfig is the dials the phase ran on: what the record says it was,
+// and what the flow asked for where the record is silent.
+func phaseConfig(phase flow.Phase, ex phaseExec) []string {
+	engName := phase.Engine
+	if ex.engine != "" {
+		engName = ex.engine
+	}
+
+	modelName := phase.Model
+	if ex.model != "" {
+		modelName = ex.model
+	}
+
+	var cfg []string
+
+	for _, part := range []string{engName, modelName, "effort:" + phase.Effort, "thinking:" + phase.Thinking} {
+		if part == "" || strings.HasSuffix(part, ":") {
+			continue
+		}
+
+		cfg = append(cfg, part)
+	}
+
+	return cfg
+}
+
+// phaseOutcome is what the phase wrote, wrapped to the pane and labelled on
+// its first row. The rows are cut as well as wrapped, because an engine that
+// printed a path with nothing to break at would otherwise be set over the
+// margin the scroll bar is drawn in.
+func (m Model) phaseOutcome(text string) []subItem {
+	if strings.TrimSpace(text) == "" {
+		return nil
+	}
+
+	// The measure the deepest row of the tree leaves: the branches in front
+	// of it, and the label the first row carries.
+	measure := max(20, m.frame.Body.W-24)
+
+	var out []subItem
+
+	for _, l := range strings.Split(strings.TrimSpace(text), "\n") {
+		if l = strings.TrimSpace(l); l == "" {
+			continue
+		}
+
+		for _, wl := range splitIntoLines(l, measure) {
+			if out == nil {
+				out = append(out, subItem{text: fmt.Sprintf("📋 %s: %s",
+					m.opts.Words.T("flow.tree_outcome", "outcome"), fit(wl, measure))})
+
+				continue
+			}
+
+			out = append(out, subItem{text: fit(wl, measure), cont: true})
+		}
 	}
 
 	return out

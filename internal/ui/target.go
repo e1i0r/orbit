@@ -41,6 +41,10 @@ const (
 	TargetComposePaste
 	TargetDiffFile
 	TargetDiffSelectToggle
+	TargetFold
+	TargetSeam
+	TargetPaneRow
+	TargetScrollBar
 )
 
 // Target is one cell's hit target.
@@ -49,10 +53,12 @@ type Target struct {
 	ID     string        // TargetTask, TargetRepo
 	Band   view.Band     // TargetTask, TargetBandHeader
 	Column layout.Column // TargetTask: which field of the row was pointed at
-	Pane   int           // TargetPaneTab, TargetPaneBody, TargetSettingsRow
-	Key    string        // TargetBarHint, TargetMenuEntry, TargetCommand
-	Field  string        // TargetHeaderField, TargetStatusField
-	Phase  int           // TargetDialogPhase
+	// TargetPaneTab, TargetPaneBody, TargetSettingsRow, TargetScrollBar: the
+	// row of the bar. TargetPaneRow: which entry. TargetSeam: which attempt.
+	Pane  int
+	Key   string // TargetBarHint, TargetMenuEntry, TargetCommand, TargetFold
+	Field string // TargetHeaderField, TargetStatusField
+	Phase int    // TargetDialogPhase
 }
 
 // The names of the two switches on the start dialog. They are constants

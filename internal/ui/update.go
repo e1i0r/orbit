@@ -24,7 +24,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// pressed a key would not be a tail.
 		cmds := []tea.Cmd{refresh(m.opts.Reader), tick()}
 		if m.screen == screenDetail {
-			cmds = append(cmds, logOf(m.opts.Reader, m.subject()))
+			cmds = append(cmds, logOf(m.opts.Reader, m.subject()), filesOf(m.opts.Reader, m.subject()))
 		}
 
 		return m, tea.Batch(cmds...)
@@ -145,6 +145,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.entries, m.logErr = msg.Entries, msg.Err
 
 		return m.syncPanes(), nil
+	case filesMsg:
+		// The same guard again: a listing that arrives for a task the reader
+		// has since left would put one task's files under another's heading.
+		if msg.ID != m.detail {
+			return m, nil
+		}
+
+		m.files, m.filesErr, m.filesKnown = msg.Files, msg.Err, true
+
+		return m.syncPanes(), nil
+	case fileTextMsg:
+		if msg.ID != m.detail {
+			return m, nil
+		}
+
+		return m.readFile(msg), nil
 	case languageMsg:
 		return m.language(msg.Lang), nil
 	case tea.PasteMsg:

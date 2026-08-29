@@ -33,18 +33,31 @@ func TestGatesLinesAllStates(t *testing.T) {
 	}
 
 	// 3. A mix of a pass and a fail, the fallback name and command, and the
-	// reason line a failure carries.
+	// reason a failure carries — which is behind the arrow until it is asked
+	// for, because a check is read as passed or failed first and diagnosed
+	// second.
 	m.entries = []view.Entry{
 		{Kind: "gate.passed", Gate: "lint", Text: "make lint"},
 		{Kind: "gate.failed", Tool: "go test", Cause: "tests failed"},
 	}
 
 	joined := strings.Join(m.gatesLines(), "\n")
-	for _, want := range []string{"lint", "check", "go test", "tests failed", "1/2"} {
+	for _, want := range []string{"lint", "check", "go test", "1/2"} {
 		if !strings.Contains(joined, want) {
 			t.Errorf("gatesLines mixed = %q, want it to mention %q", joined, want)
 		}
 	}
+
+	if strings.Contains(joined, "tests failed") {
+		t.Errorf("gatesLines mixed = %q, want the reason kept behind the arrow", joined)
+	}
+
+	m.expandedDetail = true
+	if joined = strings.Join(m.gatesLines(), "\n"); !strings.Contains(joined, "tests failed") {
+		t.Errorf("gatesLines opened = %q, want it to mention why the check failed", joined)
+	}
+
+	m.expandedDetail = false
 
 	// 4. Every check passed: the summary is the OK word, not the failure count.
 	m.entries = []view.Entry{{Kind: "gate.passed", Gate: "vet", Text: "go vet"}}
@@ -87,13 +100,35 @@ func TestNotesLinesAllStates(t *testing.T) {
 
 	joined := strings.Join(m.notesLines(), "\n")
 	for _, want := range []string{
-		"read by run 2", "did the thing", "ran ls", "plain note",
-		"blocked on review", "needs a decision",
+		"read by run 2", "did the thing", "blocked on review", "needs a decision",
 	} {
 		if !strings.Contains(joined, want) {
 			t.Errorf("notesLines = %q, want it to mention %q", joined, want)
 		}
 	}
+
+	// The rest of the note waits behind the arrow, with a count of how much
+	// of it there is.
+	for _, hidden := range []string{"ran ls", "plain note"} {
+		if strings.Contains(joined, hidden) {
+			t.Errorf("notesLines = %q, want %q kept behind the arrow", joined, hidden)
+		}
+	}
+
+	if !strings.Contains(joined, "2 more lines") {
+		t.Errorf("notesLines = %q, want the closed note to count what is under it", joined)
+	}
+
+	m.expandedDetail = true
+
+	joined = strings.Join(m.notesLines(), "\n")
+	for _, want := range []string{"ran ls", "plain note"} {
+		if !strings.Contains(joined, want) {
+			t.Errorf("notesLines opened = %q, want it to mention %q", joined, want)
+		}
+	}
+
+	m.expandedDetail = false
 
 	// 4. A note with no attempt: the plain status, without a number.
 	m.entries = []view.Entry{{Kind: "task.noted", Text: "one line"}}

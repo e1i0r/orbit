@@ -69,6 +69,16 @@ type Entry struct {
 // Truncated says the engine printed more than the record kept.
 func (e Entry) Truncated() bool { return e.Full > e.Kept }
 
+// Said is Text with an engine's stream framing left out: the words the model
+// wrote, and not the hook traffic, token counters and tool calls a killed
+// phase leaves on stdout around them. It is Text itself whenever Text was
+// never a stream, which is everything a run that reached its own end writes.
+//
+// It is derived rather than stored so that an entry cannot be built holding
+// one and not the other, the same reason Truncated is not a bool somebody
+// has to remember to set.
+func (e Entry) Said() string { return unframe(e.Text) }
+
 // EntryKind is what one entry says happened, in this package's vocabulary
 // rather than the record's own.
 //

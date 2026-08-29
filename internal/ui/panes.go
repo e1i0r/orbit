@@ -117,26 +117,47 @@ func (m Model) tabNames() []tabName {
 
 // syncPanes rebuilds all eleven panes and resizes them to the detail body region.
 func (m Model) syncPanes() Model {
-	w, h := max(m.frame.Body.W, 1), max(paneHeight(m.frame.Body.H), 1)
+	w := max(m.frame.Body.W, 1)
+
+	timeline, timelineHeads, timelineSeams := m.logRows()
+	report, reportSeams := m.reportRows()
+	thinking, thinkingHeads := m.thinkingRows()
+	flowTree, flowHeads := m.flowRows()
+	gates, gateHeads := m.gatesRows()
+	refused, refusedHeads := m.refusedRows()
+	notes, noteHeads := m.notesRows()
+	diff, diffHeads := m.diffRows()
+	artifacts, artifactHeads := m.artifactsRows()
+
+	m.heads[tabTimeline], m.heads[tabThinking] = timelineHeads, thinkingHeads
+	m.heads[tabFlow], m.heads[tabGates] = flowHeads, gateHeads
+	m.heads[tabRefused], m.heads[tabNotes] = refusedHeads, noteHeads
+	m.heads[tabDiff], m.heads[tabArtifacts] = diffHeads, artifactHeads
+	m.seams[tabTimeline], m.seams[tabReport] = timelineSeams, reportSeams
 
 	content := [tabCount][]string{
 		tabOverview:  m.overviewLines(),
-		tabFlow:      m.flowLines(),
-		tabGates:     m.gatesLines(),
+		tabFlow:      flowTree,
+		tabGates:     gates,
 		tabCost:      m.costLines(),
-		tabRefused:   m.refusedLines(),
-		tabTimeline:  m.logLines(),
-		tabReport:    m.reportLines(),
-		tabArtifacts: m.artifactsLines(),
-		tabNotes:     m.notesLines(),
-		tabDiff:      m.diffLines(),
-		tabThinking:  m.thinkingLines(),
+		tabRefused:   refused,
+		tabTimeline:  timeline,
+		tabReport:    report,
+		tabArtifacts: artifacts,
+		tabNotes:     notes,
+		tabDiff:      diff,
+		tabThinking:  thinking,
 	}
 	for i := range m.panes {
+		// Sized to the rows it is drawn into, so that the last page of a
+		// pane is a page the reader can reach and the scroll bar's floor
+		// is the end of the document.
+		_, h := m.paneBandFor(tab(i))
+
 		vp := m.panes[i]
 		vp.SoftWrap = false
 		vp.SetWidth(w)
-		vp.SetHeight(h)
+		vp.SetHeight(max(h, 1))
 		vp.SetContentLines(content[i])
 		m.panes[i] = vp
 	}

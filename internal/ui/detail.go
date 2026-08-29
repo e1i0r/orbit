@@ -8,32 +8,21 @@ package ui
 // side because at eighty columns three panes are three columns of twenty-six
 // cells, and a diff in twenty-six cells is not a diff.
 //
-// The frame is four regions and they are computed in one place, paneHeight,
-// so that what syncPanes sizes the viewport to and what detailRows draws
-// cannot drift apart: a pane one row taller than the space it is drawn into
-// is a frame one row too tall, which scrolls the whole terminal.
+// The frame is four regions and the rows they take are counted in one place,
+// detailTop, so that what syncPanes sizes the viewport to and what
+// detailRows draws cannot drift apart: a pane one row taller than the space
+// it is drawn into is a frame one row too tall, which scrolls the whole
+// terminal.
 
 import (
 	"strconv"
 	"strings"
 
 	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
 
 	"github.com/e1i0r/orbit/internal/view"
 )
-
-// paneHeight is how many rows of a body of h the pane itself gets.
-//
-// Two rows always go to the heading and the tab strip: a screen that does
-// not say which task it is open on, and which of the tabs is showing, is
-// worse than a screen with two fewer rows of content.
-func paneHeight(h int) int {
-	if h >= 4 {
-		return h - 3
-	}
-
-	return max(h-2, 0)
-}
 
 // detailRows draws the task view into the body region.
 func (m Model) detailRows(h, w int) []string {
@@ -41,6 +30,26 @@ func (m Model) detailRows(h, w int) []string {
 		return nil
 	}
 
+	out := m.detailTop(h, w)
+
+	if n := max(0, h-len(out)-1); n > 0 {
+		out = append(out, m.paneRows(n, w)...)
+	}
+
+	if h >= 4 {
+		out = append(out, fit(m.moreLine(), w))
+	}
+
+	return fill(out, h)
+}
+
+// detailTop is everything the pane is drawn under: the heading, the blank
+// line, the tab strip, and the diff's file selector when it is up.
+//
+// It is its own function because where the pane starts and how many rows it
+// got is a question a click on the scroll bar has to answer too, and two
+// counts of the same rows are two counts that drift.
+func (m Model) detailTop(h, w int) []string {
 	head := m.detailHeadLines(w)
 
 	out := append([]string{}, head...)
@@ -73,20 +82,16 @@ func (m Model) detailRows(h, w int) []string {
 		}
 	}
 
-	topUsed := len(out)
-	if n := max(0, h-topUsed-1); n > 0 {
-		out = append(out, m.paneRows(n, w)...)
-	}
-
-	if h >= 4 {
-		out = append(out, fit(m.moreLine(), w))
-	}
-
-	return fill(out, h)
+	return out
 }
 
 // detailHeadLines names the task the view is open on: its id and title on the
 // left, the repository and what the row said about it on the right.
+//
+// The title is cut to one line and stripped of the inline marks it was
+// written with. This is the label of the screen: a paragraph-long first line
+// of task.md set here in full pushes the repository and the state off the
+// right edge, and prints its own backticks besides.
 func (m Model) detailHeadLines(w int) []string {
 	t, ok := m.task(m.detail)
 
@@ -105,30 +110,37 @@ func (m Model) detailHeadLines(w int) []string {
 		right += Paint(Dim).Render(dot) + Paint(role).Render(word)
 	}
 
-	if t.Title == "" {
+	title := plainInline(t.Title)
+	if title == "" {
 		return []string{spread(" "+left, right, w)}
 	}
 
 	rightW := lipgloss.Width(right)
 	availW := max(20, w-lipgloss.Width(m.detail)-rightW-6)
 
-	if !m.expandedDetail || lipgloss.Width(t.Title) <= availW {
-		return []string{spread(" "+left+"  "+Paint(Dim).Render(t.Title), right, w)}
+	if !m.expandedDetail || lipgloss.Width(title) <= availW {
+		return []string{spread(" "+left+"  "+Text(Secondary).Render(fit(title, availW)), right, w)}
 	}
 
-	wrapped := splitIntoLines(t.Title, availW)
+	wrapped := splitIntoLines(title, availW)
 
 	var out []string
 
-	out = append(out, spread(" "+left+"  "+Paint(Dim).Render(wrapped[0]), right, w))
+	out = append(out, spread(" "+left+"  "+Text(Secondary).Render(wrapped[0]), right, w))
 
 	indent := strings.Repeat(" ", lipgloss.Width(m.detail)+3)
 	for _, wl := range wrapped[1:] {
-		out = append(out, " "+indent+Paint(Dim).Render(wl))
+		out = append(out, " "+indent+Text(Secondary).Render(wl))
 	}
 
 	return out
 }
+
+// tabStripReserve is the room the strip leaves at its right edge for the
+// note that sits there — the attempt number, or the diff saying it had no
+// base to compare against, which is the longest of them. A tier that filled
+// the line would push that note off it.
+const tabStripReserve = 16
 
 // tabTagInfo is one tab's layout representation in the strip.
 type tabTagInfo struct {
@@ -143,75 +155,40 @@ func (m Model) tabTags(w int) []tabTagInfo {
 	names := m.tabNames()
 	tags := make([]tabTagInfo, len(names))
 
-	var fullWidth int
+	// Three tiers, widest first: every name in full, then names cut to four
+	// cells, then keys alone with only the open tab named. The strip is one
+	// line and there are eleven tabs, so what a narrow terminal drops is
+	// decided here rather than by the right edge.
+	for _, tier := range []func(n tabName) string{
+		func(n tabName) string { return n.text },
+		func(n tabName) string {
+			if n.tab == m.tab {
+				return n.text
+			}
 
-	for i, n := range names {
-		k := paneKey(n.tab)
-		tagText := "[" + k + " " + n.text + "]"
+			return fit(n.text, 4)
+		},
+		func(n tabName) string {
+			if n.tab == m.tab {
+				return n.text
+			}
 
-		var rend string
-		if n.tab == m.tab {
-			rend = Paint(Sel).Bold(true).Render(tagText)
-		} else {
-			rend = Paint(Dim).Render("[") + Paint(Accent).Bold(true).Render(k) +
-				Paint(Dim).Render(" "+n.text+"]")
+			return ""
+		},
+	} {
+		var total int
+
+		for i, n := range names {
+			k := paneKey(n.tab)
+			plain, rend := tabChip(k, tier(n), n.tab == m.tab)
+			tw := lipgloss.Width(plain)
+			tags[i] = tabTagInfo{tab: n.tab, key: k, text: plain, rendered: rend, width: tw}
+			total += tw + len(tabGap)
 		}
 
-		tw := lipgloss.Width(tagText)
-		tags[i] = tabTagInfo{tab: n.tab, key: k, text: tagText, rendered: rend, width: tw}
-		fullWidth += tw + 1
-	}
-
-	if fullWidth+10 <= w {
-		return tags
-	}
-
-	var compactWidth int
-
-	for i, n := range names {
-		k := paneKey(n.tab)
-
-		text := n.text
-		if n.tab != m.tab {
-			text = fit(text, 4)
+		if total+tabStripReserve <= w {
+			return tags
 		}
-
-		tagText := "[" + k + " " + text + "]"
-
-		var rend string
-		if n.tab == m.tab {
-			rend = Paint(Sel).Bold(true).Render(tagText)
-		} else {
-			rend = Paint(Dim).Render("[") + Paint(Accent).Bold(true).Render(k) +
-				Paint(Dim).Render(" "+text+"]")
-		}
-
-		tw := lipgloss.Width(tagText)
-		tags[i] = tabTagInfo{tab: n.tab, key: k, text: tagText, rendered: rend, width: tw}
-		compactWidth += tw + 1
-	}
-
-	if compactWidth+10 <= w {
-		return tags
-	}
-
-	for i, n := range names {
-		k := paneKey(n.tab)
-
-		tagText := "[" + k + "]"
-		if n.tab == m.tab {
-			tagText = "[" + k + " " + n.text + "]"
-		}
-
-		var rend string
-		if n.tab == m.tab {
-			rend = Paint(Sel).Bold(true).Render(tagText)
-		} else {
-			rend = Paint(Dim).Render("[") + Paint(Accent).Bold(true).Render(k) + Paint(Dim).Render("]")
-		}
-
-		tw := lipgloss.Width(tagText)
-		tags[i] = tabTagInfo{tab: n.tab, key: k, text: tagText, rendered: rend, width: tw}
 	}
 
 	return tags
@@ -236,7 +213,7 @@ func (m Model) tabStrip(w int) string {
 		right = Paint(Dim).Render(p.T("log.attempt", "attempt {n}", about("n", strconv.Itoa(attempt))))
 	}
 
-	return spread(" "+strings.Join(parts, " "), right, w)
+	return spread(" "+strings.Join(parts, tabGap), right, w)
 }
 
 // placedTab is one tab of the drawn strip and the cells it occupies.
@@ -253,7 +230,7 @@ func (m Model) placeTabs() []placedTab {
 	x := 1
 	for i, t := range tags {
 		out[i] = placedTab{tab: t.tab, x: x, w: t.width}
-		x += t.width + 1
+		x += t.width + len(tabGap)
 	}
 
 	return out
@@ -261,14 +238,26 @@ func (m Model) placeTabs() []placedTab {
 
 // paneRows is the pane itself, cut to the region it was given.
 func (m Model) paneRows(h, w int) []string {
-	lines := strings.Split(m.panes[m.tab].View(), "\n")
+	vp := m.panes[m.tab]
 
-	out := make([]string, 0, h)
-	for _, line := range lines {
-		out = append(out, fit(line, w))
+	out := fill(strings.Split(vp.View(), "\n"), h)
+
+	track := scrollTrack(h, vp.TotalLineCount(), vp.YOffset())
+	for i, line := range out {
+		if track == nil {
+			out[i] = fit(line, w)
+			continue
+		}
+
+		// The rail stands in the pane's last column, so the line beside it
+		// is cut and filled to the column before: the viewport pads what it
+		// draws out to its own width, and padding that again would put an
+		// ellipsis under the rail on every row of every pane.
+		beside := max(w-1, 1)
+		out[i] = pad(ansi.Truncate(line, beside, ""), beside, false) + track[i]
 	}
 
-	return fill(out[:min(len(out), h)], h)
+	return out
 }
 
 // moreLine is the "there is more" scroll advice line.
@@ -323,6 +312,11 @@ func (m Model) detailHints() []barHint {
 	}
 
 	out = append(out, hint("e", wrapHint))
+
+	if m.tab == tabOverview {
+		out = append(out, hint("z", m.opts.Words.T("key.fold", "fold sections")))
+	}
+
 	if m.tab == tabDiff {
 		out = append(out, hintFor(m.keys.Edit))
 	}

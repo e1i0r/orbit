@@ -54,12 +54,20 @@ func ParseStream(r io.Reader) (Result, error) {
 
 // ParseStreamWithCallback reads claude's streaming JSON, invokes onEvent on each
 // incremental event, and returns the aggregated Result.
+//
+// A thinking block is a thought and a text block is the answer, and the two
+// are kept apart the way codexstream.go and opencodestream.go keep them
+// apart. Text blocks used to go into Thoughts as well, and the same prose
+// they carry comes back on the result line as Output — so every phase wrote
+// its answer down twice, once as the thoughts the thinking pane draws and
+// once as the text beside "finished".
 func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, error) {
 	sc := bufio.NewScanner(r)
 	sc.Buffer(make([]byte, 0, 64<<10), maxStreamLine)
 
 	var (
 		out   Result
+		texts []string
 		lines int
 		found bool
 	)
@@ -114,10 +122,7 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 					}
 				case "text":
 					if env.ContentBlock.Text != "" {
-						out.Thoughts = append(out.Thoughts, env.ContentBlock.Text)
-						if onEvent != nil {
-							onEvent(StreamEvent{Type: "thought", Thought: env.ContentBlock.Text})
-						}
+						texts = append(texts, env.ContentBlock.Text)
 					}
 				case "tool_use":
 					tc := StreamToolCall{
@@ -132,17 +137,13 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 				}
 			}
 		case "content_block_delta":
-			if env.Delta != nil {
-				switch env.Delta.Type {
-				case "thinking_delta":
-					if env.Delta.Thinking != "" && onEvent != nil {
-						onEvent(StreamEvent{Type: "thought", Thought: env.Delta.Thinking})
-					}
-				case "text_delta":
-					if env.Delta.Text != "" && onEvent != nil {
-						onEvent(StreamEvent{Type: "thought", Thought: env.Delta.Text})
-					}
-				}
+			// Thinking deltas only. A text delta is a fragment of the
+			// answer, and the answer is taken whole from the block that
+			// carries it; a fragment sent on as a thought would be the
+			// prose of the report arriving a second time, in pieces.
+			if env.Delta != nil && env.Delta.Type == "thinking_delta" &&
+				env.Delta.Thinking != "" && onEvent != nil {
+				onEvent(StreamEvent{Type: "thought", Thought: env.Delta.Thinking})
 			}
 		case "tool_use", "tool_call":
 			tc := StreamToolCall{
@@ -172,10 +173,7 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 						}
 					case "text":
 						if block.Text != "" {
-							out.Thoughts = append(out.Thoughts, block.Text)
-							if onEvent != nil {
-								onEvent(StreamEvent{Type: "thought", Thought: block.Text})
-							}
+							texts = append(texts, block.Text)
 						}
 					case "tool_use":
 						tc := StreamToolCall{
@@ -225,8 +223,17 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 		return Result{}, fmt.Errorf("reading the engine's stream after %d lines: %w", lines, err)
 	}
 
+	// The result line is where the answer is when the run reached the end of
+	// itself. The text blocks are what is left when it did not: a phase
+	// killed mid-run has no result object, and everything it said is in
+	// them. Without this, spec.report falls back to the raw stream, and what
+	// the record keeps of a cancelled phase is its JSON frames.
+	if out.Output == "" {
+		out.Output = strings.TrimSpace(strings.Join(texts, "\n\n"))
+	}
+
 	if !found {
-		return out, fmt.Errorf("the engine's stream ended after %d lines with no result object: the session id and the cost are reported only there, so this phase has no answer, nothing to resume from and no price", lines)
+		return out, fmt.Errorf("the engine's stream ended after %d lines with no result object: the session id and the cost are reported only there, so this phase has nothing to resume from and no price", lines)
 	}
 
 	return out, nil

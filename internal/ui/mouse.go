@@ -55,12 +55,24 @@ func (m Model) mouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 		e := msg.Mouse()
 		m.held = hold{target: m.hit(e.X, e.Y), button: e.Button, down: true}
 
+		// The bar is the one thing that answers the press rather than the
+		// release. A scroll bar that moved when the button came up would
+		// not be a scroll bar: it is held, and what it is worth is that
+		// the view is under the pointer the whole time it is held.
+		if e.Button == tea.MouseLeft && m.held.target.Kind == TargetScrollBar {
+			return m.scrollTo(m.held.target.Pane), nil
+		}
+
 		return m, nil
 	case tea.MouseReleaseMsg:
 		return m.release(msg.Mouse())
 	case tea.MouseWheelMsg:
 		return m.wheel(msg.Mouse()), nil
 	case tea.MouseMotionMsg:
+		if m.held.down && m.held.target.Kind == TargetScrollBar {
+			return m.dragBar(msg.Mouse()), nil
+		}
+
 		// Ignored, and ignored here rather than by leaving the case out.
 		// The window asks for MouseModeCellMotion, so a drag reports a
 		// message per cell it crosses; the release carries the cell it
@@ -208,6 +220,12 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		}
 	case TargetPaneTab:
 		return m.showTab(tab(t.Pane)), nil
+	case TargetFold:
+		return m.fold(t.Key), nil
+	case TargetSeam:
+		return m.foldAttempt(t.Pane), nil
+	case TargetPaneRow:
+		return m.openPaneRow(t.Pane)
 	case TargetDiffSelectToggle:
 		m.diffFilePicker = !m.diffFilePicker
 		if m.diffFilePicker {
@@ -232,8 +250,8 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		return m.flip(t.Field)
 	case TargetComposeTab, TargetComposeRepoChoice, TargetComposeFlowChoice,
 		TargetComposeEngineChoice, TargetComposeModelChoice, TargetComposeThinkingChoice,
-		TargetComposeEffortChoice, TargetComposeNewFlow, TargetComposeField,
-		TargetComposeAction, TargetComposePaste:
+		TargetComposeEffortChoice, TargetComposeNewFlow, TargetComposeInspectFlow,
+		TargetComposeField, TargetComposeAction, TargetComposePaste:
 		return m.handleComposeClick(t)
 	case TargetCommand:
 		// The same two-step a task row takes: the first click selects,

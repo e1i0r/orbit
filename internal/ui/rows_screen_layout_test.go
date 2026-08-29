@@ -2,26 +2,31 @@ package ui
 
 // detail_rows_screen_coverage_test.go covers three small, pure geometry
 // functions this package leans on constantly but no rendering test happens
-// to walk every branch of: paneHeight's own floor at a very short frame,
+// to walk every branch of: the pane's own floor at a very short frame,
 // follow and clampCursor's edges, and the frame primitives in screen.go.
 
 import (
 	"testing"
 )
 
-func TestPaneHeightFloor(t *testing.T) {
-	tests := []struct {
-		h, want int
-	}{
-		{10, 7},
-		{4, 1},
-		{3, 1},
-		{2, 0},
-		{0, 0},
-	}
-	for _, tt := range tests {
-		if got := paneHeight(tt.h); got != tt.want {
-			t.Errorf("paneHeight(%d) = %d, want %d", tt.h, got, tt.want)
+// TestNoWindowMakesThePaneTallerThanTheBody. The pane is the one region
+// sized from a count of the rows around it, so a window short enough to
+// leave no room is where that count goes negative — and a viewport taller
+// than the body is a frame taller than the terminal, which scrolls the
+// screen it was drawn on.
+func TestNoWindowMakesThePaneTallerThanTheBody(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+
+	for _, w := range []int{0, 1, 40, 100} {
+		for h := range 12 {
+			m.frame.Body.H, m.frame.Body.W = h, w
+
+			for i := range tabCount {
+				_, rows := m.paneBandFor(i)
+				if rows > max(h-1, 0) {
+					t.Errorf("a body of %dx%d gave tab %d a pane of %d rows", w, h, i, rows)
+				}
+			}
 		}
 	}
 }

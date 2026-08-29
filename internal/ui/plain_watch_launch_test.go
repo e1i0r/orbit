@@ -33,6 +33,14 @@ func (r *mockRefreshReader) Worktree(repoPath, id string) (string, error) {
 	return "", nil
 }
 
+func (r *mockRefreshReader) Files(repoPath, id string) ([]view.File, error) {
+	return nil, nil
+}
+
+func (r *mockRefreshReader) FileText(repoPath, id, name string) (view.FileText, error) {
+	return view.FileText{}, nil
+}
+
 func (r *mockRefreshReader) SupervisorLog() ([]view.SupervisorLine, error) {
 	return nil, nil
 }
