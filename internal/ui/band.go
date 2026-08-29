@@ -103,6 +103,25 @@ func (m Model) filterLine() string {
 		about("key", m.keys.Back.Help().Key)))
 }
 
+// actionGlyph is the mark in front of a live action: a brain for the model
+// thinking, a hammer for the model reaching for a tool.
+//
+// It is drawn here rather than folded into the action itself, because the
+// action is also a field the MCP server sends to a model, and a glyph is
+// something a reader looks at rather than something a caller has to strip.
+func actionGlyph(kind view.ActionKind) string {
+	switch kind {
+	case view.ActionThinking:
+		return "🧠 "
+	case view.ActionTool:
+		return "🛠️ "
+	case view.ActionNone:
+		return ""
+	default:
+		return ""
+	}
+}
+
 // runningLine names the one task a process is holding right now, including its live action.
 func (m Model) runningLine(t view.Task) string {
 	p := m.opts.Words
@@ -113,7 +132,7 @@ func (m Model) runningLine(t view.Task) string {
 	}
 
 	if t.CurrentAction != "" {
-		pieces = append(pieces, Paint(Live).Render(t.CurrentAction))
+		pieces = append(pieces, Paint(Live).Render(actionGlyph(t.ActionKind)+t.CurrentAction))
 	}
 
 	if engine := engineAndModel(t); engine != "" {
