@@ -211,3 +211,61 @@ func TestARequestThisServerCouldNotAnswerIsAWarningAndNotAFailure(t *testing.T) 
 		}
 	}
 }
+
+// TestAToolThatCrashedDoesNotEndTheSession. Nineteen handlers share one
+// pipe, and a model drives that pipe for hours. Without the recover, a panic
+// in any of them closes the conversation mid-sentence: the client sees the
+// stream end and cannot tell which of its requests was the last one
+// answered. The refusal below is what it gets instead.
+func TestAToolThatCrashedDoesNotEndTheSession(t *testing.T) {
+	var after CallToolResult
+
+	all, bad := logs(t, func() {
+		crashed := guard("orbit_boom", map[string]any{"task_id": "ORB-1"}, func() CallToolResult {
+			panic("a nil map somewhere")
+		})
+
+		if !crashed.IsError {
+			t.Errorf("a tool that panicked answered without an error: %+v", crashed)
+		}
+
+		if !strings.Contains(text(t, crashed), "crashed") {
+			t.Errorf("the refusal does not say the tool crashed: %s", text(t, crashed))
+		}
+
+		// The next call is the point: the goroutine is still here.
+		after = guard("orbit_fine", nil, func() CallToolResult { return done("still here") })
+	})
+
+	if after.IsError || !strings.Contains(text(t, after), "still here") {
+		t.Errorf("the call after the crash did not run: %+v", after)
+	}
+
+	for _, want := range []string{"panicked: a nil map somewhere", "runtime/debug", "mcp/orbit_boom"} {
+		if !strings.Contains(bad, want) {
+			t.Errorf("the errors file does not contain %q, so the stack was lost:\n%s", want, bad)
+		}
+	}
+
+	if !strings.Contains(all, "orbit_fine") {
+		t.Errorf("the log stopped at the crash:\n%s", all)
+	}
+}
+
+// TestACrashIsStillTimedAndStillWrittenDownAsAnAnswer. The recover runs
+// inside the same deferred function that writes the answer line, so a tool
+// that died is accounted for the way every other one is — one call line, one
+// answer line — rather than leaving a call in the log that nothing closes.
+func TestACrashIsStillTimedAndStillWrittenDownAsAnAnswer(t *testing.T) {
+	all, _ := logs(t, func() {
+		guard("orbit_boom", nil, func() CallToolResult { panic("x") })
+	})
+
+	if n := strings.Count(all, "[mcp/orbit_boom]"); n != 3 {
+		t.Errorf("a crashed tool left %d lines, want the call, the panic and the answer:\n%s", n, all)
+	}
+
+	if !strings.Contains(all, "refused after") {
+		t.Errorf("a crash was not written down as an answer:\n%s", all)
+	}
+}

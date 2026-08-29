@@ -18,11 +18,7 @@ import (
 // id nobody recognises is the second kind, so it comes back as text the
 // model can correct rather than as a transport fault it cannot see.
 func (sn Session) Call(name string, args map[string]any) CallToolResult {
-	start := noteCall(name, args)
-	res := sn.answer(name, args)
-	noteAnswer(name, start, res)
-
-	return res
+	return guard(name, args, func() CallToolResult { return sn.answer(name, args) })
 }
 
 // answer is the tool itself, without the two lines the log takes. It is

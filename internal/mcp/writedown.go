@@ -15,6 +15,7 @@ package mcp
 import (
 	"fmt"
 	"maps"
+	"runtime/debug"
 	"slices"
 	"strconv"
 	"strings"
@@ -37,9 +38,35 @@ const (
 	refusalChars = 300
 )
 
+// guard runs one tool with the two things every tool call needs and no tool
+// should have to remember: it is written down, and it cannot take the
+// session with it.
+//
+// The recover is not for a bug anyone has seen. It is for the shape of this
+// process: a model drives it for hours over one pipe, and a panic in any of
+// nineteen handlers would end the session for every call after it — the
+// client sees the pipe close mid-conversation and has no idea which of its
+// requests was the last one answered. A refusal it can read, and go on from,
+// is worth more than a stack trace on a stream nobody is reading. The stack
+// goes to the errors file, where the reader will look.
+func guard(name string, args map[string]any, run func() CallToolResult) (res CallToolResult) {
+	start := noteCall(name, args)
+
+	defer func() {
+		if p := recover(); p != nil {
+			logger.Error("mcp/"+name, "panicked: %v\n%s", p, debug.Stack())
+			res = refuse(fmt.Errorf("orbit_%s: this tool crashed and the session went on; the stack is in the errors log", strings.TrimPrefix(name, "orbit_")))
+		}
+
+		noteAnswer(name, start, res)
+	}()
+
+	return run()
+}
+
 // noteCall writes down a tool call as it arrives, and answers with the
 // moment it did — which is what noteAnswer is handed, so the clock for a
-// call lives here rather than in the middle of Call.
+// call lives here rather than in the middle of guard.
 func noteCall(name string, args map[string]any) time.Time {
 	logger.Info("mcp/"+name, "called with %s", argsLine(args))
 
