@@ -76,61 +76,8 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		return err
 	}
 
-	if err := f.Validate(); err != nil {
+	if err := runnable(f, engines); err != nil {
 		return failed(s, t, err)
-	}
-
-	for _, p := range f.Phases {
-		eng, ok := engines[p.Engine]
-		if !ok {
-			return failed(s, t, fmt.Errorf("phase %q wants the engine %q, which is not configured", p.Name, p.Engine))
-		}
-
-		// The empty catalogue is not checked, and that is the difference
-		// between this and the two checks below. Models() empty means an
-		// engine that does not publish its names, not one that has none — so
-		// whatever the phase named goes through to the command line and the
-		// engine answers for it. Efforts() empty and CanThink() false are
-		// claims about a dial the engine does not have at all, which is why
-		// those two refuse.
-		if p.Model != "" && len(eng.Models()) > 0 {
-			var found bool
-
-			for _, m := range eng.Models() {
-				if m.ID == p.Model {
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				return failed(s, t, fmt.Errorf("phase %q names model %q, which engine %q does not offer", p.Name, p.Model, p.Engine))
-			}
-		}
-
-		if p.Effort != "" {
-			efforts := eng.Efforts()
-			if len(efforts) == 0 {
-				return failed(s, t, fmt.Errorf("phase %q names effort %q, but engine %q has no effort dial", p.Name, p.Effort, p.Engine))
-			}
-
-			var found bool
-
-			for _, e := range efforts {
-				if e.ID == p.Effort {
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				return failed(s, t, fmt.Errorf("phase %q names effort %q, which engine %q does not offer", p.Name, p.Effort, p.Engine))
-			}
-		}
-
-		if p.Thinking != "" && !eng.CanThink() {
-			return failed(s, t, fmt.Errorf("phase %q configures thinking %q, but engine %q does not support thinking mode", p.Name, p.Thinking, p.Engine))
-		}
 	}
 
 	wt, err := prepare(s, t)
