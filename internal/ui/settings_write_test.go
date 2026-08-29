@@ -9,12 +9,12 @@ import (
 	"testing"
 )
 
-// TestASettingThatCouldNotBeWrittenSaysSoInsteadOfSayingItIsSet. Every one
-// of these writes used to be discarded with `_ =` and the band said "theme
-// is now nord" whatever came back — so the screen drew a setting that was
-// not in the file, and the next time it was opened the switch had flipped
-// itself back. The settings file has a lock now, so refusing is no longer
-// hypothetical: a second orbit holding it makes every one of these fail.
+// TestASettingThatCouldNotBeWrittenSaysSoInsteadOfSayingItIsSet. Discarded
+// with `_ =`, these writes leave the band saying "theme is now nord"
+// whatever comes back — the screen draws a setting that is not in the file,
+// and the next time it is opened the switch has flipped itself back. The
+// settings file has a lock, so refusing is not hypothetical: a second orbit
+// holding it makes every one of these fail.
 func TestASettingThatCouldNotBeWrittenSaysSoInsteadOfSayingItIsSet(t *testing.T) {
 	for _, c := range []struct{ key, val string }{
 		{"language", "es"},

@@ -83,12 +83,12 @@ func (m Model) headerLine(w int) string {
 // click.
 //
 // The zones come out of the pass that builds the line, which is the whole
-// point of returning them. hitHeader used to carry its own column numbers —
-// under 10 is the badge, 28 to 44 is Running — written down once against a
-// header that has been laid out again several times since. Measured against
-// what is actually drawn, the left third of Running filtered by To Do and
-// Needs You filtered by Running; and because the badge of the queue being
-// filtered on is two cells wider than the others, selecting one moved every
+// point of returning them. Column numbers of hitHeader's own — under 10 is
+// the badge, 28 to 44 is Running — are written down once against a header
+// that is laid out again with every change to this line. Measured against
+// what is actually drawn, the left third of Running filters by To Do and
+// Needs You filters by Running; and because the badge of the queue being
+// filtered on is two cells wider than the others, selecting one moves every
 // band after it a second time without hitHeader hearing about it.
 func (m Model) headerLayout(w int) (string, []headerZone) {
 	fields := m.headerFields()
@@ -167,15 +167,14 @@ func (m Model) headerLeft(w int, spaced bool) (string, []headerZone, bool) {
 // name is the program's own name badge: the mark from the logo, which is a
 // body with rings around it, and the word.
 //
-// It used to read "[orbit]". The brackets were doing the job the pill's own
-// background already does — saying where the badge starts and stops — and
-// everything else on this line that a reader can click is a pill without
-// them.
+// It is not "[orbit]": the brackets do the job the pill's own background
+// already does — saying where the badge starts and stops — and everything
+// else on this line that a reader can click is a pill without them.
 //
-// The glyph and the two brackets it replaces are the same three cells wide,
-// so the badge is still nine and hitHeader's columns still land where they
-// did. That is luck rather than design, and the next change to this string
-// has to check it: the click that resets every filter is placed by a number
+// The glyph and the two brackets are the same three cells wide, so the badge
+// is nine either way and hitHeader's columns land where they did. That is
+// luck rather than design, and the next change to this string has to check
+// it: the click that resets every filter is placed by a number
 // written down in target.go, not by measuring what was drawn here.
 func (m Model) name() string {
 	const (

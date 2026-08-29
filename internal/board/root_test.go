@@ -2,8 +2,8 @@ package board
 
 // The state root a test builds, and the things put into it. It is separate
 // from refresh_test.go for the same reason internal/view keeps its case
-// tables out of its assertions: a fixture read while checking an assertion
-// is a fixture nobody reads.
+// tables out of its assertions: the assertion is easier to read when the
+// fixture is not sitting in the middle of it.
 
 import (
 	"os"

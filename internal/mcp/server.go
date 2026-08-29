@@ -155,10 +155,10 @@ func fault(id any, code int, message string) JSONRPCResponse {
 
 // send writes one response and the newline that ends it.
 //
-// A response that cannot be encoded or cannot be written ends the session. It
-// used to be dropped: a client that asked a question and got silence waits
-// for ever, which is a worse failure than a server that exits and can be
-// restarted.
+// A response that cannot be encoded or cannot be written ends the session
+// rather than being dropped: a client that asked a question and got silence
+// waits for ever, which is a worse failure than a server that exits and can
+// be restarted.
 func (s *Server) send(resp JSONRPCResponse) error {
 	data, err := json.Marshal(resp)
 	if err != nil {

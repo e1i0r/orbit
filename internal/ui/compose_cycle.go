@@ -113,9 +113,8 @@ func (m Model) cycleComposeEngine(d int) Model {
 // hang off it.
 //
 // Three gestures land here — opening the form, the arrow keys, a click on a
-// pill — and the first two of them used to carry their own copy of this,
-// which is why a click could leave the model dial showing another engine's
-// models.
+// pill — and each carrying its own copy of this is how a click comes to
+// leave the model dial showing another engine's models.
 func (m Model) chooseComposeEngine(i int) Model {
 	if i < 0 || i >= len(m.compose.engines) {
 		return m

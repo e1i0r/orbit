@@ -128,9 +128,8 @@ func TestHelpRowsOffsetClampsToTheLastLine(t *testing.T) {
 	m = m.openHelp()
 
 	// The title is asked for the way helpRows asks for it. Spelling it out
-	// here in Spanish is what this line used to do, and it passed for a
-	// model whose language is English only because the screen was Spanish
-	// whatever the language said.
+	// here in Spanish passes for a model whose language is English only
+	// while the screen is Spanish whatever the language says.
 	title := m.opts.Words.T("help.title", "Help and keyboard shortcuts (cheat sheet)")
 
 	full := m.helpRows(40, 100)

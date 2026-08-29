@@ -68,10 +68,10 @@ func TestSupervisorTypingAndSubmit(t *testing.T) {
 	if m.supervisor.input != "" {
 		t.Errorf("input not cleared after enter: %q", m.supervisor.input)
 	}
-	// The window used to sign every message with one particular person's
-	// name. The thread is one conversation and every other door writes
-	// "operator": a name hardcoded here made the same person read as two
-	// participants depending on which door they came through.
+	// The window signs every message "operator", which is what every other
+	// door writes. The thread is one conversation: a particular person's
+	// name hardcoded here makes the same person read as two participants
+	// depending on which door they came through.
 	if len(signedBy) != 1 || signedBy[0] != "operator" {
 		t.Errorf("signed by %v, want [operator]", signedBy)
 	}
@@ -149,11 +149,10 @@ func TestSupervisorRenderingMarksAWithdrawnLine(t *testing.T) {
 	}
 }
 
-// TestSupervisorScreenIsSquare is what the redesign is for. The thread, the
-// rule under the title and the input box each used to work out their own
-// width, so the screen came out crooked by a couple of cells in a way no
-// single line looked wrong on its own. Every row of every box is now the
-// same width, at any terminal size.
+// TestSupervisorScreenIsSquare. The thread, the rule under the title and the
+// input box each working out their own width leaves the screen crooked by a
+// couple of cells in a way no single line looks wrong on its own. Every row
+// of every box is the same width, at any terminal size.
 func TestSupervisorScreenIsSquare(t *testing.T) {
 	for _, size := range []struct{ w, h int }{{120, 34}, {80, 24}, {60, 16}, {200, 50}} {
 		m, _ := testModel(t, size.w, size.h)

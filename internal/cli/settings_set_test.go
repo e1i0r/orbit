@@ -21,11 +21,11 @@ import (
 // hand here: a real second writer holds it for the length of one read and one
 // write, which is too short to arrange from a test.
 
-// TestSetWaitsForAChangeAlreadyUnderWayAndThenNamesTheLock. `orbit set` used
-// to read the file, change one field and write the whole of it back, with a
-// window free to do the same in between; what it wrote was a copy made before
-// the window's change existed, and the setting the window saved was gone with
-// both sides reporting success.
+// TestSetWaitsForAChangeAlreadyUnderWayAndThenNamesTheLock. `orbit set` reads
+// the file, changes one field and writes the whole of it back. With a window
+// free to do the same in between, what it writes is a copy made before the
+// window's change existed, and the setting the window saved is gone with both
+// sides reporting success.
 func TestSetWaitsForAChangeAlreadyUnderWayAndThenNamesTheLock(t *testing.T) {
 	_, orbitHome := workspace(t)
 

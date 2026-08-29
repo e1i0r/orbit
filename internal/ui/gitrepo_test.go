@@ -130,7 +130,7 @@ func TestTheDiffIsTheWorktreesAndNotTheRepositorys(t *testing.T) {
 }
 
 // TestNoBaseIsSaidOnlyWhenGitActuallySaidIt is the other direction of the
-// same flag, and the line between the two facts it used to conflate.
+// same flag, and the line between the two facts it can conflate.
 //
 // A repository with nothing to measure against really has no base, and the
 // strip says so. A base lookup that ran out of time also comes back empty,

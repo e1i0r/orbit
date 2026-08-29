@@ -95,10 +95,9 @@ func TestBandsPartitionEveryTask(t *testing.T) {
 // fixtures through. A golden row is typed out as `Task{Band: Running}` and
 // the header counts it with BandOf, so if the predicate answered from
 // anything a fixture author cannot set, the fixture and the count would
-// disagree — v1's bug, reproduced inside a test file and then frozen into a
-// golden. The unexported state is crossed in deliberately: it is what the
-// predicate used to read, and it must not be able to override what is
-// written down.
+// disagree — and the disagreement would be frozen into a golden. The
+// unexported state is crossed in deliberately: it must not be able to
+// override what is written down.
 func TestABandWrittenDownIsTheBandAnswered(t *testing.T) {
 	for _, band := range Bands() {
 		if got := BandOf(Task{Band: band}); got != band {

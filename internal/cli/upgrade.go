@@ -78,8 +78,8 @@ func upgrade(ctx Context, args []string) error {
 	// toolchain and it writes into GOBIN rather than over this binary, so a
 	// reader whose archive quietly failed ends up with a newer orbit
 	// somewhere else on their $PATH and the old one still in front of it.
-	// That sentence used to be dropped by an `if err == nil`, and the fallback
-	// then reported success for having updated a different file.
+	// Dropped by an `if err == nil`, that sentence leaves the fallback
+	// reporting success for having updated a different file.
 	failed := installRelease(reqCtx, rel)
 	if failed == nil {
 		fmt.Fprintf(ctx.Out, "%s\n", p.T("upgrade.success",
@@ -197,9 +197,9 @@ func findChecksums(assets []asset) (asset, bool) {
 // goInstall builds the latest release on this machine, which is the way out
 // for a release that published nothing this machine can run.
 //
-// What go said comes back with it. This was cmd.Run(), so a missing toolchain,
-// a module proxy that would not answer and a compile error all reached the
-// reader as the same three words: exit status 1.
+// What go said comes back with it. Under cmd.Run() a missing toolchain, a
+// module proxy that would not answer and a compile error all reach the reader
+// as the same three words: exit status 1.
 func goInstall(ctx context.Context) error {
 	cmd := exec.CommandContext(ctx, "go", "install", "github.com/"+defaultRepo+"/cmd/orbit@latest")
 

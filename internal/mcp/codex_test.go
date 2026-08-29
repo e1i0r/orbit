@@ -159,10 +159,10 @@ func TestATableIsTheSameTableHoweverItIsSpelled(t *testing.T) {
 }
 
 // TestOrbitListedTwiceIsNotSomethingThisInstallerFixes. Two
-// [mcp_servers.orbit] tables is a file TOML already refuses to parse, and
-// the merge used to make it worse rather than say so: start latched onto the
-// second table while end had latched at the first header after the first, so
-// the arithmetic wrote lines[:start] — the whole first table — then the new
+// [mcp_servers.orbit] tables is a file TOML already refuses to parse, and a
+// merge can make it worse rather than say so: start latches onto the second
+// table while end latched at the first header after the first, so the
+// arithmetic writes lines[:start] — the whole first table — then the new
 // block, then lines[end:] — the whole second one. Three orbit tables out of
 // two, and a Codex that still would not start.
 func TestOrbitListedTwiceIsNotSomethingThisInstallerFixes(t *testing.T) {

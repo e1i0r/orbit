@@ -16,8 +16,8 @@ import (
 
 // The answer is about the engine the task in front of the reader ran under,
 // which is what lets the refusal name it truthfully. "one of each" is the
-// case that used to be wrong: an AND over both engines refused every task and
-// told each of them its own engine was the one at fault.
+// case that catches it: an AND over both engines refuses every task and tells
+// each of them its own engine is the one at fault.
 func TestOnlyEnginesThatCarryOnASessionSayTheyCan(t *testing.T) {
 	claude := engine.NewClaude()
 	fake := engine.NewFake("")

@@ -10,8 +10,8 @@ import (
 	"strconv"
 )
 
-// Unreadable is the kind of the event Read puts where a line it could not
-// parse used to be. It is synthesised, never written: nothing appends it.
+// Unreadable is the kind of the event Read puts in place of a line it could
+// not parse. It is synthesised, never written: nothing appends it.
 const Unreadable = "record.unreadable"
 
 // Read returns every event in the log, oldest first.
@@ -27,12 +27,12 @@ const Unreadable = "record.unreadable"
 // with no newline after it: that is a write interrupted mid-flight rather
 // than damage, and it stays dropped.
 //
-// Everything below works from one size, taken once. A log being appended to
-// while it is read used to be measured twice — the last byte was checked
-// against the file as it was then, and the scan ran to whatever the end had
-// become since — so a write that landed in between was read as a torn line
-// in a file that had already been declared whole, and a record.unreadable
-// was synthesised for a line that was merely still being written.
+// Everything below works from one size, taken once. Measuring a log twice
+// while it is being appended to — the last byte checked against the file as
+// it was then, the scan running to whatever the end had become since — reads
+// a write that landed in between as a torn line in a file that had already
+// been declared whole, and synthesises a record.unreadable for a line that
+// was merely still being written.
 func Read(path string) ([]Event, error) {
 	f, err := os.Open(path)
 	if errors.Is(err, os.ErrNotExist) {

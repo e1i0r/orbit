@@ -257,10 +257,9 @@ func TestTheEngineThatCannotResumeIsNamed(t *testing.T) {
 
 // TestTheEngineIsAskedAboutOneTaskAtATime is the other half of the sentence
 // above being true. Naming the engine is only honest if the answer is about
-// that engine: the port used to be a standing bool — an AND over every engine
-// configured — so a build with two engines, one of which could not resume,
-// refused t on every task and told each of them that its own engine was the
-// one at fault.
+// that engine. A standing bool — an AND over every engine configured — makes
+// a build with two engines, one of which cannot resume, refuse t on every
+// task and tell each of them that its own engine is the one at fault.
 func TestTheEngineIsAskedAboutOneTaskAtATime(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 

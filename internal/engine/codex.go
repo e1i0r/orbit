@@ -9,10 +9,10 @@ import (
 // Codex runs the codex command line in headless execution mode.
 //
 // Every flag below was read off `codex exec --help` and then run against the
-// binary, because the three this replaced had not been: --effort and
-// --resume were invented, and codex answers both with "unexpected argument"
-// before it starts. A phase that named an effort, and every attempt to carry
-// a session on, died at argv parse without ever reaching a model.
+// binary. codex has no --effort and no --resume: it answers both with
+// "unexpected argument" before it starts, so a phase that names an effort
+// that way, or any attempt to carry a session on, dies at argv parse without
+// ever reaching a model.
 type Codex struct{}
 
 var _ Engine = Codex{}
@@ -98,10 +98,9 @@ func (c Codex) Run(ctx context.Context, req Request) (Result, error) {
 
 // codexArgs builds the command line for codex exec.
 //
-// --json is not optional here. codex prints prose by default, and this
-// adapter used to pipe that prose into claude's stream parser, so every
-// codex run fell through to the plain-text path with no session id and no
-// token count. The event stream is where codex says which thread it started,
+// --json is not optional here. codex prints prose by default, and prose fed
+// to claude's stream parser falls through to the plain-text path with no
+// session id and no token count. The event stream is where codex says which thread it started,
 // and a thread id is the only thing a later resume can be built from.
 //
 // Resume is a subcommand and not a flag — `codex exec resume <id>` — and the

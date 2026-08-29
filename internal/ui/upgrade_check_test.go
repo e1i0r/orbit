@@ -33,10 +33,10 @@ func TestCheckUpgradeCmd(t *testing.T) {
 	}
 }
 
-// TestCheckUpgradeCmdSaysNothingOnTheLatestVersion is the fix. The banner
-// used to light up on whatever tag GitHub answered with, so a build that was
-// already current advertised itself: the window said "v0.1.12 available"
-// while `orbit upgrade` said it was already on v0.1.12.
+// TestCheckUpgradeCmdSaysNothingOnTheLatestVersion. A banner that lights up
+// on whatever tag GitHub answers with makes a build that is already current
+// advertise itself: the window saying "v0.1.12 available" while `orbit
+// upgrade` says it is already on v0.1.12.
 func TestCheckUpgradeCmdSaysNothingOnTheLatestVersion(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := json.NewEncoder(w).Encode(latestRelease{TagName: "v0.1.12"}); err != nil {

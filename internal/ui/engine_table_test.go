@@ -3,10 +3,9 @@ package ui
 // The one table of engines, seen from the screens that draw dials off it.
 //
 // Every test here hands the window an engine no part of this package could
-// have guessed at. That is the whole point: the compose form used to carry
-// a table of its own, and it offered opencode a model called llama-3.3,
-// which no opencode has ever answered to — a task composed with it was a
-// task that could not run.
+// have guessed at. That is the whole point: a table of the compose form's
+// own offered opencode a model called llama-3.3, which no opencode has ever
+// answered to — a task composed with it is a task that cannot run.
 
 import (
 	"slices"
@@ -57,9 +56,9 @@ func TestTheComposeDialsAreTheEnginesOwn(t *testing.T) {
 	}
 }
 
-// A click on an engine pill and the arrow keys are the same gesture, and the
-// click used to carry its own copy of it: it moved the engine and left the
-// effort dial showing the engine before it.
+// A click on an engine pill and the arrow keys are the same gesture. A click
+// carrying its own copy of it moves the engine and leaves the effort dial
+// showing the engine before it.
 func TestChoosingAComposeEngineRefillsBothDialsThatHangOffIt(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m = m.openCompose()

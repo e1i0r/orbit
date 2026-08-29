@@ -11,11 +11,11 @@ import (
 // MaxLine is the longest line the log will hold, and the same number the
 // reader sizes its buffer from.
 //
-// The two sides used to disagree: Read capped a line at 4 MB while Append
-// would write anything it was handed, and task.Run handed it an engine's
-// entire stdout. One oversized event made the whole task's record
-// unreadable — the scanner returned bufio.ErrTooLong and every event before
-// the offending line was lost with it. A refused write the caller can see
+// Both sides have to agree on it. If Read capped a line at 4 MB while Append
+// wrote anything it was handed — and task.Run hands it an engine's entire
+// stdout — one oversized event would make the whole task's record
+// unreadable: the scanner returns bufio.ErrTooLong and every event before
+// the offending line is lost with it. A refused write the caller can see
 // beats a log that cannot be read back.
 const MaxLine = 4 << 20
 

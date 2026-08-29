@@ -115,9 +115,9 @@ func (m Model) openCompose() Model {
 	}
 
 	// The engines and their two dials are the build's, not this form's:
-	// see engine_table.go. This form used to carry a table of its own, and
-	// it offered opencode a model called llama-3.3 — one no opencode has
-	// ever answered to, so a task composed with it could not run.
+	// see engine_table.go. A table of this form's own offered opencode a
+	// model called llama-3.3 — one no opencode has ever answered to, so a
+	// task composed with it could not run.
 	engines := m.engineNames()
 	thinkings := []string{"adaptive", "off", "4000", "8000", "max"}
 

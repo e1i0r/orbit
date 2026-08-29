@@ -10,12 +10,12 @@ import (
 	"github.com/e1i0r/orbit/internal/record"
 )
 
-// TestRetractSupervisorStopsRepeatingATurnWithoutErasingIt is the fix.
+// TestRetractSupervisorStopsRepeatingATurnWithoutErasingIt.
 //
-// A message sent to the supervisor by mistake used to be permanent: the
-// thread is append-only and the whole of it went into every later prompt, so
-// one wrong sentence kept steering the supervisor for the life of the state
-// directory. What a retraction changes is what the line is still allowed to
+// The thread is append-only and the whole of it goes into every later
+// prompt, so without a retraction one sentence sent by mistake would keep
+// steering the supervisor for the life of the state directory. What a
+// retraction changes is what the line is still allowed to
 // do, not whether it happened.
 func TestRetractSupervisorStopsRepeatingATurnWithoutErasingIt(t *testing.T) {
 	s := fixture(t)

@@ -180,8 +180,8 @@ func TestWhatIsShortEnoughToReadIsWrittenOutInFull(t *testing.T) {
 
 // TestARequestThisServerCouldNotAnswerIsAWarningAndNotAFailure. The four
 // faults below are things a client sent, not things Orbit did, and the
-// session goes on after every one of them. An errors file that fills up with
-// handled faults is an errors file nobody reads.
+// session goes on after every one of them. Writing a handled fault down
+// there would bury the ones Orbit is answerable for.
 func TestARequestThisServerCouldNotAnswerIsAWarningAndNotAFailure(t *testing.T) {
 	_, sn, _ := oneRepo(t)
 

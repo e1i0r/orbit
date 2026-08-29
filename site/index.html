@@ -3,10 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Orbit — Mission Control for Autonomous Coding Agents</title>
-<meta name="description" content="Supervise, steer, and verify multi-agent software development at terminal velocity.">
+<title>Orbit — Stay in command of the code you did not write</title>
+<meta name="description" content="A terminal cockpit for coding agents. Each task in its own worktree, in phases that stop where you tell them to, and everything written down.">
 <meta name="author" content="Elio Rincón — e1i0.com">
 <link rel="icon" href="icon.png">
+<link rel="canonical" href="https://getorbit.sh/">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://getorbit.sh/">
+<meta property="og:title" content="Orbit — Stay in command of the code you did not write">
+<meta property="og:description" content="A terminal cockpit for coding agents. Each task in its own worktree, in phases that stop where you tell them to, and everything written down.">
+<meta property="og:image" content="https://getorbit.sh/loop-poster.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Orbit — Stay in command of the code you did not write">
+<meta name="twitter:description" content="A terminal cockpit for coding agents. Each task in its own worktree, in phases that stop where you tell them to, and everything written down.">
+<meta name="twitter:image" content="https://getorbit.sh/loop-poster.jpg">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-N9D1HEEMRD"></script>
 <script>
@@ -128,20 +139,21 @@
     line-height: 1.05;
     color: var(--text-loudest);
   }
-  .hero__eyebrow {
-    margin: 14px 0 0;
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-medium);
+  .hero__tagline {
+    margin: 16px 0 0;
+    font-size: clamp(20px, 3vw, 27px);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+    color: var(--text-loudest);
+    max-width: 520px;
   }
   .hero__subtitle {
-    margin: 18px 0 0;
+    margin: 16px 0 0;
     font-size: clamp(15px, 1.8vw, 17px);
     line-height: 1.65;
     color: var(--text-medium);
-    max-width: 480px;
+    max-width: 500px;
   }
 
   .install {
@@ -179,73 +191,61 @@
   .btn--outline { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
   .btn--outline:hover { border-color: var(--border-light); background: var(--bg-lighter); color: var(--text); }
 
-  .hero__facts {
-    display: flex; gap: 32px; justify-content: center;
-    margin-top: 40px; padding-top: 28px;
-    border-top: 1px solid var(--border);
-    max-width: 420px; width: 100%;
+  /* — Sections — */
+  .sec { max-width: 1000px; margin: 0 auto; padding: 72px 24px 0; }
+  .sec__title {
+    margin: 0 0 24px; font-size: 13px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted);
   }
-  .fact { text-align: center; }
-  .fact__num { font-size: 20px; font-weight: 700; color: var(--text-loudest); letter-spacing: -0.01em; }
-  .fact__label { margin-top: 3px; font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
 
-  /* — Screenshot — */
-  .shot { max-width: 960px; margin: 64px auto 96px; padding: 0 24px; }
-  .shot__frame {
-    border-radius: var(--radius-xl);
-    overflow: hidden;
+  /* — The loop — */
+  /* Wider than the text column: a terminal reads badly once its columns are
+     squeezed, and the recording is 145 of them. */
+  .loop__frame {
+    display: block; height: auto;
+    width: min(1200px, 94vw);
+    margin-inline: calc(50% - min(600px, 47vw));
     border: 1px solid var(--border);
-    box-shadow: var(--shadow-xl);
-  }
-  .shot__frame img { width: 100%; display: block; cursor: zoom-in; }
-
-  /* — Lightbox — */
-  .lightbox {
-    position: fixed; inset: 0; z-index: 999;
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(4, 6, 10, 0.75);
-    padding: 32px;
-    opacity: 0; visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-    cursor: zoom-out;
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-  }
-  .lightbox.active { opacity: 1; visibility: visible; }
-  .lightbox__card {
-    position: relative;
+    border-radius: var(--radius-xl);
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
-    padding: 16px;
-    box-shadow: 0 32px 64px rgba(0, 0, 0, 0.5);
-    max-width: min(92vw, 1200px);
-    max-height: 90vh;
-    transform: scale(0.96) translateY(10px);
-    transition: transform 0.3s ease;
-    cursor: default;
-    overflow: hidden;
-    display: flex; flex-direction: column;
   }
-  .lightbox.active .lightbox__card { transform: scale(1) translateY(0); }
-  .lightbox__card img {
-    width: 100%; height: auto; max-height: calc(90vh - 32px);
-    object-fit: contain; border-radius: var(--radius-md); display: block;
+  .steps { margin: 28px 0 0; padding: 0; list-style: none; counter-reset: step; }
+  .steps li {
+    counter-increment: step;
+    position: relative; padding-left: 38px; margin-bottom: 14px;
+    font-size: 14.5px; line-height: 1.65; color: var(--text-medium);
   }
-  .lightbox__close {
-    position: absolute; top: 10px; right: 10px;
-    width: 32px; height: 32px; border: none;
-    background: var(--bg-lighter); border-radius: 50%;
-    color: var(--text-medium); font-size: 18px; line-height: 1; cursor: pointer;
+  .steps li::before {
+    content: counter(step);
+    position: absolute; left: 0; top: 1px;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--primary-very-light); border: 1px solid var(--primary-light);
+    color: var(--primary); font-family: var(--mono); font-size: 12px; font-weight: 500;
     display: flex; align-items: center; justify-content: center;
-    transition: var(--ease); z-index: 1;
   }
-  .lightbox__close:hover { background: var(--border-light); color: var(--text-loudest); }
+  .loop__closer { margin: 22px 0 0; font-size: 14.5px; line-height: 1.65; color: var(--text); }
+
+  /* — Flows — */
+  .flowline {
+    font-family: var(--mono);
+    font-size: clamp(15px, 2.6vw, 24px);
+    color: var(--text-loudest);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 24px;
+    text-align: center; overflow-x: auto; white-space: nowrap;
+  }
+  .flowline .arrow { color: var(--text-muted); }
+  .flowline .gate { color: var(--amber); }
+  .flows__note { margin: 16px 0 0; font-size: 14px; color: var(--text-medium); text-align: center; }
+
+  /* — Status — */
+  .status { margin: 0; font-size: 14.5px; line-height: 1.65; color: var(--text-medium); text-align: center; }
+
+  .loop__caption { margin: 14px 0 0; font-size: 13px; color: var(--text-muted); text-align: center; }
 
   /* — Features — */
-  .features {
-    max-width: 1000px; margin: 0 auto; padding: 0 24px 120px;
-    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px;
-  }
   .card {
     background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
     padding: 26px; transition: var(--ease);
@@ -259,8 +259,12 @@
   .card p { margin: 0; font-size: 13.5px; line-height: 1.65; color: var(--text-medium); }
 
   @media (max-width: 720px) {
-    .features { grid-template-columns: 1fr; }
-    .hero__facts { gap: 20px; }
+    .grid2, .grid3 { grid-template-columns: 1fr; }
+    .hero { padding: 72px 20px 56px; }
+    .sec { padding: 56px 20px 0; }
+    .loop__frame { width: 100%; margin-inline: 0; }
+    .install { width: 100%; gap: 8px; padding: 12px 14px; }
+    .install code { font-size: 12px; overflow-x: auto; white-space: nowrap; }
   }
 
   footer {
@@ -281,8 +285,8 @@
 
     <img class="hero__icon" src="icon.png" alt="Orbit">
     <h1 class="hero__title">ORBIT</h1>
-    <p class="hero__eyebrow">Mission Control for Autonomous Coding Agents</p>
-    <p class="hero__subtitle">Supervise, steer, and verify multi-agent software development at terminal velocity.</p>
+    <p class="hero__tagline">Stay in command of the code you did not write.</p>
+    <p class="hero__subtitle">A terminal cockpit for coding agents. Each task in its own worktree, in phases that stop where you tell them to, and everything written down.</p>
 
     <div class="install">
       <span class="install__prompt mono">$</span>
@@ -291,63 +295,74 @@
     </div>
 
     <div class="hero__ctas">
-      <a class="btn btn--primary" href="https://github.com/e1i0r/orbit" onclick="gtag('event','cta_click',{button:'hero_github'})">View on GitHub</a>
-      <a class="btn btn--outline" href="https://github.com/e1i0r/orbit#-getting-started" onclick="gtag('event','cta_click',{button:'hero_docs'})">Read the Docs</a>
-    </div>
-
-    <div class="hero__facts">
-      <div class="fact"><div class="fact__num">4</div><div class="fact__label">Platforms</div></div>
-      <div class="fact"><div class="fact__num">0</div><div class="fact__label">Sudo Required</div></div>
-      <div class="fact"><div class="fact__num">11</div><div class="fact__label">Inspector Tabs</div></div>
+      <a class="btn btn--primary" href="https://github.com/e1i0r/orbit" onclick="gtag('event','cta_click',{button:'hero_github'})">GitHub</a>
+      <a class="btn btn--outline" href="https://github.com/e1i0r/orbit#quickstart" onclick="gtag('event','cta_click',{button:'hero_docs'})">Docs</a>
     </div>
   </div>
 </section>
 
-<div class="shot">
-  <div class="shot__frame">
-    <img src="screenshot.png" alt="Orbit cockpit">
+<section class="sec">
+  <div class="grid2">
+    <div class="card">
+      <div class="card__dot card__dot--teal"></div>
+      <h3>Today</h3>
+      <p>The agent writes more code than you can read, and you approve it anyway. Orbit keeps you the one who decides what ships.</p>
+    </div>
+    <div class="card">
+      <div class="card__dot card__dot--pink"></div>
+      <h3>In six months</h3>
+      <p>Nobody on the team knows what is in the repo or why it was decided that way. Orbit keeps the full record of every run next to the code, not in a chat window somebody closed.</p>
+    </div>
   </div>
-</div>
+</section>
 
-<div class="features">
-  <div class="card">
-    <div class="card__dot card__dot--teal"></div>
-    <h3>Zero Working-Tree Pollution</h3>
-    <p>Every task gets its own throwaway worktree. Run several at once, same repo. Your checkout never moves.</p>
-  </div>
-  <div class="card">
-    <div class="card__dot card__dot--pink"></div>
-    <h3>Custom Flows &amp; Pipelines</h3>
-    <p>Build your pipeline right in the cockpit, no config file needed. Or start from a template: task, quick, careful, tdd-cycle, security-audit.</p>
-  </div>
-  <div class="card">
-    <div class="card__dot card__dot--amber"></div>
-    <h3>Bidirectional CLI Integrations</h3>
-    <p>Claude Code is live today, streaming output back in real time. Codex and OpenCode are next, Gemini after that.</p>
-  </div>
-  <div class="card">
-    <div class="card__dot card__dot--teal"></div>
-    <h3>Human-in-the-Loop Gates</h3>
-    <p>Approve, redirect, or override any phase mid-run. No restart required.</p>
-  </div>
-  <div class="card">
-    <div class="card__dot card__dot--pink"></div>
-    <h3>Full Audit Trail</h3>
-    <p>Every phase, tool call, and decision lands in an append-only log. Nothing an agent does stays hidden.</p>
-  </div>
-  <div class="card">
-    <div class="card__dot card__dot--amber"></div>
-    <h3>Deep Flight Telemetry</h3>
-    <p>11 live inspector tabs. Diffs, reasoning traces, tool refusals, cost.</p>
-  </div>
-</div>
+<section class="sec">
+  <h2 class="sec__title">The loop</h2>
+  <video class="loop__frame" poster="loop-poster.jpg"
+         autoplay loop muted playsinline preload="metadata"
+         aria-label="A task written from the CLI, the cockpit, the flow, the gate that failed and the call the sandbox refused, the diff, and the record read back from the CLI.">
+    <source src="loop.webm" type="video/webm">
+    <source src="loop.mp4" type="video/mp4">
+  </video>
+  <p class="loop__caption">Four bands, eleven tabs, one window over every repository.</p>
+  <ol class="steps">
+    <li>In your CLI — Claude Code, Codex, OpenCode — you investigate, validate, and build the plan. From there it creates the tasks and hands them to Orbit over MCP.</li>
+    <li>You open the cockpit and turn on autopilot.</li>
+    <li>Orbit runs each task in its own worktree, phase by phase, stopping at the gates. The supervisor checks the result, fixes what is missing, and reports back.</li>
+    <li>You read the diff and ship the PR.</li>
+  </ol>
+  <p class="loop__closer">Then you go back to your CLI, and it can read everything that happened while you were away.</p>
+</section>
 
-<div class="lightbox" id="lightbox">
-  <div class="lightbox__card">
-    <button class="lightbox__close" aria-label="Close">&times;</button>
-    <img src="" alt="">
+<section class="sec">
+  <div class="grid3">
+    <div class="card">
+      <div class="card__dot card__dot--teal"></div>
+      <h3>How do I stay in command?</h3>
+      <p>Gates you place, a supervisor you can redirect, and autopilot with an unread cap so the queue cannot outrun you.</p>
+    </div>
+    <div class="card">
+      <div class="card__dot card__dot--pink"></div>
+      <h3>What did it actually do?</h3>
+      <p>An append-only record of every run: plan, prompts, reasoning, diff, cost, refusals. Agents report through MCP in structured events, not scraped stdout.</p>
+    </div>
+    <div class="card">
+      <div class="card__dot card__dot--amber"></div>
+      <h3>What does it cost me?</h3>
+      <p>Nothing extra. Orbit runs the CLI you already have, under the plan you already pay for. No API key.</p>
+    </div>
   </div>
-</div>
+</section>
+
+<section class="sec">
+  <h2 class="sec__title">Flows</h2>
+  <div class="flowline">validate <span class="arrow">→</span> tests <span class="arrow">→</span> pr <span class="arrow">→</span> checks <span class="arrow">→</span> merge <span class="gate">⏸</span></div>
+  <p class="flows__note">Four flows ship built in. Write your own in JSON or build it in the cockpit.</p>
+</section>
+
+<section class="sec" style="padding-bottom:96px;">
+  <p class="status">v0.1.x, used daily by its author. macOS and Linux. Claude Code, Codex, OpenCode.</p>
+</section>
 
 <footer>
   <p>Apache 2.0 License · <a href="https://github.com/e1i0r/orbit" onclick="gtag('event','cta_click',{button:'footer_github'})">github.com/e1i0r/orbit</a></p>
@@ -356,32 +371,6 @@
 </footer>
 
 <script>
-  const lightbox = document.getElementById('lightbox');
-  const lightboxImg = lightbox.querySelector('.lightbox__card img');
-  const lightboxClose = lightbox.querySelector('.lightbox__close');
-
-  function closeLightbox() {
-    lightbox.classList.remove('active');
-    document.body.style.overflow = '';
-  }
-
-  document.querySelectorAll('.shot__frame img').forEach((img) => {
-    img.addEventListener('click', () => {
-      lightboxImg.src = img.src;
-      lightboxImg.alt = img.alt;
-      lightbox.classList.add('active');
-      document.body.style.overflow = 'hidden';
-    });
-  });
-
-  lightbox.addEventListener('click', (e) => {
-    if (e.target === lightbox) closeLightbox();
-  });
-  lightboxClose.addEventListener('click', closeLightbox);
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeLightbox();
-  });
-
   const copyBtn = document.getElementById('install-copy');
   copyBtn.addEventListener('click', () => {
     navigator.clipboard.writeText(document.getElementById('install-cmd').textContent).then(() => {

@@ -23,11 +23,11 @@ import (
 // canResume is whether one named engine can carry on a session it started
 // before.
 // It answers about one engine because the window asks about one task, and
-// because the refusal it produces names an engine. It used to be an AND over
-// every engine configured — a standing fact for the whole program — and that
-// was wrong in a way that only shows up with two engines: if either of them
-// could not resume, t was refused on every task, and each task was told that
-// its own engine was the one that could not. The name comes off the task,
+// because the refusal it produces names an engine. An AND over every engine
+// configured — a standing fact for the whole program — is wrong in a way that
+// only shows up with two engines: if either of them cannot resume, t is
+// refused on every task, and each task is told that its own engine is the one
+// that cannot. The name comes off the task,
 // which is where the record keeps it.
 //
 // A name nothing is configured for is false rather than an error. The window

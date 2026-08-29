@@ -128,9 +128,9 @@ func TestACommandThatNeverFinishesIsGivenUpOn(t *testing.T) {
 	}
 }
 
-// TestAPullRequestUrlIsWhatGhPrintedOnStdout is the regression. gh's own
-// chatter used to be returned as the URL, and the caller prints what it is
-// given as "Pull Request created: %s".
+// TestAPullRequestUrlIsWhatGhPrintedOnStdout. gh's own chatter must not come
+// back as the URL: the caller prints what it is given as "Pull Request
+// created: %s".
 func TestAPullRequestUrlIsWhatGhPrintedOnStdout(t *testing.T) {
 	fakeGh(t, `echo 'A new release of gh is available: 2.40.0' >&2
 echo https://github.com/acme/app/pull/7`)
@@ -164,8 +164,8 @@ esac`)
 	}
 }
 
-// TestClosingLeavesTheCommentTheCallerGave. The sentence used to be written
-// down here, in the package that runs git and gh and writes no English.
+// TestClosingLeavesTheCommentTheCallerGave. The sentence belongs to the
+// caller: this package runs git and gh and writes no English of its own.
 func TestClosingLeavesTheCommentTheCallerGave(t *testing.T) {
 	dir := t.TempDir()
 	argv := filepath.Join(dir, "argv")

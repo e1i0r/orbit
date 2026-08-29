@@ -68,8 +68,8 @@ func TestAnArchiveThatHashesRightAndIsNotOneIsRefused(t *testing.T) {
 }
 
 // TestAnArchiveThatEndsInTheMiddleIsRefused: the header of the file named
-// orbit arrives, its bytes do not. That read used to answer whatever had
-// turned up so far.
+// orbit arrives, its bytes do not. Whatever turned up so far is not an
+// answer.
 func TestAnArchiveThatEndsInTheMiddleIsRefused(t *testing.T) {
 	body := make([]byte, 8<<10)
 	if _, err := rand.NewChaCha8([32]byte{}).Read(body); err != nil {
@@ -143,8 +143,8 @@ func TestAUrlThatIsNotOneIsNotFetched(t *testing.T) {
 
 // TestAReleaseThatWasNotAnsweredIsNotInstalled covers what github can say
 // instead of a release: nothing at all, a status, or a body that is not the
-// json this expects. Each of them used to have to be told apart by the reader
-// from an empty releaseInfo.
+// json this expects. None of them may reach the reader as an empty
+// releaseInfo they have to tell apart themselves.
 func TestAReleaseThatWasNotAnsweredIsNotInstalled(t *testing.T) {
 	for _, c := range []struct {
 		name string

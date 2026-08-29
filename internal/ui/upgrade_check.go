@@ -25,10 +25,10 @@ type latestRelease struct {
 // checkUpgradeCmd performs a lightweight, non-blocking check for the latest
 // release, and says nothing when that release is the one already running.
 //
-// The comparison is the whole point. This used to announce whatever tag
-// GitHub answered with, so the banner lit up on a build that was already the
-// latest and stayed lit for ever: the window said "v0.1.12 available" while
-// `orbit upgrade` said "orbit is already on the latest version (v0.1.12)".
+// The comparison is the whole point. Announcing whatever tag GitHub answers
+// with lights the banner up on a build that is already the latest and leaves
+// it lit for ever: the window saying "v0.1.12 available" while `orbit
+// upgrade` says "orbit is already on the latest version (v0.1.12)".
 // Two readers of one fact, disagreeing — which is exactly what the window is
 // not allowed to do.
 //
@@ -82,10 +82,10 @@ func checkUpgradeCmd(current string) tea.Cmd {
 // tag could be compared against.
 //
 // It is asked before the request goes out, not after the answer comes back.
-// A build from source calls itself dev and is never offered an upgrade, and
-// it used to reach GitHub every hour for an answer worthOffering then threw
-// away — one request an hour, for the whole time the window is open, to
-// learn something already known before it was sent.
+// A build from source calls itself dev and is never offered an upgrade, so
+// asking afterwards reaches GitHub every hour for an answer worthOffering
+// throws away — one request an hour, for the whole time the window is open,
+// to learn something already known before it was sent.
 func comparableVersion(current string) bool {
 	cur := strings.TrimPrefix(strings.TrimSpace(current), "v")
 	return cur != "" && cur != "dev"

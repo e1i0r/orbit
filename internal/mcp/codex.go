@@ -1,8 +1,8 @@
 package mcp
 
 // Codex is the one client that does not keep JSON. Its servers live in
-// ~/.codex/config.toml as [mcp_servers.<name>] tables, and the installer
-// used to write ~/.codex/config.json — a file Codex has never opened.
+// ~/.codex/config.toml as [mcp_servers.<name>] tables; ~/.codex/config.json
+// is a file Codex has never opened.
 
 import (
 	"fmt"

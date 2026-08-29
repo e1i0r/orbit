@@ -85,10 +85,10 @@ func (m Model) settingRowsList() []settingRow {
 	flowVal := orDef(s.Flow(), flow.Default)
 	themeVal := orDef(s.Theme(), defaultTheme)
 
-	// The flows are the build's and the reader's, not this screen's. This
-	// dial used to offer three names written out by hand, so the fourth
-	// flow shipped inside the binary could not be chosen here at all, and
-	// neither could any flow the reader had written for themselves.
+	// The flows are the build's and the reader's, not this screen's. Names
+	// written out by hand on this dial leave every flow they do not list —
+	// the ones shipped inside the binary and the ones the reader wrote for
+	// themselves — impossible to choose here at all.
 	flows := m.settings.flows
 	if len(flows) == 0 {
 		flows = flow.BuiltinNames()

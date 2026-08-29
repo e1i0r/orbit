@@ -67,8 +67,8 @@ func createPR(ctx Context, args []string) error {
 
 	title := fmt.Sprintf("%s: %s", taskID, firstLine)
 	// 87 and not 90, because the three dots are part of what a reader sees:
-	// the branch that cut at a space used to append them to a title already
-	// at the limit and hand 93 characters to a field meant to hold 90.
+	// the branch that cuts at a space appends them, and 90 plus three dots
+	// is 93 characters in a field meant to hold 90.
 	if short := clipWords(title, 87); short != title {
 		title = short + "..."
 	}

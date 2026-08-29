@@ -11,9 +11,9 @@ import (
 	"unicode/utf8"
 )
 
-// TestASubjectIsCutAtCharactersAndNotAtBytes. len counts bytes, and the
-// commit subject used to be cut with it: git records the half character, and
-// the pull request shows U+FFFD where a word was.
+// TestASubjectIsCutAtCharactersAndNotAtBytes. len counts bytes, and a commit
+// subject cut with it leaves half a character: git records it, and the pull
+// request shows U+FFFD where a word was.
 //
 // The title is Japanese because that is the case with nothing to catch it. A
 // title with spaces in it usually survives by accident — the cut backs off to

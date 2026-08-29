@@ -9,12 +9,12 @@ import (
 	"unicode/utf8"
 )
 
-// TestAnActionIsTheArgumentAndNotTheDocument is the regression.
+// TestAnActionIsTheArgumentAndNotTheDocument.
 //
-// The arguments used to be searched for `"command"` and then for `:"`, which
-// wants the value to start immediately after the colon. Every JSON encoder
-// that indents puts a space there, so the key matched, the value did not,
-// and the row showed the whole document instead of the command in it.
+// Searching the arguments for `"command"` and then for `:"` wants the value
+// to start immediately after the colon. Every JSON encoder that indents puts
+// a space there, so the key matches, the value does not, and the row shows
+// the whole document instead of the command in it.
 func TestAnActionIsTheArgumentAndNotTheDocument(t *testing.T) {
 	for _, c := range []struct {
 		why  string
@@ -37,7 +37,7 @@ func TestAnActionIsTheArgumentAndNotTheDocument(t *testing.T) {
 			`Bash: C:\Users\ana\main.go`,
 		},
 		{
-			"a quotation mark inside the value used to cut it short",
+			"a quotation mark inside the value does not cut it short",
 			`{"command":"echo \"hello there\""}`,
 			`Bash: echo "hello there"`,
 		},
@@ -68,9 +68,9 @@ func TestAnActionIsTheArgumentAndNotTheDocument(t *testing.T) {
 	}
 }
 
-// TestAnActionIsCutBetweenCharacters. The cut used to be head[:47], which is
-// a byte offset. A character on that boundary is left as half of itself, and
-// what a terminal draws for half a character is up to the terminal.
+// TestAnActionIsCutBetweenCharacters. head[:47] is a byte offset: a
+// character on that boundary is left as half of itself, and what a terminal
+// draws for half a character is up to the terminal.
 func TestAnActionIsCutBetweenCharacters(t *testing.T) {
 	long := strings.Repeat("ñ", 80)
 

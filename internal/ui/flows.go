@@ -46,15 +46,15 @@ type flowsState struct {
 	// listed and detail are what this screen is showing: read when the
 	// screen opens, and again whenever it changes something.
 	//
-	// They used to be read where they were drawn. flowsRows is called from
-	// View, so every frame of this screen was one os.ReadDir plus one
-	// os.ReadFile per flow, on the thread that draws — and hitFlows walked
-	// the very same directory again, on every mouse event, to work out
-	// where the rows it had not drawn would be. Two readings of one
-	// directory, taken at two moments, deciding the same layout: a flow
-	// saved between the draw and the click moved every row under the
-	// cursor, and the click landed on a different flow than the one the
-	// reader was pointing at.
+	// They are not read where they are drawn. flowsRows is called from
+	// View, so reading there makes every frame of this screen one
+	// os.ReadDir plus one os.ReadFile per flow, on the thread that draws —
+	// and hitFlows would walk the very same directory again, on every mouse
+	// event, to work out where the rows it had not drawn would be. Two
+	// readings of one directory, taken at two moments, deciding the same
+	// layout: a flow saved between the draw and the click moves every row
+	// under the cursor, and the click lands on a different flow than the
+	// one the reader was pointing at.
 	listed      []flow.Listed
 	detail      map[string]resolved
 	field       int
@@ -68,10 +68,10 @@ type flowsState struct {
 // ensurePhase gives an editor with no phases one, on the engine the editor
 // was opened with.
 //
-// It used to be born holding claude and sonnet: a choice nobody made, on a
-// build that may have neither, and sonnet is claude's model alone. It now
-// names only the engine — internal/flow refuses a phase that names none —
-// and leaves the model and the effort to whatever the run is set to.
+// It names only the engine — internal/flow refuses a phase that names none —
+// and leaves the model and the effort to whatever the run is set to. Naming a
+// model here would pin every new flow to sonnet, which is claude's alone and
+// which a build on another engine cannot run.
 func (st *flowsState) ensurePhase() {
 	if len(st.phases) == 0 {
 		st.phases = []flow.Phase{

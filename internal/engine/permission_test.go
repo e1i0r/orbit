@@ -144,8 +144,8 @@ func TestTheEmptySentinelNamesNoToolThisPackageGrants(t *testing.T) {
 }
 
 // TestEveryPostureStatesItsToolList sweeps the same eight subsets as the
-// rules below. A posture that named no tools used to produce no flag, which
-// read on `ps` as an absence and behaved as a delegation; every posture now
+// rules below. A posture that names no tools must still produce a flag: an
+// absence reads on `ps` as one and behaves as a delegation. Every posture
 // says what it asked for, including the one that asked for nothing.
 func TestEveryPostureStatesItsToolList(t *testing.T) {
 	for _, set := range postures() {

@@ -78,12 +78,10 @@ func opencodeEntry(binaryPath string) map[string]any {
 // ClientNames is every client the installer writes to, in the order it
 // writes them.
 //
-// It is exported for the command line's help, which used to carry a list of
-// its own: it said Claude Desktop, Claude Code and Cursor, and this
-// installer has never written a line of Cursor configuration while it has
-// written OpenCode, Codex and Gemini since. A person reading that help
-// installed for a client that was not touched and never learned about three
-// that were.
+// It is exported for the command line's help, which would otherwise carry a
+// list of its own and drift from this one. A person reading that help would
+// install for a client this installer does not touch, and never learn about
+// the ones it does.
 func ClientNames() []string {
 	// Which clients there are does not depend on the home directory; only
 	// where their files are does. Claude Desktop is the exception, and only

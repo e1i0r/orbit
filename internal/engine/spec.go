@@ -65,10 +65,10 @@ type spec struct {
 // locate is the program this spec runs, as an absolute path.
 //
 // The answer is the same one whether it is asked to draw a screen or to
-// start a run, which is the point of asking it here: the engine screen used
-// to ask exec.LookPath and the run used to ask exec.Command, so a machine
-// where those two disagreed got a dial it could not use or, worse, a dial
-// that looked fine and a run that died. What is found here is what is
+// start a run, which is the point of asking it here: an engine screen asking
+// exec.LookPath and a run asking exec.Command give a machine where those two
+// disagree a dial it cannot use or, worse, a dial that looks fine and a run
+// that dies. What is found here is what is
 // executed, by absolute path.
 func (s spec) locate() (string, error) {
 	if path, err := exec.LookPath(s.name); err == nil {

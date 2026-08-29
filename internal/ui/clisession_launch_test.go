@@ -130,9 +130,9 @@ func TestHandleCLIEndedSaysWhenTheProcessNeverRan(t *testing.T) {
 
 // The window hands the port the task the cursor is on and the directory it
 // believes the session belongs in — and that directory is the repository's
-// path. It used to be the repository's name, which is a column and not a
-// place: every session opened on a task was started in a directory that does
-// not exist, or, worse, in one that happened to.
+// path, not its name. The name is a column and not a place: a session opened
+// on it starts in a directory that does not exist, or, worse, in one that
+// happens to.
 func TestLaunchInteractiveCLIAsksThePortForTheSession(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	for i := range m.board.Tasks {

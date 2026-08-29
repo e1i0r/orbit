@@ -19,8 +19,7 @@ func TestCodexInterface(t *testing.T) {
 		t.Error("CanThink() = false, want true")
 	}
 
-	// Every model the dial offers was run. A list nobody ran is what put
-	// o3-mini and gpt-4o on this dial in the first place.
+	// Every model the dial offers was run against codex.
 	want := []string{"", "gpt-5.6-terra", "gpt-5.6-luna", "gpt-5.5", "gpt-5.4-mini"}
 	got := make([]string, 0, len(c.Models()))
 
@@ -77,11 +76,12 @@ func TestCodexEffortsAreOnesEveryModelTakes(t *testing.T) {
 // TestCodexArgs is the exact argv, in the exact order, that was run against
 // codex 0.46.0 and parsed.
 //
-// The three it replaces were invented. `codex exec --effort high` answers
-// "error: unexpected argument '--effort' found", so every phase that named
-// an effort died before a model saw it; `--resume` answers the same, because
-// resume is a subcommand; and the options belong to exec and must come
-// before that subcommand — `codex exec resume --sandbox` is refused too.
+// Each part of it is a refusal codex gives otherwise. `codex exec --effort
+// high` answers "error: unexpected argument '--effort' found", so a phase
+// that names an effort that way dies before a model sees it; `--resume`
+// answers the same, because resume is a subcommand; and the options belong
+// to exec and must come before that subcommand — `codex exec resume
+// --sandbox` is refused too.
 func TestCodexArgs(t *testing.T) {
 	req := Request{
 		Prompt:      "fix the bug",
@@ -110,10 +110,10 @@ func TestCodexArgs(t *testing.T) {
 	}
 }
 
-// TestCodexStatesItsPosture. codexArgs used to validate the permission names
-// and then build an argv that said nothing about them, so every codex phase
-// ran at whatever the binary defaulted to while the record claimed a
-// posture. Each line below is a sandbox codex names.
+// TestCodexStatesItsPosture. Validating the permission names and then
+// building an argv that says nothing about them runs every codex phase at
+// whatever the binary defaults to while the record claims a posture. Each
+// line below is a sandbox codex names.
 func TestCodexStatesItsPosture(t *testing.T) {
 	for _, c := range []struct {
 		perms []string

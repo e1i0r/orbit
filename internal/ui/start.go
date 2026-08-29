@@ -108,10 +108,9 @@ func (s startModel) cycle() []startFlow {
 // what it is: a name nothing answers to.
 //
 // Which mark a name gets is flow.List's answer and is not worked out again
-// here. It used to be — from flow.UserNames and a slices.Contains against
-// the built-ins — and that made two implementations of one rule, one of
-// which `orbit flows` used and one of which this dialog used. They agreed
-// only because nobody had edited either of them yet.
+// here. Working it out from flow.UserNames and a slices.Contains against
+// the built-ins makes two implementations of one rule, one for `orbit flows`
+// and one for this dialog, agreeing only until either is edited.
 func newStart(src flow.Source, t view.Task) startModel {
 	own := t.Flow
 	if own == "" {

@@ -157,9 +157,9 @@ func (m Model) readSaid(msg readMsg) string {
 // stillTaken forgets the sessions the board says cannot be open any more.
 //
 // took is set when the terminal is handed over and cleared when the keyboard
-// is handed back, and those used to be the only two moments it changed. So a
-// task that was cancelled, resumed with r, or simply ran to completion kept
-// its entry for as long as the window stayed open, and h went on being
+// is handed back. Were those the only two moments it changed, a task that
+// was cancelled, resumed with r, or simply ran to completion would keep its
+// entry for as long as the window stayed open, and h would go on being
 // offered for a session that ended long ago.
 //
 // The board is the authority and this window's memory is not: a task stopped

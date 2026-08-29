@@ -3,13 +3,12 @@ package cli
 // The engines this build can run: the one table of them, and everything the
 // window asks of it.
 //
-// The table used to be written out three times — twice as a map of
-// constructors, in `orbit run` and in the window, and once more as a list of
-// bare names for the settings screen — so an engine added to one was an
-// engine the others did not have: startable from the command line, and
-// neither offered on the settings screen nor recognised when the window went
-// looking for it. It is one table here, and the questions asked of it live
-// beside it.
+// It is one table, and the questions asked of it live beside it. Written out
+// three times — twice as a map of constructors, in `orbit run` and in the
+// window, and once more as a list of bare names for the settings screen — an
+// engine added to one is an engine the others do not have: startable from the
+// command line, and neither offered on the settings screen nor recognised
+// when the window goes looking for it.
 //
 // The ports are here rather than in ports.go for the same reason they are in
 // this package at all: they take a *store.Store, which internal/ui cannot
@@ -157,10 +156,10 @@ func autoSupervisePort(s *store.Store, engines map[string]engine.Engine) func(st
 // come from the adapter in internal/engine, which knows them whether or not
 // the command line is installed; only Available is a fact about $PATH.
 //
-// They used to be filled in only for engines that were installed, which left
-// the window with nothing to draw a dial from unless the reader already had
-// the engine — so the window kept its own copy of the catalogue, and that
-// copy is what drifted.
+// Filling them in only for engines that are installed leaves the window with
+// nothing to draw a dial from unless the reader already has the engine —
+// which is how the window comes to keep its own copy of the catalogue, and
+// that copy is what drifts.
 func enginesPort(engines map[string]engine.Engine) func() []ui.EngineInfo {
 	return func() []ui.EngineInfo {
 		var list []ui.EngineInfo

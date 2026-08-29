@@ -179,9 +179,8 @@ func TestComposePillsCycle(t *testing.T) {
 	}
 
 	// The model dial follows the engine dial, and what it offers is the
-	// engine's own. The form used to carry a table of its own here, so
-	// cycling to opencode offered a model called llama-3.3 that no
-	// opencode answers to.
+	// engine's own. A table of the form's own here offered opencode a
+	// model called llama-3.3 that no opencode answers to.
 	engModels, _ := m.modelsFor(m.compose.chosenEngine())
 	if !slices.Equal(m.compose.models, engModels) {
 		t.Errorf("the model dial offers %v after choosing %s, want %v", m.compose.models, m.compose.chosenEngine(), engModels)

@@ -2,11 +2,10 @@ package record
 
 // The kinds an event can have, and the one place they are written down.
 //
-// They used to be bare literals in internal/task, which writes them, and a
-// second set of constants in internal/view, which reads them. Neither side
-// could see a rename on the other: a kind spelled differently by the writer
-// folds to nothing at all in the reader, silently, and the record still
-// looks like a record. The layering forbids those two packages from
+// Bare literals in internal/task, which writes them, and a second set of
+// constants in internal/view, which reads them, cannot see a rename on each
+// other: a kind spelled differently by the writer folds to nothing at all in
+// the reader, silently, and the record still looks like a record. The layering forbids those two packages from
 // importing each other — that absence is what keeps the window from being
 // able to append an event — but both may import this one, and the record's
 // own vocabulary is exactly what belongs here.

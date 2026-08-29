@@ -230,11 +230,10 @@ func replaceFile(execPath string, newBytes []byte) error {
 // fill writes the new binary into the temporary file and closes it, whatever
 // happens.
 //
-// Every one of these used to be a bare tmpFile.Close() beside a discarded
-// os.Remove: a full disk reached the reader as the write error alone, and the
-// half-written orbit-update-* it left behind was never mentioned. A failure
-// to clean up is the reader's to know about, because the file is sitting next
-// to their binary.
+// A bare tmpFile.Close() beside a discarded os.Remove reaches the reader as
+// the write error alone, and never mentions the half-written orbit-update-*
+// it left behind. A failure to clean up is the reader's to know about,
+// because the file is sitting next to their binary.
 func fill(f *os.File, newBytes []byte) error {
 	if _, err := f.Write(newBytes); err != nil {
 		return errors.Join(err, f.Close())

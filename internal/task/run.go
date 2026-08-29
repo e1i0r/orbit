@@ -58,20 +58,20 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 	// Every way a run can fail writes task.failed (see failed below), and a
 	// task.failed lands on the end of a log that may already carry a phase
 	// from the attempt before it. The event that tells a reader the old
-	// phase is over is task.started, which clears it. While the three
-	// pre-phase failures returned before task.started was ever written, a
-	// second attempt refused for an invalid flow showed up in the window as
-	// a failure in the phase the *first* attempt had died in: a stale phase,
-	// named after an attempt that never ran. Writing task.started here is
-	// the whole fix, it needs no reader to change, and it is simply true —
-	// this is where an attempt begins, and now the log has a line for every
-	// attempt rather than only for the ones that reached a worktree.
+	// phase is over is task.started, which clears it. If the three
+	// pre-phase failures returned before task.started were ever written, a
+	// second attempt refused for an invalid flow would show up in the window
+	// as a failure in the phase the *first* attempt died in: a stale phase,
+	// named after an attempt that never ran. Written here it needs no reader
+	// to change, and this is where an attempt begins — so the log has a line
+	// for every attempt rather than only for the ones that reached a
+	// worktree.
 	//
-	// It costs the worktree path this event used to carry. Nothing read it,
-	// and it is a pure function of the state root, the repository's path and
-	// the id (store.CreateWorktreeParent), so nothing was knowable only from
-	// that field — whereas an attempt with no line in the log is knowable
-	// from nowhere at all.
+	// It costs the worktree path this event could otherwise carry. Nothing
+	// reads it, and it is a pure function of the state root, the
+	// repository's path and the id (store.CreateWorktreeParent), so nothing
+	// would be knowable only from that field — whereas an attempt with no
+	// line in the log is knowable from nowhere at all.
 	if err := emit(s, t, record.Event{Kind: record.TaskStarted, Data: map[string]string{"flow": f.Name}}); err != nil {
 		return err
 	}

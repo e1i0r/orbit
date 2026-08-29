@@ -1,13 +1,11 @@
 package task
 
-// The two error returns of unconsumedNotes, both of which now travel rather
-// than being answered around.
+// The two error returns of unconsumedNotes, both of which travel rather than
+// being answered around.
 //
-// This file used to assert the opposite — nil, and carry on — with a comment
-// pointing at a doc comment that gave the reason. There was no reason there
-// to point at. What the swallow actually bought was a phase that starts with
-// the operator's correction missing from its prompt and nothing anywhere
-// saying so, which is the failure this package refuses by name in Supervise.
+// Returning nil and carrying on buys a phase that starts with the operator's
+// correction missing from its prompt and nothing anywhere saying so, which
+// is the failure this package refuses by name in Supervise.
 
 import (
 	"context"

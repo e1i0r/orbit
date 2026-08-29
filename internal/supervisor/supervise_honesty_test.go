@@ -32,9 +32,9 @@ func (e halfSpokenEngine) Run(_ context.Context, _ engine.Request) (engine.Resul
 
 // TestTheSupervisorReportsAnEngineThatStoppedMidAnswer.
 //
-// The error used to be dropped whenever the engine had printed anything at
-// all, so half an answer was recorded in the thread and handed back as
-// though the supervisor had finished speaking. Both halves are the point:
+// Dropping the error whenever the engine printed anything at all would
+// record half an answer in the thread and hand it back as though the
+// supervisor had finished speaking. Both halves are the point:
 // what it said is kept, and the caller is told it did not finish.
 func TestTheSupervisorReportsAnEngineThatStoppedMidAnswer(t *testing.T) {
 	s := fixture(t)

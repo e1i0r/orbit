@@ -2,9 +2,10 @@ package ui
 
 // cycleEffort moves the effort knob to the next one the engine offers.
 //
-// The list used to be written out here — low, medium, high, xhigh — so this
-// knob and the engine it was turned for disagreed: codex has no xhigh, and
-// a phase carrying one is a phase internal/task refuses before it runs.
+// The list is not written out here — low, medium, high, xhigh — because that
+// makes this knob and the engine it is turned for disagree: codex has no
+// xhigh, and a phase carrying one is a phase internal/task refuses before it
+// runs.
 func (m Model) cycleEffort() Model {
 	efforts, _ := m.effortsFor(m.dialEngine(m.knobs.Engine))
 	m.knobs.Effort = nextOption(efforts, m.knobs.Effort, 1)
@@ -29,9 +30,9 @@ func (m Model) configLine(w int) string {
 	p := m.opts.Words
 
 	// What is drawn is what a run would actually use: the knob when one is
-	// turned, and what stands behind it when none is. It used to be the
-	// words claude, sonnet and high, which on a build without claude were
-	// true of none of the three.
+	// turned, and what stands behind it when none is. The words claude,
+	// sonnet and high are true of none of the three on a build without
+	// claude.
 	eng := m.dialEngine(m.knobs.Engine)
 
 	models, _ := m.modelsFor(eng)

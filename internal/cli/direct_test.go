@@ -86,8 +86,8 @@ func TestDirectTaskWithRestartFlag(t *testing.T) {
 
 // TestUnreadCannotBeGuessedAtZero. What is unread is the brake on starting a
 // run, and zero is the one count atCap never refuses: a board that could not
-// be read used to be reported as zero unread, so `direct -restart` started a
-// run the cap existed to stop and nothing said why.
+// be read reported as zero unread lets `direct -restart` start a run the cap
+// exists to stop, with nothing saying why.
 //
 // It is asked of the function rather than of the command because the only
 // board Refresh refuses is one whose root cannot be walked, and by the time

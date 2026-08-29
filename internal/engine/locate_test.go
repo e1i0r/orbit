@@ -6,14 +6,14 @@ import (
 	"testing"
 )
 
-// TestAnEngineIsFoundWhereItsInstallerPutIt is the fix.
+// TestAnEngineIsFoundWhereItsInstallerPutIt.
 //
-// The engine screen used to ask exec.LookPath and nothing else, so an engine
-// installed somewhere PATH did not mention was drawn as "[setup required]".
-// That is not a corner: opencode's installer puts the binary in
-// ~/.opencode/bin and adds that line to a shell profile, so any Orbit
-// started from a terminal older than the install saw a machine without
-// opencode — while opencode ran in the next pane.
+// An engine screen that asks exec.LookPath and nothing else draws an engine
+// installed somewhere PATH does not mention as "[setup required]". That is
+// not a corner: opencode's installer puts the binary in ~/.opencode/bin and
+// adds that line to a shell profile, so any Orbit started from a terminal
+// older than the install sees a machine without opencode — while opencode
+// runs in the next pane.
 func TestAnEngineIsFoundWhereItsInstallerPutIt(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)

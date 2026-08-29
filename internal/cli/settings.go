@@ -18,10 +18,10 @@ import (
 
 // settingsAdapter answers ui.Settings out of the settings file.
 //
-// The getters answer from memory and read nothing. They used to go to
-// (*store.Store).Settings on every call, which is an unconditional
-// os.ReadFile plus a json.Unmarshal — there is no cache in the store — and
-// the window asks several of them per frame: unreadCap once for the header,
+// The getters answer from memory and read nothing. Going to
+// (*store.Store).Settings on every call is an unconditional os.ReadFile plus
+// a json.Unmarshal — there is no cache in the store — and the window asks
+// several of them per frame: unreadCap once for the header,
 // once more per band header beside atUnreadCap, and autopilotOn again. At
 // the board's poll that is five to ten file reads and parses a second, every
 // one of them blocking, in the middle of a render. This program rejects

@@ -11,12 +11,10 @@ import (
 // stream opens one of the checked-in fixtures.
 //
 // Every test in this package reads bytes off the disk and never runs the
-// claude binary. That is not squeamishness about slow tests: a real headless
-// run spends real money and needs a network, and the program this replaces
-// shipped a suite with a paid call in it, which made the suite unsafe to run
-// and so nobody ran it. ParseStream is a function rather than a few lines
-// inside Run for exactly this reason, the same reason claudeArgs was split
-// out before it.
+// claude binary: a real headless run spends real money and needs a network,
+// so a suite with one in it is a suite nobody can safely run. ParseStream is
+// a function rather than a few lines inside Run for exactly this reason, the
+// same reason claudeArgs was split out before it.
 func stream(t *testing.T, name string) *bytes.Reader {
 	t.Helper()
 

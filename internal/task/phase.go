@@ -121,16 +121,16 @@ func phaseThought(phase string, n int, text string) record.Event {
 
 // phaseToolCall is one call the model made, and the arguments go in Text.
 //
-// They used to go in both Text and Data["args"], the same captured string
-// written twice on the same line. Nothing needed two copies — every reader
-// took one or the other — and this is the noisiest kind there is: a phase
-// writes hundreds of these, each one carrying a payload capped at maxOutput,
-// so the log was twice the size it had to be for the events that dominate
-// it, and a call with large arguments could push its own line past
-// record.MaxLine and be refused outright — which fails the whole run,
-// because the emit for a streamed event is not best-effort.
+// They go in Text alone and not in Data["args"] as well. Nothing needs two
+// copies — every reader takes one or the other — and this is the noisiest
+// kind there is: a phase writes hundreds of these, each one carrying a
+// payload capped at maxOutput, so the same string written twice on one line
+// doubles the events that dominate the log, and a call with large arguments
+// could push its own line past record.MaxLine and be refused outright —
+// which fails the whole run, because the emit for a streamed event is not
+// best-effort.
 //
-// Text rather than Data is which copy stayed, so that this kind agrees with
+// Text rather than Data is which copy it is, so that this kind agrees with
 // phase.refused directly below: the payload in Text, the tool's name in
 // Data["tool"]. A log written before this still carries both, and every
 // reader here reads Text, so old logs and new ones read alike.

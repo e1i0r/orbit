@@ -159,9 +159,9 @@ func TestRescanFindsWhatRefreshDoesNot(t *testing.T) {
 // what the walk found rather than what the record holds, stated here rather
 // than left to be found.
 //
-// The board used to list the tasks of a repository that had been moved or
-// deleted, under the name its path ended in, because the record lives in the
-// state root and the checkout does not. It cannot any more: the repositories
+// The tasks of a repository that has been moved or deleted are not listed,
+// under the name its path ended in or under any other, even though the
+// record lives in the state root and outlives the checkout: the repositories
 // are the ones under the root, and a checkout that is not there is not one
 // of them. Nothing is lost — the record is untouched, `orbit show` and
 // `orbit list` read it exactly as before — and the rows come back the moment

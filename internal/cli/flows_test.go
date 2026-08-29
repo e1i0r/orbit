@@ -100,9 +100,9 @@ func TestAFileThatShadowsABuiltinSaysSo(t *testing.T) {
 // The mark is a sentence, and every sentence Orbit shows a person goes
 // through the catalogue. This is the test that says so for this one: the
 // same three facts are drawn by the window's start dialog through the same
-// three keys, and English written inside internal/flow — where it used to
-// be, spliced into a Sprintf as data — could not be translated and could not
-// be seen by the tests that check translations exist.
+// three keys. English written inside internal/flow, spliced into a Sprintf
+// as data, cannot be translated and cannot be seen by the tests that check
+// translations exist.
 //
 // The language is the saved setting. Nothing here reads $LANG, so this test
 // says the same thing on a machine running in Spanish.

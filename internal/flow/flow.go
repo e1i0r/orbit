@@ -21,9 +21,9 @@ import (
 // model. Three duplicated strings are the price of that, paid knowingly.
 //
 // The set is closed rather than open because the failure mode of an open one
-// is silent. A flow file that said "repository" where it meant "repo" used
-// to load, grant nothing, and leave the engine's own default posture in
-// charge — a wider grant than the file asked for, arriving through a typo,
+// is silent. A flow file that says "repository" where it meant "repo" would
+// otherwise load, grant nothing, and leave the engine's own default posture
+// in charge — a wider grant than the file asked for, arriving through a typo,
 // with nothing anywhere saying so.
 const (
 	// PermissionRead may read the worktree and may run no command that
@@ -39,12 +39,11 @@ const (
 // Permissions is the whole vocabulary, in the order a reader meets it.
 //
 // It exists for the caller that has to offer the set rather than check one
-// of it: internal/mcp declares these as the enum of a tool argument, and it
-// used to declare them as three string literals of its own. That is a
-// different duplication from the one above — internal/mcp may import this
-// package, and does — so it bought nothing and would have gone stale on the
-// day a fourth permission was added, telling a supervising model the set was
-// three long when it was four.
+// of it: internal/mcp declares these as the enum of a tool argument. Three
+// string literals of its own would be a different duplication from the one
+// above — internal/mcp may import this package, and does — so they would buy
+// nothing and go stale on the day a fourth permission is added, telling a
+// supervising model the set is three long when it is four.
 func Permissions() []string {
 	return []string{PermissionRead, PermissionRepo, PermissionNetwork}
 }

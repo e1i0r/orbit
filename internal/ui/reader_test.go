@@ -135,10 +135,10 @@ index 3f1c9a2..a77b104 100644
 // twoFileDiff is the same change to retry.go, in a diff that also touches a
 // second file. It exists for one reason: every other fixture in this file
 // is a single file, and fileAt's walk from the cursor up to the file it
-// belongs to has a bug that only a second file can expose — a line in the
+// belongs to has a failure only a second file can expose — a line in the
 // furniture that introduces file two, met before file one's own hunk is,
-// used to be answered with file one's name and a line number counted from
-// file one's last hunk.
+// answered with file one's name and a line number counted from file one's
+// last hunk.
 const twoFileDiff = `diff --git a/retry.go b/retry.go
 index 3f1c9a2..a77b104 100644
 --- a/retry.go
