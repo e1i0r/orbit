@@ -85,7 +85,7 @@ func (m Model) helpRows(h, w int) []string {
 		{"[c]", "Abrir sesión de CLI interactiva"},
 		{"[/]", "Búsqueda y filtro en tiempo real (ID, título, repo)"},
 		{"[Esc]", "Limpiar filtros activos o volver a la vista anterior"},
-		{"[orbit] (clic)", "Resetear todos los filtros y mostrar tablero completo"},
+		{"◉ orbit (clic)", "Resetear todos los filtros y mostrar tablero completo"},
 		{"[📋⚡💬🏁] (clic)", "Filtrar para ver únicamente las tareas de esa cola"},
 	})
 

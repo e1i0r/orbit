@@ -145,6 +145,25 @@ func Pill(text string, fg, bg string) string {
 		Render(text)
 }
 
+// PillSelected renders a badge as chosen, by swapping its two colours and
+// nothing else.
+//
+// It is PillActive without the mark, and the difference is width. PillActive
+// prefixes "▶ ", which makes the badge two cells wider the moment it is
+// selected and shifts everything drawn after it. The queue badges can afford
+// that. The name badge cannot: it is the first thing on the line, so two
+// extra cells move all four queue badges, and hitHeader places every one of
+// them by a column written down in target.go rather than by measuring what
+// was drawn.
+func PillSelected(text string, fg, bg string) string {
+	return lipgloss.NewStyle().
+		Foreground(lipgloss.Color(bg)).
+		Background(lipgloss.Color(fg)).
+		Bold(true).
+		Padding(0, 1).
+		Render(text)
+}
+
 // PillActive renders an active/focused badge with inverted contrast.
 func PillActive(text string, fg, bg string) string {
 	return lipgloss.NewStyle().
