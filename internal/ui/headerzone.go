@@ -55,15 +55,20 @@ func (m Model) queueBadges() []queueBadge {
 		return Pill(text, in.fg, in.bg)
 	}
 
+	// Indexed by the band, not by the position the badge is drawn in.
+	// board.Counts is filled by view.BandOf, whose order is ToDo, NeedsYou,
+	// Running, Done; these are drawn in a different one, so 0..3 down this
+	// list hands the Running badge the count of the tasks waiting on the
+	// reader and the Needs You badge the count of the ones still running.
 	return []queueBadge{
 		{view.ToDo, pill(view.ToDo, "📋",
-			p.T("queue.todo", "To Do"), inkToDo, m.board.Counts[0])},
+			p.T("queue.todo", "To Do"), inkToDo, m.board.Counts[view.ToDo])},
 		{view.Running, pill(view.Running, "⚡",
-			p.T("queue.in_flight", "Running"), inkRunning, m.board.Counts[1])},
+			p.T("queue.in_flight", "Running"), inkRunning, m.board.Counts[view.Running])},
 		{view.NeedsYou, pill(view.NeedsYou, "💬",
-			p.T("queue.needs_you", "Needs You"), inkNeedsYou, m.board.Counts[2])},
+			p.T("queue.needs_you", "Needs You"), inkNeedsYou, m.board.Counts[view.NeedsYou])},
 		{view.Done, pill(view.Done, "🏁",
-			p.T("queue.done", "Done"), inkDone, m.board.Counts[3])},
+			p.T("queue.done", "Done"), inkDone, m.board.Counts[view.Done])},
 	}
 }
 

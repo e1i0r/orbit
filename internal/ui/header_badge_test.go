@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 
@@ -104,5 +105,37 @@ func TestLightingTheBadgeDoesNotMoveIt(t *testing.T) {
 
 	if dim := lipgloss.Width(m.name()); dim != lit {
 		t.Errorf("the name badge is %d cells lit and %d cells not; every queue badge after it moves by %d", lit, dim, lit-dim)
+	}
+}
+
+// TestEachQueueBadgeCarriesItsOwnCount.
+//
+// board.Counts is indexed by view.Band — ToDo, NeedsYou, Running, Done — and
+// the badges are drawn in a different order, ToDo, Running, NeedsYou, Done.
+// Walking Counts 0..3 down the drawn list therefore hands the Running badge
+// the number of tasks waiting on the reader, and Needs You the number still
+// running. Both numbers are plausible, so the swap reads as true.
+//
+// Four different counts is what makes the swap visible: with any two of them
+// equal, the arrangement that reports them backwards passes.
+func TestEachQueueBadgeCarriesItsOwnCount(t *testing.T) {
+	m, _ := testModel(t, 150, 30)
+
+	want := map[view.Band]int{view.ToDo: 1, view.NeedsYou: 2, view.Running: 3, view.Done: 4}
+	for band, n := range want {
+		m.board.Counts[band] = n
+	}
+
+	badges := m.queueBadges()
+	if len(badges) != len(want) {
+		t.Fatalf("queueBadges() drew %d badges, want %d", len(badges), len(want))
+	}
+
+	for _, b := range badges {
+		text := ansi.Strip(b.text)
+		if !strings.HasSuffix(strings.TrimSpace(text), strconv.Itoa(want[b.band])) {
+			t.Errorf("the %s badge reads %q and %s holds %d tasks",
+				b.band, strings.TrimSpace(text), b.band, want[b.band])
+		}
 	}
 }
