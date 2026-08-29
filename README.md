@@ -24,13 +24,11 @@ It is built against two failure modes:
   orbit show -repo ~/code/api fix-auth   # every phase, its gate verdicts, its refusals, its cost
   ```
 
-<img src="assets/screenshot.png" alt="orbit top, the interactive cockpit" width="720">
-
-<!-- TODO: replace with the full-loop GIF — CLI → tasks → autopilot → PR -->
-
 ---
 
 ## The loop
+
+<img src="assets/loop.gif" alt="a task written from the CLI, the cockpit, the record it kept, the diff, and the record read back from the CLI" width="720">
 
 1. In your CLI — Claude Code, Codex, OpenCode — you investigate, validate, and build the plan. From there it creates the tasks and hands them to Orbit over MCP.
 2. You open the cockpit and turn on autopilot.

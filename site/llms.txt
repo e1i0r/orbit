@@ -1,21 +1,23 @@
 # Orbit
 
-> Mission control for autonomous coding agents. A terminal cockpit (TUI) that
-> supervises, steers, and verifies multi-agent software development: every
-> task runs in its own throwaway Git worktree, with human-in-the-loop
-> verification gates, custom multi-phase pipelines, and a full append-only
-> audit trail of everything an agent did.
+> Stay in command of the code you did not write. Orbit is a terminal cockpit
+> for coding agents: each task runs in its own git worktree, in phases that
+> stop where you tell them to, and everything is written down — the plan, the
+> prompts, the reasoning, the diff, the cost, what the agent refused to do.
 
-Orbit drives coding-agent CLIs (Claude Code today; Codex and OpenCode next,
-Gemini after that) and streams their output back in real time, so you can
-run several tasks in parallel — even in the same repo — without ever
-touching your own working tree.
+Orbit never calls a model. It runs the coding-agent CLI you already have
+installed — Claude Code, Codex, OpenCode — under the subscription you already
+pay for, so there is no API key and no second bill per token. It is an MCP
+server with 19 tools, so your CLI writes the tasks, runs them, and reads back
+everything that happened while you were away.
 
 Built by Elio Rincón ([e1i0.com](https://e1i0.com)).
 
 ## Docs
 
-- [README](https://github.com/e1i0r/orbit#readme): install, quickstart, keybindings, and the full feature list
+- [README](https://github.com/e1i0r/orbit#readme): the loop, install, quickstart, flows and gates
+- [Engines](https://github.com/e1i0r/orbit/blob/main/docs/engines.md): the model and reasoning catalogue of each CLI
+- [Cockpit](https://github.com/e1i0r/orbit/blob/main/docs/cockpit.md): bands, tabs and keybindings
 - [Install script](https://getorbit.sh/install.sh): `curl -fsSL https://getorbit.sh/install.sh | bash`
 - [Contributing guide](https://github.com/e1i0r/orbit/blob/main/CONTRIBUTING.md): how to build the project and send a pull request
 - [License](https://github.com/e1i0r/orbit/blob/main/LICENSE): Apache License 2.0
