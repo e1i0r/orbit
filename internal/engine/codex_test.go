@@ -19,8 +19,7 @@ func TestCodexInterface(t *testing.T) {
 		t.Error("CanThink() = false, want true")
 	}
 
-	// Every model the dial offers was run. A list nobody ran is what put
-	// o3-mini and gpt-4o on this dial in the first place.
+	// Every model the dial offers was run against codex.
 	want := []string{"", "gpt-5.6-terra", "gpt-5.6-luna", "gpt-5.5", "gpt-5.4-mini"}
 	got := make([]string, 0, len(c.Models()))
 

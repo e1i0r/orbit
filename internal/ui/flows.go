@@ -68,10 +68,10 @@ type flowsState struct {
 // ensurePhase gives an editor with no phases one, on the engine the editor
 // was opened with.
 //
-// It used to be born holding claude and sonnet: a choice nobody made, on a
-// build that may have neither, and sonnet is claude's model alone. It now
-// names only the engine — internal/flow refuses a phase that names none —
-// and leaves the model and the effort to whatever the run is set to.
+// It names only the engine — internal/flow refuses a phase that names none —
+// and leaves the model and the effort to whatever the run is set to. Naming a
+// model here would pin every new flow to sonnet, which is claude's alone and
+// which a build on another engine cannot run.
 func (st *flowsState) ensurePhase() {
 	if len(st.phases) == 0 {
 		st.phases = []flow.Phase{

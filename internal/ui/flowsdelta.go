@@ -62,9 +62,8 @@ func (m Model) handleFlowFieldAction() (Model, tea.Cmd) {
 	case flowFieldAddPhase:
 		st.phases = append(st.phases, flow.Phase{
 			// A new phase is born on the window's engine and names no
-			// model and no effort. It used to be born holding claude and
-			// sonnet, which is a choice nobody made and a model claude
-			// alone has.
+			// model and no effort: sonnet is claude's model alone, so
+			// naming it here breaks the phase on any other engine.
 			Name:        fmt.Sprintf("%d-phase", len(st.phases)+1),
 			Engine:      st.engine,
 			Thinking:    "adaptive",

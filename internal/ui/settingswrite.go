@@ -49,19 +49,15 @@ func (m Model) applySetting(keyName, val string) (tea.Model, tea.Cmd) {
 
 // writeSetting puts one setting down, and answers what stopped it.
 //
-// Every one of these calls used to be `_ =` under a comment calling it a
-// best-effort update. There is no best effort here: the new value is already
-// drawn by the time this runs, so a write that fails silently is a window
-// showing a setting that is not in the file, and the next time the reader
-// opens it the switch has flipped itself back. It got sharper when the
-// settings file grew a lock — a second orbit changing settings makes these
-// refuse, in words, after waiting two seconds.
+// The new value is already drawn by the time this runs, so a write that fails
+// silently is a window showing a setting that is not in the file, and the next
+// time the reader opens it the switch has flipped itself back. The settings
+// file has a lock, so these can also refuse, in words, after waiting two
+// seconds for a second orbit to finish changing something.
 //
-// It also stopped writing everything twice. Each of these used to be
-// followed by Do("set", key, val), which shells out to `orbit set` and
-// writes the same file again — a second lock to take and a second chance to
-// fail, both dropped. For effort and thinking it could only fail: neither is
-// a key `orbit set` has.
+// Each write happens once. Shelling out to `orbit set` afterwards would take
+// the lock a second time to write the same file, and for effort and thinking
+// it could only fail: neither is a key `orbit set` has.
 func (m Model) writeSetting(keyName, val string) (Model, error) {
 	s := m.opts.Settings
 	if s == nil {
