@@ -72,12 +72,12 @@ func Supervise(ctx context.Context, s *store.Store, eng engine.Engine, prompt st
 		}
 	}
 
-	// And the error still travels. It used to be dropped whenever the engine
-	// had printed anything at all, so an answer cut off halfway — by a
-	// cancellation, a crash, a quota — was recorded in the thread and handed
-	// back as though the supervisor had finished speaking. The cockpit
-	// already draws both: the thread it re-reads from this log, and the error
-	// on the status line (ui/update.go).
+	// And the error still travels. Dropping it whenever the engine printed
+	// anything at all would record an answer cut off halfway — by a
+	// cancellation, a crash, a quota — in the thread and hand it back as
+	// though the supervisor had finished speaking. The cockpit already draws
+	// both: the thread it re-reads from this log, and the error on the status
+	// line (ui/update.go).
 	if runErr != nil {
 		return ans, fmt.Errorf("supervisor engine %s failed: %w", eng.Name(), runErr)
 	}

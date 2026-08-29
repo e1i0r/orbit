@@ -87,12 +87,11 @@ func TestEngineExecutionErrors(t *testing.T) {
 // TestEngineMockSuccessfulRun gives each engine a stand-in that prints that
 // engine's own event stream.
 //
-// One script printing claude's stream used to stand in for all three, and it
-// passed — because all three parsed with claude's parser, and the plain-text
-// fallback caught whatever did not. That is the bug in test form: codex says
-// thread_id, opencode says sessionID and claude says session_id, so a run on
-// codex or opencode recorded no session and no cost while looking exactly
-// like one that had.
+// One script printing claude's stream would stand in for all three and pass,
+// because all three parse with claude's parser and the plain-text fallback
+// catches whatever does not. What that hides: codex says thread_id, opencode
+// says sessionID and claude says session_id, so a run on codex or opencode
+// records no session and no cost while looking exactly like one that had.
 func TestEngineMockSuccessfulRun(t *testing.T) {
 	dir := t.TempDir()
 

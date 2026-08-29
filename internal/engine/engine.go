@@ -90,10 +90,10 @@ type Engine interface {
 	//
 	// The engine screen asks it to decide whether to draw dials or setup
 	// steps, and Run asks it to decide what to execute, so the two cannot
-	// disagree. It used to be neither: the screen ran exec.LookPath on the
-	// engine's name and Run ran exec.Command on the same bare name, which
-	// meant an engine installed somewhere PATH did not mention was drawn as
-	// "[setup required]" to a reader who had it open in the next window.
+	// disagree. A screen running exec.LookPath on the engine's name and a
+	// Run running exec.Command on the same bare name would draw an engine
+	// installed somewhere PATH does not mention as "[setup required]" to a
+	// reader who has it open in the next window.
 	Locate() (string, error)
 
 	// CanResume is whether this engine can carry on a session it started

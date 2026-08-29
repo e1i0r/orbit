@@ -116,11 +116,11 @@ func TestTheFrameClockIsNeverAskedForTwice(t *testing.T) {
 	}
 }
 
-// TestTheStatusHeartbeatIsAbsentRatherThanFrozen. The status line used to
-// carry how many milliseconds the last board read took, painted red past
-// 100ms — a number with no screen to give it context, flashing an alarm at a
-// window that was working. What replaced it is one glyph, and it is drawn
-// only while the clock that turns it is running: a spinner standing still
+// TestTheStatusHeartbeatIsAbsentRatherThanFrozen. The status line carries one
+// glyph and not how many milliseconds the last board read took — a number
+// with no screen to give it context, painted red past 100ms, flashes an alarm
+// at a window that is working. The glyph is drawn only while the clock that
+// turns it is running: a spinner standing still
 // reads as a wedged run, which is a worse lie than no spinner at all.
 func TestTheStatusHeartbeatIsAbsentRatherThanFrozen(t *testing.T) {
 	beat := func(m Model) bool {

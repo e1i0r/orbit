@@ -11,11 +11,11 @@ import (
 
 // applyFlowTemplate fills the builder from one of the presets.
 //
-// Every branch ends at loadedTemplate, and that is the point of it: Turbo
-// Fix used to be the one template that neither said it had loaded nor put
-// the cursor back on the first phase — pressing it after a three-phase
-// preset left the band showing the previous template's sentence and the
-// phase tabs pointing past the end of a one-phase flow.
+// Every branch ends at loadedTemplate, and that is the point of it. A
+// template that neither says it has loaded nor puts the cursor back on the
+// first phase — Turbo Fix is one phase, pressed after a three-phase preset —
+// leaves the band showing the previous template's sentence and the phase
+// tabs pointing past the end of the flow.
 func (m Model) applyFlowTemplate(tpl string) (Model, tea.Cmd) {
 	st := &m.flows
 	p := m.opts.Words

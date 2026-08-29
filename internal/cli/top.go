@@ -110,8 +110,7 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 	// The directory is what the board is of, and not only what the header
 	// says. The reader walks it for repositories and asks the store what has
 	// been written against each; a reader given only the store would answer
-	// the same board for every directory on the machine, which is what this
-	// command used to do.
+	// the same board for every directory on the machine.
 	r := board.NewReader(s, dir)
 	// The engines this build can run, by the name a record carries. It is a
 	// map of one today, and it is a map because the record already names its

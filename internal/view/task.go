@@ -162,11 +162,10 @@ type Task struct {
 	Damaged       int     // count of record.unreadable markers
 	CurrentAction string  // formatted live action or tool call currently running
 	// ActionKind is which of the two CurrentAction is, so that a caller can
-	// mark it as one or the other. The mark used to be part of the string —
-	// a brain or a hammer glued to the front of it in Fold — which put a
-	// glyph inside a field the MCP server hands to a model as
-	// current_action, and inside the detail pane's action line, which has
-	// the word "thinking" written under it already.
+	// mark it as one or the other. The mark is kept out of the string: a
+	// glyph glued to the front in Fold would travel into the field the MCP
+	// server hands a model as current_action, and into the detail pane's
+	// action line, which has the word "thinking" written under it already.
 	ActionKind     ActionKind
 	CurrentThought string // latest live thinking block from the model
 	ToolCallCount  int    // total tool calls invoked in the current attempt

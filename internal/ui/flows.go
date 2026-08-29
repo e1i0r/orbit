@@ -46,15 +46,15 @@ type flowsState struct {
 	// listed and detail are what this screen is showing: read when the
 	// screen opens, and again whenever it changes something.
 	//
-	// They used to be read where they were drawn. flowsRows is called from
-	// View, so every frame of this screen was one os.ReadDir plus one
-	// os.ReadFile per flow, on the thread that draws — and hitFlows walked
-	// the very same directory again, on every mouse event, to work out
-	// where the rows it had not drawn would be. Two readings of one
-	// directory, taken at two moments, deciding the same layout: a flow
-	// saved between the draw and the click moved every row under the
-	// cursor, and the click landed on a different flow than the one the
-	// reader was pointing at.
+	// They are not read where they are drawn. flowsRows is called from
+	// View, so reading there makes every frame of this screen one
+	// os.ReadDir plus one os.ReadFile per flow, on the thread that draws —
+	// and hitFlows would walk the very same directory again, on every mouse
+	// event, to work out where the rows it had not drawn would be. Two
+	// readings of one directory, taken at two moments, deciding the same
+	// layout: a flow saved between the draw and the click moves every row
+	// under the cursor, and the click lands on a different flow than the
+	// one the reader was pointing at.
 	listed      []flow.Listed
 	detail      map[string]resolved
 	field       int

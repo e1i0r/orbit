@@ -93,8 +93,8 @@ func directTask(ctx Context, args []string) error {
 //
 // A board that could not be read is a refusal and not a zero. Zero is the one
 // number task.Start never stops for — atCap is written as limit > 0 && unread
-// >= limit — so a state root that failed to walk used to take the brake off
-// silently, at the moment it was least worth trusting. The reader is told
+// >= limit — so reporting a state root that failed to walk as zero takes the
+// brake off silently, at the moment it is least worth trusting. The reader is told
 // instead, and can restart the task again once the count can be taken.
 //
 // The count is of the repository this command was pointed at, and not of

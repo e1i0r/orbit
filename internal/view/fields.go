@@ -134,13 +134,12 @@ func formatAction(tool, args string) string {
 // whole of what was given if none of them is there.
 //
 // It goes through encoding/json rather than searching the text for `"path"`
-// and then for `:"`, which is what it used to do — three near-identical
-// blocks of it. That search wanted the value to begin immediately after the
-// colon, so an engine that wrote `{"command": "go test"}` with the space
-// every JSON encoder puts there matched the key, missed the value, and put
-// the whole document on the row. What it found it also handed over
-// unescaped, so a Windows path arrived with its backslashes doubled and a
-// quotation mark inside a string cut the value short.
+// and then for `:"`. That search wants the value to begin immediately after
+// the colon, so an engine that writes `{"command": "go test"}` with the
+// space every JSON encoder puts there matches the key, misses the value, and
+// puts the whole document on the row. What such a search finds it also hands
+// over unescaped, so a Windows path arrives with its backslashes doubled and
+// a quotation mark inside a string cuts the value short.
 func subject(args string) string {
 	if !strings.HasPrefix(args, "{") {
 		return args

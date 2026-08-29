@@ -12,12 +12,12 @@ import (
 	"github.com/e1i0r/orbit/internal/view"
 )
 
-// TestAFailedReadIsRetriedOnceAndThenLetGoOf is the bookkeeping the fix
-// turns on, and both halves of it matter.
+// TestAFailedReadIsRetriedOnceAndThenLetGoOf is the bookkeeping this turns
+// on, and both halves of it matter.
 //
-// The size used to be committed before the read was even attempted, so a
-// failure was never retried: the bytes went on the ledger as read and the
-// next stat found nothing new to do. Committing it only on success is the
+// Committing the size before the read is even attempted means a failure is
+// never retried: the bytes go on the ledger as read and the next stat finds
+// nothing new to do. Committing it only on success is the
 // other mistake — a line longer than record.MaxLine is a log no later read
 // will get past, and four megabytes of pointless I/O twice a second, for as
 // long as the window is open, is what "just retry" costs.
@@ -75,11 +75,11 @@ func TestAFailedReadIsRetriedOnceAndThenLetGoOf(t *testing.T) {
 	}
 }
 
-// TestAnEndingIsNotLostToAReadThatFailedOnce is the same bug from the row's
-// side. A fault that lasted a moment — a descriptor Orbit could not get, a
-// filesystem that blinked — used to strand whatever had been appended in the
-// meantime until something else was written. When that write was the last
-// one of a run, nothing else ever was: the row went on saying the task was
+// TestAnEndingIsNotLostToAReadThatFailedOnce is the same thing from the
+// row's side. A fault that lasts a moment — a descriptor Orbit could not
+// get, a filesystem that blinked — must not strand whatever was appended in
+// the meantime until something else is written. When that write is the last
+// one of a run, nothing else ever is: the row would go on saying the task is
 // running over a log that says it finished, beside an error blaming a fault
 // that was already over.
 func TestAnEndingIsNotLostToAReadThatFailedOnce(t *testing.T) {

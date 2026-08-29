@@ -25,12 +25,12 @@ import (
 // produced for it. The next call rereads it once the newline lands.
 //
 // One size, taken once, decides all three things: which bytes are read, what
-// the last byte is checked to be, and what offset comes back. It used to be
-// two — the size that was returned was measured before the last byte was
-// looked at, and the scan then ran to whatever the end had become — so a log
-// appended to in between returned an offset behind what had already been
-// handed out, and the next call read those events a second time. A poller
-// that folds what it is given saw one attempt twice.
+// the last byte is checked to be, and what offset comes back. Two sizes —
+// the returned one measured before the last byte is looked at, the scan then
+// running to whatever the end has become — return an offset behind what has
+// already been handed out for a log appended to in between, and the next
+// call reads those events a second time. A poller that folds what it is
+// given would see one attempt twice.
 //
 // offset == 0 on a file that does not exist yet returns (nil, 0, nil),
 // matching Read: nothing has happened yet, which is not an error. An offset

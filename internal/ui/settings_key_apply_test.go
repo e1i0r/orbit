@@ -90,9 +90,9 @@ func TestApplySettingEveryKey(t *testing.T) {
 	}
 
 	// 3. unread-cap is the one setting a number is typed into. A number is
-	// taken; what is not a number is refused in words. It used to be
-	// dropped on the floor under a band saying "unread-cap is now
-	// not-a-number", which named a cap that was nowhere.
+	// taken; what is not a number is refused in words rather than dropped
+	// on the floor under a band saying "unread-cap is now not-a-number",
+	// which names a cap that is nowhere.
 	next, _ = m.applySetting("unread-cap", "7")
 	m = asModel(t, next)
 	wantBand(t, m, "unread-cap is now 7")
@@ -169,10 +169,10 @@ func TestApplySettingEveryKey(t *testing.T) {
 	// 7. a settings port that is nil: there is nowhere to write, and the
 	// screen says what it would have said rather than falling over.
 	//
-	// Nothing is shelled out to either. Every setting used to be written
-	// twice — once through this port and once by running `orbit set` — so
-	// the file was opened, locked and rewritten twice per keystroke, and
-	// whatever the second one had to say was thrown away.
+	// Nothing is shelled out to either. A setting written twice — once
+	// through this port and once by running `orbit set` — opens, locks and
+	// rewrites the file twice per keystroke, and whatever the second one
+	// has to say is thrown away.
 	m.opts.Settings = nil
 
 	ran := false

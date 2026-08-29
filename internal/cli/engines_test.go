@@ -13,10 +13,9 @@ import (
 )
 
 // TestTheWindowOffersEveryEngineThisBuildCanRun is the promise the table
-// makes. The list the settings screen draws used to be three names written
-// out again beside the map, so an engine added to the build was an engine
-// the screen did not offer — startable from the command line and invisible
-// on screen.
+// makes. If the list the settings screen draws were names written out again
+// beside the map, an engine added to the build would be an engine the screen
+// does not offer — startable from the command line and invisible on screen.
 func TestTheWindowOffersEveryEngineThisBuildCanRun(t *testing.T) {
 	engines := newEngines()
 	if len(engines) == 0 {
@@ -51,12 +50,11 @@ func TestTheListIsInTheSameOrderEveryTime(t *testing.T) {
 	}
 }
 
-// TestTheSupervisorAnswersOnTheEngineItWasAskedFor. Both supervisor doors
-// used to fall back to claude for a name the table does not have, which is
-// the one substitution a reader cannot detect: the window labels the reply
-// with the engine their dial names, so an answer written by claude came back
-// under the name of the engine they chose — on their claude quota, in
-// claude's voice, and reported as codex.
+// TestTheSupervisorAnswersOnTheEngineItWasAskedFor. Falling back to claude
+// for a name the table does not have is the one substitution a reader cannot
+// detect: the window labels the reply with the engine their dial names, so an
+// answer written by claude comes back under the name of the engine they chose
+// — on their claude quota, in claude's voice, and reported as codex.
 func TestTheSupervisorAnswersOnTheEngineItWasAskedFor(t *testing.T) {
 	s, err := store.New(t.TempDir())
 	if err != nil {

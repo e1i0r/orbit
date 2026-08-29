@@ -122,9 +122,9 @@ func running(pid int) bool {
 //
 // A task something else is already running is refused. Two runs of one task
 // share a worktree, a branch and a log: their phases interleave in the
-// record, and the first of them to finish used to take the other's marker
-// off on its way out, leaving a live run that nothing claimed and nobody
-// could cancel. The marker is the only thing that can say a task is taken,
+// record, and the first of them to finish takes the other's marker off on
+// its way out, leaving a live run that nothing claims and nobody can
+// cancel. The marker is the only thing that can say a task is taken,
 // so this is the only place it can be caught.
 //
 // It is not a lock and does not pretend to be. Two processes arriving here
@@ -155,9 +155,9 @@ func hold(s *store.Store, t Task) (release func(), err error) {
 func mark(s *store.Store, t Task, pid int) (func(), error) {
 	// The task's directory has to exist before a marker can go in it. It is
 	// normally there already, made when the task was written — but the
-	// marker is now the first thing a run puts on disk, ahead of the
-	// task.started that used to make it, so the run has to be able to make
-	// it itself. This is the store's own verb for that and not a MkdirAll on
+	// marker is the first thing a run puts on disk, ahead of the
+	// task.started that would otherwise make it, so the run has to be able
+	// to make it itself. This is the store's own verb for that and not a MkdirAll on
 	// a path taken apart here: which directories exist under the state root
 	// is that package's business, not this one's.
 	if _, err := s.CreateTaskDir(t.Repo.Path, t.ID); err != nil {

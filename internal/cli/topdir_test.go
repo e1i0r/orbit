@@ -17,7 +17,8 @@ import (
 
 // oneRepoNoTasks builds a root holding one repository with nothing written
 // against it: the state every new reader is in the first time they run this
-// command, and the one it used to describe as having no repositories at all.
+// command, and the one most easily described as having no repositories at
+// all.
 func oneRepoNoTasks(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()

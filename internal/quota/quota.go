@@ -25,10 +25,10 @@ const CacheDuration = 30 * time.Second
 // doubling from one to the other.
 //
 // The status bar asks for the quota on every frame it draws, which is several
-// times a second while anything is moving, so a proxy that is down used to
-// mean a connection attempt per frame for as long as the window stayed open:
-// nothing was written down after a failure, so the next look found the cache
-// cold and sent another. The cap is a minute rather than longer because this
+// times a second while anything is moving. Unless a failure is written down,
+// the next look finds the cache cold and sends another request, and a proxy
+// that is down becomes a connection attempt per frame for as long as the
+// window stays open. The cap is a minute rather than longer because this
 // is a number a person is watching — a proxy that comes back is worth seeing
 // again inside a minute — and a request a minute is not a loop.
 const (
@@ -114,10 +114,10 @@ func (c *Client) Fetch() ([]Window, error) {
 // a background goroutine is spawned to refresh it unless wait is true (used
 // for single-frame CLI commands like --once).
 //
-// Either way it asks at most as often as keep allows. What it used to do
-// with a proxy that was not answering was ask again on the next frame, and
-// the one after that, because a failure left no trace: the cache stayed cold,
-// so every look at the status bar started another request.
+// Either way it asks at most as often as keep allows. A failure leaves a
+// trace for the same reason: without one the cache stays cold, and every
+// look at the status bar starts another request against a proxy that is not
+// answering.
 func (c *Client) Quota(wait bool) []Window {
 	if c == nil || c.baseURL == "" {
 		return nil

@@ -174,9 +174,8 @@ func TestAWriteThatFailedIsNotSwallowed(t *testing.T) {
 }
 
 // TestInitSaysWhatTheLogItReplacesCouldNot. Re-initialising is where a
-// failed log is most likely to be noticed and was most likely to be lost:
-// the old logger is closed on the way past, and its answer used to go
-// straight into the blank identifier.
+// failed close is most likely to be lost: the old logger is closed on the
+// way past, and nobody is waiting on its answer.
 func TestInitSaysWhatTheLogItReplacesCouldNot(t *testing.T) {
 	dir := t.TempDir()
 	first := filepath.Join(dir, "first.log")

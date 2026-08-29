@@ -205,8 +205,8 @@ func set(ctx Context, args []string) error {
 	key, value := fs.Arg(0), fs.Arg(1)
 	// The read, the change and the write are one step. Between them, the
 	// window is another process writing the whole of this file back from a
-	// copy it read before this line ran: two settings changed at once used
-	// to be one setting changed and one silently discarded.
+	// copy it read before this line ran: two settings changed at once would
+	// be one setting changed and one silently discarded.
 	var shown string
 
 	err = s.UpdateSettings(func(cfg *store.Settings) error {

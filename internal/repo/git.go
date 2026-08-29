@@ -81,12 +81,11 @@ func environ() []string {
 // a program prints while succeeding is noise, and a message it prints while
 // failing is the only thing that will tell a reader what went wrong.
 //
-// Keeping the two streams apart is why this is one function and not two. gh
-// used to be run with CombinedOutput and its answer handed back as it stood,
-// so the pull request URL a reader was given was whatever gh had written to
-// both streams at once. One upgrade notice on stderr and "Pull Request
-// created: %s" is a link to nothing — the same fault CreatePR's own comment
-// says it already fixed once, left in place two lines above it.
+// Keeping the two streams apart is why this is one function and not two.
+// Running gh with CombinedOutput and handing its answer back as it stands
+// makes the pull request URL a reader is given whatever gh wrote to both
+// streams at once. One upgrade notice on stderr and "Pull Request
+// created: %s" is a link to nothing.
 func run(dir, program string, args ...string) (string, error) {
 	return runWithin(deadline, dir, program, args...)
 }

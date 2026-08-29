@@ -32,12 +32,11 @@ func TestOpenCodeInterface(t *testing.T) {
 
 // TestOpenCodeArgs is the argv opencode 1.18.23 actually parses.
 //
-// Two of the flags it replaces were invented. opencode has no --effort — the
-// flag is --variant — and it answers --effort by printing its help and
-// exiting one, so every opencode phase that named an effort failed before a
-// model saw it. And nothing asked for JSON, so opencode printed formatted
-// prose which this adapter fed to claude's stream parser: every opencode run
-// recorded no session id and no cost.
+// opencode has no --effort — the flag is --variant — and it answers --effort
+// by printing its help and exiting one, so a phase that names an effort that
+// way fails before a model sees it. And without a flag asking for JSON,
+// opencode prints formatted prose, which fed to claude's stream parser
+// records no session id and no cost.
 func TestOpenCodeArgs(t *testing.T) {
 	req := Request{
 		Prompt:      "refactor the handler",

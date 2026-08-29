@@ -156,10 +156,9 @@ func TestRunPhaseFinishedEmitFailure(t *testing.T) {
 // all: the marker goes down first, and an id that is not a single path
 // element has nowhere to put one.
 //
-// This test used to say it covered the task.started write. It did not -- the
-// hold above that write fails on the same id, so Run returned one line
-// earlier and the branch the name promised was never entered. The one below
-// enters it.
+// It is not the task.started write: the hold above that write fails on the
+// same id, so Run returns one line earlier. The test below is the one that
+// reaches task.started.
 func TestRunOnATaskIdTheStateRootRefuses(t *testing.T) {
 	s, r := fixture(t)
 	bad := Task{ID: "has/slash", Repo: r}

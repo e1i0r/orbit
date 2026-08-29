@@ -110,11 +110,11 @@ func TestMarkMakesTheTaskDirectoryItself(t *testing.T) {
 	}
 }
 
-// TestHoldRefusesATaskAnotherRunIsWalking is the whole of the fix.
+// TestHoldRefusesATaskAnotherRunIsWalking.
 //
-// Two runs of one task share a worktree, a branch and a log. Nothing used to
-// stop the second one: hold overwrote the marker, both walked the flow, and
-// whichever finished first took the other's claim off on its way out.
+// Two runs of one task share a worktree, a branch and a log. With nothing to
+// stop the second one, hold overwrites the marker, both walk the flow, and
+// whichever finishes first takes the other's claim off on its way out.
 func TestHoldRefusesATaskAnotherRunIsWalking(t *testing.T) {
 	s, r := fixture(t)
 	held := Task{ID: "HELD-1", Repo: r}

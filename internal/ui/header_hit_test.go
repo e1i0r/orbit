@@ -32,11 +32,10 @@ func headerCell(t *testing.T, m Model, s string) int {
 
 // TestClickingAQueueBadgeFiltersByTheQueueDrawnThere.
 //
-// hitHeader used to answer from eight column numbers of its own — under 10
-// is the badge, 28 to 44 is Running — and the header has been laid out again
-// several times since they were written. Measured against what is on the
-// screen they were off by a badge and a half: the left third of Running
-// filtered by To Do, and clicking Needs You filtered by Running.
+// Answering from eight column numbers of hitHeader's own — under 10 is the
+// badge, 28 to 44 is Running — puts them a badge and a half out as soon as
+// the header is laid out again: the left third of Running filters by To Do,
+// and clicking Needs You filters by Running.
 func TestClickingAQueueBadgeFiltersByTheQueueDrawnThere(t *testing.T) {
 	m, _ := testModel(t, 150, 30)
 	y := m.frame.Header.Y

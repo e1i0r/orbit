@@ -33,11 +33,11 @@ func markerFixture(t *testing.T, id string, pid int) (*store.Store, Task, string
 	return s, tk, path
 }
 
-// TestTheMarkerIsReplacedRatherThanRewritten is the regression, and the hard
-// link is what makes it a test rather than a race to lose.
+// TestTheMarkerIsReplacedRatherThanRewritten, with the hard link making it a
+// test rather than a race to lose.
 //
-// The marker used to go down with os.WriteFile, which truncates first and
-// writes second. Everything between those two is a marker with no pid line,
+// os.WriteFile truncates first and writes second. Everything between those
+// two is a marker with no pid line,
 // and readMarker calls that damage rather than "not running" — deliberately,
 // because a claim that cannot be read is a claim that cannot be ruled out.
 // The board asks Alive about every task twice a second, so that instant is

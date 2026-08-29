@@ -30,11 +30,11 @@ func (r Repo) CommitWorktree(wtDir, message string) error {
 // PushBranch pushes the task branch from the worktree to the repository's
 // remote.
 //
-// The remote is r.Remote and not the constant "origin", which is what these
-// two functions used to say. Repo carries the name for one reason — it is
-// not always origin, and the repository this tool was built against calls
-// its remote "acme" — and a delivery that hardcodes the word fails on such a
-// repository at the last step of the flow, after the work is committed.
+// The remote is r.Remote and not the constant "origin". Repo carries the
+// name for one reason — it is not always origin, and the repository this
+// tool was built against calls its remote "acme" — and a delivery that
+// hardcodes the word fails on such a repository at the last step of the
+// flow, after the work is committed.
 //
 // A repository with no remote at all is refused here rather than handed to
 // git as an empty argument, because `git push -u "" HEAD:branch` fails with
@@ -60,12 +60,12 @@ func (r Repo) PushBranch(wtDir, branch string) error {
 // PushBranch, and it will say so in terms of the push rather than of a fetch
 // nobody asked about.
 //
-// git's own stderr is not interpolated into these messages any more. It
-// used to be — `fetch origin %q: %s: %w` with the output as %s — and it was
-// always empty, because git() returns "" on failure and folds stderr into
-// the error it returns. The message read "fetch origin "main": : exit
-// status 1", and the colon with nothing in front of it was the part a
-// reader would have gone looking for.
+// git's own stderr is not interpolated into these messages. Written as
+// `fetch origin %q: %s: %w` with the output as %s it is always empty,
+// because git() returns "" on failure and folds stderr into the error it
+// returns: the message reads "fetch origin "main": : exit status 1", and
+// the colon with nothing in front of it is the part a reader would have
+// gone looking for.
 func (r Repo) SyncBaseBranch(wtDir, baseBranch string) error {
 	if baseBranch == "" || r.Remote == "" {
 		return nil
@@ -86,8 +86,8 @@ func (r Repo) SyncBaseBranch(wtDir, baseBranch string) error {
 //
 // gh writes the URL to stdout and everything else it has to say — an
 // upgrade notice, a warning about the default branch — to stderr, so the
-// answer is stdout and nothing else. It used to be both streams together,
-// which is a link with a paragraph in front of it.
+// answer is stdout and nothing else. Both streams together is a link with a
+// paragraph in front of it.
 func (r Repo) CreatePR(wtDir, title, body, headBranch, baseBranch string) (string, error) {
 	args := []string{"pr", "create", "--head", headBranch, "--title", title, "--body", body}
 	if baseBranch != "" {

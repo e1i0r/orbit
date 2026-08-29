@@ -16,10 +16,10 @@ import (
 	"testing"
 )
 
-// TestAMachineIsGivenItsOwnBuild is the collision the name match used to have:
-// "arm" is a substring of "arm64", so a 32-bit machine asking for its build
-// was handed the 64-bit one, wrote it over the running orbit, and was left
-// with a file its kernel refuses and no orbit to upgrade with.
+// TestAMachineIsGivenItsOwnBuild is the collision a substring match has:
+// "arm" is inside "arm64", so a 32-bit machine asking for its build is handed
+// the 64-bit one, writes it over the running orbit, and is left with a file
+// its kernel refuses and no orbit to upgrade with.
 func TestAMachineIsGivenItsOwnBuild(t *testing.T) {
 	assets := []asset{
 		{Name: "orbit_2.0.0_linux_arm64.tar.gz", URL: "https://example.com/arm64"},

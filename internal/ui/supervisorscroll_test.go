@@ -1,8 +1,8 @@
 package ui
 
-// The supervisor thread's scrolling, which is its own file because it is its
-// own bug: the offset used to be an unclamped counter with 999999 for "at the
-// bottom", so the number moved and the screen did not.
+// The supervisor thread's scrolling, which is its own file because it fails
+// on its own: an unclamped counter with 999999 for "at the bottom" is a
+// number that moves while the screen does not.
 
 import (
 	"fmt"
@@ -165,9 +165,9 @@ func TestSupervisorScrollStaysWhereYouWereReading(t *testing.T) {
 	}
 }
 
-// TestSupervisorWheelScrollsTheThread: the wheel used to do nothing at all
-// on this screen — wheel() returned early for anything that was not the
-// board.
+// TestSupervisorWheelScrollsTheThread: wheel() returning early for anything
+// that is not the board leaves the wheel doing nothing at all on this
+// screen.
 func TestSupervisorWheelScrollsTheThread(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m = m.openSupervisor()

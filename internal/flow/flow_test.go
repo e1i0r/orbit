@@ -161,10 +161,10 @@ func TestValidateAcceptsTheWholeVocabulary(t *testing.T) {
 }
 
 // TestValidateRejectsAPermissionNobodyDefined is this gap's exact failure
-// mode. A flow file that says "repository" where it meant "repo" used to be
-// accepted, granted nothing, and left the engine's own default in charge —
-// a wider posture than the file asked for, arriving through a typo, with
-// nothing anywhere saying it had happened.
+// mode. A flow file that says "repository" where it meant "repo" must not
+// be accepted: it would grant nothing and leave the engine's own default in
+// charge — a wider posture than the file asked for, arriving through a typo,
+// with nothing anywhere saying it had happened.
 func TestValidateRejectsAPermissionNobodyDefined(t *testing.T) {
 	f := Flow{Name: "x", Phases: []Phase{{
 		Name:        "implement",

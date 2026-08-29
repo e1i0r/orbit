@@ -4,8 +4,8 @@ package record
 //
 // A log is polled twice a second by a window whose runs are appending to it
 // the whole time, so "the file changed between two of my own syscalls" is
-// not an edge case here — it is the ordinary case, and both readers used to
-// measure the file twice and describe the one that never existed.
+// not an edge case here — it is the ordinary case, and a reader that
+// measures the file twice describes one that never existed.
 
 import (
 	"fmt"
@@ -129,10 +129,10 @@ func TestReadOfALogBeingWrittenReportsNoDamage(t *testing.T) {
 	}
 }
 
-// TestReadFromNamesTheDamagedLineByWhereItIsInTheLog: the mark used to carry
-// a line number counted from wherever that particular read started, so the
-// same broken line was "line 2" to a reader that had read the log before and
-// "line 4" to one that had not. A byte offset is the same fact for both.
+// TestReadFromNamesTheDamagedLineByWhereItIsInTheLog: a line number counted
+// from wherever that particular read started makes the same broken line
+// "line 2" to a reader that had read the log before and "line 4" to one that
+// had not. A byte offset is the same fact for both.
 func TestReadFromNamesTheDamagedLineByWhereItIsInTheLog(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "events.jsonl")
 	for i := range 3 {

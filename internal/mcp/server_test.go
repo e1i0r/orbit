@@ -330,10 +330,10 @@ func TestEveryToolTheInstructionsNameIsOneThisServerHas(t *testing.T) {
 	}
 }
 
-// TestEveryToolThatStartsARunIsNamedAsOneThatCostsMoney. The instructions
-// used to warn about retry and cancel and say nothing about direct, whose
-// restart starts a run exactly as retry does — so the one tool a supervisor
-// reaches for mid-run was the one it had not been told to announce first.
+// TestEveryToolThatStartsARunIsNamedAsOneThatCostsMoney. Instructions that
+// warn about retry and cancel and say nothing about direct leave out a tool
+// whose restart starts a run exactly as retry does — the one a supervisor
+// reaches for mid-run would be the one it had not been told to announce.
 func TestEveryToolThatStartsARunIsNamedAsOneThatCostsMoney(t *testing.T) {
 	costly := regexp.MustCompile(`([^.]*cost money[^.]*\.)`).FindString(instructions)
 	if costly == "" {

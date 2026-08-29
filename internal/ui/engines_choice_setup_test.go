@@ -224,9 +224,9 @@ func TestCollectEngineRowsNoDialsSections(t *testing.T) {
 	}
 }
 
-// TestTheEnginesScreenShowsWhatThePortSaysAndNothingElse. The screen used to
-// keep a claude table to fall back on, so a port that answered nothing — or
-// answered something else — still drew claude, opus, sonnet, haiku. A window
+// TestTheEnginesScreenShowsWhatThePortSaysAndNothingElse. A claude table on
+// the screen to fall back on draws claude, opus, sonnet, haiku for a port
+// that answers nothing — or answers something else. A window
 // that shows an engine the build cannot run, and hides one it can, is worse
 // than a window that shows nothing.
 func TestTheEnginesScreenShowsWhatThePortSaysAndNothingElse(t *testing.T) {

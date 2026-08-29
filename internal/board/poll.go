@@ -60,14 +60,13 @@ func (r *Reader) poll(st *taskState) ([]record.Event, error) {
 		// A read that failed gets exactly one more try, on the next
 		// refresh, and then the size is committed and the verdict stands.
 		//
-		// Both halves are needed and they pull opposite ways. The size used
-		// to be committed before the read was attempted, so a failure was
-		// never retried at all: the bytes it did not read stayed stranded
-		// until something else was appended, and if the write that failed
-		// was a run's last one, its ending never appeared — the row went on
-		// saying "running" over a log that says "finished", and the error
-		// beside it went on blaming a fault that may have lasted a
-		// millisecond.
+		// Both halves are needed and they pull opposite ways. Committing
+		// the size before the read is attempted means a failure is never
+		// retried at all: the bytes it did not read stay stranded until
+		// something else is appended, and if the write that failed was a
+		// run's last one, its ending never appears — the row goes on saying
+		// "running" over a log that says "finished", and the error beside
+		// it goes on blaming a fault that may have lasted a millisecond.
 		//
 		// Retrying forever is the other mistake. A line longer than
 		// record.MaxLine — four megabytes — is a log no later read will get

@@ -51,12 +51,12 @@ func TestRunRecordsTheDataKeysTheWindowWillRead(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Events: %v", err)
 	}
-	// task.started carries the flow and nothing else. It used to carry the
-	// worktree too, and stopped when it moved to the top of Run — before
-	// there is a worktree to name. Nothing read the key, and the path is a
-	// pure function of the state root, the repository and the id, so
+	// task.started carries the flow and nothing else. It cannot carry the
+	// worktree, because it is written at the top of Run — before there is a
+	// worktree to name. Nothing reads the key, and the path is a pure
+	// function of the state root, the repository and the id, so
 	// s.WorktreeDir answers it for anyone who wants it; an attempt with no
-	// line in the log was the thing that could not be recovered.
+	// line in the log is the thing that could not be recovered.
 	started := find(t, events, record.TaskStarted)
 	for key, want := range map[string]string{"flow": "task"} {
 		if started.Data[key] != want {
@@ -140,8 +140,8 @@ func TestAnOrdinaryOutputIsRecordedWhole(t *testing.T) {
 }
 
 // A run has four ways to fail, and every one of them has to reach the log.
-// Two used to return before anything was written: an invalid flow and an
-// engine nobody configured. A run that fails without a task.failed in the
+// Two are refused before a phase starts: an invalid flow and an engine
+// nobody configured. A run that fails without a task.failed in the
 // record is not a failed task to anything downstream — the record is the
 // only thing the window reads, so it is a task that started and never came
 // back.

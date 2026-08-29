@@ -136,10 +136,9 @@ func openCodeArgs(req Request) ([]string, error) {
 // openCodePermissionArgs turns a posture into what opencode can state, and
 // refuses the postures it cannot.
 //
-// This adapter used to validate the permission names and then emit nothing
-// about them, which is the silent widening the head of permission.go exists
-// to prevent. What makes it worse here than a missing flag is what opencode
-// does without one: asked to write a file with no --auto and no terminal to
+// Validating the permission names and then emitting nothing about them is
+// the silent widening the head of permission.go exists to prevent. What
+// makes it worse here than a missing flag is what opencode does without one: asked to write a file with no --auto and no terminal to
 // prompt at, `opencode run` wrote the file. That was run against the binary,
 // not reasoned about. Headless opencode approves everything.
 //

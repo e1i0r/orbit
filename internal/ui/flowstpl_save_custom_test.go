@@ -129,11 +129,11 @@ func TestSaveCustomFlowSucceeds(t *testing.T) {
 // TestAWindowWithNowhereToSaveSaysSoInsteadOfGuessing.
 //
 // A window opened without a state root — m.opts.Flows nil, which is the
-// fixture's own default — used to fall back to $HOME/.orbit/flows and
+// fixture's own default — must not fall back to $HOME/.orbit/flows and
 // report the flow saved. On any machine with $ORBIT_HOME pointed elsewhere,
-// and that is the whole reason the variable exists, the flow went into a
-// directory nothing reads: the band said saved, the list never showed it
-// again, and no error was ever raised. Refusing is the honest answer, and it
+// and that is the whole reason the variable exists, the flow would go into a
+// directory nothing reads: the band saying saved, the list never showing it
+// again, and no error ever raised. Refusing is the honest answer, and it
 // is the one internal/flow already gives.
 //
 // HOME is redirected for the length of the test so that a regression writes

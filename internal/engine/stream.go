@@ -235,13 +235,13 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 // isPermissionRefusal is whether a failed tool result is the sandbox saying
 // no, rather than the tool itself failing.
 //
-// Every phrase here names a permission. The bare word "refused" used to be
-// on the list, and it is the one thing a network stack says when nothing is
-// listening: "dial tcp 127.0.0.1:5432: connect: connection refused" was
-// recorded as a phase being denied permission, so a run that failed because
-// a database was down read, in the record and on the screen, as a run whose
-// posture was too narrow — pointing whoever debugged it at the permissions
-// and away from the port.
+// Every phrase here names a permission. The bare word "refused" is not on
+// the list, because it is the one thing a network stack says when nothing is
+// listening: "dial tcp 127.0.0.1:5432: connect: connection refused" matched
+// as a phase being denied permission makes a run that failed because a
+// database was down read, in the record and on the screen, as a run whose
+// posture was too narrow — pointing whoever debugs it at the permissions and
+// away from the port.
 //
 // Matching another program's prose is a guess whichever words are chosen.
 // The guess these make is narrow on purpose: a refusal this misses is a

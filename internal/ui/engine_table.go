@@ -3,14 +3,12 @@ package ui
 // The one answer in this package to "what engines are there, and what do
 // they offer".
 //
-// It used to be four answers. The engines screen carried a claude table to
-// fall back on, the settings dials carried a second in settingsdials.go, the
-// compose dials carried a third in compose.go, and the real one — the
-// adapters in internal/engine, handed over through Options.Engines — was
-// read by none of them. The three copies did not agree with each other or
-// with the engines: the compose dial offered opencode a model called
-// llama-3.3 and the settings dial offered it gemini-2.5-pro, neither of
-// which opencode has ever had.
+// One rather than four. A claude table on the engines screen to fall back
+// on, a second in settingsdials.go, a third in compose.go, and the real one
+// — the adapters in internal/engine, handed over through Options.Engines —
+// read by none of them: the copies agree neither with each other nor with
+// the engines, offering opencode a model called llama-3.3 on one dial and
+// gemini-2.5-pro on another, neither of which opencode has ever had.
 //
 // There is no fabricated table here. A window whose Engines port is nil has
 // nothing to say about engines, and saying nothing is the only honest answer
@@ -125,8 +123,8 @@ func dialLabel(ids, labels []string, i int) string {
 //
 // A phase inherits its engine, and so does the start dialog, so "" is the
 // ordinary case here and not a fault. What it must not become is a name
-// picked out of the air — the dials in this package used to answer claude
-// to it, on a build where claude may not even be installed.
+// picked out of the air: answering claude to it names an engine that may
+// not even be installed on this build.
 func (m Model) dialEngine(named string) string {
 	if named != "" {
 		return named

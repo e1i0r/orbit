@@ -104,9 +104,8 @@ func TestAnUpdateThatCannotBeWrittenLeavesTheOldOrbitStanding(t *testing.T) {
 }
 
 // TestAMoveThatFailsTakesTheHalfWrittenOrbitWithIt is the rename refusing
-// after the bytes are already on disk, which used to leave the file behind:
-// every failed upgrade added another orbit-update-* beside the binary and
-// said nothing about it.
+// after the bytes are already on disk. Left behind, every failed upgrade
+// adds another orbit-update-* beside the binary and says nothing about it.
 func TestAMoveThatFailsTakesTheHalfWrittenOrbitWithIt(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "orbit")

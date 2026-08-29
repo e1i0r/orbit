@@ -2,10 +2,9 @@
 // description, through a registry of providers — Linear, Jira, GitHub,
 // GitLab — that each recognise their own URLs and write their own prompt.
 //
-// The sentence above is a doc comment because it sits above the package
-// clause. It used to sit below it, here and in tracker.go both, which makes
-// it an ordinary comment attached to nothing: `go doc` showed this package
-// with no description at all, twice over.
+// The sentence above sits over the package clause so that it is a doc
+// comment. Below the clause it would be an ordinary comment attached to
+// nothing, and `go doc` would show this package with no description at all.
 package tracker
 
 import (

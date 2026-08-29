@@ -22,10 +22,10 @@ const (
 
 // supervisorBoxWidth is the one width the whole screen is drawn to.
 //
-// It used to be three. The rule under the title, the thread's text and the
-// input box each worked out their own, so the screen came out a couple of
-// cells crooked in a way no single line looked wrong on its own. One
-// function, called by everything, is what makes the edges line up.
+// One and not three. The rule under the title, the thread's text and the
+// input box each working out their own leaves the screen a couple of cells
+// crooked in a way no single line looks wrong on its own. One function,
+// called by everything, is what makes the edges line up.
 func supervisorBoxWidth(w int) int {
 	return max(min(w-4, 110), 24)
 }

@@ -61,11 +61,11 @@ func TestSupervisorSayRefusesEmptyMessage(t *testing.T) {
 	}
 }
 
-// TestALimitIsReadTheWayEveryOtherArgumentIs. The limit used to be the one
-// argument read inline, with its own float64 assertion in the middle of the
-// handler, while everything else went through a helper. Every case below is
-// something a client can send, and the reading of each one is what keeps a
-// bad limit from being a different bug than a bad anything else.
+// TestALimitIsReadTheWayEveryOtherArgumentIs. The limit goes through the
+// same helper as every other argument rather than a float64 assertion inline
+// in the handler. Every case below is something a client can send, and the
+// reading of each one is what keeps a bad limit from being a different bug
+// than a bad anything else.
 func TestALimitIsReadTheWayEveryOtherArgumentIs(t *testing.T) {
 	for _, c := range []struct {
 		in   any

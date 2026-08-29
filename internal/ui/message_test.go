@@ -27,10 +27,10 @@ import (
 // is nothing to look at.
 //
 // The package is globbed rather than two file names being written down here.
-// It used to read "msg.go" and "ui.go", which made the test blind to a message
-// declared in a third file — and the 300-line ceiling means this package gains
-// files as it grows, so the drift the test exists to catch was exactly the
-// drift that would hide from it.
+// Reading "msg.go" and "ui.go" makes the test blind to a message declared in
+// a third file — and the 300-line ceiling means this package gains files as
+// it grows, so the drift the test exists to catch is exactly the drift that
+// would hide from it.
 func TestEveryMessageTheWindowRaisesIsHandledInUpdate(t *testing.T) {
 	files := packageFiles(t)
 

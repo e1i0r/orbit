@@ -49,9 +49,9 @@ index 9c1a2f0..1d4e6b3 100644
 // deletedFileDiff is a file git is removing, with another file after it.
 //
 // Its new side is /dev/null, so there is no file in the worktree to open and
-// no line of it to open at, and every one of its lines — the furniture and
-// the removed lines under it — used to answer with whichever file came next
-// in the diff, at line 1. The comment line in the middle of it is there for
+// no line of it to open at, so every one of its lines — the furniture and
+// the removed lines under it — is where a walk answers with whichever file
+// comes next in the diff, at line 1. The comment line in the middle of it is there for
 // the same reason it is in commentDiff, and because a deleted SQL file is
 // where the two shapes meet.
 const deletedFileDiff = `diff --git a/legacy.sql b/legacy.sql
@@ -119,10 +119,10 @@ func TestTheDiffKnowsWhichFileALineBelongsTo(t *testing.T) {
 	})
 	// The bug I1 fixes needs two files in one diff, which every fixture
 	// above is not. Walking up from a line in the furniture that introduces
-	// the second file, fileAt used to meet that furniture before it met the
-	// first file's own hunk header, and answered with the first file's name
-	// at a line counted from the first file's last hunk — a file the cursor
-	// was never on, at a line invented for a different one.
+	// the second file, fileAt meets that furniture before the first file's
+	// own hunk header, and answering there gives the first file's name at a
+	// line counted from the first file's last hunk — a file the cursor was
+	// never on, at a line invented for a different one.
 	t.Run("a second file's own furniture is answered with the second file", func(t *testing.T) {
 		two := strings.Split(strings.TrimSuffix(twoFileDiff, "\n"), "\n")
 

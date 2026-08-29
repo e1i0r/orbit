@@ -94,10 +94,10 @@ func TestRunGatesPassedEmitFailure(t *testing.T) {
 // TestAToolCallCarriesItsArgumentsOnce is the size of the log, not a detail
 // of where a field sits.
 //
-// phase.tool_call is the kind a phase writes hundreds of, and it used to put
-// the same captured arguments in Text and in Data["args"] — so the events
-// that dominate the record weighed twice what they had to, and a call with
-// large arguments could take its own line past record.MaxLine, where Append
+// phase.tool_call is the kind a phase writes hundreds of. Putting the same
+// captured arguments in Text and in Data["args"] makes the events that
+// dominate the record weigh twice what they have to, and a call with large
+// arguments could take its own line past record.MaxLine, where Append
 // refuses it and the run fails on an emit that is not best-effort.
 func TestAToolCallCarriesItsArgumentsOnce(t *testing.T) {
 	args := `{"command":"go test ./..."}`

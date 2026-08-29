@@ -123,7 +123,7 @@ func TestUpdateCheckAvailable(t *testing.T) {
 // GOBIN and leaves this one where it is. So a reader whose archive failed and
 // whose fallback worked has a newer orbit somewhere on their $PATH, the old
 // one still in front of it, and a message saying they were updated. The
-// reason the first way failed used to be dropped by an `if err == nil`; here
+// reason the first way failed is easily dropped by an `if err == nil`; here
 // it is a 404 on the download, and it has to reach them.
 //
 // go is taken off the PATH so the fallback fails at once rather than building
@@ -199,10 +199,10 @@ func TestUpdateHelpAndUnknownFlag(t *testing.T) {
 	}
 }
 
-// TestWhatGoSaidComesBackWithIt. The fallback shells out, and this was
-// cmd.Run(): a missing toolchain, a proxy that would not answer and a compile
-// error all reached the reader as the same three words, "exit status 1", with
-// the sentence that would have told them which one on a pipe nobody read.
+// TestWhatGoSaidComesBackWithIt. The fallback shells out, and under cmd.Run()
+// a missing toolchain, a proxy that would not answer and a compile error all
+// reach the reader as the same three words, "exit status 1", with the
+// sentence that would have told them which one left on a pipe.
 func TestWhatGoSaidComesBackWithIt(t *testing.T) {
 	dir := t.TempDir()
 

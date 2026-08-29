@@ -90,12 +90,11 @@ func FuzzParseWindows(f *testing.F) {
 	})
 }
 
-// TestAProxyThatIsDownIsNotAskedOnEveryFrame is the regression. The status
-// bar calls Quota on every frame it draws, and a failure used to leave
-// nothing behind: the cache stayed cold, so the next frame started another
-// request, and a proxy that was down turned the corner of the status bar into
-// a connection attempt several times a second for as long as the window
-// stayed open.
+// TestAProxyThatIsDownIsNotAskedOnEveryFrame. The status bar calls Quota on
+// every frame it draws. If a failure left nothing behind the cache would
+// stay cold, the next frame would start another request, and a proxy that is
+// down would turn the corner of the status bar into a connection attempt
+// several times a second for as long as the window stayed open.
 func TestAProxyThatIsDownIsNotAskedOnEveryFrame(t *testing.T) {
 	var calls atomic.Int64
 
