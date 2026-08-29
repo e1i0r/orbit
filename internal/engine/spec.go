@@ -106,13 +106,15 @@ func executable(path string) bool {
 func (s spec) run(ctx context.Context, req Request) (Result, error) {
 	args, err := s.args(req)
 	if err != nil {
-		return Result{}, s.wrap(req, err)
+		return Result{}, notStarted(s.name, s.wrap(req, err))
 	}
 
 	bin, err := s.locate()
 	if err != nil {
-		return Result{}, s.wrap(req, err)
+		return Result{}, notStarted(s.name, s.wrap(req, err))
 	}
+
+	start := noteStart(s.name, bin, req)
 
 	cmd := exec.CommandContext(ctx, bin, args...)
 	cmd.Dir = req.Dir
@@ -151,7 +153,10 @@ func (s spec) run(ctx context.Context, req Request) (Result, error) {
 
 	<-done
 
-	return s.report(req, streamResult, stdout, stderr, runErr, parseErr)
+	res, err := s.report(req, streamResult, stdout, stderr, runErr, parseErr)
+	noteEnd(s.name, start, res, err)
+
+	return res, err
 }
 
 // report decides which of the two halves of a finished run is the answer.

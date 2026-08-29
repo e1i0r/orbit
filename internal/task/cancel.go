@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"syscall"
 
+	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/store"
 )
 
@@ -33,8 +34,10 @@ func Cancel(s *store.Store, t Task) error {
 	}
 
 	if err := syscall.Kill(pid, syscall.SIGTERM); err != nil {
-		return fmt.Errorf("ask process %d holding task %s to stop: %w", pid, t.ID, err)
+		return noted(t.ID, fmt.Errorf("ask process %d holding task %s to stop: %w", pid, t.ID, err))
 	}
+
+	logger.Info("task/cancel", "%s: asked process %d to stop", t.ID, pid)
 
 	return nil
 }
@@ -70,9 +73,17 @@ func Kill(s *store.Store, t Task) error {
 	// as surely as a spawned one does, and killing that group is right for
 	// the same reason.
 	pgid, gerr := syscall.Getpgid(pid)
-	if err := syscall.Kill(killTarget(pid, pgid, gerr), syscall.SIGKILL); err != nil {
-		return fmt.Errorf("stop process %d holding task %s: %w", pid, t.ID, err)
+
+	target := killTarget(pid, pgid, gerr)
+	if err := syscall.Kill(target, syscall.SIGKILL); err != nil {
+		return noted(t.ID, fmt.Errorf("stop process %d holding task %s: %w", pid, t.ID, err))
 	}
+
+	// The only account of this there will be. SIGKILL cannot be caught, so
+	// the run writes nothing about its own death, and the record says
+	// nothing about it either until somebody runs reconcile — which may be
+	// days later, or never.
+	logger.Warn("task/cancel", "%s: killed %d, and nothing of it is in the record", t.ID, target)
 
 	return nil
 }

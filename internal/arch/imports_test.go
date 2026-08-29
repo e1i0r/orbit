@@ -39,9 +39,14 @@ var layers = map[string][]string{
 	// its subcommand calls. What is not widened is the line above:
 	// internal/board still does not append anything itself, and internal/ui
 	// still cannot reach internal/record, internal/store or internal/engine.
-	"internal/board":  {"internal/record", "internal/repo", "internal/store", "internal/task", "internal/view"},
-	"internal/cli":    {"internal/board", "internal/engine", "internal/flow", "internal/logger", "internal/mcp", "internal/quota", "internal/repo", "internal/store", "internal/task", "internal/tracker", "internal/ui", "internal/view", "internal/words"},
-	"internal/engine": {},
+	"internal/board": {"internal/record", "internal/repo", "internal/store", "internal/task", "internal/view"},
+	"internal/cli":   {"internal/board", "internal/engine", "internal/flow", "internal/logger", "internal/mcp", "internal/quota", "internal/repo", "internal/store", "internal/task", "internal/tracker", "internal/ui", "internal/view", "internal/words"},
+	// internal/logger is on internal/engine's list for the one thing this
+	// package does that nothing else in Orbit does: it starts somebody
+	// else's program. What that cost, how long it took and which of the
+	// binaries on this machine it was are facts no other package sees. It
+	// widens nothing else: engine still knows no record, store or task.
+	"internal/engine": {"internal/logger"},
 	"internal/flow":   {},
 	"internal/logger": {},
 	// internal/mcp is the widest list on this map, and it is the same
@@ -54,14 +59,35 @@ var layers = map[string][]string{
 	// appending is internal/task's and this package holds no authority of
 	// its own. What is absent is internal/engine: a supervising model can
 	// start a run and cannot start a model.
-	"internal/mcp":     {"internal/board", "internal/flow", "internal/record", "internal/repo", "internal/store", "internal/task", "internal/view"},
-	"internal/quota":   {},
-	"internal/record":  {},
-	"internal/repo":    {"internal/store"},
-	"internal/store":   {},
-	"internal/task":    {"internal/engine", "internal/flow", "internal/record", "internal/repo", "internal/store"},
+	"internal/mcp":    {"internal/board", "internal/flow", "internal/record", "internal/repo", "internal/store", "internal/task", "internal/view"},
+	"internal/quota":  {},
+	"internal/record": {},
+	"internal/repo":   {"internal/store"},
+	"internal/store":  {},
+	// internal/logger is on internal/task's list for the same reason it is on
+	// internal/ui's, and for one more: a run that is SIGKILLed writes nothing
+	// about its own death, so the last line it managed to log is the only
+	// account of it there is until a reader runs reconcile. It is a widening,
+	// and it was argued rather than assumed. Nothing of Orbit's is imported
+	// by internal/logger, so no cycle can be made of it, and what a run may
+	// do is not widened at all: the log is a second copy of what the record
+	// already took, written after the record took it, and no reader of Orbit
+	// decides anything from it.
+	"internal/task":    {"internal/engine", "internal/flow", "internal/logger", "internal/record", "internal/repo", "internal/store"},
 	"internal/tracker": {},
-	"internal/ui":      {"internal/board", "internal/flow", "internal/repo", "internal/task", "internal/tracker", "internal/ui/layout", "internal/view", "internal/words"},
+	// internal/logger is on internal/ui's list for one reason: the window is
+	// where a failure a reader saw arrives, and a failure nobody wrote down
+	// ends as "it said something in red once, I think". It is a widening, and
+	// it was argued rather than assumed. internal/logger imports nothing of
+	// Orbit's — its own entry above is empty — so no cycle can be made of it.
+	// What it does not widen is the three absences named at the top: the
+	// window still cannot append to the record, still cannot build a path
+	// under the state root, and still cannot start a model. The distinction
+	// that keeps the second of those true is that internal/ui writes through
+	// the package-level logger internal/cli opened, and never opens one
+	// itself: where the file lives is internal/store's answer to give and
+	// internal/cli's to ask for, here as everywhere else.
+	"internal/ui": {"internal/board", "internal/flow", "internal/logger", "internal/repo", "internal/task", "internal/tracker", "internal/ui/layout", "internal/view", "internal/words"},
 	// internal/ui/layout is widened to internal/view for one reason:
 	// layout.Columns plans a row's columns from the board it is about to
 	// draw, and the board is []view.Task. It is a widening, and it was

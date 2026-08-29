@@ -11,7 +11,7 @@ func TestLoggerLifecycleAndLevels(t *testing.T) {
 	tmpDir := t.TempDir()
 	logPath := filepath.Join(tmpDir, "test.log")
 
-	l, err := New(logPath)
+	l, err := New(logPath, filepath.Join(tmpDir, "test-errors.log"))
 	if err != nil {
 		t.Fatalf("failed to create logger: %v", err)
 	}
@@ -48,7 +48,7 @@ func TestGlobalLogger(t *testing.T) {
 	tmpDir := t.TempDir()
 	logPath := filepath.Join(tmpDir, "global.log")
 
-	if err := Init(logPath); err != nil {
+	if err := Init(logPath, filepath.Join(tmpDir, "global-errors.log")); err != nil {
 		t.Fatalf("failed to init global logger: %v", err)
 	}
 	defer func() {
@@ -106,15 +106,15 @@ func TestNilLoggerSafety(t *testing.T) {
 }
 
 func TestLoggerErrorPaths(t *testing.T) {
-	if _, err := New(""); err == nil {
+	if _, err := New("", ""); err == nil {
 		t.Error("expected error creating logger with empty path")
 	}
 
-	if err := Init(""); err == nil {
+	if err := Init("", ""); err == nil {
 		t.Error("expected error initializing global logger with empty path")
 	}
 
-	l, err := New(filepath.Join(t.TempDir(), "temp.log"))
+	l, err := New(filepath.Join(t.TempDir(), "temp.log"), "")
 	if err != nil {
 		t.Fatalf("failed to create logger: %v", err)
 	}
@@ -154,7 +154,7 @@ func readOnly(t *testing.T, l *Logger) {
 func TestAWriteThatFailedIsNotSwallowed(t *testing.T) {
 	logPath := filepath.Join(t.TempDir(), "broken.log")
 
-	l, err := New(logPath)
+	l, err := New(logPath, "")
 	if err != nil {
 		t.Fatalf("failed to create logger: %v", err)
 	}
@@ -182,7 +182,7 @@ func TestInitSaysWhatTheLogItReplacesCouldNot(t *testing.T) {
 	first := filepath.Join(dir, "first.log")
 	second := filepath.Join(dir, "second.log")
 
-	if err := Init(first); err != nil {
+	if err := Init(first, ""); err != nil {
 		t.Fatalf("init the first logger: %v", err)
 	}
 
@@ -192,7 +192,7 @@ func TestInitSaysWhatTheLogItReplacesCouldNot(t *testing.T) {
 
 	Error("cli/test", "an entry that cannot land")
 
-	if err := Init(second); err != nil {
+	if err := Init(second, ""); err != nil {
 		t.Fatalf("init the second logger: %v", err)
 	}
 
@@ -209,5 +209,126 @@ func TestInitSaysWhatTheLogItReplacesCouldNot(t *testing.T) {
 
 	if !strings.Contains(string(data), first) {
 		t.Errorf("the new log does not say the old one was in trouble, got:\n%s", data)
+	}
+}
+
+// TestAnErrorIsWrittenTwiceAndEverythingElseOnce.
+//
+// The errors file earns its place only if it is exactly the errors: a copy
+// of the whole log under a second name is a second thing to grep, and a
+// file that drops errors is worse than not having it.
+func TestAnErrorIsWrittenTwiceAndEverythingElseOnce(t *testing.T) {
+	dir := t.TempDir()
+	logPath, errPath := filepath.Join(dir, "orbit.log"), filepath.Join(dir, "errors.log")
+
+	l, err := New(logPath, errPath)
+	if err != nil {
+		t.Fatalf("create the logger: %v", err)
+	}
+
+	l.Log(LevelDebug, "task/run", "a debug line")
+	l.Log(LevelInfo, "task/run", "an info line")
+	l.Log(LevelWarn, "task/run", "a warn line")
+	l.Log(LevelError, "task/run", "the phase %s broke", "review")
+
+	if err := l.Close(); err != nil {
+		t.Fatalf("close the logger: %v", err)
+	}
+
+	read := func(path string) string {
+		t.Helper()
+
+		b, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("read %q: %v", path, err)
+		}
+
+		return string(b)
+	}
+
+	full, errs := read(logPath), read(errPath)
+
+	for _, line := range []string{"a debug line", "an info line", "a warn line", "the phase review broke"} {
+		if !strings.Contains(full, line) {
+			t.Errorf("the log is missing %q", line)
+		}
+	}
+
+	if !strings.Contains(errs, "the phase review broke") {
+		t.Errorf("the errors file is missing the error: %q", errs)
+	}
+
+	for _, line := range []string{"a debug line", "an info line", "a warn line"} {
+		if strings.Contains(errs, line) {
+			t.Errorf("the errors file carries %q, which is not an error", line)
+		}
+	}
+}
+
+// TestALoggerWithNoErrorsFileStillLogsErrors. An empty errPath is a caller
+// that has one path, not a caller that wants its errors dropped.
+func TestALoggerWithNoErrorsFileStillLogsErrors(t *testing.T) {
+	logPath := filepath.Join(t.TempDir(), "only.log")
+
+	l, err := New(logPath, "")
+	if err != nil {
+		t.Fatalf("create the logger: %v", err)
+	}
+
+	l.Log(LevelError, "task/run", "the only error")
+
+	if err := l.Close(); err != nil {
+		t.Fatalf("close the logger: %v", err)
+	}
+
+	b, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("read the log: %v", err)
+	}
+
+	if !strings.Contains(string(b), "the only error") {
+		t.Errorf("the log is missing the error: %q", b)
+	}
+}
+
+// TestOneEntryIsOneLine.
+//
+// What gets logged is very often an error, an error very often carries the
+// stderr of something that failed, and stderr has newlines in it. Written
+// through, one failure becomes forty entries — thirty-nine of them with no
+// timestamp, no level and no module — and `grep ERROR` finds the first line
+// of the trouble and none of the rest.
+func TestOneEntryIsOneLine(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "test.log")
+
+	l, err := New(path, filepath.Join(dir, "test-errors.log"))
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	l.Log(LevelError, "task/run", "the phase failed: %v", "line one\nline two\nline three")
+
+	if err := l.Close(); err != nil {
+		t.Errorf("Close: %v", err)
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read the log: %v", err)
+	}
+
+	lines := strings.Split(strings.TrimSuffix(string(data), "\n"), "\n")
+	if len(lines) != 1 {
+		t.Fatalf("one call wrote %d lines: %q", len(lines), data)
+	}
+
+	// The words are all still there. Flattening is not truncating: a reader
+	// who lost the newlines has lost the shape of the failure, and one who
+	// lost the words has lost the failure.
+	for _, want := range []string{"line one", "line two", "line three"} {
+		if !strings.Contains(lines[0], want) {
+			t.Errorf("the entry does not carry %q: %q", want, lines[0])
+		}
 	}
 }

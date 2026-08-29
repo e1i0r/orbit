@@ -74,6 +74,7 @@ type Model struct {
 	seen   bool // a board has arrived, so the next crossing is worth a bell
 	now    time.Time
 	errs   int            // how many read failures the last board carried
+	noted  notedErrs      // the last failure each clocked source wrote down
 	totals map[string]int // phases per flow name, for "review 2/3"
 
 	width, height int

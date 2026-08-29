@@ -16,7 +16,6 @@ package cli
 // pipe, a log and a CI job get instead of a screenful of escape codes.
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -58,29 +57,9 @@ func top(ctx Context, args []string) error {
 		return err
 	}
 
-	// A log that cannot be opened is not a reason to refuse a window — the
-	// window is the thing that was asked for and none of it is drawn from
-	// the log. It is a reason to say so, and the sentence leaves the same way
-	// the sweep's does: out of the bottom of this function, once the terminal
-	// is back. Printed here it would be printed into the frame the alternate
-	// screen is about to wipe.
-	logErr := logger.Init(s.LogPath())
-	if logErr == nil {
-		// Closing answers what the log could not write, and that is said
-		// on the error stream rather than swallowed: this runs after the
-		// window has given the terminal back and the mcp client is not
-		// reading this stream, so it is the one place the sentence can be
-		// printed without ruining what it is printed next to.
-		defer func() {
-			if err := logger.CloseGlobal(); err != nil {
-				fmt.Fprintln(ctx.Err, "orbit:", err)
-			}
-		}()
+	logger.Info("cli/top", "orbit top started on %q (once=%v, lang=%q)", dir, once, lang)
 
-		logger.Info("cli/top", "orbit top started on %q (once=%v, lang=%q)", dir, once, lang)
-	}
-
-	trouble := errors.Join(logErr, reconcileAll(s))
+	trouble := reconcileAll(s)
 
 	if drawsOneFrame(once, interactive(ctx.Out)) {
 		opts.Quota = quotaPort(quota.FromEnv(), true)

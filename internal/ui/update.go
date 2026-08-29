@@ -9,6 +9,8 @@ import (
 // Update is the whole of the window's behaviour, and every case in it is a
 // row of the transition table in update_test.go.
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	m = m.writeDown(msg)
+
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		return m.resize(msg.Width, msg.Height), nil

@@ -47,7 +47,7 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 	// one. Reconcile is the reader that appends it.
 	release, err := hold(s, t)
 	if err != nil {
-		return err
+		return noted(t.ID, err)
 	}
 	defer release()
 

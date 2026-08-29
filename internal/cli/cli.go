@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/words"
@@ -66,7 +67,7 @@ func help(ctx Context, fs *flag.FlagSet) {
 // The writers are parameters and the code is returned rather than passed to
 // os.Exit so that every command can be tested in-process, without building a
 // binary and without a subprocess.
-func Run(args []string, out, errOut io.Writer) int {
+func Run(args []string, out, errOut io.Writer) (code int) {
 	ctx := Context{Out: out, Err: errOut, Words: printer()}
 	if len(args) == 0 {
 		return Run([]string{"top"}, out, errOut)
@@ -84,17 +85,77 @@ func Run(args []string, out, errOut io.Writer) int {
 		return 2
 	}
 
+	defer logging(errOut, &code)()
+
+	// The name and not the arguments. A description typed at `orbit new` is
+	// prose somebody wrote, and prose in a diagnostic log is a paragraph
+	// between two facts; what the command was asked to act on is in the
+	// error below when it matters, and in the record always.
+	logger.Info("cli/"+c.Name, "ran")
+
 	err := c.Run(ctx, args[1:])
 	if errors.Is(err, errHelpShown) {
 		return 0
 	}
 
 	if err != nil {
+		// Every command's failure, in one place, for the same reason the log
+		// is opened in one place: a command remembering to write its own down
+		// is a chance to forget, and nine of the twenty-two took it — flows,
+		// list, read, repos, resume, settings, show, top and upgrade each
+		// failed silently as far as any file was concerned. The other
+		// thirteen now say it twice, in their own words and then in these,
+		// and a line repeated is a far smaller thing than a line missing.
+		logger.Error("cli/"+c.Name, "%v", err)
 		fmt.Fprintf(errOut, "orbit: %v\n", err)
+
 		return 1
 	}
 
 	return 0
+}
+
+// logging opens the log for the length of one command, and returns the
+// function that closes it.
+//
+// It is here, in the dispatcher, because the version this replaces had it
+// in two commands out of nineteen. `orbit run` — the command that actually
+// puts an agent on a repository — wrote every one of its failures to a nil
+// global logger, which drops them without a word; so did cancel, merge,
+// pr, close-pr and reconcile. Sixty-one logger calls existed and went
+// nowhere unless you happened to be inside the window or the mcp server.
+//
+// Nothing is said about the log until the command is over. The window
+// spends its whole life on the alternate screen, and a sentence printed
+// before it opens is a sentence wiped a millisecond later; printed here,
+// after it hands the terminal back, it is a sentence somebody reads.
+func logging(errOut io.Writer, code *int) func() {
+	trouble := func() error {
+		s, err := store.Open()
+		if err != nil {
+			return err
+		}
+
+		return logger.Init(s.LogPath(), s.ErrorLogPath())
+	}()
+
+	return func() {
+		err := errors.Join(trouble, logger.CloseGlobal())
+		if err == nil {
+			return
+		}
+
+		fmt.Fprintln(errOut, "orbit: the log:", err)
+
+		// A command that did its work and wrote nothing down did not
+		// entirely succeed. This is how a reader finds out today instead of
+		// next week, from an empty file, while looking for why something
+		// else broke — and a code the command set itself is left alone,
+		// because what it was asked to do matters more than the log.
+		if *code == 0 {
+			*code = 1
+		}
+	}
 }
 
 // printer is the language everything orbit prints is in.
