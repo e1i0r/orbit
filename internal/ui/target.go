@@ -214,37 +214,11 @@ func (m Model) hitHeader(x, y int) Target {
 		return Target{}
 	}
 
-	if x < 10 {
-		return Target{Kind: TargetHeaderField, Field: "orbit"}
-	}
-
-	if x >= 10 && x < 28 {
-		return Target{Kind: TargetHeaderQueue, Band: view.ToDo}
-	}
-
-	if x >= 28 && x < 44 {
-		return Target{Kind: TargetHeaderQueue, Band: view.Running}
-	}
-
-	if x >= 44 && x < 62 {
-		return Target{Kind: TargetHeaderQueue, Band: view.NeedsYou}
-	}
-
-	if x >= 62 && x < 78 {
-		return Target{Kind: TargetHeaderQueue, Band: view.Done}
-	}
-
-	// Right side of Header: [repos] [engine] [lang]
-	if x >= m.width-12 {
-		return Target{Kind: TargetHeaderField, Field: "lang"}
-	}
-
-	if x >= m.width-28 && x < m.width-12 {
-		return Target{Kind: TargetHeaderField, Field: "engine"}
-	}
-
-	if x >= m.width-56 && x < m.width-28 {
-		return Target{Kind: TargetHeaderField, Field: "repos"}
+	_, zones := m.headerLayout(m.frame.Header.W)
+	for _, z := range zones {
+		if x >= z.x && x < z.x+z.w {
+			return z.target
+		}
 	}
 
 	return Target{}

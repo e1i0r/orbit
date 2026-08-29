@@ -75,17 +75,17 @@ func TestHeaderLeftQueueBadges(t *testing.T) {
 		t.Fatalf("fixture board has %d counts, want at least 4", len(m.board.Counts))
 	}
 
-	line, ok := m.headerLeft(120, false)
+	line, _, ok := m.headerLeft(120, false)
 	if !ok || !strings.Contains(line, "📋") {
 		t.Errorf("headerLeft(120, false) = %q, ok=%v, want the queue badges", line, ok)
 	}
 	// A width too small for the badges falls back to the root path instead.
-	line, ok = m.headerLeft(40, true)
+	line, _, ok = m.headerLeft(40, true)
 	if !ok || strings.Contains(line, "📋") {
 		t.Errorf("headerLeft(40, true) = %q, ok=%v, want the root path fallback", line, ok)
 	}
 	// And a width too small for even that refuses outright.
-	_, ok = m.headerLeft(1, true)
+	_, _, ok = m.headerLeft(1, true)
 	if ok {
 		t.Error("headerLeft(1, true) succeeded, want a refusal")
 	}
@@ -97,7 +97,7 @@ func TestHeaderFieldsUnreadBrake(t *testing.T) {
 	// 1. Below the cap (the fixture's cap of 5 against 3 unread finished
 	// tasks): no brake field.
 	fields := m.headerFields()
-	if strings.Contains(strings.Join(fields, " "), "brake") {
+	if strings.Contains(strings.Join(fieldTexts(fields), " "), "brake") {
 		t.Errorf("headerFields below the cap mentioned the brake: %v", fields)
 	}
 
@@ -106,19 +106,19 @@ func TestHeaderFieldsUnreadBrake(t *testing.T) {
 	// fixture stub does not persist, so the cap can only move by replacing
 	// the port outright.
 	m.opts.Settings = &settings{autopilot: true, lang: "en", unread: 1}
-	if fields := m.headerFields(); !strings.Contains(strings.Join(fields, " "), "brake") {
+	if fields := m.headerFields(); !strings.Contains(strings.Join(fieldTexts(fields), " "), "brake") {
 		t.Errorf("headerFields at the cap = %v, want the brake field", fields)
 	}
 
 	// 3. The knob chip: the default claude chip with no knobs set, and the
 	// chosen engine/model once they are.
 	m, _ = testModel(t, 100, 30)
-	if fields := m.headerFields(); !strings.Contains(strings.Join(fields, " "), "claude") {
+	if fields := m.headerFields(); !strings.Contains(strings.Join(fieldTexts(fields), " "), "claude") {
 		t.Errorf("headerFields with no knobs set = %v, want the default claude chip", fields)
 	}
 
 	m.knobs.Engine, m.knobs.Model = "codex", "o1"
-	if fields := m.headerFields(); !strings.Contains(strings.Join(fields, " "), "o1") {
+	if fields := m.headerFields(); !strings.Contains(strings.Join(fieldTexts(fields), " "), "o1") {
 		t.Errorf("headerFields with knobs set = %v, want the chip to mention o1", fields)
 	}
 }

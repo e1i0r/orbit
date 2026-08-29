@@ -4,8 +4,7 @@ import (
 	"testing"
 
 	"charm.land/bubbletea/v2"
-
-	"github.com/e1i0r/orbit/internal/view"
+	"charm.land/lipgloss/v2"
 )
 
 func TestTargetDialogHitDetection(t *testing.T) {
@@ -229,35 +228,19 @@ func TestHitHeaderEveryField(t *testing.T) {
 		t.Errorf("hitHeader off its own row = %+v, want TargetNone", got)
 	}
 
-	tests := []struct {
-		x     int
-		want  TargetKind
-		band  view.Band
-		field string
-	}{
-		{5, TargetHeaderField, 0, "orbit"},
-		{15, TargetHeaderQueue, view.ToDo, ""},
-		{30, TargetHeaderQueue, view.Running, ""},
-		{50, TargetHeaderQueue, view.NeedsYou, ""},
-		{70, TargetHeaderQueue, view.Done, ""},
-		{85, TargetNone, 0, ""}, // the gap between the queue badges and the right-hand fields
-		{100, TargetHeaderField, 0, "repos"},
-		{125, TargetHeaderField, 0, "engine"},
-		{145, TargetHeaderField, 0, "lang"},
+	// The name badge is the first thing on the line, so it starts at column
+	// zero and runs for as many cells as it is wide. Which cells the badges
+	// and chips after it occupy is header_hit_test.go's question, and it
+	// asks the drawn line rather than writing the answer down.
+	for x := range lipgloss.Width(m.name()) {
+		if got := m.hitHeader(x, y); got.Kind != TargetHeaderField || got.Field != "orbit" {
+			t.Errorf("hitHeader(%d) = %+v, want the orbit badge", x, got)
+		}
 	}
-	for _, tt := range tests {
-		got := m.hitHeader(tt.x, y)
-		if got.Kind != tt.want {
-			t.Errorf("hitHeader(%d) = %+v, want kind %v", tt.x, got, tt.want)
-		}
 
-		if tt.want == TargetHeaderQueue && got.Band != tt.band {
-			t.Errorf("hitHeader(%d) band = %v, want %v", tt.x, got.Band, tt.band)
-		}
-
-		if tt.want == TargetHeaderField && got.Field != tt.field {
-			t.Errorf("hitHeader(%d) field = %q, want %q", tt.x, got.Field, tt.field)
-		}
+	past := lipgloss.Width(m.name())
+	if got := m.hitHeader(past, y); got.Kind != TargetNone {
+		t.Errorf("hitHeader(%d) = %+v, want nothing: that cell is past the badge", past, got)
 	}
 }
 
