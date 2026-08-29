@@ -62,7 +62,11 @@ func TestDirectRecordsDialogueAndNoteWhenNotRunning(t *testing.T) {
 		t.Errorf("task.noted event not found in record")
 	}
 
-	notes := unconsumedNotes(s, tk)
+	notes, err := unconsumedNotes(s, tk)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if len(notes) != 1 || notes[0] != "[supervisor] change approach to use redis" {
 		t.Errorf("unconsumedNotes = %v", notes)
 	}
@@ -80,7 +84,11 @@ func TestDirectDefaultBy(t *testing.T) {
 		t.Fatalf("Direct with empty by: %v", err)
 	}
 
-	notes := unconsumedNotes(s, tk)
+	notes, err := unconsumedNotes(s, tk)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if len(notes) != 1 || notes[0] != "[supervisor] focus on unit tests" {
 		t.Errorf("unconsumedNotes with default by = %v", notes)
 	}

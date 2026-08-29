@@ -110,7 +110,11 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 			continue
 		}
 
-		notes := unconsumedNotes(s, t)
+		notes, notesErr := unconsumedNotes(s, t)
+		if notesErr != nil {
+			return failed(s, t, fmt.Errorf("task %s, before phase %q: %w", t.ID, p.Name, notesErr))
+		}
+
 		// Through failed, and not returned bare. Every other way out of
 		// this loop writes a terminal event, and the reason is the
 		// invariant hold's comment states: a task's log ends in a terminal

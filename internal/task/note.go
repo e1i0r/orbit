@@ -28,15 +28,21 @@ func Note(s *store.Store, t Task, text string) error {
 }
 
 // unconsumedNotes returns the notes recorded since the last phase start.
-func unconsumedNotes(s *store.Store, t Task) []string {
-	path, err := s.EventsPath(t.Repo.Path, t.ID)
+//
+// A log it cannot read is an error and not an empty list, and the difference
+// matters more here than almost anywhere else in this package. These notes
+// are the operator's own words, and the only thing they do is go into the
+// prompt of the phase about to start. Swallowing the error handed that phase
+// a prompt with the correction missing from it and told nobody — the model
+// then does the thing it was told not to do, and the record shows a note
+// that was written, a phase that started after it, and no reason at all why
+// the note had no effect. That is the same call Supervise makes about a
+// thread it cannot read, for the same reason: something that cannot see it
+// is missing context speaks as though it has all of it.
+func unconsumedNotes(s *store.Store, t Task) ([]string, error) {
+	events, err := Events(s, t)
 	if err != nil {
-		return nil
-	}
-
-	events, err := record.Read(path)
-	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	var notes []string
@@ -52,5 +58,5 @@ func unconsumedNotes(s *store.Store, t Task) []string {
 		}
 	}
 
-	return notes
+	return notes, nil
 }

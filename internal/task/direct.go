@@ -38,12 +38,16 @@ func Direct(s *store.Store, t Task, by, message string) error {
 		return fmt.Errorf("task %s note: %w", t.ID, err)
 	}
 
-	pid, ok, err := Alive(s, t)
+	_, ok, err := Alive(s, t)
 	if err != nil {
 		return fmt.Errorf("check liveness for task %s: %w", t.ID, err)
 	}
-
-	if ok && pid > 0 {
+	// ok alone, and not ok && pid > 0. Alive cannot answer yes about a pid
+	// it does not have, and parsePid refuses a marker naming anything below
+	// 2, so the second half was a condition that could not be false — which
+	// reads as though there were a case it guarded against, and there is
+	// not.
+	if ok {
 		if err := Cancel(s, t); err != nil {
 			return fmt.Errorf("stop task %s: %w", t.ID, err)
 		}

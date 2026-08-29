@@ -55,7 +55,11 @@ func TestDialogueIsNotHandedToTheNextPhase(t *testing.T) {
 		t.Fatalf("Dialogue: %v", err)
 	}
 
-	notes := unconsumedNotes(s, tk)
+	notes, err := unconsumedNotes(s, tk)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if len(notes) != 1 || notes[0] != "use the sql migration" {
 		t.Errorf("the next phase is handed %v, want only the note somebody wrote", notes)
 	}

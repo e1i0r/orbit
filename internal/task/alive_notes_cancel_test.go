@@ -188,14 +188,22 @@ func TestPhaseHelpersAndRunGates(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	notesBefore := unconsumedNotes(s, tk)
+	notesBefore, err := unconsumedNotes(s, tk)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if len(notesBefore) == 0 {
 		t.Error("expected unconsumed notes before phase start")
 	}
 	// Simulate phase start
 	_ = emit(s, tk, record.Event{Kind: record.PhaseStarted, Phase: "build"}) //nolint:errcheck
 
-	notesAfter := unconsumedNotes(s, tk)
+	notesAfter, err := unconsumedNotes(s, tk)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if len(notesAfter) != 0 {
 		t.Errorf("expected 0 notes after phase started, got %d", len(notesAfter))
 	}
