@@ -102,7 +102,7 @@ func (m Model) thinkingLines() []string {
 
 	out = append(out, fmt.Sprintf("  %d %s",
 		len(blocks),
-		p.T("thinking.entries_count", "análisis de razonamiento y decisiones"), //nolint:misspell // Spanish text
+		p.T("thinking.entries_count", "reasoning and decisions analysed"),
 	))
 	out = append(out, "")
 
@@ -113,7 +113,7 @@ func (m Model) thinkingLines() []string {
 		}
 
 		if b.attempt > 0 {
-			head += "  " + Paint(Dim).Render(fmt.Sprintf("intento %d", b.attempt))
+			head += "  " + Paint(Dim).Render(p.P("thinking.attempt", b.attempt, "attempt {n}", "attempt {n}"))
 		}
 
 		out = append(out, head)

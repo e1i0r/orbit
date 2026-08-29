@@ -78,10 +78,10 @@ func (m Model) costLines() []string {
 
 	// Table header
 	out = append(out, fmt.Sprintf("    %-24s %-12s %-12s %s",
-		Paint(Dim).Render("etapa"),
-		Paint(Dim).Render("costo"),
-		Paint(Dim).Render("duración"),
-		Paint(Dim).Render("motor / modelo"),
+		Paint(Dim).Render(p.T("cost.col_phase", "phase")),
+		Paint(Dim).Render(p.T("cost.col_cost", "cost")),
+		Paint(Dim).Render(p.T("cost.col_duration", "duration")),
+		Paint(Dim).Render(p.T("cost.col_engine", "engine / model")),
 	))
 
 	for _, r := range rows {
@@ -102,9 +102,9 @@ func (m Model) costLines() []string {
 
 	// Budget and totals box
 	out = append(out,
-		fmt.Sprintf("    %-24s %s", Paint(Dim).Render("total acumulado"), Paint(Accent).Bold(true).Render(fmt.Sprintf("$%.4f", t.Cost))),
-		fmt.Sprintf("    %-24s %s", Paint(Dim).Render("presupuesto tarea"), Paint(Dim).Render("$25.00")),
-		fmt.Sprintf("    %-24s %s", Paint(Dim).Render("presupuesto por etapa"), Paint(Dim).Render("$5.00")),
+		fmt.Sprintf("    %-24s %s", Paint(Dim).Render(p.T("cost.total", "total so far")), Paint(Accent).Bold(true).Render(fmt.Sprintf("$%.4f", t.Cost))),
+		fmt.Sprintf("    %-24s %s", Paint(Dim).Render(p.T("cost.budget_task", "task budget")), Paint(Dim).Render("$25.00")),
+		fmt.Sprintf("    %-24s %s", Paint(Dim).Render(p.T("cost.budget_phase", "phase budget")), Paint(Dim).Render("$5.00")),
 		"",
 	)
 

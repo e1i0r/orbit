@@ -68,18 +68,18 @@ func (m Model) gatesLines() []string {
 	}
 
 	summaryRole := OK
-	summaryWord := "pass"
+	summaryWord := p.T("gates.pass", "pass")
 
-	if passedCount < len(checks) {
+	if failed := len(checks) - passedCount; failed > 0 {
 		summaryRole = Bad
-		summaryWord = fmt.Sprintf("falló %d", len(checks)-passedCount)
+		summaryWord = p.P("gates.badge_failed", failed, "{n} failed", "{n} failed")
 	}
 
 	out = append(out, fmt.Sprintf("  %s %s   %d/%d %s   %s",
 		Paint(Accent).Render("▼"),
-		Paint(Accent).Bold(true).Render(p.T("gates.attempt", "intento 1")),
+		Paint(Accent).Bold(true).Render(p.T("gates.attempt", "attempt 1")),
 		passedCount, len(checks),
-		p.T("gates.passed_word", "pasaron"),
+		p.T("gates.passed_word", "passed"),
 		Paint(summaryRole).Bold(true).Render(summaryWord),
 	))
 	out = append(out, "")
@@ -87,10 +87,10 @@ func (m Model) gatesLines() []string {
 	for _, c := range checks {
 		icon := Paint(OK).Render("✅")
 
-		statusStr := Paint(OK).Render("pass")
+		statusStr := Paint(OK).Render(p.T("gates.pass", "pass"))
 		if !c.passed {
 			icon = Paint(Bad).Render("❌")
-			statusStr = Paint(Bad).Render("fail")
+			statusStr = Paint(Bad).Render(p.T("gates.fail", "fail"))
 		}
 
 		cmdStr := c.command
@@ -108,7 +108,7 @@ func (m Model) gatesLines() []string {
 		out = append(out, line)
 		if !c.passed && c.reason != "" {
 			out = append(out, fmt.Sprintf("       %s %s",
-				Paint(Bad).Render("por qué falló ·"),
+				Paint(Bad).Render(p.T("gates.why_failed", "why it failed ·")),
 				Paint(Bad).Render(c.reason),
 			))
 		}

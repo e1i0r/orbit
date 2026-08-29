@@ -83,7 +83,7 @@ func (m Model) overviewLines() []string {
 
 	// 1. Attention/Gate banner (if waiting on user or failed)
 	if role == Warn || role == Bad {
-		bannerText := p.T("overview.waiting_box", "ACCIONES REQUERIDAS / ESPERANDO AL OPERADOR")
+		bannerText := p.T("overview.waiting_box", "ACTIONS REQUIRED / WAITING FOR THE OPERATOR")
 		out = append(out,
 			"  "+Pill(" ⚠️  "+bannerText+" ", "#000000", "#FBBF24"),
 			"  "+Paint(role).Render("• "+word),
@@ -257,7 +257,8 @@ func (m Model) overviewLines() []string {
 		)
 		for i, f := range diffSum.files {
 			if i >= 4 {
-				out = append(out, "      "+Paint(Dim).Render(fmt.Sprintf("… and %d more files", len(diffSum.files)-4)))
+				rest := len(diffSum.files) - 4
+				out = append(out, "      "+Paint(Dim).Render(p.P("overview.more_files", rest, "… and {n} more file", "… and {n} more files")))
 				break
 			}
 

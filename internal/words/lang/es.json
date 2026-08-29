@@ -546,16 +546,38 @@
       "value": "lo que tiene que pasar — por intento, y por qué se detuvo"
     },
     "gates.attempt": {
-      "source": "intento 1",
+      "source": "attempt 1",
       "value": "intento 1"
     },
     "gates.passed_word": {
-      "source": "pasaron",
+      "source": "passed",
       "value": "pasaron"
     },
     "gates.empty": {
       "source": "no verification gates have run for this task",
       "value": "no se ejecutaron verificaciones para esta tarea"
+    },
+    "gates.pass": {
+      "source": "pass",
+      "value": "pasa"
+    },
+    "gates.fail": {
+      "source": "fail",
+      "value": "falla"
+    },
+    "gates.badge_failed": {
+      "source": {
+        "one": "{n} failed",
+        "other": "{n} failed"
+      },
+      "value": {
+        "one": "falló {n}",
+        "other": "fallaron {n}"
+      }
+    },
+    "gates.why_failed": {
+      "source": "why it failed ·",
+      "value": "por qué falló ·"
     },
     "cost.heading": {
       "source": "Cost & Resource Breakdown",
@@ -568,6 +590,34 @@
     "cost.empty": {
       "source": "no cost recorded for this task",
       "value": "no hay costes registrados para esta tarea"
+    },
+    "cost.col_phase": {
+      "source": "phase",
+      "value": "etapa"
+    },
+    "cost.col_cost": {
+      "source": "cost",
+      "value": "costo"
+    },
+    "cost.col_duration": {
+      "source": "duration",
+      "value": "duración"
+    },
+    "cost.col_engine": {
+      "source": "engine / model",
+      "value": "motor / modelo"
+    },
+    "cost.total": {
+      "source": "total so far",
+      "value": "total acumulado"
+    },
+    "cost.budget_task": {
+      "source": "task budget",
+      "value": "presupuesto tarea"
+    },
+    "cost.budget_phase": {
+      "source": "phase budget",
+      "value": "presupuesto por etapa"
     },
     "refused.title": {
       "source": "Permissions & Security Sandbox",
@@ -594,8 +644,28 @@
       "value": "LAS REGLAS · las mismas en toda corrida, haga lo que haga"
     },
     "refused.policy_note": {
-      "source": "si intenta una acción prohibida, la llamada falla de inmediato y el modelo continúa",
+      "source": "a forbidden action fails on the spot and the model carries on",
       "value": "si intenta una acción prohibida, la llamada falla de inmediato y el modelo continúa"
+    },
+    "refused.rule_db": {
+      "source": "protected databases, readable only",
+      "value": "bases de datos protegidas (solo lectura)"
+    },
+    "refused.rule_cloud": {
+      "source": "cloud services and outside credentials",
+      "value": "servicios cloud y credenciales externas"
+    },
+    "refused.rule_push": {
+      "source": "the branch belongs to the operator or the runner",
+      "value": "la rama la gestiona el operador / runner"
+    },
+    "refused.rule_remote": {
+      "source": "the repository's own configuration",
+      "value": "configuración del repositorio"
+    },
+    "refused.rule_merge": {
+      "source": "merging and publishing pull requests",
+      "value": "mezclar y publicar pull requests"
     },
     "report.title": {
       "source": "Summary Report & Review",
@@ -618,27 +688,27 @@
       "value": "lo que le dijiste, respuestas del modelo y sesiones de CLI interactiva"
     },
     "notes.operator": {
-      "source": "OPERADOR",
+      "source": "OPERATOR",
       "value": "OPERADOR"
     },
     "notes.llm_prompt": {
-      "source": "MODELO (consulta al operador)",
+      "source": "MODEL (asking the operator)",
       "value": "MODELO (consulta al operador)"
     },
     "notes.outsider": {
-      "source": "fuera de la ejecución",
+      "source": "outside the run",
       "value": "fuera de la ejecución"
     },
     "notes.unread_by_run": {
-      "source": "no lo lee la ejecución",
+      "source": "the run does not read it",
       "value": "no lo lee la ejecución"
     },
     "notes.count": {
-      "source": "entradas en el diálogo",
+      "source": "entries in the dialogue",
       "value": "entradas en el diálogo"
     },
     "notes.all_filed": {
-      "source": "sincronizado con el modelo",
+      "source": "in sync with the model",
       "value": "sincronizado con el modelo"
     },
     "notes.empty": {
@@ -646,12 +716,20 @@
       "value": "no hay notas ni diálogo registrado para esta tarea"
     },
     "notes.hint_action": {
-      "source": "pulsa 'a' para dejar una nota · pulsa 'c' para abrir la CLI interactiva",
+      "source": "press 'a' to leave a note · press 'c' to open the interactive CLI",
       "value": "pulsa 'a' para dejar una nota · pulsa 'c' para abrir la CLI interactiva"
     },
     "notes.hint_footer": {
-      "source": "pulsa 'a' para agregar una nota · pulsa 'c' o 't' para entrar a la CLI interactiva",
+      "source": "press 'a' to add a note · press 'c' or 't' to enter the interactive CLI",
       "value": "pulsa 'a' para agregar una nota · pulsa 'c' o 't' para entrar a la CLI interactiva"
+    },
+    "notes.read_by_run": {
+      "source": "read by the run",
+      "value": "leída por la ejecución"
+    },
+    "notes.read_by_run_n": {
+      "source": "read by run {n}",
+      "value": "leída por la ejecución {n}"
     },
     "thinking.title": {
       "source": "Decision Analysis & Agent Thinking",
@@ -662,7 +740,7 @@
       "value": "por qué tomó cada decisión, qué evaluó y qué descartó"
     },
     "thinking.entries_count": {
-      "source": "análisis de razonamiento y decisiones",
+      "source": "reasoning and decisions analysed",
       "value": "análisis de razonamiento y decisiones"
     },
     "thinking.empty": {
@@ -2146,7 +2224,7 @@
       "value": "Lista"
     },
     "overview.waiting_box": {
-      "source": "ACCIONES REQUERIDAS / ESPERANDO AL OPERADOR",
+      "source": "ACTIONS REQUIRED / WAITING FOR THE OPERATOR",
       "value": "ACCIONES REQUERIDAS / ESPERANDO AL OPERADOR"
     },
     "overview.resume_hint": {
@@ -2321,6 +2399,16 @@
       "source": "live / in flight",
       "value": "en curso / en vivo"
     },
+    "thinking.attempt": {
+      "source": {
+        "one": "attempt {n}",
+        "other": "attempt {n}"
+      },
+      "value": {
+        "one": "intento {n}",
+        "other": "intento {n}"
+      }
+    },
     "key.toggle_markdown": {
       "source": "md / raw",
       "value": "md / texto plano"
@@ -2380,6 +2468,16 @@
     "overview.effort": {
       "source": "effort",
       "value": "esfuerzo"
+    },
+    "overview.more_files": {
+      "source": {
+        "one": "… and {n} more file",
+        "other": "… and {n} more files"
+      },
+      "value": {
+        "one": "… y {n} archivo más",
+        "other": "… y {n} archivos más"
+      }
     },
     "detail.thinking_changed": {
       "source": "thinking mode set to {mode}",

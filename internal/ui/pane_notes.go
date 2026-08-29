@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/view"
@@ -36,12 +37,12 @@ func (m Model) notesLines() []string {
 		case view.EntryNoted:
 			noteIndex++
 
-			statusNote := "read by run"
+			statusNote := p.T("notes.read_by_run", "read by the run")
 			if e.Attempt > 0 {
-				statusNote = fmt.Sprintf("read by run %d", e.Attempt)
+				statusNote = p.T("notes.read_by_run_n", "read by run {n}", about("n", strconv.Itoa(e.Attempt)))
 			}
 
-			senderLabel := fmt.Sprintf("● %d  %s", noteIndex, p.T("notes.operator", "OPERADOR"))
+			senderLabel := fmt.Sprintf("● %d  %s", noteIndex, p.T("notes.operator", "OPERATOR"))
 			content := renderMarkdown(e.Text, m.frame.Body.W, m.rawText)
 			items = append(items, noteItem{
 				at:      timeStr,
@@ -59,14 +60,14 @@ func (m Model) notesLines() []string {
 			// next run will read.
 			who := e.By
 			if who == "" {
-				who = p.T("notes.outsider", "fuera de la ejecución")
+				who = p.T("notes.outsider", "outside the run")
 			}
 
 			items = append(items, noteItem{
 				at:      timeStr,
 				sender:  fmt.Sprintf("↔ %s", strings.ToUpper(who)),
 				role:    Live,
-				status:  p.T("notes.unread_by_run", "no lo lee la ejecución"),
+				status:  p.T("notes.unread_by_run", "the run does not read it"),
 				content: []string{"→ " + e.Text},
 			})
 
@@ -79,7 +80,7 @@ func (m Model) notesLines() []string {
 
 				items = append(items, noteItem{
 					at:      timeStr,
-					sender:  fmt.Sprintf("🤖 %s", p.T("notes.llm_prompt", "MODELO (consulta al operador)")),
+					sender:  fmt.Sprintf("🤖 %s", p.T("notes.llm_prompt", "MODEL (asking the operator)")),
 					role:    Warn,
 					status:  e.Phase,
 					content: []string{"? " + msg},
@@ -99,7 +100,7 @@ func (m Model) notesLines() []string {
 		out = append(out,
 			"  "+Paint(Dim).Render(p.T("notes.empty", "no notes or dialogue recorded for this task")),
 			"",
-			"  "+Paint(Dim).Render(p.T("notes.hint_action", "pulsa 'a' para dejar una nota · pulsa 'c' para abrir la CLI interactiva")),
+			"  "+Paint(Dim).Render(p.T("notes.hint_action", "press 'a' to leave a note · press 'c' to open the interactive CLI")),
 		)
 
 		return out
@@ -107,8 +108,8 @@ func (m Model) notesLines() []string {
 
 	out = append(out, fmt.Sprintf("  %d %s · %s",
 		len(items),
-		p.T("notes.count", "entradas en el diálogo"),
-		Paint(OK).Render(p.T("notes.all_filed", "sincronizado con el modelo")),
+		p.T("notes.count", "entries in the dialogue"),
+		Paint(OK).Render(p.T("notes.all_filed", "in sync with the model")),
 	))
 	out = append(out, "")
 
@@ -137,7 +138,7 @@ func (m Model) notesLines() []string {
 	}
 
 	out = append(out,
-		"  "+Paint(Dim).Render(p.T("notes.hint_footer", "pulsa 'a' para agregar una nota · pulsa 'c' o 't' para entrar a la CLI interactiva")),
+		"  "+Paint(Dim).Render(p.T("notes.hint_footer", "press 'a' to add a note · press 'c' or 't' to enter the interactive CLI")),
 		"",
 	)
 

@@ -55,13 +55,13 @@ func (m Model) refusedLines() []string {
 	// 2. Las reglas fijas del sandbox
 	out = append(out,
 		"  "+Paint(Accent).Render(p.T("refused.rules_title", "THE RULES · sandbox constraints")),
-		fmt.Sprintf("    %s %-24s %s", Paint(Dim).Render("✗"), "psql / mongosh", Paint(Dim).Render("bases de datos protegidas (solo lectura)")),
-		fmt.Sprintf("    %s %-24s %s", Paint(Dim).Render("✗"), "aws / cloud-cli", Paint(Dim).Render("servicios cloud y credenciales externas")),
-		fmt.Sprintf("    %s %-24s %s", Paint(Dim).Render("✗"), "git push", Paint(Dim).Render("la rama la gestiona el operador / runner")),
-		fmt.Sprintf("    %s %-24s %s", Paint(Dim).Render("✗"), "git remote / config", Paint(Dim).Render("configuración del repositorio")),
-		fmt.Sprintf("    %s %-24s %s", Paint(Dim).Render("✗"), "gh pr merge", Paint(Dim).Render("mezclar y publicar pull requests")),
+		fmt.Sprintf("    %s %-24s %s", Paint(Dim).Render("✗"), "psql / mongosh", Paint(Dim).Render(p.T("refused.rule_db", "protected databases, readable only"))),
+		fmt.Sprintf("    %s %-24s %s", Paint(Dim).Render("✗"), "aws / cloud-cli", Paint(Dim).Render(p.T("refused.rule_cloud", "cloud services and outside credentials"))),
+		fmt.Sprintf("    %s %-24s %s", Paint(Dim).Render("✗"), "git push", Paint(Dim).Render(p.T("refused.rule_push", "the branch belongs to the operator or the runner"))),
+		fmt.Sprintf("    %s %-24s %s", Paint(Dim).Render("✗"), "git remote / config", Paint(Dim).Render(p.T("refused.rule_remote", "the repository's own configuration"))),
+		fmt.Sprintf("    %s %-24s %s", Paint(Dim).Render("✗"), "gh pr merge", Paint(Dim).Render(p.T("refused.rule_merge", "merging and publishing pull requests"))),
 		"",
-		"  "+Paint(Dim).Render(p.T("refused.policy_note", "si intenta una acción prohibida, la llamada falla de inmediato y el modelo continúa")),
+		"  "+Paint(Dim).Render(p.T("refused.policy_note", "a forbidden action fails on the spot and the model carries on")),
 		"",
 	)
 
