@@ -915,10 +915,6 @@
       "source": "no base branch",
       "value": "sin rama base"
     },
-    "diff.timed_out": {
-      "source": "git did not answer in time",
-      "value": "git no respondió a tiempo"
-    },
     "diff.nav_help": {
       "source": "(] / [ next/prev file · f files · space collapse · r rationale · o editor)",
       "value": "(] / [ arch sig/ant · f archivos · espacio colapsar · r razones · o editor)"
