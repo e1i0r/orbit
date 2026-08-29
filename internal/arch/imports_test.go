@@ -39,9 +39,14 @@ var layers = map[string][]string{
 	// its subcommand calls. What is not widened is the line above:
 	// internal/board still does not append anything itself, and internal/ui
 	// still cannot reach internal/record, internal/store or internal/engine.
-	"internal/board":  {"internal/record", "internal/repo", "internal/store", "internal/task", "internal/view"},
-	"internal/cli":    {"internal/board", "internal/engine", "internal/flow", "internal/logger", "internal/mcp", "internal/quota", "internal/repo", "internal/store", "internal/task", "internal/tracker", "internal/ui", "internal/view", "internal/words"},
-	"internal/engine": {},
+	"internal/board": {"internal/record", "internal/repo", "internal/store", "internal/task", "internal/view"},
+	"internal/cli":   {"internal/board", "internal/engine", "internal/flow", "internal/logger", "internal/mcp", "internal/quota", "internal/repo", "internal/store", "internal/task", "internal/tracker", "internal/ui", "internal/view", "internal/words"},
+	// internal/logger is on internal/engine's list for the one thing this
+	// package does that nothing else in Orbit does: it starts somebody
+	// else's program. What that cost, how long it took and which of the
+	// binaries on this machine it was are facts no other package sees. It
+	// widens nothing else: engine still knows no record, store or task.
+	"internal/engine": {"internal/logger"},
 	"internal/flow":   {},
 	"internal/logger": {},
 	// internal/mcp is the widest list on this map, and it is the same
