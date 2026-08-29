@@ -79,6 +79,15 @@ func codexMerge(text, binaryPath string) (string, error) {
 
 		table = tableName(trimmed)
 		if table == ours {
+			// A second [mcp_servers.orbit] is a file TOML already refuses
+			// to parse, and it is not this installer's to guess at: taking
+			// the first left the second behind as a duplicate key, and the
+			// arithmetic below quietly wrote both tables out with a third
+			// between them. Say what is wrong and touch nothing.
+			if start >= 0 {
+				return "", fmt.Errorf("orbit is listed twice under [%s]; leaving it as it is", codexTable)
+			}
+
 			start = i
 		}
 	}

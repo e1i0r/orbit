@@ -76,12 +76,7 @@ func (sn Session) supervisorHistory(args map[string]any) CallToolResult {
 		return refuse(fmt.Errorf("read supervisor history: %w", err))
 	}
 
-	limit := 0
-	if l, ok := args["limit"].(float64); ok && l > 0 {
-		limit = int(l)
-	}
-
-	if limit > 0 && len(lines) > limit {
+	if limit := intArg(args, "limit"); limit > 0 && len(lines) > limit {
 		lines = lines[len(lines)-limit:]
 	}
 

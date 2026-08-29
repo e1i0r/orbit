@@ -88,3 +88,20 @@ func boolArg(args map[string]any, key string) bool {
 	yes, ok := args[key].(bool)
 	return ok && yes
 }
+
+// intArg reads one whole-number argument, answering zero for anything that
+// is not a positive number — a missing key, a string, a negative, a
+// fraction. Every integer this server takes is a limit, and zero is what its
+// callers already read as "no limit".
+//
+// JSON has one number type and encoding/json decodes it into float64, so the
+// assertion below is on float64 and not on int. An int assertion compiles,
+// is always false, and turns every limit a client sent into no limit at all.
+func intArg(args map[string]any, key string) int {
+	n, ok := args[key].(float64)
+	if !ok || n < 1 {
+		return 0
+	}
+
+	return int(n)
+}
