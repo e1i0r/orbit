@@ -1857,6 +1857,140 @@
       "source": "{up_down} scroll · {back} back",
       "value": "{up_down} desplazar · {back} volver"
     },
+    "help.title": {
+      "source": "Help and keyboard shortcuts (cheat sheet)",
+      "value": "Ayuda y atajos de teclado (cheat sheet)"
+    },
+    "help.subtitle": {
+      "source": "every function can be reached from the keyboard or by clicking it",
+      "value": "todas las funciones se pueden accionar por teclado o haciendo clic directo"
+    },
+    "help.board.title": {
+      "source": "📋 1. BOARD AND QUEUES",
+      "value": "📋 1. TABLERO Y COLAS"
+    },
+    "help.board.move": {
+      "source": "Move between tasks and board sections",
+      "value": "Moverse entre tareas y secciones del tablero"
+    },
+    "help.board.open_key": {
+      "source": "[⏎ enter] / click",
+      "value": "[⏎ enter] / clic"
+    },
+    "help.board.open": {
+      "source": "Open the selected task, or fold a queue away",
+      "value": "Abrir la tarea seleccionada, o plegar una cola"
+    },
+    "help.board.run": {
+      "source": "Start a new run of the selected task",
+      "value": "Poner en marcha una nueva ejecución de la tarea seleccionada"
+    },
+    "help.board.write": {
+      "source": "Write a new task in the current repository",
+      "value": "Redactar una nueva tarea en el repositorio actual"
+    },
+    "help.board.cli": {
+      "source": "Open an interactive CLI session",
+      "value": "Abrir una sesión de CLI interactiva"
+    },
+    "help.board.filter": {
+      "source": "Search and filter as you type (ID, title, repo)",
+      "value": "Buscar y filtrar mientras escribes (ID, título, repo)"
+    },
+    "help.board.escape": {
+      "source": "Clear the active filters, or go back to the previous view",
+      "value": "Limpiar los filtros activos, o volver a la vista anterior"
+    },
+    "help.board.reset_key": {
+      "source": "◉ orbit (click)",
+      "value": "◉ orbit (clic)"
+    },
+    "help.board.reset": {
+      "source": "Reset every filter and show the whole board",
+      "value": "Restablecer todos los filtros y mostrar el tablero completo"
+    },
+    "help.board.queue_key": {
+      "source": "[📋⚡💬🏁] (click)",
+      "value": "[📋⚡💬🏁] (clic)"
+    },
+    "help.board.queue": {
+      "source": "Show only the tasks in that queue",
+      "value": "Ver únicamente las tareas de esa cola"
+    },
+    "help.live.title": {
+      "source": "⚡ 2. LIVE CONTROL AND SETTINGS",
+      "value": "⚡ 2. CONTROL Y CONFIGURACIÓN EN VIVO"
+    },
+    "help.live.autopilot_key": {
+      "source": "[A] / ⚡ click",
+      "value": "[A] / ⚡ clic"
+    },
+    "help.live.autopilot": {
+      "source": "Toggle autopilot: tasks in to do start on their own",
+      "value": "Alternar el piloto automático: las tareas por hacer arrancan solas"
+    },
+    "help.live.engine_key": {
+      "source": "[M] / 🧠 click",
+      "value": "[M] / 🧠 clic"
+    },
+    "help.live.engine": {
+      "source": "Engine dial: claude, codex, opencode, effort and thinking",
+      "value": "Selector de motor: claude, codex, opencode, esfuerzo y thinking"
+    },
+    "help.live.settings": {
+      "source": "Settings screen: language, theme, limits",
+      "value": "Pantalla de ajustes: idioma, tema, límites"
+    },
+    "help.live.repos_key": {
+      "source": "[R] / 📦 click",
+      "value": "[R] / 📦 clic"
+    },
+    "help.live.repos": {
+      "source": "Pick which of the connected repositories the board shows",
+      "value": "Elegir qué repositorios conectados muestra el tablero"
+    },
+    "help.live.lang_key": {
+      "source": "🌐 ES / EN (click)",
+      "value": "🌐 ES / EN (clic)"
+    },
+    "help.live.lang": {
+      "source": "Switch the language of the whole window, live",
+      "value": "Cambiar el idioma de toda la ventana, en vivo"
+    },
+    "help.tabs.cycle": {
+      "source": "Next tab / previous tab",
+      "value": "Pestaña siguiente / anterior"
+    },
+    "help.tabs.control": {
+      "source": "Pause / unblock / add an operator note",
+      "value": "Pausar / desbloquear / añadir una nota de operador"
+    },
+    "help.global.title": {
+      "source": "⌨️ 4. GLOBAL COMMANDS",
+      "value": "⌨️ 4. COMANDOS GLOBALES"
+    },
+    "help.global.palette": {
+      "source": "Open the command palette (orbit new, flows, set...)",
+      "value": "Abrir la paleta de comandos (orbit new, flows, set...)"
+    },
+    "help.global.help": {
+      "source": "Open or close this help window",
+      "value": "Abrir o cerrar esta ventana de ayuda"
+    },
+    "help.global.quit": {
+      "source": "Leave Orbit",
+      "value": "Salir de Orbit"
+    },
+    "help.tabs.title": {
+      "source": {
+        "one": "🔍 3. TASK DETAIL ({n} tab)",
+        "other": "🔍 3. TASK DETAIL ({n} tabs)"
+      },
+      "value": {
+        "one": "🔍 3. DETALLE DE TAREA ({n} pestaña)",
+        "other": "🔍 3. DETALLE DE TAREA ({n} pestañas)"
+      }
+    },
     "flow.runs_auto": {
       "source": "runs automatically",
       "value": "se ejecuta automáticamente"
