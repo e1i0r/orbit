@@ -29,9 +29,17 @@ func Supervise(ctx context.Context, s *store.Store, eng engine.Engine, prompt st
 		return "", fmt.Errorf("supervise prompt cannot be empty")
 	}
 
+	// A thread that cannot be read is refused rather than answered around.
+	// Swallowing the error handed the model an empty history, and history
+	// below goes to some length to make sure that never happens quietly: a
+	// model that cannot see it is missing context speaks as though it has all
+	// of it. This supervisor does not only speak — it directs tasks, retries
+	// them and cancels them — so one that cannot remember what it already did
+	// is one that does it again. The operator sees the error and can fix the
+	// file; a supervisor with no memory is not something they can see at all.
 	events, err := SupervisorEvents(s)
 	if err != nil {
-		events = nil
+		return "", fmt.Errorf("read the supervisor thread: %w", err)
 	}
 
 	fullPrompt := buildSupervisorPrompt(history(events), prompt)
@@ -43,15 +51,24 @@ func Supervise(ctx context.Context, s *store.Store, eng engine.Engine, prompt st
 
 	out, runErr := eng.Run(ctx, req)
 
+	// Whatever it managed to say is kept, the way a phase keeps what its
+	// engine printed before it died (phase.go): a half-finished answer is
+	// the only account there is of what the supervisor was doing.
 	ans := strings.TrimSpace(out.Output)
-	if runErr != nil && ans == "" {
-		return "", fmt.Errorf("supervisor engine %s failed: %w", eng.Name(), runErr)
-	}
-
 	if ans != "" {
 		if recErr := RecordSupervisor(s, record.SupervisorMessage, eng.Name(), "supervisor", "", "", ans); recErr != nil {
 			return ans, recErr
 		}
+	}
+
+	// And the error still travels. It used to be dropped whenever the engine
+	// had printed anything at all, so an answer cut off halfway — by a
+	// cancellation, a crash, a quota — was recorded in the thread and handed
+	// back as though the supervisor had finished speaking. The cockpit
+	// already draws both: the thread it re-reads from this log, and the error
+	// on the status line (ui/update.go).
+	if runErr != nil {
+		return ans, fmt.Errorf("supervisor engine %s failed: %w", eng.Name(), runErr)
 	}
 
 	return ans, nil

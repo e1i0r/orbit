@@ -172,6 +172,25 @@ func runGates(ctx context.Context, s *store.Store, t Task, p flow.Phase, n int, 
 			continue
 		}
 
+		// A context that is done is not a gate that failed. exec kills the
+		// command when the run is stopped and hands back the same shape of
+		// error a gate that exited non-zero does, so the difference between
+		// "the build broke" and "you stopped it" is not in the error at all:
+		// it is here, and only this function can tell them apart. It is the
+		// same question the engine's error path asks a hundred lines away
+		// (run.go), for the same reason, and it was not asked here — so a run
+		// cancelled while a gate was up was written down as gate.failed,
+		// phase.failed and task.failed, with an exit status of 1 the gate
+		// never returned, and every reader of the record was told the build
+		// had broken.
+		//
+		// Inside the error branch and not before it, as there: a gate that
+		// passed in the instant the deadline went by did the work, and calling
+		// that a cancellation would throw away a gate that ran green.
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return stopped(s, t, p.Name, out, ctxErr)
+		}
+
 		exitCode := 1
 
 		var exitErr *exec.ExitError
