@@ -6,10 +6,12 @@ package view
 // to grow past the point where it is read in one sitting.
 
 import (
+	"encoding/json"
 	"math"
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/e1i0r/orbit/internal/record"
 )
@@ -105,46 +107,71 @@ func firstLine(s string) string {
 	return strings.TrimSpace(s)
 }
 
-// formatAction formats a tool call into a readable, concise single-line action summary.
+// actionChars is how much of an action fits on a row that also carries an
+// id, a phase, an elapsed time and an engine.
+const actionChars = 50
+
+// actionKeys are the arguments a tool call is about, in the order they are
+// looked for. What a reader wants off a row is the command that is running
+// or the file that is being written, not the JSON around it.
+var actionKeys = []string{"command", "file_path", "path"}
+
+// formatAction turns one tool call into the line beside a running task.
 func formatAction(tool, args string) string {
 	tool = strings.TrimSpace(tool)
 	if tool == "" {
 		return ""
 	}
 
-	args = strings.TrimSpace(args)
-	if strings.HasPrefix(args, "{") {
-		if idx := strings.Index(args, `"command"`); idx >= 0 {
-			if after := strings.Index(args[idx:], `:"`); after >= 0 {
-				val := args[idx+after+2:]
-				if end := strings.Index(val, `"`); end >= 0 {
-					args = val[:end]
-				}
-			}
-		} else if idx := strings.Index(args, `"file_path"`); idx >= 0 {
-			if after := strings.Index(args[idx:], `:"`); after >= 0 {
-				val := args[idx+after+2:]
-				if end := strings.Index(val, `"`); end >= 0 {
-					args = val[:end]
-				}
-			}
-		} else if idx := strings.Index(args, `"path"`); idx >= 0 {
-			if after := strings.Index(args[idx:], `:"`); after >= 0 {
-				val := args[idx+after+2:]
-				if end := strings.Index(val, `"`); end >= 0 {
-					args = val[:end]
-				}
-			}
-		}
-	}
-
-	if head := firstLine(args); head != "" {
-		if len(head) > 50 {
-			head = head[:47] + "…"
-		}
-
-		return tool + ": " + head
+	if head := firstLine(subject(strings.TrimSpace(args))); head != "" {
+		return tool + ": " + clip(head, actionChars)
 	}
 
 	return tool
+}
+
+// subject is the one argument of a tool call worth putting on a row, or the
+// whole of what was given if none of them is there.
+//
+// It goes through encoding/json rather than searching the text for `"path"`
+// and then for `:"`, which is what it used to do — three near-identical
+// blocks of it. That search wanted the value to begin immediately after the
+// colon, so an engine that wrote `{"command": "go test"}` with the space
+// every JSON encoder puts there matched the key, missed the value, and put
+// the whole document on the row. What it found it also handed over
+// unescaped, so a Windows path arrived with its backslashes doubled and a
+// quotation mark inside a string cut the value short.
+func subject(args string) string {
+	if !strings.HasPrefix(args, "{") {
+		return args
+	}
+
+	var fields map[string]any
+	if err := json.Unmarshal([]byte(args), &fields); err != nil {
+		// Arguments that are not JSON after all. They were shown as they
+		// stood before this function was reached for, and they still are.
+		return args
+	}
+
+	for _, key := range actionKeys {
+		if value, ok := fields[key].(string); ok && strings.TrimSpace(value) != "" {
+			return value
+		}
+	}
+
+	return args
+}
+
+// clip shortens a line to n characters, counting characters and not bytes.
+//
+// Slicing bytes is what this did — head[:47] — and a path or a prompt with
+// an accent in it can have a character on that boundary. Half of one is not
+// a character at all, and what the terminal draws for the half that arrives
+// is up to the terminal.
+func clip(s string, n int) string {
+	if utf8.RuneCountInString(s) <= n {
+		return s
+	}
+
+	return string([]rune(s)[:n-1]) + "…"
 }

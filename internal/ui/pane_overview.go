@@ -153,7 +153,7 @@ func (m Model) overviewLines() []string {
 		)
 		if t.CurrentAction != "" {
 			actionLabel := p.T("overview.live_action", "action")
-			out = append(out, fmt.Sprintf("    %-14s %s", Paint(Dim).Render(actionLabel), Paint(Accent).Render(t.CurrentAction)))
+			out = append(out, fmt.Sprintf("    %-14s %s", Paint(Dim).Render(actionLabel), Paint(Accent).Render(actionGlyph(t.ActionKind)+t.CurrentAction)))
 		}
 
 		if t.CurrentThought != "" {

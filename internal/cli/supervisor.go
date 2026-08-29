@@ -128,7 +128,7 @@ func retractLine(ctx Context, s *store.Store, n int) error {
 }
 
 func thread(s *store.Store) ([]view.SupervisorLine, error) {
-	lines, err := board.NewReader(s, "").SupervisorLog()
+	lines, err := board.SupervisorLog(s)
 	if err != nil {
 		logger.Error("cli/supervisor", "read supervisor history failed: %v", err)
 		return nil, err

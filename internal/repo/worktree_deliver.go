@@ -2,7 +2,6 @@ package repo
 
 import (
 	"fmt"
-	"os/exec"
 	"strings"
 )
 
@@ -83,68 +82,69 @@ func (r Repo) SyncBaseBranch(wtDir, baseBranch string) error {
 	return nil
 }
 
-// CreatePR invokes the GitHub CLI `gh pr create` inside the worktree directory.
-// If a PR already exists for the head branch, it fetches and returns its URL.
+// CreatePR opens a pull request for the task branch and answers where it is.
+//
+// gh writes the URL to stdout and everything else it has to say — an
+// upgrade notice, a warning about the default branch — to stderr, so the
+// answer is stdout and nothing else. It used to be both streams together,
+// which is a link with a paragraph in front of it.
 func (r Repo) CreatePR(wtDir, title, body, headBranch, baseBranch string) (string, error) {
 	args := []string{"pr", "create", "--head", headBranch, "--title", title, "--body", body}
 	if baseBranch != "" {
 		args = append(args, "--base", baseBranch)
 	}
 
-	cmd := exec.Command("gh", args...)
-	cmd.Dir = wtDir
-	out, err := cmd.CombinedOutput()
-
-	outputStr := strings.TrimSpace(string(out))
-	if err != nil {
-		if strings.Contains(outputStr, "already exists") {
-			viewCmd := exec.Command("gh", "pr", "view", headBranch, "--json", "url", "-q", ".url")
-			viewCmd.Dir = wtDir
-
-			viewOut, viewErr := viewCmd.CombinedOutput()
-			if viewErr != nil {
-				// The old answer here was the text gh had printed while
-				// failing, returned as the URL with a nil error. The caller
-				// prints what it is given as "Pull Request created: %s", so
-				// a reader was told a pull request had been created and
-				// handed an error message to click on.
-				return "", fmt.Errorf("a pull request for %q already exists, but gh pr view could not say where: %s: %w",
-					headBranch, strings.TrimSpace(string(viewOut)), viewErr)
-			}
-
-			return strings.TrimSpace(string(viewOut)), nil
-		}
-
-		return "", fmt.Errorf("gh pr create: %s: %w", outputStr, err)
+	url, err := gh(wtDir, args...)
+	if err == nil {
+		return url, nil
 	}
 
-	return outputStr, nil
+	if !strings.Contains(err.Error(), "already exists") {
+		return "", err
+	}
+
+	// A pull request for this branch is already open, which is the ordinary
+	// answer to delivering a task twice. gh says so and does not say where,
+	// so it is asked.
+	url, viewErr := gh(wtDir, "pr", "view", headBranch, "--json", "url", "-q", ".url")
+	if viewErr != nil {
+		// The old answer here was the text gh had printed while failing,
+		// returned as the URL with a nil error. The caller prints what it is
+		// given as "Pull Request created: %s", so a reader was told a pull
+		// request had been created and handed an error message to click on.
+		return "", fmt.Errorf("a pull request for %q already exists, but gh pr view could not say where: %w", headBranch, viewErr)
+	}
+
+	return url, nil
 }
 
-// MergePR merges the GitHub Pull Request for the task using the GitHub CLI.
-func (r Repo) MergePR(wtDir, branch string) (string, error) {
-	cmd := exec.Command("gh", "pr", "merge", branch, "--squash", "--delete-branch")
-	cmd.Dir = wtDir
-	out, err := cmd.CombinedOutput()
+// MergePR squashes and merges the task's pull request, and deletes the
+// branch behind it.
+//
+// It answers an error and nothing else. gh's confirmation is written to
+// stderr, not stdout — it is a status line for a human at a terminal rather
+// than an answer — and a caller that printed it was printing whatever
+// happened to be on that stream. What a reader needs to be told is that the
+// merge happened, and the caller knows which task it was for.
+func (r Repo) MergePR(wtDir, branch string) error {
+	_, err := gh(wtDir, "pr", "merge", branch, "--squash", "--delete-branch")
 
-	outputStr := strings.TrimSpace(string(out))
-	if err != nil {
-		return "", fmt.Errorf("gh pr merge: %s: %w", outputStr, err)
-	}
-
-	return outputStr, nil
+	return err
 }
 
-// ClosePR closes the GitHub Pull Request for the task using the GitHub CLI.
-func (r Repo) ClosePR(wtDir, branch string) (string, error) {
-	cmd := exec.Command("gh", "pr", "close", branch, "--comment", "Closed from Orbit.")
-	cmd.Dir = wtDir
-	out, err := cmd.CombinedOutput()
-
-	outputStr := strings.TrimSpace(string(out))
-	if err != nil {
-		return "", fmt.Errorf("gh pr close: %s: %w", outputStr, err)
+// ClosePR closes the task's pull request, with the comment the caller gave.
+//
+// The comment is a parameter because this package runs git and gh and does
+// not write English: the sentence a reader leaves on somebody else's
+// repository belongs where the rest of the words do. An empty comment closes
+// the pull request without leaving one.
+func (r Repo) ClosePR(wtDir, branch, comment string) error {
+	args := []string{"pr", "close", branch}
+	if comment != "" {
+		args = append(args, "--comment", comment)
 	}
 
-	return outputStr, nil
+	_, err := gh(wtDir, args...)
+
+	return err
 }
