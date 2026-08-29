@@ -2,6 +2,7 @@ package supervisor
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 
@@ -100,11 +101,67 @@ func TestTheSecondCallShowsTheModelWhatTheFirstOneSaid(t *testing.T) {
 	}
 
 	second := fake.Calls[1].Prompt
-	if !strings.Contains(second, "Supervisor Thread History") {
+	if !strings.Contains(second, "## Thread so far") {
 		t.Errorf("the second prompt carries no history section:\n%s", second)
 	}
 
 	if !strings.Contains(second, "ORB-3 is stuck on a gate") {
 		t.Errorf("the second prompt does not carry what the first call answered:\n%s", second)
+	}
+}
+
+// TestTheSupervisorIsAskedInMarkdown. What it says is drawn as Markdown in
+// the cockpit, so what it is asked is written as Markdown too: a prompt that
+// asks in one shape for another is asking twice.
+func TestTheSupervisorIsAskedInMarkdown(t *testing.T) {
+	full := buildSupervisorPrompt("[operator via tui]: what is stuck?\n", "and now?")
+
+	lines := strings.Split(full, "\n")
+	for _, head := range []string{"# Supervisor", "## Thread so far", "## Operator message", "## How to answer"} {
+		if !slices.Contains(lines, head) {
+			t.Errorf("the prompt has no %q section:\n%s", head, full)
+		}
+	}
+
+	if !strings.HasSuffix(full, "\n"+engine.AnswerContract) {
+		t.Errorf("the prompt does not end on the contract:\n%s", full)
+	}
+
+	if n := strings.Count(full, "## How to answer"); n != 1 {
+		t.Errorf("the prompt says how to answer %d times, want once:\n%s", n, full)
+	}
+}
+
+// TestAThreadOfMarkdownIsFencedOffFromThePrompt. Every turn in the thread was
+// written to the contract above, headings and code fences and all. Set loose
+// under a heading of this prompt, its sections read as sections of the prompt.
+func TestAThreadOfMarkdownIsFencedOffFromThePrompt(t *testing.T) {
+	said := "[fake via supervisor]: ## Findings\n\n```go\nfmt.Println(\"kept\")\n```\n"
+
+	full := buildSupervisorPrompt(said, "and now?")
+
+	_, after, ok := strings.Cut(full, "````markdown\n")
+	if !ok {
+		t.Fatalf("the thread is not in a fence longer than its own:\n%s", full)
+	}
+
+	body, _, ok := strings.Cut(after, "\n````")
+	if !ok || !strings.Contains(body, "fmt.Println") {
+		t.Errorf("the fence closed before the end of the thread: %q", body)
+	}
+}
+
+// TestAThreadWithNothingInItIsNotHeaded. An empty heading is a question the
+// model has to answer for itself — whether nothing was said before, or
+// whether something was and this program dropped it.
+func TestAThreadWithNothingInItIsNotHeaded(t *testing.T) {
+	full := buildSupervisorPrompt("", "what is stuck?")
+
+	if slices.Contains(strings.Split(full, "\n"), "## Thread so far") {
+		t.Errorf("the prompt heads a thread over nothing:\n%s", full)
+	}
+
+	if !strings.Contains(full, "what is stuck?") {
+		t.Errorf("the prompt lost the operator's message:\n%s", full)
 	}
 }

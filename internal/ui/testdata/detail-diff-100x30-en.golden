@@ -3,14 +3,14 @@
   $0.00 spent  ·  15 tasks  ·  0 events  ·  ⠋
  ACME-2662  Retry the webhook on 5xx                                        payments · failed: gates
 
- [1] [2] [3] [4] [5] [6] [7] [8] [9] [0 diff] [w]                                          attempt 2
+ [1]  [2]  [3]  [4]  [5]  [6]  [7]  [8]  [9]  0 diff  [w]                                  attempt 2
   ┌─ 📁 File [1/1] ───────────────────────────────────────────────────────────── [▾ select / f]─┐
   │ 🔷 retry.go  +3 -0  [MODIFIED]                               (] next · [ prev · space fold) │
   └─────────────────────────────────────────────────────────────────────────────────────────────┘
  1 file changed +3 -0  (] / [ next/prev file · f files · space collapse · r rationale · o editor)   
                                                                                                     
                                                                                                     
-  ┌── 🔷 retry.go +3 -0  [MODIFIED] ────────────────────────────────────────────────────────── [1/1]
+  ┌── ▾ 🔷 retry.go +3 -0  [MODIFIED] ──────────────────────────────────────────────────── [1/1] ──┐
   │ 💡 LLM Decision: updated logic and signatures to fulfill task requirements                      
   ├──────────────────────────────────────────────────────────────────────────────────────────────   
   │ @@ -28,7 +28,12 @@ func send(req *http.Request) error {                                         

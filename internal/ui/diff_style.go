@@ -27,13 +27,16 @@ func diffCardTop(f diffFile, idx, total, width int, p *words.Printer, isCollapse
 		Paint(Bad).Render(fmt.Sprintf("-%d", f.Deleted)))
 	pos := fmt.Sprintf("[%d/%d]", idx+1, total)
 
-	collapsedTag := ""
-	if isCollapsed {
-		collapsedTag = "  " + Paint(Warn).Render("["+p.T("diff.collapsed_tag", "collapsed")+" · "+p.T("key.space", "space")+"]")
-	}
+	// The arrow, and not a word: it is what every other head in this window
+	// wears, it says which way the file is without being read, and it is the
+	// cell the pointer goes for.
+	mark := Text(Tertiary).Render(foldMark(!isCollapsed))
 
-	headerTitle := fmt.Sprintf("%s %s %s  %s%s", icon, Paint(Accent).Bold(true).Render(f.Path), stats, badge, collapsedTag)
-	borderWidth := max(2, width-lipgloss.Width(headerTitle)-lipgloss.Width(pos)-8)
+	headerTitle := fmt.Sprintf("%s%s %s %s  %s", mark, icon, Paint(Accent).Bold(true).Render(f.Path), stats, badge)
+	// Twelve is what the card is drawn out of: two of indent, four of "┌── ",
+	// the space each side of the rule and the four of " ──┐". Counted short,
+	// the corner is pushed past the pane and cut off it.
+	borderWidth := max(2, width-lipgloss.Width(headerTitle)-lipgloss.Width(pos)-12)
 	border := strings.Repeat("─", borderWidth)
 
 	return fmt.Sprintf("  ┌── %s %s %s ──┐", headerTitle, Paint(Dim).Render(border), Paint(Dim).Render(pos))
@@ -97,4 +100,29 @@ func diffContentLines(line string, role Role, width int, wrapLines bool) []strin
 	}
 
 	return out
+}
+
+// diffRole is the colour of one diff line.
+//
+// The order of the tests is what makes it correct rather than nearly
+// correct: `+++ b/x` starts with a plus and is not an added line, and a file
+// header painted green is a header a reader reads as content.
+//
+// It reads one line knowing nothing of the ones above it, which fileAt
+// cannot afford and this can: a removed `-- comment` is dimmed rather than
+// reddened, which costs a colour and not a file.
+func diffRole(line string) Role {
+	switch {
+	case strings.HasPrefix(line, "+++"), strings.HasPrefix(line, "---"),
+		strings.HasPrefix(line, "diff "), strings.HasPrefix(line, "index "):
+		return Dim
+	case strings.HasPrefix(line, "@@"):
+		return Accent
+	case strings.HasPrefix(line, "+"):
+		return OK
+	case strings.HasPrefix(line, "-"):
+		return Bad
+	}
+
+	return Dim
 }

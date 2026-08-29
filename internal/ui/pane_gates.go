@@ -2,6 +2,9 @@ package ui
 
 import (
 	"fmt"
+	"strings"
+
+	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -15,11 +18,29 @@ type gateCheck struct {
 	phase    string
 }
 
-// gatesLines renders Pane 3: Verification gates per phase and attempt.
+// gateNameCells is the gates tab's name column, and gateWordCells the verdict
+// beside it. Sixteen fits the gate names a flow declares and truncates a
+// longer one, which is the trade the log's phase column already makes.
+const (
+	gateNameCells = 16
+	gateWordCells = 6
+)
+
+// gatesLines is the gates tab's content, ready for the pane.
 func (m Model) gatesLines() []string {
+	lines, _ := m.gatesRows()
+
+	return lines
+}
+
+// gatesRows is that content and, beside it, which check each row that folds
+// stands for. The two are built in one pass for the reason logRows is: a hit
+// test that counted the rows again would be a second opinion about where a
+// row is.
+func (m Model) gatesRows() ([]string, map[int]int) {
 	p := m.opts.Words
 	if m.logErr != nil {
-		return []string{"  " + Paint(Bad).Render(m.errSaid(m.logErr))}
+		return []string{"  " + Paint(Bad).Render(m.errSaid(m.logErr))}, nil
 	}
 
 	var checks []gateCheck
@@ -55,8 +76,7 @@ func (m Model) gatesLines() []string {
 	}
 
 	if len(checks) == 0 {
-		out = append(out, "  "+Paint(Dim).Render(p.T("gates.empty", "no verification gates have run for this task")))
-		return out
+		return append(out, "  "+Paint(Dim).Render(p.T("gates.empty", "no verification gates have run for this task"))), nil
 	}
 
 	passedCount := 0
@@ -84,37 +104,81 @@ func (m Model) gatesLines() []string {
 	))
 	out = append(out, "")
 
-	for _, c := range checks {
-		icon := Paint(OK).Render("✅")
+	heads, w := map[int]int{}, max(m.frame.Body.W, 1)
 
-		statusStr := Paint(OK).Render(p.T("gates.pass", "pass"))
-		if !c.passed {
-			icon = Paint(Bad).Render("❌")
-			statusStr = Paint(Bad).Render(p.T("gates.fail", "fail"))
+	for i, c := range checks {
+		rows, folds := m.gateRows(c, i, w)
+		if folds {
+			heads[len(out)] = i
 		}
 
-		cmdStr := c.command
-		if cmdStr != "" {
-			cmdStr = Paint(Dim).Render(cmdStr)
-		}
+		out = append(out, rows...)
+	}
 
-		line := fmt.Sprintf("    %s %-16s %-8s %s",
-			icon,
-			Paint(Accent).Render(c.name),
-			statusStr,
-			cmdStr,
-		)
+	return append(out, ""), heads
+}
 
-		out = append(out, line)
-		if !c.passed && c.reason != "" {
-			out = append(out, fmt.Sprintf("       %s %s",
-				Paint(Bad).Render(p.T("gates.why_failed", "why it failed ·")),
-				Paint(Bad).Render(c.reason),
-			))
+// gateRows is one check — whether it passed, what it ran, and why it stopped
+// — and whether there is more to it than the row is showing.
+//
+// Whether it folds is decided here, by wrapping what it has to the measure it
+// will be drawn at: a check whose whole story fits beside its name is offered
+// no arrow, because opening it would put nothing new on the screen.
+func (m Model) gateRows(c gateCheck, i, w int) ([]string, bool) {
+	p := m.opts.Words
+
+	icon, word, role := "✅", p.T("gates.pass", "pass"), OK
+	if !c.passed {
+		icon, word, role = "❌", p.T("gates.fail", "fail"), Bad
+	}
+
+	// The columns are padded on the plain word and painted afterwards: a
+	// width verb counts the bytes of an escape sequence as cells, so a
+	// padded rendered string is a column that moves with the palette.
+	head := "  " + Paint(role).Render(icon) + " " +
+		Paint(Accent).Render(pad(c.name, gateNameCells, false)) + "  " +
+		Paint(role).Render(pad(word, gateWordCells, false)) + "  "
+
+	lead := 2 + lipgloss.Width(icon) + 1 + gateNameCells + 2 + gateWordCells + 2
+	availW := max(20, w-lead-lipgloss.Width(foldShut)-2)
+
+	said := []string{c.command}
+	if !c.passed && c.reason != "" {
+		said = append(said, p.T("gates.why_failed", "why it failed ·")+" "+c.reason)
+	}
+
+	// Wrapped and then cut: a gate is a shell command, and a command with a
+	// long path in it has nothing to break at, so a row can come back from
+	// the wrap longer than it was wrapped to.
+	var body []string
+
+	for _, l := range said {
+		for _, wl := range splitIntoLines(l, availW) {
+			body = append(body, fit(wl, availW))
 		}
 	}
 
-	out = append(out, "")
+	if len(body) == 0 {
+		return []string{strings.TrimRight(head, " ")}, false
+	}
 
-	return out
+	if len(body) == 1 {
+		return []string{head + strings.Repeat(" ", lipgloss.Width(foldShut)) + Paint(Dim).Render(body[0])}, false
+	}
+
+	open := m.rowOpen(tabGates, i)
+	mark := Text(Tertiary).Render(foldMark(open))
+
+	if !open {
+		return []string{head + mark + Paint(Dim).Render(body[0])}, true
+	}
+
+	out := []string{head + mark + Text(Secondary).Render(body[0])}
+
+	indent := strings.Repeat(" ", lead+lipgloss.Width(foldShut))
+	for _, l := range body[1:] {
+		out = append(out, indent+Text(Secondary).Render(l))
+	}
+
+	return out, true
 }

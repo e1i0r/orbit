@@ -12,15 +12,15 @@ import (
 )
 
 // notedErrs is the last failure written down by each source that arrives on
-// a clock. There are three of them and they are named here rather than kept
-// in a map, because the fact worth being able to read is that only three
+// a clock. There are four of them and they are named here rather than kept
+// in a map, because the fact worth being able to read is that only four
 // messages in this window repeat themselves without a reader asking.
-type notedErrs struct{ board, diff, record string }
+type notedErrs struct{ board, diff, record, files string }
 
 // writeDown writes down whatever error arrived with a message.
 //
-// It is called once, at the top of Update, and not from the eleven cases
-// below it that each carry one. Two places were candidates and only this one
+// It is called once, at the top of Update, and not from the cases below it
+// that each carry one. Two places were candidates and only this one
 // is right: an error is news when it arrives, and drawing is not when it
 // arrives — six panes render m.logErr through errSaid on every frame, so a
 // line written there would be one failure written down as often as the
@@ -40,6 +40,8 @@ func (m Model) writeDown(msg tea.Msg) Model {
 		m.noted.diff = writeOnce("ui/diff", msg.ID, oneLine(msg.Err), m.noted.diff)
 	case logMsg:
 		m.noted.record = writeOnce("ui/record", msg.ID, oneLine(msg.Err), m.noted.record)
+	case filesMsg:
+		m.noted.files = writeOnce("ui/files", msg.ID, oneLine(msg.Err), m.noted.files)
 
 	// The rest are gestures. A reader pressed a key, so a failure that
 	// reads the same as the one before it is a second attempt that also
@@ -50,6 +52,8 @@ func (m Model) writeDown(msg tea.Msg) Model {
 		writeLine("ui/start", msg.ID, oneLine(msg.Err))
 	case readMsg:
 		writeLine("ui/read", msg.ID, oneLine(msg.Err))
+	case fileTextMsg:
+		writeLine("ui/files", msg.ID+" "+msg.Name, oneLine(msg.Err))
 	case sessionMsg:
 		writeLine("ui/session", msg.ID, oneLine(msg.Err))
 	case sessionEndedMsg:

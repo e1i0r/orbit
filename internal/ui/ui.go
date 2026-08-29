@@ -143,6 +143,46 @@ type Model struct {
 	expandedDetail   bool
 	upgradeAvailable string
 
+	// folds is which sections of the task view the reader has closed, by
+	// the keys in pane_overview.go. Absent is open: a window nobody has
+	// folded anything in shows everything it has.
+	//
+	// It is a map for the reason taken is, and carries the same warning —
+	// fold clones it rather than writing it in place, because a Model is
+	// copied by every method that returns one and a map shared between two
+	// copies is one map.
+	folds map[string]bool
+
+	// opened is which rows of each pane the reader has opened, by whatever
+	// that pane indexes its rows with — an entry of the record on the
+	// timeline and the thinking pane, a phase of the flow on the flow tree.
+	// Absent is closed, the other way round from folds: a section is a
+	// heading and one of these is a paragraph, and a screen that opens every
+	// paragraph at once is the wall this folding is here to take down. The
+	// map a pane holds is cloned rather than written in place, for the
+	// reason above.
+	//
+	// heads is which row of each pane an entry's own row was drawn on,
+	// written by syncPanes as it lays the panes out. The pointer reads the
+	// map the render produced rather than counting the rows again, because a
+	// second count is a second opinion about where a row is. It is one map
+	// per tab because the timeline and the thinking pane both draw entries,
+	// and a pane that draws none has none.
+	opened [tabCount]map[int]bool
+	heads  [tabCount]map[int]int
+
+	// shutAttempts is which attempts the reader has closed, by their number.
+	// Absent is open, the way folds is and the way opened is not: an attempt
+	// is a heading over a block of the record, and a reader who opens the
+	// report is opening it to read the report.
+	//
+	// seams is which row of each pane an attempt's rule was drawn on. It is
+	// one map per tab because two panes draw those rules and a reader points
+	// at whichever one is up, and it is written by syncPanes for the reason
+	// logHeads is.
+	shutAttempts map[int]bool
+	seams        [tabCount]map[int]int
+
 	// start is the dialog that decides what a run will be, and taken is
 	// which tasks this window has handed the terminal to an engine for.
 	//
@@ -185,10 +225,23 @@ type Model struct {
 	// handed. Their content is rebuilt by syncPanes whenever a fact behind
 	// them moves, and their scroll positions are the only thing on this
 	// screen the reader owns.
-	detail   string
-	tab      tab
-	entries  []view.Entry
-	logErr   error
+	detail  string
+	tab     tab
+	entries []view.Entry
+	logErr  error
+	// files is what the task's own directory holds, filesKnown is whether
+	// an answer has landed at all, and filesErr is what it said if that
+	// answer was a failure. The three are kept apart for the reason the
+	// diff's three are: an empty listing before the first answer and an
+	// empty listing after a real one are different facts.
+	files      []view.File
+	filesErr   error
+	filesKnown bool
+	// read is what each file the reader has opened turned out to hold. It
+	// is a map for the reason expanded is, and readFile clones it rather
+	// than writing it in place. Absent means nobody has opened that file,
+	// which is not the same as a file that was read and is empty.
+	read     map[string]fileRead
 	diff     string
 	worktree string
 	// diffKnown is whether a diffMsg has landed at all, and diffErr is what

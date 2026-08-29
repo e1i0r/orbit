@@ -34,32 +34,58 @@ const clockCells = 8
 
 // logLines is the log tab's content, ready for the pane.
 func (m Model) logLines() []string {
+	lines, _, _ := m.logRows()
+
+	return lines
+}
+
+// logRows is that content and, beside it, which entry each row that folds is
+// the head of and which attempt each seam belongs to.
+//
+// The rows and the map are built in one pass on purpose: a hit test that
+// counted the rows a second time would be a second opinion about where a row
+// is, and the day the two disagree the pointer opens the entry above the one
+// it is on.
+func (m Model) logRows() ([]string, map[int]int, map[int]int) {
 	w := max(m.frame.Body.W, 1)
 	if m.logErr != nil {
-		return []string{" " + Paint(Bad).Render(m.errSaid(m.logErr))}
+		return []string{" " + Paint(Bad).Render(m.errSaid(m.logErr))}, nil, nil
 	}
 
 	if len(m.entries) == 0 {
-		return []string{" " + Paint(Dim).Render(m.opts.Words.T("log.empty", "nothing has been recorded about this task yet"))}
+		return []string{" " + Paint(Dim).Render(m.opts.Words.T("log.empty", "nothing has been recorded about this task yet"))}, nil, nil
 	}
 
 	out := make([]string, 0, len(m.entries)+4)
-	for _, e := range m.entries {
+	heads, seams := map[int]int{}, map[int]int{}
+
+	for i, e := range m.entries {
 		if e.Attempted() {
+			seams[len(out)] = e.Attempt
 			out = append(out, m.seam(e, w))
 		}
 
-		out = append(out, m.logEntryLines(e, w)...)
+		if !m.attemptOpen(e.Attempt) {
+			continue
+		}
+
+		rows, folds := m.logEntryLines(e, i, w)
+		if folds {
+			heads[len(out)] = i
+		}
+
+		out = append(out, rows...)
 	}
 
-	return out
+	return out, heads, seams
 }
 
 // seam is the line between one attempt and the next.
 //
 // It carries the attempt's number and the time it began, because those are
 // the two things a reader comparing two attempts of the same task asks for
-// first: which one this is, and how long ago it started.
+// first: which one this is, and how long ago it started. The arrow in front
+// of it says the rule is also the lid on everything that attempt did.
 func (m Model) seam(e view.Entry, w int) string {
 	label := m.opts.Words.T("log.attempt", "attempt {n}", about("n", strconv.Itoa(e.Attempt)))
 
@@ -68,45 +94,69 @@ func (m Model) seam(e view.Entry, w int) string {
 		tail = " " + at + " ──"
 	}
 
-	rule := max(w-lipgloss.Width(head)-lipgloss.Width(tail)-1, 0)
+	mark := foldMark(m.attemptOpen(e.Attempt))
+	rule := max(w-lipgloss.Width(mark)-lipgloss.Width(head)-lipgloss.Width(tail)-1, 0)
 
-	return " " + Paint(Dim).Render(head+strings.Repeat("─", rule)+tail)
+	return " " + Text(Tertiary).Render(mark) + Paint(Dim).Render(head+strings.Repeat("─", rule)+tail)
 }
 
-// logEntryLines formats one event, wrapping long details across multiple aligned rows.
-func (m Model) logEntryLines(e view.Entry, w int) []string {
+// logEntryLines is one event — the clock, the phase, what happened, and what
+// it said — and whether that row folds.
+//
+// Whether there is more to show is decided here, by wrapping the detail at
+// the measure it will be drawn at, and nowhere else: a row is offered an
+// arrow only when opening it puts something on the screen that was not
+// already there.
+func (m Model) logEntryLines(e view.Entry, i, w int) ([]string, bool) {
 	word, role := m.logWord(e)
-	prefix := Paint(Dim).Render(pad(clock(e.At), clockCells, false)) + "  " +
+	prefix := " " + Paint(Dim).Render(pad(clock(e.At), clockCells, false)) + "  " +
 		Paint(Dim).Render(pad(e.Phase, phaseCells, false)) + "  " +
-		Paint(role).Render(word)
+		Paint(role).Render(word) + "  "
 
 	detail := m.logDetail(e)
 	if detail == "" {
-		return []string{" " + prefix}
+		return []string{strings.TrimRight(prefix, " ")}, false
 	}
 
-	if !m.expandedDetail {
-		return []string{" " + prefix + "  " + Paint(Dim).Render(detail)}
-	}
+	// The arrow stands in the detail's own column rather than out in the
+	// margin, and a row that does not fold pays for it in spaces, so that
+	// every sentence on the tab starts in the same place.
+	lead := clockCells + 2 + phaseCells + 2 + lipgloss.Width(word) + 3
+	availW := max(20, w-lead-lipgloss.Width(foldShut)-2)
 
-	prefixW := clockCells + 2 + phaseCells + 2 + lipgloss.Width(word) + 2
-	availW := max(20, w-prefixW-4)
-
+	// Wrapped to the measure and then cut to it: a tool call is written down
+	// as the arguments it was made with and JSON has no spaces to wrap at,
+	// so a row can come back from the wrap longer than it was wrapped to.
+	//
+	// The rows and not the detail itself: a detail written over two short
+	// lines fits on one row, and drawing it unwrapped would take the newline
+	// it was written with onto the screen.
 	wrapped := splitIntoLines(detail, availW)
+	for n, wl := range wrapped {
+		wrapped[n] = fit(wl, availW)
+	}
+
 	if len(wrapped) <= 1 {
-		return []string{" " + prefix + "  " + Paint(Dim).Render(detail)}
+		return []string{prefix + strings.Repeat(" ", lipgloss.Width(foldShut)) + Paint(Dim).Render(wrapped[0])}, false
 	}
 
-	var out []string
+	mark := Text(Tertiary).Render(foldMark(m.rowOpen(tabTimeline, i)))
 
-	out = append(out, " "+prefix+"  "+Paint(Dim).Render(wrapped[0]))
+	// Closed, the detail is a qualifier of the word beside it and is set as
+	// one. Open, it is what the reader asked to read.
+	if !m.rowOpen(tabTimeline, i) {
+		return []string{prefix + mark + Paint(Dim).Render(wrapped[0])}, true
+	}
 
-	indent := strings.Repeat(" ", prefixW+1)
+	out := make([]string, 0, len(wrapped))
+	out = append(out, prefix+mark+Text(Secondary).Render(wrapped[0]))
+
+	indent := strings.Repeat(" ", lead+lipgloss.Width(foldShut))
 	for _, wl := range wrapped[1:] {
-		out = append(out, indent+Paint(Dim).Render(wl))
+		out = append(out, indent+Text(Secondary).Render(wl))
 	}
 
-	return out
+	return out, true
 }
 
 // logWord is what the entry says happened, and the role it is painted in.
@@ -158,15 +208,16 @@ func (m Model) logWord(e view.Entry) (string, Role) {
 
 // logDetail is the one fact worth putting beside the word, and it is always
 // something the record said rather than something this package composed: the
-// engine that was asked, the reason a phase stopped, or the first line of
-// whatever was written down.
+// engine that was asked, the reason a phase stopped, or whatever was written
+// down. It is the whole of that fact — where it is cut to a row, and whether
+// it is cut at all, is the drawing above.
 func (m Model) logDetail(e view.Entry) string {
 	switch e.What() {
 	case view.EntryStarted:
 		return strings.TrimSpace(e.Engine + " " + e.Model)
 	case view.EntryToolCall:
 		if e.Text != "" {
-			return formatLogTool(e.Tool, e.Text, m.expandedDetail)
+			return formatLogTool(e.Tool, e.Text)
 		}
 
 		return e.Tool
@@ -178,22 +229,14 @@ func (m Model) logDetail(e view.Entry) string {
 		}
 	case view.EntryFailed, view.EntryCancelled, view.EntryTimedOut:
 		if e.Cause != "" {
-			if m.expandedDetail {
-				return e.Cause
-			}
-
-			return firstLine(e.Cause)
+			return e.Cause
 		}
 	}
 
-	if m.expandedDetail {
-		return e.Text
-	}
-
-	return firstLine(e.Text)
+	return e.Said()
 }
 
-func formatLogTool(tool, args string, expanded bool) string {
+func formatLogTool(tool, args string) string {
 	head := firstLine(args)
 	if strings.HasPrefix(head, "{") {
 		if idx := strings.Index(head, `"command"`); idx >= 0 {
@@ -211,10 +254,6 @@ func formatLogTool(tool, args string, expanded bool) string {
 				}
 			}
 		}
-	}
-
-	if !expanded && len(head) > 60 {
-		head = head[:57] + "…"
 	}
 
 	if head != "" {

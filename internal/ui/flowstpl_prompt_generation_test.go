@@ -1,8 +1,9 @@
 package ui
 
-// flowstpl_prompt_coverage_test.go is generatePhasePrompt's whole keyword
-// table: one case per branch, whether it is reading the reader's own draft
-// or falling back to the phase's name.
+// generatePhasePrompt's whole keyword table: one case per branch, whether it
+// is reading the reader's own draft or falling back to the phase's name. The
+// drafts are in either language and the instruction that comes back is in
+// English, because it is read by an engine and not by the reader.
 
 import (
 	"strings"
@@ -13,13 +14,13 @@ func TestGeneratePhasePromptFromDraft(t *testing.T) {
 	cases := []struct {
 		name, input, wantSub string
 	}{
-		{"validate", "validate the new endpoint", "Valida exhaustivamente"},
-		{"test keyword", "run the test suite", "Valida exhaustivamente"},
-		{"security", "audit for security holes", "Audita rigurosamente"},
-		{"refactor", "clean up this module", "Refactoriza"},
-		{"fix", "fix the crash on startup", "Investiga la causa raíz"},
-		{"docs", "write the readme", "documentación técnica"},
-		{"default fallback", "ship the release notes", "máxima precisión técnica"},
+		{"validate", "validate the new endpoint", "Validate what was implemented"},
+		{"test keyword", "run the test suite", "Validate what was implemented"},
+		{"security", "audit for security holes", "Audit the code for security holes"},
+		{"refactor", "clean up this module", "Refactor for clarity"},
+		{"fix", "fix the crash on startup", "Find the root cause"},
+		{"docs", "write the readme", "technical documentation"},
+		{"default fallback", "ship the release notes", "architecture and quality rules"},
 	}
 	for _, c := range cases {
 		got := generatePhasePrompt(c.input, "some-phase", "some-flow")
@@ -37,16 +38,16 @@ func TestGeneratePhasePromptFromPhaseName(t *testing.T) {
 	cases := []struct {
 		phase, wantSub string
 	}{
-		{"1-plan", "diseña un plan técnico"},
-		{"design-review", "diseña un plan técnico"},
-		{"2-implement", "Implementa la solución"},
-		{"build", "Implementa la solución"},
-		{"3-test", "pruebas automatizadas"},
-		{"qa-gate", "pruebas automatizadas"},
-		{"4-review", "Audita el diff"},
-		{"security-audit", "Audita el diff"},
-		{"5-fix", "Corrige con precisión"},
-		{"remediate", "Corrige con precisión"},
+		{"1-plan", "design a technical plan"},
+		{"design-review", "design a technical plan"},
+		{"2-implement", "Implement the agreed plan"},
+		{"build", "Implement the agreed plan"},
+		{"3-test", "automated tests"},
+		{"qa-gate", "automated tests"},
+		{"4-review", "Audit the diff"},
+		{"security-audit", "Audit the diff"},
+		{"5-fix", "Fix the failures"},
+		{"remediate", "Fix the failures"},
 	}
 	for _, c := range cases {
 		got := generatePhasePrompt("", c.phase, "some-flow")
@@ -67,7 +68,7 @@ func TestGeneratePhasePromptDefaultFallback(t *testing.T) {
 		t.Errorf("expected the phase name in the fallback, got %q", withoutFlow)
 	}
 
-	if strings.Contains(withoutFlow, "para el flujo") {
+	if strings.Contains(withoutFlow, "flow") {
 		t.Errorf("expected no flow clause when flowName is empty, got %q", withoutFlow)
 	}
 }

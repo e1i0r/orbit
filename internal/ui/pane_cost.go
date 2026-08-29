@@ -15,6 +15,14 @@ type costRow struct {
 	model    string
 }
 
+// costPhaseCells is the phase column of the cost table, and costMoneyCells
+// the figures beside it: wide enough for "$1234.5678" and for the way elapsed
+// spells an hour.
+const (
+	costPhaseCells = 24
+	costMoneyCells = 12
+)
+
 // costLines renders Pane 4: Cost Breakdown per phase and total.
 func (m Model) costLines() []string {
 	p := m.opts.Words
@@ -76,13 +84,15 @@ func (m Model) costLines() []string {
 		return out
 	}
 
-	// Table header
-	out = append(out, fmt.Sprintf("    %-24s %-12s %-12s %s",
-		Paint(Dim).Render(p.T("cost.col_phase", "phase")),
-		Paint(Dim).Render(p.T("cost.col_cost", "cost")),
-		Paint(Dim).Render(p.T("cost.col_duration", "duration")),
-		Paint(Dim).Render(p.T("cost.col_engine", "engine / model")),
-	))
+	// The columns are padded on the plain text and painted afterwards. A
+	// width verb counts the bytes of an escape sequence as characters, so a
+	// rendered string padded to a column is not padded at all — which is why
+	// this table has never lined up.
+	out = append(out, "    "+Paint(Dim).Render(
+		pad(p.T("cost.col_phase", "phase"), costPhaseCells, false)+" "+
+			pad(p.T("cost.col_cost", "cost"), costMoneyCells, false)+" "+
+			pad(p.T("cost.col_duration", "duration"), costMoneyCells, false)+" "+
+			p.T("cost.col_engine", "engine / model")))
 
 	for _, r := range rows {
 		modStr := r.engine
@@ -90,21 +100,17 @@ func (m Model) costLines() []string {
 			modStr += " (" + r.model + ")"
 		}
 
-		out = append(out, fmt.Sprintf("    %-24s %-12s %-12s %s",
-			Paint(Accent).Render(r.phase),
-			Paint(OK).Render(fmt.Sprintf("$%.4f", r.cost)),
-			Paint(Dim).Render(r.duration),
-			Paint(Dim).Render(modStr),
-		))
+		out = append(out, "    "+
+			Paint(Accent).Render(pad(r.phase, costPhaseCells, false))+" "+
+			Paint(OK).Render(pad(fmt.Sprintf("$%.4f", r.cost), costMoneyCells, false))+" "+
+			Paint(Dim).Render(pad(r.duration, costMoneyCells, false))+" "+
+			Paint(Dim).Render(modStr))
 	}
 
-	out = append(out, "")
-
-	// Budget and totals box
 	out = append(out,
-		fmt.Sprintf("    %-24s %s", Paint(Dim).Render(p.T("cost.total", "total so far")), Paint(Accent).Bold(true).Render(fmt.Sprintf("$%.4f", t.Cost))),
-		fmt.Sprintf("    %-24s %s", Paint(Dim).Render(p.T("cost.budget_task", "task budget")), Paint(Dim).Render("$25.00")),
-		fmt.Sprintf("    %-24s %s", Paint(Dim).Render(p.T("cost.budget_phase", "phase budget")), Paint(Dim).Render("$5.00")),
+		"",
+		"    "+Paint(Dim).Render(pad(p.T("cost.total", "total so far"), costPhaseCells, false))+" "+
+			Paint(Accent).Bold(true).Render(fmt.Sprintf("$%.4f", t.Cost)),
 		"",
 	)
 

@@ -1,7 +1,11 @@
 package ui
 
 import (
+	"strings"
 	"testing"
+
+	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
 )
 
 func TestAllTaskDetailPanesRender(t *testing.T) {
@@ -73,6 +77,31 @@ func TestDetailTabsCyclingAndKeys(t *testing.T) {
 		rendered := m.detailRows(20, 100)
 		if len(rendered) == 0 {
 			t.Errorf("detailRows on tab %v returned empty output", i)
+		}
+	}
+}
+
+// TestALongPaneDrawsItsBar. The line at the foot of the pane says the arrows
+// scroll; it does not say how far down eleven screens of log the reader is.
+// The bar is drawn in the pane's own last column, on every row of it.
+func TestALongPaneDrawsItsBar(t *testing.T) {
+	m, _ := openWith(t, "ACME-2662", longLog())
+	m = showing(t, m, tabTimeline)
+
+	const h, w = 12, 100
+
+	rows := m.paneRows(h, w)
+	if len(rows) != h {
+		t.Fatalf("paneRows drew %d rows, want %d", len(rows), h)
+	}
+
+	for i, r := range rows {
+		if got := lipgloss.Width(r); got != w {
+			t.Errorf("row %d is %d cells wide, want the pane's %d", i, got, w)
+		}
+
+		if !strings.HasSuffix(ansi.Strip(r), scrollRail) && !strings.HasSuffix(ansi.Strip(r), scrollThumb) {
+			t.Errorf("row %d ends without the bar: %q", i, ansi.Strip(r))
 		}
 	}
 }

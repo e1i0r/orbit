@@ -445,6 +445,10 @@
       "source": "scroll",
       "value": "desplazar"
     },
+    "key.fold": {
+      "source": "fold sections",
+      "value": "plegar secciones"
+    },
     "key.sideways": {
       "source": "scroll sideways",
       "value": "desplazar en horizontal"
@@ -611,13 +615,9 @@
       "source": "total so far",
       "value": "total acumulado"
     },
-    "cost.budget_task": {
-      "source": "task budget",
-      "value": "presupuesto tarea"
-    },
-    "cost.budget_phase": {
-      "source": "phase budget",
-      "value": "presupuesto por etapa"
+    "refused.unnamed_tool": {
+      "source": "command",
+      "value": "comando"
     },
     "refused.title": {
       "source": "Permissions & Security Sandbox",
@@ -707,6 +707,16 @@
       "source": "entries in the dialogue",
       "value": "entradas en el diálogo"
     },
+    "notes.more_rows": {
+      "source": {
+        "one": "{n} more line",
+        "other": "{n} more lines"
+      },
+      "value": {
+        "one": "{n} línea más",
+        "other": "{n} líneas más"
+      }
+    },
     "notes.all_filed": {
       "source": "in sync with the model",
       "value": "sincronizado con el modelo"
@@ -747,65 +757,69 @@
       "source": "no thinking blocks or decision logs captured for this task",
       "value": "no hay bloques de razonamiento o registro de decisiones para esta tarea"
     },
+    "artifacts.opening": {
+      "source": "opening the file",
+      "value": "abriendo el archivo"
+    },
+    "artifacts.empty_file": {
+      "source": "this file is empty",
+      "value": "este archivo esta vacio"
+    },
+    "artifacts.cut": {
+      "source": "— the rest of this file was not read —",
+      "value": "— el resto de este archivo no se leyo —"
+    },
+    "artifacts.said_task": {
+      "source": "the task as it was written, in full",
+      "value": "la tarea como fue escrita, completa"
+    },
+    "artifacts.said_events": {
+      "source": "the append-only record: one line per event",
+      "value": "el registro solo-anexar: una linea por evento"
+    },
+    "artifacts.said_control": {
+      "source": "the word the run was last told: pause, resume, cancel",
+      "value": "la ultima palabra que se le dijo a la corrida: pausa, sigue, cancela"
+    },
+    "artifacts.said_run": {
+      "source": "the marker that says a run holds this task",
+      "value": "la marca que dice que una corrida tiene esta tarea"
+    },
+    "artifacts.said_changed": {
+      "source": "changed in the worktree — see the diff tab",
+      "value": "cambiado en el worktree — mira la pestana diff"
+    },
+    "artifacts.group_record": {
+      "source": "what orbit wrote down",
+      "value": "lo que orbit anoto"
+    },
+    "artifacts.group_worktree": {
+      "source": "what the run changed",
+      "value": "lo que la corrida cambio"
+    },
+    "artifacts.reading": {
+      "source": "reading the task's directory",
+      "value": "leyendo el directorio de la tarea"
+    },
+    "artifacts.reading_worktree": {
+      "source": "reading the worktree",
+      "value": "leyendo el worktree"
+    },
+    "artifacts.none_yet": {
+      "source": "nothing written yet — this task has not run",
+      "value": "nada escrito todavia — esta tarea no ha corrido"
+    },
+    "artifacts.n_files": {
+      "source": { "one": "{n} file", "other": "{n} files" },
+      "value": { "one": "{n} archivo", "other": "{n} archivos" }
+    },
     "artifacts.title": {
       "source": "Files & Artifacts",
       "value": "Archivos y artefactos"
     },
     "artifacts.subtitle": {
-      "source": "every file left by the run, and what each one is",
+      "source": "every file the run left, and what each one is",
       "value": "cada archivo que dejó el run, y qué es cada uno"
-    },
-    "artifacts.desc_new_file": {
-      "source": "new file created during the run",
-      "value": "archivo nuevo creado durante la ejecución"
-    },
-    "artifacts.desc_report": {
-      "source": "draft summary report in model's own words",
-      "value": "el borrador del informe, en palabras del modelo"
-    },
-    "artifacts.group_produced": {
-      "source": "what it produced",
-      "value": "lo que produjo"
-    },
-    "artifacts.desc_gate_json": {
-      "source": "each check, its verdict and how long it took",
-      "value": "cada chequeo, su veredicto y cuánto tardó"
-    },
-    "artifacts.desc_gate_reason": {
-      "source": "one sentence: why the gate stopped",
-      "value": "una frase: por qué se detuvo la compuerta"
-    },
-    "artifacts.group_checks": {
-      "source": "the checks & gates",
-      "value": "los chequeos"
-    },
-    "artifacts.desc_task_md": {
-      "source": "the task prompt, exactly as written",
-      "value": "la tarea, exactamente como se escribió"
-    },
-    "artifacts.desc_task_env": {
-      "source": "environment fields and configuration read by runner",
-      "value": "los campos de entorno que lee el ejecutor"
-    },
-    "artifacts.group_prompts": {
-      "source": "what it was asked for",
-      "value": "lo que se le pidió"
-    },
-    "artifacts.desc_events": {
-      "source": "the immutable event log for this task",
-      "value": "el registro inmutable de eventos"
-    },
-    "artifacts.desc_cost": {
-      "source": "one row per phase: what it cost in $",
-      "value": "una fila por etapa: lo que costó en $"
-    },
-    "artifacts.desc_state": {
-      "source": "the phase it was in when last written",
-      "value": "la etapa en la que estaba la última vez que se escribió"
-    },
-    "artifacts.group_accounting": {
-      "source": "run accounting",
-      "value": "la contabilidad del run"
     },
     "plain.read_board": {
       "source": "read the board",
@@ -2266,20 +2280,12 @@
       "value": "Lista"
     },
     "overview.waiting_box": {
-      "source": "ACTIONS REQUIRED / WAITING FOR THE OPERATOR",
-      "value": "ACCIONES REQUERIDAS / ESPERANDO AL OPERADOR"
+      "source": "NEEDS YOU",
+      "value": "TE NECESITA"
     },
     "overview.resume_hint": {
       "source": "press 't' to open interactive session, 'r' to restart",
       "value": "presiona 't' para sesión interactiva, 'r' para reiniciar"
-    },
-    "overview.metrics": {
-      "source": "Status & Metrics",
-      "value": "Estado y métricas"
-    },
-    "overview.state": {
-      "source": "state",
-      "value": "estado"
     },
     "overview.duration": {
       "source": "duration",
@@ -2289,57 +2295,33 @@
       "source": "cost",
       "value": "coste"
     },
-    "overview.engine": {
-      "source": "engine",
-      "value": "motor"
-    },
-    "overview.repo": {
-      "source": "repository",
-      "value": "repositorio"
-    },
-    "overview.flow": {
-      "source": "flow",
-      "value": "flujo"
-    },
     "overview.execution_summary": {
-      "source": "Execution Summary",
-      "value": "Resumen de la ejecución"
+      "source": "phases",
+      "value": "fases"
     },
     "overview.not_started": {
       "source": "task has not been started yet (press [n] to start)",
       "value": "tarea pendiente de ejecución (presiona [n] para iniciar)"
     },
-    "overview.in_flight": {
-      "source": "execution in flight...",
-      "value": "ejecución en curso..."
-    },
     "overview.running_model": {
       "source": "running model...",
       "value": "ejecutando modelo..."
-    },
-    "overview.stream_hint": {
-      "source": "press [6] for live timeline or [8] for raw stream output",
-      "value": "presiona [6] para cronología en vivo o [8] para salida cruda"
     },
     "overview.no_phases": {
       "source": "no phase outputs recorded",
       "value": "sin registros de fases todavía"
     },
     "overview.code_impact": {
-      "source": "Code Impact & Changes",
-      "value": "Archivos modificados e impacto"
-    },
-    "overview.lines_in_files": {
-      "source": "lines across {count} file(s)",
-      "value": "líneas en {count} archivo(s)"
+      "source": "changes",
+      "value": "cambios"
     },
     "overview.no_diff": {
       "source": "no working tree modifications recorded",
       "value": "sin modificaciones en archivos del repositorio"
     },
     "overview.quick_actions": {
-      "source": "Quick Actions to Deliver & Validate",
-      "value": "Acciones de Entrega y Validación"
+      "source": "deliver",
+      "value": "entregar"
     },
     "overview.action_pr": {
       "source": "create PR",
@@ -2372,22 +2354,6 @@
     "overview.action_diff": {
       "source": "diff",
       "value": "ver diff"
-    },
-    "overview.live_activity": {
-      "source": "Live LLM Activity",
-      "value": "Actividad en Vivo (LLM)"
-    },
-    "overview.live_action": {
-      "source": "action",
-      "value": "acción"
-    },
-    "overview.live_thought": {
-      "source": "thinking",
-      "value": "pensamiento"
-    },
-    "overview.live_tools_count": {
-      "source": "tool calls",
-      "value": "llamadas a herramientas"
     },
     "key.tab_menu": {
       "source": "tab menu",
@@ -2503,14 +2469,6 @@
       "source": "could not install the release archive ({reason}); trying go install instead",
       "value": "no se pudo instalar el archivo de la release ({reason}); probando con go install"
     },
-    "overview.thinking": {
-      "source": "thinking",
-      "value": "thinking"
-    },
-    "overview.effort": {
-      "source": "effort",
-      "value": "esfuerzo"
-    },
     "overview.more_files": {
       "source": {
         "one": "… and {n} more file",
@@ -2552,10 +2510,6 @@
     "key.supervisor": {
       "source": "supervisor",
       "value": "supervisor"
-    },
-    "key.space": {
-      "source": "space",
-      "value": "espacio"
     },
     "supervisor.title": {
       "source": "Supervisor & Cockpit Memory",
@@ -2668,6 +2622,58 @@
     "err.git_timeout": {
       "source": "git did not answer in time",
       "value": "git no respondió a tiempo"
+    },
+    "overview.phases": {
+      "source": "phases",
+      "value": "fases"
+    },
+    "overview.changed": {
+      "source": "changed",
+      "value": "cambios"
+    },
+    "overview.gate": {
+      "source": "gate {name}",
+      "value": "puerta {name}"
+    },
+    "overview.more": {
+      "source": "… [e] for all of it",
+      "value": "… [e] para verlo todo"
+    },
+    "overview.tools": {
+      "source": {
+        "one": "{n} tool call",
+        "other": "{n} tool calls"
+      },
+      "value": {
+        "one": "{n} llamada a herramienta",
+        "other": "{n} llamadas a herramientas"
+      }
+    },
+    "overview.files": {
+      "source": {
+        "one": "{n} file",
+        "other": "{n} files"
+      },
+      "value": {
+        "one": "{n} archivo",
+        "other": "{n} archivos"
+      }
+    },
+    "overview.engine": {
+      "source": "engine",
+      "value": "motor"
+    },
+    "overview.effort": {
+      "source": "effort",
+      "value": "esfuerzo"
+    },
+    "overview.thinking": {
+      "source": "thinking",
+      "value": "pensamiento"
+    },
+    "overview.flow": {
+      "source": "flow",
+      "value": "flujo"
     }
   }
 }

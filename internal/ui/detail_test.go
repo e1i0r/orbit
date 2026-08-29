@@ -161,7 +161,7 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 			}
 		},
 	}, {
-		name: "a tick while the task view is open re-reads the log",
+		name: "a tick while the task view is open re-reads the record",
 		start: func(t *testing.T) Model {
 			m, _ := openDetail(t, "ACME-2662")
 			return m
@@ -169,8 +169,8 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 		msg: tickMsg(fixtureNow),
 		want: func(t *testing.T, m Model, cmd tea.Cmd) {
 			batch, ok := cmd().(tea.BatchMsg)
-			if !ok || len(batch) != 3 {
-				t.Fatalf("a tick under the task view returned %d commands, want the refresh, the next tick and the log", len(batch))
+			if !ok || len(batch) != 4 {
+				t.Fatalf("a tick under the task view returned %d commands, want the refresh, the next tick, the log and the listing", len(batch))
 			}
 		},
 	}, {

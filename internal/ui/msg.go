@@ -87,6 +87,27 @@ type (
 		Err     error
 	}
 
+	// filesMsg is what a task's own directory holds, or the reason it
+	// could not be read. It is a separate answer from the record because
+	// it is a separate question: the events say what happened and the
+	// directory says what is there, and neither can be derived from the
+	// other.
+	filesMsg struct {
+		ID    string
+		Files []view.File
+		Err   error
+	}
+
+	// fileTextMsg is what one file of a task's directory holds, or the
+	// reason it could not be read. It carries the name it was asked for,
+	// because two of them can be out at once and the answers do not come
+	// back in the order they were sent.
+	fileTextMsg struct {
+		ID, Name string
+		Text     view.FileText
+		Err      error
+	}
+
 	// controlMsg is what the control function said when it was asked to
 	// write one word. Err comes back verbatim — the window is a keyboard
 	// in front of the commands, not a second copy of their rules.

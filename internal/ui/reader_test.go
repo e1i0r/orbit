@@ -23,9 +23,10 @@ import (
 	"github.com/e1i0r/orbit/internal/words"
 )
 
-// fakeReader answers the four questions Reader asks, from values a test
-// wrote out. It counts the reads of the log so that a test can say whether
-// the tail is being re-taken rather than only whether it looks right.
+// fakeReader answers the six questions Reader asks, from values a test wrote
+// out. It counts the reads of the log and of a file so that a test can say
+// whether either is being taken again rather than only whether it looks
+// right.
 type fakeReader struct {
 	board    board.Board
 	changed  board.Changed
@@ -33,7 +34,12 @@ type fakeReader struct {
 	worktree string
 	logErr   error
 	treeErr  error
+	files    []view.File
+	filesErr error
+	texts    map[string]view.FileText
+	textErr  error
 	reads    int
+	opens    int
 }
 
 func (f *fakeReader) Refresh() (board.Board, board.Changed, error) {
@@ -41,6 +47,16 @@ func (f *fakeReader) Refresh() (board.Board, board.Changed, error) {
 }
 
 func (f *fakeReader) Rescan() error { return nil }
+
+func (f *fakeReader) Files(_, _ string) ([]view.File, error) {
+	return f.files, f.filesErr
+}
+
+func (f *fakeReader) FileText(_, _, name string) (view.FileText, error) {
+	f.opens++
+
+	return f.texts[name], f.textErr
+}
 
 func (f *fakeReader) Log(_, _ string) ([]view.Entry, error) {
 	f.reads++

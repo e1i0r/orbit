@@ -92,21 +92,30 @@ func AutoSupervise(ctx context.Context, s *store.Store, eng engine.Engine, needi
 	return Supervise(ctx, s, eng, prompt)
 }
 
+// buildSupervisorPrompt is what the supervisor is handed: who it is, the
+// thread so far, the message it is answering, and how to answer it.
+//
+// It is written in Markdown for the reason a phase's prompt is (task/
+// run_helpers.go): the answer is asked for in Markdown and drawn as Markdown
+// in the cockpit, and a prompt that asks in one shape for another is asking
+// twice.
 func buildSupervisorPrompt(history, newPrompt string) string {
 	var b strings.Builder
-	b.WriteString("You are Orbit's Supervisor sitting at the cockpit seat.\n")
-	b.WriteString("You have full authority to inspect all repositories, tasks, and flows via Orbit MCP tools.\n")
-	b.WriteString("Answer the operator directly, take corrective actions on tasks when needed, and report clearly.\n\n")
 
+	b.WriteString("# Supervisor\n\n")
+	b.WriteString("You are Orbit's supervisor, sitting at the cockpit seat. " +
+		"You can inspect every repository, task and flow through Orbit's MCP tools. " +
+		"Answer the operator directly, act on the tasks that need acting on, and say what you did.\n")
+
+	// Fenced rather than set as prose: every answer in the thread was
+	// written to the same contract this prompt ends with, so its headings
+	// loose under a heading of this prompt would read as sections of it.
 	if history != "" {
-		b.WriteString("## Supervisor Thread History:\n")
-		b.WriteString(history)
-		b.WriteString("\n")
+		fmt.Fprintf(&b, "\n## Thread so far\n\n%s\n", engine.Fenced(history))
 	}
 
-	b.WriteString("## Operator Directive / Message:\n")
-	b.WriteString(newPrompt)
-	b.WriteString("\n\nRespond concisely with your assessment, conclusions, or actions taken.")
+	fmt.Fprintf(&b, "\n## Operator message\n\n%s\n", strings.TrimSpace(newPrompt))
+	b.WriteString("\n" + engine.AnswerContract)
 
 	return b.String()
 }

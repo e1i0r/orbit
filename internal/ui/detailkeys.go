@@ -22,7 +22,8 @@ func (m Model) openDetail(t view.Task) (Model, tea.Cmd) {
 	m.screen, m.detail, m.tab = screenDetail, t.ID, tabOverview
 	m.entries, m.logErr, m.diff, m.following = nil, nil, "", true
 	m.diffErr, m.diffKnown, m.diffNoBase = nil, false, false
-	m.expandedDetail = true
+	m.expandedDetail, m.shutAttempts = false, nil
+	m.opened = [tabCount]map[int]bool{}
 	// The base is one of the things an open forgets: it belongs to the
 	// repository this task is in, and asking for it again is the one thing
 	// this window does per open rather than per tick.
@@ -31,7 +32,7 @@ func (m Model) openDetail(t view.Task) (Model, tea.Cmd) {
 		m.panes[i] = viewport.New()
 	}
 
-	return m.syncPanes(), tea.Batch(logOf(m.opts.Reader, t), diffOf(m.opts.Reader, t, m.diffBase))
+	return m.syncPanes(), tea.Batch(logOf(m.opts.Reader, t), filesOf(m.opts.Reader, t), diffOf(m.opts.Reader, t, m.diffBase))
 }
 
 // detailKey is the task view's map.
@@ -59,6 +60,8 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.openDiffFilePicker(), nil
 	case m.tab == tabDiff && (k.String() == " " || k.String() == "space" || k.String() == "z"):
 		return m.toggleCollapseCurrentFile(), nil
+	case m.tab == tabOverview && (k.String() == "z" || k.String() == "Z"):
+		return m.foldAll(), nil
 	case m.tab == tabDiff && k.String() == "Z":
 		return m.toggleCollapseAll(), nil
 	case m.tab == tabDiff && (k.String() == "r" || k.String() == "R"):
@@ -226,6 +229,38 @@ func (m Model) newest() Model {
 	}
 
 	return m
+}
+
+// filesOf reads what one task's directory holds, off the event loop.
+func filesOf(r Reader, t view.Task) tea.Cmd {
+	return func() tea.Msg {
+		if r == nil {
+			return filesMsg{ID: t.ID, Err: errNoRecordPort}
+		}
+
+		files, err := r.Files(t.RepoPath, t.ID)
+		if err != nil {
+			return filesMsg{ID: t.ID, Err: err}
+		}
+
+		return filesMsg{ID: t.ID, Files: files}
+	}
+}
+
+// fileTextOf reads one file of a task's directory, off the event loop.
+func fileTextOf(r Reader, t view.Task, name string) tea.Cmd {
+	return func() tea.Msg {
+		if r == nil {
+			return fileTextMsg{ID: t.ID, Name: name, Err: errNoRecordPort}
+		}
+
+		text, err := r.FileText(t.RepoPath, t.ID, name)
+		if err != nil {
+			return fileTextMsg{ID: t.ID, Name: name, Err: err}
+		}
+
+		return fileTextMsg{ID: t.ID, Name: name, Text: text}
+	}
 }
 
 // logOf reads one task's record, off the event loop.

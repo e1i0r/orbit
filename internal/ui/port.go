@@ -78,6 +78,14 @@ type Reader interface {
 	Log(repoPath, id string) ([]view.Entry, error)
 	// Worktree is where that task's throwaway checkout lives.
 	Worktree(repoPath, id string) (string, error)
+	// Files is what that task's own directory holds, with each file's
+	// size. The artifacts tab lists what a run left behind, and the only
+	// way to list it honestly is to look.
+	Files(repoPath, id string) ([]view.File, error)
+	// FileText is what one of those files holds, from the start and up to
+	// whatever the port is willing to read. It is asked for one file at a
+	// time, when a reader opens it.
+	FileText(repoPath, id, name string) (view.FileText, error)
 	// SupervisorLog is the cockpit's persistent supervisor conversation thread.
 	SupervisorLog() ([]view.SupervisorLine, error)
 }

@@ -40,16 +40,23 @@ import (
 // ends up asserting "no changes" on a question it was never actually
 // answered. An answer that came back as a failure is the third state, and
 // it is said rather than folded into the diff text.
+// diffLines is the diff pane's content, ready for the pane.
 func (m Model) diffLines() []string {
+	lines, _ := m.diffRows()
+
+	return lines
+}
+
+func (m Model) diffRows() ([]string, map[int]int) {
 	p := m.opts.Words
 
 	t, isTask := m.task(m.detail)
 	if isTask && view.BandOf(t) == view.ToDo {
-		return []string{" " + Paint(Dim).Render(p.T("diff.empty_todo", "no changes yet — task is in the todo queue (press [n] to start)"))}
+		return []string{" " + Paint(Dim).Render(p.T("diff.empty_todo", "no changes yet — task is in the todo queue (press [n] to start)"))}, nil
 	}
 
 	if !m.diffKnown {
-		return []string{" " + Paint(Dim).Render(p.T("diff.pending", "reading this task's worktree…"))}
+		return []string{" " + Paint(Dim).Render(p.T("diff.pending", "reading this task's worktree…"))}, nil
 	}
 
 	if m.diffErr != nil {
@@ -58,7 +65,7 @@ func (m Model) diffLines() []string {
 		// the same sentence whatever language this window is drawn in.
 		raw := m.diffErr.Error()
 		if strings.Contains(raw, "cannot change to") || strings.Contains(raw, "no such file or directory") {
-			return []string{" " + Paint(Dim).Render(p.T("diff.empty_no_worktree", "no working tree modifications recorded"))}
+			return []string{" " + Paint(Dim).Render(p.T("diff.empty_no_worktree", "no working tree modifications recorded"))}, nil
 		}
 
 		// The bound is said without the command line errSaid keeps, which
@@ -68,43 +75,27 @@ func (m Model) diffLines() []string {
 			said = p.T("err.git_timeout", "git did not answer in time")
 		}
 
-		return []string{" " + Paint(Bad).Render(said)}
+		return []string{" " + Paint(Bad).Render(said)}, nil
 	}
 
 	if strings.TrimSpace(m.diff) == "" {
-		return []string{" " + Paint(Dim).Render(p.T("diff.unchanged", "no changes in this task's worktree"))}
+		return []string{" " + Paint(Dim).Render(p.T("diff.unchanged", "no changes in this task's worktree"))}, nil
 	}
 
 	files := parseDiffFiles(strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n"))
 	rationales := extractFileRationales(m.entries, files, p)
-	lines, _ := formatStructuredDiff(m.diff, m.width, p, rationales, !m.hideDiffRationale, m.collapsedFiles, m.expandedDetail)
+	lines, drawn := formatStructuredDiff(m.diff, m.width, p, rationales, !m.hideDiffRationale, m.collapsedFiles, m.expandedDetail)
 
-	return lines
-}
-
-// diffRole is the colour of one diff line.
-//
-// The order of the tests is what makes it correct rather than nearly
-// correct: `+++ b/x` starts with a plus and is not an added line, and a file
-// header painted green is a header a reader reads as content.
-//
-// It reads one line knowing nothing of the ones above it, which fileAt
-// cannot afford and this can: a removed `-- comment` is dimmed rather than
-// reddened, which costs a colour and not a file.
-func diffRole(line string) Role {
-	switch {
-	case strings.HasPrefix(line, "+++"), strings.HasPrefix(line, "---"),
-		strings.HasPrefix(line, "diff "), strings.HasPrefix(line, "index "):
-		return Dim
-	case strings.HasPrefix(line, "@@"):
-		return Accent
-	case strings.HasPrefix(line, "+"):
-		return OK
-	case strings.HasPrefix(line, "-"):
-		return Bad
+	// Where each card landed, taken from the pass that drew it rather than
+	// counted again afterwards: a second count is a second opinion about
+	// where a row is, and the day they disagree the pointer collapses the
+	// file above the one it is on.
+	heads := make(map[int]int, len(drawn))
+	for i, f := range drawn {
+		heads[f.StartLine] = i
 	}
 
-	return Dim
+	return lines, heads
 }
 
 // edit opens the file under the top of the diff in $EDITOR.
