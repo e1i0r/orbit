@@ -140,7 +140,26 @@ func openTaskRepo(t view.Task) (repo.Repo, error) {
 // repository, and refused when it holds several: writing a task into
 // whichever repository happened to sort first is the kind of helpfulness
 // that files work against the wrong project.
-func pickRepo(b board.Board, hint string) (repo.Repo, error) {
+//
+// Whatever it resolves to is checked against the session's root, once, at
+// the end. The branches below reach the disk by three different routes and
+// arguing each of them safe separately is how the one that was not — a path
+// Orbit has never seen, opened straight off the filesystem — stayed unsafe.
+func (sn Session) pickRepo(b board.Board, hint string) (repo.Repo, error) {
+	r, err := chooseRepo(b, hint)
+	if err != nil {
+		return repo.Repo{}, err
+	}
+
+	if err := sn.within(r.Path); err != nil {
+		return repo.Repo{}, err
+	}
+
+	return r, nil
+}
+
+// chooseRepo is the choice itself, without the confinement.
+func chooseRepo(b board.Board, hint string) (repo.Repo, error) {
 	if hint != "" {
 		for _, r := range b.RepoList {
 			if strings.EqualFold(r.Name, hint) || r.Path == hint {

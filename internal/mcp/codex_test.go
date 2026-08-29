@@ -157,3 +157,81 @@ func TestATableIsTheSameTableHoweverItIsSpelled(t *testing.T) {
 		t.Errorf("the quoted table was not recognised as ours:\n%s", read(t, path))
 	}
 }
+
+// TestOrbitListedTwiceIsNotSomethingThisInstallerFixes. Two
+// [mcp_servers.orbit] tables is a file TOML already refuses to parse, and
+// the merge used to make it worse rather than say so: start latched onto the
+// second table while end had latched at the first header after the first, so
+// the arithmetic wrote lines[:start] — the whole first table — then the new
+// block, then lines[end:] — the whole second one. Three orbit tables out of
+// two, and a Codex that still would not start.
+func TestOrbitListedTwiceIsNotSomethingThisInstallerFixes(t *testing.T) {
+	twice := `[mcp_servers.orbit]
+command = "/old/orbit"
+args = ["mcp"]
+
+[mcp_servers.other]
+command = "/somewhere/other"
+
+[mcp_servers.orbit]
+command = "/older/orbit"
+args = ["mcp"]
+`
+
+	got, err := codexMerge(twice, "/usr/local/bin/orbit")
+	if err == nil {
+		t.Fatalf("a file with orbit in it twice was merged into:\n%s", got)
+	}
+
+	if !strings.Contains(err.Error(), "twice") {
+		t.Errorf("the refusal does not say what is wrong: %v", err)
+	}
+
+	path := codexFile(t, twice)
+	if registerCodex(path, "/usr/local/bin/orbit") == nil {
+		t.Error("registerCodex wrote a file it could not merge")
+	}
+
+	if after := read(t, path); after != twice {
+		t.Errorf("a file this installer refused was written to anyway:\n%s", after)
+	}
+}
+
+// TestOneTableIsStillReplacedInPlace, because the refusal above must not
+// have been bought by giving up the ordinary case: one orbit table, changed
+// where it stands, with everything around it carried through.
+func TestOneTableIsStillReplacedInPlace(t *testing.T) {
+	once := existing + `
+[mcp_servers.orbit]
+command = "/old/orbit"
+args = ["mcp"]
+
+[mcp_servers.other]
+command = "/somewhere/other"
+`
+
+	got, err := codexMerge(once, "/usr/local/bin/orbit")
+	if err != nil {
+		t.Fatalf("codexMerge: %v", err)
+	}
+
+	if n := strings.Count(got, "[mcp_servers.orbit]"); n != 1 {
+		t.Errorf("orbit appears %d times, want once:\n%s", n, got)
+	}
+
+	for _, want := range []string{
+		`command = "/usr/local/bin/orbit"`,
+		"# my settings, do not lose them",
+		`[projects."/Users/someone/work/payments"]`,
+		`[mcp_servers.other]`,
+		`command = "/somewhere/other"`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("the merged file lost %q:\n%s", want, got)
+		}
+	}
+
+	if strings.Contains(got, "/old/orbit") {
+		t.Errorf("the old command survived the replacement:\n%s", got)
+	}
+}

@@ -18,6 +18,13 @@ import (
 // id nobody recognises is the second kind, so it comes back as text the
 // model can correct rather than as a transport fault it cannot see.
 func (sn Session) Call(name string, args map[string]any) CallToolResult {
+	return guard(name, args, func() CallToolResult { return sn.answer(name, args) })
+}
+
+// answer is the tool itself, without the two lines the log takes. It is
+// split out so that the switch below stays the whole of what this server
+// does, and so that no tool can be added without being written down.
+func (sn Session) answer(name string, args map[string]any) CallToolResult {
 	switch name {
 	case "orbit_get_board_summary":
 		return sn.boardSummary()

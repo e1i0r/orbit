@@ -26,7 +26,7 @@ func (sn Session) createTask(args map[string]any) CallToolResult {
 		return refuse(err)
 	}
 
-	r, err := pickRepo(sb.board, stringArg(args, "repo"))
+	r, err := sn.pickRepo(sb.board, stringArg(args, "repo"))
 	if err != nil {
 		return refuse(err)
 	}

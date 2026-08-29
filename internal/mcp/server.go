@@ -12,6 +12,7 @@ package mcp
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 )
@@ -64,6 +65,7 @@ func (s *Server) Serve() error {
 
 		var req JSONRPCRequest
 		if err := json.Unmarshal(line, &req); err != nil {
+			noteFault("a line from the client would not parse", err)
 			// The id is unknown — that is what failed to parse — so the
 			// response carries a null one, which is what the specification
 			// says a parse error answers with.
@@ -109,7 +111,10 @@ func (s *Server) answer(req JSONRPCRequest) error {
 	case "ping":
 		return s.send(result(req.ID, map[string]any{}))
 	default:
-		return s.send(fault(req.ID, CodeMethodNotFound, fmt.Sprintf("this server has no method %q", req.Method)))
+		why := fmt.Sprintf("this server has no method %q", req.Method)
+		noteFault("a method nobody implements", errors.New(why))
+
+		return s.send(fault(req.ID, CodeMethodNotFound, why))
 	}
 }
 
@@ -124,11 +129,15 @@ func (s *Server) call(req JSONRPCRequest) error {
 	var params CallToolParams
 	if len(req.Params) > 0 {
 		if err := json.Unmarshal(req.Params, &params); err != nil {
+			noteFault("the parameters of a tools/call would not decode", err)
+
 			return s.send(fault(req.ID, CodeInvalidParams, err.Error()))
 		}
 	}
 
 	if params.Name == "" {
+		noteFault("a tools/call", errors.New("no tool was named"))
+
 		return s.send(fault(req.ID, CodeInvalidParams, "tools/call needs a tool name"))
 	}
 

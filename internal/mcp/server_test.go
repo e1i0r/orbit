@@ -6,6 +6,7 @@ package mcp
 import (
 	"bytes"
 	"encoding/json"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -306,3 +307,42 @@ var errBroken = errWriter("the client is gone")
 type errWriter string
 
 func (e errWriter) Error() string { return string(e) }
+
+// TestEveryToolTheInstructionsNameIsOneThisServerHas. The instructions are
+// the only prose a model reads before it has called anything, so a tool
+// renamed in the list and not here leaves the first thing the model is told
+// pointing at nothing.
+func TestEveryToolTheInstructionsNameIsOneThisServerHas(t *testing.T) {
+	named := regexp.MustCompile(`orbit_[a-z_]+`).FindAllString(instructions, -1)
+	if len(named) == 0 {
+		t.Fatal("the instructions name no tool at all")
+	}
+
+	has := make(map[string]bool, len(toolNames()))
+	for _, n := range toolNames() {
+		has[n] = true
+	}
+
+	for _, n := range named {
+		if !has[n] {
+			t.Errorf("the instructions send a model to %q, which this server does not have", n)
+		}
+	}
+}
+
+// TestEveryToolThatStartsARunIsNamedAsOneThatCostsMoney. The instructions
+// used to warn about retry and cancel and say nothing about direct, whose
+// restart starts a run exactly as retry does — so the one tool a supervisor
+// reaches for mid-run was the one it had not been told to announce first.
+func TestEveryToolThatStartsARunIsNamedAsOneThatCostsMoney(t *testing.T) {
+	costly := regexp.MustCompile(`([^.]*cost money[^.]*\.)`).FindString(instructions)
+	if costly == "" {
+		t.Fatal("the instructions no longer say which tools cost money")
+	}
+
+	for _, name := range []string{"orbit_retry_task", "orbit_direct_task", "orbit_cancel_task"} {
+		if !strings.Contains(costly, name) {
+			t.Errorf("%q starts a run and is not in the sentence that says which tools cost money: %s", name, costly)
+		}
+	}
+}
