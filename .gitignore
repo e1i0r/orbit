@@ -26,7 +26,10 @@
 .superpowers/
 
 # Working notes: the design, the plans and the session handoff are kept
-# alongside the code but are not published with it.
-/docs/
+# alongside the code but are not published with it. The two files the README
+# links to are the exception, so a clone does not land on dead links.
+/docs/*
+!/docs/engines.md
+!/docs/cockpit.md
 /NEXT.md
 site/install.sh

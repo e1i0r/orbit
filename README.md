@@ -2,7 +2,7 @@
 
 <img src="assets/logo.png" alt="Orbit" width="360">
 
-*Supervise, steer, and verify multi-agent software development at terminal velocity.*
+**Stay in command of the code you did not write.**
 
 [![CI](https://github.com/e1i0r/orbit/actions/workflows/check.yml/badge.svg)](https://github.com/e1i0r/orbit/actions)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -13,204 +13,220 @@
 
 ---
 
-## ⚡ What is Orbit?
+Orbit is a terminal cockpit for coding agents. Each task runs in its own git worktree, in phases that stop where you tell them to, and everything is written down: the plan, the prompts, the reasoning, the diff, the cost, what the agent refused to do.
 
-**Orbit** is a high-performance terminal flight deck (`TUI`) built to transform autonomous AI coding from an uncontrolled gamble into a **disciplined, production-grade engineering pipeline**.
+It is built against two failure modes:
 
-While running raw CLI agents in standalone tabs quickly leads to branch pollution, silent failures, and burned API budgets, Orbit gives you **centralized command and real-time observability** over fleets of concurrent agents (**Claude Code**, **Codex**, **OpenCode**, and local models).
+- **Today** — the agent writes more code than you can read, and you approve it anyway. Orbit keeps you the one who decides what ships.
+- **In six months** — nobody on the team knows what is in the repo or why it was decided that way. Orbit keeps the full record of every run next to the code, not in a chat window somebody closed.
 
-- 🌲 **Zero Working-Tree Pollution:** Every task executes inside an isolated, throwaway Git worktree.
-- 🛡️ **Autonomous Gates & Human Sign-Offs:** Multi-stage pipelines (`plan` $\rightarrow$ `build` $\rightarrow$ `test` $\rightarrow$ `audit`) with automated test verification and mid-flight steering.
-- 🔍 **Deep Flight Telemetry:** 11 real-time inspector tabs covering live Git diffs, chain-of-thought traces, token economics, tool refusals, and operator notes.
+  ```bash
+  orbit show -repo ~/code/api fix-auth   # every phase, its gate verdicts, its refusals, its cost
+  ```
 
 <img src="assets/screenshot.png" alt="orbit top, the interactive cockpit" width="720">
 
----
-
-## ✨ Key Features
-
-### 🎛️ 1. Interactive Terminal Cockpit & Live Dials
-- **11 Detailed Inspector Tabs:**
-  - **`1` Overview:** Summary status, duration, model, token expenditure, and active phase.
-  - **`2` Flow:** Real-time visual tree of the task's execution pipeline.
-  - **`3` Gates:** Automated test suites, lint checks, and pass/fail diagnostics.
-  - **`4` Cost:** Monotonic real-time tracking of token usage and financial cost.
-  - **`5` Refused:** Security audits and rejected unsafe tool calls.
-  - **`6` Timeline:** Append-only chronological event log.
-  - **`7` Report:** Final synthesized executive summary from the agent.
-  - **`8` Artifacts:** Generated documentation, test reports, and binary artifacts.
-  - **`9` Notes:** Interactive dialog and human operator instructions (`orbit note`).
-  - **`0` Diff:** Syntax-highlighted live Git diff viewer with unified/split toggle.
-  - **`w` Thinking:** Deep chain-of-thought and internal reasoning traces.
-- **Mid-Flight Hot Dial Overrides:** Adjust engine/model (`k`), toggle thinking mode (`t`), cycle reasoning effort (`E`), or inspect flow (`F`) live while a task runs.
-- **Full Pointer Support:** Click any tab, row, status indicator, or pill dial directly with your mouse.
-- **Command Palette (`:`):** Fuzzy search and execute any orbit verb on the fly.
-
-### 📝 2. Intelligent Task Composer & URL Ingestion
-- **Contextual Engine & Model Selector:** Choose providers (**Claude**, **Codex**, **OpenCode**) with dynamic model cascading (`sonnet`, `opus`, `gpt-4o`, `o1`, `qwen`, `deepseek`).
-- **Reasoning Controls:** Fine-tune thinking modes (`adaptive`, `on`, `off`) and effort levels (`low`, `medium`, `high`, `xhigh`).
-- **Inline Flow Previews & Inspector:** Live pipeline preview (`1-plan ⏸ ➔ 2-implement ➔ 3-review`) and 1-click read-only Flow Inspector (`i`).
-- **Instant URL Issue Parsing:** Paste Linear, Jira, or GitHub issue links (`^V`) to automatically populate task metadata and scope.
-
-### 🔄 3. Multi-Phase Pipelines & Flow Designer
-- **Visual Flow Designer & Detail View (`+` / `i` / `⏎`):** Inspect workflows with ASCII flowchart diagrams (`┌───┐ ──▶ ┌───┐`), purpose explanations, and full phase parameter breakdown cards.
-- **Built-in Engineering Presets:**
-  - `tdd-fuzz-pr`: 3-phase rigorous flow (`1-plan` $\rightarrow$ `2-implement-fuzz` $\rightarrow$ `3-review-pr`) with native Go fuzzing (`testing.F`), property invariants ($\ge 90\%$ coverage), and automated PR creation via `gh pr create`.
-  - `careful`: Thorough multiphase workflow with human review gates and fix cycles.
-  - `task`: Standard two-phase workflow with implementation and human verification gate.
-  - `quick`: Fast single-phase flow with minimal overhead for quick bug fixes or docs.
-- **Safety Gates (`Wait: true`):** Require explicit operator sign-off before high-stakes phases.
-- **Output Chaining (`FeedOutput: true`):** Seamlessly pass generated artifacts and diffs between consecutive phases.
-
-### 🏎️ 4. Parallel Worktree Isolation
-- Every task runs in an isolated `git worktree`.
-- Run multiple tasks concurrently across branches without dirtying your working tree.
-
-### 🌐 5. Bilingual & Theming Engine
-- **Live Language Switching:** Instant toggle between English (`en`) and Spanish (`es`) with `🌐 ES / EN` or `orbit set language es`.
-- **Curated Visual Themes:** `frauddi` (default), `monokai`, `nord`, `tokyo-night`, `dracula`, and `catppuccin`.
+<!-- TODO: replace with the full-loop GIF — CLI → tasks → autopilot → PR -->
 
 ---
 
-## 🚀 Getting Started
+## The loop
 
-### Installation
+1. In your CLI — Claude Code, Codex, OpenCode — you investigate, validate, and build the plan. From there it creates the tasks and hands them to Orbit over MCP.
+2. You open the cockpit and turn on autopilot.
+3. Orbit runs each task in its own worktree, phase by phase, stopping at the gates. The supervisor checks the result, fixes what is missing, and reports back.
+4. You read the diff and ship the PR.
 
-#### Quick install (macOS, Linux)
+Then you go back to your CLI, and it can read everything that happened while you were away.
+
+---
+
+## Install
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/e1i0r/orbit/main/install.sh | bash
 ```
 
-#### Using `go install` (Go 1.26+)
+## Quickstart
+
+**1. Let your CLI talk to Orbit.**
+
 ```bash
-go install github.com/e1i0r/orbit/cmd/orbit@latest
+orbit mcp install
 ```
 
-#### From Source
+Registers the Orbit MCP server in Claude Code, Claude Desktop, Codex, OpenCode and Gemini. Restart the CLI and it can create tasks, run them, read their state and write notes.
+
+**2. Send it work.** Ask your CLI, in plain language: *"create three orbit tasks in ~/code/api for the plan we just wrote"*. Or write one by hand:
+
 ```bash
-git clone https://github.com/e1i0r/orbit.git
-cd orbit
-make build
-sudo mv orbit /usr/local/bin/
+orbit new -repo ~/code/api -id fix-auth "the refresh token is not rotated on login"
+```
+
+**3. Open the cockpit.**
+
+```bash
+orbit top ~/code
+```
+
+Press `A` for autopilot and Orbit starts working the queue. `Enter` opens a task, `0` shows its diff, `p` pauses it.
+
+---
+
+## Your plans, not API keys
+
+Orbit never calls a model. It runs the CLI you already have installed, under the subscription you already pay for — so there is no API key to configure and no second bill per token.
+
+Pick an engine — Claude, Codex, OpenCode — and the model dial fills with that engine's own catalogue. `default` leaves the choice to the CLI. The full list is in [docs/engines.md](docs/engines.md).
+
+---
+
+## Flows and gates
+
+A flow is a list of phases. Each phase names its own engine, model, reasoning effort, thinking mode, prompt, and what it is allowed to touch (`read`, `repo`, `network`). A phase marked `wait` is a **gate**: the run stops there and waits for you.
+
+Four flows ship built in:
+
+| Flow | Phases | For |
+| --- | --- | --- |
+| `quick` | implement | small changes, minimal overhead |
+| `task` | implement → review ⏸ | the default |
+| `careful` | implement → review ⏸ → fix | mission-critical work |
+| `tdd-fuzz-pr` | plan → implement + fuzz → review + PR ⏸ | test-first, ending in a pull request |
+
+Flows are JSON, and phase names are yours. A release flow is as legitimate as a coding one:
+
+```json
+{"name":"ship","phases":[
+  {"name":"validate","engine":"claude","model":"opus","permissions":["read"]},
+  {"name":"tests","engine":"claude","model":"sonnet","permissions":["repo"]},
+  {"name":"pr","engine":"claude","model":"sonnet","feed_output":true,"permissions":["repo"]},
+  {"name":"checks","engine":"claude","model":"sonnet","permissions":["repo"]},
+  {"name":"merge","engine":"claude","model":"opus","wait":true,"permissions":["repo"]}
+]}
+```
+
+Drop it in `~/.orbit/flows/`, or build it in the cockpit with `+`. `orbit flows` lists what you have.
+
+Between every pair of phases Orbit asks whether to continue, and the answer is recorded — including "nobody was asked, autopilot was on". A gate that fails or a phase you paused leaves the task in **Needs You**, where it stays until you look at it.
+
+## Why gates
+
+One long session with an agent has a single verification point: the end. By then the wrong assumption from minute three is buried under four hundred lines that all look plausible, and reviewing it costs more than writing it did.
+
+Phases cut the run into pieces that are each small enough to check. A phase that gets it wrong is caught by the next phase or by you, before the one after it builds on the mistake. That is also what makes the record readable later: eleven short steps with a verdict on each, instead of one transcript nobody will open.
+
+## Supervisor and autopilot
+
+The supervisor is a run like any other: it goes out through the same CLI and subscription as your tasks, on whichever engine the dial is set to. It is the second pair of eyes — it reads the result of a run, decides whether it actually did what the task asked, and can go fix what is missing. There is a chat thread you can write into to redirect it — `orbit supervisor "the migration has to be reversible"` — and it persists, so it is still there next session.
+
+Autopilot is the switch between two modes:
+
+- **On** — Orbit picks up the next To Do, runs it through its flow without stopping at the flow's own gates, and lets the supervisor try to resolve whatever comes back needing attention.
+- **Off** — it runs what you start and hands everything else back to you.
+
+Autopilot lifts the flow's gates. It does not lift a pause you set by hand. And `unread-cap` (10 by default) is the brake: once that many finished tasks are sitting unread, nothing new starts. The queue cannot outrun you.
+
+## Bidirectional MCP
+
+Orbit is an MCP server with 19 tools, so the flow goes both ways. Your CLI writes tasks down, runs them, reads what happened, pauses and redirects them, adds notes, and manages flows and repositories — without you copying anything between windows. Writing a task and paying to run it stay two separate decisions.
+
+The agents Orbit runs report back through the same protocol. They do not have their stdout scraped and guessed at — they say what they did, in structured events, which is why the record is complete enough to be worth reading in six months.
+
+```bash
+orbit mcp install          # register in every client found
+orbit mcp                  # run the server on stdin/stdout
+```
+
+## Integrations
+
+- **CLIs:** Claude Code, Codex, OpenCode — run natively, with your own subscription.
+- **MCP clients:** Claude Code, Claude Desktop, Codex, OpenCode, Gemini.
+- **GitHub:** `orbit pr`, `orbit merge`, `orbit close-pr` — pull requests from a task's worktree, through `gh`.
+- **Issue trackers:** paste a Linear, Jira, GitHub or GitLab URL into the composer and Orbit recognises the reference and writes it into the task prompt.
+
+---
+
+## The cockpit
+
+`orbit top` is one window over every repository. Tasks sit in four bands — **To Do**, **Needs You**, **Running**, **Done** — and move between them on their own as runs progress.
+
+Open a task and eleven tabs cover it: `overview`, `flow`, `gates`, `cost`, `refused`, `timeline`, `report`, `artifacts`, `notes`, `diff`, `thinking`.
+
+Full keybindings in [docs/cockpit.md](docs/cockpit.md). `?` inside the cockpit shows them too.
+
+Everything the cockpit does has a command behind it — `orbit new`, `run`, `pause`, `resume`, `list`, `show`, `read`, `pr`, `merge`, `cancel`, `note`, `direct`, `supervisor`, `settings`. Run `orbit help` for the full list. State lives in `$ORBIT_HOME`, or `~/.orbit` when that is unset.
+
+```bash
+orbit settings                    # show every setting and its value
+orbit settings autopilot on
+orbit settings theme frauddi
 ```
 
 ---
 
-## 🎮 Quickstart
+## Project status
 
-### 1. Launch the Cockpit
-```bash
-# Open Orbit on your workspace
-orbit top ~/projects
-```
+Orbit is at `v0.1.x` and is used daily by its author. It is young, and the version number means it.
 
-### 2. Create and Run a Task
-```bash
-# Create a new task in a repository
-orbit new payments --title "Add Stripe webhook idempotency key" --flow careful
-
-# Run a task headlessly in the background
-orbit run -repo payments -flow careful TASK-1
-
-# Send an operator note to a running task
-orbit note payments TASK-1 "Ensure exponential backoff with jitter is used"
-```
-
-### 3. Manage Settings & Engine Dials
-```bash
-# Configure default engine and model
-orbit set engine claude
-orbit set model sonnet
-orbit set effort high
-orbit set autopilot on
-orbit set theme frauddi
-```
+| | |
+| --- | --- |
+| **Stable** | the cockpit, flows and gates, worktree isolation, the record, the MCP server, GitHub pull requests |
+| **In use, still moving** | the supervisor and autopilot, quota tracking, the flow designer |
+| **Engines that work today** | Claude Code, Codex, OpenCode |
+| **Platforms** | macOS and Linux |
+| **Not there yet** | issue bodies are not fetched from trackers, only the reference is read; storage is flat files, a SQLite move is planned |
 
 ---
 
-## ⌨️ Cockpit Keybindings
+## Details
 
-| Key | Context | Action |
-| :--- | :--- | :--- |
-| `↑` / `↓` or `k` / `j` | Board / Lists | Navigate tasks in the queue |
-| `Enter` / Click | Global | Open task detail view / Confirm selection |
-| `Esc` / `q` | Global | Go back to task board / Exit modal |
-| `1` - `9`, `0`, `w` | Detail View | Jump directly to Inspector tabs (1-11) |
-| `[` / `]` | Detail View | Cycle through inspector tabs |
-| `k` / `M` | Board / Detail | Open AI Engine & Model dials modal |
-| `t` | Detail View | Toggle reasoning thinking mode (`adaptive` $\leftrightarrow$ `off`) |
-| `E` | Detail View | Cycle reasoning effort (`low` $\rightarrow$ `medium` $\rightarrow$ `high` $\rightarrow$ `xhigh`) |
-| `F` | Detail View | Open Flow Designer / inspect current pipeline |
-| `n` | Board | Create a new task (Compose screen) |
-| `i` | Compose | Inspect selected flow in read-only mode |
-| `+` | Compose / Board | Open Custom Flow Designer |
-| `Ctrl+R` | Compose | Save and immediately dispatch task run |
-| `Ctrl+V` | Compose | Paste clipboard text or URL into field |
-| `a` | Detail View | Add an operator note to the task (`orbit note`) |
-| `p` / `u` | Detail View | Pause / Unpause running task |
-| `x` | Detail View | Cancel / Stop task execution |
-| `A` | Board | Toggle Autopilot (auto-dispatch To Do queue) |
-| `S` | Board | Open Settings modal |
-| `R` | Board | Open Connected Repositories modal |
-| `:` | Global | Open Command Palette |
-| `?` | Global | Open Interactive Help Overlay |
+**Other ways to install:** with Go 1.26+, `go install github.com/e1i0r/orbit/cmd/orbit@latest`. From source, `git clone https://github.com/e1i0r/orbit.git && cd orbit && make build && sudo mv orbit /usr/local/bin/`.
 
----
+**Languages:** English and Spanish, switched with `orbit settings language es`.
 
-## 📁 Repository Structure
+**Themes:** `frauddi` (default), `monokai`, `tokyo-night`, `dracula`, `nord`, `catppuccin`.
+
+<details>
+<summary><b>Repository layout</b></summary>
 
 ```
 orbit/
-├── cmd/orbit/             # Orbit binary entrypoint
-├── internal/
-│   ├── board/             # Task queues, board state and band grouping
-│   ├── cli/               # Subcommands (new, run, flows, note, repos, etc.)
-│   ├── engine/            # Agent adapters (Claude Code, Codex, OpenCode)
-│   ├── flow/              # Flow pipeline resolver, validator, and schemas
-│   ├── quota/             # Rate limit windows and asynchronous quota tracker
-│   ├── record/            # Append-only JSONLines event store
-│   ├── repo/              # Git worktree discovery, status, and diff engine
-│   ├── store/             # State root, directories, and persistence
-│   ├── task/              # Task lifecycle engine, executor, and gates
-│   ├── ui/                # Bubble Tea TUI cockpit, views, and modals
-│   │   └── layout/        # Pure geometric layout calculations and bounds
-│   ├── view/              # Read model projections for tasks and logs
-│   └── words/             # Internationalization catalog (EN / ES)
-├── Makefile               # Build, check, and test automation
-└── README.md              # Documentation
+├── cmd/orbit/        # the binary
+└── internal/
+    ├── arch/         # the import map, enforced as a test
+    ├── board/        # queues, bands, board state
+    ├── cli/          # subcommands
+    ├── engine/       # adapters for Claude Code, Codex, OpenCode
+    ├── flow/         # flow schema, resolver, validator
+    ├── logger/       # orbit.log and errors.log
+    ├── mcp/          # the MCP server and its 19 tools
+    ├── quota/        # rate limit windows
+    ├── record/       # append-only JSONL event store
+    ├── repo/         # git worktrees, status, diffs
+    ├── store/        # state root and persistence
+    ├── supervisor/   # the supervisor thread
+    ├── task/         # lifecycle, executor, gates
+    ├── tracker/      # Linear, Jira, GitHub, GitLab references
+    ├── ui/           # the Bubble Tea cockpit
+    ├── view/         # read models
+    └── words/        # en / es catalogues
 ```
 
----
+</details>
 
-## 🧪 Testing & Quality Standards
-
-Orbit maintains rigorous quality standards:
-- **Strict $< 300$ Lines per File:** Highly modular and decoupled architecture.
-- **$\ge 90\%$ Comprehensive Test Coverage:** End-to-end task flows, property-based tests, and native Go fuzz testing (`testing.F`).
-- **Zero Silent Errors:** Explicit error propagation across all packages.
+**Quality bar:** no Go file over 300 lines, ≥90% test coverage as the target, no silently discarded errors. Fuzz tests, golden-file rendering tests, and an architecture test that fails the build on an import that is not on the map.
 
 ```bash
-# Run full verification suite
-make check
-
-# Run tests with coverage
-go test -cover ./...
+make check      # gofmt, vet, lint and tests on macOS and Linux
+make test
+make coverage
 ```
 
----
+## Contributing
 
-## 🤝 Contributing
+Issues and pull requests are welcome. `make check` has to pass, and new behaviour needs a test that fails without it.
 
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md) before opening a Pull Request.
+## License
 
----
-
-## 🔒 Security
-
-For security vulnerability reports, please review our [Security Policy](SECURITY.md).
-
----
-
-## 📄 License
-
-Orbit is open-source software licensed under the [Apache License 2.0](LICENSE).
+Apache 2.0. See [LICENSE](LICENSE).
