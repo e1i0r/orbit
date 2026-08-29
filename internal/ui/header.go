@@ -66,13 +66,14 @@ func (m Model) rule(w int) string {
 // Two things are given up as the terminal narrows, and the order they go in
 // is the whole decision. The root path goes first, from the front, because a
 // reader who opened the folder knows which folder it is and the tail of a
-// path says more than its head. Then the right-hand fields go from the
-// right, which is why headerFields puts them in the order it does: a
+// path says more than its head. Then the right-hand fields go from the front
+// of the list, which is why headerFields puts them in the order it does: the
+// upgrade notice names a command that will still be there tomorrow, a
 // repository count is a number a reader can get elsewhere, the pip is a
 // setting they just changed themselves, and the unread pair is the brake
-// that stops tasks from starting. Losing the brake to fit either of the
-// other two would be losing the one field on this line that changes what
-// happens next.
+// that stops tasks from starting. Losing the brake to fit any of the others
+// would be losing the one field on this line that changes what happens
+// next.
 func (m Model) headerLine(w int) string {
 	line, _ := m.headerLayout(w)
 	return line
@@ -109,7 +110,12 @@ func (m Model) headerLayout(w int) (string, []headerZone) {
 			}}
 		}
 
-		fields = fields[:len(fields)-1]
+		// The field given up is the first, not the last. Taking the last
+		// was taking the brake: it is appended after the three chips, so a
+		// header one cell too narrow dropped the field that says why
+		// nothing is starting and kept an upgrade notice for another
+		// forty-five.
+		fields = fields[1:]
 	}
 }
 
