@@ -59,4 +59,38 @@ func TestACommandThatWorksSaysNothingToTheErrorsFile(t *testing.T) {
 	if len(bytes.TrimSpace(b)) != 0 {
 		t.Errorf("a command that worked wrote to the errors file: %q", b)
 	}
+
+	all, err := os.ReadFile(filepath.Join(home, "logs", "orbit.log"))
+	if err != nil {
+		t.Fatalf("read orbit.log: %v", err)
+	}
+
+	if !strings.Contains(string(all), "[INFO] [cli/repos] ran") {
+		t.Errorf("the log does not say which command was run: %q", all)
+	}
+}
+
+// TestACommandThatLogsNothingOfItsOwnIsStillWrittenDown.
+//
+// Nine of the twenty-two commands have no logger call anywhere in them —
+// flows, list, read, repos, resume, settings, show, top and upgrade — so
+// before the dispatcher wrote their failures down, those nine failed and
+// left no file anywhere any the wiser. show is one of them.
+func TestACommandThatLogsNothingOfItsOwnIsStillWrittenDown(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("ORBIT_HOME", home)
+
+	var out, errOut bytes.Buffer
+	if code := Run([]string{"show", "-repo", filepath.Join(home, "nowhere"), "ABC-1"}, &out, &errOut); code == 0 {
+		t.Fatal("show answered 0 for a repository that is not there")
+	}
+
+	b, err := os.ReadFile(filepath.Join(home, "logs", "errors.log"))
+	if err != nil {
+		t.Fatalf("read errors.log: %v", err)
+	}
+
+	if !strings.Contains(string(b), "[ERROR] [cli/show]") {
+		t.Errorf("the errors file does not say show failed: %q", b)
+	}
 }

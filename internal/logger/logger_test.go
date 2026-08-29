@@ -290,3 +290,45 @@ func TestALoggerWithNoErrorsFileStillLogsErrors(t *testing.T) {
 		t.Errorf("the log is missing the error: %q", b)
 	}
 }
+
+// TestOneEntryIsOneLine.
+//
+// What gets logged is very often an error, an error very often carries the
+// stderr of something that failed, and stderr has newlines in it. Written
+// through, one failure becomes forty entries — thirty-nine of them with no
+// timestamp, no level and no module — and `grep ERROR` finds the first line
+// of the trouble and none of the rest.
+func TestOneEntryIsOneLine(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "test.log")
+
+	l, err := New(path, filepath.Join(dir, "test-errors.log"))
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	l.Log(LevelError, "task/run", "the phase failed: %v", "line one\nline two\nline three")
+
+	if err := l.Close(); err != nil {
+		t.Errorf("Close: %v", err)
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read the log: %v", err)
+	}
+
+	lines := strings.Split(strings.TrimSuffix(string(data), "\n"), "\n")
+	if len(lines) != 1 {
+		t.Fatalf("one call wrote %d lines: %q", len(lines), data)
+	}
+
+	// The words are all still there. Flattening is not truncating: a reader
+	// who lost the newlines has lost the shape of the failure, and one who
+	// lost the words has lost the failure.
+	for _, want := range []string{"line one", "line two", "line three"} {
+		if !strings.Contains(lines[0], want) {
+			t.Errorf("the entry does not carry %q: %q", want, lines[0])
+		}
+	}
+}

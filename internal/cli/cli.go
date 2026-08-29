@@ -87,13 +87,28 @@ func Run(args []string, out, errOut io.Writer) (code int) {
 
 	defer logging(errOut, &code)()
 
+	// The name and not the arguments. A description typed at `orbit new` is
+	// prose somebody wrote, and prose in a diagnostic log is a paragraph
+	// between two facts; what the command was asked to act on is in the
+	// error below when it matters, and in the record always.
+	logger.Info("cli/"+c.Name, "ran")
+
 	err := c.Run(ctx, args[1:])
 	if errors.Is(err, errHelpShown) {
 		return 0
 	}
 
 	if err != nil {
+		// Every command's failure, in one place, for the same reason the log
+		// is opened in one place: a command remembering to write its own down
+		// is a chance to forget, and nine of the twenty-two took it — flows,
+		// list, read, repos, resume, settings, show, top and upgrade each
+		// failed silently as far as any file was concerned. The other
+		// thirteen now say it twice, in their own words and then in these,
+		// and a line repeated is a far smaller thing than a line missing.
+		logger.Error("cli/"+c.Name, "%v", err)
 		fmt.Fprintf(errOut, "orbit: %v\n", err)
+
 		return 1
 	}
 

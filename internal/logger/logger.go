@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
@@ -198,7 +199,14 @@ func (l *Logger) Log(lvl Level, module, format string, args ...any) {
 	}
 
 	ts := time.Now().UTC().Format(timeFormat)
-	msg := fmt.Sprintf(format, args...)
+
+	// One entry is one line, and it is this function's job rather than each
+	// caller's. What gets logged is very often an error, an error very often
+	// carries the stderr of something that failed, and stderr has newlines
+	// in it — so without this, one failure becomes forty entries, thirty-nine
+	// of which have no timestamp, no level and no module, and `grep ERROR`
+	// finds the first line of the trouble and none of the rest.
+	msg := strings.ReplaceAll(fmt.Sprintf(format, args...), "\n", " ")
 
 	entry := fmt.Sprintf("[%s] [%s] [%s] %s\n", ts, lvl.String(), module, msg)
 	l.write(l.file, l.path, entry)
