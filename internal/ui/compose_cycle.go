@@ -179,7 +179,7 @@ func (c *composeState) refreshFlows(src flow.Source) {
 	}
 
 	if len(flows) == 0 {
-		flows = []string{"task", "quick", "careful"}
+		flows = flow.BuiltinNames()
 	}
 
 	c.flows = flows
@@ -190,7 +190,7 @@ func (c *composeState) refreshFlows(src flow.Source) {
 
 func (c composeState) chosenFlow() string {
 	if len(c.flows) == 0 || c.flowIdx < 0 || c.flowIdx >= len(c.flows) {
-		return "task"
+		return flow.Default
 	}
 
 	return c.flows[c.flowIdx]

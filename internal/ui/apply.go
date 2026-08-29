@@ -17,6 +17,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/board"
+	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/ui/layout"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
@@ -110,7 +111,7 @@ func (m Model) autoStartNext() (Model, tea.Cmd) {
 		return m, nil
 	}
 
-	flowName := "task"
+	flowName := flow.Default
 	if m.opts.Settings != nil && m.opts.Settings.Flow() != "" {
 		flowName = m.opts.Settings.Flow()
 	}
