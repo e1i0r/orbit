@@ -44,7 +44,7 @@ var layers = map[string][]string{
 	// internal/board still does not append anything itself, and internal/ui
 	// still cannot reach internal/record, internal/store or internal/engine.
 	"internal/board": {"internal/record", "internal/repo", "internal/store", "internal/task", "internal/view"},
-	"internal/cli":   {"internal/board", "internal/engine", "internal/flow", "internal/logger", "internal/mcp", "internal/quota", "internal/repo", "internal/store", "internal/task", "internal/tracker", "internal/ui", "internal/view", "internal/words"},
+	"internal/cli":   {"internal/board", "internal/engine", "internal/flow", "internal/logger", "internal/mcp", "internal/quota", "internal/repo", "internal/store", "internal/supervisor", "internal/task", "internal/tracker", "internal/ui", "internal/view", "internal/words"},
 	// internal/logger is on internal/engine's list for the one thing this
 	// package does that nothing else in Orbit does: it starts somebody
 	// else's program. What that cost, how long it took and which of the
@@ -63,11 +63,27 @@ var layers = map[string][]string{
 	// is standing at: a model drives it for hours from another process, so a
 	// refusal answered to that model reached no terminal and no record. What
 	// is absent is internal/engine: a supervisor starts runs, not models.
-	"internal/mcp":    {"internal/board", "internal/flow", "internal/logger", "internal/record", "internal/repo", "internal/store", "internal/task", "internal/view"},
+	"internal/mcp":    {"internal/board", "internal/flow", "internal/logger", "internal/record", "internal/repo", "internal/store", "internal/supervisor", "internal/task", "internal/view"},
 	"internal/quota":  {},
 	"internal/record": {},
 	"internal/repo":   {"internal/store"},
 	"internal/store":  {},
+	// internal/supervisor is the one conversation in Orbit that belongs to
+	// no task: a global, append-only thread hanging off the state root. It
+	// lived inside internal/task for as long as there was nowhere else to
+	// put it, which made a package whose doc says it turns a sentence into
+	// a run also the home of a chat log, and put internal/task in the way
+	// of every reader of that log.
+	//
+	// internal/engine is on its list because this package does start a
+	// model — the supervisor is one — and internal/record and internal/store
+	// because the thread is a file under the root. What is absent is
+	// internal/task: the supervisor acts on tasks through the same front
+	// doors everything else does, internal/cli and internal/mcp, and never
+	// from in here. That absence is what keeps the direction one-way, and
+	// with it there is no cycle to make: internal/task does not list this
+	// package either.
+	"internal/supervisor": {"internal/engine", "internal/record", "internal/store"},
 	// internal/logger is on internal/task's list for the same reason it is on
 	// internal/ui's, and for one more: a run that is SIGKILLed writes nothing
 	// about its own death, so the last line it managed to log is the only

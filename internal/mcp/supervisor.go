@@ -6,7 +6,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/record"
-	"github.com/e1i0r/orbit/internal/task"
+	"github.com/e1i0r/orbit/internal/supervisor"
 )
 
 // supervisorSay writes one line into the supervisor thread, which is the one
@@ -14,7 +14,7 @@ import (
 //
 // Who is speaking and where from are the caller's to state, and default to a
 // supervisor speaking over mcp. That is not a hole: this tool is only ever
-// reached over mcp, and every other caller of task.RecordSupervisor — the
+// reached over mcp, and every other caller of supervisor.Record — the
 // cockpit and the command line both — names itself the same way, so a thread
 // whose lines all claimed to come from here would be the lie.
 func (sn Session) supervisorSay(args map[string]any) CallToolResult {
@@ -41,7 +41,7 @@ func (sn Session) supervisorSay(args map[string]any) CallToolResult {
 		return refuse(err)
 	}
 
-	if err := task.RecordSupervisor(s, record.SupervisorMessage, by, channel, taskID, repo, message); err != nil {
+	if err := supervisor.Record(s, record.SupervisorMessage, by, channel, taskID, repo, message); err != nil {
 		return refuse(fmt.Errorf("record supervisor message: %w", err))
 	}
 

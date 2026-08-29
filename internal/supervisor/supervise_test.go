@@ -1,4 +1,4 @@
-package task
+package supervisor
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 )
 
 func TestSuperviseExecutesEngineAndRecordsAnswer(t *testing.T) {
-	s, _ := fixture(t)
+	s := fixture(t)
 	fake := &engine.Fake{
 		Output: "Reviewed all tasks, all systems nominal.",
 	}
@@ -32,9 +32,9 @@ func TestSuperviseExecutesEngineAndRecordsAnswer(t *testing.T) {
 	}
 
 	// Verify recorded in supervisor thread
-	events, err := SupervisorEvents(s)
+	events, err := Events(s)
 	if err != nil {
-		t.Fatalf("SupervisorEvents: %v", err)
+		t.Fatalf("Events: %v", err)
 	}
 
 	if len(events) != 1 {
@@ -47,7 +47,7 @@ func TestSuperviseExecutesEngineAndRecordsAnswer(t *testing.T) {
 }
 
 func TestSuperviseRefusesNilStoreOrEngineOrEmptyPrompt(t *testing.T) {
-	s, _ := fixture(t)
+	s := fixture(t)
 	fake := &engine.Fake{Output: "ok"}
 
 	if _, err := Supervise(context.Background(), nil, fake, "msg"); err == nil {
@@ -64,7 +64,7 @@ func TestSuperviseRefusesNilStoreOrEngineOrEmptyPrompt(t *testing.T) {
 }
 
 func TestAutoSuperviseBuildsPromptWithTaskIDs(t *testing.T) {
-	s, _ := fixture(t)
+	s := fixture(t)
 	fake := &engine.Fake{
 		Output: "Addressed failures in ORB-10 and ORB-12.",
 	}

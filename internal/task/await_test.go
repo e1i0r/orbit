@@ -23,6 +23,7 @@ func TestAWaitForATaskNobodyHoldsIsOverAtOnce(t *testing.T) {
 	}
 
 	began := time.Now()
+
 	if err := awaitStopped(context.Background(), s, tk, time.Minute, time.Second); err != nil {
 		t.Fatalf("awaitStopped on a task nothing claims: %v", err)
 	}
@@ -81,6 +82,7 @@ func TestAWaitEndsWhenTheCallerStopsWaiting(t *testing.T) {
 	defer release()
 
 	ctx, cancel := context.WithCancel(context.Background())
+
 	go func() {
 		time.Sleep(20 * time.Millisecond)
 		cancel()

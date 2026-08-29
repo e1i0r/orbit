@@ -1,4 +1,7 @@
-package task
+package supervisor
+
+// The thread itself: one file under the state root, appended to and read
+// back, and the one way a turn is taken out of it again.
 
 import (
 	"fmt"
@@ -9,8 +12,8 @@ import (
 	"github.com/e1i0r/orbit/internal/store"
 )
 
-// RecordSupervisor appends an event to the global supervisor conversation log.
-func RecordSupervisor(s *store.Store, kind, by, channel, taskID, repo, text string) error {
+// Record appends an event to the global supervisor conversation log.
+func Record(s *store.Store, kind, by, channel, taskID, repo, text string) error {
 	if s == nil {
 		return fmt.Errorf("store cannot be nil")
 	}
@@ -51,8 +54,8 @@ func RecordSupervisor(s *store.Store, kind, by, channel, taskID, repo, text stri
 	return record.Append(s.SupervisorLogPath(), e)
 }
 
-// SupervisorEvents reads all events from the global supervisor conversation log.
-func SupervisorEvents(s *store.Store) ([]record.Event, error) {
+// Events reads all events from the global supervisor conversation log.
+func Events(s *store.Store) ([]record.Event, error) {
 	if s == nil {
 		return nil, fmt.Errorf("store cannot be nil")
 	}
@@ -60,7 +63,7 @@ func SupervisorEvents(s *store.Store) ([]record.Event, error) {
 	return record.Read(s.SupervisorLogPath())
 }
 
-// RetractSupervisor takes back one turn of the supervisor thread.
+// Retract takes back one turn of the supervisor thread.
 //
 // Nothing is erased and nothing pretends to be. A retraction is another line
 // appended after the one it withdraws, naming it by record.Stamp: the thread
@@ -73,7 +76,7 @@ func SupervisorEvents(s *store.Store) ([]record.Event, error) {
 // A timestamp nothing was written at is refused rather than appended. A
 // retraction that matches no line is a typo, and a log that quietly accepts
 // one leaves somebody believing they took something back.
-func RetractSupervisor(s *store.Store, at time.Time) error {
+func Retract(s *store.Store, at time.Time) error {
 	if s == nil {
 		return fmt.Errorf("store cannot be nil")
 	}
@@ -82,7 +85,7 @@ func RetractSupervisor(s *store.Store, at time.Time) error {
 		return fmt.Errorf("a retraction has to name the turn it takes back")
 	}
 
-	events, err := SupervisorEvents(s)
+	events, err := Events(s)
 	if err != nil {
 		return err
 	}
