@@ -49,17 +49,17 @@ var layers = map[string][]string{
 	"internal/engine": {"internal/logger"},
 	"internal/flow":   {},
 	"internal/logger": {},
-	// internal/mcp is the widest list on this map, and it is the same
-	// width as internal/cli's for the same reason: it is a second front
-	// door onto the very functions the command line calls, so it reaches
-	// internal/task to act and internal/board to read. internal/record is
-	// on it for one tool — orbit_inspect_task folds a task's events into
-	// the answer the cockpit's inspector draws — and it is a read of the
-	// vocabulary rather than a write: nothing here appends, because
-	// appending is internal/task's and this package holds no authority of
-	// its own. What is absent is internal/engine: a supervising model can
-	// start a run and cannot start a model.
-	"internal/mcp":    {"internal/board", "internal/flow", "internal/record", "internal/repo", "internal/store", "internal/task", "internal/view"},
+	// internal/mcp is the widest list on this map, and it is the same width
+	// as internal/cli's for the same reason: it is a second front door onto
+	// the very functions the command line calls, so it reaches internal/task
+	// to act and internal/board to read. internal/record is on it for one
+	// tool — orbit_inspect_task folds a task's events into the answer the
+	// cockpit's inspector draws — and it is a read, not a write: nothing
+	// here appends. internal/logger is on it because this is the door nobody
+	// is standing at: a model drives it for hours from another process, so a
+	// refusal answered to that model reached no terminal and no record. What
+	// is absent is internal/engine: a supervisor starts runs, not models.
+	"internal/mcp":    {"internal/board", "internal/flow", "internal/logger", "internal/record", "internal/repo", "internal/store", "internal/task", "internal/view"},
 	"internal/quota":  {},
 	"internal/record": {},
 	"internal/repo":   {"internal/store"},
