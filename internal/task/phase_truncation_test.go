@@ -90,3 +90,46 @@ func TestRunGatesPassedEmitFailure(t *testing.T) {
 		t.Error("runGates should have failed to record GatePassed for a bad task id")
 	}
 }
+
+// TestAToolCallCarriesItsArgumentsOnce is the size of the log, not a detail
+// of where a field sits.
+//
+// phase.tool_call is the kind a phase writes hundreds of, and it used to put
+// the same captured arguments in Text and in Data["args"] — so the events
+// that dominate the record weighed twice what they had to, and a call with
+// large arguments could take its own line past record.MaxLine, where Append
+// refuses it and the run fails on an emit that is not best-effort.
+func TestAToolCallCarriesItsArgumentsOnce(t *testing.T) {
+	args := `{"command":"go test ./..."}`
+
+	e := phaseToolCall("implement", 1, engine.StreamToolCall{Name: "Bash", Args: args})
+	if e.Text != args {
+		t.Errorf("Text = %q, want the arguments %q", e.Text, args)
+	}
+
+	for key, value := range e.Data {
+		if strings.Contains(value, args) {
+			t.Errorf("Data[%q] repeats the arguments the event already carries in Text", key)
+		}
+	}
+
+	if e.Data["tool"] != "Bash" {
+		t.Errorf("Data[\"tool\"] = %q, want Bash — the name stays beside the payload", e.Data["tool"])
+	}
+}
+
+// TestATruncatedToolCallSaysSo. The one thing Data still holds about the
+// arguments is how many bytes there were before they were cut, which is the
+// honesty rule captured follows everywhere else.
+func TestATruncatedToolCallSaysSo(t *testing.T) {
+	big := strings.Repeat("A", maxOutput+100)
+
+	e := phaseToolCall("implement", 1, engine.StreamToolCall{Name: "Bash", Args: big})
+	if e.Data["bytes"] != strconv.Itoa(len(big)) {
+		t.Errorf("bytes = %q, want %d", e.Data["bytes"], len(big))
+	}
+
+	if len(e.Text) > maxOutput+64 {
+		t.Errorf("Text is %d bytes, which is not a cut at maxOutput", len(e.Text))
+	}
+}

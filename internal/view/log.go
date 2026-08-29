@@ -54,7 +54,6 @@ type Entry struct {
 	Gate    string  // gate name, from Data["gate"]
 	Exit    string  // exit code, from Data["exit"]
 	Tool    string  // tool name, from Data["tool"]
-	Args    string  // tool arguments, from Data["args"]
 	Notes   string  // note count or info, from Data["notes"]
 	By      string  // what acted on the task from outside a run, from Data["by"]
 
@@ -211,7 +210,6 @@ func entry(e record.Event, attempt int) Entry {
 		Gate:    e.Data["gate"],
 		Exit:    e.Data["exit"],
 		Tool:    e.Data["tool"],
-		Args:    e.Data["args"],
 		Notes:   e.Data["notes"],
 		By:      e.Data["by"],
 		Kept:    len(e.Text),

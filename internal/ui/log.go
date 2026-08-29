@@ -165,8 +165,8 @@ func (m Model) logDetail(e view.Entry) string {
 	case view.EntryStarted:
 		return strings.TrimSpace(e.Engine + " " + e.Model)
 	case view.EntryToolCall:
-		if e.Args != "" {
-			return formatLogTool(e.Tool, e.Args, m.expandedDetail)
+		if e.Text != "" {
+			return formatLogTool(e.Tool, e.Text, m.expandedDetail)
 		}
 
 		return e.Tool

@@ -87,7 +87,7 @@ func foldCases() []foldCase {
 				{At: at(1), Kind: "task.started", Data: data("flow", "task")},
 				{At: at(2), Kind: "phase.started", Phase: "implement", Data: data("engine", "claude", "model", "opus", "n", "1")},
 				{At: at(3), Kind: "phase.thought", Phase: "implement", Text: "investigating tests"},
-				{At: at(4), Kind: "phase.tool_call", Phase: "implement", Data: data("tool", "Bash", "args", "go test ./...")},
+				{At: at(4), Kind: "phase.tool_call", Phase: "implement", Text: "go test ./...", Data: data("tool", "Bash")},
 			},
 			want: Task{
 				Title: "Live action task", Band: Running, Flow: "task",
