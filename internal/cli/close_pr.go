@@ -8,6 +8,11 @@ import (
 	"github.com/e1i0r/orbit/internal/logger"
 )
 
+// closingComment is what Orbit leaves on a pull request it closes. It lives
+// here rather than in internal/repo because that package runs git and gh and
+// does not write English.
+const closingComment = "Closed from Orbit."
+
 func closePR(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("close-pr", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
@@ -37,14 +42,13 @@ func closePR(ctx Context, args []string) error {
 
 	branch := "orbit/" + taskID
 
-	out, err := r.ClosePR(wtDir, branch)
-	if err != nil {
+	if err := r.ClosePR(wtDir, branch, closingComment); err != nil {
 		logger.Error("cli/close-pr", "gh pr close failed: %v", err)
 		return fmt.Errorf("close pull request for %q failed: %w", taskID, err)
 	}
 
-	logger.Info("cli/close-pr", "closed pull request for task %s: %s", taskID, out)
-	fmt.Fprintf(ctx.Out, "Pull Request closed: %s\n", out)
+	logger.Info("cli/close-pr", "closed pull request for task %s on branch %s", taskID, branch)
+	fmt.Fprintf(ctx.Out, "Pull Request closed: %s\n", branch)
 
 	return nil
 }

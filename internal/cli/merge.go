@@ -37,14 +37,13 @@ func mergePR(ctx Context, args []string) error {
 
 	branch := "orbit/" + taskID
 
-	out, err := r.MergePR(wtDir, branch)
-	if err != nil {
+	if err := r.MergePR(wtDir, branch); err != nil {
 		logger.Error("cli/merge", "gh pr merge failed: %v", err)
 		return fmt.Errorf("merge pull request for %q failed: %w", taskID, err)
 	}
 
-	logger.Info("cli/merge", "merged pull request for task %s: %s", taskID, out)
-	fmt.Fprintf(ctx.Out, "Pull Request merged: %s\n", out)
+	logger.Info("cli/merge", "merged pull request for task %s on branch %s", taskID, branch)
+	fmt.Fprintf(ctx.Out, "Pull Request merged: %s\n", branch)
 
 	return nil
 }
