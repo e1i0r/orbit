@@ -158,8 +158,42 @@ func (m Model) headerLeft(w int, spaced bool) (string, []headerZone, bool) {
 	}
 }
 
-// name is the program's own name badge.
-func (m Model) name() string { return Pill("[orbit]", "#FFFFFF", "#0F766E") }
+// name is the program's own name badge: the mark from the logo, which is a
+// body with rings around it, and the word.
+//
+// It used to read "[orbit]". The brackets were doing the job the pill's own
+// background already does — saying where the badge starts and stops — and
+// everything else on this line that a reader can click is a pill without
+// them.
+//
+// The glyph and the two brackets it replaces are the same three cells wide,
+// so the badge is still nine and hitHeader's columns still land where they
+// did. That is luck rather than design, and the next change to this string
+// has to check it: the click that resets every filter is placed by a number
+// written down in target.go, not by measuring what was drawn here.
+func (m Model) name() string {
+	const (
+		fg = "#FFFFFF"
+		bg = "#0F766E"
+	)
+
+	if m.showingEverything() {
+		return PillSelected("◉ orbit", fg, bg)
+	}
+
+	return Pill("◉ orbit", fg, bg)
+}
+
+// showingEverything reports whether the board is holding nothing back, which
+// is the state clicking the name badge puts it in: no queue chosen, no
+// repository chosen, nothing typed in the search.
+//
+// The badge is drawn as selected exactly then. A queue badge lights up when
+// its queue is the one being shown, and until now the badge that means "all
+// of them" was the one arrangement of the board with nothing lit at all.
+func (m Model) showingEverything() bool {
+	return m.queueFilter == nil && m.repoFilter == "" && m.filter == ""
+}
 
 // shorten drops one leading path segment and marks the cut, and returns ""
 // once there is nothing left worth showing.

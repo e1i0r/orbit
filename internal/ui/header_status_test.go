@@ -67,7 +67,7 @@ func TestHeaderLineShrinksAndRefuses(t *testing.T) {
 }
 
 // TestHeaderLeftQueueBadges is the branch that only fires with four bands
-// counted and enough room: the full "[orbit]  todo running needs-you done"
+// counted and enough room: the full "◉ orbit  todo running needs-you done"
 // line rather than the plain root path.
 func TestHeaderLeftQueueBadges(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
