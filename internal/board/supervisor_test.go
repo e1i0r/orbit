@@ -54,3 +54,45 @@ func TestReaderSupervisorLog(t *testing.T) {
 		t.Errorf("lines[0] = %+v", lines[0])
 	}
 }
+
+// TestTheSupervisorThreadIsReadWithoutABoard. It is one file under the state
+// root and it belongs to no repository, so a caller that wants it needs no
+// directory to point a Reader at — and both callers that wanted it were
+// pointing one at "", which repo.Discover resolves to wherever the process
+// was started from.
+func TestTheSupervisorThreadIsReadWithoutABoard(t *testing.T) {
+	s, err := store.New(filepath.Join(t.TempDir(), ".orbit"))
+	if err != nil {
+		t.Fatalf("store.New: %v", err)
+	}
+
+	lines, err := SupervisorLog(s)
+	if err != nil || len(lines) != 0 {
+		t.Fatalf("SupervisorLog on a thread nobody has written = %v, %v; want none and no error", lines, err)
+	}
+
+	ev := record.Event{
+		Kind: record.SupervisorMessage,
+		Text: "the webhook task is stuck on its gate",
+		Data: map[string]string{"by": "operator", "channel": "cli"},
+	}
+	if err := record.Append(s.SupervisorLogPath(), ev); err != nil {
+		t.Fatalf("record.Append: %v", err)
+	}
+
+	lines, err = SupervisorLog(s)
+	if err != nil {
+		t.Fatalf("SupervisorLog: %v", err)
+	}
+
+	if len(lines) != 1 || lines[0].Text != ev.Text {
+		t.Fatalf("the thread reads %+v, want the one line that was written", lines)
+	}
+
+	// And the Reader's method is the same answer, because it is the same
+	// function underneath.
+	viaReader, err := NewReader(s, t.TempDir()).SupervisorLog()
+	if err != nil || len(viaReader) != 1 || viaReader[0].Text != ev.Text {
+		t.Errorf("through a Reader the thread reads %+v, %v", viaReader, err)
+	}
+}
