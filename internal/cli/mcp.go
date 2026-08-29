@@ -55,25 +55,14 @@ func runMCP(ctx Context, args []string) error {
 // logger goes to a file under the state root, which is what makes that
 // possible.
 func serveMCP(ctx Context, root string) error {
-	s, err := store.Open()
-	if err != nil {
+	// The state root is opened before the server answers anything, so a
+	// root that cannot be opened is one refusal to serve rather than
+	// sixteen tools that each fail differently later on.
+	if _, err := store.Open(); err != nil {
 		return err
 	}
 
-	if logErr := logger.Init(s.LogPath(), s.ErrorLogPath()); logErr == nil {
-		// Closing answers what the log could not write, and that is said
-		// on the error stream rather than swallowed: this runs after the
-		// window has given the terminal back and the mcp client is not
-		// reading this stream, so it is the one place the sentence can be
-		// printed without ruining what it is printed next to.
-		defer func() {
-			if err := logger.CloseGlobal(); err != nil {
-				fmt.Fprintln(ctx.Err, "orbit:", err)
-			}
-		}()
-
-		logger.Info("cli/mcp", "mcp server started (root=%q, version=%s)", root, Version)
-	}
+	logger.Info("cli/mcp", "mcp server started (root=%q, version=%s)", root, Version)
 
 	session := mcp.Session{Root: root, Version: Version}
 	if err := mcp.NewServer(os.Stdin, os.Stdout, session).Serve(); err != nil {
