@@ -111,7 +111,7 @@ func (m Model) openCompose() Model {
 	}
 
 	if len(flows) == 0 {
-		flows = []string{"task", "quick", "careful"}
+		flows = flow.BuiltinNames()
 	}
 
 	// The engines and their two dials are the build's, not this form's:

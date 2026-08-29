@@ -7,6 +7,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 
+	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -126,7 +127,7 @@ func (m Model) overviewLines() []string {
 
 	flowName := t.Flow
 	if flowName == "" {
-		flowName = "task"
+		flowName = flow.Default
 	}
 
 	out = append(out,

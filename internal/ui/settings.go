@@ -11,12 +11,23 @@ import (
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+
+	"github.com/e1i0r/orbit/internal/flow"
 )
 
 type settingsState struct {
 	sel     int
 	editing bool
 	typed   string
+	// flows is what the flow dial offers, read once when the screen opens
+	// rather than while it draws.
+	//
+	// settingRowsList is called from View, from every keypress and from
+	// every mouse event, so asking the flows directory inside it would be
+	// one os.ReadDir per frame — and, worse, two readings taken at two
+	// moments deciding the same dial. flows.go tells that story at length;
+	// this is the same fix, made before it happened again.
+	flows []string
 }
 
 type settingRow struct {
@@ -38,7 +49,7 @@ func (r settingRow) label(i int) string {
 
 func (m Model) openSettings() Model {
 	m.screen = screenSettings
-	m.settings = settingsState{}
+	m.settings = settingsState{flows: flow.Names(m.opts.Flows)}
 
 	return m
 }
@@ -71,8 +82,17 @@ func (m Model) settingRowsList() []settingRow {
 	// dial simply has no pill lit.
 	engines := m.engineNames()
 	engineVal := orDef(s.Engine(), first(engines))
-	flowVal := orDef(s.Flow(), "task")
-	themeVal := orDef(s.Theme(), "frauddi")
+	flowVal := orDef(s.Flow(), flow.Default)
+	themeVal := orDef(s.Theme(), defaultTheme)
+
+	// The flows are the build's and the reader's, not this screen's. This
+	// dial used to offer three names written out by hand, so the fourth
+	// flow shipped inside the binary could not be chosen here at all, and
+	// neither could any flow the reader had written for themselves.
+	flows := m.settings.flows
+	if len(flows) == 0 {
+		flows = flow.BuiltinNames()
+	}
 
 	models, modelLabels := m.modelsFor(engineVal)
 
@@ -98,7 +118,7 @@ func (m Model) settingRowsList() []settingRow {
 		{key: "model", val: modelVal, options: models, labels: modelLabels, about: p.T("setting.model", "the model a phase asks for when it names none")},
 		{key: "effort", val: effortVal, options: efforts, labels: effortLabels, about: p.T("setting.effort", "the default reasoning effort level for engine sessions")},
 		{key: "thinking", val: thinkingVal, options: []string{"adaptive", "on", "off"}, about: p.T("setting.thinking", "whether extended thinking mode is enabled for the engine")},
-		{key: "flow", val: flowVal, options: []string{"task", "quick", "careful"}, about: p.T("setting.flow", "the flow a new task is written against")},
+		{key: "flow", val: flowVal, options: flows, about: p.T("setting.flow", "the flow a new task is written against")},
 		{key: "theme", val: themeVal, options: AvailableThemes(), about: p.T("setting.theme", "the visual color theme for the window")},
 	}
 }

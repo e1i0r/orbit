@@ -108,11 +108,17 @@ var themePalettes = map[string]Palette{
 	},
 }
 
-var currentThemeName = "frauddi"
+// defaultTheme is the theme a build starts on, and the one a settings file
+// naming none is read as. The palette map below is keyed by name and a map
+// has no first entry, so this says which one out loud rather than leaving
+// two places to write the same word.
+const defaultTheme = "frauddi"
+
+var currentThemeName = defaultTheme
 
 // AvailableThemes lists the default selectable themes.
 func AvailableThemes() []string {
-	return []string{"frauddi", "monokai", "tokyo-night", "dracula", "nord", "catppuccin"}
+	return []string{defaultTheme, "monokai", "tokyo-night", "dracula", "nord", "catppuccin"}
 }
 
 // SetCurrentTheme sets the active theme for painting.
