@@ -2,6 +2,8 @@ package task
 
 import (
 	"context"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/store"
@@ -153,5 +155,36 @@ func TestRunPassesLastSessionToResumableEngine(t *testing.T) {
 
 	if fake.Calls[0].Resume != "sess-existing" {
 		t.Errorf("fake.Calls[0].Resume = %q, want sess-existing", fake.Calls[0].Resume)
+	}
+}
+
+// TestAPhaseWhoseRecordWillNotReadOpensAFreshSession.
+//
+// Resuming is best-effort on purpose: an engine that has forgotten the last
+// phase still works, and failing the whole run over a log the reader could
+// not parse would cost more than it saves. What the read error must not do
+// is disappear -- a phase that quietly loses everything the phase before it
+// knew is a run nobody can explain afterwards, which is why this one goes to
+// the log on its way past.
+func TestAPhaseWhoseRecordWillNotReadOpensAFreshSession(t *testing.T) {
+	s, r := fixture(t)
+
+	tk, err := Create(s, r, "SESS-UNREADABLE-1", "resume over a log that will not read", "quick")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	path, err := s.EventsPath(r.Path, tk.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// One line over record.MaxLine, which trips the scanner rather than
+	// yielding a record.unreadable event.
+	if err := os.WriteFile(path, []byte(strings.Repeat("x", 5<<20)+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if got := lastSession(s, tk, "fake", &engine.Fake{Resumable: true}); got != "" {
+		t.Errorf("lastSession over an unreadable log = %q, want the empty id that starts a new session", got)
 	}
 }

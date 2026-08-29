@@ -1,6 +1,7 @@
 package task
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -37,12 +38,16 @@ func Direct(s *store.Store, t Task, by, message string) error {
 		return fmt.Errorf("task %s note: %w", t.ID, err)
 	}
 
-	pid, ok, err := Alive(s, t)
+	_, ok, err := Alive(s, t)
 	if err != nil {
 		return fmt.Errorf("check liveness for task %s: %w", t.ID, err)
 	}
-
-	if ok && pid > 0 {
+	// ok alone, and not ok && pid > 0. Alive cannot answer yes about a pid
+	// it does not have, and parsePid refuses a marker naming anything below
+	// 2, so the second half was a condition that could not be false — which
+	// reads as though there were a case it guarded against, and there is
+	// not.
+	if ok {
 		if err := Cancel(s, t); err != nil {
 			return fmt.Errorf("stop task %s: %w", t.ID, err)
 		}
@@ -55,6 +60,11 @@ func Direct(s *store.Store, t Task, by, message string) error {
 // on restarting the task. Long enough for an engine to notice a cancelled
 // context and unwind; short enough that a person is still watching.
 const stopWait = 30 * time.Second
+
+// stopPoll is how often the wait looks again, and it is the same shape of
+// number as the gate's own poll: short, because what is being waited on is a
+// process unwinding rather than a person deciding.
+const stopPoll = 50 * time.Millisecond
 
 // Reopen applies a directive and starts a new run of the task once the old
 // one is actually gone.
@@ -69,12 +79,12 @@ const stopWait = 30 * time.Second
 //
 // A run that will not stop inside the window is reported rather than
 // restarted over the top of, and the message names the verb that ends it.
-func Reopen(s *store.Store, t Task, by, message, flowName string, unread int) (int, error) {
+func Reopen(ctx context.Context, s *store.Store, t Task, by, message, flowName string, unread int) (int, error) {
 	if err := Direct(s, t, by, message); err != nil {
 		return 0, err
 	}
 
-	if err := awaitStopped(s, t, stopWait); err != nil {
+	if err := awaitStopped(ctx, s, t, stopWait, stopPoll); err != nil {
 		return 0, err
 	}
 
@@ -89,10 +99,21 @@ func Reopen(s *store.Store, t Task, by, message, flowName string, unread int) (i
 // awaitStopped waits until nothing live holds the task.
 //
 // It polls, as the gate does, and for the same reason: there is no way to
-// wait on a process that is not this one's child. The interval is short
-// because the answer usually arrives on the first or second look — what is
-// being waited on is a process unwinding, not a person deciding.
-func awaitStopped(s *store.Store, t Task, within time.Duration) error {
+// wait on a process that is not this one's child. within and poll are
+// parameters rather than the two constants above for the reason FileGate's
+// poll is one — a test can then exercise the deadline in milliseconds
+// instead of standing still for half a minute to reach a branch, which is
+// how this function came to be the only one in the package with no test at
+// all.
+//
+// The sleep is a select on the context rather than a time.Sleep, which is
+// the same shape fileGate.wait uses. Half a minute is a long time to hold a
+// caller that has already been told to give up: a person pressing Ctrl-C
+// gets their terminal back, and a caller with a deadline gets to keep it.
+// The context's own error is what comes back, so the difference between "the
+// run would not stop" and "you stopped waiting" survives into whatever the
+// caller prints.
+func awaitStopped(ctx context.Context, s *store.Store, t Task, within, poll time.Duration) error {
 	deadline := time.Now().Add(within)
 
 	for {
@@ -109,6 +130,10 @@ func awaitStopped(s *store.Store, t Task, within time.Duration) error {
 			return fmt.Errorf("task %s was asked to stop, but process %d is still running after %s; end it with `orbit cancel -now %s` and start it again", t.ID, pid, within, t.ID)
 		}
 
-		time.Sleep(50 * time.Millisecond)
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("task %s was asked to stop, and waiting for it ended first: %w", t.ID, ctx.Err())
+		case <-time.After(poll):
+		}
 	}
 }

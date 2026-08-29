@@ -24,7 +24,7 @@ import (
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/store"
-	"github.com/e1i0r/orbit/internal/task"
+	"github.com/e1i0r/orbit/internal/supervisor"
 	"github.com/e1i0r/orbit/internal/ui"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
@@ -133,7 +133,7 @@ func askSupervisorPort(s *store.Store, engines map[string]engine.Engine) func(st
 			return "", err
 		}
 
-		return task.Supervise(context.Background(), s, eng, prompt)
+		return supervisor.Supervise(context.Background(), s, eng, prompt)
 	}
 }
 
@@ -146,7 +146,7 @@ func autoSupervisePort(s *store.Store, engines map[string]engine.Engine) func(st
 			return "", err
 		}
 
-		return task.AutoSupervise(context.Background(), s, eng, taskIDs)
+		return supervisor.AutoSupervise(context.Background(), s, eng, taskIDs)
 	}
 }
 

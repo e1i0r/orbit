@@ -10,7 +10,7 @@ import (
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/store"
-	"github.com/e1i0r/orbit/internal/task"
+	"github.com/e1i0r/orbit/internal/supervisor"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -51,7 +51,7 @@ func supervisorCommand(ctx Context, args []string) error {
 	}
 
 	text := strings.Join(remaining, " ")
-	if err := task.RecordSupervisor(s, "", *by, *channel, *taskID, *repoName, text); err != nil {
+	if err := supervisor.Record(s, "", *by, *channel, *taskID, *repoName, text); err != nil {
 		logger.Error("cli/supervisor", "record supervisor message failed: %v", err)
 		return err
 	}
@@ -116,7 +116,7 @@ func retractLine(ctx Context, s *store.Store, n int) error {
 		return fmt.Errorf("line %d was already taken back", n)
 	}
 
-	if err := task.RetractSupervisor(s, l.At); err != nil {
+	if err := supervisor.Retract(s, l.At); err != nil {
 		logger.Error("cli/supervisor", "retract supervisor message failed: %v", err)
 		return err
 	}

@@ -1,4 +1,4 @@
-package task
+package supervisor
 
 // Taking back one turn of the supervisor thread.
 
@@ -18,25 +18,25 @@ import (
 // directory. What a retraction changes is what the line is still allowed to
 // do, not whether it happened.
 func TestRetractSupervisorStopsRepeatingATurnWithoutErasingIt(t *testing.T) {
-	s, _ := fixture(t)
+	s := fixture(t)
 	for _, text := range []string{"first thing", "the one I regret", "third thing"} {
-		if err := RecordSupervisor(s, "", "elio", "cli", "", "", text); err != nil {
-			t.Fatalf("RecordSupervisor %q: %v", text, err)
+		if err := Record(s, "", "elio", "cli", "", "", text); err != nil {
+			t.Fatalf("Record %q: %v", text, err)
 		}
 	}
 
-	events, err := SupervisorEvents(s)
+	events, err := Events(s)
 	if err != nil {
-		t.Fatalf("SupervisorEvents: %v", err)
+		t.Fatalf("Events: %v", err)
 	}
 
-	if err := RetractSupervisor(s, events[1].At); err != nil {
-		t.Fatalf("RetractSupervisor: %v", err)
+	if err := Retract(s, events[1].At); err != nil {
+		t.Fatalf("Retract: %v", err)
 	}
 
-	events, err = SupervisorEvents(s)
+	events, err = Events(s)
 	if err != nil {
-		t.Fatalf("SupervisorEvents: %v", err)
+		t.Fatalf("Events: %v", err)
 	}
 
 	if len(events) != 4 {
@@ -65,43 +65,43 @@ func TestRetractSupervisorStopsRepeatingATurnWithoutErasingIt(t *testing.T) {
 // line is a typo, and accepting one leaves somebody believing they took
 // something back.
 func TestRetractSupervisorRefusesWhatItCannotFind(t *testing.T) {
-	s, _ := fixture(t)
-	if err := RetractSupervisor(nil, time.Now()); err == nil {
-		t.Error("RetractSupervisor on a nil store answered nil, want error")
+	s := fixture(t)
+	if err := Retract(nil, time.Now()); err == nil {
+		t.Error("Retract on a nil store answered nil, want error")
 	}
 
-	if err := RetractSupervisor(s, time.Time{}); err == nil {
-		t.Error("RetractSupervisor with no timestamp answered nil, want error")
+	if err := Retract(s, time.Time{}); err == nil {
+		t.Error("Retract with no timestamp answered nil, want error")
 	}
 
-	if err := RetractSupervisor(s, time.Now()); err == nil {
-		t.Error("RetractSupervisor over an empty thread answered nil, want error")
+	if err := Retract(s, time.Now()); err == nil {
+		t.Error("Retract over an empty thread answered nil, want error")
 	}
 
-	if err := RecordSupervisor(s, "", "elio", "cli", "", "", "the only turn"); err != nil {
-		t.Fatalf("RecordSupervisor: %v", err)
+	if err := Record(s, "", "elio", "cli", "", "", "the only turn"); err != nil {
+		t.Fatalf("Record: %v", err)
 	}
 
-	events, err := SupervisorEvents(s)
+	events, err := Events(s)
 	if err != nil {
-		t.Fatalf("SupervisorEvents: %v", err)
+		t.Fatalf("Events: %v", err)
 	}
 
-	if err := RetractSupervisor(s, events[0].At.Add(time.Nanosecond)); err == nil {
-		t.Error("RetractSupervisor a nanosecond off the turn answered nil, want error")
+	if err := Retract(s, events[0].At.Add(time.Nanosecond)); err == nil {
+		t.Error("Retract a nanosecond off the turn answered nil, want error")
 	}
 
 	// And a retraction is not a turn: there is nothing to take back about it.
-	if err := RetractSupervisor(s, events[0].At); err != nil {
-		t.Fatalf("RetractSupervisor: %v", err)
+	if err := Retract(s, events[0].At); err != nil {
+		t.Fatalf("Retract: %v", err)
 	}
 
-	events, err = SupervisorEvents(s)
+	events, err = Events(s)
 	if err != nil {
-		t.Fatalf("SupervisorEvents: %v", err)
+		t.Fatalf("Events: %v", err)
 	}
 
-	if err := RetractSupervisor(s, events[1].At); err == nil {
+	if err := Retract(s, events[1].At); err == nil {
 		t.Error("retracting a retraction answered nil, want error")
 	}
 }

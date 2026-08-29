@@ -1,4 +1,15 @@
-package task
+// Package supervisor is the one conversation in Orbit that belongs to no
+// task: a global, append-only thread under the state root, and the model
+// that answers into it.
+//
+// It lived in internal/task until this package existed, which made a package
+// whose own doc says it turns a written sentence into a run also the home of
+// a chat log, and put the whole lifecycle of a run between every reader and
+// that log. Nothing here takes a task, holds a marker, or walks a flow. The
+// supervisor acts on tasks the way everything else does — through
+// internal/cli and internal/mcp — and never from in here, which is what
+// keeps the direction one way.
+package supervisor
 
 import (
 	"context"
@@ -37,7 +48,7 @@ func Supervise(ctx context.Context, s *store.Store, eng engine.Engine, prompt st
 	// them and cancels them — so one that cannot remember what it already did
 	// is one that does it again. The operator sees the error and can fix the
 	// file; a supervisor with no memory is not something they can see at all.
-	events, err := SupervisorEvents(s)
+	events, err := Events(s)
 	if err != nil {
 		return "", fmt.Errorf("read the supervisor thread: %w", err)
 	}
@@ -56,7 +67,7 @@ func Supervise(ctx context.Context, s *store.Store, eng engine.Engine, prompt st
 	// the only account there is of what the supervisor was doing.
 	ans := strings.TrimSpace(out.Output)
 	if ans != "" {
-		if recErr := RecordSupervisor(s, record.SupervisorMessage, eng.Name(), "supervisor", "", "", ans); recErr != nil {
+		if recErr := Record(s, record.SupervisorMessage, eng.Name(), "supervisor", "", "", ans); recErr != nil {
 			return ans, recErr
 		}
 	}

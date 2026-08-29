@@ -1,22 +1,32 @@
 package task
 
-// The two error returns of unconsumedNotes, both of which answer nil rather
-// than propagating a fault — see its doc comment for why a phase starting
-// must not be blocked by a record it cannot read.
+// The two error returns of unconsumedNotes, both of which now travel rather
+// than being answered around.
+//
+// This file used to assert the opposite — nil, and carry on — with a comment
+// pointing at a doc comment that gave the reason. There was no reason there
+// to point at. What the swallow actually bought was a phase that starts with
+// the operator's correction missing from its prompt and nothing anywhere
+// saying so, which is the failure this package refuses by name in Supervise.
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/engine"
+	"github.com/e1i0r/orbit/internal/flow"
 )
 
-func TestUnconsumedNotesErrorPaths(t *testing.T) {
+// TestNotesThatCannotBeReadAreNotReportedAsNoNotes.
+func TestNotesThatCannotBeReadAreNotReportedAsNoNotes(t *testing.T) {
 	s, r := fixture(t)
 
 	// 1. Bad id: EventsPath itself fails.
 	bad := Task{ID: "has/slash", Repo: r}
-	if notes := unconsumedNotes(s, bad); notes != nil {
-		t.Errorf("unconsumedNotes on a bad id = %v, want nil", notes)
+	if notes, err := unconsumedNotes(s, bad); err == nil {
+		t.Errorf("unconsumedNotes on a bad id = %v, nil — want the path error", notes)
 	}
 
 	// 2. A log record.Read cannot parse at all: one line longer than
@@ -37,7 +47,42 @@ func TestUnconsumedNotesErrorPaths(t *testing.T) {
 		t.Fatalf("WriteFile: %v", err)
 	}
 
-	if notes := unconsumedNotes(s, tk); notes != nil {
-		t.Errorf("unconsumedNotes over an unreadable log = %v, want nil", notes)
+	if notes, err := unconsumedNotes(s, tk); err == nil {
+		t.Errorf("unconsumedNotes over an unreadable log = %v, nil — want the read error", notes)
+	}
+}
+
+// TestAPhaseIsNotRunWithoutTheNotesItWasMeantToCarry is the reason the error
+// travels at all: a run whose corrections could not be read is a run about
+// to do the thing the operator wrote a note to stop.
+func TestAPhaseIsNotRunWithoutTheNotesItWasMeantToCarry(t *testing.T) {
+	s, r := fixture(t)
+
+	tk, err := Create(s, r, "NOTES-RUN-1", "notes on an unreadable log", "quick")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	path, err := s.EventsPath(r.Path, tk.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// One line over record.MaxLine, which trips the scanner rather than
+	// yielding a record.unreadable event. Appending still works, so the run
+	// gets as far as the phase loop and stops there.
+	if err := os.WriteFile(path, []byte(strings.Repeat("x", 5<<20)+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	f := flow.Flow{Name: "quick", Phases: []flow.Phase{{Name: "phase-1", Engine: "fake"}}}
+	engines := map[string]engine.Engine{"fake": engine.NewFake("out")}
+
+	err = Run(context.Background(), s, tk, f, engines, nil)
+	if err == nil {
+		t.Fatal("a phase ran with the operator notes silently missing from its prompt")
+	}
+
+	if !strings.Contains(err.Error(), "phase-1") {
+		t.Errorf("the failure is %q, and it does not name the phase that did not run", err)
 	}
 }

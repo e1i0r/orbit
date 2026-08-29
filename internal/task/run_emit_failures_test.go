@@ -152,16 +152,60 @@ func TestRunPhaseFinishedEmitFailure(t *testing.T) {
 	}
 }
 
-// TestRunTaskStartedEmitFailure covers Run's very first write failing: a bad
-// task id, before anything else about the run has happened.
-func TestRunTaskStartedEmitFailure(t *testing.T) {
+// TestRunOnATaskIdTheStateRootRefuses stops before anything is written at
+// all: the marker goes down first, and an id that is not a single path
+// element has nowhere to put one.
+//
+// This test used to say it covered the task.started write. It did not -- the
+// hold above that write fails on the same id, so Run returned one line
+// earlier and the branch the name promised was never entered. The one below
+// enters it.
+func TestRunOnATaskIdTheStateRootRefuses(t *testing.T) {
 	s, r := fixture(t)
 	bad := Task{ID: "has/slash", Repo: r}
 	f := flow.Flow{Name: "f", Phases: []flow.Phase{{Name: "p", Engine: "fake"}}}
 
 	engines := map[string]engine.Engine{"fake": engine.NewFake("out")}
 	if err := Run(context.Background(), s, bad, f, engines, nil); err == nil {
-		t.Error("Run should have failed to record task.started for a bad task id")
+		t.Error("Run walked a task whose id the state root cannot hold")
+	}
+}
+
+// TestRunTaskStartedEmitFailure covers Run's very first write failing, with
+// the marker already held.
+//
+// task.started carries the flow's name, and a flow name past record.MaxLine
+// is the one part of that event a caller controls. What the run must not do
+// is carry on: every later failure writes task.failed, and a task.failed on a
+// log with no task.started tells every reader the phase from the *previous*
+// attempt is still the current one.
+func TestRunTaskStartedEmitFailure(t *testing.T) {
+	s, r := fixture(t)
+
+	tk, err := Create(s, r, "RUN-TSTART-ERR-1", "task started emit error test", "quick")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	f := flow.Flow{
+		Name:   strings.Repeat("F", 5<<20),
+		Phases: []flow.Phase{{Name: "p", Engine: "fake"}},
+	}
+
+	engines := map[string]engine.Engine{"fake": engine.NewFake("out")}
+	if err := Run(context.Background(), s, tk, f, engines, nil); err == nil {
+		t.Error("Run walked on after the log refused its task.started")
+	}
+
+	got, err := Events(s, tk)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, e := range got {
+		if e.Kind == "task.failed" {
+			t.Errorf("the log carries a task.failed with no task.started above it; kinds are %v", kindsOf(got))
+		}
 	}
 }
 

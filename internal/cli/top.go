@@ -27,7 +27,7 @@ import (
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/quota"
 	"github.com/e1i0r/orbit/internal/store"
-	"github.com/e1i0r/orbit/internal/task"
+	"github.com/e1i0r/orbit/internal/supervisor"
 	"github.com/e1i0r/orbit/internal/ui"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -144,10 +144,10 @@ func window(dir, lang string) (ui.Options, *store.Store, error) {
 		Start:    startPort(s),
 		MarkRead: markReadPort(s),
 		RecordSupervisor: func(by, channel, message string) error {
-			return task.RecordSupervisor(s, "", by, channel, "", "", message)
+			return supervisor.Record(s, "", by, channel, "", "", message)
 		},
 		RetractSupervisor: func(at time.Time) error {
-			return task.RetractSupervisor(s, at)
+			return supervisor.Retract(s, at)
 		},
 		AskSupervisor: askSupervisorPort(s, engines),
 		AutoSupervise: autoSupervisePort(s, engines),

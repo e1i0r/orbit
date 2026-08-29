@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/engine"
+	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/record"
 	"github.com/e1i0r/orbit/internal/store"
 )
@@ -33,13 +34,18 @@ func lastSession(s *store.Store, t Task, engineName string, eng engine.Engine) s
 		return ""
 	}
 
-	path, err := s.EventsPath(t.Repo.Path, t.ID)
+	events, err := Events(s, t)
 	if err != nil {
-		return ""
-	}
+		// Best-effort, and said out loud rather than hidden. A record that
+		// will not read means this phase opens a fresh session instead of
+		// resuming one: a worse run, not a broken one — the engine still
+		// works, it has simply forgotten. Failing the whole run over it
+		// would cost more than it saves. But falling through in silence is
+		// how a phase came to lose everything the phase before it knew with
+		// nothing anywhere saying why, so it goes in the log where the
+		// person wondering can find it.
+		logger.Warn("task/run", "%s: could not read the record to resume the %s session, so it starts a new one: %v", t.ID, engineName, err)
 
-	events, err := record.Read(path)
-	if err != nil {
 		return ""
 	}
 

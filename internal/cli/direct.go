@@ -1,10 +1,14 @@
 package cli
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/logger"
@@ -54,7 +58,14 @@ func directTask(ctx Context, args []string) error {
 			return err
 		}
 
-		pid, err := task.Reopen(s, t, *by, text, t.Flow, unread)
+		// Ctrl-C during the wait is a person taking their terminal back,
+		// and it reaches Reopen rather than being swallowed: restarting
+		// waits for the run it stopped to actually be gone, and that is
+		// half a minute a reader may not want to stand through.
+		signalled, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer stop()
+
+		pid, err := task.Reopen(signalled, s, t, *by, text, t.Flow, unread)
 		if err != nil {
 			logger.Error("cli/direct", "reopen task %q failed: %v", id, err)
 			return err

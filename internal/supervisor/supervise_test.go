@@ -1,4 +1,4 @@
-package task
+package supervisor
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 )
 
 func TestSuperviseExecutesEngineAndRecordsAnswer(t *testing.T) {
-	s, _ := fixture(t)
+	s := fixture(t)
 	fake := &engine.Fake{
 		Output: "Reviewed all tasks, all systems nominal.",
 	}
@@ -32,9 +32,9 @@ func TestSuperviseExecutesEngineAndRecordsAnswer(t *testing.T) {
 	}
 
 	// Verify recorded in supervisor thread
-	events, err := SupervisorEvents(s)
+	events, err := Events(s)
 	if err != nil {
-		t.Fatalf("SupervisorEvents: %v", err)
+		t.Fatalf("Events: %v", err)
 	}
 
 	if len(events) != 1 {
@@ -47,7 +47,7 @@ func TestSuperviseExecutesEngineAndRecordsAnswer(t *testing.T) {
 }
 
 func TestSuperviseRefusesNilStoreOrEngineOrEmptyPrompt(t *testing.T) {
-	s, _ := fixture(t)
+	s := fixture(t)
 	fake := &engine.Fake{Output: "ok"}
 
 	if _, err := Supervise(context.Background(), nil, fake, "msg"); err == nil {
@@ -64,7 +64,7 @@ func TestSuperviseRefusesNilStoreOrEngineOrEmptyPrompt(t *testing.T) {
 }
 
 func TestAutoSuperviseBuildsPromptWithTaskIDs(t *testing.T) {
-	s, _ := fixture(t)
+	s := fixture(t)
 	fake := &engine.Fake{
 		Output: "Addressed failures in ORB-10 and ORB-12.",
 	}
@@ -80,5 +80,31 @@ func TestAutoSuperviseBuildsPromptWithTaskIDs(t *testing.T) {
 
 	if res != "Addressed failures in ORB-10 and ORB-12." {
 		t.Errorf("res = %q", res)
+	}
+}
+
+// TestTheSecondCallShowsTheModelWhatTheFirstOneSaid is what the thread is
+// for. The supervisor does not only speak — it directs tasks, retries them
+// and cancels them — so one that starts every call from nothing is one that
+// does the same thing twice.
+func TestTheSecondCallShowsTheModelWhatTheFirstOneSaid(t *testing.T) {
+	s := fixture(t)
+	fake := &engine.Fake{Output: "ORB-3 is stuck on a gate"}
+
+	if _, err := Supervise(context.Background(), s, fake, "what is stuck?"); err != nil {
+		t.Fatalf("first Supervise: %v", err)
+	}
+
+	if _, err := Supervise(context.Background(), s, fake, "and now?"); err != nil {
+		t.Fatalf("second Supervise: %v", err)
+	}
+
+	second := fake.Calls[1].Prompt
+	if !strings.Contains(second, "Supervisor Thread History") {
+		t.Errorf("the second prompt carries no history section:\n%s", second)
+	}
+
+	if !strings.Contains(second, "ORB-3 is stuck on a gate") {
+		t.Errorf("the second prompt does not carry what the first call answered:\n%s", second)
 	}
 }

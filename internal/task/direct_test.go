@@ -1,6 +1,7 @@
 package task
 
 import (
+	"context"
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/record"
@@ -61,7 +62,11 @@ func TestDirectRecordsDialogueAndNoteWhenNotRunning(t *testing.T) {
 		t.Errorf("task.noted event not found in record")
 	}
 
-	notes := unconsumedNotes(s, tk)
+	notes, err := unconsumedNotes(s, tk)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if len(notes) != 1 || notes[0] != "[supervisor] change approach to use redis" {
 		t.Errorf("unconsumedNotes = %v", notes)
 	}
@@ -79,7 +84,11 @@ func TestDirectDefaultBy(t *testing.T) {
 		t.Fatalf("Direct with empty by: %v", err)
 	}
 
-	notes := unconsumedNotes(s, tk)
+	notes, err := unconsumedNotes(s, tk)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if len(notes) != 1 || notes[0] != "[supervisor] focus on unit tests" {
 		t.Errorf("unconsumedNotes with default by = %v", notes)
 	}
@@ -93,7 +102,7 @@ func TestReopenReturnsErrorWhenDirectFails(t *testing.T) {
 		t.Fatalf("Create: %v", err)
 	}
 
-	if _, err := Reopen(s, tk, "supervisor", "", "quick", 0); err == nil {
+	if _, err := Reopen(context.Background(), s, tk, "supervisor", "", "quick", 0); err == nil {
 		t.Error("Reopen on empty message answered nil, want error")
 	}
 }

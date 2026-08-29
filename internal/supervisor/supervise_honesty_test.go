@@ -1,4 +1,4 @@
-package task
+package supervisor
 
 import (
 	"context"
@@ -37,7 +37,7 @@ func (e halfSpokenEngine) Run(_ context.Context, _ engine.Request) (engine.Resul
 // though the supervisor had finished speaking. Both halves are the point:
 // what it said is kept, and the caller is told it did not finish.
 func TestTheSupervisorReportsAnEngineThatStoppedMidAnswer(t *testing.T) {
-	s, _ := fixture(t)
+	s := fixture(t)
 
 	broke := errors.New("the model stopped answering")
 	eng := halfSpokenEngine{&engine.Fake{}, "ORB-10 looks stuck, I was about to", broke}
@@ -51,9 +51,9 @@ func TestTheSupervisorReportsAnEngineThatStoppedMidAnswer(t *testing.T) {
 		t.Errorf("Supervise answered %q, want what the supervisor managed to say", ans)
 	}
 
-	events, err := SupervisorEvents(s)
+	events, err := Events(s)
 	if err != nil {
-		t.Fatalf("SupervisorEvents: %v", err)
+		t.Fatalf("Events: %v", err)
 	}
 
 	if len(events) != 1 || events[0].Text != "ORB-10 looks stuck, I was about to" {
@@ -70,10 +70,10 @@ func TestTheSupervisorReportsAnEngineThatStoppedMidAnswer(t *testing.T) {
 // supervisor also acts — it directs, retries and cancels tasks — so one that
 // cannot remember is one that does it twice.
 func TestTheSupervisorRefusesAThreadItCannotRead(t *testing.T) {
-	s, _ := fixture(t)
+	s := fixture(t)
 
-	if err := RecordSupervisor(s, record.SupervisorMessage, "operator", "tui", "", "", "ORB-10 is yours"); err != nil {
-		t.Fatalf("RecordSupervisor: %v", err)
+	if err := Record(s, record.SupervisorMessage, "operator", "tui", "", "", "ORB-10 is yours"); err != nil {
+		t.Fatalf("Record: %v", err)
 	}
 
 	// A line longer than the record can read back. Append refuses to write
