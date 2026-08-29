@@ -9,7 +9,14 @@ import (
 	"github.com/e1i0r/orbit/internal/task"
 )
 
-// supervisorSay records a message or directive into the persistent supervisor conversation thread.
+// supervisorSay writes one line into the supervisor thread, which is the one
+// conversation in Orbit that belongs to no task.
+//
+// Who is speaking and where from are the caller's to state, and default to a
+// supervisor speaking over mcp. That is not a hole: this tool is only ever
+// reached over mcp, and every other caller of task.RecordSupervisor — the
+// cockpit and the command line both — names itself the same way, so a thread
+// whose lines all claimed to come from here would be the lie.
 func (sn Session) supervisorSay(args map[string]any) CallToolResult {
 	message := strings.TrimSpace(stringArg(args, "message"))
 	if message == "" {
@@ -48,7 +55,9 @@ func (sn Session) supervisorSay(args map[string]any) CallToolResult {
 	})
 }
 
-// supervisorHistory reads the persistent supervisor conversation thread.
+// supervisorHistory reads the thread back, oldest first, optionally only the
+// last few lines of it — which is what a supervisor asks for when it wants to
+// know what it was last told rather than everything it has ever been told.
 func (sn Session) supervisorHistory(args map[string]any) CallToolResult {
 	s, err := sn.open()
 	if err != nil {

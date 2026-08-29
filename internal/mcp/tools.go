@@ -81,7 +81,7 @@ func taskTools() []Tool {
 		},
 		{
 			Name:        "orbit_direct_task",
-			Description: "Direct a task with an instruction: stops any active process while preserving worktree and session memory, and records the directive. If restart is true, immediately starts a new attempt with the directive.",
+			Description: "Change what a task is doing without losing what it has done. A run in flight is stopped, but its worktree and the engine's session are kept, and the instruction is written into the task's record. With restart, the next attempt begins immediately and reads the instruction as the reason it was started — which is a run, and costs what a run costs.",
 			InputSchema: object(map[string]Property{
 				"task_id": {Type: "string", Description: "The task's id."},
 				"repo":    {Type: "string", Description: "Which repository, when two of them hold a task under this id."},
@@ -105,7 +105,7 @@ func supervisorTools() []Tool {
 	return []Tool{
 		{
 			Name:        "orbit_supervisor_say",
-			Description: "Post a message or directive to the cockpit's persistent supervisor thread. Use this for briefings, debriefings, status summaries, and general guidance that applies across all tasks.",
+			Description: "Say something in the supervisor thread, which is the one conversation that outlives every task: a briefing before the work, an account of it afterwards, anything that is about the board rather than about one task on it. It is kept under the state root and read back by orbit_supervisor_history.",
 			InputSchema: object(map[string]Property{
 				"message": {Type: "string", Description: "What to say in the supervisor thread."},
 				"by":      {Type: "string", Description: "Who is speaking (e.g. 'supervisor', 'claude', 'codex', 'opencode', 'gemini'). Defaults to 'supervisor'."},
@@ -116,7 +116,7 @@ func supervisorTools() []Tool {
 		},
 		{
 			Name:        "orbit_supervisor_history",
-			Description: "Read the conversation history and briefing thread of the supervisor, in chronological order.",
+			Description: "Everything said in the supervisor thread, oldest first, so that a supervisor starting fresh can read what the last one was told and what it answered. Without a limit it is the whole thread.",
 			InputSchema: object(map[string]Property{
 				"limit": {Type: "integer", Description: "Maximum number of most recent messages to return. Defaults to all."},
 			}),
@@ -156,6 +156,6 @@ var instructions = strings.Join([]string{
 	"Orbit is a cockpit for supervising coding agents. Tasks live on a board, in four bands: " + strings.Join(bandNames(), ", ") + ".",
 	"Read before acting: orbit_get_board_summary for the shape of the board, orbit_list_tasks for the ids, orbit_inspect_task for why one of them failed.",
 	"Never invent a task id or a repository path. Both come from orbit_list_tasks.",
-	"orbit_retry_task and orbit_cancel_task change what is running and cost money. Say what you are about to do before you do it.",
+	"orbit_retry_task, orbit_direct_task with restart, and orbit_cancel_task change what is running and cost money. Say what you are about to do before you do it.",
 	"orbit_forget_repo and orbit_delete_flow remove things that cannot be got back: a repository's record is the only account of what its runs did. Both refuse until told again.",
 }, " ")
