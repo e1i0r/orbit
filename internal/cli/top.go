@@ -64,7 +64,7 @@ func top(ctx Context, args []string) error {
 	// the sweep's does: out of the bottom of this function, once the terminal
 	// is back. Printed here it would be printed into the frame the alternate
 	// screen is about to wipe.
-	logErr := logger.Init(s.LogPath())
+	logErr := logger.Init(s.LogPath(), s.ErrorLogPath())
 	if logErr == nil {
 		// Closing answers what the log could not write, and that is said
 		// on the error stream rather than swallowed: this runs after the

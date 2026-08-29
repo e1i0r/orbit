@@ -47,9 +47,15 @@ func (l Level) String() string {
 
 // Logger handles structured logging to a dedicated file.
 type Logger struct {
-	mu   sync.Mutex
-	file *os.File
-	path string
+	mu sync.Mutex
+	// file takes every line; errFile takes the ones at LevelError, which
+	// are therefore written twice on purpose. An error read in isolation
+	// says what broke; the same error read in the log says what the
+	// program was doing when it broke, and both questions get asked.
+	file    *os.File
+	errFile *os.File
+	path    string
+	errPath string
 	// failed is the first write that did not land, kept because Log has
 	// nowhere to return one: it is called from everywhere, on paths whose
 	// callers have no business handling a logging fault, and the two
@@ -65,8 +71,8 @@ var (
 	global   *Logger
 )
 
-// Init initializes the default global logger pointing to the given file path.
-func Init(logPath string) error {
+// Init initializes the default global logger pointing to the given file paths.
+func Init(logPath, errPath string) error {
 	globalMu.Lock()
 	defer globalMu.Unlock()
 
@@ -78,7 +84,7 @@ func Init(logPath string) error {
 		previous = global.Close()
 	}
 
-	l, err := New(logPath)
+	l, err := New(logPath, errPath)
 	if err != nil {
 		return fmt.Errorf("init logger at %q: %w", logPath, err)
 	}
@@ -92,26 +98,54 @@ func Init(logPath string) error {
 	return nil
 }
 
-// New creates a new Logger writing to logPath.
-func New(logPath string) (*Logger, error) {
-	if logPath == "" {
+// New creates a new Logger writing every line to logPath and the errors
+// again to errPath.
+//
+// An empty errPath is a logger with no error file, which is what a caller
+// that only has one path gets. It is not an error: the errors still reach
+// logPath, which is the file that must exist.
+func New(logPath, errPath string) (*Logger, error) {
+	f, err := openLog(logPath)
+	if err != nil {
+		return nil, err
+	}
+
+	l := &Logger{file: f, path: logPath}
+
+	if errPath == "" {
+		return l, nil
+	}
+
+	ef, err := openLog(errPath)
+	if err != nil {
+		// The log that did open is closed again rather than leaked. A
+		// constructor that answers with an error and a descriptor nobody
+		// holds is how a process runs out of them overnight.
+		return nil, errors.Join(err, f.Close())
+	}
+
+	l.errFile, l.errPath = ef, errPath
+
+	return l, nil
+}
+
+// openLog opens one append-only log file, creating its directory.
+func openLog(path string) (*os.File, error) {
+	if path == "" {
 		return nil, fmt.Errorf("log path cannot be empty")
 	}
 
-	dir := filepath.Dir(logPath)
+	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return nil, fmt.Errorf("create log directory %q: %w", dir, err)
 	}
 
-	f, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
 	if err != nil {
-		return nil, fmt.Errorf("open log file %q: %w", logPath, err)
+		return nil, fmt.Errorf("open log file %q: %w", path, err)
 	}
 
-	return &Logger{
-		file: f,
-		path: logPath,
-	}, nil
+	return f, nil
 }
 
 // Close closes the logger and its underlying file descriptor, and answers
@@ -137,7 +171,13 @@ func (l *Logger) Close() error {
 	err := l.file.Close()
 	l.file = nil
 
-	return errors.Join(failed, err)
+	var errErr error
+	if l.errFile != nil {
+		errErr = l.errFile.Close()
+		l.errFile = nil
+	}
+
+	return errors.Join(failed, err, errErr)
 }
 
 // Log writes a leveled log entry with timestamp, level, module tag, and formatted message.
@@ -161,11 +201,21 @@ func (l *Logger) Log(lvl Level, module, format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
 
 	entry := fmt.Sprintf("[%s] [%s] [%s] %s\n", ts, lvl.String(), module, msg)
-	// The first failure is the one kept: a log that has stopped working
-	// fails on every line after it, and the hundredth message would say
-	// nothing the first does not.
-	if _, err := l.file.WriteString(entry); err != nil && l.failed == nil {
-		l.failed = fmt.Errorf("write to the log at %q: %w", l.path, err)
+	l.write(l.file, l.path, entry)
+
+	if lvl == LevelError && l.errFile != nil {
+		l.write(l.errFile, l.errPath, entry)
+	}
+}
+
+// write puts one entry in one file and keeps the first refusal.
+//
+// The first failure is the one kept: a log that has stopped working fails
+// on every line after it, and the hundredth message would say nothing the
+// first does not.
+func (l *Logger) write(f *os.File, path, entry string) {
+	if _, err := f.WriteString(entry); err != nil && l.failed == nil {
+		l.failed = fmt.Errorf("write to the log at %q: %w", path, err)
 	}
 }
 

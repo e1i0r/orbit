@@ -60,7 +60,7 @@ func serveMCP(ctx Context, root string) error {
 		return err
 	}
 
-	if logErr := logger.Init(s.LogPath()); logErr == nil {
+	if logErr := logger.Init(s.LogPath(), s.ErrorLogPath()); logErr == nil {
 		// Closing answers what the log could not write, and that is said
 		// on the error stream rather than swallowed: this runs after the
 		// window has given the terminal back and the mcp client is not
