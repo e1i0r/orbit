@@ -54,12 +54,21 @@ var layers = map[string][]string{
 	// appending is internal/task's and this package holds no authority of
 	// its own. What is absent is internal/engine: a supervising model can
 	// start a run and cannot start a model.
-	"internal/mcp":     {"internal/board", "internal/flow", "internal/record", "internal/repo", "internal/store", "internal/task", "internal/view"},
-	"internal/quota":   {},
-	"internal/record":  {},
-	"internal/repo":    {"internal/store"},
-	"internal/store":   {},
-	"internal/task":    {"internal/engine", "internal/flow", "internal/record", "internal/repo", "internal/store"},
+	"internal/mcp":    {"internal/board", "internal/flow", "internal/record", "internal/repo", "internal/store", "internal/task", "internal/view"},
+	"internal/quota":  {},
+	"internal/record": {},
+	"internal/repo":   {"internal/store"},
+	"internal/store":  {},
+	// internal/logger is on internal/task's list for the same reason it is on
+	// internal/ui's, and for one more: a run that is SIGKILLed writes nothing
+	// about its own death, so the last line it managed to log is the only
+	// account of it there is until a reader runs reconcile. It is a widening,
+	// and it was argued rather than assumed. Nothing of Orbit's is imported
+	// by internal/logger, so no cycle can be made of it, and what a run may
+	// do is not widened at all: the log is a second copy of what the record
+	// already took, written after the record took it, and no reader of Orbit
+	// decides anything from it.
+	"internal/task":    {"internal/engine", "internal/flow", "internal/logger", "internal/record", "internal/repo", "internal/store"},
 	"internal/tracker": {},
 	// internal/logger is on internal/ui's list for one reason: the window is
 	// where a failure a reader saw arrives, and a failure nobody wrote down

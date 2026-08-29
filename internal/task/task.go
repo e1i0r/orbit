@@ -254,12 +254,14 @@ func Events(s *store.Store, t Task) ([]record.Event, error) {
 func emit(s *store.Store, t Task, e record.Event) error {
 	path, err := s.EventsPath(t.Repo.Path, t.ID)
 	if err != nil {
-		return err
+		return noted(t.ID, err)
 	}
 
 	if err := record.Append(path, e); err != nil {
-		return fmt.Errorf("record %q for task %s: %w", e.Kind, t.ID, err)
+		return noted(t.ID, fmt.Errorf("record %q for task %s: %w", e.Kind, t.ID, err))
 	}
+
+	noteEvent(t.ID, e)
 
 	return nil
 }
