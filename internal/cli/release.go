@@ -49,7 +49,12 @@ func selfUpdate(ctx context.Context, bin, sums asset) error {
 		return err
 	}
 
-	return extract(archive)
+	newOrbit, err := binaryFrom(archive)
+	if err != nil {
+		return err
+	}
+
+	return replaceExecutable(newOrbit)
 }
 
 // download reads one URL whole, and refuses a body that will not end.
@@ -118,17 +123,6 @@ func verify(archive, published []byte, name string) error {
 	return nil
 }
 
-// extract puts the orbit inside a release archive in place of the one that is
-// running.
-func extract(archive []byte) error {
-	bin, err := binaryFrom(archive)
-	if err != nil {
-		return err
-	}
-
-	return replaceExecutable(bin)
-}
-
 // binaryFrom is the orbit inside a release archive.
 //
 // Regular files only. A tar entry named orbit that is a symlink or a
@@ -159,13 +153,40 @@ func binaryFrom(archive []byte) ([]byte, error) {
 		}
 
 		if header.Name == "orbit" || strings.HasSuffix(header.Name, "/orbit") {
-			return io.ReadAll(io.LimitReader(tr, maxDownload))
+			return entry(tr, header.Name)
 		}
 	}
 
 	return nil, fmt.Errorf("executable not found in archive")
 }
 
+// entry is one file out of the archive, and no more of it than the ceiling
+// the download was already held to.
+//
+// io.ReadAll(io.LimitReader(tr, maxDownload)) answers maxDownload bytes and
+// no error at all when the entry is bigger than that, so an archive over the
+// ceiling was cut in the middle and the half of a binary that came out of it
+// was written over the running orbit. download refuses a body it cannot hold
+// whole; this is the same bytes one layer in, and refuses the same way.
+func entry(tr io.Reader, name string) ([]byte, error) {
+	bin, err := io.ReadAll(io.LimitReader(tr, maxDownload+1))
+	if err != nil {
+		return nil, err
+	}
+
+	if len(bin) > maxDownload {
+		return nil, fmt.Errorf("%s in this archive is larger than %d bytes", name, maxDownload)
+	}
+
+	return bin, nil
+}
+
+// replaceExecutable puts these bytes in place of the orbit that is running.
+//
+// The symlink is resolved first because the rename below has to land on the
+// file itself: renaming over a symlink replaces the link, and the reader ends
+// up with a new orbit at the name they type and the old one still sitting
+// wherever the link used to point.
 func replaceExecutable(newBytes []byte) error {
 	execPath, err := os.Executable()
 	if err != nil {
@@ -177,35 +198,51 @@ func replaceExecutable(newBytes []byte) error {
 		return err
 	}
 
-	dir := filepath.Dir(execPath)
+	return replaceFile(execPath, newBytes)
+}
 
-	tmpFile, err := os.CreateTemp(dir, "orbit-update-*")
+// replaceFile writes the new binary beside the old one and moves it on top in
+// one step, so that a write cut short halfway never leaves a reader holding
+// half an orbit at the name they type.
+//
+// It is a function of its own for the reason parseBootTime is one: what it
+// does is worth a test, and the only path replaceExecutable can hand it is
+// the binary running that test.
+func replaceFile(execPath string, newBytes []byte) error {
+	tmpFile, err := os.CreateTemp(filepath.Dir(execPath), "orbit-update-*")
 	if err != nil {
 		return err
 	}
 
 	tmpName := tmpFile.Name()
 
-	if _, err := tmpFile.Write(newBytes); err != nil {
-		tmpFile.Close()
-
-		_ = os.Remove(tmpName)
-
-		return err
+	if err := fill(tmpFile, newBytes); err != nil {
+		return errors.Join(err, os.Remove(tmpName))
 	}
 
-	if err := tmpFile.Chmod(0o755); err != nil {
-		tmpFile.Close()
-
-		_ = os.Remove(tmpName)
-
-		return err
+	if err := os.Rename(tmpName, execPath); err != nil {
+		return errors.Join(err, os.Remove(tmpName))
 	}
 
-	if err := tmpFile.Close(); err != nil {
-		_ = os.Remove(tmpName)
-		return err
+	return nil
+}
+
+// fill writes the new binary into the temporary file and closes it, whatever
+// happens.
+//
+// Every one of these used to be a bare tmpFile.Close() beside a discarded
+// os.Remove: a full disk reached the reader as the write error alone, and the
+// half-written orbit-update-* it left behind was never mentioned. A failure
+// to clean up is the reader's to know about, because the file is sitting next
+// to their binary.
+func fill(f *os.File, newBytes []byte) error {
+	if _, err := f.Write(newBytes); err != nil {
+		return errors.Join(err, f.Close())
 	}
 
-	return os.Rename(tmpName, execPath)
+	if err := f.Chmod(0o755); err != nil {
+		return errors.Join(err, f.Close())
+	}
+
+	return f.Close()
 }
