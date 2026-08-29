@@ -1,9 +1,10 @@
 package words
 
-// words_test.go is task 2's whole point: from the moment a screen draws a
-// string through T or P, this file fails the build the instant es.json
-// falls out of step with the code, in either direction. Today it passes
-// trivially, because nothing outside this package calls T or P yet.
+// words_test.go fails the build the instant es.json falls out of step with
+// the code, in either direction. It was written when nothing outside this
+// package called T or P; it now holds some six hundred call sites to
+// account, and every one of the seven checks below was added because the
+// mistake it looks for had already shipped.
 
 import (
 	"os"
@@ -40,7 +41,7 @@ func hasCombiningMark(s string) bool {
 }
 
 // loadRepoCatalog reads a checked-in catalogue file directly, rather than
-// through loadCatalog: the six checks are about what is committed, not
+// through loadCatalog: the checks are about what is committed, not
 // about whatever a developer's $ORBIT_HOME happens to overlay on top.
 func loadRepoCatalog(t *testing.T, filename string) catalog {
 	t.Helper()
@@ -79,6 +80,8 @@ func TestEveryTranslationKeyIsHonest(t *testing.T) {
 			t.Errorf("es.json has key %q, which no T or P call in the module uses", key)
 		}
 
+		checkTranslated(t, key, e)
+
 		budget := en.keys[key].Cells
 		checkQuality(t, "es.json", key, "value.one", e.Value.One, budget)
 		checkQuality(t, "es.json", key, "value.other", e.Value.Other, budget)
@@ -91,6 +94,56 @@ func TestEveryTranslationKeyIsHonest(t *testing.T) {
 		checkQuality(t, "en.json", key, "value.one", e.Value.One, e.Cells)
 		checkQuality(t, "en.json", key, "value.other", e.Value.Other, e.Cells)
 		checkQuality(t, "en.json", key, "value", e.Value.Single, e.Cells)
+	}
+}
+
+// borrowedWholesale is every key whose Spanish is its English on purpose.
+//
+// It is short and it is named because the alternative is a check nobody
+// can turn on: a translation identical to its source is what a Spanish
+// string sitting in the English slot looks like from here, and that mistake
+// shipped — "intento 1", "etapa", "costo", the whole cheat sheet — passing
+// all six checks above, because a key whose source is already Spanish
+// agrees with itself perfectly.
+var borrowedWholesale = map[string]string{
+	"state.phase_of":           "placeholders and a slash, no prose",
+	"band.repo_filter_tag":     "placeholders and a colon, no prose",
+	"mcp.install_wrote":        "placeholders and a dash, no prose",
+	"mcp.install_failed":       "placeholders and a colon, no prose",
+	"flows.thinking_badge":     "a label that is itself a loanword, plus a placeholder",
+	"board.col_id":             "ID is ID",
+	"compose.id":               "ID is ID",
+	"compose.url":              "url is url",
+	"board.col_repo":           "repo is repo, and it is a column head three cells wide",
+	"compose.tab_manual":       "a tab number and a word Spanish spells the same",
+	"tab.gates":                "the engines call them gates and so does the record",
+	"tab.thinking":             "the dial, the flag and the engines all say thinking",
+	"start.thinking_hint":      "the dial, the flag and the engines all say thinking",
+	"compose.thinking":         "the dial, the flag and the engines all say thinking",
+	"overview.thinking":        "the dial, the flag and the engines all say thinking",
+	"key.supervisor":           "supervisor is supervisor",
+	"overview.action_merge_pr": "merge and PR are what the forge calls them",
+}
+
+// checkTranslated is check 7: a value identical to its source is either a
+// word Spanish borrowed whole, and named above with the reason, or it is
+// English that was never translated — or, worse, Spanish that was written
+// into the English slot and is therefore drawn to a reader of English.
+func checkTranslated(t *testing.T, key string, e entry) {
+	t.Helper()
+
+	if _, borrowed := borrowedWholesale[key]; borrowed {
+		return
+	}
+
+	const why = "es.json value for %q is identical to its source, %q — either the Spanish is missing, or the source is not English; if the word is the same in both, say so in borrowedWholesale"
+
+	if e.Source.Single != "" && e.Source.Single == e.Value.Single {
+		t.Errorf(why, key, e.Source.Single)
+	}
+
+	if e.Source.One != "" && e.Source.One == e.Value.One && e.Source.Other == e.Value.Other {
+		t.Errorf(why, key, e.Source.One)
 	}
 }
 

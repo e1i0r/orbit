@@ -12,7 +12,6 @@ package ui
 // not on its list.
 
 import (
-	"errors"
 	"fmt"
 	"os/exec"
 	"time"
@@ -191,7 +190,7 @@ func refresh(r Reader) tea.Cmd {
 
 		b, changed, err := r.Refresh()
 		if err != nil {
-			return boardMsg{Board: board.Board{Errs: []error{fmt.Errorf("read the board: %w", err)}}}
+			return boardMsg{Board: board.Board{Errs: []error{fmt.Errorf("%w: %w", errReadBoard, err)}}}
 		}
 
 		return boardMsg{Board: b, Changed: changed}
@@ -212,7 +211,7 @@ func rescan(r Reader) tea.Cmd {
 		}
 
 		if err := r.Rescan(); err != nil {
-			return boardMsg{Board: board.Board{Errs: []error{fmt.Errorf("look for new repositories: %w", err)}}}
+			return boardMsg{Board: board.Board{Errs: []error{fmt.Errorf("%w: %w", errFindRepos, err)}}}
 		}
 
 		return boardMsg{}
@@ -230,7 +229,7 @@ func rescan(r Reader) tea.Cmd {
 func control(port func(view.Task, string) error, t view.Task, word string) tea.Cmd {
 	return func() tea.Msg {
 		if port == nil {
-			return controlMsg{ID: t.ID, Word: word, Err: errors.New("this window was opened without a way to control a task")}
+			return controlMsg{ID: t.ID, Word: word, Err: errNoControlPort}
 		}
 
 		return controlMsg{ID: t.ID, Word: word, Err: port(t, word)}
@@ -248,7 +247,7 @@ func control(port func(view.Task, string) error, t view.Task, word string) tea.C
 func start(port func(view.Task, string, int) (int, error), t view.Task, flowName string, unread int) tea.Cmd {
 	return func() tea.Msg {
 		if port == nil {
-			return startedMsg{ID: t.ID, Err: errors.New("this window was opened without a way to start a run")}
+			return startedMsg{ID: t.ID, Err: errNoStartPort}
 		}
 
 		pid, err := port(t, flowName, unread)
@@ -261,7 +260,7 @@ func start(port func(view.Task, string, int) (int, error), t view.Task, flowName
 func markRead(port func(view.Task) error, t view.Task) tea.Cmd {
 	return func() tea.Msg {
 		if port == nil {
-			return readMsg{ID: t.ID, Err: errors.New("this window was opened without a way to mark a task read")}
+			return readMsg{ID: t.ID, Err: errNoReadPort}
 		}
 
 		return readMsg{ID: t.ID, Err: port(t)}
@@ -274,7 +273,7 @@ func markRead(port func(view.Task) error, t view.Task) tea.Cmd {
 func takeSession(port func(view.Task) (*exec.Cmd, error), t view.Task) tea.Cmd {
 	return func() tea.Msg {
 		if port == nil {
-			return sessionMsg{ID: t.ID, Err: errors.New("this window was opened without a way to take the keyboard")}
+			return sessionMsg{ID: t.ID, Err: errNoSessionPort}
 		}
 
 		cmd, err := port(t)
@@ -287,7 +286,7 @@ func takeSession(port func(view.Task) (*exec.Cmd, error), t view.Task) tea.Cmd {
 func askSupervisorCmd(ask func(string, string) (string, error), engineName, prompt string) tea.Cmd {
 	return func() tea.Msg {
 		if ask == nil {
-			return supervisorReplyMsg{Err: errors.New("supervisor engine is not configured")}
+			return supervisorReplyMsg{Err: errNoSupervisor}
 		}
 
 		ans, err := ask(engineName, prompt)

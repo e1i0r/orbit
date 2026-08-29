@@ -71,11 +71,11 @@ var errGitTimedOut = errors.New("git did not answer in time")
 func diffOf(r Reader, t view.Task, base baseRef) tea.Cmd {
 	return func() tea.Msg {
 		if r == nil {
-			return diffMsg{ID: t.ID, Err: errors.New("this window was opened without a way to find the worktree")}
+			return diffMsg{ID: t.ID, Err: errNoWorktreePort}
 		}
 
 		if t.RepoPath == "" {
-			return diffMsg{ID: t.ID, Err: errors.New("this task does not say where its repository is")}
+			return diffMsg{ID: t.ID, Err: errNoRepoPath}
 		}
 
 		dir, err := r.Worktree(t.RepoPath, t.ID)

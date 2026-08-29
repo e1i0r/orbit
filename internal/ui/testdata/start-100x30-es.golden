@@ -5,7 +5,7 @@
 
    flujo  careful                              quick · task · tdd-fuzz-pr · careful  [+] nuevo flujo
 
-   motor     claude · opus · effort:low · thinking: on        [m] modelo  [o] esfuerzo  [t] thinking
+   motor     claude · opus · esfuerzo:low · thinking: activado
 
    ▸ implement   claude   opus   permisos: repo
      review      claude   opus   permisos: repo · se detiene al terminar

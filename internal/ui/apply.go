@@ -47,7 +47,7 @@ func (m Model) applyBoard(msg boardMsg) (tea.Model, tea.Cmd) {
 func (m Model) takeBoard(msg boardMsg) (Model, tea.Cmd) {
 	if msg.Board.ReadAt.IsZero() {
 		if len(msg.Board.Errs) > 0 {
-			return m.say(msg.Board.Errs[0].Error()), nil
+			return m.say(m.errSaid(msg.Board.Errs[0])), nil
 		}
 
 		return m, nil

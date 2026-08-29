@@ -95,12 +95,12 @@ func TestNotesLinesAllStates(t *testing.T) {
 		}
 	}
 
-	// 4. A note with no attempt: the plain "read by run" status, without a
-	// number.
+	// 4. A note with no attempt: the plain status, without a number.
 	m.entries = []view.Entry{{Kind: "task.noted", Text: "one line"}}
+	plain := m.opts.Words.T("notes.read_by_run", "read by the run")
 
 	joined = strings.Join(m.notesLines(), "\n")
-	if !strings.Contains(joined, "read by run") || strings.Contains(joined, "read by run 0") {
+	if !strings.Contains(joined, plain) || strings.Contains(joined, "read by run 0") {
 		t.Errorf("notesLines with attempt 0 = %q, want the plain status", joined)
 	}
 }
@@ -115,17 +115,20 @@ func TestNotesLinesDrawsWhatActedFromOutsideTheRun(t *testing.T) {
 		{Kind: "task.dialogue", Text: "the cockpit handed the terminal to a session"},
 	}
 
+	// The count is asked for the way notesLines asks for it. Spelling out
+	// "2 entradas" here passed against an English model only because this
+	// key's English was Spanish.
 	joined := strings.Join(m.notesLines(), "\n")
 	for _, want := range []string{
 		"MCP", "a model cancelled this task over mcp",
-		"handed the terminal", "2 entradas",
+		"handed the terminal", "2 " + m.opts.Words.T("notes.count", "entries in the dialogue"),
 	} {
 		if !strings.Contains(joined, want) {
 			t.Errorf("notesLines = %q, want it to mention %q", joined, want)
 		}
 	}
 
-	if strings.Contains(joined, "read by run") {
+	if strings.Contains(joined, m.opts.Words.T("notes.read_by_run", "read by the run")) {
 		t.Errorf("notesLines = %q, want no claim that a run reads these", joined)
 	}
 }

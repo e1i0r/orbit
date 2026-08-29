@@ -9,9 +9,9 @@ import (
 )
 
 // diffSummaryHeader builds the top summary line showing change counts and key hints.
-func diffSummaryHeader(count, totalAdd, totalDel int, navHelp string) string {
+func diffSummaryHeader(count, totalAdd, totalDel int, navHelp string, p *words.Printer) string {
 	return fmt.Sprintf(" %s %s %s  %s",
-		Paint(Accent).Bold(true).Render(fmt.Sprintf("%d files changed", count)),
+		Paint(Accent).Bold(true).Render(p.P("diff.files_changed", count, "{n} file changed", "{n} files changed")),
 		Paint(OK).Render(fmt.Sprintf("+%d", totalAdd)),
 		Paint(Bad).Render(fmt.Sprintf("-%d", totalDel)),
 		Paint(Dim).Render(navHelp),
@@ -29,7 +29,7 @@ func diffCardTop(f diffFile, idx, total, width int, p *words.Printer, isCollapse
 
 	collapsedTag := ""
 	if isCollapsed {
-		collapsedTag = "  " + Paint(Warn).Render("["+p.T("diff.collapsed_tag", "collapsed")+" · space]")
+		collapsedTag = "  " + Paint(Warn).Render("["+p.T("diff.collapsed_tag", "collapsed")+" · "+p.T("key.space", "space")+"]")
 	}
 
 	headerTitle := fmt.Sprintf("%s %s %s  %s%s", icon, Paint(Accent).Bold(true).Render(f.Path), stats, badge, collapsedTag)

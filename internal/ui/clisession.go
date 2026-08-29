@@ -66,7 +66,7 @@ func (m Model) handleCLIEnded(msg cliEndedMsg) (Model, tea.Cmd) {
 	if msg.Err != nil {
 		var exitErr *exec.ExitError
 		if !errors.As(msg.Err, &exitErr) {
-			return m.say(m.opts.Words.T("msg.cli_exec_error", "error running {engine}: {err}", about("engine", msg.Engine), about("err", msg.Err.Error()))), nil
+			return m.say(m.opts.Words.T("msg.cli_exec_error", "error running {engine}: {err}", about("engine", msg.Engine), about("err", m.errSaid(msg.Err)))), nil
 		}
 	}
 

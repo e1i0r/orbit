@@ -166,7 +166,7 @@ func (m Model) idleLine() string {
 // only place a raw wire word can still reach the band.
 func (m Model) controlSaid(msg controlMsg) string {
 	if msg.Err != nil {
-		return msg.Err.Error()
+		return m.errSaid(msg.Err)
 	}
 
 	p, id := m.opts.Words, about("id", msg.ID)
@@ -187,7 +187,7 @@ func (m Model) controlSaid(msg controlMsg) string {
 // startedSaid is what the band says about a run that began.
 func (m Model) startedSaid(msg startedMsg) string {
 	if msg.Err != nil {
-		return msg.Err.Error()
+		return m.errSaid(msg.Err)
 	}
 
 	return m.opts.Words.T("msg.started", "{id} is running, as process {pid}",
@@ -202,7 +202,7 @@ func (m Model) startedSaid(msg startedMsg) string {
 // name that finished.
 func (m Model) commandSaid(msg commandMsg) string {
 	if msg.Err != nil {
-		return msg.Err.Error()
+		return m.errSaid(msg.Err)
 	}
 
 	return m.opts.Words.T("msg.command_done", "{name} finished", about("name", msg.Name))

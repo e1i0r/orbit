@@ -546,16 +546,38 @@
       "value": "lo que tiene que pasar — por intento, y por qué se detuvo"
     },
     "gates.attempt": {
-      "source": "intento 1",
+      "source": "attempt 1",
       "value": "intento 1"
     },
     "gates.passed_word": {
-      "source": "pasaron",
+      "source": "passed",
       "value": "pasaron"
     },
     "gates.empty": {
       "source": "no verification gates have run for this task",
       "value": "no se ejecutaron verificaciones para esta tarea"
+    },
+    "gates.pass": {
+      "source": "pass",
+      "value": "pasa"
+    },
+    "gates.fail": {
+      "source": "fail",
+      "value": "falla"
+    },
+    "gates.badge_failed": {
+      "source": {
+        "one": "{n} failed",
+        "other": "{n} failed"
+      },
+      "value": {
+        "one": "falló {n}",
+        "other": "fallaron {n}"
+      }
+    },
+    "gates.why_failed": {
+      "source": "why it failed ·",
+      "value": "por qué falló ·"
     },
     "cost.heading": {
       "source": "Cost & Resource Breakdown",
@@ -568,6 +590,34 @@
     "cost.empty": {
       "source": "no cost recorded for this task",
       "value": "no hay costes registrados para esta tarea"
+    },
+    "cost.col_phase": {
+      "source": "phase",
+      "value": "etapa"
+    },
+    "cost.col_cost": {
+      "source": "cost",
+      "value": "costo"
+    },
+    "cost.col_duration": {
+      "source": "duration",
+      "value": "duración"
+    },
+    "cost.col_engine": {
+      "source": "engine / model",
+      "value": "motor / modelo"
+    },
+    "cost.total": {
+      "source": "total so far",
+      "value": "total acumulado"
+    },
+    "cost.budget_task": {
+      "source": "task budget",
+      "value": "presupuesto tarea"
+    },
+    "cost.budget_phase": {
+      "source": "phase budget",
+      "value": "presupuesto por etapa"
     },
     "refused.title": {
       "source": "Permissions & Security Sandbox",
@@ -594,8 +644,28 @@
       "value": "LAS REGLAS · las mismas en toda corrida, haga lo que haga"
     },
     "refused.policy_note": {
-      "source": "si intenta una acción prohibida, la llamada falla de inmediato y el modelo continúa",
+      "source": "a forbidden action fails on the spot and the model carries on",
       "value": "si intenta una acción prohibida, la llamada falla de inmediato y el modelo continúa"
+    },
+    "refused.rule_db": {
+      "source": "protected databases, readable only",
+      "value": "bases de datos protegidas (solo lectura)"
+    },
+    "refused.rule_cloud": {
+      "source": "cloud services and outside credentials",
+      "value": "servicios cloud y credenciales externas"
+    },
+    "refused.rule_push": {
+      "source": "the branch belongs to the operator or the runner",
+      "value": "la rama la gestiona el operador / runner"
+    },
+    "refused.rule_remote": {
+      "source": "the repository's own configuration",
+      "value": "configuración del repositorio"
+    },
+    "refused.rule_merge": {
+      "source": "merging and publishing pull requests",
+      "value": "mezclar y publicar pull requests"
     },
     "report.title": {
       "source": "Summary Report & Review",
@@ -618,27 +688,27 @@
       "value": "lo que le dijiste, respuestas del modelo y sesiones de CLI interactiva"
     },
     "notes.operator": {
-      "source": "OPERADOR",
+      "source": "OPERATOR",
       "value": "OPERADOR"
     },
     "notes.llm_prompt": {
-      "source": "MODELO (consulta al operador)",
+      "source": "MODEL (asking the operator)",
       "value": "MODELO (consulta al operador)"
     },
     "notes.outsider": {
-      "source": "fuera de la ejecución",
+      "source": "outside the run",
       "value": "fuera de la ejecución"
     },
     "notes.unread_by_run": {
-      "source": "no lo lee la ejecución",
+      "source": "the run does not read it",
       "value": "no lo lee la ejecución"
     },
     "notes.count": {
-      "source": "entradas en el diálogo",
+      "source": "entries in the dialogue",
       "value": "entradas en el diálogo"
     },
     "notes.all_filed": {
-      "source": "sincronizado con el modelo",
+      "source": "in sync with the model",
       "value": "sincronizado con el modelo"
     },
     "notes.empty": {
@@ -646,12 +716,20 @@
       "value": "no hay notas ni diálogo registrado para esta tarea"
     },
     "notes.hint_action": {
-      "source": "pulsa 'a' para dejar una nota · pulsa 'c' para abrir la CLI interactiva",
+      "source": "press 'a' to leave a note · press 'c' to open the interactive CLI",
       "value": "pulsa 'a' para dejar una nota · pulsa 'c' para abrir la CLI interactiva"
     },
     "notes.hint_footer": {
-      "source": "pulsa 'a' para agregar una nota · pulsa 'c' o 't' para entrar a la CLI interactiva",
+      "source": "press 'a' to add a note · press 'c' or 't' to enter the interactive CLI",
       "value": "pulsa 'a' para agregar una nota · pulsa 'c' o 't' para entrar a la CLI interactiva"
+    },
+    "notes.read_by_run": {
+      "source": "read by the run",
+      "value": "leída por la ejecución"
+    },
+    "notes.read_by_run_n": {
+      "source": "read by run {n}",
+      "value": "leída por la ejecución {n}"
     },
     "thinking.title": {
       "source": "Decision Analysis & Agent Thinking",
@@ -662,7 +740,7 @@
       "value": "por qué tomó cada decisión, qué evaluó y qué descartó"
     },
     "thinking.entries_count": {
-      "source": "análisis de razonamiento y decisiones",
+      "source": "reasoning and decisions analysed",
       "value": "análisis de razonamiento y decisiones"
     },
     "thinking.empty": {
@@ -837,10 +915,6 @@
       "source": "no base branch",
       "value": "sin rama base"
     },
-    "diff.timed_out": {
-      "source": "git did not answer in time",
-      "value": "git no respondió a tiempo"
-    },
     "diff.nav_help": {
       "source": "(] / [ next/prev file · f files · space collapse · r rationale · o editor)",
       "value": "(] / [ arch sig/ant · f archivos · espacio colapsar · r razones · o editor)"
@@ -916,6 +990,16 @@
     "diff.select_help": {
       "source": "  [↑↓] navigate  [⏎ / click] select  [space] fold  [esc] close",
       "value": "  [↑↓] navegar  [⏎ / clic] seleccionar  [espacio] plegar  [esc] cerrar"
+    },
+    "diff.files_changed": {
+      "source": {
+        "one": "{n} file changed",
+        "other": "{n} files changed"
+      },
+      "value": {
+        "one": "{n} archivo cambiado",
+        "other": "{n} archivos cambiados"
+      }
     },
     "board.col_repo": {
       "source": "REPO",
@@ -1020,27 +1104,27 @@
       "value": "flujo"
     },
     "start.engine_config": {
-      "source": "motor",
+      "source": "engine",
       "value": "motor"
     },
     "start.dials_hint": {
-      "source": "[m] modelo  [o] esfuerzo  [t] thinking",
+      "source": "[m] model  [o] effort  [t] thinking",
       "value": "[m] modelo  [o] esfuerzo  [t] thinking"
     },
     "start.new_flow_tag": {
-      "source": "[+] nuevo flujo",
+      "source": "[+] new flow",
       "value": "[+] nuevo flujo"
     },
     "start.new_flow_hint": {
-      "source": "crear flujo",
+      "source": "new flow",
       "value": "crear flujo"
     },
     "start.model_hint": {
-      "source": "modelo",
+      "source": "model",
       "value": "modelo"
     },
     "start.effort_hint": {
-      "source": "esfuerzo",
+      "source": "effort",
       "value": "esfuerzo"
     },
     "start.thinking_hint": {
@@ -1090,6 +1174,18 @@
     "start.autopilot": {
       "source": "autopilot",
       "value": "piloto automático"
+    },
+    "start.thinking_on": {
+      "source": "thinking: on",
+      "value": "thinking: activado"
+    },
+    "start.thinking_off": {
+      "source": "thinking: off",
+      "value": "thinking: desactivado"
+    },
+    "start.effort_label": {
+      "source": "effort:",
+      "value": "esfuerzo:"
     },
     "msg.no_session": {
       "source": "{id} has no session to carry on",
@@ -1613,7 +1709,7 @@
     },
     "flows.feeds_input": {
       "source": "[feeds input]",
-      "value": "[feeds input]"
+      "value": "[alimenta la entrada]"
     },
     "flows.stops_human": {
       "source": "(stops for human)",
@@ -1853,6 +1949,22 @@
       "source": "phase {n} selected: {phase} ({engine}/{model})",
       "value": "fase {n} seleccionada: {phase} ({engine}/{model})"
     },
+    "flows.effort_badge": {
+      "source": "effort: {v}",
+      "value": "esfuerzo: {v}"
+    },
+    "flows.thinking_badge": {
+      "source": "thinking: {v}",
+      "value": "thinking: {v}"
+    },
+    "flows.press_enter": {
+      "source": "(press ⏎)",
+      "value": "(pulsa ⏎)"
+    },
+    "flows.wait_human": {
+      "source": "wait (human)",
+      "value": "wait (humano)"
+    },
     "help.ways_out": {
       "source": "{up_down} scroll · {back} back",
       "value": "{up_down} desplazar · {back} volver"
@@ -1999,6 +2111,10 @@
       "source": "stops for human",
       "value": "se detiene para un humano"
     },
+    "flow.exit_code": {
+      "source": "exit code: {code}",
+      "value": "código de salida: {code}"
+    },
     "status.spent": {
       "source": "{cost} spent",
       "value": "{cost} gastado"
@@ -2052,6 +2168,10 @@
     "repos.filter_cleared": {
       "source": "showing all repositories",
       "value": "mostrando todos los repositorios"
+    },
+    "repos.counts": {
+      "source": "{todo} to do · {running} in flight · {needs} needs you · {done} done",
+      "value": "{todo} por hacer · {running} en marcha · {needs} te necesitan · {done} terminadas"
     },
     "band.repo_filter_tag": {
       "source": "repo:{repo}",
@@ -2146,7 +2266,7 @@
       "value": "Lista"
     },
     "overview.waiting_box": {
-      "source": "ACCIONES REQUERIDAS / ESPERANDO AL OPERADOR",
+      "source": "ACTIONS REQUIRED / WAITING FOR THE OPERATOR",
       "value": "ACCIONES REQUERIDAS / ESPERANDO AL OPERADOR"
     },
     "overview.resume_hint": {
@@ -2321,6 +2441,16 @@
       "source": "live / in flight",
       "value": "en curso / en vivo"
     },
+    "thinking.attempt": {
+      "source": {
+        "one": "attempt {n}",
+        "other": "attempt {n}"
+      },
+      "value": {
+        "one": "intento {n}",
+        "other": "intento {n}"
+      }
+    },
     "key.toggle_markdown": {
       "source": "md / raw",
       "value": "md / texto plano"
@@ -2381,6 +2511,16 @@
       "source": "effort",
       "value": "esfuerzo"
     },
+    "overview.more_files": {
+      "source": {
+        "one": "… and {n} more file",
+        "other": "… and {n} more files"
+      },
+      "value": {
+        "one": "… y {n} archivo más",
+        "other": "… y {n} archivos más"
+      }
+    },
     "detail.thinking_changed": {
       "source": "thinking mode set to {mode}",
       "value": "modo de pensamiento cambiado a {mode}"
@@ -2412,6 +2552,10 @@
     "key.supervisor": {
       "source": "supervisor",
       "value": "supervisor"
+    },
+    "key.space": {
+      "source": "space",
+      "value": "espacio"
     },
     "supervisor.title": {
       "source": "Supervisor & Cockpit Memory",
@@ -2476,6 +2620,54 @@
     "supervisor.acting": {
       "source": "supervisor is autonomously inspecting {n} task(s)...",
       "value": "el supervisor está inspeccionando autónomamente {n} tarea(s)..."
+    },
+    "err.read_board": {
+      "source": "read the board",
+      "value": "leer el tablero"
+    },
+    "err.find_repos": {
+      "source": "look for new repositories",
+      "value": "buscar repositorios nuevos"
+    },
+    "err.no_control_port": {
+      "source": "this window was opened without a way to control a task",
+      "value": "esta ventana se abrió sin forma de controlar una tarea"
+    },
+    "err.no_start_port": {
+      "source": "this window was opened without a way to start a run",
+      "value": "esta ventana se abrió sin forma de arrancar una ejecución"
+    },
+    "err.no_read_port": {
+      "source": "this window was opened without a way to mark a task read",
+      "value": "esta ventana se abrió sin forma de marcar una tarea como leída"
+    },
+    "err.no_session_port": {
+      "source": "this window was opened without a way to take the keyboard",
+      "value": "esta ventana se abrió sin forma de tomar el teclado"
+    },
+    "err.no_worktree_port": {
+      "source": "this window was opened without a way to find the worktree",
+      "value": "esta ventana se abrió sin forma de encontrar el worktree"
+    },
+    "err.no_record_port": {
+      "source": "this window was opened without a way to read the record",
+      "value": "esta ventana se abrió sin forma de leer el registro"
+    },
+    "err.no_command_port": {
+      "source": "this window was opened without a way to run commands",
+      "value": "esta ventana se abrió sin forma de ejecutar comandos"
+    },
+    "err.no_repo_path": {
+      "source": "this task does not say where its repository is",
+      "value": "esta tarea no dice dónde está su repositorio"
+    },
+    "err.no_supervisor": {
+      "source": "supervisor engine is not configured",
+      "value": "el motor supervisor no está configurado"
+    },
+    "err.git_timeout": {
+      "source": "git did not answer in time",
+      "value": "git no respondió a tiempo"
     }
   }
 }

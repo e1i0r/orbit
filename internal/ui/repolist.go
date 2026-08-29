@@ -6,6 +6,7 @@ package ui
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"charm.land/bubbles/v2/key"
@@ -149,8 +150,11 @@ func (m Model) repolistRows(h, w int) []string {
 			nameRendered += " " + Paint(OK).Render(p.T("repos.active", "[filtered]"))
 		}
 
-		countsStr := fmt.Sprintf("%d todo · %d in flight · %d needs you · %d done",
-			r.counts[0], r.counts[1], r.counts[2], r.counts[3])
+		countsStr := p.T("repos.counts", "{todo} to do · {running} in flight · {needs} needs you · {done} done",
+			about("todo", strconv.Itoa(r.counts[0])),
+			about("running", strconv.Itoa(r.counts[1])),
+			about("needs", strconv.Itoa(r.counts[2])),
+			about("done", strconv.Itoa(r.counts[3])))
 
 		line := fmt.Sprintf("%s%-24s  %s  (%s)",
 			mark,

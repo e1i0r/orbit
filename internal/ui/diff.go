@@ -53,14 +53,19 @@ func (m Model) diffLines() []string {
 	}
 
 	if m.diffErr != nil {
-		errStr := m.diffErr.Error()
-		if strings.Contains(errStr, "cannot change to") || strings.Contains(errStr, "no such file or directory") {
+		// git's own words, matched before they are translated: a missing
+		// worktree is recognised by what git said, and what git said is
+		// the same sentence whatever language this window is drawn in.
+		raw := m.diffErr.Error()
+		if strings.Contains(raw, "cannot change to") || strings.Contains(raw, "no such file or directory") {
 			return []string{" " + Paint(Dim).Render(p.T("diff.empty_no_worktree", "no working tree modifications recorded"))}
 		}
 
-		said := errStr
+		// The bound is said without the command line errSaid keeps, which
+		// belongs in a log and not in a pane three lines tall.
+		said := m.errSaid(m.diffErr)
 		if errors.Is(m.diffErr, errGitTimedOut) {
-			said = p.T("diff.timed_out", "git did not answer in time")
+			said = p.T("err.git_timeout", "git did not answer in time")
 		}
 
 		return []string{" " + Paint(Bad).Render(said)}

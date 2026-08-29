@@ -106,8 +106,13 @@ func TestTheStartDialogOffersOnlyKeysItHandles(t *testing.T) {
 
 		for _, keystroke := range b.Keys() {
 			after, cmd := advance(t, m, press(keystroke))
+			// The dials count as movement. They were left out of this
+			// comparison while the footer was long enough in Spanish that
+			// [o] fell off the end of the bar, so the one key here that
+			// moves nothing but a dial was never actually pressed.
 			if cmd == nil && after.screen == m.screen && after.start.at == m.start.at &&
-				after.message == m.message && after.autopilotOn() == m.autopilotOn() {
+				after.message == m.message && after.autopilotOn() == m.autopilotOn() &&
+				after.knobs == m.knobs {
 				t.Errorf("%q is in the footer and moves nothing", keystroke)
 			}
 		}

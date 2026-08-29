@@ -35,7 +35,7 @@ type outputMsg struct {
 // what the port will answer.
 func runCommand(port func(string, []string, io.Writer) error, w *commandWatch, args []string) tea.Cmd {
 	return func() tea.Msg {
-		err := fmt.Errorf("%s never ran: this window was opened without a way to run commands", w.name)
+		err := fmt.Errorf("%w: %s", errNoCommandPort, w.name)
 		if port != nil {
 			err = port(w.name, args, w)
 		}

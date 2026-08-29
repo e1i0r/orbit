@@ -3,9 +3,9 @@
   $0.00 spent  ·  15 tasks  ·  0 events  ·  ⠋
  ACME-2662  Retry the webhook on 5xx                                                        payments
 
-   flow  careful                               quick · task · tdd-fuzz-pr · careful  [+] nuevo flujo
+   flow  careful                                  quick · task · tdd-fuzz-pr · careful  [+] new flow
 
-   motor     claude · opus · effort:low · thinking: on        [m] modelo  [o] esfuerzo  [t] thinking
+   engine     claude · opus · effort:low · thinking: on          [m] model  [o] effort  [t] thinking
 
    ▸ implement   claude   opus   permissions: repo
      review      claude   opus   permissions: repo · stops when it is done
@@ -27,4 +27,4 @@
 
 ────────────────────────────────────────────────────────────────────────────────────────────────────
  ACME-2705 · implement · 8m in · claude/opus · careful
- [⏎] run it  [f] change flow  [+] crear flujo  [m] modelo  [?] [q]                ⚡ autopilot ● [A]
+ [⏎] run it  [f] change flow  [+] new flow  [m] model  [o] effort  [?] [q]        ⚡ autopilot ● [A]
