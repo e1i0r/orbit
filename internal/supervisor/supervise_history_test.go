@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/e1i0r/orbit/internal/record"
 )
@@ -116,5 +117,39 @@ func TestOneLongTurnDoesNotBlankTheThread(t *testing.T) {
 
 	if !strings.Contains(got, "xxxx") {
 		t.Error("the newest turn is missing entirely; the model is answering a thread it cannot see")
+	}
+}
+
+// TestATurnThatFitsIsHandedOverWhole: the cut is for turns past the budget,
+// and every other turn has to come through byte for byte. A history that
+// rewrote the ordinary case would put words in the operator's mouth.
+func TestATurnThatFitsIsHandedOverWhole(t *testing.T) {
+	line := "[elio via tui]: ship it\n"
+	if got := trimmed(line, maxHistory); got != line {
+		t.Errorf("trimmed = %q, want the line unchanged", got)
+	}
+}
+
+// TestACutTurnIsStillReadableText is the reason trimmed walks backwards.
+//
+// Cutting at a byte count lands mid-rune on anything that is not ASCII, and
+// this goes into a prompt: half a character reads to the model as a
+// character it does not know. Spanish is the language half this thread is
+// written in, so the accented byte is not a corner case here.
+func TestACutTurnIsStillReadableText(t *testing.T) {
+	// Two bytes per rune, so an odd cut is guaranteed to fall inside one.
+	got := trimmed(strings.Repeat("é", 64), 21)
+
+	body, _, _ := strings.Cut(got, "…")
+	if !utf8.ValidString(body) {
+		t.Errorf("trimmed cut a rune in half: %q", body)
+	}
+
+	if len(body) != 20 {
+		t.Errorf("trimmed kept %d bytes, want the 20 that end on a rune boundary", len(body))
+	}
+
+	if !strings.Contains(got, "is cut here") {
+		t.Errorf("trimmed cut the turn without saying so: %q", got)
 	}
 }
