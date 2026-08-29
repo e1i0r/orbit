@@ -29,8 +29,10 @@ func runMCP(ctx Context, args []string) error {
 	// application spawns this process with a working directory of its own
 	// bundle, so the default is not the working directory: it is every
 	// repository the state root already has a record of. This flag is for
-	// the other case — a tree of checkouts none of which has a task yet.
-	root := fs.String("root", "", "look for repositories under this directory instead of the ones orbit already knows")
+	// the other case — a tree of checkouts none of which has a task yet —
+	// and it is a boundary as well as a search: with a root set, the server
+	// refuses to write a task into, register or forget anything outside it.
+	root := fs.String("root", "", "look for repositories under this directory, and act on nothing outside it")
 	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}

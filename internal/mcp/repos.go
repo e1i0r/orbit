@@ -113,6 +113,10 @@ func (sn Session) addRepo(args map[string]any) CallToolResult {
 		return refuse(err)
 	}
 
+	if err := sn.within(r.Path); err != nil {
+		return refuse(err)
+	}
+
 	if _, err := s.RegisterRepo(r.Path); err != nil {
 		return refuse(fmt.Errorf("record the repository at %q: %w", r.Path, err))
 	}
@@ -154,6 +158,10 @@ func (sn Session) forgetRepo(args map[string]any) CallToolResult {
 		return refuse(err)
 	}
 
+	if err := sn.within(ref.Path); err != nil {
+		return refuse(err)
+	}
+
 	ids, err := task.List(s, repo.Repo{Path: ref.Path, Name: filepath.Base(ref.Path)})
 	if err != nil {
 		return refuse(fmt.Errorf("list the tasks of %q: %w", ref.Path, err))
@@ -183,6 +191,20 @@ func (sn Session) forgetRepo(args map[string]any) CallToolResult {
 // checkout being deleted, and the board is second because a repository can
 // be registered and outside every directory this session walks.
 func (sn Session) repoPath(s *store.Store, hint string) (string, error) {
+	path, err := sn.findRepoPath(s, hint)
+	if err != nil {
+		return "", err
+	}
+
+	if err := sn.within(path); err != nil {
+		return "", err
+	}
+
+	return path, nil
+}
+
+// findRepoPath is the three lookups, without the confinement.
+func (sn Session) findRepoPath(s *store.Store, hint string) (string, error) {
 	if ref, err := knownRepo(s, hint); err == nil {
 		return ref.Path, nil
 	}

@@ -22,10 +22,11 @@ import (
 // bundle; a server that scanned the working directory would answer every
 // question with an empty board, and be believed.
 type Session struct {
-	// Root is where repositories are looked for. Empty means the ones the
-	// state root already has a record of — every repository Orbit has
-	// written a task against — which is the answer that does not depend on
-	// which directory a client happened to spawn this process in.
+	// Root is where repositories are looked for, and — when it is set — the
+	// only place this session may act. Empty means the ones the state root
+	// already has a record of: every repository Orbit has written a task
+	// against, which is the answer that does not depend on which directory
+	// a client happened to spawn this process in.
 	Root string
 	// Version is the orbit release, for the initialize handshake. It is
 	// passed in because internal/cli owns it and this package must not
@@ -137,6 +138,67 @@ func (sn Session) roots(s *store.Store) ([]string, error) {
 	}
 
 	return paths, nil
+}
+
+// within refuses a path this session was not started for.
+//
+// A root scoped every read and no write: the board a --root server folded
+// held only what was under that directory, and then orbit_create_task,
+// orbit_add_repo and orbit_forget_repo each resolved the caller's argument
+// straight off the disk. A model given a root of ~/work could write a task
+// into any checkout on the machine, register any directory, and delete the
+// record of a repository it was never able to list — which made the flag a
+// hint about where to look rather than an answer to "what may this reach".
+//
+// An empty root confines nothing, and that is not an omission: without one
+// the scope is the state root's own listing, which is the set of
+// repositories a reader has already used Orbit on.
+func (sn Session) within(path string) error {
+	if sn.Root == "" {
+		return nil
+	}
+
+	root, p := realPath(sn.Root), realPath(path)
+
+	rel, err := filepath.Rel(root, p)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return fmt.Errorf("%q is outside %q, which is the only directory this server was started for", path, sn.Root)
+	}
+
+	return nil
+}
+
+// realPath is a path with its symbolic links resolved, so that a root given
+// as /tmp and a repository found at /private/tmp are one directory rather
+// than two — the comparison above is textual, and on macOS every temporary
+// directory is a link.
+//
+// EvalSymlinks refuses a path that is not there, and a repository being
+// forgotten routinely is not: its checkout is gone and its record is the
+// thing being cleaned up. So the deepest part that does exist is resolved
+// and the rest is kept as written, which is exact rather than a prefix
+// comparison a link inside the root could walk out of.
+func realPath(path string) string {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return filepath.Clean(path)
+	}
+
+	rest := ""
+
+	for cur := abs; ; {
+		if resolved, evalErr := filepath.EvalSymlinks(cur); evalErr == nil {
+			return filepath.Join(resolved, rest)
+		}
+
+		parent := filepath.Dir(cur)
+		if parent == cur {
+			return abs
+		}
+
+		rest = filepath.Join(filepath.Base(cur), rest)
+		cur = parent
+	}
 }
 
 // mergeBoards folds one root's board into the running total.
