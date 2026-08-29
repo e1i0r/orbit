@@ -1,6 +1,7 @@
 package mcp
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -235,7 +236,12 @@ func (sn Session) directTask(args map[string]any) CallToolResult {
 	// second time is how this path came to skip that wait and put two runs
 	// on one task.
 	if boolArg(args, "restart") {
-		pid, err := task.Reopen(sb.store, t, "mcp", message, t.Flow, board.Unread(sb.board))
+		// context.Background because nothing upstream of here has one: the
+		// server reads a request off a pipe and dispatches it by name, with
+		// no per-call context to cancel. Reopen's wait is bounded either
+		// way, and the day this package grows one is the day this line
+		// changes.
+		pid, err := task.Reopen(context.Background(), sb.store, t, "mcp", message, t.Flow, board.Unread(sb.board))
 		if err != nil {
 			return refuse(fmt.Errorf("restart task %s after directing it: %w", t.ID, err))
 		}

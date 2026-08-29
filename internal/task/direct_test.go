@@ -1,6 +1,7 @@
 package task
 
 import (
+	"context"
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/record"
@@ -93,7 +94,7 @@ func TestReopenReturnsErrorWhenDirectFails(t *testing.T) {
 		t.Fatalf("Create: %v", err)
 	}
 
-	if _, err := Reopen(s, tk, "supervisor", "", "quick", 0); err == nil {
+	if _, err := Reopen(context.Background(), s, tk, "supervisor", "", "quick", 0); err == nil {
 		t.Error("Reopen on empty message answered nil, want error")
 	}
 }
