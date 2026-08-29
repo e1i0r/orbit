@@ -59,11 +59,11 @@ func (m Model) flowDetailRows(h, w int) []string {
 	for i, ph := range st.phases {
 		badgeText := fmt.Sprintf("%s/%s", ph.Engine, orDef(ph.Model, "default"))
 		if ph.Effort != "" && ph.Effort != "default" {
-			badgeText += " · effort: " + ph.Effort
+			badgeText += " · " + p.T("flows.effort_badge", "effort: {v}", about("v", ph.Effort))
 		}
 
 		if ph.Thinking != "" && ph.Thinking != "adaptive" {
-			badgeText += " · thinking: " + ph.Thinking
+			badgeText += " · " + p.T("flows.thinking_badge", "thinking: {v}", about("v", ph.Thinking))
 		}
 
 		if ph.FeedOutput {

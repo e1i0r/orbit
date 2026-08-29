@@ -259,6 +259,7 @@ func (m Model) overviewLines() []string {
 			if i >= 4 {
 				rest := len(diffSum.files) - 4
 				out = append(out, "      "+Paint(Dim).Render(p.P("overview.more_files", rest, "… and {n} more file", "… and {n} more files")))
+
 				break
 			}
 

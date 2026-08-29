@@ -173,12 +173,14 @@ func (m Model) flowsBuilderRows(h, w int) []string {
 	out = append(out, renderField(flowFieldFeedOutput, p.T("flows.field_feed_output", "7. Feed Previous Output"), feedPills))
 
 	// 9. Control
+	human := p.T("flows.wait_human", "wait (human)")
+
 	waitVal := "auto"
 	if curPh.Wait {
-		waitVal = "wait (humano)"
+		waitVal = human
 	}
 
-	waitPills := renderComboPills([]string{"auto", "wait (humano)"}, waitVal)
+	waitPills := renderComboPills([]string{"auto", human}, waitVal)
 	out = append(out, renderField(flowFieldWait, p.T("flows.field_wait", "8. Phase Control"), waitPills))
 
 	// 10. Prompt

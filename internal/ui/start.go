@@ -273,9 +273,9 @@ func (m Model) startBindings() []key.Binding {
 	}
 
 	out = append(out,
-		key.NewBinding(key.WithKeys("+"), key.WithHelp("+", p.T("start.new_flow_hint", "crear flujo"))),
-		key.NewBinding(key.WithKeys("m"), key.WithHelp("m", p.T("start.model_hint", "modelo"))),
-		key.NewBinding(key.WithKeys("o"), key.WithHelp("o", p.T("start.effort_hint", "esfuerzo"))),
+		key.NewBinding(key.WithKeys("+"), key.WithHelp("+", p.T("start.new_flow_hint", "new flow"))),
+		key.NewBinding(key.WithKeys("m"), key.WithHelp("m", p.T("start.model_hint", "model"))),
+		key.NewBinding(key.WithKeys("o"), key.WithHelp("o", p.T("start.effort_hint", "effort"))),
 		key.NewBinding(key.WithKeys("t"), key.WithHelp("t", p.T("start.thinking_hint", "thinking"))),
 		m.keys.Autopilot,
 		m.keys.Back,

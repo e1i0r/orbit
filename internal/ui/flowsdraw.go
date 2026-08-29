@@ -25,7 +25,7 @@ func (m Model) flowsRows(h, w int) []string {
 
 	createBtn := "  " + Paint(Dim).Render(p.T("flows.create_btn_idle", "[+ Create Custom Flow] (press n)"))
 	if m.flows.sel == -1 {
-		createBtn = "▸ " + Pill(p.T("flows.create_btn", "+ Create Custom Flow"), "#FFFFFF", "#005F87") + "  " + Paint(Live).Render("(pulsa ⏎)")
+		createBtn = "▸ " + Pill(p.T("flows.create_btn", "+ Create Custom Flow"), "#FFFFFF", "#005F87") + "  " + Paint(Live).Render(p.T("flows.press_enter", "(press ⏎)"))
 	}
 
 	out := []string{
@@ -96,7 +96,7 @@ func (m Model) flowsRows(h, w int) []string {
 
 			feed := ""
 			if ph.FeedOutput {
-				feed = " [feeds input]"
+				feed = " " + p.T("flows.feeds_input", "[feeds input]")
 			}
 
 			waitStr := p.T("flow.runs_auto", "runs automatically")

@@ -226,7 +226,7 @@ func (m Model) flowLines() []string {
 		if ex.failed {
 			errMsg := ex.cause
 			if errMsg == "" && ex.exit != "" {
-				errMsg = "exit code: " + ex.exit
+				errMsg = p.T("flow.exit_code", "exit code: {code}", about("code", ex.exit))
 			}
 
 			if errMsg != "" {

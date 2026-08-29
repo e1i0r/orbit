@@ -48,18 +48,18 @@ func (m Model) configLine(w int) string {
 
 	thk := m.knobs.Thinking
 
-	thkLabel := "thinking: on"
+	thkLabel := p.T("start.thinking_on", "thinking: on")
 	if thk == "off" {
-		thkLabel = "thinking: off"
+		thkLabel = p.T("start.thinking_off", "thinking: off")
 	}
 
-	left := startIndent + Paint(Dim).Render(p.T("start.engine_config", "motor")) + "     " +
+	left := startIndent + Paint(Dim).Render(p.T("start.engine_config", "engine")) + "     " +
 		Paint(Live).Bold(true).Render(eng) + " · " +
 		Paint(Accent).Render(mod) + " · " +
-		Paint(Dim).Render("effort:"+eff) + " · " +
+		Paint(Dim).Render(p.T("start.effort_label", "effort:")+eff) + " · " +
 		Paint(OK).Render(thkLabel)
 
-	hints := Paint(Dim).Render(p.T("start.dials_hint", "[m] modelo  [o] esfuerzo  [t] thinking"))
+	hints := Paint(Dim).Render(p.T("start.dials_hint", "[m] model  [o] effort  [t] thinking"))
 
 	return spread(left, hints, w)
 }

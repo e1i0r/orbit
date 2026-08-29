@@ -995,6 +995,16 @@
       "source": "  [↑↓] navigate  [⏎ / click] select  [space] fold  [esc] close",
       "value": "  [↑↓] navegar  [⏎ / clic] seleccionar  [espacio] plegar  [esc] cerrar"
     },
+    "diff.files_changed": {
+      "source": {
+        "one": "{n} file changed",
+        "other": "{n} files changed"
+      },
+      "value": {
+        "one": "{n} archivo cambiado",
+        "other": "{n} archivos cambiados"
+      }
+    },
     "board.col_repo": {
       "source": "REPO",
       "value": "REPO"
@@ -1098,27 +1108,27 @@
       "value": "flujo"
     },
     "start.engine_config": {
-      "source": "motor",
+      "source": "engine",
       "value": "motor"
     },
     "start.dials_hint": {
-      "source": "[m] modelo  [o] esfuerzo  [t] thinking",
+      "source": "[m] model  [o] effort  [t] thinking",
       "value": "[m] modelo  [o] esfuerzo  [t] thinking"
     },
     "start.new_flow_tag": {
-      "source": "[+] nuevo flujo",
+      "source": "[+] new flow",
       "value": "[+] nuevo flujo"
     },
     "start.new_flow_hint": {
-      "source": "crear flujo",
+      "source": "new flow",
       "value": "crear flujo"
     },
     "start.model_hint": {
-      "source": "modelo",
+      "source": "model",
       "value": "modelo"
     },
     "start.effort_hint": {
-      "source": "esfuerzo",
+      "source": "effort",
       "value": "esfuerzo"
     },
     "start.thinking_hint": {
@@ -1168,6 +1178,18 @@
     "start.autopilot": {
       "source": "autopilot",
       "value": "piloto automático"
+    },
+    "start.thinking_on": {
+      "source": "thinking: on",
+      "value": "thinking: activado"
+    },
+    "start.thinking_off": {
+      "source": "thinking: off",
+      "value": "thinking: desactivado"
+    },
+    "start.effort_label": {
+      "source": "effort:",
+      "value": "esfuerzo:"
     },
     "msg.no_session": {
       "source": "{id} has no session to carry on",
@@ -1691,7 +1713,7 @@
     },
     "flows.feeds_input": {
       "source": "[feeds input]",
-      "value": "[feeds input]"
+      "value": "[alimenta la entrada]"
     },
     "flows.stops_human": {
       "source": "(stops for human)",
@@ -1931,6 +1953,22 @@
       "source": "phase {n} selected: {phase} ({engine}/{model})",
       "value": "fase {n} seleccionada: {phase} ({engine}/{model})"
     },
+    "flows.effort_badge": {
+      "source": "effort: {v}",
+      "value": "esfuerzo: {v}"
+    },
+    "flows.thinking_badge": {
+      "source": "thinking: {v}",
+      "value": "thinking: {v}"
+    },
+    "flows.press_enter": {
+      "source": "(press ⏎)",
+      "value": "(pulsa ⏎)"
+    },
+    "flows.wait_human": {
+      "source": "wait (human)",
+      "value": "wait (humano)"
+    },
     "help.ways_out": {
       "source": "{up_down} scroll · {back} back",
       "value": "{up_down} desplazar · {back} volver"
@@ -2077,6 +2115,10 @@
       "source": "stops for human",
       "value": "se detiene para un humano"
     },
+    "flow.exit_code": {
+      "source": "exit code: {code}",
+      "value": "código de salida: {code}"
+    },
     "status.spent": {
       "source": "{cost} spent",
       "value": "{cost} gastado"
@@ -2130,6 +2172,10 @@
     "repos.filter_cleared": {
       "source": "showing all repositories",
       "value": "mostrando todos los repositorios"
+    },
+    "repos.counts": {
+      "source": "{todo} to do · {running} in flight · {needs} needs you · {done} done",
+      "value": "{todo} por hacer · {running} en marcha · {needs} te necesitan · {done} terminadas"
     },
     "band.repo_filter_tag": {
       "source": "repo:{repo}",
@@ -2510,6 +2556,10 @@
     "key.supervisor": {
       "source": "supervisor",
       "value": "supervisor"
+    },
+    "key.space": {
+      "source": "space",
+      "value": "espacio"
     },
     "supervisor.title": {
       "source": "Supervisor & Cockpit Memory",

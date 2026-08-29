@@ -115,7 +115,7 @@ func (m Model) flowLine(w int) string {
 		parts = append(parts, Paint(role).Render(f.name))
 	}
 
-	right := strings.Join(parts, Paint(Dim).Render(dot)) + "  " + Paint(Dim).Render(p.T("start.new_flow_tag", "[+] nuevo flujo"))
+	right := strings.Join(parts, Paint(Dim).Render(dot)) + "  " + Paint(Dim).Render(p.T("start.new_flow_tag", "[+] new flow"))
 
 	return spread(left, right, w)
 }

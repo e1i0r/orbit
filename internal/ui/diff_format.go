@@ -29,7 +29,7 @@ func formatStructuredDiff(diffText string, width int, p *words.Printer, rational
 	out := make([]string, 0, len(raw)+len(files)*6)
 
 	summary := diffSummaryHeader(len(files), totalAdd, totalDel,
-		p.T("diff.nav_help", "(] / [ next/prev file · f files · space collapse · r rationale · o editor)"))
+		p.T("diff.nav_help", "(] / [ next/prev file · f files · space collapse · r rationale · o editor)"), p)
 	out = append(out, summary, "")
 
 	fileIdx := 0
