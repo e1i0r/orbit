@@ -67,11 +67,68 @@ func Save(src Source, f Flow) (string, error) {
 		return "", fmt.Errorf("create %q: %w", dir, err)
 	}
 
-	if err := os.WriteFile(path, body, fileMode); err != nil {
-		return "", fmt.Errorf("write %q: %w", path, err)
+	if err := writeAtomically(path, body); err != nil {
+		return "", err
 	}
 
 	return path, nil
+}
+
+// writeAtomically writes a flow into place in one step, by writing it beside
+// itself and renaming it over.
+//
+// os.WriteFile truncates the file and then fills it, so every reader between
+// those two is reading a flow that is half there or not there at all. A flow
+// is read at the moment a task is about to run on it, and Resolve is
+// deliberately hard about what it finds: a file that will not parse is the
+// reader's flow failing and is reported as such, rather than falling back to
+// the built-in of the same name. So a save interrupted at the wrong instant
+// does not lose an edit — it takes the name out of service, while leaving it
+// in the list, because the listing looks at file names and not at contents.
+//
+// The rename is the whole fix and it is one line. It also means the file the
+// name points at is replaced rather than written through, so a flow path
+// somebody has pointed elsewhere is not a way to have Orbit write outside
+// its own directory.
+//
+// This is internal/mcp's writeAtomically, spelled again for the reason the
+// modes above are: this package imports nothing of Orbit's.
+func writeAtomically(path string, body []byte) error {
+	dir := filepath.Dir(path)
+
+	tmp, err := os.CreateTemp(dir, filepath.Base(path)+".*.tmp")
+	if err != nil {
+		return fmt.Errorf("create a temporary file beside %q: %w", path, err)
+	}
+
+	name := tmp.Name()
+
+	if _, err := tmp.Write(body); err != nil {
+		_ = tmp.Close()     //nolint:errcheck // the write already failed; the close cannot add to it
+		_ = os.Remove(name) //nolint:errcheck // best-effort cleanup of a file nothing points at
+
+		return fmt.Errorf("write %q: %w", name, err)
+	}
+
+	if err := tmp.Close(); err != nil {
+		_ = os.Remove(name) //nolint:errcheck // best-effort cleanup of a file nothing points at
+
+		return fmt.Errorf("close %q: %w", name, err)
+	}
+
+	if err := os.Chmod(name, fileMode); err != nil {
+		_ = os.Remove(name) //nolint:errcheck // best-effort cleanup of a file nothing points at
+
+		return fmt.Errorf("set the mode of %q: %w", name, err)
+	}
+
+	if err := os.Rename(name, path); err != nil {
+		_ = os.Remove(name) //nolint:errcheck // best-effort cleanup of a file nothing points at
+
+		return fmt.Errorf("move %q into place at %q: %w", name, path, err)
+	}
+
+	return nil
 }
 
 // Delete removes a flow of the reader's own, and says whether a built-in of
