@@ -60,8 +60,8 @@ func (m Model) helpRows(h, w int) []string {
 	p := m.opts.Words
 	out := []string{
 		"",
-		"  " + Paint(Accent).Bold(true).Render("Ayuda y Atajos de Teclado (Cheat Sheet)"),
-		"  " + Paint(Dim).Render("todas las funciones se pueden accionar por teclado o haciendo clic directo"),
+		"  " + Paint(Accent).Bold(true).Render(p.T("help.title", "Help and keyboard shortcuts (cheat sheet)")),
+		"  " + Paint(Dim).Render(p.T("help.subtitle", "every function can be reached from the keyboard or by clicking it")),
 		"",
 	}
 
@@ -77,45 +77,49 @@ func (m Model) helpRows(h, w int) []string {
 		out = append(out, "")
 	}
 
-	renderSection("📋 1. TABLERO GENERAL (Board & Queues)", [][2]string{
-		{"[↑↓] o [j/k]", "Moverse entre tareas y secciones del tablero"},
-		{"[⏎ Enter] o Clic", "Abrir detalle de tarea seleccionada o colapsar cola"},
-		{"[n]", "Poner en marcha / Iniciar nueva ejecución de tarea"},
-		{"[N] (Shift+N)", "Crear/redactar una nueva tarea en el repositorio actual"},
-		{"[c]", "Abrir sesión de CLI interactiva"},
-		{"[/]", "Búsqueda y filtro en tiempo real (ID, título, repo)"},
-		{"[Esc]", "Limpiar filtros activos o volver a la vista anterior"},
-		{"◉ orbit (clic)", "Resetear todos los filtros y mostrar tablero completo"},
-		{"[📋⚡💬🏁] (clic)", "Filtrar para ver únicamente las tareas de esa cola"},
+	renderSection(p.T("help.board.title", "📋 1. BOARD AND QUEUES"), [][2]string{
+		{"[↑↓] [j/k]", p.T("help.board.move", "Move between tasks and board sections")},
+		{p.T("help.board.open_key", "[⏎ enter] / click"), p.T("help.board.open", "Open the selected task, or fold a queue away")},
+		{"[n]", p.T("help.board.run", "Start a new run of the selected task")},
+		{"[N] (shift+n)", p.T("help.board.write", "Write a new task in the current repository")},
+		{"[c]", p.T("help.board.cli", "Open an interactive CLI session")},
+		{"[/]", p.T("help.board.filter", "Search and filter as you type (ID, title, repo)")},
+		{"[Esc]", p.T("help.board.escape", "Clear the active filters, or go back to the previous view")},
+		{p.T("help.board.reset_key", "◉ orbit (click)"), p.T("help.board.reset", "Reset every filter and show the whole board")},
+		{p.T("help.board.queue_key", "[📋⚡💬🏁] (click)"), p.T("help.board.queue", "Show only the tasks in that queue")},
 	})
 
-	//nolint:misspell // Spanish help items
-	renderSection("⚡ 2. CONTROL Y CONFIGURACIÓN EN VIVO", [][2]string{
-		{"[A] o ⚡ clic", "Alternar Autopilot (ejecución autónoma de tareas en To Do)"},
-		{"[M] o 🧠 clic", "Selector de Motor IA (claude, codex, opencode, esfuerzo y thinking)"},
-		{"[S]", "Pantalla de Ajustes (idiomas, temas visuales, límites)"},
-		{"[R] o 📦 clic", "Selector modal de repositorios conectados"},
-		{"🌐 ES / EN (clic)", "Alternar idioma del sistema entre Español e Inglés en vivo"},
+	renderSection(p.T("help.live.title", "⚡ 2. LIVE CONTROL AND SETTINGS"), [][2]string{
+		{p.T("help.live.autopilot_key", "[A] / ⚡ click"), p.T("help.live.autopilot", "Toggle autopilot: tasks in to do start on their own")},
+		{p.T("help.live.engine_key", "[M] / 🧠 click"), p.T("help.live.engine", "Engine dial: claude, codex, opencode, effort and thinking")},
+		{"[S]", p.T("help.live.settings", "Settings screen: language, theme, limits")},
+		{p.T("help.live.repos_key", "[R] / 📦 click"), p.T("help.live.repos", "Pick which of the connected repositories the board shows")},
+		{p.T("help.live.lang_key", "🌐 ES / EN (click)"), p.T("help.live.lang", "Switch the language of the whole window, live")},
 	})
 
-	renderSection("🔍 3. DETALLE DE TAREA (11 Tabs)", [][2]string{
-		{"[1] Resumen", "Ver estado, duración, modelo, tokens y costes"},
-		{"[2] Flujo", "Ver fases del pipeline del ciclo de vida"},
-		{"[3] Gates", "Comprobaciones y pruebas de verificación automática"},
-		{"[4] Coste", "Gasto financiero real acumulado"},
-		{"[6] Cronología", "Línea de tiempo de eventos y logs en tiempo real"},
-		{"[7] Informe", "Informe final generado por el agente IA"},
-		{"[0] Cambios", "Visor de Git Diff con sintaxis coloreada"},
-		{"[w] Thinking", "Cadena de pensamiento profundo del modelo"},
-		{"[Tab / Shift+Tab]", "Pestaña siguiente / anterior"},
-		{"[p] / [u] / [s]", "Pausar / Desbloquear / Añadir notas de operador"},
-	})
+	// The tab rows are the tab list itself, not a copy of it: same key, same
+	// name, same description the tab menu shows. The list this replaces was
+	// written out by hand, and by the time it was read it announced eleven
+	// tabs and then named eight of them — refused, artifacts and notes had
+	// been added to the detail screen and never to the cheat sheet.
+	tabs := make([][2]string, 0, len(m.tabNames())+2)
+	for _, e := range m.tabMenuEntries() {
+		tabs = append(tabs, [2]string{e.glyph + " " + e.title, e.detail})
+	}
 
-	//nolint:misspell // Spanish help items
-	renderSection("⌨️ 4. COMANDOS GLOBALES", [][2]string{
-		{"[:]", "Abrir paleta de comandos interactiva (orbit new, flows, set...)"},
-		{"[?]", "Abrir o cerrar esta ventana de ayuda"},
-		{"[q]", "Salir de Orbit"},
+	tabsTitle := p.P("help.tabs.title", len(tabs),
+		"🔍 3. TASK DETAIL ({n} tab)", "🔍 3. TASK DETAIL ({n} tabs)")
+
+	tabs = append(tabs,
+		[2]string{"[Tab / shift+tab]", p.T("help.tabs.cycle", "Next tab / previous tab")},
+		[2]string{"[p] / [u] / [s]", p.T("help.tabs.control", "Pause / unblock / add an operator note")},
+	)
+	renderSection(tabsTitle, tabs)
+
+	renderSection(p.T("help.global.title", "⌨️ 4. GLOBAL COMMANDS"), [][2]string{
+		{"[:]", p.T("help.global.palette", "Open the command palette (orbit new, flows, set...)")},
+		{"[?]", p.T("help.global.help", "Open or close this help window")},
+		{"[q]", p.T("help.global.quit", "Leave Orbit")},
 	})
 
 	waysOut := p.T("help.ways_out", "{up_down} scroll · {back} back",

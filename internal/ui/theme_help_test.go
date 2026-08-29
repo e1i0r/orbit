@@ -127,8 +127,14 @@ func TestHelpRowsOffsetClampsToTheLastLine(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m = m.openHelp()
 
+	// The title is asked for the way helpRows asks for it. Spelling it out
+	// here in Spanish is what this line used to do, and it passed for a
+	// model whose language is English only because the screen was Spanish
+	// whatever the language said.
+	title := m.opts.Words.T("help.title", "Help and keyboard shortcuts (cheat sheet)")
+
 	full := m.helpRows(40, 100)
-	if len(full) == 0 || !strings.Contains(strings.Join(full, "\n"), "Ayuda") {
+	if len(full) == 0 || !strings.Contains(strings.Join(full, "\n"), title) {
 		t.Fatalf("helpRows at offset 0 = %v, want the help title", full)
 	}
 
@@ -139,7 +145,7 @@ func TestHelpRowsOffsetClampsToTheLastLine(t *testing.T) {
 		t.Errorf("helpRows at offset 3 has %d lines, want it padded back to %d like offset 0", len(scrolled), len(full))
 	}
 
-	if strings.Contains(strings.Join(scrolled, "\n"), "Ayuda y Atajos") {
+	if strings.Contains(strings.Join(scrolled, "\n"), title) {
 		t.Error("helpRows at offset 3 still shows the title, want it scrolled past")
 	}
 
