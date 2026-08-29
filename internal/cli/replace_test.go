@@ -5,9 +5,7 @@ package cli
 // a reader ran it.
 
 import (
-	"archive/tar"
 	"bytes"
-	"compress/gzip"
 	"os"
 	"path/filepath"
 	"strings"
@@ -169,32 +167,7 @@ func TestAFileThatCannotBeMadeRunnableIsRefused(t *testing.T) {
 // the ceiling and answered no error, so an archive one byte over it was cut
 // in the middle and the piece was written over the running orbit.
 func TestAnOrbitLargerThanTheCeilingIsNotInstalledInHalf(t *testing.T) {
-	body := bytes.Repeat([]byte("x"), maxDownload+1)
-
-	var buf bytes.Buffer
-
-	gzw := gzip.NewWriter(&buf)
-	tw := tar.NewWriter(gzw)
-
-	if err := tw.WriteHeader(&tar.Header{
-		Name: "orbit", Typeflag: tar.TypeReg, Size: int64(len(body)), Mode: 0o755,
-	}); err != nil {
-		t.Fatalf("write the header: %v", err)
-	}
-
-	if _, err := tw.Write(body); err != nil {
-		t.Fatalf("write the oversized binary: %v", err)
-	}
-
-	if err := tw.Close(); err != nil {
-		t.Fatalf("close the tar: %v", err)
-	}
-
-	if err := gzw.Close(); err != nil {
-		t.Fatalf("close the gzip: %v", err)
-	}
-
-	got, err := binaryFrom(buf.Bytes())
+	got, err := binaryFrom(archiveOf(t, "orbit", bytes.Repeat([]byte("x"), maxDownload+1)))
 	if err == nil {
 		t.Fatalf("an oversized archive answered %d bytes to write over orbit", len(got))
 	}
