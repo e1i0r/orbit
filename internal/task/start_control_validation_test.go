@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -269,5 +270,39 @@ func TestTaskLoadAndFlowChoice(t *testing.T) {
 
 	if created.ID != loaded.ID {
 		t.Errorf("created ID %q != loaded ID %q", created.ID, loaded.ID)
+	}
+}
+
+// TestStartRefusesATaskWhoseMarkerWillNotRead.
+//
+// Start looks before it spawns, and a claim it cannot read is a claim it
+// cannot rule out. Treating it as "nothing is running" would put a second
+// `orbit run` on one worktree, one branch and one log -- which is the whole
+// reason the look is there, and the run's own hold cannot help because the
+// two runs would each be holding a marker the other could not parse.
+func TestStartRefusesATaskWhoseMarkerWillNotRead(t *testing.T) {
+	s, r := fixture(t)
+
+	tk, err := Create(s, r, "START-MARKER-1", "start over a broken marker", "quick")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	path, err := s.RunPath(r.Path, tk.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(path, []byte("pid: not a number\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	pid, err := Start(s, tk, "quick", 0)
+	if err == nil {
+		t.Fatal("Start spawned a run over a marker it could not read")
+	}
+
+	if pid != 0 {
+		t.Errorf("Start returned pid %d alongside its refusal", pid)
 	}
 }
