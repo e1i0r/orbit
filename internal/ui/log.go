@@ -263,10 +263,13 @@ func formatLogTool(tool, args string) string {
 	return tool
 }
 
-// firstLine is everything up to the first newline. A multi-line Text on a
-// one-line row would take the rest of the pane with it.
+// firstLine is everything up to the first line break. A multi-line Text on a
+// one-line row would take the rest of the pane with it, and a carriage
+// return would put the rest of it on top of the row it is already on.
 func firstLine(s string) string {
 	head, _, _ := strings.Cut(s, "\n")
+	head, _, _ = strings.Cut(head, "\r")
+
 	return strings.TrimSpace(head)
 }
 

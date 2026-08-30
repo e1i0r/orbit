@@ -37,6 +37,24 @@ func damageCases() []foldCase {
 			},
 		},
 		{
+			// A task written with CR line endings, which is how one arrives
+			// from an editor that has never seen a newline. The title is one
+			// row of the board beside four columns, and everything after the
+			// return would be drawn on top of them.
+			name: "a title whose lines end in carriage returns is only its first line",
+			events: []record.Event{
+				{At: at(0), Kind: "task.created", Text: "Add orbit version to the CLI\r- write internal/cli/version.go\r- write its tests"},
+			},
+			want: Task{Title: "Add orbit version to the CLI", Band: ToDo, Since: at(0)},
+		},
+		{
+			name: "a title whose lines end in both is only its first line",
+			events: []record.Event{
+				{At: at(0), Kind: "task.created", Text: "Add orbit version to the CLI\r\n- write internal/cli/version.go"},
+			},
+			want: Task{Title: "Add orbit version to the CLI", Band: ToDo, Since: at(0)},
+		},
+		{
 			name: "a line that is only {} unmarshals to an event with no kind",
 			events: []record.Event{
 				{At: at(0), Kind: "task.created", Text: "Index on settlements"},
