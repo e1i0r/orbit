@@ -95,8 +95,16 @@ func (sn Session) retryTask(args map[string]any) CallToolResult {
 		return refuse(err)
 	}
 
-	if row0.Live {
+	if row0.Live == view.LiveHeld {
 		return refuse(fmt.Errorf("task %s is running; pause it with orbit_pause_task or stop it with orbit_cancel_task before starting it again", row0.ID))
+	}
+
+	// Neither running nor free: the marker is there and nothing could read
+	// it. Starting anyway is how a second engine ends up in a worktree the
+	// first one is still writing in, and a model cannot look at the file to
+	// settle it, so it is told what to say to whoever can.
+	if row0.Live == view.LiveUnknown {
+		return refuse(fmt.Errorf("orbit cannot read task %s's run marker, so it cannot tell whether a phase is running; the run file in the task's directory has to be looked at before it is started again", row0.ID))
 	}
 
 	r, err := openTaskRepo(row0)

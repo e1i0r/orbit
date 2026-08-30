@@ -161,6 +161,10 @@
       "source": "cannot delete a running task; cancel it first",
       "value": "no se puede eliminar una tarea en marcha; cancélala primero"
     },
+    "why.marker_unreadable": {
+      "source": "orbit cannot read this task's run marker, so it cannot tell whether a phase is running; look at the run file in the task's directory",
+      "value": "orbit no puede leer el marcador de ejecución de esta tarea, así que no sabe si hay una fase en marcha; mira el archivo run en el directorio de la tarea"
+    },
     "header.autopilot": {
       "source": "autopilot",
       "value": "piloto automático"
@@ -1098,6 +1102,10 @@
     "start.already_running": {
       "source": "{id} is already running; press x to stop it first",
       "value": "{id} ya está en marcha; pulsa x para detenerla primero"
+    },
+    "start.marker_unreadable": {
+      "source": "orbit cannot read {id}'s run marker, so it cannot tell whether a phase is still running; look at the run file in the task's directory",
+      "value": "orbit no puede leer el marcador de ejecución de {id}, así que no sabe si todavía hay una fase en marcha; mira el archivo run en el directorio de la tarea"
     },
     "start.gone": {
       "source": "{id} has left the board; nothing was started",

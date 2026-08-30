@@ -123,13 +123,23 @@ func about(name, value string) words.Arg {
 // apart because the row says different things about them; here they are one
 // state, because r is what lets go of either.
 func parked(t view.Task) bool {
-	return t.Live && (t.Reason.Key == view.ReasonHeld || t.Reason.Key == view.ReasonGate)
+	return t.Live == view.LiveHeld && (t.Reason.Key == view.ReasonHeld || t.Reason.Key == view.ReasonGate)
 }
 
 // working is a run inside a phase right now, as opposed to one stopped at
 // the boundary of one.
 func working(t view.Task) bool {
-	return t.Live && !parked(t)
+	return t.Live == view.LiveHeld && !parked(t)
+}
+
+// unknown is a task whose run marker is there and cannot be read. Every verb
+// that turns on whether a process holds this task refuses on it, because the
+// honest answer to "is one running?" is that nobody knows — and both guesses
+// cost something. Guessing free starts a second engine in a worktree the
+// first is writing in; guessing held offers a stop that reads the same
+// unreadable marker and fails.
+func unknown(t view.Task) bool {
+	return t.Live == view.LiveUnknown
 }
 
 // started is whether a run has ever begun. Attempt is the signal and not
@@ -143,7 +153,9 @@ func started(t view.Task) bool {
 // point: each one names something else to press.
 func whyNotPause(t view.Task, s Conditions) words.Arg {
 	switch {
-	case !t.Live:
+	case unknown(t):
+		return because(whyMarkerUnreadable)
+	case t.Live != view.LiveHeld:
 		return because(whyPauseNotRunning)
 	case t.Reason.Key == view.ReasonHeld:
 		return because(whyPauseAlreadyHeld)
@@ -166,7 +178,9 @@ func whyNotResume(t view.Task) words.Arg {
 	switch {
 	case parked(t):
 		return words.Arg{}
-	case t.Live:
+	case unknown(t):
+		return because(whyMarkerUnreadable)
+	case t.Live == view.LiveHeld:
 		return because(whyResumeStillRunning)
 	}
 
@@ -177,7 +191,11 @@ func whyNotResume(t view.Task) words.Arg {
 // paused and gated included: a run stopped at a gate is still holding a
 // worktree and still holding a slot.
 func whyNotCancel(t view.Task) words.Arg {
-	if t.Live {
+	if unknown(t) {
+		return because(whyMarkerUnreadable)
+	}
+
+	if t.Live == view.LiveHeld {
 		return words.Arg{}
 	}
 
@@ -192,6 +210,8 @@ func whyNotTake(t view.Task, s Conditions) words.Arg {
 	switch {
 	case !started(t):
 		return because(whyTakeNeverRun)
+	case unknown(t):
+		return because(whyMarkerUnreadable)
 	case working(t):
 		return because(whyTakeStillRunning)
 	case !s.CanResume:
@@ -242,7 +262,11 @@ func whyNotMarkRead(t view.Task) words.Arg {
 
 // whyNotDelete answers for deleting a task. A running task must be cancelled first.
 func whyNotDelete(t view.Task) words.Arg {
-	if t.Live {
+	if unknown(t) {
+		return because(whyMarkerUnreadable)
+	}
+
+	if t.Live == view.LiveHeld {
 		return because(whyDeleteRunning)
 	}
 

@@ -18,7 +18,7 @@ func generated() []Task {
 	}
 
 	for _, band := range append(Bands(), Band(17), Band(-1)) {
-		for _, live := range []bool{false, true} {
+		for _, live := range []Liveness{LiveFree, LiveHeld, LiveUnknown} {
 			for _, read := range []bool{false, true} {
 				for _, damaged := range []int{0, 3} {
 					tasks = append(tasks, Task{ID: "ACME-1", Band: band, Live: live, Read: read, Damaged: damaged})
@@ -191,7 +191,7 @@ func TestLiveDoesNotDecideTheBand(t *testing.T) {
 		dead := Fold(c.events)
 		alive := dead
 
-		alive.Live = true
+		alive.Live = LiveHeld
 		if BandOf(alive) != BandOf(dead) {
 			t.Errorf("%s: setting Live moved the task from %s to %s", c.name, BandOf(dead), BandOf(alive))
 		}

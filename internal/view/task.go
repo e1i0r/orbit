@@ -119,6 +119,41 @@ const (
 	ActionTool     ActionKind = "tool"
 )
 
+// Liveness is what is known about the process behind a task, and it has
+// three answers rather than two.
+//
+// The third one is the reason this is not a bool. A run marker that is there
+// and cannot be read is neither "a process holds this" nor "nothing holds
+// this": it is nobody knowing, and a reader who is told "free" may start a
+// second engine on a worktree the first one is still writing in. Told
+// "held", they could neither start it nor stop it, because stopping reads
+// the same unreadable marker. Named as its own state, it can be refused by
+// both and answered by the one gesture that fits — looking at the marker.
+type Liveness int
+
+// The three answers. Free is the zero value: a Task nobody has folded has
+// nothing claiming it, which is what an empty struct should say.
+const (
+	LiveFree    Liveness = iota // no marker, or a marker whose process is gone
+	LiveHeld                    // a process answered to the marker
+	LiveUnknown                 // there is a marker and nothing could read it
+)
+
+// String is the word a caller outside this package reports, which is why it
+// is spelled for a reader and not for Go: the MCP server hands it to a model
+// as `live`, and "unknown" is the answer that field exists to be able to
+// give.
+func (l Liveness) String() string {
+	switch l {
+	case LiveHeld:
+		return "held"
+	case LiveUnknown:
+		return "unknown"
+	}
+
+	return "free"
+}
+
 // Task is everything the window knows about one task. Every field is derived
 // from the record; nothing here is remembered between folds.
 //
@@ -154,13 +189,13 @@ type Task struct {
 	// having run. Attempt is the has-it-run signal: Attempt > 0 means a
 	// task.started is in the log, whatever its clock said.
 	Started       time.Time
-	Reason        Reason  // the word the row needs beyond its phase; zero when there is none
-	Attempt       int     // how many task.started blocks are in the log
-	Live          bool    // a process is believed to hold it; always false out of Fold, and board owns it
-	Read          bool    // task.read is in the log
-	Cost          float64 // summed from every phase.finished that reported one
-	Damaged       int     // count of record.unreadable markers
-	CurrentAction string  // formatted live action or tool call currently running
+	Reason        Reason   // the word the row needs beyond its phase; zero when there is none
+	Attempt       int      // how many task.started blocks are in the log
+	Live          Liveness // what holds it, if anything; always LiveFree out of Fold, and board owns it
+	Read          bool     // task.read is in the log
+	Cost          float64  // summed from every phase.finished that reported one
+	Damaged       int      // count of record.unreadable markers
+	CurrentAction string   // formatted live action or tool call currently running
 	// ActionKind is which of the two CurrentAction is, so that a caller can
 	// mark it as one or the other. The mark is kept out of the string: a
 	// glyph glued to the front in Fold would travel into the field the MCP

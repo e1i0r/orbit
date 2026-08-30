@@ -106,12 +106,12 @@ func fixtureTasks() []view.Task {
 		{
 			Repo: "app", ID: "ACME-2705", Title: "Reconciliation endpoint", Band: view.Running,
 			Flow: "careful", Phase: "implement", PhaseN: 1, Engine: "claude", Model: "opus",
-			Live: true, Attempt: 1, Since: ago(8 * time.Minute), Started: ago(8 * time.Minute),
+			Live: view.LiveHeld, Attempt: 1, Since: ago(8 * time.Minute), Started: ago(8 * time.Minute),
 		},
 		{
 			Repo: "payments", ID: "ACME-2706", Title: "Index on settlements", Band: view.Running,
 			Flow: "careful", Phase: "review", PhaseN: 2, Engine: "claude", Model: "opus",
-			Live: true, Attempt: 1, Since: ago(3 * time.Minute), Started: ago(40 * time.Minute),
+			Live: view.LiveHeld, Attempt: 1, Since: ago(3 * time.Minute), Started: ago(40 * time.Minute),
 		},
 	}
 	for _, id := range []string{"ACME-2710", "ACME-2711", "ACME-2712", "ACME-2713"} {

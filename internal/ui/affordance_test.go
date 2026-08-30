@@ -44,26 +44,34 @@ func everyCase() []affordanceCase {
 		offered:  []string{"enter", "D"},
 	}, {
 		name:     "a run working in a phase",
-		task:     view.Task{ID: "ACME-2", Band: view.Running, Phase: "implement", Live: true, Attempt: 1, Engine: "claude"},
+		task:     view.Task{ID: "ACME-2", Band: view.Running, Phase: "implement", Live: view.LiveHeld, Attempt: 1, Engine: "claude"},
 		settings: can,
 		offered:  []string{"enter", "p", "x"},
+	}, {
+		// A run marker nobody could read. Every verb below turns on whether
+		// a process holds this task, and nothing here can say, so the only
+		// thing left is to open it — which is what its reason asks for.
+		name:     "a run whose marker could not be read",
+		task:     view.Task{ID: "ACME-11", Band: view.Running, Live: view.LiveUnknown, Attempt: 1, Engine: "claude"},
+		settings: can,
+		offered:  []string{"enter"},
 	}, {
 		// h is not on these three lists, and that is the fix this plan
 		// made: handing the keyboard back is offered where a keyboard was
 		// taken, not wherever one could have been. A run the reader merely
 		// paused wants r.
 		name:     "a run the reader has paused",
-		task:     view.Task{ID: "ACME-3", Band: view.Running, Live: true, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonHeld}},
+		task:     view.Task{ID: "ACME-3", Band: view.Running, Live: view.LiveHeld, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonHeld}},
 		settings: can,
 		offered:  []string{"enter", "r", "x", "t"},
 	}, {
 		name:     "a phase waiting at the gate its flow asked for",
-		task:     view.Task{ID: "ACME-4", Band: view.NeedsYou, Live: true, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonGate}},
+		task:     view.Task{ID: "ACME-4", Band: view.NeedsYou, Live: view.LiveHeld, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonGate}},
 		settings: can,
 		offered:  []string{"enter", "r", "x", "t"},
 	}, {
 		name:     "the same gate with autopilot on",
-		task:     view.Task{ID: "ACME-5", Band: view.NeedsYou, Live: true, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonGate}},
+		task:     view.Task{ID: "ACME-5", Band: view.NeedsYou, Live: view.LiveHeld, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonGate}},
 		settings: Conditions{Autopilot: true, CanResume: true},
 		offered:  []string{"enter", "r", "x", "t"},
 	}, {
@@ -71,7 +79,7 @@ func everyCase() []affordanceCase {
 		// the only shape on the board where h means anything, and it is the
 		// one Conditions.Taken exists to tell apart from the one above.
 		name:     "a paused run whose keyboard this reader took",
-		task:     view.Task{ID: "ACME-10", Band: view.Running, Live: true, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonHeld}},
+		task:     view.Task{ID: "ACME-10", Band: view.Running, Live: view.LiveHeld, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonHeld}},
 		settings: Conditions{CanResume: true, Taken: true},
 		offered:  []string{"enter", "r", "x", "t", "h"},
 	}, {
@@ -91,7 +99,7 @@ func everyCase() []affordanceCase {
 		offered:  []string{"enter", "t", "D"},
 	}, {
 		name:     "a paused run on an engine that cannot resume a session",
-		task:     view.Task{ID: "ACME-9", Band: view.Running, Live: true, Attempt: 1, Engine: "codex", Reason: view.Reason{Key: view.ReasonHeld}},
+		task:     view.Task{ID: "ACME-9", Band: view.Running, Live: view.LiveHeld, Attempt: 1, Engine: "codex", Reason: view.Reason{Key: view.ReasonHeld}},
 		settings: Conditions{},
 		offered:  []string{"enter", "r", "x"},
 	}}
@@ -211,9 +219,9 @@ func find(as []Affordance, verb string) Affordance {
 func TestARefusalNamesWhatToDoNext(t *testing.T) {
 	english, _ := printers(t)
 	keys := NewKeys(english)
-	gate := view.Task{Band: view.NeedsYou, Live: true, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonGate}}
+	gate := view.Task{Band: view.NeedsYou, Live: view.LiveHeld, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonGate}}
 
-	held := find(keys.Affordances(view.Task{Band: view.Running, Live: true, Attempt: 1, Reason: view.Reason{Key: view.ReasonHeld}}, Conditions{}), "p")
+	held := find(keys.Affordances(view.Task{Band: view.Running, Live: view.LiveHeld, Attempt: 1, Reason: view.Reason{Key: view.ReasonHeld}}, Conditions{}), "p")
 	if held.WhyNot.Name != whyPauseAlreadyHeld {
 		t.Errorf("pausing a paused run says %q, want %q", held.WhyNot.Name, whyPauseAlreadyHeld)
 	}
@@ -236,7 +244,7 @@ func TestTheEngineThatCannotResumeIsNamed(t *testing.T) {
 	english, spanish := printers(t)
 	keys := NewKeys(english)
 
-	paused := view.Task{Band: view.Running, Live: true, Attempt: 1, Engine: "codex", Reason: view.Reason{Key: view.ReasonHeld}}
+	paused := view.Task{Band: view.Running, Live: view.LiveHeld, Attempt: 1, Engine: "codex", Reason: view.Reason{Key: view.ReasonHeld}}
 	for _, verb := range []string{"t", "h"} {
 		a := find(keys.Affordances(paused, Conditions{}), verb)
 		if a.OK {

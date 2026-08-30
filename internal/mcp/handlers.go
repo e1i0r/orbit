@@ -178,7 +178,7 @@ func row(t view.Task) map[string]any {
 		"engine":         t.Engine,
 		"model":          t.Model,
 		"attempt":        t.Attempt,
-		"live":           t.Live,
+		"live":           t.Live.String(),
 		"read":           t.Read,
 		"cost":           t.Cost,
 		"reason":         t.Reason.Key,
