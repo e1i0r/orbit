@@ -66,20 +66,20 @@ func TestARowIsLiveOnlyWhileAProcessHoldsIt(t *testing.T) {
 	addTask(t, s, repoPath, "ACME-1", created("retry the webhook"), startedEvent())
 	r := NewReader(s, work)
 
-	if oneRow(t, first(t, r)).Live {
-		t.Error("a task no marker claims was drawn as live")
+	if got := oneRow(t, first(t, r)).Live; got != view.LiveFree {
+		t.Errorf("a task no marker claims is %v, want free", got)
 	}
 
 	claim(t, s, repoPath, "ACME-1", os.Getpid())
 
-	if !oneRow(t, next(t, r)).Live {
-		t.Error("a task whose process is running was not drawn as live — its log did not move, and a marker appearing is not an event, so this has to be asked on every refresh")
+	if got := oneRow(t, next(t, r)).Live; got != view.LiveHeld {
+		t.Errorf("a task whose process is running is %v, want held — its log did not move, and a marker appearing is not an event, so this has to be asked on every refresh", got)
 	}
 
 	claim(t, s, repoPath, "ACME-1", gonePid(t))
 
-	if oneRow(t, next(t, r)).Live {
-		t.Error("a task whose process is gone was still drawn as live — a process dying changes no file, so a poll that only watches the log will never notice")
+	if got := oneRow(t, next(t, r)).Live; got != view.LiveFree {
+		t.Errorf("a task whose process is gone is %v, want free — a process dying changes no file, so a poll that only watches the log will never notice", got)
 	}
 }
 
@@ -98,8 +98,8 @@ func TestALiveRunIsStillBandedByTheRecord(t *testing.T) {
 	claim(t, s, repoPath, "ACME-1", gonePid(t))
 
 	row := oneRow(t, first(t, NewReader(s, work)))
-	if row.Live {
-		t.Error("a task whose process is gone was drawn as live")
+	if row.Live != view.LiveFree {
+		t.Errorf("a task whose process is gone is %v, want free", row.Live)
 	}
 
 	if row.Band != view.Running {
@@ -107,7 +107,16 @@ func TestALiveRunIsStillBandedByTheRecord(t *testing.T) {
 	}
 }
 
-func TestADamagedMarkerCostsAnErrorAndNotTheRow(t *testing.T) {
+// TestADamagedMarkerIsUnknownAndNotFree. A marker that is there and will not
+// parse is the third answer, and it used to be folded into the second: the
+// row said free, and free is what the window checks before it starts a task.
+// So the one task nobody could say anything about was the one task orbit
+// would start a second engine on.
+//
+// It is not held either. Held offers a stop, and stopping reads this same
+// unreadable marker, which would leave the task with no way out of the state
+// but deleting a file by hand.
+func TestADamagedMarkerIsUnknownAndNotFree(t *testing.T) {
 	s, work, repoPath := oneRepo(t)
 	addTask(t, s, repoPath, "ACME-1", created("retry the webhook"), startedEvent())
 	writeMarker(t, s, repoPath, "ACME-1", "pid: not a number\n")
@@ -115,8 +124,8 @@ func TestADamagedMarkerCostsAnErrorAndNotTheRow(t *testing.T) {
 	b := first(t, NewReader(s, work))
 
 	row := oneRow(t, b)
-	if row.Live {
-		t.Error("a marker nobody could read was taken as proof that a process is running")
+	if row.Live != view.LiveUnknown {
+		t.Errorf("a marker nobody could read is %v, want unknown", row.Live)
 	}
 
 	if row.Band != view.Running {

@@ -140,6 +140,22 @@ func holdTask(t *testing.T, s *store.Store, r repo.Repo, id string) {
 	}
 }
 
+// damageMarker leaves a run marker nothing can read, which is what a run
+// killed mid-write leaves behind. It is the third answer to whether a
+// process holds the task: not held, and not free either.
+func damageMarker(t *testing.T, s *store.Store, r repo.Repo, id string) {
+	t.Helper()
+
+	path, err := s.RunPath(r.Path, id)
+	if err != nil {
+		t.Fatalf("run marker path of task %s: %v", id, err)
+	}
+
+	if err := os.WriteFile(path, []byte("pid: not a number\n"), 0o600); err != nil {
+		t.Fatalf("damage the run marker of task %s: %v", id, err)
+	}
+}
+
 // call runs one tool and decodes the JSON it answered with, failing the test
 // if the tool refused. It is what makes the assertions below assertions
 // rather than error handling.

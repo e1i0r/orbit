@@ -74,7 +74,7 @@ func TestAHeldRunIsNotAnimated(t *testing.T) {
 	var held int
 
 	for i := range tasks {
-		if tasks[i].Live {
+		if tasks[i].Live == view.LiveHeld {
 			tasks[i].Reason = view.Reason{Key: view.ReasonHeld, Args: []view.Arg{arg("phase", tasks[i].Phase)}}
 			held++
 		}

@@ -110,3 +110,38 @@ func TestPauseSaysWhatItHasAndHasNotDone(t *testing.T) {
 		t.Errorf("pause answered %q, want it to say the word was left rather than that the run has stopped", said)
 	}
 }
+
+// TestRetryRefusesAMarkerNobodyCouldRead. The refusal above is about a task
+// something is holding; this one is about a task nobody can say anything
+// about, and they are different sentences because they ask for different
+// things — a stop, and a look at a file.
+//
+// `live` carries the same answer into the listing. It is a word rather than a
+// flag for this state alone: a model told false starts the task, and a model
+// cannot open the marker to check.
+func TestRetryRefusesAMarkerNobodyCouldRead(t *testing.T) {
+	s, sn, r := oneRepo(t)
+	addTask(t, s, r, "PAY-9",
+		record.Event{At: at(1), Kind: record.TaskCreated, Text: "written"},
+		record.Event{At: at(2), Kind: record.TaskStarted},
+		record.Event{At: at(3), Kind: record.PhaseStarted, Phase: "implement"})
+	damageMarker(t, s, r, "PAY-9")
+
+	// The sentence and not merely the refusal: task.Start reads the same
+	// marker and stops too, but what it says is strconv.Atoi's syntax error,
+	// and a model handed that has nothing to pass on to whoever can open the
+	// file.
+	said := refused(t, sn, "orbit_retry_task", map[string]any{"task_id": "PAY-9"})
+	if !strings.Contains(said, "PAY-9") || !strings.Contains(said, "cannot tell whether a phase is running") {
+		t.Errorf("the refusal is %q, want it to name the task and what nobody knows about it", said)
+	}
+
+	rows := list(t, call(t, sn, "orbit_list_tasks", nil)["tasks"])
+	if len(rows) != 1 {
+		t.Fatalf("%d tasks listed, want 1", len(rows))
+	}
+
+	if got := str(t, obj(t, rows[0])["live"]); got != "unknown" {
+		t.Errorf("the row reports live=%q, want %q", got, "unknown")
+	}
+}

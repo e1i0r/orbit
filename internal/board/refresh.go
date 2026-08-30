@@ -139,7 +139,18 @@ func (r *Reader) Refresh() (Board, Changed, error) {
 			b.Errs = append(b.Errs, fmt.Errorf("task %s in %s: %w", st.id, st.repo.name, aliveErr))
 		}
 
-		st.task.Live = alive
+		// Three answers out of two returns and an error. A marker that could
+		// not be read is not "nothing holds this": it is nobody knowing, and
+		// the window refuses both starting and stopping on it rather than
+		// guessing which of the two would do less harm.
+		switch {
+		case aliveErr != nil:
+			st.task.Live = view.LiveUnknown
+		case alive:
+			st.task.Live = view.LiveHeld
+		default:
+			st.task.Live = view.LiveFree
+		}
 
 		// One call to view.BandOf, answering both the crossing and — via
 		// counts below, over these very tasks — the number in the header.

@@ -161,8 +161,17 @@ func (m Model) openStart() (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	if r.task.Live {
+	if r.task.Live == view.LiveHeld {
 		return m.say(p.T("start.already_running", "{id} is already running; press x to stop it first",
+			about("id", r.task.ID))), nil
+	}
+
+	// Not free either: a marker nobody can read might be a run in flight,
+	// and starting a second engine in that worktree is the one mistake this
+	// screen exists to prevent.
+	if r.task.Live == view.LiveUnknown {
+		return m.say(p.T("start.marker_unreadable",
+			"orbit cannot read {id}'s run marker, so it cannot tell whether a phase is still running; look at the run file in the task's directory",
 			about("id", r.task.ID))), nil
 	}
 
