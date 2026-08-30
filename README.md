@@ -28,7 +28,7 @@ It is built against two failure modes:
 
 ## The loop
 
-<img src="assets/loop.gif" alt="a task written from the CLI, the cockpit, the record it kept, the diff, and the record read back from the CLI" width="720">
+<img src="assets/loop.gif" alt="the cockpit, the record a finished task kept — its report, its diff, its timeline, what it changed — and the terminal handed to a CLI and handed back with the next task written down" width="720">
 
 1. In your CLI — Claude Code, Codex, OpenCode — you investigate, validate, and build the plan. From there it creates the tasks and hands them to Orbit over MCP.
 2. You open the cockpit and turn on autopilot.

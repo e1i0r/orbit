@@ -97,10 +97,15 @@ func money(s string) float64 {
 	return v
 }
 
-// firstLine is the title: everything up to the first newline, trimmed. The
-// rest of task.md is the task itself and the window has a pane for it.
+// firstLine is the title: everything up to the first line break, trimmed.
+// The rest of task.md is the task itself and the window has a pane for it.
+//
+// A carriage return breaks a line as surely as a newline does, and it breaks
+// it twice over on a terminal: the row is drawn, the cursor returns to
+// column one, and the rest of the title is drawn over the columns beside it.
+// A task written with CR line endings arrives that way.
 func firstLine(s string) string {
-	if i := strings.IndexByte(s, '\n'); i >= 0 {
+	if i := strings.IndexAny(s, "\r\n"); i >= 0 {
 		s = s[:i]
 	}
 
