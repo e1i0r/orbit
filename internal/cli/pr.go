@@ -33,15 +33,19 @@ func createPR(ctx Context, args []string) error {
 		return err
 	}
 
-	t, err := task.Load(s, r, taskID)
-	if err != nil {
-		logger.Error("cli/pr", "load task %q failed: %v", taskID, err)
-		return err
-	}
-
+	// The worktree is located before the task is read because this is where
+	// the identifier is measured against what a path can hold. Reading the
+	// task first measures the same thing on its way to the file, and leaves
+	// this check standing in front of a case that was already refused.
 	wtDir, err := s.WorktreeDir(r.Path, taskID)
 	if err != nil {
 		logger.Error("cli/pr", "get worktree for task %q failed: %v", taskID, err)
+		return err
+	}
+
+	t, err := task.Load(s, r, taskID)
+	if err != nil {
+		logger.Error("cli/pr", "load task %q failed: %v", taskID, err)
 		return err
 	}
 
