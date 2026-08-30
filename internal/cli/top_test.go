@@ -185,14 +185,27 @@ func TestTheDirectoryMayComeBeforeOrAfterTheFlags(t *testing.T) {
 		t.Fatalf("top -once <dir> exited %d: %s", after, errOut)
 	}
 
-	if stripReadTime(first) != stripReadTime(second) {
+	if stripTheClock(first) != stripTheClock(second) {
 		t.Errorf("the two orders drew different frames:\n%s\n---\n%s", first, second)
 	}
 }
 
-func stripReadTime(s string) string {
-	re := regexp.MustCompile(`\d+ms read`)
-	return re.ReplaceAllString(s, "Xms read")
+// stripTheClock takes out of a frame the two numbers a passing second
+// changes: how long the read took, and how long ago each task was written.
+//
+// The second of those is why this exists. The frames are drawn a fraction
+// of a second apart and the age is whole seconds, so two runs either side
+// of a tick differ by 0s against 1s in a comparison that is otherwise byte
+// for byte — which has nothing to do with the order the flags were typed.
+//
+// The padding in front of an age goes with it. The column is right aligned,
+// so 9s and 10s are not the same width, and normalising the number without
+// the space before it would still leave two lines that differ.
+func stripTheClock(s string) string {
+	read := regexp.MustCompile(`\d+ms read`)
+	age := regexp.MustCompile(`(?m) +\d+[smhd]$`)
+
+	return age.ReplaceAllString(read.ReplaceAllString(s, "Xms read"), " Xs")
 }
 
 func TestTopRefusesASecondDirectory(t *testing.T) {
