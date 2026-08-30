@@ -198,3 +198,44 @@ func TestClosingLeavesTheCommentTheCallerGave(t *testing.T) {
 		t.Errorf("gh was given %q, want no comment at all", got)
 	}
 }
+
+// TestMergingAsksForASquashAndNoBranchLeftBehind. MergePR answers an error
+// and nothing else, so the whole of what it does is the line it hands gh:
+// one commit on the base branch, and the branch behind it gone. A flag
+// dropped from that line is a delivery that merges some other way and says
+// nothing about having done so.
+func TestMergingAsksForASquashAndNoBranchLeftBehind(t *testing.T) {
+	dir := t.TempDir()
+	argv := filepath.Join(dir, "argv")
+
+	fakeGh(t, `printf '%s\n' "$@" > `+argv)
+
+	if err := (Repo{}).MergePR(dir, "orbit/TEST-1"); err != nil {
+		t.Fatalf("MergePR: %v", err)
+	}
+
+	got, err := os.ReadFile(argv)
+	if err != nil {
+		t.Fatalf("read what gh was given: %v", err)
+	}
+
+	if want := "pr\nmerge\norbit/TEST-1\n--squash\n--delete-branch\n"; string(got) != want {
+		t.Errorf("gh was given %q, want %q", got, want)
+	}
+}
+
+// TestAMergeGhRefusedIsAnError. gh's confirmation goes to stderr and is not
+// an answer, so nothing but the error is handed back — which makes the error
+// the only thing that can say a merge did not happen.
+func TestAMergeGhRefusedIsAnError(t *testing.T) {
+	fakeGh(t, `echo 'pull request is not mergeable' >&2; exit 1`)
+
+	err := (Repo{}).MergePR(t.TempDir(), "orbit/TEST-1")
+	if err == nil {
+		t.Fatal("a gh that refused was reported as a merge")
+	}
+
+	if !strings.Contains(err.Error(), "not mergeable") {
+		t.Errorf("the error is %q, and does not carry gh's reason", err)
+	}
+}
