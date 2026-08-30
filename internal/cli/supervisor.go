@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -12,6 +13,7 @@ import (
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/supervisor"
 	"github.com/e1i0r/orbit/internal/view"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // supervisorCommand reads or appends to the persistent supervisor conversation thread.
@@ -39,7 +41,9 @@ func supervisorCommand(ctx Context, args []string) error {
 	if *retract != "" {
 		n, err := strconv.Atoi(*retract)
 		if err != nil {
-			return fmt.Errorf("-retract takes the number of a line in the thread, not %q", *retract)
+			return errors.New(ctx.printer().T("supervisor.retract_not_a_number",
+				"-retract takes the number of a line in the thread, not {value}",
+				words.Arg{Name: "value", Value: *retract}))
 		}
 
 		return retractLine(ctx, s, n)
@@ -57,7 +61,8 @@ func supervisorCommand(ctx Context, args []string) error {
 	}
 
 	logger.Info("cli/supervisor", "recorded supervisor message by %s", *by)
-	fmt.Fprintf(ctx.Out, "recorded in supervisor thread: %s\n", text)
+	fmt.Fprintf(ctx.Out, "%s\n", ctx.printer().T("supervisor.recorded",
+		"recorded in supervisor thread: {text}", words.Arg{Name: "text", Value: text}))
 
 	return nil
 }
@@ -74,7 +79,7 @@ func printThread(ctx Context, s *store.Store) error {
 	}
 
 	if len(lines) == 0 {
-		fmt.Fprintln(ctx.Out, "the supervisor thread is empty")
+		fmt.Fprintln(ctx.Out, ctx.printer().T("supervisor.thread_empty", "the supervisor thread is empty"))
 		return nil
 	}
 
@@ -102,18 +107,24 @@ func line(l view.SupervisorLine) string {
 
 // retractLine takes back the line at the given position in the listing.
 func retractLine(ctx Context, s *store.Store, n int) error {
+	p := ctx.printer()
+
 	lines, err := thread(s)
 	if err != nil {
 		return err
 	}
 
 	if n < 1 || n > len(lines) {
-		return fmt.Errorf("there is no line %d in the supervisor thread; it has %d", n, len(lines))
+		return errors.New(p.T("supervisor.no_such_line",
+			"there is no line {n} in the supervisor thread; it has {count}",
+			words.Arg{Name: "n", Value: strconv.Itoa(n)},
+			words.Arg{Name: "count", Value: strconv.Itoa(len(lines))}))
 	}
 
 	l := lines[n-1]
 	if l.Retracted {
-		return fmt.Errorf("line %d was already taken back", n)
+		return errors.New(p.T("supervisor.already_retracted", "line {n} was already taken back",
+			words.Arg{Name: "n", Value: strconv.Itoa(n)}))
 	}
 
 	if err := supervisor.Retract(s, l.At); err != nil {
@@ -122,7 +133,8 @@ func retractLine(ctx Context, s *store.Store, n int) error {
 	}
 
 	logger.Info("cli/supervisor", "retracted supervisor line %d", n)
-	fmt.Fprintf(ctx.Out, "took back line %d: %s\n", n, l.Text)
+	fmt.Fprintf(ctx.Out, "%s\n", p.T("supervisor.line_taken_back", "took back line {n}: {text}",
+		words.Arg{Name: "n", Value: strconv.Itoa(n)}, words.Arg{Name: "text", Value: l.Text}))
 
 	return nil
 }

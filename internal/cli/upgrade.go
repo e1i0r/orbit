@@ -3,12 +3,14 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"net/http"
 	"os/exec"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -45,9 +47,9 @@ func upgrade(ctx Context, args []string) error {
 	reqCtx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	rel, err := fetchRelease(reqCtx)
+	rel, err := fetchRelease(reqCtx, p)
 	if err != nil {
-		return fmt.Errorf("fetch update: %w", err)
+		return fmt.Errorf("%s: %w", p.T("upgrade.fetch_failed", "fetch update"), err)
 	}
 
 	latestVer := strings.TrimPrefix(rel.TagName, "v")
@@ -80,7 +82,7 @@ func upgrade(ctx Context, args []string) error {
 	// somewhere else on their $PATH and the old one still in front of it.
 	// Dropped by an `if err == nil`, that sentence leaves the fallback
 	// reporting success for having updated a different file.
-	failed := installRelease(reqCtx, rel)
+	failed := installRelease(reqCtx, p, rel)
 	if failed == nil {
 		fmt.Fprintf(ctx.Out, "%s\n", p.T("upgrade.success",
 			"successfully updated orbit to {version}!",
@@ -93,8 +95,10 @@ func upgrade(ctx Context, args []string) error {
 		"could not install the release archive ({reason}); trying go install instead",
 		updateArg("reason", failed.Error())))
 
-	if err := goInstall(reqCtx); err != nil {
-		return fmt.Errorf("update orbit: %w; the release archive was not installed either: %w", err, failed)
+	if err := goInstall(reqCtx, p); err != nil {
+		return fmt.Errorf("%s: %w; %s: %w",
+			p.T("upgrade.update_failed", "update orbit"), err,
+			p.T("upgrade.archive_failed_too", "the release archive was not installed either"), failed)
 	}
 
 	fmt.Fprintf(ctx.Out, "%s\n", p.T("upgrade.success",
@@ -110,25 +114,29 @@ func upgrade(ctx Context, args []string) error {
 // Both halves can say no, and both refusals are the caller's to report: a
 // release with nothing for this machine, and a release whose archive does not
 // hash to what it said it would.
-func installRelease(ctx context.Context, rel releaseInfo) error {
+func installRelease(ctx context.Context, p *words.Printer, rel releaseInfo) error {
 	bin, ok := findAsset(rel.Assets, runtime.GOOS, runtime.GOARCH)
 	if !ok {
-		return fmt.Errorf("release %s publishes no %s %s archive", rel.TagName, runtime.GOOS, runtime.GOARCH)
+		return errors.New(p.T("upgrade.no_archive", "release {version} publishes no {os} {arch} archive",
+			updateArg("version", rel.TagName), updateArg("os", runtime.GOOS),
+			updateArg("arch", runtime.GOARCH)))
 	}
 
 	sums, ok := findChecksums(rel.Assets)
 	if !ok {
-		return fmt.Errorf("release %s publishes no checksums.txt, so %s cannot be checked", rel.TagName, bin.Name)
+		return errors.New(p.T("upgrade.no_checksums",
+			"release {version} publishes no checksums.txt, so {name} cannot be checked",
+			updateArg("version", rel.TagName), updateArg("name", bin.Name)))
 	}
 
-	return selfUpdate(ctx, bin, sums)
+	return selfUpdate(ctx, p, bin, sums)
 }
 
 func updateArg(k, v string) words.Arg {
 	return words.Arg{Name: k, Value: v}
 }
 
-func fetchRelease(ctx context.Context) (releaseInfo, error) {
+func fetchRelease(ctx context.Context, p *words.Printer) (releaseInfo, error) {
 	url := updateEndpoint
 	if url == "" {
 		url = fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", defaultRepo)
@@ -148,7 +156,8 @@ func fetchRelease(ctx context.Context) (releaseInfo, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return releaseInfo{}, fmt.Errorf("github api responded %d", resp.StatusCode)
+		return releaseInfo{}, errors.New(p.T("upgrade.github_responded", "github api responded {code}",
+			updateArg("code", strconv.Itoa(resp.StatusCode))))
 	}
 
 	var rel releaseInfo
@@ -200,16 +209,16 @@ func findChecksums(assets []asset) (asset, bool) {
 // What go said comes back with it. Under cmd.Run() a missing toolchain, a
 // module proxy that would not answer and a compile error all reach the reader
 // as the same three words: exit status 1.
-func goInstall(ctx context.Context) error {
+func goInstall(ctx context.Context, p *words.Printer) error {
 	cmd := exec.CommandContext(ctx, "go", "install", "github.com/"+defaultRepo+"/cmd/orbit@latest")
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		if said := strings.TrimSpace(string(out)); said != "" {
-			return fmt.Errorf("go install: %w: %s", err, said)
+			return fmt.Errorf("%s: %w: %s", p.T("upgrade.go_install_failed", "go install"), err, said)
 		}
 
-		return fmt.Errorf("go install: %w", err)
+		return fmt.Errorf("%s: %w", p.T("upgrade.go_install_failed", "go install"), err)
 	}
 
 	return nil

@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/task"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // noteTask records a user note for a task.
@@ -22,12 +24,13 @@ func noteTask(ctx Context, args []string) error {
 
 	id := fs.Arg(0)
 	if id == "" {
-		return fmt.Errorf("note needs the id of a task")
+		return needsTaskID(ctx, "note")
 	}
 
 	text := strings.Join(fs.Args()[1:], " ")
 	if strings.TrimSpace(text) == "" {
-		return fmt.Errorf("note needs text for task %s", id)
+		return errors.New(ctx.printer().T("note.needs_text", "note needs text for task {id}",
+			words.Arg{Name: "id", Value: id}))
 	}
 
 	s, r, err := openBoth(*dir)
@@ -48,7 +51,9 @@ func noteTask(ctx Context, args []string) error {
 	}
 
 	logger.Info("cli/note", "note added to task %s in repo %s", id, r.Name)
-	fmt.Fprintf(ctx.Out, "note recorded for %s — read by the next phase that starts\n", id)
+	fmt.Fprintf(ctx.Out, "%s\n", ctx.printer().T("note.written_down",
+		"note recorded for {id} — read by the next phase that starts",
+		words.Arg{Name: "id", Value: id}))
 
 	return nil
 }

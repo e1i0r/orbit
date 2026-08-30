@@ -86,7 +86,7 @@ func TestTheWindowIsHandedAReaderThatKeepsItsSettingsInStep(t *testing.T) {
 	emptyHome(t)
 	root := t.TempDir()
 
-	opts, _, err := window(root, "")
+	opts, _, err := window(Context{}, root, "")
 	if err != nil {
 		t.Fatalf("window: %v", err)
 	}

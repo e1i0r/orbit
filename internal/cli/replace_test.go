@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 func TestTheNewBinaryLandsWhereTheOldOneWas(t *testing.T) {
@@ -166,7 +168,7 @@ func TestAFileThatCannotBeMadeRunnableIsRefused(t *testing.T) {
 // the ceiling and answered no error, so an archive one byte over it was cut
 // in the middle and the piece was written over the running orbit.
 func TestAnOrbitLargerThanTheCeilingIsNotInstalledInHalf(t *testing.T) {
-	got, err := binaryFrom(archiveOf(t, "orbit", bytes.Repeat([]byte("x"), maxDownload+1)))
+	got, err := binaryFrom(words.For("en"), archiveOf(t, "orbit", bytes.Repeat([]byte("x"), maxDownload+1)))
 	if err == nil {
 		t.Fatalf("an oversized archive answered %d bytes to write over orbit", len(got))
 	}

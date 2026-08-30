@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/task"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 func newTask(ctx Context, args []string) error {
@@ -26,11 +28,11 @@ func newTask(ctx Context, args []string) error {
 	text := strings.TrimSpace(strings.Join(fs.Args(), " "))
 
 	if *id == "" {
-		return fmt.Errorf("new needs -id")
+		return errors.New(ctx.printer().T("new.needs_id", "new needs -id"))
 	}
 
 	if text == "" {
-		return fmt.Errorf("new needs the task written out after the flags")
+		return errors.New(ctx.printer().T("new.needs_text", "new needs the task written out after the flags"))
 	}
 
 	s, r, err := openBoth(*dir)
@@ -46,7 +48,9 @@ func newTask(ctx Context, args []string) error {
 	}
 
 	logger.Info("cli/new", "created task %s in repo %s (flow=%s)", t.ID, r.Name, t.Flow)
-	fmt.Fprintf(ctx.Out, "%s written against %s, to walk the %s flow\n", t.ID, r.Name, t.Flow)
+	fmt.Fprintf(ctx.Out, "%s\n", ctx.printer().T("new.written",
+		"{id} written against {repo}, to walk the {flow} flow",
+		words.Arg{Name: "id", Value: t.ID}, words.Arg{Name: "repo", Value: r.Name}, words.Arg{Name: "flow", Value: t.Flow}))
 
 	return nil
 }

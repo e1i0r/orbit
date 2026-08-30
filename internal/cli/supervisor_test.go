@@ -116,3 +116,39 @@ func TestSupervisorCommandRefusesARetractionItCannotPlace(t *testing.T) {
 		t.Errorf("unexpected second-retraction error: %s", errOut)
 	}
 }
+
+// TestTheThreadAnswersInTheReadersLanguage. The thread is where a reader
+// tells the fleet what to do, and everything it said back to them — the
+// refusals and the confirmations both — was English whatever they chose.
+func TestTheThreadAnswersInTheReadersLanguage(t *testing.T) {
+	answers := func(t *testing.T, language string) []string {
+		t.Helper()
+		t.Setenv("ORBIT_HOME", t.TempDir())
+
+		if code, _, errOut := run(t, "set", "language", language); code != 0 {
+			t.Fatalf("set language %s exited %d: %s", language, code, errOut)
+		}
+
+		var said []string
+
+		for _, args := range [][]string{
+			{"supervisor", "-by", "elio", "the one I regret"},
+			{"supervisor", "-retract", "two"},
+			{"supervisor", "-retract", "9"},
+			{"supervisor", "-retract", "1"},
+			{"supervisor", "-retract", "1"},
+		} {
+			_, out, errOut := run(t, args...)
+			said = append(said, out+errOut)
+		}
+
+		return said
+	}
+
+	english, spanish := answers(t, "en"), answers(t, "es")
+	for i, want := range english {
+		if spanish[i] == want {
+			t.Errorf("both readers are told %q", want)
+		}
+	}
+}

@@ -6,12 +6,20 @@ import (
 	"io"
 
 	"github.com/e1i0r/orbit/internal/logger"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // closingComment is what Orbit leaves on a pull request it closes. It lives
 // here rather than in internal/repo because that package runs git and gh and
 // does not write English.
-const closingComment = "Closed from Orbit."
+//
+// It is asked of the catalogue like every other sentence orbit writes. The
+// comment is read on GitHub rather than in the terminal, and that is a
+// reason to translate it and not a reason to leave it: whoever closed the
+// task from a Spanish cockpit is the one who will read it back.
+func closingComment(ctx Context) string {
+	return ctx.printer().T("close_pr.comment", "Closed from Orbit.")
+}
 
 func closePR(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("close-pr", flag.ContinueOnError)
@@ -23,9 +31,10 @@ func closePR(ctx Context, args []string) error {
 	}
 
 	if len(fs.Args()) < 1 {
-		return fmt.Errorf("close-pr needs the task identifier")
+		return needsTaskID(ctx, "close-pr")
 	}
 
+	p := ctx.printer()
 	taskID := fs.Args()[0]
 
 	s, r, err := openBoth(*dir)
@@ -42,13 +51,16 @@ func closePR(ctx Context, args []string) error {
 
 	branch := "orbit/" + taskID
 
-	if err := r.ClosePR(wtDir, branch, closingComment); err != nil {
+	if err := r.ClosePR(wtDir, branch, closingComment(ctx)); err != nil {
 		logger.Error("cli/close-pr", "gh pr close failed: %v", err)
-		return fmt.Errorf("close pull request for %q failed: %w", taskID, err)
+
+		return fmt.Errorf("%s: %w", p.T("close_pr.refused", "closing the pull request of {id} failed",
+			words.Arg{Name: "id", Value: taskID}), err)
 	}
 
 	logger.Info("cli/close-pr", "closed pull request for task %s on branch %s", taskID, branch)
-	fmt.Fprintf(ctx.Out, "Pull Request closed: %s\n", branch)
+	fmt.Fprintf(ctx.Out, "%s\n", p.T("close_pr.closed", "pull request closed: {branch}",
+		words.Arg{Name: "branch", Value: branch}))
 
 	return nil
 }

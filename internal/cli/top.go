@@ -16,9 +16,11 @@ package cli
 // pipe, a log and a CI job get instead of a screenful of escape codes.
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -52,7 +54,7 @@ func top(ctx Context, args []string) error {
 		return err
 	}
 
-	opts, s, err := window(dir, lang)
+	opts, s, err := window(ctx, dir, lang)
 	if err != nil {
 		return err
 	}
@@ -75,7 +77,7 @@ func top(ctx Context, args []string) error {
 	}
 
 	if _, err := tea.NewProgram(fullScreen{ui.New(opts)}).Run(); err != nil {
-		return fmt.Errorf("the window: %w", err)
+		return fmt.Errorf("%s: %w", ctx.printer().T("top.window_failed", "the window"), err)
 	}
 
 	return trouble
@@ -93,8 +95,16 @@ func top(ctx Context, args []string) error {
 // The store is handed back beside the options, and only to this file. It is
 // what the sweep needs, and it is deliberately not reachable from anything
 // the window is given.
-func window(dir, lang string) (ui.Options, *store.Store, error) {
-	if err := mustBeDirectory(dir); err != nil {
+func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
+	// The reader's language, before the store this check stands in front of
+	// is open. Run has already weighed $ORBIT_LANG and the saved setting
+	// into the Context's printer, and the flag beats both.
+	p := ctx.printer()
+	if lang != "" {
+		p = words.For(words.Resolve(lang, "", ""))
+	}
+
+	if err := mustBeDirectory(p, dir); err != nil {
 		return ui.Options{}, nil, err
 	}
 
@@ -204,14 +214,16 @@ func quotaPort(qc *quota.Client, syncWait bool) func() []ui.QuotaWindow {
 // a walk, and this one is about what was typed. A person who wrote /wrok
 // wants to be told that, on the spot, and not to read a window's refusal to
 // enumerate.
-func mustBeDirectory(dir string) error {
+func mustBeDirectory(p *words.Printer, dir string) error {
 	info, err := os.Stat(dir)
 	if err != nil {
-		return fmt.Errorf("look at %q: %w", dir, err)
+		return fmt.Errorf("%s: %w", p.T("top.look_at", "look at {dir}",
+			words.Arg{Name: "dir", Value: strconv.Quote(dir)}), err)
 	}
 
 	if !info.IsDir() {
-		return fmt.Errorf("%q is not a directory", dir)
+		return errors.New(p.T("top.not_a_directory", "{dir} is not a directory",
+			words.Arg{Name: "dir", Value: strconv.Quote(dir)}))
 	}
 
 	return nil

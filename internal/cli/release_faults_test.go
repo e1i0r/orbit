@@ -16,6 +16,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // published stands a release up: the archive at one URL and, at another, the
@@ -57,7 +59,7 @@ func dead(t *testing.T) string {
 func TestAnArchiveThatHashesRightAndIsNotOneIsRefused(t *testing.T) {
 	bin, sums := published(t, "orbit_2.0.0_test.tar.gz", []byte("this was never an archive"))
 
-	err := selfUpdate(t.Context(), bin, sums)
+	err := selfUpdate(t.Context(), words.For("en"), bin, sums)
 	if err == nil {
 		t.Fatal("an archive that is not one was installed over orbit")
 	}
@@ -79,7 +81,7 @@ func TestAnArchiveThatEndsInTheMiddleIsRefused(t *testing.T) {
 	whole := archiveOf(t, "orbit", body)
 
 	cut := whole[:len(whole)/2]
-	if _, err := binaryFrom(cut); err == nil {
+	if _, err := binaryFrom(words.For("en"), cut); err == nil {
 		t.Fatal("half an archive answered a whole binary")
 	}
 }
@@ -87,7 +89,7 @@ func TestAnArchiveThatEndsInTheMiddleIsRefused(t *testing.T) {
 // TestSomethingThatIsNotAnArchiveAtAllIsRefused is the gzip header failing
 // before any of this gets as far as looking for a file inside.
 func TestSomethingThatIsNotAnArchiveAtAllIsRefused(t *testing.T) {
-	if _, err := binaryFrom([]byte("not gzip, not tar, not anything")); err == nil {
+	if _, err := binaryFrom(words.For("en"), []byte("not gzip, not tar, not anything")); err == nil {
 		t.Fatal("bytes that are not an archive answered a binary")
 	}
 }
@@ -99,7 +101,7 @@ func TestChecksumsThatCannotBeReadStopTheUpdate(t *testing.T) {
 	bin, sums := published(t, "orbit_2.0.0_test.tar.gz", archiveOf(t, "orbit", []byte("#!/bin/sh\n")))
 	sums.URL = dead(t)
 
-	err := selfUpdate(t.Context(), bin, sums)
+	err := selfUpdate(t.Context(), words.For("en"), bin, sums)
 	if err == nil {
 		t.Fatal("an unchecked archive was installed over orbit")
 	}
@@ -114,7 +116,7 @@ func TestAnArchiveThatDidNotArriveStopsTheUpdate(t *testing.T) {
 	bin, sums := published(t, "orbit_2.0.0_test.tar.gz", nil)
 	bin.URL = dead(t)
 
-	err := selfUpdate(t.Context(), bin, sums)
+	err := selfUpdate(t.Context(), words.For("en"), bin, sums)
 	if err == nil {
 		t.Fatal("an archive that never arrived was installed over orbit")
 	}
@@ -127,7 +129,7 @@ func TestAnArchiveThatDidNotArriveStopsTheUpdate(t *testing.T) {
 // TestAUrlThatIsNotOneIsNotFetched is the request that cannot even be built,
 // which is the shape a mistyped updateEndpoint has.
 func TestAUrlThatIsNotOneIsNotFetched(t *testing.T) {
-	if _, err := download(t.Context(), "://not a url"); err == nil {
+	if _, err := download(t.Context(), words.For("en"), "://not a url"); err == nil {
 		t.Error("a URL that cannot be parsed was downloaded")
 	}
 
@@ -136,7 +138,7 @@ func TestAUrlThatIsNotOneIsNotFetched(t *testing.T) {
 
 	t.Cleanup(func() { updateEndpoint = old })
 
-	if _, err := fetchRelease(t.Context()); err == nil {
+	if _, err := fetchRelease(t.Context(), words.For("en")); err == nil {
 		t.Error("a URL that cannot be parsed answered a release")
 	}
 }
@@ -174,7 +176,7 @@ func TestAReleaseThatWasNotAnsweredIsNotInstalled(t *testing.T) {
 
 			t.Cleanup(func() { updateEndpoint = old })
 
-			if _, err := fetchRelease(t.Context()); err == nil {
+			if _, err := fetchRelease(t.Context(), words.For("en")); err == nil {
 				t.Error("this was taken for a release")
 			}
 		})
@@ -194,7 +196,7 @@ func serving(t *testing.T, write func(http.ResponseWriter)) string {
 // machine is not a crisis — go install builds for the machine it is on — but
 // the reason has to reach the reader, or the fallback looks like the plan.
 func TestAReleaseWithNothingForThisMachineSaysWhich(t *testing.T) {
-	err := installRelease(t.Context(), releaseInfo{
+	err := installRelease(t.Context(), words.For("en"), releaseInfo{
 		TagName: "v2.0.0",
 		Assets:  []asset{{Name: "orbit_2.0.0_plan9_mips.tar.gz"}, {Name: "checksums.txt"}},
 	})
@@ -213,7 +215,7 @@ func TestAReleaseWithNothingForThisMachineSaysWhich(t *testing.T) {
 func TestAReleaseWithNoChecksumsIsNotInstalled(t *testing.T) {
 	name := fmt.Sprintf("orbit_2.0.0_%s_%s.tar.gz", runtime.GOOS, runtime.GOARCH)
 
-	err := installRelease(t.Context(), releaseInfo{TagName: "v2.0.0", Assets: []asset{{Name: name}}})
+	err := installRelease(t.Context(), words.For("en"), releaseInfo{TagName: "v2.0.0", Assets: []asset{{Name: name}}})
 	if err == nil {
 		t.Fatal("a release that published no checksums reported an install")
 	}

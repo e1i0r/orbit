@@ -8,6 +8,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/e1i0r/orbit/internal/repo"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 func repos(ctx Context, args []string) error {
@@ -22,7 +23,8 @@ func repos(ctx Context, args []string) error {
 	if root == "" {
 		var err error
 		if root, err = os.Getwd(); err != nil {
-			return fmt.Errorf("locate the working directory: %w", err)
+			return fmt.Errorf("%s: %w", ctx.printer().T("cli.locate_working_directory",
+				"locate the working directory"), err)
 		}
 	}
 
@@ -32,7 +34,9 @@ func repos(ctx Context, args []string) error {
 	}
 
 	if len(found) == 0 {
-		fmt.Fprintf(ctx.Out, "no repositories under %s\n", root)
+		fmt.Fprintf(ctx.Out, "%s\n", ctx.printer().T("repos.none_under", "no repositories under {root}",
+			words.Arg{Name: "root", Value: root}))
+
 		return nil
 	}
 

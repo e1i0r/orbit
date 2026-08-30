@@ -14,6 +14,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // TestAnArchiveThatIsNotTheOnePublishedIsNotInstalled is the check reaching
@@ -27,7 +29,7 @@ func TestAnArchiveThatIsNotTheOnePublishedIsNotInstalled(t *testing.T) {
 		fmt.Fprintf(w, "%x  %s\n", sha256.Sum256([]byte("a different release")), name)
 	})}
 
-	err := selfUpdate(t.Context(), bin, sums)
+	err := selfUpdate(t.Context(), words.For("en"), bin, sums)
 	if err == nil {
 		t.Fatal("an archive the release did not vouch for was installed over orbit")
 	}
@@ -50,7 +52,7 @@ func TestTheReleaseIsAskedOfGithubWhenNothingElseIsSet(t *testing.T) {
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
 
-	_, err := fetchRelease(ctx)
+	_, err := fetchRelease(ctx, words.For("en"))
 	if err == nil {
 		t.Fatal("a cancelled fetch answered a release")
 	}

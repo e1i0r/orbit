@@ -1277,6 +1277,166 @@
       "source": "merge a task's pull request and delete its branch",
       "value": "fusionar el pull request de una tarea y borrar su rama"
     },
+    "cli.needs_task_id": {
+      "source": "{command} needs the id of a task",
+      "value": "a {command} le falta el id de una tarea"
+    },
+    "cli.locate_working_directory": {
+      "source": "locate the working directory",
+      "value": "ubicar el directorio de trabajo"
+    },
+    "new.needs_id": {
+      "source": "new needs -id",
+      "value": "new necesita -id"
+    },
+    "new.needs_text": {
+      "source": "new needs the task written out after the flags",
+      "value": "new necesita la tarea escrita después de las banderas"
+    },
+    "new.written": {
+      "source": "{id} written against {repo}, to walk the {flow} flow",
+      "value": "{id} escrita contra {repo}, para recorrer el flujo {flow}"
+    },
+    "note.needs_text": {
+      "source": "note needs text for task {id}",
+      "value": "note necesita texto para la tarea {id}"
+    },
+    "note.written_down": {
+      "source": "note recorded for {id} — read by the next phase that starts",
+      "value": "nota registrada para {id} — la leerá la próxima etapa que empiece"
+    },
+    "read.marked": {
+      "source": "{id} marked read",
+      "value": "{id} marcada como leída"
+    },
+    "run.finished": {
+      "source": "{id} finished",
+      "value": "{id} terminó"
+    },
+    "show.nothing_recorded": {
+      "source": "nothing recorded for {id} in {repo}",
+      "value": "no hay nada registrado para {id} en {repo}"
+    },
+    "list.no_tasks": {
+      "source": "no tasks against {repo}",
+      "value": "no hay tareas contra {repo}"
+    },
+    "repos.none_under": {
+      "source": "no repositories under {root}",
+      "value": "no hay repositorios bajo {root}"
+    },
+    "pause.asked": {
+      "source": "{id} asked to {word} — a run in flight notices at its next phase",
+      "value": "se le pidió {word} a {id} — una corrida en vuelo se entera en su próxima etapa"
+    },
+    "cancel.killed": {
+      "source": "{id} killed — run `orbit reconcile -repo {repo}` to close its record",
+      "value": "{id} eliminada — ejecuta `orbit reconcile -repo {repo}` para cerrar su registro"
+    },
+    "cancel.asked_to_stop": {
+      "source": "{id} asked to stop",
+      "value": "se le pidió a {id} que se detenga"
+    },
+    "direct.needs_message": {
+      "source": "direct needs a message for task {id}",
+      "value": "direct necesita un mensaje para la tarea {id}"
+    },
+    "direct.restarted": {
+      "source": "{id} redirected and restarted (pid {pid})",
+      "value": "{id} redirigida y reiniciada (pid {pid})"
+    },
+    "direct.recorded": {
+      "source": "{id} redirected: directive recorded",
+      "value": "{id} redirigida: directiva registrada"
+    },
+    "reconcile.abandoned": {
+      "source": "{id} was abandoned; its record says so now",
+      "value": "{id} fue abandonada; su registro ya lo dice"
+    },
+    "reconcile.all_accounted": {
+      "source": "every run is accounted for",
+      "value": "no falta ninguna corrida por cerrar"
+    },
+    "supervisor.thread_empty": {
+      "source": "the supervisor thread is empty",
+      "value": "el hilo del supervisor está vacío"
+    },
+    "top.window_failed": {
+      "source": "the window",
+      "value": "la ventana"
+    },
+    "top.look_at": {
+      "source": "look at {dir}",
+      "value": "mirar {dir}"
+    },
+    "top.not_a_directory": {
+      "source": "{dir} is not a directory",
+      "value": "{dir} no es un directorio"
+    },
+    "top.one_directory": {
+      "source": "top takes one directory, and was given {count}: {dirs}",
+      "value": "top toma un directorio, y recibió {count}: {dirs}"
+    },
+    "release.download_failed": {
+      "source": "download {name}",
+      "value": "descargar {name}"
+    },
+    "release.checksums_unread": {
+      "source": "read the checksums of this release",
+      "value": "leer las sumas de verificación de esta versión"
+    },
+    "release.responded": {
+      "source": "responded {code}",
+      "value": "respondió {code}"
+    },
+    "release.body_too_large": {
+      "source": "is larger than {max} bytes",
+      "value": "es más grande que {max} bytes"
+    },
+    "release.no_checksum": {
+      "source": "this release publishes no checksum for {name}",
+      "value": "esta versión no publica suma de verificación para {name}"
+    },
+    "release.hash_mismatch": {
+      "source": "{name} hashes to {got} and this release published {want}",
+      "value": "{name} suma {got} y esta versión publicó {want}"
+    },
+    "release.no_executable": {
+      "source": "executable not found in archive",
+      "value": "no se encontró el ejecutable en el archivo"
+    },
+    "release.entry_too_large": {
+      "source": "{name} in this archive is larger than {max} bytes",
+      "value": "{name} en este archivo es más grande que {max} bytes"
+    },
+    "pr.pushed_but_not_opened": {
+      "source": "branch {branch} was pushed and gh pr create refused",
+      "value": "la rama {branch} se subió y gh pr create se negó"
+    },
+    "pr.created": {
+      "source": "pull request created: {url}",
+      "value": "pull request creado: {url}"
+    },
+    "merge.refused": {
+      "source": "merging the pull request of {id} failed",
+      "value": "fusionar el pull request de {id} falló"
+    },
+    "merge.done": {
+      "source": "pull request merged: {branch}",
+      "value": "pull request fusionado: {branch}"
+    },
+    "close_pr.comment": {
+      "source": "Closed from Orbit.",
+      "value": "Cerrado desde Orbit."
+    },
+    "close_pr.refused": {
+      "source": "closing the pull request of {id} failed",
+      "value": "cerrar el pull request de {id} falló"
+    },
+    "close_pr.closed": {
+      "source": "pull request closed: {branch}",
+      "value": "pull request cerrado: {branch}"
+    },
     "cmd.close_pr": {
       "source": "close a task's pull request on GitHub",
       "value": "cerrar el pull request de una tarea en GitHub"
@@ -1352,6 +1512,38 @@
     "cli.state": {
       "source": "State lives in $ORBIT_HOME, or ~/.orbit when that is unset.",
       "value": "El estado vive en $ORBIT_HOME, o en ~/.orbit si no está definida."
+    },
+    "set.needs_key_and_value": {
+      "source": "set needs a key and a value; the keys are {keys}",
+      "value": "a set le faltan una clave y un valor; las claves son {keys}"
+    },
+    "set.no_such_setting": {
+      "source": "{key} is not a setting; the keys are {keys}",
+      "value": "{key} no es un ajuste; las claves son {keys}"
+    },
+    "set.autopilot_on_or_off": {
+      "source": "autopilot is on or off, not {value}",
+      "value": "el piloto automático está en on o en off, no en {value}"
+    },
+    "supervisor.retract_not_a_number": {
+      "source": "-retract takes the number of a line in the thread, not {value}",
+      "value": "-retract toma el número de una línea del hilo, no {value}"
+    },
+    "supervisor.recorded": {
+      "source": "recorded in supervisor thread: {text}",
+      "value": "anotado en el hilo del supervisor: {text}"
+    },
+    "supervisor.no_such_line": {
+      "source": "there is no line {n} in the supervisor thread; it has {count}",
+      "value": "no hay línea {n} en el hilo del supervisor; tiene {count}"
+    },
+    "supervisor.already_retracted": {
+      "source": "line {n} was already taken back",
+      "value": "la línea {n} ya se había retirado"
+    },
+    "supervisor.line_taken_back": {
+      "source": "took back line {n}: {text}",
+      "value": "línea {n} retirada: {text}"
     },
     "set.now": {
       "source": "{key} is now {value}",
@@ -2457,6 +2649,34 @@
       "source": "checking for updates...",
       "value": "buscando actualizaciones..."
     },
+    "upgrade.fetch_failed": {
+      "source": "fetch update",
+      "value": "buscar la actualización"
+    },
+    "upgrade.update_failed": {
+      "source": "update orbit",
+      "value": "actualizar orbit"
+    },
+    "upgrade.archive_failed_too": {
+      "source": "the release archive was not installed either",
+      "value": "el archivo de la versión tampoco se instaló"
+    },
+    "upgrade.no_archive": {
+      "source": "release {version} publishes no {os} {arch} archive",
+      "value": "la versión {version} no publica un archivo {os} {arch}"
+    },
+    "upgrade.no_checksums": {
+      "source": "release {version} publishes no checksums.txt, so {name} cannot be checked",
+      "value": "la versión {version} no publica checksums.txt, así que {name} no se puede verificar"
+    },
+    "upgrade.github_responded": {
+      "source": "github api responded {code}",
+      "value": "la api de github respondió {code}"
+    },
+    "upgrade.go_install_failed": {
+      "source": "go install",
+      "value": "go install"
+    },
     "upgrade.already_latest": {
       "source": "orbit is already on the latest version ({version})",
       "value": "orbit ya está en la última versión ({version})"
@@ -2498,6 +2718,28 @@
     "mcp.installing": {
       "source": "registering orbit as an mcp server",
       "value": "registrando orbit como servidor mcp"
+    },
+    "mcp.takes_no_arguments": {
+      "source": "mcp takes no arguments but {rest}; `orbit mcp` is the server and `orbit mcp install` registers it",
+      "value": "mcp no toma argumentos y recibió {rest}; `orbit mcp` es el servidor y `orbit mcp install` lo registra"
+    },
+    "mcp.server_failed": {
+      "source": "the mcp server",
+      "value": "el servidor mcp"
+    },
+    "mcp.no_home": {
+      "source": "find the home directory the clients keep their configuration in",
+      "value": "encontrar el directorio personal donde los clientes guardan su configuración"
+    },
+    "mcp.install_some_failed": {
+      "source": {
+        "one": "{n} client configuration could not be written",
+        "other": "{n} client configurations could not be written"
+      },
+      "value": {
+        "one": "no se pudo escribir {n} configuración de cliente",
+        "other": "no se pudieron escribir {n} configuraciones de cliente"
+      }
     },
     "mcp.install_wrote": {
       "source": "{client} — {path}",

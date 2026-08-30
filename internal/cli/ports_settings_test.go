@@ -11,6 +11,7 @@ import (
 	"github.com/e1i0r/orbit/internal/quota"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/view"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 func TestSettingsAdapterComprehensive(t *testing.T) {
@@ -260,7 +261,7 @@ func TestDoPortAndTopHelpers(t *testing.T) {
 	_ = dp("reconcile", []string{"-repo", t.TempDir()}, &buf) //nolint:errcheck
 
 	// 4. mustBeDirectory
-	if err := mustBeDirectory("/nonexistent/directory/path"); err == nil {
+	if err := mustBeDirectory(words.For("en"), "/nonexistent/directory/path"); err == nil {
 		t.Error("expected error on nonexistent directory")
 	}
 
@@ -269,7 +270,7 @@ func TestDoPortAndTopHelpers(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := mustBeDirectory(fileBlocker); err == nil {
+	if err := mustBeDirectory(words.For("en"), fileBlocker); err == nil {
 		t.Error("expected error on regular file passed to mustBeDirectory")
 	}
 

@@ -8,6 +8,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/task"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // reconcile closes the records of runs whose processes are gone.
@@ -51,12 +52,14 @@ func reconcile(ctx Context, args []string) error {
 			closed++
 
 			logger.Info("cli/reconcile", "reconciled and marked abandoned: task %s in repo %s", id, r.Name)
-			fmt.Fprintf(ctx.Out, "%s was abandoned; its record says so now\n", id)
+			fmt.Fprintf(ctx.Out, "%s\n", ctx.printer().T("reconcile.abandoned",
+				"{id} was abandoned; its record says so now",
+				words.Arg{Name: "id", Value: id}))
 		}
 	}
 
 	if closed == 0 && len(errs) == 0 {
-		fmt.Fprintln(ctx.Out, "every run is accounted for")
+		fmt.Fprintln(ctx.Out, ctx.printer().T("reconcile.all_accounted", "every run is accounted for"))
 	}
 
 	return errors.Join(errs...)

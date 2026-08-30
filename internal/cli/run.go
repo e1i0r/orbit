@@ -13,6 +13,7 @@ import (
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/task"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // runTask walks a task through a flow. It is the one command that spends
@@ -57,7 +58,7 @@ func runTask(ctx Context, args []string) error {
 
 	id := fs.Arg(0)
 	if id == "" {
-		return fmt.Errorf("run needs the id of a task")
+		return needsTaskID(ctx, "run")
 	}
 
 	s, r, err := openBoth(*dir)
@@ -126,7 +127,8 @@ func runTask(ctx Context, args []string) error {
 	}
 
 	logger.Info("cli/run", "task %s execution finished successfully", id)
-	fmt.Fprintf(ctx.Out, "%s finished\n", id)
+	fmt.Fprintf(ctx.Out, "%s\n", ctx.printer().T("run.finished", "{id} finished",
+		words.Arg{Name: "id", Value: id}))
 
 	return nil
 }

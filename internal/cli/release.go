@@ -17,7 +17,10 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // maxDownload is larger than any orbit archive has been and small enough that
@@ -34,22 +37,24 @@ const maxDownload = 64 << 20
 // it with bytes that arrived over a network; unchecked, a truncated download
 // or a proxy answering with something of its own leaves a reader with no
 // working orbit and therefore no way to run `orbit upgrade` again.
-func selfUpdate(ctx context.Context, bin, sums asset) error {
-	archive, err := download(ctx, bin.URL)
+func selfUpdate(ctx context.Context, p *words.Printer, bin, sums asset) error {
+	archive, err := download(ctx, p, bin.URL)
 	if err != nil {
-		return fmt.Errorf("download %s: %w", bin.Name, err)
+		return fmt.Errorf("%s: %w", p.T("release.download_failed", "download {name}",
+			words.Arg{Name: "name", Value: bin.Name}), err)
 	}
 
-	published, err := download(ctx, sums.URL)
+	published, err := download(ctx, p, sums.URL)
 	if err != nil {
-		return fmt.Errorf("read the checksums of this release: %w", err)
+		return fmt.Errorf("%s: %w", p.T("release.checksums_unread",
+			"read the checksums of this release"), err)
 	}
 
-	if err := verify(archive, published, bin.Name); err != nil {
+	if err := verify(p, archive, published, bin.Name); err != nil {
 		return err
 	}
 
-	newOrbit, err := binaryFrom(archive)
+	newOrbit, err := binaryFrom(p, archive)
 	if err != nil {
 		return err
 	}
@@ -58,7 +63,7 @@ func selfUpdate(ctx context.Context, bin, sums asset) error {
 }
 
 // download reads one URL whole, and refuses a body that will not end.
-func download(ctx context.Context, url string) ([]byte, error) {
+func download(ctx context.Context, p *words.Printer, url string) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -73,7 +78,8 @@ func download(ctx context.Context, url string) ([]byte, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("responded %d", resp.StatusCode)
+		return nil, errors.New(p.T("release.responded", "responded {code}",
+			words.Arg{Name: "code", Value: strconv.Itoa(resp.StatusCode)}))
 	}
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxDownload+1))
@@ -82,7 +88,8 @@ func download(ctx context.Context, url string) ([]byte, error) {
 	}
 
 	if len(body) > maxDownload {
-		return nil, fmt.Errorf("is larger than %d bytes", maxDownload)
+		return nil, errors.New(p.T("release.body_too_large", "is larger than {max} bytes",
+			words.Arg{Name: "max", Value: strconv.Itoa(maxDownload)}))
 	}
 
 	return body, nil
@@ -95,7 +102,7 @@ func download(ctx context.Context, url string) ([]byte, error) {
 // what sha256sum -c reads. A name that is not in it is refused rather than
 // waved through: an archive nobody published a hash for is an archive nobody
 // is standing behind.
-func verify(archive, published []byte, name string) error {
+func verify(p *words.Printer, archive, published []byte, name string) error {
 	var want string
 
 	for line := range strings.SplitSeq(string(published), "\n") {
@@ -112,12 +119,16 @@ func verify(archive, published []byte, name string) error {
 	}
 
 	if want == "" {
-		return fmt.Errorf("this release publishes no checksum for %s", name)
+		return errors.New(p.T("release.no_checksum", "this release publishes no checksum for {name}",
+			words.Arg{Name: "name", Value: name}))
 	}
 
 	got := fmt.Sprintf("%x", sha256.Sum256(archive))
 	if !strings.EqualFold(got, want) {
-		return fmt.Errorf("%s hashes to %s and this release published %s", name, got, want)
+		return errors.New(p.T("release.hash_mismatch",
+			"{name} hashes to {got} and this release published {want}",
+			words.Arg{Name: "name", Value: name}, words.Arg{Name: "got", Value: got},
+			words.Arg{Name: "want", Value: want}))
 	}
 
 	return nil
@@ -129,7 +140,7 @@ func verify(archive, published []byte, name string) error {
 // directory carries no bytes, and reading it answers an empty file that would
 // then be written over the executable — leaving a reader with an orbit that
 // does nothing and cannot upgrade itself back.
-func binaryFrom(archive []byte) ([]byte, error) {
+func binaryFrom(p *words.Printer, archive []byte) ([]byte, error) {
 	gzr, err := gzip.NewReader(bytes.NewReader(archive))
 	if err != nil {
 		return nil, err
@@ -153,11 +164,11 @@ func binaryFrom(archive []byte) ([]byte, error) {
 		}
 
 		if header.Name == "orbit" || strings.HasSuffix(header.Name, "/orbit") {
-			return entry(tr, header.Name)
+			return entry(p, tr, header.Name)
 		}
 	}
 
-	return nil, fmt.Errorf("executable not found in archive")
+	return nil, errors.New(p.T("release.no_executable", "executable not found in archive"))
 }
 
 // entry is one file out of the archive, and no more of it than the ceiling
@@ -168,14 +179,17 @@ func binaryFrom(archive []byte) ([]byte, error) {
 // ceiling was cut in the middle and the half of a binary that came out of it
 // was written over the running orbit. download refuses a body it cannot hold
 // whole; this is the same bytes one layer in, and refuses the same way.
-func entry(tr io.Reader, name string) ([]byte, error) {
+func entry(p *words.Printer, tr io.Reader, name string) ([]byte, error) {
 	bin, err := io.ReadAll(io.LimitReader(tr, maxDownload+1))
 	if err != nil {
 		return nil, err
 	}
 
 	if len(bin) > maxDownload {
-		return nil, fmt.Errorf("%s in this archive is larger than %d bytes", name, maxDownload)
+		return nil, errors.New(p.T("release.entry_too_large",
+			"{name} in this archive is larger than {max} bytes",
+			words.Arg{Name: "name", Value: name},
+			words.Arg{Name: "max", Value: strconv.Itoa(maxDownload)}))
 	}
 
 	return bin, nil

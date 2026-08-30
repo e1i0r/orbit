@@ -13,6 +13,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 func createFakeArchive(t *testing.T, binaryContent string) []byte {
@@ -213,7 +215,7 @@ func TestWhatGoSaidComesBackWithIt(t *testing.T) {
 
 	t.Setenv("PATH", dir)
 
-	err := goInstall(t.Context())
+	err := goInstall(t.Context(), words.For("en"))
 	if err == nil {
 		t.Fatal("a go install that failed came back as a success")
 	}
