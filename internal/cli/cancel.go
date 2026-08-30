@@ -7,6 +7,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/task"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // cancelTask stops a run that is under way.
@@ -31,7 +32,7 @@ func cancelTask(ctx Context, args []string) error {
 
 	id := fs.Arg(0)
 	if id == "" {
-		return fmt.Errorf("cancel needs the id of a task")
+		return needsTaskID(ctx, "cancel")
 	}
 
 	s, r, err := openBoth(*dir)
@@ -53,7 +54,9 @@ func cancelTask(ctx Context, args []string) error {
 		}
 
 		logger.Warn("cli/cancel", "task %s in %s killed outright", id, r.Name)
-		fmt.Fprintf(ctx.Out, "%s killed — run `orbit reconcile -repo %s` to close its record\n", id, *dir)
+		fmt.Fprintf(ctx.Out, "%s\n", ctx.printer().T("cancel.killed",
+			"{id} killed — run `orbit reconcile -repo {repo}` to close its record",
+			words.Arg{Name: "id", Value: id}, words.Arg{Name: "repo", Value: *dir}))
 
 		return nil
 	}
@@ -64,7 +67,8 @@ func cancelTask(ctx Context, args []string) error {
 	}
 
 	logger.Info("cli/cancel", "task %s in %s requested to stop gracefully", id, r.Name)
-	fmt.Fprintf(ctx.Out, "%s asked to stop\n", id)
+	fmt.Fprintf(ctx.Out, "%s\n", ctx.printer().T("cancel.asked_to_stop", "{id} asked to stop",
+		words.Arg{Name: "id", Value: id}))
 
 	return nil
 }

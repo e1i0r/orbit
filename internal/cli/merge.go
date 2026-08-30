@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/e1i0r/orbit/internal/logger"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 func mergePR(ctx Context, args []string) error {
@@ -18,9 +19,10 @@ func mergePR(ctx Context, args []string) error {
 	}
 
 	if len(fs.Args()) < 1 {
-		return fmt.Errorf("merge needs the task identifier")
+		return needsTaskID(ctx, "merge")
 	}
 
+	p := ctx.printer()
 	taskID := fs.Args()[0]
 
 	s, r, err := openBoth(*dir)
@@ -39,11 +41,14 @@ func mergePR(ctx Context, args []string) error {
 
 	if err := r.MergePR(wtDir, branch); err != nil {
 		logger.Error("cli/merge", "gh pr merge failed: %v", err)
-		return fmt.Errorf("merge pull request for %q failed: %w", taskID, err)
+
+		return fmt.Errorf("%s: %w", p.T("merge.refused", "merging the pull request of {id} failed",
+			words.Arg{Name: "id", Value: taskID}), err)
 	}
 
 	logger.Info("cli/merge", "merged pull request for task %s on branch %s", taskID, branch)
-	fmt.Fprintf(ctx.Out, "Pull Request merged: %s\n", branch)
+	fmt.Fprintf(ctx.Out, "%s\n", p.T("merge.done", "pull request merged: {branch}",
+		words.Arg{Name: "branch", Value: branch}))
 
 	return nil
 }

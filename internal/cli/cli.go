@@ -22,6 +22,15 @@ import (
 // into exit code 0 and prints nothing further.
 var errHelpShown = errors.New("help shown")
 
+// needsTaskID is the refusal three commands share. It is one sentence with
+// the command's own name in it rather than three sentences differing by a
+// word: a command name is typed rather than read, so it is the one thing in
+// a translated sentence that must not be translated.
+func needsTaskID(ctx Context, command string) error {
+	return errors.New(ctx.printer().T("cli.needs_task_id", "{command} needs the id of a task",
+		words.Arg{Name: "command", Value: command}))
+}
+
 // parse reads a subcommand's flags and makes flag's two failure modes
 // legible.
 //

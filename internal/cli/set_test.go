@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/store"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // settings reads back what `orbit set` wrote, through the store rather than
@@ -126,7 +127,7 @@ func TestEverySettingKeyCanBeSet(t *testing.T) {
 		}
 
 		var cfg store.Settings
-		if _, err := assign(&cfg, key, value); err != nil {
+		if _, err := assign(words.For("en"), &cfg, key, value); err != nil {
 			t.Errorf("set %s %s: %v", key, value, err)
 		}
 	}
@@ -213,5 +214,45 @@ func TestTheConfirmationIsInTheReadersLanguage(t *testing.T) {
 
 	if !strings.Contains(out, "autopilot") || !strings.Contains(out, "on") {
 		t.Errorf("the confirmation does not say what the setting is now:\n%s", out)
+	}
+}
+
+// TestTheRefusalsAreInTheReadersLanguage is the other half of the sweep
+// above. Choosing a language is the first thing a reader does with this
+// command, and every way of getting the next one wrong answered in English.
+//
+// The flow name that is a path is not here: that refusal is the flow
+// package's, written where the name is validated rather than where it is
+// typed, and it is still English for everyone.
+func TestTheRefusalsAreInTheReadersLanguage(t *testing.T) {
+	refusal := func(t *testing.T, language string, args ...string) string {
+		t.Helper()
+		t.Setenv("ORBIT_HOME", t.TempDir())
+
+		if code, _, errOut := run(t, "set", "language", language); code != 0 {
+			t.Fatalf("set language %s exited %d: %s", language, code, errOut)
+		}
+
+		code, _, errOut := run(t, args...)
+		if code == 0 {
+			t.Fatalf("%v exited 0", args)
+		}
+
+		return errOut
+	}
+
+	for _, args := range [][]string{
+		{"set", "colour", "blue"},
+		{"set", "unread-cap", "lots"},
+		{"set", "unread-cap", "-1"},
+		{"set", "autopilot", "maybe"},
+		{"set", "autopilot"},
+	} {
+		t.Run(strings.Join(args[1:], " "), func(t *testing.T) {
+			english := refusal(t, "en", args...)
+			if spanish := refusal(t, "es", args...); spanish == english {
+				t.Errorf("both readers are refused with %q", english)
+			}
+		})
 	}
 }

@@ -19,7 +19,7 @@ import (
 func TestWindowRefusesADirectoryThatIsNotOne(t *testing.T) {
 	t.Setenv("ORBIT_HOME", t.TempDir())
 
-	if _, _, err := window(filepath.Join(t.TempDir(), "does-not-exist"), ""); err == nil {
+	if _, _, err := window(Context{}, filepath.Join(t.TempDir(), "does-not-exist"), ""); err == nil {
 		t.Error("window over a directory that does not exist succeeded")
 	}
 }
@@ -34,7 +34,7 @@ func TestWindowFailsWhenTheStateRootCannotBeCreated(t *testing.T) {
 
 	t.Setenv("ORBIT_HOME", filepath.Join(blocker, "orbit"))
 
-	if _, _, err := window(repoRoot, ""); err == nil {
+	if _, _, err := window(Context{}, repoRoot, ""); err == nil {
 		t.Error("window with an unmakeable state root succeeded")
 	}
 }
@@ -49,7 +49,7 @@ func TestWindowFallsBackToHOMEWhenUserHomeDirFails(t *testing.T) {
 	t.Setenv("ORBIT_HOME", t.TempDir())
 	t.Setenv("HOME", "")
 
-	if _, _, err := window(repoRoot, ""); err != nil {
+	if _, _, err := window(Context{}, repoRoot, ""); err != nil {
 		t.Fatalf("window: %v", err)
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/e1i0r/orbit/internal/task"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // readTask writes down that somebody has looked at a finished task.
@@ -25,7 +26,7 @@ func readTask(ctx Context, args []string) error {
 
 	id := fs.Arg(0)
 	if id == "" {
-		return fmt.Errorf("read needs the id of a task")
+		return needsTaskID(ctx, "read")
 	}
 
 	s, r, err := openBoth(*dir)
@@ -42,7 +43,8 @@ func readTask(ctx Context, args []string) error {
 		return err
 	}
 
-	fmt.Fprintf(ctx.Out, "%s marked read\n", id)
+	fmt.Fprintf(ctx.Out, "%s\n", ctx.printer().T("read.marked", "{id} marked read",
+		words.Arg{Name: "id", Value: id}))
 
 	return nil
 }

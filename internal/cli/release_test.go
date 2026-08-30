@@ -14,6 +14,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // TestAMachineIsGivenItsOwnBuild is the collision a substring match has:
@@ -75,11 +77,11 @@ func TestAnArchiveIsOnlyInstalledIfItIsTheOneThatWasPublished(t *testing.T) {
 	name := "orbit_2.0.0_linux_amd64.tar.gz"
 
 	published := fmt.Sprintf("%s  orbit_2.0.0_darwin_arm64.tar.gz\n%s  %s\n", strings.Repeat("0", 64), sum, name)
-	if err := verify(archive, []byte(published), name); err != nil {
+	if err := verify(words.For("en"), archive, []byte(published), name); err != nil {
 		t.Errorf("the archive that was published was refused: %v", err)
 	}
 
-	err := verify([]byte("something else entirely"), []byte(published), name)
+	err := verify(words.For("en"), []byte("something else entirely"), []byte(published), name)
 	if err == nil {
 		t.Fatal("an archive that hashes to something else was installed")
 	}
@@ -88,7 +90,7 @@ func TestAnArchiveIsOnlyInstalledIfItIsTheOneThatWasPublished(t *testing.T) {
 		t.Errorf("the refusal does not say what was expected: %v", err)
 	}
 
-	if err := verify(archive, []byte(published), "orbit_2.0.0_linux_arm.tar.gz"); err == nil {
+	if err := verify(words.For("en"), archive, []byte(published), "orbit_2.0.0_linux_arm.tar.gz"); err == nil {
 		t.Error("an archive nobody published a checksum for was installed anyway")
 	}
 }
@@ -105,7 +107,7 @@ func TestASumWrittenTheWayShaWritesItIsRead(t *testing.T) {
 		sum + " *orbit.tar.gz\n",
 		strings.ToUpper(sum) + "  orbit.tar.gz",
 	} {
-		if err := verify(archive, []byte(published), "orbit.tar.gz"); err != nil {
+		if err := verify(words.For("en"), archive, []byte(published), "orbit.tar.gz"); err != nil {
 			t.Errorf("verify(%q) = %v, want it read", published, err)
 		}
 	}
@@ -143,7 +145,7 @@ func TestOnlyARealFileIsTakenForTheBinary(t *testing.T) {
 		t.Fatalf("close the gzip: %v", err)
 	}
 
-	got, err := binaryFrom(buf.Bytes())
+	got, err := binaryFrom(words.For("en"), buf.Bytes())
 	if err == nil {
 		t.Fatalf("an archive with no orbit in it answered %d bytes to install", len(got))
 	}
@@ -163,7 +165,7 @@ func TestTheArchiveComesBackWhole(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	got, err := download(t.Context(), ts.URL)
+	got, err := download(t.Context(), words.For("en"), ts.URL)
 	if err != nil {
 		t.Fatalf("download: %v", err)
 	}
@@ -172,7 +174,7 @@ func TestTheArchiveComesBackWhole(t *testing.T) {
 		t.Fatalf("downloaded %d bytes, served %d", len(got), len(archive))
 	}
 
-	bin, err := binaryFrom(got)
+	bin, err := binaryFrom(words.For("en"), got)
 	if err != nil {
 		t.Fatalf("take orbit out of the archive: %v", err)
 	}
@@ -188,7 +190,7 @@ func TestADownloadThatDidNotHappenSaysWhy(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	_, err := download(t.Context(), ts.URL)
+	_, err := download(t.Context(), words.For("en"), ts.URL)
 	if err == nil {
 		t.Fatal("a 404 came back as an archive")
 	}
@@ -215,7 +217,7 @@ func TestADownloadThatWillNotEndIsStopped(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	_, err := download(ctx, ts.URL)
+	_, err := download(ctx, words.For("en"), ts.URL)
 	if err == nil {
 		t.Fatal("a body larger than the limit was read whole")
 	}

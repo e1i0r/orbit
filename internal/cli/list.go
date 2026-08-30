@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/e1i0r/orbit/internal/task"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 func list(ctx Context, args []string) error {
@@ -28,7 +29,9 @@ func list(ctx Context, args []string) error {
 	}
 
 	if len(ids) == 0 {
-		fmt.Fprintf(ctx.Out, "no tasks against %s\n", r.Name)
+		fmt.Fprintf(ctx.Out, "%s\n", ctx.printer().T("list.no_tasks", "no tasks against {repo}",
+			words.Arg{Name: "repo", Value: r.Name}))
+
 		return nil
 	}
 

@@ -9,6 +9,7 @@ package cli
 // refusal — rather than one that three of those four know about.
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -30,10 +31,15 @@ import (
 // which is not always what was typed — "1" for autopilot is stored as true
 // and shown as "on", so the confirmation says what the file now holds rather
 // than repeating the argument.
+//
+// It is handed the printer for the same reason About is: a refusal is a
+// sentence a reader reads, and the sentence a setting refuses with belongs
+// beside the rule it enforces. Most settings take anything and pass it
+// unread, which is why most of these closures never look at it.
 type Setting struct {
 	Name  string
 	About func(*words.Printer) string
-	Set   func(*store.Settings, string) (string, error)
+	Set   func(*words.Printer, *store.Settings, string) (string, error)
 	Value func(store.Settings) string
 }
 
@@ -46,7 +52,7 @@ func settingTable() []Setting {
 	return []Setting{{
 		Name:  "language",
 		About: func(p *words.Printer) string { return p.T("setting.language", "the language orbit speaks") },
-		Set: func(cfg *store.Settings, value string) (string, error) {
+		Set: func(p *words.Printer, cfg *store.Settings, value string) (string, error) {
 			// Not checked against the catalogues Orbit ships. words.For
 			// falls back to English for a language it has no catalogue for,
 			// and an overlay in $ORBIT_HOME/lang can add one after this
@@ -61,8 +67,8 @@ func settingTable() []Setting {
 		About: func(p *words.Printer) string {
 			return p.T("setting.autopilot", "whether a run walks its whole flow without stopping")
 		},
-		Set: func(cfg *store.Settings, value string) (string, error) {
-			on, err := onOff(value)
+		Set: func(p *words.Printer, cfg *store.Settings, value string) (string, error) {
+			on, err := onOff(p, value)
 			if err != nil {
 				return "", err
 			}
@@ -77,14 +83,16 @@ func settingTable() []Setting {
 		About: func(p *words.Printer) string {
 			return p.T("setting.unread_cap", "how many finished tasks may sit unread before nothing new starts")
 		},
-		Set: func(cfg *store.Settings, value string) (string, error) {
+		Set: func(p *words.Printer, cfg *store.Settings, value string) (string, error) {
 			n, err := strconv.Atoi(value)
 			if err != nil {
-				return "", fmt.Errorf("unread-cap wants a whole number, not %q", value)
+				return "", errors.New(p.T("settings.not_a_number", "{val} is not a whole number",
+					words.Arg{Name: "val", Value: value}))
 			}
 
 			if n < 0 {
-				return "", fmt.Errorf("unread-cap cannot be negative; zero is no cap at all")
+				return "", errors.New(p.T("settings.negative_cap",
+					"the unread cap cannot be negative; zero is no cap at all"))
 			}
 
 			cfg.UnreadCap = n
@@ -97,7 +105,7 @@ func settingTable() []Setting {
 		About: func(p *words.Printer) string {
 			return p.T("setting.engine", "the engine a task runs on when it names none")
 		},
-		Set: func(cfg *store.Settings, value string) (string, error) {
+		Set: func(p *words.Printer, cfg *store.Settings, value string) (string, error) {
 			cfg.Engine = value
 			return value, nil
 		},
@@ -107,7 +115,7 @@ func settingTable() []Setting {
 		About: func(p *words.Printer) string {
 			return p.T("setting.model", "the model a phase asks for when it names none")
 		},
-		Set: func(cfg *store.Settings, value string) (string, error) {
+		Set: func(p *words.Printer, cfg *store.Settings, value string) (string, error) {
 			cfg.Model = value
 			return value, nil
 		},
@@ -115,7 +123,7 @@ func settingTable() []Setting {
 	}, {
 		Name:  "flow",
 		About: func(p *words.Printer) string { return p.T("setting.flow", "the flow a new task is written against") },
-		Set: func(cfg *store.Settings, value string) (string, error) {
+		Set: func(p *words.Printer, cfg *store.Settings, value string) (string, error) {
 			// Checked for being a name and not for naming anything: a file
 			// dropped into $ORBIT_HOME/flows after this line is typed is a
 			// flow that works, so refusing a name nothing answers to yet
@@ -136,7 +144,7 @@ func settingTable() []Setting {
 	}, {
 		Name:  "theme",
 		About: func(p *words.Printer) string { return p.T("setting.theme", "the visual color theme for the window") },
-		Set: func(cfg *store.Settings, value string) (string, error) {
+		Set: func(p *words.Printer, cfg *store.Settings, value string) (string, error) {
 			cfg.Theme = value
 			return value, nil
 		},
@@ -199,7 +207,9 @@ func set(ctx Context, args []string) error {
 	}
 
 	if fs.NArg() < 2 {
-		return fmt.Errorf("set needs a key and a value; the keys are %s", strings.Join(settingKeys(), ", "))
+		return errors.New(ctx.printer().T("set.needs_key_and_value",
+			"set needs a key and a value; the keys are {keys}",
+			words.Arg{Name: "keys", Value: strings.Join(settingKeys(), ", ")}))
 	}
 
 	key, value := fs.Arg(0), fs.Arg(1)
@@ -212,7 +222,7 @@ func set(ctx Context, args []string) error {
 	err = s.UpdateSettings(func(cfg *store.Settings) error {
 		var err error
 
-		shown, err = assign(cfg, key, value)
+		shown, err = assign(ctx.printer(), cfg, key, value)
 
 		return err
 	})
@@ -256,14 +266,15 @@ func unset(value string) string {
 // is the same asymmetry read the other way round: nothing is running, there
 // is a person at the terminal to tell, and silently doing nothing to a
 // setting somebody believes they changed is the worst of the three outcomes.
-func assign(cfg *store.Settings, key, value string) (string, error) {
+func assign(p *words.Printer, cfg *store.Settings, key, value string) (string, error) {
 	for _, s := range settingTable() {
 		if s.Name == key {
-			return s.Set(cfg, value)
+			return s.Set(p, cfg, value)
 		}
 	}
 
-	return "", fmt.Errorf("%q is not a setting; the keys are %s", key, strings.Join(settingKeys(), ", "))
+	return "", errors.New(p.T("set.no_such_setting", "{key} is not a setting; the keys are {keys}",
+		words.Arg{Name: "key", Value: key}, words.Arg{Name: "keys", Value: strings.Join(settingKeys(), ", ")}))
 }
 
 // onOff reads a switch the way a person writes one.
@@ -272,7 +283,7 @@ func assign(cfg *store.Settings, key, value string) (string, error) {
 // and a command line that disagreed with the screen would be two vocabularies
 // for one setting. strconv.ParseBool after it, so true/false/1/0 — what
 // anybody who has used a config file expects — are not refusals.
-func onOff(value string) (bool, error) {
+func onOff(p *words.Printer, value string) (bool, error) {
 	switch strings.ToLower(strings.TrimSpace(value)) {
 	case "on":
 		return true, nil
@@ -282,7 +293,8 @@ func onOff(value string) (bool, error) {
 
 	on, err := strconv.ParseBool(value)
 	if err != nil {
-		return false, fmt.Errorf("autopilot is on or off, not %q", value)
+		return false, errors.New(p.T("set.autopilot_on_or_off", "autopilot is on or off, not {value}",
+			words.Arg{Name: "value", Value: value}))
 	}
 
 	return on, nil

@@ -1,10 +1,12 @@
 package cli
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/logger"
@@ -42,7 +44,9 @@ func runMCP(ctx Context, args []string) error {
 	}
 
 	if rest := fs.Arg(0); rest != "" {
-		return fmt.Errorf("mcp takes no arguments but %q; `orbit mcp` is the server and `orbit mcp install` registers it", rest)
+		return errors.New(ctx.printer().T("mcp.takes_no_arguments",
+			"mcp takes no arguments but {rest}; `orbit mcp` is the server and `orbit mcp install` registers it",
+			words.Arg{Name: "rest", Value: strconv.Quote(rest)}))
 	}
 
 	return serveMCP(ctx, *root)
@@ -69,7 +73,7 @@ func serveMCP(ctx Context, root string) error {
 	session := mcp.Session{Root: root, Version: Version}
 	if err := mcp.NewServer(os.Stdin, os.Stdout, session).Serve(); err != nil {
 		logger.Error("cli/mcp", "mcp server stopped: %v", err)
-		return fmt.Errorf("the mcp server: %w", err)
+		return fmt.Errorf("%s: %w", ctx.printer().T("mcp.server_failed", "the mcp server"), err)
 	}
 
 	logger.Info("cli/mcp", "mcp server stopped: the client closed the connection")
@@ -87,7 +91,8 @@ func installMCP(ctx Context) error {
 
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return fmt.Errorf("find the home directory the clients keep their configuration in: %w", err)
+		return fmt.Errorf("%s: %w", p.T("mcp.no_home",
+			"find the home directory the clients keep their configuration in"), err)
 	}
 
 	fmt.Fprintln(ctx.Out, p.T("mcp.installing", "registering orbit as an mcp server"))
@@ -111,7 +116,9 @@ func installMCP(ctx Context) error {
 	}
 
 	if failed > 0 {
-		return fmt.Errorf("%d client configurations could not be written", failed)
+		return errors.New(p.P("mcp.install_some_failed", failed,
+			"{n} client configuration could not be written",
+			"{n} client configurations could not be written"))
 	}
 
 	fmt.Fprintln(ctx.Out, p.T("mcp.install_restart", "restart the client to connect; it will run `orbit mcp`"))

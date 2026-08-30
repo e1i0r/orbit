@@ -16,11 +16,15 @@ package cli
 // file decides it.
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
+
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // parseTop reads top's flags with the directory allowed on either side of
@@ -69,14 +73,18 @@ func parseTop(ctx Context, args []string) (dir string, once bool, lang string, e
 	case 0:
 		cwd, werr := os.Getwd()
 		if werr != nil {
-			return "", false, "", fmt.Errorf("locate the working directory: %w", werr)
+			return "", false, "", fmt.Errorf("%s: %w", ctx.printer().T("cli.locate_working_directory",
+				"locate the working directory"), werr)
 		}
 
 		dir = cwd
 	case 1:
 		dir = dirs[0]
 	default:
-		return "", false, "", fmt.Errorf("top takes one directory, and was given %d: %s", len(dirs), strings.Join(dirs, " "))
+		return "", false, "", errors.New(ctx.printer().T("top.one_directory",
+			"top takes one directory, and was given {count}: {dirs}",
+			words.Arg{Name: "count", Value: strconv.Itoa(len(dirs))},
+			words.Arg{Name: "dirs", Value: strings.Join(dirs, " ")}))
 	}
 
 	return dir, *onceFlag, *langFlag, nil

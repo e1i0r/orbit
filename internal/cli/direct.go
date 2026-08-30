@@ -2,11 +2,13 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -14,6 +16,7 @@ import (
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/task"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // directTask interrupts an in-flight run while preserving memory, records the
@@ -31,12 +34,13 @@ func directTask(ctx Context, args []string) error {
 
 	id := fs.Arg(0)
 	if id == "" {
-		return fmt.Errorf("direct needs the id of a task")
+		return needsTaskID(ctx, "direct")
 	}
 
 	text := strings.Join(fs.Args()[1:], " ")
 	if strings.TrimSpace(text) == "" {
-		return fmt.Errorf("direct needs a message for task %s", id)
+		return errors.New(ctx.printer().T("direct.needs_message", "direct needs a message for task {id}",
+			words.Arg{Name: "id", Value: id}))
 	}
 
 	s, r, err := openBoth(*dir)
@@ -72,7 +76,9 @@ func directTask(ctx Context, args []string) error {
 		}
 
 		logger.Info("cli/direct", "task %s redirected and restarted (pid %d)", id, pid)
-		fmt.Fprintf(ctx.Out, "%s redirected and restarted (pid %d)\n", id, pid)
+		fmt.Fprintf(ctx.Out, "%s\n", ctx.printer().T("direct.restarted",
+			"{id} redirected and restarted (pid {pid})",
+			words.Arg{Name: "id", Value: id}, words.Arg{Name: "pid", Value: strconv.Itoa(pid)}))
 
 		return nil
 	}
@@ -83,7 +89,8 @@ func directTask(ctx Context, args []string) error {
 	}
 
 	logger.Info("cli/direct", "directive recorded for task %s", id)
-	fmt.Fprintf(ctx.Out, "%s redirected: directive recorded\n", id)
+	fmt.Fprintf(ctx.Out, "%s\n", ctx.printer().T("direct.recorded", "{id} redirected: directive recorded",
+		words.Arg{Name: "id", Value: id}))
 
 	return nil
 }

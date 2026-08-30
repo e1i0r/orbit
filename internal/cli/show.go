@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/e1i0r/orbit/internal/task"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 func show(ctx Context, args []string) error {
@@ -22,7 +24,7 @@ func show(ctx Context, args []string) error {
 
 	id := fs.Arg(0)
 	if id == "" {
-		return fmt.Errorf("show needs the id of a task")
+		return needsTaskID(ctx, "show")
 	}
 
 	s, r, err := openBoth(*dir)
@@ -36,7 +38,8 @@ func show(ctx Context, args []string) error {
 	}
 
 	if len(events) == 0 {
-		return fmt.Errorf("nothing recorded for %s in %s", id, r.Name)
+		return errors.New(ctx.printer().T("show.nothing_recorded", "nothing recorded for {id} in {repo}",
+			words.Arg{Name: "id", Value: id}, words.Arg{Name: "repo", Value: r.Name}))
 	}
 
 	w := tabwriter.NewWriter(ctx.Out, 0, 0, 2, ' ', 0)

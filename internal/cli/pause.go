@@ -7,6 +7,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/task"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // controlTask leaves one word for a run to find at its next phase boundary.
@@ -34,7 +35,7 @@ func controlTask(word string, ctx Context, args []string) error {
 
 	id := fs.Arg(0)
 	if id == "" {
-		return fmt.Errorf("%s needs the id of a task", word)
+		return needsTaskID(ctx, word)
 	}
 
 	s, r, err := openBoth(*dir)
@@ -55,7 +56,9 @@ func controlTask(word string, ctx Context, args []string) error {
 	}
 
 	logger.Info("cli/pause", "task %s in %s requested to %s", id, r.Name, word)
-	fmt.Fprintf(ctx.Out, "%s asked to %s — a run in flight notices at its next phase\n", id, word)
+	fmt.Fprintf(ctx.Out, "%s\n", ctx.printer().T("pause.asked",
+		"{id} asked to {word} — a run in flight notices at its next phase",
+		words.Arg{Name: "id", Value: id}, words.Arg{Name: "word", Value: word}))
 
 	return nil
 }

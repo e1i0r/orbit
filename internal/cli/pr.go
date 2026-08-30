@@ -8,6 +8,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/task"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 func createPR(ctx Context, args []string) error {
@@ -20,9 +21,10 @@ func createPR(ctx Context, args []string) error {
 	}
 
 	if len(fs.Args()) < 1 {
-		return fmt.Errorf("pr needs the task identifier")
+		return needsTaskID(ctx, "pr")
 	}
 
+	p := ctx.printer()
 	taskID := fs.Args()[0]
 
 	s, r, err := openBoth(*dir)
@@ -76,11 +78,15 @@ func createPR(ctx Context, args []string) error {
 	prURL, err := r.CreatePR(wtDir, title, body, branch, r.Base)
 	if err != nil {
 		logger.Error("cli/pr", "gh pr create failed: %v", err)
-		return fmt.Errorf("branch %q pushed, but gh pr create failed: %w", branch, err)
+
+		return fmt.Errorf("%s: %w", p.T("pr.pushed_but_not_opened",
+			"branch {branch} was pushed and gh pr create refused",
+			words.Arg{Name: "branch", Value: branch}), err)
 	}
 
 	logger.Info("cli/pr", "created pull request %s for task %s (base=%s)", prURL, taskID, r.Base)
-	fmt.Fprintf(ctx.Out, "Pull Request created: %s\n", prURL)
+	fmt.Fprintf(ctx.Out, "%s\n", p.T("pr.created", "pull request created: {url}",
+		words.Arg{Name: "url", Value: prURL}))
 
 	return nil
 }
