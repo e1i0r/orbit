@@ -105,10 +105,11 @@ func money(s string) float64 {
 // column one, and the rest of the title is drawn over the columns beside it.
 // A task written with CR line endings arrives that way.
 func firstLine(s string) string {
-	head, _, _ := strings.Cut(s, "\n")
-	head, _, _ = strings.Cut(head, "\r")
+	if i := strings.IndexAny(s, "\r\n"); i >= 0 {
+		s = s[:i]
+	}
 
-	return strings.TrimSpace(head)
+	return strings.TrimSpace(s)
 }
 
 // actionChars is how much of an action fits on a row that also carries an

@@ -266,9 +266,12 @@ func formatLogTool(tool, args string) string {
 // firstLine is everything up to the first line break. A multi-line Text on a
 // one-line row would take the rest of the pane with it, and a carriage
 // return would put the rest of it on top of the row it is already on.
+//
+// SplitN and not Cut: this package may not slice a string, and Cut answers
+// with two more values than the cut is asking for.
 func firstLine(s string) string {
-	head, _, _ := strings.Cut(s, "\n")
-	head, _, _ = strings.Cut(head, "\r")
+	head := strings.SplitN(s, "\n", 2)[0]
+	head = strings.SplitN(head, "\r", 2)[0]
 
 	return strings.TrimSpace(head)
 }
