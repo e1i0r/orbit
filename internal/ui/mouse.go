@@ -249,8 +249,7 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 	case TargetDialogSwitch:
 		return m.flip(t.Field)
 	case TargetComposeTab, TargetComposeRepoChoice, TargetComposeFlowChoice,
-		TargetComposeEngineChoice, TargetComposeModelChoice, TargetComposeThinkingChoice,
-		TargetComposeEffortChoice, TargetComposeNewFlow, TargetComposeInspectFlow,
+		TargetComposeNewFlow, TargetComposeInspectFlow,
 		TargetComposeField, TargetComposeAction, TargetComposePaste:
 		return m.handleComposeClick(t)
 	case TargetCommand:

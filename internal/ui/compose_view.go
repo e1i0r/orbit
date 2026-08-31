@@ -70,11 +70,6 @@ func (m Model) composeManualRows(w int) []string {
 		out = append(out, fit(padded+Paint(Dim).Render("↳ "+sum), w))
 	}
 
-	out = append(out, m.composeEngineLine(m.compose.field == composeEngine, w))
-	out = append(out, m.composeModelLine(m.compose.field == composeModel, w))
-	out = append(out, m.composeThinkingLine(m.compose.field == composeThinking, w))
-	out = append(out, m.composeEffortLine(m.compose.field == composeEffort, w))
-
 	idLine := m.composeFieldLine(
 		composeID,
 		p.T("compose.id", "id"),
@@ -111,11 +106,6 @@ func (m Model) composeURLRows(w int) []string {
 		padded := strings.Repeat(" ", gutter+composeLabelWidth+1)
 		out = append(out, fit(padded+Paint(Dim).Render("↳ "+sum), w))
 	}
-
-	out = append(out, m.composeEngineLine(m.compose.field == composeURLEngine, w))
-	out = append(out, m.composeModelLine(m.compose.field == composeURLModel, w))
-	out = append(out, m.composeThinkingLine(m.compose.field == composeURLThinking, w))
-	out = append(out, m.composeEffortLine(m.compose.field == composeURLEffort, w))
 
 	if m.compose.parsedIssue != nil {
 		iss := m.compose.parsedIssue

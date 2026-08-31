@@ -17,13 +17,13 @@ const (
 	composeTabURL    = 1
 )
 
+// The fields of the form. Which engine, which model, how much thinking and
+// how much effort are not among them: the seat already answers those, and a
+// phase of a flow answers them again for the work it runs. A form that asks
+// a third time is a third answer to keep in sync with the other two.
 const (
 	composeRepo = iota
 	composeFlow
-	composeEngine
-	composeModel
-	composeThinking
-	composeEffort
 	composeID
 	composeText
 	composeFields
@@ -33,10 +33,6 @@ const (
 	composeURL = iota
 	composeURLRepo
 	composeURLFlow
-	composeURLEngine
-	composeURLModel
-	composeURLThinking
-	composeURLEffort
 	composeURLFields
 )
 
@@ -51,30 +47,8 @@ type composeState struct {
 	repoIdx     int
 	parsedIssue *tracker.Issue
 
-	flows     []string
-	flowIdx   int
-	engines   []string
-	engineIdx int
-	// models and efforts are the ids these dials hold and modelLabels and
-	// effortLabels are what those positions are drawn as. The two differ
-	// for opencode, whose model ids are provider-qualified.
-	models       []string
-	modelLabels  []string
-	modelIdx     int
-	thinkings    []string
-	thinkingIdx  int
-	efforts      []string
-	effortLabels []string
-	effortIdx    int
-}
-
-// modelLabel and effortLabel are what the option at i is drawn as.
-func (c composeState) modelLabel(i int) string {
-	return dialLabel(c.models, c.modelLabels, i)
-}
-
-func (c composeState) effortLabel(i int) string {
-	return dialLabel(c.efforts, c.effortLabels, i)
+	flows   []string
+	flowIdx int
 }
 
 // openCompose brings the form up with the repository defaulted to the current task's repo.
@@ -114,24 +88,13 @@ func (m Model) openCompose() Model {
 		flows = flow.BuiltinNames()
 	}
 
-	// The engines and their two dials are the build's, not this form's:
-	// see engine_table.go. A table of this form's own offered opencode a
-	// model called llama-3.3 — one no opencode has ever answered to, so a
-	// task composed with it could not run.
-	engines := m.engineNames()
-	thinkings := []string{"adaptive", "off", "4000", "8000", "max"}
-
 	m.compose = composeState{
-		tab:       composeTabManual,
-		repo:      initialRepo,
-		repos:     repos,
-		repoIdx:   repoIdx,
-		flows:     flows,
-		engines:   engines,
-		thinkings: thinkings,
+		tab:     composeTabManual,
+		repo:    initialRepo,
+		repos:   repos,
+		repoIdx: repoIdx,
+		flows:   flows,
 	}
-
-	m = m.chooseComposeEngine(0)
 
 	return m
 }
@@ -319,7 +282,7 @@ func (m Model) composeTab(d int) Model {
 func (m Model) composeNext(startNow bool) (tea.Model, tea.Cmd) {
 	limit := composeText
 	if m.compose.tab == composeTabURL {
-		limit = composeURLEffort
+		limit = composeURLFlow
 	}
 
 	if m.compose.field < limit {

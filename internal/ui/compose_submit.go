@@ -77,11 +77,9 @@ func (m Model) composeSubmit(startNow bool) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	// The knobs are left as the seat set them. The form no longer answers
+	// which engine runs this, so it no longer overwrites the answer.
 	flowName := m.compose.chosenFlow()
-	m.knobs.Engine = m.compose.chosenEngine()
-	m.knobs.Model = m.compose.chosenModel()
-	m.knobs.Thinking = m.compose.chosenThinking()
-	m.knobs.Effort = m.compose.chosenEffort()
 
 	args := []string{"-repo", path, "-id", id}
 	if flowName != "" {

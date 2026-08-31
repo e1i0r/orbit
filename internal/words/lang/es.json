@@ -1737,38 +1737,6 @@
       "source": "(←/→ to cycle, click again/i for details, + new)",
       "value": "(←/→ para cambiar, clic de nuevo/i para detalles, + nuevo)"
     },
-    "compose.engine": {
-      "source": "engine",
-      "value": "motor"
-    },
-    "compose.engine_hint": {
-      "source": "(←/→ to cycle)",
-      "value": "(←/→ para cambiar)"
-    },
-    "compose.model": {
-      "source": "model",
-      "value": "modelo"
-    },
-    "compose.model_hint": {
-      "source": "(←/→ to cycle)",
-      "value": "(←/→ para cambiar)"
-    },
-    "compose.thinking": {
-      "source": "thinking",
-      "value": "thinking"
-    },
-    "compose.thinking_hint": {
-      "source": "(←/→ to cycle)",
-      "value": "(←/→ para cambiar)"
-    },
-    "compose.effort": {
-      "source": "effort",
-      "value": "esfuerzo"
-    },
-    "compose.effort_hint": {
-      "source": "(←/→ to cycle)",
-      "value": "(←/→ para cambiar)"
-    },
     "note.empty": {
       "source": "the note cannot be empty",
       "value": "la nota no puede estar vacía"
