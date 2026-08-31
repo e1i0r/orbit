@@ -3,8 +3,8 @@ package ui
 // Where a cell of the compose form is: the fields a task is written into and
 // the rows of pills each one is chosen from.
 //
-// It is its own file because the form is its own screen — nine fields and
-// six pill rows — and reading the task view's hit test should not mean
+// It is its own file because the form is its own screen — five fields and
+// two pill rows — and reading the task view's hit test should not mean
 // reading past all of it.
 
 import "charm.land/lipgloss/v2"
@@ -33,14 +33,6 @@ func (m Model) hitCompose(x, y int) Target {
 			return m.hitComposeFlowPills(x, composeFlow)
 		case plan.flowSum != -1 && line == plan.flowSum:
 			return Target{Kind: TargetComposeInspectFlow}
-		case line == plan.engine:
-			return m.hitComposeEnginePills(x, composeEngine)
-		case line == plan.model:
-			return m.hitComposeModelPills(x, composeModel)
-		case line == plan.thinking:
-			return m.hitComposeThinkingPills(x, composeThinking)
-		case line == plan.effort:
-			return m.hitComposeEffortPills(x, composeEffort)
 		case line == plan.id:
 			return Target{Kind: TargetComposeField, Pane: composeID}
 		case line == plan.textHeader:
@@ -68,14 +60,6 @@ func (m Model) hitCompose(x, y int) Target {
 			return m.hitComposeFlowPills(x, composeURLFlow)
 		case plan.flowSum != -1 && line == plan.flowSum:
 			return Target{Kind: TargetComposeInspectFlow}
-		case line == plan.engine:
-			return m.hitComposeEnginePills(x, composeURLEngine)
-		case line == plan.model:
-			return m.hitComposeModelPills(x, composeURLModel)
-		case line == plan.thinking:
-			return m.hitComposeThinkingPills(x, composeURLThinking)
-		case line == plan.effort:
-			return m.hitComposeEffortPills(x, composeURLEffort)
 		case line >= plan.actions:
 			return hitComposeActions(m.opts.Words, x)
 		}
@@ -126,66 +110,6 @@ func (m Model) hitComposeFlowPills(x int, field int) Target {
 	newWidth := lipgloss.Width(newBtn)
 	if x >= curX && x < curX+newWidth {
 		return Target{Kind: TargetComposeNewFlow}
-	}
-
-	return Target{Kind: TargetComposeField, Pane: field}
-}
-
-func (m Model) hitComposeEnginePills(x int, field int) Target {
-	curX := composeLabelStart
-
-	for i, eng := range m.compose.engines {
-		pillWidth := composePillWidth(eng, i == m.compose.engineIdx)
-		if x >= curX && x < curX+pillWidth {
-			return Target{Kind: TargetComposeEngineChoice, Pane: i}
-		}
-
-		curX += pillWidth + 1
-	}
-
-	return Target{Kind: TargetComposeField, Pane: field}
-}
-
-func (m Model) hitComposeModelPills(x int, field int) Target {
-	curX := composeLabelStart
-
-	for i := range m.compose.models {
-		pillWidth := composePillWidth(m.compose.modelLabel(i), i == m.compose.modelIdx)
-		if x >= curX && x < curX+pillWidth {
-			return Target{Kind: TargetComposeModelChoice, Pane: i}
-		}
-
-		curX += pillWidth + 1
-	}
-
-	return Target{Kind: TargetComposeField, Pane: field}
-}
-
-func (m Model) hitComposeThinkingPills(x int, field int) Target {
-	curX := composeLabelStart
-
-	for i, th := range m.compose.thinkings {
-		pillWidth := composePillWidth(th, i == m.compose.thinkingIdx)
-		if x >= curX && x < curX+pillWidth {
-			return Target{Kind: TargetComposeThinkingChoice, Pane: i}
-		}
-
-		curX += pillWidth + 1
-	}
-
-	return Target{Kind: TargetComposeField, Pane: field}
-}
-
-func (m Model) hitComposeEffortPills(x int, field int) Target {
-	curX := composeLabelStart
-
-	for i := range m.compose.efforts {
-		pillWidth := composePillWidth(m.compose.effortLabel(i), i == m.compose.effortIdx)
-		if x >= curX && x < curX+pillWidth {
-			return Target{Kind: TargetComposeEffortChoice, Pane: i}
-		}
-
-		curX += pillWidth + 1
 	}
 
 	return Target{Kind: TargetComposeField, Pane: field}

@@ -2,7 +2,6 @@ package ui
 
 import (
 	"errors"
-	"slices"
 	"testing"
 
 	"charm.land/bubbletea/v2"
@@ -168,50 +167,6 @@ func TestComposePillsCycle(t *testing.T) {
 	if len(m.compose.flows) > 1 && m.compose.chosenFlow() == oldFlow {
 		t.Errorf("expected flow to cycle from %s", oldFlow)
 	}
-
-	// 3. Engine / Provider cycle
-	m.compose.field = composeEngine
-	oldEng := m.compose.chosenEngine()
-
-	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyRight}))
-	if m.compose.chosenEngine() == oldEng {
-		t.Errorf("expected engine to cycle from %s", oldEng)
-	}
-
-	// The model dial follows the engine dial, and what it offers is the
-	// engine's own. A table of the form's own here offered opencode a
-	// model called llama-3.3 that no opencode answers to.
-	engModels, _ := m.modelsFor(m.compose.chosenEngine())
-	if !slices.Equal(m.compose.models, engModels) {
-		t.Errorf("the model dial offers %v after choosing %s, want %v", m.compose.models, m.compose.chosenEngine(), engModels)
-	}
-
-	// 4. Model cycle
-	m.compose.field = composeModel
-	oldMod := m.compose.chosenModel()
-
-	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyRight}))
-	if m.compose.chosenModel() == oldMod {
-		t.Errorf("expected model to cycle from %s", oldMod)
-	}
-
-	// 5. Thinking cycle
-	m.compose.field = composeThinking
-	oldThk := m.compose.chosenThinking()
-
-	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyRight}))
-	if m.compose.chosenThinking() == oldThk {
-		t.Errorf("expected thinking to cycle from %s", oldThk)
-	}
-
-	// 6. Effort cycle
-	m.compose.field = composeEffort
-	oldEff := m.compose.chosenEffort()
-
-	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyRight}))
-	if m.compose.chosenEffort() == oldEff {
-		t.Errorf("expected effort to cycle from %s", oldEff)
-	}
 }
 
 func TestComposeSubmitValidID(t *testing.T) {
@@ -253,21 +208,11 @@ func TestComposeUpDownAndMouseClicks(t *testing.T) {
 	}
 
 	m = asModel(t, mustUpdate(m, press("down")))
-	if m.compose.field != composeEngine {
-		t.Fatalf("field after second down arrow = %d, want composeEngine", m.compose.field)
-	}
-
-	m = asModel(t, mustUpdate(m, press("down")))
-	if m.compose.field != composeModel {
-		t.Fatalf("field after third down arrow = %d, want composeModel", m.compose.field)
+	if m.compose.field != composeID {
+		t.Fatalf("field after second down arrow = %d, want composeID", m.compose.field)
 	}
 
 	// 2. Arrow up moves back up
-	m = asModel(t, mustUpdate(m, press("up")))
-	if m.compose.field != composeEngine {
-		t.Fatalf("field after up arrow = %d, want composeEngine", m.compose.field)
-	}
-
 	m = asModel(t, mustUpdate(m, press("up")))
 	if m.compose.field != composeFlow {
 		t.Fatalf("field after up arrow = %d, want composeFlow", m.compose.field)
@@ -286,8 +231,7 @@ func TestComposeUpDownAndMouseClicks(t *testing.T) {
 
 	yRepo := m.frame.Body.Y + 2
 	yFlow := m.frame.Body.Y + 3
-	yEngine := m.frame.Body.Y + 4 + extra
-	yID := m.frame.Body.Y + 8 + extra
+	yID := m.frame.Body.Y + 4 + extra
 
 	clickField := func(y int) {
 		res, _ := m.mouse(tea.MouseClickMsg{X: 10, Y: y, Button: tea.MouseLeft})
@@ -300,12 +244,6 @@ func TestComposeUpDownAndMouseClicks(t *testing.T) {
 
 	if m.compose.field != composeID {
 		t.Errorf("field after click on ID = %d, want composeID", m.compose.field)
-	}
-
-	clickField(yEngine)
-
-	if m.compose.field != composeEngine {
-		t.Errorf("field after click on Engine = %d, want composeEngine", m.compose.field)
 	}
 
 	clickField(yFlow)

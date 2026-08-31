@@ -13,10 +13,6 @@ type composePlan struct {
 	repo       int
 	flow       int
 	flowSum    int // -1 if no summary
-	engine     int
-	model      int
-	thinking   int
-	effort     int
 	id         int // for Manual tab
 	textHeader int // for Manual tab
 	textBoxTop int // for Manual tab
@@ -39,14 +35,6 @@ func (m Model) composeLayout() composePlan {
 			cur++
 		}
 
-		p.engine = cur
-		cur++
-		p.model = cur
-		cur++
-		p.thinking = cur
-		cur++
-		p.effort = cur
-		cur++
 		p.id = cur
 		cur++
 		p.textHeader = cur
@@ -64,15 +52,6 @@ func (m Model) composeLayout() composePlan {
 			cur++
 		}
 
-		p.engine = cur
-		cur++
-		p.model = cur
-		cur++
-		p.thinking = cur
-		cur++
-		p.effort = cur
-
-		cur++
 		if m.compose.parsedIssue != nil {
 			cur += 2
 		}

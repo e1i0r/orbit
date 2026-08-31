@@ -119,7 +119,6 @@ var borrowedWholesale = map[string]string{
 	"tab.gates":                 "the engines call them gates and so does the record",
 	"tab.thinking":              "the dial, the flag and the engines all say thinking",
 	"start.thinking_hint":       "the dial, the flag and the engines all say thinking",
-	"compose.thinking":          "the dial, the flag and the engines all say thinking",
 	"overview.thinking":         "the dial, the flag and the engines all say thinking",
 	"key.supervisor":            "supervisor is supervisor",
 	"overview.action_merge_pr":  "merge and PR are what the forge calls them",

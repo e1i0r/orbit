@@ -58,7 +58,7 @@ func composeForm(t *testing.T) Model {
 	return m.openCompose()
 }
 
-// TestEveryDialOfTheFormIsChosenByPointingAtIt. Six rows of pills, and the
+// TestEveryDialOfTheFormIsChosenByPointingAtIt. Two rows of pills, and the
 // pointer is the only way to reach one of them that does not involve
 // counting keystrokes.
 func TestEveryDialOfTheFormIsChosenByPointingAtIt(t *testing.T) {
@@ -74,28 +74,6 @@ func TestEveryDialOfTheFormIsChosenByPointingAtIt(t *testing.T) {
 	if m.compose.flowIdx != 2 {
 		t.Errorf("the third flow pill left flowIdx=%d, want 2", m.compose.flowIdx)
 	}
-
-	// The engine decides which models, thinkings and efforts exist, so it is
-	// chosen before them and the rest are read off the form it redrew.
-	m = clickAt(t, m, formRow(t, m, "engine:"), TargetComposeEngineChoice, 1)
-	if m.compose.engineIdx != 1 {
-		t.Errorf("the second engine pill left engineIdx=%d, want 1", m.compose.engineIdx)
-	}
-
-	for _, c := range []struct {
-		label string
-		kind  TargetKind
-		got   func(Model) int
-	}{
-		{"model:", TargetComposeModelChoice, func(m Model) int { return m.compose.modelIdx }},
-		{"thinking:", TargetComposeThinkingChoice, func(m Model) int { return m.compose.thinkingIdx }},
-		{"effort:", TargetComposeEffortChoice, func(m Model) int { return m.compose.effortIdx }},
-	} {
-		m = clickAt(t, m, formRow(t, m, c.label), c.kind, 1)
-		if c.got(m) != 1 {
-			t.Errorf("the second pill of %s left it on %d, want 1", c.label, c.got(m))
-		}
-	}
 }
 
 // TestPointingBesideThePillsPutsTheCursorOnThatRow. The empty half of a dial
@@ -104,16 +82,16 @@ func TestEveryDialOfTheFormIsChosenByPointingAtIt(t *testing.T) {
 func TestPointingBesideThePillsPutsTheCursorOnThatRow(t *testing.T) {
 	m := composeForm(t)
 
-	y := formRow(t, m, "thinking:")
+	y := formRow(t, m, "flow:")
 
 	at := m.hit(m.width-2, y)
-	if at.Kind != TargetComposeField || at.Pane != composeThinking {
-		t.Fatalf("the far end of the thinking row is kind %d pane %d, want the thinking field", at.Kind, at.Pane)
+	if at.Kind != TargetComposeField || at.Pane != composeFlow {
+		t.Fatalf("the far end of the flow row is kind %d pane %d, want the flow field", at.Kind, at.Pane)
 	}
 
 	after, _ := m.leftClick(at)
-	if m = asModel(t, after); m.compose.field != composeThinking {
-		t.Errorf("the cursor is on field %d, want the thinking one", m.compose.field)
+	if m = asModel(t, after); m.compose.field != composeFlow {
+		t.Errorf("the cursor is on field %d, want the flow one", m.compose.field)
 	}
 }
 
@@ -209,14 +187,14 @@ func TestTheOtherTabHasItsOwnRows(t *testing.T) {
 		t.Errorf("the far end of the url row is kind %d pane %d, want the url field", at.Kind, at.Pane)
 	}
 
-	// Every dial of this tab is its own field, not the manual tab's.
-	m = clickAt(t, m, formRow(t, m, "model:"), TargetComposeModelChoice, 1)
-	if m.compose.modelIdx != 1 {
-		t.Errorf("the second model pill of the url tab left modelIdx=%d, want 1", m.compose.modelIdx)
+	// Every field of this tab is its own, not the manual tab's.
+	m = clickAt(t, m, formRow(t, m, "repository:"), TargetComposeRepoChoice, 1)
+	if m.compose.repoIdx != 1 {
+		t.Errorf("the second repository pill of the url tab left repoIdx=%d, want 1", m.compose.repoIdx)
 	}
 
-	if at := m.hit(m.width-2, formRow(t, m, "effort:")); at.Pane != composeURLEffort {
-		t.Errorf("the effort row of the url tab is field %d, want the url one", at.Pane)
+	if at := m.hit(m.width-2, formRow(t, m, "flow:")); at.Pane != composeURLFlow {
+		t.Errorf("the flow row of the url tab is field %d, want the url one", at.Pane)
 	}
 }
 

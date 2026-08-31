@@ -93,26 +93,6 @@ func (m Model) handleComposeClick(t Target) (tea.Model, tea.Cmd) {
 		}
 
 		return m, nil
-	case TargetComposeEngineChoice:
-		return m.chooseComposeEngine(t.Pane), nil
-	case TargetComposeModelChoice:
-		if t.Pane >= 0 && t.Pane < len(m.compose.models) {
-			m.compose.modelIdx = t.Pane
-		}
-
-		return m, nil
-	case TargetComposeThinkingChoice:
-		if t.Pane >= 0 && t.Pane < len(m.compose.thinkings) {
-			m.compose.thinkingIdx = t.Pane
-		}
-
-		return m, nil
-	case TargetComposeEffortChoice:
-		if t.Pane >= 0 && t.Pane < len(m.compose.efforts) {
-			m.compose.effortIdx = t.Pane
-		}
-
-		return m, nil
 	case TargetComposeNewFlow:
 		return m.openFlows(), nil
 	case TargetComposeInspectFlow:
