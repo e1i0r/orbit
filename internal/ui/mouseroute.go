@@ -100,6 +100,8 @@ func (m Model) handleComposeClick(t Target) (tea.Model, tea.Cmd) {
 	case TargetComposeField:
 		m.compose.field = t.Pane
 		return m, nil
+	case TargetComposeCaret:
+		return m.composeAim(t), nil
 	case TargetComposeAction:
 		switch t.Key {
 		case "save":

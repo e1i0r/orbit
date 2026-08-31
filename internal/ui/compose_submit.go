@@ -17,8 +17,8 @@ func (m Model) composeSubmit(startNow bool) (tea.Model, tea.Cmd) {
 		repo = m.compose.repos[m.compose.repoIdx].name
 	}
 
-	id := strings.TrimSpace(m.compose.id)
-	text := strings.TrimSpace(m.compose.text)
+	id := strings.TrimSpace(m.compose.id.String())
+	text := strings.TrimSpace(m.compose.text.String())
 
 	if m.compose.tab == composeTabURL {
 		if m.compose.parsedIssue != nil {
@@ -29,8 +29,8 @@ func (m Model) composeSubmit(startNow bool) (tea.Model, tea.Cmd) {
 			if text == "" {
 				text = tracker.FormatPrompt(*m.compose.parsedIssue)
 			}
-		} else if strings.TrimSpace(m.compose.url) != "" {
-			if issue, err := tracker.Parse(m.compose.url); err == nil {
+		} else if strings.TrimSpace(m.compose.url.String()) != "" {
+			if issue, err := tracker.Parse(m.compose.url.String()); err == nil {
 				if id == "" {
 					id = issue.ID
 				}

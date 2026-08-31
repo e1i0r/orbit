@@ -40,9 +40,9 @@ type composeState struct {
 	tab         int // composeTabManual or composeTabURL
 	field       int // active field index within current tab
 	repo        string
-	id          string
-	text        string
-	url         string
+	id          input
+	text        input
+	url         input
 	repos       []repoItem
 	repoIdx     int
 	parsedIssue *tracker.Issue
@@ -117,7 +117,7 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 
 		if msg.Mod&tea.ModShift != 0 || msg.Mod&tea.ModAlt != 0 {
 			if m.compose.tab == composeTabManual && m.compose.field == composeText {
-				m.compose.text += "\n"
+				m.compose.text.insert("\n")
 				return m, nil
 			}
 		}
@@ -125,6 +125,12 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.composeNext(false)
 	case (msg.Code == 'r' || msg.Code == 'R') && msg.Mod&tea.ModCtrl != 0:
 		return m.composeSubmit(true)
+	case (msg.Code == 'a' || msg.Code == 'A') && msg.Mod&tea.ModCtrl != 0:
+		return m.composeCaret((*input).selectAll), nil
+	case (msg.Code == 'c' || msg.Code == 'C') && msg.Mod&tea.ModCtrl != 0:
+		return m.composeCopy(false), nil
+	case (msg.Code == 'x' || msg.Code == 'X') && msg.Mod&tea.ModCtrl != 0:
+		return m.composeCopy(true), nil
 	case (msg.Code == 'v' || msg.Code == 'V') && msg.Mod&tea.ModCtrl != 0:
 		if clip := readClipboard(); clip != "" {
 			return m.paste(clip), nil
@@ -142,13 +148,13 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case (msg.Text == "a" || msg.Text == "A" || key.Matches(msg, m.keys.Autopilot)) && m.isPillField():
 		return m.autopilot()
 	case msg.Code == tea.KeyUp || key.Matches(msg, m.keys.Up):
-		return m.composeMove(-1), nil
+		return m.composeVertical(-1, msg.Mod), nil
 	case msg.Code == tea.KeyDown || key.Matches(msg, m.keys.Down):
-		return m.composeMove(1), nil
+		return m.composeVertical(1, msg.Mod), nil
 	case msg.Code == tea.KeyLeft:
-		return m.handleComposeLeft(), nil
+		return m.composeArrow(-1, msg.Mod), nil
 	case msg.Code == tea.KeyRight:
-		return m.handleComposeRight(), nil
+		return m.composeArrow(1, msg.Mod), nil
 	case key.Matches(msg, m.keys.PrevTab):
 		return m.composeMove(-1), nil
 	case msg.Code == tea.KeyTab || key.Matches(msg, m.keys.NextTab):
@@ -157,14 +163,17 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		}
 
 		return m.composeTab(1), nil
-	case msg.Code == tea.KeyBackspace || msg.Code == tea.KeyDelete:
-		m.compose.set(trimLastRune(m.compose.get()))
-		m.onComposeChanged()
-
-		return m, nil
+	case msg.Code == tea.KeyBackspace:
+		return m.composeEdit(func(in *input) { in.backspace() }), nil
+	case msg.Code == tea.KeyDelete:
+		return m.composeEdit(func(in *input) { in.deleteForward() }), nil
+	case msg.Code == tea.KeyHome:
+		return m.composeJump((*input).lineStart, msg.Mod), nil
+	case msg.Code == tea.KeyEnd:
+		return m.composeJump((*input).lineEnd, msg.Mod), nil
 	}
 
-	if (msg.Text == "1" || msg.Text == "2") && (m.isPillField() || m.compose.get() == "") {
+	if (msg.Text == "1" || msg.Text == "2") && (m.isPillField() || m.compose.typed() == "") {
 		if msg.Text == "1" {
 			m.compose.tab = composeTabManual
 		} else {
@@ -177,10 +186,7 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	}
 
 	if msg.Text != "" && !m.isPillField() {
-		m.compose.set(m.compose.get() + msg.Text)
-		m.onComposeChanged()
-
-		return m, nil
+		return m.composeEdit(func(in *input) { in.insert(msg.Text) }), nil
 	}
 
 	return m, nil
@@ -188,14 +194,15 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) onComposeChanged() {
 	if m.compose.tab == composeTabURL && m.compose.field == composeURL {
-		raw := strings.TrimSpace(m.compose.url)
+		raw := strings.TrimSpace(m.compose.url.String())
 		if raw != "" {
 			if issue, err := tracker.Parse(raw); err == nil {
 				m.compose.parsedIssue = &issue
 
-				m.compose.id = issue.ID
+				m.compose.id.setValue(issue.ID)
+
 				if issue.Title != "" {
-					m.compose.text = issue.Title
+					m.compose.text.setValue(issue.Title)
 				}
 			} else {
 				m.compose.parsedIssue = nil
@@ -204,57 +211,54 @@ func (m *Model) onComposeChanged() {
 			m.compose.parsedIssue = nil
 		}
 	} else if m.compose.tab == composeTabManual {
-		cur := strings.TrimSpace(m.compose.get())
+		cur := strings.TrimSpace(m.compose.typed())
 		if strings.HasPrefix(cur, "http://") || strings.HasPrefix(cur, "https://") ||
 			strings.HasPrefix(cur, "linear.app/") {
 			if issue, err := tracker.Parse(cur); err == nil {
 				m.compose.tab = composeTabURL
-				m.compose.url = cur
+				m.compose.url.setValue(cur)
 				m.compose.parsedIssue = &issue
 
-				m.compose.id = issue.ID
+				m.compose.id.setValue(issue.ID)
+
 				if issue.Title != "" {
-					m.compose.text = issue.Title
+					m.compose.text.setValue(issue.Title)
 				}
 			}
 		}
 	}
 }
 
-func (c *composeState) get() string {
+// active is the field being typed into, or nothing when the form is on a
+// row of pills. Every key that writes, deletes or moves a caret goes
+// through it, so which field a keystroke lands in is answered once.
+func (c *composeState) active() *input {
 	if c.tab == composeTabURL {
 		if c.field == composeURL {
-			return c.url
+			return &c.url
 		}
 
-		return ""
+		return nil
 	}
 
 	switch c.field {
 	case composeID:
-		return c.id
+		return &c.id
 	case composeText:
-		return c.text
+		return &c.text
+	}
+
+	return nil
+}
+
+// typed is what the field being typed into holds, for the screens that only
+// want to read it.
+func (c *composeState) typed() string {
+	if in := c.active(); in != nil {
+		return in.String()
 	}
 
 	return ""
-}
-
-func (c *composeState) set(v string) {
-	if c.tab == composeTabURL {
-		if c.field == composeURL {
-			c.url = v
-		}
-
-		return
-	}
-
-	switch c.field {
-	case composeID:
-		c.id = v
-	case composeText:
-		c.text = v
-	}
 }
 
 func (m Model) composeMove(d int) Model {

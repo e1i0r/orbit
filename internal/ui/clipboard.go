@@ -4,6 +4,7 @@ import (
 	"context"
 	"os/exec"
 	"runtime"
+	"strings"
 	"time"
 )
 
@@ -95,5 +96,47 @@ func clipboardFrom(name string, args ...string) (string, bool) {
 		return string(a.out), true
 	case <-ctx.Done():
 		return "", false
+	}
+}
+
+// writeClipboard puts one string on the system clipboard, through the same
+// three platforms readClipboard reads it back from.
+//
+// It reports whether a helper took it. Nothing else in the window can tell
+// whether pbcopy is on this machine, and a copy that quietly went nowhere
+// is a copy the reader will paste from somewhere else and lose.
+func writeClipboard(text string) bool {
+	if runtime.GOOS == "darwin" {
+		return clipboardTo(text, "pbcopy")
+	}
+
+	if clipboardTo(text, "wl-copy") {
+		return true
+	}
+
+	return clipboardTo(text, "xclip", "-in", "-selection", "clipboard")
+}
+
+// clipboardTo hands the text to one helper on its standard input, under the
+// deadline reading is given and for the same reason: this runs inside
+// Update, so a helper that never returns is a window that never draws
+// again.
+func clipboardTo(text, name string, args ...string) bool {
+	ctx, cancel := context.WithTimeout(context.Background(), clipboardTimeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, name, args...)
+	cmd.Stdin = strings.NewReader(text)
+	cmd.WaitDelay = clipboardTimeout
+
+	done := make(chan error, 1)
+
+	go func() { done <- cmd.Run() }()
+
+	select {
+	case err := <-done:
+		return err == nil
+	case <-ctx.Done():
+		return false
 	}
 }
