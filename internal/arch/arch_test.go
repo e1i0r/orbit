@@ -162,6 +162,14 @@ var approved = []string{
 	"github.com/charmbracelet/colorprofile",
 	"github.com/charmbracelet/x/ansi",
 	"github.com/charmbracelet/x/exp/golden",
+	// modernc.org/sqlite is the derived index, and it is the pure-Go
+	// translation of SQLite rather than the cgo binding on purpose:
+	// releases are built with CGO_ENABLED=0 for four platforms, and a
+	// dependency that needs a C toolchain would make `go install` a
+	// question about the machine it is run on. What it costs is a large
+	// module; what it buys is that the index stays a file the same binary
+	// opens everywhere.
+	"modernc.org/sqlite",
 }
 
 func TestGoModTakesOnlyApprovedDependencies(t *testing.T) {
