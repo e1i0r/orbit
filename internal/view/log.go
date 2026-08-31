@@ -117,6 +117,10 @@ const (
 	EntryRefused                     // permission refused
 	EntryNoted                       // user note
 	EntryDialogue                    // something outside a run acted on the task
+	EntryStuck                       // the attempts ran out
+	EntryDecision                    // something was decided, and the decision is in the line
+	EntrySuperseded                  // a decision replaced an earlier one
+	EntryRepoJoined                  // a repository joined the task by being worked in
 	EntryUnreadable                  // this line of the record itself is damaged
 )
 
@@ -164,6 +168,14 @@ func (e Entry) What() EntryKind {
 		return EntryNoted
 	case record.TaskDialogue:
 		return EntryDialogue
+	case record.TaskStuck:
+		return EntryStuck
+	case record.DecisionMade:
+		return EntryDecision
+	case record.DecisionSuperseded:
+		return EntrySuperseded
+	case record.RepoJoined:
+		return EntryRepoJoined
 	case record.Unreadable:
 		// Not a kind anything wrote: the reader synthesises it where a line
 		// would not parse, and it is a fact about the log rather than about

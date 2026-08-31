@@ -24,6 +24,12 @@ const (
 	TaskRead      = "task.read"      // somebody has looked at it
 	TaskNoted     = "task.noted"     // a user note left for the task
 	TaskDialogue  = "task.dialogue"  // something outside a run acted on it; Data["by"] says what
+	// TaskStuck is a task that ran out of attempts. It is not a failure of
+	// one run — task.failed already says that — it is the run after the
+	// last one the flow was allowed: nothing will move until a reader
+	// looks. Data["attempts"] is how many were spent, Text is the line a
+	// human reads about why it stopped.
+	TaskStuck = "task.stuck"
 
 	PhaseStarted   = "phase.started"   // Data carries engine, model, n, and the permissions the phase was given
 	PhaseFinished  = "phase.finished"  // the phase ran through; Text is what the engine printed
@@ -47,4 +53,28 @@ const (
 	// in a log that cannot erase: the withdrawn line stays where it is, and
 	// stops being repeated into the model's prompt.
 	SupervisorRetracted = "supervisor.retracted"
+
+	// A decision is what somebody chose and why, written down where the
+	// work happened rather than in a document beside it. The event is the
+	// decision's home; a file under .orbit/decisions/ is a copy of it, and
+	// the other way around there would be two truths.
+	//
+	// Data["id"] names it so a later line can point back at it, Data["scope"]
+	// lists the paths it governs — that is what makes a decision checkable
+	// against a diff rather than prose nobody reads — and Text is the
+	// decision itself.
+	DecisionMade = "decision.made"
+	// DecisionSuperseded replaces an earlier decision with the one this
+	// event carries. It names the earlier one in Data["at"] by record.Stamp,
+	// the way supervisor.retracted names the line it takes back: the log
+	// cannot erase, so what changes is what a decision still governs, never
+	// whether it was made.
+	DecisionSuperseded = "decision.superseded"
+
+	// RepoJoined is a repository joining the task by being worked in. The
+	// scope of a task is not declared and then checked — it is observed:
+	// opening a worktree is what joining is, in whichever phase it happens.
+	// Data["repo"] is the repository's name and Data["path"] is where its
+	// worktree was made.
+	RepoJoined = "repo.joined"
 )

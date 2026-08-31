@@ -159,6 +159,7 @@ func TestEveryStateHasABand(t *testing.T) {
 		stateAbandoned:   NeedsYou,
 		stateCancelled:   Done,
 		stateFinished:    Done,
+		stateStuck:       NeedsYou,
 	}
 	if len(want) != int(stateCount) {
 		t.Fatalf("this test names %d states and the fold has %d — place the new one in a band", len(want), stateCount)
