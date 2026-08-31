@@ -44,7 +44,7 @@ var layers = map[string][]string{
 	// internal/board still does not append anything itself, and internal/ui
 	// still cannot reach internal/record, internal/store or internal/engine.
 	"internal/board": {"internal/record", "internal/repo", "internal/store", "internal/task", "internal/view"},
-	"internal/cli":   {"internal/board", "internal/engine", "internal/flow", "internal/logger", "internal/mcp", "internal/quota", "internal/repo", "internal/store", "internal/supervisor", "internal/task", "internal/tracker", "internal/ui", "internal/view", "internal/words"},
+	"internal/cli":   {"internal/board", "internal/engine", "internal/flow", "internal/index", "internal/logger", "internal/mcp", "internal/quota", "internal/repo", "internal/store", "internal/supervisor", "internal/task", "internal/tracker", "internal/ui", "internal/view", "internal/words"},
 	// internal/logger is on internal/engine's list for the one thing this
 	// package does that nothing else in Orbit does: it starts somebody
 	// else's program. What that cost, how long it took and which of the
@@ -52,6 +52,14 @@ var layers = map[string][]string{
 	// widens nothing else: engine still knows no record, store or task.
 	"internal/engine": {"internal/logger"},
 	"internal/flow":   {},
+	// internal/index derives its rows from the record and from nothing
+	// else, which is why its list holds one package. What it does not
+	// import is internal/store, and that absence is the point: a projection
+	// that had to know the shape of the state tree to fold an event would
+	// be derived from the tree as well as from the log. It reads the logs
+	// through an interface the store happens to satisfy, and internal/cli
+	// is what puts the two together.
+	"internal/index":  {"internal/record"},
 	"internal/logger": {},
 	// internal/mcp is the widest list on this map, and it is the same width
 	// as internal/cli's for the same reason: it is a second front door onto

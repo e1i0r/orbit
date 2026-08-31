@@ -262,6 +262,14 @@ func (s *Store) EventsPath(taskID string) (string, error) {
 	return filepath.Join(dir, "events.jsonl"), nil
 }
 
+// IndexPath is the derived index over the record — see internal/index. It
+// sits at the root beside the logs rather than inside any task because the
+// questions it exists to answer are the ones that span them.
+//
+// It holds nothing the record does not, so it is the one file in the tree
+// that can be deleted on a hunch: the next command builds it again.
+func (s *Store) IndexPath() string { return filepath.Join(s.root, "index.db") }
+
 // LogDir is where internal diagnostic logs of Orbit live.
 func (s *Store) LogDir() string { return filepath.Join(s.root, "logs") }
 
