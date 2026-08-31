@@ -61,4 +61,9 @@ const (
 	// ReasonAbandoned is a run whose process is gone and whose log never got
 	// a terminal event — a SIGKILL, or a machine that went down. Args: none.
 	ReasonAbandoned = "reason.abandoned"
+	// ReasonStuck is a task that spent every attempt it was allowed. It is
+	// not the same word as failed: a failure is one run, and this is the
+	// end of retrying — nothing will move until a reader decides
+	// something. Args: attempts.
+	ReasonStuck = "reason.stuck"
 )

@@ -121,6 +121,8 @@ func (m Model) stateWord(t view.Task) (string, Role) {
 		return p.T("reason.abandoned", "abandoned"), Warn
 	case view.ReasonCancelled:
 		return p.T("reason.cancelled", "cancelled"), Dim
+	case view.ReasonStuck:
+		return p.T("reason.stuck", "stuck after {attempts} attempts", reasonArgs(t.Reason)...), Bad
 	}
 
 	if t.Damaged > 0 {

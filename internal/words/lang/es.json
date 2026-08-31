@@ -265,6 +265,10 @@
       "source": "cancelled",
       "value": "cancelada"
     },
+    "reason.stuck": {
+      "source": "stuck after {attempts} attempts",
+      "value": "atascada tras {attempts} intentos"
+    },
     "state.unreadable": {
       "source": "record unreadable",
       "value": "registro ilegible"
@@ -814,8 +818,14 @@
       "value": "nada escrito todavia — esta tarea no ha corrido"
     },
     "artifacts.n_files": {
-      "source": { "one": "{n} file", "other": "{n} files" },
-      "value": { "one": "{n} archivo", "other": "{n} archivos" }
+      "source": {
+        "one": "{n} file",
+        "other": "{n} files"
+      },
+      "value": {
+        "one": "{n} archivo",
+        "other": "{n} archivos"
+      }
     },
     "artifacts.title": {
       "source": "Files & Artifacts",
@@ -872,6 +882,22 @@
     "log.unreadable": {
       "source": "this line could not be read",
       "value": "no se pudo leer esta línea"
+    },
+    "log.stuck": {
+      "source": "stuck",
+      "value": "atascada"
+    },
+    "log.decision": {
+      "source": "decided",
+      "value": "decidido"
+    },
+    "log.superseded": {
+      "source": "decision replaced",
+      "value": "decisión reemplazada"
+    },
+    "log.repo_joined": {
+      "source": "repository joined",
+      "value": "se sumó un repositorio"
     },
     "log.waiting": {
       "source": "waiting",

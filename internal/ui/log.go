@@ -199,6 +199,14 @@ func (m Model) logWord(e view.Entry) (string, Role) {
 		return p.T("log.tool_call", "tool call"), Live
 	case view.EntryThought:
 		return p.T("log.thought", "thought"), Dim
+	case view.EntryStuck:
+		return p.T("log.stuck", "stuck"), Bad
+	case view.EntryDecision:
+		return p.T("log.decision", "decided"), Accent
+	case view.EntrySuperseded:
+		return p.T("log.superseded", "decision replaced"), Warn
+	case view.EntryRepoJoined:
+		return p.T("log.repo_joined", "repository joined"), Accent
 	case view.EntryUnreadable:
 		return p.T("log.unreadable", "this line could not be read"), Bad
 	}

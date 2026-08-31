@@ -97,6 +97,7 @@ const (
 	stateAbandoned                // task.abandoned
 	stateCancelled                // task.cancelled, or a phase.cancelled with nothing after it
 	stateFinished                 // task.finished
+	stateStuck                    // task.stuck: the attempts ran out and nothing will move on its own
 
 	// stateCount is not a state. It is how many there are, so a test can
 	// walk every one and fail when a new state arrives without a band.
@@ -257,7 +258,7 @@ func bandOfState(s state) Band {
 		return ToDo
 	case stateRunning, stateHeld:
 		return Running
-	case stateWaiting, statePhaseFailed, stateFailed, stateTimedOut, stateAbandoned:
+	case stateWaiting, statePhaseFailed, stateFailed, stateTimedOut, stateAbandoned, stateStuck:
 		return NeedsYou
 	case stateCancelled, stateFinished:
 		return Done

@@ -203,6 +203,21 @@ func fold(t *Task, e record.Event) {
 		t.state = stateFinished
 		t.Reason = Reason{}
 		stamp(&t.Since, e.At)
+	case record.TaskStuck:
+		// The attempts ran out. It is a band of its own way of getting to
+		// NeedsYou: a failed run can be retried and this is what is left
+		// when retrying is what already happened, so the row says how many
+		// were spent rather than which phase broke.
+		t.state = stateStuck
+		t.Reason = Reason{Key: ReasonStuck, Args: []Arg{{Name: "attempts", Value: e.Data["attempts"]}}}
+		stamp(&t.Since, e.At)
+	case record.DecisionMade, record.DecisionSuperseded, record.RepoJoined:
+		// Written down and deliberately not folded. What was decided and
+		// which repositories the task reached are facts about the task, but
+		// they are not where the run is: a decision made in the middle of a
+		// working run leaves it working. The task view reads these lines
+		// from the log itself, which is what keeps them from being folded
+		// into a verdict nobody wrote.
 	case record.TaskRead:
 		// Read says task.read is in the log and nothing more. It does not
 		// move Since, because being read does not change what the row says

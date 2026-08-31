@@ -206,5 +206,45 @@ func stoppedCases() []foldCase {
 				Reason: Reason{Key: ReasonCancelled},
 			},
 		},
+		{
+			// The attempts ran out. Every one of them failed and the last
+			// one says so as usual; what task.stuck adds is that there will
+			// not be another, and the row says how many there were rather
+			// than which phase broke this time.
+			name: "three attempts and no more left",
+			events: []record.Event{
+				{At: at(0), Kind: "task.created", Text: "Index on settlements"},
+				{At: at(1), Kind: "task.started", Data: data("flow", "task")},
+				{At: at(2), Kind: "phase.started", Phase: "review", Data: data("engine", "claude", "model", "sonnet", "n", "2")},
+				{At: at(3), Kind: "phase.failed", Phase: "review", Data: data("cost", "0.30", "error", "exit status 1")},
+				{At: at(4), Kind: "task.failed", Text: `task ACME-1, phase "review": exit status 1`},
+				{At: at(5), Kind: "task.stuck", Text: "the suite is red on every attempt for the same test", Data: data("attempts", "3")},
+			},
+			want: Task{
+				Title: "Index on settlements", Band: NeedsYou, Flow: "task",
+				Phase: "review", PhaseN: 2, Engine: "claude", Model: "sonnet",
+				Since: at(5), Started: at(1), Attempt: 1, Cost: 0.30, state: stateStuck,
+				Reason: Reason{Key: ReasonStuck, Args: []Arg{{Name: "attempts", Value: "3"}}},
+			},
+		},
+		{
+			// A decision written down in the middle of a working run leaves
+			// it working. These kinds are read from the log itself; folding
+			// them into a state would be a verdict nobody wrote.
+			name: "a decision and a repository joining leave the run where it was",
+			events: []record.Event{
+				{At: at(0), Kind: "task.created", Text: "Index on settlements"},
+				{At: at(1), Kind: "task.started", Data: data("flow", "task")},
+				{At: at(2), Kind: "phase.started", Phase: "implement", Data: data("engine", "claude", "model", "opus", "n", "1")},
+				{At: at(3), Kind: "repo.joined", Data: data("repo", "app", "path", "/w/app")},
+				{At: at(4), Kind: "decision.made", Text: "the index goes on (merchant_id, created_at)", Data: data("id", "idx-order", "scope", "db/migrations")},
+				{At: at(5), Kind: "decision.superseded", Text: "created_at first: every query filters by date", Data: data("id", "idx-order-2", "at", "2026-08-23T09:04:00Z")},
+			},
+			want: Task{
+				Title: "Index on settlements", Band: Running, Flow: "task",
+				Phase: "implement", PhaseN: 1, Engine: "claude", Model: "opus",
+				Since: at(2), Started: at(1), Attempt: 1, state: stateRunning,
+			},
+		},
 	}
 }
