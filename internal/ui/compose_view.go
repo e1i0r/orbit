@@ -166,13 +166,22 @@ func (m Model) composeTextLines(innerW int, active bool, placeholder string) []s
 	spans := wrapSpans(rs, innerW)
 	caretRow := spanRow(spans, m.compose.text.at)
 	top := spanWindow(len(spans), composeTextRows, caretRow)
+	from, to := m.compose.text.selection()
 
 	var out []string
 
 	for i := top; i < len(spans) && i < top+composeTextRows; i++ {
-		line := spanText(rs, spans[i])
-		if active && i == caretRow {
-			line = withCaret(line, m.compose.text.at-spans[i].from, unpainted)
+		s := spans[i]
+
+		line := spanText(rs, s)
+
+		if active {
+			caret := -1
+			if i == caretRow {
+				caret = m.compose.text.at - s.from
+			}
+
+			line = paintCells(line, from-s.from, to-s.from, caret, unpainted)
 		}
 
 		out = append(out, line)
@@ -181,7 +190,7 @@ func (m Model) composeTextLines(innerW int, active bool, placeholder string) []s
 	if len(rs) == 0 {
 		out = []string{placeholder}
 		if active {
-			out = []string{withCaret("", 0, unpainted) + placeholder}
+			out = []string{paintCells("", 0, 0, 0, unpainted) + placeholder}
 		}
 	}
 
@@ -190,22 +199,6 @@ func (m Model) composeTextLines(innerW int, active bool, placeholder string) []s
 	}
 
 	return out
-}
-
-// withCaret draws one line with the block on the character the caret is on,
-// or after the last one when the caret is at the end of the line. What is
-// around the block is drawn as it would have been drawn anyway, which is
-// why the painting is the caller's: the box paints nothing and a one-line
-// field paints the value it holds.
-func withCaret(line string, col int, paint func(string) string) string {
-	rs := []rune(line)
-	col = clamp(col, 0, len(rs))
-
-	if col == len(rs) {
-		return paint(line) + Paint(Sel).Render(" ")
-	}
-
-	return paint(string(rs[:col])) + Paint(Sel).Render(string(rs[col])) + paint(string(rs[col+1:]))
 }
 
 // unpainted is the box: what is typed into it is drawn as it was typed.
@@ -218,7 +211,7 @@ func (m Model) composeFieldLine(fieldIdx int, label string, val input, placehold
 	if val.empty() {
 		line := prefix
 		if active {
-			line += withCaret("", 0, unpainted)
+			line += paintCells("", 0, 0, 0, unpainted)
 		}
 
 		return fit(line+Paint(Dim).Render(placeholder), w)
@@ -226,7 +219,8 @@ func (m Model) composeFieldLine(fieldIdx int, label string, val input, placehold
 
 	body := Paint(Accent).Render(val.String())
 	if active {
-		body = withCaret(val.String(), val.at, func(s string) string { return Paint(Accent).Render(s) })
+		from, to := val.selection()
+		body = paintCells(val.String(), from, to, val.at, func(s string) string { return Paint(Accent).Render(s) })
 	}
 
 	return fit(prefix+body, w)

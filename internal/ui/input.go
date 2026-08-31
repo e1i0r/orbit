@@ -16,16 +16,24 @@ import "strings"
 // caret that outlives the text it pointed into is not a state this can be
 // in.
 
-// input is a value and the caret in it, in runes from the start.
+// input is a value, the caret in it, and the other end of what is
+// selected, both counted in runes from the start.
 type input struct {
 	val string
 	at  int
+	// anchor is where a selection started. It is equal to at whenever
+	// nothing is selected, which is what every plain movement leaves
+	// behind, so there is no third state to keep in step with the other
+	// two: see inputsel.go.
+	anchor int
 }
 
 // newInput is a field already holding something, with the caret after it —
 // where somebody who was handed a value would carry on typing.
 func newInput(s string) input {
-	return input{val: s, at: len([]rune(s))}
+	at := len([]rune(s))
+
+	return input{val: s, at: at, anchor: at}
 }
 
 func (in input) String() string { return in.val }
@@ -41,10 +49,15 @@ func (in input) empty() bool { return in.val == "" }
 func (in *input) setValue(s string) {
 	in.val = s
 	in.at = len([]rune(s))
+	in.anchor = in.at
 }
 
-// insert writes at the caret and leaves it after what was written.
+// insert writes at the caret and leaves it after what was written. What was
+// selected goes first: typing over a selection replaces it, the way it does
+// in every other field on the machine.
 func (in *input) insert(s string) {
+	in.cutSelection()
+
 	rs := in.runes()
 	at := clamp(in.at, 0, len(rs))
 
@@ -56,11 +69,19 @@ func (in *input) insert(s string) {
 
 	in.val = b.String()
 	in.at = at + len([]rune(s))
+	in.anchor = in.at
 }
 
-// backspace removes what is behind the caret. At the start of the value
-// there is nothing behind it and nothing happens.
+// backspace removes what is selected, or what is behind the caret when
+// nothing is. At the start of the value there is nothing behind it and
+// nothing happens.
 func (in *input) backspace() {
+	if in.hasSelection() {
+		in.cutSelection()
+
+		return
+	}
+
 	rs := in.runes()
 
 	at := clamp(in.at, 0, len(rs))
@@ -70,11 +91,18 @@ func (in *input) backspace() {
 
 	in.val = string(rs[:at-1]) + string(rs[at:])
 	in.at = at - 1
+	in.anchor = in.at
 }
 
 // deleteForward removes what is in front of the caret, which is the other
 // half of a field a reader can stand in the middle of.
 func (in *input) deleteForward() {
+	if in.hasSelection() {
+		in.cutSelection()
+
+		return
+	}
+
 	rs := in.runes()
 
 	at := clamp(in.at, 0, len(rs))
@@ -84,11 +112,15 @@ func (in *input) deleteForward() {
 
 	in.val = string(rs[:at]) + string(rs[at+1:])
 	in.at = at
+	in.anchor = in.at
 }
 
-// moveTo puts the caret where it was pointed at, inside the value.
+// moveTo puts the caret where it was pointed at, inside the value, and
+// carries the anchor along with it: a movement on its own selects nothing,
+// and only extend leaves the anchor behind.
 func (in *input) moveTo(at int) {
 	in.at = clamp(at, 0, len(in.runes()))
+	in.anchor = in.at
 }
 
 // moveBy walks the caret one position at a time, in either direction.
@@ -107,7 +139,7 @@ func (in *input) lineStart() {
 		at--
 	}
 
-	in.at = at
+	in.moveTo(at)
 }
 
 func (in *input) lineEnd() {
@@ -118,7 +150,7 @@ func (in *input) lineEnd() {
 		at++
 	}
 
-	in.at = at
+	in.moveTo(at)
 }
 
 // wordLeft and wordRight are the jump a reader expects from the option key:
@@ -135,7 +167,7 @@ func (in *input) wordLeft() {
 		at--
 	}
 
-	in.at = at
+	in.moveTo(at)
 }
 
 func (in *input) wordRight() {
@@ -150,7 +182,7 @@ func (in *input) wordRight() {
 		at++
 	}
 
-	in.at = at
+	in.moveTo(at)
 }
 
 func isBlank(r rune) bool { return r == ' ' || r == '\t' || r == '\n' }

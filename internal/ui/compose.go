@@ -125,6 +125,12 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.composeNext(false)
 	case (msg.Code == 'r' || msg.Code == 'R') && msg.Mod&tea.ModCtrl != 0:
 		return m.composeSubmit(true)
+	case (msg.Code == 'a' || msg.Code == 'A') && msg.Mod&tea.ModCtrl != 0:
+		return m.composeCaret((*input).selectAll), nil
+	case (msg.Code == 'c' || msg.Code == 'C') && msg.Mod&tea.ModCtrl != 0:
+		return m.composeCopy(false), nil
+	case (msg.Code == 'x' || msg.Code == 'X') && msg.Mod&tea.ModCtrl != 0:
+		return m.composeCopy(true), nil
 	case (msg.Code == 'v' || msg.Code == 'V') && msg.Mod&tea.ModCtrl != 0:
 		if clip := readClipboard(); clip != "" {
 			return m.paste(clip), nil
@@ -142,13 +148,13 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case (msg.Text == "a" || msg.Text == "A" || key.Matches(msg, m.keys.Autopilot)) && m.isPillField():
 		return m.autopilot()
 	case msg.Code == tea.KeyUp || key.Matches(msg, m.keys.Up):
-		return m.composeUp(-1), nil
+		return m.composeVertical(-1, msg.Mod), nil
 	case msg.Code == tea.KeyDown || key.Matches(msg, m.keys.Down):
-		return m.composeUp(1), nil
+		return m.composeVertical(1, msg.Mod), nil
 	case msg.Code == tea.KeyLeft:
-		return m.handleComposeLeft(msg.Mod&tea.ModAlt != 0), nil
+		return m.composeArrow(-1, msg.Mod), nil
 	case msg.Code == tea.KeyRight:
-		return m.handleComposeRight(msg.Mod&tea.ModAlt != 0), nil
+		return m.composeArrow(1, msg.Mod), nil
 	case key.Matches(msg, m.keys.PrevTab):
 		return m.composeMove(-1), nil
 	case msg.Code == tea.KeyTab || key.Matches(msg, m.keys.NextTab):
@@ -162,9 +168,9 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case msg.Code == tea.KeyDelete:
 		return m.composeEdit(func(in *input) { in.deleteForward() }), nil
 	case msg.Code == tea.KeyHome:
-		return m.composeCaret(func(in *input) { in.lineStart() }), nil
+		return m.composeJump((*input).lineStart, msg.Mod), nil
 	case msg.Code == tea.KeyEnd:
-		return m.composeCaret(func(in *input) { in.lineEnd() }), nil
+		return m.composeJump((*input).lineEnd, msg.Mod), nil
 	}
 
 	if (msg.Text == "1" || msg.Text == "2") && (m.isPillField() || m.compose.typed() == "") {

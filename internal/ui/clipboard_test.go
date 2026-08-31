@@ -79,3 +79,35 @@ func TestAHelperThatIsNotInstalledIsNotAnAnswer(t *testing.T) {
 		t.Errorf("clipboardFrom = (%q, %v), want nothing for a helper that is not there", out, ok)
 	}
 }
+
+// TestWhatIsCopiedReachesTheHelper. A cut takes the text out of the field,
+// so a copy that went nowhere while saying it worked is text nobody gets
+// back. The helper is handed it on standard input, which is the half of
+// this the read tests above never exercise.
+func TestWhatIsCopiedReachesTheHelper(t *testing.T) {
+	taken := filepath.Join(t.TempDir(), "taken")
+	helperNamed(t, "wl-copy", "cat > "+taken)
+
+	if !clipboardTo("una tarea", "wl-copy") {
+		t.Fatal("the helper refused what it was handed")
+	}
+
+	got, err := os.ReadFile(taken)
+	if err != nil {
+		t.Fatalf("read what the helper was given: %v", err)
+	}
+
+	if string(got) != "una tarea" {
+		t.Errorf("the helper was given %q, want %q", got, "una tarea")
+	}
+}
+
+// A machine with no clipboard helper on it says so, rather than reporting a
+// copy that never happened.
+func TestACopyWithNoHelperToTakeItIsNotACopy(t *testing.T) {
+	helperNamed(t, "unrelated", "true")
+
+	if clipboardTo("una tarea", "wl-copy") {
+		t.Error("clipboardTo said yes with no helper installed")
+	}
+}

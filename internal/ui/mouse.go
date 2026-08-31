@@ -63,6 +63,16 @@ func (m Model) mouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 			return m.scrollTo(m.held.target.Pane), nil
 		}
 
+		// A caret answers the press for the same reason: a selection is
+		// dragged out of the cell the button went down on, so the field
+		// has to be told where that was while the pointer is still on it.
+		// The release lands on the same cell when nobody dragged
+		// anywhere, and putting the caret where it already is changes
+		// nothing.
+		if e.Button == tea.MouseLeft && m.held.target.Kind == TargetComposeCaret {
+			return m.composeAim(m.held.target), nil
+		}
+
 		return m, nil
 	case tea.MouseReleaseMsg:
 		return m.release(msg.Mouse())
@@ -73,12 +83,17 @@ func (m Model) mouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 			return m.dragBar(msg.Mouse()), nil
 		}
 
-		// Ignored, and ignored here rather than by leaving the case out.
-		// The window asks for MouseModeCellMotion, so a drag reports a
-		// message per cell it crosses; the release carries the cell it
-		// happened in, which is everything this window needs, and nothing
-		// is drawn differently while a button is held. When something is —
-		// a hovered row, a drag that reorders — this is where it starts.
+		if m.held.down && m.held.target.Kind == TargetComposeCaret {
+			return m.dragCaret(msg.Mouse()), nil
+		}
+
+		// Everything else is ignored, and ignored here rather than by
+		// leaving the case out. The window asks for MouseModeCellMotion,
+		// so a drag reports a message per cell it crosses; for a row or a
+		// button the release carries the cell it happened in, which is all
+		// they need, and nothing about them is drawn differently while a
+		// button is held. When something is — a hovered row, a drag that
+		// reorders — this is where it starts.
 		return m, nil
 	}
 
