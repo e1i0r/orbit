@@ -10,8 +10,8 @@ package store
 import "path/filepath"
 
 // RunPath is where one task's run marker lives.
-func (s *Store) RunPath(repoPath, taskID string) (string, error) {
-	dir, err := s.TaskDir(repoPath, taskID)
+func (s *Store) RunPath(taskID string) (string, error) {
+	dir, err := s.TaskDir(taskID)
 	if err != nil {
 		return "", err
 	}

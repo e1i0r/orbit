@@ -19,7 +19,7 @@ import (
 func taskDir(t *testing.T, s *store.Store, repoPath, id string) string {
 	t.Helper()
 
-	dir, err := s.TaskDir(repoPath, id)
+	dir, err := s.TaskDir(id)
 	if err != nil {
 		t.Fatalf("task directory of %s: %v", id, err)
 	}
@@ -65,8 +65,10 @@ func TestTheListingIsWhatTheDirectoryHolds(t *testing.T) {
 	// In name order, which is the order the pane draws: a listing that came
 	// back arranged differently between two polls of the same second would
 	// move the row a reader is reaching for.
-	if got := strings.Join(names, " "); got != "control events.jsonl task.md" {
-		t.Fatalf("the listing is %q, want the three files in name order", got)
+	// The marker naming the repositories the task is worked in is a file of
+	// the task like any other, and the tab shows what is there.
+	if got := strings.Join(names, " "); got != "control events.jsonl repos task.md" {
+		t.Fatalf("the listing is %q, want the four files in name order", got)
 	}
 
 	for _, f := range files {

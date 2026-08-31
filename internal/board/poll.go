@@ -89,32 +89,16 @@ func (r *Reader) poll(st *taskState) ([]record.Event, error) {
 	return events, nil
 }
 
-// list is every task directory of one repository, in the order the rows are
-// drawn — os.ReadDir answers in filename order, which for task ids is the
-// order they are listed in everywhere else.
+// list is every task of one repository, in the order the rows are drawn —
+// sorted by id, which is the order they are listed in everywhere else.
+//
+// The tasks are all in one directory now and each one says which
+// repositories it is worked in, so this asks the store rather than reading
+// a directory of its own.
 func (r *Reader) list(rs *repoState) ([]string, error) {
-	dir, err := r.store.TasksDir(rs.path)
+	ids, err := r.store.TaskIDsOfRepo(rs.path)
 	if err != nil {
-		return nil, err
-	}
-
-	entries, err := os.ReadDir(dir)
-	if errors.Is(err, os.ErrNotExist) {
-		// A repository nobody has written a task against yet. Computing a
-		// path creates nothing, so this directory is genuinely absent until
-		// the first task, and "no tasks" is an answer rather than a fault.
-		return nil, nil
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("list the tasks of %q: %w", rs.name, err)
-	}
-
-	ids := make([]string, 0, len(entries))
-	for _, e := range entries {
-		if e.IsDir() {
-			ids = append(ids, e.Name())
-		}
+		return ids, fmt.Errorf("list the tasks of %q: %w", rs.name, err)
 	}
 
 	return ids, nil

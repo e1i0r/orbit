@@ -123,10 +123,7 @@ func TestReconcileAllReportsPerRepositoryAndPerTaskFailures(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	tasksDir, err := s.TasksDir(r.Path)
-	if err != nil {
-		t.Fatal(err)
-	}
+	tasksDir := s.TasksDir()
 
 	if err := os.Chmod(tasksDir, 0o000); err != nil {
 		t.Fatalf("chmod: %v", err)
@@ -197,7 +194,7 @@ func TestDeletingATaskRemovesTheRecordTheStoreActuallyWrote(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	taskDir, err := s.TaskDir(r.Path, "ACME-1")
+	taskDir, err := s.TaskDir("ACME-1")
 	if err != nil {
 		t.Fatal(err)
 	}

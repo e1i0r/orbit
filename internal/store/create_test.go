@@ -44,7 +44,7 @@ func TestCreateTaskDirMakesTheWholeChain(t *testing.T) {
 		t.Fatalf("CreateTaskDir: %v", err)
 	}
 
-	want, err := s.TaskDir("/tmp/one", "ACME-1")
+	want, err := s.TaskDir("ACME-1")
 	if err != nil {
 		t.Fatalf("TaskDir: %v", err)
 	}
@@ -189,7 +189,7 @@ func TestRegisterRepoTwiceLeavesTheRecordAlone(t *testing.T) {
 		t.Fatalf("RegisterRepo: %v", err)
 	}
 
-	task, err := s.TaskDir("/tmp/one", "ACME-1")
+	task, err := s.TaskDir("ACME-1")
 	if err != nil {
 		t.Fatalf("TaskDir: %v", err)
 	}

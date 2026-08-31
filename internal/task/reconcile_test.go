@@ -40,7 +40,7 @@ func openRun(t *testing.T, s *store.Store, tk Task) {
 func markerExists(t *testing.T, s *store.Store, tk Task) bool {
 	t.Helper()
 
-	path, err := s.RunPath(tk.Repo.Path, tk.ID)
+	path, err := s.RunPath(tk.ID)
 	if err != nil {
 		t.Fatalf("RunPath: %v", err)
 	}
@@ -212,7 +212,7 @@ func TestAliveRefusesAMarkerItCannotUnderstand(t *testing.T) {
 		t.Fatalf("Create: %v", err)
 	}
 
-	path, err := s.RunPath(tk.Repo.Path, tk.ID)
+	path, err := s.RunPath(tk.ID)
 	if err != nil {
 		t.Fatalf("RunPath: %v", err)
 	}

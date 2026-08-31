@@ -174,7 +174,7 @@ func TestAPhaseWhoseRecordWillNotReadOpensAFreshSession(t *testing.T) {
 		t.Fatalf("Create: %v", err)
 	}
 
-	path, err := s.EventsPath(r.Path, tk.ID)
+	path, err := s.EventsPath(tk.ID)
 	if err != nil {
 		t.Fatal(err)
 	}

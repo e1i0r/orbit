@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"sort"
+	"path/filepath"
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/flow"
@@ -63,7 +63,7 @@ func Create(s *store.Store, r repo.Repo, id, text, flowName string) (Task, error
 		return Task{}, err
 	}
 
-	path, err := s.TaskFilePath(r.Path, id)
+	path, err := s.TaskFilePath(id)
 	if err != nil {
 		return Task{}, err
 	}
@@ -92,28 +92,24 @@ func Create(s *store.Store, r repo.Repo, id, text, flowName string) (Task, error
 		if rmErr := os.Remove(path); rmErr != nil {
 			return Task{}, fmt.Errorf("%w; and %q could not be taken back out again: %w", err, path, rmErr)
 		}
-		// The directory itself is what List keys on, so it has to go too or
-		// a task that was never recorded would still show up in it. The
-		// removal is deliberately non-recursive, not os.RemoveAll: it
-		// succeeds exactly when task.md (just removed above) was the only
-		// thing inside, which is the state a failed Create should leave
-		// behind, and it fails harmlessly if something else landed in
-		// there — a partially written events.jsonl, say — rather than
-		// destroying that evidence.
+		// What is left behind is the directory and the file inside it that
+		// says which repository the task is worked in, and that file is
+		// what List keys on now, so a task that was never recorded would
+		// still be listed. Both go, and neither removal is recursive: they
+		// succeed exactly when task.md and that marker were the only
+		// things inside, which is the state a failed Create leaves, and
+		// they fail harmlessly when something else landed there — a
+		// partially written events.jsonl, say — rather than destroying
+		// that evidence.
 		//
-		// Unlike the file's removal above, this error is discarded rather
-		// than folded into the returned error. The file's error is folded
-		// in because a task.md still on disk blocks the retry the emit
-		// error tells the user to attempt — it's a second fact they need
-		// to hear. A directory that could not be removed blocks nothing:
-		// the duplicate check in Create keys on task.md, already gone, so
-		// the retry still succeeds. It would still leave List reporting a
-		// task that was never recorded — the very bug this rollback
-		// exists to close — but only in the case that removal fails,
-		// which happens only when something else is inside the directory,
-		// and forcing that onto the caller as a second error would not
-		// give them anything to act on beyond what the emit error already
-		// says.
+		// Unlike the file's removal above, these errors are discarded
+		// rather than folded into the returned error. The file's error is
+		// folded in because a task.md still on disk blocks the retry the
+		// emit error tells the user to attempt — it's a second fact they
+		// need to hear. A directory that could not be removed blocks
+		// nothing: the duplicate check in Create keys on task.md, already
+		// gone, so the retry still succeeds.
+		_ = os.Remove(filepath.Join(dir, "repos"))
 		_ = os.Remove(dir)
 
 		return Task{}, fmt.Errorf("%w; task %q was not created", err, id)
@@ -128,7 +124,7 @@ func Create(s *store.Store, r repo.Repo, id, text, flowName string) (Task, error
 // notably — and cannot pass along the Task value Create returned, because
 // that happened in a different process.
 func Load(s *store.Store, r repo.Repo, id string) (Task, error) {
-	path, err := s.TaskFilePath(r.Path, id)
+	path, err := s.TaskFilePath(id)
 	if err != nil {
 		return Task{}, err
 	}
@@ -208,41 +204,24 @@ func writtenFlow(s *store.Store, t Task) string {
 	return name
 }
 
-// List returns the ids of every task recorded against a repository, sorted.
+// List returns the ids of every task worked in a repository, sorted.
+//
+// The tasks all live in one directory now, so which repository a task
+// belongs to is read out of the task rather than out of its path. A task
+// whose repositories cannot be read costs itself and not the listing: the
+// window draws what it could read and says what it could not.
 func List(s *store.Store, r repo.Repo) ([]string, error) {
-	tasksDir, err := s.TasksDir(r.Path)
+	ids, err := s.TaskIDsOfRepo(r.Path)
 	if err != nil {
-		return nil, err
+		return ids, fmt.Errorf("list the tasks of %q: %w", r.Name, err)
 	}
-
-	entries, err := os.ReadDir(tasksDir)
-	if errors.Is(err, os.ErrNotExist) {
-		// A repository nobody has written a task against yet. Reading a
-		// path no longer creates it, so this directory is genuinely absent
-		// until the first task is created — and "no tasks" is an answer,
-		// not a fault.
-		return nil, nil
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("list the tasks of %q: %w", r.Name, err)
-	}
-
-	ids := make([]string, 0, len(entries))
-	for _, e := range entries {
-		if e.IsDir() {
-			ids = append(ids, e.Name())
-		}
-	}
-
-	sort.Strings(ids)
 
 	return ids, nil
 }
 
 // Events returns everything recorded about a task, oldest first.
 func Events(s *store.Store, t Task) ([]record.Event, error) {
-	path, err := s.EventsPath(t.Repo.Path, t.ID)
+	path, err := s.EventsPath(t.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +231,7 @@ func Events(s *store.Store, t Task) ([]record.Event, error) {
 
 // emit appends one event to the task's log.
 func emit(s *store.Store, t Task, e record.Event) error {
-	path, err := s.EventsPath(t.Repo.Path, t.ID)
+	path, err := s.EventsPath(t.ID)
 	if err != nil {
 		return noted(t.ID, err)
 	}

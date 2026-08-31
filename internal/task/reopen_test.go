@@ -178,7 +178,7 @@ func TestADirectiveOnAMarkerThatWillNotReadIsRefused(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	path, err := s.RunPath(tk.Repo.Path, tk.ID)
+	path, err := s.RunPath(tk.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -208,7 +208,7 @@ func TestADirectiveThatCannotBeWrittenDownIsRefused(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	path, err := s.EventsPath(tk.Repo.Path, tk.ID)
+	path, err := s.EventsPath(tk.ID)
 	if err != nil {
 		t.Fatal(err)
 	}

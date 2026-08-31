@@ -63,11 +63,10 @@ func TestComputingAPathCreatesNothing(t *testing.T) {
 
 	paths := map[string]func() (string, error){
 		"RepoDir":      func() (string, error) { return s.RepoDir("/tmp/one") },
-		"TasksDir":     func() (string, error) { return s.TasksDir("/tmp/one") },
-		"TaskDir":      func() (string, error) { return s.TaskDir("/tmp/one", "ACME-1") },
-		"TaskFilePath": func() (string, error) { return s.TaskFilePath("/tmp/one", "ACME-1") },
+		"TaskDir":      func() (string, error) { return s.TaskDir("ACME-1") },
+		"TaskFilePath": func() (string, error) { return s.TaskFilePath("ACME-1") },
 		"WorktreeDir":  func() (string, error) { return s.WorktreeDir("/tmp/one", "ACME-1") },
-		"EventsPath":   func() (string, error) { return s.EventsPath("/tmp/one", "ACME-1") },
+		"EventsPath":   func() (string, error) { return s.EventsPath("ACME-1") },
 	}
 	for name, compute := range paths {
 		path, err := compute()
@@ -93,12 +92,12 @@ func TestTaskFilePathSitsInsideTheTask(t *testing.T) {
 		t.Fatalf("New: %v", err)
 	}
 
-	dir, err := s.TaskDir("/tmp/one", "ACME-1")
+	dir, err := s.TaskDir("ACME-1")
 	if err != nil {
 		t.Fatalf("TaskDir: %v", err)
 	}
 
-	path, err := s.TaskFilePath("/tmp/one", "ACME-1")
+	path, err := s.TaskFilePath("ACME-1")
 	if err != nil {
 		t.Fatalf("TaskFilePath: %v", err)
 	}
@@ -118,12 +117,12 @@ func TestEventsPathSitsInsideTheTask(t *testing.T) {
 		t.Fatalf("New: %v", err)
 	}
 
-	dir, err := s.TaskDir("/tmp/one", "ACME-1")
+	dir, err := s.TaskDir("ACME-1")
 	if err != nil {
 		t.Fatalf("TaskDir: %v", err)
 	}
 
-	path, err := s.EventsPath("/tmp/one", "ACME-1")
+	path, err := s.EventsPath("ACME-1")
 	if err != nil {
 		t.Fatalf("EventsPath: %v", err)
 	}
@@ -232,7 +231,7 @@ func TestTaskDirRejectsEscapingID(t *testing.T) {
 		t.Fatalf("New: %v", err)
 	}
 
-	_, err = s.TaskDir("/tmp/one", "../../escape")
+	_, err = s.TaskDir("../../escape")
 	if err == nil {
 		t.Error("escaped path id was accepted")
 	}
@@ -256,7 +255,7 @@ func TestOrdinaryIDWorks(t *testing.T) {
 		t.Fatalf("New: %v", err)
 	}
 
-	_, err = s.TaskDir("/tmp/one", "ACME-1")
+	_, err = s.TaskDir("ACME-1")
 	if err != nil {
 		t.Errorf("TaskDir rejected ordinary id: %v", err)
 	}
@@ -267,7 +266,7 @@ func TestOrdinaryIDWorks(t *testing.T) {
 	}
 }
 
-func TestTasksDirSitsUnderRepoDir(t *testing.T) {
+func TestTasksSitAtTheRootAndNotUnderARepository(t *testing.T) {
 	s, err := New(t.TempDir())
 	if err != nil {
 		t.Fatalf("New: %v", err)
@@ -278,14 +277,23 @@ func TestTasksDirSitsUnderRepoDir(t *testing.T) {
 		t.Fatalf("RepoDir: %v", err)
 	}
 
-	tasksDir, err := s.TasksDir("/tmp/one")
-	if err != nil {
-		t.Fatalf("TasksDir: %v", err)
+	if got, want := s.TasksDir(), filepath.Join(s.Root(), "tasks"); got != want {
+		t.Errorf("TasksDir() = %q, want %q", got, want)
 	}
 
-	want := filepath.Join(repoDir, "tasks")
-	if tasksDir != want {
-		t.Errorf("TasksDir() = %q, want %q", tasksDir, want)
+	// And a task's own directory is under it, named by the id alone: no
+	// repository stands between the root and a task any more.
+	dir, err := s.TaskDir("ACME-1")
+	if err != nil {
+		t.Fatalf("TaskDir: %v", err)
+	}
+
+	if want := filepath.Join(s.TasksDir(), "ACME-1"); dir != want {
+		t.Errorf("TaskDir() = %q, want %q", dir, want)
+	}
+
+	if strings.Contains(dir, repoDir) {
+		t.Errorf("TaskDir() = %q, and it still hangs off the repository at %q", dir, repoDir)
 	}
 }
 

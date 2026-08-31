@@ -220,7 +220,7 @@ func TestRunHoldFailureAfterTaskStarted(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	dir, err := s.TaskDir(r.Path, tk.ID)
+	dir, err := s.TaskDir(tk.ID)
 	if err != nil {
 		t.Fatal(err)
 	}

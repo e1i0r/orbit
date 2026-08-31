@@ -24,7 +24,7 @@ import (
 // came back arranged differently between two polls of the same second would
 // move the row a reader is reaching for.
 func (r *Reader) Files(repoPath, id string) ([]view.File, error) {
-	dir, err := r.store.TaskDir(repoPath, id)
+	dir, err := r.store.TaskDir(id)
 	if err != nil {
 		return nil, fmt.Errorf("locate the directory of task %s: %w", id, err)
 	}

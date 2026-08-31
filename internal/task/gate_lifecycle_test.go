@@ -131,7 +131,7 @@ func TestBeforeErrorPaths(t *testing.T) {
 	p := flow.Phase{Name: "plan", Wait: false}
 
 	// 1. take fails: a directory sitting where the control file belongs.
-	controlPath, err := s.ControlPath(r.Path, tk.ID)
+	controlPath, err := s.ControlPath(tk.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -180,7 +180,7 @@ func TestWaitErrorPaths(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	controlPath, err := s.ControlPath(r.Path, tk.ID)
+	controlPath, err := s.ControlPath(tk.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -224,7 +224,7 @@ func TestWaitResumedEmitFailure(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	eventsPath, err := s.EventsPath(r.Path, tk.ID)
+	eventsPath, err := s.EventsPath(tk.ID)
 	if err != nil {
 		t.Fatal(err)
 	}

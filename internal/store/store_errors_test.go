@@ -57,22 +57,22 @@ func TestStorePathsAndCreation(t *testing.T) {
 	}
 
 	// Task paths
-	taskDir, err := s.TaskDir(repoPath, "TASK-1")
+	taskDir, err := s.TaskDir("TASK-1")
 	if err != nil || !strings.Contains(taskDir, "TASK-1") {
 		t.Fatalf("TaskDir: %v, dir=%q", err, taskDir)
 	}
 
-	ctrlPath, err := s.ControlPath(repoPath, "TASK-1")
+	ctrlPath, err := s.ControlPath("TASK-1")
 	if err != nil || !strings.HasSuffix(ctrlPath, "control") {
 		t.Fatalf("ControlPath: %v, path=%q", err, ctrlPath)
 	}
 
-	runPath, err := s.RunPath(repoPath, "TASK-1")
+	runPath, err := s.RunPath("TASK-1")
 	if err != nil || !strings.HasSuffix(runPath, "run") {
 		t.Fatalf("RunPath: %v, path=%q", err, runPath)
 	}
 
-	eventsPath, err := s.EventsPath(repoPath, "TASK-1")
+	eventsPath, err := s.EventsPath("TASK-1")
 	if err != nil || !strings.HasSuffix(eventsPath, "events.jsonl") {
 		t.Fatalf("EventsPath: %v, path=%q", err, eventsPath)
 	}
@@ -103,11 +103,11 @@ func TestStorePathsAndCreation(t *testing.T) {
 	}
 
 	// Error on invalid task ID
-	if _, err := s.TaskDir(repoPath, "../escape"); err == nil {
+	if _, err := s.TaskDir("../escape"); err == nil {
 		t.Error("expected TaskDir to fail on traversal ID")
 	}
 
-	if _, err := s.ControlPath(repoPath, ""); err == nil {
+	if _, err := s.ControlPath(""); err == nil {
 		t.Error("expected ControlPath to fail on empty ID")
 	}
 }
@@ -214,23 +214,23 @@ func TestStoreErrorsAndInvalidPaths(t *testing.T) {
 
 	// Invalid task ID tests across all methods
 	for _, badID := range []string{"", "..", "../escape", "bad..id"} {
-		if _, err := s.TaskDir(repoPath, badID); err == nil {
+		if _, err := s.TaskDir(badID); err == nil {
 			t.Errorf("expected TaskDir to fail on %q", badID)
 		}
 
-		if _, err := s.ControlPath(repoPath, badID); err == nil {
+		if _, err := s.ControlPath(badID); err == nil {
 			t.Errorf("expected ControlPath to fail on %q", badID)
 		}
 
-		if _, err := s.RunPath(repoPath, badID); err == nil {
+		if _, err := s.RunPath(badID); err == nil {
 			t.Errorf("expected RunPath to fail on %q", badID)
 		}
 
-		if _, err := s.EventsPath(repoPath, badID); err == nil {
+		if _, err := s.EventsPath(badID); err == nil {
 			t.Errorf("expected EventsPath to fail on %q", badID)
 		}
 
-		if _, err := s.TaskFilePath(repoPath, badID); err == nil {
+		if _, err := s.TaskFilePath(badID); err == nil {
 			t.Errorf("expected TaskFilePath to fail on %q", badID)
 		}
 

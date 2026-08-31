@@ -52,7 +52,7 @@ func Control(s *store.Store, t Task, word string) error {
 		return fmt.Errorf("%q is not something a run understands; the words are %s", word, strings.Join(controlWords, ", "))
 	}
 
-	path, err := s.ControlPath(t.Repo.Path, t.ID)
+	path, err := s.ControlPath(t.ID)
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func Control(s *store.Store, t Task, word string) error {
 // symmetrical: there, shrugging declares a live run abandoned; here, refusing
 // kills a live run.
 func take(s *store.Store, t Task) (string, error) {
-	path, err := s.ControlPath(t.Repo.Path, t.ID)
+	path, err := s.ControlPath(t.ID)
 	if err != nil {
 		return "", err
 	}

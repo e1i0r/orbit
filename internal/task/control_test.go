@@ -19,7 +19,7 @@ import (
 func controlPath(t *testing.T, s *store.Store, tk Task) string {
 	t.Helper()
 
-	path, err := s.ControlPath(tk.Repo.Path, tk.ID)
+	path, err := s.ControlPath(tk.ID)
 	if err != nil {
 		t.Fatalf("ControlPath: %v", err)
 	}

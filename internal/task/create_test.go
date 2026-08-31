@@ -143,7 +143,7 @@ func TestATaskWhoseRecordIsGoneStillLoads(t *testing.T) {
 		t.Fatalf("Create: %v", err)
 	}
 
-	path, err := s.EventsPath(r.Path, "ACME-1")
+	path, err := s.EventsPath("ACME-1")
 	if err != nil {
 		t.Fatalf("EventsPath: %v", err)
 	}
