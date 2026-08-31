@@ -14,8 +14,8 @@ package store
 import "path/filepath"
 
 // ControlPath is where one task's control word lives.
-func (s *Store) ControlPath(repoPath, taskID string) (string, error) {
-	dir, err := s.TaskDir(repoPath, taskID)
+func (s *Store) ControlPath(taskID string) (string, error) {
+	dir, err := s.TaskDir(taskID)
 	if err != nil {
 		return "", err
 	}

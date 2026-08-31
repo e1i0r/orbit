@@ -8,7 +8,7 @@ package cli
 //
 // cli_workflows_test.go's TestCancelTaskExecution (a hand-written test this
 // file leaves untouched) plants its run marker
-// at s.RunPath(repoPath, ...) using the -repo string exactly as typed, while
+// at s.RunPath(...) using the -repo string exactly as typed, while
 // cancelTask resolves the repository through repo.Open first — which, on a
 // machine where the temp directory is itself a symlink (macOS: /var ->
 // /private/var), returns a different, canonicalised path. The marker and

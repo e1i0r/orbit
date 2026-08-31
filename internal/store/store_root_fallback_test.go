@@ -128,16 +128,7 @@ func TestNewAndCreateTaskDirBlockerErrors(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rDir, err := s2.RepoDir(repoPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err := os.MkdirAll(rDir, 0o700); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := os.WriteFile(filepath.Join(rDir, "tasks"), []byte("x"), 0o600); err != nil {
+	if err := os.WriteFile(s2.TasksDir(), []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 

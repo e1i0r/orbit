@@ -35,7 +35,7 @@ func (r *Reader) FileText(repoPath, id, name string) (view.FileText, error) {
 		return view.FileText{}, fmt.Errorf("read %q of task %s: not a file of its own directory", name, id)
 	}
 
-	dir, err := r.store.TaskDir(repoPath, id)
+	dir, err := r.store.TaskDir(id)
 	if err != nil {
 		return view.FileText{}, fmt.Errorf("locate the directory of task %s: %w", id, err)
 	}

@@ -131,7 +131,7 @@ func appendTo(t *testing.T, s *store.Store, repoPath, id string, events ...recor
 func eventsPath(t *testing.T, s *store.Store, repoPath, id string) string {
 	t.Helper()
 
-	path, err := s.EventsPath(repoPath, id)
+	path, err := s.EventsPath(id)
 	if err != nil {
 		t.Fatalf("events path of task %s: %v", id, err)
 	}

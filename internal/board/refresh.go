@@ -264,7 +264,7 @@ func (r *Reader) rescan() error {
 		for _, id := range ids {
 			st, keep := r.index[taskKey{rs.path, id}]
 			if !keep {
-				path, pathErr := r.store.EventsPath(rs.path, id)
+				path, pathErr := r.store.EventsPath(id)
 				if pathErr != nil {
 					errs = append(errs, pathErr)
 					continue

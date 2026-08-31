@@ -64,7 +64,7 @@ func TestCreateWritesTheTaskAndAnEvent(t *testing.T) {
 		t.Fatalf("Create: %v", err)
 	}
 
-	dir, err := s.TaskDir(r.Path, "ACME-1")
+	dir, err := s.TaskDir("ACME-1")
 	if err != nil {
 		t.Fatalf("TaskDir: %v", err)
 	}
@@ -210,7 +210,7 @@ func TestCreateTakesTheFileBackOutWhenNothingCouldBeRecorded(t *testing.T) {
 		t.Errorf("the error does not name both what failed and which task: %v", err)
 	}
 
-	path, err := s.TaskFilePath(r.Path, "ACME-1")
+	path, err := s.TaskFilePath("ACME-1")
 	if err != nil {
 		t.Fatalf("TaskFilePath: %v", err)
 	}
@@ -260,7 +260,7 @@ func TestCreateTakesTheDirectoryBackOutTooSoListForgetsIt(t *testing.T) {
 		t.Errorf("List = %v, want nothing at all — ACME-1 was never recorded", got)
 	}
 
-	dir, err := s.TaskDir(r.Path, "ACME-1")
+	dir, err := s.TaskDir("ACME-1")
 	if err != nil {
 		t.Fatalf("TaskDir: %v", err)
 	}

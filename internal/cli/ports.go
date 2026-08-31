@@ -92,7 +92,7 @@ func deleteTaskPort(s *store.Store) func(view.Task) error {
 			}
 		}
 
-		taskDir, err := s.TaskDir(t.RepoPath, t.ID)
+		taskDir, err := s.TaskDir(t.ID)
 		if err != nil {
 			errs = append(errs, err)
 		} else if err := os.RemoveAll(taskDir); err != nil {

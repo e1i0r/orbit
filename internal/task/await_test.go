@@ -112,7 +112,7 @@ func TestAWaitOnAMarkerItCannotReadStops(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	path, err := s.RunPath(tk.Repo.Path, tk.ID)
+	path, err := s.RunPath(tk.ID)
 	if err != nil {
 		t.Fatal(err)
 	}

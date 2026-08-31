@@ -36,7 +36,7 @@ func TestReconcileEventsUnreadablePropagates(t *testing.T) {
 		t.Fatalf("mark: %v", err)
 	}
 
-	path, err := s.EventsPath(r.Path, tk.ID)
+	path, err := s.EventsPath(tk.ID)
 	if err != nil {
 		t.Fatalf("EventsPath: %v", err)
 	}
@@ -70,7 +70,7 @@ func TestReconcileAbandonedEmitFailurePropagates(t *testing.T) {
 
 	// Read-only: Events (a read) still succeeds, but the task.abandoned
 	// append does not.
-	path, err := s.EventsPath(r.Path, tk.ID)
+	path, err := s.EventsPath(tk.ID)
 	if err != nil {
 		t.Fatalf("EventsPath: %v", err)
 	}

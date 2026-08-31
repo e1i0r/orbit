@@ -198,35 +198,27 @@ func (s *Store) RepoDir(repoPath string) (string, error) {
 	return filepath.Join(s.root, "repos", repoKey(abs)), nil
 }
 
-// TasksDir is where every task of one repository lives. It exists so that
-// nothing outside this package has to know that "tasks" sits under a repo's
-// directory — TaskDir and List both build on this one path.
-func (s *Store) TasksDir(repoPath string) (string, error) {
-	repoDir, err := s.RepoDir(repoPath)
-	if err != nil {
-		return "", err
-	}
-
-	return filepath.Join(repoDir, "tasks"), nil
-}
+// TasksDir is where every task lives, whichever repository it is worked in.
+//
+// It sits at the root of the state tree and not under a repository because a
+// task is not the property of one checkout: the same piece of work can be
+// carried out across several of them, and a tree that files it under one has
+// already decided it cannot. Which repositories a task touched is written
+// down inside the task, by tasks.go, rather than spelled by its path.
+func (s *Store) TasksDir() string { return filepath.Join(s.root, "tasks") }
 
 // TaskDir is where one task's record lives.
-func (s *Store) TaskDir(repoPath, taskID string) (string, error) {
+func (s *Store) TaskDir(taskID string) (string, error) {
 	if err := validateTaskID(taskID); err != nil {
 		return "", err
 	}
 
-	tasksDir, err := s.TasksDir(repoPath)
-	if err != nil {
-		return "", err
-	}
-
-	return filepath.Join(tasksDir, taskID), nil
+	return filepath.Join(s.TasksDir(), taskID), nil
 }
 
 // TaskFilePath is the written task itself — the sentence a human typed.
-func (s *Store) TaskFilePath(repoPath, taskID string) (string, error) {
-	dir, err := s.TaskDir(repoPath, taskID)
+func (s *Store) TaskFilePath(taskID string) (string, error) {
+	dir, err := s.TaskDir(taskID)
 	if err != nil {
 		return "", err
 	}
@@ -261,8 +253,8 @@ func (s *Store) WorktreeDir(repoPath, taskID string) (string, error) {
 }
 
 // EventsPath is the append-only log for one task — the source of truth.
-func (s *Store) EventsPath(repoPath, taskID string) (string, error) {
-	dir, err := s.TaskDir(repoPath, taskID)
+func (s *Store) EventsPath(taskID string) (string, error) {
+	dir, err := s.TaskDir(taskID)
 	if err != nil {
 		return "", err
 	}

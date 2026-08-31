@@ -164,7 +164,7 @@ func mark(s *store.Store, t Task, pid int) (func(), error) {
 		return nil, err
 	}
 
-	path, err := s.RunPath(t.Repo.Path, t.ID)
+	path, err := s.RunPath(t.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +211,7 @@ func mark(s *store.Store, t Task, pid int) (func(), error) {
 // reports what happened. Reconcile calls it, and Reconcile has somebody to
 // tell.
 func removeMarker(s *store.Store, t Task) error {
-	path, err := s.RunPath(t.Repo.Path, t.ID)
+	path, err := s.RunPath(t.ID)
 	if err != nil {
 		return err
 	}
@@ -228,7 +228,7 @@ func removeMarker(s *store.Store, t Task) error {
 // file is one line of text this package wrote, and a reader that shrugs at
 // damage it cannot explain is how a running task gets declared abandoned.
 func readMarker(s *store.Store, t Task) (pid int, started time.Time, found bool, err error) {
-	path, err := s.RunPath(t.Repo.Path, t.ID)
+	path, err := s.RunPath(t.ID)
 	if err != nil {
 		return 0, time.Time{}, false, err
 	}

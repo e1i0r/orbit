@@ -215,7 +215,7 @@ func TestEventsReadingAndCorruptedLines(t *testing.T) {
 	}
 
 	// Append valid and invalid JSON lines to events.jsonl
-	eventsPath, err := s.EventsPath(r.Path, tk.ID)
+	eventsPath, err := s.EventsPath(tk.ID)
 	if err != nil {
 		t.Fatalf("EventsPath: %v", err)
 	}

@@ -94,7 +94,7 @@ func addTask(t *testing.T, s *store.Store, r repo.Repo, id string, events ...rec
 		t.Fatalf("create the directory of task %s: %v", id, err)
 	}
 
-	path, err := s.TaskFilePath(r.Path, id)
+	path, err := s.TaskFilePath(id)
 	if err != nil {
 		t.Fatalf("task file path of %s: %v", id, err)
 	}
@@ -109,7 +109,7 @@ func addTask(t *testing.T, s *store.Store, r repo.Repo, id string, events ...rec
 func appendTo(t *testing.T, s *store.Store, r repo.Repo, id string, events ...record.Event) {
 	t.Helper()
 
-	path, err := s.EventsPath(r.Path, id)
+	path, err := s.EventsPath(id)
 	if err != nil {
 		t.Fatalf("events path of task %s: %v", id, err)
 	}
@@ -129,7 +129,7 @@ func appendTo(t *testing.T, s *store.Store, r repo.Repo, id string, events ...re
 func holdTask(t *testing.T, s *store.Store, r repo.Repo, id string) {
 	t.Helper()
 
-	path, err := s.RunPath(r.Path, id)
+	path, err := s.RunPath(id)
 	if err != nil {
 		t.Fatalf("run marker path of task %s: %v", id, err)
 	}
@@ -146,7 +146,7 @@ func holdTask(t *testing.T, s *store.Store, r repo.Repo, id string) {
 func damageMarker(t *testing.T, s *store.Store, r repo.Repo, id string) {
 	t.Helper()
 
-	path, err := s.RunPath(r.Path, id)
+	path, err := s.RunPath(id)
 	if err != nil {
 		t.Fatalf("run marker path of task %s: %v", id, err)
 	}

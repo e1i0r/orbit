@@ -46,7 +46,7 @@ func TestTakeErrorPaths(t *testing.T) {
 		t.Fatalf("Create: %v", err)
 	}
 
-	path, err := s.ControlPath(r.Path, tk.ID)
+	path, err := s.ControlPath(tk.ID)
 	if err != nil {
 		t.Fatalf("ControlPath: %v", err)
 	}
@@ -91,7 +91,7 @@ func TestTakeErrorPaths(t *testing.T) {
 		t.Fatalf("WriteFile: %v", err)
 	}
 
-	dir, err := s.TaskDir(r.Path, tk.ID)
+	dir, err := s.TaskDir(tk.ID)
 	if err != nil {
 		t.Fatalf("TaskDir: %v", err)
 	}
@@ -135,7 +135,7 @@ func TestAWordIsNeverHalfWritten(t *testing.T) {
 		t.Fatalf("Control(pause): %v", err)
 	}
 
-	path, err := s.ControlPath(tk.Repo.Path, tk.ID)
+	path, err := s.ControlPath(tk.ID)
 	if err != nil {
 		t.Fatalf("ControlPath: %v", err)
 	}

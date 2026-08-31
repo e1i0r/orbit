@@ -66,7 +66,7 @@ func TestCancelTaskExecution(t *testing.T) {
 	}
 	defer func() { _ = cmd.Process.Kill() }() //nolint:errcheck
 
-	runPath, err := s.RunPath(repoPath, tk.ID)
+	runPath, err := s.RunPath(tk.ID)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -28,7 +28,7 @@ func claim(t *testing.T, s *store.Store, repoPath, id string, pid int) {
 func writeMarker(t *testing.T, s *store.Store, repoPath, id, body string) {
 	t.Helper()
 
-	path, err := s.RunPath(repoPath, id)
+	path, err := s.RunPath(id)
 	if err != nil {
 		t.Fatalf("run path of task %s: %v", id, err)
 	}

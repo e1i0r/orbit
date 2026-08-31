@@ -30,7 +30,7 @@ func TestAliveReturnsDeadForAMarkerWrittenBeforeThisBoot(t *testing.T) {
 		t.Skip("this machine cannot report a boot time")
 	}
 
-	path, err := s.RunPath(r.Path, tk.ID)
+	path, err := s.RunPath(tk.ID)
 	if err != nil {
 		t.Fatalf("RunPath: %v", err)
 	}
@@ -73,7 +73,7 @@ func TestMarkErrorPaths(t *testing.T) {
 	// so the failure to reach is the one where making it is impossible.
 	blocked := Task{ID: "BLOCKED-1", Repo: r}
 
-	dir, err := s.TaskDir(r.Path, blocked.ID)
+	dir, err := s.TaskDir(blocked.ID)
 	if err != nil {
 		t.Fatalf("TaskDir: %v", err)
 	}
@@ -216,7 +216,7 @@ func TestRemoveMarkerErrorPaths(t *testing.T) {
 		t.Fatalf("mark: %v", err)
 	}
 
-	dir, err := s.TaskDir(r.Path, tk.ID)
+	dir, err := s.TaskDir(tk.ID)
 	if err != nil {
 		t.Fatalf("TaskDir: %v", err)
 	}
@@ -249,7 +249,7 @@ func TestReadMarkerErrorPaths(t *testing.T) {
 		t.Fatalf("Create: %v", err)
 	}
 
-	path, err := s.RunPath(r.Path, tk.ID)
+	path, err := s.RunPath(tk.ID)
 	if err != nil {
 		t.Fatalf("RunPath: %v", err)
 	}

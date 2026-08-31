@@ -25,7 +25,7 @@ func markerFixture(t *testing.T, id string, pid int) (*store.Store, Task, string
 		t.Fatalf("mark: %v", err)
 	}
 
-	path, err := s.RunPath(r.Path, tk.ID)
+	path, err := s.RunPath(tk.ID)
 	if err != nil {
 		t.Fatalf("RunPath: %v", err)
 	}

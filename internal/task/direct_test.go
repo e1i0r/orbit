@@ -32,7 +32,7 @@ func TestDirectRecordsDialogueAndNoteWhenNotRunning(t *testing.T) {
 		t.Fatalf("Direct: %v", err)
 	}
 
-	path, err := s.EventsPath(tk.Repo.Path, tk.ID)
+	path, err := s.EventsPath(tk.ID)
 	if err != nil {
 		t.Fatalf("EventsPath: %v", err)
 	}

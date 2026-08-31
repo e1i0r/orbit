@@ -22,7 +22,7 @@ import (
 func kindsOn(t *testing.T, s *store.Store, r repo.Repo, id string) []record.Event {
 	t.Helper()
 
-	path, err := s.EventsPath(r.Path, id)
+	path, err := s.EventsPath(id)
 	if err != nil {
 		t.Fatalf("events path of task %s: %v", id, err)
 	}
@@ -106,7 +106,7 @@ func heldTask(t *testing.T, s *store.Store, r repo.Repo, id string) {
 		_ = cmd.Wait()                                      //nolint:errcheck // best effort: the test is over
 	})
 
-	path, err := s.RunPath(r.Path, id)
+	path, err := s.RunPath(id)
 	if err != nil {
 		t.Fatalf("run marker path of task %s: %v", id, err)
 	}

@@ -94,7 +94,7 @@ func TestDialogueRefusesEmptyTextAndKeepsByOptional(t *testing.T) {
 func lastEvent(t *testing.T, s *store.Store, tk Task) record.Event {
 	t.Helper()
 
-	path, err := s.EventsPath(tk.Repo.Path, tk.ID)
+	path, err := s.EventsPath(tk.ID)
 	if err != nil {
 		t.Fatalf("EventsPath: %v", err)
 	}

@@ -98,7 +98,7 @@ func TestLoadReadFileErrorPropagates(t *testing.T) {
 	s, r := fixture(t)
 	id := "LOAD-READ-ERR-1"
 
-	path, err := s.TaskFilePath(r.Path, id)
+	path, err := s.TaskFilePath(id)
 	if err != nil {
 		t.Fatalf("TaskFilePath: %v", err)
 	}
@@ -163,10 +163,7 @@ func TestWrittenFlowEventsErrorAnswersEmpty(t *testing.T) {
 func TestListTasksDirReadDirErrorPropagates(t *testing.T) {
 	s, r := fixture(t)
 
-	tasksDir, err := s.TasksDir(r.Path)
-	if err != nil {
-		t.Fatalf("TasksDir: %v", err)
-	}
+	tasksDir := s.TasksDir()
 
 	if err := os.MkdirAll(filepath.Dir(tasksDir), 0o700); err != nil {
 		t.Fatalf("MkdirAll: %v", err)

@@ -102,6 +102,8 @@ func Run(args []string, out, errOut io.Writer) (code int) {
 	// error below when it matters, and in the record always.
 	logger.Info("cli/"+c.Name, "ran")
 
+	flatten(errOut)
+
 	err := c.Run(ctx, args[1:])
 	if errors.Is(err, errHelpShown) {
 		return 0
