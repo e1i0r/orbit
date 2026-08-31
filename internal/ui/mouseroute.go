@@ -100,6 +100,14 @@ func (m Model) handleComposeClick(t Target) (tea.Model, tea.Cmd) {
 	case TargetComposeField:
 		m.compose.field = t.Pane
 		return m, nil
+	case TargetComposeCaret:
+		m.compose.field = t.Pane
+
+		if t.Pane == composeText && m.compose.tab == composeTabManual {
+			return m.composePoint(t.Phase, t.Caret), nil
+		}
+
+		return m.composeCaret(func(in *input) { in.moveTo(t.Caret) }), nil
 	case TargetComposeAction:
 		switch t.Key {
 		case "save":

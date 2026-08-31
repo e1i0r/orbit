@@ -28,6 +28,7 @@ const (
 	TargetRepo
 	TargetFlowItem
 	TargetComposeField
+	TargetComposeCaret
 	TargetComposeTab
 	TargetComposeRepoChoice
 	TargetComposeFlowChoice
@@ -54,7 +55,13 @@ type Target struct {
 	Pane  int
 	Key   string // TargetBarHint, TargetMenuEntry, TargetCommand, TargetFold
 	Field string // TargetHeaderField, TargetStatusField
-	Phase int    // TargetDialogPhase
+	// TargetDialogPhase: which phase. TargetComposeCaret: which drawn line
+	// of the box, counted from the first one on screen.
+	Phase int
+	// Caret is the column of the drawn line that was pointed at, for
+	// TargetComposeCaret. A field is a place somebody points inside, not
+	// only one they land on.
+	Caret int
 }
 
 // The names of the two switches on the start dialog. They are constants

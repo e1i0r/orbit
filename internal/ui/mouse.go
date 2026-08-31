@@ -250,7 +250,7 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		return m.flip(t.Field)
 	case TargetComposeTab, TargetComposeRepoChoice, TargetComposeFlowChoice,
 		TargetComposeNewFlow, TargetComposeInspectFlow,
-		TargetComposeField, TargetComposeAction, TargetComposePaste:
+		TargetComposeField, TargetComposeCaret, TargetComposeAction, TargetComposePaste:
 		return m.handleComposeClick(t)
 	case TargetCommand:
 		// The same two-step a task row takes: the first click selects,

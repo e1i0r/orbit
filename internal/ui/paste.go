@@ -16,10 +16,7 @@ func (m Model) paste(content string) Model {
 		m.note.text += trimmed
 		return m
 	case m.screen == screenCompose:
-		m.compose.set(m.compose.get() + trimmed)
-		m.onComposeChanged()
-
-		return m
+		return m.composeEdit(func(in *input) { in.insert(trimmed) })
 	case m.filtering:
 		m.filter += trimmed
 		return m.clampCursor()

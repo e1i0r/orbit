@@ -18,26 +18,33 @@ func (m Model) isPillField() bool {
 	return m.isComposeRepoField() || m.isComposeFlowField()
 }
 
-func (m Model) handleComposeLeft() Model {
+// The left and right arrows are the pills on a row of pills and the caret
+// everywhere else. Held with the option key they are a word at a time,
+// which is what the rest of the machine does with them.
+func (m Model) handleComposeLeft(word bool) Model {
 	switch {
 	case m.isComposeRepoField():
 		return m.cycleComposeRepo(-1)
 	case m.isComposeFlowField():
 		return m.cycleComposeFlow(-1)
+	case word:
+		return m.composeCaret((*input).wordLeft)
 	}
 
-	return m
+	return m.composeCaret(func(in *input) { in.moveBy(-1) })
 }
 
-func (m Model) handleComposeRight() Model {
+func (m Model) handleComposeRight(word bool) Model {
 	switch {
 	case m.isComposeRepoField():
 		return m.cycleComposeRepo(1)
 	case m.isComposeFlowField():
 		return m.cycleComposeFlow(1)
+	case word:
+		return m.composeCaret((*input).wordRight)
 	}
 
-	return m
+	return m.composeCaret(func(in *input) { in.moveBy(1) })
 }
 
 func (m Model) cycleComposeRepo(d int) Model {

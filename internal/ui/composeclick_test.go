@@ -183,7 +183,7 @@ func TestTheOtherTabHasItsOwnRows(t *testing.T) {
 		t.Errorf("the paste button of the url row is kind %d, want the paste target", at.Kind)
 	}
 
-	if at := m.hit(m.width-2, y); at.Kind != TargetComposeField || at.Pane != composeURL {
+	if at := m.hit(m.width-2, y); at.Kind != TargetComposeCaret || at.Pane != composeURL {
 		t.Errorf("the far end of the url row is kind %d pane %d, want the url field", at.Kind, at.Pane)
 	}
 
@@ -215,7 +215,7 @@ func TestThePasteButtonIsNotTheTaskField(t *testing.T) {
 
 	// The box under it is the same field: a reader aiming at the text aims
 	// at the box, not at the word above it.
-	if at := m.hit(20, y+3); at.Kind != TargetComposeField || at.Pane != composeText {
+	if at := m.hit(20, y+3); at.Kind != TargetComposeCaret || at.Pane != composeText {
 		t.Errorf("inside the text box is kind %d pane %d, want the text field", at.Kind, at.Pane)
 	}
 }

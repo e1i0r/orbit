@@ -34,7 +34,7 @@ func (m Model) hitCompose(x, y int) Target {
 		case plan.flowSum != -1 && line == plan.flowSum:
 			return Target{Kind: TargetComposeInspectFlow}
 		case line == plan.id:
-			return Target{Kind: TargetComposeField, Pane: composeID}
+			return caretAt(composeID, 0, x-composeLabelStart)
 		case line == plan.textHeader:
 			if x >= 17 && x <= 37 {
 				return Target{Kind: TargetComposePaste}
@@ -42,7 +42,7 @@ func (m Model) hitCompose(x, y int) Target {
 
 			return Target{Kind: TargetComposeField, Pane: composeText}
 		case line >= plan.textBoxTop && line <= plan.textBoxBot:
-			return Target{Kind: TargetComposeField, Pane: composeText}
+			return caretAt(composeText, line-plan.textBoxTop, x-composeBoxStart)
 		case line >= plan.actions:
 			return hitComposeActions(m.opts.Words, x)
 		}
@@ -53,7 +53,7 @@ func (m Model) hitCompose(x, y int) Target {
 				return Target{Kind: TargetComposePaste}
 			}
 
-			return Target{Kind: TargetComposeField, Pane: composeURL}
+			return caretAt(composeURL, 0, x-composeLabelStart)
 		case line == plan.repo:
 			return m.hitComposeRepoPills(x, composeURLRepo)
 		case line == plan.flow:
@@ -113,4 +113,15 @@ func (m Model) hitComposeFlowPills(x int, field int) Target {
 	}
 
 	return Target{Kind: TargetComposeField, Pane: field}
+}
+
+// composeBoxStart is the column the text inside the box is drawn at: two
+// cells of margin and the border with its space.
+const composeBoxStart = 4
+
+// caretAt is a click inside a field, as the place in the value it points
+// at. A click to the left of where the value starts is the start of it,
+// which is where a reader who lands on the label meant to be.
+func caretAt(field, row, col int) Target {
+	return Target{Kind: TargetComposeCaret, Pane: field, Phase: row, Caret: max(col, 0)}
 }

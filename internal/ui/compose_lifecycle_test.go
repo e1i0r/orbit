@@ -48,7 +48,7 @@ func TestComposeScreenFullLifecycle(t *testing.T) {
 	sendKey('X', 0, "")
 	sendKey(0, tea.KeyBackspace, "")
 
-	if m.compose.id != "TASK-9" {
+	if m.compose.id.String() != "TASK-9" {
 		t.Errorf("compose.id = %q, want TASK-9", m.compose.id)
 	}
 
@@ -79,10 +79,10 @@ func TestComposeScreenFullLifecycle(t *testing.T) {
 	mEmpty.compose.repos = nil
 	_, _ = mEmpty.composeSubmit(false)
 	mEmpty.compose.repo = "repo"
-	mEmpty.compose.id = ""
+	mEmpty.compose.id = newInput("")
 	_, _ = mEmpty.composeSubmit(false)
-	mEmpty.compose.id = "TASK-1"
-	mEmpty.compose.text = ""
+	mEmpty.compose.id = newInput("TASK-1")
+	mEmpty.compose.text = newInput("")
 	_, _ = mEmpty.composeSubmit(false)
 }
 
@@ -130,7 +130,7 @@ func TestComposeURLAutoParsing(t *testing.T) {
 		t.Errorf("tab after pasting URL = %d, want composeTabURL", m.compose.tab)
 	}
 
-	if m.compose.id != "ENG-456" {
+	if m.compose.id.String() != "ENG-456" {
 		t.Errorf("compose.id = %q, want ENG-456", m.compose.id)
 	}
 }
@@ -143,7 +143,7 @@ func TestComposePaste(t *testing.T) {
 
 	m = m.paste("Pasted task requirement line 1\nLine 2")
 
-	if m.compose.text != "Pasted task requirement line 1\nLine 2" {
+	if m.compose.text.String() != "Pasted task requirement line 1\nLine 2" {
 		t.Errorf("compose.text = %q, want pasted multiline text", m.compose.text)
 	}
 }
@@ -173,8 +173,8 @@ func TestComposeSubmitValidID(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m = m.openCompose()
 	m.compose.repo = "repo"
-	m.compose.id = "TASK-10"
-	m.compose.text = "Write some tests"
+	m.compose.id = newInput("TASK-10")
+	m.compose.text = newInput("Write some tests")
 
 	m.opts.ValidID = func(id string) error { return errors.New("id taken") }
 

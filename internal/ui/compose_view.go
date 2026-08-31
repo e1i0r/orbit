@@ -133,64 +133,20 @@ func (m Model) composeTextArea(w int) []string {
 		header += " " + Paint(Dim).Render(p.T("compose.text_hint", "(Shift+↵ for newline)"))
 	}
 
-	boxW := w - 8
-	if boxW < 24 {
-		boxW = 24
-	}
-
-	if boxW > 84 {
-		boxW = 84
-	}
-
-	innerW := boxW - 4
-
-	raw := m.compose.text
-
-	var lines []string
-	if raw == "" {
-		lines = []string{Paint(Dim).Render(p.T("compose.text_placeholder", "what is to be done?"))}
-	} else {
-		for _, part := range strings.Split(raw, "\n") {
-			if part == "" {
-				lines = append(lines, "")
-			} else {
-				lines = append(lines, splitIntoLines(part, innerW)...)
-			}
-		}
-	}
-
-	for len(lines) < 3 {
-		lines = append(lines, "")
-	}
-
-	if len(lines) > 6 {
-		lines = lines[len(lines)-6:]
-	}
+	boxW, innerW := composeBoxWidth(w), composeInnerWidth(w)
+	lines := m.composeTextLines(innerW, active,
+		Paint(Dim).Render(p.T("compose.text_placeholder", "what is to be done?")))
 
 	borderStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#334155"))
 	if active {
 		borderStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#38BDF8"))
 	}
 
-	var out []string
+	out := []string{header, fit("  "+borderStyle.Render("┌"+strings.Repeat("─", boxW-2)+"┐"), w)}
 
-	out = append(out, header)
-	out = append(out, fit("  "+borderStyle.Render("┌"+strings.Repeat("─", boxW-2)+"┐"), w))
-
-	for i, l := range lines {
-		content := l
-		if active && i == len(lines)-1 && raw != "" {
-			content += Paint(Sel).Render(" ")
-		}
-
-		wLine := lipgloss.Width(content)
-
-		padW := innerW - wLine
-		if padW < 0 {
-			padW = 0
-		}
-
-		row := "  " + borderStyle.Render("│ ") + content + strings.Repeat(" ", padW) + borderStyle.Render(" │")
+	for _, l := range lines {
+		padW := max(innerW-lipgloss.Width(l), 0)
+		row := "  " + borderStyle.Render("│ ") + l + strings.Repeat(" ", padW) + borderStyle.Render(" │")
 		out = append(out, fit(row, w))
 	}
 
@@ -199,22 +155,81 @@ func (m Model) composeTextArea(w int) []string {
 	return out
 }
 
-func (m Model) composeFieldLine(fieldIdx int, label, val, placeholder string, w int) string {
+// composeTextLines is what is drawn inside the box: the lines the task
+// wraps into, the ones of them that fit, and the caret on the one it is on.
+//
+// The caret used to be hung off the end of the last drawn line, which after
+// the box was padded out to three was an empty row below the text. It goes
+// where the reader is instead, and the box scrolls to keep it in view.
+func (m Model) composeTextLines(innerW int, active bool, placeholder string) []string {
+	rs := m.compose.text.runes()
+	spans := wrapSpans(rs, innerW)
+	caretRow := spanRow(spans, m.compose.text.at)
+	top := spanWindow(len(spans), composeTextRows, caretRow)
+
+	var out []string
+
+	for i := top; i < len(spans) && i < top+composeTextRows; i++ {
+		line := spanText(rs, spans[i])
+		if active && i == caretRow {
+			line = withCaret(line, m.compose.text.at-spans[i].from, unpainted)
+		}
+
+		out = append(out, line)
+	}
+
+	if len(rs) == 0 {
+		out = []string{placeholder}
+		if active {
+			out = []string{withCaret("", 0, unpainted) + placeholder}
+		}
+	}
+
+	for len(out) < 3 {
+		out = append(out, "")
+	}
+
+	return out
+}
+
+// withCaret draws one line with the block on the character the caret is on,
+// or after the last one when the caret is at the end of the line. What is
+// around the block is drawn as it would have been drawn anyway, which is
+// why the painting is the caller's: the box paints nothing and a one-line
+// field paints the value it holds.
+func withCaret(line string, col int, paint func(string) string) string {
+	rs := []rune(line)
+	col = clamp(col, 0, len(rs))
+
+	if col == len(rs) {
+		return paint(line) + Paint(Sel).Render(" ")
+	}
+
+	return paint(string(rs[:col])) + Paint(Sel).Render(string(rs[col])) + paint(string(rs[col+1:]))
+}
+
+// unpainted is the box: what is typed into it is drawn as it was typed.
+func unpainted(s string) string { return s }
+
+func (m Model) composeFieldLine(fieldIdx int, label string, val input, placeholder string, w int) string {
 	active := m.compose.field == fieldIdx
 	prefix := composeLabel(label, active)
-	role := Accent
 
-	if val == "" {
-		val = placeholder
-		role = Dim
+	if val.empty() {
+		line := prefix
+		if active {
+			line += withCaret("", 0, unpainted)
+		}
+
+		return fit(line+Paint(Dim).Render(placeholder), w)
 	}
 
-	line := prefix + Paint(role).Render(val)
+	body := Paint(Accent).Render(val.String())
 	if active {
-		line += Paint(Sel).Render(" ")
+		body = withCaret(val.String(), val.at, func(s string) string { return Paint(Accent).Render(s) })
 	}
 
-	return fit(line, w)
+	return fit(prefix+body, w)
 }
 
 func splitIntoLines(text string, maxW int) []string {
