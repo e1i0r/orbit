@@ -94,6 +94,7 @@ func (m Model) helpRows(h, w int) []string {
 		{p.T("help.live.engine_key", "[M] / 🧠 click"), p.T("help.live.engine", "Engine dial: claude, codex, opencode, effort and thinking")},
 		{"[S]", p.T("help.live.settings", "Settings screen: language, theme, limits")},
 		{p.T("help.live.repos_key", "[R] / 📦 click"), p.T("help.live.repos", "Pick which of the connected repositories the board shows")},
+		{p.T("help.live.quota_key", "[Q] / ⏳ click"), p.T("help.live.quota", "What is left of each engine's windows, and when each comes back")},
 		{p.T("help.live.lang_key", "🌐 ES / EN (click)"), p.T("help.live.lang", "Switch the language of the whole window, live")},
 	})
 

@@ -2401,6 +2401,30 @@
       "source": "source answered nothing",
       "value": "la fuente no respondió"
     },
+    "quota.title": {
+      "source": "Quota",
+      "value": "Quota"
+    },
+    "quota.subtitle": {
+      "source": "what is left of each engine's windows, and when each comes back",
+      "value": "qué queda de las ventanas de cada motor, y cuándo vuelve cada una"
+    },
+    "quota.ways_out": {
+      "source": "{back} back",
+      "value": "{back} volver"
+    },
+    "key.quota": {
+      "source": "quota",
+      "value": "quota"
+    },
+    "help.live.quota_key": {
+      "source": "[Q] / ⏳ click",
+      "value": "[Q] / clic en ⏳"
+    },
+    "help.live.quota": {
+      "source": "What is left of each engine's windows, and when each comes back",
+      "value": "Qué queda de las ventanas de cada motor, y cuándo vuelve cada una"
+    },
     "status.quota_unread": {
       "source": "no quota source for {engine}",
       "value": "sin fuente de quota para {engine}"

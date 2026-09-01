@@ -192,6 +192,10 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		if t.Field == "engine" {
 			return m.openEngines(), nil
 		}
+
+		if t.Field == "quota" {
+			return m.openQuota(), nil
+		}
 	case TargetStatusField:
 		if t.Field == "autopilot" {
 			return m.autopilot()

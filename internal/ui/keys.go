@@ -22,12 +22,12 @@ import (
 // opening things, doing something to a task, and the settings that are not
 // about any one task.
 type Keys struct {
-	Up, Down, First, Last, PageUp, PageDown                                                key.Binding
-	Open, Back, NextTab, PrevTab, Sideways                                                 key.Binding
-	Start, Run, ChangeFlow, Menu, Compose                                                  key.Binding
-	Pause, Resume, Cancel, Requeue                                                         key.Binding
-	Take, Hand, Ask, MarkRead, Delete, Edit                                                key.Binding
-	Filter, Commands, CLI, Repos, EngineKnobs, Supervisor, Autopilot, Language, Help, Quit key.Binding
+	Up, Down, First, Last, PageUp, PageDown                                                       key.Binding
+	Open, Back, NextTab, PrevTab, Sideways                                                        key.Binding
+	Start, Run, ChangeFlow, Menu, Compose                                                         key.Binding
+	Pause, Resume, Cancel, Requeue                                                                key.Binding
+	Take, Hand, Ask, MarkRead, Delete, Edit                                                       key.Binding
+	Filter, Commands, CLI, Repos, EngineKnobs, Quota, Supervisor, Autopilot, Language, Help, Quit key.Binding
 }
 
 // NewKeys builds the key map, with every description translated.
@@ -109,6 +109,7 @@ func NewKeys(p *words.Printer) Keys {
 		CLI:         binding("c", p.T("key.cli", "interactive CLI"), "c", "C"),
 		Repos:       binding("R", p.T("key.repos", "repositories"), "R"),
 		EngineKnobs: binding("M", p.T("key.engines", "engine & model knobs"), "M"),
+		Quota:       binding("Q", p.T("key.quota", "quota"), "Q"),
 		Supervisor:  binding("S", p.T("key.supervisor", "supervisor"), "S"),
 		Autopilot:   binding("A", p.T("key.autopilot", "autopilot"), "A"),
 		Language:    binding("L", p.T("key.language", "language"), "L"),

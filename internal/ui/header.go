@@ -244,11 +244,12 @@ func (m Model) headerFields() []headerField {
 
 	// Quota chip
 	//
-	// Unnamed, so it is drawn and never clicked: what is behind a percentage
-	// is the proxy that answered it, and there is no screen of ours to open
-	// on that. It sits after the engine because it is that engine's number.
+	// Named, so the pointer can reach it: what is behind the percentage is
+	// several windows of several engines, none of which fits on this line,
+	// and the quota screen is where all of it is written down. It sits after
+	// the engine because it is that engine's number.
 	if q := m.quotaChip(); q != "" {
-		fields = append(fields, headerField{text: Chrome().Render("⏳ " + q)})
+		fields = append(fields, headerField{"quota", Chrome().Render("⏳ " + q)})
 	}
 
 	// Language chip
