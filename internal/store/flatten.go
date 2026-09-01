@@ -103,7 +103,7 @@ func (s *Store) flattenTask(r RepoRef, id string) (bool, error) {
 		return false, err
 	}
 
-	if err := s.joinRepo(id, r.Path); err != nil {
+	if err := s.JoinRepo(id, r.Path); err != nil {
 		return false, err
 	}
 

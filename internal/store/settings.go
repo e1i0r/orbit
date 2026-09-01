@@ -39,6 +39,13 @@ type Settings struct {
 	Model     string `json:"model,omitempty"`
 	Flow      string `json:"flow,omitempty"`
 	Theme     string `json:"theme,omitempty"`
+
+	// CheckRecord makes every command ask SQLite whether the record is
+	// still readable before it does anything. It is off by default because
+	// the answer costs a full read of the file; it is a setting at all
+	// because damage found on the day it happens is damage there is still a
+	// backup for.
+	CheckRecord bool `json:"checkRecord,omitempty"`
 }
 
 // settingsPath is the one file settings live in, at the root of the state

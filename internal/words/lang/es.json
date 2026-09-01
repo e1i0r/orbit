@@ -2918,6 +2918,72 @@
     "overview.flow": {
       "source": "flow",
       "value": "flujo"
+    },
+    "cmd.export": {
+      "source": "write the record back out as JSONL, one file per task",
+      "value": "escribir el registro de vuelta como JSONL, un archivo por tarea"
+    },
+    "cmd.check": {
+      "source": "say whether the record is still readable",
+      "value": "decir si el registro todavía se puede leer"
+    },
+    "setting.check_record": {
+      "source": "whether every command asks SQLite if the record is still readable",
+      "value": "si cada comando le pregunta a SQLite si el registro todavía se puede leer"
+    },
+    "export.needs_dir": {
+      "source": "export needs one directory to write the record into",
+      "value": "export necesita un directorio donde escribir el registro"
+    },
+    "export.wrote": {
+      "source": "wrote {what} into {dir}",
+      "value": "escribió {what} en {dir}"
+    },
+    "check.sound": {
+      "source": "{path} is sound, and holds {what}",
+      "value": "{path} está sano y contiene {what}"
+    },
+    "check.damaged": {
+      "source": "{path} is damaged, and SQLite says:",
+      "value": "{path} está dañado, y SQLite dice:"
+    },
+    "check.damaged_error": {
+      "source": "the record is damaged: copy the file aside, and try `orbit export` before anything writes to it again",
+      "value": "el registro está dañado: copia el archivo aparte y prueba `orbit export` antes de que algo vuelva a escribir en él"
+    },
+    "check.warning": {
+      "source": "the record is damaged — `orbit check` says what SQLite found",
+      "value": "el registro está dañado — `orbit check` dice qué encontró SQLite"
+    },
+    "record.tasks": {
+      "source": {
+        "one": "{n} task",
+        "other": "{n} tasks"
+      },
+      "value": {
+        "one": "{n} tarea",
+        "other": "{n} tareas"
+      }
+    },
+    "record.events": {
+      "source": {
+        "one": "{n} event",
+        "other": "{n} events"
+      },
+      "value": {
+        "one": "{n} evento",
+        "other": "{n} eventos"
+      }
+    },
+    "record.turns": {
+      "source": {
+        "one": "{n} supervisor turn",
+        "other": "{n} supervisor turns"
+      },
+      "value": {
+        "one": "{n} turno del supervisor",
+        "other": "{n} turnos del supervisor"
+      }
     }
   }
 }

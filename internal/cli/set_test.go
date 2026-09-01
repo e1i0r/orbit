@@ -112,13 +112,14 @@ func TestSetCanTurnTheUnreadCapOff(t *testing.T) {
 // other fails here rather than at a reader's terminal.
 func TestEverySettingKeyCanBeSet(t *testing.T) {
 	values := map[string]string{
-		"language":   "es",
-		"autopilot":  "on",
-		"unread-cap": "3",
-		"engine":     "claude",
-		"model":      "sonnet",
-		"flow":       "careful",
-		"theme":      "tokyo-night",
+		"language":     "es",
+		"autopilot":    "on",
+		"unread-cap":   "3",
+		"engine":       "claude",
+		"model":        "sonnet",
+		"flow":         "careful",
+		"theme":        "tokyo-night",
+		"check-record": "on",
 	}
 	for _, key := range settingKeys() {
 		value, ok := values[key]

@@ -13,11 +13,17 @@ import (
 	"strings"
 )
 
-// joinRepo writes down that a task is worked in a repository, once. The file
+// JoinRepo writes down that a task is worked in a repository, once. The file
 // is a list because a task may reach into several, and it is append-only for
 // the same reason the record is: a repository that took part took part, and
 // a later line cannot make that untrue.
-func (s *Store) joinRepo(taskID, abs string) error {
+//
+// It is exported for the one caller outside this package that writes a task
+// directory rather than reads one: `orbit export` builds the tree the record
+// used to live in, and the shape of the file it builds is this package's to
+// say. A second writer of the same three words is how the two halves of a
+// format drift apart.
+func (s *Store) JoinRepo(taskID, abs string) error {
 	joined, err := s.TaskRepos(taskID)
 	if err != nil {
 		return err

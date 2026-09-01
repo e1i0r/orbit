@@ -142,6 +142,22 @@ func settingTable() []Setting {
 		},
 		Value: func(cfg store.Settings) string { return cfg.Flow },
 	}, {
+		Name: "check-record",
+		About: func(p *words.Printer) string {
+			return p.T("setting.check_record", "whether every command asks SQLite if the record is still readable")
+		},
+		Set: func(p *words.Printer, cfg *store.Settings, value string) (string, error) {
+			on, err := onOff(p, value)
+			if err != nil {
+				return "", err
+			}
+
+			cfg.CheckRecord = on
+
+			return offOn(on), nil
+		},
+		Value: func(cfg store.Settings) string { return offOn(cfg.CheckRecord) },
+	}, {
 		Name:  "theme",
 		About: func(p *words.Printer) string { return p.T("setting.theme", "the visual color theme for the window") },
 		Set: func(p *words.Printer, cfg *store.Settings, value string) (string, error) {

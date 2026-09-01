@@ -31,7 +31,7 @@ func (s *Store) CreateTaskDir(repoPath, taskID string) (string, error) {
 		return "", fmt.Errorf("resolve %q: %w", repoPath, err)
 	}
 
-	if err := s.joinRepo(taskID, abs); err != nil {
+	if err := s.JoinRepo(taskID, abs); err != nil {
 		return "", err
 	}
 

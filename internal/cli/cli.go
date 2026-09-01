@@ -103,8 +103,9 @@ func Run(args []string, out, errOut io.Writer) (code int) {
 	logger.Info("cli/"+c.Name, "ran")
 
 	flatten(errOut)
+	checkRecord(ctx)
 
-	if !migrateRecord(errOut) {
+	if moved := migrateRecord(quietFor(c, errOut)); !moved && !c.Salvage {
 		return 1
 	}
 
@@ -128,6 +129,21 @@ func Run(args []string, out, errOut io.Writer) (code int) {
 	}
 
 	return 0
+}
+
+// quietFor is where the migration's complaints go, for one command.
+//
+// A command that salvages gets nowhere. The migration cannot finish on a
+// record that is damaged, and its account of why is five SQLite lines
+// printed above the one sentence `orbit check` exists to say — a dump in
+// front of the words that were written to replace it. What it had to say is
+// in the log either way: migrateRecord writes there before it writes here.
+func quietFor(c Command, errOut io.Writer) io.Writer {
+	if c.Salvage {
+		return io.Discard
+	}
+
+	return errOut
 }
 
 // logging opens the log for the length of one command, and returns the
