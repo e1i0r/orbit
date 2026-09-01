@@ -279,23 +279,27 @@ func (m Model) overviewActions(w int) []string {
 		return []string{head, ""}
 	}
 
-	return []string{
-		head,
-		paneGutter + meta(
-			act("p", p.T("overview.action_pr", "create PR")),
-			act("u", p.T("overview.action_update_pr", "update PR")),
-			act("M", p.T("overview.action_merge_pr", "merge PR")),
-			act("X", p.T("overview.action_close_pr", "close PR")),
-		),
-		paneGutter + meta(
-			act("c", p.T("overview.action_checks", "fix checks")),
-			act("T", p.T("overview.action_tests", "more tests")),
-			act("a", p.T("overview.action_feedback", "feedback")),
-			act("0", p.T("overview.action_diff", "diff")),
-		),
-		"",
+	out := []string{head}
+	for _, row := range columns([][]string{{
+		act("p", p.T("overview.action_pr", "create PR")),
+		act("u", p.T("overview.action_update_pr", "update PR")),
+		act("M", p.T("overview.action_merge_pr", "merge PR")),
+		act("X", p.T("overview.action_close_pr", "close PR")),
+	}, {
+		act("c", p.T("overview.action_checks", "fix checks")),
+		act("T", p.T("overview.action_tests", "more tests")),
+		act("a", p.T("overview.action_feedback", "feedback")),
+		act("0", p.T("overview.action_diff", "diff")),
+	}}, actionGap) {
+		out = append(out, paneGutter+row)
 	}
+
+	return append(out, "")
 }
+
+// actionGap is the alley between two action columns: wide enough that the
+// key of the next column reads as a new field without a middot to say so.
+const actionGap = "   "
 
 // plusMinus is the two numbers a diff is judged by. A side that did not
 // happen is left out rather than written as zero: "+21" is a fact, and

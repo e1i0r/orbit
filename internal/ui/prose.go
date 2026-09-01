@@ -91,6 +91,41 @@ func meta(parts ...string) string {
 	return strings.Join(kept, Text(Tertiary).Render(" · "))
 }
 
+// columns sets rows of the same shape as a table: every cell in a column is
+// widened to the widest one in it, so the second row's keys land under the
+// first row's keys. Written as middots between the cells instead, the two
+// action rows start their columns wherever the row above them happened to
+// end, and a reader looking for a key reads both lines through rather than
+// glancing down one.
+//
+// Cells are measured in cells, not bytes, for pad's reason.
+func columns(rows [][]string, gap string) []string {
+	widths := make([]int, 0, len(rows))
+
+	for _, row := range rows {
+		for i, cell := range row {
+			for len(widths) <= i {
+				widths = append(widths, 0)
+			}
+
+			widths[i] = max(widths[i], lipgloss.Width(cell))
+		}
+	}
+
+	out := make([]string, 0, len(rows))
+
+	for _, row := range rows {
+		line := make([]string, len(row))
+		for i, cell := range row {
+			line[i] = pad(cell, widths[i], false)
+		}
+
+		out = append(out, strings.TrimRight(strings.Join(line, gap), " "))
+	}
+
+	return out
+}
+
 // prose sets what the model wrote: wrapped at the measure, ruled down the
 // left, and painted in nothing at all — the terminal's own foreground is the
 // brightest thing available and this is the text the reader came for.

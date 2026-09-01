@@ -112,3 +112,32 @@ func TestTheHeaderKeepsTheRepositoryWhateverTheTitleIs(t *testing.T) {
 		t.Errorf("a long title pushed the repository off the header: %q", head)
 	}
 }
+
+// The two action rows are a table: whatever the labels of the first row are
+// as long as, the keys of the second row start under the keys of the first.
+// Joined with middots instead, each column began wherever the row above it
+// happened to end, and finding a key meant reading both lines through.
+func TestTheDeliverActionsStandInColumns(t *testing.T) {
+	m, _ := testModel(t, 120, 30)
+
+	rows := m.overviewActions(120)
+	if len(rows) < 3 {
+		t.Fatalf("overviewActions drew %d lines, want a head and two rows", len(rows))
+	}
+
+	first, second := ansi.Strip(rows[1]), ansi.Strip(rows[2])
+	for _, pair := range [][2]string{{"u ", "T "}, {"M ", "a "}, {"X ", "0 "}} {
+		top, bottom := strings.Index(first, pair[0]), strings.Index(second, pair[1])
+		if top < 0 || bottom < 0 {
+			t.Fatalf("rows %q / %q do not both carry %v", first, second, pair)
+		}
+
+		if top != bottom {
+			t.Errorf("%q starts at cell %d and %q at cell %d, want one column", pair[0], top, pair[1], bottom)
+		}
+	}
+
+	if strings.TrimRight(second, " ") != second {
+		t.Errorf("row %q was padded past its last column", second)
+	}
+}
