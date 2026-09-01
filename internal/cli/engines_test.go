@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/engine"
+	"github.com/e1i0r/orbit/internal/quota"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -152,6 +153,25 @@ func TestTheCommandToTypeIsNotTranslated(t *testing.T) {
 
 		if !found {
 			t.Errorf("the Spanish steps for %s do not carry %q for the reader to type", name, command)
+		}
+	}
+}
+
+// TestEveryEngineThisBuildRunsSaysHowItIsPaidFor holds two tables together
+// that cannot see each other: this package names the engines the build can
+// run, internal/quota names how each of them is billed, and neither may
+// import the other's list — quota imports nothing of Orbit's at all.
+//
+// An engine on one table and not the other is a run whose cost is spoken
+// about in a unit nobody decided: the window would print dollars for it
+// because dollars are what a reading with no mode falls back to, and the
+// reader on a subscription would be shown a charge that was never made.
+func TestEveryEngineThisBuildRunsSaysHowItIsPaidFor(t *testing.T) {
+	meter := quota.FromEnv()
+
+	for _, name := range engineNames(newEngines()) {
+		if meter.Mode(name) == quota.Unstated {
+			t.Errorf("this build runs %q and internal/quota does not say how it is paid for", name)
 		}
 	}
 }

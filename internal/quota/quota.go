@@ -1,19 +1,23 @@
+// Package quota is how much of an engine's allowance is left, and what a
+// number about that engine's use means at all.
+//
+// Two questions, and they are one question. An engine paid per token is
+// spoken about in money; an engine paid by subscription has no money to
+// speak of — what it has is a share of a window and the hour that window
+// comes back — and $0.42 shown to somebody on a fixed subscription is a
+// figure nobody is charging them. A header, a budget screen and a stats
+// screen that each decided this for themselves would disagree with each
+// other in front of one reader, so the decision is made here, once, and they
+// inherit it: see Mode.
+//
+// Where the number comes from differs per engine, and the shape it arrives
+// in does not. A proxy that answers GET /quota is one source; an engine with
+// no source at all is an answer of its own, and this package says so rather
+// than reporting zero — "nobody can read codex's quota" and "codex has none
+// left" are not the same sentence, and only one of them is true.
 package quota
 
-// Package quota queries the Anthropic / proxy quota endpoint (GET /quota)
-// to discover remaining limits and reset intervals.
-//
-// Absence of the proxy is not a failure: when ANTHROPIC_BASE_URL is unset,
-// or unreachable, no quota is reported and no error is raised.
-
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io"
-	"net/http"
-	"os"
-	"strings"
 	"sync"
 	"time"
 )
@@ -36,9 +40,6 @@ const (
 	maxBackoff   = time.Minute
 )
 
-// MaxKeyLen is the maximum length of an account key preserved for display.
-const MaxKeyLen = 12
-
 // Window is one quota window: percentage and countdown clock.
 type Window struct {
 	Key      string
@@ -47,10 +48,9 @@ type Window struct {
 	ResetsIn time.Duration
 }
 
-// Client fetches and caches quota windows from the proxy.
+// Client is one source with the cache and the backoff in front of it.
 type Client struct {
-	baseURL string
-	client  *http.Client
+	src Source
 
 	mu     sync.Mutex
 	cached []Window
@@ -63,51 +63,26 @@ type Client struct {
 	fetching bool
 }
 
-// New builds a Client for the given base URL. An empty base URL yields nil.
+// New builds a Client over the proxy at the given base URL. An empty base
+// URL yields nil, which is this package's way of saying there is nowhere to
+// look: a nil Client answers nothing to everything, and the engine it was
+// built for is reported as having no source rather than no quota left.
 func New(baseURL string) *Client {
-	baseURL = strings.TrimSpace(baseURL)
-	if baseURL == "" {
+	src := newProxy(baseURL)
+	if src == nil {
 		return nil
 	}
 
-	return &Client{
-		baseURL: strings.TrimRight(baseURL, "/"),
-		client:  &http.Client{Timeout: 1 * time.Second},
-	}
+	return &Client{src: src}
 }
 
-// FromEnv builds a Client from ANTHROPIC_BASE_URL.
-func FromEnv() *Client {
-	return New(os.Getenv("ANTHROPIC_BASE_URL"))
-}
-
-// Fetch requests GET /quota from the base URL synchronously.
+// Fetch asks the source once, synchronously, past the cache.
 func (c *Client) Fetch() ([]Window, error) {
-	if c == nil || c.baseURL == "" {
+	if c == nil || c.src == nil {
 		return nil, nil
 	}
 
-	req, err := http.NewRequest(http.MethodGet, c.baseURL+"/quota", nil)
-	if err != nil {
-		return nil, fmt.Errorf("build quota request: %w", err)
-	}
-
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("fetch quota: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("quota HTTP %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("read quota body: %w", err)
-	}
-
-	return parseWindows(body)
+	return c.src.Read()
 }
 
 // Quota returns the cached quota windows immediately. If the cache is cold,
@@ -119,7 +94,7 @@ func (c *Client) Fetch() ([]Window, error) {
 // look at the status bar starts another request against a proxy that is not
 // answering.
 func (c *Client) Quota(wait bool) []Window {
-	if c == nil || c.baseURL == "" {
+	if c == nil || c.src == nil {
 		return nil
 	}
 
@@ -184,64 +159,4 @@ func (c *Client) keep(windows []Window, err error) {
 
 	c.cached, c.backoff = windows, 0
 	c.nextTry = time.Now().Add(CacheDuration)
-}
-
-type wireWindow struct {
-	Key       string  `json:"key"`
-	Label     string  `json:"label"`
-	Pct       float64 `json:"pct"`
-	ResetsInS int64   `json:"resets_in_s"`
-	ResetsIn  int64   `json:"resets_in"`
-}
-
-func parseWindows(body []byte) ([]Window, error) {
-	var list []wireWindow
-	if err := json.Unmarshal(body, &list); err == nil {
-		return toWindows(list), nil
-	}
-
-	var wrapper struct {
-		Windows []wireWindow `json:"windows"`
-		Quota   []wireWindow `json:"quota"`
-	}
-	if err := json.Unmarshal(body, &wrapper); err == nil {
-		if len(wrapper.Windows) > 0 {
-			return toWindows(wrapper.Windows), nil
-		}
-
-		if len(wrapper.Quota) > 0 {
-			return toWindows(wrapper.Quota), nil
-		}
-	}
-
-	var single wireWindow
-	if err := json.Unmarshal(body, &single); err == nil && (single.Label != "" || single.Pct > 0) {
-		return toWindows([]wireWindow{single}), nil
-	}
-
-	return nil, errors.New("unrecognised quota response format")
-}
-
-func toWindows(list []wireWindow) []Window {
-	out := make([]Window, 0, len(list))
-	for _, w := range list {
-		key := w.Key
-		if len(key) > MaxKeyLen {
-			key = key[:MaxKeyLen]
-		}
-
-		res := w.ResetsInS
-		if res == 0 {
-			res = w.ResetsIn
-		}
-
-		out = append(out, Window{
-			Key:      key,
-			Label:    w.Label,
-			Pct:      w.Pct,
-			ResetsIn: time.Duration(res) * time.Second,
-		})
-	}
-
-	return out
 }
