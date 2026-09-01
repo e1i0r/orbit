@@ -1,10 +1,6 @@
 package board
 
 import (
-	"errors"
-	"os"
-
-	"github.com/e1i0r/orbit/internal/record"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -24,13 +20,16 @@ func SupervisorLog(s *store.Store) ([]view.SupervisorLine, error) {
 		return nil, nil
 	}
 
-	events, err := record.Read(s.SupervisorLogPath())
-	if errors.Is(err, os.ErrNotExist) {
-		// A thread nobody has written to yet is an empty thread, not a
-		// fault, and it is what every reader sees on their first day.
-		return nil, nil
+	d, err := s.Record()
+	if err != nil {
+		return nil, err
 	}
 
+	// A thread nobody has written to yet is an empty thread and not a fault,
+	// which is what every reader sees on their first day. It used to take a
+	// check for a missing file to say so; a table with no rows says it on
+	// its own.
+	events, err := d.Messages()
 	if err != nil {
 		return nil, err
 	}

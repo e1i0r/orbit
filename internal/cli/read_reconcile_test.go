@@ -47,23 +47,25 @@ func TestReadTaskEarlyExits(t *testing.T) {
 	}
 }
 
-func TestReadTaskFailsWhenTheLogCannotBeAppendedTo(t *testing.T) {
-	root, orbitHome := workspace(t)
+// TestReadTaskFailsOverARecordItCannotReach is what is left of a test that
+// made one task's log read-only. The record is one file for every task now,
+// and a command that cannot write to it cannot read it either, so the fault
+// is the whole record being gone rather than one log refusing a line. What
+// this still pins is that looking is written down: a read nobody could
+// record is a failure and not a shrug.
+func TestReadTaskFailsOverARecordItCannotReach(t *testing.T) {
+	root, _ := workspace(t)
 	dir := writeTask(t, root)
 
-	events := findFile(t, orbitHome, "events.jsonl")
-	if err := os.Chmod(events, 0o400); err != nil {
-		t.Fatalf("chmod: %v", err)
-	}
-	defer func() { _ = os.Chmod(events, 0o600) }() //nolint:errcheck
+	breakRecord(t)
 
 	code, _, errOut := run(t, "read", "-repo", dir, "ACME-1")
 	if code == 0 {
-		t.Error("read over a read-only log exited 0")
+		t.Error("read over a record nothing can reach exited 0")
 	}
 
 	if errOut == "" {
-		t.Error("read failed silently over a read-only log")
+		t.Error("read failed silently over a record nothing can reach")
 	}
 }
 
@@ -99,16 +101,13 @@ func TestReconcileFailsWhenTheTasksDirCannotBeListed(t *testing.T) {
 }
 
 func TestReconcileReportsAPerTaskFailureAndKeepsGoing(t *testing.T) {
-	root, orbitHome := workspace(t)
+	root, _ := workspace(t)
 	dir := writeTask(t, root)
 
 	// A run marker nothing in this codebase wrote: task.Reconcile's call to
 	// Alive fails parsing the pid line, rather than reporting the task as
 	// abandoned or as still running.
-	events := findFile(t, orbitHome, "events.jsonl")
-
-	marker := filepath.Join(filepath.Dir(events), "run")
-	if err := os.WriteFile(marker, []byte("pid: not-a-number\nstarted: 2026-08-24T12:00:00Z\n"), 0o600); err != nil {
+	if err := os.WriteFile(markerPath(t, "ACME-1"), []byte("pid: not-a-number\nstarted: 2026-08-24T12:00:00Z\n"), 0o600); err != nil {
 		t.Fatalf("write the run marker: %v", err)
 	}
 

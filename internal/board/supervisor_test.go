@@ -37,8 +37,8 @@ func TestReaderSupervisorLog(t *testing.T) {
 			"channel": "autopilot",
 		},
 	}
-	if err := record.Append(s.SupervisorLogPath(), ev); err != nil {
-		t.Fatalf("record.Append: %v", err)
+	if err := appendMessage(t, s, ev); err != nil {
+		t.Fatalf("append a turn to the thread: %v", err)
 	}
 
 	lines, err = r.SupervisorLog()
@@ -76,8 +76,8 @@ func TestTheSupervisorThreadIsReadWithoutABoard(t *testing.T) {
 		Text: "the webhook task is stuck on its gate",
 		Data: map[string]string{"by": "operator", "channel": "cli"},
 	}
-	if err := record.Append(s.SupervisorLogPath(), ev); err != nil {
-		t.Fatalf("record.Append: %v", err)
+	if err := appendMessage(t, s, ev); err != nil {
+		t.Fatalf("append a turn to the thread: %v", err)
 	}
 
 	lines, err = SupervisorLog(s)
@@ -95,4 +95,18 @@ func TestTheSupervisorThreadIsReadWithoutABoard(t *testing.T) {
 	if err != nil || len(viaReader) != 1 || viaReader[0].Text != ev.Text {
 		t.Errorf("through a Reader the thread reads %+v, %v", viaReader, err)
 	}
+}
+
+// appendMessage writes one turn of the supervisor thread through the state
+// root's own handle, which is what internal/supervisor does and what the
+// reader under test reads back.
+func appendMessage(t *testing.T, s *store.Store, e record.Event) error {
+	t.Helper()
+
+	d, err := s.Record()
+	if err != nil {
+		return err
+	}
+
+	return d.AppendMessage(e)
 }

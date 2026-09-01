@@ -103,19 +103,37 @@ func addTask(t *testing.T, s *store.Store, r repo.Repo, id string, events ...rec
 		t.Fatalf("write task %s: %v", id, err)
 	}
 
+	// Which repository a task belongs to is a row in the record now, and
+	// task.Create makes it by naming the repository in the event that writes
+	// the task down. A fixture that states a history rather than running one
+	// makes it the other way the record allows — the way the migration makes
+	// it for a state root whose link was a line in a file.
+	d, err := s.Record()
+	if err != nil {
+		t.Fatalf("open the record: %v", err)
+	}
+
+	if err := d.Join(id, r.Path, r.Name, time.Now()); err != nil {
+		t.Fatalf("join task %s to %s: %v", id, r.Name, err)
+	}
+
 	appendTo(t, s, r, id, events...)
 }
 
+// appendTo writes events through the state root's own handle, which is the
+// one every reader in this package is given. A fixture that wrote them any
+// other way would be a second writer of the record, and the record admits
+// one.
 func appendTo(t *testing.T, s *store.Store, r repo.Repo, id string, events ...record.Event) {
 	t.Helper()
 
-	path, err := s.EventsPath(id)
+	d, err := s.Record()
 	if err != nil {
-		t.Fatalf("events path of task %s: %v", id, err)
+		t.Fatalf("open the record: %v", err)
 	}
 
 	for _, e := range events {
-		if err := record.Append(path, e); err != nil {
+		if err := d.Append(id, e); err != nil {
 			t.Fatalf("append %s to task %s: %v", e.Kind, id, err)
 		}
 	}

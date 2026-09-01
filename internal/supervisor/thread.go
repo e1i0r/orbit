@@ -1,7 +1,13 @@
 package supervisor
 
-// The thread itself: one file under the state root, appended to and read
+// The thread itself: one table under the state root, appended to and read
 // back, and the one way a turn is taken out of it again.
+//
+// It is a table of its own rather than a task's events because it belongs to
+// no task, and hanging it off one would mean inventing a task for it. What
+// comes back out is still record.Event, so internal/view folds the thread
+// exactly as it folded the file — where the turns are kept changed, what a
+// turn is did not.
 
 import (
 	"fmt"
@@ -51,16 +57,26 @@ func Record(s *store.Store, kind, by, channel, taskID, repo, text string) error 
 		Data: data,
 	}
 
-	return record.Append(s.SupervisorLogPath(), e)
+	d, err := s.Record()
+	if err != nil {
+		return err
+	}
+
+	return d.AppendMessage(e)
 }
 
-// Events reads all events from the global supervisor conversation log.
+// Events reads the whole global supervisor thread, oldest first.
 func Events(s *store.Store) ([]record.Event, error) {
 	if s == nil {
 		return nil, fmt.Errorf("store cannot be nil")
 	}
 
-	return record.Read(s.SupervisorLogPath())
+	d, err := s.Record()
+	if err != nil {
+		return nil, err
+	}
+
+	return d.Messages()
 }
 
 // Retract takes back one turn of the supervisor thread.
@@ -96,7 +112,12 @@ func Retract(s *store.Store, at time.Time) error {
 			continue
 		}
 
-		return record.Append(s.SupervisorLogPath(), record.Event{
+		d, err := s.Record()
+		if err != nil {
+			return err
+		}
+
+		return d.AppendMessage(record.Event{
 			At:   time.Now().UTC(),
 			Kind: record.SupervisorRetracted,
 			Data: map[string]string{"at": want},

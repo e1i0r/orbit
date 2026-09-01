@@ -18,15 +18,7 @@ func TestDirectTaskRecordsDirectiveAndNote(t *testing.T) {
 		t.Fatalf("orbit_direct_task failed: %s", text(t, res))
 	}
 
-	path, err := s.EventsPath("DIR-MCP-1")
-	if err != nil {
-		t.Fatalf("EventsPath: %v", err)
-	}
-
-	events, err := record.Read(path)
-	if err != nil {
-		t.Fatalf("record.Read: %v", err)
-	}
+	events := kindsOn(t, s, r, "DIR-MCP-1")
 
 	var foundDialogue, foundNote bool
 

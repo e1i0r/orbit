@@ -13,14 +13,13 @@ package cli
 // machine where the temp directory is itself a symlink (macOS: /var ->
 // /private/var), returns a different, canonicalised path. The marker and
 // the lookup disagree, task.Alive never finds it, and both of that test's
-// calls end in "not running". findFile (cancel_test.go) sidesteps the whole
-// question by locating the task's own directory on disk after the fact,
-// rather than recomputing the hash by hand.
+// calls end in "not running". markerPath (cancel_test.go) asks the store,
+// which resolves the same way every command does.
 //
-// The write failures are forced by chmod: the task's own directory, or its
-// events.jsonl, made read-only after the task exists, so the os.WriteFile /
-// os.OpenFile underneath task.Control / task.Note fails with a real
-// permission error rather than anything this package had to fabricate.
+// The write failures are forced on the record rather than on one task: it is
+// one file for every task now, so the fault is breakRecord — the file taken
+// away and a directory left where it goes — and what fails is a command that
+// cannot write down what it did.
 
 import (
 	"fmt"
@@ -59,9 +58,8 @@ func TestCancelTaskEarlyExits(t *testing.T) {
 }
 
 // plantLiveMarker writes a run marker naming a real, currently-running
-// process for the task last written under orbitHome, by finding the task's
-// own directory on disk rather than recomputing the store's hash.
-func plantLiveMarker(t *testing.T, orbitHome string) *exec.Cmd {
+// process for one task, at the path the store gives for it.
+func plantLiveMarker(t *testing.T, id string) *exec.Cmd {
 	t.Helper()
 
 	cmd := exec.Command("sleep", "5")
@@ -71,11 +69,8 @@ func plantLiveMarker(t *testing.T, orbitHome string) *exec.Cmd {
 
 	t.Cleanup(func() { _ = cmd.Process.Kill() }) //nolint:errcheck
 
-	events := findFile(t, orbitHome, "events.jsonl")
-	marker := filepath.Join(filepath.Dir(events), "run")
-
 	body := fmt.Sprintf("pid: %d\nstarted: %s\n", cmd.Process.Pid, time.Now().UTC().Format(time.RFC3339))
-	if err := os.WriteFile(marker, []byte(body), 0o600); err != nil {
+	if err := os.WriteFile(markerPath(t, id), []byte(body), 0o600); err != nil {
 		t.Fatalf("write the run marker: %v", err)
 	}
 
@@ -83,14 +78,14 @@ func plantLiveMarker(t *testing.T, orbitHome string) *exec.Cmd {
 }
 
 func TestCancelNowKillsALiveProcess(t *testing.T) {
-	root, orbitHome := workspace(t)
+	root, _ := workspace(t)
 
 	repoDir := filepath.Join(root, "payments")
 	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-KILL", "kill me"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
-	plantLiveMarker(t, orbitHome)
+	plantLiveMarker(t, "ACME-KILL")
 
 	code, out, errOut := run(t, "cancel", "-now", "-repo", repoDir, "ACME-KILL")
 	if code != 0 {
@@ -103,14 +98,14 @@ func TestCancelNowKillsALiveProcess(t *testing.T) {
 }
 
 func TestCancelGracefullyAsksALiveProcess(t *testing.T) {
-	root, orbitHome := workspace(t)
+	root, _ := workspace(t)
 
 	repoDir := filepath.Join(root, "payments")
 	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-ASK", "ask me"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
-	plantLiveMarker(t, orbitHome)
+	plantLiveMarker(t, "ACME-ASK")
 
 	code, out, errOut := run(t, "cancel", "-repo", repoDir, "ACME-ASK")
 	if code != 0 {
@@ -187,22 +182,18 @@ func TestNoteTaskEarlyExits(t *testing.T) {
 	}
 }
 
-func TestNoteTaskFailsWhenTheLogCannotBeAppendedTo(t *testing.T) {
-	root, orbitHome := workspace(t)
+func TestNoteTaskFailsOverARecordItCannotReach(t *testing.T) {
+	root, _ := workspace(t)
 	dir := writeTask(t, root)
 
-	events := findFile(t, orbitHome, "events.jsonl")
-	if err := os.Chmod(events, 0o400); err != nil {
-		t.Fatalf("chmod: %v", err)
-	}
-	defer func() { _ = os.Chmod(events, 0o600) }() //nolint:errcheck
+	breakRecord(t)
 
 	code, _, errOut := run(t, "note", "-repo", dir, "ACME-1", "a note nobody can write")
 	if code == 0 {
-		t.Error("note over a read-only log exited 0")
+		t.Error("note over a record nothing can reach exited 0")
 	}
 
 	if errOut == "" {
-		t.Error("note failed silently over a read-only log")
+		t.Error("note failed silently over a record nothing can reach")
 	}
 }

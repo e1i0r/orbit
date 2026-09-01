@@ -5,33 +5,37 @@
 // It sits between the readers and the window. Everything it hands out is
 // derived from the append-only record: it appends nothing and decides
 // nothing the record does not already say. The one thing it remembers is
-// where in each log it stopped reading, and that is an optimisation rather
-// than a second copy of the truth — throw a Reader away and the next one
-// reaches the same board by reading every log again from byte zero.
+// the row of the record it stopped reading at, and that is an optimisation
+// rather than a second copy of the truth — throw a Reader away and the next
+// one reaches the same board by reading from row zero.
 //
-// # The window polls, and reads only the tail
+// # The window polls, and reads only what arrived
 //
 // This is the design decision the package exists to hold, and it is written
 // down here so that a later reader does not "fix" it by reaching for a
-// filesystem watcher.
+// notifier of some kind.
 //
-// An append-only file is the one case where polling is nearly free. Refresh
-// calls os.Stat on each task's events.jsonl; a file whose size is unchanged
-// costs one stat and nothing else. A file that grew costs a read from the
-// stored offset and a parse of exactly the new bytes. At twenty running
-// tasks and a 500 ms tick that is forty stats a second and a parse of
-// whatever was actually written — where calling record.Read on the same
-// twenty tasks would open and scan every log from byte zero forty times a
-// second, which at a 200 KB log is eight megabytes a second of parsing to
-// learn that nothing happened.
+// A record that is only ever appended to is the one case where polling is
+// nearly free, and it stayed that way when the record became a table.
+// Refresh asks for every event written after the row it last saw, for every
+// task at once: one statement, answering no rows on a quiet board, and on a
+// busy one exactly the events that were written. Twenty tasks and a 500 ms
+// tick is two queries a second, where reading each task's whole history
+// forty times a second would be eight megabytes of parsing to learn that
+// nothing happened.
 //
-// fsnotify is refused for four reasons, and none of them is that it would
-// not work: it is a dependency the allowlist would have to admit, it has
-// documented deadlocks around removing watches from the consuming
-// goroutine, it behaves inconsistently across macOS and Linux for appends,
-// and — decisively — it gives no ordering guarantee against the writer's
-// fsync, so offset tracking would still be required. It buys latency nobody
-// can perceive in a terminal and pays for it in go.mod.
+// The version this replaces did the same thing against twenty files, with a
+// stat and a byte offset each. What is bought by the move is not speed on a
+// quiet board — a stat is cheap — but that the number of things asked no
+// longer grows with the number of tasks, and that the answer is one
+// snapshot: a run starting while a refresh is halfway through the tasks
+// cannot land in half of it.
+//
+// A watcher is refused for the reasons it always was: it is a dependency the
+// allowlist would have to admit, it behaves inconsistently across macOS and
+// Linux, and it gives no ordering guarantee against the writer's commit, so
+// the row a reader has reached would still have to be tracked. It buys
+// latency nobody can perceive in a terminal and pays for it in go.mod.
 package board
 
 import (
@@ -82,8 +86,8 @@ type Board struct {
 	// ReadAt is when this board was read, so the window can age its elapsed
 	// column against one time rather than against time.Now per row.
 	ReadAt time.Time
-	// Health is the status of the .jsonl database and store, measured during
-	// the refresh.
+	// Health is the state of the record and the store, measured during the
+	// refresh.
 	Health Health
 	// Errs is what went wrong, per task and per repository, without the
 	// board failing as a whole. One task whose log is unreadable must not
@@ -101,8 +105,9 @@ type Board struct {
 type Changed struct {
 	// Tasks is the id of every task the window has reason to redraw: one
 	// whose record grew, one the reader is seeing for the first time, and
-	// one whose log started or stopped being readable. A task whose log did
-	// not move is not in it, which is the whole point of the offsets.
+	// one whose history started or stopped being readable. A task nothing
+	// was written about is not in it, which is the whole point of following
+	// the record by row rather than re-reading it.
 	Tasks []string
 	// Entered is the id of every task that crossed *into* view.NeedsYou
 	// since the previous refresh, and it is the only thing that notifies.
@@ -214,11 +219,15 @@ type Reader struct {
 	// from both would be a data race the day the window is wired up.
 	mu sync.Mutex
 
-	repos    []*repoState
-	tasks    []*taskState           // in the order Board.Tasks draws them
-	index    map[taskKey]*taskState // the same states, to carry offsets across a rescan
-	scanErrs []error                // what the last enumeration could not do
-	scanned  bool                   // an enumeration has completed
+	repos []*repoState
+	tasks []*taskState           // in the order Board.Tasks draws them
+	index map[taskKey]*taskState // the same states, to carry their place across a rescan
+	// at is the row of the record every task on the board has been read up
+	// to. It is what makes a refresh one query: everything written after it,
+	// for all of them at once.
+	at       int64
+	scanErrs []error // what the last enumeration could not do
+	scanned  bool    // an enumeration has completed
 	// baseline says a Refresh has completed, and it is the whole of the
 	// first-refresh-rings-no-bell rule.
 	baseline bool

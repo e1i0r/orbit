@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"io/fs"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -28,18 +26,23 @@ func TestShowPrintsTheDayAsWellAsTheClock(t *testing.T) {
 }
 
 // TestShowSaysNothingRatherThanTheYearOne is the reading end of a record
-// with a line in it that would not parse: record.Read hands back a
+// with something in it that would not parse: the reader hands back a
 // placeholder event, and a placeholder has no time. Printed as a date it
 // would say 0001-01-01, which is a date, and a wrong one.
+//
+// The line is planted where an older Orbit's log was and carried across by
+// the migration, which is the one thing that appends a record.unreadable —
+// the damage a log took is a fact about the record and has to survive the
+// move. It arrives with no time and keeps none, which is what this pins.
 func TestShowSaysNothingRatherThanTheYearOne(t *testing.T) {
-	root, orbitHome := workspace(t)
+	root, _ := workspace(t)
 
 	repoDir := filepath.Join(root, "payments")
 	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
-	appendLine(t, findLog(t, orbitHome), "{not json")
+	plant(t, repoDir, "ACME-1", "{not json")
 
 	code, out, errOut := run(t, "show", "-repo", repoDir, "ACME-1")
 	if code != 0 {
@@ -65,14 +68,14 @@ func TestShowSaysNothingRatherThanTheYearOne(t *testing.T) {
 // that quotes stdout under the word "failed" reads as though stdout were the
 // failure.
 func TestShowSaysWhyAPhaseFailed(t *testing.T) {
-	root, orbitHome := workspace(t)
+	root, _ := workspace(t)
 
 	repoDir := filepath.Join(root, "payments")
 	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
-	appendLine(t, findLog(t, orbitHome), `{"at":"2026-08-23T09:14:02Z","kind":"phase.failed","phase":"implement",`+
+	plant(t, repoDir, "ACME-1", `{"at":"2026-08-23T09:14:02Z","kind":"phase.failed","phase":"implement",`+
 		`"text":"reading the webhook handler","data":{"error":"claude exited 1: no such model"}}`)
 
 	code, out, errOut := run(t, "show", "-repo", repoDir, "ACME-1")
@@ -111,25 +114,6 @@ func TestDetailPrefersTheReasonOverTheOutput(t *testing.T) {
 	}
 }
 
-// appendLine adds one line to a log that is already there, which is how a
-// test plants an event no command writes yet.
-func appendLine(t *testing.T, path, line string) {
-	t.Helper()
-
-	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0o600)
-	if err != nil {
-		t.Fatalf("open the record: %v", err)
-	}
-
-	if _, err := f.WriteString(line + "\n"); err != nil {
-		t.Fatalf("write: %v", err)
-	}
-
-	if err := f.Close(); err != nil {
-		t.Fatalf("close: %v", err)
-	}
-}
-
 // rowContaining is the one printed row that mentions something, because an
 // assertion against the whole table cannot tell which row carried the text.
 func rowContaining(t *testing.T, out, want string) string {
@@ -144,28 +128,6 @@ func rowContaining(t *testing.T, out, want string) string {
 	t.Fatalf("no row mentioning %q:\n%s", want, out)
 
 	return ""
-}
-
-// findLog is the one events.jsonl under the state root. The path is derived
-// from a hash of the repository's own path, and looking for the file is
-// steadier than recomputing that here.
-func findLog(t *testing.T, orbitHome string) string {
-	t.Helper()
-
-	var found string
-
-	err := filepath.WalkDir(orbitHome, func(p string, d fs.DirEntry, err error) error {
-		if err == nil && !d.IsDir() && d.Name() == "events.jsonl" {
-			found = p
-		}
-
-		return nil
-	})
-	if err != nil || found == "" {
-		t.Fatalf("no events.jsonl under %q: %v", orbitHome, err)
-	}
-
-	return found
 }
 
 // TestFirstLineKeepsTheTableATable pins what show does to text it did not

@@ -3,9 +3,8 @@ package board
 import "time"
 
 // Health is what the refresh loop knows about the state of the record right
-// now: the state root, how many repositories and tasks are under it, how
-// many bytes of events.jsonl they come to, what the last refresh read and
-// how long it took.
+// now: the state root, how many repositories and tasks are under it, how big
+// the record is, what the last refresh read and how long it took.
 //
 // Every field is gathered from facts the refresh already touches. Nothing
 // here costs a stat, a walk or an open of its own — a panel that charged
@@ -21,13 +20,13 @@ type Health struct {
 	// Tasks is how many task records are held under the state root.
 	Tasks int
 
-	// Bytes is the total bytes of events.jsonl across all tasks.
+	// Bytes is how big the record is on disk.
 	Bytes int64
 
 	// EventsRead is how many events were read in the last refresh cycle.
 	EventsRead int
 
-	// LastWrite is the newest modification time seen on an events.jsonl file.
+	// LastWrite is when the newest event this refresh read was written.
 	LastWrite time.Time
 
 	// Duration is how long the last refresh took.

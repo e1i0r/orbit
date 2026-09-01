@@ -22,12 +22,7 @@ import (
 func kindsOn(t *testing.T, s *store.Store, r repo.Repo, id string) []record.Event {
 	t.Helper()
 
-	path, err := s.EventsPath(id)
-	if err != nil {
-		t.Fatalf("events path of task %s: %v", id, err)
-	}
-
-	events, err := record.Read(path)
+	events, err := task.Events(s, task.Task{ID: id, Repo: r})
 	if err != nil {
 		t.Fatalf("read the record of task %s: %v", id, err)
 	}

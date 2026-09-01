@@ -9,41 +9,33 @@ package task
 
 import (
 	"context"
-	"os"
 	"strings"
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/store"
 )
 
 // TestNotesThatCannotBeReadAreNotReportedAsNoNotes.
 func TestNotesThatCannotBeReadAreNotReportedAsNoNotes(t *testing.T) {
 	s, r := fixture(t)
 
-	// 1. Bad id: EventsPath itself fails.
+	// 1. Bad id: the record refuses to be asked about it at all.
 	bad := Task{ID: "has/slash", Repo: r}
 	if notes, err := unconsumedNotes(s, bad); err == nil {
 		t.Errorf("unconsumedNotes on a bad id = %v, nil — want the path error", notes)
 	}
 
-	// 2. A log record.Read cannot parse at all: one line longer than
-	// record.MaxLine, which trips the scanner rather than yielding a
-	// record.unreadable event.
+	// 2. A record that cannot be reached, which is what a damaged row is not:
+	// a row that will not parse comes back as record.unreadable and the notes
+	// around it still read.
 	tk, err := Create(s, r, "NOTES-ERR-1", "notes error test", "quick")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
 
-	path, err := s.EventsPath(tk.ID)
-	if err != nil {
-		t.Fatalf("EventsPath: %v", err)
-	}
-
-	oversized := strings.Repeat("x", 5<<20) // over record.MaxLine (4 MiB)
-	if err := os.WriteFile(path, []byte(oversized+"\n"), 0o600); err != nil {
-		t.Fatalf("WriteFile: %v", err)
-	}
+	breakRecord(t, s)
 
 	if notes, err := unconsumedNotes(s, tk); err == nil {
 		t.Errorf("unconsumedNotes over an unreadable log = %v, nil — want the read error", notes)
@@ -56,26 +48,22 @@ func TestNotesThatCannotBeReadAreNotReportedAsNoNotes(t *testing.T) {
 func TestAPhaseIsNotRunWithoutTheNotesItWasMeantToCarry(t *testing.T) {
 	s, r := fixture(t)
 
-	tk, err := Create(s, r, "NOTES-RUN-1", "notes on an unreadable log", "quick")
+	tk, err := Create(s, r, "NOTES-RUN-1", "notes on an unreadable record", "quick")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	path, err := s.EventsPath(tk.ID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	// One line over record.MaxLine, which trips the scanner rather than
-	// yielding a record.unreadable event. Appending still works, so the run
-	// gets as far as the phase loop and stops there.
-	if err := os.WriteFile(path, []byte(strings.Repeat("x", 5<<20)+"\n"), 0o600); err != nil {
-		t.Fatal(err)
-	}
+	// The record is taken away by the gate, which is the one moment that
+	// isolates this: the run has started and been written down, the phase has
+	// been let past, and the very next thing it does is read the notes. Taking
+	// it away any earlier would fail the run over task.started instead, which
+	// is a different branch and has its own test.
+	gate := breakingGate{t: t, store: s}
 
 	f := flow.Flow{Name: "quick", Phases: []flow.Phase{{Name: "phase-1", Engine: "fake"}}}
 	engines := map[string]engine.Engine{"fake": engine.NewFake("out")}
 
-	err = Run(context.Background(), s, tk, f, engines, nil)
+	err = Run(context.Background(), s, tk, f, engines, gate)
 	if err == nil {
 		t.Fatal("a phase ran with the operator notes silently missing from its prompt")
 	}
@@ -83,4 +71,16 @@ func TestAPhaseIsNotRunWithoutTheNotesItWasMeantToCarry(t *testing.T) {
 	if !strings.Contains(err.Error(), "phase-1") {
 		t.Errorf("the failure is %q, and it does not name the phase that did not run", err)
 	}
+}
+
+// breakingGate lets every phase past and takes the record away on the way.
+type breakingGate struct {
+	t     *testing.T
+	store *store.Store
+}
+
+func (g breakingGate) Before(_ context.Context, _ Task, _ flow.Phase, _ int) (Go, error) {
+	breakRecord(g.t, g.store)
+
+	return Continue, nil
 }

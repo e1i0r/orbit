@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/e1i0r/orbit/internal/record"
 )
@@ -22,22 +21,13 @@ import (
 
 // AppendMessage writes one turn of the supervisor thread.
 func (d *DB) AppendMessage(e record.Event) error {
-	if e.At.IsZero() {
-		e.At = time.Now()
+	e = stamped(e)
+
+	if err := tooBig(e); err != nil {
+		return fmt.Errorf("append %q to the supervisor thread: %w", e.Kind, err)
 	}
 
-	var err error
-
-	for try := 0; ; try++ {
-		err = d.messageOnce(e)
-		if err == nil || !refused(err) || try == retries {
-			break
-		}
-
-		time.Sleep(time.Duration(try+1) * 250 * time.Millisecond)
-	}
-
-	if err != nil {
+	if err := keepTrying(func() error { return d.messageOnce(e) }); err != nil {
 		return fmt.Errorf("append %q to the supervisor thread: %w", e.Kind, err)
 	}
 

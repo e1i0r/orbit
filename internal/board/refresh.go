@@ -3,11 +3,12 @@ package board
 // The two loops, on the two clocks: refresh every task the last enumeration
 // found and coalesce what moved into one answer, and, more slowly, walk the
 // tree again to find what has been written down since. What either of them
-// does to a single task or repository is poll.go.
+// asks the record, and what one task makes of the answer, is poll.go.
 
 import (
 	"cmp"
 	"fmt"
+	"os"
 	"slices"
 	"strings"
 	"time"
@@ -71,20 +72,27 @@ func (r *Reader) Refresh() (Board, Changed, error) {
 	}
 	b.Errs = append(b.Errs, r.scanErrs...)
 
+	// One query for every task on the board, before the loop rather than
+	// inside it. A record nobody can read is not one task's problem but
+	// every task's, so it is the returned error and not a row: an empty
+	// board and a board whose record would not open are different pictures.
+	arrived, err := r.follow()
+	if err != nil {
+		return Board{Health: Health{Root: root, Duration: time.Since(start), Errs: 1}}, Changed{}, err
+	}
+
 	var (
 		changed    Changed
-		totalBytes int64
 		eventsRead int
 		lastWrite  time.Time
 	)
 
 	for _, st := range r.tasks {
-		fresh, err := r.poll(st)
-		totalBytes += st.size
+		fresh, err := r.arrivals(st, arrived)
 		eventsRead += len(fresh)
 
-		if st.modTime.After(lastWrite) {
-			lastWrite = st.modTime
+		if at := newest(fresh); at.After(lastWrite) {
+			lastWrite = at
 		}
 
 		moved := len(fresh) > 0
@@ -172,7 +180,7 @@ func (r *Reader) Refresh() (Board, Changed, error) {
 		Root:       root,
 		Repos:      len(r.repos),
 		Tasks:      len(r.tasks),
-		Bytes:      totalBytes,
+		Bytes:      r.recordSize(),
 		EventsRead: eventsRead,
 		LastWrite:  lastWrite,
 		Duration:   time.Since(start),
@@ -181,6 +189,24 @@ func (r *Reader) Refresh() (Board, Changed, error) {
 	r.baseline = true
 
 	return b, changed, nil
+}
+
+// recordSize is how big the record is on disk, for the panel that says so.
+//
+// One stat of one file, where the number it replaces was the sum of a stat
+// per task that the refresh was already paying for. A record that cannot be
+// stat'd reports nothing rather than failing a refresh over a panel.
+func (r *Reader) recordSize() int64 {
+	if r.store == nil {
+		return 0
+	}
+
+	info, err := os.Stat(r.store.DBPath())
+	if err != nil {
+		return 0
+	}
+
+	return info.Size()
 }
 
 // Rescan walks the tree again: every repository under the root and every
@@ -264,13 +290,7 @@ func (r *Reader) rescan() error {
 		for _, id := range ids {
 			st, keep := r.index[taskKey{rs.path, id}]
 			if !keep {
-				path, pathErr := r.store.EventsPath(id)
-				if pathErr != nil {
-					errs = append(errs, pathErr)
-					continue
-				}
-
-				st = &taskState{id: id, path: path}
+				st = &taskState{id: id}
 			}
 
 			st.repo = rs

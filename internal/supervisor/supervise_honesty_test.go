@@ -3,8 +3,6 @@ package supervisor
 import (
 	"context"
 	"errors"
-	"os"
-	"strings"
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/engine"
@@ -76,13 +74,10 @@ func TestTheSupervisorRefusesAThreadItCannotRead(t *testing.T) {
 		t.Fatalf("Record: %v", err)
 	}
 
-	// A line longer than the record can read back. Append refuses to write
-	// one, so this is damage from outside — which is the case: a thread that
-	// will not parse is a thread nobody can vouch for.
-	damaged := strings.Repeat("x", record.MaxLine+1) + "\n"
-	if err := os.WriteFile(s.SupervisorLogPath(), []byte(damaged), 0o600); err != nil {
-		t.Fatalf("damage the thread: %v", err)
-	}
+	// The record taken out from under it, which is damage from outside — as
+	// it has to be: a turn this package wrote is a turn it can read back, and
+	// a thread nobody can vouch for is one something else broke.
+	breakRecord(t, s)
 
 	fake := &engine.Fake{Output: "all systems nominal"}
 

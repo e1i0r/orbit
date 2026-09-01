@@ -4,7 +4,6 @@ package task
 // and recorded there. These are the tests of that one decision.
 
 import (
-	"os"
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/flow"
@@ -143,14 +142,7 @@ func TestATaskWhoseRecordIsGoneStillLoads(t *testing.T) {
 		t.Fatalf("Create: %v", err)
 	}
 
-	path, err := s.EventsPath("ACME-1")
-	if err != nil {
-		t.Fatalf("EventsPath: %v", err)
-	}
-
-	if err := os.Remove(path); err != nil {
-		t.Fatalf("remove the record: %v", err)
-	}
+	breakRecord(t, s)
 
 	tk, err := Load(s, r, "ACME-1")
 	if err != nil {

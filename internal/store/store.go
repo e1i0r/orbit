@@ -274,6 +274,21 @@ func (s *Store) EventsPath(taskID string) (string, error) {
 	return filepath.Join(dir, "events.jsonl"), nil
 }
 
+// TaskReposPath is the file that says which repositories a task is worked
+// in — the link, in the shape the last version of Orbit kept it in.
+//
+// It is named here for the same reason EventsPath is: the migration has to
+// read it, and where a file lives under the state root is this package's
+// answer to give.
+func (s *Store) TaskReposPath(taskID string) (string, error) {
+	dir, err := s.TaskDir(taskID)
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(dir, "repos"), nil
+}
+
 // DBPath is the record: one file at the root of the state, holding every
 // task's events rather than one log per task directory.
 //

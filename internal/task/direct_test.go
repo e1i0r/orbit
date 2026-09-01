@@ -32,14 +32,9 @@ func TestDirectRecordsDialogueAndNoteWhenNotRunning(t *testing.T) {
 		t.Fatalf("Direct: %v", err)
 	}
 
-	path, err := s.EventsPath(tk.ID)
+	events, err := Events(s, tk)
 	if err != nil {
-		t.Fatalf("EventsPath: %v", err)
-	}
-
-	events, err := record.Read(path)
-	if err != nil {
-		t.Fatalf("record.Read: %v", err)
+		t.Fatalf("read the record of task %s: %v", tk.ID, err)
 	}
 
 	var foundDialogue, foundNote bool

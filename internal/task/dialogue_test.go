@@ -90,18 +90,13 @@ func TestDialogueRefusesEmptyTextAndKeepsByOptional(t *testing.T) {
 	}
 }
 
-// lastEvent is the most recent line of a task's record.
+// lastEvent is the most recent row of a task's record.
 func lastEvent(t *testing.T, s *store.Store, tk Task) record.Event {
 	t.Helper()
 
-	path, err := s.EventsPath(tk.ID)
+	events, err := Events(s, tk)
 	if err != nil {
-		t.Fatalf("EventsPath: %v", err)
-	}
-
-	events, err := record.Read(path)
-	if err != nil {
-		t.Fatalf("record.Read: %v", err)
+		t.Fatalf("read the record of task %s: %v", tk.ID, err)
 	}
 
 	if len(events) == 0 {

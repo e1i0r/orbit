@@ -1,8 +1,8 @@
 package cli
 
 import (
-	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -23,7 +23,7 @@ func writeTask(t *testing.T, root string) string {
 }
 
 func TestReadWritesDownThatSomebodyLooked(t *testing.T) {
-	root, orbitHome := workspace(t)
+	root, _ := workspace(t)
 	dir := writeTask(t, root)
 
 	code, out, errOut := run(t, "read", "-repo", dir, "ACME-1")
@@ -35,13 +35,9 @@ func TestReadWritesDownThatSomebodyLooked(t *testing.T) {
 		t.Errorf("read said %q, which does not name the task", out)
 	}
 
-	body, err := os.ReadFile(findFile(t, orbitHome, "events.jsonl"))
-	if err != nil {
-		t.Fatalf("read the log: %v", err)
-	}
-
-	if !strings.Contains(string(body), `"task.read"`) {
-		t.Errorf("the log does not say the task was read:\n%s", body)
+	kinds := recorded(t, dir, "ACME-1")
+	if !slices.Contains(kinds, "task.read") {
+		t.Errorf("the record does not say the task was read: %v", kinds)
 	}
 }
 

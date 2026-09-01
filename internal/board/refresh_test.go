@@ -1,8 +1,6 @@
 package board
 
 import (
-	"errors"
-	"os"
 	"slices"
 	"testing"
 
@@ -65,41 +63,42 @@ func TestCrossingIntoNeedsYouIsAnnouncedOnce(t *testing.T) {
 	}
 }
 
-// TestTheSecondReadStartsWhereTheFirstStopped is the assertion the polling
-// design is worth nothing without. Two refreshes that both give the right
-// answer prove nothing — a reader that re-read every log from byte zero
-// would pass that. So the offset is asserted directly, and then every byte
-// the first refresh already read is overwritten with nonsense: a reader
-// that started over would fold damaged lines and lose the title, and a
-// reader that starts at its stored offset never looks at them again.
-func TestTheSecondReadStartsWhereTheFirstStopped(t *testing.T) {
+// TestTheSecondReadStartsAtTheRowTheFirstStopped is the assertion the
+// polling design is worth nothing without. Two refreshes that both give the
+// right answer prove nothing — a reader that re-read every task's whole
+// history would pass that — so what is asserted is the reading itself: the
+// second refresh reads the one event that was written and not the three that
+// are there.
+func TestTheSecondReadStartsAtTheRowTheFirstStopped(t *testing.T) {
 	s, work, repoPath := oneRepo(t)
 	addTask(t, s, repoPath, "ACME-1", created("Retry the webhook on 5xx"), startedEvent())
-	path := eventsPath(t, s, repoPath, "ACME-1")
 
 	r := NewReader(s, work)
-	refresh(t, r)
+	b, _ := refresh(t, r)
 
-	first := r.tasks[0].offset
-	if want := sizeOf(t, path); first != want {
-		t.Fatalf("after one refresh the offset is %d and the log is %d bytes long", first, want)
+	first := r.tasks[0].at
+	if b.Health.EventsRead != 2 || first == 0 {
+		t.Fatalf("the first refresh read %d events and stopped at row %d, want 2 and a row of its own", b.Health.EventsRead, first)
 	}
 
-	poison(t, path, first)
 	appendTo(t, s, repoPath, "ACME-1", failedEvent())
 
 	b, changed := refresh(t, r)
-	if want := sizeOf(t, path); r.tasks[0].offset != want {
-		t.Errorf("after the second refresh the offset is %d and the log is %d bytes long", r.tasks[0].offset, want)
+	if b.Health.EventsRead != 1 {
+		t.Errorf("the second refresh read %d events, want the 1 that was appended", b.Health.EventsRead)
+	}
+
+	if r.tasks[0].at <= first {
+		t.Errorf("the task is still at row %d after an event was written past %d", r.tasks[0].at, first)
 	}
 
 	got := b.Tasks[0]
-	if got.Damaged != 0 {
-		t.Errorf("Damaged = %d: the second refresh re-read bytes it had already read", got.Damaged)
-	}
-
 	if got.Title != "Retry the webhook on 5xx" {
 		t.Errorf("Title = %q: what the first refresh read was not kept", got.Title)
+	}
+
+	if got.Attempt != 1 {
+		t.Errorf("Attempt = %d, want 1: rows the first refresh had read were folded in a second time", got.Attempt)
 	}
 
 	if view.BandOf(got) != view.NeedsYou {
@@ -111,93 +110,26 @@ func TestTheSecondReadStartsWhereTheFirstStopped(t *testing.T) {
 	}
 }
 
-// TestAnUnreadableLogDoesNotBlankTheBoard: one task whose record cannot be
-// read is one row that says so and nineteen rows that are unaffected. The
-// error names the task, because a window that had to match on the words of
-// an error message to find the row would be testing the message.
-func TestAnUnreadableLogDoesNotBlankTheBoard(t *testing.T) {
-	s, work, repoPath := oneRepo(t)
-	addTask(t, s, repoPath, "ACME-1", created("Retry the webhook on 5xx"), startedEvent())
-	addTask(t, s, repoPath, "ACME-2", created("Fix the swagger lint"), startedEvent())
-	tooLongLine(t, eventsPath(t, s, repoPath, "ACME-2"))
+// TestARecordThatWillNotOpenIsARefusalAndNotAnEmptyBoard is where the move
+// to one record changed what a failure means. A log per task made an
+// unreadable one task's problem: nineteen rows drew and the twentieth said
+// so. There is one record now, so a record that will not open is every task's
+// problem, and answering an empty board would say there is nothing to do —
+// which is a different sentence from "nobody could look".
+func TestARecordThatWillNotOpenIsARefusalAndNotAnEmptyBoard(t *testing.T) {
+	s, work, _ := oneRepo(t)
+	unopenable(t, s)
 
-	r := NewReader(s, work)
-
-	b, _ := refresh(t, r)
-	if len(b.Tasks) != 2 {
-		t.Fatalf("%d rows, want 2: an unreadable log took the other task with it", len(b.Tasks))
+	b, _, err := NewReader(s, work).Refresh()
+	if err == nil {
+		t.Fatal("a record nobody can open was refreshed without complaint")
 	}
 
-	if b.Tasks[0].Title != "Retry the webhook on 5xx" || view.BandOf(b.Tasks[0]) != view.Running {
-		t.Errorf("the readable task folded to %+v", b.Tasks[0])
+	if len(b.Tasks) != 0 {
+		t.Errorf("the failed refresh still drew %d rows", len(b.Tasks))
 	}
 
-	var unreadable *TaskError
-	if len(b.Errs) != 1 || !errors.As(b.Errs[0], &unreadable) {
-		t.Fatalf("Errs = %v, want one TaskError", b.Errs)
-	}
-
-	if unreadable.ID != "ACME-2" || unreadable.Repo != "payments" {
-		t.Errorf("the error names task %q in %q, want ACME-2 in payments", unreadable.ID, unreadable.Repo)
-	}
-
-	// And it keeps saying so. The next refresh finds that log unchanged and
-	// skips reading it, which must not be the same as finding nothing wrong
-	// with it: a row whose record cannot be read quietly becoming an ordinary
-	// row is worse than the failure it hides.
-	b, changed := refresh(t, r)
-	if len(b.Errs) != 1 || !errors.As(b.Errs[0], &unreadable) {
-		t.Errorf("Errs = %v on the second refresh, want the same failure still reported", b.Errs)
-	}
-
-	if len(changed.Tasks) != 0 {
-		t.Errorf("Changed.Tasks = %v: neither log moved and neither verdict flipped", changed.Tasks)
-	}
-}
-
-// TestALogThatWasReplacedIsReadAgainFromTheTop: a log shorter than what has
-// already been read was replaced rather than appended to. Reading it from the
-// top is record.ReadFrom's own doing; what this package has to add is
-// forgetting what it folded from the log that is gone, because a task shown
-// as attempted twice when its record says once is the reader inventing
-// history out of two different logs.
-func TestALogThatWasReplacedIsReadAgainFromTheTop(t *testing.T) {
-	s, work, repoPath := oneRepo(t)
-	addTask(t, s, repoPath, "ACME-1",
-		created("Retry the webhook on 5xx, and stop pretending it is idempotent"),
-		startedEvent(), failedEvent())
-	path := eventsPath(t, s, repoPath, "ACME-1")
-
-	r := NewReader(s, work)
-	refresh(t, r)
-	read := r.tasks[0].offset
-
-	if err := os.Remove(path); err != nil {
-		t.Fatalf("remove %q: %v", path, err)
-	}
-
-	appendTo(t, s, repoPath, "ACME-1", created("Index on settlements"), startedEvent())
-
-	if size := sizeOf(t, path); size >= read {
-		t.Fatalf("the replacement is %d bytes and %d had been read: this test needs a shorter log", size, read)
-	}
-
-	b, changed := refresh(t, r)
-
-	got := b.Tasks[0]
-	if got.Title != "Index on settlements" {
-		t.Errorf("Title = %q, want the replacement's title", got.Title)
-	}
-
-	if got.Attempt != 1 {
-		t.Errorf("Attempt = %d, want 1: the log that was replaced was folded in with the one that replaced it", got.Attempt)
-	}
-
-	if want := sizeOf(t, path); r.tasks[0].offset != want {
-		t.Errorf("the offset is %d and the replacement is %d bytes long", r.tasks[0].offset, want)
-	}
-
-	if !slices.Equal(changed.Tasks, []string{"ACME-1"}) {
-		t.Errorf("Changed.Tasks = %v, want [ACME-1]", changed.Tasks)
+	if b.Health.Errs != 1 {
+		t.Errorf("Health.Errs = %d, want the one failure to be counted", b.Health.Errs)
 	}
 }

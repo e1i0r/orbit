@@ -19,6 +19,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -75,12 +76,12 @@ func Open(path string) (*DB, error) {
 	d := &DB{sql: handle, path: path}
 
 	if err := d.migrate(); err != nil {
-		return nil, fmt.Errorf("%w, and closing after it: %w", err, handle.Close())
+		return nil, errors.Join(err, handle.Close())
 	}
 
 	if fresh {
 		if err := os.Chmod(path, fileMode); err != nil {
-			return nil, fmt.Errorf("%w, and closing after it: %w", err, handle.Close())
+			return nil, errors.Join(fmt.Errorf("set the mode of %q: %w", path, err), handle.Close())
 		}
 	}
 

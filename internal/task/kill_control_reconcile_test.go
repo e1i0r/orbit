@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"slices"
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/engine"
@@ -205,8 +206,12 @@ func TestTaskListAndFlowDefaults(t *testing.T) {
 	}
 }
 
-// TestEventsReadingAndCorruptedLines tests event retrieval and corrupted line toleration.
-func TestEventsReadingAndCorruptedLines(t *testing.T) {
+// TestEventsReadsTheWholeRecordInOrder. A row nobody can read comes back as
+// record.unreadable rather than failing the read, and that is asserted where
+// a row can be damaged — internal/db, which is the only package holding the
+// statement. Here what has to be true is that Events answers everything that
+// was written, oldest first.
+func TestEventsReadsTheWholeRecordInOrder(t *testing.T) {
 	s, r := fixture(t)
 
 	tk, err := Create(s, r, "EVT-1", "Events test", "")
@@ -214,24 +219,24 @@ func TestEventsReadingAndCorruptedLines(t *testing.T) {
 		t.Fatalf("Create: %v", err)
 	}
 
-	// Append valid and invalid JSON lines to events.jsonl
-	eventsPath, err := s.EventsPath(tk.ID)
-	if err != nil {
-		t.Fatalf("EventsPath: %v", err)
-	}
-
-	corruptedData := "{\"at\":\"2026-08-24T12:00:00Z\",\"kind\":\"task.started\"}\nnot valid json\n{\"at\":\"2026-08-24T12:01:00Z\",\"kind\":\"task.finished\"}\n"
-	if err := os.WriteFile(eventsPath, []byte(corruptedData), 0o644); err != nil {
-		t.Fatalf("WriteFile: %v", err)
+	for _, kind := range []string{record.TaskStarted, record.TaskFinished} {
+		if err := emit(s, tk, record.Event{Kind: kind}); err != nil {
+			t.Fatalf("emit %s: %v", kind, err)
+		}
 	}
 
 	events, err := Events(s, tk)
 	if err != nil {
-		t.Fatalf("Events with unreadable line: %v", err)
+		t.Fatalf("Events: %v", err)
 	}
 
-	if len(events) != 3 {
-		t.Errorf("expected 3 events (including unreadable marker), got %d: %v", len(events), events)
+	var kinds []string
+	for _, e := range events {
+		kinds = append(kinds, e.Kind)
+	}
+
+	if want := []string{record.TaskCreated, record.TaskStarted, record.TaskFinished}; !slices.Equal(kinds, want) {
+		t.Errorf("the record reads %v, want %v", kinds, want)
 	}
 }
 

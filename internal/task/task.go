@@ -83,7 +83,23 @@ func Create(s *store.Store, r repo.Repo, id, text, flowName string) (Task, error
 	}
 
 	t := Task{ID: id, Repo: r, Text: text, Flow: flowName}
-	if err := emit(s, t, record.Event{Kind: record.TaskCreated, Text: text, Data: map[string]string{"flow": flowName}}); err != nil {
+
+	// The repository rides in the event that writes the task down rather
+	// than in an event of its own, and rather than in the row the directory
+	// above just made. Which tasks belong to a checkout is read out of the
+	// record now, and both alternatives put the link somewhere the failure
+	// below cannot take it back out of: a second event leaves a window in
+	// which a killed process is a task no repository has, and a link written
+	// with the directory outlives a create that recorded nothing — a task
+	// listed against a repository forever, with nothing to show. One event
+	// is one transaction, and the rollback is the same one either way.
+	created := record.Event{
+		Kind: record.TaskCreated,
+		Text: text,
+		Data: map[string]string{"flow": flowName, "repo": r.Name, "path": r.Path},
+	}
+
+	if err := emit(s, t, created); err != nil {
 		// The file landed and nothing was recorded. Left alone, that is the
 		// worst of both: the task exists to List, `orbit show` has nothing
 		// to show, and writing it again is refused as a duplicate — a task
@@ -93,9 +109,11 @@ func Create(s *store.Store, r repo.Repo, id, text, flowName string) (Task, error
 			return Task{}, fmt.Errorf("%w; and %q could not be taken back out again: %w", err, path, rmErr)
 		}
 		// What is left behind is the directory and the file inside it that
-		// says which repository the task is worked in, and that file is
-		// what List keys on now, so a task that was never recorded would
-		// still be listed. Both go, and neither removal is recursive: they
+		// says which repository the task is worked in. The listing no longer
+		// reads that file — it is the record that would have to name the
+		// task, and nothing was recorded — but the file is a claim about a
+		// task that does not exist, and the migration would carry it across
+		// as one. Both go, and neither removal is recursive: they
 		// succeed exactly when task.md and that marker were the only
 		// things inside, which is the state a failed Create leaves, and
 		// they fail harmlessly when something else landed there — a
@@ -206,38 +224,60 @@ func writtenFlow(s *store.Store, t Task) string {
 
 // List returns the ids of every task worked in a repository, sorted.
 //
-// The tasks all live in one directory now, so which repository a task
-// belongs to is read out of the task rather than out of its path. A task
-// whose repositories cannot be read costs itself and not the listing: the
-// window draws what it could read and says what it could not.
+// Which tasks belong to a checkout is the one question about tasks that
+// cannot be folded from a task's own events, because it starts from the
+// other end and crosses all of them. So it is asked of the record, which is
+// what holds the link, rather than of a directory listing that would have to
+// open every task in the state root to answer it.
 func List(s *store.Store, r repo.Repo) ([]string, error) {
-	ids, err := s.TaskIDsOfRepo(r.Path)
-	if err != nil {
-		return ids, fmt.Errorf("list the tasks of %q: %w", r.Name, err)
-	}
-
-	return ids, nil
-}
-
-// Events returns everything recorded about a task, oldest first.
-func Events(s *store.Store, t Task) ([]record.Event, error) {
-	path, err := s.EventsPath(t.ID)
+	d, err := s.Record()
 	if err != nil {
 		return nil, err
 	}
 
-	return record.Read(path)
+	return d.TasksOfRepo(r.Path)
 }
 
-// emit appends one event to the task's log.
+// Events returns everything recorded about a task, oldest first.
+//
+// A task nobody has heard of comes back as no events rather than as a
+// failure, which is what reading a log that was never written gave and what
+// every caller here already handles.
+func Events(s *store.Store, t Task) ([]record.Event, error) {
+	// The id used to be a directory name, so the rules about it were
+	// enforced by the path being built. It is a column now and a column
+	// takes anything, but the rules were never only about the filesystem:
+	// an id is a name a directory, a command line and a line of the record
+	// read months later all have to agree on. So it is asked here instead.
+	if err := store.ValidTaskID(t.ID); err != nil {
+		return nil, err
+	}
+
+	d, err := s.Record()
+	if err != nil {
+		return nil, err
+	}
+
+	return d.Events(t.ID)
+}
+
+// emit writes one event into the record.
+//
+// The error is not wrapped again on the way out. db.Append already names
+// the kind and the task — "append \"phase.started\" to \"ACME-1\"" — and a
+// second sentence saying the same two things is how one fault reads as two.
 func emit(s *store.Store, t Task, e record.Event) error {
-	path, err := s.EventsPath(t.ID)
+	if err := store.ValidTaskID(t.ID); err != nil {
+		return noted(t.ID, err)
+	}
+
+	d, err := s.Record()
 	if err != nil {
 		return noted(t.ID, err)
 	}
 
-	if err := record.Append(path, e); err != nil {
-		return noted(t.ID, fmt.Errorf("record %q for task %s: %w", e.Kind, t.ID, err))
+	if err := d.Append(t.ID, e); err != nil {
+		return noted(t.ID, err)
 	}
 
 	noteEvent(t.ID, e)

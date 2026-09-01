@@ -1,8 +1,6 @@
 package board
 
 import (
-	"time"
-
 	"github.com/e1i0r/orbit/internal/record"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -21,45 +19,36 @@ type repoState struct {
 }
 
 // taskState is what the Reader remembers about one task between refreshes.
-// It is the whole of the polling design: an offset, the size the last stat
-// saw, and the events read so far.
+// It is the whole of the polling design: the row the record has been read up
+// to, and the events read so far.
 type taskState struct {
 	repo *repoState
 	id   string
-	path string // the task's events.jsonl
-	// offset is the next byte to read, and it is only ever what
-	// record.ReadFrom answered — never arithmetic of this package's own.
-	// That matters because ReadFrom advances the offset past a complete,
-	// newline-terminated line and no further: a torn final line is a write
-	// in flight rather than damage, and holding the offset before it is
-	// what makes the next read pick the line up once it lands.
-	offset int64
-	// size is the file size the last stat saw. An unchanged size is the
-	// cheap answer this design is built on: nothing was appended, so there
-	// is nothing to open, read or parse.
-	size int64
-	// modTime is the modification time seen at the last stat.
-	modTime time.Time
+	// at is the row of the record this task has been read up to, and it is
+	// the one thing a Reader remembers. It is an optimisation rather than a
+	// second copy of the truth: throw the Reader away and the next one
+	// reaches the same board by reading from row zero.
+	//
+	// It is kept per task and not only per reader because a task the window
+	// has just found starts behind the others, and because an event handed
+	// to a task once must not be handed to it twice — the catch-up read and
+	// the stream can overlap, and this is what makes that harmless.
+	at int64
 	// events is everything read so far, oldest first. view.Fold is a
 	// function of the whole log and holds nothing between calls, so the
 	// delta is appended here and the fold re-run over the total — which
-	// costs a walk of a slice already in memory, and never a re-read of the
-	// file. That is the trade the offsets buy: the I/O and the JSON are
-	// what polling has to avoid, not the switch statement.
+	// costs a walk of a slice already in memory, and never a second query.
 	events []record.Event
 	task   view.Task
 	// band is the band at the previous refresh, and it is what Entered is a
 	// crossing of. A task the reader has not folded yet has the zero Band,
 	// view.ToDo, so a task that arrives already needing you does cross.
 	band view.Band
-	// err is the last read's verdict, kept so that a log nobody can read
-	// keeps saying so on the refreshes that skip it for being unchanged.
+	// err is the last read's verdict, kept so that a task whose history
+	// could not be read keeps saying so.
 	err error
 	// seen says a refresh has folded this task at least once. It is what
-	// makes a task with an empty log — written down and never run — fold
-	// once rather than never.
+	// makes a task with nothing recorded — written down and never run —
+	// fold once rather than never.
 	seen bool
-	// retried is whether the read that failed has already had its second
-	// chance at this size. poll argues why there is exactly one.
-	retried bool
 }

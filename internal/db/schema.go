@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 )
 
@@ -141,13 +142,22 @@ func (d *DB) migrate() error {
 		return fmt.Errorf("%q is at schema version %d and this orbit knows %d: upgrade orbit rather than letting an older one write into it", d.path, found, version)
 	}
 
+	if found == version {
+		// There is nothing to do, so nothing is written. Every command opens
+		// the record before it does anything, and re-stamping the version it
+		// already has would make opening it a write: a transaction and a
+		// growing write-ahead log for each `orbit list`, and a state root
+		// whose file is read-only refusing to be read at all.
+		return nil
+	}
+
 	tx, err := d.sql.Begin()
 	if err != nil {
 		return fmt.Errorf("begin the migration of %q: %w", d.path, err)
 	}
 
 	if err := stepsFrom(tx, found); err != nil {
-		return fmt.Errorf("%w, and rolling back after it: %w", err, tx.Rollback())
+		return errors.Join(err, tx.Rollback())
 	}
 
 	if err := tx.Commit(); err != nil {

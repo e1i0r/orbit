@@ -1,105 +1,157 @@
 package board
 
-// The two things a poll does to one thing: read the tail of one task's log,
-// and find out what tasks one repository has. Refresh and Rescan are the
-// loops; these are what they call.
+// What a poll asks: everything the record has gained since the last refresh,
+// one task's whole history, and what tasks one repository has. Refresh and
+// Rescan are the loops; these are what they call.
 
 import (
-	"errors"
 	"fmt"
-	"os"
+	"time"
 
 	"github.com/e1i0r/orbit/internal/record"
 )
 
-// poll reads whatever has been appended to one task's log since the last
-// refresh, and returns the verdict on having done so.
-func (r *Reader) poll(st *taskState) ([]record.Event, error) {
-	info, err := os.Stat(st.path)
-	if errors.Is(err, os.ErrNotExist) {
-		// A task written down whose run has never started has no log at
-		// all, and that is an answer rather than a fault — the same
-		// treatment record.Read gives it.
-		return nil, nil
-	}
+// arrival is one event the stream brought, with the row it was written at.
+//
+// The row travels with the event because the reader has to be able to tell an
+// event it has already been given from one it has not, and two events of a
+// task can be told apart by nothing else: the same kind, at the same second,
+// with the same text, is what a retried run writes.
+type arrival struct {
+	at    int64
+	event record.Event
+}
 
+// follow reads everything written since the last refresh, whatever task it
+// was written about, and files it under the tasks it belongs to.
+//
+// One query, and not one per task. That is what the byte offsets used to
+// buy, bought again and more cheaply: a refresh over twenty quiet tasks is
+// one statement answering no rows, where it used to be twenty stats.
+//
+// Each state carries the row it has read up to rather than trusting the
+// reader's own, so an event this call has already handed to a task cannot be
+// handed to it twice — which is what makes the catch-up below safe to run at
+// any moment, against a record another process is writing to.
+func (r *Reader) follow() (map[string][]arrival, error) {
+	d, err := r.store.Record()
 	if err != nil {
-		return nil, fmt.Errorf("stat %q: %w", st.path, err)
-	}
-
-	st.modTime = info.ModTime()
-
-	size := info.Size()
-	if size == st.size {
-		// The one stat this whole design is built on. Nothing was appended,
-		// so there is nothing to open, seek, read or parse, and the last
-		// verdict stands — which is also what stops a log nobody can read
-		// from being re-read twice a second and from quietly stopping being
-		// reported.
-		return nil, st.err
-	}
-
-	if size < st.offset {
-		// Shorter than what has already been read, so this log was replaced
-		// rather than appended to. ReadFrom answers that on its own by
-		// starting from the top; what it cannot know is that the events read
-		// from the log it replaced are no longer this task's history, and
-		// folding both together would show one task attempted twice. So they
-		// go with the offset. Clearing seen is what makes the caller fold
-		// again even if the replacement has nothing in it yet.
-		st.offset, st.events, st.seen = 0, nil, false
-	}
-
-	// The offset is only ever what ReadFrom answered, never arithmetic of
-	// this package's own: ReadFrom advances past a complete,
-	// newline-terminated line and no further, and a torn final line is a
-	// write in flight rather than damage. Tracking bytes here would defeat
-	// exactly that property.
-	events, next, err := record.ReadFrom(st.path, st.offset)
-	if err != nil {
-		// A read that failed gets exactly one more try, on the next
-		// refresh, and then the size is committed and the verdict stands.
-		//
-		// Both halves are needed and they pull opposite ways. Committing
-		// the size before the read is attempted means a failure is never
-		// retried at all: the bytes it did not read stay stranded until
-		// something else is appended, and if the write that failed was a
-		// run's last one, its ending never appears — the row goes on saying
-		// "running" over a log that says "finished", and the error beside
-		// it goes on blaming a fault that may have lasted a millisecond.
-		//
-		// Retrying forever is the other mistake. A line longer than
-		// record.MaxLine — four megabytes — is a log no later read will get
-		// past, and re-reading it twice a second is four megabytes of
-		// pointless I/O per second per damaged task, for as long as the
-		// window is open. One retry recovers a filesystem that blinked and
-		// bounds the other case at two.
-		if !st.retried {
-			st.retried = true
-			return nil, err
-		}
-
-		st.size, st.retried = size, false
-
 		return nil, err
 	}
 
-	st.size, st.offset, st.retried = size, next, false
+	changes, err := d.Since(r.at, "")
+	if err != nil {
+		return nil, err
+	}
+
+	fresh := make(map[string][]arrival, len(changes))
+
+	for _, c := range changes {
+		fresh[c.Task] = append(fresh[c.Task], arrival{at: c.N, event: c.Event})
+
+		if c.N > r.at {
+			r.at = c.N
+		}
+	}
+
+	return fresh, nil
+}
+
+// history is everything the record holds about one task the reader has only
+// just heard of.
+//
+// A task written down since the window opened has a whole history behind the
+// row every other task has already reached, and the stream above starts
+// where they are. So it is read once, from the top, exactly as opening its
+// log from byte zero used to do.
+func (r *Reader) history(st *taskState) ([]record.Event, error) {
+	d, err := r.store.Record()
+	if err != nil {
+		return nil, err
+	}
+
+	changes, err := d.Since(0, st.id)
+	if err != nil {
+		return nil, fmt.Errorf("read the record of %q: %w", st.id, err)
+	}
+
+	events := make([]record.Event, 0, len(changes))
+
+	for _, c := range changes {
+		events = append(events, c.Event)
+
+		if c.N > st.at {
+			st.at = c.N
+		}
+	}
 
 	return events, nil
 }
 
-// list is every task of one repository, in the order the rows are drawn —
-// sorted by id, which is the order they are listed in everywhere else.
+// list is every task of one repository, sorted by id, which is the order
+// they are listed in everywhere else.
 //
-// The tasks are all in one directory now and each one says which
-// repositories it is worked in, so this asks the store rather than reading
-// a directory of its own.
+// One query rather than a directory listing and a file opened per task in
+// it. That is the last of the per-task reads a refresh used to do: the
+// events arrive in one statement above, and which tasks there are to ask
+// about arrives in this one.
 func (r *Reader) list(rs *repoState) ([]string, error) {
-	ids, err := r.store.TaskIDsOfRepo(rs.path)
+	d, err := r.store.Record()
 	if err != nil {
-		return ids, fmt.Errorf("list the tasks of %q: %w", rs.name, err)
+		return nil, err
+	}
+
+	ids, err := d.TasksOfRepo(rs.path)
+	if err != nil {
+		return ids, fmt.Errorf("the tasks of %q: %w", rs.name, err)
 	}
 
 	return ids, nil
+}
+
+// arrivals is what one task gained this refresh: its whole history if this
+// is the first the reader has heard of it, and otherwise the part of the
+// stream that was written about it.
+//
+// The row each task has read up to is checked against even on the stream,
+// and that is not belt and braces. A task caught up during the previous
+// refresh read to the last row in the record, which is past the row the
+// stream had reached before it — so the next stream carries rows that task
+// has already been given, and taking them again would show a run attempted
+// twice over a record that says once.
+func (r *Reader) arrivals(st *taskState, arrived map[string][]arrival) ([]record.Event, error) {
+	if !st.seen && st.at == 0 {
+		return r.history(st)
+	}
+
+	var fresh []record.Event
+
+	for _, a := range arrived[st.id] {
+		if a.at <= st.at {
+			continue
+		}
+
+		fresh = append(fresh, a.event)
+		st.at = a.at
+	}
+
+	return fresh, nil
+}
+
+// newest is when the last of these events was written, which is what the
+// health panel calls the last write.
+//
+// It comes from the events themselves rather than from a file's modification
+// time, and it is the one number on that panel that is now a fact about the
+// record instead of a fact about the filesystem holding it.
+func newest(events []record.Event) time.Time {
+	var at time.Time
+
+	for _, e := range events {
+		if e.At.After(at) {
+			at = e.At
+		}
+	}
+
+	return at
 }

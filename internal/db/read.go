@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/e1i0r/orbit/internal/record"
@@ -50,23 +51,15 @@ func (d *DB) Events(taskID string) ([]record.Event, error) {
 
 	for rows.Next() {
 		var (
-			e        record.Event
-			at, data string
+			n                           int64
+			kind, at, phase, text, data string
 		)
 
-		if err := rows.Scan(&e.Kind, &at, &e.Phase, &e.Text, &data); err != nil {
+		if err := rows.Scan(&n, &kind, &at, &phase, &text, &data); err != nil {
 			return nil, fmt.Errorf("read an event of %q: %w", taskID, err)
 		}
 
-		if e.At, err = moment(at); err != nil {
-			return nil, fmt.Errorf("the %q event of %q: %w", e.Kind, taskID, err)
-		}
-
-		if e.Data, err = decode(data); err != nil {
-			return nil, fmt.Errorf("the %q event of %q: %w", e.Kind, taskID, err)
-		}
-
-		events = append(events, e)
+		events = append(events, eventOf(n, kind, at, phase, text, data))
 	}
 
 	return events, rows.Err()
@@ -206,6 +199,41 @@ func span(started string, ended sql.NullString) (time.Time, time.Time, error) {
 	return from, to, nil
 }
 
+// eventOf turns one row into the event it holds, and a row that will not
+// read into the record.unreadable event that says so.
+//
+// It cannot fail, and that is deliberate. A reader answering with fewer
+// events than the record holds and nothing to say so is lying about its own
+// completeness, and a board drawing twenty tasks would go blank because one
+// row of one of them had been hand-edited. internal/record does exactly this
+// for a line of a file that will not parse; this is the same fact about a
+// row.
+func eventOf(n int64, kind, at, phase, text, data string) record.Event {
+	when, err := moment(at)
+	if err != nil {
+		return unreadable(n, "the time it was written at is not a time")
+	}
+
+	held, err := decode(data)
+	if err != nil {
+		return unreadable(n, "what it carries is not the object it should be")
+	}
+
+	return record.Event{Kind: kind, At: when, Phase: phase, Text: text, Data: held}
+}
+
+// unreadable names the row rather than counting rows, for the reason
+// internal/record names a byte rather than a line: a count is only true of
+// the reader that made it, and a row id is the same fact for everybody.
+// Whoever is looking can go and read it with their own eyes.
+func unreadable(n int64, why string) record.Event {
+	return record.Event{
+		Kind: record.Unreadable,
+		Text: "this row of the record could not be read: " + why,
+		Data: map[string]string{"row": strconv.FormatInt(n, 10)},
+	}
+}
+
 // moment reads a column back into the time it was written from.
 func moment(s string) (time.Time, error) {
 	at, err := time.Parse(time.RFC3339Nano, s)
@@ -213,7 +241,12 @@ func moment(s string) (time.Time, error) {
 		return time.Time{}, fmt.Errorf("read %q as a time: %w", s, err)
 	}
 
-	return at, nil
+	// Stored in UTC, answered where the reader is. The instant is the same
+	// either way; what changes is what `orbit show` prints, and a reader
+	// asking what happened at four o'clock means four o'clock on the clock in
+	// front of them. The log kept the writer's own offset in the line and
+	// this brings the same answer back out of a column that cannot.
+	return at.Local(), nil
 }
 
 // decode is encode backwards: an empty column is an event with no data,
