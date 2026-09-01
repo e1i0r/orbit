@@ -118,6 +118,8 @@ var borrowedWholesale = map[string]string{
 	"compose.tab_manual":        "a tab number and a word Spanish spells the same",
 	"tab.gates":                 "the engines call them gates and so does the record",
 	"tab.thinking":              "the dial, the flag and the engines all say thinking",
+	"quota.title":               "this program's Spanish already spells the word quota, as its own sentences about it do",
+	"key.quota":                 "the same loanword, and the name of the screen it opens",
 	"start.thinking_hint":       "the dial, the flag and the engines all say thinking",
 	"overview.thinking":         "the dial, the flag and the engines all say thinking",
 	"key.supervisor":            "supervisor is supervisor",

@@ -136,9 +136,10 @@ func (m Model) hit(x, y int) Target {
 			return m.hitRepos(x, y)
 		case screenCompose:
 			return m.hitCompose(x, y)
-		case screenHelp, screenSupervisor:
-			// Neither has anything to point at: the cheat sheet is read
-			// and the supervisor's log is scrolled. Answering nothing is
+		case screenHelp, screenSupervisor, screenQuota:
+			// None of the three has anything to point at: the cheat sheet
+			// and the quota are read, the supervisor's log is scrolled.
+			// Answering nothing is
 			// what keeps them from falling through to the board's rows
 			// below — where a click landed on whatever task happened to be
 			// at that height, and a second one opened it.

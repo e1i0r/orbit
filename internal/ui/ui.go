@@ -42,6 +42,7 @@ const (
 	screenFlows
 	screenRepos
 	screenEngines
+	screenQuota
 	screenHelp
 	screenSupervisor
 )

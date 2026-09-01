@@ -64,6 +64,8 @@ func (m Model) key(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.repolistKey(msg)
 	case m.screen == screenEngines:
 		return m.enginesKey(msg)
+	case m.screen == screenQuota:
+		return m.quotaKey(msg)
 	case m.screen == screenHelp:
 		return m.helpKey(msg)
 	case m.screen == screenSupervisor:
@@ -125,6 +127,8 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.openRepos(), nil
 	case key.Matches(k, m.keys.EngineKnobs):
 		return m.openEngines(), nil
+	case key.Matches(k, m.keys.Quota):
+		return m.openQuota(), nil
 	case key.Matches(k, m.keys.Supervisor):
 		return m.openSupervisor(), nil
 	case key.Matches(k, m.keys.Autopilot):
