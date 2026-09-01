@@ -53,11 +53,15 @@ func TestACardKeepsItsBodyOffItsBorder(t *testing.T) {
 
 // TestFieldsSetTheLabelAboveTheValue, in that order, because the pair is read
 // as a caption and the thing it captions rather than as two values.
+//
+// The label is upper-cased and the key beside it is not. Written into the
+// label, thinking's t was drawn as [T] — which on that screen is the key for
+// more tests, and pressing what the pane named queued an engine run.
 func TestFieldsSetTheLabelAboveTheValue(t *testing.T) {
 	pairs := []field{
-		{"engine [k]", "claude sonnet"},
-		{"effort [E]", "high"},
-		{"thinking [t]", "adaptive"},
+		{label: "engine", key: "k", value: "claude sonnet"},
+		{label: "effort", key: "E", value: "high"},
+		{label: "thinking", key: "t", value: "adaptive"},
 	}
 
 	got := fields(pairs, 2, 60)
@@ -69,7 +73,7 @@ func TestFieldsSetTheLabelAboveTheValue(t *testing.T) {
 		t.Errorf("the line between two rows is %q, want a blank one", got[2])
 	}
 
-	for i, want := range []string{"ENGINE [K]", "claude sonnet", "THINKING [T]", "adaptive"} {
+	for i, want := range []string{"ENGINE [k]", "claude sonnet", "THINKING [t]", "adaptive"} {
 		line := got[[]int{0, 1, 3, 4}[i]]
 		if !strings.Contains(line, want) {
 			t.Errorf("line %d is %q, want it to state %q", i, line, want)
@@ -84,7 +88,11 @@ func TestFieldsSetTheLabelAboveTheValue(t *testing.T) {
 // TestFieldsHoldTheirColumns. The value under a label is the value of that
 // label, and it only reads that way while both start in the same cell.
 func TestFieldsHoldTheirColumns(t *testing.T) {
-	pairs := []field{{"a", "1"}, {"bbbbbbbbbbbbbbbbbbbb", "2"}, {"c", "3"}}
+	pairs := []field{
+		{label: "a", value: "1"},
+		{label: "bbbbbbbbbbbbbbbbbbbb", value: "2"},
+		{label: "c", value: "3"},
+	}
 
 	got := fields(pairs, 3, 60)
 	if len(got) != 2 {
@@ -104,7 +112,7 @@ func TestFieldsHoldTheirColumns(t *testing.T) {
 // TestFieldsRefuseWhatTheyCannotLay. Zero columns is a division by zero and
 // no pairs is a blank line where a block was expected.
 func TestFieldsRefuseWhatTheyCannotLay(t *testing.T) {
-	if got := fields([]field{{"a", "1"}}, 0, 60); got != nil {
+	if got := fields([]field{{label: "a", value: "1"}}, 0, 60); got != nil {
 		t.Errorf("fields in 0 columns returned %q", got)
 	}
 

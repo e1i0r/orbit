@@ -39,7 +39,7 @@ func (m Model) overviewVitals(t view.Task, w int) []string {
 
 	out = append(out, "")
 
-	for _, l := range fields(m.dials(t), 4, w-2*len(paneGutter)) {
+	for _, l := range fields(m.dials(t), gridColumns(w), w-2*len(paneGutter)) {
 		out = append(out, paneGutter+l)
 	}
 
@@ -70,7 +70,8 @@ func (m Model) dials(t view.Task) []field {
 	p := m.opts.Words
 	dial := func(label, key, value string) field {
 		return field{
-			label: label + " [" + key + "]",
+			label: label,
+			key:   key,
 			value: Paint(Accent).Render(value),
 		}
 	}
@@ -262,6 +263,19 @@ func (m Model) overviewChanges(w int) []string {
 	return append(out, "")
 }
 
+// gridColumns is how many columns the pane's two grids are laid in at a
+// width. A cell has to hold the widest label with a space after it —
+// THINKING [t] is twelve cells and MORE TESTS is ten — so under sixty the
+// four are paired instead of run together. It is the width statStrip gives
+// up its boxes at, and for the same reason.
+func gridColumns(w int) int {
+	if w < 60 {
+		return 2
+	}
+
+	return 4
+}
+
 // overviewFileCap is how many paths the pane names before counting the rest.
 const overviewFileCap = 4
 
@@ -270,8 +284,8 @@ const overviewFileCap = 4
 func (m Model) overviewActions(w int) []string {
 	p := m.opts.Words
 
-	act := func(key, label string) string {
-		return Paint(Live).Render(key) + Text(Tertiary).Render(" "+label)
+	act := func(key, label string) field {
+		return field{label: label, value: Paint(Live).Render(key)}
 	}
 
 	head := m.sectionHead(foldDeliver, p.T("overview.quick_actions", "deliver"), "", w)
@@ -279,22 +293,21 @@ func (m Model) overviewActions(w int) []string {
 		return []string{head, ""}
 	}
 
-	return []string{
-		head,
-		paneGutter + meta(
-			act("p", p.T("overview.action_pr", "create PR")),
-			act("u", p.T("overview.action_update_pr", "update PR")),
-			act("M", p.T("overview.action_merge_pr", "merge PR")),
-			act("X", p.T("overview.action_close_pr", "close PR")),
-		),
-		paneGutter + meta(
-			act("C", p.T("overview.action_checks", "fix checks")),
-			act("T", p.T("overview.action_tests", "more tests")),
-			act("a", p.T("overview.action_feedback", "feedback")),
-			act("0", p.T("overview.action_diff", "diff")),
-		),
-		"",
+	out := []string{head}
+	for _, l := range fields([]field{
+		act("p", p.T("overview.action_pr", "create PR")),
+		act("u", p.T("overview.action_update_pr", "update PR")),
+		act("M", p.T("overview.action_merge_pr", "merge PR")),
+		act("X", p.T("overview.action_close_pr", "close PR")),
+		act("C", p.T("overview.action_checks", "fix checks")),
+		act("T", p.T("overview.action_tests", "more tests")),
+		act("a", p.T("overview.action_feedback", "feedback")),
+		act("0", p.T("overview.action_diff", "diff")),
+	}, gridColumns(w), w-2*len(paneGutter)) {
+		out = append(out, paneGutter+l)
 	}
+
+	return append(out, "")
 }
 
 // plusMinus is the two numbers a diff is judged by. A side that did not

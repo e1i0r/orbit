@@ -56,11 +56,16 @@ func card(title string, body []string, width int) []string {
 	return strings.Split(box.Render(strings.Join(lines, "\n")), "\n")
 }
 
-// field is one thing a card states about its subject: what it is called, and
-// what it says.
+// field is one thing a card states about its subject: what it is called,
+// what it says, and the key that acts on it.
+//
+// The key is its own string rather than part of the label because the label
+// is upper-cased and a keystroke is not: written into the label, thinking's
+// t was drawn as [T], which on this screen is the key for more tests.
 type field struct {
 	label string
 	value string
+	key   string
 }
 
 // fields sets label-over-value pairs in columns: the label small, quiet and
@@ -84,7 +89,13 @@ func fields(pairs []field, columns, width int) []string {
 
 		for col := 0; col < columns && row+col < len(pairs); col++ {
 			p := pairs[row+col]
-			labels += pad(Text(Tertiary).Render(strings.ToUpper(p.label)), cell, false)
+
+			label := strings.ToUpper(p.label)
+			if p.key != "" {
+				label += " [" + p.key + "]"
+			}
+
+			labels += pad(Text(Tertiary).Render(label), cell, false)
 			values += pad(p.value, cell, false)
 		}
 
