@@ -8,16 +8,19 @@ import (
 	"time"
 )
 
-func TestQuotaFromEnvEmpty(t *testing.T) {
-	t.Setenv("ANTHROPIC_BASE_URL", "")
-
-	c := FromEnv()
+func TestAClientWithNoBaseURLIsNoClient(t *testing.T) {
+	c := New("  ")
 	if c != nil {
-		t.Fatalf("want nil client when ANTHROPIC_BASE_URL is empty, got %+v", c)
+		t.Fatalf("want nil client when nobody named a base URL, got %+v", c)
 	}
 
 	if got := c.Quota(true); got != nil {
 		t.Fatalf("want nil quota from nil client, got %+v", got)
+	}
+
+	windows, err := c.Fetch()
+	if windows != nil || err != nil {
+		t.Fatalf("a nil client fetched %+v, %v; want nothing and no failure", windows, err)
 	}
 }
 

@@ -232,9 +232,30 @@ type Options struct {
 	// come back verbatim.
 	ValidID func(id string) error
 
-	// Quota asks about proxy quota windows. A nil port answers nothing,
-	// and the quota field is not drawn.
-	Quota func() []QuotaWindow
+	// Quota asks what is left of one engine's allowance, and in what unit
+	// that engine's use is spoken about at all. A nil port answers nothing,
+	// and the status line falls back on money — which is what every
+	// engine's own command line reports.
+	//
+	// It takes an engine name because both answers are per engine: claude
+	// under a subscription has a window and no dollars, codex on an API key
+	// has dollars and no window, and a board can hold tasks of both.
+	Quota func(engine string) QuotaReading
+}
+
+// QuotaReading is what the window learns about one engine's quota.
+//
+// Money and Sourced are carried as answers rather than as the billing mode
+// they were derived from, because the mode is not this package's to read:
+// internal/quota decides what a number about an engine means, and the window
+// is told the outcome. Sourced is separate from a window count for the
+// difference it protects — an engine nobody can read a window for is not an
+// engine with no window left.
+type QuotaReading struct {
+	Engine  string
+	Money   bool
+	Sourced bool
+	Windows []QuotaWindow
 }
 
 // QuotaWindow is what the window learns about remaining quota.

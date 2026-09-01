@@ -142,12 +142,16 @@ func TestFmtReset(t *testing.T) {
 }
 
 // TestStatusLineSegmentsAndQuota walks statusLine from wide enough for every
-// segment down to one segment, and through the quota-window branch, which
-// only shows when Options.Quota is set.
+// segment down to one segment, and through the quota branch, which only
+// shows when Options.Quota is set.
 func TestStatusLineSegmentsAndQuota(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m.opts.Quota = func() []QuotaWindow {
-		return []QuotaWindow{{Label: "5h", Pct: 40, ResetsIn: 90 * time.Minute}}
+	m.opts.Quota = func(engine string) QuotaReading {
+		return QuotaReading{
+			Engine:  engine,
+			Sourced: true,
+			Windows: []QuotaWindow{{Label: "5h", Pct: 40, ResetsIn: 90 * time.Minute}},
+		}
 	}
 
 	wide := m.statusLine(200)
@@ -173,11 +177,26 @@ func TestStatusLineSegmentsAndQuota(t *testing.T) {
 		t.Errorf("statusLine with no quota port = %q, want no percentage", got)
 	}
 
-	// An empty quota window slice: same as no port, since the branch checks
-	// len(windows) > 0.
-	m.opts.Quota = func() []QuotaWindow { return nil }
-	if got := m.statusLine(200); strings.Contains(got, "%") {
-		t.Errorf("statusLine with an empty quota slice = %q, want no percentage", got)
+	// An engine paid per token has no window and needs none: what it costs
+	// is the spent field, which is money because this reading says so.
+	m.opts.Quota = func(engine string) QuotaReading {
+		return QuotaReading{Engine: engine, Money: true}
+	}
+
+	metered := m.statusLine(200)
+	if strings.Contains(metered, "%") || !strings.Contains(metered, "$") {
+		t.Errorf("statusLine for a metered engine = %q, want money and no percentage", metered)
+	}
+
+	// A subscription with nowhere to read its window from says so, and says
+	// nothing about money: neither field may be left to a reader's guess.
+	m.opts.Quota = func(engine string) QuotaReading {
+		return QuotaReading{Engine: engine}
+	}
+
+	unread := m.statusLine(200)
+	if !strings.Contains(unread, "claude") || strings.Contains(unread, "$") {
+		t.Errorf("statusLine for an unreadable subscription = %q, want it named and no money", unread)
 	}
 }
 
@@ -190,5 +209,50 @@ func TestStatusRows(t *testing.T) {
 	m.frame.Status.H = 0
 	if rows := m.statusRows(); rows != nil {
 		t.Errorf("statusRows with H=0 = %v, want nil", rows)
+	}
+}
+
+// The header carries the windows as chips beside the engine they belong to,
+// both of them, and says nothing at all when there is nothing read.
+func TestTheHeaderCarriesTheQuotaWindows(t *testing.T) {
+	m, _ := testModel(t, 120, 30)
+
+	m.opts.Quota = func(engine string) QuotaReading {
+		return QuotaReading{
+			Engine:  engine,
+			Sourced: true,
+			Windows: []QuotaWindow{
+				{Label: "5h", Pct: 1, ResetsIn: 4 * time.Hour},
+				{Label: "7d", Pct: 76, ResetsIn: 48 * time.Hour},
+			},
+		}
+	}
+
+	line := m.headerLine(120)
+	for _, want := range []string{"1% 5h", "76% 7d", "used"} {
+		if !strings.Contains(line, want) {
+			t.Errorf("header %q does not carry %q", line, want)
+		}
+	}
+
+	m.opts.Quota = func(engine string) QuotaReading {
+		return QuotaReading{Engine: engine, Sourced: true}
+	}
+
+	if got := m.quotaChip(); got != "" {
+		t.Errorf("chip with nothing read = %q, want empty", got)
+	}
+
+	m.opts.Quota = nil
+	if got := m.quotaChip(); got != "" {
+		t.Errorf("chip with no port = %q, want empty", got)
+	}
+}
+
+// A proxy reporting more used than there was is reporting an overage, and a
+// window is at most all of itself.
+func TestAnOverusedWindowIsAFullWindowRatherThanMoreThanOne(t *testing.T) {
+	if got := pctUsed(QuotaWindow{Pct: 140}); got != 100 {
+		t.Errorf("pctUsed(140%% used) = %v, want 100", got)
 	}
 }

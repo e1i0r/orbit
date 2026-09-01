@@ -242,6 +242,15 @@ func (m Model) headerFields() []headerField {
 		fields = append(fields, headerField{"engine", Paint(Dim).Render("🧠 claude")})
 	}
 
+	// Quota chip
+	//
+	// Unnamed, so it is drawn and never clicked: what is behind a percentage
+	// is the proxy that answered it, and there is no screen of ours to open
+	// on that. It sits after the engine because it is that engine's number.
+	if q := m.quotaChip(); q != "" {
+		fields = append(fields, headerField{text: Paint(Dim).Render("⏳ " + q)})
+	}
+
 	// Language chip
 	lang := p.T("header.lang_badge", "EN")
 	fields = append(fields, headerField{"lang", Paint(Dim).Render("🌐 " + lang)})

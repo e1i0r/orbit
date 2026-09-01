@@ -181,26 +181,34 @@ func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 	}, s, nil
 }
 
-// quotaPort adapts quota.Client to ui.Options.Quota.
-func quotaPort(qc *quota.Client, syncWait bool) func() []ui.QuotaWindow {
-	if qc == nil {
+// quotaPort adapts quota.Meter to ui.Options.Quota.
+//
+// Money is carried across as the answer quota.Mode gave rather than as the
+// mode itself, for the reason every port here carries answers: the window
+// draws what it is told, and a mode it could read is a mode it could
+// interpret. The one place that decides what a number about an engine means
+// is the package that knows how the engine is paid for.
+func quotaPort(m *quota.Meter, syncWait bool) func(string) ui.QuotaReading {
+	if m == nil {
 		return nil
 	}
 
-	return func() []ui.QuotaWindow {
-		windows := qc.Quota(syncWait)
-		if len(windows) == 0 {
-			return nil
+	return func(engine string) ui.QuotaReading {
+		reading := m.Read(engine, syncWait)
+
+		out := ui.QuotaReading{
+			Engine:  reading.Engine,
+			Money:   reading.Mode.Spends(),
+			Sourced: reading.Sourced,
 		}
 
-		out := make([]ui.QuotaWindow, len(windows))
-		for i, w := range windows {
-			out[i] = ui.QuotaWindow{
+		for _, w := range reading.Windows {
+			out.Windows = append(out.Windows, ui.QuotaWindow{
 				Key:      w.Key,
 				Label:    w.Label,
 				Pct:      w.Pct,
 				ResetsIn: w.ResetsIn,
-			}
+			})
 		}
 
 		return out

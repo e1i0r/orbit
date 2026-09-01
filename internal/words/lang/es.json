@@ -2342,8 +2342,16 @@
       "value": "{events} eventos"
     },
     "status.quota": {
-      "source": "{pct} left in {label} · resets in {resets}",
-      "value": "{pct} restante en {label} · reinicia en {resets}"
+      "source": "{pct} used in {label} · resets in {resets}",
+      "value": "{pct} usado en {label} · reinicia en {resets}"
+    },
+    "header.quota_used": {
+      "source": "{windows} used",
+      "value": "{windows} usado"
+    },
+    "status.quota_unread": {
+      "source": "no quota source for {engine}",
+      "value": "sin fuente de quota para {engine}"
     },
     "key.repos": {
       "source": "repositories",

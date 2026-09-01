@@ -62,20 +62,33 @@ func TestQuotaPortMapsRealWindows(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	qc := quota.New(srv.URL)
+	t.Setenv("ANTHROPIC_BASE_URL", srv.URL)
+	t.Setenv("ANTHROPIC_API_KEY", "")
 
-	qp := quotaPort(qc, true)
+	qp := quotaPort(quota.FromEnv(), true)
 	if qp == nil {
-		t.Fatal("quotaPort(client, true) returned nil")
+		t.Fatal("quotaPort(meter, true) returned nil")
 	}
 
-	windows := qp()
-	if len(windows) != 1 {
-		t.Fatalf("got %d windows, want 1", len(windows))
+	reading := qp("claude")
+	if len(reading.Windows) != 1 {
+		t.Fatalf("got %d windows, want 1", len(reading.Windows))
 	}
 
-	if windows[0].Key != "acct-1" || windows[0].Label != "5h" {
-		t.Errorf("unexpected window: %+v", windows[0])
+	if reading.Windows[0].Key != "acct-1" || reading.Windows[0].Label != "5h" {
+		t.Errorf("unexpected window: %+v", reading.Windows[0])
+	}
+
+	// The proxy answered, so there is a source; and the key is out of the
+	// environment, so what claude costs is not spoken about in money.
+	if !reading.Sourced || reading.Money {
+		t.Errorf("claude read as sourced=%v money=%v, want sourced with no money", reading.Sourced, reading.Money)
+	}
+
+	// An engine with no source of its own says so rather than reporting a
+	// window nobody read as empty.
+	if none := qp("opencode"); none.Sourced || len(none.Windows) != 0 || !none.Money {
+		t.Errorf("opencode read as %+v, want unsourced, empty and metered", none)
 	}
 }
 
