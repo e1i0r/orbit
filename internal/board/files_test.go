@@ -67,8 +67,8 @@ func TestTheListingIsWhatTheDirectoryHolds(t *testing.T) {
 	// move the row a reader is reaching for.
 	// The marker naming the repositories the task is worked in is a file of
 	// the task like any other, and the tab shows what is there.
-	if got := strings.Join(names, " "); got != "control events.jsonl repos task.md" {
-		t.Fatalf("the listing is %q, want the four files in name order", got)
+	if got := strings.Join(names, " "); got != "control repos task.md" {
+		t.Fatalf("the listing is %q, want the three files in name order", got)
 	}
 
 	for _, f := range files {

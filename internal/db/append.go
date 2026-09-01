@@ -29,16 +29,26 @@ const retries = 4
 // exists and the row derived from it does not, and that window is where two
 // answers to one question come from.
 func (d *DB) Append(taskID string, e record.Event) error {
-	if e.At.IsZero() {
-		e.At = time.Now()
+	e = stamped(e)
+
+	if err := tooBig(e); err != nil {
+		return fmt.Errorf("append %q to %q: %w", e.Kind, taskID, err)
 	}
 
-	var err error
+	if err := keepTrying(func() error { return d.appendOnce(taskID, e) }); err != nil {
+		return fmt.Errorf("append %q to %q: %w", e.Kind, taskID, err)
+	}
 
+	return nil
+}
+
+// keepTrying runs a write, and asks again when it failed only for want of a
+// turn at the lock.
+func keepTrying(write func() error) error {
 	for try := 0; ; try++ {
-		err = d.appendOnce(taskID, e)
+		err := write()
 		if err == nil || !refused(err) || try == retries {
-			break
+			return err
 		}
 
 		// Backing off rather than spinning: the lock is held by somebody
@@ -46,9 +56,47 @@ func (d *DB) Append(taskID string, e record.Event) error {
 		// to whatever they are doing.
 		time.Sleep(time.Duration(try+1) * 250 * time.Millisecond)
 	}
+}
 
+// stamped gives an event the time it happened, and leaves alone the one kind
+// that never happened at a time.
+//
+// Most callers fill At in nowhere: the record is written as the thing is
+// done, so now is the answer. record.unreadable is the exception, and it is
+// why this is a function rather than a line. It is what a reader puts where
+// an event it could not read should have been, and the migration appends it
+// — carrying a damaged line of an older Orbit's log across as the fact it is.
+// Dating it from the clock would say the damage happened while the record was
+// being moved, and every reader would print that date as the event's own.
+func stamped(e record.Event) record.Event {
+	if e.At.IsZero() && e.Kind != record.Unreadable {
+		e.At = time.Now()
+	}
+
+	return e
+}
+
+// tooBig refuses an event too large to be one row, at the size the log
+// refused at.
+//
+// The number is record.MaxLine and the measure is the event's JSON, which is
+// the line the log wrote. Both are deliberately unchanged, and the reason for
+// them is not the one it was: a line over the reader's buffer made a whole
+// task's log unreadable, and there is no buffer to overrun now.
+//
+// What replaced it is that an event this size is a run that has gone wrong —
+// an engine looping on its own output — and the record is what every refresh
+// of the board reads. Keeping one number for both records also keeps them
+// interchangeable: a state root filled from the files holds nothing this one
+// would refuse, and refuses nothing the files held.
+func tooBig(e record.Event) error {
+	line, err := json.Marshal(e)
 	if err != nil {
-		return fmt.Errorf("append %q to %q: %w", e.Kind, taskID, err)
+		return fmt.Errorf("encode event %q: %w", e.Kind, err)
+	}
+
+	if len(line) > record.MaxLine {
+		return fmt.Errorf("event %q is %d bytes, over the %d one row of the record holds", e.Kind, len(line), record.MaxLine)
 	}
 
 	return nil
@@ -141,12 +189,22 @@ func taskRow(tx *sql.Tx, taskID string, e record.Event) (int64, error) {
 	return id, nil
 }
 
-// joined records the repository an event says the task is being worked in.
+// joined records the repository an event says the task belongs to.
 //
-// The scope of a task is observed rather than declared: opening a worktree is
-// what joining is, so repo.joined is the event that makes the row.
+// Two events say it. repo.joined is a repository joining a task by being
+// worked in, which is how a task that reaches into a second checkout gains
+// it, and it is what the migration writes for a state root whose join was a
+// line in a file. task.created is the repository somebody wrote the task
+// against, and it says so in the same event rather than in one after it —
+// deliberately, because the link is what every listing of a repository's
+// tasks is now read from. Two events would leave a window, a process killed
+// inside it, and a task in the record that no repository has: on the board,
+// a task that does not exist.
+//
+// An event that carries no path joins nothing, which is every other kind and
+// every task.created an older Orbit wrote.
 func joined(tx *sql.Tx, task int64, e record.Event) error {
-	if e.Kind != record.RepoJoined {
+	if e.Kind != record.RepoJoined && e.Kind != record.TaskCreated {
 		return nil
 	}
 

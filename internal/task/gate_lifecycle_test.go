@@ -224,11 +224,6 @@ func TestWaitResumedEmitFailure(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	eventsPath, err := s.EventsPath(tk.ID)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	gate := FileGate(s, 5*time.Millisecond).(fileGate) //nolint:errcheck
 	p := flow.Phase{Name: "review"}
 
@@ -240,15 +235,13 @@ func TestWaitResumedEmitFailure(t *testing.T) {
 			done <- err
 		}()
 		// wait returns from synctest.Wait once phase.waiting is written and
-		// the goroutine is parked on its first poll — at which point the log
-		// is made unwritable before the word that would release it arrives.
+		// the goroutine is parked on its first poll — at which point the
+		// record is taken away, before the word that would release it
+		// arrives. The word itself is a file beside the record and is
+		// unaffected, which is what leaves the release clean and only the
+		// writing down of it broken.
 		synctest.Wait()
-
-		if err := os.Chmod(eventsPath, 0o400); err != nil {
-			t.Fatal(err)
-		}
-
-		t.Cleanup(func() { _ = os.Chmod(eventsPath, 0o600) }) //nolint:errcheck
+		breakRecord(t, s)
 
 		if err := Control(s, tk, "resume"); err != nil {
 			t.Fatal(err)

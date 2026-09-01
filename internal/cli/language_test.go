@@ -21,16 +21,16 @@ import (
 )
 
 // speaking is a workspace whose reader chose this language.
-func speaking(t *testing.T, language string) (orbitHome, dir string) {
+func speaking(t *testing.T, language string) (dir string) {
 	t.Helper()
 
-	root, orbitHome := workspace(t)
+	root, _ := workspace(t)
 
 	if code, _, errOut := run(t, "set", "language", language); code != 0 {
 		t.Fatalf("set language %s exited %d: %s", language, code, errOut)
 	}
 
-	return orbitHome, filepath.Join(root, "payments")
+	return filepath.Join(root, "payments")
 }
 
 // TestEveryCommandThatNeedsATaskIDRefusesInTheReadersLanguage. Eight commands
@@ -38,7 +38,7 @@ func speaking(t *testing.T, language string) (orbitHome, dir string) {
 // the commands rather than over the sentence: a command left behind still
 // answers in English while the other seven have moved.
 func TestEveryCommandThatNeedsATaskIDRefusesInTheReadersLanguage(t *testing.T) {
-	_, dir := speaking(t, "es")
+	dir := speaking(t, "es")
 
 	for _, command := range []string{"cancel", "direct", "note", "pause", "read", "resume", "run", "show"} {
 		t.Run(command, func(t *testing.T) {
@@ -67,7 +67,7 @@ func TestEveryCommandThatNeedsATaskIDRefusesInTheReadersLanguage(t *testing.T) {
 // The steps run in order against the same workspace, because half of them
 // need what the step before wrote.
 func TestTheEverydayVerbsSpeakTheReadersLanguage(t *testing.T) {
-	orbitHome, dir := speaking(t, "es")
+	dir := speaking(t, "es")
 	elsewhere := t.TempDir()
 
 	for _, step := range []struct {
@@ -92,7 +92,7 @@ func TestTheEverydayVerbsSpeakTheReadersLanguage(t *testing.T) {
 		{
 			args:    []string{"cancel", "-repo", dir, "PAY-1"},
 			english: "asked to stop",
-			before:  func(t *testing.T) { plantLiveMarker(t, orbitHome) },
+			before:  func(t *testing.T) { plantLiveMarker(t, "PAY-1") },
 		},
 		{args: []string{"reconcile", "-repo", dir}, english: "every run is accounted for"},
 		{args: []string{"supervisor"}, english: "supervisor thread is empty"},

@@ -177,11 +177,15 @@ func TestListReturnsTheTaskIDs(t *testing.T) {
 	}
 }
 
-// blockTheLog makes the task's events file impossible to write by putting a
-// directory where the file has to go. It is the cheapest honest way to make
-// a record fail: no permissions to fake, no interface to inject, and it
-// behaves the same on every filesystem this runs on.
-func blockTheLog(t *testing.T, s *store.Store, r repo.Repo, id string) string {
+// leaveSomethingInTheTaskDir puts a directory inside the task's own, which is
+// exactly what the rollback's non-recursive removal has to leave alone.
+//
+// It used to be the fault as well: a directory where events.jsonl went made
+// the record fail and left the task directory non-empty in one stroke. The
+// record is one file under the state root now, so the two are separate — the
+// refusal comes from the event itself being too big, and this is only the
+// thing the directory must not be emptied of.
+func leaveSomethingInTheTaskDir(t *testing.T, s *store.Store, r repo.Repo, id string) string {
 	t.Helper()
 
 	dir, err := s.CreateTaskDir(r.Path, id)
@@ -189,19 +193,19 @@ func blockTheLog(t *testing.T, s *store.Store, r repo.Repo, id string) string {
 		t.Fatalf("CreateTaskDir: %v", err)
 	}
 
-	blocked := filepath.Join(dir, "events.jsonl")
-	if err := os.Mkdir(blocked, 0o700); err != nil {
-		t.Fatalf("mkdir %q: %v", blocked, err)
+	kept := filepath.Join(dir, "sessions")
+	if err := os.Mkdir(kept, 0o700); err != nil {
+		t.Fatalf("mkdir %q: %v", kept, err)
 	}
 
-	return blocked
+	return kept
 }
 
 func TestCreateTakesTheFileBackOutWhenNothingCouldBeRecorded(t *testing.T) {
 	s, r := fixture(t)
-	blocked := blockTheLog(t, s, r, "ACME-1")
+	blocked := leaveSomethingInTheTaskDir(t, s, r, "ACME-1")
 
-	_, err := Create(s, r, "ACME-1", "one", "")
+	_, err := Create(s, r, "ACME-1", strings.Repeat("x", 5<<20), "")
 	if err == nil {
 		t.Fatal("Create reported success with nothing in the record")
 	}
@@ -223,7 +227,7 @@ func TestCreateTakesTheFileBackOutWhenNothingCouldBeRecorded(t *testing.T) {
 	// would exist to nothing but the duplicate check, which would refuse to
 	// write it ever again.
 	if err := os.Remove(blocked); err != nil {
-		t.Fatalf("unblock: %v", err)
+		t.Fatalf("empty the task directory: %v", err)
 	}
 
 	if _, err := Create(s, r, "ACME-1", "one", ""); err != nil {
@@ -286,9 +290,72 @@ func TestADuplicateIsTellableFromEveryOtherFailure(t *testing.T) {
 		t.Errorf("a duplicate id did not come back as ErrExists: %v", err)
 	}
 
-	blockTheLog(t, s, r, "ACME-2")
-
-	if _, err := Create(s, r, "ACME-2", "one", ""); errors.Is(err, ErrExists) {
+	if _, err := Create(s, r, "ACME-2", strings.Repeat("x", 5<<20), ""); errors.Is(err, ErrExists) {
 		t.Errorf("a record that could not be written came back as ErrExists: %v", err)
 	}
+}
+
+// breakRecord makes the record unreachable from here on.
+//
+// The open handle is let go of and a directory is put where the file was, so
+// the next reader or writer gets the failure a state root on a broken disk
+// would give. A directory rather than a permission bit because the bit
+// depends on who is running the test, and root would not notice it.
+//
+// It breaks reading and writing together. readOnlyRecord below breaks only
+// the writing, which is the other fault worth having and is a permission bit
+// after all — the two are not interchangeable, and which one a test wants
+// depends on which side of a function it is aiming at.
+func breakRecord(t *testing.T, s *store.Store) {
+	t.Helper()
+
+	if err := s.Close(); err != nil {
+		t.Fatalf("let go of the record: %v", err)
+	}
+
+	if err := os.RemoveAll(s.DBPath()); err != nil {
+		t.Fatalf("remove the record: %v", err)
+	}
+
+	if err := os.Mkdir(s.DBPath(), 0o700); err != nil {
+		t.Fatalf("put a directory where the record goes: %v", err)
+	}
+}
+
+// readOnlyRecord makes the record answer every read and refuse every write.
+//
+// The handle is let go of first, because the mode is checked when the file is
+// opened and not when it is written to: a process already holding it open for
+// writing keeps that permission whatever the bit says afterwards. Opened
+// again at 0444, SQLite does what it documents — takes the file read-only
+// rather than refusing it — so a reader gets its answer and a writer is told
+// the database is read-only.
+//
+// This is a permission bit, which breakRecord deliberately is not, and the
+// difference is what it costs: root ignores the bit, so under root the fault
+// does not happen and the caller skips rather than reporting a failure that
+// is the test's own. It is worth that. A fault that stops the writing and
+// leaves the reading is the only way to reach a function's second half from
+// outside the package, and there is no way to build one that does not come
+// down to who is running the test.
+func readOnlyRecord(t *testing.T, s *store.Store) {
+	t.Helper()
+
+	if os.Geteuid() == 0 {
+		t.Skip("running as root: a read-only file is still writable, so there is no fault to make")
+	}
+
+	if err := s.Close(); err != nil {
+		t.Fatalf("let go of the record: %v", err)
+	}
+
+	if err := os.Chmod(s.DBPath(), 0o444); err != nil {
+		t.Fatalf("make the record read-only: %v", err)
+	}
+
+	t.Cleanup(func() {
+		if err := os.Chmod(s.DBPath(), 0o600); err != nil {
+			t.Errorf("give the record its mode back: %v", err)
+		}
+	})
 }

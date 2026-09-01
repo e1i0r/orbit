@@ -39,6 +39,20 @@ const (
 	joinTaskToRepo = `INSERT INTO task_repo(task_id, repo_id, joined_at)
 	                  SELECT ?, id, ? FROM repo WHERE abs_path = ?
 	                  ON CONFLICT(task_id, repo_id) DO NOTHING`
+
+	selectTasksOfRepo = `SELECT t.task_id
+	                       FROM task t
+	                       JOIN task_repo tr ON tr.task_id = t.id
+	                       JOIN repo r ON r.id = tr.repo_id
+	                      WHERE r.abs_path = ?
+	                      ORDER BY t.task_id`
+
+	selectReposOfTask = `SELECT r.abs_path
+	                       FROM repo r
+	                       JOIN task_repo tr ON tr.repo_id = r.id
+	                       JOIN task t ON t.id = tr.task_id
+	                      WHERE t.task_id = ?
+	                      ORDER BY tr.joined_at, r.abs_path`
 )
 
 // Runs. An attempt is numbered by how many came before it, and it is ended
@@ -91,12 +105,22 @@ const insertEvent = `INSERT INTO event(task_id, run_id, phase_id, kind, at, phas
 // them, and one machine's clock stepping backwards would otherwise reorder a
 // history that did not change.
 const (
-	selectEvents = `SELECT e.kind, e.at, e.phase, e.text, e.data
+	selectEvents = `SELECT e.id, e.kind, e.at, e.phase, e.text, e.data
 	                  FROM event e JOIN task t ON t.id = e.task_id
 	                 WHERE t.task_id = ?
 	                 ORDER BY e.id`
 
 	selectTasks = `SELECT task_id FROM task ORDER BY id`
+
+	selectSince = `SELECT e.id, t.task_id, e.kind, e.at, e.phase, e.text, e.data
+	                 FROM event e JOIN task t ON t.id = e.task_id
+	                WHERE e.id > ?
+	                ORDER BY e.id`
+
+	selectSinceOf = `SELECT e.id, t.task_id, e.kind, e.at, e.phase, e.text, e.data
+	                   FROM event e JOIN task t ON t.id = e.task_id
+	                  WHERE e.id > ? AND t.task_id = ?
+	                  ORDER BY e.id`
 
 	selectRuns = `SELECT r.n, r.started_at, r.ended_at, r.outcome,
 	                     p.n, p.name, p.engine, p.model, p.started_at, p.ended_at, p.outcome

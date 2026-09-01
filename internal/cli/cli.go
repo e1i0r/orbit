@@ -103,7 +103,10 @@ func Run(args []string, out, errOut io.Writer) (code int) {
 	logger.Info("cli/"+c.Name, "ran")
 
 	flatten(errOut)
-	migrateRecord(errOut)
+
+	if !migrateRecord(errOut) {
+		return 1
+	}
 
 	err := c.Run(ctx, args[1:])
 	if errors.Is(err, errHelpShown) {

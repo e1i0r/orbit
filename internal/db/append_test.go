@@ -94,6 +94,32 @@ func TestAnEventWithNoTimeIsStampedOnArrival(t *testing.T) {
 	}
 }
 
+// TestTheOneEventThatNeverHappenedKeepsNoTime is the exception to the line
+// above, and the migration is what needs it.
+//
+// record.unreadable is not something that happened at a time: it is what a
+// reader puts where an event it could not read should have been, and the
+// migration appends one for every line of an older Orbit's log that would
+// not parse. Stamping it from the clock would date the damage to the moment
+// the record was moved, and `orbit show` would print that as the event's own
+// time — a date, and a wrong one, where the reader has to see there is none.
+func TestTheOneEventThatNeverHappenedKeepsNoTime(t *testing.T) {
+	d := open(t)
+
+	if err := d.Append("ACME-1", record.Event{Kind: record.Unreadable, Text: "a line nobody could read"}); err != nil {
+		t.Fatalf("append: %v", err)
+	}
+
+	events, err := d.Events("ACME-1")
+	if err != nil {
+		t.Fatalf("read back: %v", err)
+	}
+
+	if !events[0].At.IsZero() {
+		t.Errorf("the event that could not be read is stamped %v, want no time at all", events[0].At)
+	}
+}
+
 // TestTheTaskRowIsWhatTaskCreatedSaid. task.created is the one event that
 // says what a task is, and the row is what a board reads instead of folding
 // every event of every task to find a title.

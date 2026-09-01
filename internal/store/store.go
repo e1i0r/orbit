@@ -18,7 +18,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"unicode"
+
+	"github.com/e1i0r/orbit/internal/db"
 )
 
 // dirMode and fileMode keep the state root to its owner.
@@ -33,9 +36,18 @@ const (
 	fileMode os.FileMode = 0o600
 )
 
-// Store is a rooted view of ~/.orbit. It holds a path and no other state.
+// Store is a rooted view of ~/.orbit: a path, and the one handle on the
+// record that lives under it. Every path method is still pure — see the
+// package doc — and the handle is opened by Record and by nothing else.
 type Store struct {
 	root string
+
+	// mu guards the handle below and nothing else. The window refreshes on
+	// one goroutine and rescans on another, so the first call to Record can
+	// genuinely be two calls at once, and opening the record twice would
+	// defeat the whole of what Record is for.
+	mu     sync.Mutex
+	record *db.DB
 }
 
 // validateTaskID rejects taskIDs that could escape or traverse the store.
@@ -260,6 +272,21 @@ func (s *Store) EventsPath(taskID string) (string, error) {
 	}
 
 	return filepath.Join(dir, "events.jsonl"), nil
+}
+
+// TaskReposPath is the file that says which repositories a task is worked
+// in — the link, in the shape the last version of Orbit kept it in.
+//
+// It is named here for the same reason EventsPath is: the migration has to
+// read it, and where a file lives under the state root is this package's
+// answer to give.
+func (s *Store) TaskReposPath(taskID string) (string, error) {
+	dir, err := s.TaskDir(taskID)
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(dir, "repos"), nil
 }
 
 // DBPath is the record: one file at the root of the state, holding every

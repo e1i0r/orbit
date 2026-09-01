@@ -158,23 +158,16 @@ func TestWrittenFlowEventsErrorAnswersEmpty(t *testing.T) {
 	}
 }
 
-// TestListTasksDirReadDirErrorPropagates covers List's ReadDir error return:
-// the tasks directory exists as a plain file.
-func TestListTasksDirReadDirErrorPropagates(t *testing.T) {
+// TestListFailsOverARecordItCannotReach covers List's error return. The
+// listing is a query now, so what it fails over is a record it cannot open
+// rather than a tasks directory it cannot read.
+func TestListFailsOverARecordItCannotReach(t *testing.T) {
 	s, r := fixture(t)
 
-	tasksDir := s.TasksDir()
-
-	if err := os.MkdirAll(filepath.Dir(tasksDir), 0o700); err != nil {
-		t.Fatalf("MkdirAll: %v", err)
-	}
-
-	if err := os.WriteFile(tasksDir, []byte("blocking"), 0o600); err != nil {
-		t.Fatalf("WriteFile: %v", err)
-	}
+	breakRecord(t, s)
 
 	if _, err := List(s, r); err == nil {
-		t.Error("List should have failed when the tasks directory is blocked by a file")
+		t.Error("List answered with the tasks of a repository over a record it could not open")
 	}
 }
 

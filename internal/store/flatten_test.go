@@ -90,13 +90,16 @@ func TestFlattenCopiesATaskUpAndLeavesTheOldOneWhereItIs(t *testing.T) {
 		t.Errorf("the task names the repositories %v, want /w/app", joined)
 	}
 
-	ids, err := s.TaskIDsOfRepo("/w/app")
+	// And it is one of the state root's tasks, which is the listing the
+	// migration walks: a flattened task the migration cannot see is a task
+	// whose record never reaches the database.
+	ids, err := s.TaskIDs()
 	if err != nil {
-		t.Fatalf("TaskIDsOfRepo: %v", err)
+		t.Fatalf("TaskIDs: %v", err)
 	}
 
 	if len(ids) != 1 || ids[0] != "ACME-1" {
-		t.Errorf("the repository lists %v, want ACME-1", ids)
+		t.Errorf("the state root holds %v, want ACME-1", ids)
 	}
 }
 
@@ -217,16 +220,5 @@ func TestATaskCanBeWorkedInTwoRepositories(t *testing.T) {
 
 	if len(again) != 2 {
 		t.Errorf("after joining twice the task names %v", again)
-	}
-
-	for _, repoPath := range []string{"/w/app", "/w/api"} {
-		ids, err := s.TaskIDsOfRepo(repoPath)
-		if err != nil {
-			t.Fatalf("TaskIDsOfRepo %s: %v", repoPath, err)
-		}
-
-		if len(ids) != 1 || ids[0] != "ACME-1" {
-			t.Errorf("%s lists %v, want ACME-1", repoPath, ids)
-		}
 	}
 }

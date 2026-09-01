@@ -123,13 +123,13 @@ func TestTheHeaderCountsWhatTheListDraws(t *testing.T) {
 // TestRescanFindsWhatRefreshDoesNot is the two clocks made visible. Refresh
 // polls the tasks it already knows and never re-walks the tree; a task
 // written down after the window opened arrives on the next enumeration, and
-// the tasks that were already there keep the offsets they had.
+// the tasks that were already there keep the row they had read up to.
 func TestRescanFindsWhatRefreshDoesNot(t *testing.T) {
 	s, work, repoPath := oneRepo(t)
 	addTask(t, s, repoPath, "ACME-1", created("Retry the webhook on 5xx"), startedEvent())
 	r := NewReader(s, work)
 	refresh(t, r)
-	carried := r.tasks[0].offset
+	carried := r.tasks[0].at
 
 	addTask(t, s, repoPath, "ACME-2", created("Fix the swagger lint"))
 
@@ -141,8 +141,8 @@ func TestRescanFindsWhatRefreshDoesNot(t *testing.T) {
 		t.Fatalf("Rescan: %v", err)
 	}
 
-	if r.tasks[0].offset != carried {
-		t.Errorf("a task that was already there has offset %d after a rescan, want %d", r.tasks[0].offset, carried)
+	if r.tasks[0].at != carried {
+		t.Errorf("a task that was already there is at row %d after a rescan, want %d", r.tasks[0].at, carried)
 	}
 
 	b, changed := refresh(t, r)

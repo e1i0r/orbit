@@ -73,14 +73,13 @@ func TestTheLogIsAnsweredFromWhatThePollerAlreadyRead(t *testing.T) {
 // able to put in the pane. A wrapped error naming the id is what tells a
 // reader which of the rows they were looking at is the unreadable one.
 //
-// The damage is a line longer than the reader's buffer, because that is the
-// one kind the record refuses outright: a line of broken JSON is folded into
-// an unreadable event and the rest of the log still reads, which is the
-// behaviour a log tab wants and not a failure at all.
+// The damage is the record itself refusing to open, because that is the one
+// failure left: a row that will not parse is folded into an unreadable event
+// and the rest of the record still reads, which is the behaviour a log tab
+// wants and not a failure at all.
 func TestALogNobodyCanReadSaysWhichTask(t *testing.T) {
 	s, work, repoPath := oneRepo(t)
-	addTask(t, s, repoPath, "ACME-404", created("Retry the webhook on 5xx"))
-	tooLongLine(t, eventsPath(t, s, repoPath, "ACME-404"))
+	unopenable(t, s)
 
 	if _, err := NewReader(s, work).Log(repoPath, "ACME-404"); err == nil {
 		t.Fatal("a record nobody can read came back as a record")

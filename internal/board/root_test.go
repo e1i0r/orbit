@@ -115,28 +115,54 @@ func addTask(t *testing.T, s *store.Store, repoPath, id string, events ...record
 		t.Fatalf("create the directory of task %s: %v", id, err)
 	}
 
+	// Which repository a task belongs to is a row now, and task.Create makes
+	// it by naming the repository in the event that writes the task down.
+	// The events here are handed in rather than written by Create, so the
+	// link is made the other way the record allows: the one the migration
+	// uses for a state root whose link was a line in a file.
+	d, err := s.Record()
+	if err != nil {
+		t.Fatalf("open the record: %v", err)
+	}
+
+	if err := d.Join(id, repoPath, filepath.Base(repoPath), time.Now()); err != nil {
+		t.Fatalf("join task %s to %s: %v", id, repoPath, err)
+	}
+
 	appendTo(t, s, repoPath, id, events...)
 }
 
+// appendTo writes events through the state root's own handle, which is the
+// one the reader under test will be given. A fixture that wrote them any
+// other way would be a second writer of the record, and the record admits
+// one.
 func appendTo(t *testing.T, s *store.Store, repoPath, id string, events ...record.Event) {
 	t.Helper()
 
+	d, err := s.Record()
+	if err != nil {
+		t.Fatalf("open the record: %v", err)
+	}
+
 	for _, e := range events {
-		if err := record.Append(eventsPath(t, s, repoPath, id), e); err != nil {
+		if err := d.Append(id, e); err != nil {
 			t.Fatalf("append %s to task %s: %v", e.Kind, id, err)
 		}
 	}
 }
 
-func eventsPath(t *testing.T, s *store.Store, repoPath, id string) string {
+// unopenable puts a directory where the record's file goes, which is the
+// honest way to make a record that will not open: no permission bit to
+// depend on, and the same failure a state root on a broken disk gives.
+//
+// It has to be called before anything asks the store for the record, because
+// a handle already open stays open.
+func unopenable(t *testing.T, s *store.Store) {
 	t.Helper()
 
-	path, err := s.EventsPath(id)
-	if err != nil {
-		t.Fatalf("events path of task %s: %v", id, err)
+	if err := os.Mkdir(s.DBPath(), 0o700); err != nil {
+		t.Fatalf("put a directory where the record goes: %v", err)
 	}
-
-	return path
 }
 
 func sizeOf(t *testing.T, path string) int64 {
@@ -148,54 +174,6 @@ func sizeOf(t *testing.T, path string) int64 {
 	}
 
 	return info.Size()
-}
-
-// poison overwrites the first n bytes of a log with a character no JSON
-// document starts with, leaving the newlines — and therefore the file's
-// length — alone.
-func poison(t *testing.T, path string, n int64) {
-	t.Helper()
-
-	body, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatalf("read %q: %v", path, err)
-	}
-
-	for i := range body[:n] {
-		if body[i] != '\n' {
-			body[i] = 'x'
-		}
-	}
-
-	if err := os.WriteFile(path, body, 0o600); err != nil {
-		t.Fatalf("write %q: %v", path, err)
-	}
-}
-
-// tooLongLine appends a line longer than the reader's buffer, which is the
-// one damage record.ReadFrom reports as an error rather than folding into a
-// record.unreadable event. record.Append refuses to write one, so it is
-// written here by hand.
-func tooLongLine(t *testing.T, path string) {
-	t.Helper()
-
-	line := make([]byte, record.MaxLine+1)
-	for i := range line {
-		line[i] = 'x'
-	}
-
-	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0o600)
-	if err != nil {
-		t.Fatalf("open %q: %v", path, err)
-	}
-
-	if _, err := f.Write(append(line, '\n')); err != nil {
-		t.Fatalf("write a line nobody can read back: %v", err)
-	}
-
-	if err := f.Close(); err != nil {
-		t.Fatalf("close %q: %v", path, err)
-	}
 }
 
 func at(n int) time.Time { return time.Date(2026, 8, 23, 9, 0, n, 0, time.UTC) }

@@ -80,7 +80,15 @@ var layers = map[string][]string{
 	"internal/quota":   {},
 	"internal/record":  {},
 	"internal/repo":    {"internal/store"},
-	"internal/store":   {},
+	// internal/store lists internal/db for one method: Record, which opens
+	// the SQLite file under the state root and hands back the same handle
+	// every time. The handle has to be owned somewhere — db.Open pins each
+	// one to a single connection so that one process is one writer, and two
+	// handles in one process would be two writers contending for one lock —
+	// and the store is where the state root already lives. The direction is
+	// safe: internal/db lists only internal/record, so nothing comes back
+	// the other way.
+	"internal/store": {"internal/db"},
 	// internal/supervisor is the one conversation in Orbit that belongs to
 	// no task: a global, append-only thread hanging off the state root. It
 	// lived inside internal/task for as long as there was nowhere else to

@@ -101,24 +101,20 @@ func TestTasksComeBackInTheOrderTheyWereFirstSeen(t *testing.T) {
 	}
 }
 
-// TestAStampThatWillNotParseIsRefusedAndNamed. A time nobody can read is
-// damage, and answering the zero time for it would put a task in 0001 on a
-// board rather than telling anybody the file is wrong.
-func TestAStampThatWillNotParseIsRefusedAndNamed(t *testing.T) {
-	d := open(t)
-
-	history(t, d, "ACME-1",
-		record.Event{Kind: record.TaskStarted},
-		phase("implement", "claude", "claude-opus-5"),
-		record.Event{Kind: record.PhaseFinished},
-		record.Event{Kind: record.TaskFinished},
-	)
-
+// TestASpanStampThatWillNotParseIsRefusedAndNamed. A time nobody can read is
+// damage, and answering the zero time for it would put a run in 0001 on a
+// board rather than telling anybody the record is wrong.
+//
+// A run and a phase refuse where an event does not, and the difference is
+// what the caller can do about it. An event is one line of a task's history
+// and the rest of them are still worth drawing, so a damaged one comes back
+// saying so — see below. A run is the frame the phases hang in, and a frame
+// that begins at no time is not a frame with one bad field in it.
+func TestASpanStampThatWillNotParseIsRefusedAndNamed(t *testing.T) {
 	for _, damage := range []struct {
 		what string
 		sql  string
 	}{
-		{"an event", `UPDATE event SET at = 'yesterday'`},
 		{"the start of a run", `UPDATE run SET started_at = 'yesterday'`},
 		{"the end of a run", `UPDATE run SET ended_at = 'yesterday'`},
 		{"the start of a phase", `UPDATE phase SET started_at = 'yesterday'`},
@@ -149,6 +145,55 @@ func TestAStampThatWillNotParseIsRefusedAndNamed(t *testing.T) {
 	}
 }
 
+// TestARowNobodyCanReadSaysSoRatherThanVanishing. Both columns a row is
+// decoded from — the time it was written at and what it carries — are
+// written by this package and could only be wrong if somebody edited them or
+// a write was torn.
+//
+// Answering with fewer events than the record holds, and nothing to say so,
+// is a reader lying about its own completeness. It is also how a board
+// drawing twenty tasks goes blank because one row of one of them is bad.
+func TestARowNobodyCanReadSaysSoRatherThanVanishing(t *testing.T) {
+	for _, damage := range []struct {
+		what string
+		sql  string
+	}{
+		{"a time nobody can read", `UPDATE event SET at = 'yesterday' WHERE kind = 'task.started'`},
+		{"half an object", `UPDATE event SET data = '{"flow":' WHERE kind = 'task.started'`},
+	} {
+		d := open(t)
+
+		history(t, d, "ACME-1",
+			record.Event{Kind: record.TaskCreated, Text: "Retry the webhook"},
+			record.Event{Kind: record.TaskStarted},
+			record.Event{Kind: record.TaskFinished},
+		)
+
+		if _, err := d.sql.Exec(damage.sql); err != nil {
+			t.Fatalf("damage %s: %v", damage.what, err)
+		}
+
+		events, err := d.Events("ACME-1")
+		if err != nil {
+			t.Fatalf("read %s: %v", damage.what, err)
+		}
+
+		if len(events) != 3 {
+			t.Fatalf("%s left %d events, want the other two to survive it", damage.what, len(events))
+		}
+
+		if events[1].Kind != record.Unreadable {
+			t.Errorf("%s read back as %q, want %q", damage.what, events[1].Kind, record.Unreadable)
+		}
+
+		// The row rather than a count of rows, so somebody can go and look
+		// at exactly this one.
+		if events[1].Data["row"] == "" {
+			t.Errorf("%s did not name the row it was in", damage.what)
+		}
+	}
+}
+
 // readBoth asks both readers, and answers the first thing that went wrong.
 func readBoth(d *DB) error {
 	if _, err := d.Events("ACME-1"); err != nil {
@@ -160,23 +205,6 @@ func readBoth(d *DB) error {
 	}
 
 	return nil
-}
-
-// TestDataThatWillNotParseIsRefused. The column is written by encode and
-// read by decode, so half a JSON object in it is a file somebody edited or a
-// write that was torn.
-func TestDataThatWillNotParseIsRefused(t *testing.T) {
-	d := open(t)
-
-	history(t, d, "ACME-1", record.Event{Kind: record.TaskCreated, Text: "Retry the webhook"})
-
-	if _, err := d.sql.Exec(`UPDATE event SET data = '{"flow":'`); err != nil {
-		t.Fatalf("damage the data: %v", err)
-	}
-
-	if _, err := d.Events("ACME-1"); err == nil {
-		t.Error("an event with half an object in its data read cleanly, want a refusal")
-	}
 }
 
 // TestAPhaseCannotPointAtARunThatIsNotThere. Every phase hangs off an

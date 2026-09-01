@@ -285,3 +285,92 @@ func TestTheSupervisorThreadBecomesRows(t *testing.T) {
 		t.Errorf("the second turn is a %q, want the briefing it was", thread[1].Kind)
 	}
 }
+
+// TestTheLinkInTheFileBecomesTheRow. Which repository a task is worked in
+// was a file beside the task and never an event, so there is nothing in the
+// log to carry across — the fact itself is moved, out of the shape the last
+// version kept it in and into the row every listing of a repository's tasks
+// is now read from.
+func TestTheLinkInTheFileBecomesTheRow(t *testing.T) {
+	s := root(t)
+
+	log(t, s, "ACME-1", record.Event{Kind: record.TaskCreated, Text: "Retry the webhook"})
+
+	// What the older Orbit wrote: an absolute path in tasks/ACME-1/repos,
+	// put there by CreateTaskDir when the fixture made the directory.
+	marked, err := s.TaskRepos("ACME-1")
+	if err != nil {
+		t.Fatalf("read the marker: %v", err)
+	}
+
+	if len(marked) != 1 {
+		t.Fatalf("the marker names %v, want the one repository the task was worked in", marked)
+	}
+
+	if _, err := Run(s); err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+
+	d := opened(t, s)
+
+	ids, err := d.TasksOfRepo(marked[0])
+	if err != nil {
+		t.Fatalf("the tasks of %s: %v", marked[0], err)
+	}
+
+	if len(ids) != 1 || ids[0] != "ACME-1" {
+		t.Errorf("%s lists %v, want ACME-1 — the link stayed in the file", marked[0], ids)
+	}
+
+	// And it is still in the file. The migration reads and never deletes,
+	// so the previous binary keeps listing what it always listed.
+	again, err := s.TaskRepos("ACME-1")
+	if err != nil {
+		t.Fatalf("read the marker again: %v", err)
+	}
+
+	if len(again) != 1 || again[0] != marked[0] {
+		t.Errorf("the marker now names %v, want it untouched", again)
+	}
+}
+
+// TestTheLinkIsCarriedOnceHoweverOftenTheMigrationRuns. This runs before
+// every command, so "already done" has to be nothing at all — neither a
+// second row nor an event appearing in a task's history on the fourth
+// command of the day.
+func TestTheLinkIsCarriedOnceHoweverOftenTheMigrationRuns(t *testing.T) {
+	s := root(t)
+
+	log(t, s, "ACME-1", record.Event{Kind: record.TaskCreated, Text: "Retry the webhook"})
+
+	for pass := range 3 {
+		out, err := Run(s)
+		if err != nil {
+			t.Fatalf("pass %d: %v", pass, err)
+		}
+
+		if pass > 0 && out.Moved() {
+			t.Errorf("pass %d moved %s, want nothing", pass, out)
+		}
+	}
+
+	d := opened(t, s)
+
+	joined, err := d.ReposOfTask("ACME-1")
+	if err != nil {
+		t.Fatalf("the repositories of ACME-1: %v", err)
+	}
+
+	if len(joined) != 1 {
+		t.Errorf("after three passes ACME-1 belongs to %v", joined)
+	}
+
+	events, err := d.Events("ACME-1")
+	if err != nil {
+		t.Fatalf("read the events: %v", err)
+	}
+
+	if len(events) != 1 {
+		t.Errorf("after three passes the record holds %d events, want the one that was in the file", len(events))
+	}
+}

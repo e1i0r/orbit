@@ -13,6 +13,10 @@ package migrate
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+	"slices"
+	"time"
 
 	"github.com/e1i0r/orbit/internal/db"
 	"github.com/e1i0r/orbit/internal/record"
@@ -53,6 +57,10 @@ func Records(s *store.Store, d *db.DB) (Result, error) {
 	}
 
 	for _, id := range ids {
+		if err := joins(s, d, id); err != nil {
+			failed = append(failed, err)
+		}
+
 		n, err := task(s, d, id)
 		if err != nil {
 			failed = append(failed, err)
@@ -113,6 +121,75 @@ func task(s *store.Store, d *db.DB, id string) (int, error) {
 	return len(events) - done, nil
 }
 
+// joins carries one task's repositories across.
+//
+// Nothing is appended to the task's own record. The link was never an event:
+// the last version kept it in a file beside the task and wrote no line about
+// it, so there is nothing to copy — what moves is the fact itself, out of the
+// shape it was kept in and into the row every listing of a repository's tasks
+// is now read from.
+//
+// It runs before the events rather than after because a task whose events
+// have already been carried across is a task this would otherwise never look
+// at again — and it is exactly those state roots, migrated by the version
+// that had no link to write, whose rows are missing.
+//
+// What the record already has is asked first so that the second run writes
+// nothing. Both inserts are harmless twice; taking the write lock once per
+// task per command would not be.
+func joins(s *store.Store, d *db.DB, id string) error {
+	marked, err := s.TaskRepos(id)
+	if err != nil {
+		return err
+	}
+
+	if len(marked) == 0 {
+		return nil
+	}
+
+	known, err := d.ReposOfTask(id)
+	if err != nil {
+		return err
+	}
+
+	at, err := markedAt(s, id)
+	if err != nil {
+		return err
+	}
+
+	for _, abs := range marked {
+		if slices.Contains(known, abs) {
+			continue
+		}
+
+		if err := d.Join(id, abs, filepath.Base(abs), at); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// markedAt is when the file was last written, which is when the last
+// repository joined.
+//
+// The clock would be wrong in a way that shows: a join is a thing that
+// already happened, and dating it from the migration would say every task in
+// the state root joined its repository the moment Orbit was upgraded.
+func markedAt(s *store.Store, id string) (time.Time, error) {
+	path, err := s.TaskReposPath(id)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	info, err := os.Stat(path)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("read when %q was written: %w", path, err)
+	}
+
+	return info.ModTime(), nil
+}
+
 // thread copies the part of the supervisor conversation the record has not
 // got, by the same count and for the same reason.
 func thread(s *store.Store, d *db.DB) (int, error) {
@@ -139,18 +216,18 @@ func thread(s *store.Store, d *db.DB) (int, error) {
 	return len(turns) - done, nil
 }
 
-// Run opens the record, fills it from the files, and lets go of it again.
+// Run fills the record from the files, through the state root's own handle.
 //
-// The handle is opened here rather than handed in so that a caller wanting
-// the migration does not have to know where the record lives or hold it open
-// across a command it is not otherwise using.
+// The handle is the store's and not one of this package's own. One process
+// is one writer — db.Open pins a handle to a single connection to make that
+// true — and a migration opening a second one would have it contending with
+// the very command it is running in front of. Letting go of it is the
+// caller's, for the same reason: this package did not open it.
 func Run(s *store.Store) (Result, error) {
-	d, err := db.Open(s.DBPath())
+	d, err := s.Record()
 	if err != nil {
 		return Result{}, err
 	}
 
-	out, err := Records(s, d)
-
-	return out, errors.Join(err, d.Close())
+	return Records(s, d)
 }

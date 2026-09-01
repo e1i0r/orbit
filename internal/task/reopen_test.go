@@ -208,16 +208,7 @@ func TestADirectiveThatCannotBeWrittenDownIsRefused(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	path, err := s.EventsPath(tk.ID)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err := os.Chmod(path, 0o400); err != nil {
-		t.Fatal(err)
-	}
-
-	t.Cleanup(func() { _ = os.Chmod(path, 0o600) }) //nolint:errcheck // best effort, the root is a temp dir
+	breakRecord(t, s)
 
 	if err := Direct(s, tk, "operator", "stop"); err == nil {
 		t.Fatal("Direct answered nil over a record it could not write to")

@@ -87,7 +87,7 @@ func TestReconcileAllFailsWhenRepositoriesCannotBeListed(t *testing.T) {
 }
 
 func TestReconcileAllReportsPerRepositoryAndPerTaskFailures(t *testing.T) {
-	root, orbitHome := workspace(t)
+	root, _ := workspace(t)
 	writeTask(t, root)
 
 	s, err := store.Open()
@@ -98,10 +98,7 @@ func TestReconcileAllReportsPerRepositoryAndPerTaskFailures(t *testing.T) {
 	// A damaged run marker makes task.Reconcile fail for this one task,
 	// without stopping the sweep over whatever else the state root knows
 	// about.
-	events := findFile(t, orbitHome, "events.jsonl")
-
-	marker := filepath.Join(filepath.Dir(events), "run")
-	if err := os.WriteFile(marker, []byte("pid: not-a-number\nstarted: 2026-08-24T12:00:00Z\n"), 0o600); err != nil {
+	if err := os.WriteFile(markerPath(t, "ACME-1"), []byte("pid: not-a-number\nstarted: 2026-08-24T12:00:00Z\n"), 0o600); err != nil {
 		t.Fatalf("write the run marker: %v", err)
 	}
 

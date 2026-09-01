@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/e1i0r/orbit/internal/db"
 	"github.com/e1i0r/orbit/internal/record"
 )
 
@@ -146,5 +147,102 @@ func TestARecordThatWillNotOpenIsReported(t *testing.T) {
 
 	if _, err := Run(s); err == nil {
 		t.Error("a record that is a directory opened cleanly")
+	}
+}
+
+// TestAMarkerThatCannotBeReadDoesNotStopThePass. The link is carried across
+// before the events, so a task whose marker file is unreadable is the first
+// thing a pass meets — and it must cost that task its link and nothing else.
+func TestAMarkerThatCannotBeReadDoesNotStopThePass(t *testing.T) {
+	s := root(t)
+
+	log(t, s, "ACME-1", record.Event{Kind: record.TaskCreated, Text: "the one whose marker is gone"})
+	log(t, s, "ACME-2", record.Event{Kind: record.TaskCreated, Text: "the one that is fine"})
+
+	marker, err := s.TaskReposPath("ACME-1")
+	if err != nil {
+		t.Fatalf("marker path: %v", err)
+	}
+
+	if err := os.Remove(marker); err != nil {
+		t.Fatalf("remove the marker: %v", err)
+	}
+
+	// A directory where the file was: no permission bit to depend on, and
+	// root would not notice one.
+	if err := os.Mkdir(marker, 0o700); err != nil {
+		t.Fatalf("put a directory where the marker goes: %v", err)
+	}
+
+	out, err := Run(s)
+	if err == nil {
+		t.Fatal("a marker that could not be read was not reported")
+	}
+
+	if !strings.Contains(err.Error(), "ACME-1") {
+		t.Errorf("the error does not name the task whose marker could not be read: %v", err)
+	}
+
+	if out.Events != 2 {
+		t.Errorf("the pass moved %s, want both tasks' events — the damaged marker stopped the rest", out)
+	}
+
+	joined, err := opened(t, s).ReposOfTask("ACME-2")
+	if err != nil {
+		t.Fatalf("the repositories of ACME-2: %v", err)
+	}
+
+	if len(joined) != 1 {
+		t.Errorf("ACME-2 belongs to %v, want the repository it was worked in", joined)
+	}
+}
+
+// TestARecordThatWillNotBeWrittenToIsReported. The pass reads three things —
+// the log, the marker, and what the record already holds — and writes what
+// is missing. A record that answers every read and refuses every write is
+// the shape that tells the two apart, and it is not hypothetical: a state
+// root restored from a backup arrives with the mode it was archived with.
+func TestARecordThatWillNotBeWrittenToIsReported(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("running as root: a read-only file is still writable, so there is no fault to make")
+	}
+
+	s := root(t)
+
+	log(t, s, "ACME-1", record.Event{Kind: record.TaskCreated, Text: "Retry the webhook"})
+
+	// Made, let go of, and made read-only: the mode is checked when the file
+	// is opened, so a handle already held keeps the permission it opened
+	// with whatever the bit says afterwards.
+	made, err := db.Open(s.DBPath())
+	if err != nil {
+		t.Fatalf("make the record: %v", err)
+	}
+
+	if err := made.Close(); err != nil {
+		t.Fatalf("let go of the record: %v", err)
+	}
+
+	if err := os.Chmod(s.DBPath(), 0o444); err != nil {
+		t.Fatalf("make the record read-only: %v", err)
+	}
+
+	t.Cleanup(func() {
+		if err := os.Chmod(s.DBPath(), 0o600); err != nil {
+			t.Errorf("give the record its mode back: %v", err)
+		}
+	})
+
+	out, err := Records(s, opened(t, s))
+	if err == nil {
+		t.Fatal("a record that would take nothing reported a clean pass")
+	}
+
+	if !strings.Contains(err.Error(), "ACME-1") {
+		t.Errorf("the error does not name the task that could not be moved: %v", err)
+	}
+
+	if out.Moved() {
+		t.Errorf("the pass says it moved %s into a record that would take nothing", out)
 	}
 }
