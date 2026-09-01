@@ -50,7 +50,7 @@ var layers = map[string][]string{
 	// task and no engine, so nothing here can decide anything about a run
 	// or reach the state root to find one.
 	"internal/db":  {"internal/record"},
-	"internal/cli": {"internal/board", "internal/engine", "internal/flow", "internal/logger", "internal/mcp", "internal/quota", "internal/repo", "internal/store", "internal/supervisor", "internal/task", "internal/tracker", "internal/ui", "internal/view", "internal/words"},
+	"internal/cli": {"internal/board", "internal/engine", "internal/flow", "internal/logger", "internal/mcp", "internal/migrate", "internal/quota", "internal/repo", "internal/store", "internal/supervisor", "internal/task", "internal/tracker", "internal/ui", "internal/view", "internal/words"},
 	// internal/logger is on internal/engine's list for the one thing this
 	// package does that nothing else in Orbit does: it starts somebody
 	// else's program. What that cost, how long it took and which of the
@@ -69,11 +69,18 @@ var layers = map[string][]string{
 	// is standing at: a model drives it for hours from another process, so a
 	// refusal answered to that model reached no terminal and no record. What
 	// is absent is internal/engine: a supervisor starts runs, not models.
-	"internal/mcp":    {"internal/board", "internal/flow", "internal/logger", "internal/record", "internal/repo", "internal/store", "internal/supervisor", "internal/task", "internal/view"},
-	"internal/quota":  {},
-	"internal/record": {},
-	"internal/repo":   {"internal/store"},
-	"internal/store":  {},
+	"internal/mcp": {"internal/board", "internal/flow", "internal/logger", "internal/record", "internal/repo", "internal/store", "internal/supervisor", "internal/task", "internal/view"},
+	// internal/migrate reads the files an older Orbit wrote and fills the
+	// database from them, so it is the one package that touches the record
+	// on both sides: internal/store to find the logs, internal/record to
+	// read them, internal/db to write them down. It is a translation and
+	// nothing else — it starts no run, and nothing imports it but the two
+	// front doors that trigger it.
+	"internal/migrate": {"internal/db", "internal/record", "internal/store"},
+	"internal/quota":   {},
+	"internal/record":  {},
+	"internal/repo":    {"internal/store"},
+	"internal/store":   {},
 	// internal/supervisor is the one conversation in Orbit that belongs to
 	// no task: a global, append-only thread hanging off the state root. It
 	// lived inside internal/task for as long as there was nowhere else to

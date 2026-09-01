@@ -59,6 +59,29 @@ const (
 	endOpenPhases = `UPDATE phase SET ended_at = ?, outcome = ? WHERE run_id = ? AND ended_at IS NULL`
 )
 
+// The supervisor thread. The subselects turn a task id or a repository path
+// into the row it names, and into NULL when it names none — a turn about a
+// task the record has never heard of is still a turn that was taken.
+const (
+	insertMessage = `INSERT INTO message(at, kind, source, who, task_id, repo_id, text, data)
+	                 VALUES(?,?,?,?,
+	                        (SELECT id FROM task WHERE task_id = ?),
+	                        (SELECT id FROM repo WHERE abs_path = ?),
+	                        ?,?)`
+
+	retractMessage = `UPDATE message SET retracted_at = ? WHERE at = ? AND retracted_at IS NULL`
+
+	selectMessages = `SELECT kind, at, text, data FROM message ORDER BY id`
+)
+
+// How much of each thing the record already holds. Both are appended to and
+// never reordered, so a count is a position — which is what a migration
+// reads to know where it got to.
+const (
+	countEvents   = `SELECT count(*) FROM event e JOIN task t ON t.id = e.task_id WHERE t.task_id = ?`
+	countMessages = `SELECT count(*) FROM message`
+)
+
 // Events.
 const insertEvent = `INSERT INTO event(task_id, run_id, phase_id, kind, at, phase, text, data)
                      VALUES(?,?,?,?,?,?,?,?)`
