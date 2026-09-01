@@ -189,9 +189,19 @@ func (m Model) quotaChip() string {
 		return ""
 	}
 
+	return m.windowsUsed(m.opts.Quota(m.dialEngine("")))
+}
+
+// windowsUsed is a reading's windows on one line: the share used of each,
+// and the word said once at the end.
+//
+// Empty for a reading with nothing in it, which is what a caller draws when
+// there is nothing to draw rather than a sentence about absence — the one
+// place that says a source is missing is the status line, once.
+func (m Model) windowsUsed(reading QuotaReading) string {
 	var parts []string
 
-	for _, w := range m.opts.Quota(m.dialEngine("")).Windows {
+	for _, w := range reading.Windows {
 		parts = append(parts, fmt.Sprintf("%.0f%% %s", pctUsed(w), w.Label))
 	}
 

@@ -74,6 +74,10 @@ func (m Model) enginesRows(h, w int) []string {
 			text = Paint(Dim).Render(text)
 		}
 
+		if note := m.engineQuota(r); note != "" {
+			text += "   " + Paint(Dim).Render(note)
+		}
+
 		line := fmt.Sprintf("%s%s", mark, text)
 		out = append(out, fit(line, w))
 	}
@@ -112,4 +116,39 @@ func (m Model) hitEngines(x, y int) Target {
 	}
 
 	return Target{}
+}
+
+// engineQuota is what one row of this screen says about the engine it names:
+// how much of its windows is gone, or that nobody can tell.
+//
+// It is here and not only in the header because this is the screen where the
+// choice is made. The header carries the engine already running; a reader
+// standing on this list is deciding which one to hand the next task to, and
+// "claude is at 77% of its week" is the fact that decides it — two lines up
+// is far enough away to be worth repeating here.
+//
+// Only engine rows carry it. A window belongs to the engine and not to the
+// model: the proxy reports what each model contributed to the window, which
+// is not a limit that model has, and drawn beside opus it would read as a cap
+// that does not exist. A row for an engine that is not installed carries
+// nothing either — what that row is about is the setup it still needs.
+func (m Model) engineQuota(r engineRow) string {
+	if m.opts.Quota == nil || r.kind != rowEngine || r.disabled {
+		return ""
+	}
+
+	reading := m.opts.Quota(r.engine)
+	if used := m.windowsUsed(reading); used != "" {
+		return used
+	}
+
+	// An engine paid per token has no window to be at the end of, and one
+	// whose source has simply not answered yet says nothing rather than
+	// guessing. What is left is the engine nobody can read at all.
+	if reading.Money || reading.Sourced {
+		return ""
+	}
+
+	return m.opts.Words.T("status.quota_unread", "no quota source for {engine}",
+		about("engine", reading.Engine))
 }

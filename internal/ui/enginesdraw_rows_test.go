@@ -70,3 +70,77 @@ func TestHitEnginesSkipsHeaders(t *testing.T) {
 		t.Errorf("hitEngines on a header row = %+v, want the zero Target", got)
 	}
 }
+
+// The screen where the engine is chosen says what is left of each one, and
+// says it beside the engine rather than beside a model: a window belongs to
+// the engine, and a model with a percentage next to it would be claiming a
+// cap of its own.
+func TestTheEnginePickerCarriesEachEnginesWindows(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+	m = m.openEngines()
+
+	m.opts.Quota = func(engine string) QuotaReading {
+		if engine != "claude" {
+			return QuotaReading{Engine: engine, Sourced: false}
+		}
+
+		return QuotaReading{
+			Engine:  engine,
+			Sourced: true,
+			Windows: []QuotaWindow{{Label: "5h", Pct: 2}, {Label: "7d", Pct: 77}},
+		}
+	}
+
+	rows := m.enginesRows(30, 100)
+
+	var claude, model string
+
+	for _, row := range rows {
+		if strings.Contains(row, "claude") {
+			claude = row
+		}
+
+		if strings.Contains(row, "sonnet") {
+			model = row
+		}
+	}
+
+	if claude == "" {
+		t.Fatal("no claude row on the engine screen")
+	}
+
+	for _, want := range []string{"2% 5h", "77% 7d"} {
+		if !strings.Contains(claude, want) {
+			t.Errorf("engine row %q does not carry %q", claude, want)
+		}
+	}
+
+	if model != "" && strings.Contains(model, "%") {
+		t.Errorf("model row %q carries a percentage, which is the engine's and not its own", model)
+	}
+
+	// An engine that is not installed carries nothing: that row is about the
+	// setup it still needs, and a quota beside it is an answer to a question
+	// nobody standing there is asking.
+	for _, row := range rows {
+		if strings.Contains(row, "setup required") && strings.Contains(row, "%") {
+			t.Errorf("row %q carries a quota for an engine that is not installed", row)
+		}
+	}
+
+	// An engine nobody can read says so where it is chosen, for the same
+	// reason it says so on the status line: silence there is read as zero.
+	unsourced := m.engineQuota(engineRow{kind: rowEngine, engine: "codex"})
+	if !strings.Contains(unsourced, "no quota source") {
+		t.Errorf("unsourced engine = %q, want it to say it has no source", unsourced)
+	}
+
+	// And one paid per token has no window to be at the end of.
+	m.opts.Quota = func(engine string) QuotaReading {
+		return QuotaReading{Engine: engine, Money: true}
+	}
+
+	if got := m.engineQuota(engineRow{kind: rowEngine, engine: "opencode"}); got != "" {
+		t.Errorf("metered engine = %q, want nothing", got)
+	}
+}
