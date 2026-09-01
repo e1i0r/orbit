@@ -74,6 +74,15 @@ type Command struct {
 
 	InWindow InWindow
 	Because  func(*words.Printer) string // why, when InWindow is WindowRefuses
+
+	// Salvage says the command still runs when the record is too damaged
+	// for the migration in front of it to finish. Two commands are: `check`,
+	// which says what is wrong with it, and `export`, which gets out
+	// whatever can still be read. Everything else stops, because a state
+	// root half moved is the one shape nobody can reason about — but
+	// stopping these two would mean a file that breaks takes the only two
+	// commands for a broken file down with it.
+	Salvage bool
 }
 
 // printer is the Context's own, and English for a Context that was built
@@ -191,6 +200,19 @@ func commands() []Command {
 		Name: "note", Args: "-repo <dir> <id> <text>",
 		About: func(p *words.Printer) string { return p.T("cmd.note", "record a note for a task") },
 		Run:   noteTask,
+	}, {
+		Name: "export", Args: "[-task <id>] <dir>",
+		About: func(p *words.Printer) string {
+			return p.T("cmd.export", "write the record back out as JSONL, one file per task")
+		},
+		Run:     exportRecord,
+		Salvage: true,
+	}, {
+		Name:  "check",
+		About: func(p *words.Printer) string { return p.T("cmd.check", "say whether the record is still readable") },
+		Run:   checkCommand,
+
+		Salvage: true,
 	}, {
 		Name:  "version",
 		About: func(p *words.Printer) string { return p.T("cmd.version", "print the version orbit was built at") },

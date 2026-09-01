@@ -50,13 +50,20 @@ var layers = map[string][]string{
 	// task and no engine, so nothing here can decide anything about a run
 	// or reach the state root to find one.
 	"internal/db":  {"internal/record"},
-	"internal/cli": {"internal/board", "internal/engine", "internal/flow", "internal/logger", "internal/mcp", "internal/migrate", "internal/quota", "internal/repo", "internal/store", "internal/supervisor", "internal/task", "internal/tracker", "internal/ui", "internal/view", "internal/words"},
+	"internal/cli": {"internal/board", "internal/engine", "internal/export", "internal/flow", "internal/logger", "internal/mcp", "internal/migrate", "internal/quota", "internal/repo", "internal/store", "internal/supervisor", "internal/task", "internal/tracker", "internal/ui", "internal/view", "internal/words"},
 	// internal/logger is on internal/engine's list for the one thing this
 	// package does that nothing else in Orbit does: it starts somebody
 	// else's program. What that cost, how long it took and which of the
 	// binaries on this machine it was are facts no other package sees. It
 	// widens nothing else: engine still knows no record, store or task.
 	"internal/engine": {"internal/logger"},
+	// internal/export is internal/migrate read backwards, and it carries the
+	// same three imports for the same three reasons: internal/db to read the
+	// record, internal/record to turn a row back into the line it was
+	// written as, internal/store to name where that line goes. It writes
+	// nothing but files a person asked for, starts nothing, and — like the
+	// migration — nothing imports it but the front door that triggers it.
+	"internal/export": {"internal/db", "internal/record", "internal/store"},
 	"internal/flow":   {},
 	"internal/logger": {},
 	// internal/mcp is the widest list on this map, and it is the same width

@@ -130,3 +130,17 @@ const (
 	               WHERE t.task_id = ?
 	               ORDER BY r.n, p.n`
 )
+
+// What SQLite says about its own file, and how much of ours is in it.
+//
+// The check is a pragma rather than a query because that is the only thing
+// that reads the pages themselves; everything else here would read an index
+// and believe it. The counts are one statement so that the three numbers
+// answer for one moment rather than for three.
+const (
+	integrityCheck = `PRAGMA integrity_check`
+
+	countAll = `SELECT (SELECT count(*) FROM task),
+	                   (SELECT count(*) FROM event),
+	                   (SELECT count(*) FROM message)`
+)
