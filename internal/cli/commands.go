@@ -83,6 +83,14 @@ type Command struct {
 	// stopping these two would mean a file that breaks takes the only two
 	// commands for a broken file down with it.
 	Salvage bool
+
+	// NeedsTask says the command's first argument is the id of a task, and
+	// that it refuses without one. It is a fact about the command and not
+	// about any one entry point, which is why the board's menu can read it:
+	// that menu chooses with no arguments at all, so an entry for one of
+	// these ran bare and came back with the refusal, which reads as an entry
+	// that is broken rather than as one in the wrong place.
+	NeedsTask bool
 }
 
 // printer is the Context's own, and English for a Context that was built
@@ -132,15 +140,15 @@ func commands() []Command {
 		About: func(p *words.Printer) string { return p.T("cmd.new", "write a task down") },
 		Run:   newTask,
 	}, {
-		Name: "run", Args: "-repo <dir> <id>",
+		Name: "run", Args: "-repo <dir> <id>", NeedsTask: true,
 		About: func(p *words.Printer) string { return p.T("cmd.run", "run a task through its flow") },
 		Run:   runTask,
 	}, {
-		Name: "pause", Args: "-repo <dir> <id>",
+		Name: "pause", Args: "-repo <dir> <id>", NeedsTask: true,
 		About: func(p *words.Printer) string { return p.T("cmd.pause", "stop a run at its next phase") },
 		Run:   func(ctx Context, args []string) error { return controlTask("pause", ctx, args) },
 	}, {
-		Name: "resume", Args: "-repo <dir> <id>",
+		Name: "resume", Args: "-repo <dir> <id>", NeedsTask: true,
 		About: func(p *words.Printer) string { return p.T("cmd.resume", "let a stopped run carry on") },
 		Run:   func(ctx Context, args []string) error { return controlTask("resume", ctx, args) },
 	}, {
@@ -149,38 +157,38 @@ func commands() []Command {
 		Run:      list,
 		InWindow: WindowOpens,
 	}, {
-		Name: "show", Args: "-repo <dir> <id>",
+		Name: "show", Args: "-repo <dir> <id>", NeedsTask: true,
 		About:    func(p *words.Printer) string { return p.T("cmd.show", "print what happened to a task") },
 		Run:      show,
 		InWindow: WindowOpens,
 	}, {
-		Name: "read", Args: "-repo <dir> <id>",
+		Name: "read", Args: "-repo <dir> <id>", NeedsTask: true,
 		About: func(p *words.Printer) string { return p.T("cmd.read", "mark a finished task as looked at") },
 		Run:   readTask,
 	}, {
-		Name: "pr", Args: "-repo <dir> <id>",
+		Name: "pr", Args: "-repo <dir> <id>", NeedsTask: true,
 		About: func(p *words.Printer) string {
 			return p.T("cmd.pr", "create a pull request from a task's worktree")
 		},
 		Run: createPR,
 	}, {
-		Name: "merge", Args: "-repo <dir> <id>",
+		Name: "merge", Args: "-repo <dir> <id>", NeedsTask: true,
 		About: func(p *words.Printer) string {
 			return p.T("cmd.merge", "merge a task's pull request and delete its branch")
 		},
 		Run: mergePR,
 	}, {
-		Name: "close-pr", Args: "-repo <dir> <id>",
+		Name: "close-pr", Args: "-repo <dir> <id>", NeedsTask: true,
 		About: func(p *words.Printer) string {
 			return p.T("cmd.close_pr", "close a task's pull request on GitHub")
 		},
 		Run: closePR,
 	}, {
-		Name: "cancel", Args: "-repo <dir> <id>",
+		Name: "cancel", Args: "-repo <dir> <id>", NeedsTask: true,
 		About: func(p *words.Printer) string { return p.T("cmd.cancel", "stop a run, and say so in its record") },
 		Run:   cancelTask,
 	}, {
-		Name: "requeue", Args: "-repo <dir> <id> [why]",
+		Name: "requeue", Args: "-repo <dir> <id> [why]", NeedsTask: true,
 		About: func(p *words.Printer) string {
 			return p.T("cmd.requeue", "stop a run and put the task back in to do")
 		},
@@ -197,13 +205,13 @@ func commands() []Command {
 		Run:      set,
 		InWindow: WindowOpens,
 	}, {
-		Name: "direct", Args: "-repo <dir> [-restart] <id> <message>",
+		Name: "direct", Args: "-repo <dir> [-restart] <id> <message>", NeedsTask: true,
 		About: func(p *words.Printer) string {
 			return p.T("cmd.direct", "interrupt or redirect a task and record the directive")
 		},
 		Run: directTask,
 	}, {
-		Name: "note", Args: "-repo <dir> <id> <text>",
+		Name: "note", Args: "-repo <dir> <id> <text>", NeedsTask: true,
 		About: func(p *words.Printer) string { return p.T("cmd.note", "record a note for a task") },
 		Run:   noteTask,
 	}, {

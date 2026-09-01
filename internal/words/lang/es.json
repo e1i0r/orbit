@@ -1843,6 +1843,10 @@
       "source": "{name} finished",
       "value": "{name} terminó"
     },
+    "msg.needs_task_id": {
+      "source": "{name} needs the id of a task; type it here",
+      "value": "{name} necesita el id de una tarea; escríbelo aquí"
+    },
     "msg.no_such_command": {
       "source": "no such command: {name}",
       "value": "no existe ningún comando: {name}"

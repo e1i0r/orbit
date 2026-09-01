@@ -33,14 +33,20 @@ func speaking(t *testing.T, language string) (dir string) {
 	return filepath.Join(root, "payments")
 }
 
-// TestEveryCommandThatNeedsATaskIDRefusesInTheReadersLanguage. Eight commands
-// refuse the same way and now say so through one key, so the sweep is over
-// the commands rather than over the sentence: a command left behind still
-// answers in English while the other seven have moved.
+// TestEveryCommandThatNeedsATaskIDRefusesInTheReadersLanguage. A dozen
+// commands refuse the same way and say so through one key, so the sweep is
+// over the commands rather than over the sentence: a command left behind
+// still answers in English while the rest have moved.
+//
+// The list is the table's own NeedsTask, and not a copy of it kept here.
+// The window reads that same field to decide which entries go to the
+// command line rather than being run bare, so a row that sets it without
+// refusing — or refuses without setting it — is a menu entry that is wrong
+// in one direction or the other.
 func TestEveryCommandThatNeedsATaskIDRefusesInTheReadersLanguage(t *testing.T) {
 	dir := speaking(t, "es")
 
-	for _, command := range []string{"cancel", "direct", "note", "pause", "read", "requeue", "resume", "run", "show"} {
+	for _, command := range needsTaskCommands() {
 		t.Run(command, func(t *testing.T) {
 			code, _, errOut := run(t, command, "-repo", dir)
 			if code == 0 {
@@ -58,6 +64,19 @@ func TestEveryCommandThatNeedsATaskIDRefusesInTheReadersLanguage(t *testing.T) {
 			}
 		})
 	}
+}
+
+// needsTaskCommands is every command the table says takes the id of a task.
+func needsTaskCommands() []string {
+	var out []string
+
+	for _, c := range commands() {
+		if c.NeedsTask {
+			out = append(out, c.Name)
+		}
+	}
+
+	return out
 }
 
 // TestTheEverydayVerbsSpeakTheReadersLanguage walks one workspace the way a

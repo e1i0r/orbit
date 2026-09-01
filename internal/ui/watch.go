@@ -123,6 +123,15 @@ func (m Model) runSelected() (tea.Model, tea.Cmd) {
 		args = args[1:]
 	}
 
+	if c.NeedsTask && len(args) == 0 {
+		// The line stays up, with the name still on it, because the id goes
+		// on the end of what is already typed. Closing it to print the same
+		// sentence into the watch is where this used to end: an answer in a
+		// pane with nowhere to type the thing it asks for.
+		return m.say(m.opts.Words.T("msg.needs_task_id",
+			"{name} needs the id of a task; type it here", about("name", c.Name))), nil
+	}
+
 	return m.closePalette().launch(c, args)
 }
 

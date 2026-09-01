@@ -51,10 +51,30 @@ func (m Model) openPalette() Model {
 	return m
 }
 
+// openPaletteWith brings it up with something already on the line, for the
+// one caller that knows what the reader is about to type: the menu, whose
+// task commands need an id it has no way of supplying.
+func (m Model) openPaletteWith(typed string) Model {
+	m.palette = paletteState{open: true, typed: typed}
+	return m
+}
+
 // closePalette takes the line down and gives the keyboard back.
 func (m Model) closePalette() Model {
 	m.palette = paletteState{}
 	return m
+}
+
+// firstWord is the name part of what has been typed, through the same split
+// the runner uses on the same line: what it calls the command here is what
+// gets run there, and an empty line is a prefix everything matches.
+func firstWord(typed string) string {
+	fields := strings.Fields(typed)
+	if len(fields) == 0 {
+		return ""
+	}
+
+	return fields[0]
 }
 
 func matchesSettingsAlias(prefix string) bool {
@@ -72,10 +92,15 @@ func matchesSettingsAlias(prefix string) bool {
 // reader learned, and reshuffling it under a prefix would move rows between
 // two keystrokes.
 //
+// Only the first word is the prefix. What follows it is the command's own
+// arguments, and matching against the whole line meant that the moment a
+// space was typed nothing matched: `cancel PAY-11` had no selection, so ⏎
+// on it did nothing at all and the line sat there looking broken.
+//
 // The match ignores case, as the board's filter does: a reader who types a
 // capital because a sentence started with one still means the command.
 func (p paletteState) candidates(cmds []Command) []Command {
-	prefix := strings.ToLower(p.typed)
+	prefix := strings.ToLower(firstWord(p.typed))
 
 	var out []Command
 
