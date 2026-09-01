@@ -1527,6 +1527,18 @@
       "source": "stop a run and put the task back in to do",
       "value": "detener una ejecución y devolver la tarea a pendientes"
     },
+    "cmd.join": {
+      "source": "open a checkout of another repository for a task",
+      "value": "abre un checkout de otro repositorio para una tarea"
+    },
+    "join.needs_a_name": {
+      "source": "join needs the name of a repository; `orbit repos` lists them",
+      "value": "join necesita el nombre de un repositorio; `orbit repos` los lista"
+    },
+    "join.needs_a_task": {
+      "source": "join needs a task: pass -task, or run it inside a phase, where {env} is already set",
+      "value": "join necesita una tarea: pasá -task, o corrélo dentro de una fase, donde {env} ya está puesto"
+    },
     "cmd.reconcile": {
       "source": "close the records of runs whose processes are gone",
       "value": "cerrar los registros de las ejecuciones cuyos procesos ya no están"

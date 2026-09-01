@@ -85,6 +85,14 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		return failed(s, t, err)
 	}
 
+	// The listing is read once and given to every phase, rather than once
+	// per phase: a repository cloned while a run is walking its flow is not
+	// something this run was asked about, and a phase whose prompt differs
+	// from the one before it for a reason nobody caused is a run that cannot
+	// be read back. A workspace that cannot be walked is not a failure —
+	// the task is still the task, and the phase runs with no listing.
+	others := elsewhere(t)
+
 	var prevOutput string
 
 	for i, p := range f.Phases {
@@ -146,12 +154,13 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		resumeSess := lastSession(s, t, p.Engine, engines[p.Engine])
 
 		out, runErr := engines[p.Engine].Run(ctx, engine.Request{
-			Prompt:      prompt(t, p, notes, inputPrev),
+			Prompt:      prompt(t, p, notes, inputPrev, others),
 			Model:       p.Model,
 			Effort:      p.Effort,
 			Thinking:    p.Thinking,
 			Dir:         wt,
 			Permissions: p.Permissions,
+			Env:         childEnv(t),
 			Resume:      resumeSess,
 			OnEvent: func(ev engine.StreamEvent) {
 				switch ev.Type {

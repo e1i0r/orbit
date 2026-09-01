@@ -241,6 +241,8 @@ func (m Model) logDetail(e view.Entry) string {
 		if e.Cause != "" {
 			return e.Cause
 		}
+	case view.EntryRepoJoined:
+		return e.Repo
 	}
 
 	return e.Said()

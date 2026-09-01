@@ -275,3 +275,17 @@ func TestOnlyAPaneThatDrawsEntriesFolds(t *testing.T) {
 		}
 	}
 }
+
+// TestTheTimelineNamesTheRepositoryThatJoined. A task that reached into
+// three repositories has three of these rows, and the whole of what a reader
+// wants from them is which repositories — a row reading "repository joined"
+// over an empty cell is the one fact left out.
+func TestTheTimelineNamesTheRepositoryThatJoined(t *testing.T) {
+	_, lines := timeline(t, append(fixtureEntries(), view.Entry{
+		At: ago(5 * time.Minute), Kind: "repo.joined", Attempt: 2, Repo: "ledger",
+	}))
+
+	if rowOf(lines, "ledger") < 0 {
+		t.Errorf("the timeline does not say which repository joined:\n%s", strings.Join(lines, "\n"))
+	}
+}
