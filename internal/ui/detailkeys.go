@@ -113,7 +113,15 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.syncPanes().say(msg), nil
 	case k.String() == "p" || k.String() == "P":
 		return m.deliverPR()
-	case k.String() == "c" || k.String() == "C":
+	// Fix checks is C, and lower-case c is left to the interactive CLI.
+	// Both were c: the CLI is a binding the key bar draws as [c]
+	// interactive CLI on this screen and on the board, this case is
+	// matched by the letter and sits above it, and so the hint the reader
+	// clicked wrote an instruction note for the next run instead. Upper
+	// case is where the deliver toolbar puts its other verbs — M merge, X
+	// close, T more tests — and it costs the CLI only its alias, since c
+	// is what is drawn for it everywhere.
+	case k.String() == "C":
 		return m.fixChecks()
 	case k.String() == "T":
 		return m.addMoreTests()

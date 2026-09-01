@@ -288,7 +288,7 @@ func (m Model) overviewActions(w int) []string {
 			act("X", p.T("overview.action_close_pr", "close PR")),
 		),
 		paneGutter + meta(
-			act("c", p.T("overview.action_checks", "fix checks")),
+			act("C", p.T("overview.action_checks", "fix checks")),
 			act("T", p.T("overview.action_tests", "more tests")),
 			act("a", p.T("overview.action_feedback", "feedback")),
 			act("0", p.T("overview.action_diff", "diff")),

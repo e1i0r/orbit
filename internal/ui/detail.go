@@ -300,8 +300,8 @@ func (m Model) detailHints() []barHint {
 	out := []barHint{
 		hintFor(m.keys.Back),
 		hintFor(m.keys.NextTab),
-		hint("m", m.opts.Words.T("key.tab_menu", "tab menu")),
-		hint("v", m.opts.Words.T("key.toggle_markdown", "md / raw")),
+		hintKey("m", m.opts.Words.T("key.tab_menu", "tab menu")),
+		hintKey("v", m.opts.Words.T("key.toggle_markdown", "md / raw")),
 		hintFor(m.keys.Ask),
 		hintFor(m.keys.CLI),
 	}
@@ -311,10 +311,10 @@ func (m Model) detailHints() []barHint {
 		wrapHint = m.opts.Words.T("detail.hint_collapse", "collapse")
 	}
 
-	out = append(out, hint("e", wrapHint))
+	out = append(out, hintKey("e", wrapHint))
 
 	if m.tab == tabOverview {
-		out = append(out, hint("z", m.opts.Words.T("key.fold", "fold sections")))
+		out = append(out, hintKey("z", m.opts.Words.T("key.fold", "fold sections")))
 	}
 
 	if m.tab == tabDiff {
