@@ -16,6 +16,7 @@ package cli
 // rules and the two disagree the first time the verb changes its mind.
 
 import (
+	"context"
 	"errors"
 	"os"
 
@@ -43,6 +44,18 @@ func subject(t view.Task) task.Task {
 func controlPort(s *store.Store) func(view.Task, string) error {
 	return func(t view.Task, word string) error {
 		return task.Control(s, subject(t), word)
+	}
+}
+
+// requeuePort stops whatever holds a task and puts it back in the queue.
+//
+// The context is the window's and not a signalled one: a window has no
+// terminal to hand back — Ctrl-C there is a keystroke the program reads, not
+// a signal — so the wait ends when the run is gone or when task.Requeue
+// gives up on it.
+func requeuePort(s *store.Store) func(view.Task) error {
+	return func(t view.Task) error {
+		return task.Requeue(context.Background(), s, subject(t), "operator", "")
 	}
 }
 

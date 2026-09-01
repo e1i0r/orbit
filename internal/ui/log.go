@@ -179,6 +179,8 @@ func (m Model) logWord(e view.Entry) (string, Role) {
 		return p.T("log.failed", "failed"), Bad
 	case view.EntryCancelled:
 		return p.T("log.cancelled", "cancelled"), Dim
+	case view.EntryRequeued:
+		return p.T("log.requeued", "back in to do"), Warn
 	case view.EntryTimedOut:
 		return p.T("log.timed_out", "timed out"), Bad
 	case view.EntryAbandoned:

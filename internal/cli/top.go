@@ -152,6 +152,7 @@ func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 		Control:  controlPort(s),
 		Start:    startPort(s),
 		MarkRead: markReadPort(s),
+		Requeue:  requeuePort(s),
 		RecordSupervisor: func(by, channel, message string) error {
 			return supervisor.Record(s, "", by, channel, "", "", message)
 		},

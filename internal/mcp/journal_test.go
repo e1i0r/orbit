@@ -86,6 +86,13 @@ func TestAPauseAskedForOverMCPIsInTheTasksHistory(t *testing.T) {
 // really willing to be signalled — a sleep of its own, in a group of its
 // own. holdTask writes this process's pid, which is right for a tool that
 // only reads the marker and fatal for the one that sends it SIGTERM.
+//
+// It is waited on in a goroutine, which is what internal/task does with every
+// run it spawns and for the same reason: a child nobody reaps is a zombie
+// once it is signalled, and a zombie answers kill(pid, 0) as though it were
+// running. A verb that stops a run and then waits for the process to be gone
+// would wait here for as long as it was willing to and then say the run
+// survived.
 func heldTask(t *testing.T, s *store.Store, r repo.Repo, id string) {
 	t.Helper()
 
@@ -96,9 +103,18 @@ func heldTask(t *testing.T, s *store.Store, r repo.Repo, id string) {
 		t.Fatalf("start a process to signal: %v", err)
 	}
 
+	gone := make(chan struct{})
+
+	go func() {
+		_ = cmd.Wait() //nolint:errcheck // the exit status is not the question; being gone is
+
+		close(gone)
+	}()
+
 	t.Cleanup(func() {
 		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL) //nolint:errcheck // best effort: the test is over
-		_ = cmd.Wait()                                      //nolint:errcheck // best effort: the test is over
+
+		<-gone
 	})
 
 	path, err := s.RunPath(id)
@@ -125,6 +141,33 @@ func TestACancelIsInTheTasksHistory(t *testing.T) {
 
 	if got := only(t, kindsOn(t, s, r, "PAY-10"), record.TaskDialogue); !strings.Contains(got.Text, "cancelled") {
 		t.Errorf("the record says %q, want it to say the task was cancelled", got.Text)
+	}
+}
+
+// A task taken back over mcp is in its history too, and what the history
+// says is the difference between the two verbs: this one was not cancelled,
+// it was put back in the queue to be run again.
+func TestARequeueIsInTheTasksHistory(t *testing.T) {
+	s, sn, r := oneRepo(t)
+	addTask(t, s, r, "PAY-11",
+		record.Event{At: at(1), Kind: record.TaskCreated, Text: "written"},
+		record.Event{At: at(2), Kind: record.TaskStarted})
+	heldTask(t, s, r, "PAY-11")
+
+	res := sn.Call("orbit_requeue_task", map[string]any{"task_id": "PAY-11", "why": "wrong engine"})
+	if res.IsError {
+		t.Fatalf("orbit_requeue_task refused: %s", text(t, res))
+	}
+
+	events := kindsOn(t, s, r, "PAY-11")
+
+	back := only(t, events, record.TaskRequeued)
+	if back.Data["by"] != "mcp" || !strings.Contains(back.Text, "wrong engine") {
+		t.Errorf("the record says %q by %q, want the reason and that a model gave it", back.Text, back.Data["by"])
+	}
+
+	if got := only(t, events, record.TaskDialogue); !strings.Contains(got.Text, "back in the queue") {
+		t.Errorf("the history says %q, want it to say the task went back to the queue", got.Text)
 	}
 }
 

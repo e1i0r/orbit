@@ -40,7 +40,7 @@ func speaking(t *testing.T, language string) (dir string) {
 func TestEveryCommandThatNeedsATaskIDRefusesInTheReadersLanguage(t *testing.T) {
 	dir := speaking(t, "es")
 
-	for _, command := range []string{"cancel", "direct", "note", "pause", "read", "resume", "run", "show"} {
+	for _, command := range []string{"cancel", "direct", "note", "pause", "read", "requeue", "resume", "run", "show"} {
 		t.Run(command, func(t *testing.T) {
 			code, _, errOut := run(t, command, "-repo", dir)
 			if code == 0 {

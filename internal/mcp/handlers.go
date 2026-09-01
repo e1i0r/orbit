@@ -44,6 +44,8 @@ func (sn Session) answer(name string, args map[string]any) CallToolResult {
 		return sn.directTask(args)
 	case "orbit_cancel_task":
 		return sn.cancelTask(args)
+	case "orbit_requeue_task":
+		return sn.requeueTask(args)
 	case "orbit_list_flows":
 		return sn.listFlows()
 	case "orbit_get_flow":

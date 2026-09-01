@@ -30,6 +30,10 @@ func (m Model) bandLeft() string {
 		return Paint(Warn).Render(m.opts.Words.T("msg.confirm_cancel",
 			"cancel {id}? press y to confirm, anything else to leave it running",
 			about("id", m.confirmID)))
+	case m.confirm == confirmRequeue:
+		return Paint(Warn).Render(m.opts.Words.T("msg.confirm_requeue",
+			"stop {id} and put it back in to do? press y to confirm, anything else to leave it alone",
+			about("id", m.confirmID)))
 	case m.confirm == confirmPostCliTask:
 		return Paint(Live).Render(m.opts.Words.T("msg.confirm_post_cli",
 			"create a task in Orbit from this session? press y to confirm, anything else to skip"))
@@ -201,6 +205,15 @@ func (m Model) controlSaid(msg controlMsg) string {
 	}
 
 	return p.T("msg.control_sent", "asked {id} to {word}", id, about("word", msg.Word))
+}
+
+// requeuedSaid is what the band says about a task that was taken back.
+func (m Model) requeuedSaid(msg requeuedMsg) string {
+	if msg.Err != nil {
+		return m.errSaid(msg.Err)
+	}
+
+	return m.opts.Words.T("msg.requeued", "{id} is back in to do", about("id", msg.ID))
 }
 
 // startedSaid is what the band says about a run that began.

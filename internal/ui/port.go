@@ -129,6 +129,12 @@ type Options struct {
 	// and the only thing on this screen that decrements unread 3/5.
 	MarkRead func(t view.Task) error
 
+	// Requeue stops whatever holds a task and puts it back in to do. It is
+	// a port of its own rather than a sixth control word because the word
+	// channel is read by a run between phases, and this gesture has to work
+	// on a task with no run to read it.
+	Requeue func(t view.Task) error
+
 	// RecordSupervisor records a message into the global supervisor conversation thread.
 	RecordSupervisor func(by, channel, message string) error
 

@@ -94,6 +94,50 @@ func TestTheGesturesReachTheFunctionsTheSubcommandsCall(t *testing.T) {
 			wantControl(t, cmd, got, "ACME-2705", "cancel")
 		},
 	}, {
+		// The same question x asks, and a different answer to it: the run
+		// stops either way, and this one says the task is going to be run
+		// again rather than that it is over.
+		name: "b asks first and then puts the task back in to do",
+		start: func(t *testing.T) (Model, *recorder) {
+			m, got := testModel(t, 100, 30)
+			return onRow(t, m, "ACME-2705"), got
+		},
+		keys: []string{"b", "y"},
+		want: func(t *testing.T, _ Model, cmd tea.Cmd, got *recorder) {
+			if cmd == nil {
+				t.Fatal("b then y answered with no command")
+			}
+
+			if _, ok := cmd().(requeuedMsg); !ok {
+				t.Fatal("b then y raised something other than a requeuedMsg")
+			}
+
+			if got.requeued != "ACME-2705" {
+				t.Errorf("the requeue port was asked for %q, want ACME-2705", got.requeued)
+			}
+
+			if got.word != "" {
+				t.Errorf("b also wrote the control word %q, and taking a task back is not one of the five", got.word)
+			}
+		},
+	}, {
+		// The one row it means nothing on. A task in to do is where this
+		// gesture would put it, so it is refused with the sentence saying
+		// so rather than writing an event that changes nothing.
+		name: "b on a task already in to do is refused and says why",
+		start: func(t *testing.T) (Model, *recorder) {
+			m, got := testModel(t, 100, 30)
+			return onRow(t, m.expand(view.ToDo), "ACME-2710"), got
+		},
+		keys: []string{"b"},
+		want: func(t *testing.T, m Model, cmd tea.Cmd, got *recorder) {
+			if cmd != nil || got.requeued != "" {
+				t.Fatalf("b on a task in to do produced cmd=%v and asked for %q", cmd != nil, got.requeued)
+			}
+
+			wantBand(t, m, "already waiting in to do")
+		},
+	}, {
 		name:  "h writes continue once the keyboard has been taken",
 		start: takenModel,
 		keys:  []string{"h"},

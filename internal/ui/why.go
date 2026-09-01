@@ -28,6 +28,8 @@ const (
 
 	whyCancelNotRunning = "why.cancel_not_running"
 
+	whyRequeueAlreadyToDo = "why.requeue_already_todo"
+
 	whyTakeNeverRun               = "why.take_never_run"
 	whyTakeStillRunning           = "why.take_still_running"
 	whyTakeEngineCannotResume     = "why.take_engine_cannot_resume"
@@ -78,6 +80,8 @@ func (a Affordance) Why(p *words.Printer) string {
 		return p.T("why.resume_not_running", "resuming needs a paused task; nothing is running here")
 	case whyCancelNotRunning:
 		return p.T("why.cancel_not_running", "cancelling needs a running task; nothing is running here")
+	case whyRequeueAlreadyToDo:
+		return p.T("why.requeue_already_todo", "this task is already waiting in to do")
 	case whyTakeNeverRun:
 		return p.T("why.take_never_run", "taking the keyboard needs a session; this task has never run")
 	case whyTakeStillRunning:

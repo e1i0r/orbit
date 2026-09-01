@@ -139,6 +139,13 @@ type (
 		Err error
 	}
 
+	// requeuedMsg is a task having been taken back to the queue, or the
+	// reason it was not.
+	requeuedMsg struct {
+		ID  string
+		Err error
+	}
+
 	// sessionMsg is the interactive session t would open, as a command line
 	// nobody has run yet.
 	//
@@ -285,6 +292,22 @@ func markRead(port func(view.Task) error, t view.Task) tea.Cmd {
 		}
 
 		return readMsg{ID: t.ID, Err: port(t)}
+	}
+}
+
+// requeue takes a task back to the queue, through the port.
+//
+// It is off the event loop like every other gesture here, and it is the one
+// that most needs to be: a run that has been signalled is waited on until
+// its own process is gone, which is seconds at best and half a minute for an
+// engine that has stopped listening.
+func requeue(port func(view.Task) error, t view.Task) tea.Cmd {
+	return func() tea.Msg {
+		if port == nil {
+			return requeuedMsg{ID: t.ID, Err: errNoRequeuePort}
+		}
+
+		return requeuedMsg{ID: t.ID, Err: port(t)}
 	}
 }
 

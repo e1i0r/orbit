@@ -137,6 +137,8 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.handBack()
 	case key.Matches(k, m.keys.Cancel):
 		return m.ask()
+	case key.Matches(k, m.keys.Requeue):
+		return m.askRequeue()
 	case key.Matches(k, m.keys.Take):
 		return m.takeKey()
 	case key.Matches(k, m.keys.MarkRead):
@@ -158,6 +160,23 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	}
 
 	return m, nil
+}
+
+// askRequeue opens the confirm in front of b.
+//
+// It asks for the same reason cancel does and not for cancel's reason: the
+// task is not lost — it is going back to to do, where it can be started
+// again — but whatever was running when the key was pressed does not come
+// back, and neither does what that phase spent.
+func (m Model) askRequeue() (tea.Model, tea.Cmd) {
+	t, next, ok := m.gesture(m.keys.Requeue)
+	if !ok {
+		return next, nil
+	}
+
+	next.confirm, next.confirmID = confirmRequeue, t.ID
+
+	return next, nil
 }
 
 func (m Model) askDeleteTask() (tea.Model, tea.Cmd) {
@@ -224,6 +243,10 @@ func (m Model) confirmKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	t, ok := m.task(id)
 	if !ok {
 		return m, nil
+	}
+
+	if c == confirmRequeue {
+		return m, requeue(m.opts.Requeue, t)
 	}
 
 	return m, control(m.opts.Control, t, "cancel")

@@ -180,6 +180,12 @@ func commands() []Command {
 		About: func(p *words.Printer) string { return p.T("cmd.cancel", "stop a run, and say so in its record") },
 		Run:   cancelTask,
 	}, {
+		Name: "requeue", Args: "-repo <dir> <id> [why]",
+		About: func(p *words.Printer) string {
+			return p.T("cmd.requeue", "stop a run and put the task back in to do")
+		},
+		Run: requeueTask,
+	}, {
 		Name: "reconcile", Args: "-repo <dir> [id]",
 		About: func(p *words.Printer) string {
 			return p.T("cmd.reconcile", "close the records of runs whose processes are gone")

@@ -256,6 +256,14 @@ func TestEveryMessageSaysSomething(t *testing.T) {
 		msg:  controlMsg{ID: "ACME-2705", Word: "pause", Err: sent},
 		want: func(t *testing.T, m Model, _ tea.Cmd) { wantBand(t, m, sent.Error()) },
 	}, {
+		name: "a task taken back to the queue",
+		msg:  requeuedMsg{ID: "ACME-2705"},
+		want: func(t *testing.T, m Model, _ tea.Cmd) { wantBand(t, m, "ACME-2705") },
+	}, {
+		name: "a task that would not go back",
+		msg:  requeuedMsg{ID: "ACME-2705", Err: sent},
+		want: func(t *testing.T, m Model, _ tea.Cmd) { wantBand(t, m, sent.Error()) },
+	}, {
 		name: "a run that started",
 		msg:  startedMsg{ID: "ACME-2710", Pid: 4114},
 		want: func(t *testing.T, m Model, _ tea.Cmd) { wantBand(t, m, "ACME-2710") },

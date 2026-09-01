@@ -56,6 +56,7 @@ const (
 	confirmCancel
 	confirmPostCliTask
 	confirmDeleteTask
+	confirmRequeue
 )
 
 // Model is one window. It is a value: Update takes one and returns the next,

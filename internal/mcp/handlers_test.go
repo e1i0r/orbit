@@ -215,7 +215,7 @@ func TestAnAmbiguousIdIsRefusedWithTheRepositoriesThatHoldIt(t *testing.T) {
 
 func TestAnUnknownTaskIsRefusedByName(t *testing.T) {
 	_, sn, _ := oneRepo(t)
-	for _, tool := range []string{"orbit_inspect_task", "orbit_pause_task", "orbit_cancel_task", "orbit_retry_task"} {
+	for _, tool := range []string{"orbit_inspect_task", "orbit_pause_task", "orbit_cancel_task", "orbit_requeue_task", "orbit_retry_task"} {
 		if said := refused(t, sn, tool, map[string]any{"task_id": "NOPE-1"}); !strings.Contains(said, "NOPE-1") {
 			t.Errorf("%s refused without naming the task: %s", tool, said)
 		}

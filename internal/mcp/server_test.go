@@ -163,6 +163,7 @@ func TestEveryDeclaredArgumentIsOneAHandlerReads(t *testing.T) {
 		"orbit_pause_task":         {"task_id": true, "repo": true},
 		"orbit_direct_task":        {"task_id": true, "repo": true, "message": true, "restart": true},
 		"orbit_cancel_task":        {"task_id": true, "repo": true},
+		"orbit_requeue_task":       {"task_id": true, "repo": true, "why": true},
 		"orbit_list_flows":         {},
 		"orbit_get_flow":           {"name": true},
 		"orbit_save_flow":          {"name": true, "description": true, "from": true, "phases": true},

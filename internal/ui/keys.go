@@ -25,7 +25,7 @@ type Keys struct {
 	Up, Down, First, Last, PageUp, PageDown                                                key.Binding
 	Open, Back, NextTab, PrevTab, Sideways                                                 key.Binding
 	Start, Run, ChangeFlow, Menu, Compose                                                  key.Binding
-	Pause, Resume, Cancel                                                                  key.Binding
+	Pause, Resume, Cancel, Requeue                                                         key.Binding
 	Take, Hand, Ask, MarkRead, Delete, Edit                                                key.Binding
 	Filter, Commands, CLI, Repos, EngineKnobs, Supervisor, Autopilot, Language, Help, Quit key.Binding
 }
@@ -88,6 +88,10 @@ func NewKeys(p *words.Printer) Keys {
 		Pause:  binding("p", p.T("key.pause", "pause"), "p"),
 		Resume: binding("r", p.T("key.resume", "resume"), "r"),
 		Cancel: binding("x", p.T("key.cancel", "cancel"), "x"),
+		// b for back. It is beside x because it is the other way a run
+		// stops, and it is not x because the two say different things about
+		// the work: x is finished with it, b is starting it over.
+		Requeue: binding("b", p.T("key.requeue", "back to to do"), "b"),
 
 		Take:     binding("t", p.T("key.take", "take the keyboard"), "t"),
 		Hand:     binding("h", p.T("key.hand", "hand it back"), "h"),

@@ -226,6 +226,27 @@ func (sn Session) cancelTask(args map[string]any) CallToolResult {
 	return done("task %s was told to stop; the record carries the outcome%s", t.ID, trace)
 }
 
+// requeueTask stops whatever holds a task and puts it back in the queue.
+//
+// context.Background for the reason directTask gives: nothing upstream of a
+// dispatched tool call has a context, and the wait Requeue makes is bounded
+// on its own.
+func (sn Session) requeueTask(args map[string]any) CallToolResult {
+	sb, t, res := sn.loadFor(args)
+	if res != nil {
+		return *res
+	}
+
+	why := strings.TrimSpace(stringArg(args, "why"))
+	if err := task.Requeue(context.Background(), sb.store, t, "mcp", why); err != nil {
+		return refuse(fmt.Errorf("requeue task %s: %w", t.ID, err))
+	}
+
+	trace := journal(sb.store, t, "a model put this task back in the queue over mcp")
+
+	return done("task %s is back in to do and can be started again%s", t.ID, trace)
+}
+
 // directTask interrupts an in-flight run while preserving memory, records the
 // directive and note, and optionally restarts the task.
 func (sn Session) directTask(args map[string]any) CallToolResult {

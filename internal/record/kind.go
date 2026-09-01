@@ -19,6 +19,14 @@ const (
 	TaskFinished  = "task.finished"  // every phase of the flow ran through
 	TaskFailed    = "task.failed"    // the run stopped and Text says why
 	TaskCancelled = "task.cancelled" // a reader stopped it
+	// TaskRequeued is a task a reader took back: whatever was running was
+	// stopped, and the task goes to the front of the queue rather than into
+	// the record as cancelled. The two are different sentences. A run
+	// cancelled is a piece of work that is over; a run requeued is one
+	// somebody means to start again once they have fixed what was wrong
+	// with it, and filing it under Done hides it from the person who has to
+	// do that. Data["by"] is who took it back and Text is why, if they said.
+	TaskRequeued  = "task.requeued"
 	TaskTimedOut  = "task.timedout"  // it outlived the deadline it was given
 	TaskAbandoned = "task.abandoned" // its process is gone and a reader wrote that down
 	TaskRead      = "task.read"      // somebody has looked at it
