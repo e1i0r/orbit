@@ -77,6 +77,11 @@ func (m Model) View() tea.View {
 	lines = append(lines, m.bandRows()...)
 	lines = append(lines, m.barRows()...)
 	v := tea.NewView(strings.Join(lines, "\n"))
+	// The window's own paper, so the frame reads as a program and not as
+	// scrollback in whatever colours the terminal happens to be set to. Bubble
+	// Tea puts the terminal back the way it found it on the way out.
+	v.BackgroundColor = WindowBackground()
+	v.ForegroundColor = WindowForeground()
 	// CellMotion and not AllMotion: the window is told about a moved
 	// pointer only while a button is down, which is what a drag needs and
 	// all it needs. AllMotion is a message for every cell the pointer

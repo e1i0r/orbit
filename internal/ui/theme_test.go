@@ -116,3 +116,31 @@ func TestAvailableThemes(t *testing.T) {
 
 	SetCurrentTheme("monokai")
 }
+
+// The window is painted on its theme's own paper, and changing the theme
+// changes it: a background written down here rather than read from the shell
+// would be the one colour on screen that does not move with the setting.
+func TestTheWindowIsPaintedOnItsThemesPaper(t *testing.T) {
+	t.Cleanup(func() { SetCurrentTheme("frauddi") })
+
+	for _, tc := range []struct{ theme, want string }{
+		{"frauddi", "#0B1016"},
+		{"dracula", "#282A36"},
+	} {
+		SetCurrentTheme(tc.theme)
+
+		if got := WindowBackground(); got != lipgloss.Color(tc.want) {
+			t.Errorf("%s background = %v, want %s", tc.theme, got, tc.want)
+		}
+	}
+
+	// The pair, not one of them: paper handed over without ink leaves every
+	// unstyled cell in the foreground the reader's console was set to, which
+	// was chosen against a different background.
+	m, _ := testModel(t, 80, 24)
+
+	v := m.View()
+	if v.BackgroundColor == nil || v.ForegroundColor == nil {
+		t.Errorf("the window draws paper %v and ink %v; it needs both", v.BackgroundColor, v.ForegroundColor)
+	}
+}
