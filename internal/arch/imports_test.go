@@ -44,7 +44,13 @@ var layers = map[string][]string{
 	// internal/board still does not append anything itself, and internal/ui
 	// still cannot reach internal/record, internal/store or internal/engine.
 	"internal/board": {"internal/record", "internal/repo", "internal/store", "internal/task", "internal/view"},
-	"internal/cli":   {"internal/board", "internal/engine", "internal/flow", "internal/logger", "internal/mcp", "internal/quota", "internal/repo", "internal/store", "internal/supervisor", "internal/task", "internal/tracker", "internal/ui", "internal/view", "internal/words"},
+	// internal/db is the record: it turns an event into rows and reads them
+	// back. internal/record is on its list because the event is the thing
+	// it stores, and it is the only entry — the record knows no store, no
+	// task and no engine, so nothing here can decide anything about a run
+	// or reach the state root to find one.
+	"internal/db":  {"internal/record"},
+	"internal/cli": {"internal/board", "internal/engine", "internal/flow", "internal/logger", "internal/mcp", "internal/quota", "internal/repo", "internal/store", "internal/supervisor", "internal/task", "internal/tracker", "internal/ui", "internal/view", "internal/words"},
 	// internal/logger is on internal/engine's list for the one thing this
 	// package does that nothing else in Orbit does: it starts somebody
 	// else's program. What that cost, how long it took and which of the

@@ -162,6 +162,12 @@ var approved = []string{
 	"github.com/charmbracelet/colorprofile",
 	"github.com/charmbracelet/x/ansi",
 	"github.com/charmbracelet/x/exp/golden",
+	// modernc.org/sqlite is the record. It is a translation of SQLite into
+	// Go rather than a binding to the C library, which is the whole reason
+	// it is this one: releases build with CGO_ENABLED=0, and a binding
+	// would mean a C toolchain on every machine that builds Orbit and a
+	// different answer per platform about whether it worked.
+	"modernc.org/sqlite",
 }
 
 func TestGoModTakesOnlyApprovedDependencies(t *testing.T) {

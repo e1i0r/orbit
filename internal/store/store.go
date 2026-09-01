@@ -262,6 +262,14 @@ func (s *Store) EventsPath(taskID string) (string, error) {
 	return filepath.Join(dir, "events.jsonl"), nil
 }
 
+// DBPath is the record: one file at the root of the state, holding every
+// task's events rather than one log per task directory.
+//
+// It sits beside the per-task directories rather than inside one because it
+// is about all of them, and because a question like "what is running right
+// now" is one query here and was a walk of every directory before.
+func (s *Store) DBPath() string { return filepath.Join(s.root, "orbit.db") }
+
 // LogDir is where internal diagnostic logs of Orbit live.
 func (s *Store) LogDir() string { return filepath.Join(s.root, "logs") }
 
