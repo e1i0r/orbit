@@ -32,6 +32,14 @@ const (
 	TaskRead      = "task.read"      // somebody has looked at it
 	TaskNoted     = "task.noted"     // a user note left for the task
 	TaskDialogue  = "task.dialogue"  // something outside a run acted on it; Data["by"] says what
+	// TaskDeleted takes a task off every listing without unwriting a word
+	// of what it did. The record is the only account of what an engine was
+	// asked, what it cost and what it changed, and a reader tidying a board
+	// is not saying they want that account gone — they are saying they do
+	// not want to look at this row any more. So it is an event like the
+	// others rather than a row removed: the fold ignores it, and the one
+	// query that enumerates tasks leaves out whatever has it.
+	TaskDeleted = "task.deleted"
 	// TaskStuck is a task that ran out of attempts. It is not a failure of
 	// one run — task.failed already says that — it is the run after the
 	// last one the flow was allowed: nothing will move until a reader

@@ -25,8 +25,16 @@ import (
 // The order is by id rather than by when the task was written, which is what
 // the directory listing this replaced gave and what every caller of it
 // expects to print.
+//
+// A deleted task is not one of them. Deleting is an event rather than a row
+// removed — see record.TaskDeleted — and this is the one enumeration in the
+// program: the board, `orbit list` and the reconcile sweep all arrive here,
+// so leaving them out once leaves them out everywhere, and no caller can
+// forget the rule because no caller states it. The kind is passed rather
+// than written into the statement so that it is spelled in exactly one
+// place, which is the constant.
 func (d *DB) TasksOfRepo(abs string) ([]string, error) {
-	rows, err := d.sql.Query(selectTasksOfRepo, abs)
+	rows, err := d.sql.Query(selectTasksOfRepo, abs, record.TaskDeleted)
 	if err != nil {
 		return nil, fmt.Errorf("read the tasks of %q: %w", abs, err)
 	}

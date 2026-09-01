@@ -48,6 +48,38 @@ func TestARepositoryListsTheTasksWrittenAgainstIt(t *testing.T) {
 	}
 }
 
+// TestADeletedTaskLeavesTheListingAndKeepsItsEvents. The two halves of the
+// soft delete meet here: the enumeration every caller reads leaves the task
+// out, and the record the enumeration read it out of is untouched.
+func TestADeletedTaskLeavesTheListingAndKeepsItsEvents(t *testing.T) {
+	d := open(t)
+
+	wrote(t, d, "ACME-1", "app", "/w/app")
+	wrote(t, d, "ACME-2", "app", "/w/app")
+
+	if err := d.Append("ACME-1", record.Event{Kind: record.TaskDeleted}); err != nil {
+		t.Fatalf("delete ACME-1: %v", err)
+	}
+
+	got, err := d.TasksOfRepo("/w/app")
+	if err != nil {
+		t.Fatalf("the tasks of /w/app: %v", err)
+	}
+
+	if !slices.Equal(got, []string{"ACME-2"}) {
+		t.Errorf("/w/app lists %v, want [ACME-2] — the deleted task is off the listing", got)
+	}
+
+	events, err := d.Events("ACME-1")
+	if err != nil {
+		t.Fatalf("read the record of the deleted task: %v", err)
+	}
+
+	if len(events) != 2 {
+		t.Errorf("the deleted task has %d events, want the two that were written: what it did is the part a delete does not take away", len(events))
+	}
+}
+
 // TestARepositoryNobodyHasWrittenAgainstListsNothing. Nothing rather than a
 // failure: a checkout Orbit knows and has never been given a task is the
 // ordinary state of a repository somebody has just added.
