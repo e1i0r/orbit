@@ -135,12 +135,24 @@ func TestTheEnginePickerCarriesEachEnginesWindows(t *testing.T) {
 		t.Errorf("unsourced engine = %q, want it to say it has no source", unsourced)
 	}
 
-	// And one paid per token has no window to be at the end of.
+	// And one paid per token says that instead: there is no window to be at
+	// the end of, which is an answer and not an absence.
 	m.opts.Quota = func(engine string) QuotaReading {
 		return QuotaReading{Engine: engine, Money: true}
 	}
 
-	if got := m.engineQuota(engineRow{kind: rowEngine, engine: "opencode"}); got != "" {
-		t.Errorf("metered engine = %q, want nothing", got)
+	if got := m.engineQuota(engineRow{kind: rowEngine, engine: "opencode"}); !strings.Contains(got, "per token") {
+		t.Errorf("metered engine = %q, want it to say it is paid per token", got)
+	}
+
+	// A source that is there and answers nothing is a third thing, and the
+	// one worth going to look at: a base URL nothing serves /quota on read
+	// exactly like an engine with no proxy at all.
+	m.opts.Quota = func(engine string) QuotaReading {
+		return QuotaReading{Engine: engine, Sourced: true}
+	}
+
+	if got := m.engineQuota(engineRow{kind: rowEngine, engine: "codex"}); !strings.Contains(got, "answered nothing") {
+		t.Errorf("silent source = %q, want it to say the source answered nothing", got)
 	}
 }

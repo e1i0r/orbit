@@ -2349,6 +2349,14 @@
       "source": "{windows} used",
       "value": "{windows} usado"
     },
+    "quota.per_token": {
+      "source": "billed per token",
+      "value": "se paga por token"
+    },
+    "quota.silent": {
+      "source": "source answered nothing",
+      "value": "la fuente no respondió"
+    },
     "status.quota_unread": {
       "source": "no quota source for {engine}",
       "value": "sin fuente de quota para {engine}"

@@ -137,18 +137,28 @@ func (m Model) engineQuota(r engineRow) string {
 		return ""
 	}
 
+	p := m.opts.Words
+
 	reading := m.opts.Quota(r.engine)
 	if used := m.windowsUsed(reading); used != "" {
 		return used
 	}
 
-	// An engine paid per token has no window to be at the end of, and one
-	// whose source has simply not answered yet says nothing rather than
-	// guessing. What is left is the engine nobody can read at all.
-	if reading.Money || reading.Sourced {
-		return ""
+	// Three ways to have no percentage, and a row that drew the same blank
+	// for all of them would be the silence this screen was given a quota to
+	// end. An engine paid per token has no window to be at the end of; one
+	// with a source that has answered nothing is a source to go and look at
+	// — a base URL a proxy does not serve /quota on reads exactly like an
+	// engine with no proxy, and only one of those is worth fixing; and an
+	// engine with nowhere to look at all says so, as it does on the status
+	// line.
+	switch {
+	case reading.Money:
+		return p.T("quota.per_token", "billed per token")
+	case reading.Sourced:
+		return p.T("quota.silent", "source answered nothing")
+	default:
+		return p.T("status.quota_unread", "no quota source for {engine}",
+			about("engine", reading.Engine))
 	}
-
-	return m.opts.Words.T("status.quota_unread", "no quota source for {engine}",
-		about("engine", reading.Engine))
 }
