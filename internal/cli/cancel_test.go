@@ -299,3 +299,35 @@ func TestRunOffersATimeout(t *testing.T) {
 		t.Errorf("run does not offer a timeout:\n%s", out)
 	}
 }
+
+// TestRequeueTakesATaskBackToTheQueue is the front door of the gesture that
+// undoes a start: nothing is running, so nothing is signalled, and the
+// record ends with the task waiting to be run again rather than cancelled.
+func TestRequeueTakesATaskBackToTheQueue(t *testing.T) {
+	root, _ := workspace(t)
+
+	repoDir := filepath.Join(root, "payments")
+	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
+		t.Fatalf("new exited %d: %s", code, errOut)
+	}
+
+	code, out, errOut := run(t, "requeue", "-repo", repoDir, "ACME-1", "wrong", "brief")
+	if code != 0 {
+		t.Fatalf("requeue exited %d: %s", code, errOut)
+	}
+
+	if !strings.Contains(out, "ACME-1") {
+		t.Errorf("requeue does not name the task it took back:\n%s", out)
+	}
+
+	// The reason is written down as it was typed, spaces and all: what the
+	// reader said is the only account of why the work was stopped.
+	code, shown, errOut := run(t, "show", "-repo", repoDir, "ACME-1")
+	if code != 0 {
+		t.Fatalf("show exited %d: %s", code, errOut)
+	}
+
+	if !strings.Contains(shown, "wrong brief") {
+		t.Errorf("the record does not carry the reason it was taken back:\n%s", shown)
+	}
+}

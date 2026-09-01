@@ -320,3 +320,18 @@ func hintFor(b key.Binding) barHint {
 func hint(glyph, desc string) barHint {
 	return barHint{text: Paint(Accent).Render("["+glyph+"]") + " " + Chrome().Render(desc)}
 }
+
+// hintKey is a hint whose glyph is the whole of the keystroke it sends.
+//
+// Some of what the task view answers is matched by the letter inside
+// detailKey rather than by a binding in m.keys, and drawn with hint those
+// were drawn as keys and clicked as nothing: [m] tab menu, [v] md / raw and
+// [e] expand did what pressing them does and nothing at all from the
+// pointer. A hint that names a key a reader can press is a hint they can
+// click, and the click sends that key.
+func hintKey(glyph, desc string) barHint {
+	h := hint(glyph, desc)
+	h.key = glyph
+
+	return h
+}

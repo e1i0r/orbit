@@ -46,7 +46,7 @@ func everyCase() []affordanceCase {
 		name:     "a run working in a phase",
 		task:     view.Task{ID: "ACME-2", Band: view.Running, Phase: "implement", Live: view.LiveHeld, Attempt: 1, Engine: "claude"},
 		settings: can,
-		offered:  []string{"enter", "p", "x"},
+		offered:  []string{"enter", "p", "x", "b"},
 	}, {
 		// A run marker nobody could read. Every verb below turns on whether
 		// a process holds this task, and nothing here can say, so the only
@@ -63,17 +63,17 @@ func everyCase() []affordanceCase {
 		name:     "a run the reader has paused",
 		task:     view.Task{ID: "ACME-3", Band: view.Running, Live: view.LiveHeld, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonHeld}},
 		settings: can,
-		offered:  []string{"enter", "r", "x", "t"},
+		offered:  []string{"enter", "r", "x", "b", "t"},
 	}, {
 		name:     "a phase waiting at the gate its flow asked for",
 		task:     view.Task{ID: "ACME-4", Band: view.NeedsYou, Live: view.LiveHeld, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonGate}},
 		settings: can,
-		offered:  []string{"enter", "r", "x", "t"},
+		offered:  []string{"enter", "r", "x", "b", "t"},
 	}, {
 		name:     "the same gate with autopilot on",
 		task:     view.Task{ID: "ACME-5", Band: view.NeedsYou, Live: view.LiveHeld, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonGate}},
 		settings: Conditions{Autopilot: true, CanResume: true},
-		offered:  []string{"enter", "r", "x", "t"},
+		offered:  []string{"enter", "r", "x", "b", "t"},
 	}, {
 		// The same paused run, with the keyboard actually taken. This is
 		// the only shape on the board where h means anything, and it is the
@@ -81,27 +81,27 @@ func everyCase() []affordanceCase {
 		name:     "a paused run whose keyboard this reader took",
 		task:     view.Task{ID: "ACME-10", Band: view.Running, Live: view.LiveHeld, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonHeld}},
 		settings: Conditions{CanResume: true, Taken: true},
-		offered:  []string{"enter", "r", "x", "t", "h"},
+		offered:  []string{"enter", "r", "x", "b", "t", "h"},
 	}, {
 		name:     "a run that failed and whose process is gone",
 		task:     view.Task{ID: "ACME-6", Band: view.NeedsYou, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonFailed}},
 		settings: can,
-		offered:  []string{"enter", "t", "D"},
+		offered:  []string{"enter", "b", "t", "D"},
 	}, {
 		name:     "a finished task nobody has read",
 		task:     view.Task{ID: "ACME-7", Band: view.Done, Attempt: 1, Engine: "claude"},
 		settings: can,
-		offered:  []string{"enter", "t", "d", "D"},
+		offered:  []string{"enter", "b", "t", "d", "D"},
 	}, {
 		name:     "a finished task already read",
 		task:     view.Task{ID: "ACME-8", Band: view.Done, Attempt: 1, Engine: "claude", Read: true},
 		settings: can,
-		offered:  []string{"enter", "t", "D"},
+		offered:  []string{"enter", "b", "t", "D"},
 	}, {
 		name:     "a paused run on an engine that cannot resume a session",
 		task:     view.Task{ID: "ACME-9", Band: view.Running, Live: view.LiveHeld, Attempt: 1, Engine: "codex", Reason: view.Reason{Key: view.ReasonHeld}},
 		settings: Conditions{},
-		offered:  []string{"enter", "r", "x"},
+		offered:  []string{"enter", "r", "x", "b"},
 	}}
 }
 

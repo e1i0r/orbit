@@ -87,6 +87,24 @@ func stoppedByHandCases() []foldCase {
 			},
 		},
 		{
+			// The one gesture that moves a task backwards. What it spent is
+			// still in the record and the attempt still counts, so the next
+			// run is the second one and not the first over again.
+			name: "the reader took it back, and a requeued task is to do again",
+			events: []record.Event{
+				{At: at(0), Kind: "task.created", Text: "Move the assets cron"},
+				{At: at(1), Kind: "task.started", Data: data("flow", "task")},
+				{At: at(2), Kind: "phase.started", Phase: "implement", Data: data("engine", "claude", "model", "opus", "n", "1")},
+				{At: at(3), Kind: "phase.cancelled", Phase: "implement", Data: data("cost", "0.42")},
+				{At: at(4), Kind: "task.cancelled"},
+				{At: at(5), Kind: "task.requeued", Text: "wrong engine", Data: data("by", "operator")},
+			},
+			want: Task{
+				Title: "Move the assets cron", Band: ToDo, Flow: "task",
+				Since: at(5), Started: at(1), Attempt: 1, Cost: 0.42, state: stateNew,
+			},
+		},
+		{
 			name: "its process is gone and a reader wrote that down",
 			events: []record.Event{
 				{At: at(0), Kind: "task.created", Text: "Fix the swagger lint"},

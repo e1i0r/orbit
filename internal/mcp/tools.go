@@ -97,6 +97,15 @@ func taskTools() []Tool {
 				"repo":    {Type: "string", Description: "Which repository, when two of them hold a task under this id."},
 			}, "task_id"),
 		},
+		{
+			Name:        "orbit_requeue_task",
+			Description: "Stop whatever holds a task and put it back in the to do band, to be started again from the beginning. This is for work that was begun wrongly — the wrong brief, the wrong engine, the wrong task — where orbit_cancel_task is for work that is over. What the stopped run spent stays in the record.",
+			InputSchema: object(map[string]Property{
+				"task_id": {Type: "string", Description: "The task's id."},
+				"repo":    {Type: "string", Description: "Which repository, when two of them hold a task under this id."},
+				"why":     {Type: "string", Description: "Why it is being taken back, for the record."},
+			}, "task_id"),
+		},
 	}
 }
 
@@ -156,6 +165,6 @@ var instructions = strings.Join([]string{
 	"Orbit is a cockpit for supervising coding agents. Tasks live on a board, in four bands: " + strings.Join(bandNames(), ", ") + ".",
 	"Read before acting: orbit_get_board_summary for the shape of the board, orbit_list_tasks for the ids, orbit_inspect_task for why one of them failed.",
 	"Never invent a task id or a repository path. Both come from orbit_list_tasks.",
-	"orbit_retry_task, orbit_direct_task with restart, and orbit_cancel_task change what is running and cost money. Say what you are about to do before you do it.",
+	"orbit_retry_task, orbit_direct_task with restart, orbit_cancel_task and orbit_requeue_task change what is running and cost money. Say what you are about to do before you do it.",
 	"orbit_forget_repo and orbit_delete_flow remove things that cannot be got back: a repository's record is the only account of what its runs did. Both refuse until told again.",
 }, " ")

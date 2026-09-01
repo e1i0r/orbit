@@ -53,6 +53,10 @@
       "source": "cancel",
       "value": "cancelar"
     },
+    "key.requeue": {
+      "source": "back to to do",
+      "value": "volver a pendientes"
+    },
     "key.take": {
       "source": "take the keyboard",
       "value": "tomar el teclado"
@@ -124,6 +128,10 @@
     "why.cancel_not_running": {
       "source": "cancelling needs a running task; nothing is running here",
       "value": "cancelar necesita una tarea en marcha; aquí no hay nada en marcha"
+    },
+    "why.requeue_already_todo": {
+      "source": "this task is already waiting in to do",
+      "value": "esta tarea ya está esperando en pendientes"
     },
     "why.take_never_run": {
       "source": "taking the keyboard needs a session; this task has never run",
@@ -292,6 +300,10 @@
     "msg.confirm_cancel": {
       "source": "cancel {id}? press y to confirm, anything else to leave it running",
       "value": "¿cancelar {id}? pulsa y para confirmar, cualquier otra tecla la deja en marcha"
+    },
+    "msg.confirm_requeue": {
+      "source": "stop {id} and put it back in to do? press y to confirm, anything else to leave it alone",
+      "value": "¿detener {id} y devolverla a pendientes? pulsa y para confirmar, cualquier otra tecla la deja como está"
     },
     "msg.confirm_delete_task": {
       "source": "delete task {id}? press y or ⏎ to confirm deletion, any other key to cancel",
@@ -867,6 +879,10 @@
       "source": "cancelled",
       "value": "cancelada"
     },
+    "log.requeued": {
+      "source": "back in to do",
+      "value": "de vuelta en pendientes"
+    },
     "log.timed_out": {
       "source": "timed out",
       "value": "plazo agotado"
@@ -1247,6 +1263,10 @@
       "source": "{id} is marked read",
       "value": "{id} queda marcada como leída"
     },
+    "msg.requeued": {
+      "source": "{id} is back in to do",
+      "value": "{id} vuelve a pendientes"
+    },
     "why.hand_back_not_stopped": {
       "source": "handing the keyboard back needs a run stopped at a phase; this one is not stopped",
       "value": "devolver el teclado necesita una ejecución detenida en una fase; esta no lo está"
@@ -1362,6 +1382,10 @@
     "cancel.asked_to_stop": {
       "source": "{id} asked to stop",
       "value": "se le pidió a {id} que se detenga"
+    },
+    "requeue.back_in_queue": {
+      "source": "{id} stopped and back in to do",
+      "value": "{id} detenida y de vuelta en pendientes"
     },
     "direct.needs_message": {
       "source": "direct needs a message for task {id}",
@@ -1498,6 +1522,10 @@
     "cmd.cancel": {
       "source": "stop a run, and say so in its record",
       "value": "detener una ejecución y dejarlo dicho en su registro"
+    },
+    "cmd.requeue": {
+      "source": "stop a run and put the task back in to do",
+      "value": "detener una ejecución y devolver la tarea a pendientes"
     },
     "cmd.reconcile": {
       "source": "close the records of runs whose processes are gone",
@@ -1663,6 +1691,18 @@
       "source": "the task this menu was opened on is no longer on the board",
       "value": "la tarea en la que se abrió este menú ya no está en el tablero"
     },
+    "menu.title_board": {
+        "source": "commands — nothing here is about one task",
+        "value": "comandos — nada de esto es sobre una tarea"
+    },
+    "menu.title_task": {
+        "source": "{id} — what can be done to this task",
+        "value": "{id} — lo que se puede hacer con esta tarea"
+    },
+    "menu.title_panes": {
+        "source": "the panes of this task",
+        "value": "los paneles de esta tarea"
+    },
     "key.compose": {
       "source": "write a task",
       "value": "escribir una tarea"
@@ -1814,6 +1854,10 @@
     "msg.command_done": {
       "source": "{name} finished",
       "value": "{name} terminó"
+    },
+    "msg.needs_args": {
+      "source": "{name} takes {args}; type them here",
+      "value": "{name} lleva {args}; escríbelo aquí"
     },
     "msg.no_such_command": {
       "source": "no such command: {name}",
@@ -2854,6 +2898,10 @@
     "err.no_read_port": {
       "source": "this window was opened without a way to mark a task read",
       "value": "esta ventana se abrió sin forma de marcar una tarea como leída"
+    },
+    "err.no_requeue_port": {
+      "source": "this window was opened without a way to put a task back in the queue",
+      "value": "esta ventana se abrió sin forma de devolver una tarea a la cola"
     },
     "err.no_session_port": {
       "source": "this window was opened without a way to take the keyboard",

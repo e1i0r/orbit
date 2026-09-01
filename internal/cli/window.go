@@ -104,6 +104,17 @@ func commandTable() []ui.Command {
 			uc.Because = c.Because
 		}
 
+		// Only for the commands the window actually runs. A command it
+		// answers with a screen has its own reason for not running here, and
+		// telling a reader to type an id for it would send them back with
+		// the id to the same refusal.
+		uc.NeedsArgs = c.NeedsArgs && c.InWindow == WindowRuns
+
+		// Whatever the window would do with it. A verb about one task is off
+		// the board's menu because of what it is about, not because of what
+		// the window can do with it.
+		uc.AboutATask = c.AboutATask
+
 		out = append(out, uc)
 	}
 

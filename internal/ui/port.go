@@ -129,6 +129,12 @@ type Options struct {
 	// and the only thing on this screen that decrements unread 3/5.
 	MarkRead func(t view.Task) error
 
+	// Requeue stops whatever holds a task and puts it back in to do. It is
+	// a port of its own rather than a sixth control word because the word
+	// channel is read by a run between phases, and this gesture has to work
+	// on a task with no run to read it.
+	Requeue func(t view.Task) error
+
 	// RecordSupervisor records a message into the global supervisor conversation thread.
 	RecordSupervisor func(by, channel, message string) error
 
@@ -301,4 +307,14 @@ type Command struct {
 
 	Refused bool                        // the window does not run it here
 	Because func(*words.Printer) string // why, when Refused is set
+
+	// NeedsArgs says the command refuses when it is given none, and Args
+	// says what it wants. The command line can give it those and the
+	// board's menu cannot, so it is the menu that reads this.
+	NeedsArgs bool
+
+	// AboutATask keeps the command off the board's menu. That menu is
+	// opened on no row, and a verb about one task has no task there; the
+	// menu of the row it is about is where it belongs.
+	AboutATask bool
 }

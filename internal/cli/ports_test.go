@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -169,15 +170,11 @@ func TestEnginesPortMarksEveryEngineUnavailableWithNoPath(t *testing.T) {
 	}
 }
 
-// The delete gesture. It asked the store for both of its directories by the
-// repository's name, and the store keys everything by the repository's path:
-// what it removed was a hash of "payments" resolved against whatever
-// directory the process happened to be started in — nothing, in every test
-// here and on every machine where the window was not opened from the
-// workspace root — and it answered nil regardless, so the window said "task
-// deleted" over a task that was still there.
+// The delete gesture. It is a soft delete — task.Delete says why — so what
+// this port is asked for is that the row leaves every listing and that the
+// account of what the task did is still there to read afterwards.
 
-func TestDeletingATaskRemovesTheRecordTheStoreActuallyWrote(t *testing.T) {
+func TestDeletingATaskTakesItOffTheListingAndKeepsItsRecord(t *testing.T) {
 	root, _ := workspace(t)
 	dir := writeTask(t, root)
 
@@ -191,21 +188,26 @@ func TestDeletingATaskRemovesTheRecordTheStoreActuallyWrote(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	taskDir, err := s.TaskDir("ACME-1")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if !exists(taskDir) {
-		t.Fatalf("the fixture wrote no record at %q", taskDir)
-	}
-
 	if err := deleteTaskPort(s)(view.Task{ID: "ACME-1", Repo: r.Name, RepoPath: r.Path}); err != nil {
 		t.Fatalf("delete: %v", err)
 	}
 
-	if exists(taskDir) {
-		t.Errorf("the record at %q is still there and the gesture reported success", taskDir)
+	ids, err := task.List(s, r)
+	if err != nil {
+		t.Fatalf("list the tasks of %s: %v", r.Name, err)
+	}
+
+	if slices.Contains(ids, "ACME-1") {
+		t.Errorf("the deleted task is still listed: %v", ids)
+	}
+
+	events, err := task.Events(s, task.Task{ID: "ACME-1", Repo: r})
+	if err != nil {
+		t.Fatalf("read the record of the deleted task: %v", err)
+	}
+
+	if len(events) == 0 {
+		t.Error("the record of the deleted task is empty, and it was the only account of what it did")
 	}
 }
 
@@ -240,7 +242,7 @@ func TestDeletingATaskGivesTheWorktreeBackToGit(t *testing.T) {
 		t.Fatalf("delete: %v", err)
 	}
 
-	if exists(wtDir) {
+	if _, err := os.Stat(wtDir); err == nil {
 		t.Errorf("the checkout at %q is still there", wtDir)
 	}
 

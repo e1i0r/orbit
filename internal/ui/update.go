@@ -70,6 +70,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.say(m.startedSaid(msg)), nil
 	case readMsg:
 		return m.say(m.readSaid(msg)), nil
+	case requeuedMsg:
+		return m.say(m.requeuedSaid(msg)), nil
 	case outputMsg:
 		// A tick for a run this window already stopped watching, or one
 		// whose name does not match what is on screen, is dropped rather

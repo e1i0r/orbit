@@ -21,6 +21,7 @@ var (
 	errNoControlPort  = errors.New("this window was opened without a way to control a task")
 	errNoStartPort    = errors.New("this window was opened without a way to start a run")
 	errNoReadPort     = errors.New("this window was opened without a way to mark a task read")
+	errNoRequeuePort  = errors.New("this window was opened without a way to put a task back in the queue")
 	errNoSessionPort  = errors.New("this window was opened without a way to take the keyboard")
 	errNoWorktreePort = errors.New("this window was opened without a way to find the worktree")
 	errNoRecordPort   = errors.New("this window was opened without a way to read the record")
@@ -74,6 +75,8 @@ func (m Model) errSentence(err error) (string, error) {
 		return p.T("err.no_start_port", "this window was opened without a way to start a run"), errNoStartPort
 	case errors.Is(err, errNoReadPort):
 		return p.T("err.no_read_port", "this window was opened without a way to mark a task read"), errNoReadPort
+	case errors.Is(err, errNoRequeuePort):
+		return p.T("err.no_requeue_port", "this window was opened without a way to put a task back in the queue"), errNoRequeuePort
 	case errors.Is(err, errNoSessionPort):
 		return p.T("err.no_session_port", "this window was opened without a way to take the keyboard"), errNoSessionPort
 	case errors.Is(err, errNoWorktreePort):

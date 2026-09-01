@@ -136,7 +136,12 @@ func (m Model) hit(x, y int) Target {
 			return m.hitRepos(x, y)
 		case screenCompose:
 			return m.hitCompose(x, y)
-		case screenSupervisor:
+		case screenHelp, screenSupervisor:
+			// Neither has anything to point at: the cheat sheet is read
+			// and the supervisor's log is scrolled. Answering nothing is
+			// what keeps them from falling through to the board's rows
+			// below — where a click landed on whatever task happened to be
+			// at that height, and a second one opened it.
 			return Target{}
 		}
 
@@ -195,20 +200,17 @@ func (m Model) hitBar(x, y int) Target {
 		// rows under it, and nothing is on them.
 		return Target{}
 	}
-	// Right side execution chips in footer: [autopilot] [cli]
-	if m.screen == screenList {
-		if x >= m.width-28 {
-			return Target{Kind: TargetBarHint, Key: "c"}
-		}
+	// The chips at the right end and the hints at the left both answer
+	// from where the bar put them, so what is clickable is exactly what
+	// was drawn — including what it dropped for want of width.
+	_, hints, chips := m.barLayout(m.frame.Bar.W)
 
-		if x >= m.width-60 && x < m.width-28 {
-			return Target{Kind: TargetStatusField, Field: "autopilot"}
+	for _, z := range chips {
+		if x >= z.x && x < z.x+z.w {
+			return z.target
 		}
-	} else if x >= m.width-32 {
-		return Target{Kind: TargetStatusField, Field: "autopilot"}
 	}
 
-	_, hints := m.barLayout(m.frame.Bar.W)
 	for _, h := range hints {
 		if x >= h.x && x < h.x+h.w {
 			return Target{Kind: TargetBarHint, Key: h.key}

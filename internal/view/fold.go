@@ -182,6 +182,18 @@ func fold(t *Task, e record.Event) {
 		t.state = stateCancelled
 		t.Reason = Reason{Key: ReasonCancelled}
 		stamp(&t.Since, e.At)
+	case record.TaskRequeued:
+		// Back to where a task sits before anything has run: the attempt is
+		// over and there is nothing of it left to draw. What it spent stays
+		// — the money and the tokens were spent whoever changed their mind
+		// — and so does Attempt, because the next run is the next attempt
+		// and not the first one again.
+		t.state = stateNew
+		t.Reason = Reason{}
+		t.Phase, t.PhaseN, t.Engine, t.Model = "", 0, "", ""
+		t.CurrentAction, t.CurrentThought, t.ActionKind = "", "", ActionNone
+		t.ToolCallCount = 0
+		stamp(&t.Since, e.At)
 	case record.TaskTimedOut:
 		t.state = stateTimedOut
 		t.Reason = Reason{Key: ReasonTimedOut}

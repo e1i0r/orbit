@@ -45,6 +45,8 @@ const (
 	                       JOIN task_repo tr ON tr.task_id = t.id
 	                       JOIN repo r ON r.id = tr.repo_id
 	                      WHERE r.abs_path = ?
+	                        AND NOT EXISTS (SELECT 1 FROM event e
+	                                         WHERE e.task_id = t.id AND e.kind = ?)
 	                      ORDER BY t.task_id`
 
 	selectReposOfTask = `SELECT r.abs_path

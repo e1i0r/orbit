@@ -105,6 +105,7 @@ const (
 	EntryFinished                    // it ran through
 	EntryFailed                      // it broke
 	EntryCancelled                   // somebody stopped it
+	EntryRequeued                    // somebody took it back to the queue
 	EntryTimedOut                    // it outlived its deadline
 	EntryAbandoned                   // its process is gone
 	EntryRead                        // somebody has looked at it
@@ -144,6 +145,8 @@ func (e Entry) What() EntryKind {
 		return EntryFailed
 	case record.TaskCancelled, record.PhaseCancelled:
 		return EntryCancelled
+	case record.TaskRequeued:
+		return EntryRequeued
 	case record.TaskTimedOut:
 		return EntryTimedOut
 	case record.TaskAbandoned:

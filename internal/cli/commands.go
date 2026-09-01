@@ -83,6 +83,23 @@ type Command struct {
 	// stopping these two would mean a file that breaks takes the only two
 	// commands for a broken file down with it.
 	Salvage bool
+
+	// NeedsArgs says the command refuses when it is given none — the id of a
+	// task, for most of them, and a directory for `export`. Every command
+	// that sets it has an Args fragment saying what it wants.
+	//
+	// It is a fact about the command and not about any one entry point,
+	// which is why the board's menu can read it: that menu chooses with no
+	// arguments at all, so an entry for one of these ran bare and came back
+	// with the refusal, which reads as an entry that is broken rather than
+	// as one in the wrong place.
+	NeedsArgs bool
+
+	// AboutATask says the argument it wants first is the id of a task, and
+	// it implies NeedsArgs — an id is an argument. The board's menu leaves
+	// these out altogether: it is the menu of no row in particular, and a
+	// verb about one task belongs to the menu of the task it is about.
+	AboutATask bool
 }
 
 // printer is the Context's own, and English for a Context that was built
@@ -132,15 +149,15 @@ func commands() []Command {
 		About: func(p *words.Printer) string { return p.T("cmd.new", "write a task down") },
 		Run:   newTask,
 	}, {
-		Name: "run", Args: "-repo <dir> <id>",
+		Name: "run", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
 		About: func(p *words.Printer) string { return p.T("cmd.run", "run a task through its flow") },
 		Run:   runTask,
 	}, {
-		Name: "pause", Args: "-repo <dir> <id>",
+		Name: "pause", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
 		About: func(p *words.Printer) string { return p.T("cmd.pause", "stop a run at its next phase") },
 		Run:   func(ctx Context, args []string) error { return controlTask("pause", ctx, args) },
 	}, {
-		Name: "resume", Args: "-repo <dir> <id>",
+		Name: "resume", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
 		About: func(p *words.Printer) string { return p.T("cmd.resume", "let a stopped run carry on") },
 		Run:   func(ctx Context, args []string) error { return controlTask("resume", ctx, args) },
 	}, {
@@ -149,36 +166,42 @@ func commands() []Command {
 		Run:      list,
 		InWindow: WindowOpens,
 	}, {
-		Name: "show", Args: "-repo <dir> <id>",
+		Name: "show", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
 		About:    func(p *words.Printer) string { return p.T("cmd.show", "print what happened to a task") },
 		Run:      show,
 		InWindow: WindowOpens,
 	}, {
-		Name: "read", Args: "-repo <dir> <id>",
+		Name: "read", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
 		About: func(p *words.Printer) string { return p.T("cmd.read", "mark a finished task as looked at") },
 		Run:   readTask,
 	}, {
-		Name: "pr", Args: "-repo <dir> <id>",
+		Name: "pr", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
 		About: func(p *words.Printer) string {
 			return p.T("cmd.pr", "create a pull request from a task's worktree")
 		},
 		Run: createPR,
 	}, {
-		Name: "merge", Args: "-repo <dir> <id>",
+		Name: "merge", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
 		About: func(p *words.Printer) string {
 			return p.T("cmd.merge", "merge a task's pull request and delete its branch")
 		},
 		Run: mergePR,
 	}, {
-		Name: "close-pr", Args: "-repo <dir> <id>",
+		Name: "close-pr", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
 		About: func(p *words.Printer) string {
 			return p.T("cmd.close_pr", "close a task's pull request on GitHub")
 		},
 		Run: closePR,
 	}, {
-		Name: "cancel", Args: "-repo <dir> <id>",
+		Name: "cancel", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
 		About: func(p *words.Printer) string { return p.T("cmd.cancel", "stop a run, and say so in its record") },
 		Run:   cancelTask,
+	}, {
+		Name: "requeue", Args: "-repo <dir> <id> [why]", NeedsArgs: true, AboutATask: true,
+		About: func(p *words.Printer) string {
+			return p.T("cmd.requeue", "stop a run and put the task back in to do")
+		},
+		Run: requeueTask,
 	}, {
 		Name: "reconcile", Args: "-repo <dir> [id]",
 		About: func(p *words.Printer) string {
@@ -191,17 +214,17 @@ func commands() []Command {
 		Run:      set,
 		InWindow: WindowOpens,
 	}, {
-		Name: "direct", Args: "-repo <dir> [-restart] <id> <message>",
+		Name: "direct", Args: "-repo <dir> [-restart] <id> <message>", NeedsArgs: true, AboutATask: true,
 		About: func(p *words.Printer) string {
 			return p.T("cmd.direct", "interrupt or redirect a task and record the directive")
 		},
 		Run: directTask,
 	}, {
-		Name: "note", Args: "-repo <dir> <id> <text>",
+		Name: "note", Args: "-repo <dir> <id> <text>", NeedsArgs: true, AboutATask: true,
 		About: func(p *words.Printer) string { return p.T("cmd.note", "record a note for a task") },
 		Run:   noteTask,
 	}, {
-		Name: "export", Args: "[-task <id>] <dir>",
+		Name: "export", Args: "[-task <id>] <dir>", NeedsArgs: true,
 		About: func(p *words.Printer) string {
 			return p.T("cmd.export", "write the record back out as JSONL, one file per task")
 		},

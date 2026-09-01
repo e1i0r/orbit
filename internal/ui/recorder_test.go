@@ -35,6 +35,7 @@ type recorder struct {
 	flow     string // the start port: which flow the dialog chose
 	unread   int    // and the count it passed to the cap
 	read     string // the mark-read port
+	requeued string // the port that takes a task back to the queue
 	taken    string // the take-the-keyboard port
 	err      error
 }
@@ -69,6 +70,15 @@ func (got *recorder) ports() Options {
 			}
 
 			got.read = t.ID
+
+			return got.err
+		},
+		Requeue: func(t view.Task) error {
+			if got == nil {
+				return nil
+			}
+
+			got.requeued = t.ID
 
 			return got.err
 		},

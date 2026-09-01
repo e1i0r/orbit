@@ -186,7 +186,14 @@ func TestPortsHelpers(t *testing.T) {
 		t.Errorf("markReadPort failed: %v", err)
 	}
 
-	// 5. enginesPort
+	// 5. requeuePort, on a task nothing holds: no process to stop, and the
+	// event that puts it back is written all the same.
+	rPort := requeuePort(s)
+	if err := rPort(tView); err != nil {
+		t.Errorf("requeuePort failed: %v", err)
+	}
+
+	// 6. enginesPort
 	engFn := enginesPort(map[string]engine.Engine{
 		"claude":   engine.NewClaude(),
 		"codex":    engine.NewCodex(),
@@ -198,7 +205,7 @@ func TestPortsHelpers(t *testing.T) {
 		t.Error("enginesPort returned empty engines list")
 	}
 
-	// 6. takePort with empty engine
+	// 7. takePort with empty engine
 	takeP := takePort(nil, map[string]engine.Engine{"fake": engine.NewFake("ok")})
 
 	cmd, err := takeP(view.Task{ID: "TASK-1"})
@@ -206,17 +213,17 @@ func TestPortsHelpers(t *testing.T) {
 		t.Errorf("takePort on empty engine = (%v, %v), want (nil, nil)", cmd, err)
 	}
 
-	// 7. takePort with unknown engine
+	// 8. takePort with unknown engine
 	_, err = takeP(view.Task{ID: "TASK-1", Engine: "missing"})
 	if err == nil {
 		t.Error("expected unknownEngineError for missing engine")
 	}
 
-	// 8. startPort
+	// 9. startPort
 	stPort := startPort(s)
 	_, _ = stPort(tView, "quick", 5) //nolint:errcheck
 
-	// 9. reconcileAll
+	// 10. reconcileAll
 	if err := reconcileAll(s); err != nil {
 		t.Errorf("reconcileAll failed: %v", err)
 	}

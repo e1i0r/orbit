@@ -87,6 +87,7 @@ func (k Keys) Affordances(t view.Task, s Conditions) []Affordance {
 		answer(k.Pause, whyNotPause(t, s)),
 		answer(k.Resume, whyNotResume(t)),
 		answer(k.Cancel, whyNotCancel(t)),
+		answer(k.Requeue, whyNotRequeue(t)),
 		answer(k.Take, whyNotTake(t, s)),
 		answer(k.Hand, whyNotHand(t, s)),
 		// Ask is listed and refused. Orbit has no way to put a question to
@@ -200,6 +201,29 @@ func whyNotCancel(t view.Task) words.Arg {
 	}
 
 	return because(whyCancelNotRunning)
+}
+
+// whyNotRequeue offers taking a task back from anywhere but the queue it
+// would be put back into.
+//
+// It is offered where cancelling is refused, and that is the point of it: a
+// task that failed, that is waiting for an answer, or that finished into a
+// branch nobody wants is a task somebody may want to run again from the
+// start, and none of those have a process to signal. The only task there is
+// nothing to take back from is one already sitting in to do.
+//
+// An unreadable run marker refuses, as it does for pause and cancel. Nobody
+// knows whether a phase is writing in that worktree, and putting the task
+// back in the queue would offer to start a second one beside it.
+func whyNotRequeue(t view.Task) words.Arg {
+	switch {
+	case unknown(t):
+		return because(whyMarkerUnreadable)
+	case view.BandOf(t) == view.ToDo:
+		return because(whyRequeueAlreadyToDo)
+	}
+
+	return words.Arg{}
 }
 
 // whyNotTake answers for the keyboard. Taking it means carrying on the

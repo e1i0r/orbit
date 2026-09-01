@@ -252,23 +252,47 @@ func TestHitBarBranches(t *testing.T) {
 		t.Errorf("hitBar off its own row = %+v, want TargetNone", got)
 	}
 
+	// The chips at the right end are asked where they were drawn rather
+	// than at a column written down here: their widths are of translated
+	// words, and the two constants this replaced — the last 28 columns are
+	// the cli chip, the 32 before it the switch — were a guess that was
+	// wrong in Spanish and wrong at every width where the bar drops the
+	// chips and leaves that end of the line empty.
 	m.screen = screenList
-	if got := m.hitBar(m.width-5, y); got.Kind != TargetBarHint || got.Key != "c" {
-		t.Errorf("hitBar on the cli chip = %+v, want the c hint", got)
+
+	_, hints, chips := m.barLayout(m.frame.Bar.W)
+	if len(chips) != 2 {
+		t.Fatalf("the board's bar placed %d chips, want the switch and the cli one", len(chips))
 	}
 
-	if got := m.hitBar(m.width-45, y); got.Kind != TargetStatusField || got.Field != "autopilot" {
-		t.Errorf("hitBar on the autopilot chip (screenList) = %+v, want the autopilot field", got)
+	for _, z := range chips {
+		for _, x := range []int{z.x, z.x + z.w - 1} {
+			if got := m.hitBar(x, y); got != z.target {
+				t.Errorf("hitBar(%d) = %+v, want %+v: that cell is on the chip", x, got, z.target)
+			}
+		}
 	}
 
-	m.screen = screenDetail
-	if got := m.hitBar(m.width-10, y); got.Kind != TargetStatusField || got.Field != "autopilot" {
+	if gap := chips[0].x + chips[0].w; gap < chips[1].x {
+		if got := m.hitBar(gap, y); got.Kind != TargetNone {
+			t.Errorf("hitBar between the two chips = %+v, want TargetNone", got)
+		}
+	}
+
+	// Off the board there is no cli chip, and the switch is the last thing
+	// on the line.
+	detail := m
+	detail.screen = screenDetail
+
+	_, _, detailChips := detail.barLayout(detail.frame.Bar.W)
+	if len(detailChips) != 1 {
+		t.Fatalf("the detail bar placed %d chips, want the switch alone", len(detailChips))
+	}
+
+	if got := detail.hitBar(detailChips[0].x, y); got.Kind != TargetStatusField || got.Field != "autopilot" {
 		t.Errorf("hitBar on the autopilot chip (not screenList) = %+v, want the autopilot field", got)
 	}
 
-	m.screen = screenList
-
-	_, hints := m.barLayout(m.frame.Bar.W)
 	if len(hints) == 0 {
 		t.Fatal("the fixture bar has no hints to test against")
 	}
@@ -279,9 +303,35 @@ func TestHitBarBranches(t *testing.T) {
 	}
 
 	last := hints[len(hints)-1]
-	if gapX := last.x + last.w + 1; gapX < m.width-60 {
+	if gapX := last.x + last.w + 1; gapX < chips[0].x {
 		if got := m.hitBar(gapX, y); got.Kind != TargetNone {
 			t.Errorf("hitBar in the gap past the last hint = %+v, want TargetNone", got)
 		}
+	}
+}
+
+// A click on the cheat sheet is a click on nothing.
+//
+// The help screen is drawn over the board, and until it had an arm of its
+// own in hit every cell of it answered as the board's row at that height:
+// pointing at a line of the sheet moved the cursor onto a task the reader
+// could not see, and pointing at it again opened that task.
+func TestClicksOnTheHelpScreenDoNotReachTheBoard(t *testing.T) {
+	m, _ := testModel(t, 150, 30)
+	m.screen = screenHelp
+
+	for _, dy := range []int{0, 1, 3, 10} {
+		if got := m.hit(4, m.frame.Body.Y+dy); got.Kind != TargetNone {
+			t.Errorf("hit on help screen row %d = %+v, want TargetNone", dy, got)
+		}
+	}
+
+	// The same cell on the board still answers, so what changed is the
+	// screen and not the rows under it.
+	board := m
+	board.screen = screenList
+
+	if got := board.hit(4, board.frame.Body.Y+1); got.Kind == TargetNone {
+		t.Error("the board's own first row stopped answering")
 	}
 }

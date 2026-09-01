@@ -131,7 +131,7 @@ func TestTruncationIsAnswerableWithoutReadingTheText(t *testing.T) {
 func TestEveryKindTheRecordWritesHasAWord(t *testing.T) {
 	kinds := []string{
 		record.TaskCreated, record.TaskStarted, record.TaskFinished, record.TaskFailed,
-		record.TaskCancelled, record.TaskTimedOut, record.TaskAbandoned, record.TaskRead,
+		record.TaskCancelled, record.TaskRequeued, record.TaskTimedOut, record.TaskAbandoned, record.TaskRead,
 		record.TaskNoted, record.TaskDialogue,
 		record.PhaseStarted, record.PhaseFinished, record.PhaseFailed, record.PhaseCancelled,
 		record.PhaseWaiting, record.PhaseResumed,

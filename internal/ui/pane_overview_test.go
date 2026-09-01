@@ -113,31 +113,42 @@ func TestTheHeaderKeepsTheRepositoryWhateverTheTitleIs(t *testing.T) {
 	}
 }
 
-// The two action rows are a table: whatever the labels of the first row are
-// as long as, the keys of the second row start under the keys of the first.
+// The deliver verbs are laid on the grid the dials above them use: the verb
+// captions on one line, the key that sends each one under its own caption.
 // Joined with middots instead, each column began wherever the row above it
 // happened to end, and finding a key meant reading both lines through.
 func TestTheDeliverActionsStandInColumns(t *testing.T) {
 	m, _ := testModel(t, 120, 30)
 
 	rows := m.overviewActions(120)
-	if len(rows) < 3 {
-		t.Fatalf("overviewActions drew %d lines, want a head and two rows", len(rows))
+	if len(rows) < 6 {
+		t.Fatalf("overviewActions drew %d lines, want a head and two rows of keys under captions", len(rows))
 	}
 
-	first, second := ansi.Strip(rows[1]), ansi.Strip(rows[2])
-	for _, pair := range [][2]string{{"u ", "T "}, {"M ", "a "}, {"X ", "0 "}} {
-		top, bottom := strings.Index(first, pair[0]), strings.Index(second, pair[1])
+	for _, c := range []struct {
+		captions, keys int
+		caption, key   string
+	}{
+		{1, 2, "UPDATE PR", "u"},
+		{1, 2, "MERGE PR", "M"},
+		{1, 2, "CLOSE PR", "X"},
+		{4, 5, "MORE TESTS", "T"},
+		{4, 5, "FEEDBACK", "a"},
+		{4, 5, "DIFF", "0"},
+	} {
+		above, below := ansi.Strip(rows[c.captions]), ansi.Strip(rows[c.keys])
+
+		top, bottom := strings.Index(above, c.caption), strings.Index(below, c.key)
 		if top < 0 || bottom < 0 {
-			t.Fatalf("rows %q / %q do not both carry %v", first, second, pair)
+			t.Fatalf("rows %q / %q do not carry %q over %q", above, below, c.caption, c.key)
 		}
 
 		if top != bottom {
-			t.Errorf("%q starts at cell %d and %q at cell %d, want one column", pair[0], top, pair[1], bottom)
+			t.Errorf("%q starts at cell %d and its key %q at cell %d, want one column", c.caption, top, c.key, bottom)
 		}
-	}
 
-	if strings.TrimRight(second, " ") != second {
-		t.Errorf("row %q was padded past its last column", second)
+		if strings.TrimRight(below, " ") != below {
+			t.Errorf("row %q was padded past its last column", below)
+		}
 	}
 }
