@@ -64,7 +64,7 @@ func composeForm(t *testing.T) Model {
 func TestEveryDialOfTheFormIsChosenByPointingAtIt(t *testing.T) {
 	m := composeForm(t)
 
-	m = clickAt(t, m, formRow(t, m, "repository:"), TargetComposeRepoChoice, 1)
+	m = clickAt(t, m, formRow(t, m, "starts in:"), TargetComposeRepoChoice, 1)
 	if m.compose.repoIdx != 1 || m.compose.repo != m.compose.repos[1].name {
 		t.Errorf("the second repository pill left repoIdx=%d repo=%q, want 1 and %q",
 			m.compose.repoIdx, m.compose.repo, m.compose.repos[1].name)
@@ -188,7 +188,7 @@ func TestTheOtherTabHasItsOwnRows(t *testing.T) {
 	}
 
 	// Every field of this tab is its own, not the manual tab's.
-	m = clickAt(t, m, formRow(t, m, "repository:"), TargetComposeRepoChoice, 1)
+	m = clickAt(t, m, formRow(t, m, "starts in:"), TargetComposeRepoChoice, 1)
 	if m.compose.repoIdx != 1 {
 		t.Errorf("the second repository pill of the url tab left repoIdx=%d, want 1", m.compose.repoIdx)
 	}

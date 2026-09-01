@@ -57,6 +57,28 @@ func (m Model) composeRows(h, w int) []string {
 	return fill(out, h)
 }
 
+// composeFlowDetail is the block under the flow pills: the phases the chosen
+// flow will run, and what it says about itself. The first row carries the ↳
+// and the rest line up under it, so the block reads as one answer to the
+// field above rather than as loose lines in the form.
+func (m Model) composeFlowDetail(w int) []string {
+	rows := m.flowDetail(m.compose.chosenFlow(), w)
+	padded := strings.Repeat(" ", gutter+composeLabelWidth+1)
+
+	out := make([]string, 0, len(rows))
+
+	for i, row := range rows {
+		lead := "  "
+		if i == 0 {
+			lead = "↳ "
+		}
+
+		out = append(out, fit(padded+Paint(Dim).Render(lead)+Paint(Dim).Render(row), w))
+	}
+
+	return out
+}
+
 func (m Model) composeManualRows(w int) []string {
 	p := m.opts.Words
 
@@ -65,10 +87,7 @@ func (m Model) composeManualRows(w int) []string {
 	out = append(out, m.composeRepoLine(m.compose.field == composeRepo, w))
 
 	out = append(out, m.composeFlowLine(m.compose.field == composeFlow, w))
-	if sum := m.flowSummary(m.compose.chosenFlow()); sum != "" {
-		padded := strings.Repeat(" ", gutter+composeLabelWidth+1)
-		out = append(out, fit(padded+Paint(Dim).Render("↳ "+sum), w))
-	}
+	out = append(out, m.composeFlowDetail(w)...)
 
 	idLine := m.composeFieldLine(
 		composeID,
@@ -102,10 +121,7 @@ func (m Model) composeURLRows(w int) []string {
 	out = append(out, m.composeRepoLine(m.compose.field == composeURLRepo, w))
 
 	out = append(out, m.composeFlowLine(m.compose.field == composeURLFlow, w))
-	if sum := m.flowSummary(m.compose.chosenFlow()); sum != "" {
-		padded := strings.Repeat(" ", gutter+composeLabelWidth+1)
-		out = append(out, fit(padded+Paint(Dim).Render("↳ "+sum), w))
-	}
+	out = append(out, m.composeFlowDetail(w)...)
 
 	if m.compose.parsedIssue != nil {
 		iss := m.compose.parsedIssue

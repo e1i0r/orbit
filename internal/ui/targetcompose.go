@@ -31,7 +31,7 @@ func (m Model) hitCompose(x, y int) Target {
 			return m.hitComposeRepoPills(x, composeRepo)
 		case line == plan.flow:
 			return m.hitComposeFlowPills(x, composeFlow)
-		case plan.flowSum != -1 && line == plan.flowSum:
+		case plan.flowSum != -1 && line >= plan.flowSum && line < plan.flowSum+plan.flowRows:
 			return Target{Kind: TargetComposeInspectFlow}
 		case line == plan.id:
 			return caretAt(composeID, 0, x-composeLabelStart)
@@ -58,7 +58,7 @@ func (m Model) hitCompose(x, y int) Target {
 			return m.hitComposeRepoPills(x, composeURLRepo)
 		case line == plan.flow:
 			return m.hitComposeFlowPills(x, composeURLFlow)
-		case plan.flowSum != -1 && line == plan.flowSum:
+		case plan.flowSum != -1 && line >= plan.flowSum && line < plan.flowSum+plan.flowRows:
 			return Target{Kind: TargetComposeInspectFlow}
 		case line >= plan.actions:
 			return hitComposeActions(m.opts.Words, x)
