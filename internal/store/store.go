@@ -18,7 +18,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"unicode"
+
+	"github.com/e1i0r/orbit/internal/db"
 )
 
 // dirMode and fileMode keep the state root to its owner.
@@ -33,9 +36,18 @@ const (
 	fileMode os.FileMode = 0o600
 )
 
-// Store is a rooted view of ~/.orbit. It holds a path and no other state.
+// Store is a rooted view of ~/.orbit: a path, and the one handle on the
+// record that lives under it. Every path method is still pure — see the
+// package doc — and the handle is opened by Record and by nothing else.
 type Store struct {
 	root string
+
+	// mu guards the handle below and nothing else. The window refreshes on
+	// one goroutine and rescans on another, so the first call to Record can
+	// genuinely be two calls at once, and opening the record twice would
+	// defeat the whole of what Record is for.
+	mu     sync.Mutex
+	record *db.DB
 }
 
 // validateTaskID rejects taskIDs that could escape or traverse the store.
