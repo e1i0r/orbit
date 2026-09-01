@@ -1691,6 +1691,18 @@
       "source": "the task this menu was opened on is no longer on the board",
       "value": "la tarea en la que se abrió este menú ya no está en el tablero"
     },
+    "menu.title_board": {
+        "source": "commands — nothing here is about one task",
+        "value": "comandos — nada de esto es sobre una tarea"
+    },
+    "menu.title_task": {
+        "source": "{id} — what can be done to this task",
+        "value": "{id} — lo que se puede hacer con esta tarea"
+    },
+    "menu.title_panes": {
+        "source": "the panes of this task",
+        "value": "los paneles de esta tarea"
+    },
     "key.compose": {
       "source": "write a task",
       "value": "escribir una tarea"

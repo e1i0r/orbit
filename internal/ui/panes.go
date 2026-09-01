@@ -170,3 +170,39 @@ func (m Model) syncPanes() Model {
 
 	return m
 }
+
+// tabMenuEntries is the menu of a task's panes: the same list the tab strip
+// draws, with a sentence under each name saying what is in it. It is here
+// rather than in menu.go because it is built out of this file's two answers
+// — which panes this task has, and which key each one is on.
+func (m Model) tabMenuEntries() []menuEntry {
+	p := m.opts.Words
+	descs := map[tab]string{
+		tabOverview:  p.T("tab_desc.overview", "general status, live activity and metrics summary"),
+		tabFlow:      p.T("tab_desc.flow", "task pipeline phases and execution plan"),
+		tabGates:     p.T("tab_desc.gates", "automated quality gates, linters and validation status"),
+		tabCost:      p.T("tab_desc.cost", "token usage and monetary cost breakdown per phase"),
+		tabRefused:   p.T("tab_desc.refused", "denied tool invocations and permission rejections"),
+		tabTimeline:  p.T("tab_desc.timeline", "complete live event timeline and phase history"),
+		tabReport:    p.T("tab_desc.report", "final solution report, summary and review conclusions"),
+		tabArtifacts: p.T("tab_desc.artifacts", "raw tool output and generated artifacts"),
+		tabNotes:     p.T("tab_desc.notes", "operator notes and interactive dialogue history"),
+		tabDiff:      p.T("tab_desc.diff", "git working tree diff and code modifications"),
+		tabThinking:  p.T("tab_desc.thinking", "extended model thinking, chain of thought and reasoning"),
+	}
+
+	var out []menuEntry
+
+	for _, n := range m.tabNames() {
+		tVal := n.tab
+		k := paneKey(tVal)
+		out = append(out, menuEntry{
+			glyph:  "[" + k + "]",
+			title:  n.text,
+			detail: descs[tVal],
+			tab:    &tVal,
+		})
+	}
+
+	return out
+}

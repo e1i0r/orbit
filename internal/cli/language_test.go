@@ -79,6 +79,14 @@ func needsArgsCommands(t *testing.T) []string {
 	var out []string
 
 	for _, c := range commands() {
+		// A command about one task wants the id of one, and an id is an
+		// argument. The board's menu reads the first fact and the window's
+		// routing reads the second, so a row that set one without the
+		// other would be off that menu and run bare from wherever else.
+		if c.AboutATask && !c.NeedsArgs {
+			t.Errorf("%s is about a task and does not say it needs arguments", c.Name)
+		}
+
 		if !c.NeedsArgs {
 			continue
 		}

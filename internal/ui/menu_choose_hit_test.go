@@ -151,17 +151,23 @@ func TestHitMenuMapsRowsToEntries(t *testing.T) {
 		t.Errorf("hitMenu far past the body = %+v, want TargetNone", tgt)
 	}
 
-	// 2. A row on an entry answers a TargetMenuEntry keyed by its command.
-	tgt := m.hitMenu(0, m.frame.Body.Y)
+	// 2. The title is not an entry: a click on it hits nothing.
+	if tgt := m.hitMenu(0, m.frame.Body.Y); tgt.Kind != TargetNone {
+		t.Errorf("hitMenu on the title = %+v, want TargetNone", tgt)
+	}
+
+	// 3. The first entry is under it, and answers a TargetMenuEntry keyed
+	// by its command.
+	tgt := m.hitMenu(0, m.frame.Body.Y+menuTitleRows)
 	if tgt.Kind != TargetMenuEntry || tgt.Key != "new" {
 		t.Errorf("hitMenu on the first row = %+v, want TargetMenuEntry keyed \"new\"", tgt)
 	}
 
-	// 3. On a task menu, the row is keyed by the affordance's glyph.
+	// 4. On a task menu, the row is keyed by the affordance's glyph.
 	m2, _ := testModel(t, 100, 30)
 	m2 = m2.openMenu("ACME-2705")
 
-	tgt2 := m2.hitMenu(0, m2.frame.Body.Y)
+	tgt2 := m2.hitMenu(0, m2.frame.Body.Y+menuTitleRows)
 	if tgt2.Kind != TargetMenuEntry || tgt2.Key == "" {
 		t.Errorf("hitMenu on a task menu's first row = %+v, want a keyed TargetMenuEntry", tgt2)
 	}
@@ -191,7 +197,11 @@ func TestMenuRowsAndMenuRowDrawWhatIsThere(t *testing.T) {
 		t.Errorf("menuRows(10, ...) drew %d lines, want 10 (padded)", len(drawn))
 	}
 
-	if !strings.Contains(drawn[0], "new") {
-		t.Errorf("first menu row is %q, want it to mention \"new\"", drawn[0])
+	if !strings.Contains(drawn[0], "about one task") {
+		t.Errorf("first menu row is %q, want the title of the menu", drawn[0])
+	}
+
+	if !strings.Contains(drawn[menuTitleRows], "new") {
+		t.Errorf("first menu entry is %q, want it to mention \"new\"", drawn[menuTitleRows])
 	}
 }

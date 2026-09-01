@@ -77,9 +77,10 @@ type menuEntry struct {
 // and the table rather than remembered — a menu frozen at open time would
 // keep offering verbs for a run that finished while it was up.
 //
-// The board's menu carries the whole table, refusals included: `top` greyed
-// with "you are already in it" teaches the shape of the program, which is
-// more than hiding it would.
+// Which of the two it is comes from what the pointer was on when it opened.
+// The board's carries the commands about no task in particular, refusals
+// included: `top` greyed with "you are already in it" teaches the shape of
+// the program. The task's carries the verbs, each with its reason.
 func (m Model) menuEntries() []menuEntry {
 	p := m.opts.Words
 	if m.screen == screenDetail {
@@ -90,6 +91,12 @@ func (m Model) menuEntries() []menuEntry {
 		out := make([]menuEntry, 0, len(m.opts.Commands))
 		for i := range m.opts.Commands {
 			c := &m.opts.Commands[i]
+			// A verb about one task is not on this menu. This one is
+			// opened on no row, so there is no task for such a verb to be
+			// about: choosing it ran it bare and got its usage back.
+			if c.AboutATask {
+				continue
+			}
 
 			e := menuEntry{title: c.Name, cmd: c}
 			if c.About != nil {
@@ -131,38 +138,6 @@ func (m Model) menuEntries() []menuEntry {
 		}
 
 		out = append(out, e)
-	}
-
-	return out
-}
-
-func (m Model) tabMenuEntries() []menuEntry {
-	p := m.opts.Words
-	descs := map[tab]string{
-		tabOverview:  p.T("tab_desc.overview", "general status, live activity and metrics summary"),
-		tabFlow:      p.T("tab_desc.flow", "task pipeline phases and execution plan"),
-		tabGates:     p.T("tab_desc.gates", "automated quality gates, linters and validation status"),
-		tabCost:      p.T("tab_desc.cost", "token usage and monetary cost breakdown per phase"),
-		tabRefused:   p.T("tab_desc.refused", "denied tool invocations and permission rejections"),
-		tabTimeline:  p.T("tab_desc.timeline", "complete live event timeline and phase history"),
-		tabReport:    p.T("tab_desc.report", "final solution report, summary and review conclusions"),
-		tabArtifacts: p.T("tab_desc.artifacts", "raw tool output and generated artifacts"),
-		tabNotes:     p.T("tab_desc.notes", "operator notes and interactive dialogue history"),
-		tabDiff:      p.T("tab_desc.diff", "git working tree diff and code modifications"),
-		tabThinking:  p.T("tab_desc.thinking", "extended model thinking, chain of thought and reasoning"),
-	}
-
-	var out []menuEntry
-
-	for _, n := range m.tabNames() {
-		tVal := n.tab
-		k := paneKey(tVal)
-		out = append(out, menuEntry{
-			glyph:  "[" + k + "]",
-			title:  n.text,
-			detail: descs[tVal],
-			tab:    &tVal,
-		})
 	}
 
 	return out
@@ -238,8 +213,14 @@ func (m Model) chooseMenu() (tea.Model, tea.Cmd) {
 	return next.sendKey(keystroke(e.glyph))
 }
 
-// menuRows draws the menu in the body: one row per entry, the reason on the
-// line for anything greyed, nothing hidden.
+// menuTitleRows is how far down the first entry is drawn: the title and the
+// blank under it. menuRows writes them and hitMenu counts past them, and a
+// click landing one row off is what happens when only one of the two knows.
+const menuTitleRows = 2
+
+// menuRows draws the menu in the body: a line saying which menu this is,
+// then one row per entry, the reason on the line for anything greyed,
+// nothing hidden.
 func (m Model) menuRows(h, w int) []string {
 	if h <= 0 {
 		return nil
@@ -254,6 +235,8 @@ func (m Model) menuRows(h, w int) []string {
 	}
 
 	out := make([]string, 0, h)
+	out = append(out, fit("  "+Paint(Dim).Render(m.menuTitle()), w), "")
+
 	for i, e := range es {
 		if len(out) >= h {
 			break
@@ -263,6 +246,23 @@ func (m Model) menuRows(h, w int) []string {
 	}
 
 	return fill(out, h)
+}
+
+// menuTitle names the menu that is up: the two open on the same keystroke
+// and answer different questions, and a reader who meant the task's and got
+// the board's should not have to work that out from a missing verb.
+func (m Model) menuTitle() string {
+	p := m.opts.Words
+
+	switch {
+	case m.screen == screenDetail:
+		return p.T("menu.title_panes", "the panes of this task")
+	case m.menu.taskID == "":
+		return p.T("menu.title_board", "commands — nothing here is about one task")
+	}
+
+	return p.T("menu.title_task", "{id} — what can be done to this task",
+		about("id", m.menu.taskID))
 }
 
 // menuRow lays one entry out: glyph, name, description — or, where it
@@ -308,6 +308,9 @@ func (m Model) hitMenu(x, y int) Target {
 	if !ok {
 		return Target{}
 	}
+
+	// Past the title, which is drawn above the entries and is not one.
+	line -= menuTitleRows
 
 	es := m.menuEntries()
 	if line < 0 || line >= len(es) {

@@ -110,6 +110,11 @@ func commandTable() []ui.Command {
 		// the id to the same refusal.
 		uc.NeedsArgs = c.NeedsArgs && c.InWindow == WindowRuns
 
+		// Whatever the window would do with it. A verb about one task is off
+		// the board's menu because of what it is about, not because of what
+		// the window can do with it.
+		uc.AboutATask = c.AboutATask
+
 		out = append(out, uc)
 	}
 

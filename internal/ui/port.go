@@ -312,4 +312,9 @@ type Command struct {
 	// says what it wants. The command line can give it those and the
 	// board's menu cannot, so it is the menu that reads this.
 	NeedsArgs bool
+
+	// AboutATask keeps the command off the board's menu. That menu is
+	// opened on no row, and a verb about one task has no task there; the
+	// menu of the row it is about is where it belongs.
+	AboutATask bool
 }
