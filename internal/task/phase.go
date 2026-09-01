@@ -90,6 +90,24 @@ func phaseEnd(kind, phase string, out engine.Result, cause error) record.Event {
 		data["cost"] = strconv.FormatFloat(out.Cost, 'f', -1, 64)
 	}
 
+	// The four counts, and the cache pair is written apart from the other
+	// two rather than folded into them. A cached read is a fraction of the
+	// price of the same tokens sent fresh, so a phase whose cache stopped
+	// being hit costs several times what the phase before it did with the
+	// same totals — and there is nothing in a sum of input tokens that says
+	// so. A count the engine did not report is left out for cost's reason:
+	// zero written down reads as a phase that sent no prompt.
+	for key, n := range map[string]int64{
+		"tokens_in":   out.Usage.Input,
+		"tokens_out":  out.Usage.Output,
+		"cache_read":  out.Usage.CacheRead,
+		"cache_write": out.Usage.CacheWrite,
+	} {
+		if n != 0 {
+			data[key] = strconv.FormatInt(n, 10)
+		}
+	}
+
 	if cause != nil {
 		// Why it stopped goes in Data rather than Text, because Text is now
 		// what the engine printed, and a log that ends at phase.failed — it

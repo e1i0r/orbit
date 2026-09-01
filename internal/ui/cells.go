@@ -292,7 +292,7 @@ func (m Model) bandName(b view.Band) string {
 	case view.ToDo:
 		return "📋 " + p.T("band.to_do", "TO DO")
 	case view.Done:
-		return "🏁 " + p.T("band.done", "DONE TODAY")
+		return "🏁 " + p.T("band.done", "DONE")
 	}
 
 	return ""

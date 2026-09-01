@@ -149,7 +149,7 @@ func (m Model) headerLeft(w int, spaced bool) (string, []headerZone, bool) {
 	for root := m.opts.Root; ; {
 		line := name
 		if root != "" {
-			line = name + "  " + Paint(Dim).Render(root)
+			line = name + "  " + Chrome().Render(root)
 		}
 
 		if lipgloss.Width(line) <= w {
@@ -232,14 +232,14 @@ func (m Model) headerFields() []headerField {
 
 	// Repos chip
 	reposText := p.P("header.repos", m.board.Repos, "{n} repo", "{n} repos")
-	fields = append(fields, headerField{"repos", Paint(Dim).Render("📦 " + reposText)})
+	fields = append(fields, headerField{"repos", Chrome().Render("📦 " + reposText)})
 
 	// Model / knob chip
 	chip := m.knobChip()
 	if chip != "" {
 		fields = append(fields, headerField{"engine", Paint(Accent).Render("🧠 " + chip)})
 	} else {
-		fields = append(fields, headerField{"engine", Paint(Dim).Render("🧠 claude")})
+		fields = append(fields, headerField{"engine", Chrome().Render("🧠 claude")})
 	}
 
 	// Quota chip
@@ -248,12 +248,12 @@ func (m Model) headerFields() []headerField {
 	// is the proxy that answered it, and there is no screen of ours to open
 	// on that. It sits after the engine because it is that engine's number.
 	if q := m.quotaChip(); q != "" {
-		fields = append(fields, headerField{text: Paint(Dim).Render("⏳ " + q)})
+		fields = append(fields, headerField{text: Chrome().Render("⏳ " + q)})
 	}
 
 	// Language chip
 	lang := p.T("header.lang_badge", "EN")
-	fields = append(fields, headerField{"lang", Paint(Dim).Render("🌐 " + lang)})
+	fields = append(fields, headerField{"lang", Chrome().Render("🌐 " + lang)})
 
 	// Unread brake warning (shown when brake is engaged)
 	unread := board.Unread(m.board)
@@ -318,7 +318,7 @@ func hintFor(b key.Binding) barHint {
 // has no binding of its own and so no single keystroke to send. It is drawn
 // and it is inert.
 func hint(glyph, desc string) barHint {
-	return barHint{text: Paint(Accent).Render("["+glyph+"]") + " " + Paint(Dim).Render(desc)}
+	return barHint{text: Paint(Accent).Render("["+glyph+"]") + " " + Chrome().Render(desc)}
 }
 
 // hintKey is a hint whose glyph is the whole of the keystroke it sends.
