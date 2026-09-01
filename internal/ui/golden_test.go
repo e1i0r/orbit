@@ -95,7 +95,7 @@ func TestNoEnglishSurvivesThePseudolocale(t *testing.T) {
 
 	frame := strings.Join(renderAt(t, m, 100, 30), "\n")
 	for _, english := range []string{
-		"NEEDS YOU", "RUNNING", "TO DO", "DONE TODAY",
+		"NEEDS YOU", "RUNNING", "TO DO", "DONE",
 		"autopilot", "unread", "repos", "open", "new", "move", "filter",
 		"failed", "waiting", "abandoned", "in ", "cap reached",
 	} {

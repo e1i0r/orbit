@@ -198,8 +198,8 @@
       "value": "POR HACER"
     },
     "band.done": {
-      "source": "DONE TODAY",
-      "value": "TERMINADAS HOY"
+      "source": "DONE",
+      "value": "TERMINADAS"
     },
     "band.unread_cap": {
       "source": "unread cap reached · {n} of {cap}",
