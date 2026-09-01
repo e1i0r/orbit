@@ -87,6 +87,36 @@ var themeShells = map[string]Shell{
 	},
 }
 
+// WindowBackground is the paper the whole window is painted on: the current
+// theme's Base, handed to the terminal once per frame rather than stamped
+// onto every cell.
+//
+// The terminal is asked to change its own background for as long as the
+// program is up, which is the one way to do this that costs nothing per
+// line. Painting it into the frame instead would mean every renderer in this
+// package remembering to fill the cells it does not write, and a renderer
+// that forgets leaves a stripe of the reader's own console across the
+// window.
+//
+// It is the theme's own colour and not one invented here, for the reason the
+// shells above are the published neutrals: a window that sits half a shade
+// off the palette it is drawing looks like a bug in the palette.
+func WindowBackground() color.Color {
+	return lipgloss.Color(currentShell().Base)
+}
+
+// WindowForeground is the ink that goes with that paper: the theme's Text.
+//
+// It is set with the background and for the same reason. A terminal told to
+// change its background keeps drawing unstyled text in whatever foreground
+// the reader configured, and the two were never chosen together — a console
+// set to near-black text over a light scheme is unreadable the moment the
+// paper under it goes dark. Handing both over as a pair is the only way this
+// package can promise a legible frame on a terminal it did not configure.
+func WindowForeground() color.Color {
+	return lipgloss.Color(currentShell().Text)
+}
+
 func currentShell() Shell {
 	if s, ok := themeShells[currentThemeName]; ok {
 		return s
