@@ -308,8 +308,8 @@ type Command struct {
 	Refused bool                        // the window does not run it here
 	Because func(*words.Printer) string // why, when Refused is set
 
-	// NeedsTask says the command takes the id of a task. The command line
-	// can give it one and the board's menu cannot, so it is the menu that
-	// reads this.
-	NeedsTask bool
+	// NeedsArgs says the command refuses when it is given none, and Args
+	// says what it wants. The command line can give it those and the
+	// board's menu cannot, so it is the menu that reads this.
+	NeedsArgs bool
 }

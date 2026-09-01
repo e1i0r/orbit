@@ -232,17 +232,6 @@ func (m Model) chooseMenu() (tea.Model, tea.Cmd) {
 	next := m.closeMenu()
 
 	if e.cmd != nil {
-		// A command that takes the id of a task is handed to the command
-		// line with its name already typed, rather than run. The menu
-		// chooses with no arguments and has no id to give: running one of
-		// these bare printed "requeue needs the id of a task" into the
-		// watch, which is an answer to a question nobody asked and a dead
-		// end — there is nowhere in the menu to say which task. The line
-		// is where an id can be typed, and it shows the usage under it.
-		if e.cmd.NeedsTask {
-			return next.openPaletteWith(e.cmd.Name + " "), nil
-		}
-
 		return next.launch(*e.cmd, nil)
 	}
 

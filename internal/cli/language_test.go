@@ -33,27 +33,31 @@ func speaking(t *testing.T, language string) (dir string) {
 	return filepath.Join(root, "payments")
 }
 
-// TestEveryCommandThatNeedsATaskIDRefusesInTheReadersLanguage. A dozen
-// commands refuse the same way and say so through one key, so the sweep is
-// over the commands rather than over the sentence: a command left behind
-// still answers in English while the rest have moved.
+// TestEveryCommandThatRefusesWithoutArgumentsDoesSoInTheReadersLanguage.
+// Thirteen commands refuse for want of an argument, and the sweep is over
+// the commands rather than over the sentence: a command left behind still
+// answers in English while the rest have moved.
 //
-// The list is the table's own NeedsTask, and not a copy of it kept here.
-// The window reads that same field to decide which entries go to the
+// The list is the table's own NeedsArgs, and not a copy of it kept here.
+// The window reads that same field to decide which menu entries go to the
 // command line rather than being run bare, so a row that sets it without
 // refusing — or refuses without setting it — is a menu entry that is wrong
 // in one direction or the other.
-func TestEveryCommandThatNeedsATaskIDRefusesInTheReadersLanguage(t *testing.T) {
+//
+// "needs" is what every one of these refusals said in English, and none of
+// the Spanish ones has an English word in it, so one check covers a set
+// whose sentences are not otherwise the same.
+func TestEveryCommandThatRefusesWithoutArgumentsDoesSoInTheReadersLanguage(t *testing.T) {
 	dir := speaking(t, "es")
 
-	for _, command := range needsTaskCommands() {
+	for _, command := range needsArgsCommands(t) {
 		t.Run(command, func(t *testing.T) {
 			code, _, errOut := run(t, command, "-repo", dir)
 			if code == 0 {
-				t.Fatalf("%s with no id exited 0", command)
+				t.Fatalf("%s with nothing to work on exited 0", command)
 			}
 
-			if strings.Contains(errOut, "needs the id of a task") {
+			if strings.Contains(errOut, "needs") {
 				t.Errorf("a reader who chose Spanish is refused in English: %q", errOut)
 			}
 
@@ -66,14 +70,24 @@ func TestEveryCommandThatNeedsATaskIDRefusesInTheReadersLanguage(t *testing.T) {
 	}
 }
 
-// needsTaskCommands is every command the table says takes the id of a task.
-func needsTaskCommands() []string {
+// needsArgsCommands is every command the table says refuses without
+// arguments, and it insists each of them says what it wants: the window
+// builds the sentence it puts in front of a reader out of that fragment.
+func needsArgsCommands(t *testing.T) []string {
+	t.Helper()
+
 	var out []string
 
 	for _, c := range commands() {
-		if c.NeedsTask {
-			out = append(out, c.Name)
+		if !c.NeedsArgs {
+			continue
 		}
+
+		if c.Args == "" {
+			t.Errorf("%s refuses without arguments and does not say which", c.Name)
+		}
+
+		out = append(out, c.Name)
 	}
 
 	return out

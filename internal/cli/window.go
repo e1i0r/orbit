@@ -108,7 +108,7 @@ func commandTable() []ui.Command {
 		// answers with a screen has its own reason for not running here, and
 		// telling a reader to type an id for it would send them back with
 		// the id to the same refusal.
-		uc.NeedsTask = c.NeedsTask && c.InWindow == WindowRuns
+		uc.NeedsArgs = c.NeedsArgs && c.InWindow == WindowRuns
 
 		out = append(out, uc)
 	}

@@ -123,13 +123,16 @@ func (m Model) runSelected() (tea.Model, tea.Cmd) {
 		args = args[1:]
 	}
 
-	if c.NeedsTask && len(args) == 0 {
-		// The line stays up, with the name still on it, because the id goes
-		// on the end of what is already typed. Closing it to print the same
-		// sentence into the watch is where this used to end: an answer in a
-		// pane with nowhere to type the thing it asks for.
-		return m.say(m.opts.Words.T("msg.needs_task_id",
-			"{name} needs the id of a task; type it here", about("name", c.Name))), nil
+	if c.NeedsArgs && len(args) == 0 {
+		// The line stays up, with the name still on it, because what is
+		// missing goes on the end of what is already typed. Closing it to
+		// print the same sentence into the watch is where this used to end:
+		// an answer in a pane with nowhere to type what it asks for.
+		//
+		// The usage is the table's own, so the sentence is right for every
+		// command that reaches it without one being written per command.
+		return m.say(m.opts.Words.T("msg.needs_args", "{name} takes {args}; type them here",
+			about("name", c.Name), about("args", c.Args))), nil
 	}
 
 	return m.closePalette().launch(c, args)
@@ -145,6 +148,10 @@ func (m Model) runSelected() (tea.Model, tea.Cmd) {
 // it — so the table keeps its rule that no command exists in one entry
 // point and not the other.
 func (m Model) launch(c Command, args []string) (tea.Model, tea.Cmd) {
+	// The screens first. A command the window answers with one of its own
+	// is answered with it however little was typed: `new` refuses on the
+	// command line without -id, and the compose form is where that id is
+	// filled in.
 	switch c.Name {
 	case "new":
 		return m.openCompose(), nil
@@ -156,6 +163,16 @@ func (m Model) launch(c Command, args []string) (tea.Model, tea.Cmd) {
 		return m.openRepos(), nil
 	case "supervisor":
 		return m.openSupervisor(), nil
+	}
+
+	// Then what is left to run, which cannot be run with nothing. The menu
+	// chooses with no arguments and has none to give — no task, no
+	// directory — so running one of these bare printed "requeue needs the
+	// id of a task" into the watch: an answer to a question nobody asked,
+	// in a pane with nowhere to type what it asks for. The line is where
+	// they can be typed, and it shows the usage under it.
+	if c.NeedsArgs && len(args) == 0 {
+		return m.openPaletteWith(c.Name + " "), nil
 	}
 
 	return m.runWatched(c, args)
