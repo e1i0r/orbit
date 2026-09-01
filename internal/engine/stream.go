@@ -18,6 +18,7 @@ type streamEnvelope struct {
 	Result       string          `json:"result"`
 	SessionID    string          `json:"session_id"`
 	Cost         float64         `json:"total_cost_usd"`
+	Usage        *streamUsage    `json:"usage"`
 	Message      *streamMessage  `json:"message"`
 	ContentBlock *streamContent  `json:"content_block"`
 	Delta        *streamDelta    `json:"delta"`
@@ -29,6 +30,23 @@ type streamEnvelope struct {
 
 type streamMessage struct {
 	Content []streamContent `json:"content"`
+	Usage   *streamUsage    `json:"usage"`
+}
+
+// streamUsage is claude's count of one turn, spelled as claude spells it.
+type streamUsage struct {
+	Input      int64 `json:"input_tokens"`
+	Output     int64 `json:"output_tokens"`
+	CacheRead  int64 `json:"cache_read_input_tokens"`
+	CacheWrite int64 `json:"cache_creation_input_tokens"`
+}
+
+func (u *streamUsage) usage() Usage {
+	if u == nil {
+		return Usage{}
+	}
+
+	return Usage{Input: u.Input, Output: u.Output, CacheRead: u.CacheRead, CacheWrite: u.CacheWrite}
 }
 
 type streamContent struct {
@@ -66,10 +84,11 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 	sc.Buffer(make([]byte, 0, 64<<10), maxStreamLine)
 
 	var (
-		out   Result
-		texts []string
-		lines int
-		found bool
+		out        Result
+		texts      []string
+		lines      int
+		found      bool
+		perMessage Usage
 	)
 
 	for sc.Scan() {
@@ -89,6 +108,14 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 			out.SessionID = env.SessionID
 		}
 
+		// Every assistant message carries its own count, and a stream that
+		// ends without a result line — a run killed, a phase cancelled — is
+		// still a phase that spent something. Summed here and used only if
+		// no result line ever arrives.
+		if u := usageOf(env.Message); u.Any() {
+			perMessage = addUsage(perMessage, u)
+		}
+
 		switch env.Type {
 		case "result":
 			found = true
@@ -102,6 +129,13 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 			// finished, the record said it could not be resumed, and the
 			// evidence that it could had been read and thrown away.
 			out.Cost = env.Cost
+			// The result line's own count is the turn's total, so it wins
+			// over the running sum below rather than adding to it: taking
+			// both would count every assistant message twice.
+			if u := env.Usage.usage(); u.Any() {
+				out.Usage = u
+			}
+
 			if onEvent != nil {
 				onEvent(StreamEvent{Type: "result", Cost: env.Cost})
 			}
@@ -232,6 +266,10 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 		out.Output = strings.TrimSpace(strings.Join(texts, "\n\n"))
 	}
 
+	if !out.Usage.Any() {
+		out.Usage = perMessage
+	}
+
 	if !found {
 		return out, fmt.Errorf("the engine's stream ended after %d lines with no result object: the session id and the cost are reported only there, so this phase has nothing to resume from and no price", lines)
 	}
@@ -262,4 +300,23 @@ func isPermissionRefusal(s string) bool {
 		strings.Contains(lower, "permission refused") ||
 		strings.Contains(lower, "refused permission") ||
 		strings.Contains(lower, "is not allowed")
+}
+
+// usageOf is one message's count, for a message that may not be there.
+func usageOf(m *streamMessage) Usage {
+	if m == nil {
+		return Usage{}
+	}
+
+	return m.Usage.usage()
+}
+
+// addUsage is two counts, added field by field.
+func addUsage(a, b Usage) Usage {
+	return Usage{
+		Input:      a.Input + b.Input,
+		Output:     a.Output + b.Output,
+		CacheRead:  a.CacheRead + b.CacheRead,
+		CacheWrite: a.CacheWrite + b.CacheWrite,
+	}
 }

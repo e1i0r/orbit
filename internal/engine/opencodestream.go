@@ -33,6 +33,14 @@ type openCodeEvent struct {
 			Status string          `json:"status"`
 			Input  json.RawMessage `json:"input"`
 		} `json:"state"`
+		Tokens struct {
+			Input  int64 `json:"input"`
+			Output int64 `json:"output"`
+			Cache  struct {
+				Read  int64 `json:"read"`
+				Write int64 `json:"write"`
+			} `json:"cache"`
+		} `json:"tokens"`
 	} `json:"part"`
 	Error struct {
 		Name string `json:"name"`
@@ -40,6 +48,19 @@ type openCodeEvent struct {
 			Message string `json:"message"`
 		} `json:"data"`
 	} `json:"error"`
+}
+
+// usage is one step's count, spelled as opencode spells it: the cache pair
+// is nested under the tokens object rather than named beside the other two.
+func (e openCodeEvent) usage() Usage {
+	t := e.Part.Tokens
+
+	return Usage{
+		Input:      t.Input,
+		Output:     t.Output,
+		CacheRead:  t.Cache.Read,
+		CacheWrite: t.Cache.Write,
+	}
 }
 
 // ParseOpenCodeStream reads opencode's JSON events and reports what the run
@@ -89,6 +110,10 @@ func ParseOpenCodeStream(r io.Reader, onEvent func(StreamEvent)) (Result, error)
 		case "step_finish":
 			found = true
 			out.Cost += ev.Part.Cost
+			// Summed across steps for cost's reason: opencode counts each
+			// step as it finishes, so a run of four steps reports four
+			// counts and the phase spent all of them.
+			out.Usage = addUsage(out.Usage, ev.usage())
 
 			emit(onEvent, StreamEvent{Type: "result", Cost: ev.Part.Cost})
 		case "error":

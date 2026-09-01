@@ -31,8 +31,13 @@ const (
 	// human reads about why it stopped.
 	TaskStuck = "task.stuck"
 
-	PhaseStarted   = "phase.started"   // Data carries engine, model, n, and the permissions the phase was given
-	PhaseFinished  = "phase.finished"  // the phase ran through; Text is what the engine printed
+	PhaseStarted = "phase.started" // Data carries engine, model, n, and the permissions the phase was given
+	// PhaseFinished ends a phase that ran through. Text is what the engine
+	// printed, and Data carries what it spent doing so: cost where the
+	// engine prices itself, and tokens_in, tokens_out, cache_read and
+	// cache_write where it counts. Failed and cancelled phases carry the
+	// same fields — a phase that broke halfway still spent what it spent.
+	PhaseFinished  = "phase.finished"
 	PhaseFailed    = "phase.failed"    // the engine broke; Text is what it printed, Data["error"] why it stopped
 	PhaseCancelled = "phase.cancelled" // the phase was stopped from outside; Text is what it printed first
 	PhaseWaiting   = "phase.waiting"   // stopped at a gate; Data["why"] says whose gate

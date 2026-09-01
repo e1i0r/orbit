@@ -287,3 +287,37 @@ func TestTheEngineIsHandedThePhasesPermissions(t *testing.T) {
 		t.Errorf("the engine was handed %v, want [repo]", got)
 	}
 }
+
+// A phase's tokens are written down beside its cost, and the cache pair is
+// written apart from the input rather than folded into it: a phase whose
+// cache stopped being hit costs several times the phase before it on the
+// same totals, and nothing in a sum of input tokens says so.
+func TestAPhaseRecordsWhatItSpentInTokens(t *testing.T) {
+	res := engine.Result{
+		Output: "done",
+		Usage:  engine.Usage{Input: 1200, Output: 340, CacheRead: 18000},
+	}
+
+	ev := phaseEnd(record.PhaseFinished, "implement", res, nil)
+	for key, want := range map[string]string{
+		"tokens_in": "1200", "tokens_out": "340", "cache_read": "18000",
+	} {
+		if ev.Data[key] != want {
+			t.Errorf("Data[%q] = %q, want %q", key, ev.Data[key], want)
+		}
+	}
+
+	// A count the engine did not report is left out. Written as zero it
+	// would read as a phase that wrote no cache, which is a different fact
+	// from an engine that does not count them.
+	if _, ok := ev.Data["cache_write"]; ok {
+		t.Errorf("Data carries cache_write the engine never reported: %+v", ev.Data)
+	}
+
+	quiet := phaseEnd(record.PhaseFinished, "implement", engine.Result{Output: "done"}, nil)
+	for _, key := range []string{"tokens_in", "tokens_out", "cache_read", "cache_write"} {
+		if _, ok := quiet.Data[key]; ok {
+			t.Errorf("an engine that counted nothing wrote %q: %+v", key, quiet.Data)
+		}
+	}
+}

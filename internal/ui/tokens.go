@@ -162,6 +162,18 @@ func Surface(l Level) lipgloss.Style {
 	return style.Background(lipgloss.Color(sh.Base))
 }
 
+// Chrome is the ink of the window's own furniture: the header chips, the
+// root path beside the program name, and the key bar along the bottom.
+//
+// It is Secondary rather than Paint(Dim) for two reasons the reader gave.
+// Dim is faint on top of a grey, and faint grey on a theme's own paper is
+// text that is there and cannot be read — the whole point of the bars is
+// that they are what you scan when you do not know what to press. And the
+// three bars are one surface as far as the eye is concerned, so they are
+// one ink: a chip in the header that is a shade off the hints in the footer
+// reads as two kinds of thing, and it is not.
+func Chrome() lipgloss.Style { return Text(Secondary) }
+
 // Rule is the colour of a border at rest.
 func Rule() color.Color {
 	return lipgloss.Color(currentShell().Line)

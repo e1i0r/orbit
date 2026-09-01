@@ -59,12 +59,40 @@ type StreamToolCall struct {
 	Args string
 }
 
+// Usage is what a phase spent, in tokens, as the engine counted them.
+//
+// The cache pair is here beside the other two because it is the number that
+// moves the bill. A cached read is a fraction of the price of the same tokens
+// sent fresh, and a cache that stops being hit fails silently — nothing
+// errors, the run works, and the cost per turn quietly multiplies. Read as
+// zero across a long session it says something early in the context is
+// changing between turns; there is no way to notice that from a total.
+//
+// Zero is "the engine did not say", not "none": the three CLIs count in
+// three vocabularies and not all of them report every field.
+type Usage struct {
+	// Input is the prompt as it was sent, not counting the part of it that
+	// came back from the cache. That is claude's spelling and the one the
+	// other two are normalised to, so that a total across a task's phases
+	// adds tokens of one kind.
+	Input      int64
+	Output     int64
+	CacheRead  int64
+	CacheWrite int64
+}
+
+// Any is whether the engine said anything at all about what it spent.
+func (u Usage) Any() bool {
+	return u.Input != 0 || u.Output != 0 || u.CacheRead != 0 || u.CacheWrite != 0
+}
+
 // Result is what came back. SessionID and Cost are empty when an engine does
 // not report them, which is a fact about that engine and not a failure.
 type Result struct {
 	Output    string
 	SessionID string
 	Cost      float64
+	Usage     Usage
 	Thoughts  []string
 	Refusals  []StreamRefusal
 	ToolCalls []StreamToolCall

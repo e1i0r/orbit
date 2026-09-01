@@ -9,6 +9,7 @@ package ui
 
 import (
 	"image/color"
+	"strings"
 	"testing"
 
 	"charm.land/lipgloss/v2"
@@ -142,5 +143,36 @@ func TestTheWindowIsPaintedOnItsThemesPaper(t *testing.T) {
 	v := m.View()
 	if v.BackgroundColor == nil || v.ForegroundColor == nil {
 		t.Errorf("the window draws paper %v and ink %v; it needs both", v.BackgroundColor, v.ForegroundColor)
+	}
+}
+
+// The window's furniture is one ink and it is not a faint one.
+//
+// The header chips, the key bar's labels and the chips beside them are one
+// surface as far as a reader is concerned, and they were three: chips and
+// hints in faint grey, the cli chip in Live. Faint grey on a theme's own
+// paper is text that is drawn and cannot be read, which is what the bars are
+// for at the moment nobody knows what to press.
+func TestTheBarsShareOneInkAndItIsNotFaint(t *testing.T) {
+	m, _ := testModel(t, 140, 40)
+
+	ink, _, ok := strings.Cut(Chrome().Render("probe"), "probe")
+	if !ok || ink == "" {
+		t.Fatalf("Chrome() rendered %q, want a colour before the text", Chrome().Render("probe"))
+	}
+
+	faint, _, _ := strings.Cut(Paint(Dim).Render("probe"), "probe")
+
+	for _, line := range []struct{ name, drawn string }{
+		{"header", m.headerLine(140)},
+		{"bar", m.barLine(140)},
+	} {
+		if !strings.Contains(line.drawn, ink) {
+			t.Errorf("the %s is drawn in no ink of Chrome's: %q", line.name, line.drawn)
+		}
+
+		if strings.Contains(line.drawn, faint) {
+			t.Errorf("the %s still carries faint text: %q", line.name, line.drawn)
+		}
 	}
 }

@@ -35,6 +35,27 @@ type codexEvent struct {
 	Error struct {
 		Message string `json:"message"`
 	} `json:"error"`
+	Usage struct {
+		Input  int64 `json:"input_tokens"`
+		Cached int64 `json:"cached_input_tokens"`
+		Output int64 `json:"output_tokens"`
+	} `json:"usage"`
+}
+
+// usage is codex's count of the turn, in this package's terms.
+//
+// codex counts the cached prefix inside input_tokens and then names the part
+// of it that came from the cache; claude counts the two apart. Subtracting
+// here is what keeps Input meaning one thing whichever engine ran the phase
+// — added up across a task otherwise, a cached prefix is counted once as
+// input and once again as a cache read. The floor is for a codex that
+// changes its mind about this: the wrong answer to give then is a zero.
+func (e codexEvent) usage() Usage {
+	return Usage{
+		Input:     max(e.Usage.Input-e.Usage.Cached, 0),
+		Output:    e.Usage.Output,
+		CacheRead: e.Usage.Cached,
+	}
 }
 
 // ParseCodexStream reads codex's JSONL and reports what the run did.
@@ -59,6 +80,7 @@ func ParseCodexStream(r io.Reader, onEvent func(StreamEvent)) (Result, error) {
 		switch ev.Type {
 		case "turn.completed":
 			found = true
+			out.Usage = ev.usage()
 		case "thread.started":
 			if ev.Thread != "" {
 				out.SessionID = ev.Thread

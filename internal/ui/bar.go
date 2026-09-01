@@ -32,17 +32,19 @@ func (m Model) barFooterChips() string {
 
 	var chips []string
 
-	// Autopilot chip
-	pip, role := pipOff, Dim
+	// Autopilot chip. The label is the bar's own ink like every other label
+	// on this line, and the only thing that carries a colour is the pip,
+	// which is the one part of the chip that is saying something.
+	pip, state := pipOff, Chrome()
 	if m.autopilotOn() {
-		pip, role = pipOn, Live
+		pip, state = pipOn, Paint(Live)
 	}
 
-	chips = append(chips, Paint(role).Render("⚡ "+p.T("header.autopilot", "autopilot"))+" "+Paint(role).Render(pip)+" "+Paint(role).Bold(true).Render("["+m.keys.Autopilot.Help().Key+"]"))
+	chips = append(chips, Chrome().Render("⚡ "+p.T("header.autopilot", "autopilot"))+" "+state.Render(pip)+" "+Paint(Live).Bold(true).Render("["+m.keys.Autopilot.Help().Key+"]"))
 
 	// Interactive CLI chip
 	if m.screen == screenList {
-		chips = append(chips, Paint(Live).Render("💬 "+p.T("header.cli_chip", "cli"))+" "+Paint(Live).Bold(true).Render("[c]"))
+		chips = append(chips, Chrome().Render("💬 "+p.T("header.cli_chip", "cli"))+" "+Paint(Live).Bold(true).Render("[c]"))
 	}
 
 	return strings.Join(chips, "    ")
@@ -50,7 +52,7 @@ func (m Model) barFooterChips() string {
 
 // barLayout is the key bar, drawn, and where it put each hint.
 func (m Model) barLayout(w int) (string, []placedHint) {
-	tail := Paint(Dim).Render("[" + m.keys.Help.Help().Key + "] [" + m.keys.Quit.Help().Key + "]")
+	tail := Chrome().Render("[" + m.keys.Help.Help().Key + "] [" + m.keys.Quit.Help().Key + "]")
 	chips := m.barFooterChips()
 	chipsW := lipgloss.Width(chips)
 	hints := m.hints()
