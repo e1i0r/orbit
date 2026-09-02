@@ -9,6 +9,8 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/e1i0r/orbit/internal/record"
+	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -108,4 +110,50 @@ func TestATaskThatJoinsARepositoryBetweenScansSaysSoOnce(t *testing.T) {
 	if got := b.Tasks[0].Repos; !slices.Equal(got, []string{"payments", "ledger"}) {
 		t.Errorf("the row says it is worked in %v, want each repository once", got)
 	}
+}
+
+// TestATaskThatHasReachedIntoNothingIsStillARow. The board is of a
+// directory, and the test for a task belonging to it is which repositories
+// it names — which answers nothing at all for a task that has joined none.
+//
+// It is kept, and the reason is the difference between the two silences: a
+// task naming repositories, none of them under this root, belongs to some
+// other root; a task naming none belongs to whichever root holds it, and
+// this is that root. A row nobody can see is a run nobody can start, and the
+// first phase of such a task is what finds its first checkout.
+func TestATaskThatHasReachedIntoNothingIsStillARow(t *testing.T) {
+	s, work, payments := oneRepo(t)
+
+	addTask(t, s, payments, "ACME-1", created("Move the fee table"))
+	nowhere(t, s, "ACME-2", created("Find out which service owns the retry"))
+
+	b, _ := refresh(t, NewReader(s, work))
+	if len(b.Tasks) != 2 {
+		t.Fatalf("the board drew %d rows, want the task that is somewhere and the one that is nowhere", len(b.Tasks))
+	}
+
+	row := b.Tasks[0]
+	if row.ID != "ACME-2" {
+		t.Fatalf("the first row is %q, want the task that names no repository", row.ID)
+	}
+
+	if row.Repo != "" || row.RepoPath != "" || len(row.Repos) != 0 {
+		t.Errorf("the row says it is worked in %q at %q, and in %v", row.Repo, row.RepoPath, row.Repos)
+	}
+
+	if row.Title != "Find out which service owns the retry" {
+		t.Errorf("the row reads %q, want the task that was written", row.Title)
+	}
+}
+
+// nowhere writes a task down that is joined to no repository, which is what
+// task.Create leaves behind when it is given none.
+func nowhere(t *testing.T, s *store.Store, id string, events ...record.Event) {
+	t.Helper()
+
+	if _, err := s.CreateTaskDir("", id); err != nil {
+		t.Fatalf("create the directory of task %s: %v", id, err)
+	}
+
+	appendTo(t, s, "", id, events...)
 }

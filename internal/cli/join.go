@@ -59,12 +59,14 @@ func joinRepo(ctx Context, args []string) error {
 
 // joined resolves the name against the workspace and opens the checkout.
 //
-// The task is loaded against the repository the command was run from, which
-// is the one thing here that is not the task's own: Load wants a repository
-// to name in the error when there is no such task, and any repository of the
-// workspace answers that question as well as the next.
+// The repository the command was run from is the one thing here that is not
+// the task's own, and it is what the name is resolved against: its workspace
+// is the set of checkouts on offer. A phase of a task that has joined
+// nothing runs in a directory that is no repository at all, so that door is
+// allowed to come back empty — the names then come from the repositories
+// Orbit has a record of, which is the whole of where such a task can go.
 func joined(dir, id, name string) (string, error) {
-	s, r, err := openBoth(dir)
+	s, r, err := openMaybe(dir, false)
 	if err != nil {
 		return "", err
 	}
@@ -74,7 +76,7 @@ func joined(dir, id, name string) (string, error) {
 		return "", err
 	}
 
-	found, err := task.Joinable(r, name)
+	found, err := task.Joinable(s, r, name)
 	if err != nil {
 		return "", err
 	}

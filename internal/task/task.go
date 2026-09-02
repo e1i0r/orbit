@@ -69,7 +69,7 @@ func Create(s *store.Store, r repo.Repo, id, text, flowName string) (Task, error
 	}
 
 	if _, statErr := os.Stat(path); statErr == nil {
-		return Task{}, fmt.Errorf("task %q in %s %w", id, r.Name, ErrExists)
+		return Task{}, fmt.Errorf("task %q %w", id, ErrExists)
 	}
 
 	dir, err := s.CreateTaskDir(r.Path, id)
@@ -96,7 +96,7 @@ func Create(s *store.Store, r repo.Repo, id, text, flowName string) (Task, error
 	created := record.Event{
 		Kind: record.TaskCreated,
 		Text: text,
-		Data: map[string]string{"flow": flowName, "repo": r.Name, "path": r.Path},
+		Data: details(r, flowName),
 	}
 
 	if err := emit(s, t, created); err != nil {
@@ -136,6 +136,24 @@ func Create(s *store.Store, r repo.Repo, id, text, flowName string) (Task, error
 	return t, nil
 }
 
+// details is what the event that creates a task says about it.
+//
+// A task with no repository names none, rather than naming the empty string:
+// a reader of the record asks whether the key is there, and a "repo": ""
+// answers yes to a question whose true answer is no. The keys are absent for
+// exactly as long as the task has reached into nothing, and repo.joined adds
+// the first one the moment it does.
+func details(r repo.Repo, flowName string) map[string]string {
+	data := map[string]string{"flow": flowName}
+	if r.Path == "" {
+		return data
+	}
+
+	data["repo"], data["path"] = r.Name, r.Path
+
+	return data
+}
+
 // Load reads a task's text back off disk.
 //
 // It exists for callers that only carry an id — the command line, most
@@ -150,7 +168,7 @@ func Load(s *store.Store, r repo.Repo, id string) (Task, error) {
 	body, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return Task{}, fmt.Errorf("task %q does not exist in %s", id, r.Name)
+			return Task{}, fmt.Errorf("task %q does not exist", id)
 		}
 
 		return Task{}, fmt.Errorf("read %q: %w", path, err)

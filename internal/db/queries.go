@@ -33,6 +33,11 @@ const (
 // Repositories, and the tasks worked in them. Both inserts are written to be
 // harmless the second time: repo.joined is appended whenever a worktree is
 // opened, which happens again on every retry.
+//
+// selectTasksAndRepos joins outward because a task can be worked in no
+// repository. One written before it has reached into anything has no
+// task_repo row, and an inner join answers that task by leaving it out — a
+// task on disk, in the record, and on no board.
 const (
 	insertRepo = `INSERT INTO repo(abs_path, name, first_seen) VALUES(?,?,?) ON CONFLICT(abs_path) DO NOTHING`
 
@@ -58,8 +63,8 @@ const (
 
 	selectTasksAndRepos = `SELECT t.task_id, r.abs_path, r.name
 	                         FROM task t
-	                         JOIN task_repo tr ON tr.task_id = t.id
-	                         JOIN repo r ON r.id = tr.repo_id
+	                         LEFT JOIN task_repo tr ON tr.task_id = t.id
+	                         LEFT JOIN repo r ON r.id = tr.repo_id
 	                        WHERE NOT EXISTS (SELECT 1 FROM event e
 	                                           WHERE e.task_id = t.id AND e.kind = ?)
 	                        ORDER BY t.task_id, tr.joined_at, r.abs_path`

@@ -129,6 +129,14 @@ func (r *Reader) enumerate(repos []*repoState) ([]*taskState, map[string]*taskSt
 			found = append(found, st)
 		}
 
+		// A task that has reached into nothing is one row naming no
+		// repository. It is a task all the same — written down, waiting to
+		// be run, joining its first checkout in whichever phase the work
+		// asks for one — so it gains its taskState above and nothing else.
+		if w.Path == "" {
+			continue
+		}
+
 		st.repos = append(st.repos, RepoInfo{Name: w.Name, Path: w.Path})
 		// Filed under the first repository it joined that this board can
 		// see, which is where its checkout and its diff are opened from.
@@ -167,14 +175,22 @@ func (r *Reader) carried(id string) *taskState {
 // dropped here is dropped from the index with it so that nothing reaches it
 // by id either.
 //
+// Worked in none at all is the other thing, and it is kept. The test is what
+// the record says about the task and not whether this window could file it:
+// a task with repositories, all of them elsewhere, belongs to some other
+// root, and a task with no repositories belongs to whichever root holds it —
+// this one. It is the first phase of every such task that finds the first
+// checkout, and a row nobody can see is a run nobody can start.
+//
 // The order is the repository the task is filed under and then the id, which
 // is the order the rows have always been in: predictable, and stable across
-// refreshes so that a cursor resting on a row stays on that row.
+// refreshes so that a cursor resting on a row stays on that row. The tasks
+// that are nowhere sort first, under a name no repository has.
 func onTheBoard(found []*taskState, index map[string]*taskState) []*taskState {
 	tasks := make([]*taskState, 0, len(found))
 
 	for _, st := range found {
-		if st.repo == nil {
+		if st.repo == nil && len(st.repos) > 0 {
 			delete(index, st.id)
 			continue
 		}
@@ -184,8 +200,8 @@ func onTheBoard(found []*taskState, index map[string]*taskState) []*taskState {
 
 	slices.SortFunc(tasks, func(a, b *taskState) int {
 		return cmp.Or(
-			strings.Compare(a.repo.name, b.repo.name),
-			strings.Compare(a.repo.path, b.repo.path),
+			strings.Compare(a.repoName(), b.repoName()),
+			strings.Compare(a.repoPath(), b.repoPath()),
 			strings.Compare(a.id, b.id),
 		)
 	})

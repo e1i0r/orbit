@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -86,7 +87,7 @@ func (d *DB) ReposOfTask(taskID string) ([]string, error) {
 // Worked is one task and one repository it is worked in.
 type Worked struct {
 	Task string // the task's id
-	Path string // the repository's absolute path
+	Path string // the repository's absolute path, empty when there is none yet
 	Name string // the repository's name, as the row that made the link spelled it
 }
 
@@ -101,6 +102,12 @@ type Worked struct {
 // went on to — survives, where a walk of the repositories would have
 // returned them in whatever order the repositories were walked in.
 //
+// A task worked in no repository is one row with an empty Path and Name.
+// It is a task that has been written down and has not reached into anything
+// yet — the join is outer for it — and the empty strings are the answer
+// rather than a missing row, so that a caller reading this list finds every
+// task the record holds and not only the ones that got somewhere.
+//
 // A deleted task is left out here for the reason it is left out of
 // TasksOfRepo, and by the same subselect.
 func (d *DB) TasksAndRepos() ([]Worked, error) {
@@ -114,11 +121,16 @@ func (d *DB) TasksAndRepos() ([]Worked, error) {
 	var worked []Worked
 
 	for rows.Next() {
-		var w Worked
-		if err := rows.Scan(&w.Task, &w.Path, &w.Name); err != nil {
+		var (
+			w          Worked
+			path, name sql.NullString
+		)
+
+		if err := rows.Scan(&w.Task, &path, &name); err != nil {
 			return nil, fmt.Errorf("read a task and its repository: %w", err)
 		}
 
+		w.Path, w.Name = path.String, name.String
 		worked = append(worked, w)
 	}
 

@@ -61,7 +61,12 @@ func runTask(ctx Context, args []string) error {
 		return needsTaskID(ctx, "run")
 	}
 
-	s, r, err := openBoth(*dir)
+	// As in `orbit new`: a -repo the reader typed has to open, and the
+	// default may come back empty. A run started by the window passes the
+	// task's repository when it has one and nothing when it has not, so the
+	// absence here is what carries "this task is against no repository"
+	// across the process boundary.
+	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
 		logger.Error("cli/run", "open repository %q failed: %v", *dir, err)
 		return err

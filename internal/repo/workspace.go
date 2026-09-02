@@ -32,9 +32,18 @@ const WorkspaceEnv = "ORBIT_WORKSPACE"
 // workspace. Discover does not descend into a repository once it finds one
 // and skips dotted directories, so the cost is the breadth of the tree
 // rather than its depth, and it is paid once per run.
+//
+// A task with no repository at all has no parent to take, and the answer is
+// nothing rather than the current directory. filepath.Dir("") is ".", and
+// "." in a phase of such a task is a worktree under the state root — a
+// workspace nobody chose, holding no repositories, walked on every run.
 func Workspace(r Repo) string {
 	if set := os.Getenv(WorkspaceEnv); set != "" {
 		return set
+	}
+
+	if r.Path == "" {
+		return ""
 	}
 
 	return filepath.Dir(r.Path)
@@ -47,5 +56,10 @@ func Workspace(r Repo) string {
 // reaching into is decided by the work, one worktree at a time, and is never
 // read off this list.
 func Siblings(r Repo) ([]Repo, error) {
-	return Discover(Workspace(r))
+	where := Workspace(r)
+	if where == "" {
+		return nil, nil
+	}
+
+	return Discover(where)
 }

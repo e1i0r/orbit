@@ -101,7 +101,7 @@ func (r *Reader) Refresh() (Board, Changed, error) {
 
 		st.err = err
 		if err != nil {
-			b.Errs = append(b.Errs, &TaskError{Repo: st.repo.name, ID: st.id, Err: err})
+			b.Errs = append(b.Errs, &TaskError{Repo: st.repoName(), ID: st.id, Err: err})
 		}
 
 		if moved || !st.seen {
@@ -114,7 +114,7 @@ func (r *Reader) Refresh() (Board, Changed, error) {
 		// whose name has just become readable reaches the rows it owns
 		// without waiting for their logs to move.
 		//
-		st.task.ID, st.task.Repo, st.task.RepoPath = st.id, st.repo.name, st.repo.path
+		st.task.ID, st.task.Repo, st.task.RepoPath = st.id, st.repoName(), st.repoPath()
 		st.task.Repos = named(st.repos)
 
 		// Live is the one field on the row that does not come from the log,
@@ -137,14 +137,14 @@ func (r *Reader) Refresh() (Board, Changed, error) {
 		// banded on liveness would be the only reader of the record that
 		// knew, and `orbit show` and `cat` would still say the run was
 		// going. That drift is the thing the record exists to prevent.
-		_, alive, aliveErr := task.Alive(r.store, task.Task{ID: st.id, Repo: repo.Repo{Path: st.repo.path}})
+		_, alive, aliveErr := task.Alive(r.store, task.Task{ID: st.id, Repo: repo.Repo{Path: st.repoPath()}})
 		if aliveErr != nil {
 			// Not a *TaskError: that type says the task's log could not be
 			// read, which drives the flipped test above and would be a lie
 			// here — the log is fine, the marker beside it is not. The row
 			// stays, showing what the record says, and the fault is
 			// reported where a reader can see it.
-			b.Errs = append(b.Errs, fmt.Errorf("task %s in %s: %w", st.id, st.repo.name, aliveErr))
+			b.Errs = append(b.Errs, fmt.Errorf("task %s in %s: %w", st.id, st.repoName(), aliveErr))
 		}
 
 		// Three answers out of two returns and an error. A marker that could

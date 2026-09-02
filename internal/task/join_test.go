@@ -208,9 +208,9 @@ func TestJoiningARepositoryTwiceIsOneJoin(t *testing.T) {
 // rather than given the nearest match: work committed in a repository that
 // was not part of the task is a mistake nobody finds by reading the record.
 func TestANameNoRepositoryAnswersToIsRefusedWithTheOnesThatWould(t *testing.T) {
-	_, repos := workspaceFixture(t, "api", "app")
+	s, repos := workspaceFixture(t, "api", "app")
 
-	found, err := Joinable(repos[0], "app")
+	found, err := Joinable(s, repos[0], "app")
 	if err != nil {
 		t.Fatalf("Joinable app: %v", err)
 	}
@@ -219,7 +219,7 @@ func TestANameNoRepositoryAnswersToIsRefusedWithTheOnesThatWould(t *testing.T) {
 		t.Errorf("Joinable(app) = %q, want %q", found.Path, repos[1].Path)
 	}
 
-	_, err = Joinable(repos[0], "backend")
+	_, err = Joinable(s, repos[0], "backend")
 	if err == nil {
 		t.Fatal("Joinable answered a name no repository has")
 	}
@@ -254,10 +254,10 @@ func TestARunTellsItsEngineWhichTaskItIsRunning(t *testing.T) {
 // in /x, which holds []" reads as a listing that failed rather than a
 // workspace that is empty.
 func TestAWorkspaceWithNothingInItSaysThatRatherThanListingNothing(t *testing.T) {
-	_, repos := workspaceFixture(t, "app")
+	s, repos := workspaceFixture(t, "app")
 	t.Setenv(repo.WorkspaceEnv, t.TempDir())
 
-	_, err := Joinable(repos[0], "api")
+	_, err := Joinable(s, repos[0], "api")
 	if err == nil {
 		t.Fatal("Joinable answered out of an empty workspace")
 	}
@@ -272,15 +272,15 @@ func TestAWorkspaceWithNothingInItSaysThatRatherThanListingNothing(t *testing.T)
 // the task exactly as capable as it was before the offer existed, working in
 // the repository it was written against.
 func TestAWorkspaceThatCannotBeWalkedStillRunsThePhase(t *testing.T) {
-	_, repos := workspaceFixture(t, "app")
+	s, repos := workspaceFixture(t, "app")
 	t.Setenv(repo.WorkspaceEnv, filepath.Join(t.TempDir(), "not-here"))
 
 	tk := Task{ID: "ACME-5", Text: "add the retry", Repo: repos[0]}
-	if others := elsewhere(tk); others != nil {
+	if others := elsewhere(s, tk); others != nil {
 		t.Errorf("a workspace that is not there listed %v", others)
 	}
 
-	if said := workspace(nil); said != "" {
+	if said := workspace(tk, nil); said != "" {
 		t.Errorf("the prompt offers a workspace it could not read: %q", said)
 	}
 }

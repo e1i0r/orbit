@@ -1343,6 +1343,10 @@
       "source": "{id} written against {repo}, to walk the {flow} flow",
       "value": "{id} escrita contra {repo}, para recorrer el flujo {flow}"
     },
+    "new.written_nowhere": {
+      "source": "{id} written against no repository yet, to walk the {flow} flow",
+      "value": "{id} escrita todavía contra ningún repositorio, para recorrer el flujo {flow}"
+    },
     "note.needs_text": {
       "source": "note needs text for task {id}",
       "value": "note necesita texto para la tarea {id}"
@@ -1362,6 +1366,10 @@
     "show.nothing_recorded": {
       "source": "nothing recorded for {id} in {repo}",
       "value": "no hay nada registrado para {id} en {repo}"
+    },
+    "show.nothing_recorded_anywhere": {
+      "source": "nothing recorded for {id}",
+      "value": "no hay nada registrado para {id}"
     },
     "list.no_tasks": {
       "source": "no tasks against {repo}",
@@ -1738,10 +1746,6 @@
     "compose.text": {
       "source": "task",
       "value": "tarea"
-    },
-    "compose.no_repo": {
-      "source": "orbit knows no repository to start in; open it where there is one",
-      "value": "orbit no conoce ningún repositorio en el que empezar; abrilo donde haya uno"
     },
     "compose.id_required": {
       "source": "the id is required; what is this task called?",

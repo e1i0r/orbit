@@ -43,7 +43,7 @@ func directTask(ctx Context, args []string) error {
 			words.Arg{Name: "id", Value: id}))
 	}
 
-	s, r, err := openBoth(*dir)
+	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
 		logger.Error("cli/direct", "open repository %q failed: %v", *dir, err)
 		return err

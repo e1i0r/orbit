@@ -37,7 +37,7 @@ func requeueTask(ctx Context, args []string) error {
 		return needsTaskID(ctx, "requeue")
 	}
 
-	s, r, err := openBoth(*dir)
+	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
 		logger.Error("cli/requeue", "open repository %q failed: %v", *dir, err)
 		return err
