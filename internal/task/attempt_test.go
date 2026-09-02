@@ -106,8 +106,11 @@ func TestAttemptsRunOutAndTheRunFails(t *testing.T) {
 		t.Errorf("phase.failed = %d, want 1 — only the last attempt ends the phase: %v", got, kinds)
 	}
 
-	if got := count(kinds, record.TaskFailed); got != 1 {
-		t.Errorf("task.failed = %d, want 1: %v", got, kinds)
+	// task.stuck and not task.failed: the run did not break, it ran out of
+	// the attempts it was allowed. TestAttemptsRunOutAndTheTaskIsStuck is
+	// about what that event carries.
+	if got := count(kinds, record.TaskStuck); got != 1 {
+		t.Errorf("task.stuck = %d, want 1: %v", got, kinds)
 	}
 }
 
@@ -239,4 +242,65 @@ func TestARefusedAttemptSaysWhatItSpent(t *testing.T) {
 	}
 
 	t.Error("no phase.retried was written")
+}
+
+// TestAttemptsRunOutAndTheTaskIsStuck. A task that spent every attempt it
+// was allowed is not one failed run: it is the end of retrying, and retrying
+// is what already happened. The record has to say that in its own word, with
+// the attempts summarised on the event, so that whoever picks it up reads
+// what was tried rather than reconstructing it from the log.
+func TestAttemptsRunOutAndTheTaskIsStuck(t *testing.T) {
+	s, r := fixture(t)
+
+	tk, err := Create(s, r, "ACME-7", "a gate nothing will satisfy", "")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	fake := engine.NewFake("tried")
+
+	if err := Run(context.Background(), s, tk, retryFlow("echo 'undefined: Retry'; exit 2", 0), map[string]engine.Engine{"fake": fake}, nil); err == nil {
+		t.Fatal("Run: want an error when the attempts run out")
+	}
+
+	events, err := Events(s, tk)
+	if err != nil {
+		t.Fatalf("Events: %v", err)
+	}
+
+	kinds := kindsOf(events)
+	if count(kinds, record.TaskFailed) != 0 {
+		t.Errorf("the record says the task failed; a task out of attempts is stuck: %v", kinds)
+	}
+
+	last := events[len(events)-1]
+	if last.Kind != record.TaskStuck {
+		t.Fatalf("the record ends in %q, want task.stuck: %v", last.Kind, kinds)
+	}
+
+	if last.Data["attempts"] != "3" {
+		t.Errorf("task.stuck says %q attempts were spent, want 3", last.Data["attempts"])
+	}
+
+	for _, want := range []string{"implement", "build", "3"} {
+		if !strings.Contains(last.Text, want) {
+			t.Errorf("task.stuck does not say %q in the line a human reads:\n%s", want, last.Text)
+		}
+	}
+
+	if !strings.Contains(last.Text, "undefined: Retry") {
+		t.Errorf("task.stuck carries no summary of what the gate said:\n%s", last.Text)
+	}
+}
+
+// TestAStuckTaskIsNotARunToReconcile. Reconcile appends task.abandoned to a
+// log that never got a terminal event. A stuck task got one — turning it
+// into an abandoned one would lose the only word that says retrying is over.
+func TestAStuckTaskIsNotARunToReconcile(t *testing.T) {
+	if inFlight([]record.Event{
+		{Kind: record.TaskStarted},
+		{Kind: record.TaskStuck},
+	}) {
+		t.Error("a log ending in task.stuck reads as a run still in flight")
+	}
 }

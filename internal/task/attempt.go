@@ -21,6 +21,11 @@ import (
 	"github.com/e1i0r/orbit/internal/store"
 )
 
+// stuckLines is how much of each gate's output the stuck summary repeats.
+// Enough for a failing test's own report, short enough that three of them
+// are still one thing a person reads.
+const stuckLines = 20
+
 // gateRefusal is a gate that said no, and everything the next attempt is
 // owed about it: which gate, what it returned, what it printed, and what the
 // engine had answered when it was run past it.
@@ -100,16 +105,16 @@ func attempts(ctx context.Context, r phaseRun, allowed int) (engine.Result, erro
 			return out, nil
 		}
 
+		refused.Said = out.Output
+		r.tried = append(r.tried, *refused)
+
 		if n >= allowed {
-			return out, r.exhausted(out, *refused)
+			return out, r.exhausted(out, n)
 		}
 
 		if err := r.retried(out, *refused, n, allowed); err != nil {
 			return out, failed(r.store, r.task, err)
 		}
-
-		refused.Said = out.Output
-		r.tried = append(r.tried, *refused)
 	}
 }
 
@@ -202,12 +207,64 @@ func (r phaseRun) retried(out engine.Result, ref gateRefusal, n, allowed int) er
 
 // exhausted ends a phase no attempt could get past its gate.
 //
-// The error names the gate and not the number of attempts, because the gate
-// is what a reader has to go and look at; how many times it was tried is in
-// the record, once per phase.retried, and the window counts them there.
-func (r phaseRun) exhausted(out engine.Result, ref gateRefusal) error {
-	cause := fmt.Errorf("gate %q failed (exit %d)", ref.Gate, ref.Exit)
+// The task is stuck and not failed. A failure is one run, and a run is what
+// a reader answers by starting another one — which is exactly what has been
+// happening here, twice already. task.stuck is the word for the end of
+// retrying, and the fold reads it as a band of its own: nothing moves until
+// somebody decides something.
+//
+// The summary of the attempts goes on the event rather than being left to
+// be reassembled from the log, because the reader who needs it is the one
+// opening the supervisor's thread, and reconstructing three attempts from a
+// hundred lines of stream is the work this saves.
+func (r phaseRun) exhausted(out engine.Result, spent int) error {
+	last := r.tried[len(r.tried)-1]
+	cause := fmt.Errorf("gate %q failed (exit %d)", last.Gate, last.Exit)
 	_ = emit(r.store, r.task, phaseEnd(record.PhaseFailed, r.phase.Name, out, cause)) //nolint:errcheck // best-effort: see broke
 
-	return failed(r.store, r.task, fmt.Errorf("task %s, phase %q: %w", r.task.ID, r.phase.Name, cause))
+	text, _ := captured(stuckLine(r.phase.Name, spent, r.tried))
+	_ = emit(r.store, r.task, record.Event{ //nolint:errcheck // best-effort: see broke
+		Kind: record.TaskStuck,
+		Text: text,
+		Data: map[string]string{
+			"attempts": strconv.Itoa(spent),
+			"phase":    r.phase.Name,
+			"gate":     last.Gate,
+		},
+	})
+
+	return fmt.Errorf("task %s, phase %q: %w, and the %d attempts it was allowed are spent",
+		r.task.ID, r.phase.Name, cause, spent)
+}
+
+// stuckLine is what a human reads about a task that ran out of attempts: one
+// sentence saying where it stopped, and then each attempt with the tail of
+// what its gate printed.
+//
+// The tail rather than the head: a build says what is wrong at the end, and
+// the first twenty lines of a test run are the tests that passed.
+func stuckLine(phase string, spent int, tried []gateRefusal) string {
+	var b strings.Builder
+
+	fmt.Fprintf(&b, "%d attempts at phase %q, and the gate %q refused every one of them.\n",
+		spent, phase, tried[len(tried)-1].Gate)
+
+	for i, ref := range tried {
+		fmt.Fprintf(&b, "\nAttempt %d — gate %q, exit %d:\n%s\n",
+			i+1, ref.Gate, ref.Exit, lastLines(ref.Output, stuckLines))
+	}
+
+	return b.String()
+}
+
+// lastLines is the final n lines of what a gate printed, and says so when it
+// left anything out.
+func lastLines(out string, n int) string {
+	lines := strings.Split(strings.TrimRight(out, "\n"), "\n")
+	if len(lines) <= n {
+		return out
+	}
+
+	return fmt.Sprintf("…[the first %d lines are not repeated here]\n%s",
+		len(lines)-n, strings.Join(lines[len(lines)-n:], "\n"))
 }

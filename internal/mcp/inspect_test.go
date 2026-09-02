@@ -295,3 +295,38 @@ func TestInspectSaysAnAttemptWasRetriedRatherThanLeavingItRunning(t *testing.T) 
 		t.Errorf("the attempt that stood reads as %v, want finished", got)
 	}
 }
+
+// TestInspectReportsAStuckTaskAsTheLastThingThatWentWrong. A task out of
+// attempts writes phase.failed and then task.stuck, and the second is the
+// one carrying the summary of what was tried. A supervisor handed the first
+// gets the gate's exit code and none of the three attempts behind it.
+func TestInspectReportsAStuckTaskAsTheLastThingThatWentWrong(t *testing.T) {
+	s, sn, r := oneRepo(t)
+	addTask(t, s, r, "PAY-3",
+		record.Event{At: at(1), Kind: record.TaskCreated, Text: "make the webhook idempotent"},
+		record.Event{At: at(2), Kind: record.TaskStarted},
+		record.Event{At: at(3), Kind: record.PhaseStarted, Phase: "implement", Data: map[string]string{"engine": "claude"}},
+		record.Event{At: at(4), Kind: record.PhaseFailed, Phase: "implement", Data: map[string]string{"error": "gate \"tests\" failed (exit 1)"}},
+		record.Event{At: at(5), Kind: record.TaskStuck, Text: "3 attempts at phase \"implement\", and the gate \"tests\" refused every one of them.", Data: map[string]string{"attempts": "3", "phase": "implement", "gate": "tests"}},
+	)
+
+	got := call(t, sn, "orbit_inspect_task", map[string]any{"task_id": "PAY-3"})
+
+	last, ok := got["last_error"].(map[string]any)
+	if !ok {
+		t.Fatalf("the inspection carries no last_error: %v", got["last_error"])
+	}
+
+	if last["kind"] != record.TaskStuck {
+		t.Errorf("last_error is a %v, want the task.stuck that ended the run", last["kind"])
+	}
+
+	text, ok := last["text"].(string)
+	if !ok {
+		t.Fatalf("last_error carries no text: %v", last["text"])
+	}
+
+	if !strings.Contains(text, "3 attempts") {
+		t.Errorf("last_error carries %q, want the summary of the attempts", text)
+	}
+}
