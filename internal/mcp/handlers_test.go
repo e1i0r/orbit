@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/e1i0r/orbit/internal/record"
+	"github.com/e1i0r/orbit/internal/view"
 )
 
 // at is a fixed clock, so a record a test writes reads back in the order it
@@ -191,12 +192,13 @@ func TestATaskIsFoundByIdAloneAcrossRepositories(t *testing.T) {
 
 // TestAnIdWorkedInTwoRepositoriesIsStillOneTask. An id names one task in the
 // whole state root now, so a task that reaches into a second checkout is not
-// two tasks a tool has to choose between: it is one, and naming either of its
-// repositories names it.
+// two tasks a tool has to choose between, and there is no repository for a
+// caller to name: the id is the whole of what these tools take.
 //
 // The refusal this replaces was the pair identity's: two rows under one id
 // were two tasks, and acting on whichever came first would have been acting
-// on a task the caller did not name. There is one row.
+// on a task the caller did not name. There is one row, and it says where all
+// of the work went.
 func TestAnIdWorkedInTwoRepositoriesIsStillOneTask(t *testing.T) {
 	s, work := newRoot(t)
 	payments := gitRepo(t, work, "payments")
@@ -211,19 +213,81 @@ func TestAnIdWorkedInTwoRepositoriesIsStillOneTask(t *testing.T) {
 		t.Errorf("a note on a task worked in two repositories was refused: %s", text(t, noted))
 	}
 
-	// Either repository names it: the one it was written in, and the one the
-	// work went on into, by name and by the path orbit_list_repos hands out.
-	for _, hint := range []string{"payments", "ledger", ledger.Path} {
-		got := call(t, sn, "orbit_inspect_task", map[string]any{"task_id": "SHARED-1", "repo": hint})
-		if got["id"] != "SHARED-1" {
-			t.Errorf("naming %q found %v, want SHARED-1", hint, got["id"])
+	got := call(t, sn, "orbit_inspect_task", map[string]any{"task_id": "SHARED-1"})
+	if got["id"] != "SHARED-1" {
+		t.Fatalf("the id alone found %v, want SHARED-1", got["id"])
+	}
+
+	if !worksIn(got, "payments") || !worksIn(got, "ledger") {
+		t.Errorf("the task reports %v, want both payments and ledger", got["repos"])
+	}
+}
+
+// TestEveryTaskReportsTheRepositoriesItIsWorkedIn. A supervisor acts on what
+// the row says. One that named the home checkout alone would have it account
+// for a change in one repository and never look at the other three.
+func TestEveryTaskReportsTheRepositoriesItIsWorkedIn(t *testing.T) {
+	s, work := newRoot(t)
+	payments := gitRepo(t, work, "payments")
+	gitRepo(t, work, "ledger")
+	sn := Session{Root: work, Version: "test"}
+
+	addTask(t, s, payments, "PAY-1", record.Event{At: at(1), Kind: record.TaskCreated, Text: "alone"})
+
+	listed := call(t, sn, "orbit_list_tasks", nil)
+
+	rows, ok := listed["tasks"].([]any)
+	if !ok || len(rows) != 1 {
+		t.Fatalf("the board answered %v, want one task", listed["tasks"])
+	}
+
+	one, ok := rows[0].(map[string]any)
+	if !ok {
+		t.Fatalf("the row is %T, want an object", rows[0])
+	}
+
+	if !worksIn(one, "payments") {
+		t.Errorf("a task in one repository reports %v, want payments", one["repos"])
+	}
+}
+
+// TestARowAlwaysNamesAtLeastOneRepositoryAndNeverNull. A tool answering
+// `"repos": null` leaves a reader deciding whether that means none or
+// unknown, and a task on the board is worked in at least one. The list is
+// what a fold produced; the single name is what a row built by hand carries,
+// and both have to come back as a list.
+func TestARowAlwaysNamesAtLeastOneRepositoryAndNeverNull(t *testing.T) {
+	for _, one := range []struct {
+		name string
+		task view.Task
+		want []string
+	}{
+		{"the list the board folded", view.Task{Repo: "app", Repos: []string{"app", "payments"}}, []string{"app", "payments"}},
+		{"a row that carries one name", view.Task{Repo: "app"}, []string{"app"}},
+		{"a row that names none", view.Task{}, []string{}},
+	} {
+		got := reposWorked(one.task)
+		if !slices.Equal(got, one.want) {
+			t.Errorf("%s reports %#v, want %#v", one.name, got, one.want)
+		}
+	}
+}
+
+// worksIn answers whether a reported task names a repository among the ones
+// it is worked in.
+func worksIn(got map[string]any, name string) bool {
+	repos, ok := got["repos"].([]any)
+	if !ok {
+		return false
+	}
+
+	for _, one := range repos {
+		if one == name {
+			return true
 		}
 	}
 
-	elsewhere := refused(t, sn, "orbit_inspect_task", map[string]any{"task_id": "SHARED-1", "repo": "billing"})
-	if !strings.Contains(elsewhere, "billing") {
-		t.Errorf("a repository the task was never worked in was accepted: %s", elsewhere)
-	}
+	return false
 }
 
 func TestAnUnknownTaskIsRefusedByName(t *testing.T) {

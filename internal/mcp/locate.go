@@ -62,36 +62,25 @@ func parseBand(slug string) (view.Band, error) {
 	return 0, fmt.Errorf("%q is not a band; the bands are %s", slug, strings.Join(bandNames(), ", "))
 }
 
-// findTask locates one task by id.
+// findTask locates one task by id, and the id is the whole of what it takes.
 //
-// The id is enough, and it is enough now in a way it was not: an id names one
-// task in the whole state root, whatever number of repositories that task is
-// worked in. Two rows under one id is a picture the board can no longer draw,
-// so there is nothing left here to disambiguate.
-//
-// The repository stays as a filter and not as a requirement — a model that
-// has just read a row off orbit_list_tasks has the id and nothing else, and
-// making it also supply a path it was never given is how a tool call becomes
-// a guess. A caller who does name one is asking for the task worked in that
-// repository, and is told so when it is not.
-func findTask(b board.Board, id, repoHint string) (view.Task, error) {
+// It is enough now in a way it was not: an id names one task in the whole
+// state root, whatever number of repositories that task is worked in. Two
+// rows under one id is a picture the board can no longer draw, so there is
+// nothing here to disambiguate and nothing for a caller to supply beyond the
+// id it read off orbit_list_tasks.
+func findTask(b board.Board, id string) (view.Task, error) {
 	if id == "" {
 		return view.Task{}, fmt.Errorf("this tool needs task_id")
 	}
 
 	for _, t := range b.Tasks {
-		if t.ID != id {
-			continue
+		if t.ID == id {
+			return t, nil
 		}
-
-		if repoHint != "" && !sameRepo(b, t, repoHint) {
-			continue
-		}
-
-		return t, nil
 	}
 
-	return view.Task{}, fmt.Errorf("no task %q on the board%s", id, inRepo(repoHint))
+	return view.Task{}, fmt.Errorf("no task %q on the board", id)
 }
 
 // sameRepo answers whether a hint picks out one of the repositories the task
@@ -133,16 +122,6 @@ func repoNamed(b board.Board, hint string) string {
 	}
 
 	return hint
-}
-
-// inRepo is the trailing clause of a not-found message, and empty when the
-// caller named no repository.
-func inRepo(hint string) string {
-	if hint == "" {
-		return ""
-	}
-
-	return fmt.Sprintf(" in %q", hint)
 }
 
 // openTaskRepo opens the repository a board row belongs to.

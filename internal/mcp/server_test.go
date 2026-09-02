@@ -152,18 +152,23 @@ func TestEveryToolInTheListIsOneTheServerRuns(t *testing.T) {
 // this list dishonest once already: orbit_create_task declared engine and
 // model, neither of which reached task.Create, so a model passed them, read
 // a success, and believed they took effect.
+//
+// It reads both ways. A row here naming an argument no tool declares is a
+// handler still reaching for something a model can no longer pass, which is
+// how the repo argument on the task tools would have outlived the pair
+// identity that needed it.
 func TestEveryDeclaredArgumentIsOneAHandlerReads(t *testing.T) {
 	read := map[string]map[string]bool{
 		"orbit_get_board_summary":  {},
 		"orbit_list_tasks":         {"band": true, "repo": true},
-		"orbit_inspect_task":       {"task_id": true, "repo": true},
+		"orbit_inspect_task":       {"task_id": true},
 		"orbit_create_task":        {"title": true, "prompt": true, "repo": true, "flow": true, "id": true},
-		"orbit_retry_task":         {"task_id": true, "repo": true, "corrective_prompt": true, "flow": true},
-		"orbit_add_note":           {"task_id": true, "text": true, "repo": true},
-		"orbit_pause_task":         {"task_id": true, "repo": true},
-		"orbit_direct_task":        {"task_id": true, "repo": true, "message": true, "restart": true},
-		"orbit_cancel_task":        {"task_id": true, "repo": true},
-		"orbit_requeue_task":       {"task_id": true, "repo": true, "why": true},
+		"orbit_retry_task":         {"task_id": true, "corrective_prompt": true, "flow": true},
+		"orbit_add_note":           {"task_id": true, "text": true},
+		"orbit_pause_task":         {"task_id": true},
+		"orbit_direct_task":        {"task_id": true, "message": true, "restart": true},
+		"orbit_cancel_task":        {"task_id": true},
+		"orbit_requeue_task":       {"task_id": true, "why": true},
 		"orbit_list_flows":         {},
 		"orbit_get_flow":           {"name": true},
 		"orbit_save_flow":          {"name": true, "description": true, "from": true, "phases": true},
@@ -191,6 +196,12 @@ func TestEveryDeclaredArgumentIsOneAHandlerReads(t *testing.T) {
 		for _, name := range tool.InputSchema.Required {
 			if _, ok := tool.InputSchema.Properties[name]; !ok {
 				t.Errorf("%s requires %q and does not declare it", tool.Name, name)
+			}
+		}
+
+		for name := range handled {
+			if _, ok := tool.InputSchema.Properties[name]; !ok {
+				t.Errorf("%s is said to read %q and does not declare it", tool.Name, name)
 			}
 		}
 	}

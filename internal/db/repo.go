@@ -125,6 +125,38 @@ func (d *DB) TasksAndRepos() ([]Worked, error) {
 	return worked, rows.Err()
 }
 
+// Unjoin ends every link between a repository and the tasks worked in it,
+// and answers how many it ended.
+//
+// This is what forgetting a repository does to the record, and it is
+// deliberately the links and not the repository. The repo row is what an
+// event, a pull request and a message point at when they say where something
+// happened, and deleting it would either break those rows or leave them
+// naming nothing — an account of a run that can no longer say which checkout
+// it ran in. What forgetting ends is the present tense: this task is worked
+// in that repository. What it happened in stays said.
+//
+// A task that is worked in another repository as well keeps that link and
+// stays on the board under it. One that is worked here and nowhere else is
+// left with no repository at all, which is why the caller deletes those
+// tasks first rather than leaving them adrift.
+//
+// A repository nothing was ever joined to is no links removed and no error:
+// it is the same answer as forgetting one that had them and now has none.
+func (d *DB) Unjoin(abs string) (int, error) {
+	res, err := d.sql.Exec(unjoinRepo, abs)
+	if err != nil {
+		return 0, fmt.Errorf("end the links to %q: %w", abs, err)
+	}
+
+	n, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("count the links ended to %q: %w", abs, err)
+	}
+
+	return int(n), nil
+}
+
 // Join links a task to a repository without an event saying so.
 //
 // It is what the migration writes, and it is the one place a task_repo row

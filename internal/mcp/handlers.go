@@ -167,13 +167,21 @@ func (sn Session) listTasks(args map[string]any) CallToolResult {
 }
 
 // row is one task as a tool reports it: the columns the window draws, and
-// the repository path a follow-up call needs to name it unambiguously.
+// where the work went.
+//
+// Where it went is repos and not repo. A task reaches into as many
+// checkouts as the work needed, and a report that named one of them would be
+// telling a supervisor that the other three do not exist — it would read the
+// row, act on the one repository it was shown, and account for a change it
+// never saw. repo and repo_path stay beside it as the home checkout: the one
+// the worktree and the diff are opened from, and the first the task joined.
 func row(t view.Task) map[string]any {
 	return map[string]any{
 		"id":             t.ID,
 		"title":          t.Title,
 		"repo":           t.Repo,
 		"repo_path":      t.RepoPath,
+		"repos":          reposWorked(t),
 		"band":           bandSlug(t.Band),
 		"flow":           t.Flow,
 		"phase":          t.Phase,
@@ -186,6 +194,22 @@ func row(t view.Task) map[string]any {
 		"reason":         t.Reason.Key,
 		"current_action": t.CurrentAction,
 	}
+}
+
+// reposWorked is every repository the task is worked in, by name and oldest
+// join first, and never nil: a tool that answers `"repos": null` for a task
+// leaves a reader to decide whether that means none or unknown, and a task
+// on the board is worked in at least one.
+func reposWorked(t view.Task) []string {
+	if len(t.Repos) > 0 {
+		return t.Repos
+	}
+
+	if t.Repo != "" {
+		return []string{t.Repo}
+	}
+
+	return []string{}
 }
 
 // reposOf names every repository on the board with the path a caller needs

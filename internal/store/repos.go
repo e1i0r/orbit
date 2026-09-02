@@ -137,11 +137,25 @@ func parseRepoMarker(body string) (string, bool) {
 // ForgetRepo removes one repository's record from the state root, and
 // answers the directory it removed.
 //
-// What goes is the record and only the record: every task's events.jsonl,
-// task.md, run marker and control file for that repository. It is the one
-// operation in Orbit that deletes from the append-only log, so it is spelled
-// as its own verb rather than reached by removing a directory, and the
-// caller is the one that has to decide there is nothing there worth keeping.
+// What goes is the directory under repos/ and every link saying a task is
+// worked in this repository. It is the one operation in Orbit that deletes
+// from the append-only log, so it is spelled as its own verb rather than
+// reached by removing a directory, and the caller is the one that has to
+// decide there is nothing there worth keeping.
+//
+// The links and not the repository's own row: an event, a pull request and a
+// message point at that row when they say where something happened, and a
+// record that forgot it would hold an account of a run that can no longer
+// name the checkout it ran in. Forgetting ends the present tense — this task
+// is worked in that repository — and leaves what happened said. Without
+// this, the directory went and the links stayed, so a task carried into
+// another checkout went on naming a repository Orbit had been told to
+// forget.
+//
+// The links go before the directory, because that order is the one a second
+// call can finish. A directory removed first would take the record of the
+// repository with it, and a failure after that leaves the links standing
+// with nothing left to look them up by.
 //
 // What stays is the worktrees. They live under worktrees/ rather than under
 // repos/ — see WorktreeDir — and they are checkouts git itself has
@@ -165,6 +179,20 @@ func (s *Store) ForgetRepo(repoPath string) (string, error) {
 		}
 
 		return "", fmt.Errorf("read %q: %w", dir, err)
+	}
+
+	abs, err := filepath.Abs(repoPath)
+	if err != nil {
+		return "", fmt.Errorf("resolve %q: %w", repoPath, err)
+	}
+
+	d, err := s.Record()
+	if err != nil {
+		return "", err
+	}
+
+	if _, err := d.Unjoin(abs); err != nil {
+		return "", err
 	}
 
 	if err := os.RemoveAll(dir); err != nil {

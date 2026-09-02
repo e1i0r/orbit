@@ -38,7 +38,7 @@ func (sn Session) inspectTask(args map[string]any) CallToolResult {
 		return refuse(err)
 	}
 
-	row0, err := findTask(sb.board, stringArg(args, "task_id"), stringArg(args, "repo"))
+	row0, err := findTask(sb.board, stringArg(args, "task_id"))
 	if err != nil {
 		return refuse(err)
 	}

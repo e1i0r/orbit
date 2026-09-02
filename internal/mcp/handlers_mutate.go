@@ -90,7 +90,7 @@ func (sn Session) retryTask(args map[string]any) CallToolResult {
 		return refuse(err)
 	}
 
-	row0, err := findTask(sb.board, stringArg(args, "task_id"), stringArg(args, "repo"))
+	row0, err := findTask(sb.board, stringArg(args, "task_id"))
 	if err != nil {
 		return refuse(err)
 	}
@@ -306,7 +306,7 @@ func (sn Session) loadFor(args map[string]any) (*storeAndBoard, task.Task, *Call
 		return nil, task.Task{}, &res
 	}
 
-	row0, err := findTask(sb.board, stringArg(args, "task_id"), stringArg(args, "repo"))
+	row0, err := findTask(sb.board, stringArg(args, "task_id"))
 	if err != nil {
 		res := refuse(err)
 		return nil, task.Task{}, &res

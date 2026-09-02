@@ -146,6 +146,28 @@ func TestInspectRepoAnswersTheCheckoutAndHowItsTasksStand(t *testing.T) {
 	}
 }
 
+// TestARepositoryCountsTheTasksCarriedIntoIt. A task written in one
+// repository and worked in a second belongs to both, and the cockpit's
+// repository list has said so since the board became a list of tasks. This
+// tool answers the same question, so it has to answer it the same way — a
+// supervisor comparing the number here against the screen beside it is
+// comparing two reports of one fact.
+func TestARepositoryCountsTheTasksCarriedIntoIt(t *testing.T) {
+	s, work := newRoot(t)
+	payments := gitRepo(t, work, "payments")
+	ledger := gitRepo(t, work, "ledger")
+	sn := Session{Root: work, Version: "test"}
+
+	addTask(t, s, payments, "PAY-1", record.Event{At: at(1), Kind: record.TaskCreated, Text: "written in payments"})
+	addTask(t, s, ledger, "PAY-1")
+
+	for _, name := range []string{"payments", "ledger"} {
+		if got := call(t, sn, "orbit_inspect_repo", map[string]any{"repo": name}); got["tasks"] != float64(1) {
+			t.Errorf("%s counts %v tasks, want the 1 that is worked in it", name, got["tasks"])
+		}
+	}
+}
+
 func TestInspectRepoTakesANameOrAPath(t *testing.T) {
 	_, sn, r := oneRepo(t)
 	call(t, sn, "orbit_add_repo", map[string]any{"path": r.Path})
