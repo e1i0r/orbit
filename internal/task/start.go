@@ -98,13 +98,30 @@ func Start(s *store.Store, t Task, flowName string, unread int) (int, error) {
 // asserted without a binary to run, exactly as claudeArgs was split out of
 // engine.Claude.Run so the claude command line could be tested without
 // claude installed.
+// A task with no repository is started without -repo, which is the flag
+// saying which one it is against: passing an empty path would have `orbit
+// run` open the current directory and hand the run whatever repository the
+// window happens to be sitting in. The run reads the flag the same way, so
+// the absence is the answer.
 func runCommand(exe, root string, t Task, flowName string) *exec.Cmd {
-	cmd := exec.Command(exe, "run", "-repo", t.Repo.Path, "-flow", flowName, t.ID)
+	args := []string{"run"}
+	if t.Repo.Path != "" {
+		args = append(args, "-repo", t.Repo.Path)
+	}
+
+	args = append(args, "-flow", flowName, t.ID)
+
+	cmd := exec.Command(exe, args...)
 	// The repository the task is against, and not whatever directory the
 	// caller happens to be in. -repo is absolute so nothing depends on this,
 	// but a child inheriting a working directory that may be deleted while
-	// it runs is a run that dies for a reason nobody can see.
+	// it runs is a run that dies for a reason nobody can see. A task with no
+	// repository is run from the state root, which is the one directory such
+	// a run is certain of.
 	cmd.Dir = t.Repo.Path
+	if cmd.Dir == "" {
+		cmd.Dir = root
+	}
 	// The state root is passed rather than inherited. A run that wrote its
 	// events into a different root than its reader is reading would be a
 	// task that vanished at the moment it started; the environment is where

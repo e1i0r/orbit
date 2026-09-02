@@ -13,16 +13,36 @@ import tea "charm.land/bubbletea/v2"
 
 // composeBoxWidth is how wide the box a task is written in is drawn, and
 // composeInnerWidth is how much of that the text itself gets.
-func composeBoxWidth(w int) int {
-	return clamp(w-8, 24, 84)
+//
+// They are the model's because the paste button stands to the right of the
+// box and the words on it are translated: a box measured without asking how
+// much room that takes would push the button off the edge in whichever
+// language spends the most cells on it.
+func (m Model) composeBoxWidth(w int) int {
+	return clamp(w-composeLabelStart-2-composePasteRoom(m.opts.Words), 24, 84)
 }
 
-func composeInnerWidth(w int) int {
-	return composeBoxWidth(w) - 4
+func (m Model) composeInnerWidth(w int) int {
+	return m.composeBoxWidth(w) - 4
 }
 
 // composeTextRows is how many lines of the box are drawn at once.
 const composeTextRows = 6
+
+// composeInBox is whether the field the cursor is in is the one this tab
+// draws as a box: the task on one, the URL on the other.
+//
+// What it decides is what a line means. In a box the lines are the value
+// wrapped, so up and down walk them and a click lands at a row and a
+// column; everywhere else on the form a line is a field and the same keys
+// leave it.
+func (m Model) composeInBox() bool {
+	if m.compose.tab == composeTabURL {
+		return m.compose.field == composeURL
+	}
+
+	return m.compose.field == composeText
+}
 
 // composeEdit is a key that changes what a field holds. What it writes can
 // be a URL, so the form is given the chance to recognise one.
@@ -57,12 +77,12 @@ func (m Model) composeCaret(f func(*input)) Model {
 // or the field below.
 func (m Model) composeUp(d int) Model {
 	in := m.compose.active()
-	if in == nil || m.compose.tab != composeTabManual || m.compose.field != composeText {
+	if in == nil || !m.composeInBox() {
 		return m.composeMove(d)
 	}
 
 	rs := in.runes()
-	spans := wrapSpans(rs, composeInnerWidth(m.frame.Body.W))
+	spans := wrapSpans(rs, m.composeInnerWidth(m.frame.Body.W))
 
 	row := spanRow(spans, in.at)
 	col := in.at - spans[row].from
@@ -85,7 +105,7 @@ func (m Model) composePoint(row, col int) Model {
 		return m
 	}
 
-	spans := wrapSpans(in.runes(), composeInnerWidth(m.frame.Body.W))
+	spans := wrapSpans(in.runes(), m.composeInnerWidth(m.frame.Body.W))
 	top := spanWindow(len(spans), composeTextRows, spanRow(spans, in.at))
 
 	in.moveTo(spanOffset(spans, top+row, col))
@@ -127,7 +147,7 @@ func (m Model) composeExtend(move func(Model) Model) Model {
 func (m Model) composeAim(t Target) Model {
 	m.compose.field = t.Pane
 
-	if t.Pane == composeText && m.compose.tab == composeTabManual {
+	if m.composeInBox() {
 		return m.composePoint(t.Phase, t.Caret)
 	}
 

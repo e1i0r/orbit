@@ -248,3 +248,49 @@ func openBoth(dir string) (*store.Store, repo.Repo, error) {
 
 	return s, r, nil
 }
+
+// openMaybe is openBoth for the commands a directory that is not a
+// repository is an answer to rather than a mistake.
+//
+// A task does not have to be against a repository any more, so `orbit new`
+// in an empty directory writes one that is against none, and a phase of such
+// a task runs somewhere no git command would work — which is where `orbit
+// join` is typed, and where `orbit run` is spawned from. For all three, a
+// repository is a thing the caller may have and not a thing they must.
+//
+// A directory that was named on purpose is still opened on purpose: only the
+// default is allowed to come back empty, and the caller passes named to say
+// which of the two this was. A -repo the reader typed and got wrong is a
+// refusal, not a task quietly written against nothing.
+func openMaybe(dir string, named bool) (*store.Store, repo.Repo, error) {
+	r, err := repo.Open(dir)
+	if err != nil && named {
+		return nil, repo.Repo{}, err
+	}
+
+	if err != nil {
+		r = repo.Repo{}
+	}
+
+	s, openErr := store.Open()
+	if openErr != nil {
+		return nil, repo.Repo{}, openErr
+	}
+
+	return s, r, nil
+}
+
+// given reports whether a flag was set on the command line rather than left
+// at its default. It is how -repo tells "here" from "nowhere": both read as
+// a path, and only the flag set says the reader chose one.
+func given(fs *flag.FlagSet, name string) bool {
+	set := false
+
+	fs.Visit(func(f *flag.Flag) {
+		if f.Name == name {
+			set = true
+		}
+	})
+
+	return set
+}

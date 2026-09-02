@@ -271,3 +271,79 @@ func TestCreateRepoDirLeavesADamagedMarkerAlone(t *testing.T) {
 		t.Errorf("marker = %q, want it untouched: Repos is what reports damage, and a rewrite erases it", body)
 	}
 }
+
+// TestCreateWorkDirMakesSomewhereForATaskWithNoRepository. A phase runs in a
+// worktree, and a task that has reached into no repository has none — so it
+// gets a directory beside its own record, which is a real place a command
+// can be started in rather than whatever directory the run inherited.
+func TestCreateWorkDirMakesSomewhereForATaskWithNoRepository(t *testing.T) {
+	s, err := New(t.TempDir())
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	work, err := s.CreateWorkDir("ACME-1")
+	if err != nil {
+		t.Fatalf("CreateWorkDir: %v", err)
+	}
+
+	dir, err := s.TaskDir("ACME-1")
+	if err != nil {
+		t.Fatalf("TaskDir: %v", err)
+	}
+
+	if want := filepath.Join(dir, "work"); work != want {
+		t.Errorf("CreateWorkDir made %q, want %q", work, want)
+	}
+
+	info, err := os.Stat(work)
+	if err != nil {
+		t.Fatalf("the work directory was not created: %v", err)
+	}
+
+	if !info.IsDir() {
+		t.Error("the work directory is not a directory")
+	}
+}
+
+// TestCreateWorkDirRefusesAnIDThatIsNotOne, and says so rather than making a
+// directory somewhere else in the tree. It is the same validation every
+// other path method does, and it is here because this one is reached from a
+// run rather than from the command line that first checked the id.
+func TestCreateWorkDirRefusesAnIDThatIsNotOne(t *testing.T) {
+	s, err := New(t.TempDir())
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	if _, err := s.CreateWorkDir("../escape"); err == nil {
+		t.Error("a work directory was made for an id that is not one")
+	}
+}
+
+// TestCreateWorkDirSaysWhenItCannotMakeTheDirectory. The phase that follows
+// is told to run there, so a directory that was not made has to be an error
+// and not an empty string the caller carries into exec.
+func TestCreateWorkDirSaysWhenItCannotMakeTheDirectory(t *testing.T) {
+	s, err := New(t.TempDir())
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	if err := os.MkdirAll(s.TasksDir(), 0o700); err != nil {
+		t.Fatalf("make the tasks directory: %v", err)
+	}
+	// A file where the task's own directory belongs: mkdir -p stops at it.
+	blocked, err := s.TaskDir("ACME-1")
+	if err != nil {
+		t.Fatalf("TaskDir: %v", err)
+	}
+
+	if err := os.WriteFile(blocked, []byte("not a directory\n"), 0o600); err != nil {
+		t.Fatalf("write in the way: %v", err)
+	}
+
+	if _, err := s.CreateWorkDir("ACME-1"); err == nil {
+		t.Error("CreateWorkDir made a directory under a file")
+	}
+}

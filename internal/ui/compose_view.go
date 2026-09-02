@@ -95,26 +95,20 @@ func (m Model) composeManualRows(w int) []string {
 		w,
 	)
 	out = append(out, idLine)
-	out = append(out, m.composeTextArea(w)...)
+	out = append(out, m.composeBox(
+		composeText,
+		p.T("compose.text", "task"),
+		p.T("compose.text_placeholder", "what is to be done?"),
+		p.T("compose.text_hint", "(Shift+↵ for newline)"),
+		m.compose.text,
+		w,
+	)...)
 
 	return out
 }
 
 func (m Model) composeURLRows(w int) []string {
-	p := m.opts.Words
-
 	var out []string
-
-	urlLine := m.composeFieldLine(
-		composeURL,
-		p.T("compose.url", "url"),
-		m.compose.url,
-		p.T("compose.url_placeholder", "https://linear.app/... or https://...atlassian.net/..."),
-		w,
-	)
-	pastePill := Pill(" 📋 "+p.T("compose.btn_paste", "Paste (^V)")+" ", "#FFFFFF", "#0369A1")
-	urlLine += " " + pastePill
-	out = append(out, urlLine)
 
 	out = append(out, m.composeFlowLine(m.compose.field == composeURLFlow, w))
 	out = append(out, m.composeFlowDetail(w)...)
@@ -130,91 +124,25 @@ func (m Model) composeURLRows(w int) []string {
 
 		out = append(out, "", fit(preview, w))
 	}
-
-	return out
-}
-
-func (m Model) composeTextArea(w int) []string {
+	// Last, under the flow and under what that flow says it will do. The
+	// URL is the one thing this tab is for, so it is the row the eye ends
+	// on and the row the actions are typed from.
+	//
+	// It is a box for the same reason the task is one: a tracker URL is
+	// long, and a row of the form cuts it off at the width of the window.
+	// A reader who cannot see the end of what they pasted cannot tell a
+	// URL that is wrong from one that is merely far away.
 	p := m.opts.Words
-	active := m.compose.field == composeText
-	header := composeLabel(p.T("compose.text", "task"), active)
-	pastePill := Pill(" 📋 "+p.T("compose.btn_paste", "Paste (^V)")+" ", "#FFFFFF", "#0369A1")
 
-	header += pastePill
-	if active {
-		header += " " + Paint(Dim).Render(p.T("compose.text_hint", "(Shift+↵ for newline)"))
-	}
-
-	boxW, innerW := composeBoxWidth(w), composeInnerWidth(w)
-	lines := m.composeTextLines(innerW, active,
-		Paint(Dim).Render(p.T("compose.text_placeholder", "what is to be done?")))
-
-	borderStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#334155"))
-	if active {
-		borderStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#38BDF8"))
-	}
-
-	out := []string{header, fit("  "+borderStyle.Render("┌"+strings.Repeat("─", boxW-2)+"┐"), w)}
-
-	for _, l := range lines {
-		padW := max(innerW-lipgloss.Width(l), 0)
-		row := "  " + borderStyle.Render("│ ") + l + strings.Repeat(" ", padW) + borderStyle.Render(" │")
-		out = append(out, fit(row, w))
-	}
-
-	out = append(out, fit("  "+borderStyle.Render("└"+strings.Repeat("─", boxW-2)+"┘"), w))
-
-	return out
+	return append(out, m.composeBox(
+		composeURL,
+		p.T("compose.url", "url"),
+		p.T("compose.url_placeholder", "https://linear.app/... or https://...atlassian.net/..."),
+		"",
+		m.compose.url,
+		w,
+	)...)
 }
-
-// composeTextLines is what is drawn inside the box: the lines the task
-// wraps into, the ones of them that fit, and the caret on the one it is on.
-//
-// The caret used to be hung off the end of the last drawn line, which after
-// the box was padded out to three was an empty row below the text. It goes
-// where the reader is instead, and the box scrolls to keep it in view.
-func (m Model) composeTextLines(innerW int, active bool, placeholder string) []string {
-	rs := m.compose.text.runes()
-	spans := wrapSpans(rs, innerW)
-	caretRow := spanRow(spans, m.compose.text.at)
-	top := spanWindow(len(spans), composeTextRows, caretRow)
-	from, to := m.compose.text.selection()
-
-	var out []string
-
-	for i := top; i < len(spans) && i < top+composeTextRows; i++ {
-		s := spans[i]
-
-		line := spanText(rs, s)
-
-		if active {
-			caret := -1
-			if i == caretRow {
-				caret = m.compose.text.at - s.from
-			}
-
-			line = paintCells(line, from-s.from, to-s.from, caret, unpainted)
-		}
-
-		out = append(out, line)
-	}
-
-	if len(rs) == 0 {
-		out = []string{placeholder}
-		if active {
-			out = []string{paintCells("", 0, 0, 0, unpainted) + placeholder}
-		}
-	}
-
-	for len(out) < 3 {
-		out = append(out, "")
-	}
-
-	return out
-}
-
-// unpainted is the box: what is typed into it is drawn as it was typed.
-func unpainted(s string) string { return s }
 
 func (m Model) composeFieldLine(fieldIdx int, label string, val input, placeholder string, w int) string {
 	active := m.compose.field == fieldIdx

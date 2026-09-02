@@ -39,9 +39,6 @@ func (m Model) composeSubmit(startNow bool) (tea.Model, tea.Cmd) {
 	}
 
 	switch {
-	case path == "":
-		return m.say(p.T("compose.no_repo",
-			"orbit knows no repository to start in; open it where there is one")), nil
 	case id == "":
 		return m.say(p.T("compose.id_required",
 			"the id is required; what is this task called?")), nil
@@ -60,7 +57,15 @@ func (m Model) composeSubmit(startNow bool) (tea.Model, tea.Cmd) {
 	// which engine runs this, so it no longer overwrites the answer.
 	flowName := m.compose.chosenFlow()
 
-	args := []string{"-repo", path, "-id", id}
+	// -repo only when there is one. A board with no repository on it writes
+	// a task against none, which runs in a directory of its own and joins
+	// its first checkout when the work reaches one; passing an empty path
+	// would instead hand it whatever directory the window was started from.
+	args := []string{"-id", id}
+	if path != "" {
+		args = append(args, "-repo", path)
+	}
+
 	if flowName != "" {
 		args = append(args, "-flow", flowName)
 	}

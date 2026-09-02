@@ -37,11 +37,26 @@ const (
 	composeFields
 )
 
+// The URL tab, in the order the rows are drawn and the order the cursor
+// walks them. The URL is last because it is what this tab is for: the
+// reader pastes it, looks at the flow above to see what will be done with
+// it, and saves — rather than reading upwards from the thing they came for.
 const (
-	composeURL = iota
-	composeURLFlow
+	composeURLFlow = iota
+	composeURL
 	composeURLFields
 )
+
+// firstComposeField is where the cursor lands when a tab is opened: the
+// field that tab exists for, which on the URL tab is the last row and not
+// the first.
+func firstComposeField(tab int) int {
+	if tab == composeTabURL {
+		return composeURL
+	}
+
+	return composeFlow
+}
 
 type composeState struct {
 	tab   int // composeTabManual or composeTabURL
@@ -211,7 +226,7 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			m.compose.tab = composeTabURL
 		}
 
-		m.compose.field = 0
+		m.compose.field = firstComposeField(m.compose.tab)
 
 		return m, nil
 	}
@@ -247,6 +262,7 @@ func (m *Model) onComposeChanged() {
 			strings.HasPrefix(cur, "linear.app/") {
 			if issue, err := tracker.Parse(cur); err == nil {
 				m.compose.tab = composeTabURL
+				m.compose.field = composeURL
 				m.compose.url.setValue(cur)
 				m.compose.parsedIssue = &issue
 
@@ -317,7 +333,7 @@ func (m Model) composeTab(d int) Model {
 func (m Model) composeNext(startNow bool) (tea.Model, tea.Cmd) {
 	limit := composeText
 	if m.compose.tab == composeTabURL {
-		limit = composeURLFlow
+		limit = composeURL
 	}
 
 	if m.compose.field < limit {

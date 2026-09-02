@@ -14,6 +14,7 @@ import (
 	"os"
 	"slices"
 
+	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/record"
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
@@ -70,16 +71,16 @@ func Join(s *store.Store, t Task, r repo.Repo) (string, error) {
 	return wt, nil
 }
 
-// Joinable is the repository of the workspace that answers to a name, or a
-// refusal listing the names that would have worked.
+// Joinable is the repository that answers to a name, or a refusal listing
+// the names that would have worked.
 //
 // The name is matched and never interpreted: a model that asks for a
 // repository nobody has checked out is told so plainly, because the
 // alternative is Orbit deciding which repository somebody meant and joining
 // the wrong one — a mistake that shows up as work committed in a project
 // that was not part of the task.
-func Joinable(in repo.Repo, name string) (repo.Repo, error) {
-	found, err := repo.Siblings(in)
+func Joinable(s *store.Store, in repo.Repo, name string) (repo.Repo, error) {
+	found, err := reachable(s, in)
 	if err != nil {
 		return repo.Repo{}, err
 	}
@@ -95,12 +96,79 @@ func Joinable(in repo.Repo, name string) (repo.Repo, error) {
 	}
 
 	if len(names) == 0 {
-		return repo.Repo{}, fmt.Errorf("no repository called %q in %s, which holds none",
-			name, repo.Workspace(in))
+		return repo.Repo{}, fmt.Errorf("no repository called %q in %s, which holds none", name, among(in))
 	}
 
-	return repo.Repo{}, fmt.Errorf("no repository called %q in %s, which holds %v",
-		name, repo.Workspace(in), names)
+	return repo.Repo{}, fmt.Errorf("no repository called %q in %s, which holds %v", name, among(in), names)
+}
+
+// among is what the refusal calls the place it looked in.
+//
+// A workspace has a directory to name. The repositories Orbit has a record
+// of are not a directory and must not be given one: a refusal naming "" or
+// "." would send whoever reads it to look in the wrong place for a name that
+// was never going to be there.
+func among(in repo.Repo) string {
+	if where := repo.Workspace(in); where != "" {
+		return where
+	}
+
+	return "the repositories orbit knows"
+}
+
+// reachable is every repository a task may join.
+//
+// A task that has one takes its neighbours: the workspace is the parent of
+// the checkout it was written against, and a walk of it is the candidate set
+// every phase has been shown since a repository could join a task at all.
+//
+// A task with none has no such parent, and $ORBIT_WORKSPACE is the first
+// answer — a reader who has named a workspace has answered this question
+// whether or not the task has a repository. Failing that, the candidates are
+// the repositories the state root has a record of, which is every checkout
+// Orbit has been run in. It is a different list read from a different place,
+// and it is the only one there is: a task that starts nowhere either gets
+// offered these names or is told there is nowhere to go.
+func reachable(s *store.Store, in repo.Repo) ([]repo.Repo, error) {
+	found, err := repo.Siblings(in)
+	if err != nil {
+		return nil, err
+	}
+
+	if in.Path != "" || len(found) > 0 {
+		return found, nil
+	}
+
+	return recorded(s)
+}
+
+// recorded opens every repository the state root knows about.
+//
+// A checkout that has been moved or deleted since is left out rather than
+// failing the whole list: it is one name a phase is not offered, and the
+// other four are worth having. store.Repos reports damage of its own the
+// same way — it always finishes the listing — and both faults are logged
+// rather than returned, because a candidate set that came back short is not
+// a reason to stop a run.
+func recorded(s *store.Store) ([]repo.Repo, error) {
+	refs, err := s.Repos()
+	if err != nil {
+		logger.Error("task/join", "read the repositories orbit knows: %v", err)
+	}
+
+	found := make([]repo.Repo, 0, len(refs))
+
+	for _, ref := range refs {
+		one, openErr := repo.Open(ref.Path)
+		if openErr != nil {
+			logger.Error("task/join", "open the known repository %q: %v", ref.Path, openErr)
+			continue
+		}
+
+		found = append(found, one)
+	}
+
+	return found, nil
 }
 
 // IDEnv is where a running phase is told which task it is running.
@@ -112,9 +180,19 @@ func Joinable(in repo.Repo, name string) (repo.Repo, error) {
 const IDEnv = "ORBIT_TASK"
 
 // childEnv is what a phase's process is told about the run it belongs to.
+//
+// The workspace is left unset when there is none to name. A task with no
+// repository has no parent directory to offer, and $ORBIT_WORKSPACE set to
+// the empty string is not the same as unset: `orbit join` reads it first and
+// would take that empty answer as the workspace, walk nothing, and refuse
+// every name — instead of falling through to the repositories Orbit knows,
+// which for such a task is the whole of where it can go.
 func childEnv(t Task) []string {
-	return []string{
-		IDEnv + "=" + t.ID,
-		repo.WorkspaceEnv + "=" + repo.Workspace(t.Repo),
+	env := []string{IDEnv + "=" + t.ID}
+
+	if where := repo.Workspace(t.Repo); where != "" {
+		env = append(env, repo.WorkspaceEnv+"="+where)
 	}
+
+	return env
 }

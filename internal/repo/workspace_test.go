@@ -125,3 +125,26 @@ func TestAWorkspaceThatIsNotThereIsAnError(t *testing.T) {
 		t.Errorf("Siblings of a directory that is not there gave %v, want a not-exist error", err)
 	}
 }
+
+// TestATaskWithNoRepositoryHasNoWorkspaceToGuessFrom. The guess is the
+// parent of the repository the task is against, and filepath.Dir("") is "."
+// — so a task that has reached into nothing would name the directory the
+// process happens to be in. That is a workspace nobody chose, holding
+// whatever checkouts are below it, walked on every phase. The answer is
+// nothing, and a listing of nothing is what Siblings gives back.
+func TestATaskWithNoRepositoryHasNoWorkspaceToGuessFrom(t *testing.T) {
+	t.Setenv(WorkspaceEnv, "")
+
+	if got := Workspace(Repo{}); got != "" {
+		t.Errorf("the workspace of no repository is %q, want nothing", got)
+	}
+
+	near, err := Siblings(Repo{})
+	if err != nil {
+		t.Fatalf("Siblings of no repository: %v", err)
+	}
+
+	if len(near) != 0 {
+		t.Errorf("the workspace of no repository holds %v", found(near))
+	}
+}

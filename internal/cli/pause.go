@@ -38,7 +38,7 @@ func controlTask(word string, ctx Context, args []string) error {
 		return needsTaskID(ctx, word)
 	}
 
-	s, r, err := openBoth(*dir)
+	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
 		logger.Error("cli/pause", "open repository %q failed: %v", *dir, err)
 		return err

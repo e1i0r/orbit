@@ -60,3 +60,27 @@ type taskState struct {
 	// fold once rather than never.
 	seen bool
 }
+
+// repoName and repoPath are where the task is filed, and the empty string
+// when it is filed nowhere.
+//
+// A task that has not reached into any repository yet has no repoState to
+// take them from, and every reader of a row asks for both — the sort, the
+// row, the marker that says whether a run is alive. Asked through these, a
+// task that is nowhere reads as a task whose repository is unnamed, which is
+// what it is.
+func (t *taskState) repoName() string {
+	if t.repo == nil {
+		return ""
+	}
+
+	return t.repo.name
+}
+
+func (t *taskState) repoPath() string {
+	if t.repo == nil {
+		return ""
+	}
+
+	return t.repo.path
+}

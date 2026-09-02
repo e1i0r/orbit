@@ -91,7 +91,10 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 	// from the one before it for a reason nobody caused is a run that cannot
 	// be read back. A workspace that cannot be walked is not a failure —
 	// the task is still the task, and the phase runs with no listing.
-	others := elsewhere(t)
+	//
+	// It is read after prepare and not before, so that a task with no
+	// repository has its directory before it is told what it could join.
+	others := elsewhere(s, t)
 
 	var prevOutput string
 

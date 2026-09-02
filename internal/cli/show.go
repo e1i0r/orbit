@@ -9,6 +9,7 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/task"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -27,7 +28,7 @@ func show(ctx Context, args []string) error {
 		return needsTaskID(ctx, "show")
 	}
 
-	s, r, err := openBoth(*dir)
+	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
 		return err
 	}
@@ -38,8 +39,7 @@ func show(ctx Context, args []string) error {
 	}
 
 	if len(events) == 0 {
-		return errors.New(ctx.printer().T("show.nothing_recorded", "nothing recorded for {id} in {repo}",
-			words.Arg{Name: "id", Value: id}, words.Arg{Name: "repo", Value: r.Name}))
+		return errors.New(nothingRecorded(ctx, id, r))
 	}
 
 	w := tabwriter.NewWriter(ctx.Out, 0, 0, 2, ' ', 0)
@@ -49,6 +49,23 @@ func show(ctx Context, args []string) error {
 	}
 
 	return w.Flush()
+}
+
+// nothingRecorded is what show says when the id names no task.
+//
+// A task can be against no repository, and the refusal for one of those
+// names none either: "nothing recorded for ACME-1 in " puts a hole where the
+// reader looks for the answer, and the repository is not part of why the id
+// found nothing.
+func nothingRecorded(ctx Context, id string, r repo.Repo) string {
+	p := ctx.printer()
+	if r.Name == "" {
+		return p.T("show.nothing_recorded_anywhere", "nothing recorded for {id}",
+			words.Arg{Name: "id", Value: id})
+	}
+
+	return p.T("show.nothing_recorded", "nothing recorded for {id} in {repo}",
+		words.Arg{Name: "id", Value: id}, words.Arg{Name: "repo", Value: r.Name})
 }
 
 // stamp says when, with the day included: a task that ran last week printed

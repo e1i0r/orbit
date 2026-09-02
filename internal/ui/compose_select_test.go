@@ -115,7 +115,7 @@ func TestWhatIsSelectedIsDrawnAsSelected(t *testing.T) {
 	m.compose.text.moveTo(0)
 	m.compose.text.extend(func(in *input) { in.moveTo(4) })
 
-	lines := m.composeTextLines(40, true, "")
+	lines := m.composeBoxLines(m.compose.text, 40, true, "")
 	if len(lines) == 0 {
 		t.Fatal("the box drew nothing")
 	}

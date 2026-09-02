@@ -12,18 +12,31 @@ import (
 //
 // Creation is a verb of its own so that the path methods can stay pure. Only
 // a caller that is about to write something calls this.
+//
+// An empty repoPath is a task that is not worked in any repository yet, and
+// it gets the directory and nothing else: no repository is registered and no
+// link is written. The task's own directory is under tasks/ and has never
+// been under a repository's, so there is nothing here that a task with no
+// repository is missing — which is what makes writing one down a matter of
+// leaving a step out rather than a second way of writing a task.
 func (s *Store) CreateTaskDir(repoPath, taskID string) (string, error) {
-	if _, err := s.createRepoDir(repoPath); err != nil {
-		return "", err
-	}
-
 	dir, err := s.TaskDir(taskID)
 	if err != nil {
 		return "", err
 	}
 
+	if repoPath != "" {
+		if _, err := s.createRepoDir(repoPath); err != nil {
+			return "", err
+		}
+	}
+
 	if err := os.MkdirAll(dir, dirMode); err != nil {
 		return "", fmt.Errorf("create %q: %w", dir, err)
+	}
+
+	if repoPath == "" {
+		return dir, nil
 	}
 
 	abs, err := filepath.Abs(repoPath)
@@ -36,6 +49,30 @@ func (s *Store) CreateTaskDir(repoPath, taskID string) (string, error) {
 	}
 
 	return dir, nil
+}
+
+// CreateWorkDir makes the directory a phase runs in when the task has no
+// repository, and returns it.
+//
+// A run needs somewhere to be, and a task that has reached into nothing has
+// no checkout to offer. It gets a directory of its own beside its record —
+// tasks/<id>/work — where the engine can read what it was given, write
+// scratch, and run the command that opens the first real checkout. Nothing
+// is committed from here and nothing is delivered from here: the moment the
+// work is about a repository, `orbit join` answers with a worktree, and that
+// is where the code goes.
+func (s *Store) CreateWorkDir(taskID string) (string, error) {
+	dir, err := s.TaskDir(taskID)
+	if err != nil {
+		return "", err
+	}
+
+	work := filepath.Join(dir, "work")
+	if err := os.MkdirAll(work, dirMode); err != nil {
+		return "", fmt.Errorf("create %q: %w", work, err)
+	}
+
+	return work, nil
 }
 
 // RegisterRepo records a repository in the state root without writing a task

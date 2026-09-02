@@ -3,20 +3,20 @@
   $0.00 spent  ·  15 tasks  ·  0 events  ·  ⠋
      1 Manual     [ 2 From URL (Linear / Jira / GitHub) ] 
 
-▸  url:            https://linear.app/... or https://...atlassian.net/...   📋 Paste (^V)  
-   flow:            ● 🛡️ careful     🚀 quick     ⚡ task     ⚡ tdd-fuzz-pr     ➕ New  
+▸  flow:            ● 🛡️ careful     🚀 quick     ⚡ task     ⚡ tdd-fuzz-pr     ➕ New   (←/→ to c…
                   ↳ 1 implement · claude/opus
                     2 review · claude/opus · ⏸ waits for you
                     3 fix · claude/opus
                     Thorough multiphase workflow with human review gates and fix cycles. Best for
                     complex, mission-critical features where code quality and careful verification
                     are essential.
+   url:           ┌────────────────────────────────────────────────────────────┐   📋 Paste (^V)  
+                  │ https://linear.app/... or https://...atlassian.net/...     │
+                  │                                                            │
+                  │                                                            │
+                  └────────────────────────────────────────────────────────────┘
 
   [ ↵ Save ]   [ ^R Save & Run ]   [ esc Cancel ]   ⚡ autopilot is ON: starts automatically [A to …
-
-
-
-
 
 
 

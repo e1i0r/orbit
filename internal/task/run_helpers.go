@@ -8,7 +8,6 @@ import (
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/logger"
-	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 )
 
@@ -42,7 +41,16 @@ func captured(out string) (text string, full int) {
 // is not special, and a task whose starting repository was recorded by one
 // road and every other by a second would have two accounts of its scope and
 // no reason to believe either.
+//
+// A task with no repository has no worktree to open and gets a directory of
+// its own instead. Nothing has joined it yet, so there is nothing to join it
+// through: the first repository arrives when the phase runs `orbit join`,
+// by the same road the fourth one takes.
 func prepare(s *store.Store, t Task) (string, error) {
+	if t.Repo.Path == "" {
+		return s.CreateWorkDir(t.ID)
+	}
+
 	return Join(s, t, t.Repo)
 }
 
@@ -56,8 +64,8 @@ func prompt(t Task, p flow.Phase, notes []string, prevOutput string, others []st
 	var b strings.Builder
 
 	fmt.Fprintf(&b, "# %s\n\n%s\n\n", t.ID, strings.TrimSpace(t.Text))
-	fmt.Fprintf(&b, "## Phase\n\n`%s`, in repository `%s`.\n", p.Name, t.Repo.Name)
-	b.WriteString(workspace(others))
+	fmt.Fprintf(&b, "## Phase\n\n%s\n", where(t, p))
+	b.WriteString(workspace(t, others))
 
 	if p.Prompt != "" {
 		fmt.Fprintf(&b, "\n## Phase instructions\n\n%s\n", strings.TrimSpace(p.Prompt))
@@ -83,6 +91,21 @@ func prompt(t Task, p flow.Phase, notes []string, prevOutput string, others []st
 	return b.String()
 }
 
+// where is the line that says which phase is running and in what.
+//
+// A task with no repository is told so plainly rather than being handed an
+// empty name in a sentence shaped for one — "in repository “" is a fact
+// about a bug, not about the task. What to do about it is in the workspace
+// section below, next to the names: a phase told it may join a repository
+// on one line and given the list on another is a phase that guesses.
+func where(t Task, p flow.Phase) string {
+	if t.Repo.Name == "" {
+		return fmt.Sprintf("`%s`. This task is not being worked in any repository yet.", p.Name)
+	}
+
+	return fmt.Sprintf("`%s`, in repository `%s`.", p.Name, t.Repo.Name)
+}
+
 // workspace is what the phase is told about the repositories it is not in.
 //
 // The names, and the one command that opens a checkout of one — nothing
@@ -92,17 +115,35 @@ func prompt(t Task, p flow.Phase, notes []string, prevOutput string, others []st
 // stays open until the work closes it. A workspace with nothing else in it
 // says nothing at all, because a list of no repositories and an instruction
 // for reaching them is a paragraph asking to be misread.
-func workspace(others []string) string {
+//
+// For a task that is in none of them the same list is the whole of where the
+// work can go, and the paragraph says so: the phase is not being invited to
+// widen a scope it already has, it is being told how to get one.
+func workspace(t Task, others []string) string {
 	if len(others) == 0 {
 		return ""
 	}
 
 	var b strings.Builder
 
-	b.WriteString("\n## Other repositories in this workspace\n\n")
+	if t.Repo.Name == "" {
+		b.WriteString("\n## Repositories in this workspace\n\n")
+	} else {
+		b.WriteString("\n## Other repositories in this workspace\n\n")
+	}
 
 	for _, name := range others {
 		fmt.Fprintf(&b, "- `%s`\n", name)
+	}
+
+	if t.Repo.Name == "" {
+		fmt.Fprintf(&b, "\nThis task has no checkout of its own yet. Run "+
+			"`orbit join <name>` for whichever of these the work turns out to be "+
+			"in: it prints a checkout to work in, and the repository becomes part "+
+			"of the task. Do this in any phase, as many times as the work calls "+
+			"for; nothing had to be declared in advance.\n")
+
+		return b.String()
 	}
 
 	fmt.Fprintf(&b, "\nIf this task turns out to need a change in one of them, run "+
@@ -113,17 +154,18 @@ func workspace(others []string) string {
 	return b.String()
 }
 
-// elsewhere is the workspace's other repositories, by name.
+// elsewhere is the repositories a phase is told it can reach, by name.
 //
 // A walk that fails answers nothing rather than stopping the run. The
 // listing is a convenience for the engine — a name it would otherwise have
 // to be told — and a task that cannot see its neighbours is a task that runs
 // in the one repository it already has, which is what every run did before
-// any of this.
-func elsewhere(t Task) []string {
-	found, err := repo.Siblings(t.Repo)
+// any of this. A task with none runs in its own directory and is told
+// nothing, which is the same trade one step further along.
+func elsewhere(s *store.Store, t Task) []string {
+	found, err := reachable(s, t.Repo)
 	if err != nil {
-		logger.Error("task/run", "list the workspace of %q failed: %v", t.Repo.Path, err)
+		logger.Error("task/run", "list the repositories task %q can reach failed: %v", t.ID, err)
 		return nil
 	}
 

@@ -29,7 +29,7 @@ func readTask(ctx Context, args []string) error {
 		return needsTaskID(ctx, "read")
 	}
 
-	s, r, err := openBoth(*dir)
+	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
 		return err
 	}
