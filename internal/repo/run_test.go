@@ -199,6 +199,50 @@ func TestClosingLeavesTheCommentTheCallerGave(t *testing.T) {
 	}
 }
 
+// TestRewritingABodyReplacesItWholeAndSaysNothingElse. The bodies of a task
+// delivered into several repositories are written twice — a pull request
+// cannot link to one that does not exist yet — and the second writing is
+// this. `--body` replaces, so what is handed over is the whole body and not
+// the part that changed.
+func TestRewritingABodyReplacesItWholeAndSaysNothingElse(t *testing.T) {
+	dir := t.TempDir()
+	argv := filepath.Join(dir, "argv")
+
+	fakeGh(t, `printf '%s\n' "$@" > `+argv)
+
+	body := "## Orbit Task: TEST-1\n\nthe task\n"
+	if err := (Repo{}).EditPR(dir, "orbit/TEST-1", body); err != nil {
+		t.Fatalf("EditPR: %v", err)
+	}
+
+	got, err := os.ReadFile(argv)
+	if err != nil {
+		t.Fatalf("read what gh was given: %v", err)
+	}
+
+	if want := "pr\nedit\norbit/TEST-1\n--body\n" + body + "\n"; string(got) != want {
+		t.Errorf("gh was given %q, want %q", got, want)
+	}
+}
+
+// TestABodyGhRefusedToRewriteIsAnError. The pull requests are open by the
+// time this runs, so a failure here is not a delivery that did not happen —
+// it is a set of pull requests that do not name each other, and the caller
+// has to be able to say so.
+func TestABodyGhRefusedToRewriteIsAnError(t *testing.T) {
+	fakeGh(t, `echo 'could not update pull request: HTTP 422' >&2
+exit 1`)
+
+	err := (Repo{}).EditPR(t.TempDir(), "orbit/TEST-1", "body")
+	if err == nil {
+		t.Fatal("a gh that refused came back without an error")
+	}
+
+	if !strings.Contains(err.Error(), "HTTP 422") {
+		t.Errorf("the error reads %q, want it to carry what gh said", err)
+	}
+}
+
 // TestMergingAsksForASquashAndNoBranchLeftBehind. MergePR answers an error
 // and nothing else, so the whole of what it does is the line it hands gh:
 // one commit on the base branch, and the branch behind it gone. A flag
