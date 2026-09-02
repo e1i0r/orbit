@@ -50,10 +50,27 @@ func deliverable(t *testing.T, text string) (dir string) {
 	t.Setenv("GIT_CONFIG_SYSTEM", os.DevNull)
 	t.Setenv("ORBIT_HOME", filepath.Join(t.TempDir(), "orbit"))
 
+	dir = withRemote(t, t.TempDir(), "payments")
+
+	if code, _, errOut := run(t, "new", "-repo", dir, "-id", "PAY-1", text); code != 0 {
+		t.Fatalf("orbit new exited %d: %s", code, errOut)
+	}
+
+	plantWorktree(t, dir, text)
+
+	return dir
+}
+
+// withRemote is a repository at root/name whose remote is a bare repository
+// on this disk, so a delivery from it makes a real push and stops only at
+// GitHub.
+func withRemote(t *testing.T, root, name string) string {
+	t.Helper()
+
 	remote := t.TempDir()
 	inside(t, remote, "init", "--bare", "-q", "-b", "main")
 
-	dir = filepath.Join(t.TempDir(), "payments")
+	dir := filepath.Join(root, name)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatalf("make the repository directory: %v", err)
 	}
@@ -68,12 +85,6 @@ func deliverable(t *testing.T, text string) (dir string) {
 	} {
 		inside(t, dir, args...)
 	}
-
-	if code, _, errOut := run(t, "new", "-repo", dir, "-id", "PAY-1", text); code != 0 {
-		t.Fatalf("orbit new exited %d: %s", code, errOut)
-	}
-
-	plantWorktree(t, dir, text)
 
 	return dir
 }

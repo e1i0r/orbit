@@ -1464,8 +1464,20 @@
       "value": "la rama {branch} se subió y gh pr create se negó"
     },
     "pr.created": {
-      "source": "pull request created: {url}",
-      "value": "pull request creado: {url}"
+      "source": "pull request created for {repo}: {url}",
+      "value": "pull request creado para {repo}: {url}"
+    },
+    "pr.no_checkout": {
+      "source": "{repo} has no checkout of this task to deliver from; `orbit join -task {id} {repo}` opens one again",
+      "value": "{repo} no tiene un checkout de esta tarea desde el cual entregar; `orbit join -task {id} {repo}` abre uno de nuevo"
+    },
+    "pr.nothing_to_deliver": {
+      "source": "{repo}: nothing changed here, so there is no pull request",
+      "value": "{repo}: acá no cambió nada, así que no hay pull request"
+    },
+    "pr.opened_but_not_linked": {
+      "source": "the pull requests are open and gh pr edit refused, so none of them names the others",
+      "value": "los pull requests están abiertos y gh pr edit se negó, así que ninguno nombra a los otros"
     },
     "merge.refused": {
       "source": "merging the pull request of {id} failed",

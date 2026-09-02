@@ -155,3 +155,122 @@ func TestPushingWithNoRemoteSaysSo(t *testing.T) {
 		t.Errorf("SyncBaseBranch with no remote: %v", err)
 	}
 }
+
+// TestAWorktreeNobodyChangedHasNothingToDeliver. A task may open a checkout
+// of a repository, read it and decide it needs nothing. The branch is then
+// the base branch under another name, and the delivery has to be able to
+// tell that apart from work — a pull request for it asks a reviewer to look
+// at no change at all.
+func TestAWorktreeNobodyChangedHasNothingToDeliver(t *testing.T) {
+	cloneDir := cloneWithRemote(t, "origin")
+	r := Repo{Path: cloneDir, Name: "ledger", Remote: "origin", Base: "main"}
+	wtDir := filepath.Join(t.TempDir(), "wt-untouched")
+
+	if err := r.AddWorktree(wtDir, "orbit/TEST-4"); err != nil {
+		t.Fatalf("AddWorktree: %v", err)
+	}
+
+	ahead, err := r.WorktreeAhead(wtDir, "main")
+	if err != nil {
+		t.Fatalf("WorktreeAhead: %v", err)
+	}
+
+	if ahead {
+		t.Error("a checkout with no commit of its own reads as having work to deliver")
+	}
+
+	if err := os.WriteFile(filepath.Join(wtDir, "test.txt"), []byte("orbit test\n"), 0o600); err != nil {
+		t.Fatalf("write file in worktree: %v", err)
+	}
+
+	// Uncommitted work is not counted, and does not have to be: the delivery
+	// commits before it asks.
+	if err := r.CommitWorktree(wtDir, "feat(TEST-4): add test.txt"); err != nil {
+		t.Fatalf("CommitWorktree: %v", err)
+	}
+
+	if ahead, err = r.WorktreeAhead(wtDir, "main"); err != nil || !ahead {
+		t.Errorf("a checkout with a commit on it reads as %v, %v", ahead, err)
+	}
+
+	// A base branch nothing answers to is not a count of nothing. It is a
+	// question that could not be asked, and reading it as "nothing to
+	// deliver" leaves a repository's work on the floor without a word.
+	if _, err := r.WorktreeAhead(wtDir, "no-such-branch"); err == nil {
+		t.Error("counting against a branch that is not there came back without an error")
+	}
+}
+
+// TestABaseNobodyFetchedIsNotWhatTheWorkIsCountedAgainst. The local branch of
+// a checkout that has not been fetched in a week is behind its remote, and
+// counting a task's work against it reports a repository as changed because
+// somebody else changed it. Here somebody else pushes from their own clone,
+// so this one's main stays where it was and only origin/main moves.
+func TestABaseNobodyFetchedIsNotWhatTheWorkIsCountedAgainst(t *testing.T) {
+	cloneDir := cloneWithRemote(t, "origin")
+	r := Repo{Path: cloneDir, Name: "ledger", Remote: "origin", Base: "main"}
+	wtDir := filepath.Join(t.TempDir(), "wt-behind")
+
+	// The local base branch has to exist before the worktree is cut from it,
+	// or git makes one out of the remote-tracking ref at the moment it is
+	// asked — which is a local branch that cannot be stale, and the staleness
+	// is the whole of what this test is about.
+	if _, err := git(cloneDir, "rev-parse", "--verify", "--quiet", "main"); err != nil {
+		if _, err := git(cloneDir, "branch", "main"); err != nil {
+			t.Fatalf("git branch main: %v", err)
+		}
+	}
+
+	if err := r.AddWorktree(wtDir, "orbit/TEST-5"); err != nil {
+		t.Fatalf("AddWorktree: %v", err)
+	}
+
+	theirs(t, cloneDir)
+
+	if err := r.SyncBaseBranch(wtDir, "main"); err != nil {
+		t.Fatalf("SyncBaseBranch: %v", err)
+	}
+
+	// The worktree now holds one commit its own repository's main has never
+	// heard of, and not one of them is this task's.
+	ahead, err := r.WorktreeAhead(wtDir, "main")
+	if err != nil {
+		t.Fatalf("WorktreeAhead: %v", err)
+	}
+
+	if ahead {
+		t.Error("a checkout that only caught up with its remote reads as having work of its own")
+	}
+}
+
+// theirs is a commit pushed to the same remote by somebody else — a second
+// clone, which is what makes the first one's main go stale.
+func theirs(t *testing.T, cloneDir string) {
+	t.Helper()
+
+	remote, err := git(cloneDir, "remote", "get-url", "origin")
+	if err != nil {
+		t.Fatalf("git remote get-url: %v", err)
+	}
+
+	other := t.TempDir()
+	if _, err := git(other, "clone", "-b", "main", strings.TrimSpace(remote), "."); err != nil {
+		t.Fatalf("git clone: %v", err)
+	}
+
+	if err := os.WriteFile(filepath.Join(other, "theirs.txt"), []byte("theirs\n"), 0o600); err != nil {
+		t.Fatalf("write their file: %v", err)
+	}
+
+	for _, args := range [][]string{
+		{"config", "user.name", "Somebody Else"},
+		{"config", "user.email", "else@example.com"},
+		{"add", "-A"},
+		{"commit", "-m", "somebody else"},
+		{"push", "origin", "HEAD:main"},
+	} {
+		if _, err := git(other, args...); err != nil {
+			t.Fatalf("git %v: %v", args, err)
+		}
+	}
+}

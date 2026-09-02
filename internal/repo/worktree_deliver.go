@@ -2,6 +2,7 @@ package repo
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -25,6 +26,53 @@ func (r Repo) CommitWorktree(wtDir, message string) error {
 	}
 
 	return nil
+}
+
+// WorktreeAhead says whether the worktree holds commits its base branch does
+// not — whether, in other words, this repository has anything to deliver.
+//
+// A task that opened a checkout of a repository, read it and changed nothing
+// leaves a branch identical to the base it was cut from, and a pull request
+// for that branch is a review request for nothing. The repository still
+// joined the task and the record still says so; what it does not get is a
+// pull request.
+//
+// The count is taken against the remote-tracking branch when there is one. A
+// local base branch nobody has fetched in a week is behind its remote, and
+// counting against it reports a repository as changed because somebody else
+// changed it.
+//
+// A repository on no branch at all has nothing to count against, and answers
+// yes: the delivery that follows is the one it would have had before this
+// question was asked of it.
+func (r Repo) WorktreeAhead(wtDir, baseBranch string) (bool, error) {
+	if baseBranch == "" {
+		return true, nil
+	}
+
+	base := baseBranch
+	if tracking := r.Remote + "/" + baseBranch; r.Remote != "" && r.resolves(wtDir, tracking) {
+		base = tracking
+	}
+
+	out, err := git(wtDir, "rev-list", "--count", base+"..HEAD")
+	if err != nil {
+		return false, fmt.Errorf("count the commits of %q over %q: %w", wtDir, base, err)
+	}
+
+	n, err := strconv.Atoi(strings.TrimSpace(out))
+	if err != nil {
+		return false, fmt.Errorf("read the commit count of %q: %w", wtDir, err)
+	}
+
+	return n > 0, nil
+}
+
+// resolves says whether a name is a ref the repository holds.
+func (r Repo) resolves(wtDir, ref string) bool {
+	_, err := git(wtDir, "rev-parse", "--verify", "--quiet", ref)
+
+	return err == nil
 }
 
 // PushBranch pushes the task branch from the worktree to the repository's
@@ -116,6 +164,18 @@ func (r Repo) CreatePR(wtDir, title, body, headBranch, baseBranch string) (strin
 	}
 
 	return url, nil
+}
+
+// EditPR rewrites the body of a pull request that is already open.
+//
+// A task delivered into three repositories opens three pull requests, and
+// none of them can name the others while they are being opened: the second
+// URL does not exist when the first body is written. So the bodies are
+// written twice, and this is the second time.
+func (r Repo) EditPR(wtDir, branch, body string) error {
+	_, err := gh(wtDir, "pr", "edit", branch, "--body", body)
+
+	return err
 }
 
 // MergePR squashes and merges the task's pull request, and deletes the

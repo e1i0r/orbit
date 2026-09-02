@@ -2,20 +2,18 @@ package cli
 
 import (
 	"flag"
-	"fmt"
 	"io"
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/task"
-	"github.com/e1i0r/orbit/internal/words"
 )
 
 func createPR(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("pr", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 
-	dir := fs.String("repo", ".", "the repository the task is against")
+	dir := fs.String("repo", ".", "a repository the task was worked in")
 	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
@@ -24,7 +22,6 @@ func createPR(ctx Context, args []string) error {
 		return needsTaskID(ctx, "pr")
 	}
 
-	p := ctx.printer()
 	taskID := fs.Args()[0]
 
 	s, r, err := openBoth(*dir)
@@ -33,13 +30,13 @@ func createPR(ctx Context, args []string) error {
 		return err
 	}
 
-	// The worktree is located before the task is read because this is where
-	// the identifier is measured against what a path can hold. Reading the
-	// task first measures the same thing on its way to the file, and leaves
-	// this check standing in front of a case that was already refused.
-	wtDir, err := s.WorktreeDir(r.Path, taskID)
+	// Where the task was worked is read before the task is. That listing is
+	// where the identifier is measured against what a path can hold, and a
+	// task read first measures the same thing on its way to the file, which
+	// leaves this check standing in front of a case already refused.
+	where, err := worked(s, r, taskID)
 	if err != nil {
-		logger.Error("cli/pr", "get worktree for task %q failed: %v", taskID, err)
+		logger.Error("cli/pr", "read the repositories of task %q failed: %v", taskID, err)
 		return err
 	}
 
@@ -49,50 +46,7 @@ func createPR(ctx Context, args []string) error {
 		return err
 	}
 
-	branch := "orbit/" + taskID
-
-	firstLine := strings.SplitN(strings.TrimSpace(t.Text), "\n", 2)[0]
-
-	commitMsg := clipWords(fmt.Sprintf("feat(%s): %s", taskID, firstLine), 72)
-
-	if err := r.SyncBaseBranch(wtDir, r.Base); err != nil {
-		logger.Warn("cli/pr", "sync base branch %q into %q: %v", r.Base, wtDir, err)
-	}
-
-	if err := r.CommitWorktree(wtDir, commitMsg); err != nil {
-		logger.Error("cli/pr", "commit worktree %q failed: %v", wtDir, err)
-		return err
-	}
-
-	if err := r.PushBranch(wtDir, branch); err != nil {
-		logger.Error("cli/pr", "push branch %q failed: %v", branch, err)
-		return err
-	}
-
-	body := fmt.Sprintf("## Orbit Task: %s\n\n%s\n\nGenerated automatically by Orbit.", taskID, t.Text)
-
-	title := fmt.Sprintf("%s: %s", taskID, firstLine)
-	// 87 and not 90, because the three dots are part of what a reader sees:
-	// the branch that cuts at a space appends them, and 90 plus three dots
-	// is 93 characters in a field meant to hold 90.
-	if short := clipWords(title, 87); short != title {
-		title = short + "..."
-	}
-
-	prURL, err := r.CreatePR(wtDir, title, body, branch, r.Base)
-	if err != nil {
-		logger.Error("cli/pr", "gh pr create failed: %v", err)
-
-		return fmt.Errorf("%s: %w", p.T("pr.pushed_but_not_opened",
-			"branch {branch} was pushed and gh pr create refused",
-			words.Arg{Name: "branch", Value: branch}), err)
-	}
-
-	logger.Info("cli/pr", "created pull request %s for task %s (base=%s)", prURL, taskID, r.Base)
-	fmt.Fprintf(ctx.Out, "%s\n", p.T("pr.created", "pull request created: {url}",
-		words.Arg{Name: "url", Value: prURL}))
-
-	return nil
+	return deliverTask(ctx, s, t, where)
 }
 
 // clipWords cuts s down to at most limit characters, at the last space when
