@@ -37,7 +37,7 @@ func (r *Reader) Log(repoPath, id string) ([]view.Entry, error) {
 	// trade rather than an oversight: the alternative is releasing it and
 	// racing a rescan that is removing this very task's state. One read of
 	// one log delays one 500 ms poll; a use-after-free does worse.
-	if st, ok := r.index[taskKey{repoPath, id}]; ok && st.seen {
+	if st, ok := r.index[id]; ok && st.seen {
 		return view.Log(st.events), nil
 	}
 

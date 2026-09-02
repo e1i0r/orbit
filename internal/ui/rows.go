@@ -87,13 +87,27 @@ func (m Model) tasksIn(b view.Band, filter string) []view.Task {
 	return out
 }
 
-// matchesRepo is whether the task belongs to the filtered repository.
+// matchesRepo is whether the task was worked in the filtered repository.
+//
+// Any of the repositories it joined and not only the one it is filed under.
+// A reader who filters to ledger is asking what is going on in ledger, and a
+// task whose second phase is rewriting half of it is going on in ledger.
 func matchesRepo(t view.Task, repoFilter string) bool {
 	if repoFilter == "" {
 		return true
 	}
 
-	return strings.EqualFold(t.Repo, repoFilter)
+	if strings.EqualFold(t.Repo, repoFilter) {
+		return true
+	}
+
+	for _, name := range t.Repos {
+		if strings.EqualFold(name, repoFilter) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // matches is the filter, over the three fields a reader would type: the
@@ -103,7 +117,7 @@ func matches(t view.Task, filter string) bool {
 		return true
 	}
 
-	for _, field := range []string{t.Repo, t.ID, t.Title} {
+	for _, field := range append([]string{t.Repo, t.ID, t.Title}, t.Repos...) {
 		if strings.Contains(strings.ToLower(field), filter) {
 			return true
 		}

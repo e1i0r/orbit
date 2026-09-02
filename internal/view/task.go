@@ -158,14 +158,23 @@ func (l Liveness) String() string {
 // Task is everything the window knows about one task. Every field is derived
 // from the record; nothing here is remembered between folds.
 //
-// ID, Repo and RepoPath are the exception and are left empty by Fold: they
-// are facts about where the log lives rather than facts inside it, and the
-// caller that opened the log is the only thing that knows them.
+// ID, Repo, RepoPath and Repos are the exception and are left empty by
+// Fold: they are facts about where the log lives rather than facts inside
+// it, and the caller that opened the log is the only thing that knows them.
 type Task struct {
 	ID       string
-	Repo     string // the repository's name, for the column
-	RepoPath string // where it is, for the diff tab and $EDITOR
-	Title    string // the first line of task.md
+	Repo     string // the first repository it was worked in, for the diff tab and $EDITOR
+	RepoPath string // where that one is
+	// Repos is every repository the task has been worked in, by name and
+	// oldest join first, with Repo the first of them.
+	//
+	// A task is one thing that reaches into as many checkouts as the work
+	// needed, so this is a list rather than the single name the column used
+	// to draw. It is the whole of what the row says about where the work
+	// went: a reader who sees one name is reading a task that joined one
+	// repository, not a task whose others were dropped.
+	Repos []string
+	Title string // the first line of task.md
 	// Band is the band this task is drawn in. Fold writes it from the
 	// record and BandOf reads it, so the header counts and the list draws
 	// one value rather than two rules that agree by inspection. A Task

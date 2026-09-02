@@ -18,6 +18,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/layout"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -45,7 +46,7 @@ func (m Model) drawRow(r row, w int, selected bool) string {
 		role  Role
 		right bool
 	}{
-		{m.plan.Repo, r.task.Repo, Dim, false},
+		{m.plan.Repo, layout.RepoCell(r.task, m.plan.Repo), Dim, false},
 		{m.plan.ID, r.task.ID, Accent, false},
 		{m.plan.Title, r.task.Title, Dim, false},
 		{m.plan.State, word, role, false},

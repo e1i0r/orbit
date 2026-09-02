@@ -83,6 +83,48 @@ func (d *DB) ReposOfTask(taskID string) ([]string, error) {
 	return paths, rows.Err()
 }
 
+// Worked is one task and one repository it is worked in.
+type Worked struct {
+	Task string // the task's id
+	Path string // the repository's absolute path
+	Name string // the repository's name, as the row that made the link spelled it
+}
+
+// TasksAndRepos is every task the record holds, with every repository it is
+// worked in, by id and then oldest join first.
+//
+// It is one question rather than the same question asked once per
+// repository, because a task that reaches into four checkouts is answered by
+// four of those and the board has to put the four answers back together to
+// draw one row. Asked from this end the row is already whole, and the join
+// order — which repository the task was written in, and which ones the work
+// went on to — survives, where a walk of the repositories would have
+// returned them in whatever order the repositories were walked in.
+//
+// A deleted task is left out here for the reason it is left out of
+// TasksOfRepo, and by the same subselect.
+func (d *DB) TasksAndRepos() ([]Worked, error) {
+	rows, err := d.sql.Query(selectTasksAndRepos, record.TaskDeleted)
+	if err != nil {
+		return nil, fmt.Errorf("read the tasks and their repositories: %w", err)
+	}
+
+	defer rows.Close()
+
+	var worked []Worked
+
+	for rows.Next() {
+		var w Worked
+		if err := rows.Scan(&w.Task, &w.Path, &w.Name); err != nil {
+			return nil, fmt.Errorf("read a task and its repository: %w", err)
+		}
+
+		worked = append(worked, w)
+	}
+
+	return worked, rows.Err()
+}
+
 // Join links a task to a repository without an event saying so.
 //
 // It is what the migration writes, and it is the one place a task_repo row

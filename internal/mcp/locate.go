@@ -62,52 +62,77 @@ func parseBand(slug string) (view.Band, error) {
 	return 0, fmt.Errorf("%q is not a band; the bands are %s", slug, strings.Join(bandNames(), ", "))
 }
 
-// findTask locates one task by id across every repository on the board.
+// findTask locates one task by id.
 //
-// The repository is optional and is a disambiguator rather than a
-// requirement: a model that has just read a row off orbit_list_tasks has the
-// id and nothing else, and making it also supply a path it was never given
-// is how a tool call becomes a guess. It only has to be supplied when two
-// repositories hold a task under the same id.
+// The id is enough, and it is enough now in a way it was not: an id names one
+// task in the whole state root, whatever number of repositories that task is
+// worked in. Two rows under one id is a picture the board can no longer draw,
+// so there is nothing left here to disambiguate.
+//
+// The repository stays as a filter and not as a requirement — a model that
+// has just read a row off orbit_list_tasks has the id and nothing else, and
+// making it also supply a path it was never given is how a tool call becomes
+// a guess. A caller who does name one is asking for the task worked in that
+// repository, and is told so when it is not.
 func findTask(b board.Board, id, repoHint string) (view.Task, error) {
 	if id == "" {
 		return view.Task{}, fmt.Errorf("this tool needs task_id")
 	}
-
-	var matches []view.Task
 
 	for _, t := range b.Tasks {
 		if t.ID != id {
 			continue
 		}
 
-		if repoHint != "" && !sameRepo(t, repoHint) {
+		if repoHint != "" && !sameRepo(b, t, repoHint) {
 			continue
 		}
 
-		matches = append(matches, t)
+		return t, nil
 	}
 
-	switch len(matches) {
-	case 1:
-		return matches[0], nil
-	case 0:
-		return view.Task{}, fmt.Errorf("no task %q on the board%s", id, inRepo(repoHint))
-	default:
-		where := make([]string, 0, len(matches))
-		for _, t := range matches {
-			where = append(where, t.Repo)
-		}
-
-		return view.Task{}, fmt.Errorf("task %q is in %s; say which with repo", id, strings.Join(where, ", "))
-	}
+	return view.Task{}, fmt.Errorf("no task %q on the board%s", id, inRepo(repoHint))
 }
 
-// sameRepo answers whether a hint picks out this task's repository. A hint is
-// either the name the rows carry or the path a caller read off orbit_list_repos,
-// and both are accepted because a model has been shown both.
-func sameRepo(t view.Task, hint string) bool {
-	return strings.EqualFold(t.Repo, hint) || t.RepoPath == hint
+// sameRepo answers whether a hint picks out one of the repositories the task
+// is worked in. A hint is either the name the rows carry or the path a caller
+// read off orbit_list_repos, and both are accepted because a model has been
+// shown both.
+//
+// Every repository the task joined and not only the one it is filed under: a
+// task that was written in payments and worked in ledger is in ledger to
+// anybody who watched it happen, and a tool that answered "no such task"
+// there would be denying its own report.
+func sameRepo(b board.Board, t view.Task, hint string) bool {
+	if t.RepoPath == hint {
+		return true
+	}
+
+	name := repoNamed(b, hint)
+
+	for _, joined := range t.Repos {
+		if strings.EqualFold(joined, name) {
+			return true
+		}
+	}
+
+	return strings.EqualFold(t.Repo, name)
+}
+
+// repoNamed is a hint as a repository name.
+//
+// The rows carry names and a caller may have a path, so the path is turned
+// into the name the board knows it by. A path the board has never heard of
+// is left as it is: it will match nothing, which is the true answer, and it
+// is the caller's own words that come back in the message.
+func repoNamed(b board.Board, hint string) string {
+	for _, r := range b.RepoList {
+		if r.Path == hint {
+			return r.Name
+		}
+	}
+
+	return hint
 }
 
 // inRepo is the trailing clause of a not-found message, and empty when the

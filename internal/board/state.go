@@ -22,8 +22,16 @@ type repoState struct {
 // It is the whole of the polling design: the row the record has been read up
 // to, and the events read so far.
 type taskState struct {
+	// repo is the repository the task is filed under: the first one it
+	// joined that this board can see. It is where the checkout, the diff
+	// and the editor are opened from, and it is one of repos.
 	repo *repoState
-	id   string
+	// repos is every repository the task is worked in, oldest join first,
+	// including any this window is not opened over. What the row says about
+	// where the work went has to be what the record says, not what this
+	// directory happens to hold.
+	repos []RepoInfo
+	id    string
 	// at is the row of the record this task has been read up to, and it is
 	// the one thing a Reader remembers. It is an optimisation rather than a
 	// second copy of the truth: throw the Reader away and the next one

@@ -103,8 +103,12 @@ func fixtureTasks() []view.Task {
 			Flow: "task", Attempt: 1, Since: ago(3 * time.Hour),
 			Reason: view.Reason{Key: view.ReasonAbandoned},
 		},
+		// The one task on this board that reaches past the repository it
+		// was written in. Its row is a row like any other and its column
+		// says so: `app +2`, three checkouts, one task.
 		{
-			Repo: "app", ID: "ACME-2705", Title: "Reconciliation endpoint", Band: view.Running,
+			Repo: "app", Repos: []string{"app", "payments", "api"},
+			ID: "ACME-2705", Title: "Reconciliation endpoint", Band: view.Running,
 			Flow: "careful", Phase: "implement", PhaseN: 1, Engine: "claude", Model: "opus",
 			Live: view.LiveHeld, Attempt: 1, Since: ago(8 * time.Minute), Started: ago(8 * time.Minute),
 		},

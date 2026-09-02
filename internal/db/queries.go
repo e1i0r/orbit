@@ -55,6 +55,14 @@ const (
 	                       JOIN task t ON t.id = tr.task_id
 	                      WHERE t.task_id = ?
 	                      ORDER BY tr.joined_at, r.abs_path`
+
+	selectTasksAndRepos = `SELECT t.task_id, r.abs_path, r.name
+	                         FROM task t
+	                         JOIN task_repo tr ON tr.task_id = t.id
+	                         JOIN repo r ON r.id = tr.repo_id
+	                        WHERE NOT EXISTS (SELECT 1 FROM event e
+	                                           WHERE e.task_id = t.id AND e.kind = ?)
+	                        ORDER BY t.task_id, tr.joined_at, r.abs_path`
 )
 
 // Runs. An attempt is numbered by how many came before it, and it is ended

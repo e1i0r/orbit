@@ -70,7 +70,6 @@ func (r *Reader) Refresh() (Board, Changed, error) {
 		RepoList: repoList,
 		ReadAt:   time.Now(),
 	}
-	b.Errs = append(b.Errs, r.scanErrs...)
 
 	// One query for every task on the board, before the loop rather than
 	// inside it. A record nobody can read is not one task's problem but
@@ -109,13 +108,14 @@ func (r *Reader) Refresh() (Board, Changed, error) {
 			st.events = append(st.events, fresh...)
 			st.task = view.Fold(st.events)
 		}
-		// Where the log was found is the caller's knowledge and not the
-		// log's, so Fold leaves these three empty and they are stamped
-		// here — on every refresh rather than only on a fold, so that a
-		// repository whose name has just become readable reaches the rows
-		// it owns without waiting for their logs to move.
+		// Where the work went is the caller's knowledge and not the log's,
+		// so Fold leaves these four empty and they are stamped here — on
+		// every refresh rather than only on a fold, so that a repository
+		// whose name has just become readable reaches the rows it owns
+		// without waiting for their logs to move.
 		//
 		st.task.ID, st.task.Repo, st.task.RepoPath = st.id, st.repo.name, st.repo.path
+		st.task.Repos = named(st.repos)
 
 		// Live is the one field on the row that does not come from the log,
 		// and cannot: a run killed with SIGKILL writes nothing on its way
@@ -191,6 +191,20 @@ func (r *Reader) Refresh() (Board, Changed, error) {
 	return b, changed, nil
 }
 
+// named is the repositories of a row, by name, in the order they joined.
+//
+// The name and not the path: the path is how the record tells two checkouts
+// of one project apart, and the row has one column to say where the work
+// went in.
+func named(repos []RepoInfo) []string {
+	names := make([]string, 0, len(repos))
+	for _, one := range repos {
+		names = append(names, one.Name)
+	}
+
+	return names
+}
+
 // recordSize is how big the record is on disk, for the panel that says so.
 //
 // One stat of one file, where the number it replaces was the sum of a stat
@@ -258,8 +272,6 @@ func (r *Reader) rescan() error {
 		return fmt.Errorf("look for repositories under %q: %w", r.root, err)
 	}
 
-	var errs []error
-
 	repos := make([]*repoState, 0, len(found))
 	for _, rp := range found {
 		// The name is taken from the walk rather than asked for again.
@@ -275,31 +287,15 @@ func (r *Reader) rescan() error {
 		return cmp.Or(strings.Compare(a.name, b.name), strings.Compare(a.path, b.path))
 	})
 
-	index := make(map[taskKey]*taskState, len(r.index))
-
-	tasks := make([]*taskState, 0, len(r.tasks))
-	for _, rs := range repos {
-		ids, listErr := r.list(rs)
-		if listErr != nil {
-			// The tasks of this one repository are not claimed this time
-			// round. Every other repository still walks.
-			errs = append(errs, listErr)
-			continue
-		}
-
-		for _, id := range ids {
-			st, keep := r.index[taskKey{rs.path, id}]
-			if !keep {
-				st = &taskState{id: id}
-			}
-
-			st.repo = rs
-			index[taskKey{rs.path, id}] = st
-			tasks = append(tasks, st)
-		}
+	// The tasks are asked for once and not once per repository. A task
+	// reaching into four checkouts is four of those answers, and putting
+	// them back together is the whole of what makes it one row.
+	tasks, index, err := r.enumerate(repos)
+	if err != nil {
+		return err
 	}
 
-	r.repos, r.tasks, r.index, r.scanErrs, r.scanned = repos, tasks, index, errs, true
+	r.repos, r.tasks, r.index, r.scanned = repos, tasks, index, true
 
 	return nil
 }
