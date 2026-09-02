@@ -12,6 +12,14 @@ import "strings"
 // orbit_create_task; neither reaches task.Create, which takes the engine
 // from the phase of the flow, so both are gone rather than accepted and
 // dropped.
+//
+// The repo argument on the task tools went the same way. It was there to
+// pick between two rows under one id, and an id names one task now, so what
+// it did was narrow a search that had nothing to narrow: a model that read a
+// row and passed the repository back with it got the same task, and one that
+// passed a different repository got "no such task" for a task that was on
+// the board. It stays on orbit_list_tasks, where it is a filter and means
+// something, and on orbit_create_task, where it says where to write.
 func Tools() []Tool {
 	return append(append(taskTools(), workspaceTools()...), supervisorTools()...)
 }
@@ -30,7 +38,7 @@ func taskTools() []Tool {
 			Description: "Every task on the board, newest state first, optionally narrowed to one band or one repository. Start here: the ids it returns are what every other tool takes.",
 			InputSchema: object(map[string]Property{
 				"band": {Type: "string", Description: "Only tasks in this band.", Enum: bandNames()},
-				"repo": {Type: "string", Description: "Only tasks in this repository, by name or by path."},
+				"repo": {Type: "string", Description: "Only tasks worked in this repository, by name or by path. A task worked in several is matched by any of them."},
 			}),
 		},
 		{
@@ -38,7 +46,6 @@ func taskTools() []Tool {
 			Description: "Everything the cockpit's inspector shows about one task: the text it was written with, the phases it walked and how each ended, its gate checks, the engine's recent thinking, the last error with the tail of what the engine printed, every note left on it, and what has already been done to it from outside a run — the calls other supervisors made and the sessions somebody opened by hand.",
 			InputSchema: object(map[string]Property{
 				"task_id": {Type: "string", Description: "The task's id, as orbit_list_tasks reports it."},
-				"repo":    {Type: "string", Description: "Which repository, when two of them hold a task under this id."},
 			}, "task_id"),
 		},
 		{
@@ -57,7 +64,6 @@ func taskTools() []Tool {
 			Description: "Run a task that is not currently running — one that has never started, or one that failed. A corrective prompt is written into the task's record as a supervisor note before the run begins, so the next attempt and the reason for it are in one history.",
 			InputSchema: object(map[string]Property{
 				"task_id":           {Type: "string", Description: "The task's id."},
-				"repo":              {Type: "string", Description: "Which repository, when two of them hold a task under this id."},
 				"corrective_prompt": {Type: "string", Description: "What to do differently this time. Recorded as a note on the task."},
 				"flow":              {Type: "string", Description: "Walk this flow instead of the one the task was written against."},
 			}, "task_id"),
@@ -68,7 +74,6 @@ func taskTools() []Tool {
 			InputSchema: object(map[string]Property{
 				"task_id": {Type: "string", Description: "The task's id."},
 				"text":    {Type: "string", Description: "What to write down."},
-				"repo":    {Type: "string", Description: "Which repository, when two of them hold a task under this id."},
 			}, "task_id", "text"),
 		},
 		{
@@ -76,7 +81,6 @@ func taskTools() []Tool {
 			Description: "Ask a running task to stop at its next phase boundary. The word is left for the run to read, so it takes effect when the current phase ends and not immediately.",
 			InputSchema: object(map[string]Property{
 				"task_id": {Type: "string", Description: "The task's id."},
-				"repo":    {Type: "string", Description: "Which repository, when two of them hold a task under this id."},
 			}, "task_id"),
 		},
 		{
@@ -84,7 +88,6 @@ func taskTools() []Tool {
 			Description: "Change what a task is doing without losing what it has done. A run in flight is stopped, but its worktree and the engine's session are kept, and the instruction is written into the task's record. With restart, the next attempt begins immediately and reads the instruction as the reason it was started — which is a run, and costs what a run costs.",
 			InputSchema: object(map[string]Property{
 				"task_id": {Type: "string", Description: "The task's id."},
-				"repo":    {Type: "string", Description: "Which repository, when two of them hold a task under this id."},
 				"message": {Type: "string", Description: "The directive or feedback for the task."},
 				"restart": {Type: "boolean", Description: "Whether to immediately start the task again with the directive."},
 			}, "task_id", "message"),
@@ -94,7 +97,6 @@ func taskTools() []Tool {
 			Description: "Stop a run where it stands. The cancellation is written into the task's record.",
 			InputSchema: object(map[string]Property{
 				"task_id": {Type: "string", Description: "The task's id."},
-				"repo":    {Type: "string", Description: "Which repository, when two of them hold a task under this id."},
 			}, "task_id"),
 		},
 		{
@@ -102,7 +104,6 @@ func taskTools() []Tool {
 			Description: "Stop whatever holds a task and put it back in the to do band, to be started again from the beginning. This is for work that was begun wrongly — the wrong brief, the wrong engine, the wrong task — where orbit_cancel_task is for work that is over. What the stopped run spent stays in the record.",
 			InputSchema: object(map[string]Property{
 				"task_id": {Type: "string", Description: "The task's id."},
-				"repo":    {Type: "string", Description: "Which repository, when two of them hold a task under this id."},
 				"why":     {Type: "string", Description: "Why it is being taken back, for the record."},
 			}, "task_id"),
 		},

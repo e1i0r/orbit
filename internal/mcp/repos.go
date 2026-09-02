@@ -162,13 +162,27 @@ func (sn Session) forgetRepo(args map[string]any) CallToolResult {
 		return refuse(err)
 	}
 
-	ids, err := task.List(s, repo.Repo{Path: ref.Path, Name: filepath.Base(ref.Path)})
+	r := repo.Repo{Path: ref.Path, Name: filepath.Base(ref.Path)}
+
+	ids, err := task.List(s, r)
 	if err != nil {
 		return refuse(fmt.Errorf("list the tasks of %q: %w", ref.Path, err))
 	}
 
-	if len(ids) > 0 && !boolArg(args, "delete_tasks") {
-		return refuse(fmt.Errorf("%q holds %d tasks (%s), and forgetting it deletes their whole record — the only account of what those runs did; pass delete_tasks to do it anyway", ref.Path, len(ids), strings.Join(ids, ", ")))
+	going, err := departing(s, ids, ref.Path)
+	if err != nil {
+		return refuse(fmt.Errorf("read the repositories of the tasks in %q: %w", ref.Path, err))
+	}
+
+	// The refusal is about what would be lost, and a task carried on into
+	// another checkout loses nothing: its record stays, and it stays on the
+	// board under the repositories it is still worked in.
+	if len(going.ending) > 0 && !boolArg(args, "delete_tasks") {
+		return refuse(fmt.Errorf("%q holds %d tasks worked nowhere else (%s), and forgetting it deletes their whole record — the only account of what those runs did; pass delete_tasks to do it anyway", ref.Path, len(going.ending), strings.Join(going.ending, ", ")))
+	}
+
+	if err := endTasks(s, r, going.ending); err != nil {
+		return refuse(err)
 	}
 
 	dir, err := s.ForgetRepo(ref.Path)
@@ -179,7 +193,8 @@ func (sn Session) forgetRepo(args map[string]any) CallToolResult {
 	return reply(map[string]any{
 		"path":          ref.Path,
 		"removed":       dir,
-		"tasks_deleted": len(ids),
+		"tasks_deleted": len(going.ending),
+		"tasks_kept":    names(going.kept),
 		"message":       fmt.Sprintf("orbit no longer has a record of %s; the checkout itself and any worktrees under the state root were left where they are", ref.Path),
 	})
 }
@@ -268,6 +283,16 @@ func pathsOf(refs []store.RepoRef) []string {
 
 // repoTally is how one repository's tasks stand, counted the same way the
 // board counts the whole of them.
+//
+// A task counts here if it is worked in this repository, and not only if it
+// is filed under it. A task written in app and carried into payments is in
+// payments to anybody who watched it happen, and the cockpit's own
+// repository list has counted it in both since the board became a list of
+// tasks; a tool that counted only the home checkout would answer a different
+// number than the screen beside it. One task in four repositories is
+// therefore counted four times across four tallies, which is what a
+// per-repository question asks for and is why these numbers do not sum to
+// the board's.
 func repoTally(b board.Board, path string) map[string]any {
 	counts := map[string]int{}
 	for _, band := range view.Bands() {
@@ -278,7 +303,7 @@ func repoTally(b board.Board, path string) map[string]any {
 	tasks, unread, spend := 0, 0, 0.0
 
 	for _, t := range b.Tasks {
-		if t.RepoPath != path {
+		if !sameRepo(b, t, path) {
 			continue
 		}
 
@@ -288,7 +313,7 @@ func repoTally(b board.Board, path string) map[string]any {
 	}
 
 	for _, t := range board.Unreads(b) {
-		if t.RepoPath == path {
+		if sameRepo(b, t, path) {
 			unread++
 		}
 	}

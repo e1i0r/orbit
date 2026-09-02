@@ -117,10 +117,10 @@ func repoTools() []Tool {
 		},
 		{
 			Name:        "orbit_forget_repo",
-			Description: "Remove a repository's record from Orbit. This deletes the history of every task in it — the append-only record is the only account of what those runs did — so it refuses while any task is there unless delete_tasks says otherwise. Worktrees are left alone: they are checkouts git has registered, and `orbit cancel` is what removes one.",
+			Description: "Remove a repository's record from Orbit. A task worked in this repository and nowhere else goes with it — the append-only record is the only account of what those runs did — so it refuses while any such task is there unless delete_tasks says otherwise. A task also worked in another checkout is kept and reported: it goes on under the repositories that are left. Worktrees are left alone: they are checkouts git has registered, and `orbit cancel` is what removes one.",
 			InputSchema: object(map[string]Property{
 				"repo":         {Type: "string", Description: "The repository to forget, by name or by path."},
-				"delete_tasks": {Type: "boolean", Description: "Delete the record of the tasks in it as well. Without this, a repository holding tasks is refused."},
+				"delete_tasks": {Type: "boolean", Description: "Delete the tasks that are worked in it and nowhere else as well. Without this, a repository holding one is refused."},
 			}, "repo"),
 		},
 	}
