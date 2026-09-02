@@ -57,10 +57,10 @@ func TestOpenWithNothingSelectedDoesNothing(t *testing.T) {
 }
 
 func TestConfirmKeyAnswersThePostCliQuestion(t *testing.T) {
-	// 1. Confirming with y opens the compose form, pre-filled with the
-	// repo the CLI session ran in.
+	// 1. Confirming with y opens the compose form, starting in the
+	// checkout the CLI session ran in.
 	m, _ := testModel(t, 100, 30)
-	m.confirm, m.confirmID = confirmPostCliTask, "payments"
+	m.confirm, m.confirmID = confirmPostCliTask, "/checkouts/payments"
 
 	next, cmd := m.confirmKey(press("y"))
 	if cmd != nil {
@@ -68,25 +68,25 @@ func TestConfirmKeyAnswersThePostCliQuestion(t *testing.T) {
 	}
 
 	after := asModel(t, next)
-	if after.screen != screenCompose || after.compose.repo != "payments" {
-		t.Errorf("confirmKey(y) after a CLI session = screen=%v repo=%q, want screenCompose on payments", after.screen, after.compose.repo)
+	if after.screen != screenCompose || after.compose.repoPath != "/checkouts/payments" {
+		t.Errorf("confirmKey(y) after a CLI session = screen=%v repo=%q, want screenCompose on the payments checkout", after.screen, after.compose.repoPath)
 	}
 
-	// 2. The same question with no repo remembered leaves openCompose's own
-	// default alone — the cursor's task, not a forced one — and leaves the
-	// caret on the repo field rather than jumping it to the text field.
+	// 2. The same question with no repository remembered leaves
+	// openCompose's own choice alone — the cursor's task, not a forced one
+	// — and leaves the caret where the form put it, on the flow.
 	m2, _ := testModel(t, 100, 30)
 	m2 = onRow(t, m2, "ACME-2701") // repo "app", distinct from ACME-2705's "payments"
 	m2.confirm, m2.confirmID = confirmPostCliTask, ""
 	next2, _ := m2.confirmKey(press("y"))
 
 	after2 := asModel(t, next2)
-	if after2.screen != screenCompose || after2.compose.repo != "app" {
-		t.Errorf("confirmKey(y) with no repo = screen=%v repo=%q, want screenCompose defaulted to the cursor's own repo, app", after2.screen, after2.compose.repo)
+	if after2.screen != screenCompose || after2.compose.repoPath != "/checkouts/app" {
+		t.Errorf("confirmKey(y) with no repo = screen=%v repo=%q, want screenCompose starting in the cursor's own checkout, app", after2.screen, after2.compose.repoPath)
 	}
 
-	if after2.compose.field != composeRepo {
-		t.Errorf("confirmKey(y) with no repo left the caret on field %v, want composeRepo", after2.compose.field)
+	if after2.compose.field != composeFlow {
+		t.Errorf("confirmKey(y) with no repo left the caret on field %v, want composeFlow", after2.compose.field)
 	}
 
 	// 3. Anything else answers no: the session is simply over.

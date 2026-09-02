@@ -12,11 +12,7 @@ import (
 func (m Model) composeSubmit(startNow bool) (tea.Model, tea.Cmd) {
 	p := m.opts.Words
 
-	repo := strings.TrimSpace(m.compose.repo)
-	if repo == "" && len(m.compose.repos) > 0 {
-		repo = m.compose.repos[m.compose.repoIdx].name
-	}
-
+	path := strings.TrimSpace(m.compose.repoPath)
 	id := strings.TrimSpace(m.compose.id.String())
 	text := strings.TrimSpace(m.compose.text.String())
 
@@ -43,9 +39,9 @@ func (m Model) composeSubmit(startNow bool) (tea.Model, tea.Cmd) {
 	}
 
 	switch {
-	case repo == "":
-		return m.say(p.T("compose.repo_required",
-			"a task has to start somewhere; which repository?")), nil
+	case path == "":
+		return m.say(p.T("compose.no_repo",
+			"orbit knows no repository to start in; open it where there is one")), nil
 	case id == "":
 		return m.say(p.T("compose.id_required",
 			"the id is required; what is this task called?")), nil
@@ -57,23 +53,6 @@ func (m Model) composeSubmit(startNow bool) (tea.Model, tea.Cmd) {
 	if m.opts.ValidID != nil {
 		if err := m.opts.ValidID(id); err != nil {
 			return m.say(err.Error()), nil
-		}
-	}
-
-	path := repo
-	for _, r := range m.compose.repos {
-		if r.name == repo {
-			path = r.path
-			break
-		}
-	}
-
-	if path == repo {
-		for _, t := range m.board.Tasks {
-			if t.Repo == repo {
-				path = t.RepoPath
-				break
-			}
 		}
 	}
 

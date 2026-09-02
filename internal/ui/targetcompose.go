@@ -3,9 +3,9 @@ package ui
 // Where a cell of the compose form is: the fields a task is written into and
 // the rows of pills each one is chosen from.
 //
-// It is its own file because the form is its own screen — five fields and
-// two pill rows — and reading the task view's hit test should not mean
-// reading past all of it.
+// It is its own file because the form is its own screen — three fields and
+// the row of flows they are written against — and reading the task view's
+// hit test should not mean reading past all of it.
 
 import "charm.land/lipgloss/v2"
 
@@ -27,8 +27,6 @@ func (m Model) hitCompose(x, y int) Target {
 
 	if m.compose.tab == composeTabManual {
 		switch {
-		case line == plan.repo:
-			return m.hitComposeRepoPills(x, composeRepo)
 		case line == plan.flow:
 			return m.hitComposeFlowPills(x, composeFlow)
 		case plan.flowSum != -1 && line >= plan.flowSum && line < plan.flowSum+plan.flowRows:
@@ -54,8 +52,6 @@ func (m Model) hitCompose(x, y int) Target {
 			}
 
 			return caretAt(composeURL, 0, x-composeLabelStart)
-		case line == plan.repo:
-			return m.hitComposeRepoPills(x, composeURLRepo)
 		case line == plan.flow:
 			return m.hitComposeFlowPills(x, composeURLFlow)
 		case plan.flowSum != -1 && line >= plan.flowSum && line < plan.flowSum+plan.flowRows:
@@ -66,21 +62,6 @@ func (m Model) hitCompose(x, y int) Target {
 	}
 
 	return Target{}
-}
-
-func (m Model) hitComposeRepoPills(x int, field int) Target {
-	curX := composeLabelStart
-
-	for i, r := range m.compose.repos {
-		pillWidth := composePillWidth(r.name, i == m.compose.repoIdx)
-		if x >= curX && x < curX+pillWidth {
-			return Target{Kind: TargetComposeRepoChoice, Pane: i}
-		}
-
-		curX += pillWidth + 1
-	}
-
-	return Target{Kind: TargetComposeField, Pane: field}
 }
 
 func (m Model) hitComposeFlowPills(x int, field int) Target {

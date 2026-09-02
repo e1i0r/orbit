@@ -10,7 +10,6 @@ import (
 type composePlan struct {
 	tabLine    int
 	url        int // for URL tab
-	repo       int
 	flow       int
 	flowSum    int // first row of the flow detail, -1 when there is none
 	flowRows   int // how many rows that detail takes
@@ -29,10 +28,9 @@ func (m Model) composeLayout() composePlan {
 	p.flowRows = len(detail)
 
 	if m.compose.tab == composeTabManual {
-		p.repo = 2
-		p.flow = 3
+		p.flow = 2
 
-		cur := 4
+		cur := 3
 		if hasSum {
 			p.flowSum = cur
 			cur += p.flowRows
@@ -46,10 +44,9 @@ func (m Model) composeLayout() composePlan {
 		p.actions = p.textBoxBot + 2
 	} else {
 		p.url = 2
-		p.repo = 3
-		p.flow = 4
+		p.flow = 3
 
-		cur := 5
+		cur := 4
 		if hasSum {
 			p.flowSum = cur
 			cur += p.flowRows

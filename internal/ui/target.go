@@ -30,7 +30,6 @@ const (
 	TargetComposeField
 	TargetComposeCaret
 	TargetComposeTab
-	TargetComposeRepoChoice
 	TargetComposeFlowChoice
 	TargetComposeNewFlow
 	TargetComposeInspectFlow

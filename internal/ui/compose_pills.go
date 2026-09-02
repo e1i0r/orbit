@@ -22,46 +22,6 @@ func composeLabel(label string, active bool) string {
 	return mark + Paint(Dim).Render(padded) + " "
 }
 
-func (m Model) composeRepoLine(active bool, w int) string {
-	p := m.opts.Words
-	prefix := composeLabel(p.T("compose.repo", "starts in"), active)
-
-	if len(m.compose.repos) == 0 {
-		val := m.compose.repo
-		role := Accent
-
-		if val == "" {
-			val = p.T("compose.repo_placeholder", "start in which repository?")
-			role = Dim
-		}
-
-		line := prefix + Paint(role).Render(val)
-		if active {
-			line += Paint(Sel).Render(" ")
-		}
-
-		return fit(line, w)
-	}
-
-	var pills []string
-
-	for i, r := range m.compose.repos {
-		selected := i == m.compose.repoIdx
-		if selected {
-			pills = append(pills, Pill(" ● "+r.name+" ", "#000000", "#38BDF8"))
-		} else {
-			pills = append(pills, Pill(" "+r.name+" ", "#94A3B8", "#1E293B"))
-		}
-	}
-
-	line := prefix + strings.Join(pills, " ")
-	if active {
-		line += " " + Paint(Dim).Render(p.T("compose.repo_hint", "(←/→ to cycle)"))
-	}
-
-	return fit(line, w)
-}
-
 func (m Model) composeFlowLine(active bool, w int) string {
 	p := m.opts.Words
 	prefix := composeLabel(p.T("compose.flow", "flow"), active)

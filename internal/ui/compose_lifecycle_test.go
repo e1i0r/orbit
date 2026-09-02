@@ -11,7 +11,7 @@ import (
 func TestComposeScreenFullLifecycle(t *testing.T) {
 	m, _ := testModel(t, 120, 30)
 	m.board.Tasks = []view.Task{
-		{ID: "PAY-1", Repo: "payments"},
+		{ID: "PAY-1", Repo: "payments", RepoPath: "/checkouts/payments"},
 	}
 
 	m = m.openCompose()
@@ -75,10 +75,9 @@ func TestComposeScreenFullLifecycle(t *testing.T) {
 
 	// Validation errors on empty fields
 	mEmpty := m.openCompose()
-	mEmpty.compose.repo = ""
-	mEmpty.compose.repos = nil
+	mEmpty.compose.repoPath = ""
 	_, _ = mEmpty.composeSubmit(false)
-	mEmpty.compose.repo = "repo"
+	mEmpty.compose.repoPath = "/checkouts/payments"
 	mEmpty.compose.id = newInput("")
 	_, _ = mEmpty.composeSubmit(false)
 	mEmpty.compose.id = newInput("TASK-1")
@@ -89,12 +88,12 @@ func TestComposeScreenFullLifecycle(t *testing.T) {
 func TestComposeKeyTabAndOpen(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.board.Tasks = []view.Task{
-		{ID: "ACME-1", Repo: "app"},
+		{ID: "ACME-1", Repo: "app", RepoPath: "/checkouts/app"},
 	}
 	m = m.openCompose()
 
 	// Switching between tabs: [1] Manual, [2] URL
-	m.compose.field = composeRepo
+	m.compose.field = composeFlow
 
 	m = asModel(t, mustUpdate(m, press("2")))
 	if m.compose.tab != composeTabURL {
@@ -156,10 +155,6 @@ func TestComposePillsCycle(t *testing.T) {
 	}
 	m = m.openCompose()
 
-	// 1. Repo cycle with left/right
-	m.compose.field = composeRepo
-	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyRight}))
-	// 2. Flow cycle
 	m.compose.field = composeFlow
 	oldFlow := m.compose.chosenFlow()
 
@@ -172,7 +167,7 @@ func TestComposePillsCycle(t *testing.T) {
 func TestComposeSubmitValidID(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m = m.openCompose()
-	m.compose.repo = "repo"
+	m.compose.repoPath = "/checkouts/repo"
 	m.compose.id = newInput("TASK-10")
 	m.compose.text = newInput("Write some tests")
 
@@ -203,32 +198,31 @@ func TestComposeUpDownAndMouseClicks(t *testing.T) {
 
 	// 1. Arrow down moves between fields
 	m = asModel(t, mustUpdate(m, press("down")))
-	if m.compose.field != composeFlow {
-		t.Fatalf("field after down arrow = %d, want composeFlow", m.compose.field)
+	if m.compose.field != composeID {
+		t.Fatalf("field after down arrow = %d, want composeID", m.compose.field)
 	}
 
 	m = asModel(t, mustUpdate(m, press("down")))
-	if m.compose.field != composeID {
-		t.Fatalf("field after second down arrow = %d, want composeID", m.compose.field)
+	if m.compose.field != composeText {
+		t.Fatalf("field after second down arrow = %d, want composeText", m.compose.field)
 	}
 
 	// 2. Arrow up moves back up
 	m = asModel(t, mustUpdate(m, press("up")))
-	if m.compose.field != composeFlow {
-		t.Fatalf("field after up arrow = %d, want composeFlow", m.compose.field)
+	if m.compose.field != composeID {
+		t.Fatalf("field after up arrow = %d, want composeID", m.compose.field)
 	}
 
 	m = asModel(t, mustUpdate(m, press("up")))
-	if m.compose.field != composeRepo {
-		t.Fatalf("field after second up arrow = %d, want composeRepo", m.compose.field)
+	if m.compose.field != composeFlow {
+		t.Fatalf("field after second up arrow = %d, want composeFlow", m.compose.field)
 	}
 
 	// 3. Mouse clicks directly focus fields
 	extra := len(m.flowDetail(m.compose.chosenFlow(), m.width))
 
-	yRepo := m.frame.Body.Y + 2
-	yFlow := m.frame.Body.Y + 3
-	yID := m.frame.Body.Y + 4 + extra
+	yFlow := m.frame.Body.Y + 2
+	yID := m.frame.Body.Y + 3 + extra
 
 	clickField := func(y int) {
 		res, _ := m.mouse(tea.MouseClickMsg{X: 10, Y: y, Button: tea.MouseLeft})
@@ -248,12 +242,44 @@ func TestComposeUpDownAndMouseClicks(t *testing.T) {
 	if m.compose.field != composeFlow {
 		t.Errorf("field after click on Flow = %d, want composeFlow", m.compose.field)
 	}
+}
 
-	clickField(yRepo)
+// TestTheFormPicksWhereTheTaskStartsAndDoesNotAsk. The repository was the
+// first field on this screen. What replaced it is not a smaller field or a
+// better default — it is nothing at all, and this is the whole of what the
+// form does instead.
+func TestTheFormPicksWhereTheTaskStartsAndDoesNotAsk(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
 
-	if m.compose.field != composeRepo {
-		t.Errorf("field after click on Repo = %d, want composeRepo", m.compose.field)
+	// The task the cursor is on, because a reader writing a task while
+	// looking at another one is usually writing about the same code.
+	m = onRow(t, m, "ACME-2701")
+	if got := m.openCompose().compose.repoPath; got != "/checkouts/app" {
+		t.Errorf("the form starts in %q, want the checkout of the task the cursor was on", got)
 	}
+
+	// A checkout Orbit has never listed, which can only name itself by
+	// where it is: the session a reader opened by hand somewhere else.
+	if got := m.startsIn("/elsewhere/ledger"); got != "/elsewhere/ledger" {
+		t.Errorf("a checkout named by path resolved to %q, want the path itself", got)
+	}
+
+	// Nothing preferred and nothing to prefer: the first one Orbit knows.
+	if got := m.startsIn(""); got == "" {
+		t.Error("the form found nowhere to start on a board with four repositories")
+	}
+
+	// And a board with none is the one case the form still has to say
+	// something about, because there is nothing for it to pick.
+	empty, _ := testModel(t, 100, 30)
+	empty.board = fixtureBoard(nil, 0)
+
+	if got := empty.startsIn("payments"); got != "" {
+		t.Errorf("a board with no repositories offered %q to start in", got)
+	}
+
+	said, _ := empty.openCompose().composeSubmit(false)
+	wantBand(t, asModel(t, said), "knows no repository")
 }
 
 func mustUpdate(m Model, msg tea.Msg) tea.Model {
