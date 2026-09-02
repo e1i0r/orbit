@@ -56,25 +56,50 @@ func (m Model) collectRepos() []repoItem {
 		}
 	}
 
+	// A task counts in every repository it was worked in. This screen is a
+	// list of repositories and not of tasks, so a task that reached into
+	// three of them is three repositories with work going on in them — the
+	// one place in the window where counting the pairs is the true answer.
 	for _, t := range m.board.Tasks {
-		idx, ok := seen[strings.ToLower(t.Repo)]
-		if !ok {
-			idx = len(list)
-			seen[strings.ToLower(t.Repo)] = idx
-			list = append(list, repoItem{
-				name: t.Repo,
-				path: t.RepoPath,
-			})
-		}
+		for _, name := range worked(t) {
+			idx, ok := seen[strings.ToLower(name)]
+			if !ok {
+				idx = len(list)
+				seen[strings.ToLower(name)] = idx
+				list = append(list, repoItem{name: name, path: pathOf(t, name)})
+			}
 
-		band := view.BandOf(t)
-		if band >= 0 && int(band) < len(list[idx].counts) {
-			list[idx].counts[band]++
-			list[idx].total++
+			band := view.BandOf(t)
+			if band >= 0 && int(band) < len(list[idx].counts) {
+				list[idx].counts[band]++
+				list[idx].total++
+			}
 		}
 	}
 
 	return list
+}
+
+// worked is the repositories of one row, and the single name a row carries
+// when it carries no list.
+func worked(t view.Task) []string {
+	if len(t.Repos) > 0 {
+		return t.Repos
+	}
+
+	return []string{t.Repo}
+}
+
+// pathOf is where a repository of a task is, which is known only for the one
+// the task is filed under: the row carries the others by name. A repository
+// the board walked has its path in RepoList already, and this answer is only
+// reached by one it did not.
+func pathOf(t view.Task, name string) string {
+	if strings.EqualFold(name, t.Repo) {
+		return t.RepoPath
+	}
+
+	return ""
 }
 
 func (m Model) repolistKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {

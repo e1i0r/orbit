@@ -189,3 +189,18 @@ func startedEvent() record.Event {
 func failedEvent() record.Event { return record.Event{At: at(2), Kind: "task.failed"} }
 
 func finishedEvent() record.Event { return record.Event{At: at(3), Kind: "task.finished"} }
+
+// joinTo works a task in one more repository, which is what `orbit join`
+// records when a phase reaches into a second checkout.
+func joinTo(t *testing.T, s *store.Store, id, repoPath string) {
+	t.Helper()
+
+	d, err := s.Record()
+	if err != nil {
+		t.Fatalf("open the record: %v", err)
+	}
+
+	if err := d.Join(id, repoPath, filepath.Base(repoPath), time.Now()); err != nil {
+		t.Fatalf("join task %s to %s: %v", id, repoPath, err)
+	}
+}

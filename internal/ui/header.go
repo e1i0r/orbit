@@ -230,7 +230,14 @@ func (m Model) headerFields() []headerField {
 		fields = append(fields, headerField{text: Pill(" ✨ "+notice+" ", inkUpgrade.fg, inkUpgrade.bg)})
 	}
 
-	// Repos chip
+	// Repos chip.
+	//
+	// The one number here that is not a count of tasks, and the reason the
+	// band counts beside it can be read as tasks at all: they count rows,
+	// and a row is a task however many of these it reaches into. A chip
+	// saying how many tasks there are was tried here and taken out again —
+	// it cost the band counts their place at a hundred cells, to repeat a
+	// number the status line already gives and the bands already add up to.
 	reposText := p.P("header.repos", m.board.Repos, "{n} repo", "{n} repos")
 	fields = append(fields, headerField{"repos", Chrome().Render("📦 " + reposText)})
 

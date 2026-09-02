@@ -245,3 +245,54 @@ func TestTheLinkOfAClosedRecordFails(t *testing.T) {
 		t.Error("joining a repository in a closed record answered cleanly")
 	}
 }
+
+// TestEveryTaskAndTheRepositoriesItIsWorkedIn is the question asked from the
+// task's end: one answer per pair, ordered so that a reader can put the
+// pairs back together into one row per task without sorting them again.
+func TestEveryTaskAndTheRepositoriesItIsWorkedIn(t *testing.T) {
+	d := open(t)
+
+	wrote(t, d, "ACME-2", "app", "/w/app")
+	wrote(t, d, "ACME-1", "app", "/w/app")
+
+	joining := record.Event{Kind: record.RepoJoined, Data: map[string]string{"repo": "api", "path": "/w/api"}}
+	if err := d.Append("ACME-1", joining); err != nil {
+		t.Fatalf("join the second checkout: %v", err)
+	}
+
+	got, err := d.TasksAndRepos()
+	if err != nil {
+		t.Fatalf("the tasks and their repositories: %v", err)
+	}
+
+	want := []Worked{
+		{Task: "ACME-1", Path: "/w/app", Name: "app"},
+		{Task: "ACME-1", Path: "/w/api", Name: "api"},
+		{Task: "ACME-2", Path: "/w/app", Name: "app"},
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("the record holds %v, want %v: by id, and then oldest join first", got, want)
+	}
+}
+
+// TestADeletedTaskIsNoRepositorysTask. Deleting is an event rather than a row
+// removed, and this enumeration is the board's, so a task left in would be a
+// row nobody can act on drawn on every window that is open.
+func TestADeletedTaskIsNoRepositorysTask(t *testing.T) {
+	d := open(t)
+
+	wrote(t, d, "ACME-1", "app", "/w/app")
+
+	if err := d.Append("ACME-1", record.Event{Kind: record.TaskDeleted}); err != nil {
+		t.Fatalf("delete the task: %v", err)
+	}
+
+	got, err := d.TasksAndRepos()
+	if err != nil {
+		t.Fatalf("the tasks and their repositories: %v", err)
+	}
+
+	if len(got) != 0 {
+		t.Errorf("a deleted task is still worked in %v", got)
+	}
+}

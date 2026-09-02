@@ -156,7 +156,7 @@ func (sn Session) listTasks(args map[string]any) CallToolResult {
 			continue
 		}
 
-		if repoFilter != "" && !sameRepo(t, repoFilter) {
+		if repoFilter != "" && !sameRepo(sb.board, t, repoFilter) {
 			continue
 		}
 

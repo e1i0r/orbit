@@ -16,12 +16,16 @@ import (
 func TestCollectReposFromRepoListAndFromTasks(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 
-	// 1. A board with an explicit RepoList: names and paths come from it.
+	// 1. A board with an explicit RepoList: names and paths come from it,
+	// and a repository the window was not opened over is still listed when a
+	// task on the board is worked in it — the fixture's ACME-2705 reaches
+	// into api, and a screen that left it out would be a list of
+	// repositories missing one that work is going on in.
 	m.board.RepoList = []board.RepoInfo{{Name: "payments", Path: "/r/payments"}, {Name: "app", Path: "/r/app"}}
 
 	repos := m.collectRepos()
-	if len(repos) != 2 {
-		t.Fatalf("collectRepos with a RepoList = %d entries, want 2", len(repos))
+	if len(repos) != 3 {
+		t.Fatalf("collectRepos with a RepoList = %d entries, want the 2 listed and the one a task reaches into", len(repos))
 	}
 
 	var total int

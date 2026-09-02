@@ -5,7 +5,10 @@ package board
 // Rescan are the loops; these are what they call.
 
 import (
+	"cmp"
 	"fmt"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/e1i0r/orbit/internal/record"
@@ -88,25 +91,106 @@ func (r *Reader) history(st *taskState) ([]record.Event, error) {
 	return events, nil
 }
 
-// list is every task of one repository, sorted by id, which is the order
-// they are listed in everywhere else.
+// enumerate is every task this board holds, with the state each one carries
+// between refreshes.
 //
-// One query rather than a directory listing and a file opened per task in
-// it. That is the last of the per-task reads a refresh used to do: the
-// events arrive in one statement above, and which tasks there are to ask
-// about arrives in this one.
-func (r *Reader) list(rs *repoState) ([]string, error) {
+// One query, asked from the task's end rather than the repository's. A task
+// worked in four checkouts comes back as four rows and leaves here as one
+// state naming four repositories: asked the other way round it would be four
+// tasks with the same id, which is how a band came to count pairs.
+//
+// The index is keyed by the id alone. Ids are the state root's to give out
+// now and are unique across it, so a task is one thing whatever number of
+// repositories it reaches into.
+func (r *Reader) enumerate(repos []*repoState) ([]*taskState, map[string]*taskState, error) {
 	d, err := r.store.Record()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	ids, err := d.TasksOfRepo(rs.path)
+	worked, err := d.TasksAndRepos()
 	if err != nil {
-		return ids, fmt.Errorf("the tasks of %q: %w", rs.name, err)
+		return nil, nil, fmt.Errorf("the tasks under %q: %w", r.root, err)
 	}
 
-	return ids, nil
+	under := make(map[string]*repoState, len(repos))
+	for _, rs := range repos {
+		under[rs.path] = rs
+	}
+
+	found := make([]*taskState, 0, len(r.tasks))
+	index := make(map[string]*taskState, len(r.index))
+
+	for _, w := range worked {
+		st, held := index[w.Task]
+		if !held {
+			st = r.carried(w.Task)
+			index[w.Task] = st
+			found = append(found, st)
+		}
+
+		st.repos = append(st.repos, RepoInfo{Name: w.Name, Path: w.Path})
+		// Filed under the first repository it joined that this board can
+		// see, which is where its checkout and its diff are opened from.
+		// The rest are on the row and nowhere else.
+		if st.repo == nil {
+			st.repo = under[w.Path]
+		}
+	}
+
+	return onTheBoard(found, index), index, nil
+}
+
+// carried is what the previous enumeration remembered about a task, emptied
+// of the repositories it named then.
+//
+// Everything else is kept — the offset above all, so a rescan costs no
+// re-reading. The repositories are not, because a task that has joined one
+// since would otherwise name it twice.
+func (r *Reader) carried(id string) *taskState {
+	st, kept := r.index[id]
+	if !kept {
+		return &taskState{id: id}
+	}
+
+	st.repo, st.repos = nil, nil
+
+	return st
+}
+
+// onTheBoard drops the tasks this window is not of and puts the rest in the
+// order they are drawn.
+//
+// A task none of whose repositories is under the root is not on this board.
+// The walk that asked each repository what it held said that by never
+// asking; asked from the task's end it has to be said out loud, and a task
+// dropped here is dropped from the index with it so that nothing reaches it
+// by id either.
+//
+// The order is the repository the task is filed under and then the id, which
+// is the order the rows have always been in: predictable, and stable across
+// refreshes so that a cursor resting on a row stays on that row.
+func onTheBoard(found []*taskState, index map[string]*taskState) []*taskState {
+	tasks := make([]*taskState, 0, len(found))
+
+	for _, st := range found {
+		if st.repo == nil {
+			delete(index, st.id)
+			continue
+		}
+
+		tasks = append(tasks, st)
+	}
+
+	slices.SortFunc(tasks, func(a, b *taskState) int {
+		return cmp.Or(
+			strings.Compare(a.repo.name, b.repo.name),
+			strings.Compare(a.repo.path, b.repo.path),
+			strings.Compare(a.id, b.id),
+		)
+	})
+
+	return tasks
 }
 
 // arrivals is what one task gained this refresh: its whole history if this

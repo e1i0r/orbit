@@ -220,23 +220,17 @@ type Reader struct {
 	mu sync.Mutex
 
 	repos []*repoState
-	tasks []*taskState           // in the order Board.Tasks draws them
-	index map[taskKey]*taskState // the same states, to carry their place across a rescan
+	tasks []*taskState          // in the order Board.Tasks draws them
+	index map[string]*taskState // the same states by id, to carry their place across a rescan
 	// at is the row of the record every task on the board has been read up
 	// to. It is what makes a refresh one query: everything written after it,
 	// for all of them at once.
-	at       int64
-	scanErrs []error // what the last enumeration could not do
-	scanned  bool    // an enumeration has completed
+	at      int64
+	scanned bool // an enumeration has completed
 	// baseline says a Refresh has completed, and it is the whole of the
 	// first-refresh-rings-no-bell rule.
 	baseline bool
 }
-
-// taskKey is how a task is identified between enumerations. It is the
-// repository's path and the id together, because an id is unique inside one
-// repository and nowhere else.
-type taskKey struct{ repoPath, id string }
 
 // NewReader makes a reader of one directory, folded against one state root.
 // It touches no disk until it is asked to.
@@ -252,6 +246,6 @@ func NewReader(s *store.Store, root string) *Reader {
 	return &Reader{
 		store: s,
 		root:  root,
-		index: make(map[taskKey]*taskState),
+		index: make(map[string]*taskState),
 	}
 }

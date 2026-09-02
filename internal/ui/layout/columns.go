@@ -177,8 +177,8 @@ func widest(tasks []view.Task, field func(view.Task) string) int {
 	return cells
 }
 
-// repoColumn is the width of the repository column, and zero when the board
-// holds fewer than two repositories.
+// repoColumn is the width of the repository column, and zero when every row
+// of the board would say the same thing in it.
 //
 // A column with one value in it is not information — it is the same word
 // written once per row, taking cells from the title, which is the field that
@@ -186,17 +186,23 @@ func widest(tasks []view.Task, field func(view.Task) string) int {
 // this decision at all: it was a one-repository tool with a repository
 // column bolted on, so the column was always there and always said the same
 // thing.
+//
+// It is the short form that is measured, and the short form that decides
+// whether two rows differ. The long one is what a row draws when there is
+// room left over, and sizing the column by it would take those cells from
+// the title every time, which is the opposite of what having room means.
 func repoColumn(tasks []view.Task) int {
 	seen := map[string]bool{}
 	cells := 0
 
 	for _, t := range tasks {
-		if t.Repo == "" {
+		short := repoShort(t)
+		if short == "" {
 			continue
 		}
 
-		seen[t.Repo] = true
-		cells = max(cells, lipgloss.Width(t.Repo))
+		seen[short] = true
+		cells = max(cells, lipgloss.Width(short))
 	}
 
 	if len(seen) < 2 {

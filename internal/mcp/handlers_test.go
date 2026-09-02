@@ -189,27 +189,40 @@ func TestATaskIsFoundByIdAloneAcrossRepositories(t *testing.T) {
 	}
 }
 
-// TestAnAmbiguousIdIsRefusedWithTheRepositoriesThatHoldIt: acting on
-// whichever one came first would be acting on a task the caller did not name.
-func TestAnAmbiguousIdIsRefusedWithTheRepositoriesThatHoldIt(t *testing.T) {
+// TestAnIdWorkedInTwoRepositoriesIsStillOneTask. An id names one task in the
+// whole state root now, so a task that reaches into a second checkout is not
+// two tasks a tool has to choose between: it is one, and naming either of its
+// repositories names it.
+//
+// The refusal this replaces was the pair identity's: two rows under one id
+// were two tasks, and acting on whichever came first would have been acting
+// on a task the caller did not name. There is one row.
+func TestAnIdWorkedInTwoRepositoriesIsStillOneTask(t *testing.T) {
 	s, work := newRoot(t)
 	payments := gitRepo(t, work, "payments")
 	ledger := gitRepo(t, work, "ledger")
 	sn := Session{Root: work, Version: "test"}
 
 	addTask(t, s, payments, "SHARED-1", record.Event{At: at(1), Kind: record.TaskCreated, Text: "one"})
-	addTask(t, s, ledger, "SHARED-1", record.Event{At: at(1), Kind: record.TaskCreated, Text: "two"})
+	addTask(t, s, ledger, "SHARED-1")
 
-	said := refused(t, sn, "orbit_add_note", map[string]any{"task_id": "SHARED-1", "text": "which one?"})
-	for _, name := range []string{"payments", "ledger"} {
-		if !strings.Contains(said, name) {
-			t.Errorf("the refusal does not name %q: %s", name, said)
+	noted := sn.Call("orbit_add_note", map[string]any{"task_id": "SHARED-1", "text": "one task"})
+	if noted.IsError {
+		t.Errorf("a note on a task worked in two repositories was refused: %s", text(t, noted))
+	}
+
+	// Either repository names it: the one it was written in, and the one the
+	// work went on into, by name and by the path orbit_list_repos hands out.
+	for _, hint := range []string{"payments", "ledger", ledger.Path} {
+		got := call(t, sn, "orbit_inspect_task", map[string]any{"task_id": "SHARED-1", "repo": hint})
+		if got["id"] != "SHARED-1" {
+			t.Errorf("naming %q found %v, want SHARED-1", hint, got["id"])
 		}
 	}
 
-	got := call(t, sn, "orbit_inspect_task", map[string]any{"task_id": "SHARED-1", "repo": "ledger"})
-	if got["repo"] != "ledger" {
-		t.Errorf("the disambiguated call answered %v, want ledger", got["repo"])
+	elsewhere := refused(t, sn, "orbit_inspect_task", map[string]any{"task_id": "SHARED-1", "repo": "billing"})
+	if !strings.Contains(elsewhere, "billing") {
+		t.Errorf("a repository the task was never worked in was accepted: %s", elsewhere)
 	}
 }
 
