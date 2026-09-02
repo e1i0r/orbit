@@ -50,7 +50,12 @@ func (m Model) costLines() []string {
 			continue
 		}
 
-		if e.What() == view.EntryFinished || e.What() == view.EntryFailed || e.What() == view.EntryCancelled {
+		// EntryRetried is a row like the others: an attempt a gate refused
+		// ran, and was paid for. Left out, this table stops adding up to
+		// the total above it, and what it hides is the spend a reader most
+		// wants — what the run cost getting it wrong.
+		if e.What() == view.EntryFinished || e.What() == view.EntryFailed ||
+			e.What() == view.EntryCancelled || e.What() == view.EntryRetried {
 			if e.Cost > 0 || e.Phase != "" {
 				eng := started.Engine
 				if eng == "" {

@@ -31,10 +31,16 @@ var (
 		record.TaskStuck:     true,
 	}
 
+	// closesPhase includes phase.retried because an attempt that a gate
+	// refused is a phase that ended: the next attempt opens a row of its
+	// own. Left open, the row would be closed by whatever ended the run —
+	// so a task that went on to finish would carry attempts reading
+	// "task.finished", stamped at a time none of them ran.
 	closesPhase = map[string]bool{
 		record.PhaseFinished:  true,
 		record.PhaseFailed:    true,
 		record.PhaseCancelled: true,
+		record.PhaseRetried:   true,
 	}
 )
 

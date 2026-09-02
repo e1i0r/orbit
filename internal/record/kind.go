@@ -58,9 +58,20 @@ const (
 	PhaseCancelled = "phase.cancelled" // the phase was stopped from outside; Text is what it printed first
 	PhaseWaiting   = "phase.waiting"   // stopped at a gate; Data["why"] says whose gate
 	PhaseResumed   = "phase.resumed"   // let go again
-	PhaseThought   = "phase.thought"   // a thinking block from the engine stream
-	PhaseToolCall  = "phase.tool_call" // a tool call invoked by the engine (Bash, Edit, Read, etc.)
-	PhaseRefused   = "phase.refused"   // a tool call the engine was denied by permissions
+	// PhaseRetried is the seam between one attempt at a phase and the next:
+	// the gate refused the work and the flow allows another run of the same
+	// phase. Data["gate"] is the gate that refused, Data["exit"] what it
+	// returned, Data["attempt"] which attempt has just ended and
+	// Data["attempts"] how many the flow allows, so a reader can see how
+	// much rope is left without counting the events themselves.
+	//
+	// It is written between the two attempts rather than at the end of the
+	// phase because a reader watching a run needs to know it is going round
+	// again while it is going round, not once it stops.
+	PhaseRetried  = "phase.retried"
+	PhaseThought  = "phase.thought"   // a thinking block from the engine stream
+	PhaseToolCall = "phase.tool_call" // a tool call invoked by the engine (Bash, Edit, Read, etc.)
+	PhaseRefused  = "phase.refused"   // a tool call the engine was denied by permissions
 
 	GatePassed = "gate.passed" // a phase gate verification check passed
 	GateFailed = "gate.failed" // a phase gate verification check failed

@@ -48,7 +48,7 @@ func TestRunGatesPassingGateWithOversizedOutputReportsBytes(t *testing.T) {
 			{Name: "big", Command: "dd if=/dev/zero bs=1048576 count=2 2>/dev/null | tr '\\0' 'A'"},
 		},
 	}
-	if err := runGates(context.Background(), s, tk, p, 1, wt, engine.Result{}); err != nil {
+	if _, err := runGates(context.Background(), s, tk, p, 1, wt, engine.Result{}); err != nil {
 		t.Fatalf("runGates: %v", err)
 	}
 
@@ -86,7 +86,7 @@ func TestRunGatesPassedEmitFailure(t *testing.T) {
 		Name:  "test",
 		Gates: []flow.Gate{{Name: "ok", Command: "true"}},
 	}
-	if err := runGates(context.Background(), s, bad, p, 1, wt, engine.Result{}); err == nil {
+	if _, err := runGates(context.Background(), s, bad, p, 1, wt, engine.Result{}); err == nil {
 		t.Error("runGates should have failed to record GatePassed for a bad task id")
 	}
 }

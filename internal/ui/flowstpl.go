@@ -102,6 +102,7 @@ func (m Model) saveCustomFlow() (Model, tea.Cmd) {
 	fl := flow.Flow{
 		Name:        name,
 		Description: strings.TrimSpace(st.description),
+		Attempts:    st.attempts,
 		Phases:      st.phases,
 	}
 
@@ -163,6 +164,7 @@ func (m Model) editFlow(name string) (Model, tea.Cmd) {
 	m.flows.flowName = fl.Name
 	m.flows.description = fl.Description
 	m.flows.phases = fl.Phases
+	m.flows.attempts = fl.Attempts
 	m.flows.activePhase = 0
 	m.flows.ensurePhase()
 	p := m.opts.Words

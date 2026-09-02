@@ -153,6 +153,14 @@ func flowDocument(s flowSource, name string, args map[string]any) (map[string]an
 		doc["description"] = description
 	}
 
+	// Left out entirely when nobody said, rather than written as the
+	// default: a flow file that carries "attempts": 3 has decided
+	// something, and a caller who did not mention attempts has not. The two
+	// read the same until the default changes.
+	if n := intArg(args, "attempts"); n != 0 {
+		doc["attempts"] = n
+	}
+
 	if phases, ok := args["phases"]; ok && phases != nil {
 		doc["phases"] = phases
 		return doc, nil

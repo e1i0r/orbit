@@ -112,6 +112,7 @@ const (
 	EntryRead                        // somebody has looked at it
 	EntryWaiting                     // it stopped at a gate
 	EntryResumed                     // it was let go again
+	EntryRetried                     // its gate refused it and the phase is being run again
 	EntryGatePassed                  // verification gate passed
 	EntryGateFailed                  // verification gate failed
 	EntryThought                     // thinking block
@@ -158,6 +159,8 @@ func (e Entry) What() EntryKind {
 		return EntryWaiting
 	case record.PhaseResumed:
 		return EntryResumed
+	case record.PhaseRetried:
+		return EntryRetried
 	case record.GatePassed:
 		return EntryGatePassed
 	case record.GateFailed:

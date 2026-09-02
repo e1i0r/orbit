@@ -191,6 +191,8 @@ func (m Model) logWord(e view.Entry) (string, Role) {
 		return p.T("log.waiting", "waiting"), Warn
 	case view.EntryResumed:
 		return p.T("log.resumed", "let go again"), Accent
+	case view.EntryRetried:
+		return p.T("log.retried", "trying again"), Warn
 	case view.EntryGatePassed:
 		return p.T("log.gate_passed", "gate passed"), OK
 	case view.EntryGateFailed:
@@ -233,7 +235,7 @@ func (m Model) logDetail(e view.Entry) string {
 		return e.Tool
 	case view.EntryRefused:
 		return e.Tool + ": " + firstLine(e.Text)
-	case view.EntryGatePassed, view.EntryGateFailed:
+	case view.EntryGatePassed, view.EntryGateFailed, view.EntryRetried:
 		if e.Gate != "" {
 			return e.Gate
 		}

@@ -923,6 +923,10 @@
       "source": "let go again",
       "value": "reanudada"
     },
+    "log.retried": {
+      "source": "trying again",
+      "value": "otro intento"
+    },
     "log.gate_passed": {
       "source": "gate passed",
       "value": "gate superado"

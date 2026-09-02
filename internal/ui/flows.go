@@ -63,6 +63,10 @@ type flowsState struct {
 	description string
 	activePhase int
 	phases      []flow.Phase
+	// attempts is the flow's cap, carried although no field shows it: this
+	// editor rebuilds the whole flow when it saves, so what it does not hold
+	// is lost by opening a flow and saving it.
+	attempts int
 }
 
 // ensurePhase gives an editor with no phases one, on the engine the editor
@@ -148,6 +152,7 @@ func (m Model) openFlowPreview(name string) Model {
 		flowName:      name,
 		description:   fl.Description,
 		phases:        fl.Phases,
+		attempts:      fl.Attempts,
 		isBuiltin:     slices.Contains(flow.BuiltinNames(), name),
 		activePhase:   0,
 	}

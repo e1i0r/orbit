@@ -37,6 +37,7 @@ func flowTools() []Tool {
 				"name":        {Type: "string", Description: "What the flow is called. It is also the file it is saved as."},
 				"description": {Type: "string", Description: "One line saying what this flow is for."},
 				"from":        {Type: "string", Description: "Start from this existing flow's phases. Ignored when phases are given."},
+				"attempts":    {Type: "integer", Description: "How many times one phase may be run before the task gives up on it, counting the first. Each attempt after the first is told what the ones before it tried and why the gate refused them. Three when unset."},
 				"phases":      phasesProperty(),
 			}, "name"),
 		},

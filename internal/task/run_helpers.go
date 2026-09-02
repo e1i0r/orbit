@@ -54,13 +54,28 @@ func prepare(s *store.Store, t Task) (string, error) {
 	return Join(s, t, t.Repo)
 }
 
+// fedOutput is what a phase is handed of the phase before it, which is
+// nothing at all unless it asked to be fed.
+func fedOutput(p flow.Phase, prev string) string {
+	if !p.FeedOutput {
+		return ""
+	}
+
+	return prev
+}
+
 // prompt is what the engine is told for one phase: the task, the phase it is
-// running, what the phase before it said, and whatever the operator has
-// added since.
+// running, what the phase before it said, whatever the operator has added
+// since, and — on a second attempt at the same phase — what the attempts
+// before it tried and why the gate refused them.
+//
+// tried is variadic because it is empty on the first attempt at every phase,
+// which is most of them, and a caller that has nothing to say about earlier
+// attempts should not have to say it.
 //
 // It is written in Markdown because the answer is asked for in Markdown, and
 // a prompt that asks in one shape for another is asking twice.
-func prompt(t Task, p flow.Phase, notes []string, prevOutput string, others []string) string {
+func prompt(t Task, p flow.Phase, notes []string, prevOutput string, others []string, tried ...gateRefusal) string {
 	var b strings.Builder
 
 	fmt.Fprintf(&b, "# %s\n\n%s\n\n", t.ID, strings.TrimSpace(t.Text))
@@ -77,6 +92,8 @@ func prompt(t Task, p flow.Phase, notes []string, prevOutput string, others []st
 	if prevOutput != "" {
 		fmt.Fprintf(&b, "\n## Previous phase output\n\n%s\n", engine.Fenced(prevOutput))
 	}
+
+	b.WriteString(refusals(tried))
 
 	if len(notes) > 0 {
 		b.WriteString("\n## Operator notes\n\n")
