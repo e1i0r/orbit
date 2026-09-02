@@ -63,6 +63,9 @@ const (
 	                        WHERE NOT EXISTS (SELECT 1 FROM event e
 	                                           WHERE e.task_id = t.id AND e.kind = ?)
 	                        ORDER BY t.task_id, tr.joined_at, r.abs_path`
+
+	unjoinRepo = `DELETE FROM task_repo
+	                    WHERE repo_id IN (SELECT id FROM repo WHERE abs_path = ?)`
 )
 
 // Runs. An attempt is numbered by how many came before it, and it is ended

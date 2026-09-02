@@ -54,7 +54,19 @@ func TestATaskCarriedIntoAnotherCheckoutSurvivesForgettingTheFirst(t *testing.T)
 		t.Errorf("the answer says %v was kept, want PAY-1", got["tasks_kept"])
 	}
 
-	if found := call(t, sn, "orbit_inspect_task", map[string]any{"task_id": "PAY-1"}); found["id"] != "PAY-1" {
-		t.Errorf("PAY-1 went with the repository it was only half worked in: %v", found)
+	found := call(t, sn, "orbit_inspect_task", map[string]any{"task_id": "PAY-1"})
+	if found["id"] != "PAY-1" {
+		t.Fatalf("PAY-1 went with the repository it was only half worked in: %v", found)
+	}
+
+	// And it stops naming the one that was forgotten. Forgetting ends the
+	// present tense: the task is not worked in payments any more, whatever
+	// the events still say about what happened there.
+	if worksIn(found, "payments") {
+		t.Errorf("PAY-1 is still worked in the forgotten payments: %v", found["repos"])
+	}
+
+	if !worksIn(found, "ledger") {
+		t.Errorf("PAY-1 reports %v, want the ledger it is still worked in", found["repos"])
 	}
 }

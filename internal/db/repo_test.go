@@ -275,6 +275,60 @@ func TestEveryTaskAndTheRepositoriesItIsWorkedIn(t *testing.T) {
 	}
 }
 
+// TestForgettingARepositoryEndsItsLinksAndLeavesTheOthers. Forgetting is
+// about the present tense — this task is worked in that repository — and a
+// task carried into a second checkout is still worked in that one.
+func TestForgettingARepositoryEndsItsLinksAndLeavesTheOthers(t *testing.T) {
+	d := open(t)
+
+	wrote(t, d, "ACME-1", "app", "/w/app")
+	wrote(t, d, "ACME-2", "app", "/w/app")
+
+	joining := record.Event{Kind: record.RepoJoined, Data: map[string]string{"repo": "api", "path": "/w/api"}}
+	if err := d.Append("ACME-1", joining); err != nil {
+		t.Fatalf("join the second checkout: %v", err)
+	}
+
+	n, err := d.Unjoin("/w/app")
+	if err != nil {
+		t.Fatalf("forget /w/app: %v", err)
+	}
+
+	if n != 2 {
+		t.Errorf("forgetting /w/app ended %d links, want the 2 tasks worked in it", n)
+	}
+
+	ids, err := d.TasksOfRepo("/w/app")
+	if err != nil {
+		t.Fatalf("the tasks of a forgotten repository: %v", err)
+	}
+
+	if len(ids) != 0 {
+		t.Errorf("a forgotten repository still holds %v", ids)
+	}
+
+	repos, err := d.ReposOfTask("ACME-1")
+	if err != nil {
+		t.Fatalf("the repositories of ACME-1: %v", err)
+	}
+
+	if !slices.Equal(repos, []string{"/w/api"}) {
+		t.Errorf("ACME-1 is worked in %v, want the /w/api it was carried into", repos)
+	}
+}
+
+// TestForgettingARepositoryNothingWasJoinedToIsNotAnError. "Forgotten" and
+// "had nothing to forget" are the same answer to this question; which of the
+// two it was is the caller's to know.
+func TestForgettingARepositoryNothingWasJoinedToIsNotAnError(t *testing.T) {
+	d := open(t)
+
+	n, err := d.Unjoin("/w/nobody")
+	if err != nil || n != 0 {
+		t.Errorf("forgetting a repository with no tasks ended %d links and said %v, want 0 and nothing", n, err)
+	}
+}
+
 // TestADeletedTaskIsNoRepositorysTask. Deleting is an event rather than a row
 // removed, and this enumeration is the board's, so a task left in would be a
 // row nobody can act on drawn on every window that is open.
