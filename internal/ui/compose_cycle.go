@@ -6,18 +6,15 @@ import (
 	"github.com/e1i0r/orbit/internal/flow"
 )
 
-func (m Model) isComposeRepoField() bool {
-	return (m.compose.tab == composeTabManual && m.compose.field == composeRepo) ||
-		(m.compose.tab == composeTabURL && m.compose.field == composeURLRepo)
-}
-
 func (m Model) isComposeFlowField() bool {
 	return (m.compose.tab == composeTabManual && m.compose.field == composeFlow) ||
 		(m.compose.tab == composeTabURL && m.compose.field == composeURLFlow)
 }
 
+// isPillField is the flow row, which is the only row of the form that is
+// chosen from rather than typed into.
 func (m Model) isPillField() bool {
-	return m.isComposeRepoField() || m.isComposeFlowField()
+	return m.isComposeFlowField()
 }
 
 // The left and right arrows are the pills on a row of pills and the caret
@@ -25,8 +22,6 @@ func (m Model) isPillField() bool {
 // which is what the rest of the machine does with them.
 func (m Model) handleComposeLeft(word bool) Model {
 	switch {
-	case m.isComposeRepoField():
-		return m.cycleComposeRepo(-1)
 	case m.isComposeFlowField():
 		return m.cycleComposeFlow(-1)
 	case word:
@@ -38,8 +33,6 @@ func (m Model) handleComposeLeft(word bool) Model {
 
 func (m Model) handleComposeRight(word bool) Model {
 	switch {
-	case m.isComposeRepoField():
-		return m.cycleComposeRepo(1)
 	case m.isComposeFlowField():
 		return m.cycleComposeFlow(1)
 	case word:
@@ -85,18 +78,6 @@ func (m Model) composeJump(move func(*input), mod tea.KeyMod) Model {
 	}
 
 	return m.composeCaret(move)
-}
-
-func (m Model) cycleComposeRepo(d int) Model {
-	if len(m.compose.repos) == 0 {
-		return m
-	}
-
-	n := len(m.compose.repos)
-	m.compose.repoIdx = (m.compose.repoIdx + d + n) % n
-	m.compose.repo = m.compose.repos[m.compose.repoIdx].name
-
-	return m
 }
 
 func (m Model) cycleComposeFlow(d int) Model {

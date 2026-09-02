@@ -58,17 +58,11 @@ func composeForm(t *testing.T) Model {
 	return m.openCompose()
 }
 
-// TestEveryDialOfTheFormIsChosenByPointingAtIt. Two rows of pills, and the
+// TestEveryDialOfTheFormIsChosenByPointingAtIt. One row of pills, and the
 // pointer is the only way to reach one of them that does not involve
 // counting keystrokes.
 func TestEveryDialOfTheFormIsChosenByPointingAtIt(t *testing.T) {
 	m := composeForm(t)
-
-	m = clickAt(t, m, formRow(t, m, "starts in:"), TargetComposeRepoChoice, 1)
-	if m.compose.repoIdx != 1 || m.compose.repo != m.compose.repos[1].name {
-		t.Errorf("the second repository pill left repoIdx=%d repo=%q, want 1 and %q",
-			m.compose.repoIdx, m.compose.repo, m.compose.repos[1].name)
-	}
 
 	m = clickAt(t, m, formRow(t, m, "flow:"), TargetComposeFlowChoice, 2)
 	if m.compose.flowIdx != 2 {
@@ -188,11 +182,6 @@ func TestTheOtherTabHasItsOwnRows(t *testing.T) {
 	}
 
 	// Every field of this tab is its own, not the manual tab's.
-	m = clickAt(t, m, formRow(t, m, "starts in:"), TargetComposeRepoChoice, 1)
-	if m.compose.repoIdx != 1 {
-		t.Errorf("the second repository pill of the url tab left repoIdx=%d, want 1", m.compose.repoIdx)
-	}
-
 	if at := m.hit(m.width-2, formRow(t, m, "flow:")); at.Pane != composeURLFlow {
 		t.Errorf("the flow row of the url tab is field %d, want the url one", at.Pane)
 	}

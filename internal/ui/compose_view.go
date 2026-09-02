@@ -6,8 +6,8 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-// composeRows draws the compose screen: top tabs, fields, repository selector,
-// flow, engine, model, thinking, effort selectors, issue preview, and action buttons.
+// composeRows draws the compose screen: top tabs, the flow and what it will
+// do, the fields a task is written into, the issue preview, and the actions.
 func (m Model) composeRows(h, w int) []string {
 	if h <= 0 {
 		return nil
@@ -84,8 +84,6 @@ func (m Model) composeManualRows(w int) []string {
 
 	var out []string
 
-	out = append(out, m.composeRepoLine(m.compose.field == composeRepo, w))
-
 	out = append(out, m.composeFlowLine(m.compose.field == composeFlow, w))
 	out = append(out, m.composeFlowDetail(w)...)
 
@@ -117,8 +115,6 @@ func (m Model) composeURLRows(w int) []string {
 	pastePill := Pill(" 📋 "+p.T("compose.btn_paste", "Paste (^V)")+" ", "#FFFFFF", "#0369A1")
 	urlLine += " " + pastePill
 	out = append(out, urlLine)
-
-	out = append(out, m.composeRepoLine(m.compose.field == composeURLRepo, w))
 
 	out = append(out, m.composeFlowLine(m.compose.field == composeURLFlow, w))
 	out = append(out, m.composeFlowDetail(w)...)

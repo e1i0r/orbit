@@ -1731,10 +1731,6 @@
       "source": "write a task",
       "value": "escribir una tarea"
     },
-    "compose.repo": {
-      "source": "starts in",
-      "value": "empieza en"
-    },
     "compose.id": {
       "source": "id",
       "value": "id"
@@ -1743,9 +1739,9 @@
       "source": "task",
       "value": "tarea"
     },
-    "compose.repo_required": {
-      "source": "a task has to start somewhere; which repository?",
-      "value": "una tarea tiene que empezar en algún lado; ¿en cuál repositorio?"
+    "compose.no_repo": {
+      "source": "orbit knows no repository to start in; open it where there is one",
+      "value": "orbit no conoce ningún repositorio en el que empezar; abrilo donde haya uno"
     },
     "compose.id_required": {
       "source": "the id is required; what is this task called?",
@@ -1799,17 +1795,9 @@
       "source": "what is to be done?",
       "value": "¿qué hay que hacer?"
     },
-    "compose.repo_placeholder": {
-      "source": "start in which repository?",
-      "value": "¿en cuál repositorio empieza?"
-    },
     "compose.flow_waits": {
       "source": "waits for you",
       "value": "te espera"
-    },
-    "compose.repo_hint": {
-      "source": "(←/→ to cycle)",
-      "value": "(←/→ para cambiar)"
     },
     "compose.text_hint": {
       "source": "(Shift+↵ for newline)",

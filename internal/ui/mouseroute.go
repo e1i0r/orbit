@@ -76,13 +76,6 @@ func (m Model) handleComposeClick(t Target) (tea.Model, tea.Cmd) {
 		m.compose.field = 0
 
 		return m, nil
-	case TargetComposeRepoChoice:
-		if t.Pane >= 0 && t.Pane < len(m.compose.repos) {
-			m.compose.repoIdx = t.Pane
-			m.compose.repo = m.compose.repos[t.Pane].name
-		}
-
-		return m, nil
 	case TargetComposeFlowChoice:
 		if t.Pane >= 0 && t.Pane < len(m.compose.flows) {
 			if m.compose.flowIdx == t.Pane {

@@ -3,6 +3,7 @@ package ui
 // The form a task is written into, either manually or by importing from an issue tracker URL.
 
 import (
+	"path/filepath"
 	"strings"
 
 	"charm.land/bubbles/v2/key"
@@ -21,9 +22,16 @@ const (
 // how much effort are not among them: the seat already answers those, and a
 // phase of a flow answers them again for the work it runs. A form that asks
 // a third time is a third answer to keep in sync with the other two.
+//
+// Neither is the repository, and that one was the first field on the screen.
+// Choosing one was a reader's first decision about a task, back when a task
+// belonged to the checkout it was written under. It is worked in whatever it
+// turns out to reach into now, so the field asked a question the answer to
+// which was no longer the reader's to give — and a task that reached into
+// three repositories still had one of them declared at the top of it as if
+// that were the fact about it.
 const (
-	composeRepo = iota
-	composeFlow
+	composeFlow = iota
 	composeID
 	composeText
 	composeFields
@@ -31,51 +39,36 @@ const (
 
 const (
 	composeURL = iota
-	composeURLRepo
 	composeURLFlow
 	composeURLFields
 )
 
 type composeState struct {
-	tab         int // composeTabManual or composeTabURL
-	field       int // active field index within current tab
-	repo        string
+	tab   int // composeTabManual or composeTabURL
+	field int // active field index within current tab
+
+	// Where the first phase runs, which the form picks rather than asks.
+	repoPath string
+
 	id          input
 	text        input
 	url         input
-	repos       []repoItem
-	repoIdx     int
 	parsedIssue *tracker.Issue
 
 	flows   []string
 	flowIdx int
 }
 
-// openCompose brings the form up with the repository defaulted to the current task's repo.
+// openCompose brings the form up.
 func (m Model) openCompose() Model {
 	m.screen = screenCompose
-	repos := m.collectRepos()
 
-	selectedRepo := ""
+	under := ""
 	if r, ok := m.selected(); ok && !r.head {
-		selectedRepo = r.task.Repo
+		under = r.task.Repo
 	}
 
-	repoIdx := 0
-
-	for i, r := range repos {
-		if strings.EqualFold(r.name, selectedRepo) {
-			repoIdx = i
-			break
-		}
-	}
-
-	initialRepo := ""
-	if len(repos) > 0 {
-		initialRepo = repos[repoIdx].name
-	} else if selectedRepo != "" {
-		initialRepo = selectedRepo
-	}
+	path := m.startsIn(under)
 
 	flowsListed := flow.List(m.opts.Flows)
 
@@ -89,14 +82,52 @@ func (m Model) openCompose() Model {
 	}
 
 	m.compose = composeState{
-		tab:     composeTabManual,
-		repo:    initialRepo,
-		repos:   repos,
-		repoIdx: repoIdx,
-		flows:   flows,
+		tab:      composeTabManual,
+		repoPath: path,
+		flows:    flows,
 	}
 
 	return m
+}
+
+// startsIn is the repository the first phase runs in: the one the hint
+// names, by name or by path, and otherwise the first Orbit knows.
+//
+// The form used to ask, and now it picks. The preference is the task the
+// cursor was on, because a reader writing a task while looking at another
+// one is usually writing about the same code — but it is a guess either
+// way, and a wrong guess costs one repo.joined event: the task goes on into
+// whatever it is actually worked in, and says so.
+func (m Model) startsIn(hint string) string {
+	repos := m.collectRepos()
+
+	if hint != "" {
+		for _, r := range repos {
+			if r.path != "" && (strings.EqualFold(r.name, hint) || r.path == hint) {
+				return r.path
+			}
+		}
+
+		// A checkout Orbit has never listed, named by the only thing that
+		// can name one it does not know: where it is. This is the session a
+		// reader opened by hand somewhere else and is now writing about.
+		if strings.ContainsRune(hint, filepath.Separator) {
+			return hint
+		}
+	}
+
+	// A repository with no path is one the board knows only by name —
+	// a checkout a task was carried into, which view.Task names and does
+	// not locate. It is somewhere work happened and not somewhere work can
+	// be started, so the fall back is the first one Orbit can actually
+	// reach, and a board where it can reach none is answered with nothing.
+	for _, r := range repos {
+		if r.path != "" {
+			return r.path
+		}
+	}
+
+	return ""
 }
 
 func (m Model) abandonCompose() Model {

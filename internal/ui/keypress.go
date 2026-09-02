@@ -209,7 +209,7 @@ func (m Model) confirmKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if msg.String() == confirmYes || msg.String() == "s" || msg.String() == "S" || key.Matches(msg, m.keys.Open) {
 			m = m.openCompose()
 			if id != "" {
-				m.compose.repo = id
+				m.compose.repoPath = m.startsIn(id)
 				m.compose.field = composeText
 			}
 

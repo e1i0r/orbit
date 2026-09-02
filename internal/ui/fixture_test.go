@@ -133,6 +133,14 @@ func fixtureTasks() []view.Task {
 		})
 	}
 
+	// Every row knows where its home repository is, as every row a Reader
+	// builds does. The repositories a task was carried into are named and
+	// not located, which is also true of the rows: view.Task.Repos is a
+	// list of names, and the one path on it is the home one's.
+	for i := range tasks {
+		tasks[i].RepoPath = "/checkouts/" + tasks[i].Repo
+	}
+
 	return tasks
 }
 
