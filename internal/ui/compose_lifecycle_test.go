@@ -2,6 +2,8 @@ package ui
 
 import (
 	"errors"
+	"io"
+	"slices"
 	"testing"
 
 	"charm.land/bubbletea/v2"
@@ -269,8 +271,9 @@ func TestTheFormPicksWhereTheTaskStartsAndDoesNotAsk(t *testing.T) {
 		t.Error("the form found nowhere to start on a board with four repositories")
 	}
 
-	// And a board with none is the one case the form still has to say
-	// something about, because there is nothing for it to pick.
+	// And a board with none has nothing to pick, which is not a refusal:
+	// the task is written against no repository and joins its first
+	// checkout in whichever phase the work reaches one.
 	empty, _ := testModel(t, 100, 30)
 	empty.board = fixtureBoard(nil, 0)
 
@@ -278,11 +281,83 @@ func TestTheFormPicksWhereTheTaskStartsAndDoesNotAsk(t *testing.T) {
 		t.Errorf("a board with no repositories offered %q to start in", got)
 	}
 
-	said, _ := empty.openCompose().composeSubmit(false)
-	wantBand(t, asModel(t, said), "knows no repository")
+	if args := submitted(t, empty, "ACME-9", "write the importer"); slices.Contains(args, "-repo") {
+		t.Errorf("the form ran `orbit new %v`, want no -repo on a board that has none", args)
+	}
+
+	// Where there is one, it is still passed: this is a task that starts
+	// nowhere, not a form that stopped saying where.
+	on, _ := testModel(t, 100, 30)
+	if args := submitted(t, onRow(t, on, "ACME-2701"), "ACME-9", "write the importer"); !slices.Contains(args, "/checkouts/app") {
+		t.Errorf("the form ran `orbit new %v`, want the checkout it picked", args)
+	}
+}
+
+// submitted is the command line the form runs, with the id and the text
+// typed into it first.
+//
+// The command is executed rather than inspected because the arguments are
+// closed over by a tea.Cmd and reach the port and nowhere else, which is
+// also the only place they reach in the running window.
+func submitted(t *testing.T, m Model, id, text string) []string {
+	t.Helper()
+
+	var got []string
+
+	m.opts.Do = func(_ string, args []string, _ io.Writer) error {
+		got = args
+		return nil
+	}
+
+	m = m.openCompose()
+	m.compose.id, m.compose.text = newInput(id), newInput(text)
+
+	next, cmd := m.composeSubmit(false)
+	if cmd == nil {
+		t.Fatalf("the form submitted nothing and said %q", asModel(t, next).message)
+	}
+
+	// One of the batch is the pump that draws the output while the command
+	// works; the one that runs it is the one that reaches the port.
+	for _, one := range commandsIn(t, cmd) {
+		one()
+
+		if got != nil {
+			return got
+		}
+	}
+
+	t.Fatal("the form ran no command")
+
+	return nil
 }
 
 func mustUpdate(m Model, msg tea.Msg) tea.Model {
 	next, _ := m.Update(msg)
 	return next
+}
+
+// TestTheURLTabWalksDownToTheURL. The field is drawn under the flow it will
+// be run with, and the cursor walks the rows in the order they are drawn: a
+// reader who opens the tab is on the URL, because pasting one is what they
+// opened it for, and the flow is the row above.
+func TestTheURLTabWalksDownToTheURL(t *testing.T) {
+	m := composeForm(t)
+
+	m.compose.tab = composeTabURL
+	m.compose.field = firstComposeField(composeTabURL)
+
+	if m.compose.field != composeURL {
+		t.Fatalf("opening the URL tab left field %d, want the url", m.compose.field)
+	}
+
+	up := asModel(t, mustUpdate(m, press("up")))
+	if up.compose.field != composeURLFlow {
+		t.Fatalf("up from the url is field %d, want the flow above it", up.compose.field)
+	}
+
+	down := asModel(t, mustUpdate(up, press("down")))
+	if down.compose.field != composeURL {
+		t.Errorf("down from the flow is field %d, want the url below it", down.compose.field)
+	}
 }

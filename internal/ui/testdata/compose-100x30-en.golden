@@ -11,14 +11,14 @@
                     complex, mission-critical features where code quality and careful verification
                     are essential.
    id:            what is it called? (e.g. ORBIT-42)
-   task:            📋 Paste (^V)  
-  ┌──────────────────────────────────────────────────────────────────────────────────┐
-  │ what is to be done?                                                              │
-  │                                                                                  │
-  │                                                                                  │
-  └──────────────────────────────────────────────────────────────────────────────────┘
+   task:          ┌────────────────────────────────────────────────────────────┐   📋 Paste (^V)  
+                  │ what is to be done?                                        │
+                  │                                                            │
+                  │                                                            │
+                  └────────────────────────────────────────────────────────────┘
 
   [ ↵ Save ]   [ ^R Save & Run ]   [ esc Cancel ]   ⚡ autopilot is ON: starts automatically [A to …
+
 
 
 

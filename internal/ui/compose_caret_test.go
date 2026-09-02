@@ -134,7 +134,7 @@ func TestTheBlockIsDrawnOnTheCaretAndNotUnderTheText(t *testing.T) {
 	m := composeOn(t, composeText, "adaa")
 	m.compose.text.moveTo(2)
 
-	lines := m.composeTextLines(40, true, "")
+	lines := m.composeBoxLines(m.compose.text, 40, true, "")
 	if len(lines) < 3 {
 		t.Fatalf("the box drew %d lines, want at least three", len(lines))
 	}

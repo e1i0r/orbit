@@ -170,15 +170,21 @@ func TestTheOtherTabHasItsOwnRows(t *testing.T) {
 		t.Fatalf("the right half of the tab line left tab %d, want the URL one", m.compose.tab)
 	}
 
-	// The URL row carries the paste button, and the rest of the cells on it
-	// are the field itself.
+	// The URL is written into a box like the task is: its label row carries
+	// the paste button and answers for the field, and the lines between the
+	// borders are where a reader pointing at what they pasted lands on a
+	// caret.
 	y := formRow(t, m, "url:")
-	if at := m.hit(20, y); at.Kind != TargetComposePaste {
-		t.Errorf("the paste button of the url row is kind %d, want the paste target", at.Kind)
+	pointAt(t, m, y, TargetComposePaste, 0)
+
+	for _, x := range []int{composeLabelStart, m.width - 2} {
+		if at := m.hit(x, y); at.Kind != TargetComposeField || at.Pane != composeURL {
+			t.Errorf("column %d of the url label row is kind %d pane %d, want the url field", x, at.Kind, at.Pane)
+		}
 	}
 
-	if at := m.hit(m.width-2, y); at.Kind != TargetComposeCaret || at.Pane != composeURL {
-		t.Errorf("the far end of the url row is kind %d pane %d, want the url field", at.Kind, at.Pane)
+	if at := m.hit(composeBoxStart, y+1); at.Kind != TargetComposeCaret || at.Pane != composeURL {
+		t.Errorf("inside the url box is kind %d pane %d, want the caret of the url field", at.Kind, at.Pane)
 	}
 
 	// Every field of this tab is its own, not the manual tab's.
@@ -187,25 +193,28 @@ func TestTheOtherTabHasItsOwnRows(t *testing.T) {
 	}
 }
 
-// TestThePasteButtonIsNotTheTaskField. They share a row, and the one the
-// reader lands on decides whether the clipboard is read or the cursor moves.
+// TestThePasteButtonIsNotTheTaskField. The button ends the row the label and
+// the top border of the box are on, and the cell the reader lands on decides
+// whether the clipboard is read or the caret moves.
 func TestThePasteButtonIsNotTheTaskField(t *testing.T) {
 	m := composeForm(t)
 
 	y := formRow(t, m, "📋 Paste")
 
-	if at := m.hit(20, y); at.Kind != TargetComposePaste {
-		t.Errorf("the paste button is kind %d, want the paste target", at.Kind)
+	pointAt(t, m, y, TargetComposePaste, 0)
+
+	// The rest of that row is the label and the top border, which is the
+	// field itself: the box begins where the other values of the form begin.
+	for _, x := range []int{gutter, composeBoxStart, m.width - 2} {
+		if at := m.hit(x, y); at.Kind != TargetComposeField || at.Pane != composeText {
+			t.Errorf("column %d of the task label row is kind %d pane %d, want the text field", x, at.Kind, at.Pane)
+		}
 	}
 
-	if at := m.hit(m.width-2, y); at.Kind != TargetComposeField || at.Pane != composeText {
-		t.Errorf("the far end of the task row is kind %d pane %d, want the text field", at.Kind, at.Pane)
-	}
-
-	// The box under it is the same field: a reader aiming at the text aims
-	// at the box, not at the word above it.
-	if at := m.hit(20, y+3); at.Kind != TargetComposeCaret || at.Pane != composeText {
-		t.Errorf("inside the text box is kind %d pane %d, want the text field", at.Kind, at.Pane)
+	// The row under it is the first line of the text: a reader aiming at
+	// what they typed is aiming at a caret and not at the field.
+	if at := m.hit(composeBoxStart, y+1); at.Kind != TargetComposeCaret || at.Pane != composeText {
+		t.Errorf("inside the text box is kind %d pane %d, want the caret of the task", at.Kind, at.Pane)
 	}
 }
 

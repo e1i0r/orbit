@@ -11,14 +11,14 @@
                     complex, mission-critical features where code quality and careful verification
                     are essential.
    id:            ¿cómo se llama? (ej. ORBIT-42)
-   tarea:           📋 Pegar (^V)  
-  ┌──────────────────────────────────────────────────────────────────────────────────┐
-  │ ¿qué hay que hacer?                                                              │
-  │                                                                                  │
-  │                                                                                  │
-  └──────────────────────────────────────────────────────────────────────────────────┘
+   tarea:         ┌────────────────────────────────────────────────────────────┐   📋 Pegar (^V)  
+                  │ ¿qué hay que hacer?                                        │
+                  │                                                            │
+                  │                                                            │
+                  └────────────────────────────────────────────────────────────┘
 
   [ ↵ Guardar ]   [ ^R Guardar y Ejecutar ]   [ esc Cancelar ]   ⚡ piloto automático ACTIVO: se in…
+
 
 
 

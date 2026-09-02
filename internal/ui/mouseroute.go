@@ -73,7 +73,7 @@ func (m Model) handleComposeClick(t Target) (tea.Model, tea.Cmd) {
 	switch t.Kind {
 	case TargetComposeTab:
 		m.compose.tab = t.Pane
-		m.compose.field = 0
+		m.compose.field = firstComposeField(t.Pane)
 
 		return m, nil
 	case TargetComposeFlowChoice:
