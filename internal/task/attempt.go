@@ -104,7 +104,7 @@ func attempts(ctx context.Context, r phaseRun, allowed int) (engine.Result, erro
 			return out, r.exhausted(out, *refused)
 		}
 
-		if err := r.retried(*refused, n, allowed); err != nil {
+		if err := r.retried(out, *refused, n, allowed); err != nil {
 			return out, failed(r.store, r.task, err)
 		}
 
@@ -179,17 +179,25 @@ func (r phaseRun) broke(ctx context.Context, out engine.Result, runErr error) er
 }
 
 // retried writes down the seam between one attempt and the next.
-func (r phaseRun) retried(ref gateRefusal, n, allowed int) error {
-	return emit(r.store, r.task, record.Event{
-		Kind:  record.PhaseRetried,
-		Phase: r.phase.Name,
-		Data: map[string]string{
-			"gate":     ref.Gate,
-			"exit":     strconv.Itoa(ref.Exit),
-			"attempt":  strconv.Itoa(n),
-			"attempts": strconv.Itoa(allowed),
-		},
-	})
+//
+// It is built by phaseEnd, like the three events that end a phase for good,
+// because it ends one too: this is the only line the record will ever hold
+// about the attempt a gate refused, and an attempt that ran was paid for.
+// Written any other way, what two refused attempts spent is money nothing
+// adds up — the cost on the board would be the price of the attempt that
+// happened to pass.
+func (r phaseRun) retried(out engine.Result, ref gateRefusal, n, allowed int) error {
+	e := phaseEnd(record.PhaseRetried, r.phase.Name, out, nil)
+	if e.Data == nil {
+		e.Data = map[string]string{}
+	}
+
+	e.Data["gate"] = ref.Gate
+	e.Data["exit"] = strconv.Itoa(ref.Exit)
+	e.Data["attempt"] = strconv.Itoa(n)
+	e.Data["attempts"] = strconv.Itoa(allowed)
+
+	return emit(r.store, r.task, e)
 }
 
 // exhausted ends a phase no attempt could get past its gate.

@@ -68,6 +68,27 @@ func foldCases() []foldCase {
 			},
 		},
 		{
+			// What a refused attempt spent is on the event that ends it,
+			// and nothing else ever ends it: a total that leaves it out is
+			// the price of the attempt that happened to pass.
+			name: "a phase its gate refused once, then let through",
+			events: []record.Event{
+				{At: at(0), Kind: "task.created", Text: "Retry the webhook on 5xx"},
+				{At: at(1), Kind: "task.started", Data: data("flow", "task")},
+				{At: at(2), Kind: "phase.started", Phase: "implement", Data: data("engine", "claude", "model", "opus", "n", "1")},
+				{At: at(3), Kind: "gate.failed", Phase: "implement", Data: data("gate", "build", "exit", "1")},
+				{At: at(4), Kind: "phase.retried", Phase: "implement", Data: data("cost", "0.25", "gate", "build", "attempt", "1")},
+				{At: at(5), Kind: "phase.started", Phase: "implement", Data: data("engine", "claude", "model", "opus", "n", "1")},
+				{At: at(6), Kind: "phase.finished", Phase: "implement", Data: data("cost", "0.25")},
+				{At: at(7), Kind: "task.finished"},
+			},
+			want: Task{
+				Title: "Retry the webhook on 5xx", Band: Done, Flow: "task",
+				Phase: "implement", PhaseN: 1, Engine: "claude", Model: "opus",
+				Since: at(7), Started: at(1), Attempt: 1, Cost: 0.5, state: stateFinished,
+			},
+		},
+		{
 			name: "a run inside its first phase",
 			events: []record.Event{
 				{At: at(0), Kind: "task.created", Text: "Reconciliation endpoint"},

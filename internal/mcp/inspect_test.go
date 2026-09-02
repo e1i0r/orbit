@@ -263,3 +263,35 @@ func TestInspectCarriesTheTaskItself(t *testing.T) {
 		t.Errorf("the inspection carries the task as %q, want what was written", body)
 	}
 }
+
+// TestInspectSaysAnAttemptWasRetriedRatherThanLeavingItRunning. A phase
+// whose gate refused it is run again, so one phase name can open twice in
+// one run. Without a state for the seam, the first of them reads as a phase
+// that started and never ended — which is the one thing a supervisor acts
+// on.
+func TestInspectSaysAnAttemptWasRetriedRatherThanLeavingItRunning(t *testing.T) {
+	s, sn, r := oneRepo(t)
+	addTask(t, s, r, "PAY-2",
+		record.Event{At: at(1), Kind: record.TaskCreated, Text: "make the webhook idempotent"},
+		record.Event{At: at(2), Kind: record.TaskStarted},
+		record.Event{At: at(3), Kind: record.PhaseStarted, Phase: "implement", Data: map[string]string{"engine": "claude"}},
+		record.Event{At: at(4), Kind: record.GateFailed, Phase: "implement", Text: "go test ./... — 1 failure"},
+		record.Event{At: at(5), Kind: record.PhaseRetried, Phase: "implement", Data: map[string]string{"gate": "tests", "attempt": "1", "attempts": "3"}},
+		record.Event{At: at(6), Kind: record.PhaseStarted, Phase: "implement", Data: map[string]string{"engine": "claude"}},
+		record.Event{At: at(7), Kind: record.PhaseFinished, Phase: "implement"},
+		record.Event{At: at(8), Kind: record.TaskFinished},
+	)
+
+	phases := list(t, call(t, sn, "orbit_inspect_task", map[string]any{"task_id": "PAY-2"})["phases"])
+	if len(phases) != 2 {
+		t.Fatalf("the inspection reports %d phases, want the two attempts", len(phases))
+	}
+
+	if got := obj(t, phases[0])["state"]; got != "retried" {
+		t.Errorf("the first attempt reads as %v, want retried", got)
+	}
+
+	if got := obj(t, phases[1])["state"]; got != "finished" {
+		t.Errorf("the attempt that stood reads as %v, want finished", got)
+	}
+}

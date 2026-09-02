@@ -180,3 +180,63 @@ func TestAPhaseWithNoGateIsRunOnce(t *testing.T) {
 		t.Fatalf("the engine ran %d times, want 1", len(fake.Calls))
 	}
 }
+
+// costlyEngine answers like the fake and puts a price on it, which the fake
+// itself does not: what a refused attempt spent is the point of the test
+// below, and an engine that spends nothing cannot make it.
+type costlyEngine struct{ *engine.Fake }
+
+func (e costlyEngine) Run(ctx context.Context, req engine.Request) (engine.Result, error) {
+	out, err := e.Fake.Run(ctx, req)
+	out.Cost = 0.25
+	out.Usage = engine.Usage{Input: 10, Output: 5}
+
+	return out, err
+}
+
+// TestARefusedAttemptSaysWhatItSpent. A phase that ran for twenty minutes
+// and was then refused by its gate was paid for. The event that ends the
+// attempt is the only place that spend can be written down — nothing else
+// ends it — so a total taken from the record without it is a number a reader
+// acts on and is wrong about.
+func TestARefusedAttemptSaysWhatItSpent(t *testing.T) {
+	s, r := fixture(t)
+
+	tk, err := Create(s, r, "ACME-6", "the gate refuses once", "")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	eng := costlyEngine{engine.NewFake("tried")}
+
+	if err := Run(context.Background(), s, tk, retryFlow(countingGate("2"), 0), map[string]engine.Engine{"fake": eng}, nil); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	events, err := Events(s, tk)
+	if err != nil {
+		t.Fatalf("Events: %v", err)
+	}
+
+	for _, e := range events {
+		if e.Kind != record.PhaseRetried {
+			continue
+		}
+
+		if e.Data["cost"] != "0.25" {
+			t.Errorf("phase.retried says the attempt cost %q, want 0.25", e.Data["cost"])
+		}
+
+		if e.Data["tokens_in"] != "10" || e.Data["tokens_out"] != "5" {
+			t.Errorf("phase.retried counts %q in and %q out, want 10 and 5", e.Data["tokens_in"], e.Data["tokens_out"])
+		}
+
+		if e.Data["gate"] != "build" || e.Data["attempt"] != "1" {
+			t.Errorf("phase.retried names gate %q on attempt %q, want build on 1", e.Data["gate"], e.Data["attempt"])
+		}
+
+		return
+	}
+
+	t.Error("no phase.retried was written")
+}

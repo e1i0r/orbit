@@ -289,3 +289,64 @@ func TestAPhaseEndingWithNoneOpenChangesNothing(t *testing.T) {
 		t.Errorf("%d events were written, want both of them", len(events))
 	}
 }
+
+// TestARefusedAttemptEndsItsPhase is the span half of the attempt cap: a
+// phase whose gate refused it is run again, and the row for the attempt that
+// was refused has to end where it ended. Left open, it would be closed by
+// the run's own outcome — so a task that went on to finish would carry two
+// attempts reading "task.finished", stamped at a time neither of them ran.
+func TestARefusedAttemptEndsItsPhase(t *testing.T) {
+	d := open(t)
+
+	history(t, d, "ACME-1",
+		record.Event{Kind: record.TaskCreated, Text: "Retry the webhook"},
+		record.Event{Kind: record.TaskStarted},
+		phase("implement", "claude", "sonnet"),
+		record.Event{Kind: record.GateFailed, Phase: "implement"},
+		record.Event{Kind: record.PhaseRetried, Phase: "implement"},
+		phase("implement", "claude", "sonnet"),
+		record.Event{Kind: record.PhaseFinished, Phase: "implement"},
+		record.Event{Kind: record.TaskFinished},
+	)
+
+	rows, err := d.sql.Query(`SELECT n, outcome, ended_at IS NOT NULL FROM phase ORDER BY n`)
+	if err != nil {
+		t.Fatalf("read the phases: %v", err)
+	}
+	defer rows.Close()
+
+	var got []string
+
+	for rows.Next() {
+		var (
+			n       int
+			outcome string
+			ended   bool
+		)
+
+		if err := rows.Scan(&n, &outcome, &ended); err != nil {
+			t.Fatalf("scan a phase: %v", err)
+		}
+
+		if !ended {
+			t.Errorf("phase %d is still open", n)
+		}
+
+		got = append(got, outcome)
+	}
+
+	if err := rows.Err(); err != nil {
+		t.Fatalf("walk the phases: %v", err)
+	}
+
+	want := []string{record.PhaseRetried, record.PhaseFinished}
+	if len(got) != len(want) {
+		t.Fatalf("the run holds %d phases (%v), want two: the attempt that was refused and the one that stood", len(got), got)
+	}
+
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("phase %d ended %q, want %q", i+1, got[i], want[i])
+		}
+	}
+}

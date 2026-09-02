@@ -171,7 +171,10 @@ func phaseOutcomes(events []record.Event) []map[string]any {
 				"model":  e.Data["model"],
 				"state":  "started",
 			})
-		case record.PhaseFinished, record.PhaseFailed, record.PhaseCancelled, record.PhaseWaiting:
+		// phase.retried ends an attempt the same way the others do. Without
+		// it, the attempt a gate refused reads as a phase that started and
+		// never ended, which is the shape a supervisor acts on.
+		case record.PhaseFinished, record.PhaseFailed, record.PhaseCancelled, record.PhaseWaiting, record.PhaseRetried:
 			state := strings.TrimPrefix(e.Kind, "phase.")
 			if n := len(out) - 1; n >= 0 && out[n]["phase"] == e.Phase {
 				out[n]["state"] = state

@@ -111,6 +111,15 @@ func fold(t *Task, e record.Event) {
 		if act := formatAction(e.Data["tool"], e.Text); act != "" {
 			t.CurrentAction, t.ActionKind = act, ActionTool
 		}
+	case record.PhaseRetried:
+		// The attempt a gate refused. Its spend is summed for the reason
+		// every other phase ending is summed here: it ran, and it was paid
+		// for. Nothing else about the row moves — the phase is the same
+		// phase and the run is the same run; what changes is that it is
+		// about to be run again, and the phase.started that does it is what
+		// moves Since.
+		t.Cost += money(e.Data["cost"])
+		t.CurrentAction, t.CurrentThought, t.ActionKind = "", "", ActionNone
 	case record.PhaseFinished:
 		// Since is deliberately not moved. What the row says does not change
 		// when a phase ends — the task is still in the same run, and the
