@@ -7,6 +7,7 @@ package mcp
 // be left resolving the name.
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -313,4 +314,25 @@ func permissionEnum(t *testing.T) []string {
 	t.Fatal("orbit_save_flow is not in the tool list")
 
 	return nil
+}
+
+// TestSaveFlowKeepsHowManyAttemptsItAllows is the cap of 3.1 arriving
+// through the door a model uses: a flow that says one attempt has to be
+// savable and readable, or the setting exists only in a file nobody here
+// can write.
+func TestSaveFlowKeepsHowManyAttemptsItAllows(t *testing.T) {
+	_, sn, _ := oneRepo(t)
+
+	call(t, sn, "orbit_save_flow", map[string]any{
+		"name": "one-shot",
+		// float64 and not 1, because that is what a client's JSON arrives
+		// as and what intArg reads.
+		"attempts": float64(1),
+		"phases":   onePhase("implement", "claude"),
+	})
+
+	doc := obj(t, call(t, sn, "orbit_get_flow", map[string]any{"name": "one-shot"})["flow"])
+	if got := fmt.Sprint(doc["attempts"]); got != "1" {
+		t.Errorf("the saved flow allows %v attempts, want the 1 it was saved with", doc["attempts"])
+	}
 }

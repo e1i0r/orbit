@@ -91,11 +91,36 @@ type Gate struct {
 	Command string `json:"command"`
 }
 
+// DefaultAttempts is how many times a phase whose gate refused it is run,
+// counting the first run. Three is the number a flow that says nothing gets.
+//
+// It is a default rather than a fixed rule because how many shots a phase
+// deserves is a property of the flow: `quick` wants one and to be told, and
+// a long review cycle can afford more. What it is not is unbounded — a phase
+// that cannot satisfy its own gate spends money on every turn of the loop,
+// and the run that never stops is the one nobody is watching.
+const DefaultAttempts = 3
+
 // Flow is an ordered list of phases under a name.
 type Flow struct {
-	Name        string  `json:"name"`
-	Description string  `json:"description,omitempty"`
-	Phases      []Phase `json:"phases"`
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	// Attempts is how many times one phase may be run before the run gives
+	// up on it. Zero is not "no attempts": it is a flow that did not say,
+	// and AttemptCap reads it as the default. Every flow file written
+	// before this field existed decodes to zero, which is what makes them
+	// mean what they meant.
+	Attempts int     `json:"attempts,omitempty"`
+	Phases   []Phase `json:"phases"`
+}
+
+// AttemptCap is how many times a phase of this flow may be run.
+func (f Flow) AttemptCap() int {
+	if f.Attempts <= 0 {
+		return DefaultAttempts
+	}
+
+	return f.Attempts
 }
 
 // Validate reports the first thing that would make a flow unrunnable.
@@ -106,6 +131,15 @@ func (f Flow) Validate() error {
 
 	if len(f.Phases) == 0 {
 		return fmt.Errorf("flow %q has no phases", f.Name)
+	}
+
+	// A negative cap is refused rather than read as the default, because the
+	// two are different mistakes: zero is a file that did not mention
+	// attempts, and -1 is a file that meant something by it. Reading the
+	// second as three would run a phase three times for somebody who wrote
+	// down that they wanted otherwise.
+	if f.Attempts < 0 {
+		return fmt.Errorf("flow %q allows %d attempts, which is not a number of attempts", f.Name, f.Attempts)
 	}
 
 	seen := make(map[string]bool, len(f.Phases))

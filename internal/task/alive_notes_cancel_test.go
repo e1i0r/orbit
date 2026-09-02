@@ -174,9 +174,13 @@ func TestPhaseHelpersAndRunGates(t *testing.T) {
 	}
 	wtDir := t.TempDir()
 
-	err = runGates(context.Background(), s, tk, pGates, 1, wtDir, res)
-	if err == nil || !strings.Contains(err.Error(), "gate \"fail-gate\" failed") {
-		t.Errorf("expected gate failure error, got %v", err)
+	refused, err := runGates(context.Background(), s, tk, pGates, 1, wtDir, res)
+	if err != nil {
+		t.Errorf("runGates: %v", err)
+	}
+
+	if refused == nil || refused.Gate != "fail-gate" || refused.Exit != 42 {
+		t.Errorf("expected fail-gate to refuse with exit 42, got %+v", refused)
 	}
 
 	// 5. Note validation and unconsumedNotes reset

@@ -126,127 +126,19 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 			return failed(s, t, fmt.Errorf("task %s, before phase %q: %w", t.ID, p.Name, notesErr))
 		}
 
-		// Through failed, and not returned bare. Every other way out of
-		// this loop writes a terminal event, and the reason is the
-		// invariant hold's comment states: a task's log ends in a terminal
-		// event, or a reader appends one. Reconcile is that reader, and it
-		// cannot be here — it acts on a stale marker, and the marker of
-		// this run is about to be released cleanly by the defer above. So
-		// an emit that failed left task.started with nothing after it and
-		// nothing that would ever close it: a task that reads as running
-		// for ever, in every reader of the record.
-		//
-		// The write may well fail too — it is the same log, usually for the
-		// same reason — which is why failed discards its own error. It
-		// costs nothing and it closes the log whenever the failure was
-		// transient, which is the case worth having.
-		if err := emit(s, t, phaseStart(p, i+1, notes)); err != nil {
-			return failed(s, t, err)
-		}
-
-		inputPrev := ""
-		if p.FeedOutput {
-			inputPrev = prevOutput
-		}
-
-		var (
-			streamErr                                             error
-			streamedThoughts, streamedRefusals, streamedToolCalls int
-		)
-
-		resumeSess := lastSession(s, t, p.Engine, engines[p.Engine])
-
-		out, runErr := engines[p.Engine].Run(ctx, engine.Request{
-			Prompt:      prompt(t, p, notes, inputPrev, others),
-			Model:       p.Model,
-			Effort:      p.Effort,
-			Thinking:    p.Thinking,
-			Dir:         wt,
-			Permissions: p.Permissions,
-			Env:         childEnv(t),
-			Resume:      resumeSess,
-			OnEvent: func(ev engine.StreamEvent) {
-				switch ev.Type {
-				case "thought":
-					streamedThoughts++
-
-					if err := emit(s, t, phaseThought(p.Name, i+1, ev.Thought)); err != nil && streamErr == nil {
-						streamErr = err
-					}
-				case "tool_call":
-					streamedToolCalls++
-
-					if err := emit(s, t, phaseToolCall(p.Name, i+1, ev.ToolCall)); err != nil && streamErr == nil {
-						streamErr = err
-					}
-				case "refusal":
-					streamedRefusals++
-
-					if err := emit(s, t, phaseRefused(p.Name, i+1, ev.Refusal)); err != nil && streamErr == nil {
-						streamErr = err
-					}
-				}
-			},
-		})
-		if streamErr != nil {
-			return failed(s, t, fmt.Errorf("task %s, phase %q stream event emit: %w", t.ID, p.Name, streamErr))
-		}
-
-		if streamedThoughts == 0 {
-			for _, th := range out.Thoughts {
-				if err := emit(s, t, phaseThought(p.Name, i+1, th)); err != nil {
-					return failed(s, t, fmt.Errorf("task %s, phase %q fallback thought emit: %w", t.ID, p.Name, err))
-				}
-			}
-		}
-
-		if streamedRefusals == 0 {
-			for _, ref := range out.Refusals {
-				if err := emit(s, t, phaseRefused(p.Name, i+1, ref)); err != nil {
-					return failed(s, t, fmt.Errorf("task %s, phase %q fallback refusal emit: %w", t.ID, p.Name, err))
-				}
-			}
-		}
-
-		if streamedToolCalls == 0 {
-			for _, tc := range out.ToolCalls {
-				if err := emit(s, t, phaseToolCall(p.Name, i+1, tc)); err != nil {
-					return failed(s, t, fmt.Errorf("task %s, phase %q fallback tool call emit: %w", t.ID, p.Name, err))
-				}
-			}
-		}
-
-		if runErr != nil {
-			// A context that is done is not an engine that broke. The engine
-			// reports being killed the same way it reports falling over —
-			// exec gives it no other vocabulary — so the difference between
-			// "the model failed" and "you stopped it" is not in the error at
-			// all, it is here, and only this function can tell them apart.
-			// Asking the context first is what keeps a task somebody
-			// cancelled from being written down as a task that broke.
-			//
-			// The check is inside the error branch, not before it: a phase
-			// that finished in the same instant the deadline passed did the
-			// work, and calling that a cancellation would throw away a
-			// finished phase to make the bookkeeping neat.
-			if ctxErr := ctx.Err(); ctxErr != nil {
-				return stopped(s, t, p.Name, out, ctxErr)
-			}
-			// The engine's error is what the caller needs; a failure to
-			// record it must not replace or mask that error, so this emit is
-			// best-effort and its own error is discarded, for the same
-			// reason as the one in failed below.
-			_ = emit(s, t, phaseEnd(record.PhaseFailed, p.Name, out, runErr)) //nolint:errcheck // deliberate: see above
-
-			return failed(s, t, fmt.Errorf("task %s, phase %q: %w", t.ID, p.Name, runErr))
-		}
-
-		if err := runGates(ctx, s, t, p, i+1, wt, out); err != nil {
+		out, err := attempts(ctx, phaseRun{
+			store:  s,
+			task:   t,
+			phase:  p,
+			eng:    engines[p.Engine],
+			n:      i + 1,
+			wt:     wt,
+			notes:  notes,
+			prev:   fedOutput(p, prevOutput),
+			others: others,
+		}, f.AttemptCap())
+		if err != nil {
 			return err
-		}
-
-		if err := emit(s, t, phaseEnd(record.PhaseFinished, p.Name, out, nil)); err != nil {
-			return failed(s, t, err)
 		}
 
 		// Only when there is something to carry. A phase that finished

@@ -95,12 +95,23 @@ func TestAGateThatFailsOnItsOwnStillSaysSo(t *testing.T) {
 		t.Fatal("Run on a gate that exited 3 returned nil, want the failure")
 	}
 
+	// Three times, because the flow says nothing about attempts and the
+	// default is three: the gate refuses, the phase is run again, and only
+	// the attempt with nothing after it ends the phase and the run.
 	events := eventsOf(t, s, tk)
 	wantKinds(t, events,
-		record.TaskCreated, record.TaskStarted, record.PhaseStarted,
-		record.GateFailed, record.PhaseFailed, record.TaskFailed)
+		record.TaskCreated, record.TaskStarted,
+		record.PhaseStarted, record.GateFailed, record.PhaseRetried,
+		record.PhaseStarted, record.GateFailed, record.PhaseRetried,
+		record.PhaseStarted, record.GateFailed, record.PhaseFailed, record.TaskFailed)
 
-	if got := find(t, events, record.GateFailed).Data["exit"]; got != "3" {
-		t.Errorf("gate.failed exit = %q, want the 3 the gate returned", got)
+	for _, e := range events {
+		if e.Kind != record.GateFailed {
+			continue
+		}
+
+		if got := e.Data["exit"]; got != "3" {
+			t.Errorf("gate.failed exit = %q, want the 3 the gate returned", got)
+		}
 	}
 }

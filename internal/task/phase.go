@@ -3,7 +3,6 @@ package task
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -180,7 +179,15 @@ func phaseRefused(phase string, n int, r engine.StreamRefusal) record.Event {
 	return record.Event{Kind: record.PhaseRefused, Phase: phase, Text: c, Data: data}
 }
 
-func runGates(ctx context.Context, s *store.Store, t Task, p flow.Phase, n int, wt string, out engine.Result) error {
+// runGates runs every gate the phase declares and writes down what each one
+// answered.
+//
+// A gate that refused comes back as a value, not as an error. Whether a
+// refusal ends the run is not this function's to decide — the flow says how
+// many attempts a phase gets, and attempts is where that is counted — so
+// what is written here is gate.failed and nothing else. The events that end
+// a phase are written by whoever decides it is over.
+func runGates(ctx context.Context, s *store.Store, t Task, p flow.Phase, n int, wt string, out engine.Result) (*gateRefusal, error) {
 	for _, g := range p.Gates {
 		cmd := exec.CommandContext(ctx, "sh", "-c", g.Command)
 		cmd.Dir = wt
@@ -198,7 +205,7 @@ func runGates(ctx context.Context, s *store.Store, t Task, p flow.Phase, n int, 
 		if err == nil {
 			data["exit"] = "0"
 			if emitErr := emit(s, t, record.Event{Kind: record.GatePassed, Phase: p.Name, Text: text, Data: data}); emitErr != nil {
-				return emitErr
+				return nil, emitErr
 			}
 
 			continue
@@ -220,7 +227,7 @@ func runGates(ctx context.Context, s *store.Store, t Task, p flow.Phase, n int, 
 		// passed in the instant the deadline went by did the work, and calling
 		// that a cancellation would throw away a gate that ran green.
 		if ctxErr := ctx.Err(); ctxErr != nil {
-			return stopped(s, t, p.Name, out, ctxErr)
+			return nil, stopped(s, t, p.Name, out, ctxErr)
 		}
 
 		exitCode := 1
@@ -232,11 +239,9 @@ func runGates(ctx context.Context, s *store.Store, t Task, p flow.Phase, n int, 
 
 		data["exit"] = strconv.Itoa(exitCode)
 		_ = emit(s, t, record.Event{Kind: record.GateFailed, Phase: p.Name, Text: text, Data: data}) //nolint:errcheck // best-effort event emission on gate failure
-		gateCause := fmt.Errorf("gate %q failed (exit %d)", g.Name, exitCode)
-		_ = emit(s, t, phaseEnd(record.PhaseFailed, p.Name, out, gateCause)) //nolint:errcheck // best-effort event emission on gate failure
 
-		return failed(s, t, fmt.Errorf("task %s, phase %q: %w", t.ID, p.Name, gateCause))
+		return &gateRefusal{Gate: g.Name, Exit: exitCode, Output: text}, nil
 	}
 
-	return nil
+	return nil, nil
 }
