@@ -119,10 +119,17 @@ func (s spec) run(ctx context.Context, req Request) (Result, error) {
 	cmd := exec.CommandContext(ctx, bin, args...)
 	cmd.Dir = req.Dir
 
+	// The run's own variables first and the engine's after them, so that a
+	// spec that has an opinion about a name the run also set is the one
+	// that wins: the engine's are about how this program is driven, and
+	// nothing above knows enough to override that.
+	extra := append([]string(nil), req.Env...)
 	if s.env != nil {
-		if extra := s.env(req); len(extra) > 0 {
-			cmd.Env = append(cmd.Environ(), extra...)
-		}
+		extra = append(extra, s.env(req)...)
+	}
+
+	if len(extra) > 0 {
+		cmd.Env = append(cmd.Environ(), extra...)
 	}
 
 	stdout := &boundedBuffer{max: maxStream}

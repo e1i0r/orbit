@@ -34,6 +34,14 @@ type Request struct {
 	// rather than quietly starting over.
 	Resume string
 
+	// Env is what the phase's process is told about the run it belongs to,
+	// as NAME=value, on top of the environment Orbit itself was started
+	// with. It is how a command the engine runs — `orbit join`, in the
+	// worktree, with no arguments — knows which task it is acting on
+	// without the prompt having to spell an id the model would then have to
+	// copy correctly.
+	Env []string
+
 	// OnEvent receives streaming events in real time as the engine emits them.
 	OnEvent func(StreamEvent)
 }

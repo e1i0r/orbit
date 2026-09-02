@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 
 	"charm.land/lipgloss/v2"
@@ -23,14 +24,14 @@ func composeLabel(label string, active bool) string {
 
 func (m Model) composeRepoLine(active bool, w int) string {
 	p := m.opts.Words
-	prefix := composeLabel(p.T("compose.repo", "repository"), active)
+	prefix := composeLabel(p.T("compose.repo", "starts in"), active)
 
 	if len(m.compose.repos) == 0 {
 		val := m.compose.repo
 		role := Accent
 
 		if val == "" {
-			val = p.T("compose.repo_placeholder", "which repository?")
+			val = p.T("compose.repo_placeholder", "start in which repository?")
 			role = Dim
 		}
 
@@ -96,38 +97,70 @@ func (m Model) composeFlowLine(active bool, w int) string {
 	return fit(line, w)
 }
 
-func (m Model) flowSummary(name string) string {
+// flowDetail is what the flow the form is set to will actually do: one row
+// per phase, and what the flow says about itself under them.
+//
+// It was one row for all of it — every phase and the whole description run
+// together behind a "·" — which at any terminal width ended in an ellipsis,
+// so the sentence a reader was choosing between flows on was the half of it
+// that fitted. A phase is a line because a flow is a sequence, and a
+// sequence read as a paragraph is a sequence nobody counts.
+//
+// The description is wrapped to the room left beside the label and cut at
+// three rows: it is prose somebody wrote about their own flow, and a form
+// that grows without bound underneath the field being edited pushes the task
+// box off a short terminal.
+func (m Model) flowDetail(name string, w int) []string {
 	fl, err := flow.Resolve(m.opts.Flows, name)
 	if err != nil {
-		return ""
+		return nil
 	}
 
-	var phaseDescs []string
+	out := make([]string, 0, len(fl.Phases)+flowAboutRows)
 
-	for _, ph := range fl.Phases {
-		desc := ph.Name
-		if ph.Engine != "" {
-			engMod := ph.Engine
-			if ph.Model != "" && ph.Model != "default" {
-				engMod += "/" + ph.Model
-			}
+	for i, ph := range fl.Phases {
+		out = append(out, m.flowPhaseRow(i+1, ph))
+	}
 
-			desc += " (" + engMod + ")"
+	about := wrapPromptText(fl.Description, max(w-composeLabelStart-2, minFlowAbout))
+	if len(about) > flowAboutRows {
+		about = append(about[:flowAboutRows-1], about[flowAboutRows-1]+"…")
+	}
+
+	return append(out, about...)
+}
+
+// flowAboutRows is how many rows of a flow's own description are shown, and
+// minFlowAbout the narrowest the wrap is allowed to get — a pane too narrow
+// to hold the label and a word would otherwise wrap one letter per row.
+const (
+	flowAboutRows = 3
+	minFlowAbout  = 20
+)
+
+// flowPhaseRow is one phase: what it is called, what runs it, and whether it
+// stops there.
+//
+// The pause is a word and not only the glyph it used to be. A flow that
+// stops halfway and waits is the one thing about a flow that surprises the
+// person who chose it, and ⏸ alone is a symbol a reader has to already know.
+func (m Model) flowPhaseRow(n int, ph flow.Phase) string {
+	row := fmt.Sprintf("%d %s", n, ph.Name)
+
+	if ph.Engine != "" {
+		engine := ph.Engine
+		if ph.Model != "" && ph.Model != "default" {
+			engine += "/" + ph.Model
 		}
 
-		if ph.Wait {
-			desc += " ⏸"
-		}
-
-		phaseDescs = append(phaseDescs, desc)
+		row += " · " + engine
 	}
 
-	pipeline := strings.Join(phaseDescs, " ➔ ")
-	if fl.Description != "" {
-		return pipeline + " · " + fl.Description
+	if ph.Wait {
+		return row + " · " + Paint(Warn).Render("⏸ "+m.opts.Words.T("compose.flow_waits", "waits for you"))
 	}
 
-	return pipeline
+	return row
 }
 
 const composeLabelStart = gutter + composeLabelWidth + 1

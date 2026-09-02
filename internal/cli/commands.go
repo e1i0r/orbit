@@ -203,6 +203,12 @@ func commands() []Command {
 		},
 		Run: requeueTask,
 	}, {
+		Name: "join", Args: "[-repo <dir>] [-task <id>] <name>", NeedsArgs: true,
+		About: func(p *words.Printer) string {
+			return p.T("cmd.join", "open a checkout of another repository for a task")
+		},
+		Run: joinRepo,
+	}, {
 		Name: "reconcile", Args: "-repo <dir> [id]",
 		About: func(p *words.Printer) string {
 			return p.T("cmd.reconcile", "close the records of runs whose processes are gone")

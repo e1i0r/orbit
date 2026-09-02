@@ -22,7 +22,7 @@ func asked(t *testing.T, prev string, notes ...string) string {
 	return prompt(
 		Task{ID: "ACME-1", Text: "Retry the webhook on 5xx.", Repo: repoTaskRepo(t)},
 		flow.Phase{Name: "implement", Prompt: "Keep the retry budget bounded."},
-		notes, prev,
+		notes, prev, nil,
 	)
 }
 
@@ -61,11 +61,14 @@ func TestThePromptIsWrittenInMarkdown(t *testing.T) {
 func TestASectionWithNothingInItIsNotDrawn(t *testing.T) {
 	bare := prompt(
 		Task{ID: "ACME-1", Text: "Retry the webhook on 5xx.", Repo: repoTaskRepo(t)},
-		flow.Phase{Name: "implement"}, nil, "",
+		flow.Phase{Name: "implement"}, nil, "", nil,
 	)
 
 	bareLines := strings.Split(bare, "\n")
-	for _, head := range []string{"## Phase instructions", "## Previous phase output", "## Operator notes"} {
+	for _, head := range []string{
+		"## Phase instructions", "## Previous phase output", "## Operator notes",
+		"## Other repositories in this workspace",
+	} {
 		if slices.Contains(bareLines, head) {
 			t.Errorf("the prompt heads %q over nothing:\n%s", head, bare)
 		}
@@ -121,6 +124,35 @@ func TestTheAnswerContractIsTheLastThingSaid(t *testing.T) {
 
 	if n := strings.Count(full, "## How to answer"); n != 1 {
 		t.Errorf("the prompt says how to answer %d times, want once:\n%s", n, full)
+	}
+}
+
+// TestThePromptSaysWhatElseIsCheckedOutAndHowToReachIt. A phase that finds
+// the change it is making needs the API as well cannot ask for a repository
+// it does not know is there, and would otherwise either stop or write the
+// change in the wrong place.
+func TestThePromptSaysWhatElseIsCheckedOutAndHowToReachIt(t *testing.T) {
+	full := prompt(
+		Task{ID: "ACME-1", Text: "Retry the webhook on 5xx.", Repo: repoTaskRepo(t)},
+		flow.Phase{Name: "implement"}, nil, "",
+		[]string{"api", "scripts"},
+	)
+
+	lines := strings.Split(full, "\n")
+	if !slices.Contains(lines, "## Other repositories in this workspace") {
+		t.Fatalf("the prompt does not say what else is checked out:\n%s", full)
+	}
+
+	for _, want := range []string{"- `api`", "- `scripts`", "orbit join <name>"} {
+		if !strings.Contains(full, want) {
+			t.Errorf("the prompt does not carry %q:\n%s", want, full)
+		}
+	}
+
+	// The phase it may happen in is worth saying, because the alternative a
+	// model falls back on is asking permission the run has nobody to give.
+	if !strings.Contains(full, "any phase") {
+		t.Errorf("the prompt does not say a repository may join at any point:\n%s", full)
 	}
 }
 

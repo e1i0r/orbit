@@ -45,7 +45,7 @@ func (m Model) composeSubmit(startNow bool) (tea.Model, tea.Cmd) {
 	switch {
 	case repo == "":
 		return m.say(p.T("compose.repo_required",
-			"the repository is required; which one is this task against?")), nil
+			"a task has to start somewhere; which repository?")), nil
 	case id == "":
 		return m.say(p.T("compose.id_required",
 			"the id is required; what is this task called?")), nil

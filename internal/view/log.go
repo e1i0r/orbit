@@ -56,6 +56,7 @@ type Entry struct {
 	Tool    string  // tool name, from Data["tool"]
 	Notes   string  // note count or info, from Data["notes"]
 	By      string  // what acted on the task from outside a run, from Data["by"]
+	Repo    string  // the repository that joined, from Data["repo"]
 
 	// Kept and Full are the size of the engine's output as it was written
 	// and as it actually was. They differ only when internal/task cut it,
@@ -237,6 +238,7 @@ func entry(e record.Event, attempt int) Entry {
 		Tool:    e.Data["tool"],
 		Notes:   e.Data["notes"],
 		By:      e.Data["by"],
+		Repo:    e.Data["repo"],
 		Kept:    len(e.Text),
 		Full:    count(e.Data["output_bytes"]),
 	}

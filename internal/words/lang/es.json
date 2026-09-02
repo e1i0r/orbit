@@ -1527,6 +1527,18 @@
       "source": "stop a run and put the task back in to do",
       "value": "detener una ejecución y devolver la tarea a pendientes"
     },
+    "cmd.join": {
+      "source": "open a checkout of another repository for a task",
+      "value": "abre un checkout de otro repositorio para una tarea"
+    },
+    "join.needs_a_name": {
+      "source": "join needs the name of a repository; `orbit repos` lists them",
+      "value": "join necesita el nombre de un repositorio; `orbit repos` los lista"
+    },
+    "join.needs_a_task": {
+      "source": "join needs a task: pass -task, or run it inside a phase, where {env} is already set",
+      "value": "join necesita una tarea: pasá -task, o corrélo dentro de una fase, donde {env} ya está puesto"
+    },
     "cmd.reconcile": {
       "source": "close the records of runs whose processes are gone",
       "value": "cerrar los registros de las ejecuciones cuyos procesos ya no están"
@@ -1708,8 +1720,8 @@
       "value": "escribir una tarea"
     },
     "compose.repo": {
-      "source": "repository",
-      "value": "repositorio"
+      "source": "starts in",
+      "value": "empieza en"
     },
     "compose.id": {
       "source": "id",
@@ -1720,8 +1732,8 @@
       "value": "tarea"
     },
     "compose.repo_required": {
-      "source": "the repository is required; which one is this task against?",
-      "value": "el repositorio es obligatorio; ¿contra cuál es esta tarea?"
+      "source": "a task has to start somewhere; which repository?",
+      "value": "una tarea tiene que empezar en algún lado; ¿en cuál repositorio?"
     },
     "compose.id_required": {
       "source": "the id is required; what is this task called?",
@@ -1776,8 +1788,12 @@
       "value": "¿qué hay que hacer?"
     },
     "compose.repo_placeholder": {
-      "source": "which repository?",
-      "value": "¿cuál repositorio?"
+      "source": "start in which repository?",
+      "value": "¿en cuál repositorio empieza?"
+    },
+    "compose.flow_waits": {
+      "source": "waits for you",
+      "value": "te espera"
     },
     "compose.repo_hint": {
       "source": "(←/→ to cycle)",

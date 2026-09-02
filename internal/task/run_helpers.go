@@ -2,12 +2,13 @@ package task
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/logger"
+	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 )
 
@@ -33,23 +34,16 @@ func captured(out string) (text string, full int) {
 	return out[:n] + fmt.Sprintf("\n…[truncated, full output was %d bytes]", len(out)), len(out)
 }
 
-// prepare makes the worktree, reusing one that is already there so that a
-// re-run picks up where the last one stopped rather than starting over.
+// prepare opens the worktree a run works in, which is the repository the
+// task was written against joining it.
+//
+// It goes through the same verb a repository joined on the fourth phase goes
+// through, and that is the point rather than a saving: the first repository
+// is not special, and a task whose starting repository was recorded by one
+// road and every other by a second would have two accounts of its scope and
+// no reason to believe either.
 func prepare(s *store.Store, t Task) (string, error) {
-	wt, err := s.CreateWorktreeParent(t.Repo.Path, t.ID)
-	if err != nil {
-		return "", err
-	}
-
-	if _, statErr := os.Stat(wt); statErr == nil {
-		return wt, nil
-	}
-
-	if err := t.Repo.AddWorktree(wt, "orbit/"+t.ID); err != nil {
-		return "", err
-	}
-
-	return wt, nil
+	return Join(s, t, t.Repo)
 }
 
 // prompt is what the engine is told for one phase: the task, the phase it is
@@ -58,11 +52,12 @@ func prepare(s *store.Store, t Task) (string, error) {
 //
 // It is written in Markdown because the answer is asked for in Markdown, and
 // a prompt that asks in one shape for another is asking twice.
-func prompt(t Task, p flow.Phase, notes []string, prevOutput string) string {
+func prompt(t Task, p flow.Phase, notes []string, prevOutput string, others []string) string {
 	var b strings.Builder
 
 	fmt.Fprintf(&b, "# %s\n\n%s\n\n", t.ID, strings.TrimSpace(t.Text))
 	fmt.Fprintf(&b, "## Phase\n\n`%s`, in repository `%s`.\n", p.Name, t.Repo.Name)
+	b.WriteString(workspace(others))
 
 	if p.Prompt != "" {
 		fmt.Fprintf(&b, "\n## Phase instructions\n\n%s\n", strings.TrimSpace(p.Prompt))
@@ -86,4 +81,59 @@ func prompt(t Task, p flow.Phase, notes []string, prevOutput string) string {
 	b.WriteString("\n" + engine.AnswerContract)
 
 	return b.String()
+}
+
+// workspace is what the phase is told about the repositories it is not in.
+//
+// The names, and the one command that opens a checkout of one — nothing
+// else. Orbit does not read the task and suggest which of them it thinks the
+// work needs: a scope guessed up front is the same forgetting with a
+// different author, and the whole of the many-repos design is that the set
+// stays open until the work closes it. A workspace with nothing else in it
+// says nothing at all, because a list of no repositories and an instruction
+// for reaching them is a paragraph asking to be misread.
+func workspace(others []string) string {
+	if len(others) == 0 {
+		return ""
+	}
+
+	var b strings.Builder
+
+	b.WriteString("\n## Other repositories in this workspace\n\n")
+
+	for _, name := range others {
+		fmt.Fprintf(&b, "- `%s`\n", name)
+	}
+
+	fmt.Fprintf(&b, "\nIf this task turns out to need a change in one of them, run "+
+		"`orbit join <name>`. It prints a checkout to work in, and the repository "+
+		"becomes part of the task. Do this whenever the work calls for it, in any "+
+		"phase; nothing had to be declared in advance.\n")
+
+	return b.String()
+}
+
+// elsewhere is the workspace's other repositories, by name.
+//
+// A walk that fails answers nothing rather than stopping the run. The
+// listing is a convenience for the engine — a name it would otherwise have
+// to be told — and a task that cannot see its neighbours is a task that runs
+// in the one repository it already has, which is what every run did before
+// any of this.
+func elsewhere(t Task) []string {
+	found, err := repo.Siblings(t.Repo)
+	if err != nil {
+		logger.Error("task/run", "list the workspace of %q failed: %v", t.Repo.Path, err)
+		return nil
+	}
+
+	var names []string
+
+	for _, r := range found {
+		if r.Path != t.Repo.Path {
+			names = append(names, r.Name)
+		}
+	}
+
+	return names
 }

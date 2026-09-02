@@ -224,10 +224,7 @@ func TestComposeUpDownAndMouseClicks(t *testing.T) {
 	}
 
 	// 3. Mouse clicks directly focus fields
-	extra := 0
-	if m.flowSummary(m.compose.chosenFlow()) != "" {
-		extra = 1
-	}
+	extra := len(m.flowDetail(m.compose.chosenFlow(), m.width))
 
 	yRepo := m.frame.Body.Y + 2
 	yFlow := m.frame.Body.Y + 3

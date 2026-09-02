@@ -12,7 +12,8 @@ type composePlan struct {
 	url        int // for URL tab
 	repo       int
 	flow       int
-	flowSum    int // -1 if no summary
+	flowSum    int // first row of the flow detail, -1 when there is none
+	flowRows   int // how many rows that detail takes
 	id         int // for Manual tab
 	textHeader int // for Manual tab
 	textBoxTop int // for Manual tab
@@ -23,7 +24,9 @@ type composePlan struct {
 // composeLayout calculates pure geometric row positions based on active flow and tab.
 func (m Model) composeLayout() composePlan {
 	p := composePlan{tabLine: 0, flowSum: -1}
-	hasSum := m.flowSummary(m.compose.chosenFlow()) != ""
+	detail := m.flowDetail(m.compose.chosenFlow(), m.width)
+	hasSum := len(detail) > 0
+	p.flowRows = len(detail)
 
 	if m.compose.tab == composeTabManual {
 		p.repo = 2
@@ -32,7 +35,7 @@ func (m Model) composeLayout() composePlan {
 		cur := 4
 		if hasSum {
 			p.flowSum = cur
-			cur++
+			cur += p.flowRows
 		}
 
 		p.id = cur
@@ -49,7 +52,7 @@ func (m Model) composeLayout() composePlan {
 		cur := 5
 		if hasSum {
 			p.flowSum = cur
-			cur++
+			cur += p.flowRows
 		}
 
 		if m.compose.parsedIssue != nil {

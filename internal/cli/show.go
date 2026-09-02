@@ -84,6 +84,13 @@ func detail(text string, data map[string]string) string {
 		return reason
 	}
 
+	if text == "" {
+		// A repository joining is the one event whose whole content is in
+		// Data: the name is what the row is about, and without it the line
+		// reads "repo.joined" over an empty cell.
+		return data["repo"]
+	}
+
 	return text
 }
 
