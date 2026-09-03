@@ -122,6 +122,7 @@ const (
 	EntryDialogue                    // something outside a run acted on the task
 	EntryStuck                       // the attempts ran out
 	EntryOverBudget                  // it spent what it was allowed
+	EntryOverDiff                    // it changed more than was agreed
 	EntryDecision                    // something was decided, and the decision is in the line
 	EntrySuperseded                  // a decision replaced an earlier one
 	EntryRepoJoined                  // a repository joined the task by being worked in
@@ -180,6 +181,8 @@ func (e Entry) What() EntryKind {
 		return EntryStuck
 	case record.TaskOverBudget:
 		return EntryOverBudget
+	case record.TaskOverDiff:
+		return EntryOverDiff
 	case record.DecisionMade:
 		return EntryDecision
 	case record.DecisionSuperseded:

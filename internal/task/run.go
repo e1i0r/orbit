@@ -147,6 +147,14 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 			return err
 		}
 
+		// The diff is measured after the phase's work stands, and before
+		// the next phase adds to it. A change that has already gone past
+		// what was agreed is one a person decides about; running the phase
+		// after it would be spending money to make that decision bigger.
+		if v := overDiff(s, t, f); v != nil {
+			return stopChanging(s, t, p, *v)
+		}
+
 		// Only when there is something to carry. A phase that finished
 		// silently leaves the last real answer standing rather than blanking
 		// it, so the "Previous Phase Output" the next prompt shows can be two

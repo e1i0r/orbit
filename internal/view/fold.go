@@ -243,6 +243,13 @@ func fold(t *Task, e record.Event) {
 			{Name: "budget", Value: e.Data["budget"]},
 		}}
 		stamp(&t.Since, e.At)
+	case record.TaskOverDiff:
+		t.state = stateOverDiff
+		t.Reason = Reason{Key: ReasonOverDiff, Args: []Arg{
+			{Name: "lines", Value: e.Data["lines"]},
+			{Name: "budget", Value: e.Data["budget"]},
+		}}
+		stamp(&t.Since, e.At)
 	case record.DecisionMade, record.DecisionSuperseded, record.RepoJoined:
 		// Written down and deliberately not folded. What was decided and
 		// which repositories the task reached are facts about the task, but

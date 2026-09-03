@@ -72,4 +72,9 @@ const (
 	// was spent and what the cap was — because raising the cap is the
 	// decision it asks for. Args: spent, budget.
 	ReasonOverBudget = "reason.over_budget"
+	// ReasonOverDiff is a change bigger than the flow allowed, or one that
+	// reached a file the plan never named. The row carries the two figures
+	// for the reason ReasonOverBudget does — what it asks of a reader is
+	// whether this is still the change they wanted. Args: lines, budget.
+	ReasonOverDiff = "reason.over_diff"
 )

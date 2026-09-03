@@ -99,6 +99,7 @@ const (
 	stateFinished                 // task.finished
 	stateStuck                    // task.stuck: the attempts ran out and nothing will move on its own
 	stateOverBudget               // task.over_budget: it spent what it was allowed
+	stateOverDiff                 // task.over_diff: it changed more than was agreed
 
 	// stateCount is not a state. It is how many there are, so a test can
 	// walk every one and fail when a new state arrives without a band.
@@ -269,7 +270,7 @@ func bandOfState(s state) Band {
 	case stateRunning, stateHeld:
 		return Running
 	case stateWaiting, statePhaseFailed, stateFailed, stateTimedOut, stateAbandoned, stateStuck,
-		stateOverBudget:
+		stateOverBudget, stateOverDiff:
 		return NeedsYou
 	case stateCancelled, stateFinished:
 		return Done

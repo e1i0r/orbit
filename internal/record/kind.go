@@ -55,6 +55,13 @@ const (
 	// reads about which phase did not run.
 	TaskOverBudget = "task.over_budget"
 
+	// TaskOverDiff is a task whose change grew past what its flow allowed,
+	// or reached a file the plan never named. Like task.over_budget it is
+	// a run stopped by a number somebody chose rather than by anything
+	// going wrong. Data["lines"], Data["budget"] and Data["unplanned"] are
+	// what a reader compares.
+	TaskOverDiff = "task.over_diff"
+
 	PhaseStarted = "phase.started" // Data carries engine, model, n, and the permissions the phase was given
 	// PhaseFinished ends a phase that ran through. Text is what the engine
 	// printed, and Data carries what it spent doing so: cost where the
