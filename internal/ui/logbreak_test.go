@@ -28,6 +28,12 @@ func brokenLines(ending string) []view.Entry {
 // half nobody asked for: a newline puts it under the entry, out of the
 // columns it was drawn in, and a carriage return puts it over the entry, on
 // top of the time and the phase beside it.
+//
+// Dropping everything after the break is how that was kept off the screen,
+// and it dropped the command with it: a shell line continued with a
+// backslash reads `grep -rn \` and every one of them reads the same. The
+// break is what may not reach the pane, not what was written after it, so
+// the lines are joined onto the one row the entry has.
 func TestAnEntryIsOneRowWhicheverWayItsLinesEnd(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
@@ -49,9 +55,13 @@ func TestAnEntryIsOneRowWhicheverWayItsLinesEnd(t *testing.T) {
 				t.Errorf("the row carries the break itself: %q", lines[y])
 			}
 
+			if !strings.Contains(lines[y], "make check go test ./internal/ui/") {
+				t.Errorf("the row lost what came after the break: %q", lines[y])
+			}
+
 			for i, l := range lines {
-				if strings.Contains(l, "go test ./internal/ui/") {
-					t.Errorf("row %d holds what came after the break: %q", i, l)
+				if i != y && strings.Contains(l, "go test ./internal/ui/") {
+					t.Errorf("row %d is a second row for one entry: %q", i, l)
 				}
 			}
 		})

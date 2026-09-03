@@ -47,9 +47,14 @@ func TestAnActionIsTheArgumentAndNotTheDocument(t *testing.T) {
 			"Bash: internal/view/fold.go",
 		},
 		{
+			"the pattern a search is for is one of them too",
+			`{"pattern":"needle","-i":true}`,
+			"Bash: needle",
+		},
+		{
 			"a call about none of them shows what it was given",
-			`{"pattern":"needle"}`,
-			`Bash: {"pattern":"needle"}`,
+			`{"style":"table"}`,
+			`Bash: {"style":"table"}`,
 		},
 		{
 			"arguments that are not JSON are shown as they stand",
@@ -91,5 +96,72 @@ func TestAnActionIsCutBetweenCharacters(t *testing.T) {
 	// And one that fits is not touched.
 	if got := formatAction("Bash", "ls"); got != "Bash: ls" {
 		t.Errorf("formatAction = %q, want a short action left alone", got)
+	}
+}
+
+// TestAnActionNamesTheFileAndNotTheWorktree.
+//
+// Every path an engine reports inside a run begins with the worktree it was
+// given — ~/.orbit/worktrees/<repo>/<task>/ — and that prefix is the same on
+// every row of the run. It is also long enough that cutting the action to
+// the measure cuts away the one part that differs: the file.
+func TestAnActionNamesTheFileAndNotTheWorktree(t *testing.T) {
+	for _, c := range []struct {
+		why  string
+		args string
+		want string
+	}{
+		{
+			"the worktree a run was given is the same on every row",
+			`{"file_path":"/Users/ana/.orbit/worktrees/5a14f7401345/FRA-62/internal/ui/repoargs_test.go"}`,
+			"Bash: internal/ui/repoargs_test.go",
+		},
+		{
+			"a state directory somewhere else is still a worktree",
+			`{"path":"/var/tmp/state/worktrees/02c3a714b58d/ACME-1/go.mod"}`,
+			"Bash: go.mod",
+		},
+		{
+			"a path that is not under a worktree is left as it stands",
+			`{"file_path":"/etc/hosts"}`,
+			"Bash: /etc/hosts",
+		},
+		{
+			"and the worktree root itself still names itself",
+			`{"path":"/Users/ana/.orbit/worktrees/5a14f7401345/FRA-62"}`,
+			"Bash: /Users/ana/.orbit/worktrees/5a14f7401345/FRA-62",
+		},
+	} {
+		if got := formatAction("Bash", c.args); got != c.want {
+			t.Errorf("formatAction(%s) = %q, want %q — %s", c.args, got, c.want, c.why)
+		}
+	}
+}
+
+// TestAnActionOnMoreThanOneLineIsJoined.
+//
+// A shell command written over several lines is one command. Stopping at
+// the first line break leaves the row reading `grep -rn \`, which is the
+// same row for every grep in the run and says nothing about any of them.
+func TestAnActionOnMoreThanOneLineIsJoined(t *testing.T) {
+	for _, c := range []struct {
+		why  string
+		args string
+		want string
+	}{
+		{
+			"a continued line carries on, and the backslash goes",
+			"{\"command\":\"grep -rn \\\\\\n  needle .\"}",
+			"Bash: grep -rn needle .",
+		},
+		{
+			"lines that are separate commands are still one row",
+			"{\"command\":\"cd internal\\ngo test ./...\"}",
+			"Bash: cd internal go test ./...",
+		},
+	} {
+		if got := formatAction("Bash", c.args); got != c.want {
+			t.Errorf("formatAction(%s) = %q, want %q — %s", c.args, got, c.want, c.why)
+		}
 	}
 }

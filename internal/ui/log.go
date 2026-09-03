@@ -241,7 +241,7 @@ func (m Model) logDetail(e view.Entry) string {
 		return strings.TrimSpace(e.Engine + " " + e.Model)
 	case view.EntryToolCall:
 		if e.Text != "" {
-			return formatLogTool(e.Tool, e.Text)
+			return view.ToolLine(e.Tool, e.Text)
 		}
 
 		return e.Tool
@@ -260,33 +260,6 @@ func (m Model) logDetail(e view.Entry) string {
 	}
 
 	return e.Said()
-}
-
-func formatLogTool(tool, args string) string {
-	head := firstLine(args)
-	if strings.HasPrefix(head, "{") {
-		if idx := strings.Index(head, `"command"`); idx >= 0 {
-			if after := strings.Index(head[idx:], `:"`); after >= 0 {
-				val := head[idx+after+2:]
-				if end := strings.Index(val, `"`); end >= 0 {
-					head = val[:end]
-				}
-			}
-		} else if idx := strings.Index(head, `"path"`); idx >= 0 {
-			if after := strings.Index(head[idx:], `:"`); after >= 0 {
-				val := head[idx+after+2:]
-				if end := strings.Index(val, `"`); end >= 0 {
-					head = val[:end]
-				}
-			}
-		}
-	}
-
-	if head != "" {
-		return tool + ": " + head
-	}
-
-	return tool
 }
 
 // firstLine is everything up to the first line break. A multi-line Text on a
