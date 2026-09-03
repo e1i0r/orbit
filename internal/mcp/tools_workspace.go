@@ -77,19 +77,55 @@ func phasesProperty() Property {
 					Description: "What this step may touch. An empty list is the step that asks for nothing, and gets the most restrictive posture the engine can state.",
 					Items:       &Property{Type: "string", Description: "One permission.", Enum: flow.Permissions()},
 				},
-				"gates": {
-					Type:        "array",
-					Description: "Commands run in the worktree after the engine finishes. A gate that exits non-zero fails the phase.",
-					Items: &Property{
-						Type:        "object",
-						Description: "One check.",
-						Required:    []string{"name", "command"},
-						Properties: map[string]Property{
-							"name":    {Type: "string", Description: "What the check is called."},
-							"command": {Type: "string", Description: "The shell command to run."},
-						},
-					},
-				},
+				"gates": checksProperty("Commands run in the worktree after the engine finishes. A gate that exits non-zero fails the phase."),
+				"loop":  loopProperty(),
+			},
+		},
+	}
+}
+
+// checksProperty is a list of named commands, which is the shape of a
+// phase's gates and of a loop's checks alike.
+func checksProperty(about string) Property {
+	return Property{
+		Type:        "array",
+		Description: about,
+		Items: &Property{
+			Type:        "object",
+			Description: "One check.",
+			Required:    []string{"name", "command"},
+			Properties: map[string]Property{
+				"name":    {Type: "string", Description: "What the check is called."},
+				"command": {Type: "string", Description: "The shell command to run."},
+			},
+		},
+	}
+}
+
+// loopProperty is the block that repeats. A phase carries this instead of an
+// engine, never as well as one.
+//
+// The inner phases are described as objects rather than spelled out a second
+// time: a schema that repeated every field of a phase inside itself would be
+// two descriptions of one thing, and the day a field is added one of them
+// would stop mentioning it.
+func loopProperty() Property {
+	return Property{
+		Type: "object",
+		Description: "Makes this phase a block that repeats instead of a step that runs. " +
+			"The phases inside it go round until every check passes, and never more than max times. " +
+			"A phase with a loop names no engine of its own.",
+		Required: []string{"phases", "until", "max"},
+		Properties: map[string]Property{
+			"phases": {
+				Type:        "array",
+				Description: "The phases that go round, in order. Each is a phase like any other, and none of them may hold a loop of its own.",
+				Items:       &Property{Type: "object", Description: "One phase of the loop."},
+			},
+			"until": checksProperty("What says the work is done. The loop stops when every one of these exits zero — never because the model said it was finished."),
+			"max": {
+				Type:        "integer",
+				Description: "How many turns the loop may take. There is no default: a loop with no cap spends the whole quota window on a check that cannot pass.",
 			},
 		},
 	}

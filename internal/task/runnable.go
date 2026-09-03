@@ -29,7 +29,25 @@ func runnable(f flow.Flow, engines map[string]engine.Engine) error {
 		return err
 	}
 
-	for _, p := range f.Phases {
+	return walkable(f.Phases, engines)
+}
+
+// walkable asks the same of a list of phases wherever it sits: the flow's
+// own, or the ones inside a loop.
+//
+// A loop names no engine and its phases do. Asking about the block itself
+// would report a phase wanting the engine "" — which is not a mistake
+// anybody made, and would refuse every flow with a loop in it.
+func walkable(phases []flow.Phase, engines map[string]engine.Engine) error {
+	for _, p := range phases {
+		if p.Loop != nil {
+			if err := walkable(p.Loop.Phases, engines); err != nil {
+				return err
+			}
+
+			continue
+		}
+
 		eng, ok := engines[p.Engine]
 		if !ok {
 			return fmt.Errorf("phase %q wants the engine %q, which is not configured", p.Name, p.Engine)

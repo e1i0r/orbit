@@ -148,6 +148,7 @@ const (
 	EntryOverDiff                       // it changed more than was agreed
 	EntryNewDependency                  // it reached for a library nobody approved
 	EntryContradicts                    // the change goes against a decision
+	EntryLoopChecked                    // a turn of a loop, and what its checks answered
 	EntryApproved                       // a reader said yes to those libraries
 	EntryDecision                       // something was decided, and the decision is in the line
 	EntrySuperseded                     // a decision replaced an earlier one
@@ -213,6 +214,8 @@ func (e Entry) What() EntryKind {
 		return EntryNewDependency
 	case record.TaskContradicts:
 		return EntryContradicts
+	case record.LoopChecked:
+		return EntryLoopChecked
 	case record.DependencyApproved:
 		return EntryApproved
 	case record.DecisionMade:

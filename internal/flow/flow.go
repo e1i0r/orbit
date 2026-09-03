@@ -83,6 +83,15 @@ type Phase struct {
 	// can state rather than into an absence of flags.
 	Permissions []string `json:"permissions,omitempty"`
 	Gates       []Gate   `json:"gates,omitempty"`
+
+	// Loop makes this phase a block rather than a step: the phases inside
+	// it go round until every check passes, and never more than Max times.
+	//
+	// A phase is one or the other. An engine and a loop on the same phase
+	// would leave the interpreter to decide which of the two the flow
+	// meant, and whichever it picked would surprise the person who wrote
+	// the file.
+	Loop *Loop `json:"loop,omitempty"`
 }
 
 // Gate is a named verification check run after a phase engine finishes.
@@ -134,6 +143,44 @@ type Flow struct {
 	Phases              []Phase `json:"phases"`
 }
 
+// validate is what has to be true of one phase, wherever it sits: at the
+// top of a flow, or inside a loop of one.
+//
+// It is a method so that a loop's phases are held to the same rules as the
+// flow's own. Two lists of checks would agree until the day somebody added
+// a rule to one of them.
+func (p Phase) validate(flow string, siblings int) error {
+	if p.Loop != nil && p.Engine != "" {
+		return fmt.Errorf("flow %q: phase %q is both an engine and a loop, and only one of those can run", flow, p.Name)
+	}
+
+	if p.Loop == nil && p.Engine == "" {
+		return fmt.Errorf("flow %q: phase %q names no engine", flow, p.Name)
+	}
+
+	// A permission nobody defined is refused here, at load, rather than
+	// where it would otherwise surface: after a worktree, a process and a
+	// bill. Load calls Validate as it decodes, so a flow file with a typo
+	// in it never becomes a run at all.
+	for _, perm := range p.Permissions {
+		if !slices.Contains(Permissions(), perm) {
+			return fmt.Errorf("flow %q: phase %q asks for unknown permission %q", flow, p.Name, perm)
+		}
+	}
+
+	for gi, g := range p.Gates {
+		if g.Name == "" {
+			return fmt.Errorf("flow %q: phase %q has a gate at position %d with no name", flow, p.Name, gi+1)
+		}
+
+		if g.Command == "" {
+			return fmt.Errorf("flow %q: phase %q gate %q has no command", flow, p.Name, g.Name)
+		}
+	}
+
+	return p.Loop.validate(flow, p.Name)
+}
+
 // AttemptCap is how many times a phase of this flow may be run.
 func (f Flow) AttemptCap() int {
 	if f.Attempts <= 0 {
@@ -172,33 +219,14 @@ func (f Flow) Validate() error {
 			return fmt.Errorf("flow %q: phase %d has no name", f.Name, i+1)
 		}
 
-		if p.Engine == "" {
-			return fmt.Errorf("flow %q: phase %q names no engine", f.Name, p.Name)
-		}
-
 		if seen[p.Name] {
 			return fmt.Errorf("flow %q: phase %q appears more than once", f.Name, p.Name)
 		}
 
 		seen[p.Name] = true
-		// A permission nobody defined is refused here, at load, rather than
-		// where it would otherwise surface: after a worktree, a process and
-		// a bill. Load calls Validate as it decodes, so a flow file with a
-		// typo in it never becomes a run at all.
-		for _, perm := range p.Permissions {
-			if !slices.Contains(Permissions(), perm) {
-				return fmt.Errorf("flow %q: phase %q asks for unknown permission %q", f.Name, p.Name, perm)
-			}
-		}
 
-		for gi, g := range p.Gates {
-			if g.Name == "" {
-				return fmt.Errorf("flow %q: phase %q has a gate at position %d with no name", f.Name, p.Name, gi+1)
-			}
-
-			if g.Command == "" {
-				return fmt.Errorf("flow %q: phase %q gate %q has no command", f.Name, p.Name, g.Name)
-			}
+		if err := p.validate(f.Name, len(f.Phases)); err != nil {
+			return err
 		}
 	}
 
