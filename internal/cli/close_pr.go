@@ -37,25 +37,33 @@ func closePR(ctx Context, args []string) error {
 	p := ctx.printer()
 	taskID := fs.Args()[0]
 
-	s, r, err := openBoth(*dir)
+	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
 		logger.Error("cli/close-pr", "open repository %q failed: %v", *dir, err)
 		return err
 	}
 
-	wtDir, err := s.WorktreeDir(r.Path, taskID)
+	where, err := worked(s, r, taskID)
 	if err != nil {
-		logger.Error("cli/close-pr", "get worktree for task %q failed: %v", taskID, err)
+		logger.Error("cli/close-pr", "read the repositories of task %q failed: %v", taskID, err)
 		return err
 	}
 
 	branch := "orbit/" + taskID
 
-	if err := r.ClosePR(wtDir, branch, closingComment(ctx)); err != nil {
-		logger.Error("cli/close-pr", "gh pr close failed: %v", err)
+	for _, one := range where {
+		wtDir, wtErr := s.WorktreeDir(one.Path, taskID)
+		if wtErr != nil {
+			logger.Error("cli/close-pr", "get worktree for task %q failed: %v", taskID, wtErr)
+			return wtErr
+		}
 
-		return fmt.Errorf("%s: %w", p.T("close_pr.refused", "closing the pull request of {id} failed",
-			words.Arg{Name: "id", Value: taskID}), err)
+		if err := one.ClosePR(wtDir, branch, closingComment(ctx)); err != nil {
+			logger.Error("cli/close-pr", "gh pr close failed: %v", err)
+
+			return fmt.Errorf("%s: %w", p.T("close_pr.refused", "closing the pull request of {id} failed",
+				words.Arg{Name: "id", Value: taskID}), err)
+		}
 	}
 
 	logger.Info("cli/close-pr", "closed pull request for task %s on branch %s", taskID, branch)
