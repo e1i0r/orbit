@@ -211,6 +211,8 @@ func (m Model) logWord(e view.Entry) (string, Role) {
 		return p.T("log.over_diff", "change too big"), Bad
 	case view.EntryNewDependency:
 		return p.T("log.new_dependency", "new dependency"), Bad
+	case view.EntryContradicts:
+		return p.T("log.contradicts", "against a decision"), Bad
 	case view.EntryApproved:
 		return p.T("log.approved", "dependency approved"), OK
 	case view.EntryDecision:

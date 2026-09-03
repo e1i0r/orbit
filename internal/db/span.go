@@ -32,6 +32,7 @@ var (
 		record.TaskOverBudget:    true,
 		record.TaskOverDiff:      true,
 		record.TaskNewDependency: true,
+		record.TaskContradicts:   true,
 	}
 
 	// closesPhase includes phase.retried because an attempt that a gate

@@ -68,6 +68,13 @@ const (
 	// updates — is the reader's. Data["names"] is what was added.
 	TaskNewDependency = "task.new_dependency"
 
+	// TaskContradicts is a change that went against a decision this task
+	// had already made. Data["decision"] names it and Text is why the
+	// judge said so — the two things a reader needs to choose between the
+	// only two answers there are: change the code back, or supersede the
+	// decision.
+	TaskContradicts = "task.contradicts"
+
 	PhaseStarted = "phase.started" // Data carries engine, model, n, and the permissions the phase was given
 	// PhaseFinished ends a phase that ran through. Text is what the engine
 	// printed, and Data carries what it spent doing so: cost where the

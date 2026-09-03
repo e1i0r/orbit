@@ -56,7 +56,7 @@ func StuckStreak(tasks []Task) []Task {
 func Stopped(t Task) bool {
 	switch t.Reason.Key {
 	case ReasonFailed, ReasonFailedToStart, ReasonTimedOut, ReasonAbandoned, ReasonCancelled,
-		ReasonStuck, ReasonOverBudget, ReasonOverDiff, ReasonNewDependency:
+		ReasonStuck, ReasonOverBudget, ReasonOverDiff, ReasonNewDependency, ReasonContradicts:
 		return true
 	case "":
 		return BandOf(t) == Done

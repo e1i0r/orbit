@@ -451,6 +451,10 @@
         "other": "no se pudieron leer {n} registros"
       }
     },
+    "reason.contradicts": {
+      "source": "goes against {decision}",
+      "value": "va contra {decision}"
+    },
     "reason.new_dependency": {
       "source": "added {names}",
       "value": "agregó {names}"
@@ -974,6 +978,10 @@
     "approve.done": {
       "source": "approved for {id}: {names}",
       "value": "aprobado para {id}: {names}"
+    },
+    "log.contradicts": {
+      "source": "against a decision",
+      "value": "contra una decisión"
     },
     "log.new_dependency": {
       "source": "new dependency",

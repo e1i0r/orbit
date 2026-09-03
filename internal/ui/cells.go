@@ -122,6 +122,8 @@ func (m Model) stateWord(t view.Task) (string, Role) {
 		return p.T("reason.abandoned", "abandoned"), Warn
 	case view.ReasonCancelled:
 		return p.T("reason.cancelled", "cancelled"), Dim
+	case view.ReasonContradicts:
+		return p.T("reason.contradicts", "goes against {decision}", reasonArgs(t.Reason)...), Bad
 	case view.ReasonNewDependency:
 		return p.T("reason.new_dependency", "added {names}", reasonArgs(t.Reason)...), Bad
 	case view.ReasonOverDiff:
