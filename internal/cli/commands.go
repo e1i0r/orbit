@@ -126,9 +126,10 @@ func (c Command) Usage() string {
 
 // commands is every command there is, in the order they are worth reading:
 // the window first, then what a task is made to do, then what it is asked
-// about, and the settings last.
+// about, the settings, and last the two verbs of answering.go — which are
+// there because this file met the size ceiling.
 func commands() []Command {
-	return []Command{{
+	return append([]Command{{
 		Name: "top", Args: "[dir]",
 		About:    func(p *words.Printer) string { return p.T("cmd.top", "watch every task in one window") },
 		Run:      top,
@@ -276,7 +277,7 @@ func commands() []Command {
 		Because: func(p *words.Printer) string {
 			return p.T("cmd.mcp.inside", "it speaks over this terminal, which the window is already using")
 		},
-	}}
+	}}, answering()...)
 }
 
 // lookup finds a command by the name that was typed.

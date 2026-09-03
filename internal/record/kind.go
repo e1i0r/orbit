@@ -31,7 +31,14 @@ const (
 	TaskAbandoned = "task.abandoned" // its process is gone and a reader wrote that down
 	TaskRead      = "task.read"      // somebody has looked at it
 	TaskNoted     = "task.noted"     // a user note left for the task
-	TaskDialogue  = "task.dialogue"  // something outside a run acted on it; Data["by"] says what
+	// ReviewComment is something a reviewer wrote on the pull request,
+	// read back into the record so a phase can answer it. Data["by"] is who
+	// wrote it, Data["where"] the file and line it is about, and
+	// Data["url"] where it can be read in full. It is consumed the way a
+	// note is: the phase that runs next is told, and the one after it is
+	// not told again.
+	ReviewComment = "review.comment"
+	TaskDialogue  = "task.dialogue" // something outside a run acted on it; Data["by"] says what
 	// TaskDeleted takes a task off every listing without unwriting a word
 	// of what it did. The record is the only account of what an engine was
 	// asked, what it cost and what it changed, and a reader tidying a board
