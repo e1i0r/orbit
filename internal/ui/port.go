@@ -42,6 +42,13 @@ type Settings interface {
 	SetLanguage(string) error
 	UnreadCap() int
 	SetUnreadCap(int) error
+	// BudgetWorkspace and QuotaFloor are read and not written here: they
+	// are the two halves of the brake the queue asks about, and `orbit set`
+	// is where a number like that is chosen. A pair of writers this window
+	// has no screen for would be a port promising a gesture nobody can
+	// make.
+	BudgetWorkspace() float64
+	QuotaFloor() int
 	Engine() string
 	SetEngine(string) error
 	Model() string

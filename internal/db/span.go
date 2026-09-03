@@ -23,12 +23,13 @@ import (
 // why a second one does not reopen the first.
 var (
 	closesRun = map[string]bool{
-		record.TaskFinished:  true,
-		record.TaskFailed:    true,
-		record.TaskCancelled: true,
-		record.TaskTimedOut:  true,
-		record.TaskAbandoned: true,
-		record.TaskStuck:     true,
+		record.TaskFinished:   true,
+		record.TaskFailed:     true,
+		record.TaskCancelled:  true,
+		record.TaskTimedOut:   true,
+		record.TaskAbandoned:  true,
+		record.TaskStuck:      true,
+		record.TaskOverBudget: true,
 	}
 
 	// closesPhase includes phase.retried because an attempt that a gate

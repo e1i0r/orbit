@@ -121,6 +121,12 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 			continue
 		}
 
+		// The budget is asked before the notes are taken, so that a run
+		// stopped by it does not consume a note the next run will need.
+		if spent, budget, over := overBudget(s, t); over {
+			return stopSpending(s, t, p, spent, budget)
+		}
+
 		notes, notesErr := unconsumedNotes(s, t)
 		if notesErr != nil {
 			return failed(s, t, fmt.Errorf("task %s, before phase %q: %w", t.ID, p.Name, notesErr))

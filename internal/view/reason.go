@@ -66,4 +66,10 @@ const (
 	// end of retrying — nothing will move until a reader decides
 	// something. Args: attempts.
 	ReasonStuck = "reason.stuck"
+	// ReasonOverBudget is a task that spent what it was allowed. It is not
+	// a failure and not stuck: the work was going fine and a number
+	// somebody chose stopped it, so the row carries both figures — what
+	// was spent and what the cap was — because raising the cap is the
+	// decision it asks for. Args: spent, budget.
+	ReasonOverBudget = "reason.over_budget"
 )

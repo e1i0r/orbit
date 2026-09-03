@@ -111,6 +111,15 @@ func (m Model) autoStartNext() (Model, tea.Cmd) {
 		return m, nil
 	}
 
+	// The money, or the window the money bought. Silently, like the unread
+	// cap above it and for the same reason: the poll runs twice a second,
+	// and a sentence in the band on every one of them would own the band
+	// for as long as the brake is on. The header carries it instead, where
+	// what is standing is drawn.
+	if m.workspaceBrake(m.opts.Words).key != "" {
+		return m, nil
+	}
+
 	flowName := flow.Default
 	if m.opts.Settings != nil && m.opts.Settings.Flow() != "" {
 		flowName = m.opts.Settings.Flow()

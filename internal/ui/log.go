@@ -205,6 +205,8 @@ func (m Model) logWord(e view.Entry) (string, Role) {
 		return p.T("log.thought", "thought"), Dim
 	case view.EntryStuck:
 		return p.T("log.stuck", "stuck"), Bad
+	case view.EntryOverBudget:
+		return p.T("log.over_budget", "over budget"), Bad
 	case view.EntryDecision:
 		return p.T("log.decision", "decided"), Accent
 	case view.EntrySuperseded:

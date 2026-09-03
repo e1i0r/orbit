@@ -451,6 +451,18 @@
         "other": "no se pudieron leer {n} registros"
       }
     },
+    "reason.over_budget": {
+      "source": "spent {spent} of {budget}",
+      "value": "gastó {spent} de {budget}"
+    },
+    "header.budget_brake": {
+      "source": "budget spent (${spent})",
+      "value": "presupuesto gastado (${spent})"
+    },
+    "header.quota_brake": {
+      "source": "quota floor ({left}% left)",
+      "value": "piso de quota (queda {left}%)"
+    },
     "msg.breaker": {
       "source": "autopilot off: {n} runs in a row ended stuck",
       "value": "autopilot apagado: {n} corridas seguidas quedaron atascadas"
@@ -930,6 +942,10 @@
     "log.retried": {
       "source": "trying again",
       "value": "otro intento"
+    },
+    "log.over_budget": {
+      "source": "over budget",
+      "value": "sin presupuesto"
     },
     "log.gate_passed": {
       "source": "gate passed",
@@ -1918,6 +1934,30 @@
     "settings.language_changed": {
       "source": "language changed to {lang}",
       "value": "idioma cambiado a {lang}"
+    },
+    "setting.budget_task": {
+      "source": "the most one task may spend in dollars; 0 is no budget",
+      "value": "lo máximo que una tarea puede gastar en dólares; 0 es sin presupuesto"
+    },
+    "setting.budget_workspace": {
+      "source": "the most the board may have spent before nothing new starts on its own; 0 is no budget",
+      "value": "lo máximo que el tablero puede haber gastado antes de que nada arranque solo; 0 es sin presupuesto"
+    },
+    "setting.quota_floor": {
+      "source": "how much of a subscription engine's window must be left for the queue to go on, as a percentage; 0 is no floor",
+      "value": "cuánto tiene que quedar de la ventana de un motor por suscripción para que la cola siga, en porcentaje; 0 es sin piso"
+    },
+    "settings.not_an_amount": {
+      "source": "{val} is not an amount of money",
+      "value": "{val} no es un monto de dinero"
+    },
+    "settings.negative_budget": {
+      "source": "a budget cannot be negative; zero is no budget at all",
+      "value": "un presupuesto no puede ser negativo; cero es sin presupuesto"
+    },
+    "settings.not_a_share": {
+      "source": "a quota floor is a percentage between 0 and 99; 0 is no floor at all",
+      "value": "un piso de quota es un porcentaje entre 0 y 99; 0 es sin piso"
     },
     "settings.not_a_number": {
       "source": "{val} is not a whole number",
