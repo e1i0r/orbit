@@ -139,3 +139,38 @@ func TestSnapshotWritesTheStateAndTagsABackup(t *testing.T) {
 		t.Errorf("the refusal does not say how to undo it:\n%s", Refused(a))
 	}
 }
+
+// TestWhatWasAppliedCarriesBothStates. The summary a reader needs afterwards
+// is the difference between before and after — and an action that reported
+// success while leaving the world where it was is the failure this protocol
+// exists to catch.
+func TestWhatWasAppliedCarriesBothStates(t *testing.T) {
+	s, r := fixture(t)
+
+	tk, err := Create(s, r, "ACME-40", "apply and say so", "")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	a := Action{Name: "pr", Repo: r.Name, Ref: "before1", Plan: "push it", Revert: "gh pr close x"}
+	if err := Applied(s, tk, a, "after1"); err != nil {
+		t.Fatalf("Applied: %v", err)
+	}
+
+	events := mustEvents(t, s, tk)
+
+	last := events[len(events)-1]
+	if last.Kind != record.CriticalApplied {
+		t.Fatalf("the record ends in %q, want critical.applied", last.Kind)
+	}
+
+	if last.Data["ref"] != "before1" || last.Data["now"] != "after1" || last.Data["revert"] == "" {
+		t.Errorf("critical.applied carries %v, want both states and the way back", last.Data)
+	}
+
+	// And the task is waiting on nobody again: the question it was asked
+	// has been answered by the world.
+	if _, waiting := Waiting(s, tk); waiting {
+		t.Error("a task that applied its action is still waiting to be allowed to")
+	}
+}

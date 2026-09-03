@@ -140,3 +140,73 @@ func TestNumstatSkipsALineItCannotRead(t *testing.T) {
 		t.Errorf("the png reads as %+v, want a binary file worth no lines", got[1])
 	}
 }
+
+// TestABackupIsATagThatDoesNotMove. A branch is something git moves — a
+// push, a checkout, a reset all can — and a backup that moves is not a
+// backup.
+func TestABackupIsATagThatDoesNotMove(t *testing.T) {
+	isolateGitConfig(t)
+
+	dir := filepath.Join(t.TempDir(), "src")
+	if err := mkdir(dir); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+
+	makeRepo(t, dir, "main", "")
+	nameRepo(t, dir)
+
+	r, err := Open(dir)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+
+	wt := filepath.Join(t.TempDir(), "wt")
+	if err := r.AddWorktree(wt, "orbit/ACME-3"); err != nil {
+		t.Fatalf("AddWorktree: %v", err)
+	}
+
+	head, err := r.HeadSHA(wt)
+	if err != nil {
+		t.Fatalf("HeadSHA: %v", err)
+	}
+
+	if len(head) != 40 {
+		t.Errorf("HeadSHA answered %q, want the whole hash — an abbreviation that is unique today stops being unique", head)
+	}
+
+	if err := r.Backup(wt, "orbit/backup/ACME-3/now", head); err != nil {
+		t.Fatalf("Backup: %v", err)
+	}
+
+	// The work moves on, and the backup does not.
+	if err := os.WriteFile(filepath.Join(wt, "after.txt"), []byte("more\n"), 0o600); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	if err := r.CommitWorktree(wt, "work after the backup"); err != nil {
+		t.Fatalf("CommitWorktree: %v", err)
+	}
+
+	at, err := git(wt, "rev-list", "-n", "1", "orbit/backup/ACME-3/now")
+	if err != nil {
+		t.Fatalf("read the backup: %v", err)
+	}
+
+	if strings.TrimSpace(at) != head {
+		t.Errorf("the backup points at %q, want the commit it was taken at, %q", strings.TrimSpace(at), head)
+	}
+
+	// And a second backup of the same task does not overwrite the first.
+	if err := r.Backup(wt, "orbit/backup/ACME-3/later", head); err != nil {
+		t.Fatalf("second Backup: %v", err)
+	}
+
+	tags, err := git(wt, "tag", "-l", "orbit/backup/ACME-3/*")
+	if err != nil {
+		t.Fatalf("list the backups: %v", err)
+	}
+
+	if len(strings.Fields(tags)) != 2 {
+		t.Errorf("the repository holds %q, want both backups", tags)
+	}
+}
