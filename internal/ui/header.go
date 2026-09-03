@@ -263,6 +263,7 @@ func (m Model) headerFields() []headerField {
 	lang := p.T("header.lang_badge", "EN")
 	fields = append(fields, headerField{"lang", Chrome().Render("🌐 " + lang)})
 
+	fields = append(fields, m.runningField(p)...)
 	fields = append(fields, m.brakeField(p)...)
 
 	// Unread brake warning (shown when brake is engaged)
