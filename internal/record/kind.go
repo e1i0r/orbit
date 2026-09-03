@@ -38,7 +38,28 @@ const (
 	// note is: the phase that runs next is told, and the one after it is
 	// not told again.
 	ReviewComment = "review.comment"
-	TaskDialogue  = "task.dialogue" // something outside a run acted on it; Data["by"] says what
+
+	// TaskCritical marks a task as one that reaches something that
+	// matters, and every critical.* event below happens only for a task
+	// that carries it. Data["on"] is whether it is being turned on or off
+	// and Data["by"] is who said so — a mark that can be lifted is a mark
+	// somebody can put on by mistake without being stuck with it.
+	TaskCritical = "task.critical"
+
+	// The five steps of the critical protocol, in the order they happen.
+	//
+	// critical.snapshot is how the world stood before, critical.backup is
+	// the ref that can put it back, critical.approved or .rejected is what
+	// a person said about the plan, and critical.applied is what was done
+	// and where it left things. Data["revert"] travels with the last three
+	// because the command that undoes it is what a reader is owed at every
+	// point after the question was asked.
+	CriticalSnapshot = "critical.snapshot"
+	CriticalBackup   = "critical.backup"
+	CriticalApproved = "critical.approved"
+	CriticalRejected = "critical.rejected"
+	CriticalApplied  = "critical.applied"
+	TaskDialogue     = "task.dialogue" // something outside a run acted on it; Data["by"] says what
 	// TaskDeleted takes a task off every listing without unwriting a word
 	// of what it did. The record is the only account of what an engine was
 	// asked, what it cost and what it changed, and a reader tidying a board
