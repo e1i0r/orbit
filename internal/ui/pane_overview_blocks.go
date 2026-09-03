@@ -301,6 +301,7 @@ func (m Model) overviewActions(w int) []string {
 		act("X", p.T("overview.action_close_pr", "close PR")),
 		act("C", p.T("overview.action_checks", "fix checks")),
 		act("T", p.T("overview.action_tests", "more tests")),
+		act("R", p.T("overview.action_resolve", "resolve comments")),
 		act("a", p.T("overview.action_feedback", "feedback")),
 		act("0", p.T("overview.action_diff", "diff")),
 	}, gridColumns(w), w-2*len(paneGutter)) {

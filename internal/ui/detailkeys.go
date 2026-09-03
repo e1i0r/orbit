@@ -125,6 +125,10 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.fixChecks()
 	case k.String() == "T":
 		return m.addMoreTests()
+	// R and not r: r is restart, and a reader who meant to bring back a
+	// review would otherwise start the task over.
+	case k.String() == "R":
+		return m.resolveComments()
 	case k.String() == "t":
 		m = m.cycleThinking()
 

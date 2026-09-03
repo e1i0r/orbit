@@ -24,7 +24,7 @@ func (r phaseRun) run(ctx context.Context) (engine.Result, error, error) { //nol
 	)
 
 	out, runErr := r.eng.Run(ctx, engine.Request{
-		Prompt:      promptFor(r.task, r.flow, r.n, r.notes, r.prev, r.others, r.tried...),
+		Prompt:      promptFor(r.task, r.flow, r.n, r.notes, r.reviews, r.prev, r.others, r.tried...),
 		Model:       r.phase.Model,
 		Effort:      r.phase.Effort,
 		Thinking:    r.phase.Thinking,

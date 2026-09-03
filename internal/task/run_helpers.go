@@ -76,19 +76,19 @@ func fedOutput(p flow.Phase, prev string) string {
 // It is written in Markdown because the answer is asked for in Markdown, and
 // a prompt that asks in one shape for another is asking twice.
 func prompt(t Task, p flow.Phase, notes []string, prevOutput string, others []string, tried ...gateRefusal) string {
-	return build(t, p, false, notes, prevOutput, others, tried...)
+	return build(t, p, false, notes, nil, prevOutput, others, tried...)
 }
 
 // promptFor is prompt for a phase whose place in the flow is known, which is
 // the one thing that decides whether it is asked for the story: the last
 // phase is the only one that can tell how the task ended.
-func promptFor(t Task, f flow.Flow, n int, notes []string, prevOutput string, others []string, tried ...gateRefusal) string {
+func promptFor(t Task, f flow.Flow, n int, notes, reviews []string, prevOutput string, others []string, tried ...gateRefusal) string {
 	p := f.Phases[n-1]
 
-	return build(t, p, n == len(f.Phases), notes, prevOutput, others, tried...)
+	return build(t, p, n == len(f.Phases), notes, reviews, prevOutput, others, tried...)
 }
 
-func build(t Task, p flow.Phase, last bool, notes []string, prevOutput string, others []string, tried ...gateRefusal) string {
+func build(t Task, p flow.Phase, last bool, notes, reviews []string, prevOutput string, others []string, tried ...gateRefusal) string {
 	var b strings.Builder
 
 	fmt.Fprintf(&b, "# %s\n\n%s\n\n", t.ID, strings.TrimSpace(t.Text))
@@ -113,6 +113,19 @@ func build(t Task, p flow.Phase, last bool, notes []string, prevOutput string, o
 
 		for _, n := range notes {
 			fmt.Fprintf(&b, "- %s\n", n)
+		}
+	}
+
+	// After the operator's own notes and before the contract. A reviewer
+	// asking for something is the same kind of instruction a note is — it
+	// came from a person and it is about this task — but the operator is
+	// the one whose word settles a disagreement between the two, so theirs
+	// is read first.
+	if len(reviews) > 0 {
+		b.WriteString("\n## What reviewers asked for\n\n")
+
+		for _, r := range reviews {
+			fmt.Fprintf(&b, "- %s\n", r)
 		}
 	}
 

@@ -79,15 +79,21 @@ type phaseRun struct {
 	// flow and n place the phase in its own flow, which is what says
 	// whether it is the last one — and the last one is the only phase that
 	// can tell how the task ended.
-	flow   flow.Flow
-	phase  flow.Phase
-	eng    engine.Engine
-	n      int      // which phase of the flow this is
-	wt     string   // the worktree it runs in
-	notes  []string // what the operator has said since the last phase
-	prev   string   // what the phase before it said, when this one asked to be fed it
-	others []string // the repositories it has not joined, by name
-	tried  []gateRefusal
+	flow  flow.Flow
+	phase flow.Phase
+	eng   engine.Engine
+	n     int      // which phase of the flow this is
+	wt    string   // the worktree it runs in
+	notes []string // what the operator has said since the last phase
+	// reviews is what people said on the pull request and no phase has
+	// answered yet. It is carried beside the notes because it is the same
+	// kind of thing — an instruction from a person about this task — and
+	// read after them, because the operator is who settles a disagreement
+	// between the two.
+	reviews []string
+	prev    string   // what the phase before it said, when this one asked to be fed it
+	others  []string // the repositories it has not joined, by name
+	tried   []gateRefusal
 }
 
 // attempts runs one phase until a gate lets it stand or there are no

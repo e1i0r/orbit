@@ -144,16 +144,17 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		}
 
 		out, err := attempts(ctx, phaseRun{
-			store:  s,
-			task:   t,
-			flow:   f,
-			phase:  p,
-			eng:    engines[p.Engine],
-			n:      i + 1,
-			wt:     wt,
-			notes:  notes,
-			prev:   fedOutput(p, prevOutput),
-			others: others,
+			store:   s,
+			task:    t,
+			flow:    f,
+			phase:   p,
+			eng:     engines[p.Engine],
+			n:       i + 1,
+			wt:      wt,
+			notes:   notes,
+			reviews: unansweredReviews(s, t),
+			prev:    fedOutput(p, prevOutput),
+			others:  others,
 		}, f.AttemptCap())
 		if err != nil {
 			return err

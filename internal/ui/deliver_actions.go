@@ -83,6 +83,32 @@ func (m Model) addMoreTests() (tea.Model, tea.Cmd) {
 	return m.runWatched(Command{Name: "note"}, []string{"-repo", path, taskID, "--", instruction})
 }
 
+// resolveComments brings back what reviewers asked for on the pull request,
+// so the next run answers it.
+//
+// It reads and records, exactly as the verb does: the comments land in the
+// task and the reader decides whether to spend a run on them. A key that
+// silently started one would make "what did they say?" cost money.
+func (m Model) resolveComments() (tea.Model, tea.Cmd) {
+	p := m.opts.Words
+
+	taskID := m.detail
+	if taskID == "" {
+		if r, ok := m.selected(); ok && !r.head {
+			taskID = r.task.ID
+		}
+	}
+
+	if taskID == "" {
+		return m.say(p.T("deliver.no_task", "select a task to continue")), nil
+	}
+
+	path := m.taskRepoPath(taskID)
+	m = m.say(p.T("deliver.resolving", "reading the reviews on {id}...", about("id", taskID)))
+
+	return m.runWatched(Command{Name: "resolve"}, []string{"-repo", path, taskID})
+}
+
 // updatePRBranch commits any pending worktree modifications and pushes them to update the PR.
 func (m Model) updatePRBranch() (tea.Model, tea.Cmd) {
 	p := m.opts.Words
