@@ -198,6 +198,18 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		}
 	}
 
+	// The last word, before the run is called finished. A verdict that
+	// sends the task round again or hands it to a person writes its own
+	// terminal event, and this run ends there rather than also saying it
+	// finished.
+	if err := validate(ctx, s, t, f, engines[lastEngine(f)], wt); err != nil {
+		return err
+	}
+
+	if requeued(s, t) {
+		return nil
+	}
+
 	// Every phase ran and every one of them was written down; only the line
 	// that says so did not land. Calling that a failure is the closest true
 	// thing the record can say — the run did not complete, because

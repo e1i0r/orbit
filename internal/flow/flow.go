@@ -139,8 +139,20 @@ type Flow struct {
 	// check costs nothing in a repository whose decisions say nothing
 	// about the files being worked on: it is asked only when one of them
 	// reaches the change.
-	AllowContradictions bool    `json:"allow_contradictions,omitempty"`
-	Phases              []Phase `json:"phases"`
+	AllowContradictions bool `json:"allow_contradictions,omitempty"`
+	// Validate_ has the supervisor read the finished run against the task
+	// it was written for, and decide: it is done, it needs another run, or
+	// it needs a person.
+	//
+	// Off by default, unlike the other two, because this one costs a model
+	// call on every task that finishes rather than only when something
+	// looks wrong. A flow that wants the last word asks for it.
+	//
+	// The trailing underscore keeps the field from colliding with Validate,
+	// which is what says a flow can be walked at all — the JSON name is
+	// what a flow file writes, and it is `validate`.
+	Validate_ bool    `json:"validate,omitempty"`
+	Phases    []Phase `json:"phases"`
 }
 
 // validate is what has to be true of one phase, wherever it sits: at the
