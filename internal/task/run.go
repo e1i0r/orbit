@@ -135,6 +135,7 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		out, err := attempts(ctx, phaseRun{
 			store:  s,
 			task:   t,
+			flow:   f,
 			phase:  p,
 			eng:    engines[p.Engine],
 			n:      i + 1,
@@ -148,6 +149,7 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		}
 
 		noteDecisions(s, t, p, out)
+		noteStory(s, t, f, i+1, out)
 
 		// The diff is measured after the phase's work stands, and before
 		// the next phase adds to it. A change that has already gone past

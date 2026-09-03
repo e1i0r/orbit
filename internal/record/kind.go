@@ -75,6 +75,12 @@ const (
 	// decision.
 	TaskContradicts = "task.contradicts"
 
+	// TaskStory is how this prompt became this diff, in the five fields the
+	// task story spec settles on: entry, purpose, symptom, cause, fix. The
+	// engine writes them and the record is what proves them — every claim
+	// sits beside the events that would refute it.
+	TaskStory = "task.story"
+
 	PhaseStarted = "phase.started" // Data carries engine, model, n, and the permissions the phase was given
 	// PhaseFinished ends a phase that ran through. Text is what the engine
 	// printed, and Data carries what it spent doing so: cost where the

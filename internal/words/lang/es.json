@@ -979,6 +979,30 @@
       "source": "approved for {id}: {names}",
       "value": "aprobado para {id}: {names}"
     },
+    "overview.story": {
+      "source": "how it happened",
+      "value": "cómo pasó"
+    },
+    "story.entry": {
+      "source": "the way in",
+      "value": "la entrada"
+    },
+    "story.purpose": {
+      "source": "what it is for",
+      "value": "para qué es"
+    },
+    "story.symptom": {
+      "source": "what went wrong",
+      "value": "qué salió mal"
+    },
+    "story.cause": {
+      "source": "why",
+      "value": "por qué"
+    },
+    "story.fix": {
+      "source": "what was done",
+      "value": "qué se hizo"
+    },
     "log.contradicts": {
       "source": "against a decision",
       "value": "contra una decisión"

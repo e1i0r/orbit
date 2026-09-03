@@ -74,8 +74,12 @@ func refusals(tried []gateRefusal) string {
 // phaseRun is one phase and everything it needs to be run, gathered once so
 // that running it again costs nothing but the engine.
 type phaseRun struct {
-	store  *store.Store
-	task   Task
+	store *store.Store
+	task  Task
+	// flow and n place the phase in its own flow, which is what says
+	// whether it is the last one — and the last one is the only phase that
+	// can tell how the task ended.
+	flow   flow.Flow
 	phase  flow.Phase
 	eng    engine.Engine
 	n      int      // which phase of the flow this is

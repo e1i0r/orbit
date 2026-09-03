@@ -61,6 +61,7 @@ func (m Model) overviewLines() []string {
 
 	out := []string{""}
 	out = append(out, m.overviewHead(t, w)...)
+	out = append(out, m.storyLines(w)...)
 	out = append(out, m.overviewVitals(t, w)...)
 	out = append(out, m.overviewPhases(t, w)...)
 	out = append(out, m.overviewChanges(w)...)
