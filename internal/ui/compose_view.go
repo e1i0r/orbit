@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
 )
 
 // composeRows draws the compose screen: top tabs, the flow and what it will
@@ -166,6 +167,21 @@ func (m Model) composeFieldLine(fieldIdx int, label string, val input, placehold
 	return fit(prefix+body, w)
 }
 
+// chop breaks a word wider than the measure into pieces of it.
+//
+// A word with no space in it is a path, a URL, or the JSON a tool call was
+// made with, and there is nowhere in it to wrap. Left whole it comes back
+// from the wrap longer than it was wrapped to, and whoever draws it cuts it
+// to the measure — so the tail of the word is on no line at all, and a fold
+// that counts lines is told there is nothing to open.
+func chop(word string, maxW int) []string {
+	if lipgloss.Width(word) <= maxW {
+		return []string{word}
+	}
+
+	return strings.Split(ansi.Hardwrap(word, maxW, false), "\n")
+}
+
 func splitIntoLines(text string, maxW int) []string {
 	if maxW <= 0 {
 		return []string{text}
@@ -173,7 +189,11 @@ func splitIntoLines(text string, maxW int) []string {
 
 	var res []string
 
-	words := strings.Fields(text)
+	var words []string
+	for _, w := range strings.Fields(text) {
+		words = append(words, chop(w, maxW)...)
+	}
+
 	if len(words) == 0 {
 		return []string{""}
 	}

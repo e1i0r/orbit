@@ -124,17 +124,17 @@ func (m Model) logEntryLines(e view.Entry, i, w int) ([]string, bool) {
 	lead := clockCells + 2 + phaseCells + 2 + lipgloss.Width(word) + 3
 	availW := max(20, w-lead-lipgloss.Width(foldShut)-2)
 
-	// Wrapped to the measure and then cut to it: a tool call is written down
-	// as the arguments it was made with and JSON has no spaces to wrap at,
-	// so a row can come back from the wrap longer than it was wrapped to.
+	// Wrapped to the measure, and the wrap breaks what has no break in it:
+	// a tool call is written down as the arguments it was made with, and a
+	// path or a JSON document has no space to wrap at. Cutting the row to
+	// the measure instead is what this did, and what was cut was then on no
+	// row at all — the fold counts rows, so it was told there was nothing to
+	// open, and the reader had no way to reach the rest of the command.
 	//
 	// The rows and not the detail itself: a detail written over two short
 	// lines fits on one row, and drawing it unwrapped would take the newline
 	// it was written with onto the screen.
 	wrapped := splitIntoLines(detail, availW)
-	for n, wl := range wrapped {
-		wrapped[n] = fit(wl, availW)
-	}
 
 	if len(wrapped) <= 1 {
 		return []string{prefix + strings.Repeat(" ", lipgloss.Width(foldShut)) + Paint(Dim).Render(wrapped[0])}, false
