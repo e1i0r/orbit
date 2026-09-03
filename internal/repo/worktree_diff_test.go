@@ -7,6 +7,21 @@ import (
 	"testing"
 )
 
+// nameRepo gives a repository an author, so a commit made through the
+// production git() has one on a machine whose git config is empty — which is
+// every machine CI runs on.
+func nameRepo(t *testing.T, dir string) {
+	t.Helper()
+
+	if _, err := git(dir, "config", "user.name", "Test User"); err != nil {
+		t.Fatalf("git config user.name: %v", err)
+	}
+
+	if _, err := git(dir, "config", "user.email", "test@example.com"); err != nil {
+		t.Fatalf("git config user.email: %v", err)
+	}
+}
+
 // TestWorktreeChangesCountsWhatWasWrittenAndWhatWasCommitted. A budget an
 // engine can walk past by committing is not a budget, so both halves of the
 // work are one count.
@@ -19,6 +34,12 @@ func TestWorktreeChangesCountsWhatWasWrittenAndWhatWasCommitted(t *testing.T) {
 	}
 
 	makeRepo(t, dir, "main", "")
+	// CommitWorktree goes through the production git(), which inherits this
+	// process's environment — and isolateGitConfig has just emptied it of
+	// every config a commit could take an author from. The identity is set
+	// on the repository itself, the way cloneWithRemote does it, so the
+	// test does not depend on whoever is running it having one.
+	nameRepo(t, dir)
 
 	r, err := Open(dir)
 	if err != nil {
