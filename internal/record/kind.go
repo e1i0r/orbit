@@ -47,6 +47,14 @@ const (
 	// human reads about why it stopped.
 	TaskStuck = "task.stuck"
 
+	// TaskOverBudget is a task that has spent what it was allowed. Like
+	// task.stuck it is the end of a run that nothing will move on its own,
+	// and unlike it nothing was wrong with the work: the run stopped
+	// because of a number somebody chose. Data["spent"] and
+	// Data["budget"] are the two figures, and Text is the line a human
+	// reads about which phase did not run.
+	TaskOverBudget = "task.over_budget"
+
 	PhaseStarted = "phase.started" // Data carries engine, model, n, and the permissions the phase was given
 	// PhaseFinished ends a phase that ran through. Text is what the engine
 	// printed, and Data carries what it spent doing so: cost where the

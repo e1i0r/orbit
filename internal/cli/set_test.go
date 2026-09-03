@@ -120,6 +120,10 @@ func TestEverySettingKeyCanBeSet(t *testing.T) {
 		"flow":         "careful",
 		"theme":        "tokyo-night",
 		"check-record": "on",
+
+		"budget-task":      "1.50",
+		"budget-workspace": "20",
+		"quota-floor":      "15",
 	}
 	for _, key := range settingKeys() {
 		value, ok := values[key]

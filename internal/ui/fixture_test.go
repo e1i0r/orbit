@@ -38,6 +38,8 @@ type settings struct {
 	autopilot bool
 	lang      string
 	unread    int
+	budget    float64
+	floor     int
 	fail      error
 }
 
@@ -69,16 +71,18 @@ func (s *settings) SetLanguage(v string) error {
 // answers fail, because every one of them can refuse in the file this
 // stands for: the settings file has a lock, and a second orbit holding it
 // makes any of these say so after waiting two seconds.
-func (s *settings) UnreadCap() int         { return s.unread }
-func (s *settings) SetUnreadCap(int) error { return s.fail }
-func (s *settings) Engine() string         { return "" }
-func (s *settings) SetEngine(string) error { return s.fail }
-func (s *settings) Model() string          { return "" }
-func (s *settings) SetModel(string) error  { return s.fail }
-func (s *settings) Flow() string           { return "task" }
-func (s *settings) SetFlow(string) error   { return s.fail }
-func (s *settings) Theme() string          { return "monokai" }
-func (s *settings) SetTheme(string) error  { return s.fail }
+func (s *settings) UnreadCap() int           { return s.unread }
+func (s *settings) BudgetWorkspace() float64 { return s.budget }
+func (s *settings) QuotaFloor() int          { return s.floor }
+func (s *settings) SetUnreadCap(int) error   { return s.fail }
+func (s *settings) Engine() string           { return "" }
+func (s *settings) SetEngine(string) error   { return s.fail }
+func (s *settings) Model() string            { return "" }
+func (s *settings) SetModel(string) error    { return s.fail }
+func (s *settings) Flow() string             { return "task" }
+func (s *settings) SetFlow(string) error     { return s.fail }
+func (s *settings) Theme() string            { return "monokai" }
+func (s *settings) SetTheme(string) error    { return s.fail }
 
 // arg is one placeholder for a reason, spelled the way internal/view spells
 // it so a fixture reads like the record it stands for.

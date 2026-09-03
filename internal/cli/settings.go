@@ -193,6 +193,16 @@ func (a *settingsAdapter) write(change func(*store.Settings)) error {
 	return nil
 }
 
+// BudgetWorkspace is the most the board may have spent before the queue
+// stops picking tasks up, and QuotaFloor the share of a subscription
+// engine's window that has to be left for the same. Read only: `orbit set`
+// is where either number is chosen.
+func (a *settingsAdapter) BudgetWorkspace() float64 { return a.read().BudgetWorkspace }
+
+// QuotaFloor is that brake in the unit an engine on a subscription is paid
+// in.
+func (a *settingsAdapter) QuotaFloor() int { return a.read().QuotaFloor }
+
 // Autopilot is whether a run walks its gates without asking.
 func (a *settingsAdapter) Autopilot() bool { return a.read().Autopilot }
 

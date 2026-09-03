@@ -49,7 +49,7 @@ type Setting struct {
 // a slice at package scope is state a caller can reorder, and this package
 // keeps none.
 func settingTable() []Setting {
-	return []Setting{{
+	return append([]Setting{{
 		Name:  "language",
 		About: func(p *words.Printer) string { return p.T("setting.language", "the language orbit speaks") },
 		Set: func(p *words.Printer, cfg *store.Settings, value string) (string, error) {
@@ -171,7 +171,7 @@ func settingTable() []Setting {
 
 			return cfg.Theme
 		},
-	}}
+	}}, budgetSettings()...)
 }
 
 // settingKeys is every key set accepts, in the order a refusal lists them.

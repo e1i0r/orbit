@@ -89,6 +89,25 @@ func foldCases() []foldCase {
 			},
 		},
 		{
+			// Nothing was wrong with the work: the run stopped because of
+			// a number somebody chose, and the row has to say which number
+			// so that raising it is a decision and not a guess.
+			name: "a task that spent what it was allowed",
+			events: []record.Event{
+				{At: at(0), Kind: "task.created", Text: "Retry the webhook on 5xx"},
+				{At: at(1), Kind: "task.started", Data: data("flow", "task")},
+				{At: at(2), Kind: "phase.started", Phase: "implement", Data: data("engine", "claude", "model", "opus", "n", "1")},
+				{At: at(3), Kind: "phase.finished", Phase: "implement", Data: data("cost", "0.25")},
+				{At: at(4), Kind: "task.over_budget", Text: "spent it", Data: data("spent", "0.25", "budget", "0.2", "phase", "review")},
+			},
+			want: Task{
+				Title: "Retry the webhook on 5xx", Band: NeedsYou, Flow: "task",
+				Phase: "implement", PhaseN: 1, Engine: "claude", Model: "opus",
+				Since: at(4), Started: at(1), Attempt: 1, Cost: 0.25, state: stateOverBudget,
+				Reason: Reason{Key: ReasonOverBudget, Args: []Arg{{Name: "spent", Value: "0.25"}, {Name: "budget", Value: "0.2"}}},
+			},
+		},
+		{
 			name: "a run inside its first phase",
 			events: []record.Event{
 				{At: at(0), Kind: "task.created", Text: "Reconciliation endpoint"},

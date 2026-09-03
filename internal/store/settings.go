@@ -40,6 +40,25 @@ type Settings struct {
 	Flow      string `json:"flow,omitempty"`
 	Theme     string `json:"theme,omitempty"`
 
+	// BudgetTask is the most one task may spend, in dollars, and zero is
+	// no budget at all — the working zero every field of this file has.
+	//
+	// Dollars and not tokens because dollars are what a person decides in:
+	// a cap in tokens is a cap whose meaning changes with the model. It is
+	// enforced between phases, and only for engines that charge per token
+	// — under a subscription the money left the account in advance, and a
+	// share of it attributed to one run is arithmetic on a charge nobody
+	// made.
+	BudgetTask float64 `json:"budgetTask,omitempty"`
+	// BudgetWorkspace is the most the tasks on this board may have spent
+	// before nothing new starts on its own. Zero is no budget.
+	BudgetWorkspace float64 `json:"budgetWorkspace,omitempty"`
+	// QuotaFloor is the percentage of a subscription engine's window that
+	// has to be left for the queue to pick up another task. Zero is no
+	// floor. It is the same brake as BudgetWorkspace in the other unit:
+	// money for an engine that charges, the window for one that does not.
+	QuotaFloor int `json:"quotaFloor,omitempty"`
+
 	// CheckRecord makes every command ask SQLite whether the record is
 	// still readable before it does anything. It is off by default because
 	// the answer costs a full read of the file; it is a setting at all

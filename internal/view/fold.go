@@ -232,6 +232,17 @@ func fold(t *Task, e record.Event) {
 		t.state = stateStuck
 		t.Reason = Reason{Key: ReasonStuck, Args: []Arg{{Name: "attempts", Value: e.Data["attempts"]}}}
 		stamp(&t.Since, e.At)
+	case record.TaskOverBudget:
+		// The two figures travel together. A row saying a task is over its
+		// budget without saying by how much is a row a reader has to open
+		// the task view to act on, and the decision it asks for — raise the
+		// cap or leave it — is one those two numbers answer.
+		t.state = stateOverBudget
+		t.Reason = Reason{Key: ReasonOverBudget, Args: []Arg{
+			{Name: "spent", Value: e.Data["spent"]},
+			{Name: "budget", Value: e.Data["budget"]},
+		}}
+		stamp(&t.Since, e.At)
 	case record.DecisionMade, record.DecisionSuperseded, record.RepoJoined:
 		// Written down and deliberately not folded. What was decided and
 		// which repositories the task reached are facts about the task, but
