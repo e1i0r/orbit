@@ -250,7 +250,13 @@ func fold(t *Task, e record.Event) {
 			{Name: "budget", Value: e.Data["budget"]},
 		}}
 		stamp(&t.Since, e.At)
-	case record.DecisionMade, record.DecisionSuperseded, record.RepoJoined:
+	case record.TaskNewDependency:
+		t.state = stateNewDependency
+		t.Reason = Reason{Key: ReasonNewDependency, Args: []Arg{
+			{Name: "names", Value: e.Data["names"]},
+		}}
+		stamp(&t.Since, e.At)
+	case record.DecisionMade, record.DecisionSuperseded, record.RepoJoined, record.DependencyApproved:
 		// Written down and deliberately not folded. What was decided and
 		// which repositories the task reached are facts about the task, but
 		// they are not where the run is: a decision made in the middle of a

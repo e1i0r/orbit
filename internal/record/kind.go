@@ -62,6 +62,12 @@ const (
 	// what a reader compares.
 	TaskOverDiff = "task.over_diff"
 
+	// TaskNewDependency is a task that added a library nobody has approved.
+	// It is a run stopped by a decision that is not the agent's to make:
+	// what a project carries — its licences, its maintenance, its security
+	// updates — is the reader's. Data["names"] is what was added.
+	TaskNewDependency = "task.new_dependency"
+
 	PhaseStarted = "phase.started" // Data carries engine, model, n, and the permissions the phase was given
 	// PhaseFinished ends a phase that ran through. Text is what the engine
 	// printed, and Data carries what it spent doing so: cost where the
@@ -117,6 +123,13 @@ const (
 	// cannot erase, so what changes is what a decision still governs, never
 	// whether it was made.
 	DecisionSuperseded = "decision.superseded"
+
+	// DependencyApproved is a reader saying yes to the libraries a task
+	// added. Data["names"] is what they were shown and accepted, so the
+	// gate can let exactly those past and stop for anything else — per
+	// name and not per run, because the same library added again by a
+	// later phase is a question that was already answered.
+	DependencyApproved = "dependency.approved"
 
 	// RepoJoined is a repository joining the task by being worked in. The
 	// scope of a task is not declared and then checked — it is observed:

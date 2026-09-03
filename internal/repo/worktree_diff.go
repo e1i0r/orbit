@@ -76,6 +76,37 @@ func (r Repo) WorktreeChanges(wtDir string) ([]Change, error) {
 	return numstat(out), nil
 }
 
+// WorktreeAddedLines is every line the task added to one file, without the
+// leading plus.
+//
+// Added and not changed: what a dependency gate asks is what appeared, and a
+// line that was removed cannot have brought a library with it. -U0 so that
+// the context lines around a change — which are somebody else's
+// dependencies, already there — are not read as new ones.
+func (r Repo) WorktreeAddedLines(wtDir, path string) ([]string, error) {
+	args := append([]string{"diff", "-U0"}, r.against(wtDir)...)
+	args = append(args, "--", path)
+
+	out, err := git(wtDir, args...)
+	if err != nil {
+		out, err = git(wtDir, "diff", "-U0", "--", path)
+		if err != nil {
+			return nil, fmt.Errorf("read what %q added to %q: %w", wtDir, path, err)
+		}
+	}
+
+	var added []string
+
+	for _, line := range splitLines(out) {
+		// +++ is the header naming the file, not a line of it.
+		if strings.HasPrefix(line, "+") && !strings.HasPrefix(line, "+++") {
+			added = append(added, strings.TrimPrefix(line, "+"))
+		}
+	}
+
+	return added, nil
+}
+
 // against is what the count is taken against: the branch the worktree was
 // cut from, through its merge base so that work somebody else pushed to that
 // branch since is not read as this task's.

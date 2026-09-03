@@ -149,19 +149,20 @@ func TestFoldStoresTheAnswerThePredicateGives(t *testing.T) {
 // instead of arriving on screen in whatever band the default happens to be.
 func TestEveryStateHasABand(t *testing.T) {
 	want := map[state]Band{
-		stateNew:         ToDo,
-		stateRunning:     Running,
-		stateHeld:        Running,
-		stateWaiting:     NeedsYou,
-		statePhaseFailed: NeedsYou,
-		stateFailed:      NeedsYou,
-		stateTimedOut:    NeedsYou,
-		stateAbandoned:   NeedsYou,
-		stateCancelled:   Done,
-		stateFinished:    Done,
-		stateStuck:       NeedsYou,
-		stateOverBudget:  NeedsYou,
-		stateOverDiff:    NeedsYou,
+		stateNew:           ToDo,
+		stateRunning:       Running,
+		stateHeld:          Running,
+		stateWaiting:       NeedsYou,
+		statePhaseFailed:   NeedsYou,
+		stateFailed:        NeedsYou,
+		stateTimedOut:      NeedsYou,
+		stateAbandoned:     NeedsYou,
+		stateCancelled:     Done,
+		stateFinished:      Done,
+		stateStuck:         NeedsYou,
+		stateOverBudget:    NeedsYou,
+		stateOverDiff:      NeedsYou,
+		stateNewDependency: NeedsYou,
 	}
 	if len(want) != int(stateCount) {
 		t.Fatalf("this test names %d states and the fold has %d — place the new one in a band", len(want), stateCount)
