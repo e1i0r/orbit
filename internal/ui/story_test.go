@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -80,5 +81,54 @@ func TestTheNewestStoryIsTheOneDrawn(t *testing.T) {
 
 	if !strings.Contains(text, "POST /items") {
 		t.Errorf("the overview did not draw the newest story:\n%s", text)
+	}
+}
+
+func toolCall(tool, args string, ago_ time.Duration) view.Entry {
+	return view.Entry{Kind: "phase.tool_call", At: ago(ago_), Tool: tool, Text: args}
+}
+
+// TestTheStoryCarriesWhatWasChangedUnderIt. A claim with its evidence one
+// line away is the whole rule of the spec: the model says what it did, and
+// the record says what it touched to do it.
+func TestTheStoryCarriesWhatWasChangedUnderIt(t *testing.T) {
+	_, lines := onTab(t, tabOverview, []view.Entry{
+		{Kind: "task.created", At: ago(time.Hour), Text: "Fix the save"},
+		toolCall("Read", `{"file_path":"routes/items.go"}`, 40*time.Minute),
+		toolCall("Edit", `{"file_path":"store/items_repo.go"}`, 30*time.Minute),
+		storyEntry(),
+	})
+
+	text := ansi.Strip(strings.Join(lines, "\n"))
+	if !strings.Contains(text, "store/items_repo.go") {
+		t.Errorf("the story does not show the file that was changed:\n%s", text)
+	}
+
+	if strings.Contains(text, "routes/items.go") {
+		t.Errorf("the story shows a file that was read and never changed:\n%s", text)
+	}
+}
+
+// TestTheStoryShowsEveryChangeAndNotTheFirstFew. If a hundred changes went
+// in, the story draws a hundred rows: what is pruned is the noise, never the
+// work. It is asked of the pane rather than of the frame, because the frame
+// is a window onto it and scrolling is the reader's business.
+func TestTheStoryShowsEveryChangeAndNotTheFirstFew(t *testing.T) {
+	entries := []view.Entry{{Kind: "task.created", At: ago(time.Hour), Text: "A big change"}}
+	for i := range 40 {
+		entries = append(entries, toolCall("Edit",
+			fmt.Sprintf(`{"file_path":"internal/pkg/file%02d.go"}`, i),
+			time.Duration(40-i)*time.Minute))
+	}
+
+	entries = append(entries, storyEntry())
+
+	m, _ := onTab(t, tabOverview, entries)
+
+	text := strings.Join(m.storyLines(120), "\n")
+	for _, want := range []string{"file00.go", "file20.go", "file39.go", "40 files changed"} {
+		if !strings.Contains(ansi.Strip(text), want) {
+			t.Errorf("the story left out %q, and the work is never pruned:\n%s", want, ansi.Strip(text))
+		}
 	}
 }
