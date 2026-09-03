@@ -47,6 +47,14 @@ func worked(s *store.Store, r repo.Repo, taskID string) ([]repo.Repo, error) {
 	}
 
 	if len(paths) == 0 {
+		// The repository the reader named, when they named one. A task that
+		// has worked nowhere and was asked about from the directory above
+		// the repositories has no repository at all, and answering with an
+		// empty one would send a delivery at a path that is not there.
+		if r.Path == "" {
+			return nil, fmt.Errorf("task %s has not been worked in any repository yet", taskID)
+		}
+
 		return []repo.Repo{r}, nil
 	}
 

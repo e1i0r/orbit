@@ -24,7 +24,7 @@ func createPR(ctx Context, args []string) error {
 
 	taskID := fs.Args()[0]
 
-	s, r, err := openBoth(*dir)
+	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
 		logger.Error("cli/pr", "open repository %q failed: %v", *dir, err)
 		return err
