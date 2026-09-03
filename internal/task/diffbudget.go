@@ -84,10 +84,31 @@ func changesOf(s *store.Store, t Task) []repo.Change {
 			continue
 		}
 
-		all = append(all, changes...)
+		all = append(all, taskWrote(changes)...)
 	}
 
 	return all
+}
+
+// taskWrote leaves out what Orbit itself put in the worktree.
+//
+// A decision's copy under .orbit/ is written by Orbit, in the same checkout,
+// between one phase and the next. Counted, it would spend a task's diff
+// budget on Orbit's own writing and report a file the plan never named — and
+// both would be true, and neither would be the reader's problem. What these
+// two gates are about is what the agent changed.
+func taskWrote(changes []repo.Change) []repo.Change {
+	kept := make([]repo.Change, 0, len(changes))
+
+	for _, c := range changes {
+		if c.Path == OrbitDir || strings.HasPrefix(c.Path, OrbitDir+"/") {
+			continue
+		}
+
+		kept = append(kept, c)
+	}
+
+	return kept
 }
 
 // reposOf is where the task has worked, and the repository it was written
