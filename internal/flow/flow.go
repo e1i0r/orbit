@@ -119,8 +119,13 @@ type Flow struct {
 	// about the step that made it: what a reader agrees to is the size of
 	// what they will have to read, and which phase wrote which line of it
 	// is not a thing they agreed anything about.
-	DiffBudget int     `json:"diff_budget,omitempty"`
-	Phases     []Phase `json:"phases"`
+	DiffBudget int `json:"diff_budget,omitempty"`
+	// AllowNewDependencies lets a task add libraries without stopping to
+	// ask. The working zero is the careful one: a flow that says nothing
+	// stops, because a dependency is what a project carries afterwards and
+	// the agent is not who decides that.
+	AllowNewDependencies bool    `json:"allow_new_dependencies,omitempty"`
+	Phases               []Phase `json:"phases"`
 }
 
 // AttemptCap is how many times a phase of this flow may be run.

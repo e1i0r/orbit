@@ -100,33 +100,35 @@ type EntryKind int
 // of what each one means; a doc comment per constant would say the same
 // things twice.
 const (
-	EntryUnknown    EntryKind = iota // a kind this build does not know; draw Kind itself
-	EntryWritten                     // the task was written down
-	EntryStarted                     // a run or a phase began
-	EntryFinished                    // it ran through
-	EntryFailed                      // it broke
-	EntryCancelled                   // somebody stopped it
-	EntryRequeued                    // somebody took it back to the queue
-	EntryTimedOut                    // it outlived its deadline
-	EntryAbandoned                   // its process is gone
-	EntryRead                        // somebody has looked at it
-	EntryWaiting                     // it stopped at a gate
-	EntryResumed                     // it was let go again
-	EntryRetried                     // its gate refused it and the phase is being run again
-	EntryGatePassed                  // verification gate passed
-	EntryGateFailed                  // verification gate failed
-	EntryThought                     // thinking block
-	EntryToolCall                    // tool call invocation
-	EntryRefused                     // permission refused
-	EntryNoted                       // user note
-	EntryDialogue                    // something outside a run acted on the task
-	EntryStuck                       // the attempts ran out
-	EntryOverBudget                  // it spent what it was allowed
-	EntryOverDiff                    // it changed more than was agreed
-	EntryDecision                    // something was decided, and the decision is in the line
-	EntrySuperseded                  // a decision replaced an earlier one
-	EntryRepoJoined                  // a repository joined the task by being worked in
-	EntryUnreadable                  // this line of the record itself is damaged
+	EntryUnknown       EntryKind = iota // a kind this build does not know; draw Kind itself
+	EntryWritten                        // the task was written down
+	EntryStarted                        // a run or a phase began
+	EntryFinished                       // it ran through
+	EntryFailed                         // it broke
+	EntryCancelled                      // somebody stopped it
+	EntryRequeued                       // somebody took it back to the queue
+	EntryTimedOut                       // it outlived its deadline
+	EntryAbandoned                      // its process is gone
+	EntryRead                           // somebody has looked at it
+	EntryWaiting                        // it stopped at a gate
+	EntryResumed                        // it was let go again
+	EntryRetried                        // its gate refused it and the phase is being run again
+	EntryGatePassed                     // verification gate passed
+	EntryGateFailed                     // verification gate failed
+	EntryThought                        // thinking block
+	EntryToolCall                       // tool call invocation
+	EntryRefused                        // permission refused
+	EntryNoted                          // user note
+	EntryDialogue                       // something outside a run acted on the task
+	EntryStuck                          // the attempts ran out
+	EntryOverBudget                     // it spent what it was allowed
+	EntryOverDiff                       // it changed more than was agreed
+	EntryNewDependency                  // it reached for a library nobody approved
+	EntryApproved                       // a reader said yes to those libraries
+	EntryDecision                       // something was decided, and the decision is in the line
+	EntrySuperseded                     // a decision replaced an earlier one
+	EntryRepoJoined                     // a repository joined the task by being worked in
+	EntryUnreadable                     // this line of the record itself is damaged
 )
 
 // What is the entry's kind in this package's vocabulary.
@@ -183,6 +185,10 @@ func (e Entry) What() EntryKind {
 		return EntryOverBudget
 	case record.TaskOverDiff:
 		return EntryOverDiff
+	case record.TaskNewDependency:
+		return EntryNewDependency
+	case record.DependencyApproved:
+		return EntryApproved
 	case record.DecisionMade:
 		return EntryDecision
 	case record.DecisionSuperseded:

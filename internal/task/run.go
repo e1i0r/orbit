@@ -155,6 +155,13 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 			return stopChanging(s, t, p, *v)
 		}
 
+		// After the size, because a change that is already too big is the
+		// larger question: a reader told about both at once has to answer
+		// the small one first to reach the big one.
+		if names := newDependencies(s, t, f); len(names) > 0 {
+			return stopForDependencies(s, t, p, names)
+		}
+
 		// Only when there is something to carry. A phase that finished
 		// silently leaves the last real answer standing rather than blanking
 		// it, so the "Previous Phase Output" the next prompt shows can be two

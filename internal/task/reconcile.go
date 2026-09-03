@@ -87,7 +87,7 @@ func inFlight(events []record.Event) bool {
 			open = true
 		case record.TaskFinished, record.TaskFailed, record.TaskCancelled,
 			record.TaskTimedOut, record.TaskAbandoned, record.TaskStuck,
-			record.TaskOverBudget, record.TaskOverDiff:
+			record.TaskOverBudget, record.TaskOverDiff, record.TaskNewDependency:
 			open = false
 		}
 	}

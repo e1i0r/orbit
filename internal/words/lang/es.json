@@ -451,6 +451,10 @@
         "other": "no se pudieron leer {n} registros"
       }
     },
+    "reason.new_dependency": {
+      "source": "added {names}",
+      "value": "agregó {names}"
+    },
     "reason.over_diff": {
       "source": "changed {lines} lines of {budget}",
       "value": "cambió {lines} líneas de {budget}"
@@ -946,6 +950,26 @@
     "log.retried": {
       "source": "trying again",
       "value": "otro intento"
+    },
+    "cmd.approve": {
+      "source": "say yes to the libraries a task added, so its next run goes past the gate",
+      "value": "decir que sí a las librerías que agregó una tarea, para que su próxima corrida pase el gate"
+    },
+    "approve.nothing": {
+      "source": "{id} has added no dependency waiting on you",
+      "value": "{id} no agregó ninguna dependencia que te esté esperando"
+    },
+    "approve.done": {
+      "source": "approved for {id}: {names}",
+      "value": "aprobado para {id}: {names}"
+    },
+    "log.new_dependency": {
+      "source": "new dependency",
+      "value": "dependencia nueva"
+    },
+    "log.approved": {
+      "source": "dependency approved",
+      "value": "dependencia aprobada"
     },
     "log.over_diff": {
       "source": "change too big",

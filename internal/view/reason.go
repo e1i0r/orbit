@@ -77,4 +77,8 @@ const (
 	// for the reason ReasonOverBudget does — what it asks of a reader is
 	// whether this is still the change they wanted. Args: lines, budget.
 	ReasonOverDiff = "reason.over_diff"
+	// ReasonNewDependency is a task that added a library nobody has said
+	// yes to. It names them, because what a reader decides here is about
+	// those names and nothing else. Args: names.
+	ReasonNewDependency = "reason.new_dependency"
 )

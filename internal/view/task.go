@@ -87,19 +87,20 @@ func (b Band) String() string {
 type state int
 
 const (
-	stateNew         state = iota // written down; no run has started
-	stateRunning                  // a run is between task.started and a terminal event
-	stateHeld                     // stopped at a gate because the reader asked
-	stateWaiting                  // stopped at a gate because the flow asked
-	statePhaseFailed              // a phase failed and the task-level event has not arrived
-	stateFailed                   // the run stopped and task.failed says so
-	stateTimedOut                 // task.timedout
-	stateAbandoned                // task.abandoned
-	stateCancelled                // task.cancelled, or a phase.cancelled with nothing after it
-	stateFinished                 // task.finished
-	stateStuck                    // task.stuck: the attempts ran out and nothing will move on its own
-	stateOverBudget               // task.over_budget: it spent what it was allowed
-	stateOverDiff                 // task.over_diff: it changed more than was agreed
+	stateNew           state = iota // written down; no run has started
+	stateRunning                    // a run is between task.started and a terminal event
+	stateHeld                       // stopped at a gate because the reader asked
+	stateWaiting                    // stopped at a gate because the flow asked
+	statePhaseFailed                // a phase failed and the task-level event has not arrived
+	stateFailed                     // the run stopped and task.failed says so
+	stateTimedOut                   // task.timedout
+	stateAbandoned                  // task.abandoned
+	stateCancelled                  // task.cancelled, or a phase.cancelled with nothing after it
+	stateFinished                   // task.finished
+	stateStuck                      // task.stuck: the attempts ran out and nothing will move on its own
+	stateOverBudget                 // task.over_budget: it spent what it was allowed
+	stateOverDiff                   // task.over_diff: it changed more than was agreed
+	stateNewDependency              // task.new_dependency: it reached for a library nobody approved
 
 	// stateCount is not a state. It is how many there are, so a test can
 	// walk every one and fail when a new state arrives without a band.
@@ -270,7 +271,7 @@ func bandOfState(s state) Band {
 	case stateRunning, stateHeld:
 		return Running
 	case stateWaiting, statePhaseFailed, stateFailed, stateTimedOut, stateAbandoned, stateStuck,
-		stateOverBudget, stateOverDiff:
+		stateOverBudget, stateOverDiff, stateNewDependency:
 		return NeedsYou
 	case stateCancelled, stateFinished:
 		return Done
