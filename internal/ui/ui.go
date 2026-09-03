@@ -72,12 +72,18 @@ type Model struct {
 	opts Options
 	keys Keys
 
-	board  board.Board
-	seen   bool // a board has arrived, so the next crossing is worth a bell
-	now    time.Time
-	errs   int            // how many read failures the last board carried
-	noted  notedErrs      // the last failure each clocked source wrote down
-	totals map[string]int // phases per flow name, for "review 2/3"
+	board board.Board
+	seen  bool // a board has arrived, so the next crossing is worth a bell
+	now   time.Time
+	// brokeAt is when the newest run of the stuck streak that last took
+	// autopilot off had stopped. It is what keeps the breaker from arguing
+	// with a reader who turns the switch back on: the same three stuck runs
+	// are the same evidence, and only a run that stopped after this one is
+	// new.
+	brokeAt time.Time
+	errs    int            // how many read failures the last board carried
+	noted   notedErrs      // the last failure each clocked source wrote down
+	totals  map[string]int // phases per flow name, for "review 2/3"
 
 	width, height int
 	frame         layout.Frame
