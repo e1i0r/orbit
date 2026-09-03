@@ -83,7 +83,7 @@ func deliverTask(ctx Context, s *store.Store, t task.Task, where []repo.Repo) er
 	story := task.StoryOf(s, t)
 
 	for i, one := range opened {
-		if opened[i].url, err = openPR(ctx, t, one, story); err != nil {
+		if opened[i].url, err = openPR(ctx, s, t, one, story); err != nil {
 			return err
 		}
 	}
@@ -132,7 +132,7 @@ func checkouts(ctx Context, s *store.Store, t task.Task, where []repo.Repo) ([]a
 // is not a failure: a repository the work opened, read and left as it was
 // joined the task and is worth saying so, and a pull request for an
 // unchanged branch is a review request for nothing.
-func openPR(ctx Context, t task.Task, one aPullRequest, story *task.Story) (string, error) {
+func openPR(ctx Context, s *store.Store, t task.Task, one aPullRequest, story *task.Story) (string, error) {
 	r, wtDir := one.repo, one.wtDir
 
 	if err := r.SyncBaseBranch(wtDir, r.Base); err != nil {
@@ -156,7 +156,21 @@ func openPR(ctx Context, t task.Task, one aPullRequest, story *task.Story) (stri
 		return "", nil
 	}
 
-	return pushAndOpen(ctx, t, r, wtDir, story)
+	// The boundary. Everything before this happened in a checkout nobody
+	// else can see; everything after it is on a remote other people pull
+	// from, which is why a critical task stops here and nowhere else.
+	if err := permitted(ctx, s, t, r, wtDir); err != nil {
+		return "", err
+	}
+
+	url, err := pushAndOpen(ctx, t, r, wtDir, story)
+	if err != nil {
+		return "", err
+	}
+
+	noteCritical(s, t, r, wtDir, url)
+
+	return url, nil
 }
 
 // pushAndOpen puts the branch on the remote and asks gh for a pull request.

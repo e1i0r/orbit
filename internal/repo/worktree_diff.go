@@ -165,3 +165,32 @@ func count(field string) int {
 
 	return n
 }
+
+// HeadSHA is the commit a worktree stands at.
+//
+// The full hash and not the short one: it goes into the record as the way
+// back, and an abbreviation that is unique today is one that stops being
+// unique as the repository grows.
+func (r Repo) HeadSHA(wtDir string) (string, error) {
+	out, err := git(wtDir, "rev-parse", "HEAD")
+	if err != nil {
+		return "", fmt.Errorf("read the head of %q: %w", wtDir, err)
+	}
+
+	return strings.TrimSpace(out), nil
+}
+
+// Backup writes a tag at a commit so that whatever happens next can be
+// undone.
+//
+// A tag and not a branch: a branch is something git moves — a push, a
+// checkout, a reset can all take it somewhere else — and a backup that moves
+// is not a backup. The name is the caller's and carries the task and the
+// hour, so two backups on one day do not overwrite each other.
+func (r Repo) Backup(wtDir, name, at string) error {
+	if _, err := git(wtDir, "tag", "-f", name, at); err != nil {
+		return fmt.Errorf("tag %q at %q: %w", name, at, err)
+	}
+
+	return nil
+}

@@ -975,6 +975,42 @@
       "source": "reading the reviews on {id}...",
       "value": "leyendo los reviews de {id}..."
     },
+    "cmd.permit": {
+      "source": "allow, or refuse, the irreversible thing a critical task is waiting to do",
+      "value": "permitir, o rechazar, lo irreversible que una tarea crítica está esperando hacer"
+    },
+    "cmd.critical": {
+      "source": "mark a task as one that reaches something that matters, so it stops before it pushes",
+      "value": "marcar una tarea como una que toca algo que importa, para que pare antes de pushear"
+    },
+    "critical.how": {
+      "source": "allow it with `orbit permit {id}`, or refuse it with `orbit permit -no {id}`",
+      "value": "permitilo con `orbit permit {id}`, o rechazalo con `orbit permit -no {id}`"
+    },
+    "critical.refused": {
+      "source": "{id} is critical and {action} has not been allowed",
+      "value": "{id} es crítica y {action} no fue permitido"
+    },
+    "critical.on": {
+      "source": "{id} is critical: before it pushes anything, Orbit writes down where things stand, tags a backup and asks you",
+      "value": "{id} es crítica: antes de pushear nada, Orbit anota cómo está todo, deja un respaldo etiquetado y te pregunta"
+    },
+    "critical.off": {
+      "source": "{id} is an ordinary task again",
+      "value": "{id} vuelve a ser una tarea común"
+    },
+    "permit.nothing": {
+      "source": "{id} is not waiting on you for anything",
+      "value": "{id} no está esperando nada tuyo"
+    },
+    "permit.refused": {
+      "source": "{action} on {id} was refused; nothing left this machine",
+      "value": "{action} en {id} fue rechazado; nada salió de esta máquina"
+    },
+    "permit.allowed": {
+      "source": "{action} on {id} is allowed; run it again to do it",
+      "value": "{action} en {id} está permitido; volvé a correrlo para hacerlo"
+    },
     "cmd.resolve": {
       "source": "read what reviewers asked on the pull requests into the task, for the next run to answer",
       "value": "traer a la tarea lo que pidieron los reviewers en los pull requests, para que la próxima corrida lo responda"

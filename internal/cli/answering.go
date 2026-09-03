@@ -24,5 +24,17 @@ func answering() []Command {
 			return p.T("cmd.approve", "say yes to the libraries a task added, so its next run goes past the gate")
 		},
 		Run: approveTask,
+	}, {
+		Name: "permit", Args: "-repo <dir> [-no] <id>", NeedsArgs: true, AboutATask: true,
+		About: func(p *words.Printer) string {
+			return p.T("cmd.permit", "allow, or refuse, the irreversible thing a critical task is waiting to do")
+		},
+		Run: permitTask,
+	}, {
+		Name: "critical", Args: "-repo <dir> [-off] <id>", NeedsArgs: true, AboutATask: true,
+		About: func(p *words.Printer) string {
+			return p.T("cmd.critical", "mark a task as one that reaches something that matters, so it stops before it pushes")
+		},
+		Run: criticalTask,
 	}}
 }
