@@ -76,6 +76,19 @@ func fedOutput(p flow.Phase, prev string) string {
 // It is written in Markdown because the answer is asked for in Markdown, and
 // a prompt that asks in one shape for another is asking twice.
 func prompt(t Task, p flow.Phase, notes []string, prevOutput string, others []string, tried ...gateRefusal) string {
+	return build(t, p, false, notes, prevOutput, others, tried...)
+}
+
+// promptFor is prompt for a phase whose place in the flow is known, which is
+// the one thing that decides whether it is asked for the story: the last
+// phase is the only one that can tell how the task ended.
+func promptFor(t Task, f flow.Flow, n int, notes []string, prevOutput string, others []string, tried ...gateRefusal) string {
+	p := f.Phases[n-1]
+
+	return build(t, p, n == len(f.Phases), notes, prevOutput, others, tried...)
+}
+
+func build(t Task, p flow.Phase, last bool, notes []string, prevOutput string, others []string, tried ...gateRefusal) string {
 	var b strings.Builder
 
 	fmt.Fprintf(&b, "# %s\n\n%s\n\n", t.ID, strings.TrimSpace(t.Text))
@@ -108,6 +121,10 @@ func prompt(t Task, p flow.Phase, notes []string, prevOutput string, others []st
 	// the thing every phase has to hold on to.
 	if isPlan(p.Name) {
 		b.WriteString(decisionAsk)
+	}
+
+	if last {
+		b.WriteString(storyAsk)
 	}
 
 	b.WriteString("\n" + engine.AnswerContract)

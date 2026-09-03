@@ -58,6 +58,14 @@ type Entry struct {
 	By      string  // what acted on the task from outside a run, from Data["by"]
 	Repo    string  // the repository that joined, from Data["repo"]
 
+	// Story is the five fields of task.story and nil for every other kind.
+	//
+	// A pointer, and the one field here that is not flat: the five travel
+	// together or not at all — a story with a link missing draws as a chain
+	// that still looks whole — and five more strings on an Entry that never
+	// has them would be five more zero values for every other kind to carry.
+	Story *Story
+
 	// Kept and Full are the size of the engine's output as it was written
 	// and as it actually was. They differ only when internal/task cut it,
 	// and Full is 0 whenever it did not — so Full > Kept is the whole of the
@@ -65,6 +73,21 @@ type Entry struct {
 	// end of Text.
 	Kept int
 	Full int
+}
+
+// Story is how a prompt became a diff: the route in, what it is for, what
+// went wrong, why, and what was done about it.
+//
+// It is a type of its own rather than five fields on Entry because it is one
+// claim in five parts, and because what will hang under each part — the read
+// that found the entry point, the hunk that is the fix — belongs to the part
+// and not to the entry.
+type Story struct {
+	Entry   string
+	Purpose string
+	Symptom string
+	Cause   string
+	Fix     string
 }
 
 // Truncated says the engine printed more than the record kept.
@@ -213,6 +236,32 @@ func (e Entry) What() EntryKind {
 // view draws the seam between one run and the next.
 func (e Entry) Attempted() bool { return e.Kind == record.TaskStarted }
 
+// storyOf reads the five fields of a task.story, and nothing for any other
+// kind or for a story that arrived with a field missing.
+//
+// The check is here rather than left to the drawing, because a pane asking
+// "is this story whole" on every frame is a pane that will one day answer it
+// differently from the pane beside it.
+func storyOf(e record.Event) *Story {
+	if e.Kind != record.TaskStory {
+		return nil
+	}
+
+	s := Story{
+		Entry:   e.Data["entry"],
+		Purpose: e.Data["purpose"],
+		Symptom: e.Data["symptom"],
+		Cause:   e.Data["cause"],
+		Fix:     e.Data["fix"],
+	}
+
+	if s.Entry == "" || s.Purpose == "" || s.Symptom == "" || s.Cause == "" || s.Fix == "" {
+		return nil
+	}
+
+	return &s
+}
+
 // Log folds a whole record into its entries, oldest first — the order they
 // were appended in, which is the order the record is true in.
 //
@@ -257,6 +306,7 @@ func entry(e record.Event, attempt int) Entry {
 		Notes:   e.Data["notes"],
 		By:      e.Data["by"],
 		Repo:    e.Data["repo"],
+		Story:   storyOf(e),
 		Kept:    len(e.Text),
 		Full:    count(e.Data["output_bytes"]),
 	}
