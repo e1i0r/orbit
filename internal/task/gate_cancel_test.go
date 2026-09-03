@@ -103,7 +103,7 @@ func TestAGateThatFailsOnItsOwnStillSaysSo(t *testing.T) {
 		record.TaskCreated, record.TaskStarted,
 		record.PhaseStarted, record.GateFailed, record.PhaseRetried,
 		record.PhaseStarted, record.GateFailed, record.PhaseRetried,
-		record.PhaseStarted, record.GateFailed, record.PhaseFailed, record.TaskFailed)
+		record.PhaseStarted, record.GateFailed, record.PhaseFailed, record.TaskStuck)
 
 	for _, e := range events {
 		if e.Kind != record.GateFailed {

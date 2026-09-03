@@ -86,7 +86,7 @@ func inFlight(events []record.Event) bool {
 		case record.TaskStarted:
 			open = true
 		case record.TaskFinished, record.TaskFailed, record.TaskCancelled,
-			record.TaskTimedOut, record.TaskAbandoned:
+			record.TaskTimedOut, record.TaskAbandoned, record.TaskStuck:
 			open = false
 		}
 	}

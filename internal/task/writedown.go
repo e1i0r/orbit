@@ -43,6 +43,7 @@ var wentWrong = map[string]bool{
 	record.TaskTimedOut:  true,
 	record.TaskAbandoned: true,
 	record.GateFailed:    true,
+	record.TaskStuck:     true,
 }
 
 // noteEvent writes down an event that reached the record. It is called after

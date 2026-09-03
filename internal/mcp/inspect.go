@@ -223,7 +223,12 @@ func lastErrorOf(events []record.Event) map[string]any {
 	for i := len(events) - 1; i >= 0; i-- {
 		e := events[i]
 		switch e.Kind {
-		case record.TaskFailed, record.PhaseFailed, record.TaskTimedOut, record.TaskAbandoned:
+		// task.stuck is here because it is the last word of a run that
+		// spent every attempt, and the only one carrying what those
+		// attempts tried. Handed the phase.failed under it instead, a
+		// supervisor gets one gate's exit code and none of the three
+		// attempts behind it.
+		case record.TaskFailed, record.PhaseFailed, record.TaskTimedOut, record.TaskAbandoned, record.TaskStuck:
 			return map[string]any{
 				"at":     e.At,
 				"kind":   e.Kind,
