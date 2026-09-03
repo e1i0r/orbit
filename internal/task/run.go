@@ -127,6 +127,17 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 			return stopSpending(s, t, p, spent, budget)
 		}
 
+		// A loop is a phase that is a block of phases. It is walked before
+		// the notes are taken and before the engine is asked for anything,
+		// because none of what follows is about one phase with one engine.
+		if p.Loop != nil {
+			if err := runLoop(ctx, s, t, f, p, wt, engines, others); err != nil {
+				return err
+			}
+
+			continue
+		}
+
 		notes, notesErr := unconsumedNotes(s, t)
 		if notesErr != nil {
 			return failed(s, t, fmt.Errorf("task %s, before phase %q: %w", t.ID, p.Name, notesErr))

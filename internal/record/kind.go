@@ -107,6 +107,13 @@ const (
 	PhaseToolCall = "phase.tool_call" // a tool call invoked by the engine (Bash, Edit, Read, etc.)
 	PhaseRefused  = "phase.refused"   // a tool call the engine was denied by permissions
 
+	// LoopChecked is one turn of a loop and what its checks answered.
+	// Data["turn"] and Data["turns"] are where it is of what it was
+	// allowed, Data["passed"] is whether the loop can stop, and on a turn
+	// that did not pass Data["check"] names the command and Text is what
+	// it printed — which is what the next turn is told.
+	LoopChecked = "loop.checked"
+
 	GatePassed = "gate.passed" // a phase gate verification check passed
 	GateFailed = "gate.failed" // a phase gate verification check failed
 

@@ -1023,6 +1023,10 @@
       "source": "what was done",
       "value": "qué se hizo"
     },
+    "log.loop_checked": {
+      "source": "loop checked",
+      "value": "vuelta verificada"
+    },
     "log.contradicts": {
       "source": "against a decision",
       "value": "contra una decisión"
