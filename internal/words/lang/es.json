@@ -975,6 +975,42 @@
       "source": "reading the reviews on {id}...",
       "value": "leyendo los reviews de {id}..."
     },
+    "cmd.digest": {
+      "source": "what the record says about the work as a whole",
+      "value": "lo que el record dice del trabajo en conjunto"
+    },
+    "digest.merged": {
+      "source": "merged",
+      "value": "mergeadas"
+    },
+    "digest.spent_merged": {
+      "source": "what merging cost",
+      "value": "lo que costó lo mergeado"
+    },
+    "digest.untouched": {
+      "source": "finished with nobody asked",
+      "value": "terminadas sin preguntarle a nadie"
+    },
+    "digest.stuck": {
+      "source": "stuck",
+      "value": "atascadas"
+    },
+    "digest.requeued": {
+      "source": "sent back",
+      "value": "devueltas a la cola"
+    },
+    "digest.spent": {
+      "source": "spent in total",
+      "value": "gastado en total"
+    },
+    "digest.asked_at": {
+      "source": "where people are stopped",
+      "value": "dónde se para a preguntarle a alguien"
+    },
+    "digest.rounds": {
+      "source": "phases that go round again",
+      "value": "fases que vuelven a dar la vuelta"
+    },
     "cmd.permit": {
       "source": "allow, or refuse, the irreversible thing a critical task is waiting to do",
       "value": "permitir, o rechazar, lo irreversible que una tarea crítica está esperando hacer"

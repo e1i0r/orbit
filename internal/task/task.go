@@ -302,3 +302,16 @@ func emit(s *store.Store, t Task, e record.Event) error {
 
 	return nil
 }
+
+// Merged writes down that a task's work landed.
+//
+// Where the merge happened and not inferred from a branch that is gone: a
+// branch disappears for three other reasons and only one of them is
+// delivery, so what a report counts as landed is something somebody did
+// rather than something that stopped being there.
+func Merged(s *store.Store, t Task, repoName, branch string) error {
+	return emit(s, t, record.Event{
+		Kind: record.TaskMerged,
+		Data: map[string]string{"repo": repoName, "branch": branch},
+	})
+}

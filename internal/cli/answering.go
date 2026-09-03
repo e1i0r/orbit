@@ -36,5 +36,11 @@ func answering() []Command {
 			return p.T("cmd.critical", "mark a task as one that reaches something that matters, so it stops before it pushes")
 		},
 		Run: criticalTask,
+	}, {
+		Name: "digest",
+		About: func(p *words.Printer) string {
+			return p.T("cmd.digest", "what the record says about the work as a whole")
+		},
+		Run: digest,
 	}}
 }

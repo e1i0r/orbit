@@ -68,6 +68,11 @@ const (
 	// others rather than a row removed: the fold ignores it, and the one
 	// query that enumerates tasks leaves out whatever has it.
 	TaskDeleted = "task.deleted"
+	// TaskMerged is work that landed: somebody merged the pull request a
+	// task opened. It is written where the merge happens rather than
+	// inferred from a branch that disappeared, because a branch can vanish
+	// for three other reasons and only one of them is delivery.
+	TaskMerged = "task.merged"
 	// TaskStuck is a task that ran out of attempts. It is not a failure of
 	// one run — task.failed already says that — it is the run after the
 	// last one the flow was allowed: nothing will move until a reader
