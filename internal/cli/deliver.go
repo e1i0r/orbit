@@ -76,15 +76,21 @@ func deliverTask(ctx Context, s *store.Store, t task.Task, where []repo.Repo) er
 		return err
 	}
 
+	// The story is read once, here, and carried into every body. Reading it
+	// per repository would ask the record the same question N times for one
+	// answer, and a story that changed between two of those reads would put
+	// two accounts of one task in two pull requests.
+	story := task.StoryOf(s, t)
+
 	for i, one := range opened {
-		if opened[i].url, err = openPR(ctx, t, one); err != nil {
+		if opened[i].url, err = openPR(ctx, t, one, story); err != nil {
 			return err
 		}
 	}
 
 	report(ctx, opened)
 
-	return crossLink(ctx, t, opened)
+	return crossLink(ctx, t, opened, story)
 }
 
 // checkouts is where the task's work is in each of its repositories, and a
@@ -126,7 +132,7 @@ func checkouts(ctx Context, s *store.Store, t task.Task, where []repo.Repo) ([]a
 // is not a failure: a repository the work opened, read and left as it was
 // joined the task and is worth saying so, and a pull request for an
 // unchanged branch is a review request for nothing.
-func openPR(ctx Context, t task.Task, one aPullRequest) (string, error) {
+func openPR(ctx Context, t task.Task, one aPullRequest, story *task.Story) (string, error) {
 	r, wtDir := one.repo, one.wtDir
 
 	if err := r.SyncBaseBranch(wtDir, r.Base); err != nil {
@@ -150,11 +156,11 @@ func openPR(ctx Context, t task.Task, one aPullRequest) (string, error) {
 		return "", nil
 	}
 
-	return pushAndOpen(ctx, t, r, wtDir)
+	return pushAndOpen(ctx, t, r, wtDir, story)
 }
 
 // pushAndOpen puts the branch on the remote and asks gh for a pull request.
-func pushAndOpen(ctx Context, t task.Task, r repo.Repo, wtDir string) (string, error) {
+func pushAndOpen(ctx Context, t task.Task, r repo.Repo, wtDir string, story *task.Story) (string, error) {
 	branch := branchOf(t)
 	if err := r.PushBranch(wtDir, branch); err != nil {
 		logger.Error("cli/pr", "push branch %q failed: %v", branch, err)
@@ -162,7 +168,7 @@ func pushAndOpen(ctx Context, t task.Task, r repo.Repo, wtDir string) (string, e
 		return "", err
 	}
 
-	url, err := r.CreatePR(wtDir, titleOf(t), bodyOf(t, nil), branch, r.Base)
+	url, err := r.CreatePR(wtDir, titleOf(t), bodyOf(t, nil, story), branch, r.Base)
 	if err != nil {
 		logger.Error("cli/pr", "gh pr create failed: %v", err)
 
@@ -181,7 +187,7 @@ func pushAndOpen(ctx Context, t task.Task, r repo.Repo, wtDir string) (string, e
 // One repository is left alone: a task delivered where it was written shells
 // out to gh once, the way it always has, and there is nothing for a body to
 // say about siblings it does not have.
-func crossLink(ctx Context, t task.Task, opened []aPullRequest) error {
+func crossLink(ctx Context, t task.Task, opened []aPullRequest, story *task.Story) error {
 	if len(opened) < 2 {
 		return nil
 	}
@@ -191,7 +197,7 @@ func crossLink(ctx Context, t task.Task, opened []aPullRequest) error {
 			continue
 		}
 
-		if err := one.repo.EditPR(one.wtDir, branchOf(t), bodyOf(t, siblings(opened, i))); err != nil {
+		if err := one.repo.EditPR(one.wtDir, branchOf(t), bodyOf(t, siblings(opened, i), story)); err != nil {
 			logger.Error("cli/pr", "gh pr edit failed in %s: %v", one.repo.Name, err)
 
 			return fmt.Errorf("%s: %w", ctx.printer().T("pr.opened_but_not_linked",
@@ -236,10 +242,11 @@ func report(ctx Context, opened []aPullRequest) {
 // answer to a question a reviewer would otherwise have to ask — whether the
 // task looked at that repository at all — and "I looked here and it needed
 // nothing" is worth reading.
-func bodyOf(t task.Task, others []aPullRequest) string {
+func bodyOf(t task.Task, others []aPullRequest, story *task.Story) string {
 	var b strings.Builder
 
 	fmt.Fprintf(&b, "## Orbit Task: %s\n\n%s\n", t.ID, t.Text)
+	b.WriteString(storySection(story))
 
 	if len(others) > 0 {
 		b.WriteString("\n### The rest of this task\n\n")

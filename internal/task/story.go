@@ -46,6 +46,61 @@ const storyAsk = "\n## Story\n\n" +
 	"Write all five or none. Four of five is a shape that looks complete " +
 	"with a field missing, and a reader cannot tell which one is gone.\n"
 
+// Story is how a prompt became a diff, as everything outside this package
+// reads it.
+//
+// It is a type and not the map the record carries because a caller writing
+// a diagram or a pane needs the five by name, and a map hands them the
+// chance to ask for a sixth that will always be empty.
+type Story struct {
+	Entry   string
+	Purpose string
+	Symptom string
+	Cause   string
+	Fix     string
+}
+
+// StoryOf is the story of the attempt that stands, and nothing when the task
+// has none.
+//
+// The last one written, for the reason the pane draws the last one: a task
+// run three times told its story three times, and the two before it are
+// about work that was thrown away.
+func StoryOf(s *store.Store, t Task) *Story {
+	events, err := Events(s, t)
+	if err != nil {
+		return nil
+	}
+
+	var found *Story
+
+	for _, e := range events {
+		if e.Kind != record.TaskStory {
+			continue
+		}
+
+		story := Story{
+			Entry:   e.Data["entry"],
+			Purpose: e.Data["purpose"],
+			Symptom: e.Data["symptom"],
+			Cause:   e.Data["cause"],
+			Fix:     e.Data["fix"],
+		}
+
+		if story.whole() {
+			found = &story
+		}
+	}
+
+	return found
+}
+
+// whole is the same rule the parser and the window both keep: five fields or
+// none. A story with a link missing draws as a chain that still looks whole.
+func (s Story) whole() bool {
+	return s.Entry != "" && s.Purpose != "" && s.Symptom != "" && s.Cause != "" && s.Fix != ""
+}
+
 // storyIn reads the five fields out of an answer, and says whether it found
 // a whole story.
 //
