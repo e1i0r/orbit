@@ -133,8 +133,11 @@ func TestTheDeliverActionsStandInColumns(t *testing.T) {
 		{1, 2, "MERGE PR", "M"},
 		{1, 2, "CLOSE PR", "X"},
 		{4, 5, "MORE TESTS", "T"},
+		{4, 5, "RESOLVE COMMENTS", "R"},
 		{4, 5, "FEEDBACK", "a"},
-		{4, 5, "DIFF", "0"},
+		// The ninth verb starts a third row of its own, which is what the
+		// grid does with anything past two full rows.
+		{7, 8, "DIFF", "0"},
 	} {
 		above, below := ansi.Strip(rows[c.captions]), ansi.Strip(rows[c.keys])
 

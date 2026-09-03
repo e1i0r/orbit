@@ -967,6 +967,14 @@
       "source": "trying again",
       "value": "otro intento"
     },
+    "overview.action_resolve": {
+      "source": "resolve comments",
+      "value": "resolver comentarios"
+    },
+    "deliver.resolving": {
+      "source": "reading the reviews on {id}...",
+      "value": "leyendo los reviews de {id}..."
+    },
     "cmd.resolve": {
       "source": "read what reviewers asked on the pull requests into the task, for the next run to answer",
       "value": "traer a la tarea lo que pidieron los reviewers en los pull requests, para que la próxima corrida lo responda"
