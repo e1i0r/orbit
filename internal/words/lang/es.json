@@ -451,6 +451,10 @@
         "other": "no se pudieron leer {n} registros"
       }
     },
+    "msg.breaker": {
+      "source": "autopilot off: {n} runs in a row ended stuck",
+      "value": "autopilot apagado: {n} corridas seguidas quedaron atascadas"
+    },
     "msg.entered": {
       "source": {
         "one": "{n} task needs you",
