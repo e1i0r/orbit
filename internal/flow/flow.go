@@ -124,8 +124,14 @@ type Flow struct {
 	// ask. The working zero is the careful one: a flow that says nothing
 	// stops, because a dependency is what a project carries afterwards and
 	// the agent is not who decides that.
-	AllowNewDependencies bool    `json:"allow_new_dependencies,omitempty"`
-	Phases               []Phase `json:"phases"`
+	AllowNewDependencies bool `json:"allow_new_dependencies,omitempty"`
+	// AllowContradictions lets a task change code against a decision it
+	// recorded earlier without stopping. The working zero checks, and the
+	// check costs nothing in a repository whose decisions say nothing
+	// about the files being worked on: it is asked only when one of them
+	// reaches the change.
+	AllowContradictions bool    `json:"allow_contradictions,omitempty"`
+	Phases              []Phase `json:"phases"`
 }
 
 // AttemptCap is how many times a phase of this flow may be run.

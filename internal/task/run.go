@@ -164,6 +164,13 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 			return stopForDependencies(s, t, p, names)
 		}
 
+		// Last of the gates, because it is the only one that costs a model
+		// call: a change already refused for its size or for a library it
+		// reached for is not worth paying to judge.
+		if c := contradicts(ctx, s, t, f, p, engines[p.Engine], wt); c != nil {
+			return stopContradicting(s, t, p, *c)
+		}
+
 		// Only when there is something to carry. A phase that finished
 		// silently leaves the last real answer standing rather than blanking
 		// it, so the "Previous Phase Output" the next prompt shows can be two

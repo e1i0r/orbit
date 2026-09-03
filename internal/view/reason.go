@@ -81,4 +81,9 @@ const (
 	// yes to. It names them, because what a reader decides here is about
 	// those names and nothing else. Args: names.
 	ReasonNewDependency = "reason.new_dependency"
+	// ReasonContradicts is a change that goes against a decision the task
+	// recorded earlier. It names the decision, because the reader's answer
+	// is one of two — change the code back, or supersede the decision —
+	// and both are about that one. Args: decision.
+	ReasonContradicts = "reason.contradicts"
 )
