@@ -246,7 +246,12 @@ func (m Model) logDetail(e view.Entry) string {
 
 		return e.Tool
 	case view.EntryRefused:
-		return e.Tool + ": " + firstLine(e.Text)
+		// The whole of what was refused, and not its first line. The row is
+		// wrapped and folded like every other row here, so a reason written
+		// over three lines is three rows under an arrow — cutting it at the
+		// first break put the rest of it on no row at all, and left the row
+		// with nothing to open.
+		return e.Tool + ": " + e.Text
 	case view.EntryGatePassed, view.EntryGateFailed, view.EntryRetried:
 		if e.Gate != "" {
 			return e.Gate
@@ -260,19 +265,6 @@ func (m Model) logDetail(e view.Entry) string {
 	}
 
 	return e.Said()
-}
-
-// firstLine is everything up to the first line break. A multi-line Text on a
-// one-line row would take the rest of the pane with it, and a carriage
-// return would put the rest of it on top of the row it is already on.
-//
-// SplitN and not Cut: this package may not slice a string, and Cut answers
-// with two more values than the cut is asking for.
-func firstLine(s string) string {
-	head := strings.SplitN(s, "\n", 2)[0]
-	head = strings.SplitN(head, "\r", 2)[0]
-
-	return strings.TrimSpace(head)
 }
 
 // clock is the wall time an entry was written, or nothing at all when the

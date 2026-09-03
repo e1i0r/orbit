@@ -67,3 +67,33 @@ func TestAToolCallOnTheTimelineIsItsArgumentAndNotItsDocument(t *testing.T) {
 		})
 	}
 }
+
+// TestARefusalIsWhatWasRefusedAndNotItsFirstLine.
+//
+// The row was built as the tool and the first line of the reason. Every
+// break after that was dropped before the pane wrapped anything, so the row
+// had one line, the fold was told there was nothing under it, and the rest
+// of the refusal was on no screen the reader could reach.
+func TestARefusalIsWhatWasRefusedAndNotItsFirstLine(t *testing.T) {
+	m, lines := timeline(t, append(fixtureEntries(), view.Entry{
+		At: ago(20 * time.Minute), Kind: "phase.refused", Phase: "implement",
+		Attempt: 2, PhaseN: 1, Tool: "Bash",
+		Text: "rm -rf build\nthe run may not delete outside the worktree\nask for it in a note",
+	}))
+
+	head := rowOf(lines, "rm -rf build")
+	if head < 0 {
+		t.Fatalf("the refusal was not drawn:\n%s", strings.Join(lines, "\n"))
+	}
+
+	if !strings.Contains(lines[head], foldShut) {
+		t.Errorf("the refusal offers nothing to open: %q", lines[head])
+	}
+
+	opened := strings.Join(screenRows(step(t, m, "e")), " ")
+	for _, want := range []string{"may not delete outside the worktree", "ask for it in a note"} {
+		if !strings.Contains(opened, want) {
+			t.Errorf("the timeline lost %q off the end of the refusal:\n%s", want, opened)
+		}
+	}
+}
