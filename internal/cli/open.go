@@ -121,6 +121,16 @@ func openCommand(engineName, dir, context string) (*exec.Cmd, error) {
 	}
 
 	if context != "" {
+		// The separator first, when a flag was given. --mcp-config takes as
+		// many values as follow it, so the sentence the session opens on was
+		// read as a second configuration file: claude answered "MCP config
+		// file not found: I am looking at orbit task ..." and exited before
+		// it drew anything, which from the cockpit is a screen that flashes
+		// and comes back.
+		if len(args) > 0 {
+			args = append(args, "--")
+		}
+
 		args = append(args, context)
 	}
 

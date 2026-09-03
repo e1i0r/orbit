@@ -21,9 +21,17 @@ func (m Model) launchInteractiveCLI() (Model, tea.Cmd) {
 	// is what the repository is called — and handed it to exec as a working
 	// directory, so every session opened on a task started in a directory
 	// that does not exist, or worse, in one that happened to.
-	var t view.Task
-	if r, ok := m.selected(); ok && !r.head {
-		t = r.task
+	// The task the view is open on, and the row under the cursor only when
+	// there is no view. A session opened from the task view read the board's
+	// cursor, which is on whatever row the reader left it on: the sentence
+	// the session was told named that task, and the directory it opened in
+	// was that task's — or, on a cursor that had never moved onto a task,
+	// the first repository on the board rather than this task's worktree.
+	t, ok := m.task(m.detail)
+	if !ok {
+		if r, sel := m.selected(); sel && !r.head {
+			t = r.task
+		}
 	}
 
 	repoDir := t.RepoPath
