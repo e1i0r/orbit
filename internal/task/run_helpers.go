@@ -103,6 +103,13 @@ func prompt(t Task, p flow.Phase, notes []string, prevOutput string, others []st
 		}
 	}
 
+	// Before the answer contract, which is last for the reason it says: the
+	// last thing said is the thing a model holds on to, and how to write is
+	// the thing every phase has to hold on to.
+	if isPlan(p.Name) {
+		b.WriteString(decisionAsk)
+	}
+
 	b.WriteString("\n" + engine.AnswerContract)
 
 	return b.String()

@@ -147,6 +147,8 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 			return err
 		}
 
+		noteDecisions(s, t, p, out)
+
 		// The diff is measured after the phase's work stands, and before
 		// the next phase adds to it. A change that has already gone past
 		// what was agreed is one a person decides about; running the phase
