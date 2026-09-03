@@ -4,7 +4,11 @@ package task
 // the work happened.
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
@@ -209,5 +213,109 @@ func noteDecisions(s *store.Store, t Task, p flow.Phase, out engine.Result) {
 		}); err != nil {
 			logger.Warn("task/run", "%s: the decision %q of phase %q was not written down: %v", t.ID, d.ID, p.Name, err)
 		}
+
+		// The copy beside the code, after the event and never instead of
+		// it. A file that could not be written leaves a decision that is
+		// still in the record; an event that was never written would leave
+		// a file claiming to be a copy of nothing.
+		if err := fileDecision(s, t, p, d); err != nil {
+			logger.Warn("task/run", "%s: the decision %q was not written into the repository: %v", t.ID, d.ID, err)
+		}
 	}
+}
+
+// OrbitDir is the directory Orbit keeps its own files in inside a
+// repository, and the one part of a task's worktree that is not the task's
+// work.
+//
+// It is named here rather than spelled in three places because two gates
+// have to skip it: a diff budget that counted Orbit's own writing would be
+// Orbit refusing a change it made itself, and a scope check would report the
+// decision file as a file the plan never named — which is true, and is not
+// the reader's problem.
+const OrbitDir = ".orbit"
+
+// fileDecision writes the decision beside the code it governs.
+//
+// The event is the decision's home and this is a copy: the record is what
+// Orbit reads, and the file is what survives outside it. A reader who has
+// the repository and not the state root — somebody reviewing the pull
+// request, somebody who cloned it a year later — is who the copy is for, and
+// it travels in the same commit as the change that decided it.
+//
+// The path is the decision's id, so a plan that ran twice rewrites its own
+// file rather than leaving the repository two files arguing with each other.
+func fileDecision(s *store.Store, t Task, p flow.Phase, d decision) error {
+	wt, ok := worktreeFor(s, t, d)
+	if !ok {
+		// A task with no checkout has nowhere to put a copy, and that is
+		// not a failure: the decision is in the record, which is where it
+		// lives. The copy arrives when the task joins a repository.
+		return nil
+	}
+
+	dir := filepath.Join(wt, OrbitDir, "decisions")
+	if err := os.MkdirAll(dir, 0o750); err != nil {
+		return fmt.Errorf("make %q: %w", dir, err)
+	}
+
+	return os.WriteFile(filepath.Join(dir, d.ID+".md"), []byte(decisionFile(t, p, d)), 0o600)
+}
+
+// worktreeFor is the checkout a decision's copy belongs in: the repository
+// holding the first path it says it governs, and the one the task is being
+// worked in when it governs nothing that can be found.
+//
+// One copy and not one per repository. A decision written into three
+// checkouts is three files that will disagree the first time one of them is
+// edited, and the scope is what says which of the three the reader will look
+// in.
+func worktreeFor(s *store.Store, t Task, d decision) (string, bool) {
+	var fallback string
+
+	for _, r := range openedRepos(s, t) {
+		wt, err := s.WorktreeDir(r.Path, t.ID)
+		if err != nil {
+			continue
+		}
+
+		if fallback == "" {
+			fallback = wt
+		}
+
+		for _, scope := range strings.Split(d.Scope, ",") {
+			if scope = strings.TrimSpace(scope); scope == "" {
+				continue
+			}
+
+			if _, err := os.Stat(filepath.Join(wt, scope)); err == nil {
+				return wt, true
+			}
+		}
+	}
+
+	return fallback, fallback != ""
+}
+
+// decisionFile is the copy as a reader meets it: the facts that place it
+// first, then what was decided.
+//
+// Plain lines and not a serialisation format. It is read by people and by
+// grep, and the day something reads it back it will be reading a copy — the
+// record is where a program asks.
+func decisionFile(t Task, p flow.Phase, d decision) string {
+	var b strings.Builder
+
+	fmt.Fprintf(&b, "# %s\n\n", d.ID)
+	fmt.Fprintf(&b, "task: %s\n", t.ID)
+	fmt.Fprintf(&b, "phase: %s\n", p.Name)
+	fmt.Fprintf(&b, "at: %s\n", time.Now().UTC().Format(time.RFC3339))
+
+	if d.Scope != "" {
+		fmt.Fprintf(&b, "scope: %s\n", strings.ReplaceAll(d.Scope, ",", ", "))
+	}
+
+	fmt.Fprintf(&b, "\n%s\n", strings.TrimSpace(d.Text))
+
+	return b.String()
 }
