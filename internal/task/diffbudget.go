@@ -156,7 +156,7 @@ func planText(s *store.Store, t Task) string {
 			continue
 		}
 
-		if e.Kind == record.PhaseFinished && strings.Contains(strings.ToLower(e.Phase), "plan") {
+		if e.Kind == record.PhaseFinished && isPlan(e.Phase) {
 			text = e.Text
 		}
 	}
