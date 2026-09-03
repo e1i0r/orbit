@@ -155,3 +155,33 @@ func TestTheDeliverActionsStandInColumns(t *testing.T) {
 		}
 	}
 }
+
+// TestTheNeedsYouLineNamesTheKeysThisScreenHonours.
+//
+// The banner read "press 't' to open interactive session", and t on the
+// detail screen is the thinking dial: a reader who did as it said turned
+// thinking off and got no session. The letters come from the bindings now,
+// so the sentence cannot drift away from the keys again.
+func TestTheNeedsYouLineNamesTheKeysThisScreenHonours(t *testing.T) {
+	m := openOn(t, "ACME-2662")
+
+	got := overviewText(m)
+	if !strings.Contains(got, "NEEDS YOU") {
+		t.Fatalf("the banner a task in needs you draws is not there:\n%s", got)
+	}
+
+	if strings.Contains(got, "'t'") {
+		t.Errorf("the banner sends the reader to the thinking dial:\n%s", got)
+	}
+
+	for _, k := range []string{m.keys.CLI.Help().Key, m.keys.Ask.Help().Key, m.keys.Resume.Help().Key} {
+		if !strings.Contains(got, "'"+k+"'") {
+			t.Errorf("the banner does not name %q, which is a key this screen honours:\n%s", k, got)
+		}
+	}
+
+	// And the key it names for feedback is the key that takes it.
+	if next := step(t, m, m.keys.Ask.Help().Key); !next.note.open {
+		t.Errorf("%q did not open the note the banner offers", m.keys.Ask.Help().Key)
+	}
+}

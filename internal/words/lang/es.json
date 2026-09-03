@@ -2836,8 +2836,8 @@
       "value": "TE NECESITA"
     },
     "overview.resume_hint": {
-      "source": "press 't' to open interactive session, 'r' to restart",
-      "value": "presiona 't' para sesión interactiva, 'r' para reiniciar"
+      "source": "press '{cli}' to open an interactive session, '{ask}' to leave feedback, '{resume}' to resume",
+      "value": "presiona '{cli}' para una sesión interactiva, '{ask}' para dejar feedback, '{resume}' para reanudar"
     },
     "overview.duration": {
       "source": "duration",

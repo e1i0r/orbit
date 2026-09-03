@@ -95,9 +95,18 @@ func (m Model) overviewHead(t view.Task, w int) []string {
 
 	// The one banner in the window. A task that wants the reader has to say
 	// so louder than the four figures under it, or it waits until they scroll.
+	//
+	// The keys are asked for rather than written into the sentence. This
+	// line read "press 't'", and t on this screen is the thinking dial: the
+	// reader who did as it said turned thinking off and got no session. A
+	// letter written into a sentence is a letter nothing keeps true.
 	return append(out,
 		paneGutter+Paint(role).Bold(true).Render("▍ "+p.T("overview.waiting_box", "NEEDS YOU")),
-		paneGutter+Text(Tertiary).Render(p.T("overview.resume_hint", "press 't' to open interactive session, 'r' to restart")),
+		paneGutter+Text(Tertiary).Render(p.T("overview.resume_hint",
+			"press '{cli}' to open an interactive session, '{ask}' to leave feedback, '{resume}' to resume",
+			about("cli", m.keys.CLI.Help().Key),
+			about("ask", m.keys.Ask.Help().Key),
+			about("resume", m.keys.Resume.Help().Key))),
 		"",
 	)
 }
