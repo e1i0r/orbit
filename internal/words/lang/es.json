@@ -975,6 +975,10 @@
       "source": "reading the reviews on {id}...",
       "value": "leyendo los reviews de {id}..."
     },
+    "list.none": {
+      "source": "no tasks yet",
+      "value": "todavía no hay tareas"
+    },
     "cmd.digest": {
       "source": "what the record says about the work as a whole",
       "value": "lo que el record dice del trabajo en conjunto"
