@@ -110,8 +110,17 @@ type Flow struct {
 	// and AttemptCap reads it as the default. Every flow file written
 	// before this field existed decodes to zero, which is what makes them
 	// mean what they meant.
-	Attempts int     `json:"attempts,omitempty"`
-	Phases   []Phase `json:"phases"`
+	Attempts int `json:"attempts,omitempty"`
+	// DiffBudget is how many lines a task walking this flow may change
+	// before it stops and asks. Zero is no budget, the working zero every
+	// setting in Orbit has.
+	//
+	// It is per flow and not per phase because it is about the change, not
+	// about the step that made it: what a reader agrees to is the size of
+	// what they will have to read, and which phase wrote which line of it
+	// is not a thing they agreed anything about.
+	DiffBudget int     `json:"diff_budget,omitempty"`
+	Phases     []Phase `json:"phases"`
 }
 
 // AttemptCap is how many times a phase of this flow may be run.
@@ -138,6 +147,10 @@ func (f Flow) Validate() error {
 	// attempts, and -1 is a file that meant something by it. Reading the
 	// second as three would run a phase three times for somebody who wrote
 	// down that they wanted otherwise.
+	if f.DiffBudget < 0 {
+		return fmt.Errorf("flow %q allows %d changed lines, which is not a number of lines", f.Name, f.DiffBudget)
+	}
+
 	if f.Attempts < 0 {
 		return fmt.Errorf("flow %q allows %d attempts, which is not a number of attempts", f.Name, f.Attempts)
 	}

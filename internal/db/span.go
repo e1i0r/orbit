@@ -30,6 +30,7 @@ var (
 		record.TaskAbandoned:  true,
 		record.TaskStuck:      true,
 		record.TaskOverBudget: true,
+		record.TaskOverDiff:   true,
 	}
 
 	// closesPhase includes phase.retried because an attempt that a gate

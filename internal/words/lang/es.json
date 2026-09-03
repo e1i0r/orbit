@@ -451,6 +451,10 @@
         "other": "no se pudieron leer {n} registros"
       }
     },
+    "reason.over_diff": {
+      "source": "changed {lines} lines of {budget}",
+      "value": "cambió {lines} líneas de {budget}"
+    },
     "reason.over_budget": {
       "source": "spent {spent} of {budget}",
       "value": "gastó {spent} de {budget}"
@@ -942,6 +946,10 @@
     "log.retried": {
       "source": "trying again",
       "value": "otro intento"
+    },
+    "log.over_diff": {
+      "source": "change too big",
+      "value": "cambio demasiado grande"
     },
     "log.over_budget": {
       "source": "over budget",
