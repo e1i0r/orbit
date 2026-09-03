@@ -9,6 +9,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/view"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // storyLines is the five fields as a chain, or nothing at all.
@@ -49,7 +50,51 @@ func (m Model) storyLines(w int) []string {
 		out = append(out, storyRow(i, step.text, step.about, w))
 	}
 
+	return append(out, m.walkLines(w)...)
+}
+
+// walkLines is what the task changed, under the story that says why.
+//
+// The claim and its evidence one line apart, which is the rule the whole
+// story is built on: the model says what was done and the record says what
+// was touched to do it, and a reader who doubts the first is one keystroke
+// from the second.
+//
+// Every changed file, however many there are. What is pruned is the files
+// the agent opened and left alone; a hundred changes draw a hundred rows,
+// because a story that stopped at ten would be hiding the work rather than
+// the noise.
+func (m Model) walkLines(w int) []string {
+	steps := view.Walk(m.entries)
+	if len(steps) == 0 {
+		return []string{""}
+	}
+
+	p := m.opts.Words
+
+	out := []string{
+		"",
+		paneGutter + "        " + Text(Tertiary).Render(p.P("story.changed", len(steps),
+			"{n} file changed, in the order it got there",
+			"{n} files changed, in the order it got there")),
+	}
+
+	for _, s := range steps {
+		out = append(out, paneGutter+"        "+Paint(OK).Render(fit(s.Path, max(20, w-2*len(paneGutter)-10)))+
+			Text(Tertiary).Render(touches(p, s)))
+	}
+
 	return append(out, "")
+}
+
+// touches is how much was done to one file, said only when it is more than
+// once: "changed" beside every row is a column of the same word.
+func touches(p *words.Printer, s view.Step) string {
+	if s.Touches < 2 {
+		return ""
+	}
+
+	return "  " + p.P("story.touches", s.Touches, "{n} change", "{n} changes")
 }
 
 // storyRow is one link of the chain: the claim, and the word for which link

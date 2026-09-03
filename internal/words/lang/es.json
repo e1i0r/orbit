@@ -983,6 +983,26 @@
       "source": "how it happened",
       "value": "cómo pasó"
     },
+    "story.changed": {
+      "source": {
+        "one": "{n} file changed, in the order it got there",
+        "other": "{n} files changed, in the order it got there"
+      },
+      "value": {
+        "one": "{n} archivo cambiado, en el orden en que llegó",
+        "other": "{n} archivos cambiados, en el orden en que llegó"
+      }
+    },
+    "story.touches": {
+      "source": {
+        "one": "{n} change",
+        "other": "{n} changes"
+      },
+      "value": {
+        "one": "{n} cambio",
+        "other": "{n} cambios"
+      }
+    },
     "story.entry": {
       "source": "the way in",
       "value": "la entrada"
