@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/e1i0r/orbit/internal/view"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 type costRow struct {
@@ -13,6 +14,22 @@ type costRow struct {
 	turns    int
 	engine   string
 	model    string
+}
+
+// figure is what goes in the cost column: money where money was charged,
+// and the word for a plan where it was not.
+//
+// $0.0000 against a phase that ran for twenty minutes reads as "this one was
+// free", which is the one thing it certainly was not. Under a subscription
+// the money left the account in advance and none of it is attributable to a
+// run; the honest column says which kind of number is missing rather than
+// printing a zero that looks like one.
+func figure(p *words.Printer, cost float64, priced bool) string {
+	if !priced {
+		return p.T("cost.subscription", "subscription")
+	}
+
+	return fmt.Sprintf("$%.4f", cost)
 }
 
 // costPhaseCells is the phase column of the cost table, and costMoneyCells
@@ -99,6 +116,12 @@ func (m Model) costLines() []string {
 			pad(p.T("cost.col_duration", "duration"), costMoneyCells, false)+" "+
 			p.T("cost.col_engine", "engine / model")))
 
+	// Whether this engine's use is spoken about in money at all. Asked once
+	// for the table rather than per row: every row of it is the same task
+	// on the same engine, and asking per row would put a dollar sign on one
+	// phase and not the next.
+	priced := m.spends(t.Engine)
+
 	for _, r := range rows {
 		modStr := r.engine
 		if r.model != "" {
@@ -107,7 +130,7 @@ func (m Model) costLines() []string {
 
 		out = append(out, "    "+
 			Paint(Accent).Render(pad(r.phase, costPhaseCells, false))+" "+
-			Paint(OK).Render(pad(fmt.Sprintf("$%.4f", r.cost), costMoneyCells, false))+" "+
+			Paint(OK).Render(pad(figure(p, r.cost, priced), costMoneyCells, false))+" "+
 			Paint(Dim).Render(pad(r.duration, costMoneyCells, false))+" "+
 			Paint(Dim).Render(modStr))
 	}
@@ -115,9 +138,17 @@ func (m Model) costLines() []string {
 	out = append(out,
 		"",
 		"    "+Paint(Dim).Render(pad(p.T("cost.total", "total so far"), costPhaseCells, false))+" "+
-			Paint(Accent).Bold(true).Render(fmt.Sprintf("$%.4f", t.Cost)),
+			Paint(Accent).Bold(true).Render(figure(p, t.Cost, priced)),
 		"",
 	)
+
+	if !priced {
+		out = append(out,
+			"    "+Paint(Dim).Render(p.T("cost.window_is_the_unit",
+				"under subscription · what is left is the quota window")),
+			"",
+		)
+	}
 
 	return out
 }

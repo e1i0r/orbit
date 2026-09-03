@@ -463,6 +463,18 @@
       "source": "spent {spent} of {budget}",
       "value": "gastó {spent} de {budget}"
     },
+    "header.running_cost": {
+      "source": "{cost} running",
+      "value": "{cost} corriendo"
+    },
+    "cost.subscription": {
+      "source": "subscription",
+      "value": "suscripción"
+    },
+    "cost.window_is_the_unit": {
+      "source": "under subscription · what is left is the quota window",
+      "value": "bajo suscripción · lo que queda es la ventana de quota"
+    },
     "header.budget_brake": {
       "source": "budget spent (${spent})",
       "value": "presupuesto gastado (${spent})"
