@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	tea "charm.land/bubbletea/v2"
+
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -68,5 +70,52 @@ func TestTheArgumentsCarryWhateverFollowsThem(t *testing.T) {
 	got := repoArgs("/work/payments", "ACME-1", "--", "fix the tests")
 	if strings.Join(got, " ") != "-repo /work/payments ACME-1 -- fix the tests" {
 		t.Errorf("repoArgs = %v", got)
+	}
+}
+
+// TestEveryDeliverVerbReachesItsCommand. The eight verbs of the deliver grid
+// are eight call sites of one pattern, and the one that is never exercised
+// is the one that still hands a command the workspace.
+func TestEveryDeliverVerbReachesItsCommand(t *testing.T) {
+	for name, verb := range map[string]func(Model) (tea.Model, tea.Cmd){
+		"create PR":        Model.deliverPR,
+		"update PR":        Model.updatePRBranch,
+		"merge PR":         Model.mergePR,
+		"close PR":         Model.closePR,
+		"fix checks":       Model.fixChecks,
+		"more tests":       Model.addMoreTests,
+		"resolve comments": Model.resolveComments,
+	} {
+		m, _ := testModel(t, 120, 30)
+		m.board = fixtureBoard([]view.Task{{
+			ID: "ACME-9", Title: "no repository at all", Band: view.NeedsYou, Since: ago(time.Minute),
+		}}, 1)
+		m.detail = "ACME-9"
+
+		next, cmd := verb(m)
+		if cmd == nil {
+			t.Errorf("%s ran nothing", name)
+		}
+
+		if asModel(t, next).message == "" {
+			t.Errorf("%s said nothing about what it was doing", name)
+		}
+	}
+}
+
+// TestADeliverVerbWithNoTaskSaysSo, rather than running a command about
+// whichever task the cursor last touched.
+func TestADeliverVerbWithNoTaskSaysSo(t *testing.T) {
+	m, _ := testModel(t, 120, 30)
+	m.board = fixtureBoard(nil, 1)
+	m.detail = ""
+
+	next, cmd := m.deliverPR()
+	if cmd != nil {
+		t.Error("a deliver verb with no task in front of it ran a command")
+	}
+
+	if !strings.Contains(asModel(t, next).message, "select") {
+		t.Errorf("it said %q, want it asking for a task", asModel(t, next).message)
 	}
 }
