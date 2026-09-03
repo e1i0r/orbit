@@ -140,6 +140,30 @@ func foldCases() []foldCase {
 			},
 		},
 		{
+			// The measure that cut this to fifty characters was kept in the
+			// model, where fifty is a measure of the band's row and of
+			// nothing else. The overview, which draws the same field on a
+			// line it shares with nothing, was handed the same fifty.
+			name: "a long tool call reaches the row whole",
+			events: []record.Event{
+				{At: at(0), Kind: "task.created", Text: "Live action task"},
+				{At: at(1), Kind: "task.started", Data: data("flow", "task")},
+				{At: at(2), Kind: "phase.started", Phase: "implement", Data: data("engine", "claude", "model", "opus", "n", "1")},
+				{
+					At: at(3), Kind: "phase.tool_call", Phase: "implement", Data: data("tool", "Bash"),
+					Text: `{"command":"go test ./internal/task/ -run TestTheShippedTaskFlow -count=1 -v"}`,
+				},
+			},
+			want: Task{
+				Title: "Live action task", Band: Running, Flow: "task",
+				Phase: "implement", PhaseN: 1, Engine: "claude", Model: "opus",
+				Since: at(2), Started: at(1), Attempt: 1,
+				CurrentAction: "Bash: go test ./internal/task/ -run TestTheShippedTaskFlow -count=1 -v",
+				ActionKind:    ActionTool,
+				ToolCallCount: 1, state: stateRunning,
+			},
+		},
+		{
 			name: "between two phases, the cost of each one summed",
 			events: []record.Event{
 				{At: at(0), Kind: "task.created", Text: "Index on settlements"},

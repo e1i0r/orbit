@@ -1,7 +1,7 @@
 package view
 
 // The line beside a running task: which argument of a tool call it shows,
-// and where it is cut.
+// and that the model hands it over whole.
 
 import (
 	"strings"
@@ -67,35 +67,38 @@ func TestAnActionIsTheArgumentAndNotTheDocument(t *testing.T) {
 			"Bash",
 		},
 	} {
-		if got := formatAction("Bash", c.args); got != c.want {
-			t.Errorf("formatAction(%s) = %q, want %q — %s", c.args, got, c.want, c.why)
+		if got := ToolLine("Bash", c.args); got != c.want {
+			t.Errorf("ToolLine(%s) = %q, want %q — %s", c.args, got, c.want, c.why)
 		}
 	}
 }
 
-// TestAnActionIsCutBetweenCharacters. head[:47] is a byte offset: a
-// character on that boundary is left as half of itself, and what a terminal
-// draws for half a character is up to the terminal.
-func TestAnActionIsCutBetweenCharacters(t *testing.T) {
+// TestAnActionIsNotCutInTheModel.
+//
+// Fifty characters was the band's measure, where five other fields share the
+// row, and it was applied here — so the overview, which has the width of the
+// window, was handed a command already cut to fifty and drew an ellipsis
+// with eighty columns of room beside it. The measure belongs to whoever
+// draws the line.
+func TestAnActionIsNotCutInTheModel(t *testing.T) {
 	long := strings.Repeat("ñ", 80)
 
-	got := formatAction("Bash", long)
+	got := ToolLine("Bash", long)
 	if !utf8.ValidString(got) {
-		t.Fatalf("formatAction cut a character in half: %q", got)
+		t.Fatalf("ToolLine cut a character in half: %q", got)
 	}
 
-	cut := strings.TrimPrefix(got, "Bash: ")
-	if n := utf8.RuneCountInString(cut); n != actionChars {
-		t.Errorf("the action is %d characters long, want %d", n, actionChars)
+	if want := "Bash: " + long; got != want {
+		t.Errorf("ToolLine = %q, want the whole of what the call was about", got)
 	}
 
-	if !strings.HasSuffix(cut, "…") {
-		t.Errorf("the action reads %q, want it to end in an ellipsis", cut)
+	if strings.Contains(got, "…") {
+		t.Errorf("ToolLine = %q, want nothing cut and so no ellipsis", got)
 	}
 
-	// And one that fits is not touched.
-	if got := formatAction("Bash", "ls"); got != "Bash: ls" {
-		t.Errorf("formatAction = %q, want a short action left alone", got)
+	// And one that was short all along is untouched.
+	if got := ToolLine("Bash", "ls"); got != "Bash: ls" {
+		t.Errorf("ToolLine = %q, want a short action left alone", got)
 	}
 }
 
@@ -132,8 +135,8 @@ func TestAnActionNamesTheFileAndNotTheWorktree(t *testing.T) {
 			"Bash: /Users/ana/.orbit/worktrees/5a14f7401345/FRA-62",
 		},
 	} {
-		if got := formatAction("Bash", c.args); got != c.want {
-			t.Errorf("formatAction(%s) = %q, want %q — %s", c.args, got, c.want, c.why)
+		if got := ToolLine("Bash", c.args); got != c.want {
+			t.Errorf("ToolLine(%s) = %q, want %q — %s", c.args, got, c.want, c.why)
 		}
 	}
 }
@@ -160,8 +163,8 @@ func TestAnActionOnMoreThanOneLineIsJoined(t *testing.T) {
 			"Bash: cd internal go test ./...",
 		},
 	} {
-		if got := formatAction("Bash", c.args); got != c.want {
-			t.Errorf("formatAction(%s) = %q, want %q — %s", c.args, got, c.want, c.why)
+		if got := ToolLine("Bash", c.args); got != c.want {
+			t.Errorf("ToolLine(%s) = %q, want %q — %s", c.args, got, c.want, c.why)
 		}
 	}
 }

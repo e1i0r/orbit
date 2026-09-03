@@ -126,6 +126,14 @@ func actionGlyph(kind view.ActionKind) string {
 	}
 }
 
+// actionCells is how much of the live action this row draws.
+//
+// The action arrives whole — view.ToolLine keeps no measure of its own — and
+// the row it lands on already carries an id, a phase, an elapsed time, an
+// engine and a flow, with the whole line cut to the terminal at the end. An
+// action left whole here is an action that pushes the engine off the row.
+const actionCells = 50
+
 // runningLine names the one task a process is holding right now, including its live action.
 func (m Model) runningLine(t view.Task) string {
 	p := m.opts.Words
@@ -136,7 +144,7 @@ func (m Model) runningLine(t view.Task) string {
 	}
 
 	if t.CurrentAction != "" {
-		pieces = append(pieces, Paint(Live).Render(actionGlyph(t.ActionKind)+t.CurrentAction))
+		pieces = append(pieces, Paint(Live).Render(actionGlyph(t.ActionKind)+fit(t.CurrentAction, actionCells)))
 	}
 
 	if engine := engineAndModel(t); engine != "" {

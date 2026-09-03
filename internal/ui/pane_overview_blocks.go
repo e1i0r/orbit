@@ -212,8 +212,15 @@ const overviewFoldLines = 3
 func (m Model) livePhase(t view.Task, w int) []string {
 	p := m.opts.Words
 	now := orDef(t.CurrentAction, p.T("overview.running_model", "running model..."))
+	glyph := m.runGlyph(working(t))
 
-	out := []string{paneGutter + Paint(Live).Render(m.runGlyph(working(t))) + Text(Primary).Bold(true).Render(now)}
+	// Cut to the pane and not to a constant. What the band has room for is
+	// fifty characters, because five other fields share its row; this line
+	// shares its row with nothing, and a command that fits in the window is
+	// a command the reader gets to read.
+	now = fit(now, max(20, w-lipgloss.Width(paneGutter)-lipgloss.Width(glyph)))
+
+	out := []string{paneGutter + Paint(Live).Render(glyph) + Text(Primary).Bold(true).Render(now)}
 
 	if t.CurrentThought != "" {
 		out = append(out, prose(t.CurrentThought, w, paneGutter+"  ")...)

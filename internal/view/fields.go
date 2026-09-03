@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	"github.com/e1i0r/orbit/internal/record"
 )
@@ -112,10 +111,6 @@ func firstLine(s string) string {
 	return strings.TrimSpace(s)
 }
 
-// actionChars is how much of an action fits on a row that also carries an
-// id, a phase, an elapsed time and an engine.
-const actionChars = 50
-
 // actionKeys are the arguments a tool call is about, in the order they are
 // looked for. What a reader wants off a row is the command that is running,
 // the file that is being read or the pattern that is being searched for, not
@@ -126,28 +121,22 @@ var actionKeys = []string{"command", "file_path", "path", "pattern"}
 // ones worth shortening against the worktree the run was given.
 var actionPathKeys = map[string]bool{"file_path": true, "path": true}
 
-// formatAction turns one tool call into the line beside a running task,
-// where it shares the row with an id, a phase, an elapsed time and an
-// engine, and so is cut to what is left.
-func formatAction(tool, args string) string {
-	return toolLine(tool, args, actionChars)
-}
-
-// ToolLine is the same call written for a pane that has a line to give it:
-// the timeline wraps what it is given and folds what does not fit, so it
-// wants the argument whole.
+// ToolLine is one tool call written for a reader: the name of the tool, and
+// then the one argument it is about.
+//
+// It is not cut here. This is the model three readers share — the band, the
+// overview and the MCP server — and a measure kept in the model is the
+// measure of whichever of them was thought of first. Fifty characters was
+// the band's, where the row also carries an id, a phase, an elapsed time, an
+// engine and a flow; the overview, which has the width of the window, drew
+// the same fifty and cut a command that had room to be read. Whoever draws
+// the line is the one that knows what it has to fit in.
 //
 // It is exported because the timeline had a reader of its own that searched
 // the arguments for `"command"` and then for `:"` — the search this package
 // documents as the one that does not work — and so showed raw JSON for every
-// call about a file. One formatter, and both panes read the same.
+// call about a file. One formatter, and every reader reads the same.
 func ToolLine(tool, args string) string {
-	return toolLine(tool, args, 0)
-}
-
-// toolLine is what both of them do: name the tool, then the one argument it
-// is about, cut to n characters when n asks for it.
-func toolLine(tool, args string, n int) string {
 	tool = strings.TrimSpace(tool)
 	if tool == "" {
 		return ""
@@ -156,10 +145,6 @@ func toolLine(tool, args string, n int) string {
 	head := oneLine(subject(strings.TrimSpace(args)))
 	if head == "" {
 		return tool
-	}
-
-	if n > 0 {
-		head = clip(head, n)
 	}
 
 	return tool + ": " + head
@@ -236,18 +221,4 @@ func oneLine(s string) string {
 	}
 
 	return strings.TrimSpace(strings.Join(strings.Fields(strings.Join(lines, " ")), " "))
-}
-
-// clip shortens a line to n characters, counting characters and not bytes.
-//
-// Slicing bytes is what this did — head[:47] — and a path or a prompt with
-// an accent in it can have a character on that boundary. Half of one is not
-// a character at all, and what the terminal draws for the half that arrives
-// is up to the terminal.
-func clip(s string, n int) string {
-	if utf8.RuneCountInString(s) <= n {
-		return s
-	}
-
-	return string([]rune(s)[:n-1]) + "…"
 }
