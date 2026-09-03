@@ -57,6 +57,28 @@ func (m Model) gesture(b key.Binding) (view.Task, Model, bool) {
 	return r.task, m, true
 }
 
+// verbOn writes one of the five control words on a named task, with the
+// affordance asked first and its refusal said.
+//
+// It is handed the task rather than finding it under the cursor because the
+// task view has no cursor: the reader is inside one task and the board's rows
+// are behind it. r reached nothing at all on that screen — it was in the
+// board's map and in no other, so it fell through to the pane's scroll, which
+// is a keystroke that does nothing on a screen whose own banner had just told
+// the reader to press it.
+func (m Model) verbOn(t view.Task, b key.Binding, word string) (Model, tea.Cmd) {
+	a, ok := m.affordance(t, b)
+	if !ok {
+		return m, nil
+	}
+
+	if !a.OK {
+		return m.say(a.Why(m.opts.Words)), nil
+	}
+
+	return m, control(m.opts.Control, t, word)
+}
+
 // markReadKey is d: one finished task read, and the brake one notch looser.
 func (m Model) markReadKey() (tea.Model, tea.Cmd) {
 	t, next, ok := m.gesture(m.keys.MarkRead)

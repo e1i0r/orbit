@@ -275,12 +275,12 @@ func (m Model) open() (tea.Model, tea.Cmd) {
 // verb asks the command behind one key to write one word. Whether the key is
 // allowed at all is gesture's answer, in gesture.go.
 func (m Model) verb(b key.Binding, word string) (Model, tea.Cmd) {
-	t, next, ok := m.gesture(b)
-	if !ok {
-		return next, nil
+	r, ok := m.selected()
+	if !ok || r.head {
+		return m, nil
 	}
 
-	return next, control(next.opts.Control, t, word)
+	return m.verbOn(r.task, b, word)
 }
 
 // ask opens the confirm in front of a cancel.

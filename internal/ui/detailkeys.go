@@ -125,8 +125,8 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.fixChecks()
 	case k.String() == "T":
 		return m.addMoreTests()
-	// R and not r: r is restart, and a reader who meant to bring back a
-	// review would otherwise start the task over.
+	// R and not r: r lets a parked run go, and a reader who meant to bring
+	// back a review would otherwise pass the gate it is waiting at.
 	case k.String() == "R":
 		return m.resolveComments()
 	case k.String() == "t":
@@ -157,6 +157,11 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 			"effort level set to {effort}", about("effort", eff))), nil
 	case k.String() == "F":
 		return m.openFlows(), nil
+	// The three keys the needs-you banner names are r, a and c, and all
+	// three are answered here. The diff tab's own r is matched above, so a
+	// reader reading a change still toggles the rationale with it.
+	case key.Matches(k, m.keys.Resume):
+		return m.verbOn(m.subject(), m.keys.Resume, "resume")
 	case key.Matches(k, m.keys.Ask):
 		return m.openNote(), nil
 	case key.Matches(k, m.keys.CLI):
