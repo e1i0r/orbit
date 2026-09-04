@@ -296,6 +296,9 @@ func isPermissionRefusal(s string) bool {
 	lower := strings.ToLower(s)
 
 	return strings.Contains(lower, "permission denied") ||
+		// agy's own wording, which puts who said no in front of it: "user
+		// denied permission to run command".
+		strings.Contains(lower, "denied permission") ||
 		strings.Contains(lower, "not permitted") ||
 		strings.Contains(lower, "permission refused") ||
 		strings.Contains(lower, "refused permission") ||

@@ -157,12 +157,20 @@ func openSays(engineName string, flagged bool, context string) []string {
 // claude and codex do read it as one. opencode reads a bare argument as the
 // directory to start in, so the session died before it drew anything —
 // "ENAMETOOLONG: name too long, lstat '<worktree>/I am looking at orbit task
-// FRA-62...'", the whole sentence lstat'ed as a path.
+// FRA-62...'", the whole sentence lstat'ed as a path. agy reads no bare
+// argument at all, and the flag it does read is the one that opens a
+// terminal rather than the one that runs without one.
 //
 // It is a name check for the reason mcpConfigFlag is one.
 func promptFlag(engineName string) string {
-	if engineName == "opencode" {
+	switch engineName {
+	case "opencode":
 		return "--prompt"
+	case "agy":
+		// Not --prompt, which agy spells as an alias for --print and runs
+		// without a terminal at all: the session would answer once into a
+		// window that is not looking and exit.
+		return "--prompt-interactive"
 	}
 
 	return ""

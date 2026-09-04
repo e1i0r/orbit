@@ -326,3 +326,21 @@ func TestOpenCommandGivesOpenCodeTheSentenceOnItsOwnFlag(t *testing.T) {
 		t.Errorf("args = %v, want %v", got, want)
 	}
 }
+
+// TestOpenCommandOpensAgyInteractively.
+//
+// agy spells --prompt as an alias for --print, which answers once with no
+// terminal at all: the window would suspend itself for a session that had
+// already ended. --prompt-interactive is the one that hands the reader a
+// session with the first line typed into it.
+func TestOpenCommandOpensAgyInteractively(t *testing.T) {
+	cmd, err := openCommand("agy", "", "look at PAY-1")
+	if err != nil {
+		t.Fatalf("openCommand: %v", err)
+	}
+
+	want := []string{"--prompt-interactive", "look at PAY-1"}
+	if got := cmd.Args[1:]; !slices.Equal(got, want) {
+		t.Errorf("args = %v, want %v", got, want)
+	}
+}

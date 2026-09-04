@@ -76,6 +76,11 @@ type metered struct {
 // pointed at nothing are the engines with no source, which is a state this
 // package reports rather than hides.
 //
+// agy is a subscription with no source and no variable either, from the
+// other direction: it is signed into with a Google account and there is no
+// key that would make it metered, so what a run of it costs is a share of a
+// monthly price nothing here can read.
+//
 // opencode is per token with no source and no variable to look at: it drives
 // whichever provider its own configuration names, on the reader's key, so
 // there is no single endpoint that could answer for it and no arrangement in
@@ -86,6 +91,7 @@ type metered struct {
 // an engine named here but nowhere else would be a row nobody ever reads.
 func FromEnv() *Meter {
 	return &Meter{engines: []metered{
+		{name: "agy", mode: Subscription},
 		{name: "claude", mode: keyed("ANTHROPIC_API_KEY"), from: New(os.Getenv("ANTHROPIC_BASE_URL"))},
 		{name: "codex", mode: keyed("OPENAI_API_KEY"), from: New(os.Getenv("OPENAI_BASE_URL"))},
 		{name: "opencode", mode: PerToken},
