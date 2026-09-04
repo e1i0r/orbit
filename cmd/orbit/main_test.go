@@ -34,3 +34,7 @@ func TestMainCallsExitWithRunCode(t *testing.T) {
 		t.Errorf("main() exit code = %d, want 0", code)
 	}
 }
+
+func TestRaiseFileLimit(t *testing.T) {
+	raiseFileLimit()
+}

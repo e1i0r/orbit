@@ -61,7 +61,7 @@ func Discover(root string) ([]Repo, error) {
 			return filepath.SkipDir
 		}
 
-		if name := d.Name(); path != abs && strings.HasPrefix(name, ".") {
+		if name := d.Name(); path != abs && (strings.HasPrefix(name, ".") || isIgnoredDir(name)) {
 			return filepath.SkipDir
 		}
 
@@ -78,7 +78,9 @@ func Discover(root string) ([]Repo, error) {
 			// ownership safety check when the repository's owner differs from the
 			// running user. Omit it from results instead of failing the whole walk,
 			// because one unopenable directory must not blank the entire listing.
-			return nil //nolint:nilerr // deliberate: skip this one, keep the listing
+			// Descending into it is refused: it is still a repository, and its
+			// contents are not separate projects to start tasks against.
+			return filepath.SkipDir //nolint:nilerr // deliberate: skip this one, keep the listing
 		}
 
 		found = append(found, r)
@@ -92,4 +94,17 @@ func Discover(root string) ([]Repo, error) {
 	sort.Slice(found, func(i, j int) bool { return found[i].Path < found[j].Path })
 
 	return found, nil
+}
+
+// isIgnoredDir reports directory names that cannot be repositories to track
+// tasks against, such as package manager caches, dependency folders, and build
+// outputs. Skipping them avoids traversing tens of thousands of nested folders
+// and exhausting system file descriptors.
+func isIgnoredDir(name string) bool {
+	switch name {
+	case "node_modules", "vendor", "__pycache__", "build", "dist", "target", "coverage":
+		return true
+	default:
+		return false
+	}
 }
