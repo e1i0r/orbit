@@ -7,17 +7,12 @@ import "maps"
 
 // engineOpen says whether an engine's models are on the list.
 //
-// Absent from the map is the engine in force open and every other one shut,
-// which is this screen as it was before it folded at all: a reader who has
-// touched no arrow sees the models of the engine the run will use, and the
-// rest of the engines by name.
-func (m Model) engineOpen(name string) bool {
-	if shown, set := m.engines.open[name]; set {
-		return shown
-	}
-
-	return name == m.dialEngine(m.knobs.Engine)
-}
+// Everything starts shut, including the engine in force. Four engines and
+// their catalogues are eighty-odd rows, and a screen that opened one of them
+// by itself would open the longest list on the machine — opencode's
+// sixty-five — in front of a reader who came here to change the effort. The
+// names fit on one screen; what is behind them is asked for.
+func (m Model) engineOpen(name string) bool { return m.engines.open[name] }
 
 // foldEngine puts an engine's models on the list or takes them off it.
 //

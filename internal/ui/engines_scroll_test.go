@@ -32,7 +32,7 @@ func knobsOnALongList(t *testing.T) Model {
 	m.opts.Engines = enginesLongList
 	m.knobs.Engine = "opencode"
 
-	return m.openEngines()
+	return m.openEngines().foldEngine("opencode", true)
 }
 
 // selectedKnob is what the cursor is on, asked of the rows rather than of

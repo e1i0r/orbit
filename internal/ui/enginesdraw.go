@@ -3,6 +3,8 @@ package ui
 import (
 	"fmt"
 	"strings"
+
+	"charm.land/lipgloss/v2"
 )
 
 const (
@@ -100,7 +102,7 @@ func (m Model) engineLines(w int) ([]string, []int) {
 		}
 
 		at = append(at, len(lines))
-		lines = append(lines, fit(m.engineLine(r, i == current), w))
+		lines = append(lines, m.engineLine(r, i == current, w))
 	}
 
 	return lines, at
@@ -108,34 +110,71 @@ func (m Model) engineLines(w int) ([]string, []int) {
 
 // engineLine is one row: the cursor's gutter, what the row is called, the
 // dot on the one in force, and whatever the quota has to say about it.
-func (m Model) engineLine(r engineRow, marked bool) string {
+//
+// The chosen row is painted across its whole width rather than marked only
+// in the gutter. This list is read by running an eye down it, and a cursor
+// that is one glyph three columns to the left of a name is the thing the eye
+// was not looking at.
+//
+// Nothing inside that row carries a colour of its own: a colour ends with
+// its own reset, and a reset halfway along the line would end the highlight
+// halfway along the name it is marking.
+func (m Model) engineLine(r engineRow, marked bool, w int) string {
 	mark := strings.Repeat(" ", gutter)
 	if marked {
 		mark = markGlyph + strings.Repeat(" ", gutter-1)
 	}
 
+	ink := func(paint func(...string) string, s string) string {
+		if marked {
+			return s
+		}
+
+		return paint(s)
+	}
+
 	text := r.title
 	if r.kind == rowEngine {
-		text = Text(Tertiary).Render(foldMark(r.open)) + text
-		if !r.open && r.models > 0 {
-			text += " " + Paint(Dim).Render(m.opts.Words.T("engines.model_count",
-				"{count} models", about("count", fmt.Sprint(r.models))))
-		}
+		text = ink(Text(Tertiary).Render, foldMark(r.open)) + text
 	}
 
 	if r.selected {
-		text += " " + Paint(OK).Render("●")
+		text += " " + ink(Paint(OK).Render, "●")
+	}
+
+	if r.kind == rowEngine && !r.open {
+		text += " " + ink(Paint(Dim).Render, m.shutEngineNote(r))
 	}
 
 	if r.disabled {
-		text = Paint(Dim).Render(text)
+		text = ink(Paint(Dim).Render, text)
 	}
 
 	if note := m.engineQuota(r); note != "" {
-		text += "   " + Paint(Dim).Render(note)
+		text += "   " + ink(Paint(Dim).Render, note)
 	}
 
-	return fmt.Sprintf("%s%s", mark, text)
+	line := fit(mark+text, w)
+	if !marked {
+		return line
+	}
+
+	// Out to the edge, so the row the cursor is on is a band across the
+	// screen and not a word with a colour behind it.
+	return Paint(Sel).Render(line + strings.Repeat(" ", max(0, w-lipgloss.Width(line))))
+}
+
+// shutEngineNote is what a folded engine says it is holding: the model it
+// would run with, and how many there are to choose from.
+func (m Model) shutEngineNote(r engineRow) string {
+	count := m.opts.Words.T("engines.model_count", "{count} models",
+		about("count", fmt.Sprint(r.models)))
+
+	if r.chosen == "" {
+		return count
+	}
+
+	return r.chosen + dot + count
 }
 
 // engineView is how many rows of the list the screen has room for, which is

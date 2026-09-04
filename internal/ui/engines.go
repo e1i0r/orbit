@@ -27,8 +27,8 @@ type enginesState struct {
 	// a shortlist.
 	offset int
 
-	// open is which engines are showing their models, where absent means
-	// the one in force is open and the others are not. Nothing forces one
+	// open is which engines are showing their models. Absent is shut, so
+	// the screen opens as four names and their dials. Nothing forces one
 	// open or shut: two engines side by side is how a reader compares them.
 	open map[string]bool
 
@@ -56,6 +56,7 @@ type engineRow struct {
 	disabled bool
 	open     bool
 	models   int
+	chosen   string
 	setup    []string
 }
 
@@ -150,6 +151,7 @@ func (m Model) collectEngineRows() []engineRow {
 			selected: eng.Name == activeEngine,
 			open:     open,
 			models:   len(eng.Models),
+			chosen:   m.chosenModel(eng),
 		})
 
 		if open {
@@ -210,6 +212,23 @@ func (m Model) collectEngineRows() []engineRow {
 	}
 
 	return rows
+}
+
+// chosenModel is the model this engine would run with, for the row to carry
+// while it is shut: folding hides which of sixty-five is in force, and the
+// name of it is the one thing on that list a reader needs at a glance.
+func (m Model) chosenModel(eng EngineInfo) string {
+	if eng.Name != m.dialEngine(m.knobs.Engine) || m.knobs.Model == "" {
+		return ""
+	}
+
+	for _, mdl := range eng.Models {
+		if mdl.ID == m.knobs.Model {
+			return mdl.Label
+		}
+	}
+
+	return m.knobs.Model
 }
 
 func (m Model) selectableEngineIndices(rows []engineRow) []int {
