@@ -123,11 +123,9 @@ func (m Model) flowLine(w int) string {
 // flowMark says where a flow came from, in the words `orbit flows` uses.
 //
 // Word for word the same words, and not by anyone remembering to keep them
-// so: both screens say a mark through the same catalogue key, and the
-// translation honesty test fails if two call sites give one key two
-// different English sentences. A reader who ran the command and then opened
-// this dialog is looking at the same fact, and two spellings of it would
-// read as two facts.
+// so: this is the listing's own sentence, asked for here. A reader who ran
+// the command and then opened this dialog is looking at the same fact, and
+// two spellings of it would read as two facts.
 //
 // A built-in is unmarked here and marked in the listing, and that difference
 // is deliberate. The listing is a catalogue of everything there is, where the
@@ -137,16 +135,11 @@ func (m Model) flowLine(w int) string {
 // A name nothing answers to is unmarked too. The dialog says what is wrong
 // with it in the error line below, which is a sentence and not a mark.
 func (m Model) flowMark(f startFlow) string {
-	p := m.opts.Words
-
-	switch f.origin {
-	case flow.OriginShadow:
-		return p.T("flow.shadowing", "yours, shadowing the built-in")
-	case flow.OriginUser:
-		return p.T("flow.yours", "yours")
+	if f.origin == flow.OriginBuiltin {
+		return ""
 	}
 
-	return ""
+	return flowOriginString(m.opts.Words, f.origin)
 }
 
 // phaseRows is what the flow on screen is made of, one phase to a line.
