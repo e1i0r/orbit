@@ -54,8 +54,8 @@ func (m Model) bandLeft() string {
 	}
 
 	if m.screen == screenDetail {
-		if t, ok := m.task(m.detail); ok && view.BandOf(t) == view.Running {
-			return m.runningLine(t)
+		if t, ok := m.task(m.detail); ok {
+			return m.detailBandLine(t)
 		}
 	} else if r, ok := m.selected(); ok && !r.head && view.BandOf(r.task) == view.Running {
 		return m.runningLine(r.task)
@@ -154,7 +154,8 @@ func (m Model) runningLine(t view.Task) string {
 	}
 
 	if t.CurrentAction != "" {
-		pieces = append(pieces, Paint(Live).Render(actionGlyph(t.ActionKind)+fit(t.CurrentAction, actionCells)))
+		pieces = append(pieces, Paint(Live).Render(
+			actionGlyph(t.ActionKind)+fit(t.CurrentAction, actionCells)))
 	}
 
 	if engine := engineAndModel(t); engine != "" {
