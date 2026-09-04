@@ -69,7 +69,12 @@ func (m Model) deliverPR() (tea.Model, tea.Cmd) {
 	return m.runWatched(Command{Name: "pr"}, repoArgs(path, taskID))
 }
 
-// fixChecks asks the task to run its checks and fix what fails.
+// fixChecks asks the task to make the checks on its pull request pass.
+//
+// The checks that matter are the ones GitHub ran on the branch, and the fix
+// is not done until they have run again: the instruction says to read them
+// there, fix what they found, and push. Told only to run the suite locally,
+// a run could finish green with the pull request still red.
 //
 // It records the instruction, exactly as resolveComments records the
 // reviews: what the reader pressed is not a run, and nothing here starts
@@ -83,8 +88,9 @@ func (m Model) fixChecks() (tea.Model, tea.Cmd) {
 	}
 
 	p := m.opts.Words
-	instruction := "Run the full test suite and linter (go test ./..., golangci-lint). Investigate any failures, fix the source code and tests, and ensure 100% green checks."
-	said := p.T("deliver.checks_asked", "{id} was asked to fix the failing checks; a run has to pick it up",
+	instruction := "The checks on this task's pull request are failing. Read them with `gh pr checks` and `gh run view --log-failed`, reproduce the failure locally, fix the source and the tests until the whole suite and the linter are green, then commit and push the branch so the checks run again."
+	said := p.T("deliver.checks_asked",
+		"{id} was asked to make its pull request's checks pass again; a run has to pick it up",
 		about("id", taskID))
 
 	return m.say(said).runWatchedSaying(Command{Name: "note"}, repoArgs(path, taskID, instruction), said)

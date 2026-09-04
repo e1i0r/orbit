@@ -98,7 +98,7 @@ func TestAVerbSaysWhatWasAskedForWhenItLands(t *testing.T) {
 		press func(Model) (tea.Model, tea.Cmd)
 		want  string
 	}{
-		{Model.fixChecks, "fix the failing checks"},
+		{Model.fixChecks, "checks pass again"},
 		{Model.addMoreTests, "asked for more tests"},
 	} {
 		m, _ := testModel(t, 100, 30)

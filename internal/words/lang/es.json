@@ -1806,8 +1806,8 @@
       "value": "cerrando pull request para {id}..."
     },
     "deliver.checks_asked": {
-      "source": "{id} was asked to fix the failing checks; a run has to pick it up",
-      "value": "se le pidió a {id} arreglar los checks que fallan; lo recoge una ejecución"
+      "source": "{id} was asked to make its pull request's checks pass again; a run has to pick it up",
+      "value": "se le pidió a {id} que los checks de su pull request vuelvan a pasar; lo recoge una ejecución"
     },
     "deliver.tests_asked": {
       "source": "{id} was asked for more tests; a run has to pick it up",
