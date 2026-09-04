@@ -1657,6 +1657,30 @@
       "source": "{id} redirected: directive recorded",
       "value": "{id} redirigida: directiva registrada"
     },
+    "direct.empty": {
+      "source": "the directive cannot be empty",
+      "value": "la directiva no puede estar vacía"
+    },
+    "direct.given": {
+      "source": "{id} redirected — the run it was in is stopped",
+      "value": "{id} redirigida — la corrida en la que estaba queda detenida"
+    },
+    "direct.dialog_title": {
+      "source": "redirect {id}",
+      "value": "redirigir {id}"
+    },
+    "direct.prompt": {
+      "source": "directive",
+      "value": "directiva"
+    },
+    "direct.placeholder": {
+      "source": "what to do instead — this stops the run in flight...",
+      "value": "qué hacer en su lugar — esto detiene la corrida en curso..."
+    },
+    "direct.actions": {
+      "source": "↵ send directive · esc cancel · ^V paste",
+      "value": "↵ enviar directiva · esc cancelar · ^V pegar"
+    },
     "reconcile.abandoned": {
       "source": "{id} was abandoned; its record says so now",
       "value": "{id} fue abandonada; su registro ya lo dice"

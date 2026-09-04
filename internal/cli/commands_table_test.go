@@ -46,19 +46,50 @@ func TestNoCommandIsInTheTableTwice(t *testing.T) {
 	}
 }
 
-// TestTheVerbsTheWindowReachesOnlyByNameAreStillCalledThat. approve, permit
-// and critical have no key in the window: its task menu names them, so a
-// rename here takes them out of the window without a compiler saying so.
-func TestTheVerbsTheWindowReachesOnlyByNameAreStillCalledThat(t *testing.T) {
-	for _, name := range []string{"approve", "permit", "critical"} {
+// wayInTheWindow is how each verb about a task is reached without typing it:
+// everything the command line can do to a task, the window can do from a
+// menu. The commands about no task in particular need no entry here — the
+// board's menu is built from the table itself, so they are all on it.
+//
+// The window's task menu asks for most of these by name, and a rename here
+// takes one out of the window with nothing to say so; a new verb about a
+// task with no line in this map is one nobody has given a way in yet.
+var wayInTheWindow = map[string]string{
+	"pause":    "the pause key and the task's menu, through the control port",
+	"resume":   "the resume key and the task's menu, through the control port",
+	"skip":     "the skip key and the task's menu, through the control port",
+	"cancel":   "the cancel key and the task's menu, through the control port",
+	"requeue":  "the requeue key and the task's menu, through the control port",
+	"read":     "the mark-read key and the task's menu, through its own port",
+	"show":     "opening the task, which is what the menu's first entry does",
+	"run":      "the start dialog, from its key or the task's menu",
+	"note":     "the message box, from its key or the task's menu",
+	"direct":   "the message box, from the task's menu",
+	"pr":       "the task's menu, and the deliver keys on the task's screen",
+	"merge":    "the task's menu, and the merge key on the task's screen",
+	"close-pr": "the task's menu, and the close key on the task's screen",
+	"resolve":  "the task's menu, and the resolve key on the task's screen",
+	"approve":  "the task's menu",
+	"permit":   "the task's menu",
+	"critical": "the task's menu",
+}
+
+func TestEveryVerbAboutATaskHasAWayInTheWindow(t *testing.T) {
+	for _, c := range commands() {
+		if c.AboutATask && wayInTheWindow[c.Name] == "" {
+			t.Errorf("%q is about a task and has no way in the window; the command line is the only place it can be run from", c.Name)
+		}
+	}
+
+	for name := range wayInTheWindow {
 		c, ok := lookup(name)
 		if !ok {
-			t.Errorf("%q is not in the command table, and the window's task menu asks for it by that name", name)
+			t.Errorf("%q is not in the command table, and the window asks for it by that name", name)
 			continue
 		}
 
 		if !c.AboutATask {
-			t.Errorf("%q is no longer about one task, so the task menu is the wrong place for it", name)
+			t.Errorf("%q is no longer about one task, so the task's menu is the wrong place for it", name)
 		}
 	}
 }
