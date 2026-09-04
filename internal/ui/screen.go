@@ -96,25 +96,28 @@ func (m Model) View() tea.View {
 	return v
 }
 
-// headerRows is the header region: the line, then its rule.
+// headerRows is the header region: optional top padding row, the line, then its rule.
 func (m Model) headerRows() []string {
 	r := m.frame.Header
 	if r.H <= 0 {
 		return nil
 	}
 
-	out := []string{m.headerLine(r.W)}
-	if r.H > 1 {
-		out = append(out, m.rule(r.W))
+	if r.H == 1 {
+		return []string{m.headerLine(r.W)}
 	}
+
+	if r.H == 2 {
+		return []string{m.headerLine(r.W), m.rule(r.W)}
+	}
+
+	out := []string{"", m.headerLine(r.W), m.rule(r.W)}
 
 	return fill(out, r.H)
 }
 
-// bandRows is the activity band: its rounded box frame (top border, notification
-// sentence, bottom border) and an empty separating padding row before the
-// key bar. The box visually isolates the band as a distinct notification card,
-// keeping it clear of the body above and the shortcuts bar below.
+// bandRows is the activity band: a rule on top separating it from the body,
+// the sentence itself, and a rule on the bottom separating it from the key bar.
 func (m Model) bandRows() []string {
 	r := m.frame.Band
 	if r.H <= 0 {
@@ -126,58 +129,32 @@ func (m Model) bandRows() []string {
 		return []string{m.bandLine(r.W)}
 	case 2:
 		return []string{m.rule(r.W), m.bandLine(r.W)}
-	case 3:
-		return m.bandBox(r.W)
-	case 4:
-		out := append(m.bandBox(r.W), "")
-
-		return fill(out, r.H)
 	default:
-		out := append([]string{""}, m.bandBox(r.W)...)
-		out = append(out, "")
-
-		return fill(out, r.H)
+		return fill([]string{m.rule(r.W), m.bandLine(r.W), m.rule(r.W)}, r.H)
 	}
-}
-
-// bandBox draws the activity band as a framed, rounded notification card.
-func (m Model) bandBox(w int) []string {
-	if w < 6 {
-		return []string{m.bandLine(w)}
-	}
-
-	innerW := w - 4
-	top := " " + Paint(Dim).Render("╭"+strings.Repeat("─", innerW)+"╮") + " "
-	bot := " " + Paint(Dim).Render("╰"+strings.Repeat("─", innerW)+"╯") + " "
-
-	contentW := w - 6
-	content := fit(m.bandLeft(), contentW)
-	cw := lipgloss.Width(content)
-
-	pad := ""
-	if cw < contentW {
-		pad = strings.Repeat(" ", contentW-cw)
-	}
-
-	mid := " " + Paint(Dim).Render("│") + " " + content + pad + " " + Paint(Dim).Render("│") + " "
-
-	return []string{top, mid, bot}
 }
 
 // barRows is the key bar, which is one row and has never wanted a second —
-// unless the palette is up, when the row is the palette's line instead. The
-// hints it replaces belong to a keyboard the palette is holding.
+// unless the palette is up, when the row is the palette's line instead. A
+// second row provides bottom padding before the terminal bottom edge.
 func (m Model) barRows() []string {
 	r := m.frame.Bar
 	if r.H <= 0 {
 		return nil
 	}
 
+	line := m.barLine(r.W)
 	if m.palette.open {
-		return fill([]string{m.paletteInputLine(r.W)}, r.H)
+		line = m.paletteInputLine(r.W)
 	}
 
-	return fill([]string{m.barLine(r.W)}, r.H)
+	if r.H == 1 {
+		return []string{line}
+	}
+
+	out := []string{line, ""}
+
+	return fill(out, r.H)
 }
 
 // bodyRows is the list, the window it is seen through, and the sentence that

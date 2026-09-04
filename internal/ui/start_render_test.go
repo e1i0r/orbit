@@ -85,7 +85,7 @@ func TestTheStartDialogOffersOnlyKeysItHandles(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m, _ = dialog(t, m, "ACME-2662")
 	rows := renderAt(t, m, 100, 30)
-	bar := ansi.Strip(rows[len(rows)-1])
+	bar := ansi.Strip(rows[m.frame.BarLineY()])
 
 	handled := map[string]key.Binding{}
 	for _, b := range append(m.startBindings(), m.keys.Help, m.keys.Quit) {

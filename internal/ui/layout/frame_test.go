@@ -145,10 +145,11 @@ func TestFrameGivesUpTheBandBeforeTheBody(t *testing.T) {
 		h                               int
 		header, status, body, band, bar int
 	}{
-		{11, 2, 2, 1, 5, 1},
-		{10, 2, 2, 1, 4, 1},
-		{9, 2, 1, 1, 4, 1},
-		{8, 2, 1, 1, 3, 1},
+		{11, 3, 2, 1, 3, 2},
+		{10, 3, 2, 1, 2, 2},
+		{9, 3, 2, 1, 2, 1},
+		{8, 2, 2, 1, 2, 1},
+		{7, 2, 1, 1, 2, 1},
 		{6, 2, 0, 1, 2, 1},
 		{5, 2, 0, 1, 1, 1},
 		{4, 2, 0, 1, 0, 1},
@@ -172,5 +173,37 @@ func TestFrameGivesUpTheBandBeforeTheBody(t *testing.T) {
 				break
 			}
 		}
+	}
+}
+
+func TestRegionLineYHelpers(t *testing.T) {
+	tall, err := Fit(MinWidth, 30)
+	if err != nil {
+		t.Fatalf("Fit tall: %v", err)
+	}
+
+	if tall.HeaderLineY() != 1 {
+		t.Errorf("tall HeaderLineY = %d, want 1 (under top padding)", tall.HeaderLineY())
+	}
+
+	if tall.BandLineY() != tall.Band.Y+1 {
+		t.Errorf("tall BandLineY = %d, want %d", tall.BandLineY(), tall.Band.Y+1)
+	}
+
+	if tall.BarLineY() != tall.Bar.Y {
+		t.Errorf("tall BarLineY = %d, want %d", tall.BarLineY(), tall.Bar.Y)
+	}
+
+	short, err := Fit(MinWidth, 5)
+	if err != nil {
+		t.Fatalf("Fit short: %v", err)
+	}
+
+	if short.HeaderLineY() != 0 {
+		t.Errorf("short HeaderLineY = %d, want 0", short.HeaderLineY())
+	}
+
+	if short.BandLineY() != short.Band.Y {
+		t.Errorf("short BandLineY = %d, want %d", short.BandLineY(), short.Band.Y)
 	}
 }

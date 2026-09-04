@@ -20,6 +20,7 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/layout"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -72,12 +73,18 @@ func wantTaskRows(t *testing.T, rows []string) {
 		t.Errorf("no row names the task the view is open on:\n%s", frame)
 	}
 
-	if strings.TrimSpace(rows[len(rows)-4]) == "" {
+	f, err := layout.Fit(100, len(rows))
+	if err != nil {
+		t.Fatalf("fit frame: %v", err)
+	}
+
+	bandY := f.BandLineY()
+	if strings.TrimSpace(rows[bandY]) == "" {
 		t.Error("the activity band is blank under the task view")
 	}
 
-	if !strings.Contains(rows[len(rows)-1], "[") {
-		t.Errorf("the key bar is %q, want it to offer at least one key", rows[len(rows)-1])
+	if !strings.Contains(rows[f.BarLineY()], "[") {
+		t.Errorf("the key bar is %q, want it to offer at least one key", rows[f.BarLineY()])
 	}
 }
 
@@ -234,10 +241,13 @@ func TestTheMoreLineSaysWhatToDoAboutIt(t *testing.T) {
 		t.Errorf("the frame still claims to be following after the reader scrolled up:\n%s", let)
 	}
 
-	// A pane whose content fits says nothing at all, which is what the
-	// three goldens above are drawn with: the row is there and it is blank.
-	short := renderAt(t, showing(t, m, tabDiff), 100, 32)
-	if line := short[len(short)-6]; strings.TrimSpace(line) != "" {
+	fShort, err := layout.Fit(100, 35)
+	if err != nil {
+		t.Fatalf("fit frame: %v", err)
+	}
+
+	short := renderAt(t, showing(t, m, tabDiff), 100, 35)
+	if line := short[fShort.Body.Y+fShort.Body.H-1]; strings.TrimSpace(line) != "" {
 		t.Errorf("the more line is %q over a diff that fits, want it left blank", line)
 	}
 }

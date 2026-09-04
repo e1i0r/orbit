@@ -50,7 +50,7 @@ func TestTheQuotaChipOpensTheScreenItIsAShortVersionOf(t *testing.T) {
 
 	x := headerCell(t, m, "⏳")
 
-	got := m.hitHeader(x, m.frame.Header.Y)
+	got := m.hitHeader(x, m.frame.HeaderLineY())
 	if got.Kind != TargetHeaderField || got.Field != "quota" {
 		t.Fatalf("hitHeader on the quota chip = %+v, want the quota field", got)
 	}

@@ -28,7 +28,7 @@ func enginesLongList() []EngineInfo {
 func knobsOnALongList(t *testing.T) Model {
 	t.Helper()
 
-	m, _ := testModel(t, 100, 20)
+	m, _ := testModel(t, 100, 24)
 	m.opts.Engines = enginesLongList
 	m.knobs.Engine = "opencode"
 

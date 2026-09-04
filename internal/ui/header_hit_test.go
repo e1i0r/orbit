@@ -38,7 +38,7 @@ func headerCell(t *testing.T, m Model, s string) int {
 // and clicking Needs You filters by Running.
 func TestClickingAQueueBadgeFiltersByTheQueueDrawnThere(t *testing.T) {
 	m, _ := testModel(t, 150, 30)
-	y := m.frame.Header.Y
+	y := m.frame.HeaderLineY()
 
 	for _, c := range []struct {
 		icon, label string
@@ -72,7 +72,7 @@ func TestClickingAQueueBadgeFiltersByTheQueueDrawnThere(t *testing.T) {
 // then went to click Done landed two cells short of it.
 func TestSelectingAQueueDoesNotMoveTheOthersOutFromUnderTheCursor(t *testing.T) {
 	m, _ := testModel(t, 150, 30)
-	y := m.frame.Header.Y
+	y := m.frame.HeaderLineY()
 
 	band := view.Running
 	m.queueFilter = &band
@@ -91,7 +91,7 @@ func TestSelectingAQueueDoesNotMoveTheOthersOutFromUnderTheCursor(t *testing.T) 
 // engine name and the language all do.
 func TestClickingAStandingFactOpensTheFactDrawnThere(t *testing.T) {
 	m, _ := testModel(t, 150, 30)
-	y := m.frame.Header.Y
+	y := m.frame.HeaderLineY()
 
 	for _, c := range []struct {
 		icon, tail, field string
@@ -120,7 +120,7 @@ func TestClickingAStandingFactOpensTheFactDrawnThere(t *testing.T) {
 // know that, and handed every gap to whichever chip was nearest.
 func TestTheBlankCellsOfTheHeaderAreInert(t *testing.T) {
 	m, _ := testModel(t, 150, 30)
-	y := m.frame.Header.Y
+	y := m.frame.HeaderLineY()
 
 	for _, icon := range []string{"📦", "🧠", "🌐"} {
 		x := headerCell(t, m, icon) - 1
