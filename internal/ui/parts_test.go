@@ -164,30 +164,37 @@ func TestATabChipNamesItsKey(t *testing.T) {
 	}
 }
 
-// TestTheOpenTabIsUnderlined. Underline is what says which of eleven chips is
-// the one being read; the others are told apart by it being absent.
-func TestTheOpenTabIsUnderlined(t *testing.T) {
-	_, open := tabChip("1", "overview", true)
+// TestTheOpenTabIsABand. The band is what says which of eleven chips is the
+// one being read; the others are told apart by it being absent.
+func TestTheOpenTabIsABand(t *testing.T) {
+	openPlain, open := tabChip("1", "overview", true)
 	_, shut := tabChip("1", "overview", false)
 
-	if with, runs := underlinedRuns(open); with != runs || runs == 0 {
-		t.Errorf("the open tab has %d of %d runs underlined: %q", with, runs, open)
+	if with, runs := bandedRuns(open); with != runs || runs == 0 {
+		t.Errorf("the open tab has %d of %d runs behind a band: %q", with, runs, open)
 	}
 
-	if with, _ := underlinedRuns(shut); with != 0 {
-		t.Errorf("a closed tab has %d runs underlined: %q", with, shut)
+	if with, _ := bandedRuns(shut); with != 0 {
+		t.Errorf("a closed tab has %d runs behind a band: %q", with, shut)
+	}
+
+	// The band covers a cell either side of the name rather than sitting
+	// tight against it, and the padding is reported so a click on it lands
+	// on the tab it is drawn over.
+	if !strings.HasPrefix(openPlain, " ") || !strings.HasSuffix(openPlain, " ") {
+		t.Errorf("the open tab reports %q, want the pad the band is drawn over", openPlain)
 	}
 }
 
-// underlinedRuns counts the escape sequences in s that set a style, and how
-// many of those also set SGR 4. The key and the name are styled separately,
-// so an underline under one of them and not the other is a rule that stops
-// half way across the chip.
+// bandedRuns counts the escape sequences in s that set a style, and how many
+// of those also set a background. The key and the name can be styled
+// separately, so a band behind one of them and not the other is a mark that
+// stops half way across the chip.
 //
-// It walks the parameters rather than searching the text for a 4, because a
+// It walks the parameters rather than searching the text for a 48, because a
 // truecolour sequence spells a colour out in decimal and any of those five
-// numbers can be a 4 that means nothing about underlining.
-func underlinedRuns(s string) (with, runs int) {
+// numbers can be a 48 that means nothing about a background.
+func bandedRuns(s string) (with, runs int) {
 	for _, seq := range strings.Split(s, "\x1b[") {
 		end := strings.Index(seq, "m")
 		if end < 1 {
@@ -196,7 +203,7 @@ func underlinedRuns(s string) (with, runs int) {
 
 		runs++
 
-		if setsUnderline(strings.Split(seq[:end], ";")) {
+		if setsBackground(strings.Split(seq[:end], ";")) {
 			with++
 		}
 	}
@@ -204,16 +211,16 @@ func underlinedRuns(s string) (with, runs int) {
 	return with, runs
 }
 
-// setsUnderline reports whether one sequence's parameters include SGR 4,
-// skipping the five a truecolour takes: any of a colour's decimal channels
-// can be a 4 that says nothing about underlining.
-func setsUnderline(params []string) bool {
+// setsBackground reports whether one sequence's parameters include SGR 48,
+// skipping the five a truecolour takes: any of a foreground's decimal
+// channels can be a 48 that says nothing about a background.
+func setsBackground(params []string) bool {
 	for i := 0; i < len(params); i++ {
 		switch params[i] {
-		case "38", "48":
-			i += 4 // 38;2;r;g;b, which is what lipgloss writes here
-		case "4":
+		case "48":
 			return true
+		case "38":
+			i += 4 // 38;2;r;g;b, which is what lipgloss writes here
 		}
 	}
 
