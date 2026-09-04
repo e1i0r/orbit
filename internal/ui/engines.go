@@ -27,6 +27,11 @@ type enginesState struct {
 	// a shortlist.
 	offset int
 
+	// open is which engines are showing their models, where absent means
+	// the one in force is open and the others are not. Nothing forces one
+	// open or shut: two engines side by side is how a reader compares them.
+	open map[string]bool
+
 	showingSetup bool
 	setupEngine  string
 	fromScreen   screen
@@ -49,6 +54,8 @@ type engineRow struct {
 	id       string
 	selected bool
 	disabled bool
+	open     bool
+	models   int
 	setup    []string
 }
 
@@ -134,13 +141,18 @@ func (m Model) collectEngineRows() []engineRow {
 			continue
 		}
 
+		open := m.engineOpen(eng.Name)
+
 		rows = append(rows, engineRow{
 			kind:     rowEngine,
 			title:    eng.Name,
 			engine:   eng.Name,
 			selected: eng.Name == activeEngine,
+			open:     open,
+			models:   len(eng.Models),
 		})
-		if eng.Name == activeEngine {
+
+		if open {
 			for _, mdl := range eng.Models {
 				lbl := mdl.Label
 				if mdl.ID == "" {
@@ -253,6 +265,8 @@ func (m Model) enginesKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		}
 
 		return m.keepEngineRowSeen(), nil
+	case key.Matches(msg, m.keys.Sideways):
+		return m.foldKnob(msg.String() != "left"), nil
 	case key.Matches(msg, m.keys.Open), msg.Text == " ":
 		selectedRow := rows[idxs[m.engines.sel]]
 		return m.applyEngineChoice(selectedRow), nil
@@ -271,8 +285,15 @@ func (m Model) applyEngineChoice(selectedRow engineRow) Model {
 
 	switch selectedRow.kind {
 	case rowEngine:
+		// An engine already in force has nothing left to choose, so ⏎ on
+		// its name folds it instead: the reader is done with its models,
+		// or wants them back.
+		if m.knobs.Engine == selectedRow.engine {
+			return m.foldKnob(!selectedRow.open)
+		}
+
 		m.knobs.Engine, m.knobs.Model = selectedRow.engine, ""
-		m = m.setOpt("engine", selectedRow.engine)
+		m = m.setOpt("engine", selectedRow.engine).foldEngine(selectedRow.engine, true)
 	case rowModel:
 		m.knobs.Engine, m.knobs.Model = selectedRow.engine, selectedRow.id
 		m = m.setOpt("model", selectedRow.id)

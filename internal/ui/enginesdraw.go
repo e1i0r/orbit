@@ -63,9 +63,10 @@ func (m Model) enginesRows(h, w int) []string {
 		out = append(out, lines[i])
 	}
 
-	waysOut := p.T("engines.ways_out", "{open} select · {up_down} move · {back} back",
+	waysOut := p.T("engines.ways_out", "{open} select · {up_down} move · {fold} fold · {back} back",
 		about("open", m.keys.Open.Help().Key),
 		about("up_down", m.keys.Up.Help().Key+m.keys.Down.Help().Key),
+		about("fold", m.keys.Sideways.Help().Key),
 		about("back", m.keys.Back.Help().Key))
 	out = append(out, "", fit("  "+Paint(Dim).Render(waysOut), w))
 
@@ -114,6 +115,14 @@ func (m Model) engineLine(r engineRow, marked bool) string {
 	}
 
 	text := r.title
+	if r.kind == rowEngine {
+		text = Text(Tertiary).Render(foldMark(r.open)) + text
+		if !r.open && r.models > 0 {
+			text += " " + Paint(Dim).Render(m.opts.Words.T("engines.model_count",
+				"{count} models", about("count", fmt.Sprint(r.models))))
+		}
+	}
+
 	if r.selected {
 		text += " " + Paint(OK).Render("●")
 	}

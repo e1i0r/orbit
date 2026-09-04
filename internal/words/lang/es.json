@@ -2840,8 +2840,12 @@
       "value": "{back} volver"
     },
     "engines.ways_out": {
-      "source": "{open} select · {up_down} move · {back} back",
-      "value": "{open} seleccionar · {up_down} mover · {back} volver"
+      "source": "{open} select · {up_down} move · {fold} fold · {back} back",
+      "value": "{open} seleccionar · {up_down} mover · {fold} plegar · {back} volver"
+    },
+    "engines.model_count": {
+      "source": "{count} models",
+      "value": "{count} modelos"
     },
     "queue.todo": {
       "source": "To Do",
