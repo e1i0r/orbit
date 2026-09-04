@@ -4,7 +4,6 @@ import (
 	"io"
 	"testing"
 
-	tea "charm.land/bubbletea/v2"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -89,37 +88,31 @@ func TestDeliverActionsSelectedTask(t *testing.T) {
 	}
 }
 
-// TestAVerbSaysWhatWasAskedForWhenItLands. Fix checks and more tests are
-// both `orbit note` underneath, and what the band said when the command came
-// back was "note finished": the name of a command the reader never pressed,
-// naming no task, in front of a screen whose caption said FIX CHECKS.
+// TestAVerbSaysWhatWasAskedForWhenItLands. A note is `orbit note`
+// underneath, and what the band said when the command came back was "note
+// finished" — the name of the command, naming no task, in place of the
+// sentence the window had just said about the task the note was for.
 func TestAVerbSaysWhatWasAskedForWhenItLands(t *testing.T) {
-	for _, c := range []struct {
-		press func(Model) (tea.Model, tea.Cmd)
-		want  string
-	}{
-		{Model.fixChecks, "checks pass again"},
-		{Model.addMoreTests, "asked for more tests"},
-	} {
-		m, _ := testModel(t, 100, 30)
-		m.board.Tasks = []view.Task{{ID: "ACME-100", Repo: "acme", RepoPath: "/path/to/acme", Band: view.Done}}
-		m.detail, m.screen = "ACME-100", screenDetail
-		m.opts.Do = func(string, []string, io.Writer) error { return nil }
+	m, _ := testModel(t, 100, 30)
+	m.board.Tasks = []view.Task{{ID: "ACME-100", Repo: "acme", RepoPath: "/path/to/acme", Band: view.Done}}
+	m.detail, m.screen = "ACME-100", screenDetail
+	m.opts.Do = func(string, []string, io.Writer) error { return nil }
 
-		next, cmd := c.press(m)
+	m = m.openMessage(verbNote, "ACME-100")
+	m.note.text = "check the retry path"
 
-		running := asModel(t, next)
-		wantBand(t, running, c.want)
+	next, cmd := m.submitNote()
 
-		// And the sentence is still the reader's once the note is filed.
-		for _, one := range commandsIn(t, cmd) {
-			msg, ok := one().(commandMsg)
-			if !ok {
-				continue
-			}
+	said := asModel(t, next)
+	wantBand(t, said, "note recorded for ACME-100")
 
-			landed, _ := running.Update(msg)
-			wantBand(t, asModel(t, landed), c.want)
+	for _, one := range commandsIn(t, cmd) {
+		msg, ok := one().(commandMsg)
+		if !ok {
+			continue
 		}
+
+		landed, _ := said.Update(msg)
+		wantBand(t, asModel(t, landed), "note recorded for ACME-100")
 	}
 }

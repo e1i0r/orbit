@@ -129,6 +129,8 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	// back a review would otherwise pass the gate it is waiting at.
 	case k.String() == "R":
 		return m.resolveComments()
+	case k.String() == "D":
+		return m.reviewPR()
 	case k.String() == "t":
 		m = m.cycleThinking()
 
