@@ -2891,6 +2891,10 @@
       "source": "press '{cli}' to open an interactive session, '{ask}' to leave feedback, '{resume}' to resume",
       "value": "presiona '{cli}' para una sesión interactiva, '{ask}' para dejar feedback, '{resume}' para reanudar"
     },
+    "overview.start_hint": {
+      "source": "press '{cli}' to open an interactive session, '{ask}' to leave feedback, '{start}' to start a run",
+      "value": "presiona '{cli}' para una sesión interactiva, '{ask}' para dejar feedback, '{start}' para iniciar una corrida"
+    },
     "overview.duration": {
       "source": "duration",
       "value": "duración"
