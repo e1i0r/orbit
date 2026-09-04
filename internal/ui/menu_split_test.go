@@ -14,6 +14,7 @@ package ui
 // line, with the name already typed.
 
 import (
+	"slices"
 	"strings"
 	"testing"
 )
@@ -137,42 +138,72 @@ func TestACommandWithAScreenKeepsItOverTheCommandLine(t *testing.T) {
 	}
 }
 
-// TestTheLineRunsACommandOnceItHasItsArguments is the other half: with an
-// id typed the command runs, and without one the line stays up and says
+// TestTheLineRunsACommandOnceItHasItsArguments is the other half: with what
+// it needs typed the command runs, and without it the line stays up and says
 // what is missing rather than closing to print it somewhere else.
+//
+// The command is export and not cancel because cancel is about one task and
+// the line no longer carries those. What is being tested is the line's rule
+// about arguments, which export needs a directory for.
 func TestTheLineRunsACommandOnceItHasItsArguments(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.opts.Commands = needsArgsCommands()
-	m.palette.open, m.palette.typed = true, "cancel "
+	m.palette.open, m.palette.typed = true, "export "
 
 	next, _ := m.runSelected()
 
 	after := asModel(t, next)
-	if !after.palette.open || after.palette.typed != "cancel " {
-		t.Errorf("bare cancel left the line open=%v typed=%q, want it up and unchanged",
+	if !after.palette.open || after.palette.typed != "export " {
+		t.Errorf("bare export left the line open=%v typed=%q, want it up and unchanged",
 			after.palette.open, after.palette.typed)
 	}
 
-	if !strings.Contains(after.message, "cancel") {
-		t.Errorf("bare cancel said %q, want it to name the command and ask for an id", after.message)
+	if !strings.Contains(after.message, "export") {
+		t.Errorf("bare export said %q, want it to name the command and ask for a directory", after.message)
 	}
 
 	if after.watching != nil {
-		t.Errorf("bare cancel ran %q", after.watching.name)
+		t.Errorf("bare export ran %q", after.watching.name)
 	}
 
-	withID := m
-	withID.palette.typed = "cancel PAY-11"
+	withArgs := m
+	withArgs.palette.typed = "export /tmp/out"
 
-	afterID, _ := withID.runSelected()
+	afterArgs, _ := withArgs.runSelected()
 
-	ran := asModel(t, afterID)
+	ran := asModel(t, afterArgs)
 	if ran.palette.open {
 		t.Error("the line stayed up after a command that ran")
 	}
 
-	if ran.watching == nil || ran.watching.name != "cancel" {
-		t.Errorf("cancel PAY-11 left the watch on %v, want cancel running", ran.watching)
+	if ran.watching == nil || ran.watching.name != "export" {
+		t.Errorf("export /tmp/out left the watch on %v, want export running", ran.watching)
+	}
+}
+
+// TestTheLineLeavesOutTheVerbsAboutOneTask, for the reason the board's menu
+// does: the line is opened on the board, where there is no task for such a
+// verb to be about. It offered them and then answered with a usage string
+// to satisfy by hand — for a task that was on the screen behind it.
+func TestTheLineLeavesOutTheVerbsAboutOneTask(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+	m.opts.Commands = needsArgsCommands()
+	m.palette.open = true
+
+	var names []string
+	for _, c := range m.palette.candidates(m.opts.Commands) {
+		names = append(names, c.Name)
+	}
+
+	if want := []string{"reconcile", "export"}; !slices.Equal(names, want) {
+		t.Errorf("the line offers %v, want %v", names, want)
+	}
+
+	// And typing one says so, rather than leaving ⏎ on a row that is not
+	// there.
+	m.palette.typed = "cancel"
+	if n := len(m.palette.candidates(m.opts.Commands)); n != 0 {
+		t.Errorf("typing cancel matched %d commands, want none", n)
 	}
 }
 

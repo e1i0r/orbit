@@ -105,6 +105,16 @@ func (p paletteState) candidates(cmds []Command) []Command {
 	var out []Command
 
 	for _, c := range cmds {
+		// A verb about one task is not on this line. The line is opened on
+		// the board, where there is no task for such a verb to be about:
+		// choosing one here left the reader holding "pr takes -repo <dir>
+		// <id>", a usage string to satisfy by hand for a task that is on
+		// the screen behind it. The task's own menu is where they belong,
+		// and it is the rule the board's menu already applies.
+		if c.AboutATask {
+			continue
+		}
+
 		name := strings.ToLower(c.Name)
 		if strings.HasPrefix(name, prefix) {
 			out = append(out, c)

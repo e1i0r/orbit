@@ -174,7 +174,11 @@ func TestTheNeedsYouLineNamesTheKeysThisScreenHonours(t *testing.T) {
 		t.Errorf("the banner sends the reader to the thinking dial:\n%s", got)
 	}
 
-	for _, k := range []string{m.keys.CLI.Help().Key, m.keys.Ask.Help().Key, m.keys.Resume.Help().Key} {
+	// The third key is whichever sets this task going again, and this one
+	// failed at a gate with no process left, so it is the start key rather
+	// than resume. TestTheBannerNamesAKeyThatDoesSomething is about that
+	// choice; this is about the letters coming from the bindings.
+	for _, k := range []string{m.keys.CLI.Help().Key, m.keys.Ask.Help().Key, m.keys.Start.Help().Key} {
 		if !strings.Contains(got, "'"+k+"'") {
 			t.Errorf("the banner does not name %q, which is a key this screen honours:\n%s", k, got)
 		}
@@ -183,5 +187,38 @@ func TestTheNeedsYouLineNamesTheKeysThisScreenHonours(t *testing.T) {
 	// And the key it names for feedback is the key that takes it.
 	if next := step(t, m, m.keys.Ask.Help().Key); !next.note.open {
 		t.Errorf("%q did not open the note the banner offers", m.keys.Ask.Help().Key)
+	}
+}
+
+// TestTheBannerNamesAKeyThatDoesSomething. A task that was abandoned is
+// waiting for the reader, and the banner told them to press resume — which
+// answers that resuming needs a paused task, there being no process left to
+// let go of. The window had sent them to a key it refuses.
+func TestTheBannerNamesAKeyThatDoesSomething(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+
+	abandoned := view.Task{
+		ID: "ORB-102", Repo: "orbit", Band: view.NeedsYou,
+		Reason: view.Reason{Key: view.ReasonAbandoned},
+	}
+
+	hint := m.waitingHint(abandoned)
+	if strings.Contains(hint, "'"+m.keys.Resume.Help().Key+"'") {
+		t.Errorf("the banner on an abandoned task names the resume key: %q", hint)
+	}
+
+	if !strings.Contains(hint, "'"+m.keys.Start.Help().Key+"'") {
+		t.Errorf("the banner does not say how to set the task going again: %q", hint)
+	}
+
+	// And where resume is the verb — a run stopped at a phase boundary — it
+	// is still the one named.
+	held := view.Task{
+		ID: "ORB-103", Repo: "orbit", Band: view.NeedsYou, Live: view.LiveHeld,
+		Reason: view.Reason{Key: view.ReasonHeld},
+	}
+
+	if got := m.waitingHint(held); !strings.Contains(got, "'"+m.keys.Resume.Help().Key+"'") {
+		t.Errorf("the banner on a held run does not name the resume key: %q", got)
 	}
 }

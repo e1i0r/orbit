@@ -74,9 +74,11 @@ type menuEntry struct {
 	reason string // why, when dim
 	head   bool   // names the block below it; not a thing to choose
 
-	aff *Affordance
-	cmd *Command
-	tab *tab
+	aff  *Affordance
+	cmd  *Command
+	args []string // what cmd is run with, for a command the entry can answer for
+	says bool     // cmd takes a message: choosing opens the box to type it in
+	tab  *tab
 }
 
 // menuEntries is the menu as it stands right now, recomputed from the board
@@ -199,10 +201,19 @@ func (m Model) chooseMenu() (tea.Model, tea.Cmd) {
 		return m.closeMenu(), nil
 	}
 
+	// Which task the menu is about, taken before it is closed: a command
+	// that needs a message is handed the box rather than run, and the box
+	// has to know what it will be talking to.
+	id := m.menu.taskID
+
 	next := m.closeMenu()
 
 	if e.cmd != nil {
-		return next.launch(*e.cmd, nil)
+		if e.says {
+			return next.openMessage(e.cmd.Name, id), nil
+		}
+
+		return next.launch(*e.cmd, e.args)
 	}
 
 	return next.sendKey(keystroke(e.glyph))

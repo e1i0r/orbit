@@ -198,12 +198,6 @@ func commands() []Command {
 		},
 		Run: requeueTask,
 	}, {
-		Name: "approve", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
-		About: func(p *words.Printer) string {
-			return p.T("cmd.approve", "say yes to the libraries a task added, so its next run goes past the gate")
-		},
-		Run: approveTask,
-	}, {
 		Name: "join", Args: "[-repo <dir>] [-task <id>] <name>", NeedsArgs: true,
 		About: func(p *words.Printer) string {
 			return p.T("cmd.join", "open a checkout of another repository for a task")

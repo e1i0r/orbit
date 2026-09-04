@@ -32,6 +32,11 @@ type enginesState struct {
 	// open or shut: two engines side by side is how a reader compares them.
 	open map[string]bool
 
+	// filter cuts the catalogue down to what was typed and typing is
+	// whether the keyboard is going into it. See enginesfilter.go.
+	filter string
+	typing bool
+
 	showingSetup bool
 	setupEngine  string
 	fromScreen   screen
@@ -68,6 +73,8 @@ func (m Model) openEngines() Model {
 }
 
 func (m Model) abandonEngines() Model {
+	m.engines.filter, m.engines.typing = "", false
+
 	prev := m.engines.fromScreen
 
 	m.engines = enginesState{}
@@ -104,114 +111,6 @@ func (m Model) knobChip() string {
 	}
 
 	return strings.Join(parts, " · ")
-}
-
-func (m Model) collectEngineRows() []engineRow {
-	p := m.opts.Words
-
-	var rows []engineRow
-
-	engineList := m.engineTable()
-
-	activeEngine := m.dialEngine(m.knobs.Engine)
-
-	// 1. Model & Engine Section
-	rows = append(rows, engineRow{kind: rowHeader, title: p.T("engines.section_model", "Engine & Model")})
-
-	var currentEng EngineInfo
-
-	for _, eng := range engineList {
-		if eng.Name == activeEngine {
-			currentEng = eng
-		}
-
-		if !eng.Available {
-			var steps []string
-			if eng.Setup != nil {
-				steps = eng.Setup(p)
-			}
-
-			rows = append(rows, engineRow{
-				kind:     rowEngine,
-				title:    eng.Name + " " + p.T("engines.setup_tag", "[setup required]"),
-				engine:   eng.Name,
-				disabled: true,
-				setup:    steps,
-			})
-
-			continue
-		}
-
-		open := m.engineOpen(eng.Name)
-
-		rows = append(rows, engineRow{
-			kind:     rowEngine,
-			title:    eng.Name,
-			engine:   eng.Name,
-			selected: eng.Name == activeEngine,
-			open:     open,
-			models:   len(eng.Models),
-			chosen:   m.chosenModel(eng),
-		})
-
-		if open {
-			for _, mdl := range eng.Models {
-				lbl := mdl.Label
-				if mdl.ID == "" {
-					lbl = p.T("engines.default", "default")
-				}
-
-				rows = append(rows, engineRow{
-					kind:     rowModel,
-					title:    "  " + lbl,
-					engine:   eng.Name,
-					id:       mdl.ID,
-					selected: m.knobs.Model == mdl.ID,
-				})
-			}
-		}
-	}
-
-	// 2. Effort Section
-	rows = append(rows, engineRow{kind: rowHeader, title: p.T("engines.section_effort", "Effort")})
-	if len(currentEng.Efforts) == 0 {
-		rows = append(rows, engineRow{
-			kind:  rowHeader,
-			title: "  " + p.T("engines.no_effort", "{engine} has no effort dial", about("engine", activeEngine)),
-		})
-	} else {
-		for _, eff := range currentEng.Efforts {
-			lbl := eff.Label
-			if eff.ID == "" {
-				lbl = p.T("engines.default", "default")
-			}
-
-			rows = append(rows, engineRow{
-				kind:     rowEffort,
-				title:    "  " + lbl,
-				engine:   activeEngine,
-				id:       eff.ID,
-				selected: m.knobs.Effort == eff.ID,
-			})
-		}
-	}
-
-	// 3. Thinking Section
-	rows = append(rows, engineRow{kind: rowHeader, title: p.T("engines.section_thinking", "Thinking Mode")})
-	if !currentEng.CanThink {
-		rows = append(rows, engineRow{
-			kind:  rowHeader,
-			title: "  " + p.T("engines.no_thinking", "{engine} has no thinking mode", about("engine", activeEngine)),
-		})
-	} else {
-		rows = append(rows,
-			engineRow{kind: rowThinking, title: "  " + p.T("engines.thinking_adaptive", "adaptive (default)"), id: "", selected: m.knobs.Thinking == "" || m.knobs.Thinking == "adaptive"},
-			engineRow{kind: rowThinking, title: "  " + p.T("engines.thinking_on", "on"), id: "on", selected: m.knobs.Thinking == "on"},
-			engineRow{kind: rowThinking, title: "  " + p.T("engines.thinking_off", "off"), id: "off", selected: m.knobs.Thinking == "off"},
-		)
-	}
-
-	return rows
 }
 
 // chosenModel is the model this engine would run with, for the row to carry
@@ -253,6 +152,10 @@ func (m Model) enginesKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
+	if m.engines.typing {
+		return m.engineFilterKey(msg)
+	}
+
 	rows := m.collectEngineRows()
 
 	idxs := m.selectableEngineIndices(rows)
@@ -284,6 +187,9 @@ func (m Model) enginesKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		}
 
 		return m.keepEngineRowSeen(), nil
+	case key.Matches(msg, m.keys.Filter):
+		m.engines.typing = true
+		return m, nil
 	case key.Matches(msg, m.keys.Sideways):
 		return m.foldKnob(msg.String() != "left"), nil
 	case key.Matches(msg, m.keys.Open), msg.Text == " ":

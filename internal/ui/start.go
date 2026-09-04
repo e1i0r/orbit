@@ -140,8 +140,9 @@ func newStart(src flow.Source, t view.Task) startModel {
 	return s
 }
 
-// openStart is what n does: put the dialog in front of the row under the
-// cursor, or say why there is nothing to put it in front of.
+// openStart is what n does: put the dialog in front of the task in hand —
+// the one being read, or the row under the cursor — or say why there is
+// nothing to put it in front of.
 //
 // A band header is left alone in silence, and that is the one place in this
 // window where a key does nothing without saying so. It is not an oversight:
@@ -151,31 +152,39 @@ func newStart(src flow.Source, t view.Task) startModel {
 func (m Model) openStart() (tea.Model, tea.Cmd) {
 	p := m.opts.Words
 
-	r, ok := m.selected()
+	// The task being read, and otherwise the row under the cursor: this key
+	// is answered on the task's own screen too, where the board's cursor is
+	// behind whatever is on top of it.
+	t, ok := m.task(m.detail)
 	if !ok {
-		return m.say(p.T("start.nothing_to_start",
-			"there is no task here to start; write one with `orbit new`")), nil
+		r, on := m.selected()
+		if !on {
+			return m.say(p.T("start.nothing_to_start",
+				"there is no task here to start; write one with `orbit new`")), nil
+		}
+
+		if r.head {
+			return m, nil
+		}
+
+		t = r.task
 	}
 
-	if r.head {
-		return m, nil
-	}
-
-	if r.task.Live == view.LiveHeld {
+	if t.Live == view.LiveHeld {
 		return m.say(p.T("start.already_running", "{id} is already running; press x to stop it first",
-			about("id", r.task.ID))), nil
+			about("id", t.ID))), nil
 	}
 
 	// Not free either: a marker nobody can read might be a run in flight,
 	// and starting a second engine in that worktree is the one mistake this
 	// screen exists to prevent.
-	if r.task.Live == view.LiveUnknown {
+	if t.Live == view.LiveUnknown {
 		return m.say(p.T("start.marker_unreadable",
 			"orbit cannot read {id}'s run marker, so it cannot tell whether a phase is still running; look at the run file in the task's directory",
-			about("id", r.task.ID))), nil
+			about("id", t.ID))), nil
 	}
 
-	m.screen, m.start = screenStart, newStart(m.opts.Flows, r.task)
+	m.screen, m.start = screenStart, newStart(m.opts.Flows, t)
 
 	return m, nil
 }

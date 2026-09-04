@@ -27,7 +27,7 @@ func noteTask(ctx Context, args []string) error {
 		return needsTaskID(ctx, "note")
 	}
 
-	text := strings.Join(fs.Args()[1:], " ")
+	text := message(fs)
 	if strings.TrimSpace(text) == "" {
 		return errors.New(ctx.printer().T("note.needs_text", "note needs text for task {id}",
 			words.Arg{Name: "id", Value: id}))
@@ -56,4 +56,20 @@ func noteTask(ctx Context, args []string) error {
 		words.Arg{Name: "id", Value: id}))
 
 	return nil
+}
+
+// message is the words after the id: what note and direct are given to say.
+//
+// A leading "--" is dropped. It is the shell's way of saying the flags are
+// over, and a caller that puts it after the id — which is where a caller
+// naturally puts it, the id being what the flags come before — is saying so
+// once the flags are over already: flag.Parse stops at the id and never sees
+// it. Kept, it became the first word of every note the window wrote.
+func message(fs *flag.FlagSet) string {
+	rest := fs.Args()[1:]
+	if len(rest) > 0 && rest[0] == "--" {
+		rest = rest[1:]
+	}
+
+	return strings.Join(rest, " ")
 }

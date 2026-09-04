@@ -88,8 +88,9 @@ func TestWalkingDownReachesTheVerbs(t *testing.T) {
 		m = m.menuPick(1)
 	}
 
-	if got := m.menuEntries()[m.menu.sel]; got.aff == nil {
-		t.Errorf("the bottom of the menu is %+v, want the last of the task's verbs", got)
+	got := m.menuEntries()[m.menu.sel]
+	if got.head || (got.aff == nil && got.cmd == nil && got.glyph == "") {
+		t.Errorf("the bottom of the menu is %+v, want a verb about the task", got)
 	}
 }
 

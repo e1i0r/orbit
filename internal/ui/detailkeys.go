@@ -166,6 +166,11 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.askSkip()
 	case key.Matches(k, m.keys.Ask):
 		return m.openNote(), nil
+	// Starting a run is offered on the task's own screen and not only on the
+	// board. A task that was abandoned is read here, and here is where the
+	// reader decides to set it going again.
+	case key.Matches(k, m.keys.Start):
+		return m.openStart()
 	case key.Matches(k, m.keys.CLI):
 		return m.launchInteractiveCLI()
 	case key.Matches(k, m.keys.Open), key.Matches(k, m.keys.Last):

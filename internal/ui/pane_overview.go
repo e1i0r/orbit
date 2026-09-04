@@ -102,13 +102,37 @@ func (m Model) overviewHead(t view.Task, w int) []string {
 	// letter written into a sentence is a letter nothing keeps true.
 	return append(out,
 		paneGutter+Paint(role).Bold(true).Render("▍ "+p.T("overview.waiting_box", "NEEDS YOU")),
-		paneGutter+Text(Tertiary).Render(p.T("overview.resume_hint",
-			"press '{cli}' to open an interactive session, '{ask}' to leave feedback, '{resume}' to resume",
-			about("cli", m.keys.CLI.Help().Key),
-			about("ask", m.keys.Ask.Help().Key),
-			about("resume", m.keys.Resume.Help().Key))),
+		paneGutter+Text(Tertiary).Render(m.waitingHint(t)),
 		"",
 	)
+}
+
+// waitingHint is the line under NEEDS YOU: the two things that are always
+// worth doing to a task that is waiting, and the one that sets it going
+// again.
+//
+// Which key that last one is follows the task. Resume is for a run stopped
+// at a phase boundary, and a task that failed, timed out or was abandoned
+// has no process left to let go of: this line named resume anyway, so the
+// reader who did as it said was told that resuming needs a paused task —
+// having been sent there by the window itself. What such a task takes is a
+// fresh run, which is the start dialog.
+func (m Model) waitingHint(t view.Task) string {
+	p := m.opts.Words
+
+	if whyNotResume(t).Name != "" {
+		return p.T("overview.start_hint",
+			"press '{cli}' to open an interactive session, '{ask}' to leave feedback, '{start}' to start a run",
+			about("cli", m.keys.CLI.Help().Key),
+			about("ask", m.keys.Ask.Help().Key),
+			about("start", m.keys.Start.Help().Key))
+	}
+
+	return p.T("overview.resume_hint",
+		"press '{cli}' to open an interactive session, '{ask}' to leave feedback, '{resume}' to resume",
+		about("cli", m.keys.CLI.Help().Key),
+		about("ask", m.keys.Ask.Help().Key),
+		about("resume", m.keys.Resume.Help().Key))
 }
 
 // overviewBriefRows is how much of the brief a closed pane shows: enough to

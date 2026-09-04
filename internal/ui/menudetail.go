@@ -76,7 +76,12 @@ func (m Model) taskVerbEntries(id string) []menuEntry {
 		out = append(out, e)
 	}
 
-	return out
+	// And what only a command or a dialog can do to it. They are in the same
+	// block rather than under a heading of their own: a reader asking what
+	// can be done to a task is not asking which of the answers is a key.
+	out = append(out, m.startEntry())
+
+	return append(out, m.taskCommandEntries(id)...)
 }
 
 // menuChoice is the entry the cursor may sit on nearest to from, walking in
