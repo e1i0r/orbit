@@ -64,10 +64,11 @@ func TestAllListKeypressActions(t *testing.T) {
 
 	sendKey('a', 0, "") // Autopilot toggle
 	sendKey('L', 0, "") // Language toggle
-	sendKey('?', 0, "") // Help screen
+	sendKey('?', 0, "") // asks which key
+	sendKey('?', 0, "") // and ? again is the help screen
 
 	if m.screen != screenHelp {
-		t.Errorf("screen after ? = %v, want screenHelp", m.screen)
+		t.Errorf("screen after ? ? = %v, want screenHelp", m.screen)
 	}
 
 	sendKey(0, tea.KeyEsc, "esc") // back to list

@@ -203,7 +203,7 @@ func (m Model) startKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	case key.Matches(k, m.keys.Autopilot):
 		return m.autopilot()
 	case key.Matches(k, m.keys.Help):
-		return m.openHelp(), nil
+		return m.armTip(), nil
 	case key.Matches(k, m.keys.Quit):
 		return m, tea.Quit
 	}

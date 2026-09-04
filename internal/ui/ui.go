@@ -131,6 +131,10 @@ type Model struct {
 	pendingID string
 	pendTries int
 
+	// tip is the reader asking what a key does, with ? and then that key.
+	// It lives in tip.go, beside the sentences it answers with.
+	tip tipState
+
 	note           noteState
 	settings       settingsState
 	flows          flowsState

@@ -3366,6 +3366,122 @@
         "one": "{n} turno del supervisor",
         "other": "{n} turnos del supervisor"
       }
+    },
+    "tip.armed": {
+      "source": "which key? press one to read what it does, ? for the full help, esc to leave it",
+      "value": "¿qué tecla? pulsa una para leer qué hace, ? para la ayuda completa, esc para dejarlo"
+    },
+    "tip.open": {
+      "source": "opens the task under the cursor; on a band's heading it folds that band away instead",
+      "value": "abre la tarea bajo el cursor; sobre el título de una franja la pliega en su lugar"
+    },
+    "tip.start": {
+      "source": "opens the dialog that decides what the run will be — flow, engine, model — and starts it",
+      "value": "abre el diálogo que decide cómo será la ejecución — flujo, motor, modelo — y la arranca"
+    },
+    "tip.compose": {
+      "source": "writes a new task down; nothing runs until you start it",
+      "value": "anota una tarea nueva; no se ejecuta nada hasta que la arranques"
+    },
+    "tip.menu": {
+      "source": "every verb for the thing under the cursor, including the ones it refuses and why",
+      "value": "todos los verbos para lo que hay bajo el cursor, incluidos los que rechaza y por qué"
+    },
+    "tip.pause": {
+      "source": "asks a run to stop at its next phase; the phase it is inside finishes first",
+      "value": "pide a una ejecución que pare en su próxima fase; la fase en la que está termina antes"
+    },
+    "tip.resume": {
+      "source": "lets a stopped run carry on, beginning with the phase it is waiting in front of",
+      "value": "deja seguir a una ejecución parada, empezando por la fase ante la que espera"
+    },
+    "tip.skip": {
+      "source": "lets a stopped run carry on without the phase it is waiting in front of",
+      "value": "deja seguir a una ejecución parada sin la fase ante la que espera"
+    },
+    "tip.cancel": {
+      "source": "stops the run for good; the worktree and everything written in it stay where they are",
+      "value": "detiene la ejecución para siempre; el worktree y todo lo escrito en él se quedan donde están"
+    },
+    "tip.requeue": {
+      "source": "stops the run and puts the task back in to do, to be started again from the top",
+      "value": "detiene la ejecución y devuelve la tarea a por hacer, para arrancarla otra vez desde el principio"
+    },
+    "tip.take": {
+      "source": "hands you the engine's session in this task's worktree, to type at yourself",
+      "value": "te entrega la sesión del motor en el worktree de esta tarea, para que escribas tú"
+    },
+    "tip.hand": {
+      "source": "gives the task back to orbit, and the run carries on from where you left it",
+      "value": "devuelve la tarea a orbit, y la ejecución sigue desde donde la dejaste"
+    },
+    "tip.ask": {
+      "source": "writes a note for this task, which the run reads at its next phase",
+      "value": "escribe una nota para esta tarea, que la ejecución lee en su próxima fase"
+    },
+    "tip.read": {
+      "source": "marks a finished task read, which is what takes it out of needs you",
+      "value": "marca como leída una tarea terminada, que es lo que la saca de te necesita"
+    },
+    "tip.delete": {
+      "source": "removes the task and its whole record; nothing brings either back",
+      "value": "elimina la tarea y todo su registro; nada devuelve ninguno de los dos"
+    },
+    "tip.edit": {
+      "source": "opens this task's own files in $EDITOR",
+      "value": "abre los ficheros propios de esta tarea en $EDITOR"
+    },
+    "tip.cli": {
+      "source": "opens an engine session in this task's worktree, in this terminal, with you at the keyboard",
+      "value": "abre una sesión del motor en el worktree de esta tarea, en esta terminal, con el teclado para ti"
+    },
+    "tip.filter": {
+      "source": "narrows the board to the tasks whose id, title or repository match what you type",
+      "value": "reduce el tablero a las tareas cuyo id, título o repositorio coinciden con lo que escribes"
+    },
+    "tip.commands": {
+      "source": "the command line: everything orbit can do, including what no key was given to",
+      "value": "la línea de comandos: todo lo que orbit sabe hacer, incluido lo que no tiene tecla"
+    },
+    "tip.autopilot": {
+      "source": "turns autopilot on and off; with it on, tasks in to do start by themselves",
+      "value": "enciende y apaga el piloto automático; encendido, las tareas por hacer arrancan solas"
+    },
+    "tip.supervisor": {
+      "source": "opens the supervisor: what it has said about the board, and the line you say things to it on",
+      "value": "abre el supervisor: lo que ha dicho sobre el tablero, y la línea donde le hablas tú"
+    },
+    "tip.repos": {
+      "source": "the repositories orbit knows about, and which of them the board is showing",
+      "value": "los repositorios que orbit conoce, y cuáles de ellos muestra el tablero"
+    },
+    "tip.engines": {
+      "source": "which engine and model the next run is asked with, and how hard it is asked to think",
+      "value": "con qué motor y modelo se pide la próxima ejecución, y cuánto se le pide pensar"
+    },
+    "tip.quota": {
+      "source": "what each engine has left of its window, and when the next one opens",
+      "value": "lo que le queda a cada motor de su ventana, y cuándo se abre la siguiente"
+    },
+    "tip.language": {
+      "source": "switches every word on this screen between English and Spanish",
+      "value": "cambia todas las palabras de esta pantalla entre inglés y español"
+    },
+    "tip.help": {
+      "source": "the whole cheat sheet, every key at once",
+      "value": "la chuleta entera, todas las teclas a la vez"
+    },
+    "tip.quit": {
+      "source": "closes the cockpit; the runs it started carry on without it",
+      "value": "cierra la cabina; las ejecuciones que arrancó siguen sin ella"
+    },
+    "tip.back": {
+      "source": "goes back one screen, and on the board clears whatever is filtering it",
+      "value": "vuelve una pantalla atrás, y en el tablero limpia lo que lo esté filtrando"
+    },
+    "tip.nothing": {
+      "source": "nothing in this window answers {key}",
+      "value": "nada en esta ventana responde a {key}"
     }
   }
 }

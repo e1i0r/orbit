@@ -38,6 +38,12 @@ const confirmYes = "y"
 // out.
 func (m Model) key(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
+	// A held question about a key is on top of everything, because it is
+	// about the key that is being pressed right now: a window that let the
+	// screen underneath answer it would act on the key the reader was only
+	// asking about.
+	case m.tip.armed:
+		return m.tipKey(msg)
 	case m.note.open:
 		return m.noteKey(msg)
 	case m.palette.open:
@@ -160,7 +166,7 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	case key.Matches(k, m.keys.CLI):
 		return m.launchInteractiveCLI()
 	case key.Matches(k, m.keys.Help):
-		return m.openHelp(), nil
+		return m.armTip(), nil
 	case key.Matches(k, m.keys.Quit):
 		return m, tea.Quit
 	}

@@ -31,13 +31,20 @@ func TestDetailKeyInteractionsAndTabSwitching(t *testing.T) {
 	newM, _ = m.detailKey(sideKey)
 	m = asModel(t, newM)
 
-	// 4. Help overlay from detail
+	// 4. ? asks which key, and ? again is the whole cheat sheet
 	helpKey := keystroke("?")
 	newM, _ = m.detailKey(helpKey)
 
 	m = asModel(t, newM)
+	if !m.tip.armed {
+		t.Error("'?' on the task view did not ask which key")
+	}
+
+	newM, _ = m.tipKey(helpKey)
+
+	m = asModel(t, newM)
 	if m.screen != screenHelp {
-		t.Errorf("expected screenHelp after '?', got %v", m.screen)
+		t.Errorf("expected screenHelp after '? ?', got %v", m.screen)
 	}
 
 	// 5. Back returns to list

@@ -171,7 +171,7 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	case key.Matches(k, m.keys.Open), key.Matches(k, m.keys.Last):
 		return m.newest(), nil
 	case key.Matches(k, m.keys.Help):
-		return m.openHelp(), nil
+		return m.armTip(), nil
 	case key.Matches(k, m.keys.Quit):
 		return m, tea.Quit
 	}
