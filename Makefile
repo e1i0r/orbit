@@ -48,8 +48,20 @@ coverage:
 tidy:
 	$(GO) mod tidy -diff
 
+# VERSION is what the build calls itself, and it is asked of git rather than
+# written down here: a number kept in the file goes stale the moment somebody
+# forgets to bump it. `git describe` answers with the last release tag, how
+# far past it this checkout is, and -dirty when the tree has uncommitted work
+# — which is the whole question a reader has when the window shows a version
+# and they are wondering whether their fix is in the binary they are running.
+#
+# A checkout with no tags at all, and a source tree that is not a checkout,
+# both fall back to the "dev" the code already defaults to.
+VERSION ?= $(shell git describe --tags --dirty --always 2>/dev/null || echo dev)
+LDFLAGS := -X github.com/e1i0r/orbit/internal/cli.Version=$(VERSION)
+
 build:
-	$(GO) build -o orbit ./cmd/orbit
+	$(GO) build -ldflags "$(LDFLAGS)" -o orbit ./cmd/orbit
 
 # install puts the binary where the shell will find it. PREFIX is honoured so
 # a packager, or somebody without write access to /usr/local, can redirect it

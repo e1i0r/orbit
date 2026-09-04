@@ -66,6 +66,21 @@ func (m Model) barFooterChips() []barChip {
 		})
 	}
 
+	// Version chip, at the far end of the bar.
+	//
+	// It is read and not pressed — there is no screen behind a version — so
+	// it carries no target, and a click on it lands on nothing the way a
+	// click on the empty end of the bar does. It is last because it is the
+	// one thing here that never changes while the window is open: the eye
+	// goes looking for it, rather than being caught by it.
+	//
+	// A build with nothing stamped in it says nothing. That is `go test`,
+	// where a version would be a fact about the harness rather than about
+	// orbit.
+	if mark := buildMark(m.opts.Version); mark != "" {
+		chips = append(chips, barChip{text: Paint(Dim).Render(mark)})
+	}
+
 	return chips
 }
 
@@ -156,4 +171,41 @@ func place(hints []barHint) []placedHint {
 	}
 
 	return out
+}
+
+// buildMark is the running build's version, cut down to what a corner of the
+// bar has room for.
+//
+// A release is stamped with its tag and needs nothing done to it. A build
+// from a checkout is stamped by `git describe`, which spells out how far past
+// the tag it is and which commit that was — "v0.1.83-27-gabd558b-dirty" is
+// twenty-five cells to say three things, and only two of them are worth the
+// room: the release this came after, and that it is not that release. So the
+// commit goes and what is left is v0.1.83+27, with a star when the tree the
+// build was made from had uncommitted work in it.
+func buildMark(version string) string {
+	v := strings.TrimSpace(version)
+	if v == "" || v == "dev" {
+		return v
+	}
+
+	star := ""
+	if cut := strings.TrimSuffix(v, "-dirty"); cut != v {
+		v, star = cut, "*"
+	}
+
+	// A checkout with no tags describes as a bare commit, which is not a
+	// version and does not take a v.
+	if v != "" && (v[0] == 'v' || (v[0] >= '0' && v[0] <= '9')) {
+		v = "v" + strings.TrimPrefix(v, "v")
+	}
+
+	// The tail git describe adds: -<commits since the tag>-g<commit>.
+	if at := strings.LastIndex(v, "-g"); at > 0 {
+		if cut := strings.LastIndex(v[:at], "-"); cut > 0 {
+			v = v[:cut] + "+" + v[cut+1:at]
+		}
+	}
+
+	return v + star
 }
