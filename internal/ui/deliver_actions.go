@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"os"
+
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/view"
@@ -27,6 +29,29 @@ func (m Model) taskRepoPath(taskID string) string {
 	for _, t := range m.board.Tasks {
 		if t.ID == taskID {
 			return t.RepoPath
+		}
+	}
+
+	return ""
+}
+
+// taskCheckoutPath is where the task's branch is checked out: its worktree
+// when one exists on disk, the repository path when the reader has no worktree
+// port (in tests), or empty when there is no checkout to work in.
+func (m Model) taskCheckoutPath(taskID string) string {
+	t, ok := m.task(taskID)
+	if !ok || t.RepoPath == "" {
+		return ""
+	}
+
+	if m.opts.Reader == nil {
+		return t.RepoPath
+	}
+
+	dir, err := m.opts.Reader.Worktree(t.RepoPath, t.ID)
+	if err == nil && dir != "" {
+		if info, statErr := os.Stat(dir); statErr == nil && info.IsDir() {
+			return dir
 		}
 	}
 
@@ -148,12 +173,12 @@ func (m Model) askSupervisorTo(caption, taskID, path, body, said string) (tea.Mo
 
 // deliverPR asks for the pull request to be opened, template and all.
 func (m Model) deliverPR() (tea.Model, tea.Cmd) {
-	m, taskID, path, ok := m.aboutTask()
+	m, taskID, _, ok := m.aboutTask()
 	if !ok {
 		return m, nil
 	}
 
-	return m.askSupervisorTo("CREATE PR", taskID, path, promptCreatePR,
+	return m.askSupervisorTo("CREATE PR", taskID, m.taskCheckoutPath(taskID), promptCreatePR,
 		m.opts.Words.T("deliver.pr_asked", "the supervisor was asked to open the pull request for {id}",
 			about("id", taskID)))
 }
@@ -164,24 +189,24 @@ func (m Model) deliverPR() (tea.Model, tea.Cmd) {
 // takes to fix them is not known until they have been read: that is the
 // whole reason this goes to the supervisor rather than to a command.
 func (m Model) fixChecks() (tea.Model, tea.Cmd) {
-	m, taskID, path, ok := m.aboutTask()
+	m, taskID, _, ok := m.aboutTask()
 	if !ok {
 		return m, nil
 	}
 
-	return m.askSupervisorTo("FIX CHECKS", taskID, path, promptFixChecks,
+	return m.askSupervisorTo("FIX CHECKS", taskID, m.taskCheckoutPath(taskID), promptFixChecks,
 		m.opts.Words.T("deliver.checks_asked", "the supervisor was asked to make {id}'s checks pass",
 			about("id", taskID)))
 }
 
 // addMoreTests asks for the tests this task's change is missing.
 func (m Model) addMoreTests() (tea.Model, tea.Cmd) {
-	m, taskID, path, ok := m.aboutTask()
+	m, taskID, _, ok := m.aboutTask()
 	if !ok {
 		return m, nil
 	}
 
-	return m.askSupervisorTo("MORE TESTS", taskID, path, promptMoreTests,
+	return m.askSupervisorTo("MORE TESTS", taskID, m.taskCheckoutPath(taskID), promptMoreTests,
 		m.opts.Words.T("deliver.tests_asked", "the supervisor was asked for more tests on {id}",
 			about("id", taskID)))
 }
@@ -194,12 +219,13 @@ func (m Model) addMoreTests() (tea.Model, tea.Cmd) {
 // to the supervisor with the reviews still on the pull request, where the
 // replies have to go anyway.
 func (m Model) resolveComments() (tea.Model, tea.Cmd) {
-	m, taskID, path, ok := m.aboutTask()
+	m, taskID, _, ok := m.aboutTask()
 	if !ok {
 		return m, nil
 	}
 
-	return m.askSupervisorTo("RESOLVE COMMENTS", taskID, path, promptResolveComments,
+	return m.askSupervisorTo(
+		"RESOLVE COMMENTS", taskID, m.taskCheckoutPath(taskID), promptResolveComments,
 		m.opts.Words.T("deliver.resolve_asked", "the supervisor was asked to answer the reviews on {id}",
 			about("id", taskID)))
 }
@@ -208,12 +234,12 @@ func (m Model) resolveComments() (tea.Model, tea.Cmd) {
 // request. It is the one verb here that changes nothing: a review is worth
 // having precisely because the reader of it decides.
 func (m Model) reviewPR() (tea.Model, tea.Cmd) {
-	m, taskID, path, ok := m.aboutTask()
+	m, taskID, _, ok := m.aboutTask()
 	if !ok {
 		return m, nil
 	}
 
-	return m.askSupervisorTo("DEEP REVIEW", taskID, path, promptReview,
+	return m.askSupervisorTo("DEEP REVIEW", taskID, m.taskCheckoutPath(taskID), promptReview,
 		m.opts.Words.T("deliver.review_asked", "the supervisor was asked to review {id}",
 			about("id", taskID)))
 }
@@ -223,13 +249,14 @@ func (m Model) reviewPR() (tea.Model, tea.Cmd) {
 // then merged in here. It is not the same verb as creating the pull
 // request, which is what this key used to run.
 func (m Model) updatePRBranch() (tea.Model, tea.Cmd) {
-	m, taskID, path, ok := m.aboutTask()
+	m, taskID, _, ok := m.aboutTask()
 	if !ok {
 		return m, nil
 	}
 
-	return m.askSupervisorTo("UPDATE PR", taskID, path, promptUpdatePR,
-		m.opts.Words.T("deliver.update_asked", "the supervisor was asked to bring {id} up to date with its base branch",
+	return m.askSupervisorTo("UPDATE PR", taskID, m.taskCheckoutPath(taskID), promptUpdatePR,
+		m.opts.Words.T("deliver.update_asked",
+			"the supervisor was asked to bring {id} up to date with its base branch",
 			about("id", taskID)))
 }
 
