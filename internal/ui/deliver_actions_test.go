@@ -1,8 +1,10 @@
 package ui
 
 import (
+	"io"
 	"testing"
 
+	tea "charm.land/bubbletea/v2"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -84,5 +86,40 @@ func TestDeliverActionsSelectedTask(t *testing.T) {
 	nextM, cmd = m.closePR()
 	if nextM == nil || cmd == nil {
 		t.Errorf("closePR on selected task should return non-nil cmd")
+	}
+}
+
+// TestAVerbSaysWhatWasAskedForWhenItLands. Fix checks and more tests are
+// both `orbit note` underneath, and what the band said when the command came
+// back was "note finished": the name of a command the reader never pressed,
+// naming no task, in front of a screen whose caption said FIX CHECKS.
+func TestAVerbSaysWhatWasAskedForWhenItLands(t *testing.T) {
+	for _, c := range []struct {
+		press func(Model) (tea.Model, tea.Cmd)
+		want  string
+	}{
+		{Model.fixChecks, "fix the failing checks"},
+		{Model.addMoreTests, "asked for more tests"},
+	} {
+		m, _ := testModel(t, 100, 30)
+		m.board.Tasks = []view.Task{{ID: "ACME-100", Repo: "acme", RepoPath: "/path/to/acme", Band: view.Done}}
+		m.detail, m.screen = "ACME-100", screenDetail
+		m.opts.Do = func(string, []string, io.Writer) error { return nil }
+
+		next, cmd := c.press(m)
+
+		running := asModel(t, next)
+		wantBand(t, running, c.want)
+
+		// And the sentence is still the reader's once the note is filed.
+		for _, one := range commandsIn(t, cmd) {
+			msg, ok := one().(commandMsg)
+			if !ok {
+				continue
+			}
+
+			landed, _ := running.Update(msg)
+			wantBand(t, asModel(t, landed), c.want)
+		}
 	}
 }

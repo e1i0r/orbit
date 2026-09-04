@@ -1805,13 +1805,13 @@
       "source": "closing pull request for {id}...",
       "value": "cerrando pull request para {id}..."
     },
-    "deliver.fixing_checks": {
-      "source": "running checks and fixing issues for {id}...",
-      "value": "ejecutando checks y corrigiendo errores para {id}..."
+    "deliver.checks_asked": {
+      "source": "{id} was asked to fix the failing checks; a run has to pick it up",
+      "value": "se le pidió a {id} arreglar los checks que fallan; lo recoge una ejecución"
     },
-    "deliver.adding_tests": {
-      "source": "generating unit and fuzz tests for {id}...",
-      "value": "generando pruebas unitarias y fuzzing para {id}..."
+    "deliver.tests_asked": {
+      "source": "{id} was asked for more tests; a run has to pick it up",
+      "value": "se le pidió a {id} más pruebas; lo recoge una ejecución"
     },
     "cmd.cancel": {
       "source": "stop a run, and say so in its record",

@@ -15,6 +15,7 @@ import (
 type commandMsg struct {
 	Name string
 	Text string // the final snapshot of the watch's buffer
+	Said string // what to say about it landing; the name, when empty
 	Err  error
 }
 
@@ -43,7 +44,7 @@ func runCommand(port func(string, []string, io.Writer) error, w *commandWatch, a
 		w.finish()
 		text, _ := w.snapshot()
 
-		return commandMsg{Name: w.name, Text: text, Err: err}
+		return commandMsg{Name: w.name, Text: text, Said: w.said, Err: err}
 	}
 }
 

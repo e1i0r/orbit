@@ -69,7 +69,13 @@ func (m Model) deliverPR() (tea.Model, tea.Cmd) {
 	return m.runWatched(Command{Name: "pr"}, repoArgs(path, taskID))
 }
 
-// fixChecks runs tests and linters in the task worktree and automatically patches issues.
+// fixChecks asks the task to run its checks and fix what fails.
+//
+// It records the instruction, exactly as resolveComments records the
+// reviews: what the reader pressed is not a run, and nothing here starts
+// one. The sentence says so — it said "running checks and fixing issues"
+// and then "note finished", which is two accounts of the same keystroke and
+// neither of them what happened.
 func (m Model) fixChecks() (tea.Model, tea.Cmd) {
 	m, taskID, path, ok := m.aboutTask()
 	if !ok {
@@ -78,12 +84,15 @@ func (m Model) fixChecks() (tea.Model, tea.Cmd) {
 
 	p := m.opts.Words
 	instruction := "Run the full test suite and linter (go test ./..., golangci-lint). Investigate any failures, fix the source code and tests, and ensure 100% green checks."
-	m = m.say(p.T("deliver.fixing_checks", "running checks and fixing issues for {id}...", about("id", taskID)))
+	said := p.T("deliver.checks_asked", "{id} was asked to fix the failing checks; a run has to pick it up",
+		about("id", taskID))
 
-	return m.runWatched(Command{Name: "note"}, repoArgs(path, taskID, instruction))
+	return m.say(said).runWatchedSaying(Command{Name: "note"}, repoArgs(path, taskID, instruction), said)
 }
 
-// addMoreTests generates unit tests, fuzz testing, and property invariants up to >=90% coverage.
+// addMoreTests asks the task for unit tests, fuzz tests and property
+// invariants up to >=90% coverage. Like fixChecks, it records the
+// instruction and leaves the run to the reader.
 func (m Model) addMoreTests() (tea.Model, tea.Cmd) {
 	m, taskID, path, ok := m.aboutTask()
 	if !ok {
@@ -92,9 +101,10 @@ func (m Model) addMoreTests() (tea.Model, tea.Cmd) {
 
 	p := m.opts.Words
 	instruction := "Analyze package coverage and write comprehensive unit tests, native Go fuzz tests (testing.F), and boundary property tests to achieve >=90% test coverage."
-	m = m.say(p.T("deliver.adding_tests", "generating unit and fuzz tests for {id}...", about("id", taskID)))
+	said := p.T("deliver.tests_asked", "{id} was asked for more tests; a run has to pick it up",
+		about("id", taskID))
 
-	return m.runWatched(Command{Name: "note"}, repoArgs(path, taskID, instruction))
+	return m.say(said).runWatchedSaying(Command{Name: "note"}, repoArgs(path, taskID, instruction), said)
 }
 
 // resolveComments brings back what reviewers asked for on the pull request,

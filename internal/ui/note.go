@@ -125,7 +125,8 @@ func (m Model) submitNote() (tea.Model, tea.Cmd) {
 		cmds = append(cmds, logOf(m.opts.Reader, m.subject()))
 	}
 
-	nextM, runCmd := m.runWatched(Command{Name: verb}, repoArgs(m.taskRepoPath(taskID), taskID, text))
+	nextM, runCmd := m.runWatchedSaying(Command{Name: verb},
+		repoArgs(m.taskRepoPath(taskID), taskID, text), said)
 	if runCmd != nil {
 		cmds = append(cmds, runCmd)
 	}
