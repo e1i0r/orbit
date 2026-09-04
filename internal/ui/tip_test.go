@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
 )
 
@@ -96,5 +97,42 @@ func TestAKeyThatDoesNothingSaysSo(t *testing.T) {
 	after, _ := advance(t, armed, press("§"))
 	if band := ansi.Strip(after.bandLine(120)); !strings.Contains(band, "nothing in this window answers") {
 		t.Errorf("the band says %q, want the answer about a key nothing is bound to", band)
+	}
+}
+
+// TestPointingAtAHintExplainsIt, which is the same answer ? gives, without
+// the keystroke: the reader is already looking at the hint.
+func TestPointingAtAHintExplainsIt(t *testing.T) {
+	m, got := parkedModel(t)
+	m = onRow(t, m, "ACME-2705")
+
+	y := m.frame.Bar.Y
+
+	_, hints, _ := m.barLayout(m.frame.Bar.W)
+
+	x, found := 0, false
+
+	for _, h := range hints {
+		if h.key == "r" {
+			x, found = h.x, true
+		}
+	}
+
+	if !found {
+		t.Fatal("the bar offers no r to point at")
+	}
+
+	on := m.hover(tea.Mouse{X: x, Y: y})
+	if band := ansi.Strip(on.bandLine(120)); !strings.Contains(band, "beginning with the phase") {
+		t.Errorf("the band says %q, want what the hint under the pointer does", band)
+	}
+
+	if got.word != "" {
+		t.Errorf("pointing at the hint wrote %q", got.word)
+	}
+
+	off := on.hover(tea.Mouse{X: x, Y: y + 5})
+	if band := ansi.Strip(off.bandLine(120)); strings.Contains(band, "beginning with the phase") {
+		t.Errorf("the sentence stayed behind the pointer: %q", band)
 	}
 }

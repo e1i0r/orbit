@@ -19,9 +19,12 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
-// tipState is the window waiting to be told which key to explain.
+// tipState is the window being asked what a key does: armed is the ? that
+// is waiting to be told which key, and hover is the hint the pointer is
+// resting on right now.
 type tipState struct {
 	armed bool
+	hover string
 }
 
 // armTip is ?: the next keystroke is a question about itself.
@@ -51,4 +54,35 @@ func (m Model) tipKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	}
 
 	return m.say(m.meaning(k)), nil
+}
+
+// hover is the pointer resting on the key bar with no button down: the same
+// answer as ?, for the reader who is already looking at the hint and has
+// their hand on the mouse.
+//
+// It reads hitBar and nothing else, so a hint is explained exactly where it
+// was drawn — including at the widths where the bar drops it, since a hint
+// that is not on the line cannot be pointed at. Off the bar the sentence
+// goes with the pointer: a tooltip that stayed behind is a sentence about a
+// key the reader has stopped asking about.
+func (m Model) hover(e tea.Mouse) Model {
+	if t := m.hitBar(e.X, e.Y); t.Kind == TargetBarHint {
+		m.tip.hover = t.Key
+		return m
+	}
+
+	m.tip.hover = ""
+
+	return m
+}
+
+// hovered is what the band says for it, and nothing at all when the pointer
+// is not on a hint. The arrows are drawn as a hint and send no keystroke, so
+// they are the one entry of the bar with nothing to say.
+func (m Model) hovered() string {
+	if m.tip.hover == "" {
+		return ""
+	}
+
+	return m.meaning(keystroke(m.tip.hover))
 }

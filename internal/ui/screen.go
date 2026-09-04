@@ -84,12 +84,14 @@ func (m Model) View() tea.View {
 	// Tea puts the terminal back the way it found it on the way out.
 	v.BackgroundColor = WindowBackground()
 	v.ForegroundColor = WindowForeground()
-	// CellMotion and not AllMotion: the window is told about a moved
-	// pointer only while a button is down, which is what a drag needs and
-	// all it needs. AllMotion is a message for every cell the pointer
-	// crosses whether or not anything is being done with it, and it buys
-	// nothing until a row is drawn differently for being hovered over.
-	v.MouseMode = tea.MouseModeCellMotion
+	// AllMotion and not CellMotion: a message for every cell the pointer
+	// crosses, whether or not a button is down. It costs that traffic and
+	// it buys the hint under the pointer explaining itself, which is the
+	// one thing on this window that is drawn for being pointed at. The
+	// work per message is a row comparison — hitBar answers off its own
+	// row before it lays anything out — and the model only changes when
+	// the hint under the pointer does.
+	v.MouseMode = tea.MouseModeAllMotion
 
 	return v
 }

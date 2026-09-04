@@ -41,6 +41,12 @@ func (m Model) bandLeft() string {
 	case m.confirm == confirmPostCliTask:
 		return Paint(Live).Render(m.opts.Words.T("msg.confirm_post_cli",
 			"create a task in Orbit from this session? press y to confirm, anything else to skip"))
+	// Above the message and below the questions: what the pointer is on is
+	// newer than whatever was said before it got there, and a question the
+	// window is waiting for an answer to is not something a moved pointer
+	// gets to cover.
+	case m.hovered() != "":
+		return Paint(Live).Render(m.hovered())
 	case m.message != "" && m.now.Sub(m.messageAt) < messageLife:
 		return Paint(Accent).Render(m.message)
 	case m.filter != "" || m.repoFilter != "" || m.queueFilter != nil:
