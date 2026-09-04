@@ -29,12 +29,17 @@ type menuState struct {
 	open   bool
 	taskID string
 	sel    int
+	offset int // the first entry drawn, for a menu longer than the window
 }
 
-// openMenu brings the menu up on a target.
+// openMenu brings the menu up on a target, its cursor on the first entry
+// there is to choose — which is not the first row, on a menu that names its
+// blocks.
 func (m Model) openMenu(id string) Model {
 	m.menu = menuState{open: true, taskID: id}
-	return m
+	m.menu.sel = max(0, menuChoice(m.menuEntries(), 0, 1))
+
+	return m.keepMenuEntrySeen()
 }
 
 // closeMenu takes it down.
@@ -67,6 +72,7 @@ type menuEntry struct {
 	detail string // its description, dimmed, when it has one
 	dim    bool   // refused here
 	reason string // why, when dim
+	head   bool   // names the block below it; not a thing to choose
 
 	aff *Affordance
 	cmd *Command
@@ -84,7 +90,7 @@ type menuEntry struct {
 func (m Model) menuEntries() []menuEntry {
 	p := m.opts.Words
 	if m.screen == screenDetail {
-		return m.tabMenuEntries()
+		return m.detailMenuEntries()
 	}
 
 	if m.menu.taskID == "" {
@@ -115,32 +121,9 @@ func (m Model) menuEntries() []menuEntry {
 		return out
 	}
 
-	t, ok := m.task(m.menu.taskID)
-	if !ok {
-		// The run the menu was opened on left the board while it was up.
-		return nil
-	}
-
-	all := m.keys.Affordances(t, m.conditions(t))
-
-	out := make([]menuEntry, 0, len(all))
-	for i := range all {
-		a := &all[i]
-
-		e := menuEntry{
-			glyph: a.Key.Help().Key,
-			title: a.Key.Help().Desc,
-			aff:   a,
-		}
-		if !a.OK {
-			e.dim = true
-			e.reason = a.Why(p)
-		}
-
-		out = append(out, e)
-	}
-
-	return out
+	// A task menu with nothing on it is one whose run left the board while
+	// it was up, and the drawing says so.
+	return m.taskVerbEntries(m.menu.taskID)
 }
 
 // menuKey answers the keyboard while the menu is up: pick, choose, leave.
@@ -176,16 +159,24 @@ func (m Model) menuPick(d int) Model {
 		return m
 	}
 
-	m.menu.sel += d
-	if m.menu.sel < 0 {
-		m.menu.sel = 0
+	es := m.menuEntries()
+
+	// The step is a distance — the wheel moves several rows at once — and
+	// the search for a row that can be chosen is one entry at a time in the
+	// direction it was going.
+	step := 1
+	if d < 0 {
+		step = -1
 	}
 
-	if m.menu.sel >= n {
-		m.menu.sel = n - 1
+	next := min(max(m.menu.sel+d, 0), n-1)
+	if at := menuChoice(es, next, step); at >= 0 {
+		next = at
 	}
 
-	return m
+	m.menu.sel = next
+
+	return m.keepMenuEntrySeen()
 }
 
 // chooseMenu acts on the selection by becoming the keyboard: an affordance
@@ -199,6 +190,10 @@ func (m Model) chooseMenu() (tea.Model, tea.Cmd) {
 	}
 
 	e := entries[m.menu.sel]
+	if e.head {
+		return m, nil
+	}
+
 	if e.tab != nil {
 		m = m.showTab(*e.tab)
 		return m.closeMenu(), nil
@@ -237,12 +232,13 @@ func (m Model) menuRows(h, w int) []string {
 	out := make([]string, 0, h)
 	out = append(out, fit("  "+Paint(Dim).Render(m.menuTitle()), w), "")
 
-	for i, e := range es {
+	off := m.menuOffset(len(es), menuView(h))
+	for i, e := range es[off:] {
 		if len(out) >= h {
 			break
 		}
 
-		out = append(out, m.menuRow(e, i == m.menu.sel, w))
+		out = append(out, m.menuRow(e, off+i == m.menu.sel, w))
 	}
 
 	return fill(out, h)
@@ -256,7 +252,8 @@ func (m Model) menuTitle() string {
 
 	switch {
 	case m.screen == screenDetail:
-		return p.T("menu.title_panes", "the panes of this task")
+		return p.T("menu.title_detail", "{id} — where to look, and what can be done",
+			about("id", m.menu.taskID))
 	case m.menu.taskID == "":
 		return p.T("menu.title_board", "commands — nothing here is about one task")
 	}
@@ -270,6 +267,10 @@ func (m Model) menuTitle() string {
 // mirror paletteRow's, because a reader who learned to read one list should
 // be able to read the other.
 func (m Model) menuRow(e menuEntry, selected bool, w int) string {
+	if e.head {
+		return menuHeadRow(e, w)
+	}
+
 	line := e.title
 	if e.glyph != "" {
 		line = Paint(Accent).Render(e.glyph) + "  " + line
@@ -311,13 +312,25 @@ func (m Model) hitMenu(x, y int) Target {
 
 	// Past the title, which is drawn above the entries and is not one.
 	line -= menuTitleRows
+	if line < 0 {
+		return Target{}
+	}
 
+	// Down by whatever the list has scrolled: the drawing and the counting
+	// read the same offset, or a click lands on the row the reader is not
+	// looking at.
 	es := m.menuEntries()
-	if line < 0 || line >= len(es) {
+
+	line += m.menuOffset(len(es), menuView(m.frame.Body.H))
+	if line >= len(es) {
 		return Target{}
 	}
 
 	e := es[line]
+	if e.head {
+		return Target{}
+	}
+
 	if e.glyph != "" {
 		return Target{Kind: TargetMenuEntry, Key: e.glyph}
 	}

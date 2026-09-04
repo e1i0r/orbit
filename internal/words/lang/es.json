@@ -1986,16 +1986,12 @@
       "value": "la tarea en la que se abrió este menú ya no está en el tablero"
     },
     "menu.title_board": {
-        "source": "commands — nothing here is about one task",
-        "value": "comandos — nada de esto es sobre una tarea"
+      "source": "commands — nothing here is about one task",
+      "value": "comandos — nada de esto es sobre una tarea"
     },
     "menu.title_task": {
-        "source": "{id} — what can be done to this task",
-        "value": "{id} — lo que se puede hacer con esta tarea"
-    },
-    "menu.title_panes": {
-        "source": "the panes of this task",
-        "value": "los paneles de esta tarea"
+      "source": "{id} — what can be done to this task",
+      "value": "{id} — lo que se puede hacer con esta tarea"
     },
     "key.compose": {
       "source": "write a task",
@@ -3518,6 +3514,18 @@
     "msg.session_not_filed": {
       "source": "the session on {id} could not be read back: {err}",
       "value": "no se pudo traer la sesión sobre {id}: {err}"
+    },
+    "menu.head_panes": {
+      "source": "the panes of this task",
+      "value": "los paneles de esta tarea"
+    },
+    "menu.head_verbs": {
+      "source": "what can be done to it",
+      "value": "lo que se puede hacer con ella"
+    },
+    "menu.title_detail": {
+      "source": "{id} — where to look, and what can be done",
+      "value": "{id} — dónde mirar, y lo que se puede hacer"
     }
   }
 }

@@ -23,17 +23,24 @@ func TestTabMenuInDetailView(t *testing.T) {
 		t.Fatal("expected menu to be open after pressing 'm' in detail view")
 	}
 
+	// The panes are one block of this menu now, under a heading, with the
+	// task's verbs under another.
 	entries := m.menuEntries()
-	if len(entries) != int(tabCount) {
-		t.Fatalf("menuEntries in detail = %d, want %d (all tabs)", len(entries), int(tabCount))
+	if len(entries) <= int(tabCount) {
+		t.Fatalf("menuEntries in detail = %d, want the tabs and the verbs both", len(entries))
+	}
+
+	if !entries[0].head {
+		t.Errorf("entry 0 = %+v, expected the heading the panes are listed under", entries[0])
 	}
 
 	// Verify each entry has title and description
-	if entries[0].title != "overview" || entries[0].detail == "" {
-		t.Errorf("entry 0 = %+v, expected overview with description", entries[0])
+	if entries[1].title != "overview" || entries[1].detail == "" {
+		t.Errorf("entry 1 = %+v, expected overview with description", entries[1])
 	}
 
-	// 2. Select diff tab (index 9) using down arrows and press Enter
+	// 2. Select diff tab using down arrows and press Enter. The cursor
+	// opened on overview, the first entry there is to choose.
 	for i := 0; i < 9; i++ {
 		res, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 		m = asModel(t, res)
