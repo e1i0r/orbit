@@ -135,7 +135,11 @@ func (m Model) supervisorKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) sendSupervisorMessage(text string) (tea.Model, tea.Cmd) {
+// sendSupervisorMessage puts one line in the supervisor's thread and asks
+// it to answer. It returns a Model rather than a tea.Model so that a caller
+// with something of its own to say — the deliver keys, which send a line
+// nobody typed — can say it without taking the window apart again.
+func (m Model) sendSupervisorMessage(text string) (Model, tea.Cmd) {
 	if m.opts.RecordSupervisor != nil {
 		// "operator" is who every other door writes, and the thread is one
 		// conversation: a name hardcoded here made the same person read as

@@ -987,9 +987,17 @@
       "source": "resolve comments",
       "value": "resolver comentarios"
     },
-    "deliver.resolving": {
-      "source": "reading the reviews on {id}...",
-      "value": "leyendo los reviews de {id}..."
+    "overview.action_review": {
+      "source": "deep review",
+      "value": "revisión a fondo"
+    },
+    "deliver.resolve_asked": {
+      "source": "the supervisor was asked to answer the reviews on {id}",
+      "value": "se le pidió al supervisor contestar los reviews de {id}"
+    },
+    "deliver.review_asked": {
+      "source": "the supervisor was asked to review {id}",
+      "value": "se le pidió al supervisor revisar {id}"
     },
     "list.none": {
       "source": "no tasks yet",
@@ -1789,13 +1797,17 @@
       "source": "select a task to continue",
       "value": "selecciona una tarea para continuar"
     },
-    "deliver.creating_pr": {
-      "source": "creating pull request for {id}...",
-      "value": "creando pull request para {id}..."
+    "deliver.pr_asked": {
+      "source": "the supervisor was asked to open the pull request for {id}",
+      "value": "se le pidió al supervisor abrir el pull request de {id}"
     },
-    "deliver.updating_pr": {
-      "source": "updating branch and PR for {id}...",
-      "value": "actualizando rama y PR para {id}..."
+    "deliver.update_asked": {
+      "source": "the supervisor was asked to bring {id} up to date with its base branch",
+      "value": "se le pidió al supervisor poner {id} al día con su rama base"
+    },
+    "deliver.no_checkout": {
+      "source": "{id} has no checkout, so there is nothing to work in",
+      "value": "{id} no tiene checkout, así que no hay dónde trabajar"
     },
     "deliver.merging_pr": {
       "source": "merging pull request for {id}...",
@@ -1805,13 +1817,13 @@
       "source": "closing pull request for {id}...",
       "value": "cerrando pull request para {id}..."
     },
-    "deliver.fixing_checks": {
-      "source": "running checks and fixing issues for {id}...",
-      "value": "ejecutando checks y corrigiendo errores para {id}..."
+    "deliver.checks_asked": {
+      "source": "the supervisor was asked to make {id}'s checks pass",
+      "value": "se le pidió al supervisor que los checks de {id} pasen"
     },
-    "deliver.adding_tests": {
-      "source": "generating unit and fuzz tests for {id}...",
-      "value": "generando pruebas unitarias y fuzzing para {id}..."
+    "deliver.tests_asked": {
+      "source": "the supervisor was asked for more tests on {id}",
+      "value": "se le pidió al supervisor más pruebas para {id}"
     },
     "cmd.cancel": {
       "source": "stop a run, and say so in its record",

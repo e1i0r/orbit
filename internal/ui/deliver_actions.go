@@ -56,76 +56,117 @@ func (m Model) aboutTask() (Model, string, string, bool) {
 	return m, id, m.taskRepoPath(id), true
 }
 
-// deliverPR initiates the GitHub Pull Request creation for the viewed task.
+// askSupervisorTo hands one of these verbs to the supervisor: the window
+// says what is wanted and where, and the supervisor finds out what that
+// takes before doing it.
+//
+// What it is asked goes into the supervisor's own thread, exactly as a line
+// typed on its screen does, so a keystroke and a sentence are one
+// conversation in one order — and the answer comes back where the operator
+// already reads its answers.
+func (m Model) askSupervisorTo(caption, taskID, path, body, said string) (tea.Model, tea.Cmd) {
+	p := m.opts.Words
+
+	if path == "" {
+		return m.say(p.T("deliver.no_checkout", "{id} has no checkout, so there is nothing to work in",
+			about("id", taskID))), nil
+	}
+
+	next, cmd := m.sendSupervisorMessage(deliverPrompt(caption, taskID, path, body))
+	if cmd == nil {
+		// The thread refused the line. What it said about that is the
+		// only true sentence there is here.
+		return next, nil
+	}
+
+	return next.say(said), cmd
+}
+
+// deliverPR asks for the pull request to be opened, template and all.
 func (m Model) deliverPR() (tea.Model, tea.Cmd) {
 	m, taskID, path, ok := m.aboutTask()
 	if !ok {
 		return m, nil
 	}
 
-	p := m.opts.Words
-	m = m.say(p.T("deliver.creating_pr", "creating pull request for {id}...", about("id", taskID)))
-
-	return m.runWatched(Command{Name: "pr"}, repoArgs(path, taskID))
+	return m.askSupervisorTo("CREATE PR", taskID, path, promptCreatePR,
+		m.opts.Words.T("deliver.pr_asked", "the supervisor was asked to open the pull request for {id}",
+			about("id", taskID)))
 }
 
-// fixChecks runs tests and linters in the task worktree and automatically patches issues.
+// fixChecks asks for the checks on the pull request to pass.
+//
+// The checks that matter are the ones GitHub ran on the branch, and what it
+// takes to fix them is not known until they have been read: that is the
+// whole reason this goes to the supervisor rather than to a command.
 func (m Model) fixChecks() (tea.Model, tea.Cmd) {
 	m, taskID, path, ok := m.aboutTask()
 	if !ok {
 		return m, nil
 	}
 
-	p := m.opts.Words
-	instruction := "Run the full test suite and linter (go test ./..., golangci-lint). Investigate any failures, fix the source code and tests, and ensure 100% green checks."
-	m = m.say(p.T("deliver.fixing_checks", "running checks and fixing issues for {id}...", about("id", taskID)))
-
-	return m.runWatched(Command{Name: "note"}, repoArgs(path, taskID, instruction))
+	return m.askSupervisorTo("FIX CHECKS", taskID, path, promptFixChecks,
+		m.opts.Words.T("deliver.checks_asked", "the supervisor was asked to make {id}'s checks pass",
+			about("id", taskID)))
 }
 
-// addMoreTests generates unit tests, fuzz testing, and property invariants up to >=90% coverage.
+// addMoreTests asks for the tests this task's change is missing.
 func (m Model) addMoreTests() (tea.Model, tea.Cmd) {
 	m, taskID, path, ok := m.aboutTask()
 	if !ok {
 		return m, nil
 	}
 
-	p := m.opts.Words
-	instruction := "Analyze package coverage and write comprehensive unit tests, native Go fuzz tests (testing.F), and boundary property tests to achieve >=90% test coverage."
-	m = m.say(p.T("deliver.adding_tests", "generating unit and fuzz tests for {id}...", about("id", taskID)))
-
-	return m.runWatched(Command{Name: "note"}, repoArgs(path, taskID, instruction))
+	return m.askSupervisorTo("MORE TESTS", taskID, path, promptMoreTests,
+		m.opts.Words.T("deliver.tests_asked", "the supervisor was asked for more tests on {id}",
+			about("id", taskID)))
 }
 
-// resolveComments brings back what reviewers asked for on the pull request,
-// so the next run answers it.
+// resolveComments answers the reviews on the pull request.
 //
-// It reads and records, exactly as the verb does: the comments land in the
-// task and the reader decides whether to spend a run on them. A key that
-// silently started one would make "what did they say?" cost money.
+// It used to read the comments into the record and stop there, which left
+// the reader with the reviews written down twice and nothing said back. The
+// deciding is the work — apply this one, argue with that one — so it goes
+// to the supervisor with the reviews still on the pull request, where the
+// replies have to go anyway.
 func (m Model) resolveComments() (tea.Model, tea.Cmd) {
 	m, taskID, path, ok := m.aboutTask()
 	if !ok {
 		return m, nil
 	}
 
-	p := m.opts.Words
-	m = m.say(p.T("deliver.resolving", "reading the reviews on {id}...", about("id", taskID)))
-
-	return m.runWatched(Command{Name: "resolve"}, repoArgs(path, taskID))
+	return m.askSupervisorTo("RESOLVE COMMENTS", taskID, path, promptResolveComments,
+		m.opts.Words.T("deliver.resolve_asked", "the supervisor was asked to answer the reviews on {id}",
+			about("id", taskID)))
 }
 
-// updatePRBranch commits any pending worktree modifications and pushes them to update the PR.
+// reviewPR reads the pull request and says what it finds, on the pull
+// request. It is the one verb here that changes nothing: a review is worth
+// having precisely because the reader of it decides.
+func (m Model) reviewPR() (tea.Model, tea.Cmd) {
+	m, taskID, path, ok := m.aboutTask()
+	if !ok {
+		return m, nil
+	}
+
+	return m.askSupervisorTo("DEEP REVIEW", taskID, path, promptReview,
+		m.opts.Words.T("deliver.review_asked", "the supervisor was asked to review {id}",
+			about("id", taskID)))
+}
+
+// updatePRBranch brings the task's branch up to date with the branch it
+// will be merged into: the base branch is brought up to the remote's, and
+// then merged in here. It is not the same verb as creating the pull
+// request, which is what this key used to run.
 func (m Model) updatePRBranch() (tea.Model, tea.Cmd) {
 	m, taskID, path, ok := m.aboutTask()
 	if !ok {
 		return m, nil
 	}
 
-	p := m.opts.Words
-	m = m.say(p.T("deliver.updating_pr", "updating branch and PR for {id}...", about("id", taskID)))
-
-	return m.runWatched(Command{Name: "pr"}, repoArgs(path, taskID))
+	return m.askSupervisorTo("UPDATE PR", taskID, path, promptUpdatePR,
+		m.opts.Words.T("deliver.update_asked", "the supervisor was asked to bring {id} up to date with its base branch",
+			about("id", taskID)))
 }
 
 // mergePR merges the GitHub Pull Request and cleans up the remote branch.

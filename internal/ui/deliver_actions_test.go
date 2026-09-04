@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"io"
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/view"
@@ -84,5 +85,34 @@ func TestDeliverActionsSelectedTask(t *testing.T) {
 	nextM, cmd = m.closePR()
 	if nextM == nil || cmd == nil {
 		t.Errorf("closePR on selected task should return non-nil cmd")
+	}
+}
+
+// TestAVerbSaysWhatWasAskedForWhenItLands. A note is `orbit note`
+// underneath, and what the band said when the command came back was "note
+// finished" — the name of the command, naming no task, in place of the
+// sentence the window had just said about the task the note was for.
+func TestAVerbSaysWhatWasAskedForWhenItLands(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+	m.board.Tasks = []view.Task{{ID: "ACME-100", Repo: "acme", RepoPath: "/path/to/acme", Band: view.Done}}
+	m.detail, m.screen = "ACME-100", screenDetail
+	m.opts.Do = func(string, []string, io.Writer) error { return nil }
+
+	m = m.openMessage(verbNote, "ACME-100")
+	m.note.text = "check the retry path"
+
+	next, cmd := m.submitNote()
+
+	said := asModel(t, next)
+	wantBand(t, said, "note recorded for ACME-100")
+
+	for _, one := range commandsIn(t, cmd) {
+		msg, ok := one().(commandMsg)
+		if !ok {
+			continue
+		}
+
+		landed, _ := said.Update(msg)
+		wantBand(t, asModel(t, landed), "note recorded for ACME-100")
 	}
 }

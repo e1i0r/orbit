@@ -247,12 +247,17 @@ func (m Model) startedSaid(msg startedMsg) string {
 // commandSaid is what the band says about a palette command that came back.
 //
 // The error is passed on exactly as the command phrased it — the same rule
-// controlSaid keeps, for the same reason. The success is one sentence per
-// nothing: unlike a control word, there is no verb to conjugate, only a
-// name that finished.
+// controlSaid keeps, for the same reason. The success is whatever the
+// keystroke left to be said about landing, and the command's own name when
+// it left nothing: a verb the reader pressed is not always the command that
+// carries it out.
 func (m Model) commandSaid(msg commandMsg) string {
 	if msg.Err != nil {
 		return m.errSaid(msg.Err)
+	}
+
+	if msg.Said != "" {
+		return msg.Said
 	}
 
 	return m.opts.Words.T("msg.command_done", "{name} finished", about("name", msg.Name))

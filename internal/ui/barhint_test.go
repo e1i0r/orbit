@@ -96,5 +96,5 @@ func TestTheTaskViewsCKeyIsTheOneTheBarNames(t *testing.T) {
 	wantBand(t, asModel(t, next), "opening interactive session")
 
 	after, _ := m.sendKey(keystroke("C"))
-	wantBand(t, asModel(t, after), "running checks")
+	wantBand(t, asModel(t, after), "supervisor was asked to make")
 }

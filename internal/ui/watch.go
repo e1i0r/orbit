@@ -41,6 +41,7 @@ const outputTick = 150 * time.Millisecond
 // from one racing it.
 type commandWatch struct {
 	name string
+	said string // the sentence to leave behind, when the name is not one
 
 	mu   sync.Mutex
 	buf  []byte
@@ -182,6 +183,17 @@ func (m Model) launch(c Command, args []string) (tea.Model, tea.Cmd) {
 // on screen while it works and its result left there when it lands. The
 // caller closes whatever list it was showing; the watch opens here.
 func (m Model) runWatched(c Command, args []string) (tea.Model, tea.Cmd) {
+	return m.runWatchedSaying(c, args, "")
+}
+
+// runWatchedSaying is runWatched with the sentence to leave on the band when
+// the command lands.
+//
+// The verb a reader pressed is not always the command that carries it out:
+// fix checks and more tests are both `orbit note`, and a reader who pressed
+// neither of those was answered "note finished". What is said here is what
+// was asked for, in the words the keystroke was offered in.
+func (m Model) runWatchedSaying(c Command, args []string, said string) (tea.Model, tea.Cmd) {
 	if m.watching != nil {
 		if c.Name == m.watching.name {
 			return m.reopenWatch(), nil
@@ -191,7 +203,7 @@ func (m Model) runWatched(c Command, args []string) (tea.Model, tea.Cmd) {
 			about("name", m.watching.name))), nil
 	}
 
-	w := &commandWatch{name: c.Name}
+	w := &commandWatch{name: c.Name, said: said}
 	next := m
 	next.watching, next.watchUp, next.output = w, true, ""
 
