@@ -308,3 +308,21 @@ func TestOpenPortStillOpensWhenNothingCanBeWritten(t *testing.T) {
 		t.Errorf("a session was refused for want of a state root: %v", err)
 	}
 }
+
+// TestOpenCommandGivesOpenCodeTheSentenceOnItsOwnFlag.
+//
+// A bare argument is the directory to start in for opencode, so the task
+// arrived as a path: "ENAMETOOLONG: name too long, lstat
+// '<worktree>/I am looking at orbit task FRA-62...'", over and over, and no
+// session.
+func TestOpenCommandGivesOpenCodeTheSentenceOnItsOwnFlag(t *testing.T) {
+	cmd, err := openCommand("opencode", "", "look at PAY-1")
+	if err != nil {
+		t.Fatalf("openCommand: %v", err)
+	}
+
+	want := []string{"--prompt", "look at PAY-1"}
+	if got := cmd.Args[1:]; !slices.Equal(got, want) {
+		t.Errorf("args = %v, want %v", got, want)
+	}
+}

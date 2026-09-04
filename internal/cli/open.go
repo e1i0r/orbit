@@ -121,23 +121,51 @@ func openCommand(engineName, dir, context string) (*exec.Cmd, error) {
 	}
 
 	if context != "" {
-		// The separator first, when a flag was given. --mcp-config takes as
-		// many values as follow it, so the sentence the session opens on was
-		// read as a second configuration file: claude answered "MCP config
-		// file not found: I am looking at orbit task ..." and exited before
-		// it drew anything, which from the cockpit is a screen that flashes
-		// and comes back.
-		if len(args) > 0 {
-			args = append(args, "--")
-		}
-
-		args = append(args, context)
+		args = append(args, openSays(engineName, len(args) > 0, context)...)
 	}
 
 	cmd := exec.Command(engineName, args...)
 	cmd.Dir = dir
 
 	return cmd, nil
+}
+
+// openSays is the sentence the session opens on, in the form the engine
+// reads it as a sentence.
+//
+// flagged says a flag has already been written, and the separator goes in
+// first when one has. --mcp-config takes as many values as follow it, so the
+// sentence was read as a second configuration file: claude answered "MCP
+// config file not found: I am looking at orbit task ..." and exited before
+// it drew anything, which from the cockpit is a screen that flashes and
+// comes back.
+func openSays(engineName string, flagged bool, context string) []string {
+	if flag := promptFlag(engineName); flag != "" {
+		return []string{flag, context}
+	}
+
+	if flagged {
+		return []string{"--", context}
+	}
+
+	return []string{context}
+}
+
+// promptFlag is how one engine is handed that sentence, and "" for an engine
+// that reads a bare argument as one.
+//
+// claude and codex do read it as one. opencode reads a bare argument as the
+// directory to start in, so the session died before it drew anything —
+// "ENAMETOOLONG: name too long, lstat '<worktree>/I am looking at orbit task
+// FRA-62...'", the whole sentence lstat'ed as a path.
+//
+// It is a name check for the reason mcpConfigFlag is one.
+func promptFlag(engineName string) string {
+	if engineName == "opencode" {
+		return "--prompt"
+	}
+
+	return ""
 }
 
 // mcpConfigFlag is how one engine is told about a server for the length of a
