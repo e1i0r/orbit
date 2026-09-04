@@ -86,6 +86,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, outputPump(m.watching)
 	case commandMsg:
 		next := m
+		if m.delivering.cmd == msg.Name {
+			next = next.answered(msg.Text, msg.Err)
+		}
+
 		if m.watching != nil && m.watching.name == msg.Name {
 			next.output = msg.Text
 			next.watching = nil
@@ -102,7 +106,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.sessionEnded(msg), nil
 	case supervisorReplyMsg:
 		m.supervisorBusy = false
-		m = m.syncSupervisor()
+		// The delivery keys send their ask down this same wire, so the
+		// answer to one of them is written onto the task it was about
+		// before the thread is redrawn. A reply nobody was waiting on —
+		// a line the operator typed, a turn of autopilot — closes
+		// nothing, because answered is about a verb that is out.
+		m = m.answered(msg.Text, msg.Err).syncSupervisor()
 
 		m.supervisor.offset = 999999
 		if msg.Err != nil {

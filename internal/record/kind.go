@@ -73,6 +73,23 @@ const (
 	// inferred from a branch that disappeared, because a branch can vanish
 	// for three other reasons and only one of them is delivery.
 	TaskMerged = "task.merged"
+	// DeliverAsked is a delivery verb the operator pressed in the cockpit:
+	// open the pull request, bring it up to date, make its checks pass,
+	// answer its reviews. Data["verb"] is which one, in the caption the key
+	// was offered under, and Data["by"] is what was handed the work — the
+	// supervisor, or the command that carries it.
+	//
+	// It is written where the key is pressed rather than by whatever does
+	// the work, because most of these verbs are carried out by an engine
+	// that answers minutes later somewhere else entirely. The ask is a fact
+	// about the task the moment it is made, and a reader who pressed a key
+	// and saw nothing appear has no way to tell a slow verb from a dead one.
+	DeliverAsked = "deliver.asked"
+	// DeliverAnswered ends one of those. Data["verb"] names the same verb,
+	// Data["error"] is why it broke where it did, and Text is what came
+	// back — the supervisor's own account, or what the command printed.
+	DeliverAnswered = "deliver.answered"
+
 	// TaskStuck is a task that ran out of attempts. It is not a failure of
 	// one run — task.failed already says that — it is the run after the
 	// last one the flow was allowed: nothing will move until a reader

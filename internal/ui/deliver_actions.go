@@ -2,7 +2,14 @@ package ui
 
 import (
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/view"
 )
+
+// deliverBySupervisor is what the record says was handed the work when the
+// verb is one of the six the supervisor carries. The commands say their own
+// name, which is what a reader would have typed to do it themselves.
+const deliverBySupervisor = "supervisor"
 
 // taskRepoPath is where the task's repository is on disk, and nothing at all
 // when it has none.
@@ -38,6 +45,63 @@ func repoArgs(path string, rest ...string) []string {
 	}
 
 	return append([]string{"-repo", path}, rest...)
+}
+
+// deliverPending is the delivery verb this window is waiting on: the task it
+// was pressed about, the caption it was offered under, and the command
+// carrying it — empty where the supervisor is carrying it instead.
+//
+// One verb at a time, because the watch already runs one command at a time
+// and the supervisor answers one ask at a time. A second field per carrier
+// would be two ways to be waiting on the same thing.
+type deliverPending struct {
+	task view.Task
+	verb string
+	cmd  string
+}
+
+// asked writes down that a delivery verb was pressed, and remembers it until
+// it is answered. Nothing else on this screen leaves a trace on the task, so
+// this is what a reader sees when they look at what the key did.
+//
+// A record that will not take the ask is said in the band and the verb still
+// goes ahead: the work was asked for either way, and refusing to do it
+// because the writing failed would be the window choosing its own bookkeeping
+// over what the reader wanted.
+func (m Model) asked(taskID, verb, by, cmd string) Model {
+	t, ok := m.task(taskID)
+	if !ok {
+		return m
+	}
+
+	m.delivering = deliverPending{task: t, verb: verb, cmd: cmd}
+
+	return m.deliver(t, Delivery{Verb: verb, By: by})
+}
+
+// answered closes the verb that was out, with what came back or why it broke.
+func (m Model) answered(text string, err error) Model {
+	out := m.delivering
+	m.delivering = deliverPending{}
+
+	if out.verb == "" {
+		return m
+	}
+
+	return m.deliver(out.task, Delivery{Verb: out.verb, Text: text, Failure: err, Done: true})
+}
+
+// deliver hands one of those to the port, and says what stopped it.
+func (m Model) deliver(t view.Task, d Delivery) Model {
+	if m.opts.RecordDeliver == nil {
+		return m
+	}
+
+	if err := m.opts.RecordDeliver(t, d); err != nil {
+		return m.say(err.Error())
+	}
+
+	return m
 }
 
 // aboutTask is the task a verb on this screen is about — the one being read,
@@ -79,7 +143,7 @@ func (m Model) askSupervisorTo(caption, taskID, path, body, said string) (tea.Mo
 		return next, nil
 	}
 
-	return next.say(said), cmd
+	return next.asked(taskID, caption, deliverBySupervisor, "").say(said), cmd
 }
 
 // deliverPR asks for the pull request to be opened, template and all.
@@ -177,6 +241,7 @@ func (m Model) mergePR() (tea.Model, tea.Cmd) {
 	}
 
 	p := m.opts.Words
+	m = m.asked(taskID, "MERGE PR", "merge", "merge")
 	m = m.say(p.T("deliver.merging_pr", "merging pull request for {id}...", about("id", taskID)))
 
 	return m.runWatched(Command{Name: "merge"}, repoArgs(path, taskID))
@@ -190,6 +255,7 @@ func (m Model) closePR() (tea.Model, tea.Cmd) {
 	}
 
 	p := m.opts.Words
+	m = m.asked(taskID, "CLOSE PR", "close-pr", "close-pr")
 	m = m.say(p.T("deliver.closing_pr", "closing pull request for {id}...", about("id", taskID)))
 
 	return m.runWatched(Command{Name: "close-pr"}, repoArgs(path, taskID))

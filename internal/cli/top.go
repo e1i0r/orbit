@@ -159,6 +159,7 @@ func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 		RetractSupervisor: func(at time.Time) error {
 			return supervisor.Retract(s, at)
 		},
+		RecordDeliver: deliverPort(s),
 		AskSupervisor: askSupervisorPort(s, engines),
 		AutoSupervise: autoSupervisePort(s, engines),
 		DeleteTask:    deleteTaskPort(s),

@@ -223,6 +223,18 @@ func (m Model) logWord(e view.Entry) (string, Role) {
 		return p.T("log.superseded", "decision replaced"), Warn
 	case view.EntryRepoJoined:
 		return p.T("log.repo_joined", "repository joined"), Accent
+	case view.EntryDeliverAsked:
+		return p.T("log.deliver_asked", "asked for"), Accent
+	case view.EntryDeliverAnswered:
+		// The one kind here whose word depends on what it carries: the
+		// same event ends a verb that worked and one that broke, and a
+		// timeline that called both of them "answered" would make the
+		// reader open the row to find out which.
+		if e.Cause != "" {
+			return p.T("log.deliver_broke", "came back broken"), Bad
+		}
+
+		return p.T("log.deliver_answered", "came back"), OK
 	case view.EntryUnreadable:
 		return p.T("log.unreadable", "this line could not be read"), Bad
 	}
@@ -262,6 +274,18 @@ func (m Model) logDetail(e view.Entry) string {
 		}
 	case view.EntryRepoJoined:
 		return e.Repo
+	case view.EntryDeliverAsked:
+		if e.By != "" {
+			return e.Verb + " · " + e.By
+		}
+
+		return e.Verb
+	case view.EntryDeliverAnswered:
+		if e.Cause != "" {
+			return e.Verb + ": " + e.Cause
+		}
+
+		return strings.TrimSpace(e.Verb + " " + e.Said())
 	}
 
 	return e.Said()

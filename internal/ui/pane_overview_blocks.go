@@ -316,7 +316,7 @@ func (m Model) overviewActions(w int) []string {
 		out = append(out, paneGutter+l)
 	}
 
-	return append(out, "")
+	return append(append(out, m.handOutRows()...), "")
 }
 
 // plusMinus is the two numbers a diff is judged by. A side that did not
