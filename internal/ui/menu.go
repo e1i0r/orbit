@@ -74,9 +74,10 @@ type menuEntry struct {
 	reason string // why, when dim
 	head   bool   // names the block below it; not a thing to choose
 
-	aff *Affordance
-	cmd *Command
-	tab *tab
+	aff  *Affordance
+	cmd  *Command
+	args []string // what cmd is run with, for a command the entry can answer for
+	tab  *tab
 }
 
 // menuEntries is the menu as it stands right now, recomputed from the board
@@ -202,7 +203,7 @@ func (m Model) chooseMenu() (tea.Model, tea.Cmd) {
 	next := m.closeMenu()
 
 	if e.cmd != nil {
-		return next.launch(*e.cmd, nil)
+		return next.launch(*e.cmd, e.args)
 	}
 
 	return next.sendKey(keystroke(e.glyph))

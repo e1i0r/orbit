@@ -46,6 +46,23 @@ func TestNoCommandIsInTheTableTwice(t *testing.T) {
 	}
 }
 
+// TestTheVerbsTheWindowReachesOnlyByNameAreStillCalledThat. approve, permit
+// and critical have no key in the window: its task menu names them, so a
+// rename here takes them out of the window without a compiler saying so.
+func TestTheVerbsTheWindowReachesOnlyByNameAreStillCalledThat(t *testing.T) {
+	for _, name := range []string{"approve", "permit", "critical"} {
+		c, ok := lookup(name)
+		if !ok {
+			t.Errorf("%q is not in the command table, and the window's task menu asks for it by that name", name)
+			continue
+		}
+
+		if !c.AboutATask {
+			t.Errorf("%q is no longer about one task, so the task menu is the wrong place for it", name)
+		}
+	}
+}
+
 func TestNoteSubcommandExecution(t *testing.T) {
 	root, _ := workspace(t)
 	repoDir := filepath.Join(root, "payments")
