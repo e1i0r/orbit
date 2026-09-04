@@ -5,6 +5,16 @@ import (
 	"strings"
 )
 
+const (
+	// engineTop is the chrome above the list — the title, the line of
+	// advice under it, and the blank rows that set them off — and engineFoot
+	// the blank row and the ways out below it. Neither scrolls: what the
+	// keys do has to stay on screen while the reader is going down a list
+	// of sixty models looking for one.
+	engineTop  = 4
+	engineFoot = 2
+)
+
 func (m Model) enginesRows(h, w int) []string {
 	if h <= 0 {
 		return nil
@@ -46,40 +56,11 @@ func (m Model) enginesRows(h, w int) []string {
 		"",
 	}
 
-	rows := m.collectEngineRows()
-	idxs := m.selectableEngineIndices(rows)
+	lines, _ := m.engineLines(w)
 
-	currentSelectable := -1
-	if m.engines.sel >= 0 && m.engines.sel < len(idxs) {
-		currentSelectable = idxs[m.engines.sel]
-	}
-
-	for i, r := range rows {
-		if r.kind == rowHeader {
-			out = append(out, "", "  "+Paint(Accent).Render(r.title))
-			continue
-		}
-
-		mark := strings.Repeat(" ", gutter)
-		if i == currentSelectable {
-			mark = markGlyph + strings.Repeat(" ", gutter-1)
-		}
-
-		text := r.title
-		if r.selected {
-			text += " " + Paint(OK).Render("●")
-		}
-
-		if r.disabled {
-			text = Paint(Dim).Render(text)
-		}
-
-		if note := m.engineQuota(r); note != "" {
-			text += "   " + Paint(Dim).Render(note)
-		}
-
-		line := fmt.Sprintf("%s%s", mark, text)
-		out = append(out, fit(line, w))
+	view := engineView(h)
+	for i := m.engineOffset(len(lines), view); i < len(lines) && len(out) < engineTop+view; i++ {
+		out = append(out, lines[i])
 	}
 
 	waysOut := p.T("engines.ways_out", "{open} select · {up_down} move · {back} back",
@@ -91,28 +72,121 @@ func (m Model) enginesRows(h, w int) []string {
 	return fill(out, h)
 }
 
+// engineLines is the whole list drawn, however much taller than the screen
+// it is, and which line each selectable row landed on.
+//
+// Both answers come out of one pass because they are the same rule: where a
+// row is drawn is where a click on it lands, and two passes would be two
+// places for that to be decided.
+func (m Model) engineLines(w int) ([]string, []int) {
+	rows := m.collectEngineRows()
+	idxs := m.selectableEngineIndices(rows)
+
+	current := -1
+	if m.engines.sel >= 0 && m.engines.sel < len(idxs) {
+		current = idxs[m.engines.sel]
+	}
+
+	var (
+		lines []string
+		at    []int
+	)
+
+	for i, r := range rows {
+		if r.kind == rowHeader {
+			lines = append(lines, "", "  "+Paint(Accent).Render(r.title))
+			continue
+		}
+
+		at = append(at, len(lines))
+		lines = append(lines, fit(m.engineLine(r, i == current), w))
+	}
+
+	return lines, at
+}
+
+// engineLine is one row: the cursor's gutter, what the row is called, the
+// dot on the one in force, and whatever the quota has to say about it.
+func (m Model) engineLine(r engineRow, marked bool) string {
+	mark := strings.Repeat(" ", gutter)
+	if marked {
+		mark = markGlyph + strings.Repeat(" ", gutter-1)
+	}
+
+	text := r.title
+	if r.selected {
+		text += " " + Paint(OK).Render("●")
+	}
+
+	if r.disabled {
+		text = Paint(Dim).Render(text)
+	}
+
+	if note := m.engineQuota(r); note != "" {
+		text += "   " + Paint(Dim).Render(note)
+	}
+
+	return fmt.Sprintf("%s%s", mark, text)
+}
+
+// engineView is how many rows of the list the screen has room for, which is
+// everything the chrome above and below it did not take.
+func engineView(h int) int {
+	return max(1, h-engineTop-engineFoot)
+}
+
+// engineOffset is the first line on show, held inside the list it is
+// scrolling: a list that got shorter — an engine collapsed, a model chosen —
+// cannot leave the view parked past its end.
+func (m Model) engineOffset(lines, view int) int {
+	return min(max(m.engines.offset, 0), max(0, lines-view))
+}
+
+// keepEngineRowSeen moves the list as little as it can to keep the selection
+// on screen, which is the palette's rule and for the palette's reason: the
+// reader is moving a cursor, and the scrolling is this screen's business
+// rather than theirs.
+func (m Model) keepEngineRowSeen() Model {
+	lines, at := m.engineLines(m.frame.Body.W)
+
+	view := engineView(m.frame.Body.H)
+
+	if m.engines.sel < 0 || m.engines.sel >= len(at) {
+		m.engines.offset = 0
+		return m
+	}
+
+	line := at[m.engines.sel]
+	off := m.engineOffset(len(lines), view)
+
+	switch {
+	case line < off:
+		// A row under a section head is shown with it: the head says what
+		// the row is one of, and "sonnet" alone at the top of the screen
+		// does not say whether it is a model or an effort.
+		off = max(0, line-2)
+	case line >= off+view:
+		off = line - view + 1
+	}
+
+	m.engines.offset = min(max(off, 0), max(0, len(lines)-view))
+
+	return m
+}
+
 func (m Model) hitEngines(x, y int) Target {
 	line, ok := m.frame.BodyRow(y)
 	if !ok {
 		return Target{}
 	}
 
-	rows := m.collectEngineRows()
-	lineIdx := 4
-	sIdx := 0
+	lines, at := m.engineLines(m.frame.Body.W)
 
-	for _, r := range rows {
-		if r.kind == rowHeader {
-			lineIdx += 2
-			continue
+	want := line - engineTop + m.engineOffset(len(lines), engineView(m.frame.Body.H))
+	for i, l := range at {
+		if l == want {
+			return Target{Kind: TargetEngineRow, Pane: i}
 		}
-
-		if line == lineIdx {
-			return Target{Kind: TargetEngineRow, Pane: sIdx}
-		}
-
-		lineIdx++
-		sIdx++
 	}
 
 	return Target{}

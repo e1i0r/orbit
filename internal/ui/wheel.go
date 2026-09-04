@@ -110,6 +110,19 @@ func (m Model) wheel(e tea.Mouse) Model {
 		return m.scrollThread(d)
 	}
 
+	if m.screen == screenEngines {
+		// The knobs are a list with one row chosen, so the wheel moves the
+		// choice and the list follows it — the palette's rule, on the one
+		// other screen where what a reader is looking for is off the
+		// bottom of it.
+		d := wheelRows
+		if up {
+			d = -wheelRows
+		}
+
+		return m.pickEngineRow(d)
+	}
+
 	if m.screen != screenList {
 		return m
 	}

@@ -19,7 +19,14 @@ type Knobs struct {
 }
 
 type enginesState struct {
-	sel          int
+	sel int
+
+	// offset is the first line of the list on show, moved only by
+	// keepEngineRowSeen: opencode alone offers sixty-four models, so this
+	// list has been taller than the screen since the day it stopped being
+	// a shortlist.
+	offset int
+
 	showingSetup bool
 	setupEngine  string
 	fromScreen   screen
@@ -238,14 +245,14 @@ func (m Model) enginesKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			m.engines.sel = len(idxs) - 1
 		}
 
-		return m, nil
+		return m.keepEngineRowSeen(), nil
 	case key.Matches(msg, m.keys.Down):
 		m.engines.sel++
 		if m.engines.sel >= len(idxs) {
 			m.engines.sel = 0
 		}
 
-		return m, nil
+		return m.keepEngineRowSeen(), nil
 	case key.Matches(msg, m.keys.Open), msg.Text == " ":
 		selectedRow := rows[idxs[m.engines.sel]]
 		return m.applyEngineChoice(selectedRow), nil
@@ -275,7 +282,25 @@ func (m Model) applyEngineChoice(selectedRow engineRow) Model {
 		m.knobs.Thinking = selectedRow.id
 	}
 
-	return m
+	// Choosing an engine opens its models under it and closes the one that
+	// was open, so the list this was picked from is not the list it leaves
+	// behind: where the view sits has to be asked again.
+	return m.keepEngineRowSeen()
+}
+
+// pickEngineRow moves the selection by rows, for the wheel. It stops at
+// either end rather than wrapping as the arrows do: a notch that carried the
+// reader from the last model back to the top would read as the list jumping
+// under their hand.
+func (m Model) pickEngineRow(d int) Model {
+	n := len(m.selectableEngineIndices(m.collectEngineRows()))
+	if n == 0 {
+		return m
+	}
+
+	m.engines.sel = min(max(m.engines.sel+d, 0), n-1)
+
+	return m.keepEngineRowSeen()
 }
 
 func (m Model) setOpt(k, v string) Model {
