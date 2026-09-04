@@ -3,7 +3,10 @@ package quota
 // Reading codex's windows out of the rollouts codex writes them into.
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
@@ -229,5 +232,53 @@ func TestCodexIsSourcedByItsOwnFiles(t *testing.T) {
 
 	if len(reading.Windows) != 1 || reading.Windows[0].Pct != 33 {
 		t.Errorf("codex reads as %+v, want the window off its rollout", reading)
+	}
+}
+
+// TestAProxyThatCannotAnswerForCodexFallsThroughToTheFile. A base URL is
+// often one proxy in front of every engine, and a proxy that speaks for
+// another engine has no route for this one — the reader is owed the number
+// that is on their own disk rather than a 404 drawn as an unreadable engine.
+func TestAProxyThatCannotAnswerForCodexFallsThroughToTheFile(t *testing.T) {
+	bare(t)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "no such route", http.StatusNotFound)
+	}))
+	defer srv.Close()
+
+	t.Setenv("OPENAI_BASE_URL", srv.URL)
+
+	now := time.Now()
+	codexRollout(t, "2026/09/03", "rollout-2026-09-03T20-08-38-aaa.jsonl",
+		tokenCount(now.Add(-time.Minute), 33, 43200, now.Add(500*time.Hour)))
+
+	reading := FromEnv().Read("codex", true)
+	if len(reading.Windows) != 1 || reading.Windows[0].Pct != 33 {
+		t.Errorf("codex reads as %+v, want the window off its rollout once the proxy had nothing", reading)
+	}
+}
+
+// TestAProxyThatDoesAnswerIsThePreferredReading, because it is live and the
+// file is as fresh as the last run.
+func TestAProxyThatDoesAnswerIsThePreferredReading(t *testing.T) {
+	bare(t)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_ = json.NewEncoder(w).Encode([]map[string]any{ //nolint:errcheck // the test reads what arrives
+			{"key": "acct", "label": "5h", "pct": 40, "resets_in_s": 900},
+		})
+	}))
+	defer srv.Close()
+
+	t.Setenv("OPENAI_BASE_URL", srv.URL)
+
+	now := time.Now()
+	codexRollout(t, "2026/09/03", "rollout-2026-09-03T20-08-38-aaa.jsonl",
+		tokenCount(now.Add(-time.Minute), 33, 43200, now.Add(500*time.Hour)))
+
+	reading := FromEnv().Read("codex", true)
+	if len(reading.Windows) != 1 || reading.Windows[0].Pct != 40 {
+		t.Errorf("codex reads as %+v, want the proxy's live window and not the file's", reading)
 	}
 }

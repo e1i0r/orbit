@@ -7,7 +7,7 @@
 
    engine     claude · opus · effort:low · thinking: on          [m] model  [o] effort  [t] thinking
 
-   ▸ implement   claude   opus   permissions: repo
+   ❯ implement   claude   opus   permissions: repo
      review      claude   opus   permissions: repo · stops when it is done
      fix         claude   opus   permissions: repo
 

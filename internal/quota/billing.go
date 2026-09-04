@@ -104,13 +104,15 @@ func FromEnv() *Meter {
 }
 
 // codexQuota is where codex's windows are read from: the proxy when a base
-// URL names one, and otherwise what codex itself wrote down.
+// URL names one that answers for codex, and what codex itself wrote down
+// when it does not.
+//
+// The order is the reader's own arrangement first. A proxy is the live
+// number and the rollouts are as fresh as the last run, so a proxy that
+// answers wins; a base URL pointed at something that has never heard of
+// codex is the common case, and it falls through to the file.
 func codexQuota() *Client {
-	if c := New(os.Getenv("OPENAI_BASE_URL")); c != nil {
-		return c
-	}
-
-	return over(newRollouts(codexSessions()))
+	return over(behind(newProxy(os.Getenv("OPENAI_BASE_URL")), newRollouts(codexSessions())))
 }
 
 // keyed is the mode of an engine that can be either, decided by whether a

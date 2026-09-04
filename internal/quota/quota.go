@@ -87,6 +87,41 @@ func over(src Source) *Client {
 	return &Client{src: src}
 }
 
+// backed is a source with another one behind it, for an engine that can be
+// read two ways.
+type backed struct{ first, then Source }
+
+// behind puts a second source behind a first: the first is asked, and the
+// second answers when the first had nothing to say.
+//
+// A proxy that is up and a proxy that answers for this engine are two
+// different things — a base URL naming one that has no idea what this engine
+// is returns a 404 per look, and the engine reads as unreadable while the
+// answer sits in a file on the same machine. Either half being nil is the
+// other half alone, which is what makes a machine with no proxy and a
+// machine with no rollouts both work out to one source rather than a case.
+func behind(first, then Source) Source {
+	switch {
+	case first == nil:
+		return then
+	case then == nil:
+		return first
+	default:
+		return backed{first: first, then: then}
+	}
+}
+
+// Read is what the first source said, and what the second says when the
+// first said nothing. A failure is nothing: the point of the second source
+// is the times the first cannot answer.
+func (b backed) Read() ([]Window, error) {
+	if windows, err := b.first.Read(); err == nil && len(windows) > 0 {
+		return windows, nil
+	}
+
+	return b.then.Read()
+}
+
 // Fetch asks the source once, synchronously, past the cache.
 func (c *Client) Fetch() ([]Window, error) {
 	if c == nil || c.src == nil {
