@@ -139,6 +139,8 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.verb(m.keys.Resume, "resume")
 	case key.Matches(k, m.keys.Hand):
 		return m.handBack()
+	case key.Matches(k, m.keys.Skip):
+		return m.askSkip()
 	case key.Matches(k, m.keys.Cancel):
 		return m.ask()
 	case key.Matches(k, m.keys.Requeue):
@@ -251,6 +253,10 @@ func (m Model) confirmKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 
 	if c == confirmRequeue {
 		return m, requeue(m.opts.Requeue, t)
+	}
+
+	if c == confirmSkip {
+		return m, control(m.opts.Control, t, "skip")
 	}
 
 	return m, control(m.opts.Control, t, "cancel")

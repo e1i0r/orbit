@@ -25,7 +25,7 @@ type Keys struct {
 	Up, Down, First, Last, PageUp, PageDown                                                       key.Binding
 	Open, Back, NextTab, PrevTab, Sideways                                                        key.Binding
 	Start, Run, ChangeFlow, Menu, Compose                                                         key.Binding
-	Pause, Resume, Cancel, Requeue                                                                key.Binding
+	Pause, Resume, Skip, Cancel, Requeue                                                          key.Binding
 	Take, Hand, Ask, MarkRead, Delete, Edit                                                       key.Binding
 	Filter, Commands, CLI, Repos, EngineKnobs, Quota, Supervisor, Autopilot, Language, Help, Quit key.Binding
 }
@@ -87,6 +87,10 @@ func NewKeys(p *words.Printer) Keys {
 
 		Pause:  binding("p", p.T("key.pause", "pause"), "p"),
 		Resume: binding("r", p.T("key.resume", "resume"), "r"),
+		// s is beside r because the two answer the same question — the run
+		// is stopped in front of a phase, does that phase happen — and the
+		// letter is the word.
+		Skip:   binding("s", p.T("key.skip", "skip this phase"), "s"),
 		Cancel: binding("x", p.T("key.cancel", "cancel"), "x"),
 		// b for back. It is beside x because it is the other way a run
 		// stops, and it is not x because the two say different things about

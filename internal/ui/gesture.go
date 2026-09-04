@@ -45,16 +45,69 @@ func (m Model) gesture(b key.Binding) (view.Task, Model, bool) {
 		return view.Task{}, m, false
 	}
 
-	a, ok := m.affordance(r.task, b)
+	next, ok := m.allowed(r.task, b)
 	if !ok {
-		return view.Task{}, m, false
+		return view.Task{}, next, false
+	}
+
+	return r.task, next, true
+}
+
+// allowed is the affordance asked and its refusal said, which is the half of
+// every gesture that does not depend on where the cursor is.
+func (m Model) allowed(t view.Task, b key.Binding) (Model, bool) {
+	a, ok := m.affordance(t, b)
+	if !ok {
+		return m, false
 	}
 
 	if !a.OK {
-		return view.Task{}, m.say(a.Why(m.opts.Words)), false
+		return m.say(a.Why(m.opts.Words)), false
 	}
 
-	return r.task, m, true
+	return m, true
+}
+
+// pointedAt is the task a gesture is about: the one the task view is open
+// on, and the row under the cursor when no task view is up.
+//
+// The screen decides which, and it has to: m.detail keeps its value after
+// the reader goes back to the board, so a gesture that preferred it would
+// act on the task they last looked at rather than on the row they are on.
+func (m Model) pointedAt() (view.Task, bool) {
+	if m.screen == screenDetail {
+		if t, ok := m.task(m.detail); ok {
+			return t, true
+		}
+	}
+
+	r, ok := m.selected()
+	if !ok || r.head {
+		return view.Task{}, false
+	}
+
+	return r.task, true
+}
+
+// askSkip opens the confirm in front of a skip.
+//
+// It asks because a phase that did not run cannot be un-run: the gate is let
+// go, the run moves to the phase after the one it was stopped in front of,
+// and there is no word that brings the skipped one back.
+func (m Model) askSkip() (tea.Model, tea.Cmd) {
+	t, ok := m.pointedAt()
+	if !ok {
+		return m, nil
+	}
+
+	next, ok := m.allowed(t, m.keys.Skip)
+	if !ok {
+		return next, nil
+	}
+
+	next.confirm, next.confirmID = confirmSkip, t.ID
+
+	return next, nil
 }
 
 // verbOn writes one of the five control words on a named task, with the
@@ -67,16 +120,12 @@ func (m Model) gesture(b key.Binding) (view.Task, Model, bool) {
 // is a keystroke that does nothing on a screen whose own banner had just told
 // the reader to press it.
 func (m Model) verbOn(t view.Task, b key.Binding, word string) (Model, tea.Cmd) {
-	a, ok := m.affordance(t, b)
+	next, ok := m.allowed(t, b)
 	if !ok {
-		return m, nil
+		return next, nil
 	}
 
-	if !a.OK {
-		return m.say(a.Why(m.opts.Words)), nil
-	}
-
-	return m, control(m.opts.Control, t, word)
+	return next, control(next.opts.Control, t, word)
 }
 
 // markReadKey is d: one finished task read, and the brake one notch looser.

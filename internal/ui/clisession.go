@@ -27,11 +27,9 @@ func (m Model) launchInteractiveCLI() (Model, tea.Cmd) {
 	// the session was told named that task, and the directory it opened in
 	// was that task's — or, on a cursor that had never moved onto a task,
 	// the first repository on the board rather than this task's worktree.
-	t, ok := m.task(m.detail)
-	if !ok {
-		if r, sel := m.selected(); sel && !r.head {
-			t = r.task
-		}
+	var t view.Task
+	if pointed, ok := m.pointedAt(); ok {
+		t = pointed
 	}
 
 	repoDir := t.RepoPath

@@ -34,6 +34,10 @@ func (m Model) bandLeft() string {
 		return Paint(Warn).Render(m.opts.Words.T("msg.confirm_requeue",
 			"stop {id} and put it back in to do? press y to confirm, anything else to leave it alone",
 			about("id", m.confirmID)))
+	case m.confirm == confirmSkip:
+		return Paint(Warn).Render(m.opts.Words.T("msg.confirm_skip",
+			"skip the phase {id} is waiting in front of? press y to confirm, anything else to leave it waiting",
+			about("id", m.confirmID)))
 	case m.confirm == confirmPostCliTask:
 		return Paint(Live).Render(m.opts.Words.T("msg.confirm_post_cli",
 			"create a task in Orbit from this session? press y to confirm, anything else to skip"))

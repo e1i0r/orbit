@@ -49,6 +49,10 @@
       "source": "resume",
       "value": "reanudar"
     },
+    "key.skip": {
+      "source": "skip this phase",
+      "value": "saltar esta fase"
+    },
     "key.cancel": {
       "source": "cancel",
       "value": "cancelar"
@@ -124,6 +128,14 @@
     "why.resume_not_running": {
       "source": "resuming needs a paused task; nothing is running here",
       "value": "reanudar necesita una tarea en pausa; aquí no hay nada en marcha"
+    },
+    "why.skip_still_running": {
+      "source": "skipping a phase needs a run stopped in front of one; this phase is already under way",
+      "value": "saltar una fase necesita una ejecución detenida delante de una; esta fase ya está en marcha"
+    },
+    "why.skip_nothing_waiting": {
+      "source": "skipping a phase needs a run stopped in front of one; nothing is running here",
+      "value": "saltar una fase necesita una ejecución detenida delante de una; aquí no hay nada en marcha"
     },
     "why.cancel_not_running": {
       "source": "cancelling needs a running task; nothing is running here",
@@ -300,6 +312,10 @@
     "msg.confirm_cancel": {
       "source": "cancel {id}? press y to confirm, anything else to leave it running",
       "value": "¿cancelar {id}? pulsa y para confirmar, cualquier otra tecla la deja en marcha"
+    },
+    "msg.confirm_skip": {
+      "source": "skip the phase {id} is waiting in front of? press y to confirm, anything else to leave it waiting",
+      "value": "¿saltar la fase delante de la que {id} está esperando? pulsa y para confirmar, cualquier otra tecla para dejarla esperando"
     },
     "msg.confirm_requeue": {
       "source": "stop {id} and put it back in to do? press y to confirm, anything else to leave it alone",
@@ -1532,6 +1548,10 @@
     "cmd.resume": {
       "source": "let a stopped run carry on",
       "value": "dejar que una ejecución detenida continúe"
+    },
+    "cmd.skip": {
+      "source": "let a stopped run carry on without the phase it is waiting in front of",
+      "value": "dejar que una ejecución detenida continúe sin la fase delante de la que espera"
     },
     "cmd.list": {
       "source": "list the tasks of a repository",
