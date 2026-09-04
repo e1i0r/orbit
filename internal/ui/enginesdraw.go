@@ -51,10 +51,18 @@ func (m Model) enginesRows(h, w int) []string {
 		return fill(out, h)
 	}
 
+	// The line under the title is the advice until something is typed, and
+	// then it is what was typed: the filter has to be on screen, and a
+	// fourth line of chrome would come out of the list.
+	said := p.T("engines.subtitle", "choose model, effort and thinking for this run")
+	if m.engines.typing || m.engines.filter != "" {
+		said = m.knobFilterLine(m.shownModels())
+	}
+
 	out := []string{
 		"",
 		"  " + Paint(Accent).Render(p.T("engines.title", "Engine & Model Knobs")),
-		"  " + Paint(Dim).Render(p.T("engines.subtitle", "choose model, effort and thinking for this run")),
+		"  " + Paint(Dim).Render(said),
 		"",
 	}
 
@@ -65,11 +73,21 @@ func (m Model) enginesRows(h, w int) []string {
 		out = append(out, lines[i])
 	}
 
-	waysOut := p.T("engines.ways_out", "{open} select · {up_down} move · {fold} fold · {back} back",
+	waysOut := p.T("engines.ways_out",
+		"{open} select · {up_down} move · {fold} fold · {filter} filter · {back} back",
 		about("open", m.keys.Open.Help().Key),
 		about("up_down", m.keys.Up.Help().Key+m.keys.Down.Help().Key),
 		about("fold", m.keys.Sideways.Help().Key),
+		about("filter", m.keys.Filter.Help().Key),
 		about("back", m.keys.Back.Help().Key))
+
+	if m.engines.typing {
+		waysOut = p.T("engines.ways_typing", "{open} keep it · {back} clear it · {up_down} move",
+			about("open", m.keys.Open.Help().Key),
+			about("back", m.keys.Back.Help().Key),
+			about("up_down", m.keys.Up.Help().Key+m.keys.Down.Help().Key))
+	}
+
 	out = append(out, "", fit("  "+Paint(Dim).Render(waysOut), w))
 
 	return fill(out, h)

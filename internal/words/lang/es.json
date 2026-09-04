@@ -2836,8 +2836,8 @@
       "value": "{back} volver"
     },
     "engines.ways_out": {
-      "source": "{open} select · {up_down} move · {fold} fold · {back} back",
-      "value": "{open} seleccionar · {up_down} mover · {fold} plegar · {back} volver"
+      "source": "{open} select · {up_down} move · {fold} fold · {filter} filter · {back} back",
+      "value": "{open} elegir · {up_down} mover · {fold} plegar · {filter} filtrar · {back} volver"
     },
     "engines.model_count": {
       "source": "{count} models",
@@ -3526,6 +3526,18 @@
     "menu.title_detail": {
       "source": "{id} — where to look, and what can be done",
       "value": "{id} — dónde mirar, y lo que se puede hacer"
+    },
+    "engines.ways_typing": {
+      "source": "{open} keep it · {back} clear it · {up_down} move",
+      "value": "{open} dejarlo · {back} borrarlo · {up_down} mover"
+    },
+    "engines.filter_line": {
+      "source": "filter: {typed} · {count} models",
+      "value": "filtro: {typed} · {count} modelos"
+    },
+    "engines.filter_none": {
+      "source": "no model matches {typed}",
+      "value": "ningún modelo coincide con {typed}"
     }
   }
 }
