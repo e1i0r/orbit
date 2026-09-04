@@ -35,7 +35,7 @@ func onDiff(t *testing.T, text string) (Model, []string) {
 	t.Helper()
 
 	m, _ := openIn(t, words.For("en"), "ACME-2662", nil, text)
-	next, _ := m.Update(tea.WindowSizeMsg{Width: 100, Height: 32})
+	next, _ := m.Update(tea.WindowSizeMsg{Width: 100, Height: 36})
 	m = asModel(t, next)
 	m = showing(t, m, tabDiff)
 

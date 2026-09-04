@@ -2948,8 +2948,34 @@
       "value": "coste"
     },
     "overview.execution_summary": {
-      "source": "flows",
-      "value": "flujos"
+      "source": "flow",
+      "value": "flujo"
+    },
+    "overview.flow_full_tree_hint": {
+      "source": "press [2] for full flow tree",
+      "value": "presiona [2] para ver el árbol del flujo completo"
+    },
+    "overview.flow_completed": {
+      "source": "flow completed successfully",
+      "value": "flujo completado con éxito"
+    },
+    "overview.flow_failed": {
+      "source": "flow stopped on failure",
+      "value": "flujo detenido por error"
+    },
+    "overview.flow_finished_phases": {
+      "source": {
+        "one": "{n} phase executed",
+        "other": "{n} phases executed"
+      },
+      "value": {
+        "one": "{n} fase ejecutada",
+        "other": "{n} fases ejecutadas"
+      }
+    },
+    "overview.flow_ready": {
+      "source": "ready to start",
+      "value": "listo para iniciar"
     },
     "overview.not_started": {
       "source": "task has not been started yet (press [n] to start)",
@@ -2958,10 +2984,6 @@
     "overview.running_model": {
       "source": "running model...",
       "value": "ejecutando modelo..."
-    },
-    "overview.no_phases": {
-      "source": "no flow outputs recorded",
-      "value": "sin registros de flujo todavía"
     },
     "overview.code_impact": {
       "source": "changes",
@@ -3342,16 +3364,12 @@
       "value": "git no respondió a tiempo"
     },
     "overview.phases": {
-      "source": "flows",
-      "value": "flujos"
+      "source": "flow",
+      "value": "flujo"
     },
     "overview.changed": {
       "source": "changed",
       "value": "cambios"
-    },
-    "overview.gate": {
-      "source": "gate {name}",
-      "value": "puerta {name}"
     },
     "overview.more": {
       "source": "… [e] for all of it",

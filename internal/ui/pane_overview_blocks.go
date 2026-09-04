@@ -3,7 +3,6 @@ package ui
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 
 	"charm.land/lipgloss/v2"
@@ -34,8 +33,8 @@ func (m Model) overviewVitals(t view.Task, w int) []string {
 		{label: p.T("overview.cost", "cost"), value: cost, role: OK},
 		{label: p.T("overview.duration", "duration"), value: elapsed(m.now, t.Since), role: Accent},
 		{
-			label: p.T("overview.phases", "flows"),
-			value: strconv.Itoa(len(m.finishedPhases())),
+			label: p.T("overview.phases", "flow"),
+			value: orDef(t.Flow, flow.Default),
 			role:  Accent,
 		},
 		{label: p.T("overview.changed", "changed"), value: changed, role: Live},
@@ -48,7 +47,8 @@ func (m Model) overviewVitals(t view.Task, w int) []string {
 	}
 
 	if t.RepoPath != "" {
-		out = append(out, paneGutter+Text(Tertiary).Render(tailFit(homeTilde(t.RepoPath), min(proseMeasure, w-2*len(paneGutter)))))
+		tail := tailFit(homeTilde(t.RepoPath), min(proseMeasure, w-2*len(paneGutter)))
+		out = append(out, paneGutter+Text(Tertiary).Render(tail))
 	}
 
 	return append(out, "")
@@ -93,7 +93,8 @@ func (m Model) dials(t view.Task) []field {
 func (m Model) overviewChanges(w int) []string {
 	p := m.opts.Words
 	sum := parseDiffSummary(m.diff)
-	head := m.sectionHead(foldChanges, p.T("overview.code_impact", "changes"), plusMinus(sum, false), w)
+	head := m.sectionHead(foldChanges, p.T("overview.code_impact", "changes"),
+		plusMinus(sum, false), w)
 
 	if m.folded(foldChanges) {
 		return []string{head, ""}
@@ -102,7 +103,8 @@ func (m Model) overviewChanges(w int) []string {
 	out := []string{head}
 
 	if len(sum.files) == 0 && sum.added == 0 && sum.deleted == 0 {
-		return append(out, paneGutter+Text(Tertiary).Render(p.T("overview.no_diff", "no working tree modifications recorded")), "")
+		msg := p.T("overview.no_diff", "no working tree modifications recorded")
+		return append(out, paneGutter+Text(Tertiary).Render(msg), "")
 	}
 
 	out = append(out, paneGutter+meta(
@@ -118,7 +120,8 @@ func (m Model) overviewChanges(w int) []string {
 				"… and {n} more file", "… and {n} more files")), "")
 		}
 
-		out = append(out, paneGutter+"  "+Paint(OK).Render(fit(f, min(proseMeasure, w-2*len(paneGutter)-2))))
+		trimmed := fit(f, min(proseMeasure, w-2*len(paneGutter)-2))
+		out = append(out, paneGutter+"  "+Paint(OK).Render(trimmed))
 	}
 
 	return append(out, "")

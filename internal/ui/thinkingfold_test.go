@@ -81,7 +81,7 @@ func TestPointingAtAThoughtOpensAndClosesIt(t *testing.T) {
 
 	shown := screenRows(clicked(t, m, at))
 	if rowOf(shown, "added a backoff") < 0 {
-		t.Errorf("opening a block did not put the rest of it on the screen:\n%s", strings.Join(shown, "\n"))
+		t.Errorf("opening block did not put rest on screen:\n%s", strings.Join(shown, "\n"))
 	}
 
 	head := rowOf(shown, "wrote retry.go") - 1
@@ -130,8 +130,10 @@ func TestAThoughtIsWrappedAndCutToThePaneItIsDrawnOn(t *testing.T) {
 				continue
 			}
 
-			// The row as the pane holds it, not as the window pads it out.
-			if w := lipgloss.Width(strings.TrimRight(l, " ")); w > m.frame.Body.W-2 {
+			// The row as the pane holds it, not as the window pads it out or
+			// tracks scroll on the right margin.
+			clean := strings.TrimRight(strings.TrimRight(l, scrollRail+scrollThumb), " ")
+			if w := lipgloss.Width(clean); w > m.frame.Body.W-2 {
 				t.Errorf("row %d runs to %d cells on a pane of %d: %q", i, w, m.frame.Body.W, l)
 			}
 		}

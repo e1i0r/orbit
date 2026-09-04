@@ -45,18 +45,20 @@ func checkTiling(t *testing.T, f Frame, w, h int) {
 		}
 
 		if reg.r.Y != y {
-			t.Errorf("%s starts at row %d, want %d — the regions must tile with no gap and no overlap", reg.name, reg.r.Y, y)
+			t.Errorf("%s starts at row %d, want %d — regions must tile with no gap or overlap",
+				reg.name, reg.r.Y, y)
 		}
 
 		if reg.r.W != w {
-			t.Errorf("%s is %d columns wide, want %d — every region spans the terminal", reg.name, reg.r.W, w)
+			t.Errorf("%s is %d columns wide, want %d — every region spans the terminal",
+				reg.name, reg.r.W, w)
 		}
 
 		y += reg.r.H
 	}
 
 	if y != h {
-		t.Errorf("the five regions cover %d rows of %d — the frame must tile the height exactly", y, h)
+		t.Errorf("the five regions cover %d rows of %d — frame must tile height exactly", y, h)
 	}
 }
 
@@ -66,11 +68,11 @@ func TestFrameTilesEveryTerminalItAccepts(t *testing.T) {
 		w, h     int
 		wantBody int
 	}{
-		{"a large terminal", 200, 60, 52},
-		{"a laptop", 120, 40, 32},
-		{"a half screen", 100, 30, 22},
-		{"the classic eighty by twenty-four", 80, 24, 16},
-		{"the narrowest terminal orbit draws", 60, 20, 12},
+		{"a large terminal", 200, 60, 50},
+		{"a laptop", 120, 40, 30},
+		{"a half screen", 100, 30, 20},
+		{"the classic eighty by twenty-four", 80, 24, 14},
+		{"the narrowest terminal orbit draws", 60, 20, 10},
 		{"a shell pane with eight rows", 100, 8, 1},
 	}
 	for _, c := range cases {
@@ -83,7 +85,8 @@ func TestFrameTilesEveryTerminalItAccepts(t *testing.T) {
 			checkTiling(t, f, c.w, c.h)
 
 			if f.Body.H != c.wantBody {
-				t.Errorf("body is %d rows, want %d — the body is what is left after the header, the band and the bar", f.Body.H, c.wantBody)
+				t.Errorf("body is %d rows, want %d — body is what is left after chrome",
+					f.Body.H, c.wantBody)
 			}
 
 			if f.Body.H < 1 {
@@ -108,7 +111,8 @@ func TestFrameRefusesATerminalUnderTheMinimum(t *testing.T) {
 
 	for _, want := range []string{"60", "59"} {
 		if !strings.Contains(err.Error(), want) {
-			t.Errorf("Fit(59, 20) said %q, want it to name %s — the reader has to know how far off they are", err.Error(), want)
+			t.Errorf("Fit(59, 20) said %q, want %s — reader must know how far off they are",
+				err.Error(), want)
 		}
 	}
 }
@@ -127,7 +131,7 @@ func TestFrameStaysTotalOnAShortTerminal(t *testing.T) {
 		checkTiling(t, f, MinWidth, h)
 
 		if h >= 6 && f.Body.H < 1 {
-			t.Errorf("at height %d the body is %d rows — the body is the last thing to give up a row", h, f.Body.H)
+			t.Errorf("at height %d body is %d rows — body is last to give up a row", h, f.Body.H)
 		}
 	}
 }
@@ -141,6 +145,8 @@ func TestFrameGivesUpTheBandBeforeTheBody(t *testing.T) {
 		h                               int
 		header, status, body, band, bar int
 	}{
+		{11, 2, 2, 1, 5, 1},
+		{10, 2, 2, 1, 4, 1},
 		{9, 2, 1, 1, 4, 1},
 		{8, 2, 1, 1, 3, 1},
 		{6, 2, 0, 1, 2, 1},

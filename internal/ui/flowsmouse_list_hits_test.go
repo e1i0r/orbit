@@ -82,7 +82,7 @@ func TestHitFlowsListCreateButton(t *testing.T) {
 // it — careful (3 phases), quick (1), task (2) — and checks each header
 // line resolves to an edit click, since every one of them is built in.
 func TestHitFlowsListEntries(t *testing.T) {
-	m, _ := testModel(t, 100, 30)
+	m, _ := testModel(t, 100, 36)
 	m = m.openFlows()
 	base := m.frame.Body.Y
 
@@ -112,7 +112,8 @@ func TestHitFlowsListEntries(t *testing.T) {
 // edit, and delete buttons when selected.
 func TestHitFlowsListDeleteVsEdit(t *testing.T) {
 	dir := t.TempDir()
-	writeFlowFile(t, dir, "zzz-mine", `{"name":"zzz-mine","phases":[{"name":"implement","engine":"claude"}]}`)
+	flowJSON := `{"name":"zzz-mine","phases":[{"name":"implement","engine":"claude"}]}`
+	writeFlowFile(t, dir, "zzz-mine", flowJSON)
 
 	m, _ := testModel(t, 100, 50)
 	m.opts.Flows = flowsTestDir(dir)

@@ -128,8 +128,14 @@ func (m Model) bandRows() []string {
 		return []string{m.rule(r.W), m.bandLine(r.W)}
 	case 3:
 		return m.bandBox(r.W)
-	default:
+	case 4:
 		out := append(m.bandBox(r.W), "")
+
+		return fill(out, r.H)
+	default:
+		out := append([]string{""}, m.bandBox(r.W)...)
+		out = append(out, "")
+
 		return fill(out, r.H)
 	}
 }

@@ -1,6 +1,7 @@
  ◉ orbit   ~/work           📦 4 repos    🧠 claude    🌐 EN
 ────────────────────────────────────────────────────────────
   $0.00 spent  ·  15 tasks  ·  0 events  ·  ⠋
+
   ID         TASK                  STATUS              TIME
   🛑 NEEDS YOU (3) ───────────────────────────────────────
 ▸ ACME-2662  Retry the webhook o…  failed: gates        31m
@@ -10,9 +11,8 @@
   ⠋ RUNNING (2) ──────────────────────────────────────────
 ⠋ ACME-2705  Reconciliation endp…  implement             8m
 ⠋ ACME-2706  Index on settlements  review 2/3            3m
+   … and 4 more
 
-  📋 TO DO (4) ─────────────────────────────────────  ⏎ open
-   … and 2 more
  ╭────────────────────────────────────────────────────────╮ 
  │ ACME-2705 · implement · 8m in · claude/opus · careful  │ 
  ╰────────────────────────────────────────────────────────╯ 

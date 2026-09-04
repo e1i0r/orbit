@@ -1,12 +1,9 @@
 package ui
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
-
 	"charm.land/lipgloss/v2"
 
+	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -29,12 +26,13 @@ func (m Model) finishedPhases() []view.Entry {
 	return done
 }
 
-// overviewPhases is the record of the run: one row per phase with its verdict
-// and its cost, and under each one what the model wrote, set as prose.
+// overviewPhases renders the single focused Flow card in Overview: what the
+// flow is doing right now (or how it concluded), while leaving the complete
+// multi-phase historical tree and details for Tab 2 [Flow].
 func (m Model) overviewPhases(t view.Task, w int) []string {
 	p := m.opts.Words
-	head := m.sectionHead(foldPhases, p.T("overview.execution_summary", "flows"),
-		strconv.Itoa(len(m.finishedPhases())), w)
+	flowName := orDef(t.Flow, flow.Default)
+	head := m.sectionHead(foldPhases, p.T("overview.execution_summary", "flow"), flowName, w)
 
 	if m.folded(foldPhases) {
 		return []string{head, ""}
@@ -42,122 +40,97 @@ func (m Model) overviewPhases(t view.Task, w int) []string {
 
 	out := []string{head}
 
-	if t.Band == view.Running {
-		out = append(out, m.livePhase(t, w)...)
+	switch t.Band {
+	case view.Running:
+		out = append(out, m.liveFlowCard(t, flowName, w)...)
+	case view.NeedsYou:
+		out = append(out, m.waitingFlowCard(t, flowName)...)
+	case view.Done:
+		out = append(out, m.doneFlowCard(t, flowName)...)
+	default:
+		out = append(out, m.todoFlowCard(flowName)...)
 	}
 
-	done := m.finishedPhases()
-	if len(done) == 0 {
-		if t.Band != view.Running {
-			said := p.T("overview.no_phases", "no flow outputs recorded")
-			if t.Band == view.ToDo {
-				said = p.T("overview.not_started", "task has not been started yet (press [n] to start)")
-			}
-
-			out = append(out, paneGutter+Text(Tertiary).Render(said))
-		}
-
-		return append(out, "")
-	}
-
-	for _, ph := range done {
-		out = append(out, paneGutter+m.phaseRow(ph))
-		out = append(out, m.phaseSaid(ph, w)...)
-		out = append(out, "")
-	}
-
-	return out
+	return append(out, "")
 }
 
-// phaseRow is the phase's name and its verdict on one line: the mark and the
-// name carry the outcome, everything that qualifies it goes dim behind.
-func (m Model) phaseRow(ph view.Entry) string {
+func (m Model) liveFlowCard(t view.Task, flowName string, w int) []string {
 	p := m.opts.Words
-	mark, role := Paint(OK).Render("✓"), OK
-
-	switch ph.What() {
-	case view.EntryFailed:
-		mark, role = Paint(Bad).Render("✗"), Bad
-	case view.EntryCancelled:
-		mark, role = Paint(Warn).Render("⏹"), Warn
-	}
-
-	row := mark + " " + Text(Primary).Bold(true).Render(ph.Phase)
-
-	var qualifiers []string
-	if ph.Cost > 0 {
-		qualifiers = append(qualifiers, Text(Secondary).Render(fmt.Sprintf("$%.2f", ph.Cost)))
-	}
-
-	if ph.Gate != "" {
-		qualifiers = append(qualifiers,
-			Text(Secondary).Render(p.T("overview.gate", "gate {name}", about("name", ph.Gate))))
-	}
-
-	if ph.Cause != "" {
-		qualifiers = append(qualifiers, Paint(role).Render(ph.Cause))
-	}
-
-	if len(qualifiers) == 0 {
-		return row
-	}
-
-	return row + "  " + meta(qualifiers...)
-}
-
-// phaseSaid sets what the model wrote under its phase. Closed, a phase shows
-// its opening paragraph, which is where an engine states what it did; open —
-// [e] — it shows all of it. Either way it is wrapped at the measure and ruled
-// down the left, so prose never arrives as a wall.
-func (m Model) phaseSaid(ph view.Entry, w int) []string {
-	text := strings.TrimSpace(ph.Said())
-	if text == "" {
-		return nil
-	}
-
-	if !m.expandedDetail {
-		if cut := strings.Index(text, "\n\n"); cut > 0 {
-			text = text[:cut]
-		}
-
-		if lines := prose(text, w, paneGutter+"  "); len(lines) > overviewFoldLines {
-			return append(lines[:overviewFoldLines],
-				paneGutter+"  "+Text(Tertiary).Render(
-					proseRule+m.opts.Words.T("overview.more", "… [e] for all of it")))
-		}
-	}
-
-	return prose(text, w, paneGutter+"  ")
-}
-
-// overviewFoldLines is how much of a phase's prose a closed row shows: enough
-// to tell one phase from another, short enough that ten phases still fit on a
-// screen.
-const overviewFoldLines = 3
-
-// livePhase is what the model is doing right now, drawn where the finished
-// phases will be so the eye does not have to move when it lands.
-func (m Model) livePhase(t view.Task, w int) []string {
-	p := m.opts.Words
-	now := orDef(t.CurrentAction, p.T("overview.running_model", "running model..."))
 	glyph := m.runGlyph(working(t))
+	step := orDef(t.Phase, "running")
+	now := orDef(t.CurrentAction, p.T("overview.running_model", "running model..."))
 
-	// Cut to the pane and not to a constant. What the band has room for is
-	// fifty characters, because five other fields share its row; this line
-	// shares its row with nothing, and a command that fits in the window is
-	// a command the reader gets to read.
-	now = fit(now, max(20, w-lipgloss.Width(paneGutter)-lipgloss.Width(glyph)))
+	now = fit(now, max(20, w-lipgloss.Width(paneGutter)-lipgloss.Width(glyph)-4))
 
-	out := []string{paneGutter + Paint(Live).Render(glyph) + Text(Primary).Bold(true).Render(now)}
+	out := []string{
+		paneGutter + Paint(Live).Render(glyph) + Text(Primary).Bold(true).Render(step) +
+			" · " + Paint(Accent).Render(flowName),
+		paneGutter + "  " + Paint(Live).Render(now),
+	}
 
 	if t.CurrentThought != "" {
 		out = append(out, prose(t.CurrentThought, w, paneGutter+"  ")...)
 	}
 
 	if t.ToolCallCount > 0 {
-		out = append(out, paneGutter+"  "+Text(Secondary).Render(p.P("overview.tools", t.ToolCallCount,
-			"{n} tool call", "{n} tool calls")))
+		out = append(out, paneGutter+"  "+Text(Secondary).Render(
+			p.P("overview.tools", t.ToolCallCount, "{n} tool call", "{n} tool calls")))
 	}
 
-	return append(out, "")
+	out = append(out, paneGutter+"  "+Text(Tertiary).Render(
+		p.T("overview.flow_full_tree_hint", "press [2] for full flow tree")))
+
+	return out
+}
+
+func (m Model) waitingFlowCard(t view.Task, flowName string) []string {
+	p := m.opts.Words
+	stateWord, role := m.stateWord(t)
+	step := orDef(t.Phase, stateWord)
+
+	return []string{
+		paneGutter + Paint(role).Render("⏸ ") + Text(Primary).Bold(true).Render(step) +
+			" · " + Paint(Accent).Render(flowName),
+		paneGutter + "  " + Paint(role).Render(stateWord),
+		paneGutter + "  " + Text(Tertiary).Render(
+			p.T("overview.flow_full_tree_hint", "press [2] for full flow tree")),
+	}
+}
+
+func (m Model) doneFlowCard(t view.Task, flowName string) []string {
+	p := m.opts.Words
+	mark := Paint(OK).Render("✓ ")
+	verdict := p.T("overview.flow_completed", "flow completed successfully")
+
+	if t.Reason.Key == view.ReasonFailed {
+		mark = Paint(Bad).Render("✗ ")
+		verdict = p.T("overview.flow_failed", "flow stopped on failure")
+	}
+
+	out := []string{
+		paneGutter + mark + Text(Primary).Bold(true).Render(verdict) +
+			" · " + Paint(Accent).Render(flowName),
+	}
+
+	if done := m.finishedPhases(); len(done) > 0 {
+		out = append(out, paneGutter+"  "+Text(Secondary).Render(
+			p.P("overview.flow_finished_phases", len(done),
+				"{n} phase executed", "{n} phases executed")))
+	}
+
+	out = append(out, paneGutter+"  "+Text(Tertiary).Render(
+		p.T("overview.flow_full_tree_hint", "press [2] for full flow tree")))
+
+	return out
+}
+
+func (m Model) todoFlowCard(flowName string) []string {
+	p := m.opts.Words
+
+	return []string{
+		paneGutter + Paint(Dim).Render("○ ") + Text(Primary).Bold(true).Render(
+			p.T("overview.flow_ready", "ready to start")) + " · " + Paint(Accent).Render(flowName),
+		paneGutter + "  " + Text(Tertiary).Render(
+			p.T("overview.not_started", "task has not been started yet (press [n] to start)")),
+	}
 }
