@@ -42,7 +42,8 @@ func TestDiscoverSkipsOrbitsOwnStateRoot(t *testing.T) {
 			names[i] = r.Name
 		}
 
-		t.Fatalf("found %v, want only [payments] — Orbit's own throwaway checkouts are not projects to start tasks against", names)
+		t.Fatalf("found %v, want only [payments] — Orbit's own throwaway "+
+			"checkouts are not projects to start tasks against", names)
 	}
 }
 
@@ -79,5 +80,41 @@ func TestOpenReportsADetachedHeadAsNoBranch(t *testing.T) {
 
 	if r.Base != "" {
 		t.Errorf("Base = %q, want empty: there is no branch here", r.Base)
+	}
+}
+
+func TestDiscoverSkipsIgnoredDirs(t *testing.T) {
+	root := t.TempDir()
+
+	real := filepath.Join(root, "payments")
+	if err := mkdir(real); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+
+	makeRepo(t, real, "main", "origin")
+
+	for _, ignored := range []string{
+		"node_modules", "vendor", "__pycache__", "build", "dist", "target", "coverage",
+	} {
+		fake := filepath.Join(root, ignored, "child")
+		if err := mkdir(fake); err != nil {
+			t.Fatalf("mkdir: %v", err)
+		}
+
+		makeRepo(t, fake, "main", "origin")
+	}
+
+	found, err := Discover(root)
+	if err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+
+	if len(found) != 1 || found[0].Name != "payments" {
+		names := make([]string, len(found))
+		for i, r := range found {
+			names[i] = r.Name
+		}
+
+		t.Fatalf("found %v, want only [payments]", names)
 	}
 }
