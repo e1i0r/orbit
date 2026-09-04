@@ -136,3 +136,25 @@ func TestPointingAtAHintExplainsIt(t *testing.T) {
 		t.Errorf("the sentence stayed behind the pointer: %q", band)
 	}
 }
+
+// TestTheCheatSheetSaysWhatTheVerbsDo, in the same words the band does.
+//
+// The line this replaces named p, u and s for pause, unblock and note: two
+// of the three had not been those keys for a long time, and nothing failed
+// when they changed. Reading the sheet out of the bindings is what makes
+// that impossible.
+func TestTheCheatSheetSaysWhatTheVerbsDo(t *testing.T) {
+	m, _ := parkedModel(t)
+
+	sheet := ansi.Strip(strings.Join(m.openHelp().helpRows(80, 140), "\n"))
+
+	for _, b := range m.keys.taskVerbs() {
+		if !strings.Contains(sheet, "["+b.Help().Key+"]") {
+			t.Errorf("the cheat sheet does not offer %q", b.Help().Key)
+		}
+
+		if said := m.meaning(firstKey(b)); !strings.Contains(sheet, said) {
+			t.Errorf("the cheat sheet does not say %q", said)
+		}
+	}
+}

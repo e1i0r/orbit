@@ -89,10 +89,34 @@ func (m Model) helpRows(h, w int) []string {
 		{p.T("help.board.queue_key", "[📋⚡💬🏁] (click)"), p.T("help.board.queue", "Show only the tasks in that queue")},
 	})
 
-	renderSection(p.T("help.live.title", "⚡ 2. LIVE CONTROL AND SETTINGS"), [][2]string{
+	// The verbs are built out of the bindings and the sentences ? answers
+	// with, rather than written down a second time here: a sheet that keeps
+	// its own copy of them stops being true the day one of them changes,
+	// which is what the line below this section was — it named p, u and s
+	// for pause, unblock and note long after s became skip.
+	//
+	// The sentences are whole. They are longer than a column, so they are
+	// wrapped here and the continuation rows are given no key of their own.
+	bindings := m.keys.taskVerbs()
+
+	verbs := make([][2]string, 0, len(bindings))
+	for _, b := range bindings {
+		for i, line := range splitIntoLines(m.meaning(firstKey(b)), max(w-36, 20)) {
+			glyph := ""
+			if i == 0 {
+				glyph = "[" + b.Help().Key + "]"
+			}
+
+			verbs = append(verbs, [2]string{glyph, line})
+		}
+	}
+
+	renderSection(p.T("help.verbs.title", "🎛️ 2. WHAT YOU CAN DO TO A TASK"), verbs)
+
+	renderSection(p.T("help.live.title", "⚡ 3. LIVE CONTROL AND SETTINGS"), [][2]string{
 		{p.T("help.live.autopilot_key", "[A] / ⚡ click"), p.T("help.live.autopilot", "Toggle autopilot: tasks in to do start on their own")},
 		{p.T("help.live.engine_key", "[M] / 🧠 click"), p.T("help.live.engine", "Engine dial: claude, codex, opencode, effort and thinking")},
-		{"[S]", p.T("help.live.settings", "Settings screen: language, theme, limits")},
+		{"[S]", p.T("help.live.supervisor", "The supervisor: what it has said about the board, and the line you answer it on")},
 		{p.T("help.live.repos_key", "[R] / 📦 click"), p.T("help.live.repos", "Pick which of the connected repositories the board shows")},
 		{p.T("help.live.quota_key", "[Q] / ⏳ click"), p.T("help.live.quota", "What is left of each engine's windows, and when each comes back")},
 		{p.T("help.live.lang_key", "🌐 ES / EN (click)"), p.T("help.live.lang", "Switch the language of the whole window, live")},
@@ -109,17 +133,17 @@ func (m Model) helpRows(h, w int) []string {
 	}
 
 	tabsTitle := p.P("help.tabs.title", len(tabs),
-		"🔍 3. TASK DETAIL ({n} tab)", "🔍 3. TASK DETAIL ({n} tabs)")
+		"🔍 4. TASK DETAIL ({n} tab)", "🔍 4. TASK DETAIL ({n} tabs)")
 
 	tabs = append(tabs,
 		[2]string{"[Tab / shift+tab]", p.T("help.tabs.cycle", "Next tab / previous tab")},
-		[2]string{"[p] / [u] / [s]", p.T("help.tabs.control", "Pause / unblock / add an operator note")},
+		[2]string{"[r] / [s] / [a]", p.T("help.tabs.control", "Let a stopped run go / skip the phase it waits at / write it a note")},
 	)
 	renderSection(tabsTitle, tabs)
 
-	renderSection(p.T("help.global.title", "⌨️ 4. GLOBAL COMMANDS"), [][2]string{
+	renderSection(p.T("help.global.title", "⌨️ 5. GLOBAL COMMANDS"), [][2]string{
 		{"[:]", p.T("help.global.palette", "Open the command palette (orbit new, flows, set...)")},
-		{"[?]", p.T("help.global.help", "Open or close this help window")},
+		{"[?]", p.T("help.global.help", "Ask what a key does, then press it — ? again is this whole sheet")},
 		{"[q]", p.T("help.global.quit", "Leave Orbit")},
 	})
 

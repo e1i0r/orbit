@@ -122,6 +122,20 @@ func NewKeys(p *words.Printer) Keys {
 	}
 }
 
+// taskVerbs is the keys that do something to one task, in the order
+// Affordances lists them, with the two that are not verbs of the run — the
+// menu that offers them all and the editor — at either end.
+//
+// It is a list of its own because the cheat sheet needs the verbs and
+// Affordances needs a task to answer about. The two orders are the same on
+// purpose: a reader who has read one is not learning the other from scratch.
+func (k Keys) taskVerbs() []key.Binding {
+	return []key.Binding{
+		k.Menu, k.Pause, k.Resume, k.Skip, k.Cancel, k.Requeue,
+		k.Take, k.Hand, k.Ask, k.MarkRead, k.Delete, k.Edit,
+	}
+}
+
 // binding is one gesture: the glyph the bar prints, the description the help
 // overlay prints, and the keystrokes that trigger it.
 //

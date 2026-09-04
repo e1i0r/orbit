@@ -2576,8 +2576,8 @@
       "value": "Ver únicamente las tareas de esa cola"
     },
     "help.live.title": {
-      "source": "⚡ 2. LIVE CONTROL AND SETTINGS",
-      "value": "⚡ 2. CONTROL Y CONFIGURACIÓN EN VIVO"
+      "source": "⚡ 3. LIVE CONTROL AND SETTINGS",
+      "value": "⚡ 3. CONTROL Y CONFIGURACIÓN EN VIVO"
     },
     "help.live.autopilot_key": {
       "source": "[A] / ⚡ click",
@@ -2594,10 +2594,6 @@
     "help.live.engine": {
       "source": "Engine dial: claude, codex, opencode, effort and thinking",
       "value": "Selector de motor: claude, codex, opencode, esfuerzo y thinking"
-    },
-    "help.live.settings": {
-      "source": "Settings screen: language, theme, limits",
-      "value": "Pantalla de ajustes: idioma, tema, límites"
     },
     "help.live.repos_key": {
       "source": "[R] / 📦 click",
@@ -2620,20 +2616,20 @@
       "value": "Pestaña siguiente / anterior"
     },
     "help.tabs.control": {
-      "source": "Pause / unblock / add an operator note",
-      "value": "Pausar / desbloquear / añadir una nota de operador"
+      "source": "Let a stopped run go / skip the phase it waits at / write it a note",
+      "value": "Soltar una ejecución parada / saltar la fase ante la que espera / escribirle una nota"
     },
     "help.global.title": {
-      "source": "⌨️ 4. GLOBAL COMMANDS",
-      "value": "⌨️ 4. COMANDOS GLOBALES"
+      "source": "⌨️ 5. GLOBAL COMMANDS",
+      "value": "⌨️ 5. COMANDOS GLOBALES"
     },
     "help.global.palette": {
       "source": "Open the command palette (orbit new, flows, set...)",
       "value": "Abrir la paleta de comandos (orbit new, flows, set...)"
     },
     "help.global.help": {
-      "source": "Open or close this help window",
-      "value": "Abrir o cerrar esta ventana de ayuda"
+      "source": "Ask what a key does, then press it — ? again is this whole sheet",
+      "value": "Pregunta qué hace una tecla y púlsala — ? otra vez es esta chuleta entera"
     },
     "help.global.quit": {
       "source": "Leave Orbit",
@@ -2641,12 +2637,12 @@
     },
     "help.tabs.title": {
       "source": {
-        "one": "🔍 3. TASK DETAIL ({n} tab)",
-        "other": "🔍 3. TASK DETAIL ({n} tabs)"
+        "one": "🔍 4. TASK DETAIL ({n} tab)",
+        "other": "🔍 4. TASK DETAIL ({n} tabs)"
       },
       "value": {
-        "one": "🔍 3. DETALLE DE TAREA ({n} pestaña)",
-        "other": "🔍 3. DETALLE DE TAREA ({n} pestañas)"
+        "one": "🔍 4. DETALLE DE TAREA ({n} pestaña)",
+        "other": "🔍 4. DETALLE DE TAREA ({n} pestañas)"
       }
     },
     "flow.runs_auto": {
@@ -3482,6 +3478,14 @@
     "tip.nothing": {
       "source": "nothing in this window answers {key}",
       "value": "nada en esta ventana responde a {key}"
+    },
+    "help.verbs.title": {
+      "source": "🎛️ 2. WHAT YOU CAN DO TO A TASK",
+      "value": "🎛️ 2. LO QUE PUEDES HACERLE A UNA TAREA"
+    },
+    "help.live.supervisor": {
+      "source": "The supervisor: what it has said about the board, and the line you answer it on",
+      "value": "El supervisor: lo que ha dicho sobre el tablero, y la línea donde le respondes"
     }
   }
 }
