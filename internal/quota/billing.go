@@ -86,6 +86,11 @@ type metered struct {
 // there is no single endpoint that could answer for it and no arrangement in
 // which its use is not metered by somebody.
 //
+// codex is the one engine read from a file rather than an endpoint. It
+// writes the limits the API answered with into its own rollouts after every
+// turn, so a machine with no proxy in front of it still has somewhere to
+// look — see codex.go.
+//
 // The names are the names a record writes, and internal/cli holds the two
 // tables together with a test — this package cannot import the engines, and
 // an engine named here but nowhere else would be a row nobody ever reads.
@@ -93,9 +98,19 @@ func FromEnv() *Meter {
 	return &Meter{engines: []metered{
 		{name: "agy", mode: Subscription},
 		{name: "claude", mode: keyed("ANTHROPIC_API_KEY"), from: New(os.Getenv("ANTHROPIC_BASE_URL"))},
-		{name: "codex", mode: keyed("OPENAI_API_KEY"), from: New(os.Getenv("OPENAI_BASE_URL"))},
+		{name: "codex", mode: keyed("OPENAI_API_KEY"), from: codexQuota()},
 		{name: "opencode", mode: PerToken},
 	}}
+}
+
+// codexQuota is where codex's windows are read from: the proxy when a base
+// URL names one, and otherwise what codex itself wrote down.
+func codexQuota() *Client {
+	if c := New(os.Getenv("OPENAI_BASE_URL")); c != nil {
+		return c
+	}
+
+	return over(newRollouts(codexSessions()))
 }
 
 // keyed is the mode of an engine that can be either, decided by whether a

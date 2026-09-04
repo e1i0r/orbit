@@ -76,6 +76,17 @@ func New(baseURL string) *Client {
 	return &Client{src: src}
 }
 
+// over puts the cache and the backoff in front of a source that is not a
+// proxy. A nil source yields nil, which is this package's way of saying
+// there is nowhere to look.
+func over(src Source) *Client {
+	if src == nil {
+		return nil
+	}
+
+	return &Client{src: src}
+}
+
 // Fetch asks the source once, synchronously, past the cache.
 func (c *Client) Fetch() ([]Window, error) {
 	if c == nil || c.src == nil {
