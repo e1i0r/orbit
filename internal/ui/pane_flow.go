@@ -133,6 +133,20 @@ func (m Model) flowRows() ([]string, map[int]int) {
 		out = append(out, m.flowNode(t, phase, i, len(f.Phases))...)
 	}
 
+	// The delivery verbs hang off the same trunk, under a heading of their
+	// own: they happened to this task, in this order, and nothing in the
+	// flow put them there. Their fold keys carry on where the phases' stop,
+	// so opening one is the same gesture as opening a phase.
+	steps := m.byHand()
+	if len(steps) > 0 {
+		out = append(out, "  "+Paint(Accent).Bold(true).Render(p.T("flow.by_hand", "Asked for by hand")))
+	}
+
+	for j, st := range steps {
+		heads[len(out)] = len(f.Phases) + j
+		out = append(out, m.handNode(st, len(f.Phases)+j, j == len(steps)-1)...)
+	}
+
 	return out, heads
 }
 
@@ -168,26 +182,8 @@ func (m Model) flowNode(t view.Task, phase flow.Phase, i, total int) []string {
 	}
 
 	out := []string{head}
-
-	if items := m.phaseSubItems(phase, ex); open {
-		last := lastStart(items)
-
-		for j, item := range items {
-			// A row that carries on the row above it hangs off nothing of
-			// its own: a branch in front of it says a second thing is under
-			// this phase, and there is only the one.
-			sub := "├──"
-
-			switch {
-			case item.cont:
-				sub = "   "
-			case j == last:
-				sub = "└──"
-			}
-
-			out = append(out, fmt.Sprintf("  %s %s %s",
-				Paint(Dim).Render(subBranch), Paint(Dim).Render(sub), item.text))
-		}
+	if open {
+		out = append(out, subRows(m.phaseSubItems(phase, ex), subBranch)...)
 	}
 
 	// The trunk carries on past the node whether it is open or shut, which
@@ -222,6 +218,34 @@ func (m Model) phaseStanding(ex phaseExec, inFlight bool) (string, string, Role)
 type subItem struct {
 	text string
 	cont bool
+}
+
+// subRows draws what hangs off one node of the tree, under the trunk the node
+// left behind it. Both kinds of node — a phase of the flow and a verb the
+// operator asked for — are opened onto the same way, and a second copy of
+// this loop is a second opinion about where a branch closes.
+func subRows(items []subItem, subBranch string) []string {
+	last := lastStart(items)
+	out := make([]string, 0, len(items))
+
+	for j, item := range items {
+		// A row that carries on the row above it hangs off nothing of its
+		// own: a branch in front of it says a second thing is under this
+		// node, and there is only the one.
+		sub := "├──"
+
+		switch {
+		case item.cont:
+			sub = "   "
+		case j == last:
+			sub = "└──"
+		}
+
+		out = append(out, fmt.Sprintf("  %s %s %s",
+			Paint(Dim).Render(subBranch), Paint(Dim).Render(sub), item.text))
+	}
+
+	return out
 }
 
 // lastStart is the index of the final row that starts something, which is the

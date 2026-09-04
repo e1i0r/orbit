@@ -97,6 +97,23 @@ type Reader interface {
 	SupervisorLog() ([]view.SupervisorLine, error)
 }
 
+// Delivery is one press of a delivery key on its way into a task's record:
+// what was asked for, what was handed the work, and — once it comes back —
+// what it did or why it broke.
+//
+// It is one struct rather than five arguments because the two halves are one
+// fact in two moments. A verb that is asked for and never answered is the
+// shape of a key that appears to do nothing, and that is exactly what the
+// reader has to be able to see: the ask on its own, until the answer joins
+// it.
+type Delivery struct {
+	Verb    string // the caption the key was offered under, and never the command underneath
+	By      string // what was handed the work: the supervisor, or the command that carries it
+	Text    string // what came back, on the answer
+	Failure error  // why it broke, where it did
+	Done    bool   // whether this is the answer rather than the ask
+}
+
 // Options is everything the window is handed. Every field is a value or a
 // port; none of them is a path, and none of them is a handle on the state
 // root.
@@ -151,6 +168,17 @@ type Options struct {
 	// erased: the line stays in the thread, marked, and stops being put in
 	// front of the model.
 	RetractSupervisor func(at time.Time) error
+
+	// RecordDeliver writes one of the delivery keys onto the task it was
+	// pressed about: the ask when the key goes down, and the answer when it
+	// lands. A nil port writes nothing, which is what every one of those
+	// keys did before there was one.
+	//
+	// It is a port and not a call to internal/task for the reason Control
+	// is, and it is the same trip Delivery's own doc argues for: the window
+	// says which task and what was asked of it, and the side that may append
+	// decides how that is written down.
+	RecordDeliver func(t view.Task, d Delivery) error
 
 	// AskSupervisor asks the active engine to process and reply to the supervisor thread.
 	AskSupervisor func(engineName, prompt string) (string, error)

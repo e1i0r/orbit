@@ -577,6 +577,26 @@
       "source": "Pipeline & Execution Tree",
       "value": "Árbol de ejecución del flujo"
     },
+    "flow.by_hand": {
+      "source": "Asked for by hand",
+      "value": "Pedido a mano"
+    },
+    "flow.hand_out": {
+      "source": "asked for, still out",
+      "value": "pedido, todavía sin contestar"
+    },
+    "flow.hand_done": {
+      "source": "came back",
+      "value": "contestó"
+    },
+    "flow.hand_broke": {
+      "source": "came back broken",
+      "value": "contestó con un fallo"
+    },
+    "flow.hand_by": {
+      "source": "handed to",
+      "value": "se lo encargó a"
+    },
     "flow.step_status_done": {
       "source": "completed",
       "value": "completado"
@@ -970,6 +990,18 @@
     "log.repo_joined": {
       "source": "repository joined",
       "value": "se sumó un repositorio"
+    },
+    "log.deliver_asked": {
+      "source": "asked for",
+      "value": "se pidió"
+    },
+    "log.deliver_answered": {
+      "source": "came back",
+      "value": "contestó"
+    },
+    "log.deliver_broke": {
+      "source": "came back broken",
+      "value": "contestó con un fallo"
     },
     "log.waiting": {
       "source": "waiting",
@@ -2974,6 +3006,18 @@
     "overview.action_diff": {
       "source": "diff",
       "value": "ver diff"
+    },
+    "overview.deliver_out": {
+      "source": "{verb} is out with {by}",
+      "value": "{verb} está en marcha con {by}"
+    },
+    "overview.deliver_out_bare": {
+      "source": "{verb} is out",
+      "value": "{verb} está en marcha"
+    },
+    "overview.deliver_ago": {
+      "source": "asked {ago} ago",
+      "value": "pedido hace {ago}"
     },
     "key.tab_menu": {
       "source": "tab menu",

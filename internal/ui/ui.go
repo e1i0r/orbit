@@ -146,6 +146,7 @@ type Model struct {
 	help           helpState
 	supervisor     supervisorState
 	supervisorBusy bool
+	delivering     deliverPending
 	// spinning is whether an animation frame is already on its way.
 	// The frame clock is a chain of one-shot ticks, so two starters
 	// mean two chains and a spinner that turns twice as fast for the

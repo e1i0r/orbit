@@ -57,6 +57,7 @@ type Entry struct {
 	Notes   string  // note count or info, from Data["notes"]
 	By      string  // what acted on the task from outside a run, from Data["by"]
 	Repo    string  // the repository that joined, from Data["repo"]
+	Verb    string  // the delivery verb a key asked for, from Data["verb"]
 
 	// Story is the five fields of task.story and nil for every other kind.
 	//
@@ -177,6 +178,7 @@ func entry(e record.Event, attempt int) Entry {
 		Notes:   e.Data["notes"],
 		By:      e.Data["by"],
 		Repo:    e.Data["repo"],
+		Verb:    e.Data["verb"],
 		Story:   storyOf(e),
 		Kept:    len(e.Text),
 		Full:    count(e.Data["output_bytes"]),

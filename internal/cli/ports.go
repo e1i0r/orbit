@@ -23,6 +23,7 @@ import (
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/task"
+	"github.com/e1i0r/orbit/internal/ui"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -77,6 +78,26 @@ func deleteTaskPort(s *store.Store) func(view.Task) error {
 
 	return func(t view.Task) error {
 		return task.Delete(s, subject(t))
+	}
+}
+
+// deliverPort writes one of the cockpit's delivery keys onto the task it was
+// pressed about: the ask as the key goes down, the answer when it lands.
+//
+// Two calls into internal/task and not one with a flag, because they are two
+// events at two moments — and most of the wait is between them. Which of the
+// two this is is the window's to say; how either is written down is not.
+func deliverPort(s *store.Store) func(view.Task, ui.Delivery) error {
+	if s == nil {
+		return nil
+	}
+
+	return func(t view.Task, d ui.Delivery) error {
+		if d.Done {
+			return task.Delivered(s, subject(t), d.Verb, d.Text, d.Failure)
+		}
+
+		return task.Delivering(s, subject(t), d.Verb, d.By)
 	}
 }
 
