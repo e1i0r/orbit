@@ -13,7 +13,7 @@ import "testing"
 
 func builderModel(t *testing.T) Model {
 	t.Helper()
-	m, _ := testModel(t, 100, 30)
+	m, _ := testModel(t, 100, 36)
 
 	return m.startCreateFlow()
 }
@@ -23,7 +23,8 @@ func TestHitFlowsBuilderOverview(t *testing.T) {
 	base := m.frame.Body.Y
 
 	// The lone phase's own overview row selects it.
-	if got := m.hitFlows(10, base+5); got.Kind != TargetFlowItem || got.Field != "select_phase" || got.Phase != 0 {
+	got := m.hitFlows(10, base+5)
+	if got.Kind != TargetFlowItem || got.Field != "select_phase" || got.Phase != 0 {
 		t.Errorf("hitFlows on the overview row = %+v, want select_phase 0", got)
 	}
 
@@ -41,7 +42,8 @@ func TestHitFlowsBuilderOverviewWithPrompt(t *testing.T) {
 	// A phase with a prompt draws an extra line, so its overview row is
 	// two lines tall rather than one.
 	for _, dy := range []int{5, 6} {
-		if got := m.hitFlows(10, base+dy); got.Kind != TargetFlowItem || got.Field != "select_phase" || got.Phase != 0 {
+		got := m.hitFlows(10, base+dy)
+		if got.Kind != TargetFlowItem || got.Field != "select_phase" || got.Phase != 0 {
 			t.Errorf("hitFlows at overview row %d = %+v, want select_phase 0", dy, got)
 		}
 	}
@@ -56,7 +58,8 @@ func TestHitFlowsBuilderSecondPhase(t *testing.T) {
 		t.Errorf("first phase overview row = %+v, want phase 0", got)
 	}
 
-	if got := m.hitFlows(10, base+6); got.Kind != TargetFlowItem || got.Field != "select_phase" || got.Phase != 1 {
+	got := m.hitFlows(10, base+6)
+	if got.Kind != TargetFlowItem || got.Field != "select_phase" || got.Phase != 1 {
 		t.Errorf("second phase overview row = %+v, want select_phase 1", got)
 	}
 }
@@ -99,7 +102,8 @@ func TestHitFlowsBuilderPromptRowButtons(t *testing.T) {
 	m := builderModel(t)
 	y := m.frame.Body.Y + 18
 
-	if got := m.hitFlows(10, y); got.Kind != TargetFlowItem || got.Field != "" || got.Phase != flowFieldPrompt {
+	got := m.hitFlows(10, y)
+	if got.Kind != TargetFlowItem || got.Field != "" || got.Phase != flowFieldPrompt {
 		t.Errorf("hitFlows left of the prompt row's pills = %+v, want the prompt field", got)
 	}
 
@@ -123,8 +127,9 @@ func TestHitFlowsBuilderPromptBox(t *testing.T) {
 
 	base := m.frame.Body.Y
 	for _, dy := range []int{19, 20, 21} {
-		if got := m.hitFlows(10, base+dy); got.Kind != TargetFlowItem || got.Field != "" || got.Phase != flowFieldPrompt {
-			t.Errorf("hitFlows in the prompt box at line %d = %+v, want the prompt field", dy, got)
+		got := m.hitFlows(10, base+dy)
+		if got.Kind != TargetFlowItem || got.Field != "" || got.Phase != flowFieldPrompt {
+			t.Errorf("hitFlows in prompt box at line %d = %+v, want prompt field", dy, got)
 		}
 	}
 }

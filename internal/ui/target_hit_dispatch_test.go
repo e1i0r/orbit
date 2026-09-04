@@ -222,7 +222,7 @@ func TestHitRowEveryOutcome(t *testing.T) {
 
 func TestHitHeaderEveryField(t *testing.T) {
 	m, _ := testModel(t, 150, 30)
-	y := m.frame.Header.Y
+	y := m.frame.HeaderLineY()
 
 	if got := m.hitHeader(5, y+50); got.Kind != TargetNone {
 		t.Errorf("hitHeader off its own row = %+v, want TargetNone", got)

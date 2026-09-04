@@ -28,13 +28,12 @@ func storyEntry() view.Entry {
 // the point is that each one is the reason for the one under it, and the
 // tree is the only shape that says so in eighty columns.
 func TestTheOverviewDrawsTheStoryAsAChain(t *testing.T) {
-	m, lines := onTab(t, tabOverview, []view.Entry{
+	m, _ := onTab(t, tabOverview, []view.Entry{
 		{Kind: "task.created", At: ago(time.Hour), Text: "Fix the save\n\nRepeated entries vanish."},
 		storyEntry(),
 	})
-	_ = m
 
-	text := ansi.Strip(strings.Join(lines, "\n"))
+	text := overviewText(m)
 	for _, want := range []string{
 		"POST /items",
 		"save the list Z in the database",
@@ -92,14 +91,14 @@ func toolCall(tool, args string, ago_ time.Duration) view.Entry {
 // line away is the whole rule of the spec: the model says what it did, and
 // the record says what it touched to do it.
 func TestTheStoryCarriesWhatWasChangedUnderIt(t *testing.T) {
-	_, lines := onTab(t, tabOverview, []view.Entry{
+	m, _ := onTab(t, tabOverview, []view.Entry{
 		{Kind: "task.created", At: ago(time.Hour), Text: "Fix the save"},
 		toolCall("Read", `{"file_path":"routes/items.go"}`, 40*time.Minute),
 		toolCall("Edit", `{"file_path":"store/items_repo.go"}`, 30*time.Minute),
 		storyEntry(),
 	})
 
-	text := ansi.Strip(strings.Join(lines, "\n"))
+	text := overviewText(m)
 	if !strings.Contains(text, "store/items_repo.go") {
 		t.Errorf("the story does not show the file that was changed:\n%s", text)
 	}

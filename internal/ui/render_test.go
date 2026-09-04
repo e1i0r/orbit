@@ -139,8 +139,9 @@ func TestEveryFrameFitsTheTerminalItWasGiven(t *testing.T) {
 func wantRows(t *testing.T, m Model, rows []string) {
 	t.Helper()
 
-	if !strings.Contains(rows[0], "orbit") {
-		t.Errorf("the header row is %q, want it to name the program", rows[0])
+	headerY := m.frame.HeaderLineY()
+	if !strings.Contains(rows[headerY], "orbit") {
+		t.Errorf("the header row is %q, want it to name the program", rows[headerY])
 	}
 
 	list := m.rows()
@@ -159,12 +160,12 @@ func wantRows(t *testing.T, m Model, rows []string) {
 		break
 	}
 
-	band := rows[len(rows)-2]
+	band := rows[m.frame.BandLineY()]
 	if strings.TrimSpace(band) == "" {
 		t.Error("the activity band is blank, and a status area that goes blank reads as broken")
 	}
 
-	bar := rows[len(rows)-1]
+	bar := rows[m.frame.BarLineY()]
 	if !strings.Contains(bar, "[") {
 		t.Errorf("the key bar is %q, want it to offer at least one key", bar)
 	}
@@ -194,7 +195,8 @@ func TestAnAppliedFilterKeepsSayingSoAfterTheTypingStops(t *testing.T) {
 	}
 
 	rows := renderAt(t, m, 100, 30)
-	band := rows[len(rows)-2]
+
+	band := rows[m.frame.BandLineY()]
 	// Six of the fifteen fixture tasks are in the app repository, two of
 	// them in a band the window opens on and four in one it does not: the
 	// sentence counts what the filter let through, not what is drawn.

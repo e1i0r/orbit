@@ -133,7 +133,10 @@ func rows(h int) (header, status, body, band, bar int) {
 		h = 0
 	}
 
-	for _, claim := range []*int{&header, &body, &header, &bar, &band, &band, &status} {
+	for _, claim := range []*int{
+		&header, &body, &header, &bar, &band, &band, &status, &status,
+		&header, &bar, &band,
+	} {
 		if h == 0 {
 			return
 		}
@@ -145,6 +148,29 @@ func rows(h int) (header, status, body, band, bar int) {
 	body += h
 
 	return
+}
+
+// HeaderLineY is the terminal row where the header text line sits.
+func (f Frame) HeaderLineY() int {
+	if f.Header.H >= 3 {
+		return f.Header.Y + 1
+	}
+
+	return f.Header.Y
+}
+
+// BandLineY is the terminal row where the activity band text line sits.
+func (f Frame) BandLineY() int {
+	if f.Band.H > 1 {
+		return f.Band.Y + 1
+	}
+
+	return f.Band.Y
+}
+
+// BarLineY is the terminal row where the shortcuts bar sits.
+func (f Frame) BarLineY() int {
+	return f.Bar.Y
 }
 
 // Region names one of the frame's stacked strips. It is what a caller asks

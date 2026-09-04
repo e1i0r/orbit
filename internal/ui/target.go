@@ -195,7 +195,7 @@ func (m Model) hitRow(x, y int) Target {
 // the hints it dropped for want of width, which are not clickable because
 // they are not there.
 func (m Model) hitBar(x, y int) Target {
-	if y != m.frame.Bar.Y {
+	if y != m.frame.BarLineY() {
 		// The bar is one row. A region taller than its content has blank
 		// rows under it, and nothing is on them.
 		return Target{}
@@ -221,7 +221,7 @@ func (m Model) hitBar(x, y int) Target {
 }
 
 func (m Model) hitHeader(x, y int) Target {
-	if y != m.frame.Header.Y {
+	if y != m.frame.HeaderLineY() {
 		return Target{}
 	}
 

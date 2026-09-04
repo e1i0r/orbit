@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	tea "charm.land/bubbletea/v2"
+
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -192,5 +194,55 @@ func TestTheTimelineNamesTheVerbThatWasAskedFor(t *testing.T) {
 		if !strings.Contains(drawn, want) {
 			t.Errorf("the timeline does not say %q:\n%s", want, drawn)
 		}
+	}
+}
+
+// The checkout handed to the supervisor is the task's worktree when one
+// exists, not the parent repository, so git and gh commands run on the
+// task's actual branch.
+func TestSupervisorDeliveryVerbUsesWorktreeWhenPresent(t *testing.T) {
+	m, _ := deliverWindow(t)
+	dir := t.TempDir()
+
+	var askedBody string
+
+	m.opts.AskSupervisor = func(_, prompt string) (string, error) {
+		askedBody = prompt
+		return "done", nil
+	}
+	m.opts.Reader = &fakeReader{worktree: dir}
+
+	_, cmd := m.fixChecks()
+	if cmd == nil {
+		t.Fatal("fix checks failed to ask supervisor")
+	}
+
+	if batch, ok := cmd().(tea.BatchMsg); ok {
+		for _, c := range batch {
+			if c != nil {
+				c()
+			}
+		}
+	}
+
+	if !strings.Contains(askedBody, dir) {
+		t.Errorf("prompt handed to supervisor does not name worktree %q:\n%s", dir, askedBody)
+	}
+}
+
+// When the task's worktree does not exist on disk, the supervisor is not
+// pointed to a phantom path or to the main repo; the window says there is no
+// checkout.
+func TestSupervisorDeliveryVerbRefusesWhenWorktreeMissing(t *testing.T) {
+	m, _ := deliverWindow(t)
+	m.opts.Reader = &fakeReader{worktree: "/nonexistent/path/to/worktree"}
+
+	next, cmd := m.fixChecks()
+	if cmd != nil {
+		t.Error("asked supervisor when worktree does not exist on disk")
+	}
+
+	if got := asModel(t, next).message; !strings.Contains(got, "checkout") {
+		t.Errorf("it said %q, want it saying there is nowhere to work", got)
 	}
 }

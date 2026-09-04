@@ -11,7 +11,7 @@ import (
 // foldLabels is what each section is headed with in English, which is the
 // language every window in these tests is drawn in.
 var foldLabels = map[string]string{
-	foldPhases:  "PHASES",
+	foldPhases:  "FLOW",
 	foldChanges: "CHANGES",
 	foldDeliver: "DELIVER",
 }
@@ -57,22 +57,22 @@ func TestAFoldedSectionKeepsOnlyItsHead(t *testing.T) {
 	m, _ := openWith(t, "ACME-2662", fixtureEntries())
 
 	before := overviewText(m)
-	if !strings.Contains(before, "wrote retry.go") {
-		t.Fatalf("the open pane does not carry what the phase wrote:\n%s", before)
+	if !strings.Contains(before, "press [2] for full flow tree") {
+		t.Fatalf("the open pane does not carry flow card hint:\n%s", before)
 	}
 
 	after := overviewText(m.fold(foldPhases))
 
-	if strings.Contains(after, "wrote retry.go") {
+	if strings.Contains(after, "press [2] for full flow tree") {
 		t.Errorf("a folded section still sets what it holds:\n%s", after)
 	}
 
-	if !strings.Contains(after, foldShut+"PHASES 3") {
-		t.Errorf("a folded section does not say how much it is holding:\n%s", after)
+	if !strings.Contains(after, foldShut+"FLOW") {
+		t.Errorf("a folded section does not show flow name:\n%s", after)
 	}
 
-	if strings.Contains(before, foldOpen+"PHASES 3") {
-		t.Errorf("an open section counts what is drawn under it anyway:\n%s", before)
+	if strings.Contains(before, foldShut+"FLOW") {
+		t.Errorf("an open section is folded:\n%s", before)
 	}
 
 	if len(strings.Split(after, "\n")) >= len(strings.Split(before, "\n")) {
@@ -182,13 +182,13 @@ func TestAHeadIsStillItselfAfterAScroll(t *testing.T) {
 
 	lines := screenRows(m)
 
-	y := rowOf(lines, foldOpen+"PHASES")
+	y := rowOf(lines, foldOpen+"FLOW")
 	if y < 0 {
-		t.Fatalf("the phases head was not drawn after a scroll:\n%s", strings.Join(lines, "\n"))
+		t.Fatalf("the flow head was not drawn after a scroll:\n%s", strings.Join(lines, "\n"))
 	}
 
 	if got := m.hit(4, y); got.Kind != TargetFold || got.Key != foldPhases {
-		t.Errorf("a click on the scrolled phases head = %+v, want the phases fold", got)
+		t.Errorf("a click on the scrolled flow head = %+v, want the flow fold", got)
 	}
 }
 

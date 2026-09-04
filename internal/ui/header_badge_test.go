@@ -29,7 +29,7 @@ func TestClickingAnywhereOnTheBadgeResetsTheFilters(t *testing.T) {
 	}
 
 	for x := range badge {
-		got := m.hitHeader(x, m.frame.Header.Y)
+		got := m.hitHeader(x, m.frame.HeaderLineY())
 		if got.Kind != TargetHeaderField || got.Field != "orbit" {
 			t.Errorf("column %d of the %d-cell badge hits %+v, not the badge; hitHeader and name() disagree about how wide it is", x, badge, got)
 		}

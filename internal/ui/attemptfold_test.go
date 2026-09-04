@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	tea "charm.land/bubbletea/v2"
+
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -223,7 +225,11 @@ func deepLog() []view.Entry {
 // task's: a reader who shut an attempt on one task and then opened another
 // is looking at a record they have never folded anything in.
 func TestOpeningATaskForgetsWhatWasFolded(t *testing.T) {
-	m, lines := timeline(t, wordyLog())
+	m, _ := openWith(t, "ACME-2662", wordyLog())
+	nextM, _ := m.Update(tea.WindowSizeMsg{Width: 100, Height: 36})
+	m = asModel(t, nextM)
+	m = showing(t, m, tabTimeline)
+	lines := screenRows(m)
 
 	// The entry first: once an attempt is closed its own rule is the first
 	// shut arrow on the screen, and the click would land on that instead.
