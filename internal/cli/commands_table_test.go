@@ -93,6 +93,43 @@ func TestNoteSubcommandExecution(t *testing.T) {
 	}
 }
 
+// TestTheFlagTerminatorIsNotPartOfWhatWasSaid. note and direct take their
+// message after the id, which is where flag parsing has already stopped: a
+// "--" there is not a terminator the flag package removes, it is the first
+// word of the message. The window put one in front of every note it wrote,
+// and every note it wrote started with it.
+func TestTheFlagTerminatorIsNotPartOfWhatWasSaid(t *testing.T) {
+	root, _ := workspace(t)
+	repoDir := filepath.Join(root, "payments")
+
+	if code, out, errOut := run(t, "new", "-repo", repoDir, "-id", "PAY-200", "Retry backoff"); code != 0 {
+		t.Fatalf("new failed (exit %d): out=%q err=%q", code, out, errOut)
+	}
+
+	if code, out, errOut := run(t, "note", "-repo", repoDir, "PAY-200", "--", "use jitter"); code != 0 {
+		t.Fatalf("note failed (exit %d): out=%q err=%q", code, out, errOut)
+	}
+
+	if code, out, errOut := run(t, "direct", "-repo", repoDir, "PAY-200", "--", "stop and ask"); code != 0 {
+		t.Fatalf("direct failed (exit %d): out=%q err=%q", code, out, errOut)
+	}
+
+	code, out, errOut := run(t, "show", "-repo", repoDir, "PAY-200")
+	if code != 0 {
+		t.Fatalf("show failed (exit %d): out=%q err=%q", code, out, errOut)
+	}
+
+	if strings.Contains(out, "--") {
+		t.Errorf("what the task was told keeps the flag terminator: %q", out)
+	}
+
+	for _, said := range []string{"use jitter", "stop and ask"} {
+		if !strings.Contains(out, said) {
+			t.Errorf("the task does not carry %q: %q", said, out)
+		}
+	}
+}
+
 func TestReposAndReconcileSubcommands(t *testing.T) {
 	root, _ := workspace(t)
 	repoDir := filepath.Join(root, "payments")

@@ -80,7 +80,7 @@ func (m Model) fixChecks() (tea.Model, tea.Cmd) {
 	instruction := "Run the full test suite and linter (go test ./..., golangci-lint). Investigate any failures, fix the source code and tests, and ensure 100% green checks."
 	m = m.say(p.T("deliver.fixing_checks", "running checks and fixing issues for {id}...", about("id", taskID)))
 
-	return m.runWatched(Command{Name: "note"}, repoArgs(path, taskID, "--", instruction))
+	return m.runWatched(Command{Name: "note"}, repoArgs(path, taskID, instruction))
 }
 
 // addMoreTests generates unit tests, fuzz testing, and property invariants up to >=90% coverage.
@@ -102,7 +102,7 @@ func (m Model) addMoreTests() (tea.Model, tea.Cmd) {
 	instruction := "Analyze package coverage and write comprehensive unit tests, native Go fuzz tests (testing.F), and boundary property tests to achieve >=90% test coverage."
 	m = m.say(p.T("deliver.adding_tests", "generating unit and fuzz tests for {id}...", about("id", taskID)))
 
-	return m.runWatched(Command{Name: "note"}, repoArgs(path, taskID, "--", instruction))
+	return m.runWatched(Command{Name: "note"}, repoArgs(path, taskID, instruction))
 }
 
 // resolveComments brings back what reviewers asked for on the pull request,

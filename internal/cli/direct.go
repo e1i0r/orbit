@@ -37,7 +37,7 @@ func directTask(ctx Context, args []string) error {
 		return needsTaskID(ctx, "direct")
 	}
 
-	text := strings.Join(fs.Args()[1:], " ")
+	text := message(fs)
 	if strings.TrimSpace(text) == "" {
 		return errors.New(ctx.printer().T("direct.needs_message", "direct needs a message for task {id}",
 			words.Arg{Name: "id", Value: id}))
