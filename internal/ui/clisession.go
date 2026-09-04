@@ -12,6 +12,12 @@ import (
 type cliEndedMsg struct {
 	Engine string
 	Repo   string
+	// TaskID is the task the session was opened on, and it is empty for a
+	// session opened on none. What the reader is asked when they come back
+	// turns on it: a session on a task is work on that task, and a window
+	// that offers to write a second task down for it is offering to split
+	// the same work in two.
+	TaskID string
 	Err    error
 }
 
@@ -43,7 +49,7 @@ func (m Model) launchInteractiveCLI() (Model, tea.Cmd) {
 	}
 
 	return m.say(m.opts.Words.T("msg.opening_cli", "opening interactive session with {engine}...", about("engine", eng))), tea.ExecProcess(cmd, func(err error) tea.Msg {
-		return cliEndedMsg{Engine: eng, Repo: repoDir, Err: err}
+		return cliEndedMsg{Engine: eng, Repo: repoDir, TaskID: t.ID, Err: err}
 	})
 }
 
@@ -74,6 +80,15 @@ func (m Model) handleCLIEnded(msg cliEndedMsg) (Model, tea.Cmd) {
 		if !errors.As(msg.Err, &exitErr) {
 			return m.say(m.opts.Words.T("msg.cli_exec_error", "error running {engine}: {err}", about("engine", msg.Engine), about("err", m.errSaid(msg.Err)))), nil
 		}
+	}
+
+	// A session opened on a task is already about one, so there is nothing
+	// to ask: the question exists for the reader who opened a bare terminal
+	// on a repository, worked something out in it, and has a task to write
+	// down at the end of it.
+	if msg.TaskID != "" {
+		return m.say(m.opts.Words.T("msg.cli_ended_on_task",
+			"the session on {id} ended", about("id", msg.TaskID))), nil
 	}
 
 	m.confirm = confirmPostCliTask

@@ -3486,6 +3486,10 @@
     "help.live.supervisor": {
       "source": "The supervisor: what it has said about the board, and the line you answer it on",
       "value": "El supervisor: lo que ha dicho sobre el tablero, y la línea donde le respondes"
+    },
+    "msg.cli_ended_on_task": {
+      "source": "the session on {id} ended",
+      "value": "la sesión sobre {id} terminó"
     }
   }
 }
