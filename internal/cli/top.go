@@ -164,6 +164,7 @@ func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 		DeleteTask:    deleteTaskPort(s),
 		Take:          takePort(r, engines),
 		Open:          openPort(s, r),
+		FileSession:   fileSessionPort(s, r, engines),
 		Flows:         s,
 		// canResume is asked per task rather than once for the build: the
 		// engine a task ran under is the one that decides whether its

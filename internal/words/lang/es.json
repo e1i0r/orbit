@@ -3490,6 +3490,18 @@
     "msg.cli_ended_on_task": {
       "source": "the session on {id} ended",
       "value": "la sesión sobre {id} terminó"
+    },
+    "msg.session_filed": {
+      "source": "{n} turns of that session are now in {id}",
+      "value": "{n} turnos de esa sesión ya están en {id}"
+    },
+    "msg.session_filed_one": {
+      "source": "what was said in that session is now in {id}",
+      "value": "lo que se dijo en esa sesión ya está en {id}"
+    },
+    "msg.session_not_filed": {
+      "source": "the session on {id} could not be read back: {err}",
+      "value": "no se pudo traer la sesión sobre {id}: {err}"
     }
   }
 }

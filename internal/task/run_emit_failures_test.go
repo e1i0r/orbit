@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
@@ -27,11 +28,14 @@ func (capableEngine) Name() string { return "capable" }
 func (capableEngine) Run(ctx context.Context, req engine.Request) (engine.Result, error) {
 	return engine.Result{Output: "ok"}, nil
 }
-func (capableEngine) Models() []engine.Choice  { return []engine.Choice{{ID: "model-a"}} }
-func (capableEngine) Efforts() []engine.Choice { return []engine.Choice{{ID: "effort-a"}} }
-func (capableEngine) CanThink() bool           { return true }
-func (capableEngine) Locate() (string, error)  { return "capable", nil }
-func (capableEngine) CanResume() bool          { return false }
+
+func (capableEngine) Models() []engine.Choice { return []engine.Choice{{ID: "model-a"}} }
+
+func (capableEngine) Efforts() []engine.Choice                            { return []engine.Choice{{ID: "effort-a"}} }
+func (capableEngine) CanThink() bool                                      { return true }
+func (capableEngine) Transcript(string, time.Time) ([]engine.Turn, error) { return nil, nil }
+func (capableEngine) Locate() (string, error)                             { return "capable", nil }
+func (capableEngine) CanResume() bool                                     { return false }
 
 func TestRunModelAndEffortMatchesRunTheEngine(t *testing.T) {
 	s, r := fixture(t)
@@ -128,11 +132,13 @@ func (oversizedSessionEngine) Name() string { return "oversized-session" }
 func (oversizedSessionEngine) Run(ctx context.Context, req engine.Request) (engine.Result, error) {
 	return engine.Result{Output: "ok", SessionID: strings.Repeat("S", 5<<20)}, nil
 }
-func (oversizedSessionEngine) Models() []engine.Choice  { return nil }
-func (oversizedSessionEngine) Efforts() []engine.Choice { return nil }
-func (oversizedSessionEngine) CanThink() bool           { return false }
-func (oversizedSessionEngine) Locate() (string, error)  { return "oversized", nil }
-func (oversizedSessionEngine) CanResume() bool          { return false }
+func (oversizedSessionEngine) Models() []engine.Choice                             { return nil }
+func (oversizedSessionEngine) Efforts() []engine.Choice                            { return nil }
+func (oversizedSessionEngine) CanThink() bool                                      { return false }
+func (oversizedSessionEngine) Transcript(string, time.Time) ([]engine.Turn, error) { return nil, nil }
+
+func (oversizedSessionEngine) Locate() (string, error) { return "oversized", nil }
+func (oversizedSessionEngine) CanResume() bool         { return false }
 
 func TestRunPhaseFinishedEmitFailure(t *testing.T) {
 	s, r := fixture(t)
@@ -248,12 +254,13 @@ func TestRunHoldFailureAfterTaskStarted(t *testing.T) {
 // cannot be written, in a log that is otherwise perfectly writable.
 type unrecordableEngine struct{}
 
-func (unrecordableEngine) Name() string             { return "unrecordable" }
-func (unrecordableEngine) CanResume() bool          { return false }
-func (unrecordableEngine) CanThink() bool           { return false }
-func (unrecordableEngine) Models() []engine.Choice  { return nil }
-func (unrecordableEngine) Efforts() []engine.Choice { return nil }
-func (unrecordableEngine) Locate() (string, error)  { return "unrecordable", nil }
+func (unrecordableEngine) Name() string                                        { return "unrecordable" }
+func (unrecordableEngine) CanResume() bool                                     { return false }
+func (unrecordableEngine) CanThink() bool                                      { return false }
+func (unrecordableEngine) Transcript(string, time.Time) ([]engine.Turn, error) { return nil, nil }
+func (unrecordableEngine) Models() []engine.Choice                             { return nil }
+func (unrecordableEngine) Efforts() []engine.Choice                            { return nil }
+func (unrecordableEngine) Locate() (string, error)                             { return "unrecordable", nil }
 
 func (unrecordableEngine) Run(_ context.Context, _ engine.Request) (engine.Result, error) {
 	return engine.Result{Output: strings.Repeat("\x00", maxOutput)}, nil

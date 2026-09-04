@@ -78,7 +78,7 @@ func (m Model) notesRows() ([]string, map[int]int) {
 				sender:  fmt.Sprintf("↔ %s", strings.ToUpper(who)),
 				role:    Live,
 				status:  p.T("notes.unread_by_run", "the run does not read it"),
-				content: []string{"→ " + e.Text},
+				content: turnLines(e.Text, m.frame.Body.W),
 			})
 
 		case view.EntryWaiting:
@@ -189,4 +189,39 @@ func (m Model) noteItemRows(item noteItem, i int) ([]string, bool) {
 	}
 
 	return append(out, body...), true
+}
+
+// turnLines is one thing said, wrapped to the pane: the arrow on the first
+// line and the rest aligned under it.
+//
+// It was a single line until sessions were read back into the record. A
+// tool call and a handover are a sentence long, so nothing was lost by
+// drawing them whole; a turn somebody typed is a paragraph, and everything
+// past the pane's width was.
+func turnLines(text string, w int) []string {
+	var out []string
+
+	// Paragraph by paragraph, because a blank line between two thoughts is
+	// something the writer put there. Wrapping folds the words inside one.
+	for _, para := range strings.Split(text, "\n") {
+		if strings.TrimSpace(para) == "" {
+			out = append(out, "")
+			continue
+		}
+
+		// The pane indents an item's content by six, and the arrow takes
+		// two of what is left.
+		out = append(out, splitIntoLines(para, max(w-8, 20))...)
+	}
+
+	for i, line := range out {
+		if i == 0 {
+			out[i] = "→ " + line
+			continue
+		}
+
+		out[i] = "  " + line
+	}
+
+	return out
 }

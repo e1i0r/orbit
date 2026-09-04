@@ -1,6 +1,9 @@
 package engine
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 // Fake is the engine every test uses.
 //
@@ -8,7 +11,10 @@ import "context"
 // program this replaces had a test that fired a real paid call, which made
 // its own suite unsafe to run.
 type Fake struct {
-	Output    string
+	Output string
+	// Turns is the conversation a session on this engine left behind, for
+	// the tests about reading one back.
+	Turns     []Turn
 	SessionID string
 	Resumable bool
 	Err       error
@@ -27,6 +33,11 @@ func NewFake(output string) *Fake {
 
 // Name identifies the engine in the record.
 func (f *Fake) Name() string { return "fake" }
+
+// Transcript is whatever the test put there, with no file to read: a fake
+// that went looking for one would go looking under the home directory of
+// whoever is running the suite.
+func (f *Fake) Transcript(string, time.Time) ([]Turn, error) { return f.Turns, nil }
 
 // CanResume reports whether the fake is configured to support resumption.
 func (f *Fake) CanResume() bool { return f.Resumable }

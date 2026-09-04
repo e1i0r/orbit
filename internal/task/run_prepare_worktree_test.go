@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 	"unicode/utf8"
 
 	"github.com/e1i0r/orbit/internal/engine"
@@ -221,11 +222,12 @@ func (m *streamMockEngine) Run(ctx context.Context, req engine.Request) (engine.
 
 	return engine.Result{Output: "default"}, nil
 }
-func (m *streamMockEngine) Models() []engine.Choice  { return nil }
-func (m *streamMockEngine) Efforts() []engine.Choice { return nil }
-func (m *streamMockEngine) CanThink() bool           { return true }
-func (m *streamMockEngine) Locate() (string, error)  { return "mock", nil }
-func (m *streamMockEngine) CanResume() bool          { return true }
+func (m *streamMockEngine) Models() []engine.Choice                             { return nil }
+func (m *streamMockEngine) Efforts() []engine.Choice                            { return nil }
+func (m *streamMockEngine) CanThink() bool                                      { return true }
+func (m *streamMockEngine) Transcript(string, time.Time) ([]engine.Turn, error) { return nil, nil }
+func (m *streamMockEngine) Locate() (string, error)                             { return "mock", nil }
+func (m *streamMockEngine) CanResume() bool                                     { return true }
 
 func repoTaskRepo(t *testing.T) repo.Repo {
 	t.Helper()
