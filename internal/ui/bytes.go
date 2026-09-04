@@ -27,8 +27,10 @@ func FormatBytes(b int64) string {
 		if b < 0 {
 			b = 0
 		}
+
 		return fmt.Sprintf("%d B", b)
 	}
+
 	size, unit := float64(b)/1024, byteUnits[0]
 	for _, next := range byteUnits[1:] {
 		// The rounded size decides the unit, not the raw one: a count a
@@ -37,7 +39,9 @@ func FormatBytes(b int64) string {
 		if math.Round(size*10)/10 < 1024 {
 			break
 		}
+
 		size, unit = size/1024, next
 	}
+
 	return fmt.Sprintf("%.1f %s", size, unit)
 }
