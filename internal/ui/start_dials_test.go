@@ -69,10 +69,13 @@ func TestStartKeyEveryBinding(t *testing.T) {
 	m = asModel(t, next)
 
 	next, _ = m.startKey(keystroke("?"))
+	m = asModel(t, next)
+
+	next, _ = m.tipKey(keystroke("?"))
 
 	m = asModel(t, next)
 	if m.screen != screenHelp {
-		t.Errorf("Help ('?') left screen %v, want screenHelp", m.screen)
+		t.Errorf("Help ('? ?') left screen %v, want screenHelp", m.screen)
 	}
 
 	m.screen = screenStart

@@ -62,7 +62,13 @@ func TestEnginesScreenFullLifecycle(t *testing.T) {
 	_ = m.hit(10, 4)
 	_ = m.hit(10, 8)
 
-	// 7. Escape to close
+	// 7. Escape to close. The walk above may have landed ⏎ on an engine
+	// that needs setting up, which puts its steps on screen; the first Esc
+	// takes those down and the second closes the knobs.
+	if m.engines.showingSetup {
+		sendKey(0, tea.KeyEsc, "esc")
+	}
+
 	sendKey(0, tea.KeyEsc, "esc")
 
 	if m.screen != screenList {

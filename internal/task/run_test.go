@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
@@ -224,11 +225,12 @@ type resultEngine struct {
 
 func (e resultEngine) Name() string { return "fake" }
 
-func (e resultEngine) CanResume() bool          { return false }
-func (e resultEngine) Models() []engine.Choice  { return nil }
-func (e resultEngine) Efforts() []engine.Choice { return nil }
-func (e resultEngine) CanThink() bool           { return false }
-func (e resultEngine) Locate() (string, error)  { return "result", nil }
+func (e resultEngine) CanResume() bool                                     { return false }
+func (e resultEngine) Models() []engine.Choice                             { return nil }
+func (e resultEngine) Efforts() []engine.Choice                            { return nil }
+func (e resultEngine) CanThink() bool                                      { return false }
+func (e resultEngine) Transcript(string, time.Time) ([]engine.Turn, error) { return nil, nil }
+func (e resultEngine) Locate() (string, error)                             { return "result", nil }
 
 func (e resultEngine) Run(context.Context, engine.Request) (engine.Result, error) {
 	return e.result, nil

@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	"github.com/e1i0r/orbit/internal/record"
 )
@@ -112,27 +111,43 @@ func firstLine(s string) string {
 	return strings.TrimSpace(s)
 }
 
-// actionChars is how much of an action fits on a row that also carries an
-// id, a phase, an elapsed time and an engine.
-const actionChars = 50
-
 // actionKeys are the arguments a tool call is about, in the order they are
-// looked for. What a reader wants off a row is the command that is running
-// or the file that is being written, not the JSON around it.
-var actionKeys = []string{"command", "file_path", "path"}
+// looked for. What a reader wants off a row is the command that is running,
+// the file that is being read or the pattern that is being searched for, not
+// the JSON around it.
+var actionKeys = []string{"command", "file_path", "path", "pattern"}
 
-// formatAction turns one tool call into the line beside a running task.
-func formatAction(tool, args string) string {
+// actionPathKeys are the ones among them whose value is a path, and so the
+// ones worth shortening against the worktree the run was given.
+var actionPathKeys = map[string]bool{"file_path": true, "path": true}
+
+// ToolLine is one tool call written for a reader: the name of the tool, and
+// then the one argument it is about.
+//
+// It is not cut here. This is the model three readers share — the band, the
+// overview and the MCP server — and a measure kept in the model is the
+// measure of whichever of them was thought of first. Fifty characters was
+// the band's, where the row also carries an id, a phase, an elapsed time, an
+// engine and a flow; the overview, which has the width of the window, drew
+// the same fifty and cut a command that had room to be read. Whoever draws
+// the line is the one that knows what it has to fit in.
+//
+// It is exported because the timeline had a reader of its own that searched
+// the arguments for `"command"` and then for `:"` — the search this package
+// documents as the one that does not work — and so showed raw JSON for every
+// call about a file. One formatter, and every reader reads the same.
+func ToolLine(tool, args string) string {
 	tool = strings.TrimSpace(tool)
 	if tool == "" {
 		return ""
 	}
 
-	if head := firstLine(subject(strings.TrimSpace(args))); head != "" {
-		return tool + ": " + clip(head, actionChars)
+	head := oneLine(subject(strings.TrimSpace(args)))
+	if head == "" {
+		return tool
 	}
 
-	return tool
+	return tool + ": " + head
 }
 
 // subject is the one argument of a tool call worth putting on a row, or the
@@ -159,6 +174,10 @@ func subject(args string) string {
 
 	for _, key := range actionKeys {
 		if value, ok := fields[key].(string); ok && strings.TrimSpace(value) != "" {
+			if actionPathKeys[key] {
+				return underWorktree(value)
+			}
+
 			return value
 		}
 	}
@@ -166,16 +185,40 @@ func subject(args string) string {
 	return args
 }
 
-// clip shortens a line to n characters, counting characters and not bytes.
+// underWorktree is a path with the worktree it is inside taken off the front
+// of it.
 //
-// Slicing bytes is what this did — head[:47] — and a path or a prompt with
-// an accent in it can have a character on that boundary. Half of one is not
-// a character at all, and what the terminal draws for the half that arrives
-// is up to the terminal.
-func clip(s string, n int) string {
-	if utf8.RuneCountInString(s) <= n {
-		return s
+// A run works in ~/.orbit/worktrees/<repo>/<task>, so every path it reports
+// begins with those five segments. They are the same on every row of the
+// run, they are most of what fits on a row, and cutting the row to the
+// measure cuts away the file — which is the only part that differs.
+//
+// The two segments after `worktrees` are the repository and the task, and a
+// path that is only those is the worktree root: there is nothing under it to
+// name, so it names itself.
+func underWorktree(path string) string {
+	parts := strings.Split(path, "/")
+	for i, seg := range parts {
+		if seg == "worktrees" && len(parts) > i+3 {
+			return strings.Join(parts[i+3:], "/")
+		}
 	}
 
-	return string([]rune(s)[:n-1]) + "…"
+	return path
+}
+
+// oneLine folds a value written over several lines onto the one line a row
+// has for it.
+//
+// Stopping at the first break is what this did, and a shell command written
+// with a trailing backslash begins `grep -rn \` — which is where the break
+// is. Every such row read the same and said nothing about any of them. The
+// backslash goes with the break it was continuing.
+func oneLine(s string) string {
+	lines := strings.FieldsFunc(s, func(r rune) bool { return r == '\n' || r == '\r' })
+	for i, line := range lines {
+		lines[i] = strings.TrimSuffix(strings.TrimSpace(line), "\\")
+	}
+
+	return strings.TrimSpace(strings.Join(strings.Fields(strings.Join(lines, " ")), " "))
 }

@@ -240,6 +240,7 @@ func TestTheEnginesScreenShowsWhatThePortSaysAndNothingElse(t *testing.T) {
 		}}
 	}
 	m.knobs.Engine = "zeta"
+	m = m.foldEngine("zeta", true)
 
 	var engines, models []string
 

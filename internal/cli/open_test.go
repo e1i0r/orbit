@@ -70,6 +70,35 @@ func TestOpenCommandGivesClaudeOrbitsOwnServer(t *testing.T) {
 	}
 }
 
+// TestTheSentenceIsNotReadAsAnotherConfiguration is the argument that has to
+// be there and reads like a typo.
+//
+// --mcp-config takes every value that follows it, so a sentence appended
+// after the configuration was taken as a second configuration file. The
+// engine refused to start, and the cockpit — which suspends itself for the
+// session — showed a screen that flashed and came back.
+func TestTheSentenceIsNotReadAsAnotherConfiguration(t *testing.T) {
+	cmd, err := openCommand("claude", t.TempDir(), "look at PAY-1")
+	if err != nil {
+		t.Fatalf("openCommand: %v", err)
+	}
+
+	args := cmd.Args[1:]
+
+	at := slices.Index(args, "--")
+	if at < 0 {
+		t.Fatalf("args = %v, want the sentence separated from the flag that would swallow it", args)
+	}
+
+	if at != len(args)-2 || args[len(args)-1] != "look at PAY-1" {
+		t.Errorf("args = %v, want the separator immediately before what the session is about", args)
+	}
+
+	if config := slices.Index(args, "--mcp-config"); config > at {
+		t.Errorf("args = %v, want the configuration before the separator", args)
+	}
+}
+
 // An engine with no such flag gets no such flag. The gesture is "hand me the
 // terminal", and an argument the program does not know would turn that into
 // a session that never starts.
@@ -277,5 +306,41 @@ func TestOpenPortStillOpensWhenNothingCanBeWritten(t *testing.T) {
 
 	if _, err := openPort(nil, nil)(view.Task{ID: "ACME-9"}, "claude", root); err != nil {
 		t.Errorf("a session was refused for want of a state root: %v", err)
+	}
+}
+
+// TestOpenCommandGivesOpenCodeTheSentenceOnItsOwnFlag.
+//
+// A bare argument is the directory to start in for opencode, so the task
+// arrived as a path: "ENAMETOOLONG: name too long, lstat
+// '<worktree>/I am looking at orbit task FRA-62...'", over and over, and no
+// session.
+func TestOpenCommandGivesOpenCodeTheSentenceOnItsOwnFlag(t *testing.T) {
+	cmd, err := openCommand("opencode", "", "look at PAY-1")
+	if err != nil {
+		t.Fatalf("openCommand: %v", err)
+	}
+
+	want := []string{"--prompt", "look at PAY-1"}
+	if got := cmd.Args[1:]; !slices.Equal(got, want) {
+		t.Errorf("args = %v, want %v", got, want)
+	}
+}
+
+// TestOpenCommandOpensAgyInteractively.
+//
+// agy spells --prompt as an alias for --print, which answers once with no
+// terminal at all: the window would suspend itself for a session that had
+// already ended. --prompt-interactive is the one that hands the reader a
+// session with the first line typed into it.
+func TestOpenCommandOpensAgyInteractively(t *testing.T) {
+	cmd, err := openCommand("agy", "", "look at PAY-1")
+	if err != nil {
+		t.Fatalf("openCommand: %v", err)
+	}
+
+	want := []string{"--prompt-interactive", "look at PAY-1"}
+	if got := cmd.Args[1:]; !slices.Equal(got, want) {
+		t.Errorf("args = %v, want %v", got, want)
 	}
 }

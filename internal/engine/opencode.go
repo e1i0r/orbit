@@ -35,28 +35,9 @@ func (OpenCode) CanResume() bool { return true }
 // what a reader picks from and what opencode is told are the same string
 // with nothing in between deciding.
 //
-// It is a written-down copy of a catalogue that moves, which is a cost taken
-// deliberately: reading it at run time means shelling out to opencode before
-// a dial can be drawn, on a machine where opencode may not be installed at
-// all. Refresh it with `opencode models`.
-func (OpenCode) Models() []Choice {
-	return []Choice{
-		{ID: "", Label: "default"},
-		// Paid.
-		{ID: "opencode/claude-opus-5", Label: "claude-opus-5"},
-		{ID: "opencode/claude-sonnet-5", Label: "claude-sonnet-5"},
-		{ID: "opencode/gpt-5.3-codex", Label: "gpt-5.3-codex"},
-		{ID: "opencode/gemini-3.1-pro", Label: "gemini-3.1-pro"},
-		{ID: "opencode/grok-4.6", Label: "grok-4.6"},
-		// Free.
-		{ID: "opencode/nemotron-3-ultra-free", Label: "nemotron-3-ultra-free"},
-		{ID: "opencode/nemotron-3.5-lightning-free", Label: "nemotron-3.5-lightning-free"},
-		{ID: "opencode/mimo-v2.5-free", Label: "mimo-v2.5-free"},
-		{ID: "opencode/ling-3.0-flash-fin-free", Label: "ling-3.0-flash-fin-free"},
-		{ID: "opencode/hy3-free", Label: "hy3-free"},
-		{ID: "opencode/muse-spark-1.2-contributor-free", Label: "muse-spark-1.2-contributor-free"},
-	}
-}
+// The catalogue itself is in opencodemodels.go, where its length is
+// somebody else's business rather than this file's.
+func (OpenCode) Models() []Choice { return opencodeModels }
 
 // Efforts returns the effort choices opencode supports.
 //

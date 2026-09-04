@@ -26,6 +26,9 @@ const (
 	whyResumeStillRunning = "why.resume_still_running"
 	whyResumeNotRunning   = "why.resume_not_running"
 
+	whySkipStillRunning   = "why.skip_still_running"
+	whySkipNothingWaiting = "why.skip_nothing_waiting"
+
 	whyCancelNotRunning = "why.cancel_not_running"
 
 	whyRequeueAlreadyToDo = "why.requeue_already_todo"
@@ -78,6 +81,10 @@ func (a Affordance) Why(p *words.Printer) string {
 		return p.T("why.resume_still_running", "resuming needs a paused task; this one is running")
 	case whyResumeNotRunning:
 		return p.T("why.resume_not_running", "resuming needs a paused task; nothing is running here")
+	case whySkipStillRunning:
+		return p.T("why.skip_still_running", "skipping a phase needs a run stopped in front of one; this phase is already under way")
+	case whySkipNothingWaiting:
+		return p.T("why.skip_nothing_waiting", "skipping a phase needs a run stopped in front of one; nothing is running here")
 	case whyCancelNotRunning:
 		return p.T("why.cancel_not_running", "cancelling needs a running task; nothing is running here")
 	case whyRequeueAlreadyToDo:

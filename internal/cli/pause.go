@@ -10,13 +10,42 @@ import (
 	"github.com/e1i0r/orbit/internal/words"
 )
 
+// controlling is the three commands that leave a word behind: pause, resume
+// and skip.
+//
+// They are a slice of their own, appended to the table in commands.go, for
+// the reason answering()'s two are: that file is at the size ceiling. Here
+// they also sit beside the one function all three call.
+//
+// skip is the word the gate has always understood and nothing could write.
+// It differs from resume in what happens to the phase the run is stopped in
+// front of: resume runs it, skip does not, and the run carries on at the one
+// after it.
+func controlling() []Command {
+	return []Command{{
+		Name: "pause", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
+		About: func(p *words.Printer) string { return p.T("cmd.pause", "stop a run at its next phase") },
+		Run:   func(ctx Context, args []string) error { return controlTask("pause", ctx, args) },
+	}, {
+		Name: "resume", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
+		About: func(p *words.Printer) string { return p.T("cmd.resume", "let a stopped run carry on") },
+		Run:   func(ctx Context, args []string) error { return controlTask("resume", ctx, args) },
+	}, {
+		Name: "skip", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
+		About: func(p *words.Printer) string {
+			return p.T("cmd.skip", "let a stopped run carry on without the phase it is waiting in front of")
+		},
+		Run: func(ctx Context, args []string) error { return controlTask("skip", ctx, args) },
+	}}
+}
+
 // controlTask leaves one word for a run to find at its next phase boundary.
 //
-// `orbit pause` and `orbit resume` are one function because they differ in
-// exactly one string, and that string is also the name of the flag set — so
-// a mistyped flag under `orbit resume` prints resume's own line out of the
-// synopsis rather than pause's. Two copies of this body would be two places
-// for the -repo flag's help text to drift apart.
+// The three are one function because they differ in exactly one string, and
+// that string is also the name of the flag set — so a mistyped flag under
+// `orbit resume` prints resume's own line out of the synopsis rather than
+// pause's. Three copies of this body would be three places for the -repo
+// flag's help text to drift apart.
 //
 // It returns as soon as the word is written, and says so. A run stopped at a
 // gate takes it up within a poll; a run in the middle of a phase takes it up

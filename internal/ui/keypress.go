@@ -38,6 +38,12 @@ const confirmYes = "y"
 // out.
 func (m Model) key(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
+	// A held question about a key is on top of everything, because it is
+	// about the key that is being pressed right now: a window that let the
+	// screen underneath answer it would act on the key the reader was only
+	// asking about.
+	case m.tip.armed:
+		return m.tipKey(msg)
 	case m.note.open:
 		return m.noteKey(msg)
 	case m.palette.open:
@@ -139,6 +145,8 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.verb(m.keys.Resume, "resume")
 	case key.Matches(k, m.keys.Hand):
 		return m.handBack()
+	case key.Matches(k, m.keys.Skip):
+		return m.askSkip()
 	case key.Matches(k, m.keys.Cancel):
 		return m.ask()
 	case key.Matches(k, m.keys.Requeue):
@@ -158,7 +166,7 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	case key.Matches(k, m.keys.CLI):
 		return m.launchInteractiveCLI()
 	case key.Matches(k, m.keys.Help):
-		return m.openHelp(), nil
+		return m.armTip(), nil
 	case key.Matches(k, m.keys.Quit):
 		return m, tea.Quit
 	}
@@ -253,6 +261,10 @@ func (m Model) confirmKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m, requeue(m.opts.Requeue, t)
 	}
 
+	if c == confirmSkip {
+		return m, control(m.opts.Control, t, "skip")
+	}
+
 	return m, control(m.opts.Control, t, "cancel")
 }
 
@@ -275,12 +287,12 @@ func (m Model) open() (tea.Model, tea.Cmd) {
 // verb asks the command behind one key to write one word. Whether the key is
 // allowed at all is gesture's answer, in gesture.go.
 func (m Model) verb(b key.Binding, word string) (Model, tea.Cmd) {
-	t, next, ok := m.gesture(b)
-	if !ok {
-		return next, nil
+	r, ok := m.selected()
+	if !ok || r.head {
+		return m, nil
 	}
 
-	return next, control(next.opts.Control, t, word)
+	return m.verbOn(r.task, b, word)
 }
 
 // ask opens the confirm in front of a cancel.

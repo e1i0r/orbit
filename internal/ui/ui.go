@@ -58,6 +58,7 @@ const (
 	confirmPostCliTask
 	confirmDeleteTask
 	confirmRequeue
+	confirmSkip
 )
 
 // Model is one window. It is a value: Update takes one and returns the next,
@@ -129,6 +130,10 @@ type Model struct {
 	compose   composeState
 	pendingID string
 	pendTries int
+
+	// tip is the reader asking what a key does, with ? and then that key.
+	// It lives in tip.go, beside the sentences it answers with.
+	tip tipState
 
 	note           noteState
 	settings       settingsState

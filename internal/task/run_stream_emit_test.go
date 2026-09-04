@@ -12,6 +12,7 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
@@ -89,12 +90,13 @@ func TestAStreamedEventTheLogRefusesFailsTheRun(t *testing.T) {
 // the same way.
 type quiet struct{ res engine.Result }
 
-func (quiet) Name() string             { return "quiet" }
-func (quiet) CanResume() bool          { return false }
-func (quiet) CanThink() bool           { return false }
-func (quiet) Models() []engine.Choice  { return nil }
-func (quiet) Efforts() []engine.Choice { return nil }
-func (quiet) Locate() (string, error)  { return "quiet", nil }
+func (quiet) Name() string                                        { return "quiet" }
+func (quiet) CanResume() bool                                     { return false }
+func (quiet) CanThink() bool                                      { return false }
+func (quiet) Transcript(string, time.Time) ([]engine.Turn, error) { return nil, nil }
+func (quiet) Models() []engine.Choice                             { return nil }
+func (quiet) Efforts() []engine.Choice                            { return nil }
+func (quiet) Locate() (string, error)                             { return "quiet", nil }
 
 func (q quiet) Run(context.Context, engine.Request) (engine.Result, error) {
 	return q.res, nil

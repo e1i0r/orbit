@@ -115,3 +115,24 @@ func TestEachOfTheTwoShowsItsOwnLine(t *testing.T) {
 		}
 	}
 }
+
+// TestSkipIsAWordTheCommandLineCanWrite is the word the gate always
+// understood and nothing could ask for: the run carries on without the phase
+// it is waiting in front of.
+func TestSkipIsAWordTheCommandLineCanWrite(t *testing.T) {
+	root, orbitHome := workspace(t)
+	dir := writeTask(t, root)
+
+	code, out, errOut := run(t, "skip", "-repo", dir, "ACME-1")
+	if code != 0 {
+		t.Fatalf("skip exited %d: %s", code, errOut)
+	}
+
+	if got := control(t, orbitHome); got != "skip\n" {
+		t.Errorf("the control file holds %q, want %q", got, "skip\n")
+	}
+
+	if !strings.Contains(out, "ACME-1") || !strings.Contains(out, "skip") {
+		t.Errorf("skip said %q, which does not say what was asked of what", out)
+	}
+}

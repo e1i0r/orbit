@@ -7,7 +7,10 @@
 // grey out the button and say why.
 package engine
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 // Request is everything an engine needs for one phase.
 type Request struct {
@@ -154,4 +157,21 @@ type Engine interface {
 
 	// CanThink returns whether this engine supports an extended thinking mode.
 	CanThink() bool
+
+	// Transcript is what was said in an interactive session opened in dir
+	// after since — the reader's prompts and the engine's answers, oldest
+	// first, and no tool call.
+	//
+	// It is on this interface rather than behind a name check because
+	// every engine keeps one and no two keep it alike: claude a directory
+	// of JSON lines per working directory, codex a file per session under
+	// the day it ran, opencode rows in a database. Which of those a
+	// session left behind is a fact about the program, like Locate and
+	// CanResume, and the compiler is the right reviewer for a new engine
+	// that has not answered the question.
+	//
+	// An engine whose transcript nobody has mapped yet answers with
+	// nothing rather than with a guess: the session is not read back, and
+	// the record is left as it was.
+	Transcript(dir string, since time.Time) ([]Turn, error)
 }

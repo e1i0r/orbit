@@ -121,8 +121,14 @@ func badge(text string, r Role) string {
 // where one tab ends.
 const tabGap = "  "
 
-// tabChip is one tab of the strip: its key, then its name, and an underline
-// under both when it is the tab being read.
+// tabChip is one tab of the strip: its key, then its name, and — on the tab
+// being read — a band behind both.
+//
+// The band is the mark the chosen row of the knobs carries, for the same
+// reason: a strip of eleven chips is read by running an eye along it, and an
+// underline a cell high under one of them is what the eye does not catch.
+// The pad is part of the chip rather than the gap between chips, so that
+// what the band covers is what a click on it lands on.
 //
 // It returns what it drew and the plain text of it, because the strip is
 // clickable and a hit test on rendered text would be counting escape codes.
@@ -137,8 +143,8 @@ func tabChip(key, text string, active bool) (plain, rendered string) {
 	plain = key + " " + text
 
 	if active {
-		return plain, Paint(Accent).Bold(true).Underline(true).Render(key) +
-			Text(Primary).Bold(true).Underline(true).Render(" "+text)
+		plain = " " + plain + " "
+		return plain, Paint(Sel).Bold(true).Render(plain)
 	}
 
 	return plain, Paint(Accent).Bold(true).Render(key) + Text(Tertiary).Render(" "+text)

@@ -86,6 +86,7 @@ func (k Keys) Affordances(t view.Task, s Conditions) []Affordance {
 		{Key: k.Open, OK: true},
 		answer(k.Pause, whyNotPause(t, s)),
 		answer(k.Resume, whyNotResume(t)),
+		answer(k.Skip, whyNotSkip(t)),
 		answer(k.Cancel, whyNotCancel(t)),
 		answer(k.Requeue, whyNotRequeue(t)),
 		answer(k.Take, whyNotTake(t, s)),
@@ -186,6 +187,28 @@ func whyNotResume(t view.Task) words.Arg {
 	}
 
 	return because(whyResumeNotRunning)
+}
+
+// whyNotSkip offers skipping only at a phase boundary, where resume is
+// offered, and the two are the same question answered the two ways it has:
+// the run is stopped in front of a phase, and that phase either happens or
+// does not.
+//
+// A run in the middle of one is refused rather than queued. The word would
+// be taken at the next boundary, and the phase it skipped would be the one
+// after the phase the reader was looking at — which is not what a key called
+// skip says it does.
+func whyNotSkip(t view.Task) words.Arg {
+	switch {
+	case parked(t):
+		return words.Arg{}
+	case unknown(t):
+		return because(whyMarkerUnreadable)
+	case t.Live == view.LiveHeld:
+		return because(whySkipStillRunning)
+	}
+
+	return because(whySkipNothingWaiting)
 }
 
 // whyNotCancel offers cancellation for anything a process still holds,

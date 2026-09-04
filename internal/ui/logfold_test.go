@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
 
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -219,11 +220,16 @@ func TestExpandOpensEveryEntryAtOnce(t *testing.T) {
 	}
 }
 
-// TestARowIsCutToTheMeasureItWasWrappedTo. A tool call is written down as
-// the arguments it was made with, and JSON has no spaces to wrap at: a row
-// that cannot be wrapped has to be cut, or one entry sets itself over the
-// margin the scroll bar is drawn in.
-func TestARowIsCutToTheMeasureItWasWrappedTo(t *testing.T) {
+// TestARowIsWrappedToTheMeasureAndNotCutToIt.
+//
+// A tool call is written down as the arguments it was made with, and a path
+// or a JSON document has no space in it to wrap at. Cutting such a row to
+// the measure kept it off the margin the scroll bar is drawn in, and put
+// what it cut on no row at all: the fold counts rows, so it was told there
+// was nothing to open, and the rest of the command was on no screen the
+// reader could reach. The word is broken at the measure instead, and the
+// rows that come back are still inside it.
+func TestARowIsWrappedToTheMeasureAndNotCutToIt(t *testing.T) {
 	long := strings.Repeat("some/deep/path/", 20)
 
 	m, _ := timeline(t, append(fixtureEntries(),
@@ -243,18 +249,44 @@ func TestARowIsCutToTheMeasureItWasWrappedTo(t *testing.T) {
 		},
 	))
 
-	// Closed and open: a row that folds is cut on its head and on the rows
-	// it opens onto, and a row that does not fold is cut where it is.
-	for _, lines := range [][]string{screenRows(m), screenRows(step(t, m, "e"))} {
+	opened := step(t, m, "e")
+
+	// The rows as the pane holds them, and not as the window pads them out
+	// and hangs a scroll bar off the end: closed on its head, and open on
+	// every row it opens onto.
+	for _, lines := range [][]string{m.logLines(), opened.logLines()} {
 		for i, l := range lines {
 			if !strings.Contains(l, "deep/path") {
 				continue
 			}
 
-			// The row as the pane holds it, not as the window pads it out.
 			if w := lipgloss.Width(strings.TrimRight(l, " ")); w > m.frame.Body.W-2 {
 				t.Errorf("row %d runs to %d cells on a pane of %d: %q", i, w, m.frame.Body.W, l)
 			}
+		}
+	}
+
+	// Cut, the entry was one row and the fold was told there was nothing
+	// under it. Wrapped, it has rows to open onto, and says so.
+	closed := m.logLines()
+
+	head := rowOf(closed, "Edit:")
+	if head < 0 {
+		t.Fatalf("the tool call was not drawn:\n%s", strings.Join(closed, "\n"))
+	}
+
+	if !strings.Contains(closed[head], foldShut) {
+		t.Errorf("the row that could not be wrapped offers nothing to open: %q", closed[head])
+	}
+
+	// And what the wrap broke is all there once the entry is open: the head
+	// of the path is on the first row, and the file it ends at is on a row
+	// of its own further down.
+	whole := strings.Join(strings.Fields(ansi.Strip(strings.Join(opened.logLines(), " "))), " ")
+	for _, want := range []string{"bytes.go", "and the rest of the sentence after it"} {
+		if !strings.Contains(whole, want) {
+			t.Errorf("the timeline lost %q off the end of a row it could not wrap:\n%s",
+				want, strings.Join(opened.logLines(), "\n"))
 		}
 	}
 }

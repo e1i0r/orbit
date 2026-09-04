@@ -25,7 +25,7 @@ type Keys struct {
 	Up, Down, First, Last, PageUp, PageDown                                                       key.Binding
 	Open, Back, NextTab, PrevTab, Sideways                                                        key.Binding
 	Start, Run, ChangeFlow, Menu, Compose                                                         key.Binding
-	Pause, Resume, Cancel, Requeue                                                                key.Binding
+	Pause, Resume, Skip, Cancel, Requeue                                                          key.Binding
 	Take, Hand, Ask, MarkRead, Delete, Edit                                                       key.Binding
 	Filter, Commands, CLI, Repos, EngineKnobs, Quota, Supervisor, Autopilot, Language, Help, Quit key.Binding
 }
@@ -87,6 +87,10 @@ func NewKeys(p *words.Printer) Keys {
 
 		Pause:  binding("p", p.T("key.pause", "pause"), "p"),
 		Resume: binding("r", p.T("key.resume", "resume"), "r"),
+		// s is beside r because the two answer the same question — the run
+		// is stopped in front of a phase, does that phase happen — and the
+		// letter is the word.
+		Skip:   binding("s", p.T("key.skip", "skip this phase"), "s"),
 		Cancel: binding("x", p.T("key.cancel", "cancel"), "x"),
 		// b for back. It is beside x because it is the other way a run
 		// stops, and it is not x because the two say different things about
@@ -115,6 +119,20 @@ func NewKeys(p *words.Printer) Keys {
 		Language:    binding("L", p.T("key.language", "language"), "L"),
 		Help:        binding("?", p.T("key.help", "help"), "?"),
 		Quit:        binding("q", p.T("key.quit", "quit"), "q"),
+	}
+}
+
+// taskVerbs is the keys that do something to one task, in the order
+// Affordances lists them, with the two that are not verbs of the run — the
+// menu that offers them all and the editor — at either end.
+//
+// It is a list of its own because the cheat sheet needs the verbs and
+// Affordances needs a task to answer about. The two orders are the same on
+// purpose: a reader who has read one is not learning the other from scratch.
+func (k Keys) taskVerbs() []key.Binding {
+	return []key.Binding{
+		k.Menu, k.Pause, k.Resume, k.Skip, k.Cancel, k.Requeue,
+		k.Take, k.Hand, k.Ask, k.MarkRead, k.Delete, k.Edit,
 	}
 }
 

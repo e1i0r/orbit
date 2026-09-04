@@ -19,7 +19,19 @@ type Knobs struct {
 }
 
 type enginesState struct {
-	sel          int
+	sel int
+
+	// offset is the first line of the list on show, moved only by
+	// keepEngineRowSeen: opencode alone offers sixty-four models, so this
+	// list has been taller than the screen since the day it stopped being
+	// a shortlist.
+	offset int
+
+	// open is which engines are showing their models. Absent is shut, so
+	// the screen opens as four names and their dials. Nothing forces one
+	// open or shut: two engines side by side is how a reader compares them.
+	open map[string]bool
+
 	showingSetup bool
 	setupEngine  string
 	fromScreen   screen
@@ -42,6 +54,9 @@ type engineRow struct {
 	id       string
 	selected bool
 	disabled bool
+	open     bool
+	models   int
+	chosen   string
 	setup    []string
 }
 
@@ -127,13 +142,19 @@ func (m Model) collectEngineRows() []engineRow {
 			continue
 		}
 
+		open := m.engineOpen(eng.Name)
+
 		rows = append(rows, engineRow{
 			kind:     rowEngine,
 			title:    eng.Name,
 			engine:   eng.Name,
 			selected: eng.Name == activeEngine,
+			open:     open,
+			models:   len(eng.Models),
+			chosen:   m.chosenModel(eng),
 		})
-		if eng.Name == activeEngine {
+
+		if open {
 			for _, mdl := range eng.Models {
 				lbl := mdl.Label
 				if mdl.ID == "" {
@@ -193,6 +214,23 @@ func (m Model) collectEngineRows() []engineRow {
 	return rows
 }
 
+// chosenModel is the model this engine would run with, for the row to carry
+// while it is shut: folding hides which of sixty-five is in force, and the
+// name of it is the one thing on that list a reader needs at a glance.
+func (m Model) chosenModel(eng EngineInfo) string {
+	if eng.Name != m.dialEngine(m.knobs.Engine) || m.knobs.Model == "" {
+		return ""
+	}
+
+	for _, mdl := range eng.Models {
+		if mdl.ID == m.knobs.Model {
+			return mdl.Label
+		}
+	}
+
+	return m.knobs.Model
+}
+
 func (m Model) selectableEngineIndices(rows []engineRow) []int {
 	var idxs []int
 
@@ -238,14 +276,16 @@ func (m Model) enginesKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			m.engines.sel = len(idxs) - 1
 		}
 
-		return m, nil
+		return m.keepEngineRowSeen(), nil
 	case key.Matches(msg, m.keys.Down):
 		m.engines.sel++
 		if m.engines.sel >= len(idxs) {
 			m.engines.sel = 0
 		}
 
-		return m, nil
+		return m.keepEngineRowSeen(), nil
+	case key.Matches(msg, m.keys.Sideways):
+		return m.foldKnob(msg.String() != "left"), nil
 	case key.Matches(msg, m.keys.Open), msg.Text == " ":
 		selectedRow := rows[idxs[m.engines.sel]]
 		return m.applyEngineChoice(selectedRow), nil
@@ -264,8 +304,15 @@ func (m Model) applyEngineChoice(selectedRow engineRow) Model {
 
 	switch selectedRow.kind {
 	case rowEngine:
+		// An engine already in force has nothing left to choose, so ⏎ on
+		// its name folds it instead: the reader is done with its models,
+		// or wants them back.
+		if m.knobs.Engine == selectedRow.engine {
+			return m.foldKnob(!selectedRow.open)
+		}
+
 		m.knobs.Engine, m.knobs.Model = selectedRow.engine, ""
-		m = m.setOpt("engine", selectedRow.engine)
+		m = m.setOpt("engine", selectedRow.engine).foldEngine(selectedRow.engine, true)
 	case rowModel:
 		m.knobs.Engine, m.knobs.Model = selectedRow.engine, selectedRow.id
 		m = m.setOpt("model", selectedRow.id)
@@ -275,7 +322,25 @@ func (m Model) applyEngineChoice(selectedRow engineRow) Model {
 		m.knobs.Thinking = selectedRow.id
 	}
 
-	return m
+	// Choosing an engine opens its models under it and closes the one that
+	// was open, so the list this was picked from is not the list it leaves
+	// behind: where the view sits has to be asked again.
+	return m.keepEngineRowSeen()
+}
+
+// pickEngineRow moves the selection by rows, for the wheel. It stops at
+// either end rather than wrapping as the arrows do: a notch that carried the
+// reader from the last model back to the top would read as the list jumping
+// under their hand.
+func (m Model) pickEngineRow(d int) Model {
+	n := len(m.selectableEngineIndices(m.collectEngineRows()))
+	if n == 0 {
+		return m
+	}
+
+	m.engines.sel = min(max(m.engines.sel+d, 0), n-1)
+
+	return m.keepEngineRowSeen()
 }
 
 func (m Model) setOpt(k, v string) Model {

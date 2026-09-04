@@ -6,6 +6,7 @@ import (
 	"os"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
@@ -279,8 +280,9 @@ func (e *failingEngine) Name() string { return "fail" }
 func (e *failingEngine) Run(ctx context.Context, req engine.Request) (engine.Result, error) {
 	return engine.Result{}, e.err
 }
-func (e *failingEngine) Models() []engine.Choice  { return nil }
-func (e *failingEngine) Efforts() []engine.Choice { return nil }
-func (e *failingEngine) CanThink() bool           { return true }
-func (e *failingEngine) Locate() (string, error)  { return "failing", nil }
-func (e *failingEngine) CanResume() bool          { return false }
+func (e *failingEngine) Models() []engine.Choice                             { return nil }
+func (e *failingEngine) Efforts() []engine.Choice                            { return nil }
+func (e *failingEngine) CanThink() bool                                      { return true }
+func (e *failingEngine) Transcript(string, time.Time) ([]engine.Turn, error) { return nil, nil }
+func (e *failingEngine) Locate() (string, error)                             { return "failing", nil }
+func (e *failingEngine) CanResume() bool                                     { return false }

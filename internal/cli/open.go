@@ -121,13 +121,59 @@ func openCommand(engineName, dir, context string) (*exec.Cmd, error) {
 	}
 
 	if context != "" {
-		args = append(args, context)
+		args = append(args, openSays(engineName, len(args) > 0, context)...)
 	}
 
 	cmd := exec.Command(engineName, args...)
 	cmd.Dir = dir
 
 	return cmd, nil
+}
+
+// openSays is the sentence the session opens on, in the form the engine
+// reads it as a sentence.
+//
+// flagged says a flag has already been written, and the separator goes in
+// first when one has. --mcp-config takes as many values as follow it, so the
+// sentence was read as a second configuration file: claude answered "MCP
+// config file not found: I am looking at orbit task ..." and exited before
+// it drew anything, which from the cockpit is a screen that flashes and
+// comes back.
+func openSays(engineName string, flagged bool, context string) []string {
+	if flag := promptFlag(engineName); flag != "" {
+		return []string{flag, context}
+	}
+
+	if flagged {
+		return []string{"--", context}
+	}
+
+	return []string{context}
+}
+
+// promptFlag is how one engine is handed that sentence, and "" for an engine
+// that reads a bare argument as one.
+//
+// claude and codex do read it as one. opencode reads a bare argument as the
+// directory to start in, so the session died before it drew anything —
+// "ENAMETOOLONG: name too long, lstat '<worktree>/I am looking at orbit task
+// FRA-62...'", the whole sentence lstat'ed as a path. agy reads no bare
+// argument at all, and the flag it does read is the one that opens a
+// terminal rather than the one that runs without one.
+//
+// It is a name check for the reason mcpConfigFlag is one.
+func promptFlag(engineName string) string {
+	switch engineName {
+	case "opencode":
+		return "--prompt"
+	case "agy":
+		// Not --prompt, which agy spells as an alias for --print and runs
+		// without a terminal at all: the session would answer once into a
+		// window that is not looking and exit.
+		return "--prompt-interactive"
+	}
+
+	return ""
 }
 
 // mcpConfigFlag is how one engine is told about a server for the length of a

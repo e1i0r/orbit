@@ -57,6 +57,12 @@ func TestEnginesKeyNavigationAndToggles(t *testing.T) {
 	newM, _ = m.enginesKey(enterKey)
 	m = asModel(t, newM)
 
+	// ⏎ may have landed on an engine this machine has not set up, whose
+	// steps Esc takes down before Esc closes the screen.
+	if m.engines.showingSetup {
+		m.engines.showingSetup = false
+	}
+
 	// Back key closes engines
 	escKey := tea.KeyPressMsg{Code: tea.KeyEsc}
 	newM, _ = m.enginesKey(escKey)

@@ -87,14 +87,11 @@ func (m Model) mouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 			return m.dragCaret(msg.Mouse()), nil
 		}
 
-		// Everything else is ignored, and ignored here rather than by
-		// leaving the case out. The window asks for MouseModeCellMotion,
-		// so a drag reports a message per cell it crosses; for a row or a
-		// button the release carries the cell it happened in, which is all
-		// they need, and nothing about them is drawn differently while a
-		// button is held. When something is — a hovered row, a drag that
-		// reorders — this is where it starts.
-		return m, nil
+		// A pointer with no button down is a reader pointing at something,
+		// and on the key bar that is a question: hover answers it. Nothing
+		// else here is drawn differently for being under the pointer, so
+		// everything else this reports is dropped.
+		return m.hover(msg.Mouse()), nil
 	}
 
 	return m, nil

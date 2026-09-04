@@ -62,6 +62,8 @@ func (m Model) writeDown(msg tea.Msg) Model {
 		writeLine("ui/session", msg.ID, oneLine(msg.Err))
 	case cliEndedMsg:
 		writeLine("ui/session", msg.Engine+" in "+msg.Repo, oneLine(msg.Err))
+	case sessionFiledMsg:
+		writeLine("ui/session", "filing "+msg.ID, oneLine(msg.Err))
 	case commandMsg:
 		writeLine("ui/command", msg.Name, oneLine(msg.Err))
 	case editorMsg:

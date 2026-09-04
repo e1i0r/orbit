@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/charmbracelet/x/ansi"
+
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -165,5 +167,29 @@ func TestNotesLinesDrawsWhatActedFromOutsideTheRun(t *testing.T) {
 
 	if strings.Contains(joined, m.opts.Words.T("notes.read_by_run", "read by the run")) {
 		t.Errorf("notesLines = %q, want no claim that a run reads these", joined)
+	}
+}
+
+// TestALongTurnIsWrappedIntoThePane.
+//
+// A session's conversation is now in this tab, and a turn is a paragraph
+// rather than the one-sentence line the tab was written for: drawn whole it
+// ran off the right edge, and what a reader typed is exactly the thing they
+// come here to read again.
+func TestALongTurnIsWrappedIntoThePane(t *testing.T) {
+	m, _ := testModel(t, 120, 30)
+
+	said := strings.Repeat("what the review gate is waiting for, in words. ", 8)
+	m.entries = []view.Entry{{Kind: "task.dialogue", By: "operator", Text: said}}
+
+	lines := m.notesLines()
+	for _, line := range lines {
+		if w := ansi.StringWidth(line); w > m.frame.Body.W {
+			t.Errorf("a line of the turn is %d wide, want no wider than the pane's %d: %q", w, m.frame.Body.W, line)
+		}
+	}
+
+	if joined := strings.Join(lines, " "); !strings.Contains(joined, "→ what the review gate") {
+		t.Errorf("notesLines = %q, want the turn behind the arrow", joined)
 	}
 }

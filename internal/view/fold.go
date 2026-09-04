@@ -108,7 +108,7 @@ func fold(t *Task, e record.Event) {
 		}
 	case record.PhaseToolCall:
 		t.ToolCallCount++
-		if act := formatAction(e.Data["tool"], e.Text); act != "" {
+		if act := ToolLine(e.Data["tool"], e.Text); act != "" {
 			t.CurrentAction, t.ActionKind = act, ActionTool
 		}
 	case record.PhaseRetried:

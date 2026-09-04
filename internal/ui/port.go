@@ -184,6 +184,22 @@ type Options struct {
 	// did before there was one.
 	Open func(t view.Task, engineName, dir string) (*exec.Cmd, error)
 
+	// FileSession takes what was said in one of those sessions into the
+	// task it was opened on, and answers how many turns it wrote.
+	//
+	// The window is suspended for the length of a session and sees none of
+	// it, so the one thing it can say afterwards is when it handed the
+	// terminal over. The other side reads the engine's own transcript for
+	// that worktree and writes each turn into the record, which is the
+	// only place this window can then show it. Tool calls are not turns:
+	// what a session did to the files is the timeline's business, and this
+	// is the conversation, which is the half that exists nowhere else once
+	// the terminal is closed.
+	//
+	// A nil port files nothing, which is what a session left behind before
+	// anything read one back.
+	FileSession func(t view.Task, engineName string, since time.Time) (int, error)
+
 	// Flows is where a user's own flows live, for the cycle the start
 	// dialog offers. A nil Source is the built-ins and nothing else, which
 	// is what flow.Resolve already documents and what a window opened
@@ -254,74 +270,4 @@ type Options struct {
 	// under a subscription has a window and no dollars, codex on an API key
 	// has dollars and no window, and a board can hold tasks of both.
 	Quota func(engine string) QuotaReading
-}
-
-// QuotaReading is what the window learns about one engine's quota.
-//
-// Money and Sourced are carried as answers rather than as the billing mode
-// they were derived from, because the mode is not this package's to read:
-// internal/quota decides what a number about an engine means, and the window
-// is told the outcome. Sourced is separate from a window count for the
-// difference it protects — an engine nobody can read a window for is not an
-// engine with no window left.
-type QuotaReading struct {
-	Engine  string
-	Money   bool
-	Sourced bool
-	Windows []QuotaWindow
-}
-
-// QuotaWindow is what the window learns about remaining quota.
-type QuotaWindow struct {
-	Key      string
-	Label    string
-	Pct      float64
-	ResetsIn time.Duration
-}
-
-// EngineInfo is what the window knows about an engine's dials and setup.
-//
-// Setup is a function of a printer for the reason Command.About is: the
-// steps are sentences a reader reads, so they go through internal/words like
-// every other line on this screen, and they follow a language changed after
-// this slice was handed over.
-type EngineInfo struct {
-	Name      string
-	Available bool
-	Setup     func(*words.Printer) []string
-	Models    []ChoiceInfo
-	Efforts   []ChoiceInfo
-	CanThink  bool
-}
-
-// ChoiceInfo is one selectable value for an engine dial.
-type ChoiceInfo struct {
-	ID    string
-	Label string
-}
-
-// Command is one row of the palette: what the window shows of a command,
-// and nothing of what the command does.
-//
-// About and Because are functions of a printer rather than strings because
-// both are sentences a reader reads, and sentences go through
-// internal/words like every other line this window draws — which also lets
-// them follow a language changed after this slice was handed over.
-type Command struct {
-	Name  string // as the reader types it
-	Args  string // the usage fragment after the name; empty when none
-	About func(*words.Printer) string
-
-	Refused bool                        // the window does not run it here
-	Because func(*words.Printer) string // why, when Refused is set
-
-	// NeedsArgs says the command refuses when it is given none, and Args
-	// says what it wants. The command line can give it those and the
-	// board's menu cannot, so it is the menu that reads this.
-	NeedsArgs bool
-
-	// AboutATask keeps the command off the board's menu. That menu is
-	// opened on no row, and a verb about one task has no task there; the
-	// menu of the row it is about is where it belongs.
-	AboutATask bool
 }

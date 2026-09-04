@@ -76,20 +76,43 @@ type metered struct {
 // pointed at nothing are the engines with no source, which is a state this
 // package reports rather than hides.
 //
+// agy is a subscription with no source and no variable either, from the
+// other direction: it is signed into with a Google account and there is no
+// key that would make it metered, so what a run of it costs is a share of a
+// monthly price nothing here can read.
+//
 // opencode is per token with no source and no variable to look at: it drives
 // whichever provider its own configuration names, on the reader's key, so
 // there is no single endpoint that could answer for it and no arrangement in
 // which its use is not metered by somebody.
+//
+// codex is the one engine read from a file rather than an endpoint. It
+// writes the limits the API answered with into its own rollouts after every
+// turn, so a machine with no proxy in front of it still has somewhere to
+// look — see codex.go.
 //
 // The names are the names a record writes, and internal/cli holds the two
 // tables together with a test — this package cannot import the engines, and
 // an engine named here but nowhere else would be a row nobody ever reads.
 func FromEnv() *Meter {
 	return &Meter{engines: []metered{
+		{name: "agy", mode: Subscription},
 		{name: "claude", mode: keyed("ANTHROPIC_API_KEY"), from: New(os.Getenv("ANTHROPIC_BASE_URL"))},
-		{name: "codex", mode: keyed("OPENAI_API_KEY"), from: New(os.Getenv("OPENAI_BASE_URL"))},
+		{name: "codex", mode: keyed("OPENAI_API_KEY"), from: codexQuota()},
 		{name: "opencode", mode: PerToken},
 	}}
+}
+
+// codexQuota is where codex's windows are read from: the proxy when a base
+// URL names one that answers for codex, and what codex itself wrote down
+// when it does not.
+//
+// The order is the reader's own arrangement first. A proxy is the live
+// number and the rollouts are as fresh as the last run, so a proxy that
+// answers wins; a base URL pointed at something that has never heard of
+// codex is the common case, and it falls through to the file.
+func codexQuota() *Client {
+	return over(behind(newProxy(os.Getenv("OPENAI_BASE_URL")), newRollouts(codexSessions())))
 }
 
 // keyed is the mode of an engine that can be either, decided by whether a

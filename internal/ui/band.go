@@ -34,9 +34,19 @@ func (m Model) bandLeft() string {
 		return Paint(Warn).Render(m.opts.Words.T("msg.confirm_requeue",
 			"stop {id} and put it back in to do? press y to confirm, anything else to leave it alone",
 			about("id", m.confirmID)))
+	case m.confirm == confirmSkip:
+		return Paint(Warn).Render(m.opts.Words.T("msg.confirm_skip",
+			"skip the phase {id} is waiting in front of? press y to confirm, anything else to leave it waiting",
+			about("id", m.confirmID)))
 	case m.confirm == confirmPostCliTask:
 		return Paint(Live).Render(m.opts.Words.T("msg.confirm_post_cli",
 			"create a task in Orbit from this session? press y to confirm, anything else to skip"))
+	// Above the message and below the questions: what the pointer is on is
+	// newer than whatever was said before it got there, and a question the
+	// window is waiting for an answer to is not something a moved pointer
+	// gets to cover.
+	case m.hovered() != "":
+		return Paint(Live).Render(m.hovered())
 	case m.message != "" && m.now.Sub(m.messageAt) < messageLife:
 		return Paint(Accent).Render(m.message)
 	case m.filter != "" || m.repoFilter != "" || m.queueFilter != nil:
@@ -126,6 +136,14 @@ func actionGlyph(kind view.ActionKind) string {
 	}
 }
 
+// actionCells is how much of the live action this row draws.
+//
+// The action arrives whole — view.ToolLine keeps no measure of its own — and
+// the row it lands on already carries an id, a phase, an elapsed time, an
+// engine and a flow, with the whole line cut to the terminal at the end. An
+// action left whole here is an action that pushes the engine off the row.
+const actionCells = 50
+
 // runningLine names the one task a process is holding right now, including its live action.
 func (m Model) runningLine(t view.Task) string {
 	p := m.opts.Words
@@ -136,7 +154,7 @@ func (m Model) runningLine(t view.Task) string {
 	}
 
 	if t.CurrentAction != "" {
-		pieces = append(pieces, Paint(Live).Render(actionGlyph(t.ActionKind)+t.CurrentAction))
+		pieces = append(pieces, Paint(Live).Render(actionGlyph(t.ActionKind)+fit(t.CurrentAction, actionCells)))
 	}
 
 	if engine := engineAndModel(t); engine != "" {

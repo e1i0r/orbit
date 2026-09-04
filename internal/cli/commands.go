@@ -14,6 +14,7 @@ package cli
 import (
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 	"text/tabwriter"
 
@@ -126,10 +127,11 @@ func (c Command) Usage() string {
 
 // commands is every command there is, in the order they are worth reading:
 // the window first, then what a task is made to do, then what it is asked
-// about, the settings, and last the two verbs of answering.go — which are
-// there because this file met the size ceiling.
+// about, the settings, and last the three words of pause.go and the two
+// verbs of answering.go — which are there because this file met the size
+// ceiling.
 func commands() []Command {
-	return append([]Command{{
+	return slices.Concat([]Command{{
 		Name: "top", Args: "[dir]",
 		About:    func(p *words.Printer) string { return p.T("cmd.top", "watch every task in one window") },
 		Run:      top,
@@ -153,14 +155,6 @@ func commands() []Command {
 		Name: "run", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
 		About: func(p *words.Printer) string { return p.T("cmd.run", "run a task through its flow") },
 		Run:   runTask,
-	}, {
-		Name: "pause", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
-		About: func(p *words.Printer) string { return p.T("cmd.pause", "stop a run at its next phase") },
-		Run:   func(ctx Context, args []string) error { return controlTask("pause", ctx, args) },
-	}, {
-		Name: "resume", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
-		About: func(p *words.Printer) string { return p.T("cmd.resume", "let a stopped run carry on") },
-		Run:   func(ctx Context, args []string) error { return controlTask("resume", ctx, args) },
 	}, {
 		Name: "list", Args: "-repo <dir>",
 		About:    func(p *words.Printer) string { return p.T("cmd.list", "list the tasks of a repository") },
@@ -277,7 +271,7 @@ func commands() []Command {
 		Because: func(p *words.Printer) string {
 			return p.T("cmd.mcp.inside", "it speaks over this terminal, which the window is already using")
 		},
-	}}, answering()...)
+	}}, controlling(), answering())
 }
 
 // lookup finds a command by the name that was typed.

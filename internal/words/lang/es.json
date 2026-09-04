@@ -49,6 +49,10 @@
       "source": "resume",
       "value": "reanudar"
     },
+    "key.skip": {
+      "source": "skip this phase",
+      "value": "saltar esta fase"
+    },
     "key.cancel": {
       "source": "cancel",
       "value": "cancelar"
@@ -124,6 +128,14 @@
     "why.resume_not_running": {
       "source": "resuming needs a paused task; nothing is running here",
       "value": "reanudar necesita una tarea en pausa; aquí no hay nada en marcha"
+    },
+    "why.skip_still_running": {
+      "source": "skipping a phase needs a run stopped in front of one; this phase is already under way",
+      "value": "saltar una fase necesita una ejecución detenida delante de una; esta fase ya está en marcha"
+    },
+    "why.skip_nothing_waiting": {
+      "source": "skipping a phase needs a run stopped in front of one; nothing is running here",
+      "value": "saltar una fase necesita una ejecución detenida delante de una; aquí no hay nada en marcha"
     },
     "why.cancel_not_running": {
       "source": "cancelling needs a running task; nothing is running here",
@@ -300,6 +312,10 @@
     "msg.confirm_cancel": {
       "source": "cancel {id}? press y to confirm, anything else to leave it running",
       "value": "¿cancelar {id}? pulsa y para confirmar, cualquier otra tecla la deja en marcha"
+    },
+    "msg.confirm_skip": {
+      "source": "skip the phase {id} is waiting in front of? press y to confirm, anything else to leave it waiting",
+      "value": "¿saltar la fase delante de la que {id} está esperando? pulsa y para confirmar, cualquier otra tecla para dejarla esperando"
     },
     "msg.confirm_requeue": {
       "source": "stop {id} and put it back in to do? press y to confirm, anything else to leave it alone",
@@ -1533,6 +1549,10 @@
       "source": "let a stopped run carry on",
       "value": "dejar que una ejecución detenida continúe"
     },
+    "cmd.skip": {
+      "source": "let a stopped run carry on without the phase it is waiting in front of",
+      "value": "dejar que una ejecución detenida continúe sin la fase delante de la que espera"
+    },
     "cmd.list": {
       "source": "list the tasks of a repository",
       "value": "listar las tareas de un repositorio"
@@ -1865,6 +1885,18 @@
       "source": "{key} is now {value}",
       "value": "{key} ahora es {value}"
     },
+    "engine.setup.agy.install": {
+      "source": "1. Install the Antigravity CLI: agy is its binary",
+      "value": "1. Instala la CLI de Antigravity: su binario es agy"
+    },
+    "engine.setup.agy.login": {
+      "source": "2. Run 'agy' in a terminal and sign in with your Google account",
+      "value": "2. Ejecuta 'agy' en una terminal e inicia sesión con tu cuenta de Google"
+    },
+    "engine.setup.agy.path": {
+      "source": "3. Ensure 'agy' is in your PATH",
+      "value": "3. Asegúrate de que 'agy' esté en tu PATH"
+    },
     "engine.setup.claude.install": {
       "source": "1. Install Claude Code: npm install -g @anthropic-ai/claude-code",
       "value": "1. Instala Claude Code: npm install -g @anthropic-ai/claude-code"
@@ -1954,16 +1986,12 @@
       "value": "la tarea en la que se abrió este menú ya no está en el tablero"
     },
     "menu.title_board": {
-        "source": "commands — nothing here is about one task",
-        "value": "comandos — nada de esto es sobre una tarea"
+      "source": "commands — nothing here is about one task",
+      "value": "comandos — nada de esto es sobre una tarea"
     },
     "menu.title_task": {
-        "source": "{id} — what can be done to this task",
-        "value": "{id} — lo que se puede hacer con esta tarea"
-    },
-    "menu.title_panes": {
-        "source": "the panes of this task",
-        "value": "los paneles de esta tarea"
+      "source": "{id} — what can be done to this task",
+      "value": "{id} — lo que se puede hacer con esta tarea"
     },
     "key.compose": {
       "source": "write a task",
@@ -2556,8 +2584,8 @@
       "value": "Ver únicamente las tareas de esa cola"
     },
     "help.live.title": {
-      "source": "⚡ 2. LIVE CONTROL AND SETTINGS",
-      "value": "⚡ 2. CONTROL Y CONFIGURACIÓN EN VIVO"
+      "source": "⚡ 3. LIVE CONTROL AND SETTINGS",
+      "value": "⚡ 3. CONTROL Y CONFIGURACIÓN EN VIVO"
     },
     "help.live.autopilot_key": {
       "source": "[A] / ⚡ click",
@@ -2574,10 +2602,6 @@
     "help.live.engine": {
       "source": "Engine dial: claude, codex, opencode, effort and thinking",
       "value": "Selector de motor: claude, codex, opencode, esfuerzo y thinking"
-    },
-    "help.live.settings": {
-      "source": "Settings screen: language, theme, limits",
-      "value": "Pantalla de ajustes: idioma, tema, límites"
     },
     "help.live.repos_key": {
       "source": "[R] / 📦 click",
@@ -2600,20 +2624,20 @@
       "value": "Pestaña siguiente / anterior"
     },
     "help.tabs.control": {
-      "source": "Pause / unblock / add an operator note",
-      "value": "Pausar / desbloquear / añadir una nota de operador"
+      "source": "Let a stopped run go / skip the phase it waits at / write it a note",
+      "value": "Soltar una ejecución parada / saltar la fase ante la que espera / escribirle una nota"
     },
     "help.global.title": {
-      "source": "⌨️ 4. GLOBAL COMMANDS",
-      "value": "⌨️ 4. COMANDOS GLOBALES"
+      "source": "⌨️ 5. GLOBAL COMMANDS",
+      "value": "⌨️ 5. COMANDOS GLOBALES"
     },
     "help.global.palette": {
       "source": "Open the command palette (orbit new, flows, set...)",
       "value": "Abrir la paleta de comandos (orbit new, flows, set...)"
     },
     "help.global.help": {
-      "source": "Open or close this help window",
-      "value": "Abrir o cerrar esta ventana de ayuda"
+      "source": "Ask what a key does, then press it — ? again is this whole sheet",
+      "value": "Pregunta qué hace una tecla y púlsala — ? otra vez es esta chuleta entera"
     },
     "help.global.quit": {
       "source": "Leave Orbit",
@@ -2621,12 +2645,12 @@
     },
     "help.tabs.title": {
       "source": {
-        "one": "🔍 3. TASK DETAIL ({n} tab)",
-        "other": "🔍 3. TASK DETAIL ({n} tabs)"
+        "one": "🔍 4. TASK DETAIL ({n} tab)",
+        "other": "🔍 4. TASK DETAIL ({n} tabs)"
       },
       "value": {
-        "one": "🔍 3. DETALLE DE TAREA ({n} pestaña)",
-        "other": "🔍 3. DETALLE DE TAREA ({n} pestañas)"
+        "one": "🔍 4. DETALLE DE TAREA ({n} pestaña)",
+        "other": "🔍 4. DETALLE DE TAREA ({n} pestañas)"
       }
     },
     "flow.runs_auto": {
@@ -2812,8 +2836,12 @@
       "value": "{back} volver"
     },
     "engines.ways_out": {
-      "source": "{open} select · {up_down} move · {back} back",
-      "value": "{open} seleccionar · {up_down} mover · {back} volver"
+      "source": "{open} select · {up_down} move · {fold} fold · {back} back",
+      "value": "{open} seleccionar · {up_down} mover · {fold} plegar · {back} volver"
+    },
+    "engines.model_count": {
+      "source": "{count} models",
+      "value": "{count} modelos"
     },
     "queue.todo": {
       "source": "To Do",
@@ -2836,8 +2864,8 @@
       "value": "TE NECESITA"
     },
     "overview.resume_hint": {
-      "source": "press 't' to open interactive session, 'r' to restart",
-      "value": "presiona 't' para sesión interactiva, 'r' para reiniciar"
+      "source": "press '{cli}' to open an interactive session, '{ask}' to leave feedback, '{resume}' to resume",
+      "value": "presiona '{cli}' para una sesión interactiva, '{ask}' para dejar feedback, '{resume}' para reanudar"
     },
     "overview.duration": {
       "source": "duration",
@@ -3346,6 +3374,158 @@
         "one": "{n} turno del supervisor",
         "other": "{n} turnos del supervisor"
       }
+    },
+    "tip.armed": {
+      "source": "which key? press one to read what it does, ? for the full help, esc to leave it",
+      "value": "¿qué tecla? pulsa una para leer qué hace, ? para la ayuda completa, esc para dejarlo"
+    },
+    "tip.open": {
+      "source": "opens the task under the cursor; on a band's heading it folds that band away instead",
+      "value": "abre la tarea bajo el cursor; sobre el título de una franja la pliega en su lugar"
+    },
+    "tip.start": {
+      "source": "opens the dialog that decides what the run will be — flow, engine, model — and starts it",
+      "value": "abre el diálogo que decide cómo será la ejecución — flujo, motor, modelo — y la arranca"
+    },
+    "tip.compose": {
+      "source": "writes a new task down; nothing runs until you start it",
+      "value": "anota una tarea nueva; no se ejecuta nada hasta que la arranques"
+    },
+    "tip.menu": {
+      "source": "every verb for the thing under the cursor, including the ones it refuses and why",
+      "value": "todos los verbos para lo que hay bajo el cursor, incluidos los que rechaza y por qué"
+    },
+    "tip.pause": {
+      "source": "asks a run to stop at its next phase; the phase it is inside finishes first",
+      "value": "pide a una ejecución que pare en su próxima fase; la fase en la que está termina antes"
+    },
+    "tip.resume": {
+      "source": "lets a stopped run carry on, beginning with the phase it is waiting in front of",
+      "value": "deja seguir a una ejecución parada, empezando por la fase ante la que espera"
+    },
+    "tip.skip": {
+      "source": "lets a stopped run carry on without the phase it is waiting in front of",
+      "value": "deja seguir a una ejecución parada sin la fase ante la que espera"
+    },
+    "tip.cancel": {
+      "source": "stops the run for good; the worktree and everything written in it stay where they are",
+      "value": "detiene la ejecución para siempre; el worktree y todo lo escrito en él se quedan donde están"
+    },
+    "tip.requeue": {
+      "source": "stops the run and puts the task back in to do, to be started again from the top",
+      "value": "detiene la ejecución y devuelve la tarea a por hacer, para arrancarla otra vez desde el principio"
+    },
+    "tip.take": {
+      "source": "hands you the engine's session in this task's worktree, to type at yourself",
+      "value": "te entrega la sesión del motor en el worktree de esta tarea, para que escribas tú"
+    },
+    "tip.hand": {
+      "source": "gives the task back to orbit, and the run carries on from where you left it",
+      "value": "devuelve la tarea a orbit, y la ejecución sigue desde donde la dejaste"
+    },
+    "tip.ask": {
+      "source": "writes a note for this task, which the run reads at its next phase",
+      "value": "escribe una nota para esta tarea, que la ejecución lee en su próxima fase"
+    },
+    "tip.read": {
+      "source": "marks a finished task read, which is what takes it out of needs you",
+      "value": "marca como leída una tarea terminada, que es lo que la saca de te necesita"
+    },
+    "tip.delete": {
+      "source": "removes the task and its whole record; nothing brings either back",
+      "value": "elimina la tarea y todo su registro; nada devuelve ninguno de los dos"
+    },
+    "tip.edit": {
+      "source": "opens this task's own files in $EDITOR",
+      "value": "abre los ficheros propios de esta tarea en $EDITOR"
+    },
+    "tip.cli": {
+      "source": "opens an engine session in this task's worktree, in this terminal, with you at the keyboard",
+      "value": "abre una sesión del motor en el worktree de esta tarea, en esta terminal, con el teclado para ti"
+    },
+    "tip.filter": {
+      "source": "narrows the board to the tasks whose id, title or repository match what you type",
+      "value": "reduce el tablero a las tareas cuyo id, título o repositorio coinciden con lo que escribes"
+    },
+    "tip.commands": {
+      "source": "the command line: everything orbit can do, including what no key was given to",
+      "value": "la línea de comandos: todo lo que orbit sabe hacer, incluido lo que no tiene tecla"
+    },
+    "tip.autopilot": {
+      "source": "turns autopilot on and off; with it on, tasks in to do start by themselves",
+      "value": "enciende y apaga el piloto automático; encendido, las tareas por hacer arrancan solas"
+    },
+    "tip.supervisor": {
+      "source": "opens the supervisor: what it has said about the board, and the line you say things to it on",
+      "value": "abre el supervisor: lo que ha dicho sobre el tablero, y la línea donde le hablas tú"
+    },
+    "tip.repos": {
+      "source": "the repositories orbit knows about, and which of them the board is showing",
+      "value": "los repositorios que orbit conoce, y cuáles de ellos muestra el tablero"
+    },
+    "tip.engines": {
+      "source": "which engine and model the next run is asked with, and how hard it is asked to think",
+      "value": "con qué motor y modelo se pide la próxima ejecución, y cuánto se le pide pensar"
+    },
+    "tip.quota": {
+      "source": "what each engine has left of its window, and when the next one opens",
+      "value": "lo que le queda a cada motor de su ventana, y cuándo se abre la siguiente"
+    },
+    "tip.language": {
+      "source": "switches every word on this screen between English and Spanish",
+      "value": "cambia todas las palabras de esta pantalla entre inglés y español"
+    },
+    "tip.help": {
+      "source": "the whole cheat sheet, every key at once",
+      "value": "la chuleta entera, todas las teclas a la vez"
+    },
+    "tip.quit": {
+      "source": "closes the cockpit; the runs it started carry on without it",
+      "value": "cierra la cabina; las ejecuciones que arrancó siguen sin ella"
+    },
+    "tip.back": {
+      "source": "goes back one screen, and on the board clears whatever is filtering it",
+      "value": "vuelve una pantalla atrás, y en el tablero limpia lo que lo esté filtrando"
+    },
+    "tip.nothing": {
+      "source": "nothing in this window answers {key}",
+      "value": "nada en esta ventana responde a {key}"
+    },
+    "help.verbs.title": {
+      "source": "🎛️ 2. WHAT YOU CAN DO TO A TASK",
+      "value": "🎛️ 2. LO QUE PUEDES HACERLE A UNA TAREA"
+    },
+    "help.live.supervisor": {
+      "source": "The supervisor: what it has said about the board, and the line you answer it on",
+      "value": "El supervisor: lo que ha dicho sobre el tablero, y la línea donde le respondes"
+    },
+    "msg.cli_ended_on_task": {
+      "source": "the session on {id} ended",
+      "value": "la sesión sobre {id} terminó"
+    },
+    "msg.session_filed": {
+      "source": "{n} turns of that session are now in {id}",
+      "value": "{n} turnos de esa sesión ya están en {id}"
+    },
+    "msg.session_filed_one": {
+      "source": "what was said in that session is now in {id}",
+      "value": "lo que se dijo en esa sesión ya está en {id}"
+    },
+    "msg.session_not_filed": {
+      "source": "the session on {id} could not be read back: {err}",
+      "value": "no se pudo traer la sesión sobre {id}: {err}"
+    },
+    "menu.head_panes": {
+      "source": "the panes of this task",
+      "value": "los paneles de esta tarea"
+    },
+    "menu.head_verbs": {
+      "source": "what can be done to it",
+      "value": "lo que se puede hacer con ella"
+    },
+    "menu.title_detail": {
+      "source": "{id} — where to look, and what can be done",
+      "value": "{id} — dónde mirar, y lo que se puede hacer"
     }
   }
 }

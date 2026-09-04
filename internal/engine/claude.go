@@ -31,15 +31,8 @@ func (Claude) Name() string { return "claude" }
 // records one, so a person can carry it on.
 func (Claude) CanResume() bool { return true }
 
-// Models returns the models claude supports.
-func (Claude) Models() []Choice {
-	return []Choice{
-		{ID: "", Label: "default"},
-		{ID: "opus", Label: "opus"},
-		{ID: "sonnet", Label: "sonnet"},
-		{ID: "haiku", Label: "haiku"},
-	}
-}
+// Models returns the models claude supports, from claudemodels.go.
+func (Claude) Models() []Choice { return claudeModels }
 
 // Efforts returns the effort levels claude supports.
 func (Claude) Efforts() []Choice {

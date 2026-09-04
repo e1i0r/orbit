@@ -31,7 +31,12 @@ import (
 const columnGap = 2
 
 // markGlyph is what the cursor's row is marked with, in the gutter.
-const markGlyph = "▸"
+//
+// It is a chevron rather than the triangle a fold is drawn with. The two sit
+// side by side on any screen whose rows fold — the gutter mark, then the
+// section's own arrow — and drawn with the same glyph they read as one
+// stutter rather than as two different facts about the row.
+const markGlyph = "❯"
 
 // drawRow lays one task out under the column plan.
 //

@@ -124,17 +124,17 @@ func (m Model) logEntryLines(e view.Entry, i, w int) ([]string, bool) {
 	lead := clockCells + 2 + phaseCells + 2 + lipgloss.Width(word) + 3
 	availW := max(20, w-lead-lipgloss.Width(foldShut)-2)
 
-	// Wrapped to the measure and then cut to it: a tool call is written down
-	// as the arguments it was made with and JSON has no spaces to wrap at,
-	// so a row can come back from the wrap longer than it was wrapped to.
+	// Wrapped to the measure, and the wrap breaks what has no break in it:
+	// a tool call is written down as the arguments it was made with, and a
+	// path or a JSON document has no space to wrap at. Cutting the row to
+	// the measure instead is what this did, and what was cut was then on no
+	// row at all — the fold counts rows, so it was told there was nothing to
+	// open, and the reader had no way to reach the rest of the command.
 	//
 	// The rows and not the detail itself: a detail written over two short
 	// lines fits on one row, and drawing it unwrapped would take the newline
 	// it was written with onto the screen.
 	wrapped := splitIntoLines(detail, availW)
-	for n, wl := range wrapped {
-		wrapped[n] = fit(wl, availW)
-	}
 
 	if len(wrapped) <= 1 {
 		return []string{prefix + strings.Repeat(" ", lipgloss.Width(foldShut)) + Paint(Dim).Render(wrapped[0])}, false
@@ -241,12 +241,17 @@ func (m Model) logDetail(e view.Entry) string {
 		return strings.TrimSpace(e.Engine + " " + e.Model)
 	case view.EntryToolCall:
 		if e.Text != "" {
-			return formatLogTool(e.Tool, e.Text)
+			return view.ToolLine(e.Tool, e.Text)
 		}
 
 		return e.Tool
 	case view.EntryRefused:
-		return e.Tool + ": " + firstLine(e.Text)
+		// The whole of what was refused, and not its first line. The row is
+		// wrapped and folded like every other row here, so a reason written
+		// over three lines is three rows under an arrow — cutting it at the
+		// first break put the rest of it on no row at all, and left the row
+		// with nothing to open.
+		return e.Tool + ": " + e.Text
 	case view.EntryGatePassed, view.EntryGateFailed, view.EntryRetried:
 		if e.Gate != "" {
 			return e.Gate
@@ -260,46 +265,6 @@ func (m Model) logDetail(e view.Entry) string {
 	}
 
 	return e.Said()
-}
-
-func formatLogTool(tool, args string) string {
-	head := firstLine(args)
-	if strings.HasPrefix(head, "{") {
-		if idx := strings.Index(head, `"command"`); idx >= 0 {
-			if after := strings.Index(head[idx:], `:"`); after >= 0 {
-				val := head[idx+after+2:]
-				if end := strings.Index(val, `"`); end >= 0 {
-					head = val[:end]
-				}
-			}
-		} else if idx := strings.Index(head, `"path"`); idx >= 0 {
-			if after := strings.Index(head[idx:], `:"`); after >= 0 {
-				val := head[idx+after+2:]
-				if end := strings.Index(val, `"`); end >= 0 {
-					head = val[:end]
-				}
-			}
-		}
-	}
-
-	if head != "" {
-		return tool + ": " + head
-	}
-
-	return tool
-}
-
-// firstLine is everything up to the first line break. A multi-line Text on a
-// one-line row would take the rest of the pane with it, and a carriage
-// return would put the rest of it on top of the row it is already on.
-//
-// SplitN and not Cut: this package may not slice a string, and Cut answers
-// with two more values than the cut is asking for.
-func firstLine(s string) string {
-	head := strings.SplitN(s, "\n", 2)[0]
-	head = strings.SplitN(head, "\r", 2)[0]
-
-	return strings.TrimSpace(head)
 }
 
 // clock is the wall time an entry was written, or nothing at all when the

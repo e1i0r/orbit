@@ -37,6 +37,7 @@ import (
 // rather than by assumption.
 func newEngines() map[string]engine.Engine {
 	return map[string]engine.Engine{
+		"agy":      engine.NewAgy(),
 		"claude":   engine.NewClaude(),
 		"codex":    engine.NewCodex(),
 		"opencode": engine.NewOpenCode(),
@@ -227,6 +228,14 @@ func choices(from []engine.Choice) []ui.ChoiceInfo {
 // written the steps for yet — better than three lines of somebody else's.
 func setupGuide(name string) func(*words.Printer) []string {
 	switch name {
+	case "agy":
+		return func(p *words.Printer) []string {
+			return []string{
+				p.T("engine.setup.agy.install", "1. Install the Antigravity CLI: agy is its binary"),
+				p.T("engine.setup.agy.login", "2. Run 'agy' in a terminal and sign in with your Google account"),
+				p.T("engine.setup.agy.path", "3. Ensure 'agy' is in your PATH"),
+			}
+		}
 	case "claude":
 		return func(p *words.Printer) []string {
 			return []string{
