@@ -78,7 +78,10 @@ func (m Model) barFooterChips() []barChip {
 	// where a version would be a fact about the harness rather than about
 	// orbit.
 	if mark := buildMark(m.opts.Version); mark != "" {
-		chips = append(chips, barChip{text: Paint(Dim).Render(mark)})
+		// The bar's own ink, like every other label on this line: Dim is
+		// faint grey on the bar's grey, which is a version that is there and
+		// cannot be read.
+		chips = append(chips, barChip{text: Chrome().Render(mark)})
 	}
 
 	return chips

@@ -30,6 +30,22 @@ func TestCommandsTableIntegrity(t *testing.T) {
 	}
 }
 
+// TestNoCommandIsInTheTableTwice. The table is built out of three files now
+// that one of them met the size ceiling, and a name added to the wrong one is
+// a name in the list twice: `approve` was, and the window's menu drew it in
+// two places while lookup answered from the first.
+func TestNoCommandIsInTheTableTwice(t *testing.T) {
+	seen := map[string]bool{}
+
+	for _, cmd := range commands() {
+		if seen[cmd.Name] {
+			t.Errorf("%q is in the command table twice", cmd.Name)
+		}
+
+		seen[cmd.Name] = true
+	}
+}
+
 func TestNoteSubcommandExecution(t *testing.T) {
 	root, _ := workspace(t)
 	repoDir := filepath.Join(root, "payments")
