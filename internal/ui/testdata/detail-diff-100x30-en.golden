@@ -7,24 +7,24 @@
   ┌─ 📁 File [1/1] ───────────────────────────────────────────────────────────── [▾ select / f]─┐
   │ 🔷 retry.go  +3 -0  [MODIFIED]                               (] next · [ prev · space fold) │
   └─────────────────────────────────────────────────────────────────────────────────────────────┘
- 1 file changed +3 -0  (] / [ next/prev file · f files · space collapse · r rationale · o editor)   
-                                                                                                    
-                                                                                                    
-  ┌── ▾ 🔷 retry.go +3 -0  [MODIFIED] ──────────────────────────────────────────────────── [1/1] ──┐
-  │ 💡 LLM Decision: updated logic and signatures to fulfill task requirements                      
-  ├──────────────────────────────────────────────────────────────────────────────────────────────   
-  │ @@ -28,7 +28,12 @@ func send(req *http.Request) error {                                         
-  │      resp, err := do(req)                                                                       
-  │      if err != nil {                                                                            
-  │          return err                                                                             
-  │      }                                                                                          
-  │ +    if resp.StatusCode >= 500 {                                                                
-  │ +        return backoff(req, resp)                                                              
-  │ +    }                                                                                          
-  │      return nil                                                                                 
-  │  }                                                                                              
-                                                                                                    
+ 1 file changed +3 -0  (] / [ next/prev file · f files · space collapse · r rationale · o editor)  ┃
+                                                                                                   ┃
+                                                                                                   ┃
+  ┌── ▾ 🔷 retry.go +3 -0  [MODIFIED] ──────────────────────────────────────────────────── [1/1] ──┃
+  │ 💡 LLM Decision: updated logic and signatures to fulfill task requirements                     ┃
+  ├──────────────────────────────────────────────────────────────────────────────────────────────  ┃
+  │ @@ -28,7 +28,12 @@ func send(req *http.Request) error {                                        ┃
+  │      resp, err := do(req)                                                                      ┃
+  │      if err != nil {                                                                           ┃
+  │          return err                                                                            ┃
+  │      }                                                                                         ┃
+  │ +    if resp.StatusCode >= 500 {                                                               ┃
+  │ +        return backoff(req, resp)                                                             ┃
+  │ +    }                                                                                         ┃
+  │      return nil                                                                                │
+ ↑↓ scrolls
+ ╭────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+ │ ACME-2662 · failed: gates · 31m in · careful                                                   │ 
+ ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
 
-────────────────────────────────────────────────────────────────────────────────────────────────────
- ACME-2662 · failed: gates · 31m in · careful
  [esc] back  [tab] next tab  [m] tab menu  [v] md / raw  [a] ask  [?] [q]         ⚡ autopilot ● [A]

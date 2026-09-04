@@ -66,12 +66,12 @@ func TestFrameTilesEveryTerminalItAccepts(t *testing.T) {
 		w, h     int
 		wantBody int
 	}{
-		{"a large terminal", 200, 60, 54},
-		{"a laptop", 120, 40, 34},
-		{"a half screen", 100, 30, 24},
-		{"the classic eighty by twenty-four", 80, 24, 18},
-		{"the narrowest terminal orbit draws", 60, 20, 14},
-		{"a shell pane with eight rows", 100, 8, 2},
+		{"a large terminal", 200, 60, 52},
+		{"a laptop", 120, 40, 32},
+		{"a half screen", 100, 30, 22},
+		{"the classic eighty by twenty-four", 80, 24, 16},
+		{"the narrowest terminal orbit draws", 60, 20, 12},
+		{"a shell pane with eight rows", 100, 8, 1},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -141,7 +141,8 @@ func TestFrameGivesUpTheBandBeforeTheBody(t *testing.T) {
 		h                               int
 		header, status, body, band, bar int
 	}{
-		{8, 2, 1, 2, 2, 1},
+		{9, 2, 1, 1, 4, 1},
+		{8, 2, 1, 1, 3, 1},
 		{6, 2, 0, 1, 2, 1},
 		{5, 2, 0, 1, 1, 1},
 		{4, 2, 0, 1, 0, 1},

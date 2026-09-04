@@ -133,7 +133,9 @@ func rows(h int) (header, status, body, band, bar int) {
 		h = 0
 	}
 
-	for _, claim := range []*int{&header, &body, &header, &bar, &band, &band, &status} {
+	for _, claim := range []*int{
+		&header, &body, &header, &bar, &band, &band, &status, &band, &band,
+	} {
 		if h == 0 {
 			return
 		}

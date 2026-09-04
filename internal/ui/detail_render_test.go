@@ -72,7 +72,7 @@ func wantTaskRows(t *testing.T, rows []string) {
 		t.Errorf("no row names the task the view is open on:\n%s", frame)
 	}
 
-	if strings.TrimSpace(rows[len(rows)-2]) == "" {
+	if strings.TrimSpace(rows[len(rows)-4]) == "" {
 		t.Error("the activity band is blank under the task view")
 	}
 
@@ -236,8 +236,8 @@ func TestTheMoreLineSaysWhatToDoAboutIt(t *testing.T) {
 
 	// A pane whose content fits says nothing at all, which is what the
 	// three goldens above are drawn with: the row is there and it is blank.
-	short := renderAt(t, showing(t, m, tabDiff), 100, 30)
-	if line := short[len(short)-4]; strings.TrimSpace(line) != "" {
+	short := renderAt(t, showing(t, m, tabDiff), 100, 32)
+	if line := short[len(short)-6]; strings.TrimSpace(line) != "" {
 		t.Errorf("the more line is %q over a diff that fits, want it left blank", line)
 	}
 }

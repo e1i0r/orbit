@@ -2948,8 +2948,8 @@
       "value": "coste"
     },
     "overview.execution_summary": {
-      "source": "phases",
-      "value": "fases"
+      "source": "flows",
+      "value": "flujos"
     },
     "overview.not_started": {
       "source": "task has not been started yet (press [n] to start)",
@@ -2960,8 +2960,8 @@
       "value": "ejecutando modelo..."
     },
     "overview.no_phases": {
-      "source": "no phase outputs recorded",
-      "value": "sin registros de fases todavía"
+      "source": "no flow outputs recorded",
+      "value": "sin registros de flujo todavía"
     },
     "overview.code_impact": {
       "source": "changes",
@@ -3342,8 +3342,8 @@
       "value": "git no respondió a tiempo"
     },
     "overview.phases": {
-      "source": "phases",
-      "value": "fases"
+      "source": "flows",
+      "value": "flujos"
     },
     "overview.changed": {
       "source": "changed",

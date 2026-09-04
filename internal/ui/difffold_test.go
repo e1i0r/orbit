@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/e1i0r/orbit/internal/words"
@@ -34,6 +35,8 @@ func onDiff(t *testing.T, text string) (Model, []string) {
 	t.Helper()
 
 	m, _ := openIn(t, words.For("en"), "ACME-2662", nil, text)
+	next, _ := m.Update(tea.WindowSizeMsg{Width: 100, Height: 32})
+	m = asModel(t, next)
 	m = showing(t, m, tabDiff)
 
 	return m, screenRows(m)

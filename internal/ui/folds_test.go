@@ -11,7 +11,7 @@ import (
 // foldLabels is what each section is headed with in English, which is the
 // language every window in these tests is drawn in.
 var foldLabels = map[string]string{
-	foldPhases:  "PHASES",
+	foldPhases:  "FLOWS",
 	foldChanges: "CHANGES",
 	foldDeliver: "DELIVER",
 }
@@ -67,11 +67,11 @@ func TestAFoldedSectionKeepsOnlyItsHead(t *testing.T) {
 		t.Errorf("a folded section still sets what it holds:\n%s", after)
 	}
 
-	if !strings.Contains(after, foldShut+"PHASES 3") {
+	if !strings.Contains(after, foldShut+"FLOWS 3") {
 		t.Errorf("a folded section does not say how much it is holding:\n%s", after)
 	}
 
-	if strings.Contains(before, foldOpen+"PHASES 3") {
+	if strings.Contains(before, foldOpen+"FLOWS 3") {
 		t.Errorf("an open section counts what is drawn under it anyway:\n%s", before)
 	}
 
@@ -182,9 +182,9 @@ func TestAHeadIsStillItselfAfterAScroll(t *testing.T) {
 
 	lines := screenRows(m)
 
-	y := rowOf(lines, foldOpen+"PHASES")
+	y := rowOf(lines, foldOpen+"FLOWS")
 	if y < 0 {
-		t.Fatalf("the phases head was not drawn after a scroll:\n%s", strings.Join(lines, "\n"))
+		t.Fatalf("the flows head was not drawn after a scroll:\n%s", strings.Join(lines, "\n"))
 	}
 
 	if got := m.hit(4, y); got.Kind != TargetFold || got.Key != foldPhases {

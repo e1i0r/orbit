@@ -118,6 +118,11 @@ func TestBandRowsOneAndTwoTallRegions(t *testing.T) {
 		t.Errorf("bandRows with H=2 has %d rows, want 2", len(rows))
 	}
 
+	m.frame.Band.H = 3
+	if rows := m.bandRows(); len(rows) != 3 {
+		t.Errorf("bandRows with H=3 has %d rows, want 3", len(rows))
+	}
+
 	m.frame.Band.H = 0
 	if rows := m.bandRows(); rows != nil {
 		t.Errorf("bandRows with H=0 = %v, want nil", rows)

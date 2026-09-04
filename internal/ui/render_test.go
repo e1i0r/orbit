@@ -159,7 +159,7 @@ func wantRows(t *testing.T, m Model, rows []string) {
 		break
 	}
 
-	band := rows[len(rows)-2]
+	band := rows[len(rows)-4]
 	if strings.TrimSpace(band) == "" {
 		t.Error("the activity band is blank, and a status area that goes blank reads as broken")
 	}
@@ -194,7 +194,7 @@ func TestAnAppliedFilterKeepsSayingSoAfterTheTypingStops(t *testing.T) {
 	}
 
 	rows := renderAt(t, m, 100, 30)
-	band := rows[len(rows)-2]
+	band := rows[len(rows)-4]
 	// Six of the fifteen fixture tasks are in the app repository, two of
 	// them in a band the window opens on and four in one it does not: the
 	// sentence counts what the filter let through, not what is drawn.

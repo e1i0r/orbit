@@ -13,7 +13,7 @@ import "testing"
 
 func builderModel(t *testing.T) Model {
 	t.Helper()
-	m, _ := testModel(t, 100, 30)
+	m, _ := testModel(t, 100, 32)
 
 	return m.startCreateFlow()
 }
