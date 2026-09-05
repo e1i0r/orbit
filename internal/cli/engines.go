@@ -137,6 +137,34 @@ func askSupervisorPort(s *store.Store, engines map[string]engine.Engine) func(st
 	}
 }
 
+// draftPort is one engine asked one question, with no thread and no
+// contract around it: the flow designer's third tab, which turns a sentence
+// into a draft flow.
+//
+// It is read-only and it runs in the state root rather than in a repository.
+// Writing a flow is reading a request and answering with JSON; an engine
+// that can also change the checkout would be one that can act on a sentence
+// nobody has approved yet.
+func draftPort(s *store.Store, engines map[string]engine.Engine) func(string, string) (string, error) {
+	return func(name, prompt string) (string, error) {
+		eng, err := engineNamed(engines, name)
+		if err != nil {
+			return "", err
+		}
+
+		out, err := eng.Run(context.Background(), engine.Request{
+			Prompt:      prompt,
+			Dir:         s.Root(),
+			Permissions: []string{engine.PermissionRead},
+		})
+		if err != nil {
+			return "", err
+		}
+
+		return out.Output, nil
+	}
+}
+
 // autoSupervisePort is the same engine, asked on autopilot about the tasks
 // that are waiting for somebody.
 func autoSupervisePort(s *store.Store, engines map[string]engine.Engine) func(string, []string) (string, error) {

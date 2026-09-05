@@ -80,6 +80,14 @@ type flowsState struct {
 	// for the times it is taller than the terminal.
 	picker pickerState
 	scroll int
+	// tab is which of the designer's three views is open: see flowstabs.go.
+	tab int
+	// say is the sentence the third tab turns into a flow, saying is
+	// whether an engine is out answering it, and sayNote is what the last
+	// attempt said when it did not come back with one.
+	say     string
+	saying  bool
+	sayNote string
 	// attempts is the flow's cap, carried although no field shows it: this
 	// editor rebuilds the whole flow when it saves, so what it does not hold
 	// is lost by opening a flow and saving it.

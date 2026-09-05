@@ -57,9 +57,12 @@ func (m Model) textBox(field int, content, placeholder string, rows, w int) []bu
 
 	wrapped := wrapPromptText(shown, boxWidth-4)
 
+	// The placeholder is folded like anything else in the box: it is a
+	// sentence saying what to write here, and one cut off at the edge with
+	// an ellipsis is a sentence nobody finishes reading.
 	ghost := len(wrapped) == 0
 	if ghost {
-		wrapped = []string{placeholder}
+		wrapped = wrapPromptText(placeholder, boxWidth-4)
 	}
 
 	// The tail and not the head: the caret is at the end of what has been

@@ -21,6 +21,10 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.pickerKey(msg)
 	}
 
+	if d, held := flowTabKey(msg); held {
+		return m.moveFlowTab(d), nil
+	}
+
 	p := m.opts.Words
 
 	if st.confirmDiscard {
@@ -48,6 +52,12 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 
 		st.creating = false
 
+		return m, nil
+	case st.tab == flowTabSay:
+		return m.sayKey(msg)
+	case st.tab == flowTabDiagram:
+		// The diagram is read, not typed into: the only keys it has are the
+		// ones already taken above, and the mouse, which selects a phase.
 		return m, nil
 	case (msg.Code == tea.KeyTab && msg.Mod&tea.ModShift == 0) || msg.Code == tea.KeyDown || (!isText && key.Matches(msg, m.keys.Down)):
 		// The window's Up and Down are also bound to k and j, which is

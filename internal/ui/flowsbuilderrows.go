@@ -32,6 +32,9 @@ type builderLine struct {
 	phase int // the pipeline phase it points at, or noPhase
 	// pick is the choice a picker row stands for, or noPick.
 	pick int
+	// strip is the row of tabs, whose parts are told apart by where the
+	// pointer is along it.
+	strip bool
 	// head is the label row of a field drawn over several rows, as opposed
 	// to the box under it. It is what tells a click on the instructions
 	// label from a click inside the instructions: the pills that paste,
@@ -166,12 +169,21 @@ func shrunk(over int, looping bool) boxSizes {
 	return sz
 }
 
-// builderLines is the whole form, top to bottom.
+// builderLines is the whole screen, top to bottom: the title, the tabs, and
+// whichever of them is open.
 func (m Model) builderLines(w int, sz boxSizes) []builderLine {
 	st := &m.flows
 	st.ensurePhase()
 
-	out := m.builderHead(w)
+	out := append(m.builderHead(w), m.flowTabsRow(w))
+
+	switch st.tab {
+	case flowTabDiagram:
+		return append(out, m.diagramRows(w)...)
+	case flowTabSay:
+		return append(out, m.sayRows(w, sz)...)
+	}
+
 	out = append(out, m.builderPipeline(w)...)
 	out = append(out, m.builderFieldRows(w, sz)...)
 	out = append(out, m.builderPromptRows(w, sz)...)

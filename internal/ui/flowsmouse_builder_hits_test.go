@@ -176,6 +176,8 @@ func TestHitFlowsBuilderPromptRowButtons(t *testing.T) {
 // which is still the prompt field wherever inside it the reader clicks.
 func TestHitFlowsBuilderPromptBox(t *testing.T) {
 	m := builderModel(t)
+	m.flows.field = flowFieldPrompt
+	m = m.followField()
 
 	rows := rowsOf(m, func(l builderLine) bool { return l.field == flowFieldPrompt && !l.head })
 	if len(rows) < 3 {
