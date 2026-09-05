@@ -69,6 +69,34 @@ func (s *Store) Save(f Fact) (string, error) {
 	return path, nil
 }
 
+// Replace writes a changed fact and takes the one it replaces away.
+//
+// Saving alone is not enough whenever the change moves the file. A fact with
+// no reference is filed under a slug of its own sentence and one with a scope
+// is filed under its path, so editing either writes somewhere new — and the
+// copy nobody meant to keep would go on being told and go on refusing work.
+//
+// The old one is removed after the new one is written, so a failure in the
+// middle leaves two facts rather than none: a duplicate is visible in the
+// screen that lists them, and a fact that vanished is not.
+func (s *Store) Replace(was, now Fact) (string, error) {
+	where, err := s.Save(now)
+	if err != nil {
+		return "", err
+	}
+
+	before := filepath.Join(s.dirFor(was.Scope), fileName(was))
+	if before == where {
+		return where, nil
+	}
+
+	if err := os.Remove(before); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return where, fmt.Errorf("remove the fact it replaces at %q: %w", before, err)
+	}
+
+	return where, nil
+}
+
 // Load is everything known while working in one repository: the general
 // facts, the ones of every language, and the repository's own.
 //

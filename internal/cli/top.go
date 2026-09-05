@@ -161,11 +161,12 @@ func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 		RecordSupervisor: func(by, channel, message string) error {
 			return supervisor.Record(s, "", by, channel, "", "", message)
 		},
-		Knows:    knowsPort(s, dir),
-		KnowsAll: knowsAllPort(r, s),
-		TurnFact: turnFactPort(s),
-		Learn:    learnPort(s),
-		NoteTask: notePort(r, s),
+		Knows:       knowsPort(s, dir),
+		KnowsAll:    knowsAllPort(r, s),
+		TurnFact:    turnFactPort(s),
+		ReplaceFact: replaceFactPort(s),
+		Learn:       learnPort(s),
+		NoteTask:    notePort(r, s),
 		RetractSupervisor: func(at time.Time) error {
 			return supervisor.Retract(s, at)
 		},

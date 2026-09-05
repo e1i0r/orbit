@@ -40,8 +40,8 @@ func (m Model) knowledgeRows(h, w int) []string {
 			"travels with the repository"), repo.facts, at, cw)
 	}
 
-	out = append(out, "", Paint(Dim).Render(fit(p.T("knowledge.ways",
-		"[↑↓] move · [space] turn off · [esc] back"), cw)))
+	out = append(out, "")
+	out = append(out, m.knowledgeFoot(cw)...)
 
 	return fill(rowsFit(out, w), h)
 }
@@ -195,4 +195,57 @@ func rowsFit(rows []string, w int) []string {
 	}
 
 	return rows
+}
+
+// knowledgeFoot is the line being corrected, or the ways out when nothing is.
+//
+// The two fields are drawn together rather than one at a time: what a rule
+// says and what makes it stop are one thought, and somebody adding a check is
+// reading the sentence it belongs to while they type it.
+func (m Model) knowledgeFoot(cw int) []string {
+	p := m.opts.Words
+
+	if !m.knowledge.editing {
+		return []string{Paint(Dim).Render(fit(p.T("knowledge.ways",
+			"[↑↓] move · [e] edit · [space] turn off · [esc] back"), cw))}
+	}
+
+	return []string{
+		m.factField(p.T("knowledge.field_phrase", "what it says"), factPhrase, cw),
+		m.factField(p.T("knowledge.field_check", "the check that makes it stop"), factCheck, cw),
+		"",
+		Paint(Dim).Render(fit(p.T("knowledge.editing_ways",
+			"[tab] the other field · [↵] save · [esc] leave it as it was"), cw)),
+	}
+}
+
+// factField is one line being typed into, with the caret where the next
+// character will land.
+func (m Model) factField(label string, field, cw int) string {
+	in := m.knowledge.in[field]
+
+	text := in.val
+	if field == m.knowledge.field {
+		text = withCaret(in.val, in.at)
+	}
+
+	ink := Paint(Dim)
+	if field == m.knowledge.field {
+		ink = Paint(Accent)
+	}
+
+	return fit(ink.Render(label+": ")+Text(Primary).Render(text), cw)
+}
+
+// withCaret puts the block where the caret is, which is at the end of the line
+// as often as not.
+func withCaret(s string, at int) string {
+	runes := []rune(s)
+	at = min(max(at, 0), len(runes))
+
+	if at == len(runes) {
+		return s + Paint(Accent).Render("█")
+	}
+
+	return string(runes[:at]) + Paint(Accent).Render(string(runes[at])) + string(runes[at+1:])
 }

@@ -3263,6 +3263,32 @@
       "source": "what orbit has learned about this code: the rules that stop a run, and what it is told before one",
       "value": "lo que orbit aprendió de este código: las reglas que detienen una corrida, y lo que se le dice antes de una"
     },
+    "knowledge.needs_words": {
+      "source": "a fact with no sentence says nothing",
+      "value": "un hecho sin frase no dice nada"
+    },
+    "knowledge.field_phrase": {
+      "source": "what it says",
+      "value": "qué dice"
+    },
+    "knowledge.field_check": {
+      "source": "the check that makes it stop",
+      "value": "el check que lo hace detener"
+    },
+    "knowledge.editing_ways": {
+      "source": "[tab] the other field · [↵] save · [esc] leave it as it was",
+      "value": "[tab] el otro campo · [↵] guardar · [esc] dejarlo como estaba"
+    },
+    "header.knows": {
+      "source": {
+        "one": "{n} fact",
+        "other": "{n} facts"
+      },
+      "value": {
+        "one": "{n} hecho",
+        "other": "{n} hechos"
+      }
+    },
     "knowledge.title": {
       "source": "What Orbit knows",
       "value": "Lo que Orbit sabe"
@@ -3280,8 +3306,8 @@
       "value": "viaja con el repositorio"
     },
     "knowledge.ways": {
-      "source": "[↑↓] move · [space] turn off · [esc] back",
-      "value": "[↑↓] mover · [espacio] apagar · [esc] atrás"
+      "source": "[↑↓] move · [e] edit · [space] turn off · [esc] back",
+      "value": "[↑↓] mover · [e] editar · [espacio] apagar · [esc] atrás"
     },
     "knowledge.is_off": {
       "source": "off",

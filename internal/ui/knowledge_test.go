@@ -119,3 +119,117 @@ func TestNothingKnownSaysSoRatherThanDrawingAnEmptyList(t *testing.T) {
 		t.Error("a fresh install draws an empty screen with nothing said on it")
 	}
 }
+
+// TestEOpensTheFactForEditing, with what it says already in the line: a fact
+// is corrected far more often than it is rewritten.
+func TestEOpensTheFactForEditing(t *testing.T) {
+	m := onScreen(t, knowledge.Fact{
+		Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.Human,
+		Phrase: "the fuxx tests hang sometimes",
+	})
+	// Nothing opens for editing without somewhere to save it to: typing into
+	// a line that cannot be written back is worse than not offering it.
+	m.opts.ReplaceFact = func(knowledge.Fact, knowledge.Fact) error { return nil }
+
+	m = next(t, m, tea.KeyPressMsg{Code: 'e', Text: "e"})
+	if !m.knowledge.editing {
+		t.Fatal("e did not open the fact for editing")
+	}
+
+	if got := m.knowledge.in[factPhrase].val; got != "the fuxx tests hang sometimes" {
+		t.Errorf("the line holds %q, want the sentence it is about to correct", got)
+	}
+}
+
+// TestEditingTheSentenceReplacesTheFact rather than leaving both: the file is
+// named after the sentence when nothing else names it.
+func TestEditingTheSentenceReplacesTheFact(t *testing.T) {
+	var was, now knowledge.Fact
+
+	m := onScreen(t, knowledge.Fact{
+		Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.Human, Phrase: "fuxx",
+	})
+	m.opts.ReplaceFact = func(a, b knowledge.Fact) error {
+		was, now = a, b
+
+		return nil
+	}
+
+	m = next(t, m, tea.KeyPressMsg{Code: 'e', Text: "e"})
+	m = next(t, m, tea.KeyPressMsg{Text: "y"})
+	m = next(t, m, tea.KeyPressMsg{Code: tea.KeyEnter})
+
+	if was.Phrase != "fuxx" {
+		t.Errorf("the fact replaced was %q", was.Phrase)
+	}
+
+	if now.Phrase != "fuxxy" {
+		t.Errorf("the fact written is %q, want what was typed", now.Phrase)
+	}
+
+	if m.knowledge.editing {
+		t.Error("the line stayed open after saving")
+	}
+}
+
+// TestACheckCanBeGivenToARuleThatHasNone. This is the gesture that turns a
+// sentence into a gate: the screen already says which rules cannot fire, and
+// this is where that is answered.
+func TestACheckCanBeGivenToARuleThatHasNone(t *testing.T) {
+	var now knowledge.Fact
+
+	asked := knowledge.Fact{
+		Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.Human,
+		Phrase: "coverage stays above 90%", Stops: true,
+	}
+
+	m := onScreen(t, asked)
+	m.opts.ReplaceFact = func(_, b knowledge.Fact) error {
+		now = b
+
+		return nil
+	}
+
+	m = next(t, m, tea.KeyPressMsg{Code: 'e', Text: "e"})
+	m = next(t, m, tea.KeyPressMsg{Code: tea.KeyTab})
+
+	for _, r := range "make cover" {
+		m = next(t, m, tea.KeyPressMsg{Text: string(r)})
+	}
+
+	m = next(t, m, tea.KeyPressMsg{Code: tea.KeyEnter})
+
+	if now.Check != "make cover" {
+		t.Errorf("the check written is %q", now.Check)
+	}
+
+	if now.Action() != knowledge.Stops {
+		t.Error("a rule that was given a check still only warns")
+	}
+}
+
+// TestEscapeLeavesTheFactAsItWas.
+func TestEscapeLeavesTheFactAsItWas(t *testing.T) {
+	saved := false
+
+	m := onScreen(t, knowledge.Fact{
+		Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.Human, Phrase: "as it was",
+	})
+	m.opts.ReplaceFact = func(knowledge.Fact, knowledge.Fact) error {
+		saved = true
+
+		return nil
+	}
+
+	m = next(t, m, tea.KeyPressMsg{Code: 'e', Text: "e"})
+	m = next(t, m, tea.KeyPressMsg{Text: "x"})
+	m = next(t, m, tea.KeyPressMsg{Code: tea.KeyEscape})
+
+	if saved {
+		t.Error("escape saved the change it was cancelling")
+	}
+
+	if m.knowledge.editing || m.screen != screenKnowledge {
+		t.Errorf("escape left editing=%v screen=%v", m.knowledge.editing, m.screen)
+	}
+}

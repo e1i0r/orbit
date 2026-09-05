@@ -169,10 +169,10 @@ func onlyOf(repoPath string, facts []knowledge.Fact) []knowledge.Fact {
 	return kept
 }
 
-// turnFactPort writes a fact back with whatever was changed about it.
+// turnFactPort switches a fact off, or on again.
 //
-// Save writes to the path the scope and the reference name, which is where
-// the fact already is, so this overwrites rather than leaving a second copy.
+// Nothing about it moves, so Save writes over the file the fact is already
+// in: the path is made from the scope and the reference, and neither changed.
 func turnFactPort(s *store.Store) func(knowledge.Fact) error {
 	return func(f knowledge.Fact) error {
 		where, err := knowledge.NewStore(s.Root()).Save(f)
@@ -181,6 +181,24 @@ func turnFactPort(s *store.Store) func(knowledge.Fact) error {
 		}
 
 		logger.Info("cli/learn", "turned %q at %q, off=%v", f.Phrase, where, f.Off)
+
+		return nil
+	}
+}
+
+// replaceFactPort writes a corrected fact and takes away the one it replaces.
+//
+// Replace and not Save, because correcting the sentence moves the file: a
+// fact with no reference is filed under a slug of what it says. Saving alone
+// would leave the old copy behind, still told and still refusing work.
+func replaceFactPort(s *store.Store) func(was, now knowledge.Fact) error {
+	return func(was, now knowledge.Fact) error {
+		where, err := knowledge.NewStore(s.Root()).Replace(was, now)
+		if err != nil {
+			return err
+		}
+
+		logger.Info("cli/learn", "replaced %q with %q at %q", was.Phrase, now.Phrase, where)
 
 		return nil
 	}

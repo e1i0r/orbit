@@ -202,3 +202,76 @@ func TestAFactWrittenByHandIsRead(t *testing.T) {
 		t.Errorf("the scope was read as %+v, want the directory it was filed in", got[0].Scope)
 	}
 }
+
+// TestChangingASentenceDoesNotLeaveTheOldOneBehind.
+//
+// A fact with no reference is filed under a slug of its own sentence, so
+// editing the sentence writes to a different path. Saving alone would leave
+// both, and the one nobody meant to keep would go on being told.
+func TestChangingASentenceDoesNotLeaveTheOldOneBehind(t *testing.T) {
+	state, repo := roots(t)
+	s := NewStore(state)
+
+	was := Fact{
+		Scope:  Scope{Kind: Repo, Repo: repo},
+		Source: Human,
+		Phrase: "the fuxx tests hang sometimes",
+	}
+
+	if _, err := s.Save(was); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	now := was
+	now.Phrase = "the fuzz tests hang sometimes"
+
+	if _, err := s.Replace(was, now); err != nil {
+		t.Fatalf("Replace: %v", err)
+	}
+
+	got, err := s.Load(repo)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+
+	if len(got) != 1 {
+		phrases := make([]string, 0, len(got))
+		for _, f := range got {
+			phrases = append(phrases, f.Phrase)
+		}
+
+		t.Fatalf("the repository holds %d facts: %v", len(got), phrases)
+	}
+
+	if got[0].Phrase != now.Phrase {
+		t.Errorf("the fact says %q, want the sentence it was changed to", got[0].Phrase)
+	}
+}
+
+// TestReplacingInPlaceKeepsTheOneFile, so that turning a fact off does not
+// depend on the sentence having stayed the same.
+func TestReplacingInPlaceKeepsTheOneFile(t *testing.T) {
+	state, repo := roots(t)
+	s := NewStore(state)
+
+	was := Fact{Scope: Scope{Kind: Repo, Repo: repo}, Source: Human, Ref: "REF-9", Phrase: "no UPDATE in ledger"}
+	if _, err := s.Save(was); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	now := was
+	now.Off = true
+
+	if _, err := s.Replace(was, now); err != nil {
+		t.Fatalf("Replace: %v", err)
+	}
+
+	got, err := s.Load(repo)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+
+	if len(got) != 1 || !got[0].Off {
+		t.Errorf("the repository holds %d facts and the first is off=%v", len(got), len(got) > 0 && got[0].Off)
+	}
+}
