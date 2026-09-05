@@ -14,7 +14,10 @@ package ui
 // where a fact is edited.
 
 import (
+	"strconv"
 	"strings"
+
+	"github.com/charmbracelet/x/ansi"
 
 	"github.com/e1i0r/orbit/internal/knowledge"
 )
@@ -46,14 +49,41 @@ func (m Model) knownSide(h, w int) []string {
 		return nil
 	}
 
-	stops, warns := split(m.supervisor.knows)
+	rules, warns := split(m.supervisor.knows)
 
-	rows := make([]string, 0, h)
-	rows = append(rows, Paint(Dim).Render(m.opts.Words.T("known.side", "What Orbit knows")), "")
-	rows = append(rows, m.sideSection(m.opts.Words.T("known.rules", "Rules"), stops)...)
+	rows := []string{Paint(Dim).Render(m.opts.Words.T("known.side", "What Orbit knows")), ""}
+	rows = append(rows, m.sideSection(m.opts.Words.T("known.rules", "Rules"), rules)...)
 	rows = append(rows, m.sideSection(m.opts.Words.T("known.aware", "Aware"), warns)...)
 
-	return rows
+	return m.cutSide(rows, h, len(m.supervisor.knows))
+}
+
+// cutSide keeps the side inside the screen and says what it left out.
+//
+// A column that quietly stops listing is worse than a short one: whoever
+// reads it believes they have seen everything Orbit knows, and the rules
+// past the bottom are exactly the ones nobody finds out about. The rules are
+// drawn first, so they are the last thing given up for room.
+//
+// What is cut is not lost — the Knowledge screen lists all of it, and this
+// says how many are waiting there.
+func (m Model) cutSide(rows []string, h, facts int) []string {
+	if len(rows) <= h {
+		return rows
+	}
+
+	kept := rows[:max(h-1, 0)]
+	shown := 0
+
+	for _, row := range kept {
+		if strings.HasPrefix(ansi.Strip(row), "  ") {
+			shown++
+		}
+	}
+
+	return append(kept, Paint(Dim).Render(
+		m.opts.Words.T("known.more", "{n} more, in the Knowledge screen",
+			about("n", strconv.Itoa(max(facts-shown, 1))))))
 }
 
 // sideFits is whether the side is drawn: there is something to say, and the

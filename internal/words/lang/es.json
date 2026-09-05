@@ -3255,6 +3255,10 @@
       "source": "Supervisor & Cockpit Memory",
       "value": "Supervisor y Memoria del Cockpit"
     },
+    "known.more": {
+      "source": "{n} more, in the Knowledge screen",
+      "value": "{n} m\u00e1s, en la pantalla Knowledge"
+    },
     "known.no_check": {
       "source": "no check yet",
       "value": "sin check todavía"

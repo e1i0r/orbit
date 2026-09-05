@@ -3,6 +3,7 @@ package ui
 // What Orbit knows, down the side of the supervisor screen.
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -178,5 +179,44 @@ func TestTheThreadIsNotCutByTheSide(t *testing.T) {
 			t.Errorf("the side cut the thread short: %q", ansi.Strip(row))
 			break
 		}
+	}
+}
+
+// TestTheSideSaysWhatItCouldNotFit.
+//
+// Twenty facts do not fit down the side of a thirty row terminal, and the
+// rows past the bottom were dropped where nobody could see them go. A column
+// that quietly stops listing is worse than a short one: somebody reading it
+// believes they have seen what Orbit knows.
+func TestTheSideSaysWhatItCouldNotFit(t *testing.T) {
+	many := make([]knowledge.Fact, 0, 30)
+	for i := range 30 {
+		many = append(many, known(fmt.Sprintf("fact number %02d", i), knowledge.Scope{Kind: knowledge.General}))
+	}
+
+	m := knowing(t, 140, many...)
+
+	rows := m.knownSide(24, 140)
+	if len(rows) > 24 {
+		t.Errorf("the side drew %d rows into 24", len(rows))
+	}
+
+	drawn := strings.Join(rows, "\n")
+	if !strings.Contains(ansi.Strip(drawn), "more") {
+		t.Errorf("the side dropped what did not fit without saying so:\n%s", ansi.Strip(drawn))
+	}
+}
+
+// TestTheRulesSurviveTheCut. What stops the work is what somebody most needs
+// to know is standing, so it is the last thing given up for room.
+func TestTheRulesSurviveTheCut(t *testing.T) {
+	facts := []knowledge.Fact{stopper("the one rule", knowledge.Scope{Kind: knowledge.General})}
+	for i := range 30 {
+		facts = append(facts, known(fmt.Sprintf("aware %02d", i), knowledge.Scope{Kind: knowledge.General}))
+	}
+
+	drawn := ansi.Strip(strings.Join(knowing(t, 140, facts...).knownSide(12, 140), "\n"))
+	if !strings.Contains(drawn, "the one rule") {
+		t.Errorf("the rule was cut before the aware ones:\n%s", drawn)
 	}
 }
