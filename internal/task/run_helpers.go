@@ -7,6 +7,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/knowledge"
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/store"
 )
@@ -75,20 +76,20 @@ func fedOutput(p flow.Phase, prev string) string {
 //
 // It is written in Markdown because the answer is asked for in Markdown, and
 // a prompt that asks in one shape for another is asking twice.
-func prompt(t Task, p flow.Phase, notes []string, prevOutput string, others []string, tried ...gateRefusal) string {
-	return build(t, p, false, notes, nil, prevOutput, others, tried...)
+func prompt(t Task, p flow.Phase, knows []knowledge.Fact, notes []string, prevOutput string, others []string, tried ...gateRefusal) string {
+	return build(t, p, false, knows, notes, nil, prevOutput, others, tried...)
 }
 
 // promptFor is prompt for a phase whose place in the flow is known, which is
 // the one thing that decides whether it is asked for the story: the last
 // phase is the only one that can tell how the task ended.
-func promptFor(t Task, f flow.Flow, n int, notes, reviews []string, prevOutput string, others []string, tried ...gateRefusal) string {
+func promptFor(t Task, f flow.Flow, n int, knows []knowledge.Fact, notes, reviews []string, prevOutput string, others []string, tried ...gateRefusal) string {
 	p := f.Phases[n-1]
 
-	return build(t, p, n == len(f.Phases), notes, reviews, prevOutput, others, tried...)
+	return build(t, p, n == len(f.Phases), knows, notes, reviews, prevOutput, others, tried...)
 }
 
-func build(t Task, p flow.Phase, last bool, notes, reviews []string, prevOutput string, others []string, tried ...gateRefusal) string {
+func build(t Task, p flow.Phase, last bool, knows []knowledge.Fact, notes, reviews []string, prevOutput string, others []string, tried ...gateRefusal) string {
 	var b strings.Builder
 
 	fmt.Fprintf(&b, "# %s\n\n%s\n\n", t.ID, strings.TrimSpace(t.Text))
@@ -107,6 +108,8 @@ func build(t Task, p flow.Phase, last bool, notes, reviews []string, prevOutput 
 	}
 
 	b.WriteString(refusals(tried))
+
+	b.WriteString(whatIsKnown(knows))
 
 	if len(notes) > 0 {
 		b.WriteString("\n## Operator notes\n\n")

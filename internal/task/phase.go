@@ -188,7 +188,7 @@ func phaseRefused(phase string, n int, r engine.StreamRefusal) record.Event {
 // what is written here is gate.failed and nothing else. The events that end
 // a phase are written by whoever decides it is over.
 func runGates(ctx context.Context, s *store.Store, t Task, p flow.Phase, n int, wt string, out engine.Result) (*gateRefusal, error) {
-	for _, g := range p.Gates {
+	for _, g := range gatesOf(p, factsFor(s, t)) {
 		cmd := exec.CommandContext(ctx, "sh", "-c", g.Command)
 		cmd.Dir = wt
 		combined, err := cmd.CombinedOutput()

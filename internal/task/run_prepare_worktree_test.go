@@ -28,7 +28,7 @@ func TestPromptAndCapturedHelpers(t *testing.T) {
 	// 1. Full prompt with notes, instructions, previous output
 	notes := []string{"First note", "Second note"}
 
-	fullPrompt := prompt(tk, p, notes, "Previous output text", nil)
+	fullPrompt := prompt(tk, p, nil, notes, "Previous output text", nil)
 	if !strings.Contains(fullPrompt, "Main task body") ||
 		!strings.Contains(fullPrompt, "Extra phase prompt") ||
 		!strings.Contains(fullPrompt, "Previous output text") ||
