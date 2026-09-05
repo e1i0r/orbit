@@ -50,7 +50,7 @@ var layers = map[string][]string{
 	// task and no engine, so nothing here can decide anything about a run
 	// or reach the state root to find one.
 	"internal/db":  {"internal/record"},
-	"internal/cli": {"internal/board", "internal/engine", "internal/export", "internal/flow", "internal/logger", "internal/mcp", "internal/migrate", "internal/quota", "internal/repo", "internal/store", "internal/supervisor", "internal/task", "internal/tracker", "internal/ui", "internal/view", "internal/words"},
+	"internal/cli": {"internal/board", "internal/engine", "internal/export", "internal/flow", "internal/knowledge", "internal/logger", "internal/mcp", "internal/migrate", "internal/quota", "internal/repo", "internal/store", "internal/supervisor", "internal/task", "internal/tracker", "internal/ui", "internal/view", "internal/words"},
 	// internal/logger is on internal/engine's list for the one thing this
 	// package does that nothing else in Orbit does: it starts somebody
 	// else's program. What that cost, how long it took and which of the
@@ -65,7 +65,13 @@ var layers = map[string][]string{
 	// migration — nothing imports it but the front door that triggers it.
 	"internal/export": {"internal/db", "internal/record", "internal/store"},
 	"internal/flow":   {},
-	"internal/logger": {},
+	// internal/knowledge is what Orbit has learned: a fact, its scope and
+	// where it came from. It imports nothing of Orbit's and that is the
+	// point — the sentence an agent is told has to be traceable to a source,
+	// and a package that could reach the record or the store could decide
+	// things about a run instead of describing one.
+	"internal/knowledge": {},
+	"internal/logger":    {},
 	// internal/mcp is the widest list on this map, and it is the same width
 	// as internal/cli's for the same reason: it is a second front door onto
 	// the very functions the command line calls, so it reaches internal/task
@@ -129,7 +135,11 @@ var layers = map[string][]string{
 	// do is not widened at all: the log is a second copy of what the record
 	// already took, written after the record took it, and no reader of Orbit
 	// decides anything from it.
-	"internal/task":    {"internal/engine", "internal/flow", "internal/logger", "internal/record", "internal/repo", "internal/store"},
+	// internal/knowledge is on internal/task's list because this is where a
+	// fact reaches a model: the prompt of a phase, which this package
+	// writes. It is a read — internal/task tells the engine what is known
+	// and decides nothing about it.
+	"internal/task":    {"internal/engine", "internal/flow", "internal/knowledge", "internal/logger", "internal/record", "internal/repo", "internal/store"},
 	"internal/tracker": {},
 	// internal/logger is on internal/ui's list for one reason: the window is
 	// where a failure a reader saw arrives, and a failure nobody wrote down
