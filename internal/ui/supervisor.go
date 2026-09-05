@@ -187,7 +187,7 @@ func (m Model) sendSupervisorMessage(text string) (Model, tea.Cmd) {
 
 	m = m.syncSupervisor()
 	m.supervisor.follow = true
-	m.supervisorBusy = true
+	m.supervisorBusy, m.supervisorAt = true, m.now
 
 	eng := m.dialEngine(m.knobs.Engine)
 

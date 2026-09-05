@@ -143,6 +143,12 @@ type Options struct {
 	// AskSupervisor asks the active engine to process and reply to the supervisor thread.
 	AskSupervisor func(engineName, prompt string) (string, error)
 
+	// Draft asks an engine one question and nothing else: no thread, no
+	// history, no contract but the prompt it is given. The designer's third
+	// tab turns a sentence into a flow with it, and a window whose build
+	// left it nil says so rather than pretending the tab is there.
+	Draft func(engineName, model, prompt string) (string, error)
+
 	// AutoSupervise triggers the supervisor autonomously for tasks needing attention.
 	AutoSupervise func(engineName string, taskIDs []string) (string, error)
 

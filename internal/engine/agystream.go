@@ -89,12 +89,13 @@ func (u *agyUsage) usage() Usage {
 // subscription is being charged is not on this stream.
 func ParseAgyStream(r io.Reader, onEvent func(StreamEvent)) (Result, error) {
 	var (
-		out      Result
-		streamed []string
-		answer   string
-		stepped  Usage
-		total    Usage
-		found    bool
+		out     Result
+		said    strings.Builder
+		notes   []string
+		answer  string
+		stepped Usage
+		total   Usage
+		found   bool
 	)
 
 	lines, err := scanJSONLines(r, func(line []byte) {
@@ -111,7 +112,19 @@ func ParseAgyStream(r io.Reader, onEvent func(StreamEvent)) (Result, error) {
 		case "step_update":
 			found = true
 			stepped = addUsage(stepped, ev.Step.Usage.usage())
-			streamed = append(streamed, agyStep(&out, ev, onEvent)...)
+			text, note := agyStep(&out, ev, onEvent)
+
+			switch {
+			case note:
+				notes = append(notes, text)
+			case text != "":
+				// Written on, and not appended to a list joined by blank
+				// lines: the answer arrives in pieces that are not
+				// paragraphs, and one that ended mid-word came back as
+				// "feed_outpu\n\nt" — a field name nobody typed, in JSON
+				// that would not parse.
+				said.WriteString(text)
+			}
 		case "result":
 			found = true
 			total = ev.Result.Usage.usage()
@@ -132,7 +145,7 @@ func ParseAgyStream(r io.Reader, onEvent func(StreamEvent)) (Result, error) {
 	// The result line repeats the whole answer the steps arrived in pieces
 	// of, so it is the fallback rather than the last paragraph: added to
 	// what was streamed it would write every answer down twice.
-	out.Output = strings.TrimSpace(strings.Join(streamed, "\n\n"))
+	out.Output = strings.TrimSpace(strings.Join(append(notes, said.String()), "\n\n"))
 	if out.Output == "" {
 		out.Output = answer
 	}
@@ -151,7 +164,7 @@ func ParseAgyStream(r io.Reader, onEvent func(StreamEvent)) (Result, error) {
 // it stops — so a tool is recorded on the first of those and the rest are
 // read for how it ended. Recording it on every state would draw one command
 // in the timeline twice.
-func agyStep(out *Result, ev agyEvent, onEvent func(StreamEvent)) []string {
+func agyStep(out *Result, ev agyEvent, onEvent func(StreamEvent)) (text string, note bool) {
 	step := ev.Step
 
 	if step.Type == "tool" && step.State == "ACTIVE" {
@@ -159,7 +172,7 @@ func agyStep(out *Result, ev agyEvent, onEvent func(StreamEvent)) []string {
 		out.ToolCalls = append(out.ToolCalls, call)
 		emit(onEvent, StreamEvent{Type: "tool_call", ToolCall: call})
 
-		return nil
+		return "", false
 	}
 
 	if step.Type == "tool" && step.State == "ERROR" {
@@ -168,23 +181,27 @@ func agyStep(out *Result, ev agyEvent, onEvent func(StreamEvent)) []string {
 			out.Refusals = append(out.Refusals, ref)
 			emit(onEvent, StreamEvent{Type: "refusal", Refusal: ref})
 
-			return nil
+			return "", false
 		}
 
 		if msg := strings.TrimSpace(step.Info.Error.Message); msg != "" {
-			return []string{msg}
+			return msg, true
 		}
 
-		return nil
+		return "", false
 	}
 
 	// The answer arrives in pieces on the agent_response steps, and whole
 	// again on the result line that ParseAgyStream keeps in reserve.
+	//
+	// The piece is handed back exactly as it came. It used to be trimmed,
+	// which is right for a paragraph and wrong for a chunk: the spaces at
+	// the edges of one are the spaces between two words, and the run's own
+	// answer came back with the words run together and blank lines through
+	// the middle of them.
 	if step.Type == "agent_response" {
-		if text := strings.TrimSpace(step.Text); text != "" {
-			return []string{text}
-		}
+		return step.Text, false
 	}
 
-	return nil
+	return "", false
 }

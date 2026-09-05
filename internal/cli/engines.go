@@ -16,7 +16,9 @@ package cli
 
 import (
 	"context"
+	"fmt"
 	"maps"
+	"os"
 	"os/exec"
 	"slices"
 
@@ -134,6 +136,51 @@ func askSupervisorPort(s *store.Store, engines map[string]engine.Engine) func(st
 		}
 
 		return supervisor.Supervise(context.Background(), s, eng, prompt)
+	}
+}
+
+// draftPort is one engine asked one question, with no thread and no
+// contract around it: the flow designer's third tab, which turns a sentence
+// into a draft flow.
+//
+// It is read-only and it runs in the state root rather than in a repository.
+// Writing a flow is reading a request and answering with JSON; an engine
+// that can also change the checkout would be one that can act on a sentence
+// nobody has approved yet.
+func draftPort(engines map[string]engine.Engine) func(string, string, string) (string, error) {
+	return func(name, model, prompt string) (string, error) {
+		eng, err := engineNamed(engines, name)
+		if err != nil {
+			return "", err
+		}
+
+		// An empty directory of its own, thrown away afterwards.
+		//
+		// Two engines — agy and opencode — refuse to run a phase narrower
+		// than repo, because their headless runs cannot enforce anything
+		// narrower and they say so rather than recording a posture that is
+		// not real. So a draft cannot be asked for read-only everywhere,
+		// and asking for repo in the state root would put a model that was
+		// asked for JSON in reach of the record. Here it can write all it
+		// likes into a directory with nothing in it.
+		dir, err := os.MkdirTemp("", "orbit-draft-")
+		if err != nil {
+			return "", fmt.Errorf("make a scratch directory for the draft: %w", err)
+		}
+
+		defer func() { _ = os.RemoveAll(dir) }() //nolint:errcheck // a temporary directory the OS will take back
+
+		out, err := eng.Run(context.Background(), engine.Request{
+			Prompt:      prompt,
+			Model:       model,
+			Dir:         dir,
+			Permissions: []string{engine.PermissionRead, engine.PermissionRepo},
+		})
+		if err != nil {
+			return "", err
+		}
+
+		return out.Output, nil
 	}
 }
 

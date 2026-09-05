@@ -11,17 +11,18 @@ package ui
 // knowledgeChip is the header's count of what Orbit has learned.
 //
 // Beside the repositories and not instead of them: one says how much there is
-// to work on and the other how much has been learned about it. Nothing known
-// draws nothing — a zero on the header is a number nobody needs to read, and
-// a fresh install has learned nothing yet.
+// to work on and the other how much has been learned about it.
+//
+// It is drawn at zero as well, dimmed. The chip is the door to the screen
+// where facts are written and turned back on, and a door that appears only
+// once you are through it is one nobody finds: an install that has learned
+// nothing is exactly the one whose reader needs to be told the screen exists.
 func (m Model) knowledgeChip() []headerField {
-	n := m.factCount()
-	if n == 0 {
-		return nil
-	}
-
+	// Chrome at zero as well as at forty: the header shares one ink, and
+	// faint text on it is the thing theme_test.go refuses — a chip nobody
+	// can read is not a gentler way of saying nothing.
 	return []headerField{{"knowledge", Chrome().Render("🧩 " +
-		m.opts.Words.P("header.knows", n, "{n} fact", "{n} facts"))}}
+		m.opts.Words.P("header.knows", m.factCount(), "{n} fact", "{n} facts"))}}
 }
 
 // engineChip is the header's engine, which is the knob when one is set and

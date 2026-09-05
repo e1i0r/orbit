@@ -109,7 +109,7 @@ func TestBandLeftPriority(t *testing.T) {
 	}
 
 	m.confirm = confirmPostCliTask
-	if !strings.Contains(m.bandLeft(), "press y") {
+	if !strings.Contains(m.bandLeft(), "[y/n]") {
 		t.Errorf("bandLeft with confirmPostCliTask = %q, want the confirmation sentence", m.bandLeft())
 	}
 

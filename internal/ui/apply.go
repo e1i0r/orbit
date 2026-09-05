@@ -165,7 +165,7 @@ func (m Model) autoSuperviseNeedsYou() (Model, tea.Cmd) {
 		m = m.took(id+"-sup", true)
 	}
 
-	m.supervisorBusy = true
+	m.supervisorBusy, m.supervisorAt = true, m.now
 
 	eng := m.dialEngine(m.knobs.Engine)
 

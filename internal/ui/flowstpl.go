@@ -166,6 +166,10 @@ func (m Model) editFlow(name string) (Model, tea.Cmd) {
 	m.flows.phases = fl.Phases
 	m.flows.attempts = fl.Attempts
 	m.flows.activePhase = 0
+	// Editing opens on the fields: this flow already exists, and the tab
+	// that writes one from a sentence would replace every phase of it.
+	m.flows.tab = flowTabFields
+	m.flows.scroll = 0
 	m.flows.ensurePhase()
 	p := m.opts.Words
 
@@ -191,7 +195,7 @@ func (m Model) deleteFlow(name string, origin flow.Origin) (Model, tea.Cmd) {
 
 	m.flows.confirmDelete = true
 
-	return m.say(p.T("flows.confirm_delete", "delete flow {name}? [y] yes / [n] no", about("name", name))), nil
+	return m.say(p.T("flows.confirm_delete", "delete flow {name}? [y/n]", about("name", name))), nil
 }
 
 func (m Model) confirmDeleteFlow() (Model, tea.Cmd) {
@@ -319,6 +323,22 @@ func (m Model) handleFlowClick(t Target) (tea.Model, tea.Cmd) {
 	case "save":
 		m.flows.field = flowFieldSave
 		return m.handleFlowFieldAction()
+	case "say_engine":
+		m.flows.sayFocus = sayOnEngine
+		return m.openPicker(flowFieldSayEngine), nil
+	case "say_model":
+		m.flows.sayFocus = sayOnModel
+		return m.openPicker(flowFieldSayModel), nil
+	case "draft":
+		next, cmd := m.draftFlow()
+		return next, cmd
+	case "tab":
+		m.flows.tab = t.Phase
+		m.flows.scroll = 0
+
+		return m, nil
+	case "pick":
+		return m.takePick(t.Phase), nil
 	case "select_phase":
 		m.flows.activePhase = t.Phase
 		m.flows.field = flowFieldPhaseSelect

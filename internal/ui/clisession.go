@@ -112,7 +112,7 @@ func (m Model) handleCLIEnded(msg cliEndedMsg) (Model, tea.Cmd) {
 	m.confirm = confirmPostCliTask
 	m.confirmID = msg.Repo
 
-	return m.say(m.opts.Words.T("msg.confirm_post_cli", "create a task in Orbit from this session? press y to confirm, anything else to skip")), nil
+	return m.say(m.opts.Words.T("msg.confirm_post_cli", "make a task from this session? [y/n]")), nil
 }
 
 // fileSession reads the conversation back into the task, off the event

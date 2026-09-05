@@ -47,16 +47,25 @@ func TestTheHeaderSaysHowMuchOrbitKnows(t *testing.T) {
 	}
 }
 
-// TestNothingKnownDrawsNoChip. A fresh install has learned nothing, and a
-// zero on the header is a number nobody needs to read.
-func TestNothingKnownDrawsNoChip(t *testing.T) {
+// TestNothingKnownStillDrawsTheChip. The chip is the door to the screen
+// where facts are written and turned back on, and a door that appears only
+// once you are through it is one nobody finds — an install that has learned
+// nothing is exactly the one whose reader needs to be told the screen is
+// there.
+func TestNothingKnownStillDrawsTheChip(t *testing.T) {
 	m, _ := testModel(t, 140, 30)
 
 	for _, field := range m.headerFields() {
 		if field.name == "knowledge" {
-			t.Error("a window that knows nothing still drew the chip")
+			if !strings.Contains(field.text, "0") {
+				t.Errorf("the chip says %q, want the count in it", field.text)
+			}
+
+			return
 		}
 	}
+
+	t.Error("a window that knows nothing drew no way into the knowledge screen")
 }
 
 // TestTheChipIsAWayIn. Every chip on this header is something a pointer can

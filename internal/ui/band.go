@@ -28,19 +28,28 @@ func (m Model) bandLeft() string {
 		return m.filterLine()
 	case m.confirm == confirmCancel:
 		return Paint(Warn).Render(m.opts.Words.T("msg.confirm_cancel",
-			"cancel {id}? press y to confirm, anything else to leave it running",
+			"cancel {id}? [y/n]",
 			about("id", m.confirmID)))
 	case m.confirm == confirmRequeue:
 		return Paint(Warn).Render(m.opts.Words.T("msg.confirm_requeue",
-			"stop {id} and put it back in to do? press y to confirm, anything else to leave it alone",
+			"put {id} back in to do? [y/n]",
 			about("id", m.confirmID)))
 	case m.confirm == confirmSkip:
 		return Paint(Warn).Render(m.opts.Words.T("msg.confirm_skip",
-			"skip the phase {id} is waiting in front of? press y to confirm, anything else to leave it waiting",
+			"skip the phase {id} waits in front of? [y/n]",
 			about("id", m.confirmID)))
 	case m.confirm == confirmPostCliTask:
 		return Paint(Live).Render(m.opts.Words.T("msg.confirm_post_cli",
-			"create a task in Orbit from this session? press y to confirm, anything else to skip"))
+			"make a task from this session? [y/n]"))
+	// Above the message and below the questions: something that is out
+	// right now is truer than a sentence about something that finished, and
+	// a message with a life of twenty seconds would leave the reader
+	// deciding whether to wait or to kill the window: see waiting.go.
+	// The task view says the same thing in its own words, with the task's
+	// id and how long it has been in front of it, so it keeps the line
+	// there: see detailBandLine.
+	case len(m.waitingOn()) > 0 && m.screen != screenDetail:
+		return m.waitingLine()
 	// Above the message and below the questions: what the pointer is on is
 	// newer than whatever was said before it got there, and a question the
 	// window is waiting for an answer to is not something a moved pointer

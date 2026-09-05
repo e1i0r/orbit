@@ -40,7 +40,7 @@ func TestHandleFlowClickListActions(t *testing.T) {
 
 func TestHandleFlowClickBuilderButtons(t *testing.T) {
 	base, _ := testModel(t, 100, 30)
-	base = base.startCreateFlow()
+	base = base.startCreateFlow().onFields()
 
 	// "add_phase" grows the phase list and moves the field onto its name.
 	m2raw, _ := base.handleFlowClick(Target{Field: "add_phase"})
@@ -94,7 +94,7 @@ func TestHandleFlowClickBuilderButtons(t *testing.T) {
 
 func TestHandleFlowClickPromptButtons(t *testing.T) {
 	base, _ := testModel(t, 100, 30)
-	base = base.startCreateFlow()
+	base = base.startCreateFlow().onFields()
 
 	// "clear_prompt" empties whatever was there and moves the field onto it.
 	withPrompt := base
@@ -144,8 +144,10 @@ func TestHandleFlowClickPromptButtons(t *testing.T) {
 // and the click acts as if that field's own action key had been pressed.
 func TestHandleFlowClickFieldDefault(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m = m.startCreateFlow()
-	before := m.flows.cur().Engine
+	m = m.startCreateFlow().onFields()
+
+	// A dial with a list behind it opens the list, rather than stepping one
+	// along: an engine has sixty models, and sixty clicks is not a gesture.
 	m2raw, _ := m.handleFlowClick(Target{Phase: flowFieldEngine})
 
 	m2 := asModel(t, m2raw)
@@ -153,8 +155,17 @@ func TestHandleFlowClickFieldDefault(t *testing.T) {
 		t.Fatalf("expected the click to select the engine field")
 	}
 
-	if m2.flows.cur().Engine == before {
-		t.Errorf("expected clicking the engine field to cycle it, stayed %q", before)
+	if !m2.flows.picker.open || m2.flows.picker.field != flowFieldEngine {
+		t.Errorf("expected clicking the engine field to open its list, got %+v", m2.flows.picker)
+	}
+
+	// A switch with two positions still just turns over.
+	before := m.flows.cur().Wait
+	m3raw, _ := m.handleFlowClick(Target{Phase: flowFieldWait})
+
+	m3 := asModel(t, m3raw)
+	if m3.flows.cur().Wait == before {
+		t.Errorf("expected clicking the control field to turn it over, stayed %v", before)
 	}
 }
 

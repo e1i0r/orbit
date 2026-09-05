@@ -44,7 +44,7 @@ func (m Model) spinner(r Role) string {
 // not, which is why every place that can begin motion asks for the next
 // frame rather than assuming one is coming.
 func (m Model) moving() bool {
-	return m.supervisorBusy || m.anyWorking() || m.delivering.verb != "" || m.watching != nil
+	return m.supervisorBusy || m.anyWorking() || m.delivering.verb != "" || m.watching != nil || m.flows.saying
 }
 
 // anyWorking is whether any run on the board is inside a phase right now.

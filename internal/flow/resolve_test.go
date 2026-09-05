@@ -45,7 +45,7 @@ func onePhase(name string) string {
 }
 
 func TestBuiltinFlowsShip(t *testing.T) {
-	want := []string{"careful", "quick", "task", "tdd-fuzz-pr"}
+	want := []string{"careful", "coverage", "quick", "task", "tdd-fuzz-pr"}
 
 	got := BuiltinNames()
 	if strings.Join(got, ",") != strings.Join(want, ",") {
@@ -259,6 +259,7 @@ func TestListSaysWhereEachFlowCameFromAndSortsThem(t *testing.T) {
 
 	want := []Listed{
 		{Name: "careful", Origin: OriginBuiltin},
+		{Name: "coverage", Origin: OriginBuiltin},
 		{Name: "mine", Origin: OriginUser},
 		{Name: "quick", Origin: OriginBuiltin},
 		{Name: "task", Origin: OriginShadow},
@@ -272,6 +273,7 @@ func TestListSaysWhereEachFlowCameFromAndSortsThem(t *testing.T) {
 func TestListOnAStateRootWithNoFlowsOfItsOwn(t *testing.T) {
 	want := []Listed{
 		{Name: "careful", Origin: OriginBuiltin},
+		{Name: "coverage", Origin: OriginBuiltin},
 		{Name: "quick", Origin: OriginBuiltin},
 		{Name: "task", Origin: OriginBuiltin},
 		{Name: "tdd-fuzz-pr", Origin: OriginBuiltin},
@@ -293,7 +295,7 @@ func TestNamesAreBareNamesAndTheRefusalOffersThem(t *testing.T) {
 
 	got := strings.Join(Names(src), ", ")
 
-	want := "careful, mine, quick, task, tdd-fuzz-pr"
+	want := "careful, coverage, mine, quick, task, tdd-fuzz-pr"
 	if got != want {
 		t.Fatalf("Names() = %q, want %q", got, want)
 	}

@@ -9,7 +9,7 @@ import "testing"
 
 func TestHandleFlowFieldDeltaEveryCyclingField(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m = m.startCreateFlow()
+	m = m.startCreateFlow().onFields()
 	m.flows.phases = append(m.flows.phases, m.flows.phases[0])
 
 	m.flows.field = flowFieldPhaseSelect
@@ -59,7 +59,7 @@ func TestHandleFlowFieldActionDelegatesEveryCyclingField(t *testing.T) {
 	}
 	for _, f := range fields {
 		m, _ := testModel(t, 100, 30)
-		m = m.startCreateFlow()
+		m = m.startCreateFlow().onFields()
 		m.flows.phases = append(m.flows.phases, m.flows.phases[0])
 		m.flows.field = f
 		// A field action must not panic and must return some model; the
@@ -76,7 +76,7 @@ func TestHandleFlowFieldActionDelegatesEveryCyclingField(t *testing.T) {
 // action switch names no case for: enter on it does nothing.
 func TestHandleFlowFieldActionUnhandledField(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m = m.startCreateFlow()
+	m = m.startCreateFlow().onFields()
 	m.flows.field = flowFieldPrompt
 	before := m.flows.cur().Prompt
 

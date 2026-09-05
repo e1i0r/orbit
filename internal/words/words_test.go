@@ -125,6 +125,7 @@ var borrowedWholesale = map[string]string{
 	"key.supervisor":            "supervisor is supervisor",
 	"overview.action_merge_pr":  "merge and PR are what the forge calls them",
 	"upgrade.go_install_failed": "go install is the name of the command that failed",
+	"flows.until_placeholder":   "a shell command shown as an example, and a command is not translated",
 }
 
 // checkTranslated is check 7: a value identical to its source is either a

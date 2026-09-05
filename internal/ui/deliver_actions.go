@@ -2,6 +2,7 @@ package ui
 
 import (
 	"os"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 
@@ -83,6 +84,9 @@ type deliverPending struct {
 	task view.Task
 	verb string
 	cmd  string
+	// at is when it was asked for, for the line in the band that says how
+	// long it has been: see waiting.go.
+	at time.Time
 }
 
 // asked writes down that a delivery verb was pressed, and remembers it until
@@ -99,7 +103,7 @@ func (m Model) asked(taskID, verb, by, cmd string) Model {
 		return m
 	}
 
-	m.delivering = deliverPending{task: t, verb: verb, cmd: cmd}
+	m.delivering = deliverPending{task: t, verb: verb, cmd: cmd, at: m.now}
 
 	return m.deliver(t, Delivery{Verb: verb, By: by})
 }

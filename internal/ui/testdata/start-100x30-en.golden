@@ -1,11 +1,11 @@
 
- ◉ orbit    📋 To Do 4   ⚡ Running 2   💬 Needs You 3   🏁 Done 6  📦 4 repos    🧠 claude    🌐 EN
+ ◉ orbit   ~/work                                     📦 4 repos    🧩 0 facts    🧠 claude    🌐 EN
 ────────────────────────────────────────────────────────────────────────────────────────────────────
   $0.00 spent  ·  15 tasks  ·  0 events  ·  ⠋
 
  ACME-2662  Retry the webhook on 5xx                                                        payments
 
-   flow  careful                                  quick · task · tdd-fuzz-pr · careful  [+] new flow
+   flow  careful                       coverage · quick · task · tdd-fuzz-pr · careful  [+] new flow
 
    engine     claude · opus · effort:low · thinking: on          [m] model  [o] effort  [t] thinking
 

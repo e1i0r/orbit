@@ -14,7 +14,7 @@ import (
 
 func TestSaveCustomFlowNoName(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m = m.startCreateFlow()
+	m = m.startCreateFlow().onFields()
 	m.flows.flowName = "   "
 
 	m2, cmd := m.saveCustomFlow()
@@ -32,7 +32,7 @@ func TestSaveCustomFlowNoName(t *testing.T) {
 func TestSaveCustomFlowInvalid(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.opts.Flows = flowsTestDir(t.TempDir())
-	m = m.startCreateFlow()
+	m = m.startCreateFlow().onFields()
 	m.flows.flowName = "no-engine"
 	m.flows.phases[0].Engine = ""
 
@@ -54,7 +54,7 @@ func TestSaveCustomFlowMkdirAllFails(t *testing.T) {
 
 	m, _ := testModel(t, 100, 30)
 	m.opts.Flows = flowsTestDir(blocked)
-	m = m.startCreateFlow()
+	m = m.startCreateFlow().onFields()
 	m.flows.flowName = "wont-save"
 
 	m2, cmd := m.saveCustomFlow()
@@ -81,7 +81,7 @@ func TestSaveCustomFlowWriteFileFails(t *testing.T) {
 
 	m, _ := testModel(t, 100, 30)
 	m.opts.Flows = flowsTestDir(dir)
-	m = m.startCreateFlow()
+	m = m.startCreateFlow().onFields()
 	m.flows.flowName = "in-the-way"
 
 	m2, cmd := m.saveCustomFlow()
@@ -98,7 +98,7 @@ func TestSaveCustomFlowSucceeds(t *testing.T) {
 	dir := t.TempDir()
 	m, _ := testModel(t, 100, 30)
 	m.opts.Flows = flowsTestDir(dir)
-	m = m.startCreateFlow()
+	m = m.startCreateFlow().onFields()
 	m.flows.flowName = "my-new-flow"
 
 	m2, cmd := m.saveCustomFlow()
@@ -144,7 +144,7 @@ func TestAWindowWithNowhereToSaveSaysSoInsteadOfGuessing(t *testing.T) {
 	t.Setenv("ORBIT_HOME", filepath.Join(home, "elsewhere"))
 
 	m, _ := testModel(t, 100, 30)
-	m = m.startCreateFlow()
+	m = m.startCreateFlow().onFields()
 	m.flows.flowName = "home-fallback-flow"
 
 	m2, cmd := m.saveCustomFlow()
@@ -181,7 +181,7 @@ func TestAFlowNameCannotClimbOutOfTheFlowDirectory(t *testing.T) {
 	for _, name := range []string{"../escaped", "sub/escaped", ".."} {
 		m, _ := testModel(t, 100, 30)
 		m.opts.Flows = flowsTestDir(flows)
-		m = m.startCreateFlow()
+		m = m.startCreateFlow().onFields()
 		m.flows.flowName = name
 
 		if _, cmd := m.saveCustomFlow(); cmd != nil {
@@ -203,7 +203,7 @@ func TestASavedFlowIsNoWiderThanTheStateRoot(t *testing.T) {
 
 	m, _ := testModel(t, 100, 30)
 	m.opts.Flows = flowsTestDir(dir)
-	m = m.startCreateFlow()
+	m = m.startCreateFlow().onFields()
 	m.flows.flowName = "narrow"
 
 	if _, cmd := m.saveCustomFlow(); cmd != nil {

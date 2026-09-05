@@ -33,3 +33,8 @@
 !/docs/cockpit.md
 /NEXT.md
 site/install.sh
+
+# A literal ~ directory, made by a make install whose PREFIX was quoted so
+# the shell never expanded it. The 24MB binary that landed there was
+# committed once; this keeps the next slip out of the tree.
+~/

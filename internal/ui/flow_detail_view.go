@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"charm.land/lipgloss/v2"
@@ -55,36 +56,7 @@ func (m Model) flowDetailRows(h, w int) []string {
 	// 4. Phase Breakdown Cards
 	out = append(out, "")
 	out = append(out, "  "+Paint(Live).Bold(true).Render(p.T("flows.phase_breakdown", "Phases Breakdown:")))
-
-	for i, ph := range st.phases {
-		badgeText := fmt.Sprintf("%s/%s", ph.Engine, orDef(ph.Model, "default"))
-		if ph.Effort != "" && ph.Effort != "default" {
-			badgeText += " · " + p.T("flows.effort_badge", "effort: {v}", about("v", ph.Effort))
-		}
-
-		if ph.Thinking != "" && ph.Thinking != "adaptive" {
-			badgeText += " · " + p.T("flows.thinking_badge", "thinking: {v}", about("v", ph.Thinking))
-		}
-
-		if ph.FeedOutput {
-			badgeText += " · " + p.T("flows.feed_badge", "feeds output")
-		}
-
-		if ph.Wait {
-			badgeText += " · " + p.T("flows.gate_badge", "⏸ human gate")
-		}
-
-		cardHdr := fmt.Sprintf("    [%s %d: %s] (%s)",
-			p.T("flows.phase_label", "Phase"), i+1, ph.Name, badgeText)
-		out = append(out, Paint(Accent).Bold(true).Render(cardHdr))
-
-		if ph.Prompt != "" {
-			prmLines := wrapPromptText(`"`+ph.Prompt+`"`, w-14)
-			for _, pl := range prmLines {
-				out = append(out, "       "+Paint(Dim).Render(pl))
-			}
-		}
-	}
+	out = append(out, m.phaseCards(st.phases, w)...)
 
 	// 5. Actions Footer
 	out = append(out, "")
@@ -115,8 +87,16 @@ func renderFlowDiagram(phases []flow.Phase, maxW int) []string {
 	for i, ph := range phases {
 		line1 := fmt.Sprintf("%d. %s", i+1, ph.Name)
 
+		// A loop names no engine of its own — what runs is the phase inside
+		// it — so the box says how many turns it takes, where a phase says
+		// what runs it. It used to say "/def": an empty engine and a model
+		// nobody set, which reads as a phase that was never configured.
 		line2 := fmt.Sprintf("%s/%s", ph.Engine, orDef(ph.Model, "def"))
-		if ph.FeedOutput {
+		if ph.Loop != nil {
+			line2 = "↻ ×" + strconv.Itoa(ph.Loop.Max)
+		}
+
+		if runsIn(ph).FeedOutput {
 			line2 += " ➔"
 		}
 
@@ -192,6 +172,59 @@ func renderFlowDiagram(phases []flow.Phase, maxW int) []string {
 			Paint(OK).Render("  "+b.mid2),
 			Paint(Dim).Render("  "+b.bot),
 		)
+	}
+
+	return out
+}
+
+// phaseCards is one card per phase: what runs it, how it is joined to the
+// phase before, and what it is told to do.
+//
+// It is shared by the flow inspector and the designer's diagram tab, because
+// they are two windows onto the same list of phases and a second copy of
+// this would be a second answer to "what does this flow do".
+func (m Model) phaseCards(phases []flow.Phase, w int) []string {
+	var out []string
+
+	for i, ph := range phases {
+		out = append(out, m.phaseCard(i, ph, w)...)
+	}
+
+	return out
+}
+
+// phaseCard is one of them, numbered from where it sits in the flow.
+func (m Model) phaseCard(i int, ph flow.Phase, w int) []string {
+	p := m.opts.Words
+
+	if ph.Loop != nil {
+		return m.loopCard(i, ph, w)
+	}
+
+	badgeText := fmt.Sprintf("%s/%s", ph.Engine, orDef(ph.Model, "default"))
+	if ph.Effort != "" && ph.Effort != "default" {
+		badgeText += " · " + p.T("flows.effort_badge", "effort: {v}", about("v", ph.Effort))
+	}
+
+	if ph.Thinking != "" && ph.Thinking != "adaptive" {
+		badgeText += " · " + p.T("flows.thinking_badge", "thinking: {v}", about("v", ph.Thinking))
+	}
+
+	if ph.FeedOutput {
+		badgeText += " · " + p.T("flows.feed_badge", "feeds output")
+	}
+
+	if ph.Wait {
+		badgeText += " · " + p.T("flows.gate_badge", "⏸ human gate")
+	}
+
+	out := []string{Paint(Accent).Bold(true).Render(fmt.Sprintf("    [%s %d: %s] (%s)",
+		p.T("flows.phase_label", "Phase"), i+1, ph.Name, badgeText))}
+
+	if ph.Prompt != "" {
+		for _, pl := range wrapPromptText(`"`+ph.Prompt+`"`, w-14) {
+			out = append(out, "       "+Paint(Dim).Render(pl))
+		}
 	}
 
 	return out

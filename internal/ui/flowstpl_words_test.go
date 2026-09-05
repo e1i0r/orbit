@@ -20,7 +20,7 @@ import (
 // jumped a phase on its own.
 func TestEveryTemplateSaysItLoaded(t *testing.T) {
 	base, _ := testModel(t, 100, 30)
-	base = base.startCreateFlow()
+	base = base.startCreateFlow().onFields()
 
 	for _, tpl := range []string{"TDD Fuzz & PR", "TDD Cycle", "Security Audit", "Turbo Fix", "ninguna"} {
 		m := base
@@ -44,7 +44,7 @@ func TestEveryTemplateSaysItLoaded(t *testing.T) {
 // Cycle cargada (3 fases)" and a Spanish one could not have them retranslated.
 func TestTheBuilderSpeaksTheReadersLanguage(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m = m.startCreateFlow()
+	m = m.startCreateFlow().onFields()
 
 	for _, tpl := range []string{"TDD Fuzz & PR", "TDD Cycle", "Security Audit", "Turbo Fix", "ninguna"} {
 		got, _ := m.applyFlowTemplate(tpl)
@@ -70,7 +70,7 @@ func TestTheBuilderSpeaksTheReadersLanguage(t *testing.T) {
 // is the whole reason it has to be right.
 func TestAPastedPromptIsCountedInCharacters(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m = m.startCreateFlow()
+	m = m.startCreateFlow().onFields()
 
 	// Three characters, eleven bytes.
 	got := m.pastedPrompt("áé🎉")

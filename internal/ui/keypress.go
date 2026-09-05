@@ -206,7 +206,7 @@ func (m Model) askDeleteTask() (tea.Model, tea.Cmd) {
 	m.confirm = confirmDeleteTask
 	m.confirmID = r.task.ID
 
-	return m.say(m.opts.Words.T("msg.confirm_delete_task", "delete task {id}? press y or ⏎ to confirm deletion, any other key to cancel", about("id", r.task.ID))), nil
+	return m.say(m.opts.Words.T("msg.confirm_delete_task", "delete task {id}? [y/n]", about("id", r.task.ID))), nil
 }
 
 // confirmKey answers the one question the window ever asks.

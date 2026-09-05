@@ -17,6 +17,8 @@ import (
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/view"
+
+	"github.com/e1i0r/orbit/internal/flow"
 )
 
 // dialog is the model with the start dialog open on one task, reached the
@@ -144,13 +146,22 @@ func TestTheStartDialogTransitionTable(t *testing.T) {
 		},
 		msg: press("f"),
 		want: func(t *testing.T, m Model, _ tea.Cmd, _ *recorder) {
-			f := m.start.chosen()
-			if f.name != "quick" {
-				t.Fatalf("f moved to %q, want quick — the next flow after careful", f.name)
+			// The second flow the dialog offers, whichever that is: naming
+			// one here makes this test fail the day a flow ships, about
+			// something that is not what changed.
+			want, err := flow.Builtin(flow.BuiltinNames()[1])
+			if err != nil {
+				t.Fatal(err)
 			}
 
-			if len(f.flow.Phases) != 1 {
-				t.Errorf("quick draws %d phases, want 1 — the phase list follows the flow line", len(f.flow.Phases))
+			f := m.start.chosen()
+			if f.name != want.Name {
+				t.Fatalf("f moved to %q, want %q — the next flow after the first", f.name, want.Name)
+			}
+
+			if len(f.flow.Phases) != len(want.Phases) {
+				t.Errorf("%s draws %d phases, want %d — the phase list follows the flow line",
+					want.Name, len(f.flow.Phases), len(want.Phases))
 			}
 		},
 	}, {
@@ -224,8 +235,8 @@ func TestTheStartDialogTransitionTable(t *testing.T) {
 
 			cmd()
 
-			if got.id != "ACME-2662" || got.flow != "quick" {
-				t.Errorf("started %q on %q, want ACME-2662 on quick — the flow that was on screen", got.id, got.flow)
+			if want := flow.BuiltinNames()[1]; got.id != "ACME-2662" || got.flow != want {
+				t.Errorf("started %q on %q, want ACME-2662 on %q — the flow that was on screen", got.id, got.flow, want)
 			}
 
 			if want := board.Unread(m.board); got.unread != want {

@@ -59,7 +59,7 @@ func TestDeleteSelectedFlowAndDeleteFlow(t *testing.T) {
 	m.opts.Flows = flowsTestDir(dir)
 	m.flows.refresh(m.opts.Flows)
 	// Sorted: careful, quick, task, tdd-fuzz-pr, zzz-mine.
-	m.flows.sel = 4
+	m.flows.sel = len(flow.BuiltinNames()) // the reader's own, after the builtins
 
 	m2, _ = m.deleteSelectedFlow()
 	if !m2.flows.confirmDelete {
@@ -102,12 +102,14 @@ func TestConfirmDeleteFlow(t *testing.T) {
 	writeFlowFile(t, dir, "zzz-mine", `{"name":"zzz-mine","phases":[{"name":"implement","engine":"claude"}]}`)
 	m.opts.Flows = flowsTestDir(dir)
 	m.flows.refresh(m.opts.Flows)
-	m.flows.sel = 4 // careful, quick, task, tdd-fuzz-pr, zzz-mine
+	m.flows.sel = len(flow.BuiltinNames()) // the reader's own, after the builtins
 	m2, _ = m.confirmDeleteFlow()
 	wantBand(t, m2, "zzz-mine")
 
-	if m2.flows.sel != 3 {
-		t.Errorf("sel after delete = %d, want 3 (stepped back)", m2.flows.sel)
+	// The cursor steps back onto the last built-in, since what it was on is
+	// gone.
+	if want := len(flow.BuiltinNames()) - 1; m2.flows.sel != want {
+		t.Errorf("sel after delete = %d, want %d (stepped back)", m2.flows.sel, want)
 	}
 
 	if _, err := os.Stat(filepath.Join(dir, "zzz-mine.json")); !os.IsNotExist(err) {

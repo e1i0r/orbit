@@ -127,9 +127,12 @@ type Model struct {
 	help           helpState
 	supervisor     supervisorState
 	supervisorBusy bool
-	knowledge      knowledgeState
-	thread         *threadCache // the supervisor screen's last rendering: supervisorcache.go
-	delivering     deliverPending
+	// supervisorAt is when the question went out, for the line in the band
+	// that says how long it has been: see waiting.go.
+	supervisorAt time.Time
+	knowledge    knowledgeState
+	thread       *threadCache // the supervisor screen's last rendering: supervisorcache.go
+	delivering   deliverPending
 	// spinning is whether an animation frame is already on its way.
 	// The frame clock is a chain of one-shot ticks, so two starters
 	// mean two chains and a spinner that turns twice as fast for the

@@ -310,20 +310,20 @@
       "value": "{phase} {n}/{total}"
     },
     "msg.confirm_cancel": {
-      "source": "cancel {id}? press y to confirm, anything else to leave it running",
-      "value": "¿cancelar {id}? pulsa y para confirmar, cualquier otra tecla la deja en marcha"
+      "source": "cancel {id}? [y/n]",
+      "value": "¿cancelar {id}? [y/n]"
     },
     "msg.confirm_skip": {
-      "source": "skip the phase {id} is waiting in front of? press y to confirm, anything else to leave it waiting",
-      "value": "¿saltar la fase delante de la que {id} está esperando? pulsa y para confirmar, cualquier otra tecla para dejarla esperando"
+      "source": "skip the phase {id} waits in front of? [y/n]",
+      "value": "¿saltar la fase donde {id} espera? [y/n]"
     },
     "msg.confirm_requeue": {
-      "source": "stop {id} and put it back in to do? press y to confirm, anything else to leave it alone",
-      "value": "¿detener {id} y devolverla a pendientes? pulsa y para confirmar, cualquier otra tecla la deja como está"
+      "source": "put {id} back in to do? [y/n]",
+      "value": "¿devolver {id} a por hacer? [y/n]"
     },
     "msg.confirm_delete_task": {
-      "source": "delete task {id}? press y or ⏎ to confirm deletion, any other key to cancel",
-      "value": "¿eliminar la tarea {id}? pulsa y o ⏎ para confirmar, cualquier otra tecla para cancelar"
+      "source": "delete task {id}? [y/n]",
+      "value": "¿borrar la tarea {id}? [y/n]"
     },
     "msg.task_deleted": {
       "source": "task {id} deleted",
@@ -334,8 +334,8 @@
       "value": "eliminación cancelada"
     },
     "msg.confirm_post_cli": {
-      "source": "create a task in Orbit from this session? press y to confirm, anything else to skip",
-      "value": "¿crear una tarea en Orbit a partir de esta sesión? pulsa y para confirmar, cualquier otra tecla para saltar"
+      "source": "make a task from this session? [y/n]",
+      "value": "¿crear una tarea de esta sesión? [y/n]"
     },
     "msg.cli_ended": {
       "source": "interactive session ended",
@@ -2286,8 +2286,8 @@
       "value": "[⏎] inspeccionar · [n] nuevo · [e] editar · [d] borrar · {up_down} desplazar · {back} volver"
     },
     "flows.ways_out_form": {
-      "source": "[tab] field · [enter] action · {back} back",
-      "value": "[tab] campo · [enter] acción · {back} volver"
+      "source": "[tab] next field · [↑↓] move · [←→] change · [enter] do it · [shift+↵] new line · {back} back",
+      "value": "[tab] siguiente campo · [↑↓] mover · [←→] cambiar · [enter] ejecutar · [shift+↵] nueva línea · {back} volver"
     },
     "flows.saved": {
       "source": "flow {name} saved",
@@ -2318,12 +2318,28 @@
       "value": "Diseñador de Flujos (Editar: {name})"
     },
     "flows.builder_subtitle": {
-      "source": "configure phases, models, effort, thinking, input chaining and prompts",
-      "value": "configura las fases, modelos, esfuerzo, thinking, input chaining y prompts"
+      "source": "a flow is phases in order; each is an engine given instructions",
+      "value": "un flujo son fases en orden; cada una es un motor con instrucciones"
     },
     "flows.builder_pipeline_title": {
       "source": "Pipeline (Click on a phase to edit it):",
       "value": "Pipeline del Ciclo (Haz clic en una fase para editarla):"
+    },
+    "flows.loop_line": {
+      "source": "loop ×{n} until: {checks}",
+      "value": "loop ×{n} hasta: {checks}"
+    },
+    "flows.loop_badge": {
+      "source": "loop · up to {n} turns",
+      "value": "loop · hasta {n} vueltas"
+    },
+    "flows.loop_until": {
+      "source": "stops when these pass: {checks}",
+      "value": "para cuando pasen: {checks}"
+    },
+    "flows.loop_fed": {
+      "source": "reads what failed",
+      "value": "lee lo que falló"
     },
     "flows.phase_label": {
       "source": "Phase",
@@ -2338,52 +2354,52 @@
       "value": "(se detiene para un humano)"
     },
     "flows.field_template": {
-      "source": "0. Template / Preset",
-      "value": "0. Plantilla / Preset"
+      "source": "Template / Preset",
+      "value": "Plantilla / Preset"
     },
     "flows.field_flow_name": {
-      "source": "1. Flow Name",
-      "value": "1. Nombre del Flujo"
+      "source": "Flow name",
+      "value": "Nombre del flujo"
     },
     "flows.field_description": {
-      "source": "2. Purpose / Desc",
-      "value": "2. Propósito / Desc"
+      "source": "Purpose",
+      "value": "Propósito"
     },
     "flows.field_editing_phase": {
-      "source": "Editing Phase",
-      "value": "Fase en edición"
+      "source": "Editing phase",
+      "value": "Editando fase"
     },
     "flows.field_phase_name": {
-      "source": "2. Phase {n} Name",
-      "value": "2. Nombre Fase {n}"
+      "source": "Phase name",
+      "value": "Nombre de la fase"
     },
     "flows.field_engine": {
-      "source": "3. AI Engine",
-      "value": "3. Motor IA"
+      "source": "Engine",
+      "value": "Motor"
     },
     "flows.field_model": {
-      "source": "4. Model",
-      "value": "4. Modelo"
+      "source": "Model",
+      "value": "Modelo"
     },
     "flows.field_effort": {
-      "source": "5. Effort",
-      "value": "5. Esfuerzo"
+      "source": "Effort",
+      "value": "Esfuerzo"
     },
     "flows.field_thinking": {
-      "source": "6. Thinking Mode",
-      "value": "6. Modo Thinking"
+      "source": "Thinking",
+      "value": "Razonamiento"
     },
     "flows.field_feed_output": {
-      "source": "7. Feed Previous Output",
-      "value": "7. Alimentar Output Anterior"
+      "source": "Previous output",
+      "value": "Salida anterior"
     },
     "flows.field_wait": {
-      "source": "8. Phase Control",
-      "value": "8. Control de Fase"
+      "source": "When it ends",
+      "value": "Al terminar"
     },
     "flows.field_prompt": {
-      "source": "9. Prompt / Instructions",
-      "value": "9. Prompt / Instrucciones"
+      "source": "Instructions",
+      "value": "Instrucciones"
     },
     "flows.btn_paste": {
       "source": "📋 Paste",
@@ -2426,8 +2442,8 @@
       "value": "cambios descartados"
     },
     "flows.confirm_discard": {
-      "source": "discard flow changes? [y] yes / [n] no (or press Esc again)",
-      "value": "¿Descartar cambios del flujo? [y] sí / [n] no (o presiona Esc otra vez)"
+      "source": "discard changes? [y/n]",
+      "value": "¿descartar cambios? [y/n]"
     },
     "flows.phase_added": {
       "source": "phase {n} added",
@@ -2544,8 +2560,8 @@
       "value": "los flujos predeterminados no se pueden borrar"
     },
     "flows.confirm_delete": {
-      "source": "delete flow {name}? [y] yes / [n] no",
-      "value": "¿Borrar flujo {name}? [y] sí / [n] no"
+      "source": "delete flow {name}? [y/n]",
+      "value": "¿borrar el flujo {name}? [y/n]"
     },
     "flows.paste_done": {
       "source": "📋 pasted {n} chars into phase {phase}",
@@ -3291,7 +3307,7 @@
     },
     "knowledge.no_repo_here": {
       "source": "there is more than one repository here; say which with the supervisor",
-      "value": "hay m\u00e1s de un repositorio aqu\u00ed; di cu\u00e1l desde el supervisor"
+      "value": "hay más de un repositorio aquí; di cuál desde el supervisor"
     },
     "knowledge.title": {
       "source": "What Orbit knows",
@@ -3351,7 +3367,7 @@
     },
     "known.more": {
       "source": "{n} more, in the Knowledge screen",
-      "value": "{n} m\u00e1s, en la pantalla Knowledge"
+      "value": "{n} más, en la pantalla Knowledge"
     },
     "known.no_check": {
       "source": "no check yet",
@@ -3826,6 +3842,340 @@
     "engines.filter_none": {
       "source": "no model matches {typed}",
       "value": "ningún modelo coincide con {typed}"
+    },
+    "flows.group_flow": {
+      "source": "THE FLOW · what it is called and what it is for",
+      "value": "EL FLUJO · cómo se llama y para qué es"
+    },
+    "flows.group_phase": {
+      "source": "THE PHASE · one step of the pipeline",
+      "value": "LA FASE · un paso del pipeline"
+    },
+    "flows.group_engine": {
+      "source": "WHO RUNS IT",
+      "value": "QUIÉN LA EJECUTA"
+    },
+    "flows.group_wiring": {
+      "source": "HOW IT JOINS THE PHASE BEFORE",
+      "value": "CÓMO SE ENGANCHA CON LA FASE ANTERIOR"
+    },
+    "flows.repeat_no": {
+      "source": "runs once",
+      "value": "corre una vez"
+    },
+    "flows.repeat_yes": {
+      "source": "repeats ↻",
+      "value": "repite ↻"
+    },
+    "flows.field_is_loop": {
+      "source": "Repeat until it passes",
+      "value": "Repetir hasta que pase"
+    },
+    "flows.feed_off": {
+      "source": "starts fresh",
+      "value": "empieza de cero"
+    },
+    "flows.feed_on": {
+      "source": "takes the last output",
+      "value": "recibe la salida anterior"
+    },
+    "flows.wait_auto": {
+      "source": "carries on",
+      "value": "sigue"
+    },
+    "flows.empty_field": {
+      "source": "(empty)",
+      "value": "(vacío)"
+    },
+    "flows.field_turns": {
+      "source": "turns at most",
+      "value": "vueltas como máximo"
+    },
+    "flows.turns_hint": {
+      "source": "← → to change",
+      "value": "← → para cambiar"
+    },
+    "flows.field_until": {
+      "source": "stops when all pass",
+      "value": "para cuando todo pasa"
+    },
+    "flows.until_hint": {
+      "source": "one per line — name: command",
+      "value": "una por línea — nombre: comando"
+    },
+    "flows.until_placeholder": {
+      "source": "tests: go test ./...",
+      "value": "tests: go test ./..."
+    },
+    "flows.repeats_up_to": {
+      "source": "↻ up to {n}×",
+      "value": "↻ hasta {n}×"
+    },
+    "flows.no_engine": {
+      "source": "no engine",
+      "value": "sin motor"
+    },
+    "flows.hint_template": {
+      "source": "a starting point: picking one fills the phases below, which you can then change",
+      "value": "un punto de partida: al elegir uno se llenan las fases de abajo, que luego puedes cambiar"
+    },
+    "flows.hint_name": {
+      "source": "what you will pick this flow by when you start a task",
+      "value": "con este nombre elegirás el flujo al crear una tarea"
+    },
+    "flows.hint_description": {
+      "source": "what this flow is for; the list shows its first line, and shift+↵ starts another",
+      "value": "para qué sirve este flujo; la lista muestra su primera línea, y shift+↵ empieza otra"
+    },
+    "flows.hint_phase_select": {
+      "source": "the phases run in this order; the fields below are about the one selected",
+      "value": "las fases corren en este orden; los campos de abajo son de la seleccionada"
+    },
+    "flows.hint_phase_name": {
+      "source": "the name is what the board shows while this phase runs",
+      "value": "el nombre es lo que el tablero muestra mientras corre esta fase"
+    },
+    "flows.hint_is_loop": {
+      "source": "a repeating phase runs again until its checks pass, and is told what failed each time",
+      "value": "una fase que repite vuelve a correr hasta que sus checks pasen, y cada vez se le dice qué falló"
+    },
+    "flows.hint_turns": {
+      "source": "how many times it may go round before it gives up, so an impossible check cannot run all night",
+      "value": "cuántas vueltas puede dar antes de rendirse, para que un check imposible no corra toda la noche"
+    },
+    "flows.hint_until": {
+      "source": "commands, one per line, as name: command — the loop stops when every one of them exits zero",
+      "value": "comandos, uno por línea, como nombre: comando — el loop para cuando todos salen en cero"
+    },
+    "flows.hint_engine": {
+      "source": "which coding agent runs this phase",
+      "value": "qué agente de código ejecuta esta fase"
+    },
+    "flows.hint_model": {
+      "source": "the model that engine runs on; left and right walk every one it has",
+      "value": "el modelo con el que corre ese motor; izquierda y derecha recorren todos los que tiene"
+    },
+    "flows.hint_effort": {
+      "source": "how hard the model is asked to think, where the engine offers the choice",
+      "value": "cuánto se le pide pensar al modelo, donde el motor ofrece la opción"
+    },
+    "flows.hint_thinking": {
+      "source": "adaptive lets Orbit decide from the task; on and off say it outright",
+      "value": "adaptive deja que Orbit decida según la tarea; on y off lo dicen de frente"
+    },
+    "flows.hint_feed": {
+      "source": "hand this phase what the phase before it wrote, instead of starting from nothing",
+      "value": "entrégale a esta fase lo que escribió la anterior, en vez de empezar de cero"
+    },
+    "flows.hint_wait": {
+      "source": "wait stops the flow here for you to look, and nothing runs until you say so",
+      "value": "wait detiene el flujo aquí para que mires, y nada corre hasta que tú lo digas"
+    },
+    "flows.hint_prompt": {
+      "source": "what this phase is told to do; shift+↵ for a new line, and ✨ writes a first draft",
+      "value": "qué se le dice a esta fase que haga; shift+↵ para una línea nueva, y ✨ escribe un primer borrador"
+    },
+    "flows.hint_add": {
+      "source": "adds a phase after the last one",
+      "value": "agrega una fase después de la última"
+    },
+    "flows.hint_del": {
+      "source": "removes the phase being edited",
+      "value": "elimina la fase que estás editando"
+    },
+    "flows.hint_save": {
+      "source": "writes the flow to $ORBIT_HOME/flows and returns to the list",
+      "value": "escribe el flujo en $ORBIT_HOME/flows y vuelve a la lista"
+    },
+    "flows.pick_engine": {
+      "source": "Pick the engine",
+      "value": "Elige el motor"
+    },
+    "flows.pick_model": {
+      "source": "Pick the model",
+      "value": "Elige el modelo"
+    },
+    "flows.pick_effort": {
+      "source": "Pick the effort",
+      "value": "Elige el esfuerzo"
+    },
+    "flows.pick_count": {
+      "source": "{n} to choose from",
+      "value": "{n} para elegir"
+    },
+    "flows.pick_filter": {
+      "source": "type to narrow: ",
+      "value": "escribe para filtrar: "
+    },
+    "flows.pick_current": {
+      "source": "· in use",
+      "value": "· en uso"
+    },
+    "flows.pick_ways": {
+      "source": "[↑↓] move · [↵] choose · [esc] back",
+      "value": "[↑↓] mover · [↵] elegir · [esc] volver"
+    },
+    "flows.pick_default": {
+      "source": "default",
+      "value": "por defecto"
+    },
+    "flows.desc_hint": {
+      "source": "one line, or several — shift+↵ for a new one",
+      "value": "una línea, o varias — shift+↵ para otra"
+    },
+    "flows.desc_placeholder": {
+      "source": "(what is this flow for?)",
+      "value": "(¿para qué sirve este flujo?)"
+    },
+    "flows.dial_default": {
+      "source": "default",
+      "value": "por defecto"
+    },
+    "flows.dial_of": {
+      "source": "{n} of {total}",
+      "value": "{n} de {total}"
+    },
+    "flows.dial_count": {
+      "source": "{total} to choose from",
+      "value": "{total} para elegir"
+    },
+    "flows.dial_open": {
+      "source": "[↵] see them all",
+      "value": "[↵] ver todos"
+    },
+    "flows.tab_fields": {
+      "source": "Fields",
+      "value": "Campos"
+    },
+    "flows.tab_diagram": {
+      "source": "Diagram",
+      "value": "Diagrama"
+    },
+    "flows.tab_say": {
+      "source": "Describe it",
+      "value": "Descríbelo"
+    },
+    "flows.tab_ways": {
+      "source": "[^←/^→] tab",
+      "value": "[^←/^→] pestaña"
+    },
+    "flows.diagram_ways": {
+      "source": "click a phase to edit it · [^←/^→] tab · [esc] back",
+      "value": "haz clic en una fase para editarla · [^←/^→] pestaña · [esc] volver"
+    },
+    "flows.say_title": {
+      "source": "Say what the flow should do",
+      "value": "Di qué debe hacer el flujo"
+    },
+    "flows.say_about": {
+      "source": "the draft lands in the other tabs to check; nothing is saved until you press Save Flow",
+      "value": "el borrador aparece en las otras pestañas para revisarlo; no se guarda nada hasta Guardar Flujo"
+    },
+    "flows.say_placeholder": {
+      "source": "e.g. implement, then go round fixing until the tests pass and coverage is over 90%, then a review that stops for me",
+      "value": "ej: implementa, luego da vueltas arreglando hasta que pasen las pruebas y la cobertura supere 90%, y al final una revisión que se detenga para mí"
+    },
+    "flows.btn_draft": {
+      "source": "✨ Draft it",
+      "value": "✨ Redactarlo"
+    },
+    "flows.say_empty": {
+      "source": "say what the flow should do first",
+      "value": "primero di qué debe hacer el flujo"
+    },
+    "flows.say_no_engine": {
+      "source": "this build cannot ask an engine for a draft",
+      "value": "esta build no puede pedirle un borrador a un motor"
+    },
+    "flows.say_no_phases": {
+      "source": "the engine answered with no phases",
+      "value": "el motor respondió sin fases"
+    },
+    "flows.say_drafted": {
+      "source": "drafted {n} phases — read them, change what is wrong, then save",
+      "value": "{n} fases redactadas — léelas, corrige lo que esté mal y guarda"
+    },
+    "flows.draft_same_as": {
+      "source": "or press ↵",
+      "value": "o pulsa ↵"
+    },
+    "flows.say_sent": {
+      "source": "asking {engine}…",
+      "value": "preguntándole a {engine}…"
+    },
+    "flows.say_failed": {
+      "source": "no draft: {err}",
+      "value": "sin borrador: {err}"
+    },
+    "flows.say_ask_engine": {
+      "source": "Ask",
+      "value": "Preguntarle a"
+    },
+    "flows.say_engine_now": {
+      "source": "the draft will be asked of {engine}",
+      "value": "el borrador se le pedirá a {engine}"
+    },
+    "flows.say_replaces": {
+      "source": "a draft replaces the {n} phases this flow already has",
+      "value": "un borrador reemplaza las {n} fases que este flujo ya tiene"
+    },
+    "flows.say_ask_model": {
+      "source": "on model",
+      "value": "con el modelo"
+    },
+    "flows.say_dial_ways": {
+      "source": "← → change · [↵] see them all",
+      "value": "← → cambia · [↵] ver todos"
+    },
+    "flows.say_model_now": {
+      "source": "the draft will be asked on {model}",
+      "value": "el borrador se pedirá con {model}"
+    },
+    "flows.say_ways2": {
+      "source": "[tab] engine · model · text · [↵] pick, or draft it from the text · [shift+↵] new line · [^V] paste · [^←/^→] tab · [esc] back",
+      "value": "[tab] motor · modelo · texto · [↵] elegir, o redactar desde el texto · [shift+↵] nueva línea · [^V] pegar · [^←/^→] pestaña · [esc] volver"
+    },
+    "flows.say_asking2": {
+      "source": "asking {engine} — {secs} · [esc] stop waiting",
+      "value": "preguntándole a {engine} — {secs} · [esc] deja de esperar"
+    },
+    "flows.say_stopped": {
+      "source": "stopped waiting; the answer will be dropped if it lands",
+      "value": "dejé de esperar; si llega la respuesta, se descarta"
+    },
+    "flows.say_drafted_mended": {
+      "source": "drafted {n} phases, after asking twice — its first answer was not JSON. Read them closely",
+      "value": "{n} fases redactadas, tras preguntar dos veces — su primera respuesta no era JSON. Léelas con cuidado"
+    },
+    "wait.draft": {
+      "source": "asking {engine} for a flow",
+      "value": "pidiéndole un flujo a {engine}"
+    },
+    "wait.supervisor": {
+      "source": "the supervisor is thinking",
+      "value": "el supervisor está pensando"
+    },
+    "wait.deliver": {
+      "source": "{verb} on {id}",
+      "value": "{verb} en {id}"
+    },
+    "wait.command": {
+      "source": "{name} is running",
+      "value": "{name} está corriendo"
+    },
+    "wait.stop": {
+      "source": "[{key}] stop waiting",
+      "value": "[{key}] deja de esperar"
+    },
+    "wait.more": {
+      "source": {
+        "one": "{n} more",
+        "other": "{n} more"
+      },
+      "value": {
+        "one": "{n} más",
+        "other": "{n} más"
+      }
     }
   }
 }

@@ -137,7 +137,7 @@ func knowsAllPort(r *board.Reader, s *store.Store) func() []knowledge.Fact {
 		if err != nil {
 			logger.Error("cli/learn", "the repositories to read facts from: %v", err)
 
-			return knowledge.InScope(facts)
+			return knowledge.Every(facts)
 		}
 
 		for _, repo := range b.RepoList {
@@ -150,7 +150,9 @@ func knowsAllPort(r *board.Reader, s *store.Store) func() []knowledge.Fact {
 			facts = append(facts, onlyOf(repo.Path, own)...)
 		}
 
-		return knowledge.InScope(facts)
+		// Every and not InScope: this is the screen where a fact is turned
+		// back on, and one that hid what was off could not.
+		return knowledge.Every(facts)
 	}
 }
 

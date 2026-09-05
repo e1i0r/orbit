@@ -48,7 +48,9 @@ func TestFlowsRowsSelectedUserFlow(t *testing.T) {
 	m, _ := testModel(t, 100, 50)
 	m.opts.Flows = flowsTestDir(dir)
 	m = m.openFlows()
-	m.flows.sel = 4 // careful, quick, task, tdd-fuzz-pr, zzz-mine
+	// The reader's own flow sorts after every built-in, so it is the row
+	// past the end of them.
+	m.flows.sel = len(flow.BuiltinNames())
 
 	rows := m.flowsRows(m.frame.Body.H, m.frame.Body.W)
 
