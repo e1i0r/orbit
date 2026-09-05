@@ -46,7 +46,12 @@ func TestTheLinesAfterTheFirstLineUpUnderIt(t *testing.T) {
 	first, second := ansi.Strip(rows[0]), ansi.Strip(rows[1])
 
 	at := func(row, word string) int {
-		return lipgloss.Width(row[:strings.Index(row, word)])
+		before, _, found := strings.Cut(row, word)
+		if !found {
+			t.Fatalf("%q does not hold %q", row, word)
+		}
+
+		return lipgloss.Width(before)
 	}
 
 	if at(first, "first") != at(second, "second") {
