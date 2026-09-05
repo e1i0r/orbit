@@ -4,45 +4,101 @@ package ui
 
 import "strings"
 
-// flowDraftPrompt is that instruction: the shape of the document, the engines
-// this build actually has, and the sentence to turn into one.
+// flowDraftPrompt is that instruction: the shape to answer in, one whole
+// example of it, and the handful of rules internal/flow will refuse a draft
+// over.
+//
+// The example is the specification. A list of field names and their types is
+// something a model reads and then improvises around; one complete document
+// of the right shape is something it copies. The rules under it are only the
+// ones a reader cannot fix by editing a field afterwards.
 //
 // The engine names are listed rather than left to the model, because a phase
 // naming an engine this machine does not have is a flow that cannot run and
-// a reader who has to work out why. The rules below are internal/flow's own,
-// spelled out here because a draft that breaks one of them comes back as a
-// decoder error rather than as a flow.
+// a reader who has to work out why.
 func flowDraftPrompt(said string, engines []string) string {
 	var b strings.Builder
 
-	b.WriteString("Write one Orbit flow as JSON, and answer with the JSON alone.\n\n")
-	b.WriteString("A flow is a list of phases run in order. Each phase is one coding agent given instructions.\n\n")
-	b.WriteString("The document:\n")
-	b.WriteString(`{"name":"short-kebab-name","description":"one line","attempts":2,"phases":[` + "\n")
-	b.WriteString(`  {"name":"1-implement","engine":"<engine>","model":"","thinking":"adaptive",` +
-		`"permissions":["repo"],"feed_output":false,"wait":false,"prompt":"what this phase is told to do"},` + "\n")
-	b.WriteString(`  {"name":"2-until-it-passes","loop":{"max":3,` +
-		`"until":[{"name":"tests","command":"go test ./..."}],` +
-		`"phases":[{"name":"fix","engine":"<engine>","feed_output":true,"permissions":["repo"],"prompt":"..."}]}}` + "\n")
-	b.WriteString("]}\n\n")
+	b.WriteString("Write one Orbit flow. Answer with one JSON object and nothing else: no prose before it, ")
+	b.WriteString("no explanation after it, no markdown fences.\n\n")
+	b.WriteString("A flow is phases run in order. Each phase is one coding agent given instructions. ")
+	b.WriteString("A phase can instead be a loop, which repeats until every one of its checks exits zero.\n\n")
 
-	b.WriteString("The rules:\n")
-	b.WriteString("- engine is one of: " + strings.Join(engines, ", ") + ". Use the same one throughout unless told otherwise.\n")
-	b.WriteString("- a phase has an engine or a loop, never both; the loop's own phases have the engine.\n")
-	b.WriteString("- a loop needs max and at least one check in until; a check is a shell command that exits non-zero when the work is not done.\n")
-	b.WriteString("- never let a model decide when a loop is finished: only a command's exit code says so.\n")
-	b.WriteString("- wait: true stops the flow for a human, and belongs on a review phase if there is one.\n")
-	b.WriteString("- permissions are read, repo or network, and ask for the least that will do.\n")
-	b.WriteString("- prompts are instructions to a coding agent, in the language the request below is written in.\n")
-	b.WriteString("- leave model and effort empty unless the request names one.\n")
-	b.WriteString("- it must be valid JSON: no comments, no trailing commas, and a line break inside a string is \\n and never a real one.\n")
-	b.WriteString("- a double quote inside a string is \\\" — a command needs no quotes around it, so write go test ./... bare.\n\n")
+	b.WriteString("Answer in exactly this shape. This is a whole example, not a fragment:\n\n")
+	b.WriteString(draftExample(firstEngine(engines)))
+
+	b.WriteString("\nThe rules a wrong answer is refused over:\n")
+	b.WriteString("- engine is one of: " + strings.Join(engines, ", ") + ", and the same one throughout unless asked otherwise.\n")
+	b.WriteString("- a phase has an engine or a loop, never both. The loop's own phases carry the engine.\n")
+	b.WriteString("- a loop needs max and at least one check in until. A check is a shell command, and its exit code is what says the work is done — never a model saying so.\n")
+	b.WriteString("- permissions are read, repo or network. Ask for the least that will do.\n")
+	b.WriteString("- wait: true stops the flow for a person, and belongs on a review phase if there is one.\n")
+	b.WriteString("- leave model and effort out unless the request names one.\n")
+	b.WriteString("- write the prompts in the language the request below is written in.\n")
+	b.WriteString("- valid JSON: no comments, no trailing commas, a line break inside a string is \\n, a quote inside a string is \\\". ")
+	b.WriteString("Commands need no quotes around them: write go test ./... bare.\n\n")
 
 	b.WriteString("The request:\n")
 	b.WriteString(said)
 	b.WriteString("\n")
 
 	return b.String()
+}
+
+// draftExample is the whole document, with a loop in it, on the engine this
+// build would run.
+func draftExample(engine string) string {
+	return `{
+  "name": "safe-refactor",
+  "description": "plan it, apply it, then go round until the tests pass",
+  "attempts": 2,
+  "phases": [
+    {
+      "name": "1-plan",
+      "engine": "` + engine + `",
+      "permissions": ["read"],
+      "prompt": "Study the code and write the plan. Change nothing."
+    },
+    {
+      "name": "2-until-it-passes",
+      "loop": {
+        "max": 3,
+        "until": [
+          {"name": "tests", "command": "go test ./..."},
+          {"name": "lint", "command": "golangci-lint run"}
+        ],
+        "phases": [
+          {
+            "name": "fix",
+            "engine": "` + engine + `",
+            "feed_output": true,
+            "permissions": ["repo"],
+            "prompt": "Read what the checks said above and fix what failed."
+          }
+        ]
+      }
+    },
+    {
+      "name": "3-review",
+      "engine": "` + engine + `",
+      "wait": true,
+      "feed_output": true,
+      "permissions": ["repo"],
+      "prompt": "Review the whole diff: what it does, what it broke, what it left."
+    }
+  ]
+}
+`
+}
+
+// firstEngine is the name the example is written on, so the model copies an
+// engine this build actually has.
+func firstEngine(engines []string) string {
+	if len(engines) == 0 {
+		return "claude"
+	}
+
+	return engines[0]
 }
 
 // mendDraftPrompt is the second ask: what came back, what the decoder said

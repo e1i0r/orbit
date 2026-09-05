@@ -10,7 +10,6 @@ package ui
 // to.
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -262,65 +261,11 @@ func (m Model) drafted(msg flowDraftedMsg) (Model, tea.Cmd) {
 		about("n", fmt.Sprint(len(fl.Phases))))), nil
 }
 
-// decodeDraft reads the flow out of whatever the engine printed.
-//
-// The braces are found rather than the whole answer parsed: engines wrap
-// JSON in prose and in fences however they feel like on the day, and a draft
-// refused because the model said "here you go" first is a draft the reader
-// has to ask for twice.
-func decodeDraft(out string) (flow.Flow, error) {
-	from := strings.Index(out, "{")
-	to := strings.LastIndex(out, "}")
-
-	if from < 0 || to <= from {
-		return flow.Flow{}, fmt.Errorf("the engine answered with no flow in it: %s", firstLine(out))
-	}
-
-	raw := asJSON(body(out)[from : to+1])
-
-	// A draft with no name of its own is given one rather than refused: the
-	// name is what the reader types next anyway, and "the flow has no name"
-	// tells them nothing about the flow they just asked for.
-	var doc map[string]any
-	if err := json.Unmarshal(raw, &doc); err != nil {
-		return flow.Flow{}, fmt.Errorf("the engine's answer is not a flow: %w", err)
-	}
-
-	name, named := doc["name"].(string)
-	if !named || strings.TrimSpace(name) == "" {
-		name = "draft"
-		doc["name"] = name
-
-		filled, err := json.Marshal(doc)
-		if err != nil {
-			return flow.Flow{}, fmt.Errorf("read the engine's answer back: %w", err)
-		}
-
-		raw = filled
-	}
-
-	return flow.Decode(raw, name)
-}
-
-// body is the answer as bytes, so the slice below is of bytes and not of a
-// string: the offsets came from strings.Index, which counts the same way.
-func body(out string) []byte { return []byte(out) }
-
-// asJSON is the answer as written when that parses, and mended when it does
-// not.
-//
-// Mending first would be a repair applied to documents that never needed one,
-// and this one — escaping raw control characters inside strings — cannot tell
-// a string that ran on from a string that was never closed. So it is the
-// fallback and not the first move.
-func asJSON(raw []byte) []byte {
-	var any map[string]any
-	if json.Unmarshal(raw, &any) == nil {
-		return raw
-	}
-
-	return mendJSON(raw)
-}
+// decodeDraft is internal/flow's reader, under the name this screen calls
+// it by. Getting a flow back out of a model's answer is about flows, and
+// living there keeps this package free of the byte-counting that reading
+// JSON needs and drawing a terminal forbids.
+func decodeDraft(out string) (flow.Flow, error) { return flow.Draft(out) }
 
 // firstLine is enough of an answer to say what went wrong without printing a
 // page of it into a one-line note.

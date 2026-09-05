@@ -233,3 +233,29 @@ func TestAnAnswerThatIsNotJSONIsSentBack(t *testing.T) {
 		t.Errorf("a valid answer was asked for again: asks=%d mended=%v", asks, got.mended)
 	}
 }
+
+// TestTheDraftSaysWhatItIsDoing, in the bar, both when it is sent and when
+// it comes back with nothing. A gesture whose effect cannot be seen is one
+// the reader presses again — and behind this one is a run they pay for.
+func TestTheDraftSaysWhatItIsDoing(t *testing.T) {
+	m := builderModel(t)
+	m.flows.tab = flowTabSay
+	m.flows.say = "implementa y revisa"
+	m.opts.Draft = func(engineName, model, prompt string) (string, error) { return "{}", nil }
+
+	sent, _ := m.draftFlow()
+	if sent.message == "" {
+		t.Error("nothing was said in the bar when the draft was sent")
+	}
+
+	if !sent.flows.saying {
+		t.Error("the tab does not say it is waiting on the engine")
+	}
+
+	back, _ := sent.drafted(flowDraftedMsg{id: sent.flows.sayID, err: errDraftForTest})
+
+	got := asModel(t, back)
+	if got.message == "" || got.flows.saying {
+		t.Errorf("a refused draft left the bar at %q and saying=%v", got.message, got.flows.saying)
+	}
+}
