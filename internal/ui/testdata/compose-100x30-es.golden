@@ -5,7 +5,7 @@
 
    [ 1 Manual ]     2 Desde URL (Linear / Jira / GitHub)   
 
-❯  flujo:           ● 🛡️ careful     🚀 quick     ⚡ task     ⚡ tdd-fuzz-pr     ➕ Nuevo   (←/→ pa…
+❯  flujo:           ● 🛡️ careful     ⚡ coverage     🚀 quick     ⚡ task     ⚡ tdd-fuzz-pr     ➕…
                   ↳ 1 implement · claude/opus
                     2 review · claude/opus · ⏸ te espera
                     3 fix · claude/opus

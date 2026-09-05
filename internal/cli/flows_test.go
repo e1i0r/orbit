@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/flow"
 )
 
 // userFlow drops one flow file into $ORBIT_HOME/flows, which is the whole
@@ -46,12 +48,17 @@ func TestFlowsListsTheBuiltinsOnACleanStateRoot(t *testing.T) {
 		t.Fatalf("flows exited %d: %s", code, errOut)
 	}
 
+	// Counted against the builtins themselves rather than against a number
+	// written here: a number goes stale the day a flow ships, and the test
+	// that fails then is not about the thing that changed.
+	builtins := flow.BuiltinNames()
+
 	lines := listed(t, out)
-	if len(lines) != 4 {
-		t.Fatalf("flows listed %d flows, want the four builtins:\n%s", len(lines), out)
+	if len(lines) != len(builtins) {
+		t.Fatalf("flows listed %d flows, want the %d builtins:\n%s", len(lines), len(builtins), out)
 	}
 
-	for _, name := range []string{"careful", "quick", "task", "tdd-fuzz-pr"} {
+	for _, name := range builtins {
 		if !strings.Contains(out, name+" (built in)") {
 			t.Errorf("flows does not offer %q as a built-in:\n%s", name, out)
 		}
@@ -67,8 +74,8 @@ func TestAFlowFileIsListedBesideTheBuiltins(t *testing.T) {
 		t.Fatalf("flows exited %d: %s", code, errOut)
 	}
 
-	if lines := listed(t, out); len(lines) != 5 {
-		t.Fatalf("flows listed %d flows, want five:\n%s", len(lines), out)
+	if want := len(flow.BuiltinNames()) + 1; len(listed(t, out)) != want {
+		t.Fatalf("flows listed %d flows, want the builtins and mine:\n%s", len(listed(t, out)), out)
 	}
 
 	if !strings.Contains(out, "mine (yours)") {
@@ -88,7 +95,7 @@ func TestAFileThatShadowsABuiltinSaysSo(t *testing.T) {
 		t.Fatalf("flows exited %d: %s", code, errOut)
 	}
 
-	if lines := listed(t, out); len(lines) != 4 {
+	if len(listed(t, out)) != len(flow.BuiltinNames()) {
 		t.Fatalf("a shadowed built-in was listed twice:\n%s", out)
 	}
 

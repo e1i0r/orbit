@@ -1,0 +1,52 @@
+{
+  "name": "coverage",
+  "description": "Implement, then go round until the tests pass and coverage clears 90%, reading each failure before trying again. Assumes a Go repository; change the two checks for another language.",
+  "attempts": 2,
+  "phases": [
+    {
+      "name": "1-implement",
+      "engine": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "prompt": "Implement what the task asks for, with the tests that prove it. Write the tests first where you can.",
+      "permissions": ["repo"]
+    },
+    {
+      "name": "2-until-it-passes",
+      "loop": {
+        "max": 3,
+        "until": [
+          {
+            "name": "tests",
+            "command": "go test ./..."
+          },
+          {
+            "name": "coverage over 90%",
+            "command": "p=$(mktemp) && go test ./... -coverprofile=\"$p\" >/dev/null && go tool cover -func=\"$p\" | awk '/^total:/{gsub(\"%\",\"\",$3); print \"total coverage: \" $3 \"%\"; if ($3+0 < 90) exit 1}'"
+          }
+        ],
+        "phases": [
+          {
+            "name": "fix",
+            "engine": "claude",
+            "model": "sonnet",
+            "effort": "high",
+            "feed_output": true,
+            "prompt": "The checks above did not pass. Read what they printed, fix the cause rather than the symptom, and add the tests that were missing. Say what you learned from the failure.",
+            "permissions": ["repo"]
+          }
+        ]
+      }
+    },
+    {
+      "name": "3-review",
+      "engine": "claude",
+      "model": "opus",
+      "effort": "high",
+      "feed_output": true,
+      "wait": true,
+      "prompt": "Review the whole diff: what it does, what it broke, what it left. Say plainly whether the coverage was earned with real tests or padded.",
+      "permissions": ["repo"]
+    }
+  ]
+}

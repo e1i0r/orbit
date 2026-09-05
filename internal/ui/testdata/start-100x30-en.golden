@@ -5,7 +5,7 @@
 
  ACME-2662  Retry the webhook on 5xx                                                        payments
 
-   flow  careful                                  quick · task · tdd-fuzz-pr · careful  [+] new flow
+   flow  careful                       coverage · quick · task · tdd-fuzz-pr · careful  [+] new flow
 
    engine     claude · opus · effort:low · thinking: on          [m] model  [o] effort  [t] thinking
 

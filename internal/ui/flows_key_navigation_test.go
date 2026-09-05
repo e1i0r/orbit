@@ -66,7 +66,9 @@ func TestFlowsListKeyConfirmDelete(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.opts.Flows = flowsTestDir(dir)
 	m = m.openFlows()
-	m.flows.sel, m.flows.confirmDelete = 4, true
+	// The last row: the flows are sorted by name and zzz-mine is after every
+	// built-in, so it is the one past the end of them.
+	m.flows.sel, m.flows.confirmDelete = len(flow.BuiltinNames()), true
 
 	// A key other than yes cancels the deletion.
 	m2raw, _ := m.flowsListKey(press("x"))
@@ -95,9 +97,11 @@ func TestFlowsListKeyNavigationBoundaries(t *testing.T) {
 		t.Errorf("Up at sel=-1 moved: %d", asModel(t, m2raw).flows.sel)
 	}
 
-	// Down walks off the end of the descriptor list and no further. The
-	// fixture ships exactly four built-in flows and no flow directory.
-	const builtinCount = 4
+	// Down walks off the end of the descriptor list and no further. Counted
+	// against the builtins themselves: a number written here goes stale the
+	// day a flow ships, and the test that fails then is not about what
+	// changed.
+	builtinCount := len(flow.BuiltinNames())
 
 	m2 := asModel(t, m2raw)
 	for range builtinCount + 2 {

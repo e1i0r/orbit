@@ -57,6 +57,11 @@ func (m Model) flowDetailRows(h, w int) []string {
 	out = append(out, "  "+Paint(Live).Bold(true).Render(p.T("flows.phase_breakdown", "Phases Breakdown:")))
 
 	for i, ph := range st.phases {
+		if ph.Loop != nil {
+			out = append(out, m.loopCard(i, ph, w)...)
+			continue
+		}
+
 		badgeText := fmt.Sprintf("%s/%s", ph.Engine, orDef(ph.Model, "default"))
 		if ph.Effort != "" && ph.Effort != "default" {
 			badgeText += " · " + p.T("flows.effort_badge", "effort: {v}", about("v", ph.Effort))

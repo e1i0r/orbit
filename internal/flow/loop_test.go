@@ -77,3 +77,48 @@ func TestAPhaseIsAnEngineOrALoopAndNotBoth(t *testing.T) {
 		t.Error("a phase that is both an engine and a loop was accepted")
 	}
 }
+
+// TestTheCoverageFlowIsALoopThatCanRun.
+//
+// The loop block shipped and nothing used it: no built-in declared one, so
+// the whole feature was a function nobody could invoke. This is the worked
+// example — and it has to be one that runs, not one that reads well.
+func TestTheCoverageFlowIsALoopThatCanRun(t *testing.T) {
+	f, err := Builtin("coverage")
+	if err != nil {
+		t.Fatalf("Builtin(coverage): %v", err)
+	}
+
+	var loops int
+
+	for _, p := range f.Phases {
+		if p.Loop == nil {
+			continue
+		}
+
+		loops++
+
+		if p.Loop.Max < 1 {
+			t.Errorf("the loop goes round %d times", p.Loop.Max)
+		}
+
+		if len(p.Loop.Until) == 0 {
+			t.Error("the loop has nothing that says it can stop")
+		}
+
+		if len(p.Loop.Phases) == 0 {
+			t.Error("the loop repeats no phases")
+		}
+
+		// Fed the checks' output, or the next turn is the same turn again.
+		for _, inner := range p.Loop.Phases {
+			if !inner.FeedOutput {
+				t.Errorf("the phase %q inside the loop is not told what failed", inner.Name)
+			}
+		}
+	}
+
+	if loops != 1 {
+		t.Errorf("the coverage flow declares %d loops, want one", loops)
+	}
+}

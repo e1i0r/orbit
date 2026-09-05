@@ -2325,6 +2325,22 @@
       "source": "Pipeline (Click on a phase to edit it):",
       "value": "Pipeline del Ciclo (Haz clic en una fase para editarla):"
     },
+    "flows.loop_line": {
+      "source": "loop \u00d7{n} until: {checks}",
+      "value": "loop \u00d7{n} hasta: {checks}"
+    },
+    "flows.loop_badge": {
+      "source": "loop · up to {n} turns",
+      "value": "loop · hasta {n} vueltas"
+    },
+    "flows.loop_until": {
+      "source": "stops when these pass: {checks}",
+      "value": "para cuando pasen: {checks}"
+    },
+    "flows.loop_fed": {
+      "source": "reads what failed",
+      "value": "lee lo que falló"
+    },
     "flows.phase_label": {
       "source": "Phase",
       "value": "Fase"

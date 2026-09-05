@@ -89,6 +89,11 @@ func (m Model) flowsRows(h, w int) []string {
 		}
 
 		for idx, ph := range fl.Phases {
+			if ph.Loop != nil {
+				out = append(out, fit(m.loopLine(idx, ph), w))
+				continue
+			}
+
 			engineModel := ph.Engine
 			if ph.Model != "" {
 				engineModel += " / " + ph.Model
