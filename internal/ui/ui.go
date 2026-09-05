@@ -146,6 +146,7 @@ type Model struct {
 	help           helpState
 	supervisor     supervisorState
 	supervisorBusy bool
+	thread         *threadCache // the supervisor screen's last rendering: supervisorcache.go
 	delivering     deliverPending
 	// spinning is whether an animation frame is already on its way.
 	// The frame clock is a chain of one-shot ticks, so two starters
@@ -308,6 +309,7 @@ func New(o Options) Model {
 		expanded: map[view.Band]bool{view.NeedsYou: true, view.Running: true},
 		totals:   map[string]int{},
 		taken:    map[string]bool{},
+		thread:   &threadCache{},
 	}
 	if o.Width > 0 && o.Height > 0 {
 		m = m.resize(o.Width, o.Height)

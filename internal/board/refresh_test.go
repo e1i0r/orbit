@@ -1,6 +1,8 @@
 package board
 
 import (
+	"os"
+	"path/filepath"
 	"slices"
 	"testing"
 
@@ -131,5 +133,30 @@ func TestARecordThatWillNotOpenIsARefusalAndNotAnEmptyBoard(t *testing.T) {
 
 	if b.Health.Errs != 1 {
 		t.Errorf("Health.Errs = %d, want the one failure to be counted", b.Health.Errs)
+	}
+}
+
+// TestTheEnumerationDoesNotOpenTheRepositoriesItFinds is the cost of the
+// two second clock.
+//
+// Opening a repository is three git subprocesses, and the enumeration ran
+// them for every repository under the root every time it re-walked: thirteen
+// checkouts came to thirty-nine processes a rescan, for a remote and a
+// branch name the board never draws. It asks for the path and the name now,
+// which the walk already knows.
+//
+// The fixture is what proves it: a directory with a .git that git cannot
+// open at all. An enumeration that still counts it is one that never asked.
+func TestTheEnumerationDoesNotOpenTheRepositoriesItFinds(t *testing.T) {
+	s, work := newRoot(t)
+
+	if err := os.MkdirAll(filepath.Join(work, "payments", ".git"), 0o700); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+
+	b, _ := refresh(t, NewReader(s, work))
+	if b.Repos != 1 {
+		t.Errorf("the board is of %d repositories, want 1 — the walk found it and "+
+			"nothing had to run git to say so", b.Repos)
 	}
 }

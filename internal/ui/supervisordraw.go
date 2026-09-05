@@ -105,9 +105,27 @@ func (m Model) supervisorBody(maxRows, cw int) []string {
 	return rows
 }
 
-// threadLines renders every message, and says which row each one starts on
+// threadLines is every message rendered, and which row each one starts on
 // so that picking one can scroll to it.
+//
+// It renders once per change rather than once per frame: what came back last
+// time is given back whenever the thread, the width and the way it is being
+// read are all still what they were. supervisorcache.go says why that is
+// worth doing.
 func (m Model) threadLines(cw int) (rows []string, starts []int) {
+	key := m.threadKeyAt(cw)
+	if rows, starts, held := m.thread.rowsFor(key); held {
+		return rows, starts
+	}
+
+	rows, starts = m.renderThread(cw)
+	m.thread.keep(key, rows, starts)
+
+	return rows, starts
+}
+
+// renderThread draws every message in the thread, whatever it costs.
+func (m Model) renderThread(cw int) (rows []string, starts []int) {
 	p := m.opts.Words
 	if len(m.supervisor.lines) == 0 && !m.supervisorBusy {
 		empty := p.T("supervisor.empty", "No messages in supervisor thread yet. Type a briefing or instruction below.")

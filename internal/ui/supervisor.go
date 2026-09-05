@@ -69,6 +69,10 @@ func (m Model) syncSupervisor() Model {
 	lines, err := m.opts.Reader.SupervisorLog()
 	m.supervisor.lines = lines
 	m.supervisor.err = err
+	// What was drawn is not this thread any more. Saying so outright is
+	// what makes a retraction a change: taking a turn back adds a line
+	// rather than removing one, so the length alone would not.
+	m.thread.invalidate()
 
 	return m
 }
