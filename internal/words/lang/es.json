@@ -4110,6 +4110,14 @@
     "flows.draft_same_as": {
       "source": "or press ↵",
       "value": "o pulsa ↵"
+    },
+    "flows.say_sent": {
+      "source": "asking {engine} for a draft — this takes as long as one of its runs",
+      "value": "pidiéndole un borrador a {engine} — tarda lo mismo que una de sus corridas"
+    },
+    "flows.say_failed": {
+      "source": "no draft: {err}",
+      "value": "sin borrador: {err}"
     }
   }
 }

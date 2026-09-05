@@ -3,6 +3,7 @@ package ui
 // The designer's three tabs.
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -11,6 +12,9 @@ import (
 
 	"github.com/e1i0r/orbit/internal/flow"
 )
+
+// errDraftForTest is what an engine that could not answer looks like here.
+var errDraftForTest = errors.New("agy: no quota source")
 
 // TestTheTabsAreThreeViewsOfOneFlow: what the diagram draws is what the
 // fields hold, without anything being copied between them.
@@ -210,5 +214,24 @@ func TestTheDraftButtonIsOne(t *testing.T) {
 
 	if !asked {
 		t.Error("the engine was never asked")
+	}
+}
+
+// TestTheDraftSaysWhatItIsDoing, in the bar, both when it is sent and when
+// it comes back with nothing.
+func TestTheDraftSaysWhatItIsDoing(t *testing.T) {
+	m := builderModel(t)
+	m.flows.tab = flowTabSay
+	m.flows.say = "implementa y revisa"
+	m.opts.Draft = func(engineName, prompt string) (string, error) { return "{}", nil }
+
+	sent, _ := m.draftFlow()
+	if sent.message == "" {
+		t.Error("nothing was said in the bar when the draft was sent")
+	}
+
+	back, _ := sent.drafted(flowDraftedMsg{err: errDraftForTest})
+	if got := asModel(t, back); got.message == "" || got.flows.saying {
+		t.Errorf("a refused draft left the bar at %q and saying=%v", got.message, got.flows.saying)
 	}
 }

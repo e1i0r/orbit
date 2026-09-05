@@ -74,6 +74,12 @@ func (m Model) draftFlow() (Model, tea.Cmd) {
 	engineName := m.dialEngine("")
 	ask := m.opts.Draft
 
+	// Said in the bar as well as on the tab: a gesture that starts
+	// something the reader cannot see finishing is a gesture they press
+	// twice.
+	m = m.say(p.T("flows.say_sent", "asking {engine} for a draft — this takes as long as one of its runs",
+		about("engine", engineName)))
+
 	return m, func() tea.Msg {
 		out, err := ask(engineName, flowDraftPrompt(said, m.engineNames()))
 		if err != nil {
@@ -94,14 +100,14 @@ func (m Model) drafted(msg flowDraftedMsg) (Model, tea.Cmd) {
 	if msg.err != nil {
 		m.flows.sayNote = msg.err.Error()
 
-		return m, nil
+		return m.say(p.T("flows.say_failed", "no draft: {err}", about("err", firstLine(msg.err.Error())))), nil
 	}
 
 	fl := msg.flow
 	if len(fl.Phases) == 0 {
 		m.flows.sayNote = p.T("flows.say_no_phases", "the engine answered with no phases")
 
-		return m, nil
+		return m.say(m.flows.sayNote), nil
 	}
 
 	m.flows.phases = fl.Phases
