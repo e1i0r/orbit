@@ -25,15 +25,32 @@ type flowDraftedMsg struct {
 	err  error
 }
 
+// The three things on the say tab, in the order tab moves between them.
+const (
+	sayOnEngine = iota
+	sayOnModel
+	sayOnText
+	sayThings
+)
+
 // sayKey is every key on this tab.
 func (m Model) sayKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	st := &m.flows
 
 	switch {
+	case msg.Code == tea.KeyTab && msg.Mod&tea.ModShift == 0:
+		st.sayFocus = (st.sayFocus + 1) % sayThings
+		return m, nil
+	case msg.Code == tea.KeyTab || msg.Code == tea.KeyUp:
+		st.sayFocus = (st.sayFocus - 1 + sayThings) % sayThings
+		return m, nil
+	case msg.Code == tea.KeyDown:
+		st.sayFocus = (st.sayFocus + 1) % sayThings
+		return m, nil
 	case msg.Code == tea.KeyLeft:
-		return m.turnSayEngine(-1), nil
+		return m.turnSayDial(-1), nil
 	case msg.Code == tea.KeyRight:
-		return m.turnSayEngine(1), nil
+		return m.turnSayDial(1), nil
 	case st.saying:
 		// While the engine is out there is nothing to type into: what
 		// comes back replaces the phases, and a sentence written in the
@@ -42,6 +59,10 @@ func (m Model) sayKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case msg.Code == tea.KeyEnter && (msg.Mod&tea.ModShift != 0 || msg.Mod&tea.ModAlt != 0):
 		st.say += "\n"
 		return m, nil
+	case msg.Code == tea.KeyEnter && st.sayFocus == sayOnEngine:
+		return m.openPicker(flowFieldSayEngine), nil
+	case msg.Code == tea.KeyEnter && st.sayFocus == sayOnModel:
+		return m.openPicker(flowFieldSayModel), nil
 	case msg.Code == tea.KeyEnter:
 		return m.draftFlow()
 	case msg.Code == tea.KeyBackspace:
@@ -65,12 +86,32 @@ func (m Model) sayEngineName() string {
 	return m.dialEngine(m.flows.sayEngine)
 }
 
-// turnSayEngine moves that choice along, and says which one it landed on:
-// the draft costs a run, and the reader should know whose.
-func (m Model) turnSayEngine(d int) Model {
-	m.flows.sayEngine = nextOption(m.engineNames(), m.sayEngineName(), d)
+// sayModelName is the model that engine is asked on, which is its own
+// default until somebody picks one.
+func (m Model) sayModelName() string {
+	return m.flows.sayModel
+}
 
-	return m.say(m.opts.Words.T("flows.say_engine_now", "the draft will be asked of {engine}",
+// turnSayDial moves whichever of the two dials the reader is on, and says
+// where it landed: the draft costs a run, and they should know whose.
+//
+// Changing the engine forgets the model, because a model is one engine's own
+// name for it — opus is claude's, and agy has never heard of it.
+func (m Model) turnSayDial(d int) Model {
+	p := m.opts.Words
+
+	if m.flows.sayFocus == sayOnModel {
+		mdls, _ := m.modelsFor(m.sayEngineName())
+		m.flows.sayModel = nextOption(append([]string{""}, mdls...), m.flows.sayModel, d)
+
+		return m.say(p.T("flows.say_model_now", "the draft will be asked on {model}",
+			about("model", orDef(m.flows.sayModel, p.T("flows.dial_default", "default")))))
+	}
+
+	m.flows.sayEngine = nextOption(m.engineNames(), m.sayEngineName(), d)
+	m.flows.sayModel = ""
+
+	return m.say(p.T("flows.say_engine_now", "the draft will be asked of {engine}",
 		about("engine", m.sayEngineName())))
 }
 
@@ -90,7 +131,7 @@ func (m Model) draftFlow() (Model, tea.Cmd) {
 	m.flows.saying = true
 	m.flows.sayNote = ""
 
-	engineName := m.sayEngineName()
+	engineName, model := m.sayEngineName(), m.sayModelName()
 	ask := m.opts.Draft
 
 	// Said in the bar as well as on the tab: a gesture that starts
@@ -100,7 +141,7 @@ func (m Model) draftFlow() (Model, tea.Cmd) {
 		about("engine", engineName)))
 
 	return m, func() tea.Msg {
-		out, err := ask(engineName, flowDraftPrompt(said, m.engineNames()))
+		out, err := ask(engineName, model, flowDraftPrompt(said, m.engineNames()))
 		if err != nil {
 			return flowDraftedMsg{err: err}
 		}

@@ -4083,10 +4083,6 @@
       "source": "✨ Draft it",
       "value": "✨ Redactarlo"
     },
-    "flows.say_ways": {
-      "source": "[↵] draft it · [shift+↵] new line · [^V] paste · [^←/^→] tab · [esc] back",
-      "value": "[↵] redactarlo · [shift+↵] nueva línea · [^V] pegar · [^←/^→] pestaña · [esc] volver"
-    },
     "flows.say_empty": {
       "source": "say what the flow should do first",
       "value": "primero di qué debe hacer el flujo"
@@ -4119,10 +4115,6 @@
       "source": "Ask",
       "value": "Preguntarle a"
     },
-    "flows.say_engine_ways": {
-      "source": "← → to change",
-      "value": "← → para cambiar"
-    },
     "flows.say_engine_now": {
       "source": "the draft will be asked of {engine}",
       "value": "el borrador se le pedirá a {engine}"
@@ -4130,6 +4122,22 @@
     "flows.say_replaces": {
       "source": "a draft replaces the {n} phases this flow already has",
       "value": "un borrador reemplaza las {n} fases que este flujo ya tiene"
+    },
+    "flows.say_ask_model": {
+      "source": "on model",
+      "value": "con el modelo"
+    },
+    "flows.say_dial_ways": {
+      "source": "← → change · [↵] see them all",
+      "value": "← → cambia · [↵] ver todos"
+    },
+    "flows.say_model_now": {
+      "source": "the draft will be asked on {model}",
+      "value": "el borrador se pedirá con {model}"
+    },
+    "flows.say_ways2": {
+      "source": "[tab] engine · model · text · [↵] pick, or draft it from the text · [shift+↵] new line · [^V] paste · [^←/^→] tab · [esc] back",
+      "value": "[tab] motor · modelo · texto · [↵] elegir, o redactar desde el texto · [shift+↵] nueva línea · [^V] pegar · [^←/^→] pestaña · [esc] volver"
     }
   }
 }

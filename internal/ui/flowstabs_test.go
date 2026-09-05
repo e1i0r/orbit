@@ -82,7 +82,7 @@ func TestADraftLandsInTheFieldsAndIsNotSaved(t *testing.T) {
 	m.flows.say = "implementa y luego revisa"
 
 	asked := ""
-	m.opts.Draft = func(engineName, prompt string) (string, error) {
+	m.opts.Draft = func(engineName, model, prompt string) (string, error) {
 		asked = prompt
 
 		return "Here you go:\n```json\n" + `{"name":"revisado","description":"dos fases",` +
@@ -176,7 +176,7 @@ func TestTheDraftButtonIsOne(t *testing.T) {
 	m.flows.say = "implementa y revisa"
 
 	asked := false
-	m.opts.Draft = func(engineName, prompt string) (string, error) {
+	m.opts.Draft = func(engineName, model, prompt string) (string, error) {
 		asked = true
 
 		return "{}", nil
@@ -223,7 +223,7 @@ func TestTheDraftSaysWhatItIsDoing(t *testing.T) {
 	m := builderModel(t)
 	m.flows.tab = flowTabSay
 	m.flows.say = "implementa y revisa"
-	m.opts.Draft = func(engineName, prompt string) (string, error) { return "{}", nil }
+	m.opts.Draft = func(engineName, model, prompt string) (string, error) { return "{}", nil }
 
 	sent, _ := m.draftFlow()
 	if sent.message == "" {
@@ -261,7 +261,7 @@ func TestTheDraftIsAskedOfTheEngineTheReaderChose(t *testing.T) {
 	}
 
 	asked := ""
-	m.opts.Draft = func(engineName, prompt string) (string, error) {
+	m.opts.Draft = func(engineName, model, prompt string) (string, error) {
 		asked = engineName
 
 		return "{}", nil
@@ -299,5 +299,47 @@ func TestANewFlowOpensOnTheTabThatWritesIt(t *testing.T) {
 	rows := strings.Join(editing.flowsBuilderRows(editing.frame.Body.H, editing.frame.Body.W), "\n")
 	if !strings.Contains(rows, "3") {
 		t.Errorf("the tab does not say how many phases a draft would replace:\n%s", rows)
+	}
+}
+
+// TestTheDraftPicksProviderAndModel. The engine that runs tasks here is not
+// always the one set up to answer a question, and a model is one engine's
+// own name for it.
+func TestTheDraftPicksProviderAndModel(t *testing.T) {
+	m := builderModel(t)
+	m.flows.tab = flowTabSay
+	m.flows.say = "implementa y revisa"
+	m.flows.sayFocus = sayOnModel
+
+	mdls, _ := m.modelsFor(m.sayEngineName())
+	if len(mdls) == 0 {
+		t.Skip("this build's engine table has no models")
+	}
+
+	m = m.turnSayDial(1)
+	if m.flows.sayModel != mdls[0] {
+		t.Fatalf("→ on the model dial left it at %q", m.flows.sayModel)
+	}
+
+	askedEngine, askedModel := "", ""
+	m.opts.Draft = func(engineName, model, prompt string) (string, error) {
+		askedEngine, askedModel = engineName, model
+
+		return "{}", nil
+	}
+
+	_, cmd := m.draftFlow()
+	cmd()
+
+	if askedEngine != m.sayEngineName() || askedModel != mdls[0] {
+		t.Errorf("asked %q/%q, want %q/%q", askedEngine, askedModel, m.sayEngineName(), mdls[0])
+	}
+
+	// Changing the engine forgets the model, which belonged to the old one.
+	m.flows.sayFocus = sayOnEngine
+	m = m.turnSayDial(1)
+
+	if m.flows.sayModel != "" {
+		t.Errorf("the old engine's model survived at %q", m.flows.sayModel)
 	}
 }

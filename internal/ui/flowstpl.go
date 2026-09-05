@@ -324,7 +324,11 @@ func (m Model) handleFlowClick(t Target) (tea.Model, tea.Cmd) {
 		m.flows.field = flowFieldSave
 		return m.handleFlowFieldAction()
 	case "say_engine":
-		return m.turnSayEngine(1), nil
+		m.flows.sayFocus = sayOnEngine
+		return m.openPicker(flowFieldSayEngine), nil
+	case "say_model":
+		m.flows.sayFocus = sayOnModel
+		return m.openPicker(flowFieldSayModel), nil
 	case "draft":
 		next, cmd := m.draftFlow()
 		return next, cmd

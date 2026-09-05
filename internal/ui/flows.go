@@ -29,6 +29,13 @@ const (
 	flowFieldDelPhase
 	flowFieldSave
 	flowFieldCount
+
+	// The say tab's two dials. They are past the count on purpose: they are
+	// not fields of the form — tab does not stop on them and fieldsShown
+	// never lists them — but the picker is told which dial it is choosing
+	// for, and this is that name.
+	flowFieldSayEngine
+	flowFieldSayModel
 )
 
 type flowsState struct {
@@ -88,11 +95,16 @@ type flowsState struct {
 	say     string
 	saying  bool
 	sayNote string
-	// sayEngine is which engine that tab asks. Empty is the window's own
-	// default, and it is held apart from the phases' engines: which engine
-	// writes the draft and which engine runs the flow are two decisions,
-	// and the second is one the draft itself makes.
+	// sayEngine and sayModel are who that tab asks. Empty is the window's
+	// own default and the engine's own default model, and both are held
+	// apart from the phases' engines: which engine writes the draft and
+	// which engine runs the flow are two decisions, and the second is one
+	// the draft itself makes.
+	//
+	// sayFocus is which of the tab's three things the keys are aimed at.
 	sayEngine string
+	sayModel  string
+	sayFocus  int
 	// attempts is the flow's cap, carried although no field shows it: this
 	// editor rebuilds the whole flow when it saves, so what it does not hold
 	// is lost by opening a flow and saving it.

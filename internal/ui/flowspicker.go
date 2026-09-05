@@ -48,6 +48,12 @@ func (m Model) pickerChoices(field int) (ids, labels []string) {
 	eng := m.dialEngine(m.flows.edited().Engine)
 
 	switch field {
+	case flowFieldSayEngine:
+		names := m.engineNames()
+		return names, names
+	case flowFieldSayModel:
+		mdls, mdlLabels := m.modelsFor(m.sayEngineName())
+		return withDefault(m, mdls, mdlLabels)
 	case flowFieldEngine:
 		names := m.engineNames()
 		return names, names
@@ -78,6 +84,10 @@ func withDefault(m Model, ids, labels []string) (allIDs, allLabels []string) {
 // pickedNow is what that field holds at the moment.
 func (m Model) pickedNow(field int) string {
 	switch field {
+	case flowFieldSayEngine:
+		return m.sayEngineName()
+	case flowFieldSayModel:
+		return m.flows.sayModel
 	case flowFieldEngine:
 		return m.dialEngine(m.flows.edited().Engine)
 	case flowFieldModel:
@@ -120,6 +130,12 @@ func (m Model) takePick(at int) Model {
 	}
 
 	switch m.flows.picker.field {
+	case flowFieldSayEngine:
+		// The model is one engine's own name for it, so it goes with the
+		// engine it belonged to.
+		m.flows.sayEngine, m.flows.sayModel = ids[at], ""
+	case flowFieldSayModel:
+		m.flows.sayModel = ids[at]
 	case flowFieldEngine:
 		// The model and the effort are one engine's own: kept across a
 		// change of engine, they name something the new one has never

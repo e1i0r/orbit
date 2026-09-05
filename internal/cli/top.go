@@ -172,7 +172,7 @@ func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 		},
 		RecordDeliver: deliverPort(s),
 		AskSupervisor: askSupervisorPort(s, engines),
-		Draft:         draftPort(s, engines),
+		Draft:         draftPort(engines),
 		AutoSupervise: autoSupervisePort(s, engines),
 		DeleteTask:    deleteTaskPort(s),
 		Take:          takePort(r, engines),

@@ -4,6 +4,22 @@ package ui
 
 import "strconv"
 
+// sayDial is one of the tab's two dials: what it is called, where it stands,
+// and the mark when the keys are aimed at it.
+func (m Model) sayDial(on int, label, value, act string, w int) builderLine {
+	mark, lbl := "  ", pad(label, labelWidth, false)
+
+	if m.flows.sayFocus == on {
+		mark = Paint(Accent).Bold(true).Render("▸ ")
+		lbl = Paint(Accent).Bold(true).Render(lbl)
+		value += "  " + Paint(Dim).Render(m.opts.Words.T("flows.say_dial_ways", "← → change · [↵] see them all"))
+	} else {
+		lbl = Paint(Dim).Render(lbl)
+	}
+
+	return builderLine{text: fit(mark+lbl+" "+value, w), field: noField, phase: noPhase, pick: noPick, act: act}
+}
+
 // sayReplaces warns that a draft would take the place of what is already
 // written, which is the one thing this tab does that cannot be undone by
 // pressing escape.
@@ -23,6 +39,8 @@ func (m Model) sayRows(w int, sz boxSizes) []builderLine {
 	st := &m.flows
 	p := m.opts.Words
 
+	mdls, mdlLabels := m.pickerChoices(flowFieldSayModel)
+
 	out := []builderLine{
 		plainLine(""),
 		plainLine(fit("  "+Paint(Accent).Bold(true).Render(p.T("flows.say_title",
@@ -31,15 +49,10 @@ func (m Model) sayRows(w int, sz boxSizes) []builderLine {
 			"the draft lands in the other two tabs for you to check; nothing is saved until you press Save Flow")), w)),
 		m.sayReplaces(w),
 		plainLine(""),
-		{
-			text: fit("  "+Paint(Dim).Render(pad(p.T("flows.say_ask_engine", "Ask"), labelWidth, false))+" "+
-				renderComboPills(m.engineNames(), m.sayEngineName())+"  "+
-				Paint(Dim).Render(p.T("flows.say_engine_ways", "← → to change")), w),
-			field: noField,
-			phase: noPhase,
-			pick:  noPick,
-			act:   "say_engine",
-		},
+		m.sayDial(sayOnEngine, p.T("flows.say_ask_engine", "Ask"),
+			renderComboPills(m.engineNames(), m.sayEngineName()), "say_engine", w),
+		m.sayDial(sayOnModel, p.T("flows.say_ask_model", "on model"),
+			m.dialValue(flowFieldSayModel, mdls, mdlLabels, m.flows.sayModel), "say_model", w),
 		plainLine(""),
 	}
 
@@ -68,7 +81,7 @@ func (m Model) sayRows(w int, sz boxSizes) []builderLine {
 
 	return append(out,
 		plainLine(""),
-		plainLine(fit("  "+Paint(Dim).Render(p.T("flows.say_ways",
-			"[↵] draft it · [shift+↵] new line · [^V] paste · [^←/^→] tab · [esc] back")), w)),
+		plainLine(fit("  "+Paint(Dim).Render(p.T("flows.say_ways2",
+			"[tab] engine · model · text · [↵] pick, or draft it from the text · [shift+↵] new line · [^V] paste · [^←/^→] tab · [esc] back")), w)),
 	)
 }
