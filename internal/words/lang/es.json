@@ -3255,6 +3255,10 @@
       "source": "Supervisor & Cockpit Memory",
       "value": "Supervisor y Memoria del Cockpit"
     },
+    "known.no_check": {
+      "source": "no check yet",
+      "value": "sin check todavía"
+    },
     "known.side": {
       "source": "What Orbit knows",
       "value": "Lo que Orbit sabe"

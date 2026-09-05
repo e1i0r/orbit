@@ -131,3 +131,52 @@ func TestNothingKnownIsNoSide(t *testing.T) {
 		t.Errorf("a heading with nothing under it was drawn:\n%s", drawn)
 	}
 }
+
+// TestARuleWaitingForACheckIsStillUnderRules.
+//
+// Written with /rule, it arrives under Aware if the side groups by what a
+// fact does — because with no check it can only warn. From the operator's
+// side that reads as the gesture having been ignored. It goes where they put
+// it, marked as not yet able to fire: what was asked for decides the heading,
+// and what it can do decides the mark.
+func TestARuleWaitingForACheckIsStillUnderRules(t *testing.T) {
+	asked := known("coverage stays above 90%", knowledge.Scope{Kind: knowledge.General})
+	asked.Stops = true // and no check
+
+	drawn := sideOf(t, knowing(t, 140, asked), 140)
+
+	rules, aware := strings.Index(drawn, "Rules"), strings.Index(drawn, "Aware")
+	at := strings.Index(drawn, "coverage stays above")
+
+	if at < 0 || rules < 0 || at < rules || (aware >= 0 && at > aware) {
+		t.Errorf("a rule with no check is not under Rules:\n%s", drawn)
+	}
+
+	line := ""
+
+	for _, l := range strings.Split(drawn, "\n") {
+		if strings.Contains(l, "coverage stays above") || strings.Contains(l, "no check") {
+			line += l
+		}
+	}
+
+	if !strings.Contains(strings.ToLower(line), "no check") {
+		t.Errorf("nothing says the rule cannot fire yet: %q", line)
+	}
+}
+
+// TestTheThreadIsNotCutByTheSide. The scroll rail sits one column past the
+// text, so a row is a column wider than the text is: cutting at the text's
+// width takes the rail off and leaves an ellipsis down the seam.
+func TestTheThreadIsNotCutByTheSide(t *testing.T) {
+	m := knowing(t, 140, known("of everything", knowledge.Scope{Kind: knowledge.General}))
+	m.supervisor.lines = longThread(60)
+	m.thread.invalidate()
+
+	for _, row := range m.supervisorRows(30, 140) {
+		if strings.Contains(ansi.Strip(row), "…") {
+			t.Errorf("the side cut the thread short: %q", ansi.Strip(row))
+			break
+		}
+	}
+}

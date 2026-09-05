@@ -69,20 +69,29 @@ func (m Model) sideFits(w int) bool {
 	return len(m.supervisor.knows) > 0 && w-sideGap-sideWidth >= sideMinThread
 }
 
-// split takes the facts apart by what they do. The ones that stop come
-// first wherever they are drawn: they are what will send work back, and a
-// reader scanning for what is standing over them looks for those.
-func split(facts []knowledge.Fact) (stops, warns []knowledge.Fact) {
+// split takes the facts apart by what was asked of them, not by what they
+// can do.
+//
+// The difference matters here and nowhere else. A rule written as a sentence
+// brings no check, so it can only warn — and grouping by that put it under
+// Aware, where the person who had just typed /rule read it as the gesture
+// having been ignored. It goes where they put it, and the mark beside it says
+// it cannot fire yet.
+//
+// The ones that stop come first wherever they are drawn: they are what will
+// send work back, and a reader scanning for what is standing over them looks
+// for those.
+func split(facts []knowledge.Fact) (rules, warns []knowledge.Fact) {
 	for _, f := range facts {
-		if f.Action() == knowledge.Stops {
-			stops = append(stops, f)
+		if f.Stops {
+			rules = append(rules, f)
 			continue
 		}
 
 		warns = append(warns, f)
 	}
 
-	return stops, warns
+	return rules, warns
 }
 
 // sideSection is one heading and what is under it, and nothing when there is
@@ -109,7 +118,12 @@ func (m Model) sideSection(head string, facts []knowledge.Fact) []string {
 // and a line that did not say which is which reads as a rule about
 // everything.
 func (m Model) sideFact(f knowledge.Fact) []string {
-	rows := []string{Paint(Dim).Render(sideWhere(f.Scope))}
+	where := sideWhere(f.Scope)
+	if f.Stops && f.Action() != knowledge.Stops {
+		where += " · " + m.opts.Words.T("known.no_check", "no check yet")
+	}
+
+	rows := []string{Paint(Dim).Render(where)}
 	for _, line := range splitIntoLines(f.Phrase, sideWidth-2) {
 		rows = append(rows, Text(Primary).Render("  "+line))
 	}
@@ -158,7 +172,11 @@ func besideThread(rows, side []string, cw int) []string {
 			continue
 		}
 
-		out = append(out, padRight(fit(left, cw), cw)+strings.Repeat(" ", sideGap)+right)
+		// The thread's rows are wrapped to cw, and the one that carries the
+		// scroll rail is a column wider than that: the rail stands past the
+		// text. Cutting at cw takes it off and leaves an ellipsis down the
+		// seam of every row that had one.
+		out = append(out, padRight(fit(left, cw+1), cw+1)+strings.Repeat(" ", sideGap)+right)
 	}
 
 	return out
