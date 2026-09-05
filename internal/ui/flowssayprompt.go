@@ -19,8 +19,9 @@ import "strings"
 func flowDraftPrompt(said string, engines []string) string {
 	var b strings.Builder
 
-	b.WriteString("Write one Orbit flow. Answer with one JSON object and nothing else: no prose before it, ")
-	b.WriteString("no explanation after it, no markdown fences.\n\n")
+	b.WriteString("Write one Orbit flow. The whole of your answer must be one JSON object: ")
+	b.WriteString("no prose before it, no explanation after it, no markdown fences, nothing but the object. ")
+	b.WriteString("Keep to the shape below exactly — the field names, the nesting, and no field that is not in it.\n\n")
 	b.WriteString("A flow is phases run in order. Each phase is one coding agent given instructions. ")
 	b.WriteString("A phase can instead be a loop, which repeats until every one of its checks exits zero.\n\n")
 

@@ -116,7 +116,7 @@ func TestAgyStreamFallsBackToTheResultLine(t *testing.T) {
 // TestAgyStreamKeepsWhatAKilledRunSpent: no result line ever arrives, and
 // the steps are the only place the count was written.
 func TestAgyStreamKeepsWhatAKilledRunSpent(t *testing.T) {
-	const killed = `{"event":"step_update","step_update":{"conversation_id":"c2","step_index":1,"state":"DONE","step_type":"agent_response","text_delta":"half an","usage":{"input_tokens":10,"output_tokens":2}}}
+	const killed = `{"event":"step_update","step_update":{"conversation_id":"c2","step_index":1,"state":"DONE","step_type":"agent_response","text_delta":"half an ","usage":{"input_tokens":10,"output_tokens":2}}}
 {"event":"step_update","step_update":{"conversation_id":"c2","step_index":2,"state":"DONE","step_type":"agent_response","text_delta":"answer","usage":{"input_tokens":30,"output_tokens":4}}}
 `
 
@@ -129,7 +129,9 @@ func TestAgyStreamKeepsWhatAKilledRunSpent(t *testing.T) {
 		t.Errorf("Usage = %+v, want the steps summed", res.Usage)
 	}
 
-	if res.Output != "half an\n\nanswer" {
+	// Stitched and not paragraphed: the pieces are text deltas, and the
+	// space at the end of one is the space between two words.
+	if res.Output != "half an answer" {
 		t.Errorf("Output = %q, want both pieces that arrived", res.Output)
 	}
 }
@@ -140,5 +142,44 @@ func TestAgyStreamKeepsWhatAKilledRunSpent(t *testing.T) {
 func TestAgyStreamSaysSoWhenItUnderstoodNothing(t *testing.T) {
 	if _, err := ParseAgyStream(strings.NewReader("not json\n{\"event\":\"unknown\"}\n"), nil); err == nil {
 		t.Error("a stream with nothing this parser reads came back without an error")
+	}
+}
+
+// TestTheAnswerIsStitchedAndNotParagraphed. agy streams its answer in
+// pieces, and a piece ends wherever the model stopped — mid-word as often as
+// not. Joined with blank lines, "feed_output" came back as "feed_outpu\n\nt":
+// a field name nobody typed, in JSON that would not parse.
+func TestTheAnswerIsStitchedAndNotParagraphed(t *testing.T) {
+	stream := strings.Join([]string{
+		`{"event":"step_update","step_update":{"state":"DONE","step_type":"agent_response","text_delta":"{\"feed_outpu"}}`,
+		`{"event":"step_update","step_update":{"state":"DONE","step_type":"agent_response","text_delta":"t\": true}"}}`,
+		`{"event":"result","result":{"response":"whole answer"}}`,
+	}, "\n")
+
+	out, err := ParseAgyStream(strings.NewReader(stream), nil)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+
+	if out.Output != `{"feed_output": true}` {
+		t.Errorf("the answer came back as %q", out.Output)
+	}
+}
+
+// TestTheSpacesBetweenPiecesSurvive, because a piece that ends in one is two
+// words and a piece trimmed of it is one.
+func TestTheSpacesBetweenPiecesSurvive(t *testing.T) {
+	stream := strings.Join([]string{
+		`{"event":"step_update","step_update":{"state":"DONE","step_type":"agent_response","text_delta":"hola "}}`,
+		`{"event":"step_update","step_update":{"state":"DONE","step_type":"agent_response","text_delta":"mundo"}}`,
+	}, "\n")
+
+	out, err := ParseAgyStream(strings.NewReader(stream), nil)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+
+	if out.Output != "hola mundo" {
+		t.Errorf("the answer came back as %q", out.Output)
 	}
 }
