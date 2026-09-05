@@ -241,13 +241,14 @@ func (m Model) headerFields() []headerField {
 	reposText := p.P("header.repos", m.board.Repos, "{n} repo", "{n} repos")
 	fields = append(fields, headerField{"repos", Chrome().Render("📦 " + reposText)})
 
-	// Model / knob chip
-	chip := m.knobChip()
-	if chip != "" {
-		fields = append(fields, headerField{"engine", Paint(Accent).Render("🧠 " + chip)})
-	} else {
-		fields = append(fields, headerField{"engine", Chrome().Render("🧠 claude")})
+	// Model / knob chip. With no knob set this is still the engine that
+	// answers, and not the literal "claude" it used to print.
+	chip, ink := m.knobChip(), Paint(Accent)
+	if chip == "" {
+		chip, ink = m.dialEngine(""), Chrome()
 	}
+
+	fields = append(fields, headerField{"engine", ink.Render("🧠 " + chip)})
 
 	// Quota chip
 	//

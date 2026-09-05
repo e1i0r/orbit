@@ -3251,9 +3251,21 @@
       "source": "Supervisor & Cockpit Memory",
       "value": "Supervisor y Memoria del Cockpit"
     },
-    "supervisor.input_prompt": {
-      "source": "Say to Supervisor / Directive",
-      "value": "Hablar al Supervisor / Directiva"
+    "supervisor.answered_by": {
+      "source": "answered by {engine}",
+      "value": "responde {engine}"
+    },
+    "supervisor.auto_on": {
+      "source": "autopilot on",
+      "value": "piloto automático encendido"
+    },
+    "supervisor.auto_off": {
+      "source": "autopilot off",
+      "value": "piloto automático apagado"
+    },
+    "supervisor.msg_count": {
+      "source": "{n} messages",
+      "value": "{n} mensajes"
     },
     "supervisor.placeholder": {
       "source": "type a briefing, question or standing directive...",

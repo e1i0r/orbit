@@ -120,7 +120,10 @@ func placeChips(chips []barChip, x int) []headerZone {
 
 // barLayout is the key bar, drawn, and where it put each hint.
 func (m Model) barLayout(w int) (string, []placedHint, []headerZone) {
-	tail := Chrome().Render("[" + m.keys.Help.Help().Key + "] [" + m.keys.Quit.Help().Key + "]")
+	// The three keys that are always there, in the corner they have always
+	// been in: the menu of everything the thing under the cursor can be
+	// asked, the cheat sheet, and the way out.
+	tail := Chrome().Render("[" + m.keys.Menu.Help().Key + "] [" + m.keys.Help.Help().Key + "] [" + m.keys.Quit.Help().Key + "]")
 	chips := m.barFooterChips()
 	chipsText := chipLine(chips)
 	chipsW := lipgloss.Width(chipsText)
