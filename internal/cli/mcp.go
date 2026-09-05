@@ -68,7 +68,8 @@ func serveMCP(ctx Context, root string) error {
 		return err
 	}
 
-	logger.Info("cli/mcp", "mcp server started (root=%q, version=%s)", root, Version)
+	logger.Info("cli/mcp", "mcp server started (root=%q, version=%s, %d descriptors open)",
+		root, Version, logger.OpenFiles())
 
 	session := mcp.Session{Root: root, Version: Version}
 	if err := mcp.NewServer(os.Stdin, os.Stdout, session).Serve(); err != nil {
@@ -76,7 +77,8 @@ func serveMCP(ctx Context, root string) error {
 		return fmt.Errorf("%s: %w", ctx.printer().T("mcp.server_failed", "the mcp server"), err)
 	}
 
-	logger.Info("cli/mcp", "mcp server stopped: the client closed the connection")
+	logger.Info("cli/mcp", "mcp server stopped: the client closed the connection (%d descriptors open)",
+		logger.OpenFiles())
 
 	return nil
 }

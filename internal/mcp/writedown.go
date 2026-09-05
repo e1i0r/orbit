@@ -19,6 +19,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 	"unicode/utf8"
 
@@ -73,6 +74,40 @@ func noteCall(name string, args map[string]any) time.Time {
 	return time.Now()
 }
 
+// callsPerCensus is how many tool calls pass between two counts of what this
+// process holds open. A hundred is often enough that a leak of one
+// descriptor a call is a line climbing steadily in an afternoon's log, and
+// rare enough that the count itself — twenty microseconds of reading one
+// directory — is nothing beside the work of a call.
+//
+// It is a var so a test can turn it down, for the same reason gitDiffTimeout
+// in internal/ui is one.
+var callsPerCensus = 100
+
+// calls is how many have been answered. It is atomic because a client is
+// free to have two questions outstanding, and this is the one number in this
+// file that is not written by the call that reads it.
+var calls atomic.Uint64
+
+// census writes down what this process holds open, every callsPerCensus
+// calls.
+//
+// It exists because of a leak that gave no other sign: this server opened
+// the state root for every call and closed it in none of them, and every one
+// of those opens succeeded. A file of failures had nothing to say until the
+// machine's own file table was full — at which point the failures were
+// everybody else's. A number that climbs while nothing is going wrong is the
+// only warning that shape of bug gives.
+func census() {
+	if n := calls.Add(1); n%uint64(callsPerCensus) != 0 {
+		return
+	}
+
+	if open := logger.OpenFiles(); open >= 0 {
+		logger.Info("mcp/census", "%d calls answered, %d descriptors open", calls.Load(), open)
+	}
+}
+
 // noteAnswer writes down what the tool said.
 //
 // A refusal is an error in the file, and it is the reason this exists: "no
@@ -84,11 +119,13 @@ func noteAnswer(name string, start time.Time, res CallToolResult) {
 
 	if res.IsError {
 		logger.Error("mcp/"+name, "refused after %s: %s", took, said(res))
+		census()
 
 		return
 	}
 
 	logger.Info("mcp/"+name, "answered after %s", took)
+	census()
 }
 
 // noteFault writes down a request this server answered with a JSON-RPC error

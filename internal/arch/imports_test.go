@@ -95,7 +95,15 @@ var layers = map[string][]string{
 	// and the store is where the state root already lives. The direction is
 	// safe: internal/db lists only internal/record, so nothing comes back
 	// the other way.
-	"internal/store": {"internal/db"},
+	// internal/logger is on internal/store's list for one line, and the line
+	// is the argument. The settings lock is the only place in Orbit where a
+	// process's death leaves a mark that another process silently repairs:
+	// a lock file older than a minute is broken, the change goes through,
+	// and both processes report success. Nobody is standing at that door
+	// either. It widens nothing else — the store still decides nothing about
+	// a run and still reaches no engine, no task and no board — and
+	// internal/logger imports nothing of Orbit's, so there is no cycle.
+	"internal/store": {"internal/db", "internal/logger"},
 	// internal/supervisor is the one conversation in Orbit that belongs to
 	// no task: a global, append-only thread hanging off the state root. It
 	// lived inside internal/task for as long as there was nowhere else to

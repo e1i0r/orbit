@@ -14,6 +14,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/e1i0r/orbit/internal/logger"
 )
 
 // defaultUnreadCap is what a store that has never saved settings starts
@@ -255,6 +257,12 @@ func breakStale(path string) (bool, error) {
 	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return false, fmt.Errorf("remove the stale settings lock %q: %w", path, err)
 	}
+	// Breaking it is the right thing to do and no reason to do it quietly.
+	// A lock older than a minute is the footprint of a process that died
+	// between taking it and giving it back, and that is worth knowing about
+	// on its own — the change that follows will succeed and say nothing.
+	logger.Warn("store/settings", "broke a settings lock left behind %s ago: something died holding it",
+		time.Since(info.ModTime()).Round(time.Second))
 
 	return true, nil
 }

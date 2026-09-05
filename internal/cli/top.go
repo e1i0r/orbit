@@ -59,7 +59,8 @@ func top(ctx Context, args []string) error {
 		return err
 	}
 
-	logger.Info("cli/top", "orbit top started on %q (once=%v, lang=%q)", dir, once, lang)
+	logger.Info("cli/top", "orbit top started on %q (once=%v, lang=%q, %d descriptors open)",
+		dir, once, lang, logger.OpenFiles())
 
 	trouble := reconcileAll(s)
 
@@ -79,6 +80,10 @@ func top(ctx Context, args []string) error {
 	if _, err := tea.NewProgram(fullScreen{ui.New(opts)}).Run(); err != nil {
 		return fmt.Errorf("%s: %w", ctx.printer().T("top.window_failed", "the window"), err)
 	}
+	// The same count as the line above, at the other end of a window that
+	// may have been open for a day. The two together are the whole of what
+	// a leak in here would look like from outside.
+	logger.Info("cli/top", "orbit top closed (%d descriptors open)", logger.OpenFiles())
 
 	return trouble
 }
