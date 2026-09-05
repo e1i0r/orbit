@@ -82,7 +82,13 @@ var layers = map[string][]string{
 	// is standing at: a model drives it for hours from another process, so a
 	// refusal answered to that model reached no terminal and no record. What
 	// is absent is internal/engine: a supervisor starts runs, not models.
-	"internal/mcp": {"internal/board", "internal/flow", "internal/logger", "internal/record", "internal/repo", "internal/store", "internal/supervisor", "internal/task", "internal/view"},
+	// internal/knowledge is on internal/mcp's list because this is the door
+	// the store grows through: an agent that hit something worth knowing
+	// writes it down mid-task, and the next run against that code is told
+	// before it starts. Reading it is the other half — a model that asks
+	// before planning starts from what is known rather than finding it out
+	// again.
+	"internal/mcp": {"internal/board", "internal/flow", "internal/knowledge", "internal/logger", "internal/record", "internal/repo", "internal/store", "internal/supervisor", "internal/task", "internal/view"},
 	// internal/migrate reads the files an older Orbit wrote and fills the
 	// database from them, so it is the one package that touches the record
 	// on both sides: internal/store to find the logs, internal/record to

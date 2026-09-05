@@ -177,6 +177,8 @@ func TestEveryDeclaredArgumentIsOneAHandlerReads(t *testing.T) {
 		"orbit_inspect_repo":       {"repo": true},
 		"orbit_add_repo":           {"path": true},
 		"orbit_forget_repo":        {"repo": true, "delete_tasks": true},
+		"orbit_learn":              {"phrase": true, "repo": true, "lang": true, "stops": true, "check": true, "task_id": true},
+		"orbit_knowledge":          {"repo": true},
 		"orbit_supervisor_say":     {"message": true, "by": true, "channel": true, "task_id": true, "repo": true},
 		"orbit_supervisor_history": {"limit": true},
 	}
