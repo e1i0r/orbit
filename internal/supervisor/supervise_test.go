@@ -123,7 +123,8 @@ func TestTheSupervisorIsAskedInMarkdown(t *testing.T) {
 		}
 	}
 
-	if !strings.HasSuffix(full, "\n"+engine.AnswerContract) {
+	// Its own contract and not the one a phase answers to: see answerContract.
+	if !strings.HasSuffix(full, "\n"+answerContract) {
 		t.Errorf("the prompt does not end on the contract:\n%s", full)
 	}
 

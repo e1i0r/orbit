@@ -24,7 +24,10 @@ func (m Model) supervisorRows(h, w int) []string {
 	out := m.supervisorHead(cw)
 	out = append(out, m.supervisorBody(threadH, cw)...)
 	out = append(out, "")
+	out = append(out, m.drawCompletions(cw)...)
 	out = append(out, m.drawSupervisorInput(cw)...)
+
+	out = besideThread(out, m.knownSide(h, w), cw)
 
 	for i, row := range out {
 		out[i] = fit("  "+row, w)
@@ -46,7 +49,13 @@ const supervisorHeadRows = 4
 // first ten presses.
 func (m Model) supervisorLayout(h, w int) (cw, threadH int) {
 	cw = max(min(w-4, 110), 24)
-	return cw, max(h-supervisorHeadRows-1-len(m.drawSupervisorInput(cw)), 3)
+	if m.sideFits(w) {
+		cw = min(cw, w-sideGap-sideWidth)
+	}
+	// The offers take their rows from the thread, not from the line being
+	// typed: a list that pushed the input off the bottom would hide the
+	// cursor it is helping somebody move.
+	return cw, max(h-supervisorHeadRows-1-len(m.drawSupervisorInput(cw))-len(m.drawCompletions(cw)), 3)
 }
 
 // supervisorHead is the title and the standing facts under it: which engine

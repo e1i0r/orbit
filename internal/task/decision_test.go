@@ -78,12 +78,12 @@ func TestABulletWithNoDecisionLineIsNotADecision(t *testing.T) {
 func TestAPlanIsAskedForItsDecisions(t *testing.T) {
 	tk := Task{ID: "ACME-1", Text: "make it idempotent"}
 
-	plan := prompt(tk, flow.Phase{Name: "1-plan", Engine: "fake"}, nil, "", nil)
+	plan := prompt(tk, flow.Phase{Name: "1-plan", Engine: "fake"}, nil, nil, "", nil)
 	if !strings.Contains(plan, "## Decisions") {
 		t.Errorf("a plan phase is not asked for its decisions:\n%s", plan)
 	}
 
-	work := prompt(tk, flow.Phase{Name: "2-implement", Engine: "fake"}, nil, "", nil)
+	work := prompt(tk, flow.Phase{Name: "2-implement", Engine: "fake"}, nil, nil, "", nil)
 	if strings.Contains(work, "## Decisions") {
 		t.Errorf("a phase that is not planning is asked for decisions anyway:\n%s", work)
 	}

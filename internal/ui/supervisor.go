@@ -6,6 +6,7 @@ import (
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/e1i0r/orbit/internal/knowledge"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -15,6 +16,10 @@ type supervisorState struct {
 	offset     int
 	lines      []view.SupervisorLine
 	err        error
+	// knows is what Orbit has learned about the code being worked in, drawn
+	// down the side. It is read when the thread is, for the reason
+	// syncSupervisor gives.
+	knows []knowledge.Fact
 
 	// picking is the mode that takes a turn back: ↑↓ choose a line instead
 	// of scrolling and ↵ withdraws it instead of sending. It is a mode
@@ -62,6 +67,18 @@ func (m Model) abandonSupervisor() Model {
 }
 
 func (m Model) syncSupervisor() Model {
+	// Read here and not while drawing: the port reads two directories off
+	// disk, and a frame is drawn ten times a second. This is also what puts
+	// a rule on the side the moment it is written, since writing one syncs.
+	//
+	// Before the thread and not after it, because the two are separate
+	// doors: a window handed one and not the other has to get the one it
+	// was handed, and reading them in one order made the side depend on a
+	// port that has nothing to do with it.
+	if m.opts.Knows != nil {
+		m.supervisor.knows = m.opts.Knows()
+	}
+
 	if m.opts.Reader == nil {
 		return m
 	}
@@ -81,6 +98,12 @@ func (m Model) supervisorKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
 	case m.supervisor.picking:
 		return m.pickingKey(msg)
+	case len(m.completions()) > 0 && offering(msg):
+		// A list is up over an unfinished word, so ↑↓ choose from it and ↵
+		// finishes it rather than sending half a gesture. There is no key to
+		// dismiss it and none is needed: a space ends the word, and the list
+		// is only ever there while one is unfinished.
+		return m.completionKey(msg), nil
 	case msg.Code == tea.KeyEscape || key.Matches(msg, m.keys.Back):
 		return m.abandonSupervisor(), nil
 	case (msg.Code == 'r' || msg.Code == 'R') && msg.Mod&tea.ModCtrl != 0:
@@ -144,6 +167,13 @@ func (m Model) supervisorKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 // with something of its own to say — the deliver keys, which send a line
 // nobody typed — can say it without taking the window apart again.
 func (m Model) sendSupervisorMessage(text string) (Model, tea.Cmd) {
+	// Four gestures share this one line, and which one was typed is read
+	// before anything is sent: a rule is not a message the supervisor has to
+	// interpret, it is a fact to write down. spoken.go is the whole grammar.
+	if said := parseSaid(text); said.Kind != saidMessage {
+		return m.act(said), nil
+	}
+
 	if m.opts.RecordSupervisor != nil {
 		// "operator" is who every other door writes, and the thread is one
 		// conversation: a name hardcoded here made the same person read as

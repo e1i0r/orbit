@@ -22,7 +22,7 @@ func asked(t *testing.T, prev string, notes ...string) string {
 	return prompt(
 		Task{ID: "ACME-1", Text: "Retry the webhook on 5xx.", Repo: repoTaskRepo(t)},
 		flow.Phase{Name: "implement", Prompt: "Keep the retry budget bounded."},
-		notes, prev, nil,
+		nil, notes, prev, nil,
 	)
 }
 
@@ -61,7 +61,7 @@ func TestThePromptIsWrittenInMarkdown(t *testing.T) {
 func TestASectionWithNothingInItIsNotDrawn(t *testing.T) {
 	bare := prompt(
 		Task{ID: "ACME-1", Text: "Retry the webhook on 5xx.", Repo: repoTaskRepo(t)},
-		flow.Phase{Name: "implement"}, nil, "", nil,
+		flow.Phase{Name: "implement"}, nil, nil, "", nil,
 	)
 
 	bareLines := strings.Split(bare, "\n")
@@ -134,7 +134,7 @@ func TestTheAnswerContractIsTheLastThingSaid(t *testing.T) {
 func TestThePromptSaysWhatElseIsCheckedOutAndHowToReachIt(t *testing.T) {
 	full := prompt(
 		Task{ID: "ACME-1", Text: "Retry the webhook on 5xx.", Repo: repoTaskRepo(t)},
-		flow.Phase{Name: "implement"}, nil, "",
+		flow.Phase{Name: "implement"}, nil, nil, "",
 		[]string{"api", "scripts"},
 	)
 

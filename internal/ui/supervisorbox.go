@@ -52,7 +52,15 @@ func (m Model) inputLines(cw int) []string {
 		return []string{prompt + Paint(Dim).Render(placeholder) + Paint(Accent).Render("█"), ""}
 	}
 
+	// The mark says "this is where you are writing", and that is true once.
+	// One on every row read as three prompts — three separate things about
+	// to be sent — for what is one message. The rows after the first line up
+	// under it instead, so the message reads as a block.
 	var rows []string
+
+	// Two cells, which is what "❯ " is: the continuation lines start where
+	// the first line's text does.
+	const indent = "  "
 
 	for _, raw := range plainLines(m.supervisor.input) {
 		wrapped := splitIntoLines(raw, max(cw-2, 8))
@@ -61,7 +69,12 @@ func (m Model) inputLines(cw int) []string {
 		}
 
 		for _, l := range wrapped {
-			rows = append(rows, prompt+l)
+			lead := indent
+			if len(rows) == 0 {
+				lead = prompt
+			}
+
+			rows = append(rows, lead+l)
 		}
 	}
 
