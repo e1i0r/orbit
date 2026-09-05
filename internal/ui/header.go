@@ -307,7 +307,12 @@ func (m Model) hints() []barHint {
 		}
 	}
 
-	return append(out, hintFor(m.keys.Filter))
+	// The supervisor is named on the bar and not only in the help overlay:
+	// it is the one screen that is asked things rather than shown them, and
+	// a reader who never sees the key does not know there is anybody to
+	// ask. It goes beside the filter because neither is about the row under
+	// the cursor.
+	return append(out, hintFor(m.keys.Supervisor), hintFor(m.keys.Filter))
 }
 
 // hintFor is one binding as the bar prints it: the glyph a reader sees, the
