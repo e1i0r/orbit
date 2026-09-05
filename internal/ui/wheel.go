@@ -110,6 +110,25 @@ func (m Model) wheel(e tea.Mouse) Model {
 		return m.scrollThread(d)
 	}
 
+	if m.screen == screenFlows && m.flows.creating {
+		// The designer is taller than a short terminal. While a list of
+		// choices is up the wheel moves the choice, which is what every
+		// other list on this screen does under it.
+		d := wheelRows
+		if up {
+			d = -wheelRows
+		}
+
+		if m.flows.picker.open {
+			ids, _ := m.pickerRows()
+			m.flows.picker.sel = min(max(m.flows.picker.sel+d, 0), max(len(ids)-1, 0))
+
+			return m
+		}
+
+		return m.scrollBuilder(d)
+	}
+
 	if m.screen == screenEngines {
 		// The knobs are a list with one row chosen, so the wheel moves the
 		// choice and the list follows it — the palette's rule, on the one

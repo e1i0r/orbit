@@ -183,3 +183,47 @@ func TestTheListCanPutAPhaseBackOnTheDefault(t *testing.T) {
 		t.Errorf("choosing the default left the model at %q", got)
 	}
 }
+
+// TestTheFormScrollsUnderTheWheel, because it is taller than a short
+// terminal and the reader has to be able to see the end of it without
+// leaving the field they are typing into.
+func TestTheFormScrollsUnderTheWheel(t *testing.T) {
+	m, _ := testModel(t, 100, 24)
+	m = m.startCreateFlow()
+
+	lines, start := m.builderView(m.frame.Body.H, m.frame.Body.W)
+	if len(lines) <= m.frame.Body.H {
+		t.Skip("the form fits this window, so there is nothing to scroll")
+	}
+
+	if start != 0 {
+		t.Fatalf("a fresh form starts at row %d", start)
+	}
+
+	m = m.scrollBuilder(wheelRows)
+
+	if _, after := m.builderView(m.frame.Body.H, m.frame.Body.W); after != wheelRows {
+		t.Errorf("the wheel moved the window to %d, want %d", after, wheelRows)
+	}
+
+	// It stops at the end rather than scrolling the form off the screen.
+	for range 50 {
+		m = m.scrollBuilder(wheelRows)
+	}
+
+	lines, end := m.builderView(m.frame.Body.H, m.frame.Body.W)
+	if end != len(lines)-m.frame.Body.H {
+		t.Errorf("the wheel scrolled to %d of %d rows", end, len(lines))
+	}
+
+	// And moving to a field brings the window back onto it.
+	m.flows.field = flowFieldTemplate
+	m = m.followField()
+
+	lines, back := m.builderView(m.frame.Body.H, m.frame.Body.W)
+
+	at := m.fieldRow(lines)
+	if at < back || at >= back+m.frame.Body.H {
+		t.Errorf("the first field is at row %d, outside the window at %d", at, back)
+	}
+}

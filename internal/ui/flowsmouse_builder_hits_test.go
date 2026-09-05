@@ -194,6 +194,11 @@ func TestHitFlowsBuilderPromptBox(t *testing.T) {
 // order along the row under the form.
 func TestHitFlowsBuilderButtonsRow(t *testing.T) {
 	m := builderModel(t)
+	// The form is taller than a short terminal and the window follows the
+	// cursor, so the buttons are on screen when the reader is on them.
+	m.flows.field = flowFieldSave
+	m = m.followField()
+
 	y := rowOfField(t, m, flowFieldAddPhase)
 
 	if got := m.hitFlows(10, y); got.Field != "add_phase" {

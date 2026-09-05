@@ -19,6 +19,7 @@ import "strings"
 const (
 	promptRows = 6
 	checkRows  = 4
+	descRows   = 3
 )
 
 // builderPromptRows is the instructions field: its label, the three pills
@@ -27,7 +28,7 @@ func (m Model) builderPromptRows(w int, sz boxSizes) []builderLine {
 	st := &m.flows
 	p := m.opts.Words
 
-	head := m.fieldRow(flowFieldPrompt, p.T("flows.field_prompt", "Instructions"), "", w)
+	head := m.labelled(flowFieldPrompt, p.T("flows.field_prompt", "Instructions"), "", w)
 	head.head = true
 	head.text = fit(strings.TrimRight(head.text, " ")+" "+
 		Pill(p.T("flows.btn_paste", "📋 Paste"), "#FFFFFF", "#0C4A6E")+" "+
@@ -43,7 +44,11 @@ func (m Model) builderPromptRows(w int, sz boxSizes) []builderLine {
 // textBox is a paragraph in a frame, and every row of it belongs to the
 // field it is drawn for, so a click anywhere inside lands on that field.
 func (m Model) textBox(field int, content, placeholder string, rows, w int) []builderLine {
-	boxWidth := min(max(w-6, 36), 80)
+	// As wide as the window allows, up to a line length that is still
+	// comfortable to read back: what somebody types here is a paragraph, and
+	// eighty columns of it on a hundred-and-thirty column terminal was a
+	// third of the screen left empty beside the field being written in.
+	boxWidth := min(max(w-6, 36), 104)
 
 	shown := content
 	if m.flows.field == field {
@@ -92,10 +97,10 @@ func (m Model) loopFieldRows(w int, sz boxSizes) []builderLine {
 	p := m.opts.Words
 
 	out := []builderLine{
-		m.fieldRow(flowFieldLoopTurns, "  ├ "+p.T("flows.field_turns", "turns at most"),
+		m.labelled(flowFieldLoopTurns, "  ├ "+p.T("flows.field_turns", "turns at most"),
 			Paint(Accent).Render(st.loopTurnsText())+"  "+
 				Paint(Dim).Render(p.T("flows.turns_hint", "← → to change")), w),
-		m.fieldRow(flowFieldLoopUntil, "  └ "+p.T("flows.field_until", "stops when all pass"),
+		m.labelled(flowFieldLoopUntil, "  └ "+p.T("flows.field_until", "stops when all pass"),
 			Paint(Dim).Render(p.T("flows.until_hint", "one per line — name: command")), w),
 	}
 

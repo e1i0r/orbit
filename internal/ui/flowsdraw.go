@@ -84,7 +84,7 @@ func (m Model) flowsRows(h, w int) []string {
 		}
 
 		if fl.Description != "" {
-			descLine := strings.Repeat(" ", gutter+2) + Paint(OK).Render("↳ ") + Paint(Dim).Render(fl.Description)
+			descLine := strings.Repeat(" ", gutter+2) + Paint(OK).Render("↳ ") + Paint(Dim).Render(flatten(fl.Description))
 			out = append(out, fit(descLine, w))
 		}
 

@@ -7,6 +7,8 @@ package ui
 // screens. What each key does to a field is in flowsfields.go.
 
 import (
+	"strings"
+
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 )
@@ -47,12 +49,17 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		st.creating = false
 
 		return m, nil
-	case key.Matches(msg, m.keys.NextTab) || key.Matches(msg, m.keys.Down):
+	case (msg.Code == tea.KeyTab && msg.Mod&tea.ModShift == 0) || msg.Code == tea.KeyDown || (!isText && key.Matches(msg, m.keys.Down)):
+		// The window's Up and Down are also bound to k and j, which is
+		// right on a board and wrong in a field: typing "make cover" moved
+		// the cursor twice and left "ma" and "e cover" in two other fields.
+		// While something is being typed into, a letter is a letter.
 		st.moveField(1)
-		return m, nil
-	case key.Matches(msg, m.keys.PrevTab) || key.Matches(msg, m.keys.Up):
+
+		return m.followField(), nil
+	case key.Matches(msg, m.keys.PrevTab) || msg.Code == tea.KeyUp || (!isText && key.Matches(msg, m.keys.Up)):
 		st.moveField(-1)
-		return m, nil
+		return m.followField(), nil
 	case !isText && (msg.Code == tea.KeyLeft || msg.Code == tea.KeyRight):
 		delta := 1
 		if msg.Code == tea.KeyLeft {
@@ -72,6 +79,15 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case key.Matches(msg, m.keys.Open) || (!isText && msg.Text == " "):
 		return m.handleFlowFieldAction()
+	case (msg.Code == 'v' || msg.Code == 'V') && msg.Mod&tea.ModCtrl != 0:
+		// ^V as well as cmd+V: the second arrives as a paste message the
+		// terminal wraps, which is off in some terminals and never happens
+		// over ssh at all.
+		if clip := strings.TrimRight(readClipboard(), "\r\n"); clip != "" {
+			st.write(clip)
+		}
+
+		return m, nil
 	case msg.Code == tea.KeyBackspace:
 		st.rub()
 		return m, nil

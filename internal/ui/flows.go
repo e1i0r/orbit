@@ -76,8 +76,10 @@ type flowsState struct {
 	checksTyped bool
 	checksFor   int
 	// picker is the list of choices while one is open over the form: see
-	// flowspicker.go.
+	// flowspicker.go. scroll is the row of the form the window starts at,
+	// for the times it is taller than the terminal.
 	picker pickerState
+	scroll int
 	// attempts is the flow's cap, carried although no field shows it: this
 	// editor rebuilds the whole flow when it saves, so what it does not hold
 	// is lost by opening a flow and saving it.

@@ -113,3 +113,34 @@ func TestTheTurnsAreCappedAtSomethingReal(t *testing.T) {
 		t.Errorf("the turns were set to %d", got)
 	}
 }
+
+// TestThePurposeHoldsAParagraph. It is the field the list shows and the one
+// a reader writes to remember why the flow exists, and one line of it was
+// running out of row before the sentence was finished.
+func TestThePurposeHoldsAParagraph(t *testing.T) {
+	m := building(t)
+	m.flows.field = flowFieldDescription
+
+	m.flows.write("first line")
+
+	if !m.flows.multiline() {
+		t.Fatal("the purpose refuses a new line")
+	}
+
+	m.flows.write("\nsecond line")
+
+	if m.flows.description != "first line\nsecond line" {
+		t.Errorf("the purpose holds %q", m.flows.description)
+	}
+
+	// And the list, which has one row for it, shows it as one line.
+	if got := flatten(m.flows.description); got != "first line second line" {
+		t.Errorf("the list would draw %q", got)
+	}
+
+	// A name is not a paragraph: it is the file the flow is written to.
+	m.flows.field = flowFieldName
+	if m.flows.multiline() {
+		t.Error("a newline is allowed in the flow's name")
+	}
+}

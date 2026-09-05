@@ -3924,8 +3924,8 @@
       "value": "con este nombre elegirás el flujo al crear una tarea"
     },
     "flows.hint_description": {
-      "source": "one line about what this flow is for; it is what the list shows",
-      "value": "una línea sobre para qué sirve este flujo; es lo que muestra la lista"
+      "source": "what this flow is for; the list shows its first line, and shift+↵ starts another",
+      "value": "para qué sirve este flujo; la lista muestra su primera línea, y shift+↵ empieza otra"
     },
     "flows.hint_phase_select": {
       "source": "the phases run in this order; the fields below are about the one selected",
@@ -4018,6 +4018,30 @@
     "flows.pick_default": {
       "source": "default (what the engine is set to)",
       "value": "por defecto (lo que el motor tenga configurado)"
+    },
+    "flows.desc_hint": {
+      "source": "one line, or several — shift+↵ for a new one",
+      "value": "una línea, o varias — shift+↵ para otra"
+    },
+    "flows.desc_placeholder": {
+      "source": "(what is this flow for?)",
+      "value": "(¿para qué sirve este flujo?)"
+    },
+    "flows.dial_default": {
+      "source": "default",
+      "value": "por defecto"
+    },
+    "flows.dial_of": {
+      "source": "{n} of {total}",
+      "value": "{n} de {total}"
+    },
+    "flows.dial_count": {
+      "source": "{total} to choose from",
+      "value": "{total} para elegir"
+    },
+    "flows.dial_open": {
+      "source": "[↵] see them all",
+      "value": "[↵] ver todos"
     }
   }
 }

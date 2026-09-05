@@ -16,7 +16,7 @@ func (m Model) fieldHint() string {
 	case flowFieldName:
 		return p.T("flows.hint_name", "what you will pick this flow by when you start a task")
 	case flowFieldDescription:
-		return p.T("flows.hint_description", "one line about what this flow is for; it is what the list shows")
+		return p.T("flows.hint_description", "what this flow is for; the list shows its first line, and shift+↵ starts another")
 	case flowFieldPhaseSelect:
 		return p.T("flows.hint_phase_select", "the phases run in this order; the fields below are about the one selected")
 	case flowFieldPhaseName:

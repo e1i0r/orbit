@@ -47,15 +47,15 @@ func plainLine(text string) builderLine {
 // builderView is the form, and the row the window starts at.
 //
 // The form is taller than a short terminal, and fill cuts what does not fit
-// — which on this screen would be the Save button. So the window follows the
-// field the reader is on: everything above it scrolls away rather than
-// everything below it being lost.
+// — which on this screen would be the Save button. So the boxes give their
+// rows up first, and past that the window scrolls: the wheel moves it, and
+// moving between fields brings it back to the one being edited.
 func (m Model) builderView(h, w int) (lines []builderLine, start int) {
 	if m.flows.picker.open {
 		return m.pickerLines(h, w), 0
 	}
 
-	lines = m.builderLines(w, boxSizes{prompt: promptRows, checks: checkRows})
+	lines = m.builderLines(w, roomy())
 	if h <= 0 || len(lines) <= h {
 		return lines, 0
 	}
@@ -69,9 +69,17 @@ func (m Model) builderView(h, w int) (lines []builderLine, start int) {
 		return lines, 0
 	}
 
-	// The last row of the field and not the first: a box is several rows,
-	// and a window placed on its label cuts the end of what is being typed.
-	at := 0
+	return lines, min(max(m.flows.scroll, 0), len(lines)-h)
+}
+
+// fieldRow is the last row the field under the cursor was drawn on.
+//
+// The last and not the first: a box is several rows, and a window placed on
+// its label cuts the end of what is being typed. A field with no row of its
+// own — delete and save share the buttons row with add — takes the end of
+// the form, which is where those are.
+func (m Model) fieldRow(lines []builderLine) int {
+	at := len(lines) - 1
 
 	for i, l := range lines {
 		if l.field == m.flows.field {
@@ -79,30 +87,81 @@ func (m Model) builderView(h, w int) (lines []builderLine, start int) {
 		}
 	}
 
-	// Two rows of room under the cursor, so the field being typed into is
-	// never the last thing on the screen.
-	if at >= h-2 {
-		start = min(at-(h-3), len(lines)-h)
-	}
-
-	return lines, start
+	return at
 }
 
-// boxSizes is how many rows the two paragraph fields are given.
+// followField brings the window back to the field the reader just moved to.
+func (m Model) followField() Model {
+	h := m.frame.Body.H
+
+	lines, start := m.builderView(h, m.frame.Body.W)
+	if h <= 0 || len(lines) <= h {
+		m.flows.scroll = 0
+
+		return m
+	}
+
+	at := m.fieldRow(lines)
+
+	switch {
+	case at < start:
+		m.flows.scroll = at
+	case at > start+h-1:
+		m.flows.scroll = at - h + 1
+	}
+
+	return m
+}
+
+// scrollBuilder is the wheel over the form: rows, not fields, because what
+// the reader wants is to see what is off the bottom without leaving the
+// field they are typing into.
+func (m Model) scrollBuilder(d int) Model {
+	lines, _ := m.builderView(m.frame.Body.H, m.frame.Body.W)
+
+	m.flows.scroll = min(max(m.flows.scroll+d, 0), max(len(lines)-m.frame.Body.H, 0))
+
+	return m
+}
+
+// boxSizes is how many rows each paragraph field is given.
 type boxSizes struct {
 	prompt int
 	checks int
+	desc   int
 }
 
-// shrunk is those two sizes with the overflow taken out of them, the
-// instructions first because they are the taller of the two. Neither goes
-// below two rows: a box of one row is a line, and this screen has those.
+// roomy is what the three boxes get on a terminal with room for them.
+func roomy() boxSizes {
+	return boxSizes{prompt: promptRows, checks: checkRows, desc: descRows}
+}
+
+// shrunk is those sizes with the overflow taken out of them, the
+// instructions first and the purpose last, because the instructions are the
+// tallest and the purpose is the one a reader writes once. None goes below
+// two rows: a box of one row is a line, and this screen has those.
 func shrunk(over int, looping bool) boxSizes {
-	sz := boxSizes{prompt: max(promptRows-over, 2), checks: checkRows}
+	sz := roomy()
+
+	take := func(have *int, floor int) {
+		if over <= 0 {
+			return
+		}
+
+		room := *have - floor
+		cut := min(room, over)
+
+		*have -= cut
+		over -= cut
+	}
+
+	take(&sz.prompt, 2)
 
 	if looping {
-		sz.checks = max(checkRows-max(over-(promptRows-sz.prompt), 0), 2)
+		take(&sz.checks, 2)
 	}
+
+	take(&sz.desc, 2)
 
 	return sz
 }

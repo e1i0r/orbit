@@ -30,9 +30,16 @@ func (m Model) builderFieldRows(w int, sz boxSizes) []builderLine {
 
 	tpls := []string{"ninguna", "TDD Fuzz & PR", "TDD Cycle", "Security Audit", "Turbo Fix"}
 	out = append(out,
-		m.fieldRow(flowFieldTemplate, p.T("flows.field_template", "Template / Preset"), renderComboPills(tpls, st.template), w),
-		m.fieldRow(flowFieldName, p.T("flows.field_flow_name", "Flow name"), m.typedValue(flowFieldName, st.flowName), w),
-		m.fieldRow(flowFieldDescription, p.T("flows.field_description", "Purpose"), m.typedValue(flowFieldDescription, st.description), w),
+		m.labelled(flowFieldTemplate, p.T("flows.field_template", "Template / Preset"), renderComboPills(tpls, st.template), w),
+		m.labelled(flowFieldName, p.T("flows.field_flow_name", "Flow name"), m.typedValue(flowFieldName, st.flowName), w),
+		m.labelled(flowFieldDescription, p.T("flows.field_description", "Purpose"),
+			Paint(Dim).Render(p.T("flows.desc_hint", "one line, or several — shift+↵ for a new one")), w),
+	)
+
+	out = append(out, m.textBox(flowFieldDescription, st.description,
+		p.T("flows.desc_placeholder", "(what is this flow for?)"), sz.desc, w)...)
+
+	out = append(out,
 		m.groupRow(p.T("flows.group_phase", "THE PHASE · one step of the pipeline"), w),
 	)
 
@@ -67,8 +74,8 @@ func (m Model) phaseFieldRows(w int, sz boxSizes) []builderLine {
 	}
 
 	out := []builderLine{
-		m.fieldRow(flowFieldPhaseSelect, p.T("flows.field_editing_phase", "Editing phase"), strings.Join(tabs, " "), w),
-		m.fieldRow(flowFieldPhaseName, p.T("flows.field_phase_name", "Phase name"), m.typedValue(flowFieldPhaseName, st.cur().Name), w),
+		m.labelled(flowFieldPhaseSelect, p.T("flows.field_editing_phase", "Editing phase"), strings.Join(tabs, " "), w),
+		m.labelled(flowFieldPhaseName, p.T("flows.field_phase_name", "Phase name"), m.typedValue(flowFieldPhaseName, st.cur().Name), w),
 	}
 
 	no, yes := p.T("flows.repeat_no", "runs once"), p.T("flows.repeat_yes", "repeats ↻")
@@ -78,7 +85,7 @@ func (m Model) phaseFieldRows(w int, sz boxSizes) []builderLine {
 		val = yes
 	}
 
-	out = append(out, m.fieldRow(flowFieldIsLoop, p.T("flows.field_is_loop", "Repeat until it passes"),
+	out = append(out, m.labelled(flowFieldIsLoop, p.T("flows.field_is_loop", "Repeat until it passes"),
 		renderComboPills([]string{no, yes}, val), w))
 
 	if !st.looping() {
@@ -100,12 +107,12 @@ func (m Model) engineFieldRows(w int) []builderLine {
 	effs, effLabels := m.effortsFor(eng)
 
 	return []builderLine{
-		m.fieldRow(flowFieldEngine, p.T("flows.field_engine", "Engine"), renderComboPills(m.engineNames(), eng), w),
-		m.fieldRow(flowFieldModel, p.T("flows.field_model", "Model"),
+		m.labelled(flowFieldEngine, p.T("flows.field_engine", "Engine"), renderComboPills(m.engineNames(), eng), w),
+		m.labelled(flowFieldModel, p.T("flows.field_model", "Model"),
 			m.dialValue(flowFieldModel, mdls, mdlLabels, st.edited().Model), w),
-		m.fieldRow(flowFieldEffort, p.T("flows.field_effort", "Effort"),
+		m.labelled(flowFieldEffort, p.T("flows.field_effort", "Effort"),
 			m.dialValue(flowFieldEffort, effs, effLabels, st.edited().Effort), w),
-		m.fieldRow(flowFieldThinking, p.T("flows.field_thinking", "Thinking"),
+		m.labelled(flowFieldThinking, p.T("flows.field_thinking", "Thinking"),
 			renderComboPills([]string{"adaptive", "on", "off"}, orDef(st.edited().Thinking, "adaptive")), w),
 	}
 }
@@ -130,8 +137,8 @@ func (m Model) wiringFieldRows(w int) []builderLine {
 	}
 
 	return []builderLine{
-		m.fieldRow(flowFieldFeedOutput, p.T("flows.field_feed_output", "Previous output"), renderComboPills([]string{off, on}, feed), w),
-		m.fieldRow(flowFieldWait, p.T("flows.field_wait", "When it ends"), renderComboPills([]string{auto, human}, wait), w),
+		m.labelled(flowFieldFeedOutput, p.T("flows.field_feed_output", "Previous output"), renderComboPills([]string{off, on}, feed), w),
+		m.labelled(flowFieldWait, p.T("flows.field_wait", "When it ends"), renderComboPills([]string{auto, human}, wait), w),
 	}
 }
 
@@ -149,9 +156,9 @@ func (m Model) groupRow(head string, w int) builderLine {
 	return plainLine(fit(line, w))
 }
 
-// fieldRow is one label and its value, with the cursor's mark when the
+// labelled is one label and its value, with the cursor's mark when the
 // reader is on it.
-func (m Model) fieldRow(field int, label, val string, w int) builderLine {
+func (m Model) labelled(field int, label, val string, w int) builderLine {
 	mark, lbl := "  ", pad(label, labelWidth, false)
 
 	if m.flows.field == field {

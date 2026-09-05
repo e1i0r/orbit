@@ -18,6 +18,7 @@ func (m Model) startCreateFlow() Model {
 	}
 	m.flows.activePhase = 0
 	m.flows.checksTyped = false
+	m.flows.scroll = 0
 
 	return m
 }

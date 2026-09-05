@@ -67,10 +67,18 @@ func (st *flowsState) typing() bool {
 	return false
 }
 
-// multiline is whether a new line belongs in it. Instructions and a list of
-// checks are both paragraphs; a flow's name is not.
+// multiline is whether a new line belongs in it.
+//
+// The purpose, the instructions and the list of checks are paragraphs. A
+// flow's name is not: it is the name of the file the flow is written to, and
+// a newline in it is a file name nothing can open.
 func (st *flowsState) multiline() bool {
-	return st.field == flowFieldPrompt || st.field == flowFieldLoopUntil
+	switch st.field {
+	case flowFieldDescription, flowFieldPrompt, flowFieldLoopUntil:
+		return true
+	}
+
+	return false
 }
 
 // write puts what was typed at the end of the field under the cursor.
