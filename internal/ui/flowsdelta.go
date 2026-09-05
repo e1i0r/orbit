@@ -24,23 +24,31 @@ func (m Model) handleFlowFieldDelta(delta int) (Model, tea.Cmd) {
 		if n > 0 {
 			st.activePhase = (st.activePhase + delta + n) % n
 		}
+	case flowFieldIsLoop:
+		return m.toggleLoop(), nil
+	case flowFieldLoopTurns:
+		return m.setLoopTurns(st.cur().Loop.Max + delta), nil
 	case flowFieldEngine:
 		// The three dials are the build's: see engine_table.go. This one
 		// offered every engine a model called sonnet, which is claude's
 		// alone, and an effort called default, which internal/task refuses
 		// by name before a run starts.
-		st.cur().Engine = nextOption(m.engineNames(), st.cur().Engine, delta)
+		//
+		// They are set on the phase that runs, which for a loop is the
+		// phase inside it: internal/flow refuses a phase that is both an
+		// engine and a loop.
+		st.edited().Engine = nextOption(m.engineNames(), st.edited().Engine, delta)
 	case flowFieldModel:
-		mdls, _ := m.modelsFor(m.dialEngine(st.cur().Engine))
-		st.cur().Model = nextOption(mdls, st.cur().Model, delta)
+		mdls, _ := m.modelsFor(m.dialEngine(st.edited().Engine))
+		st.edited().Model = nextOption(mdls, st.edited().Model, delta)
 	case flowFieldEffort:
-		effs, _ := m.effortsFor(m.dialEngine(st.cur().Engine))
-		st.cur().Effort = nextOption(effs, st.cur().Effort, delta)
+		effs, _ := m.effortsFor(m.dialEngine(st.edited().Engine))
+		st.edited().Effort = nextOption(effs, st.edited().Effort, delta)
 	case flowFieldThinking:
 		thks := []string{"adaptive", "on", "off"}
-		st.cur().Thinking = nextOption(thks, st.cur().Thinking, delta)
+		st.edited().Thinking = nextOption(thks, st.edited().Thinking, delta)
 	case flowFieldFeedOutput:
-		st.cur().FeedOutput = !st.cur().FeedOutput
+		st.edited().FeedOutput = !st.edited().FeedOutput
 	case flowFieldWait:
 		st.cur().Wait = !st.cur().Wait
 	}
@@ -55,9 +63,13 @@ func (m Model) handleFlowFieldAction() (Model, tea.Cmd) {
 	p := m.opts.Words
 
 	switch st.field {
-	case flowFieldTemplate, flowFieldPhaseSelect, flowFieldEngine,
-		flowFieldModel, flowFieldEffort, flowFieldThinking,
-		flowFieldFeedOutput, flowFieldWait:
+	case flowFieldEngine, flowFieldModel, flowFieldEffort:
+		// Enter opens the list rather than stepping one along, because one
+		// engine has sixty models and the reader knows which one they want.
+		// Left and right still walk them, for the dials that are short.
+		return m.openPicker(st.field), nil
+	case flowFieldTemplate, flowFieldPhaseSelect, flowFieldThinking,
+		flowFieldFeedOutput, flowFieldWait, flowFieldIsLoop:
 		return m.handleFlowFieldDelta(1)
 	case flowFieldAddPhase:
 		st.phases = append(st.phases, flow.Phase{

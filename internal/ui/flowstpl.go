@@ -319,6 +319,8 @@ func (m Model) handleFlowClick(t Target) (tea.Model, tea.Cmd) {
 	case "save":
 		m.flows.field = flowFieldSave
 		return m.handleFlowFieldAction()
+	case "pick":
+		return m.takePick(t.Phase), nil
 	case "select_phase":
 		m.flows.activePhase = t.Phase
 		m.flows.field = flowFieldPhaseSelect

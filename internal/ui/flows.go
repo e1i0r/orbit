@@ -15,6 +15,9 @@ const (
 	flowFieldDescription
 	flowFieldPhaseSelect
 	flowFieldPhaseName
+	flowFieldIsLoop
+	flowFieldLoopTurns
+	flowFieldLoopUntil
 	flowFieldEngine
 	flowFieldModel
 	flowFieldEffort
@@ -63,6 +66,18 @@ type flowsState struct {
 	description string
 	activePhase int
 	phases      []flow.Phase
+	// checksDraft is what has been typed into a loop's checks field,
+	// checksTyped is whether anything has been, and checksFor is the phase
+	// it was typed for. The three keep a half-written line from being
+	// rewritten by its own parse: see setLoopChecks. A draft left behind on
+	// another phase is ignored rather than cleared, so switching phases
+	// needs no bookkeeping anywhere.
+	checksDraft string
+	checksTyped bool
+	checksFor   int
+	// picker is the list of choices while one is open over the form: see
+	// flowspicker.go.
+	picker pickerState
 	// attempts is the flow's cap, carried although no field shows it: this
 	// editor rebuilds the whole flow when it saves, so what it does not hold
 	// is lost by opening a flow and saving it.
@@ -269,85 +284,6 @@ func (m Model) flowsListKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.deleteSelectedFlow()
 	case msg.Text == "n" || msg.Text == "N":
 		return m.startCreateFlow(), nil
-	}
-
-	return m, nil
-}
-
-func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
-	st := &m.flows
-	st.ensurePhase()
-
-	p := m.opts.Words
-
-	if st.confirmDiscard {
-		switch {
-		case msg.Text == "y" || msg.Text == "Y" || msg.Text == "s" || msg.Text == "S" || key.Matches(msg, m.keys.Open) || key.Matches(msg, m.keys.Back):
-			st.creating = false
-			st.confirmDiscard = false
-
-			return m.say(p.T("flows.changes_discarded", "changes discarded")), nil
-		default:
-			st.confirmDiscard = false
-			return m.say(p.T("flows.editing_resumed", "editing resumed")), nil
-		}
-	}
-
-	isText := st.field == flowFieldName || st.field == flowFieldDescription ||
-		st.field == flowFieldPhaseName || st.field == flowFieldPrompt
-	switch {
-	case key.Matches(msg, m.keys.Back):
-		if st.flowName != "" || st.description != "" || len(st.phases) > 1 || st.cur().Prompt != "" {
-			st.confirmDiscard = true
-
-			return m.say(p.T("flows.confirm_discard",
-				"discard flow changes? [y] yes / [n] no (or press Esc again)")), nil
-		}
-
-		st.creating = false
-
-		return m, nil
-	case key.Matches(msg, m.keys.NextTab) || key.Matches(msg, m.keys.Down):
-		st.field = (st.field + 1) % flowFieldCount
-		return m, nil
-	case key.Matches(msg, m.keys.PrevTab) || key.Matches(msg, m.keys.Up):
-		st.field = (st.field - 1 + flowFieldCount) % flowFieldCount
-		return m, nil
-	case !isText && (msg.Code == tea.KeyLeft || msg.Code == tea.KeyRight):
-		delta := 1
-		if msg.Code == tea.KeyLeft {
-			delta = -1
-		}
-
-		return m.handleFlowFieldDelta(delta)
-	case key.Matches(msg, m.keys.Open) || (!isText && msg.Text == " "):
-		return m.handleFlowFieldAction()
-	case msg.Code == tea.KeyBackspace:
-		switch st.field {
-		case flowFieldName:
-			st.flowName = trimLastRune(st.flowName)
-		case flowFieldDescription:
-			st.description = trimLastRune(st.description)
-		case flowFieldPhaseName:
-			st.cur().Name = trimLastRune(st.cur().Name)
-		case flowFieldPrompt:
-			st.cur().Prompt = trimLastRune(st.cur().Prompt)
-		}
-
-		return m, nil
-	}
-
-	if msg.Text != "" {
-		switch st.field {
-		case flowFieldName:
-			st.flowName += msg.Text
-		case flowFieldDescription:
-			st.description += msg.Text
-		case flowFieldPhaseName:
-			st.cur().Name += msg.Text
-		case flowFieldPrompt:
-			st.cur().Prompt += msg.Text
-		}
 	}
 
 	return m, nil

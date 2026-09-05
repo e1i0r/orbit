@@ -8,13 +8,27 @@ import (
 )
 
 func wrapPromptText(text string, maxLen int) []string {
-	if text == "" || maxLen <= 0 {
+	if strings.TrimSpace(text) == "" || maxLen <= 0 {
 		return nil
 	}
 
+	var lines []string
+
+	// A line the writer ended is a line: these fields hold paragraphs now,
+	// and wrapping them as one run of words would join a list of checks
+	// into a sentence.
+	for _, para := range strings.Split(text, "\n") {
+		lines = append(lines, wrapParagraph(para, maxLen)...)
+	}
+
+	return lines
+}
+
+// wrapOne folds one paragraph, which has no newlines left in it.
+func wrapParagraph(text string, maxLen int) []string {
 	wordsList := strings.Fields(text)
 	if len(wordsList) == 0 {
-		return nil
+		return []string{""}
 	}
 
 	var lines []string
@@ -155,84 +169,91 @@ func (m Model) hitFlows(x, y int) Target {
 		return Target{}
 	}
 
-	st := &m.flows
-	// Overview lines
-	curL := 5
-	for idx, ph := range st.phases {
-		startL := curL
+	return m.hitBuilder(x, line)
+}
 
-		curL++
-		if ph.Prompt != "" {
-			curL++
-		}
+// hitBuilder is where a click landed in the designer.
+//
+// It reads the rows that were drawn rather than a table of line numbers kept
+// beside them: see flowsbuilderrows.go for why there is no second opinion
+// about the layout any more.
+func (m Model) hitBuilder(x, line int) Target {
+	lines, start := m.builderView(m.frame.Body.H, m.frame.Body.W)
 
-		if line >= startL && line < curL {
-			return Target{Kind: TargetFlowItem, Field: "select_phase", Phase: idx}
-		}
+	at := start + line
+	if at < 0 || at >= len(lines) {
+		return Target{}
 	}
 
-	overviewLines := curL + 1
+	row := lines[at]
 
-	pLines := len(wrapPromptText(st.cur().Prompt, 76))
-	if pLines < 1 {
-		pLines = 1
-	}
-
-	if pLines > 4 {
-		pLines = 4
-	}
-
-	fLine := line - overviewLines
 	switch {
-	case fLine == 0:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldTemplate}
-	case fLine == 1:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldName}
-	case fLine == 2:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldDescription}
-	case fLine == 3:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldPhaseSelect}
-	case fLine == 4:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldPhaseName}
-	case fLine == 5:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldEngine}
-	case fLine == 6:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldModel}
-	case fLine == 7:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldEffort}
-	case fLine == 8:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldThinking}
-	case fLine == 9:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldFeedOutput}
-	case fLine == 10:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldWait}
-	case fLine == 11:
-		if x >= 27 && x < 39 {
-			return Target{Kind: TargetFlowItem, Field: "paste_prompt"}
+	case row.pick != noPick:
+		return Target{Kind: TargetFlowItem, Field: "pick", Phase: row.pick}
+	case row.phase != noPhase:
+		return Target{Kind: TargetFlowItem, Field: "select_phase", Phase: row.phase}
+	case row.field == noField:
+		return Target{}
+	case row.head && row.field == flowFieldPrompt:
+		if field := promptPill(m, x); field != "" {
+			return Target{Kind: TargetFlowItem, Field: field}
 		}
-
-		if x >= 39 && x < 57 {
-			return Target{Kind: TargetFlowItem, Field: "autogen_prompt"}
-		}
-
-		if x >= 57 {
-			return Target{Kind: TargetFlowItem, Field: "clear_prompt"}
-		}
-
-		return Target{Kind: TargetFlowItem, Phase: flowFieldPrompt}
-	case fLine > 11 && fLine <= 11+pLines+2:
-		return Target{Kind: TargetFlowItem, Phase: flowFieldPrompt}
-	case fLine >= 11+pLines+3:
-		if x < 25 {
-			return Target{Kind: TargetFlowItem, Field: "add_phase"}
-		}
-
-		if x < 45 {
-			return Target{Kind: TargetFlowItem, Field: "del_phase"}
-		}
-
-		return Target{Kind: TargetFlowItem, Field: "save"}
+	case row.field == flowFieldAddPhase:
+		return Target{Kind: TargetFlowItem, Field: buttonAt(m, x)}
 	}
 
-	return Target{}
+	return Target{Kind: TargetFlowItem, Phase: row.field}
+}
+
+// promptPill is which of the instruction row's three pills the pointer is
+// over, or nothing when it is over the label to their left.
+//
+// The ranges are measured off the pills themselves rather than written down,
+// because a translation makes every one of them a different width.
+func promptPill(m Model, x int) string {
+	p := m.opts.Words
+	at := 2 + labelWidth + 2
+
+	for _, pill := range []struct {
+		text  string
+		field string
+	}{
+		{p.T("flows.btn_paste", "📋 Paste"), "paste_prompt"},
+		{p.T("flows.btn_autogen", "✨ Autogenerate"), "autogen_prompt"},
+		{p.T("flows.btn_clear", "🗑 Clear"), "clear_prompt"},
+	} {
+		wide := lipgloss.Width(pill.text) + 2
+		if x >= at && x < at+wide {
+			return pill.field
+		}
+
+		at += wide + 1
+	}
+
+	return ""
+}
+
+// buttonAt is which of the three buttons under the form the pointer is over,
+// measured the same way.
+func buttonAt(m Model, x int) string {
+	p := m.opts.Words
+	at := 4
+
+	for _, btn := range []struct {
+		text  string
+		field string
+	}{
+		{p.T("flows.btn_add_phase", "+ Add Phase"), "add_phase"},
+		{p.T("flows.btn_del_phase", "🗑 Delete Phase"), "del_phase"},
+		{p.T("flows.btn_save_flow", "✔ Save Flow"), "save"},
+	} {
+		wide := lipgloss.Width(btn.text) + 2
+		if x < at+wide {
+			return btn.field
+		}
+
+		at += wide + 6
+	}
+
+	return "save"
 }

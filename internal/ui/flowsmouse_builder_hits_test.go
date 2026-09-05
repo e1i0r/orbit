@@ -1,13 +1,13 @@
 package ui
 
-// flowsmouse_builder_coverage_test.go is hitFlows's builder-view half: the
-// pipeline overview, the field rows and the prompt box, once the reader is
-// creating or editing a flow rather than looking at the list.
+// hitFlows's builder-view half: the pipeline overview, the field rows and
+// the boxes, once the reader is creating or editing a flow rather than
+// looking at the list.
 //
-// The line numbers below are hitFlows's own arithmetic, walked by hand for
-// a single default phase with an empty prompt — the shape startCreateFlow
-// leaves the form in — so a change to that geometry breaks the test that
-// depends on it rather than silently drawing under the reader's click.
+// The rows are found rather than written down. This test held a table of
+// line numbers walked by hand, which is the same table hitFlows itself held
+// — so the two agreed about a layout neither of them was reading. Both now
+// read builderView, and a row that moves moves in the test with it.
 
 import "testing"
 
@@ -18,33 +18,73 @@ func builderModel(t *testing.T) Model {
 	return m.startCreateFlow()
 }
 
+// rowOfField is the screen row the given field was drawn on, and the last of
+// them when the field is a box several rows tall.
+func rowOfField(t *testing.T, m Model, field int) int {
+	t.Helper()
+
+	lines, start := m.builderView(m.frame.Body.H, m.frame.Body.W)
+
+	for i, l := range lines {
+		if l.field == field {
+			return m.frame.Body.Y + i - start
+		}
+	}
+
+	t.Fatalf("no row was drawn for field %d", field)
+
+	return 0
+}
+
+// rowsOf is every screen row the given predicate drew.
+func rowsOf(m Model, keep func(builderLine) bool) []int {
+	lines, start := m.builderView(m.frame.Body.H, m.frame.Body.W)
+
+	var out []int
+
+	for i, l := range lines {
+		if keep(l) {
+			out = append(out, m.frame.Body.Y+i-start)
+		}
+	}
+
+	return out
+}
+
 func TestHitFlowsBuilderOverview(t *testing.T) {
 	m := builderModel(t)
-	base := m.frame.Body.Y
 
-	// The lone phase's own overview row selects it.
-	got := m.hitFlows(10, base+5)
+	rows := rowsOf(m, func(l builderLine) bool { return l.phase == 0 })
+	if len(rows) != 1 {
+		t.Fatalf("the lone phase drew %d overview rows", len(rows))
+	}
+
+	got := m.hitFlows(10, rows[0])
 	if got.Kind != TargetFlowItem || got.Field != "select_phase" || got.Phase != 0 {
 		t.Errorf("hitFlows on the overview row = %+v, want select_phase 0", got)
 	}
 
-	// The gap between the overview and the first field selects nothing.
-	if got := m.hitFlows(10, base+6); got.Kind != TargetNone {
-		t.Errorf("hitFlows on the overview's blank gap = %+v, want the zero Target", got)
+	// The screen's own title selects nothing.
+	if got := m.hitFlows(10, m.frame.Body.Y); got.Kind != TargetNone {
+		t.Errorf("hitFlows on the title = %+v, want the zero Target", got)
 	}
 }
 
 func TestHitFlowsBuilderOverviewWithPrompt(t *testing.T) {
 	m := builderModel(t)
 	m.flows.phases[0].Prompt = "already written"
-	base := m.frame.Body.Y
 
 	// A phase with a prompt draws an extra line, so its overview row is
-	// two lines tall rather than one.
-	for _, dy := range []int{5, 6} {
-		got := m.hitFlows(10, base+dy)
+	// two lines tall rather than one, and both select it.
+	rows := rowsOf(m, func(l builderLine) bool { return l.phase == 0 })
+	if len(rows) != 2 {
+		t.Fatalf("a phase with a prompt drew %d overview rows, want 2", len(rows))
+	}
+
+	for _, y := range rows {
+		got := m.hitFlows(10, y)
 		if got.Kind != TargetFlowItem || got.Field != "select_phase" || got.Phase != 0 {
-			t.Errorf("hitFlows at overview row %d = %+v, want select_phase 0", dy, got)
+			t.Errorf("hitFlows at overview row %d = %+v, want select_phase 0", y, got)
 		}
 	}
 }
@@ -52,45 +92,48 @@ func TestHitFlowsBuilderOverviewWithPrompt(t *testing.T) {
 func TestHitFlowsBuilderSecondPhase(t *testing.T) {
 	m := builderModel(t)
 	m.flows.phases = append(m.flows.phases, m.flows.phases[0])
-	base := m.frame.Body.Y
 
-	if got := m.hitFlows(10, base+5); got.Phase != 0 {
-		t.Errorf("first phase overview row = %+v, want phase 0", got)
-	}
+	for phase := range 2 {
+		rows := rowsOf(m, func(l builderLine) bool { return l.phase == phase })
+		if len(rows) == 0 {
+			t.Fatalf("phase %d drew no overview row", phase)
+		}
 
-	got := m.hitFlows(10, base+6)
-	if got.Kind != TargetFlowItem || got.Field != "select_phase" || got.Phase != 1 {
-		t.Errorf("second phase overview row = %+v, want select_phase 1", got)
+		got := m.hitFlows(10, rows[0])
+		if got.Kind != TargetFlowItem || got.Field != "select_phase" || got.Phase != phase {
+			t.Errorf("overview row of phase %d = %+v", phase, got)
+		}
 	}
 }
 
-// TestHitFlowsBuilderFields walks every field row hitFlows can name, for
-// the single-default-phase shape: overview line 5, blank line 6, fields
-// starting at line 7.
+// TestHitFlowsBuilderFields is every field of the form, clicked where it was
+// drawn.
 func TestHitFlowsBuilderFields(t *testing.T) {
 	m := builderModel(t)
-	base := m.frame.Body.Y
 
-	cases := []struct {
-		dy    int
-		field int
-	}{
-		{7, flowFieldTemplate},
-		{8, flowFieldName},
-		{9, flowFieldDescription},
-		{10, flowFieldPhaseSelect},
-		{11, flowFieldPhaseName},
-		{12, flowFieldEngine},
-		{13, flowFieldModel},
-		{14, flowFieldEffort},
-		{15, flowFieldThinking},
-		{16, flowFieldFeedOutput},
-		{17, flowFieldWait},
+	for _, field := range m.flows.fieldsShown() {
+		if field == flowFieldAddPhase || field == flowFieldDelPhase || field == flowFieldSave {
+			continue // three fields on one row, told apart by x below
+		}
+
+		got := m.hitFlows(10, rowOfField(t, m, field))
+		if got.Kind != TargetFlowItem || got.Field != "" || got.Phase != field {
+			t.Errorf("hitFlows on field %d = %+v", field, got)
+		}
 	}
-	for _, c := range cases {
-		got := m.hitFlows(10, base+c.dy)
-		if got.Kind != TargetFlowItem || got.Field != "" || got.Phase != c.field {
-			t.Errorf("hitFlows at field row %d = %+v, want field %d", c.dy, got, c.field)
+}
+
+// TestHitFlowsBuilderLoopFields is the two fields that exist only while the
+// phase repeats, which is the whole reason the layout is read rather than
+// written down.
+func TestHitFlowsBuilderLoopFields(t *testing.T) {
+	m := builderModel(t)
+	m = m.toggleLoop()
+
+	for _, field := range []int{flowFieldLoopTurns, flowFieldLoopUntil} {
+		got := m.hitFlows(10, rowOfField(t, m, field))
+		if got.Kind != TargetFlowItem || got.Phase != field {
+			t.Errorf("hitFlows on loop field %d = %+v", field, got)
 		}
 	}
 }
@@ -100,18 +143,27 @@ func TestHitFlowsBuilderFields(t *testing.T) {
 // their left.
 func TestHitFlowsBuilderPromptRowButtons(t *testing.T) {
 	m := builderModel(t)
-	y := m.frame.Body.Y + 18
+
+	lines, start := m.builderView(m.frame.Body.H, m.frame.Body.W)
+
+	y := 0
+
+	for i, l := range lines {
+		if l.head && l.field == flowFieldPrompt {
+			y = m.frame.Body.Y + i - start
+		}
+	}
 
 	got := m.hitFlows(10, y)
 	if got.Kind != TargetFlowItem || got.Field != "" || got.Phase != flowFieldPrompt {
 		t.Errorf("hitFlows left of the prompt row's pills = %+v, want the prompt field", got)
 	}
 
-	if got := m.hitFlows(30, y); got.Field != "paste_prompt" {
+	if got := m.hitFlows(29, y); got.Field != "paste_prompt" {
 		t.Errorf("hitFlows on the paste pill = %+v, want paste_prompt", got)
 	}
 
-	if got := m.hitFlows(45, y); got.Field != "autogen_prompt" {
+	if got := m.hitFlows(43, y); got.Field != "autogen_prompt" {
 		t.Errorf("hitFlows on the autogenerate pill = %+v, want autogen_prompt", got)
 	}
 
@@ -125,20 +177,24 @@ func TestHitFlowsBuilderPromptRowButtons(t *testing.T) {
 func TestHitFlowsBuilderPromptBox(t *testing.T) {
 	m := builderModel(t)
 
-	base := m.frame.Body.Y
-	for _, dy := range []int{19, 20, 21} {
-		got := m.hitFlows(10, base+dy)
+	rows := rowsOf(m, func(l builderLine) bool { return l.field == flowFieldPrompt && !l.head })
+	if len(rows) < 3 {
+		t.Fatalf("the prompt box drew %d rows, want its frame and something inside it", len(rows))
+	}
+
+	for _, y := range rows {
+		got := m.hitFlows(10, y)
 		if got.Kind != TargetFlowItem || got.Field != "" || got.Phase != flowFieldPrompt {
-			t.Errorf("hitFlows in prompt box at line %d = %+v, want prompt field", dy, got)
+			t.Errorf("hitFlows in the prompt box at %d = %+v, want the prompt field", y, got)
 		}
 	}
 }
 
 // TestHitFlowsBuilderButtonsRow is add/delete/save, in that left-to-right
-// order along the row under the prompt box.
+// order along the row under the form.
 func TestHitFlowsBuilderButtonsRow(t *testing.T) {
 	m := builderModel(t)
-	y := m.frame.Body.Y + 22
+	y := rowOfField(t, m, flowFieldAddPhase)
 
 	if got := m.hitFlows(10, y); got.Field != "add_phase" {
 		t.Errorf("hitFlows on add_phase = %+v", got)

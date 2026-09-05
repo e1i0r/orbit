@@ -40,7 +40,7 @@ func (m Model) paste(content string) Model {
 		return m.ensureVisible()
 	case m.screen == screenFlows:
 		if m.flows.creating {
-			m.flows.cur().Prompt += trimmed
+			m.flows.write(trimmed)
 		}
 
 		return m
