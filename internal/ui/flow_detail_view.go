@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"charm.land/lipgloss/v2"
@@ -120,8 +121,16 @@ func renderFlowDiagram(phases []flow.Phase, maxW int) []string {
 	for i, ph := range phases {
 		line1 := fmt.Sprintf("%d. %s", i+1, ph.Name)
 
+		// A loop names no engine of its own — what runs is the phase inside
+		// it — so the box says how many turns it takes, where a phase says
+		// what runs it. It used to say "/def": an empty engine and a model
+		// nobody set, which reads as a phase that was never configured.
 		line2 := fmt.Sprintf("%s/%s", ph.Engine, orDef(ph.Model, "def"))
-		if ph.FeedOutput {
+		if ph.Loop != nil {
+			line2 = "↻ ×" + strconv.Itoa(ph.Loop.Max)
+		}
+
+		if runsIn(ph).FeedOutput {
 			line2 += " ➔"
 		}
 

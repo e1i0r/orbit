@@ -65,3 +65,20 @@ func TestThePhasesInsideTheLoopAreShown(t *testing.T) {
 		t.Errorf("the phases inside the loop are not shown:\n%s", drawn)
 	}
 }
+
+// TestTheDiagramSaysHowManyTurnsRatherThanNoEngine. A loop runs nothing
+// itself, so the box that names the engine and the model had nothing to put
+// in it and printed "/def" — a phase that reads as never configured.
+func TestTheDiagramSaysHowManyTurnsRatherThanNoEngine(t *testing.T) {
+	m, _ := testModel(t, 100, 40)
+	m = m.openFlowPreview("coverage")
+
+	rows := strings.Join(m.flowDetailRows(m.frame.Body.H, m.frame.Body.W), "\n")
+	if strings.Contains(rows, "/def") {
+		t.Errorf("the diagram still names no engine:\n%s", rows)
+	}
+
+	if !strings.Contains(rows, "↻ ×3") {
+		t.Errorf("the diagram does not say how many turns the loop takes:\n%s", rows)
+	}
+}
