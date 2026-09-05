@@ -149,11 +149,12 @@ func TestSupervisorRenderingMarksAWithdrawnLine(t *testing.T) {
 	}
 }
 
-// TestSupervisorScreenIsSquare. The thread, the rule under the title and the
-// input box each working out their own width leaves the screen crooked by a
-// couple of cells in a way no single line looks wrong on its own. Every row
-// of every box is the same width, at any terminal size.
-func TestSupervisorScreenIsSquare(t *testing.T) {
+// TestSupervisorScreenFitsTheTerminal. The screen is drawn as rows of text
+// and not as a box, so what has to hold is that it fills exactly the height
+// it was given and that no line runs off the right edge — a wrapped reply
+// measured against a width nobody clipped it to is how the frame ends up
+// with a tail hanging past it.
+func TestSupervisorScreenFitsTheTerminal(t *testing.T) {
 	for _, size := range []struct{ w, h int }{{120, 34}, {80, 24}, {60, 16}, {200, 50}} {
 		m, _ := testModel(t, size.w, size.h)
 		m = m.openSupervisor()
@@ -167,24 +168,9 @@ func TestSupervisorScreenIsSquare(t *testing.T) {
 			t.Errorf("%dx%d: %d rows, want %d", size.w, size.h, len(rows), size.h)
 		}
 
-		want := -1
-
 		for i, r := range rows {
-			got := lipgloss.Width(r)
-			if strings.TrimSpace(r) == "" {
-				continue
-			}
-
-			if want == -1 {
-				want = got
-			}
-
-			if got != want {
-				t.Errorf("%dx%d: row %d is %d cells, the rest are %d: %q", size.w, size.h, i, got, want, r)
-			}
-
-			if got > size.w {
-				t.Errorf("%dx%d: row %d is %d cells, wider than the terminal", size.w, size.h, i, got)
+			if got := lipgloss.Width(r); got > size.w {
+				t.Errorf("%dx%d: row %d is %d cells, wider than the terminal: %q", size.w, size.h, i, got, r)
 			}
 		}
 	}

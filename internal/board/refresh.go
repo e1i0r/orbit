@@ -258,26 +258,28 @@ func (r *Reader) rescan() error {
 	// just cloned three projects that there are no repositories at all, and
 	// offers them the one action — clone one — that would change nothing.
 	//
-	// repo.Discover is the walker, and it is the same one `orbit repos`
-	// uses rather than a second: it stops at the first .git instead of
+	// repo.Paths is the walker: it stops at the first .git instead of
 	// descending into it, skips dotted directories and the state root, and
-	// does not follow symlinks. A directory that looks like a repository and
-	// will not open is left out of the listing rather than failing the walk.
+	// does not follow symlinks.
+	//
+	// It is Paths and not Discover because of the clock this sits on. This
+	// runs every board.RescanEvery for as long as the window is open, and
+	// Discover opens every repository it finds — three git subprocesses
+	// each, for a remote and a branch the board never draws. Thirteen
+	// checkouts made that thirty-nine processes every two seconds. The walk
+	// already knows the path and the name, which is all of it that is read
+	// below.
 	//
 	// The one error is the walk not happening: a root that is not there, or
 	// one that cannot be read. An empty board and a root nobody could look
 	// in are the same picture, and which one this is has to be said.
-	found, err := repo.Discover(r.root)
+	found, err := repo.Paths(r.root)
 	if err != nil {
 		return fmt.Errorf("look for repositories under %q: %w", r.root, err)
 	}
 
 	repos := make([]*repoState, 0, len(found))
 	for _, rp := range found {
-		// The name is taken from the walk rather than asked for again.
-		// Discover has already run repo.Open on this path, and repo.Open is
-		// three git subprocesses; asking a second time would pay for them
-		// twice on every enumeration.
 		repos = append(repos, &repoState{path: rp.Path, name: rp.Name})
 	}
 	// Sorted by name so the rows are in an order a reader can predict —

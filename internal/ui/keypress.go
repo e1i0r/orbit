@@ -131,6 +131,8 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m, nil
 	case key.Matches(k, m.keys.Repos):
 		return m.openRepos(), nil
+	case key.Matches(k, m.keys.Flows):
+		return m.openFlows(), nil
 	case key.Matches(k, m.keys.EngineKnobs):
 		return m.openEngines(), nil
 	case key.Matches(k, m.keys.Quota):

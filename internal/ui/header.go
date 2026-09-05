@@ -241,13 +241,14 @@ func (m Model) headerFields() []headerField {
 	reposText := p.P("header.repos", m.board.Repos, "{n} repo", "{n} repos")
 	fields = append(fields, headerField{"repos", Chrome().Render("📦 " + reposText)})
 
-	// Model / knob chip
-	chip := m.knobChip()
-	if chip != "" {
-		fields = append(fields, headerField{"engine", Paint(Accent).Render("🧠 " + chip)})
-	} else {
-		fields = append(fields, headerField{"engine", Chrome().Render("🧠 claude")})
+	// Model / knob chip. With no knob set this is still the engine that
+	// answers, and not the literal "claude" it used to print.
+	chip, ink := m.knobChip(), Paint(Accent)
+	if chip == "" {
+		chip, ink = m.dialEngine(""), Chrome()
 	}
+
+	fields = append(fields, headerField{"engine", ink.Render("🧠 " + chip)})
 
 	// Quota chip
 	//
@@ -307,7 +308,9 @@ func (m Model) hints() []barHint {
 		}
 	}
 
-	return append(out, hintFor(m.keys.Filter))
+	// On the bar and not only in the help overlay: a key a reader never
+	// sees is a key they never press.
+	return append(out, hintFor(m.keys.Supervisor), hintFor(m.keys.Flows), hintFor(m.keys.Filter))
 }
 
 // hintFor is one binding as the bar prints it: the glyph a reader sees, the

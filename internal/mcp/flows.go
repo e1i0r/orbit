@@ -43,6 +43,8 @@ func (sn Session) listFlows() CallToolResult {
 		return refuse(err)
 	}
 
+	defer func() { _ = s.Close() }() //nolint:errcheck // the answer is already made
+
 	listed := flow.List(s)
 
 	flows := make([]map[string]any, 0, len(listed))
@@ -75,6 +77,8 @@ func (sn Session) getFlow(args map[string]any) CallToolResult {
 		return refuse(err)
 	}
 
+	defer func() { _ = s.Close() }() //nolint:errcheck // the answer is already made
+
 	name := strings.TrimSpace(stringArg(args, "name"))
 	if name == "" {
 		return refuse(fmt.Errorf("this tool needs name"))
@@ -105,6 +109,8 @@ func (sn Session) saveFlow(args map[string]any) CallToolResult {
 	if err != nil {
 		return refuse(err)
 	}
+
+	defer func() { _ = s.Close() }() //nolint:errcheck // the answer is already made
 
 	name := strings.TrimSpace(stringArg(args, "name"))
 	if name == "" {
@@ -195,6 +201,8 @@ func (sn Session) deleteFlow(args map[string]any) CallToolResult {
 		return refuse(err)
 	}
 
+	defer func() { _ = s.Close() }() //nolint:errcheck // the answer is already made
+
 	name := strings.TrimSpace(stringArg(args, "name"))
 	if name == "" {
 		return refuse(fmt.Errorf("this tool needs name"))
@@ -232,6 +240,8 @@ func (sn Session) flowUsers(name string) []string {
 	if err != nil {
 		return nil
 	}
+
+	defer sb.close()
 
 	var users []string
 

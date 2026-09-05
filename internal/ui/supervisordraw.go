@@ -8,23 +8,24 @@ import (
 	"github.com/e1i0r/orbit/internal/view"
 )
 
-// supervisorRows draws the whole screen: the thread in one box and what you
-// are about to say in another, both of one width.
+// supervisorRows draws the whole screen: a heading, the thread under it,
+// and what you are about to say at the foot.
 //
-// The two boxes are sized from each other rather than from constants. The
-// input grows with what has been typed into it, and the thread is whatever
-// is left, so a long directive eats the conversation instead of being
-// clipped against a fixed six rows.
+// It is laid out the way the quota and engine screens are — a title, an
+// indented body, the ways out in dim underneath — and not as two framed
+// boxes. Framed, it read as a different program bolted into the cockpit.
 func (m Model) supervisorRows(h, w int) []string {
 	if h <= 0 {
 		return nil
 	}
 
-	boxW, threadH := m.supervisorLayout(h, w)
-	out := m.drawSupervisorThread(threadH, boxW)
-	out = append(out, "")
+	cw, threadH := m.supervisorLayout(h, w)
 
-	out = append(out, m.drawSupervisorTextarea(boxW)...)
+	out := m.supervisorHead(cw)
+	out = append(out, m.supervisorBody(threadH, cw)...)
+	out = append(out, "")
+	out = append(out, m.drawSupervisorInput(cw)...)
+
 	for i, row := range out {
 		out[i] = fit("  "+row, w)
 	}
@@ -32,54 +33,52 @@ func (m Model) supervisorRows(h, w int) []string {
 	return fill(out, h)
 }
 
-// supervisorLayout is the screen's arithmetic, in one place: how wide both
-// boxes are, and how tall the thread is once the input has taken what it
-// needs. The keys ask it the same question the drawing does — a scroll that
-// clamped against a different height from the one on screen is a scroll
-// that stops a row early, or does nothing for the first ten presses.
-func (m Model) supervisorLayout(h, w int) (boxW, threadH int) {
-	boxW = supervisorBoxWidth(w)
-	return boxW, max(h-len(m.drawSupervisorTextarea(boxW))-1, 3)
+// supervisorHeadRows is the heading's height: the blank row above the
+// title, the title, the standing facts under it, and the blank row that
+// sets the thread off.
+const supervisorHeadRows = 4
+
+// supervisorLayout is the screen's arithmetic, in one place: the width every
+// line is wrapped to, and how tall the thread is once the heading and the
+// input have taken what they need. The keys ask it the same question the
+// drawing does — a scroll that clamped against a different height from the
+// one on screen is a scroll that stops a row early, or does nothing for the
+// first ten presses.
+func (m Model) supervisorLayout(h, w int) (cw, threadH int) {
+	cw = max(min(w-4, 110), 24)
+	return cw, max(h-supervisorHeadRows-1-len(m.drawSupervisorInput(cw)), 3)
 }
 
-// drawSupervisorThread is the conversation, framed.
-func (m Model) drawSupervisorThread(h, boxW int) []string {
+// supervisorHead is the title and the standing facts under it: which engine
+// answers here, whether autopilot is on, and how long the thread is.
+func (m Model) supervisorHead(cw int) []string {
 	p := m.opts.Words
 
-	eng := m.dialEngine(m.knobs.Engine)
-
-	autoPip := Paint(Dim).Render("○ off")
-	if m.autopilotOn() {
-		autoPip = Paint(Live).Render("● on")
-	}
-
-	// The border says which mode the screen is in. Picking a line to take
-	// back changes what every key does, and a mode you cannot see is a mode
-	// you press keys into by accident.
-	frame := Dim
-
-	right := Paint(Dim).Render("⚡ ") + autoPip + Paint(Dim).Render(" · "+strconv.Itoa(len(m.supervisor.lines))+" msg")
+	title := p.T("supervisor.title", "Supervisor & Cockpit Memory")
 	if m.supervisor.picking {
-		frame = Accent
-		right = Paint(Accent).Bold(true).Render(p.T("supervisor.picking", "pick a line to take back"))
+		title = p.T("supervisor.picking", "pick a line to take back")
 	}
 
-	title := Paint(Accent).Bold(true).Render("🛸 "+p.T("supervisor.title", "Supervisor & Cockpit Memory")) +
-		" " + Paint(Dim).Render("·") + " " + Paint(Accent).Render("["+eng+"]")
-
-	rows := []string{boxTop(frame, title, right, boxW)}
-	for _, body := range m.supervisorBody(h-2, boxContentWidth(boxW)) {
-		rows = append(rows, boxRow(frame, body, boxW))
+	auto := p.T("supervisor.auto_off", "autopilot off")
+	if m.autopilotOn() {
+		auto = p.T("supervisor.auto_on", "autopilot on")
 	}
 
-	return append(rows, boxBottom(frame, "", "", boxW))
+	facts := strings.Join([]string{
+		p.T("supervisor.answered_by", "answered by {engine}", about("engine", m.dialEngine(m.knobs.Engine))),
+		auto,
+		p.T("supervisor.msg_count", "{n} messages", about("n", strconv.Itoa(len(m.supervisor.lines)))),
+	}, " · ")
+
+	return []string{"", Paint(Accent).Render(title), Paint(Dim).Render(fit(facts, cw)), ""}
 }
 
 // supervisorBody is the thread's content: every message, then the window of
-// it that fits, chosen by the scroll offset or by what is being picked.
+// it that fits, chosen by the scroll offset or by what is being picked, with
+// a scroll bar down its right edge when there is more of it than fits.
 //
-// A thread shorter than the box is padded above rather than below, so the
-// last thing said sits against the box you answer it in. Padding underneath
+// A thread shorter than the screen is padded above rather than below, so the
+// last thing said sits against the line you answer it in. Padding underneath
 // left a conversation of two lines stranded at the top of a tall terminal
 // with a field of nothing between it and the cursor.
 func (m Model) supervisorBody(maxRows, cw int) []string {
@@ -89,13 +88,44 @@ func (m Model) supervisorBody(maxRows, cw int) []string {
 	}
 
 	offset := m.threadOffset(len(rendered), maxRows, starts)
+	rows := slices.Clone(rendered[offset : offset+maxRows])
 
-	return rendered[offset : offset+maxRows]
+	// The rail stands in the column after the text, which is why the rows
+	// are filled out to one width first: a bar drawn against ragged lines
+	// zigzags down the screen instead of standing still.
+	track := scrollTrack(maxRows, len(rendered), offset)
+	for i := range rows {
+		if track == nil {
+			break
+		}
+
+		rows[i] = padRight(fit(rows[i], cw), cw) + track[i]
+	}
+
+	return rows
 }
 
-// threadLines renders every message, and says which row each one starts on
+// threadLines is every message rendered, and which row each one starts on
 // so that picking one can scroll to it.
+//
+// It renders once per change rather than once per frame: what came back last
+// time is given back whenever the thread, the width and the way it is being
+// read are all still what they were. supervisorcache.go says why that is
+// worth doing.
 func (m Model) threadLines(cw int) (rows []string, starts []int) {
+	key := m.threadKeyAt(cw)
+	if rows, starts, held := m.thread.rowsFor(key); held {
+		return rows, starts
+	}
+
+	rows, starts = m.renderThread(cw)
+	m.thread.keep(key, rows, starts)
+
+	return rows, starts
+}
+
+// renderThread draws every message in the thread, whatever it costs.
+func (m Model) renderThread(cw int) (rows []string, starts []int) {
 	p := m.opts.Words
 	if len(m.supervisor.lines) == 0 && !m.supervisorBusy {
 		empty := p.T("supervisor.empty", "No messages in supervisor thread yet. Type a briefing or instruction below.")

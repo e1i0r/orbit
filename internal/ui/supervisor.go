@@ -69,6 +69,10 @@ func (m Model) syncSupervisor() Model {
 	lines, err := m.opts.Reader.SupervisorLog()
 	m.supervisor.lines = lines
 	m.supervisor.err = err
+	// What was drawn is not this thread any more. Saying so outright is
+	// what makes a retraction a change: taking a turn back adds a line
+	// rather than removing one, so the length alone would not.
+	m.thread.invalidate()
 
 	return m
 }
@@ -246,10 +250,10 @@ func (m Model) scrollThread(d int) Model {
 // threadSize is how many rows the conversation is and how many are on
 // screen, asked of the same functions that draw it.
 func (m Model) threadSize() (total, view int) {
-	boxW, threadH := m.supervisorLayout(max(m.frame.Body.H, 1), max(m.frame.Body.W, 1))
-	rows, _ := m.threadLines(boxContentWidth(boxW))
+	cw, threadH := m.supervisorLayout(max(m.frame.Body.H, 1), max(m.frame.Body.W, 1))
+	rows, _ := m.threadLines(cw)
 
-	return len(rows), max(threadH-2, 1)
+	return len(rows), max(threadH, 1)
 }
 
 // threadRows is how many rows of conversation are on screen.

@@ -28,6 +28,8 @@ func (sn Session) listRepos() CallToolResult {
 		return refuse(err)
 	}
 
+	defer sb.close()
+
 	return reply(map[string]any{
 		"repos": reposOf(sb.board),
 		"roots": sb.roots,
@@ -54,6 +56,8 @@ func (sn Session) inspectRepo(args map[string]any) CallToolResult {
 	if err != nil {
 		return refuse(err)
 	}
+
+	defer func() { _ = s.Close() }() //nolint:errcheck // the answer is already made
 
 	path, err := sn.repoPath(s, hint)
 	if err != nil {
@@ -108,6 +112,8 @@ func (sn Session) addRepo(args map[string]any) CallToolResult {
 		return refuse(err)
 	}
 
+	defer func() { _ = s.Close() }() //nolint:errcheck // the answer is already made
+
 	r, err := repo.Open(path)
 	if err != nil {
 		return refuse(err)
@@ -152,6 +158,8 @@ func (sn Session) forgetRepo(args map[string]any) CallToolResult {
 	if err != nil {
 		return refuse(err)
 	}
+
+	defer func() { _ = s.Close() }() //nolint:errcheck // the answer is already made
 
 	ref, err := knownRepo(s, hint)
 	if err != nil {
