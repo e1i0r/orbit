@@ -81,6 +81,10 @@ func (sn Session) readBoard() (*storeAndBoard, error) {
 
 	b, roots, err := sn.board(s)
 	if err != nil {
+		// Nothing is handed back on this path, so nothing else can close
+		// what was opened a moment ago.
+		_ = s.Close() //nolint:errcheck // the failure being reported is the worse one
+
 		return nil, fmt.Errorf("read the board: %w", err)
 	}
 
@@ -100,11 +104,30 @@ type storeAndBoard struct {
 	roots []string
 }
 
+// close gives the record back.
+//
+// Every tool call opens the state root for itself, and opening it opens the
+// record: one SQLite connection, which is the database file, its write-ahead
+// log and its shared-memory index. A server answers for as long as the
+// client that spawned it runs, so a call that does not close leaves those
+// open for the life of the process — and enough calls take the machine's own
+// file table with them, after which nothing on it can open a file: not the
+// next tool call, not the window's run markers, not git.
+func (sb *storeAndBoard) close() {
+	if sb == nil || sb.store == nil {
+		return
+	}
+
+	_ = sb.store.Close() //nolint:errcheck // the answer is already made and there is nobody left to tell
+}
+
 func (sn Session) boardSummary() CallToolResult {
 	sb, err := sn.readBoard()
 	if err != nil {
 		return refuse(err)
 	}
+
+	defer sb.close()
 
 	b := sb.board
 
@@ -147,6 +170,8 @@ func (sn Session) listTasks(args map[string]any) CallToolResult {
 	if err != nil {
 		return refuse(err)
 	}
+
+	defer sb.close()
 
 	repoFilter := stringArg(args, "repo")
 

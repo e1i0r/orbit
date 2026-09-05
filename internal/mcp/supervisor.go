@@ -41,6 +41,8 @@ func (sn Session) supervisorSay(args map[string]any) CallToolResult {
 		return refuse(err)
 	}
 
+	defer func() { _ = s.Close() }() //nolint:errcheck // the answer is already made
+
 	if err := supervisor.Record(s, record.SupervisorMessage, by, channel, taskID, repo, message); err != nil {
 		return refuse(fmt.Errorf("record supervisor message: %w", err))
 	}
@@ -63,6 +65,8 @@ func (sn Session) supervisorHistory(args map[string]any) CallToolResult {
 	if err != nil {
 		return refuse(err)
 	}
+
+	defer func() { _ = s.Close() }() //nolint:errcheck // the answer is already made
 
 	// No Reader, and no root. The supervisor thread is one file under the
 	// state root rather than something folded per repository, so there is

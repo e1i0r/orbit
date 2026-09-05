@@ -27,6 +27,8 @@ func (sn Session) createTask(args map[string]any) CallToolResult {
 		return refuse(err)
 	}
 
+	defer sb.close()
+
 	r, err := sn.pickRepo(sb.board, stringArg(args, "repo"))
 	if err != nil {
 		return refuse(err)
@@ -89,6 +91,8 @@ func (sn Session) retryTask(args map[string]any) CallToolResult {
 	if err != nil {
 		return refuse(err)
 	}
+
+	defer sb.close()
 
 	row0, err := findTask(sb.board, stringArg(args, "task_id"))
 	if err != nil {
@@ -183,6 +187,8 @@ func (sn Session) addNote(args map[string]any) CallToolResult {
 		return *res
 	}
 
+	defer sb.close()
+
 	note := supervisorNote(text)
 	if err := task.Note(sb.store, t, note); err != nil {
 		return refuse(fmt.Errorf("record a note on task %s: %w", t.ID, err))
@@ -198,6 +204,8 @@ func (sn Session) control(args map[string]any, word, past string) CallToolResult
 	if res != nil {
 		return *res
 	}
+
+	defer sb.close()
 
 	if err := task.Control(sb.store, t, word); err != nil {
 		return refuse(fmt.Errorf("tell task %s to %s: %w", t.ID, word, err))
@@ -216,6 +224,8 @@ func (sn Session) cancelTask(args map[string]any) CallToolResult {
 	if res != nil {
 		return *res
 	}
+
+	defer sb.close()
 
 	if err := task.Cancel(sb.store, t); err != nil {
 		return refuse(fmt.Errorf("cancel task %s: %w", t.ID, err))
@@ -236,6 +246,8 @@ func (sn Session) requeueTask(args map[string]any) CallToolResult {
 	if res != nil {
 		return *res
 	}
+
+	defer sb.close()
 
 	why := strings.TrimSpace(stringArg(args, "why"))
 	if err := task.Requeue(context.Background(), sb.store, t, "mcp", why); err != nil {
@@ -259,6 +271,8 @@ func (sn Session) directTask(args map[string]any) CallToolResult {
 	if res != nil {
 		return *res
 	}
+
+	defer sb.close()
 	// Directing and restarting is one verb — task.Reopen — and not the two
 	// halves of it done here in a row. Reopen waits for the run it stopped
 	// to actually be gone before starting the next; spelling the pair out a
@@ -308,21 +322,33 @@ func (sn Session) loadFor(args map[string]any) (*storeAndBoard, task.Task, *Call
 
 	row0, err := findTask(sb.board, stringArg(args, "task_id"))
 	if err != nil {
+		sb.close()
+
 		res := refuse(err)
+
 		return nil, task.Task{}, &res
 	}
 
 	r, err := openTaskRepo(row0)
 	if err != nil {
+		sb.close()
+
 		res := refuse(err)
+
 		return nil, task.Task{}, &res
 	}
 
 	t, err := task.Load(sb.store, r, row0.ID)
 	if err != nil {
+		sb.close()
+
 		res := refuse(fmt.Errorf("load task %s: %w", row0.ID, err))
+
 		return nil, task.Task{}, &res
 	}
-
+	// The record travels with the row, and so does closing it: the caller
+	// owns what it was handed. Every path above that answers instead gives
+	// it back here, because a refusal that leaked would be the tool call
+	// that costs the most and keeps the most.
 	return sb, t, nil
 }
