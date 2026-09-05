@@ -18,6 +18,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/e1i0r/orbit/internal/engine"
+	"github.com/e1i0r/orbit/internal/knowledge"
+	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/record"
 	"github.com/e1i0r/orbit/internal/store"
 )
@@ -53,7 +55,7 @@ func Supervise(ctx context.Context, s *store.Store, eng engine.Engine, prompt st
 		return "", fmt.Errorf("read the supervisor thread: %w", err)
 	}
 
-	fullPrompt := buildSupervisorPrompt(history(events), prompt)
+	fullPrompt := buildSupervisorPrompt(history(events), prompt, standing(s))
 	req := engine.Request{
 		Prompt:      fullPrompt,
 		Dir:         s.Root(),
@@ -99,7 +101,7 @@ func AutoSupervise(ctx context.Context, s *store.Store, eng engine.Engine, needi
 // run_helpers.go): the answer is asked for in Markdown and drawn as Markdown
 // in the cockpit, and a prompt that asks in one shape for another is asking
 // twice.
-func buildSupervisorPrompt(history, newPrompt string) string {
+func buildSupervisorPrompt(history, newPrompt string, knows []knowledge.Fact) string {
 	var b strings.Builder
 
 	b.WriteString("# Supervisor\n\n")
@@ -114,6 +116,7 @@ func buildSupervisorPrompt(history, newPrompt string) string {
 		fmt.Fprintf(&b, "\n## Thread so far\n\n%s\n", engine.Fenced(history))
 	}
 
+	b.WriteString(alreadyKnown(knows))
 	fmt.Fprintf(&b, "\n## Operator message\n\n%s\n", strings.TrimSpace(newPrompt))
 	b.WriteString("\n" + answerContract)
 
@@ -140,7 +143,81 @@ const answerContract = "## How to answer\n\n" +
 	"- Bullets only for a list of things. Not for one thing.\n" +
 	"- Never write file:// links or any other address: nothing here can be clicked, and a path " +
 	"wraps mid-word in the middle of a sentence. Name the file plainly instead.\n" +
-	"- Say what you did, if you did something. Do not restate what was asked.\n"
+	"- Say what you did, if you did something. Do not restate what was asked.\n\n" +
+	"When the operator tells you something that should have been standing knowledge about the code — " +
+	"a constraint, a trap, a convention, something they are telling you because Orbit did not already know it — " +
+	"**offer** to write it down with orbit_learn, in one line, at the end of your answer. " +
+	"Never write one without them agreeing: a rule that appeared because nobody disagreed is a rule nobody put there. " +
+	"Say nothing when what they said is a question, a request, or something already in the list above.\n"
+
+// standing is everything Orbit has learned, across the state root and every
+// repository the record has heard of.
+//
+// Every repository and not the one somebody happens to be in: this supervisor
+// is global — it answers about tasks wherever they are — so a rule it was not
+// shown is a rule it can contradict.
+//
+// A store that cannot be read costs the facts and not the answer. The
+// sentences are how a rule is explained; the gate is what enforces one, and
+// the gate reads its own copy.
+func standing(s *store.Store) []knowledge.Fact {
+	ks := knowledge.NewStore(s.Root())
+
+	facts, err := ks.Load("")
+	if err != nil {
+		logger.Error("supervisor", "what orbit knows was not read: %v", err)
+
+		return nil
+	}
+
+	repos, err := s.Repos()
+	if err != nil {
+		logger.Error("supervisor", "the repositories to read facts from: %v", err)
+
+		return knowledge.InScope(facts)
+	}
+
+	for _, r := range repos {
+		own, err := ks.Load(r.Path)
+		if err != nil {
+			logger.Error("supervisor", "what orbit knows about %q: %v", r.Path, err)
+			continue
+		}
+
+		for _, f := range own {
+			if f.Scope.Repo == r.Path {
+				facts = append(facts, f)
+			}
+		}
+	}
+
+	return knowledge.InScope(facts)
+}
+
+// alreadyKnown is the standing facts, in front of the supervisor while it
+// answers.
+//
+// Two things need it. It directs tasks and answers questions about the work,
+// and without the rules it could say something a gate would refuse an hour
+// later. And it is what makes the offer above possible at all: telling
+// whether the operator is repeating themselves is comparing meaning, which a
+// model does and matching text does not — the same thing said in other words
+// is not the same string.
+func alreadyKnown(facts []knowledge.Fact) string {
+	if len(facts) == 0 {
+		return ""
+	}
+
+	var b strings.Builder
+
+	b.WriteString("\n## What Orbit already knows\n\n")
+
+	for _, f := range facts {
+		fmt.Fprintf(&b, "- %s\n", strings.TrimSpace(f.Phrase))
+	}
+
+	return b.String()
+}
 
 // maxHistory is how much of the thread is put in front of the model.
 //

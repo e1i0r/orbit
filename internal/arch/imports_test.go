@@ -131,7 +131,13 @@ var layers = map[string][]string{
 	// from in here. That absence is what keeps the direction one-way, and
 	// with it there is no cycle to make: internal/task does not list this
 	// package either.
-	"internal/supervisor": {"internal/engine", "internal/record", "internal/store"},
+	// internal/knowledge is on the supervisor's list because it answers with
+	// the standing rules in front of it: one that directs a task without
+	// them can contradict a gate an hour before the gate refuses the work.
+	// internal/logger is there because a store it could not read costs the
+	// facts and not the answer, and a loss that says nothing is the kind
+	// nobody finds.
+	"internal/supervisor": {"internal/engine", "internal/knowledge", "internal/logger", "internal/record", "internal/store"},
 	// internal/logger is on internal/task's list for the same reason it is on
 	// internal/ui's, and for one more: a run that is SIGKILLed writes nothing
 	// about its own death, so the last line it managed to log is the only

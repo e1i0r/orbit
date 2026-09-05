@@ -15,7 +15,7 @@ import (
 // and the same contract turned every "what happened?" into a page of
 // headings, bullet lists and file:// links.
 func TestTheSupervisorIsAskedForAnAnswerAndNotAReport(t *testing.T) {
-	asked := buildSupervisorPrompt("", "what happened while I was out?")
+	asked := buildSupervisorPrompt("", "what happened while I was out?", nil)
 
 	for _, want := range []string{"few sentences", "question"} {
 		if !strings.Contains(strings.ToLower(asked), want) {
@@ -32,7 +32,7 @@ func TestTheSupervisorIsAskedForAnAnswerAndNotAReport(t *testing.T) {
 // clicked, and a file:// address is a hundred characters of noise that wraps
 // mid-path in the middle of a sentence.
 func TestTheSupervisorIsToldNotToLinkLocalFiles(t *testing.T) {
-	if asked := buildSupervisorPrompt("", "status"); !strings.Contains(asked, "file://") {
+	if asked := buildSupervisorPrompt("", "status", nil); !strings.Contains(asked, "file://") {
 		t.Errorf("nothing tells the supervisor to leave local links out:\n%s", asked)
 	}
 }
