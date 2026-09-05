@@ -137,8 +137,7 @@ func (m Model) draftFlow() (Model, tea.Cmd) {
 	// Said in the bar as well as on the tab: a gesture that starts
 	// something the reader cannot see finishing is a gesture they press
 	// twice.
-	m = m.say(p.T("flows.say_sent", "asking {engine} for a draft — this takes as long as one of its runs",
-		about("engine", engineName)))
+	m = m.say(p.T("flows.say_sent", "asking {engine}…", about("engine", engineName)))
 
 	return m, func() tea.Msg {
 		out, err := ask(engineName, model, flowDraftPrompt(said, m.engineNames()))
@@ -204,7 +203,7 @@ func decodeDraft(out string) (flow.Flow, error) {
 	}
 
 	body := []byte(out)
-	raw := body[from : to+1]
+	raw := mendJSON(body[from : to+1])
 
 	// A draft with no name of its own is given one rather than refused: the
 	// name is what the reader types next anyway, and "the flow has no name"

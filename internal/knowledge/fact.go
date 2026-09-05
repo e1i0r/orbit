@@ -145,6 +145,23 @@ func InScope(all []Fact) []Fact {
 	return ordered(all, func(Scope) bool { return true })
 }
 
+// Every is all of them in the same order, the ones that were turned off
+// included.
+//
+// It is what the screen that lists them shows. InScope is what a phase is
+// told, and a fact turned off is not told — but a screen that dropped them
+// too would be a screen with no way to turn one back on, and a file on disk
+// that nothing in the window admits exists.
+func Every(all []Fact) []Fact {
+	kept := slices.Clone(all)
+
+	slices.SortStableFunc(kept, func(a, b Fact) int {
+		return a.Scope.Depth() - b.Scope.Depth()
+	})
+
+	return kept
+}
+
 // For is every fact that reaches a target, widest first.
 //
 // The order is the point. The agent reads them in this order, so what was

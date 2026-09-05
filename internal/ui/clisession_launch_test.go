@@ -97,7 +97,7 @@ func TestHandleCLIEndedOpensTheConfirmOnASuccessfulRun(t *testing.T) {
 		t.Errorf("confirm=%v confirmID=%q, want confirmPostCliTask on %q", next.confirm, next.confirmID, "payments")
 	}
 
-	wantBand(t, next, "create a task in Orbit")
+	wantBand(t, next, "make a task from this session")
 }
 
 func TestHandleCLIEndedTreatsAnExitErrorAsAnOrdinaryEnding(t *testing.T) {

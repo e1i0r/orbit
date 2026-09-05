@@ -76,7 +76,7 @@ func (m Model) pickerChoices(field int) (ids, labels []string) {
 // rows are routed by their position, so the empty value has a row like any
 // other.
 func withDefault(m Model, ids, labels []string) (allIDs, allLabels []string) {
-	fresh := m.opts.Words.T("flows.pick_default", "default (what the engine is set to)")
+	fresh := m.opts.Words.T("flows.pick_default", "default")
 
 	return append([]string{""}, ids...), append([]string{fresh}, labels...)
 }

@@ -310,20 +310,20 @@
       "value": "{phase} {n}/{total}"
     },
     "msg.confirm_cancel": {
-      "source": "cancel {id}? press y to confirm, anything else to leave it running",
-      "value": "¿cancelar {id}? pulsa y para confirmar, cualquier otra tecla la deja en marcha"
+      "source": "cancel {id}? [y/n]",
+      "value": "¿cancelar {id}? [y/n]"
     },
     "msg.confirm_skip": {
-      "source": "skip the phase {id} is waiting in front of? press y to confirm, anything else to leave it waiting",
-      "value": "¿saltar la fase delante de la que {id} está esperando? pulsa y para confirmar, cualquier otra tecla para dejarla esperando"
+      "source": "skip the phase {id} waits in front of? [y/n]",
+      "value": "¿saltar la fase donde {id} espera? [y/n]"
     },
     "msg.confirm_requeue": {
-      "source": "stop {id} and put it back in to do? press y to confirm, anything else to leave it alone",
-      "value": "¿detener {id} y devolverla a pendientes? pulsa y para confirmar, cualquier otra tecla la deja como está"
+      "source": "put {id} back in to do? [y/n]",
+      "value": "¿devolver {id} a por hacer? [y/n]"
     },
     "msg.confirm_delete_task": {
-      "source": "delete task {id}? press y or ⏎ to confirm deletion, any other key to cancel",
-      "value": "¿eliminar la tarea {id}? pulsa y o ⏎ para confirmar, cualquier otra tecla para cancelar"
+      "source": "delete task {id}? [y/n]",
+      "value": "¿borrar la tarea {id}? [y/n]"
     },
     "msg.task_deleted": {
       "source": "task {id} deleted",
@@ -334,8 +334,8 @@
       "value": "eliminación cancelada"
     },
     "msg.confirm_post_cli": {
-      "source": "create a task in Orbit from this session? press y to confirm, anything else to skip",
-      "value": "¿crear una tarea en Orbit a partir de esta sesión? pulsa y para confirmar, cualquier otra tecla para saltar"
+      "source": "make a task from this session? [y/n]",
+      "value": "¿crear una tarea de esta sesión? [y/n]"
     },
     "msg.cli_ended": {
       "source": "interactive session ended",
@@ -2442,8 +2442,8 @@
       "value": "cambios descartados"
     },
     "flows.confirm_discard": {
-      "source": "discard flow changes? [y] yes / [n] no (or press Esc again)",
-      "value": "¿Descartar cambios del flujo? [y] sí / [n] no (o presiona Esc otra vez)"
+      "source": "discard changes? [y/n]",
+      "value": "¿descartar cambios? [y/n]"
     },
     "flows.phase_added": {
       "source": "phase {n} added",
@@ -2560,8 +2560,8 @@
       "value": "los flujos predeterminados no se pueden borrar"
     },
     "flows.confirm_delete": {
-      "source": "delete flow {name}? [y] yes / [n] no",
-      "value": "¿Borrar flujo {name}? [y] sí / [n] no"
+      "source": "delete flow {name}? [y/n]",
+      "value": "¿borrar el flujo {name}? [y/n]"
     },
     "flows.paste_done": {
       "source": "📋 pasted {n} chars into phase {phase}",
@@ -4016,8 +4016,8 @@
       "value": "[↑↓] mover · [↵] elegir · [esc] volver"
     },
     "flows.pick_default": {
-      "source": "default (what the engine is set to)",
-      "value": "por defecto (lo que el motor tenga configurado)"
+      "source": "default",
+      "value": "por defecto"
     },
     "flows.desc_hint": {
       "source": "one line, or several — shift+↵ for a new one",
@@ -4068,16 +4068,16 @@
       "value": "Di qué debe hacer el flujo"
     },
     "flows.say_about": {
-      "source": "the draft lands in the other two tabs for you to check; nothing is saved until you press Save Flow",
-      "value": "el borrador aparece en las otras dos pestañas para que lo revises; no se guarda nada hasta que pulses Guardar Flujo"
+      "source": "the draft lands in the other tabs to check; nothing is saved until you press Save Flow",
+      "value": "el borrador aparece en las otras pestañas para revisarlo; no se guarda nada hasta Guardar Flujo"
     },
     "flows.say_placeholder": {
       "source": "e.g. implement, then go round fixing until the tests pass and coverage is over 90%, then a review that stops for me",
       "value": "ej: implementa, luego da vueltas arreglando hasta que pasen las pruebas y la cobertura supere 90%, y al final una revisión que se detenga para mí"
     },
     "flows.say_asking": {
-      "source": "asking {engine}… this takes as long as one of its runs",
-      "value": "preguntándole a {engine}… tarda lo mismo que una de sus corridas"
+      "source": "asking {engine}…",
+      "value": "preguntándole a {engine}…"
     },
     "flows.btn_draft": {
       "source": "✨ Draft it",
@@ -4104,8 +4104,8 @@
       "value": "o pulsa ↵"
     },
     "flows.say_sent": {
-      "source": "asking {engine} for a draft — this takes as long as one of its runs",
-      "value": "pidiéndole un borrador a {engine} — tarda lo mismo que una de sus corridas"
+      "source": "asking {engine}…",
+      "value": "preguntándole a {engine}…"
     },
     "flows.say_failed": {
       "source": "no draft: {err}",

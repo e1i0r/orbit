@@ -343,3 +343,33 @@ func TestTheDraftPicksProviderAndModel(t *testing.T) {
 		t.Errorf("the old engine's model survived at %q", m.flows.sayModel)
 	}
 }
+
+// TestADraftWithRealNewlinesInItIsMended. A model asked for JSON writes a
+// prompt with line breaks and leaves them raw inside the string, which is
+// not JSON — and the reader was handed "invalid character '\n' in string
+// literal" instead of the flow they asked for.
+func TestADraftWithRealNewlinesInItIsMended(t *testing.T) {
+	raw := "{\"name\":\"mended\",\"phases\":[{\"name\":\"one\",\"engine\":\"claude\"," +
+		"\"prompt\":\"first line\nsecond line\"}]}"
+
+	fl, err := decodeDraft(raw)
+	if err != nil {
+		t.Fatalf("a draft with a real newline in it was refused: %v", err)
+	}
+
+	if got := fl.Phases[0].Prompt; got != "first line\nsecond line" {
+		t.Errorf("the prompt came back as %q", got)
+	}
+
+	// What was already valid is untouched, escapes included.
+	same := `{"name":"same","phases":[{"name":"one","engine":"claude","prompt":"a \"quoted\" word\nand a line"}]}`
+
+	fl, err = decodeDraft(same)
+	if err != nil {
+		t.Fatalf("a valid draft was refused: %v", err)
+	}
+
+	if got := fl.Phases[0].Prompt; got != "a \"quoted\" word\nand a line" {
+		t.Errorf("the valid prompt came back as %q", got)
+	}
+}

@@ -195,7 +195,7 @@ func (m Model) deleteFlow(name string, origin flow.Origin) (Model, tea.Cmd) {
 
 	m.flows.confirmDelete = true
 
-	return m.say(p.T("flows.confirm_delete", "delete flow {name}? [y] yes / [n] no", about("name", name))), nil
+	return m.say(p.T("flows.confirm_delete", "delete flow {name}? [y/n]", about("name", name))), nil
 }
 
 func (m Model) confirmDeleteFlow() (Model, tea.Cmd) {

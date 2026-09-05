@@ -34,7 +34,8 @@ func flowDraftPrompt(said string, engines []string) string {
 	b.WriteString("- wait: true stops the flow for a human, and belongs on a review phase if there is one.\n")
 	b.WriteString("- permissions are read, repo or network, and ask for the least that will do.\n")
 	b.WriteString("- prompts are instructions to a coding agent, in the language the request below is written in.\n")
-	b.WriteString("- leave model and effort empty unless the request names one.\n\n")
+	b.WriteString("- leave model and effort empty unless the request names one.\n")
+	b.WriteString("- it must be valid JSON: no comments, no trailing commas, and a line break inside a string is \\n and never a real one.\n\n")
 
 	b.WriteString("The request:\n")
 	b.WriteString(said)

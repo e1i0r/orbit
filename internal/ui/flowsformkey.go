@@ -46,8 +46,7 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if st.flowName != "" || st.description != "" || len(st.phases) > 1 || st.cur().Prompt != "" {
 			st.confirmDiscard = true
 
-			return m.say(p.T("flows.confirm_discard",
-				"discard flow changes? [y] yes / [n] no (or press Esc again)")), nil
+			return m.say(p.T("flows.confirm_discard", "discard changes? [y/n]")), nil
 		}
 
 		st.creating = false

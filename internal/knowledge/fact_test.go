@@ -94,3 +94,27 @@ func TestAFactThatIsOffIsNotTold(t *testing.T) {
 		t.Errorf("a fact that was turned off was still told: %v", got)
 	}
 }
+
+// TestEveryKeepsWhatWasTurnedOff, because the screen that lists facts is the
+// one where a fact is turned back on: dropping them there would leave a file
+// on disk that nothing in the window admits exists.
+func TestEveryKeepsWhatWasTurnedOff(t *testing.T) {
+	all := []Fact{
+		{Scope: Scope{Kind: Repo, Repo: "/w/api"}, Phrase: "narrow", Source: Human},
+		{Scope: Scope{Kind: General}, Phrase: "off and wide", Source: Human, Off: true},
+	}
+
+	got := Every(all)
+	if len(got) != 2 {
+		t.Fatalf("Every kept %d of 2 facts", len(got))
+	}
+
+	// Widest first, the same order everything else reads them in.
+	if got[0].Phrase != "off and wide" {
+		t.Errorf("Every put %q first", got[0].Phrase)
+	}
+
+	if kept := InScope(all); len(kept) != 1 {
+		t.Errorf("InScope told a phase %d facts, want only the one that is on", len(kept))
+	}
+}
