@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	tea "charm.land/bubbletea/v2"
+
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/e1i0r/orbit/internal/flow"
@@ -176,4 +178,50 @@ func flowRowOf(t *testing.T, m Model, name string) int {
 	t.Fatalf("the list draws no row for %q", name)
 
 	return 0
+}
+
+// TestTheListScrollsAndTheRailSaysSo. Eight flows with phases are taller
+// than any terminal: fill cut the rest, so the reader could not see the last
+// three and nothing on screen said they were there.
+func TestTheListScrollsAndTheRailSaysSo(t *testing.T) {
+	m, _ := testModel(t, 100, 24)
+	m.opts.Flows = flowsTestDir(t.TempDir())
+	m = m.openFlows()
+
+	lines := m.flowsListLines(m.frame.Body.W)
+	if len(lines) <= m.frame.Body.H {
+		t.Skip("this build's flows fit the window, so there is nothing to scroll")
+	}
+
+	rows := m.flowsRows(m.frame.Body.H, m.frame.Body.W)
+	if len(rows) != m.frame.Body.H {
+		t.Fatalf("the list drew %d rows into a body of %d", len(rows), m.frame.Body.H)
+	}
+
+	if !strings.Contains(strings.Join(rows, "\n"), scrollThumb) {
+		t.Error("a list taller than the window drew no rail")
+	}
+
+	// The wheel moves it, and the click that lands afterwards is the row
+	// the reader is looking at rather than the one that used to be there.
+	m = m.wheel(tea.Mouse{X: 10, Y: m.frame.Body.Y + 2, Button: tea.MouseWheelDown})
+	if m.flows.scroll != wheelRows {
+		t.Fatalf("the wheel left the list at %d", m.flows.scroll)
+	}
+
+	start := m.flowsListStart(lines, max(m.frame.Body.H-1, 0))
+
+	var flowRow, want int
+
+	for i := start; i < len(lines); i++ {
+		if lines[i].at != noFlow {
+			flowRow, want = i, lines[i].at
+			break
+		}
+	}
+
+	got := m.hitFlows(10, m.frame.Body.Y+flowRow-start)
+	if got.Kind != TargetFlowItem || got.ID != m.flows.listed[want].Name {
+		t.Errorf("a click after scrolling landed on %+v, want %q", got, m.flows.listed[want].Name)
+	}
 }

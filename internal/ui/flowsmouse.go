@@ -120,56 +120,71 @@ func (m Model) hitFlows(x, y int) Target {
 	}
 
 	if !m.flows.creating {
-		if line == 4 {
-			return Target{Kind: TargetFlowItem, Field: "create"}
-		}
-
-		descriptors := m.flows.listed
-		curLine := 6
-
-		for i, d := range descriptors {
-			fl := m.flows.shown(d.Name).flow
-			phaseCount := len(fl.Phases)
-
-			extraDesc := 0
-			if fl.Description != "" {
-				extraDesc = 1
-			}
-
-			if line >= curLine && line <= curLine+phaseCount+extraDesc {
-				m.flows.sel = i
-				if line == curLine {
-					originStr := flowOriginString(m.opts.Words, d.Origin)
-
-					offset := gutter + lipgloss.Width(d.Name)
-					if originStr != "" {
-						offset += 2 + lipgloss.Width(originStr) + 2
-					}
-
-					offset += 3
-
-					detW := lipgloss.Width("👁 "+m.opts.Words.T("flows.btn_view_details", "Details")) + 4
-					editW := lipgloss.Width("✏ "+m.opts.Words.T("flows.btn_edit", "Edit")) + 4
-
-					if x >= offset+detW && x < offset+detW+editW {
-						return Target{Kind: TargetFlowItem, Field: "edit", ID: d.Name}
-					}
-
-					if d.Origin != flow.OriginBuiltin && x >= offset+detW+editW {
-						return Target{Kind: TargetFlowItem, Field: "delete", ID: d.Name}
-					}
-				}
-
-				return Target{Kind: TargetFlowItem, Field: "details", ID: d.Name}
-			}
-
-			curLine += 1 + extraDesc + phaseCount + 1
-		}
-
-		return Target{}
+		return m.hitList(x, line)
 	}
 
 	return m.hitBuilder(x, line)
+}
+
+// hitList is where a click landed in the list of flows.
+//
+// It reads the rows that were drawn, for the reason hitBuilder does: the
+// list scrolls now, and a table of line numbers kept beside the draw would
+// put every click one page out the moment it did.
+func (m Model) hitList(x, line int) Target {
+	lines := m.flowsListLines(m.frame.Body.W)
+	rows := max(m.frame.Body.H-1, 0)
+
+	at := m.flowsListStart(lines, rows) + line
+	if at < 0 || at >= len(lines) {
+		return Target{}
+	}
+
+	row := lines[at]
+
+	switch {
+	case row.create:
+		return Target{Kind: TargetFlowItem, Field: "create"}
+	case row.at == noFlow || row.at >= len(m.flows.listed):
+		return Target{}
+	}
+
+	d := m.flows.listed[row.at]
+	m.flows.sel = row.at
+
+	if row.head {
+		if field := flowPill(m, d, x); field != "" {
+			return Target{Kind: TargetFlowItem, Field: field, ID: d.Name}
+		}
+	}
+
+	return Target{Kind: TargetFlowItem, Field: "details", ID: d.Name}
+}
+
+// flowPill is which of the row's own pills the pointer is over, measured off
+// the pills themselves rather than written down: a translation makes every
+// one of them a different width.
+func flowPill(m Model, d flow.Listed, x int) string {
+	p := m.opts.Words
+
+	at := gutter + lipgloss.Width(d.Name)
+	if origin := flowOriginString(p, d.Origin); origin != "" {
+		at += 2 + lipgloss.Width(origin) + 2
+	}
+
+	at += 3
+
+	detW := lipgloss.Width("👁 "+p.T("flows.btn_view_details", "Details")) + 4
+	editW := lipgloss.Width("✏ "+p.T("flows.btn_edit", "Edit")) + 4
+
+	switch {
+	case x >= at+detW && x < at+detW+editW:
+		return "edit"
+	case d.Origin != flow.OriginBuiltin && x >= at+detW+editW:
+		return "delete"
+	}
+
+	return ""
 }
 
 // hitBuilder is where a click landed in the designer.

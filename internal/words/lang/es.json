@@ -4135,10 +4135,6 @@
       "source": "[tab] engine · model · text · [↵] pick, or draft it from the text · [shift+↵] new line · [^V] paste · [^←/^→] tab · [esc] back",
       "value": "[tab] motor · modelo · texto · [↵] elegir, o redactar desde el texto · [shift+↵] nueva línea · [^V] pegar · [^←/^→] pestaña · [esc] volver"
     },
-    "flows.say_waiting": {
-      "source": "asking {engine} — {secs} · [esc] stop waiting",
-      "value": "preguntándole a {engine} — {secs} · [esc] deja de esperar"
-    },
     "flows.say_asking2": {
       "source": "asking {engine} — {secs} · [esc] stop waiting",
       "value": "preguntándole a {engine} — {secs} · [esc] deja de esperar"
@@ -4150,6 +4146,36 @@
     "flows.say_drafted_mended": {
       "source": "drafted {n} phases, after asking twice — its first answer was not JSON. Read them closely",
       "value": "{n} fases redactadas, tras preguntar dos veces — su primera respuesta no era JSON. Léelas con cuidado"
+    },
+    "wait.draft": {
+      "source": "asking {engine} for a flow",
+      "value": "pidiéndole un flujo a {engine}"
+    },
+    "wait.supervisor": {
+      "source": "the supervisor is thinking",
+      "value": "el supervisor está pensando"
+    },
+    "wait.deliver": {
+      "source": "{verb} on {id}",
+      "value": "{verb} en {id}"
+    },
+    "wait.command": {
+      "source": "{name} is running",
+      "value": "{name} está corriendo"
+    },
+    "wait.stop": {
+      "source": "[{key}] stop waiting",
+      "value": "[{key}] deja de esperar"
+    },
+    "wait.more": {
+      "source": {
+        "one": "{n} more",
+        "other": "{n} more"
+      },
+      "value": {
+        "one": "{n} más",
+        "other": "{n} más"
+      }
     }
   }
 }

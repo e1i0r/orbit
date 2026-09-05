@@ -42,6 +42,9 @@ const outputTick = 150 * time.Millisecond
 type commandWatch struct {
 	name string
 	said string // the sentence to leave behind, when the name is not one
+	// at is when it was started, for the line in the band that says how
+	// long it has been: see waiting.go.
+	at time.Time
 
 	mu   sync.Mutex
 	buf  []byte
@@ -203,7 +206,7 @@ func (m Model) runWatchedSaying(c Command, args []string, said string) (tea.Mode
 			about("name", m.watching.name))), nil
 	}
 
-	w := &commandWatch{name: c.Name, said: said}
+	w := &commandWatch{name: c.Name, said: said, at: m.now}
 	next := m
 	next.watching, next.watchUp, next.output = w, true, ""
 

@@ -38,16 +38,18 @@ func (m Model) bandLeft() string {
 		return Paint(Warn).Render(m.opts.Words.T("msg.confirm_skip",
 			"skip the phase {id} waits in front of? [y/n]",
 			about("id", m.confirmID)))
-	case m.flows.saying:
-		// Not a message with a life of twenty seconds: this is true until
-		// the engine answers, and a bar that went quiet halfway through
-		// would leave the reader deciding whether to wait or to cancel.
-		return m.spinner(Live) + Paint(Live).Render(m.opts.Words.T("flows.say_waiting",
-			"asking {engine} — {secs} · [esc] stop waiting",
-			about("engine", m.sayEngineName()), about("secs", m.waitedFor().String())))
 	case m.confirm == confirmPostCliTask:
 		return Paint(Live).Render(m.opts.Words.T("msg.confirm_post_cli",
 			"make a task from this session? [y/n]"))
+	// Above the message and below the questions: something that is out
+	// right now is truer than a sentence about something that finished, and
+	// a message with a life of twenty seconds would leave the reader
+	// deciding whether to wait or to kill the window: see waiting.go.
+	// The task view says the same thing in its own words, with the task's
+	// id and how long it has been in front of it, so it keeps the line
+	// there: see detailBandLine.
+	case len(m.waitingOn()) > 0 && m.screen != screenDetail:
+		return m.waitingLine()
 	// Above the message and below the questions: what the pointer is on is
 	// newer than whatever was said before it got there, and a question the
 	// window is waiting for an answer to is not something a moved pointer

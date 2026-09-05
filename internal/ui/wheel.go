@@ -110,6 +110,19 @@ func (m Model) wheel(e tea.Mouse) Model {
 		return m.scrollThread(d)
 	}
 
+	if m.screen == screenFlows && !m.flows.creating && !m.flows.showingDetail {
+		// The list is longer than the screen as soon as a few flows have
+		// phases, and the cursor still pulls the page to whatever it is on.
+		d := wheelRows
+		if up {
+			d = -wheelRows
+		}
+
+		m.flows.scroll = max(m.flows.scroll+d, 0)
+
+		return m
+	}
+
 	if m.screen == screenFlows && m.flows.creating {
 		// The designer is taller than a short terminal. While a list of
 		// choices is up the wheel moves the choice, which is what every
