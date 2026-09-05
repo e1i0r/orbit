@@ -81,6 +81,12 @@ func (m Model) supervisorKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
 	case m.supervisor.picking:
 		return m.pickingKey(msg)
+	case len(m.completions()) > 0 && offering(msg):
+		// A list is up over an unfinished word, so ↑↓ choose from it and ↵
+		// finishes it rather than sending half a gesture. There is no key to
+		// dismiss it and none is needed: a space ends the word, and the list
+		// is only ever there while one is unfinished.
+		return m.completionKey(msg), nil
 	case msg.Code == tea.KeyEscape || key.Matches(msg, m.keys.Back):
 		return m.abandonSupervisor(), nil
 	case (msg.Code == 'r' || msg.Code == 'R') && msg.Mod&tea.ModCtrl != 0:
@@ -144,6 +150,13 @@ func (m Model) supervisorKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 // with something of its own to say — the deliver keys, which send a line
 // nobody typed — can say it without taking the window apart again.
 func (m Model) sendSupervisorMessage(text string) (Model, tea.Cmd) {
+	// Four gestures share this one line, and which one was typed is read
+	// before anything is sent: a rule is not a message the supervisor has to
+	// interpret, it is a fact to write down. spoken.go is the whole grammar.
+	if said := parseSaid(text); said.Kind != saidMessage {
+		return m.act(said), nil
+	}
+
 	if m.opts.RecordSupervisor != nil {
 		// "operator" is who every other door writes, and the thread is one
 		// conversation: a name hardcoded here made the same person read as

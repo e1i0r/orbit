@@ -252,7 +252,7 @@ func hung(mark string, paint lipgloss.Style, text string, w int) []string {
 func formatInlineMarkdown(s string) string {
 	var b strings.Builder
 
-	rest := s
+	rest := unlink(s)
 
 	for {
 		delim := firstDelim(rest)
@@ -287,6 +287,56 @@ func formatInlineMarkdown(s string) string {
 	return b.String()
 }
 
+// unlink turns [words](address) into the words.
+//
+// Nothing in a terminal can be clicked, so the address is not an affordance:
+// it is a hundred characters of noise in the middle of a sentence, and a URL
+// has nowhere to break, so wrapping puts half a path on one line and the
+// rest on the next. What a reader needs is what the writer wrote around it.
+//
+// An address with no words shows the address, because a sentence pointing at
+// nothing is worse than a long one.
+//
+// A bracket that opens nothing — the list `[a, b, c]`, the footnote `[1]` —
+// is left exactly as it was typed: the loop only consumes a bracket it can
+// see the whole of, and gives back everything it was holding otherwise.
+func unlink(s string) string {
+	var b strings.Builder
+
+	rest := s
+
+	for {
+		before, tail, opened := strings.Cut(rest, "[")
+		if !opened {
+			break
+		}
+
+		words, address, closed := strings.Cut(tail, "](")
+		if !closed {
+			break
+		}
+
+		addr, after, ended := strings.Cut(address, ")")
+		if !ended {
+			break
+		}
+
+		b.WriteString(before)
+
+		if strings.TrimSpace(words) == "" {
+			words = strings.TrimSpace(addr)
+		}
+
+		b.WriteString(words)
+
+		rest = after
+	}
+
+	b.WriteString(rest)
+
+	return b.String()
+}
+
 // plainInline is a line with its inline marks taken out.
 //
 // A heading strip has one line for the title and no room to paint spans in
@@ -294,7 +344,7 @@ func formatInlineMarkdown(s string) string {
 // characters they are. Taking them out is what a label wants; painting them
 // is what the panes do.
 func plainInline(s string) string {
-	return strings.NewReplacer("**", "", "`", "").Replace(s)
+	return strings.NewReplacer("**", "", "`", "").Replace(unlink(s))
 }
 
 // firstDelim is whichever inline mark opens first, so that a backtick inside

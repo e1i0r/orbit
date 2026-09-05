@@ -3255,6 +3255,58 @@
       "source": "Supervisor & Cockpit Memory",
       "value": "Supervisor y Memoria del Cockpit"
     },
+    "complete.rule": {
+      "source": "a rule with a check: the gate sends the work back",
+      "value": "una regla con check: el gate devuelve el trabajo"
+    },
+    "complete.aware": {
+      "source": "something to keep in mind: it reaches the prompt",
+      "value": "algo a tener en cuenta: llega al prompt"
+    },
+    "complete.rule_general": {
+      "source": "a rule for every repository",
+      "value": "una regla para todos los repositorios"
+    },
+    "complete.aware_general": {
+      "source": "for every repository",
+      "value": "para todos los repositorios"
+    },
+    "complete.aware_lang": {
+      "source": "for one language: {flag} go",
+      "value": "para un lenguaje: {flag} go"
+    },
+    "complete.more": {
+      "source": "{n} more",
+      "value": "{n} más"
+    },
+    "supervisor.said_nothing": {
+      "source": "that gesture has nothing after it; write what you want remembered",
+      "value": "ese gesto no tiene nada después; escribe qué quieres que se recuerde"
+    },
+    "supervisor.cannot_learn": {
+      "source": "this window cannot write down what it knows",
+      "value": "esta ventana no puede escribir lo que sabe"
+    },
+    "supervisor.learned_rule": {
+      "source": "written down for {where}. It has no check yet, so it is said and not enforced: add one to make a gate of it.",
+      "value": "anotado para {where}. Todavía no tiene check, así que se dice y no se exige: agrégale uno para volverlo un gate."
+    },
+    "supervisor.learned_aware": {
+      "source": "written down for {where}",
+      "value": "anotado para {where}"
+    },
+    "supervisor.scope_general": {
+      "source": "everything",
+      "value": "todo"
+    },
+    "supervisor.cannot_note": {
+      "source": "this window cannot write notes on a task",
+      "value": "esta ventana no puede escribir notas en una tarea"
+    },
+    "supervisor.noted_on": {
+      "source": "noted on {task}",
+      "value": "anotado en {task}"
+    },
     "supervisor.answered_by": {
       "source": "answered by {engine}",
       "value": "responde {engine}"

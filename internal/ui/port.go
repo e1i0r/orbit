@@ -162,6 +162,20 @@ type Options struct {
 	// RecordSupervisor records a message into the global supervisor conversation thread.
 	RecordSupervisor func(by, channel, message string) error
 
+	// Learn writes down something the operator said about the code rather
+	// than about a task: /rule for a fact that stops the work at a gate,
+	// /aware for one that only reaches the prompt. scope is empty for the
+	// repository named by repo, "general" for everything, or a language.
+	//
+	// It is a port and not a call because the window writes nothing: it says
+	// what was meant and something else does it, which is the same line
+	// every other gesture on this screen is drawn on.
+	Learn func(stops bool, scope, repo, phrase string) error
+
+	// NoteTask puts a line in one task's notes, which is where a mention of
+	// it in the supervisor lands.
+	NoteTask func(id, text string) error
+
 	// RetractSupervisor takes back one turn of that thread, named by the
 	// moment it was written — an event carries no id, so its timestamp is
 	// the only thing that already tells one line from another. Nothing is

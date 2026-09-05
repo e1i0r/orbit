@@ -115,10 +115,32 @@ func buildSupervisorPrompt(history, newPrompt string) string {
 	}
 
 	fmt.Fprintf(&b, "\n## Operator message\n\n%s\n", strings.TrimSpace(newPrompt))
-	b.WriteString("\n" + engine.AnswerContract)
+	b.WriteString("\n" + answerContract)
 
 	return b.String()
 }
+
+// answerContract is how the supervisor is asked to answer, and it is its own
+// rather than the one a phase gets.
+//
+// A phase writes a work report: it ran for minutes with nobody watching, and
+// the panes that draw its answer lay out headings and sections. The
+// supervisor is a conversation — somebody asked it something and is sitting
+// in front of the screen waiting — and handed the phase's contract it turned
+// every "what happened?" into a page of headings, bullet lists, fenced
+// blocks and file:// links that wrapped mid-path.
+//
+// So: answer the question, in the length the question deserves. The
+// structure is allowed when what was asked for is genuinely a list; it is
+// not the default.
+const answerContract = "## How to answer\n\n" +
+	"You are talking to somebody who is looking at the screen, not writing them a report.\n\n" +
+	"- Answer the question asked, in a few sentences. Long only when what was asked for is long.\n" +
+	"- No headings unless the answer is genuinely several sections. Prefer a paragraph.\n" +
+	"- Bullets only for a list of things. Not for one thing.\n" +
+	"- Never write file:// links or any other address: nothing here can be clicked, and a path " +
+	"wraps mid-word in the middle of a sentence. Name the file plainly instead.\n" +
+	"- Say what you did, if you did something. Do not restate what was asked.\n"
 
 // maxHistory is how much of the thread is put in front of the model.
 //
