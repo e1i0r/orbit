@@ -4146,6 +4146,10 @@
     "flows.say_stopped": {
       "source": "stopped waiting; the answer will be dropped if it lands",
       "value": "dejé de esperar; si llega la respuesta, se descarta"
+    },
+    "flows.say_drafted_mended": {
+      "source": "drafted {n} phases, after asking twice — its first answer was not JSON. Read them closely",
+      "value": "{n} fases redactadas, tras preguntar dos veces — su primera respuesta no era JSON. Léelas con cuidado"
     }
   }
 }

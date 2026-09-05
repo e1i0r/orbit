@@ -35,11 +35,28 @@ func flowDraftPrompt(said string, engines []string) string {
 	b.WriteString("- permissions are read, repo or network, and ask for the least that will do.\n")
 	b.WriteString("- prompts are instructions to a coding agent, in the language the request below is written in.\n")
 	b.WriteString("- leave model and effort empty unless the request names one.\n")
-	b.WriteString("- it must be valid JSON: no comments, no trailing commas, and a line break inside a string is \\n and never a real one.\n\n")
+	b.WriteString("- it must be valid JSON: no comments, no trailing commas, and a line break inside a string is \\n and never a real one.\n")
+	b.WriteString("- a double quote inside a string is \\\" — a command needs no quotes around it, so write go test ./... bare.\n\n")
 
 	b.WriteString("The request:\n")
 	b.WriteString(said)
 	b.WriteString("\n")
+
+	return b.String()
+}
+
+// mendDraftPrompt is the second ask: what came back, what the decoder said
+// about it, and nothing else. The engine wrote it, so the engine is the one
+// thing that knows what it meant to say.
+func mendDraftPrompt(out string, err error) string {
+	var b strings.Builder
+
+	b.WriteString("That was not valid JSON. The decoder said:\n")
+	b.WriteString(err.Error())
+	b.WriteString("\n\nHere is what you wrote:\n")
+	b.WriteString(out)
+	b.WriteString("\n\nAnswer with the corrected JSON alone — no prose, no fences. ")
+	b.WriteString("Escape every double quote inside a string as \\\", and every line break as \\n.\n")
 
 	return b.String()
 }

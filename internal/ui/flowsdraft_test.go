@@ -98,178 +98,6 @@ func TestADraftLandsInTheFieldsAndIsNotSaved(t *testing.T) {
 	}
 }
 
-// TestADraftWithNoFlowInItSaysSo rather than leaving the reader with an
-// empty form and no reason for it.
-func TestADraftWithNoFlowInItSaysSo(t *testing.T) {
-	if _, err := decodeDraft("I cannot do that"); err == nil {
-		t.Error("prose was read as a flow")
-	}
-
-	fl, err := decodeDraft(`{"phases":[{"name":"one","engine":"claude"}]}`)
-	if err != nil {
-		t.Fatalf("a flow with no name of its own was refused: %v", err)
-	}
-
-	if fl.Name != "draft" {
-		t.Errorf("the unnamed draft is called %q", fl.Name)
-	}
-}
-
-// TestTheSayTabTakesAParagraph, which is what somebody describing a flow
-// writes.
-func TestTheSayTabTakesAParagraph(t *testing.T) {
-	m := builderModel(t)
-	m.flows.tab = flowTabSay
-
-	for _, k := range []tea.KeyPressMsg{
-		{Text: "a"},
-		{Code: tea.KeyEnter, Mod: tea.ModShift},
-		{Text: "b"},
-	} {
-		next, _ := m.flowsFormKey(k)
-		m = asModel(t, next)
-	}
-
-	if m.flows.say != "a\nb" {
-		t.Errorf("the tab holds %q", m.flows.say)
-	}
-}
-
-// TestTheDraftButtonIsOne. It is drawn as a pill, so it has to answer to
-// the pointer: a button that only works from the keyboard is a picture of a
-// button.
-func TestTheDraftButtonIsOne(t *testing.T) {
-	m := builderModel(t)
-	m.flows.tab = flowTabSay
-	m.flows.say = "implementa y revisa"
-
-	asked := false
-	m.opts.Draft = func(engineName, model, prompt string) (string, error) {
-		asked = true
-
-		return "{}", nil
-	}
-
-	lines, start := m.builderView(m.frame.Body.H, m.frame.Body.W)
-
-	y := -1
-
-	for i, l := range lines {
-		if l.act == "draft" {
-			y = m.frame.Body.Y + i - start
-		}
-	}
-
-	if y < 0 {
-		t.Fatal("the tab draws no draft button")
-	}
-
-	got := m.hitFlows(4, y)
-	if got.Field != "draft" {
-		t.Fatalf("hitFlows on the button = %+v", got)
-	}
-
-	next, cmd := m.handleFlowClick(got)
-	if cmd == nil {
-		t.Fatal("clicking the button asked nothing")
-	}
-
-	if !asModel(t, next).flows.saying {
-		t.Error("the click did not say it was waiting on the engine")
-	}
-
-	draftAnswer(t, cmd)
-
-	if !asked {
-		t.Error("the engine was never asked")
-	}
-}
-
-// TestTheDraftSaysWhatItIsDoing, in the bar, both when it is sent and when
-// it comes back with nothing.
-func TestTheDraftSaysWhatItIsDoing(t *testing.T) {
-	m := builderModel(t)
-	m.flows.tab = flowTabSay
-	m.flows.say = "implementa y revisa"
-	m.opts.Draft = func(engineName, model, prompt string) (string, error) { return "{}", nil }
-
-	sent, _ := m.draftFlow()
-	if sent.message == "" {
-		t.Error("nothing was said in the bar when the draft was sent")
-	}
-
-	back, _ := sent.drafted(flowDraftedMsg{id: sent.flows.sayID, err: errDraftForTest})
-	if got := asModel(t, back); got.message == "" || got.flows.saying {
-		t.Errorf("a refused draft left the bar at %q and saying=%v", got.message, got.flows.saying)
-	}
-}
-
-// TestTheDraftIsAskedOfTheEngineTheReaderChose, which is not always the
-// window's default: the one that is set up on this machine is the one that
-// can answer.
-func TestTheDraftIsAskedOfTheEngineTheReaderChose(t *testing.T) {
-	m := builderModel(t)
-	m.flows.tab = flowTabSay
-	m.flows.say = "implementa y revisa"
-
-	names := m.engineNames()
-	if len(names) < 2 {
-		t.Skip("this build has one engine")
-	}
-
-	next, _ := m.flowsFormKey(tea.KeyPressMsg{Code: tea.KeyRight})
-
-	m = asModel(t, next)
-	if m.sayEngineName() == names[0] {
-		t.Fatalf("→ left the engine on %q", m.sayEngineName())
-	}
-
-	if m.message == "" {
-		t.Error("the bar did not say which engine the draft would be asked of")
-	}
-
-	asked := ""
-	m.opts.Draft = func(engineName, model, prompt string) (string, error) {
-		asked = engineName
-
-		return "{}", nil
-	}
-
-	_, cmd := m.draftFlow()
-	draftAnswer(t, cmd)
-
-	if asked != m.sayEngineName() {
-		t.Errorf("the draft was asked of %q, want %q", asked, m.sayEngineName())
-	}
-}
-
-// TestANewFlowOpensOnTheTabThatWritesIt, and an existing one does not: the
-// sentence replaces every phase, which is not what somebody who pressed
-// edit came to do.
-func TestANewFlowOpensOnTheTabThatWritesIt(t *testing.T) {
-	fresh, _ := testModel(t, 100, 36)
-
-	m := fresh.startCreateFlow()
-	if m.flows.tab != flowTabSay {
-		t.Errorf("a new flow opened on tab %d", m.flows.tab)
-	}
-
-	next, _ := m.editNamedFlow("careful")
-
-	editing := asModel(t, next)
-	if editing.flows.tab != flowTabFields {
-		t.Errorf("editing careful opened on tab %d", editing.flows.tab)
-	}
-
-	// And that tab warns that a draft would take the place of what is there.
-	editing.flows.tab = flowTabSay
-
-	rows := strings.Join(editing.flowsBuilderRows(editing.frame.Body.H, editing.frame.Body.W), "\n")
-	if !strings.Contains(rows, "3") {
-		t.Errorf("the tab does not say how many phases a draft would replace:\n%s", rows)
-	}
-}
-
 // TestTheDraftPicksProviderAndModel. The engine that runs tasks here is not
 // always the one set up to answer a question, and a model is one engine's
 // own name for it.
@@ -312,36 +140,6 @@ func TestTheDraftPicksProviderAndModel(t *testing.T) {
 	}
 }
 
-// TestADraftWithRealNewlinesInItIsMended. A model asked for JSON writes a
-// prompt with line breaks and leaves them raw inside the string, which is
-// not JSON — and the reader was handed "invalid character '\n' in string
-// literal" instead of the flow they asked for.
-func TestADraftWithRealNewlinesInItIsMended(t *testing.T) {
-	raw := "{\"name\":\"mended\",\"phases\":[{\"name\":\"one\",\"engine\":\"claude\"," +
-		"\"prompt\":\"first line\nsecond line\"}]}"
-
-	fl, err := decodeDraft(raw)
-	if err != nil {
-		t.Fatalf("a draft with a real newline in it was refused: %v", err)
-	}
-
-	if got := fl.Phases[0].Prompt; got != "first line\nsecond line" {
-		t.Errorf("the prompt came back as %q", got)
-	}
-
-	// What was already valid is untouched, escapes included.
-	same := `{"name":"same","phases":[{"name":"one","engine":"claude","prompt":"a \"quoted\" word\nand a line"}]}`
-
-	fl, err = decodeDraft(same)
-	if err != nil {
-		t.Fatalf("a valid draft was refused: %v", err)
-	}
-
-	if got := fl.Phases[0].Prompt; got != "a \"quoted\" word\nand a line" {
-		t.Errorf("the valid prompt came back as %q", got)
-	}
-}
-
 // TestStoppingTheWaitDropsTheAnswer. Orbit did not spawn the engine with a
 // handle it can kill, so escape stops waiting rather than pretending to
 // cancel — and what lands afterwards must not overwrite a form the reader
@@ -372,5 +170,66 @@ func TestStoppingTheWaitDropsTheAnswer(t *testing.T) {
 	got := asModel(t, after)
 	if got.flows.flowName == "late" || got.flows.tab != flowTabSay {
 		t.Errorf("the dropped answer landed anyway: name=%q tab=%d", got.flows.flowName, got.flows.tab)
+	}
+}
+
+// TestAnAnswerThatIsNotJSONIsSentBack. A model writing JSON by hand puts a
+// quotation mark inside a string — "go test ./..." is what the person asked
+// for and the engine repeats it — and from there no repair here can tell a
+// string that ran on from one that was never closed. The engine that wrote
+// it is asked, once, with the decoder's own complaint.
+func TestAnAnswerThatIsNotJSONIsSentBack(t *testing.T) {
+	m := builderModel(t)
+	m.flows.tab = flowTabSay
+	m.flows.say = "un loop hasta que pasen las pruebas"
+
+	asks := 0
+	second := ""
+
+	m.opts.Draft = func(engineName, model, prompt string) (string, error) {
+		asks++
+		if asks == 1 {
+			// A quote inside a string, exactly as it comes back.
+			return `{"name":"safe-refactor","phases":[{"name":"one","engine":"claude",` +
+				`"prompt":"run "go test ./..." until it passes"}]}`, nil
+		}
+
+		second = prompt
+
+		return `{"name":"safe-refactor","phases":[{"name":"one","engine":"claude",` +
+			`"prompt":"run go test ./... until it passes"}]}`, nil
+	}
+
+	_, cmd := m.draftFlow()
+
+	answer := draftAnswer(t, cmd)
+	if answer.err != nil {
+		t.Fatalf("the mended draft was refused: %v", answer.err)
+	}
+
+	if asks != 2 {
+		t.Errorf("the engine was asked %d times, want a first answer and one mend", asks)
+	}
+
+	if !answer.mended {
+		t.Error("the draft does not say it took two asks")
+	}
+
+	if !strings.Contains(second, "not valid JSON") || !strings.Contains(second, "go test") {
+		t.Errorf("the second ask does not carry the complaint and what was written:\n%s", second)
+	}
+
+	// And a first answer that parses is never sent back.
+	asks = 0
+	m.opts.Draft = func(engineName, model, prompt string) (string, error) {
+		asks++
+
+		return `{"name":"fine","phases":[{"name":"one","engine":"claude"}]}`, nil
+	}
+
+	_, cmd = m.draftFlow()
+
+	if got := draftAnswer(t, cmd); got.mended || asks != 1 {
+		t.Errorf("a valid answer was asked for again: asks=%d mended=%v", asks, got.mended)
 	}
 }

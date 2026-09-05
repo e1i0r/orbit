@@ -25,6 +25,10 @@ type flowDraftedMsg struct {
 	id   int
 	flow flow.Flow
 	err  error
+	// mended is whether the engine had to be asked a second time, because
+	// what it wrote first was not JSON. It is said out loud: two runs were
+	// paid for, and a draft that needed mending is one to read twice.
+	mended bool
 }
 
 // The three things on the say tab, in the order tab moves between them.
@@ -150,15 +154,36 @@ func (m Model) draftFlow() (Model, tea.Cmd) {
 	// question that is out and a window that is wedged.
 	m, frame := m.nextFrame()
 
+	engines := m.engineNames()
+
 	send := func() tea.Msg {
-		out, err := ask(engineName, model, flowDraftPrompt(said, m.engineNames()))
+		out, err := ask(engineName, model, flowDraftPrompt(said, engines))
 		if err != nil {
 			return flowDraftedMsg{id: id, err: err}
 		}
 
 		fl, err := decodeDraft(out)
+		if err == nil {
+			return flowDraftedMsg{id: id, flow: fl}
+		}
 
-		return flowDraftedMsg{id: id, flow: fl, err: err}
+		// One more ask, with the decoder's own complaint in front of it.
+		//
+		// A model writing JSON by hand puts a quotation mark inside a
+		// string — "go test ./..." is what the person asked for, and the
+		// engine repeats it — and from there the document is broken in a
+		// way no repair here can tell from a string that was never closed.
+		// The engine that wrote it is the one thing that knows what it
+		// meant, so it is asked, once, rather than the reader being handed
+		// a decoder error about a field they never typed.
+		out, retryErr := ask(engineName, model, mendDraftPrompt(out, err))
+		if retryErr != nil {
+			return flowDraftedMsg{id: id, err: err}
+		}
+
+		fl, err = decodeDraft(out)
+
+		return flowDraftedMsg{id: id, flow: fl, err: err, mended: true}
 	}
 
 	return m, tea.Batch(send, frame)
@@ -227,6 +252,12 @@ func (m Model) drafted(msg flowDraftedMsg) (Model, tea.Cmd) {
 	m.flows.field = flowFieldPhaseSelect
 	m.flows.scroll = 0
 
+	if msg.mended {
+		return m.say(p.T("flows.say_drafted_mended",
+			"drafted {n} phases, after asking twice — its first answer was not JSON. Read them closely",
+			about("n", fmt.Sprint(len(fl.Phases))))), nil
+	}
+
 	return m.say(p.T("flows.say_drafted", "drafted {n} phases — read them, change what is wrong, then save",
 		about("n", fmt.Sprint(len(fl.Phases))))), nil
 }
@@ -245,8 +276,7 @@ func decodeDraft(out string) (flow.Flow, error) {
 		return flow.Flow{}, fmt.Errorf("the engine answered with no flow in it: %s", firstLine(out))
 	}
 
-	body := []byte(out)
-	raw := mendJSON(body[from : to+1])
+	raw := asJSON(body(out)[from : to+1])
 
 	// A draft with no name of its own is given one rather than refused: the
 	// name is what the reader types next anyway, and "the flow has no name"
@@ -270,6 +300,26 @@ func decodeDraft(out string) (flow.Flow, error) {
 	}
 
 	return flow.Decode(raw, name)
+}
+
+// body is the answer as bytes, so the slice below is of bytes and not of a
+// string: the offsets came from strings.Index, which counts the same way.
+func body(out string) []byte { return []byte(out) }
+
+// asJSON is the answer as written when that parses, and mended when it does
+// not.
+//
+// Mending first would be a repair applied to documents that never needed one,
+// and this one — escaping raw control characters inside strings — cannot tell
+// a string that ran on from a string that was never closed. So it is the
+// fallback and not the first move.
+func asJSON(raw []byte) []byte {
+	var any map[string]any
+	if json.Unmarshal(raw, &any) == nil {
+		return raw
+	}
+
+	return mendJSON(raw)
 }
 
 // firstLine is enough of an answer to say what went wrong without printing a
