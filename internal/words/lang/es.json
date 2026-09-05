@@ -3255,6 +3255,100 @@
       "source": "Supervisor & Cockpit Memory",
       "value": "Supervisor y Memoria del Cockpit"
     },
+    "key.knowledge": {
+      "source": "what orbit knows",
+      "value": "lo que orbit sabe"
+    },
+    "tip.knowledge": {
+      "source": "what orbit has learned about this code: the rules that stop a run, and what it is told before one",
+      "value": "lo que orbit aprendió de este código: las reglas que detienen una corrida, y lo que se le dice antes de una"
+    },
+    "knowledge.needs_words": {
+      "source": "a fact with no sentence says nothing",
+      "value": "un hecho sin frase no dice nada"
+    },
+    "knowledge.field_phrase": {
+      "source": "what it says",
+      "value": "qué dice"
+    },
+    "knowledge.field_check": {
+      "source": "the check that makes it stop",
+      "value": "el check que lo hace detener"
+    },
+    "knowledge.editing_ways": {
+      "source": "[tab] the other field · [↵] save · [esc] leave it as it was",
+      "value": "[tab] el otro campo · [↵] guardar · [esc] dejarlo como estaba"
+    },
+    "header.knows": {
+      "source": {
+        "one": "{n} fact",
+        "other": "{n} facts"
+      },
+      "value": {
+        "one": "{n} hecho",
+        "other": "{n} hechos"
+      }
+    },
+    "knowledge.no_repo_here": {
+      "source": "there is more than one repository here; say which with the supervisor",
+      "value": "hay m\u00e1s de un repositorio aqu\u00ed; di cu\u00e1l desde el supervisor"
+    },
+    "knowledge.title": {
+      "source": "What Orbit knows",
+      "value": "Lo que Orbit sabe"
+    },
+    "knowledge.empty": {
+      "source": "Nothing written down yet. Say /rule or /aware to the supervisor, or drop a file in .orbit/knowledge/.",
+      "value": "Todavía no hay nada anotado. Dile /rule o /aware al supervisor, o deja un archivo en .orbit/knowledge/."
+    },
+    "knowledge.general": {
+      "source": "Everywhere · this machine only, these do not travel",
+      "value": "En todas partes · solo en esta máquina, estos no viajan"
+    },
+    "knowledge.travels": {
+      "source": "travels with the repository",
+      "value": "viaja con el repositorio"
+    },
+    "knowledge.ways": {
+      "source": "[↑↓] move · [e] edit · [n] new · [←→] wider or narrower · [space] turn off · [esc] back",
+      "value": "[↑↓] mover · [e] editar · [n] nuevo · [←→] más amplio o más estrecho · [espacio] apagar · [esc] atrás"
+    },
+    "knowledge.is_off": {
+      "source": "off",
+      "value": "apagado"
+    },
+    "knowledge.stops": {
+      "source": "stops",
+      "value": "detiene"
+    },
+    "knowledge.no_check": {
+      "source": "rule, no check yet",
+      "value": "regla, sin check todavía"
+    },
+    "knowledge.warns": {
+      "source": "aware",
+      "value": "avisa"
+    },
+    "knowledge.from_code": {
+      "source": "from the code",
+      "value": "del código"
+    },
+    "knowledge.from_human": {
+      "source": "you said it",
+      "value": "lo dijiste tú"
+    },
+    "knowledge.from_record": {
+      "source": "from the record",
+      "value": "del record"
+    },
+    "knowledge.from_prod": {
+      "source": "from production",
+      "value": "de producción"
+    },
+    "knowledge.used": {
+      "source": "told {n}×",
+      "value": "dicho {n}×"
+    },
     "known.more": {
       "source": "{n} more, in the Knowledge screen",
       "value": "{n} m\u00e1s, en la pantalla Knowledge"

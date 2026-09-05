@@ -186,6 +186,10 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 			return m.openRepos(), nil
 		}
 
+		if t.Field == "knowledge" {
+			return m.openKnowledge(), nil
+		}
+
 		if t.Field == "engine" {
 			return m.openEngines(), nil
 		}

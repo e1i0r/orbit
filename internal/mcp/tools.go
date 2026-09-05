@@ -77,6 +77,29 @@ func taskTools() []Tool {
 			}, "task_id", "text"),
 		},
 		{
+			Name: "orbit_learn",
+			Description: "Write down something true about this code, so the next run against it is told before it starts. " +
+				"Use it when you hit something worth knowing that the task description did not say: a constraint, a trap, a convention the code keeps. " +
+				"Without stops it reaches the prompt of every phase that works here. With stops and a check it also becomes a gate: work that breaks it is sent back. " +
+				"A rule with no check cannot enforce itself and is told rather than enforced.",
+			InputSchema: object(map[string]Property{
+				"phrase":  {Type: "string", Description: "The fact, in a sentence. It is what the next agent reads."},
+				"repo":    {Type: "string", Description: "The repository's path, when the fact is about one project. It travels with that repository."},
+				"lang":    {Type: "string", Description: "A language name such as go or ts, when the fact is about every file of that language instead of one project."},
+				"stops":   {Type: "boolean", Description: "Whether work that breaks this should be refused rather than merely warned about. Needs check."},
+				"check":   {Type: "string", Description: "A shell command that exits non-zero when the rule is broken. This is what lets it stop work."},
+				"task_id": {Type: "string", Description: "The task this was learned in, so a reader can go and see what happened."},
+			}, "phrase"),
+		},
+		{
+			Name: "orbit_knowledge",
+			Description: "What Orbit has already learned about this code: the general facts, the ones about a language, and the ones about a repository. " +
+				"Ask before planning, so the work starts from what is known rather than finding it out again. Lines marked [stops] are refused by a gate.",
+			InputSchema: object(map[string]Property{
+				"repo": {Type: "string", Description: "A repository's path, to include what is known about it. Without one, only what applies everywhere."},
+			}),
+		},
+		{
 			Name:        "orbit_pause_task",
 			Description: "Ask a running task to stop at its next phase boundary. The word is left for the run to read, so it takes effect when the current phase ends and not immediately.",
 			InputSchema: object(map[string]Property{

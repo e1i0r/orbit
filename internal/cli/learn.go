@@ -116,3 +116,90 @@ func knowsPort(s *store.Store, repoPath string) func() []knowledge.Fact {
 		return knowledge.InScope(facts)
 	}
 }
+
+// knowsAllPort is everything Orbit has learned, for the screen that lists it
+// whole: the state root's own facts and every repository on the board.
+//
+// The board is asked rather than a fixed list, so a repository that gains its
+// first fact appears the moment the screen is opened again.
+func knowsAllPort(r *board.Reader, s *store.Store) func() []knowledge.Fact {
+	return func() []knowledge.Fact {
+		ks := knowledge.NewStore(s.Root())
+
+		facts, err := ks.Load("")
+		if err != nil {
+			logger.Error("cli/learn", "what orbit knows was not read: %v", err)
+
+			return nil
+		}
+
+		b, _, err := r.Refresh()
+		if err != nil {
+			logger.Error("cli/learn", "the repositories to read facts from: %v", err)
+
+			return knowledge.InScope(facts)
+		}
+
+		for _, repo := range b.RepoList {
+			own, err := ks.Load(repo.Path)
+			if err != nil {
+				logger.Error("cli/learn", "what orbit knows about %s: %v", repo.Name, err)
+				continue
+			}
+
+			facts = append(facts, onlyOf(repo.Path, own)...)
+		}
+
+		return knowledge.InScope(facts)
+	}
+}
+
+// onlyOf keeps the facts that belong to one checkout. Load answers the state
+// root's facts as well, and adding those once per repository would list the
+// general ones as many times as there are checkouts.
+func onlyOf(repoPath string, facts []knowledge.Fact) []knowledge.Fact {
+	kept := make([]knowledge.Fact, 0, len(facts))
+
+	for _, f := range facts {
+		if f.Scope.Repo == repoPath {
+			kept = append(kept, f)
+		}
+	}
+
+	return kept
+}
+
+// turnFactPort switches a fact off, or on again.
+//
+// Nothing about it moves, so Save writes over the file the fact is already
+// in: the path is made from the scope and the reference, and neither changed.
+func turnFactPort(s *store.Store) func(knowledge.Fact) error {
+	return func(f knowledge.Fact) error {
+		where, err := knowledge.NewStore(s.Root()).Save(f)
+		if err != nil {
+			return err
+		}
+
+		logger.Info("cli/learn", "turned %q at %q, off=%v", f.Phrase, where, f.Off)
+
+		return nil
+	}
+}
+
+// replaceFactPort writes a corrected fact and takes away the one it replaces.
+//
+// Replace and not Save, because correcting the sentence moves the file: a
+// fact with no reference is filed under a slug of what it says. Saving alone
+// would leave the old copy behind, still told and still refusing work.
+func replaceFactPort(s *store.Store) func(was, now knowledge.Fact) error {
+	return func(was, now knowledge.Fact) error {
+		where, err := knowledge.NewStore(s.Root()).Replace(was, now)
+		if err != nil {
+			return err
+		}
+
+		logger.Info("cli/learn", "replaced %q with %q at %q", was.Phrase, now.Phrase, where)
+
+		return nil
+	}
+}

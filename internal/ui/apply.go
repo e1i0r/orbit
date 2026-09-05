@@ -31,6 +31,14 @@ import (
 // of it is a board arriving with a live task on it, and if that board does
 // not ask for a frame nothing on screen ever moves.
 func (m Model) applyBoard(msg boardMsg) (tea.Model, tea.Cmd) {
+	// The first board is what fills in what Orbit knows, for the header's
+	// chip. Once and not on every refresh: the port walks every repository,
+	// and the count changes when a fact is written, which is where it is
+	// read again.
+	if !m.knowledge.read {
+		m = m.syncKnowledge()
+	}
+
 	next, cmd := m.takeBoard(msg)
 	next, frame := next.nextFrame()
 

@@ -18,6 +18,30 @@ import (
 	"github.com/charmbracelet/x/ansi"
 )
 
+// screen is which of the window's screens is on top: the board, the task
+// view one level below it, the dialog that decides what a run will be before
+// anything runs, and the standing screens each of which a capital opens.
+//
+// It lives here rather than in ui.go because this is the file that turns one
+// into rows; ui.go holds what a window remembers, and which screen is up is
+// only one of those.
+type screen int
+
+const (
+	screenList screen = iota
+	screenDetail
+	screenStart
+	screenCompose
+	screenSettings
+	screenFlows
+	screenRepos
+	screenEngines
+	screenQuota
+	screenHelp
+	screenSupervisor
+	screenKnowledge
+)
+
 // View draws the whole terminal, every time.
 //
 // It always returns exactly the number of rows the frame was fitted to, and
@@ -63,6 +87,8 @@ func (m Model) View() tea.View {
 			lines = append(lines, m.flowsRows(m.frame.Body.H, m.frame.Body.W)...)
 		case screenRepos:
 			lines = append(lines, m.repolistRows(m.frame.Body.H, m.frame.Body.W)...)
+		case screenKnowledge:
+			lines = append(lines, m.knowledgeRows(m.frame.Body.H, m.frame.Body.W)...)
 		case screenEngines:
 			lines = append(lines, m.enginesRows(m.frame.Body.H, m.frame.Body.W)...)
 		case screenQuota:

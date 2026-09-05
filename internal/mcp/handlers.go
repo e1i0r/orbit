@@ -62,6 +62,10 @@ func (sn Session) answer(name string, args map[string]any) CallToolResult {
 		return sn.addRepo(args)
 	case "orbit_forget_repo":
 		return sn.forgetRepo(args)
+	case "orbit_learn":
+		return sn.learn(args)
+	case "orbit_knowledge":
+		return sn.knowledgeOf(args)
 	case "orbit_supervisor_say":
 		return sn.supervisorSay(args)
 	case "orbit_supervisor_history":
