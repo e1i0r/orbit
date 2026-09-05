@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	tea "charm.land/bubbletea/v2"
+
 	"github.com/charmbracelet/x/ansi"
 	"github.com/e1i0r/orbit/internal/knowledge"
 )
@@ -72,5 +74,37 @@ func TestTheChipIsAWayIn(t *testing.T) {
 
 	if !found {
 		t.Fatal("the header has no knowledge chip to press")
+	}
+}
+
+// TestPressingTheChipOpensTheScreen. Every chip on this header is a door, and
+// one that draws a number and answers nothing to a click is a button that
+// looks broken.
+func TestPressingTheChipOpensTheScreen(t *testing.T) {
+	m := withFacts(t, 2)
+
+	at := headerCell(t, m, "🧩")
+	if got := m.hitHeader(at, m.frame.HeaderLineY()); got.Kind != TargetHeaderField || got.Field != "knowledge" {
+		t.Fatalf("the chip's own cell answers %+v, want the knowledge field", got)
+	}
+
+	// The press arms it and the release acts, which is how every other chip
+	// on this line answers a pointer.
+	down, _ := m.mouse(tea.MouseClickMsg{X: at, Y: m.frame.HeaderLineY(), Button: tea.MouseLeft})
+
+	armed, ok := down.(Model)
+	if !ok {
+		t.Fatalf("the press answered %T", down)
+	}
+
+	next, _ := armed.mouse(tea.MouseReleaseMsg{X: at, Y: m.frame.HeaderLineY(), Button: tea.MouseLeft})
+
+	after, ok := next.(Model)
+	if !ok {
+		t.Fatalf("mouse answered %T", next)
+	}
+
+	if after.screen != screenKnowledge {
+		t.Errorf("pressing the chip left the window on %v", after.screen)
 	}
 }

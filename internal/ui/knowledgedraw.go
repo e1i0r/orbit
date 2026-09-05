@@ -207,7 +207,7 @@ func (m Model) knowledgeFoot(cw int) []string {
 
 	if !m.knowledge.editing {
 		return []string{Paint(Dim).Render(fit(p.T("knowledge.ways",
-			"[↑↓] move · [e] edit · [space] turn off · [esc] back"), cw))}
+			"[↑↓] move · [e] edit · [n] new · [←→] wider or narrower · [space] turn off · [esc] back"), cw))}
 	}
 
 	return []string{

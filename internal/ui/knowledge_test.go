@@ -233,3 +233,77 @@ func TestEscapeLeavesTheFactAsItWas(t *testing.T) {
 		t.Errorf("escape left editing=%v screen=%v", m.knowledge.editing, m.screen)
 	}
 }
+
+// TestNWritesANewFact, on the same line the corrections are made in. The
+// supervisor is where most of them are written, mid-conversation; this is for
+// the one somebody thinks of while reading the others.
+func TestNWritesANewFact(t *testing.T) {
+	var now knowledge.Fact
+
+	m := onScreen(t)
+	m.opts.ReplaceFact = func(_, b knowledge.Fact) error {
+		now = b
+
+		return nil
+	}
+
+	m = next(t, m, tea.KeyPressMsg{Code: 'n', Text: "n"})
+	if !m.knowledge.editing {
+		t.Fatal("n did not open a line to write in")
+	}
+
+	for _, r := range "written here" {
+		m = next(t, m, tea.KeyPressMsg{Text: string(r)})
+	}
+
+	m = next(t, m, tea.KeyPressMsg{Code: tea.KeyEnter})
+
+	if now.Phrase != "written here" {
+		t.Errorf("the fact written is %q", now.Phrase)
+	}
+
+	if now.Source != knowledge.Human {
+		t.Errorf("a fact typed by a person came from %v", now.Source)
+	}
+}
+
+// TestLeftWidensAFactAndRightNarrowsIt.
+//
+// The common move: a rule written in the supervisor defaults to the
+// repository being worked in, and then turns out to be true everywhere.
+func TestLeftWidensAFactAndRightNarrowsIt(t *testing.T) {
+	var now knowledge.Fact
+
+	m := onScreen(t, knowledge.Fact{
+		Scope: knowledge.Scope{Kind: knowledge.Repo, Repo: "/w/orbit"}, Source: knowledge.Human, Phrase: "of the repo",
+	})
+	m.opts.ReplaceFact = func(_, b knowledge.Fact) error {
+		now = b
+
+		return nil
+	}
+
+	m = next(t, m, tea.KeyPressMsg{Code: tea.KeyLeft})
+	if now.Scope.Kind != knowledge.General {
+		t.Errorf("left left the fact at %v, want everywhere", now.Scope.Kind)
+	}
+
+	if now.Scope.Repo != "" {
+		t.Errorf("a general fact still names the repository %q", now.Scope.Repo)
+	}
+}
+
+// TestNarrowingWithNothingToNarrowToSaysSo, rather than picking a repository
+// on the reader's behalf.
+func TestNarrowingWithNothingToNarrowToSaysSo(t *testing.T) {
+	m := onScreen(t, knowledge.Fact{
+		Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.Human, Phrase: "of everything",
+	})
+	m.opts.ReplaceFact = func(knowledge.Fact, knowledge.Fact) error { return nil }
+	m.board.RepoList = nil
+
+	m = next(t, m, tea.KeyPressMsg{Code: tea.KeyRight})
+	if m.knowledge.facts[0].Scope.Kind != knowledge.General {
+		t.Error("right narrowed a fact to a repository that was never named")
+	}
+}

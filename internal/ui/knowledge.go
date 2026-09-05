@@ -14,6 +14,7 @@ package ui
 
 import (
 	"strings"
+	"time"
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
@@ -103,6 +104,12 @@ func (m Model) knowledgeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.turnFact(), nil
 	case msg.Code == 'e' || msg.Code == 'E':
 		return m.editFact(), nil
+	case msg.Code == 'n' || msg.Code == 'N':
+		return m.newFact(), nil
+	case msg.Code == tea.KeyLeft:
+		return m.moveFact(wider), nil
+	case msg.Code == tea.KeyRight:
+		return m.moveFact(narrower), nil
 	}
 
 	return m, nil
@@ -121,6 +128,83 @@ func (m Model) editFact() Model {
 	m.knowledge.in[factCheck] = newInput(f.Check)
 
 	return m
+}
+
+// newFact opens an empty line, scoped to the repository being worked in.
+//
+// Most facts are written in the supervisor, mid-conversation, which is where
+// somebody is when they think of one. This is for the one they think of while
+// reading the others.
+func (m Model) newFact() Model {
+	if m.opts.ReplaceFact == nil {
+		return m
+	}
+
+	m.knowledge.facts = append(m.knowledge.facts, knowledge.Fact{
+		Scope:  m.hereScope(),
+		Source: knowledge.Human,
+		At:     time.Now().UTC(),
+	})
+	m.knowledge.sel = len(m.knowledge.facts) - 1
+	m.knowledge.editing, m.knowledge.field = true, factPhrase
+	m.knowledge.in[factPhrase] = newInput("")
+	m.knowledge.in[factCheck] = newInput("")
+
+	return m
+}
+
+// hereScope is what a fact written on this screen is about: the one
+// repository on the board, and everything when there is more than one to
+// choose between. Choosing one for somebody is how a rule ends up on the
+// wrong project.
+func (m Model) hereScope() knowledge.Scope {
+	if len(m.board.RepoList) == 1 {
+		return knowledge.Scope{Kind: knowledge.Repo, Repo: m.board.RepoList[0].Path}
+	}
+
+	return knowledge.Scope{Kind: knowledge.General}
+}
+
+// The two directions a fact can be moved in.
+const (
+	wider    = -1
+	narrower = 1
+)
+
+// moveFact widens a fact to everything, or narrows it back to the repository.
+//
+// It is the common correction: a rule written in the supervisor is about the
+// repository being worked in by default, and then turns out to be true
+// everywhere. The language level is not on this ladder — a fact is about a
+// language because somebody said so, not because it drifted there.
+func (m Model) moveFact(dir int) Model {
+	if m.opts.ReplaceFact == nil || m.knowledge.sel >= len(m.knowledge.facts) {
+		return m
+	}
+
+	was := m.knowledge.facts[m.knowledge.sel]
+
+	now := was
+	switch {
+	case dir == wider && was.Scope.Kind == knowledge.Repo:
+		now.Scope = knowledge.Scope{Kind: knowledge.General}
+	case dir == narrower && was.Scope.Kind == knowledge.General:
+		here := m.hereScope()
+		if here.Kind != knowledge.Repo {
+			return m.say(m.opts.Words.T("knowledge.no_repo_here",
+				"there is more than one repository here; say which with the supervisor"))
+		}
+
+		now.Scope = here
+	default:
+		return m
+	}
+
+	if err := m.opts.ReplaceFact(was, now); err != nil {
+		return m.say(err.Error())
+	}
+
+	return m.syncKnowledge()
 }
 
 // editingKey is every key while a fact is being corrected.

@@ -3289,6 +3289,10 @@
         "other": "{n} hechos"
       }
     },
+    "knowledge.no_repo_here": {
+      "source": "there is more than one repository here; say which with the supervisor",
+      "value": "hay m\u00e1s de un repositorio aqu\u00ed; di cu\u00e1l desde el supervisor"
+    },
     "knowledge.title": {
       "source": "What Orbit knows",
       "value": "Lo que Orbit sabe"
@@ -3306,8 +3310,8 @@
       "value": "viaja con el repositorio"
     },
     "knowledge.ways": {
-      "source": "[↑↓] move · [e] edit · [space] turn off · [esc] back",
-      "value": "[↑↓] mover · [e] editar · [espacio] apagar · [esc] atrás"
+      "source": "[↑↓] move · [e] edit · [n] new · [←→] wider or narrower · [space] turn off · [esc] back",
+      "value": "[↑↓] mover · [e] editar · [n] nuevo · [←→] más amplio o más estrecho · [espacio] apagar · [esc] atrás"
     },
     "knowledge.is_off": {
       "source": "off",
