@@ -153,7 +153,12 @@ var layers = map[string][]string{
 	// the package-level logger internal/cli opened, and never opens one
 	// itself: where the file lives is internal/store's answer to give and
 	// internal/cli's to ask for, here as everywhere else.
-	"internal/ui": {"internal/board", "internal/flow", "internal/logger", "internal/repo", "internal/task", "internal/tracker", "internal/ui/layout", "internal/view", "internal/words"},
+	// internal/knowledge is on internal/ui's list for one screen: the
+	// supervisor draws what Orbit knows down its side, so that a rule
+	// somebody is about to write sits beside the ones already standing. It
+	// is a type and a read — the facts arrive through a port, because
+	// reaching the state root to load them is what the window may not do.
+	"internal/ui": {"internal/board", "internal/flow", "internal/knowledge", "internal/logger", "internal/repo", "internal/task", "internal/tracker", "internal/ui/layout", "internal/view", "internal/words"},
 	// internal/ui/layout is widened to internal/view for one reason:
 	// layout.Columns plans a row's columns from the board it is about to
 	// draw, and the board is []view.Task. It is a widening, and it was

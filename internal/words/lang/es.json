@@ -3255,6 +3255,18 @@
       "source": "Supervisor & Cockpit Memory",
       "value": "Supervisor y Memoria del Cockpit"
     },
+    "known.side": {
+      "source": "What Orbit knows",
+      "value": "Lo que Orbit sabe"
+    },
+    "known.rules": {
+      "source": "Rules",
+      "value": "Reglas"
+    },
+    "known.aware": {
+      "source": "Aware",
+      "value": "Ten en cuenta"
+    },
     "complete.rule": {
       "source": "a rule with a check: the gate sends the work back",
       "value": "una regla con check: el gate devuelve el trabajo"

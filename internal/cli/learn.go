@@ -97,3 +97,22 @@ func notePort(r *board.Reader, s *store.Store) func(id, text string) error {
 		return fmt.Errorf("no task %s on the board", id)
 	}
 }
+
+// knowsPort is what the supervisor screen draws down its side: everything
+// Orbit has learned that would reach a phase started in this repository.
+//
+// The repository is the one the window was opened over, resolved once when
+// the port is built: the side is about where somebody is working, and the
+// task under the cursor moving does not change that.
+func knowsPort(s *store.Store, repoPath string) func() []knowledge.Fact {
+	return func() []knowledge.Fact {
+		facts, err := knowledge.NewStore(s.Root()).Load(repoPath)
+		if err != nil {
+			logger.Error("cli/learn", "what orbit knows was not read: %v", err)
+
+			return nil
+		}
+
+		return knowledge.InScope(facts)
+	}
+}

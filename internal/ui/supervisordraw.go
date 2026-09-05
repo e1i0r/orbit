@@ -27,6 +27,8 @@ func (m Model) supervisorRows(h, w int) []string {
 	out = append(out, m.drawCompletions(cw)...)
 	out = append(out, m.drawSupervisorInput(cw)...)
 
+	out = besideThread(out, m.knownSide(h, w, cw), cw)
+
 	for i, row := range out {
 		out[i] = fit("  "+row, w)
 	}

@@ -19,6 +19,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/knowledge"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -171,6 +172,14 @@ type Options struct {
 	// what was meant and something else does it, which is the same line
 	// every other gesture on this screen is drawn on.
 	Learn func(stops bool, scope, repo, phrase string) error
+
+	// Knows is what Orbit has learned about the code being worked in: the
+	// general facts, the ones of every language, and the repository's own —
+	// the same set a phase started there would be told.
+	//
+	// It is a port because reading them means reaching the state root and the
+	// checkout, which the window may not do. What comes back is data.
+	Knows func() []knowledge.Fact
 
 	// NoteTask puts a line in one task's notes, which is where a mention of
 	// it in the supervisor lands.
