@@ -166,6 +166,10 @@ func (m Model) editFlow(name string) (Model, tea.Cmd) {
 	m.flows.phases = fl.Phases
 	m.flows.attempts = fl.Attempts
 	m.flows.activePhase = 0
+	// Editing opens on the fields: this flow already exists, and the tab
+	// that writes one from a sentence would replace every phase of it.
+	m.flows.tab = flowTabFields
+	m.flows.scroll = 0
 	m.flows.ensurePhase()
 	p := m.opts.Words
 

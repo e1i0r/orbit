@@ -40,7 +40,7 @@ func TestHandleFlowClickListActions(t *testing.T) {
 
 func TestHandleFlowClickBuilderButtons(t *testing.T) {
 	base, _ := testModel(t, 100, 30)
-	base = base.startCreateFlow()
+	base = base.startCreateFlow().onFields()
 
 	// "add_phase" grows the phase list and moves the field onto its name.
 	m2raw, _ := base.handleFlowClick(Target{Field: "add_phase"})
@@ -94,7 +94,7 @@ func TestHandleFlowClickBuilderButtons(t *testing.T) {
 
 func TestHandleFlowClickPromptButtons(t *testing.T) {
 	base, _ := testModel(t, 100, 30)
-	base = base.startCreateFlow()
+	base = base.startCreateFlow().onFields()
 
 	// "clear_prompt" empties whatever was there and moves the field onto it.
 	withPrompt := base
@@ -144,7 +144,7 @@ func TestHandleFlowClickPromptButtons(t *testing.T) {
 // and the click acts as if that field's own action key had been pressed.
 func TestHandleFlowClickFieldDefault(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m = m.startCreateFlow()
+	m = m.startCreateFlow().onFields()
 
 	// A dial with a list behind it opens the list, rather than stepping one
 	// along: an engine has sixty models, and sixty clicks is not a gesture.

@@ -38,6 +38,10 @@ func TestFlowsBuilderFullLifecycle(t *testing.T) {
 		t.Error("expected creating to be true in flowsState")
 	}
 
+	// A new flow opens on the tab that writes one from a sentence; the rest
+	// of this walk is about the fields.
+	m = m.onFields()
+
 	// 3. Render builder view
 	v := m.View()
 	if len(v.Content) == 0 {

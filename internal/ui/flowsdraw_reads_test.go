@@ -65,7 +65,7 @@ func TestSavingAFlowShowsItWithoutReopeningTheScreen(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.opts.Flows = flowsTestDir(t.TempDir())
 	m = m.openFlows()
-	m = m.startCreateFlow()
+	m = m.startCreateFlow().onFields()
 	m.flows.flowName = "recien-guardado"
 
 	m2, _ := m.saveCustomFlow()

@@ -330,3 +330,15 @@ func wantBand(t *testing.T, m Model, want string) {
 		t.Errorf("the band says %q, want it to mention %q", m.message, want)
 	}
 }
+
+// onFields is a designer opened on the tab where a flow is edited by hand.
+//
+// Creating a flow opens on the tab where it is described in words instead,
+// which is the right first move for somebody with an empty form and the
+// wrong one for a test about the fields. The tests that drive the fields say
+// so here rather than every one of them knowing which tab is first.
+func (m Model) onFields() Model {
+	m.flows.tab = flowTabFields
+
+	return m
+}

@@ -2,6 +2,21 @@ package ui
 
 // What the "describe it" tab draws.
 
+import "strconv"
+
+// sayReplaces warns that a draft would take the place of what is already
+// written, which is the one thing this tab does that cannot be undone by
+// pressing escape.
+func (m Model) sayReplaces(w int) builderLine {
+	if len(m.flows.phases) == 0 || !m.flows.isEditing {
+		return plainLine("")
+	}
+
+	return plainLine(fit("  "+Paint(Warn).Render(m.opts.Words.T("flows.say_replaces",
+		"a draft replaces the {n} phases this flow already has",
+		about("n", strconv.Itoa(len(m.flows.phases))))), w))
+}
+
 // sayRows is the tab: what it is for, the box the sentence goes in, and
 // whatever the last attempt had to say.
 func (m Model) sayRows(w int, sz boxSizes) []builderLine {
@@ -14,6 +29,7 @@ func (m Model) sayRows(w int, sz boxSizes) []builderLine {
 			"Say what the flow should do")), w)),
 		plainLine(fit("  "+Paint(Dim).Render(p.T("flows.say_about",
 			"the draft lands in the other two tabs for you to check; nothing is saved until you press Save Flow")), w)),
+		m.sayReplaces(w),
 		plainLine(""),
 		{
 			text: fit("  "+Paint(Dim).Render(pad(p.T("flows.say_ask_engine", "Ask"), labelWidth, false))+" "+

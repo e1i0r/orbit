@@ -15,7 +15,7 @@ func builderModel(t *testing.T) Model {
 	t.Helper()
 	m, _ := testModel(t, 100, 36)
 
-	return m.startCreateFlow()
+	return m.startCreateFlow().onFields()
 }
 
 // rowOfField is the screen row the given field was drawn on, and the last of

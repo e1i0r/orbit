@@ -189,7 +189,7 @@ func TestTheListCanPutAPhaseBackOnTheDefault(t *testing.T) {
 // leaving the field they are typing into.
 func TestTheFormScrollsUnderTheWheel(t *testing.T) {
 	m, _ := testModel(t, 100, 24)
-	m = m.startCreateFlow()
+	m = m.startCreateFlow().onFields()
 
 	lines, start := m.builderView(m.frame.Body.H, m.frame.Body.W)
 	if len(lines) <= m.frame.Body.H {

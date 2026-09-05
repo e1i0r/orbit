@@ -19,6 +19,11 @@ func (m Model) startCreateFlow() Model {
 	m.flows.activePhase = 0
 	m.flows.checksTyped = false
 	m.flows.scroll = 0
+	// A new flow opens on the tab where you say what it should do: there is
+	// nothing to edit yet, and a sentence is a faster first draft than
+	// eleven fields. Editing one opens on the fields, because that flow
+	// already exists and the sentence would replace it.
+	m.flows.tab = flowTabSay
 
 	return m
 }

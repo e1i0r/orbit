@@ -150,7 +150,7 @@ func TestFlowsListKeyNavigationBoundaries(t *testing.T) {
 
 func TestFlowsFormKeyConfirmDiscard(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m = m.startCreateFlow()
+	m = m.startCreateFlow().onFields()
 	m.flows.flowName = "typed-something"
 
 	// Back with something typed asks first, rather than discarding at once.
@@ -181,7 +181,7 @@ func TestFlowsFormKeyConfirmDiscard(t *testing.T) {
 
 	// Back with nothing typed closes without asking.
 	m5, _ := testModel(t, 100, 30)
-	m5 = m5.startCreateFlow()
+	m5 = m5.startCreateFlow().onFields()
 	m6raw, _ := m5.flowsFormKey(press("esc"))
 
 	m6 := asModel(t, m6raw)
@@ -192,7 +192,7 @@ func TestFlowsFormKeyConfirmDiscard(t *testing.T) {
 
 func TestFlowsFormKeyTextFields(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m = m.startCreateFlow()
+	m = m.startCreateFlow().onFields()
 
 	m.flows.field = flowFieldName
 	m2raw, _ := m.flowsFormKey(press("x"))
@@ -242,7 +242,7 @@ func TestFlowsFormKeyTextFields(t *testing.T) {
 
 func TestFlowsFormKeyTabAndArrows(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m = m.startCreateFlow()
+	m = m.startCreateFlow().onFields()
 
 	m2raw, _ := m.flowsFormKey(press("tab"))
 	if asModel(t, m2raw).flows.field != 1 {

@@ -274,3 +274,30 @@ func TestTheDraftIsAskedOfTheEngineTheReaderChose(t *testing.T) {
 		t.Errorf("the draft was asked of %q, want %q", asked, m.sayEngineName())
 	}
 }
+
+// TestANewFlowOpensOnTheTabThatWritesIt, and an existing one does not: the
+// sentence replaces every phase, which is not what somebody who pressed
+// edit came to do.
+func TestANewFlowOpensOnTheTabThatWritesIt(t *testing.T) {
+	fresh, _ := testModel(t, 100, 36)
+
+	m := fresh.startCreateFlow()
+	if m.flows.tab != flowTabSay {
+		t.Errorf("a new flow opened on tab %d", m.flows.tab)
+	}
+
+	next, _ := m.editNamedFlow("careful")
+
+	editing := asModel(t, next)
+	if editing.flows.tab != flowTabFields {
+		t.Errorf("editing careful opened on tab %d", editing.flows.tab)
+	}
+
+	// And that tab warns that a draft would take the place of what is there.
+	editing.flows.tab = flowTabSay
+
+	rows := strings.Join(editing.flowsBuilderRows(editing.frame.Body.H, editing.frame.Body.W), "\n")
+	if !strings.Contains(rows, "3") {
+		t.Errorf("the tab does not say how many phases a draft would replace:\n%s", rows)
+	}
+}

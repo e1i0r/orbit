@@ -4126,6 +4126,10 @@
     "flows.say_engine_now": {
       "source": "the draft will be asked of {engine}",
       "value": "el borrador se le pedirá a {engine}"
+    },
+    "flows.say_replaces": {
+      "source": "a draft replaces the {n} phases this flow already has",
+      "value": "un borrador reemplaza las {n} fases que este flujo ya tiene"
     }
   }
 }

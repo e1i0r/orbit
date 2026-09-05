@@ -32,7 +32,7 @@ func zetaEngines() []EngineInfo {
 func TestTheFlowEditorDialsAreTheEnginesOwn(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.opts.Engines = zetaEngines
-	m = m.startCreateFlow()
+	m = m.startCreateFlow().onFields()
 
 	for _, tc := range []struct {
 		field int
@@ -93,7 +93,7 @@ func TestNoScreenNamesAnEngineThisBuildDoesNotHave(t *testing.T) {
 		t.Fatalf("with nothing chosen the window names %q, want the only engine there is", got)
 	}
 
-	m = m.startCreateFlow()
+	m = m.startCreateFlow().onFields()
 	if got := m.flows.cur().Engine; got != "zeta" {
 		t.Errorf("a new flow's first phase is born on %q, want zeta", got)
 	}
