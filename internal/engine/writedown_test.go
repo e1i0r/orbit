@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/e1i0r/orbit/internal/logger"
 )
@@ -155,18 +156,23 @@ func TestTheWaitIsTimedFromBeforeTheRunAndNotAfterIt(t *testing.T) {
 		}
 	})
 
-	m := regexp.MustCompile(`answered after ([0-9.]+)ms`).FindStringSubmatch(all)
+	// The unit is whatever the duration printed itself as, and not
+	// milliseconds: a machine busy running the rest of this suite takes
+	// more than a second over the same sleep, and Go writes that as "1.4s".
+	// A test that demanded "ms" failed there while nothing was wrong, which
+	// is the one thing a test must never do.
+	m := regexp.MustCompile(`answered after ([^ ]+): `).FindStringSubmatch(all)
 	if m == nil {
-		t.Fatalf("no duration in milliseconds in the log:\n%s", all)
+		t.Fatalf("no duration in the log:\n%s", all)
 	}
 
-	took, err := strconv.ParseFloat(m[1], 64)
+	took, err := time.ParseDuration(m[1])
 	if err != nil {
-		t.Fatalf("ParseFloat(%q): %v", m[1], err)
+		t.Fatalf("ParseDuration(%q): %v", m[1], err)
 	}
 
-	if took < 150 {
-		t.Errorf("a run that slept 200ms was logged as %sms", m[1])
+	if took < 150*time.Millisecond {
+		t.Errorf("a run that slept 200ms was logged as %s", took)
 	}
 }
 

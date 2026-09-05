@@ -29,10 +29,9 @@ func TestFOpensTheFlowsScreenFromTheBoard(t *testing.T) {
 // presses, which is the argument the supervisor's own hint was added under.
 //
 // The width is wide because the bar drops hints from the end until what is
-// left fits, and this one and the supervisor's are at that end: on an eighty
-// or a hundred column terminal neither is drawn, and the task verbs before
-// them are. Whether that order is the right one is a question about the bar
-// and not about this key.
+// left fits, and this one and the supervisor's are at that end: on a hundred
+// column terminal with tasks on it neither is drawn and the task verbs are.
+// That order is the bar's own and is left alone here.
 func TestTheFlowsKeyIsOnTheBoardsBar(t *testing.T) {
 	m, _ := testModel(t, 180, 30)
 
