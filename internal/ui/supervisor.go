@@ -6,6 +6,7 @@ import (
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/e1i0r/orbit/internal/knowledge"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -15,6 +16,10 @@ type supervisorState struct {
 	offset     int
 	lines      []view.SupervisorLine
 	err        error
+	// knows is what Orbit has learned about the code being worked in, drawn
+	// down the side. It is read when the thread is, for the reason
+	// syncSupervisor gives.
+	knows []knowledge.Fact
 
 	// picking is the mode that takes a turn back: ↑↓ choose a line instead
 	// of scrolling and ↵ withdraws it instead of sending. It is a mode
@@ -62,6 +67,18 @@ func (m Model) abandonSupervisor() Model {
 }
 
 func (m Model) syncSupervisor() Model {
+	// Read here and not while drawing: the port reads two directories off
+	// disk, and a frame is drawn ten times a second. This is also what puts
+	// a rule on the side the moment it is written, since writing one syncs.
+	//
+	// Before the thread and not after it, because the two are separate
+	// doors: a window handed one and not the other has to get the one it
+	// was handed, and reading them in one order made the side depend on a
+	// port that has nothing to do with it.
+	if m.opts.Knows != nil {
+		m.supervisor.knows = m.opts.Knows()
+	}
+
 	if m.opts.Reader == nil {
 		return m
 	}

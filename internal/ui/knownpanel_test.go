@@ -98,13 +98,36 @@ func TestTheSideSaysWhereEachFactApplies(t *testing.T) {
 	}
 }
 
-// TestANarrowWindowKeepsItsConversation. The side is worth having only where
-// there is room going spare; on the terminal most people have, the thread and
-// the line being typed are the screen.
-func TestANarrowWindowKeepsItsConversation(t *testing.T) {
-	m := knowing(t, 100, known("of everything", knowledge.Scope{Kind: knowledge.General}))
+// TestTheSideAppearsOnAnOrdinaryTerminal.
+//
+// It waited for width going spare, and there is none: the content is capped
+// at 110 columns and a terminal narrower than that has nothing left over, so
+// the panel needed 150 columns and never appeared on the screen it was built
+// for. It takes its columns from the thread now.
+func TestTheSideAppearsOnAnOrdinaryTerminal(t *testing.T) {
+	m := knowing(t, 120, known("of everything", knowledge.Scope{Kind: knowledge.General}))
 
-	if drawn := sideOf(t, m, 100); strings.Contains(drawn, "of everything") {
-		t.Errorf("a hundred column window gave its width to the side:\n%s", drawn)
+	if drawn := sideOf(t, m, 120); !strings.Contains(drawn, "of everything") {
+		t.Errorf("a hundred and twenty column window draws no side:\n%s", drawn)
+	}
+}
+
+// TestATerminalTooNarrowKeepsItsConversation. Below the point where the
+// thread stops being readable the panel is a bad trade, however useful it is.
+func TestATerminalTooNarrowKeepsItsConversation(t *testing.T) {
+	m := knowing(t, 90, known("of everything", knowledge.Scope{Kind: knowledge.General}))
+
+	if drawn := sideOf(t, m, 90); strings.Contains(drawn, "of everything") {
+		t.Errorf("a ninety column window gave its width to the side:\n%s", drawn)
+	}
+}
+
+// TestNothingKnownIsNoSide, so a fresh install is the conversation and
+// nothing else.
+func TestNothingKnownIsNoSide(t *testing.T) {
+	m := knowing(t, 180)
+
+	if drawn := sideOf(t, m, 180); strings.Contains(drawn, "What Orbit knows") {
+		t.Errorf("a heading with nothing under it was drawn:\n%s", drawn)
 	}
 }
