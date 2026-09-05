@@ -319,6 +319,8 @@ func (m Model) handleFlowClick(t Target) (tea.Model, tea.Cmd) {
 	case "save":
 		m.flows.field = flowFieldSave
 		return m.handleFlowFieldAction()
+	case "say_engine":
+		return m.turnSayEngine(1), nil
 	case "draft":
 		next, cmd := m.draftFlow()
 		return next, cmd

@@ -11,10 +11,19 @@ func (m Model) sayRows(w int, sz boxSizes) []builderLine {
 	out := []builderLine{
 		plainLine(""),
 		plainLine(fit("  "+Paint(Accent).Bold(true).Render(p.T("flows.say_title",
-			"Say what the flow should do"))+"  "+
-			Paint(Dim).Render(p.T("flows.say_engine", "asks {engine}", about("engine", m.dialEngine("")))), w)),
+			"Say what the flow should do")), w)),
 		plainLine(fit("  "+Paint(Dim).Render(p.T("flows.say_about",
 			"the draft lands in the other two tabs for you to check; nothing is saved until you press Save Flow")), w)),
+		plainLine(""),
+		{
+			text: fit("  "+Paint(Dim).Render(pad(p.T("flows.say_ask_engine", "Ask"), labelWidth, false))+" "+
+				renderComboPills(m.engineNames(), m.sayEngineName())+"  "+
+				Paint(Dim).Render(p.T("flows.say_engine_ways", "← → to change")), w),
+			field: noField,
+			phase: noPhase,
+			pick:  noPick,
+			act:   "say_engine",
+		},
 		plainLine(""),
 	}
 
@@ -28,7 +37,7 @@ func (m Model) sayRows(w int, sz boxSizes) []builderLine {
 	switch {
 	case st.saying:
 		out = append(out, plainLine(fit("  "+Paint(Live).Render(p.T("flows.say_asking",
-			"asking {engine}… this takes as long as one of its runs", about("engine", m.dialEngine("")))), w)))
+			"asking {engine}… this takes as long as one of its runs", about("engine", m.sayEngineName()))), w)))
 	case st.sayNote != "":
 		out = append(out, plainLine(fit("  "+Paint(Bad).Render(st.sayNote), w)))
 	default:

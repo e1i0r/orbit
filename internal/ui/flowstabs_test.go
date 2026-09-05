@@ -235,3 +235,42 @@ func TestTheDraftSaysWhatItIsDoing(t *testing.T) {
 		t.Errorf("a refused draft left the bar at %q and saying=%v", got.message, got.flows.saying)
 	}
 }
+
+// TestTheDraftIsAskedOfTheEngineTheReaderChose, which is not always the
+// window's default: the one that is set up on this machine is the one that
+// can answer.
+func TestTheDraftIsAskedOfTheEngineTheReaderChose(t *testing.T) {
+	m := builderModel(t)
+	m.flows.tab = flowTabSay
+	m.flows.say = "implementa y revisa"
+
+	names := m.engineNames()
+	if len(names) < 2 {
+		t.Skip("this build has one engine")
+	}
+
+	next, _ := m.flowsFormKey(tea.KeyPressMsg{Code: tea.KeyRight})
+
+	m = asModel(t, next)
+	if m.sayEngineName() == names[0] {
+		t.Fatalf("→ left the engine on %q", m.sayEngineName())
+	}
+
+	if m.message == "" {
+		t.Error("the bar did not say which engine the draft would be asked of")
+	}
+
+	asked := ""
+	m.opts.Draft = func(engineName, prompt string) (string, error) {
+		asked = engineName
+
+		return "{}", nil
+	}
+
+	_, cmd := m.draftFlow()
+	cmd()
+
+	if asked != m.sayEngineName() {
+		t.Errorf("the draft was asked of %q, want %q", asked, m.sayEngineName())
+	}
+}

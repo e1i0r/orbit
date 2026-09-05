@@ -4067,10 +4067,6 @@
       "source": "Say what the flow should do",
       "value": "Di qué debe hacer el flujo"
     },
-    "flows.say_engine": {
-      "source": "asks {engine}",
-      "value": "le pregunta a {engine}"
-    },
     "flows.say_about": {
       "source": "the draft lands in the other two tabs for you to check; nothing is saved until you press Save Flow",
       "value": "el borrador aparece en las otras dos pestañas para que lo revises; no se guarda nada hasta que pulses Guardar Flujo"
@@ -4118,6 +4114,18 @@
     "flows.say_failed": {
       "source": "no draft: {err}",
       "value": "sin borrador: {err}"
+    },
+    "flows.say_ask_engine": {
+      "source": "Ask",
+      "value": "Preguntarle a"
+    },
+    "flows.say_engine_ways": {
+      "source": "← → to change",
+      "value": "← → para cambiar"
+    },
+    "flows.say_engine_now": {
+      "source": "the draft will be asked of {engine}",
+      "value": "el borrador se le pedirá a {engine}"
     }
   }
 }

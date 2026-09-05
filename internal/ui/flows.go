@@ -88,6 +88,11 @@ type flowsState struct {
 	say     string
 	saying  bool
 	sayNote string
+	// sayEngine is which engine that tab asks. Empty is the window's own
+	// default, and it is held apart from the phases' engines: which engine
+	// writes the draft and which engine runs the flow are two decisions,
+	// and the second is one the draft itself makes.
+	sayEngine string
 	// attempts is the flow's cap, carried although no field shows it: this
 	// editor rebuilds the whole flow when it saves, so what it does not hold
 	// is lost by opening a flow and saving it.

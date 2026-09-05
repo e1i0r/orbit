@@ -30,6 +30,10 @@ func (m Model) sayKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	st := &m.flows
 
 	switch {
+	case msg.Code == tea.KeyLeft:
+		return m.turnSayEngine(-1), nil
+	case msg.Code == tea.KeyRight:
+		return m.turnSayEngine(1), nil
 	case st.saying:
 		// While the engine is out there is nothing to type into: what
 		// comes back replaces the phases, and a sentence written in the
@@ -55,6 +59,21 @@ func (m Model) sayKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// sayEngineName is the engine this tab asks: the one chosen on it, or the
+// window's own when nobody has chosen.
+func (m Model) sayEngineName() string {
+	return m.dialEngine(m.flows.sayEngine)
+}
+
+// turnSayEngine moves that choice along, and says which one it landed on:
+// the draft costs a run, and the reader should know whose.
+func (m Model) turnSayEngine(d int) Model {
+	m.flows.sayEngine = nextOption(m.engineNames(), m.sayEngineName(), d)
+
+	return m.say(m.opts.Words.T("flows.say_engine_now", "the draft will be asked of {engine}",
+		about("engine", m.sayEngineName())))
+}
+
 // draftFlow sends what was written to the engine.
 func (m Model) draftFlow() (Model, tea.Cmd) {
 	p := m.opts.Words
@@ -71,7 +90,7 @@ func (m Model) draftFlow() (Model, tea.Cmd) {
 	m.flows.saying = true
 	m.flows.sayNote = ""
 
-	engineName := m.dialEngine("")
+	engineName := m.sayEngineName()
 	ask := m.opts.Draft
 
 	// Said in the bar as well as on the tab: a gesture that starts
