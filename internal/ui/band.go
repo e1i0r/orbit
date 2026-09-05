@@ -38,6 +38,13 @@ func (m Model) bandLeft() string {
 		return Paint(Warn).Render(m.opts.Words.T("msg.confirm_skip",
 			"skip the phase {id} waits in front of? [y/n]",
 			about("id", m.confirmID)))
+	case m.flows.saying:
+		// Not a message with a life of twenty seconds: this is true until
+		// the engine answers, and a bar that went quiet halfway through
+		// would leave the reader deciding whether to wait or to cancel.
+		return m.spinner(Live) + Paint(Live).Render(m.opts.Words.T("flows.say_waiting",
+			"asking {engine} — {secs} · [esc] stop waiting",
+			about("engine", m.sayEngineName()), about("secs", m.waitedFor().String())))
 	case m.confirm == confirmPostCliTask:
 		return Paint(Live).Render(m.opts.Words.T("msg.confirm_post_cli",
 			"make a task from this session? [y/n]"))

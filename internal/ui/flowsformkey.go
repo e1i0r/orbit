@@ -25,6 +25,10 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.moveFlowTab(d), nil
 	}
 
+	if st.saying && (msg.Code == tea.KeyEscape || key.Matches(msg, m.keys.Back)) {
+		return m.stopWaiting(), nil
+	}
+
 	p := m.opts.Words
 
 	if st.confirmDiscard {

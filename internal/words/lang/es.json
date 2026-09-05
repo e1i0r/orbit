@@ -4075,10 +4075,6 @@
       "source": "e.g. implement, then go round fixing until the tests pass and coverage is over 90%, then a review that stops for me",
       "value": "ej: implementa, luego da vueltas arreglando hasta que pasen las pruebas y la cobertura supere 90%, y al final una revisión que se detenga para mí"
     },
-    "flows.say_asking": {
-      "source": "asking {engine}…",
-      "value": "preguntándole a {engine}…"
-    },
     "flows.btn_draft": {
       "source": "✨ Draft it",
       "value": "✨ Redactarlo"
@@ -4138,6 +4134,18 @@
     "flows.say_ways2": {
       "source": "[tab] engine · model · text · [↵] pick, or draft it from the text · [shift+↵] new line · [^V] paste · [^←/^→] tab · [esc] back",
       "value": "[tab] motor · modelo · texto · [↵] elegir, o redactar desde el texto · [shift+↵] nueva línea · [^V] pegar · [^←/^→] pestaña · [esc] volver"
+    },
+    "flows.say_waiting": {
+      "source": "asking {engine} — {secs} · [esc] stop waiting",
+      "value": "preguntándole a {engine} — {secs} · [esc] deja de esperar"
+    },
+    "flows.say_asking2": {
+      "source": "asking {engine} — {secs} · [esc] stop waiting",
+      "value": "preguntándole a {engine} — {secs} · [esc] deja de esperar"
+    },
+    "flows.say_stopped": {
+      "source": "stopped waiting; the answer will be dropped if it lands",
+      "value": "dejé de esperar; si llega la respuesta, se descarta"
     }
   }
 }

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"slices"
+	"time"
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
@@ -105,6 +106,13 @@ type flowsState struct {
 	sayEngine string
 	sayModel  string
 	sayFocus  int
+	// sayAt is when the question went out, for the count of seconds beside
+	// the spinner, and sayID is which question is being waited on. The id
+	// is what lets somebody stop waiting: an answer that arrives for a
+	// question they walked away from is dropped rather than landing in a
+	// form they have moved on to.
+	sayAt time.Time
+	sayID int
 	// attempts is the flow's cap, carried although no field shows it: this
 	// editor rebuilds the whole flow when it saves, so what it does not hold
 	// is lost by opening a flow and saving it.

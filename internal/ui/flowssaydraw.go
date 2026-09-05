@@ -65,8 +65,9 @@ func (m Model) sayRows(w int, sz boxSizes) []builderLine {
 
 	switch {
 	case st.saying:
-		out = append(out, plainLine(fit("  "+Paint(Live).Render(p.T("flows.say_asking",
-			"asking {engine}…", about("engine", m.sayEngineName()))), w)))
+		out = append(out, plainLine(fit("  "+m.spinner(Live)+Paint(Live).Render(p.T("flows.say_asking2",
+			"asking {engine} — {secs} · [esc] stop waiting",
+			about("engine", m.sayEngineName()), about("secs", m.waitedFor().String()))), w)))
 	case st.sayNote != "":
 		out = append(out, plainLine(fit("  "+Paint(Bad).Render(st.sayNote), w)))
 	default:

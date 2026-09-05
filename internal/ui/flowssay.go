@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 
@@ -21,6 +22,7 @@ import (
 
 // flowDraftedMsg is what the engine answered, decoded.
 type flowDraftedMsg struct {
+	id   int
 	flow flow.Flow
 	err  error
 }
@@ -130,6 +132,10 @@ func (m Model) draftFlow() (Model, tea.Cmd) {
 
 	m.flows.saying = true
 	m.flows.sayNote = ""
+	m.flows.sayAt = time.Now()
+	m.flows.sayID++
+
+	id := m.flows.sayID
 
 	engineName, model := m.sayEngineName(), m.sayModelName()
 	ask := m.opts.Draft
@@ -139,21 +145,58 @@ func (m Model) draftFlow() (Model, tea.Cmd) {
 	// twice.
 	m = m.say(p.T("flows.say_sent", "asking {engine}…", about("engine", engineName)))
 
-	return m, func() tea.Msg {
+	// The frame clock is started here, the way the supervisor starts it:
+	// the spinner beside the count of seconds is the difference between a
+	// question that is out and a window that is wedged.
+	m, frame := m.nextFrame()
+
+	send := func() tea.Msg {
 		out, err := ask(engineName, model, flowDraftPrompt(said, m.engineNames()))
 		if err != nil {
-			return flowDraftedMsg{err: err}
+			return flowDraftedMsg{id: id, err: err}
 		}
 
 		fl, err := decodeDraft(out)
 
-		return flowDraftedMsg{flow: fl, err: err}
+		return flowDraftedMsg{id: id, flow: fl, err: err}
 	}
+
+	return m, tea.Batch(send, frame)
+}
+
+// stopWaiting leaves the question out there and gives the screen back.
+//
+// Orbit did not spawn the engine with a handle it can kill — the port hands
+// back an answer or an error, and nothing in between — so this is honest
+// about what it does: it stops waiting, and the answer is dropped if it ever
+// comes.
+func (m Model) stopWaiting() Model {
+	m.flows.saying = false
+	m.flows.sayID++
+
+	return m.say(m.opts.Words.T("flows.say_stopped", "stopped waiting; the answer will be dropped if it lands"))
+}
+
+// waitedFor is how long the question has been out, for the line that says so.
+func (m Model) waitedFor() time.Duration {
+	if m.flows.sayAt.IsZero() {
+		return 0
+	}
+
+	return m.now.Sub(m.flows.sayAt).Round(time.Second)
 }
 
 // drafted takes what came back into the fields, for the reader to check.
 func (m Model) drafted(msg flowDraftedMsg) (Model, tea.Cmd) {
 	p := m.opts.Words
+
+	// An answer to a question nobody is waiting on any more: the reader
+	// pressed escape, or asked again, and what lands now would overwrite a
+	// form they have gone back to editing by hand.
+	if !m.flows.saying || msg.id != m.flows.sayID {
+		return m, nil
+	}
+
 	m.flows.saying = false
 
 	if msg.err != nil {
