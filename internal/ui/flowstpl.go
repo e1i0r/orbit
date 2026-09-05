@@ -319,6 +319,9 @@ func (m Model) handleFlowClick(t Target) (tea.Model, tea.Cmd) {
 	case "save":
 		m.flows.field = flowFieldSave
 		return m.handleFlowFieldAction()
+	case "draft":
+		next, cmd := m.draftFlow()
+		return next, cmd
 	case "tab":
 		m.flows.tab = t.Phase
 		m.flows.scroll = 0

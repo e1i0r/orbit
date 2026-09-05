@@ -32,7 +32,13 @@ func (m Model) sayRows(w int, sz boxSizes) []builderLine {
 	case st.sayNote != "":
 		out = append(out, plainLine(fit("  "+Paint(Bad).Render(st.sayNote), w)))
 	default:
-		out = append(out, plainLine(fit("  "+Pill(p.T("flows.btn_draft", "✨ Draft it"), "#FFFFFF", "#581C87"), w)))
+		out = append(out, builderLine{
+			text:  fit("  "+Pill(p.T("flows.btn_draft", "✨ Draft it"), "#FFFFFF", "#581C87")+"  "+Paint(Dim).Render(p.T("flows.draft_same_as", "or press ↵")), w),
+			field: noField,
+			phase: noPhase,
+			pick:  noPick,
+			act:   "draft",
+		})
 	}
 
 	return append(out,

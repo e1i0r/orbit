@@ -4106,6 +4106,10 @@
     "flows.say_drafted": {
       "source": "drafted {n} phases — read them, change what is wrong, then save",
       "value": "{n} fases redactadas — léelas, corrige lo que esté mal y guarda"
+    },
+    "flows.draft_same_as": {
+      "source": "or press ↵",
+      "value": "o pulsa ↵"
     }
   }
 }

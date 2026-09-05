@@ -35,6 +35,9 @@ type builderLine struct {
 	// strip is the row of tabs, whose parts are told apart by where the
 	// pointer is along it.
 	strip bool
+	// act is what a click on this row does, for a row that is a button
+	// rather than a field: handleFlowClick reads it by name.
+	act string
 	// head is the label row of a field drawn over several rows, as opposed
 	// to the box under it. It is what tells a click on the instructions
 	// label from a click inside the instructions: the pills that paste,

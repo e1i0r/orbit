@@ -188,6 +188,8 @@ func (m Model) hitBuilder(x, line int) Target {
 	row := lines[at]
 
 	switch {
+	case row.act != "":
+		return Target{Kind: TargetFlowItem, Field: row.act}
 	case row.strip:
 		if at := m.flowTabAt(x); at >= 0 {
 			return Target{Kind: TargetFlowItem, Field: "tab", Phase: at}

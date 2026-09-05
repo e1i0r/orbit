@@ -162,3 +162,53 @@ func TestTheSayTabTakesAParagraph(t *testing.T) {
 		t.Errorf("the tab holds %q", m.flows.say)
 	}
 }
+
+// TestTheDraftButtonIsOne. It is drawn as a pill, so it has to answer to
+// the pointer: a button that only works from the keyboard is a picture of a
+// button.
+func TestTheDraftButtonIsOne(t *testing.T) {
+	m := builderModel(t)
+	m.flows.tab = flowTabSay
+	m.flows.say = "implementa y revisa"
+
+	asked := false
+	m.opts.Draft = func(engineName, prompt string) (string, error) {
+		asked = true
+
+		return "{}", nil
+	}
+
+	lines, start := m.builderView(m.frame.Body.H, m.frame.Body.W)
+
+	y := -1
+
+	for i, l := range lines {
+		if l.act == "draft" {
+			y = m.frame.Body.Y + i - start
+		}
+	}
+
+	if y < 0 {
+		t.Fatal("the tab draws no draft button")
+	}
+
+	got := m.hitFlows(4, y)
+	if got.Field != "draft" {
+		t.Fatalf("hitFlows on the button = %+v", got)
+	}
+
+	next, cmd := m.handleFlowClick(got)
+	if cmd == nil {
+		t.Fatal("clicking the button asked nothing")
+	}
+
+	if !asModel(t, next).flows.saying {
+		t.Error("the click did not say it was waiting on the engine")
+	}
+
+	cmd()
+
+	if !asked {
+		t.Error("the engine was never asked")
+	}
+}
