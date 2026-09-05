@@ -2799,6 +2799,10 @@
       "source": "repositories",
       "value": "repositorios"
     },
+    "key.flows": {
+      "source": "flows",
+      "value": "flujos"
+    },
     "repos.title": {
       "source": "Repositories",
       "value": "Repositorios"
@@ -3576,6 +3580,10 @@
     "tip.repos": {
       "source": "the repositories orbit knows about, and which of them the board is showing",
       "value": "los repositorios que orbit conoce, y cuáles de ellos muestra el tablero"
+    },
+    "tip.flows": {
+      "source": "the flows a run can be made of: which phases it has, what each one is asked, and where it stops for you",
+      "value": "los flujos de los que se compone una ejecución: qué fases tiene, qué se le pide a cada una, y dónde se detiene para ti"
     },
     "tip.engines": {
       "source": "which engine and model the next run is asked with, and how hard it is asked to think",

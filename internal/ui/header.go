@@ -308,9 +308,9 @@ func (m Model) hints() []barHint {
 		}
 	}
 
-	// The supervisor is on the bar and not only in the help overlay: a
-	// reader who never sees the key does not know there is anybody to ask.
-	return append(out, hintFor(m.keys.Supervisor), hintFor(m.keys.Filter))
+	// On the bar and not only in the help overlay: a key a reader never
+	// sees is a key they never press.
+	return append(out, hintFor(m.keys.Supervisor), hintFor(m.keys.Flows), hintFor(m.keys.Filter))
 }
 
 // hintFor is one binding as the bar prints it: the glyph a reader sees, the

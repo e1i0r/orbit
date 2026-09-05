@@ -28,6 +28,7 @@ type Keys struct {
 	Pause, Resume, Skip, Cancel, Requeue                                                          key.Binding
 	Take, Hand, Ask, MarkRead, Delete, Edit                                                       key.Binding
 	Filter, Commands, CLI, Repos, EngineKnobs, Quota, Supervisor, Autopilot, Language, Help, Quit key.Binding
+	Flows                                                                                         key.Binding
 }
 
 // NewKeys builds the key map, with every description translated.
@@ -109,9 +110,14 @@ func NewKeys(p *words.Printer) Keys {
 		// because the two are siblings: both are a line the reader types
 		// into, and one narrows what is already on screen while the other
 		// reaches everything no key was ever given to.
-		Commands:    binding(":", p.T("key.commands", "commands"), ":"),
-		CLI:         binding("c", p.T("key.cli", "interactive CLI"), "c", "C"),
-		Repos:       binding("R", p.T("key.repos", "repositories"), "R"),
+		Commands: binding(":", p.T("key.commands", "commands"), ":"),
+		CLI:      binding("c", p.T("key.cli", "interactive CLI"), "c", "C"),
+		Repos:    binding("R", p.T("key.repos", "repositories"), "R"),
+		// F for flows, in the same case as the four screens beside it: a
+		// capital opens a screen and a small letter does something to the
+		// task under the cursor, which is the whole of how the two halves
+		// of this map are told apart.
+		Flows:       binding("F", p.T("key.flows", "flows"), "F"),
 		EngineKnobs: binding("M", p.T("key.engines", "engine & model knobs"), "M"),
 		Quota:       binding("Q", p.T("key.quota", "quota"), "Q"),
 		Supervisor:  binding("S", p.T("key.supervisor", "supervisor"), "S"),
