@@ -74,6 +74,8 @@ func (m Model) key(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.quotaKey(msg)
 	case m.screen == screenHelp:
 		return m.helpKey(msg)
+	case m.screen == screenKnowledge:
+		return m.knowledgeKey(msg)
 	case m.screen == screenSupervisor:
 		return m.supervisorKey(msg)
 	case key.Matches(msg, m.keys.Commands):
@@ -133,6 +135,8 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.openRepos(), nil
 	case key.Matches(k, m.keys.Flows):
 		return m.openFlows(), nil
+	case key.Matches(k, m.keys.Knowledge):
+		return m.openKnowledge(), nil
 	case key.Matches(k, m.keys.EngineKnobs):
 		return m.openEngines(), nil
 	case key.Matches(k, m.keys.Quota):
@@ -311,29 +315,4 @@ func (m Model) ask() (tea.Model, tea.Cmd) {
 	next.confirm, next.confirmID = confirmCancel, t.ID
 
 	return next, nil
-}
-
-// autopilot flips the standing switch and says which way it went.
-//
-// It says what it just did rather than what it undid. The program this
-// replaces printed "autopilot was off" after turning it on, and the sentence
-// is ambiguous in exactly the moment a reader needs it not to be.
-func (m Model) autopilot() (tea.Model, tea.Cmd) {
-	if m.opts.Settings == nil {
-		return m, nil
-	}
-
-	on := !m.opts.Settings.Autopilot()
-	if err := m.opts.Settings.SetAutopilot(on); err != nil {
-		return m.say(err.Error()), nil
-	}
-
-	if on {
-		m = m.say(m.opts.Words.T("msg.autopilot_on", "autopilot is on: every phase runs without asking"))
-		nextM, cmd := m.autoStartNext()
-
-		return nextM, cmd
-	}
-
-	return m.say(m.opts.Words.T("msg.autopilot_off", "autopilot is off: every phase stops for you")), nil
 }

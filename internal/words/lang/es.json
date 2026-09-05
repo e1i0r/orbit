@@ -3255,6 +3255,70 @@
       "source": "Supervisor & Cockpit Memory",
       "value": "Supervisor y Memoria del Cockpit"
     },
+    "key.knowledge": {
+      "source": "what orbit knows",
+      "value": "lo que orbit sabe"
+    },
+    "tip.knowledge": {
+      "source": "what orbit has learned about this code: the rules that stop a run, and what it is told before one",
+      "value": "lo que orbit aprendió de este código: las reglas que detienen una corrida, y lo que se le dice antes de una"
+    },
+    "knowledge.title": {
+      "source": "What Orbit knows",
+      "value": "Lo que Orbit sabe"
+    },
+    "knowledge.empty": {
+      "source": "Nothing written down yet. Say /rule or /aware to the supervisor, or drop a file in .orbit/knowledge/.",
+      "value": "Todavía no hay nada anotado. Dile /rule o /aware al supervisor, o deja un archivo en .orbit/knowledge/."
+    },
+    "knowledge.general": {
+      "source": "Everywhere · this machine only, these do not travel",
+      "value": "En todas partes · solo en esta máquina, estos no viajan"
+    },
+    "knowledge.travels": {
+      "source": "travels with the repository",
+      "value": "viaja con el repositorio"
+    },
+    "knowledge.ways": {
+      "source": "[↑↓] move · [space] turn off · [esc] back",
+      "value": "[↑↓] mover · [espacio] apagar · [esc] atrás"
+    },
+    "knowledge.is_off": {
+      "source": "off",
+      "value": "apagado"
+    },
+    "knowledge.stops": {
+      "source": "stops",
+      "value": "detiene"
+    },
+    "knowledge.no_check": {
+      "source": "rule, no check yet",
+      "value": "regla, sin check todavía"
+    },
+    "knowledge.warns": {
+      "source": "aware",
+      "value": "avisa"
+    },
+    "knowledge.from_code": {
+      "source": "from the code",
+      "value": "del código"
+    },
+    "knowledge.from_human": {
+      "source": "you said it",
+      "value": "lo dijiste tú"
+    },
+    "knowledge.from_record": {
+      "source": "from the record",
+      "value": "del record"
+    },
+    "knowledge.from_prod": {
+      "source": "from production",
+      "value": "de producción"
+    },
+    "knowledge.used": {
+      "source": "told {n}×",
+      "value": "dicho {n}×"
+    },
     "known.more": {
       "source": "{n} more, in the Knowledge screen",
       "value": "{n} m\u00e1s, en la pantalla Knowledge"

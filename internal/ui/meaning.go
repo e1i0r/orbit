@@ -72,6 +72,8 @@ func (m Model) meaning(k fmt.Stringer) string {
 		return p.T("tip.supervisor", "opens the supervisor: what it has said about the board, and the line you say things to it on")
 	case key.Matches(k, m.keys.Repos):
 		return p.T("tip.repos", "the repositories orbit knows about, and which of them the board is showing")
+	case key.Matches(k, m.keys.Knowledge):
+		return p.T("tip.knowledge", "what orbit has learned about this code: the rules that stop a run, and what it is told before one")
 	case key.Matches(k, m.keys.Flows):
 		return p.T("tip.flows", "the flows a run can be made of: which phases it has, what each one is asked, and where it stops for you")
 	case key.Matches(k, m.keys.EngineKnobs):

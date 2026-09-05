@@ -181,6 +181,14 @@ type Options struct {
 	// checkout, which the window may not do. What comes back is data.
 	Knows func() []knowledge.Fact
 
+	// KnowsAll is everything Orbit has learned, across the repositories on
+	// the board and the state root, for the screen that lists it whole.
+	KnowsAll func() []knowledge.Fact
+
+	// TurnFact writes a fact back with whatever was changed about it, which
+	// today is only whether it is switched off.
+	TurnFact func(f knowledge.Fact) error
+
 	// NoteTask puts a line in one task's notes, which is where a mention of
 	// it in the supervisor lands.
 	NoteTask func(id, text string) error

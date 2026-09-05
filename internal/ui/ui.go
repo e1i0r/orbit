@@ -28,25 +28,6 @@ const gutter = 3
 // thing on screen when something else starts.
 const messageLife = 20 * time.Second
 
-// screen is which of the window's three screens is on top: the board, the
-// task view one level below it, and the dialog that decides what a run will
-// be before anything runs.
-type screen int
-
-const (
-	screenList screen = iota
-	screenDetail
-	screenStart
-	screenCompose
-	screenSettings
-	screenFlows
-	screenRepos
-	screenEngines
-	screenQuota
-	screenHelp
-	screenSupervisor
-)
-
 // confirm is the question the window is waiting for an answer to, and there
 // is never more than one — a second question over the first is how a reader
 // answers the wrong one.
@@ -146,6 +127,7 @@ type Model struct {
 	help           helpState
 	supervisor     supervisorState
 	supervisorBusy bool
+	knowledge      knowledgeState
 	thread         *threadCache // the supervisor screen's last rendering: supervisorcache.go
 	delivering     deliverPending
 	// spinning is whether an animation frame is already on its way.

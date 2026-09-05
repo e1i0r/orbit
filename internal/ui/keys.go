@@ -28,7 +28,7 @@ type Keys struct {
 	Pause, Resume, Skip, Cancel, Requeue                                                          key.Binding
 	Take, Hand, Ask, MarkRead, Delete, Edit                                                       key.Binding
 	Filter, Commands, CLI, Repos, EngineKnobs, Quota, Supervisor, Autopilot, Language, Help, Quit key.Binding
-	Flows                                                                                         key.Binding
+	Flows, Knowledge                                                                              key.Binding
 }
 
 // NewKeys builds the key map, with every description translated.
@@ -117,7 +117,9 @@ func NewKeys(p *words.Printer) Keys {
 		// capital opens a screen and a small letter does something to the
 		// task under the cursor, which is the whole of how the two halves
 		// of this map are told apart.
-		Flows:       binding("F", p.T("key.flows", "flows"), "F"),
+		Flows: binding("F", p.T("key.flows", "flows"), "F"),
+		// K for what Orbit knows, a capital like the screens beside it.
+		Knowledge:   binding("K", p.T("key.knowledge", "what orbit knows"), "K"),
 		EngineKnobs: binding("M", p.T("key.engines", "engine & model knobs"), "M"),
 		Quota:       binding("Q", p.T("key.quota", "quota"), "Q"),
 		Supervisor:  binding("S", p.T("key.supervisor", "supervisor"), "S"),
