@@ -1,4 +1,4 @@
-package ui
+package typing
 
 // Where a value breaks when it is drawn, counted so that it can be counted
 // back. splitIntoLines cannot do this — it rejoins words with one space —
@@ -17,22 +17,22 @@ func TestTheDrawnLinesOfAValueAccountForEveryCharacter(t *testing.T) {
 	text := "una tarea larga que no entra en la caja\ny otra línea"
 	rs := []rune(text)
 
-	spans := wrapSpans(rs, 12)
+	spans := Wrap(rs, 12)
 
 	var b strings.Builder
 
 	at := 0
 
 	for _, s := range spans {
-		for ; at < s.from; at++ {
+		for ; at < s.From; at++ {
 			if rs[at] != '\n' {
 				t.Fatalf("the character at %d is on no line at all: %q", at, string(rs[at]))
 			}
 		}
 
-		b.WriteString(spanText(rs, s))
+		b.WriteString(SpanText(rs, s))
 
-		at = s.to
+		at = s.To
 	}
 
 	// What is missing between the lines is the newlines, which are not
@@ -45,9 +45,9 @@ func TestTheDrawnLinesOfAValueAccountForEveryCharacter(t *testing.T) {
 func TestALineNeverComesOutWiderThanTheBox(t *testing.T) {
 	rs := []rune("palabras cortas y una palabralarguisimaquenoentra al final")
 
-	for _, s := range wrapSpans(rs, 10) {
-		if s.to-s.from > 10 {
-			t.Errorf("a line of %d characters was drawn in a box of 10: %q", s.to-s.from, spanText(rs, s))
+	for _, s := range Wrap(rs, 10) {
+		if s.To-s.From > 10 {
+			t.Errorf("a line of %d characters was drawn in a box of 10: %q", s.To-s.From, SpanText(rs, s))
 		}
 	}
 }
@@ -57,16 +57,16 @@ func TestALineNeverComesOutWiderThanTheBox(t *testing.T) {
 func TestACaretOnABreakIsOnTheLineItIsAboutToWriteOn(t *testing.T) {
 	rs := []rune("aaa bbb ccc")
 
-	spans := wrapSpans(rs, 4)
+	spans := Wrap(rs, 4)
 	if len(spans) != 3 {
 		t.Fatalf("the value was drawn as %d lines, want 3", len(spans))
 	}
 
-	if row := spanRow(spans, spans[1].from); row != 1 {
+	if row := SpanRow(spans, spans[1].From); row != 1 {
 		t.Errorf("the start of the second line is on row %d, want 1", row)
 	}
 
-	if row := spanRow(spans, len(rs)); row != 2 {
+	if row := SpanRow(spans, len(rs)); row != 2 {
 		t.Errorf("the end of the value is on row %d, want the last line", row)
 	}
 }
@@ -75,16 +75,16 @@ func TestACaretOnABreakIsOnTheLineItIsAboutToWriteOn(t *testing.T) {
 // far into the third line, not that far into the value.
 func TestPointingAtALineAnswersWithThePlaceInTheValue(t *testing.T) {
 	rs := []rune("aaa bbb ccc")
-	spans := wrapSpans(rs, 4)
+	spans := Wrap(rs, 4)
 
-	if got := spanOffset(spans, 2, 1); got != 9 {
+	if got := SpanOffset(spans, 2, 1); got != 9 {
 		t.Errorf("the second cell of the third line is offset %d, want 9", got)
 	}
 
 	// Past the end of a line is the end of that line. The half of a row
 	// that has no text on it still belongs to the row.
-	if got := spanOffset(spans, 0, 40); got != spans[0].to {
-		t.Errorf("a cell past the first line is offset %d, want its end %d", got, spans[0].to)
+	if got := SpanOffset(spans, 0, 40); got != spans[0].To {
+		t.Errorf("a cell past the first line is offset %d, want its end %d", got, spans[0].To)
 	}
 }
 
@@ -92,15 +92,15 @@ func TestPointingAtALineAnswersWithThePlaceInTheValue(t *testing.T) {
 // decided by where the reader is: the last ones while they are typing at
 // the end, and the caret's own once they have walked back up into it.
 func TestTheBoxScrollsToWhereTheCaretIs(t *testing.T) {
-	if got := spanWindow(3, 6, 2); got != 0 {
+	if got := SpanWindow(3, 6, 2); got != 0 {
 		t.Errorf("a value shorter than the box starts at line %d, want 0", got)
 	}
 
-	if got := spanWindow(10, 6, 9); got != 4 {
+	if got := SpanWindow(10, 6, 9); got != 4 {
 		t.Errorf("a caret on the last of ten lines shows from %d, want 4", got)
 	}
 
-	if got := spanWindow(10, 6, 1); got != 1 {
+	if got := SpanWindow(10, 6, 1); got != 1 {
 		t.Errorf("a caret on the second of ten lines shows from %d, want 1", got)
 	}
 }

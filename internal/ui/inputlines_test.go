@@ -27,7 +27,7 @@ func TestOnlyTheFirstLineCarriesThePrompt(t *testing.T) {
 	}
 
 	if n := strings.Count(ansi.Strip(strings.Join(rows, "\n")), "❯"); n != 1 {
-		t.Errorf("the input drew %d prompts for one message:\n%s", n, ansi.Strip(strings.Join(rows, "\n")))
+		t.Errorf("the typing.Field drew %d prompts for one message:\n%s", n, ansi.Strip(strings.Join(rows, "\n")))
 	}
 }
 

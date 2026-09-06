@@ -164,7 +164,7 @@ var layers = map[string][]string{
 	// somebody is about to write sits beside the ones already standing. It
 	// is a type and a read — the facts arrive through a port, because
 	// reaching the state root to load them is what the window may not do.
-	"internal/ui": {"internal/board", "internal/flow", "internal/knowledge", "internal/logger", "internal/repo", "internal/task", "internal/tracker", "internal/ui/layout", "internal/view", "internal/words"},
+	"internal/ui": {"internal/board", "internal/flow", "internal/knowledge", "internal/logger", "internal/repo", "internal/task", "internal/tracker", "internal/ui/layout", "internal/ui/typing", "internal/view", "internal/words"},
 	// internal/ui/layout is widened to internal/view for one reason:
 	// layout.Columns plans a row's columns from the board it is about to
 	// draw, and the board is []view.Task. It is a widening, and it was
@@ -180,6 +180,13 @@ var layers = map[string][]string{
 	// internal/ui/layout, so the geometry can never become a function of
 	// anything but the numbers it was given.
 	"internal/ui/layout": {"internal/view"},
+	// internal/ui/typing is the field somebody types into: a value, a caret,
+	// and the other end of a selection, with the wrapping that decides which
+	// drawn line a caret is on. It imports nothing, not even internal/words,
+	// because it holds runes and not sentences — what the window puts around
+	// it is the window's business, and the caret arithmetic is the part that
+	// was worth being able to test on its own.
+	"internal/ui/typing": {},
 	"internal/view":      {"internal/record"},
 	"internal/words":     {},
 }

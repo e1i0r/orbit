@@ -4,7 +4,9 @@ package ui
 // was. The window writes nothing itself: each of these hands the sentence to
 // a port and reports what came back.
 
-import "strings"
+import (
+	"strings"
+)
 
 // act carries out one gesture and answers with what to say about it.
 func (m Model) act(said spoken) Model {

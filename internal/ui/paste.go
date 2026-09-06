@@ -2,6 +2,8 @@ package ui
 
 import (
 	"strings"
+
+	"github.com/e1i0r/orbit/internal/ui/typing"
 )
 
 // paste inserts clipboard or bracketed paste content into the active focused
@@ -31,7 +33,7 @@ func (m Model) paste(content string) Model {
 		m.note.text += trimmed
 		return m
 	case m.screen == screenCompose:
-		return m.composeEdit(func(in *input) { in.insert(trimmed) })
+		return m.composeEdit(func(in *typing.Field) { in.Insert(trimmed) })
 	case m.filtering:
 		m.filter += trimmed
 		return m.clampCursor()

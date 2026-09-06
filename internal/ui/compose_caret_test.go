@@ -25,14 +25,14 @@ func composeOn(t *testing.T, field int, val string) Model {
 		t.Fatalf("field %d is not one that is typed into", field)
 	}
 
-	in.setValue(val)
+	in.SetValue(val)
 
 	return m
 }
 
 func TestWhatIsTypedGoesWhereTheCaretIs(t *testing.T) {
 	m := composeOn(t, composeID, "ORBIT-42")
-	m.compose.id.moveTo(5)
+	m.compose.id.MoveTo(5)
 
 	m = asModel(t, mustUpdate(m, press("x")))
 
@@ -47,13 +47,13 @@ func TestTheArrowsMoveTheCaretAndStillCycleThePills(t *testing.T) {
 	m := composeOn(t, composeText, "hola")
 
 	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyLeft}))
-	if m.compose.text.at != 3 {
-		t.Errorf("the left arrow left the caret at %d, want 3", m.compose.text.at)
+	if m.compose.text.At != 3 {
+		t.Errorf("the left arrow left the caret at %d, want 3", m.compose.text.At)
 	}
 
 	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyRight}))
-	if m.compose.text.at != 4 {
-		t.Errorf("the right arrow left the caret at %d, want 4", m.compose.text.at)
+	if m.compose.text.At != 4 {
+		t.Errorf("the right arrow left the caret at %d, want 4", m.compose.text.At)
 	}
 
 	m.compose.field = composeFlow
@@ -69,16 +69,16 @@ func TestTheArrowsMoveTheCaretAndStillCycleThePills(t *testing.T) {
 // fields of the form once there are not.
 func TestUpAndDownWalkTheLinesOfTheTaskAndThenLeaveTheField(t *testing.T) {
 	m := composeOn(t, composeText, "uno\ndos")
-	m.compose.text.moveTo(0)
+	m.compose.text.MoveTo(0)
 
 	m = asModel(t, mustUpdate(m, press("down")))
-	if m.compose.field != composeText || m.compose.text.at != 4 {
-		t.Errorf("down inside the box left field %d caret %d, want the second line", m.compose.field, m.compose.text.at)
+	if m.compose.field != composeText || m.compose.text.At != 4 {
+		t.Errorf("down inside the box left field %d caret %d, want the second line", m.compose.field, m.compose.text.At)
 	}
 
 	m = asModel(t, mustUpdate(m, press("up")))
-	if m.compose.field != composeText || m.compose.text.at != 0 {
-		t.Errorf("up inside the box left field %d caret %d, want the first line", m.compose.field, m.compose.text.at)
+	if m.compose.field != composeText || m.compose.text.At != 0 {
+		t.Errorf("up inside the box left field %d caret %d, want the first line", m.compose.field, m.compose.text.At)
 	}
 
 	// There is no line above the first one, so the arrow means what it
@@ -103,8 +103,8 @@ func TestPointingInsideTheBoxPutsTheCaretThere(t *testing.T) {
 	after, _ := m.leftClick(at)
 
 	m = asModel(t, after)
-	if m.compose.text.at != 4 {
-		t.Fatalf("the click left the caret at %d, want 4", m.compose.text.at)
+	if m.compose.text.At != 4 {
+		t.Fatalf("the click left the caret at %d, want 4", m.compose.text.At)
 	}
 
 	m = asModel(t, mustUpdate(m, press("!")))
@@ -122,8 +122,8 @@ func TestPointingAtAOneLineFieldPutsTheCaretThere(t *testing.T) {
 	after, _ := m.leftClick(m.hit(composeLabelStart+3, y))
 
 	m = asModel(t, after)
-	if m.compose.id.at != 3 {
-		t.Errorf("the click left the caret at %d, want 3", m.compose.id.at)
+	if m.compose.id.At != 3 {
+		t.Errorf("the click left the caret at %d, want 3", m.compose.id.At)
 	}
 }
 
@@ -132,7 +132,7 @@ func TestPointingAtAOneLineFieldPutsTheCaretThere(t *testing.T) {
 // two rows below the text.
 func TestTheBlockIsDrawnOnTheCaretAndNotUnderTheText(t *testing.T) {
 	m := composeOn(t, composeText, "adaa")
-	m.compose.text.moveTo(2)
+	m.compose.text.MoveTo(2)
 
 	lines := m.composeBoxLines(m.compose.text, 40, true, "")
 	if len(lines) < 3 {

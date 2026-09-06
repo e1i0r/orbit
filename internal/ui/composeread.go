@@ -67,7 +67,7 @@ func (m Model) tookIssue(msg issueReadMsg) (tea.Model, tea.Cmd) {
 
 	m.compose.parsedIssue = &msg.issue
 	if msg.issue.Description != "" {
-		m.compose.text.setValue(tracker.FormatPrompt(msg.issue))
+		m.compose.text.SetValue(tracker.FormatPrompt(msg.issue))
 	}
 
 	return m.composeSubmit(m.compose.startAfterRead)

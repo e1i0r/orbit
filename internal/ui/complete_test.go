@@ -9,8 +9,8 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
-// typing is a supervisor screen with something half written in it.
-func typing(t *testing.T, input string) Model {
+// halfWritten is a supervisor screen with something half written in it.
+func halfWritten(t *testing.T, input string) Model {
 	t.Helper()
 
 	m, _ := testModel(t, 100, 30)
@@ -28,7 +28,7 @@ func typing(t *testing.T, input string) Model {
 // and "/aware" are two words for two powers and the difference is the whole
 // point.
 func TestASlashOffersTheGesturesAndSaysWhatTheyDo(t *testing.T) {
-	got := typing(t, "/").completions()
+	got := halfWritten(t, "/").completions()
 
 	if len(got) < 2 {
 		t.Fatalf("a slash offered %d things: %+v", len(got), got)
@@ -50,7 +50,7 @@ func TestASlashOffersTheGesturesAndSaysWhatTheyDo(t *testing.T) {
 
 // TestWhatIsTypedNarrowsWhatIsOffered.
 func TestWhatIsTypedNarrowsWhatIsOffered(t *testing.T) {
-	got := typing(t, "/aw").completions()
+	got := halfWritten(t, "/aw").completions()
 	if len(got) == 0 {
 		t.Fatal("/aw offered nothing")
 	}
@@ -63,7 +63,7 @@ func TestWhatIsTypedNarrowsWhatIsOffered(t *testing.T) {
 		}
 	}
 
-	if none := typing(t, "/zzz").completions(); len(none) != 0 {
+	if none := halfWritten(t, "/zzz").completions(); len(none) != 0 {
 		t.Errorf("a gesture nobody has offered %+v", none)
 	}
 }
@@ -71,7 +71,7 @@ func TestWhatIsTypedNarrowsWhatIsOffered(t *testing.T) {
 // TestAnAtOffersTheTasksOnTheBoard, by their id and with their title, since
 // an id alone is not something anybody remembers.
 func TestAnAtOffersTheTasksOnTheBoard(t *testing.T) {
-	m := typing(t, "@")
+	m := halfWritten(t, "@")
 
 	got := m.completions()
 	if len(got) == 0 {
@@ -96,7 +96,7 @@ func TestAnAtOffersTheTasksOnTheBoard(t *testing.T) {
 // list popping up over somebody's sentence is the window interrupting them.
 func TestOrdinaryTextOffersNothing(t *testing.T) {
 	for _, said := range []string{"what happened", "", "/rule coverage stays above 90%", "look at ORB-1"} {
-		if got := typing(t, said).completions(); len(got) != 0 {
+		if got := halfWritten(t, said).completions(); len(got) != 0 {
 			t.Errorf("%q offered %+v, want nothing", said, got)
 		}
 	}
@@ -105,7 +105,7 @@ func TestOrdinaryTextOffersNothing(t *testing.T) {
 // TestTabTakesWhatIsOffered, and leaves a space, so that the next thing
 // typed is the sentence and not stuck to the gesture.
 func TestTabTakesWhatIsOffered(t *testing.T) {
-	m := typing(t, "/aw")
+	m := halfWritten(t, "/aw")
 
 	next := next(t, m, tea.KeyPressMsg{Code: tea.KeyTab})
 	if next.supervisor.input != awareWord+" " {
@@ -116,7 +116,7 @@ func TestTabTakesWhatIsOffered(t *testing.T) {
 // TestEnterTakesTheOfferRatherThanSending. The list is up because somebody
 // is mid-word; sending half a gesture is never what they meant.
 func TestEnterTakesTheOfferRatherThanSending(t *testing.T) {
-	m := typing(t, "/ru")
+	m := halfWritten(t, "/ru")
 
 	sent := false
 	m.opts.RecordSupervisor = func(string, string, string, string) error {

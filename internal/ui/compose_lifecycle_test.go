@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"charm.land/bubbletea/v2"
+	"github.com/e1i0r/orbit/internal/ui/typing"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -80,10 +81,10 @@ func TestComposeScreenFullLifecycle(t *testing.T) {
 	mEmpty.compose.repoPath = ""
 	_, _ = mEmpty.composeSubmit(false)
 	mEmpty.compose.repoPath = "/checkouts/payments"
-	mEmpty.compose.id = newInput("")
+	mEmpty.compose.id = typing.New("")
 	_, _ = mEmpty.composeSubmit(false)
-	mEmpty.compose.id = newInput("TASK-1")
-	mEmpty.compose.text = newInput("")
+	mEmpty.compose.id = typing.New("TASK-1")
+	mEmpty.compose.text = typing.New("")
 	_, _ = mEmpty.composeSubmit(false)
 }
 
@@ -170,8 +171,8 @@ func TestComposeSubmitValidID(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m = m.openCompose()
 	m.compose.repoPath = "/checkouts/repo"
-	m.compose.id = newInput("TASK-10")
-	m.compose.text = newInput("Write some tests")
+	m.compose.id = typing.New("TASK-10")
+	m.compose.text = typing.New("Write some tests")
 
 	m.opts.ValidID = func(id string) error { return errors.New("id taken") }
 
@@ -310,7 +311,7 @@ func submitted(t *testing.T, m Model, id, text string) []string {
 	}
 
 	m = m.openCompose()
-	m.compose.id, m.compose.text = newInput(id), newInput(text)
+	m.compose.id, m.compose.text = typing.New(id), typing.New(text)
 
 	next, cmd := m.composeSubmit(false)
 	if cmd == nil {

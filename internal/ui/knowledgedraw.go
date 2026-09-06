@@ -224,9 +224,9 @@ func (m Model) knowledgeFoot(cw int) []string {
 func (m Model) factField(label string, field, cw int) string {
 	in := m.knowledge.in[field]
 
-	text := in.val
+	text := in.Val
 	if field == m.knowledge.field {
-		text = withCaret(in.val, in.at)
+		text = withCaret(in.Val, in.At)
 	}
 
 	ink := Paint(Dim)

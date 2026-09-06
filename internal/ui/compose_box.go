@@ -13,10 +13,11 @@ import (
 
 	"charm.land/lipgloss/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/typing"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
-func (m Model) composeBox(field int, label, placeholder, hint string, in input, w int) []string {
+func (m Model) composeBox(field int, label, placeholder, hint string, in typing.Field, w int) []string {
 	p := m.opts.Words
 	active := m.compose.field == field
 
@@ -58,27 +59,27 @@ func (m Model) composeBox(field int, label, placeholder, hint string, in input, 
 // composeBoxLines is what is drawn between the borders: the lines the value
 // wraps into, the window of them the caret is inside, and the selection and
 // the caret painted over the cells they are on.
-func (m Model) composeBoxLines(in input, innerW int, active bool, placeholder string) []string {
-	rs := in.runes()
-	spans := wrapSpans(rs, innerW)
-	caretRow := spanRow(spans, in.at)
-	top := spanWindow(len(spans), composeTextRows, caretRow)
-	from, to := in.selection()
+func (m Model) composeBoxLines(in typing.Field, innerW int, active bool, placeholder string) []string {
+	rs := in.Runes()
+	spans := typing.Wrap(rs, innerW)
+	caretRow := typing.SpanRow(spans, in.At)
+	top := typing.SpanWindow(len(spans), composeTextRows, caretRow)
+	from, to := in.Selection()
 
 	var out []string
 
 	for i := top; i < len(spans) && i < top+composeTextRows; i++ {
 		s := spans[i]
 
-		line := spanText(rs, s)
+		line := typing.SpanText(rs, s)
 
 		if active {
 			caret := -1
 			if i == caretRow {
-				caret = in.at - s.from
+				caret = in.At - s.From
 			}
 
-			line = paintCells(line, from-s.from, to-s.from, caret, unpainted)
+			line = paintCells(line, from-s.From, to-s.From, caret, unpainted)
 		}
 
 		out = append(out, line)

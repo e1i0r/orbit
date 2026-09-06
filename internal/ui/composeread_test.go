@@ -18,8 +18,8 @@ func urlForm(t *testing.T, readable bool, iss tracker.Issue) Model {
 	m.compose.tab = composeTabURL
 	m.compose.parsedIssue = &iss
 	m.compose.readable = readable
-	m.compose.id.setValue(iss.ID)
-	m.compose.text.setValue(iss.Title)
+	m.compose.id.SetValue(iss.ID)
+	m.compose.text.SetValue(iss.Title)
 
 	return m
 }
@@ -54,7 +54,7 @@ func TestATaskThatIsOnlyALinkIsRefused(t *testing.T) {
 // in it, not about tasks that came from a tracker.
 func TestSomethingWrittenByHandIsEnough(t *testing.T) {
 	m := urlForm(t, false, tracker.Issue{Kind: "linear", ID: "FRA-71", Title: "the slug"})
-	m.compose.text.setValue("the slug\n\nadd ago() to internal/ui and test it")
+	m.compose.text.SetValue("the slug\n\nadd ago() to internal/ui and test it")
 
 	if m.onlyALink(m.compose.text.String()) {
 		t.Error("a task the reader wrote into is refused as a bare link")

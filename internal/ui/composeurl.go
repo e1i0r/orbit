@@ -17,10 +17,10 @@ func (m *Model) onComposeChanged() {
 				m.compose.parsedIssue = &issue
 				m.compose.readable = tracker.Readable(issue.Kind)
 
-				m.compose.id.setValue(issue.ID)
+				m.compose.id.SetValue(issue.ID)
 
 				if issue.Title != "" {
-					m.compose.text.setValue(issue.Title)
+					m.compose.text.SetValue(issue.Title)
 				}
 			} else {
 				m.compose.parsedIssue = nil
@@ -35,14 +35,14 @@ func (m *Model) onComposeChanged() {
 			if issue, err := tracker.Parse(cur); err == nil {
 				m.compose.tab = composeTabURL
 				m.compose.field = composeURL
-				m.compose.url.setValue(cur)
+				m.compose.url.SetValue(cur)
 				m.compose.parsedIssue = &issue
 				m.compose.readable = tracker.Readable(issue.Kind)
 
-				m.compose.id.setValue(issue.ID)
+				m.compose.id.SetValue(issue.ID)
 
 				if issue.Title != "" {
-					m.compose.text.setValue(issue.Title)
+					m.compose.text.SetValue(issue.Title)
 				}
 			}
 		}

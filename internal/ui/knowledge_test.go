@@ -136,7 +136,7 @@ func TestEOpensTheFactForEditing(t *testing.T) {
 		t.Fatal("e did not open the fact for editing")
 	}
 
-	if got := m.knowledge.in[factPhrase].val; got != "the fuxx tests hang sometimes" {
+	if got := m.knowledge.in[factPhrase].Val; got != "the fuxx tests hang sometimes" {
 		t.Errorf("the line holds %q, want the sentence it is about to correct", got)
 	}
 }

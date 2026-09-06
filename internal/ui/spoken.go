@@ -12,7 +12,9 @@ package ui
 // says what was meant and a port does it. That is the same line every other
 // gesture on this screen is drawn on.
 
-import "strings"
+import (
+	"strings"
+)
 
 // spokenKind is which of the four things a line turned out to be.
 type spokenKind int

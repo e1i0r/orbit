@@ -1,5 +1,7 @@
 package ui
 
+import "github.com/e1i0r/orbit/internal/ui/typing"
+
 import tea "charm.land/bubbletea/v2"
 
 // The caret of the form: what a key does to the field the reader is in, and
@@ -19,7 +21,7 @@ import tea "charm.land/bubbletea/v2"
 // much room that takes would push the button off the edge in whichever
 // language spends the most cells on it.
 func (m Model) composeBoxWidth(w int) int {
-	return clamp(w-composeLabelStart-2-composePasteRoom(m.opts.Words), 24, 84)
+	return min(max(w-composeLabelStart-2-composePasteRoom(m.opts.Words), 24), 84)
 }
 
 func (m Model) composeInnerWidth(w int) int {
@@ -46,7 +48,7 @@ func (m Model) composeInBox() bool {
 
 // composeEdit is a key that changes what a field holds. What it writes can
 // be a URL, so the form is given the chance to recognise one.
-func (m Model) composeEdit(f func(*input)) Model {
+func (m Model) composeEdit(f func(*typing.Field)) Model {
 	in := m.compose.active()
 	if in == nil {
 		return m
@@ -60,7 +62,7 @@ func (m Model) composeEdit(f func(*input)) Model {
 
 // composeCaret is a key that only moves. Nothing was written, so nothing is
 // re-read.
-func (m Model) composeCaret(f func(*input)) Model {
+func (m Model) composeCaret(f func(*typing.Field)) Model {
 	if in := m.compose.active(); in != nil {
 		f(in)
 	}
@@ -81,18 +83,18 @@ func (m Model) composeUp(d int) Model {
 		return m.composeMove(d)
 	}
 
-	rs := in.runes()
-	spans := wrapSpans(rs, m.composeInnerWidth(m.frame.Body.W))
+	rs := in.Runes()
+	spans := typing.Wrap(rs, m.composeInnerWidth(m.frame.Body.W))
 
-	row := spanRow(spans, in.at)
-	col := in.at - spans[row].from
+	row := typing.SpanRow(spans, in.At)
+	col := in.At - spans[row].From
 
 	next := row + d
 	if next < 0 || next >= len(spans) {
 		return m.composeMove(d)
 	}
 
-	in.moveTo(spanOffset(spans, next, col))
+	in.MoveTo(typing.SpanOffset(spans, next, col))
 
 	return m
 }
@@ -105,10 +107,10 @@ func (m Model) composePoint(row, col int) Model {
 		return m
 	}
 
-	spans := wrapSpans(in.runes(), m.composeInnerWidth(m.frame.Body.W))
-	top := spanWindow(len(spans), composeTextRows, spanRow(spans, in.at))
+	spans := typing.Wrap(in.Runes(), m.composeInnerWidth(m.frame.Body.W))
+	top := typing.SpanWindow(len(spans), composeTextRows, typing.SpanRow(spans, in.At))
 
-	in.moveTo(spanOffset(spans, top+row, col))
+	in.MoveTo(typing.SpanOffset(spans, top+row, col))
 
 	return m
 }
@@ -127,7 +129,7 @@ func (m Model) composeExtend(move func(Model) Model) Model {
 		return move(m)
 	}
 
-	was := in.anchor
+	was := in.Anchor
 	field := m.compose.field
 
 	next := move(m)
@@ -136,7 +138,7 @@ func (m Model) composeExtend(move func(Model) Model) Model {
 	}
 
 	if out := next.compose.active(); out != nil {
-		out.anchor = clamp(was, 0, len(out.runes()))
+		out.Anchor = min(max(was, 0), len(out.Runes()))
 	}
 
 	return next
@@ -151,7 +153,7 @@ func (m Model) composeAim(t Target) Model {
 		return m.composePoint(t.Phase, t.Caret)
 	}
 
-	return m.composeCaret(func(in *input) { in.moveTo(t.Caret) })
+	return m.composeCaret(func(in *typing.Field) { in.MoveTo(t.Caret) })
 }
 
 // dragCaret is the pointer moving with the button still down: the caret
@@ -178,16 +180,16 @@ func (m Model) dragCaret(e tea.Mouse) Model {
 // after the clipboard dropped what was in it is text nobody can get back.
 func (m Model) composeCopy(cut bool) Model {
 	in := m.compose.active()
-	if in == nil || !in.hasSelection() {
+	if in == nil || !in.HasSelection() {
 		return m
 	}
 
-	if !writeClipboard(in.selected()) {
+	if !writeClipboard(in.Selected()) {
 		return m
 	}
 
 	if cut {
-		in.cutSelection()
+		in.CutSelection()
 		m.onComposeChanged()
 	}
 

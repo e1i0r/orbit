@@ -5,6 +5,8 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
+
+	"github.com/e1i0r/orbit/internal/ui/typing"
 )
 
 // composeRows draws the compose screen: top tabs, the flow and what it will
@@ -145,11 +147,11 @@ func (m Model) composeURLRows(w int) []string {
 	)...)
 }
 
-func (m Model) composeFieldLine(fieldIdx int, label string, val input, placeholder string, w int) string {
+func (m Model) composeFieldLine(fieldIdx int, label string, val typing.Field, placeholder string, w int) string {
 	active := m.compose.field == fieldIdx
 	prefix := composeLabel(label, active)
 
-	if val.empty() {
+	if val.Empty() {
 		line := prefix
 		if active {
 			line += paintCells("", 0, 0, 0, unpainted)
@@ -160,8 +162,8 @@ func (m Model) composeFieldLine(fieldIdx int, label string, val input, placehold
 
 	body := Paint(Accent).Render(val.String())
 	if active {
-		from, to := val.selection()
-		body = paintCells(val.String(), from, to, val.at, func(s string) string { return Paint(Accent).Render(s) })
+		from, to := val.Selection()
+		body = paintCells(val.String(), from, to, val.At, func(s string) string { return Paint(Accent).Render(s) })
 	}
 
 	return fit(prefix+body, w)

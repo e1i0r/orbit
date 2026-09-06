@@ -11,17 +11,19 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
+
+	"github.com/e1i0r/orbit/internal/ui/typing"
 )
 
 func TestShiftHeldWithAnArrowSelectsWhatItCrosses(t *testing.T) {
 	m := composeOn(t, composeID, "ORBIT-42")
-	m.compose.id.moveTo(0)
+	m.compose.id.MoveTo(0)
 
 	for range 5 {
 		m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyRight, Mod: tea.ModShift}))
 	}
 
-	if got := m.compose.id.selected(); got != "ORBIT" {
+	if got := m.compose.id.Selected(); got != "ORBIT" {
 		t.Errorf("five shifted arrows took %q, want %q", got, "ORBIT")
 	}
 
@@ -38,11 +40,11 @@ func TestShiftHeldWithAnArrowSelectsWhatItCrosses(t *testing.T) {
 // bare arrows make.
 func TestShiftHeldWithDownSelectsToTheLineBelow(t *testing.T) {
 	m := composeOn(t, composeText, "uno\ndos")
-	m.compose.text.moveTo(0)
+	m.compose.text.MoveTo(0)
 
 	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyDown, Mod: tea.ModShift}))
 
-	if got := m.compose.text.selected(); got != "uno\n" {
+	if got := m.compose.text.Selected(); got != "uno\n" {
 		t.Errorf("shift with down took %q, want the first line", got)
 	}
 }
@@ -51,7 +53,7 @@ func TestShiftHeldWithDownSelectsToTheLineBelow(t *testing.T) {
 // text between the box and the field above it.
 func TestAShiftedArrowThatLeavesTheFieldTakesNothingWithIt(t *testing.T) {
 	m := composeOn(t, composeText, "uno")
-	m.compose.text.moveTo(0)
+	m.compose.text.MoveTo(0)
 
 	m = asModel(t, mustUpdate(m, tea.KeyPressMsg{Code: tea.KeyUp, Mod: tea.ModShift}))
 
@@ -59,8 +61,8 @@ func TestAShiftedArrowThatLeavesTheFieldTakesNothingWithIt(t *testing.T) {
 		t.Fatalf("up on the first line left field %d, want the id above the box", m.compose.field)
 	}
 
-	if m.compose.text.hasSelection() {
-		t.Errorf("leaving the box left %q selected", m.compose.text.selected())
+	if m.compose.text.HasSelection() {
+		t.Errorf("leaving the box left %q selected", m.compose.text.Selected())
 	}
 }
 
@@ -73,20 +75,20 @@ func TestDraggingThePointerSelectsWhatItCrossed(t *testing.T) {
 	y := formRow(t, m, "hola mundo")
 
 	held := pointed(t, m, tea.MouseClickMsg{X: composeBoxStart, Y: y, Button: tea.MouseLeft})
-	if held.compose.text.at != 0 {
-		t.Fatalf("the press left the caret at %d, want the head of the value", held.compose.text.at)
+	if held.compose.text.At != 0 {
+		t.Fatalf("the press left the caret at %d, want the head of the value", held.compose.text.At)
 	}
 
 	dragged := pointed(t, held, tea.MouseMotionMsg{X: composeBoxStart + 4, Y: y, Button: tea.MouseLeft})
 
-	if got := dragged.compose.text.selected(); got != "hola" {
+	if got := dragged.compose.text.Selected(); got != "hola" {
 		t.Errorf("the drag took %q, want %q", got, "hola")
 	}
 
 	// Letting go where the drag ended keeps it: the release lands on a
 	// different cell from the press, so it is not a click on anything.
 	after := pointed(t, dragged, tea.MouseReleaseMsg{X: composeBoxStart + 4, Y: y, Button: tea.MouseLeft})
-	if got := after.compose.text.selected(); got != "hola" {
+	if got := after.compose.text.Selected(); got != "hola" {
 		t.Errorf("letting go left %q selected, want the drag to stand", got)
 	}
 }
@@ -99,12 +101,12 @@ func TestAClickThatDidNotMoveSelectsNothing(t *testing.T) {
 	held := pointed(t, m, tea.MouseClickMsg{X: composeBoxStart + 4, Y: y, Button: tea.MouseLeft})
 	after := pointed(t, held, tea.MouseReleaseMsg{X: composeBoxStart + 4, Y: y, Button: tea.MouseLeft})
 
-	if after.compose.text.hasSelection() {
-		t.Errorf("a plain click left %q selected", after.compose.text.selected())
+	if after.compose.text.HasSelection() {
+		t.Errorf("a plain click left %q selected", after.compose.text.Selected())
 	}
 
-	if after.compose.text.at != 4 {
-		t.Errorf("the click left the caret at %d, want 4", after.compose.text.at)
+	if after.compose.text.At != 4 {
+		t.Errorf("the click left the caret at %d, want 4", after.compose.text.At)
 	}
 }
 
@@ -112,8 +114,8 @@ func TestAClickThatDidNotMoveSelectsNothing(t *testing.T) {
 // what is painted over is still every character that was there.
 func TestWhatIsSelectedIsDrawnAsSelected(t *testing.T) {
 	m := composeOn(t, composeText, "hola mundo")
-	m.compose.text.moveTo(0)
-	m.compose.text.extend(func(in *input) { in.moveTo(4) })
+	m.compose.text.MoveTo(0)
+	m.compose.text.Extend(func(in *typing.Field) { in.MoveTo(4) })
 
 	lines := m.composeBoxLines(m.compose.text, 40, true, "")
 	if len(lines) == 0 {

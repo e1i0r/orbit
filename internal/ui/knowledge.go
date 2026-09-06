@@ -20,6 +20,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/knowledge"
+	"github.com/e1i0r/orbit/internal/ui/typing"
 )
 
 // knowledgeState is the screen: which fact the cursor is on, and the facts as
@@ -48,7 +49,7 @@ type knowledgeState struct {
 	// moved with its own gesture rather than by typing a path.
 	editing bool
 	field   int
-	in      [factFields]input
+	in      [factFields]typing.Field
 }
 
 // The two fields of a fact that are typed into.
@@ -124,8 +125,8 @@ func (m Model) editFact() Model {
 
 	f := m.knowledge.facts[m.knowledge.sel]
 	m.knowledge.editing, m.knowledge.field = true, factPhrase
-	m.knowledge.in[factPhrase] = newInput(f.Phrase)
-	m.knowledge.in[factCheck] = newInput(f.Check)
+	m.knowledge.in[factPhrase] = typing.New(f.Phrase)
+	m.knowledge.in[factCheck] = typing.New(f.Check)
 
 	return m
 }
@@ -147,8 +148,8 @@ func (m Model) newFact() Model {
 	})
 	m.knowledge.sel = len(m.knowledge.facts) - 1
 	m.knowledge.editing, m.knowledge.field = true, factPhrase
-	m.knowledge.in[factPhrase] = newInput("")
-	m.knowledge.in[factCheck] = newInput("")
+	m.knowledge.in[factPhrase] = typing.New("")
+	m.knowledge.in[factCheck] = typing.New("")
 
 	return m
 }
@@ -219,28 +220,28 @@ func (m Model) editingKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		m.knowledge.field = (m.knowledge.field + 1) % factFields
 		return m, nil
 	case tea.KeyBackspace:
-		return m.factEdit(func(in *input) { in.backspace() }), nil
+		return m.factEdit(func(in *typing.Field) { in.Backspace() }), nil
 	case tea.KeyDelete:
-		return m.factEdit(func(in *input) { in.deleteForward() }), nil
+		return m.factEdit(func(in *typing.Field) { in.DeleteForward() }), nil
 	case tea.KeyLeft:
-		return m.factEdit(func(in *input) { in.moveBy(-1) }), nil
+		return m.factEdit(func(in *typing.Field) { in.MoveBy(-1) }), nil
 	case tea.KeyRight:
-		return m.factEdit(func(in *input) { in.moveBy(1) }), nil
+		return m.factEdit(func(in *typing.Field) { in.MoveBy(1) }), nil
 	case tea.KeyHome:
-		return m.factEdit((*input).lineStart), nil
+		return m.factEdit((*typing.Field).LineStart), nil
 	case tea.KeyEnd:
-		return m.factEdit((*input).lineEnd), nil
+		return m.factEdit((*typing.Field).LineEnd), nil
 	}
 
 	if msg.Text != "" {
-		return m.factEdit(func(in *input) { in.insert(msg.Text) }), nil
+		return m.factEdit(func(in *typing.Field) { in.Insert(msg.Text) }), nil
 	}
 
 	return m, nil
 }
 
 // factEdit does something to the field being typed into.
-func (m Model) factEdit(do func(*input)) Model {
+func (m Model) factEdit(do func(*typing.Field)) Model {
 	in := m.knowledge.in[m.knowledge.field]
 	do(&in)
 	m.knowledge.in[m.knowledge.field] = in
@@ -260,8 +261,8 @@ func (m Model) saveFact() Model {
 	was := m.knowledge.facts[m.knowledge.sel]
 
 	now := was
-	now.Phrase = strings.TrimSpace(m.knowledge.in[factPhrase].val)
-	now.Check = strings.TrimSpace(m.knowledge.in[factCheck].val)
+	now.Phrase = strings.TrimSpace(m.knowledge.in[factPhrase].Val)
+	now.Check = strings.TrimSpace(m.knowledge.in[factCheck].Val)
 
 	if now.Phrase == "" {
 		return m.say(m.opts.Words.T("knowledge.needs_words", "a fact with no sentence says nothing"))

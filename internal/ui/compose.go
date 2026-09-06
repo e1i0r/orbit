@@ -12,6 +12,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/tracker"
+	"github.com/e1i0r/orbit/internal/ui/typing"
 )
 
 const (
@@ -66,9 +67,9 @@ type composeState struct {
 	// Where the first phase runs, which the form picks rather than asks.
 	repoPath string
 
-	id          input
-	text        input
-	url         input
+	id          typing.Field
+	text        typing.Field
+	url         typing.Field
 	parsedIssue *tracker.Issue
 	// readable is whether this machine can read the body of an issue of
 	// that tracker's kind — whether there is a credential for it. A URL
@@ -176,7 +177,7 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 
 		if msg.Mod&tea.ModShift != 0 || msg.Mod&tea.ModAlt != 0 {
 			if m.compose.tab == composeTabManual && m.compose.field == composeText {
-				m.compose.text.insert("\n")
+				m.compose.text.Insert("\n")
 				return m, nil
 			}
 		}
@@ -185,7 +186,7 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case (msg.Code == 'r' || msg.Code == 'R') && msg.Mod&tea.ModCtrl != 0:
 		return m.composeSubmit(true)
 	case (msg.Code == 'a' || msg.Code == 'A') && msg.Mod&tea.ModCtrl != 0:
-		return m.composeCaret((*input).selectAll), nil
+		return m.composeCaret((*typing.Field).SelectAll), nil
 	case (msg.Code == 'c' || msg.Code == 'C') && msg.Mod&tea.ModCtrl != 0:
 		return m.composeCopy(false), nil
 	case (msg.Code == 'x' || msg.Code == 'X') && msg.Mod&tea.ModCtrl != 0:
@@ -223,13 +224,13 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 
 		return m.composeTab(1), nil
 	case msg.Code == tea.KeyBackspace:
-		return m.composeEdit(func(in *input) { in.backspace() }), nil
+		return m.composeEdit(func(in *typing.Field) { in.Backspace() }), nil
 	case msg.Code == tea.KeyDelete:
-		return m.composeEdit(func(in *input) { in.deleteForward() }), nil
+		return m.composeEdit(func(in *typing.Field) { in.DeleteForward() }), nil
 	case msg.Code == tea.KeyHome:
-		return m.composeJump((*input).lineStart, msg.Mod), nil
+		return m.composeJump((*typing.Field).LineStart, msg.Mod), nil
 	case msg.Code == tea.KeyEnd:
-		return m.composeJump((*input).lineEnd, msg.Mod), nil
+		return m.composeJump((*typing.Field).LineEnd, msg.Mod), nil
 	}
 
 	if (msg.Text == "1" || msg.Text == "2") && (m.isPillField() || m.compose.typed() == "") {
@@ -245,13 +246,16 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	}
 
 	if msg.Text != "" && !m.isPillField() {
-		return m.composeEdit(func(in *input) { in.insert(msg.Text) }), nil
+		return m.composeEdit(func(in *typing.Field) { in.Insert(msg.Text) }), nil
 	}
 
 	return m, nil
 }
 
-func (c *composeState) active() *input {
+// active is the field being typed into, or nothing when the form is on a
+// row of pills. Every key that writes, deletes or moves a caret goes
+// through it, so which field a keystroke lands in is answered once.
+func (c *composeState) active() *typing.Field {
 	if c.tab == composeTabURL {
 		if c.field == composeURL {
 			return &c.url

@@ -4,6 +4,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/typing"
 )
 
 func (m Model) isComposeFlowField() bool {
@@ -25,10 +26,10 @@ func (m Model) handleComposeLeft(word bool) Model {
 	case m.isComposeFlowField():
 		return m.cycleComposeFlow(-1)
 	case word:
-		return m.composeCaret((*input).wordLeft)
+		return m.composeCaret((*typing.Field).WordLeft)
 	}
 
-	return m.composeCaret(func(in *input) { in.moveBy(-1) })
+	return m.composeCaret(func(in *typing.Field) { in.MoveBy(-1) })
 }
 
 func (m Model) handleComposeRight(word bool) Model {
@@ -36,10 +37,10 @@ func (m Model) handleComposeRight(word bool) Model {
 	case m.isComposeFlowField():
 		return m.cycleComposeFlow(1)
 	case word:
-		return m.composeCaret((*input).wordRight)
+		return m.composeCaret((*typing.Field).WordRight)
 	}
 
-	return m.composeCaret(func(in *input) { in.moveBy(1) })
+	return m.composeCaret(func(in *typing.Field) { in.MoveBy(1) })
 }
 
 // The three keys below are one movement each, and what was held down with
@@ -72,9 +73,9 @@ func (m Model) composeVertical(d int, mod tea.KeyMod) Model {
 	return m.composeUp(d)
 }
 
-func (m Model) composeJump(move func(*input), mod tea.KeyMod) Model {
+func (m Model) composeJump(move func(*typing.Field), mod tea.KeyMod) Model {
 	if mod&tea.ModShift != 0 {
-		return m.composeCaret(func(in *input) { in.extend(move) })
+		return m.composeCaret(func(in *typing.Field) { in.Extend(move) })
 	}
 
 	return m.composeCaret(move)

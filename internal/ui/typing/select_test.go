@@ -1,4 +1,4 @@
-package ui
+package typing
 
 // What a field does with a stretch of text somebody has selected. The
 // complaint this comes from is short: "no puedo seleccionar el texto".
@@ -6,68 +6,68 @@ package ui
 import "testing"
 
 func TestASelectionIsWhatLiesBetweenTheAnchorAndTheCaret(t *testing.T) {
-	in := newInput("una tarea larga")
-	in.moveTo(4)
-	in.extend(func(in *input) { in.moveTo(9) })
+	in := New("una tarea larga")
+	in.MoveTo(4)
+	in.Extend(func(in *Field) { in.MoveTo(9) })
 
-	if got := in.selected(); got != "tarea" {
+	if got := in.Selected(); got != "tarea" {
 		t.Errorf("what is selected reads %q, want %q", got, "tarea")
 	}
 
 	// Dragged the other way it is the same stretch: the value is read in
 	// the order it was written, not in the order it was pointed at.
-	in.moveTo(9)
-	in.extend(func(in *input) { in.moveTo(4) })
+	in.MoveTo(9)
+	in.Extend(func(in *Field) { in.MoveTo(4) })
 
-	if got := in.selected(); got != "tarea" {
+	if got := in.Selected(); got != "tarea" {
 		t.Errorf("selected backwards reads %q, want %q", got, "tarea")
 	}
 }
 
 func TestAMovementOnItsOwnSelectsNothing(t *testing.T) {
-	in := newInput("una tarea")
-	in.moveTo(2)
-	in.extend(func(in *input) { in.moveTo(5) })
+	in := New("una tarea")
+	in.MoveTo(2)
+	in.Extend(func(in *Field) { in.MoveTo(5) })
 
-	in.moveBy(1)
+	in.MoveBy(1)
 
-	if in.hasSelection() {
-		t.Errorf("a plain arrow left %q selected, want the selection dropped", in.selected())
+	if in.HasSelection() {
+		t.Errorf("a plain arrow left %q selected, want the selection dropped", in.Selected())
 	}
 }
 
 func TestTypingOverASelectionReplacesIt(t *testing.T) {
-	in := newInput("una tarea larga")
-	in.moveTo(4)
-	in.extend(func(in *input) { in.moveTo(9) })
+	in := New("una tarea larga")
+	in.MoveTo(4)
+	in.Extend(func(in *Field) { in.MoveTo(9) })
 
-	in.insert("nota")
+	in.Insert("nota")
 
 	if got := in.String(); got != "una nota larga" {
 		t.Errorf("typing over the selection left %q", got)
 	}
 
-	if in.at != 8 || in.hasSelection() {
-		t.Errorf("the caret is at %d with %q selected, want 8 and nothing", in.at, in.selected())
+	if in.At != 8 || in.HasSelection() {
+		t.Errorf("the caret is at %d with %q selected, want 8 and nothing", in.At, in.Selected())
 	}
 }
 
 // Backspace takes the whole selection rather than the character behind the
 // caret, which is what makes selecting a word worth doing at all.
 func TestBackspaceAndDeleteTakeTheWholeSelection(t *testing.T) {
-	in := newInput("una tarea larga")
-	in.moveTo(3)
-	in.extend(func(in *input) { in.moveTo(9) })
+	in := New("una tarea larga")
+	in.MoveTo(3)
+	in.Extend(func(in *Field) { in.MoveTo(9) })
 
-	in.backspace()
+	in.Backspace()
 
 	if got := in.String(); got != "una larga" {
 		t.Errorf("backspace over the selection left %q", got)
 	}
 
-	in.moveTo(0)
-	in.extend(func(in *input) { in.lineEnd() })
-	in.deleteForward()
+	in.MoveTo(0)
+	in.Extend(func(in *Field) { in.LineEnd() })
+	in.DeleteForward()
 
 	if got := in.String(); got != "" {
 		t.Errorf("delete over everything selected left %q, want an empty field", got)
@@ -75,11 +75,11 @@ func TestBackspaceAndDeleteTakeTheWholeSelection(t *testing.T) {
 }
 
 func TestSelectAllIsTheWholeValue(t *testing.T) {
-	in := newInput("uno\ndos")
-	in.moveTo(1)
-	in.selectAll()
+	in := New("uno\ndos")
+	in.MoveTo(1)
+	in.SelectAll()
 
-	if got := in.selected(); got != "uno\ndos" {
+	if got := in.Selected(); got != "uno\ndos" {
 		t.Errorf("select all took %q", got)
 	}
 }
@@ -87,17 +87,17 @@ func TestSelectAllIsTheWholeValue(t *testing.T) {
 // The word jump and the ends of a line are movements like any other, so
 // shift held with them selects across exactly what they walk over.
 func TestExtendingSelectsAcrossWhateverTheMovementWalks(t *testing.T) {
-	in := newInput("una tarea larga")
-	in.moveTo(4)
-	in.extend((*input).wordRight)
+	in := New("una tarea larga")
+	in.MoveTo(4)
+	in.Extend((*Field).WordRight)
 
-	if got := in.selected(); got != "tarea " {
+	if got := in.Selected(); got != "tarea " {
 		t.Errorf("shift with the word jump took %q, want %q", got, "tarea ")
 	}
 
-	in.extend((*input).lineEnd)
+	in.Extend((*Field).LineEnd)
 
-	if got := in.selected(); got != "tarea larga" {
+	if got := in.Selected(); got != "tarea larga" {
 		t.Errorf("shift with end took %q, want the rest of the line", got)
 	}
 }
