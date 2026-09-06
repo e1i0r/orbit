@@ -4,6 +4,8 @@ package ui
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -231,5 +233,68 @@ func TestTheComparisonIsOfferedBeforeItIsRun(t *testing.T) {
 
 	if got := m.waitingLine(); !strings.Contains(got, "ACME-1") {
 		t.Errorf("the band says %q while the checks run", got)
+	}
+}
+
+// TestAnEmptyWorktreeShowsNoDiffAtAll. It used to fall back to HEAD~1..HEAD
+// — the last commit of whatever branch the worktree was cut from — so a task
+// that had written nothing yet showed somebody else's commit as its own
+// work, with a rationale under every file saying what the LLM decided.
+func TestAnEmptyWorktreeShowsNoDiffAtAll(t *testing.T) {
+	dir := t.TempDir()
+
+	for _, args := range [][]string{
+		{"init", "-b", "main"},
+		{"config", "user.email", "a@b.c"},
+		{"config", "user.name", "a"},
+	} {
+		if _, err := runGitDiff(dir, args...); err != nil {
+			t.Fatalf("git %v: %v", args, err)
+		}
+	}
+
+	if err := os.WriteFile(filepath.Join(dir, "kept.txt"), []byte("committed\n"), 0o600); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	for _, args := range [][]string{{"add", "-A"}, {"commit", "-m", "somebody else's commit"}} {
+		if _, err := runGitDiff(dir, args...); err != nil {
+			t.Fatalf("git %v: %v", args, err)
+		}
+	}
+
+	out, _, err := gitDiff(dir, "")
+	if err != nil {
+		t.Fatalf("gitDiff: %v", err)
+	}
+
+	if strings.TrimSpace(out) != "" {
+		t.Errorf("a worktree with nothing written in it showed:\n%s", out)
+	}
+}
+
+// TestTheReadingIsTakenAgainWhenItDisagreesWithTheDiff. It is taken once
+// when the view opens, and a task that is still running had written nothing
+// then: a pane saying "this task changed no files" beside a pane showing
+// three of them is the window contradicting itself.
+func TestTheReadingIsTakenAgainWhenItDisagreesWithTheDiff(t *testing.T) {
+	m := reading(t, repo.Impact{})
+	m.detail = "ACME-1"
+
+	if m.staleImpact() {
+		t.Error("a reading of nothing beside a diff of nothing is stale")
+	}
+
+	m.diff = "diff --git a/pricing.py b/pricing.py\n+ changed\n"
+	if !m.staleImpact() {
+		t.Error("a reading of nothing beside a diff of something is not stale")
+	}
+
+	// And the other way round: files read, diff gone.
+	m = reading(t, repo.Impact{Changed: []string{"pricing.py"}})
+	m.diff = ""
+
+	if !m.staleImpact() {
+		t.Error("a reading of files beside an empty diff is not stale")
 	}
 }

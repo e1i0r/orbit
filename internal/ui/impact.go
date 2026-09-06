@@ -12,6 +12,7 @@ package ui
 // and this screen redraws ten times a second.
 
 import (
+	"strings"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -97,6 +98,21 @@ func (m Model) forgetImpact() Model {
 	m.weigh.reachKnown, m.weigh.reachAsking = false, false
 
 	return m
+}
+
+// staleImpact is whether the reading and the diff disagree about whether
+// this task has changed anything.
+//
+// It is the one cheap signal that the history was read too early: reading it
+// again costs five hundred commits of git log, so it is not done on a clock
+// — the diff is polled every couple of seconds and that would be a subprocess
+// every couple of seconds for the life of the view.
+func (m Model) staleImpact() bool {
+	if !m.weigh.reachKnown || m.weigh.reachErr != nil {
+		return false
+	}
+
+	return (len(m.weigh.reach.Changed) == 0) != (strings.TrimSpace(m.diff) == "")
 }
 
 // impactWarnings is how many things the reading found, for the mark on the
