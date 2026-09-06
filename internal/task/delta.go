@@ -97,12 +97,15 @@ func isDeltaField(key string) bool {
 	return false
 }
 
-// noteDelta writes it down, once, off the last phase of the flow.
-func noteDelta(s *store.Store, t Task, f flow.Flow, n int, out engine.Result) {
-	if n != len(f.Phases) {
-		return
-	}
-
+// noteDelta writes down whatever a phase said about its own change.
+//
+// Every phase, and not the last alone: a flow that ends at a human gate
+// leaves its last phase unfinished until somebody resumes it, and until then
+// the pane had nothing to show about work that was already done. The pane
+// reads the newest, so a later phase's account replaces an earlier one — and
+// a phase that changed nothing writes nothing, which is what leaves the one
+// that did standing.
+func noteDelta(s *store.Store, t Task, _ flow.Flow, _ int, out engine.Result) {
 	fields := deltaIn(out.Output)
 	if fields == nil {
 		return

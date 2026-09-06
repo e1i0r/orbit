@@ -141,8 +141,13 @@ func build(t Task, p flow.Phase, last bool, knows []knowledge.Fact, notes, revie
 
 	if last {
 		b.WriteString(storyAsk)
-		b.WriteString(deltaAsk)
 	}
+
+	// The delta is asked of every phase, and the last one written is what
+	// the pane draws. Asked of the last alone, a flow that ends at a human
+	// gate had nothing to show until somebody resumed it — and the phase
+	// that did the work had already answered and gone.
+	b.WriteString(deltaAsk)
 
 	b.WriteString("\n" + engine.AnswerContract)
 

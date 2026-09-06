@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -106,9 +107,41 @@ func (r Repo) Compare(wtDir string, checks []Check) ([]Divergence, error) {
 
 	defer func() { _ = r.RemoveWorktree(dir) }() //nolint:errcheck // the checkout is going either way
 
-	out := make([]Divergence, 0, len(checks))
-	for _, c := range checks {
-		out = append(out, Divergence{Check: c, Base: runCheck(dir, c.Command), Now: runCheck(wtDir, c.Command)})
+	// The two sides at once. They are different directories with nothing
+	// shared between them, and a suite that takes four minutes took eight
+	// when they were run one after the other — which is most of what makes
+	// this feel like a thing you start and walk away from.
+	//
+	// The checks themselves stay in order and one at a time: they are the
+	// repository's own commands, and two of them at once on the same
+	// checkout is a race nobody asked for — one writing a coverage profile
+	// the other is reading.
+	out := make([]Divergence, len(checks))
+
+	for i, c := range checks {
+		var (
+			wg   sync.WaitGroup
+			base Ran
+			now  Ran
+		)
+
+		wg.Add(2)
+
+		go func() {
+			defer wg.Done()
+
+			base = runCheck(dir, c.Command)
+		}()
+
+		go func() {
+			defer wg.Done()
+
+			now = runCheck(wtDir, c.Command)
+		}()
+
+		wg.Wait()
+
+		out[i] = Divergence{Check: c, Base: base, Now: now}
 	}
 
 	return out, nil

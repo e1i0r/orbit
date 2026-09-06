@@ -25,8 +25,10 @@ func (m Model) compareRows() []string {
 
 	switch {
 	case m.weigh.running:
-		return append(rows, "  "+m.spinner(Live)+Paint(Live).Render(p.T("compare.out",
-			"running… {secs}", about("secs", m.comparedFor().String()))), "")
+		return append(rows, "  "+m.spinner(Live)+Paint(Live).Render(p.T("compare.out2",
+			"running {n} checks on both sides at once… {secs}",
+			about("n", strconv.Itoa(m.checksNow())),
+			about("secs", m.comparedFor().String()))), "")
 	case m.weigh.checksErr != nil:
 		return append(rows, "  "+Paint(Bad).Render(m.errSaid(m.weigh.checksErr)), "")
 	case !m.weigh.checksKnown:
@@ -122,4 +124,14 @@ func lastLine(out string) string {
 	}
 
 	return ""
+}
+
+// checksNow is how many checks the run that is out is running.
+func (m Model) checksNow() int {
+	t, held := m.task(m.detail)
+	if !held {
+		return 0
+	}
+
+	return len(m.checksOf(t))
 }

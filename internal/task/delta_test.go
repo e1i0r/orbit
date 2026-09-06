@@ -6,6 +6,8 @@ package task
 import (
 	"strings"
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/flow"
 )
 
 // TestTheFourFieldsAreReadOutOfTheAnswer, repeats and all: one change can
@@ -64,5 +66,31 @@ func TestAnAnswerWithNoDeltaWritesNothing(t *testing.T) {
 func TestTheLastPhaseIsAskedForIt(t *testing.T) {
 	if !strings.Contains(deltaAsk, "instead") || !strings.Contains(deltaAsk, "dies with this run") {
 		t.Error("the ask does not say why the discarded alternatives matter")
+	}
+}
+
+// TestEveryPhaseIsAskedForItsDelta. Asked of the last phase alone, a flow
+// that ends at a human gate had nothing to show until somebody resumed it —
+// and the phase that did the work had already answered and gone.
+func TestEveryPhaseIsAskedForItsDelta(t *testing.T) {
+	f := flow.Flow{Name: "three", Phases: []flow.Phase{
+		{Name: "1-implement", Engine: "claude"},
+		{Name: "2-fix", Engine: "claude"},
+		{Name: "3-review", Engine: "claude", Wait: true},
+	}}
+
+	tk := Task{ID: "ACME-1", Text: "do the thing"}
+
+	for n := 1; n <= len(f.Phases); n++ {
+		asked := promptFor(tk, f, n, nil, nil, nil, "", nil)
+		if !strings.Contains(asked, "## Delta") {
+			t.Errorf("phase %d is not asked for a delta", n)
+		}
+	}
+
+	// The story is still the last phase's alone: it is about the task, and a
+	// phase in the middle does not know how it ends.
+	if strings.Contains(promptFor(tk, f, 1, nil, nil, nil, "", nil), "## Story") {
+		t.Error("the first phase is asked for the story")
 	}
 }

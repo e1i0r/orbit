@@ -4341,10 +4341,6 @@
       "source": "the flow's own checks, run on the branch this work was cut from and on the work itself. An exit code decided every line below — nothing here is anybody's reading.",
       "value": "los checks del propio flujo, corridos en la rama de la que salió este trabajo y en el trabajo mismo. Cada línea de abajo la decidió un exit code — aquí no hay lectura de nadie."
     },
-    "compare.out": {
-      "source": "running… {secs}",
-      "value": "corriendo… {secs}"
-    },
     "compare.none_ran": {
       "source": "no checks ran",
       "value": "no corrió ningún check"
@@ -4428,6 +4424,14 @@
     "wait.issue": {
       "source": "reading the issue",
       "value": "leyendo la issue"
+    },
+    "flow.step_status_looping": {
+      "source": "going round",
+      "value": "dando vueltas"
+    },
+    "compare.out2": {
+      "source": "running {n} checks on both sides at once… {secs}",
+      "value": "corriendo {n} checks en los dos lados a la vez… {secs}"
     }
   }
 }
