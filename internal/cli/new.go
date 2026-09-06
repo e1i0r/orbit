@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/logger"
@@ -22,6 +23,13 @@ func newTask(ctx Context, args []string) error {
 	// a task walks when nobody says is the user's setting, and a default
 	// spelled out on this flag would quietly override it.
 	flowName := fs.String("flow", "", "which flow the task walks; the default is the one orbit set flow chose")
+	// Written down and run, in one command. The window's compose form has
+	// a Save and start button and it saved without starting: it built this
+	// command line, and there was nothing on it that said to start. Doing
+	// it here rather than in the window is what makes the button honest
+	// without a second gesture racing the board's next refresh.
+	startNow := fs.Bool("start", false, "start the task as soon as it is written down")
+
 	if err := parse(ctx, fs, args); err != nil {
 		return err
 	}
@@ -54,6 +62,29 @@ func newTask(ctx Context, args []string) error {
 
 	logger.Info("cli/new", "created task %s in repo %q (flow=%s)", t.ID, r.Name, t.Flow)
 	fmt.Fprintf(ctx.Out, "%s\n", written(ctx, t, r))
+
+	if !*startNow {
+		return nil
+	}
+
+	// The unread cap is what Start weighs a new run against, and a task
+	// written this second has been read by nobody — so it is asked for
+	// here rather than assumed to be zero.
+	unread, err := unreadCount(s, r.Path)
+	if err != nil {
+		return err
+	}
+
+	pid, err := task.Start(s, t, t.Flow, unread)
+	if err != nil {
+		logger.Error("cli/new", "start task %q failed: %v", t.ID, err)
+		return err
+	}
+
+	logger.Info("cli/new", "started task %s as process %d", t.ID, pid)
+	fmt.Fprintf(ctx.Out, "%s\n", ctx.printer().T("new.started",
+		"{id} started, process {pid}", words.Arg{Name: "id", Value: t.ID},
+		words.Arg{Name: "pid", Value: strconv.Itoa(pid)}))
 
 	return nil
 }

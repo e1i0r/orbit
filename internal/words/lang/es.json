@@ -4408,6 +4408,10 @@
     "wait.compare": {
       "source": "running the checks on both sides of {id}",
       "value": "corriendo los checks de los dos lados de {id}"
+    },
+    "new.started": {
+      "source": "{id} started, process {pid}",
+      "value": "{id} arrancó, proceso {pid}"
     }
   }
 }

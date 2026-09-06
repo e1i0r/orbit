@@ -70,6 +70,15 @@ func (m Model) composeSubmit(startNow bool) (tea.Model, tea.Cmd) {
 		args = append(args, "-flow", flowName)
 	}
 
+	// The button says "save and start" and this is what makes it true. It
+	// used to take the flag and drop it: the task was written down, the
+	// window went back to the board, and the row sat in to do with nobody
+	// able to say why. Starting it here, in the same command that writes
+	// it, also means nothing races the board's next refresh.
+	if startNow {
+		args = append(args, "-start")
+	}
+
 	args = append(args, "--", text)
 
 	m.screen = screenList
