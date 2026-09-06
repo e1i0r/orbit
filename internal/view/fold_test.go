@@ -287,3 +287,32 @@ func allCases() []foldCase {
 
 	return all
 }
+
+// TestTheBoardShowsTheLifeThatIsStanding. An id written down again after it
+// was deleted is a new task with an old name: folding the previous life in
+// would show it as finished, on its third attempt, with what the other one
+// spent.
+func TestTheBoardShowsTheLifeThatIsStanding(t *testing.T) {
+	now := time.Now().UTC()
+
+	got := Fold([]record.Event{
+		{At: now.Add(-3 * time.Hour), Kind: record.TaskCreated, Text: "the first life"},
+		{At: now.Add(-2 * time.Hour), Kind: record.TaskStarted},
+		{At: now.Add(-90 * time.Minute), Kind: record.PhaseFinished, Phase: "implement", Data: map[string]string{"cost": "0.42"}},
+		{At: now.Add(-time.Hour), Kind: record.TaskFinished},
+		{At: now.Add(-30 * time.Minute), Kind: record.TaskDeleted},
+		{At: now.Add(-time.Minute), Kind: record.TaskCreated, Text: "the second life"},
+	})
+
+	if got.Attempt != 0 {
+		t.Errorf("the new task is on attempt %d", got.Attempt)
+	}
+
+	if got.Cost != 0 {
+		t.Errorf("the new task carries $%.2f of the old one's spend", got.Cost)
+	}
+
+	if got.Title != "the second life" {
+		t.Errorf("the board shows %q", got.Title)
+	}
+}

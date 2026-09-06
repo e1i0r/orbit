@@ -28,11 +28,19 @@ func (m Model) openDetail(t view.Task) (Model, tea.Cmd) {
 	// repository this task is in, and asking for it again is the one thing
 	// this window does per open rather than per tick.
 	m.diffBase, m.diffAsking = baseRef{}, true
+	m = m.forgetImpact().forgetComparison()
+
 	for i := range m.panes {
 		m.panes[i] = viewport.New()
 	}
 
-	return m.syncPanes(), tea.Batch(logOf(m.opts.Reader, t), filesOf(m.opts.Reader, t), diffOf(m.opts.Reader, t, m.diffBase))
+	// The history is read once per open, the way the base is: it is a fact
+	// about the repository this task is in, it takes about as long as the
+	// diff, and the mark on the tab strip is only honest if it was read
+	// whether or not the reader went looking.
+	next, impact := m.syncPanes().askImpact()
+
+	return next, tea.Batch(logOf(m.opts.Reader, t), filesOf(m.opts.Reader, t), diffOf(m.opts.Reader, t, m.diffBase), impact)
 }
 
 // detailKey is the task view's map.
@@ -64,6 +72,8 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.foldAll(), nil
 	case m.tab == tabDiff && k.String() == "Z":
 		return m.toggleCollapseAll(), nil
+	case m.tab == tabImpact && (k.String() == "r" || k.String() == "R"):
+		return m.compareSidesCmd()
 	case m.tab == tabDiff && (k.String() == "r" || k.String() == "R"):
 		m.hideDiffRationale = !m.hideDiffRationale
 		p := m.opts.Words
@@ -91,7 +101,9 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.closePR()
 	case k.String() == "u" || k.String() == "U":
 		return m.updatePRBranch()
-	case k.String() == "e" || k.String() == "w" || k.String() == "W":
+	// w and W are not here: they are the thinking pane's own key, taken by
+	// keyToPane above, so this case never saw them.
+	case k.String() == "e":
 		m.expandedDetail = !m.expandedDetail
 		p := m.opts.Words
 

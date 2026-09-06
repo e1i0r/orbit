@@ -38,6 +38,20 @@ func (m Model) waitingOn() []busy {
 		})
 	}
 
+	if m.compose.reading {
+		out = append(out, busy{
+			what:  p.T("wait.issue", "reading the issue"),
+			since: m.compose.readAt,
+		})
+	}
+
+	if m.weigh.running {
+		out = append(out, busy{
+			what:  p.T("wait.compare", "running the checks on both sides of {id}", about("id", m.detail)),
+			since: m.weigh.since,
+		})
+	}
+
 	if m.supervisorBusy {
 		out = append(out, busy{
 			what:  p.T("wait.supervisor", "the supervisor is thinking"),

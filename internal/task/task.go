@@ -69,7 +69,14 @@ func Create(s *store.Store, r repo.Repo, id, text, flowName string) (Task, error
 	}
 
 	if _, statErr := os.Stat(path); statErr == nil {
-		return Task{}, fmt.Errorf("task %q %w", id, ErrExists)
+		// A directory left behind by a deletion that could not remove it —
+		// or by a version of Orbit that did not try — is not a task that
+		// exists. The record is what says which: a reader who deleted this
+		// id sees nothing on the board, and answering "already exists"
+		// about it is the window contradicting itself.
+		if err := clearIfDeleted(s, id); err != nil {
+			return Task{}, err
+		}
 	}
 
 	dir, err := s.CreateTaskDir(r.Path, id)

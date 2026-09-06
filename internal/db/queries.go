@@ -38,6 +38,14 @@ const (
 // repository. One written before it has reached into anything has no
 // task_repo row, and an inner join answers that task by leaving it out — a
 // task on disk, in the record, and on no board.
+//
+// Both listings hide a task while its newest task.deleted is newer than its
+// newest task.created, and not while it has ever been deleted. An id comes
+// back — a tracker hands the same one out again — and a task written down
+// after a deletion is a new task with an old name. Asking "was it ever
+// deleted" made that one invisible forever, which is the worst of the three
+// possible answers: it existed, nothing showed it, and `orbit new` said it
+// already existed.
 const (
 	insertRepo = `INSERT INTO repo(abs_path, name, first_seen) VALUES(?,?,?) ON CONFLICT(abs_path) DO NOTHING`
 
@@ -50,8 +58,10 @@ const (
 	                       JOIN task_repo tr ON tr.task_id = t.id
 	                       JOIN repo r ON r.id = tr.repo_id
 	                      WHERE r.abs_path = ?
-	                        AND NOT EXISTS (SELECT 1 FROM event e
-	                                         WHERE e.task_id = t.id AND e.kind = ?)
+	                        AND NOT EXISTS (SELECT 1 FROM event d
+	                                         WHERE d.task_id = t.id AND d.kind = ?
+	                                           AND d.id > COALESCE((SELECT MAX(c.id) FROM event c
+	                                                                 WHERE c.task_id = t.id AND c.kind = ?), 0))
 	                      ORDER BY t.task_id`
 
 	selectReposOfTask = `SELECT r.abs_path
@@ -65,8 +75,10 @@ const (
 	                         FROM task t
 	                         LEFT JOIN task_repo tr ON tr.task_id = t.id
 	                         LEFT JOIN repo r ON r.id = tr.repo_id
-	                        WHERE NOT EXISTS (SELECT 1 FROM event e
-	                                           WHERE e.task_id = t.id AND e.kind = ?)
+	                        WHERE NOT EXISTS (SELECT 1 FROM event d
+	                                           WHERE d.task_id = t.id AND d.kind = ?
+	                                             AND d.id > COALESCE((SELECT MAX(c.id) FROM event c
+	                                                                   WHERE c.task_id = t.id AND c.kind = ?), 0))
 	                        ORDER BY t.task_id, tr.joined_at, r.abs_path`
 
 	unjoinRepo = `DELETE FROM task_repo

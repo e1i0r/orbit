@@ -4252,6 +4252,190 @@
     "complete.brief": {
       "source": "what happened while you were away, from the record",
       "value": "qué pasó mientras no estabas, según el registro"
+    },
+    "tab.impact": {
+      "source": "impact",
+      "value": "impacto"
+    },
+    "impact.no_port": {
+      "source": "this build cannot read the history",
+      "value": "esta build no puede leer el historial"
+    },
+    "impact.reading": {
+      "source": "reading the history…",
+      "value": "leyendo el historial…"
+    },
+    "impact.not_yet": {
+      "source": "nothing read yet",
+      "value": "todavía no se ha leído nada"
+    },
+    "impact.failed": {
+      "source": "the history could not be read: {err}",
+      "value": "no se pudo leer el historial: {err}"
+    },
+    "impact.no_changes": {
+      "source": "this task changed no files, so there is nothing to weigh",
+      "value": "esta tarea no cambió archivos, así que no hay nada que pesar"
+    },
+    "impact.reach_title": {
+      "source": "WHAT USUALLY COMES ALONG",
+      "value": "LO QUE SUELE IR JUNTO"
+    },
+    "impact.reach_about": {
+      "source": "files this repository has committed together with the ones this task changed, and that it did not touch this time.",
+      "value": "archivos que este repositorio ha commiteado junto a los que esta tarea cambió, y que esta vez no tocó."
+    },
+    "impact.reach_source": {
+      "source": "read from the last {n} commits. It is what the history does, not a rule: a file left out on purpose is the normal case.",
+      "value": "leído de los últimos {n} commits. Es lo que hace el historial, no una regla: dejar uno fuera a propósito es el caso normal."
+    },
+    "impact.reach_none": {
+      "source": "nothing else follows these files often enough to mention",
+      "value": "nada más acompaña a estos archivos con la frecuencia suficiente para mencionarlo"
+    },
+    "impact.changed_here": {
+      "source": "changed here",
+      "value": "cambiado aquí"
+    },
+    "impact.follows": {
+      "source": "{pct}% of the time ({times}/{of}) · not touched",
+      "value": "{pct}% de las veces ({times}/{of}) · no tocado"
+    },
+    "impact.contracts_title": {
+      "source": "WHAT THOSE TESTS SAY THEY HOLD",
+      "value": "LO QUE ESAS PRUEBAS DICEN QUE GARANTIZAN"
+    },
+    "impact.contracts_about": {
+      "source": "the names of the tests in the files above, read as sentences. Nothing here was run: it is what somebody wrote down that the code guarantees.",
+      "value": "los nombres de las pruebas de los archivos de arriba, leídos como frases. Aquí no se corrió nada: es lo que alguien escribió que el código garantiza."
+    },
+    "impact.delta_title": {
+      "source": "WHAT THE AGENT SAYS IT DID",
+      "value": "LO QUE EL AGENTE DICE QUE HIZO"
+    },
+    "impact.delta_about": {
+      "source": "the engine's own account of what this change asks of its callers and what it now promises them. Nobody verified it — no command can — and the last part is the only place a rejected approach is written down.",
+      "value": "el relato del propio motor sobre qué exige este cambio a quien lo llama y qué promete ahora. Nadie lo verificó — ningún comando puede — y la última parte es el único sitio donde queda escrito un camino que se descartó."
+    },
+    "impact.delta_needs": {
+      "source": "callers must now",
+      "value": "quien lo llame ahora debe"
+    },
+    "impact.delta_guarantees": {
+      "source": "it now holds",
+      "value": "ahora garantiza"
+    },
+    "impact.delta_assumes": {
+      "source": "it took for granted",
+      "value": "dio por sentado"
+    },
+    "impact.delta_instead": {
+      "source": "considered and not taken",
+      "value": "considerado y descartado"
+    },
+    "compare.title": {
+      "source": "WHAT THE CHECKS SAY, BOTH SIDES",
+      "value": "LO QUE DICEN LOS CHECKS, DE LOS DOS LADOS"
+    },
+    "compare.about": {
+      "source": "the flow's own checks, run on the branch this work was cut from and on the work itself. An exit code decided every line below — nothing here is anybody's reading.",
+      "value": "los checks del propio flujo, corridos en la rama de la que salió este trabajo y en el trabajo mismo. Cada línea de abajo la decidió un exit code — aquí no hay lectura de nadie."
+    },
+    "compare.none_ran": {
+      "source": "no checks ran",
+      "value": "no corrió ningún check"
+    },
+    "compare.no_checks_here": {
+      "source": "this task's flow carries no checks, so there is nothing to run on either side",
+      "value": "el flujo de esta tarea no trae checks, así que no hay nada que correr de ninguno de los dos lados"
+    },
+    "compare.offer": {
+      "source": "[r] runs these on both sides — the base is checked out on its own and thrown away afterwards",
+      "value": "[r] los corre de los dos lados — la base se saca en un checkout aparte y se tira después"
+    },
+    "compare.same": {
+      "source": "the same on both sides",
+      "value": "igual de los dos lados"
+    },
+    "compare.broke": {
+      "source": "passed before, fails now",
+      "value": "pasaba antes, ahora falla"
+    },
+    "compare.fixed": {
+      "source": "failed before, passes now",
+      "value": "fallaba antes, ahora pasa"
+    },
+    "compare.base_said": {
+      "source": "base:     {said}",
+      "value": "base:     {said}"
+    },
+    "compare.now_said": {
+      "source": "worktree: {said}",
+      "value": "worktree: {said}"
+    },
+    "compare.could_not_run": {
+      "source": "could not be run: {err}",
+      "value": "no se pudo correr: {err}"
+    },
+    "compare.passed": {
+      "source": "passed",
+      "value": "pasó"
+    },
+    "compare.exited": {
+      "source": "exit {code}",
+      "value": "salió {code}"
+    },
+    "compare.no_checks": {
+      "source": "this task's flow has no checks, so there is nothing to run on either side",
+      "value": "el flujo de esta tarea no tiene checks, así que no hay nada que correr de ninguno de los dos lados"
+    },
+    "compare.running": {
+      "source": "running {n} checks on both sides",
+      "value": "corriendo {n} checks de los dos lados"
+    },
+    "compare.failed": {
+      "source": "the checks could not be run: {err}",
+      "value": "no se pudieron correr los checks: {err}"
+    },
+    "compare.done": {
+      "source": "{n} of {total} checks answered differently",
+      "value": "{n} de {total} checks respondieron distinto"
+    },
+    "wait.compare": {
+      "source": "running the checks on both sides of {id}",
+      "value": "corriendo los checks de los dos lados de {id}"
+    },
+    "new.started": {
+      "source": "{id} started, process {pid}",
+      "value": "{id} arrancó, proceso {pid}"
+    },
+    "compose.body_unreadable": {
+      "source": "orbit cannot read this issue here, and a run will not be able to either: write what has to be done, or set LINEAR_API_KEY",
+      "value": "orbit no puede leer esta issue aquí, y una corrida tampoco podrá: escribe qué hay que hacer, o define LINEAR_API_KEY"
+    },
+    "compose.reading": {
+      "source": "reading {id} from {kind}…",
+      "value": "leyendo {id} de {kind}…"
+    },
+    "compose.read_failed": {
+      "source": "could not read the issue: {err}",
+      "value": "no se pudo leer la issue: {err}"
+    },
+    "wait.issue": {
+      "source": "reading the issue",
+      "value": "leyendo la issue"
+    },
+    "flow.step_status_looping": {
+      "source": "going round",
+      "value": "dando vueltas"
+    },
+    "compare.out2": {
+      "source": "running {n} checks on both sides at once… {secs}",
+      "value": "corriendo {n} checks en los dos lados a la vez… {secs}"
+    },
+    "compare.again": {
+      "source": "[r] runs them again",
+      "value": "[r] los vuelve a correr"
     }
   }
 }

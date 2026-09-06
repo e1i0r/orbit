@@ -24,13 +24,19 @@ func (m Model) openQuota() Model {
 
 // quotaKey answers the keyboard while it is up.
 //
-// Nothing on the screen is chosen, so the only key is the one that leaves.
-// Every other key does nothing rather than reaching the board underneath,
-// which is the rule the cheat sheet and the supervisor's thread follow for
-// the same reason: a reader looking at one screen should not be able to move
-// a cursor on another.
+// Nothing on the screen is chosen, so the only keys are the ones that leave:
+// esc, back, and q. Every other key does nothing rather than reaching the
+// board underneath, which is the rule the cheat sheet and the supervisor's
+// thread follow for the same reason: a reader looking at one screen should
+// not be able to move a cursor on another.
+//
+// q closes this screen rather than the window, as it does on every other
+// screen that is not the board. It is here because the screen is opened with
+// Q, and a reader whose caps lock is down opens it without meaning to — and
+// then presses the key that closes everything else and is answered with
+// nothing.
 func (m Model) quotaKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
-	if msg.Code == tea.KeyEscape || key.Matches(msg, m.keys.Back) {
+	if msg.Code == tea.KeyEscape || key.Matches(msg, m.keys.Back) || key.Matches(msg, m.keys.Quit) {
 		m.screen = screenList
 		return m, nil
 	}

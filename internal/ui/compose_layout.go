@@ -52,19 +52,40 @@ func (m Model) composeLayout() composePlan {
 	return p
 }
 
-// hitComposeActions calculates button hitboxes based on translated button widths.
+// hitComposeActions is which button the pointer is over, measured the way
+// the row is drawn: two spaces of indent, then each button, three spaces
+// apart. See composeRows.
+//
+// It used to count from zero and fold the indent into the first button's
+// width, which put every zone three cells left of what it was pointing at:
+// the right-hand end of Save & Run answered cancel. Anything past the last
+// button is nothing at all, rather than cancel reaching to the right edge of
+// the screen.
 func hitComposeActions(p *words.Printer, x int) Target {
-	saveText := "[ " + p.T("compose.save_btn", "↵ Save") + " ]"
-	runText := "[ " + p.T("compose.save_run_btn", "^R Save & Run") + " ]"
+	at := composeIndent
 
-	saveW := lipgloss.Width(saveText) + 2
-	runW := lipgloss.Width(runText) + 3
+	for _, b := range []struct {
+		text string
+		key  string
+	}{
+		{"[ " + p.T("compose.save_btn", "↵ Save") + " ]", "save"},
+		{"[ " + p.T("compose.save_run_btn", "^R Save & Run") + " ]", "save_and_run"},
+		{"[ " + p.T("compose.cancel_btn", "esc Cancel") + " ]", "cancel"},
+	} {
+		wide := lipgloss.Width(b.text)
+		if x >= at && x < at+wide {
+			return Target{Kind: TargetComposeAction, Key: b.key}
+		}
 
-	if x < saveW {
-		return Target{Kind: TargetComposeAction, Key: "save"}
-	} else if x < saveW+runW {
-		return Target{Kind: TargetComposeAction, Key: "save_and_run"}
+		at += wide + composeGap
 	}
 
-	return Target{Kind: TargetComposeAction, Key: "cancel"}
+	return Target{}
 }
+
+// The row's own spacing, named once so the draw and the hit test cannot
+// drift apart.
+const (
+	composeIndent = 2
+	composeGap    = 3
+)

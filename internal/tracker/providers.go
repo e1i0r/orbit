@@ -96,7 +96,7 @@ func (LinearProvider) FormatPrompt(iss Issue) string {
 	}
 
 	fmt.Fprintf(&b, "Issue Tracker: Linear (%s)\nURL: %s\n\n", iss.ID, iss.RawURL)
-	b.WriteString("Please inspect the issue details using Linear MCP tools (e.g. linear_get_issue) or review the requirement and implement the requested changes.")
+	b.WriteString(body(iss, "Linear MCP tools (e.g. linear_get_issue)"))
 
 	return b.String()
 }
@@ -153,7 +153,7 @@ func (JiraProvider) FormatPrompt(iss Issue) string {
 	}
 
 	fmt.Fprintf(&b, "Issue Tracker: Jira (%s)\nURL: %s\n\n", iss.ID, iss.RawURL)
-	b.WriteString("Please inspect the issue details using Jira MCP tools or review the requirement and implement the requested changes.")
+	b.WriteString(body(iss, "Jira MCP tools"))
 
 	return b.String()
 }
@@ -281,4 +281,22 @@ func cleanSlug(slug string) string {
 	}
 
 	return string(runes)
+}
+
+// body is what the task carries under the link: the issue itself when it
+// could be read, and the note telling somebody to go and read it when it
+// could not.
+//
+// The note used to be there either way, so a task written from a URL that
+// had been read said "please inspect the issue details" above the issue
+// details. And when it had not been read, that note was the whole of the
+// task: an instruction a headless run cannot follow, because its tool calls
+// are auto-denied with nobody there to approve them.
+func body(iss Issue, tools string) string {
+	if said := strings.TrimSpace(iss.Description); said != "" {
+		return said
+	}
+
+	return "Please inspect the issue details using " + tools +
+		" or review the requirement and implement the requested changes."
 }

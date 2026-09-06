@@ -131,6 +131,18 @@ func (m Model) openDiffFilePicker() Model {
 	return m
 }
 
+// movePickedFile moves the pick in the open file picker by however far a
+// gesture asks for: one row for an arrow key, three for a notch of the
+// wheel. The ends hold rather than wrap, which is what every other list in
+// the window does under the same gestures.
+func (m Model) movePickedFile(d int) Model {
+	raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
+	files := parseDiffFiles(raw)
+	m.diffFileCursor = min(max(m.diffFileCursor+d, 0), max(len(files)-1, 0))
+
+	return m
+}
+
 // handleDiffFilePickerKey handles keystrokes while the file selector modal is open.
 func (m Model) handleDiffFilePickerKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
@@ -141,17 +153,9 @@ func (m Model) handleDiffFilePickerKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		m.diffFilePicker = false
 		return m, nil
 	case "up", "k":
-		if m.diffFileCursor > 0 {
-			m.diffFileCursor--
-		}
-
-		return m, nil
+		return m.movePickedFile(-1), nil
 	case "down", "j":
-		if m.diffFileCursor < len(files)-1 {
-			m.diffFileCursor++
-		}
-
-		return m, nil
+		return m.movePickedFile(1), nil
 	case "enter":
 		if m.diffFileCursor >= 0 && m.diffFileCursor < len(files) {
 			m.diffFilePicker = false

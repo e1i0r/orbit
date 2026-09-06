@@ -135,15 +135,15 @@ func gitDiff(dir, base string) (string, bool, error) {
 		}
 	}
 
+	// The working tree, and nothing else. This used to fall back to
+	// HEAD~1..HEAD when there was nothing — the last commit of whatever
+	// branch the worktree was cut from — so a task that had written nothing
+	// yet showed somebody else's commit as its own work, with a rationale
+	// under every file saying what "the LLM decided". A task with no changes
+	// has no changes, and the pane already says so.
 	out, err := runGitDiff(dir, "diff")
 	if err != nil {
 		return "", false, err
-	}
-
-	if strings.TrimSpace(out) == "" {
-		if headDiff, hErr := runGitDiff(dir, "diff", "HEAD~1..HEAD"); hErr == nil && strings.TrimSpace(headDiff) != "" {
-			return headDiff, false, nil
-		}
 	}
 
 	return out, true, nil

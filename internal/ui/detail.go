@@ -119,7 +119,17 @@ func (m Model) detailHeadLines(w int) []string {
 	availW := max(20, w-lipgloss.Width(m.detail)-rightW-6)
 
 	if !m.expandedDetail || lipgloss.Width(title) <= availW {
-		return []string{spread(" "+left+"  "+Text(Secondary).Render(fit(title, availW)), right, w)}
+		// The hint sits against the cut rather than in the key bar, because
+		// the cut is where somebody notices they are missing something: a
+		// title that ends in an ellipsis and says nothing about how to see
+		// the rest is a title nobody knows is expandable.
+		shown, hint := fit(title, availW), ""
+		if lipgloss.Width(title) > availW {
+			shown = fit(title, max(availW-4, 8))
+			hint = Paint(Dim).Render(" [e]")
+		}
+
+		return []string{spread(" "+left+"  "+Text(Secondary).Render(shown)+hint, right, w)}
 	}
 
 	wrapped := splitIntoLines(title, availW)
@@ -157,7 +167,7 @@ func (m Model) tabTags(w int) []tabTagInfo {
 
 	// Three tiers, widest first: every name in full, then names cut to four
 	// cells, then keys alone with only the open tab named. The strip is one
-	// line and there are eleven tabs, so what a narrow terminal drops is
+	// line and there are twelve tabs, so what a narrow terminal drops is
 	// decided here rather than by the right edge.
 	for _, tier := range []func(n tabName) string{
 		func(n tabName) string { return n.text },
@@ -194,7 +204,7 @@ func (m Model) tabTags(w int) []tabTagInfo {
 	return tags
 }
 
-// tabStrip renders the eleven tabs.
+// tabStrip renders the twelve tabs.
 func (m Model) tabStrip(w int) string {
 	tags := m.tabTags(w)
 

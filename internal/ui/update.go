@@ -119,6 +119,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		return m.say(m.opts.Words.T("supervisor.replied", "supervisor replied in thread")), nil
+	case issueReadMsg:
+		return m.tookIssue(msg)
+	case comparedMsg:
+		return m.tookComparison(msg), nil
+	case impactMsg:
+		return m.tookImpact(msg), nil
 	case flowDraftedMsg:
 		return m.drafted(msg)
 	case cliEndedMsg:
@@ -148,7 +154,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.diffErr, m.diffKnown, m.diffNoBase = msg.Err, true, msg.NoBase
 		m.diffBase, m.diffAsking = msg.Base, false
 
-		return m.syncPanes(), nil
+		// The impact reading is taken once when the view opens, and a task
+		// that is still running had written nothing then. When the diff and
+		// the reading disagree about whether anything changed, the reading
+		// is the stale one: it is taken again rather than left saying "this
+		// task changed no files" beside a pane showing three of them.
+		if m.staleImpact() {
+			m = m.forgetImpact()
+			m.weigh.reread = true
+		}
+
+		next, impact := m.syncPanes().askImpact()
+
+		return next, impact
 	case logMsg:
 		// The same guard, for the same reason: a record that arrives for a
 		// task the reader has since left would put one task's history under
