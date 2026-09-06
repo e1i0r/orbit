@@ -4252,6 +4252,62 @@
     "complete.brief": {
       "source": "what happened while you were away, from the record",
       "value": "qué pasó mientras no estabas, según el registro"
+    },
+    "tab.impact": {
+      "source": "impact",
+      "value": "impacto"
+    },
+    "impact.no_port": {
+      "source": "this build cannot read the history",
+      "value": "esta build no puede leer el historial"
+    },
+    "impact.reading": {
+      "source": "reading the history…",
+      "value": "leyendo el historial…"
+    },
+    "impact.not_yet": {
+      "source": "nothing read yet",
+      "value": "todavía no se ha leído nada"
+    },
+    "impact.failed": {
+      "source": "the history could not be read: {err}",
+      "value": "no se pudo leer el historial: {err}"
+    },
+    "impact.no_changes": {
+      "source": "this task changed no files, so there is nothing to weigh",
+      "value": "esta tarea no cambió archivos, así que no hay nada que pesar"
+    },
+    "impact.reach_title": {
+      "source": "WHAT USUALLY COMES ALONG",
+      "value": "LO QUE SUELE IR JUNTO"
+    },
+    "impact.reach_about": {
+      "source": "files this repository has committed together with the ones this task changed, and that it did not touch this time.",
+      "value": "archivos que este repositorio ha commiteado junto a los que esta tarea cambió, y que esta vez no tocó."
+    },
+    "impact.reach_source": {
+      "source": "read from the last {n} commits. It is what the history does, not a rule: a file left out on purpose is the normal case.",
+      "value": "leído de los últimos {n} commits. Es lo que hace el historial, no una regla: dejar uno fuera a propósito es el caso normal."
+    },
+    "impact.reach_none": {
+      "source": "nothing else follows these files often enough to mention",
+      "value": "nada más acompaña a estos archivos con la frecuencia suficiente para mencionarlo"
+    },
+    "impact.changed_here": {
+      "source": "changed here",
+      "value": "cambiado aquí"
+    },
+    "impact.follows": {
+      "source": "{pct}% of the time ({times}/{of}) · not touched",
+      "value": "{pct}% de las veces ({times}/{of}) · no tocado"
+    },
+    "impact.contracts_title": {
+      "source": "WHAT THOSE TESTS SAY THEY HOLD",
+      "value": "LO QUE ESAS PRUEBAS DICEN QUE GARANTIZAN"
+    },
+    "impact.contracts_about": {
+      "source": "the names of the tests in the files above, read as sentences. Nothing here was run: it is what somebody wrote down that the code guarantees.",
+      "value": "los nombres de las pruebas de los archivos de arriba, leídos como frases. Aquí no se corrió nada: es lo que alguien escribió que el código garantiza."
     }
   }
 }

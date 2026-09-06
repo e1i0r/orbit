@@ -157,7 +157,7 @@ func (m Model) tabTags(w int) []tabTagInfo {
 
 	// Three tiers, widest first: every name in full, then names cut to four
 	// cells, then keys alone with only the open tab named. The strip is one
-	// line and there are eleven tabs, so what a narrow terminal drops is
+	// line and there are twelve tabs, so what a narrow terminal drops is
 	// decided here rather than by the right edge.
 	for _, tier := range []func(n tabName) string{
 		func(n tabName) string { return n.text },
@@ -194,7 +194,7 @@ func (m Model) tabTags(w int) []tabTagInfo {
 	return tags
 }
 
-// tabStrip renders the eleven tabs.
+// tabStrip renders the twelve tabs.
 func (m Model) tabStrip(w int) string {
 	tags := m.tabTags(w)
 

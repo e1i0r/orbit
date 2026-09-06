@@ -1,9 +1,9 @@
 package ui
 
-// The eleven detail panes: overview, flow, gates, cost, refused, timeline,
-// report, artifacts, notes, diff, and thinking.
+// The twelve detail panes: overview, flow, gates, cost, refused, timeline,
+// report, artifacts, notes, diff, impact, and thinking.
 
-// tab is which of the eleven panes is showing.
+// tab is which of the twelve panes is showing.
 type tab int
 
 const (
@@ -17,6 +17,7 @@ const (
 	tabArtifacts
 	tabNotes
 	tabDiff
+	tabImpact
 	tabThinking
 	tabCount
 )
@@ -53,6 +54,8 @@ func paneKey(t tab) string {
 		return "9"
 	case tabDiff:
 		return "0"
+	case tabImpact:
+		return "i"
 	case tabThinking:
 		return "w"
 	default:
@@ -83,6 +86,8 @@ func keyToPane(k string) (tab, bool) {
 		return tabNotes, true
 	case "0":
 		return tabDiff, true
+	case "i", "I":
+		return tabImpact, true
 	case "w", "W":
 		return tabThinking, true
 	default:
@@ -96,7 +101,7 @@ type tabName struct {
 	text string
 }
 
-// tabNames returns the eleven tabs in order.
+// tabNames returns the twelve tabs in order.
 func (m Model) tabNames() []tabName {
 	p := m.opts.Words
 
@@ -111,11 +116,15 @@ func (m Model) tabNames() []tabName {
 		{tabArtifacts, p.T("tab.artifacts", "artifacts")},
 		{tabNotes, p.T("tab.notes", "notes")},
 		{tabDiff, p.T("tab.diff", "diff")},
+		// The mark rides on the name so that every place the strip is drawn
+		// — the tabs, the menu, the help — says the same thing without
+		// each of them knowing what a warning is.
+		{tabImpact, p.T("tab.impact", "impact") + m.impactMark()},
 		{tabThinking, p.T("tab.thinking", "thinking")},
 	}
 }
 
-// syncPanes rebuilds all eleven panes and resizes them to the detail body region.
+// syncPanes rebuilds all twelve panes and resizes them to the detail body region.
 func (m Model) syncPanes() Model {
 	w := max(m.frame.Body.W, 1)
 
@@ -146,6 +155,7 @@ func (m Model) syncPanes() Model {
 		tabArtifacts: artifacts,
 		tabNotes:     notes,
 		tabDiff:      diff,
+		tabImpact:    m.impactRows(),
 		tabThinking:  thinking,
 	}
 	for i := range m.panes {

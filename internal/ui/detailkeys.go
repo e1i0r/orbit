@@ -28,11 +28,19 @@ func (m Model) openDetail(t view.Task) (Model, tea.Cmd) {
 	// repository this task is in, and asking for it again is the one thing
 	// this window does per open rather than per tick.
 	m.diffBase, m.diffAsking = baseRef{}, true
+	m = m.forgetImpact()
+
 	for i := range m.panes {
 		m.panes[i] = viewport.New()
 	}
 
-	return m.syncPanes(), tea.Batch(logOf(m.opts.Reader, t), filesOf(m.opts.Reader, t), diffOf(m.opts.Reader, t, m.diffBase))
+	// The history is read once per open, the way the base is: it is a fact
+	// about the repository this task is in, it takes about as long as the
+	// diff, and the mark on the tab strip is only honest if it was read
+	// whether or not the reader went looking.
+	next, impact := m.syncPanes().askImpact()
+
+	return next, tea.Batch(logOf(m.opts.Reader, t), filesOf(m.opts.Reader, t), diffOf(m.opts.Reader, t, m.diffBase), impact)
 }
 
 // detailKey is the task view's map.
