@@ -37,6 +37,13 @@ type weighed struct {
 	checksKnown bool
 	running     bool
 	since       time.Time
+	// reread is whether the reading has already been taken a second time
+	// because the diff disagreed with it. It is what keeps that second
+	// reading from becoming an every-two-seconds one: the diff is polled on
+	// a clock, and a disagreement neither side can settle would otherwise
+	// send five hundred commits of git log after every poll — which is what
+	// it did, and the pane spent its life loading rather than being read.
+	reread bool
 }
 
 // impactMsg is the reading, come back.
@@ -68,6 +75,12 @@ func (m Model) askImpact() (Model, tea.Cmd) {
 }
 
 // impactOf reads the history behind one task's worktree.
+//
+// The base branch travels with the repository, as it does for the comparison
+// and for the diff. Without it the reading asks git what is uncommitted, and
+// a task that committed its work — which is every task that finished — has
+// nothing uncommitted: the pane said "this change touched no files" beside a
+// diff of nineteen, and the disagreement sent it back to git on every poll.
 func impactOf(r Reader, t view.Task) tea.Cmd {
 	return func() tea.Msg {
 		dir, err := r.Worktree(t.RepoPath, t.ID)
@@ -75,7 +88,7 @@ func impactOf(r Reader, t view.Task) tea.Cmd {
 			return impactMsg{id: t.ID, err: err}
 		}
 
-		got, err := repo.Repo{Path: t.RepoPath, Name: t.Repo}.Impact(dir)
+		got, err := repo.Repo{Path: t.RepoPath, Name: t.Repo, Base: baseOf(t.RepoPath)}.Impact(dir)
 
 		return impactMsg{id: t.ID, impact: got, err: err}
 	}
@@ -96,6 +109,7 @@ func (m Model) tookImpact(msg impactMsg) Model {
 func (m Model) forgetImpact() Model {
 	m.weigh.reach, m.weigh.reachErr = repo.Impact{}, nil
 	m.weigh.reachKnown, m.weigh.reachAsking = false, false
+	m.weigh.reread = false
 
 	return m
 }
@@ -108,7 +122,7 @@ func (m Model) forgetImpact() Model {
 // — the diff is polled every couple of seconds and that would be a subprocess
 // every couple of seconds for the life of the view.
 func (m Model) staleImpact() bool {
-	if !m.weigh.reachKnown || m.weigh.reachErr != nil {
+	if !m.weigh.reachKnown || m.weigh.reachErr != nil || m.weigh.reread {
 		return false
 	}
 

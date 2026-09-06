@@ -300,6 +300,29 @@ func TestTheReadingIsTakenAgainWhenItDisagreesWithTheDiff(t *testing.T) {
 	}
 }
 
+// TestTheReadingIsTakenAgainOnlyOnce. The diff is polled every couple of
+// seconds, so a disagreement neither side can settle is not a second reading
+// — it is one after every poll, five hundred commits of git log each, for as
+// long as the pane is open. It was: the pane spent its life loading, and the
+// window went slow with it.
+func TestTheReadingIsTakenAgainOnlyOnce(t *testing.T) {
+	m := reading(t, repo.Impact{})
+	m.detail = "ACME-1"
+	m.diff = "diff --git a/pricing.py b/pricing.py\n+ changed\n"
+
+	if !m.staleImpact() {
+		t.Fatal("a reading of nothing beside a diff of something is not stale")
+	}
+
+	m = m.forgetImpact()
+	m.weigh.reread = true
+	m = m.tookImpact(impactMsg{id: "ACME-1"})
+
+	if m.staleImpact() {
+		t.Error("the same disagreement asked for a third reading")
+	}
+}
+
 // TestALoopThatRanIsNotPending. A loop runs no engine of its own — the
 // phases inside it do — so it writes no phase.started and no phase.finished
 // under its own name. The tree read that as pending while it was going round

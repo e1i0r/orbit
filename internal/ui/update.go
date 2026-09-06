@@ -161,6 +161,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// task changed no files" beside a pane showing three of them.
 		if m.staleImpact() {
 			m = m.forgetImpact()
+			m.weigh.reread = true
 		}
 
 		next, impact := m.syncPanes().askImpact()
