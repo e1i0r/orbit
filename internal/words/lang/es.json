@@ -4236,6 +4236,10 @@
     "complete.new": {
       "source": "start a conversation of its own",
       "value": "empezar una conversación aparte"
+    },
+    "known.learned": {
+      "source": "· learned",
+      "value": "· aprendido"
     }
   }
 }

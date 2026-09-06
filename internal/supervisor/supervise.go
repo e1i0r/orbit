@@ -15,6 +15,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/e1i0r/orbit/internal/engine"
@@ -73,7 +74,20 @@ func SuperviseIn(ctx context.Context, s *store.Store, eng engine.Engine, convers
 		return "", fmt.Errorf("read the supervisor thread: %w", err)
 	}
 
-	fullPrompt := buildSupervisorPrompt(history(In(conversation, events)), prompt)
+	// What the record says, beside the conversation. It is read here and
+	// not left to the tools: a supervisor asked "what happened?" that has to
+	// go and look answers from whatever it thought to ask for, and a
+	// supervisor handed the lines answers from what is written down. The
+	// failure to read it is not fatal — the question can still be answered
+	// from the thread — but it is said out loud in the block, because a
+	// model that cannot see it is missing context speaks as though it has
+	// all of it.
+	happened, err := Happened(s, time.Now().Add(-happenedWindow))
+	if err != nil {
+		happened = []string{"the record could not be read: " + err.Error()}
+	}
+
+	fullPrompt := buildSupervisorPrompt(history(In(conversation, events)), happened, prompt)
 	req := engine.Request{
 		Prompt:      fullPrompt,
 		Dir:         s.Root(),
@@ -119,7 +133,7 @@ func AutoSupervise(ctx context.Context, s *store.Store, eng engine.Engine, needi
 // run_helpers.go): the answer is asked for in Markdown and drawn as Markdown
 // in the cockpit, and a prompt that asks in one shape for another is asking
 // twice.
-func buildSupervisorPrompt(history, newPrompt string) string {
+func buildSupervisorPrompt(history string, happened []string, newPrompt string) string {
 	var b strings.Builder
 
 	b.WriteString("# Supervisor\n\n")
@@ -132,6 +146,17 @@ func buildSupervisorPrompt(history, newPrompt string) string {
 	// loose under a heading of this prompt would read as sections of it.
 	if history != "" {
 		fmt.Fprintf(&b, "\n## Thread so far\n\n%s\n", engine.Fenced(history))
+	}
+
+	// The record itself, not a verdict about it. Everything in this block
+	// happened and was written down; everything the supervisor says beyond
+	// it is its own reading, and the contract below asks it to keep the two
+	// apart — "the tests passed" is a different claim from "it looks like
+	// the tests passed", and the person coming back from lunch is deciding
+	// what to do next on the strength of which one it is.
+	if len(happened) > 0 {
+		fmt.Fprintf(&b, "\n## What the record says (the last %d hours, verified)\n\n%s\n",
+			int(happenedWindow.Hours()), engine.Fenced(strings.Join(happened, "\n")))
 	}
 
 	fmt.Fprintf(&b, "\n## Operator message\n\n%s\n", strings.TrimSpace(newPrompt))
@@ -160,7 +185,14 @@ const answerContract = "## How to answer\n\n" +
 	"- Bullets only for a list of things. Not for one thing.\n" +
 	"- Never write file:// links or any other address: nothing here can be clicked, and a path " +
 	"wraps mid-word in the middle of a sentence. Name the file plainly instead.\n" +
-	"- Say what you did, if you did something. Do not restate what was asked.\n"
+	"- Say what you did, if you did something. Do not restate what was asked.\n" +
+	"- Asked what happened, answer from the record block above: which tasks ran, how they ended, " +
+	"which checks passed and which failed. It is what is written down.\n" +
+	"- Keep verified apart from your own reading. A check that exited zero is verified and you may " +
+	"say so plainly; anything you conclude beyond the record is yours, and say that it is. " +
+	"Never call something verified because it looks right.\n" +
+	"- What is missing from the record is missing: say so rather than filling it in. " +
+	"orbit_inspect_task reads a task in full when the block is not enough.\n"
 
 // maxHistory is how much of the thread is put in front of the model.
 //
