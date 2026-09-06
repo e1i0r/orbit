@@ -4308,6 +4308,30 @@
     "impact.contracts_about": {
       "source": "the names of the tests in the files above, read as sentences. Nothing here was run: it is what somebody wrote down that the code guarantees.",
       "value": "los nombres de las pruebas de los archivos de arriba, leídos como frases. Aquí no se corrió nada: es lo que alguien escribió que el código garantiza."
+    },
+    "impact.delta_title": {
+      "source": "WHAT THE AGENT SAYS IT DID",
+      "value": "LO QUE EL AGENTE DICE QUE HIZO"
+    },
+    "impact.delta_about": {
+      "source": "the engine's own account of what this change asks of its callers and what it now promises them. Nobody verified it — no command can — and the last part is the only place a rejected approach is written down.",
+      "value": "el relato del propio motor sobre qué exige este cambio a quien lo llama y qué promete ahora. Nadie lo verificó — ningún comando puede — y la última parte es el único sitio donde queda escrito un camino que se descartó."
+    },
+    "impact.delta_needs": {
+      "source": "callers must now",
+      "value": "quien lo llame ahora debe"
+    },
+    "impact.delta_guarantees": {
+      "source": "it now holds",
+      "value": "ahora garantiza"
+    },
+    "impact.delta_assumes": {
+      "source": "it took for granted",
+      "value": "dio por sentado"
+    },
+    "impact.delta_instead": {
+      "source": "considered and not taken",
+      "value": "considerado y descartado"
     }
   }
 }

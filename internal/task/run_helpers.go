@@ -141,6 +141,7 @@ func build(t Task, p flow.Phase, last bool, knows []knowledge.Fact, notes, revie
 
 	if last {
 		b.WriteString(storyAsk)
+		b.WriteString(deltaAsk)
 	}
 
 	b.WriteString("\n" + engine.AnswerContract)

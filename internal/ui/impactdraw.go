@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/repo"
+	"github.com/e1i0r/orbit/internal/view"
 )
 
 // impactRows is the pane.
@@ -34,13 +35,14 @@ func (m Model) impactRows() []string {
 	case m.impactErr != nil:
 		return []string{Paint(Bad).Render(p.T("impact.failed", "the history could not be read: {err}",
 			about("err", m.errSaid(m.impactErr))))}
-	case len(m.impact.Changed) == 0:
+	case len(m.impact.Changed) == 0 && m.lastDelta() == nil:
 		return []string{Paint(Dim).Render(p.T("impact.no_changes", "this task changed no files, so there is nothing to weigh"))}
 	}
 
 	rows := m.impactCoupled()
+	rows = append(rows, m.impactContracts()...)
 
-	return append(rows, m.impactContracts()...)
+	return append(rows, m.impactDelta()...)
 }
 
 // impactCoupled is the first section: what the history says usually comes
@@ -154,4 +156,66 @@ func (m Model) impactMark() string {
 	}
 
 	return fmt.Sprintf(" ⚠%s", strings.TrimSpace(strconv.Itoa(n)))
+}
+
+// impactDelta is the third section: what the engine says its own change
+// asks, promises, assumed and decided against.
+//
+// Last, and marked. The two sections above it are the repository's own
+// history; this one is a claim by the thing whose work is being weighed, and
+// nothing verified it — nothing can, for "assumes UTC timestamps". It is
+// here because the discarded alternatives exist nowhere else: they die with
+// the run, and the next person to touch that code pays again to find out why
+// the obvious approach was not taken.
+func (m Model) impactDelta() []string {
+	p := m.opts.Words
+
+	d := m.lastDelta()
+	if d == nil {
+		return nil
+	}
+
+	rows := []string{Paint(Accent).Bold(true).Render(p.T("impact.delta_title", "WHAT THE AGENT SAYS IT DID"))}
+	rows = append(rows, m.explains(p.T("impact.delta_about",
+		"the engine's own account of what this change asks of its callers and what it now promises them. Nobody verified it — no command can — and the last part is the only place a rejected approach is written down."))...)
+	rows = append(rows, "")
+
+	for _, part := range []struct {
+		head  string
+		lines []string
+	}{
+		{p.T("impact.delta_needs", "callers must now"), d.Needs},
+		{p.T("impact.delta_guarantees", "it now holds"), d.Guarantees},
+		{p.T("impact.delta_assumes", "it took for granted"), d.Assumes},
+		{p.T("impact.delta_instead", "considered and not taken"), d.Instead},
+	} {
+		if len(part.lines) == 0 {
+			continue
+		}
+
+		rows = append(rows, "  "+Paint(Dim).Render(part.head))
+		for _, line := range part.lines {
+			rows = append(rows, "    "+Paint(Dim).Render("· ")+Text(Primary).Render(line))
+		}
+
+		rows = append(rows, "")
+	}
+
+	return rows
+}
+
+// lastDelta is the one the attempt that stands wrote, and nothing when no
+// attempt wrote one.
+//
+// The last, for the reason the report pane draws the last: a task run three
+// times said this three times, and the two before it are about work that was
+// thrown away.
+func (m Model) lastDelta() *view.Delta {
+	for i := len(m.entries) - 1; i >= 0; i-- {
+		if m.entries[i].Delta != nil {
+			return m.entries[i].Delta
+		}
+	}
+
+	return nil
 }

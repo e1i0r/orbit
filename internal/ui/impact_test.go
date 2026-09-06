@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/repo"
+	"github.com/e1i0r/orbit/internal/view"
 )
 
 // reading is a window with a reading already in it.
@@ -120,5 +121,53 @@ func TestAReadingForAnotherTaskIsDropped(t *testing.T) {
 	late := impactMsg{id: "ACME-1", impact: repo.Impact{Changed: []string{"pricing.py"}}}
 	if got := m.tookImpact(late); got.impactKnown {
 		t.Error("a reading about another task landed on this one")
+	}
+}
+
+// TestTheAgentsOwnAccountIsMarkedAsSuch. The two sections above it are the
+// repository's history; this one is a claim by the thing whose work is being
+// weighed, and nothing verified it.
+func TestTheAgentsOwnAccountIsMarkedAsSuch(t *testing.T) {
+	m := reading(t, repo.Impact{Changed: []string{"pricing.py"}, Commits: 120})
+	m.entries = []view.Entry{
+		{Kind: "task.delta", Delta: &view.Delta{
+			Needs:   []string{"amount must be a Decimal"},
+			Instead: []string{"rounding per currency, dropped for the configuration it would need"},
+		}},
+	}
+
+	rows := strings.Join(m.impactRows(), "\n")
+
+	for _, want := range []string{
+		"WHAT THE AGENT SAYS IT DID",
+		"Nobody verified it",
+		"callers must now",
+		"amount must be a Decimal",
+		"considered and not taken",
+		"rounding per currency",
+	} {
+		if !strings.Contains(rows, want) {
+			t.Errorf("the pane does not say %q:\n%s", want, rows)
+		}
+	}
+
+	// It does not count as a warning: nothing here was checked, and a mark
+	// on the strip would read as one.
+	if got := m.impactMark(); got != "" {
+		t.Errorf("the agent's own account marked the strip with %q", got)
+	}
+}
+
+// TestTheAttemptThatStandsIsTheOneDrawn: a task run three times said this
+// three times, and the two before it are about work that was thrown away.
+func TestTheAttemptThatStandsIsTheOneDrawn(t *testing.T) {
+	m := reading(t, repo.Impact{Changed: []string{"pricing.py"}})
+	m.entries = []view.Entry{
+		{Kind: "task.delta", Delta: &view.Delta{Needs: []string{"the first attempt said this"}}},
+		{Kind: "task.delta", Delta: &view.Delta{Needs: []string{"and the one that stands says this"}}},
+	}
+
+	if got := m.lastDelta(); got == nil || got.Needs[0] != "and the one that stands says this" {
+		t.Errorf("the pane draws %+v", got)
 	}
 }

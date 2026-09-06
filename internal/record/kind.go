@@ -131,6 +131,19 @@ const (
 	// sits beside the events that would refute it.
 	TaskStory = "task.story"
 
+	// TaskDelta is what the change asks of its callers and what it promises
+	// them, as the engine that wrote it says: the preconditions it added,
+	// the guarantees it now holds, what it assumed about the world around
+	// it, and the alternatives it discarded with the reason.
+	//
+	// It is the engine's claim about its own work and nothing verified it.
+	// That is not a flaw to be fixed by checking it — nothing can check
+	// "assumes UTC timestamps" — it is what the field is, and every reader
+	// of it says so. What makes it worth keeping is that the discarded
+	// alternatives exist nowhere else: the moment the run ends they are
+	// gone, and the next person to touch that code pays to rediscover them.
+	TaskDelta = "task.delta"
+
 	PhaseStarted = "phase.started" // Data carries engine, model, n, and the permissions the phase was given
 	// PhaseFinished ends a phase that ran through. Text is what the engine
 	// printed, and Data carries what it spent doing so: cost where the
