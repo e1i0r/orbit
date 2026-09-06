@@ -241,3 +241,24 @@ func ctrlLetter(msg tea.KeyPressMsg, letter rune) bool {
 
 	return unicode.ToLower(code) == letter
 }
+
+// briefQuestion is what /brief asks, in the reader's own language.
+//
+// It is a question typed for somebody rather than a report Orbit writes: the
+// answer is the supervisor's, at the length the question deserves, and it is
+// asked in the language the screen is in because that is the language the
+// answer has to come back in. Whatever was written after the word narrows
+// it — "/brief the coverage" is still this question, about that.
+func (m Model) briefQuestion(narrower string) string {
+	p := m.opts.Words
+
+	asked := p.T("supervisor.brief_ask",
+		"What happened while I was away? Which tasks ran, how did each one end, "+
+			"which checks passed and which failed? Say plainly what is verified and what is your reading.")
+
+	if narrower = strings.TrimSpace(narrower); narrower != "" {
+		asked += " " + p.T("supervisor.brief_about", "In particular: {about}", about("about", narrower))
+	}
+
+	return asked
+}

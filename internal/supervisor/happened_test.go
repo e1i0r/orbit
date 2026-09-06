@@ -98,3 +98,14 @@ func TestTheAnswerIsAskedToKeepVerifiedApartFromItsOwnReading(t *testing.T) {
 		t.Error("the contract does not ask it to mark what is its own reading")
 	}
 }
+
+// TestTheAnswerFollowsTheLanguageTheQuestionWasAskedIn. The record and this
+// prompt are in English because that is what the log is written in; the
+// person reading the answer asked in Spanish.
+func TestTheAnswerFollowsTheLanguageTheQuestionWasAskedIn(t *testing.T) {
+	asked := buildSupervisorPrompt("", nil, "¿qué pasó mientras no estaba?")
+
+	if !strings.Contains(asked, "Answer in the language the operator wrote in") {
+		t.Error("the contract does not ask it to answer in the language it was asked in")
+	}
+}

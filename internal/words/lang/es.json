@@ -4240,6 +4240,18 @@
     "known.learned": {
       "source": "· learned",
       "value": "· aprendido"
+    },
+    "supervisor.brief_ask": {
+      "source": "What happened while I was away? Which tasks ran, how did each one end, which checks passed and which failed? Say plainly what is verified and what is your reading.",
+      "value": "¿Qué pasó mientras no estaba? ¿Qué tareas corrieron, cómo terminó cada una, qué checks pasaron y cuáles fallaron? Di claramente qué está verificado y qué es lectura tuya."
+    },
+    "supervisor.brief_about": {
+      "source": "In particular: {about}",
+      "value": "En particular: {about}"
+    },
+    "complete.brief": {
+      "source": "what happened while you were away, from the record",
+      "value": "qué pasó mientras no estabas, según el registro"
     }
   }
 }

@@ -55,6 +55,7 @@ func (m Model) gestures() []completion {
 		{ruleWord + " " + generalFlag, p.T("complete.rule_general", "a rule for every repository")},
 		{awareWord + " " + generalFlag, p.T("complete.aware_general", "for every repository")},
 		{awareWord + " " + langFlag, p.T("complete.aware_lang", "for one language: {flag} go", about("flag", langFlag))},
+		{briefWord, p.T("complete.brief", "what happened while you were away, from the record")},
 		{chatsWord, p.T("complete.chats", "the conversations, by what started each one")},
 		{newWord, p.T("complete.new", "start a conversation of its own")},
 	}

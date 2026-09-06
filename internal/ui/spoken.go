@@ -34,6 +34,12 @@ const (
 	// gesture nobody can reach. A word typed into the line always arrives.
 	saidChats
 	saidNew
+	// saidBrief is the question somebody comes back with, asked for them:
+	// what happened, how did it end, what passed. It is a gesture and not a
+	// digest Orbit writes on its own — what comes back is the supervisor's
+	// answer, at the length the question deserves, and anything after the
+	// word narrows it.
+	saidBrief
 	// saidNothing is a gesture nobody finished typing. It is not an empty
 	// rule and not an empty message: it is a line to do nothing with.
 	saidNothing
@@ -45,6 +51,7 @@ const (
 	awareWord = "/aware"
 	chatsWord = "/chats"
 	newWord   = "/new"
+	briefWord = "/brief"
 	atWord    = "@"
 
 	generalFlag = "--general"
@@ -78,6 +85,8 @@ func parseSaid(text string) spoken {
 		return fact(saidRule, rest(said, ruleWord))
 	case word(said, awareWord):
 		return fact(saidAware, rest(said, awareWord))
+	case word(said, briefWord):
+		return spoken{Kind: saidBrief, Phrase: rest(said, briefWord)}
 	case word(said, chatsWord):
 		return spoken{Kind: saidChats}
 	case word(said, newWord):

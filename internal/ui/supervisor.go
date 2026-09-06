@@ -192,6 +192,13 @@ func (m Model) sendSupervisorMessage(text string) (Model, tea.Cmd) {
 	// before anything is sent: a rule is not a message the supervisor has to
 	// interpret, it is a fact to write down. spoken.go is the whole grammar.
 	if said := parseSaid(text); said.Kind != saidMessage {
+		// /brief is a question and not an action: it is sent the way a
+		// typed sentence is, so the answer lands in the thread where the
+		// person who asked will look for it.
+		if said.Kind == saidBrief {
+			return m.sendSupervisorMessage(m.briefQuestion(said.Phrase))
+		}
+
 		return m.act(said), nil
 	}
 

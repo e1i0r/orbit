@@ -210,3 +210,47 @@ func TestTheControlKeysAreTakenInEveryShapeATerminalSendsThem(t *testing.T) {
 		}
 	}
 }
+
+// TestBriefAsksTheQuestionForYou, in the reader's own language, and sends it
+// the way a typed sentence is sent so the answer lands in the thread.
+func TestBriefAsksTheQuestionForYou(t *testing.T) {
+	m, _ := twoConversations(t)
+
+	said := ""
+	m.opts.RecordSupervisor = func(conversation, by, channel, message string) error {
+		said = message
+
+		return nil
+	}
+
+	asked := ""
+	m.opts.AskSupervisor = func(engineName, conversation, prompt string) (string, error) {
+		asked = prompt
+
+		return "", nil
+	}
+
+	next, cmd := m.sendSupervisorMessage("/brief")
+	if cmd == nil {
+		t.Fatal("/brief asked nothing")
+	}
+
+	cmd()
+
+	if !strings.Contains(said, "What happened") || said != asked {
+		t.Errorf("the thread got %q and the engine %q", said, asked)
+	}
+
+	if !next.supervisorBusy {
+		t.Error("the window does not say it is waiting on an answer")
+	}
+
+	// What follows the word narrows the question rather than replacing it.
+	if _, cmd = m.sendSupervisorMessage("/brief the coverage on ACME-1"); cmd != nil {
+		cmd()
+	}
+
+	if !strings.Contains(said, "In particular: the coverage on ACME-1") {
+		t.Errorf("the narrowed question is %q", said)
+	}
+}

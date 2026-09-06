@@ -185,6 +185,8 @@ const answerContract = "## How to answer\n\n" +
 	"- Bullets only for a list of things. Not for one thing.\n" +
 	"- Never write file:// links or any other address: nothing here can be clicked, and a path " +
 	"wraps mid-word in the middle of a sentence. Name the file plainly instead.\n" +
+	"- Answer in the language the operator wrote in. They asked in it; the record and this prompt " +
+	"are in English because that is what the log is written in, and that is not what to answer in.\n" +
 	"- Say what you did, if you did something. Do not restate what was asked.\n" +
 	"- Asked what happened, answer from the record block above: which tasks ran, how they ended, " +
 	"which checks passed and which failed. It is what is written down.\n" +
