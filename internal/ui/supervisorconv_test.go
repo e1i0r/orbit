@@ -149,3 +149,64 @@ func TestRemovingAConversationTakesItOffTheListAndSaysTheRecordKeepsIt(t *testin
 		t.Errorf("the bar says %q, want it to say the record still has it", m.message)
 	}
 }
+
+// TestTheConversationsAreReachableByGestureAsWellAsByKey.
+//
+// This screen is a text field: every printable key types into it, so a key
+// needs a modifier — and a terminal that decides not to deliver one leaves
+// the gesture unreachable. A word typed into the line always arrives.
+func TestTheConversationsAreReachableByGestureAsWellAsByKey(t *testing.T) {
+	m, _ := twoConversations(t)
+
+	listed, _ := m.sendSupervisorMessage("/chats")
+	if !listed.supervisor.list || listed.supervisor.input != "" {
+		t.Errorf("/chats left list=%v input=%q", listed.supervisor.list, listed.supervisor.input)
+	}
+
+	fresh, _ := m.sendSupervisorMessage("/new")
+	if fresh.supervisor.conversation != "c3" {
+		t.Errorf("/new opened %q", fresh.supervisor.conversation)
+	}
+
+	// And both are offered while the word is being typed.
+	m.supervisor.input = "/"
+
+	var found int
+
+	for _, c := range m.completions() {
+		if c.Text == chatsWord || c.Text == newWord {
+			found++
+		}
+	}
+
+	if found != 2 {
+		t.Errorf("the completion list offers %d of the two conversation gestures", found)
+	}
+}
+
+// TestTheControlKeysAreTakenInEveryShapeATerminalSendsThem, the bare control
+// code included: a terminal speaking no modifier protocol sends 0x0C for ^L
+// and sets no modifier at all.
+func TestTheControlKeysAreTakenInEveryShapeATerminalSendsThem(t *testing.T) {
+	shapes := []tea.KeyPressMsg{
+		{Code: 'l', Mod: tea.ModCtrl},
+		{Code: 'L', Mod: tea.ModCtrl},
+		{Code: 'l', Mod: tea.ModCtrl | tea.ModShift},
+		{Code: 12},
+	}
+
+	for _, k := range shapes {
+		m, _ := twoConversations(t)
+
+		next, _ := m.supervisorKey(k)
+
+		after := asModel(t, next)
+		if !after.supervisor.list {
+			t.Errorf("%v did not open the conversations", k)
+		}
+
+		if after.supervisor.input != "" {
+			t.Errorf("%v typed %q into the line", k, after.supervisor.input)
+		}
+	}
+}

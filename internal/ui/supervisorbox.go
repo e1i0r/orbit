@@ -39,7 +39,7 @@ func (m Model) drawSupervisorInput(cw int) []string {
 		}
 	}
 
-	ways := p.T("supervisor.ways_out2", "[↵] send · [shift+↵] newline · [^L] conversations · [^N] new · [^R] retract · [^V] paste · [esc] back",
+	ways := p.T("supervisor.ways_out3", "[↵] send · [shift+↵] newline · /chats or [ctrl+L] · /new or [ctrl+N] · [ctrl+R] retract · [ctrl+V] paste · [esc] back",
 		about("up_down", m.keys.Up.Help().Key+m.keys.Down.Help().Key))
 
 	return append(m.inputLines(cw), "", Paint(Dim).Render(ways))

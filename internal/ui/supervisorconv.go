@@ -16,6 +16,7 @@ package ui
 import (
 	"strings"
 	"time"
+	"unicode"
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
@@ -212,4 +213,31 @@ func (m Model) conversationKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, nil
+}
+
+// clearedLine takes the gesture out of the line it was typed into, which
+// every other gesture does through the thread being redrawn.
+func (m Model) clearedLine() Model {
+	m.supervisor.input = ""
+
+	return m
+}
+
+// ctrlLetter is whether a key is control and this letter, in the shapes a
+// terminal may deliver it in: the letter with the modifier set, either case,
+// or the control code itself — 0x0C for ^L — which is what a terminal
+// speaking no modifier protocol sends and where the modifier is not set at
+// all.
+func ctrlLetter(msg tea.KeyPressMsg, letter rune) bool {
+	code := msg.Code
+
+	if code == letter-'a'+1 {
+		return true
+	}
+
+	if msg.Mod&tea.ModCtrl == 0 {
+		return false
+	}
+
+	return unicode.ToLower(code) == letter
 }

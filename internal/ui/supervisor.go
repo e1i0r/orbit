@@ -125,9 +125,9 @@ func (m Model) supervisorKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.abandonSupervisor(), nil
 	case (msg.Code == 'r' || msg.Code == 'R') && msg.Mod&tea.ModCtrl != 0:
 		return m.startPicking(), nil
-	case (msg.Code == 'l' || msg.Code == 'L') && msg.Mod&tea.ModCtrl != 0:
+	case ctrlLetter(msg, 'l'):
 		return m.openConversationList(), nil
-	case (msg.Code == 'n' || msg.Code == 'N') && msg.Mod&tea.ModCtrl != 0:
+	case ctrlLetter(msg, 'n'):
 		return m.startConversation(), nil
 	case msg.Code == tea.KeyUp:
 		return m.scrollThread(-1), nil

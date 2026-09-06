@@ -4169,10 +4169,6 @@
         "other": "{n} más"
       }
     },
-    "supervisor.ways_out2": {
-      "source": "[↵] send · [shift+↵] newline · [^L] conversations · [^N] new · [^R] retract · [^V] paste · [esc] back",
-      "value": "[↵] enviar · [shift+↵] nueva línea · [^L] conversaciones · [^N] nueva · [^R] retirar · [^V] pegar · [esc] volver"
-    },
     "supervisor.no_new": {
       "source": "this build cannot start a conversation",
       "value": "esta build no puede empezar una conversación"
@@ -4192,10 +4188,6 @@
     "supervisor.list_note": {
       "source": "a conversation is disposable: what is worth keeping went to what Orbit knows when you said /rule or /aware",
       "value": "una conversación es desechable: lo que valía la pena se fue a lo que Orbit sabe cuando dijiste /rule o /aware"
-    },
-    "supervisor.list_ways": {
-      "source": "[↑↓] pick · [↵] open · [d] remove from the list · [^N] new · [esc] back",
-      "value": "[↑↓] elegir · [↵] abrir · [d] quitar de la lista · [^N] nueva · [esc] volver"
     },
     "supervisor.conversations": {
       "source": "Conversations",
@@ -4228,6 +4220,22 @@
         "one": "{n} mensaje",
         "other": "{n} mensajes"
       }
+    },
+    "supervisor.ways_out3": {
+      "source": "[↵] send · [shift+↵] newline · /chats or [ctrl+L] · /new or [ctrl+N] · [ctrl+R] retract · [ctrl+V] paste · [esc] back",
+      "value": "[↵] enviar · [shift+↵] nueva línea · /chats o [ctrl+L] · /new o [ctrl+N] · [ctrl+R] retirar · [ctrl+V] pegar · [esc] volver"
+    },
+    "supervisor.list_ways2": {
+      "source": "[↑↓] pick · [↵] open · [d] remove from the list · [ctrl+N] new · [esc] back",
+      "value": "[↑↓] elegir · [↵] abrir · [d] quitar de la lista · [ctrl+N] nueva · [esc] volver"
+    },
+    "complete.chats": {
+      "source": "the conversations, by what started each one",
+      "value": "las conversaciones, por lo que empezó cada una"
+    },
+    "complete.new": {
+      "source": "start a conversation of its own",
+      "value": "empezar una conversación aparte"
     }
   }
 }

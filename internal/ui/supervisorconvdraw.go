@@ -96,7 +96,7 @@ func (m Model) conversationWays() []string {
 		Paint(Dim).Render(p.T("supervisor.list_note",
 			"a conversation is disposable: what is worth keeping went to what Orbit knows when you said /rule or /aware")),
 		"",
-		Paint(Dim).Render(p.T("supervisor.list_ways",
-			"[↑↓] pick · [↵] open · [d] remove from the list · [^N] new · [esc] back")),
+		Paint(Dim).Render(p.T("supervisor.list_ways2",
+			"[↑↓] pick · [↵] open · [d] remove from the list · [ctrl+N] new · [esc] back")),
 	}
 }

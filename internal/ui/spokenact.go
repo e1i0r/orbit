@@ -13,6 +13,10 @@ func (m Model) act(said spoken) Model {
 		return m.learn(said)
 	case saidNote:
 		return m.noteOn(said)
+	case saidChats:
+		return m.openConversationList().clearedLine()
+	case saidNew:
+		return m.startConversation()
 	default:
 		// A gesture nobody finished typing. Saying nothing back would look
 		// like the window had swallowed it.
