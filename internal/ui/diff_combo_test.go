@@ -9,11 +9,12 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/patch"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
 func TestDiffSelectRenderAndMouseHit(t *testing.T) {
-	files := []diffFile{
+	files := []patch.File{
 		{Path: "internal/ui/badge.go", StartLine: 10, Added: 5, Deleted: 2, Status: "M"},
 		{Path: "internal/ui/screen.go", StartLine: 35, Added: 12, Deleted: 0, Status: "M"},
 	}
@@ -66,9 +67,9 @@ func TestDiffSelectRenderAndMouseHit(t *testing.T) {
 // said nothing about the other twelve: the reader learned they were there by
 // holding the arrow key down.
 func TestTheFilePickerSaysThereIsMore(t *testing.T) {
-	var files []diffFile
+	var files []patch.File
 	for i := range 19 {
-		files = append(files, diffFile{Path: fmt.Sprintf("internal/ui/file%d.go", i), Status: "MODIFIED"})
+		files = append(files, patch.File{Path: fmt.Sprintf("internal/ui/file%d.go", i), Status: "MODIFIED"})
 	}
 
 	open := ansi.Strip(renderDiffFileSelect(files, 0, 100, words.For("en"), nil, true, 0))

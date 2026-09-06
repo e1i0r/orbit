@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+	"github.com/e1i0r/orbit/internal/ui/patch"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -20,9 +21,9 @@ func diffSummaryHeader(count, totalAdd, totalDel int, navHelp string, p *words.P
 }
 
 // diffCardTop renders the top card boundary and metadata for a single file.
-func diffCardTop(f diffFile, idx, total, width int, p *words.Printer, isCollapsed bool) string {
-	icon := fileIcon(f.Path)
-	badge := formatFileBadge(f.Status)
+func diffCardTop(f patch.File, idx, total, width int, p *words.Printer, isCollapsed bool) string {
+	icon := patch.Icon(f.Path)
+	badge := patch.Badge(f.Status)
 	stats := fmt.Sprintf("%s %s",
 		theme.Paint(theme.OK).Render(fmt.Sprintf("+%d", f.Added)),
 		theme.Paint(theme.Bad).Render(fmt.Sprintf("-%d", f.Deleted)))
@@ -78,7 +79,7 @@ func diffCardDivider(width int) string {
 
 // diffHunkLine renders the styled hunk header with branch line.
 func diffHunkLine(line string) string {
-	return "  " + theme.Paint(theme.Accent).Bold(true).Render("│"+formatHunkHeader(line))
+	return "  " + theme.Paint(theme.Accent).Bold(true).Render("│"+patch.HunkHeader(line))
 }
 
 // diffContentLines renders a diff content line, wrapping across rows if wrapLines is true.

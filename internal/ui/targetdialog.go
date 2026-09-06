@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/patch"
 )
 
 // Dialog and subscreen hit detection: task detail, start dialog, settings, repos, compose.
@@ -36,7 +38,7 @@ func (m Model) hitDetail(x, y int) Target {
 	case m.tab == tabDiff:
 		raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
 
-		files := parseDiffFiles(raw)
+		files := patch.Files(raw)
 		if len(files) > 0 {
 			if !m.diffFilePicker {
 				if line >= bodyStart && line <= bodyStart+2 {

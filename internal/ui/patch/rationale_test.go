@@ -1,4 +1,4 @@
-package ui
+package patch
 
 import (
 	"strings"
@@ -9,7 +9,7 @@ import (
 )
 
 func TestExtractFileRationales(t *testing.T) {
-	files := []diffFile{
+	files := []File{
 		{Path: "internal/ui/badge.go", Status: "NEW"},
 		{Path: "internal/ui/badge_test.go", Status: "NEW"},
 	}
@@ -24,7 +24,7 @@ func TestExtractFileRationales(t *testing.T) {
 
 	p := words.For("en")
 
-	rationales := extractFileRationales(entries, files, p)
+	rationales := Rationales(entries, files, p)
 	if len(rationales) != 2 {
 		t.Fatalf("expected 2 rationales, got %d", len(rationales))
 	}

@@ -3,12 +3,13 @@ package ui
 import (
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/ui/patch"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
 // formatStructuredDiff renders a rich, scalable diff view with file cards, hunk tags, LLM rationale, and collapse states.
-func formatStructuredDiff(diffText string, width int, p *words.Printer, rationales map[string]string, showRationale bool, collapsed map[string]bool, wrapLines bool) ([]string, []diffFile) {
+func formatStructuredDiff(diffText string, width int, p *words.Printer, rationales map[string]string, showRationale bool, collapsed map[string]bool, wrapLines bool) ([]string, []patch.File) {
 	text := strings.TrimSuffix(diffText, "\n")
 	if strings.TrimSpace(text) == "" {
 		return []string{" " + theme.Paint(theme.Dim).Render(p.T("diff.unchanged", "no changes in this task's worktree"))}, nil
@@ -16,7 +17,7 @@ func formatStructuredDiff(diffText string, width int, p *words.Printer, rational
 
 	raw := strings.Split(text, "\n")
 
-	files := parseDiffFiles(raw)
+	files := patch.Files(raw)
 	if len(files) == 0 {
 		out := make([]string, 0, len(raw))
 		for _, line := range raw {
@@ -26,7 +27,7 @@ func formatStructuredDiff(diffText string, width int, p *words.Printer, rational
 		return out, files
 	}
 
-	totalAdd, totalDel := diffStats(files)
+	totalAdd, totalDel := patch.Stats(files)
 	out := make([]string, 0, len(raw)+len(files)*6)
 
 	summary := diffSummaryHeader(len(files), totalAdd, totalDel,

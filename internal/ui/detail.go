@@ -21,6 +21,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/patch"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -66,7 +67,7 @@ func (m Model) detailTop(h, w int) []string {
 	if m.tab == tabDiff && m.diffKnown && m.diffErr == nil {
 		raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
 
-		files := parseDiffFiles(raw)
+		files := patch.Files(raw)
 		if len(files) > 0 {
 			activeIdx := fileIndexAtOffset(files, m.panes[tabDiff].YOffset())
 

@@ -1,4 +1,4 @@
-package ui
+package patch
 
 import (
 	"path/filepath"
@@ -11,9 +11,9 @@ import (
 	"github.com/e1i0r/orbit/internal/words"
 )
 
-// extractFileRationales analyzes task entries and reports to extract the LLM's
+// Rationales analyzes task entries and reports to extract the LLM's
 // decisions and rationale for each modified file.
-func extractFileRationales(entries []view.Entry, files []diffFile, p *words.Printer) map[string]string {
+func Rationales(entries []view.Entry, files []File, p *words.Printer) map[string]string {
 	rationales := make(map[string]string)
 	if len(files) == 0 {
 		return rationales
@@ -36,7 +36,7 @@ func extractFileRationales(entries []view.Entry, files []diffFile, p *words.Prin
 					}
 
 					if strings.Contains(trimmed, f.Path) || strings.Contains(trimmed, filepath.Base(f.Path)) {
-						if reason := extractReasonFromLine(trimmed); reason != "" {
+						if reason := reasonFromLine(trimmed); reason != "" {
 							rationales[f.Path] = reason
 						}
 					}
@@ -48,14 +48,14 @@ func extractFileRationales(entries []view.Entry, files []diffFile, p *words.Prin
 	// 2. Fallback rationale based on file status and extension
 	for _, f := range files {
 		if rationales[f.Path] == "" {
-			rationales[f.Path] = fallbackRationale(f, p)
+			rationales[f.Path] = fallback(f, p)
 		}
 	}
 
 	return rationales
 }
 
-func extractReasonFromLine(line string) string {
+func reasonFromLine(line string) string {
 	line = strings.TrimPrefix(line, "•")
 	line = strings.TrimPrefix(line, "-")
 	line = strings.TrimPrefix(line, "*")
@@ -66,20 +66,20 @@ func extractReasonFromLine(line string) string {
 		if len(parts) == 2 {
 			after := strings.TrimSpace(parts[1])
 			if lipgloss.Width(after) > 10 {
-				return cleanRationale(after)
+				return clean(after)
 			}
 		}
 	}
 
 	w := lipgloss.Width(line)
 	if w > 15 && w < 160 {
-		return cleanRationale(line)
+		return clean(line)
 	}
 
 	return ""
 }
 
-func cleanRationale(text string) string {
+func clean(text string) string {
 	text = strings.TrimSpace(text)
 
 	text = strings.Trim(text, "`\"'")
@@ -90,7 +90,7 @@ func cleanRationale(text string) string {
 	return text
 }
 
-func fallbackRationale(f diffFile, p *words.Printer) string {
+func fallback(f File, p *words.Printer) string {
 	base := filepath.Base(f.Path)
 	switch {
 	case strings.HasSuffix(base, "_test.go") || strings.Contains(base, ".test."):

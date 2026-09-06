@@ -28,6 +28,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/patch"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -83,8 +84,8 @@ func (m Model) diffRows() ([]string, map[int]int) {
 		return []string{" " + theme.Paint(theme.Dim).Render(p.T("diff.unchanged", "no changes in this task's worktree"))}, nil
 	}
 
-	files := parseDiffFiles(strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n"))
-	rationales := extractFileRationales(m.entries, files, p)
+	files := patch.Files(strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n"))
+	rationales := patch.Rationales(m.entries, files, p)
 	lines, drawn := formatStructuredDiff(m.diff, m.width, p, rationales, !m.hideDiffRationale, m.collapsedFiles, m.expandedDetail)
 
 	// Where each card landed, taken from the pass that drew it rather than

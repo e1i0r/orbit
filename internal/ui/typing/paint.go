@@ -1,4 +1,4 @@
-package ui
+package typing
 
 import (
 	"strings"
@@ -22,7 +22,7 @@ const (
 	cellCaret
 )
 
-// paintCells draws one line, given the stretch of it that is selected and
+// PaintCells draws one line, given the stretch of it that is selected and
 // the column the caret is on, both in the line's own columns. A caret of -1
 // is a line the caret is not on; a caret one past the last character is a
 // block drawn after the text, which is where a reader typing at the end of
@@ -31,7 +31,7 @@ const (
 // Cells of a kind are painted in one go rather than one at a time, so a
 // line comes out carrying a handful of escapes rather than one per
 // character.
-func paintCells(line string, from, to, caret int, paint func(string) string) string {
+func PaintCells(line string, from, to, caret int, paint func(string) string) string {
 	rs := []rune(line)
 	if caret == len(rs) {
 		rs = append(rs, ' ')

@@ -80,7 +80,7 @@ func (m Model) composeBoxLines(in typing.Field, innerW int, active bool, placeho
 				caret = in.At - s.From
 			}
 
-			line = paintCells(line, from-s.From, to-s.From, caret, unpainted)
+			line = typing.PaintCells(line, from-s.From, to-s.From, caret, unpainted)
 		}
 
 		out = append(out, line)
@@ -89,7 +89,7 @@ func (m Model) composeBoxLines(in typing.Field, innerW int, active bool, placeho
 	if len(rs) == 0 {
 		out = []string{placeholder}
 		if active {
-			out = []string{paintCells("", 0, 0, 0, unpainted) + placeholder}
+			out = []string{typing.PaintCells("", 0, 0, 0, unpainted) + placeholder}
 		}
 	}
 

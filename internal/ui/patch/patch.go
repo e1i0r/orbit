@@ -1,4 +1,4 @@
-package ui
+package patch
 
 import (
 	"strings"
@@ -6,8 +6,8 @@ import (
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
-// diffFile is one file's structured metadata inside a git diff.
-type diffFile struct {
+// File is one file's structured metadata inside a git diff.
+type File struct {
 	Path      string
 	Status    string // "NEW", "MOD", "DEL"
 	Added     int
@@ -18,11 +18,11 @@ type diffFile struct {
 	Rationale string
 }
 
-// parseDiffFiles parses raw diff lines into structured files and hunks.
-func parseDiffFiles(lines []string) []diffFile {
+// Files parses raw diff lines into structured files and hunks.
+func Files(lines []string) []File {
 	var (
-		files []diffFile
-		cur   *diffFile
+		files []File
+		cur   *File
 	)
 
 	for i, s := range lines {
@@ -32,7 +32,7 @@ func parseDiffFiles(lines []string) []diffFile {
 				files = append(files, *cur)
 			}
 
-			cur = &diffFile{
+			cur = &File{
 				Status:    "MOD",
 				StartLine: i,
 				Hunks:     make([]int, 0),
@@ -76,8 +76,8 @@ func parseDiffFiles(lines []string) []diffFile {
 	return files
 }
 
-// diffStats computes aggregate metrics across all parsed files.
-func diffStats(files []diffFile) (totalAdded, totalDeleted int) {
+// Stats computes aggregate metrics across all parsed files.
+func Stats(files []File) (totalAdded, totalDeleted int) {
 	for _, f := range files {
 		totalAdded += f.Added
 		totalDeleted += f.Deleted
@@ -86,8 +86,8 @@ func diffStats(files []diffFile) (totalAdded, totalDeleted int) {
 	return totalAdded, totalDeleted
 }
 
-// formatFileBadge returns a styled status badge for a diff file.
-func formatFileBadge(status string) string {
+// Badge returns a styled status badge for a diff file.
+func Badge(status string) string {
 	switch status {
 	case "NEW":
 		return theme.Paint(theme.OK).Render("[NEW]")
@@ -98,8 +98,8 @@ func formatFileBadge(status string) string {
 	}
 }
 
-// fileIcon returns an emoji icon based on file extension.
-func fileIcon(path string) string {
+// Icon returns an emoji icon based on file extension.
+func Icon(path string) string {
 	switch {
 	case strings.HasSuffix(path, ".go"):
 		return "🔷"
@@ -120,8 +120,8 @@ func fileIcon(path string) string {
 	}
 }
 
-// formatHunkHeader parses hunk header line numbers: @@ -oldStart,oldLen +newStart,newLen @@.
-func formatHunkHeader(hunk string) string {
+// HunkHeader parses hunk header line numbers: @@ -oldStart,oldLen +newStart,newLen @@.
+func HunkHeader(hunk string) string {
 	parts := strings.SplitN(hunk, "@@", 3)
 	if len(parts) < 2 {
 		return hunk

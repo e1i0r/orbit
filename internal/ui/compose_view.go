@@ -155,7 +155,7 @@ func (m Model) composeFieldLine(fieldIdx int, label string, val typing.Field, pl
 	if val.Empty() {
 		line := prefix
 		if active {
-			line += paintCells("", 0, 0, 0, unpainted)
+			line += typing.PaintCells("", 0, 0, 0, unpainted)
 		}
 
 		return fit(line+theme.Paint(theme.Dim).Render(placeholder), w)
@@ -164,7 +164,7 @@ func (m Model) composeFieldLine(fieldIdx int, label string, val typing.Field, pl
 	body := theme.Paint(theme.Accent).Render(val.String())
 	if active {
 		from, to := val.Selection()
-		body = paintCells(val.String(), from, to, val.At, func(s string) string { return theme.Paint(theme.Accent).Render(s) })
+		body = typing.PaintCells(val.String(), from, to, val.At, func(s string) string { return theme.Paint(theme.Accent).Render(s) })
 	}
 
 	return fit(prefix+body, w)

@@ -6,12 +6,13 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
+	"github.com/e1i0r/orbit/internal/ui/patch"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
 // renderDiffFileSelect renders an HTML-like dropdown / select component for changed files.
-func renderDiffFileSelect(files []diffFile, activeIdx int, width int, p *words.Printer, collapsed map[string]bool, isOpen bool, cursorIdx int) string {
+func renderDiffFileSelect(files []patch.File, activeIdx int, width int, p *words.Printer, collapsed map[string]bool, isOpen bool, cursorIdx int) string {
 	if len(files) == 0 {
 		return ""
 	}
@@ -25,8 +26,8 @@ func renderDiffFileSelect(files []diffFile, activeIdx int, width int, p *words.P
 		}
 
 		curr := files[activeIdx]
-		icon := fileIcon(curr.Path)
-		badge := formatFileBadge(curr.Status)
+		icon := patch.Icon(curr.Path)
+		badge := patch.Badge(curr.Status)
 		stats := fmt.Sprintf("%s %s", theme.Paint(theme.OK).Render(fmt.Sprintf("+%d", curr.Added)), theme.Paint(theme.Bad).Render(fmt.Sprintf("-%d", curr.Deleted)))
 
 		collapseTag := ""
@@ -102,8 +103,8 @@ func renderDiffFileSelect(files []diffFile, activeIdx int, width int, p *words.P
 			cursor = theme.Paint(theme.Live).Bold(true).Render(" ▸ ")
 		}
 
-		icon := fileIcon(f.Path)
-		badge := formatFileBadge(f.Status)
+		icon := patch.Icon(f.Path)
+		badge := patch.Badge(f.Status)
 		stats := fmt.Sprintf("%s %s", theme.Paint(theme.OK).Render(fmt.Sprintf("+%d", f.Added)), theme.Paint(theme.Bad).Render(fmt.Sprintf("-%d", f.Deleted)))
 
 		colTag := ""

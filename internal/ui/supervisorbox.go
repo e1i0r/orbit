@@ -1,6 +1,8 @@
 package ui
 
-import "github.com/e1i0r/orbit/internal/ui/theme"
+import (
+	"github.com/e1i0r/orbit/internal/ui/theme"
+)
 
 // The pieces one message and the input line are drawn out of.
 

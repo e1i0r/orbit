@@ -7,7 +7,9 @@ package ui
 // say about. Tab, the mouse and the draw all read this one list, so a field
 // that appears cannot appear in one of them and not the others.
 
-import "slices"
+import (
+	"slices"
+)
 
 // fieldsShown is every field of the form, in the order it is drawn.
 func (st *flowsState) fieldsShown() []int {

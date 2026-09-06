@@ -146,7 +146,7 @@ var layers = map[string][]string{
 	// somebody is about to write sits beside the ones already standing. It
 	// is a type and a read — the facts arrive through a port, because
 	// reaching the state root to load them is what the window may not do.
-	"internal/ui": {"internal/board", "internal/flow", "internal/knowledge", "internal/logger", "internal/repo", "internal/task", "internal/tracker", "internal/ui/clip", "internal/ui/keymap", "internal/ui/layout", "internal/ui/prompt", "internal/ui/spoken", "internal/ui/theme", "internal/ui/typing", "internal/ui/upgrade", "internal/view", "internal/words"},
+	"internal/ui": {"internal/board", "internal/flow", "internal/knowledge", "internal/logger", "internal/repo", "internal/task", "internal/tracker", "internal/ui/clip", "internal/ui/keymap", "internal/ui/layout", "internal/ui/patch", "internal/ui/prompt", "internal/ui/spoken", "internal/ui/theme", "internal/ui/typing", "internal/ui/upgrade", "internal/view", "internal/words"},
 	// internal/ui/layout is widened to internal/view for one reason:
 	// layout.Columns plans a row's columns from the board it is about to
 	// draw, and the board is []view.Task. It is a widening, and it was
@@ -183,6 +183,11 @@ var layers = map[string][]string{
 	// be done to it; doing any of it is the window's, which is why nothing
 	// here reaches the record or the store.
 	"internal/ui/keymap": {"internal/view", "internal/words"},
+	// internal/ui/patch is a diff read: which files it touches, how much of
+	// each, and what the record says the change to each was for. It reads
+	// text git wrote and says what is in it; what to draw of that is the
+	// window's.
+	"internal/ui/patch":  {"internal/ui/theme", "internal/view", "internal/words"},
 	"internal/ui/prompt": {},
 	// internal/ui/spoken is a line the operator typed into the supervisor,
 	// taken apart: which of the gestures it is, what it is about, and what
@@ -197,7 +202,7 @@ var layers = map[string][]string{
 	// why 79 files could start naming it without anything moving the other
 	// way.
 	"internal/ui/theme":  {},
-	"internal/ui/typing": {},
+	"internal/ui/typing": {"internal/ui/theme"},
 	// internal/ui/upgrade asks GitHub what the newest release is and says
 	// whether it is worth offering. It is the one package under
 	// internal/ui that talks to the network, which is the reason it is its

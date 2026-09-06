@@ -14,6 +14,8 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/patch"
 )
 
 // hold is the button that is down and the cell it went down on.
@@ -250,7 +252,7 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		m.diffFilePicker = !m.diffFilePicker
 		if m.diffFilePicker {
 			raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
-			files := parseDiffFiles(raw)
+			files := patch.Files(raw)
 			m.diffFileCursor = fileIndexAtOffset(files, m.panes[tabDiff].YOffset())
 		}
 
@@ -258,7 +260,7 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 	case TargetDiffFile:
 		raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
 
-		files := parseDiffFiles(raw)
+		files := patch.Files(raw)
 		if t.Pane >= 0 && t.Pane < len(files) {
 			m.panes[tabDiff].SetYOffset(files[t.Pane].StartLine)
 			m.diffFilePicker = false
