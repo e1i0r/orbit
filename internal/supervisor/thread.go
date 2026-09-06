@@ -18,8 +18,43 @@ import (
 	"github.com/e1i0r/orbit/internal/store"
 )
 
-// Record appends an event to the global supervisor conversation log.
+// Record appends an event to the conversation the thread is on.
+//
+// Which one that is, when nobody says, is the newest that has not been
+// removed — so a line written from the command line or through the tools
+// lands where the reader was last talking rather than opening a conversation
+// they never started.
 func Record(s *store.Store, kind, by, channel, taskID, repo, text string) error {
+	if s == nil {
+		return fmt.Errorf("store cannot be nil")
+	}
+
+	conversation, err := Current(s)
+	if err != nil {
+		return err
+	}
+
+	return RecordIn(s, conversation, kind, by, channel, taskID, repo, text)
+}
+
+// Current is the conversation a line goes into when nobody names one: the
+// newest still on the list, and a fresh one when there is nothing to carry
+// on.
+func Current(s *store.Store) (string, error) {
+	events, err := Events(s)
+	if err != nil {
+		return "", err
+	}
+
+	if open := Conversations(events); len(open) > 0 {
+		return open[0].ID, nil
+	}
+
+	return NewID(time.Now().UTC()), nil
+}
+
+// RecordIn appends a turn to the conversation it names.
+func RecordIn(s *store.Store, conversation, kind, by, channel, taskID, repo, text string) error {
 	if s == nil {
 		return fmt.Errorf("store cannot be nil")
 	}
@@ -49,6 +84,12 @@ func Record(s *store.Store, kind, by, channel, taskID, repo, text string) error 
 	if repo = strings.TrimSpace(repo); repo != "" {
 		data["repo"] = repo
 	}
+
+	// Written even when it is empty, which is the thread that came before
+	// conversations had ids: a turn with no key at all and a turn that
+	// belongs to that first thread are the same fact, and saying it out
+	// loud is what keeps the two from drifting apart.
+	data["conversation"] = strings.TrimSpace(conversation)
 
 	e := record.Event{
 		At:   time.Now().UTC(),

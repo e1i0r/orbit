@@ -14,7 +14,7 @@ func typing(t *testing.T, input string) Model {
 	t.Helper()
 
 	m, _ := testModel(t, 100, 30)
-	m.opts.RecordSupervisor = func(string, string, string) error { return nil }
+	m.opts.RecordSupervisor = func(string, string, string, string) error { return nil }
 	m = m.openSupervisor()
 	m.supervisor.input = input
 
@@ -119,7 +119,7 @@ func TestEnterTakesTheOfferRatherThanSending(t *testing.T) {
 	m := typing(t, "/ru")
 
 	sent := false
-	m.opts.RecordSupervisor = func(string, string, string) error {
+	m.opts.RecordSupervisor = func(string, string, string, string) error {
 		sent = true
 
 		return nil

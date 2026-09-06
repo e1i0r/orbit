@@ -15,7 +15,7 @@ func knowing(t *testing.T, w int, facts ...knowledge.Fact) Model {
 	t.Helper()
 
 	m, _ := testModel(t, w, 30)
-	m.opts.RecordSupervisor = func(string, string, string) error { return nil }
+	m.opts.RecordSupervisor = func(string, string, string, string) error { return nil }
 	m.opts.Knows = func() []knowledge.Fact { return facts }
 
 	return m.openSupervisor()

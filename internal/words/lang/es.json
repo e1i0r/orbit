@@ -3449,17 +3449,9 @@
       "source": "autopilot off",
       "value": "piloto automático apagado"
     },
-    "supervisor.msg_count": {
-      "source": "{n} messages",
-      "value": "{n} mensajes"
-    },
     "supervisor.placeholder": {
       "source": "type a briefing, question or standing directive...",
       "value": "escribe un briefing, consulta o directiva permanente..."
-    },
-    "supervisor.ways_out": {
-      "source": "[Shift+↵] newline · [↵] send · [esc] back · [↑↓] scroll · [^R] retract · [^V] paste",
-      "value": "[Shift+↵] nueva línea · [↵] enviar · [esc] volver · [↑↓] desplazar · [^R] retractar · [^V] pegar"
     },
     "supervisor.picking": {
       "source": "pick a line to take back",
@@ -4175,6 +4167,66 @@
       "value": {
         "one": "{n} más",
         "other": "{n} más"
+      }
+    },
+    "supervisor.ways_out2": {
+      "source": "[↵] send · [shift+↵] newline · [^L] conversations · [^N] new · [^R] retract · [^V] paste · [esc] back",
+      "value": "[↵] enviar · [shift+↵] nueva línea · [^L] conversaciones · [^N] nueva · [^R] retirar · [^V] pegar · [esc] volver"
+    },
+    "supervisor.no_new": {
+      "source": "this build cannot start a conversation",
+      "value": "esta build no puede empezar una conversación"
+    },
+    "supervisor.started": {
+      "source": "new conversation — it takes its name from what you say first",
+      "value": "conversación nueva — toma su nombre de lo primero que digas"
+    },
+    "supervisor.removed": {
+      "source": "removed from the list — every line of it is still in the record",
+      "value": "fuera de la lista — cada línea sigue en el registro"
+    },
+    "supervisor.no_conversations": {
+      "source": "nothing has been said to the supervisor yet",
+      "value": "todavía no le has dicho nada al supervisor"
+    },
+    "supervisor.list_note": {
+      "source": "a conversation is disposable: what is worth keeping went to what Orbit knows when you said /rule or /aware",
+      "value": "una conversación es desechable: lo que valía la pena se fue a lo que Orbit sabe cuando dijiste /rule o /aware"
+    },
+    "supervisor.list_ways": {
+      "source": "[↑↓] pick · [↵] open · [d] remove from the list · [^N] new · [esc] back",
+      "value": "[↑↓] elegir · [↵] abrir · [d] quitar de la lista · [^N] nueva · [esc] volver"
+    },
+    "supervisor.conversations": {
+      "source": "Conversations",
+      "value": "Conversaciones"
+    },
+    "supervisor.today": {
+      "source": "today",
+      "value": "hoy"
+    },
+    "supervisor.yesterday": {
+      "source": "yesterday",
+      "value": "ayer"
+    },
+    "supervisor.conv_count": {
+      "source": {
+        "one": "{n} conversation",
+        "other": "{n} conversations"
+      },
+      "value": {
+        "one": "{n} conversación",
+        "other": "{n} conversaciones"
+      }
+    },
+    "supervisor.msg_count2": {
+      "source": {
+        "one": "{n} message",
+        "other": "{n} messages"
+      },
+      "value": {
+        "one": "{n} mensaje",
+        "other": "{n} mensajes"
       }
     }
   }

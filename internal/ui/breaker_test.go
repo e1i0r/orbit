@@ -34,7 +34,7 @@ func TestThreeStuckInARowTakeAutopilotOff(t *testing.T) {
 
 	var said string
 
-	m.opts.RecordSupervisor = func(_, _, message string) error {
+	m.opts.RecordSupervisor = func(_, _, _, message string) error {
 		said = message
 		return nil
 	}
@@ -81,7 +81,7 @@ func TestTheBreakerDoesNotTripTwiceOverTheSameBoard(t *testing.T) {
 	m.seen = true
 
 	lines := 0
-	m.opts.RecordSupervisor = func(_, _, _ string) error {
+	m.opts.RecordSupervisor = func(_, _, _, _ string) error {
 		lines++
 		return nil
 	}

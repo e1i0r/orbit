@@ -31,6 +31,26 @@ func Supervise(ctx context.Context, s *store.Store, eng engine.Engine, prompt st
 		return "", fmt.Errorf("store cannot be nil")
 	}
 
+	conversation, err := Current(s)
+	if err != nil {
+		return "", err
+	}
+
+	return SuperviseIn(ctx, s, eng, conversation, prompt)
+}
+
+// SuperviseIn is the same, told which conversation it is in.
+//
+// What the model is shown is that conversation and no other. The thread used
+// to be one list with no ends, so every answer carried every line anybody had
+// ever written — including the ones about a repository nobody has touched
+// since. What survives between conversations is what Orbit knows, which is
+// the point of writing a fact down rather than saying it.
+func SuperviseIn(ctx context.Context, s *store.Store, eng engine.Engine, conversation, prompt string) (string, error) {
+	if s == nil {
+		return "", fmt.Errorf("store cannot be nil")
+	}
+
 	if eng == nil {
 		return "", fmt.Errorf("engine cannot be nil")
 	}
@@ -53,7 +73,7 @@ func Supervise(ctx context.Context, s *store.Store, eng engine.Engine, prompt st
 		return "", fmt.Errorf("read the supervisor thread: %w", err)
 	}
 
-	fullPrompt := buildSupervisorPrompt(history(events), prompt)
+	fullPrompt := buildSupervisorPrompt(history(In(conversation, events)), prompt)
 	req := engine.Request{
 		Prompt:      fullPrompt,
 		Dir:         s.Root(),

@@ -35,7 +35,7 @@ func TestSupervisorTypingAndSubmit(t *testing.T) {
 		signedBy []string
 	)
 
-	m.opts.RecordSupervisor = func(by, channel, message string) error {
+	m.opts.RecordSupervisor = func(conversation, by, channel, message string) error {
 		recorded = append(recorded, message)
 		signedBy = append(signedBy, by)
 

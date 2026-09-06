@@ -158,15 +158,17 @@ func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 		Start:    startPort(s),
 		MarkRead: markReadPort(s),
 		Requeue:  requeuePort(s),
-		RecordSupervisor: func(by, channel, message string) error {
-			return supervisor.Record(s, "", by, channel, "", "", message)
+		RecordSupervisor: func(conversation, by, channel, message string) error {
+			return supervisor.RecordIn(s, conversation, "", by, channel, "", "", message)
 		},
-		Knows:       knowsPort(s, dir),
-		KnowsAll:    knowsAllPort(r, s),
-		TurnFact:    turnFactPort(s),
-		ReplaceFact: replaceFactPort(s),
-		Learn:       learnPort(s),
-		NoteTask:    notePort(r, s),
+		NewConversation:    func() string { return supervisor.NewID(time.Now().UTC()) },
+		RemoveConversation: func(id string) error { return supervisor.Remove(s, id) },
+		Knows:              knowsPort(s, dir),
+		KnowsAll:           knowsAllPort(r, s),
+		TurnFact:           turnFactPort(s),
+		ReplaceFact:        replaceFactPort(s),
+		Learn:              learnPort(s),
+		NoteTask:           notePort(r, s),
 		RetractSupervisor: func(at time.Time) error {
 			return supervisor.Retract(s, at)
 		},

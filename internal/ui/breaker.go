@@ -66,7 +66,7 @@ func (m Model) breaker() Model {
 	// "orbit" and not "operator": nobody typed this. The thread is read
 	// back into the supervisor's own prompt, so a line claiming to be the
 	// operator's would be an instruction the operator never gave.
-	if err := m.opts.RecordSupervisor("orbit", "breaker", breakerLine(streak)); err != nil {
+	if err := m.opts.RecordSupervisor(m.supervisor.conversation, "orbit", "breaker", breakerLine(streak)); err != nil {
 		return m.say(err.Error())
 	}
 

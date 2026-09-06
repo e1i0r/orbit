@@ -27,8 +27,8 @@ func deliverWindow(t *testing.T) (Model, *[]Delivery) {
 		Repo: "payments", RepoPath: "/work/payments", Since: ago(time.Minute),
 	}}, 1)
 	m.detail = "ACME-9"
-	m.opts.RecordSupervisor = func(_, _, _ string) error { return nil }
-	m.opts.AskSupervisor = func(_, _ string) (string, error) { return "", nil }
+	m.opts.RecordSupervisor = func(_, _, _, _ string) error { return nil }
+	m.opts.AskSupervisor = func(_, _, _ string) (string, error) { return "", nil }
 
 	written := &[]Delivery{}
 	m.opts.RecordDeliver = func(_ view.Task, d Delivery) error {
@@ -206,7 +206,7 @@ func TestSupervisorDeliveryVerbUsesWorktreeWhenPresent(t *testing.T) {
 
 	var askedBody string
 
-	m.opts.AskSupervisor = func(_, prompt string) (string, error) {
+	m.opts.AskSupervisor = func(_, _, prompt string) (string, error) {
 		askedBody = prompt
 		return "done", nil
 	}

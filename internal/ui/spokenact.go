@@ -127,7 +127,7 @@ func (m Model) remember(said spoken, stops bool) Model {
 	}
 
 	line := word + " " + m.whereFact(said) + ": " + said.Phrase
-	if err := m.opts.RecordSupervisor("operator", "tui", line); err != nil {
+	if err := m.opts.RecordSupervisor(m.supervisor.conversation, "operator", "tui", line); err != nil {
 		return m.say(err.Error())
 	}
 
