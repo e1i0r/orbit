@@ -39,6 +39,19 @@ func (m Model) wheel(e tea.Mouse) Model {
 		return m
 	}
 
+	if m.screen == screenDetail && m.diffFilePicker {
+		// The picker is a list with one row chosen, and it owns the
+		// keyboard while it is open: the wheel moves the pick rather than
+		// the pane behind it, which is what the menu and the palette do
+		// under the same notch.
+		d := wheelRows
+		if up {
+			d = -wheelRows
+		}
+
+		return m.movePickedFile(d)
+	}
+
 	if m.screen == screenDetail {
 		// Anything the pane is made of: its own rows, the heads that fold
 		// it, the bar down its edge. The wheel turns over all of them, and

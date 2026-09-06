@@ -86,6 +86,12 @@ func renderDiffFileSelect(files []diffFile, activeIdx int, width int, p *words.P
 
 	end := min(len(files), start+maxItems)
 
+	// The rail down the right edge, where every other list in this window
+	// has one. Nineteen files in a box that shows seven said nothing about
+	// the other twelve: the reader learned they were there by holding the
+	// arrow key down.
+	track := scrollTrack(maxItems, len(files), start)
+
 	for i := start; i < end; i++ {
 		f := files[i]
 		isSel := i == cursorIdx
@@ -116,7 +122,13 @@ func renderDiffFileSelect(files []diffFile, activeIdx int, width int, p *words.P
 		itemText := fmt.Sprintf("%s%s %s %s  %s  %s%s", cursor, Paint(Dim).Render(num), icon, name, stats, badge, colTag)
 		fittedItem := ansi.Truncate(itemText, innerW, "…")
 		pad := strings.Repeat(" ", max(0, innerW-lipgloss.Width(fittedItem)))
-		lines = append(lines, fmt.Sprintf("  │ %s%s │", fittedItem, pad))
+
+		edge := "│"
+		if track != nil {
+			edge = track[i-start]
+		}
+
+		lines = append(lines, fmt.Sprintf("  │ %s%s %s", fittedItem, pad, edge))
 	}
 
 	helpText := Paint(Dim).Render(p.T("diff.select_help", "  [↑↓] navigate  [⏎ / click] select  [space] fold  [esc] close"))
