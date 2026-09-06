@@ -54,7 +54,7 @@ func TestWheelScrollsWhicheverScreenIsUnderIt(t *testing.T) {
 	// to scroll to — the fixture task view opens with none at all.
 	entries := make([]view.Entry, 0, 60)
 	for i := range 60 {
-		entries = append(entries, view.Entry{Kind: "phase.started", Phase: "implement", At: ago(time.Duration(60-i) * time.Minute)})
+		entries = append(entries, view.Entry{Kind: "phase.started", Phase: "implement", At: fixtureAgo(time.Duration(60-i) * time.Minute)})
 	}
 
 	m.entries = entries

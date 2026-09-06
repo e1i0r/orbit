@@ -35,7 +35,7 @@ func metered(m Model) Model {
 func running(cost float64, engine string) []view.Task {
 	return []view.Task{{
 		Repo: "payments", ID: "ACME-1", Title: "in flight", Band: view.Running,
-		Engine: engine, Phase: "implement", Since: ago(time.Minute), Cost: cost,
+		Engine: engine, Phase: "implement", Since: fixtureAgo(time.Minute), Cost: cost,
 	}}
 }
 
@@ -45,8 +45,8 @@ func running(cost float64, engine string) []view.Task {
 // arithmetic on a charge nobody made.
 func TestTheCostTabDoesNotPriceASubscription(t *testing.T) {
 	m, _ := onTab(t, tabCost, []view.Entry{
-		{Kind: "phase.started", Phase: "implement", At: ago(2 * time.Minute), Engine: "claude", Model: "opus"},
-		{Kind: "phase.finished", Phase: "implement", At: ago(time.Minute)},
+		{Kind: "phase.started", Phase: "implement", At: fixtureAgo(2 * time.Minute), Engine: "claude", Model: "opus"},
+		{Kind: "phase.finished", Phase: "implement", At: fixtureAgo(time.Minute)},
 	})
 	m = onSubscription(m)
 
@@ -63,8 +63,8 @@ func TestTheCostTabDoesNotPriceASubscription(t *testing.T) {
 // TestTheCostTabStillPricesAnEngineThatCharges.
 func TestTheCostTabStillPricesAnEngineThatCharges(t *testing.T) {
 	m, _ := onTab(t, tabCost, []view.Entry{
-		{Kind: "phase.started", Phase: "implement", At: ago(2 * time.Minute), Engine: "codex", Model: "gpt"},
-		{Kind: "phase.finished", Phase: "implement", At: ago(time.Minute), Cost: 0.25},
+		{Kind: "phase.started", Phase: "implement", At: fixtureAgo(2 * time.Minute), Engine: "codex", Model: "gpt"},
+		{Kind: "phase.finished", Phase: "implement", At: fixtureAgo(time.Minute), Cost: 0.25},
 	})
 	m = metered(m)
 
@@ -122,7 +122,7 @@ func TestAnIdleBoardSaysNothingAboutRunningCost(t *testing.T) {
 	m, _ := testModel(t, 200, 30)
 	m = metered(m)
 	m.board = fixtureBoard([]view.Task{{
-		Repo: "payments", ID: "ACME-2", Title: "done", Band: view.Done, Cost: 0.42, Since: ago(time.Hour),
+		Repo: "payments", ID: "ACME-2", Title: "done", Band: view.Done, Cost: 0.42, Since: fixtureAgo(time.Hour),
 	}}, 1)
 
 	if line := ansi.Strip(m.headerLine(200)); strings.Contains(line, "running") {

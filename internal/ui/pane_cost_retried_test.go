@@ -15,10 +15,10 @@ import (
 // wants to see: what the run spent getting it wrong.
 func TestTheCostTabCountsAnAttemptItsGateRefused(t *testing.T) {
 	m, _ := onTab(t, tabCost, []view.Entry{
-		{Kind: "phase.started", Phase: "implement", At: ago(3 * time.Minute), Engine: "claude", Model: "opus"},
-		{Kind: "phase.retried", Phase: "implement", At: ago(2 * time.Minute), Gate: "build", Cost: 0.25},
-		{Kind: "phase.started", Phase: "implement", At: ago(2 * time.Minute), Engine: "claude", Model: "opus"},
-		{Kind: "phase.finished", Phase: "implement", At: ago(time.Minute), Cost: 0.25},
+		{Kind: "phase.started", Phase: "implement", At: fixtureAgo(3 * time.Minute), Engine: "claude", Model: "opus"},
+		{Kind: "phase.retried", Phase: "implement", At: fixtureAgo(2 * time.Minute), Gate: "build", Cost: 0.25},
+		{Kind: "phase.started", Phase: "implement", At: fixtureAgo(2 * time.Minute), Engine: "claude", Model: "opus"},
+		{Kind: "phase.finished", Phase: "implement", At: fixtureAgo(time.Minute), Cost: 0.25},
 	})
 
 	var rows int

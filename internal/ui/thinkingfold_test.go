@@ -104,11 +104,11 @@ func TestAThoughtIsWrappedAndCutToThePaneItIsDrawnOn(t *testing.T) {
 
 	m, _ := thinking(t, []view.Entry{
 		{
-			At: ago(20 * time.Minute), Kind: "phase.finished", Phase: "implement",
+			At: fixtureAgo(20 * time.Minute), Kind: "phase.finished", Phase: "implement",
 			Attempt: 1, PhaseN: 1, Text: reported,
 		},
 		{
-			At: ago(18 * time.Minute), Kind: "phase.finished", Phase: "gates",
+			At: fixtureAgo(18 * time.Minute), Kind: "phase.finished", Phase: "gates",
 			Attempt: 1, PhaseN: 2, Text: unbreakable,
 		},
 	})

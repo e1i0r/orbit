@@ -13,7 +13,7 @@ import (
 
 func storyEntry() view.Entry {
 	return view.Entry{
-		Kind: "task.story", At: ago(time.Minute),
+		Kind: "task.story", At: fixtureAgo(time.Minute),
 		Story: &view.Story{
 			Entry:   "POST /items",
 			Purpose: "save the list Z in the database",
@@ -29,7 +29,7 @@ func storyEntry() view.Entry {
 // tree is the only shape that says so in eighty columns.
 func TestTheOverviewDrawsTheStoryAsAChain(t *testing.T) {
 	m, _ := onTab(t, tabOverview, []view.Entry{
-		{Kind: "task.created", At: ago(time.Hour), Text: "Fix the save\n\nRepeated entries vanish."},
+		{Kind: "task.created", At: fixtureAgo(time.Hour), Text: "Fix the save\n\nRepeated entries vanish."},
 		storyEntry(),
 	})
 
@@ -56,7 +56,7 @@ func TestTheOverviewDrawsTheStoryAsAChain(t *testing.T) {
 // pane that was there before.
 func TestATaskWithNoStoryDrawsNoEmptyTree(t *testing.T) {
 	_, lines := onTab(t, tabOverview, []view.Entry{
-		{Kind: "task.created", At: ago(time.Hour), Text: "Fix the save"},
+		{Kind: "task.created", At: fixtureAgo(time.Hour), Text: "Fix the save"},
 	})
 
 	if text := ansi.Strip(strings.Join(lines, "\n")); strings.Contains(text, "└─") {
@@ -68,7 +68,7 @@ func TestATaskWithNoStoryDrawsNoEmptyTree(t *testing.T) {
 // and the one that counts is the one about the run that stands.
 func TestTheNewestStoryIsTheOneDrawn(t *testing.T) {
 	old := storyEntry()
-	old.At = ago(time.Hour)
+	old.At = fixtureAgo(time.Hour)
 	old.Story = &view.Story{Entry: "GET /old", Purpose: "p", Symptom: "s", Cause: "c", Fix: "f"}
 
 	_, lines := onTab(t, tabOverview, []view.Entry{old, storyEntry()})
@@ -84,7 +84,7 @@ func TestTheNewestStoryIsTheOneDrawn(t *testing.T) {
 }
 
 func toolCall(tool, args string, ago_ time.Duration) view.Entry {
-	return view.Entry{Kind: "phase.tool_call", At: ago(ago_), Tool: tool, Text: args}
+	return view.Entry{Kind: "phase.tool_call", At: fixtureAgo(ago_), Tool: tool, Text: args}
 }
 
 // TestTheStoryCarriesWhatWasChangedUnderIt. A claim with its evidence one
@@ -92,7 +92,7 @@ func toolCall(tool, args string, ago_ time.Duration) view.Entry {
 // the record says what it touched to do it.
 func TestTheStoryCarriesWhatWasChangedUnderIt(t *testing.T) {
 	m, _ := onTab(t, tabOverview, []view.Entry{
-		{Kind: "task.created", At: ago(time.Hour), Text: "Fix the save"},
+		{Kind: "task.created", At: fixtureAgo(time.Hour), Text: "Fix the save"},
 		toolCall("Read", `{"file_path":"routes/items.go"}`, 40*time.Minute),
 		toolCall("Edit", `{"file_path":"store/items_repo.go"}`, 30*time.Minute),
 		storyEntry(),
@@ -113,7 +113,7 @@ func TestTheStoryCarriesWhatWasChangedUnderIt(t *testing.T) {
 // work. It is asked of the pane rather than of the frame, because the frame
 // is a window onto it and scrolling is the reader's business.
 func TestTheStoryShowsEveryChangeAndNotTheFirstFew(t *testing.T) {
-	entries := []view.Entry{{Kind: "task.created", At: ago(time.Hour), Text: "A big change"}}
+	entries := []view.Entry{{Kind: "task.created", At: fixtureAgo(time.Hour), Text: "A big change"}}
 	for i := range 40 {
 		entries = append(entries, toolCall("Edit",
 			fmt.Sprintf(`{"file_path":"internal/pkg/file%02d.go"}`, i),

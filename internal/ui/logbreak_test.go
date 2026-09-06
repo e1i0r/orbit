@@ -18,7 +18,7 @@ import (
 // reaches the pane.
 func brokenLines(ending string) []view.Entry {
 	return append(fixtureEntries(), view.Entry{
-		At: ago(20 * time.Minute), Kind: "phase.tool_call", Phase: "implement",
+		At: fixtureAgo(20 * time.Minute), Kind: "phase.tool_call", Phase: "implement",
 		Attempt: 2, PhaseN: 1, Tool: "Bash",
 		Text: "make check" + ending + "go test ./internal/ui/",
 	})

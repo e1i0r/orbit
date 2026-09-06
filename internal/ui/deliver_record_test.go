@@ -24,7 +24,7 @@ func deliverWindow(t *testing.T) (Model, *[]Delivery) {
 	m, _ := testModel(t, 120, 30)
 	m.board = fixtureBoard([]view.Task{{
 		ID: "ACME-9", Title: "a task in a checkout", Band: view.NeedsYou,
-		Repo: "payments", RepoPath: "/work/payments", Since: ago(time.Minute),
+		Repo: "payments", RepoPath: "/work/payments", Since: fixtureAgo(time.Minute),
 	}}, 1)
 	m.detail = "ACME-9"
 	m.opts.RecordSupervisor = func(_, _, _, _ string) error { return nil }
@@ -125,14 +125,14 @@ func TestAVerbWithNoRecordPortStillAsks(t *testing.T) {
 func TestTheFlowTreeDrawsWhatWasAskedForByHand(t *testing.T) {
 	m, _ := deliverWindow(t)
 	m.entries = []view.Entry{
-		{Kind: "deliver.asked", Verb: "CREATE PR", By: "supervisor", At: ago(2 * time.Minute)},
+		{Kind: "deliver.asked", Verb: "CREATE PR", By: "supervisor", At: fixtureAgo(2 * time.Minute)},
 		{
 			Kind: "deliver.answered",
 			Verb: "CREATE PR",
 			Text: "opened pull request 12",
-			At:   ago(time.Minute),
+			At:   fixtureAgo(time.Minute),
 		},
-		{Kind: "deliver.asked", Verb: "FIX CHECKS", By: "supervisor", At: ago(30 * time.Second)},
+		{Kind: "deliver.asked", Verb: "FIX CHECKS", By: "supervisor", At: fixtureAgo(30 * time.Second)},
 	}
 
 	rows, _ := m.flowRows()
@@ -151,9 +151,9 @@ func TestTheFlowTreeDrawsWhatWasAskedForByHand(t *testing.T) {
 func TestEachAskIsClosedByItsOwnAnswer(t *testing.T) {
 	m, _ := deliverWindow(t)
 	m.entries = []view.Entry{
-		{Kind: "deliver.asked", Verb: "FIX CHECKS", At: ago(3 * time.Minute)},
-		{Kind: "deliver.answered", Verb: "FIX CHECKS", Text: "green", At: ago(2 * time.Minute)},
-		{Kind: "deliver.asked", Verb: "FIX CHECKS", At: ago(time.Minute)},
+		{Kind: "deliver.asked", Verb: "FIX CHECKS", At: fixtureAgo(3 * time.Minute)},
+		{Kind: "deliver.answered", Verb: "FIX CHECKS", Text: "green", At: fixtureAgo(2 * time.Minute)},
+		{Kind: "deliver.asked", Verb: "FIX CHECKS", At: fixtureAgo(time.Minute)},
 	}
 
 	steps := m.byHand()
@@ -172,12 +172,12 @@ func TestEachAskIsClosedByItsOwnAnswer(t *testing.T) {
 func TestTheTimelineNamesTheVerbThatWasAskedFor(t *testing.T) {
 	m, _ := deliverWindow(t)
 	m.entries = []view.Entry{
-		{Kind: "deliver.asked", Verb: "RESOLVE COMMENTS", By: "supervisor", At: ago(time.Minute)},
+		{Kind: "deliver.asked", Verb: "RESOLVE COMMENTS", By: "supervisor", At: fixtureAgo(time.Minute)},
 		{
 			Kind:  "deliver.answered",
 			Verb:  "RESOLVE COMMENTS",
 			Cause: "no threads to answer",
-			At:    ago(time.Second),
+			At:    fixtureAgo(time.Second),
 		},
 	}
 

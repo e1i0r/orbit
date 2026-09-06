@@ -16,7 +16,7 @@ func stuckBoard(n int) []view.Task {
 	for i := range n {
 		tasks = append(tasks, view.Task{
 			Repo: "payments", ID: "ACME-" + string(rune('1'+i)), Title: "a task that will not pass its gate",
-			Band: view.NeedsYou, Since: ago(time.Duration(n-i) * time.Minute),
+			Band: view.NeedsYou, Since: fixtureAgo(time.Duration(n-i) * time.Minute),
 			Reason: view.Reason{Key: view.ReasonStuck, Args: []view.Arg{arg("attempts", "3")}},
 		})
 	}

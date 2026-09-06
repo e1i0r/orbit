@@ -17,7 +17,7 @@ func spentBoard(each float64, n int) []view.Task {
 	for i := range n {
 		tasks = append(tasks, view.Task{
 			Repo: "payments", ID: "ACME-" + string(rune('1'+i)), Title: "done and paid for",
-			Band: view.Done, Since: ago(time.Duration(n-i) * time.Minute), Cost: each,
+			Band: view.Done, Since: fixtureAgo(time.Duration(n-i) * time.Minute), Cost: each,
 		})
 	}
 
@@ -39,7 +39,7 @@ func TestTheQueueStopsWhenTheWorkspaceHasSpentItsBudget(t *testing.T) {
 	held.budget = 1.00
 
 	tasks := append(spentBoard(0.50, 2), view.Task{
-		Repo: "payments", ID: "ACME-9", Title: "waiting its turn", Band: view.ToDo, Since: ago(time.Minute),
+		Repo: "payments", ID: "ACME-9", Title: "waiting its turn", Band: view.ToDo, Since: fixtureAgo(time.Minute),
 	})
 
 	next, cmd := m.applyBoard(boardMsg{Board: fixtureBoard(tasks, 1)})
@@ -70,7 +70,7 @@ func TestTheQueueGoesOnUnderTheBudget(t *testing.T) {
 	held.budget = 10.00
 
 	tasks := append(spentBoard(0.50, 2), view.Task{
-		Repo: "payments", ID: "ACME-9", Title: "waiting its turn", Band: view.ToDo, Since: ago(time.Minute),
+		Repo: "payments", ID: "ACME-9", Title: "waiting its turn", Band: view.ToDo, Since: fixtureAgo(time.Minute),
 	})
 
 	next, cmd := m.applyBoard(boardMsg{Board: fixtureBoard(tasks, 1)})
@@ -110,7 +110,7 @@ func TestTheQueueStopsWhenTheQuotaWindowIsNearlySpent(t *testing.T) {
 	}
 
 	tasks := []view.Task{{
-		Repo: "payments", ID: "ACME-9", Title: "waiting its turn", Band: view.ToDo, Since: ago(time.Minute),
+		Repo: "payments", ID: "ACME-9", Title: "waiting its turn", Band: view.ToDo, Since: fixtureAgo(time.Minute),
 	}}
 
 	next, cmd := m.applyBoard(boardMsg{Board: fixtureBoard(tasks, 1)})
@@ -146,7 +146,7 @@ func TestAnEngineThatChargesIsNotHeldByAQuotaFloor(t *testing.T) {
 	}
 
 	tasks := []view.Task{{
-		Repo: "payments", ID: "ACME-9", Title: "waiting its turn", Band: view.ToDo, Since: ago(time.Minute),
+		Repo: "payments", ID: "ACME-9", Title: "waiting its turn", Band: view.ToDo, Since: fixtureAgo(time.Minute),
 	}}
 
 	_, cmd := m.applyBoard(boardMsg{Board: fixtureBoard(tasks, 1)})

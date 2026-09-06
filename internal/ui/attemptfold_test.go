@@ -208,12 +208,12 @@ func TestTheAttemptUnderThePointerIsTheOneThatFolds(t *testing.T) {
 // enough up to still be on it after a scroll.
 func deepLog() []view.Entry {
 	out := append(longLog(), view.Entry{
-		At: ago(6 * time.Minute), Kind: "task.started", Attempt: 3,
+		At: fixtureAgo(6 * time.Minute), Kind: "task.started", Attempt: 3,
 	})
 
 	for i := range 4 {
 		out = append(out, view.Entry{
-			At: ago(time.Duration(5-i) * time.Minute), Kind: "phase.started",
+			At: fixtureAgo(time.Duration(5-i) * time.Minute), Kind: "phase.started",
 			Phase: "gates", Attempt: 3, PhaseN: 2, Engine: "claude", Model: "opus",
 		})
 	}

@@ -24,7 +24,7 @@ const reported = "make check is green: fmt, vet, lint with no issues, every pack
 // wordyLog is the fixture record with that paragraph at the end of it.
 func wordyLog() []view.Entry {
 	return append(fixtureEntries(), view.Entry{
-		At: ago(20 * time.Minute), Kind: "phase.finished", Phase: "implement",
+		At: fixtureAgo(20 * time.Minute), Kind: "phase.finished", Phase: "implement",
 		Attempt: 2, PhaseN: 1, Cost: 0.31, Session: "8f2c31", Text: reported,
 	})
 }
@@ -178,13 +178,13 @@ func TestTheEntryUnderThePointerIsTheOneThatOpens(t *testing.T) {
 // up to still be on it after a scroll.
 func longWordyLog() []view.Entry {
 	out := append(longLog(), view.Entry{
-		At: ago(6 * time.Minute), Kind: "phase.finished", Phase: "implement",
+		At: fixtureAgo(6 * time.Minute), Kind: "phase.finished", Phase: "implement",
 		Attempt: 2, PhaseN: 1, Cost: 0.31, Session: "8f2c31", Text: reported,
 	})
 
 	for i := range 5 {
 		out = append(out, view.Entry{
-			At: ago(time.Duration(5-i) * time.Minute), Kind: "phase.started",
+			At: fixtureAgo(time.Duration(5-i) * time.Minute), Kind: "phase.started",
 			Phase: "gates", Attempt: 2, PhaseN: 2, Engine: "claude", Model: "opus",
 		})
 	}
@@ -234,17 +234,17 @@ func TestARowIsWrappedToTheMeasureAndNotCutToIt(t *testing.T) {
 
 	m, _ := timeline(t, append(fixtureEntries(),
 		view.Entry{
-			At: ago(19 * time.Minute), Kind: "phase.tool_call", Phase: "implement",
+			At: fixtureAgo(19 * time.Minute), Kind: "phase.tool_call", Phase: "implement",
 			Attempt: 2, Tool: "Edit", Text: `{"file_path":"` + long + `bytes.go"}`,
 		},
 		view.Entry{
-			At: ago(18 * time.Minute), Kind: "phase.finished", Phase: "implement",
+			At: fixtureAgo(18 * time.Minute), Kind: "phase.finished", Phase: "implement",
 			Attempt: 2, PhaseN: 1, Text: long,
 		},
 		// A row that folds and whose first line is the unbreakable one: the
 		// head a closed entry shows is cut like every other row.
 		view.Entry{
-			At: ago(17 * time.Minute), Kind: "phase.finished", Phase: "implement",
+			At: fixtureAgo(17 * time.Minute), Kind: "phase.finished", Phase: "implement",
 			Attempt: 2, PhaseN: 1, Text: long + " and the rest of the sentence after it",
 		},
 	))
@@ -314,7 +314,7 @@ func TestOnlyAPaneThatDrawsEntriesFolds(t *testing.T) {
 // over an empty cell is the one fact left out.
 func TestTheTimelineNamesTheRepositoryThatJoined(t *testing.T) {
 	_, lines := timeline(t, append(fixtureEntries(), view.Entry{
-		At: ago(5 * time.Minute), Kind: "repo.joined", Attempt: 2, Repo: "ledger",
+		At: fixtureAgo(5 * time.Minute), Kind: "repo.joined", Attempt: 2, Repo: "ledger",
 	}))
 
 	if rowOf(lines, "ledger") < 0 {

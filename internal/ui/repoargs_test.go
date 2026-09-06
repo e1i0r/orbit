@@ -18,7 +18,7 @@ import (
 func TestATaskWithNoRepositoryIsNotToldToUseThisOne(t *testing.T) {
 	m, _ := testModel(t, 120, 30)
 	m.board = fixtureBoard([]view.Task{{
-		ID: "ACME-9", Title: "written against nothing", Band: view.NeedsYou, Since: ago(time.Minute),
+		ID: "ACME-9", Title: "written against nothing", Band: view.NeedsYou, Since: fixtureAgo(time.Minute),
 	}}, 1)
 
 	if got := m.taskRepoPath("ACME-9"); got != "" {
@@ -36,7 +36,7 @@ func TestATaskWithARepositoryStillNamesIt(t *testing.T) {
 	m, _ := testModel(t, 120, 30)
 	m.board = fixtureBoard([]view.Task{{
 		ID: "ACME-8", Title: "written against payments", Band: view.NeedsYou,
-		Repo: "payments", RepoPath: "/work/payments", Since: ago(time.Minute),
+		Repo: "payments", RepoPath: "/work/payments", Since: fixtureAgo(time.Minute),
 	}}, 1)
 
 	args := repoArgs(m.taskRepoPath("ACME-8"), "ACME-8")
@@ -52,7 +52,7 @@ func TestARepositoryNameIsNotAPath(t *testing.T) {
 	m, _ := testModel(t, 120, 30)
 	m.board = fixtureBoard([]view.Task{{
 		ID: "ACME-7", Title: "a name and no path", Band: view.NeedsYou,
-		Repo: "payments", Since: ago(time.Minute),
+		Repo: "payments", Since: fixtureAgo(time.Minute),
 	}}, 1)
 
 	if got := m.taskRepoPath("ACME-7"); got != "" {
@@ -84,7 +84,7 @@ func TestEveryDeliverVerbReachesItsCommand(t *testing.T) {
 	} {
 		m, _ := testModel(t, 120, 30)
 		m.board = fixtureBoard([]view.Task{{
-			ID: "ACME-9", Title: "no repository at all", Band: view.NeedsYou, Since: ago(time.Minute),
+			ID: "ACME-9", Title: "no repository at all", Band: view.NeedsYou, Since: fixtureAgo(time.Minute),
 		}}, 1)
 		m.detail = "ACME-9"
 
@@ -120,7 +120,7 @@ func TestTheVerbsHandedToTheSupervisorCarryTheTaskAndItsCheckout(t *testing.T) {
 		m, _ := testModel(t, 120, 30)
 		m.board = fixtureBoard([]view.Task{{
 			ID: "ACME-9", Title: "a task in a checkout", Band: view.NeedsYou,
-			Repo: "payments", RepoPath: "/work/payments", Since: ago(time.Minute),
+			Repo: "payments", RepoPath: "/work/payments", Since: fixtureAgo(time.Minute),
 		}}, 1)
 		m.detail = "ACME-9"
 
@@ -155,7 +155,7 @@ func TestTheVerbsHandedToTheSupervisorCarryTheTaskAndItsCheckout(t *testing.T) {
 func TestAVerbForTheSupervisorNeedsACheckout(t *testing.T) {
 	m, _ := testModel(t, 120, 30)
 	m.board = fixtureBoard([]view.Task{{
-		ID: "ACME-9", Title: "no repository at all", Band: view.NeedsYou, Since: ago(time.Minute),
+		ID: "ACME-9", Title: "no repository at all", Band: view.NeedsYou, Since: fixtureAgo(time.Minute),
 	}}, 1)
 	m.detail = "ACME-9"
 

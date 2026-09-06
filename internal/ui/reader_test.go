@@ -91,40 +91,40 @@ func (f *fakeReader) SupervisorLog() ([]view.SupervisorLine, error) {
 func fixtureEntries() []view.Entry {
 	return []view.Entry{
 		{
-			At: ago(70 * time.Minute), Kind: "task.created", Attempt: 0,
+			At: fixtureAgo(70 * time.Minute), Kind: "task.created", Attempt: 0,
 			Text: "Retry the webhook on 5xx",
 		},
-		{At: ago(66 * time.Minute), Kind: "task.started", Attempt: 1},
+		{At: fixtureAgo(66 * time.Minute), Kind: "task.started", Attempt: 1},
 		{
-			At: ago(66 * time.Minute), Kind: "phase.started", Phase: "implement", Attempt: 1,
+			At: fixtureAgo(66 * time.Minute), Kind: "phase.started", Phase: "implement", Attempt: 1,
 			PhaseN: 1, Engine: "claude", Model: "opus",
 		},
 		{
-			At: ago(52 * time.Minute), Kind: "phase.finished", Phase: "implement", Attempt: 1,
+			At: fixtureAgo(52 * time.Minute), Kind: "phase.finished", Phase: "implement", Attempt: 1,
 			PhaseN: 1, Cost: 0.42, Session: "8f2c31", Kept: 30,
 			Text: "wrote retry.go\nadded a backoff",
 		},
 		{
-			At: ago(52 * time.Minute), Kind: "phase.started", Phase: "gates", Attempt: 1,
+			At: fixtureAgo(52 * time.Minute), Kind: "phase.started", Phase: "gates", Attempt: 1,
 			PhaseN: 2, Engine: "claude", Model: "opus",
 		},
 		{
-			At: ago(49 * time.Minute), Kind: "phase.failed", Phase: "gates", Attempt: 1,
+			At: fixtureAgo(49 * time.Minute), Kind: "phase.failed", Phase: "gates", Attempt: 1,
 			PhaseN: 2, Cost: 0.11, Session: "8f2c31", Kept: 37,
 			Text: "go vet: retry.go:31: unreachable code", Cause: "the gates phase exited 1",
 		},
-		{At: ago(49 * time.Minute), Kind: "task.failed", Attempt: 1, Text: "gates did not pass"},
-		{At: ago(34 * time.Minute), Kind: "task.started", Attempt: 2},
+		{At: fixtureAgo(49 * time.Minute), Kind: "task.failed", Attempt: 1, Text: "gates did not pass"},
+		{At: fixtureAgo(34 * time.Minute), Kind: "task.started", Attempt: 2},
 		{
-			At: ago(34 * time.Minute), Kind: "phase.started", Phase: "gates", Attempt: 2,
+			At: fixtureAgo(34 * time.Minute), Kind: "phase.started", Phase: "gates", Attempt: 2,
 			PhaseN: 2, Engine: "claude", Model: "opus",
 		},
 		{
-			At: ago(31 * time.Minute), Kind: "phase.failed", Phase: "gates", Attempt: 2,
+			At: fixtureAgo(31 * time.Minute), Kind: "phase.failed", Phase: "gates", Attempt: 2,
 			PhaseN: 2, Cost: 0.09, Session: "b41d07", Kept: 37, Full: 1048583,
 			Text: "go vet: retry.go:31: unreachable code", Cause: "the gates phase exited 1",
 		},
-		{At: ago(31 * time.Minute), Kind: "task.failed", Attempt: 2, Text: "gates did not pass"},
+		{At: fixtureAgo(31 * time.Minute), Kind: "task.failed", Attempt: 2, Text: "gates did not pass"},
 	}
 }
 
@@ -302,7 +302,7 @@ func longLog() []view.Entry {
 	entries := fixtureEntries()
 	for i := range 40 {
 		entries = append(entries, view.Entry{
-			At: ago(time.Duration(30-i) * time.Minute), Kind: "phase.started",
+			At: fixtureAgo(time.Duration(30-i) * time.Minute), Kind: "phase.started",
 			Phase: "gates", Attempt: 2, PhaseN: 2, Engine: "claude", Model: "opus",
 		})
 	}

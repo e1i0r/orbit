@@ -30,7 +30,9 @@ import (
 // column is a fact about the fixture and not about when the test ran.
 var fixtureNow = time.Date(2026, 8, 23, 15, 4, 0, 0, time.UTC)
 
-func ago(d time.Duration) time.Time { return fixtureNow.Add(-d) }
+// fixtureAgo is the timestamp d before that clock. The prefix is there
+// because the package also has an ago, which reads a time back as words.
+func fixtureAgo(d time.Duration) time.Time { return fixtureNow.Add(-d) }
 
 // settings is the settings file, in memory. It is the whole of what
 // internal/cli will satisfy with a store-backed type.
@@ -94,17 +96,17 @@ func fixtureTasks() []view.Task {
 	tasks := []view.Task{
 		{
 			Repo: "payments", ID: "ACME-2662", Title: "Retry the webhook on 5xx", Band: view.NeedsYou,
-			Flow: "careful", Phase: "gates", Attempt: 2, Since: ago(31 * time.Minute),
+			Flow: "careful", Phase: "gates", Attempt: 2, Since: fixtureAgo(31 * time.Minute),
 			Reason: view.Reason{Key: view.ReasonFailed, Args: []view.Arg{arg("phase", "gates")}},
 		},
 		{
 			Repo: "app", ID: "ACME-2701", Title: "Move the assets cron", Band: view.NeedsYou,
-			Flow: "task", Phase: "review", Attempt: 1, Since: ago(4 * time.Minute),
+			Flow: "task", Phase: "review", Attempt: 1, Since: fixtureAgo(4 * time.Minute),
 			Reason: view.Reason{Key: view.ReasonGate, Args: []view.Arg{arg("phase", "review")}},
 		},
 		{
 			Repo: "payments", ID: "ACME-2698", Title: "Fix the swagger lint", Band: view.NeedsYou,
-			Flow: "task", Attempt: 1, Since: ago(3 * time.Hour),
+			Flow: "task", Attempt: 1, Since: fixtureAgo(3 * time.Hour),
 			Reason: view.Reason{Key: view.ReasonAbandoned},
 		},
 		// The one task on this board that reaches past the repository it
@@ -114,18 +116,18 @@ func fixtureTasks() []view.Task {
 			Repo: "app", Repos: []string{"app", "payments", "api"},
 			ID: "ACME-2705", Title: "Reconciliation endpoint", Band: view.Running,
 			Flow: "careful", Phase: "implement", PhaseN: 1, Engine: "claude", Model: "opus",
-			Live: view.LiveHeld, Attempt: 1, Since: ago(8 * time.Minute), Started: ago(8 * time.Minute),
+			Live: view.LiveHeld, Attempt: 1, Since: fixtureAgo(8 * time.Minute), Started: fixtureAgo(8 * time.Minute),
 		},
 		{
 			Repo: "payments", ID: "ACME-2706", Title: "Index on settlements", Band: view.Running,
 			Flow: "careful", Phase: "review", PhaseN: 2, Engine: "claude", Model: "opus",
-			Live: view.LiveHeld, Attempt: 1, Since: ago(3 * time.Minute), Started: ago(40 * time.Minute),
+			Live: view.LiveHeld, Attempt: 1, Since: fixtureAgo(3 * time.Minute), Started: fixtureAgo(40 * time.Minute),
 		},
 	}
 	for _, id := range []string{"ACME-2710", "ACME-2711", "ACME-2712", "ACME-2713"} {
 		tasks = append(tasks, view.Task{
 			Repo: "app", ID: id, Title: "Written down and not started",
-			Band: view.ToDo, Flow: "task", Since: ago(2 * time.Hour),
+			Band: view.ToDo, Flow: "task", Since: fixtureAgo(2 * time.Hour),
 		})
 	}
 
@@ -133,7 +135,7 @@ func fixtureTasks() []view.Task {
 		tasks = append(tasks, view.Task{
 			Repo: "payments", ID: id, Title: "Finished earlier today",
 			Band: view.Done, Flow: "task", Phase: "review", Engine: "claude", Model: "opus",
-			Attempt: 1, Read: i >= 3, Since: ago(time.Duration(i+1) * time.Hour),
+			Attempt: 1, Read: i >= 3, Since: fixtureAgo(time.Duration(i+1) * time.Hour),
 		})
 	}
 

@@ -15,7 +15,7 @@ import (
 // given.
 func calling(tool, args string) []view.Entry {
 	return append(fixtureEntries(), view.Entry{
-		At: ago(20 * time.Minute), Kind: "phase.tool_call", Phase: "implement",
+		At: fixtureAgo(20 * time.Minute), Kind: "phase.tool_call", Phase: "implement",
 		Attempt: 2, PhaseN: 1, Tool: tool, Text: args,
 	})
 }
@@ -76,7 +76,7 @@ func TestAToolCallOnTheTimelineIsItsArgumentAndNotItsDocument(t *testing.T) {
 // of the refusal was on no screen the reader could reach.
 func TestARefusalIsWhatWasRefusedAndNotItsFirstLine(t *testing.T) {
 	m, lines := timeline(t, append(fixtureEntries(), view.Entry{
-		At: ago(20 * time.Minute), Kind: "phase.refused", Phase: "implement",
+		At: fixtureAgo(20 * time.Minute), Kind: "phase.refused", Phase: "implement",
 		Attempt: 2, PhaseN: 1, Tool: "Bash",
 		Text: "rm -rf build\nthe run may not delete outside the worktree\nask for it in a note",
 	}))

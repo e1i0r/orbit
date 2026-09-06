@@ -176,7 +176,7 @@ func TestAnOutcomeIsWrappedAndCutToTheTree(t *testing.T) {
 // tree are both rows that fold.
 func oneWordyEntry(text string) []view.Entry {
 	return []view.Entry{{
-		At: ago(20 * time.Minute), Kind: "phase.finished", Phase: "implement",
+		At: fixtureAgo(20 * time.Minute), Kind: "phase.finished", Phase: "implement",
 		Attempt: 1, PhaseN: 1, Text: text,
 	}}
 }

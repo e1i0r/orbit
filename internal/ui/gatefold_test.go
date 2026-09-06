@@ -165,7 +165,7 @@ func TestARefusalWithoutAToolIsStillNamed(t *testing.T) {
 func TestALongNoteIsClosedAndSaysHowMuchIsUnderIt(t *testing.T) {
 	m, lines := onTab(t, tabNotes, []view.Entry{
 		{
-			Kind: "task.noted", At: ago(3 * time.Minute), Attempt: 1,
+			Kind: "task.noted", At: fixtureAgo(3 * time.Minute), Attempt: 1,
 			Text: "the first thing\nthe second thing\nthe third thing",
 		},
 	})
@@ -210,7 +210,7 @@ func TestALongNoteIsClosedAndSaysHowMuchIsUnderIt(t *testing.T) {
 // nobody trusts an arrow on again.
 func TestAOneLineNoteHasNothingToOpen(t *testing.T) {
 	_, lines := onTab(t, tabNotes, []view.Entry{
-		{Kind: "task.noted", At: ago(time.Minute), Text: "one line and no more"},
+		{Kind: "task.noted", At: fixtureAgo(time.Minute), Text: "one line and no more"},
 	})
 
 	y := rowOf(lines, "OPERATOR")
