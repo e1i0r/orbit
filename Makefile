@@ -70,10 +70,17 @@ build:
 PREFIX ?= /usr/local
 BINDIR ?= $(PREFIX)/bin
 
+# A leading ~ is expanded here and not by the shell. Every path below is
+# quoted, because a directory with a space in it has to be, and a quoted ~ is
+# not a home directory — it is a directory called "~". `make install
+# PREFIX=~/.local` made one inside the checkout and reported success, while
+# the binary on PATH stayed the one from before.
+DESTBIN := $(patsubst ~%,$(HOME)%,$(BINDIR))
+
 install: build
-	@mkdir -p "$(BINDIR)"
-	install -m 0755 orbit "$(BINDIR)/orbit"
-	@echo "installed $(BINDIR)/orbit"
+	@mkdir -p "$(DESTBIN)"
+	install -m 0755 orbit "$(DESTBIN)/orbit"
+	@echo "installed $(DESTBIN)/orbit"
 
 # run opens the cockpit over the current directory. ARGS is the escape hatch
 # for everything top takes — a different root, or none of this and a flag
