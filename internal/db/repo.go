@@ -35,7 +35,7 @@ import (
 // than written into the statement so that it is spelled in exactly one
 // place, which is the constant.
 func (d *DB) TasksOfRepo(abs string) ([]string, error) {
-	rows, err := d.sql.Query(selectTasksOfRepo, abs, record.TaskDeleted)
+	rows, err := d.sql.Query(selectTasksOfRepo, abs, record.TaskDeleted, record.TaskCreated)
 	if err != nil {
 		return nil, fmt.Errorf("read the tasks of %q: %w", abs, err)
 	}
@@ -111,7 +111,7 @@ type Worked struct {
 // A deleted task is left out here for the reason it is left out of
 // TasksOfRepo, and by the same subselect.
 func (d *DB) TasksAndRepos() ([]Worked, error) {
-	rows, err := d.sql.Query(selectTasksAndRepos, record.TaskDeleted)
+	rows, err := d.sql.Query(selectTasksAndRepos, record.TaskDeleted, record.TaskCreated)
 	if err != nil {
 		return nil, fmt.Errorf("read the tasks and their repositories: %w", err)
 	}

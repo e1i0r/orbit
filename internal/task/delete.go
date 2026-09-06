@@ -56,6 +56,18 @@ func Delete(s *store.Store, t Task) error {
 		errs = append(errs, err)
 	}
 
+	// And the directory the task was written into, after the event: the
+	// text in it is in the record verbatim — task.created carries the whole
+	// of task.md — and what else is there belongs to work that has just
+	// been deleted. Left behind, it was the reason `orbit new` refused the
+	// id afterwards: the board said the task was gone and the disk said it
+	// was not.
+	if dir, err := s.TaskDir(t.ID); err != nil {
+		errs = append(errs, err)
+	} else if err := os.RemoveAll(dir); err != nil {
+		errs = append(errs, err)
+	}
+
 	return errors.Join(errs...)
 }
 

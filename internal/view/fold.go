@@ -30,7 +30,7 @@ const whyPaused = "paused"
 //     to somebody who can look at a process.
 func Fold(events []record.Event) Task {
 	var t Task
-	for _, e := range events {
+	for _, e := range thisLife(events) {
 		fold(&t, e)
 	}
 	// One conversion, at the end, in one place. The state above is this
@@ -39,6 +39,27 @@ func Fold(events []record.Event) Task {
 	t.Band = bandOfState(t.state)
 
 	return t
+}
+
+// thisLife is the events of the task that stands, which is everything from
+// the last task.created onwards.
+//
+// An id can be written down again after it was deleted — a tracker hands the
+// same id back, and refusing it forever would be Orbit keeping a name
+// somebody stopped using. The record keeps both lives, because it keeps
+// everything; the board is about the one that is here now, and folding the
+// old one in would show a fresh task as finished, on its third attempt, with
+// what the previous one spent.
+func thisLife(events []record.Event) []record.Event {
+	from := 0
+
+	for i, e := range events {
+		if e.Kind == record.TaskCreated {
+			from = i
+		}
+	}
+
+	return events[from:]
 }
 
 // fold applies one event. It is separate from the loop so that the loop is
