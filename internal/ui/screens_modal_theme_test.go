@@ -2,6 +2,8 @@ package ui
 
 import (
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 func TestModalScreensNavigationAndRender(t *testing.T) {
@@ -80,14 +82,14 @@ func TestStartDialogDialsAndKeys(t *testing.T) {
 }
 
 func TestThemeSwitchingAndPalettes(t *testing.T) {
-	for _, themeName := range AvailableThemes() {
-		SetCurrentTheme(themeName)
+	for _, themeName := range theme.AvailableThemes() {
+		theme.SetCurrentTheme(themeName)
 
-		palette := currentPalette()
+		palette := theme.CurrentPalette()
 		if palette.OK == "" || palette.Accent == "" {
 			t.Errorf("theme %q has empty OK or Accent tokens", themeName)
 		}
 	}
 	// Reset to default frauddi
-	SetCurrentTheme("frauddi")
+	theme.SetCurrentTheme("frauddi")
 }

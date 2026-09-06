@@ -13,6 +13,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/ui/typing"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -22,7 +23,7 @@ func (m Model) composeBox(field int, label, placeholder, hint string, in typing.
 	active := m.compose.field == field
 
 	boxW, innerW := m.composeBoxWidth(w), m.composeInnerWidth(w)
-	lines := m.composeBoxLines(in, innerW, active, Paint(Dim).Render(fit(placeholder, innerW)))
+	lines := m.composeBoxLines(in, innerW, active, theme.Paint(theme.Dim).Render(fit(placeholder, innerW)))
 
 	borderStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#334155"))
 	if active {
@@ -50,7 +51,7 @@ func (m Model) composeBox(field int, label, placeholder, hint string, in typing.
 	// as well from below and nothing has to give up its place for it.
 	bottom := indent + borderStyle.Render("└"+strings.Repeat("─", boxW-2)+"┘")
 	if active && hint != "" {
-		bottom += " " + Paint(Dim).Render(hint)
+		bottom += " " + theme.Paint(theme.Dim).Render(hint)
 	}
 
 	return append(out, fit(bottom, w))
@@ -115,7 +116,7 @@ func (m Model) composeBoxRowCount() int {
 // is drawn beside, and composePasteRoom is the width it needs with the cell
 // of space that separates it from that field.
 func composePasteTab(p *words.Printer) string {
-	return Pill(" 📋 "+p.T("compose.btn_paste", "Paste (^V)")+" ", "#FFFFFF", "#0369A1")
+	return theme.Pill(" 📋 "+p.T("compose.btn_paste", "Paste (^V)")+" ", "#FFFFFF", "#0369A1")
 }
 
 func composePasteRoom(p *words.Printer) int {

@@ -8,6 +8,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -64,7 +65,7 @@ func TestTheBadgeIsLitWhenNothingIsFilteredOut(t *testing.T) {
 	m, _ := testModel(t, 150, 30)
 
 	clear := m.name()
-	if clear != PillSelected("◉ orbit", "#FFFFFF", "#0F766E") {
+	if clear != theme.PillSelected("◉ orbit", "#FFFFFF", "#0F766E") {
 		t.Error("the board is holding nothing back and the name badge is not lit")
 	}
 

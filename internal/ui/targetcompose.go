@@ -9,6 +9,8 @@ package ui
 
 import (
 	"charm.land/lipgloss/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 func (m Model) hitCompose(x, y int) Target {
@@ -78,7 +80,7 @@ func (m Model) hitComposeFlowPills(x int, field int) Target {
 		curX += pillWidth + 1
 	}
 
-	newBtn := Pill(" ➕ "+p.T("compose.new_flow_btn", "New")+" ", "#FFFFFF", "#6366F1")
+	newBtn := theme.Pill(" ➕ "+p.T("compose.new_flow_btn", "New")+" ", "#FFFFFF", "#6366F1")
 
 	newWidth := lipgloss.Width(newBtn)
 	if x >= curX && x < curX+newWidth {

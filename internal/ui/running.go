@@ -6,6 +6,7 @@ package ui
 import (
 	"fmt"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -35,7 +36,7 @@ func (m Model) runningField(p *words.Printer) []headerField {
 
 	text := p.T("header.running_cost", "{cost} running", about("cost", fmt.Sprintf("$%.2f", spent)))
 
-	return []headerField{{name: "running", text: Paint(Live).Render("💸 " + text)}}
+	return []headerField{{name: "running", text: theme.Paint(theme.Live).Render("💸 " + text)}}
 }
 
 // runningSpend is what the tasks in flight have cost so far, and whether any

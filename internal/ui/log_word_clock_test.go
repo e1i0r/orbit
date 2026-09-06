@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -59,7 +60,7 @@ func TestLogWordCoversEveryKnownKindAndTheUnknownOne(t *testing.T) {
 		t.Errorf("logWord on an unrecognised kind = %q, want the kind verbatim", word)
 	}
 
-	if role != Dim {
+	if role != theme.Dim {
 		t.Errorf("logWord on an unrecognised kind painted %v, want Dim", role)
 	}
 }

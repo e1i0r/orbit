@@ -1,6 +1,10 @@
 package ui
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
+)
 
 // How one drawn line of a field is painted when its cells do not all mean
 // the same thing: a stretch of it is selected, one cell of it is where the
@@ -66,9 +70,9 @@ func paintCells(line string, from, to, caret int, paint func(string) string) str
 func paintRun(kind int, s string, paint func(string) string) string {
 	switch kind {
 	case cellCaret:
-		return Paint(Sel).Bold(true).Render(s)
+		return theme.Paint(theme.Sel).Bold(true).Render(s)
 	case cellSel:
-		return Paint(Sel).Render(s)
+		return theme.Paint(theme.Sel).Render(s)
 	}
 
 	return paint(s)

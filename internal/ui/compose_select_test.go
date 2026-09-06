@@ -12,6 +12,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/ui/typing"
 )
 
@@ -122,7 +123,7 @@ func TestWhatIsSelectedIsDrawnAsSelected(t *testing.T) {
 		t.Fatal("the box drew nothing")
 	}
 
-	if !strings.Contains(lines[0], Paint(Sel).Render("hola")) {
+	if !strings.Contains(lines[0], theme.Paint(theme.Sel).Render("hola")) {
 		t.Errorf("the selected stretch is not painted as selected: %q", lines[0])
 	}
 

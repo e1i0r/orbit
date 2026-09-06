@@ -20,6 +20,8 @@ import (
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // menuState is the menu while it is up. taskID is the task the menu is
@@ -236,12 +238,12 @@ func (m Model) menuRows(h, w int) []string {
 
 	es := m.menuEntries()
 	if len(es) == 0 {
-		return fill([]string{"", fit("  "+Paint(Dim).Render(
+		return fill([]string{"", fit("  "+theme.Paint(theme.Dim).Render(
 			p.T("menu.gone", "the task this menu was opened on is no longer on the board")), w)}, h)
 	}
 
 	out := make([]string, 0, h)
-	out = append(out, fit("  "+Paint(Dim).Render(m.menuTitle()), w), "")
+	out = append(out, fit("  "+theme.Paint(theme.Dim).Render(m.menuTitle()), w), "")
 
 	off := m.menuOffset(len(es), menuView(h))
 	for i, e := range es[off:] {
@@ -284,26 +286,26 @@ func (m Model) menuRow(e menuEntry, selected bool, w int) string {
 
 	line := e.title
 	if e.glyph != "" {
-		line = Paint(Accent).Render(e.glyph) + "  " + line
+		line = theme.Paint(theme.Accent).Render(e.glyph) + "  " + line
 	} else {
 		line = "   " + line
 	}
 
 	switch {
 	case e.reason != "":
-		line += dot + Paint(Dim).Render(" "+e.reason)
+		line += dot + theme.Paint(theme.Dim).Render(" "+e.reason)
 	case e.detail != "":
-		line += dot + Paint(Dim).Render(" "+e.detail)
+		line += dot + theme.Paint(theme.Dim).Render(" "+e.detail)
 	}
 
 	mark := strings.Repeat(" ", gutter)
 	if selected {
 		mark = markGlyph + strings.Repeat(" ", gutter-1)
-		return Paint(Sel).Render(fit(mark+line, w))
+		return theme.Paint(theme.Sel).Render(fit(mark+line, w))
 	}
 
 	if e.dim {
-		return fit(mark+Paint(Dim).Render(line), w)
+		return fit(mark+theme.Paint(theme.Dim).Render(line), w)
 	}
 
 	return fit(mark+line, w)

@@ -18,6 +18,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/ui/spoken"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // A completion is one thing on offer: what it puts in the line, and what it
@@ -176,7 +177,7 @@ func (m Model) drawCompletions(cw int) []string {
 	}
 
 	if len(offers) > to-from {
-		rows = append(rows, Paint(Dim).Render(
+		rows = append(rows, theme.Paint(theme.Dim).Render(
 			m.opts.Words.T("complete.more", "{n} more", about("n", strconv.Itoa(len(offers)-(to-from))))))
 	}
 
@@ -186,10 +187,10 @@ func (m Model) drawCompletions(cw int) []string {
 // offerRow is one offer: the mark, what it puts in the line, and what it
 // does.
 func offerRow(c completion, chosen bool, cw int) string {
-	mark, text := "  ", Paint(Dim).Render(c.Text)
+	mark, text := "  ", theme.Paint(theme.Dim).Render(c.Text)
 	if chosen {
-		mark, text = Paint(Accent).Bold(true).Render("▸ "), Paint(Accent).Bold(true).Render(c.Text)
+		mark, text = theme.Paint(theme.Accent).Bold(true).Render("▸ "), theme.Paint(theme.Accent).Bold(true).Render(c.Text)
 	}
 
-	return fit(mark+text+"  "+Paint(Dim).Render(c.What), cw)
+	return fit(mark+text+"  "+theme.Paint(theme.Dim).Render(c.What), cw)
 }

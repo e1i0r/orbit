@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -22,7 +23,7 @@ func (m Model) reportLines() []string {
 func (m Model) reportRows() ([]string, map[int]int) {
 	p := m.opts.Words
 	if m.logErr != nil {
-		return []string{"  " + Paint(Bad).Render(m.errSaid(m.logErr))}, nil
+		return []string{"  " + theme.Paint(theme.Bad).Render(m.errSaid(m.logErr))}, nil
 	}
 
 	w, blocks := max(m.frame.Body.W, 1), 0
@@ -31,8 +32,8 @@ func (m Model) reportRows() ([]string, map[int]int) {
 
 	out = append(out,
 		"",
-		"  "+Paint(Accent).Bold(true).Render(p.T("report.title", "Summary Report & Review")),
-		"  "+Paint(Dim).Render(p.T("report.subtitle", "what it wrote about the change, and what the review concluded")),
+		"  "+theme.Paint(theme.Accent).Bold(true).Render(p.T("report.title", "Summary Report & Review")),
+		"  "+theme.Paint(theme.Dim).Render(p.T("report.subtitle", "what it wrote about the change, and what the review concluded")),
 		"",
 	)
 
@@ -78,7 +79,7 @@ func (m Model) reportRows() ([]string, map[int]int) {
 	}
 
 	if blocks == 0 {
-		return []string{"  " + Paint(Dim).Render(p.T("report.empty", "no engine report available for this task"))}, nil
+		return []string{"  " + theme.Paint(theme.Dim).Render(p.T("report.empty", "no engine report available for this task"))}, nil
 	}
 
 	return out, seams
@@ -88,24 +89,24 @@ func (m Model) reportRows() ([]string, map[int]int) {
 func (m Model) phaseHead(e, started view.Entry) string {
 	p := m.opts.Words
 
-	parts := []string{Paint(Accent).Render(e.Phase)}
+	parts := []string{theme.Paint(theme.Accent).Render(e.Phase)}
 	if engine := strings.TrimSpace(started.Engine + " " + started.Model); engine != "" {
-		parts = append(parts, Paint(Dim).Render(engine))
+		parts = append(parts, theme.Paint(theme.Dim).Render(engine))
 	}
 
 	if e.Cost > 0 {
-		parts = append(parts, Paint(Dim).Render(p.T("evidence.cost", "cost ${amount}",
+		parts = append(parts, theme.Paint(theme.Dim).Render(p.T("evidence.cost", "cost ${amount}",
 			about("amount", strconv.FormatFloat(e.Cost, 'f', 2, 64)))))
 	}
 
 	if e.Session != "" {
-		parts = append(parts, Paint(Dim).Render(p.T("evidence.session", "session {id}",
+		parts = append(parts, theme.Paint(theme.Dim).Render(p.T("evidence.session", "session {id}",
 			about("id", e.Session))))
 	}
 
 	word, role := m.logWord(e)
 
-	return "  " + Paint(role).Render(word) + "  " + strings.Join(parts, "  ")
+	return "  " + theme.Paint(role).Render(word) + "  " + strings.Join(parts, "  ")
 }
 
 // phaseBody is why the phase stopped and what it printed.
@@ -114,11 +115,11 @@ func (m Model) phaseBody(e view.Entry) []string {
 
 	var out []string
 	if e.Cause != "" {
-		out = append(out, "    "+Paint(Bad).Render(p.T("evidence.stopped", "stopped: {why}", about("why", e.Cause))))
+		out = append(out, "    "+theme.Paint(theme.Bad).Render(p.T("evidence.stopped", "stopped: {why}", about("why", e.Cause))))
 	}
 
 	if e.Truncated() {
-		out = append(out, "    "+Paint(Warn).Render(p.T("evidence.truncated",
+		out = append(out, "    "+theme.Paint(theme.Warn).Render(p.T("evidence.truncated",
 			"{kept} of {full} bytes kept — the rest was not written down anywhere",
 			about("kept", group(e.Kept)), about("full", group(e.Full)))))
 	}
@@ -131,7 +132,7 @@ func (m Model) phaseBody(e view.Entry) []string {
 	}
 
 	if strings.TrimSpace(text) == "" {
-		return append(out, "    "+Paint(Dim).Render(p.T("evidence.silent", "the engine printed nothing")))
+		return append(out, "    "+theme.Paint(theme.Dim).Render(p.T("evidence.silent", "the engine printed nothing")))
 	}
 
 	return append(out, renderMarkdown(text, m.frame.Body.W, m.rawText)...)

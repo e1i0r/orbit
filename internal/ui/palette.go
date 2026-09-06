@@ -23,6 +23,8 @@ import (
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // paletteState is the palette while it is up, and nothing while it is down:
@@ -256,7 +258,7 @@ func (m Model) paletteRows(h, w int) []string {
 
 	all := m.palette.candidates(m.opts.Commands)
 	if len(all) == 0 {
-		line := Paint(Dim).Render(m.opts.Words.T("palette.none",
+		line := theme.Paint(theme.Dim).Render(m.opts.Words.T("palette.none",
 			"no command starts with {typed}", about("typed", m.palette.typed)))
 
 		return fill([]string{"", fit("  "+line, w)}, h)
@@ -282,14 +284,14 @@ func (m Model) paletteRow(c Command, selected bool, w int) string {
 
 	tail := ""
 	if c.Refused && c.Because != nil {
-		tail = Paint(Dim).Render(dot + " " + c.Because(p))
+		tail = theme.Paint(theme.Dim).Render(dot + " " + c.Because(p))
 	} else {
 		if c.Args != "" {
-			tail += Paint(Dim).Render(" " + c.Args)
+			tail += theme.Paint(theme.Dim).Render(" " + c.Args)
 		}
 
 		if c.About != nil {
-			tail += Paint(Dim).Render(dot + " " + c.About(p))
+			tail += theme.Paint(theme.Dim).Render(dot + " " + c.About(p))
 		}
 	}
 
@@ -300,7 +302,7 @@ func (m Model) paletteRow(c Command, selected bool, w int) string {
 		mark = markGlyph + strings.Repeat(" ", gutter-1)
 		line = fit(mark+line, w)
 
-		return Paint(Sel).Render(line)
+		return theme.Paint(theme.Sel).Render(line)
 	}
 
 	return fit(mark+c.Name+tail, w)
@@ -311,11 +313,11 @@ func (m Model) paletteRow(c Command, selected bool, w int) string {
 // borrowed from the cursor's own paint, gone the moment the line goes down.
 func (m Model) paletteInputLine(w int) string {
 	if m.palette.typed == "" {
-		placeholder := Paint(Dim).Render(": " + m.opts.Words.T("palette.placeholder", "type a command"))
+		placeholder := theme.Paint(theme.Dim).Render(": " + m.opts.Words.T("palette.placeholder", "type a command"))
 		return fit(" "+placeholder, w)
 	}
 
-	return fit(" :"+m.palette.typed+Paint(Sel).Render(" "), w)
+	return fit(" :"+m.palette.typed+theme.Paint(theme.Sel).Render(" "), w)
 }
 
 // hitPalette answers the body's cells while the palette is up: each

@@ -9,7 +9,11 @@ package ui
 // it. What is drawn now is a window around the one that is chosen, with the
 // count beside it, so walking the dial walks the whole catalogue.
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
+)
 
 // dialShown is how many choices still read as a row of pills. Past it, the
 // row says what is in use and where the rest are.
@@ -44,6 +48,6 @@ func (m Model) dialValue(field int, ids, labels []string, current string) string
 			about("total", strconv.Itoa(len(ids))))
 	}
 
-	return Paint(Sel).Render(" "+shown+" ") + " " + Paint(Dim).Render(where+" · ") +
-		Paint(Live).Render(m.opts.Words.T("flows.dial_open", "[↵] see them all"))
+	return theme.Paint(theme.Sel).Render(" "+shown+" ") + " " + theme.Paint(theme.Dim).Render(where+" · ") +
+		theme.Paint(theme.Live).Render(m.opts.Words.T("flows.dial_open", "[↵] see them all"))
 }

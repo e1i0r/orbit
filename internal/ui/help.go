@@ -3,6 +3,8 @@ package ui
 import (
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 type helpState struct {
@@ -60,17 +62,17 @@ func (m Model) helpRows(h, w int) []string {
 	p := m.opts.Words
 	out := []string{
 		"",
-		"  " + Paint(Accent).Bold(true).Render(p.T("help.title", "Help and keyboard shortcuts (cheat sheet)")),
-		"  " + Paint(Dim).Render(p.T("help.subtitle", "every function can be reached from the keyboard or by clicking it")),
+		"  " + theme.Paint(theme.Accent).Bold(true).Render(p.T("help.title", "Help and keyboard shortcuts (cheat sheet)")),
+		"  " + theme.Paint(theme.Dim).Render(p.T("help.subtitle", "every function can be reached from the keyboard or by clicking it")),
 		"",
 	}
 
 	renderSection := func(title string, items [][2]string) {
-		out = append(out, "  "+Paint(Live).Bold(true).Render(title))
+		out = append(out, "  "+theme.Paint(theme.Live).Bold(true).Render(title))
 
 		for _, item := range items {
 			k := pad(item[0], 28, false)
-			line := "    " + Paint(Accent).Render(k) + " " + Paint(Dim).Render(item[1])
+			line := "    " + theme.Paint(theme.Accent).Render(k) + " " + theme.Paint(theme.Dim).Render(item[1])
 			out = append(out, fit(line, w))
 		}
 
@@ -150,7 +152,7 @@ func (m Model) helpRows(h, w int) []string {
 	waysOut := p.T("help.ways_out", "{up_down} scroll · {back} back",
 		about("up_down", m.keys.Up.Help().Key+m.keys.Down.Help().Key),
 		about("back", m.keys.Back.Help().Key))
-	out = append(out, fit("  "+Paint(Dim).Render(waysOut), w))
+	out = append(out, fit("  "+theme.Paint(theme.Dim).Render(waysOut), w))
 
 	if m.help.offset > 0 {
 		if m.help.offset >= len(out) {

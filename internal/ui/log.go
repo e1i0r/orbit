@@ -20,6 +20,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -49,11 +50,11 @@ func (m Model) logLines() []string {
 func (m Model) logRows() ([]string, map[int]int, map[int]int) {
 	w := max(m.frame.Body.W, 1)
 	if m.logErr != nil {
-		return []string{" " + Paint(Bad).Render(m.errSaid(m.logErr))}, nil, nil
+		return []string{" " + theme.Paint(theme.Bad).Render(m.errSaid(m.logErr))}, nil, nil
 	}
 
 	if len(m.entries) == 0 {
-		return []string{" " + Paint(Dim).Render(m.opts.Words.T("log.empty", "nothing has been recorded about this task yet"))}, nil, nil
+		return []string{" " + theme.Paint(theme.Dim).Render(m.opts.Words.T("log.empty", "nothing has been recorded about this task yet"))}, nil, nil
 	}
 
 	out := make([]string, 0, len(m.entries)+4)
@@ -97,7 +98,7 @@ func (m Model) seam(e view.Entry, w int) string {
 	mark := foldMark(m.attemptOpen(e.Attempt))
 	rule := max(w-lipgloss.Width(mark)-lipgloss.Width(head)-lipgloss.Width(tail)-1, 0)
 
-	return " " + Text(Tertiary).Render(mark) + Paint(Dim).Render(head+strings.Repeat("─", rule)+tail)
+	return " " + theme.Text(theme.Tertiary).Render(mark) + theme.Paint(theme.Dim).Render(head+strings.Repeat("─", rule)+tail)
 }
 
 // logEntryLines is one event — the clock, the phase, what happened, and what
@@ -109,9 +110,9 @@ func (m Model) seam(e view.Entry, w int) string {
 // already there.
 func (m Model) logEntryLines(e view.Entry, i, w int) ([]string, bool) {
 	word, role := m.logWord(e)
-	prefix := " " + Paint(Dim).Render(pad(clock(e.At), clockCells, false)) + "  " +
-		Paint(Dim).Render(pad(e.Phase, phaseCells, false)) + "  " +
-		Paint(role).Render(word) + "  "
+	prefix := " " + theme.Paint(theme.Dim).Render(pad(clock(e.At), clockCells, false)) + "  " +
+		theme.Paint(theme.Dim).Render(pad(e.Phase, phaseCells, false)) + "  " +
+		theme.Paint(role).Render(word) + "  "
 
 	detail := m.logDetail(e)
 	if detail == "" {
@@ -137,23 +138,23 @@ func (m Model) logEntryLines(e view.Entry, i, w int) ([]string, bool) {
 	wrapped := splitIntoLines(detail, availW)
 
 	if len(wrapped) <= 1 {
-		return []string{prefix + strings.Repeat(" ", lipgloss.Width(foldShut)) + Paint(Dim).Render(wrapped[0])}, false
+		return []string{prefix + strings.Repeat(" ", lipgloss.Width(foldShut)) + theme.Paint(theme.Dim).Render(wrapped[0])}, false
 	}
 
-	mark := Text(Tertiary).Render(foldMark(m.rowOpen(tabTimeline, i)))
+	mark := theme.Text(theme.Tertiary).Render(foldMark(m.rowOpen(tabTimeline, i)))
 
 	// Closed, the detail is a qualifier of the word beside it and is set as
 	// one. Open, it is what the reader asked to read.
 	if !m.rowOpen(tabTimeline, i) {
-		return []string{prefix + mark + Paint(Dim).Render(wrapped[0])}, true
+		return []string{prefix + mark + theme.Paint(theme.Dim).Render(wrapped[0])}, true
 	}
 
 	out := make([]string, 0, len(wrapped))
-	out = append(out, prefix+mark+Text(Secondary).Render(wrapped[0]))
+	out = append(out, prefix+mark+theme.Text(theme.Secondary).Render(wrapped[0]))
 
 	indent := strings.Repeat(" ", lead+lipgloss.Width(foldShut))
 	for _, wl := range wrapped[1:] {
-		out = append(out, indent+Text(Secondary).Render(wl))
+		out = append(out, indent+theme.Text(theme.Secondary).Render(wl))
 	}
 
 	return out, true
@@ -165,81 +166,81 @@ func (m Model) logEntryLines(e view.Entry, i, w int) ([]string, bool) {
 // the one string on this screen that is deliberately not translated: it is
 // not a word, it is a key out of somebody else's log, and inventing a
 // sentence for it would be inventing the meaning too.
-func (m Model) logWord(e view.Entry) (string, Role) {
+func (m Model) logWord(e view.Entry) (string, theme.Role) {
 	p := m.opts.Words
 
 	switch e.What() {
 	case view.EntryWritten:
-		return p.T("log.written", "written down"), Dim
+		return p.T("log.written", "written down"), theme.Dim
 	case view.EntryStarted:
-		return p.T("log.started", "started"), Accent
+		return p.T("log.started", "started"), theme.Accent
 	case view.EntryFinished:
-		return p.T("log.finished", "finished"), OK
+		return p.T("log.finished", "finished"), theme.OK
 	case view.EntryFailed:
-		return p.T("log.failed", "failed"), Bad
+		return p.T("log.failed", "failed"), theme.Bad
 	case view.EntryCancelled:
-		return p.T("log.cancelled", "cancelled"), Dim
+		return p.T("log.cancelled", "cancelled"), theme.Dim
 	case view.EntryRequeued:
-		return p.T("log.requeued", "back in to do"), Warn
+		return p.T("log.requeued", "back in to do"), theme.Warn
 	case view.EntryTimedOut:
-		return p.T("log.timed_out", "timed out"), Bad
+		return p.T("log.timed_out", "timed out"), theme.Bad
 	case view.EntryAbandoned:
-		return p.T("log.abandoned", "abandoned"), Warn
+		return p.T("log.abandoned", "abandoned"), theme.Warn
 	case view.EntryRead:
-		return p.T("log.read", "read"), Dim
+		return p.T("log.read", "read"), theme.Dim
 	case view.EntryWaiting:
-		return p.T("log.waiting", "waiting"), Warn
+		return p.T("log.waiting", "waiting"), theme.Warn
 	case view.EntryResumed:
-		return p.T("log.resumed", "let go again"), Accent
+		return p.T("log.resumed", "let go again"), theme.Accent
 	case view.EntryRetried:
-		return p.T("log.retried", "trying again"), Warn
+		return p.T("log.retried", "trying again"), theme.Warn
 	case view.EntryGatePassed:
-		return p.T("log.gate_passed", "gate passed"), OK
+		return p.T("log.gate_passed", "gate passed"), theme.OK
 	case view.EntryGateFailed:
-		return p.T("log.gate_failed", "gate failed"), Warn
+		return p.T("log.gate_failed", "gate failed"), theme.Warn
 	case view.EntryRefused:
-		return p.T("log.refused", "refused"), Bad
+		return p.T("log.refused", "refused"), theme.Bad
 	case view.EntryToolCall:
-		return p.T("log.tool_call", "tool call"), Live
+		return p.T("log.tool_call", "tool call"), theme.Live
 	case view.EntryThought:
-		return p.T("log.thought", "thought"), Dim
+		return p.T("log.thought", "thought"), theme.Dim
 	case view.EntryStuck:
-		return p.T("log.stuck", "stuck"), Bad
+		return p.T("log.stuck", "stuck"), theme.Bad
 	case view.EntryOverBudget:
-		return p.T("log.over_budget", "over budget"), Bad
+		return p.T("log.over_budget", "over budget"), theme.Bad
 	case view.EntryOverDiff:
-		return p.T("log.over_diff", "change too big"), Bad
+		return p.T("log.over_diff", "change too big"), theme.Bad
 	case view.EntryNewDependency:
-		return p.T("log.new_dependency", "new dependency"), Bad
+		return p.T("log.new_dependency", "new dependency"), theme.Bad
 	case view.EntryContradicts:
-		return p.T("log.contradicts", "against a decision"), Bad
+		return p.T("log.contradicts", "against a decision"), theme.Bad
 	case view.EntryLoopChecked:
-		return p.T("log.loop_checked", "loop checked"), Accent
+		return p.T("log.loop_checked", "loop checked"), theme.Accent
 	case view.EntryApproved:
-		return p.T("log.approved", "dependency approved"), OK
+		return p.T("log.approved", "dependency approved"), theme.OK
 	case view.EntryDecision:
-		return p.T("log.decision", "decided"), Accent
+		return p.T("log.decision", "decided"), theme.Accent
 	case view.EntrySuperseded:
-		return p.T("log.superseded", "decision replaced"), Warn
+		return p.T("log.superseded", "decision replaced"), theme.Warn
 	case view.EntryRepoJoined:
-		return p.T("log.repo_joined", "repository joined"), Accent
+		return p.T("log.repo_joined", "repository joined"), theme.Accent
 	case view.EntryDeliverAsked:
-		return p.T("log.deliver_asked", "asked for"), Accent
+		return p.T("log.deliver_asked", "asked for"), theme.Accent
 	case view.EntryDeliverAnswered:
 		// The one kind here whose word depends on what it carries: the
 		// same event ends a verb that worked and one that broke, and a
 		// timeline that called both of them "answered" would make the
 		// reader open the row to find out which.
 		if e.Cause != "" {
-			return p.T("log.deliver_broke", "came back broken"), Bad
+			return p.T("log.deliver_broke", "came back broken"), theme.Bad
 		}
 
-		return p.T("log.deliver_answered", "came back"), OK
+		return p.T("log.deliver_answered", "came back"), theme.OK
 	case view.EntryUnreadable:
-		return p.T("log.unreadable", "this line could not be read"), Bad
+		return p.T("log.unreadable", "this line could not be read"), theme.Bad
 	}
 
-	return e.Kind, Dim
+	return e.Kind, theme.Dim
 }
 
 // logDetail is the one fact worth putting beside the word, and it is always

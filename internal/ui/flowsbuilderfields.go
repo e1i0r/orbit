@@ -14,6 +14,8 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // labelWidth is how wide the left column is. Every label is padded to it so
@@ -33,7 +35,7 @@ func (m Model) builderFieldRows(w int, sz boxSizes) []builderLine {
 		m.labelled(flowFieldTemplate, p.T("flows.field_template", "Template / Preset"), renderComboPills(tpls, st.template), w),
 		m.labelled(flowFieldName, p.T("flows.field_flow_name", "Flow name"), m.typedValue(flowFieldName, st.flowName), w),
 		m.labelled(flowFieldDescription, p.T("flows.field_description", "Purpose"),
-			Paint(Dim).Render(p.T("flows.desc_hint", "one line, or several — shift+↵ for a new one")), w),
+			theme.Paint(theme.Dim).Render(p.T("flows.desc_hint", "one line, or several — shift+↵ for a new one")), w),
 	)
 
 	out = append(out, m.textBox(flowFieldDescription, st.description,
@@ -66,11 +68,11 @@ func (m Model) phaseFieldRows(w int, sz boxSizes) []builderLine {
 		}
 
 		if i == st.activePhase {
-			tabs = append(tabs, Paint(Sel).Bold(true).Render(" ● "+label+" "))
+			tabs = append(tabs, theme.Paint(theme.Sel).Bold(true).Render(" ● "+label+" "))
 			continue
 		}
 
-		tabs = append(tabs, Paint(Dim).Render(" "+label+" "))
+		tabs = append(tabs, theme.Paint(theme.Dim).Render(" "+label+" "))
 	}
 
 	out := []builderLine{
@@ -145,12 +147,12 @@ func (m Model) wiringFieldRows(w int) []builderLine {
 // groupRow is one heading over a run of fields, with a rule after it so the
 // eye finds the next group without reading the words again.
 func (m Model) groupRow(head string, w int) builderLine {
-	line := "  " + Paint(Live).Bold(true).Render(head) + " "
+	line := "  " + theme.Paint(theme.Live).Bold(true).Render(head) + " "
 
 	// Every rule ends in the same column, so the groups read as one
 	// column of the form rather than as four ragged ones.
 	if rule := min(w, 104) - lipgloss.Width(line) - 2; rule > 0 {
-		line += Paint(Dim).Render(strings.Repeat("─", rule))
+		line += theme.Paint(theme.Dim).Render(strings.Repeat("─", rule))
 	}
 
 	return plainLine(fit(line, w))
@@ -162,10 +164,10 @@ func (m Model) labelled(field int, label, val string, w int) builderLine {
 	mark, lbl := "  ", pad(label, labelWidth, false)
 
 	if m.flows.field == field {
-		mark = Paint(Accent).Bold(true).Render("▸ ")
-		lbl = Paint(Accent).Bold(true).Render(lbl)
+		mark = theme.Paint(theme.Accent).Bold(true).Render("▸ ")
+		lbl = theme.Paint(theme.Accent).Bold(true).Render(lbl)
 	} else {
-		lbl = Paint(Dim).Render(lbl)
+		lbl = theme.Paint(theme.Dim).Render(lbl)
 	}
 
 	return builderLine{text: fit(mark+lbl+" "+val, w), field: field, phase: noPhase, pick: noPick}
@@ -175,12 +177,12 @@ func (m Model) labelled(field int, label, val string, w int) builderLine {
 // it while it is the field being typed into.
 func (m Model) typedValue(field int, val string) string {
 	if m.flows.field == field {
-		return Paint(Accent).Render(val + "█")
+		return theme.Paint(theme.Accent).Render(val + "█")
 	}
 
 	if val == "" {
-		return Paint(Dim).Render(m.opts.Words.T("flows.empty_field", "(empty)"))
+		return theme.Paint(theme.Dim).Render(m.opts.Words.T("flows.empty_field", "(empty)"))
 	}
 
-	return Text(Primary).Render(val)
+	return theme.Text(theme.Primary).Render(val)
 }

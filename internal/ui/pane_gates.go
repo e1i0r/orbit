@@ -6,6 +6,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -40,7 +41,7 @@ func (m Model) gatesLines() []string {
 func (m Model) gatesRows() ([]string, map[int]int) {
 	p := m.opts.Words
 	if m.logErr != nil {
-		return []string{"  " + Paint(Bad).Render(m.errSaid(m.logErr))}, nil
+		return []string{"  " + theme.Paint(theme.Bad).Render(m.errSaid(m.logErr))}, nil
 	}
 
 	var checks []gateCheck
@@ -70,13 +71,13 @@ func (m Model) gatesRows() ([]string, map[int]int) {
 
 	out := []string{
 		"",
-		"  " + Paint(Accent).Bold(true).Render(p.T("gates.title", "Verification Gates & Checks")),
-		"  " + Paint(Dim).Render(p.T("gates.subtitle", "what needs to pass — by attempt, and why it stopped")),
+		"  " + theme.Paint(theme.Accent).Bold(true).Render(p.T("gates.title", "Verification Gates & Checks")),
+		"  " + theme.Paint(theme.Dim).Render(p.T("gates.subtitle", "what needs to pass — by attempt, and why it stopped")),
 		"",
 	}
 
 	if len(checks) == 0 {
-		return append(out, "  "+Paint(Dim).Render(p.T("gates.empty", "no verification gates have run for this task"))), nil
+		return append(out, "  "+theme.Paint(theme.Dim).Render(p.T("gates.empty", "no verification gates have run for this task"))), nil
 	}
 
 	passedCount := 0
@@ -87,20 +88,20 @@ func (m Model) gatesRows() ([]string, map[int]int) {
 		}
 	}
 
-	summaryRole := OK
+	summaryRole := theme.OK
 	summaryWord := p.T("gates.pass", "pass")
 
 	if failed := len(checks) - passedCount; failed > 0 {
-		summaryRole = Bad
+		summaryRole = theme.Bad
 		summaryWord = p.P("gates.badge_failed", failed, "{n} failed", "{n} failed")
 	}
 
 	out = append(out, fmt.Sprintf("  %s %s   %d/%d %s   %s",
-		Paint(Accent).Render("▼"),
-		Paint(Accent).Bold(true).Render(p.T("gates.attempt", "attempt 1")),
+		theme.Paint(theme.Accent).Render("▼"),
+		theme.Paint(theme.Accent).Bold(true).Render(p.T("gates.attempt", "attempt 1")),
 		passedCount, len(checks),
 		p.T("gates.passed_word", "passed"),
-		Paint(summaryRole).Bold(true).Render(summaryWord),
+		theme.Paint(summaryRole).Bold(true).Render(summaryWord),
 	))
 	out = append(out, "")
 
@@ -127,17 +128,17 @@ func (m Model) gatesRows() ([]string, map[int]int) {
 func (m Model) gateRows(c gateCheck, i, w int) ([]string, bool) {
 	p := m.opts.Words
 
-	icon, word, role := "✅", p.T("gates.pass", "pass"), OK
+	icon, word, role := "✅", p.T("gates.pass", "pass"), theme.OK
 	if !c.passed {
-		icon, word, role = "❌", p.T("gates.fail", "fail"), Bad
+		icon, word, role = "❌", p.T("gates.fail", "fail"), theme.Bad
 	}
 
 	// The columns are padded on the plain word and painted afterwards: a
 	// width verb counts the bytes of an escape sequence as cells, so a
 	// padded rendered string is a column that moves with the palette.
-	head := "  " + Paint(role).Render(icon) + " " +
-		Paint(Accent).Render(pad(c.name, gateNameCells, false)) + "  " +
-		Paint(role).Render(pad(word, gateWordCells, false)) + "  "
+	head := "  " + theme.Paint(role).Render(icon) + " " +
+		theme.Paint(theme.Accent).Render(pad(c.name, gateNameCells, false)) + "  " +
+		theme.Paint(role).Render(pad(word, gateWordCells, false)) + "  "
 
 	lead := 2 + lipgloss.Width(icon) + 1 + gateNameCells + 2 + gateWordCells + 2
 	availW := max(20, w-lead-lipgloss.Width(foldShut)-2)
@@ -163,21 +164,21 @@ func (m Model) gateRows(c gateCheck, i, w int) ([]string, bool) {
 	}
 
 	if len(body) == 1 {
-		return []string{head + strings.Repeat(" ", lipgloss.Width(foldShut)) + Paint(Dim).Render(body[0])}, false
+		return []string{head + strings.Repeat(" ", lipgloss.Width(foldShut)) + theme.Paint(theme.Dim).Render(body[0])}, false
 	}
 
 	open := m.rowOpen(tabGates, i)
-	mark := Text(Tertiary).Render(foldMark(open))
+	mark := theme.Text(theme.Tertiary).Render(foldMark(open))
 
 	if !open {
-		return []string{head + mark + Paint(Dim).Render(body[0])}, true
+		return []string{head + mark + theme.Paint(theme.Dim).Render(body[0])}, true
 	}
 
-	out := []string{head + mark + Text(Secondary).Render(body[0])}
+	out := []string{head + mark + theme.Text(theme.Secondary).Render(body[0])}
 
 	indent := strings.Repeat(" ", lead+lipgloss.Width(foldShut))
 	for _, l := range body[1:] {
-		out = append(out, indent+Text(Secondary).Render(l))
+		out = append(out, indent+theme.Text(theme.Secondary).Render(l))
 	}
 
 	return out, true

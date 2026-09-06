@@ -19,6 +19,7 @@ import (
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/ui/layout"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -48,15 +49,15 @@ func (m Model) drawRow(r row, w int, selected bool) string {
 	fields := []struct {
 		cells int
 		text  string
-		role  Role
+		role  theme.Role
 		right bool
 	}{
-		{m.plan.Repo, layout.RepoCell(r.task, m.plan.Repo), Dim, false},
-		{m.plan.ID, r.task.ID, Accent, false},
-		{m.plan.Title, r.task.Title, Dim, false},
+		{m.plan.Repo, layout.RepoCell(r.task, m.plan.Repo), theme.Dim, false},
+		{m.plan.ID, r.task.ID, theme.Accent, false},
+		{m.plan.Title, r.task.Title, theme.Dim, false},
 		{m.plan.State, word, role, false},
-		{m.plan.Model, r.task.Model, Dim, false},
-		{m.plan.Elapsed, elapsed(m.now, r.task.Since), Dim, true},
+		{m.plan.Model, r.task.Model, theme.Dim, false},
+		{m.plan.Elapsed, elapsed(m.now, r.task.Since), theme.Dim, true},
 	}
 
 	var parts []string
@@ -68,15 +69,15 @@ func (m Model) drawRow(r row, w int, selected bool) string {
 
 		cell := pad(f.text, f.cells, f.right)
 
-		rendered := Paint(f.role).Render(cell)
+		rendered := theme.Paint(f.role).Render(cell)
 		if selected {
 			switch f.role {
-			case Accent:
-				rendered = Paint(Live).Bold(true).Render(cell)
-			case Dim:
-				rendered = Paint(Accent).Bold(true).Render(cell)
+			case theme.Accent:
+				rendered = theme.Paint(theme.Live).Bold(true).Render(cell)
+			case theme.Dim:
+				rendered = theme.Paint(theme.Accent).Bold(true).Render(cell)
 			default:
-				rendered = Paint(f.role).Bold(true).Render(cell)
+				rendered = theme.Paint(f.role).Bold(true).Render(cell)
 			}
 		}
 
@@ -91,9 +92,9 @@ func (m Model) drawRow(r row, w int, selected bool) string {
 
 	switch {
 	case selected:
-		mark = Paint(Live).Bold(true).Render("▸ ")
+		mark = theme.Paint(theme.Live).Bold(true).Render("▸ ")
 	case working(r.task):
-		mark = Paint(Live).Render(m.spin() + " ")
+		mark = theme.Paint(theme.Live).Render(m.spin() + " ")
 	}
 
 	line := mark + strings.Join(parts, strings.Repeat(" ", columnGap))
@@ -109,50 +110,50 @@ func (m Model) drawRow(r row, w int, selected bool) string {
 // The fold produces a key and this switch translates it, which is what keeps
 // a Spanish reader from being handed an English word folded three layers
 // down.
-func (m Model) stateWord(t view.Task) (string, Role) {
+func (m Model) stateWord(t view.Task) (string, theme.Role) {
 	p := m.opts.Words
 
 	switch t.Reason.Key {
 	case view.ReasonFailed:
-		return p.T("reason.failed", "failed: {phase}", reasonArgs(t.Reason)...), Bad
+		return p.T("reason.failed", "failed: {phase}", reasonArgs(t.Reason)...), theme.Bad
 	case view.ReasonFailedToStart:
-		return p.T("reason.failed_to_start", "would not start"), Bad
+		return p.T("reason.failed_to_start", "would not start"), theme.Bad
 	case view.ReasonGate:
-		return p.T("reason.gate", "waiting: {phase}", reasonArgs(t.Reason)...), Warn
+		return p.T("reason.gate", "waiting: {phase}", reasonArgs(t.Reason)...), theme.Warn
 	case view.ReasonHeld:
-		return p.T("reason.held", "held: {phase}", reasonArgs(t.Reason)...), Warn
+		return p.T("reason.held", "held: {phase}", reasonArgs(t.Reason)...), theme.Warn
 	case view.ReasonTimedOut:
-		return p.T("reason.timed_out", "timed out"), Bad
+		return p.T("reason.timed_out", "timed out"), theme.Bad
 	case view.ReasonAbandoned:
-		return p.T("reason.abandoned", "abandoned"), Warn
+		return p.T("reason.abandoned", "abandoned"), theme.Warn
 	case view.ReasonCancelled:
-		return p.T("reason.cancelled", "cancelled"), Dim
+		return p.T("reason.cancelled", "cancelled"), theme.Dim
 	case view.ReasonContradicts:
-		return p.T("reason.contradicts", "goes against {decision}", reasonArgs(t.Reason)...), Bad
+		return p.T("reason.contradicts", "goes against {decision}", reasonArgs(t.Reason)...), theme.Bad
 	case view.ReasonNewDependency:
-		return p.T("reason.new_dependency", "added {names}", reasonArgs(t.Reason)...), Bad
+		return p.T("reason.new_dependency", "added {names}", reasonArgs(t.Reason)...), theme.Bad
 	case view.ReasonOverDiff:
-		return p.T("reason.over_diff", "changed {lines} lines of {budget}", reasonArgs(t.Reason)...), Bad
+		return p.T("reason.over_diff", "changed {lines} lines of {budget}", reasonArgs(t.Reason)...), theme.Bad
 	case view.ReasonOverBudget:
-		return p.T("reason.over_budget", "spent {spent} of {budget}", reasonArgs(t.Reason)...), Bad
+		return p.T("reason.over_budget", "spent {spent} of {budget}", reasonArgs(t.Reason)...), theme.Bad
 	case view.ReasonStuck:
-		return p.T("reason.stuck", "stuck after {attempts} attempts", reasonArgs(t.Reason)...), Bad
+		return p.T("reason.stuck", "stuck after {attempts} attempts", reasonArgs(t.Reason)...), theme.Bad
 	}
 
 	if t.Damaged > 0 {
-		return p.T("state.unreadable", "record unreadable"), Bad
+		return p.T("state.unreadable", "record unreadable"), theme.Bad
 	}
 
 	switch view.BandOf(t) {
 	case view.Running:
-		return m.phaseWord(t), Live
+		return m.phaseWord(t), theme.Live
 	case view.Done:
-		return p.T("state.finished", "finished"), OK
+		return p.T("state.finished", "finished"), theme.OK
 	case view.ToDo:
-		return p.T("state.not_started", "not started"), Dim
+		return p.T("state.not_started", "not started"), theme.Dim
 	}
 
-	return "", Dim
+	return "", theme.Dim
 }
 
 // phaseWord is the state word for a task a process is holding: the phase it
@@ -273,18 +274,18 @@ func (m Model) headRow(r row, selected bool, w int) string {
 
 	mark := "  "
 	if selected {
-		mark = Paint(Accent).Bold(true).Render("▸ ")
+		mark = theme.Paint(theme.Accent).Bold(true).Render("▸ ")
 	}
 
-	nameTag := Paint(Accent).Bold(true).Render(name) + " " + Paint(m.countRole(r)).Render("("+count+")")
+	nameTag := theme.Paint(theme.Accent).Bold(true).Render(name) + " " + theme.Paint(m.countRole(r)).Render("("+count+")")
 	left := mark + nameTag + " "
 
 	if right != "" {
-		right = Paint(Dim).Render(right)
+		right = theme.Paint(theme.Dim).Render(right)
 	}
 
 	ruleW := max(0, w-lipgloss.Width(left)-lipgloss.Width(right)-2)
-	rule := Paint(Dim).Render(strings.Repeat("─", ruleW))
+	rule := theme.Paint(theme.Dim).Render(strings.Repeat("─", ruleW))
 
 	return spread(left+rule, right, w)
 }
@@ -314,12 +315,12 @@ func (m Model) bandName(b view.Band) string {
 
 // countRole paints the number over a band, and only one of the four numbers
 // is ever worth a colour: how many things are waiting on a person.
-func (m Model) countRole(r row) Role {
+func (m Model) countRole(r row) theme.Role {
 	if r.band == view.NeedsYou && r.n > 0 {
-		return Warn
+		return theme.Warn
 	}
 
-	return Dim
+	return theme.Dim
 }
 
 // headHint is the right-hand end of a band header.

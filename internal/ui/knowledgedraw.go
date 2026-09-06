@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/e1i0r/orbit/internal/knowledge"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // knowledgeRows is the whole screen: a title, the facts that belong to no
@@ -20,10 +21,10 @@ func (m Model) knowledgeRows(h, w int) []string {
 	p := m.opts.Words
 	cw := max(min(w-4, 110), 24)
 
-	out := []string{"", Paint(Accent).Render(p.T("knowledge.title", "What Orbit knows")), ""}
+	out := []string{"", theme.Paint(theme.Accent).Render(p.T("knowledge.title", "What Orbit knows")), ""}
 
 	if len(m.knowledge.facts) == 0 {
-		out = append(out, Paint(Dim).Render(fit(p.T("knowledge.empty",
+		out = append(out, theme.Paint(theme.Dim).Render(fit(p.T("knowledge.empty",
 			"Nothing written down yet. Say /rule or /aware to the supervisor, or drop a file in .orbit/knowledge/."), cw)))
 
 		return fill(rowsFit(out, w), h)
@@ -54,7 +55,7 @@ func (m Model) knowledgeGroup(out []string, head string, facts []knowledge.Fact,
 		return out, at
 	}
 
-	out = append(out, Paint(Dim).Render(fit(head, cw)))
+	out = append(out, theme.Paint(theme.Dim).Render(fit(head, cw)))
 
 	for _, f := range facts {
 		out = append(out, m.knowledgeFact(f, at == m.knowledge.sel, cw)...)
@@ -99,20 +100,20 @@ func knowledgeRepos(facts []knowledge.Fact) []repoFacts {
 func (m Model) knowledgeFact(f knowledge.Fact, chosen bool, cw int) []string {
 	mark := "  "
 	if chosen {
-		mark = Paint(Accent).Bold(true).Render("▸ ")
+		mark = theme.Paint(theme.Accent).Bold(true).Render("▸ ")
 	}
 
 	head := strings.Join(nonEmpty(
 		m.factDoes(f),
-		Paint(Dim).Render(sideWhere(f.Scope)),
+		theme.Paint(theme.Dim).Render(sideWhere(f.Scope)),
 		m.factFrom(f),
-	), Paint(Dim).Render(" · "))
+	), theme.Paint(theme.Dim).Render(" · "))
 
 	rows := []string{mark + head}
 
-	ink := Text(Primary)
+	ink := theme.Text(theme.Primary)
 	if f.Off {
-		ink = Paint(Dim)
+		ink = theme.Paint(theme.Dim)
 	}
 
 	for _, line := range splitIntoLines(f.Phrase, max(cw-4, 8)) {
@@ -129,13 +130,13 @@ func (m Model) factDoes(f knowledge.Fact) string {
 
 	switch {
 	case f.Off:
-		return Paint(Dim).Render(p.T("knowledge.is_off", "off"))
+		return theme.Paint(theme.Dim).Render(p.T("knowledge.is_off", "off"))
 	case f.Action() == knowledge.Stops:
-		return Paint(Bad).Bold(true).Render(p.T("knowledge.stops", "stops"))
+		return theme.Paint(theme.Bad).Bold(true).Render(p.T("knowledge.stops", "stops"))
 	case f.Stops:
-		return Paint(Warn).Render(p.T("knowledge.no_check", "rule, no check yet"))
+		return theme.Paint(theme.Warn).Render(p.T("knowledge.no_check", "rule, no check yet"))
 	default:
-		return Paint(Live).Render(p.T("knowledge.warns", "aware"))
+		return theme.Paint(theme.Live).Render(p.T("knowledge.warns", "aware"))
 	}
 }
 
@@ -171,7 +172,7 @@ func (m Model) factFrom(f knowledge.Fact) string {
 		said += " · " + p.T("knowledge.used", "told {n}×", about("n", strconv.Itoa(f.Used)))
 	}
 
-	return Paint(Dim).Render(said)
+	return theme.Paint(theme.Dim).Render(said)
 }
 
 // nonEmpty drops the parts that had nothing to say, so the separators do not
@@ -206,7 +207,7 @@ func (m Model) knowledgeFoot(cw int) []string {
 	p := m.opts.Words
 
 	if !m.knowledge.editing {
-		return []string{Paint(Dim).Render(fit(p.T("knowledge.ways",
+		return []string{theme.Paint(theme.Dim).Render(fit(p.T("knowledge.ways",
 			"[↑↓] move · [e] edit · [n] new · [←→] wider or narrower · [space] turn off · [esc] back"), cw))}
 	}
 
@@ -214,7 +215,7 @@ func (m Model) knowledgeFoot(cw int) []string {
 		m.factField(p.T("knowledge.field_phrase", "what it says"), factPhrase, cw),
 		m.factField(p.T("knowledge.field_check", "the check that makes it stop"), factCheck, cw),
 		"",
-		Paint(Dim).Render(fit(p.T("knowledge.editing_ways",
+		theme.Paint(theme.Dim).Render(fit(p.T("knowledge.editing_ways",
 			"[tab] the other field · [↵] save · [esc] leave it as it was"), cw)),
 	}
 }
@@ -229,12 +230,12 @@ func (m Model) factField(label string, field, cw int) string {
 		text = withCaret(in.Val, in.At)
 	}
 
-	ink := Paint(Dim)
+	ink := theme.Paint(theme.Dim)
 	if field == m.knowledge.field {
-		ink = Paint(Accent)
+		ink = theme.Paint(theme.Accent)
 	}
 
-	return fit(ink.Render(label+": ")+Text(Primary).Render(text), cw)
+	return fit(ink.Render(label+": ")+theme.Text(theme.Primary).Render(text), cw)
 }
 
 // withCaret puts the block where the caret is, which is at the end of the line
@@ -244,8 +245,8 @@ func withCaret(s string, at int) string {
 	at = min(max(at, 0), len(runes))
 
 	if at == len(runes) {
-		return s + Paint(Accent).Render("█")
+		return s + theme.Paint(theme.Accent).Render("█")
 	}
 
-	return string(runes[:at]) + Paint(Accent).Render(string(runes[at])) + string(runes[at+1:])
+	return string(runes[:at]) + theme.Paint(theme.Accent).Render(string(runes[at])) + string(runes[at+1:])
 }

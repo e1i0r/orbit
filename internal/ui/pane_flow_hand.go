@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -81,12 +82,12 @@ func (m Model) handNode(st handStep, i int, last bool) []string {
 	}
 
 	icon, status, role := m.handStanding(st)
-	mark := Text(Tertiary).Render(foldMark(m.rowOpen(tabFlow, i)))
+	mark := theme.Text(theme.Tertiary).Render(foldMark(m.rowOpen(tabFlow, i)))
 
 	head := fmt.Sprintf("  %s %s%s %s · %s",
-		Paint(Dim).Render(branch), mark, icon, Paint(role).Bold(true).Render(st.verb), status)
+		theme.Paint(theme.Dim).Render(branch), mark, icon, theme.Paint(role).Bold(true).Render(st.verb), status)
 	if st.took != "" {
-		head += " " + Paint(Dim).Render(fmt.Sprintf("(%s)", st.took))
+		head += " " + theme.Paint(theme.Dim).Render(fmt.Sprintf("(%s)", st.took))
 	}
 
 	out := []string{head}
@@ -94,7 +95,7 @@ func (m Model) handNode(st handStep, i int, last bool) []string {
 		out = append(out, subRows(m.handSubItems(st), subBranch)...)
 	}
 
-	return append(out, "  "+Paint(Dim).Render(subBranch))
+	return append(out, "  "+theme.Paint(theme.Dim).Render(subBranch))
 }
 
 // handStanding is where a delivery verb got to: the glyph, the word, and the
@@ -103,18 +104,18 @@ func (m Model) handNode(st handStep, i int, last bool) []string {
 // A verb that has not come back is drawn as work in progress and not as
 // something pending, which is the whole point of writing the ask down: the
 // supervisor is out doing it, and the reader pressed the key minutes ago.
-func (m Model) handStanding(st handStep) (string, string, Role) {
+func (m Model) handStanding(st handStep) (string, string, theme.Role) {
 	p := m.opts.Words
 
 	switch {
 	case st.failed:
-		return Paint(Bad).Render("✗"),
-			Paint(Bad).Render(p.T("flow.hand_broke", "came back broken")), Bad
+		return theme.Paint(theme.Bad).Render("✗"),
+			theme.Paint(theme.Bad).Render(p.T("flow.hand_broke", "came back broken")), theme.Bad
 	case st.done:
-		return Paint(OK).Render("✓"), Paint(OK).Render(p.T("flow.hand_done", "came back")), OK
+		return theme.Paint(theme.OK).Render("✓"), theme.Paint(theme.OK).Render(p.T("flow.hand_done", "came back")), theme.OK
 	default:
-		return Paint(Live).Render("⚡"),
-			Paint(Live).Bold(true).Render(p.T("flow.hand_out", "asked for, still out")), Live
+		return theme.Paint(theme.Live).Render("⚡"),
+			theme.Paint(theme.Live).Bold(true).Render(p.T("flow.hand_out", "asked for, still out")), theme.Live
 	}
 }
 
@@ -132,8 +133,8 @@ func (m Model) handSubItems(st handStep) []subItem {
 
 	if st.cause != "" {
 		items = append(items, subItem{text: fmt.Sprintf("❌ %s: %s",
-			Paint(Bad).Bold(true).Render(p.T("flow.tree_error", "error details")),
-			Paint(Bad).Render(st.cause))})
+			theme.Paint(theme.Bad).Bold(true).Render(p.T("flow.tree_error", "error details")),
+			theme.Paint(theme.Bad).Render(st.cause))})
 	}
 
 	return append(items, m.phaseOutcome(st.text)...)
@@ -170,7 +171,7 @@ func (m Model) handOutRows() []string {
 			said += " · " + p.T("overview.deliver_ago", "asked {ago} ago", about("ago", ago))
 		}
 
-		return []string{paneGutter + Paint(Live).Render("⚡ "+said)}
+		return []string{paneGutter + theme.Paint(theme.Live).Render("⚡ "+said)}
 	}
 
 	return nil

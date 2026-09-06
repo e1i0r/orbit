@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -12,13 +13,13 @@ func TestFormatThoughtLineAndThinkingLines(t *testing.T) {
 	tests := []struct {
 		input string
 		want  string
-		role  Role
+		role  theme.Role
 	}{
-		{"decided to refactor", "🎯 decided to refactor", OK},
-		{"rejected outdated plan", "🚫 rejected outdated plan", Warn},
-		{"investigating the cache issue", "🔍 investigating the cache issue", Live},
-		{"because the disk was full", "💡 because the disk was full", Accent},
-		{"plain thinking text", "• plain thinking text", Dim},
+		{"decided to refactor", "🎯 decided to refactor", theme.OK},
+		{"rejected outdated plan", "🚫 rejected outdated plan", theme.Warn},
+		{"investigating the cache issue", "🔍 investigating the cache issue", theme.Live},
+		{"because the disk was full", "💡 because the disk was full", theme.Accent},
+		{"plain thinking text", "• plain thinking text", theme.Dim},
 	}
 
 	for _, tt := range tests {

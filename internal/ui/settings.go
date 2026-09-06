@@ -13,6 +13,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 type settingsState struct {
@@ -83,7 +84,7 @@ func (m Model) settingRowsList() []settingRow {
 	engines := m.engineNames()
 	engineVal := orDef(s.Engine(), first(engines))
 	flowVal := orDef(s.Flow(), flow.Default)
-	themeVal := orDef(s.Theme(), defaultTheme)
+	themeVal := orDef(s.Theme(), theme.DefaultTheme)
 
 	// The flows are the build's and the reader's, not this screen's. Names
 	// written out by hand on this dial leave every flow they do not list —
@@ -119,7 +120,7 @@ func (m Model) settingRowsList() []settingRow {
 		{key: "effort", val: effortVal, options: efforts, labels: effortLabels, about: p.T("setting.effort", "the default reasoning effort level for engine sessions")},
 		{key: "thinking", val: thinkingVal, options: []string{"adaptive", "on", "off"}, about: p.T("setting.thinking", "whether extended thinking mode is enabled for the engine")},
 		{key: "flow", val: flowVal, options: flows, about: p.T("setting.flow", "the flow a new task is written against")},
-		{key: "theme", val: themeVal, options: AvailableThemes(), about: p.T("setting.theme", "the visual color theme for the window")},
+		{key: "theme", val: themeVal, options: theme.AvailableThemes(), about: p.T("setting.theme", "the visual color theme for the window")},
 	}
 }
 
@@ -255,32 +256,32 @@ func (m Model) settingsRows(h, w int) []string {
 	rows := m.settingRowsList()
 	out := []string{
 		"",
-		"  " + Paint(Accent).Bold(true).Render(p.T("settings.title", "Settings")),
-		"  " + Paint(Dim).Render(p.T("settings.subtitle", "changes take effect immediately")),
+		"  " + theme.Paint(theme.Accent).Bold(true).Render(p.T("settings.title", "Settings")),
+		"  " + theme.Paint(theme.Dim).Render(p.T("settings.subtitle", "changes take effect immediately")),
 		"",
 	}
 
 	for i, r := range rows {
 		isSelected := i == m.settings.sel
 		mark := "    "
-		keyRole := Accent
-		descRole := Dim
+		keyRole := theme.Accent
+		descRole := theme.Dim
 
 		if isSelected {
-			mark = "  " + Paint(Live).Bold(true).Render("▸ ")
-			keyRole = Live
-			descRole = Accent
+			mark = "  " + theme.Paint(theme.Live).Bold(true).Render("▸ ")
+			keyRole = theme.Live
+			descRole = theme.Accent
 		}
 
 		var optViews []string
 		if isSelected && m.settings.editing {
-			optViews = append(optViews, Paint(Accent).Render(m.settings.typed)+Paint(Sel).Render(" "))
+			optViews = append(optViews, theme.Paint(theme.Accent).Render(m.settings.typed)+theme.Paint(theme.Sel).Render(" "))
 		} else {
 			for i, opt := range r.options {
 				if opt == r.val {
-					optViews = append(optViews, Paint(Sel).Bold(true).Render(" ● "+r.label(i)+" "))
+					optViews = append(optViews, theme.Paint(theme.Sel).Bold(true).Render(" ● "+r.label(i)+" "))
 				} else {
-					optViews = append(optViews, Paint(Dim).Render(" "+r.label(i)+" "))
+					optViews = append(optViews, theme.Paint(theme.Dim).Render(" "+r.label(i)+" "))
 				}
 			}
 		}
@@ -288,8 +289,8 @@ func (m Model) settingsRows(h, w int) []string {
 		optsFormatted := strings.Join(optViews, " ")
 
 		keyCol := padRight(r.key, 14)
-		headerLine := mark + Paint(keyRole).Bold(true).Render(keyCol) + "  " + optsFormatted
-		descLine := "      " + Paint(descRole).Render(r.about)
+		headerLine := mark + theme.Paint(keyRole).Bold(true).Render(keyCol) + "  " + optsFormatted
+		descLine := "      " + theme.Paint(descRole).Render(r.about)
 
 		out = append(out, fit(headerLine, w), fit(descLine, w), "")
 	}
@@ -304,7 +305,7 @@ func (m Model) settingsRows(h, w int) []string {
 			about("back", m.keys.Back.Help().Key))
 	}
 
-	out = append(out, fit("  "+Paint(Dim).Render(waysOut), w))
+	out = append(out, fit("  "+theme.Paint(theme.Dim).Render(waysOut), w))
 
 	return fill(out, h)
 }

@@ -1,4 +1,4 @@
-package ui
+package theme
 
 import (
 	"fmt"
@@ -46,7 +46,7 @@ const (
 	Sunken              // a well: code, output, anything quoted verbatim
 )
 
-// Shell is one theme's paper and ink, as opposed to Palette, which is its
+// Shell is one theme's paper and Ink, as opposed to Palette, which is its
 // meanings. Tertiary text is Palette.Dim: furniture already had a name.
 type Shell struct {
 	Text   string // Primary
@@ -105,7 +105,7 @@ func WindowBackground() color.Color {
 	return lipgloss.Color(currentShell().Base)
 }
 
-// WindowForeground is the ink that goes with that paper: the theme's Text.
+// WindowForeground is the Ink that goes with that paper: the theme's Text.
 //
 // It is set with the background and for the same reason. A terminal told to
 // change its background keeps drawing unstyled text in whatever foreground
@@ -122,7 +122,7 @@ func currentShell() Shell {
 		return s
 	}
 
-	return themeShells[defaultTheme]
+	return themeShells[DefaultTheme]
 }
 
 // Text is the style for one weight of text. It sets a foreground and nothing
@@ -135,7 +135,7 @@ func Text(t Tone) lipgloss.Style {
 	case Secondary:
 		return style.Foreground(lipgloss.Color(sh.Muted))
 	case Tertiary:
-		return style.Foreground(lipgloss.Color(currentPalette().Dim))
+		return style.Foreground(lipgloss.Color(CurrentPalette().Dim))
 	case Primary:
 		return style.Foreground(lipgloss.Color(sh.Text))
 	}
@@ -162,7 +162,7 @@ func Surface(l Level) lipgloss.Style {
 	return style.Background(lipgloss.Color(sh.Base))
 }
 
-// Chrome is the ink of the window's own furniture: the header chips, the
+// Chrome is the Ink of the window's own furniture: the header chips, the
 // root path beside the program name, and the key bar along the bottom.
 //
 // It is Secondary rather than Paint(Dim) for two reasons the reader gave.
@@ -170,7 +170,7 @@ func Surface(l Level) lipgloss.Style {
 // text that is there and cannot be read — the whole point of the bars is
 // that they are what you scan when you do not know what to press. And the
 // three bars are one surface as far as the eye is concerned, so they are
-// one ink: a chip in the header that is a shade off the hints in the footer
+// one Ink: a chip in the header that is a shade off the hints in the footer
 // reads as two kinds of thing, and it is not.
 func Chrome() lipgloss.Style { return Text(Secondary) }
 
@@ -203,7 +203,7 @@ func Tint(r Role) lipgloss.Style {
 // roleColour is the one hex a role stands for, without the weight and the
 // boldness Paint decides on top of it.
 func roleColour(r Role) string {
-	pal := currentPalette()
+	pal := CurrentPalette()
 
 	switch r {
 	case OK:

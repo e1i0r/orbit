@@ -1,8 +1,7 @@
 package ui
 
-// theme_help_coverage_test.go is currentPalette's fallback for a theme name
-// nothing answers to, and the help overlay's own key map: which screen it
-// remembers to return to, and how its offset scrolls and clamps.
+// The help overlay's own key map: which screen it remembers to return to,
+// and how its offset scrolls and clamps.
 
 import (
 	"strings"
@@ -10,24 +9,6 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 )
-
-func TestCurrentPaletteFallsBackOnAnUnknownTheme(t *testing.T) {
-	old := currentThemeName
-
-	t.Cleanup(func() { currentThemeName = old })
-
-	currentThemeName = "not-a-real-theme"
-
-	if got := currentPalette(); got != themePalettes["monokai"] {
-		t.Errorf("currentPalette with an unknown theme name = %+v, want the monokai fallback", got)
-	}
-
-	currentThemeName = "nord"
-
-	if got := currentPalette(); got != themePalettes["nord"] {
-		t.Errorf("currentPalette(nord) = %+v, want the nord palette", got)
-	}
-}
 
 func TestOpenAndAbandonHelpRememberTheScreen(t *testing.T) {
 	m, _ := testModel(t, 100, 30)

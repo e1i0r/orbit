@@ -6,6 +6,7 @@ package ui
 import (
 	"fmt"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -79,7 +80,7 @@ func (m Model) brakeField(p *words.Printer) []headerField {
 		return nil
 	}
 
-	return []headerField{{text: Paint(Warn).Render("⚠️ " + b.text)}}
+	return []headerField{{text: theme.Paint(theme.Warn).Render("⚠️ " + b.text)}}
 }
 
 // spentOnBoard is what the tasks on this board have cost between them.

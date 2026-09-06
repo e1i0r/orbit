@@ -7,6 +7,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 const composeLabelWidth = 14
@@ -19,7 +20,7 @@ func composeLabel(label string, active bool) string {
 
 	padded := pad(label+":", composeLabelWidth, false)
 
-	return mark + Paint(Dim).Render(padded) + " "
+	return mark + theme.Paint(theme.Dim).Render(padded) + " "
 }
 
 func (m Model) composeFlowLine(active bool, w int) string {
@@ -40,18 +41,18 @@ func (m Model) composeFlowLine(active bool, w int) string {
 		}
 
 		if selected {
-			pills = append(pills, Pill(" ● "+glyph+f+" ", "#000000", "#A855F7"))
+			pills = append(pills, theme.Pill(" ● "+glyph+f+" ", "#000000", "#A855F7"))
 		} else {
-			pills = append(pills, Pill(" "+glyph+f+" ", "#94A3B8", "#1E293B"))
+			pills = append(pills, theme.Pill(" "+glyph+f+" ", "#94A3B8", "#1E293B"))
 		}
 	}
 
-	newBtn := Pill(" ➕ "+p.T("compose.new_flow_btn", "New")+" ", "#FFFFFF", "#6366F1")
+	newBtn := theme.Pill(" ➕ "+p.T("compose.new_flow_btn", "New")+" ", "#FFFFFF", "#6366F1")
 	pills = append(pills, newBtn)
 
 	line := prefix + strings.Join(pills, " ")
 	if active {
-		line += " " + Paint(Dim).Render(p.T("compose.flow_hint", "(←/→ to cycle, click again/i for details, + new)"))
+		line += " " + theme.Paint(theme.Dim).Render(p.T("compose.flow_hint", "(←/→ to cycle, click again/i for details, + new)"))
 	}
 
 	return fit(line, w)
@@ -117,7 +118,7 @@ func (m Model) flowPhaseRow(n int, ph flow.Phase) string {
 	}
 
 	if ph.Wait {
-		return row + " · " + Paint(Warn).Render("⏸ "+m.opts.Words.T("compose.flow_waits", "waits for you"))
+		return row + " · " + theme.Paint(theme.Warn).Render("⏸ "+m.opts.Words.T("compose.flow_waits", "waits for you"))
 	}
 
 	return row
@@ -127,8 +128,8 @@ const composeLabelStart = gutter + composeLabelWidth + 1
 
 func composePillWidth(name string, selected bool) int {
 	if selected {
-		return lipgloss.Width(Pill(" ● "+name+" ", "#000000", "#FFFFFF"))
+		return lipgloss.Width(theme.Pill(" ● "+name+" ", "#000000", "#FFFFFF"))
 	}
 
-	return lipgloss.Width(Pill(" "+name+" ", "#94A3B8", "#1E293B"))
+	return lipgloss.Width(theme.Pill(" "+name+" ", "#94A3B8", "#1E293B"))
 }

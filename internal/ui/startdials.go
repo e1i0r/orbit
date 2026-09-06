@@ -1,5 +1,7 @@
 package ui
 
+import "github.com/e1i0r/orbit/internal/ui/theme"
+
 // cycleEffort moves the effort knob to the next one the engine offers.
 //
 // The list is not written out here — low, medium, high, xhigh — because that
@@ -54,13 +56,13 @@ func (m Model) configLine(w int) string {
 		thkLabel = p.T("start.thinking_off", "thinking: off")
 	}
 
-	left := startIndent + Paint(Dim).Render(p.T("start.engine_config", "engine")) + "     " +
-		Paint(Live).Bold(true).Render(eng) + " · " +
-		Paint(Accent).Render(mod) + " · " +
-		Paint(Dim).Render(p.T("start.effort_label", "effort:")+eff) + " · " +
-		Paint(OK).Render(thkLabel)
+	left := startIndent + theme.Paint(theme.Dim).Render(p.T("start.engine_config", "engine")) + "     " +
+		theme.Paint(theme.Live).Bold(true).Render(eng) + " · " +
+		theme.Paint(theme.Accent).Render(mod) + " · " +
+		theme.Paint(theme.Dim).Render(p.T("start.effort_label", "effort:")+eff) + " · " +
+		theme.Paint(theme.OK).Render(thkLabel)
 
-	hints := Paint(Dim).Render(p.T("start.dials_hint", "[m] model  [o] effort  [t] thinking"))
+	hints := theme.Paint(theme.Dim).Render(p.T("start.dials_hint", "[m] model  [o] effort  [t] thinking"))
 
 	return spread(left, hints, w)
 }

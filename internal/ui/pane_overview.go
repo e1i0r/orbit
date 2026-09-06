@@ -3,6 +3,7 @@ package ui
 import (
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -49,12 +50,12 @@ func (m Model) overviewLines() []string {
 	p := m.opts.Words
 
 	if m.logErr != nil {
-		return []string{paneGutter + Paint(Bad).Render(m.errSaid(m.logErr))}
+		return []string{paneGutter + theme.Paint(theme.Bad).Render(m.errSaid(m.logErr))}
 	}
 
 	t, ok := m.task(m.detail)
 	if !ok {
-		return []string{paneGutter + Paint(Dim).Render(p.T("detail.gone", "this task is no longer on the board"))}
+		return []string{paneGutter + theme.Paint(theme.Dim).Render(p.T("detail.gone", "this task is no longer on the board"))}
 	}
 
 	w := max(40, m.frame.Body.W)
@@ -82,14 +83,14 @@ func (m Model) overviewHead(t view.Task, w int) []string {
 	word, role := m.stateWord(t)
 
 	out := []string{paneGutter + meta(
-		Text(Secondary).Render(t.ID),
-		Text(Secondary).Render(t.Repo),
+		theme.Text(theme.Secondary).Render(t.ID),
+		theme.Text(theme.Secondary).Render(t.Repo),
 		badge(m.bandGlyph(t)+" "+word, role),
 	), ""}
 
 	out = append(out, m.overviewBrief(w)...)
 
-	if role != Warn && role != Bad {
+	if role != theme.Warn && role != theme.Bad {
 		return out
 	}
 
@@ -101,8 +102,8 @@ func (m Model) overviewHead(t view.Task, w int) []string {
 	// reader who did as it said turned thinking off and got no session. A
 	// letter written into a sentence is a letter nothing keeps true.
 	return append(out,
-		paneGutter+Paint(role).Bold(true).Render("▍ "+p.T("overview.waiting_box", "NEEDS YOU")),
-		paneGutter+Text(Tertiary).Render(m.waitingHint(t)),
+		paneGutter+theme.Paint(role).Bold(true).Render("▍ "+p.T("overview.waiting_box", "NEEDS YOU")),
+		paneGutter+theme.Text(theme.Tertiary).Render(m.waitingHint(t)),
 		"",
 	)
 }
@@ -162,7 +163,7 @@ func (m Model) overviewBrief(w int) []string {
 		}
 
 		if !m.expandedDetail && len(rows) > overviewBriefRows {
-			return append(rows[:overviewBriefRows], markdownIndent+Text(Tertiary).Render(
+			return append(rows[:overviewBriefRows], markdownIndent+theme.Text(theme.Tertiary).Render(
 				m.opts.Words.T("overview.more", "… [e] for all of it")), "")
 		}
 

@@ -21,6 +21,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/e1i0r/orbit/internal/knowledge"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // The side's shape.
@@ -52,7 +53,7 @@ func (m Model) knownSide(h, w int) []string {
 
 	rules, warns := split(m.supervisor.knows)
 
-	rows := []string{Paint(Dim).Render(m.opts.Words.T("known.side", "What Orbit knows")), ""}
+	rows := []string{theme.Paint(theme.Dim).Render(m.opts.Words.T("known.side", "What Orbit knows")), ""}
 	rows = append(rows, m.sideSection(m.opts.Words.T("known.rules", "Rules"), rules)...)
 	rows = append(rows, m.sideSection(m.opts.Words.T("known.aware", "Aware"), warns)...)
 
@@ -82,7 +83,7 @@ func (m Model) cutSide(rows []string, h, facts int) []string {
 		}
 	}
 
-	return append(kept, Paint(Dim).Render(
+	return append(kept, theme.Paint(theme.Dim).Render(
 		m.opts.Words.T("known.more", "{n} more, in the Knowledge screen",
 			about("n", strconv.Itoa(max(facts-shown, 1))))))
 }
@@ -133,7 +134,7 @@ func (m Model) sideSection(head string, facts []knowledge.Fact) []string {
 		return nil
 	}
 
-	rows := []string{Paint(Accent).Bold(true).Render(head)}
+	rows := []string{theme.Paint(theme.Accent).Bold(true).Render(head)}
 
 	for _, f := range facts {
 		rows = append(rows, m.sideFact(f)...)
@@ -154,17 +155,17 @@ func (m Model) sideFact(f knowledge.Fact) []string {
 		where += " · " + m.opts.Words.T("known.no_check", "no check yet")
 	}
 
-	rows := []string{Paint(Dim).Render(where)}
+	rows := []string{theme.Paint(theme.Dim).Render(where)}
 	// A fact written while the reader was away is marked, because the
 	// question they came back with is what happened — and a rule that
 	// appeared out of a run is part of the answer. It says learned rather
 	// than new: what it means is that nobody typed it.
 	if m.learnedRecently(f) {
-		rows[0] += " " + Paint(Live).Render(m.opts.Words.T("known.learned", "· learned"))
+		rows[0] += " " + theme.Paint(theme.Live).Render(m.opts.Words.T("known.learned", "· learned"))
 	}
 
 	for _, line := range splitIntoLines(f.Phrase, sideWidth-2) {
-		rows = append(rows, Text(Primary).Render("  "+line))
+		rows = append(rows, theme.Text(theme.Primary).Render("  "+line))
 	}
 
 	return rows

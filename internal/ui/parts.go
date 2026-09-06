@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // The shapes a pane is built out of.
@@ -38,15 +40,15 @@ func card(title string, body []string, width int) []string {
 	outer := max(cardFloor, width)
 	inner := outer - cardChrome
 
-	box := Surface(Raised).
+	box := theme.Surface(theme.Raised).
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(Rule()).
+		BorderForeground(theme.Rule()).
 		Padding(0, 1).
 		Width(outer)
 
 	lines := make([]string, 0, len(body)+1)
 	if title != "" {
-		lines = append(lines, Text(Tertiary).Render(fit(strings.ToUpper(title), inner)))
+		lines = append(lines, theme.Text(theme.Tertiary).Render(fit(strings.ToUpper(title), inner)))
 	}
 
 	for _, l := range body {
@@ -95,7 +97,7 @@ func fields(pairs []field, columns, width int) []string {
 				label += " [" + p.key + "]"
 			}
 
-			labels += pad(Text(Tertiary).Render(label), cell, false)
+			labels += pad(theme.Text(theme.Tertiary).Render(label), cell, false)
 			values += pad(p.value, cell, false)
 		}
 
@@ -112,8 +114,8 @@ func fields(pairs []field, columns, width int) []string {
 // badge is a soft pill: the role's own hue, on paper tinted with it. It is
 // what the saturated blocks become — legible at a glance without being the
 // loudest thing on a pane that has ten other things to say.
-func badge(text string, r Role) string {
-	return Tint(r).Render(text)
+func badge(text string, r theme.Role) string {
+	return theme.Tint(r).Render(text)
 }
 
 // tabGap is the space between two chips in a strip. Two cells rather than
@@ -136,18 +138,18 @@ func tabChip(key, text string, active bool) (plain, rendered string) {
 	// A tab too narrow to be named keeps the brackets the named ones drop:
 	// a bare digit in a row of digits does not say it is a key to press.
 	if text == "" {
-		return "[" + key + "]", Text(Tertiary).Render("[") +
-			Paint(Accent).Bold(true).Render(key) + Text(Tertiary).Render("]")
+		return "[" + key + "]", theme.Text(theme.Tertiary).Render("[") +
+			theme.Paint(theme.Accent).Bold(true).Render(key) + theme.Text(theme.Tertiary).Render("]")
 	}
 
 	plain = key + " " + text
 
 	if active {
 		plain = " " + plain + " "
-		return plain, Paint(Sel).Bold(true).Render(plain)
+		return plain, theme.Paint(theme.Sel).Bold(true).Render(plain)
 	}
 
-	return plain, Paint(Accent).Bold(true).Render(key) + Text(Tertiary).Render(" "+text)
+	return plain, theme.Paint(theme.Accent).Bold(true).Render(key) + theme.Text(theme.Tertiary).Render(" "+text)
 }
 
 // The two cells a scroll bar is drawn with: a rail the height of the pane
@@ -182,11 +184,11 @@ func scrollTrack(rows, total, offset int) []string {
 
 	for i := range col {
 		if i < top || i >= top+thumb {
-			col[i] = Text(Tertiary).Render(scrollRail)
+			col[i] = theme.Text(theme.Tertiary).Render(scrollRail)
 			continue
 		}
 
-		col[i] = Text(Secondary).Render(scrollThumb)
+		col[i] = theme.Text(theme.Secondary).Render(scrollThumb)
 	}
 
 	return col

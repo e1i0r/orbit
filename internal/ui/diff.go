@@ -28,6 +28,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -52,11 +53,11 @@ func (m Model) diffRows() ([]string, map[int]int) {
 
 	t, isTask := m.task(m.detail)
 	if isTask && view.BandOf(t) == view.ToDo {
-		return []string{" " + Paint(Dim).Render(p.T("diff.empty_todo", "no changes yet — task is in the todo queue (press [n] to start)"))}, nil
+		return []string{" " + theme.Paint(theme.Dim).Render(p.T("diff.empty_todo", "no changes yet — task is in the todo queue (press [n] to start)"))}, nil
 	}
 
 	if !m.diffKnown {
-		return []string{" " + Paint(Dim).Render(p.T("diff.pending", "reading this task's worktree…"))}, nil
+		return []string{" " + theme.Paint(theme.Dim).Render(p.T("diff.pending", "reading this task's worktree…"))}, nil
 	}
 
 	if m.diffErr != nil {
@@ -65,7 +66,7 @@ func (m Model) diffRows() ([]string, map[int]int) {
 		// the same sentence whatever language this window is drawn in.
 		raw := m.diffErr.Error()
 		if strings.Contains(raw, "cannot change to") || strings.Contains(raw, "no such file or directory") {
-			return []string{" " + Paint(Dim).Render(p.T("diff.empty_no_worktree", "no working tree modifications recorded"))}, nil
+			return []string{" " + theme.Paint(theme.Dim).Render(p.T("diff.empty_no_worktree", "no working tree modifications recorded"))}, nil
 		}
 
 		// The bound is said without the command line errSaid keeps, which
@@ -75,11 +76,11 @@ func (m Model) diffRows() ([]string, map[int]int) {
 			said = p.T("err.git_timeout", "git did not answer in time")
 		}
 
-		return []string{" " + Paint(Bad).Render(said)}, nil
+		return []string{" " + theme.Paint(theme.Bad).Render(said)}, nil
 	}
 
 	if strings.TrimSpace(m.diff) == "" {
-		return []string{" " + Paint(Dim).Render(p.T("diff.unchanged", "no changes in this task's worktree"))}, nil
+		return []string{" " + theme.Paint(theme.Dim).Render(p.T("diff.unchanged", "no changes in this task's worktree"))}, nil
 	}
 
 	files := parseDiffFiles(strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n"))

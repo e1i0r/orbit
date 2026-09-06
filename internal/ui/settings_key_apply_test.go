@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // TestTheSettingsDialsAreTheEnginesOwn. The three dials were a switch on the
@@ -155,15 +157,15 @@ func TestApplySettingEveryKey(t *testing.T) {
 	m = asModel(t, next)
 	wantBand(t, m, "flow is now careful")
 
-	old := CurrentTheme()
+	old := theme.CurrentTheme()
 
-	t.Cleanup(func() { SetCurrentTheme(old) })
+	t.Cleanup(func() { theme.SetCurrentTheme(old) })
 
 	next, _ = m.applySetting("theme", "nord")
 
 	m = asModel(t, next)
-	if CurrentTheme() != "nord" {
-		t.Errorf("applySetting(theme) left the live theme %q, want nord", CurrentTheme())
+	if theme.CurrentTheme() != "nord" {
+		t.Errorf("applySetting(theme) left the live theme %q, want nord", theme.CurrentTheme())
 	}
 
 	// 7. a settings port that is nil: there is nowhere to write, and the

@@ -6,6 +6,8 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // TestACardIsExactlyAsWideAsAsked. Cards are set side by side, so one that
@@ -124,9 +126,9 @@ func TestFieldsRefuseWhatTheyCannotLay(t *testing.T) {
 // TestABadgeIsItsRoleOnItsOwnTint, which is the whole point of a badge: a
 // pane can carry several without any of them shouting.
 func TestABadgeIsItsRoleOnItsOwnTint(t *testing.T) {
-	seen := map[string]Role{}
+	seen := map[string]theme.Role{}
 
-	for _, r := range []Role{OK, Bad, Warn, Live, Accent} {
+	for _, r := range []theme.Role{theme.OK, theme.Bad, theme.Warn, theme.Live, theme.Accent} {
 		got := badge("done", r)
 		if !strings.Contains(got, "done") {
 			t.Errorf("badge(%v) lost its text: %q", r, got)

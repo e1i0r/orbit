@@ -12,6 +12,7 @@ import (
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -154,14 +155,14 @@ func (m Model) repolistRows(h, w int) []string {
 	p := m.opts.Words
 	out := []string{
 		"",
-		"  " + Paint(Accent).Render(p.T("repos.title", "Repositories")),
-		"  " + Paint(Dim).Render(p.T("repos.subtitle", "choose a repository to filter the board")),
+		"  " + theme.Paint(theme.Accent).Render(p.T("repos.title", "Repositories")),
+		"  " + theme.Paint(theme.Dim).Render(p.T("repos.subtitle", "choose a repository to filter the board")),
 		"",
 	}
 
 	repos := m.collectRepos()
 	if len(repos) == 0 {
-		out = append(out, "  "+Paint(Dim).Render(p.T("repos.none", "no repositories found")))
+		out = append(out, "  "+theme.Paint(theme.Dim).Render(p.T("repos.none", "no repositories found")))
 	}
 
 	for i, r := range repos {
@@ -170,9 +171,9 @@ func (m Model) repolistRows(h, w int) []string {
 			mark = markGlyph + strings.Repeat(" ", gutter-1)
 		}
 
-		nameRendered := Paint(Accent).Render(r.name)
+		nameRendered := theme.Paint(theme.Accent).Render(r.name)
 		if strings.EqualFold(m.repoFilter, r.name) {
-			nameRendered += " " + Paint(OK).Render(p.T("repos.active", "[filtered]"))
+			nameRendered += " " + theme.Paint(theme.OK).Render(p.T("repos.active", "[filtered]"))
 		}
 
 		countsStr := p.T("repos.counts", "{todo} to do · {running} in flight · {needs} needs you · {done} done",
@@ -184,8 +185,8 @@ func (m Model) repolistRows(h, w int) []string {
 		line := fmt.Sprintf("%s%-24s  %s  (%s)",
 			mark,
 			nameRendered,
-			Paint(Dim).Render(r.path),
-			Paint(Dim).Render(countsStr),
+			theme.Paint(theme.Dim).Render(r.path),
+			theme.Paint(theme.Dim).Render(countsStr),
 		)
 		out = append(out, fit(line, w))
 	}
@@ -194,7 +195,7 @@ func (m Model) repolistRows(h, w int) []string {
 		about("open", m.keys.Open.Help().Key),
 		about("up_down", m.keys.Up.Help().Key+m.keys.Down.Help().Key),
 		about("back", m.keys.Back.Help().Key))
-	out = append(out, "", fit("  "+Paint(Dim).Render(waysOut), w))
+	out = append(out, "", fit("  "+theme.Paint(theme.Dim).Render(waysOut), w))
 
 	return fill(out, h)
 }

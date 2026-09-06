@@ -8,36 +8,37 @@ import (
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // phaseStanding is where a phase got to: the glyph it is marked with, the
 // word for it, and the role both are painted in.
-func (m Model) phaseStanding(ex phaseExec, inFlight, past bool) (string, string, Role) {
+func (m Model) phaseStanding(ex phaseExec, inFlight, past bool) (string, string, theme.Role) {
 	p := m.opts.Words
 
 	switch {
 	case ex.failed:
-		return Paint(Bad).Render("✗"), Paint(Bad).Render(p.T("flow.step_status_failed", "failed")), Bad
+		return theme.Paint(theme.Bad).Render("✗"), theme.Paint(theme.Bad).Render(p.T("flow.step_status_failed", "failed")), theme.Bad
 	case ex.cancelled:
-		return Paint(Warn).Render("⏹"), Paint(Warn).Render(p.T("flow.step_status_cancelled", "cancelled")), Warn
+		return theme.Paint(theme.Warn).Render("⏹"), theme.Paint(theme.Warn).Render(p.T("flow.step_status_cancelled", "cancelled")), theme.Warn
 	case ex.waiting:
-		return Paint(Warn).Render("⚠️"), Paint(Warn).Render(p.T("flow.step_status_waiting", "waiting at gate")), Warn
+		return theme.Paint(theme.Warn).Render("⚠️"), theme.Paint(theme.Warn).Render(p.T("flow.step_status_waiting", "waiting at gate")), theme.Warn
 	case ex.finished:
-		return Paint(OK).Render("✓"), Paint(OK).Render(p.T("flow.step_status_done", "completed")), OK
+		return theme.Paint(theme.OK).Render("✓"), theme.Paint(theme.OK).Render(p.T("flow.step_status_done", "completed")), theme.OK
 	case past:
 		// A phase the run has gone past is done, whatever it wrote down
 		// about itself. A loop writes no phase.finished of its own — what
 		// ran are the phases inside it — so the only thing that says its
 		// block is closed is that the flow moved on.
-		return Paint(OK).Render("✓"), Paint(OK).Render(p.T("flow.step_status_done", "completed")), OK
+		return theme.Paint(theme.OK).Render("✓"), theme.Paint(theme.OK).Render(p.T("flow.step_status_done", "completed")), theme.OK
 	case ex.checked:
-		return Paint(Live).Render("⚡"),
-			Paint(Live).Bold(true).Render(p.T("flow.step_status_looping", "going round")), Live
+		return theme.Paint(theme.Live).Render("⚡"),
+			theme.Paint(theme.Live).Bold(true).Render(p.T("flow.step_status_looping", "going round")), theme.Live
 	case inFlight:
-		return Paint(Live).Render("⚡"),
-			Paint(Live).Bold(true).Render(p.T("flow.step_status_in_flight", "in progress")), Live
+		return theme.Paint(theme.Live).Render("⚡"),
+			theme.Paint(theme.Live).Bold(true).Render(p.T("flow.step_status_in_flight", "in progress")), theme.Live
 	default:
-		return Paint(Dim).Render("○"), Paint(Dim).Render(p.T("flow.step_status_pending", "pending")), Dim
+		return theme.Paint(theme.Dim).Render("○"), theme.Paint(theme.Dim).Render(p.T("flow.step_status_pending", "pending")), theme.Dim
 	}
 }
 
@@ -70,7 +71,7 @@ func subRows(items []subItem, subBranch string) []string {
 		}
 
 		out = append(out, fmt.Sprintf("  %s %s %s",
-			Paint(Dim).Render(subBranch), Paint(Dim).Render(sub), item.text))
+			theme.Paint(theme.Dim).Render(subBranch), theme.Paint(theme.Dim).Render(sub), item.text))
 	}
 
 	return out
@@ -113,8 +114,8 @@ func (m Model) phaseSubItems(phase flow.Phase, ex phaseExec) []subItem {
 
 		if errMsg != "" {
 			items = append(items, subItem{text: fmt.Sprintf("❌ %s: %s",
-				Paint(Bad).Bold(true).Render(p.T("flow.tree_error", "error details")),
-				Paint(Bad).Render(errMsg))})
+				theme.Paint(theme.Bad).Bold(true).Render(p.T("flow.tree_error", "error details")),
+				theme.Paint(theme.Bad).Render(errMsg))})
 		}
 	}
 

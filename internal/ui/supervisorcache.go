@@ -1,5 +1,7 @@
 package ui
 
+import "github.com/e1i0r/orbit/internal/ui/theme"
+
 // The rows the supervisor thread was last drawn to, kept so that a redraw
 // which changes nothing does not render every message again.
 //
@@ -80,6 +82,6 @@ func (m Model) threadKeyAt(cw int) threadKey {
 		// The palette is chosen at run time and every row carries its
 		// colours, so a thread drawn before the theme changed is a thread
 		// in the old one.
-		theme: CurrentTheme(),
+		theme: theme.CurrentTheme(),
 	}
 }

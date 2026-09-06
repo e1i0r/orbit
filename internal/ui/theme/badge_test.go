@@ -1,4 +1,4 @@
-package ui
+package theme
 
 // FormatLatency has one job: turn a millisecond count into the role a
 // person would assign it on sight. These tests pin the three bands and

@@ -12,12 +12,13 @@ import (
 
 	"charm.land/lipgloss/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
 type statusSegment struct {
 	text string
-	role Role
+	role theme.Role
 }
 
 func (m Model) statusRows() []string {
@@ -41,11 +42,11 @@ func (m Model) statusLine(w int) string {
 
 	// 2. Tasks (tareas totales)
 	tasksStr := p.P("status.total_tasks", len(m.board.Tasks), "{n} task", "{n} tasks")
-	segments = append(segments, statusSegment{text: tasksStr, role: Dim})
+	segments = append(segments, statusSegment{text: tasksStr, role: theme.Dim})
 
 	// 3. Events (eventos)
 	eventsStr := p.T("status.events", "{events} events", about("events", strconv.Itoa(m.board.Health.EventsRead)))
-	segments = append(segments, statusSegment{text: eventsStr, role: Dim})
+	segments = append(segments, statusSegment{text: eventsStr, role: theme.Dim})
 
 	// 4. Heartbeat (latido)
 	//
@@ -62,7 +63,7 @@ func (m Model) statusLine(w int) string {
 	// because the frame clock stops then and a spinner standing still is a
 	// worse lie than no spinner at all.
 	if m.moving() {
-		segments = append(segments, statusSegment{text: m.spin(), role: Dim})
+		segments = append(segments, statusSegment{text: m.spin(), role: theme.Dim})
 	}
 
 	// 5. Quota remaining (quota restante)
@@ -70,7 +71,7 @@ func (m Model) statusLine(w int) string {
 		segments = append(segments, quota)
 	}
 
-	sep := Paint(Dim).Render("  ·  ")
+	sep := theme.Paint(theme.Dim).Render("  ·  ")
 
 	// Try fitting all segments; drop from the right if too wide
 	for len(segments) > 1 {
@@ -83,7 +84,7 @@ func (m Model) statusLine(w int) string {
 	}
 
 	if len(segments) == 1 {
-		rendered := Paint(segments[0].role).Render(segments[0].text)
+		rendered := theme.Paint(segments[0].role).Render(segments[0].text)
 		return fit("  "+rendered, w)
 	}
 
@@ -127,7 +128,7 @@ func (m Model) spentSegment(p *words.Printer) (statusSegment, bool) {
 
 	text := p.T("status.spent", "{cost} spent", about("cost", fmt.Sprintf("$%.2f", total)))
 
-	return statusSegment{text: text, role: Accent}, true
+	return statusSegment{text: text, role: theme.Accent}, true
 }
 
 // spends is whether this engine's use is spoken about in money.
@@ -156,7 +157,7 @@ func (m Model) quotaSegment(p *words.Printer) (statusSegment, bool) {
 	reading := m.opts.Quota(m.dialEngine(""))
 
 	if len(reading.Windows) > 0 {
-		return statusSegment{text: windowUsed(p, reading.Windows[0]), role: Dim}, true
+		return statusSegment{text: windowUsed(p, reading.Windows[0]), role: theme.Dim}, true
 	}
 
 	if reading.Money || reading.Sourced {
@@ -166,7 +167,7 @@ func (m Model) quotaSegment(p *words.Printer) (statusSegment, bool) {
 	text := p.T("status.quota_unread", "no quota source for {engine}",
 		about("engine", reading.Engine))
 
-	return statusSegment{text: text, role: Dim}, true
+	return statusSegment{text: text, role: theme.Dim}, true
 }
 
 // quotaChip is what the header carries about the engine's quota: the share
@@ -242,7 +243,7 @@ func windowUsed(p *words.Printer, w QuotaWindow) string {
 func renderSegments(segs []statusSegment, sep string) string {
 	parts := make([]string, len(segs))
 	for i, s := range segs {
-		parts[i] = Paint(s.role).Render(s.text)
+		parts[i] = theme.Paint(s.role).Render(s.text)
 	}
 
 	return strings.Join(parts, sep)

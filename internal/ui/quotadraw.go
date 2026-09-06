@@ -5,6 +5,8 @@ package ui
 import (
 	"math"
 	"strings"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // quotaBarCells is how wide a window's bar is drawn, and quotaBarFloor is
@@ -38,20 +40,20 @@ func (m Model) quotaRows(h, w int) []string {
 
 	out := []string{
 		"",
-		"  " + Paint(Accent).Render(p.T("quota.title", "Quota")),
-		"  " + Paint(Dim).Render(p.T("quota.subtitle",
+		"  " + theme.Paint(theme.Accent).Render(p.T("quota.title", "Quota")),
+		"  " + theme.Paint(theme.Dim).Render(p.T("quota.subtitle",
 			"what is left of each engine's windows, and when each comes back")),
 	}
 
 	for _, reading := range m.quotaReadings() {
-		out = append(out, "", "  "+Paint(Accent).Render(strings.ToUpper(reading.Engine)))
+		out = append(out, "", "  "+theme.Paint(theme.Accent).Render(strings.ToUpper(reading.Engine)))
 		for _, line := range m.quotaEngineLines(reading, w) {
 			out = append(out, fit("    "+line, w))
 		}
 	}
 
 	waysOut := p.T("quota.ways_out", "{back} back", about("back", m.keys.Back.Help().Key))
-	out = append(out, "", fit("  "+Paint(Dim).Render(waysOut), w))
+	out = append(out, "", fit("  "+theme.Paint(theme.Dim).Render(waysOut), w))
 
 	return fill(out, h)
 }
@@ -60,7 +62,7 @@ func (m Model) quotaRows(h, w int) []string {
 // one sentence there is when it has none.
 func (m Model) quotaEngineLines(reading QuotaReading, w int) []string {
 	if len(reading.Windows) == 0 {
-		return []string{Paint(Dim).Render(m.quotaSilence(reading))}
+		return []string{theme.Paint(theme.Dim).Render(m.quotaSilence(reading))}
 	}
 
 	out := make([]string, 0, len(reading.Windows))
@@ -90,11 +92,11 @@ func quotaBar(pct float64, cells int) string {
 
 	spent := min(int(math.Ceil(pct/100*float64(cells))), cells)
 
-	role := OK
+	role := theme.OK
 	if pct >= quotaFull {
-		role = Warn
+		role = theme.Warn
 	}
 
-	return Paint(role).Render(strings.Repeat(quotaSpent, spent)) +
-		Paint(Dim).Render(strings.Repeat(quotaLeft, cells-spent))
+	return theme.Paint(role).Render(strings.Repeat(quotaSpent, spent)) +
+		theme.Paint(theme.Dim).Render(strings.Repeat(quotaLeft, cells-spent))
 }

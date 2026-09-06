@@ -1,31 +1,27 @@
-package ui
+package theme
 
 // Colour inside a code well. What a reader looks for in a block somebody
 // else's model wrote is its shape — where the strings are, which line is a
 // comment — and one flat colour on darker paper carries none of it.
 
 import (
-	"strings"
 	"testing"
-
-	"charm.land/lipgloss/v2"
-	"github.com/charmbracelet/x/ansi"
 )
 
 // parts is what the lexer made of a line, as the runs it found.
-func parts(t *testing.T, line, family string) map[codePart][]string {
+func parts(t *testing.T, line, family string) map[CodePart][]string {
 	t.Helper()
 
-	out := map[codePart][]string{}
-	for _, tok := range lexCode(line, family) {
-		out[tok.part] = append(out[tok.part], tok.text)
+	out := map[CodePart][]string{}
+	for _, tok := range LexCode(line, family) {
+		out[tok.Part] = append(out[tok.Part], tok.Text)
 	}
 
 	return out
 }
 
 // has says whether one of the runs of that part is exactly want.
-func has(got map[codePart][]string, part codePart, want string) bool {
+func has(got map[CodePart][]string, part CodePart, want string) bool {
 	for _, s := range got[part] {
 		if s == want {
 			return true
@@ -41,7 +37,7 @@ func has(got map[codePart][]string, part codePart, want string) bool {
 func TestThreeVolumesOfWord(t *testing.T) {
 	got := parts(t, `func run(n int) bool { return n > 0 && ok != nil }`, "go")
 
-	for part, want := range map[codePart]string{
+	for part, want := range map[CodePart]string{
 		codeKeyword: "func", codeType: "int", codeConst: "nil", codeNumber: "0",
 	} {
 		if !has(got, part, want) {
@@ -49,7 +45,7 @@ func TestThreeVolumesOfWord(t *testing.T) {
 		}
 	}
 
-	// An identifier the language did not name is the well's own ink: a
+	// An identifier the language did not name is the well's own Ink: a
 	// vocabulary that also held every function a language ships would paint
 	// most of a line loud and say nothing by it.
 	if !has(got, codePlain, " run(n ") {
@@ -60,10 +56,10 @@ func TestThreeVolumesOfWord(t *testing.T) {
 	// are three names for one thing.
 	seen := map[Role]bool{}
 
-	for _, part := range []codePart{codeKeyword, codeType, codeConst, codeComment} {
-		role, painted := codeRole(part)
+	for _, part := range []CodePart{codeKeyword, codeType, codeConst, codeComment} {
+		role, painted := CodeRole(part)
 		if !painted {
-			t.Errorf("part %d is drawn in the well's own ink, so it is not told apart", part)
+			t.Errorf("part %d is drawn in the well's own Ink, so it is not told apart", part)
 		}
 
 		if seen[role] {
@@ -79,7 +75,7 @@ func TestThreeVolumesOfWord(t *testing.T) {
 func TestAWordInsideAWordIsNotAWord(t *testing.T) {
 	got := parts(t, "iffy := myint + sha256sum", "go")
 
-	for _, part := range []codePart{codeKeyword, codeType, codeNumber} {
+	for _, part := range []CodePart{codeKeyword, codeType, codeNumber} {
 		if len(got[part]) > 0 {
 			t.Errorf("part %d was found inside an identifier: %v", part, got[part])
 		}
@@ -141,72 +137,8 @@ func TestAStringHoldsWhatItQuotes(t *testing.T) {
 // TestAFenceSaysWhatToReadAndTheNextOneForgetsIt. The language belongs to the
 // block it was written on; carried past the closing fence it would colour
 // plain output as somebody's Go.
-func TestAFenceSaysWhatToReadAndTheNextOneForgetsIt(t *testing.T) {
-	rows := renderMarkdown("```go\nreturn nil\n```\n\n```\nreturn nil\n```\n", 60, false)
-
-	var painted, plain string
-
-	for _, r := range rows {
-		switch {
-		case !strings.Contains(ansi.Strip(r), "return nil"):
-		case painted == "":
-			painted = r
-		default:
-			plain = r
-		}
-	}
-
-	if painted == "" || plain == "" {
-		t.Fatalf("the two blocks were not both drawn:\n%s", strings.Join(rows, "\n"))
-	}
-
-	// The keyword is asked for by role, so what it should look like is
-	// composed here the same way the well composes it.
-	keyword := Surface(Sunken).Foreground(Paint(Bad).GetForeground()).Render("return")
-	if !strings.Contains(painted, keyword) {
-		t.Errorf("the Go fence did not paint its keyword: %q", painted)
-	}
-
-	if strings.Contains(plain, keyword) {
-		t.Errorf("the fence with no language was read as the Go before it: %q", plain)
-	}
-}
-
-// TestTheWellKeepsItsPaperUnderEveryColour. A style rendered inside another
-// closes with a reset, so a token painted on the well would take the rest of
-// the row back to the window's own paper — a block with a bite out of it.
-func TestTheWellKeepsItsPaperUnderEveryColour(t *testing.T) {
-	const w = 60
-
-	line := `if n > 0 { // done`
-
-	row := codeWell(line, "go", w)
-
-	if got := lipgloss.Width(ansi.Strip(row)); got != w {
-		t.Errorf("a row of the well is %d cells wide, want %d: %q", got, w, ansi.Strip(row))
-	}
-
-	// The paper is named once per run of the line, and the runs are what the
-	// lexer found: a count short of that is a run drawn on the window's own
-	// paper. What to look for is taken from the surface rather than written
-	// out, so the check is about the well and not about one theme's hex.
-	probe := Surface(Sunken).Render("x")
-
-	paper, _, _ := strings.Cut(strings.TrimPrefix(probe, "\x1b["), "m")
-	if paper == "" || paper == probe {
-		t.Fatalf("the sunken surface sets nothing: %q", probe)
-	}
-
-	if got, want := strings.Count(row, paper), len(lexCode(line, "go")); got < want {
-		t.Errorf("the well names its paper %d times over %d runs: %q", got, want, row)
-	}
-}
-
-// TestAFenceWithNoLanguageStillReadsItsQuotes. Most of what a model fences is
-// output rather than source, and the quotes and the numbers in it are the
-// shape it has.
 func TestAFenceWithNoLanguageStillReadsItsQuotes(t *testing.T) {
-	got := parts(t, `level="warn" tries=3 msg=ok`, codeFamily("whatever-this-is"))
+	got := parts(t, `level="warn" tries=3 msg=ok`, CodeFamily("whatever-this-is"))
 
 	if !has(got, codeString, `"warn"`) {
 		t.Errorf("the quoted value was not read: %v", got)
@@ -230,8 +162,8 @@ func TestEveryAliasAModelTypesIsRead(t *testing.T) {
 		"YAML": "data", "jsonc": "data", "py": "python", "tsx": "js", "sql": "sql",
 		"": "", "brainfuck": "",
 	} {
-		if got := codeFamily(alias); got != want {
-			t.Errorf("codeFamily(%q) = %q, want %q", alias, got, want)
+		if got := CodeFamily(alias); got != want {
+			t.Errorf("CodeFamily(%q) = %q, want %q", alias, got, want)
 		}
 	}
 }

@@ -13,7 +13,11 @@ package ui
 // holds a handle for some of this work and not for the rest, and a line that
 // offered a key that does nothing would be worse than one that offers none.
 
-import "time"
+import (
+	"time"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
+)
 
 // busy is one thing in flight.
 type busy struct {
@@ -100,7 +104,7 @@ func (m Model) waitingLine() string {
 		line += " · " + m.opts.Words.P("wait.more", rest, "{n} more", "{n} more")
 	}
 
-	return m.spinner(Live) + Paint(Live).Render(line)
+	return m.spinner(theme.Live) + theme.Paint(theme.Live).Render(line)
 }
 
 // watchState is whether the command a watch is holding has finished, and

@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // loopCard is one loop: how many turns it gets, what would let it stop, and
@@ -29,22 +30,22 @@ func (m Model) loopCard(i int, ph flow.Phase, w int) []string {
 		p.T("flows.phase_label", "Phase"), i+1, ph.Name,
 		p.T("flows.loop_badge", "loop · up to {n} turns", about("n", strconv.Itoa(ph.Loop.Max))))
 
-	out := []string{Paint(Accent).Bold(true).Render(fit(head, w))}
+	out := []string{theme.Paint(theme.Accent).Bold(true).Render(fit(head, w))}
 
 	names := make([]string, 0, len(ph.Loop.Until))
 	for _, g := range ph.Loop.Until {
 		names = append(names, g.Name)
 	}
 
-	out = append(out, fit("      "+Paint(Dim).Render(
+	out = append(out, fit("      "+theme.Paint(theme.Dim).Render(
 		p.T("flows.loop_until", "stops when these pass: {checks}",
 			about("checks", strings.Join(names, ", ")))), w))
 
 	for n, inner := range ph.Loop.Phases {
 		line := fmt.Sprintf("      %d. %s  %s", n+1, inner.Name,
-			Paint(Dim).Render(inner.Engine+"/"+orDef(inner.Model, "default")))
+			theme.Paint(theme.Dim).Render(inner.Engine+"/"+orDef(inner.Model, "default")))
 		if inner.FeedOutput {
-			line += "  " + Paint(Live).Render(p.T("flows.loop_fed", "reads what failed"))
+			line += "  " + theme.Paint(theme.Live).Render(p.T("flows.loop_fed", "reads what failed"))
 		}
 
 		out = append(out, fit(line, w))
@@ -69,8 +70,8 @@ func (m Model) loopLine(idx int, ph flow.Phase) string {
 
 	return fmt.Sprintf("%s%d. %s  %s",
 		strings.Repeat(" ", gutter+2), idx+1,
-		Paint(Accent).Render(ph.Name),
-		Paint(Dim).Render(p.T("flows.loop_line", "loop ×{n} until: {checks}",
+		theme.Paint(theme.Accent).Render(ph.Name),
+		theme.Paint(theme.Dim).Render(p.T("flows.loop_line", "loop ×{n} until: {checks}",
 			about("n", strconv.Itoa(ph.Loop.Max)),
 			about("checks", strings.Join(names, ", ")))))
 }

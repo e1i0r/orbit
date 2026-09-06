@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -46,13 +47,13 @@ func (m Model) costLines() []string {
 
 	t, ok := m.task(m.detail)
 	if !ok {
-		return []string{"  " + Paint(Dim).Render(p.T("detail.gone", "this task is no longer on the board"))}
+		return []string{"  " + theme.Paint(theme.Dim).Render(p.T("detail.gone", "this task is no longer on the board"))}
 	}
 
 	out := []string{
 		"",
-		"  " + Paint(Accent).Bold(true).Render(p.T("cost.heading", "Cost & Resource Breakdown")),
-		"  " + Paint(Dim).Render(p.T("cost.subtitle", "how much has been spent, stage by stage")),
+		"  " + theme.Paint(theme.Accent).Bold(true).Render(p.T("cost.heading", "Cost & Resource Breakdown")),
+		"  " + theme.Paint(theme.Dim).Render(p.T("cost.subtitle", "how much has been spent, stage by stage")),
 		"",
 	}
 
@@ -102,7 +103,7 @@ func (m Model) costLines() []string {
 	}
 
 	if len(rows) == 0 && t.Cost == 0 {
-		out = append(out, "  "+Paint(Dim).Render(p.T("cost.empty", "no cost recorded for this task")))
+		out = append(out, "  "+theme.Paint(theme.Dim).Render(p.T("cost.empty", "no cost recorded for this task")))
 		return out
 	}
 
@@ -110,7 +111,7 @@ func (m Model) costLines() []string {
 	// width verb counts the bytes of an escape sequence as characters, so a
 	// rendered string padded to a column is not padded at all — which is why
 	// this table has never lined up.
-	out = append(out, "    "+Paint(Dim).Render(
+	out = append(out, "    "+theme.Paint(theme.Dim).Render(
 		pad(p.T("cost.col_phase", "phase"), costPhaseCells, false)+" "+
 			pad(p.T("cost.col_cost", "cost"), costMoneyCells, false)+" "+
 			pad(p.T("cost.col_duration", "duration"), costMoneyCells, false)+" "+
@@ -129,22 +130,22 @@ func (m Model) costLines() []string {
 		}
 
 		out = append(out, "    "+
-			Paint(Accent).Render(pad(r.phase, costPhaseCells, false))+" "+
-			Paint(OK).Render(pad(figure(p, r.cost, priced), costMoneyCells, false))+" "+
-			Paint(Dim).Render(pad(r.duration, costMoneyCells, false))+" "+
-			Paint(Dim).Render(modStr))
+			theme.Paint(theme.Accent).Render(pad(r.phase, costPhaseCells, false))+" "+
+			theme.Paint(theme.OK).Render(pad(figure(p, r.cost, priced), costMoneyCells, false))+" "+
+			theme.Paint(theme.Dim).Render(pad(r.duration, costMoneyCells, false))+" "+
+			theme.Paint(theme.Dim).Render(modStr))
 	}
 
 	out = append(out,
 		"",
-		"    "+Paint(Dim).Render(pad(p.T("cost.total", "total so far"), costPhaseCells, false))+" "+
-			Paint(Accent).Bold(true).Render(figure(p, t.Cost, priced)),
+		"    "+theme.Paint(theme.Dim).Render(pad(p.T("cost.total", "total so far"), costPhaseCells, false))+" "+
+			theme.Paint(theme.Accent).Bold(true).Render(figure(p, t.Cost, priced)),
 		"",
 	)
 
 	if !priced {
 		out = append(out,
-			"    "+Paint(Dim).Render(p.T("cost.window_is_the_unit",
+			"    "+theme.Paint(theme.Dim).Render(p.T("cost.window_is_the_unit",
 				"under subscription · what is left is the quota window")),
 			"",
 		)

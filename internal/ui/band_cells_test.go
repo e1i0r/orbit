@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -116,7 +117,7 @@ func TestBandLeftPriority(t *testing.T) {
 	m.confirm = confirmNone
 
 	m.message, m.messageAt = "a fresh message", m.now
-	if m.bandLeft() != Paint(Accent).Render("a fresh message") {
+	if m.bandLeft() != theme.Paint(theme.Accent).Render("a fresh message") {
 		t.Errorf("bandLeft with a fresh message = %q, want it painted and shown", m.bandLeft())
 	}
 

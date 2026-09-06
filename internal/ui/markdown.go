@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // Markdown, set the way the rest of the panes are set.
@@ -33,7 +35,7 @@ func renderMarkdown(text string, width int, raw bool) []string {
 	if raw {
 		out := make([]string, 0, len(lines))
 		for _, l := range lines {
-			out = append(out, markdownIndent+Text(Tertiary).Render(quoteMark)+Text(Primary).Render(l))
+			out = append(out, markdownIndent+theme.Text(theme.Tertiary).Render(quoteMark)+theme.Text(theme.Primary).Render(l))
 		}
 
 		return out
@@ -57,18 +59,18 @@ func renderMarkdown(text string, width int, raw bool) []string {
 			// or not: a block that fell back to the last block's syntax
 			// would colour plain output as somebody's Go.
 			if coding {
-				family = codeFamily(lang)
+				family = theme.CodeFamily(lang)
 			}
 
 			if coding && lang != "" {
-				out = append(out, markdownIndent+Text(Tertiary).Render(strings.ToUpper(lang)))
+				out = append(out, markdownIndent+theme.Text(theme.Tertiary).Render(strings.ToUpper(lang)))
 			}
 
 			continue
 		}
 
 		if coding {
-			out = append(out, markdownIndent+Text(Tertiary).Render(quoteMark)+codeWell(l, family, w))
+			out = append(out, markdownIndent+theme.Text(theme.Tertiary).Render(quoteMark)+codeWell(l, family, w))
 
 			continue
 		}
@@ -96,17 +98,17 @@ func codeWell(line, family string, w int) string {
 	// terminal expands them comes out one step wider per level of indent.
 	flat := pad(strings.ReplaceAll(line, "\t", codeTab), w, false)
 
-	well := Surface(Sunken)
+	well := theme.Surface(theme.Sunken)
 
 	var b strings.Builder
 
-	for _, tok := range lexCode(flat, family) {
-		ink := Text(Primary).GetForeground()
-		if role, painted := codeRole(tok.part); painted {
-			ink = Paint(role).GetForeground()
+	for _, tok := range theme.LexCode(flat, family) {
+		ink := theme.Text(theme.Primary).GetForeground()
+		if role, painted := theme.CodeRole(tok.Part); painted {
+			ink = theme.Paint(role).GetForeground()
 		}
 
-		b.WriteString(well.Foreground(ink).Render(tok.text))
+		b.WriteString(well.Foreground(ink).Render(tok.Text))
 	}
 
 	return b.String()
@@ -125,7 +127,7 @@ func markdownLine(trimmed, raw string, w int) []string {
 	if quote, ok := strings.CutPrefix(trimmed, "> "); ok {
 		out := make([]string, 0, 2)
 		for _, wl := range splitIntoLines(formatInlineMarkdown(quote), w-lipgloss.Width(proseRule)) {
-			out = append(out, markdownIndent+Text(Tertiary).Render(proseRule)+wl)
+			out = append(out, markdownIndent+theme.Text(theme.Tertiary).Render(proseRule)+wl)
 		}
 
 		return out
@@ -133,7 +135,7 @@ func markdownLine(trimmed, raw string, w int) []string {
 
 	switch trimmed {
 	case "---", "***", "___":
-		return []string{markdownIndent + Text(Tertiary).Render(strings.Repeat("─", w))}
+		return []string{markdownIndent + theme.Text(theme.Tertiary).Render(strings.Repeat("─", w))}
 	case "":
 		return []string{""}
 	}
@@ -154,9 +156,9 @@ func headingRow(trimmed string, w int) ([]string, bool) {
 		prefix string
 		style  lipgloss.Style
 	}{
-		{"# ", Paint(Accent).Bold(true)},
-		{"## ", Text(Primary).Bold(true)},
-		{"### ", Text(Secondary).Bold(true)},
+		{"# ", theme.Paint(theme.Accent).Bold(true)},
+		{"## ", theme.Text(theme.Primary).Bold(true)},
+		{"### ", theme.Text(theme.Secondary).Bold(true)},
 	} {
 		title, ok := strings.CutPrefix(trimmed, h.prefix)
 		if !ok {
@@ -188,18 +190,18 @@ func listItem(trimmed string) (bullet, bool) {
 		}
 
 		if done, box := strings.CutPrefix(text, "[x] "); box {
-			return bullet{"✔ ", Paint(OK), done}, true
+			return bullet{"✔ ", theme.Paint(theme.OK), done}, true
 		}
 
 		if todo, box := strings.CutPrefix(text, "[ ] "); box {
-			return bullet{"☐ ", Text(Tertiary), todo}, true
+			return bullet{"☐ ", theme.Text(theme.Tertiary), todo}, true
 		}
 
-		return bullet{"• ", Text(Tertiary), text}, true
+		return bullet{"• ", theme.Text(theme.Tertiary), text}, true
 	}
 
 	if n, rest, found := strings.Cut(trimmed, ". "); found && isNumber(n) {
-		return bullet{n + ". ", Text(Tertiary), rest}, true
+		return bullet{n + ". ", theme.Text(theme.Tertiary), rest}, true
 	}
 
 	return bullet{}, false
@@ -268,20 +270,20 @@ func formatInlineMarkdown(s string) string {
 		}
 
 		if before != "" {
-			b.WriteString(Text(Primary).Render(before))
+			b.WriteString(theme.Text(theme.Primary).Render(before))
 		}
 
 		if delim == "**" {
-			b.WriteString(Text(Primary).Bold(true).Render(span))
+			b.WriteString(theme.Text(theme.Primary).Bold(true).Render(span))
 		} else {
-			b.WriteString(Paint(Accent).Render(span))
+			b.WriteString(theme.Paint(theme.Accent).Render(span))
 		}
 
 		rest = after
 	}
 
 	if rest != "" {
-		b.WriteString(Text(Primary).Render(rest))
+		b.WriteString(theme.Text(theme.Primary).Render(rest))
 	}
 
 	return b.String()

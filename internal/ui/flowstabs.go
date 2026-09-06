@@ -14,6 +14,8 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // The tabs, in the order the strip draws them.
@@ -41,15 +43,15 @@ func (m Model) flowTabsRow(w int) builderLine {
 
 	for i, name := range m.flowTabNames() {
 		if i == m.flows.tab {
-			parts = append(parts, Paint(Sel).Bold(true).Render(" "+name+" "))
+			parts = append(parts, theme.Paint(theme.Sel).Bold(true).Render(" "+name+" "))
 			continue
 		}
 
-		parts = append(parts, Paint(Dim).Render(" "+name+" "))
+		parts = append(parts, theme.Paint(theme.Dim).Render(" "+name+" "))
 	}
 
 	return builderLine{
-		text:  fit("  "+strings.Join(parts, " ")+"  "+Paint(Dim).Render(m.opts.Words.T("flows.tab_ways", "[^←/^→] tab")), w),
+		text:  fit("  "+strings.Join(parts, " ")+"  "+theme.Paint(theme.Dim).Render(m.opts.Words.T("flows.tab_ways", "[^←/^→] tab")), w),
 		field: noField,
 		phase: noPhase,
 		pick:  noPick,

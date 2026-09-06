@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // Typography: how a block of text is set. theme.go says what a piece of text
@@ -57,11 +59,11 @@ func foldMark(open bool) string {
 // under it, and a count above detail that shows the same thing is a line the
 // reader has to check against another line.
 func section(label, note string, width int, open bool) string {
-	head := paneGutter + Text(Tertiary).Render(foldMark(open)) +
-		Paint(Accent).Bold(true).Render(strings.ToUpper(label)) + " "
+	head := paneGutter + theme.Text(theme.Tertiary).Render(foldMark(open)) +
+		theme.Paint(theme.Accent).Bold(true).Render(strings.ToUpper(label)) + " "
 
 	if !open && note != "" {
-		head += Text(Tertiary).Render(note) + " "
+		head += theme.Text(theme.Tertiary).Render(note) + " "
 	}
 
 	fill := max(0, width-lipgloss.Width(head)-2*len(paneGutter))
@@ -69,7 +71,7 @@ func section(label, note string, width int, open bool) string {
 		return head
 	}
 
-	return head + Text(Tertiary).Render(strings.Repeat("─", fill))
+	return head + theme.Text(theme.Tertiary).Render(strings.Repeat("─", fill))
 }
 
 // meta sets the facts that qualify something — a cost, a duration, a verdict
@@ -88,7 +90,7 @@ func meta(parts ...string) string {
 		return ""
 	}
 
-	return strings.Join(kept, Text(Tertiary).Render(" · "))
+	return strings.Join(kept, theme.Text(theme.Tertiary).Render(" · "))
 }
 
 // prose sets what the model wrote: wrapped at the measure, ruled down the
@@ -96,7 +98,7 @@ func meta(parts ...string) string {
 // brightest thing available and this is the text the reader came for.
 func prose(text string, width int, indent string) []string {
 	measure := max(20, min(proseMeasure, width-lipgloss.Width(indent)-len(proseRule)-2))
-	rule := Text(Tertiary).Render(proseRule)
+	rule := theme.Text(theme.Tertiary).Render(proseRule)
 
 	var out []string
 
@@ -107,7 +109,7 @@ func prose(text string, width int, indent string) []string {
 		}
 
 		for _, l := range splitIntoLines(para, measure) {
-			out = append(out, indent+rule+Text(Primary).Render(l))
+			out = append(out, indent+rule+theme.Text(theme.Primary).Render(l))
 		}
 	}
 
@@ -118,7 +120,7 @@ func prose(text string, width int, indent string) []string {
 type stat struct {
 	label string
 	value string
-	role  Role
+	role  theme.Role
 }
 
 // statStrip draws the numbers that answer "how did this go" as a row of
@@ -136,7 +138,7 @@ func statStrip(cells []stat, width int) []string {
 	if width < 60 {
 		flat := make([]string, 0, len(cells))
 		for _, c := range cells {
-			flat = append(flat, Paint(c.role).Render(c.value)+" "+Text(Tertiary).Render(strings.ToLower(c.label)))
+			flat = append(flat, theme.Paint(c.role).Render(c.value)+" "+theme.Text(theme.Tertiary).Render(strings.ToLower(c.label)))
 		}
 
 		return []string{paneGutter + meta(flat...)}
@@ -147,7 +149,7 @@ func statStrip(cells []stat, width int) []string {
 
 	for _, c := range cells {
 		drawn = append(drawn, strings.Join(
-			card(c.label, []string{Paint(c.role).Bold(true).Render(c.value)}, each), "\n"))
+			card(c.label, []string{theme.Paint(c.role).Bold(true).Render(c.value)}, each), "\n"))
 	}
 
 	out := strings.Split(lipgloss.JoinHorizontal(lipgloss.Top, drawn...), "\n")

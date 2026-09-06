@@ -2,6 +2,8 @@ package ui
 
 import (
 	"strings"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // diffFile is one file's structured metadata inside a git diff.
@@ -88,11 +90,11 @@ func diffStats(files []diffFile) (totalAdded, totalDeleted int) {
 func formatFileBadge(status string) string {
 	switch status {
 	case "NEW":
-		return Paint(OK).Render("[NEW]")
+		return theme.Paint(theme.OK).Render("[NEW]")
 	case "DEL":
-		return Paint(Bad).Render("[DELETED]")
+		return theme.Paint(theme.Bad).Render("[DELETED]")
 	default:
-		return Paint(Accent).Render("[MODIFIED]")
+		return theme.Paint(theme.Accent).Render("[MODIFIED]")
 	}
 }
 

@@ -3,6 +3,7 @@ package ui
 import (
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -22,12 +23,12 @@ func (m Model) detailBandLine(t view.Task) string {
 		said := p.T("overview.deliver_out", "{verb} is out with {by}",
 			about("verb", m.delivering.verb), about("by", by))
 
-		pieces := []string{Paint(Accent).Render(t.ID), Paint(Live).Render(said)}
+		pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(theme.Live).Render(said)}
 		if age := elapsed(m.now, t.Since); age != "" {
 			pieces = append(pieces, p.T("band.elapsed", "{d} in", about("d", age)))
 		}
 
-		return m.spinner(Live) + strings.Join(pieces, dot)
+		return m.spinner(theme.Live) + strings.Join(pieces, dot)
 	}
 
 	// 2. Uncompleted delivery recorded in the task history.
@@ -44,21 +45,21 @@ func (m Model) detailBandLine(t view.Task) string {
 				about("verb", st.verb), about("by", st.by))
 		}
 
-		pieces := []string{Paint(Accent).Render(t.ID), Paint(Live).Render(said)}
+		pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(theme.Live).Render(said)}
 		if ago := elapsed(m.now, st.at); ago != "" {
 			pieces = append(pieces, p.T("overview.deliver_ago", "asked {ago} ago",
 				about("ago", ago)))
 		}
 
-		return m.spinner(Live) + strings.Join(pieces, dot)
+		return m.spinner(theme.Live) + strings.Join(pieces, dot)
 	}
 
 	// 3. Supervisor active on this task.
 	if m.supervisorBusy && (m.delivering.task.ID == t.ID || m.detail == t.ID) {
 		said := p.T("supervisor.thinking", "supervisor is thinking...")
-		pieces := []string{Paint(Accent).Render(t.ID), Paint(Live).Render(said)}
+		pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(theme.Live).Render(said)}
 
-		return m.spinner(Live) + strings.Join(pieces, dot)
+		return m.spinner(theme.Live) + strings.Join(pieces, dot)
 	}
 
 	// 4. Per-band rendering for the viewed task.
@@ -82,7 +83,7 @@ func (m Model) detailRunningLine(t view.Task) string {
 	if t.Reason.Key == view.ReasonHeld {
 		held := p.T("reason.held", "held: {phase}", reasonArgs(t.Reason)...)
 
-		pieces := []string{Paint(Accent).Render(t.ID), Paint(Warn).Render(held)}
+		pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(theme.Warn).Render(held)}
 		if age := elapsed(m.now, t.Since); age != "" {
 			pieces = append(pieces, p.T("band.elapsed", "{d} in", about("d", age)))
 		}
@@ -95,23 +96,23 @@ func (m Model) detailRunningLine(t view.Task) string {
 			pieces = append(pieces, t.Flow)
 		}
 
-		pieces = append(pieces, Paint(Dim).Render("⏸"))
+		pieces = append(pieces, theme.Paint(theme.Dim).Render("⏸"))
 
 		return strings.Join(pieces, dot)
 	}
 
-	pieces := []string{Paint(Accent).Render(t.ID), Paint(Live).Render(m.phaseWord(t))}
+	pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(theme.Live).Render(m.phaseWord(t))}
 	if age := elapsed(m.now, t.Since); age != "" {
 		pieces = append(pieces, p.T("band.elapsed", "{d} in", about("d", age)))
 	}
 
 	if t.CurrentAction != "" {
-		pieces = append(pieces, Paint(Live).Render(
+		pieces = append(pieces, theme.Paint(theme.Live).Render(
 			actionGlyph(t.ActionKind)+fit(t.CurrentAction, actionCells)))
 	} else if t.CurrentThought != "" {
 		first := strings.TrimSpace(strings.Split(t.CurrentThought, "\n")[0])
 		if first != "" {
-			pieces = append(pieces, Paint(Live).Render("🧠 "+fit(first, actionCells)))
+			pieces = append(pieces, theme.Paint(theme.Live).Render("🧠 "+fit(first, actionCells)))
 		}
 	}
 
@@ -123,13 +124,13 @@ func (m Model) detailRunningLine(t view.Task) string {
 		pieces = append(pieces, t.Flow)
 	}
 
-	return m.spinner(Live) + strings.Join(pieces, dot)
+	return m.spinner(theme.Live) + strings.Join(pieces, dot)
 }
 
 func (m Model) detailNeedsYouLine(t view.Task) string {
 	p := m.opts.Words
 	state, role := m.stateWord(t)
-	pieces := []string{Paint(Accent).Render(t.ID), Paint(role).Render(state)}
+	pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(role).Render(state)}
 
 	if age := elapsed(m.now, t.Since); age != "" {
 		pieces = append(pieces, p.T("band.elapsed", "{d} in", about("d", age)))
@@ -137,11 +138,11 @@ func (m Model) detailNeedsYouLine(t view.Task) string {
 
 	if t.Reason.Key == view.ReasonGate {
 		if m.autopilotOn() {
-			pieces = append(pieces, Paint(Live).Render(
+			pieces = append(pieces, theme.Paint(theme.Live).Render(
 				p.T("why.pause_autopilot_is_lifting",
 					"autopilot is lifting this gate; press A to turn it off")))
 		} else {
-			pieces = append(pieces, Paint(Dim).Render(
+			pieces = append(pieces, theme.Paint(theme.Dim).Render(
 				p.T("why.pause_already_waiting",
 					"this phase is already waiting for you; press r to let it go")))
 		}
@@ -162,8 +163,8 @@ func (m Model) detailToDoLine(t view.Task) string {
 	p := m.opts.Words
 
 	pieces := []string{
-		Paint(Accent).Render(t.ID),
-		Paint(Dim).Render(p.T("state.not_started", "not started")),
+		theme.Paint(theme.Accent).Render(t.ID),
+		theme.Paint(theme.Dim).Render(p.T("state.not_started", "not started")),
 	}
 
 	if t.Flow != "" {
@@ -180,7 +181,7 @@ func (m Model) detailToDoLine(t view.Task) string {
 func (m Model) detailDoneLine(t view.Task) string {
 	p := m.opts.Words
 	state, role := m.stateWord(t)
-	pieces := []string{Paint(Accent).Render(t.ID), Paint(role).Render(state)}
+	pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(role).Render(state)}
 
 	if age := elapsed(m.now, t.Since); age != "" {
 		pieces = append(pieces, p.T("band.elapsed", "{d} in", about("d", age)))

@@ -21,6 +21,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -95,19 +96,19 @@ func (m Model) detailTop(h, w int) []string {
 func (m Model) detailHeadLines(w int) []string {
 	t, ok := m.task(m.detail)
 
-	left := Paint(Accent).Bold(true).Render(m.detail)
+	left := theme.Paint(theme.Accent).Bold(true).Render(m.detail)
 	if !ok {
 		return []string{
-			spread(" "+left, Paint(Dim).Render(m.opts.Words.T("detail.gone",
+			spread(" "+left, theme.Paint(theme.Dim).Render(m.opts.Words.T("detail.gone",
 				"this task is no longer on the board")), w),
 		}
 	}
 
 	word, role := m.stateWord(t)
 
-	right := Paint(Dim).Render(t.Repo)
+	right := theme.Paint(theme.Dim).Render(t.Repo)
 	if word != "" {
-		right += Paint(Dim).Render(dot) + Paint(role).Render(word)
+		right += theme.Paint(theme.Dim).Render(dot) + theme.Paint(role).Render(word)
 	}
 
 	title := plainInline(t.Title)
@@ -126,21 +127,21 @@ func (m Model) detailHeadLines(w int) []string {
 		shown, hint := fit(title, availW), ""
 		if lipgloss.Width(title) > availW {
 			shown = fit(title, max(availW-4, 8))
-			hint = Paint(Dim).Render(" [e]")
+			hint = theme.Paint(theme.Dim).Render(" [e]")
 		}
 
-		return []string{spread(" "+left+"  "+Text(Secondary).Render(shown)+hint, right, w)}
+		return []string{spread(" "+left+"  "+theme.Text(theme.Secondary).Render(shown)+hint, right, w)}
 	}
 
 	wrapped := splitIntoLines(title, availW)
 
 	var out []string
 
-	out = append(out, spread(" "+left+"  "+Text(Secondary).Render(wrapped[0]), right, w))
+	out = append(out, spread(" "+left+"  "+theme.Text(theme.Secondary).Render(wrapped[0]), right, w))
 
 	indent := strings.Repeat(" ", lipgloss.Width(m.detail)+3)
 	for _, wl := range wrapped[1:] {
-		out = append(out, " "+indent+Text(Secondary).Render(wl))
+		out = append(out, " "+indent+theme.Text(theme.Secondary).Render(wl))
 	}
 
 	return out
@@ -218,9 +219,9 @@ func (m Model) tabStrip(w int) string {
 	p := m.opts.Words
 	switch attempt := m.attempt(); {
 	case m.tab == tabDiff && m.diffKnown && m.diffErr == nil && m.diffNoBase:
-		right = Paint(Dim).Render(p.T("diff.no_base", "no base branch"))
+		right = theme.Paint(theme.Dim).Render(p.T("diff.no_base", "no base branch"))
 	case attempt > 0:
-		right = Paint(Dim).Render(p.T("log.attempt", "attempt {n}", about("n", strconv.Itoa(attempt))))
+		right = theme.Paint(theme.Dim).Render(p.T("log.attempt", "attempt {n}", about("n", strconv.Itoa(attempt))))
 	}
 
 	return spread(" "+strings.Join(parts, tabGap), right, w)
@@ -279,11 +280,11 @@ func (m Model) moreLine() string {
 
 	p := m.opts.Words
 	if m.tab == tabTimeline && m.following {
-		return " " + Paint(Live).Render(p.T("detail.following", "following — {key} stops it",
+		return " " + theme.Paint(theme.Live).Render(p.T("detail.following", "following — {key} stops it",
 			about("key", m.keys.Up.Help().Key)))
 	}
 
-	return " " + Paint(Dim).Render(p.T("detail.scrolls", "{keys} scrolls",
+	return " " + theme.Paint(theme.Dim).Render(p.T("detail.scrolls", "{keys} scrolls",
 		about("keys", m.keys.Up.Help().Key+m.keys.Down.Help().Key)))
 }
 

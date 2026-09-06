@@ -5,6 +5,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 func wrapPromptText(text string, maxLen int) []string {
@@ -67,9 +68,9 @@ func renderComboPillsLabelled(ids, labels []string, current string) string {
 	for i, id := range ids {
 		label := dialLabel(ids, labels, i)
 		if id == current {
-			views = append(views, Paint(Sel).Render(" "+label+" "))
+			views = append(views, theme.Paint(theme.Sel).Render(" "+label+" "))
 		} else {
-			views = append(views, Paint(Dim).Render(label))
+			views = append(views, theme.Paint(theme.Dim).Render(label))
 		}
 	}
 

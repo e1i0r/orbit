@@ -7,13 +7,14 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
 type noteItem struct {
 	at      string
 	sender  string
-	role    Role
+	role    theme.Role
 	status  string
 	content []string
 }
@@ -30,7 +31,7 @@ func (m Model) notesLines() []string {
 func (m Model) notesRows() ([]string, map[int]int) {
 	p := m.opts.Words
 	if m.logErr != nil {
-		return []string{"  " + Paint(Bad).Render(m.errSaid(m.logErr))}, nil
+		return []string{"  " + theme.Paint(theme.Bad).Render(m.errSaid(m.logErr))}, nil
 	}
 
 	var items []noteItem
@@ -57,7 +58,7 @@ func (m Model) notesRows() ([]string, map[int]int) {
 			items = append(items, noteItem{
 				at:      timeStr,
 				sender:  senderLabel,
-				role:    Accent,
+				role:    theme.Accent,
 				status:  statusNote,
 				content: content,
 			})
@@ -76,7 +77,7 @@ func (m Model) notesRows() ([]string, map[int]int) {
 			items = append(items, noteItem{
 				at:      timeStr,
 				sender:  fmt.Sprintf("↔ %s", strings.ToUpper(who)),
-				role:    Live,
+				role:    theme.Live,
 				status:  p.T("notes.unread_by_run", "the run does not read it"),
 				content: turnLines(e.Text, m.frame.Body.W),
 			})
@@ -91,7 +92,7 @@ func (m Model) notesRows() ([]string, map[int]int) {
 				items = append(items, noteItem{
 					at:      timeStr,
 					sender:  fmt.Sprintf("🤖 %s", p.T("notes.llm_prompt", "MODEL (asking the operator)")),
-					role:    Warn,
+					role:    theme.Warn,
 					status:  e.Phase,
 					content: []string{"? " + msg},
 				})
@@ -101,23 +102,23 @@ func (m Model) notesRows() ([]string, map[int]int) {
 
 	out := []string{
 		"",
-		"  " + Paint(Accent).Bold(true).Render(p.T("notes.title", "Operator Notes & LLM Dialogue")),
-		"  " + Paint(Dim).Render(p.T("notes.subtitle", "everything spoken with the model, notes filed and interactive sessions")),
+		"  " + theme.Paint(theme.Accent).Bold(true).Render(p.T("notes.title", "Operator Notes & LLM Dialogue")),
+		"  " + theme.Paint(theme.Dim).Render(p.T("notes.subtitle", "everything spoken with the model, notes filed and interactive sessions")),
 		"",
 	}
 
 	if len(items) == 0 {
 		return append(out,
-			"  "+Paint(Dim).Render(p.T("notes.empty", "no notes or dialogue recorded for this task")),
+			"  "+theme.Paint(theme.Dim).Render(p.T("notes.empty", "no notes or dialogue recorded for this task")),
 			"",
-			"  "+Paint(Dim).Render(p.T("notes.hint_action", "press 'a' to leave a note · press 'c' to open the interactive CLI")),
+			"  "+theme.Paint(theme.Dim).Render(p.T("notes.hint_action", "press 'a' to leave a note · press 'c' to open the interactive CLI")),
 		), nil
 	}
 
 	out = append(out, fmt.Sprintf("  %d %s · %s",
 		len(items),
 		p.T("notes.count", "entries in the dialogue"),
-		Paint(OK).Render(p.T("notes.all_filed", "in sync with the model")),
+		theme.Paint(theme.OK).Render(p.T("notes.all_filed", "in sync with the model")),
 	))
 	out = append(out, "")
 
@@ -134,7 +135,7 @@ func (m Model) notesRows() ([]string, map[int]int) {
 	}
 
 	out = append(out,
-		"  "+Paint(Dim).Render(p.T("notes.hint_footer", "press 'a' to add a note · press 'c' or 't' to enter the interactive CLI")),
+		"  "+theme.Paint(theme.Dim).Render(p.T("notes.hint_footer", "press 'a' to add a note · press 'c' or 't' to enter the interactive CLI")),
 		"",
 	)
 
@@ -148,8 +149,8 @@ func (m Model) notesRows() ([]string, map[int]int) {
 // that sets ten of them open is a tab where the eleventh cannot be found, so
 // everything past the opening line waits behind the arrow.
 func (m Model) noteItemRows(item noteItem, i int) ([]string, bool) {
-	head := "  " + Paint(item.role).Render(item.sender) + "  " +
-		Paint(Dim).Render(item.at) + "  " + Paint(Dim).Render(item.status)
+	head := "  " + theme.Paint(item.role).Render(item.sender) + "  " +
+		theme.Paint(theme.Dim).Render(item.at) + "  " + theme.Paint(theme.Dim).Render(item.status)
 
 	// Trailing blanks are what a note was typed with, not part of what it
 	// says: kept, they pad the gap under an open note and are counted as
@@ -164,11 +165,11 @@ func (m Model) noteItemRows(item noteItem, i int) ([]string, bool) {
 	for _, l := range content {
 		switch {
 		case strings.HasPrefix(l, "?"):
-			body = append(body, "      "+Paint(Warn).Render(l))
+			body = append(body, "      "+theme.Paint(theme.Warn).Render(l))
 		case strings.HasPrefix(l, "→"):
-			body = append(body, "      "+Paint(OK).Render(l))
+			body = append(body, "      "+theme.Paint(theme.OK).Render(l))
 		case strings.HasPrefix(l, "[cli]"):
-			body = append(body, "      "+Paint(Live).Render(l))
+			body = append(body, "      "+theme.Paint(theme.Live).Render(l))
 		default:
 			body = append(body, "      "+l)
 		}
@@ -179,12 +180,12 @@ func (m Model) noteItemRows(item noteItem, i int) ([]string, bool) {
 	}
 
 	open := m.rowOpen(tabNotes, i)
-	out := []string{Text(Tertiary).Render(foldMark(open)) + head}
+	out := []string{theme.Text(theme.Tertiary).Render(foldMark(open)) + head}
 
 	if !open {
 		// The opening line and a count of what is under it: a reader
 		// scanning the thread needs to know which note is the long one.
-		return append(out, body[0], "      "+Text(Tertiary).Render(
+		return append(out, body[0], "      "+theme.Text(theme.Tertiary).Render(
 			m.opts.Words.P("notes.more_rows", len(body)-1, "{n} more line", "{n} more lines"))), true
 	}
 

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -111,7 +112,7 @@ func (m Model) flowRows() ([]string, map[int]int) {
 
 	t, ok := m.task(m.detail)
 	if !ok {
-		return []string{"  " + Paint(Dim).Render(
+		return []string{"  " + theme.Paint(theme.Dim).Render(
 			p.T("detail.gone", "this task is no longer on the board"))}, nil
 	}
 
@@ -122,13 +123,13 @@ func (m Model) flowRows() ([]string, map[int]int) {
 
 	f, err := flow.Resolve(m.opts.Flows, flowName)
 	if err != nil {
-		return []string{"  " + Paint(Bad).Render(fmt.Sprintf("flow %q: %v", flowName, err))}, nil
+		return []string{"  " + theme.Paint(theme.Bad).Render(fmt.Sprintf("flow %q: %v", flowName, err))}, nil
 	}
 
-	title := Paint(Accent).Bold(true).Render(p.T("flow.tree_title", "Pipeline & Execution Tree") + " · ")
+	title := theme.Paint(theme.Accent).Bold(true).Render(p.T("flow.tree_title", "Pipeline & Execution Tree") + " · ")
 	out := []string{
 		"",
-		"  " + title + Paint(Live).Render(f.Name),
+		"  " + title + theme.Paint(theme.Live).Render(f.Name),
 		"",
 	}
 
@@ -148,7 +149,7 @@ func (m Model) flowRows() ([]string, map[int]int) {
 	// so opening one is the same gesture as opening a phase.
 	steps := m.byHand()
 	if len(steps) > 0 {
-		out = append(out, "  "+Paint(Accent).Bold(true).Render(p.T("flow.by_hand", "Asked for by hand")))
+		out = append(out, "  "+theme.Paint(theme.Accent).Bold(true).Render(p.T("flow.by_hand", "Asked for by hand")))
 	}
 
 	for j, st := range steps {
@@ -176,18 +177,18 @@ func (m Model) flowNode(t view.Task, phase flow.Phase, i, total int, past bool) 
 
 	// The arrow stands between the branch and the icon, where a tree's
 	// disclosure has always stood.
-	mark := Text(Tertiary).Render(foldMark(open))
+	mark := theme.Text(theme.Tertiary).Render(foldMark(open))
 
 	head := fmt.Sprintf("  %s %s%s [%d/%d] %s · %s",
-		Paint(Dim).Render(branch), mark, icon, i+1, total,
-		Paint(role).Bold(true).Render(phase.Name), status)
+		theme.Paint(theme.Dim).Render(branch), mark, icon, i+1, total,
+		theme.Paint(role).Bold(true).Render(phase.Name), status)
 
 	if ex.cost > 0 {
-		head += " " + Paint(Dim).Render(fmt.Sprintf("($%.4f)", ex.cost))
+		head += " " + theme.Paint(theme.Dim).Render(fmt.Sprintf("($%.4f)", ex.cost))
 	}
 
 	if ex.duration != "" {
-		head += " " + Paint(Dim).Render(fmt.Sprintf("(%s)", ex.duration))
+		head += " " + theme.Paint(theme.Dim).Render(fmt.Sprintf("(%s)", ex.duration))
 	}
 
 	out := []string{head}
@@ -197,5 +198,5 @@ func (m Model) flowNode(t view.Task, phase flow.Phase, i, total int, past bool) 
 
 	// The trunk carries on past the node whether it is open or shut, which
 	// is what keeps a folded tree a tree.
-	return append(out, "  "+Paint(Dim).Render(subBranch))
+	return append(out, "  "+theme.Paint(theme.Dim).Render(subBranch))
 }

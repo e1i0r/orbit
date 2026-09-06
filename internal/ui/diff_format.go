@@ -3,6 +3,7 @@ package ui
 import (
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -10,7 +11,7 @@ import (
 func formatStructuredDiff(diffText string, width int, p *words.Printer, rationales map[string]string, showRationale bool, collapsed map[string]bool, wrapLines bool) ([]string, []diffFile) {
 	text := strings.TrimSuffix(diffText, "\n")
 	if strings.TrimSpace(text) == "" {
-		return []string{" " + Paint(Dim).Render(p.T("diff.unchanged", "no changes in this task's worktree"))}, nil
+		return []string{" " + theme.Paint(theme.Dim).Render(p.T("diff.unchanged", "no changes in this task's worktree"))}, nil
 	}
 
 	raw := strings.Split(text, "\n")
@@ -19,7 +20,7 @@ func formatStructuredDiff(diffText string, width int, p *words.Printer, rational
 	if len(files) == 0 {
 		out := make([]string, 0, len(raw))
 		for _, line := range raw {
-			out = append(out, " "+Paint(diffRole(line)).Render(line))
+			out = append(out, " "+theme.Paint(diffRole(line)).Render(line))
 		}
 
 		return out, files

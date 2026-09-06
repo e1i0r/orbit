@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 func (m Model) noteRows(h, w int) []string {
@@ -26,7 +28,7 @@ func (m Model) noteRows(h, w int) []string {
 
 	var contentLines []string
 	if raw == "" {
-		contentLines = []string{Paint(Dim).Render(said.placeholder)}
+		contentLines = []string{theme.Paint(theme.Dim).Render(said.placeholder)}
 	} else {
 		for _, part := range strings.Split(raw, "\n") {
 			if part == "" {
@@ -42,7 +44,7 @@ func (m Model) noteRows(h, w int) []string {
 	}
 
 	borderStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#38BDF8"))
-	headerBorder := "┌─ " + Paint(Accent).Bold(true).Render(title) + " "
+	headerBorder := "┌─ " + theme.Paint(theme.Accent).Bold(true).Render(title) + " "
 
 	remWidth := boxW - lipgloss.Width(headerBorder) - 1
 	if remWidth < 0 {
@@ -58,11 +60,11 @@ func (m Model) noteRows(h, w int) []string {
 	for i, l := range contentLines {
 		lineContent := l
 		if i == 0 && raw != "" {
-			lineContent = Paint(Dim).Render(prompt) + lineContent
+			lineContent = theme.Paint(theme.Dim).Render(prompt) + lineContent
 		}
 
 		if i == len(contentLines)-1 {
-			lineContent += Paint(Sel).Render(" ")
+			lineContent += theme.Paint(theme.Sel).Render(" ")
 		}
 
 		wLine := lipgloss.Width(lineContent)
@@ -77,7 +79,7 @@ func (m Model) noteRows(h, w int) []string {
 	}
 
 	actions := said.actions
-	actionLine := "  " + Paint(Dim).Render(actions)
+	actionLine := "  " + theme.Paint(theme.Dim).Render(actions)
 	wAct := lipgloss.Width(actionLine)
 
 	padAct := innerW - wAct

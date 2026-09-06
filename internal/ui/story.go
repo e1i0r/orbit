@@ -8,6 +8,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -33,7 +34,7 @@ func (m Model) storyLines(w int) []string {
 	p := m.opts.Words
 
 	out := []string{
-		paneGutter + Text(Secondary).Render(p.T("overview.story", "how it happened")),
+		paneGutter + theme.Text(theme.Secondary).Render(p.T("overview.story", "how it happened")),
 		"",
 	}
 
@@ -74,14 +75,14 @@ func (m Model) walkLines(w int) []string {
 
 	out := []string{
 		"",
-		paneGutter + "        " + Text(Tertiary).Render(p.P("story.changed", len(steps),
+		paneGutter + "        " + theme.Text(theme.Tertiary).Render(p.P("story.changed", len(steps),
 			"{n} file changed, in the order it got there",
 			"{n} files changed, in the order it got there")),
 	}
 
 	for _, s := range steps {
-		out = append(out, paneGutter+"        "+Paint(OK).Render(fit(s.Path, max(20, w-2*len(paneGutter)-10)))+
-			Text(Tertiary).Render(touches(p, s)))
+		out = append(out, paneGutter+"        "+theme.Paint(theme.OK).Render(fit(s.Path, max(20, w-2*len(paneGutter)-10)))+
+			theme.Text(theme.Tertiary).Render(touches(p, s)))
 	}
 
 	return append(out, "")
@@ -114,7 +115,7 @@ func storyRow(depth int, text, about string, w int) string {
 	// The label only when there is room for it and a gap between the two.
 	// A label wrapped onto its own line reads as a sixth field.
 	if room := w - lipgloss.Width(line) - lipgloss.Width(about) - 4; room > 0 {
-		line += strings.Repeat(" ", room) + Text(Tertiary).Render(about)
+		line += strings.Repeat(" ", room) + theme.Text(theme.Tertiary).Render(about)
 	}
 
 	return paneGutter + line

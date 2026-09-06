@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 const (
@@ -27,7 +29,7 @@ func (m Model) enginesRows(h, w int) []string {
 	if m.engines.showingSetup {
 		out := []string{
 			"",
-			"  " + Paint(Accent).Render(p.T("engines.setup_title", "Setup Steps for {engine}",
+			"  " + theme.Paint(theme.Accent).Render(p.T("engines.setup_title", "Setup Steps for {engine}",
 				about("engine", m.engines.setupEngine))),
 			"",
 		}
@@ -43,9 +45,9 @@ func (m Model) enginesRows(h, w int) []string {
 
 		out = append(out,
 			"",
-			"  "+Paint(Dim).Render(p.T("engines.setup_notice", "Orbit verifies setup steps but executes nothing.")),
+			"  "+theme.Paint(theme.Dim).Render(p.T("engines.setup_notice", "Orbit verifies setup steps but executes nothing.")),
 			"",
-			"  "+Paint(Dim).Render(p.T("engines.setup_back", "{back} back", about("back", m.keys.Back.Help().Key))),
+			"  "+theme.Paint(theme.Dim).Render(p.T("engines.setup_back", "{back} back", about("back", m.keys.Back.Help().Key))),
 		)
 
 		return fill(out, h)
@@ -61,8 +63,8 @@ func (m Model) enginesRows(h, w int) []string {
 
 	out := []string{
 		"",
-		"  " + Paint(Accent).Render(p.T("engines.title", "Engine & Model Knobs")),
-		"  " + Paint(Dim).Render(said),
+		"  " + theme.Paint(theme.Accent).Render(p.T("engines.title", "Engine & Model Knobs")),
+		"  " + theme.Paint(theme.Dim).Render(said),
 		"",
 	}
 
@@ -88,7 +90,7 @@ func (m Model) enginesRows(h, w int) []string {
 			about("up_down", m.keys.Up.Help().Key+m.keys.Down.Help().Key))
 	}
 
-	out = append(out, "", fit("  "+Paint(Dim).Render(waysOut), w))
+	out = append(out, "", fit("  "+theme.Paint(theme.Dim).Render(waysOut), w))
 
 	return fill(out, h)
 }
@@ -115,7 +117,7 @@ func (m Model) engineLines(w int) ([]string, []int) {
 
 	for i, r := range rows {
 		if r.kind == rowHeader {
-			lines = append(lines, "", "  "+Paint(Accent).Render(r.title))
+			lines = append(lines, "", "  "+theme.Paint(theme.Accent).Render(r.title))
 			continue
 		}
 
@@ -153,23 +155,23 @@ func (m Model) engineLine(r engineRow, marked bool, w int) string {
 
 	text := r.title
 	if r.kind == rowEngine {
-		text = ink(Text(Tertiary).Render, foldMark(r.open)) + text
+		text = ink(theme.Text(theme.Tertiary).Render, foldMark(r.open)) + text
 	}
 
 	if r.selected {
-		text += " " + ink(Paint(OK).Render, "●")
+		text += " " + ink(theme.Paint(theme.OK).Render, "●")
 	}
 
 	if r.kind == rowEngine && !r.open {
-		text += " " + ink(Paint(Dim).Render, m.shutEngineNote(r))
+		text += " " + ink(theme.Paint(theme.Dim).Render, m.shutEngineNote(r))
 	}
 
 	if r.disabled {
-		text = ink(Paint(Dim).Render, text)
+		text = ink(theme.Paint(theme.Dim).Render, text)
 	}
 
 	if note := m.engineQuota(r); note != "" {
-		text += "   " + ink(Paint(Dim).Render, note)
+		text += "   " + ink(theme.Paint(theme.Dim).Render, note)
 	}
 
 	line := fit(mark+text, w)
@@ -179,7 +181,7 @@ func (m Model) engineLine(r engineRow, marked bool, w int) string {
 
 	// Out to the edge, so the row the cursor is on is a band across the
 	// screen and not a word with a colour behind it.
-	return Paint(Sel).Render(line + strings.Repeat(" ", max(0, w-lipgloss.Width(line))))
+	return theme.Paint(theme.Sel).Render(line + strings.Repeat(" ", max(0, w-lipgloss.Width(line))))
 }
 
 // shutEngineNote is what a folded engine says it is holding: the model it

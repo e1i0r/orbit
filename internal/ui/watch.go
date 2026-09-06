@@ -17,6 +17,8 @@ import (
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // outputCap is how much of a command's output the window keeps. A run can
@@ -227,9 +229,9 @@ func (m Model) watchRows(h, w int) []string {
 
 	var status string
 	if m.watching != nil {
-		status = Paint(Dim).Render(p.T("watch.running", "{name}: still running…", about("name", m.watching.name)))
+		status = theme.Paint(theme.Dim).Render(p.T("watch.running", "{name}: still running…", about("name", m.watching.name)))
 	} else {
-		status = Paint(Dim).Render(p.T("watch.finished_line", "finished — {back} closes",
+		status = theme.Paint(theme.Dim).Render(p.T("watch.finished_line", "finished — {back} closes",
 			about("back", m.keys.Back.Help().Key)))
 	}
 

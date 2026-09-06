@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // noField and noPhase are what a row that is a heading, a rule or a blank
@@ -211,8 +212,8 @@ func (m Model) builderHead(w int) []builderLine {
 	// row spent on saying what this screen is is a row the reader has to
 	// scroll past to reach the button that saves what they wrote — what
 	// each field does is said at the bottom, about the field they are on.
-	return []builderLine{plainLine(fit("  "+Paint(Accent).Bold(true).Render(title)+"  "+
-		Paint(Dim).Render(p.T("flows.builder_subtitle",
+	return []builderLine{plainLine(fit("  "+theme.Paint(theme.Accent).Bold(true).Render(title)+"  "+
+		theme.Paint(theme.Dim).Render(p.T("flows.builder_subtitle",
 			"a flow is phases in order; each is an engine given instructions")), w))}
 }
 
@@ -222,7 +223,7 @@ func (m Model) builderPipeline(w int) []builderLine {
 	st := &m.flows
 	p := m.opts.Words
 
-	out := []builderLine{plainLine("  " + Paint(Live).Bold(true).Render(
+	out := []builderLine{plainLine("  " + theme.Paint(theme.Live).Bold(true).Render(
 		p.T("flows.builder_pipeline_title", "Pipeline (Click on a phase to edit it):")))}
 
 	for i, ph := range st.phases {
@@ -244,7 +245,7 @@ func (m Model) builderPipeline(w int) []builderLine {
 		}
 
 		if ph.Loop != nil {
-			title += " " + Paint(Warn).Render(p.T("flows.repeats_up_to",
+			title += " " + theme.Paint(theme.Warn).Render(p.T("flows.repeats_up_to",
 				"↻ up to {n}×", about("n", strconv.Itoa(ph.Loop.Max))))
 		}
 
@@ -252,16 +253,16 @@ func (m Model) builderPipeline(w int) []builderLine {
 			title += " " + p.T("flows.stops_human", "(stops for human)")
 		}
 
-		ink := Paint(Dim)
+		ink := theme.Paint(theme.Dim)
 		if i == st.activePhase {
-			ink = Paint(Accent).Bold(true)
+			ink = theme.Paint(theme.Accent).Bold(true)
 		}
 
 		out = append(out, builderLine{text: fit(prefix+ink.Render(title), w), field: noField, phase: i, pick: noPick})
 
 		if prompt := runsIn(ph).Prompt; prompt != "" {
 			out = append(out, builderLine{
-				text:  "       " + Paint(Dim).Render(fit(`"`+flatten(prompt)+`"`, w-14)),
+				text:  "       " + theme.Paint(theme.Dim).Render(fit(`"`+flatten(prompt)+`"`, w-14)),
 				field: noField,
 				phase: i,
 				pick:  noPick,

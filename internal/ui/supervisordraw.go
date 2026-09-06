@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -82,7 +83,7 @@ func (m Model) supervisorHead(cw int) []string {
 		m.howMuch(),
 	}, " · ")
 
-	return []string{"", Paint(Accent).Render(title), Paint(Dim).Render(fit(facts, cw)), ""}
+	return []string{"", theme.Paint(theme.Accent).Render(title), theme.Paint(theme.Dim).Render(fit(facts, cw)), ""}
 }
 
 // howMuch is how much there is: how many conversations while the list is
@@ -158,7 +159,7 @@ func (m Model) renderThread(cw int) (rows []string, starts []int) {
 	p := m.opts.Words
 	if len(m.supervisor.lines) == 0 && !m.supervisorBusy {
 		empty := p.T("supervisor.empty", "No messages in supervisor thread yet. Type a briefing or instruction below.")
-		return append([]string{""}, splitIntoLines(Paint(Dim).Render(empty), cw)...), nil
+		return append([]string{""}, splitIntoLines(theme.Paint(theme.Dim).Render(empty), cw)...), nil
 	}
 
 	for i, l := range m.supervisor.lines {
@@ -209,36 +210,36 @@ func (m Model) threadOffset(total, maxRows int, starts []int) int {
 func (m Model) messageLines(l view.SupervisorLine, cw int, selected bool) []string {
 	p := m.opts.Words
 
-	role := Accent
+	role := theme.Accent
 	if m.isEngineName(l.By) {
-		role = Live
+		role = theme.Live
 	}
 
 	if l.Retracted {
-		role = Dim
+		role = theme.Dim
 	}
 
-	rail := Paint(role).Render("▎")
+	rail := theme.Paint(role).Render("▎")
 	if selected {
-		rail = Paint(Accent).Bold(true).Render("▶")
+		rail = theme.Paint(theme.Accent).Bold(true).Render("▶")
 	}
 
-	who := Paint(role).Bold(true).Render(l.By) + " " + Paint(Dim).Render("["+l.Channel+"]")
+	who := theme.Paint(role).Bold(true).Render(l.By) + " " + theme.Paint(theme.Dim).Render("["+l.Channel+"]")
 
 	tag := ""
 	if l.TaskID != "" {
-		tag = Paint(Accent).Render("(" + l.TaskID + ")")
+		tag = theme.Paint(theme.Accent).Render("(" + l.TaskID + ")")
 	}
 
 	if l.Retracted {
-		tag = strings.TrimSpace(tag + " " + Paint(Dim).Render(p.T("supervisor.retracted", "(retracted)")))
+		tag = strings.TrimSpace(tag + " " + theme.Paint(theme.Dim).Render(p.T("supervisor.retracted", "(retracted)")))
 	}
 
 	if selected {
-		tag = Paint(Accent).Bold(true).Render(p.T("supervisor.take_back", "[↵] take this one back"))
+		tag = theme.Paint(theme.Accent).Bold(true).Render(p.T("supervisor.take_back", "[↵] take this one back"))
 	}
 
-	head := railed(rail, Paint(Dim).Render(l.At.Format("15:04:05"))+"  "+who)
+	head := railed(rail, theme.Paint(theme.Dim).Render(l.At.Format("15:04:05"))+"  "+who)
 
 	rows := []string{spread(head, tag, cw)}
 	for _, body := range m.messageBody(l, cw) {
@@ -262,7 +263,7 @@ func (m Model) messageBody(l view.SupervisorLine, cw int) []string {
 	case l.Retracted:
 		for _, raw := range plainLines(l.Text) {
 			for _, wrapped := range splitIntoLines(raw, text) {
-				out = append(out, Paint(Dim).Render(wrapped))
+				out = append(out, theme.Paint(theme.Dim).Render(wrapped))
 			}
 		}
 	case m.isEngineName(l.By):
@@ -282,9 +283,9 @@ func (m Model) messageBody(l view.SupervisorLine, cw int) []string {
 func (m Model) supervisorThinking(cw int) []string {
 	eng := m.dialEngine(m.knobs.Engine)
 
-	rail := Paint(Live).Render("▎")
-	head := railed(rail, Paint(Dim).Render(m.now.Format("15:04:05"))+"  "+Paint(Live).Bold(true).Render(eng)+" "+Paint(Dim).Render("[supervisor]"))
-	body := railed(rail, m.spinner(Live)+Paint(Dim).Render(m.opts.Words.T("supervisor.thinking", "supervisor is thinking...")))
+	rail := theme.Paint(theme.Live).Render("▎")
+	head := railed(rail, theme.Paint(theme.Dim).Render(m.now.Format("15:04:05"))+"  "+theme.Paint(theme.Live).Bold(true).Render(eng)+" "+theme.Paint(theme.Dim).Render("[supervisor]"))
+	body := railed(rail, m.spinner(theme.Live)+theme.Paint(theme.Dim).Render(m.opts.Words.T("supervisor.thinking", "supervisor is thinking...")))
 
 	return []string{fit(head, cw), fit(body, cw), ""}
 }

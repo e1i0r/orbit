@@ -8,6 +8,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -30,14 +31,14 @@ func (m Model) overviewVitals(t view.Task, w int) []string {
 	changed := plusMinus(sum, false)
 
 	out := statStrip([]stat{
-		{label: p.T("overview.cost", "cost"), value: cost, role: OK},
-		{label: p.T("overview.duration", "duration"), value: elapsed(m.now, t.Since), role: Accent},
+		{label: p.T("overview.cost", "cost"), value: cost, role: theme.OK},
+		{label: p.T("overview.duration", "duration"), value: elapsed(m.now, t.Since), role: theme.Accent},
 		{
 			label: p.T("overview.phases", "flow"),
 			value: orDef(t.Flow, flow.Default),
-			role:  Accent,
+			role:  theme.Accent,
 		},
-		{label: p.T("overview.changed", "changed"), value: changed, role: Live},
+		{label: p.T("overview.changed", "changed"), value: changed, role: theme.Live},
 	}, w)
 
 	out = append(out, "")
@@ -48,7 +49,7 @@ func (m Model) overviewVitals(t view.Task, w int) []string {
 
 	if t.RepoPath != "" {
 		tail := tailFit(homeTilde(t.RepoPath), min(proseMeasure, w-2*len(paneGutter)))
-		out = append(out, paneGutter+Text(Tertiary).Render(tail))
+		out = append(out, paneGutter+theme.Text(theme.Tertiary).Render(tail))
 	}
 
 	return append(out, "")
@@ -76,7 +77,7 @@ func (m Model) dials(t view.Task) []field {
 		return field{
 			label: label,
 			key:   key,
-			value: Paint(Accent).Render(value),
+			value: theme.Paint(theme.Accent).Render(value),
 		}
 	}
 
@@ -104,24 +105,24 @@ func (m Model) overviewChanges(w int) []string {
 
 	if len(sum.files) == 0 && sum.added == 0 && sum.deleted == 0 {
 		msg := p.T("overview.no_diff", "no working tree modifications recorded")
-		return append(out, paneGutter+Text(Tertiary).Render(msg), "")
+		return append(out, paneGutter+theme.Text(theme.Tertiary).Render(msg), "")
 	}
 
 	out = append(out, paneGutter+meta(
 		plusMinus(sum, true),
-		Text(Secondary).Render(p.P("overview.files", len(sum.files), "{n} file", "{n} files")),
+		theme.Text(theme.Secondary).Render(p.P("overview.files", len(sum.files), "{n} file", "{n} files")),
 	))
 
 	for i, f := range sum.files {
 		if i >= overviewFileCap {
 			rest := len(sum.files) - overviewFileCap
 
-			return append(out, paneGutter+"  "+Text(Secondary).Render(p.P("overview.more_files", rest,
+			return append(out, paneGutter+"  "+theme.Text(theme.Secondary).Render(p.P("overview.more_files", rest,
 				"… and {n} more file", "… and {n} more files")), "")
 		}
 
 		trimmed := fit(f, min(proseMeasure, w-2*len(paneGutter)-2))
-		out = append(out, paneGutter+"  "+Paint(OK).Render(trimmed))
+		out = append(out, paneGutter+"  "+theme.Paint(theme.OK).Render(trimmed))
 	}
 
 	return append(out, "")
@@ -149,7 +150,7 @@ func (m Model) overviewActions(w int) []string {
 	p := m.opts.Words
 
 	act := func(key, label string) field {
-		return field{label: label, value: Paint(Live).Render(key)}
+		return field{label: label, value: theme.Paint(theme.Live).Render(key)}
 	}
 
 	head := m.sectionHead(foldDeliver, p.T("overview.quick_actions", "deliver"), "", w)
@@ -183,9 +184,9 @@ func (m Model) overviewActions(w int) []string {
 // The cells of the strip paint their own value, so painted is false there:
 // a colour inside a cell would end mid-word where lipgloss resets it.
 func plusMinus(sum diffSummary, painted bool) string {
-	paint := func(r Role, s string) string {
+	paint := func(r theme.Role, s string) string {
 		if painted {
-			return Paint(r).Render(s)
+			return theme.Paint(r).Render(s)
 		}
 
 		return s
@@ -194,11 +195,11 @@ func plusMinus(sum diffSummary, painted bool) string {
 	var parts []string
 
 	if sum.added > 0 {
-		parts = append(parts, paint(OK, fmt.Sprintf("+%d", sum.added)))
+		parts = append(parts, paint(theme.OK, fmt.Sprintf("+%d", sum.added)))
 	}
 
 	if sum.deleted > 0 {
-		parts = append(parts, paint(Bad, fmt.Sprintf("−%d", sum.deleted)))
+		parts = append(parts, paint(theme.Bad, fmt.Sprintf("−%d", sum.deleted)))
 	}
 
 	if len(parts) == 0 {

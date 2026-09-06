@@ -5,6 +5,8 @@ package ui
 import (
 	"strings"
 	"time"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // conversationRows is the list, in place of the thread: one row per
@@ -15,25 +17,25 @@ func (m Model) conversationRows(maxRows, cw int) []string {
 	convs := conversationsOf(m.supervisor.all)
 
 	if len(convs) == 0 {
-		return fill([]string{Paint(Dim).Render(fit(p.T("supervisor.no_conversations",
+		return fill([]string{theme.Paint(theme.Dim).Render(fit(p.T("supervisor.no_conversations",
 			"nothing has been said to the supervisor yet"), cw))}, maxRows)
 	}
 
 	var out []string
 
 	for i, c := range convs {
-		mark, ink := "  ", Paint(Dim)
+		mark, ink := "  ", theme.Paint(theme.Dim)
 		if i == m.supervisor.listSel {
-			mark, ink = Paint(Accent).Bold(true).Render("▸ "), Text(Primary)
+			mark, ink = theme.Paint(theme.Accent).Bold(true).Render("▸ "), theme.Text(theme.Primary)
 		}
 
 		open := "○ "
 		if c.id == m.supervisor.conversation {
-			open = Paint(Live).Render("● ")
+			open = theme.Paint(theme.Live).Render("● ")
 		}
 
 		out = append(out, fit(mark+open+ink.Render(c.title), cw))
-		out = append(out, fit("    "+Paint(Dim).Render(strings.Join([]string{
+		out = append(out, fit("    "+theme.Paint(theme.Dim).Render(strings.Join([]string{
 			m.said(c),
 			p.P("supervisor.msg_count2", c.turns, "{n} message", "{n} messages"),
 		}, " · ")), cw))
@@ -93,10 +95,10 @@ func (m Model) conversationWays() []string {
 	p := m.opts.Words
 
 	return []string{
-		Paint(Dim).Render(p.T("supervisor.list_note",
+		theme.Paint(theme.Dim).Render(p.T("supervisor.list_note",
 			"a conversation is disposable: what is worth keeping went to what Orbit knows when you said /rule or /aware")),
 		"",
-		Paint(Dim).Render(p.T("supervisor.list_ways2",
+		theme.Paint(theme.Dim).Render(p.T("supervisor.list_ways2",
 			"[↑↓] pick · [↵] open · [d] remove from the list · [ctrl+N] new · [esc] back")),
 	}
 }

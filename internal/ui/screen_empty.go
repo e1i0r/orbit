@@ -3,6 +3,8 @@ package ui
 import (
 	"strconv"
 	"strings"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // emptyRows is the body with nothing in it, and it says which kind of
@@ -48,12 +50,12 @@ func (m Model) emptyRows(h, w int) []string {
 			continue
 		}
 
-		role := Dim
+		role := theme.Dim
 		if i == 0 {
-			role = Accent
+			role = theme.Accent
 		}
 
-		out = append(out, fit("  "+Paint(role).Render(line), w))
+		out = append(out, fit("  "+theme.Paint(role).Render(line), w))
 	}
 
 	return fill(out, h)
@@ -65,9 +67,9 @@ func (m Model) refusal() string {
 	p := m.opts.Words
 	w := max(m.width, 1)
 	out := []string{
-		fit(Paint(Warn).Render(p.T("narrow.refused", "orbit needs {need} columns.",
+		fit(theme.Paint(theme.Warn).Render(p.T("narrow.refused", "orbit needs {need} columns.",
 			about("need", strconv.Itoa(m.narrow.Need)))), w),
-		fit(Paint(Dim).Render(p.T("narrow.got", "this one has {got}.",
+		fit(theme.Paint(theme.Dim).Render(p.T("narrow.got", "this one has {got}.",
 			about("got", strconv.Itoa(m.narrow.Got)))), w),
 	}
 

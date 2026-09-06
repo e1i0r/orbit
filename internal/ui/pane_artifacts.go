@@ -18,6 +18,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -45,9 +46,9 @@ const fileRowLead = 4 + fileNameCells + 2 + fileSizeCells + 2
 // the end of, without the ellipsis that says a decision was made.
 func fileRow(name, size, said string, w int) string {
 	return "    " +
-		Paint(Accent).Render(pad(name, fileNameCells, false)) + "  " +
-		Paint(Dim).Render(pad(size, fileSizeCells, false)) + "  " +
-		Paint(Dim).Render(fit(said, max(w-fileRowLead, 8)))
+		theme.Paint(theme.Accent).Render(pad(name, fileNameCells, false)) + "  " +
+		theme.Paint(theme.Dim).Render(pad(size, fileSizeCells, false)) + "  " +
+		theme.Paint(theme.Dim).Render(fit(said, max(w-fileRowLead, 8)))
 }
 
 // formatBytes is a size in the largest unit that keeps it a whole number.
@@ -102,13 +103,13 @@ func (m Model) artifactsRows() ([]string, map[int]int) {
 	p := m.opts.Words
 
 	if _, ok := m.task(m.detail); !ok {
-		return []string{"  " + Paint(Dim).Render(p.T("detail.gone", "this task is no longer on the board"))}, nil
+		return []string{"  " + theme.Paint(theme.Dim).Render(p.T("detail.gone", "this task is no longer on the board"))}, nil
 	}
 
 	out := []string{
 		"",
-		"  " + Paint(Accent).Bold(true).Render(p.T("artifacts.title", "Files & Artifacts")),
-		"  " + Paint(Dim).Render(p.T("artifacts.subtitle", "every file the run left, and what each one is")),
+		"  " + theme.Paint(theme.Accent).Bold(true).Render(p.T("artifacts.title", "Files & Artifacts")),
+		"  " + theme.Paint(theme.Dim).Render(p.T("artifacts.subtitle", "every file the run left, and what each one is")),
 		"",
 	}
 
@@ -132,18 +133,18 @@ func (m Model) recordFiles(out []string, heads map[int]int) []string {
 
 	switch {
 	case m.filesErr != nil:
-		return append(out, "    "+Paint(Bad).Render(m.errSaid(m.filesErr)))
+		return append(out, "    "+theme.Paint(theme.Bad).Render(m.errSaid(m.filesErr)))
 	case !m.filesKnown:
-		return append(out, "    "+Paint(Dim).Render(p.T("artifacts.reading", "reading the task's directory")))
+		return append(out, "    "+theme.Paint(theme.Dim).Render(p.T("artifacts.reading", "reading the task's directory")))
 	case len(m.files) == 0:
-		return append(out, "    "+Paint(Dim).Render(p.T("artifacts.none_yet", "nothing written yet — this task has not run")))
+		return append(out, "    "+theme.Paint(theme.Dim).Render(p.T("artifacts.none_yet", "nothing written yet — this task has not run")))
 	}
 
 	for i, f := range m.files {
 		open := m.rowOpen(tabArtifacts, i)
 
 		heads[len(out)] = i
-		out = append(out, "  "+Text(Tertiary).Render(foldMark(open))+
+		out = append(out, "  "+theme.Text(theme.Tertiary).Render(foldMark(open))+
 			fileRow(f.Name, formatBytes(f.Size), m.fileSaid(f.Name), m.bodyCells()-4))
 
 		if open {
@@ -168,11 +169,11 @@ func (m Model) fileBody(name string) []string {
 
 	switch {
 	case !asked:
-		return []string{"      " + Paint(Dim).Render(p.T("artifacts.opening", "opening the file"))}
+		return []string{"      " + theme.Paint(theme.Dim).Render(p.T("artifacts.opening", "opening the file"))}
 	case got.err != nil:
-		return []string{"      " + Paint(Bad).Render(m.errSaid(got.err))}
+		return []string{"      " + theme.Paint(theme.Bad).Render(m.errSaid(got.err))}
 	case strings.TrimSpace(got.text.Text) == "":
-		return []string{"      " + Paint(Dim).Render(p.T("artifacts.empty_file", "this file is empty"))}
+		return []string{"      " + theme.Paint(theme.Dim).Render(p.T("artifacts.empty_file", "this file is empty"))}
 	}
 
 	lines := strings.Split(strings.TrimRight(got.text.Text, "\n"), "\n")
@@ -183,7 +184,7 @@ func (m Model) fileBody(name string) []string {
 	}
 
 	if !got.text.Whole {
-		out = append(out, "      "+Text(Tertiary).Render(
+		out = append(out, "      "+theme.Text(theme.Tertiary).Render(
 			p.T("artifacts.cut", "— the rest of this file was not read —")))
 	}
 
@@ -196,7 +197,7 @@ func (m Model) fileBody(name string) []string {
 func fileFamily(name string) string {
 	ext := strings.TrimPrefix(filepath.Ext(name), ".")
 
-	return codeFamily(ext)
+	return theme.CodeFamily(ext)
 }
 
 // worktreeFiles is what the run wrote about the repository, which is the
@@ -219,11 +220,11 @@ func (m Model) worktreeFiles() []string {
 
 	switch {
 	case m.diffErr != nil:
-		return []string{head, "    " + Paint(Bad).Render(m.errSaid(m.diffErr))}
+		return []string{head, "    " + theme.Paint(theme.Bad).Render(m.errSaid(m.diffErr))}
 	case !m.diffKnown:
-		return []string{head, "    " + Paint(Dim).Render(p.T("artifacts.reading_worktree", "reading the worktree"))}
+		return []string{head, "    " + theme.Paint(theme.Dim).Render(p.T("artifacts.reading_worktree", "reading the worktree"))}
 	case len(changed) == 0:
-		return []string{head, "    " + Paint(Dim).Render(p.T("diff.unchanged", "no changes in this task's worktree"))}
+		return []string{head, "    " + theme.Paint(theme.Dim).Render(p.T("diff.unchanged", "no changes in this task's worktree"))}
 	}
 
 	out := []string{head}
@@ -238,7 +239,7 @@ func (m Model) worktreeFiles() []string {
 // is under it. It does not fold — the rows under it do, and a lid over the
 // lids would put the thing a reader came for two gestures away.
 func (m Model) artifactsHead(label, count string) string {
-	return "  " + Paint(Accent).Render(label) + "  " + Paint(Dim).Render(count)
+	return "  " + theme.Paint(theme.Accent).Render(label) + "  " + theme.Paint(theme.Dim).Render(count)
 }
 
 // fileRead is what one file turned out to hold, or why it could not be read.

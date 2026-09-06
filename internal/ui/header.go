@@ -13,6 +13,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/board"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 const (
@@ -149,7 +150,7 @@ func (m Model) headerLeft(w int, spaced bool) (string, []headerZone, bool) {
 	for root := m.opts.Root; ; {
 		line := name
 		if root != "" {
-			line = name + "  " + Chrome().Render(root)
+			line = name + "  " + theme.Chrome().Render(root)
 		}
 
 		if lipgloss.Width(line) <= w {
@@ -183,10 +184,10 @@ func (m Model) name() string {
 	)
 
 	if m.showingEverything() {
-		return PillSelected("◉ orbit", fg, bg)
+		return theme.PillSelected("◉ orbit", fg, bg)
 	}
 
-	return Pill("◉ orbit", fg, bg)
+	return theme.Pill("◉ orbit", fg, bg)
 }
 
 // showingEverything reports whether the board is holding nothing back, which
@@ -227,7 +228,7 @@ func (m Model) headerFields() []headerField {
 		ver := "v" + strings.TrimPrefix(m.upgradeAvailable, "v")
 		notice := p.T("header.upgrade_notice", "{version} available · orbit upgrade",
 			about("version", ver))
-		fields = append(fields, headerField{text: Pill(" ✨ "+notice+" ", inkUpgrade.fg, inkUpgrade.bg)})
+		fields = append(fields, headerField{text: theme.Pill(" ✨ "+notice+" ", theme.InkUpgrade.Fg, theme.InkUpgrade.Bg)})
 	}
 
 	// Repos chip.
@@ -239,7 +240,7 @@ func (m Model) headerFields() []headerField {
 	// it cost the band counts their place at a hundred cells, to repeat a
 	// number the status line already gives and the bands already add up to.
 	reposText := p.P("header.repos", m.board.Repos, "{n} repo", "{n} repos")
-	fields = append(fields, headerField{"repos", Chrome().Render("📦 " + reposText)})
+	fields = append(fields, headerField{"repos", theme.Chrome().Render("📦 " + reposText)})
 
 	fields = append(fields, m.knowledgeChip()...)
 
@@ -252,12 +253,12 @@ func (m Model) headerFields() []headerField {
 	// and the quota screen is where all of it is written down. It sits after
 	// the engine because it is that engine's number.
 	if q := m.quotaChip(); q != "" {
-		fields = append(fields, headerField{"quota", Chrome().Render("⏳ " + q)})
+		fields = append(fields, headerField{"quota", theme.Chrome().Render("⏳ " + q)})
 	}
 
 	// Language chip
 	lang := p.T("header.lang_badge", "EN")
-	fields = append(fields, headerField{"lang", Chrome().Render("🌐 " + lang)})
+	fields = append(fields, headerField{"lang", theme.Chrome().Render("🌐 " + lang)})
 
 	fields = append(fields, m.runningField(p)...)
 	fields = append(fields, m.brakeField(p)...)
@@ -267,7 +268,7 @@ func (m Model) headerFields() []headerField {
 	if m.atUnreadCap(unread) {
 		brakeText := p.T("header.unread_brake", "brake ({n} unread)",
 			about("n", strconv.Itoa(unread)))
-		fields = append(fields, headerField{text: Paint(Warn).Render("⚠️ " + brakeText)})
+		fields = append(fields, headerField{text: theme.Paint(theme.Warn).Render("⚠️ " + brakeText)})
 	}
 
 	return fields
@@ -327,7 +328,7 @@ func hintFor(b key.Binding) barHint {
 // has no binding of its own and so no single keystroke to send. It is drawn
 // and it is inert.
 func hint(glyph, desc string) barHint {
-	return barHint{text: Paint(Accent).Render("["+glyph+"]") + " " + Chrome().Render(desc)}
+	return barHint{text: theme.Paint(theme.Accent).Render("["+glyph+"]") + " " + theme.Chrome().Render(desc)}
 }
 
 // hintKey is a hint whose glyph is the whole of the keystroke it sends.

@@ -8,6 +8,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // flowDetailRows renders the dedicated visual inspection view for a workflow:
@@ -20,13 +21,13 @@ func (m Model) flowDetailRows(h, w int) []string {
 
 	out = append(out, "")
 	// 1. Header with Flow Name and Origin Badge
-	originBadge := Pill(p.T("flows.badge_custom", "Custom"), "#FFFFFF", "#6366F1")
+	originBadge := theme.Pill(p.T("flows.badge_custom", "Custom"), "#FFFFFF", "#6366F1")
 	if st.isBuiltin {
-		originBadge = Pill(p.T("flows.badge_builtin", "Built-in"), "#FFFFFF", "#0284C7")
+		originBadge = theme.Pill(p.T("flows.badge_builtin", "Built-in"), "#FFFFFF", "#0284C7")
 	}
 
-	title := "  " + Paint(Live).Bold(true).Render("⚡ "+p.T("flows.workflow_title", "Workflow")+": ") +
-		Paint(Accent).Bold(true).Render(st.flowName) + "  " + originBadge
+	title := "  " + theme.Paint(theme.Live).Bold(true).Render("⚡ "+p.T("flows.workflow_title", "Workflow")+": ") +
+		theme.Paint(theme.Accent).Bold(true).Render(st.flowName) + "  " + originBadge
 	out = append(out, title)
 
 	// 2. Purpose / Description Box
@@ -39,14 +40,14 @@ func (m Model) flowDetailRows(h, w int) []string {
 
 	out = append(out, "")
 
-	out = append(out, "  "+Paint(Dim).Bold(true).Render(p.T("flows.purpose_label", "Purpose & When to Use:")))
+	out = append(out, "  "+theme.Paint(theme.Dim).Bold(true).Render(p.T("flows.purpose_label", "Purpose & When to Use:")))
 	for _, dl := range descLines {
-		out = append(out, "    "+Paint(OK).Render("↳ ")+Paint(Dim).Render(dl))
+		out = append(out, "    "+theme.Paint(theme.OK).Render("↳ ")+theme.Paint(theme.Dim).Render(dl))
 	}
 
 	// 3. Visual Pipeline Flowchart Diagram
 	out = append(out, "")
-	out = append(out, "  "+Paint(Accent).Bold(true).Render(p.T("flows.pipeline_diagram", "Pipeline Flowchart:")))
+	out = append(out, "  "+theme.Paint(theme.Accent).Bold(true).Render(p.T("flows.pipeline_diagram", "Pipeline Flowchart:")))
 
 	diagramLines := renderFlowDiagram(st.phases, w-4)
 	for _, dl := range diagramLines {
@@ -55,18 +56,18 @@ func (m Model) flowDetailRows(h, w int) []string {
 
 	// 4. Phase Breakdown Cards
 	out = append(out, "")
-	out = append(out, "  "+Paint(Live).Bold(true).Render(p.T("flows.phase_breakdown", "Phases Breakdown:")))
+	out = append(out, "  "+theme.Paint(theme.Live).Bold(true).Render(p.T("flows.phase_breakdown", "Phases Breakdown:")))
 	out = append(out, m.phaseCards(st.phases, w)...)
 
 	// 5. Actions Footer
 	out = append(out, "")
-	selectBtn := Pill(" ↵ "+p.T("flows.btn_select_return", "Select & Return")+" ", "#FFFFFF", "#16A34A")
-	editBtn := Pill(" e "+p.T("flows.btn_edit_designer", "Edit in Designer")+" ", "#FFFFFF", "#4F46E5")
-	backBtn := Pill(" esc "+p.T("flows.btn_back", "Back")+" ", "#FFFFFF", "#334155")
+	selectBtn := theme.Pill(" ↵ "+p.T("flows.btn_select_return", "Select & Return")+" ", "#FFFFFF", "#16A34A")
+	editBtn := theme.Pill(" e "+p.T("flows.btn_edit_designer", "Edit in Designer")+" ", "#FFFFFF", "#4F46E5")
+	backBtn := theme.Pill(" esc "+p.T("flows.btn_back", "Back")+" ", "#FFFFFF", "#334155")
 	out = append(out, "  "+selectBtn+"   "+editBtn+"   "+backBtn, "")
 
 	hints := p.T("flows.detail_hints", "[enter] select · [e] edit · [esc] return")
-	out = append(out, fit("  "+Paint(Dim).Render(hints), w))
+	out = append(out, fit("  "+theme.Paint(theme.Dim).Render(hints), w))
 
 	return fill(out, h)
 }
@@ -151,10 +152,10 @@ func renderFlowDiagram(phases []flow.Phase, maxW int) []string {
 
 	if lipgloss.Width(rowTop) <= maxW {
 		return []string{
-			Paint(Dim).Render(rowTop),
-			Paint(Accent).Render(rowMid1),
-			Paint(OK).Render(rowMid2),
-			Paint(Dim).Render(rowBot),
+			theme.Paint(theme.Dim).Render(rowTop),
+			theme.Paint(theme.Accent).Render(rowMid1),
+			theme.Paint(theme.OK).Render(rowMid2),
+			theme.Paint(theme.Dim).Render(rowBot),
 		}
 	}
 
@@ -167,10 +168,10 @@ func renderFlowDiagram(phases []flow.Phase, maxW int) []string {
 		}
 
 		out = append(out,
-			Paint(Dim).Render("  "+b.top),
-			Paint(Accent).Render("  "+b.mid1),
-			Paint(OK).Render("  "+b.mid2),
-			Paint(Dim).Render("  "+b.bot),
+			theme.Paint(theme.Dim).Render("  "+b.top),
+			theme.Paint(theme.Accent).Render("  "+b.mid1),
+			theme.Paint(theme.OK).Render("  "+b.mid2),
+			theme.Paint(theme.Dim).Render("  "+b.bot),
 		)
 	}
 
@@ -218,12 +219,12 @@ func (m Model) phaseCard(i int, ph flow.Phase, w int) []string {
 		badgeText += " · " + p.T("flows.gate_badge", "⏸ human gate")
 	}
 
-	out := []string{Paint(Accent).Bold(true).Render(fmt.Sprintf("    [%s %d: %s] (%s)",
+	out := []string{theme.Paint(theme.Accent).Bold(true).Render(fmt.Sprintf("    [%s %d: %s] (%s)",
 		p.T("flows.phase_label", "Phase"), i+1, ph.Name, badgeText))}
 
 	if ph.Prompt != "" {
 		for _, pl := range wrapPromptText(`"`+ph.Prompt+`"`, w-14) {
-			out = append(out, "       "+Paint(Dim).Render(pl))
+			out = append(out, "       "+theme.Paint(theme.Dim).Render(pl))
 		}
 	}
 

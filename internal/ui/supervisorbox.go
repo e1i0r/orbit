@@ -1,5 +1,7 @@
 package ui
 
+import "github.com/e1i0r/orbit/internal/ui/theme"
+
 // The pieces one message and the input line are drawn out of.
 
 // railed puts a message's rail in front of one line of its body.
@@ -33,27 +35,27 @@ func (m Model) drawSupervisorInput(cw int) []string {
 
 	if m.supervisor.picking {
 		return []string{
-			Paint(Dim).Render(p.T("supervisor.picking_note", "the line stays in the thread, marked; the supervisor stops being told it")),
+			theme.Paint(theme.Dim).Render(p.T("supervisor.picking_note", "the line stays in the thread, marked; the supervisor stops being told it")),
 			"",
-			Paint(Dim).Render(p.T("supervisor.picking_ways", "[↑↓] pick · [↵] take it back · [esc] cancel")),
+			theme.Paint(theme.Dim).Render(p.T("supervisor.picking_ways", "[↑↓] pick · [↵] take it back · [esc] cancel")),
 		}
 	}
 
 	ways := p.T("supervisor.ways_out3", "[↵] send · [shift+↵] newline · /chats or [ctrl+L] · /new or [ctrl+N] · [ctrl+R] retract · [ctrl+V] paste · [esc] back",
 		about("up_down", m.keys.Up.Help().Key+m.keys.Down.Help().Key))
 
-	return append(m.inputLines(cw), "", Paint(Dim).Render(ways))
+	return append(m.inputLines(cw), "", theme.Paint(theme.Dim).Render(ways))
 }
 
 // inputLines is what has been typed, wrapped, with the cursor on the end of
 // the last line. It is never fewer than two rows, so the box does not resize
 // under the first character.
 func (m Model) inputLines(cw int) []string {
-	prompt := Paint(Accent).Render("❯ ")
+	prompt := theme.Paint(theme.Accent).Render("❯ ")
 
 	if m.supervisor.input == "" {
 		placeholder := m.opts.Words.T("supervisor.placeholder", "type a briefing, question or standing directive...")
-		return []string{prompt + Paint(Dim).Render(placeholder) + Paint(Accent).Render("█"), ""}
+		return []string{prompt + theme.Paint(theme.Dim).Render(placeholder) + theme.Paint(theme.Accent).Render("█"), ""}
 	}
 
 	// The mark says "this is where you are writing", and that is true once.
@@ -82,7 +84,7 @@ func (m Model) inputLines(cw int) []string {
 		}
 	}
 
-	rows[len(rows)-1] += Paint(Accent).Render("█")
+	rows[len(rows)-1] += theme.Paint(theme.Accent).Render("█")
 	for len(rows) < 2 {
 		rows = append(rows, "")
 	}

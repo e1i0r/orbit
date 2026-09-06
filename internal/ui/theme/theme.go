@@ -4,7 +4,7 @@
 // built on top of it — and it holds no authority: it cannot append an event,
 // build a path under the state root or start a model, because arch.layers
 // does not let it import the packages that can.
-package ui
+package theme
 
 import "charm.land/lipgloss/v2"
 
@@ -108,17 +108,17 @@ var themePalettes = map[string]Palette{
 	},
 }
 
-// defaultTheme is the theme a build starts on, and the one a settings file
+// DefaultTheme is the theme a build starts on, and the one a settings file
 // naming none is read as. The palette map below is keyed by name and a map
 // has no first entry, so this says which one out loud rather than leaving
 // two places to write the same word.
-const defaultTheme = "frauddi"
+const DefaultTheme = "frauddi"
 
-var currentThemeName = defaultTheme
+var currentThemeName = DefaultTheme
 
 // AvailableThemes lists the default selectable themes.
 func AvailableThemes() []string {
-	return []string{defaultTheme, "monokai", "tokyo-night", "dracula", "nord", "catppuccin"}
+	return []string{DefaultTheme, "monokai", "tokyo-night", "dracula", "nord", "catppuccin"}
 }
 
 // SetCurrentTheme sets the active theme for painting.
@@ -133,7 +133,10 @@ func CurrentTheme() string {
 	return currentThemeName
 }
 
-func currentPalette() Palette {
+// CurrentPalette is the palette in use, and the default one when the name
+// in hand answers to nothing — a theme somebody typed wrong leaves the
+// window drawn rather than blank.
+func CurrentPalette() Palette {
 	if p, ok := themePalettes[currentThemeName]; ok {
 		return p
 	}
@@ -141,11 +144,11 @@ func currentPalette() Palette {
 	return themePalettes["monokai"]
 }
 
-// ink is a badge's two colours together: what its text is painted, and what
+// Ink is a badge's two colours together: what its text is painted, and what
 // that text sits on. Pill takes them apart because lipgloss does, but a
 // badge is only legible as a pair, and half a pair is how you get white on
 // white.
-type ink struct{ fg, bg string }
+type Ink struct{ Fg, Bg string }
 
 // The queue badges' inks.
 //
@@ -156,14 +159,14 @@ type ink struct{ fg, bg string }
 // who learns that amber means "needs you" should not have to learn it again
 // after changing the theme.
 var (
-	inkToDo     = ink{"#38BDF8", "#0C4A6E"}
-	inkRunning  = ink{"#2DD4BF", "#134E4A"}
-	inkNeedsYou = ink{"#FBBF24", "#78350F"}
-	inkDone     = ink{"#4ADE80", "#14532D"}
+	InkToDo     = Ink{Fg: "#38BDF8", Bg: "#0C4A6E"}
+	InkRunning  = Ink{Fg: "#2DD4BF", Bg: "#134E4A"}
+	InkNeedsYou = Ink{Fg: "#FBBF24", Bg: "#78350F"}
+	InkDone     = Ink{Fg: "#4ADE80", Bg: "#14532D"}
 
-	// inkUpgrade is the notice that a newer orbit is out: pastel mint on
+	// InkUpgrade is the notice that a newer orbit is out: pastel mint on
 	// deep emerald.
-	inkUpgrade = ink{"#86EFAC", "#064E3B"}
+	InkUpgrade = Ink{Fg: "#86EFAC", Bg: "#064E3B"}
 )
 
 // Pill renders text as a styled badge with background and padding.
@@ -213,7 +216,7 @@ func Roles() []Role {
 // Paint is the style for one role in the current theme.
 func Paint(r Role) lipgloss.Style {
 	style := lipgloss.NewStyle()
-	pal := currentPalette()
+	pal := CurrentPalette()
 
 	switch r {
 	case Accent:

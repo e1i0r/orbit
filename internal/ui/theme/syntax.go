@@ -1,4 +1,4 @@
-package ui
+package theme
 
 import "strings"
 
@@ -21,11 +21,11 @@ import "strings"
 // closed on the next is two strings to it. That is the trade a fenced block
 // in a pane is worth: a parser per language is a dependency per language.
 
-// codePart is what a run of a line of code is, as far as colour cares.
-type codePart int
+// CodePart is what a run of a line of code is, as far as colour cares.
+type CodePart int
 
 const (
-	codePlain   codePart = iota
+	codePlain   CodePart = iota
 	codeComment          // to the end of the line
 	codeString           // between quotes, escapes respected
 	codeNumber           // a literal, decimal or hex
@@ -34,11 +34,11 @@ const (
 	codeConst            // the named literals: nil, true, null, undefined
 )
 
-// codeRole is the role a part is painted in, and whether it is painted at
-// all: plain code is the well's own ink, which is the brightest thing on it
+// CodeRole is the role a part is painted in, and whether it is painted at
+// all: plain code is the well's own Ink, which is the brightest thing on it
 // and the right weight for the half of a line that is neither a keyword nor
 // a string.
-func codeRole(p codePart) (Role, bool) {
+func CodeRole(p CodePart) (Role, bool) {
 	switch p {
 	case codeComment:
 		return Dim, true
@@ -57,9 +57,9 @@ func codeRole(p codePart) (Role, bool) {
 	return Dim, false
 }
 
-// codeFamily is the syntax a fence's language is read with. The name on a
+// CodeFamily is the syntax a fence's language is read with. The name on a
 // fence is whatever the model typed, so the aliases are the ones models type.
-func codeFamily(lang string) string {
+func CodeFamily(lang string) string {
 	switch strings.ToLower(strings.TrimSpace(lang)) {
 	case "go", "golang":
 		return "go"
@@ -146,7 +146,7 @@ func wordSet(words string) map[string]bool {
 
 // codeWordPart is what a family calls one identifier, and whether it calls it
 // anything at all.
-func codeWordPart(family, word string) (codePart, bool) {
+func codeWordPart(family, word string) (CodePart, bool) {
 	vocab, known := codeVocab[family]
 	if !known {
 		return codePlain, false
@@ -177,29 +177,29 @@ var codeComments = map[string][]string{
 	"sql":    {"--"},
 }
 
-// codeToken is one run of a line and what it is.
-type codeToken struct {
-	text string
-	part codePart
+// CodeToken is one run of a line and what it is.
+type CodeToken struct {
+	Text string
+	Part CodePart
 }
 
-// lexCode reads one line into the runs colour is decided on.
+// LexCode reads one line into the runs colour is decided on.
 //
 // It walks runes rather than bytes: a comment in a report is prose, and prose
 // in these panes is not measured in bytes anywhere else either.
-func lexCode(line, family string) []codeToken {
+func LexCode(line, family string) []CodeToken {
 	var (
-		out  []codeToken
+		out  []CodeToken
 		flat []rune
 	)
 
-	keep := func(part codePart, text string) {
+	keep := func(part CodePart, text string) {
 		if len(flat) > 0 {
-			out = append(out, codeToken{text: string(flat), part: codePlain})
+			out = append(out, CodeToken{Text: string(flat), Part: codePlain})
 			flat = flat[:0]
 		}
 
-		out = append(out, codeToken{text: text, part: part})
+		out = append(out, CodeToken{Text: text, Part: part})
 	}
 
 	runes := []rune(line)
@@ -249,7 +249,7 @@ func lexCode(line, family string) []codeToken {
 	}
 
 	if len(flat) > 0 {
-		out = append(out, codeToken{text: string(flat), part: codePlain})
+		out = append(out, CodeToken{Text: string(flat), Part: codePlain})
 	}
 
 	return out

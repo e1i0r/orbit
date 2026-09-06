@@ -1,5 +1,7 @@
 package ui
 
+import "github.com/e1i0r/orbit/internal/ui/theme"
+
 // The menu inside a task: the panes it can be shown in, and what can be
 // done to it, under a heading each.
 //
@@ -113,5 +115,5 @@ func menuHeadRow(e menuEntry, w int) string {
 		return ""
 	}
 
-	return fit("  "+Paint(Accent).Render(e.title), w)
+	return fit("  "+theme.Paint(theme.Accent).Render(e.title), w)
 }

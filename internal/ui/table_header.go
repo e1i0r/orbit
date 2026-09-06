@@ -2,6 +2,8 @@ package ui
 
 import (
 	"strings"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // tableHeader draws the column labels aligned with the layout plan.
@@ -28,7 +30,7 @@ func (m Model) tableHeader(w int) string {
 		}
 
 		cell := pad(f.text, f.cells, f.right)
-		parts = append(parts, Paint(Dim).Bold(true).Render(cell))
+		parts = append(parts, theme.Paint(theme.Dim).Bold(true).Render(cell))
 	}
 
 	line := "  " + strings.Join(parts, strings.Repeat(" ", columnGap))

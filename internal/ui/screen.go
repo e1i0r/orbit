@@ -16,6 +16,8 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // screen is which of the window's screens is on top: the board, the task
@@ -108,8 +110,8 @@ func (m Model) View() tea.View {
 	// The window's own paper, so the frame reads as a program and not as
 	// scrollback in whatever colours the terminal happens to be set to. Bubble
 	// Tea puts the terminal back the way it found it on the way out.
-	v.BackgroundColor = WindowBackground()
-	v.ForegroundColor = WindowForeground()
+	v.BackgroundColor = theme.WindowBackground()
+	v.ForegroundColor = theme.WindowForeground()
 	// AllMotion and not CellMotion: a message for every cell the pointer
 	// crosses, whether or not a button is down. It costs that traffic and
 	// it buys the hint under the pointer explaining itself, which is the
@@ -207,7 +209,7 @@ func (m Model) bodyRows() []string {
 	if hidden := len(all) - m.offset - (len(out) - 1); hidden > 0 {
 		more := m.opts.Words.P("body.more", hidden, "… and {n} more", "… and {n} more",
 			about("n", strconv.Itoa(hidden)))
-		out = append(out, fit(strings.Repeat(" ", gutter)+Paint(Dim).Render(more), w))
+		out = append(out, fit(strings.Repeat(" ", gutter)+theme.Paint(theme.Dim).Render(more), w))
 	}
 
 	return fill(out, h)

@@ -16,6 +16,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // applySetting writes one setting down and says what it now is, or why it
@@ -94,7 +95,7 @@ func (m Model) writeSetting(keyName, val string) (Model, error) {
 			return m, err
 		}
 
-		SetCurrentTheme(val)
+		theme.SetCurrentTheme(val)
 	}
 
 	return m, nil

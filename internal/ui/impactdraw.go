@@ -20,6 +20,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/repo"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -29,16 +30,16 @@ func (m Model) impactRows() []string {
 
 	switch {
 	case m.opts.Reader == nil:
-		return []string{Paint(Dim).Render(p.T("impact.no_port", "this build cannot read the history"))}
+		return []string{theme.Paint(theme.Dim).Render(p.T("impact.no_port", "this build cannot read the history"))}
 	case m.weigh.reachAsking && !m.weigh.reachKnown:
-		return []string{m.spinner(Live) + Paint(Live).Render(p.T("impact.reading", "reading the history…"))}
+		return []string{m.spinner(theme.Live) + theme.Paint(theme.Live).Render(p.T("impact.reading", "reading the history…"))}
 	case !m.weigh.reachKnown:
-		return []string{Paint(Dim).Render(p.T("impact.not_yet", "nothing read yet"))}
+		return []string{theme.Paint(theme.Dim).Render(p.T("impact.not_yet", "nothing read yet"))}
 	case m.weigh.reachErr != nil:
-		return []string{Paint(Bad).Render(p.T("impact.failed", "the history could not be read: {err}",
+		return []string{theme.Paint(theme.Bad).Render(p.T("impact.failed", "the history could not be read: {err}",
 			about("err", m.errSaid(m.weigh.reachErr))))}
 	case len(m.weigh.reach.Changed) == 0 && m.lastDelta() == nil && !m.weigh.checksKnown:
-		return []string{Paint(Dim).Render(p.T("impact.no_changes", "this task changed no files, so there is nothing to weigh"))}
+		return []string{theme.Paint(theme.Dim).Render(p.T("impact.no_changes", "this task changed no files, so there is nothing to weigh"))}
 	}
 
 	rows := m.compareRows()
@@ -62,7 +63,7 @@ func (m Model) impactCoupled() []string {
 	rows = append(rows, "")
 
 	if len(m.weigh.reach.Coupled) == 0 {
-		return append(rows, Paint(OK).Render("  "+p.T("impact.reach_none",
+		return append(rows, theme.Paint(theme.OK).Render("  "+p.T("impact.reach_none",
 			"nothing else follows these files often enough to mention"))+"\n", "")
 	}
 
@@ -77,8 +78,8 @@ func (m Model) impactCoupled() []string {
 			continue
 		}
 
-		rows = append(rows, "  "+Text(Primary).Render(file)+" "+
-			Paint(Dim).Render(p.T("impact.changed_here", "changed here")))
+		rows = append(rows, "  "+theme.Text(theme.Primary).Render(file)+" "+
+			theme.Paint(theme.Dim).Render(p.T("impact.changed_here", "changed here")))
 		rows = append(rows, lines...)
 		rows = append(rows, "")
 	}
@@ -93,10 +94,10 @@ func (m Model) impactCoupled() []string {
 // cannot see where one ends reads the third as though it carried the weight
 // of the first. The rule is what says they are separate things.
 func (m Model) impactHead(title string) string {
-	head := Paint(Accent).Bold(true).Render(title) + " "
+	head := theme.Paint(theme.Accent).Bold(true).Render(title) + " "
 
 	if rule := min(m.frame.Body.W, 104) - lipgloss.Width(title) - 3; rule > 0 {
-		head += Paint(Dim).Render(strings.Repeat("─", rule))
+		head += theme.Paint(theme.Dim).Render(strings.Repeat("─", rule))
 	}
 
 	return head
@@ -111,7 +112,7 @@ func (m Model) explains(sentence string) []string {
 	var out []string
 
 	for _, line := range splitIntoLines(sentence, max(m.frame.Body.W-4, 20)) {
-		out = append(out, Paint(Dim).Render("  "+line))
+		out = append(out, theme.Paint(theme.Dim).Render("  "+line))
 	}
 
 	return out
@@ -122,8 +123,8 @@ func (m Model) explains(sentence string) []string {
 func impactLine(m Model, c repo.Coupled) string {
 	p := m.opts.Words
 
-	return "    " + Paint(Warn).Render("⚠ ") + Text(Primary).Render(c.File) + " " +
-		Paint(Dim).Render(p.T("impact.follows", "{pct}% of the time ({times}/{of}) · not touched",
+	return "    " + theme.Paint(theme.Warn).Render("⚠ ") + theme.Text(theme.Primary).Render(c.File) + " " +
+		theme.Paint(theme.Dim).Render(p.T("impact.follows", "{pct}% of the time ({times}/{of}) · not touched",
 			about("pct", strconv.Itoa(int(c.Ratio()*100+0.5))),
 			about("times", strconv.Itoa(c.Times)),
 			about("of", strconv.Itoa(c.Of))))
@@ -155,9 +156,9 @@ func (m Model) impactContracts() []string {
 	}
 
 	for _, file := range order {
-		rows = append(rows, "  "+Text(Primary).Render(file))
+		rows = append(rows, "  "+theme.Text(theme.Primary).Render(file))
 		for _, says := range byFile[file] {
-			rows = append(rows, "    "+Paint(Dim).Render("· ")+Text(Primary).Render(says))
+			rows = append(rows, "    "+theme.Paint(theme.Dim).Render("· ")+theme.Text(theme.Primary).Render(says))
 		}
 
 		rows = append(rows, "")
@@ -212,9 +213,9 @@ func (m Model) impactDelta() []string {
 			continue
 		}
 
-		rows = append(rows, "  "+Paint(Dim).Render(part.head))
+		rows = append(rows, "  "+theme.Paint(theme.Dim).Render(part.head))
 		for _, line := range part.lines {
-			rows = append(rows, "    "+Paint(Dim).Render("· ")+Text(Primary).Render(line))
+			rows = append(rows, "    "+theme.Paint(theme.Dim).Render("· ")+theme.Text(theme.Primary).Render(line))
 		}
 
 		rows = append(rows, "")

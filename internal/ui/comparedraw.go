@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/repo"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // compareRows is the section: what it is, and what the two sides answered.
@@ -25,16 +26,16 @@ func (m Model) compareRows() []string {
 
 	switch {
 	case m.weigh.running:
-		return append(rows, "  "+m.spinner(Live)+Paint(Live).Render(p.T("compare.out2",
+		return append(rows, "  "+m.spinner(theme.Live)+theme.Paint(theme.Live).Render(p.T("compare.out2",
 			"running {n} checks on both sides at once… {secs}",
 			about("n", strconv.Itoa(m.checksNow())),
 			about("secs", m.comparedFor().String()))), "")
 	case m.weigh.checksErr != nil:
-		return append(rows, "  "+Paint(Bad).Render(m.errSaid(m.weigh.checksErr)), "")
+		return append(rows, "  "+theme.Paint(theme.Bad).Render(m.errSaid(m.weigh.checksErr)), "")
 	case !m.weigh.checksKnown:
 		return append(rows, m.compareOffer()...)
 	case len(m.weigh.checks) == 0:
-		return append(rows, "  "+Paint(Dim).Render(p.T("compare.none_ran", "no checks ran")), "")
+		return append(rows, "  "+theme.Paint(theme.Dim).Render(p.T("compare.none_ran", "no checks ran")), "")
 	}
 
 	for _, d := range m.weigh.checks {
@@ -44,7 +45,7 @@ func (m Model) compareRows() []string {
 	// The key stays on screen after the run, because the answer goes stale
 	// the moment the phase writes another line — and a reader who has just
 	// read a failure is exactly the one who wants to ask again.
-	return append(rows, "  "+Paint(Live).Render(p.T("compare.again", "[r] runs them again")), "")
+	return append(rows, "  "+theme.Paint(theme.Live).Render(p.T("compare.again", "[r] runs them again")), "")
 }
 
 // compareOffer is what it would run, and the key that runs it. It says the
@@ -59,15 +60,15 @@ func (m Model) compareOffer() []string {
 
 	checks := m.checksOf(t)
 	if len(checks) == 0 {
-		return []string{"  " + Paint(Dim).Render(p.T("compare.no_checks_here",
+		return []string{"  " + theme.Paint(theme.Dim).Render(p.T("compare.no_checks_here",
 			"this task's flow carries no checks, so there is nothing to run on either side")), ""}
 	}
 
-	rows := []string{"  " + Paint(Live).Render(p.T("compare.offer",
+	rows := []string{"  " + theme.Paint(theme.Live).Render(p.T("compare.offer",
 		"[r] runs these on both sides — the base is checked out on its own and thrown away afterwards"))}
 
 	for _, c := range checks {
-		rows = append(rows, "    "+Paint(Dim).Render("· "+c.Name+" · "+c.Command))
+		rows = append(rows, "    "+theme.Paint(theme.Dim).Render("· "+c.Name+" · "+c.Command))
 	}
 
 	return append(rows, "")
@@ -78,20 +79,20 @@ func (m Model) compareLine(d repo.Divergence) []string {
 	p := m.opts.Words
 
 	if d.Same() {
-		return []string{"  " + Paint(OK).Render("✓ ") + Text(Primary).Render(d.Name) + " " +
-			Paint(Dim).Render(p.T("compare.same", "the same on both sides"))}
+		return []string{"  " + theme.Paint(theme.OK).Render("✓ ") + theme.Text(theme.Primary).Render(d.Name) + " " +
+			theme.Paint(theme.Dim).Render(p.T("compare.same", "the same on both sides"))}
 	}
 
-	mark, said := Paint(Bad).Render("✗ "), p.T("compare.broke", "passed before, fails now")
+	mark, said := theme.Paint(theme.Bad).Render("✗ "), p.T("compare.broke", "passed before, fails now")
 	if d.Fixed() {
-		mark, said = Paint(OK).Render("✓ "), p.T("compare.fixed", "failed before, passes now")
+		mark, said = theme.Paint(theme.OK).Render("✓ "), p.T("compare.fixed", "failed before, passes now")
 	}
 
 	rows := []string{
-		"  " + mark + Text(Primary).Render(d.Name) + " " + Paint(Warn).Render(said),
-		"    " + Paint(Dim).Render(d.Command),
-		"    " + Paint(Dim).Render(p.T("compare.base_said", "base:     {said}", about("said", verdict(m, d.Base)))),
-		"    " + Paint(Dim).Render(p.T("compare.now_said", "worktree: {said}", about("said", verdict(m, d.Now)))),
+		"  " + mark + theme.Text(theme.Primary).Render(d.Name) + " " + theme.Paint(theme.Warn).Render(said),
+		"    " + theme.Paint(theme.Dim).Render(d.Command),
+		"    " + theme.Paint(theme.Dim).Render(p.T("compare.base_said", "base:     {said}", about("said", verdict(m, d.Base)))),
+		"    " + theme.Paint(theme.Dim).Render(p.T("compare.now_said", "worktree: {said}", about("said", verdict(m, d.Now)))),
 	}
 
 	// The end of what it printed, and not one line of it: a test runner
@@ -99,7 +100,7 @@ func (m Model) compareLine(d repo.Divergence) []string {
 	// that shows only the last line shows the word and not the reason.
 	if !d.Now.Passed() {
 		for _, line := range lastLines(d.Now.Out, saidLines) {
-			rows = append(rows, "      "+Paint(Dim).Render(line))
+			rows = append(rows, "      "+theme.Paint(theme.Dim).Render(line))
 		}
 	}
 

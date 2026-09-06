@@ -1,5 +1,7 @@
 package ui
 
+import "github.com/e1i0r/orbit/internal/ui/theme"
+
 // The designer's diagram tab: the flow as it will run, read rather than
 // edited.
 //
@@ -16,7 +18,7 @@ func (m Model) diagramRows(w int) []builderLine {
 
 	out := []builderLine{
 		plainLine(""),
-		plainLine("  " + Paint(Accent).Bold(true).Render(p.T("flows.pipeline_diagram", "Pipeline Flowchart:"))),
+		plainLine("  " + theme.Paint(theme.Accent).Bold(true).Render(p.T("flows.pipeline_diagram", "Pipeline Flowchart:"))),
 	}
 
 	for _, line := range renderFlowDiagram(st.phases, w-4) {
@@ -25,7 +27,7 @@ func (m Model) diagramRows(w int) []builderLine {
 
 	out = append(out,
 		plainLine(""),
-		plainLine("  "+Paint(Live).Bold(true).Render(p.T("flows.phase_breakdown", "Phases Breakdown:"))),
+		plainLine("  "+theme.Paint(theme.Live).Bold(true).Render(p.T("flows.phase_breakdown", "Phases Breakdown:"))),
 	)
 
 	for i, ph := range st.phases {
@@ -36,7 +38,7 @@ func (m Model) diagramRows(w int) []builderLine {
 
 	return append(out,
 		plainLine(""),
-		plainLine(fit("  "+Paint(Dim).Render(p.T("flows.diagram_ways",
+		plainLine(fit("  "+theme.Paint(theme.Dim).Render(p.T("flows.diagram_ways",
 			"click a phase to edit it · [^←/^→] tab · [esc] back")), w)),
 	)
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -20,27 +21,27 @@ type thoughtBlock struct {
 }
 
 // formatThoughtLine formats a thought line into a clean, concise decision bullet.
-func formatThoughtLine(l string) (string, Role) {
+func formatThoughtLine(l string) (string, theme.Role) {
 	lower := strings.ToLower(l)
 	switch {
 	case strings.Contains(lower, "decid") || strings.Contains(lower, "conclu") ||
 		strings.Contains(lower, "opt") || strings.Contains(lower, "resolv") ||
 		strings.Contains(lower, "implement"):
-		return "🎯 " + l, OK
+		return "🎯 " + l, theme.OK
 	case strings.Contains(lower, "descart") || strings.Contains(lower, "turn down") ||
 		strings.Contains(lower, "reject") || strings.Contains(lower, "avoid") ||
 		strings.Contains(lower, "evit"):
-		return "🚫 " + l, Warn
+		return "🚫 " + l, theme.Warn
 	case strings.Contains(lower, "investig") || strings.Contains(lower, "check") ||
 		strings.Contains(lower, "find") || strings.Contains(lower, "encontr") ||
 		strings.Contains(lower, "analiz") || strings.Contains(lower, "evalu"):
-		return "🔍 " + l, Live
+		return "🔍 " + l, theme.Live
 	case strings.Contains(lower, "porqu") || strings.Contains(lower, "becaus") ||
 		strings.Contains(lower, "razon") || strings.Contains(lower, "reason") ||
 		strings.Contains(lower, "motivo"):
-		return "💡 " + l, Accent
+		return "💡 " + l, theme.Accent
 	default:
-		return "• " + l, Dim
+		return "• " + l, theme.Dim
 	}
 }
 
@@ -60,13 +61,13 @@ func (m Model) thinkingRows() ([]string, map[int]int) {
 
 	out := []string{
 		"",
-		"  " + Paint(Accent).Bold(true).Render(p.T("thinking.title", "Decision Analysis & Agent Thinking")),
-		"  " + Paint(Dim).Render(p.T("thinking.subtitle", "why it made each decision, what it evaluated and what it turned down")),
+		"  " + theme.Paint(theme.Accent).Bold(true).Render(p.T("thinking.title", "Decision Analysis & Agent Thinking")),
+		"  " + theme.Paint(theme.Dim).Render(p.T("thinking.subtitle", "why it made each decision, what it evaluated and what it turned down")),
 		"",
 	}
 
 	if len(blocks) == 0 {
-		return append(out, "  "+Paint(Dim).Render(p.T("thinking.empty",
+		return append(out, "  "+theme.Paint(theme.Dim).Render(p.T("thinking.empty",
 			"no thinking blocks or decision logs captured for this task"))), nil
 	}
 
@@ -158,13 +159,13 @@ const (
 func (m Model) thoughtRows(b thoughtBlock, w int) ([]string, bool) {
 	p := m.opts.Words
 
-	head := Paint(Accent).Render("●") + " " + Paint(Dim).Render(b.at)
+	head := theme.Paint(theme.Accent).Render("●") + " " + theme.Paint(theme.Dim).Render(b.at)
 	if b.phase != "" {
-		head += "  " + Paint(Accent).Render(b.phase)
+		head += "  " + theme.Paint(theme.Accent).Render(b.phase)
 	}
 
 	if b.attempt > 0 {
-		head += "  " + Paint(Dim).Render(p.P("thinking.attempt", b.attempt, "attempt {n}", "attempt {n}"))
+		head += "  " + theme.Paint(theme.Dim).Render(p.P("thinking.attempt", b.attempt, "attempt {n}", "attempt {n}"))
 	}
 
 	availW := max(20, w-len(thoughtIndent)-2)
@@ -174,7 +175,7 @@ func (m Model) thoughtRows(b thoughtBlock, w int) ([]string, bool) {
 	for _, l := range b.lines {
 		formatted, role := formatThoughtLine(l)
 		for _, wl := range splitIntoLines(formatted, availW) {
-			body = append(body, thoughtIndent+Paint(role).Render(fit(wl, availW)))
+			body = append(body, thoughtIndent+theme.Paint(role).Render(fit(wl, availW)))
 		}
 	}
 
@@ -183,7 +184,7 @@ func (m Model) thoughtRows(b thoughtBlock, w int) ([]string, bool) {
 	}
 
 	open := m.rowOpen(tabThinking, b.entry)
-	out := []string{"  " + Text(Tertiary).Render(foldMark(open)) + head}
+	out := []string{"  " + theme.Text(theme.Tertiary).Render(foldMark(open)) + head}
 
 	if !open {
 		return append(out, body[0]), true

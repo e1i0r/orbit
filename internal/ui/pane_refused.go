@@ -6,6 +6,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -21,7 +22,7 @@ func (m Model) refusedLines() []string {
 func (m Model) refusedRows() ([]string, map[int]int) {
 	p := m.opts.Words
 	if m.logErr != nil {
-		return []string{"  " + Paint(Bad).Render(m.errSaid(m.logErr))}, nil
+		return []string{"  " + theme.Paint(theme.Bad).Render(m.errSaid(m.logErr))}, nil
 	}
 
 	var denials []view.Entry
@@ -34,21 +35,21 @@ func (m Model) refusedRows() ([]string, map[int]int) {
 
 	out := []string{
 		"",
-		"  " + Paint(Accent).Bold(true).Render(p.T("refused.title", "Permissions & Security Sandbox")),
-		"  " + Paint(Dim).Render(p.T("refused.subtitle", "what the sandbox forbids, and what it attempted")),
+		"  " + theme.Paint(theme.Accent).Bold(true).Render(p.T("refused.title", "Permissions & Security Sandbox")),
+		"  " + theme.Paint(theme.Dim).Render(p.T("refused.subtitle", "what the sandbox forbids, and what it attempted")),
 		"",
 	}
 
 	// What the sandbox stopped this run doing, above the standing rules it
 	// stopped them by.
-	out = append(out, "  "+Paint(Accent).Render(p.T("refused.in_this_run", "IN THIS RUN")))
+	out = append(out, "  "+theme.Paint(theme.Accent).Render(p.T("refused.in_this_run", "IN THIS RUN")))
 
 	heads := map[int]int{}
 
 	if len(denials) == 0 {
 		out = append(out,
-			"    "+Paint(OK).Render(p.T("refused.none_denied", "no commands or actions were denied")),
-			"    "+Paint(Dim).Render(p.T("refused.all_allowed", "everything it attempted was permitted to run")),
+			"    "+theme.Paint(theme.OK).Render(p.T("refused.none_denied", "no commands or actions were denied")),
+			"    "+theme.Paint(theme.Dim).Render(p.T("refused.all_allowed", "everything it attempted was permitted to run")),
 		)
 	} else {
 		for i, d := range denials {
@@ -65,14 +66,14 @@ func (m Model) refusedRows() ([]string, map[int]int) {
 
 	// 2. Las reglas fijas del sandbox
 	out = append(out,
-		"  "+Paint(Accent).Render(p.T("refused.rules_title", "THE RULES · sandbox constraints")),
-		fmt.Sprintf("    %s %-24s %s", Paint(Dim).Render("✗"), "psql / mongosh", Paint(Dim).Render(p.T("refused.rule_db", "protected databases, readable only"))),
-		fmt.Sprintf("    %s %-24s %s", Paint(Dim).Render("✗"), "aws / cloud-cli", Paint(Dim).Render(p.T("refused.rule_cloud", "cloud services and outside credentials"))),
-		fmt.Sprintf("    %s %-24s %s", Paint(Dim).Render("✗"), "git push", Paint(Dim).Render(p.T("refused.rule_push", "the branch belongs to the operator or the runner"))),
-		fmt.Sprintf("    %s %-24s %s", Paint(Dim).Render("✗"), "git remote / config", Paint(Dim).Render(p.T("refused.rule_remote", "the repository's own configuration"))),
-		fmt.Sprintf("    %s %-24s %s", Paint(Dim).Render("✗"), "gh pr merge", Paint(Dim).Render(p.T("refused.rule_merge", "merging and publishing pull requests"))),
+		"  "+theme.Paint(theme.Accent).Render(p.T("refused.rules_title", "THE RULES · sandbox constraints")),
+		fmt.Sprintf("    %s %-24s %s", theme.Paint(theme.Dim).Render("✗"), "psql / mongosh", theme.Paint(theme.Dim).Render(p.T("refused.rule_db", "protected databases, readable only"))),
+		fmt.Sprintf("    %s %-24s %s", theme.Paint(theme.Dim).Render("✗"), "aws / cloud-cli", theme.Paint(theme.Dim).Render(p.T("refused.rule_cloud", "cloud services and outside credentials"))),
+		fmt.Sprintf("    %s %-24s %s", theme.Paint(theme.Dim).Render("✗"), "git push", theme.Paint(theme.Dim).Render(p.T("refused.rule_push", "the branch belongs to the operator or the runner"))),
+		fmt.Sprintf("    %s %-24s %s", theme.Paint(theme.Dim).Render("✗"), "git remote / config", theme.Paint(theme.Dim).Render(p.T("refused.rule_remote", "the repository's own configuration"))),
+		fmt.Sprintf("    %s %-24s %s", theme.Paint(theme.Dim).Render("✗"), "gh pr merge", theme.Paint(theme.Dim).Render(p.T("refused.rule_merge", "merging and publishing pull requests"))),
 		"",
-		"  "+Paint(Dim).Render(p.T("refused.policy_note", "a forbidden action fails on the spot and the model carries on")),
+		"  "+theme.Paint(theme.Dim).Render(p.T("refused.policy_note", "a forbidden action fails on the spot and the model carries on")),
 		"",
 	)
 
@@ -91,7 +92,7 @@ func (m Model) denialRows(d view.Entry, i int) ([]string, bool) {
 		tool = m.opts.Words.T("refused.unnamed_tool", "command")
 	}
 
-	head := "    " + Paint(Bad).Render("✗") + " " + Paint(Accent).Render(tool) + ": "
+	head := "    " + theme.Paint(theme.Bad).Render("✗") + " " + theme.Paint(theme.Accent).Render(tool) + ": "
 
 	lead := 4 + 1 + 1 + lipgloss.Width(tool) + 2
 	availW := max(20, max(m.frame.Body.W, 1)-lead-lipgloss.Width(foldShut)-2)
@@ -113,21 +114,21 @@ func (m Model) denialRows(d view.Entry, i int) ([]string, bool) {
 	}
 
 	if len(body) == 1 {
-		return []string{head + strings.Repeat(" ", lipgloss.Width(foldShut)) + Paint(Bad).Render(body[0])}, false
+		return []string{head + strings.Repeat(" ", lipgloss.Width(foldShut)) + theme.Paint(theme.Bad).Render(body[0])}, false
 	}
 
 	open := m.rowOpen(tabRefused, i)
-	mark := Text(Tertiary).Render(foldMark(open))
+	mark := theme.Text(theme.Tertiary).Render(foldMark(open))
 
 	if !open {
-		return []string{head + mark + Paint(Bad).Render(body[0])}, true
+		return []string{head + mark + theme.Paint(theme.Bad).Render(body[0])}, true
 	}
 
-	out := []string{head + mark + Paint(Bad).Render(body[0])}
+	out := []string{head + mark + theme.Paint(theme.Bad).Render(body[0])}
 
 	indent := strings.Repeat(" ", lead+lipgloss.Width(foldShut))
 	for _, l := range body[1:] {
-		out = append(out, indent+Paint(Bad).Render(l))
+		out = append(out, indent+theme.Paint(theme.Bad).Render(l))
 	}
 
 	return out, true

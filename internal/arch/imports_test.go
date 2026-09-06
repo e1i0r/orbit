@@ -164,7 +164,7 @@ var layers = map[string][]string{
 	// somebody is about to write sits beside the ones already standing. It
 	// is a type and a read — the facts arrive through a port, because
 	// reaching the state root to load them is what the window may not do.
-	"internal/ui": {"internal/board", "internal/flow", "internal/knowledge", "internal/logger", "internal/repo", "internal/task", "internal/tracker", "internal/ui/clip", "internal/ui/layout", "internal/ui/prompt", "internal/ui/spoken", "internal/ui/typing", "internal/ui/upgrade", "internal/view", "internal/words"},
+	"internal/ui": {"internal/board", "internal/flow", "internal/knowledge", "internal/logger", "internal/repo", "internal/task", "internal/tracker", "internal/ui/clip", "internal/ui/layout", "internal/ui/prompt", "internal/ui/spoken", "internal/ui/theme", "internal/ui/typing", "internal/ui/upgrade", "internal/view", "internal/words"},
 	// internal/ui/layout is widened to internal/view for one reason:
 	// layout.Columns plans a row's columns from the board it is about to
 	// draw, and the board is []view.Task. It is a widening, and it was
@@ -202,6 +202,13 @@ var layers = map[string][]string{
 	// to do about a line is the window's, and this only says what the line
 	// was.
 	"internal/ui/spoken": {},
+	// internal/ui/theme is the whole vocabulary of colour: the seven roles,
+	// the palettes that answer them, the paper each surface is drawn on, and
+	// the lexer that decides which role a run of code takes. It imports
+	// nothing of Orbit's — a palette is not a fact about a task — which is
+	// why 79 files could start naming it without anything moving the other
+	// way.
+	"internal/ui/theme":  {},
 	"internal/ui/typing": {},
 	// internal/ui/upgrade asks GitHub what the newest release is and says
 	// whether it is worth offering. It is the one package under

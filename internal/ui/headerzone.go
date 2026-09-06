@@ -9,6 +9,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -46,13 +47,13 @@ func (m Model) queueBadges() []queueBadge {
 	}
 
 	p := m.opts.Words
-	pill := func(b view.Band, icon, label string, in ink, count int) string {
+	pill := func(b view.Band, icon, label string, in theme.Ink, count int) string {
 		text := fmt.Sprintf("%s %s %d", icon, label, count)
 		if m.queueFilter != nil && *m.queueFilter == b {
-			return PillActive(text, in.fg, in.bg)
+			return theme.PillActive(text, in.Fg, in.Bg)
 		}
 
-		return Pill(text, in.fg, in.bg)
+		return theme.Pill(text, in.Fg, in.Bg)
 	}
 
 	// Indexed by the band, not by the position the badge is drawn in.
@@ -62,13 +63,13 @@ func (m Model) queueBadges() []queueBadge {
 	// reader and the Needs You badge the count of the ones still running.
 	return []queueBadge{
 		{view.ToDo, pill(view.ToDo, "📋",
-			p.T("queue.todo", "To Do"), inkToDo, m.board.Counts[view.ToDo])},
+			p.T("queue.todo", "To Do"), theme.InkToDo, m.board.Counts[view.ToDo])},
 		{view.Running, pill(view.Running, "⚡",
-			p.T("queue.in_flight", "Running"), inkRunning, m.board.Counts[view.Running])},
+			p.T("queue.in_flight", "Running"), theme.InkRunning, m.board.Counts[view.Running])},
 		{view.NeedsYou, pill(view.NeedsYou, "💬",
-			p.T("queue.needs_you", "Needs You"), inkNeedsYou, m.board.Counts[view.NeedsYou])},
+			p.T("queue.needs_you", "Needs You"), theme.InkNeedsYou, m.board.Counts[view.NeedsYou])},
 		{view.Done, pill(view.Done, "🏁",
-			p.T("queue.done", "Done"), inkDone, m.board.Counts[view.Done])},
+			p.T("queue.done", "Done"), theme.InkDone, m.board.Counts[view.Done])},
 	}
 }
 

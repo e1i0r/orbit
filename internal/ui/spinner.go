@@ -11,6 +11,8 @@ package ui
 
 import (
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // spinnerFrames is a braille cycle rather than the usual /-\| because every
@@ -31,8 +33,8 @@ func (m Model) spin() string {
 // from whatever it is spinning beside — two cells, always, so a label with a
 // spinner in front of it sits exactly where the same label behind a static
 // glyph used to.
-func (m Model) spinner(r Role) string {
-	return Paint(r).Render(m.spin()) + " "
+func (m Model) spinner(r theme.Role) string {
+	return theme.Paint(r).Render(m.spin()) + " "
 }
 
 // moving is whether anything on screen is actually in motion, and it is what

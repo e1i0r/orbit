@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -120,7 +121,7 @@ func (m Model) flowsListStart(lines []flowLine, rows int) int {
 func (m Model) flowsWaysOut(w int) string {
 	p := m.opts.Words
 
-	return fit("  "+Paint(Dim).Render(p.T("flows.ways_out",
+	return fit("  "+theme.Paint(theme.Dim).Render(p.T("flows.ways_out",
 		"[⏎] inspect · [n] create · [e] edit · [d] delete · {up_down} scroll · {back} back",
 		about("up_down", m.keys.Up.Help().Key+m.keys.Down.Help().Key),
 		about("back", m.keys.Back.Help().Key))), w)
@@ -130,23 +131,23 @@ func (m Model) flowsWaysOut(w int) string {
 func (m Model) flowsListLines(w int) []flowLine {
 	p := m.opts.Words
 
-	createBtn := "  " + Paint(Dim).Render(p.T("flows.create_btn_idle", "[+ Create Custom Flow] (press n)"))
+	createBtn := "  " + theme.Paint(theme.Dim).Render(p.T("flows.create_btn_idle", "[+ Create Custom Flow] (press n)"))
 	if m.flows.sel == -1 {
-		createBtn = "▸ " + Pill(p.T("flows.create_btn", "+ Create Custom Flow"), "#FFFFFF", "#005F87") + "  " + Paint(Live).Render(p.T("flows.press_enter", "(press ⏎)"))
+		createBtn = "▸ " + theme.Pill(p.T("flows.create_btn", "+ Create Custom Flow"), "#FFFFFF", "#005F87") + "  " + theme.Paint(theme.Live).Render(p.T("flows.press_enter", "(press ⏎)"))
 	}
 
 	plain := func(text string) flowLine { return flowLine{text: text, at: noFlow} }
 
 	out := []flowLine{
 		plain(""),
-		plain("  " + Paint(Accent).Render(p.T("flows.title", "Flows"))),
+		plain("  " + theme.Paint(theme.Accent).Render(p.T("flows.title", "Flows"))),
 		// This line said flows were read-only and to go edit the files by
 		// hand — printed directly above a Create button, and above an Edit
 		// and a Delete pill on every row the cursor is on. What is true is
 		// the half about where they live, and that a built-in is inside the
 		// binary: saving one of your own under its name covers it, which is
 		// the only way a shipped flow changes.
-		plain("  " + Paint(Dim).Render(p.T("flows.where_they_live",
+		plain("  " + theme.Paint(theme.Dim).Render(p.T("flows.where_they_live",
 			"your own flows are files under $ORBIT_HOME/flows/; a built-in is inside orbit, and saving your own under its name covers it"))),
 		plain(""),
 		{text: createBtn, at: noFlow, create: true},
@@ -155,7 +156,7 @@ func (m Model) flowsListLines(w int) []flowLine {
 
 	descriptors := m.flows.listed
 	if len(descriptors) == 0 {
-		out = append(out, plain("  "+Paint(Dim).Render(p.T("flows.none", "no flows found"))))
+		out = append(out, plain("  "+theme.Paint(theme.Dim).Render(p.T("flows.none", "no flows found"))))
 	}
 
 	for i, d := range descriptors {
@@ -166,17 +167,17 @@ func (m Model) flowsListLines(w int) []flowLine {
 
 		originStr := flowOriginString(p, d.Origin)
 
-		headerLine := mark + Paint(Accent).Render(d.Name)
+		headerLine := mark + theme.Paint(theme.Accent).Render(d.Name)
 		if originStr != "" {
-			headerLine += "  " + Paint(Dim).Render("("+originStr+")")
+			headerLine += "  " + theme.Paint(theme.Dim).Render("("+originStr+")")
 		}
 
 		if i == m.flows.sel {
-			headerLine += "   " + Pill("👁 "+p.T("flows.btn_view_details", "Details"), "#FFFFFF", "#0284C7")
+			headerLine += "   " + theme.Pill("👁 "+p.T("flows.btn_view_details", "Details"), "#FFFFFF", "#0284C7")
 
-			headerLine += " " + Pill("✏ "+p.T("flows.btn_edit", "Edit"), "#FFFFFF", "#0C4A6E")
+			headerLine += " " + theme.Pill("✏ "+p.T("flows.btn_edit", "Edit"), "#FFFFFF", "#0C4A6E")
 			if d.Origin != flow.OriginBuiltin {
-				headerLine += " " + Pill("🗑 "+p.T("flows.btn_delete", "Delete"), "#FFFFFF", "#7F1D1D")
+				headerLine += " " + theme.Pill("🗑 "+p.T("flows.btn_delete", "Delete"), "#FFFFFF", "#7F1D1D")
 			}
 		}
 
@@ -186,14 +187,14 @@ func (m Model) flowsListLines(w int) []flowLine {
 
 		fl, err := got.flow, got.err
 		if err != nil {
-			errLine := strings.Repeat(" ", gutter+2) + Paint(Bad).Render(err.Error())
+			errLine := strings.Repeat(" ", gutter+2) + theme.Paint(theme.Bad).Render(err.Error())
 			out = append(out, flowLine{text: fit(errLine, w), at: i})
 
 			continue
 		}
 
 		if fl.Description != "" {
-			descLine := strings.Repeat(" ", gutter+2) + Paint(OK).Render("↳ ") + Paint(Dim).Render(flatten(fl.Description))
+			descLine := strings.Repeat(" ", gutter+2) + theme.Paint(theme.OK).Render("↳ ") + theme.Paint(theme.Dim).Render(flatten(fl.Description))
 			out = append(out, flowLine{text: fit(descLine, w), at: i})
 		}
 
@@ -221,13 +222,13 @@ func (m Model) flowsListLines(w int) []flowLine {
 			phaseLine := fmt.Sprintf("%s%d. %s  %s%s  (%s)",
 				strings.Repeat(" ", gutter+2),
 				idx+1,
-				Paint(Accent).Render(ph.Name),
-				Paint(Dim).Render(engineModel),
-				Paint(Live).Render(feed),
-				Paint(Dim).Render(waitStr),
+				theme.Paint(theme.Accent).Render(ph.Name),
+				theme.Paint(theme.Dim).Render(engineModel),
+				theme.Paint(theme.Live).Render(feed),
+				theme.Paint(theme.Dim).Render(waitStr),
 			)
 			if ph.Prompt != "" {
-				phaseLine += "  " + Paint(Dim).Render(`"`+ph.Prompt+`"`)
+				phaseLine += "  " + theme.Paint(theme.Dim).Render(`"`+ph.Prompt+`"`)
 			}
 
 			out = append(out, flowLine{text: fit(phaseLine, w), at: i})

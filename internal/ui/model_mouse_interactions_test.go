@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 func TestModelInit(t *testing.T) {
@@ -121,7 +123,7 @@ func TestSettingsSubmitAndEditing(t *testing.T) {
 }
 
 func TestThemePillActive(t *testing.T) {
-	activePill := PillActive("ACTIVE", "#FFFFFF", "#000000")
+	activePill := theme.PillActive("ACTIVE", "#FFFFFF", "#000000")
 	if activePill == "" {
 		t.Error("PillActive returned empty string")
 	}

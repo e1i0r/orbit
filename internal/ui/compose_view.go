@@ -6,6 +6,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/ui/typing"
 )
 
@@ -25,10 +26,10 @@ func (m Model) composeRows(h, w int) []string {
 
 	renderTab := func(name string, active bool) string {
 		if active {
-			return Paint(Sel).Bold(true).Render(" [ " + name + " ] ")
+			return theme.Paint(theme.Sel).Bold(true).Render(" [ " + name + " ] ")
 		}
 
-		return Paint(Dim).Render("   " + name + "   ")
+		return theme.Paint(theme.Dim).Render("   " + name + "   ")
 	}
 
 	tabLine := "  " + renderTab(tabManual, m.compose.tab == composeTabManual) +
@@ -45,14 +46,14 @@ func (m Model) composeRows(h, w int) []string {
 	runBtn := p.T("compose.save_run_btn", "^R Save & Run")
 	cancelBtn := p.T("compose.cancel_btn", "esc Cancel")
 
-	actions := "  " + Paint(OK).Render("[ "+saveBtn+" ]") +
-		"   " + Paint(Accent).Render("[ "+runBtn+" ]") +
-		"   " + Paint(Dim).Render("[ "+cancelBtn+" ]")
+	actions := "  " + theme.Paint(theme.OK).Render("[ "+saveBtn+" ]") +
+		"   " + theme.Paint(theme.Accent).Render("[ "+runBtn+" ]") +
+		"   " + theme.Paint(theme.Dim).Render("[ "+cancelBtn+" ]")
 
 	if m.autopilotOn() {
-		actions += "   " + Paint(Accent).Render("⚡ "+p.T("compose.autopilot_on_note", "autopilot is ON: starts automatically [A to toggle]"))
+		actions += "   " + theme.Paint(theme.Accent).Render("⚡ "+p.T("compose.autopilot_on_note", "autopilot is ON: starts automatically [A to toggle]"))
 	} else {
-		actions += "   " + Paint(Dim).Render("⚡ "+p.T("compose.autopilot_off_note", "autopilot is OFF: saves to To Do backlog"))
+		actions += "   " + theme.Paint(theme.Dim).Render("⚡ "+p.T("compose.autopilot_off_note", "autopilot is OFF: saves to To Do backlog"))
 	}
 
 	out = append(out, "", fit(actions, w))
@@ -76,7 +77,7 @@ func (m Model) composeFlowDetail(w int) []string {
 			lead = "↳ "
 		}
 
-		out = append(out, fit(padded+Paint(Dim).Render(lead)+Paint(Dim).Render(row), w))
+		out = append(out, fit(padded+theme.Paint(theme.Dim).Render(lead)+theme.Paint(theme.Dim).Render(row), w))
 	}
 
 	return out
@@ -119,10 +120,10 @@ func (m Model) composeURLRows(w int) []string {
 	if m.compose.parsedIssue != nil {
 		iss := m.compose.parsedIssue
 
-		preview := "  " + Paint(OK).Render("✓ "+strings.ToUpper(iss.Kind)) +
-			" · " + Paint(Accent).Render(iss.ID)
+		preview := "  " + theme.Paint(theme.OK).Render("✓ "+strings.ToUpper(iss.Kind)) +
+			" · " + theme.Paint(theme.Accent).Render(iss.ID)
 		if iss.Title != "" {
-			preview += " · " + Paint(Dim).Render(iss.Title)
+			preview += " · " + theme.Paint(theme.Dim).Render(iss.Title)
 		}
 
 		out = append(out, "", fit(preview, w))
@@ -157,13 +158,13 @@ func (m Model) composeFieldLine(fieldIdx int, label string, val typing.Field, pl
 			line += paintCells("", 0, 0, 0, unpainted)
 		}
 
-		return fit(line+Paint(Dim).Render(placeholder), w)
+		return fit(line+theme.Paint(theme.Dim).Render(placeholder), w)
 	}
 
-	body := Paint(Accent).Render(val.String())
+	body := theme.Paint(theme.Accent).Render(val.String())
 	if active {
 		from, to := val.Selection()
-		body = paintCells(val.String(), from, to, val.At, func(s string) string { return Paint(Accent).Render(s) })
+		body = paintCells(val.String(), from, to, val.At, func(s string) string { return theme.Paint(theme.Accent).Render(s) })
 	}
 
 	return fit(prefix+body, w)

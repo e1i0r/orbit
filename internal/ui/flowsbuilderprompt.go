@@ -8,7 +8,11 @@ package ui
 // a field that sends the reader back to editing the JSON by hand — which is
 // what this screen is for not doing.
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
+)
 
 // promptRows is how tall the instruction box is, and checkRows the box of
 // checks under a loop. What is being typed is the end of the paragraph, so a
@@ -31,9 +35,9 @@ func (m Model) builderPromptRows(w int, sz boxSizes) []builderLine {
 	head := m.labelled(flowFieldPrompt, p.T("flows.field_prompt", "Instructions"), "", w)
 	head.head = true
 	head.text = fit(strings.TrimRight(head.text, " ")+" "+
-		Pill(p.T("flows.btn_paste", "📋 Paste"), "#FFFFFF", "#0C4A6E")+" "+
-		Pill(p.T("flows.btn_autogen", "✨ Autogenerate"), "#FFFFFF", "#581C87")+" "+
-		Pill(p.T("flows.btn_clear", "🗑 Clear"), "#FFFFFF", "#374151"), w)
+		theme.Pill(p.T("flows.btn_paste", "📋 Paste"), "#FFFFFF", "#0C4A6E")+" "+
+		theme.Pill(p.T("flows.btn_autogen", "✨ Autogenerate"), "#FFFFFF", "#581C87")+" "+
+		theme.Pill(p.T("flows.btn_clear", "🗑 Clear"), "#FFFFFF", "#374151"), w)
 
 	out := []builderLine{head}
 
@@ -72,12 +76,12 @@ func (m Model) textBox(field int, content, placeholder string, rows, w int) []bu
 		wrapped = wrapped[len(wrapped)-rows:]
 	}
 
-	ink, edge := Paint(Dim), Dim
+	ink, edge := theme.Paint(theme.Dim), theme.Dim
 	if m.flows.field == field {
-		edge = Accent
+		edge = theme.Accent
 
 		if !ghost {
-			ink = Paint(Accent)
+			ink = theme.Paint(theme.Accent)
 		}
 	}
 
@@ -85,12 +89,12 @@ func (m Model) textBox(field int, content, placeholder string, rows, w int) []bu
 		return builderLine{text: fit(text, w), field: field, phase: noPhase, pick: noPick}
 	}
 
-	out := []builderLine{line("    " + Paint(edge).Render("┌"+strings.Repeat("─", boxWidth-2)+"┐"))}
+	out := []builderLine{line("    " + theme.Paint(edge).Render("┌"+strings.Repeat("─", boxWidth-2)+"┐"))}
 	for _, l := range wrapped {
-		out = append(out, line("    "+Paint(edge).Render("│ ")+ink.Render(pad(l, boxWidth-4, false))+Paint(edge).Render(" │")))
+		out = append(out, line("    "+theme.Paint(edge).Render("│ ")+ink.Render(pad(l, boxWidth-4, false))+theme.Paint(edge).Render(" │")))
 	}
 
-	return append(out, line("    "+Paint(edge).Render("└"+strings.Repeat("─", boxWidth-2)+"┘")))
+	return append(out, line("    "+theme.Paint(edge).Render("└"+strings.Repeat("─", boxWidth-2)+"┘")))
 }
 
 // loopFieldRows is the two fields a repeating phase has: how many turns it
@@ -101,10 +105,10 @@ func (m Model) loopFieldRows(w int, sz boxSizes) []builderLine {
 
 	out := []builderLine{
 		m.labelled(flowFieldLoopTurns, "  ├ "+p.T("flows.field_turns", "turns at most"),
-			Paint(Accent).Render(st.loopTurnsText())+"  "+
-				Paint(Dim).Render(p.T("flows.turns_hint", "← → to change")), w),
+			theme.Paint(theme.Accent).Render(st.loopTurnsText())+"  "+
+				theme.Paint(theme.Dim).Render(p.T("flows.turns_hint", "← → to change")), w),
 		m.labelled(flowFieldLoopUntil, "  └ "+p.T("flows.field_until", "stops when all pass"),
-			Paint(Dim).Render(p.T("flows.until_hint", "one per line — name: command")), w),
+			theme.Paint(theme.Dim).Render(p.T("flows.until_hint", "one per line — name: command")), w),
 	}
 
 	return append(out, m.textBox(flowFieldLoopUntil, st.loopChecksText(),
@@ -119,29 +123,29 @@ func (m Model) builderActions(w int) []builderLine {
 	if m.flows.readOnly {
 		return []builderLine{
 			plainLine(""),
-			plainLine("  " + Pill(" ↵ "+p.T("flows.btn_return", "Return")+" ", "#FFFFFF", "#2563EB")),
+			plainLine("  " + theme.Pill(" ↵ "+p.T("flows.btn_return", "Return")+" ", "#FFFFFF", "#2563EB")),
 			plainLine(""),
-			plainLine(fit("  "+Paint(Dim).Render(p.T("flows.ways_out_preview",
+			plainLine(fit("  "+theme.Paint(theme.Dim).Render(p.T("flows.ways_out_preview",
 				"[←/→ / tab] inspect phase · [enter / esc] return")), w)),
 		}
 	}
 
 	mark := func(field int) string {
 		if m.flows.field == field {
-			return Paint(Accent).Bold(true).Render("▸ ")
+			return theme.Paint(theme.Accent).Bold(true).Render("▸ ")
 		}
 
 		return "  "
 	}
 
-	buttons := "  " + mark(flowFieldAddPhase) + Pill(p.T("flows.btn_add_phase", "+ Add Phase"), "#FFFFFF", "#0C4A6E") +
-		"    " + mark(flowFieldDelPhase) + Pill(p.T("flows.btn_del_phase", "🗑 Delete Phase"), "#FFFFFF", "#7F1D1D") +
-		"    " + mark(flowFieldSave) + Pill(p.T("flows.btn_save_flow", "✔ Save Flow"), "#FFFFFF", "#14532D")
+	buttons := "  " + mark(flowFieldAddPhase) + theme.Pill(p.T("flows.btn_add_phase", "+ Add Phase"), "#FFFFFF", "#0C4A6E") +
+		"    " + mark(flowFieldDelPhase) + theme.Pill(p.T("flows.btn_del_phase", "🗑 Delete Phase"), "#FFFFFF", "#7F1D1D") +
+		"    " + mark(flowFieldSave) + theme.Pill(p.T("flows.btn_save_flow", "✔ Save Flow"), "#FFFFFF", "#14532D")
 
 	return []builderLine{
 		{text: fit(buttons, w), field: flowFieldAddPhase, phase: noPhase, pick: noPick},
-		plainLine(fit("  "+Paint(Live).Render(m.fieldHint()), w)),
-		plainLine(fit("  "+Paint(Dim).Render(p.T("flows.ways_out_form",
+		plainLine(fit("  "+theme.Paint(theme.Live).Render(m.fieldHint()), w)),
+		plainLine(fit("  "+theme.Paint(theme.Dim).Render(p.T("flows.ways_out_form",
 			"[tab] next field · [↑↓] move · [←→] change · [enter] do it · [shift+↵] new line · {back} back",
 			about("back", m.keys.Back.Help().Key))), w)),
 	}

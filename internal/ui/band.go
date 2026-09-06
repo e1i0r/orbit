@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -27,19 +28,19 @@ func (m Model) bandLeft() string {
 	case m.filtering:
 		return m.filterLine()
 	case m.confirm == confirmCancel:
-		return Paint(Warn).Render(m.opts.Words.T("msg.confirm_cancel",
+		return theme.Paint(theme.Warn).Render(m.opts.Words.T("msg.confirm_cancel",
 			"cancel {id}? [y/n]",
 			about("id", m.confirmID)))
 	case m.confirm == confirmRequeue:
-		return Paint(Warn).Render(m.opts.Words.T("msg.confirm_requeue",
+		return theme.Paint(theme.Warn).Render(m.opts.Words.T("msg.confirm_requeue",
 			"put {id} back in to do? [y/n]",
 			about("id", m.confirmID)))
 	case m.confirm == confirmSkip:
-		return Paint(Warn).Render(m.opts.Words.T("msg.confirm_skip",
+		return theme.Paint(theme.Warn).Render(m.opts.Words.T("msg.confirm_skip",
 			"skip the phase {id} waits in front of? [y/n]",
 			about("id", m.confirmID)))
 	case m.confirm == confirmPostCliTask:
-		return Paint(Live).Render(m.opts.Words.T("msg.confirm_post_cli",
+		return theme.Paint(theme.Live).Render(m.opts.Words.T("msg.confirm_post_cli",
 			"make a task from this session? [y/n]"))
 	// Above the message and below the questions: something that is out
 	// right now is truer than a sentence about something that finished, and
@@ -55,9 +56,9 @@ func (m Model) bandLeft() string {
 	// window is waiting for an answer to is not something a moved pointer
 	// gets to cover.
 	case m.hovered() != "":
-		return Paint(Live).Render(m.hovered())
+		return theme.Paint(theme.Live).Render(m.hovered())
 	case m.message != "" && m.now.Sub(m.messageAt) < messageLife:
-		return Paint(Accent).Render(m.message)
+		return theme.Paint(theme.Accent).Render(m.message)
 	case m.filter != "" || m.repoFilter != "" || m.queueFilter != nil:
 		return m.filterLine()
 	}
@@ -76,7 +77,7 @@ func (m Model) bandLeft() string {
 		}
 	}
 
-	return Paint(Dim).Render(m.idleLine())
+	return theme.Paint(theme.Dim).Render(m.idleLine())
 }
 
 // filterLine is what is being typed, and how much of the board it is
@@ -97,24 +98,24 @@ func (m Model) filterLine() string {
 
 	var parts []string
 	if m.queueFilter != nil {
-		parts = append(parts, Paint(Accent).Render(m.bandName(*m.queueFilter)))
+		parts = append(parts, theme.Paint(theme.Accent).Render(m.bandName(*m.queueFilter)))
 	}
 
 	if m.filter != "" || m.filtering {
-		typed, role := m.filter, Accent
+		typed, role := m.filter, theme.Accent
 		if typed == "" {
-			typed, role = p.T("filter.placeholder", "repository, id or title"), Dim
+			typed, role = p.T("filter.placeholder", "repository, id or title"), theme.Dim
 		}
 
-		parts = append(parts, Paint(role).Render("/"+typed))
+		parts = append(parts, theme.Paint(role).Render("/"+typed))
 	}
 
 	if m.repoFilter != "" {
 		repoTag := p.T("band.repo_filter_tag", "repo:{repo}", about("repo", m.repoFilter))
-		parts = append(parts, Paint(Accent).Render(repoTag))
+		parts = append(parts, theme.Paint(theme.Accent).Render(repoTag))
 	}
 
-	parts = append(parts, Paint(Dim).Render(p.T("band.shown", "{n} of {total} shown",
+	parts = append(parts, theme.Paint(theme.Dim).Render(p.T("band.shown", "{n} of {total} shown",
 		about("n", strconv.Itoa(shown)), about("total", strconv.Itoa(len(m.board.Tasks))))))
 
 	line := strings.Join(parts, dot)
@@ -122,7 +123,7 @@ func (m Model) filterLine() string {
 		return line
 	}
 
-	return line + dot + Paint(Dim).Render(p.T("band.filter_clear", "{key} clears it",
+	return line + dot + theme.Paint(theme.Dim).Render(p.T("band.filter_clear", "{key} clears it",
 		about("key", m.keys.Back.Help().Key)))
 }
 
@@ -157,13 +158,13 @@ const actionCells = 50
 func (m Model) runningLine(t view.Task) string {
 	p := m.opts.Words
 
-	pieces := []string{Paint(Accent).Render(t.ID), Paint(Live).Render(m.phaseWord(t))}
+	pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(theme.Live).Render(m.phaseWord(t))}
 	if age := elapsed(m.now, t.Since); age != "" {
 		pieces = append(pieces, p.T("band.elapsed", "{d} in", about("d", age)))
 	}
 
 	if t.CurrentAction != "" {
-		pieces = append(pieces, Paint(Live).Render(
+		pieces = append(pieces, theme.Paint(theme.Live).Render(
 			actionGlyph(t.ActionKind)+fit(t.CurrentAction, actionCells)))
 	}
 

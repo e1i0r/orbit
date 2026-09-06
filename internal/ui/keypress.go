@@ -13,6 +13,8 @@ import (
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // confirmYes is the one keystroke that answers a question with yes.
@@ -238,13 +240,13 @@ func (m Model) confirmKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			t, ok := m.task(id)
 			if ok && m.opts.DeleteTask != nil {
 				if err := m.opts.DeleteTask(t); err != nil {
-					return m.say(Paint(Bad).Render(err.Error())), nil
+					return m.say(theme.Paint(theme.Bad).Render(err.Error())), nil
 				}
 			}
 
 			if m.opts.Reader != nil {
 				if err := m.opts.Reader.Rescan(); err != nil {
-					return m.say(Paint(Bad).Render(err.Error())), nil
+					return m.say(theme.Paint(theme.Bad).Render(err.Error())), nil
 				}
 			}
 

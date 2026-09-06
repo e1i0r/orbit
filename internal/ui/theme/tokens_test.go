@@ -1,4 +1,4 @@
-package ui
+package theme
 
 import (
 	"image/color"
