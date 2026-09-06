@@ -23,7 +23,20 @@ import (
 	"testing"
 )
 
+// A run this suite starts is this binary, and it is asked to do nothing.
+//
+// task.Start spawns os.Executable() with "run" at the front of its argument
+// list, which under `go test` is the test binary rather than orbit. The flag
+// package stops at the first argument that is not a flag, so the child would
+// read none of what follows and run the whole suite again — including the
+// test that started it, which would spawn a child of its own. That is what
+// took this package from seconds to a ten-minute timeout, with a tree of
+// itself still running underneath.
 func TestMain(m *testing.M) {
+	if len(os.Args) > 1 && os.Args[1] == "run" {
+		os.Exit(0)
+	}
+
 	for _, name := range []string{"ORBIT_TASK", "ORBIT_WORKSPACE", "ORBIT_HOME"} {
 		os.Unsetenv(name)
 	}
