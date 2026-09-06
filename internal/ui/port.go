@@ -85,8 +85,20 @@ type Options struct {
 	// on a task with no run to read it.
 	Requeue func(t view.Task) error
 
-	// RecordSupervisor records a message into the global supervisor conversation thread.
-	RecordSupervisor func(by, channel, message string) error
+	// RecordSupervisor records a message into one conversation of the
+	// supervisor thread. An empty conversation is the thread that came
+	// before conversations had ids, which is one like any other.
+	RecordSupervisor func(conversation, by, channel, message string) error
+
+	// NewConversation is the id a conversation started right now carries.
+	// It is a port because the shape of that id belongs to the record, and
+	// this package cannot name it.
+	NewConversation func() string
+
+	// RemoveConversation takes one off the list and out of what the model is
+	// told. It marks and does not erase: the record is append-only, so this
+	// appends, and orbit export still has every line of it.
+	RemoveConversation func(id string) error
 
 	// Learn writes down something the operator said about the code rather
 	// than about a task: /rule for a fact that stops the work at a gate,
@@ -140,8 +152,10 @@ type Options struct {
 	// decides how that is written down.
 	RecordDeliver func(t view.Task, d Delivery) error
 
-	// AskSupervisor asks the active engine to process and reply to the supervisor thread.
-	AskSupervisor func(engineName, prompt string) (string, error)
+	// AskSupervisor asks the active engine to answer, in the conversation
+	// the reader has open. What the model is shown is that conversation and
+	// no other: what survives between them is what Orbit knows.
+	AskSupervisor func(engineName, conversation, prompt string) (string, error)
 
 	// Draft asks an engine one question and nothing else: no thread, no
 	// history, no contract but the prompt it is given. The designer's third

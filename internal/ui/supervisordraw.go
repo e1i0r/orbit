@@ -2,7 +2,6 @@ package ui
 
 import (
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/view"
@@ -64,8 +63,12 @@ func (m Model) supervisorHead(cw int) []string {
 	p := m.opts.Words
 
 	title := p.T("supervisor.title", "Supervisor & Cockpit Memory")
-	if m.supervisor.picking {
+
+	switch {
+	case m.supervisor.picking:
 		title = p.T("supervisor.picking", "pick a line to take back")
+	case m.supervisor.list:
+		title = p.T("supervisor.conversations", "Conversations")
 	}
 
 	auto := p.T("supervisor.auto_off", "autopilot off")
@@ -76,10 +79,23 @@ func (m Model) supervisorHead(cw int) []string {
 	facts := strings.Join([]string{
 		p.T("supervisor.answered_by", "answered by {engine}", about("engine", m.dialEngine(m.knobs.Engine))),
 		auto,
-		p.T("supervisor.msg_count", "{n} messages", about("n", strconv.Itoa(len(m.supervisor.lines)))),
+		m.howMuch(),
 	}, " · ")
 
 	return []string{"", Paint(Accent).Render(title), Paint(Dim).Render(fit(facts, cw)), ""}
+}
+
+// howMuch is how much there is: how many conversations while the list is
+// up, and how long the open one is while it is being read.
+func (m Model) howMuch() string {
+	p := m.opts.Words
+
+	if m.supervisor.list {
+		return p.P("supervisor.conv_count", len(conversationsOf(m.supervisor.all)),
+			"{n} conversation", "{n} conversations")
+	}
+
+	return p.P("supervisor.msg_count2", len(m.supervisor.lines), "{n} message", "{n} messages")
 }
 
 // supervisorBody is the thread's content: every message, then the window of
@@ -91,6 +107,10 @@ func (m Model) supervisorHead(cw int) []string {
 // left a conversation of two lines stranded at the top of a tall terminal
 // with a field of nothing between it and the cursor.
 func (m Model) supervisorBody(maxRows, cw int) []string {
+	if m.supervisor.list {
+		return m.conversationRows(maxRows, cw)
+	}
+
 	rendered, starts := m.threadLines(cw)
 	if len(rendered) < maxRows {
 		return append(make([]string, maxRows-len(rendered)), rendered...)

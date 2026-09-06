@@ -17,7 +17,7 @@ import (
 // "this is where you are writing", and it is only true once.
 func TestOnlyTheFirstLineCarriesThePrompt(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m.opts.RecordSupervisor = func(string, string, string) error { return nil }
+	m.opts.RecordSupervisor = func(string, string, string, string) error { return nil }
 	m = m.openSupervisor()
 	m.supervisor.input = "first\nsecond\nthird"
 
@@ -35,7 +35,7 @@ func TestOnlyTheFirstLineCarriesThePrompt(t *testing.T) {
 // rather than stepping back to the margin.
 func TestTheLinesAfterTheFirstLineUpUnderIt(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m.opts.RecordSupervisor = func(string, string, string) error { return nil }
+	m.opts.RecordSupervisor = func(string, string, string, string) error { return nil }
 	m = m.openSupervisor()
 	m.supervisor.input = "first\nsecond"
 

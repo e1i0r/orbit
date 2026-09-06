@@ -17,7 +17,7 @@ import (
 // not tell whether they had pasted anything at all.
 func TestCmdVReachesTheSupervisorLine(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m.opts.RecordSupervisor = func(string, string, string) error { return nil }
+	m.opts.RecordSupervisor = func(string, string, string, string) error { return nil }
 	m = m.openSupervisor()
 	m.supervisor.input = "look at "
 
@@ -31,7 +31,7 @@ func TestCmdVReachesTheSupervisorLine(t *testing.T) {
 // wants more than one line, and the input already takes them.
 func TestPastingManyLinesKeepsThemAll(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m.opts.RecordSupervisor = func(string, string, string) error { return nil }
+	m.opts.RecordSupervisor = func(string, string, string, string) error { return nil }
 	m = m.openSupervisor()
 
 	next := next(t, m, tea.PasteMsg{Content: "first\nsecond\nthird"})

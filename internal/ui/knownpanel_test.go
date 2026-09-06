@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/charmbracelet/x/ansi"
 	"github.com/e1i0r/orbit/internal/knowledge"
@@ -15,7 +16,7 @@ func knowing(t *testing.T, w int, facts ...knowledge.Fact) Model {
 	t.Helper()
 
 	m, _ := testModel(t, w, 30)
-	m.opts.RecordSupervisor = func(string, string, string) error { return nil }
+	m.opts.RecordSupervisor = func(string, string, string, string) error { return nil }
 	m.opts.Knows = func() []knowledge.Fact { return facts }
 
 	return m.openSupervisor()
@@ -218,5 +219,47 @@ func TestTheRulesSurviveTheCut(t *testing.T) {
 	drawn := ansi.Strip(strings.Join(knowing(t, 140, facts...).knownSide(12, 140), "\n"))
 	if !strings.Contains(drawn, "the one rule") {
 		t.Errorf("the rule was cut before the aware ones:\n%s", drawn)
+	}
+}
+
+// TestAFactARunWroteWhileYouWereAwayIsMarked. The question somebody comes
+// back with is what happened, and a rule that appeared out of a run is part
+// of the answer — the mark says nobody typed it.
+func TestAFactARunWroteWhileYouWereAwayIsMarked(t *testing.T) {
+	m, _ := testModel(t, 140, 30)
+	m.now = time.Now()
+
+	learned := knowledge.Fact{
+		Scope:  knowledge.Scope{Kind: knowledge.General},
+		Source: knowledge.FromRecord,
+		Phrase: "the api refuses a body over 1MB",
+		At:     m.now.Add(-2 * time.Hour),
+	}
+
+	typed := knowledge.Fact{
+		Scope:  knowledge.Scope{Kind: knowledge.General},
+		Source: knowledge.Human,
+		Phrase: "never force-push",
+		At:     m.now.Add(-time.Hour),
+	}
+
+	old := learned
+	old.At = m.now.Add(-72 * time.Hour)
+
+	if !m.learnedRecently(learned) {
+		t.Error("a fact a run wrote two hours ago is not marked")
+	}
+
+	if m.learnedRecently(typed) {
+		t.Error("a fact the reader typed is marked as learned")
+	}
+
+	if m.learnedRecently(old) {
+		t.Error("a fact from three days ago is part of what they missed")
+	}
+
+	rows := strings.Join(m.sideFact(learned), "\n")
+	if !strings.Contains(rows, "learned") {
+		t.Errorf("the side does not mark it:\n%s", rows)
 	}
 }

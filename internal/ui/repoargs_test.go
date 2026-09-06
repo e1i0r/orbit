@@ -126,7 +126,7 @@ func TestTheVerbsHandedToTheSupervisorCarryTheTaskAndItsCheckout(t *testing.T) {
 
 		var said string
 
-		m.opts.RecordSupervisor = func(_, _, text string) error {
+		m.opts.RecordSupervisor = func(_, _, _, text string) error {
 			said = text
 			return nil
 		}

@@ -64,7 +64,7 @@ func TestTheSupervisorAnswersOnTheEngineItWasAskedFor(t *testing.T) {
 
 	engines := newEngines()
 
-	_, err = askSupervisorPort(s, engines)("an-engine-nobody-has", "how is it going?")
+	_, err = askSupervisorPort(s, engines)("an-engine-nobody-has", "", "how is it going?")
 	if err == nil {
 		t.Fatal("the supervisor answered on an engine that was not asked for")
 	}

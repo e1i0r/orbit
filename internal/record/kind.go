@@ -177,6 +177,16 @@ const (
 	// stops being repeated into the model's prompt.
 	SupervisorRetracted = "supervisor.retracted"
 
+	// SupervisorConversationRemoved takes a whole conversation out of the
+	// thread, naming it by its id in Data["conversation"].
+	//
+	// It marks and does not erase, for the reason a retraction does: this
+	// record is appended to and never rewritten, so taking something out
+	// puts something in. What changes is whether those turns are listed and
+	// whether they are put in front of the model again — never whether they
+	// were said. orbit export still has them.
+	SupervisorConversationRemoved = "supervisor.conversation_removed"
+
 	// A decision is what somebody chose and why, written down where the
 	// work happened rather than in a document beside it. The event is the
 	// decision's home; a file under .orbit/decisions/ is a copy of it, and

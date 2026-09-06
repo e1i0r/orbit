@@ -27,6 +27,19 @@ const (
 	saidAware
 	// saidNote is a line about one task, which lands in its notes.
 	saidNote
+	// saidChats opens the list of conversations and saidNew starts one.
+	// They are gestures rather than keys alone because this screen is a
+	// text field: every printable key types into it, so a key needs a
+	// modifier — and a modifier a terminal decides not to deliver is a
+	// gesture nobody can reach. A word typed into the line always arrives.
+	saidChats
+	saidNew
+	// saidBrief is the question somebody comes back with, asked for them:
+	// what happened, how did it end, what passed. It is a gesture and not a
+	// digest Orbit writes on its own — what comes back is the supervisor's
+	// answer, at the length the question deserves, and anything after the
+	// word narrows it.
+	saidBrief
 	// saidNothing is a gesture nobody finished typing. It is not an empty
 	// rule and not an empty message: it is a line to do nothing with.
 	saidNothing
@@ -36,6 +49,9 @@ const (
 const (
 	ruleWord  = "/rule"
 	awareWord = "/aware"
+	chatsWord = "/chats"
+	newWord   = "/new"
+	briefWord = "/brief"
 	atWord    = "@"
 
 	generalFlag = "--general"
@@ -69,6 +85,12 @@ func parseSaid(text string) spoken {
 		return fact(saidRule, rest(said, ruleWord))
 	case word(said, awareWord):
 		return fact(saidAware, rest(said, awareWord))
+	case word(said, briefWord):
+		return spoken{Kind: saidBrief, Phrase: rest(said, briefWord)}
+	case word(said, chatsWord):
+		return spoken{Kind: saidChats}
+	case word(said, newWord):
+		return spoken{Kind: saidNew}
 	case mentions(said):
 		return note(said)
 	default:

@@ -128,14 +128,14 @@ func engineNamed(engines map[string]engine.Engine, name string) (engine.Engine, 
 
 // askSupervisorPort is the supervisor thread: what a reader types in it goes
 // to the engine their dial names, and the answer comes back into the thread.
-func askSupervisorPort(s *store.Store, engines map[string]engine.Engine) func(string, string) (string, error) {
-	return func(name, prompt string) (string, error) {
+func askSupervisorPort(s *store.Store, engines map[string]engine.Engine) func(string, string, string) (string, error) {
+	return func(name, conversation, prompt string) (string, error) {
 		eng, err := engineNamed(engines, name)
 		if err != nil {
 			return "", err
 		}
 
-		return supervisor.Supervise(context.Background(), s, eng, prompt)
+		return supervisor.SuperviseIn(context.Background(), s, eng, conversation, prompt)
 	}
 }
 

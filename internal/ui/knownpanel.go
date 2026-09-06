@@ -16,6 +16,7 @@ package ui
 import (
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/x/ansi"
 
@@ -154,6 +155,14 @@ func (m Model) sideFact(f knowledge.Fact) []string {
 	}
 
 	rows := []string{Paint(Dim).Render(where)}
+	// A fact written while the reader was away is marked, because the
+	// question they came back with is what happened — and a rule that
+	// appeared out of a run is part of the answer. It says learned rather
+	// than new: what it means is that nobody typed it.
+	if m.learnedRecently(f) {
+		rows[0] += " " + Paint(Live).Render(m.opts.Words.T("known.learned", "· learned"))
+	}
+
 	for _, line := range splitIntoLines(f.Phrase, sideWidth-2) {
 		rows = append(rows, Text(Primary).Render("  "+line))
 	}
@@ -210,4 +219,19 @@ func besideThread(rows, side []string, cw int) []string {
 	}
 
 	return out
+}
+
+// sinceLearned is how recently a fact has to have been written down to be
+// marked on the side. A day covers being away for one, which is the whole
+// case this is for.
+const sinceLearned = 24 * time.Hour
+
+// learnedRecently is whether a fact was written down by a run rather than by
+// the reader, and recently enough to be part of what they missed.
+func (m Model) learnedRecently(f knowledge.Fact) bool {
+	if f.Source != knowledge.FromRecord || f.At.IsZero() || m.now.IsZero() {
+		return false
+	}
+
+	return m.now.Sub(f.At) < sinceLearned
 }

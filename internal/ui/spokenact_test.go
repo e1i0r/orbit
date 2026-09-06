@@ -21,7 +21,7 @@ func TestWritingAFactLeavesItInTheThread(t *testing.T) {
 
 	var said []string
 
-	m.opts.RecordSupervisor = func(_, _, message string) error {
+	m.opts.RecordSupervisor = func(_, _, _, message string) error {
 		said = append(said, message)
 
 		return nil
@@ -47,9 +47,9 @@ func TestWritingAFactAsksTheEngineNothing(t *testing.T) {
 
 	asked := false
 
-	m.opts.RecordSupervisor = func(string, string, string) error { return nil }
+	m.opts.RecordSupervisor = func(string, string, string, string) error { return nil }
 	m.opts.Learn = func(bool, string, string, string) error { return nil }
-	m.opts.AskSupervisor = func(string, string) (string, error) {
+	m.opts.AskSupervisor = func(string, string, string) (string, error) {
 		asked = true
 
 		return "", nil
@@ -76,7 +76,7 @@ func TestWritingAFactAsksTheEngineNothing(t *testing.T) {
 func TestAMessageStillReachesTheEngine(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 
-	m.opts.RecordSupervisor = func(string, string, string) error { return nil }
+	m.opts.RecordSupervisor = func(string, string, string, string) error { return nil }
 	m = m.openSupervisor()
 
 	next, cmd := m.sendSupervisorMessage("what happened while I was out?")

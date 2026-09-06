@@ -29,6 +29,18 @@ type supervisorState struct {
 	picking bool
 	pick    int
 
+	// conversation is the one the screen has open, and all is every line of
+	// every conversation — lines above is only this one's. The list needs
+	// all of them to say what there is; everything else on this screen —
+	// what is drawn, what a retraction picks from, how many messages it
+	// says — is about the conversation being read.
+	conversation string
+	all          []view.SupervisorLine
+	// list is whether the conversations are up instead of the thread, and
+	// listSel is which of them the cursor is on.
+	list    bool
+	listSel int
+
 	// follow is whether the thread is pinned to its own end. It replaces a
 	// sentinel offset of 999999, which was the bug behind "the scroll does
 	// not work": one press of ↑ took it to 999998, still far past the
@@ -51,7 +63,9 @@ func (m Model) openSupervisor() Model {
 		follow:     true,
 	}
 
-	return m.syncSupervisor()
+	// The thread has to be read before there is anything to choose from,
+	// and openLatest reads it again once it knows which one it is opening.
+	return m.syncSupervisor().openLatest()
 }
 
 func (m Model) abandonSupervisor() Model {
@@ -83,9 +97,10 @@ func (m Model) syncSupervisor() Model {
 		return m
 	}
 
-	lines, err := m.opts.Reader.SupervisorLog()
-	m.supervisor.lines = lines
+	all, err := m.opts.Reader.SupervisorLog()
+	m.supervisor.all = all
 	m.supervisor.err = err
+	m.supervisor.lines = linesIn(all, m.supervisor.conversation)
 	// What was drawn is not this thread any more. Saying so outright is
 	// what makes a retraction a change: taking a turn back adds a line
 	// rather than removing one, so the length alone would not.
@@ -96,6 +111,8 @@ func (m Model) syncSupervisor() Model {
 
 func (m Model) supervisorKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
+	case m.supervisor.list:
+		return m.conversationKey(msg)
 	case m.supervisor.picking:
 		return m.pickingKey(msg)
 	case len(m.completions()) > 0 && offering(msg):
@@ -108,6 +125,10 @@ func (m Model) supervisorKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.abandonSupervisor(), nil
 	case (msg.Code == 'r' || msg.Code == 'R') && msg.Mod&tea.ModCtrl != 0:
 		return m.startPicking(), nil
+	case ctrlLetter(msg, 'l'):
+		return m.openConversationList(), nil
+	case ctrlLetter(msg, 'n'):
+		return m.startConversation(), nil
 	case msg.Code == tea.KeyUp:
 		return m.scrollThread(-1), nil
 	case msg.Code == tea.KeyDown:
@@ -171,6 +192,13 @@ func (m Model) sendSupervisorMessage(text string) (Model, tea.Cmd) {
 	// before anything is sent: a rule is not a message the supervisor has to
 	// interpret, it is a fact to write down. spoken.go is the whole grammar.
 	if said := parseSaid(text); said.Kind != saidMessage {
+		// /brief is a question and not an action: it is sent the way a
+		// typed sentence is, so the answer lands in the thread where the
+		// person who asked will look for it.
+		if said.Kind == saidBrief {
+			return m.sendSupervisorMessage(m.briefQuestion(said.Phrase))
+		}
+
 		return m.act(said), nil
 	}
 
@@ -180,7 +208,7 @@ func (m Model) sendSupervisorMessage(text string) (Model, tea.Cmd) {
 		// two participants depending on whether they typed in the window or
 		// in a terminal, and put somebody else's name on the messages of
 		// anyone who is not the author of this program.
-		if err := m.opts.RecordSupervisor("operator", "tui", text); err != nil {
+		if err := m.opts.RecordSupervisor(m.supervisor.conversation, "operator", "tui", text); err != nil {
 			return m.say(err.Error()), nil
 		}
 	}
@@ -191,7 +219,7 @@ func (m Model) sendSupervisorMessage(text string) (Model, tea.Cmd) {
 
 	eng := m.dialEngine(m.knobs.Engine)
 
-	cmd := askSupervisorCmd(m.opts.AskSupervisor, eng, text)
+	cmd := askSupervisorCmd(m.opts.AskSupervisor, eng, m.supervisor.conversation, text)
 	m, frame := m.say(m.opts.Words.T("supervisor.thinking", "supervisor is thinking...")).nextFrame()
 
 	return m, tea.Batch(cmd, frame)

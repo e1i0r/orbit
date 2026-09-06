@@ -27,6 +27,10 @@ func (m Model) drawSupervisorInput(cw int) []string {
 	// The mode owns the foot of the screen. While a line is being picked
 	// there is nothing to type, so it says what the keys do instead of
 	// pretending.
+	if m.supervisor.list {
+		return m.conversationWays()
+	}
+
 	if m.supervisor.picking {
 		return []string{
 			Paint(Dim).Render(p.T("supervisor.picking_note", "the line stays in the thread, marked; the supervisor stops being told it")),
@@ -35,7 +39,7 @@ func (m Model) drawSupervisorInput(cw int) []string {
 		}
 	}
 
-	ways := p.T("supervisor.ways_out", "[Shift+↵] newline · [↵] send · [esc] back · [↑↓] scroll · [^R] retract · [^V] paste",
+	ways := p.T("supervisor.ways_out3", "[↵] send · [shift+↵] newline · /chats or [ctrl+L] · /new or [ctrl+N] · [ctrl+R] retract · [ctrl+V] paste · [esc] back",
 		about("up_down", m.keys.Up.Help().Key+m.keys.Down.Help().Key))
 
 	return append(m.inputLines(cw), "", Paint(Dim).Render(ways))
