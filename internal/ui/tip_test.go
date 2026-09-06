@@ -148,7 +148,7 @@ func TestTheCheatSheetSaysWhatTheVerbsDo(t *testing.T) {
 
 	sheet := ansi.Strip(strings.Join(m.openHelp().helpRows(80, 140), "\n"))
 
-	for _, b := range m.keys.taskVerbs() {
+	for _, b := range m.keys.TaskVerbs() {
 		if !strings.Contains(sheet, "["+b.Help().Key+"]") {
 			t.Errorf("the cheat sheet does not offer %q", b.Help().Key)
 		}

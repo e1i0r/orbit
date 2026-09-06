@@ -4,6 +4,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -57,7 +58,7 @@ func (m Model) overviewPhases(t view.Task, w int) []string {
 
 func (m Model) liveFlowCard(t view.Task, flowName string, w int) []string {
 	p := m.opts.Words
-	glyph := m.runGlyph(working(t))
+	glyph := m.runGlyph(keymap.Working(t))
 	step := orDef(t.Phase, "running")
 	now := orDef(t.CurrentAction, p.T("overview.running_model", "running model..."))
 

@@ -12,6 +12,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/board"
+	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/ui/layout"
 	"github.com/e1i0r/orbit/internal/ui/upgrade"
 	"github.com/e1i0r/orbit/internal/view"
@@ -53,7 +54,7 @@ const (
 // which is the one shape of shared state a value model can still have.
 type Model struct {
 	opts Options
-	keys Keys
+	keys keymap.Keys
 
 	board board.Board
 	seen  bool // a board has arrived, so the next crossing is worth a bell
@@ -292,7 +293,7 @@ func New(o Options) Model {
 
 	m := Model{
 		opts: o,
-		keys: NewKeys(o.Words),
+		keys: keymap.New(o.Words),
 		now:  time.Now(),
 		// NeedsYou and Running are open and the other two are shut,
 		// because the window's question is "what needs me", and a screen

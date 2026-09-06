@@ -1,4 +1,4 @@
-package ui
+package keymap
 
 // What can be done to the thing under the cursor. The key bar, the help
 // overlay and the task menu are all shortlists of one answer, computed here.
@@ -85,7 +85,7 @@ func (k Keys) Affordances(t view.Task, s Conditions) []Affordance {
 		// description is.
 		{Key: k.Open, OK: true},
 		answer(k.Pause, whyNotPause(t, s)),
-		answer(k.Resume, whyNotResume(t)),
+		answer(k.Resume, WhyNotResume(t)),
 		answer(k.Skip, whyNotSkip(t)),
 		answer(k.Cancel, whyNotCancel(t)),
 		answer(k.Requeue, whyNotRequeue(t)),
@@ -120,18 +120,18 @@ func about(name, value string) words.Arg {
 	return words.Arg{Name: name, Value: value}
 }
 
-// parked is a live run stopped at a phase boundary — held because the reader
+// Parked is a live run stopped at a phase boundary — held because the reader
 // asked, or waiting because the flow asked. internal/view keeps the two
 // apart because the row says different things about them; here they are one
 // state, because r is what lets go of either.
-func parked(t view.Task) bool {
+func Parked(t view.Task) bool {
 	return t.Live == view.LiveHeld && (t.Reason.Key == view.ReasonHeld || t.Reason.Key == view.ReasonGate)
 }
 
-// working is a run inside a phase right now, as opposed to one stopped at
+// Working is a run inside a phase right now, as opposed to one stopped at
 // the boundary of one.
-func working(t view.Task) bool {
-	return t.Live == view.LiveHeld && !parked(t)
+func Working(t view.Task) bool {
+	return t.Live == view.LiveHeld && !Parked(t)
 }
 
 // unknown is a task whose run marker is there and cannot be read. Every verb
@@ -156,7 +156,7 @@ func started(t view.Task) bool {
 func whyNotPause(t view.Task, s Conditions) words.Arg {
 	switch {
 	case unknown(t):
-		return because(whyMarkerUnreadable)
+		return because(WhyMarkerUnreadable)
 	case t.Live != view.LiveHeld:
 		return because(whyPauseNotRunning)
 	case t.Reason.Key == view.ReasonHeld:
@@ -174,14 +174,14 @@ func whyNotPause(t view.Task, s Conditions) words.Arg {
 	return words.Arg{}
 }
 
-// whyNotResume refuses a running task differently from an idle one, because
+// WhyNotResume refuses a running task differently from an idle one, because
 // "this one is running" is an answer and "you cannot do that" is not.
-func whyNotResume(t view.Task) words.Arg {
+func WhyNotResume(t view.Task) words.Arg {
 	switch {
-	case parked(t):
+	case Parked(t):
 		return words.Arg{}
 	case unknown(t):
-		return because(whyMarkerUnreadable)
+		return because(WhyMarkerUnreadable)
 	case t.Live == view.LiveHeld:
 		return because(whyResumeStillRunning)
 	}
@@ -200,10 +200,10 @@ func whyNotResume(t view.Task) words.Arg {
 // skip says it does.
 func whyNotSkip(t view.Task) words.Arg {
 	switch {
-	case parked(t):
+	case Parked(t):
 		return words.Arg{}
 	case unknown(t):
-		return because(whyMarkerUnreadable)
+		return because(WhyMarkerUnreadable)
 	case t.Live == view.LiveHeld:
 		return because(whySkipStillRunning)
 	}
@@ -216,7 +216,7 @@ func whyNotSkip(t view.Task) words.Arg {
 // worktree and still holding a slot.
 func whyNotCancel(t view.Task) words.Arg {
 	if unknown(t) {
-		return because(whyMarkerUnreadable)
+		return because(WhyMarkerUnreadable)
 	}
 
 	if t.Live == view.LiveHeld {
@@ -241,7 +241,7 @@ func whyNotCancel(t view.Task) words.Arg {
 func whyNotRequeue(t view.Task) words.Arg {
 	switch {
 	case unknown(t):
-		return because(whyMarkerUnreadable)
+		return because(WhyMarkerUnreadable)
 	case view.BandOf(t) == view.ToDo:
 		return because(whyRequeueAlreadyToDo)
 	}
@@ -258,8 +258,8 @@ func whyNotTake(t view.Task, s Conditions) words.Arg {
 	case !started(t):
 		return because(whyTakeNeverRun)
 	case unknown(t):
-		return because(whyMarkerUnreadable)
-	case working(t):
+		return because(WhyMarkerUnreadable)
+	case Working(t):
 		return because(whyTakeStillRunning)
 	case !s.CanResume:
 		return about(whyTakeEngineCannotResume, t.Engine)
@@ -271,7 +271,7 @@ func whyNotTake(t view.Task, s Conditions) words.Arg {
 // whyNotHand answers for handing the keyboard back, and it asks the one
 // question the previous plan could not: did this reader take it.
 //
-// Until Conditions carried Taken, h was offered on any parked run — including
+// Until Conditions carried Taken, h was offered on any Parked run — including
 // one that was merely paused, where "hand the keyboard back" names a keyboard
 // nobody had.
 //
@@ -283,7 +283,7 @@ func whyNotTake(t view.Task, s Conditions) words.Arg {
 // is reached there is a name to put in it.
 func whyNotHand(t view.Task, s Conditions) words.Arg {
 	switch {
-	case !parked(t):
+	case !Parked(t):
 		return because(whyHandBackNotStopped)
 	case !s.CanResume:
 		return about(whyHandBackEngineCannotResume, t.Engine)
@@ -310,7 +310,7 @@ func whyNotMarkRead(t view.Task) words.Arg {
 // whyNotDelete answers for deleting a task. A running task must be cancelled first.
 func whyNotDelete(t view.Task) words.Arg {
 	if unknown(t) {
-		return because(whyMarkerUnreadable)
+		return because(WhyMarkerUnreadable)
 	}
 
 	if t.Live == view.LiveHeld {

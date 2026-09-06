@@ -12,6 +12,7 @@ package ui
 import (
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
@@ -59,7 +60,7 @@ func (m Model) moving() bool {
 // what the screen animates and what the keys act on cannot drift apart.
 func (m Model) anyWorking() bool {
 	for _, t := range m.board.Tasks {
-		if working(t) {
+		if keymap.Working(t) {
 			return true
 		}
 	}

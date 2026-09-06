@@ -99,7 +99,7 @@ func (m Model) helpRows(h, w int) []string {
 	//
 	// The sentences are whole. They are longer than a column, so they are
 	// wrapped here and the continuation rows are given no key of their own.
-	bindings := m.keys.taskVerbs()
+	bindings := m.keys.TaskVerbs()
 
 	verbs := make([][2]string, 0, len(bindings))
 	for _, b := range bindings {

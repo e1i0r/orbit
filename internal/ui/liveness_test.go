@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -24,15 +25,15 @@ func unreadable() view.Task {
 func TestEveryVerbAboutAProcessRefusesAnUnreadableMarker(t *testing.T) {
 	english, _ := printers(t)
 
-	keys := NewKeys(english)
+	keys := keymap.New(english)
 	for _, verb := range []string{"p", "r", "x", "t", "D"} {
-		a := find(keys.Affordances(unreadable(), Conditions{CanResume: true}), verb)
+		a := find(keys.Affordances(unreadable(), keymap.Conditions{CanResume: true}), verb)
 		if a.OK {
 			t.Errorf("%q is offered on a task nobody can say anything about", verb)
 		}
 
-		if a.WhyNot.Name != whyMarkerUnreadable {
-			t.Errorf("%q refuses with %q, want %q", verb, a.WhyNot.Name, whyMarkerUnreadable)
+		if a.WhyNot.Name != keymap.WhyMarkerUnreadable {
+			t.Errorf("%q refuses with %q, want %q", verb, a.WhyNot.Name, keymap.WhyMarkerUnreadable)
 		}
 	}
 }

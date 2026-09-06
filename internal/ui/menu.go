@@ -21,6 +21,7 @@ import (
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
@@ -76,7 +77,7 @@ type menuEntry struct {
 	reason string // why, when dim
 	head   bool   // names the block below it; not a thing to choose
 
-	aff  *Affordance
+	aff  *keymap.Affordance
 	cmd  *Command
 	args []string // what cmd is run with, for a command the entry can answer for
 	says bool     // cmd takes a message: choosing opens the box to type it in

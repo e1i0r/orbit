@@ -1,4 +1,4 @@
-package ui
+package keymap
 
 // What can be done to the thing under the cursor, band by band. The key bar
 // hides a refused verb and the menu shows it with the reason, so a refusal
@@ -43,7 +43,7 @@ func everyCase() []affordanceCase {
 		settings: can,
 		offered:  []string{"enter", "D"},
 	}, {
-		name:     "a run working in a phase",
+		name:     "a run Working in a phase",
 		task:     view.Task{ID: "ACME-2", Band: view.Running, Phase: "implement", Live: view.LiveHeld, Attempt: 1, Engine: "claude"},
 		settings: can,
 		offered:  []string{"enter", "p", "x", "b"},
@@ -121,7 +121,7 @@ func verbsOffered(as []Affordance) []string {
 
 func TestEachBandOffersTheVerbsThatMeanSomethingForIt(t *testing.T) {
 	english, _ := printers(t)
-	keys := NewKeys(english)
+	keys := New(english)
 
 	for _, c := range everyCase() {
 		t.Run(c.name, func(t *testing.T) {
@@ -138,7 +138,7 @@ func TestEachBandOffersTheVerbsThatMeanSomethingForIt(t *testing.T) {
 // whose entries reorder is one the reader has to read rather than reach for.
 func TestTheMenuIsTheSameListForEveryTask(t *testing.T) {
 	english, _ := printers(t)
-	keys := NewKeys(english)
+	keys := New(english)
 
 	var want []string
 
@@ -166,7 +166,7 @@ func TestTheMenuIsTheSameListForEveryTask(t *testing.T) {
 func TestEveryRefusalCarriesAReasonBothCataloguesCanSay(t *testing.T) {
 	english, spanish := printers(t)
 
-	keys := NewKeys(english)
+	keys := New(english)
 	for _, c := range everyCase() {
 		for _, a := range keys.Affordances(c.task, c.settings) {
 			verb := a.Key.Keys()[0]
@@ -218,7 +218,7 @@ func find(as []Affordance, verb string) Affordance {
 // is one English word in the middle of a Spanish one.
 func TestARefusalNamesWhatToDoNext(t *testing.T) {
 	english, _ := printers(t)
-	keys := NewKeys(english)
+	keys := New(english)
 	gate := view.Task{Band: view.NeedsYou, Live: view.LiveHeld, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonGate}}
 
 	held := find(keys.Affordances(view.Task{Band: view.Running, Live: view.LiveHeld, Attempt: 1, Reason: view.Reason{Key: view.ReasonHeld}}, Conditions{}), "p")
@@ -242,7 +242,7 @@ func TestARefusalNamesWhatToDoNext(t *testing.T) {
 // button and says why. Saying why means saying which engine.
 func TestTheEngineThatCannotResumeIsNamed(t *testing.T) {
 	english, spanish := printers(t)
-	keys := NewKeys(english)
+	keys := New(english)
 
 	paused := view.Task{Band: view.Running, Live: view.LiveHeld, Attempt: 1, Engine: "codex", Reason: view.Reason{Key: view.ReasonHeld}}
 	for _, verb := range []string{"t", "h"} {
@@ -268,29 +268,10 @@ func TestTheEngineThatCannotResumeIsNamed(t *testing.T) {
 // that engine. A standing bool — an AND over every engine configured — makes
 // a build with two engines, one of which cannot resume, refuse t on every
 // task and tell each of them that its own engine is the one at fault.
-func TestTheEngineIsAskedAboutOneTaskAtATime(t *testing.T) {
-	m, _ := testModel(t, 100, 30)
-
-	m.opts.CanResume = func(engine string) bool { return engine == "claude" }
-	for engine, want := range map[string]bool{"claude": true, "codex": false, "": false} {
-		if got := m.conditions(view.Task{ID: "ACME-1", Engine: engine}).CanResume; got != want {
-			t.Errorf("a task on %q is told CanResume=%v, want %v", engine, got, want)
-		}
-	}
-
-	m.opts.CanResume = nil
-	if m.conditions(view.Task{ID: "ACME-1", Engine: "claude"}).CanResume {
-		t.Error("a window with no way to ask about engines answered yes")
-	}
-}
-
-// TestAskIsListedAndRefused is the tool being honest about its own gap in
-// the same voice it uses about an engine's. The verb exists in the menu, it
-// is refused, and the reason says what to do instead.
 func TestAskIsListedAndRefused(t *testing.T) {
 	english, _ := printers(t)
 
-	keys := NewKeys(english)
+	keys := New(english)
 	for _, c := range everyCase() {
 		ask := find(keys.Affordances(c.task, c.settings), "a")
 		if ask.OK {

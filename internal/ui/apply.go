@@ -18,6 +18,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/ui/layout"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
@@ -231,7 +232,7 @@ func (m Model) language(lang string) Model {
 	}
 
 	m.opts.Words = words.For(lang)
-	m.keys = NewKeys(m.opts.Words)
+	m.keys = keymap.New(m.opts.Words)
 
 	return m.replan().syncPanes()
 }

@@ -1,4 +1,4 @@
-package ui
+package keymap
 
 // The key map, which is also the help overlay: bubbles/help renders from the
 // same key.Binding values the window matches against, so a gesture cannot be
@@ -31,7 +31,7 @@ type Keys struct {
 	Flows, Knowledge                                                                              key.Binding
 }
 
-// NewKeys builds the key map, with every description translated.
+// New builds the key map, with every description translated.
 //
 // The Printer is a parameter and not a package variable, which is the whole
 // discipline internal/words exists to enforce; the cost is that the key map
@@ -44,7 +44,7 @@ type Keys struct {
 // keyboard" is seventeen cells before anybody translates it. The key bar
 // drops whole hints rather than truncating them, so the hints are not
 // width-constrained the way a column is.
-func NewKeys(p *words.Printer) Keys {
+func New(p *words.Printer) Keys {
 	return Keys{
 		Up:    binding("↑", p.T("key.up", "up"), "up", "k"),
 		Down:  binding("↓", p.T("key.down", "down"), "down", "j"),
@@ -130,14 +130,14 @@ func NewKeys(p *words.Printer) Keys {
 	}
 }
 
-// taskVerbs is the keys that do something to one task, in the order
+// TaskVerbs is the keys that do something to one task, in the order
 // Affordances lists them, with the two that are not verbs of the run — the
 // menu that offers them all and the editor — at either end.
 //
 // It is a list of its own because the cheat sheet needs the verbs and
 // Affordances needs a task to answer about. The two orders are the same on
 // purpose: a reader who has read one is not learning the other from scratch.
-func (k Keys) taskVerbs() []key.Binding {
+func (k Keys) TaskVerbs() []key.Binding {
 	return []key.Binding{
 		k.Menu, k.Pause, k.Resume, k.Skip, k.Cancel, k.Requeue,
 		k.Take, k.Hand, k.Ask, k.MarkRead, k.Delete, k.Edit,

@@ -1,4 +1,4 @@
-package ui
+package keymap
 
 // The sentences a refused verb says, and the keys they are catalogued under.
 //
@@ -52,7 +52,7 @@ const (
 	// is one: nobody knows what holds this task. Five sentences would be
 	// five ways of saying the same thing to a reader whose next move is the
 	// same in all five.
-	whyMarkerUnreadable = "why.marker_unreadable"
+	WhyMarkerUnreadable = "why.marker_unreadable"
 )
 
 // engineArg names the one placeholder any of these sentences uses.
@@ -109,7 +109,7 @@ func (a Affordance) Why(p *words.Printer) string {
 		return p.T("why.read_already_read", "this task is already marked read")
 	case whyDeleteRunning:
 		return p.T("why.delete_running", "cannot delete a running task; cancel it first")
-	case whyMarkerUnreadable:
+	case WhyMarkerUnreadable:
 		return p.T("why.marker_unreadable", "orbit cannot read this task's run marker, so it cannot tell whether a phase is running; look at the run file in the task's directory")
 	}
 

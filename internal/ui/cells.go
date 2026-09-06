@@ -18,6 +18,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/ui/layout"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
@@ -93,7 +94,7 @@ func (m Model) drawRow(r row, w int, selected bool) string {
 	switch {
 	case selected:
 		mark = theme.Paint(theme.Live).Bold(true).Render("▸ ")
-	case working(r.task):
+	case keymap.Working(r.task):
 		mark = theme.Paint(theme.Live).Render(m.spin() + " ")
 	}
 

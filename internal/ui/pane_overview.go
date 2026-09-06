@@ -3,6 +3,7 @@ package ui
 import (
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -121,7 +122,7 @@ func (m Model) overviewHead(t view.Task, w int) []string {
 func (m Model) waitingHint(t view.Task) string {
 	p := m.opts.Words
 
-	if whyNotResume(t).Name != "" {
+	if keymap.WhyNotResume(t).Name != "" {
 		return p.T("overview.start_hint",
 			"press '{cli}' to open an interactive session, '{ask}' to leave feedback, '{start}' to start a run",
 			about("cli", m.keys.CLI.Help().Key),
@@ -181,7 +182,7 @@ func (m Model) bandGlyph(t view.Task) string {
 	case view.Done:
 		return "✓"
 	case view.Running:
-		return strings.TrimSpace(m.runGlyph(working(t)))
+		return strings.TrimSpace(m.runGlyph(keymap.Working(t)))
 	case view.NeedsYou:
 		return "▲"
 	case view.ToDo:
