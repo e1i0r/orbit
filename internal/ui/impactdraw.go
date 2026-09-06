@@ -28,18 +28,19 @@ func (m Model) impactRows() []string {
 	switch {
 	case m.opts.Reader == nil:
 		return []string{Paint(Dim).Render(p.T("impact.no_port", "this build cannot read the history"))}
-	case m.impactAsking && !m.impactKnown:
+	case m.weigh.reachAsking && !m.weigh.reachKnown:
 		return []string{m.spinner(Live) + Paint(Live).Render(p.T("impact.reading", "reading the history…"))}
-	case !m.impactKnown:
+	case !m.weigh.reachKnown:
 		return []string{Paint(Dim).Render(p.T("impact.not_yet", "nothing read yet"))}
-	case m.impactErr != nil:
+	case m.weigh.reachErr != nil:
 		return []string{Paint(Bad).Render(p.T("impact.failed", "the history could not be read: {err}",
-			about("err", m.errSaid(m.impactErr))))}
-	case len(m.impact.Changed) == 0 && m.lastDelta() == nil:
+			about("err", m.errSaid(m.weigh.reachErr))))}
+	case len(m.weigh.reach.Changed) == 0 && m.lastDelta() == nil && !m.weigh.checksKnown:
 		return []string{Paint(Dim).Render(p.T("impact.no_changes", "this task changed no files, so there is nothing to weigh"))}
 	}
 
-	rows := m.impactCoupled()
+	rows := m.compareRows()
+	rows = append(rows, m.impactCoupled()...)
 	rows = append(rows, m.impactContracts()...)
 
 	return append(rows, m.impactDelta()...)
@@ -55,20 +56,20 @@ func (m Model) impactCoupled() []string {
 		"files this repository has committed together with the ones this task changed, and that it did not touch this time."))...)
 	rows = append(rows, m.explains(p.T("impact.reach_source",
 		"read from the last {n} commits. It is what the history does, not a rule: a file left out on purpose is the normal case.",
-		about("n", strconv.Itoa(m.impact.Commits))))...)
+		about("n", strconv.Itoa(m.weigh.reach.Commits))))...)
 	rows = append(rows, "")
 
-	if len(m.impact.Coupled) == 0 {
+	if len(m.weigh.reach.Coupled) == 0 {
 		return append(rows, Paint(OK).Render("  "+p.T("impact.reach_none",
 			"nothing else follows these files often enough to mention"))+"\n", "")
 	}
 
 	changed := map[string][]string{}
-	for _, c := range m.impact.Coupled {
+	for _, c := range m.weigh.reach.Coupled {
 		changed[c.With] = append(changed[c.With], impactLine(m, c))
 	}
 
-	for _, file := range m.impact.Changed {
+	for _, file := range m.weigh.reach.Changed {
 		lines, held := changed[file]
 		if !held {
 			continue
@@ -114,7 +115,7 @@ func impactLine(m Model, c repo.Coupled) string {
 // say they hold.
 func (m Model) impactContracts() []string {
 	p := m.opts.Words
-	if len(m.impact.Contracts) == 0 {
+	if len(m.weigh.reach.Contracts) == 0 {
 		return nil
 	}
 
@@ -127,7 +128,7 @@ func (m Model) impactContracts() []string {
 
 	var order []string
 
-	for _, c := range m.impact.Contracts {
+	for _, c := range m.weigh.reach.Contracts {
 		if _, seen := byFile[c.File]; !seen {
 			order = append(order, c.File)
 		}

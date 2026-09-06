@@ -12,11 +12,31 @@ package ui
 // and this screen redraws ten times a second.
 
 import (
+	"time"
+
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/view"
 )
+
+// weighed is what the impact pane holds.
+//
+// The three fields around each answer draw the distinction the diff's do:
+// asked for, out, answered, refused. Nothing found and not looked yet are
+// different facts, and a pane that folded them into one would tell a reader
+// a repository has no coupling when what happened is that git timed out.
+type weighed struct {
+	reach       repo.Impact
+	reachErr    error
+	reachKnown  bool
+	reachAsking bool
+	checks      []repo.Divergence
+	checksErr   error
+	checksKnown bool
+	running     bool
+	since       time.Time
+}
 
 // impactMsg is the reading, come back.
 type impactMsg struct {
@@ -32,7 +52,7 @@ type impactMsg struct {
 // package may not name that. Reading the repository instead would weigh
 // whatever the reader happens to have uncommitted in their own checkout.
 func (m Model) askImpact() (Model, tea.Cmd) {
-	if m.opts.Reader == nil || m.detail == "" || m.impactKnown || m.impactAsking {
+	if m.opts.Reader == nil || m.detail == "" || m.weigh.reachKnown || m.weigh.reachAsking {
 		return m, nil
 	}
 
@@ -41,7 +61,7 @@ func (m Model) askImpact() (Model, tea.Cmd) {
 		return m, nil
 	}
 
-	m.impactAsking = true
+	m.weigh.reachAsking = true
 
 	return m, impactOf(m.opts.Reader, t)
 }
@@ -66,15 +86,15 @@ func (m Model) tookImpact(msg impactMsg) Model {
 		return m
 	}
 
-	m.impact, m.impactErr, m.impactKnown, m.impactAsking = msg.impact, msg.err, true, false
+	m.weigh.reach, m.weigh.reachErr, m.weigh.reachKnown, m.weigh.reachAsking = msg.impact, msg.err, true, false
 
 	return m.syncPanes()
 }
 
 // forgetImpact drops the reading when the view moves to another task.
 func (m Model) forgetImpact() Model {
-	m.impact, m.impactErr = repo.Impact{}, nil
-	m.impactKnown, m.impactAsking = false, false
+	m.weigh.reach, m.weigh.reachErr = repo.Impact{}, nil
+	m.weigh.reachKnown, m.weigh.reachAsking = false, false
 
 	return m
 }
@@ -83,9 +103,9 @@ func (m Model) forgetImpact() Model {
 // tab. Nothing found draws no mark: a zero on a tab strip is a number nobody
 // needs to read.
 func (m Model) impactWarnings() int {
-	if !m.impactKnown || m.impactErr != nil {
+	if !m.weigh.reachKnown || m.weigh.reachErr != nil {
 		return 0
 	}
 
-	return len(m.impact.Coupled)
+	return len(m.weigh.reach.Coupled)
 }

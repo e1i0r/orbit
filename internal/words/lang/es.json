@@ -4332,6 +4332,82 @@
     "impact.delta_instead": {
       "source": "considered and not taken",
       "value": "considerado y descartado"
+    },
+    "compare.title": {
+      "source": "WHAT THE CHECKS SAY, BOTH SIDES",
+      "value": "LO QUE DICEN LOS CHECKS, DE LOS DOS LADOS"
+    },
+    "compare.about": {
+      "source": "the flow's own checks, run on the branch this work was cut from and on the work itself. An exit code decided every line below — nothing here is anybody's reading.",
+      "value": "los checks del propio flujo, corridos en la rama de la que salió este trabajo y en el trabajo mismo. Cada línea de abajo la decidió un exit code — aquí no hay lectura de nadie."
+    },
+    "compare.out": {
+      "source": "running… {secs}",
+      "value": "corriendo… {secs}"
+    },
+    "compare.none_ran": {
+      "source": "no checks ran",
+      "value": "no corrió ningún check"
+    },
+    "compare.no_checks_here": {
+      "source": "this task's flow carries no checks, so there is nothing to run on either side",
+      "value": "el flujo de esta tarea no trae checks, así que no hay nada que correr de ninguno de los dos lados"
+    },
+    "compare.offer": {
+      "source": "[r] runs these on both sides — the base is checked out on its own and thrown away afterwards",
+      "value": "[r] los corre de los dos lados — la base se saca en un checkout aparte y se tira después"
+    },
+    "compare.same": {
+      "source": "the same on both sides",
+      "value": "igual de los dos lados"
+    },
+    "compare.broke": {
+      "source": "passed before, fails now",
+      "value": "pasaba antes, ahora falla"
+    },
+    "compare.fixed": {
+      "source": "failed before, passes now",
+      "value": "fallaba antes, ahora pasa"
+    },
+    "compare.base_said": {
+      "source": "base:     {said}",
+      "value": "base:     {said}"
+    },
+    "compare.now_said": {
+      "source": "worktree: {said}",
+      "value": "worktree: {said}"
+    },
+    "compare.could_not_run": {
+      "source": "could not be run: {err}",
+      "value": "no se pudo correr: {err}"
+    },
+    "compare.passed": {
+      "source": "passed",
+      "value": "pasó"
+    },
+    "compare.exited": {
+      "source": "exit {code}",
+      "value": "salió {code}"
+    },
+    "compare.no_checks": {
+      "source": "this task's flow has no checks, so there is nothing to run on either side",
+      "value": "el flujo de esta tarea no tiene checks, así que no hay nada que correr de ninguno de los dos lados"
+    },
+    "compare.running": {
+      "source": "running {n} checks on both sides",
+      "value": "corriendo {n} checks de los dos lados"
+    },
+    "compare.failed": {
+      "source": "the checks could not be run: {err}",
+      "value": "no se pudieron correr los checks: {err}"
+    },
+    "compare.done": {
+      "source": "{n} of {total} checks answered differently",
+      "value": "{n} de {total} checks respondieron distinto"
+    },
+    "wait.compare": {
+      "source": "running the checks on both sides of {id}",
+      "value": "corriendo los checks de los dos lados de {id}"
     }
   }
 }

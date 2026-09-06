@@ -12,7 +12,6 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/board"
-	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/ui/layout"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
@@ -266,15 +265,10 @@ type Model struct {
 	collapsedFiles    map[string]bool
 	diffFilePicker    bool
 	diffFileCursor    int
-	// impact is what the history says this task's change reaches beyond the
-	// files it touched, impactKnown whether the reading has landed at all,
-	// and impactErr what it said when it could not be taken. The three are
-	// kept apart for the reason the diff's three are: nothing found and not
-	// looked yet are different facts.
-	impact       repo.Impact
-	impactErr    error
-	impactKnown  bool
-	impactAsking bool
+	// weigh is the impact pane: what the history says this change reaches,
+	// and the flow's own checks run on both sides of it. Its shape is in
+	// impact.go, beside what reads it.
+	weigh weighed
 
 	// following is whether the log tab is taking every new entry as it
 	// arrives. It is armed when the view opens and released the moment the
