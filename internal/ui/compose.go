@@ -82,6 +82,13 @@ type composeState struct {
 	reading        bool
 	readAt         time.Time
 	startAfterRead bool
+	// asked is whether the tracker has already answered about this issue,
+	// however it answered. An issue with no description at all is a
+	// successful read that changes nothing, and without this the form would
+	// see a body it still does not have, ask again, and go on asking for as
+	// long as the reader left it open — one HTTPS call per turn of the
+	// loop.
+	asked bool
 
 	flows   []string
 	flowIdx int

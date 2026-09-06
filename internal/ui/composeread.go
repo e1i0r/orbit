@@ -18,6 +18,12 @@ import (
 
 // issueReadMsg is the issue, read.
 type issueReadMsg struct {
+	// id is the issue that was asked about. The answer is written in only
+	// if the form is still on that issue: a reader who pressed esc, or who
+	// reopened the form for something else, would otherwise have a reply to
+	// a question they left behind land in the middle of what they are
+	// typing now — the same guard every late answer in update.go carries.
+	id    string
 	issue tracker.Issue
 	err   error
 }
@@ -27,7 +33,7 @@ type issueReadMsg struct {
 func (m Model) needsBody() bool {
 	iss := m.compose.parsedIssue
 
-	return iss != nil && m.compose.readable && iss.Description == "" && !m.compose.reading
+	return iss != nil && m.compose.readable && iss.Description == "" && !m.compose.reading && !m.compose.asked
 }
 
 // readIssue asks the tracker for the body, and says so while it waits.
@@ -44,7 +50,7 @@ func (m Model) readIssue() (Model, tea.Cmd) {
 	return next, tea.Batch(frame, func() tea.Msg {
 		got, err := tracker.Read(context.Background(), iss)
 
-		return issueReadMsg{issue: got, err: err}
+		return issueReadMsg{id: iss.ID, issue: got, err: err}
 	})
 }
 
@@ -56,7 +62,11 @@ func (m Model) readIssue() (Model, tea.Cmd) {
 // those words. So the form comes back with what it had, and the same key
 // they pressed will now be refused with a sentence they can act on.
 func (m Model) tookIssue(msg issueReadMsg) (tea.Model, tea.Cmd) {
-	m.compose.reading = false
+	if m.compose.parsedIssue == nil || m.compose.parsedIssue.ID != msg.id {
+		return m, nil
+	}
+
+	m.compose.reading, m.compose.asked = false, true
 
 	if msg.err != nil {
 		m.compose.readable = false

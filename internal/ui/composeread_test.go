@@ -84,7 +84,7 @@ func TestABodyThatCanBeReadIsReadBeforeTheTaskIsWritten(t *testing.T) {
 	// What comes back goes into the form.
 	read := tracker.Issue{Kind: "linear", ID: "FRA-71", Title: "the real title", Description: "the real body"}
 
-	done, _ := next.tookIssue(issueReadMsg{issue: read})
+	done, _ := next.tookIssue(issueReadMsg{id: "FRA-71", issue: read})
 
 	after := asModel(t, done)
 	if after.compose.reading {
@@ -101,7 +101,7 @@ func TestAnIssueThatCouldNotBeReadFallsBackToAskingTheReader(t *testing.T) {
 	m := urlForm(t, true, tracker.Issue{Kind: "linear", ID: "FRA-71", Title: "the slug"})
 	m.compose.reading = true
 
-	next, _ := m.tookIssue(issueReadMsg{err: tracker.ErrNoKey})
+	next, _ := m.tookIssue(issueReadMsg{id: "FRA-71", err: tracker.ErrNoKey})
 
 	after := asModel(t, next)
 	if after.compose.readable {
@@ -109,6 +109,71 @@ func TestAnIssueThatCouldNotBeReadFallsBackToAskingTheReader(t *testing.T) {
 	}
 
 	if !strings.Contains(after.message, "could not read") {
+		t.Errorf("the band says %q", after.message)
+	}
+}
+
+// TestAnIssueWithNoBodyIsAskedForOnce. A tracker that answers with an empty
+// description is answering successfully, and the form used to read that as
+// "no body yet": it asked again, and again, one call to the tracker for
+// every turn, for as long as the form stayed open.
+func TestAnIssueWithNoBodyIsAskedForOnce(t *testing.T) {
+	m := urlForm(t, true, tracker.Issue{Kind: "linear", ID: "FRA-71", Title: "the slug"})
+	m.compose.reading = true
+
+	next, _ := m.tookIssue(issueReadMsg{id: "FRA-71", issue: tracker.Issue{
+		Kind: "linear", ID: "FRA-71", Title: "the slug",
+	}})
+
+	after := asModel(t, next)
+	if after.needsBody() {
+		t.Error("the form would ask the tracker about that issue again")
+	}
+
+	if !strings.Contains(after.message, "no description") {
+		t.Errorf("the band says %q", after.message)
+	}
+}
+
+// TestAnAnswerAboutAnotherIssueIsDropped. The reader pressed esc, or opened
+// the form again for something else, while the tracker was still answering:
+// what comes back belongs to a question they have left behind.
+func TestAnAnswerAboutAnotherIssueIsDropped(t *testing.T) {
+	m := urlForm(t, true, tracker.Issue{Kind: "linear", ID: "FRA-71", Title: "the slug"})
+	m.compose.reading = true
+
+	next, _ := m.tookIssue(issueReadMsg{id: "FRA-70", issue: tracker.Issue{
+		Kind: "linear", ID: "FRA-70", Title: "another", Description: "another body",
+	}})
+
+	after := asModel(t, next)
+	if strings.Contains(after.compose.text.String(), "another body") {
+		t.Errorf("an answer about another issue landed in the form: %q", after.compose.text.String())
+	}
+
+	if !after.compose.reading {
+		t.Error("an answer about another issue stopped this one's wait")
+	}
+}
+
+// TestASecondPressWhileReadingWritesNothing. Both guards are asleep in that
+// window — the machine says it can read the issue, and a read is already out
+// — so the second press used to write the task with its title as the whole
+// body, which is what those guards exist to stop.
+func TestASecondPressWhileReadingWritesNothing(t *testing.T) {
+	m := urlForm(t, true, tracker.Issue{Kind: "linear", ID: "FRA-71", Title: "the slug"})
+	m.compose.reading = true
+	m.compose.id.setValue("FRA-71")
+	m.compose.text.setValue("the slug")
+
+	next, _ := m.composeSubmit(false)
+
+	after := asModel(t, next)
+	if after.watching != nil {
+		t.Error("a second press while the tracker was answering ran the command")
+	}
+
+	if !strings.Contains(after.message, "still reading") {
 		t.Errorf("the band says %q", after.message)
 	}
 }

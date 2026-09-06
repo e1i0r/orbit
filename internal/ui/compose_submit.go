@@ -12,6 +12,16 @@ import (
 func (m Model) composeSubmit(startNow bool) (tea.Model, tea.Cmd) {
 	p := m.opts.Words
 
+	// A second press while the tracker is answering is not a second task.
+	// Both guards below are asleep in that window — onlyALink because the
+	// machine says it can read the issue, and needsBody because a read is
+	// already out — so without this the form would write the task with the
+	// title as its whole body, which is the one thing those two exist to
+	// stop.
+	if m.compose.reading {
+		return m.say(p.T("compose.still_reading", "still reading the issue; give it a moment")), nil
+	}
+
 	path := strings.TrimSpace(m.compose.repoPath)
 	id := strings.TrimSpace(m.compose.id.String())
 	text := strings.TrimSpace(m.compose.text.String())
@@ -45,6 +55,14 @@ func (m Model) composeSubmit(startNow bool) (tea.Model, tea.Cmd) {
 	case text == "":
 		return m.say(p.T("compose.text_required",
 			"the task needs something written in it")), nil
+	case m.emptyIssue(text):
+		// The tracker answered and the issue had no description in it. It
+		// is a name, the same as a link is, and it is worth its own
+		// sentence: nothing is wrong with the key or the connection, and a
+		// reader told "orbit cannot read this issue" would go looking for
+		// a fault that is not there.
+		return m.say(p.T("compose.issue_empty",
+			"that issue has no description; write what has to be done")), nil
 	case m.onlyALink(text):
 		// A URL and a title are a name, not a task. Orbit cannot read the
 		// body of this issue on this machine, and a headless run cannot
@@ -125,6 +143,19 @@ func (m Model) selectPending() Model {
 	}
 
 	return m
+}
+
+// emptyIssue is whether the tracker answered about this issue and there was
+// nothing written in it — so all the task would carry is its own title.
+func (m Model) emptyIssue(text string) bool {
+	iss := m.compose.parsedIssue
+	if iss == nil || !m.compose.asked || iss.Description != "" {
+		return false
+	}
+
+	written := strings.TrimSpace(text)
+
+	return written == "" || written == strings.TrimSpace(iss.Title)
 }
 
 // onlyALink is whether all this task would carry is what the URL itself
