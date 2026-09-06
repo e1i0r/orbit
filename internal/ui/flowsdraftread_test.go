@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/prompt"
 )
 
 // TestThePromptCarriesAWholeExample. A list of field names is something a
@@ -17,7 +19,7 @@ import (
 // something it copies — so the example is the specification, and it has to
 // be a flow this build would actually accept.
 func TestThePromptCarriesAWholeExample(t *testing.T) {
-	asked := flowDraftPrompt("un loop hasta que pasen las pruebas", []string{"agy", "claude"})
+	asked := prompt.FlowDraft("un loop hasta que pasen las pruebas", []string{"agy", "claude"})
 
 	fl, err := decodeDraft(asked)
 	if err != nil {

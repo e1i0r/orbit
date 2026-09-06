@@ -17,6 +17,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/prompt"
 )
 
 // flowDraftedMsg is what the engine answered, decoded.
@@ -156,7 +157,7 @@ func (m Model) draftFlow() (Model, tea.Cmd) {
 	engines := m.engineNames()
 
 	send := func() tea.Msg {
-		out, err := ask(engineName, model, flowDraftPrompt(said, engines))
+		out, err := ask(engineName, model, prompt.FlowDraft(said, engines))
 		if err != nil {
 			return flowDraftedMsg{id: id, err: err}
 		}
@@ -175,7 +176,7 @@ func (m Model) draftFlow() (Model, tea.Cmd) {
 		// The engine that wrote it is the one thing that knows what it
 		// meant, so it is asked, once, rather than the reader being handed
 		// a decoder error about a field they never typed.
-		out, retryErr := ask(engineName, model, mendDraftPrompt(out, err))
+		out, retryErr := ask(engineName, model, prompt.MendDraft(out, err))
 		if retryErr != nil {
 			return flowDraftedMsg{id: id, err: err}
 		}

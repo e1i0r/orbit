@@ -1,6 +1,6 @@
-package ui
+package prompt
 
-// generatePhasePrompt's whole keyword table: one case per branch, whether it
+// Phase's whole keyword table: one case per branch, whether it
 // is reading the reader's own draft or falling back to the phase's name. The
 // drafts are in either language and the instruction that comes back is in
 // English, because it is read by an engine and not by the reader.
@@ -23,9 +23,9 @@ func TestGeneratePhasePromptFromDraft(t *testing.T) {
 		{"default fallback", "ship the release notes", "architecture and quality rules"},
 	}
 	for _, c := range cases {
-		got := generatePhasePrompt(c.input, "some-phase", "some-flow")
+		got := Phase(c.input, "some-phase", "some-flow")
 		if !strings.Contains(got, c.wantSub) {
-			t.Errorf("%s: generatePhasePrompt(%q) = %q, want it to contain %q", c.name, c.input, got, c.wantSub)
+			t.Errorf("%s: Phase(%q) = %q, want it to contain %q", c.name, c.input, got, c.wantSub)
 		}
 
 		if !strings.Contains(got, c.input) {
@@ -50,20 +50,20 @@ func TestGeneratePhasePromptFromPhaseName(t *testing.T) {
 		{"remediate", "Fix the failures"},
 	}
 	for _, c := range cases {
-		got := generatePhasePrompt("", c.phase, "some-flow")
+		got := Phase("", c.phase, "some-flow")
 		if !strings.Contains(got, c.wantSub) {
-			t.Errorf("phase %q: generatePhasePrompt = %q, want it to contain %q", c.phase, got, c.wantSub)
+			t.Errorf("phase %q: Phase = %q, want it to contain %q", c.phase, got, c.wantSub)
 		}
 	}
 }
 
 func TestGeneratePhasePromptDefaultFallback(t *testing.T) {
-	withFlow := generatePhasePrompt("", "mystery-phase", "my-flow")
+	withFlow := Phase("", "mystery-phase", "my-flow")
 	if !strings.Contains(withFlow, "mystery-phase") || !strings.Contains(withFlow, "my-flow") {
 		t.Errorf("expected both names in the fallback, got %q", withFlow)
 	}
 
-	withoutFlow := generatePhasePrompt("", "mystery-phase", "")
+	withoutFlow := Phase("", "mystery-phase", "")
 	if !strings.Contains(withoutFlow, "mystery-phase") {
 		t.Errorf("expected the phase name in the fallback, got %q", withoutFlow)
 	}

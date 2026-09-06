@@ -1,4 +1,4 @@
-package ui
+package prompt
 
 import "fmt"
 
@@ -35,7 +35,7 @@ Now do this:
 // The five bodies. Each one is the verb's caption spelled out far enough
 // that two runs of it do the same thing.
 const (
-	promptCreatePR = `Open the pull request for this task.
+	CreatePR = `Open the pull request for this task.
 
 1. Check first whether one is already open for the branch (gh pr list --head <branch>). If there is, say so and stop: you were asked to create one, not to update one.
 2. Read the repository's own pull request template — .github/pull_request_template.md, .github/PULL_REQUEST_TEMPLATE/, or whatever that repository keeps. If there is one, fill in every section it asks for, with facts taken from the task and from the diff. A template returned with its headings and no answers is worse than no template.
@@ -44,7 +44,7 @@ const (
 5. Push the branch and open the pull request against the repository's default branch.
 6. Answer with the URL.`
 
-	promptUpdatePR = `Bring this task's branch up to date with the branch it will be merged into.
+	UpdatePR = `Bring this task's branch up to date with the branch it will be merged into.
 
 1. git fetch, then bring the local base branch up to the remote's. Fast-forward only — if it will not fast-forward, something local is on it that should not be, so stop and say what.
 2. Merge the base branch into the task's branch. Merge, not rebase: the branch is already pushed, and rebasing it would need the force-push you are not allowed.
@@ -52,7 +52,7 @@ const (
 4. Run the repository's own checks before pushing. A branch that was green and is now red after taking the base branch in is the whole reason this is done here rather than at merge time.
 5. Push, and say what came in and whether anything conflicted.`
 
-	promptFixChecks = `Make the checks on this task's pull request pass.
+	FixChecks = `Make the checks on this task's pull request pass.
 
 1. Find out what actually failed: gh pr checks for which ones are red, then gh run view <id> --log-failed for what they said. Read the log, not the summary.
 2. Reproduce the failure in the checkout before you change anything. A fix for a failure you never saw fail is a guess.
@@ -61,7 +61,7 @@ const (
 5. Commit saying what was failing and why this fixes it, push, and watch the checks run again (gh pr checks --watch).
 6. Report what failed, what the cause was, and where the checks stand now.`
 
-	promptMoreTests = `Raise this task's tests where they are worth raising.
+	MoreTests = `Raise this task's tests where they are worth raising.
 
 1. Measure before you write: run the repository's coverage tooling and find which of the files this task changed are least covered.
 2. Test the behaviour those files promise — the boundaries, the error paths, the case a reader would get wrong. One test per accessor to move a percentage is work nobody will thank you for.
@@ -70,7 +70,7 @@ const (
 5. Run the whole suite, commit, push.
 6. Report coverage before and after, and what the new tests actually protect.`
 
-	promptReview = `Review this task's pull request the way a senior reviewer would, and leave what you find on the pull request itself.
+	Review = `Review this task's pull request the way a senior reviewer would, and leave what you find on the pull request itself.
 
 1. Read the whole diff (gh pr diff), then read the files it changed around the change. A diff is not reviewable without the code it lands in.
 2. Judge it against what the task asked for. A change that is good work and is not what was asked for is a finding.
@@ -80,7 +80,7 @@ const (
 6. Leave it on the pull request: one comment per finding, on the line it is about, and one summary saying what the change does well, what has to change before it is merged, and what is only worth considering. Do not approve it and do not file a formal request for changes — the operator merges.
 7. Say nothing you cannot point at. Three findings that are real beat twelve that are opinions, and every finding names the file and line.`
 
-	promptResolveComments = `Answer the review comments on this task's pull request.
+	ResolveComments = `Answer the review comments on this task's pull request.
 
 1. Read every unresolved thread: gh pr view --comments, and the threads on the diff.
 2. Decide each one: apply it, or explain why not. A comment you disagree with gets an answer, never silence.
@@ -90,7 +90,7 @@ const (
 6. Report how many threads there were, how many you applied, and which ones you pushed back on.`
 )
 
-// deliverPrompt is one of those bodies with the brief in front of it.
-func deliverPrompt(caption, taskID, path, body string) string {
+// Deliver is one of those bodies with the brief in front of it.
+func Deliver(caption, taskID, path, body string) string {
 	return fmt.Sprintf(supervisorBrief, caption, taskID, path) + body
 }

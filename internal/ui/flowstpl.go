@@ -7,6 +7,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/prompt"
 )
 
 // applyFlowTemplate fills the builder from one of the presets.
@@ -295,7 +296,7 @@ func (m Model) handleFlowClick(t Target) (tea.Model, tea.Cmd) {
 	case "autogen_prompt":
 		cur := m.flows.cur()
 		draft := cur.Prompt
-		cur.Prompt = generatePhasePrompt(draft, cur.Name, m.flows.flowName)
+		cur.Prompt = prompt.Phase(draft, cur.Name, m.flows.flowName)
 
 		m.flows.field = flowFieldPrompt
 		if draft != "" {

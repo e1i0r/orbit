@@ -6,6 +6,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/prompt"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -165,7 +166,7 @@ func (m Model) askSupervisorTo(caption, taskID, path, body, said string) (tea.Mo
 			about("id", taskID))), nil
 	}
 
-	next, cmd := m.sendSupervisorMessage(deliverPrompt(caption, taskID, path, body))
+	next, cmd := m.sendSupervisorMessage(prompt.Deliver(caption, taskID, path, body))
 	if cmd == nil {
 		// The thread refused the line. What it said about that is the
 		// only true sentence there is here.
@@ -182,7 +183,7 @@ func (m Model) deliverPR() (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	return m.askSupervisorTo("CREATE PR", taskID, m.taskCheckoutPath(taskID), promptCreatePR,
+	return m.askSupervisorTo("CREATE PR", taskID, m.taskCheckoutPath(taskID), prompt.CreatePR,
 		m.opts.Words.T("deliver.pr_asked", "the supervisor was asked to open the pull request for {id}",
 			about("id", taskID)))
 }
@@ -198,7 +199,7 @@ func (m Model) fixChecks() (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	return m.askSupervisorTo("FIX CHECKS", taskID, m.taskCheckoutPath(taskID), promptFixChecks,
+	return m.askSupervisorTo("FIX CHECKS", taskID, m.taskCheckoutPath(taskID), prompt.FixChecks,
 		m.opts.Words.T("deliver.checks_asked", "the supervisor was asked to make {id}'s checks pass",
 			about("id", taskID)))
 }
@@ -210,7 +211,7 @@ func (m Model) addMoreTests() (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	return m.askSupervisorTo("MORE TESTS", taskID, m.taskCheckoutPath(taskID), promptMoreTests,
+	return m.askSupervisorTo("MORE TESTS", taskID, m.taskCheckoutPath(taskID), prompt.MoreTests,
 		m.opts.Words.T("deliver.tests_asked", "the supervisor was asked for more tests on {id}",
 			about("id", taskID)))
 }
@@ -229,7 +230,7 @@ func (m Model) resolveComments() (tea.Model, tea.Cmd) {
 	}
 
 	return m.askSupervisorTo(
-		"RESOLVE COMMENTS", taskID, m.taskCheckoutPath(taskID), promptResolveComments,
+		"RESOLVE COMMENTS", taskID, m.taskCheckoutPath(taskID), prompt.ResolveComments,
 		m.opts.Words.T("deliver.resolve_asked", "the supervisor was asked to answer the reviews on {id}",
 			about("id", taskID)))
 }
@@ -243,7 +244,7 @@ func (m Model) reviewPR() (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	return m.askSupervisorTo("DEEP REVIEW", taskID, m.taskCheckoutPath(taskID), promptReview,
+	return m.askSupervisorTo("DEEP REVIEW", taskID, m.taskCheckoutPath(taskID), prompt.Review,
 		m.opts.Words.T("deliver.review_asked", "the supervisor was asked to review {id}",
 			about("id", taskID)))
 }
@@ -258,7 +259,7 @@ func (m Model) updatePRBranch() (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	return m.askSupervisorTo("UPDATE PR", taskID, m.taskCheckoutPath(taskID), promptUpdatePR,
+	return m.askSupervisorTo("UPDATE PR", taskID, m.taskCheckoutPath(taskID), prompt.UpdatePR,
 		m.opts.Words.T("deliver.update_asked",
 			"the supervisor was asked to bring {id} up to date with its base branch",
 			about("id", taskID)))

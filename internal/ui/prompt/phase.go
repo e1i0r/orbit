@@ -1,11 +1,11 @@
-package ui
+package prompt
 
 import (
 	"fmt"
 	"strings"
 )
 
-// generatePhasePrompt is the instruction a phase is given when the reader has
+// Phase is the instruction a phase is given when the reader has
 // not written one: what they were drafting if there is a draft, and what the
 // phase is called if there is not.
 //
@@ -14,13 +14,13 @@ import (
 // the rest of the prompt speaks to the engine in — the phase instructions land
 // under a heading of it, and a prompt that changes language halfway is a
 // prompt asking to be read twice.
-func generatePhasePrompt(userInput, phaseName, flowName string) string {
+func Phase(userInput, phaseName, flowName string) string {
 	raw := strings.TrimSpace(userInput)
 	lower := strings.ToLower(raw)
 	phLower := strings.ToLower(phaseName)
 
 	if raw != "" {
-		return draftPrompt(raw, lower, phaseName)
+		return draft(raw, lower, phaseName)
 	}
 
 	switch {
@@ -51,11 +51,11 @@ func generatePhasePrompt(userInput, phaseName, flowName string) string {
 	}
 }
 
-// draftPrompt is the instruction read out of what the reader was drafting.
+// draft is the instruction read out of what the reader was drafting.
 // The draft is carried into it whole, because it is the one part of the
 // sentence the reader wrote and a phase told something they did not write is
 // a phase running on this program's guess.
-func draftPrompt(raw, lower, phaseName string) string {
+func draft(raw, lower, phaseName string) string {
 	switch {
 	case strings.Contains(lower, "valid") || strings.Contains(lower, "test") ||
 		strings.Contains(lower, "prob") || strings.Contains(lower, "verif") ||

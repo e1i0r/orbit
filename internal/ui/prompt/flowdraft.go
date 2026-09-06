@@ -1,10 +1,10 @@
-package ui
+package prompt
 
 // What the engine is told when somebody asks for a flow in words.
 
 import "strings"
 
-// flowDraftPrompt is that instruction: the shape to answer in, one whole
+// FlowDraft is that instruction: the shape to answer in, one whole
 // example of it, and the handful of rules internal/flow will refuse a draft
 // over.
 //
@@ -16,7 +16,7 @@ import "strings"
 // The engine names are listed rather than left to the model, because a phase
 // naming an engine this machine does not have is a flow that cannot run and
 // a reader who has to work out why.
-func flowDraftPrompt(said string, engines []string) string {
+func FlowDraft(said string, engines []string) string {
 	var b strings.Builder
 
 	b.WriteString("Write one Orbit flow. The whole of your answer must be one JSON object: ")
@@ -102,10 +102,10 @@ func firstEngine(engines []string) string {
 	return engines[0]
 }
 
-// mendDraftPrompt is the second ask: what came back, what the decoder said
+// MendDraft is the second ask: what came back, what the decoder said
 // about it, and nothing else. The engine wrote it, so the engine is the one
 // thing that knows what it meant to say.
-func mendDraftPrompt(out string, err error) string {
+func MendDraft(out string, err error) string {
 	var b strings.Builder
 
 	b.WriteString("That was not valid JSON. The decoder said:\n")
