@@ -76,3 +76,56 @@ func TestADeletedIdCanBeWrittenDownAgain(t *testing.T) {
 		t.Errorf("the first life is gone from the record: %+v", events[0])
 	}
 }
+
+// TestADirectoryLeftBehindByAnOlderDeleteIsNotATask. Deleting used to take
+// the row off the board and leave the directory, so writing the id down
+// again answered "already exists" about something nothing on screen could
+// show. Every state root that ever ran that version still has those
+// directories, and the record is what says which of them are stale.
+func TestADirectoryLeftBehindByAnOlderDeleteIsNotATask(t *testing.T) {
+	s, r := fixture(t)
+
+	first, err := Create(s, r, "ACME-2", "the first life", "")
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	// Deleted the way the older version did it: the event, and the
+	// directory left where it was.
+	if err := emit(s, first, record.Event{Kind: record.TaskDeleted}); err != nil {
+		t.Fatalf("delete: %v", err)
+	}
+
+	dir, err := s.TaskDir("ACME-2")
+	if err != nil {
+		t.Fatalf("task dir: %v", err)
+	}
+
+	if _, err := os.Stat(dir); err != nil {
+		t.Fatalf("the fixture did not leave a directory behind: %v", err)
+	}
+
+	again, err := Create(s, r, "ACME-2", "the second life", "")
+	if err != nil {
+		t.Fatalf("the leftover directory refused the id: %v", err)
+	}
+
+	if again.Text != "the second life" {
+		t.Errorf("the new task reads %q", again.Text)
+	}
+}
+
+// TestATaskThatIsStillThereStillRefusesItsId, which is the whole point of
+// the check: two tasks with one name would share a directory and interleave
+// their events.
+func TestATaskThatIsStillThereStillRefusesItsId(t *testing.T) {
+	s, r := fixture(t)
+
+	if _, err := Create(s, r, "ACME-3", "the only life", ""); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	if _, err := Create(s, r, "ACME-3", "another", ""); !errors.Is(err, ErrExists) {
+		t.Errorf("writing over a live task answered %v", err)
+	}
+}
