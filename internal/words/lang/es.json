@@ -4432,6 +4432,10 @@
     "compare.out2": {
       "source": "running {n} checks on both sides at once… {secs}",
       "value": "corriendo {n} checks en los dos lados a la vez… {secs}"
+    },
+    "compare.again": {
+      "source": "[r] runs them again",
+      "value": "[r] los vuelve a correr"
     }
   }
 }

@@ -17,6 +17,8 @@ import (
 	"strconv"
 	"strings"
 
+	"charm.land/lipgloss/v2"
+
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -51,7 +53,7 @@ func (m Model) impactRows() []string {
 func (m Model) impactCoupled() []string {
 	p := m.opts.Words
 
-	rows := []string{"", Paint(Accent).Bold(true).Render(p.T("impact.reach_title", "WHAT USUALLY COMES ALONG"))}
+	rows := []string{"", m.impactHead(p.T("impact.reach_title", "WHAT USUALLY COMES ALONG"))}
 	rows = append(rows, m.explains(p.T("impact.reach_about",
 		"files this repository has committed together with the ones this task changed, and that it did not touch this time."))...)
 	rows = append(rows, m.explains(p.T("impact.reach_source",
@@ -82,6 +84,22 @@ func (m Model) impactCoupled() []string {
 	}
 
 	return rows
+}
+
+// impactHead is one section's name with a rule after it.
+//
+// The three sections are three different kinds of claim — an exit code, a
+// pattern in the history, and the engine's own account — and a reader who
+// cannot see where one ends reads the third as though it carried the weight
+// of the first. The rule is what says they are separate things.
+func (m Model) impactHead(title string) string {
+	head := Paint(Accent).Bold(true).Render(title) + " "
+
+	if rule := min(m.frame.Body.W, 104) - lipgloss.Width(title) - 3; rule > 0 {
+		head += Paint(Dim).Render(strings.Repeat("─", rule))
+	}
+
+	return head
 }
 
 // explains is one sentence of explanation, folded to the pane.
@@ -119,7 +137,7 @@ func (m Model) impactContracts() []string {
 		return nil
 	}
 
-	rows := []string{Paint(Accent).Bold(true).Render(p.T("impact.contracts_title", "WHAT THOSE TESTS SAY THEY HOLD"))}
+	rows := []string{m.impactHead(p.T("impact.contracts_title", "WHAT THOSE TESTS SAY THEY HOLD"))}
 	rows = append(rows, m.explains(p.T("impact.contracts_about",
 		"the names of the tests in the files above, read as sentences. Nothing here was run: it is what somebody wrote down that the code guarantees."))...)
 	rows = append(rows, "")
@@ -176,7 +194,7 @@ func (m Model) impactDelta() []string {
 		return nil
 	}
 
-	rows := []string{Paint(Accent).Bold(true).Render(p.T("impact.delta_title", "WHAT THE AGENT SAYS IT DID"))}
+	rows := []string{m.impactHead(p.T("impact.delta_title", "WHAT THE AGENT SAYS IT DID"))}
 	rows = append(rows, m.explains(p.T("impact.delta_about",
 		"the engine's own account of what this change asks of its callers and what it now promises them. Nobody verified it — no command can — and the last part is the only place a rejected approach is written down."))...)
 	rows = append(rows, "")

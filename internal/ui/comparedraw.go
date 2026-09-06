@@ -18,7 +18,7 @@ import (
 func (m Model) compareRows() []string {
 	p := m.opts.Words
 
-	rows := []string{"", Paint(Accent).Bold(true).Render(p.T("compare.title", "WHAT THE CHECKS SAY, BOTH SIDES"))}
+	rows := []string{"", m.impactHead(p.T("compare.title", "WHAT THE CHECKS SAY, BOTH SIDES"))}
 	rows = append(rows, m.explains(p.T("compare.about",
 		"the flow's own checks, run on the branch this work was cut from and on the work itself. An exit code decided every line below — nothing here is anybody's reading."))...)
 	rows = append(rows, "")
@@ -41,7 +41,10 @@ func (m Model) compareRows() []string {
 		rows = append(rows, m.compareLine(d)...)
 	}
 
-	return append(rows, "")
+	// The key stays on screen after the run, because the answer goes stale
+	// the moment the phase writes another line — and a reader who has just
+	// read a failure is exactly the one who wants to ask again.
+	return append(rows, "  "+Paint(Live).Render(p.T("compare.again", "[r] runs them again")), "")
 }
 
 // compareOffer is what it would run, and the key that runs it. It says the
@@ -91,8 +94,13 @@ func (m Model) compareLine(d repo.Divergence) []string {
 		"    " + Paint(Dim).Render(p.T("compare.now_said", "worktree: {said}", about("said", verdict(m, d.Now)))),
 	}
 
-	if line := lastLine(d.Now.Out); line != "" && !d.Now.Passed() {
-		rows = append(rows, "      "+Paint(Dim).Render(`"`+line+`"`))
+	// The end of what it printed, and not one line of it: a test runner
+	// says which test failed a few lines above the word FAIL, and a pane
+	// that shows only the last line shows the word and not the reason.
+	if !d.Now.Passed() {
+		for _, line := range lastLines(d.Now.Out, saidLines) {
+			rows = append(rows, "      "+Paint(Dim).Render(line))
+		}
 	}
 
 	return append(rows, "")
@@ -113,17 +121,24 @@ func verdict(m Model, r repo.Ran) string {
 	}
 }
 
-// lastLine is the end of what a command printed, which is where a test
-// runner says how many failed.
-func lastLine(out string) string {
+// saidLines is how much of a failing command's output is shown: enough to
+// carry the failing test's name and the assertion under it, and not so much
+// that the section becomes the log.
+const saidLines = 6
+
+// lastLines is the end of what a command printed, which is where a test
+// runner says what failed.
+func lastLines(out string, most int) []string {
+	var kept []string
+
 	lines := strings.Split(strings.TrimSpace(out), "\n")
-	for i := len(lines) - 1; i >= 0; i-- {
+	for i := len(lines) - 1; i >= 0 && len(kept) < most; i-- {
 		if line := strings.TrimSpace(lines[i]); line != "" {
-			return fit(line, 100)
+			kept = append([]string{fit(line, 120)}, kept...)
 		}
 	}
 
-	return ""
+	return kept
 }
 
 // checksNow is how many checks the run that is out is running.
