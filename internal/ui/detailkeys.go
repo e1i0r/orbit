@@ -101,7 +101,9 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.closePR()
 	case k.String() == "u" || k.String() == "U":
 		return m.updatePRBranch()
-	case k.String() == "e" || k.String() == "w" || k.String() == "W":
+	// w and W are not here: they are the thinking pane's own key, taken by
+	// keyToPane above, so this case never saw them.
+	case k.String() == "e":
 		m.expandedDetail = !m.expandedDetail
 		p := m.opts.Words
 

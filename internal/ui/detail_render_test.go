@@ -21,6 +21,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/e1i0r/orbit/internal/ui/layout"
+	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -249,5 +250,30 @@ func TestTheMoreLineSaysWhatToDoAboutIt(t *testing.T) {
 	short := renderAt(t, showing(t, m, tabDiff), 100, 35)
 	if line := short[fShort.Body.Y+fShort.Body.H-1]; strings.TrimSpace(line) != "" {
 		t.Errorf("the more line is %q over a diff that fits, want it left blank", line)
+	}
+}
+
+// TestACutTitleSaysHowToSeeTheRest. It expands with e and always has; what
+// it never did was say so, and a title ending in an ellipsis with no
+// affordance beside it is a title nobody knows is expandable.
+func TestACutTitleSaysHowToSeeTheRest(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+	m.board.Tasks = []view.Task{{
+		ID:    "ACME-1",
+		Repo:  "orbit",
+		Title: strings.Repeat("una instrucción larguísima que no cabe en una línea ", 4),
+	}}
+	m.detail = "ACME-1"
+
+	cut := strings.Join(m.detailHeadLines(m.frame.Body.W), "\n")
+	if !strings.Contains(ansi.Strip(cut), "[e]") {
+		t.Errorf("a cut title offers no way to see the rest:\n%s", ansi.Strip(cut))
+	}
+
+	m.expandedDetail = true
+
+	whole := m.detailHeadLines(m.frame.Body.W)
+	if len(whole) < 2 {
+		t.Errorf("the expanded title is still one line: %q", whole)
 	}
 }
