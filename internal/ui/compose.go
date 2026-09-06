@@ -12,6 +12,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/tracker"
+	"github.com/e1i0r/orbit/internal/ui/clip"
 	"github.com/e1i0r/orbit/internal/ui/typing"
 )
 
@@ -192,7 +193,7 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case (msg.Code == 'x' || msg.Code == 'X') && msg.Mod&tea.ModCtrl != 0:
 		return m.composeCopy(true), nil
 	case (msg.Code == 'v' || msg.Code == 'V') && msg.Mod&tea.ModCtrl != 0:
-		if clip := readClipboard(); clip != "" {
+		if clip := clip.Read(); clip != "" {
 			return m.paste(clip), nil
 		}
 

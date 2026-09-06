@@ -1,4 +1,4 @@
-package ui
+package clip
 
 import (
 	"context"
@@ -8,10 +8,10 @@ import (
 	"time"
 )
 
-// clipboardTimeout is how long one clipboard helper is given before the
+// timeout is how long one clipboard helper is given before the
 // window gives up on it.
 //
-// Every caller of readClipboard is inside Update, so the read happens on the
+// Every caller of Read is inside Update, so the read happens on the
 // thread that draws: while it is out, nothing renders and no key is
 // answered. exec.Command carries no deadline, and the two helpers below are
 // exactly the kind that hang rather than fail — wl-paste with no compositor
@@ -21,29 +21,29 @@ import (
 //
 // It is a variable so a test can shorten it, the way internal/tracker makes
 // Linear's endpoint one.
-var clipboardTimeout = 2 * time.Second
+var timeout = 2 * time.Second
 
-// readClipboard queries the system clipboard across macOS, Wayland, and X11.
-func readClipboard() string {
+// Read queries the system clipboard across macOS, Wayland, and X11.
+func Read() string {
 	// On darwin pbpaste is the answer, and an empty one is still the
 	// answer: neither helper below is installed there, so falling through
 	// to them only spends two more process spawns to be told so twice.
 	if runtime.GOOS == "darwin" {
-		out, _ := clipboardFrom("pbpaste")
+		out, _ := from("pbpaste")
 
 		return out
 	}
 
-	if out, ok := clipboardFrom("wl-paste"); ok {
+	if out, ok := from("wl-paste"); ok {
 		return out
 	}
 
-	out, _ := clipboardFrom("xclip", "-out", "-selection", "clipboard")
+	out, _ := from("xclip", "-out", "-selection", "clipboard")
 
 	return out
 }
 
-// clipboardFrom runs one clipboard helper under that deadline.
+// from runs one clipboard helper under that deadline.
 //
 // It reports false when the helper is not installed, failed, or ran out of
 // time — the three cases the caller answers the same way, by asking the next
@@ -63,8 +63,8 @@ func readClipboard() string {
 // never returns leaves its goroutine, and whatever it forked, running until
 // it does. The channel is buffered, so the goroutine ends either way, and
 // the caller is a keystroke rather than a two-second tick.
-func clipboardFrom(name string, args ...string) (string, bool) {
-	ctx, cancel := context.WithTimeout(context.Background(), clipboardTimeout)
+func from(name string, args ...string) (string, bool) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	type answer struct {
@@ -80,7 +80,7 @@ func clipboardFrom(name string, args ...string) (string, bool) {
 	// reaches its end, and a helper's own child holds that open after the
 	// helper is gone. Without this the goroutine below outlives the window's
 	// interest in it for as long as that child runs.
-	cmd.WaitDelay = clipboardTimeout
+	cmd.WaitDelay = timeout
 
 	go func() {
 		out, err := cmd.Output()
@@ -99,35 +99,35 @@ func clipboardFrom(name string, args ...string) (string, bool) {
 	}
 }
 
-// writeClipboard puts one string on the system clipboard, through the same
-// three platforms readClipboard reads it back from.
+// Write puts one string on the system clipboard, through the same
+// three platforms Read reads it back from.
 //
 // It reports whether a helper took it. Nothing else in the window can tell
 // whether pbcopy is on this machine, and a copy that quietly went nowhere
 // is a copy the reader will paste from somewhere else and lose.
-func writeClipboard(text string) bool {
+func Write(text string) bool {
 	if runtime.GOOS == "darwin" {
-		return clipboardTo(text, "pbcopy")
+		return to(text, "pbcopy")
 	}
 
-	if clipboardTo(text, "wl-copy") {
+	if to(text, "wl-copy") {
 		return true
 	}
 
-	return clipboardTo(text, "xclip", "-in", "-selection", "clipboard")
+	return to(text, "xclip", "-in", "-selection", "clipboard")
 }
 
-// clipboardTo hands the text to one helper on its standard input, under the
+// to hands the text to one helper on its standard input, under the
 // deadline reading is given and for the same reason: this runs inside
 // Update, so a helper that never returns is a window that never draws
 // again.
-func clipboardTo(text, name string, args ...string) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), clipboardTimeout)
+func to(text, name string, args ...string) bool {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, name, args...)
 	cmd.Stdin = strings.NewReader(text)
-	cmd.WaitDelay = clipboardTimeout
+	cmd.WaitDelay = timeout
 
 	done := make(chan error, 1)
 

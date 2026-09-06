@@ -16,6 +16,8 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/spoken"
 )
 
 // A completion is one thing on offer: what it puts in the line, and what it
@@ -38,7 +40,7 @@ func (m Model) completions() []completion {
 	switch {
 	case strings.HasPrefix(typed, "/"):
 		return matching(m.gestures(), typed)
-	case strings.HasPrefix(typed, atWord):
+	case strings.HasPrefix(typed, spoken.AtWord):
 		return matching(m.tasksOnOffer(), typed)
 	default:
 		return nil
@@ -50,14 +52,14 @@ func (m Model) gestures() []completion {
 	p := m.opts.Words
 
 	return []completion{
-		{ruleWord, p.T("complete.rule", "a rule with a check: the gate sends the work back")},
-		{awareWord, p.T("complete.aware", "something to keep in mind: it reaches the prompt")},
-		{ruleWord + " " + generalFlag, p.T("complete.rule_general", "a rule for every repository")},
-		{awareWord + " " + generalFlag, p.T("complete.aware_general", "for every repository")},
-		{awareWord + " " + langFlag, p.T("complete.aware_lang", "for one language: {flag} go", about("flag", langFlag))},
-		{briefWord, p.T("complete.brief", "what happened while you were away, from the record")},
-		{chatsWord, p.T("complete.chats", "the conversations, by what started each one")},
-		{newWord, p.T("complete.new", "start a conversation of its own")},
+		{spoken.RuleWord, p.T("complete.rule", "a rule with a check: the gate sends the work back")},
+		{spoken.AwareWord, p.T("complete.aware", "something to keep in mind: it reaches the prompt")},
+		{spoken.RuleWord + " " + spoken.GeneralFlag, p.T("complete.rule_general", "a rule for every repository")},
+		{spoken.AwareWord + " " + spoken.GeneralFlag, p.T("complete.aware_general", "for every repository")},
+		{spoken.AwareWord + " " + spoken.LangFlag, p.T("complete.aware_lang", "for one language: {flag} go", about("flag", spoken.LangFlag))},
+		{spoken.BriefWord, p.T("complete.brief", "what happened while you were away, from the record")},
+		{spoken.ChatsWord, p.T("complete.chats", "the conversations, by what started each one")},
+		{spoken.NewWord, p.T("complete.new", "start a conversation of its own")},
 	}
 }
 
@@ -66,7 +68,7 @@ func (m Model) gestures() []completion {
 func (m Model) tasksOnOffer() []completion {
 	out := make([]completion, 0, len(m.board.Tasks))
 	for _, t := range m.board.Tasks {
-		out = append(out, completion{atWord + t.ID, t.Title})
+		out = append(out, completion{spoken.AtWord + t.ID, t.Title})
 	}
 
 	return out

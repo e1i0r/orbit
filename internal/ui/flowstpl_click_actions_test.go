@@ -2,12 +2,14 @@ package ui
 
 // flowstpl_click_coverage_test.go is handleFlowClick's whole dispatch table
 // — one Target.Field per mouse affordance the builder draws — plus
-// readClipboard, which handleFlowClick's "paste_prompt" field is the only
+// clip.Read, which handleFlowClick's "paste_prompt" field is the only
 // caller of.
 
 import (
 	"strings"
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/ui/clip"
 )
 
 func TestHandleFlowClickListActions(t *testing.T) {
@@ -174,5 +176,5 @@ func TestHandleFlowClickFieldDefault(t *testing.T) {
 // whatever the host machine's pasteboard happens to hold, which a
 // hermetic test has no business asserting on.
 func TestReadClipboard(t *testing.T) {
-	_ = readClipboard()
+	_ = clip.Read()
 }

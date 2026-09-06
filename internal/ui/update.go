@@ -4,6 +4,8 @@ import (
 	"time"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/upgrade"
 )
 
 // Update is the whole of the window's behaviour, and every case in it is a
@@ -60,8 +62,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m, next := m.nextFrame()
 
 		return m, next
-	case upgradeTickMsg:
-		return m, tea.Batch(checkUpgradeCmd(m.opts.Version), upgradeTick())
+	case upgrade.TickMsg:
+		return m, tea.Batch(upgrade.Check(m.opts.Version), upgrade.Tick())
 	case boardMsg:
 		return m.applyBoard(msg)
 	case controlMsg:
@@ -137,7 +139,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		return m, nil
-	case upgradeAvailableMsg:
+	case upgrade.AvailableMsg:
 		m.upgradeAvailable = msg.Version
 		return m, nil
 	case diffMsg:

@@ -2,6 +2,7 @@ package ui
 
 import (
 	tea "charm.land/bubbletea/v2"
+	"github.com/e1i0r/orbit/internal/ui/clip"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -105,7 +106,7 @@ func (m Model) handleComposeClick(t Target) (tea.Model, tea.Cmd) {
 			return m.abandonCompose(), nil
 		}
 	case TargetComposePaste:
-		if clip := readClipboard(); clip != "" {
+		if clip := clip.Read(); clip != "" {
 			return m.paste(clip), nil
 		}
 	}

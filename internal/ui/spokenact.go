@@ -6,18 +6,20 @@ package ui
 
 import (
 	"strings"
+
+	"github.com/e1i0r/orbit/internal/ui/spoken"
 )
 
 // act carries out one gesture and answers with what to say about it.
-func (m Model) act(said spoken) Model {
+func (m Model) act(said spoken.Line) Model {
 	switch said.Kind {
-	case saidRule, saidAware:
+	case spoken.Rule, spoken.Aware:
 		return m.learn(said)
-	case saidNote:
+	case spoken.Note:
 		return m.noteOn(said)
-	case saidChats:
+	case spoken.Chats:
 		return m.openConversationList().clearedLine()
-	case saidNew:
+	case spoken.New:
 		return m.startConversation()
 	default:
 		// A gesture nobody finished typing. Saying nothing back would look
@@ -33,13 +35,13 @@ func (m Model) act(said spoken) Model {
 // sentence has none — so it is written as a fact that warns, and the window
 // says so rather than letting somebody believe a gate is now watching for
 // them. The check is added afterwards, where a fact can be edited.
-func (m Model) learn(said spoken) Model {
+func (m Model) learn(said spoken.Line) Model {
 	p := m.opts.Words
 	if m.opts.Learn == nil {
 		return m.say(p.T("supervisor.cannot_learn", "this window cannot write down what it knows"))
 	}
 
-	stops := said.Kind == saidRule
+	stops := said.Kind == spoken.Rule
 	if err := m.opts.Learn(stops, said.Scope, m.repoForFact(), said.Phrase); err != nil {
 		return m.say(err.Error())
 	}
@@ -58,7 +60,7 @@ func (m Model) learn(said spoken) Model {
 
 // whereFact is the scope in the words the operator used, for the sentence
 // that confirms what was written.
-func (m Model) whereFact(said spoken) string {
+func (m Model) whereFact(said spoken.Line) string {
 	p := m.opts.Words
 
 	switch said.Scope {
@@ -101,7 +103,7 @@ func shortRepo(path string) string {
 }
 
 // noteOn puts a line in one task's notes.
-func (m Model) noteOn(said spoken) Model {
+func (m Model) noteOn(said spoken.Line) Model {
 	p := m.opts.Words
 	if m.opts.NoteTask == nil {
 		return m.say(p.T("supervisor.cannot_note", "this window cannot write notes on a task"))
@@ -122,14 +124,14 @@ func (m Model) noteOn(said spoken) Model {
 // the one place the operator was looking had no record that anything had
 // happened. It is also what the supervisor reads next time: a model that
 // cannot see a rule was written will keep working as though it was not.
-func (m Model) remember(said spoken, stops bool) Model {
+func (m Model) remember(said spoken.Line, stops bool) Model {
 	if m.opts.RecordSupervisor == nil {
 		return m
 	}
 
-	word := awareWord
+	word := spoken.AwareWord
 	if stops {
-		word = ruleWord
+		word = spoken.RuleWord
 	}
 
 	line := word + " " + m.whereFact(said) + ": " + said.Phrase

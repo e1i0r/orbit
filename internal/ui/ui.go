@@ -13,6 +13,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/ui/layout"
+	"github.com/e1i0r/orbit/internal/ui/upgrade"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -317,5 +318,5 @@ func New(o Options) Model {
 // from wherever they are called, which inside a render is a blocking read
 // in the middle of a frame.
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(tea.RequestBackgroundColor, refresh(m.opts.Reader), tick(), rescanTick(), elapsedTick(), checkUpgradeCmd(m.opts.Version), upgradeTick())
+	return tea.Batch(tea.RequestBackgroundColor, refresh(m.opts.Reader), tick(), rescanTick(), elapsedTick(), upgrade.Check(m.opts.Version), upgrade.Tick())
 }

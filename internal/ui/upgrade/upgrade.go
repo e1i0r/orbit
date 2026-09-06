@@ -1,4 +1,4 @@
-package ui
+package upgrade
 
 import (
 	"context"
@@ -11,10 +11,10 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
-var upgradeCheckEndpoint = "https://api.github.com/repos/e1i0r/orbit/releases/latest"
+var endpoint = "https://api.github.com/repos/e1i0r/orbit/releases/latest"
 
-// upgradeAvailableMsg notifies the TUI that a newer version of orbit was detected.
-type upgradeAvailableMsg struct {
+// AvailableMsg notifies the TUI that a newer version of orbit was detected.
+type AvailableMsg struct {
 	Version string
 }
 
@@ -22,7 +22,7 @@ type latestRelease struct {
 	TagName string `json:"tag_name"`
 }
 
-// checkUpgradeCmd performs a lightweight, non-blocking check for the latest
+// Check performs a lightweight, non-blocking check for the latest
 // release, and says nothing when that release is the one already running.
 //
 // The comparison is the whole point. Announcing whatever tag GitHub answers
@@ -38,7 +38,7 @@ type latestRelease struct {
 // build alone: a build with no version cannot be compared to a tag, and
 // telling somebody who built from source to upgrade to the last release is
 // usually advice to go backwards.
-func checkUpgradeCmd(current string) tea.Cmd {
+func Check(current string) tea.Cmd {
 	if !comparableVersion(current) {
 		return nil
 	}
@@ -47,7 +47,7 @@ func checkUpgradeCmd(current string) tea.Cmd {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, upgradeCheckEndpoint, nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 		if err != nil {
 			return nil
 		}
@@ -74,7 +74,7 @@ func checkUpgradeCmd(current string) tea.Cmd {
 			return nil
 		}
 
-		return upgradeAvailableMsg{Version: rel.TagName}
+		return AvailableMsg{Version: rel.TagName}
 	}
 }
 
@@ -182,15 +182,15 @@ func versionParts(v string) (nums []int, pre string, ok bool) {
 	return nums, pre, true
 }
 
-// upgradeCheckInterval is the cadence at which Orbit checks for new releases.
-const upgradeCheckInterval = 1 * time.Hour
+// interval is the cadence at which Orbit checks for new releases.
+const interval = 1 * time.Hour
 
-// upgradeTickMsg triggers periodic release checks.
-type upgradeTickMsg time.Time
+// TickMsg triggers periodic release checks.
+type TickMsg time.Time
 
-// upgradeTick schedules the next periodic check.
-func upgradeTick() tea.Cmd {
-	return tea.Tick(upgradeCheckInterval, func(t time.Time) tea.Msg {
-		return upgradeTickMsg(t)
+// Tick schedules the next periodic check.
+func Tick() tea.Cmd {
+	return tea.Tick(interval, func(t time.Time) tea.Msg {
+		return TickMsg(t)
 	})
 }

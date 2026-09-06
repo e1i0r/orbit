@@ -7,6 +7,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/clip"
 	"github.com/e1i0r/orbit/internal/ui/prompt"
 )
 
@@ -292,7 +293,7 @@ func (m Model) handleFlowClick(t Target) (tea.Model, tea.Cmd) {
 
 		return m, nil
 	case "paste_prompt":
-		return m.pastedPrompt(strings.TrimSpace(readClipboard())), nil
+		return m.pastedPrompt(strings.TrimSpace(clip.Read())), nil
 	case "autogen_prompt":
 		cur := m.flows.cur()
 		draft := cur.Prompt

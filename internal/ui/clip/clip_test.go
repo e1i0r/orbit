@@ -1,4 +1,4 @@
-package ui
+package clip
 
 import (
 	"os"
@@ -28,7 +28,7 @@ func helperNamed(t *testing.T, name, script string) {
 
 // TestAClipboardThatNeverAnswersDoesNotFreezeTheWindow.
 //
-// readClipboard is called from Update — from compose, from the note, from
+// Read is called from Update — from compose, from the note, from
 // the supervisor, from a middle click and from the flow builder — so it runs
 // on the thread that draws. It shelled out with exec.Command, which waits
 // for as long as the helper takes, and xclip waiting on a selection owner
@@ -41,12 +41,12 @@ func TestAClipboardThatNeverAnswersDoesNotFreezeTheWindow(t *testing.T) {
 	// at once, so the deadline has to bound the wait and not only the call.
 	helperNamed(t, "wl-paste", "sleep 5 &")
 
-	clipboardTimeout = 150 * time.Millisecond
+	timeout = 150 * time.Millisecond
 
-	t.Cleanup(func() { clipboardTimeout = 2 * time.Second })
+	t.Cleanup(func() { timeout = 2 * time.Second })
 
 	done := time.Now()
-	out, ok := clipboardFrom("wl-paste")
+	out, ok := from("wl-paste")
 
 	took := time.Since(done)
 	if took > 2*time.Second {
@@ -54,7 +54,7 @@ func TestAClipboardThatNeverAnswersDoesNotFreezeTheWindow(t *testing.T) {
 	}
 
 	if ok || out != "" {
-		t.Errorf("clipboardFrom = (%q, %v), want nothing: a helper that ran out of time said nothing", out, ok)
+		t.Errorf("from = (%q, %v), want nothing: a helper that ran out of time said nothing", out, ok)
 	}
 }
 
@@ -63,20 +63,20 @@ func TestAClipboardThatNeverAnswersDoesNotFreezeTheWindow(t *testing.T) {
 func TestAHelperThatAnsweredIsBelieved(t *testing.T) {
 	helperNamed(t, "wl-paste", "printf 'pegado'")
 
-	out, ok := clipboardFrom("wl-paste")
+	out, ok := from("wl-paste")
 	if !ok || out != "pegado" {
-		t.Errorf("clipboardFrom = (%q, %v), want (\"pegado\", true)", out, ok)
+		t.Errorf("from = (%q, %v), want (\"pegado\", true)", out, ok)
 	}
 }
 
 // TestAHelperThatIsNotInstalledIsNotAnAnswer. On a machine with no clipboard
-// tool at all every helper fails this way, and readClipboard has to reach the
+// tool at all every helper fails this way, and Read has to reach the
 // end of the list rather than believe the first empty answer.
 func TestAHelperThatIsNotInstalledIsNotAnAnswer(t *testing.T) {
 	t.Setenv("PATH", t.TempDir())
 
-	if out, ok := clipboardFrom("wl-paste"); ok || out != "" {
-		t.Errorf("clipboardFrom = (%q, %v), want nothing for a helper that is not there", out, ok)
+	if out, ok := from("wl-paste"); ok || out != "" {
+		t.Errorf("from = (%q, %v), want nothing for a helper that is not there", out, ok)
 	}
 }
 
@@ -88,7 +88,7 @@ func TestWhatIsCopiedReachesTheHelper(t *testing.T) {
 	taken := filepath.Join(t.TempDir(), "taken")
 	helperNamed(t, "wl-copy", "cat > "+taken)
 
-	if !clipboardTo("una tarea", "wl-copy") {
+	if !to("una tarea", "wl-copy") {
 		t.Fatal("the helper refused what it was handed")
 	}
 
@@ -107,7 +107,7 @@ func TestWhatIsCopiedReachesTheHelper(t *testing.T) {
 func TestACopyWithNoHelperToTakeItIsNotACopy(t *testing.T) {
 	helperNamed(t, "unrelated", "true")
 
-	if clipboardTo("una tarea", "wl-copy") {
-		t.Error("clipboardTo said yes with no helper installed")
+	if to("una tarea", "wl-copy") {
+		t.Error("to said yes with no helper installed")
 	}
 }

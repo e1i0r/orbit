@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/spoken"
 )
 
 // halfWritten is a supervisor screen with something half written in it.
@@ -39,7 +41,7 @@ func TestASlashOffersTheGesturesAndSaysWhatTheyDo(t *testing.T) {
 		seen[c.Text] = c.What
 	}
 
-	for _, want := range []string{ruleWord, awareWord} {
+	for _, want := range []string{spoken.RuleWord, spoken.AwareWord} {
 		if what, offered := seen[want]; !offered {
 			t.Errorf("a slash does not offer %q", want)
 		} else if what == "" {
@@ -58,7 +60,7 @@ func TestWhatIsTypedNarrowsWhatIsOffered(t *testing.T) {
 	// Its own flags are still offered — that is where somebody learns they
 	// exist — but nothing that is not the word being typed.
 	for _, c := range got {
-		if !strings.HasPrefix(c.Text, awareWord) {
+		if !strings.HasPrefix(c.Text, spoken.AwareWord) {
 			t.Errorf("/aw offered %q", c.Text)
 		}
 	}
@@ -80,7 +82,7 @@ func TestAnAtOffersTheTasksOnTheBoard(t *testing.T) {
 
 	first := m.board.Tasks[0]
 	for _, c := range got {
-		if c.Text == atWord+first.ID {
+		if c.Text == spoken.AtWord+first.ID {
 			if c.What == "" {
 				t.Errorf("%q is offered with no title beside it", c.Text)
 			}
@@ -108,8 +110,8 @@ func TestTabTakesWhatIsOffered(t *testing.T) {
 	m := halfWritten(t, "/aw")
 
 	next := next(t, m, tea.KeyPressMsg{Code: tea.KeyTab})
-	if next.supervisor.input != awareWord+" " {
-		t.Errorf("tab left %q in the line, want %q", next.supervisor.input, awareWord+" ")
+	if next.supervisor.input != spoken.AwareWord+" " {
+		t.Errorf("tab left %q in the line, want %q", next.supervisor.input, spoken.AwareWord+" ")
 	}
 }
 
@@ -130,7 +132,7 @@ func TestEnterTakesTheOfferRatherThanSending(t *testing.T) {
 		t.Error("enter sent half a gesture instead of finishing it")
 	}
 
-	if !strings.HasPrefix(next.supervisor.input, ruleWord) {
+	if !strings.HasPrefix(next.supervisor.input, spoken.RuleWord) {
 		t.Errorf("enter left %q in the line", next.supervisor.input)
 	}
 }

@@ -1,4 +1,4 @@
-package ui
+package spoken
 
 // What the operator typed into the supervisor, taken apart.
 //
@@ -16,53 +16,56 @@ import (
 	"strings"
 )
 
-// spokenKind is which of the four things a line turned out to be.
-type spokenKind int
+// Kind is which of the four things a line turned out to be.
+type Kind int
 
 const (
-	// saidMessage is the ordinary case: something said to the supervisor.
-	saidMessage spokenKind = iota
-	// saidRule is a fact that stops the work, and saidAware one that only
-	// warns. They are two words because they are two powers, and the
-	// operator chooses which by which one they type.
-	saidRule
-	saidAware
-	// saidNote is a line about one task, which lands in its notes.
-	saidNote
-	// saidChats opens the list of conversations and saidNew starts one.
+	// Message is the ordinary case: something said to the supervisor.
+	Message Kind = iota
+	// Rule is a fact that stops the work. It and Aware are two words
+	// because they are two powers, and the operator chooses which by
+	// which one they type.
+	Rule
+	// Aware is a fact that only warns: told to the run, never a refusal.
+	Aware
+	// Note is a line about one task, which lands in its notes.
+	Note
+	// Chats opens the list of conversations and New starts one.
 	// They are gestures rather than keys alone because this screen is a
 	// text field: every printable key types into it, so a key needs a
 	// modifier — and a modifier a terminal decides not to deliver is a
 	// gesture nobody can reach. A word typed into the line always arrives.
-	saidChats
-	saidNew
-	// saidBrief is the question somebody comes back with, asked for them:
+	Chats
+	// New starts a conversation, for the same reason and by the same
+	// means.
+	New
+	// Brief is the question somebody comes back with, asked for them:
 	// what happened, how did it end, what passed. It is a gesture and not a
 	// digest Orbit writes on its own — what comes back is the supervisor's
 	// answer, at the length the question deserves, and anything after the
 	// word narrows it.
-	saidBrief
-	// saidNothing is a gesture nobody finished typing. It is not an empty
+	Brief
+	// Nothing is a gesture nobody finished typing. It is not an empty
 	// rule and not an empty message: it is a line to do nothing with.
-	saidNothing
+	Nothing
 )
 
 // The words that start a line, and the flags that widen one.
 const (
-	ruleWord  = "/rule"
-	awareWord = "/aware"
-	chatsWord = "/chats"
-	newWord   = "/new"
-	briefWord = "/brief"
-	atWord    = "@"
+	RuleWord  = "/rule"
+	AwareWord = "/aware"
+	ChatsWord = "/chats"
+	NewWord   = "/new"
+	BriefWord = "/brief"
+	AtWord    = "@"
 
-	generalFlag = "--general"
-	langFlag    = "--lang"
+	GeneralFlag = "--general"
+	LangFlag    = "--lang"
 )
 
-// spoken is one line, read.
-type spoken struct {
-	Kind spokenKind
+// Line is one line, read.
+type Line struct {
+	Kind Kind
 	// Task is the id a note is about.
 	Task string
 	// Scope is empty for the repository being worked in, "general" for
@@ -74,29 +77,29 @@ type spoken struct {
 	Phrase string
 }
 
-// parseSaid reads one line.
+// Parse reads one line.
 //
 // A line that starts with something looking like a gesture but is not one —
 // "/ruleset", "and/or" — is a message, because it is one. Only the exact
 // words, followed by a space or the end of the line, are gestures.
-func parseSaid(text string) spoken {
+func Parse(text string) Line {
 	said := strings.TrimSpace(text)
 
 	switch {
-	case word(said, ruleWord):
-		return fact(saidRule, rest(said, ruleWord))
-	case word(said, awareWord):
-		return fact(saidAware, rest(said, awareWord))
-	case word(said, briefWord):
-		return spoken{Kind: saidBrief, Phrase: rest(said, briefWord)}
-	case word(said, chatsWord):
-		return spoken{Kind: saidChats}
-	case word(said, newWord):
-		return spoken{Kind: saidNew}
+	case word(said, RuleWord):
+		return fact(Rule, rest(said, RuleWord))
+	case word(said, AwareWord):
+		return fact(Aware, rest(said, AwareWord))
+	case word(said, BriefWord):
+		return Line{Kind: Brief, Phrase: rest(said, BriefWord)}
+	case word(said, ChatsWord):
+		return Line{Kind: Chats}
+	case word(said, NewWord):
+		return Line{Kind: New}
 	case mentions(said):
 		return note(said)
 	default:
-		return spoken{Kind: saidMessage, Phrase: text}
+		return Line{Kind: Message, Phrase: text}
 	}
 }
 
@@ -110,7 +113,7 @@ func word(said, gesture string) bool {
 
 // mentions is whether a line points at a task: the sign, and then something.
 func mentions(said string) bool {
-	after, is := strings.CutPrefix(said, atWord)
+	after, is := strings.CutPrefix(said, AtWord)
 
 	return is && after != ""
 }
@@ -122,32 +125,32 @@ func rest(said, gesture string) string {
 
 // fact reads the scope flags off the front of what was said, and then the
 // sentence.
-func fact(kind spokenKind, said string) spoken {
+func fact(kind Kind, said string) Line {
 	scope := ""
 
 	switch {
-	case word(said, generalFlag):
-		scope, said = "general", rest(said, generalFlag)
-	case word(said, langFlag):
-		lang, phrase, _ := strings.Cut(rest(said, langFlag), " ")
+	case word(said, GeneralFlag):
+		scope, said = "general", rest(said, GeneralFlag)
+	case word(said, LangFlag):
+		lang, phrase, _ := strings.Cut(rest(said, LangFlag), " ")
 		scope, said = lang, strings.TrimSpace(phrase)
 	}
 
-	if said == "" || scope == langFlag {
-		return spoken{Kind: saidNothing}
+	if said == "" || scope == LangFlag {
+		return Line{Kind: Nothing}
 	}
 
-	return spoken{Kind: kind, Scope: scope, Phrase: said}
+	return Line{Kind: kind, Scope: scope, Phrase: said}
 }
 
 // note reads the task a line is about, and what it says about it.
-func note(said string) spoken {
-	id, phrase, _ := strings.Cut(strings.TrimPrefix(said, atWord), " ")
+func note(said string) Line {
+	id, phrase, _ := strings.Cut(strings.TrimPrefix(said, AtWord), " ")
 
 	phrase = strings.TrimSpace(phrase)
 	if id == "" || phrase == "" {
-		return spoken{Kind: saidNothing}
+		return Line{Kind: Nothing}
 	}
 
-	return spoken{Kind: saidNote, Task: id, Phrase: phrase}
+	return Line{Kind: Note, Task: id, Phrase: phrase}
 }

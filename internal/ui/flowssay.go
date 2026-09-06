@@ -17,6 +17,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/clip"
 	"github.com/e1i0r/orbit/internal/ui/prompt"
 )
 
@@ -75,7 +76,7 @@ func (m Model) sayKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		st.say = trimLastRune(st.say)
 		return m, nil
 	case (msg.Code == 'v' || msg.Code == 'V') && msg.Mod&tea.ModCtrl != 0:
-		st.say += strings.TrimRight(readClipboard(), "\r\n")
+		st.say += strings.TrimRight(clip.Read(), "\r\n")
 		return m, nil
 	}
 

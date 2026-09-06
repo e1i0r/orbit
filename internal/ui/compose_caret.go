@@ -1,6 +1,10 @@
 package ui
 
-import "github.com/e1i0r/orbit/internal/ui/typing"
+import (
+	"github.com/e1i0r/orbit/internal/ui/typing"
+
+	"github.com/e1i0r/orbit/internal/ui/clip"
+)
 
 import tea "charm.land/bubbletea/v2"
 
@@ -184,7 +188,7 @@ func (m Model) composeCopy(cut bool) Model {
 		return m
 	}
 
-	if !writeClipboard(in.Selected()) {
+	if !clip.Write(in.Selected()) {
 		return m
 	}
 

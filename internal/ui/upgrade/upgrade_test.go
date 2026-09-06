@@ -1,4 +1,4 @@
-package ui
+package upgrade
 
 import (
 	"encoding/json"
@@ -16,16 +16,16 @@ func TestCheckUpgradeCmd(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	old := upgradeCheckEndpoint
-	upgradeCheckEndpoint = ts.URL
+	old := endpoint
+	endpoint = ts.URL
 
-	t.Cleanup(func() { upgradeCheckEndpoint = old })
+	t.Cleanup(func() { endpoint = old })
 
-	msg := checkUpgradeCmd("v0.1.0")()
+	msg := Check("v0.1.0")()
 
-	upMsg, ok := msg.(upgradeAvailableMsg)
+	upMsg, ok := msg.(AvailableMsg)
 	if !ok {
-		t.Fatalf("expected upgradeAvailableMsg, got: %T", msg)
+		t.Fatalf("expected AvailableMsg, got: %T", msg)
 	}
 
 	if upMsg.Version != "v0.2.0" {
@@ -45,15 +45,15 @@ func TestCheckUpgradeCmdSaysNothingOnTheLatestVersion(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	old := upgradeCheckEndpoint
-	upgradeCheckEndpoint = ts.URL
+	old := endpoint
+	endpoint = ts.URL
 
-	t.Cleanup(func() { upgradeCheckEndpoint = old })
+	t.Cleanup(func() { endpoint = old })
 
 	// Both spellings, because a tag carries a leading v and the version
 	// stamped into a build may not.
 	for _, current := range []string{"v0.1.12", "0.1.12"} {
-		if msg := checkUpgradeCmd(current)(); msg != nil {
+		if msg := Check(current)(); msg != nil {
 			t.Errorf("running %s, the latest release being v0.1.12: got %+v, want nothing to say", current, msg)
 		}
 	}
@@ -105,13 +105,13 @@ func TestADevBuildNeverReachesGitHub(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	old := upgradeCheckEndpoint
-	upgradeCheckEndpoint = ts.URL
+	old := endpoint
+	endpoint = ts.URL
 
-	t.Cleanup(func() { upgradeCheckEndpoint = old })
+	t.Cleanup(func() { endpoint = old })
 
 	for _, current := range []string{"dev", "", "  "} {
-		if cmd := checkUpgradeCmd(current); cmd != nil {
+		if cmd := Check(current); cmd != nil {
 			t.Errorf("a build calling itself %q was given an upgrade check to run", current)
 			cmd()
 		}
@@ -128,20 +128,20 @@ func TestCheckUpgradeCmdFailure(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	old := upgradeCheckEndpoint
-	upgradeCheckEndpoint = ts.URL
+	old := endpoint
+	endpoint = ts.URL
 
-	t.Cleanup(func() { upgradeCheckEndpoint = old })
+	t.Cleanup(func() { endpoint = old })
 
-	msg := checkUpgradeCmd("v0.1.0")()
+	msg := Check("v0.1.0")()
 	if msg != nil {
 		t.Errorf("expected nil on error, got: %+v", msg)
 	}
 }
 
 func TestUpgradeTickCmd(t *testing.T) {
-	cmd := upgradeTick()
+	cmd := Tick()
 	if cmd == nil {
-		t.Fatal("expected non-nil cmd from upgradeTick")
+		t.Fatal("expected non-nil cmd from Tick")
 	}
 }

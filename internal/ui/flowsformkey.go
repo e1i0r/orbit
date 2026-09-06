@@ -11,6 +11,8 @@ import (
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/clip"
 )
 
 func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
@@ -96,7 +98,7 @@ func (m Model) flowsFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		// ^V as well as cmd+V: the second arrives as a paste message the
 		// terminal wraps, which is off in some terminals and never happens
 		// over ssh at all.
-		if clip := strings.TrimRight(readClipboard(), "\r\n"); clip != "" {
+		if clip := strings.TrimRight(clip.Read(), "\r\n"); clip != "" {
 			st.write(clip)
 		}
 

@@ -7,6 +7,8 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/knowledge"
+	"github.com/e1i0r/orbit/internal/ui/clip"
+	"github.com/e1i0r/orbit/internal/ui/spoken"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -158,7 +160,7 @@ func (m Model) supervisorKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 
 		return m.sendSupervisorMessage(text)
 	case (msg.Code == 'v' || msg.Code == 'V') && msg.Mod&tea.ModCtrl != 0:
-		if clip := readClipboard(); clip != "" {
+		if clip := clip.Read(); clip != "" {
 			m.supervisor.input += clip
 		}
 
@@ -191,11 +193,11 @@ func (m Model) sendSupervisorMessage(text string) (Model, tea.Cmd) {
 	// Four gestures share this one line, and which one was typed is read
 	// before anything is sent: a rule is not a message the supervisor has to
 	// interpret, it is a fact to write down. spoken.go is the whole grammar.
-	if said := parseSaid(text); said.Kind != saidMessage {
+	if said := spoken.Parse(text); said.Kind != spoken.Message {
 		// /brief is a question and not an action: it is sent the way a
 		// typed sentence is, so the answer lands in the thread where the
 		// person who asked will look for it.
-		if said.Kind == saidBrief {
+		if said.Kind == spoken.Brief {
 			return m.sendSupervisorMessage(m.briefQuestion(said.Phrase))
 		}
 

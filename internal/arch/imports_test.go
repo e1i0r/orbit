@@ -164,7 +164,7 @@ var layers = map[string][]string{
 	// somebody is about to write sits beside the ones already standing. It
 	// is a type and a read — the facts arrive through a port, because
 	// reaching the state root to load them is what the window may not do.
-	"internal/ui": {"internal/board", "internal/flow", "internal/knowledge", "internal/logger", "internal/repo", "internal/task", "internal/tracker", "internal/ui/layout", "internal/ui/prompt", "internal/ui/typing", "internal/view", "internal/words"},
+	"internal/ui": {"internal/board", "internal/flow", "internal/knowledge", "internal/logger", "internal/repo", "internal/task", "internal/tracker", "internal/ui/clip", "internal/ui/layout", "internal/ui/prompt", "internal/ui/spoken", "internal/ui/typing", "internal/ui/upgrade", "internal/view", "internal/words"},
 	// internal/ui/layout is widened to internal/view for one reason:
 	// layout.Columns plans a row's columns from the board it is about to
 	// draw, and the board is []view.Task. It is a widening, and it was
@@ -191,10 +191,25 @@ var layers = map[string][]string{
 	// given, and the shape a flow drafted from a sentence must come back in.
 	// It imports nothing, because a prompt is a string and everything that
 	// decides which one to send is the window's.
+	// internal/ui/clip is the pasteboard, which is three commands that may
+	// not be installed rather than a library: pbcopy and pbpaste on a mac,
+	// wl-copy and xclip on the two Linux display servers. It imports nothing.
+	"internal/ui/clip":   {},
 	"internal/ui/prompt": {},
+	// internal/ui/spoken is a line the operator typed into the supervisor,
+	// taken apart: which of the gestures it is, what it is about, and what
+	// is left once the gesture is off the front. It imports nothing — what
+	// to do about a line is the window's, and this only says what the line
+	// was.
+	"internal/ui/spoken": {},
 	"internal/ui/typing": {},
-	"internal/view":      {"internal/record"},
-	"internal/words":     {},
+	// internal/ui/upgrade asks GitHub what the newest release is and says
+	// whether it is worth offering. It is the one package under
+	// internal/ui that talks to the network, which is the reason it is its
+	// own: the window asks and draws, and never reaches out itself.
+	"internal/ui/upgrade": {},
+	"internal/view":       {"internal/record"},
+	"internal/words":      {},
 }
 
 // modulePath prefixes every import that is one of Orbit's own packages

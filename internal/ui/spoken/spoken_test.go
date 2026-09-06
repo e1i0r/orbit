@@ -1,4 +1,4 @@
-package ui
+package spoken
 
 // What the operator typed into the supervisor, taken apart.
 
@@ -15,7 +15,7 @@ func TestPlainTextIsAMessage(t *testing.T) {
 		"and/or this",
 		"@",
 	} {
-		if got := parseSaid(said); got.Kind != saidMessage || got.Phrase != said {
+		if got := Parse(said); got.Kind != Message || got.Phrase != said {
 			t.Errorf("%q was read as %+v, want the message it is", said, got)
 		}
 	}
@@ -25,13 +25,13 @@ func TestPlainTextIsAMessage(t *testing.T) {
 // two words are the two things a fact can do, and the operator says which
 // by which word they use.
 func TestSlashRuleIsAFactThatStops(t *testing.T) {
-	rule := parseSaid("/rule coverage stays above 90%")
-	if rule.Kind != saidRule || rule.Phrase != "coverage stays above 90%" {
+	rule := Parse("/rule coverage stays above 90%")
+	if rule.Kind != Rule || rule.Phrase != "coverage stays above 90%" {
 		t.Errorf("/rule was read as %+v", rule)
 	}
 
-	aware := parseSaid("/aware the fuzz tests hang sometimes")
-	if aware.Kind != saidAware || aware.Phrase != "the fuzz tests hang sometimes" {
+	aware := Parse("/aware the fuzz tests hang sometimes")
+	if aware.Kind != Aware || aware.Phrase != "the fuzz tests hang sometimes" {
 		t.Errorf("/aware was read as %+v", aware)
 	}
 }
@@ -41,12 +41,12 @@ func TestSlashRuleIsAFactThatStops(t *testing.T) {
 // scopes above a repository have to be asked for, because they reach
 // everywhere and nobody should arrive at them by not saying anything.
 func TestAScopeCanBeSaidOutLoud(t *testing.T) {
-	for said, want := range map[string]spoken{
-		"/rule the PRs are in English":            {Kind: saidRule, Phrase: "the PRs are in English"},
-		"/rule --general the PRs are in English":  {Kind: saidRule, Scope: "general", Phrase: "the PRs are in English"},
-		"/aware --lang go never discard an error": {Kind: saidAware, Scope: "go", Phrase: "never discard an error"},
+	for said, want := range map[string]Line{
+		"/rule the PRs are in English":            {Kind: Rule, Phrase: "the PRs are in English"},
+		"/rule --general the PRs are in English":  {Kind: Rule, Scope: "general", Phrase: "the PRs are in English"},
+		"/aware --lang go never discard an error": {Kind: Aware, Scope: "go", Phrase: "never discard an error"},
 	} {
-		if got := parseSaid(said); got != want {
+		if got := Parse(said); got != want {
 			t.Errorf("%q was read as %+v,\nwant %+v", said, got, want)
 		}
 	}
@@ -55,8 +55,8 @@ func TestAScopeCanBeSaidOutLoud(t *testing.T) {
 // TestAtPointsAtATask. What follows lands in that task's notes, where
 // somebody opening it tomorrow will read it.
 func TestAtPointsAtATask(t *testing.T) {
-	got := parseSaid("@ORB-115 this one is stuck, do not let it hang")
-	if got.Kind != saidNote || got.Task != "ORB-115" {
+	got := Parse("@ORB-115 this one is stuck, do not let it hang")
+	if got.Kind != Note || got.Task != "ORB-115" {
 		t.Errorf("the mention was read as %+v", got)
 	}
 
@@ -69,7 +69,7 @@ func TestAtPointsAtATask(t *testing.T) {
 // has not finished typing, not a rule with an empty sentence.
 func TestAGestureWithNothingAfterItSaysNothing(t *testing.T) {
 	for _, said := range []string{"/rule", "/rule   ", "/aware", "@ORB-115", "/rule --general"} {
-		if got := parseSaid(said); got.Kind != saidNothing {
+		if got := Parse(said); got.Kind != Nothing {
 			t.Errorf("%q was read as %+v, want nothing to act on", said, got)
 		}
 	}

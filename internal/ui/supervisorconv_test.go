@@ -9,6 +9,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/spoken"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -174,7 +175,7 @@ func TestTheConversationsAreReachableByGestureAsWellAsByKey(t *testing.T) {
 	var found int
 
 	for _, c := range m.completions() {
-		if c.Text == chatsWord || c.Text == newWord {
+		if c.Text == spoken.ChatsWord || c.Text == spoken.NewWord {
 			found++
 		}
 	}
