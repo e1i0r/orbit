@@ -45,6 +45,25 @@ func (m Model) composeSubmit(startNow bool) (tea.Model, tea.Cmd) {
 	case text == "":
 		return m.say(p.T("compose.text_required",
 			"the task needs something written in it")), nil
+	case m.onlyALink(text):
+		// A URL and a title are a name, not a task. Orbit cannot read the
+		// body of this issue on this machine, and a headless run cannot
+		// either: its tool calls are auto-denied with nobody there to
+		// approve them. What it does then is invent the requirements or
+		// nothing at all, and both cost a run.
+		return m.say(p.T("compose.body_unreadable",
+			"orbit cannot read this issue here, and a run will not be able to either: write what has to be done, or set LINEAR_API_KEY")), nil
+	}
+
+	// The body first, when this machine can read it: a task written from a
+	// URL alone is a task nobody can follow. What comes back finishes this
+	// same save — see composeread.go.
+	if m.needsBody() {
+		m.compose.startAfterRead = startNow
+
+		next, cmd := m.readIssue()
+
+		return next, cmd
 	}
 
 	if m.opts.ValidID != nil {
@@ -106,4 +125,17 @@ func (m Model) selectPending() Model {
 	}
 
 	return m
+}
+
+// onlyALink is whether all this task would carry is what the URL itself
+// says: the id, the slug, and a note telling somebody to go and look.
+func (m Model) onlyALink(text string) bool {
+	iss := m.compose.parsedIssue
+	if iss == nil || m.compose.readable || iss.Description != "" {
+		return false
+	}
+
+	written := strings.TrimSpace(text)
+
+	return written == "" || written == strings.TrimSpace(iss.Title)
 }

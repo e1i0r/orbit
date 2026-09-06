@@ -119,6 +119,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		return m.say(m.opts.Words.T("supervisor.replied", "supervisor replied in thread")), nil
+	case issueReadMsg:
+		return m.tookIssue(msg)
 	case comparedMsg:
 		return m.tookComparison(msg), nil
 	case impactMsg:

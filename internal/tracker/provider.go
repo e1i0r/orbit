@@ -108,7 +108,8 @@ func defaultPrompt(iss Issue) string {
 	b.WriteString(iss.ID)
 	b.WriteString(")\nURL: ")
 	b.WriteString(iss.RawURL)
-	b.WriteString("\n\nPlease inspect the issue details using available MCP tools and implement the requested changes.")
+	b.WriteString("\n\n")
+	b.WriteString(body(iss, "available MCP tools"))
 
 	return b.String()
 }

@@ -4412,6 +4412,22 @@
     "new.started": {
       "source": "{id} started, process {pid}",
       "value": "{id} arrancó, proceso {pid}"
+    },
+    "compose.body_unreadable": {
+      "source": "orbit cannot read this issue here, and a run will not be able to either: write what has to be done, or set LINEAR_API_KEY",
+      "value": "orbit no puede leer esta issue aquí, y una corrida tampoco podrá: escribe qué hay que hacer, o define LINEAR_API_KEY"
+    },
+    "compose.reading": {
+      "source": "reading {id} from {kind}…",
+      "value": "leyendo {id} de {kind}…"
+    },
+    "compose.read_failed": {
+      "source": "could not read the issue: {err}",
+      "value": "no se pudo leer la issue: {err}"
+    },
+    "wait.issue": {
+      "source": "reading the issue",
+      "value": "leyendo la issue"
     }
   }
 }

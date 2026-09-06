@@ -5,6 +5,7 @@ package ui
 import (
 	"path/filepath"
 	"strings"
+	"time"
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
@@ -69,6 +70,18 @@ type composeState struct {
 	text        input
 	url         input
 	parsedIssue *tracker.Issue
+	// readable is whether this machine can read the body of an issue of
+	// that tracker's kind — whether there is a credential for it. A URL
+	// names an issue; only the body says what the work is, and a run
+	// started without it is a run that will either invent the requirements
+	// or do nothing.
+	readable bool
+	// reading is whether the body is being fetched right now, readAt when
+	// that started, and startAfterRead whether the key the reader pressed
+	// was Save and start — the save is finished once the answer lands.
+	reading        bool
+	readAt         time.Time
+	startAfterRead bool
 
 	flows   []string
 	flowIdx int
@@ -238,47 +251,6 @@ func (m Model) composeKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) onComposeChanged() {
-	if m.compose.tab == composeTabURL && m.compose.field == composeURL {
-		raw := strings.TrimSpace(m.compose.url.String())
-		if raw != "" {
-			if issue, err := tracker.Parse(raw); err == nil {
-				m.compose.parsedIssue = &issue
-
-				m.compose.id.setValue(issue.ID)
-
-				if issue.Title != "" {
-					m.compose.text.setValue(issue.Title)
-				}
-			} else {
-				m.compose.parsedIssue = nil
-			}
-		} else {
-			m.compose.parsedIssue = nil
-		}
-	} else if m.compose.tab == composeTabManual {
-		cur := strings.TrimSpace(m.compose.typed())
-		if strings.HasPrefix(cur, "http://") || strings.HasPrefix(cur, "https://") ||
-			strings.HasPrefix(cur, "linear.app/") {
-			if issue, err := tracker.Parse(cur); err == nil {
-				m.compose.tab = composeTabURL
-				m.compose.field = composeURL
-				m.compose.url.setValue(cur)
-				m.compose.parsedIssue = &issue
-
-				m.compose.id.setValue(issue.ID)
-
-				if issue.Title != "" {
-					m.compose.text.setValue(issue.Title)
-				}
-			}
-		}
-	}
-}
-
-// active is the field being typed into, or nothing when the form is on a
-// row of pills. Every key that writes, deletes or moves a caret goes
-// through it, so which field a keystroke lands in is answered once.
 func (c *composeState) active() *input {
 	if c.tab == composeTabURL {
 		if c.field == composeURL {
