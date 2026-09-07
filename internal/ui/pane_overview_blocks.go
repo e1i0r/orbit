@@ -34,7 +34,7 @@ func (m Model) overviewVitals(t view.Task, w int) []string {
 
 	out := statStrip([]stat{
 		{label: p.T("overview.cost", "cost"), value: cost, role: theme.OK},
-		{label: p.T("overview.duration", "duration"), value: elapsed(m.now, t.Since), role: theme.Accent},
+		{label: p.T("overview.duration", "duration"), value: cells.Elapsed(m.now, t.Since), role: theme.Accent},
 		{
 			label: p.T("overview.phases", "flow"),
 			value: cells.OrDef(t.Flow, flow.Default),

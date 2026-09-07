@@ -65,7 +65,7 @@ func (m Model) findPhaseExec(phaseName string) phaseExec {
 
 			exec.text = e.Said()
 			if !startEntry.At.IsZero() && !e.At.IsZero() {
-				exec.duration = elapsed(e.At, startEntry.At)
+				exec.duration = cells.Elapsed(e.At, startEntry.At)
 			}
 		}
 
@@ -77,7 +77,7 @@ func (m Model) findPhaseExec(phaseName string) phaseExec {
 
 			exec.text = e.Said()
 			if !startEntry.At.IsZero() && !e.At.IsZero() {
-				exec.duration = elapsed(e.At, startEntry.At)
+				exec.duration = cells.Elapsed(e.At, startEntry.At)
 			}
 		}
 

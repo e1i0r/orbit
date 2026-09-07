@@ -1,4 +1,4 @@
-package ui
+package panes
 
 import (
 	"fmt"
@@ -46,19 +46,13 @@ func formatThoughtLine(l string) (string, theme.Role) {
 	}
 }
 
-// thinkingLines renders Pane 11: Concise decision reasoning and analysis captured from the model.
-func (m Model) thinkingLines() []string {
-	lines, _ := m.thinkingRows()
+// Thinking is the reasoning the engine showed its work in, and beside it
+// which entry each block that folds was written by — laid out in one pass
+// for the reason the timeline is.
+func Thinking(e Env) ([]string, map[int]int) {
+	p := e.Words
 
-	return lines
-}
-
-// thinkingRows is that content and, beside it, which entry each block that
-// folds was written by, laid out in one pass for the reason logRows is.
-func (m Model) thinkingRows() ([]string, map[int]int) {
-	p := m.opts.Words
-
-	blocks := m.thoughtBlocks()
+	blocks := e.thoughtBlocks()
 
 	out := []string{
 		"",
@@ -77,10 +71,10 @@ func (m Model) thinkingRows() ([]string, map[int]int) {
 		p.T("thinking.entries_count", "reasoning and decisions analysed"),
 	), "")
 
-	heads, w := map[int]int{}, max(m.frame.Body.W, 1)
+	heads, w := map[int]int{}, max(e.Frame.Body.W, 1)
 
 	for _, b := range blocks {
-		rows, folds := m.thoughtRows(b, w)
+		rows, folds := e.thoughtRows(b, w)
 		if folds {
 			heads[len(out)] = b.entry
 		}
@@ -95,25 +89,27 @@ func (m Model) thinkingRows() ([]string, map[int]int) {
 // thoughtBlocks is the record read as reasoning: the thinking the engine
 // showed its work in, the summary each phase ended on, and the sentence the
 // one that is running is on right now.
-func (m Model) thoughtBlocks() []thoughtBlock {
+func (e Env) thoughtBlocks() []thoughtBlock {
 	var blocks []thoughtBlock
 
-	for i, e := range m.entries {
-		isThought := e.What() == view.EntryThought
+	for i, entry := range e.Entries {
+		isThought := entry.What() == view.EntryThought
 
 		// Said and not Text: a phase that was killed leaves its stream on
 		// stdout, and the first line of a folded block would be a line of
 		// somebody's JSON rather than the sentence it stands for.
-		said := strings.TrimSpace(e.Said())
+		said := strings.TrimSpace(entry.Said())
 
-		isPhaseSummary := (e.What() == view.EntryFinished || e.What() == view.EntryFailed) && said != ""
+		ended := entry.What() == view.EntryFinished || entry.What() == view.EntryFailed
+
+		isPhaseSummary := ended && said != ""
 		if !isThought && !isPhaseSummary {
 			continue
 		}
 
 		timeStr := ""
-		if !e.At.IsZero() {
-			timeStr = e.At.Format("15:04:05")
+		if !entry.At.IsZero() {
+			timeStr = entry.At.Format("15:04:05")
 		}
 
 		var lines []string
@@ -126,15 +122,14 @@ func (m Model) thoughtBlocks() []thoughtBlock {
 
 		if len(lines) > 0 {
 			blocks = append(blocks, thoughtBlock{
-				at: timeStr, phase: e.Phase, attempt: e.Attempt, lines: lines, entry: i,
+				at: timeStr, phase: entry.Phase, attempt: entry.Attempt, lines: lines, entry: i,
 			})
 		}
 	}
 
-	t, ok := m.task(m.detail)
-	if ok && t.CurrentThought != "" {
+	if t := e.Task; !e.Gone && t.CurrentThought != "" {
 		blocks = append(blocks, thoughtBlock{
-			at:    m.opts.Words.T("thinking.live_now", "live / in flight"),
+			at:    e.Words.T("thinking.live_now", "live / in flight"),
 			phase: t.Phase, lines: []string{t.CurrentThought}, entry: -1,
 		})
 	}
@@ -157,8 +152,8 @@ const (
 // Whether it folds is decided here, by wrapping the reasoning at the measure
 // it will be drawn at: a block that says all it has in one row is offered no
 // arrow, because opening it would put nothing new on the screen.
-func (m Model) thoughtRows(b thoughtBlock, w int) ([]string, bool) {
-	p := m.opts.Words
+func (e Env) thoughtRows(b thoughtBlock, w int) ([]string, bool) {
+	p := e.Words
 
 	head := theme.Paint(theme.Accent).Render("●") + " " + theme.Paint(theme.Dim).Render(b.at)
 	if b.phase != "" {
@@ -184,7 +179,7 @@ func (m Model) thoughtRows(b thoughtBlock, w int) ([]string, bool) {
 		return append([]string{"  " + thoughtGutter + head}, body...), false
 	}
 
-	open := m.rowOpen(tabThinking, b.entry)
+	open := e.row(b.entry)
 	out := []string{"  " + theme.Text(theme.Tertiary).Render(cells.Fold(open)) + head}
 
 	if !open {

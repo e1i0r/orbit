@@ -9,7 +9,9 @@ package cells
 // see.
 
 import (
+	"strconv"
 	"strings"
+	"time"
 
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
@@ -255,4 +257,31 @@ func Spread(left, right string, w int) string {
 	}
 
 	return left + strings.Repeat(" ", gap) + right
+}
+
+// Elapsed is how long something has been in the state it is in, in one unit.
+//
+// The units are not translated. They are the same four letters in the
+// languages Orbit ships, and a column seven cells wide has no room for a
+// word — a number with a letter after it is read the same way in both.
+//
+// A negative age is clamped rather than drawn. The record's clock is the
+// record's word and the fold does not correct it, so a log whose clock went
+// backwards reaches here as a task that started after it was read.
+func Elapsed(now, since time.Time) string {
+	if since.IsZero() {
+		return ""
+	}
+
+	d := max(now.Sub(since), 0)
+	switch {
+	case d < time.Minute:
+		return strconv.Itoa(int(d.Seconds())) + "s"
+	case d < time.Hour:
+		return strconv.Itoa(int(d.Minutes())) + "m"
+	case d < 24*time.Hour:
+		return strconv.Itoa(int(d.Hours())) + "h"
+	}
+
+	return strconv.Itoa(int(d.Hours()/24)) + "d"
 }

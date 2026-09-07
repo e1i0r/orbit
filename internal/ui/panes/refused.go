@@ -1,4 +1,4 @@
-package ui
+package panes
 
 import (
 	"fmt"
@@ -11,26 +11,20 @@ import (
 	"github.com/e1i0r/orbit/internal/view"
 )
 
-// refusedLines is the refused tab's content, ready for the pane.
-func (m Model) refusedLines() []string {
-	lines, _ := m.refusedRows()
-
-	return lines
-}
-
-// refusedRows is that content and, beside it, which denial each row that
-// folds stands for, laid out in one pass for the reason logRows is.
-func (m Model) refusedRows() ([]string, map[int]int) {
-	p := m.opts.Words
-	if m.logErr != nil {
-		return []string{"  " + theme.Paint(theme.Bad).Render(m.errSaid(m.logErr))}, nil
+// Refused is what the sandbox would not let this run do, and beside it
+// which denial each row that folds stands for — laid out in one pass for
+// the reason the timeline is.
+func Refused(e Env) ([]string, map[int]int) {
+	p := e.Words
+	if e.Failed != "" {
+		return []string{"  " + theme.Paint(theme.Bad).Render(e.Failed)}, nil
 	}
 
 	var denials []view.Entry
 
-	for _, e := range m.entries {
-		if e.What() == view.EntryRefused {
-			denials = append(denials, e)
+	for _, entry := range e.Entries {
+		if entry.What() == view.EntryRefused {
+			denials = append(denials, entry)
 		}
 	}
 
@@ -54,7 +48,7 @@ func (m Model) refusedRows() ([]string, map[int]int) {
 		)
 	} else {
 		for i, d := range denials {
-			rows, folds := m.denialRows(d, i)
+			rows, folds := e.denialRows(d, i)
 			if folds {
 				heads[len(out)] = i
 			}
@@ -65,7 +59,7 @@ func (m Model) refusedRows() ([]string, map[int]int) {
 
 	out = append(out, "")
 
-	// 2. Las reglas fijas del sandbox
+	// And the standing rules it stopped them by.
 	out = append(out,
 		"  "+theme.Paint(theme.Accent).Render(p.T("refused.rules_title", "THE RULES · sandbox constraints")),
 		rule("psql / mongosh", p.T("refused.rule_db", "protected databases, readable only")),
@@ -87,16 +81,16 @@ func (m Model) refusedRows() ([]string, map[int]int) {
 // What the sandbox writes down is a paragraph often enough that it cannot be
 // set on one row: a refusal drawn unwrapped loses everything past the margin,
 // which is the half that says why.
-func (m Model) denialRows(d view.Entry, i int) ([]string, bool) {
+func (e Env) denialRows(d view.Entry, i int) ([]string, bool) {
 	tool := d.Tool
 	if tool == "" {
-		tool = m.opts.Words.T("refused.unnamed_tool", "command")
+		tool = e.Words.T("refused.unnamed_tool", "command")
 	}
 
 	head := "    " + theme.Paint(theme.Bad).Render("✗") + " " + theme.Paint(theme.Accent).Render(tool) + ": "
 
 	lead := 4 + 1 + 1 + lipgloss.Width(tool) + 2
-	availW := max(20, max(m.frame.Body.W, 1)-lead-lipgloss.Width(cells.FoldShut)-2)
+	availW := max(20, max(e.Frame.Body.W, 1)-lead-lipgloss.Width(cells.FoldShut)-2)
 
 	var body []string
 
@@ -118,7 +112,7 @@ func (m Model) denialRows(d view.Entry, i int) ([]string, bool) {
 		return []string{head + strings.Repeat(" ", lipgloss.Width(cells.FoldShut)) + theme.Paint(theme.Bad).Render(body[0])}, false
 	}
 
-	open := m.rowOpen(tabRefused, i)
+	open := e.row(i)
 	mark := theme.Text(theme.Tertiary).Render(cells.Fold(open))
 
 	if !open {

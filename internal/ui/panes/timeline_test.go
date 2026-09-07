@@ -1,13 +1,12 @@
-package ui
+package panes
 
-// log_coverage_test.go is logWord's whole vocabulary — every kind the task
-// view knows a word for, and the one it does not — plus clock's own two
-// answers.
+// logWord's whole vocabulary — every kind the task view knows a word for,
+// and the one it does not — plus clock's own two answers.
 //
 // Every Kind here is spelled as the record's own constant would render it,
-// as a literal string: internal/ui may not import internal/record (see
-// arch.layers), so reader_test.go and detail_test.go build their fixture
-// entries the same way.
+// as a literal string: nothing under internal/ui may import internal/record
+// (see arch.layers), so every fixture entry in this repository is built the
+// same way.
 
 import (
 	"strings"
@@ -19,7 +18,7 @@ import (
 )
 
 func TestLogWordCoversEveryKnownKindAndTheUnknownOne(t *testing.T) {
-	m, _ := testModel(t, 100, 30)
+	e := world(t, nil)
 
 	cases := []struct {
 		kind string
@@ -47,7 +46,7 @@ func TestLogWordCoversEveryKnownKindAndTheUnknownOne(t *testing.T) {
 		{"record.unreadable", "could not be read"},
 	}
 	for _, c := range cases {
-		word, _ := m.logWord(view.Entry{Kind: c.kind})
+		word, _ := e.logWord(view.Entry{Kind: c.kind})
 		if !strings.Contains(word, c.want) {
 			t.Errorf("logWord(%q) = %q, want it to say %q", c.kind, word, c.want)
 		}
@@ -55,7 +54,7 @@ func TestLogWordCoversEveryKnownKindAndTheUnknownOne(t *testing.T) {
 
 	// A kind this build has never heard of is drawn exactly as the record
 	// spelled it, and not translated.
-	word, role := m.logWord(view.Entry{Kind: "custom.unknown.kind"})
+	word, role := e.logWord(view.Entry{Kind: "custom.unknown.kind"})
 	if word != "custom.unknown.kind" {
 		t.Errorf("logWord on an unrecognised kind = %q, want the kind verbatim", word)
 	}

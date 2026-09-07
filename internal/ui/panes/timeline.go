@@ -1,4 +1,4 @@
-package ui
+package panes
 
 // The log tab: one task's record, oldest at the top, newest at the bottom,
 // seamed where one attempt ends and the next begins.
@@ -34,57 +34,51 @@ const phaseCells = 10
 // it is in the heading.
 const clockCells = 8
 
-// logLines is the log tab's content, ready for the pane.
-func (m Model) logLines() []string {
-	lines := m.logRows().rows
-
-	return lines
-}
-
-// logRows is that content and, beside it, which entry each row that folds is
-// the head of and which attempt each seam belongs to.
-//
-// The rows and the map are built in one pass on purpose: a hit test that
-// counted the rows a second time would be a second opinion about where a row
-// is, and the day the two disagree the pointer opens the entry above the one
-// it is on.
-// drawnLog is the timeline drawn: the rows, and which row each entry and
-// each attempt's rule ended up on.
+// Drawn is a pane laid out: the rows, and which row each entry and each
+// attempt's rule ended up on.
 //
 // Three values came back side by side and two of them were the same type, so
 // the pointer read the seams as the heads for as long as nobody looked. The
 // map a pane holds is written by the render that produced it — a second count
 // is a second opinion about where a row is.
-type drawnLog struct {
-	rows  []string
-	heads map[int]int
-	seams map[int]int
+type Drawn struct {
+	Rows  []string
+	Heads map[int]int
+	Seams map[int]int
 }
 
-func (m Model) logRows() drawnLog {
-	w := max(m.frame.Body.W, 1)
-	if m.logErr != nil {
-		return drawnLog{rows: []string{" " + theme.Paint(theme.Bad).Render(m.errSaid(m.logErr))}}
+// Timeline is one task's record, oldest at the top, newest at the bottom,
+// seamed where one attempt ends and the next begins.
+//
+// The rows and the maps are built in one pass on purpose: a hit test that
+// counted the rows a second time would be a second opinion about where a row
+// is, and the day the two disagree the pointer opens the entry above the one
+// it is on.
+func Timeline(e Env) Drawn {
+	w := max(e.Frame.Body.W, 1)
+	if e.Failed != "" {
+		return Drawn{Rows: []string{" " + theme.Paint(theme.Bad).Render(e.Failed)}}
 	}
 
-	if len(m.entries) == 0 {
-		return drawnLog{rows: []string{" " + theme.Paint(theme.Dim).Render(m.opts.Words.T("log.empty", "nothing has been recorded about this task yet"))}}
+	if len(e.Entries) == 0 {
+		return Drawn{Rows: []string{" " + theme.Paint(theme.Dim).Render(
+			e.Words.T("log.empty", "nothing has been recorded about this task yet"))}}
 	}
 
-	out := make([]string, 0, len(m.entries)+4)
+	out := make([]string, 0, len(e.Entries)+4)
 	heads, seams := map[int]int{}, map[int]int{}
 
-	for i, e := range m.entries {
-		if e.Attempted() {
-			seams[len(out)] = e.Attempt
-			out = append(out, m.seam(e, w))
+	for i, entry := range e.Entries {
+		if entry.Attempted() {
+			seams[len(out)] = entry.Attempt
+			out = append(out, e.seam(entry, w))
 		}
 
-		if !m.attemptOpen(e.Attempt) {
+		if !e.attempt(entry.Attempt) {
 			continue
 		}
 
-		rows, folds := m.logEntryLines(e, i, w)
+		rows, folds := e.logEntryLines(entry, i, w)
 		if folds {
 			heads[len(out)] = i
 		}
@@ -92,7 +86,7 @@ func (m Model) logRows() drawnLog {
 		out = append(out, rows...)
 	}
 
-	return drawnLog{rows: out, heads: heads, seams: seams}
+	return Drawn{Rows: out, Heads: heads, Seams: seams}
 }
 
 // seam is the line between one attempt and the next.
@@ -101,15 +95,15 @@ func (m Model) logRows() drawnLog {
 // the two things a reader comparing two attempts of the same task asks for
 // first: which one this is, and how long ago it started. The arrow in front
 // of it says the rule is also the lid on everything that attempt did.
-func (m Model) seam(e view.Entry, w int) string {
-	label := m.opts.Words.T("log.attempt", "attempt {n}", about("n", strconv.Itoa(e.Attempt)))
+func (e Env) seam(entry view.Entry, w int) string {
+	label := e.Words.T("log.attempt", "attempt {n}", about("n", strconv.Itoa(entry.Attempt)))
 
 	head, tail := "── "+label+" ", ""
-	if at := clock(e.At); at != "" {
+	if at := clock(entry.At); at != "" {
 		tail = " " + at + " ──"
 	}
 
-	mark := cells.Fold(m.attemptOpen(e.Attempt))
+	mark := cells.Fold(e.attempt(entry.Attempt))
 	rule := max(w-lipgloss.Width(mark)-lipgloss.Width(head)-lipgloss.Width(tail)-1, 0)
 
 	return " " + theme.Text(theme.Tertiary).Render(mark) + theme.Paint(theme.Dim).Render(head+strings.Repeat("─", rule)+tail)
@@ -122,13 +116,13 @@ func (m Model) seam(e view.Entry, w int) string {
 // the measure it will be drawn at, and nowhere else: a row is offered an
 // arrow only when opening it puts something on the screen that was not
 // already there.
-func (m Model) logEntryLines(e view.Entry, i, w int) ([]string, bool) {
-	word, role := m.logWord(e)
-	prefix := " " + theme.Paint(theme.Dim).Render(cells.Pad(clock(e.At), clockCells, false)) + "  " +
-		theme.Paint(theme.Dim).Render(cells.Pad(e.Phase, phaseCells, false)) + "  " +
+func (e Env) logEntryLines(entry view.Entry, i, w int) ([]string, bool) {
+	word, role := e.logWord(entry)
+	prefix := " " + theme.Paint(theme.Dim).Render(cells.Pad(clock(entry.At), clockCells, false)) + "  " +
+		theme.Paint(theme.Dim).Render(cells.Pad(entry.Phase, phaseCells, false)) + "  " +
 		theme.Paint(role).Render(word) + "  "
 
-	detail := m.logDetail(e)
+	detail := logDetail(entry)
 	if detail == "" {
 		return []string{strings.TrimRight(prefix, " ")}, false
 	}
@@ -155,11 +149,11 @@ func (m Model) logEntryLines(e view.Entry, i, w int) ([]string, bool) {
 		return []string{prefix + strings.Repeat(" ", lipgloss.Width(cells.FoldShut)) + theme.Paint(theme.Dim).Render(wrapped[0])}, false
 	}
 
-	mark := theme.Text(theme.Tertiary).Render(cells.Fold(m.rowOpen(tabTimeline, i)))
+	mark := theme.Text(theme.Tertiary).Render(cells.Fold(e.row(i)))
 
 	// Closed, the detail is a qualifier of the word beside it and is set as
 	// one. Open, it is what the reader asked to read.
-	if !m.rowOpen(tabTimeline, i) {
+	if !e.row(i) {
 		return []string{prefix + mark + theme.Paint(theme.Dim).Render(wrapped[0])}, true
 	}
 
@@ -180,10 +174,10 @@ func (m Model) logEntryLines(e view.Entry, i, w int) ([]string, bool) {
 // the one string on this screen that is deliberately not translated: it is
 // not a word, it is a key out of somebody else's log, and inventing a
 // sentence for it would be inventing the meaning too.
-func (m Model) logWord(e view.Entry) (string, theme.Role) {
-	p := m.opts.Words
+func (e Env) logWord(entry view.Entry) (string, theme.Role) {
+	p := e.Words
 
-	switch e.What() {
+	switch entry.What() {
 	case view.EntryWritten:
 		return p.T("log.written", "written down"), theme.Dim
 	case view.EntryStarted:
@@ -245,7 +239,7 @@ func (m Model) logWord(e view.Entry) (string, theme.Role) {
 		// same event ends a verb that worked and one that broke, and a
 		// timeline that called both of them "answered" would make the
 		// reader open the row to find out which.
-		if e.Cause != "" {
+		if entry.Cause != "" {
 			return p.T("log.deliver_broke", "came back broken"), theme.Bad
 		}
 
@@ -254,7 +248,7 @@ func (m Model) logWord(e view.Entry) (string, theme.Role) {
 		return p.T("log.unreadable", "this line could not be read"), theme.Bad
 	}
 
-	return e.Kind, theme.Dim
+	return entry.Kind, theme.Dim
 }
 
 // logDetail is the one fact worth putting beside the word, and it is always
@@ -262,7 +256,7 @@ func (m Model) logWord(e view.Entry) (string, theme.Role) {
 // engine that was asked, the reason a phase stopped, or whatever was written
 // down. It is the whole of that fact — where it is cut to a row, and whether
 // it is cut at all, is the drawing above.
-func (m Model) logDetail(e view.Entry) string {
+func logDetail(e view.Entry) string {
 	switch e.What() {
 	case view.EntryStarted:
 		return strings.TrimSpace(e.Engine + " " + e.Model)

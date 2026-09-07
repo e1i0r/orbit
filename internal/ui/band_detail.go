@@ -25,7 +25,7 @@ func (m Model) detailBandLine(t view.Task) string {
 			about("verb", m.delivering.verb), about("by", by))
 
 		pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(theme.Live).Render(said)}
-		if age := elapsed(m.now, t.Since); age != "" {
+		if age := cells.Elapsed(m.now, t.Since); age != "" {
 			pieces = append(pieces, p.T("band.elapsed", "{d} in", about("d", age)))
 		}
 
@@ -47,7 +47,7 @@ func (m Model) detailBandLine(t view.Task) string {
 		}
 
 		pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(theme.Live).Render(said)}
-		if ago := elapsed(m.now, st.at); ago != "" {
+		if ago := cells.Elapsed(m.now, st.at); ago != "" {
 			pieces = append(pieces, p.T("overview.deliver_ago", "asked {ago} ago",
 				about("ago", ago)))
 		}
@@ -85,7 +85,7 @@ func (m Model) detailRunningLine(t view.Task) string {
 		held := p.T("reason.held", "held: {phase}", reasonArgs(t.Reason)...)
 
 		pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(theme.Warn).Render(held)}
-		if age := elapsed(m.now, t.Since); age != "" {
+		if age := cells.Elapsed(m.now, t.Since); age != "" {
 			pieces = append(pieces, p.T("band.elapsed", "{d} in", about("d", age)))
 		}
 
@@ -103,7 +103,7 @@ func (m Model) detailRunningLine(t view.Task) string {
 	}
 
 	pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(theme.Live).Render(m.phaseWord(t))}
-	if age := elapsed(m.now, t.Since); age != "" {
+	if age := cells.Elapsed(m.now, t.Since); age != "" {
 		pieces = append(pieces, p.T("band.elapsed", "{d} in", about("d", age)))
 	}
 
@@ -133,7 +133,7 @@ func (m Model) detailNeedsYouLine(t view.Task) string {
 	state, role := m.stateWord(t)
 	pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(role).Render(state)}
 
-	if age := elapsed(m.now, t.Since); age != "" {
+	if age := cells.Elapsed(m.now, t.Since); age != "" {
 		pieces = append(pieces, p.T("band.elapsed", "{d} in", about("d", age)))
 	}
 
@@ -184,7 +184,7 @@ func (m Model) detailDoneLine(t view.Task) string {
 	state, role := m.stateWord(t)
 	pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(role).Render(state)}
 
-	if age := elapsed(m.now, t.Since); age != "" {
+	if age := cells.Elapsed(m.now, t.Since); age != "" {
 		pieces = append(pieces, p.T("band.elapsed", "{d} in", about("d", age)))
 	}
 

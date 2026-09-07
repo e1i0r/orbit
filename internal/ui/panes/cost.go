@@ -1,4 +1,4 @@
-package ui
+package panes
 
 import (
 	"fmt"
@@ -42,12 +42,12 @@ const (
 	costMoneyCells = 12
 )
 
-// costLines renders Pane 4: Cost Breakdown per phase and total.
-func (m Model) costLines() []string {
-	p := m.opts.Words
+// Cost is what has been spent, stage by stage, and what it adds up to.
+func Cost(e Env) []string {
+	p := e.Words
 
-	t, ok := m.task(m.detail)
-	if !ok {
+	t := e.Task
+	if e.Gone {
 		return []string{"  " + theme.Paint(theme.Dim).Render(p.T("detail.gone", "this task is no longer on the board"))}
 	}
 
@@ -63,9 +63,9 @@ func (m Model) costLines() []string {
 		started view.Entry
 	)
 
-	for _, e := range m.entries {
-		if e.What() == view.EntryStarted {
-			started = e
+	for _, entry := range e.Entries {
+		if entry.What() == view.EntryStarted {
+			started = entry
 			continue
 		}
 
@@ -73,9 +73,9 @@ func (m Model) costLines() []string {
 		// ran, and was paid for. Left out, this table stops adding up to
 		// the total above it, and what it hides is the spend a reader most
 		// wants — what the run cost getting it wrong.
-		if e.What() == view.EntryFinished || e.What() == view.EntryFailed ||
-			e.What() == view.EntryCancelled || e.What() == view.EntryRetried {
-			if e.Cost > 0 || e.Phase != "" {
+		if entry.What() == view.EntryFinished || entry.What() == view.EntryFailed ||
+			entry.What() == view.EntryCancelled || entry.What() == view.EntryRetried {
+			if entry.Cost > 0 || entry.Phase != "" {
 				eng := started.Engine
 				if eng == "" {
 					eng = t.Engine
@@ -87,17 +87,17 @@ func (m Model) costLines() []string {
 				}
 
 				dur := ""
-				if !started.At.IsZero() && !e.At.IsZero() {
-					dur = elapsed(e.At, started.At)
+				if !started.At.IsZero() && !entry.At.IsZero() {
+					dur = cells.Elapsed(entry.At, started.At)
 				}
 
 				rows = append(rows, costRow{
-					phase:    e.Phase,
-					cost:     e.Cost,
+					phase:    entry.Phase,
+					cost:     entry.Cost,
 					duration: dur,
 					engine:   eng,
 					model:    mod,
-					turns:    max(e.Attempt, 1),
+					turns:    max(entry.Attempt, 1),
 				})
 			}
 		}
@@ -118,12 +118,6 @@ func (m Model) costLines() []string {
 			cells.Pad(p.T("cost.col_duration", "duration"), costMoneyCells, false)+" "+
 			p.T("cost.col_engine", "engine / model")))
 
-	// Whether this engine's use is spoken about in money at all. Asked once
-	// for the table rather than per row: every row of it is the same task
-	// on the same engine, and asking per row would put a dollar sign on one
-	// phase and not the next.
-	priced := m.spends(t.Engine)
-
 	for _, r := range rows {
 		modStr := r.engine
 		if r.model != "" {
@@ -132,7 +126,7 @@ func (m Model) costLines() []string {
 
 		out = append(out, "    "+
 			theme.Paint(theme.Accent).Render(cells.Pad(r.phase, costPhaseCells, false))+" "+
-			theme.Paint(theme.OK).Render(cells.Pad(figure(p, r.cost, priced), costMoneyCells, false))+" "+
+			theme.Paint(theme.OK).Render(cells.Pad(figure(p, r.cost, e.Priced), costMoneyCells, false))+" "+
 			theme.Paint(theme.Dim).Render(cells.Pad(r.duration, costMoneyCells, false))+" "+
 			theme.Paint(theme.Dim).Render(modStr))
 	}
@@ -140,11 +134,11 @@ func (m Model) costLines() []string {
 	out = append(out,
 		"",
 		"    "+theme.Paint(theme.Dim).Render(cells.Pad(p.T("cost.total", "total so far"), costPhaseCells, false))+" "+
-			theme.Paint(theme.Accent).Bold(true).Render(figure(p, t.Cost, priced)),
+			theme.Paint(theme.Accent).Bold(true).Render(figure(p, t.Cost, e.Priced)),
 		"",
 	)
 
-	if !priced {
+	if !e.Priced {
 		out = append(out,
 			"    "+theme.Paint(theme.Dim).Render(p.T("cost.window_is_the_unit",
 				"under subscription · what is left is the quota window")),

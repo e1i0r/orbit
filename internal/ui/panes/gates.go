@@ -1,4 +1,4 @@
-package ui
+package panes
 
 import (
 	"fmt"
@@ -28,43 +28,36 @@ const (
 	gateWordCells = 6
 )
 
-// gatesLines is the gates tab's content, ready for the pane.
-func (m Model) gatesLines() []string {
-	lines, _ := m.gatesRows()
-
-	return lines
-}
-
-// gatesRows is that content and, beside it, which check each row that folds
-// stands for. The two are built in one pass for the reason logRows is: a hit
-// test that counted the rows again would be a second opinion about where a
-// row is.
-func (m Model) gatesRows() ([]string, map[int]int) {
-	p := m.opts.Words
-	if m.logErr != nil {
-		return []string{"  " + theme.Paint(theme.Bad).Render(m.errSaid(m.logErr))}, nil
+// Gates is what has to pass before a phase stands, and beside it which
+// check each row that folds stands for. The two are built in one pass for
+// the reason the timeline is: a hit test that counted the rows again would
+// be a second opinion about where a row is.
+func Gates(e Env) ([]string, map[int]int) {
+	p := e.Words
+	if e.Failed != "" {
+		return []string{"  " + theme.Paint(theme.Bad).Render(e.Failed)}, nil
 	}
 
 	var checks []gateCheck
 
-	for _, e := range m.entries {
-		if e.What() == view.EntryGatePassed || e.What() == view.EntryGateFailed {
-			gName := e.Gate
+	for _, entry := range e.Entries {
+		if entry.What() == view.EntryGatePassed || entry.What() == view.EntryGateFailed {
+			gName := entry.Gate
 			if gName == "" {
 				gName = "check"
 			}
 
-			cmd := e.Text
+			cmd := entry.Text
 			if cmd == "" {
-				cmd = e.Tool
+				cmd = entry.Tool
 			}
 
 			checks = append(checks, gateCheck{
 				name:     gName,
-				passed:   e.What() == view.EntryGatePassed,
+				passed:   entry.What() == view.EntryGatePassed,
 				command:  cmd,
-				reason:   e.Cause,
-				phase:    e.Phase,
+				reason:   entry.Cause,
+				phase:    entry.Phase,
 				duration: "ok",
 			})
 		}
@@ -106,10 +99,10 @@ func (m Model) gatesRows() ([]string, map[int]int) {
 	))
 	out = append(out, "")
 
-	heads, w := map[int]int{}, max(m.frame.Body.W, 1)
+	heads, w := map[int]int{}, max(e.Frame.Body.W, 1)
 
 	for i, c := range checks {
-		rows, folds := m.gateRows(c, i, w)
+		rows, folds := e.gateRows(c, i, w)
 		if folds {
 			heads[len(out)] = i
 		}
@@ -126,8 +119,8 @@ func (m Model) gatesRows() ([]string, map[int]int) {
 // Whether it folds is decided here, by wrapping what it has to the measure it
 // will be drawn at: a check whose whole story fits beside its name is offered
 // no arrow, because opening it would put nothing new on the screen.
-func (m Model) gateRows(c gateCheck, i, w int) ([]string, bool) {
-	p := m.opts.Words
+func (e Env) gateRows(c gateCheck, i, w int) ([]string, bool) {
+	p := e.Words
 
 	icon, word, role := "✅", p.T("gates.pass", "pass"), theme.OK
 	if !c.passed {
@@ -168,7 +161,7 @@ func (m Model) gateRows(c gateCheck, i, w int) ([]string, bool) {
 		return []string{head + strings.Repeat(" ", lipgloss.Width(cells.FoldShut)) + theme.Paint(theme.Dim).Render(body[0])}, false
 	}
 
-	open := m.rowOpen(tabGates, i)
+	open := e.row(i)
 	mark := theme.Text(theme.Tertiary).Render(cells.Fold(open))
 
 	if !open {

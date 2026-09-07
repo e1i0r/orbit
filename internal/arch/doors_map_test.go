@@ -58,8 +58,16 @@ var doors = map[string][]string{
 	// it drawn and what a click lands on, and key.go is every gesture that
 	// moves the cursor or chooses a row. entries.go and draw.go are how the
 	// list is built and one row of it set out.
-	"internal/ui/menu":   {"menu.go", "view.go", "key.go"},
-	"internal/ui/patch":  {"patch.go", "rationale.go"},
+	"internal/ui/menu":  {"menu.go", "view.go", "key.go"},
+	"internal/ui/patch": {"patch.go", "rationale.go"},
+	// The body of the task screen: one door per pane, named after the pane
+	// it draws, plus panes.go for the world they are all handed. A pane's
+	// own workings — the rows of a gate, the blocks of the thinking — stay
+	// in its file.
+	"internal/ui/panes": {
+		"panes.go", "cost.go", "gates.go", "notes.go", "refused.go", "report.go", "thinking.go",
+		"timeline.go",
+	},
 	"internal/ui/point":  {"point.go"},
 	"internal/ui/prompt": {"deliver.go", "flowdraft.go", "phase.go"},
 	// The engines and their quota, as the ports answer: one file, because

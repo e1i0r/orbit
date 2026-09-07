@@ -160,7 +160,7 @@ func (m Model) runningLine(t view.Task) string {
 	p := m.opts.Words
 
 	pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(theme.Live).Render(m.phaseWord(t))}
-	if age := elapsed(m.now, t.Since); age != "" {
+	if age := cells.Elapsed(m.now, t.Since); age != "" {
 		pieces = append(pieces, p.T("band.elapsed", "{d} in", about("d", age)))
 	}
 

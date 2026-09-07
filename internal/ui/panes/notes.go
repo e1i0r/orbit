@@ -1,4 +1,4 @@
-package ui
+package panes
 
 import (
 	"fmt"
@@ -21,42 +21,37 @@ type noteItem struct {
 	content []string
 }
 
-// notesLines is the notes tab's content, ready for the pane.
-func (m Model) notesLines() []string {
-	lines, _ := m.notesRows()
-
-	return lines
-}
-
-// notesRows is that content and, beside it, which item each row that folds
-// stands for, laid out in one pass for the reason logRows is.
-func (m Model) notesRows() ([]string, map[int]int) {
-	p := m.opts.Words
-	if m.logErr != nil {
-		return []string{"  " + theme.Paint(theme.Bad).Render(m.errSaid(m.logErr))}, nil
+// Notes is everything spoken with the model — the operator's notes, the
+// sessions held beside the run, and what the model stopped to ask — and
+// beside it which item each row that folds stands for, laid out in one pass
+// for the reason the timeline is.
+func Notes(e Env) ([]string, map[int]int) {
+	p := e.Words
+	if e.Failed != "" {
+		return []string{"  " + theme.Paint(theme.Bad).Render(e.Failed)}, nil
 	}
 
 	var items []noteItem
 
 	noteIndex := 0
 
-	for _, e := range m.entries {
+	for _, entry := range e.Entries {
 		timeStr := ""
-		if !e.At.IsZero() {
-			timeStr = e.At.Format("15:04:05")
+		if !entry.At.IsZero() {
+			timeStr = entry.At.Format("15:04:05")
 		}
 
-		switch e.What() {
+		switch entry.What() {
 		case view.EntryNoted:
 			noteIndex++
 
 			statusNote := p.T("notes.read_by_run", "read by the run")
-			if e.Attempt > 0 {
-				statusNote = p.T("notes.read_by_run_n", "read by run {n}", about("n", strconv.Itoa(e.Attempt)))
+			if entry.Attempt > 0 {
+				statusNote = p.T("notes.read_by_run_n", "read by run {n}", about("n", strconv.Itoa(entry.Attempt)))
 			}
 
 			senderLabel := fmt.Sprintf("● %d  %s", noteIndex, p.T("notes.operator", "OPERATOR"))
-			content := markdown.Render(e.Text, m.frame.Body.W, m.rawText)
+			content := markdown.Render(entry.Text, e.Frame.Body.W, e.Raw)
 			items = append(items, noteItem{
 				at:      timeStr,
 				sender:  senderLabel,
@@ -71,7 +66,7 @@ func (m Model) notesRows() ([]string, map[int]int) {
 			// dialogue the reader came to this tab for — and the half no
 			// phase is ever handed, so it is never mistaken for a note the
 			// next run will read.
-			who := e.By
+			who := entry.By
 			if who == "" {
 				who = p.T("notes.outsider", "outside the run")
 			}
@@ -81,21 +76,21 @@ func (m Model) notesRows() ([]string, map[int]int) {
 				sender:  fmt.Sprintf("↔ %s", strings.ToUpper(who)),
 				role:    theme.Live,
 				status:  p.T("notes.unread_by_run", "the run does not read it"),
-				content: turnLines(e.Text, m.frame.Body.W),
+				content: turnLines(entry.Text, e.Frame.Body.W),
 			})
 
 		case view.EntryWaiting:
-			if e.Cause != "" || e.Text != "" {
-				msg := e.Cause
+			if entry.Cause != "" || entry.Text != "" {
+				msg := entry.Cause
 				if msg == "" {
-					msg = e.Text
+					msg = entry.Text
 				}
 
 				items = append(items, noteItem{
 					at:      timeStr,
 					sender:  fmt.Sprintf("🤖 %s", p.T("notes.llm_prompt", "MODEL (asking the operator)")),
 					role:    theme.Warn,
-					status:  e.Phase,
+					status:  entry.Phase,
 					content: []string{"? " + msg},
 				})
 			}
@@ -127,7 +122,7 @@ func (m Model) notesRows() ([]string, map[int]int) {
 	heads := map[int]int{}
 
 	for i, item := range items {
-		rows, folds := m.noteItemRows(item, i)
+		rows, folds := e.noteItemRows(item, i)
 		if folds {
 			heads[len(out)] = i
 		}
@@ -150,7 +145,7 @@ func (m Model) notesRows() ([]string, map[int]int) {
 // A note is written in Markdown and is as long as the operator made it. A tab
 // that sets ten of them open is a tab where the eleventh cannot be found, so
 // everything past the opening line waits behind the arrow.
-func (m Model) noteItemRows(item noteItem, i int) ([]string, bool) {
+func (e Env) noteItemRows(item noteItem, i int) ([]string, bool) {
 	head := "  " + theme.Paint(item.role).Render(item.sender) + "  " +
 		theme.Paint(theme.Dim).Render(item.at) + "  " + theme.Paint(theme.Dim).Render(item.status)
 
@@ -181,14 +176,14 @@ func (m Model) noteItemRows(item noteItem, i int) ([]string, bool) {
 		return append([]string{"  " + head}, body...), false
 	}
 
-	open := m.rowOpen(tabNotes, i)
+	open := e.row(i)
 	out := []string{theme.Text(theme.Tertiary).Render(cells.Fold(open)) + head}
 
 	if !open {
 		// The opening line and a count of what is under it: a reader
 		// scanning the thread needs to know which note is the long one.
 		return append(out, body[0], "      "+theme.Text(theme.Tertiary).Render(
-			m.opts.Words.P("notes.more_rows", len(body)-1, "{n} more line", "{n} more lines"))), true
+			e.Words.P("notes.more_rows", len(body)-1, "{n} more line", "{n} more lines"))), true
 	}
 
 	return append(out, body...), true

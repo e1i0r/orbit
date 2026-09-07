@@ -30,6 +30,14 @@ var windowLayers = map[string][]string{
 		"internal/ui/cells", "internal/ui/keymap", "internal/ui/layout", "internal/ui/point",
 		"internal/ui/theme", "internal/words",
 	},
+	// internal/ui/panes is the body of the task screen: the twelve ways one
+	// run can be read. Every one of them is a function of the record and of
+	// what the reader has folded, which the window hands over — a pane can
+	// reach no port and decide nothing about the task it is drawing.
+	"internal/ui/panes": {
+		"internal/ui/cells", "internal/ui/layout", "internal/ui/markdown", "internal/ui/theme",
+		"internal/view", "internal/words",
+	},
 	// internal/ui/palette is the ':' line. It answers with the command the
 	// reader chose and the window runs it: what a command does is not this
 	// screen's business, which is why it names no port at all.

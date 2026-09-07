@@ -63,7 +63,7 @@ func (m Model) byHand() []handStep {
 			steps[i].text, steps[i].cause = e.Said(), e.Cause
 
 			if !steps[i].at.IsZero() && !e.At.IsZero() {
-				steps[i].took = elapsed(e.At, steps[i].at)
+				steps[i].took = cells.Elapsed(e.At, steps[i].at)
 			}
 
 			break
@@ -179,7 +179,7 @@ func (m Model) handOutRows() []string {
 				about("verb", st.verb), about("by", st.by))
 		}
 
-		if ago := elapsed(m.now, st.at); ago != "" {
+		if ago := cells.Elapsed(m.now, st.at); ago != "" {
 			said += " · " + p.T("overview.deliver_ago", "asked {ago} ago", about("ago", ago))
 		}
 

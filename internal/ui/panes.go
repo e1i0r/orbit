@@ -140,11 +140,11 @@ func (m Model) syncPanes() Model {
 	diff, diffHeads := m.diffRows()
 	artifacts, artifactHeads := m.artifactsRows()
 
-	m.heads[tabTimeline], m.heads[tabThinking] = timeline.heads, thinkingHeads
+	m.heads[tabTimeline], m.heads[tabThinking] = timeline.Heads, thinkingHeads
 	m.heads[tabFlow], m.heads[tabGates] = flowHeads, gateHeads
 	m.heads[tabRefused], m.heads[tabNotes] = refusedHeads, noteHeads
 	m.heads[tabDiff], m.heads[tabArtifacts] = diffHeads, artifactHeads
-	m.seams[tabTimeline], m.seams[tabReport] = timeline.seams, reportSeams
+	m.seams[tabTimeline], m.seams[tabReport] = timeline.Seams, reportSeams
 
 	content := [tabCount][]string{
 		tabOverview:  m.overviewLines(),
@@ -152,7 +152,7 @@ func (m Model) syncPanes() Model {
 		tabGates:     gates,
 		tabCost:      m.costLines(),
 		tabRefused:   refused,
-		tabTimeline:  timeline.rows,
+		tabTimeline:  timeline.Rows,
 		tabReport:    report,
 		tabArtifacts: artifacts,
 		tabNotes:     notes,

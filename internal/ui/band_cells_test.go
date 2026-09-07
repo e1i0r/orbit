@@ -200,8 +200,8 @@ func TestElapsedEveryUnit(t *testing.T) {
 		{now.Add(-50 * time.Hour), "2d"},
 	}
 	for _, tt := range tests {
-		if got := elapsed(now, tt.since); got != tt.want {
-			t.Errorf("elapsed(now, %v) = %q, want %q", tt.since, got, tt.want)
+		if got := cells.Elapsed(now, tt.since); got != tt.want {
+			t.Errorf("cells.Elapsed(now, %v) = %q, want %q", tt.since, got, tt.want)
 		}
 	}
 }
