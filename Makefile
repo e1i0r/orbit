@@ -1,7 +1,7 @@
 export PATH := /usr/local/go/bin:$(HOME)/go/bin:$(PATH)
 GO ?= $(shell which go 2>/dev/null || echo /usr/local/go/bin/go)
 
-.PHONY: check fmt vet lint test coverage mutate fuzz tidy build install run demo tapes posters
+.PHONY: check fmt vet lint test coverage mutate fuzz tidy build install run site demo tapes posters
 
 # check is what a contributor runs before pushing, so it has to be what CI
 # runs: lint used to be in CI and not here, which meant a green local check
@@ -110,6 +110,14 @@ install: build
 # instead — so this stays the one command a contributor needs to remember.
 run:
 	$(GO) run ./cmd/orbit top $(ARGS)
+
+# site writes the landing page, once per language, from web/page.tmpl.html and
+# the two catalogues beside it. The pages it writes are committed: GitHub Pages
+# serves site/ as it finds it, so nothing runs this at deploy time — which is
+# why `make check` fails when what is committed is not what the template says.
+site:
+	$(GO) run ./web/build
+	@echo "site/index.html and site/es/index.html are up to date"
 
 # demo seeds a board to shoot the recordings against: two repositories under
 # ~/code and a state root of its own under .demo/, with the record written

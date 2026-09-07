@@ -1,0 +1,622 @@
+<!doctype html>
+<!--
+  Written by `make site` from web/page.tmpl.html and web/en.json / web/es.json.
+  Edits here are lost the next time it runs, and `make check` says so before
+  that happens. Change the template or the catalogue instead.
+-->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orbit — Una sala de control para los agentes que escriben tu código</title>
+<meta name="description" content="Una sala de control para los agentes que escriben tu código. Cada tarea en su propio worktree, en fases que se detienen donde tú les digas, y cada corrida escrita al lado del código.">
+<meta name="author" content="Elio Rincón — e1i0.com">
+<link rel="icon" href="../icon.png">
+<link rel="canonical" href="https://getorbit.sh/es/">
+<link rel="alternate" hreflang="en" href="https://getorbit.sh/">
+<link rel="alternate" hreflang="es" href="https://getorbit.sh/es/">
+<link rel="alternate" hreflang="x-default" href="https://getorbit.sh/">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://getorbit.sh/es/">
+<meta property="og:locale" content="es_ES">
+<meta property="og:title" content="Orbit — Una sala de control para los agentes que escriben tu código">
+<meta property="og:description" content="Una sala de control para los agentes que escriben tu código. Cada tarea en su propio worktree, en fases que se detienen donde tú les digas, y cada corrida escrita al lado del código.">
+<meta property="og:image" content="https://getorbit.sh/flow-reading-poster.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Orbit — Una sala de control para los agentes que escriben tu código">
+<meta name="twitter:description" content="Una sala de control para los agentes que escriben tu código. Cada tarea en su propio worktree, en fases que se detienen donde tú les digas, y cada corrida escrita al lado del código.">
+<meta name="twitter:image" content="https://getorbit.sh/flow-reading-poster.jpg">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-N9D1HEEMRD"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-N9D1HEEMRD');
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg-page: #0a0e14;
+    --surface: #111726;
+    --bg-lighter: #161d2e;
+    --border: #1f2937;
+    --border-light: #18202f;
+
+    --text-loudest: #f1f5f9;
+    --text: #c7d0e0;
+    --text-medium: #94a3b8;
+    --text-muted: #64748b;
+
+    --primary: #2dd4bf;
+    --primary-dark: #14b8a6;
+    --primary-light: rgba(45, 212, 191, 0.14);
+    --primary-very-light: rgba(45, 212, 191, 0.08);
+    --primary-shadow: rgba(45, 212, 191, 0.25);
+
+    --pink: #ec4899;
+    --amber: #f59e0b;
+
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-xl: 14px;
+    --radius-pill: 99px;
+
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.45);
+    --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.55);
+
+    --ease: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+    --font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html { color-scheme: dark; }
+  body {
+    margin: 0;
+    background: var(--bg-page);
+    color: var(--text);
+    font-family: var(--font);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { color: var(--primary-dark); }
+  code, .mono { font-family: var(--mono); }
+
+  /* — Hero — */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    padding: 108px 24px 72px;
+    background: linear-gradient(180deg, var(--bg-page) 0%, var(--surface) 100%);
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 22% 15%, rgba(45, 212, 191, 0.10) 0%, transparent 45%),
+      radial-gradient(circle at 78% 30%, rgba(236, 72, 153, 0.05) 0%, transparent 40%),
+      radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.04) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .hero__content {
+    position: relative;
+    z-index: 1;
+    max-width: 640px;
+    margin: 0 auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--primary-very-light);
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 5px 14px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--primary-light);
+    margin-bottom: 28px;
+  }
+  .badge__dot {
+    width: 6px;
+    height: 6px;
+    background: var(--primary);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+  .hero__icon { width: 84px; height: 84px; margin-bottom: 24px; filter: drop-shadow(0 0 32px rgba(45, 212, 191, 0.25)); }
+
+  .hero__title {
+    margin: 0;
+    font-size: clamp(38px, 6vw, 60px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    color: var(--text-loudest);
+  }
+  .hero__tagline {
+    margin: 16px 0 0;
+    font-size: clamp(20px, 3vw, 27px);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+    color: var(--text-loudest);
+    max-width: 520px;
+  }
+  .hero__subtitle {
+    margin: 16px 0 0;
+    font-size: clamp(15px, 1.8vw, 17px);
+    line-height: 1.65;
+    color: var(--text-medium);
+    max-width: 500px;
+  }
+
+  .install {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 32px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 13px 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .install__prompt { color: var(--primary); font-size: 14px; }
+  .install code { font-size: 13.5px; color: var(--text-loudest); }
+  .install__copy {
+    border: none; background: none; color: var(--text-muted); cursor: pointer;
+    font-family: var(--font); font-size: 12px; padding: 4px 8px; border-radius: var(--radius-sm);
+    transition: var(--ease);
+  }
+  .install__copy:hover { background: var(--bg-lighter); color: var(--text); }
+
+  .hero__ctas { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--font); font-weight: 600; font-size: 13.5px;
+    padding: 10px 20px; border-radius: var(--radius-sm);
+    transition: var(--ease); cursor: pointer; white-space: nowrap;
+  }
+  .btn--primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #04211d; border: 1px solid var(--primary);
+  }
+  .btn--primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px var(--primary-shadow); color: #04211d; }
+  .btn--outline { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  .btn--outline:hover { border-color: var(--border-light); background: var(--bg-lighter); color: var(--text); }
+
+  /* — The two languages — */
+  /* Top right of the hero, not in the sticky bar: it is the first decision a
+     reader makes and never one they make again, and the bar already scrolls
+     sideways under its own width with ten flows in it. The order is fixed,
+     English then Spanish, so the pill does not move when the page changes
+     under it — only which half is lit. */
+  .lang {
+    position: absolute; top: 22px; right: 24px; z-index: 2;
+    display: inline-flex; align-items: center; gap: 2px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-pill); padding: 3px;
+  }
+  .lang a, .lang span {
+    font-family: var(--font); font-size: 12px; font-weight: 600;
+    letter-spacing: 0.03em; padding: 5px 12px; border-radius: var(--radius-pill);
+    transition: var(--ease);
+  }
+  .lang span { background: var(--primary); color: #04211d; }
+  .lang a { color: var(--text-muted); }
+  .lang a:hover { color: var(--text-loudest); background: var(--bg-lighter); }
+
+  /* — Sections — */
+  .sec { max-width: 1000px; margin: 0 auto; padding: 72px 24px 0; }
+  .sec__title {
+    margin: 0 0 24px; font-size: 13px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted);
+  }
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+
+  /* — A recording — */
+  /* Wider than the text column: a terminal reads badly once its columns are
+     squeezed, and these are 142 of them. */
+  .loop__frame {
+    display: block; height: auto;
+    width: min(1200px, 94vw);
+    margin-inline: calc(50% - min(600px, 47vw));
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background: var(--surface);
+  }
+
+  /* — The nine, across the top — */
+  /* Sticky, because the page is nine sections of video: the reader who wants
+     the supervisor should not have to scroll past six things to find it. It
+     scrolls sideways under its own width rather than wrapping to two rows —
+     a bar that changes height as the page is resized moves everything under
+     it. */
+  .flownav {
+    position: sticky; top: 0; z-index: 20;
+    margin-top: 72px;
+    background: color-mix(in srgb, var(--bg-page) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-block: 1px solid var(--border);
+  }
+  .flownav__inner {
+    width: min(1200px, 94vw); margin: 0 auto; padding: 0 8px;
+    display: flex; justify-content: space-between; gap: 14px; overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .flownav__inner::-webkit-scrollbar { display: none; }
+  .flownav a {
+    flex: 0 0 auto; padding: 14px 0;
+    font-size: 13px; color: var(--text-muted); white-space: nowrap;
+    border-bottom: 2px solid transparent; transition: var(--ease);
+  }
+  .flownav a:hover { color: var(--text-loudest); border-bottom-color: var(--primary); }
+  .flownav a .mono { color: var(--primary); margin-right: 6px; }
+
+  /* The bar covers the top of whatever is scrolled to, so an anchor lands
+     under it without this. */
+  .sec[id] { scroll-margin-top: 64px; }
+
+  /* — One flow, one section — */
+  /* Nine recordings on one page is a lot of bytes, so only the loop at the
+     top plays on its own. The rest carry a poster and load when clicked. */
+  .flow__head { display: flex; align-items: baseline; gap: 12px; margin: 0 0 10px; }
+  .flow__num {
+    font-family: var(--mono); font-size: 13px; color: var(--primary);
+    background: var(--primary-very-light); border: 1px solid var(--primary-light);
+    border-radius: var(--radius-lg); padding: 2px 9px;
+  }
+  .flow__title {
+    margin: 0; font-size: 13px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted);
+  }
+  .flow__lede { margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: var(--text); }
+  .flow__points { margin: 24px 0 0; padding: 0; list-style: none; }
+  .flow__points li {
+    position: relative; padding-left: 20px; margin-bottom: 10px;
+    font-size: 14.5px; line-height: 1.65; color: var(--text-medium);
+  }
+  .flow__points li::before {
+    content: "·"; position: absolute; left: 6px; color: var(--text-muted);
+  }
+  .flow__points strong { color: var(--text-loudest); font-weight: 600; }
+  .card .flow__points { margin-top: 4px; }
+  .flow__more { display: inline-block; margin-top: 14px; font-size: 14px; color: var(--primary); }
+
+
+  /* — Status — */
+  .status { margin: 0; font-size: 14.5px; line-height: 1.65; color: var(--text-medium); text-align: center; }
+
+
+  /* — Features — */
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 26px; transition: var(--ease);
+  }
+  .card:hover { border-color: var(--border-light); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .card__dot { width: 10px; height: 10px; border-radius: 50%; margin-bottom: 16px; }
+  .card__dot--teal { background: var(--primary); box-shadow: 0 0 12px var(--primary-shadow); }
+  .card__dot--pink { background: var(--pink); box-shadow: 0 0 12px rgba(236, 72, 153, 0.35); }
+  .card__dot--amber { background: var(--amber); box-shadow: 0 0 12px rgba(245, 158, 11, 0.35); }
+  .card h3 { margin: 0 0 8px; font-size: 15.5px; font-weight: 600; color: var(--text-loudest); }
+  .card p { margin: 0; font-size: 13.5px; line-height: 1.65; color: var(--text-medium); }
+
+  @media (max-width: 720px) {
+    .grid2, .grid3 { grid-template-columns: 1fr; }
+    .hero { padding: 72px 20px 56px; }
+    .lang { top: 14px; right: 14px; }
+    .sec { padding: 56px 20px 0; }
+    .loop__frame { width: 100%; margin-inline: 0; }
+    .install { width: 100%; gap: 8px; padding: 12px 14px; }
+    .install code { font-size: 12px; overflow-x: auto; white-space: nowrap; }
+  }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 36px 24px;
+    text-align: center;
+  }
+  footer p { margin: 0; font-size: 13px; color: var(--text-muted); }
+  footer a { color: var(--text-medium); }
+  footer a:hover { color: var(--primary); }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <nav class="lang" aria-label="idioma">
+    <a href="../" hreflang="en" lang="en" title="English">EN</a><span>ES</span>
+  </nav>
+  <div class="hero__content">
+    <span class="badge"><span class="badge__dot"></span>CÓDIGO ABIERTO · APACHE 2.0</span>
+
+    <img class="hero__icon" src="../icon.png" alt="Orbit">
+    <h1 class="hero__title">ORBIT</h1>
+    <p class="hero__tagline">Una sala de control para los agentes que escriben tu código.</p>
+
+    <div class="install">
+      <span class="install__prompt mono">$</span>
+      <code class="mono" id="install-cmd">curl -fsSL https://getorbit.sh/install.sh | bash</code>
+      <button class="install__copy mono" id="install-copy" type="button">copiar</button>
+    </div>
+
+    <div class="hero__ctas">
+      <a class="btn btn--primary" href="https://github.com/e1i0r/orbit" onclick="gtag('event','cta_click',{button:'hero_github'})">GitHub</a>
+      <a class="btn btn--outline" href="https://github.com/e1i0r/orbit/blob/main/docs/start.md" onclick="gtag('event','cta_click',{button:'hero_docs'})">Documentación</a>
+    </div>
+  </div>
+</section>
+
+
+<section class="sec">
+  <div class="card">
+    <div class="card__dot card__dot--teal"></div>
+    <h3>Corre el CLI que ya tienes, y deja escrito lo que hizo</h3>
+    <ul class="flow__points">
+      <li><strong>Un worktree por tarea, y varias a la vez.</strong> Su propio checkout, su propia rama: nada de lo que escribe una corrida está en la tuya hasta que tú lo digas.</li>
+      <li><strong>Fases que paran donde tú dijiste.</strong> Los gates responden con un código de salida, no con una opinión, y un sandbox rechaza lo que la fase no tenía permitido tocar.</li>
+      <li><strong>Autopilot, con freno.</strong> Trabaja la cola solo, y deja de tomar trabajo nuevo cuando se acumulan las tareas terminadas que nadie ha leído.</li>
+      <li><strong>Tu propio CLI, en los dos sentidos.</strong> Una tecla le entrega la terminal en el worktree de la tarea; por MCP escribe tareas, las corre, y te lee de vuelta lo que pasó mientras no estabas.</li>
+      <li><strong>Un supervisor al que puedes redirigir.</strong> Lee el resultado de una corrida, decide si hizo lo que se pidió, y va a arreglar lo que falta — en un hilo en el que tú escribes.</li>
+      <li><strong>Hechos que lleva a cada corrida.</strong> Lo que es cierto sobre tu código, con su fuente y su alcance, guardado fuera del modelo para que cambiar de motor no lo pierda.</li>
+      <li><strong>Doce paneles por tarea.</strong> Lo que gastó, lo que corrió cada gate, lo que el sandbox negó, la línea de tiempo evento por evento, los artefactos, el razonamiento que mostró, el diff — y lo que el cambio alcanza y un diff no puede mostrar.</li>
+      <li><strong>Todo escrito, al lado del código.</strong> No en una ventana de chat que alguien cerró: <code class="mono">orbit show</code> lee una corrida seis meses después, y <code class="mono">orbit export</code> saca el registro completo.</li>
+    </ul>
+  </div>
+</section>
+
+<nav class="flownav" aria-label="los diez flujos">
+  <div class="flownav__inner">
+    <a href="#start"><span class="mono">01</span> empezar</a>
+    <a href="#menus"><span class="mono">02</span> menús</a>
+    <a href="#run"><span class="mono">03</span> una corrida</a>
+    <a href="#autopilot"><span class="mono">04</span> autopilot</a>
+    <a href="#parallel"><span class="mono">05</span> en paralelo</a>
+    <a href="#reading"><span class="mono">06</span> leerlo</a>
+    <a href="#cli"><span class="mono">07</span> el CLI</a>
+    <a href="#supervisor"><span class="mono">08</span> supervisor</a>
+    <a href="#knowledge"><span class="mono">09</span> conocimiento</a>
+    <a href="#flows"><span class="mono">10</span> flujos</a>
+  </div>
+</nav>
+
+
+
+<section class="sec" id="start">
+  <div class="flow__head">
+    <span class="flow__num mono">01</span>
+    <h2 class="flow__title">Cómo empezar</h2>
+  </div>
+  <p class="flow__lede">Cuatro comandos, y el único que tienes que pensar es el tercero: apunta la sala de control al directorio donde están tus repositorios.</p>
+  <video class="loop__frame" poster="../flow-start-poster.jpg"
+         controls muted playsinline preload="none"
+         aria-label="instalar orbit, registrar el servidor MCP, abrir la sala de control sobre un directorio de repositorios, y escribir la primera tarea">
+    <source src="../flow-start.webm" type="video/webm">
+    <source src="../flow-start.mp4" type="video/mp4">
+  </video>
+  <ul class="flow__points">
+      <li><code class="mono">orbit mcp install</code> registra el servidor en Claude Code, Claude Desktop, Codex, OpenCode y Gemini.</li>
+      <li><code class="mono">orbit top ~/code</code> es una sola ventana sobre cada repositorio git que haya debajo. No hay lista que registrar.</li>
+      <li><code class="mono">N</code> escribe una tarea, o pídeselo a tu CLI en lenguaje normal y las escribe por ti.</li>
+  </ul>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/start.md">Leer la página → (en inglés)</a>
+</section>
+
+<section class="sec" id="menus">
+  <div class="flow__head">
+    <span class="flow__num mono">02</span>
+    <h2 class="flow__title">Lo que puedes hacer</h2>
+  </div>
+  <p class="flow__lede">Presiona <code class="mono">m</code> sobre cualquier cosa. El menú lista cada verbo que le aplica — y los que no, en gris, cada uno con la frase que dice por qué.</p>
+  <video class="loop__frame" poster="../flow-menus-poster.jpg"
+         controls muted playsinline preload="none"
+         aria-label="el menú en el tablero y el menú dentro de una tarea: los paneles, los verbos, y un verbo rechazado en gris con su razón">
+    <source src="../flow-menus.webm" type="video/webm">
+    <source src="../flow-menus.mp4" type="video/mp4">
+  </video>
+  <ul class="flow__points">
+      <li>Una tecla que no hace nada en silencio es indistinguible de una tecla rota. Así que nada se esconde: se muestra rechazada, con la razón.</li>
+      <li>Dentro de una tarea la misma tecla trae los dos bloques — los doce paneles, y todo lo que se le puede hacer a la corrida.</li>
+      <li>Cada verbo del menú es un comando que también puedes correr desde un script, y el rechazo es palabra por palabra el mismo.</li>
+  </ul>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/menus.md">Leer la página → (en inglés)</a>
+</section>
+
+<section class="sec" id="run">
+  <div class="flow__head">
+    <span class="flow__num mono">03</span>
+    <h2 class="flow__title">Una corrida, de principio a fin</h2>
+  </div>
+  <p class="flow__lede">Una tarea no es una sesión larga. Es una lista de fases, cada una lo bastante pequeña para revisarla, con un veredicto escrito después de cada una.</p>
+  <video class="loop__frame" poster="../flow-run-poster.jpg"
+         controls muted playsinline preload="none"
+         aria-label="una tarea arrancada desde el tablero, avanzando fase por fase por su flujo, deteniéndose en un gate, y el gate liberado">
+    <source src="../flow-run.webm" type="video/webm">
+    <source src="../flow-run.mp4" type="video/mp4">
+  </video>
+  <ul class="flow__points">
+      <li>Una fase que se equivoca la atrapa la siguiente, o la atrapas tú, antes de que la de después construya sobre el error.</li>
+      <li>Una fase marcada <code class="mono">wait</code> es un gate: la corrida se detiene delante de ella. Entre cada par de fases queda registrada la respuesta — incluyendo "no se le preguntó a nadie, autopilot estaba encendido".</li>
+      <li>Cinco flujos vienen incluidos. Los tuyos son JSON, y los nombres de las fases son tuyos.</li>
+  </ul>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/run.md">Leer la página → (en inglés)</a>
+</section>
+
+<section class="sec" id="autopilot">
+  <div class="flow__head">
+    <span class="flow__num mono">04</span>
+    <h2 class="flow__title">Autopilot</h2>
+  </div>
+  <p class="flow__lede">Una tecla, y Orbit trabaja la cola: toma la siguiente pendiente, la lleva por su flujo sin detenerse en los gates del flujo, y deja que el supervisor intente resolver lo que vuelve necesitando atención.</p>
+  <video class="loop__frame" poster="../flow-autopilot-poster.jpg"
+         controls muted playsinline preload="none"
+         aria-label="autopilot encendido, la cola moviéndose sola, y una tarea que necesitaba a una persona cayendo en necesita atención">
+    <source src="../flow-autopilot.webm" type="video/webm">
+    <source src="../flow-autopilot.mp4" type="video/mp4">
+  </video>
+  <ul class="flow__points">
+      <li>No levanta una pausa que pusiste a mano, y no levanta una tarea marcada como crítica.</li>
+      <li><code class="mono">unread-cap</code> es el freno: cuando hay diez tareas terminadas sin leer, no arranca nada nuevo. La cola no puede adelantarse a ti.</li>
+      <li>Cada gate que levanta queda registrado como una decisión que nadie tomó — un dato distinto sobre cuánto se revisó el resultado.</li>
+  </ul>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/autopilot.md">Leer la página → (en inglés)</a>
+</section>
+
+<section class="sec" id="parallel">
+  <div class="flow__head">
+    <span class="flow__num mono">05</span>
+    <h2 class="flow__title">Varias tareas a la vez</h2>
+  </div>
+  <p class="flow__lede">Tres corridas andando, en tres worktrees, en una sola ventana.</p>
+  <video class="loop__frame" poster="../flow-parallel-poster.jpg"
+         controls muted playsinline preload="none"
+         aria-label="varias tareas corriendo lado a lado en la banda de ejecución, cada una en su propio worktree, avanzando por sus fases">
+    <source src="../flow-parallel.webm" type="video/webm">
+    <source src="../flow-parallel.mp4" type="video/mp4">
+  </video>
+  <ul class="flow__points">
+      <li>Cada tarea corre en su propio worktree de git, en su propia rama. Dos agentes en sus propios checkouts son simplemente dos ramas.</li>
+      <li>La banda Ejecutando lleva una fila por corrida viva: la fase, lo que está haciendo ahora, cuánto lleva, cuánto ha gastado.</li>
+      <li><code class="mono">orbit join</code> abre un segundo repositorio para una tarea que resulta necesitarlo.</li>
+  </ul>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/parallel.md">Leer la página → (en inglés)</a>
+</section>
+
+<section class="sec" id="reading">
+  <div class="flow__head">
+    <span class="flow__num mono">06</span>
+    <h2 class="flow__title">Leer lo que hizo</h2>
+  </div>
+  <p class="flow__lede">El diff dice qué se escribió. La pestaña de impacto dice si estuvo bien — qué suele venir junto con estos archivos y esta vez no vino.</p>
+  <video class="loop__frame" poster="../flow-reading-poster.jpg"
+         controls muted playsinline preload="none"
+         aria-label="el resumen de una tarea terminada, luego el reporte, el diff tarjeta por tarjeta, y la pestaña de impacto">
+    <source src="../flow-reading.webm" type="video/webm">
+    <source src="../flow-reading.mp4" type="video/mp4">
+  </video>
+  <ul class="flow__points">
+      <li>Leído del historial de este mismo repositorio: <span class="mono">invoice.py · 87% de las veces (34/39) · sin tocar</span>. No es una regla — es la pregunta que un revisor no le puede hacer a un diff.</li>
+      <li><code class="mono">r</code> corre los checks del propio flujo sobre la base y sobre el trabajo al mismo tiempo. Un código de salida decidió cada línea.</li>
+      <li>Y lo que el agente dice que hizo: qué les pide ahora el cambio a quienes lo llaman, qué promete, y qué consideró y no hizo — que no existe en ningún otro lado.</li>
+  </ul>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/reading.md">Leer la página → (en inglés)</a>
+</section>
+
+<section class="sec" id="cli">
+  <div class="flow__head">
+    <span class="flow__num mono">07</span>
+    <h2 class="flow__title">El CLI, en los dos sentidos</h2>
+  </div>
+  <p class="flow__lede">Orbit no reemplaza el CLI que ya usas — Claude Code, Codex, OpenCode, Antigravity. <code class="mono">c</code> le entrega la terminal, en el worktree de esa tarea, con el contexto de la tarea y el servidor MCP de Orbit.</p>
+  <video class="loop__frame" poster="../flow-cli-poster.jpg"
+         controls muted playsinline preload="none"
+         aria-label="presionar c en una tarea, el CLI abriéndose en el worktree de esa tarea, salir, y orbit ofreciendo escribir la sesión como una tarea">
+    <source src="../flow-cli.webm" type="video/webm">
+    <source src="../flow-cli.mp4" type="video/mp4">
+  </video>
+  <ul class="flow__points">
+      <li>Sales de él y caes de vuelta en el tablero. Orbit pregunta si escribir la sesión como una tarea.</li>
+      <li>Veintidós herramientas MCP, así que el flujo va en los dos sentidos: tu CLI escribe tareas, las corre, lee lo que pasó, y las dirige.</li>
+      <li>Los agentes que Orbit corre reportan por el mismo protocolo — eventos estructurados, no stdout raspado.</li>
+  </ul>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/cli.md">Leer la página → (en inglés)</a>
+</section>
+
+<section class="sec" id="supervisor">
+  <div class="flow__head">
+    <span class="flow__num mono">08</span>
+    <h2 class="flow__title">El supervisor</h2>
+  </div>
+  <p class="flow__lede">Un segundo par de ojos sobre el trabajo, y un hilo desde el que lo diriges. Sale por el mismo CLI y la misma suscripción que tus tareas.</p>
+  <video class="loop__frame" poster="../flow-supervisor-poster.jpg"
+         controls muted playsinline preload="none"
+         aria-label="el hilo del supervisor: una directiva escrita en él, el supervisor leyendo una corrida terminada, y un hecho que aprendió apareciendo en la columna de al lado">
+    <source src="../flow-supervisor.webm" type="video/webm">
+    <source src="../flow-supervisor.mp4" type="video/mp4">
+  </video>
+  <ul class="flow__points">
+      <li><code class="mono">orbit supervisor "la migración tiene que ser reversible"</code> — y sigue ahí la próxima sesión, y el mes que viene.</li>
+      <li>Con autopilot encendido, es lo que intenta resolver una tarea que volvió necesitando atención antes de que te toque mirarla a ti.</li>
+      <li>Lo que concluye entra en lo que Orbit sabe, así que la conversación no es un chat: lo que dices en ella se vuelve algo que las corridas llevan.</li>
+  </ul>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/supervisor.md">Leer la página → (en inglés)</a>
+</section>
+
+<section class="sec" id="knowledge">
+  <div class="flow__head">
+    <span class="flow__num mono">09</span>
+    <h2 class="flow__title">Lo que Orbit sabe</h2>
+  </div>
+  <p class="flow__lede">Hechos sobre tu código, con su fuente y su alcance, que llegan al prompt antes de que el agente trabaje.</p>
+  <video class="loop__frame" poster="../flow-knowledge-poster.jpg"
+         controls muted playsinline preload="none"
+         aria-label="la pantalla de conocimiento: hechos por alcance, uno corregido, uno ampliado, uno apagado, y de dónde vino cada uno">
+    <source src="../flow-knowledge.webm" type="video/webm">
+    <source src="../flow-knowledge.mp4" type="video/mp4">
+  </video>
+  <ul class="flow__points">
+      <li>El modelo olvida entre sesiones y olvida cuando lo cambias. CLAUDE.md y AGENTS.md son silos que se vacían el día que cambia el motor. Esto se guarda fuera de todos ellos.</li>
+      <li>Seis alcances, leídos de más lejano a más cercano: todo, un lenguaje, un repositorio, un directorio, un archivo, un símbolo.</li>
+      <li>Un hecho sin fuente no entra — una frase que nadie puede rastrear es indistinguible de una que el modelo se inventó.</li>
+  </ul>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/knowledge.md">Leer la página → (en inglés)</a>
+</section>
+
+<section class="sec" id="flows">
+  <div class="flow__head">
+    <span class="flow__num mono">10</span>
+    <h2 class="flow__title">Flujos que escribes tú</h2>
+  </div>
+  <p class="flow__lede">Un flujo es una lista de fases, cada una nombrando su motor, su modelo, su esfuerzo, su prompt y lo que tiene permitido tocar. Cinco vienen incluidos. El resto son tuyos.</p>
+  <video class="loop__frame" poster="../flow-flows-poster.jpg"
+         controls muted playsinline preload="none"
+         aria-label="la pantalla de flujos: los cinco que vienen y los escritos aquí, cada fase con su motor, su modelo y si se detiene para una persona, y el diseñador que escribe uno nuevo">
+    <source src="../flow-flows.webm" type="video/webm">
+    <source src="../flow-flows.mp4" type="video/mp4">
+  </video>
+  <ul class="flow__points">
+    <li>La pantalla muestra cada flujo abierto — cada fase, sobre qué corre, y cuáles se detienen. Un flujo que no puedes leer antes de pagarlo es un flujo en el que confías en vez de elegirlo.</li>
+    <li>Una fase marcada <code class="mono">wait</code> es un gate. Así es como dices dónde van los controles.</li>
+    <li>Los nombres de las fases son tuyos: un flujo de release, uno de migración, uno de triage tienen la misma forma, y todos reciben el mismo registro y la misma sala de control.</li>
+  </ul>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/flows.md">Leer la página → (en inglés)</a>
+</section>
+
+<section class="sec" style="padding-bottom:96px;">
+  <p class="status">v0.1.x, usado a diario por su autor. macOS y Linux. Claude Code, Codex, OpenCode, Antigravity.</p>
+</section>
+
+<footer>
+  <p>Licencia Apache 2.0 · <a href="https://github.com/e1i0r/orbit" onclick="gtag('event','cta_click',{button:'footer_github'})">github.com/e1i0r/orbit</a></p>
+  <p style="margin-top:6px;">Se aceptan contribuciones — <a href="https://github.com/e1i0r/orbit/blob/main/CONTRIBUTING.md" onclick="gtag('event','cta_click',{button:'footer_contributing'})">lee la guía</a> y súmate.</p>
+  <p style="margin-top:6px;">Hecho por <a href="https://e1i0.com" onclick="gtag('event','cta_click',{button:'footer_author'})">Elio Rincón</a></p>
+</footer>
+
+<script>
+  const copyBtn = document.getElementById('install-copy');
+  copyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(document.getElementById('install-cmd').textContent).then(() => {
+      copyBtn.textContent = 'copiado';
+      setTimeout(() => { copyBtn.textContent = 'copiar'; }, 1500);
+    });
+  });
+</script>
+
+</body>
+</html>

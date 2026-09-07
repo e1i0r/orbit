@@ -28,6 +28,12 @@ func mergedLayers() map[string][]string {
 }
 
 var program = map[string][]string{
+	// web/build writes the landing page and imports nothing of Orbit's: it is
+	// a template, two catalogues of sentences and the standard library. It is
+	// in the module rather than beside it so that `go test ./...` checks the
+	// committed pages are what the template says — a generated file nobody
+	// checks is a generated file that has already drifted.
+	"web/build":     {},
 	"cmd/orbit":     {"internal/cli"},
 	"internal/arch": {},
 	// internal/task is on internal/board's list for one function: task.Alive,

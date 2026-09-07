@@ -188,6 +188,21 @@ make build
 
 Install it where your shell will find it with `make install PREFIX=$HOME/.local`.
 
+### The landing page
+
+`site/index.html` and `site/es/index.html` are **generated**. Editing them
+directly is lost work: they are written by `make site` from one template and
+two catalogues of sentences.
+
+| | |
+| --- | --- |
+| `web/page.tmpl.html` | the markup, once |
+| `web/en.json`, `web/es.json` | every sentence, in both languages |
+
+Change one of those, run `make site`, and commit what it wrote. `make check`
+fails when the committed pages are not what the template says, and it fails
+when a sentence exists in one language and not the other.
+
 ---
 
 ## Code of conduct

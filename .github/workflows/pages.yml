@@ -45,7 +45,7 @@ jobs:
 
       - name: Check the site is whole
         run: |
-          for f in index.html install.sh CNAME .nojekyll; do
+          for f in index.html es/index.html install.sh CNAME .nojekyll; do
             test -s "site/$f" || { echo "site/$f is missing or empty"; exit 1; }
           done
           grep -q '^getorbit.sh$' site/CNAME || { echo "site/CNAME is not getorbit.sh"; exit 1; }
