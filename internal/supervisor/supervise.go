@@ -19,6 +19,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/e1i0r/orbit/internal/engine"
+	"github.com/e1i0r/orbit/internal/knowledge"
 	"github.com/e1i0r/orbit/internal/record"
 	"github.com/e1i0r/orbit/internal/store"
 )
@@ -87,7 +88,8 @@ func SuperviseIn(ctx context.Context, s *store.Store, eng engine.Engine, convers
 		happened = []string{"the record could not be read: " + err.Error()}
 	}
 
-	fullPrompt := buildSupervisorPrompt(history(In(conversation, events)), happened, prompt)
+	thread := history(In(conversation, events))
+	fullPrompt := buildSupervisorPrompt(thread, happened, prompt, standing(s))
 	req := engine.Request{
 		Prompt:      fullPrompt,
 		Dir:         s.Root(),
@@ -133,7 +135,9 @@ func AutoSupervise(ctx context.Context, s *store.Store, eng engine.Engine, needi
 // run_helpers.go): the answer is asked for in Markdown and drawn as Markdown
 // in the cockpit, and a prompt that asks in one shape for another is asking
 // twice.
-func buildSupervisorPrompt(history string, happened []string, newPrompt string) string {
+func buildSupervisorPrompt(
+	history string, happened []string, newPrompt string, knows []knowledge.Fact,
+) string {
 	var b strings.Builder
 
 	b.WriteString("# Supervisor\n\n")
@@ -159,6 +163,7 @@ func buildSupervisorPrompt(history string, happened []string, newPrompt string) 
 			int(happenedWindow.Hours()), engine.Fenced(strings.Join(happened, "\n")))
 	}
 
+	b.WriteString(alreadyKnown(knows))
 	fmt.Fprintf(&b, "\n## Operator message\n\n%s\n", strings.TrimSpace(newPrompt))
 	b.WriteString("\n" + answerContract)
 
@@ -194,7 +199,13 @@ const answerContract = "## How to answer\n\n" +
 	"say so plainly; anything you conclude beyond the record is yours, and say that it is. " +
 	"Never call something verified because it looks right.\n" +
 	"- What is missing from the record is missing: say so rather than filling it in. " +
-	"orbit_inspect_task reads a task in full when the block is not enough.\n"
+	"orbit_inspect_task reads a task in full when the block is not enough.\n\n" +
+	"When the operator tells you something that should have been standing knowledge about the code — " +
+	"a constraint, a trap, a convention, something they are telling you because Orbit did not already " +
+	"know it — **offer** to write it down with orbit_learn, in one line, at the end of your answer. " +
+	"Never write one without them agreeing: a rule that appeared because nobody disagreed is a rule " +
+	"nobody put there. Say nothing when what they said is a question, a request, or something already " +
+	"in the list above.\n"
 
 // maxHistory is how much of the thread is put in front of the model.
 //

@@ -65,12 +65,16 @@ source, and how many times it has been told. On any of them:
 - **turn it off** — it stays and stops being told, because disagreeing with a
   fact and losing the record that it existed are two different things.
 
-## From your CLI
+## From the CLI you plan in
 
-```
-orbit_learn        write a fact down, with its scope, its source, and its check
-orbit_knowledge    read what is known about a path
-```
+Two of Orbit's MCP tools, not shell commands — your CLI calls them once
+`orbit mcp install` has registered the server. See [the CLI, both
+ways](cli.md).
+
+| Tool | What it does |
+| --- | --- |
+| `orbit_learn` | write a fact down, with its scope and, if it stops work, its check |
+| `orbit_knowledge` | read what is already known before planning |
 
 So the CLI you plan in can teach Orbit what it just worked out, and the run
 tomorrow starts with it.
