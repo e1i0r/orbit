@@ -120,14 +120,12 @@ func permitTask(ctx Context, args []string) error {
 
 	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
-		logger.Error("cli/permit", "open repository %q failed: %v", *dir, err)
-		return err
+		return fmt.Errorf("open repository %q: %w", *dir, err)
 	}
 
 	t, err := task.Load(s, r, id)
 	if err != nil {
-		logger.Error("cli/permit", "load task %q failed: %v", id, err)
-		return err
+		return fmt.Errorf("load task %q: %w", id, err)
 	}
 
 	p := ctx.printer()
@@ -179,14 +177,12 @@ func criticalTask(ctx Context, args []string) error {
 
 	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
-		logger.Error("cli/critical", "open repository %q failed: %v", *dir, err)
-		return err
+		return fmt.Errorf("open repository %q: %w", *dir, err)
 	}
 
 	t, err := task.Load(s, r, id)
 	if err != nil {
-		logger.Error("cli/critical", "load task %q failed: %v", id, err)
-		return err
+		return fmt.Errorf("load task %q: %w", id, err)
 	}
 
 	if err := task.Mark(s, t, !*off, *by); err != nil {

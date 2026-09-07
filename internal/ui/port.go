@@ -19,6 +19,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/knowledge"
+	"github.com/e1i0r/orbit/internal/ui/roster"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -233,7 +234,7 @@ type Options struct {
 	CanResume func(engine string) bool
 
 	// Engines returns the engines the UI offers dials and setup steps for.
-	Engines func() []EngineInfo
+	Engines func() []roster.Engine
 
 	// Commands is the command table the palette shows, carried in rather
 	// than reached for: internal/cli owns the table and internal/ui cannot
@@ -277,5 +278,5 @@ type Options struct {
 	// It takes an engine name because both answers are per engine: claude
 	// under a subscription has a window and no dollars, codex on an API key
 	// has dollars and no window, and a board can hold tasks of both.
-	Quota func(engine string) QuotaReading
+	Quota func(engine string) roster.Reading
 }

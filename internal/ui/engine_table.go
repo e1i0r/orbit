@@ -1,5 +1,9 @@
 package ui
 
+import "github.com/e1i0r/orbit/internal/ui/roster"
+
+import "github.com/e1i0r/orbit/internal/ui/cells"
+
 // The one answer in this package to "what engines are there, and what do
 // they offer".
 //
@@ -16,7 +20,7 @@ package ui
 // up would be a fourth copy waiting to drift.
 
 // engineTable is every engine the build can run, as the port answers.
-func (m Model) engineTable() []EngineInfo {
+func (m Model) engineTable() []roster.Engine {
 	if m.opts.Engines == nil {
 		return nil
 	}
@@ -65,14 +69,14 @@ func (m Model) effortsFor(engine string) (ids, labels []string) {
 }
 
 // engineInfo is one engine by name, and whether it was there at all.
-func (m Model) engineInfo(name string) (EngineInfo, bool) {
+func (m Model) engineInfo(name string) (roster.Engine, bool) {
 	for _, eng := range m.engineTable() {
 		if eng.Name == name {
 			return eng, true
 		}
 	}
 
-	return EngineInfo{}, false
+	return roster.Engine{}, false
 }
 
 // dialOf splits a port's choices into what is stored and what is drawn, and
@@ -82,7 +86,7 @@ func (m Model) engineInfo(name string) (EngineInfo, bool) {
 // answer on the engines screen and not one this dial can carry: a click is
 // routed back by the value it drew, and an empty value is indistinguishable
 // from a click on no pill at all.
-func dialOf(choices []ChoiceInfo) (ids, labels []string) {
+func dialOf(choices []roster.Choice) (ids, labels []string) {
 	for _, c := range choices {
 		if c.ID == "" {
 			continue
@@ -98,24 +102,6 @@ func dialOf(choices []ChoiceInfo) (ids, labels []string) {
 	}
 
 	return ids, labels
-}
-
-// dialLabel is what the option at i on a dial is drawn as: the label beside
-// it when there is one, and the option itself when there is not.
-//
-// It takes two slices rather than a slice of pairs because the ids are what
-// every dial in this package already holds, compares and stores, and the
-// labels are only ever read at the moment of drawing.
-func dialLabel(ids, labels []string, i int) string {
-	if i < 0 || i >= len(ids) {
-		return ""
-	}
-
-	if i < len(labels) {
-		return labels[i]
-	}
-
-	return ids[i]
 }
 
 // dialEngine is whose dials to offer when nothing names an engine: the
@@ -136,5 +122,5 @@ func (m Model) dialEngine(named string) string {
 		}
 	}
 
-	return first(m.engineNames())
+	return cells.First(m.engineNames())
 }

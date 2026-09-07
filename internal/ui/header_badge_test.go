@@ -8,6 +8,8 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/point"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -30,7 +32,7 @@ func TestClickingAnywhereOnTheBadgeResetsTheFilters(t *testing.T) {
 
 	for x := range badge {
 		got := m.hitHeader(x, m.frame.HeaderLineY())
-		if got.Kind != TargetHeaderField || got.Field != "orbit" {
+		if got.Kind != point.HeaderField || got.Field != "orbit" {
 			t.Errorf("column %d of the %d-cell badge hits %+v, not the badge; hitHeader and name() disagree about how wide it is", x, badge, got)
 		}
 	}
@@ -64,7 +66,7 @@ func TestTheBadgeIsLitWhenNothingIsFilteredOut(t *testing.T) {
 	m, _ := testModel(t, 150, 30)
 
 	clear := m.name()
-	if clear != PillSelected("◉ orbit", "#FFFFFF", "#0F766E") {
+	if clear != theme.PillSelected("◉ orbit", "#FFFFFF", "#0F766E") {
 		t.Error("the board is holding nothing back and the name badge is not lit")
 	}
 

@@ -28,8 +28,7 @@ func mergePR(ctx Context, args []string) error {
 
 	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
-		logger.Error("cli/merge", "open repository %q failed: %v", *dir, err)
-		return err
+		return fmt.Errorf("open repository %q: %w", *dir, err)
 	}
 
 	// Where the task was worked, and not where the reader happens to be
@@ -38,8 +37,7 @@ func mergePR(ctx Context, args []string) error {
 	// merge.
 	where, err := worked(s, r, taskID)
 	if err != nil {
-		logger.Error("cli/merge", "read the repositories of task %q failed: %v", taskID, err)
-		return err
+		return fmt.Errorf("read the repositories of task %q: %w", taskID, err)
 	}
 
 	branch := "orbit/" + taskID

@@ -14,6 +14,9 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/patch"
+	"github.com/e1i0r/orbit/internal/ui/point"
 )
 
 // hold is the button that is down and the cell it went down on.
@@ -23,7 +26,7 @@ import (
 // on the release, on the target the press landed on, has the one escape
 // every reader already knows — drag off the thing and let go.
 type hold struct {
-	target Target
+	target point.Target
 	button tea.MouseButton
 	down   bool
 }
@@ -59,7 +62,7 @@ func (m Model) mouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 		// release. A scroll bar that moved when the button came up would
 		// not be a scroll bar: it is held, and what it is worth is that
 		// the view is under the pointer the whole time it is held.
-		if e.Button == tea.MouseLeft && m.held.target.Kind == TargetScrollBar {
+		if e.Button == tea.MouseLeft && m.held.target.Kind == point.ScrollBar {
 			return m.scrollTo(m.held.target.Pane), nil
 		}
 
@@ -69,7 +72,7 @@ func (m Model) mouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 		// The release lands on the same cell when nobody dragged
 		// anywhere, and putting the caret where it already is changes
 		// nothing.
-		if e.Button == tea.MouseLeft && m.held.target.Kind == TargetComposeCaret {
+		if e.Button == tea.MouseLeft && m.held.target.Kind == point.ComposeCaret {
 			return m.composeAim(m.held.target), nil
 		}
 
@@ -79,11 +82,11 @@ func (m Model) mouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 	case tea.MouseWheelMsg:
 		return m.wheel(msg.Mouse()), nil
 	case tea.MouseMotionMsg:
-		if m.held.down && m.held.target.Kind == TargetScrollBar {
+		if m.held.down && m.held.target.Kind == point.ScrollBar {
 			return m.dragBar(msg.Mouse()), nil
 		}
 
-		if m.held.down && m.held.target.Kind == TargetComposeCaret {
+		if m.held.down && m.held.target.Kind == point.ComposeCaret {
 			return m.dragCaret(msg.Mouse()), nil
 		}
 
@@ -108,11 +111,11 @@ func (m Model) release(e tea.Mouse) (tea.Model, tea.Cmd) {
 	held := m.held
 
 	m.held = hold{}
-	if !held.down || held.target.Kind == TargetNone {
+	if !held.down || held.target.Kind == point.None {
 		return m, nil
 	}
 
-	if !m.hit(e.X, e.Y).same(held.target) {
+	if !m.hit(e.X, e.Y).Same(held.target) {
 		return m, nil
 	}
 
@@ -133,9 +136,9 @@ func (m Model) release(e tea.Mouse) (tea.Model, tea.Cmd) {
 // to open, which is the two-step every list in every file manager has. It is
 // not a double-click: a double-click is a timer, and a timer means the same
 // two clicks do different things depending on how fast the reader is.
-func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
+func (m Model) leftClick(t point.Target) (tea.Model, tea.Cmd) {
 	switch t.Kind {
-	case TargetTask:
+	case point.Task:
 		i, ok := m.rowOf(t)
 		if !ok {
 			return m, nil
@@ -146,7 +149,7 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		}
 
 		return m.moveTo(i), nil
-	case TargetBandHeader:
+	case point.BandHeader:
 		// The band folds and unfolds, which is item five of what this
 		// window is for: the bands are queues, and a queue you can shut is
 		// a queue you can put down. The cursor goes to the heading first,
@@ -158,13 +161,13 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		}
 
 		return m.moveTo(i).expand(t.Band).clampCursor(), nil
-	case TargetBarHint:
+	case point.BarHint:
 		if t.Key == "" {
 			return m, nil
 		}
 
 		return m.sendKey(keystroke(t.Key))
-	case TargetHeaderField:
+	case point.HeaderField:
 		if t.Field == "orbit" {
 			m.queueFilter = nil
 			m.repoFilter = ""
@@ -197,7 +200,7 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		if t.Field == "quota" {
 			return m.openQuota(), nil
 		}
-	case TargetStatusField:
+	case point.StatusField:
 		if t.Field == "autopilot" {
 			return m.autopilot()
 		}
@@ -205,7 +208,7 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		if t.Field == "engine" {
 			return m.openEngines(), nil
 		}
-	case TargetHeaderQueue:
+	case point.HeaderQueue:
 		if m.queueFilter != nil && *m.queueFilter == t.Band {
 			m.queueFilter = nil
 			return m.moveTo(0).clampCursor(), nil
@@ -216,49 +219,41 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		m.expanded[band] = true
 
 		return m.jumpToBand(band)
-	case TargetSettingsRow:
-		m.settings.sel = t.Pane
+	case point.SettingsRow:
+		m.settings = m.settings.Point(t.Pane)
 
 		rows := m.settingRowsList()
 		if t.Pane >= 0 && t.Pane < len(rows) {
 			r := rows[t.Pane]
-			if t.Field != "" && slices.Contains(r.options, t.Field) {
-				return m.applySetting(r.key, t.Field)
+			if t.Field != "" && slices.Contains(r.Options, t.Field) {
+				return m.applySetting(r.Key, t.Field)
 			}
 		}
 
 		return m.cycleSetting(1)
-	case TargetEngineRow:
-		rows := m.collectEngineRows()
-
-		idxs := m.selectableEngineIndices(rows)
-		if t.Pane >= 0 && t.Pane < len(idxs) {
-			m.engines.sel = t.Pane
-			selectedRow := rows[idxs[t.Pane]]
-
-			return m.applyEngineChoice(selectedRow), nil
-		}
-	case TargetPaneTab:
+	case point.EngineRow:
+		return m.chooseEngineRow(t.Pane)
+	case point.PaneTab:
 		return m.showTab(tab(t.Pane)), nil
-	case TargetFold:
+	case point.Fold:
 		return m.fold(t.Key), nil
-	case TargetSeam:
+	case point.Seam:
 		return m.foldAttempt(t.Pane), nil
-	case TargetPaneRow:
+	case point.PaneRow:
 		return m.openPaneRow(t.Pane)
-	case TargetDiffSelectToggle:
+	case point.DiffSelectToggle:
 		m.diffFilePicker = !m.diffFilePicker
 		if m.diffFilePicker {
 			raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
-			files := parseDiffFiles(raw)
+			files := patch.Files(raw)
 			m.diffFileCursor = fileIndexAtOffset(files, m.panes[tabDiff].YOffset())
 		}
 
 		return m, nil
-	case TargetDiffFile:
+	case point.DiffFile:
 		raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
 
-		files := parseDiffFiles(raw)
+		files := patch.Files(raw)
 		if t.Pane >= 0 && t.Pane < len(files) {
 			m.panes[tabDiff].SetYOffset(files[t.Pane].StartLine)
 			m.diffFilePicker = false
@@ -266,74 +261,20 @@ func (m Model) leftClick(t Target) (tea.Model, tea.Cmd) {
 		}
 
 		return m, nil
-	case TargetDialogSwitch:
+	case point.DialogSwitch:
 		return m.flip(t.Field)
-	case TargetComposeTab, TargetComposeFlowChoice,
-		TargetComposeNewFlow, TargetComposeInspectFlow,
-		TargetComposeField, TargetComposeCaret, TargetComposeAction, TargetComposePaste:
+	case point.ComposeTab, point.ComposeFlowChoice,
+		point.ComposeNewFlow, point.ComposeInspectFlow,
+		point.ComposeField, point.ComposeCaret, point.ComposeAction, point.ComposePaste:
 		return m.handleComposeClick(t)
-	case TargetCommand:
-		// The same two-step a task row takes: the first click selects,
-		// the second runs what was selected. Both arrive through the same
-		// methods the keyboard uses — there is no third path to a run.
-		i, ok := m.commandIndex(t.Key)
-		if !ok {
-			return m, nil
-		}
-
-		if i == m.palette.sel {
-			return m.runSelected()
-		}
-
-		next := m
-		next.palette.sel = i
-
-		return next.ensureVisible(), nil
-	case TargetMenuEntry:
-		// The palette's two-step again, on the menu's list. The entry is
-		// found by what identifies it — glyph for a verb, name for a
-		// command — never by where it sat when the button went down: the
-		// list is recomputed between press and release.
-		for i, e := range m.menuEntries() {
-			id := e.glyph
-			if id == "" && e.cmd != nil {
-				id = e.cmd.Name
-			}
-
-			if id != t.Key {
-				continue
-			}
-
-			if i == m.menu.sel {
-				return m.chooseMenu()
-			}
-
-			next := m
-			next.menu.sel = i
-
-			return next, nil
-		}
-
-		return m, nil
-	case TargetFlowItem:
+	case point.Command:
+		return m.chooseCommand(t.Key)
+	case point.MenuEntry:
+		return m.chooseMenuEntry(t.Key)
+	case point.FlowItem:
 		return m.handleFlowClick(t)
-	case TargetRepo:
-		repos := m.collectRepos()
-		for i, r := range repos {
-			if strings.EqualFold(r.name, t.ID) {
-				m.repolist.sel = i
-
-				p := m.opts.Words
-				if strings.EqualFold(m.repoFilter, r.name) {
-					m.repoFilter = ""
-					return m.abandonRepos().say(p.T("repos.filter_cleared", "showing all repositories")), nil
-				}
-
-				m.repoFilter = r.name
-
-				return m.abandonRepos().say(p.T("repos.filtered", "filtered to {repo}", about("repo", r.name))), nil
-			}
-		}
+	case point.Repo:
+		return m.chooseRepo(t.ID)
 	}
 
 	return m, nil

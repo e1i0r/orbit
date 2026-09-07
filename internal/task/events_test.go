@@ -43,7 +43,7 @@ func TestRunRecordsTheDataKeysTheWindowWillRead(t *testing.T) {
 		t.Fatalf("Create: %v", err)
 	}
 
-	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": engine.NewFake("done")}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, oneFlow(), fakes(engine.NewFake("done")), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -85,7 +85,7 @@ func TestRunTruncatesAnEnormousOutputAndSaysSoInTheRecord(t *testing.T) {
 	huge := strings.Repeat("x", 5<<20)
 
 	eng := resultEngine{result: engine.Result{Output: huge}}
-	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": eng}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, oneFlow(), fakes(eng), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -120,7 +120,7 @@ func TestAnOrdinaryOutputIsRecordedWhole(t *testing.T) {
 		t.Fatalf("Create: %v", err)
 	}
 
-	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": engine.NewFake("wrote the retry")}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, oneFlow(), fakes(engine.NewFake("wrote the retry")), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -155,7 +155,7 @@ func TestRunRecordsAFlowThatDoesNotValidate(t *testing.T) {
 	}
 
 	f := flow.Flow{Name: "task"} // no phases
-	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": engine.NewFake("")}, nil); err == nil {
+	if err := Run(context.Background(), s, tk, f, fakes(engine.NewFake("")), nil); err == nil {
 		t.Fatal("Run walked a flow with no phases")
 	}
 
@@ -174,7 +174,7 @@ func TestRunRecordsAnEngineNobodyConfigured(t *testing.T) {
 	}
 
 	f := flow.Flow{Name: "task", Phases: []flow.Phase{{Name: "implement", Engine: "opencode"}}}
-	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": engine.NewFake("")}, nil); err == nil {
+	if err := Run(context.Background(), s, tk, f, fakes(engine.NewFake("")), nil); err == nil {
 		t.Fatal("Run accepted a phase naming an engine that is not configured")
 	}
 
@@ -219,7 +219,7 @@ func TestPhaseStartedSaysWhatThePhaseWasAllowedToTouch(t *testing.T) {
 	}
 
 	f := permissionFlow(flow.PermissionRead, flow.PermissionNetwork)
-	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": engine.NewFake("done")}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, f, fakes(engine.NewFake("done")), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -245,7 +245,7 @@ func TestPhaseStartedOmitsPermissionsWhenThePhaseAsksForNothing(t *testing.T) {
 		t.Fatalf("Create: %v", err)
 	}
 
-	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": engine.NewFake("done")}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, oneFlow(), fakes(engine.NewFake("done")), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -274,7 +274,7 @@ func TestTheEngineIsHandedThePhasesPermissions(t *testing.T) {
 	fake := engine.NewFake("done")
 
 	f := permissionFlow(flow.PermissionRepo)
-	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": fake}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, f, fakes(fake), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 

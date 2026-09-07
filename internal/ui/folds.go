@@ -4,6 +4,7 @@ import (
 	"maps"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/e1i0r/orbit/internal/ui/panes"
 )
 
 // Folding: the sections of the task view open and close, and the head of
@@ -14,27 +15,10 @@ import (
 // back to — the phases matter while a run is going and the deliver keys
 // matter when it is over — so the state is the window's and not the task's.
 
-// The sections that fold. The keys are this package's own vocabulary rather
-// than the labels above them, which are translated and would change what a
-// fold applies to when the window's language changed.
-const (
-	foldPhases  = "phases"
-	foldChanges = "changes"
-	foldDeliver = "deliver"
-)
-
-// overviewFolds is every section of the overview, in the order the pane
-// draws them.
-var overviewFolds = []string{foldPhases, foldChanges, foldDeliver}
-
 // folded says whether a section is closed. Absent is open, so a window
-// nobody has folded anything in shows everything it has.
+// nobody has folded anything in shows everything it has. Which sections
+// there are is the pane's own vocabulary, in panes.Sections.
 func (m Model) folded(key string) bool { return m.folds[key] }
-
-// sectionHead is one section's head, in the state that section is in.
-func (m Model) sectionHead(key, label, note string, w int) string {
-	return section(label, note, w, !m.folded(key))
-}
 
 // fold closes an open section and opens a closed one.
 //
@@ -168,7 +152,7 @@ func (m Model) hitPaneRow(row int) (int, bool) {
 // down to its heads without a pointer.
 func (m Model) foldAll() Model {
 	shut := map[string]bool{}
-	for _, key := range overviewFolds {
+	for _, key := range panes.Sections {
 		shut[key] = true
 	}
 
@@ -183,36 +167,6 @@ func (m Model) foldAll() Model {
 	return m.syncPanes()
 }
 
-// overviewFoldRows is which row of the pane's content each section head
-// landed on.
-//
-// A head is the first row of its block, so where it landed is the count of
-// what the pane drew before it. The blocks are asked their own heights here
-// rather than searched for in the drawn rows, which keeps a translated label
-// out of a hit test — and pins this arithmetic to overviewLines, which is
-// what the test beside it is for.
-func (m Model) overviewFoldRows() map[int]string {
-	t, ok := m.task(m.detail)
-	if !ok || m.logErr != nil {
-		return nil
-	}
-
-	w := max(40, m.frame.Body.W)
-
-	// The blank line overviewLines opens the pane with.
-	at := 1 + len(m.overviewHead(t, w)) + len(m.overviewVitals(t, w))
-
-	rows := map[int]string{at: foldPhases}
-
-	at += len(m.overviewPhases(t, w))
-	rows[at] = foldChanges
-
-	at += len(m.overviewChanges(w))
-	rows[at] = foldDeliver
-
-	return rows
-}
-
 // hitFold is the section head, if any, on a row of the overview pane,
 // counting from the first row the pane drew and through whatever the reader
 // has scrolled past.
@@ -223,7 +177,7 @@ func (m Model) hitFold(row int) (string, bool) {
 
 	vp := m.panes[tabOverview]
 
-	key, ok := m.overviewFoldRows()[row+vp.YOffset()]
+	key, ok := panes.FoldRows(m.panesEnv())[row+vp.YOffset()]
 
 	return key, ok
 }

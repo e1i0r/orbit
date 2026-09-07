@@ -21,6 +21,8 @@ package task
 import (
 	"os"
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/engine"
 )
 
 // A run this suite starts is this binary, and it is asked to do nothing.
@@ -43,4 +45,11 @@ func TestMain(m *testing.M) {
 	}
 
 	os.Exit(m.Run())
+}
+
+// fakes is the engine table a run is given: one engine, under the name the
+// test flows ask for. It is here because every run in this package needs it
+// and the literal is wider than the line it sits on.
+func fakes(e engine.Engine) map[string]engine.Engine {
+	return map[string]engine.Engine{"fake": e}
 }

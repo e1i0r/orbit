@@ -39,20 +39,17 @@ func resolveComments(ctx Context, args []string) error {
 
 	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
-		logger.Error("cli/resolve", "open repository %q failed: %v", *dir, err)
-		return err
+		return fmt.Errorf("open repository %q: %w", *dir, err)
 	}
 
 	t, err := task.Load(s, r, id)
 	if err != nil {
-		logger.Error("cli/resolve", "load task %q failed: %v", id, err)
-		return err
+		return fmt.Errorf("load task %q: %w", id, err)
 	}
 
 	where, err := worked(s, r, id)
 	if err != nil {
-		logger.Error("cli/resolve", "read the repositories of task %q failed: %v", id, err)
-		return err
+		return fmt.Errorf("read the repositories of task %q: %w", id, err)
 	}
 
 	return gather(ctx, s, t, where)

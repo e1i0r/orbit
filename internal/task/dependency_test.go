@@ -54,7 +54,7 @@ func TestARunStopsWhenSomethingNewIsDependedOn(t *testing.T) {
 
 	eng := addingEngine{Fake: engine.NewFake("added cobra"), file: "go.mod", body: goMod}
 
-	err = Run(context.Background(), s, tk, dependencyFlow(false), map[string]engine.Engine{"fake": eng}, nil)
+	err = Run(context.Background(), s, tk, dependencyFlow(false), fakes(eng), nil)
 	if err == nil {
 		t.Fatal("Run: want an error when a new dependency appears")
 	}
@@ -89,7 +89,7 @@ func TestAFlowMayAllowNewDependencies(t *testing.T) {
 	}
 
 	eng := addingEngine{Fake: engine.NewFake("added cobra"), file: "go.mod", body: goMod}
-	if err := Run(context.Background(), s, tk, dependencyFlow(true), map[string]engine.Engine{"fake": eng}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, dependencyFlow(true), fakes(eng), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -111,7 +111,7 @@ func TestApprovingADependencyLetsTheNextRunPast(t *testing.T) {
 
 	f := dependencyFlow(false)
 	eng := addingEngine{Fake: engine.NewFake("added cobra"), file: "go.mod", body: goMod}
-	engines := map[string]engine.Engine{"fake": eng}
+	engines := fakes(eng)
 
 	if err := Run(context.Background(), s, tk, f, engines, nil); err == nil {
 		t.Fatal("Run: want the first run to stop at the gate")

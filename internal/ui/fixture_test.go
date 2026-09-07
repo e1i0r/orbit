@@ -32,9 +32,9 @@ var fixtureNow = time.Date(2026, 8, 23, 15, 4, 0, 0, time.UTC)
 
 func ago(d time.Duration) time.Time { return fixtureNow.Add(-d) }
 
-// settings is the settings file, in memory. It is the whole of what
+// settingsFile is the settings file, in memory. It is the whole of what
 // internal/cli will satisfy with a store-backed type.
-type settings struct {
+type settingsFile struct {
 	autopilot bool
 	lang      string
 	unread    int
@@ -43,9 +43,9 @@ type settings struct {
 	fail      error
 }
 
-func (s *settings) Autopilot() bool { return s.autopilot }
+func (s *settingsFile) Autopilot() bool { return s.autopilot }
 
-func (s *settings) SetAutopilot(v bool) error {
+func (s *settingsFile) SetAutopilot(v bool) error {
 	if s.fail != nil {
 		return s.fail
 	}
@@ -55,9 +55,9 @@ func (s *settings) SetAutopilot(v bool) error {
 	return nil
 }
 
-func (s *settings) Language() string { return s.lang }
+func (s *settingsFile) Language() string { return s.lang }
 
-func (s *settings) SetLanguage(v string) error {
+func (s *settingsFile) SetLanguage(v string) error {
 	if s.fail != nil {
 		return s.fail
 	}
@@ -71,18 +71,18 @@ func (s *settings) SetLanguage(v string) error {
 // answers fail, because every one of them can refuse in the file this
 // stands for: the settings file has a lock, and a second orbit holding it
 // makes any of these say so after waiting two seconds.
-func (s *settings) UnreadCap() int           { return s.unread }
-func (s *settings) BudgetWorkspace() float64 { return s.budget }
-func (s *settings) QuotaFloor() int          { return s.floor }
-func (s *settings) SetUnreadCap(int) error   { return s.fail }
-func (s *settings) Engine() string           { return "" }
-func (s *settings) SetEngine(string) error   { return s.fail }
-func (s *settings) Model() string            { return "" }
-func (s *settings) SetModel(string) error    { return s.fail }
-func (s *settings) Flow() string             { return "task" }
-func (s *settings) SetFlow(string) error     { return s.fail }
-func (s *settings) Theme() string            { return "monokai" }
-func (s *settings) SetTheme(string) error    { return s.fail }
+func (s *settingsFile) UnreadCap() int           { return s.unread }
+func (s *settingsFile) BudgetWorkspace() float64 { return s.budget }
+func (s *settingsFile) QuotaFloor() int          { return s.floor }
+func (s *settingsFile) SetUnreadCap(int) error   { return s.fail }
+func (s *settingsFile) Engine() string           { return "" }
+func (s *settingsFile) SetEngine(string) error   { return s.fail }
+func (s *settingsFile) Model() string            { return "" }
+func (s *settingsFile) SetModel(string) error    { return s.fail }
+func (s *settingsFile) Flow() string             { return "task" }
+func (s *settingsFile) SetFlow(string) error     { return s.fail }
+func (s *settingsFile) Theme() string            { return "monokai" }
+func (s *settingsFile) SetTheme(string) error    { return s.fail }
 
 // arg is one placeholder for a reason, spelled the way internal/view spells
 // it so a fixture reads like the record it stands for.
@@ -210,7 +210,7 @@ func modelWith(t *testing.T, p *words.Printer, b board.Board, w, h int, got *rec
 	t.Helper()
 
 	o := got.ports()
-	o.Root, o.Settings, o.Words = "~/work", &settings{autopilot: true, lang: "en", unread: 5}, p
+	o.Root, o.Settings, o.Words = "~/work", &settingsFile{autopilot: true, lang: "en", unread: 5}, p
 	o.Width, o.Height = w, h
 	// Every engine in the fixture can resume. The port is a function of the
 	// engine's name, and the one test that is about an engine that cannot
@@ -331,14 +331,7 @@ func wantBand(t *testing.T, m Model, want string) {
 	}
 }
 
-// onFields is a designer opened on the tab where a flow is edited by hand.
-//
-// Creating a flow opens on the tab where it is described in words instead,
-// which is the right first move for somebody with an empty form and the
-// wrong one for a test about the fields. The tests that drive the fields say
-// so here rather than every one of them knowing which tab is first.
-func (m Model) onFields() Model {
-	m.flows.tab = flowTabFields
+// flowsTestDir is a flow.Source pointing at a directory of the test's own.
+type flowsTestDir string
 
-	return m
-}
+func (d flowsTestDir) FlowDir() string { return string(d) }

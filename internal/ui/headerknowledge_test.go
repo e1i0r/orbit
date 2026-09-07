@@ -10,6 +10,7 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 	"github.com/e1i0r/orbit/internal/knowledge"
+	"github.com/e1i0r/orbit/internal/ui/point"
 )
 
 func withFacts(t *testing.T, n int) Model {
@@ -93,7 +94,7 @@ func TestPressingTheChipOpensTheScreen(t *testing.T) {
 	m := withFacts(t, 2)
 
 	at := headerCell(t, m, "🧩")
-	if got := m.hitHeader(at, m.frame.HeaderLineY()); got.Kind != TargetHeaderField || got.Field != "knowledge" {
+	if got := m.hitHeader(at, m.frame.HeaderLineY()); got.Kind != point.HeaderField || got.Field != "knowledge" {
 		t.Fatalf("the chip's own cell answers %+v, want the knowledge field", got)
 	}
 

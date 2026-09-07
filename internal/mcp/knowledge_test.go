@@ -97,3 +97,53 @@ func TestAFactWithNoSentenceIsRefused(t *testing.T) {
 		t.Error("a fact with nothing in it was written down")
 	}
 }
+
+// TestAFactSaysHowFarItReachesInTheWordsTheToolAnswersWith.
+func TestAFactSaysHowFarItReachesInTheWordsTheToolAnswersWith(t *testing.T) {
+	for _, c := range []struct {
+		in   knowledge.Scope
+		want string
+	}{
+		{knowledge.Scope{Kind: knowledge.General}, "everywhere"},
+		{knowledge.Scope{Kind: knowledge.Language, Lang: "go"}, "in go"},
+		{knowledge.Scope{Kind: knowledge.Repo, Repo: "/w/orbit"}, "in this repository"},
+		{knowledge.Scope{Kind: knowledge.Symbol, Path: "run.go", Symbol: "Start"}, "in run.go#Start"},
+		{knowledge.Scope{Kind: knowledge.File, Path: "run.go"}, "in run.go"},
+	} {
+		if got := factWhere(c.in); got != c.want {
+			t.Errorf("factWhere(%+v) = %q, want %q", c.in, got, c.want)
+		}
+	}
+}
+
+// TestARepositoryIsNamedByPathAndNotGuessed. A supervising model works
+// across several, and a fact filed against the wrong one is a rule applied
+// where nobody put it.
+func TestARepositoryIsNamedByPathAndNotGuessed(t *testing.T) {
+	for _, c := range []struct {
+		what string
+		args map[string]any
+		want knowledge.Scope
+	}{
+		{"nothing named", map[string]any{}, knowledge.Scope{Kind: knowledge.General}},
+		{"a language", map[string]any{"lang": "go"}, knowledge.Scope{Kind: knowledge.Language, Lang: "go"}},
+		{"a checkout", map[string]any{"repo": "/w/orbit"}, knowledge.Scope{Kind: knowledge.Repo, Repo: "/w/orbit"}},
+	} {
+		got, err := factScope(c.args)
+		if err != nil {
+			t.Errorf("%s: %v", c.what, err)
+			continue
+		}
+
+		if got != c.want {
+			t.Errorf("%s: %+v, want %+v", c.what, got, c.want)
+		}
+	}
+
+	// Both at once is not a scope: a fact is about a language or about a
+	// repository, and a tool that guessed which would file it somewhere
+	// nobody asked for.
+	if _, err := factScope(map[string]any{"lang": "go", "repo": "/w/orbit"}); err == nil {
+		t.Error("a fact named both a language and a repository and was filed anyway")
+	}
+}

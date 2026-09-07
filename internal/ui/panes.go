@@ -3,6 +3,8 @@ package ui
 // The twelve detail panes: overview, flow, gates, cost, refused, timeline,
 // report, artifacts, notes, diff, impact, and thinking.
 
+import "github.com/e1i0r/orbit/internal/ui/menu"
+
 // tab is which of the twelve panes is showing.
 type tab int
 
@@ -128,7 +130,7 @@ func (m Model) tabNames() []tabName {
 func (m Model) syncPanes() Model {
 	w := max(m.frame.Body.W, 1)
 
-	timeline, timelineHeads, timelineSeams := m.logRows()
+	timeline := m.logRows()
 	report, reportSeams := m.reportRows()
 	thinking, thinkingHeads := m.thinkingRows()
 	flowTree, flowHeads := m.flowRows()
@@ -138,11 +140,11 @@ func (m Model) syncPanes() Model {
 	diff, diffHeads := m.diffRows()
 	artifacts, artifactHeads := m.artifactsRows()
 
-	m.heads[tabTimeline], m.heads[tabThinking] = timelineHeads, thinkingHeads
+	m.heads[tabTimeline], m.heads[tabThinking] = timeline.Heads, thinkingHeads
 	m.heads[tabFlow], m.heads[tabGates] = flowHeads, gateHeads
 	m.heads[tabRefused], m.heads[tabNotes] = refusedHeads, noteHeads
 	m.heads[tabDiff], m.heads[tabArtifacts] = diffHeads, artifactHeads
-	m.seams[tabTimeline], m.seams[tabReport] = timelineSeams, reportSeams
+	m.seams[tabTimeline], m.seams[tabReport] = timeline.Seams, reportSeams
 
 	content := [tabCount][]string{
 		tabOverview:  m.overviewLines(),
@@ -150,7 +152,7 @@ func (m Model) syncPanes() Model {
 		tabGates:     gates,
 		tabCost:      m.costLines(),
 		tabRefused:   refused,
-		tabTimeline:  timeline,
+		tabTimeline:  timeline.Rows,
 		tabReport:    report,
 		tabArtifacts: artifacts,
 		tabNotes:     notes,
@@ -181,11 +183,12 @@ func (m Model) syncPanes() Model {
 	return m
 }
 
-// tabMenuEntries is the menu of a task's panes: the same list the tab strip
+// paneMenu is the menu of a task's panes: the same list the tab strip
 // draws, with a sentence under each name saying what is in it. It is here
-// rather than in menu.go because it is built out of this file's two answers
-// — which panes this task has, and which key each one is on.
-func (m Model) tabMenuEntries() []menuEntry {
+// rather than in the menu's own package because it is built out of this
+// file's two answers — which panes this task has, and which key each one is
+// on.
+func (m Model) paneMenu() []menu.Pane {
 	p := m.opts.Words
 	descs := map[tab]string{
 		tabOverview:  p.T("tab_desc.overview", "general status, live activity and metrics summary"),
@@ -203,17 +206,10 @@ func (m Model) tabMenuEntries() []menuEntry {
 		tabThinking: p.T("tab_desc.thinking", "extended model thinking, chain of thought and reasoning"),
 	}
 
-	var out []menuEntry
+	out := make([]menu.Pane, 0, tabCount)
 
 	for _, n := range m.tabNames() {
-		tVal := n.tab
-		k := paneKey(tVal)
-		out = append(out, menuEntry{
-			glyph:  "[" + k + "]",
-			title:  n.text,
-			detail: descs[tVal],
-			tab:    &tVal,
-		})
+		out = append(out, menu.Pane{Key: paneKey(n.tab), Title: n.text, Detail: descs[n.tab]})
 	}
 
 	return out

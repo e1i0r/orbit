@@ -7,6 +7,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/point"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -56,7 +57,7 @@ func TestClickingAQueueBadgeFiltersByTheQueueDrawnThere(t *testing.T) {
 
 		for _, x := range []int{edge, last} {
 			got := m.hitHeader(x, y)
-			if got.Kind != TargetHeaderQueue || got.Band != c.want {
+			if got.Kind != point.HeaderQueue || got.Band != c.want {
 				t.Errorf("hitHeader(%d) = %+v, want the %v badge, which is what is drawn there",
 					x, got, c.want)
 			}
@@ -80,7 +81,7 @@ func TestSelectingAQueueDoesNotMoveTheOthersOutFromUnderTheCursor(t *testing.T) 
 	// Done's own left edge, two cells further right than it was before
 	// Running grew its mark.
 	x := headerCell(t, m, "🏁") - 1
-	if got := m.hitHeader(x, y); got.Kind != TargetHeaderQueue || got.Band != view.Done {
+	if got := m.hitHeader(x, y); got.Kind != point.HeaderQueue || got.Band != view.Done {
 		t.Errorf("with Running selected, hitHeader(%d) = %+v, want Done", x, got)
 	}
 }
@@ -106,7 +107,7 @@ func TestClickingAStandingFactOpensTheFactDrawnThere(t *testing.T) {
 			headerCell(t, m, c.tail) + lipgloss.Width(c.tail) - 1,
 		} {
 			got := m.hitHeader(x, y)
-			if got.Kind != TargetHeaderField || got.Field != c.field {
+			if got.Kind != point.HeaderField || got.Field != c.field {
 				t.Errorf("hitHeader(%d) = %+v, want the %s field, which is what is drawn there",
 					x, got, c.field)
 			}
@@ -124,7 +125,7 @@ func TestTheBlankCellsOfTheHeaderAreInert(t *testing.T) {
 
 	for _, icon := range []string{"📦", "🧠", "🌐"} {
 		x := headerCell(t, m, icon) - 1
-		if got := m.hitHeader(x, y); got.Kind != TargetNone {
+		if got := m.hitHeader(x, y); got.Kind != point.None {
 			t.Errorf("hitHeader(%d) = %+v, want nothing: the cell before %s is blank", x, got, icon)
 		}
 	}

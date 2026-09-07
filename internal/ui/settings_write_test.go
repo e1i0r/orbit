@@ -7,6 +7,8 @@ import (
 	"errors"
 	"strings"
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // TestASettingThatCouldNotBeWrittenSaysSoInsteadOfSayingItIsSet. Discarded
@@ -26,11 +28,11 @@ func TestASettingThatCouldNotBeWrittenSaysSoInsteadOfSayingItIsSet(t *testing.T)
 		{"theme", "nord"},
 	} {
 		m, _ := testModel(t, 100, 30)
-		m.opts.Settings = &settings{fail: errors.New("settings file is locked by another orbit")}
+		m.opts.Settings = &settingsFile{fail: errors.New("settings file is locked by another orbit")}
 
-		old := CurrentTheme()
+		old := theme.CurrentTheme()
 
-		t.Cleanup(func() { SetCurrentTheme(old) })
+		t.Cleanup(func() { theme.SetCurrentTheme(old) })
 
 		next, _ := m.applySetting(c.key, c.val)
 
@@ -48,14 +50,14 @@ func TestASettingThatCouldNotBeWrittenSaysSoInsteadOfSayingItIsSet(t *testing.T)
 // not have and the next run will not restore.
 func TestARefusedThemeDoesNotRepaintTheWindow(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m.opts.Settings = &settings{fail: errors.New("disk full")}
+	m.opts.Settings = &settingsFile{fail: errors.New("disk full")}
 
-	old := CurrentTheme()
+	old := theme.CurrentTheme()
 
-	t.Cleanup(func() { SetCurrentTheme(old) })
+	t.Cleanup(func() { theme.SetCurrentTheme(old) })
 
-	if _, _ = m.applySetting("theme", "nord"); CurrentTheme() != old {
-		t.Errorf("a refused theme write repainted the window to %q", CurrentTheme())
+	if _, _ = m.applySetting("theme", "nord"); theme.CurrentTheme() != old {
+		t.Errorf("a refused theme write repainted the window to %q", theme.CurrentTheme())
 	}
 }
 

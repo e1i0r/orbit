@@ -8,6 +8,7 @@ package ui
 import (
 	"testing"
 
+	"github.com/e1i0r/orbit/internal/ui/point"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -63,7 +64,7 @@ func TestFlipTheStartDialogSwitches(t *testing.T) {
 	}
 
 	// 2. Autopilot on, clicking the "on" half does nothing further...
-	m.opts.Settings.(*settings).autopilot = false //nolint:errcheck
+	m.opts.Settings.(*settingsFile).autopilot = false //nolint:errcheck
 
 	nextOn, _ := m.flip(fieldAutopilotOn)
 	if !asModel(t, nextOn).autopilotOn() {
@@ -71,7 +72,7 @@ func TestFlipTheStartDialogSwitches(t *testing.T) {
 	}
 
 	// 3. ...and clicking the "off" half while it is already on turns it off.
-	m.opts.Settings.(*settings).autopilot = true //nolint:errcheck
+	m.opts.Settings.(*settingsFile).autopilot = true //nolint:errcheck
 
 	nextOff, _ := m.flip(fieldAutopilotOff)
 	if asModel(t, nextOff).autopilotOn() {
@@ -124,36 +125,36 @@ func TestJumpToBandMovesTheCursorAndExpandsIt(t *testing.T) {
 func TestRightClickOnThePaneBodyAndElsewhere(t *testing.T) {
 	// 1. The task view open on a subject: right click opens the menu on it.
 	m := openOn(t, "ACME-2705")
-	next, _ := m.rightClick(Target{Kind: TargetPaneBody})
+	next, _ := m.rightClick(point.Target{Kind: point.PaneBody})
 
 	after := asModel(t, next)
-	if !after.menu.open || after.menu.taskID != "ACME-2705" {
-		t.Errorf("rightClick(TargetPaneBody) = open=%v taskID=%q, want the menu open on ACME-2705", after.menu.open, after.menu.taskID)
+	if !after.menu.Up() || after.menu.Task() != "ACME-2705" {
+		t.Errorf("rightClick(point.PaneBody) = open=%v taskID=%q, want the menu open on ACME-2705", after.menu.Up(), after.menu.Task())
 	}
 
 	// 2. No subject at all: right click on the pane body does nothing.
 	m2, _ := testModel(t, 100, 30)
 
-	next2, cmd2 := m2.rightClick(Target{Kind: TargetPaneBody})
-	if cmd2 != nil || asModel(t, next2).menu.open {
-		t.Error("rightClick(TargetPaneBody) with no subject opened the menu")
+	next2, cmd2 := m2.rightClick(point.Target{Kind: point.PaneBody})
+	if cmd2 != nil || asModel(t, next2).menu.Up() {
+		t.Error("rightClick(point.PaneBody) with no subject opened the menu")
 	}
 
 	// 3. A target that maps to no row at all is left alone.
 	m3, _ := testModel(t, 100, 30)
 
-	next3, cmd3 := m3.rightClick(Target{Kind: TargetTask, ID: "no-such-task"})
-	if cmd3 != nil || asModel(t, next3).menu.open {
+	next3, cmd3 := m3.rightClick(point.Target{Kind: point.Task, ID: "no-such-task"})
+	if cmd3 != nil || asModel(t, next3).menu.Up() {
 		t.Error("rightClick on a target with no row opened the menu")
 	}
 
 	// 4. A band header: right click moves the cursor there but does not
 	// open the menu — only a task row does.
 	m4, _ := testModel(t, 100, 30)
-	next4, _ := m4.rightClick(Target{Kind: TargetBandHeader, Band: view.Done})
+	next4, _ := m4.rightClick(point.Target{Kind: point.BandHeader, Band: view.Done})
 
 	after4 := asModel(t, next4)
-	if after4.menu.open {
+	if after4.menu.Up() {
 		t.Error("rightClick on a band header opened the menu")
 	}
 

@@ -4,7 +4,10 @@ package flow
 // object beside it, a fence over it, and the writer's own line breaks inside
 // its strings.
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 // TestADraftWithNoFlowInItSaysSo rather than leaving the reader with an
 // empty form and no reason for it.
@@ -86,5 +89,34 @@ func TestABraceInsideAPromptOpensNothing(t *testing.T) {
 
 	if got := fl.Phases[0].Prompt; got != "write func f() { return } and keep going" {
 		t.Errorf("the prompt came back as %q", got)
+	}
+}
+
+// TestAFenceIsTakenOffWhateverIsInsideIt, which is what an engine writes on
+// the days it ignores being asked not to.
+func TestAFenceIsTakenOffWhateverIsInsideIt(t *testing.T) {
+	const doc = `{"name":"drafted"}`
+
+	for _, c := range []struct{ what, in string }{
+		{"a fence with a language on it", "```json\n" + doc + "\n```"},
+		{"a bare fence", "```\n" + doc + "\n```"},
+		{"a fence with prose around it", "Here you go:\n\n```json\n" + doc + "\n```\n"},
+	} {
+		if got := fenced(c.in); !strings.Contains(got, doc) {
+			t.Errorf("%s: fenced() = %q, want the document inside it", c.what, got)
+		}
+	}
+
+	// What was never fenced is handed back exactly as it came.
+	if got := fenced(doc); got != doc {
+		t.Errorf("an unfenced answer came back as %q", got)
+	}
+
+	// A fence nobody closed is not a fence to take off: the answer is
+	// whatever it is, and cutting the first line off it would lose part of
+	// what the engine said.
+	half := "```json"
+	if got := fenced(half); got != half {
+		t.Errorf("an unclosed fence came back as %q", got)
 	}
 }

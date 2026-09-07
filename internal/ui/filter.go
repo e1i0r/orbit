@@ -12,6 +12,8 @@ package ui
 import (
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/cells"
 )
 
 // filterKey feeds the text input, which owns every key it is not given a
@@ -29,7 +31,7 @@ func (m Model) filterKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		m.filtering = false
 		return m.clampCursor(), nil
 	case msg.Code == tea.KeyBackspace:
-		m.filter = trimLastRune(m.filter)
+		m.filter = cells.TrimLastRune(m.filter)
 		return m.clampCursor(), nil
 	}
 
@@ -38,17 +40,4 @@ func (m Model) filterKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	}
 
 	return m.clampCursor(), nil
-}
-
-// trimLastRune removes the last character of a line being typed, counting
-// runes and never bytes: backspacing "café" a byte at a time leaves an
-// invalid string on screen, which is the same mistake as measuring a column
-// in bytes. The palette backspaces through here too.
-func trimLastRune(s string) string {
-	runes := []rune(s)
-	if len(runes) == 0 {
-		return s
-	}
-
-	return string(runes[:len(runes)-1])
 }

@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/flow"
-	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/task"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -38,20 +37,17 @@ func approveTask(ctx Context, args []string) error {
 
 	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
-		logger.Error("cli/approve", "open repository %q failed: %v", *dir, err)
-		return err
+		return fmt.Errorf("open repository %q: %w", *dir, err)
 	}
 
 	t, err := task.Load(s, r, id)
 	if err != nil {
-		logger.Error("cli/approve", "load task %q failed: %v", id, err)
-		return err
+		return fmt.Errorf("load task %q: %w", id, err)
 	}
 
 	f, err := flowOfTask(s, t)
 	if err != nil {
-		logger.Error("cli/approve", "resolve the flow of task %q failed: %v", id, err)
-		return err
+		return fmt.Errorf("resolve the flow of task %q: %w", id, err)
 	}
 
 	pending := task.Pending(s, t, f)
@@ -63,8 +59,7 @@ func approveTask(ctx Context, args []string) error {
 	}
 
 	if err := task.Approve(s, t, pending); err != nil {
-		logger.Error("cli/approve", "approve the dependencies of task %q failed: %v", id, err)
-		return err
+		return fmt.Errorf("approve the dependencies of task %q: %w", id, err)
 	}
 
 	fmt.Fprintln(ctx.Out, ctx.Words.T("approve.done", "approved for {id}: {names}",

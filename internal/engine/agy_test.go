@@ -118,3 +118,20 @@ func TestAgySaysNothingAboutASessionItCannotRead(t *testing.T) {
 		t.Errorf("Transcript answered %d turns, want none", len(turns))
 	}
 }
+
+// TestAgyReadsNoTranscriptAndSaysSoRatherThanGuessing.
+//
+// Every step of an agy conversation is a protobuf blob with no schema
+// shipped for it. Walking that wire format field by field would be a guess
+// written into a task's record as if it were an account of the session, so
+// the answer is nothing.
+func TestAgyReadsNoTranscriptAndSaysSoRatherThanGuessing(t *testing.T) {
+	got, err := NewAgy().Transcript("/some/worktree", time.Now())
+	if err != nil {
+		t.Errorf("reading nothing answered an error: %v", err)
+	}
+
+	if len(got) != 0 {
+		t.Errorf("agy invented %d turns of a conversation it cannot read", len(got))
+	}
+}

@@ -132,7 +132,7 @@ func TestDetailBandLineNeedsYou(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 
 	// 1. Gate with autopilot off.
-	m.opts.Settings.(*settings).autopilot = false //nolint:errcheck
+	m.opts.Settings.(*settingsFile).autopilot = false //nolint:errcheck
 	tkGate := view.Task{
 		ID:     "ACME-106",
 		Band:   view.NeedsYou,
@@ -150,7 +150,7 @@ func TestDetailBandLineNeedsYou(t *testing.T) {
 	}
 
 	// 2. Gate with autopilot on.
-	m.opts.Settings.(*settings).autopilot = true //nolint:errcheck
+	m.opts.Settings.(*settingsFile).autopilot = true //nolint:errcheck
 
 	got = ansi.Strip(m.bandLeft())
 	for _, want := range []string{"ACME-106", "waiting: review", "lifting this gate"} {

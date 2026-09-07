@@ -26,7 +26,7 @@ import (
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/supervisor"
-	"github.com/e1i0r/orbit/internal/ui"
+	"github.com/e1i0r/orbit/internal/ui/roster"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -208,9 +208,9 @@ func autoSupervisePort(s *store.Store, engines map[string]engine.Engine) func(st
 // nothing to draw a dial from unless the reader already has the engine —
 // which is how the window comes to keep its own copy of the catalogue, and
 // that copy is what drifts.
-func enginesPort(engines map[string]engine.Engine) func() []ui.EngineInfo {
-	return func() []ui.EngineInfo {
-		var list []ui.EngineInfo
+func enginesPort(engines map[string]engine.Engine) func() []roster.Engine {
+	return func() []roster.Engine {
+		var list []roster.Engine
 
 		for _, name := range engineNames(engines) {
 			eng, hasEng := engines[name]
@@ -227,7 +227,7 @@ func enginesPort(engines map[string]engine.Engine) func() []ui.EngineInfo {
 			// opencode running in the next window.
 			_, pathErr := eng.Locate()
 
-			info := ui.EngineInfo{
+			info := roster.Engine{
 				Name:      name,
 				Available: pathErr == nil,
 				Models:    choices(eng.Models()),
@@ -249,10 +249,10 @@ func enginesPort(engines map[string]engine.Engine) func() []ui.EngineInfo {
 
 // choices carries one engine's dial across the port, which is a copy because
 // internal/ui may not name internal/engine.
-func choices(from []engine.Choice) []ui.ChoiceInfo {
-	var out []ui.ChoiceInfo
+func choices(from []engine.Choice) []roster.Choice {
+	var out []roster.Choice
 	for _, c := range from {
-		out = append(out, ui.ChoiceInfo{ID: c.ID, Label: c.Label})
+		out = append(out, roster.Choice{ID: c.ID, Label: c.Label})
 	}
 
 	return out

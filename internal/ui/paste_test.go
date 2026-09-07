@@ -7,7 +7,17 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/x/ansi"
 )
+
+// drawnLine is what the supervisor screen has on it, as plain text. The
+// window can only reach the screen through its doors, so what a paste did is
+// asserted where the operator would see it.
+func drawnLine(t *testing.T, m Model) string {
+	t.Helper()
+
+	return ansi.Strip(strings.Join(m.supervisorRows(30, 100), "\n"))
+}
 
 // TestCmdVReachesTheSupervisorLine.
 //
@@ -19,11 +29,10 @@ func TestCmdVReachesTheSupervisorLine(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.opts.RecordSupervisor = func(string, string, string, string) error { return nil }
 	m = m.openSupervisor()
-	m.supervisor.input = "look at "
 
-	next := next(t, m, tea.PasteMsg{Content: "https://github.com/e1i0r/orbit/pull/104"})
-	if want := "look at https://github.com/e1i0r/orbit/pull/104"; next.supervisor.input != want {
-		t.Errorf("the line holds %q, want %q", next.supervisor.input, want)
+	next := next(t, m, tea.PasteMsg{Content: "orbit/pull/104"})
+	if drawn := drawnLine(t, next); !strings.Contains(drawn, "orbit/pull/104") {
+		t.Errorf("what was pasted is not in the line:\n%s", drawn)
 	}
 }
 
@@ -35,8 +44,12 @@ func TestPastingManyLinesKeepsThemAll(t *testing.T) {
 	m = m.openSupervisor()
 
 	next := next(t, m, tea.PasteMsg{Content: "first\nsecond\nthird"})
-	if n := strings.Count(next.supervisor.input, "\n"); n != 2 {
-		t.Errorf("the line holds %d newlines, want 2: %q", n, next.supervisor.input)
+
+	drawn := drawnLine(t, next)
+	for _, want := range []string{"first", "second", "third"} {
+		if !strings.Contains(drawn, want) {
+			t.Errorf("the line lost %q of a three line paste:\n%s", want, drawn)
+		}
 	}
 }
 
@@ -47,8 +60,11 @@ func TestAPasteOutsideAFieldChangesNothing(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 
 	next := next(t, m, tea.PasteMsg{Content: "nothing to do with this"})
-	if next.supervisor.input != "" || next.filter != "" {
-		t.Errorf("a paste on the board left %q in the line and %q in the filter",
-			next.supervisor.input, next.filter)
+	if next.filter != "" {
+		t.Errorf("a paste on the board left %q in the filter", next.filter)
+	}
+
+	if drawn := drawnLine(t, next.openSupervisor()); strings.Contains(drawn, "nothing to do with this") {
+		t.Errorf("a paste on the board reached the supervisor's line:\n%s", drawn)
 	}
 }

@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/e1i0r/orbit/internal/ui/roster"
 )
 
 func TestShorten(t *testing.T) {
@@ -45,7 +47,7 @@ func TestRule(t *testing.T) {
 
 // TestHeaderLineShrinksAndRefuses walks the header from a width wide enough
 // for every field down to one so narrow even the program's own name and a
-// bare root will not fit, which is headerLine's last resort: fit(m.name(), w).
+// bare root will not fit, which is headerLine's last resort: cells.Fit(m.name(), w).
 func TestHeaderLineShrinksAndRefuses(t *testing.T) {
 	m, _ := testModel(t, 200, 30)
 	m.opts.Root = "~/work/acme/payments/service"
@@ -75,17 +77,17 @@ func TestHeaderLeftQueueBadges(t *testing.T) {
 		t.Fatalf("fixture board has %d counts, want at least 4", len(m.board.Counts))
 	}
 
-	line, _, ok := m.headerLeft(120, false)
-	if !ok || !strings.Contains(line, "📋") {
-		t.Errorf("headerLeft(120, false) = %q, ok=%v, want the queue badges", line, ok)
+	side, ok := m.headerLeft(120, false)
+	if !ok || !strings.Contains(side.line, "📋") {
+		t.Errorf("headerLeft(120, false) = %q, ok=%v, want the queue badges", side.line, ok)
 	}
 	// A width too small for the badges falls back to the root path instead.
-	line, _, ok = m.headerLeft(40, true)
-	if !ok || strings.Contains(line, "📋") {
-		t.Errorf("headerLeft(40, true) = %q, ok=%v, want the root path fallback", line, ok)
+	side, ok = m.headerLeft(40, true)
+	if !ok || strings.Contains(side.line, "📋") {
+		t.Errorf("headerLeft(40, true) = %q, ok=%v, want the root path fallback", side.line, ok)
 	}
 	// And a width too small for even that refuses outright.
-	_, _, ok = m.headerLeft(1, true)
+	_, ok = m.headerLeft(1, true)
 	if ok {
 		t.Error("headerLeft(1, true) succeeded, want a refusal")
 	}
@@ -105,7 +107,7 @@ func TestHeaderFieldsUnreadBrake(t *testing.T) {
 	// fixture's unread count has already reached — SetUnreadCap on the
 	// fixture stub does not persist, so the cap can only move by replacing
 	// the port outright.
-	m.opts.Settings = &settings{autopilot: true, lang: "en", unread: 1}
+	m.opts.Settings = &settingsFile{autopilot: true, lang: "en", unread: 1}
 	if fields := m.headerFields(); !strings.Contains(strings.Join(fieldTexts(fields), " "), "brake") {
 		t.Errorf("headerFields at the cap = %v, want the brake field", fields)
 	}
@@ -123,34 +125,16 @@ func TestHeaderFieldsUnreadBrake(t *testing.T) {
 	}
 }
 
-func TestFmtReset(t *testing.T) {
-	tests := []struct {
-		d    time.Duration
-		want string
-	}{
-		{0, "0s"},
-		{-5 * time.Second, "0s"},
-		{30 * time.Second, "30s"},
-		{90 * time.Second, "1m30s"},
-		{2*time.Hour + 15*time.Minute, "2h15m"},
-	}
-	for _, tt := range tests {
-		if got := fmtReset(tt.d); got != tt.want {
-			t.Errorf("fmtReset(%v) = %q, want %q", tt.d, got, tt.want)
-		}
-	}
-}
-
 // TestStatusLineSegmentsAndQuota walks statusLine from wide enough for every
 // segment down to one segment, and through the quota branch, which only
 // shows when Options.Quota is set.
 func TestStatusLineSegmentsAndQuota(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m.opts.Quota = func(engine string) QuotaReading {
-		return QuotaReading{
+	m.opts.Quota = func(engine string) roster.Reading {
+		return roster.Reading{
 			Engine:  engine,
 			Sourced: true,
-			Windows: []QuotaWindow{{Label: "5h", Pct: 40, ResetsIn: 90 * time.Minute}},
+			Windows: []roster.Window{{Label: "5h", Pct: 40, ResetsIn: 90 * time.Minute}},
 		}
 	}
 
@@ -179,8 +163,8 @@ func TestStatusLineSegmentsAndQuota(t *testing.T) {
 
 	// An engine paid per token has no window and needs none: what it costs
 	// is the spent field, which is money because this reading says so.
-	m.opts.Quota = func(engine string) QuotaReading {
-		return QuotaReading{Engine: engine, Money: true}
+	m.opts.Quota = func(engine string) roster.Reading {
+		return roster.Reading{Engine: engine, Money: true}
 	}
 
 	metered := m.statusLine(200)
@@ -190,8 +174,8 @@ func TestStatusLineSegmentsAndQuota(t *testing.T) {
 
 	// A subscription with nowhere to read its window from says so, and says
 	// nothing about money: neither field may be left to a reader's guess.
-	m.opts.Quota = func(engine string) QuotaReading {
-		return QuotaReading{Engine: engine}
+	m.opts.Quota = func(engine string) roster.Reading {
+		return roster.Reading{Engine: engine}
 	}
 
 	unread := m.statusLine(200)
@@ -217,11 +201,11 @@ func TestStatusRows(t *testing.T) {
 func TestTheHeaderCarriesTheQuotaWindows(t *testing.T) {
 	m, _ := testModel(t, 120, 30)
 
-	m.opts.Quota = func(engine string) QuotaReading {
-		return QuotaReading{
+	m.opts.Quota = func(engine string) roster.Reading {
+		return roster.Reading{
 			Engine:  engine,
 			Sourced: true,
-			Windows: []QuotaWindow{
+			Windows: []roster.Window{
 				{Label: "5h", Pct: 1, ResetsIn: 4 * time.Hour},
 				{Label: "7d", Pct: 76, ResetsIn: 48 * time.Hour},
 			},
@@ -235,8 +219,8 @@ func TestTheHeaderCarriesTheQuotaWindows(t *testing.T) {
 		}
 	}
 
-	m.opts.Quota = func(engine string) QuotaReading {
-		return QuotaReading{Engine: engine, Sourced: true}
+	m.opts.Quota = func(engine string) roster.Reading {
+		return roster.Reading{Engine: engine, Sourced: true}
 	}
 
 	if got := m.quotaChip(); got != "" {
@@ -252,7 +236,7 @@ func TestTheHeaderCarriesTheQuotaWindows(t *testing.T) {
 // A proxy reporting more used than there was is reporting an overage, and a
 // window is at most all of itself.
 func TestAnOverusedWindowIsAFullWindowRatherThanMoreThanOne(t *testing.T) {
-	if got := pctUsed(QuotaWindow{Pct: 140}); got != 100 {
-		t.Errorf("pctUsed(140%% used) = %v, want 100", got)
+	if got := roster.Used(roster.Window{Pct: 140}); got != 100 {
+		t.Errorf("roster.Used(140%% used) = %v, want 100", got)
 	}
 }

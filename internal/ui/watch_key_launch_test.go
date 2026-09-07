@@ -11,6 +11,8 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/palette"
 )
 
 func TestWatchKeyIgnoresAnythingThatIsNotTheWayOut(t *testing.T) {
@@ -87,27 +89,34 @@ func TestWriteTrimsTheBufferPastItsCap(t *testing.T) {
 	}
 }
 
-func TestRunSelectedWithNothingChosenOrWithTrailingArgs(t *testing.T) {
+// TestTheLineRunsWhatWasChosenAndNothingWhenNothingWas. The window's half of
+// the palette: a chosen command reaches the same port the keyboard and the
+// pointer do, and a line with nothing under the selection runs nothing.
+func TestTheLineRunsWhatWasChosenAndNothingWhenNothingWas(t *testing.T) {
 	// 1. Nothing in the filtered list: staying open says "not yet".
 	m, _ := testModel(t, 100, 30)
 	m.opts.Commands = nil
 	m = m.openPalette()
 
-	next, cmd := m.runSelected()
-	if cmd != nil || !asModel(t, next).palette.open {
-		t.Error("runSelected with nothing selected should leave the palette open and do nothing")
+	next, cmd := m.paletteKey(tea.KeyPressMsg{Code: tea.KeyEnter})
+	if cmd != nil || !asModel(t, next).palette.Up() {
+		t.Error("⏎ with nothing selected should leave the line up and do nothing")
 	}
 
 	// 2. A fully typed name is split on spaces so the name itself is not
 	// passed to the command as its own first argument.
 	m2, _ := testModel(t, 100, 30)
 	m2.opts.Commands = []Command{{Name: "custom"}}
-	m2 = m2.openPalette()
-	m2.palette.typed = "custom"
-	next2, cmd2 := m2.runSelected()
+	m2.palette = palette.OpenWith("custom")
+
+	next2, cmd2 := m2.paletteKey(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	after2 := asModel(t, next2)
 	if cmd2 == nil || after2.watching == nil {
-		t.Fatal("runSelected with a real command answered with nothing running")
+		t.Fatal("⏎ on a real command answered with nothing running")
+	}
+
+	if got := after2.watching.name; got != "custom" {
+		t.Errorf("the watch is on %q, want the command that was chosen", got)
 	}
 }

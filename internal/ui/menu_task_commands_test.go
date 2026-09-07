@@ -42,57 +42,17 @@ func aTaskWithCommands(t *testing.T) Model {
 	return m
 }
 
-// TestTheTaskMenuCarriesTheVerbsThatOnlyACommandDoes.
-func TestTheTaskMenuCarriesTheVerbsThatOnlyACommandDoes(t *testing.T) {
-	m := aTaskWithCommands(t).openMenu("ACME-7")
-
-	var named []string
-
-	for _, e := range m.menuEntries() {
-		if e.cmd != nil {
-			named = append(named, e.cmd.Name)
-		}
-	}
-
-	want := []string{"note", "direct", "pr", "resolve", "merge", "close-pr", "approve", "permit", "critical"}
-	if !slices.Equal(named, want) {
-		t.Errorf("the task's menu names %v, want %v", named, want)
-	}
-}
-
-// TestTheyArriveKnowingWhichTask, which is the whole reason they moved: the
-// menu was opened on a task, so the id and its repository are already known
-// and the reader does not type them.
-func TestTheyArriveKnowingWhichTask(t *testing.T) {
-	m := aTaskWithCommands(t).openMenu("ACME-7")
-
-	for _, e := range m.menuEntries() {
-		if e.cmd == nil || e.cmd.Name != "permit" {
-			continue
-		}
-
-		if want := []string{"-repo", "/checkouts/acme", "ACME-7"}; !slices.Equal(e.args, want) {
-			t.Fatalf("permit is armed with %v, want %v", e.args, want)
-		}
-
-		return
-	}
-
-	t.Fatal("no permit on the menu of the task it is about")
-}
-
 // TestChoosingOneRunsItRatherThanAskingForArguments. A command that needs
 // arguments and has none opens the line with its name on it; these have
 // theirs, so they run, and the line — which no longer carries them — is
 // never reached.
 func TestChoosingOneRunsItRatherThanAskingForArguments(t *testing.T) {
 	m := aTaskWithCommands(t).openMenu("ACME-7")
-	m.menu.sel = menuIndex(t, m, "approve")
 
-	next, cmd := m.chooseMenu()
+	next, cmd := chooseInMenu(t, m, "approve")
 
 	after := asModel(t, next)
-	if after.palette.open {
+	if after.palette.Up() {
 		t.Error("approve went to the command line, which is the board's and has no task on it")
 	}
 
@@ -105,42 +65,14 @@ func TestChoosingOneRunsItRatherThanAskingForArguments(t *testing.T) {
 	}
 }
 
-// TestTheBoardsMenuStillHasNoneOfThem: they are about one task, and the
-// board's menu is opened on no row.
-func TestTheBoardsMenuStillHasNoneOfThem(t *testing.T) {
-	m := aTaskWithCommands(t).openMenu("")
-
-	for _, e := range m.menuEntries() {
-		if e.cmd != nil && e.cmd.AboutATask {
-			t.Errorf("the board's menu offers %s, which is about one task", e.cmd.Name)
-		}
-	}
-}
-
-// TestATableWithoutThemDrawsNothingForThem. The window is handed its command
-// table from outside; a build whose table has dropped one of these names has
-// one row fewer, not a row naming a command that is not there.
-func TestATableWithoutThemDrawsNothingForThem(t *testing.T) {
-	m := aTaskWithCommands(t)
-	m.opts.Commands = []Command{{Name: "reconcile"}}
-	m = m.openMenu("ACME-7")
-
-	for _, e := range m.menuEntries() {
-		if e.cmd != nil {
-			t.Errorf("the menu names %s, which this build's table does not have", e.cmd.Name)
-		}
-	}
-}
-
 // TestAVerbThatTakesAMessageOpensTheBoxToTypeItIn. direct and note are not
 // run from the menu the way approve is: there is a sentence to write, and
 // the menu has nothing to fill it in with.
 func TestAVerbThatTakesAMessageOpensTheBoxToTypeItIn(t *testing.T) {
 	for _, verb := range []string{"note", "direct"} {
 		m := aTaskWithCommands(t).openMenu("ACME-7")
-		m.menu.sel = menuIndex(t, m, verb)
 
-		next, _ := m.chooseMenu()
+		next, _ := chooseInMenu(t, m, verb)
 
 		after := asModel(t, next)
 		if !after.note.open {
@@ -220,22 +152,7 @@ func TestTheBoxSaysWhichVerbItIsFor(t *testing.T) {
 func TestStartingARunIsOnTheMenuAsWell(t *testing.T) {
 	m := aTaskWithCommands(t).openMenu("ACME-7")
 
-	at := -1
-
-	for i, e := range m.menuEntries() {
-		if e.cmd == nil && e.aff == nil && e.glyph == m.keys.Start.Help().Key {
-			at = i
-			break
-		}
-	}
-
-	if at < 0 {
-		t.Fatalf("nothing on the task's menu starts a run: %v", m.menuEntries())
-	}
-
-	m.menu.sel = at
-
-	next, _ := m.chooseMenu()
+	next, _ := pointAt(t, m, m.keys.Start.Help().Key).chooseMenu()
 
 	after := asModel(t, next)
 	if after.screen != screenStart {

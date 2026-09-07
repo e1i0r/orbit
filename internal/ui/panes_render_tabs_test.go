@@ -6,6 +6,8 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
+
+	"github.com/e1i0r/orbit/internal/ui/cells"
 )
 
 func TestAllTaskDetailPanesRender(t *testing.T) {
@@ -100,7 +102,7 @@ func TestALongPaneDrawsItsBar(t *testing.T) {
 			t.Errorf("row %d is %d cells wide, want the pane's %d", i, got, w)
 		}
 
-		if !strings.HasSuffix(ansi.Strip(r), scrollRail) && !strings.HasSuffix(ansi.Strip(r), scrollThumb) {
+		if !strings.HasSuffix(ansi.Strip(r), cells.Rail) && !strings.HasSuffix(ansi.Strip(r), cells.Thumb) {
 			t.Errorf("row %d ends without the bar: %q", i, ansi.Strip(r))
 		}
 	}

@@ -32,8 +32,7 @@ func supervisorCommand(ctx Context, args []string) error {
 
 	s, err := store.Open()
 	if err != nil {
-		logger.Error("cli/supervisor", "open state store failed: %v", err)
-		return err
+		return fmt.Errorf("open state store: %w", err)
 	}
 
 	// A string rather than an int, so that a typed -retract 0 is refused
@@ -56,8 +55,7 @@ func supervisorCommand(ctx Context, args []string) error {
 
 	text := strings.Join(remaining, " ")
 	if err := supervisor.Record(s, "", *by, *channel, *taskID, *repoName, text); err != nil {
-		logger.Error("cli/supervisor", "record supervisor message failed: %v", err)
-		return err
+		return fmt.Errorf("record supervisor message: %w", err)
 	}
 
 	logger.Info("cli/supervisor", "recorded supervisor message by %s", *by)
@@ -128,8 +126,7 @@ func retractLine(ctx Context, s *store.Store, n int) error {
 	}
 
 	if err := supervisor.Retract(s, l.At); err != nil {
-		logger.Error("cli/supervisor", "retract supervisor message failed: %v", err)
-		return err
+		return fmt.Errorf("retract supervisor message: %w", err)
 	}
 
 	logger.Info("cli/supervisor", "retracted supervisor line %d", n)
@@ -142,8 +139,7 @@ func retractLine(ctx Context, s *store.Store, n int) error {
 func thread(s *store.Store) ([]view.SupervisorLine, error) {
 	lines, err := board.SupervisorLog(s)
 	if err != nil {
-		logger.Error("cli/supervisor", "read supervisor history failed: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("read the supervisor's history: %w", err)
 	}
 
 	return lines, nil

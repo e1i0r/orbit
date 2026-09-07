@@ -17,6 +17,8 @@ import (
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/point"
 )
 
 // tipState is the window being asked what a key does: armed is the ? that
@@ -66,7 +68,7 @@ func (m Model) tipKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 // goes with the pointer: a tooltip that stayed behind is a sentence about a
 // key the reader has stopped asking about.
 func (m Model) hover(e tea.Mouse) Model {
-	if t := m.hitBar(e.X, e.Y); t.Kind == TargetBarHint {
+	if t := m.hitBar(e.X, e.Y); t.Kind == point.BarHint {
 		m.tip.hover = t.Key
 		return m
 	}

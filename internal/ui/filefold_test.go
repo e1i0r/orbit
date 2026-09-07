@@ -16,6 +16,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/point"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -51,7 +52,7 @@ func openFile(t *testing.T, m Model, name string) (Model, tea.Cmd) {
 	}
 
 	at := m.hit(30, y)
-	if at.Kind != TargetPaneRow {
+	if at.Kind != point.PaneRow {
 		t.Fatalf("pointing at %s = %+v, want a row of the pane", name, at)
 	}
 
@@ -210,22 +211,6 @@ func TestAFileIsShownAsItIsOnDisk(t *testing.T) {
 	for i, l := range m.artifactsLines() {
 		if w := lipgloss.Width(ansi.Strip(l)); w > m.frame.Body.W {
 			t.Errorf("row %d of the artifacts runs to %d cells on a pane of %d", i, w, m.frame.Body.W)
-		}
-	}
-}
-
-// TestAFileIsReadInTheSyntaxItsNameNames. What is in these files is a
-// document and a word, not somebody's Go, and a well that called the record
-// a language would paint half of every line as a keyword of it.
-func TestAFileIsReadInTheSyntaxItsNameNames(t *testing.T) {
-	for name, want := range map[string]string{
-		"events.jsonl": "data",
-		"run":          "",
-		"control":      "",
-		"task.md":      "",
-	} {
-		if got := fileFamily(name); got != want {
-			t.Errorf("fileFamily(%q) = %q, want %q", name, got, want)
 		}
 	}
 }

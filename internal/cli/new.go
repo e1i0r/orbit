@@ -50,14 +50,12 @@ func newTask(ctx Context, args []string) error {
 	// repository joins it in whichever phase the work reaches one.
 	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
-		logger.Error("cli/new", "open repository %q failed: %v", *dir, err)
-		return err
+		return fmt.Errorf("open repository %q: %w", *dir, err)
 	}
 
 	t, err := task.Create(s, r, *id, text, *flowName)
 	if err != nil {
-		logger.Error("cli/new", "create task %q in %q failed: %v", *id, r.Name, err)
-		return err
+		return fmt.Errorf("create task %q in %q: %w", *id, r.Name, err)
 	}
 
 	logger.Info("cli/new", "created task %s in repo %q (flow=%s)", t.ID, r.Name, t.Flow)
@@ -77,8 +75,7 @@ func newTask(ctx Context, args []string) error {
 
 	pid, err := task.Start(s, t, t.Flow, unread)
 	if err != nil {
-		logger.Error("cli/new", "start task %q failed: %v", t.ID, err)
-		return err
+		return fmt.Errorf("start task %q: %w", t.ID, err)
 	}
 
 	logger.Info("cli/new", "started task %s as process %d", t.ID, pid)

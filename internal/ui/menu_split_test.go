@@ -14,9 +14,12 @@ package ui
 // line, with the name already typed.
 
 import (
-	"slices"
 	"strings"
 	"testing"
+
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/palette"
 )
 
 func needsArgsCommands() []Command {
@@ -29,40 +32,26 @@ func needsArgsCommands() []Command {
 	}
 }
 
-// menuIndex is where a named command sits in the menu as it is drawn, which
-// is no longer where it sits in the table: the board's menu leaves entries
-// out, so an index into one is not an index into the other.
-func menuIndex(t *testing.T, m Model, name string) int {
+// chooseInMenu puts the cursor on a named command and chooses it, the way a
+// reader who walked down to it would. It is found by name and not by index:
+// the menu leaves entries out and adds others, so where a command sits in
+// the table is not where it sits here.
+func chooseInMenu(t *testing.T, m Model, name string) (tea.Model, tea.Cmd) {
 	t.Helper()
 
-	for i, e := range m.menuEntries() {
-		if e.cmd != nil && e.cmd.Name == name {
-			return i
+	for i, e := range m.menu.Entries(m.menuEnv()) {
+		if e.Command != name {
+			continue
 		}
+
+		m.menu = m.menu.Point(i)
+
+		return m.chooseMenu()
 	}
 
-	t.Fatalf("no %s in the menu: %v", name, m.menuEntries())
+	t.Fatalf("no %s in the menu: %v", name, m.menu.Entries(m.menuEnv()))
 
-	return 0
-}
-
-// The three verbs the reader reached for are not on the board's menu at
-// all. This is the fix and not the routing: an entry that sends the reader
-// somewhere else to say which task is an entry in the wrong menu.
-func TestTheBoardsMenuHasNoVerbsAboutOneTask(t *testing.T) {
-	m, _ := testModel(t, 100, 30)
-	m.opts.Commands = needsArgsCommands()
-	m = m.openMenu("")
-
-	for _, e := range m.menuEntries() {
-		if e.cmd != nil && e.cmd.AboutATask {
-			t.Errorf("the board's menu offers %s, which is about one task", e.cmd.Name)
-		}
-	}
-
-	// And what is generic is still there, wanting an argument or not.
-	menuIndex(t, m, "reconcile")
-	menuIndex(t, m, "export")
+	return m, nil
 }
 
 // TestChoosingACommandThatNeedsArgumentsOpensTheLine: export is generic —
@@ -73,18 +62,17 @@ func TestChoosingACommandThatNeedsArgumentsOpensTheLine(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.opts.Commands = needsArgsCommands()
 	m = m.openMenu("")
-	m.menu.sel = menuIndex(t, m, "export")
 
-	next, cmd := m.chooseMenu()
+	next, cmd := chooseInMenu(t, m, "export")
 
 	after := asModel(t, next)
-	if after.menu.open {
+	if after.menu.Up() {
 		t.Error("the menu stayed up")
 	}
 
-	if !after.palette.open || after.palette.typed != "export " {
+	if !after.palette.Up() || after.palette.Typed() != "export " {
 		t.Errorf("chose export and got palette open=%v typed=%q, want the line up with the name on it",
-			after.palette.open, after.palette.typed)
+			after.palette.Up(), after.palette.Typed())
 	}
 
 	if cmd != nil {
@@ -102,12 +90,11 @@ func TestChoosingACommandThatNeedsNothingStillRuns(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.opts.Commands = needsArgsCommands()
 	m = m.openMenu("")
-	m.menu.sel = 0
 
-	next, _ := m.chooseMenu()
+	next, _ := chooseInMenu(t, m, "reconcile")
 
 	after := asModel(t, next)
-	if after.palette.open {
+	if after.palette.Up() {
 		t.Error("reconcile went to the command line, want it run")
 	}
 
@@ -124,12 +111,11 @@ func TestACommandWithAScreenKeepsItOverTheCommandLine(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.opts.Commands = []Command{{Name: "new", Args: "-repo <dir> -id <id> <text>", NeedsArgs: true}}
 	m = m.openMenu("")
-	m.menu.sel = 0
 
-	next, _ := m.chooseMenu()
+	next, _ := chooseInMenu(t, m, "new")
 
 	after := asModel(t, next)
-	if after.palette.open {
+	if after.palette.Up() {
 		t.Error("new went to the command line, want the compose screen")
 	}
 
@@ -148,14 +134,14 @@ func TestACommandWithAScreenKeepsItOverTheCommandLine(t *testing.T) {
 func TestTheLineRunsACommandOnceItHasItsArguments(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.opts.Commands = needsArgsCommands()
-	m.palette.open, m.palette.typed = true, "export "
+	m.palette = palette.OpenWith("export ")
 
-	next, _ := m.runSelected()
+	next, _ := m.paletteKey(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	after := asModel(t, next)
-	if !after.palette.open || after.palette.typed != "export " {
+	if !after.palette.Up() || after.palette.Typed() != "export " {
 		t.Errorf("bare export left the line open=%v typed=%q, want it up and unchanged",
-			after.palette.open, after.palette.typed)
+			after.palette.Up(), after.palette.Typed())
 	}
 
 	if !strings.Contains(after.message, "export") {
@@ -167,12 +153,12 @@ func TestTheLineRunsACommandOnceItHasItsArguments(t *testing.T) {
 	}
 
 	withArgs := m
-	withArgs.palette.typed = "export /tmp/out"
+	withArgs.palette = palette.OpenWith("export /tmp/out")
 
-	afterArgs, _ := withArgs.runSelected()
+	afterArgs, _ := withArgs.paletteKey(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	ran := asModel(t, afterArgs)
-	if ran.palette.open {
+	if ran.palette.Up() {
 		t.Error("the line stayed up after a command that ran")
 	}
 
@@ -188,45 +174,25 @@ func TestTheLineRunsACommandOnceItHasItsArguments(t *testing.T) {
 func TestTheLineLeavesOutTheVerbsAboutOneTask(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.opts.Commands = needsArgsCommands()
-	m.palette.open = true
+	m.palette = palette.Open()
 
-	var names []string
-	for _, c := range m.palette.candidates(m.opts.Commands) {
-		names = append(names, c.Name)
+	// The list is read where the reader reads it: what the line drew.
+	drawn := strings.Join(m.paletteRows(20, 100), "\n")
+
+	for _, want := range []string{"reconcile", "export"} {
+		if !strings.Contains(drawn, want) {
+			t.Errorf("the line does not offer %q:\n%s", want, drawn)
+		}
 	}
 
-	if want := []string{"reconcile", "export"}; !slices.Equal(names, want) {
-		t.Errorf("the line offers %v, want %v", names, want)
+	if strings.Contains(drawn, "cancel") {
+		t.Errorf("the line offers a verb about one task:\n%s", drawn)
 	}
 
 	// And typing one says so, rather than leaving ⏎ on a row that is not
 	// there.
-	m.palette.typed = "cancel"
-	if n := len(m.palette.candidates(m.opts.Commands)); n != 0 {
-		t.Errorf("typing cancel matched %d commands, want none", n)
-	}
-}
-
-// Each menu says which one it is, in a line above the entries. The reader
-// who opened the board's meaning the task's should be able to see that from
-// the menu rather than from a verb that is not in it.
-func TestEachMenuSaysWhichOneItIs(t *testing.T) {
-	m, _ := testModel(t, 100, 30)
-	m.opts.Commands = needsArgsCommands()
-
-	board := m.openMenu("").menuTitle()
-	if !strings.Contains(board, "one task") {
-		t.Errorf("the board's menu is titled %q, want it to say it is about no one task", board)
-	}
-
-	task := m.openMenu("ACME-2705").menuTitle()
-	if !strings.Contains(task, "ACME-2705") {
-		t.Errorf("a task's menu is titled %q, want it to name the task", task)
-	}
-
-	// And the title is drawn, not merely computed.
-	rows := strings.Join(m.openMenu("").menuRows(20, 100), "\n")
-	if !strings.Contains(rows, board) {
-		t.Errorf("the menu drew %q, want the title in it", rows)
+	m.palette = palette.OpenWith("cancel")
+	if got := strings.Join(m.paletteRows(20, 100), "\n"); !strings.Contains(got, "no command starts with") {
+		t.Errorf("typing cancel drew:\n%s", got)
 	}
 }

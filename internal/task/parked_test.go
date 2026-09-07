@@ -34,7 +34,7 @@ func TestARunParkedAtAGateStillDiesWhenItsDeadlinePasses(t *testing.T) {
 
 		done := make(chan error, 1)
 		go func() {
-			done <- Run(ctx, s, tk, gatedFlow(), map[string]engine.Engine{"fake": fake}, FileGate(s, time.Second))
+			done <- Run(ctx, s, tk, gatedFlow(), fakes(fake), FileGate(s, time.Second))
 		}()
 
 		synctest.Wait()
@@ -78,7 +78,7 @@ func TestAStaleResumeDoesNotWaveThroughTheNextRunsFirstGate(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		done := make(chan error, 1)
 		go func() {
-			done <- Run(context.Background(), s, tk, gatedFlow(), map[string]engine.Engine{"fake": fake}, FileGate(s, time.Second))
+			done <- Run(context.Background(), s, tk, gatedFlow(), fakes(fake), FileGate(s, time.Second))
 		}()
 
 		synctest.Wait()

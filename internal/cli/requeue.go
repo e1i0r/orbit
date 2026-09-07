@@ -39,14 +39,12 @@ func requeueTask(ctx Context, args []string) error {
 
 	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
-		logger.Error("cli/requeue", "open repository %q failed: %v", *dir, err)
-		return err
+		return fmt.Errorf("open repository %q: %w", *dir, err)
 	}
 
 	t, err := task.Load(s, r, id)
 	if err != nil {
-		logger.Error("cli/requeue", "load task %q in %q failed: %v", id, r.Name, err)
-		return err
+		return fmt.Errorf("load task %q in %q: %w", id, r.Name, err)
 	}
 
 	// Ctrl-C reaches the wait rather than being swallowed, for the reason it
@@ -57,8 +55,7 @@ func requeueTask(ctx Context, args []string) error {
 
 	why := strings.Join(fs.Args()[1:], " ")
 	if err := task.Requeue(signalled, s, t, *by, why); err != nil {
-		logger.Error("cli/requeue", "requeue task %q in %q failed: %v", id, r.Name, err)
-		return err
+		return fmt.Errorf("requeue task %q in %q: %w", id, r.Name, err)
 	}
 
 	logger.Info("cli/requeue", "task %s in %s taken back to the queue", id, r.Name)

@@ -21,6 +21,11 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/markdown"
+	"github.com/e1i0r/orbit/internal/ui/patch"
+	"github.com/e1i0r/orbit/internal/ui/prose"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -37,10 +42,10 @@ func (m Model) detailRows(h, w int) []string {
 	}
 
 	if h >= 4 {
-		out = append(out, fit(m.moreLine(), w))
+		out = append(out, cells.Fit(m.moreLine(), w))
 	}
 
-	return fill(out, h)
+	return cells.Fill(out, h)
 }
 
 // detailTop is everything the pane is drawn under: the heading, the blank
@@ -65,7 +70,7 @@ func (m Model) detailTop(h, w int) []string {
 	if m.tab == tabDiff && m.diffKnown && m.diffErr == nil {
 		raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
 
-		files := parseDiffFiles(raw)
+		files := patch.Files(raw)
 		if len(files) > 0 {
 			activeIdx := fileIndexAtOffset(files, m.panes[tabDiff].YOffset())
 
@@ -95,24 +100,24 @@ func (m Model) detailTop(h, w int) []string {
 func (m Model) detailHeadLines(w int) []string {
 	t, ok := m.task(m.detail)
 
-	left := Paint(Accent).Bold(true).Render(m.detail)
+	left := theme.Paint(theme.Accent).Bold(true).Render(m.detail)
 	if !ok {
 		return []string{
-			spread(" "+left, Paint(Dim).Render(m.opts.Words.T("detail.gone",
+			cells.Spread(" "+left, theme.Paint(theme.Dim).Render(m.opts.Words.T("detail.gone",
 				"this task is no longer on the board")), w),
 		}
 	}
 
 	word, role := m.stateWord(t)
 
-	right := Paint(Dim).Render(t.Repo)
+	right := theme.Paint(theme.Dim).Render(t.Repo)
 	if word != "" {
-		right += Paint(Dim).Render(dot) + Paint(role).Render(word)
+		right += theme.Paint(theme.Dim).Render(cells.Dot) + theme.Paint(role).Render(word)
 	}
 
-	title := plainInline(t.Title)
+	title := markdown.Plain(t.Title)
 	if title == "" {
-		return []string{spread(" "+left, right, w)}
+		return []string{cells.Spread(" "+left, right, w)}
 	}
 
 	rightW := lipgloss.Width(right)
@@ -123,28 +128,33 @@ func (m Model) detailHeadLines(w int) []string {
 		// the cut is where somebody notices they are missing something: a
 		// title that ends in an ellipsis and says nothing about how to see
 		// the rest is a title nobody knows is expandable.
-		shown, hint := fit(title, availW), ""
+		shown, hint := cells.Fit(title, availW), ""
 		if lipgloss.Width(title) > availW {
-			shown = fit(title, max(availW-4, 8))
-			hint = Paint(Dim).Render(" [e]")
+			shown = cells.Fit(title, max(availW-4, 8))
+			hint = theme.Paint(theme.Dim).Render(" [e]")
 		}
 
-		return []string{spread(" "+left+"  "+Text(Secondary).Render(shown)+hint, right, w)}
+		return []string{cells.Spread(" "+left+"  "+theme.Text(theme.Secondary).Render(shown)+hint, right, w)}
 	}
 
-	wrapped := splitIntoLines(title, availW)
+	wrapped := cells.Lines(title, availW)
 
 	var out []string
 
-	out = append(out, spread(" "+left+"  "+Text(Secondary).Render(wrapped[0]), right, w))
+	out = append(out, cells.Spread(" "+left+"  "+theme.Text(theme.Secondary).Render(wrapped[0]), right, w))
 
 	indent := strings.Repeat(" ", lipgloss.Width(m.detail)+3)
 	for _, wl := range wrapped[1:] {
-		out = append(out, " "+indent+Text(Secondary).Render(wl))
+		out = append(out, " "+indent+theme.Text(theme.Secondary).Render(wl))
 	}
 
 	return out
 }
+
+// tabGap is the space between two chips in a strip. Two cells rather than
+// one: the chips carry no brackets, so the gap is the only thing saying
+// where one tab ends.
+const tabGap = "  "
 
 // tabStripReserve is the room the strip leaves at its right edge for the
 // note that sits there — the attempt number, or the diff saying it had no
@@ -176,7 +186,7 @@ func (m Model) tabTags(w int) []tabTagInfo {
 				return n.text
 			}
 
-			return fit(n.text, 4)
+			return cells.Fit(n.text, 4)
 		},
 		func(n tabName) string {
 			if n.tab == m.tab {
@@ -190,7 +200,7 @@ func (m Model) tabTags(w int) []tabTagInfo {
 
 		for i, n := range names {
 			k := paneKey(n.tab)
-			plain, rend := tabChip(k, tier(n), n.tab == m.tab)
+			plain, rend := prose.Chip(k, tier(n), n.tab == m.tab)
 			tw := lipgloss.Width(plain)
 			tags[i] = tabTagInfo{tab: n.tab, key: k, text: plain, rendered: rend, width: tw}
 			total += tw + len(tabGap)
@@ -218,12 +228,12 @@ func (m Model) tabStrip(w int) string {
 	p := m.opts.Words
 	switch attempt := m.attempt(); {
 	case m.tab == tabDiff && m.diffKnown && m.diffErr == nil && m.diffNoBase:
-		right = Paint(Dim).Render(p.T("diff.no_base", "no base branch"))
+		right = theme.Paint(theme.Dim).Render(p.T("diff.no_base", "no base branch"))
 	case attempt > 0:
-		right = Paint(Dim).Render(p.T("log.attempt", "attempt {n}", about("n", strconv.Itoa(attempt))))
+		right = theme.Paint(theme.Dim).Render(p.T("log.attempt", "attempt {n}", about("n", strconv.Itoa(attempt))))
 	}
 
-	return spread(" "+strings.Join(parts, tabGap), right, w)
+	return cells.Spread(" "+strings.Join(parts, tabGap), right, w)
 }
 
 // placedTab is one tab of the drawn strip and the cells it occupies.
@@ -250,12 +260,12 @@ func (m Model) placeTabs() []placedTab {
 func (m Model) paneRows(h, w int) []string {
 	vp := m.panes[m.tab]
 
-	out := fill(strings.Split(vp.View(), "\n"), h)
+	out := cells.Fill(strings.Split(vp.View(), "\n"), h)
 
-	track := scrollTrack(h, vp.TotalLineCount(), vp.YOffset())
+	track := cells.Track(h, vp.TotalLineCount(), vp.YOffset())
 	for i, line := range out {
 		if track == nil {
-			out[i] = fit(line, w)
+			out[i] = cells.Fit(line, w)
 			continue
 		}
 
@@ -264,7 +274,7 @@ func (m Model) paneRows(h, w int) []string {
 		// draws out to its own width, and padding that again would put an
 		// ellipsis under the rail on every row of every pane.
 		beside := max(w-1, 1)
-		out[i] = pad(ansi.Truncate(line, beside, ""), beside, false) + track[i]
+		out[i] = cells.Pad(ansi.Truncate(line, beside, ""), beside, false) + track[i]
 	}
 
 	return out
@@ -279,11 +289,11 @@ func (m Model) moreLine() string {
 
 	p := m.opts.Words
 	if m.tab == tabTimeline && m.following {
-		return " " + Paint(Live).Render(p.T("detail.following", "following — {key} stops it",
+		return " " + theme.Paint(theme.Live).Render(p.T("detail.following", "following — {key} stops it",
 			about("key", m.keys.Up.Help().Key)))
 	}
 
-	return " " + Paint(Dim).Render(p.T("detail.scrolls", "{keys} scrolls",
+	return " " + theme.Paint(theme.Dim).Render(p.T("detail.scrolls", "{keys} scrolls",
 		about("keys", m.keys.Up.Help().Key+m.keys.Down.Help().Key)))
 }
 

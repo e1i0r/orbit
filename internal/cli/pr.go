@@ -2,10 +2,10 @@ package cli
 
 import (
 	"flag"
+	"fmt"
 	"io"
 	"strings"
 
-	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/task"
 )
 
@@ -26,8 +26,7 @@ func createPR(ctx Context, args []string) error {
 
 	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
-		logger.Error("cli/pr", "open repository %q failed: %v", *dir, err)
-		return err
+		return fmt.Errorf("open repository %q: %w", *dir, err)
 	}
 
 	// Where the task was worked is read before the task is. That listing is
@@ -36,14 +35,12 @@ func createPR(ctx Context, args []string) error {
 	// leaves this check standing in front of a case already refused.
 	where, err := worked(s, r, taskID)
 	if err != nil {
-		logger.Error("cli/pr", "read the repositories of task %q failed: %v", taskID, err)
-		return err
+		return fmt.Errorf("read the repositories of task %q: %w", taskID, err)
 	}
 
 	t, err := task.Load(s, r, taskID)
 	if err != nil {
-		logger.Error("cli/pr", "load task %q failed: %v", taskID, err)
-		return err
+		return fmt.Errorf("load task %q: %w", taskID, err)
 	}
 
 	return deliverTask(ctx, s, t, where)

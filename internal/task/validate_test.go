@@ -43,7 +43,7 @@ func ranWith(t *testing.T, id, verdict string, on bool) ([]string, []record.Even
 	}
 
 	eng := &judgeEngine{Fake: engine.NewFake("did the work"), verdict: verdict}
-	if err := Run(context.Background(), s, tk, validatedFlow(on), map[string]engine.Engine{"fake": eng}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, validatedFlow(on), fakes(eng), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 

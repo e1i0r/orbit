@@ -5,6 +5,7 @@ import (
 
 	"charm.land/bubbles/v2/key"
 
+	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -14,8 +15,8 @@ import (
 // one: whether this window handed the terminal to an engine for it, and
 // whether the engine that ran it can carry a session on at all. Only the
 // autopilot switch is about the whole program.
-func (m Model) conditions(t view.Task) Conditions {
-	return Conditions{
+func (m Model) conditions(t view.Task) keymap.Conditions {
+	return keymap.Conditions{
 		Autopilot: m.autopilotOn(),
 		CanResume: m.canResume(t.Engine),
 		Taken:     m.taken[t.ID],
@@ -49,14 +50,14 @@ func (m Model) unreadCap() int {
 // affordance finds one verb's answer for one task, by the glyph its binding
 // prints. The glyph is the same in every language, which is what lets this
 // match a binding the key map may have rebuilt since.
-func (m Model) affordance(t view.Task, b key.Binding) (Affordance, bool) {
+func (m Model) affordance(t view.Task, b key.Binding) (keymap.Affordance, bool) {
 	for _, a := range m.keys.Affordances(t, m.conditions(t)) {
 		if a.Key.Help().Key == b.Help().Key {
 			return a, true
 		}
 	}
 
-	return Affordance{}, false
+	return keymap.Affordance{}, false
 }
 
 // task finds one task on the board by id.

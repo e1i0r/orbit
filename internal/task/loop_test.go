@@ -36,7 +36,7 @@ func TestALoopGoesRoundUntilTheCheckPasses(t *testing.T) {
 
 	fake := engine.NewFake("wrote a fix")
 
-	if err := Run(context.Background(), s, tk, tddFlow(countingGate("3"), 5), map[string]engine.Engine{"fake": fake}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, tddFlow(countingGate("3"), 5), fakes(fake), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -64,7 +64,7 @@ func TestALoopStopsAtItsCap(t *testing.T) {
 
 	fake := engine.NewFake("tried")
 
-	err = Run(context.Background(), s, tk, tddFlow("echo 'FAIL: TestIdempotent'; exit 1", 2), map[string]engine.Engine{"fake": fake}, nil)
+	err = Run(context.Background(), s, tk, tddFlow("echo 'FAIL: TestIdempotent'; exit 1", 2), fakes(fake), nil)
 	if err == nil {
 		t.Fatal("Run: want an error when the loop runs out of turns")
 	}
@@ -96,7 +96,7 @@ func TestEachTurnIsToldWhatTheCheckSaid(t *testing.T) {
 	}
 
 	fake := engine.NewFake("tried")
-	if err := Run(context.Background(), s, tk, tddFlow(countingGate("2"), 3), map[string]engine.Engine{"fake": fake}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, tddFlow(countingGate("2"), 3), fakes(fake), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -120,7 +120,7 @@ func TestAPhaseWithNoLoopIsUntouched(t *testing.T) {
 	}
 
 	fake := engine.NewFake("done")
-	if err := Run(context.Background(), s, tk, twoPhases(), map[string]engine.Engine{"fake": fake}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, twoPhases(), fakes(fake), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 

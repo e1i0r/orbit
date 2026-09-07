@@ -17,6 +17,9 @@ import (
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // outputCap is how much of a command's output the window keeps. A run can
@@ -98,48 +101,6 @@ func (m Model) closeWatch() Model {
 func (m Model) reopenWatch() Model {
 	m.watchUp = true
 	return m
-}
-
-// runSelected raises commandMsg for the selection, through the same port
-// the keyboard and the pointer both reach. A refusal comes back verbatim
-// and is said in the band, because the window is a keyboard in front of
-// the commands and not a second copy of their rules.
-//
-// The run is watched: the body turns over to its output until esc takes it
-// down or the command finishes, so the reader sees the work as it happens
-// and the result when it lands — one command at a time, since a second
-// interleaved into the first's output would be two answers to neither
-// question.
-//
-// The line is split on spaces and quoting is not understood: a path with a
-// space in it cannot be passed this way yet, and the compose screen is the
-// answer for the one command that most wants one.
-func (m Model) runSelected() (tea.Model, tea.Cmd) {
-	c, ok := m.palette.selected(m.opts.Commands)
-	if !ok {
-		// Nothing under the selection: an empty list, usually. Staying
-		// open says "not yet" more honestly than closing would.
-		return m, nil
-	}
-
-	args := strings.Fields(m.palette.typed)
-	if len(args) > 0 {
-		args = args[1:]
-	}
-
-	if c.NeedsArgs && len(args) == 0 {
-		// The line stays up, with the name still on it, because what is
-		// missing goes on the end of what is already typed. Closing it to
-		// print the same sentence into the watch is where this used to end:
-		// an answer in a pane with nowhere to type what it asks for.
-		//
-		// The usage is the table's own, so the sentence is right for every
-		// command that reaches it without one being written per command.
-		return m.say(m.opts.Words.T("msg.needs_args", "{name} takes {args}; type them here",
-			about("name", c.Name), about("args", c.Args))), nil
-	}
-
-	return m.closePalette().launch(c, args)
 }
 
 // launch starts what a named command does from inside the window, and it
@@ -227,9 +188,9 @@ func (m Model) watchRows(h, w int) []string {
 
 	var status string
 	if m.watching != nil {
-		status = Paint(Dim).Render(p.T("watch.running", "{name}: still running…", about("name", m.watching.name)))
+		status = theme.Paint(theme.Dim).Render(p.T("watch.running", "{name}: still running…", about("name", m.watching.name)))
 	} else {
-		status = Paint(Dim).Render(p.T("watch.finished_line", "finished — {back} closes",
+		status = theme.Paint(theme.Dim).Render(p.T("watch.finished_line", "finished — {back} closes",
 			about("back", m.keys.Back.Help().Key)))
 	}
 
@@ -244,10 +205,10 @@ func (m Model) watchRows(h, w int) []string {
 
 	out := make([]string, 0, h)
 	for _, l := range lines {
-		out = append(out, fit("  "+l, w))
+		out = append(out, cells.Fit("  "+l, w))
 	}
 
-	return fill(append(out, "  "+status), h)
+	return cells.Fill(append(out, "  "+status), h)
 }
 
 // watchKey answers the keyboard while a run's output is up. It keeps only

@@ -6,56 +6,14 @@ package ui
 // closures it is handed. These are the answers those ports come back with,
 // and they are here because a struct of fields cannot be split across files
 // while the descriptions beside them can: one file was over the ceiling.
+//
+// What the window is told about the engines and their quota is in
+// internal/ui/roster, because the screens that draw it are packages of their
+// own and a type they cannot name is a type they cannot be handed.
 
 import (
-	"time"
-
 	"github.com/e1i0r/orbit/internal/words"
 )
-
-// QuotaReading is what the window learns about one engine's quota.
-//
-// Money and Sourced are carried as answers rather than as the billing mode
-// they were derived from, because the mode is not this package's to read:
-// internal/quota decides what a number about an engine means, and the window
-// is told the outcome. Sourced is separate from a window count for the
-// difference it protects — an engine nobody can read a window for is not an
-// engine with no window left.
-type QuotaReading struct {
-	Engine  string
-	Money   bool
-	Sourced bool
-	Windows []QuotaWindow
-}
-
-// QuotaWindow is what the window learns about remaining quota.
-type QuotaWindow struct {
-	Key      string
-	Label    string
-	Pct      float64
-	ResetsIn time.Duration
-}
-
-// EngineInfo is what the window knows about an engine's dials and setup.
-//
-// Setup is a function of a printer for the reason Command.About is: the
-// steps are sentences a reader reads, so they go through internal/words like
-// every other line on this screen, and they follow a language changed after
-// this slice was handed over.
-type EngineInfo struct {
-	Name      string
-	Available bool
-	Setup     func(*words.Printer) []string
-	Models    []ChoiceInfo
-	Efforts   []ChoiceInfo
-	CanThink  bool
-}
-
-// ChoiceInfo is one selectable value for an engine dial.
-type ChoiceInfo struct {
-	ID    string
-	Label string
-}
 
 // Command is one row of the palette: what the window shows of a command,
 // and nothing of what the command does.

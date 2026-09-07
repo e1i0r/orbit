@@ -2,13 +2,15 @@ package ui
 
 import (
 	"strings"
+
+	"github.com/e1i0r/orbit/internal/ui/patch"
 )
 
 // jumpNextDiffFile scrolls the diff pane to the next file boundary.
 func (m Model) jumpNextDiffFile() Model {
 	raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
 
-	files := parseDiffFiles(raw)
+	files := patch.Files(raw)
 	if len(files) == 0 {
 		return m
 	}
@@ -30,7 +32,7 @@ func (m Model) jumpNextDiffFile() Model {
 func (m Model) jumpPrevDiffFile() Model {
 	raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
 
-	files := parseDiffFiles(raw)
+	files := patch.Files(raw)
 	if len(files) == 0 {
 		return m
 	}

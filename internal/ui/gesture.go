@@ -28,6 +28,7 @@ import (
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -248,7 +249,7 @@ func (m Model) stillTaken() Model {
 
 	held := make(map[string]bool, len(m.taken))
 	for _, t := range m.board.Tasks {
-		if m.taken[t.ID] && parked(t) {
+		if m.taken[t.ID] && keymap.Parked(t) {
 			held[t.ID] = true
 		}
 	}

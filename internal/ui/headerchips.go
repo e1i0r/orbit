@@ -1,5 +1,7 @@
 package ui
 
+import "github.com/e1i0r/orbit/internal/ui/theme"
+
 // The header's chips: the standing facts about the workspace, drawn along the
 // top and each one a thing a pointer can press.
 //
@@ -21,7 +23,7 @@ func (m Model) knowledgeChip() []headerField {
 	// Chrome at zero as well as at forty: the header shares one ink, and
 	// faint text on it is the thing theme_test.go refuses — a chip nobody
 	// can read is not a gentler way of saying nothing.
-	return []headerField{{"knowledge", Chrome().Render("🧩 " +
+	return []headerField{{"knowledge", theme.Chrome().Render("🧩 " +
 		m.opts.Words.P("header.knows", m.factCount(), "{n} fact", "{n} facts"))}}
 }
 
@@ -32,9 +34,9 @@ func (m Model) knowledgeChip() []headerField {
 // the reason that one does: a chip is a thought of its own, and the field
 // list reads better as a list of them than as the code that builds each.
 func (m Model) engineChip() headerField {
-	chip, ink := m.knobChip(), Paint(Accent)
+	chip, ink := m.knobChip(), theme.Paint(theme.Accent)
 	if chip == "" {
-		chip, ink = m.dialEngine(""), Chrome()
+		chip, ink = m.dialEngine(""), theme.Chrome()
 	}
 
 	return headerField{"engine", ink.Render("🧠 " + chip)}

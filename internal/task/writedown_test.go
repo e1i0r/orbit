@@ -59,7 +59,7 @@ func TestARunThatWorkedIsInTheLogAndNotInTheErrors(t *testing.T) {
 	}
 
 	all, bad := logs(t, func() {
-		engines := map[string]engine.Engine{"fake": engine.NewFake("wrote the retry")}
+		engines := fakes(engine.NewFake("wrote the retry"))
 		if err := Run(context.Background(), s, tk, oneFlow(), engines, nil); err != nil {
 			t.Errorf("Run: %v", err)
 		}
@@ -97,7 +97,7 @@ func TestAFailedRunSaysWhyInTheErrorsFile(t *testing.T) {
 		fake := engine.NewFake("half an answer")
 		fake.Err = errors.New("the model fell over")
 
-		engines := map[string]engine.Engine{"fake": fake}
+		engines := fakes(fake)
 		if err := Run(context.Background(), s, tk, oneFlow(), engines, nil); err == nil {
 			t.Error("Run reported success after the engine failed")
 		}
@@ -135,7 +135,7 @@ func TestTheModelsStreamStaysOutOfTheLog(t *testing.T) {
 			{Type: "tool_call", ToolCall: engine.StreamToolCall{Name: "Bash", Args: "go test ./..."}},
 		}
 
-		engines := map[string]engine.Engine{"fake": fake}
+		engines := fakes(fake)
 		if err := Run(context.Background(), s, tk, oneFlow(), engines, nil); err != nil {
 			t.Errorf("Run: %v", err)
 		}
@@ -245,7 +245,7 @@ func TestNoEntrySpillsOntoASecondLine(t *testing.T) {
 		fake := engine.NewFake("")
 		fake.Err = errors.New("the model fell over\n" + strings.Repeat("w", noteWidth+50))
 
-		engines := map[string]engine.Engine{"fake": fake}
+		engines := fakes(fake)
 		if err := Run(context.Background(), s, tk, oneFlow(), engines, nil); err == nil {
 			t.Error("Run reported success after the engine failed")
 		}
@@ -277,7 +277,7 @@ func TestACancelledRunIsAWarningAndNotAFailure(t *testing.T) {
 
 		cancel()
 
-		engines := map[string]engine.Engine{"fake": fake}
+		engines := fakes(fake)
 		if err := Run(ctx, s, tk, oneFlow(), engines, nil); err == nil {
 			t.Error("Run reported success after its context was cancelled")
 		}

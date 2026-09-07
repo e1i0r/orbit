@@ -66,7 +66,7 @@ func TestTheTaskViewsOwnKeysAnswerAClick(t *testing.T) {
 		key     string
 		changed func(Model) bool
 	}{
-		{"m", func(m Model) bool { return m.menu.open }},
+		{"m", func(m Model) bool { return m.menu.Up() }},
 		{"v", func(m Model) bool { return m.rawText }},
 		{"e", func(m Model) bool { return m.expandedDetail }},
 	} {

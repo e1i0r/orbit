@@ -328,3 +328,40 @@ func TestForgetRepoSaysWhenThereIsNoRecord(t *testing.T) {
 		t.Errorf("the error does not name the repository: %v", err)
 	}
 }
+
+// TestForgettingARepositoryOrbitNeverKnewSaysSo, rather than reporting a
+// removal that never happened.
+func TestForgettingARepositoryOrbitNeverKnewSaysSo(t *testing.T) {
+	s, err := New(t.TempDir())
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	got, err := s.ForgetRepo("/tmp/never-added")
+	if err == nil {
+		t.Fatalf("forgetting a repository nobody added answered %q and no error", got)
+	}
+
+	if !strings.Contains(err.Error(), "no record") {
+		t.Errorf("the refusal reads %q", err)
+	}
+}
+
+// TestTheTwoLogsAreWhereTheProgramWritesThem. Both are read by hand when
+// something goes wrong, so where they are is part of what this store is.
+func TestTheTwoLogsAreWhereTheProgramWritesThem(t *testing.T) {
+	root := t.TempDir()
+
+	s, err := New(root)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	if got := s.ErrorLogPath(); !strings.HasPrefix(got, root) || !strings.HasSuffix(got, "errors.log") {
+		t.Errorf("the error log is at %q", got)
+	}
+
+	if got := s.SupervisorLogPath(); !strings.HasPrefix(got, root) {
+		t.Errorf("the supervisor's thread is at %q", got)
+	}
+}

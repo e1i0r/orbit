@@ -34,7 +34,7 @@ func TestADecisionIsWrittenBesideTheCodeItGoverns(t *testing.T) {
 	}
 
 	f := flow.Flow{Name: "task", Phases: []flow.Phase{{Name: "1-plan", Engine: "fake"}}}
-	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": engine.NewFake(scopedPlan)}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, f, fakes(engine.NewFake(scopedPlan)), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -68,7 +68,7 @@ func TestADecisionFileIsRewrittenAndNotRepeated(t *testing.T) {
 	}
 
 	f := flow.Flow{Name: "task", Phases: []flow.Phase{{Name: "1-plan", Engine: "fake"}}}
-	engines := map[string]engine.Engine{"fake": engine.NewFake(scopedPlan)}
+	engines := fakes(engine.NewFake(scopedPlan))
 
 	for range 2 {
 		if err := Run(context.Background(), s, tk, f, engines, nil); err != nil {
@@ -109,7 +109,7 @@ func TestOrbitsOwnFilesAreNotTheTasksDiff(t *testing.T) {
 		{Name: "2-implement", Engine: "fake"},
 	}}
 
-	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": engine.NewFake(scopedPlan)}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, f, fakes(engine.NewFake(scopedPlan)), nil); err != nil {
 		t.Fatalf("Run: %v — Orbit's own decision file was counted against the task's budget", err)
 	}
 }

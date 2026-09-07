@@ -4,14 +4,16 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/palette"
 )
 
 func TestPaletteKeyNavigationAndExecution(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 
 	// 1. Open palette with :
-	m.palette.open = true
-	m.palette.typed = "settings"
+	m.palette = palette.Open()
+	m.palette = palette.OpenWith("settings")
 
 	// 2. Down / Up navigation in palette
 	downKey := tea.KeyPressMsg{Code: tea.KeyDown}
@@ -33,43 +35,13 @@ func TestPaletteKeyNavigationAndExecution(t *testing.T) {
 	m = asModel(t, newM)
 
 	// 5. Escape closes palette
-	m.palette.open = true
+	m.palette = palette.Open()
 	escKey := tea.KeyPressMsg{Code: tea.KeyEsc}
 	newM, _ = m.paletteKey(escKey)
 
 	m = asModel(t, newM)
-	if m.palette.open {
+	if m.palette.Up() {
 		t.Error("expected palette to be closed after Esc")
-	}
-}
-
-func TestEnginesKeyNavigationAndToggles(t *testing.T) {
-	m, _ := testModel(t, 100, 30)
-	m.screen = screenEngines
-
-	// Navigation in engines screen
-	downKey := tea.KeyPressMsg{Code: tea.KeyDown}
-	newM, _ := m.enginesKey(downKey)
-	m = asModel(t, newM)
-
-	// Enter selects engine/model/effort/thinking
-	enterKey := tea.KeyPressMsg{Code: tea.KeyEnter}
-	newM, _ = m.enginesKey(enterKey)
-	m = asModel(t, newM)
-
-	// ⏎ may have landed on an engine this machine has not set up, whose
-	// steps Esc takes down before Esc closes the screen.
-	if m.engines.showingSetup {
-		m.engines.showingSetup = false
-	}
-
-	// Back key closes engines
-	escKey := tea.KeyPressMsg{Code: tea.KeyEsc}
-	newM, _ = m.enginesKey(escKey)
-
-	m = asModel(t, newM)
-	if m.screen == screenEngines {
-		t.Error("expected screenEngines to close after Esc")
 	}
 }
 
@@ -87,8 +59,8 @@ func TestFlowsKeyNavigationAndEditor(t *testing.T) {
 	newM, _ = m.flowsKey(nKey)
 
 	m = asModel(t, newM)
-	if !m.flows.creating {
-		t.Error("expected m.flows.creating to be true after 'n'")
+	if !m.flows.Creating() {
+		t.Error("expected m.flows.Creating() to be true after 'n'")
 	}
 
 	// 3. Navigate inside flows editor
@@ -143,8 +115,8 @@ func TestHelpAndMenuKeys(t *testing.T) {
 	m = asModel(t, newM)
 
 	// 2. Menu popup
-	m.menu.open = true
-	m.menu.sel = 0
+	m = m.openMenu("")
+	m.menu = m.menu.Point(0)
 	newM, _ = m.menuKey(downKey)
 	m = asModel(t, newM)
 

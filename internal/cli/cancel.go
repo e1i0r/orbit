@@ -37,20 +37,17 @@ func cancelTask(ctx Context, args []string) error {
 
 	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
-		logger.Error("cli/cancel", "open repository %q failed: %v", *dir, err)
-		return err
+		return fmt.Errorf("open repository %q: %w", *dir, err)
 	}
 
 	t, err := task.Load(s, r, id)
 	if err != nil {
-		logger.Error("cli/cancel", "load task %q in %q failed: %v", id, r.Name, err)
-		return err
+		return fmt.Errorf("load task %q in %q: %w", id, r.Name, err)
 	}
 
 	if *now {
 		if err := task.Kill(s, t); err != nil {
-			logger.Error("cli/cancel", "kill task %q in %q failed: %v", id, r.Name, err)
-			return err
+			return fmt.Errorf("kill task %q in %q: %w", id, r.Name, err)
 		}
 
 		logger.Warn("cli/cancel", "task %s in %s killed outright", id, r.Name)
@@ -62,8 +59,7 @@ func cancelTask(ctx Context, args []string) error {
 	}
 
 	if err := task.Cancel(s, t); err != nil {
-		logger.Error("cli/cancel", "cancel task %q in %q failed: %v", id, r.Name, err)
-		return err
+		return fmt.Errorf("cancel task %q in %q: %w", id, r.Name, err)
 	}
 
 	logger.Info("cli/cancel", "task %s in %s requested to stop gracefully", id, r.Name)

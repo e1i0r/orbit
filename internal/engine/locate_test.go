@@ -26,6 +26,9 @@ func TestAnEngineIsFoundWhereItsInstallerPutIt(t *testing.T) {
 		{OpenCode{}, ".opencode/bin"},
 		{Claude{}, ".local/bin"},
 		{Codex{}, ".codex/bin"},
+		// agy's installer puts the binary in ~/.local/bin and adds it to a
+		// shell profile, so a PATH exported before the install has none.
+		{NewAgy(), ".local/bin"},
 	} {
 		name := c.eng.Name()
 

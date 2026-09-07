@@ -6,6 +6,8 @@ package ui
 import (
 	"strings"
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/ui/point"
 )
 
 // TestWhatABuildCallsItselfInTheCorner over every shape the two things that
@@ -46,7 +48,7 @@ func TestTheVersionIsAtTheFarEndOfTheBar(t *testing.T) {
 	}
 
 	// Read and not pressed: there is no screen behind a version.
-	if last.target.Kind != TargetNone {
+	if last.target.Kind != point.None {
 		t.Errorf("a click on the version = %+v, want nothing", last.target)
 	}
 
@@ -63,7 +65,7 @@ func TestABuildWithNoVersionStampedShowsNoChip(t *testing.T) {
 	m.opts.Version = ""
 
 	for _, c := range m.barFooterChips() {
-		if c.target.Kind == TargetNone {
+		if c.target.Kind == point.None {
 			t.Errorf("an unstamped build drew %q at the end of the bar", c.text)
 		}
 	}
