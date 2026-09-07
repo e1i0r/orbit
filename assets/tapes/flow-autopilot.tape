@@ -21,25 +21,25 @@ Type "clear" Enter
 Show
 
 Type "orbit top ~/code" Enter
-Sleep 4s
+Sleep 5s
 
-# The switch, and the bar says what it is now.
+# Two tasks in To Do and nothing running. A is the switch, and the bar says
+# what it did.
+Type "A"
+Sleep 5s
+
+# It takes the next one on its own, and the row goes live.
+Sleep 30s
+
+# And the one after it, without a person at either gate.
+Sleep 30s
+
+# The brake is the unread cap, and the bar says when it is what stopped the
+# queue rather than the queue being empty.
+Sleep 20s
+
+# Off again: it runs what you start and hands the rest back.
 Type "A"
 Sleep 4s
-
-# It takes the next To Do on its own.
-Sleep 45s
-
-# And the phases move without a person at the gates.
-Sleep 45s
-
-# The cap is the brake: unread finished tasks stop anything new from starting.
-Hide
-Type "" Enter
-Show
-Sleep 3s
-
-Type "A"
-Sleep 3s
 Type "q"
 Sleep 1s

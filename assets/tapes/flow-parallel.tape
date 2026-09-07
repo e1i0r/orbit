@@ -21,28 +21,33 @@ Type "clear" Enter
 Show
 
 Type "orbit run -repo ~/code/ledger LED-11 &" Sleep 400ms Enter
-Sleep 1500ms
-Type "orbit run -repo ~/code/checkout CHK-3 &" Sleep 400ms Enter
-Sleep 1500ms
-Type "orbit run -repo ~/code/ledger LED-9 &" Sleep 400ms Enter
 Sleep 2s
+Type "orbit run -repo ~/code/checkout CHK-3 &" Sleep 400ms Enter
+Sleep 2s
+Type "orbit run -repo ~/code/ledger LED-9 &" Sleep 400ms Enter
+Sleep 3s
 
+Type "clear" Enter
 Type "orbit top ~/code" Enter
-Sleep 6s
+Sleep 10s
 
-# Three rows in Running, each in its own phase, each in its own worktree.
-Sleep 40s
+# Three rows in Running, each in its own phase, each in its own worktree, and
+# the header counting them.
+Sleep 25s
 
 # One of them opened, while the other two carry on behind it.
+Down
+Sleep 1500ms
 Enter
-Sleep 8s
+Sleep 6s
 Type "2"
-Sleep 10s
+Sleep 8s
 Escape
-Sleep 10s
-
-# And the worktrees they are running in.
+Sleep 8s
 Type "q"
 Sleep 1s
-Type "ls ~/.orbit/worktrees/*/" Sleep 500ms Enter
-Sleep 4s
+
+# The worktrees they are running in: one checkout each, on a branch of its own.
+Type "clear" Enter
+Type `git -C ~/code/ledger worktree list` Sleep 500ms Enter
+Sleep 5s

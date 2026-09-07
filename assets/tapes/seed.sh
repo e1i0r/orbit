@@ -69,6 +69,34 @@ package ledger
 // Issue writes the invoice for a charge that went through.
 func Issue(orderID string, cents int) error { return nil }
 EOF
+# The reconciliation job the real-run take is shot against. The bug in it is
+# real and small: a refund is its own row and is also subtracted from the
+# charge, so it lands on the total twice. A task the agent cannot actually do
+# makes a recording of an agent explaining that there is nothing to do.
+cat > reconcile.go <<'EOF'
+package ledger
+
+// A Row is one line of the day's ledger.
+type Row struct {
+	OrderID string
+	Cents   int
+	Refund  int
+}
+
+// Total is what the day came to, for the reconciliation job.
+func Total(rows []Row) int {
+	var out int
+
+	for _, r := range rows {
+		out += r.Cents - r.Refund
+		if r.Refund > 0 {
+			out -= r.Refund
+		}
+	}
+
+	return out
+}
+EOF
 cat > ledger_test.go <<'EOF'
 package ledger
 
@@ -168,6 +196,9 @@ say operator   "Good. Do not touch the charges table without me."
 # ---- the dials the recordings are shot on
 "$ORBIT" settings engine claude >/dev/null
 "$ORBIT" settings model opus >/dev/null
+# Written down rather than left to the default, so a take is the same take
+# whatever a later build decides the default is.
+"$ORBIT" settings theme frauddi >/dev/null
 
 # ---- and a home with nothing in it, for the getting-started take: the state
 # root does not exist yet, and HOME is this directory so `orbit mcp install`

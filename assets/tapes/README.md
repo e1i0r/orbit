@@ -34,3 +34,8 @@ Two things learned the hard way and worth keeping:
   a `Sleep` between them.
 - The board state decides where the arrows land. Re-seed before every take, or
   a task a previous take created puts every keystroke one row out.
+- Build without the version stamp. A build that knows its own version asks
+  GitHub for a newer one and draws an upgrade banner across the header, which
+  `make demo` avoids by building plain.
+- Watch the first frames. Anything the take runs prints its own startup noise,
+  and that noise names paths from the machine it was shot on.

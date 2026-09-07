@@ -26,7 +26,17 @@ board and the handover — not about the change.
 ## Shooting them
 
 ```bash
-vhs assets/tapes/flow-run.tape
+# A run, in two takes: the start, then the gate it stops at. A phase takes
+# minutes and the section is forty seconds, so what is shot is the two ends of
+# it — with the real minutes in between, off camera.
+vhs assets/tapes/flow-run-a.tape
+orbit run -repo ~/code/ledger LED-11        # wait for it to reach the gate
+vhs assets/tapes/flow-run-b.tape
+printf "file flow-run-a.mp4\nfile flow-run-b.mp4\n" > site/parts.txt
+ffmpeg -f concat -safe 0 -i site/parts.txt -c copy site/flow-run.mp4
+ffmpeg -i site/flow-run.mp4 -c:v libvpx-vp9 -b:v 0 -crf 34 site/flow-run.webm
+ffmpeg -i site/flow-run.mp4 -vf "fps=12,scale=1200:-1:flags=lanczos" assets/flow-run.gif
+
 vhs assets/tapes/flow-parallel.tape
 vhs assets/tapes/flow-cli.tape
 make posters
@@ -38,10 +48,30 @@ row out.
 
 ## What cannot be scripted
 
-The CLI beat. `c` hands the terminal to the engine's own program, and that
-program asks a person before it touches anything — which is the point of the
-key and is not something a tape can answer. Record generously, then cut the
-wait out in post:
+The CLI beat, and it is worth saying exactly where it breaks.
+
+`c` does hand the terminal over, and the engine's own program opens in the
+task's worktree. What it does first is ask a person whether this directory is
+trusted, and that question is the point of the key rather than something in
+the way of it. The tape answers it — `Down`, `Enter` — because a recording
+that stops there records nothing; on a machine where the directory is already
+trusted those two keystrokes go to the prompt line instead, and the take is
+shot again.
+
+Two things about the take that has to be cut afterwards:
+
+- The engine prints its own startup warnings, and they name paths from
+  whatever settings file it found. Those are somebody's private directories.
+  **Watch the first frames of every take and cut them off.**
+- A model that takes a minute to answer takes a minute. Shoot generously and
+  keep the part where it reads the record and writes back to it, which is what
+  the section is about.
+
+```bash
+ffmpeg -ss 38 -to 96 -i take.mp4 -c:v libx264 -crf 22 -an site/flow-cli.mp4
+```
+
+And to cut a wait out of the middle instead:
 
 ```bash
 ffmpeg -i take.mp4 -ss 0    -to 12 -c copy part-a.mp4

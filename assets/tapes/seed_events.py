@@ -182,7 +182,7 @@ fact(LEDGER / "the-ledger-only-appends.md", "repo", "code",
      used=9)
 fact(LEDGER / "migrations-stop-for-a-person.md", "repo", "human",
      "Anything that drops a column or writes a migration stops for a person, autopilot or not.",
-     stops=True, check="git diff --name-only | grep -q '^migrations/'", used=2)
+     stops=True, check="! git diff --name-only | grep -q '^migrations/'", used=2)
 fact(LEDGER / "money" / "round-half-to-even.md", "dir", "record",
      "Everything under money/ is in minor units and rounds half to even. A float in this directory is a bug.",
      p="money", ref="LED-2", used=6)
