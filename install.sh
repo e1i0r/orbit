@@ -52,9 +52,18 @@ resolve_version() {
     echo "$ORBIT_VERSION"
     return
   fi
-  local latest
-  latest=$(curl -fsSL "https://api.github.com/repos/${ORBIT_REPO}/releases/latest" \
-    | grep '"tag_name"' | head -n1 | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')
+  # The request and the parse are two steps so that a failed request is
+  # answered by the message below and not by curl's own line. curl -f prints
+  # "curl: (22) The requested URL returned error: 404" and exits, which is
+  # true and is not what somebody who just pasted an install command needs to
+  # read. The -z guard stays: a 200 carrying JSON with no tag_name is a
+  # different failure and lands there.
+  local body latest
+  if ! body=$(curl -fsSL "https://api.github.com/repos/${ORBIT_REPO}/releases/latest" 2>/dev/null); then
+    echo "orbit: could not find a published release for ${ORBIT_REPO}" >&2
+    return 1
+  fi
+  latest=$(printf '%s\n' "$body" | grep '"tag_name"' | head -n1 | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')
   if [ -z "$latest" ]; then
     echo "orbit: could not find a published release for ${ORBIT_REPO}" >&2
     return 1
