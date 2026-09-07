@@ -8,6 +8,7 @@ package supervisor
 // wants the sentences that came back.
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -36,23 +37,40 @@ func standing(s *store.Store) []knowledge.Fact {
 		return nil
 	}
 
+	// Repos always finishes its listing: a damaged marker costs that one
+	// directory and the rest come back beside the error, which is the
+	// contract internal/task/join.go reads it by too. Returning here on any
+	// error at all meant one unreadable marker took every healthy
+	// repository's rules with it — the opposite of what the paragraph above
+	// promises. The one failure that leaves nothing to walk is the repos/
+	// directory itself refusing to be listed, and that arrives as a
+	// *store.ReposError with no repositories at all.
 	repos, err := s.Repos()
 	if err != nil {
 		logger.Error("supervisor", "the repositories to read facts from: %v", err)
+	}
 
+	var listing *store.ReposError
+	if errors.As(err, &listing) {
 		return knowledge.InScope(facts)
 	}
 
 	for _, r := range repos {
-		own, err := ks.Load(r.Path)
+		own, err := ks.LoadRepo(r.Path)
 		if err != nil {
 			logger.Error("supervisor", "what orbit knows about %q: %v", r.Path, err)
 			continue
 		}
 
-		// Load answers with the state root's facts as well as the
-		// repository's, and those are already in hand: a fact told twice is
-		// a fact the model weighs twice.
+		// LoadRepo and not Load: Load reads the state root before the
+		// repository, and those facts are already in hand — asking for them
+		// once per repository is a walk and a decode per repository, thrown
+		// away here.
+		//
+		// The check stays because a file's own header outranks where it
+		// sits: one under this checkout that calls itself general or about a
+		// language belongs to no repository, and is not this repository's to
+		// tell.
 		for _, f := range own {
 			if f.Scope.Repo == r.Path {
 				facts = append(facts, f)

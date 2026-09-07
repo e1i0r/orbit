@@ -227,3 +227,59 @@ func TestOneDamagedRepositoryDoesNotCostTheRest(t *testing.T) {
 		t.Errorf("one unreadable repository cost the others their rules: %v", said)
 	}
 }
+
+// TestADamagedRepoMarkerDoesNotCostTheRest.
+//
+// The other damage test above breaks a fact file, which costs one repository
+// through a different door — ks.LoadRepo. This one breaks the marker that
+// says where a repository is, which is what store.Repos reads, and it is the
+// path that took every healthy repository's rules with it: Repos always
+// finishes its listing and hands back what it could read alongside the
+// error, and standing() was treating any error at all as nothing to walk.
+func TestADamagedRepoMarkerDoesNotCostTheRest(t *testing.T) {
+	root := t.TempDir()
+
+	s, err := store.New(root)
+	if err != nil {
+		t.Fatalf("store.New: %v", err)
+	}
+
+	broken, sound := filepath.Join(t.TempDir(), "broken"), filepath.Join(t.TempDir(), "sound")
+
+	for _, repo := range []string{broken, sound} {
+		if _, err := s.CreateTaskDir(repo, "LED-1"); err != nil {
+			t.Fatalf("CreateTaskDir(%q): %v", repo, err)
+		}
+	}
+
+	ks := knowledge.NewStore(root)
+
+	saved := knowledge.Fact{
+		Scope:  knowledge.Scope{Kind: knowledge.Repo, Repo: sound},
+		Source: knowledge.Human,
+		Phrase: "the ledger only appends",
+	}
+	if _, err := ks.Save(saved); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+
+	// A marker with no "path: " prefix: what a partial write leaves, and
+	// what parseRepoMarker calls damaged rather than guessing at.
+	dir, err := s.RepoDir(broken)
+	if err != nil {
+		t.Fatalf("RepoDir: %v", err)
+	}
+
+	if err := os.WriteFile(filepath.Join(dir, "repo"), []byte("rubbish\n"), 0o600); err != nil {
+		t.Fatalf("write the marker: %v", err)
+	}
+
+	var said []string
+	for _, f := range standing(s) {
+		said = append(said, f.Phrase)
+	}
+
+	if !slices.Contains(said, "the ledger only appends") {
+		t.Errorf("one damaged marker cost every other repository its rules: %v", said)
+	}
+}

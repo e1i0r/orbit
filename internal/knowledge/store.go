@@ -120,6 +120,20 @@ func (s *Store) Load(repo string) ([]Fact, error) {
 	return append(facts, own...), nil
 }
 
+// LoadRepo is one checkout's own facts, and none of the state root's.
+//
+// Load answers with both, which is what a phase wants: it works in one
+// repository and everything known reaches it. A caller walking every
+// repository the record has heard of wants the other shape — it already
+// holds the state root's facts, and Load would hand them back once per
+// repository, to be walked, decoded and thrown away N times over.
+//
+// A directory that is not there is a repository nobody has written anything
+// about yet, the same as in Load.
+func (s *Store) LoadRepo(repo string) ([]Fact, error) {
+	return s.read(filepath.Join(repo, ".orbit", dirName), repo)
+}
+
 // read walks one root. repo is the checkout the facts belong to, and empty
 // for the state root, where they belong to none.
 func (s *Store) read(root, repo string) ([]Fact, error) {
