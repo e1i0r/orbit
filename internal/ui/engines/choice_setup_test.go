@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/e1i0r/orbit/internal/ui/point"
 	"github.com/e1i0r/orbit/internal/ui/roster"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -263,5 +264,45 @@ func TestAWindowWithNoEnginesPortInventsNone(t *testing.T) {
 		if r.kind == rowEngine || r.kind == rowModel {
 			t.Errorf("a window with no engines port offered %q", r.engine+r.id)
 		}
+	}
+}
+
+// TestTheDialsTheScreenHoldsAreTheOnesItWasGiven. The window keeps them —
+// every screen that starts work reads them — and this screen is where they
+// are turned.
+func TestTheDialsTheScreenHoldsAreTheOnesItWasGiven(t *testing.T) {
+	dials := Knobs{Engine: "claude", Model: "opus", Effort: "high", Thinking: "on"}
+
+	if got := Open(0, dials).Dials(); got != dials {
+		t.Errorf("the screen holds %+v, want the dials it was handed", got)
+	}
+}
+
+// TestAClickLandsOnTheRowItWasDrawnOn, and on nothing at all outside the
+// list.
+func TestAClickLandsOnTheRowItWasDrawnOn(t *testing.T) {
+	s, e := open(t)
+
+	if got := s.Hit(10, 0, e); got.Kind != point.None {
+		t.Errorf("a click above the body = %+v, want nothing", got)
+	}
+
+	var found bool
+
+	for y := e.Frame.Body.Y; y < e.Frame.Body.Y+e.Frame.Body.H; y++ {
+		if at := s.Hit(10, y, e); at.Kind == point.EngineRow {
+			found = true
+
+			// The row it names is one a reader can stand on.
+			if _, out := s.Choose(at.Pane, e); out.Leave {
+				t.Error("clicking a row closed the screen")
+			}
+
+			break
+		}
+	}
+
+	if !found {
+		t.Error("no cell of the body answers with a row of the list")
 	}
 }

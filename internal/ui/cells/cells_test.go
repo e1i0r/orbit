@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 )
 
@@ -158,5 +159,80 @@ func TestDialLabelFallsBackToTheOptionItself(t *testing.T) {
 
 	if got := DialLabel(ids, labels, 9); got != "" {
 		t.Errorf("DialLabel past the end = %q", got)
+	}
+}
+
+// TestALineTheWriterEndedIsALine. These fields hold paragraphs, and wrapping
+// them as one run of words joins a list of checks into a sentence.
+func TestALineTheWriterEndedIsALine(t *testing.T) {
+	got := WrapKeeping("make check\nmake coverage\ngo test -race ./...", 40)
+	if len(got) != 3 {
+		t.Fatalf("three lines wrapped to %d: %q", len(got), got)
+	}
+
+	for i, want := range []string{"make check", "make coverage", "go test -race ./..."} {
+		if got[i] != want {
+			t.Errorf("line %d is %q, want %q", i, got[i], want)
+		}
+	}
+
+	// A paragraph longer than the measure is folded, and the words are kept
+	// whole.
+	long := WrapKeeping("the webhook retries on 5xx and gives up after the fifth attempt", 20)
+	if len(long) < 3 {
+		t.Fatalf("a long paragraph wrapped to %d lines: %q", len(long), long)
+	}
+
+	for _, l := range long {
+		if lipgloss.Width(l) > 20 {
+			t.Errorf("a wrapped line is %d cells wide: %q", lipgloss.Width(l), l)
+		}
+	}
+
+	// Nothing to wrap, and nowhere to wrap it into, are both nothing.
+	if got := WrapKeeping("   ", 20); got != nil {
+		t.Errorf("a blank paragraph wrapped to %q", got)
+	}
+
+	if got := WrapKeeping("something", 0); got != nil {
+		t.Errorf("wrapping into no room drew %q", got)
+	}
+}
+
+// TestABlankLineSurvivesTheWrap, because a paragraph break is what the
+// writer meant by it.
+func TestABlankLineSurvivesTheWrap(t *testing.T) {
+	got := WrapKeeping("first\n\nsecond", 40)
+	if len(got) != 3 || got[1] != "" {
+		t.Errorf("a paragraph break wrapped to %q", got)
+	}
+}
+
+// TestADialComesRoundAtBothEnds, so a reader holding a key down never finds
+// an end to it.
+func TestADialComesRoundAtBothEnds(t *testing.T) {
+	opts := []string{"low", "medium", "high"}
+
+	for _, c := range []struct {
+		current string
+		delta   int
+		want    string
+	}{
+		{"low", 1, "medium"},
+		{"high", 1, "low"},
+		{"low", -1, "high"},
+		{"medium", -1, "low"},
+		{"nothing anybody offered", 1, "medium"},
+		{"low", 0, "low"},
+	} {
+		if got := NextOption(opts, c.current, c.delta); got != c.want {
+			t.Errorf("NextOption(%q, %d) = %q, want %q", c.current, c.delta, got, c.want)
+		}
+	}
+
+	// A dial with nothing on it stays where it is rather than reaching into
+	// an empty list.
+	if got := NextOption(nil, "low", 1); got != "low" {
+		t.Errorf("a dial with no options turned to %q", got)
 	}
 }

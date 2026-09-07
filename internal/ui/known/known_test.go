@@ -27,6 +27,11 @@ func world(t *testing.T, facts ...knowledge.Fact) Env {
 	}
 }
 
+// known is one fact somebody typed.
+func known(phrase string, sc knowledge.Scope) knowledge.Fact {
+	return knowledge.Fact{Scope: sc, Source: knowledge.Human, Phrase: phrase}
+}
+
 // onScreen is the screen open on those facts.
 func onScreen(t *testing.T, facts ...knowledge.Fact) (State, Env) {
 	t.Helper()
@@ -58,6 +63,18 @@ func press(keystroke string) tea.KeyPressMsg {
 		return tea.KeyPressMsg{Code: tea.KeyLeft}
 	case "right":
 		return tea.KeyPressMsg{Code: tea.KeyRight}
+	case "backspace":
+		return tea.KeyPressMsg{Code: tea.KeyBackspace}
+	case "delete":
+		return tea.KeyPressMsg{Code: tea.KeyDelete}
+	case "home":
+		return tea.KeyPressMsg{Code: tea.KeyHome}
+	case "end":
+		return tea.KeyPressMsg{Code: tea.KeyEnd}
+	case "up":
+		return tea.KeyPressMsg{Code: tea.KeyUp}
+	case "down":
+		return tea.KeyPressMsg{Code: tea.KeyDown}
 	}
 
 	r := []rune(keystroke)[0]

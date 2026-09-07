@@ -3,6 +3,7 @@ package clip
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 )
@@ -109,5 +110,70 @@ func TestACopyWithNoHelperToTakeItIsNotACopy(t *testing.T) {
 
 	if to("una tarea", "wl-copy") {
 		t.Error("to said yes with no helper installed")
+	}
+}
+
+// TestTheHelpersAreTriedInTheOrderThisMachineIsLikelyToHaveThem.
+//
+// On darwin pbpaste is the answer and an empty one is still the answer:
+// neither of the others is installed there, so falling through to them only
+// spends two more process spawns to be told so twice. Everywhere else
+// Wayland is tried before X11, and the first helper that answers wins.
+func TestTheHelpersAreTriedInTheOrderThisMachineIsLikelyToHaveThem(t *testing.T) {
+	if runtime.GOOS == "darwin" {
+		helperNamed(t, "pbpaste", "printf 'from the mac'")
+
+		if got := Read(); got != "from the mac" {
+			t.Errorf("Read() = %q, want what pbpaste answered", got)
+		}
+
+		return
+	}
+
+	helperNamed(t, "wl-paste", "printf 'from wayland'")
+
+	if got := Read(); got != "from wayland" {
+		t.Errorf("Read() = %q, want what wl-paste answered", got)
+	}
+}
+
+// TestACopyThatWentNowhereSaysSo. Nothing else in the window can tell
+// whether a helper is on this machine, and a copy that quietly went nowhere
+// is a copy the reader will paste from somewhere else and lose.
+func TestACopyThatWentNowhereSaysSo(t *testing.T) {
+	// A PATH with no helper on it at all: every one of the three is
+	// missing, and Write says so rather than claiming the text was taken.
+	t.Setenv("PATH", t.TempDir())
+
+	if Write("something") {
+		t.Error("a machine with no clipboard helper said it took the text")
+	}
+
+	if got := Read(); got != "" {
+		t.Errorf("a machine with no clipboard helper read %q", got)
+	}
+}
+
+// TestAHelperThatTakesItSaysSo.
+func TestAHelperThatTakesItSaysSo(t *testing.T) {
+	name := "wl-copy"
+	if runtime.GOOS == "darwin" {
+		name = "pbcopy"
+	}
+
+	took := filepath.Join(t.TempDir(), "took")
+	helperNamed(t, name, "cat > "+took)
+
+	if !Write("what the reader selected") {
+		t.Fatal("a helper that took the text said it had not")
+	}
+
+	got, err := os.ReadFile(took)
+	if err != nil {
+		t.Fatalf("the helper wrote nothing: %v", err)
+	}
+
+	if string(got) != "what the reader selected" {
+		t.Errorf("the helper was handed %q", got)
 	}
 }

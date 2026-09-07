@@ -252,3 +252,47 @@ func TestAClickTakesTwoPresses(t *testing.T) {
 		t.Errorf("clicking a command that is not on the list answered %+v", out)
 	}
 }
+
+// TestTheWheelMovesTheSelectionAndTheListFollowsIt. Scrolling a list with
+// one row chosen means moving the choice, and the list comes with it rather
+// than the reader following the list.
+func TestTheWheelMovesTheSelectionAndTheListFollowsIt(t *testing.T) {
+	e := world(t)
+	e.Frame.Body.H = 2
+
+	s := Open()
+
+	down := s.Wheel(2, e)
+	if down.sel == s.sel {
+		t.Error("the wheel moved nothing")
+	}
+
+	if down.offset == 0 {
+		t.Error("the list did not follow the selection off the bottom of the body")
+	}
+
+	// It stops at both ends rather than running past them.
+	if end := down.Wheel(99, e); end.sel != len(three())-1 {
+		t.Errorf("wheeling past the end left the cursor on %d", end.sel)
+	}
+
+	if top := down.Wheel(-99, e); top.sel != 0 || top.offset != 0 {
+		t.Errorf("wheeling past the top left sel=%d offset=%d", top.sel, top.offset)
+	}
+}
+
+// TestAPasteGoesOnTheLineAndPutsTheSelectionBackAtTheTop, because what was
+// typed is now a different question.
+func TestAPasteGoesOnTheLineAndPutsTheSelectionBackAtTheTop(t *testing.T) {
+	s := Open()
+	s.sel = 2
+
+	after := s.Type("set")
+	if after.Typed() != "set" {
+		t.Errorf("the line holds %q after a paste", after.Typed())
+	}
+
+	if after.sel != 0 {
+		t.Errorf("the paste left the selection on %d", after.sel)
+	}
+}
