@@ -1,4 +1,6 @@
-package ui
+package panes
+
+// The task story on the overview: how this prompt became this diff.
 
 import (
 	"fmt"
@@ -28,12 +30,12 @@ func storyEntry() view.Entry {
 // the point is that each one is the reason for the one under it, and the
 // tree is the only shape that says so in eighty columns.
 func TestTheOverviewDrawsTheStoryAsAChain(t *testing.T) {
-	m, _ := onTab(t, tabOverview, []view.Entry{
+	e := world(t, []view.Entry{
 		{Kind: "task.created", At: ago(time.Hour), Text: "Fix the save\n\nRepeated entries vanish."},
 		storyEntry(),
 	})
 
-	text := overviewText(m)
+	drawn := text(Overview(e))
 	for _, want := range []string{
 		"POST /items",
 		"save the list Z in the database",
@@ -41,13 +43,13 @@ func TestTheOverviewDrawsTheStoryAsAChain(t *testing.T) {
 		"the primary key collided",
 		"upsert instead of insert",
 	} {
-		if !strings.Contains(text, want) {
-			t.Errorf("the overview does not carry %q:\n%s", want, text)
+		if !strings.Contains(drawn, want) {
+			t.Errorf("the overview does not carry %q:\n%s", want, drawn)
 		}
 	}
 
-	if !strings.Contains(text, "└─") {
-		t.Errorf("the story is not drawn as a chain:\n%s", text)
+	if !strings.Contains(drawn, "└─") {
+		t.Errorf("the story is not drawn as a chain:\n%s", drawn)
 	}
 }
 
@@ -55,12 +57,12 @@ func TestTheOverviewDrawsTheStoryAsAChain(t *testing.T) {
 // existed has no story, and a heading over five blank rows is worse than the
 // pane that was there before.
 func TestATaskWithNoStoryDrawsNoEmptyTree(t *testing.T) {
-	_, lines := onTab(t, tabOverview, []view.Entry{
+	drawn := text(Overview(world(t, []view.Entry{
 		{Kind: "task.created", At: ago(time.Hour), Text: "Fix the save"},
-	})
+	})))
 
-	if text := ansi.Strip(strings.Join(lines, "\n")); strings.Contains(text, "└─") {
-		t.Errorf("a task with no story drew a chain anyway:\n%s", text)
+	if strings.Contains(drawn, "└─") {
+		t.Errorf("a task with no story drew a chain anyway:\n%s", drawn)
 	}
 }
 
@@ -71,40 +73,36 @@ func TestTheNewestStoryIsTheOneDrawn(t *testing.T) {
 	old.At = ago(time.Hour)
 	old.Story = &view.Story{Entry: "GET /old", Purpose: "p", Symptom: "s", Cause: "c", Fix: "f"}
 
-	_, lines := onTab(t, tabOverview, []view.Entry{old, storyEntry()})
-
-	text := ansi.Strip(strings.Join(lines, "\n"))
-	if strings.Contains(text, "GET /old") {
-		t.Errorf("the overview drew the story of an older attempt:\n%s", text)
+	drawn := text(Overview(world(t, []view.Entry{old, storyEntry()})))
+	if strings.Contains(drawn, "GET /old") {
+		t.Errorf("the overview drew the story of an older attempt:\n%s", drawn)
 	}
 
-	if !strings.Contains(text, "POST /items") {
-		t.Errorf("the overview did not draw the newest story:\n%s", text)
+	if !strings.Contains(drawn, "POST /items") {
+		t.Errorf("the overview did not draw the newest story:\n%s", drawn)
 	}
 }
 
-func toolCall(tool, args string, ago_ time.Duration) view.Entry {
-	return view.Entry{Kind: "phase.tool_call", At: ago(ago_), Tool: tool, Text: args}
+func toolCall(tool, args string, since time.Duration) view.Entry {
+	return view.Entry{Kind: "phase.tool_call", At: ago(since), Tool: tool, Text: args}
 }
 
 // TestTheStoryCarriesWhatWasChangedUnderIt. A claim with its evidence one
 // line away is the whole rule of the spec: the model says what it did, and
 // the record says what it touched to do it.
 func TestTheStoryCarriesWhatWasChangedUnderIt(t *testing.T) {
-	m, _ := onTab(t, tabOverview, []view.Entry{
+	drawn := text(Overview(world(t, []view.Entry{
 		{Kind: "task.created", At: ago(time.Hour), Text: "Fix the save"},
 		toolCall("Read", `{"file_path":"routes/items.go"}`, 40*time.Minute),
 		toolCall("Edit", `{"file_path":"store/items_repo.go"}`, 30*time.Minute),
 		storyEntry(),
-	})
-
-	text := overviewText(m)
-	if !strings.Contains(text, "store/items_repo.go") {
-		t.Errorf("the story does not show the file that was changed:\n%s", text)
+	})))
+	if !strings.Contains(drawn, "store/items_repo.go") {
+		t.Errorf("the story does not show the file that was changed:\n%s", drawn)
 	}
 
-	if strings.Contains(text, "routes/items.go") {
-		t.Errorf("the story shows a file that was read and never changed:\n%s", text)
+	if strings.Contains(drawn, "routes/items.go") {
+		t.Errorf("the story shows a file that was read and never changed:\n%s", drawn)
 	}
 }
 
@@ -122,12 +120,10 @@ func TestTheStoryShowsEveryChangeAndNotTheFirstFew(t *testing.T) {
 
 	entries = append(entries, storyEntry())
 
-	m, _ := onTab(t, tabOverview, entries)
-
-	text := strings.Join(m.storyLines(120), "\n")
+	drawn := ansi.Strip(strings.Join(world(t, entries).storyLines(120), "\n"))
 	for _, want := range []string{"file00.go", "file20.go", "file39.go", "40 files changed"} {
-		if !strings.Contains(ansi.Strip(text), want) {
-			t.Errorf("the story left out %q, and the work is never pruned:\n%s", want, ansi.Strip(text))
+		if !strings.Contains(drawn, want) {
+			t.Errorf("the story left out %q, and the work is never pruned:\n%s", want, drawn)
 		}
 	}
 }

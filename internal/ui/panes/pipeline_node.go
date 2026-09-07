@@ -1,4 +1,4 @@
-package ui
+package panes
 
 // What a phase's node says about where it got to, and the rows that hang
 // off it once a reader opens one.
@@ -33,8 +33,8 @@ type where struct {
 }
 
 // phaseStanding is where a phase got to.
-func (m Model) phaseStanding(ex phaseExec, at where) standing {
-	p := m.opts.Words
+func (e Env) phaseStanding(ex phaseExec, at where) standing {
+	p := e.Words
 
 	switch {
 	case ex.failed:
@@ -141,8 +141,8 @@ func lastStart(items []subItem) int {
 
 // phaseSubItems is everything hanging off one node: how it was set up, what
 // it has to pass, why it broke, and what it wrote.
-func (m Model) phaseSubItems(phase flow.Phase, ex phaseExec) []subItem {
-	p := m.opts.Words
+func (e Env) phaseSubItems(phase flow.Phase, ex phaseExec) []subItem {
+	p := e.Words
 
 	var items []subItem
 
@@ -169,7 +169,7 @@ func (m Model) phaseSubItems(phase flow.Phase, ex phaseExec) []subItem {
 		}
 	}
 
-	return append(items, m.phaseOutcome(ex.text)...)
+	return append(items, e.phaseOutcome(ex.text)...)
 }
 
 // phaseConfig is the dials the phase ran on: what the record says it was,
@@ -202,14 +202,14 @@ func phaseConfig(phase flow.Phase, ex phaseExec) []string {
 // its first row. The rows are cut as well as wrapped, because an engine that
 // printed a path with nothing to break at would otherwise be set over the
 // margin the scroll bar is drawn in.
-func (m Model) phaseOutcome(text string) []subItem {
+func (e Env) phaseOutcome(text string) []subItem {
 	if strings.TrimSpace(text) == "" {
 		return nil
 	}
 
 	// The measure the deepest row of the tree leaves: the branches in front
 	// of it, and the label the first row carries.
-	measure := max(20, m.frame.Body.W-24)
+	measure := max(20, e.Frame.Body.W-24)
 
 	var out []subItem
 
@@ -221,7 +221,7 @@ func (m Model) phaseOutcome(text string) []subItem {
 		for _, wl := range cells.Lines(l, measure) {
 			if out == nil {
 				out = append(out, subItem{text: fmt.Sprintf("📋 %s: %s",
-					m.opts.Words.T("flow.tree_outcome", "outcome"), cells.Fit(wl, measure))})
+					e.Words.T("flow.tree_outcome", "outcome"), cells.Fit(wl, measure))})
 
 				continue
 			}
@@ -239,9 +239,9 @@ func (m Model) phaseOutcome(text string) []subItem {
 // The flow is walked in order, so a phase behind the one the run is in is a
 // phase that is over — which is the only thing that says a loop's block
 // closed, since a loop runs no engine of its own and writes no finish.
-func (m Model) pastPhase(f flow.Flow, i int) bool {
+func (e Env) pastPhase(f flow.Flow, i int) bool {
 	for j := i + 1; j < len(f.Phases); j++ {
-		later := m.findPhaseExec(f.Phases[j].Name)
+		later := e.execOf(f.Phases[j].Name)
 		if later.started || later.finished || later.waiting || later.failed || later.cancelled || later.checked {
 			return true
 		}

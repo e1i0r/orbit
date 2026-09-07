@@ -1,4 +1,4 @@
-package ui
+package panes
 
 // The task story on the overview: how this prompt became this diff, drawn as
 // the chain it is.
@@ -27,13 +27,13 @@ import (
 // the route exists for the purpose, the symptom happened in it, the cause is
 // under the symptom, the fix answers the cause — and indenting is the only
 // way to say that in eighty columns without a diagram.
-func (m Model) storyLines(w int) []string {
-	story := m.newestStory()
+func (e Env) storyLines(w int) []string {
+	story := e.newestStory()
 	if story == nil {
 		return nil
 	}
 
-	p := m.opts.Words
+	p := e.Words
 
 	out := []string{
 		prose.Gutter + theme.Text(theme.Secondary).Render(p.T("overview.story", "how it happened")),
@@ -53,7 +53,7 @@ func (m Model) storyLines(w int) []string {
 		out = append(out, storyRow(i, step.text, step.about, w))
 	}
 
-	return append(out, m.walkLines(w)...)
+	return append(out, e.walkLines(w)...)
 }
 
 // walkLines is what the task changed, under the story that says why.
@@ -67,13 +67,13 @@ func (m Model) storyLines(w int) []string {
 // the agent opened and left alone; a hundred changes draw a hundred rows,
 // because a story that stopped at ten would be hiding the work rather than
 // the noise.
-func (m Model) walkLines(w int) []string {
-	steps := view.Walk(m.entries)
+func (e Env) walkLines(w int) []string {
+	steps := view.Walk(e.Entries)
 	if len(steps) == 0 {
 		return []string{""}
 	}
 
-	p := m.opts.Words
+	p := e.Words
 
 	out := []string{
 		"",
@@ -128,12 +128,12 @@ func storyRow(depth int, text, about string, w int) string {
 // The last one written and not the first: a task run three times told its
 // story three times, and the two before it are about work that was thrown
 // away.
-func (m Model) newestStory() *view.Story {
+func (e Env) newestStory() *view.Story {
 	var found *view.Story
 
-	for _, e := range m.entries {
-		if e.Story != nil {
-			found = e.Story
+	for _, entry := range e.Entries {
+		if entry.Story != nil {
+			found = entry.Story
 		}
 	}
 

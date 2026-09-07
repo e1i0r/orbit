@@ -146,26 +146,6 @@ func TestTheFlowTreeDrawsWhatWasAskedForByHand(t *testing.T) {
 	}
 }
 
-// The answer pairs with the ask of the same verb, and a verb asked for twice
-// is two rows: the second ask is not closed by the first answer.
-func TestEachAskIsClosedByItsOwnAnswer(t *testing.T) {
-	m, _ := deliverWindow(t)
-	m.entries = []view.Entry{
-		{Kind: "deliver.asked", Verb: "FIX CHECKS", At: ago(3 * time.Minute)},
-		{Kind: "deliver.answered", Verb: "FIX CHECKS", Text: "green", At: ago(2 * time.Minute)},
-		{Kind: "deliver.asked", Verb: "FIX CHECKS", At: ago(time.Minute)},
-	}
-
-	steps := m.byHand()
-	if len(steps) != 2 {
-		t.Fatalf("read %d steps, want one per ask", len(steps))
-	}
-
-	if !steps[0].done || steps[1].done {
-		t.Errorf("steps = %+v, want the first answered and the second still out", steps)
-	}
-}
-
 // The timeline is where a reader looks for what happened and when. A verb
 // that is on the flow tree and not here is a verb with no moment attached
 // to it.

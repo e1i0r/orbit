@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/ui/layout"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
@@ -30,8 +31,11 @@ func world(t *testing.T, entries []view.Entry) Env {
 		t.Fatalf("a hundred columns is too narrow to draw in: %v", err)
 	}
 
+	p := words.For("en")
+
 	return Env{
-		Words:   words.For("en"),
+		Words:   p,
+		Keys:    keymap.New(p),
 		Frame:   frame,
 		Now:     now,
 		Task:    view.Task{ID: "ACME-7", Repo: "acme", Engine: "claude", Model: "opus"},

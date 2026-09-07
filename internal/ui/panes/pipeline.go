@@ -1,4 +1,4 @@
-package ui
+package panes
 
 import (
 	"fmt"
@@ -30,102 +30,92 @@ type phaseExec struct {
 	checked bool
 }
 
-// findPhaseExec finds recorded execution metrics for a phase in m.entries.
-func (m Model) findPhaseExec(phaseName string) phaseExec {
+// execOf is what the record says happened to one phase.
+func (e Env) execOf(phaseName string) phaseExec {
 	var (
-		exec       phaseExec
-		startEntry view.Entry
+		exec  phaseExec
+		start view.Entry
 	)
 
-	for _, e := range m.entries {
-		if !strings.EqualFold(e.Phase, phaseName) {
+	for _, entry := range e.Entries {
+		if !strings.EqualFold(entry.Phase, phaseName) {
 			continue
 		}
 
-		if e.What() == view.EntryLoopChecked {
+		if entry.What() == view.EntryLoopChecked {
 			exec.checked = true
 		}
 
-		if e.What() == view.EntryStarted {
+		if entry.What() == view.EntryStarted {
 			exec.started = true
 
-			startEntry = e
-			if e.Engine != "" {
-				exec.engine = e.Engine
+			start = entry
+			if entry.Engine != "" {
+				exec.engine = entry.Engine
 			}
 
-			if e.Model != "" {
-				exec.model = e.Model
+			if entry.Model != "" {
+				exec.model = entry.Model
 			}
 		}
 
-		if e.What() == view.EntryFinished {
+		if entry.What() == view.EntryFinished {
 			exec.finished = true
-			exec.cost = e.Cost
+			exec.cost = entry.Cost
 
-			exec.text = e.Said()
-			if !startEntry.At.IsZero() && !e.At.IsZero() {
-				exec.duration = cells.Elapsed(e.At, startEntry.At)
+			exec.text = entry.Said()
+			if !start.At.IsZero() && !entry.At.IsZero() {
+				exec.duration = cells.Elapsed(entry.At, start.At)
 			}
 		}
 
-		if e.What() == view.EntryFailed {
+		if entry.What() == view.EntryFailed {
 			exec.failed = true
-			exec.cause = e.Cause
-			exec.exit = e.Exit
-			exec.cost = e.Cost
+			exec.cause = entry.Cause
+			exec.exit = entry.Exit
+			exec.cost = entry.Cost
 
-			exec.text = e.Said()
-			if !startEntry.At.IsZero() && !e.At.IsZero() {
-				exec.duration = cells.Elapsed(e.At, startEntry.At)
+			exec.text = entry.Said()
+			if !start.At.IsZero() && !entry.At.IsZero() {
+				exec.duration = cells.Elapsed(entry.At, start.At)
 			}
 		}
 
-		if e.What() == view.EntryCancelled {
+		if entry.What() == view.EntryCancelled {
 			exec.cancelled = true
-			exec.text = e.Said()
+			exec.text = entry.Said()
 		}
 
-		if e.What() == view.EntryWaiting {
+		if entry.What() == view.EntryWaiting {
 			exec.waiting = true
-			exec.cause = e.Cause
+			exec.cause = entry.Cause
 		}
 	}
 
 	return exec
 }
 
-// flowLines renders Pane 2: Tree view of Flow & Step Results.
-func (m Model) flowLines() []string {
-	lines, _ := m.flowRows()
-
-	return lines
-}
-
-// flowRows is that tree and, beside it, which phase each node that folds
-// stands for, laid out in one pass for the reason logRows is.
+// Pipeline is the flow this run was started under, drawn as a tree, and
+// beside it which phase each node that folds stands for — laid out in one
+// pass for the reason the timeline is.
 //
 // The tree is the pane and folding does not take it down: a closed node is
 // still a branch off the trunk with its standing on it, and what it hides is
 // how it was configured and what it said.
-func (m Model) flowRows() ([]string, map[int]int) {
-	p := m.opts.Words
+func Pipeline(e Env) ([]string, map[int]int) {
+	p := e.Words
 
-	t, ok := m.task(m.detail)
-	if !ok {
+	t := e.Task
+	if e.Gone {
 		return []string{"  " + theme.Paint(theme.Dim).Render(
 			p.T("detail.gone", "this task is no longer on the board"))}, nil
 	}
 
-	flowName := t.Flow
-	if flowName == "" {
-		flowName = "quick"
+	if e.FlowFailed != "" {
+		return []string{"  " + theme.Paint(theme.Bad).Render(e.FlowFailed)}, nil
 	}
 
-	f, err := flow.Resolve(m.opts.Flows, flowName)
-	if err != nil {
-		return []string{"  " + theme.Paint(theme.Bad).Render(fmt.Sprintf("flow %q: %v", flowName, err))}, nil
-	}
+	f := e.Flow
 
 	title := theme.Paint(theme.Accent).Bold(true).Render(p.T("flow.tree_title", "Pipeline & Execution Tree") + " · ")
 	out := []string{
@@ -141,21 +131,21 @@ func (m Model) flowRows() ([]string, map[int]int) {
 	// not, so there is no node whose whole content is its own head.
 	for i, phase := range f.Phases {
 		heads[len(out)] = i
-		out = append(out, m.flowNode(t, phase, i, len(f.Phases), m.pastPhase(f, i))...)
+		out = append(out, e.flowNode(t, phase, i, len(f.Phases), e.pastPhase(f, i))...)
 	}
 
 	// The delivery verbs hang off the same trunk, under a heading of their
 	// own: they happened to this task, in this order, and nothing in the
 	// flow put them there. Their fold keys carry on where the phases' stop,
 	// so opening one is the same gesture as opening a phase.
-	steps := m.byHand()
+	steps := e.byHand()
 	if len(steps) > 0 {
 		out = append(out, "  "+theme.Paint(theme.Accent).Bold(true).Render(p.T("flow.by_hand", "Asked for by hand")))
 	}
 
 	for j, st := range steps {
 		heads[len(out)] = len(f.Phases) + j
-		out = append(out, m.handNode(st, len(f.Phases)+j, j == len(steps)-1)...)
+		out = append(out, e.handNode(st, len(f.Phases)+j, j == len(steps)-1)...)
 	}
 
 	return out, heads
@@ -164,17 +154,17 @@ func (m Model) flowRows() ([]string, map[int]int) {
 // flowNode is one phase of the tree: the branch it hangs off, what happened
 // to it, and — once the reader has opened it — how it was set up and what it
 // said.
-func (m Model) flowNode(t view.Task, phase flow.Phase, i, total int, past bool) []string {
+func (e Env) flowNode(t view.Task, phase flow.Phase, i, total int, past bool) []string {
 	branch, subBranch := "├──", "│  "
 	if i == total-1 {
 		branch, subBranch = "└──", "   "
 	}
 
-	ex := m.findPhaseExec(phase.Name)
+	ex := e.execOf(phase.Name)
 	inFlight := t.Band == view.Running && strings.EqualFold(t.Phase, phase.Name)
-	st := m.phaseStanding(ex, where{inFlight: inFlight, past: past})
+	st := e.phaseStanding(ex, where{inFlight: inFlight, past: past})
 
-	open := m.rowOpen(tabFlow, i)
+	open := e.row(i)
 
 	// The arrow stands between the branch and the icon, where a tree's
 	// disclosure has always stood.
@@ -194,7 +184,7 @@ func (m Model) flowNode(t view.Task, phase flow.Phase, i, total int, past bool) 
 
 	out := []string{head}
 	if open {
-		out = append(out, subRows(m.phaseSubItems(phase, ex), subBranch)...)
+		out = append(out, subRows(e.phaseSubItems(phase, ex), subBranch)...)
 	}
 
 	// The trunk carries on past the node whether it is open or shut, which

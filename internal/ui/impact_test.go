@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -271,43 +270,5 @@ func TestAnEmptyWorktreeShowsNoDiffAtAll(t *testing.T) {
 
 	if strings.TrimSpace(out) != "" {
 		t.Errorf("a worktree with nothing written in it showed:\n%s", out)
-	}
-}
-
-// TestALoopThatRanIsNotPending. A loop runs no engine of its own — the
-// phases inside it do — so it writes no phase.started and no phase.finished
-// under its own name. The tree read that as pending while it was going round
-// and after it had closed, beside a review phase already waiting at its gate.
-func TestALoopThatRanIsNotPending(t *testing.T) {
-	m, _ := testModel(t, 120, 40)
-	m.detail = "ACME-1"
-	m.board.Tasks = []view.Task{{ID: "ACME-1", Flow: "coverage", Repo: "orbit"}}
-	m.entries = []view.Entry{
-		{Kind: "phase.started", Phase: "1-implement"},
-		{Kind: "phase.finished", Phase: "1-implement"},
-		{Kind: "loop.checked", Phase: "2-until-it-passes"},
-		{Kind: "phase.waiting", Phase: "3-review"},
-	}
-
-	// While it is going round: something of its own to say.
-	looping := m
-	looping.entries = m.entries[:3]
-
-	if ex := looping.findPhaseExec("2-until-it-passes"); !ex.checked {
-		t.Error("a loop that wrote a turn down is not marked as having gone round")
-	}
-
-	// And once the run has moved past it: done.
-	fl, err := flow.Resolve(m.opts.Flows, "coverage")
-	if err != nil {
-		t.Skipf("this build has no coverage flow: %v", err)
-	}
-
-	if !m.pastPhase(fl, 1) {
-		t.Error("a loop the run has gone past reads as unfinished")
-	}
-
-	if m.pastPhase(fl, 2) {
-		t.Error("the phase the run is waiting in reads as past")
 	}
 }

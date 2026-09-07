@@ -65,8 +65,8 @@ var doors = map[string][]string{
 	// own workings — the rows of a gate, the blocks of the thinking — stay
 	// in its file.
 	"internal/ui/panes": {
-		"panes.go", "cost.go", "gates.go", "notes.go", "refused.go", "report.go", "thinking.go",
-		"timeline.go",
+		"panes.go", "cost.go", "gates.go", "notes.go", "overview.go", "pipeline.go",
+		"pipeline_hand.go", "refused.go", "report.go", "thinking.go", "timeline.go",
 	},
 	"internal/ui/point": {"point.go"},
 	// How a block of text is set, and the shapes a screen is built out of:

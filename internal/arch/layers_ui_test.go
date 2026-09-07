@@ -40,8 +40,9 @@ var windowLayers = map[string][]string{
 	// what the reader has folded, which the window hands over — a pane can
 	// reach no port and decide nothing about the task it is drawing.
 	"internal/ui/panes": {
-		"internal/ui/cells", "internal/ui/layout", "internal/ui/markdown", "internal/ui/theme",
-		"internal/view", "internal/words",
+		"internal/flow", "internal/ui/cells", "internal/ui/keymap", "internal/ui/layout",
+		"internal/ui/markdown", "internal/ui/prose", "internal/ui/theme", "internal/view",
+		"internal/words",
 	},
 	// internal/ui/palette is the ':' line. It answers with the command the
 	// reader chose and the window runs it: what a command does is not this

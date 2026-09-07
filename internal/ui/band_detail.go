@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/panes"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -33,21 +34,15 @@ func (m Model) detailBandLine(t view.Task) string {
 	}
 
 	// 2. Uncompleted delivery recorded in the task history.
-	steps := m.byHand()
-	for i := len(steps) - 1; i >= 0; i-- {
-		st := steps[i]
-		if st.done {
-			continue
-		}
-
-		said := p.T("overview.deliver_out_bare", "{verb} is out", about("verb", st.verb))
-		if st.by != "" {
+	if st, out := panes.Waiting(m.panesEnv()); out {
+		said := p.T("overview.deliver_out_bare", "{verb} is out", about("verb", st.Verb))
+		if st.By != "" {
 			said = p.T("overview.deliver_out", "{verb} is out with {by}",
-				about("verb", st.verb), about("by", st.by))
+				about("verb", st.Verb), about("by", st.By))
 		}
 
 		pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(theme.Live).Render(said)}
-		if ago := cells.Elapsed(m.now, st.at); ago != "" {
+		if ago := cells.Elapsed(m.now, st.At); ago != "" {
 			pieces = append(pieces, p.T("overview.deliver_ago", "asked {ago} ago",
 				about("ago", ago)))
 		}

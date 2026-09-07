@@ -3,7 +3,13 @@ package ui
 // Where the window and the twelve panes meet.
 
 import (
+	"fmt"
+
+	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/ui/panes"
+	"github.com/e1i0r/orbit/internal/view"
 )
 
 // panesEnv is the run being read, as the panes were written to read it.
@@ -12,6 +18,9 @@ import (
 func (m Model) panesEnv() panes.Env {
 	t, ok := m.task(m.detail)
 
+	f, flowErr := m.taskFlow(t)
+	word, role := m.stateWord(t)
+
 	return panes.Env{
 		Words:       m.opts.Words,
 		Frame:       m.frame,
@@ -19,7 +28,16 @@ func (m Model) panesEnv() panes.Env {
 		Task:        t,
 		Gone:        !ok,
 		Entries:     m.entries,
+		Flow:        f,
+		FlowFailed:  flowErr,
 		Failed:      m.errSaid(m.logErr),
+		Word:        word,
+		Role:        role,
+		Live:        m.runGlyph(keymap.Working(t)),
+		Keys:        m.keys,
+		Expanded:    m.expandedDetail,
+		Diff:        m.diff,
+		Dials:       m.taskDials(t),
 		Raw:         m.rawText,
 		Priced:      m.spends(t.Engine),
 		Folded:      m.folded,
@@ -109,4 +127,53 @@ func (m Model) notesLines() []string {
 // notesRows is that content and which item each row that folds stands for.
 func (m Model) notesRows() ([]string, map[int]int) {
 	return panes.Notes(m.paneEnv(tabNotes))
+}
+
+// taskFlow is the pipeline a task was started under, resolved: reading the
+// flow store is the window's door and not a pane's.
+func (m Model) taskFlow(t view.Task) (flow.Flow, string) {
+	name := cells.OrDef(t.Flow, flow.Default)
+
+	f, err := flow.Resolve(m.opts.Flows, name)
+	if err != nil {
+		return flow.Flow{}, fmt.Sprintf("flow %q: %v", name, err)
+	}
+
+	return f, ""
+}
+
+// flowLines is the pipeline this run was started under, drawn as a tree.
+func (m Model) flowLines() []string {
+	lines, _ := m.flowRows()
+
+	return lines
+}
+
+// flowRows is that tree and which phase each node that folds stands for.
+func (m Model) flowRows() ([]string, map[int]int) {
+	return panes.Pipeline(m.paneEnv(tabFlow))
+}
+
+// overviewLines is what became of this task, in the order a reader asks for
+// it.
+func (m Model) overviewLines() []string { return panes.Overview(m.paneEnv(tabOverview)) }
+
+// taskDials is what a task would run on: what it carries where it has run,
+// and what the knobs say where it has not — read through the engines port,
+// which is a door of the window's and not a pane's.
+func (m Model) taskDials(t view.Task) panes.Dials {
+	// Not the words claude and sonnet, which were the answer here on builds
+	// that have neither: a window whose engines port answers nothing has no
+	// engine and no model to name, and a dash says so.
+	eng := cells.OrDef(t.Engine, m.dialEngine(m.knobs.Engine))
+
+	models, _ := m.modelsFor(eng)
+	mod := cells.OrDef(t.Model, cells.OrDef(m.knobs.Model, cells.First(models)))
+
+	return panes.Dials{
+		Engine:   cells.OrDef(eng, unsetDial),
+		Model:    cells.OrDef(mod, unsetDial),
+		Effort:   m.knobs.Effort,
+		Thinking: m.knobs.Thinking,
+	}
 }

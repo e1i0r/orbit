@@ -20,6 +20,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/markdown"
+	"github.com/e1i0r/orbit/internal/ui/panes"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -214,7 +215,7 @@ func (m Model) worktreeFiles() []string {
 	var changed []string
 
 	if m.diffKnown && m.diff != "" {
-		changed = parseDiffSummary(m.diff).files
+		changed = panes.Changed(m.diff)
 	}
 
 	head := m.artifactsHead(p.T("artifacts.group_worktree", "what the run changed"),

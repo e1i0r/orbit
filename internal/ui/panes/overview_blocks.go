@@ -1,4 +1,4 @@
-package ui
+package panes
 
 import (
 	"fmt"
@@ -22,9 +22,9 @@ import (
 //
 // Under the cells go the dials, each next to the key that turns it, and the
 // checkout the task runs in.
-func (m Model) overviewVitals(t view.Task, w int) []string {
-	p := m.opts.Words
-	sum := parseDiffSummary(m.diff)
+func (e Env) vitals(t view.Task, w int) []string {
+	p := e.Words
+	sum := parseDiffSummary(e.Diff)
 
 	cost := "—"
 	if t.Cost > 0 {
@@ -35,7 +35,7 @@ func (m Model) overviewVitals(t view.Task, w int) []string {
 
 	out := prose.Strip([]prose.Stat{
 		{Label: p.T("overview.cost", "cost"), Value: cost, Role: theme.OK},
-		{Label: p.T("overview.duration", "duration"), Value: cells.Elapsed(m.now, t.Since), Role: theme.Accent},
+		{Label: p.T("overview.duration", "duration"), Value: cells.Elapsed(e.Now, t.Since), Role: theme.Accent},
 		{
 			Label: p.T("overview.phases", "flow"),
 			Value: cells.OrDef(t.Flow, flow.Default),
@@ -46,7 +46,7 @@ func (m Model) overviewVitals(t view.Task, w int) []string {
 
 	out = append(out, "")
 
-	for _, l := range prose.Fields(m.dials(t), gridColumns(w), w-2*len(prose.Gutter)) {
+	for _, l := range prose.Fields(e.dials(t), gridColumns(w), w-2*len(prose.Gutter)) {
 		out = append(out, prose.Gutter+l)
 	}
 
@@ -61,21 +61,8 @@ func (m Model) overviewVitals(t view.Task, w int) []string {
 // dials is what the task would run on and the key that changes each one.
 // The key sits against its own value rather than in the footer: [E] is not a
 // gesture the pane offers, it is what edits the word in front of it.
-func (m Model) dials(t view.Task) []prose.Field {
-	// A task that has run carries its own engine and model. One that has not
-	// shows what it would run on, which is the knob and then the setting
-	// behind it — not the words claude and sonnet, which were the answer here
-	// on builds that have neither.
-	eng := cells.OrDef(t.Engine, m.dialEngine(m.knobs.Engine))
-
-	models, _ := m.modelsFor(eng)
-	mod := cells.OrDef(t.Model, cells.OrDef(m.knobs.Model, cells.First(models)))
-
-	// A window whose engines port answers nothing has no engine and no model
-	// to name here, and a dash says so without naming one it has not.
-	eng, mod = cells.OrDef(eng, unsetDial), cells.OrDef(mod, unsetDial)
-
-	p := m.opts.Words
+func (e Env) dials(t view.Task) []prose.Field {
+	p := e.Words
 	dial := func(label, key, value string) prose.Field {
 		return prose.Field{
 			Label: label,
@@ -85,22 +72,22 @@ func (m Model) dials(t view.Task) []prose.Field {
 	}
 
 	return []prose.Field{
-		dial(p.T("overview.engine", "engine"), "k", eng+" "+mod),
-		dial(p.T("overview.effort", "effort"), "E", cells.OrDef(m.knobs.Effort, "high")),
-		dial(p.T("overview.thinking", "thinking"), "t", cells.OrDef(m.knobs.Thinking, "adaptive")),
+		dial(p.T("overview.engine", "engine"), "k", e.Dials.Engine+" "+e.Dials.Model),
+		dial(p.T("overview.effort", "effort"), "E", cells.OrDef(e.Dials.Effort, "high")),
+		dial(p.T("overview.thinking", "thinking"), "t", cells.OrDef(e.Dials.Thinking, "adaptive")),
 		dial(p.T("overview.flow", "flow"), "F", cells.OrDef(t.Flow, flow.Default)),
 	}
 }
 
 // overviewChanges is what the run did to the working tree: the two numbers
 // that say how big it was, and the files it touched.
-func (m Model) overviewChanges(w int) []string {
-	p := m.opts.Words
-	sum := parseDiffSummary(m.diff)
-	head := m.sectionHead(foldChanges, p.T("overview.code_impact", "changes"),
+func (e Env) changes(w int) []string {
+	p := e.Words
+	sum := parseDiffSummary(e.Diff)
+	head := e.sectionHead(FoldChanges, p.T("overview.code_impact", "changes"),
 		plusMinus(sum, false), w)
 
-	if m.folded(foldChanges) {
+	if e.folded(FoldChanges) {
 		return []string{head, ""}
 	}
 
@@ -149,15 +136,15 @@ const overviewFileCap = 4
 
 // overviewActions is the toolbar: what this task can be moved along with,
 // each key against the thing it does.
-func (m Model) overviewActions(w int) []string {
-	p := m.opts.Words
+func (e Env) actions(w int) []string {
+	p := e.Words
 
 	act := func(key, label string) prose.Field {
 		return prose.Field{Label: label, Value: theme.Paint(theme.Live).Render(key)}
 	}
 
-	head := m.sectionHead(foldDeliver, p.T("overview.quick_actions", "deliver"), "", w)
-	if m.folded(foldDeliver) {
+	head := e.sectionHead(FoldDeliver, p.T("overview.quick_actions", "deliver"), "", w)
+	if e.folded(FoldDeliver) {
 		return []string{head, ""}
 	}
 
@@ -177,7 +164,7 @@ func (m Model) overviewActions(w int) []string {
 		out = append(out, prose.Gutter+l)
 	}
 
-	return append(append(out, m.handOutRows()...), "")
+	return append(append(out, HandOut(e)...), "")
 }
 
 // plusMinus is the two numbers a diff is judged by. A side that did not

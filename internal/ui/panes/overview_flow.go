@@ -1,11 +1,10 @@
-package ui
+package panes
 
 import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/ui/cells"
-	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/ui/prose"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
@@ -13,32 +12,32 @@ import (
 
 // finishedPhases is every phase of this task that stopped, however it
 // stopped.
-func (m Model) finishedPhases() []view.Entry {
+func (e Env) finishedPhases() []view.Entry {
 	var done []view.Entry
 
-	for _, e := range m.entries {
-		if e.Phase == "" {
+	for _, entry := range e.Entries {
+		if entry.Phase == "" {
 			continue
 		}
 
-		switch e.What() {
+		switch entry.What() {
 		case view.EntryFinished, view.EntryFailed, view.EntryCancelled:
-			done = append(done, e)
+			done = append(done, entry)
 		}
 	}
 
 	return done
 }
 
-// overviewPhases renders the single focused Flow card in Overview: what the
-// flow is doing right now (or how it concluded), while leaving the complete
-// multi-phase historical tree and details for Tab 2 [Flow].
-func (m Model) overviewPhases(t view.Task, w int) []string {
-	p := m.opts.Words
+// phases is the one focused flow card on the overview: what the flow is
+// doing right now, or how it concluded. The whole tree, phase by phase, is
+// the pane next door.
+func (e Env) phases(t view.Task, w int) []string {
+	p := e.Words
 	flowName := cells.OrDef(t.Flow, flow.Default)
-	head := m.sectionHead(foldPhases, p.T("overview.execution_summary", "flow"), flowName, w)
+	head := e.sectionHead(FoldPhases, p.T("overview.execution_summary", "flow"), flowName, w)
 
-	if m.folded(foldPhases) {
+	if e.folded(FoldPhases) {
 		return []string{head, ""}
 	}
 
@@ -46,21 +45,21 @@ func (m Model) overviewPhases(t view.Task, w int) []string {
 
 	switch t.Band {
 	case view.Running:
-		out = append(out, m.liveFlowCard(t, flowName, w)...)
+		out = append(out, e.liveFlowCard(t, flowName, w)...)
 	case view.NeedsYou:
-		out = append(out, m.waitingFlowCard(t, flowName)...)
+		out = append(out, e.waitingFlowCard(t, flowName)...)
 	case view.Done:
-		out = append(out, m.doneFlowCard(t, flowName)...)
+		out = append(out, e.doneFlowCard(t, flowName)...)
 	default:
-		out = append(out, m.todoFlowCard(flowName)...)
+		out = append(out, e.todoFlowCard(flowName)...)
 	}
 
 	return append(out, "")
 }
 
-func (m Model) liveFlowCard(t view.Task, flowName string, w int) []string {
-	p := m.opts.Words
-	glyph := m.runGlyph(keymap.Working(t))
+func (e Env) liveFlowCard(t view.Task, flowName string, w int) []string {
+	p := e.Words
+	glyph := e.Live
 	step := cells.OrDef(t.Phase, "running")
 	now := cells.OrDef(t.CurrentAction, p.T("overview.running_model", "running model..."))
 
@@ -87,9 +86,9 @@ func (m Model) liveFlowCard(t view.Task, flowName string, w int) []string {
 	return out
 }
 
-func (m Model) waitingFlowCard(t view.Task, flowName string) []string {
-	p := m.opts.Words
-	stateWord, role := m.stateWord(t)
+func (e Env) waitingFlowCard(t view.Task, flowName string) []string {
+	p := e.Words
+	stateWord, role := e.Word, e.Role
 	step := cells.OrDef(t.Phase, stateWord)
 
 	return []string{
@@ -101,8 +100,8 @@ func (m Model) waitingFlowCard(t view.Task, flowName string) []string {
 	}
 }
 
-func (m Model) doneFlowCard(t view.Task, flowName string) []string {
-	p := m.opts.Words
+func (e Env) doneFlowCard(t view.Task, flowName string) []string {
+	p := e.Words
 	mark := theme.Paint(theme.OK).Render("✓ ")
 	verdict := p.T("overview.flow_completed", "flow completed successfully")
 
@@ -116,7 +115,7 @@ func (m Model) doneFlowCard(t view.Task, flowName string) []string {
 			" · " + theme.Paint(theme.Accent).Render(flowName),
 	}
 
-	if done := m.finishedPhases(); len(done) > 0 {
+	if done := e.finishedPhases(); len(done) > 0 {
 		out = append(out, prose.Gutter+"  "+theme.Text(theme.Secondary).Render(
 			p.P("overview.flow_finished_phases", len(done),
 				"{n} phase executed", "{n} phases executed")))
@@ -128,8 +127,8 @@ func (m Model) doneFlowCard(t view.Task, flowName string) []string {
 	return out
 }
 
-func (m Model) todoFlowCard(flowName string) []string {
-	p := m.opts.Words
+func (e Env) todoFlowCard(flowName string) []string {
+	p := e.Words
 
 	return []string{
 		prose.Gutter + theme.Paint(theme.Dim).Render("○ ") + theme.Text(theme.Primary).Bold(true).Render(

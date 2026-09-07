@@ -8,15 +8,16 @@ import (
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/panes"
 	"github.com/e1i0r/orbit/internal/ui/point"
 )
 
 // foldLabels is what each section is headed with in English, which is the
 // language every window in these tests is drawn in.
 var foldLabels = map[string]string{
-	foldPhases:  "FLOW",
-	foldChanges: "CHANGES",
-	foldDeliver: "DELIVER",
+	panes.FoldPhases:  "FLOW",
+	panes.FoldChanges: "CHANGES",
+	panes.FoldDeliver: "DELIVER",
 }
 
 // screenRows is the whole window as it is drawn, one string per terminal
@@ -64,7 +65,7 @@ func TestAFoldedSectionKeepsOnlyItsHead(t *testing.T) {
 		t.Fatalf("the open pane does not carry flow card hint:\n%s", before)
 	}
 
-	after := overviewText(m.fold(foldPhases))
+	after := overviewText(m.fold(panes.FoldPhases))
 
 	if strings.Contains(after, "press [2] for full flow tree") {
 		t.Errorf("a folded section still sets what it holds:\n%s", after)
@@ -91,7 +92,7 @@ func TestTheHeadsAreWhereTheHitTestSaysTheyAre(t *testing.T) {
 	m, _ := openWith(t, "ACME-2662", fixtureEntries())
 	lines := strings.Split(overviewText(m), "\n")
 
-	rows := m.overviewFoldRows()
+	rows := panes.FoldRows(m.panesEnv())
 	if len(rows) != len(foldLabels) {
 		t.Fatalf("the hit test knows %d heads, want %d", len(rows), len(foldLabels))
 	}
@@ -138,15 +139,15 @@ func TestAHeadIsClickableWhereItIsDrawn(t *testing.T) {
 func TestClickingAHeadFoldsThatSection(t *testing.T) {
 	m, _ := openWith(t, "ACME-2662", fixtureEntries())
 
-	next, _ := m.leftClick(point.Target{Kind: point.Fold, Key: foldChanges})
+	next, _ := m.leftClick(point.Target{Kind: point.Fold, Key: panes.FoldChanges})
 	m = asModel(t, next)
 
-	if !m.folded(foldChanges) {
+	if !m.folded(panes.FoldChanges) {
 		t.Error("clicking the changes head left it open")
 	}
 
-	next, _ = m.leftClick(point.Target{Kind: point.Fold, Key: foldChanges})
-	if m = asModel(t, next); m.folded(foldChanges) {
+	next, _ = m.leftClick(point.Target{Kind: point.Fold, Key: panes.FoldChanges})
+	if m = asModel(t, next); m.folded(panes.FoldChanges) {
 		t.Error("clicking a folded head left it closed")
 	}
 }
@@ -160,7 +161,7 @@ func TestOneKeyFoldsEverySection(t *testing.T) {
 	next, _ := m.detailKey(keystroke("z"))
 	m = asModel(t, next)
 
-	for _, key := range overviewFolds {
+	for _, key := range panes.Sections {
 		if !m.folded(key) {
 			t.Errorf("z left the %s section open", key)
 		}
@@ -169,7 +170,7 @@ func TestOneKeyFoldsEverySection(t *testing.T) {
 	next, _ = m.detailKey(keystroke("z"))
 	m = asModel(t, next)
 
-	for _, key := range overviewFolds {
+	for _, key := range panes.Sections {
 		if m.folded(key) {
 			t.Errorf("z on a folded pane left the %s section closed", key)
 		}
@@ -190,7 +191,7 @@ func TestAHeadIsStillItselfAfterAScroll(t *testing.T) {
 		t.Fatalf("the flow head was not drawn after a scroll:\n%s", strings.Join(lines, "\n"))
 	}
 
-	if got := m.hit(4, y); got.Kind != point.Fold || got.Key != foldPhases {
+	if got := m.hit(4, y); got.Kind != point.Fold || got.Key != panes.FoldPhases {
 		t.Errorf("a click on the scrolled flow head = %+v, want the flow fold", got)
 	}
 }
@@ -203,7 +204,7 @@ func TestOnlyTheOverviewHasHeads(t *testing.T) {
 	m, _ := openWith(t, "ACME-2662", fixtureEntries())
 	m = showing(t, m, tabTimeline)
 
-	for row := range m.overviewFoldRows() {
+	for row := range panes.FoldRows(m.panesEnv()) {
 		if key, ok := m.hitFold(row); ok {
 			t.Errorf("row %d of the timeline answers the %s fold", row, key)
 		}

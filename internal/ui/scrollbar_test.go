@@ -8,6 +8,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/panes"
 	"github.com/e1i0r/orbit/internal/ui/point"
 )
 
@@ -256,7 +257,7 @@ func TestTheWheelTurnsOverTheWholePane(t *testing.T) {
 	top := barTop(t, m) - m.frame.Body.Y
 
 	head := -1
-	for doc := range m.overviewFoldRows() {
+	for doc := range panes.FoldRows(m.panesEnv()) {
 		if doc >= 4 && (head < 0 || doc < head) {
 			head = doc
 		}
