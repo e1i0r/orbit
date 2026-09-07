@@ -1,7 +1,7 @@
 export PATH := /usr/local/go/bin:$(HOME)/go/bin:$(PATH)
 GO ?= $(shell which go 2>/dev/null || echo /usr/local/go/bin/go)
 
-.PHONY: check fmt vet lint test coverage tidy build install run
+.PHONY: check fmt vet lint test coverage tidy build install run demo tapes posters
 
 # check is what a contributor runs before pushing, so it has to be what CI
 # runs: lint used to be in CI and not here, which meant a green local check
@@ -87,3 +87,44 @@ install: build
 # instead — so this stays the one command a contributor needs to remember.
 run:
 	$(GO) run ./cmd/orbit top $(ARGS)
+
+# demo seeds a board to shoot the recordings against: two repositories under
+# ~/code and a state root of its own under .demo/, with the record written
+# through the doors that write it — orbit new, the migration that runs before
+# every command, and orbit supervisor -by. It calls no engine, and it never
+# touches the operator's own ~/.orbit.
+# The binary is built without the version stamp on purpose: a build that knows
+# its own version asks GitHub for a newer one and puts an upgrade banner across
+# the header, which would be in every frame of every recording. A build from
+# source calls itself dev and is never offered one.
+demo:
+	$(GO) build -o orbit ./cmd/orbit
+	ORBIT_BIN=$(PWD)/orbit assets/tapes/seed.sh $(PWD)/.demo
+
+# tapes shoots every recording that can be made against that board and writes
+# assets/ and site/. Three of the nine need a run actually going and are shot
+# by hand; assets/tapes/README.md says which and how.
+SEEDED = flow-start flow-menus flow-reading flow-supervisor flow-knowledge
+
+tapes: demo
+	@for t in $(SEEDED); do \
+		echo "shooting $$t"; \
+		ORBIT_DEMO_HOME=$(PWD)/.demo/home \
+		ORBIT_DEMO_FRESH=$(HOME)/.orbit-demo \
+		ORBIT_DEMO_BIN=$(PWD) \
+		vhs assets/tapes/$$t.tape || exit 1; \
+	done
+	@$(MAKE) posters
+
+# posters is the still the landing shows before a video is played. It is taken
+# from a third of the way in rather than from the first frame: the first frame
+# of every one of these is an empty shell, and a page of nine empty shells says
+# nothing about what is in them.
+posters:
+	@for f in site/flow-*.mp4; do \
+		out=$${f%.mp4}-poster.jpg; \
+		dur=$$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$$f"); \
+		at=$$(awk -v d="$$dur" 'BEGIN { printf "%.2f", d / 3 }'); \
+		ffmpeg -y -v error -ss "$$at" -i "$$f" -frames:v 1 -q:v 3 "$$out"; \
+		echo "poster $$out"; \
+	done

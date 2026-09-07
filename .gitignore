@@ -47,3 +47,6 @@ site/install.sh
 # the shell never expanded it. The 24MB binary that landed there was
 # committed once; this keeps the next slip out of the tree.
 ~/
+
+# The board the recordings are shot against, rebuilt by `make demo`.
+/.demo/
