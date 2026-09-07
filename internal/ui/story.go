@@ -9,6 +9,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/prose"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
@@ -35,7 +36,7 @@ func (m Model) storyLines(w int) []string {
 	p := m.opts.Words
 
 	out := []string{
-		paneGutter + theme.Text(theme.Secondary).Render(p.T("overview.story", "how it happened")),
+		prose.Gutter + theme.Text(theme.Secondary).Render(p.T("overview.story", "how it happened")),
 		"",
 	}
 
@@ -76,13 +77,13 @@ func (m Model) walkLines(w int) []string {
 
 	out := []string{
 		"",
-		paneGutter + "        " + theme.Text(theme.Tertiary).Render(p.P("story.changed", len(steps),
+		prose.Gutter + "        " + theme.Text(theme.Tertiary).Render(p.P("story.changed", len(steps),
 			"{n} file changed, in the order it got there",
 			"{n} files changed, in the order it got there")),
 	}
 
 	for _, s := range steps {
-		out = append(out, paneGutter+"        "+theme.Paint(theme.OK).Render(cells.Fit(s.Path, max(20, w-2*len(paneGutter)-10)))+
+		out = append(out, prose.Gutter+"        "+theme.Paint(theme.OK).Render(cells.Fit(s.Path, max(20, w-2*len(prose.Gutter)-10)))+
 			theme.Text(theme.Tertiary).Render(touches(p, s)))
 	}
 
@@ -119,7 +120,7 @@ func storyRow(depth int, text, about string, w int) string {
 		line += strings.Repeat(" ", room) + theme.Text(theme.Tertiary).Render(about)
 	}
 
-	return paneGutter + line
+	return prose.Gutter + line
 }
 
 // newestStory is the story of the attempt that stands.

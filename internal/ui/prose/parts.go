@@ -1,4 +1,4 @@
-package ui
+package prose
 
 import (
 	"strings"
@@ -9,12 +9,10 @@ import (
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
-// The shapes a pane is built out of.
+// The shapes a screen is built out of.
 //
-// tokens.go says what paper and what ink exist; this says what they are
-// assembled into — a card, a grid of fields, a badge. A pane asks for a part
-// and gets the same one every other pane gets, which is the difference
-// between a window with a look and eleven tabs that each invented one.
+// theme's tokens say what paper and what ink exist; this says what they are
+// assembled into — a card, a grid of fields, a badge.
 //
 // Every part returns lines rather than one string, because a pane is a list
 // of lines that the frame scrolls, and a part that returned a block would
@@ -30,14 +28,14 @@ const cardChrome = 4
 // the card, so a strip that cannot afford this asks for something else.
 const cardFloor = 12
 
-// card lays a block on raised paper inside a rounded border, with a quiet
+// Card lays a block on raised paper inside a rounded border, with a quiet
 // uppercase title on the first line the way a detail page names the block
 // before stating it.
 //
 // A title is optional: the strip of figures at the top of a pane is four
 // cards whose titles are the figures' own labels, and a card around a code
 // listing has nothing to add above it.
-func card(title string, body []string, width int) []string {
+func Card(title string, body []string, width int) []string {
 	outer := max(cardFloor, width)
 	inner := outer - cardChrome
 
@@ -59,26 +57,26 @@ func card(title string, body []string, width int) []string {
 	return strings.Split(box.Render(strings.Join(lines, "\n")), "\n")
 }
 
-// field is one thing a card states about its subject: what it is called,
+// Field is one thing a card states about its subject: what it is called,
 // what it says, and the key that acts on it.
 //
 // The key is its own string rather than part of the label because the label
 // is upper-cased and a keystroke is not: written into the label, thinking's
 // t was drawn as [T], which on this screen is the key for more tests.
-type field struct {
-	label string
-	value string
-	key   string
+type Field struct {
+	Label string
+	Value string
+	Key   string
 }
 
-// fields sets label-over-value pairs in columns: the label small, quiet and
+// Fields sets label-over-value pairs in columns: the label small, quiet and
 // upper-cased above, the value at full contrast under it, and a blank line
 // between rows.
 //
 // Two lines per pair rather than a label column and a value column, because
 // a terminal has one type size — a label beside its value can only be told
 // from it by colour, and above it, it is told by position as well.
-func fields(pairs []field, columns, width int) []string {
+func Fields(pairs []Field, columns, width int) []string {
 	if columns < 1 || len(pairs) == 0 {
 		return nil
 	}
@@ -93,13 +91,13 @@ func fields(pairs []field, columns, width int) []string {
 		for col := 0; col < columns && row+col < len(pairs); col++ {
 			p := pairs[row+col]
 
-			label := strings.ToUpper(p.label)
-			if p.key != "" {
-				label += " [" + p.key + "]"
+			label := strings.ToUpper(p.Label)
+			if p.Key != "" {
+				label += " [" + p.Key + "]"
 			}
 
 			labels += cells.Pad(theme.Text(theme.Tertiary).Render(label), cell, false)
-			values += cells.Pad(p.value, cell, false)
+			values += cells.Pad(p.Value, cell, false)
 		}
 
 		if row > 0 {
@@ -112,19 +110,14 @@ func fields(pairs []field, columns, width int) []string {
 	return out
 }
 
-// badge is a soft pill: the role's own hue, on paper tinted with it. It is
+// Badge is a soft pill: the role's own hue, on paper tinted with it. It is
 // what the saturated blocks become — legible at a glance without being the
 // loudest thing on a pane that has ten other things to say.
-func badge(text string, r theme.Role) string {
+func Badge(text string, r theme.Role) string {
 	return theme.Tint(r).Render(text)
 }
 
-// tabGap is the space between two chips in a strip. Two cells rather than
-// one: the chips carry no brackets, so the gap is the only thing saying
-// where one tab ends.
-const tabGap = "  "
-
-// tabChip is one tab of the strip: its key, then its name, and — on the tab
+// Chip is one tab of the strip: its key, then its name, and — on the tab
 // being read — a band behind both.
 //
 // The band is the mark the chosen row of the knobs carries, for the same
@@ -135,7 +128,7 @@ const tabGap = "  "
 //
 // It returns what it drew and the plain text of it, because the strip is
 // clickable and a hit test on rendered text would be counting escape codes.
-func tabChip(key, text string, active bool) (plain, rendered string) {
+func Chip(key, text string, active bool) (plain, rendered string) {
 	// A tab too narrow to be named keeps the brackets the named ones drop:
 	// a bare digit in a row of digits does not say it is a key to press.
 	if text == "" {
@@ -152,7 +145,3 @@ func tabChip(key, text string, active bool) (plain, rendered string) {
 
 	return plain, theme.Paint(theme.Accent).Bold(true).Render(key) + theme.Text(theme.Tertiary).Render(" "+text)
 }
-
-// The two cells a scroll bar is drawn with: a rail the height of the pane
-// and a thumb over the part of it the reader is looking at.
-const ()

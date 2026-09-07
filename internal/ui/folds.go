@@ -4,6 +4,7 @@ import (
 	"maps"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/e1i0r/orbit/internal/ui/prose"
 )
 
 // Folding: the sections of the task view open and close, and the head of
@@ -33,7 +34,7 @@ func (m Model) folded(key string) bool { return m.folds[key] }
 
 // sectionHead is one section's head, in the state that section is in.
 func (m Model) sectionHead(key, label, note string, w int) string {
-	return section(label, note, w, !m.folded(key))
+	return prose.Section(label, note, w, !m.folded(key))
 }
 
 // fold closes an open section and opens a closed one.

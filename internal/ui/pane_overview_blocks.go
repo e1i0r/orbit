@@ -10,6 +10,7 @@ import (
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/markdown"
+	"github.com/e1i0r/orbit/internal/ui/prose"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -32,26 +33,26 @@ func (m Model) overviewVitals(t view.Task, w int) []string {
 
 	changed := plusMinus(sum, false)
 
-	out := statStrip([]stat{
-		{label: p.T("overview.cost", "cost"), value: cost, role: theme.OK},
-		{label: p.T("overview.duration", "duration"), value: cells.Elapsed(m.now, t.Since), role: theme.Accent},
+	out := prose.Strip([]prose.Stat{
+		{Label: p.T("overview.cost", "cost"), Value: cost, Role: theme.OK},
+		{Label: p.T("overview.duration", "duration"), Value: cells.Elapsed(m.now, t.Since), Role: theme.Accent},
 		{
-			label: p.T("overview.phases", "flow"),
-			value: cells.OrDef(t.Flow, flow.Default),
-			role:  theme.Accent,
+			Label: p.T("overview.phases", "flow"),
+			Value: cells.OrDef(t.Flow, flow.Default),
+			Role:  theme.Accent,
 		},
-		{label: p.T("overview.changed", "changed"), value: changed, role: theme.Live},
+		{Label: p.T("overview.changed", "changed"), Value: changed, Role: theme.Live},
 	}, w)
 
 	out = append(out, "")
 
-	for _, l := range fields(m.dials(t), gridColumns(w), w-2*len(paneGutter)) {
-		out = append(out, paneGutter+l)
+	for _, l := range prose.Fields(m.dials(t), gridColumns(w), w-2*len(prose.Gutter)) {
+		out = append(out, prose.Gutter+l)
 	}
 
 	if t.RepoPath != "" {
-		tail := tailFit(homeTilde(t.RepoPath), min(markdown.Measure, w-2*len(paneGutter)))
-		out = append(out, paneGutter+theme.Text(theme.Tertiary).Render(tail))
+		tail := tailFit(homeTilde(t.RepoPath), min(markdown.Measure, w-2*len(prose.Gutter)))
+		out = append(out, prose.Gutter+theme.Text(theme.Tertiary).Render(tail))
 	}
 
 	return append(out, "")
@@ -60,7 +61,7 @@ func (m Model) overviewVitals(t view.Task, w int) []string {
 // dials is what the task would run on and the key that changes each one.
 // The key sits against its own value rather than in the footer: [E] is not a
 // gesture the pane offers, it is what edits the word in front of it.
-func (m Model) dials(t view.Task) []field {
+func (m Model) dials(t view.Task) []prose.Field {
 	// A task that has run carries its own engine and model. One that has not
 	// shows what it would run on, which is the knob and then the setting
 	// behind it — not the words claude and sonnet, which were the answer here
@@ -75,15 +76,15 @@ func (m Model) dials(t view.Task) []field {
 	eng, mod = cells.OrDef(eng, unsetDial), cells.OrDef(mod, unsetDial)
 
 	p := m.opts.Words
-	dial := func(label, key, value string) field {
-		return field{
-			label: label,
-			key:   key,
-			value: theme.Paint(theme.Accent).Render(value),
+	dial := func(label, key, value string) prose.Field {
+		return prose.Field{
+			Label: label,
+			Key:   key,
+			Value: theme.Paint(theme.Accent).Render(value),
 		}
 	}
 
-	return []field{
+	return []prose.Field{
 		dial(p.T("overview.engine", "engine"), "k", eng+" "+mod),
 		dial(p.T("overview.effort", "effort"), "E", cells.OrDef(m.knobs.Effort, "high")),
 		dial(p.T("overview.thinking", "thinking"), "t", cells.OrDef(m.knobs.Thinking, "adaptive")),
@@ -107,10 +108,10 @@ func (m Model) overviewChanges(w int) []string {
 
 	if len(sum.files) == 0 && sum.added == 0 && sum.deleted == 0 {
 		msg := p.T("overview.no_diff", "no working tree modifications recorded")
-		return append(out, paneGutter+theme.Text(theme.Tertiary).Render(msg), "")
+		return append(out, prose.Gutter+theme.Text(theme.Tertiary).Render(msg), "")
 	}
 
-	out = append(out, paneGutter+meta(
+	out = append(out, prose.Gutter+prose.Meta(
 		plusMinus(sum, true),
 		theme.Text(theme.Secondary).Render(p.P("overview.files", len(sum.files), "{n} file", "{n} files")),
 	))
@@ -119,12 +120,12 @@ func (m Model) overviewChanges(w int) []string {
 		if i >= overviewFileCap {
 			rest := len(sum.files) - overviewFileCap
 
-			return append(out, paneGutter+"  "+theme.Text(theme.Secondary).Render(p.P("overview.more_files", rest,
+			return append(out, prose.Gutter+"  "+theme.Text(theme.Secondary).Render(p.P("overview.more_files", rest,
 				"… and {n} more file", "… and {n} more files")), "")
 		}
 
-		trimmed := cells.Fit(f, min(markdown.Measure, w-2*len(paneGutter)-2))
-		out = append(out, paneGutter+"  "+theme.Paint(theme.OK).Render(trimmed))
+		trimmed := cells.Fit(f, min(markdown.Measure, w-2*len(prose.Gutter)-2))
+		out = append(out, prose.Gutter+"  "+theme.Paint(theme.OK).Render(trimmed))
 	}
 
 	return append(out, "")
@@ -151,8 +152,8 @@ const overviewFileCap = 4
 func (m Model) overviewActions(w int) []string {
 	p := m.opts.Words
 
-	act := func(key, label string) field {
-		return field{label: label, value: theme.Paint(theme.Live).Render(key)}
+	act := func(key, label string) prose.Field {
+		return prose.Field{Label: label, Value: theme.Paint(theme.Live).Render(key)}
 	}
 
 	head := m.sectionHead(foldDeliver, p.T("overview.quick_actions", "deliver"), "", w)
@@ -161,7 +162,7 @@ func (m Model) overviewActions(w int) []string {
 	}
 
 	out := []string{head}
-	for _, l := range fields([]field{
+	for _, l := range prose.Fields([]prose.Field{
 		act("p", p.T("overview.action_pr", "create PR")),
 		act("u", p.T("overview.action_update_pr", "update PR")),
 		act("M", p.T("overview.action_merge_pr", "merge PR")),
@@ -172,8 +173,8 @@ func (m Model) overviewActions(w int) []string {
 		act("D", p.T("overview.action_review", "deep review")),
 		act("a", p.T("overview.action_feedback", "feedback")),
 		act("0", p.T("overview.action_diff", "diff")),
-	}, gridColumns(w), w-2*len(paneGutter)) {
-		out = append(out, paneGutter+l)
+	}, gridColumns(w), w-2*len(prose.Gutter)) {
+		out = append(out, prose.Gutter+l)
 	}
 
 	return append(append(out, m.handOutRows()...), "")

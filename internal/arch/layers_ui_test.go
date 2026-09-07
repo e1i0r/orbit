@@ -30,6 +30,11 @@ var windowLayers = map[string][]string{
 		"internal/ui/cells", "internal/ui/keymap", "internal/ui/layout", "internal/ui/point",
 		"internal/ui/theme", "internal/words",
 	},
+	// internal/ui/prose is how a block of text is set, and the shapes a
+	// screen is built out of: a gutter, a section head, a card, a grid of
+	// fields, a badge. theme says what a piece of text means; this says what
+	// it is assembled into, and it decides nothing about what is in it.
+	"internal/ui/prose": {"internal/ui/cells", "internal/ui/markdown", "internal/ui/theme"},
 	// internal/ui/panes is the body of the task screen: the twelve ways one
 	// run can be read. Every one of them is a function of the record and of
 	// what the reader has folded, which the window hands over — a pane can

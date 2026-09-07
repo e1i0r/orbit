@@ -24,6 +24,7 @@ import (
 	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/markdown"
 	"github.com/e1i0r/orbit/internal/ui/patch"
+	"github.com/e1i0r/orbit/internal/ui/prose"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -150,6 +151,11 @@ func (m Model) detailHeadLines(w int) []string {
 	return out
 }
 
+// tabGap is the space between two chips in a strip. Two cells rather than
+// one: the chips carry no brackets, so the gap is the only thing saying
+// where one tab ends.
+const tabGap = "  "
+
 // tabStripReserve is the room the strip leaves at its right edge for the
 // note that sits there — the attempt number, or the diff saying it had no
 // base to compare against, which is the longest of them. A tier that filled
@@ -194,7 +200,7 @@ func (m Model) tabTags(w int) []tabTagInfo {
 
 		for i, n := range names {
 			k := paneKey(n.tab)
-			plain, rend := tabChip(k, tier(n), n.tab == m.tab)
+			plain, rend := prose.Chip(k, tier(n), n.tab == m.tab)
 			tw := lipgloss.Width(plain)
 			tags[i] = tabTagInfo{tab: n.tab, key: k, text: plain, rendered: rend, width: tw}
 			total += tw + len(tabGap)

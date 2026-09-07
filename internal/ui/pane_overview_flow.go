@@ -6,6 +6,7 @@ import (
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/keymap"
+	"github.com/e1i0r/orbit/internal/ui/prose"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -63,24 +64,24 @@ func (m Model) liveFlowCard(t view.Task, flowName string, w int) []string {
 	step := cells.OrDef(t.Phase, "running")
 	now := cells.OrDef(t.CurrentAction, p.T("overview.running_model", "running model..."))
 
-	now = cells.Fit(now, max(20, w-lipgloss.Width(paneGutter)-lipgloss.Width(glyph)-4))
+	now = cells.Fit(now, max(20, w-lipgloss.Width(prose.Gutter)-lipgloss.Width(glyph)-4))
 
 	out := []string{
-		paneGutter + theme.Paint(theme.Live).Render(glyph) + theme.Text(theme.Primary).Bold(true).Render(step) +
+		prose.Gutter + theme.Paint(theme.Live).Render(glyph) + theme.Text(theme.Primary).Bold(true).Render(step) +
 			" · " + theme.Paint(theme.Accent).Render(flowName),
-		paneGutter + "  " + theme.Paint(theme.Live).Render(now),
+		prose.Gutter + "  " + theme.Paint(theme.Live).Render(now),
 	}
 
 	if t.CurrentThought != "" {
-		out = append(out, prose(t.CurrentThought, w, paneGutter+"  ")...)
+		out = append(out, prose.Quote(t.CurrentThought, w, prose.Gutter+"  ")...)
 	}
 
 	if t.ToolCallCount > 0 {
-		out = append(out, paneGutter+"  "+theme.Text(theme.Secondary).Render(
+		out = append(out, prose.Gutter+"  "+theme.Text(theme.Secondary).Render(
 			p.P("overview.tools", t.ToolCallCount, "{n} tool call", "{n} tool calls")))
 	}
 
-	out = append(out, paneGutter+"  "+theme.Text(theme.Tertiary).Render(
+	out = append(out, prose.Gutter+"  "+theme.Text(theme.Tertiary).Render(
 		p.T("overview.flow_full_tree_hint", "press [2] for full flow tree")))
 
 	return out
@@ -92,10 +93,10 @@ func (m Model) waitingFlowCard(t view.Task, flowName string) []string {
 	step := cells.OrDef(t.Phase, stateWord)
 
 	return []string{
-		paneGutter + theme.Paint(role).Render("⏸ ") + theme.Text(theme.Primary).Bold(true).Render(step) +
+		prose.Gutter + theme.Paint(role).Render("⏸ ") + theme.Text(theme.Primary).Bold(true).Render(step) +
 			" · " + theme.Paint(theme.Accent).Render(flowName),
-		paneGutter + "  " + theme.Paint(role).Render(stateWord),
-		paneGutter + "  " + theme.Text(theme.Tertiary).Render(
+		prose.Gutter + "  " + theme.Paint(role).Render(stateWord),
+		prose.Gutter + "  " + theme.Text(theme.Tertiary).Render(
 			p.T("overview.flow_full_tree_hint", "press [2] for full flow tree")),
 	}
 }
@@ -111,17 +112,17 @@ func (m Model) doneFlowCard(t view.Task, flowName string) []string {
 	}
 
 	out := []string{
-		paneGutter + mark + theme.Text(theme.Primary).Bold(true).Render(verdict) +
+		prose.Gutter + mark + theme.Text(theme.Primary).Bold(true).Render(verdict) +
 			" · " + theme.Paint(theme.Accent).Render(flowName),
 	}
 
 	if done := m.finishedPhases(); len(done) > 0 {
-		out = append(out, paneGutter+"  "+theme.Text(theme.Secondary).Render(
+		out = append(out, prose.Gutter+"  "+theme.Text(theme.Secondary).Render(
 			p.P("overview.flow_finished_phases", len(done),
 				"{n} phase executed", "{n} phases executed")))
 	}
 
-	out = append(out, paneGutter+"  "+theme.Text(theme.Tertiary).Render(
+	out = append(out, prose.Gutter+"  "+theme.Text(theme.Tertiary).Render(
 		p.T("overview.flow_full_tree_hint", "press [2] for full flow tree")))
 
 	return out
@@ -131,9 +132,9 @@ func (m Model) todoFlowCard(flowName string) []string {
 	p := m.opts.Words
 
 	return []string{
-		paneGutter + theme.Paint(theme.Dim).Render("○ ") + theme.Text(theme.Primary).Bold(true).Render(
+		prose.Gutter + theme.Paint(theme.Dim).Render("○ ") + theme.Text(theme.Primary).Bold(true).Render(
 			p.T("overview.flow_ready", "ready to start")) + " · " + theme.Paint(theme.Accent).Render(flowName),
-		paneGutter + "  " + theme.Text(theme.Tertiary).Render(
+		prose.Gutter + "  " + theme.Text(theme.Tertiary).Render(
 			p.T("overview.not_started", "task has not been started yet (press [n] to start)")),
 	}
 }

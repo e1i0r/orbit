@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/prose"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -183,7 +184,7 @@ func (m Model) handOutRows() []string {
 			said += " · " + p.T("overview.deliver_ago", "asked {ago} ago", about("ago", ago))
 		}
 
-		return []string{paneGutter + theme.Paint(theme.Live).Render("⚡ "+said)}
+		return []string{prose.Gutter + theme.Paint(theme.Live).Render("⚡ "+said)}
 	}
 
 	return nil

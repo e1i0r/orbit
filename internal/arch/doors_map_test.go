@@ -68,7 +68,10 @@ var doors = map[string][]string{
 		"panes.go", "cost.go", "gates.go", "notes.go", "refused.go", "report.go", "thinking.go",
 		"timeline.go",
 	},
-	"internal/ui/point":  {"point.go"},
+	"internal/ui/point": {"point.go"},
+	// How a block of text is set, and the shapes a screen is built out of:
+	// prose.go is the typography and parts.go the assemblies.
+	"internal/ui/prose":  {"prose.go", "parts.go"},
 	"internal/ui/prompt": {"deliver.go", "flowdraft.go", "phase.go"},
 	// The engines and their quota, as the ports answer: one file, because
 	// it is a vocabulary and not an action.

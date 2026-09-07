@@ -5,6 +5,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/ui/markdown"
+	"github.com/e1i0r/orbit/internal/ui/prose"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -52,12 +53,12 @@ func (m Model) overviewLines() []string {
 	p := m.opts.Words
 
 	if m.logErr != nil {
-		return []string{paneGutter + theme.Paint(theme.Bad).Render(m.errSaid(m.logErr))}
+		return []string{prose.Gutter + theme.Paint(theme.Bad).Render(m.errSaid(m.logErr))}
 	}
 
 	t, ok := m.task(m.detail)
 	if !ok {
-		return []string{paneGutter + theme.Paint(theme.Dim).Render(p.T("detail.gone", "this task is no longer on the board"))}
+		return []string{prose.Gutter + theme.Paint(theme.Dim).Render(p.T("detail.gone", "this task is no longer on the board"))}
 	}
 
 	w := max(40, m.frame.Body.W)
@@ -84,10 +85,10 @@ func (m Model) overviewHead(t view.Task, w int) []string {
 	p := m.opts.Words
 	word, role := m.stateWord(t)
 
-	out := []string{paneGutter + meta(
+	out := []string{prose.Gutter + prose.Meta(
 		theme.Text(theme.Secondary).Render(t.ID),
 		theme.Text(theme.Secondary).Render(t.Repo),
-		badge(m.bandGlyph(t)+" "+word, role),
+		prose.Badge(m.bandGlyph(t)+" "+word, role),
 	), ""}
 
 	out = append(out, m.overviewBrief(w)...)
@@ -104,8 +105,8 @@ func (m Model) overviewHead(t view.Task, w int) []string {
 	// reader who did as it said turned thinking off and got no session. A
 	// letter written into a sentence is a letter nothing keeps true.
 	return append(out,
-		paneGutter+theme.Paint(role).Bold(true).Render("▍ "+p.T("overview.waiting_box", "NEEDS YOU")),
-		paneGutter+theme.Text(theme.Tertiary).Render(m.waitingHint(t)),
+		prose.Gutter+theme.Paint(role).Bold(true).Render("▍ "+p.T("overview.waiting_box", "NEEDS YOU")),
+		prose.Gutter+theme.Text(theme.Tertiary).Render(m.waitingHint(t)),
 		"",
 	)
 }
