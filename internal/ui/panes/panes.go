@@ -84,6 +84,25 @@ type Env struct {
 	// engines port — which is a door of the window's.
 	Dials Dials
 
+	// Files is the task's own directory as the window last listed it,
+	// FilesKnown whether an answer has landed at all, and FilesFailed why
+	// the listing could not be made. A directory nothing has answered about
+	// and one that is empty are two different sentences.
+	Files       []view.File
+	FilesKnown  bool
+	FilesFailed string
+
+	// DiffKnown and DiffFailed are the same two answers about the working
+	// tree, which the artifacts pane counts its second half by.
+	DiffKnown  bool
+	DiffFailed string
+
+	// Read is what a file the reader opened turned out to hold, and whether
+	// it has been asked for at all. A file is read when it is opened and
+	// not before: reading every file of the directory on every tick to draw
+	// a list of names would be a read nobody asked for.
+	Read func(name string) (File, bool)
+
 	// Raw is the reader's "show me what was written" switch: the panes that
 	// set markdown draw the record itself instead, framing and all, because
 	// a reader who asks for raw is asking what was written down and not what
@@ -174,3 +193,26 @@ var Sections = []string{FoldPhases, FoldChanges, FoldDeliver}
 // the worktree by it: the worktree is a checkout Orbit does not keep, so the
 // file that is not in the diff is the file the run left alone.
 func Changed(diff string) []string { return parseDiffSummary(diff).files }
+
+// A File is what an opened file turned out to hold, or why it could not be
+// read. The two are one type because a row shows one or the other and never
+// both.
+//
+// Whole is whether Text is all of it. A pane that showed the first part of a
+// file without saying so would be a pane a reader draws conclusions from
+// about the part that is not there.
+type File struct {
+	Text   string
+	Whole  bool
+	Failed string
+}
+
+// read is what one opened file holds, and no for a window built without that
+// port rather than reaching through it.
+func (e Env) read(name string) (File, bool) {
+	if e.Read == nil {
+		return File{}, false
+	}
+
+	return e.Read(name)
+}

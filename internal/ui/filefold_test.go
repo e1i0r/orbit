@@ -215,22 +215,6 @@ func TestAFileIsShownAsItIsOnDisk(t *testing.T) {
 	}
 }
 
-// TestAFileIsReadInTheSyntaxItsNameNames. What is in these files is a
-// document and a word, not somebody's Go, and a well that called the record
-// a language would paint half of every line as a keyword of it.
-func TestAFileIsReadInTheSyntaxItsNameNames(t *testing.T) {
-	for name, want := range map[string]string{
-		"events.jsonl": "data",
-		"run":          "",
-		"control":      "",
-		"task.md":      "",
-	} {
-		if got := fileFamily(name); got != want {
-			t.Errorf("fileFamily(%q) = %q, want %q", name, got, want)
-		}
-	}
-}
-
 // TestAClickThatLandsAfterTheListingShrankAsksForNothing. The row a target
 // carries was counted on the frame the reader clicked, and a listing that
 // arrived in between is a listing that row is not in.

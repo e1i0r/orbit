@@ -37,6 +37,12 @@ func (m Model) panesEnv() panes.Env {
 		Keys:        m.keys,
 		Expanded:    m.expandedDetail,
 		Diff:        m.diff,
+		DiffKnown:   m.diffKnown,
+		DiffFailed:  m.errSaid(m.diffErr),
+		Files:       m.files,
+		FilesKnown:  m.filesKnown,
+		FilesFailed: m.errSaid(m.filesErr),
+		Read:        m.fileHeld,
 		Dials:       m.taskDials(t),
 		Raw:         m.rawText,
 		Priced:      m.spends(t.Engine),
@@ -176,4 +182,28 @@ func (m Model) taskDials(t view.Task) panes.Dials {
 		Effort:   m.knobs.Effort,
 		Thinking: m.knobs.Thinking,
 	}
+}
+
+// fileHeld is what an opened file turned out to hold, in the words the pane
+// draws: the window says an error, and a pane is handed the sentence.
+func (m Model) fileHeld(name string) (panes.File, bool) {
+	got, asked := m.read[name]
+	if !asked {
+		return panes.File{}, false
+	}
+
+	return panes.File{Text: got.text.Text, Whole: got.text.Whole, Failed: m.errSaid(got.err)}, true
+}
+
+// artifactsLines is every file the run left, and what each one is.
+func (m Model) artifactsLines() []string {
+	lines, _ := m.artifactsRows()
+
+	return lines
+}
+
+// artifactsRows is that content and which file each row that folds is the
+// head of.
+func (m Model) artifactsRows() ([]string, map[int]int) {
+	return panes.Artifacts(m.paneEnv(tabArtifacts))
 }

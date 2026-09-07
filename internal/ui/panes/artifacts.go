@@ -1,4 +1,4 @@
-package ui
+package panes
 
 // The artifacts tab: what the run left on disk.
 //
@@ -14,15 +14,12 @@ package ui
 
 import (
 	"fmt"
-	"maps"
 	"path/filepath"
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/markdown"
-	"github.com/e1i0r/orbit/internal/ui/panes"
 	"github.com/e1i0r/orbit/internal/ui/theme"
-	"github.com/e1i0r/orbit/internal/view"
 )
 
 // fileNameCells is the tab's name column and fileSizeCells the measure
@@ -72,8 +69,8 @@ func formatBytes(bytes int64) string {
 // guessed at: the name and the size are read from the disk and are true, and
 // a sentence invented beside them would be the one part of the row that is
 // not.
-func (m Model) fileSaid(name string) string {
-	p := m.opts.Words
+func (e Env) fileSaid(name string) string {
+	p := e.Words
 
 	switch name {
 	case "task.md":
@@ -91,22 +88,17 @@ func (m Model) fileSaid(name string) string {
 
 // bodyCells is the pane's width, never nought: a window that has not been
 // told its size yet still draws a frame.
-func (m Model) bodyCells() int { return max(m.frame.Body.W, 1) }
+func (e Env) bodyCells() int { return max(e.Frame.Body.W, 1) }
 
-// artifactsLines is the artifacts tab's content, ready for the pane.
-func (m Model) artifactsLines() []string {
-	lines, _ := m.artifactsRows()
+// Artifacts is every file the run left, and what each one is: what Orbit
+// wrote about the run, and what the run wrote about the repository. Beside
+// it is which file each row that folds is the head of.
+func Artifacts(e Env) ([]string, map[int]int) {
+	p := e.Words
 
-	return lines
-}
-
-// artifactsRows is that content and, beside it, which file each row that
-// folds is the head of.
-func (m Model) artifactsRows() ([]string, map[int]int) {
-	p := m.opts.Words
-
-	if _, ok := m.task(m.detail); !ok {
-		return []string{"  " + theme.Paint(theme.Dim).Render(p.T("detail.gone", "this task is no longer on the board"))}, nil
+	if e.Gone {
+		return []string{"  " + theme.Paint(theme.Dim).Render(
+			p.T("detail.gone", "this task is no longer on the board"))}, nil
 	}
 
 	out := []string{
@@ -117,10 +109,10 @@ func (m Model) artifactsRows() ([]string, map[int]int) {
 	}
 
 	heads := map[int]int{}
-	out = m.recordFiles(out, heads)
+	out = e.recordFiles(out, heads)
 
 	out = append(out, "")
-	out = append(out, m.worktreeFiles()...)
+	out = append(out, e.worktreeFiles()...)
 	out = append(out, "")
 
 	return out, heads
@@ -128,30 +120,32 @@ func (m Model) artifactsRows() ([]string, map[int]int) {
 
 // recordFiles is what Orbit itself wrote about the run, one row per file and
 // what that file holds under whichever of them the reader has opened.
-func (m Model) recordFiles(out []string, heads map[int]int) []string {
-	p := m.opts.Words
+func (e Env) recordFiles(out []string, heads map[int]int) []string {
+	p := e.Words
 
-	out = append(out, m.artifactsHead(p.T("artifacts.group_record", "what orbit wrote down"),
-		p.P("artifacts.n_files", len(m.files), "{n} file", "{n} files")))
+	out = append(out, artifactsHead(p.T("artifacts.group_record", "what orbit wrote down"),
+		p.P("artifacts.n_files", len(e.Files), "{n} file", "{n} files")))
 
 	switch {
-	case m.filesErr != nil:
-		return append(out, "    "+theme.Paint(theme.Bad).Render(m.errSaid(m.filesErr)))
-	case !m.filesKnown:
-		return append(out, "    "+theme.Paint(theme.Dim).Render(p.T("artifacts.reading", "reading the task's directory")))
-	case len(m.files) == 0:
-		return append(out, "    "+theme.Paint(theme.Dim).Render(p.T("artifacts.none_yet", "nothing written yet — this task has not run")))
+	case e.FilesFailed != "":
+		return append(out, "    "+theme.Paint(theme.Bad).Render(e.FilesFailed))
+	case !e.FilesKnown:
+		return append(out, "    "+theme.Paint(theme.Dim).Render(
+			p.T("artifacts.reading", "reading the task's directory")))
+	case len(e.Files) == 0:
+		return append(out, "    "+theme.Paint(theme.Dim).Render(
+			p.T("artifacts.none_yet", "nothing written yet — this task has not run")))
 	}
 
-	for i, f := range m.files {
-		open := m.rowOpen(tabArtifacts, i)
+	for i, f := range e.Files {
+		open := e.row(i)
 
 		heads[len(out)] = i
 		out = append(out, "  "+theme.Text(theme.Tertiary).Render(cells.Fold(open))+
-			fileRow(f.Name, formatBytes(f.Size), m.fileSaid(f.Name), m.bodyCells()-4))
+			fileRow(f.Name, formatBytes(f.Size), e.fileSaid(f.Name), e.bodyCells()-4))
 
 		if open {
-			out = append(out, m.fileBody(f.Name)...)
+			out = append(out, e.fileBody(f.Name)...)
 		}
 	}
 
@@ -164,29 +158,29 @@ func (m Model) recordFiles(out []string, heads map[int]int) []string {
 // field per line, and a line folded onto the next would read as two of them
 // — so a line too long for the pane is cut by the well it is drawn in, and
 // the reader who needs the rest of it opens the file.
-func (m Model) fileBody(name string) []string {
-	p := m.opts.Words
-	w := max(m.bodyCells()-6, 20)
+func (e Env) fileBody(name string) []string {
+	p := e.Words
+	w := max(e.bodyCells()-6, 20)
 
-	got, asked := m.read[name]
+	got, asked := e.read(name)
 
 	switch {
 	case !asked:
 		return []string{"      " + theme.Paint(theme.Dim).Render(p.T("artifacts.opening", "opening the file"))}
-	case got.err != nil:
-		return []string{"      " + theme.Paint(theme.Bad).Render(m.errSaid(got.err))}
-	case strings.TrimSpace(got.text.Text) == "":
+	case got.Failed != "":
+		return []string{"      " + theme.Paint(theme.Bad).Render(got.Failed)}
+	case strings.TrimSpace(got.Text) == "":
 		return []string{"      " + theme.Paint(theme.Dim).Render(p.T("artifacts.empty_file", "this file is empty"))}
 	}
 
-	lines := strings.Split(strings.TrimRight(got.text.Text, "\n"), "\n")
+	lines := strings.Split(strings.TrimRight(got.Text, "\n"), "\n")
 
 	out := make([]string, 0, len(lines)+1)
 	for _, l := range lines {
 		out = append(out, "      "+markdown.Well(l, fileFamily(name), w))
 	}
 
-	if !got.text.Whole {
+	if !got.Whole {
 		out = append(out, "      "+theme.Text(theme.Tertiary).Render(
 			p.T("artifacts.cut", "— the rest of this file was not read —")))
 	}
@@ -209,30 +203,31 @@ func fileFamily(name string) string {
 //
 // The rows do not fold. What is in them is the diff, it is a tab of its own,
 // and a second rendering of it here would be a second place to keep right.
-func (m Model) worktreeFiles() []string {
-	p := m.opts.Words
+func (e Env) worktreeFiles() []string {
+	p := e.Words
 
 	var changed []string
 
-	if m.diffKnown && m.diff != "" {
-		changed = panes.Changed(m.diff)
+	if e.DiffKnown && e.Diff != "" {
+		changed = Changed(e.Diff)
 	}
 
-	head := m.artifactsHead(p.T("artifacts.group_worktree", "what the run changed"),
+	head := artifactsHead(p.T("artifacts.group_worktree", "what the run changed"),
 		p.P("artifacts.n_files", len(changed), "{n} file", "{n} files"))
 
 	switch {
-	case m.diffErr != nil:
-		return []string{head, "    " + theme.Paint(theme.Bad).Render(m.errSaid(m.diffErr))}
-	case !m.diffKnown:
-		return []string{head, "    " + theme.Paint(theme.Dim).Render(p.T("artifacts.reading_worktree", "reading the worktree"))}
+	case e.DiffFailed != "":
+		return []string{head, "    " + theme.Paint(theme.Bad).Render(e.DiffFailed)}
+	case !e.DiffKnown:
+		return []string{head, "    " + theme.Paint(theme.Dim).Render(
+			p.T("artifacts.reading_worktree", "reading the worktree"))}
 	case len(changed) == 0:
 		return []string{head, "    " + theme.Paint(theme.Dim).Render(p.T("diff.unchanged", "no changes in this task's worktree"))}
 	}
 
 	out := []string{head}
 	for _, f := range changed {
-		out = append(out, fileRow(f, "", p.T("artifacts.said_changed", "changed in the worktree — see the diff tab"), m.bodyCells()))
+		out = append(out, fileRow(f, "", p.T("artifacts.said_changed", "changed in the worktree — see the diff tab"), e.bodyCells()))
 	}
 
 	return out
@@ -241,30 +236,6 @@ func (m Model) worktreeFiles() []string {
 // artifactsHead is one section's heading: what the section is and how much
 // is under it. It does not fold — the rows under it do, and a lid over the
 // lids would put the thing a reader came for two gestures away.
-func (m Model) artifactsHead(label, count string) string {
+func artifactsHead(label, count string) string {
 	return "  " + theme.Paint(theme.Accent).Render(label) + "  " + theme.Paint(theme.Dim).Render(count)
-}
-
-// fileRead is what one file turned out to hold, or why it could not be read.
-// The two are one type because a row shows one or the other and never both.
-type fileRead struct {
-	text view.FileText
-	err  error
-}
-
-// readFile writes down what a file turned out to hold.
-//
-// The map is cloned rather than written in place, for the reason every other
-// map on the model is: a Model is copied by every method that returns one
-// and a map is not.
-func (m Model) readFile(msg fileTextMsg) Model {
-	held := maps.Clone(m.read)
-	if held == nil {
-		held = map[string]fileRead{}
-	}
-
-	held[msg.Name] = fileRead{text: msg.Text, err: msg.Err}
-	m.read = held
-
-	return m.syncPanes()
 }
