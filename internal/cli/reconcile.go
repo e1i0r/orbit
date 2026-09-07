@@ -26,15 +26,13 @@ func reconcile(ctx Context, args []string) error {
 	// record of a task against no repository gets closed at all.
 	s, r, err := openMaybe(*dir, given(fs, "repo") || fs.Arg(0) == "")
 	if err != nil {
-		logger.Error("cli/reconcile", "open repository %q failed: %v", *dir, err)
-		return err
+		return fmt.Errorf("open repository %q: %w", *dir, err)
 	}
 
 	ids := []string{fs.Arg(0)}
 	if fs.Arg(0) == "" {
 		if ids, err = task.List(s, r); err != nil {
-			logger.Error("cli/reconcile", "list tasks in repo %q failed: %v", r.Name, err)
-			return err
+			return fmt.Errorf("list tasks in repo %q: %w", r.Name, err)
 		}
 	}
 

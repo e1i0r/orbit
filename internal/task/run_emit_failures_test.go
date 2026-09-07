@@ -66,7 +66,7 @@ func TestRunEffortNamedOnAnEngineWithNoEffortDial(t *testing.T) {
 	f := flow.Flow{Name: "no-effort", Phases: []flow.Phase{
 		{Name: "phase-1", Engine: "fake", Effort: "high"},
 	}}
-	engines := map[string]engine.Engine{"fake": engine.NewFake("out")}
+	engines := fakes(engine.NewFake("out"))
 
 	err = Run(context.Background(), s, tk, f, engines, nil)
 	if err == nil || !strings.Contains(err.Error(), "has no effort dial") {
@@ -93,7 +93,7 @@ func TestRunGateErrorIsReportedAsFailure(t *testing.T) {
 	f := flow.Flow{Name: "gate-err", Phases: []flow.Phase{
 		{Name: "phase-1", Engine: "fake"},
 	}}
-	engines := map[string]engine.Engine{"fake": engine.NewFake("out")}
+	engines := fakes(engine.NewFake("out"))
 	g := erroringGate{err: errors.New("boom")}
 
 	err = Run(context.Background(), s, tk, f, engines, g)
@@ -117,7 +117,7 @@ func TestRunPhaseStartedEmitFailure(t *testing.T) {
 		{Name: strings.Repeat("N", 5<<20), Engine: "fake"},
 	}}
 
-	engines := map[string]engine.Engine{"fake": engine.NewFake("out")}
+	engines := fakes(engine.NewFake("out"))
 	if err := Run(context.Background(), s, tk, f, engines, nil); err == nil {
 		t.Error("Run should have failed to record an oversized phase.started event")
 	}
@@ -170,7 +170,7 @@ func TestRunOnATaskIdTheStateRootRefuses(t *testing.T) {
 	bad := Task{ID: "has/slash", Repo: r}
 	f := flow.Flow{Name: "f", Phases: []flow.Phase{{Name: "p", Engine: "fake"}}}
 
-	engines := map[string]engine.Engine{"fake": engine.NewFake("out")}
+	engines := fakes(engine.NewFake("out"))
 	if err := Run(context.Background(), s, bad, f, engines, nil); err == nil {
 		t.Error("Run walked a task whose id the state root cannot hold")
 	}
@@ -197,7 +197,7 @@ func TestRunTaskStartedEmitFailure(t *testing.T) {
 		Phases: []flow.Phase{{Name: "p", Engine: "fake"}},
 	}
 
-	engines := map[string]engine.Engine{"fake": engine.NewFake("out")}
+	engines := fakes(engine.NewFake("out"))
 	if err := Run(context.Background(), s, tk, f, engines, nil); err == nil {
 		t.Error("Run walked on after the log refused its task.started")
 	}
@@ -239,7 +239,7 @@ func TestRunHoldFailureAfterTaskStarted(t *testing.T) {
 
 	f := flow.Flow{Name: "f", Phases: []flow.Phase{{Name: "p", Engine: "fake"}}}
 
-	engines := map[string]engine.Engine{"fake": engine.NewFake("out")}
+	engines := fakes(engine.NewFake("out"))
 	if err := Run(context.Background(), s, tk, f, engines, nil); err == nil {
 		t.Error("Run should have failed when the run marker cannot be created")
 	}

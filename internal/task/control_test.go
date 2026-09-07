@@ -99,7 +99,7 @@ func TestAPauseWordStopsTheRunAndAResumeWordLetsItGo(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		done := make(chan error, 1)
 		go func() {
-			done <- Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": fake}, FileGate(s, time.Second))
+			done <- Run(context.Background(), s, tk, oneFlow(), fakes(fake), FileGate(s, time.Second))
 		}()
 
 		synctest.Wait()
@@ -153,7 +153,7 @@ func TestACancelWordAtAGateIsACancellationAndNotAFailure(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		done := make(chan error, 1)
 		go func() {
-			done <- Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": fake}, FileGate(s, time.Second))
+			done <- Run(context.Background(), s, tk, oneFlow(), fakes(fake), FileGate(s, time.Second))
 		}()
 
 		synctest.Wait()
@@ -198,7 +198,7 @@ func TestAutopilotDoesNotReleaseARunTheReaderPaused(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		done := make(chan error, 1)
 		go func() {
-			done <- Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": fake}, FileGate(s, time.Second))
+			done <- Run(context.Background(), s, tk, oneFlow(), fakes(fake), FileGate(s, time.Second))
 		}()
 
 		synctest.Wait()
@@ -243,7 +243,7 @@ func TestASkipWordPutsTheRunPastTheNextPhaseAndNoFurther(t *testing.T) {
 
 	fake := engine.NewFake("done")
 
-	if err := Run(context.Background(), s, tk, twoFlow(), map[string]engine.Engine{"fake": fake}, FileGate(s, time.Second)); err != nil {
+	if err := Run(context.Background(), s, tk, twoFlow(), fakes(fake), FileGate(s, time.Second)); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 

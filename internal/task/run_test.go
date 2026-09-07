@@ -29,7 +29,7 @@ func TestRunWalksEveryPhaseAndRecordsIt(t *testing.T) {
 	}
 
 	fake := engine.NewFake("wrote the retry")
-	engines := map[string]engine.Engine{"fake": fake}
+	engines := fakes(fake)
 
 	if err := Run(context.Background(), s, tk, oneFlow(), engines, nil); err != nil {
 		t.Fatalf("Run: %v", err)
@@ -78,7 +78,7 @@ func TestRunRunsInsideAWorktreeOnItsOwnBranch(t *testing.T) {
 	}
 
 	fake := engine.NewFake("ok")
-	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": fake}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, oneFlow(), fakes(fake), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -133,7 +133,7 @@ func TestRunRecordsAFailureAndStops(t *testing.T) {
 		{Name: "second", Engine: "fake"},
 	}}
 
-	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": fake}, nil); err == nil {
+	if err := Run(context.Background(), s, tk, f, fakes(fake), nil); err == nil {
 		t.Fatal("Run reported success after the engine failed")
 	}
 
@@ -179,7 +179,7 @@ func TestRunRecordsAPrepareFailureAndStops(t *testing.T) {
 	tk.Repo.Base = "no-such-branch"
 
 	fake := engine.NewFake("ok")
-	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": fake}, nil); err == nil {
+	if err := Run(context.Background(), s, tk, oneFlow(), fakes(fake), nil); err == nil {
 		t.Fatal("Run reported success though the worktree could not be created")
 	}
 
@@ -212,7 +212,7 @@ func TestRunRejectsAnUnknownEngine(t *testing.T) {
 	}
 
 	f := flow.Flow{Name: "task", Phases: []flow.Phase{{Name: "implement", Engine: "opencode"}}}
-	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": engine.NewFake("")}, nil); err == nil {
+	if err := Run(context.Background(), s, tk, f, fakes(engine.NewFake("")), nil); err == nil {
 		t.Error("Run accepted a phase naming an engine that is not configured")
 	}
 }
@@ -245,7 +245,7 @@ func TestRunRecordsSessionAndCostWhenTheEngineReportsThem(t *testing.T) {
 	}
 
 	eng := resultEngine{result: engine.Result{Output: "done", SessionID: "sess-1", Cost: 0.42}}
-	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": eng}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, oneFlow(), fakes(eng), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -286,7 +286,7 @@ func TestRunLeavesDataEmptyWhenTheEngineReportsNeither(t *testing.T) {
 	}
 
 	fake := engine.NewFake("done")
-	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": fake}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, oneFlow(), fakes(fake), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 

@@ -67,6 +67,9 @@ func noteEnd(name string, start time.Time, res Result, err error) {
 // is not installed, is Orbit refusing in a millisecond and before anything
 // was spent. "failed after 0s" would read as a model that was asked and
 // said no.
+// It is the same exception task's noted is, for the same reason: an engine
+// that will not start is a fact about this machine, and the run that asked
+// is a background process nobody is watching the stderr of.
 func notStarted(name string, err error) error {
 	logger.Error("engine/"+name, "did not start: %v", err)
 

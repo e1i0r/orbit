@@ -80,7 +80,7 @@ func TestAPhaseOfATaskWithNoRepositoryRunsSomewhere(t *testing.T) {
 	fake := engine.NewFake("looked")
 
 	f := flow.Flow{Name: "one", Phases: []flow.Phase{{Name: "survey", Engine: "fake"}}}
-	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": fake}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, f, fakes(fake), nil); err != nil {
 		t.Fatalf("Run a task with no repository: %v", err)
 	}
 

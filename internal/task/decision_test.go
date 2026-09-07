@@ -99,7 +99,7 @@ func TestAPlanThatFinishesWritesItsDecisionsDown(t *testing.T) {
 	}
 
 	f := flow.Flow{Name: "task", Phases: []flow.Phase{{Name: "1-plan", Engine: "fake"}}}
-	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": engine.NewFake(planAnswer)}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, f, fakes(engine.NewFake(planAnswer)), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -140,7 +140,7 @@ func TestOnlyAPlanWritesDecisions(t *testing.T) {
 	}
 
 	f := flow.Flow{Name: "task", Phases: []flow.Phase{{Name: "implement", Engine: "fake"}}}
-	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": engine.NewFake(planAnswer)}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, f, fakes(engine.NewFake(planAnswer)), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 

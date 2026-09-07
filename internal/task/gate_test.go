@@ -70,7 +70,7 @@ func TestAGateIsAskedAboutEveryPhaseAndContinueRunsIt(t *testing.T) {
 	fake := engine.NewFake("wrote the retry")
 	g := &scriptedGate{answers: []Go{Continue, Continue}}
 
-	if err := Run(context.Background(), s, tk, twoFlow(), map[string]engine.Engine{"fake": fake}, g); err != nil {
+	if err := Run(context.Background(), s, tk, twoFlow(), fakes(fake), g); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -97,7 +97,7 @@ func TestAGateThatSaysStopEndsTheRunAndNothingRunsAfterIt(t *testing.T) {
 	fake := engine.NewFake("")
 	g := &scriptedGate{answers: []Go{Stop}}
 
-	err := Run(context.Background(), s, tk, twoFlow(), map[string]engine.Engine{"fake": fake}, g)
+	err := Run(context.Background(), s, tk, twoFlow(), fakes(fake), g)
 	if err == nil {
 		t.Fatal("Run reported success after its gate stopped it — a run that was stopped did not finish")
 	}
@@ -126,7 +126,7 @@ func TestAGateThatSaysSkipRecordsNothingForThatPhaseAndMovesOn(t *testing.T) {
 	fake := engine.NewFake("did the second one")
 	g := &scriptedGate{answers: []Go{Skip, Continue}}
 
-	if err := Run(context.Background(), s, tk, twoFlow(), map[string]engine.Engine{"fake": fake}, g); err != nil {
+	if err := Run(context.Background(), s, tk, twoFlow(), fakes(fake), g); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -158,7 +158,7 @@ func TestANilGateNeverStops(t *testing.T) {
 
 	// A run with no gate is a run nothing can hold: `orbit run` before this
 	// task existed, and every test that is not about the gate.
-	if err := Run(context.Background(), s, tk, gatedFlow(), map[string]engine.Engine{"fake": fake}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, gatedFlow(), fakes(fake), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -175,7 +175,7 @@ func TestAPhaseThatAsksToWaitStopsAndSaysTheFlowAskedForIt(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		done := make(chan error, 1)
 		go func() {
-			done <- Run(context.Background(), s, tk, gatedFlow(), map[string]engine.Engine{"fake": fake}, FileGate(s, time.Second))
+			done <- Run(context.Background(), s, tk, gatedFlow(), fakes(fake), FileGate(s, time.Second))
 		}()
 		// Wait returns once the run is parked on its poll, so what follows
 		// is asserted against a run that has stopped and not against a race.
@@ -227,7 +227,7 @@ func TestAutopilotLetsAPhaseThatAsksToWaitStraightThrough(t *testing.T) {
 
 	fake := engine.NewFake("reviewed")
 
-	if err := Run(context.Background(), s, tk, gatedFlow(), map[string]engine.Engine{"fake": fake}, FileGate(s, time.Second)); err != nil {
+	if err := Run(context.Background(), s, tk, gatedFlow(), fakes(fake), FileGate(s, time.Second)); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -252,7 +252,7 @@ func TestFlippingAutopilotOnReleasesAPhaseThatIsAlreadyWaiting(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		done := make(chan error, 1)
 		go func() {
-			done <- Run(context.Background(), s, tk, gatedFlow(), map[string]engine.Engine{"fake": fake}, FileGate(s, time.Second))
+			done <- Run(context.Background(), s, tk, gatedFlow(), fakes(fake), FileGate(s, time.Second))
 		}()
 
 		synctest.Wait()

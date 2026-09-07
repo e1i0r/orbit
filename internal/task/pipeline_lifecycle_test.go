@@ -83,7 +83,7 @@ func TestPipelineGatesPassingAndFailing(t *testing.T) {
 	}
 
 	fake := engine.NewFake("passed phase")
-	engines := map[string]engine.Engine{"fake": fake}
+	engines := fakes(fake)
 
 	// 1. Flow with passing gate
 	passFlow := flow.Flow{

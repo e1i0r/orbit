@@ -224,7 +224,7 @@ func TestRunEngineAndModelValidations(t *testing.T) {
 
 	// 4. Fake engine (which does not support thinking mode)
 	fakeEng := engine.NewFake("out")
-	enginesFake := map[string]engine.Engine{"fake": fakeEng}
+	enginesFake := fakes(fakeEng)
 	fBadThinking := flow.Flow{
 		Name: "test-flow",
 		Phases: []flow.Phase{

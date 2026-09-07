@@ -55,7 +55,7 @@ func TestARunStopsWhenTheChangeIsBiggerThanWasAgreed(t *testing.T) {
 
 	eng := writingEngine{Fake: engine.NewFake("wrote a lot"), name: "big.txt", lines: 40}
 
-	err = Run(context.Background(), s, tk, budgetFlow(10), map[string]engine.Engine{"fake": eng}, nil)
+	err = Run(context.Background(), s, tk, budgetFlow(10), fakes(eng), nil)
 	if err == nil {
 		t.Fatal("Run: want an error when the change is over its budget")
 	}
@@ -90,7 +90,7 @@ func TestAChangeInsideItsBudgetIsLeftAlone(t *testing.T) {
 
 	eng := writingEngine{Fake: engine.NewFake("wrote a little"), name: "small.txt", lines: 3}
 
-	if err := Run(context.Background(), s, tk, budgetFlow(100), map[string]engine.Engine{"fake": eng}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, budgetFlow(100), fakes(eng), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -110,7 +110,7 @@ func TestNoBudgetIsNoGate(t *testing.T) {
 	}
 
 	eng := writingEngine{Fake: engine.NewFake("wrote a lot"), name: "big.txt", lines: 500}
-	if err := Run(context.Background(), s, tk, budgetFlow(0), map[string]engine.Engine{"fake": eng}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, budgetFlow(0), fakes(eng), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 

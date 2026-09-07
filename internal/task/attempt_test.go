@@ -57,7 +57,7 @@ func TestPhaseIsRunAgainWhenItsGateFails(t *testing.T) {
 	}
 
 	fake := engine.NewFake("wrote it")
-	engines := map[string]engine.Engine{"fake": fake}
+	engines := fakes(fake)
 
 	if err := Run(context.Background(), s, tk, retryFlow(countingGate("3"), 0), engines, nil); err != nil {
 		t.Fatalf("Run: %v", err)
@@ -86,7 +86,7 @@ func TestAttemptsRunOutAndTheRunFails(t *testing.T) {
 	}
 
 	fake := engine.NewFake("tried")
-	engines := map[string]engine.Engine{"fake": fake}
+	engines := fakes(fake)
 
 	err = Run(context.Background(), s, tk, retryFlow("echo nope; exit 1", 0), engines, nil)
 	if err == nil {
@@ -123,7 +123,7 @@ func TestAFlowMaySayHowManyAttempts(t *testing.T) {
 	}
 
 	fake := engine.NewFake("tried")
-	engines := map[string]engine.Engine{"fake": fake}
+	engines := fakes(fake)
 
 	if err := Run(context.Background(), s, tk, retryFlow("exit 1", 1), engines, nil); err == nil {
 		t.Fatal("Run: want an error when the one attempt the flow allows fails")
@@ -143,7 +143,7 @@ func TestTheNextAttemptIsToldWhatFailedAndWhatItAnswered(t *testing.T) {
 	}
 
 	fake := engine.NewFake("I renamed the symbol")
-	engines := map[string]engine.Engine{"fake": fake}
+	engines := fakes(fake)
 
 	if err := Run(context.Background(), s, tk, retryFlow(countingGate("3"), 0), engines, nil); err != nil {
 		t.Fatalf("Run: %v", err)
@@ -175,7 +175,7 @@ func TestAPhaseWithNoGateIsRunOnce(t *testing.T) {
 	}
 
 	fake := engine.NewFake("done")
-	if err := Run(context.Background(), s, tk, oneFlow(), map[string]engine.Engine{"fake": fake}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, oneFlow(), fakes(fake), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -212,7 +212,7 @@ func TestARefusedAttemptSaysWhatItSpent(t *testing.T) {
 
 	eng := costlyEngine{engine.NewFake("tried")}
 
-	if err := Run(context.Background(), s, tk, retryFlow(countingGate("2"), 0), map[string]engine.Engine{"fake": eng}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, retryFlow(countingGate("2"), 0), fakes(eng), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -259,7 +259,7 @@ func TestAttemptsRunOutAndTheTaskIsStuck(t *testing.T) {
 
 	fake := engine.NewFake("tried")
 
-	if err := Run(context.Background(), s, tk, retryFlow("echo 'undefined: Retry'; exit 2", 0), map[string]engine.Engine{"fake": fake}, nil); err == nil {
+	if err := Run(context.Background(), s, tk, retryFlow("echo 'undefined: Retry'; exit 2", 0), fakes(fake), nil); err == nil {
 		t.Fatal("Run: want an error when the attempts run out")
 	}
 

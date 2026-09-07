@@ -60,7 +60,7 @@ func TestARunCancelledWhileAGateIsUpSaysItWasCancelled(t *testing.T) {
 
 	eng := cancellingEngine{engine.NewFake("wrote the retry"), cancel}
 
-	runErr := Run(ctx, s, tk, commandGateFlow("sleep 30"), map[string]engine.Engine{"fake": eng}, nil)
+	runErr := Run(ctx, s, tk, commandGateFlow("sleep 30"), fakes(eng), nil)
 	if !errors.Is(runErr, context.Canceled) {
 		t.Fatalf("Run returned %v, want an error carrying context.Canceled", runErr)
 	}
@@ -90,7 +90,7 @@ func TestAGateThatFailsOnItsOwnStillSaysSo(t *testing.T) {
 
 	eng := engine.NewFake("wrote the retry")
 
-	runErr := Run(context.Background(), s, tk, commandGateFlow("exit 3"), map[string]engine.Engine{"fake": eng}, nil)
+	runErr := Run(context.Background(), s, tk, commandGateFlow("exit 3"), fakes(eng), nil)
 	if runErr == nil {
 		t.Fatal("Run on a gate that exited 3 returned nil, want the failure")
 	}

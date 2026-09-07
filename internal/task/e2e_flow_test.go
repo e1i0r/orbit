@@ -21,7 +21,7 @@ func TestE2EMultiPhaseFlowFeedsOutput(t *testing.T) {
 	}
 
 	fake := engine.NewFake("Step 1 Output: API Blueprint generated")
-	engines := map[string]engine.Engine{"fake": fake}
+	engines := fakes(fake)
 
 	testFlow := flow.Flow{
 		Name: "two-step",
@@ -79,7 +79,7 @@ func TestE2EPhaseWithOperatorNotes(t *testing.T) {
 	}
 
 	fake := engine.NewFake("Created SQL migration files")
-	engines := map[string]engine.Engine{"fake": fake}
+	engines := fakes(fake)
 
 	testFlow := flow.Flow{
 		Name: "migration-flow",
@@ -129,7 +129,7 @@ func TestE2ECostMonotonicityProperty(t *testing.T) {
 	}
 
 	fake := engine.NewFake("completed task successfully")
-	engines := map[string]engine.Engine{"fake": fake}
+	engines := fakes(fake)
 
 	testFlow := flow.Flow{
 		Name: "cost-flow",
@@ -183,7 +183,7 @@ func TestE2EGateDecisionsPipeline(t *testing.T) {
 	}
 
 	fake := engine.NewFake("phase execution completed")
-	engines := map[string]engine.Engine{"fake": fake}
+	engines := fakes(fake)
 
 	testFlow := flow.Flow{
 		Name: "3-phase-pipeline",

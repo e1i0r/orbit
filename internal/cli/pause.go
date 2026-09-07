@@ -69,19 +69,16 @@ func controlTask(word string, ctx Context, args []string) error {
 
 	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
-		logger.Error("cli/pause", "open repository %q failed: %v", *dir, err)
-		return err
+		return fmt.Errorf("open repository %q: %w", *dir, err)
 	}
 
 	t, err := task.Load(s, r, id)
 	if err != nil {
-		logger.Error("cli/pause", "load task %q in %q failed: %v", id, r.Name, err)
-		return err
+		return fmt.Errorf("load task %q in %q: %w", id, r.Name, err)
 	}
 
 	if err := task.Control(s, t, word); err != nil {
-		logger.Error("cli/pause", "control task %q in %q (%s) failed: %v", id, r.Name, word, err)
-		return err
+		return fmt.Errorf("control task %q in %q (%s): %w", id, r.Name, word, err)
 	}
 
 	logger.Info("cli/pause", "task %s in %s requested to %s", id, r.Name, word)

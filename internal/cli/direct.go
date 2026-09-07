@@ -45,21 +45,18 @@ func directTask(ctx Context, args []string) error {
 
 	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
-		logger.Error("cli/direct", "open repository %q failed: %v", *dir, err)
-		return err
+		return fmt.Errorf("open repository %q: %w", *dir, err)
 	}
 
 	t, err := task.Load(s, r, id)
 	if err != nil {
-		logger.Error("cli/direct", "load task %q in %q failed: %v", id, r.Name, err)
-		return err
+		return fmt.Errorf("load task %q in %q: %w", id, r.Name, err)
 	}
 
 	if *restart {
 		unread, err := unreadCount(s, *dir)
 		if err != nil {
-			logger.Error("cli/direct", "count what is unread before restarting %q: %v", id, err)
-			return err
+			return fmt.Errorf("count what is unread before restarting %q: %w", id, err)
 		}
 
 		// Ctrl-C during the wait is a person taking their terminal back,
@@ -71,8 +68,7 @@ func directTask(ctx Context, args []string) error {
 
 		pid, err := task.Reopen(signalled, s, t, *by, text, t.Flow, unread)
 		if err != nil {
-			logger.Error("cli/direct", "reopen task %q failed: %v", id, err)
-			return err
+			return fmt.Errorf("reopen task %q: %w", id, err)
 		}
 
 		logger.Info("cli/direct", "task %s redirected and restarted (pid %d)", id, pid)
@@ -84,8 +80,7 @@ func directTask(ctx Context, args []string) error {
 	}
 
 	if err := task.Direct(s, t, *by, text); err != nil {
-		logger.Error("cli/direct", "direct task %q failed: %v", id, err)
-		return err
+		return fmt.Errorf("direct task %q: %w", id, err)
 	}
 
 	logger.Info("cli/direct", "directive recorded for task %s", id)

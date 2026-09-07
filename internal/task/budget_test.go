@@ -35,7 +35,7 @@ func TestARunStopsWhenTheTaskHasSpentItsBudget(t *testing.T) {
 
 	eng := costlyEngine{engine.NewFake("done")}
 
-	err = Run(context.Background(), s, tk, twoPhases(), map[string]engine.Engine{"fake": eng}, nil)
+	err = Run(context.Background(), s, tk, twoPhases(), fakes(eng), nil)
 	if err == nil {
 		t.Fatal("Run: want an error when the task has spent its budget")
 	}
@@ -75,7 +75,7 @@ func TestABudgetOfZeroIsNoBudget(t *testing.T) {
 	}
 
 	eng := costlyEngine{engine.NewFake("done")}
-	if err := Run(context.Background(), s, tk, twoPhases(), map[string]engine.Engine{"fake": eng}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, twoPhases(), fakes(eng), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 

@@ -69,7 +69,7 @@ func TestAChangeThatContradictsADecisionStopsTheRun(t *testing.T) {
 		writes:  "kept.txt",
 	}
 
-	err = Run(context.Background(), s, tk, decisionFlow(false), map[string]engine.Engine{"fake": eng}, nil)
+	err = Run(context.Background(), s, tk, decisionFlow(false), fakes(eng), nil)
 	if err == nil {
 		t.Fatal("Run: want an error when the change contradicts a decision")
 	}
@@ -108,7 +108,7 @@ func TestAChangeThatKeepsToTheDecisionRunsOn(t *testing.T) {
 		writes:  "kept.txt",
 	}
 
-	if err := Run(context.Background(), s, tk, decisionFlow(false), map[string]engine.Engine{"fake": eng}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, decisionFlow(false), fakes(eng), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -134,7 +134,7 @@ func TestNothingIsAskedWhenNoDecisionGovernsTheChange(t *testing.T) {
 		writes:  "kept.txt",
 	}
 
-	if err := Run(context.Background(), s, tk, decisionFlow(false), map[string]engine.Engine{"fake": eng}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, decisionFlow(false), fakes(eng), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -158,7 +158,7 @@ func TestAFlowMayAllowContradictions(t *testing.T) {
 		writes:  "kept.txt",
 	}
 
-	if err := Run(context.Background(), s, tk, decisionFlow(true), map[string]engine.Engine{"fake": eng}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, decisionFlow(true), fakes(eng), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
