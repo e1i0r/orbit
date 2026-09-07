@@ -4,28 +4,28 @@
   Edits here are lost the next time it runs, and `make check` says so before
   that happens. Change the template or the catalogue instead.
 -->
-<html lang="en">
+<html lang="{{.T.html_lang}}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Orbit — A cockpit for the agents that write your code</title>
-<meta name="description" content="A cockpit for the agents that write your code. Each task in its own worktree, in phases that stop where you tell them to, and every run written down beside the code.">
+<title>{{.T.title}}</title>
+<meta name="description" content="{{.T.description}}">
 <meta name="author" content="Elio Rincón — e1i0.com">
-<link rel="icon" href="icon.png">
-<link rel="canonical" href="https://getorbit.sh/">
+<link rel="icon" href="{{.Assets}}icon.png">
+<link rel="canonical" href="{{.Canonical}}">
 <link rel="alternate" hreflang="en" href="https://getorbit.sh/">
 <link rel="alternate" hreflang="es" href="https://getorbit.sh/es/">
 <link rel="alternate" hreflang="x-default" href="https://getorbit.sh/">
 
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://getorbit.sh/">
-<meta property="og:locale" content="en_US">
-<meta property="og:title" content="Orbit — A cockpit for the agents that write your code">
-<meta property="og:description" content="A cockpit for the agents that write your code. Each task in its own worktree, in phases that stop where you tell them to, and every run written down beside the code.">
+<meta property="og:url" content="{{.Canonical}}">
+<meta property="og:locale" content="{{.T.og_locale}}">
+<meta property="og:title" content="{{.T.title}}">
+<meta property="og:description" content="{{.T.description}}">
 <meta property="og:image" content="https://getorbit.sh/flow-reading-poster.jpg">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Orbit — A cockpit for the agents that write your code">
-<meta name="twitter:description" content="A cockpit for the agents that write your code. Each task in its own worktree, in phases that stop where you tell them to, and every run written down beside the code.">
+<meta name="twitter:title" content="{{.T.title}}">
+<meta name="twitter:description" content="{{.T.description}}">
 <meta name="twitter:image" content="https://getorbit.sh/flow-reading-poster.jpg">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-N9D1HEEMRD"></script>
@@ -340,25 +340,29 @@
 <body>
 
 <section class="hero">
-  <nav class="lang" aria-label="language">
+  <nav class="lang" aria-label="{{.T.lang_label}}">
+    {{- if eq .Lang "en"}}
     <span>EN</span><a href="es/" hreflang="es" lang="es" title="Español">ES</a>
+    {{- else}}
+    <a href="../" hreflang="en" lang="en" title="English">EN</a><span>ES</span>
+    {{- end}}
   </nav>
   <div class="hero__content">
-    <span class="badge"><span class="badge__dot"></span>OPEN SOURCE · APACHE 2.0</span>
+    <span class="badge"><span class="badge__dot"></span>{{.T.badge}}</span>
 
-    <img class="hero__icon" src="icon.png" alt="Orbit">
+    <img class="hero__icon" src="{{.Assets}}icon.png" alt="Orbit">
     <h1 class="hero__title">ORBIT</h1>
-    <p class="hero__tagline">A cockpit for the agents that write your code.</p>
+    <p class="hero__tagline">{{.T.tagline}}</p>
 
     <div class="install">
       <span class="install__prompt mono">$</span>
       <code class="mono" id="install-cmd">curl -fsSL https://getorbit.sh/install.sh | bash</code>
-      <button class="install__copy mono" id="install-copy" type="button">copy</button>
+      <button class="install__copy mono" id="install-copy" type="button">{{.T.copy}}</button>
     </div>
 
     <div class="hero__ctas">
       <a class="btn btn--primary" href="https://github.com/e1i0r/orbit" onclick="gtag('event','cta_click',{button:'hero_github'})">GitHub</a>
-      <a class="btn btn--outline" href="https://github.com/e1i0r/orbit/blob/main/docs/start.md" onclick="gtag('event','cta_click',{button:'hero_docs'})">Docs</a>
+      <a class="btn btn--outline" href="https://github.com/e1i0r/orbit/blob/main/docs/start.md" onclick="gtag('event','cta_click',{button:'hero_docs'})">{{.T.cta_docs}}</a>
     </div>
   </div>
 </section>
@@ -367,32 +371,32 @@
 <section class="sec">
   <div class="card">
     <div class="card__dot card__dot--teal"></div>
-    <h3>It runs the CLI you already have, and writes down what it did</h3>
+    <h3>{{.T.card_title}}</h3>
     <ul class="flow__points">
-      <li><strong>A worktree per task, and several going at once.</strong> Its own checkout, its own branch: nothing a run writes is in yours until you say so.</li>
-      <li><strong>Phases that stop where you told them to.</strong> Gates answer with an exit code, not an opinion, and a sandbox refuses what the phase was not allowed to touch.</li>
-      <li><strong>Autopilot, with a brake.</strong> It works the queue on its own, and stops taking new work once the finished tasks nobody has read pile up.</li>
-      <li><strong>Your own CLI, both ways.</strong> One key hands it the terminal in the task's worktree; over MCP it writes tasks, runs them, and reads back what happened while you were away.</li>
-      <li><strong>A supervisor you can redirect.</strong> It reads the result of a run, decides whether it did what was asked, and goes to fix what is missing — in a thread you write into.</li>
-      <li><strong>Facts it carries into every run.</strong> What is true about your code, with a source and a reach, kept outside the model so a change of engine does not lose it.</li>
-      <li><strong>Twelve panes per task.</strong> What it spent, what each gate ran, what the sandbox denied, the timeline event by event, the artifacts, the reasoning it showed its work in, the diff — and what the change reaches that a diff cannot show.</li>
-      <li><strong>Everything written down, beside the code.</strong> Not in a chat window somebody closed: <code class="mono">orbit show</code> reads a run back six months later, and <code class="mono">orbit export</code> writes the whole record out.</li>
+      <li>{{.T.card_1}}</li>
+      <li>{{.T.card_2}}</li>
+      <li>{{.T.card_3}}</li>
+      <li>{{.T.card_4}}</li>
+      <li>{{.T.card_5}}</li>
+      <li>{{.T.card_6}}</li>
+      <li>{{.T.card_7}}</li>
+      <li>{{.T.card_8}}</li>
     </ul>
   </div>
 </section>
 
-<nav class="flownav" aria-label="the ten flows">
+<nav class="flownav" aria-label="{{.T.nav_label}}">
   <div class="flownav__inner">
-    <a href="#start"><span class="mono">01</span> start</a>
-    <a href="#menus"><span class="mono">02</span> menus</a>
-    <a href="#run"><span class="mono">03</span> a run</a>
-    <a href="#autopilot"><span class="mono">04</span> autopilot</a>
-    <a href="#parallel"><span class="mono">05</span> in parallel</a>
-    <a href="#reading"><span class="mono">06</span> reading it</a>
-    <a href="#cli"><span class="mono">07</span> the CLI</a>
-    <a href="#supervisor"><span class="mono">08</span> supervisor</a>
-    <a href="#knowledge"><span class="mono">09</span> knowledge</a>
-    <a href="#flows"><span class="mono">10</span> flows</a>
+    <a href="#start"><span class="mono">01</span> {{.T.nav_start}}</a>
+    <a href="#menus"><span class="mono">02</span> {{.T.nav_menus}}</a>
+    <a href="#run"><span class="mono">03</span> {{.T.nav_run}}</a>
+    <a href="#autopilot"><span class="mono">04</span> {{.T.nav_autopilot}}</a>
+    <a href="#parallel"><span class="mono">05</span> {{.T.nav_parallel}}</a>
+    <a href="#reading"><span class="mono">06</span> {{.T.nav_reading}}</a>
+    <a href="#cli"><span class="mono">07</span> {{.T.nav_cli}}</a>
+    <a href="#supervisor"><span class="mono">08</span> {{.T.nav_supervisor}}</a>
+    <a href="#knowledge"><span class="mono">09</span> {{.T.nav_knowledge}}</a>
+    <a href="#flows"><span class="mono">10</span> {{.T.nav_flows}}</a>
   </div>
 </nav>
 
@@ -401,219 +405,219 @@
 <section class="sec" id="start">
   <div class="flow__head">
     <span class="flow__num mono">01</span>
-    <h2 class="flow__title">Getting started</h2>
+    <h2 class="flow__title">{{.T.start_title}}</h2>
   </div>
-  <p class="flow__lede">Four commands, and the only one you have to think about is the third: point the cockpit at the directory your repositories are under.</p>
-  <video class="loop__frame" poster="flow-start-poster.jpg"
+  <p class="flow__lede">{{.T.start_lede}}</p>
+  <video class="loop__frame" poster="{{.Assets}}flow-start-poster.jpg"
          controls muted playsinline preload="none"
-         aria-label="installing orbit, registering the MCP server, opening the cockpit over a directory of repositories, and writing the first task">
-    <source src="flow-start.webm" type="video/webm">
-    <source src="flow-start.mp4" type="video/mp4">
+         aria-label="{{.T.start_alt}}">
+    <source src="{{.Assets}}flow-start.webm" type="video/webm">
+    <source src="{{.Assets}}flow-start.mp4" type="video/mp4">
   </video>
   <ul class="flow__points">
-      <li><code class="mono">orbit mcp install</code> registers the server in Claude Code, Claude Desktop, Codex, OpenCode and Gemini.</li>
-      <li><code class="mono">orbit top ~/code</code> is one window over every git repository under it. There is no list to register.</li>
-      <li><code class="mono">N</code> writes a task, or ask your CLI in plain language and it writes them for you.</li>
+      <li>{{.T.start_1}}</li>
+      <li>{{.T.start_2}}</li>
+      <li>{{.T.start_3}}</li>
   </ul>
-  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/start.md">Read the page →</a>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/start.md">{{.T.more}}</a>
 </section>
 
 <section class="sec" id="menus">
   <div class="flow__head">
     <span class="flow__num mono">02</span>
-    <h2 class="flow__title">What you can do</h2>
+    <h2 class="flow__title">{{.T.menus_title}}</h2>
   </div>
-  <p class="flow__lede">Press <code class="mono">m</code> on anything. The menu lists every verb that applies to it — and the ones that do not, greyed, each with the sentence saying why.</p>
-  <video class="loop__frame" poster="flow-menus-poster.jpg"
+  <p class="flow__lede">{{.T.menus_lede}}</p>
+  <video class="loop__frame" poster="{{.Assets}}flow-menus-poster.jpg"
          controls muted playsinline preload="none"
-         aria-label="the menu on the board and the menu inside a task: the panes, the verbs, and a refused verb greyed with its reason">
-    <source src="flow-menus.webm" type="video/webm">
-    <source src="flow-menus.mp4" type="video/mp4">
+         aria-label="{{.T.menus_alt}}">
+    <source src="{{.Assets}}flow-menus.webm" type="video/webm">
+    <source src="{{.Assets}}flow-menus.mp4" type="video/mp4">
   </video>
   <ul class="flow__points">
-      <li>A key that silently does nothing is indistinguishable from a key that is broken. So nothing is hidden: it is shown refused, with the reason.</li>
-      <li>Inside a task the same key carries both blocks — the twelve panes, and everything that can be done to the run.</li>
-      <li>Every verb in it is a command you can also run from a script, and the refusal is word for word the same.</li>
+      <li>{{.T.menus_1}}</li>
+      <li>{{.T.menus_2}}</li>
+      <li>{{.T.menus_3}}</li>
   </ul>
-  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/menus.md">Read the page →</a>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/menus.md">{{.T.more}}</a>
 </section>
 
 <section class="sec" id="run">
   <div class="flow__head">
     <span class="flow__num mono">03</span>
-    <h2 class="flow__title">A run, end to end</h2>
+    <h2 class="flow__title">{{.T.run_title}}</h2>
   </div>
-  <p class="flow__lede">A task is not one long session. It is a list of phases, each small enough to check, with a verdict written down after every one.</p>
-  <video class="loop__frame" poster="flow-run-poster.jpg"
+  <p class="flow__lede">{{.T.run_lede}}</p>
+  <video class="loop__frame" poster="{{.Assets}}flow-run-poster.jpg"
          controls muted playsinline preload="none"
-         aria-label="a task started from the board, moving phase by phase through its flow, stopping at a gate, and the gate let go">
-    <source src="flow-run.webm" type="video/webm">
-    <source src="flow-run.mp4" type="video/mp4">
+         aria-label="{{.T.run_alt}}">
+    <source src="{{.Assets}}flow-run.webm" type="video/webm">
+    <source src="{{.Assets}}flow-run.mp4" type="video/mp4">
   </video>
   <ul class="flow__points">
-      <li>A phase that gets it wrong is caught by the next one, or by you, before the one after it builds on the mistake.</li>
-      <li>A phase marked <code class="mono">wait</code> is a gate: the run stops in front of it. Between every pair of phases the answer is recorded — including "nobody was asked, autopilot was on".</li>
-      <li>Five flows ship built in. Yours are JSON, and the phase names are yours.</li>
+      <li>{{.T.run_1}}</li>
+      <li>{{.T.run_2}}</li>
+      <li>{{.T.run_3}}</li>
   </ul>
-  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/run.md">Read the page →</a>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/run.md">{{.T.more}}</a>
 </section>
 
 <section class="sec" id="autopilot">
   <div class="flow__head">
     <span class="flow__num mono">04</span>
-    <h2 class="flow__title">Autopilot</h2>
+    <h2 class="flow__title">{{.T.autopilot_title}}</h2>
   </div>
-  <p class="flow__lede">One key, and Orbit works the queue: it takes the next To Do, runs it through its flow without stopping at the flow's own gates, and lets the supervisor try to resolve what comes back needing attention.</p>
-  <video class="loop__frame" poster="flow-autopilot-poster.jpg"
+  <p class="flow__lede">{{.T.autopilot_lede}}</p>
+  <video class="loop__frame" poster="{{.Assets}}flow-autopilot-poster.jpg"
          controls muted playsinline preload="none"
-         aria-label="autopilot turned on, the queue moving on its own, and a task that needed a person landing in needs you">
-    <source src="flow-autopilot.webm" type="video/webm">
-    <source src="flow-autopilot.mp4" type="video/mp4">
+         aria-label="{{.T.autopilot_alt}}">
+    <source src="{{.Assets}}flow-autopilot.webm" type="video/webm">
+    <source src="{{.Assets}}flow-autopilot.mp4" type="video/mp4">
   </video>
   <ul class="flow__points">
-      <li>It does not lift a pause you set by hand, and it does not lift a task marked critical.</li>
-      <li><code class="mono">unread-cap</code> is the brake: once ten finished tasks are sitting unread, nothing new starts. The queue cannot outrun you.</li>
-      <li>Every gate it lifts is recorded as a decision nobody was asked about — a different fact about how much the result was checked.</li>
+      <li>{{.T.autopilot_1}}</li>
+      <li>{{.T.autopilot_2}}</li>
+      <li>{{.T.autopilot_3}}</li>
   </ul>
-  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/autopilot.md">Read the page →</a>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/autopilot.md">{{.T.more}}</a>
 </section>
 
 <section class="sec" id="parallel">
   <div class="flow__head">
     <span class="flow__num mono">05</span>
-    <h2 class="flow__title">Many tasks at once</h2>
+    <h2 class="flow__title">{{.T.parallel_title}}</h2>
   </div>
-  <p class="flow__lede">Three runs going, in three worktrees, in one window.</p>
-  <video class="loop__frame" poster="flow-parallel-poster.jpg"
+  <p class="flow__lede">{{.T.parallel_lede}}</p>
+  <video class="loop__frame" poster="{{.Assets}}flow-parallel-poster.jpg"
          controls muted playsinline preload="none"
-         aria-label="several tasks running side by side in the running band, each in its own worktree, moving through their phases">
-    <source src="flow-parallel.webm" type="video/webm">
-    <source src="flow-parallel.mp4" type="video/mp4">
+         aria-label="{{.T.parallel_alt}}">
+    <source src="{{.Assets}}flow-parallel.webm" type="video/webm">
+    <source src="{{.Assets}}flow-parallel.mp4" type="video/mp4">
   </video>
   <ul class="flow__points">
-      <li>Every task runs in a git worktree of its own, on its own branch. Two agents in their own checkouts is just two branches.</li>
-      <li>The Running band carries one row per live run: the phase, what it is doing right now, how long, what it has spent.</li>
-      <li><code class="mono">orbit join</code> opens a second repository for a task that turns out to need one.</li>
+      <li>{{.T.parallel_1}}</li>
+      <li>{{.T.parallel_2}}</li>
+      <li>{{.T.parallel_3}}</li>
   </ul>
-  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/parallel.md">Read the page →</a>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/parallel.md">{{.T.more}}</a>
 </section>
 
 <section class="sec" id="reading">
   <div class="flow__head">
     <span class="flow__num mono">06</span>
-    <h2 class="flow__title">Reading what it did</h2>
+    <h2 class="flow__title">{{.T.reading_title}}</h2>
   </div>
-  <p class="flow__lede">The diff says what was written. The impact tab says whether it was right — what usually comes along with these files and did not this time.</p>
-  <video class="loop__frame" poster="flow-reading-poster.jpg"
+  <p class="flow__lede">{{.T.reading_lede}}</p>
+  <video class="loop__frame" poster="{{.Assets}}flow-reading-poster.jpg"
          controls muted playsinline preload="none"
-         aria-label="the overview of a finished task, then the report, the diff card by card, and the impact tab">
-    <source src="flow-reading.webm" type="video/webm">
-    <source src="flow-reading.mp4" type="video/mp4">
+         aria-label="{{.T.reading_alt}}">
+    <source src="{{.Assets}}flow-reading.webm" type="video/webm">
+    <source src="{{.Assets}}flow-reading.mp4" type="video/mp4">
   </video>
   <ul class="flow__points">
-      <li>Read from this repository's own history: <span class="mono">invoice.py · 87% of the time (34/39) · not touched</span>. Not a rule — the question a reviewer cannot ask a diff.</li>
-      <li><code class="mono">r</code> runs the flow's own checks on the base and on the work at the same time. An exit code decided every line of it.</li>
-      <li>And what the agent says it did: what the change now asks of its callers, what it promises, and what it considered and did not do — which exists nowhere else.</li>
+      <li>{{.T.reading_1}}</li>
+      <li>{{.T.reading_2}}</li>
+      <li>{{.T.reading_3}}</li>
   </ul>
-  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/reading.md">Read the page →</a>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/reading.md">{{.T.more}}</a>
 </section>
 
 <section class="sec" id="cli">
   <div class="flow__head">
     <span class="flow__num mono">07</span>
-    <h2 class="flow__title">The CLI, both ways</h2>
+    <h2 class="flow__title">{{.T.cli_title}}</h2>
   </div>
-  <p class="flow__lede">Orbit does not replace the CLI you already use — Claude Code, Codex, OpenCode, Antigravity. <code class="mono">c</code> hands it the terminal, in that task's worktree, with the task's context and Orbit's MCP server.</p>
-  <video class="loop__frame" poster="flow-cli-poster.jpg"
+  <p class="flow__lede">{{.T.cli_lede}}</p>
+  <video class="loop__frame" poster="{{.Assets}}flow-cli-poster.jpg"
          controls muted playsinline preload="none"
-         aria-label="pressing c on a task, the CLI opening in that task's worktree, quitting, and orbit offering to write the session down as a task">
-    <source src="flow-cli.webm" type="video/webm">
-    <source src="flow-cli.mp4" type="video/mp4">
+         aria-label="{{.T.cli_alt}}">
+    <source src="{{.Assets}}flow-cli.webm" type="video/webm">
+    <source src="{{.Assets}}flow-cli.mp4" type="video/mp4">
   </video>
   <ul class="flow__points">
-      <li>Quit it and you land back on the board. Orbit asks whether to write the session down as a task.</li>
-      <li>Twenty-two MCP tools, so the flow goes both ways: your CLI writes tasks, runs them, reads what happened, and steers them.</li>
-      <li>The agents Orbit runs report through the same protocol — structured events, not scraped stdout.</li>
+      <li>{{.T.cli_1}}</li>
+      <li>{{.T.cli_2}}</li>
+      <li>{{.T.cli_3}}</li>
   </ul>
-  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/cli.md">Read the page →</a>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/cli.md">{{.T.more}}</a>
 </section>
 
 <section class="sec" id="supervisor">
   <div class="flow__head">
     <span class="flow__num mono">08</span>
-    <h2 class="flow__title">The supervisor</h2>
+    <h2 class="flow__title">{{.T.supervisor_title}}</h2>
   </div>
-  <p class="flow__lede">A second pair of eyes on the work, and a thread you steer it in. It goes out through the same CLI and the same subscription as your tasks.</p>
-  <video class="loop__frame" poster="flow-supervisor-poster.jpg"
+  <p class="flow__lede">{{.T.supervisor_lede}}</p>
+  <video class="loop__frame" poster="{{.Assets}}flow-supervisor-poster.jpg"
          controls muted playsinline preload="none"
-         aria-label="the supervisor thread: a directive typed into it, the supervisor reading a finished run, and a fact it learned appearing in the column beside it">
-    <source src="flow-supervisor.webm" type="video/webm">
-    <source src="flow-supervisor.mp4" type="video/mp4">
+         aria-label="{{.T.supervisor_alt}}">
+    <source src="{{.Assets}}flow-supervisor.webm" type="video/webm">
+    <source src="{{.Assets}}flow-supervisor.mp4" type="video/mp4">
   </video>
   <ul class="flow__points">
-      <li><code class="mono">orbit supervisor "the migration has to be reversible"</code> — and it is still there next session, and next month.</li>
-      <li>With autopilot on, it is what tries to resolve a task that came back needing attention before you are asked to look at it.</li>
-      <li>What it concludes goes into what Orbit knows, so the conversation is not chat: what you say in it becomes something the runs carry.</li>
+      <li>{{.T.supervisor_1}}</li>
+      <li>{{.T.supervisor_2}}</li>
+      <li>{{.T.supervisor_3}}</li>
   </ul>
-  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/supervisor.md">Read the page →</a>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/supervisor.md">{{.T.more}}</a>
 </section>
 
 <section class="sec" id="knowledge">
   <div class="flow__head">
     <span class="flow__num mono">09</span>
-    <h2 class="flow__title">What Orbit knows</h2>
+    <h2 class="flow__title">{{.T.knowledge_title}}</h2>
   </div>
-  <p class="flow__lede">Facts about your code, with a source and a reach, that arrive in the prompt before the agent works.</p>
-  <video class="loop__frame" poster="flow-knowledge-poster.jpg"
+  <p class="flow__lede">{{.T.knowledge_lede}}</p>
+  <video class="loop__frame" poster="{{.Assets}}flow-knowledge-poster.jpg"
          controls muted playsinline preload="none"
-         aria-label="the knowledge screen: facts by scope, one being corrected, one widened, one turned off, and where each came from">
-    <source src="flow-knowledge.webm" type="video/webm">
-    <source src="flow-knowledge.mp4" type="video/mp4">
+         aria-label="{{.T.knowledge_alt}}">
+    <source src="{{.Assets}}flow-knowledge.webm" type="video/webm">
+    <source src="{{.Assets}}flow-knowledge.mp4" type="video/mp4">
   </video>
   <ul class="flow__points">
-      <li>The model forgets between sessions and forgets when you swap it. CLAUDE.md and AGENTS.md are silos that empty the day the engine changes. This is kept outside all of them.</li>
-      <li>Six scopes, read closest-last: everything, a language, a repository, a directory, a file, one symbol.</li>
-      <li>A fact with no source does not get in — a sentence nobody can trace is indistinguishable from one the model made up.</li>
+      <li>{{.T.knowledge_1}}</li>
+      <li>{{.T.knowledge_2}}</li>
+      <li>{{.T.knowledge_3}}</li>
   </ul>
-  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/knowledge.md">Read the page →</a>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/knowledge.md">{{.T.more}}</a>
 </section>
 
 <section class="sec" id="flows">
   <div class="flow__head">
     <span class="flow__num mono">10</span>
-    <h2 class="flow__title">Flows you write yourself</h2>
+    <h2 class="flow__title">{{.T.flows_title}}</h2>
   </div>
-  <p class="flow__lede">A flow is a list of phases, each naming its own engine, model, effort, prompt and what it is allowed to touch. Five ship built in. The rest are yours.</p>
-  <video class="loop__frame" poster="flow-flows-poster.jpg"
+  <p class="flow__lede">{{.T.flows_lede}}</p>
+  <video class="loop__frame" poster="{{.Assets}}flow-flows-poster.jpg"
          controls muted playsinline preload="none"
-         aria-label="the flows screen: the five that ship and the ones written here, each phase with its engine, its model and whether it stops for a person, and the designer that writes a new one">
-    <source src="flow-flows.webm" type="video/webm">
-    <source src="flow-flows.mp4" type="video/mp4">
+         aria-label="{{.T.flows_alt}}">
+    <source src="{{.Assets}}flow-flows.webm" type="video/webm">
+    <source src="{{.Assets}}flow-flows.mp4" type="video/mp4">
   </video>
   <ul class="flow__points">
-    <li>The screen shows every flow opened out — each phase, what it runs on, and which of them stop. A flow you cannot read before you pay for it is a flow you are trusting rather than choosing.</li>
-    <li>A phase marked <code class="mono">wait</code> is a gate. That is how you say where the checks go.</li>
-    <li>The phase names are yours: a release flow, a migration flow, a triage flow are the same shape, and all get the same record and the same cockpit.</li>
+    <li>{{.T.flows_1}}</li>
+    <li>{{.T.flows_2}}</li>
+    <li>{{.T.flows_3}}</li>
   </ul>
-  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/flows.md">Read the page →</a>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/flows.md">{{.T.more}}</a>
 </section>
 
 <section class="sec" style="padding-bottom:96px;">
-  <p class="status">v0.1.x, used daily by its author. macOS and Linux. Claude Code, Codex, OpenCode, Antigravity.</p>
+  <p class="status">{{.T.status}}</p>
 </section>
 
 <footer>
-  <p>Apache 2.0 License · <a href="https://github.com/e1i0r/orbit" onclick="gtag('event','cta_click',{button:'footer_github'})">github.com/e1i0r/orbit</a></p>
-  <p style="margin-top:6px;">Contributions welcome — <a href="https://github.com/e1i0r/orbit/blob/main/CONTRIBUTING.md" onclick="gtag('event','cta_click',{button:'footer_contributing'})">read the guide</a> and jump in.</p>
-  <p style="margin-top:6px;">Built by <a href="https://e1i0.com" onclick="gtag('event','cta_click',{button:'footer_author'})">Elio Rincón</a></p>
+  <p>{{.T.footer_license}} · <a href="https://github.com/e1i0r/orbit" onclick="gtag('event','cta_click',{button:'footer_github'})">github.com/e1i0r/orbit</a></p>
+  <p style="margin-top:6px;">{{.T.footer_contributing}}</p>
+  <p style="margin-top:6px;">{{.T.footer_author}} <a href="https://e1i0.com" onclick="gtag('event','cta_click',{button:'footer_author'})">Elio Rincón</a></p>
 </footer>
 
 <script>
   const copyBtn = document.getElementById('install-copy');
   copyBtn.addEventListener('click', () => {
     navigator.clipboard.writeText(document.getElementById('install-cmd').textContent).then(() => {
-      copyBtn.textContent = 'copied';
-      setTimeout(() => { copyBtn.textContent = 'copy'; }, 1500);
+      copyBtn.textContent = '{{.T.copied}}';
+      setTimeout(() => { copyBtn.textContent = '{{.T.copy}}'; }, 1500);
     });
   });
 </script>
