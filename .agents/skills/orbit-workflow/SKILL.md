@@ -1,48 +1,68 @@
 ---
 name: orbit-workflow
 description: >-
-  Standard operating procedures for Orbit feature development, task lifecycle pipelines,
-  git worktree isolation, architecture layers, and release workflows.
+  How a change is made in Orbit: the layer map and where it is written down, the order
+  of work from reading to make check, worktree isolation for runs, and what never
+  leaves the machine without being asked for.
 ---
 
-# Orbit Workflow & Development Guide 🛰️
+# Making a change
 
-This skill outlines the standard workflows for designing, developing, and deploying features within Orbit.
+## The layers
 
----
+`internal/arch/layers_test.go` is the map, and every entry has the argument for it
+written beside it. Read it there rather than from a copy: a table in a skill file goes
+stale, and that one fails the build when it is wrong.
 
-## 🧭 Architecture Layers & Responsibilities
+What the map is really made of is its absences. `internal/ui` cannot reach
+`internal/record` or `internal/supervisor`, so the window can only learn things through
+the ports it was handed; `internal/board` cannot reach `internal/supervisor`, so a
+board refresh can never start a conversation. Adding an import between packages is a
+decision to argue in the pull request, and the comment beside the new entry is where
+it is argued.
 
-Orbit enforces a strict unidirectional dependency graph defined in `internal/arch/imports_test.go`:
+## The order of work
 
-| Layer / Package | Allowed Imports | Primary Responsibility |
-| :--- | :--- | :--- |
-| `cmd/orbit` | `internal/cli` | Application entrypoint and process exit handling. |
-| `internal/cli` | `board`, `engine`, `flow`, `logger`, `quota`, `repo`, `store`, `task`, `ui`, `view`, `words` | CLI command parsing, flag binding, and terminal dispatch. |
-| `internal/board` | `record`, `repo`, `store`, `task`, `view` | Real-time task board grouping, bands, and polling sweeps. |
-| `internal/task` | `engine`, `flow`, `record`, `repo`, `store` | Task execution lifecycle, gates, operator notes, and child process management. |
-| `internal/record` | *(none)* | Append-only JSONLines event logs (`events.jsonl`). |
-| `internal/store` | *(none)* | Pure on-disk filesystem path calculation and state roots. |
-| `internal/engine` | *(none)* | Multi-engine adapters (Claude Code, OpenAI Codex, OpenCode). |
-| `internal/ui` | `board`, `flow`, `repo`, `task`, `ui/layout`, `view`, `words` | Bubble Tea TUI cockpit rendering, input routing, and modals. |
-| `internal/ui/layout`| `view` | Pure geometric bounding boxes, cell grids, and dimension fitting. |
-| `internal/logger` | *(none)* | Thread-safe internal file diagnostic logging. |
+1. **Read the doors.** `internal/arch/doors_test.go` lists what each package is entered
+   by. It is the index: it tells you where the thing you need lives without opening
+   twenty files.
+2. **Read the file you are about to change, and its neighbours.** Match their shape —
+   comment density, naming, how much is explained. A file that reads differently is one
+   a reviewer has to learn twice.
+3. **Write the change and the tests that would have caught it.** Not tests that agree
+   with the code — tests that fail if it is wrong. Which kinds a change brings is in
+   the `orbit-testing` skill: unit always, property-based where there is an invariant,
+   fuzzing where bytes arrive from outside, integration where the seam is the subject,
+   `make mutate PKG=...` on what you touched, and the adversarial case somebody wrote
+   trying to break it.
+4. **Say it in the reader's language.** Every user-facing sentence goes through
+   `p.T("key", "the English")`, and `internal/words/lang/es.json` gets the same key with
+   the same source. `TestEveryTranslationKeyIsHonest` checks that the two agree.
+5. **Write it down.** Actionable failures and state changes go through
+   `internal/logger` with a subsystem tag — `logger.Info("task/run", …)`. Log where the
+   error stops travelling, and propagate it wrapped everywhere else. Never both.
+6. **`make coverage`.** It fails under 90% — a package that arrived without its own
+   suite is what usually spends it.
+7. **`make check`.** Read its exit status, not the output of something you piped it
+   into. It runs gofmt, vet twice (once for linux), golangci-lint, every test and
+   `go mod tidy`.
 
----
+## Runs and worktrees
 
-## 🛠️ Step-by-Step Feature Workflow
+A task runs in a git worktree of its own under the state root, on a branch named after
+the task. That is what lets several tasks touch the same repository at once, and it is
+why `orbit run` takes `-repo` rather than reading the current directory: a run that
+inherits whatever directory the window happened to be in is a run that writes into the
+wrong checkout.
 
-1. **Check Architectural Boundaries:**
-   - Verify that any new package dependencies are allowed by `internal/arch/imports_test.go`.
-2. **Design with Pure Layouts:**
-   - Put all geometry and bounding math into `internal/ui/layout` without side effects.
-3. **Keep File Size $< 300$ Lines:**
-   - Keep files modular ($\le 295$ lines).
-4. **Instrument Transparent Logging:**
-   - Log critical state transitions and errors using `logger.Info("module", ...)` / `logger.Error("module", ...)`.
-5. **Enforce Internationalization:**
-   - Use `p.T("key", "default English")` for all user-facing strings and update `internal/words/lang/es.json`.
-6. **Run Full Verification:**
-   ```bash
-   make check
-   ```
+`task.Start` spawns the orbit binary again, in its own process group, with the state
+root passed in the environment rather than inherited. A test suite whose code can reach
+`Start` must guard its `TestMain` — under `go test`, `os.Executable()` is the test
+binary.
+
+## What never happens without being asked
+
+Never `git push`, never open or merge a pull request, and never change repository
+settings. Work stays local and is committed when the operator says so. They read the
+diff before anything leaves the machine — that is the whole arrangement, and Orbit is a
+tool for people who want to keep it.
