@@ -201,7 +201,9 @@ func (m Model) paneMenu() []menu.Pane {
 		tabArtifacts: p.T("tab_desc.artifacts", "raw tool output and generated artifacts"),
 		tabNotes:     p.T("tab_desc.notes", "operator notes and interactive dialogue history"),
 		tabDiff:      p.T("tab_desc.diff", "git working tree diff and code modifications"),
-		tabThinking:  p.T("tab_desc.thinking", "extended model thinking, chain of thought and reasoning"),
+		tabImpact: p.T("tab_desc.impact",
+			"what usually changes with these files, what those tests hold, and what the checks say on both sides"),
+		tabThinking: p.T("tab_desc.thinking", "extended model thinking, chain of thought and reasoning"),
 	}
 
 	out := make([]menu.Pane, 0, tabCount)

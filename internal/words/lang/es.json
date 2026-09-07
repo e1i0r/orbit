@@ -3105,6 +3105,10 @@
       "source": "git working tree diff and code modifications",
       "value": "diferencias git (diff) en el árbol de trabajo"
     },
+    "tab_desc.impact": {
+      "source": "what usually changes with these files, what those tests hold, and what the checks say on both sides",
+      "value": "qué suele cambiar junto a estos archivos, qué garantizan esas pruebas y qué dicen los checks de los dos lados"
+    },
     "tab_desc.thinking": {
       "source": "extended model thinking, chain of thought and reasoning",
       "value": "razonamiento extendido del modelo LLM"
@@ -4424,6 +4428,14 @@
     "compose.read_failed": {
       "source": "could not read the issue: {err}",
       "value": "no se pudo leer la issue: {err}"
+    },
+    "compose.still_reading": {
+      "source": "still reading the issue; give it a moment",
+      "value": "todavía se está leyendo la issue; dale un momento"
+    },
+    "compose.issue_empty": {
+      "source": "that issue has no description; write what has to be done",
+      "value": "esa issue no tiene descripción; escribe qué hay que hacer"
     },
     "wait.issue": {
       "source": "reading the issue",

@@ -12,6 +12,16 @@ import (
 func (s State) Submit(startNow bool, e Env) (State, Out) {
 	p := e.Words
 
+	// A second press while the tracker is answering is not a second task.
+	// Both guards below are asleep in that window — onlyALink because the
+	// machine says it can read the issue, and needsBody because a read is
+	// already out — so without this the form would write the task with the
+	// title as its whole body, which is the one thing those two exist to
+	// stop.
+	if s.reading {
+		return s, said(p.T("compose.still_reading", "still reading the issue; give it a moment"))
+	}
+
 	path := strings.TrimSpace(s.repoPath)
 	id := strings.TrimSpace(s.id.String())
 	text := strings.TrimSpace(s.text.String())
@@ -45,6 +55,14 @@ func (s State) Submit(startNow bool, e Env) (State, Out) {
 	case text == "":
 		return s, said(p.T("compose.text_required",
 			"the task needs something written in it"))
+	case s.emptyIssue(text):
+		// The tracker answered and the issue had no description in it. It
+		// is a name, the same as a link is, and it is worth its own
+		// sentence: nothing is wrong with the key or the connection, and a
+		// reader told "orbit cannot read this issue" would go looking for
+		// a fault that is not there.
+		return s, said(p.T("compose.issue_empty",
+			"that issue has no description; write what has to be done"))
 	case s.onlyALink(text):
 		// A URL and a title are a name, not a task. Orbit cannot read the
 		// body of this issue on this machine, and a headless run cannot
@@ -86,6 +104,19 @@ func (s State) Submit(startNow bool, e Env) (State, Out) {
 		Leave: true,
 		Write: &Task{ID: id, Repo: path, Flow: s.chosenFlow(), Text: text, Start: startNow},
 	}
+}
+
+// emptyIssue is whether the tracker answered about this issue and there was
+// nothing written in it — so all the task would carry is its own title.
+func (s State) emptyIssue(text string) bool {
+	iss := s.parsedIssue
+	if iss == nil || !s.asked || iss.Description != "" {
+		return false
+	}
+
+	written := strings.TrimSpace(text)
+
+	return written == "" || written == strings.TrimSpace(iss.Title)
 }
 
 // onlyALink is whether all this task would carry is what the URL itself
