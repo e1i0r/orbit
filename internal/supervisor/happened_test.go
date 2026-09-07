@@ -86,7 +86,7 @@ func TestTheWindowIsWhatItSays(t *testing.T) {
 // coming back from lunch decides what to do next on the strength of which
 // one it is.
 func TestTheAnswerIsAskedToKeepVerifiedApartFromItsOwnReading(t *testing.T) {
-	asked := buildSupervisorPrompt("", []string{"2026-09-05 14:00 · ACME-1 · gate.passed · gate=tests"}, "¿qué pasó?")
+	asked := buildSupervisorPrompt("", []string{"2026-09-05 14:00 · ACME-1 · gate.passed · gate=tests"}, "¿qué pasó?", nil)
 
 	for _, want := range []string{"What the record says", "gate.passed", "verified"} {
 		if !strings.Contains(asked, want) {
@@ -103,7 +103,7 @@ func TestTheAnswerIsAskedToKeepVerifiedApartFromItsOwnReading(t *testing.T) {
 // prompt are in English because that is what the log is written in; the
 // person reading the answer asked in Spanish.
 func TestTheAnswerFollowsTheLanguageTheQuestionWasAskedIn(t *testing.T) {
-	asked := buildSupervisorPrompt("", nil, "¿qué pasó mientras no estaba?")
+	asked := buildSupervisorPrompt("", nil, "¿qué pasó mientras no estaba?", nil)
 
 	if !strings.Contains(asked, "Answer in the language the operator wrote in") {
 		t.Error("the contract does not ask it to answer in the language it was asked in")

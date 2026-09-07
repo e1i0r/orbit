@@ -114,7 +114,7 @@ func TestTheSecondCallShowsTheModelWhatTheFirstOneSaid(t *testing.T) {
 // the cockpit, so what it is asked is written as Markdown too: a prompt that
 // asks in one shape for another is asking twice.
 func TestTheSupervisorIsAskedInMarkdown(t *testing.T) {
-	full := buildSupervisorPrompt("[operator via tui]: what is stuck?\n", nil, "and now?")
+	full := buildSupervisorPrompt("[operator via tui]: what is stuck?\n", nil, "and now?", nil)
 
 	lines := strings.Split(full, "\n")
 	for _, head := range []string{"# Supervisor", "## Thread so far", "## Operator message", "## How to answer"} {
@@ -139,7 +139,7 @@ func TestTheSupervisorIsAskedInMarkdown(t *testing.T) {
 func TestAThreadOfMarkdownIsFencedOffFromThePrompt(t *testing.T) {
 	said := "[fake via supervisor]: ## Findings\n\n```go\nfmt.Println(\"kept\")\n```\n"
 
-	full := buildSupervisorPrompt(said, nil, "and now?")
+	full := buildSupervisorPrompt(said, nil, "and now?", nil)
 
 	_, after, ok := strings.Cut(full, "````markdown\n")
 	if !ok {
@@ -156,7 +156,7 @@ func TestAThreadOfMarkdownIsFencedOffFromThePrompt(t *testing.T) {
 // model has to answer for itself — whether nothing was said before, or
 // whether something was and this program dropped it.
 func TestAThreadWithNothingInItIsNotHeaded(t *testing.T) {
-	full := buildSupervisorPrompt("", nil, "what is stuck?")
+	full := buildSupervisorPrompt("", nil, "what is stuck?", nil)
 
 	if slices.Contains(strings.Split(full, "\n"), "## Thread so far") {
 		t.Errorf("the prompt heads a thread over nothing:\n%s", full)
