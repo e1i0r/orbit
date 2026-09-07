@@ -24,6 +24,9 @@ of its own, entered through its doors.
 | `internal/ui/settings` | the settings screen, whole | `Open`, `Rows`, `Key`, `Apply`, `View` |
 | `internal/ui/prompt` | what the window asks an engine for | `Deliver`, `Phase`, `FlowDraft` |
 | `internal/ui/layout` | pure geometry: frames, columns, bounds. No Bubble Tea, no Lip Gloss | `Frame`, `Columns` |
+| `internal/ui/prose` | how a block of text is set, and the shapes a screen is built out of | `Section`, `Meta`, `Quote`, `Strip`, `Card`, `Fields`, `Badge`, `Chip` |
+| `internal/ui/panes` | the twelve panes of the task screen: one door each, drawn from an Env | `Overview`, `Pipeline`, `Gates`, `Cost`, `Refused`, `Timeline`, `Report`, `Artifacts`, `Notes`, `Diff`, `Impact`, `Thinking` |
+| `internal/ui/menu` | what can be done to the thing under the pointer, including what cannot | `Open`, `Key`, `Choose`, `Enter`, `View`, `Hit` |
 | `internal/ui/clip`, `spoken`, `upgrade` | the pasteboard, the operator's gestures, the release check | one door each |
 
 `internal/arch/doors_test.go` is the full list and it is the index of the window:
@@ -51,9 +54,12 @@ read it before opening files.
 ## The task view
 
 Twelve tabs: overview (1), flow (2), gates (3), cost (4), refused (5), timeline (6),
-report (7), artifacts (8), notes (9), diff (0), impact (i), thinking (w). Adding one
-means `tabNames()` **and** the descriptions in `tabMenuEntries()` — a tab with no line
-in the menu is the one row a reader opened the menu to understand.
+report (7), artifacts (8), notes (9), diff (0), impact (i), thinking (w). Each is a
+door of `internal/ui/panes`, handed an `Env` — the run, its record, the room it has
+and what the reader has folded — and nothing else: a pane can reach no port and
+decide nothing about the task it is drawing. Adding one means `tabNames()` **and** the
+descriptions in `paneMenu()` — a tab with no line in the menu is the one row a reader
+opened the menu to understand.
 
 ## Themes
 
