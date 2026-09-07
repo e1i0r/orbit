@@ -227,6 +227,30 @@
   }
   .loop__closer { margin: 22px 0 0; font-size: 14.5px; line-height: 1.65; color: var(--text); }
 
+  /* — One flow, one section — */
+  /* Nine recordings on one page is a lot of bytes, so only the loop at the
+     top plays on its own. The rest carry a poster and load when clicked. */
+  .flow__head { display: flex; align-items: baseline; gap: 12px; margin: 0 0 10px; }
+  .flow__num {
+    font-family: var(--mono); font-size: 13px; color: var(--primary);
+    background: var(--primary-very-light); border: 1px solid var(--primary-light);
+    border-radius: var(--radius-lg); padding: 2px 9px;
+  }
+  .flow__title {
+    margin: 0; font-size: 13px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted);
+  }
+  .flow__lede { margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: var(--text); }
+  .flow__points { margin: 24px 0 0; padding: 0; list-style: none; }
+  .flow__points li {
+    position: relative; padding-left: 20px; margin-bottom: 10px;
+    font-size: 14.5px; line-height: 1.65; color: var(--text-medium);
+  }
+  .flow__points li::before {
+    content: "·"; position: absolute; left: 6px; color: var(--text-muted);
+  }
+  .flow__more { display: inline-block; margin-top: 14px; font-size: 14px; color: var(--primary); }
+
   /* — Flows — */
   .flowline {
     font-family: var(--mono);
@@ -296,7 +320,7 @@
 
     <div class="hero__ctas">
       <a class="btn btn--primary" href="https://github.com/e1i0r/orbit" onclick="gtag('event','cta_click',{button:'hero_github'})">GitHub</a>
-      <a class="btn btn--outline" href="https://github.com/e1i0r/orbit#quickstart" onclick="gtag('event','cta_click',{button:'hero_docs'})">Docs</a>
+      <a class="btn btn--outline" href="https://github.com/e1i0r/orbit/blob/main/docs/start.md" onclick="gtag('event','cta_click',{button:'hero_docs'})">Docs</a>
     </div>
   </div>
 </section>
@@ -324,9 +348,9 @@
     <source src="loop.webm" type="video/webm">
     <source src="loop.mp4" type="video/mp4">
   </video>
-  <p class="loop__caption">Four bands, eleven tabs, one window over every repository.</p>
+  <p class="loop__caption">Four bands, twelve tabs, one window over every repository.</p>
   <ol class="steps">
-    <li>In your CLI — Claude Code, Codex, OpenCode — you investigate, validate, and build the plan. From there it creates the tasks and hands them to Orbit over MCP.</li>
+    <li>In your CLI — Claude Code, Codex, OpenCode, Antigravity — you investigate, validate, and build the plan. From there it creates the tasks and hands them to Orbit over MCP.</li>
     <li>You open the cockpit and turn on autopilot.</li>
     <li>Orbit runs each task in its own worktree, phase by phase, stopping at the gates. The supervisor checks the result, fixes what is missing, and reports back.</li>
     <li>You read the diff and ship the PR.</li>
@@ -355,13 +379,187 @@
 </section>
 
 <section class="sec">
-  <h2 class="sec__title">Flows</h2>
-  <div class="flowline">validate <span class="arrow">→</span> tests <span class="arrow">→</span> pr <span class="arrow">→</span> checks <span class="arrow">→</span> merge <span class="gate">⏸</span></div>
-  <p class="flows__note">Four flows ship built in. Write your own in JSON or build it in the cockpit.</p>
+  <div class="flow__head">
+    <span class="flow__num mono">01</span>
+    <h2 class="flow__title">Getting started</h2>
+  </div>
+  <p class="flow__lede">Four commands, and the only one you have to think about is the third: point the cockpit at the directory your repositories are under.</p>
+  <video class="loop__frame" poster="flow-start-poster.jpg"
+         controls muted playsinline preload="none"
+         aria-label="installing orbit, registering the MCP server, opening the cockpit over a directory of repositories, and writing the first task">
+    <source src="flow-start.webm" type="video/webm">
+    <source src="flow-start.mp4" type="video/mp4">
+  </video>
+  <ul class="flow__points">
+      <li><code class="mono">orbit mcp install</code> registers the server in Claude Code, Claude Desktop, Codex, OpenCode and Gemini.</li>
+      <li><code class="mono">orbit top ~/code</code> is one window over every git repository under it. There is no list to register.</li>
+      <li><code class="mono">N</code> writes a task, or ask your CLI in plain language and it writes them for you.</li>
+  </ul>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/start.md">Read the page →</a>
+</section>
+
+<section class="sec">
+  <div class="flow__head">
+    <span class="flow__num mono">02</span>
+    <h2 class="flow__title">What you can do</h2>
+  </div>
+  <p class="flow__lede">Press <code class="mono">m</code> on anything. The menu lists every verb that applies to it — and the ones that do not, greyed, each with the sentence saying why.</p>
+  <video class="loop__frame" poster="flow-menus-poster.jpg"
+         controls muted playsinline preload="none"
+         aria-label="the menu on the board and the menu inside a task: the panes, the verbs, and a refused verb greyed with its reason">
+    <source src="flow-menus.webm" type="video/webm">
+    <source src="flow-menus.mp4" type="video/mp4">
+  </video>
+  <ul class="flow__points">
+      <li>A key that silently does nothing is indistinguishable from a key that is broken. So nothing is hidden: it is shown refused, with the reason.</li>
+      <li>Inside a task the same key carries both blocks — the twelve panes, and everything that can be done to the run.</li>
+      <li>Every verb in it is a command you can also run from a script, and the refusal is word for word the same.</li>
+  </ul>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/menus.md">Read the page →</a>
+</section>
+
+<section class="sec">
+  <div class="flow__head">
+    <span class="flow__num mono">03</span>
+    <h2 class="flow__title">A run, end to end</h2>
+  </div>
+  <p class="flow__lede">A task is not one long session. It is a list of phases, each small enough to check, with a verdict written down after every one.</p>
+  <video class="loop__frame" poster="flow-run-poster.jpg"
+         controls muted playsinline preload="none"
+         aria-label="a task started from the board, moving phase by phase through its flow, stopping at a gate, and the gate let go">
+    <source src="flow-run.webm" type="video/webm">
+    <source src="flow-run.mp4" type="video/mp4">
+  </video>
+  <ul class="flow__points">
+      <li>A phase that gets it wrong is caught by the next one, or by you, before the one after it builds on the mistake.</li>
+      <li>A phase marked <code class="mono">wait</code> is a gate: the run stops in front of it. Between every pair of phases the answer is recorded — including "nobody was asked, autopilot was on".</li>
+      <li>Five flows ship built in. Yours are JSON, and the phase names are yours.</li>
+  </ul>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/run.md">Read the page →</a>
+</section>
+
+<section class="sec">
+  <div class="flow__head">
+    <span class="flow__num mono">04</span>
+    <h2 class="flow__title">Autopilot</h2>
+  </div>
+  <p class="flow__lede">One key, and Orbit works the queue: it takes the next To Do, runs it through its flow without stopping at the flow's own gates, and lets the supervisor try to resolve what comes back needing attention.</p>
+  <video class="loop__frame" poster="flow-autopilot-poster.jpg"
+         controls muted playsinline preload="none"
+         aria-label="autopilot turned on, the queue moving on its own, and a task that needed a person landing in needs you">
+    <source src="flow-autopilot.webm" type="video/webm">
+    <source src="flow-autopilot.mp4" type="video/mp4">
+  </video>
+  <ul class="flow__points">
+      <li>It does not lift a pause you set by hand, and it does not lift a task marked critical.</li>
+      <li><code class="mono">unread-cap</code> is the brake: once ten finished tasks are sitting unread, nothing new starts. The queue cannot outrun you.</li>
+      <li>Every gate it lifts is recorded as a decision nobody was asked about — a different fact about how much the result was checked.</li>
+  </ul>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/autopilot.md">Read the page →</a>
+</section>
+
+<section class="sec">
+  <div class="flow__head">
+    <span class="flow__num mono">05</span>
+    <h2 class="flow__title">Many tasks at once</h2>
+  </div>
+  <p class="flow__lede">Three runs going, in three worktrees, in one window.</p>
+  <video class="loop__frame" poster="flow-parallel-poster.jpg"
+         controls muted playsinline preload="none"
+         aria-label="several tasks running side by side in the running band, each in its own worktree, moving through their phases">
+    <source src="flow-parallel.webm" type="video/webm">
+    <source src="flow-parallel.mp4" type="video/mp4">
+  </video>
+  <ul class="flow__points">
+      <li>Every task runs in a git worktree of its own, on its own branch. Two agents in their own checkouts is just two branches.</li>
+      <li>The Running band carries one row per live run: the phase, what it is doing right now, how long, what it has spent.</li>
+      <li><code class="mono">orbit join</code> opens a second repository for a task that turns out to need one.</li>
+  </ul>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/parallel.md">Read the page →</a>
+</section>
+
+<section class="sec">
+  <div class="flow__head">
+    <span class="flow__num mono">06</span>
+    <h2 class="flow__title">Reading what it did</h2>
+  </div>
+  <p class="flow__lede">The diff says what was written. The impact tab says whether it was right — what usually comes along with these files and did not this time.</p>
+  <video class="loop__frame" poster="flow-reading-poster.jpg"
+         controls muted playsinline preload="none"
+         aria-label="the overview of a finished task, then the report, the diff card by card, and the impact tab">
+    <source src="flow-reading.webm" type="video/webm">
+    <source src="flow-reading.mp4" type="video/mp4">
+  </video>
+  <ul class="flow__points">
+      <li>Read from this repository's own history: <span class="mono">invoice.py · 87% of the time (34/39) · not touched</span>. Not a rule — the question a reviewer cannot ask a diff.</li>
+      <li><code class="mono">r</code> runs the flow's own checks on the base and on the work at the same time. An exit code decided every line of it.</li>
+      <li>And what the agent says it did: what the change now asks of its callers, what it promises, and what it considered and did not do — which exists nowhere else.</li>
+  </ul>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/reading.md">Read the page →</a>
+</section>
+
+<section class="sec">
+  <div class="flow__head">
+    <span class="flow__num mono">07</span>
+    <h2 class="flow__title">The CLI, both ways</h2>
+  </div>
+  <p class="flow__lede">Orbit does not replace the CLI you already use — Claude Code, Codex, OpenCode, Antigravity. <code class="mono">c</code> hands it the terminal, in that task's worktree, with the task's context and Orbit's MCP server.</p>
+  <video class="loop__frame" poster="flow-cli-poster.jpg"
+         controls muted playsinline preload="none"
+         aria-label="pressing c on a task, the CLI opening in that task's worktree, quitting, and orbit offering to write the session down as a task">
+    <source src="flow-cli.webm" type="video/webm">
+    <source src="flow-cli.mp4" type="video/mp4">
+  </video>
+  <ul class="flow__points">
+      <li>Quit it and you land back on the board. Orbit asks whether to write the session down as a task.</li>
+      <li>Twenty-two MCP tools, so the flow goes both ways: your CLI writes tasks, runs them, reads what happened, and steers them.</li>
+      <li>The agents Orbit runs report through the same protocol — structured events, not scraped stdout.</li>
+  </ul>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/cli.md">Read the page →</a>
+</section>
+
+<section class="sec">
+  <div class="flow__head">
+    <span class="flow__num mono">08</span>
+    <h2 class="flow__title">The supervisor</h2>
+  </div>
+  <p class="flow__lede">A second pair of eyes on the work, and a thread you steer it in. It goes out through the same CLI and the same subscription as your tasks.</p>
+  <video class="loop__frame" poster="flow-supervisor-poster.jpg"
+         controls muted playsinline preload="none"
+         aria-label="the supervisor thread: a directive typed into it, the supervisor reading a finished run, and a fact it learned appearing in the column beside it">
+    <source src="flow-supervisor.webm" type="video/webm">
+    <source src="flow-supervisor.mp4" type="video/mp4">
+  </video>
+  <ul class="flow__points">
+      <li><code class="mono">orbit supervisor "the migration has to be reversible"</code> — and it is still there next session, and next month.</li>
+      <li>With autopilot on, it is what tries to resolve a task that came back needing attention before you are asked to look at it.</li>
+      <li>What it concludes goes into what Orbit knows, so the conversation is not chat: what you say in it becomes something the runs carry.</li>
+  </ul>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/supervisor.md">Read the page →</a>
+</section>
+
+<section class="sec">
+  <div class="flow__head">
+    <span class="flow__num mono">09</span>
+    <h2 class="flow__title">What Orbit knows</h2>
+  </div>
+  <p class="flow__lede">Facts about your code, with a source and a reach, that arrive in the prompt before the agent works.</p>
+  <video class="loop__frame" poster="flow-knowledge-poster.jpg"
+         controls muted playsinline preload="none"
+         aria-label="the knowledge screen: facts by scope, one being corrected, one widened, one turned off, and where each came from">
+    <source src="flow-knowledge.webm" type="video/webm">
+    <source src="flow-knowledge.mp4" type="video/mp4">
+  </video>
+  <ul class="flow__points">
+      <li>The model forgets between sessions and forgets when you swap it. CLAUDE.md and AGENTS.md are silos that empty the day the engine changes. This is kept outside all of them.</li>
+      <li>Six scopes, read closest-last: everything, a language, a repository, a directory, a file, one symbol.</li>
+      <li>A fact with no source does not get in — a sentence nobody can trace is indistinguishable from one the model made up.</li>
+  </ul>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/knowledge.md">Read the page →</a>
 </section>
 
 <section class="sec" style="padding-bottom:96px;">
-  <p class="status">v0.1.x, used daily by its author. macOS and Linux. Claude Code, Codex, OpenCode.</p>
+  <p class="status">v0.1.x, used daily by its author. macOS and Linux. Claude Code, Codex, OpenCode, Antigravity.</p>
 </section>
 
 <footer>

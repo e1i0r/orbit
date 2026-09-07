@@ -6,16 +6,26 @@
 > prompts, the reasoning, the diff, the cost, what the agent refused to do.
 
 Orbit never calls a model. It runs the coding-agent CLI you already have
-installed — Claude Code, Codex, OpenCode — under the subscription you already
+installed — Claude Code, Codex, OpenCode, Antigravity — under the subscription you already
 pay for, so there is no API key and no second bill per token. It is an MCP
-server with 19 tools, so your CLI writes the tasks, runs them, and reads back
-everything that happened while you were away.
+server with 22 tools, so your CLI writes the tasks, runs them, reads back
+everything that happened while you were away, and teaches Orbit what it worked
+out.
 
 Built by Elio Rincón ([e1i0.com](https://e1i0.com)).
 
 ## Docs
 
-- [README](https://github.com/e1i0r/orbit#readme): the loop, install, quickstart, flows and gates
+- [README](https://github.com/e1i0r/orbit#readme): what it is, install, and the nine flows
+- [Getting started](https://github.com/e1i0r/orbit/blob/main/docs/start.md): install, the MCP server, the first task
+- [What you can do](https://github.com/e1i0r/orbit/blob/main/docs/menus.md): the menu on anything, including what it refuses and why
+- [A run, end to end](https://github.com/e1i0r/orbit/blob/main/docs/run.md): flows, phases and gates
+- [Autopilot](https://github.com/e1i0r/orbit/blob/main/docs/autopilot.md): the queue working itself, and the unread cap that brakes it
+- [Many tasks at once](https://github.com/e1i0r/orbit/blob/main/docs/parallel.md): a worktree each, running side by side
+- [Reading what it did](https://github.com/e1i0r/orbit/blob/main/docs/reading.md): the report, the diff, and the impact of a change
+- [The CLI, both ways](https://github.com/e1i0r/orbit/blob/main/docs/cli.md): handing the terminal over, and the MCP tools
+- [The supervisor](https://github.com/e1i0r/orbit/blob/main/docs/supervisor.md): the second pair of eyes and the thread you steer it in
+- [What Orbit knows](https://github.com/e1i0r/orbit/blob/main/docs/knowledge.md): facts with a source and a reach, kept outside the model
 - [Engines](https://github.com/e1i0r/orbit/blob/main/docs/engines.md): the model and reasoning catalogue of each CLI
 - [Cockpit](https://github.com/e1i0r/orbit/blob/main/docs/cockpit.md): bands, tabs and keybindings
 - [Install script](https://getorbit.sh/install.sh): `curl -fsSL https://getorbit.sh/install.sh | bash`
