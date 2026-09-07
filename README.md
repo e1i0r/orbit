@@ -19,7 +19,7 @@
 curl -fsSL https://raw.githubusercontent.com/e1i0r/orbit/main/install.sh | bash
 ```
 
-<img src="assets/loop.gif" alt="the cockpit, the record a finished task kept, and the terminal handed to a CLI and handed back" width="720">
+<img src="assets/flow-reading.gif" alt="a finished task read: the story of how the prompt became the diff, the report, the diff card by card, and what the change reaches that the diff cannot show" width="900">
 
 ---
 

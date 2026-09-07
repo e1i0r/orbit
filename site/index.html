@@ -13,11 +13,11 @@
 <meta property="og:url" content="https://getorbit.sh/">
 <meta property="og:title" content="Orbit — A cockpit for the agents that write your code">
 <meta property="og:description" content="A cockpit for the agents that write your code. Each task in its own worktree, in phases that stop where you tell them to, and every run written down beside the code.">
-<meta property="og:image" content="https://getorbit.sh/loop-poster.jpg">
+<meta property="og:image" content="https://getorbit.sh/flow-reading-poster.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Orbit — A cockpit for the agents that write your code">
 <meta name="twitter:description" content="A cockpit for the agents that write your code. Each task in its own worktree, in phases that stop where you tell them to, and every run written down beside the code.">
-<meta name="twitter:image" content="https://getorbit.sh/loop-poster.jpg">
+<meta name="twitter:image" content="https://getorbit.sh/flow-reading-poster.jpg">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-N9D1HEEMRD"></script>
 <script>
@@ -200,9 +200,9 @@
   .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
   .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
 
-  /* — The loop — */
+  /* — A recording — */
   /* Wider than the text column: a terminal reads badly once its columns are
-     squeezed, and the recording is 145 of them. */
+     squeezed, and these are 142 of them. */
   .loop__frame {
     display: block; height: auto;
     width: min(1200px, 94vw);
@@ -211,21 +211,6 @@
     border-radius: var(--radius-xl);
     background: var(--surface);
   }
-  .steps { margin: 28px 0 0; padding: 0; list-style: none; counter-reset: step; }
-  .steps li {
-    counter-increment: step;
-    position: relative; padding-left: 38px; margin-bottom: 14px;
-    font-size: 14.5px; line-height: 1.65; color: var(--text-medium);
-  }
-  .steps li::before {
-    content: counter(step);
-    position: absolute; left: 0; top: 1px;
-    width: 24px; height: 24px; border-radius: 50%;
-    background: var(--primary-very-light); border: 1px solid var(--primary-light);
-    color: var(--primary); font-family: var(--mono); font-size: 12px; font-weight: 500;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .loop__closer { margin: 22px 0 0; font-size: 14.5px; line-height: 1.65; color: var(--text); }
 
   /* — The nine, across the top — */
   /* Sticky, because the page is nine sections of video: the reader who wants
@@ -284,23 +269,10 @@
   .card .flow__points { margin-top: 4px; }
   .flow__more { display: inline-block; margin-top: 14px; font-size: 14px; color: var(--primary); }
 
-  /* — Flows — */
-  .flowline {
-    font-family: var(--mono);
-    font-size: clamp(15px, 2.6vw, 24px);
-    color: var(--text-loudest);
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius-lg); padding: 24px;
-    text-align: center; overflow-x: auto; white-space: nowrap;
-  }
-  .flowline .arrow { color: var(--text-muted); }
-  .flowline .gate { color: var(--amber); }
-  .flows__note { margin: 16px 0 0; font-size: 14px; color: var(--text-medium); text-align: center; }
 
   /* — Status — */
   .status { margin: 0; font-size: 14.5px; line-height: 1.65; color: var(--text-medium); text-align: center; }
 
-  .loop__caption { margin: 14px 0 0; font-size: 13px; color: var(--text-muted); text-align: center; }
 
   /* — Features — */
   .card {
@@ -390,23 +362,6 @@
   </div>
 </nav>
 
-<section class="sec">
-  <h2 class="sec__title">The loop</h2>
-  <video class="loop__frame" poster="loop-poster.jpg"
-         autoplay loop muted playsinline preload="metadata"
-         aria-label="The cockpit, the record a finished task kept — its report, its diff, its timeline, what it wrote and what it changed — and the terminal handed to a CLI and handed back with the next task written down.">
-    <source src="loop.webm" type="video/webm">
-    <source src="loop.mp4" type="video/mp4">
-  </video>
-  <p class="loop__caption">Four bands, twelve tabs, one window over every repository.</p>
-  <ol class="steps">
-    <li>In your CLI — Claude Code, Codex, OpenCode, Antigravity — you investigate, validate, and build the plan. From there it creates the tasks and hands them to Orbit over MCP.</li>
-    <li>You open the cockpit and turn on autopilot.</li>
-    <li>Orbit runs each task in its own worktree, phase by phase, stopping at the gates. The supervisor checks the result, fixes what is missing, and reports back.</li>
-    <li>You read the diff and ship the PR.</li>
-  </ol>
-  <p class="loop__closer">Then you go back to your CLI, and it can read everything that happened while you were away.</p>
-</section>
 
 
 <section class="sec" id="start">
