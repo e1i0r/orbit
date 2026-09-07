@@ -137,7 +137,20 @@ var program = map[string][]string{
 	// from in here. That absence is what keeps the direction one-way, and
 	// with it there is no cycle to make: internal/task does not list this
 	// package either.
-	"internal/supervisor": {"internal/engine", "internal/record", "internal/store"},
+	//
+	// internal/knowledge is on its list for the same reason it is on
+	// internal/task's: this is a second place a fact reaches a model. The
+	// supervisor answers with the standing rules in front of it, so that it
+	// cannot direct a task into something a gate would refuse an hour later,
+	// and so that it can tell whether what the operator just said is already
+	// written down. It is a read — this package loads facts and writes none.
+	// internal/logger is on it because a store that cannot be read costs the
+	// facts and not the answer: the supervisor keeps answering, and the line
+	// in the log is the only account of what it was answering without.
+	"internal/supervisor": {
+		"internal/engine", "internal/knowledge", "internal/logger",
+		"internal/record", "internal/store",
+	},
 	// internal/logger is on internal/task's list for the same reason it is on
 	// internal/ui's, and for one more: a run that is SIGKILLed writes nothing
 	// about its own death, so the last line it managed to log is the only
