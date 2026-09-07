@@ -26,7 +26,7 @@ func TestATaskIsTypedAndWrittenDown(t *testing.T) {
 	}
 
 	s.field = composeText
-	s = typed(s, e, "Fix payment")
+	s = typed(s, e, "Fix payment webhook verification")
 
 	if rows := s.View(20, 100, e); len(rows) == 0 {
 		t.Error("the form drew nothing")
@@ -37,7 +37,7 @@ func TestATaskIsTypedAndWrittenDown(t *testing.T) {
 		t.Fatalf("the form refused a task with an id and a sentence: %q", out.Said)
 	}
 
-	if out.Write.ID != "TASK-9" || out.Write.Text != "Fix payment" {
+	if out.Write.ID != "TASK-9" || out.Write.Text != "Fix payment webhook verification" {
 		t.Errorf("the task written is %+v", out.Write)
 	}
 
@@ -219,5 +219,38 @@ func TestEscapeClosesTheFormAndKeepsNothing(t *testing.T) {
 
 	if next.id.String() != "" {
 		t.Errorf("escape kept %q on the line", next.id.String())
+	}
+}
+
+// TestTheLettersBoundToTheArrowsStillTypeInAField.
+//
+// Up carries k and Down carries j, which is how a reader walks the board.
+// In this form they were matched everywhere, so a task could not be written
+// about a webhook or a json payload: the two letters walked the fields
+// instead of landing in them, and the rest of the sentence went into
+// whichever field they had walked to.
+func TestTheLettersBoundToTheArrowsStillTypeInAField(t *testing.T) {
+	s, e := form(t)
+	s.field = composeText
+
+	s = typed(s, e, "the json webhook")
+
+	if got := s.text.String(); got != "the json webhook" {
+		t.Errorf("the task reads %q, want every letter that was typed", got)
+	}
+
+	if s.field != composeText {
+		t.Errorf("typing moved the cursor to field %d", s.field)
+	}
+
+	// And on the row of pills, where nothing is typed into, they still walk.
+	s.field = composeFlow
+
+	if up := keyed(s, press("k"), e); up.field != composeFlow {
+		t.Errorf("k on the flow row left field %d", up.field)
+	}
+
+	if down := keyed(s, press("j"), e); down.field != composeID {
+		t.Errorf("j on the flow row left field %d, want the row below it", down.field)
 	}
 }

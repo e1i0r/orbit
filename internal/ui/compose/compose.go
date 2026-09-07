@@ -169,9 +169,14 @@ func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
 		if s.isComposeFlowField() {
 			return s, Out{Flow: s.chosenFlow()}
 		}
-	case msg.Code == tea.KeyUp || key.Matches(msg, e.Keys.Up):
+	// The arrows themselves always move, and the letters bound alongside
+	// them only where nothing is being typed into. Up carries k and Down
+	// carries j, so a form that matched the binding everywhere could not be
+	// used to write "webhook" or "json": the two letters walked the fields
+	// instead of landing in them.
+	case msg.Code == tea.KeyUp || (s.isPillField() && key.Matches(msg, e.Keys.Up)):
 		return s.composeVertical(-1, msg.Mod, e), Out{}
-	case msg.Code == tea.KeyDown || key.Matches(msg, e.Keys.Down):
+	case msg.Code == tea.KeyDown || (s.isPillField() && key.Matches(msg, e.Keys.Down)):
 		return s.composeVertical(1, msg.Mod, e), Out{}
 	case msg.Code == tea.KeyLeft:
 		return s.composeArrow(-1, msg.Mod), Out{}
