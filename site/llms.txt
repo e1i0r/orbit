@@ -6,7 +6,7 @@
 > prompts, the reasoning, the diff, the cost, what the agent refused to do.
 
 Orbit never calls a model. It runs the coding-agent CLI you already have
-installed — Claude Code, Codex, OpenCode — under the subscription you already
+installed — Claude Code, Codex, OpenCode, Antigravity — under the subscription you already
 pay for, so there is no API key and no second bill per token. It is an MCP
 server with 22 tools, so your CLI writes the tasks, runs them, reads back
 everything that happened while you were away, and teaches Orbit what it worked

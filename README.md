@@ -15,7 +15,7 @@
 
 A terminal cockpit for coding agents. Each task runs in its own git worktree, in phases that stop where you tell them to, and everything is written down: the plan, the prompts, the reasoning, the diff, the cost, what the agent refused to do.
 
-It runs the CLI you already have — Claude Code, Codex, OpenCode — under the subscription you already pay for. No API key, no second bill.
+It runs the CLI you already have — Claude Code, Codex, OpenCode, Antigravity — under the subscription you already pay for. No API key, no second bill.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/e1i0r/orbit/main/install.sh | bash
@@ -51,11 +51,11 @@ Reference: [keys and screens](docs/cockpit.md) · [engines and models](docs/engi
 
 | | |
 | --- | --- |
-| **Stable** | the cockpit, flows and gates, worktree isolation, the record, the MCP server, GitHub pull requests |
-| **In use, still moving** | the supervisor, autopilot, what Orbit knows, quota tracking, the flow designer |
-| **Engines** | Claude Code, Codex, OpenCode |
+| **Stable** | the cockpit, flows and gates, worktree isolation, the record in SQLite, the MCP server, GitHub pull requests |
+| **In use, still moving** | the supervisor, autopilot, what Orbit knows, the impact reading, quota tracking, the flow designer |
+| **Engines** | Claude Code, Codex, OpenCode, Antigravity (`agy`) |
 | **Platforms** | macOS and Linux |
-| **Not there yet** | storage is flat files; a SQLite move is planned |
+| **Not there yet** | the impact reading is per file, not per symbol; issue bodies come from Linear and no other tracker yet |
 
 Other ways to install: `go install github.com/e1i0r/orbit/cmd/orbit@latest` with Go 1.26+, or `make build` from source.
 English and Spanish (`orbit settings language es`). Six themes. State lives in `$ORBIT_HOME`, or `~/.orbit`.

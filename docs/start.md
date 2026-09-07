@@ -35,9 +35,9 @@ list to register: the directory you open it on is the answer, and `R` shows
 what it found.
 
 Orbit runs the CLI you already have under the subscription you already pay
-for. Press `M` and pick an engine; the model dial fills with that engine's own
-catalogue. Nothing is called until you start a run — see
-[engines](engines.md).
+for — Claude Code, Codex, OpenCode, Antigravity. Press `M` and pick one; the
+model dial fills with that engine's own catalogue. Nothing is called until you
+start a run — see [engines](engines.md).
 
 ## 4. Write the first task
 
@@ -58,10 +58,11 @@ starts on its own.
 
 ## Where things live
 
-State is in `$ORBIT_HOME`, or `~/.orbit` when that is unset: one directory per
-repository, one per task under it, the record of every run beside the task it
-belongs to. Nothing is hidden in a database you cannot read — `orbit export`
-writes it back out as JSONL.
+State is in `$ORBIT_HOME`, or `~/.orbit` when that is unset: a directory per
+repository, a directory per task under it, and the record of every run in one
+SQLite file — so a question that crosses tasks can be asked without opening
+every log to answer it. It is not a lock-in: `orbit export` writes the whole
+thing back out as JSONL, one file per task.
 
 ---
 

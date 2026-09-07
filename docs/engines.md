@@ -40,6 +40,32 @@ without it.
 | **Models, free** | `nemotron-3-ultra-free`, `nemotron-3.5-lightning-free`, `mimo-v2.5-free`, `ling-3.0-flash-fin-free`, `hy3-free`, `muse-spark-1.2-contributor-free` |
 | **Reasoning effort** | `minimal`, `medium`, `high` |
 
+## Antigravity
+
+Runs `agy`. It is named for the program and not the product: the engine name in
+a record is also what the window runs when you ask for a session, and nothing
+on the machine answers to `antigravity`.
+
+| | |
+| --- | --- |
+| **Models** | `gemini-3.8-flash`, `gemini-3.7-flash`, `gemini-3.6-flash` and `gemini-3.1-pro`, each in the reasoning tiers Gemini names inside the model; plus `claude-sonnet-4-6`, `claude-opus-4-6-thinking`, `gpt-oss-120b-medium` |
+| **Reasoning effort** | `low`, `medium`, `high` |
+
+Gemini names its reasoning inside the model — a family appears three times, high,
+medium and low — while `--effort` says the same thing beside it. Both are offered
+as they are printed, because what a dial shows and what the binary is told have
+to be the same string. Refresh the catalogue with `agy models`.
+
+There is no thinking dial for agy, and that is not an omission: its models think,
+the stream counts the thinking tokens on every step, and how much is asked for by
+effort. A second dial would be a second name for the one beside it.
+
+**No transcript.** agy keeps each conversation in a SQLite database of its own
+whose steps are protobuf blobs with no schema shipped. Which conversation belongs
+to a worktree is answerable; what was said in it is not. Orbit says so rather
+than guessing — walking that wire format field by field would be a guess written
+into a task's record as if it were an account of the session.
+
 ## Thinking
 
 The flow designer sets a phase's thinking mode to `adaptive`, `on` or `off`.

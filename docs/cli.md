@@ -7,7 +7,7 @@ takes it back, and it talks to it over MCP while you are away.
 
 ## Hand the terminal over
 
-`c` on a task. Your CLI — Claude Code, Codex, OpenCode — opens **in that
+`c` on a task. Your CLI — Claude Code, Codex, OpenCode, Antigravity — opens **in that
 task's worktree**, carrying the task's own context and Orbit's MCP server. You
 are in a normal session, in the right directory, with everything the run knows
 already in front of it.
