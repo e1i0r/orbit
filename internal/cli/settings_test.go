@@ -286,3 +286,29 @@ func TestTopRefusesASettingsFileItCannotRead(t *testing.T) {
 		t.Errorf("the refusal is %q, want it to name the file", errOut)
 	}
 }
+
+// TestAThemeNobodyChoseIsNotNamed. The adapter answered "monokai" for a
+// settings file that names no theme, and the window starts on frauddi — so
+// `orbit settings` reported a theme the cockpit was not drawn in, and the
+// cockpit's own settings screen, which reads this same port, reported it too.
+//
+// Unset is unset. The screen draws a dash, as it does for the language, and
+// the window applies its own default to the empty string.
+func TestAThemeNobodyChoseIsNotNamed(t *testing.T) {
+	t.Setenv("ORBIT_HOME", t.TempDir())
+
+	cfg, _ := openSettings(t)
+
+	if got := cfg.Theme(); got != "" {
+		t.Errorf("a settings file naming no theme answers %q, want nothing", got)
+	}
+
+	// And one that names a theme answers with it.
+	if err := cfg.SetTheme("nord"); err != nil {
+		t.Fatalf("write the theme: %v", err)
+	}
+
+	if got := cfg.Theme(); got != "nord" {
+		t.Errorf("after choosing nord the port answers %q", got)
+	}
+}

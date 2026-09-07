@@ -255,15 +255,15 @@ func (a *settingsAdapter) SetFlow(flow string) error {
 	return a.write(func(cfg *store.Settings) { cfg.Flow = flow })
 }
 
-// Theme is the color theme chosen for the window.
-func (a *settingsAdapter) Theme() string {
-	t := a.read().Theme
-	if t == "" {
-		return "monokai"
-	}
-
-	return t
-}
+// Theme is the color theme chosen for the window, and nothing when nobody
+// has chosen one.
+//
+// It answered "monokai" for a settings file that names none, and the window
+// starts on frauddi — so `orbit settings` reported a theme the cockpit was
+// not drawn in, and so did the cockpit's own settings screen, which reads
+// this same port. An unset setting is drawn as a dash here, the way language
+// is, and the window applies its own default to the empty string.
+func (a *settingsAdapter) Theme() string { return a.read().Theme }
 
 // SetTheme writes the color theme down.
 func (a *settingsAdapter) SetTheme(theme string) error {
