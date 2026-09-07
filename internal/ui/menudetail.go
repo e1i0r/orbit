@@ -1,6 +1,10 @@
 package ui
 
-import "github.com/e1i0r/orbit/internal/ui/theme"
+import (
+	"github.com/e1i0r/orbit/internal/ui/theme"
+
+	"github.com/e1i0r/orbit/internal/ui/cells"
+)
 
 // The menu inside a task: the panes it can be shown in, and what can be
 // done to it, under a heading each.
@@ -108,12 +112,12 @@ func menuChoice(es []menuEntry, from, d int) int {
 	return -1
 }
 
-// menuHeadRow draws a heading: no gutter, no glyph, the accent the sections
+// menuHeadRow draws a heading: no cells.Gutter, no glyph, the accent the sections
 // of the knobs screen are named in.
 func menuHeadRow(e menuEntry, w int) string {
 	if e.title == "" {
 		return ""
 	}
 
-	return fit("  "+theme.Paint(theme.Accent).Render(e.title), w)
+	return cells.Fit("  "+theme.Paint(theme.Accent).Render(e.title), w)
 }

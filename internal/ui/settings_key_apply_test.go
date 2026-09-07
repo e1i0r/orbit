@@ -11,6 +11,9 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/roster"
+	"github.com/e1i0r/orbit/internal/ui/settings"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
@@ -21,12 +24,12 @@ import (
 // guessed it.
 func TestTheSettingsDialsAreTheEnginesOwn(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m.opts.Engines = func() []EngineInfo {
-		return []EngineInfo{{
+	m.opts.Engines = func() []roster.Engine {
+		return []roster.Engine{{
 			Name:      "zeta",
 			Available: true,
-			Models:    []ChoiceInfo{{ID: "", Label: "default"}, {ID: "zeta/one", Label: "one"}},
-			Efforts:   []ChoiceInfo{{ID: "", Label: "default"}, {ID: "brisk", Label: "brisk"}},
+			Models:    []roster.Choice{{ID: "", Label: "default"}, {ID: "zeta/one", Label: "one"}},
+			Efforts:   []roster.Choice{{ID: "", Label: "default"}, {ID: "brisk", Label: "brisk"}},
 		}}
 	}
 
@@ -34,12 +37,12 @@ func TestTheSettingsDialsAreTheEnginesOwn(t *testing.T) {
 		t.Fatalf("choose the engine: %v", err)
 	}
 
-	rows := map[string]settingRow{}
+	rows := map[string]settings.Row{}
 	for _, r := range m.settingRowsList() {
-		rows[r.key] = r
+		rows[r.Key] = r
 	}
 
-	if got := rows["engine"].options; !slices.Equal(got, []string{"zeta"}) {
+	if got := rows["engine"].Options; !slices.Equal(got, []string{"zeta"}) {
 		t.Errorf("the engine dial offers %v, want only what the port answered", got)
 	}
 
@@ -48,15 +51,15 @@ func TestTheSettingsDialsAreTheEnginesOwn(t *testing.T) {
 	// provider-qualified — and drawing the id would put the provider in
 	// front of every position on the dial.
 	model := rows["model"]
-	if !slices.Equal(model.options, []string{"zeta/one"}) {
-		t.Errorf("the model dial holds %v, want zeta's own ids", model.options)
+	if !slices.Equal(model.Options, []string{"zeta/one"}) {
+		t.Errorf("the model dial holds %v, want zeta's own ids", model.Options)
 	}
 
-	if got := model.label(0); got != "one" {
+	if got := model.Label(0); got != "one" {
 		t.Errorf("the model dial draws %q, want the label the port gave it", got)
 	}
 
-	if got := rows["effort"].options; !slices.Equal(got, []string{"brisk"}) {
+	if got := rows["effort"].Options; !slices.Equal(got, []string{"brisk"}) {
 		t.Errorf("the effort dial offers %v, want zeta's own", got)
 	}
 }
@@ -198,27 +201,27 @@ func TestSettingsKeyEditingAndNavigation(t *testing.T) {
 
 	// 1. Navigating with j/k and arrow keys wraps at both ends.
 	rows := m.settingRowsList()
-	m.settings.sel = 0
+	m.settings = m.settings.Point(0)
 	next, _ := m.settingsKey(tea.KeyPressMsg{Code: 'k', Text: "k"})
 
 	m = asModel(t, next)
-	if m.settings.sel != len(rows)-1 {
-		t.Errorf("up from row 0 wrapped to %d, want %d", m.settings.sel, len(rows)-1)
+	if m.settings.Chosen() != len(rows)-1 {
+		t.Errorf("up from row 0 wrapped to %d, want %d", m.settings.Chosen(), len(rows)-1)
 	}
 
 	next, _ = m.settingsKey(tea.KeyPressMsg{Code: 'j', Text: "j"})
 
 	m = asModel(t, next)
-	if m.settings.sel != 0 {
-		t.Errorf("down from the last row wrapped to %d, want 0", m.settings.sel)
+	if m.settings.Chosen() != 0 {
+		t.Errorf("down from the last row wrapped to %d, want 0", m.settings.Chosen())
 	}
 
 	// 2. 'e' enters editing mode with the row's current value typed in.
 	next, _ = m.settingsKey(tea.KeyPressMsg{Code: 'e', Text: "e"})
 
 	m = asModel(t, next)
-	if !m.settings.editing || m.settings.typed != rows[0].val {
-		t.Errorf("editing 'e' = %+v, want editing with typed=%q", m.settings, rows[0].val)
+	if !m.settings.Editing() || m.settings.Typed() != rows[0].Val {
+		t.Errorf("editing 'e' = %+v, want editing with typed=%q", m.settings, rows[0].Val)
 	}
 
 	// 3. Typing appends, backspace trims, an unmatched control key does
@@ -226,46 +229,46 @@ func TestSettingsKeyEditingAndNavigation(t *testing.T) {
 	next, _ = m.settingsKey(tea.KeyPressMsg{Code: 'x', Text: "x"})
 
 	m = asModel(t, next)
-	if m.settings.typed != rows[0].val+"x" {
-		t.Errorf("typed = %q, want the row's value with x appended", m.settings.typed)
+	if m.settings.Typed() != rows[0].Val+"x" {
+		t.Errorf("typed = %q, want the row's value with x appended", m.settings.Typed())
 	}
 
 	next, _ = m.settingsKey(tea.KeyPressMsg{Code: tea.KeyBackspace})
 
 	m = asModel(t, next)
-	if m.settings.typed != rows[0].val {
-		t.Errorf("backspace left %q, want the row's original value", m.settings.typed)
+	if m.settings.Typed() != rows[0].Val {
+		t.Errorf("backspace left %q, want the row's original value", m.settings.Typed())
 	}
 
 	next, _ = m.settingsKey(tea.KeyPressMsg{Code: tea.KeyUp})
 
 	m = asModel(t, next)
-	if !m.settings.editing {
+	if !m.settings.Editing() {
 		t.Error("an unmatched key while editing left editing mode")
 	}
 
 	next, _ = m.settingsKey(tea.KeyPressMsg{Code: tea.KeyEscape})
 
 	m = asModel(t, next)
-	if m.settings.editing || m.settings.typed != "" {
+	if m.settings.Editing() || m.settings.Typed() != "" {
 		t.Errorf("esc while editing left %+v, want editing cleared", m.settings)
 	}
 
 	// 4. Enter submits a typed value; left/right cycle an option.
-	m.settings.sel = 0
-	m.settings.editing, m.settings.typed = true, "es"
+	m.settings = m.settings.Point(0)
+	m.settings = m.settings.Edit("es")
 	next, _ = m.settingsKey(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	m = asModel(t, next)
-	if m.settings.editing {
+	if m.settings.Editing() {
 		t.Error("enter did not leave editing mode")
 	}
 
-	before := m.settingRowsList()[0].val
+	before := m.settingRowsList()[0].Val
 	next, _ = m.settingsKey(tea.KeyPressMsg{Code: tea.KeyRight})
 
 	m = asModel(t, next)
-	if m.settingRowsList()[0].val == before {
+	if m.settingRowsList()[0].Val == before {
 		t.Error("right did not cycle the first row's option")
 	}
 
@@ -299,32 +302,33 @@ func TestSettingsKeyWithoutASettingsPort(t *testing.T) {
 
 func TestCycleSettingOutOfRangeIsANoOp(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m.settings.sel = -1
+	m.settings = m.settings.Point(-1)
 	next, cmd := m.cycleSetting(1)
 
 	got := asModel(t, next)
-	if cmd != nil || got.settings.sel != -1 {
+	if cmd != nil || got.settings.Chosen() != -1 {
 		t.Errorf("cycleSetting with sel out of range mutated the model: %+v", got.settings)
 	}
 }
 
 func TestSettingsSubmitOutOfRangeClearsEditing(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m.settings.sel, m.settings.editing = 999, true
-	next, _ := m.settingsSubmit()
+	m.settings = m.settings.Point(999).Edit("")
+
+	next, _ := m.settingsKey(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	got := asModel(t, next)
-	if got.settings.editing {
-		t.Error("settingsSubmit with sel out of range left editing on")
+	if got.settings.Editing() {
+		t.Error("saving a row that is not there left the line open")
 	}
 }
 
 func TestPadRightBothBranches(t *testing.T) {
-	if got := padRight("short", 10); got != "short     " {
-		t.Errorf("padRight(short, 10) = %q, want it padded to 10 cells", got)
+	if got := cells.PadRight("short", 10); got != "short     " {
+		t.Errorf("cells.PadRight(short, 10) = %q, want it padded to 10 cells", got)
 	}
 
-	if got := padRight("already-long-enough", 4); got != "already-long-enough" {
+	if got := cells.PadRight("already-long-enough", 4); got != "already-long-enough" {
 		t.Errorf("padRight already past width = %q, want it left alone", got)
 	}
 }

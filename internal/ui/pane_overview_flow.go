@@ -4,6 +4,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
@@ -33,7 +34,7 @@ func (m Model) finishedPhases() []view.Entry {
 // multi-phase historical tree and details for Tab 2 [Flow].
 func (m Model) overviewPhases(t view.Task, w int) []string {
 	p := m.opts.Words
-	flowName := orDef(t.Flow, flow.Default)
+	flowName := cells.OrDef(t.Flow, flow.Default)
 	head := m.sectionHead(foldPhases, p.T("overview.execution_summary", "flow"), flowName, w)
 
 	if m.folded(foldPhases) {
@@ -59,10 +60,10 @@ func (m Model) overviewPhases(t view.Task, w int) []string {
 func (m Model) liveFlowCard(t view.Task, flowName string, w int) []string {
 	p := m.opts.Words
 	glyph := m.runGlyph(keymap.Working(t))
-	step := orDef(t.Phase, "running")
-	now := orDef(t.CurrentAction, p.T("overview.running_model", "running model..."))
+	step := cells.OrDef(t.Phase, "running")
+	now := cells.OrDef(t.CurrentAction, p.T("overview.running_model", "running model..."))
 
-	now = fit(now, max(20, w-lipgloss.Width(paneGutter)-lipgloss.Width(glyph)-4))
+	now = cells.Fit(now, max(20, w-lipgloss.Width(paneGutter)-lipgloss.Width(glyph)-4))
 
 	out := []string{
 		paneGutter + theme.Paint(theme.Live).Render(glyph) + theme.Text(theme.Primary).Bold(true).Render(step) +
@@ -88,7 +89,7 @@ func (m Model) liveFlowCard(t view.Task, flowName string, w int) []string {
 func (m Model) waitingFlowCard(t view.Task, flowName string) []string {
 	p := m.opts.Words
 	stateWord, role := m.stateWord(t)
-	step := orDef(t.Phase, stateWord)
+	step := cells.OrDef(t.Phase, stateWord)
 
 	return []string{
 		paneGutter + theme.Paint(role).Render("⏸ ") + theme.Text(theme.Primary).Bold(true).Render(step) +

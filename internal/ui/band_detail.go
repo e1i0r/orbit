@@ -3,6 +3,7 @@ package ui
 import (
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -28,7 +29,7 @@ func (m Model) detailBandLine(t view.Task) string {
 			pieces = append(pieces, p.T("band.elapsed", "{d} in", about("d", age)))
 		}
 
-		return m.spinner(theme.Live) + strings.Join(pieces, dot)
+		return m.spinner(theme.Live) + strings.Join(pieces, cells.Dot)
 	}
 
 	// 2. Uncompleted delivery recorded in the task history.
@@ -51,7 +52,7 @@ func (m Model) detailBandLine(t view.Task) string {
 				about("ago", ago)))
 		}
 
-		return m.spinner(theme.Live) + strings.Join(pieces, dot)
+		return m.spinner(theme.Live) + strings.Join(pieces, cells.Dot)
 	}
 
 	// 3. Supervisor active on this task.
@@ -59,7 +60,7 @@ func (m Model) detailBandLine(t view.Task) string {
 		said := p.T("supervisor.thinking", "supervisor is thinking...")
 		pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(theme.Live).Render(said)}
 
-		return m.spinner(theme.Live) + strings.Join(pieces, dot)
+		return m.spinner(theme.Live) + strings.Join(pieces, cells.Dot)
 	}
 
 	// 4. Per-band rendering for the viewed task.
@@ -98,7 +99,7 @@ func (m Model) detailRunningLine(t view.Task) string {
 
 		pieces = append(pieces, theme.Paint(theme.Dim).Render("⏸"))
 
-		return strings.Join(pieces, dot)
+		return strings.Join(pieces, cells.Dot)
 	}
 
 	pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(theme.Live).Render(m.phaseWord(t))}
@@ -108,11 +109,11 @@ func (m Model) detailRunningLine(t view.Task) string {
 
 	if t.CurrentAction != "" {
 		pieces = append(pieces, theme.Paint(theme.Live).Render(
-			actionGlyph(t.ActionKind)+fit(t.CurrentAction, actionCells)))
+			actionGlyph(t.ActionKind)+cells.Fit(t.CurrentAction, actionCells)))
 	} else if t.CurrentThought != "" {
 		first := strings.TrimSpace(strings.Split(t.CurrentThought, "\n")[0])
 		if first != "" {
-			pieces = append(pieces, theme.Paint(theme.Live).Render("🧠 "+fit(first, actionCells)))
+			pieces = append(pieces, theme.Paint(theme.Live).Render("🧠 "+cells.Fit(first, actionCells)))
 		}
 	}
 
@@ -124,7 +125,7 @@ func (m Model) detailRunningLine(t view.Task) string {
 		pieces = append(pieces, t.Flow)
 	}
 
-	return m.spinner(theme.Live) + strings.Join(pieces, dot)
+	return m.spinner(theme.Live) + strings.Join(pieces, cells.Dot)
 }
 
 func (m Model) detailNeedsYouLine(t view.Task) string {
@@ -156,7 +157,7 @@ func (m Model) detailNeedsYouLine(t view.Task) string {
 		pieces = append(pieces, t.Flow)
 	}
 
-	return strings.Join(pieces, dot)
+	return strings.Join(pieces, cells.Dot)
 }
 
 func (m Model) detailToDoLine(t view.Task) string {
@@ -175,7 +176,7 @@ func (m Model) detailToDoLine(t view.Task) string {
 		pieces = append(pieces, t.Repo)
 	}
 
-	return strings.Join(pieces, dot)
+	return strings.Join(pieces, cells.Dot)
 }
 
 func (m Model) detailDoneLine(t view.Task) string {
@@ -195,5 +196,5 @@ func (m Model) detailDoneLine(t view.Task) string {
 		pieces = append(pieces, t.Flow)
 	}
 
-	return strings.Join(pieces, dot)
+	return strings.Join(pieces, cells.Dot)
 }

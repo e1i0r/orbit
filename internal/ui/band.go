@@ -14,13 +14,14 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
 // bandLine is the activity band, and it never comes back empty.
 func (m Model) bandLine(w int) string {
-	return fit(" "+m.bandLeft(), w)
+	return cells.Fit(" "+m.bandLeft(), w)
 }
 
 func (m Model) bandLeft() string {
@@ -118,12 +119,12 @@ func (m Model) filterLine() string {
 	parts = append(parts, theme.Paint(theme.Dim).Render(p.T("band.shown", "{n} of {total} shown",
 		about("n", strconv.Itoa(shown)), about("total", strconv.Itoa(len(m.board.Tasks))))))
 
-	line := strings.Join(parts, dot)
+	line := strings.Join(parts, cells.Dot)
 	if m.filtering {
 		return line
 	}
 
-	return line + dot + theme.Paint(theme.Dim).Render(p.T("band.filter_clear", "{key} clears it",
+	return line + cells.Dot + theme.Paint(theme.Dim).Render(p.T("band.filter_clear", "{key} clears it",
 		about("key", m.keys.Back.Help().Key)))
 }
 
@@ -165,7 +166,7 @@ func (m Model) runningLine(t view.Task) string {
 
 	if t.CurrentAction != "" {
 		pieces = append(pieces, theme.Paint(theme.Live).Render(
-			actionGlyph(t.ActionKind)+fit(t.CurrentAction, actionCells)))
+			actionGlyph(t.ActionKind)+cells.Fit(t.CurrentAction, actionCells)))
 	}
 
 	if engine := engineAndModel(t); engine != "" {
@@ -176,7 +177,7 @@ func (m Model) runningLine(t view.Task) string {
 		pieces = append(pieces, t.Flow)
 	}
 
-	return strings.Join(pieces, dot)
+	return strings.Join(pieces, cells.Dot)
 }
 
 // engineAndModel is which engine ran the phase and on which model, as one
@@ -200,11 +201,11 @@ func (m Model) idleLine() string {
 
 	todo := m.board.Counts[view.ToDo]
 	if todo == 0 {
-		return nothing + dot + p.T("band.nothing_todo", "nothing to do")
+		return nothing + cells.Dot + p.T("band.nothing_todo", "nothing to do")
 	}
 
-	return nothing + dot + p.P("band.todo", todo, "{n} to do", "{n} to do") +
-		dot + p.T("band.write_one", "press n to start one")
+	return nothing + cells.Dot + p.P("band.todo", todo, "{n} to do", "{n} to do") +
+		cells.Dot + p.T("band.write_one", "press n to start one")
 }
 
 // controlSaid is what the band says about a word that was written.

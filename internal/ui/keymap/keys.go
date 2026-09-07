@@ -22,13 +22,24 @@ import (
 // opening things, doing something to a task, and the settings that are not
 // about any one task.
 type Keys struct {
-	Up, Down, First, Last, PageUp, PageDown                                                       key.Binding
-	Open, Back, NextTab, PrevTab, Sideways                                                        key.Binding
-	Start, Run, ChangeFlow, Menu, Compose                                                         key.Binding
-	Pause, Resume, Skip, Cancel, Requeue                                                          key.Binding
-	Take, Hand, Ask, MarkRead, Delete, Edit                                                       key.Binding
-	Filter, Commands, CLI, Repos, EngineKnobs, Quota, Supervisor, Autopilot, Language, Help, Quit key.Binding
-	Flows, Knowledge                                                                              key.Binding
+	// Moving about.
+	Up, Down, First, Last, PageUp, PageDown key.Binding
+
+	// Opening and leaving things.
+	Open, Back, NextTab, PrevTab, Sideways key.Binding
+
+	// Starting work.
+	Start, Run, ChangeFlow, Menu, Compose key.Binding
+
+	// Doing something to the run in front of you.
+	Pause, Resume, Skip, Cancel, Requeue    key.Binding
+	Take, Hand, Ask, MarkRead, Delete, Edit key.Binding
+
+	// The screens, and the switches that belong to no one task.
+	Filter, Commands, CLI, Repos    key.Binding
+	EngineKnobs, Quota, Supervisor  key.Binding
+	Autopilot, Language, Help, Quit key.Binding
+	Flows, Knowledge                key.Binding
 }
 
 // New builds the key map, with every description translated.

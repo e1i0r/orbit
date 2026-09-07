@@ -9,7 +9,25 @@ package arch
 // it does not list internal/engine, so the window cannot start a model.
 // "The window derives everything and holds no authority" is those three
 // missing lines, and nothing else makes it true.
-var layers = map[string][]string{
+var layers = mergedLayers()
+
+// mergedLayers is the whole map: the program's packages here, and the
+// window's own in layers_ui_test.go. It is two files because one was over
+// the ceiling, and the split is where the window starts.
+func mergedLayers() map[string][]string {
+	all := make(map[string][]string, len(program)+len(windowLayers))
+	for pkg, may := range program {
+		all[pkg] = may
+	}
+
+	for pkg, may := range windowLayers {
+		all[pkg] = may
+	}
+
+	return all
+}
+
+var program = map[string][]string{
 	"cmd/orbit":     {"internal/cli"},
 	"internal/arch": {},
 	// internal/task is on internal/board's list for one function: task.Alive,
@@ -32,7 +50,7 @@ var layers = map[string][]string{
 	// task and no engine, so nothing here can decide anything about a run
 	// or reach the state root to find one.
 	"internal/db":  {"internal/record"},
-	"internal/cli": {"internal/board", "internal/engine", "internal/export", "internal/flow", "internal/knowledge", "internal/logger", "internal/mcp", "internal/migrate", "internal/quota", "internal/repo", "internal/store", "internal/supervisor", "internal/task", "internal/tracker", "internal/ui", "internal/view", "internal/words"},
+	"internal/cli": {"internal/board", "internal/engine", "internal/export", "internal/flow", "internal/knowledge", "internal/logger", "internal/mcp", "internal/migrate", "internal/quota", "internal/repo", "internal/store", "internal/supervisor", "internal/task", "internal/tracker", "internal/ui", "internal/ui/roster", "internal/view", "internal/words"},
 	// internal/logger is on internal/engine's list for the one thing this
 	// package does that nothing else in Orbit does: it starts somebody
 	// else's program. What that cost, how long it took and which of the
@@ -146,7 +164,7 @@ var layers = map[string][]string{
 	// somebody is about to write sits beside the ones already standing. It
 	// is a type and a read — the facts arrive through a port, because
 	// reaching the state root to load them is what the window may not do.
-	"internal/ui": {"internal/board", "internal/flow", "internal/knowledge", "internal/logger", "internal/repo", "internal/task", "internal/tracker", "internal/ui/clip", "internal/ui/keymap", "internal/ui/layout", "internal/ui/patch", "internal/ui/prompt", "internal/ui/spoken", "internal/ui/theme", "internal/ui/typing", "internal/ui/upgrade", "internal/view", "internal/words"},
+	"internal/ui": {"internal/board", "internal/flow", "internal/knowledge", "internal/logger", "internal/repo", "internal/task", "internal/tracker", "internal/ui/cells", "internal/ui/cheat", "internal/ui/clip", "internal/ui/compose", "internal/ui/engines", "internal/ui/fact", "internal/ui/flows", "internal/ui/keymap", "internal/ui/known", "internal/ui/layout", "internal/ui/markdown", "internal/ui/palette", "internal/ui/patch", "internal/ui/point", "internal/ui/prompt", "internal/ui/quota", "internal/ui/repos", "internal/ui/roster", "internal/ui/settings", "internal/ui/spoken", "internal/ui/supervisor", "internal/ui/theme", "internal/ui/typing", "internal/ui/upgrade", "internal/view", "internal/words"},
 	// internal/ui/layout is widened to internal/view for one reason:
 	// layout.Columns plans a row's columns from the board it is about to
 	// draw, and the board is []view.Task. It is a widening, and it was
@@ -176,7 +194,12 @@ var layers = map[string][]string{
 	// internal/ui/clip is the pasteboard, which is three commands that may
 	// not be installed rather than a library: pbcopy and pbpaste on a mac,
 	// wl-copy and xclip on the two Linux display servers. It imports nothing.
-	"internal/ui/clip": {},
+	// internal/ui/cells is how the window measures: a terminal draws a wide
+	// rune in two columns and a combining mark in none, so a cut made on the
+	// byte count leaves a row of the wrong width and a broken escape with
+	// it. Everything here counts what a reader can see.
+	"internal/ui/cells": {"internal/ui/theme"},
+	"internal/ui/clip":  {},
 	// internal/ui/keymap is which key does what, and — the half that is
 	// actually the decision — which verbs a task offers right now and the
 	// reason each refused one gives. It reads a view.Task and says what can
@@ -187,27 +210,22 @@ var layers = map[string][]string{
 	// each, and what the record says the change to each was for. It reads
 	// text git wrote and says what is in it; what to draw of that is the
 	// window's.
-	"internal/ui/patch":  {"internal/ui/theme", "internal/view", "internal/words"},
+	"internal/ui/patch": {"internal/ui/theme", "internal/view", "internal/words"},
+	// internal/ui/point is what one cell of the terminal holds, so that a
+	// click can be answered. Every screen writes these and the window reads
+	// them: a screen that is its own package still has to be able to say
+	// "a click here means this flow".
+	"internal/ui/point": {"internal/ui/layout", "internal/view"},
+	// internal/ui/flows is the whole flow designer: the list, the form, the
+	// diagram and the tab that turns a sentence into a flow. It reads and
+	// writes flows through the source the window hands it and asks an
+	// engine through a port; it has never heard of a task or the board.
+	"internal/ui/flows": {
+		"internal/flow", "internal/ui/cells", "internal/ui/clip", "internal/ui/keymap",
+		"internal/ui/layout", "internal/ui/point", "internal/ui/prompt", "internal/ui/theme",
+		"internal/words",
+	},
 	"internal/ui/prompt": {},
-	// internal/ui/spoken is a line the operator typed into the supervisor,
-	// taken apart: which of the gestures it is, what it is about, and what
-	// is left once the gesture is off the front. It imports nothing — what
-	// to do about a line is the window's, and this only says what the line
-	// was.
-	"internal/ui/spoken": {},
-	// internal/ui/theme is the whole vocabulary of colour: the seven roles,
-	// the palettes that answer them, the paper each surface is drawn on, and
-	// the lexer that decides which role a run of code takes. It imports
-	// nothing of Orbit's — a palette is not a fact about a task — which is
-	// why 79 files could start naming it without anything moving the other
-	// way.
-	"internal/ui/theme":  {},
-	"internal/ui/typing": {"internal/ui/theme"},
-	// internal/ui/upgrade asks GitHub what the newest release is and says
-	// whether it is worth offering. It is the one package under
-	// internal/ui that talks to the network, which is the reason it is its
-	// own: the window asks and draws, and never reaches out itself.
-	"internal/ui/upgrade": {},
-	"internal/view":       {"internal/record"},
-	"internal/words":      {},
+	"internal/view":      {"internal/record"},
+	"internal/words":     {},
 }

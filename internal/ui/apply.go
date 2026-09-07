@@ -18,6 +18,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/ui/layout"
 	"github.com/e1i0r/orbit/internal/view"
@@ -33,12 +34,8 @@ import (
 // not ask for a frame nothing on screen ever moves.
 func (m Model) applyBoard(msg boardMsg) (tea.Model, tea.Cmd) {
 	// The first board is what fills in what Orbit knows, for the header's
-	// chip. Once and not on every refresh: the port walks every repository,
-	// and the count changes when a fact is written, which is where it is
-	// read again.
-	if !m.knowledge.read {
-		m = m.syncKnowledge()
-	}
+	// chip. The screen keeps it to once: reading walks every repository.
+	m.knowledge = m.knowledge.SyncOnce(m.knownEnv())
 
 	next, cmd := m.takeBoard(msg)
 	next, frame := next.nextFrame()
@@ -204,7 +201,7 @@ func (m Model) resize(w, h int) Model {
 // rows currently shown: a column that changed width while a filter was being
 // typed would move every field on screen between two keystrokes.
 func (m Model) replan() Model {
-	m.plan = layout.Columns(m.frame.Body.W-gutter, m.board.Tasks, m.opts.Words.Cells)
+	m.plan = layout.Columns(m.frame.Body.W-cells.Gutter, m.board.Tasks, m.opts.Words.Cells)
 	return m
 }
 

@@ -5,6 +5,10 @@ import (
 
 	"charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/palette"
+	"github.com/e1i0r/orbit/internal/ui/point"
 )
 
 func TestTargetDialogHitDetection(t *testing.T) {
@@ -114,40 +118,40 @@ func TestHitTopLevelRefusalsAndDispatch(t *testing.T) {
 	zero := m
 
 	zero.width, zero.height = 0, 0
-	if got := zero.hit(5, 5); got.Kind != TargetNone {
-		t.Errorf("hit on a zero-sized window = %+v, want TargetNone", got)
+	if got := zero.hit(5, 5); got.Kind != point.None {
+		t.Errorf("hit on a zero-sized window = %+v, want point.None", got)
 	}
 
 	narrow := m
 
 	narrow.tooNarrow = true
-	if got := narrow.hit(5, 5); got.Kind != TargetNone {
-		t.Errorf("hit while too narrow = %+v, want TargetNone", got)
+	if got := narrow.hit(5, 5); got.Kind != point.None {
+		t.Errorf("hit while too narrow = %+v, want point.None", got)
 	}
 
 	// 2. The bar row while the palette or the menu owns the keyboard names
 	// nothing: both are typed into, not clicked on their own row.
-	m.palette.open = true
-	if got := m.hit(5, m.frame.Bar.Y); got.Kind != TargetNone {
-		t.Errorf("hit on the bar with the palette open = %+v, want TargetNone", got)
+	m.palette = palette.Open()
+	if got := m.hit(5, m.frame.Bar.Y); got.Kind != point.None {
+		t.Errorf("hit on the bar with the palette open = %+v, want point.None", got)
 	}
 
-	m.palette.open = false
+	m.palette = palette.State{}
 
 	m.menu.open = true
-	if got := m.hit(5, m.frame.Bar.Y); got.Kind != TargetNone {
-		t.Errorf("hit on the bar with the menu open = %+v, want TargetNone", got)
+	if got := m.hit(5, m.frame.Bar.Y); got.Kind != point.None {
+		t.Errorf("hit on the bar with the menu open = %+v, want point.None", got)
 	}
 
 	m.menu.open = false
 
 	// 3. Status and Band both answer through hitStatus.
-	if got := m.hit(5, m.frame.Status.Y); got.Kind != TargetStatusField {
-		t.Errorf("hit on the status row = %+v, want TargetStatusField", got)
+	if got := m.hit(5, m.frame.Status.Y); got.Kind != point.StatusField {
+		t.Errorf("hit on the status row = %+v, want point.StatusField", got)
 	}
 
-	if got := m.hit(5, m.frame.Band.Y); got.Kind != TargetStatusField {
-		t.Errorf("hit on the band row = %+v, want TargetStatusField", got)
+	if got := m.hit(5, m.frame.Band.Y); got.Kind != point.StatusField {
+		t.Errorf("hit on the band row = %+v, want point.StatusField", got)
 	}
 
 	// 4. In the body: a watched command owns the screen and answers
@@ -155,8 +159,8 @@ func TestHitTopLevelRefusalsAndDispatch(t *testing.T) {
 	// screen-specific tests below check in detail — here only that none of
 	// them panics.
 	m.watchUp = true
-	if got := m.hit(5, m.frame.Body.Y); got.Kind != TargetNone {
-		t.Errorf("hit in the body while a watch is up = %+v, want TargetNone", got)
+	if got := m.hit(5, m.frame.Body.Y); got.Kind != point.None {
+		t.Errorf("hit in the body while a watch is up = %+v, want point.None", got)
 	}
 
 	m.watchUp = false
@@ -170,8 +174,8 @@ func TestHitRowEveryOutcome(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 
 	// 1. Outside the body entirely.
-	if got := m.hitRow(5, 0); got.Kind != TargetNone {
-		t.Errorf("hitRow outside the body = %+v, want TargetNone", got)
+	if got := m.hitRow(5, 0); got.Kind != point.None {
+		t.Errorf("hitRow outside the body = %+v, want point.None", got)
 	}
 
 	// 2. The "…and N more" line, and anything below the rows actually
@@ -180,8 +184,8 @@ func TestHitRowEveryOutcome(t *testing.T) {
 
 	short.frame.Body.H = 2
 	if short.frame.Body.H > 0 {
-		if got := short.hitRow(5, short.frame.Body.Y); got.Kind != TargetNone {
-			t.Errorf("hitRow on table header row = %+v, want TargetNone", got)
+		if got := short.hitRow(5, short.frame.Body.Y); got.Kind != point.None {
+			t.Errorf("hitRow on table header row = %+v, want point.None", got)
 		}
 	}
 
@@ -204,19 +208,19 @@ func TestHitRowEveryOutcome(t *testing.T) {
 		t.Fatal("the fixture body is missing a blank, a header or a task row to test against")
 	}
 
-	if got := m.hitRow(5, m.frame.Body.Y+1+blankIdx); got.Kind != TargetNone {
-		t.Errorf("hitRow on a blank row = %+v, want TargetNone", got)
+	if got := m.hitRow(5, m.frame.Body.Y+1+blankIdx); got.Kind != point.None {
+		t.Errorf("hitRow on a blank row = %+v, want point.None", got)
 	}
 
 	// 4. A band header.
-	if got := m.hitRow(5, m.frame.Body.Y+1+headIdx); got.Kind != TargetBandHeader {
-		t.Errorf("hitRow on a band header = %+v, want TargetBandHeader", got)
+	if got := m.hitRow(5, m.frame.Body.Y+1+headIdx); got.Kind != point.BandHeader {
+		t.Errorf("hitRow on a band header = %+v, want point.BandHeader", got)
 	}
 
 	// 5. A task row, with the column carried from x.
-	got := m.hitRow(gutter+2, m.frame.Body.Y+1+taskIdx)
-	if got.Kind != TargetTask || got.ID != rows[taskIdx].task.ID {
-		t.Errorf("hitRow on a task row = %+v, want TargetTask for %q", got, rows[taskIdx].task.ID)
+	got := m.hitRow(cells.Gutter+2, m.frame.Body.Y+1+taskIdx)
+	if got.Kind != point.Task || got.ID != rows[taskIdx].task.ID {
+		t.Errorf("hitRow on a task row = %+v, want point.Task for %q", got, rows[taskIdx].task.ID)
 	}
 }
 
@@ -224,8 +228,8 @@ func TestHitHeaderEveryField(t *testing.T) {
 	m, _ := testModel(t, 150, 30)
 	y := m.frame.HeaderLineY()
 
-	if got := m.hitHeader(5, y+50); got.Kind != TargetNone {
-		t.Errorf("hitHeader off its own row = %+v, want TargetNone", got)
+	if got := m.hitHeader(5, y+50); got.Kind != point.None {
+		t.Errorf("hitHeader off its own row = %+v, want point.None", got)
 	}
 
 	// The name badge is the first thing on the line, so it starts at column
@@ -233,13 +237,13 @@ func TestHitHeaderEveryField(t *testing.T) {
 	// and chips after it occupy is header_hit_test.go's question, and it
 	// asks the drawn line rather than writing the answer down.
 	for x := range lipgloss.Width(m.name()) {
-		if got := m.hitHeader(x, y); got.Kind != TargetHeaderField || got.Field != "orbit" {
+		if got := m.hitHeader(x, y); got.Kind != point.HeaderField || got.Field != "orbit" {
 			t.Errorf("hitHeader(%d) = %+v, want the orbit badge", x, got)
 		}
 	}
 
 	past := lipgloss.Width(m.name())
-	if got := m.hitHeader(past, y); got.Kind != TargetNone {
+	if got := m.hitHeader(past, y); got.Kind != point.None {
 		t.Errorf("hitHeader(%d) = %+v, want nothing: that cell is past the badge", past, got)
 	}
 }
@@ -248,8 +252,8 @@ func TestHitBarBranches(t *testing.T) {
 	m, _ := testModel(t, 150, 30)
 	y := m.frame.Bar.Y
 
-	if got := m.hitBar(10, y+5); got.Kind != TargetNone {
-		t.Errorf("hitBar off its own row = %+v, want TargetNone", got)
+	if got := m.hitBar(10, y+5); got.Kind != point.None {
+		t.Errorf("hitBar off its own row = %+v, want point.None", got)
 	}
 
 	// The chips at the right end are asked where they were drawn rather
@@ -274,8 +278,8 @@ func TestHitBarBranches(t *testing.T) {
 	}
 
 	if gap := chips[0].x + chips[0].w; gap < chips[1].x {
-		if got := m.hitBar(gap, y); got.Kind != TargetNone {
-			t.Errorf("hitBar between the two chips = %+v, want TargetNone", got)
+		if got := m.hitBar(gap, y); got.Kind != point.None {
+			t.Errorf("hitBar between the two chips = %+v, want point.None", got)
 		}
 	}
 
@@ -289,7 +293,7 @@ func TestHitBarBranches(t *testing.T) {
 		t.Fatalf("the detail bar placed %d chips, want the switch alone", len(detailChips))
 	}
 
-	if got := detail.hitBar(detailChips[0].x, y); got.Kind != TargetStatusField || got.Field != "autopilot" {
+	if got := detail.hitBar(detailChips[0].x, y); got.Kind != point.StatusField || got.Field != "autopilot" {
 		t.Errorf("hitBar on the autopilot chip (not screenList) = %+v, want the autopilot field", got)
 	}
 
@@ -298,14 +302,14 @@ func TestHitBarBranches(t *testing.T) {
 	}
 
 	first := hints[0]
-	if got := m.hitBar(first.x, y); got.Kind != TargetBarHint || got.Key != first.key {
+	if got := m.hitBar(first.x, y); got.Kind != point.BarHint || got.Key != first.key {
 		t.Errorf("hitBar on the first hint = %+v, want key %q", got, first.key)
 	}
 
 	last := hints[len(hints)-1]
 	if gapX := last.x + last.w + 1; gapX < chips[0].x {
-		if got := m.hitBar(gapX, y); got.Kind != TargetNone {
-			t.Errorf("hitBar in the gap past the last hint = %+v, want TargetNone", got)
+		if got := m.hitBar(gapX, y); got.Kind != point.None {
+			t.Errorf("hitBar in the gap past the last hint = %+v, want point.None", got)
 		}
 	}
 }
@@ -321,8 +325,8 @@ func TestClicksOnTheHelpScreenDoNotReachTheBoard(t *testing.T) {
 	m.screen = screenHelp
 
 	for _, dy := range []int{0, 1, 3, 10} {
-		if got := m.hit(4, m.frame.Body.Y+dy); got.Kind != TargetNone {
-			t.Errorf("hit on help screen row %d = %+v, want TargetNone", dy, got)
+		if got := m.hit(4, m.frame.Body.Y+dy); got.Kind != point.None {
+			t.Errorf("hit on help screen row %d = %+v, want point.None", dy, got)
 		}
 	}
 
@@ -331,7 +335,7 @@ func TestClicksOnTheHelpScreenDoNotReachTheBoard(t *testing.T) {
 	board := m
 	board.screen = screenList
 
-	if got := board.hit(4, board.frame.Body.Y+1); got.Kind == TargetNone {
+	if got := board.hit(4, board.frame.Body.Y+1); got.Kind == point.None {
 		t.Error("the board's own first row stopped answering")
 	}
 }

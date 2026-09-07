@@ -3,6 +3,7 @@ package ui
 import (
 	"testing"
 
+	"github.com/e1i0r/orbit/internal/ui/palette"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
@@ -10,12 +11,12 @@ func TestModalScreensNavigationAndRender(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 
 	// 1. Command Palette
-	m.palette.open = true
+	m.palette = palette.Open()
 	if lines := m.paletteRows(20, 100); len(lines) == 0 {
 		t.Error("expected paletteRows to render")
 	}
 
-	m.palette.open = false
+	m.palette = palette.State{}
 
 	// 2. Menu Rows
 	m.menu.open = true

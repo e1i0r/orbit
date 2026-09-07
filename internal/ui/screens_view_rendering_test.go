@@ -2,6 +2,8 @@ package ui
 
 import (
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/ui/palette"
 )
 
 func TestAllScreensAndPanesViewRendering(t *testing.T) {
@@ -85,12 +87,12 @@ func TestAllScreensAndPanesViewRendering(t *testing.T) {
 	// Palette modal open
 	m = m.openPalette()
 
-	m.palette.typed = "rec"
+	m.palette = palette.OpenWith("rec")
 	if v := m.View(); v.Content == "" {
 		t.Error("palette modal View returned empty string")
 	}
 
-	m = m.closePalette()
+	m.palette = palette.State{}
 
 	// Menu modal open
 	m = m.openMenu("ACME-2690")

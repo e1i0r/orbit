@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/ui/keymap"
+	"github.com/e1i0r/orbit/internal/ui/markdown"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -158,13 +159,13 @@ func (m Model) overviewBrief(w int) []string {
 
 		_, body, _ := strings.Cut(e.Text, "\n")
 
-		rows := renderMarkdown(strings.TrimSpace(body), w, m.rawText)
+		rows := markdown.Render(strings.TrimSpace(body), w, m.rawText)
 		if len(rows) == 0 {
 			return nil
 		}
 
 		if !m.expandedDetail && len(rows) > overviewBriefRows {
-			return append(rows[:overviewBriefRows], markdownIndent+theme.Text(theme.Tertiary).Render(
+			return append(rows[:overviewBriefRows], markdown.Indent+theme.Text(theme.Tertiary).Render(
 				m.opts.Words.T("overview.more", "… [e] for all of it")), "")
 		}
 

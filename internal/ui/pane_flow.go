@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -171,17 +172,17 @@ func (m Model) flowNode(t view.Task, phase flow.Phase, i, total int, past bool) 
 
 	ex := m.findPhaseExec(phase.Name)
 	inFlight := t.Band == view.Running && strings.EqualFold(t.Phase, phase.Name)
-	icon, status, role := m.phaseStanding(ex, inFlight, past)
+	st := m.phaseStanding(ex, where{inFlight: inFlight, past: past})
 
 	open := m.rowOpen(tabFlow, i)
 
 	// The arrow stands between the branch and the icon, where a tree's
 	// disclosure has always stood.
-	mark := theme.Text(theme.Tertiary).Render(foldMark(open))
+	mark := theme.Text(theme.Tertiary).Render(cells.Fold(open))
 
 	head := fmt.Sprintf("  %s %s%s [%d/%d] %s · %s",
-		theme.Paint(theme.Dim).Render(branch), mark, icon, i+1, total,
-		theme.Paint(role).Bold(true).Render(phase.Name), status)
+		theme.Paint(theme.Dim).Render(branch), mark, st.glyph, i+1, total,
+		theme.Paint(st.role).Bold(true).Render(phase.Name), st.text)
 
 	if ex.cost > 0 {
 		head += " " + theme.Paint(theme.Dim).Render(fmt.Sprintf("($%.4f)", ex.cost))

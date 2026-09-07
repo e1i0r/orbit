@@ -14,9 +14,8 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
-	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
@@ -67,7 +66,7 @@ func (m Model) View() tea.View {
 	// line and the list own the body while they are up, and the output of
 	// the command the line raised keeps the body until esc takes it down.
 	switch {
-	case m.palette.open:
+	case m.palette.Up():
 		lines = append(lines, m.paletteRows(m.frame.Body.H, m.frame.Body.W)...)
 	case m.note.open:
 		lines = append(lines, m.noteRows(m.frame.Body.H, m.frame.Body.W)...)
@@ -141,7 +140,7 @@ func (m Model) headerRows() []string {
 
 	out := []string{"", m.headerLine(r.W), m.rule(r.W)}
 
-	return fill(out, r.H)
+	return cells.Fill(out, r.H)
 }
 
 // bandRows is the activity band: a rule on top separating it from the body,
@@ -158,7 +157,7 @@ func (m Model) bandRows() []string {
 	case 2:
 		return []string{m.rule(r.W), m.bandLine(r.W)}
 	default:
-		return fill([]string{m.rule(r.W), m.bandLine(r.W), m.rule(r.W)}, r.H)
+		return cells.Fill([]string{m.rule(r.W), m.bandLine(r.W), m.rule(r.W)}, r.H)
 	}
 }
 
@@ -172,7 +171,7 @@ func (m Model) barRows() []string {
 	}
 
 	line := m.barLine(r.W)
-	if m.palette.open {
+	if m.palette.Up() {
 		line = m.paletteInputLine(r.W)
 	}
 
@@ -182,7 +181,7 @@ func (m Model) barRows() []string {
 
 	out := []string{line, ""}
 
-	return fill(out, r.H)
+	return cells.Fill(out, r.H)
 }
 
 // bodyRows is the list, the window it is seen through, and the sentence that
@@ -209,61 +208,8 @@ func (m Model) bodyRows() []string {
 	if hidden := len(all) - m.offset - (len(out) - 1); hidden > 0 {
 		more := m.opts.Words.P("body.more", hidden, "… and {n} more", "… and {n} more",
 			about("n", strconv.Itoa(hidden)))
-		out = append(out, fit(strings.Repeat(" ", gutter)+theme.Paint(theme.Dim).Render(more), w))
+		out = append(out, cells.Fit(strings.Repeat(" ", cells.Gutter)+theme.Paint(theme.Dim).Render(more), w))
 	}
 
-	return fill(out, h)
-}
-
-// fill pads a region out to the number of rows it was given, and cuts it to
-// that number if a caller overshot. Every region goes through it, so the
-// claim "the frame is exactly h rows" holds by construction rather than by
-// four separate arguments.
-func fill(lines []string, h int) []string {
-	for len(lines) < h {
-		lines = append(lines, "")
-	}
-
-	if len(lines) > h {
-		return lines[:max(h, 0)]
-	}
-
-	return lines
-}
-
-// fit cuts one line to w cells, counting cells and never bytes.
-//
-// The tail is an ellipsis rather than nothing, because a line that was cut
-// and a line that happened to end there are two different facts and a reader
-// deciding whether to widen the terminal needs to tell them apart.
-func fit(text string, w int) string {
-	if w <= 0 {
-		return ""
-	}
-
-	if lipgloss.Width(text) <= w {
-		return text
-	}
-
-	return ansi.Truncate(text, w, "…")
-}
-
-// spread puts one thing at the left of a line and another at the right, with
-// at least one space between them, and gives the right-hand one up entirely
-// when they will not both fit.
-//
-// Dropping it whole is the point. A right-hand hint truncated to "unread cap
-// reac…" costs the reader the number, which was the only part of it worth
-// the cells.
-func spread(left, right string, w int) string {
-	if right == "" {
-		return fit(left, w)
-	}
-
-	gap := w - lipgloss.Width(left) - lipgloss.Width(right)
-	if gap < 1 {
-		return fit(left, w)
-	}
-
-	return left + strings.Repeat(" ", gap) + right
+	return cells.Fill(out, h)
 }

@@ -11,6 +11,10 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
+// endpoint is where the newest release is asked for. It is a variable and
+// not a constant so a test can point it at a server it controls: this is the
+// one package under internal/ui that reaches the network, and a suite that
+// went out to GitHub would fail on an aeroplane.
 var endpoint = "https://api.github.com/repos/e1i0r/orbit/releases/latest"
 
 // AvailableMsg notifies the TUI that a newer version of orbit was detected.

@@ -6,6 +6,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -137,11 +138,11 @@ func (m Model) gateRows(c gateCheck, i, w int) ([]string, bool) {
 	// width verb counts the bytes of an escape sequence as cells, so a
 	// padded rendered string is a column that moves with the palette.
 	head := "  " + theme.Paint(role).Render(icon) + " " +
-		theme.Paint(theme.Accent).Render(pad(c.name, gateNameCells, false)) + "  " +
-		theme.Paint(role).Render(pad(word, gateWordCells, false)) + "  "
+		theme.Paint(theme.Accent).Render(cells.Pad(c.name, gateNameCells, false)) + "  " +
+		theme.Paint(role).Render(cells.Pad(word, gateWordCells, false)) + "  "
 
 	lead := 2 + lipgloss.Width(icon) + 1 + gateNameCells + 2 + gateWordCells + 2
-	availW := max(20, w-lead-lipgloss.Width(foldShut)-2)
+	availW := max(20, w-lead-lipgloss.Width(cells.FoldShut)-2)
 
 	said := []string{c.command}
 	if !c.passed && c.reason != "" {
@@ -154,8 +155,8 @@ func (m Model) gateRows(c gateCheck, i, w int) ([]string, bool) {
 	var body []string
 
 	for _, l := range said {
-		for _, wl := range splitIntoLines(l, availW) {
-			body = append(body, fit(wl, availW))
+		for _, wl := range cells.Lines(l, availW) {
+			body = append(body, cells.Fit(wl, availW))
 		}
 	}
 
@@ -164,11 +165,11 @@ func (m Model) gateRows(c gateCheck, i, w int) ([]string, bool) {
 	}
 
 	if len(body) == 1 {
-		return []string{head + strings.Repeat(" ", lipgloss.Width(foldShut)) + theme.Paint(theme.Dim).Render(body[0])}, false
+		return []string{head + strings.Repeat(" ", lipgloss.Width(cells.FoldShut)) + theme.Paint(theme.Dim).Render(body[0])}, false
 	}
 
 	open := m.rowOpen(tabGates, i)
-	mark := theme.Text(theme.Tertiary).Render(foldMark(open))
+	mark := theme.Text(theme.Tertiary).Render(cells.Fold(open))
 
 	if !open {
 		return []string{head + mark + theme.Paint(theme.Dim).Render(body[0])}, true
@@ -176,7 +177,7 @@ func (m Model) gateRows(c gateCheck, i, w int) ([]string, bool) {
 
 	out := []string{head + mark + theme.Text(theme.Secondary).Render(body[0])}
 
-	indent := strings.Repeat(" ", lead+lipgloss.Width(foldShut))
+	indent := strings.Repeat(" ", lead+lipgloss.Width(cells.FoldShut))
 	for _, l := range body[1:] {
 		out = append(out, indent+theme.Text(theme.Secondary).Render(l))
 	}

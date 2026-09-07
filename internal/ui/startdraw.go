@@ -15,11 +15,13 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/flows"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // startIndent is the three cells every line of the dialog is inset by, which
-// is the gutter the board draws its cursor in. The two screens line up
+// is the cells.Gutter the board draws its cursor in. The two screens line up
 // because one replaces the other in the same region.
 const startIndent = "   "
 
@@ -68,7 +70,7 @@ func (m Model) startRows(h, w int) []string {
 	copy(out[p.phases:], m.phaseRows(w))
 	copy(out[p.autopilot:], auto)
 
-	return fill(out, h)
+	return cells.Fill(out, h)
 }
 
 // startHead names the task the run would be: its id and title on the left,
@@ -78,7 +80,7 @@ func (m Model) startHead(w int) string {
 
 	left := theme.Paint(theme.Accent).Render(m.start.id)
 	if !ok {
-		return spread(" "+left, theme.Paint(theme.Dim).Render(m.opts.Words.T("detail.gone",
+		return cells.Spread(" "+left, theme.Paint(theme.Dim).Render(m.opts.Words.T("detail.gone",
 			"this task is no longer on the board")), w)
 	}
 
@@ -86,7 +88,7 @@ func (m Model) startHead(w int) string {
 		left += "  " + theme.Paint(theme.Dim).Render(t.Title)
 	}
 
-	return spread(" "+left, theme.Paint(theme.Dim).Render(t.Repo), w)
+	return cells.Spread(" "+left, theme.Paint(theme.Dim).Render(t.Repo), w)
 }
 
 // flowLine is the first line and the one that changes the rest: the flow
@@ -103,7 +105,7 @@ func (m Model) flowLine(w int) string {
 
 	cycle := m.start.cycle()
 	if len(cycle) < 2 {
-		return fit(left, w)
+		return cells.Fit(left, w)
 	}
 
 	parts := make([]string, 0, len(cycle))
@@ -116,9 +118,9 @@ func (m Model) flowLine(w int) string {
 		parts = append(parts, theme.Paint(role).Render(f.name))
 	}
 
-	right := strings.Join(parts, theme.Paint(theme.Dim).Render(dot)) + "  " + theme.Paint(theme.Dim).Render(p.T("start.new_flow_tag", "[+] new flow"))
+	right := strings.Join(parts, theme.Paint(theme.Dim).Render(cells.Dot)) + "  " + theme.Paint(theme.Dim).Render(p.T("start.new_flow_tag", "[+] new flow"))
 
-	return spread(left, right, w)
+	return cells.Spread(left, right, w)
 }
 
 // flowMark says where a flow came from, in the words `orbit flows` uses.
@@ -140,7 +142,7 @@ func (m Model) flowMark(f startFlow) string {
 		return ""
 	}
 
-	return flowOriginString(m.opts.Words, f.origin)
+	return flows.OriginSaid(m.opts.Words, f.origin)
 }
 
 // phaseRows is what the flow on screen is made of, one phase to a line.
@@ -152,7 +154,7 @@ func (m Model) flowMark(f startFlow) string {
 func (m Model) phaseRows(w int) []string {
 	f := m.start.chosen()
 	if f.err != nil {
-		return []string{fit(startIndent+theme.Paint(theme.Bad).Render(f.err.Error()), w)}
+		return []string{cells.Fit(startIndent+theme.Paint(theme.Bad).Render(f.err.Error()), w)}
 	}
 
 	var nameW, engineW, modelW int
@@ -166,7 +168,7 @@ func (m Model) phaseRows(w int) []string {
 	for i, ph := range f.flow.Phases {
 		mark := " "
 		if i == 0 {
-			mark = markGlyph
+			mark = cells.Mark
 		}
 
 		fields := []struct {
@@ -181,10 +183,10 @@ func (m Model) phaseRows(w int) []string {
 				continue
 			}
 
-			parts = append(parts, theme.Paint(theme.Dim).Render(pad(field.text, max(field.cells, lipgloss.Width(field.text)), false)))
+			parts = append(parts, theme.Paint(theme.Dim).Render(cells.Pad(field.text, max(field.cells, lipgloss.Width(field.text)), false)))
 		}
 
-		out = append(out, fit(startIndent+theme.Paint(theme.Accent).Render(mark)+" "+
+		out = append(out, cells.Fit(startIndent+theme.Paint(theme.Accent).Render(mark)+" "+
 			strings.Join(parts, strings.Repeat(" ", startGap)), w))
 	}
 
@@ -209,7 +211,7 @@ func (m Model) phaseNote(ph flow.Phase) string {
 	}
 
 	if ph.Wait {
-		note += dot + p.T("start.stops", "stops when it is done")
+		note += cells.Dot + p.T("start.stops", "stops when it is done")
 	}
 
 	return note
@@ -251,7 +253,7 @@ func (m Model) autopilotRows(w int) []string {
 			pip, role = pipOn, theme.Live
 		}
 
-		out = append(out, fit(lead[i]+theme.Paint(role).Render(pip+" "+pad(r.word, wordW, false))+
+		out = append(out, cells.Fit(lead[i]+theme.Paint(role).Render(pip+" "+cells.Pad(r.word, wordW, false))+
 			strings.Repeat(" ", startGap)+theme.Paint(theme.Dim).Render(r.what), w))
 	}
 

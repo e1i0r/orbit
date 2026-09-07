@@ -9,6 +9,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/point"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -16,7 +17,7 @@ import (
 // headerZone is one thing on the drawn header line that answers a click, and
 // the cells it occupies, counted from the left edge of the terminal.
 type headerZone struct {
-	target Target
+	target point.Target
 	x, w   int
 }
 
@@ -101,7 +102,7 @@ func placeBadges(badges []queueBadge, x int) []headerZone {
 	for _, b := range badges {
 		cells := lipgloss.Width(b.text)
 		out = append(out, headerZone{
-			target: Target{Kind: TargetHeaderQueue, Band: b.band},
+			target: point.Target{Kind: point.HeaderQueue, Band: b.band},
 			x:      x,
 			w:      cells,
 		})
@@ -122,7 +123,7 @@ func placeFields(fields []headerField, x int) []headerZone {
 		cells := lipgloss.Width(f.text)
 		if f.name != "" {
 			out = append(out, headerZone{
-				target: Target{Kind: TargetHeaderField, Field: f.name},
+				target: point.Target{Kind: point.HeaderField, Field: f.name},
 				x:      x,
 				w:      cells,
 			})

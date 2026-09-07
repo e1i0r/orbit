@@ -16,6 +16,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/point"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -51,7 +52,7 @@ func openFile(t *testing.T, m Model, name string) (Model, tea.Cmd) {
 	}
 
 	at := m.hit(30, y)
-	if at.Kind != TargetPaneRow {
+	if at.Kind != point.PaneRow {
 		t.Fatalf("pointing at %s = %+v, want a row of the pane", name, at)
 	}
 

@@ -8,10 +8,11 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"charm.land/lipgloss/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/roster"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -27,7 +28,7 @@ func (m Model) statusRows() []string {
 		return nil
 	}
 
-	return fill([]string{m.statusLine(r.W)}, r.H)
+	return cells.Fill([]string{m.statusLine(r.W)}, r.H)
 }
 
 func (m Model) statusLine(w int) string {
@@ -77,7 +78,7 @@ func (m Model) statusLine(w int) string {
 	for len(segments) > 1 {
 		rendered := renderSegments(segments, sep)
 		if lipgloss.Width(rendered)+2 <= w {
-			return fit("  "+rendered, w)
+			return cells.Fit("  "+rendered, w)
 		}
 
 		segments = segments[:len(segments)-1]
@@ -85,7 +86,7 @@ func (m Model) statusLine(w int) string {
 
 	if len(segments) == 1 {
 		rendered := theme.Paint(segments[0].role).Render(segments[0].text)
-		return fit("  "+rendered, w)
+		return cells.Fit("  "+rendered, w)
 	}
 
 	return ""
@@ -157,7 +158,7 @@ func (m Model) quotaSegment(p *words.Printer) (statusSegment, bool) {
 	reading := m.opts.Quota(m.dialEngine(""))
 
 	if len(reading.Windows) > 0 {
-		return statusSegment{text: windowUsed(p, reading.Windows[0]), role: theme.Dim}, true
+		return statusSegment{text: roster.Says(p, reading.Windows[0]), role: theme.Dim}, true
 	}
 
 	if reading.Money || reading.Sourced {
@@ -190,54 +191,7 @@ func (m Model) quotaChip() string {
 		return ""
 	}
 
-	return m.windowsUsed(m.opts.Quota(m.dialEngine("")))
-}
-
-// windowsUsed is a reading's windows on one line: the share used of each,
-// and the word said once at the end.
-//
-// Empty for a reading with nothing in it, which is what a caller draws when
-// there is nothing to draw rather than a sentence about absence — the one
-// place that says a source is missing is the status line, once.
-func (m Model) windowsUsed(reading QuotaReading) string {
-	var parts []string
-
-	for _, w := range reading.Windows {
-		parts = append(parts, fmt.Sprintf("%.0f%% %s", pctUsed(w), w.Label))
-	}
-
-	if len(parts) == 0 {
-		return ""
-	}
-
-	// The word is said once, at the end, and it is the word the providers
-	// own screens use. A percentage on a status bar is read as whichever of
-	// the two numbers the reader expects, and the two are opposites: 1% of a
-	// window is either almost nothing spent or almost nothing left. Saying
-	// used keeps this chip and the /usage screen a reader has open in
-	// another terminal reporting the same figure rather than its complement.
-	return m.opts.Words.T("header.quota_used", "{windows} used",
-		about("windows", strings.Join(parts, dot)))
-}
-
-// pctUsed is the share of a window already spent, capped at the whole of it:
-// a proxy reporting more used than there was is reporting an overage, and
-// 140% of a window drawn as a bar is a bar with nowhere to go.
-func pctUsed(w QuotaWindow) float64 {
-	if w.Pct > 100 {
-		return 100
-	}
-
-	return w.Pct
-}
-
-// windowUsed is one quota window as a reader reads it.
-func windowUsed(p *words.Printer, w QuotaWindow) string {
-	return p.T("status.quota", "{pct} used in {label} · resets in {resets}",
-		about("pct", fmt.Sprintf("%.0f%%", pctUsed(w))),
-		about("label", w.Label),
-		about("resets", fmtReset(w.ResetsIn)),
-	)
+	return roster.Spent(m.opts.Words, m.opts.Quota(m.dialEngine("")))
 }
 
 func renderSegments(segs []statusSegment, sep string) string {
@@ -247,24 +201,4 @@ func renderSegments(segs []statusSegment, sep string) string {
 	}
 
 	return strings.Join(parts, sep)
-}
-
-func fmtReset(d time.Duration) string {
-	if d <= 0 {
-		return "0s"
-	}
-
-	h := int(d.Hours())
-	m := int(d.Minutes()) % 60
-	s := int(d.Seconds()) % 60
-
-	if h > 0 {
-		return fmt.Sprintf("%dh%dm", h, m)
-	}
-
-	if m > 0 {
-		return fmt.Sprintf("%dm%ds", m, s)
-	}
-
-	return fmt.Sprintf("%ds", s)
 }

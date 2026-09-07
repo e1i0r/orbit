@@ -98,15 +98,30 @@ type deliverPending struct {
 // goes ahead: the work was asked for either way, and refusing to do it
 // because the writing failed would be the window choosing its own bookkeeping
 // over what the reader wanted.
-func (m Model) asked(taskID, verb, by, cmd string) Model {
-	t, ok := m.task(taskID)
+func (m Model) asked(a ask) Model {
+	t, ok := m.task(a.TaskID)
 	if !ok {
 		return m
 	}
 
-	m.delivering = deliverPending{task: t, verb: verb, cmd: cmd, at: m.now}
+	m.delivering = deliverPending{task: t, verb: a.Verb, cmd: a.Cmd, at: m.now}
 
-	return m.deliver(t, Delivery{Verb: verb, By: by})
+	return m.deliver(t, Delivery{Verb: a.Verb, By: a.By})
+}
+
+// ask is one verb going out, as the record and the band name it.
+//
+// Four strings in a row was three swaps waiting to happen, and every one of
+// them would have written a record that reads as though something else had
+// been asked for.
+type ask struct {
+	TaskID string
+	// Verb is what the record calls it: MERGE PR, CREATE PR.
+	Verb string
+	// By is who is doing it — the supervisor, or a command of Orbit's own.
+	By string
+	// Cmd is the command being watched, when there is one to watch.
+	Cmd string
 }
 
 // answered closes the verb that was out, with what came back or why it broke.
@@ -141,51 +156,37 @@ func (m Model) deliver(t view.Task, d Delivery) Model {
 // verb with no task in front of it has nothing to do, and every one of these
 // answered that in the same sentence. What comes back is the model with the
 // sentence already in it, so the caller returns it and stops.
-func (m Model) aboutTask() (Model, string, string, bool) {
+func (m Model) aboutTask() (Model, inHand, bool) {
 	id := m.taskInHand()
 	if id == "" {
-		return m.say(m.opts.Words.T("deliver.no_task", "select a task to continue")), "", "", false
+		return m.say(m.opts.Words.T("deliver.no_task", "select a task to continue")), inHand{}, false
 	}
 
-	return m, id, m.taskRepoPath(id), true
+	return m, inHand{ID: id, RepoPath: m.taskRepoPath(id)}, true
 }
 
-// askSupervisorTo hands one of these verbs to the supervisor: the window
-// says what is wanted and where, and the supervisor finds out what that
-// takes before doing it.
-//
-// What it is asked goes into the supervisor's own thread, exactly as a line
-// typed on its screen does, so a keystroke and a sentence are one
-// conversation in one order — and the answer comes back where the operator
-// already reads its answers.
-func (m Model) askSupervisorTo(caption, taskID, path, body, said string) (tea.Model, tea.Cmd) {
-	p := m.opts.Words
-
-	if path == "" {
-		return m.say(p.T("deliver.no_checkout", "{id} has no checkout, so there is nothing to work in",
-			about("id", taskID))), nil
-	}
-
-	next, cmd := m.sendSupervisorMessage(prompt.Deliver(caption, taskID, path, body))
-	if cmd == nil {
-		// The thread refused the line. What it said about that is the
-		// only true sentence there is here.
-		return next, nil
-	}
-
-	return next.asked(taskID, caption, deliverBySupervisor, "").say(said), cmd
+// inHand is the task a deliver key was pressed on: which one, and the
+// checkout it belongs to. The two were returned side by side as strings, in
+// an order nobody could check.
+type inHand struct {
+	ID       string
+	RepoPath string
 }
 
 // deliverPR asks for the pull request to be opened, template and all.
 func (m Model) deliverPR() (tea.Model, tea.Cmd) {
-	m, taskID, _, ok := m.aboutTask()
+	m, hand, ok := m.aboutTask()
 	if !ok {
 		return m, nil
 	}
 
-	return m.askSupervisorTo("CREATE PR", taskID, m.taskCheckoutPath(taskID), prompt.CreatePR,
-		m.opts.Words.T("deliver.pr_asked", "the supervisor was asked to open the pull request for {id}",
-			about("id", taskID)))
+	return m.askSupervisorTo(errand{
+		Caption: "CREATE PR",
+		TaskID:  hand.ID,
+		Body:    prompt.CreatePR,
+		Said: m.opts.Words.T("deliver.pr_asked", "the supervisor was asked to open the pull request for {id}",
+			about("id", hand.ID)),
+	})
 }
 
 // fixChecks asks for the checks on the pull request to pass.
@@ -194,26 +195,34 @@ func (m Model) deliverPR() (tea.Model, tea.Cmd) {
 // takes to fix them is not known until they have been read: that is the
 // whole reason this goes to the supervisor rather than to a command.
 func (m Model) fixChecks() (tea.Model, tea.Cmd) {
-	m, taskID, _, ok := m.aboutTask()
+	m, hand, ok := m.aboutTask()
 	if !ok {
 		return m, nil
 	}
 
-	return m.askSupervisorTo("FIX CHECKS", taskID, m.taskCheckoutPath(taskID), prompt.FixChecks,
-		m.opts.Words.T("deliver.checks_asked", "the supervisor was asked to make {id}'s checks pass",
-			about("id", taskID)))
+	return m.askSupervisorTo(errand{
+		Caption: "FIX CHECKS",
+		TaskID:  hand.ID,
+		Body:    prompt.FixChecks,
+		Said: m.opts.Words.T("deliver.checks_asked", "the supervisor was asked to make {id}'s checks pass",
+			about("id", hand.ID)),
+	})
 }
 
 // addMoreTests asks for the tests this task's change is missing.
 func (m Model) addMoreTests() (tea.Model, tea.Cmd) {
-	m, taskID, _, ok := m.aboutTask()
+	m, hand, ok := m.aboutTask()
 	if !ok {
 		return m, nil
 	}
 
-	return m.askSupervisorTo("MORE TESTS", taskID, m.taskCheckoutPath(taskID), prompt.MoreTests,
-		m.opts.Words.T("deliver.tests_asked", "the supervisor was asked for more tests on {id}",
-			about("id", taskID)))
+	return m.askSupervisorTo(errand{
+		Caption: "MORE TESTS",
+		TaskID:  hand.ID,
+		Body:    prompt.MoreTests,
+		Said: m.opts.Words.T("deliver.tests_asked", "the supervisor was asked for more tests on {id}",
+			about("id", hand.ID)),
+	})
 }
 
 // resolveComments answers the reviews on the pull request.
@@ -224,29 +233,36 @@ func (m Model) addMoreTests() (tea.Model, tea.Cmd) {
 // to the supervisor with the reviews still on the pull request, where the
 // replies have to go anyway.
 func (m Model) resolveComments() (tea.Model, tea.Cmd) {
-	m, taskID, _, ok := m.aboutTask()
+	m, hand, ok := m.aboutTask()
 	if !ok {
 		return m, nil
 	}
 
-	return m.askSupervisorTo(
-		"RESOLVE COMMENTS", taskID, m.taskCheckoutPath(taskID), prompt.ResolveComments,
-		m.opts.Words.T("deliver.resolve_asked", "the supervisor was asked to answer the reviews on {id}",
-			about("id", taskID)))
+	return m.askSupervisorTo(errand{
+		Caption: "RESOLVE COMMENTS",
+		TaskID:  hand.ID,
+		Body:    prompt.ResolveComments,
+		Said: m.opts.Words.T("deliver.resolve_asked", "the supervisor was asked to answer the reviews on {id}",
+			about("id", hand.ID)),
+	})
 }
 
 // reviewPR reads the pull request and says what it finds, on the pull
 // request. It is the one verb here that changes nothing: a review is worth
 // having precisely because the reader of it decides.
 func (m Model) reviewPR() (tea.Model, tea.Cmd) {
-	m, taskID, _, ok := m.aboutTask()
+	m, hand, ok := m.aboutTask()
 	if !ok {
 		return m, nil
 	}
 
-	return m.askSupervisorTo("DEEP REVIEW", taskID, m.taskCheckoutPath(taskID), prompt.Review,
-		m.opts.Words.T("deliver.review_asked", "the supervisor was asked to review {id}",
-			about("id", taskID)))
+	return m.askSupervisorTo(errand{
+		Caption: "DEEP REVIEW",
+		TaskID:  hand.ID,
+		Body:    prompt.Review,
+		Said: m.opts.Words.T("deliver.review_asked", "the supervisor was asked to review {id}",
+			about("id", hand.ID)),
+	})
 }
 
 // updatePRBranch brings the task's branch up to date with the branch it
@@ -254,41 +270,45 @@ func (m Model) reviewPR() (tea.Model, tea.Cmd) {
 // then merged in here. It is not the same verb as creating the pull
 // request, which is what this key used to run.
 func (m Model) updatePRBranch() (tea.Model, tea.Cmd) {
-	m, taskID, _, ok := m.aboutTask()
+	m, hand, ok := m.aboutTask()
 	if !ok {
 		return m, nil
 	}
 
-	return m.askSupervisorTo("UPDATE PR", taskID, m.taskCheckoutPath(taskID), prompt.UpdatePR,
-		m.opts.Words.T("deliver.update_asked",
+	return m.askSupervisorTo(errand{
+		Caption: "UPDATE PR",
+		TaskID:  hand.ID,
+		Body:    prompt.UpdatePR,
+		Said: m.opts.Words.T("deliver.update_asked",
 			"the supervisor was asked to bring {id} up to date with its base branch",
-			about("id", taskID)))
+			about("id", hand.ID)),
+	})
 }
 
 // mergePR merges the GitHub Pull Request and cleans up the remote branch.
 func (m Model) mergePR() (tea.Model, tea.Cmd) {
-	m, taskID, path, ok := m.aboutTask()
+	m, hand, ok := m.aboutTask()
 	if !ok {
 		return m, nil
 	}
 
 	p := m.opts.Words
-	m = m.asked(taskID, "MERGE PR", "merge", "merge")
-	m = m.say(p.T("deliver.merging_pr", "merging pull request for {id}...", about("id", taskID)))
+	m = m.asked(ask{TaskID: hand.ID, Verb: "MERGE PR", By: "merge", Cmd: "merge"})
+	m = m.say(p.T("deliver.merging_pr", "merging pull request for {id}...", about("id", hand.ID)))
 
-	return m.runWatched(Command{Name: "merge"}, repoArgs(path, taskID))
+	return m.runWatched(Command{Name: "merge"}, repoArgs(hand.RepoPath, hand.ID))
 }
 
 // closePR closes the GitHub Pull Request for the viewed task.
 func (m Model) closePR() (tea.Model, tea.Cmd) {
-	m, taskID, path, ok := m.aboutTask()
+	m, hand, ok := m.aboutTask()
 	if !ok {
 		return m, nil
 	}
 
 	p := m.opts.Words
-	m = m.asked(taskID, "CLOSE PR", "close-pr", "close-pr")
-	m = m.say(p.T("deliver.closing_pr", "closing pull request for {id}...", about("id", taskID)))
+	m = m.asked(ask{TaskID: hand.ID, Verb: "CLOSE PR", By: "close-pr", Cmd: "close-pr"})
+	m = m.say(p.T("deliver.closing_pr", "closing pull request for {id}...", about("id", hand.ID)))
 
-	return m.runWatched(Command{Name: "close-pr"}, repoArgs(path, taskID))
+	return m.runWatched(Command{Name: "close-pr"}, repoArgs(hand.RepoPath, hand.ID))
 }

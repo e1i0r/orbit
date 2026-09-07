@@ -8,37 +8,87 @@ import (
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
-// phaseStanding is where a phase got to: the glyph it is marked with, the
-// word for it, and the role both are painted in.
-func (m Model) phaseStanding(ex phaseExec, inFlight, past bool) (string, string, theme.Role) {
+// standing is how one row of the flow tree is drawn: the glyph it is marked
+// with, the word for it, and the role both are painted in.
+//
+// One type for a phase and for a verb the supervisor was handed, because the
+// two are drawn the same way — and the three came back side by side, two of
+// them strings, which is a swap the compiler cannot see.
+type standing struct {
+	glyph string
+	text  string
+	role  theme.Role
+}
+
+// where says whether the run has reached a phase yet, and whether it has gone
+// past it. They were two bools in a row: passed the wrong way round, a phase
+// that had finished drew as pending.
+type where struct {
+	inFlight bool
+	past     bool
+}
+
+// phaseStanding is where a phase got to.
+func (m Model) phaseStanding(ex phaseExec, at where) standing {
 	p := m.opts.Words
 
 	switch {
 	case ex.failed:
-		return theme.Paint(theme.Bad).Render("✗"), theme.Paint(theme.Bad).Render(p.T("flow.step_status_failed", "failed")), theme.Bad
+		return standing{
+			glyph: theme.Paint(theme.Bad).Render("✗"),
+			text:  theme.Paint(theme.Bad).Render(p.T("flow.step_status_failed", "failed")),
+			role:  theme.Bad,
+		}
 	case ex.cancelled:
-		return theme.Paint(theme.Warn).Render("⏹"), theme.Paint(theme.Warn).Render(p.T("flow.step_status_cancelled", "cancelled")), theme.Warn
+		return standing{
+			glyph: theme.Paint(theme.Warn).Render("⏹"),
+			text:  theme.Paint(theme.Warn).Render(p.T("flow.step_status_cancelled", "cancelled")),
+			role:  theme.Warn,
+		}
 	case ex.waiting:
-		return theme.Paint(theme.Warn).Render("⚠️"), theme.Paint(theme.Warn).Render(p.T("flow.step_status_waiting", "waiting at gate")), theme.Warn
+		return standing{
+			glyph: theme.Paint(theme.Warn).Render("⚠️"),
+			text:  theme.Paint(theme.Warn).Render(p.T("flow.step_status_waiting", "waiting at gate")),
+			role:  theme.Warn,
+		}
 	case ex.finished:
-		return theme.Paint(theme.OK).Render("✓"), theme.Paint(theme.OK).Render(p.T("flow.step_status_done", "completed")), theme.OK
-	case past:
+		return standing{
+			glyph: theme.Paint(theme.OK).Render("✓"),
+			text:  theme.Paint(theme.OK).Render(p.T("flow.step_status_done", "completed")),
+			role:  theme.OK,
+		}
+	case at.past:
 		// A phase the run has gone past is done, whatever it wrote down
 		// about itself. A loop writes no phase.finished of its own — what
 		// ran are the phases inside it — so the only thing that says its
 		// block is closed is that the flow moved on.
-		return theme.Paint(theme.OK).Render("✓"), theme.Paint(theme.OK).Render(p.T("flow.step_status_done", "completed")), theme.OK
+		return standing{
+			glyph: theme.Paint(theme.OK).Render("✓"),
+			text:  theme.Paint(theme.OK).Render(p.T("flow.step_status_done", "completed")),
+			role:  theme.OK,
+		}
 	case ex.checked:
-		return theme.Paint(theme.Live).Render("⚡"),
-			theme.Paint(theme.Live).Bold(true).Render(p.T("flow.step_status_looping", "going round")), theme.Live
-	case inFlight:
-		return theme.Paint(theme.Live).Render("⚡"),
-			theme.Paint(theme.Live).Bold(true).Render(p.T("flow.step_status_in_flight", "in progress")), theme.Live
+		return standing{
+			glyph: theme.Paint(theme.Live).Render("⚡"),
+			text:  theme.Paint(theme.Live).Bold(true).Render(p.T("flow.step_status_looping", "going round")),
+			role:  theme.Live,
+		}
+	case at.inFlight:
+		return standing{
+			glyph: theme.Paint(theme.Live).Render("⚡"),
+			text:  theme.Paint(theme.Live).Bold(true).Render(p.T("flow.step_status_in_flight", "in progress")),
+			role:  theme.Live,
+		}
 	default:
-		return theme.Paint(theme.Dim).Render("○"), theme.Paint(theme.Dim).Render(p.T("flow.step_status_pending", "pending")), theme.Dim
+		return standing{
+			glyph: theme.Paint(theme.Dim).Render("○"),
+			text:  theme.Paint(theme.Dim).Render(p.T("flow.step_status_pending", "pending")),
+			role:  theme.Dim,
+		}
 	}
 }
 
@@ -168,15 +218,15 @@ func (m Model) phaseOutcome(text string) []subItem {
 			continue
 		}
 
-		for _, wl := range splitIntoLines(l, measure) {
+		for _, wl := range cells.Lines(l, measure) {
 			if out == nil {
 				out = append(out, subItem{text: fmt.Sprintf("📋 %s: %s",
-					m.opts.Words.T("flow.tree_outcome", "outcome"), fit(wl, measure))})
+					m.opts.Words.T("flow.tree_outcome", "outcome"), cells.Fit(wl, measure))})
 
 				continue
 			}
 
-			out = append(out, subItem{text: fit(wl, measure), cont: true})
+			out = append(out, subItem{text: cells.Fit(wl, measure), cont: true})
 		}
 	}
 

@@ -7,6 +7,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
@@ -234,7 +235,7 @@ func thumbRun(col []string) (first, last, rows int) {
 	first, last = -1, -1
 
 	for i, c := range col {
-		if !strings.Contains(c, scrollThumb) {
+		if !strings.Contains(c, cells.Thumb) {
 			continue
 		}
 
@@ -252,8 +253,8 @@ func thumbRun(col []string) (first, last, rows int) {
 // to go, and spends a column of every pane saying it.
 func TestAPaneThatFitsHasNoBar(t *testing.T) {
 	for _, c := range []struct{ rows, total int }{{10, 10}, {10, 3}, {0, 40}} {
-		if got := scrollTrack(c.rows, c.total, 0); got != nil {
-			t.Errorf("scrollTrack(%d rows, %d lines) drew %d rows of bar", c.rows, c.total, len(got))
+		if got := cells.Track(c.rows, c.total, 0); got != nil {
+			t.Errorf("cells.Track(%d rows, %d lines) drew %d rows of bar", c.rows, c.total, len(got))
 		}
 	}
 }
@@ -262,7 +263,7 @@ func TestAPaneThatFitsHasNoBar(t *testing.T) {
 // a line filled to the column before it, so a two-cell rail wraps every row
 // of the pane onto a second line.
 func TestTheBarIsOneCellWide(t *testing.T) {
-	for _, c := range scrollTrack(12, 90, 30) {
+	for _, c := range cells.Track(12, 90, 30) {
 		if got := lipgloss.Width(c); got != 1 {
 			t.Errorf("a row of the bar is %d cells wide, want 1", got)
 		}
@@ -275,12 +276,12 @@ func TestTheBarIsOneCellWide(t *testing.T) {
 func TestTheThumbSaysWhereTheReaderIs(t *testing.T) {
 	const rows, total = 10, 90
 
-	first, _, _ := thumbRun(scrollTrack(rows, total, 0))
+	first, _, _ := thumbRun(cells.Track(rows, total, 0))
 	if first != 0 {
 		t.Errorf("at the top of the text the thumb starts on row %d, want 0", first)
 	}
 
-	_, last, _ := thumbRun(scrollTrack(rows, total, total-rows))
+	_, last, _ := thumbRun(cells.Track(rows, total, total-rows))
 	if last != rows-1 {
 		t.Errorf("at the end of the text the thumb ends on row %d, want %d", last, rows-1)
 	}
@@ -296,7 +297,7 @@ func TestTheThumbIsTheShareThatShows(t *testing.T) {
 		{10, 40000, 1},
 		{20, 30, 13},
 	} {
-		if _, _, got := thumbRun(scrollTrack(c.rows, c.total, 0)); got != c.want {
+		if _, _, got := thumbRun(cells.Track(c.rows, c.total, 0)); got != c.want {
 			t.Errorf("%d rows over %d lines: thumb is %d rows, want %d", c.rows, c.total, got, c.want)
 		}
 	}

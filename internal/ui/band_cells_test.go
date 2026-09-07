@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -206,15 +207,15 @@ func TestElapsedEveryUnit(t *testing.T) {
 }
 
 func TestPadEdgeCases(t *testing.T) {
-	if got := pad("x", 0, false); got != "" {
+	if got := cells.Pad("x", 0, false); got != "" {
 		t.Errorf("pad with 0 cells = %q, want empty", got)
 	}
 
-	if got := pad("hi", 5, true); got != "   hi" {
+	if got := cells.Pad("hi", 5, true); got != "   hi" {
 		t.Errorf("pad right-aligned = %q, want %q", got, "   hi")
 	}
 
-	if got := pad("hi", 5, false); got != "hi   " {
+	if got := cells.Pad("hi", 5, false); got != "hi   " {
 		t.Errorf("pad left-aligned = %q, want %q", got, "hi   ")
 	}
 }
@@ -250,7 +251,7 @@ func TestHeadHintBranches(t *testing.T) {
 	// 3. The To Do band at the unread cap says so, ahead of the open hint.
 	m.expanded[view.ToDo] = false
 
-	m.opts.Settings = &settings{autopilot: true, lang: "en", unread: 1}
+	m.opts.Settings = &settingsFile{autopilot: true, lang: "en", unread: 1}
 	if got := m.headHint(row{band: view.ToDo, n: 4}); !strings.Contains(got, "unread cap") {
 		t.Errorf("headHint on To Do at the cap = %q, want the unread cap sentence", got)
 	}

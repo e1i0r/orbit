@@ -9,6 +9,8 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/point"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -111,7 +113,7 @@ func TestAHeadingIsNotSomethingToClickOn(t *testing.T) {
 		t.Fatal("the menu has no heading to click on")
 	}
 
-	if got := m.hitMenu(gutter, m.frame.Body.Y+menuTitleRows+head); got.Kind != TargetNone {
+	if got := m.hitMenu(cells.Gutter, m.frame.Body.Y+menuTitleRows+head); got.Kind != point.None {
 		t.Errorf("clicking the heading answered %+v, want nothing", got)
 	}
 }
@@ -210,7 +212,7 @@ func TestAnEntryIsWhereItWasDrawnAfterScrolling(t *testing.T) {
 		t.Fatalf("row %d is %q, want the chosen entry", drawn, rows[drawn])
 	}
 
-	got := m.hitMenu(gutter, m.frame.Body.Y+drawn)
+	got := m.hitMenu(cells.Gutter, m.frame.Body.Y+drawn)
 	if want := m.menuEntries()[m.menu.sel].glyph; got.Key != want {
 		t.Errorf("clicking the chosen row answered %+v, want the entry drawn there (%q)", got, want)
 	}

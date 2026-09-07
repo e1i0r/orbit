@@ -8,6 +8,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/point"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -31,7 +32,7 @@ func TestClickingAnywhereOnTheBadgeResetsTheFilters(t *testing.T) {
 
 	for x := range badge {
 		got := m.hitHeader(x, m.frame.HeaderLineY())
-		if got.Kind != TargetHeaderField || got.Field != "orbit" {
+		if got.Kind != point.HeaderField || got.Field != "orbit" {
 			t.Errorf("column %d of the %d-cell badge hits %+v, not the badge; hitHeader and name() disagree about how wide it is", x, badge, got)
 		}
 	}

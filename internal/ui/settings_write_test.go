@@ -28,7 +28,7 @@ func TestASettingThatCouldNotBeWrittenSaysSoInsteadOfSayingItIsSet(t *testing.T)
 		{"theme", "nord"},
 	} {
 		m, _ := testModel(t, 100, 30)
-		m.opts.Settings = &settings{fail: errors.New("settings file is locked by another orbit")}
+		m.opts.Settings = &settingsFile{fail: errors.New("settings file is locked by another orbit")}
 
 		old := theme.CurrentTheme()
 
@@ -50,7 +50,7 @@ func TestASettingThatCouldNotBeWrittenSaysSoInsteadOfSayingItIsSet(t *testing.T)
 // not have and the next run will not restore.
 func TestARefusedThemeDoesNotRepaintTheWindow(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m.opts.Settings = &settings{fail: errors.New("disk full")}
+	m.opts.Settings = &settingsFile{fail: errors.New("disk full")}
 
 	old := theme.CurrentTheme()
 

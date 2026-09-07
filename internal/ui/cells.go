@@ -14,10 +14,10 @@ import (
 	"time"
 
 	"charm.land/lipgloss/v2"
-	"github.com/charmbracelet/x/ansi"
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/ui/layout"
 	"github.com/e1i0r/orbit/internal/ui/theme"
@@ -31,14 +31,6 @@ import (
 // measured render: a row drawn with three cells where the plan allowed two
 // is a row wider than the terminal it was planned for.
 const columnGap = 2
-
-// markGlyph is what the cursor's row is marked with, in the gutter.
-//
-// It is a chevron rather than the triangle a fold is drawn with. The two sit
-// side by side on any screen whose rows fold — the gutter mark, then the
-// section's own arrow — and drawn with the same glyph they read as one
-// stutter rather than as two different facts about the row.
-const markGlyph = "❯"
 
 // drawRow lays one task out under the column plan.
 //
@@ -68,7 +60,7 @@ func (m Model) drawRow(r row, w int, selected bool) string {
 			continue
 		}
 
-		cell := pad(f.text, f.cells, f.right)
+		cell := cells.Pad(f.text, f.cells, f.right)
 
 		rendered := theme.Paint(f.role).Render(cell)
 		if selected {
@@ -84,7 +76,7 @@ func (m Model) drawRow(r row, w int, selected bool) string {
 
 		parts = append(parts, rendered)
 	}
-	// The gutter says one of two things and the cursor wins, because a
+	// The cells.Gutter says one of two things and the cursor wins, because a
 	// cursor that vanished when it stepped onto a working row would read as
 	// a cursor that had been lost. It is also the only two cells on the row
 	// that are free: the state column is the narrowest field there is, and
@@ -100,7 +92,7 @@ func (m Model) drawRow(r row, w int, selected bool) string {
 
 	line := mark + strings.Join(parts, strings.Repeat(" ", columnGap))
 
-	return fit(line, w)
+	return cells.Fit(line, w)
 }
 
 // stateWord is what the row says the task is doing, and the role it is
@@ -244,25 +236,6 @@ func elapsed(now, since time.Time) string {
 	return strconv.Itoa(int(d.Hours()/24)) + "d"
 }
 
-// pad cuts one field to its budget and fills what is left, measuring in
-// cells throughout: an accented word is one column narrower than its length
-// in bytes, and a column planned in bytes looks crooked exactly where
-// nobody tests.
-func pad(text string, cells int, right bool) string {
-	if cells <= 0 {
-		return ""
-	}
-
-	text = ansi.Truncate(text, cells, "…")
-
-	space := strings.Repeat(" ", max(cells-lipgloss.Width(text), 0))
-	if right {
-		return space + text
-	}
-
-	return text + space
-}
-
 // headRow is a band's name, how many tasks are in it, and — on the right —
 // the one thing worth saying about the band as a whole.
 //
@@ -288,7 +261,7 @@ func (m Model) headRow(r row, selected bool, w int) string {
 	ruleW := max(0, w-lipgloss.Width(left)-lipgloss.Width(right)-2)
 	rule := theme.Paint(theme.Dim).Render(strings.Repeat("─", ruleW))
 
-	return spread(left+rule, right, w)
+	return cells.Spread(left+rule, right, w)
 }
 
 // bandName is the heading over one band.

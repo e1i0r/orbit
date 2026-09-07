@@ -8,6 +8,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
@@ -81,7 +82,7 @@ func (m Model) walkLines(w int) []string {
 	}
 
 	for _, s := range steps {
-		out = append(out, paneGutter+"        "+theme.Paint(theme.OK).Render(fit(s.Path, max(20, w-2*len(paneGutter)-10)))+
+		out = append(out, paneGutter+"        "+theme.Paint(theme.OK).Render(cells.Fit(s.Path, max(20, w-2*len(paneGutter)-10)))+
 			theme.Text(theme.Tertiary).Render(touches(p, s)))
 	}
 

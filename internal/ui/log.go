@@ -20,6 +20,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -35,7 +36,7 @@ const clockCells = 8
 
 // logLines is the log tab's content, ready for the pane.
 func (m Model) logLines() []string {
-	lines, _, _ := m.logRows()
+	lines := m.logRows().rows
 
 	return lines
 }
@@ -47,14 +48,27 @@ func (m Model) logLines() []string {
 // counted the rows a second time would be a second opinion about where a row
 // is, and the day the two disagree the pointer opens the entry above the one
 // it is on.
-func (m Model) logRows() ([]string, map[int]int, map[int]int) {
+// drawnLog is the timeline drawn: the rows, and which row each entry and
+// each attempt's rule ended up on.
+//
+// Three values came back side by side and two of them were the same type, so
+// the pointer read the seams as the heads for as long as nobody looked. The
+// map a pane holds is written by the render that produced it — a second count
+// is a second opinion about where a row is.
+type drawnLog struct {
+	rows  []string
+	heads map[int]int
+	seams map[int]int
+}
+
+func (m Model) logRows() drawnLog {
 	w := max(m.frame.Body.W, 1)
 	if m.logErr != nil {
-		return []string{" " + theme.Paint(theme.Bad).Render(m.errSaid(m.logErr))}, nil, nil
+		return drawnLog{rows: []string{" " + theme.Paint(theme.Bad).Render(m.errSaid(m.logErr))}}
 	}
 
 	if len(m.entries) == 0 {
-		return []string{" " + theme.Paint(theme.Dim).Render(m.opts.Words.T("log.empty", "nothing has been recorded about this task yet"))}, nil, nil
+		return drawnLog{rows: []string{" " + theme.Paint(theme.Dim).Render(m.opts.Words.T("log.empty", "nothing has been recorded about this task yet"))}}
 	}
 
 	out := make([]string, 0, len(m.entries)+4)
@@ -78,7 +92,7 @@ func (m Model) logRows() ([]string, map[int]int, map[int]int) {
 		out = append(out, rows...)
 	}
 
-	return out, heads, seams
+	return drawnLog{rows: out, heads: heads, seams: seams}
 }
 
 // seam is the line between one attempt and the next.
@@ -95,7 +109,7 @@ func (m Model) seam(e view.Entry, w int) string {
 		tail = " " + at + " ──"
 	}
 
-	mark := foldMark(m.attemptOpen(e.Attempt))
+	mark := cells.Fold(m.attemptOpen(e.Attempt))
 	rule := max(w-lipgloss.Width(mark)-lipgloss.Width(head)-lipgloss.Width(tail)-1, 0)
 
 	return " " + theme.Text(theme.Tertiary).Render(mark) + theme.Paint(theme.Dim).Render(head+strings.Repeat("─", rule)+tail)
@@ -110,8 +124,8 @@ func (m Model) seam(e view.Entry, w int) string {
 // already there.
 func (m Model) logEntryLines(e view.Entry, i, w int) ([]string, bool) {
 	word, role := m.logWord(e)
-	prefix := " " + theme.Paint(theme.Dim).Render(pad(clock(e.At), clockCells, false)) + "  " +
-		theme.Paint(theme.Dim).Render(pad(e.Phase, phaseCells, false)) + "  " +
+	prefix := " " + theme.Paint(theme.Dim).Render(cells.Pad(clock(e.At), clockCells, false)) + "  " +
+		theme.Paint(theme.Dim).Render(cells.Pad(e.Phase, phaseCells, false)) + "  " +
 		theme.Paint(role).Render(word) + "  "
 
 	detail := m.logDetail(e)
@@ -123,7 +137,7 @@ func (m Model) logEntryLines(e view.Entry, i, w int) ([]string, bool) {
 	// margin, and a row that does not fold pays for it in spaces, so that
 	// every sentence on the tab starts in the same place.
 	lead := clockCells + 2 + phaseCells + 2 + lipgloss.Width(word) + 3
-	availW := max(20, w-lead-lipgloss.Width(foldShut)-2)
+	availW := max(20, w-lead-lipgloss.Width(cells.FoldShut)-2)
 
 	// Wrapped to the measure, and the wrap breaks what has no break in it:
 	// a tool call is written down as the arguments it was made with, and a
@@ -135,13 +149,13 @@ func (m Model) logEntryLines(e view.Entry, i, w int) ([]string, bool) {
 	// The rows and not the detail itself: a detail written over two short
 	// lines fits on one row, and drawing it unwrapped would take the newline
 	// it was written with onto the screen.
-	wrapped := splitIntoLines(detail, availW)
+	wrapped := cells.Lines(detail, availW)
 
 	if len(wrapped) <= 1 {
-		return []string{prefix + strings.Repeat(" ", lipgloss.Width(foldShut)) + theme.Paint(theme.Dim).Render(wrapped[0])}, false
+		return []string{prefix + strings.Repeat(" ", lipgloss.Width(cells.FoldShut)) + theme.Paint(theme.Dim).Render(wrapped[0])}, false
 	}
 
-	mark := theme.Text(theme.Tertiary).Render(foldMark(m.rowOpen(tabTimeline, i)))
+	mark := theme.Text(theme.Tertiary).Render(cells.Fold(m.rowOpen(tabTimeline, i)))
 
 	// Closed, the detail is a qualifier of the word beside it and is set as
 	// one. Open, it is what the reader asked to read.
@@ -152,7 +166,7 @@ func (m Model) logEntryLines(e view.Entry, i, w int) ([]string, bool) {
 	out := make([]string, 0, len(wrapped))
 	out = append(out, prefix+mark+theme.Text(theme.Secondary).Render(wrapped[0]))
 
-	indent := strings.Repeat(" ", lead+lipgloss.Width(foldShut))
+	indent := strings.Repeat(" ", lead+lipgloss.Width(cells.FoldShut))
 	for _, wl := range wrapped[1:] {
 		out = append(out, indent+theme.Text(theme.Secondary).Render(wl))
 	}

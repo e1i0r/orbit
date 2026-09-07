@@ -4,7 +4,9 @@ import (
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/layout"
+	"github.com/e1i0r/orbit/internal/ui/point"
 )
 
 // wheelRows is how far one notch of the wheel moves the list. Three is what
@@ -58,7 +60,7 @@ func (m Model) wheel(e tea.Mouse) Model {
 		// a notch that did nothing because the pointer happened to rest on
 		// a section head is a wheel that works in most of the window.
 		switch m.hit(e.X, e.Y).Kind {
-		case TargetPaneBody, TargetFold, TargetSeam, TargetPaneRow, TargetScrollBar:
+		case point.PaneBody, point.Fold, point.Seam, point.PaneRow, point.ScrollBar:
 		default:
 			return m
 		}
@@ -86,7 +88,7 @@ func (m Model) wheel(e tea.Mouse) Model {
 		return m.menuPick(d)
 	}
 
-	if m.palette.open {
+	if m.palette.Up() {
 		// The wheel moves the selection, which is what scrolling a list
 		// with one row chosen means; the list itself follows it through
 		// ensureVisible rather than the reader following the list.
@@ -115,15 +117,10 @@ func (m Model) wheel(e tea.Mouse) Model {
 			d = -wheelRows
 		}
 
-		if m.supervisor.picking {
-			m.supervisor.pick = min(max(m.supervisor.pick+d, 0), max(len(m.supervisor.lines)-1, 0))
-			return m
-		}
-
 		return m.scrollThread(d)
 	}
 
-	if m.screen == screenFlows && !m.flows.creating && !m.flows.showingDetail {
+	if m.screen == screenFlows && m.flows.Listing() {
 		// The list is longer than the screen as soon as a few flows have
 		// phases, and the cursor still pulls the page to whatever it is on.
 		d := wheelRows
@@ -131,12 +128,12 @@ func (m Model) wheel(e tea.Mouse) Model {
 			d = -wheelRows
 		}
 
-		m.flows.scroll = max(m.flows.scroll+d, 0)
+		m.flows = m.flows.Scroll(d)
 
 		return m
 	}
 
-	if m.screen == screenFlows && m.flows.creating {
+	if m.screen == screenFlows && m.flows.Creating() {
 		// The designer is taller than a short terminal. While a list of
 		// choices is up the wheel moves the choice, which is what every
 		// other list on this screen does under it.
@@ -145,14 +142,9 @@ func (m Model) wheel(e tea.Mouse) Model {
 			d = -wheelRows
 		}
 
-		if m.flows.picker.open {
-			ids, _ := m.pickerRows()
-			m.flows.picker.sel = min(max(m.flows.picker.sel+d, 0), max(len(ids)-1, 0))
+		m.flows = m.flows.Turn(d, m.flowsEnv())
 
-			return m
-		}
-
-		return m.scrollBuilder(d)
+		return m
 	}
 
 	if m.screen == screenEngines {
@@ -194,25 +186,18 @@ func firstKey(b key.Binding) keystroke {
 // rowOf is which line of the body a target is on, by what it is rather than
 // by where it was: the board is re-read twice a second, so the row a press
 // landed on may have moved by the time the button comes up.
-func (m Model) rowOf(t Target) (int, bool) {
+func (m Model) rowOf(t point.Target) (int, bool) {
 	for i, r := range m.rows() {
 		switch {
 		case r.blank:
-		case r.head && t.Kind == TargetBandHeader && r.band == t.Band:
+		case r.head && t.Kind == point.BandHeader && r.band == t.Band:
 			return i, true
-		case !r.head && t.Kind == TargetTask && r.task.ID == t.ID:
+		case !r.head && t.Kind == point.Task && r.task.ID == t.ID:
 			return i, true
 		}
 	}
 
 	return 0, false
-}
-
-// same is whether two targets are the same thing, disregarding which field
-// of it was pointed at.
-func (t Target) same(o Target) bool {
-	t.Column, o.Column = 0, 0
-	return t == o
 }
 
 // paneBand is where the pane was drawn: the body row its first line landed
@@ -241,7 +226,7 @@ func (m Model) paneBandFor(t tab) (top, rows int) {
 func (m Model) barShows() bool {
 	_, rows := m.paneBand()
 
-	return scrollTrack(rows, m.panes[m.tab].TotalLineCount(), 0) != nil
+	return cells.Track(rows, m.panes[m.tab].TotalLineCount(), 0) != nil
 }
 
 // scrollTo puts the pane where a click on its bar points: how far down the

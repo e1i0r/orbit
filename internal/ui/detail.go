@@ -21,6 +21,8 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/markdown"
 	"github.com/e1i0r/orbit/internal/ui/patch"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
@@ -39,10 +41,10 @@ func (m Model) detailRows(h, w int) []string {
 	}
 
 	if h >= 4 {
-		out = append(out, fit(m.moreLine(), w))
+		out = append(out, cells.Fit(m.moreLine(), w))
 	}
 
-	return fill(out, h)
+	return cells.Fill(out, h)
 }
 
 // detailTop is everything the pane is drawn under: the heading, the blank
@@ -100,7 +102,7 @@ func (m Model) detailHeadLines(w int) []string {
 	left := theme.Paint(theme.Accent).Bold(true).Render(m.detail)
 	if !ok {
 		return []string{
-			spread(" "+left, theme.Paint(theme.Dim).Render(m.opts.Words.T("detail.gone",
+			cells.Spread(" "+left, theme.Paint(theme.Dim).Render(m.opts.Words.T("detail.gone",
 				"this task is no longer on the board")), w),
 		}
 	}
@@ -109,12 +111,12 @@ func (m Model) detailHeadLines(w int) []string {
 
 	right := theme.Paint(theme.Dim).Render(t.Repo)
 	if word != "" {
-		right += theme.Paint(theme.Dim).Render(dot) + theme.Paint(role).Render(word)
+		right += theme.Paint(theme.Dim).Render(cells.Dot) + theme.Paint(role).Render(word)
 	}
 
-	title := plainInline(t.Title)
+	title := markdown.Plain(t.Title)
 	if title == "" {
-		return []string{spread(" "+left, right, w)}
+		return []string{cells.Spread(" "+left, right, w)}
 	}
 
 	rightW := lipgloss.Width(right)
@@ -125,20 +127,20 @@ func (m Model) detailHeadLines(w int) []string {
 		// the cut is where somebody notices they are missing something: a
 		// title that ends in an ellipsis and says nothing about how to see
 		// the rest is a title nobody knows is expandable.
-		shown, hint := fit(title, availW), ""
+		shown, hint := cells.Fit(title, availW), ""
 		if lipgloss.Width(title) > availW {
-			shown = fit(title, max(availW-4, 8))
+			shown = cells.Fit(title, max(availW-4, 8))
 			hint = theme.Paint(theme.Dim).Render(" [e]")
 		}
 
-		return []string{spread(" "+left+"  "+theme.Text(theme.Secondary).Render(shown)+hint, right, w)}
+		return []string{cells.Spread(" "+left+"  "+theme.Text(theme.Secondary).Render(shown)+hint, right, w)}
 	}
 
-	wrapped := splitIntoLines(title, availW)
+	wrapped := cells.Lines(title, availW)
 
 	var out []string
 
-	out = append(out, spread(" "+left+"  "+theme.Text(theme.Secondary).Render(wrapped[0]), right, w))
+	out = append(out, cells.Spread(" "+left+"  "+theme.Text(theme.Secondary).Render(wrapped[0]), right, w))
 
 	indent := strings.Repeat(" ", lipgloss.Width(m.detail)+3)
 	for _, wl := range wrapped[1:] {
@@ -178,7 +180,7 @@ func (m Model) tabTags(w int) []tabTagInfo {
 				return n.text
 			}
 
-			return fit(n.text, 4)
+			return cells.Fit(n.text, 4)
 		},
 		func(n tabName) string {
 			if n.tab == m.tab {
@@ -225,7 +227,7 @@ func (m Model) tabStrip(w int) string {
 		right = theme.Paint(theme.Dim).Render(p.T("log.attempt", "attempt {n}", about("n", strconv.Itoa(attempt))))
 	}
 
-	return spread(" "+strings.Join(parts, tabGap), right, w)
+	return cells.Spread(" "+strings.Join(parts, tabGap), right, w)
 }
 
 // placedTab is one tab of the drawn strip and the cells it occupies.
@@ -252,12 +254,12 @@ func (m Model) placeTabs() []placedTab {
 func (m Model) paneRows(h, w int) []string {
 	vp := m.panes[m.tab]
 
-	out := fill(strings.Split(vp.View(), "\n"), h)
+	out := cells.Fill(strings.Split(vp.View(), "\n"), h)
 
-	track := scrollTrack(h, vp.TotalLineCount(), vp.YOffset())
+	track := cells.Track(h, vp.TotalLineCount(), vp.YOffset())
 	for i, line := range out {
 		if track == nil {
-			out[i] = fit(line, w)
+			out[i] = cells.Fit(line, w)
 			continue
 		}
 
@@ -266,7 +268,7 @@ func (m Model) paneRows(h, w int) []string {
 		// draws out to its own width, and padding that again would put an
 		// ellipsis under the rail on every row of every pane.
 		beside := max(w-1, 1)
-		out[i] = pad(ansi.Truncate(line, beside, ""), beside, false) + track[i]
+		out[i] = cells.Pad(ansi.Truncate(line, beside, ""), beside, false) + track[i]
 	}
 
 	return out

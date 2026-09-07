@@ -10,26 +10,28 @@ import (
 	"testing"
 
 	"github.com/charmbracelet/x/ansi"
+
+	"github.com/e1i0r/orbit/internal/ui/point"
 )
 
 func TestHitDetailAndTabs(t *testing.T) {
 	m := openOn(t, "ACME-2662")
 	bodyY := m.frame.Body.Y
 
-	if got := m.hitDetail(5, bodyY-10); got.Kind != TargetNone {
-		t.Errorf("hitDetail outside the body = %+v, want TargetNone", got)
+	if got := m.hitDetail(5, bodyY-10); got.Kind != point.None {
+		t.Errorf("hitDetail outside the body = %+v, want point.None", got)
 	}
 
-	if got := m.hitDetail(5, bodyY); got.Kind != TargetNone {
-		t.Errorf("hitDetail on the heading row = %+v, want TargetNone", got)
+	if got := m.hitDetail(5, bodyY); got.Kind != point.None {
+		t.Errorf("hitDetail on the heading row = %+v, want point.None", got)
 	}
 
-	if got := m.hitDetail(5, bodyY+3); got.Kind != TargetPaneBody {
-		t.Errorf("hitDetail inside the pane = %+v, want TargetPaneBody", got)
+	if got := m.hitDetail(5, bodyY+3); got.Kind != point.PaneBody {
+		t.Errorf("hitDetail inside the pane = %+v, want point.PaneBody", got)
 	}
 
-	if got := m.hitDetail(5, bodyY+m.frame.Body.H-1); got.Kind != TargetNone {
-		t.Errorf("hitDetail on the scroll-hint line = %+v, want TargetNone", got)
+	if got := m.hitDetail(5, bodyY+m.frame.Body.H-1); got.Kind != point.None {
+		t.Errorf("hitDetail on the scroll-hint line = %+v, want point.None", got)
 	}
 
 	tabs := m.placeTabs()
@@ -37,12 +39,12 @@ func TestHitDetailAndTabs(t *testing.T) {
 		t.Fatal("placeTabs found no tabs")
 	}
 
-	if got := m.hitTabs(tabs[0].x); got.Kind != TargetPaneTab || got.Pane != int(tabs[0].tab) {
+	if got := m.hitTabs(tabs[0].x); got.Kind != point.PaneTab || got.Pane != int(tabs[0].tab) {
 		t.Errorf("hitTabs on the first tab = %+v, want pane %d", got, tabs[0].tab)
 	}
 
-	if got := m.hitTabs(-1); got.Kind != TargetNone {
-		t.Errorf("hitTabs off every tab = %+v, want TargetNone", got)
+	if got := m.hitTabs(-1); got.Kind != point.None {
+		t.Errorf("hitTabs off every tab = %+v, want point.None", got)
 	}
 }
 
@@ -83,30 +85,30 @@ func TestHitStartEveryRow(t *testing.T) {
 	p := m.startLayout(m.frame.Body.W)
 	y := m.frame.Body.Y
 
-	if got := m.hitStart(5, y+p.flow); got.Kind != TargetDialogSwitch || got.Field != fieldFlow {
+	if got := m.hitStart(5, y+p.flow); got.Kind != point.DialogSwitch || got.Field != fieldFlow {
 		t.Errorf("hitStart on the flow line = %+v, want the flow switch", got)
 	}
 
 	if p.nPhases > 0 {
-		if got := m.hitStart(5, y+p.phases); got.Kind != TargetDialogPhase || got.Phase != 0 {
+		if got := m.hitStart(5, y+p.phases); got.Kind != point.DialogPhase || got.Phase != 0 {
 			t.Errorf("hitStart on the first phase = %+v, want phase 0", got)
 		}
 	}
 
-	if got := m.hitStart(5, y+p.autopilot); got.Kind != TargetDialogSwitch || got.Field != fieldAutopilotOn {
+	if got := m.hitStart(5, y+p.autopilot); got.Kind != point.DialogSwitch || got.Field != fieldAutopilotOn {
 		t.Errorf("hitStart on the autopilot-on row = %+v, want the on switch", got)
 	}
 
-	if got := m.hitStart(5, y+p.autopilot+1); got.Kind != TargetDialogSwitch || got.Field != fieldAutopilotOff {
+	if got := m.hitStart(5, y+p.autopilot+1); got.Kind != point.DialogSwitch || got.Field != fieldAutopilotOff {
 		t.Errorf("hitStart on the autopilot-off row = %+v, want the off switch", got)
 	}
 
-	if got := m.hitStart(5, y+p.config); got.Kind != TargetNone {
-		t.Errorf("hitStart on the config line = %+v, want TargetNone", got)
+	if got := m.hitStart(5, y+p.config); got.Kind != point.None {
+		t.Errorf("hitStart on the config line = %+v, want point.None", got)
 	}
 
-	if got := m.hitStart(5, y-10); got.Kind != TargetNone {
-		t.Errorf("hitStart outside the body = %+v, want TargetNone", got)
+	if got := m.hitStart(5, y-10); got.Kind != point.None {
+		t.Errorf("hitStart outside the body = %+v, want point.None", got)
 	}
 }
 
@@ -121,24 +123,24 @@ func TestHitSettingsEveryOutcome(t *testing.T) {
 
 	y := m.frame.Body.Y
 
-	if got := m.hitSettings(5, y); got.Kind != TargetNone {
-		t.Errorf("hitSettings above row 4 = %+v, want TargetNone", got)
+	if got := m.hitSettings(5, y); got.Kind != point.None {
+		t.Errorf("hitSettings above row 4 = %+v, want point.None", got)
 	}
 
-	if got := m.hitSettings(10, y+4); got.Kind != TargetSettingsRow || got.Field != "" {
+	if got := m.hitSettings(10, y+4); got.Kind != point.SettingsRow || got.Field != "" {
 		t.Errorf("hitSettings left of the pills = %+v, want the row with no field", got)
 	}
 
-	if got := m.hitSettings(21, y+4); got.Kind != TargetSettingsRow || got.Field != rows[0].options[0] {
-		t.Errorf("hitSettings on the first pill = %+v, want field %q", got, rows[0].options[0])
+	if got := m.hitSettings(21, y+4); got.Kind != point.SettingsRow || got.Field != rows[0].Options[0] {
+		t.Errorf("hitSettings on the first pill = %+v, want field %q", got, rows[0].Options[0])
 	}
 
-	if got := m.hitSettings(5000, y+4); got.Kind != TargetSettingsRow || got.Field != "" {
+	if got := m.hitSettings(5000, y+4); got.Kind != point.SettingsRow || got.Field != "" {
 		t.Errorf("hitSettings past every pill = %+v, want the row with no field", got)
 	}
 
-	if got := m.hitSettings(10, y+4+3*len(rows)+50); got.Kind != TargetNone {
-		t.Errorf("hitSettings past every row = %+v, want TargetNone", got)
+	if got := m.hitSettings(10, y+4+3*len(rows)+50); got.Kind != point.None {
+		t.Errorf("hitSettings past every row = %+v, want point.None", got)
 	}
 }
 
@@ -153,15 +155,15 @@ func TestHitReposEveryOutcome(t *testing.T) {
 
 	y := m.frame.Body.Y
 
-	if got := m.hitRepos(5, y-10); got.Kind != TargetNone {
-		t.Errorf("hitRepos outside the body = %+v, want TargetNone", got)
+	if got := m.hitRepos(5, y-10); got.Kind != point.None {
+		t.Errorf("hitRepos outside the body = %+v, want point.None", got)
 	}
 
-	if got := m.hitRepos(5, y+4); got.Kind != TargetRepo || got.ID != repos[0].name {
-		t.Errorf("hitRepos on the first row = %+v, want %q", got, repos[0].name)
+	if got := m.hitRepos(5, y+4); got.Kind != point.Repo || got.ID != repos[0].Name {
+		t.Errorf("hitRepos on the first row = %+v, want %q", got, repos[0].Name)
 	}
 
-	if got := m.hitRepos(5, y+4+len(repos)+50); got.Kind != TargetNone {
-		t.Errorf("hitRepos past every row = %+v, want TargetNone", got)
+	if got := m.hitRepos(5, y+4+len(repos)+50); got.Kind != point.None {
+		t.Errorf("hitRepos past every row = %+v, want point.None", got)
 	}
 }

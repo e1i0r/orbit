@@ -6,6 +6,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/patch"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/words"
@@ -51,7 +52,7 @@ func renderDiffFileSelect(files []patch.File, activeIdx int, width int, p *words
 
 		leftContent := fmt.Sprintf("%s %s  %s  %s%s", icon, theme.Paint(theme.Live).Bold(true).Render(curr.Path), stats, badge, collapseTag)
 		navHint := theme.Paint(theme.Dim).Render(p.T("diff.select_nav", "(] next · [ prev · space fold)"))
-		bodyText := spread(leftContent, navHint, innerW)
+		bodyText := cells.Spread(leftContent, navHint, innerW)
 		fittedBody := ansi.Truncate(bodyText, innerW, "…")
 		padRight := strings.Repeat(" ", max(0, innerW-lipgloss.Width(fittedBody)))
 
@@ -92,7 +93,7 @@ func renderDiffFileSelect(files []patch.File, activeIdx int, width int, p *words
 	// has one. Nineteen files in a box that shows seven said nothing about
 	// the other twelve: the reader learned they were there by holding the
 	// arrow key down.
-	track := scrollTrack(maxItems, len(files), start)
+	track := cells.Track(maxItems, len(files), start)
 
 	for i := start; i < end; i++ {
 		f := files[i]

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/patch"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/words"
@@ -32,7 +33,7 @@ func diffCardTop(f patch.File, idx, total, width int, p *words.Printer, isCollap
 	// The arrow, and not a word: it is what every other head in this window
 	// wears, it says which way the file is without being read, and it is the
 	// cell the pointer goes for.
-	mark := theme.Text(theme.Tertiary).Render(foldMark(!isCollapsed))
+	mark := theme.Text(theme.Tertiary).Render(cells.Fold(!isCollapsed))
 
 	headerTitle := fmt.Sprintf("%s%s %s %s  %s", mark, icon, theme.Paint(theme.Accent).Bold(true).Render(f.Path), stats, badge)
 	// Twelve is what the card is drawn out of: two of indent, four of "┌── ",
@@ -51,7 +52,7 @@ func diffRationaleLines(rationale string, width int, p *words.Printer) []string 
 	}
 
 	label := theme.Paint(theme.Warn).Bold(true).Render("💡 " + p.T("diff.rationale_label", "LLM Decision") + ":")
-	wrapped := splitIntoLines(rationale, max(20, width-lipgloss.Width(label)-10))
+	wrapped := cells.Lines(rationale, max(20, width-lipgloss.Width(label)-10))
 
 	var out []string
 
@@ -89,7 +90,7 @@ func diffContentLines(line string, role theme.Role, width int, wrapLines bool) [
 	}
 
 	availW := max(20, width-8)
-	wrapped := splitIntoLines(line, availW)
+	wrapped := cells.Lines(line, availW)
 
 	var out []string
 

@@ -5,6 +5,8 @@ import (
 
 	"charm.land/lipgloss/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/point"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
@@ -28,7 +30,7 @@ type placedHint struct {
 // the widths are of translated words and vary with the language.
 type barChip struct {
 	text   string
-	target Target
+	target point.Target
 }
 
 // chipGap is what the chips are joined with, and what placeChips steps over.
@@ -57,14 +59,14 @@ func (m Model) barFooterChips() []barChip {
 	chips = append(chips, barChip{
 		text: theme.Chrome().Render("⚡ "+p.T("header.autopilot", "autopilot")) + " " + state.Render(pip) + " " + theme.Paint(theme.Live).Bold(true).Render("["+m.keys.Autopilot.Help().Key+"]"),
 		// The switch, through the same target the header's own chip uses.
-		target: Target{Kind: TargetStatusField, Field: "autopilot"},
+		target: point.Target{Kind: point.StatusField, Field: "autopilot"},
 	})
 
 	// Interactive CLI chip
 	if m.screen == screenList {
 		chips = append(chips, barChip{
 			text:   theme.Chrome().Render("💬 "+p.T("header.cli_chip", "cli")) + " " + theme.Paint(theme.Live).Bold(true).Render("[c]"),
-			target: Target{Kind: TargetBarHint, Key: "c"},
+			target: point.Target{Kind: point.BarHint, Key: "c"},
 		})
 	}
 
@@ -146,10 +148,10 @@ func (m Model) barLayout(w int) (string, []placedHint, []headerZone) {
 			// No room for the chips, so they are not drawn and nothing at
 			// that end of the bar is clickable.
 			if leftW <= w {
-				return fit(leftStr, w), place(hints), nil
+				return cells.Fit(leftStr, w), place(hints), nil
 			}
 
-			return fit(leftStr, w), nil, nil
+			return cells.Fit(leftStr, w), nil, nil
 		}
 
 		hints = hints[:len(hints)-1]

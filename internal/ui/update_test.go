@@ -48,7 +48,7 @@ func TestTheTransitionTable(t *testing.T) {
 	}, {
 		name: "the first boardMsg never rings",
 		start: func(t *testing.T) Model {
-			return New(Options{Words: words.For("en"), Settings: &settings{}, Width: 100, Height: 30})
+			return New(Options{Words: words.For("en"), Settings: &settingsFile{}, Width: 100, Height: 30})
 		},
 		msg: boardMsg{Board: fixtureBoard(fixtureTasks(), 4)},
 		want: func(t *testing.T, m Model, _ tea.Cmd) {

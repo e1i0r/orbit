@@ -113,7 +113,7 @@ func TestRunItRefusesAtTheCapAndOnAGoneTask(t *testing.T) {
 	m = onto(t, m, "ACME-2698")
 	next, _ = m.openStart()
 	m = asModel(t, next)
-	m.opts.Settings = &settings{autopilot: true, lang: "en", unread: 1}
+	m.opts.Settings = &settingsFile{autopilot: true, lang: "en", unread: 1}
 	next, cmd = m.runIt()
 
 	got = asModel(t, next)

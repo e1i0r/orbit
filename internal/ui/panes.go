@@ -128,7 +128,7 @@ func (m Model) tabNames() []tabName {
 func (m Model) syncPanes() Model {
 	w := max(m.frame.Body.W, 1)
 
-	timeline, timelineHeads, timelineSeams := m.logRows()
+	timeline := m.logRows()
 	report, reportSeams := m.reportRows()
 	thinking, thinkingHeads := m.thinkingRows()
 	flowTree, flowHeads := m.flowRows()
@@ -138,11 +138,11 @@ func (m Model) syncPanes() Model {
 	diff, diffHeads := m.diffRows()
 	artifacts, artifactHeads := m.artifactsRows()
 
-	m.heads[tabTimeline], m.heads[tabThinking] = timelineHeads, thinkingHeads
+	m.heads[tabTimeline], m.heads[tabThinking] = timeline.heads, thinkingHeads
 	m.heads[tabFlow], m.heads[tabGates] = flowHeads, gateHeads
 	m.heads[tabRefused], m.heads[tabNotes] = refusedHeads, noteHeads
 	m.heads[tabDiff], m.heads[tabArtifacts] = diffHeads, artifactHeads
-	m.seams[tabTimeline], m.seams[tabReport] = timelineSeams, reportSeams
+	m.seams[tabTimeline], m.seams[tabReport] = timeline.seams, reportSeams
 
 	content := [tabCount][]string{
 		tabOverview:  m.overviewLines(),
@@ -150,7 +150,7 @@ func (m Model) syncPanes() Model {
 		tabGates:     gates,
 		tabCost:      m.costLines(),
 		tabRefused:   refused,
-		tabTimeline:  timeline,
+		tabTimeline:  timeline.rows,
 		tabReport:    report,
 		tabArtifacts: artifacts,
 		tabNotes:     notes,

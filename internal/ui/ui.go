@@ -12,17 +12,21 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/board"
+	"github.com/e1i0r/orbit/internal/ui/cheat"
+	"github.com/e1i0r/orbit/internal/ui/compose"
+	"github.com/e1i0r/orbit/internal/ui/engines"
+	"github.com/e1i0r/orbit/internal/ui/flows"
 	"github.com/e1i0r/orbit/internal/ui/keymap"
+	"github.com/e1i0r/orbit/internal/ui/known"
 	"github.com/e1i0r/orbit/internal/ui/layout"
+	"github.com/e1i0r/orbit/internal/ui/palette"
+	"github.com/e1i0r/orbit/internal/ui/repos"
+	"github.com/e1i0r/orbit/internal/ui/settings"
+	"github.com/e1i0r/orbit/internal/ui/supervisor"
 	"github.com/e1i0r/orbit/internal/ui/upgrade"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
 )
-
-// gutter is the three cells the cursor's mark is drawn in, to the left of
-// every row. It is subtracted before the columns are planned, because the
-// plan is about a row and the mark is not part of one.
-const gutter = 3
 
 // messageLife is how long the band keeps what it was told before it goes
 // back to saying what is running. Twenty seconds is long enough to be read
@@ -96,7 +100,7 @@ type Model struct {
 	// palette is the ':' line and the list above it, while it is up. Its
 	// input is a plain string for the same reason filter is, and its
 	// whole shape lives in palette.go.
-	palette paletteState
+	palette palette.State
 
 	// menu is what can be done to the thing it was opened on — a task,
 	// or the board itself — including what cannot, with the reason. It
@@ -110,7 +114,7 @@ type Model struct {
 	// selected the moment it shows up — and if it has not arrived after
 	// two refreshes, nothing is said, because a write that answered no
 	// error has nothing to apologise for. Both live in compose.go.
-	compose   composeState
+	compose   compose.State
 	pendingID string
 	pendTries int
 
@@ -119,21 +123,20 @@ type Model struct {
 	tip tipState
 
 	note           noteState
-	settings       settingsState
-	flows          flowsState
-	repolist       repolistState
+	settings       settings.State
+	flows          flows.State
+	repolist       repos.State
 	repoFilter     string
 	queueFilter    *view.Band
-	engines        enginesState
-	knobs          Knobs
-	help           helpState
-	supervisor     supervisorState
+	engines        engines.State
+	knobs          engines.Knobs
+	help           cheat.State
+	supervisor     supervisor.State
 	supervisorBusy bool
 	// supervisorAt is when the question went out, for the line in the band
 	// that says how long it has been: see waiting.go.
 	supervisorAt time.Time
-	knowledge    knowledgeState
-	thread       *threadCache // the supervisor screen's last rendering: supervisorcache.go
+	knowledge    known.State
 	delivering   deliverPending
 	// spinning is whether an animation frame is already on its way.
 	// The frame clock is a chain of one-shot ticks, so two starters
@@ -301,7 +304,6 @@ func New(o Options) Model {
 		expanded: map[view.Band]bool{view.NeedsYou: true, view.Running: true},
 		totals:   map[string]int{},
 		taken:    map[string]bool{},
-		thread:   &threadCache{},
 	}
 	if o.Width > 0 && o.Height > 0 {
 		m = m.resize(o.Width, o.Height)

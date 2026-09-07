@@ -21,7 +21,9 @@ import (
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/keymap"
+	"github.com/e1i0r/orbit/internal/ui/point"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
@@ -239,12 +241,12 @@ func (m Model) menuRows(h, w int) []string {
 
 	es := m.menuEntries()
 	if len(es) == 0 {
-		return fill([]string{"", fit("  "+theme.Paint(theme.Dim).Render(
+		return cells.Fill([]string{"", cells.Fit("  "+theme.Paint(theme.Dim).Render(
 			p.T("menu.gone", "the task this menu was opened on is no longer on the board")), w)}, h)
 	}
 
 	out := make([]string, 0, h)
-	out = append(out, fit("  "+theme.Paint(theme.Dim).Render(m.menuTitle()), w), "")
+	out = append(out, cells.Fit("  "+theme.Paint(theme.Dim).Render(m.menuTitle()), w), "")
 
 	off := m.menuOffset(len(es), menuView(h))
 	for i, e := range es[off:] {
@@ -255,7 +257,7 @@ func (m Model) menuRows(h, w int) []string {
 		out = append(out, m.menuRow(e, off+i == m.menu.sel, w))
 	}
 
-	return fill(out, h)
+	return cells.Fill(out, h)
 }
 
 // menuTitle names the menu that is up: the two open on the same keystroke
@@ -294,22 +296,22 @@ func (m Model) menuRow(e menuEntry, selected bool, w int) string {
 
 	switch {
 	case e.reason != "":
-		line += dot + theme.Paint(theme.Dim).Render(" "+e.reason)
+		line += cells.Dot + theme.Paint(theme.Dim).Render(" "+e.reason)
 	case e.detail != "":
-		line += dot + theme.Paint(theme.Dim).Render(" "+e.detail)
+		line += cells.Dot + theme.Paint(theme.Dim).Render(" "+e.detail)
 	}
 
-	mark := strings.Repeat(" ", gutter)
+	mark := strings.Repeat(" ", cells.Gutter)
 	if selected {
-		mark = markGlyph + strings.Repeat(" ", gutter-1)
-		return theme.Paint(theme.Sel).Render(fit(mark+line, w))
+		mark = cells.Mark + strings.Repeat(" ", cells.Gutter-1)
+		return theme.Paint(theme.Sel).Render(cells.Fit(mark+line, w))
 	}
 
 	if e.dim {
-		return fit(mark+theme.Paint(theme.Dim).Render(line), w)
+		return cells.Fit(mark+theme.Paint(theme.Dim).Render(line), w)
 	}
 
-	return fit(mark+line, w)
+	return cells.Fit(mark+line, w)
 }
 
 // hitMenu answers the body while the menu is up: each entry is a row, and
@@ -318,16 +320,16 @@ func (m Model) menuRow(e menuEntry, selected bool, w int) string {
 // The target carries what identifies the entry — its glyph for a verb, its
 // name for a command — because the list is recomputed between press and
 // release and an index could point at a different row by then.
-func (m Model) hitMenu(x, y int) Target {
+func (m Model) hitMenu(x, y int) point.Target {
 	line, ok := m.frame.BodyRow(y)
 	if !ok {
-		return Target{}
+		return point.Target{}
 	}
 
 	// Past the title, which is drawn above the entries and is not one.
 	line -= menuTitleRows
 	if line < 0 {
-		return Target{}
+		return point.Target{}
 	}
 
 	// Down by whatever the list has scrolled: the drawing and the counting
@@ -337,21 +339,21 @@ func (m Model) hitMenu(x, y int) Target {
 
 	line += m.menuOffset(len(es), menuView(m.frame.Body.H))
 	if line >= len(es) {
-		return Target{}
+		return point.Target{}
 	}
 
 	e := es[line]
 	if e.head {
-		return Target{}
+		return point.Target{}
 	}
 
 	if e.glyph != "" {
-		return Target{Kind: TargetMenuEntry, Key: e.glyph}
+		return point.Target{Kind: point.MenuEntry, Key: e.glyph}
 	}
 
 	if e.cmd != nil {
-		return Target{Kind: TargetMenuEntry, Key: e.cmd.Name}
+		return point.Target{Kind: point.MenuEntry, Key: e.cmd.Name}
 	}
 
-	return Target{}
+	return point.Target{}
 }

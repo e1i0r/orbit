@@ -5,6 +5,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
@@ -34,7 +35,7 @@ func (m Model) noteRows(h, w int) []string {
 			if part == "" {
 				contentLines = append(contentLines, "")
 			} else {
-				contentLines = append(contentLines, splitIntoLines(part, innerW)...)
+				contentLines = append(contentLines, cells.Lines(part, innerW)...)
 			}
 		}
 	}
@@ -55,7 +56,7 @@ func (m Model) noteRows(h, w int) []string {
 
 	var out []string
 
-	out = append(out, fit(top, w))
+	out = append(out, cells.Fit(top, w))
 
 	for i, l := range contentLines {
 		lineContent := l
@@ -75,7 +76,7 @@ func (m Model) noteRows(h, w int) []string {
 		}
 
 		row := "  " + borderStyle.Render("│ ") + lineContent + strings.Repeat(" ", pad) + borderStyle.Render(" │")
-		out = append(out, fit(row, w))
+		out = append(out, cells.Fit(row, w))
 	}
 
 	actions := said.actions
@@ -87,10 +88,10 @@ func (m Model) noteRows(h, w int) []string {
 		padAct = 0
 	}
 
-	out = append(out, fit("  "+borderStyle.Render("│ ")+actionLine+strings.Repeat(" ", padAct)+borderStyle.Render(" │"), w))
-	out = append(out, fit("  "+borderStyle.Render("└"+strings.Repeat("─", boxW-2)+"┘"), w))
+	out = append(out, cells.Fit("  "+borderStyle.Render("│ ")+actionLine+strings.Repeat(" ", padAct)+borderStyle.Render(" │"), w))
+	out = append(out, cells.Fit("  "+borderStyle.Render("└"+strings.Repeat("─", boxW-2)+"┘"), w))
 
-	return fill(out, h)
+	return cells.Fill(out, h)
 }
 
 // boxWords is what the message box calls itself, which follows the command

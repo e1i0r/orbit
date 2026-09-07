@@ -13,6 +13,8 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/point"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -51,7 +53,7 @@ func TestEveryPhaseOfTheTreeOffersToOpen(t *testing.T) {
 	for n, branch := range map[string]string{"[1/3]": "├──", "[2/3]": "├──", "[3/3]": "└──"} {
 		y := node(t, lines, n)
 
-		if !strings.Contains(lines[y], foldShut) {
+		if !strings.Contains(lines[y], cells.FoldShut) {
 			t.Errorf("the node of %s does not offer to open: %q", n, lines[y])
 		}
 
@@ -70,7 +72,7 @@ func TestPointingAtAPhaseOpensAndClosesIt(t *testing.T) {
 	m, lines := flowTree(t, fixtureEntries())
 
 	at := m.hit(30, node(t, lines, "[1/3]"))
-	if at.Kind != TargetPaneRow || at.Pane != 0 {
+	if at.Kind != point.PaneRow || at.Pane != 0 {
 		t.Fatalf("the first node answers as %+v, want the first phase of the flow", at)
 	}
 
@@ -79,11 +81,11 @@ func TestPointingAtAPhaseOpensAndClosesIt(t *testing.T) {
 		t.Errorf("opening a phase did not say how it was set up:\n%s", strings.Join(open, "\n"))
 	}
 
-	if y := node(t, open, "[1/3]"); !strings.Contains(open[y], foldOpen) {
+	if y := node(t, open, "[1/3]"); !strings.Contains(open[y], cells.FoldOpen) {
 		t.Errorf("an open node is not drawn as open: %q", open[y])
 	}
 
-	if y := node(t, open, "[2/3]"); !strings.Contains(open[y], foldShut) {
+	if y := node(t, open, "[2/3]"); !strings.Contains(open[y], cells.FoldShut) {
 		t.Errorf("opening one phase opened the one below it: %q", open[y])
 	}
 
@@ -103,7 +105,7 @@ func TestPointingAtAPhaseOpensAndClosesIt(t *testing.T) {
 func TestOnlyTheNodeRowAnswersForThePhase(t *testing.T) {
 	m, lines := flowTree(t, fixtureEntries())
 
-	if at := m.hit(30, node(t, lines, "[1/3]")+1); at.Kind != TargetPaneBody {
+	if at := m.hit(30, node(t, lines, "[1/3]")+1); at.Kind != point.PaneBody {
 		t.Errorf("the trunk below a node answers as %+v, want the pane itself", at)
 	}
 }

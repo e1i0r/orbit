@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
@@ -112,9 +113,9 @@ func (m Model) costLines() []string {
 	// rendered string padded to a column is not padded at all — which is why
 	// this table has never lined up.
 	out = append(out, "    "+theme.Paint(theme.Dim).Render(
-		pad(p.T("cost.col_phase", "phase"), costPhaseCells, false)+" "+
-			pad(p.T("cost.col_cost", "cost"), costMoneyCells, false)+" "+
-			pad(p.T("cost.col_duration", "duration"), costMoneyCells, false)+" "+
+		cells.Pad(p.T("cost.col_phase", "phase"), costPhaseCells, false)+" "+
+			cells.Pad(p.T("cost.col_cost", "cost"), costMoneyCells, false)+" "+
+			cells.Pad(p.T("cost.col_duration", "duration"), costMoneyCells, false)+" "+
 			p.T("cost.col_engine", "engine / model")))
 
 	// Whether this engine's use is spoken about in money at all. Asked once
@@ -130,15 +131,15 @@ func (m Model) costLines() []string {
 		}
 
 		out = append(out, "    "+
-			theme.Paint(theme.Accent).Render(pad(r.phase, costPhaseCells, false))+" "+
-			theme.Paint(theme.OK).Render(pad(figure(p, r.cost, priced), costMoneyCells, false))+" "+
-			theme.Paint(theme.Dim).Render(pad(r.duration, costMoneyCells, false))+" "+
+			theme.Paint(theme.Accent).Render(cells.Pad(r.phase, costPhaseCells, false))+" "+
+			theme.Paint(theme.OK).Render(cells.Pad(figure(p, r.cost, priced), costMoneyCells, false))+" "+
+			theme.Paint(theme.Dim).Render(cells.Pad(r.duration, costMoneyCells, false))+" "+
 			theme.Paint(theme.Dim).Render(modStr))
 	}
 
 	out = append(out,
 		"",
-		"    "+theme.Paint(theme.Dim).Render(pad(p.T("cost.total", "total so far"), costPhaseCells, false))+" "+
+		"    "+theme.Paint(theme.Dim).Render(cells.Pad(p.T("cost.total", "total so far"), costPhaseCells, false))+" "+
 			theme.Paint(theme.Accent).Bold(true).Render(figure(p, t.Cost, priced)),
 		"",
 	)

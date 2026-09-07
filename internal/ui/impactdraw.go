@@ -20,6 +20,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/repo"
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -111,7 +112,7 @@ func (m Model) impactHead(title string) string {
 func (m Model) explains(sentence string) []string {
 	var out []string
 
-	for _, line := range splitIntoLines(sentence, max(m.frame.Body.W-4, 20)) {
+	for _, line := range cells.Lines(sentence, max(m.frame.Body.W-4, 20)) {
 		out = append(out, theme.Paint(theme.Dim).Render("  "+line))
 	}
 

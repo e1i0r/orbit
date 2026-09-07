@@ -24,14 +24,14 @@ func TestAutopilotRefusesOrTurnsBothWays(t *testing.T) {
 	// 2. A settings file that refuses the write says why, rather than
 	// claiming the switch moved.
 	m2, _ := testModel(t, 100, 30)
-	s := m2.opts.Settings.(*settings) //nolint:errcheck
+	s := m2.opts.Settings.(*settingsFile) //nolint:errcheck
 	s.fail = errors.New("settings write refused")
 	next2, _ := m2.autopilot()
 	wantBand(t, asModel(t, next2), "settings write refused")
 
 	// 3. Off to on: the band says autopilot is on, and the switch is on.
 	m3, _ := testModel(t, 100, 30)
-	m3.opts.Settings.(*settings).autopilot = false //nolint:errcheck
+	m3.opts.Settings.(*settingsFile).autopilot = false //nolint:errcheck
 	next3, _ := m3.autopilot()
 
 	after3 := asModel(t, next3)
@@ -68,8 +68,8 @@ func TestConfirmKeyAnswersThePostCliQuestion(t *testing.T) {
 	}
 
 	after := asModel(t, next)
-	if after.screen != screenCompose || after.compose.repoPath != "/checkouts/payments" {
-		t.Errorf("confirmKey(y) after a CLI session = screen=%v repo=%q, want screenCompose on the payments checkout", after.screen, after.compose.repoPath)
+	if after.screen != screenCompose || after.compose.Starts() != "/checkouts/payments" {
+		t.Errorf("confirmKey(y) after a CLI session = screen=%v repo=%q, want screenCompose on the payments checkout", after.screen, after.compose.Starts())
 	}
 
 	// 2. The same question with no repository remembered leaves
@@ -81,12 +81,12 @@ func TestConfirmKeyAnswersThePostCliQuestion(t *testing.T) {
 	next2, _ := m2.confirmKey(press("y"))
 
 	after2 := asModel(t, next2)
-	if after2.screen != screenCompose || after2.compose.repoPath != "/checkouts/app" {
-		t.Errorf("confirmKey(y) with no repo = screen=%v repo=%q, want screenCompose starting in the cursor's own checkout, app", after2.screen, after2.compose.repoPath)
+	if after2.screen != screenCompose || after2.compose.Starts() != "/checkouts/app" {
+		t.Errorf("confirmKey(y) with no repo = screen=%v repo=%q, want screenCompose starting in the cursor's own checkout, app", after2.screen, after2.compose.Starts())
 	}
 
-	if after2.compose.field != composeFlow {
-		t.Errorf("confirmKey(y) with no repo left the caret on field %v, want composeFlow", after2.compose.field)
+	if !after2.compose.OnPills() {
+		t.Error("confirmKey(y) with no repo left the caret in a field, want it on the flow row")
 	}
 
 	// 3. Anything else answers no: the session is simply over.

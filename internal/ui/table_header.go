@@ -3,6 +3,7 @@ package ui
 import (
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
@@ -29,11 +30,11 @@ func (m Model) tableHeader(w int) string {
 			continue
 		}
 
-		cell := pad(f.text, f.cells, f.right)
+		cell := cells.Pad(f.text, f.cells, f.right)
 		parts = append(parts, theme.Paint(theme.Dim).Bold(true).Render(cell))
 	}
 
 	line := "  " + strings.Join(parts, strings.Repeat(" ", columnGap))
 
-	return fit(line, w)
+	return cells.Fit(line, w)
 }

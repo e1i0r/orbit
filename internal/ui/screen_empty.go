@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
@@ -55,10 +56,10 @@ func (m Model) emptyRows(h, w int) []string {
 			role = theme.Accent
 		}
 
-		out = append(out, fit("  "+theme.Paint(role).Render(line), w))
+		out = append(out, cells.Fit("  "+theme.Paint(role).Render(line), w))
 	}
 
-	return fill(out, h)
+	return cells.Fill(out, h)
 }
 
 // refusal is what a terminal narrower than the minimum gets instead of a
@@ -67,13 +68,13 @@ func (m Model) refusal() string {
 	p := m.opts.Words
 	w := max(m.width, 1)
 	out := []string{
-		fit(theme.Paint(theme.Warn).Render(p.T("narrow.refused", "orbit needs {need} columns.",
+		cells.Fit(theme.Paint(theme.Warn).Render(p.T("narrow.refused", "orbit needs {need} columns.",
 			about("need", strconv.Itoa(m.narrow.Need)))), w),
-		fit(theme.Paint(theme.Dim).Render(p.T("narrow.got", "this one has {got}.",
+		cells.Fit(theme.Paint(theme.Dim).Render(p.T("narrow.got", "this one has {got}.",
 			about("got", strconv.Itoa(m.narrow.Got)))), w),
 	}
 
-	return strings.Join(fill(out, max(m.height, 1)), "\n")
+	return strings.Join(cells.Fill(out, max(m.height, 1)), "\n")
 }
 
 // page is how many rows of the list the body can show at one time.

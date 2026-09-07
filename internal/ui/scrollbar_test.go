@@ -6,6 +6,9 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/point"
 )
 
 // barTop is the first row of the screen whose last cell is drawn as the
@@ -23,7 +26,7 @@ func barTop(t *testing.T, m Model) int {
 			continue
 		}
 
-		if last := string(cell[m.frame.Body.W-1]); last == scrollRail || last == scrollThumb {
+		if last := string(cell[m.frame.Body.W-1]); last == cells.Rail || last == cells.Thumb {
 			return y
 		}
 	}
@@ -46,7 +49,7 @@ func barRows(t *testing.T, m Model) int {
 			break
 		}
 
-		if last := string(cell[m.frame.Body.W-1]); last != scrollRail && last != scrollThumb {
+		if last := string(cell[m.frame.Body.W-1]); last != cells.Rail && last != cells.Thumb {
 			break
 		}
 
@@ -114,15 +117,15 @@ func TestTheLastColumnOfALongPaneIsTheBar(t *testing.T) {
 	m, x, y := barAt(t, 3)
 
 	got := m.hit(x, y)
-	if got.Kind != TargetScrollBar || got.Pane != 3 {
+	if got.Kind != point.ScrollBar || got.Pane != 3 {
 		t.Errorf("the fourth row of the bar = %+v, want the bar's row 3", got)
 	}
 
-	if got := m.hit(x-1, y); got.Kind == TargetScrollBar {
+	if got := m.hit(x-1, y); got.Kind == point.ScrollBar {
 		t.Error("the column beside the bar answers as the bar")
 	}
 
-	if got := m.hit(x, y-4); got.Kind == TargetScrollBar {
+	if got := m.hit(x, y-4); got.Kind == point.ScrollBar {
 		t.Errorf("the row above the bar answers as the bar: %+v", got)
 	}
 
@@ -157,7 +160,7 @@ func TestAPaneWithNothingToScrollHasNoBarToPointAt(t *testing.T) {
 		t.Fatalf("the log fills the pane at %d rows, so no row of it is blank", rows)
 	}
 
-	if got := m.hit(m.frame.Body.W-1, m.frame.Body.Y+top+below); got.Kind != TargetPaneBody {
+	if got := m.hit(m.frame.Body.W-1, m.frame.Body.Y+top+below); got.Kind != point.PaneBody {
 		t.Errorf("the last column of a pane with nothing to scroll = %+v, want the pane", got)
 	}
 }
@@ -194,7 +197,7 @@ func TestTheBarMovesWhileItIsHeld(t *testing.T) {
 
 	held := pointed(t, m, tea.MouseClickMsg{Button: tea.MouseLeft, X: x, Y: y})
 
-	if held.held.target.Kind != TargetScrollBar {
+	if held.held.target.Kind != point.ScrollBar {
 		t.Fatalf("the press did not take hold of the bar: %+v", held.held.target)
 	}
 
@@ -317,7 +320,7 @@ func TestTheFileSelectorIsNotTheBar(t *testing.T) {
 	}
 
 	for line := bodyStart; line < top; line++ {
-		if got := m.hit(m.frame.Body.W-1, m.frame.Body.Y+line); got.Kind == TargetScrollBar {
+		if got := m.hit(m.frame.Body.W-1, m.frame.Body.Y+line); got.Kind == point.ScrollBar {
 			t.Errorf("row %d of the selector answers as the bar: %+v", line-bodyStart, got)
 		}
 	}

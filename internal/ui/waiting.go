@@ -32,20 +32,20 @@ func (m Model) waitingOn() []busy {
 
 	var out []busy
 
-	if m.flows.saying {
+	if m.flows.Saying() {
 		out = append(out, busy{
-			what:  p.T("wait.draft", "asking {engine} for a flow", about("engine", m.sayEngineName())),
-			since: m.flows.sayAt,
+			what:  p.T("wait.draft", "asking {engine} for a flow", about("engine", m.flows.AskingOf(m.flowsEnv()))),
+			since: m.flows.Since(),
 			// Orbit did not spawn that engine with a handle it can kill, so
 			// escape stops waiting and drops the answer: see stopWaiting.
 			stop: "esc",
 		})
 	}
 
-	if m.compose.reading {
+	if since, waiting := m.compose.Reading(); waiting {
 		out = append(out, busy{
 			what:  p.T("wait.issue", "reading the issue"),
-			since: m.compose.readAt,
+			since: since,
 		})
 	}
 

@@ -5,6 +5,8 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/compose"
+	"github.com/e1i0r/orbit/internal/ui/flows"
 	"github.com/e1i0r/orbit/internal/ui/upgrade"
 )
 
@@ -114,21 +116,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// a line the operator typed, a turn of autopilot — closes
 		// nothing, because answered is about a verb that is out.
 		m = m.answered(msg.Text, msg.Err).syncSupervisor()
-
-		m.supervisor.offset = 999999
+		// An answer that has landed is the newest thing said, so the thread
+		// is pinned to its own end to show it.
+		m.supervisor = m.supervisor.Follow()
 		if msg.Err != nil {
 			return m.say(m.opts.Words.T("supervisor.error", "supervisor error: {err}", about("err", m.errSaid(msg.Err)))), nil
 		}
 
 		return m.say(m.opts.Words.T("supervisor.replied", "supervisor replied in thread")), nil
-	case issueReadMsg:
+	case compose.ReadMsg:
 		return m.tookIssue(msg)
 	case comparedMsg:
 		return m.tookComparison(msg), nil
 	case impactMsg:
 		return m.tookImpact(msg), nil
-	case flowDraftedMsg:
-		return m.drafted(msg)
+	case flows.DraftedMsg:
+		return m.draftedFlow(msg)
 	case cliEndedMsg:
 		return m.handleCLIEnded(msg)
 	case sessionFiledMsg:

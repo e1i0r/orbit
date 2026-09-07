@@ -12,6 +12,8 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/point"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -29,7 +31,7 @@ func onReport(t *testing.T, entries []view.Entry) (Model, []string) {
 }
 
 // clicked is the window after the pointer went down and came up on a target.
-func clicked(t *testing.T, m Model, at Target) Model {
+func clicked(t *testing.T, m Model, at point.Target) Model {
 	t.Helper()
 
 	next, _ := m.leftClick(at)
@@ -51,7 +53,7 @@ func TestAnAttemptSaysItCanBeClosed(t *testing.T) {
 			continue
 		}
 
-		if !strings.Contains(lines[y], foldOpen) {
+		if !strings.Contains(lines[y], cells.FoldOpen) {
 			t.Errorf("%s: an attempt nobody has closed is not drawn as open: %q", name, lines[y])
 		}
 	}
@@ -68,7 +70,7 @@ func TestClosingAnAttemptTakesItsReportOffThePane(t *testing.T) {
 	}
 
 	at := m.hit(30, rowOf(lines, attemptRule(1)))
-	if at.Kind != TargetSeam || at.Pane != 1 {
+	if at.Kind != point.Seam || at.Pane != 1 {
 		t.Fatalf("the first attempt's rule answers as %+v, want the first attempt", at)
 	}
 
@@ -83,7 +85,7 @@ func TestClosingAnAttemptTakesItsReportOffThePane(t *testing.T) {
 	}
 
 	head := rowOf(rows, attemptRule(1))
-	if head < 0 || !strings.Contains(rows[head], foldShut) {
+	if head < 0 || !strings.Contains(rows[head], cells.FoldShut) {
 		t.Fatalf("a closed attempt has no rule to open it again:\n%s", strings.Join(rows, "\n"))
 	}
 
@@ -104,7 +106,7 @@ func TestClosingAnAttemptTakesItsEntriesOffTheTimeline(t *testing.T) {
 	m, lines := timeline(t, fixtureEntries())
 
 	at := m.hit(30, rowOf(lines, attemptRule(1)))
-	if at.Kind != TargetSeam || at.Pane != 1 {
+	if at.Kind != point.Seam || at.Pane != 1 {
 		t.Fatalf("the first attempt's rule answers as %+v, want the first attempt", at)
 	}
 
@@ -150,7 +152,7 @@ func TestAReportFoldedUpStillOffersItsAttempts(t *testing.T) {
 			t.Fatalf("attempt %d lost the rule that opens it again:\n%s", n, strings.Join(rows, "\n"))
 		}
 
-		if !strings.Contains(rows[y], foldShut) {
+		if !strings.Contains(rows[y], cells.FoldShut) {
 			t.Errorf("a closed attempt is not drawn as closed: %q", rows[y])
 		}
 	}
@@ -166,7 +168,7 @@ func TestOnlyTheRuleAnswersForTheAttempt(t *testing.T) {
 		t.Fatalf("the first attempt's report is not on the pane:\n%s", strings.Join(lines, "\n"))
 	}
 
-	if got := m.hit(30, inside); got.Kind == TargetSeam {
+	if got := m.hit(30, inside); got.Kind == point.Seam {
 		t.Errorf("a row of the attempt's own report answers as its rule: %+v", got)
 	}
 }
@@ -183,7 +185,7 @@ func TestTheAttemptUnderThePointerIsTheOneThatFolds(t *testing.T) {
 	}
 
 	want := m.hit(30, y)
-	if want.Kind != TargetSeam || want.Pane != 3 {
+	if want.Kind != point.Seam || want.Pane != 3 {
 		t.Fatalf("the last attempt's rule answers as %+v, want the third attempt", want)
 	}
 
@@ -233,7 +235,7 @@ func TestOpeningATaskForgetsWhatWasFolded(t *testing.T) {
 
 	// The entry first: once an attempt is closed its own rule is the first
 	// shut arrow on the screen, and the click would land on that instead.
-	m = clicked(t, m, m.hit(30, rowOf(lines, foldShut)))
+	m = clicked(t, m, m.hit(30, rowOf(lines, cells.FoldShut)))
 	m = clicked(t, m, m.hit(30, rowOf(screenRows(m), attemptRule(1))))
 
 	if m.shutAttempts == nil || m.opened[tabTimeline] == nil {

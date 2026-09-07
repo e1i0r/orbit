@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -174,8 +175,8 @@ func (m Model) thoughtRows(b thoughtBlock, w int) ([]string, bool) {
 
 	for _, l := range b.lines {
 		formatted, role := formatThoughtLine(l)
-		for _, wl := range splitIntoLines(formatted, availW) {
-			body = append(body, thoughtIndent+theme.Paint(role).Render(fit(wl, availW)))
+		for _, wl := range cells.Lines(formatted, availW) {
+			body = append(body, thoughtIndent+theme.Paint(role).Render(cells.Fit(wl, availW)))
 		}
 	}
 
@@ -184,7 +185,7 @@ func (m Model) thoughtRows(b thoughtBlock, w int) ([]string, bool) {
 	}
 
 	open := m.rowOpen(tabThinking, b.entry)
-	out := []string{"  " + theme.Text(theme.Tertiary).Render(foldMark(open)) + head}
+	out := []string{"  " + theme.Text(theme.Tertiary).Render(cells.Fold(open)) + head}
 
 	if !open {
 		return append(out, body[0]), true

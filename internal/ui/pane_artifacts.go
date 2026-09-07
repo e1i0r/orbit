@@ -18,6 +18,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/markdown"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -46,9 +48,9 @@ const fileRowLead = 4 + fileNameCells + 2 + fileSizeCells + 2
 // the end of, without the ellipsis that says a decision was made.
 func fileRow(name, size, said string, w int) string {
 	return "    " +
-		theme.Paint(theme.Accent).Render(pad(name, fileNameCells, false)) + "  " +
-		theme.Paint(theme.Dim).Render(pad(size, fileSizeCells, false)) + "  " +
-		theme.Paint(theme.Dim).Render(fit(said, max(w-fileRowLead, 8)))
+		theme.Paint(theme.Accent).Render(cells.Pad(name, fileNameCells, false)) + "  " +
+		theme.Paint(theme.Dim).Render(cells.Pad(size, fileSizeCells, false)) + "  " +
+		theme.Paint(theme.Dim).Render(cells.Fit(said, max(w-fileRowLead, 8)))
 }
 
 // formatBytes is a size in the largest unit that keeps it a whole number.
@@ -144,7 +146,7 @@ func (m Model) recordFiles(out []string, heads map[int]int) []string {
 		open := m.rowOpen(tabArtifacts, i)
 
 		heads[len(out)] = i
-		out = append(out, "  "+theme.Text(theme.Tertiary).Render(foldMark(open))+
+		out = append(out, "  "+theme.Text(theme.Tertiary).Render(cells.Fold(open))+
 			fileRow(f.Name, formatBytes(f.Size), m.fileSaid(f.Name), m.bodyCells()-4))
 
 		if open {
@@ -180,7 +182,7 @@ func (m Model) fileBody(name string) []string {
 
 	out := make([]string, 0, len(lines)+1)
 	for _, l := range lines {
-		out = append(out, "      "+codeWell(l, fileFamily(name), w))
+		out = append(out, "      "+markdown.Well(l, fileFamily(name), w))
 	}
 
 	if !got.text.Whole {

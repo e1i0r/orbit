@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/repo"
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
@@ -135,7 +136,7 @@ func lastLines(out string, most int) []string {
 	lines := strings.Split(strings.TrimSpace(out), "\n")
 	for i := len(lines) - 1; i >= 0 && len(kept) < most; i-- {
 		if line := strings.TrimSpace(lines[i]); line != "" {
-			kept = append([]string{fit(line, 120)}, kept...)
+			kept = append([]string{cells.Fit(line, 120)}, kept...)
 		}
 	}
 

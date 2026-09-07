@@ -45,7 +45,7 @@ func TestLanguageSwitchesAndReportsFailure(t *testing.T) {
 
 	// A settings port that refuses the write reports the error rather than
 	// rebuilding the key map.
-	m.opts.Settings = &settings{fail: errors.New("disk full")}
+	m.opts.Settings = &settingsFile{fail: errors.New("disk full")}
 	got = m.language("es")
 	wantBand(t, got, "disk full")
 

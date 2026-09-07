@@ -4,12 +4,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/ui/markdown"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
-
-// quoteMark is what the engine's own words are set behind.
-const quoteMark = "│ "
 
 // reportLines renders Pane 7: The engine's summary reports and conclusions.
 func (m Model) reportLines() []string {
@@ -135,7 +133,7 @@ func (m Model) phaseBody(e view.Entry) []string {
 		return append(out, "    "+theme.Paint(theme.Dim).Render(p.T("evidence.silent", "the engine printed nothing")))
 	}
 
-	return append(out, renderMarkdown(text, m.frame.Body.W, m.rawText)...)
+	return append(out, markdown.Render(text, m.frame.Body.W, m.rawText)...)
 }
 
 func group(n int) string {

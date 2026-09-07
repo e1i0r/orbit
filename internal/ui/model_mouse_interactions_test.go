@@ -109,15 +109,14 @@ func TestDetailMouseTabsAndButtons(t *testing.T) {
 func TestSettingsSubmitAndEditing(t *testing.T) {
 	m, _ := testModel(t, 120, 40)
 	m.screen = screenSettings
-	m.settings.editing = true
-	m.settings.typed = "es"
-	m.settings.sel = 0 // Language setting row
+	m.settings = m.settings.Edit("es")
+	m.settings = m.settings.Point(0) // Language setting row
 
 	// Press Enter to submit edited setting
 	mSub, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	mSubTyped := asModel(t, mSub)
-	if mSubTyped.settings.editing {
+	if mSubTyped.settings.Editing() {
 		t.Error("expected editing to be false after submit")
 	}
 }

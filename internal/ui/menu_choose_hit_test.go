@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/e1i0r/orbit/internal/ui/point"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -147,20 +148,20 @@ func TestHitMenuMapsRowsToEntries(t *testing.T) {
 	m = m.openMenu("")
 
 	// 1. A row past the frame's body answers nothing.
-	if tgt := m.hitMenu(0, 9999); tgt.Kind != TargetNone {
-		t.Errorf("hitMenu far past the body = %+v, want TargetNone", tgt)
+	if tgt := m.hitMenu(0, 9999); tgt.Kind != point.None {
+		t.Errorf("hitMenu far past the body = %+v, want point.None", tgt)
 	}
 
 	// 2. The title is not an entry: a click on it hits nothing.
-	if tgt := m.hitMenu(0, m.frame.Body.Y); tgt.Kind != TargetNone {
-		t.Errorf("hitMenu on the title = %+v, want TargetNone", tgt)
+	if tgt := m.hitMenu(0, m.frame.Body.Y); tgt.Kind != point.None {
+		t.Errorf("hitMenu on the title = %+v, want point.None", tgt)
 	}
 
 	// 3. The first entry is under it, and answers a TargetMenuEntry keyed
 	// by its command.
 	tgt := m.hitMenu(0, m.frame.Body.Y+menuTitleRows)
-	if tgt.Kind != TargetMenuEntry || tgt.Key != "new" {
-		t.Errorf("hitMenu on the first row = %+v, want TargetMenuEntry keyed \"new\"", tgt)
+	if tgt.Kind != point.MenuEntry || tgt.Key != "new" {
+		t.Errorf("hitMenu on the first row = %+v, want point.MenuEntry keyed \"new\"", tgt)
 	}
 
 	// 4. On a task menu, the row is keyed by the affordance's glyph.
@@ -168,8 +169,8 @@ func TestHitMenuMapsRowsToEntries(t *testing.T) {
 	m2 = m2.openMenu("ACME-2705")
 
 	tgt2 := m2.hitMenu(0, m2.frame.Body.Y+menuTitleRows)
-	if tgt2.Kind != TargetMenuEntry || tgt2.Key == "" {
-		t.Errorf("hitMenu on a task menu's first row = %+v, want a keyed TargetMenuEntry", tgt2)
+	if tgt2.Kind != point.MenuEntry || tgt2.Key == "" {
+		t.Errorf("hitMenu on a task menu's first row = %+v, want a keyed point.MenuEntry", tgt2)
 	}
 }
 

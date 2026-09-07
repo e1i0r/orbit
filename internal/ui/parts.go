@@ -5,6 +5,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
@@ -48,11 +49,11 @@ func card(title string, body []string, width int) []string {
 
 	lines := make([]string, 0, len(body)+1)
 	if title != "" {
-		lines = append(lines, theme.Text(theme.Tertiary).Render(fit(strings.ToUpper(title), inner)))
+		lines = append(lines, theme.Text(theme.Tertiary).Render(cells.Fit(strings.ToUpper(title), inner)))
 	}
 
 	for _, l := range body {
-		lines = append(lines, fit(l, inner))
+		lines = append(lines, cells.Fit(l, inner))
 	}
 
 	return strings.Split(box.Render(strings.Join(lines, "\n")), "\n")
@@ -97,8 +98,8 @@ func fields(pairs []field, columns, width int) []string {
 				label += " [" + p.key + "]"
 			}
 
-			labels += pad(theme.Text(theme.Tertiary).Render(label), cell, false)
-			values += pad(p.value, cell, false)
+			labels += cells.Pad(theme.Text(theme.Tertiary).Render(label), cell, false)
+			values += cells.Pad(p.value, cell, false)
 		}
 
 		if row > 0 {
@@ -154,42 +155,4 @@ func tabChip(key, text string, active bool) (plain, rendered string) {
 
 // The two cells a scroll bar is drawn with: a rail the height of the pane
 // and a thumb over the part of it the reader is looking at.
-const (
-	scrollRail  = "│"
-	scrollThumb = "┃"
-)
-
-// scrollTrack is the bar down the right edge of a pane holding more than it
-// can show. It answers what the line at the foot of the pane cannot: where
-// in the text the reader is, and how much of it is left.
-//
-// It returns nil when everything fits, so a pane that does not scroll does
-// not grow a rail that never moves.
-func scrollTrack(rows, total, offset int) []string {
-	if rows <= 0 || total <= rows {
-		return nil
-	}
-
-	thumb := max(1, rows*rows/total)
-	top := min(max(offset, 0)*rows/total, rows-thumb)
-
-	// The last scroll position ends on the last row. Dividing down leaves
-	// the thumb a cell short of the floor, which reads as more to come on a
-	// pane that has nothing left.
-	if offset >= total-rows {
-		top = rows - thumb
-	}
-
-	col := make([]string, rows)
-
-	for i := range col {
-		if i < top || i >= top+thumb {
-			col[i] = theme.Text(theme.Tertiary).Render(scrollRail)
-			continue
-		}
-
-		col[i] = theme.Text(theme.Secondary).Render(scrollThumb)
-	}
-
-	return col
-}
+const ()

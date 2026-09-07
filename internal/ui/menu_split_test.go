@@ -14,9 +14,12 @@ package ui
 // line, with the name already typed.
 
 import (
-	"slices"
 	"strings"
 	"testing"
+
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/palette"
 )
 
 func needsArgsCommands() []Command {
@@ -82,9 +85,9 @@ func TestChoosingACommandThatNeedsArgumentsOpensTheLine(t *testing.T) {
 		t.Error("the menu stayed up")
 	}
 
-	if !after.palette.open || after.palette.typed != "export " {
+	if !after.palette.Up() || after.palette.Typed() != "export " {
 		t.Errorf("chose export and got palette open=%v typed=%q, want the line up with the name on it",
-			after.palette.open, after.palette.typed)
+			after.palette.Up(), after.palette.Typed())
 	}
 
 	if cmd != nil {
@@ -107,7 +110,7 @@ func TestChoosingACommandThatNeedsNothingStillRuns(t *testing.T) {
 	next, _ := m.chooseMenu()
 
 	after := asModel(t, next)
-	if after.palette.open {
+	if after.palette.Up() {
 		t.Error("reconcile went to the command line, want it run")
 	}
 
@@ -129,7 +132,7 @@ func TestACommandWithAScreenKeepsItOverTheCommandLine(t *testing.T) {
 	next, _ := m.chooseMenu()
 
 	after := asModel(t, next)
-	if after.palette.open {
+	if after.palette.Up() {
 		t.Error("new went to the command line, want the compose screen")
 	}
 
@@ -148,14 +151,14 @@ func TestACommandWithAScreenKeepsItOverTheCommandLine(t *testing.T) {
 func TestTheLineRunsACommandOnceItHasItsArguments(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.opts.Commands = needsArgsCommands()
-	m.palette.open, m.palette.typed = true, "export "
+	m.palette = palette.OpenWith("export ")
 
-	next, _ := m.runSelected()
+	next, _ := m.paletteKey(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	after := asModel(t, next)
-	if !after.palette.open || after.palette.typed != "export " {
+	if !after.palette.Up() || after.palette.Typed() != "export " {
 		t.Errorf("bare export left the line open=%v typed=%q, want it up and unchanged",
-			after.palette.open, after.palette.typed)
+			after.palette.Up(), after.palette.Typed())
 	}
 
 	if !strings.Contains(after.message, "export") {
@@ -167,12 +170,12 @@ func TestTheLineRunsACommandOnceItHasItsArguments(t *testing.T) {
 	}
 
 	withArgs := m
-	withArgs.palette.typed = "export /tmp/out"
+	withArgs.palette = palette.OpenWith("export /tmp/out")
 
-	afterArgs, _ := withArgs.runSelected()
+	afterArgs, _ := withArgs.paletteKey(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	ran := asModel(t, afterArgs)
-	if ran.palette.open {
+	if ran.palette.Up() {
 		t.Error("the line stayed up after a command that ran")
 	}
 
@@ -188,22 +191,26 @@ func TestTheLineRunsACommandOnceItHasItsArguments(t *testing.T) {
 func TestTheLineLeavesOutTheVerbsAboutOneTask(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.opts.Commands = needsArgsCommands()
-	m.palette.open = true
+	m.palette = palette.Open()
 
-	var names []string
-	for _, c := range m.palette.candidates(m.opts.Commands) {
-		names = append(names, c.Name)
+	// The list is read where the reader reads it: what the line drew.
+	drawn := strings.Join(m.paletteRows(20, 100), "\n")
+
+	for _, want := range []string{"reconcile", "export"} {
+		if !strings.Contains(drawn, want) {
+			t.Errorf("the line does not offer %q:\n%s", want, drawn)
+		}
 	}
 
-	if want := []string{"reconcile", "export"}; !slices.Equal(names, want) {
-		t.Errorf("the line offers %v, want %v", names, want)
+	if strings.Contains(drawn, "cancel") {
+		t.Errorf("the line offers a verb about one task:\n%s", drawn)
 	}
 
 	// And typing one says so, rather than leaving ⏎ on a row that is not
 	// there.
-	m.palette.typed = "cancel"
-	if n := len(m.palette.candidates(m.opts.Commands)); n != 0 {
-		t.Errorf("typing cancel matched %d commands, want none", n)
+	m.palette = palette.OpenWith("cancel")
+	if got := strings.Join(m.paletteRows(20, 100), "\n"); !strings.Contains(got, "no command starts with") {
+		t.Errorf("typing cancel drew:\n%s", got)
 	}
 }
 

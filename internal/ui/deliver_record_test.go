@@ -181,7 +181,7 @@ func TestTheTimelineNamesTheVerbThatWasAskedFor(t *testing.T) {
 		},
 	}
 
-	rows, _, _ := m.logRows()
+	rows := m.logRows().rows
 	drawn := strings.Join(rows, "\n")
 
 	wants := []string{

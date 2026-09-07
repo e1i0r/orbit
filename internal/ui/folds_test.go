@@ -6,6 +6,9 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
+
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/point"
 )
 
 // foldLabels is what each section is headed with in English, which is the
@@ -40,11 +43,11 @@ func TestASectionSaysWhetherItFolds(t *testing.T) {
 	m, _ := openWith(t, "ACME-2662", fixtureEntries())
 
 	for key, label := range foldLabels {
-		if got := overviewText(m); !strings.Contains(got, foldOpen+label) {
+		if got := overviewText(m); !strings.Contains(got, cells.FoldOpen+label) {
 			t.Errorf("the open %s section has no arrow on it:\n%s", label, got)
 		}
 
-		if got := overviewText(m.fold(key)); !strings.Contains(got, foldShut+label) {
+		if got := overviewText(m.fold(key)); !strings.Contains(got, cells.FoldShut+label) {
 			t.Errorf("the closed %s section has no arrow on it:\n%s", label, got)
 		}
 	}
@@ -67,11 +70,11 @@ func TestAFoldedSectionKeepsOnlyItsHead(t *testing.T) {
 		t.Errorf("a folded section still sets what it holds:\n%s", after)
 	}
 
-	if !strings.Contains(after, foldShut+"FLOW") {
+	if !strings.Contains(after, cells.FoldShut+"FLOW") {
 		t.Errorf("a folded section does not show flow name:\n%s", after)
 	}
 
-	if strings.Contains(before, foldShut+"FLOW") {
+	if strings.Contains(before, cells.FoldShut+"FLOW") {
 		t.Errorf("an open section is folded:\n%s", before)
 	}
 
@@ -98,7 +101,7 @@ func TestTheHeadsAreWhereTheHitTestSaysTheyAre(t *testing.T) {
 			t.Fatalf("the hit test puts %s on row %d of a pane %d rows tall", key, row, len(lines))
 		}
 
-		if want := foldOpen + foldLabels[key]; !strings.Contains(lines[row], want) {
+		if want := cells.FoldOpen + foldLabels[key]; !strings.Contains(lines[row], want) {
 			t.Errorf("the hit test puts %s on row %d, which is %q", key, row, lines[row])
 		}
 	}
@@ -118,13 +121,13 @@ func TestAHeadIsClickableWhereItIsDrawn(t *testing.T) {
 	lines := screenRows(m)
 
 	for key, label := range foldLabels {
-		y := rowOf(lines, foldOpen+label)
+		y := rowOf(lines, cells.FoldOpen+label)
 		if y < 0 {
 			t.Fatalf("the %s head was not drawn on the window:\n%s", label, strings.Join(lines, "\n"))
 		}
 
 		got := m.hit(4, y)
-		if got.Kind != TargetFold || got.Key != key {
+		if got.Kind != point.Fold || got.Key != key {
 			t.Errorf("a click on the %s head at row %d = %+v, want the %s fold", label, y, got, key)
 		}
 	}
@@ -135,14 +138,14 @@ func TestAHeadIsClickableWhereItIsDrawn(t *testing.T) {
 func TestClickingAHeadFoldsThatSection(t *testing.T) {
 	m, _ := openWith(t, "ACME-2662", fixtureEntries())
 
-	next, _ := m.leftClick(Target{Kind: TargetFold, Key: foldChanges})
+	next, _ := m.leftClick(point.Target{Kind: point.Fold, Key: foldChanges})
 	m = asModel(t, next)
 
 	if !m.folded(foldChanges) {
 		t.Error("clicking the changes head left it open")
 	}
 
-	next, _ = m.leftClick(Target{Kind: TargetFold, Key: foldChanges})
+	next, _ = m.leftClick(point.Target{Kind: point.Fold, Key: foldChanges})
 	if m = asModel(t, next); m.folded(foldChanges) {
 		t.Error("clicking a folded head left it closed")
 	}
@@ -182,12 +185,12 @@ func TestAHeadIsStillItselfAfterAScroll(t *testing.T) {
 
 	lines := screenRows(m)
 
-	y := rowOf(lines, foldOpen+"FLOW")
+	y := rowOf(lines, cells.FoldOpen+"FLOW")
 	if y < 0 {
 		t.Fatalf("the flow head was not drawn after a scroll:\n%s", strings.Join(lines, "\n"))
 	}
 
-	if got := m.hit(4, y); got.Kind != TargetFold || got.Key != foldPhases {
+	if got := m.hit(4, y); got.Kind != point.Fold || got.Key != foldPhases {
 		t.Errorf("a click on the scrolled flow head = %+v, want the flow fold", got)
 	}
 }

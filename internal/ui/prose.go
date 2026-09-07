@@ -5,6 +5,8 @@ import (
 
 	"charm.land/lipgloss/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/markdown"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
@@ -19,11 +21,6 @@ import (
 // the whole job of these panes.
 
 const (
-	// proseMeasure caps how wide a paragraph is set, in cells. The eye tracks
-	// a line of roughly 45 to 90 characters and starts missing the beginning
-	// of the next one past that, so a wide pane is an upper bound to stay
-	// under rather than a width to fill.
-	proseMeasure = 84
 
 	// paneGutter is the left margin every pane's content starts at.
 	paneGutter = "  "
@@ -32,23 +29,6 @@ const (
 	// prose reads as quoted speech rather than as one more row of data.
 	proseRule = "│ "
 )
-
-// The arrows a section is opened and closed with. They are the whole of the
-// affordance: a head with no mark beside it is read as a label, and a reader
-// who cannot see that a block folds never folds one.
-const (
-	foldOpen = "▾ "
-	foldShut = "▸ "
-)
-
-// foldMark is the arrow for a section in the state it is in.
-func foldMark(open bool) string {
-	if open {
-		return foldOpen
-	}
-
-	return foldShut
-}
 
 // section heads a block: the arrow that folds it, the label in the accent,
 // what it is holding while it is closed, and a rule out to the edge. The
@@ -59,7 +39,7 @@ func foldMark(open bool) string {
 // under it, and a count above detail that shows the same thing is a line the
 // reader has to check against another line.
 func section(label, note string, width int, open bool) string {
-	head := paneGutter + theme.Text(theme.Tertiary).Render(foldMark(open)) +
+	head := paneGutter + theme.Text(theme.Tertiary).Render(cells.Fold(open)) +
 		theme.Paint(theme.Accent).Bold(true).Render(strings.ToUpper(label)) + " "
 
 	if !open && note != "" {
@@ -97,7 +77,7 @@ func meta(parts ...string) string {
 // left, and painted in nothing at all — the terminal's own foreground is the
 // brightest thing available and this is the text the reader came for.
 func prose(text string, width int, indent string) []string {
-	measure := max(20, min(proseMeasure, width-lipgloss.Width(indent)-len(proseRule)-2))
+	measure := max(20, min(markdown.Measure, width-lipgloss.Width(indent)-len(proseRule)-2))
 	rule := theme.Text(theme.Tertiary).Render(proseRule)
 
 	var out []string
@@ -108,7 +88,7 @@ func prose(text string, width int, indent string) []string {
 			continue
 		}
 
-		for _, l := range splitIntoLines(para, measure) {
+		for _, l := range cells.Lines(para, measure) {
 			out = append(out, indent+rule+theme.Text(theme.Primary).Render(l))
 		}
 	}

@@ -31,6 +31,7 @@ import (
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/supervisor"
 	"github.com/e1i0r/orbit/internal/ui"
+	"github.com/e1i0r/orbit/internal/ui/roster"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -205,22 +206,22 @@ func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 // draws what it is told, and a mode it could read is a mode it could
 // interpret. The one place that decides what a number about an engine means
 // is the package that knows how the engine is paid for.
-func quotaPort(m *quota.Meter, syncWait bool) func(string) ui.QuotaReading {
+func quotaPort(m *quota.Meter, syncWait bool) func(string) roster.Reading {
 	if m == nil {
 		return nil
 	}
 
-	return func(engine string) ui.QuotaReading {
+	return func(engine string) roster.Reading {
 		reading := m.Read(engine, syncWait)
 
-		out := ui.QuotaReading{
+		out := roster.Reading{
 			Engine:  reading.Engine,
 			Money:   reading.Mode.Spends(),
 			Sourced: reading.Sourced,
 		}
 
 		for _, w := range reading.Windows {
-			out.Windows = append(out.Windows, ui.QuotaWindow{
+			out.Windows = append(out.Windows, roster.Window{
 				Key:      w.Key,
 				Label:    w.Label,
 				Pct:      w.Pct,

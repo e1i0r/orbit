@@ -14,6 +14,7 @@ import (
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/clip"
 )
 
@@ -83,7 +84,7 @@ func (m Model) noteKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 
 		return m, nil
 	case msg.Code == tea.KeyBackspace || msg.Code == tea.KeyDelete:
-		m.note.text = trimLastRune(m.note.text)
+		m.note.text = cells.TrimLastRune(m.note.text)
 		return m, nil
 	}
 

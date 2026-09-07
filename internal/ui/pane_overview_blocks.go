@@ -8,6 +8,8 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/markdown"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -35,7 +37,7 @@ func (m Model) overviewVitals(t view.Task, w int) []string {
 		{label: p.T("overview.duration", "duration"), value: elapsed(m.now, t.Since), role: theme.Accent},
 		{
 			label: p.T("overview.phases", "flow"),
-			value: orDef(t.Flow, flow.Default),
+			value: cells.OrDef(t.Flow, flow.Default),
 			role:  theme.Accent,
 		},
 		{label: p.T("overview.changed", "changed"), value: changed, role: theme.Live},
@@ -48,7 +50,7 @@ func (m Model) overviewVitals(t view.Task, w int) []string {
 	}
 
 	if t.RepoPath != "" {
-		tail := tailFit(homeTilde(t.RepoPath), min(proseMeasure, w-2*len(paneGutter)))
+		tail := tailFit(homeTilde(t.RepoPath), min(markdown.Measure, w-2*len(paneGutter)))
 		out = append(out, paneGutter+theme.Text(theme.Tertiary).Render(tail))
 	}
 
@@ -63,14 +65,14 @@ func (m Model) dials(t view.Task) []field {
 	// shows what it would run on, which is the knob and then the setting
 	// behind it — not the words claude and sonnet, which were the answer here
 	// on builds that have neither.
-	eng := orDef(t.Engine, m.dialEngine(m.knobs.Engine))
+	eng := cells.OrDef(t.Engine, m.dialEngine(m.knobs.Engine))
 
 	models, _ := m.modelsFor(eng)
-	mod := orDef(t.Model, orDef(m.knobs.Model, first(models)))
+	mod := cells.OrDef(t.Model, cells.OrDef(m.knobs.Model, cells.First(models)))
 
 	// A window whose engines port answers nothing has no engine and no model
 	// to name here, and a dash says so without naming one it has not.
-	eng, mod = orDef(eng, unsetDial), orDef(mod, unsetDial)
+	eng, mod = cells.OrDef(eng, unsetDial), cells.OrDef(mod, unsetDial)
 
 	p := m.opts.Words
 	dial := func(label, key, value string) field {
@@ -83,9 +85,9 @@ func (m Model) dials(t view.Task) []field {
 
 	return []field{
 		dial(p.T("overview.engine", "engine"), "k", eng+" "+mod),
-		dial(p.T("overview.effort", "effort"), "E", orDef(m.knobs.Effort, "high")),
-		dial(p.T("overview.thinking", "thinking"), "t", orDef(m.knobs.Thinking, "adaptive")),
-		dial(p.T("overview.flow", "flow"), "F", orDef(t.Flow, flow.Default)),
+		dial(p.T("overview.effort", "effort"), "E", cells.OrDef(m.knobs.Effort, "high")),
+		dial(p.T("overview.thinking", "thinking"), "t", cells.OrDef(m.knobs.Thinking, "adaptive")),
+		dial(p.T("overview.flow", "flow"), "F", cells.OrDef(t.Flow, flow.Default)),
 	}
 }
 
@@ -121,7 +123,7 @@ func (m Model) overviewChanges(w int) []string {
 				"… and {n} more file", "… and {n} more files")), "")
 		}
 
-		trimmed := fit(f, min(proseMeasure, w-2*len(paneGutter)-2))
+		trimmed := cells.Fit(f, min(markdown.Measure, w-2*len(paneGutter)-2))
 		out = append(out, paneGutter+"  "+theme.Paint(theme.OK).Render(trimmed))
 	}
 

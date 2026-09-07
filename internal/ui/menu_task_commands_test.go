@@ -92,7 +92,7 @@ func TestChoosingOneRunsItRatherThanAskingForArguments(t *testing.T) {
 	next, cmd := m.chooseMenu()
 
 	after := asModel(t, next)
-	if after.palette.open {
+	if after.palette.Up() {
 		t.Error("approve went to the command line, which is the board's and has no task on it")
 	}
 

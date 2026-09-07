@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -81,11 +82,12 @@ func (m Model) handNode(st handStep, i int, last bool) []string {
 		branch, subBranch = "└──", "   "
 	}
 
-	icon, status, role := m.handStanding(st)
-	mark := theme.Text(theme.Tertiary).Render(foldMark(m.rowOpen(tabFlow, i)))
+	standing := m.handStanding(st)
+	fold := theme.Text(theme.Tertiary).Render(cells.Fold(m.rowOpen(tabFlow, i)))
 
 	head := fmt.Sprintf("  %s %s%s %s · %s",
-		theme.Paint(theme.Dim).Render(branch), mark, icon, theme.Paint(role).Bold(true).Render(st.verb), status)
+		theme.Paint(theme.Dim).Render(branch), fold, standing.glyph,
+		theme.Paint(standing.role).Bold(true).Render(st.verb), standing.text)
 	if st.took != "" {
 		head += " " + theme.Paint(theme.Dim).Render(fmt.Sprintf("(%s)", st.took))
 	}
@@ -104,18 +106,28 @@ func (m Model) handNode(st handStep, i int, last bool) []string {
 // A verb that has not come back is drawn as work in progress and not as
 // something pending, which is the whole point of writing the ask down: the
 // supervisor is out doing it, and the reader pressed the key minutes ago.
-func (m Model) handStanding(st handStep) (string, string, theme.Role) {
+func (m Model) handStanding(st handStep) standing {
 	p := m.opts.Words
 
 	switch {
 	case st.failed:
-		return theme.Paint(theme.Bad).Render("✗"),
-			theme.Paint(theme.Bad).Render(p.T("flow.hand_broke", "came back broken")), theme.Bad
+		return standing{
+			glyph: theme.Paint(theme.Bad).Render("✗"),
+			text:  theme.Paint(theme.Bad).Render(p.T("flow.hand_broke", "came back broken")),
+			role:  theme.Bad,
+		}
 	case st.done:
-		return theme.Paint(theme.OK).Render("✓"), theme.Paint(theme.OK).Render(p.T("flow.hand_done", "came back")), theme.OK
+		return standing{
+			glyph: theme.Paint(theme.OK).Render("✓"),
+			text:  theme.Paint(theme.OK).Render(p.T("flow.hand_done", "came back")),
+			role:  theme.OK,
+		}
 	default:
-		return theme.Paint(theme.Live).Render("⚡"),
-			theme.Paint(theme.Live).Bold(true).Render(p.T("flow.hand_out", "asked for, still out")), theme.Live
+		return standing{
+			glyph: theme.Paint(theme.Live).Render("⚡"),
+			text:  theme.Paint(theme.Live).Bold(true).Render(p.T("flow.hand_out", "asked for, still out")),
+			role:  theme.Live,
+		}
 	}
 }
 

@@ -6,6 +6,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -67,11 +68,11 @@ func (m Model) refusedRows() ([]string, map[int]int) {
 	// 2. Las reglas fijas del sandbox
 	out = append(out,
 		"  "+theme.Paint(theme.Accent).Render(p.T("refused.rules_title", "THE RULES · sandbox constraints")),
-		fmt.Sprintf("    %s %-24s %s", theme.Paint(theme.Dim).Render("✗"), "psql / mongosh", theme.Paint(theme.Dim).Render(p.T("refused.rule_db", "protected databases, readable only"))),
-		fmt.Sprintf("    %s %-24s %s", theme.Paint(theme.Dim).Render("✗"), "aws / cloud-cli", theme.Paint(theme.Dim).Render(p.T("refused.rule_cloud", "cloud services and outside credentials"))),
-		fmt.Sprintf("    %s %-24s %s", theme.Paint(theme.Dim).Render("✗"), "git push", theme.Paint(theme.Dim).Render(p.T("refused.rule_push", "the branch belongs to the operator or the runner"))),
-		fmt.Sprintf("    %s %-24s %s", theme.Paint(theme.Dim).Render("✗"), "git remote / config", theme.Paint(theme.Dim).Render(p.T("refused.rule_remote", "the repository's own configuration"))),
-		fmt.Sprintf("    %s %-24s %s", theme.Paint(theme.Dim).Render("✗"), "gh pr merge", theme.Paint(theme.Dim).Render(p.T("refused.rule_merge", "merging and publishing pull requests"))),
+		rule("psql / mongosh", p.T("refused.rule_db", "protected databases, readable only")),
+		rule("aws / cloud-cli", p.T("refused.rule_cloud", "cloud services and outside credentials")),
+		rule("git push", p.T("refused.rule_push", "the branch belongs to the operator or the runner")),
+		rule("git remote / config", p.T("refused.rule_remote", "the repository's own configuration")),
+		rule("gh pr merge", p.T("refused.rule_merge", "merging and publishing pull requests")),
 		"",
 		"  "+theme.Paint(theme.Dim).Render(p.T("refused.policy_note", "a forbidden action fails on the spot and the model carries on")),
 		"",
@@ -95,7 +96,7 @@ func (m Model) denialRows(d view.Entry, i int) ([]string, bool) {
 	head := "    " + theme.Paint(theme.Bad).Render("✗") + " " + theme.Paint(theme.Accent).Render(tool) + ": "
 
 	lead := 4 + 1 + 1 + lipgloss.Width(tool) + 2
-	availW := max(20, max(m.frame.Body.W, 1)-lead-lipgloss.Width(foldShut)-2)
+	availW := max(20, max(m.frame.Body.W, 1)-lead-lipgloss.Width(cells.FoldShut)-2)
 
 	var body []string
 
@@ -104,8 +105,8 @@ func (m Model) denialRows(d view.Entry, i int) ([]string, bool) {
 			continue
 		}
 
-		for _, wl := range splitIntoLines(l, availW) {
-			body = append(body, fit(wl, availW))
+		for _, wl := range cells.Lines(l, availW) {
+			body = append(body, cells.Fit(wl, availW))
 		}
 	}
 
@@ -114,11 +115,11 @@ func (m Model) denialRows(d view.Entry, i int) ([]string, bool) {
 	}
 
 	if len(body) == 1 {
-		return []string{head + strings.Repeat(" ", lipgloss.Width(foldShut)) + theme.Paint(theme.Bad).Render(body[0])}, false
+		return []string{head + strings.Repeat(" ", lipgloss.Width(cells.FoldShut)) + theme.Paint(theme.Bad).Render(body[0])}, false
 	}
 
 	open := m.rowOpen(tabRefused, i)
-	mark := theme.Text(theme.Tertiary).Render(foldMark(open))
+	mark := theme.Text(theme.Tertiary).Render(cells.Fold(open))
 
 	if !open {
 		return []string{head + mark + theme.Paint(theme.Bad).Render(body[0])}, true
@@ -126,10 +127,17 @@ func (m Model) denialRows(d view.Entry, i int) ([]string, bool) {
 
 	out := []string{head + mark + theme.Paint(theme.Bad).Render(body[0])}
 
-	indent := strings.Repeat(" ", lead+lipgloss.Width(foldShut))
+	indent := strings.Repeat(" ", lead+lipgloss.Width(cells.FoldShut))
 	for _, l := range body[1:] {
 		out = append(out, indent+theme.Paint(theme.Bad).Render(l))
 	}
 
 	return out, true
+}
+
+// rule is one line of the sandbox's standing refusals: the command, and what
+// it is that Orbit will not let a run reach.
+func rule(command, why string) string {
+	return fmt.Sprintf("    %s %-24s %s",
+		theme.Paint(theme.Dim).Render("✗"), command, theme.Paint(theme.Dim).Render(why))
 }

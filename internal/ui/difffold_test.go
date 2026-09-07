@@ -10,6 +10,8 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/point"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -71,21 +73,21 @@ func TestAFileOfTheDiffWearsTheArrowEveryOtherHeadWears(t *testing.T) {
 		t.Errorf("the card does not close inside the pane: %q", ansi.Strip(lines[head]))
 	}
 
-	if !strings.Contains(lines[head], foldOpen) {
+	if !strings.Contains(lines[head], cells.FoldOpen) {
 		t.Errorf("an open file does not say it is open: %q", ansi.Strip(lines[head]))
 	}
 
 	// The pointer is offered the row the arrow is on, and it is offered the
 	// first file rather than whichever one the arithmetic landed on.
 	at := m.hit(30, head)
-	if at.Kind != TargetPaneRow || at.Pane != 0 {
+	if at.Kind != point.PaneRow || at.Pane != 0 {
 		t.Fatalf("pointing at the file = %+v, want file 0 of the diff", at)
 	}
 
 	shut := clicked(t, m, at)
 
 	rows := shut.diffLines()
-	if y := cardRow(t, rows, "one.go"); !strings.Contains(rows[y], foldShut) {
+	if y := cardRow(t, rows, "one.go"); !strings.Contains(rows[y], cells.FoldShut) {
 		t.Errorf("clicking the file did not close it:\n%s", strings.Join(rows, "\n"))
 	}
 

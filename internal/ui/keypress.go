@@ -48,7 +48,7 @@ func (m Model) key(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.tipKey(msg)
 	case m.note.open:
 		return m.noteKey(msg)
-	case m.palette.open:
+	case m.palette.Up():
 		return m.paletteKey(msg)
 	case m.menu.open:
 		return m.menuKey(msg)
@@ -223,11 +223,7 @@ func (m Model) confirmKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	m.confirm, m.confirmID = confirmNone, ""
 	if c == confirmPostCliTask {
 		if msg.String() == confirmYes || msg.String() == "s" || msg.String() == "S" || key.Matches(msg, m.keys.Open) {
-			m = m.openCompose()
-			if id != "" {
-				m.compose.repoPath = m.startsIn(id)
-				m.compose.field = composeText
-			}
+			m = m.openComposeFor(id)
 
 			return m.say(m.opts.Words.T("msg.compose_prompt", "write the task to run")), nil
 		}

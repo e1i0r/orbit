@@ -7,6 +7,8 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/markdown"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -54,7 +56,7 @@ func (m Model) notesRows() ([]string, map[int]int) {
 			}
 
 			senderLabel := fmt.Sprintf("● %d  %s", noteIndex, p.T("notes.operator", "OPERATOR"))
-			content := renderMarkdown(e.Text, m.frame.Body.W, m.rawText)
+			content := markdown.Render(e.Text, m.frame.Body.W, m.rawText)
 			items = append(items, noteItem{
 				at:      timeStr,
 				sender:  senderLabel,
@@ -180,7 +182,7 @@ func (m Model) noteItemRows(item noteItem, i int) ([]string, bool) {
 	}
 
 	open := m.rowOpen(tabNotes, i)
-	out := []string{theme.Text(theme.Tertiary).Render(foldMark(open)) + head}
+	out := []string{theme.Text(theme.Tertiary).Render(cells.Fold(open)) + head}
 
 	if !open {
 		// The opening line and a count of what is under it: a reader
@@ -212,7 +214,7 @@ func turnLines(text string, w int) []string {
 
 		// The pane indents an item's content by six, and the arrow takes
 		// two of what is left.
-		out = append(out, splitIntoLines(para, max(w-8, 20))...)
+		out = append(out, cells.Lines(para, max(w-8, 20))...)
 	}
 
 	for i, line := range out {

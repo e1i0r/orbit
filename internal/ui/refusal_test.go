@@ -184,7 +184,7 @@ func TestTheCapRefusalNamesThreeAndSaysHowManyMoreThereAre(t *testing.T) {
 	}
 
 	m := modelWith(t, printerFor(t, "en"), fixtureBoard(tasks, 4), 100, 30, nil)
-	m.opts.Settings = &settings{autopilot: true, lang: "en", unread: 3}
+	m.opts.Settings = &settingsFile{autopilot: true, lang: "en", unread: 3}
 
 	unread := board.Unread(m.board)
 	if unread <= namedInRefusal {
