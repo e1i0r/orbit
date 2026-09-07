@@ -3,20 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Orbit — Stay in command of the code you did not write</title>
-<meta name="description" content="A terminal cockpit for coding agents. Each task in its own worktree, in phases that stop where you tell them to, and everything written down.">
+<title>Orbit — A cockpit for the agents that write your code</title>
+<meta name="description" content="A cockpit for the agents that write your code. Each task in its own worktree, in phases that stop where you tell them to, and every run written down beside the code.">
 <meta name="author" content="Elio Rincón — e1i0.com">
 <link rel="icon" href="icon.png">
 <link rel="canonical" href="https://getorbit.sh/">
 
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://getorbit.sh/">
-<meta property="og:title" content="Orbit — Stay in command of the code you did not write">
-<meta property="og:description" content="A terminal cockpit for coding agents. Each task in its own worktree, in phases that stop where you tell them to, and everything written down.">
+<meta property="og:title" content="Orbit — A cockpit for the agents that write your code">
+<meta property="og:description" content="A cockpit for the agents that write your code. Each task in its own worktree, in phases that stop where you tell them to, and every run written down beside the code.">
 <meta property="og:image" content="https://getorbit.sh/loop-poster.jpg">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Orbit — Stay in command of the code you did not write">
-<meta name="twitter:description" content="A terminal cockpit for coding agents. Each task in its own worktree, in phases that stop where you tell them to, and everything written down.">
+<meta name="twitter:title" content="Orbit — A cockpit for the agents that write your code">
+<meta name="twitter:description" content="A cockpit for the agents that write your code. Each task in its own worktree, in phases that stop where you tell them to, and every run written down beside the code.">
 <meta name="twitter:image" content="https://getorbit.sh/loop-poster.jpg">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-N9D1HEEMRD"></script>
@@ -227,6 +227,37 @@
   }
   .loop__closer { margin: 22px 0 0; font-size: 14.5px; line-height: 1.65; color: var(--text); }
 
+  /* — The nine, across the top — */
+  /* Sticky, because the page is nine sections of video: the reader who wants
+     the supervisor should not have to scroll past six things to find it. It
+     scrolls sideways under its own width rather than wrapping to two rows —
+     a bar that changes height as the page is resized moves everything under
+     it. */
+  .flownav {
+    position: sticky; top: 0; z-index: 20;
+    margin-top: 72px;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-block: 1px solid var(--border);
+  }
+  .flownav__inner {
+    width: min(1200px, 94vw); margin: 0 auto; padding: 0 8px;
+    display: flex; justify-content: space-between; gap: 14px; overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .flownav__inner::-webkit-scrollbar { display: none; }
+  .flownav a {
+    flex: 0 0 auto; padding: 14px 0;
+    font-size: 13px; color: var(--text-muted); white-space: nowrap;
+    border-bottom: 2px solid transparent; transition: var(--ease);
+  }
+  .flownav a:hover { color: var(--text-loudest); border-bottom-color: var(--primary); }
+  .flownav a .mono { color: var(--primary); margin-right: 6px; }
+
+  /* The bar covers the top of whatever is scrolled to, so an anchor lands
+     under it without this. */
+  .sec[id] { scroll-margin-top: 64px; }
+
   /* — One flow, one section — */
   /* Nine recordings on one page is a lot of bytes, so only the loop at the
      top plays on its own. The rest carry a poster and load when clicked. */
@@ -249,6 +280,8 @@
   .flow__points li::before {
     content: "·"; position: absolute; left: 6px; color: var(--text-muted);
   }
+  .flow__points strong { color: var(--text-loudest); font-weight: 600; }
+  .card .flow__points { margin-top: 4px; }
   .flow__more { display: inline-block; margin-top: 14px; font-size: 14px; color: var(--primary); }
 
   /* — Flows — */
@@ -309,8 +342,7 @@
 
     <img class="hero__icon" src="icon.png" alt="Orbit">
     <h1 class="hero__title">ORBIT</h1>
-    <p class="hero__tagline">Stay in command of the code you did not write.</p>
-    <p class="hero__subtitle">A terminal cockpit for coding agents. Each task in its own worktree, in phases that stop where you tell them to, and everything written down.</p>
+    <p class="hero__tagline">A cockpit for the agents that write your code.</p>
 
     <div class="install">
       <span class="install__prompt mono">$</span>
@@ -325,20 +357,38 @@
   </div>
 </section>
 
+
 <section class="sec">
-  <div class="grid2">
-    <div class="card">
-      <div class="card__dot card__dot--teal"></div>
-      <h3>Today</h3>
-      <p>The agent writes more code than you can read, and you approve it anyway. Orbit keeps you the one who decides what ships.</p>
-    </div>
-    <div class="card">
-      <div class="card__dot card__dot--pink"></div>
-      <h3>In six months</h3>
-      <p>Nobody on the team knows what is in the repo or why it was decided that way. Orbit keeps the full record of every run next to the code, not in a chat window somebody closed.</p>
-    </div>
+  <div class="card">
+    <div class="card__dot card__dot--teal"></div>
+    <h3>It runs the CLI you already have, and writes down what it did</h3>
+    <ul class="flow__points">
+      <li><strong>A worktree per task, and several going at once.</strong> Its own checkout, its own branch: nothing a run writes is in yours until you say so.</li>
+      <li><strong>Phases that stop where you told them to.</strong> Gates answer with an exit code, not an opinion, and a sandbox refuses what the phase was not allowed to touch.</li>
+      <li><strong>Autopilot, with a brake.</strong> It works the queue on its own, and stops taking new work once the finished tasks nobody has read pile up.</li>
+      <li><strong>Your own CLI, both ways.</strong> One key hands it the terminal in the task's worktree; over MCP it writes tasks, runs them, and reads back what happened while you were away.</li>
+      <li><strong>A supervisor you can redirect.</strong> It reads the result of a run, decides whether it did what was asked, and goes to fix what is missing — in a thread you write into.</li>
+      <li><strong>Facts it carries into every run.</strong> What is true about your code, with a source and a reach, kept outside the model so a change of engine does not lose it.</li>
+      <li><strong>Twelve panes per task.</strong> What it spent, what each gate ran, what the sandbox denied, the timeline event by event, the artifacts, the reasoning it showed its work in, the diff — and what the change reaches that a diff cannot show.</li>
+      <li><strong>Everything written down, beside the code.</strong> Not in a chat window somebody closed: <code class="mono">orbit show</code> reads a run back six months later, and <code class="mono">orbit export</code> writes the whole record out.</li>
+    </ul>
   </div>
 </section>
+
+<nav class="flownav" aria-label="the nine flows">
+  <div class="flownav__inner">
+    <a href="#start"><span class="mono">01</span> start</a>
+    <a href="#menus"><span class="mono">02</span> menus</a>
+    <a href="#run"><span class="mono">03</span> a run</a>
+    <a href="#autopilot"><span class="mono">04</span> autopilot</a>
+    <a href="#parallel"><span class="mono">05</span> in parallel</a>
+    <a href="#reading"><span class="mono">06</span> reading it</a>
+    <a href="#cli"><span class="mono">07</span> the CLI</a>
+    <a href="#supervisor"><span class="mono">08</span> supervisor</a>
+    <a href="#knowledge"><span class="mono">09</span> knowledge</a>
+    <a href="#flows"><span class="mono">10</span> flows</a>
+  </div>
+</nav>
 
 <section class="sec">
   <h2 class="sec__title">The loop</h2>
@@ -358,27 +408,8 @@
   <p class="loop__closer">Then you go back to your CLI, and it can read everything that happened while you were away.</p>
 </section>
 
-<section class="sec">
-  <div class="grid3">
-    <div class="card">
-      <div class="card__dot card__dot--teal"></div>
-      <h3>How do I stay in command?</h3>
-      <p>Gates you place, a supervisor you can redirect, and autopilot with an unread cap so the queue cannot outrun you.</p>
-    </div>
-    <div class="card">
-      <div class="card__dot card__dot--pink"></div>
-      <h3>What did it actually do?</h3>
-      <p>An append-only record of every run: plan, prompts, reasoning, diff, cost, refusals. Agents report through MCP in structured events, not scraped stdout.</p>
-    </div>
-    <div class="card">
-      <div class="card__dot card__dot--amber"></div>
-      <h3>What does it cost me?</h3>
-      <p>Nothing extra. Orbit runs the CLI you already have, under the plan you already pay for. No API key.</p>
-    </div>
-  </div>
-</section>
 
-<section class="sec">
+<section class="sec" id="start">
   <div class="flow__head">
     <span class="flow__num mono">01</span>
     <h2 class="flow__title">Getting started</h2>
@@ -398,7 +429,7 @@
   <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/start.md">Read the page →</a>
 </section>
 
-<section class="sec">
+<section class="sec" id="menus">
   <div class="flow__head">
     <span class="flow__num mono">02</span>
     <h2 class="flow__title">What you can do</h2>
@@ -418,7 +449,7 @@
   <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/menus.md">Read the page →</a>
 </section>
 
-<section class="sec">
+<section class="sec" id="run">
   <div class="flow__head">
     <span class="flow__num mono">03</span>
     <h2 class="flow__title">A run, end to end</h2>
@@ -438,7 +469,7 @@
   <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/run.md">Read the page →</a>
 </section>
 
-<section class="sec">
+<section class="sec" id="autopilot">
   <div class="flow__head">
     <span class="flow__num mono">04</span>
     <h2 class="flow__title">Autopilot</h2>
@@ -458,7 +489,7 @@
   <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/autopilot.md">Read the page →</a>
 </section>
 
-<section class="sec">
+<section class="sec" id="parallel">
   <div class="flow__head">
     <span class="flow__num mono">05</span>
     <h2 class="flow__title">Many tasks at once</h2>
@@ -478,7 +509,7 @@
   <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/parallel.md">Read the page →</a>
 </section>
 
-<section class="sec">
+<section class="sec" id="reading">
   <div class="flow__head">
     <span class="flow__num mono">06</span>
     <h2 class="flow__title">Reading what it did</h2>
@@ -498,7 +529,7 @@
   <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/reading.md">Read the page →</a>
 </section>
 
-<section class="sec">
+<section class="sec" id="cli">
   <div class="flow__head">
     <span class="flow__num mono">07</span>
     <h2 class="flow__title">The CLI, both ways</h2>
@@ -518,7 +549,7 @@
   <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/cli.md">Read the page →</a>
 </section>
 
-<section class="sec">
+<section class="sec" id="supervisor">
   <div class="flow__head">
     <span class="flow__num mono">08</span>
     <h2 class="flow__title">The supervisor</h2>
@@ -538,7 +569,7 @@
   <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/supervisor.md">Read the page →</a>
 </section>
 
-<section class="sec">
+<section class="sec" id="knowledge">
   <div class="flow__head">
     <span class="flow__num mono">09</span>
     <h2 class="flow__title">What Orbit knows</h2>
@@ -556,6 +587,26 @@
       <li>A fact with no source does not get in — a sentence nobody can trace is indistinguishable from one the model made up.</li>
   </ul>
   <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/knowledge.md">Read the page →</a>
+</section>
+
+<section class="sec" id="flows">
+  <div class="flow__head">
+    <span class="flow__num mono">10</span>
+    <h2 class="flow__title">Flows you write yourself</h2>
+  </div>
+  <p class="flow__lede">A flow is a list of phases, each naming its own engine, model, effort, prompt and what it is allowed to touch. Five ship built in. The rest are yours.</p>
+  <video class="loop__frame" poster="flow-flows-poster.jpg"
+         controls muted playsinline preload="none"
+         aria-label="the flows screen: the five that ship and the ones written here, each phase with its engine, its model and whether it stops for a person, and the designer that writes a new one">
+    <source src="flow-flows.webm" type="video/webm">
+    <source src="flow-flows.mp4" type="video/mp4">
+  </video>
+  <ul class="flow__points">
+    <li>The screen shows every flow opened out — each phase, what it runs on, and which of them stop. A flow you cannot read before you pay for it is a flow you are trusting rather than choosing.</li>
+    <li>A phase marked <code class="mono">wait</code> is a gate. That is how you say where the checks go.</li>
+    <li>The phase names are yours: a release flow, a migration flow, a triage flow are the same shape, and all get the same record and the same cockpit.</li>
+  </ul>
+  <a class="flow__more" href="https://github.com/e1i0r/orbit/blob/main/docs/flows.md">Read the page →</a>
 </section>
 
 <section class="sec" style="padding-bottom:96px;">

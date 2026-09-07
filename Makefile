@@ -127,7 +127,7 @@ demo:
 # tapes shoots every recording that can be made against that board and writes
 # assets/ and site/. Three of the nine need a run actually going and are shot
 # by hand; assets/tapes/README.md says which and how.
-SEEDED = flow-start flow-menus flow-reading flow-supervisor flow-knowledge
+SEEDED = flow-start flow-menus flow-reading flow-supervisor flow-knowledge flow-flows
 
 tapes: demo
 	@for t in $(SEEDED); do \
@@ -143,11 +143,16 @@ tapes: demo
 # from a third of the way in rather than from the first frame: the first frame
 # of every one of these is an empty shell, and a page of nine empty shells says
 # nothing about what is in them.
+#
+# A take whose subject arrives late gets its own fraction: flow-start spends
+# its first half in a terminal, and the cockpit — which is what the section is
+# about — only opens at the end.
 posters:
 	@for f in site/flow-*.mp4; do \
 		out=$${f%.mp4}-poster.jpg; \
+		case "$$f" in *flow-start.mp4) frac=0.82 ;; *) frac=0.33 ;; esac; \
 		dur=$$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$$f"); \
-		at=$$(awk -v d="$$dur" 'BEGIN { printf "%.2f", d / 3 }'); \
+		at=$$(awk -v d="$$dur" -v r="$$frac" 'BEGIN { printf "%.2f", d * r }'); \
 		ffmpeg -y -v error -ss "$$at" -i "$$f" -frames:v 1 -q:v 3 "$$out"; \
-		echo "poster $$out"; \
+		echo "poster $$out at $${at}s"; \
 	done

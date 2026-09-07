@@ -1,8 +1,10 @@
 <div align="center">
 
-<img src="assets/logo.png" alt="Orbit" width="360">
+<img src="assets/icon.png" alt="" width="180">
 
-**Stay in command of the code you did not write.**
+# ORBIT
+
+**A cockpit for the agents that write your code.**
 
 [![CI](https://github.com/e1i0r/orbit/actions/workflows/check.yml/badge.svg)](https://github.com/e1i0r/orbit/actions)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -12,10 +14,6 @@
 </div>
 
 ---
-
-A terminal cockpit for coding agents. Each task runs in its own git worktree, in phases that stop where you tell them to, and everything is written down: the plan, the prompts, the reasoning, the diff, the cost, what the agent refused to do.
-
-It runs the CLI you already have — Claude Code, Codex, OpenCode, Antigravity — under the subscription you already pay for. No API key, no second bill.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/e1i0r/orbit/main/install.sh | bash
@@ -27,7 +25,7 @@ curl -fsSL https://raw.githubusercontent.com/e1i0r/orbit/main/install.sh | bash
 
 ## The flows
 
-Nine things you will actually do, each with its own page and its own recording.
+Ten things you will actually do, each with its own page and its own recording.
 
 | | | |
 | --- | --- | --- |
@@ -40,6 +38,7 @@ Nine things you will actually do, each with its own page and its own recording.
 | 7 | [**The CLI, both ways**](docs/cli.md) | hand the terminal to your CLI and take it back; the MCP server it talks through |
 | 8 | [**The supervisor**](docs/supervisor.md) | the second pair of eyes, and the thread you steer it in |
 | 9 | [**What Orbit knows**](docs/knowledge.md) | the facts it carries into every prompt, and how you correct them |
+| 10 | [**Flows you write yourself**](docs/flows.md) | a list of phases, each with its own engine, prompt and permissions; five ship, the rest are yours |
 
 Reference: [keys and screens](docs/cockpit.md) · [engines and models](docs/engines.md)
 
