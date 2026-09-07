@@ -18,31 +18,10 @@ on each, instead of one transcript nobody will open.
 
 ## What a flow is
 
-A list of phases. Each names its own engine, model, reasoning effort, thinking
-mode, prompt, and what it is allowed to touch — `read`, `repo`, `network`.
-
-Five ship built in:
-
-| Flow | Phases | For |
-| --- | --- | --- |
-| `quick` | implement | small changes, minimal overhead |
-| `task` | implement → review ⏸ | the default |
-| `careful` | implement → review ⏸ → fix | mission-critical work |
-| `coverage` | implement → until it passes ↻ → review ⏸ | a loop that goes round until a check is green |
-| `tdd-fuzz-pr` | plan → implement + fuzz → review + PR ⏸ | test-first, ending in a pull request |
-
-`F` in the cockpit lists yours and builds new ones. They are JSON in
-`~/.orbit/flows/`, and the phase names are yours — a release flow is as
-legitimate as a coding one:
-
-```json
-{"name":"ship","phases":[
-  {"name":"validate","engine":"claude","model":"opus","permissions":["read"]},
-  {"name":"tests","engine":"claude","model":"sonnet","permissions":["repo"]},
-  {"name":"pr","engine":"claude","model":"sonnet","feed_output":true,"permissions":["repo"]},
-  {"name":"merge","engine":"claude","model":"opus","wait":true,"permissions":["repo"]}
-]}
-```
+A list of phases, each naming its own engine, model, reasoning effort,
+thinking mode, prompt, and what it is allowed to touch. Five ship built in —
+`quick`, `task`, `careful`, `coverage`, `tdd-fuzz-pr` — and you write your own:
+[flows you write yourself](flows.md).
 
 ## Gates
 

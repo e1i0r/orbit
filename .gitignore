@@ -50,3 +50,6 @@ site/install.sh
 
 # The board the recordings are shot against, rebuilt by `make demo`.
 /.demo/
+
+# Scratch from a browser driving the site locally.
+/.playwright-mcp/

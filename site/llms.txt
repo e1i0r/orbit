@@ -1,6 +1,6 @@
 # Orbit
 
-> Stay in command of the code you did not write. Orbit is a terminal cockpit
+> A cockpit for the agents that write your code. Orbit is a terminal cockpit
 > for coding agents: each task runs in its own git worktree, in phases that
 > stop where you tell them to, and everything is written down — the plan, the
 > prompts, the reasoning, the diff, the cost, what the agent refused to do.
@@ -16,7 +16,7 @@ Built by Elio Rincón ([e1i0.com](https://e1i0.com)).
 
 ## Docs
 
-- [README](https://github.com/e1i0r/orbit#readme): what it is, install, and the nine flows
+- [README](https://github.com/e1i0r/orbit#readme): what it is, install, and the ten flows
 - [Getting started](https://github.com/e1i0r/orbit/blob/main/docs/start.md): install, the MCP server, the first task
 - [What you can do](https://github.com/e1i0r/orbit/blob/main/docs/menus.md): the menu on anything, including what it refuses and why
 - [A run, end to end](https://github.com/e1i0r/orbit/blob/main/docs/run.md): flows, phases and gates
@@ -26,6 +26,7 @@ Built by Elio Rincón ([e1i0.com](https://e1i0.com)).
 - [The CLI, both ways](https://github.com/e1i0r/orbit/blob/main/docs/cli.md): handing the terminal over, and the MCP tools
 - [The supervisor](https://github.com/e1i0r/orbit/blob/main/docs/supervisor.md): the second pair of eyes and the thread you steer it in
 - [What Orbit knows](https://github.com/e1i0r/orbit/blob/main/docs/knowledge.md): facts with a source and a reach, kept outside the model
+- [Flows you write yourself](https://github.com/e1i0r/orbit/blob/main/docs/flows.md): a list of phases, each with its own engine, prompt and permissions
 - [Engines](https://github.com/e1i0r/orbit/blob/main/docs/engines.md): the model and reasoning catalogue of each CLI
 - [Cockpit](https://github.com/e1i0r/orbit/blob/main/docs/cockpit.md): bands, tabs and keybindings
 - [Install script](https://getorbit.sh/install.sh): `curl -fsSL https://getorbit.sh/install.sh | bash`
