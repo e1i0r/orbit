@@ -31,14 +31,12 @@ func digest(ctx Context, args []string) error {
 
 	s, err := store.Open()
 	if err != nil {
-		logger.Error("cli/digest", "open the state root failed: %v", err)
-		return err
+		return fmt.Errorf("open the state root: %w", err)
 	}
 
 	ids, err := s.TaskIDs()
 	if err != nil {
-		logger.Error("cli/digest", "list the tasks failed: %v", err)
-		return err
+		return fmt.Errorf("list the tasks: %w", err)
 	}
 
 	d := view.Digest{}

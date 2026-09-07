@@ -8,6 +8,7 @@ import (
 
 	"charm.land/bubbletea/v2"
 	"github.com/e1i0r/orbit/internal/board"
+	"github.com/e1i0r/orbit/internal/ui/palette"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -162,10 +163,10 @@ func TestWheelAndWatchMsgCommands(t *testing.T) {
 	_ = m.wheel(tea.Mouse{X: 10, Y: 8, Button: tea.MouseWheelUp})
 
 	// 3. Wheel in palette and menu
-	m.palette.open = true
+	m.palette = palette.Open()
 	_ = m.wheel(tea.Mouse{X: 10, Y: 8, Button: tea.MouseWheelDown})
-	m.palette.open = false
-	m.menu.open = true
+	m.palette = palette.State{}
+	m = m.openMenu("")
 	_ = m.wheel(tea.Mouse{X: 10, Y: 8, Button: tea.MouseWheelDown})
 
 	// 4. runCommand and outputPump in watchmsg

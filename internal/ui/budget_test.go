@@ -7,6 +7,7 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/roster"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -31,7 +32,7 @@ func TestTheQueueStopsWhenTheWorkspaceHasSpentItsBudget(t *testing.T) {
 	m, rec := testModel(t, 100, 30)
 	m.seen = true
 
-	held, ok := m.opts.Settings.(*settings)
+	held, ok := m.opts.Settings.(*settingsFile)
 	if !ok {
 		t.Fatalf("the window's settings port is %T, want the fixture's", m.opts.Settings)
 	}
@@ -62,7 +63,7 @@ func TestTheQueueGoesOnUnderTheBudget(t *testing.T) {
 	m, rec := testModel(t, 100, 30)
 	m.seen = true
 
-	held, ok := m.opts.Settings.(*settings)
+	held, ok := m.opts.Settings.(*settingsFile)
 	if !ok {
 		t.Fatalf("the window's settings port is %T, want the fixture's", m.opts.Settings)
 	}
@@ -95,17 +96,17 @@ func TestTheQueueStopsWhenTheQuotaWindowIsNearlySpent(t *testing.T) {
 	m, rec := testModel(t, 100, 30)
 	m.seen = true
 
-	held, ok := m.opts.Settings.(*settings)
+	held, ok := m.opts.Settings.(*settingsFile)
 	if !ok {
 		t.Fatalf("the window's settings port is %T, want the fixture's", m.opts.Settings)
 	}
 
 	held.floor = 20
 
-	m.opts.Quota = func(engine string) QuotaReading {
-		return QuotaReading{
+	m.opts.Quota = func(engine string) roster.Reading {
+		return roster.Reading{
 			Engine: engine, Sourced: true,
-			Windows: []QuotaWindow{{Key: "5h", Label: "5h", Pct: 85, ResetsIn: time.Hour}},
+			Windows: []roster.Window{{Key: "5h", Label: "5h", Pct: 85, ResetsIn: time.Hour}},
 		}
 	}
 
@@ -134,15 +135,15 @@ func TestAnEngineThatChargesIsNotHeldByAQuotaFloor(t *testing.T) {
 	m, rec := testModel(t, 100, 30)
 	m.seen = true
 
-	held, ok := m.opts.Settings.(*settings)
+	held, ok := m.opts.Settings.(*settingsFile)
 	if !ok {
 		t.Fatalf("the window's settings port is %T, want the fixture's", m.opts.Settings)
 	}
 
 	held.floor = 20
 
-	m.opts.Quota = func(engine string) QuotaReading {
-		return QuotaReading{Engine: engine, Money: true, Sourced: true}
+	m.opts.Quota = func(engine string) roster.Reading {
+		return roster.Reading{Engine: engine, Money: true, Sourced: true}
 	}
 
 	tasks := []view.Task{{

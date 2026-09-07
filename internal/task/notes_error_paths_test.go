@@ -61,7 +61,7 @@ func TestAPhaseIsNotRunWithoutTheNotesItWasMeantToCarry(t *testing.T) {
 	gate := breakingGate{t: t, store: s}
 
 	f := flow.Flow{Name: "quick", Phases: []flow.Phase{{Name: "phase-1", Engine: "fake"}}}
-	engines := map[string]engine.Engine{"fake": engine.NewFake("out")}
+	engines := fakes(engine.NewFake("out"))
 
 	err = Run(context.Background(), s, tk, f, engines, gate)
 	if err == nil {

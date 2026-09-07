@@ -19,6 +19,9 @@ import (
 
 const defaultRepo = "e1i0r/orbit"
 
+// updateEndpoint is empty in a real build: the upgrade check goes to GitHub's
+// own API, and this exists so a test can put a server it controls in front of
+// it without the suite ever leaving the machine.
 var updateEndpoint = ""
 
 type releaseInfo struct {

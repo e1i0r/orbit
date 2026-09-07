@@ -1,0 +1,179 @@
+package panes
+
+import (
+	"fmt"
+	"strings"
+
+	"charm.land/lipgloss/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/theme"
+	"github.com/e1i0r/orbit/internal/view"
+)
+
+type gateCheck struct {
+	name     string
+	duration string
+	passed   bool
+	command  string
+	reason   string
+	phase    string
+}
+
+// gateNameCells is the gates tab's name column, and gateWordCells the verdict
+// beside it. Sixteen fits the gate names a flow declares and truncates a
+// longer one, which is the trade the log's phase column already makes.
+const (
+	gateNameCells = 16
+	gateWordCells = 6
+)
+
+// Gates is what has to pass before a phase stands, and beside it which
+// check each row that folds stands for. The two are built in one pass for
+// the reason the timeline is: a hit test that counted the rows again would
+// be a second opinion about where a row is.
+func Gates(e Env) ([]string, map[int]int) {
+	p := e.Words
+	if e.Failed != "" {
+		return []string{"  " + theme.Paint(theme.Bad).Render(e.Failed)}, nil
+	}
+
+	var checks []gateCheck
+
+	for _, entry := range e.Entries {
+		if entry.What() == view.EntryGatePassed || entry.What() == view.EntryGateFailed {
+			gName := entry.Gate
+			if gName == "" {
+				gName = "check"
+			}
+
+			cmd := entry.Text
+			if cmd == "" {
+				cmd = entry.Tool
+			}
+
+			checks = append(checks, gateCheck{
+				name:     gName,
+				passed:   entry.What() == view.EntryGatePassed,
+				command:  cmd,
+				reason:   entry.Cause,
+				phase:    entry.Phase,
+				duration: "ok",
+			})
+		}
+	}
+
+	out := []string{
+		"",
+		"  " + theme.Paint(theme.Accent).Bold(true).Render(p.T("gates.title", "Verification Gates & Checks")),
+		"  " + theme.Paint(theme.Dim).Render(p.T("gates.subtitle", "what needs to pass — by attempt, and why it stopped")),
+		"",
+	}
+
+	if len(checks) == 0 {
+		return append(out, "  "+theme.Paint(theme.Dim).Render(p.T("gates.empty", "no verification gates have run for this task"))), nil
+	}
+
+	passedCount := 0
+
+	for _, c := range checks {
+		if c.passed {
+			passedCount++
+		}
+	}
+
+	summaryRole := theme.OK
+	summaryWord := p.T("gates.pass", "pass")
+
+	if failed := len(checks) - passedCount; failed > 0 {
+		summaryRole = theme.Bad
+		summaryWord = p.P("gates.badge_failed", failed, "{n} failed", "{n} failed")
+	}
+
+	out = append(out, fmt.Sprintf("  %s %s   %d/%d %s   %s",
+		theme.Paint(theme.Accent).Render("▼"),
+		theme.Paint(theme.Accent).Bold(true).Render(p.T("gates.attempt", "attempt 1")),
+		passedCount, len(checks),
+		p.T("gates.passed_word", "passed"),
+		theme.Paint(summaryRole).Bold(true).Render(summaryWord),
+	))
+	out = append(out, "")
+
+	heads, w := map[int]int{}, max(e.Frame.Body.W, 1)
+
+	for i, c := range checks {
+		rows, folds := e.gateRows(c, i, w)
+		if folds {
+			heads[len(out)] = i
+		}
+
+		out = append(out, rows...)
+	}
+
+	return append(out, ""), heads
+}
+
+// gateRows is one check — whether it passed, what it ran, and why it stopped
+// — and whether there is more to it than the row is showing.
+//
+// Whether it folds is decided here, by wrapping what it has to the measure it
+// will be drawn at: a check whose whole story fits beside its name is offered
+// no arrow, because opening it would put nothing new on the screen.
+func (e Env) gateRows(c gateCheck, i, w int) ([]string, bool) {
+	p := e.Words
+
+	icon, word, role := "✅", p.T("gates.pass", "pass"), theme.OK
+	if !c.passed {
+		icon, word, role = "❌", p.T("gates.fail", "fail"), theme.Bad
+	}
+
+	// The columns are padded on the plain word and painted afterwards: a
+	// width verb counts the bytes of an escape sequence as cells, so a
+	// padded rendered string is a column that moves with the palette.
+	head := "  " + theme.Paint(role).Render(icon) + " " +
+		theme.Paint(theme.Accent).Render(cells.Pad(c.name, gateNameCells, false)) + "  " +
+		theme.Paint(role).Render(cells.Pad(word, gateWordCells, false)) + "  "
+
+	lead := 2 + lipgloss.Width(icon) + 1 + gateNameCells + 2 + gateWordCells + 2
+	availW := max(20, w-lead-lipgloss.Width(cells.FoldShut)-2)
+
+	said := []string{c.command}
+	if !c.passed && c.reason != "" {
+		said = append(said, p.T("gates.why_failed", "why it failed ·")+" "+c.reason)
+	}
+
+	// Wrapped and then cut: a gate is a shell command, and a command with a
+	// long path in it has nothing to break at, so a row can come back from
+	// the wrap longer than it was wrapped to.
+	var body []string
+
+	for _, l := range said {
+		for _, wl := range cells.Lines(l, availW) {
+			body = append(body, cells.Fit(wl, availW))
+		}
+	}
+
+	if len(body) == 0 {
+		return []string{strings.TrimRight(head, " ")}, false
+	}
+
+	if len(body) == 1 {
+		return []string{head + strings.Repeat(" ", lipgloss.Width(cells.FoldShut)) + theme.Paint(theme.Dim).Render(body[0])}, false
+	}
+
+	open := e.row(i)
+	mark := theme.Text(theme.Tertiary).Render(cells.Fold(open))
+
+	if !open {
+		return []string{head + mark + theme.Paint(theme.Dim).Render(body[0])}, true
+	}
+
+	out := []string{head + mark + theme.Text(theme.Secondary).Render(body[0])}
+
+	indent := strings.Repeat(" ", lead+lipgloss.Width(cells.FoldShut))
+	for _, l := range body[1:] {
+		out = append(out, indent+theme.Text(theme.Secondary).Render(l))
+	}
+
+	return out, true
+}

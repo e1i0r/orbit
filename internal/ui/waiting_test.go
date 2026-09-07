@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/e1i0r/orbit/internal/ui/flows"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -25,7 +26,7 @@ func TestEveryWaitSaysTheSameFourThings(t *testing.T) {
 		{
 			name: "a draft",
 			set: func(m Model) Model {
-				m.flows.saying, m.flows.sayAt = true, m.now.Add(-42*time.Second)
+				m.flows = flows.Asking("agy", m.now.Add(-42*time.Second))
 				return m
 			},
 			says: "42s",
@@ -84,7 +85,7 @@ func TestEveryWaitSaysTheSameFourThings(t *testing.T) {
 func TestTwoWaitsAtOnceSayHowManyThereAre(t *testing.T) {
 	m, _ := testModel(t, 140, 30)
 	m.now = time.Now()
-	m.flows.saying, m.flows.sayAt = true, m.now.Add(-time.Second)
+	m.flows = flows.Asking("agy", m.now.Add(-time.Second))
 	m.supervisorBusy, m.supervisorAt = true, m.now
 
 	if got := m.waitingLine(); !strings.Contains(got, "1") {

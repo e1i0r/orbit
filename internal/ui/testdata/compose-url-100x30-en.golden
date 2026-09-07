@@ -5,15 +5,15 @@
 
      1 Manual     [ 2 From URL (Linear / Jira / GitHub) ] 
 
-❯  flow:            ● 🛡️ careful     ⚡ coverage     🚀 quick     ⚡ task     ⚡ tdd-fuzz-pr     ➕…
+   flow:            ● 🛡️ careful     ⚡ coverage     🚀 quick     ⚡ task     ⚡ tdd-fuzz-pr     ➕…
                   ↳ 1 implement · claude/opus
                     2 review · claude/opus · ⏸ waits for you
                     3 fix · claude/opus
                     Thorough multiphase workflow with human review gates and fix cycles. Best for
                     complex, mission-critical features where code quality and careful verification
                     are essential.
-   url:           ┌────────────────────────────────────────────────────────────┐   📋 Paste (^V)  
-                  │ https://linear.app/... or https://...atlassian.net/...     │
+❯  url:           ┌────────────────────────────────────────────────────────────┐   📋 Paste (^V)  
+                  │  https://linear.app/... or https://...atlassian.net/...    │
                   │                                                            │
                   │                                                            │
                   └────────────────────────────────────────────────────────────┘

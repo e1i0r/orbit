@@ -2,26 +2,29 @@ package ui
 
 import (
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/ui/palette"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 func TestModalScreensNavigationAndRender(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 
 	// 1. Command Palette
-	m.palette.open = true
+	m.palette = palette.Open()
 	if lines := m.paletteRows(20, 100); len(lines) == 0 {
 		t.Error("expected paletteRows to render")
 	}
 
-	m.palette.open = false
+	m.palette = palette.State{}
 
 	// 2. Menu Rows
-	m.menu.open = true
+	m = m.openMenu("")
 	if lines := m.menuRows(20, 100); len(lines) == 0 {
 		t.Error("expected menuRows to render")
 	}
 
-	m.menu.open = false
+	m = m.closeMenu()
 
 	// 3. Engines screen
 	m.screen = screenEngines
@@ -80,14 +83,14 @@ func TestStartDialogDialsAndKeys(t *testing.T) {
 }
 
 func TestThemeSwitchingAndPalettes(t *testing.T) {
-	for _, themeName := range AvailableThemes() {
-		SetCurrentTheme(themeName)
+	for _, themeName := range theme.AvailableThemes() {
+		theme.SetCurrentTheme(themeName)
 
-		palette := currentPalette()
+		palette := theme.CurrentPalette()
 		if palette.OK == "" || palette.Accent == "" {
 			t.Errorf("theme %q has empty OK or Accent tokens", themeName)
 		}
 	}
 	// Reset to default frauddi
-	SetCurrentTheme("frauddi")
+	theme.SetCurrentTheme("frauddi")
 }

@@ -9,7 +9,11 @@ package ui
 // remembers to write — it is a frame that changes the day a field comes
 // back.
 
-import "testing"
+import (
+	"testing"
+
+	tea "charm.land/bubbletea/v2"
+)
 
 // TestTheFormIsTheScreenItWasSpecifiedAs. Three fields in the manual tab —
 // the flow, the id, the task — and two in the tab that reads an issue URL.
@@ -17,16 +21,23 @@ func TestTheFormIsTheScreenItWasSpecifiedAs(t *testing.T) {
 	for _, c := range []struct {
 		name string
 		lang string
-		tab  int
+		// url is whether the tab that reads an issue is the one open. It is
+		// reached by its number, the way a reader reaches it: the tab is the
+		// form's own state and the window can only ask through the keys.
+		url bool
 	}{
-		{"compose-100x30-en", "en", composeTabManual},
-		{"compose-100x30-es", "es", composeTabManual},
-		{"compose-url-100x30-en", "en", composeTabURL},
+		{"compose-100x30-en", "en", false},
+		{"compose-100x30-es", "es", false},
+		{"compose-url-100x30-en", "en", true},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			m := modelWith(t, printerFor(t, c.lang), fixtureBoard(fixtureTasks(), 4), 100, 30, nil)
 			m = m.openCompose()
-			m.compose.tab = c.tab
+
+			if c.url {
+				next, _ := m.composeKey(tea.KeyPressMsg{Code: '2', Text: "2"})
+				m = asModel(t, next)
+			}
 
 			golden(t, c.name, renderAt(t, m, 100, 30))
 		})

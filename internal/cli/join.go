@@ -47,8 +47,7 @@ func joinRepo(ctx Context, args []string) error {
 
 	wt, err := joined(*dir, *id, name)
 	if err != nil {
-		logger.Error("cli/join", "join %q to task %q failed: %v", name, *id, err)
-		return err
+		return fmt.Errorf("join %q to task %q: %w", name, *id, err)
 	}
 
 	logger.Info("cli/join", "%s joined task %s at %s", name, *id, wt)

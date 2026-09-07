@@ -9,10 +9,12 @@ import (
 	"strconv"
 	"strings"
 
-	"charm.land/bubbles/v2/key"
 	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/board"
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/point"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 const (
@@ -23,10 +25,9 @@ const (
 	pipOn  = "●"
 	pipOff = "○"
 
-	// dot joins the pieces of a sentence the window assembles out of facts
+	// cells.Dot joins the pieces of a sentence the window assembles out of facts
 	// — an id, a phase, a model. A comma would imply somebody wrote the
 	// sentence.
-	dot = " · "
 
 	// headerGap is the space between two of the header's right-hand fields
 	// and hintGap the space between two hints in the key bar. Four and two,
@@ -94,18 +95,18 @@ func (m Model) headerLayout(w int) (string, []headerZone) {
 	fields := m.headerFields()
 	for {
 		right := strings.Join(fieldTexts(fields), headerGap)
-		if line, zones, ok := m.headerLeft(w-lipgloss.Width(right), right != ""); ok {
-			gap := w - lipgloss.Width(line) - lipgloss.Width(right)
+		if left, ok := m.headerLeft(w-lipgloss.Width(right), right != ""); ok {
+			gap := w - lipgloss.Width(left.line) - lipgloss.Width(right)
 
-			return line + strings.Repeat(" ", gap) + right,
-				append(zones, placeFields(fields, lipgloss.Width(line)+gap)...)
+			return left.line + strings.Repeat(" ", gap) + right,
+				append(left.zones, placeFields(fields, lipgloss.Width(left.line)+gap)...)
 		}
 
 		if len(fields) == 0 {
-			line := fit(m.name(), w)
+			line := cells.Fit(m.name(), w)
 
 			return line, []headerZone{{
-				target: Target{Kind: TargetHeaderField, Field: "orbit"},
+				target: point.Target{Kind: point.HeaderField, Field: "orbit"},
 				w:      lipgloss.Width(line),
 			}}
 		}
@@ -127,14 +128,23 @@ func (m Model) headerLayout(w int) (string, []headerZone) {
 // opposite of what fit does everywhere else in this file and is right here
 // for one reason: the last two segments of a path identify it and the first
 // two rarely do.
-func (m Model) headerLeft(w int, spaced bool) (string, []headerZone, bool) {
+// headerSide is one side of the header drawn: the line, and the boxes on it
+// a click can land in. It is a struct because the line and its zones are one
+// drawing — returned apart, a caller could keep one and drop the other, and
+// the header would answer clicks for text it is no longer showing.
+type headerSide struct {
+	line  string
+	zones []headerZone
+}
+
+func (m Model) headerLeft(w int, spaced bool) (headerSide, bool) {
 	if spaced {
 		w--
 	}
 
 	name := m.name()
 	zones := []headerZone{{
-		target: Target{Kind: TargetHeaderField, Field: "orbit"},
+		target: point.Target{Kind: point.HeaderField, Field: "orbit"},
 		w:      lipgloss.Width(name),
 	}}
 
@@ -142,22 +152,25 @@ func (m Model) headerLeft(w int, spaced bool) (string, []headerZone, bool) {
 	if badges := m.queueBadges(); len(badges) > 0 {
 		full := name + "  " + strings.Join(badgeTexts(badges), " ")
 		if lipgloss.Width(full) <= w {
-			return full, append(zones, placeBadges(badges, lipgloss.Width(name)+2)...), true
+			return headerSide{
+				line:  full,
+				zones: append(zones, placeBadges(badges, lipgloss.Width(name)+2)...),
+			}, true
 		}
 	}
 
 	for root := m.opts.Root; ; {
 		line := name
 		if root != "" {
-			line = name + "  " + Chrome().Render(root)
+			line = name + "  " + theme.Chrome().Render(root)
 		}
 
 		if lipgloss.Width(line) <= w {
-			return line, zones, true
+			return headerSide{line: line, zones: zones}, true
 		}
 
 		if root == "" {
-			return "", nil, false
+			return headerSide{}, false
 		}
 
 		root = shorten(root)
@@ -183,10 +196,10 @@ func (m Model) name() string {
 	)
 
 	if m.showingEverything() {
-		return PillSelected("◉ orbit", fg, bg)
+		return theme.PillSelected("◉ orbit", fg, bg)
 	}
 
-	return Pill("◉ orbit", fg, bg)
+	return theme.Pill("◉ orbit", fg, bg)
 }
 
 // showingEverything reports whether the board is holding nothing back, which
@@ -227,7 +240,7 @@ func (m Model) headerFields() []headerField {
 		ver := "v" + strings.TrimPrefix(m.upgradeAvailable, "v")
 		notice := p.T("header.upgrade_notice", "{version} available · orbit upgrade",
 			about("version", ver))
-		fields = append(fields, headerField{text: Pill(" ✨ "+notice+" ", inkUpgrade.fg, inkUpgrade.bg)})
+		fields = append(fields, headerField{text: theme.Pill(" ✨ "+notice+" ", theme.InkUpgrade.Fg, theme.InkUpgrade.Bg)})
 	}
 
 	// Repos chip.
@@ -239,7 +252,7 @@ func (m Model) headerFields() []headerField {
 	// it cost the band counts their place at a hundred cells, to repeat a
 	// number the status line already gives and the bands already add up to.
 	reposText := p.P("header.repos", m.board.Repos, "{n} repo", "{n} repos")
-	fields = append(fields, headerField{"repos", Chrome().Render("📦 " + reposText)})
+	fields = append(fields, headerField{"repos", theme.Chrome().Render("📦 " + reposText)})
 
 	fields = append(fields, m.knowledgeChip()...)
 
@@ -252,12 +265,12 @@ func (m Model) headerFields() []headerField {
 	// and the quota screen is where all of it is written down. It sits after
 	// the engine because it is that engine's number.
 	if q := m.quotaChip(); q != "" {
-		fields = append(fields, headerField{"quota", Chrome().Render("⏳ " + q)})
+		fields = append(fields, headerField{"quota", theme.Chrome().Render("⏳ " + q)})
 	}
 
 	// Language chip
 	lang := p.T("header.lang_badge", "EN")
-	fields = append(fields, headerField{"lang", Chrome().Render("🌐 " + lang)})
+	fields = append(fields, headerField{"lang", theme.Chrome().Render("🌐 " + lang)})
 
 	fields = append(fields, m.runningField(p)...)
 	fields = append(fields, m.brakeField(p)...)
@@ -267,80 +280,8 @@ func (m Model) headerFields() []headerField {
 	if m.atUnreadCap(unread) {
 		brakeText := p.T("header.unread_brake", "brake ({n} unread)",
 			about("n", strconv.Itoa(unread)))
-		fields = append(fields, headerField{text: Paint(Warn).Render("⚠️ " + brakeText)})
+		fields = append(fields, headerField{text: theme.Paint(theme.Warn).Render("⚠️ " + brakeText)})
 	}
 
 	return fields
-}
-
-// hints are the bar's entries, in the order they are given up backwards.
-//
-// Everything about the task under the cursor comes from Affordances, so a
-// key the bar offers is a key that will not be refused when it is pressed.
-// The bar shows what can be done; the menu, one level down, shows what
-// cannot and why.
-func (m Model) hints() []barHint {
-	switch m.screen {
-	case screenDetail:
-		return m.detailHints()
-	case screenStart:
-		return m.startHints()
-	}
-
-	var out []barHint
-
-	r, ok := m.selected()
-	if ok {
-		out = append(out, hint("↑↓", m.opts.Words.T("key.move", "move")), hintFor(m.keys.Open))
-	}
-
-	out = append(out, hintFor(m.keys.Start))
-	if ok && !r.head {
-		for _, a := range m.keys.Affordances(r.task, m.conditions(r.task)) {
-			if a.OK && a.Key.Help().Key != m.keys.Open.Help().Key {
-				out = append(out, hintFor(a.Key))
-			}
-		}
-	}
-
-	// On the bar and not only in the help overlay: a key a reader never
-	// sees is a key they never press.
-	return append(out, hintFor(m.keys.Supervisor), hintFor(m.keys.Flows), hintFor(m.keys.Filter))
-}
-
-// hintFor is one binding as the bar prints it: the glyph a reader sees, the
-// description beside it, and the keystroke a click on it would send.
-//
-// The keystroke is the binding's own first key rather than the glyph, and
-// the two are not the same string — ⏎ is drawn and enter is pressed. Taking
-// it from the binding is also what keeps a clicked hint and a pressed key on
-// one path: both arrive at the board's map as the same keystroke, so a verb
-// cannot be reachable by one and not by the other.
-func hintFor(b key.Binding) barHint {
-	h := hint(b.Help().Key, b.Help().Desc)
-	h.key = string(firstKey(b))
-
-	return h
-}
-
-// hint is the same for a pair of keys with one meaning — the arrows — which
-// has no binding of its own and so no single keystroke to send. It is drawn
-// and it is inert.
-func hint(glyph, desc string) barHint {
-	return barHint{text: Paint(Accent).Render("["+glyph+"]") + " " + Chrome().Render(desc)}
-}
-
-// hintKey is a hint whose glyph is the whole of the keystroke it sends.
-//
-// Some of what the task view answers is matched by the letter inside
-// detailKey rather than by a binding in m.keys, and drawn with hint those
-// were drawn as keys and clicked as nothing: [m] tab menu, [v] md / raw and
-// [e] expand did what pressing them does and nothing at all from the
-// pointer. A hint that names a key a reader can press is a hint they can
-// click, and the click sends that key.
-func hintKey(glyph, desc string) barHint {
-	h := hint(glyph, desc)
-	h.key = glyph
-
-	return h
 }

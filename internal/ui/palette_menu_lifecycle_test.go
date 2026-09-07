@@ -32,7 +32,7 @@ func TestPaletteAndMenuFullLifecycle(t *testing.T) {
 	// 1. Open Palette with ':'
 	sendKey(':', 0, "")
 
-	if !m.palette.open {
+	if !m.palette.Up() {
 		t.Error("expected palette to be open")
 	}
 
@@ -61,14 +61,14 @@ func TestPaletteAndMenuFullLifecycle(t *testing.T) {
 	// Close palette with Esc
 	sendKey(0, tea.KeyEsc, "esc")
 
-	if m.palette.open {
+	if m.palette.Up() {
 		t.Error("expected palette to be closed")
 	}
 
 	// 2. Open Menu with 'm'
 	sendKey('m', 0, "")
 
-	if !m.menu.open {
+	if !m.menu.Up() {
 		t.Error("expected menu to be open")
 	}
 
@@ -88,12 +88,7 @@ func TestPaletteAndMenuFullLifecycle(t *testing.T) {
 	// Close menu with Esc
 	sendKey(0, tea.KeyEsc, "esc")
 
-	if m.menu.open {
+	if m.menu.Up() {
 		t.Error("expected menu to be closed")
-	}
-
-	// 3. Alias check
-	if !matchesSettingsAlias("conf") || !matchesSettingsAlias("ajus") {
-		t.Error("expected matchesSettingsAlias to match valid prefixes")
 	}
 }

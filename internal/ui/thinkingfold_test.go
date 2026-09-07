@@ -12,6 +12,8 @@ import (
 
 	"charm.land/lipgloss/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/point"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -37,7 +39,7 @@ func TestAThoughtWithMoreToShowSaysSo(t *testing.T) {
 		t.Fatalf("the reasoning of the first phase is not on the pane:\n%s", strings.Join(lines, "\n"))
 	}
 
-	if !strings.Contains(lines[first-1], foldShut) {
+	if !strings.Contains(lines[first-1], cells.FoldShut) {
 		t.Errorf("a block with more to say does not offer to open: %q", lines[first-1])
 	}
 
@@ -50,7 +52,7 @@ func TestAThoughtWithMoreToShowSaysSo(t *testing.T) {
 		t.Fatalf("the reasoning of the failed phase is not on the pane:\n%s", strings.Join(lines, "\n"))
 	}
 
-	if strings.Contains(lines[solo-1], foldShut) || strings.Contains(lines[solo-1], foldOpen) {
+	if strings.Contains(lines[solo-1], cells.FoldShut) || strings.Contains(lines[solo-1], cells.FoldOpen) {
 		t.Errorf("a block with nothing to open offers an arrow anyway: %q", lines[solo-1])
 	}
 
@@ -69,13 +71,13 @@ func TestAThoughtWithMoreToShowSaysSo(t *testing.T) {
 func TestPointingAtAThoughtOpensAndClosesIt(t *testing.T) {
 	m, lines := thinking(t, fixtureEntries())
 
-	y := rowOf(lines, foldShut)
+	y := rowOf(lines, cells.FoldShut)
 	if y < 0 {
 		t.Fatalf("no block of the thinking pane offers to open:\n%s", strings.Join(lines, "\n"))
 	}
 
 	at := m.hit(30, y)
-	if at.Kind != TargetPaneRow {
+	if at.Kind != point.PaneRow {
 		t.Fatalf("the row that offers to open answers as %+v, want an entry of the record", at)
 	}
 
@@ -85,7 +87,7 @@ func TestPointingAtAThoughtOpensAndClosesIt(t *testing.T) {
 	}
 
 	head := rowOf(shown, "wrote retry.go") - 1
-	if head < 0 || !strings.Contains(shown[head], foldOpen) {
+	if head < 0 || !strings.Contains(shown[head], cells.FoldOpen) {
 		t.Errorf("an open block is not drawn as open: %q", shown[max(head, 0)])
 	}
 
@@ -132,7 +134,7 @@ func TestAThoughtIsWrappedAndCutToThePaneItIsDrawnOn(t *testing.T) {
 
 			// The row as the pane holds it, not as the window pads it out or
 			// tracks scroll on the right margin.
-			clean := strings.TrimRight(strings.TrimRight(l, scrollRail+scrollThumb), " ")
+			clean := strings.TrimRight(strings.TrimRight(l, cells.Rail+cells.Thumb), " ")
 			if w := lipgloss.Width(clean); w > m.frame.Body.W-2 {
 				t.Errorf("row %d runs to %d cells on a pane of %d: %q", i, w, m.frame.Body.W, l)
 			}

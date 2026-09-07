@@ -5,12 +5,16 @@ package ui
 // edge firstKey exists to answer safely.
 
 import (
+	"strings"
 	"testing"
 	"time"
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/point"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -21,7 +25,7 @@ func paneBodyY(t *testing.T, m Model) int {
 	t.Helper()
 
 	for y := m.frame.Body.Y; y < m.frame.Body.Y+m.frame.Body.H; y++ {
-		if m.hit(m.frame.Body.W/2, y).Kind == TargetPaneBody {
+		if m.hit(m.frame.Body.W/2, y).Kind == point.PaneBody {
 			return y
 		}
 	}
@@ -81,13 +85,13 @@ func TestWheelScrollsWhicheverScreenIsUnderIt(t *testing.T) {
 	menu = menu.openMenu("")
 
 	afterMenuDown := menu.wheel(tea.Mouse{X: 5, Y: menu.frame.Body.Y, Button: tea.MouseWheelDown})
-	if afterMenuDown.menu.sel == menu.menu.sel {
+	if afterMenuDown.menu.At() == menu.menu.At() {
 		t.Error("wheel down over an open menu did not move its selection")
 	}
 
 	afterMenuUp := afterMenuDown.wheel(tea.Mouse{X: 5, Y: menu.frame.Body.Y, Button: tea.MouseWheelUp})
-	if afterMenuUp.menu.sel != menu.menu.sel {
-		t.Errorf("wheel up should have wound the selection back to %d, got %d", menu.menu.sel, afterMenuUp.menu.sel)
+	if afterMenuUp.menu.At() != menu.menu.At() {
+		t.Errorf("wheel up should have wound the selection back to %d, got %d", menu.menu.At(), afterMenuUp.menu.At())
 	}
 
 	// 3. The palette's selection moves the same way.
@@ -95,8 +99,9 @@ func TestWheelScrollsWhicheverScreenIsUnderIt(t *testing.T) {
 	pal.opts.Commands = []Command{{Name: "new"}, {Name: "repos"}, {Name: "flows"}}
 	pal = pal.openPalette()
 
+	// The selection is read where the reader reads it: which row is marked.
 	afterPalDown := pal.wheel(tea.Mouse{X: 5, Y: pal.frame.Body.Y, Button: tea.MouseWheelDown})
-	if afterPalDown.palette.sel == pal.palette.sel {
+	if marked(afterPalDown.paletteRows(20, 100)) == marked(pal.paletteRows(20, 100)) {
 		t.Error("wheel down over the palette did not move its selection")
 	}
 
@@ -139,4 +144,15 @@ func TestFirstKeyAnswersEmptyForABindingWithNoKeys(t *testing.T) {
 	if k := firstKey(m.keys.Down); k == "" {
 		t.Error("firstKey on a real binding answered empty")
 	}
+}
+
+// marked is the row the cursor is on, as plain text.
+func marked(rows []string) string {
+	for _, row := range rows {
+		if strings.Contains(row, cells.Mark) {
+			return ansi.Strip(row)
+		}
+	}
+
+	return ""
 }

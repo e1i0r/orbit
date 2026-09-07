@@ -86,22 +86,6 @@ func TestASwitchFlippedOnScreenWaitsForTheSameLock(t *testing.T) {
 	}
 }
 
-func TestThemeDefaultsToMonokaiWhenNobodyHasChosenOne(t *testing.T) {
-	s, err := store.New(t.TempDir())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	cfg, err := newSettings(s)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if got := cfg.Theme(); got != "monokai" {
-		t.Errorf("Theme() on a fresh store = %q, want monokai", got)
-	}
-}
-
 func TestSettingsAdapterWriteFailsWhenSettingsCannotBeReread(t *testing.T) {
 	home := t.TempDir()
 

@@ -1,22 +1,11 @@
 package ui
 
-// The diff tab: what the task changed, and the one key that leaves the
-// window for an editor.
+// The one key of the diff pane that leaves the window, and how a row of it
+// is turned back into a file and a line.
 //
-// It is git's own output, coloured on the two characters that carry the
-// meaning and nothing else. There is no syntax highlighting and there will
-// not be: it would mean a lexer per language in a terminal cockpit, and the
-// question this pane answers — what did the agent change — is answered by
-// the plus and the minus.
-//
-// Long lines scroll rather than wrap. A diff of a generated file arrives as
-// one line of several thousand cells, and wrapping it would push the rest of
-// the hunk off the bottom of the screen; the pane cuts, and ← and → move
-// along it.
-//
-// Running git and waiting for it is gitdiff.go's job, not this file's: what
-// is here reads the answer once there is one — which file a line belongs
-// to, what colour a line is, and which file and line the editor opens.
+// Running git and waiting for it is gitdiff.go's job and drawing the answer
+// is internal/ui/panes; what is here is the walk from a row the reader is
+// looking at to the file and line an editor should open at.
 
 import (
 	"cmp"
@@ -27,76 +16,7 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
-
-	"github.com/e1i0r/orbit/internal/view"
 )
-
-// diffLines is the diff tab's content, ready for the pane.
-//
-// It answers in one of three states, because there are three different true
-// things it can say. Before the first diffMsg lands there is no answer yet,
-// and that is not the same fact as an answer that came back empty —
-// collapsing the two, which this pane once did, is how a git that hangs
-// ends up asserting "no changes" on a question it was never actually
-// answered. An answer that came back as a failure is the third state, and
-// it is said rather than folded into the diff text.
-// diffLines is the diff pane's content, ready for the pane.
-func (m Model) diffLines() []string {
-	lines, _ := m.diffRows()
-
-	return lines
-}
-
-func (m Model) diffRows() ([]string, map[int]int) {
-	p := m.opts.Words
-
-	t, isTask := m.task(m.detail)
-	if isTask && view.BandOf(t) == view.ToDo {
-		return []string{" " + Paint(Dim).Render(p.T("diff.empty_todo", "no changes yet — task is in the todo queue (press [n] to start)"))}, nil
-	}
-
-	if !m.diffKnown {
-		return []string{" " + Paint(Dim).Render(p.T("diff.pending", "reading this task's worktree…"))}, nil
-	}
-
-	if m.diffErr != nil {
-		// git's own words, matched before they are translated: a missing
-		// worktree is recognised by what git said, and what git said is
-		// the same sentence whatever language this window is drawn in.
-		raw := m.diffErr.Error()
-		if strings.Contains(raw, "cannot change to") || strings.Contains(raw, "no such file or directory") {
-			return []string{" " + Paint(Dim).Render(p.T("diff.empty_no_worktree", "no working tree modifications recorded"))}, nil
-		}
-
-		// The bound is said without the command line errSaid keeps, which
-		// belongs in a log and not in a pane three lines tall.
-		said := m.errSaid(m.diffErr)
-		if errors.Is(m.diffErr, errGitTimedOut) {
-			said = p.T("err.git_timeout", "git did not answer in time")
-		}
-
-		return []string{" " + Paint(Bad).Render(said)}, nil
-	}
-
-	if strings.TrimSpace(m.diff) == "" {
-		return []string{" " + Paint(Dim).Render(p.T("diff.unchanged", "no changes in this task's worktree"))}, nil
-	}
-
-	files := parseDiffFiles(strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n"))
-	rationales := extractFileRationales(m.entries, files, p)
-	lines, drawn := formatStructuredDiff(m.diff, m.width, p, rationales, !m.hideDiffRationale, m.collapsedFiles, m.expandedDetail)
-
-	// Where each card landed, taken from the pass that drew it rather than
-	// counted again afterwards: a second count is a second opinion about
-	// where a row is, and the day they disagree the pointer collapses the
-	// file above the one it is on.
-	heads := make(map[int]int, len(drawn))
-	for i, f := range drawn {
-		heads[f.StartLine] = i
-	}
-
-	return lines, heads
-}
 
 // edit opens the file under the top of the diff in $EDITOR.
 //

@@ -6,11 +6,14 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/patch"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
 // renderDiffFileSelect renders an HTML-like dropdown / select component for changed files.
-func renderDiffFileSelect(files []diffFile, activeIdx int, width int, p *words.Printer, collapsed map[string]bool, isOpen bool, cursorIdx int) string {
+func renderDiffFileSelect(files []patch.File, activeIdx int, width int, p *words.Printer, collapsed map[string]bool, isOpen bool, cursorIdx int) string {
 	if len(files) == 0 {
 		return ""
 	}
@@ -24,13 +27,13 @@ func renderDiffFileSelect(files []diffFile, activeIdx int, width int, p *words.P
 		}
 
 		curr := files[activeIdx]
-		icon := fileIcon(curr.Path)
-		badge := formatFileBadge(curr.Status)
-		stats := fmt.Sprintf("%s %s", Paint(OK).Render(fmt.Sprintf("+%d", curr.Added)), Paint(Bad).Render(fmt.Sprintf("-%d", curr.Deleted)))
+		icon := patch.Icon(curr.Path)
+		badge := patch.Badge(curr.Status)
+		stats := fmt.Sprintf("%s %s", theme.Paint(theme.OK).Render(fmt.Sprintf("+%d", curr.Added)), theme.Paint(theme.Bad).Render(fmt.Sprintf("-%d", curr.Deleted)))
 
 		collapseTag := ""
 		if collapsed != nil && collapsed[curr.Path] {
-			collapseTag = Paint(Warn).Render(" *" + p.T("diff.collapsed_tag", "collapsed"))
+			collapseTag = theme.Paint(theme.Warn).Render(" *" + p.T("diff.collapsed_tag", "collapsed"))
 		}
 
 		title := fmt.Sprintf("📁 %s [%d/%d]", p.T("diff.select_title", "File"), activeIdx+1, len(files))
@@ -42,14 +45,14 @@ func renderDiffFileSelect(files []diffFile, activeIdx int, width int, p *words.P
 		topBorder := strings.Repeat("─", borderW)
 
 		cardTop := fmt.Sprintf("  ┌─ %s %s %s─┐",
-			Paint(Accent).Bold(true).Render(title),
-			Paint(Dim).Render(topBorder),
-			Paint(Dim).Render(actionHint),
+			theme.Paint(theme.Accent).Bold(true).Render(title),
+			theme.Paint(theme.Dim).Render(topBorder),
+			theme.Paint(theme.Dim).Render(actionHint),
 		)
 
-		leftContent := fmt.Sprintf("%s %s  %s  %s%s", icon, Paint(Live).Bold(true).Render(curr.Path), stats, badge, collapseTag)
-		navHint := Paint(Dim).Render(p.T("diff.select_nav", "(] next · [ prev · space fold)"))
-		bodyText := spread(leftContent, navHint, innerW)
+		leftContent := fmt.Sprintf("%s %s  %s  %s%s", icon, theme.Paint(theme.Live).Bold(true).Render(curr.Path), stats, badge, collapseTag)
+		navHint := theme.Paint(theme.Dim).Render(p.T("diff.select_nav", "(] next · [ prev · space fold)"))
+		bodyText := cells.Spread(leftContent, navHint, innerW)
 		fittedBody := ansi.Truncate(bodyText, innerW, "…")
 		padRight := strings.Repeat(" ", max(0, innerW-lipgloss.Width(fittedBody)))
 
@@ -68,9 +71,9 @@ func renderDiffFileSelect(files []diffFile, activeIdx int, width int, p *words.P
 	topBorder := strings.Repeat("─", borderW)
 
 	cardTop := fmt.Sprintf("  ┌─ %s %s %s─┐",
-		Paint(Accent).Bold(true).Render(title),
-		Paint(Dim).Render(topBorder),
-		Paint(Dim).Render(closeHint),
+		theme.Paint(theme.Accent).Bold(true).Render(title),
+		theme.Paint(theme.Dim).Render(topBorder),
+		theme.Paint(theme.Dim).Render(closeHint),
 	)
 
 	var lines []string
@@ -90,7 +93,7 @@ func renderDiffFileSelect(files []diffFile, activeIdx int, width int, p *words.P
 	// has one. Nineteen files in a box that shows seven said nothing about
 	// the other twelve: the reader learned they were there by holding the
 	// arrow key down.
-	track := scrollTrack(maxItems, len(files), start)
+	track := cells.Track(maxItems, len(files), start)
 
 	for i := start; i < end; i++ {
 		f := files[i]
@@ -98,28 +101,28 @@ func renderDiffFileSelect(files []diffFile, activeIdx int, width int, p *words.P
 
 		cursor := "   "
 		if isSel {
-			cursor = Paint(Live).Bold(true).Render(" ▸ ")
+			cursor = theme.Paint(theme.Live).Bold(true).Render(" ▸ ")
 		}
 
-		icon := fileIcon(f.Path)
-		badge := formatFileBadge(f.Status)
-		stats := fmt.Sprintf("%s %s", Paint(OK).Render(fmt.Sprintf("+%d", f.Added)), Paint(Bad).Render(fmt.Sprintf("-%d", f.Deleted)))
+		icon := patch.Icon(f.Path)
+		badge := patch.Badge(f.Status)
+		stats := fmt.Sprintf("%s %s", theme.Paint(theme.OK).Render(fmt.Sprintf("+%d", f.Added)), theme.Paint(theme.Bad).Render(fmt.Sprintf("-%d", f.Deleted)))
 
 		colTag := ""
 		if collapsed != nil && collapsed[f.Path] {
-			colTag = Paint(Warn).Render(" *" + p.T("diff.collapsed_tag", "collapsed"))
+			colTag = theme.Paint(theme.Warn).Render(" *" + p.T("diff.collapsed_tag", "collapsed"))
 		}
 
 		num := fmt.Sprintf("%2d.", i+1)
 
 		var name string
 		if isSel {
-			name = Paint(Live).Bold(true).Render(f.Path)
+			name = theme.Paint(theme.Live).Bold(true).Render(f.Path)
 		} else {
-			name = Paint(Accent).Render(f.Path)
+			name = theme.Paint(theme.Accent).Render(f.Path)
 		}
 
-		itemText := fmt.Sprintf("%s%s %s %s  %s  %s%s", cursor, Paint(Dim).Render(num), icon, name, stats, badge, colTag)
+		itemText := fmt.Sprintf("%s%s %s %s  %s  %s%s", cursor, theme.Paint(theme.Dim).Render(num), icon, name, stats, badge, colTag)
 		fittedItem := ansi.Truncate(itemText, innerW, "…")
 		pad := strings.Repeat(" ", max(0, innerW-lipgloss.Width(fittedItem)))
 
@@ -131,7 +134,7 @@ func renderDiffFileSelect(files []diffFile, activeIdx int, width int, p *words.P
 		lines = append(lines, fmt.Sprintf("  │ %s%s %s", fittedItem, pad, edge))
 	}
 
-	helpText := Paint(Dim).Render(p.T("diff.select_help", "  [↑↓] navigate  [⏎ / click] select  [space] fold  [esc] close"))
+	helpText := theme.Paint(theme.Dim).Render(p.T("diff.select_help", "  [↑↓] navigate  [⏎ / click] select  [space] fold  [esc] close"))
 	fittedHelp := ansi.Truncate(helpText, innerW, "…")
 	padHelp := strings.Repeat(" ", max(0, innerW-lipgloss.Width(fittedHelp)))
 	lines = append(lines, fmt.Sprintf("  │ %s%s │", fittedHelp, padHelp))

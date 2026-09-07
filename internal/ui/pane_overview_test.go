@@ -66,28 +66,6 @@ func TestATaskWithoutABriefIsNamedOnce(t *testing.T) {
 	}
 }
 
-// TestALongBriefIsFoldedUntilItIsAskedFor. The brief is the reader's own
-// text and a long one would push the figures, the phases and the changes off
-// the first screen of every task.
-func TestALongBriefIsFoldedUntilItIsAskedFor(t *testing.T) {
-	m := openOn(t, "ACME-2705")
-	m.entries = []view.Entry{{
-		Kind: "task.created",
-		Text: "Reconciliation endpoint\n" + strings.Repeat("a line of the brief\n", overviewBriefRows+2) +
-			"the last thing asked for",
-	}}
-
-	if got := overviewText(m); strings.Contains(got, "the last thing asked for") {
-		t.Errorf("a closed pane set the whole brief:\n%s", got)
-	}
-
-	m.expandedDetail = true
-
-	if got := overviewText(m); !strings.Contains(got, "the last thing asked for") {
-		t.Errorf("an opened pane still withholds the end of the brief:\n%s", got)
-	}
-}
-
 // TestTheHeaderKeepsTheRepositoryWhateverTheTitleIs. spread gives up its
 // right-hand side entirely when both halves will not fit, so a first line of
 // task.md that runs to a paragraph took the repository and the state with
@@ -110,50 +88,6 @@ func TestTheHeaderKeepsTheRepositoryWhateverTheTitleIs(t *testing.T) {
 
 	if !strings.Contains(head, tasks[0].Repo) {
 		t.Errorf("a long title pushed the repository off the header: %q", head)
-	}
-}
-
-// The deliver verbs are laid on the grid the dials above them use: the verb
-// captions on one line, the key that sends each one under its own caption.
-// Joined with middots instead, each column began wherever the row above it
-// happened to end, and finding a key meant reading both lines through.
-func TestTheDeliverActionsStandInColumns(t *testing.T) {
-	m, _ := testModel(t, 120, 30)
-
-	rows := m.overviewActions(120)
-	if len(rows) < 6 {
-		t.Fatalf("overviewActions drew %d lines, want a head and two rows of keys under captions", len(rows))
-	}
-
-	for _, c := range []struct {
-		captions, keys int
-		caption, key   string
-	}{
-		{1, 2, "UPDATE PR", "u"},
-		{1, 2, "MERGE PR", "M"},
-		{1, 2, "CLOSE PR", "X"},
-		{4, 5, "MORE TESTS", "T"},
-		{4, 5, "RESOLVE COMMENTS", "R"},
-		{4, 5, "DEEP REVIEW", "D"},
-		// The ninth and tenth verbs start a third row of their own, which is
-		// what the grid does with anything past two full rows.
-		{7, 8, "FEEDBACK", "a"},
-		{7, 8, "DIFF", "0"},
-	} {
-		above, below := ansi.Strip(rows[c.captions]), ansi.Strip(rows[c.keys])
-
-		top, bottom := strings.Index(above, c.caption), strings.Index(below, c.key)
-		if top < 0 || bottom < 0 {
-			t.Fatalf("rows %q / %q do not carry %q over %q", above, below, c.caption, c.key)
-		}
-
-		if top != bottom {
-			t.Errorf("%q starts at cell %d and its key %q at cell %d, want one column", c.caption, top, c.key, bottom)
-		}
-
-		if strings.TrimRight(below, " ") != below {
-			t.Errorf("row %q was padded past its last column", below)
-		}
 	}
 }
 
@@ -188,38 +122,5 @@ func TestTheNeedsYouLineNamesTheKeysThisScreenHonours(t *testing.T) {
 	// And the key it names for feedback is the key that takes it.
 	if next := step(t, m, m.keys.Ask.Help().Key); !next.note.open {
 		t.Errorf("%q did not open the note the banner offers", m.keys.Ask.Help().Key)
-	}
-}
-
-// TestTheBannerNamesAKeyThatDoesSomething. A task that was abandoned is
-// waiting for the reader, and the banner told them to press resume — which
-// answers that resuming needs a paused task, there being no process left to
-// let go of. The window had sent them to a key it refuses.
-func TestTheBannerNamesAKeyThatDoesSomething(t *testing.T) {
-	m, _ := testModel(t, 100, 30)
-
-	abandoned := view.Task{
-		ID: "ORB-102", Repo: "orbit", Band: view.NeedsYou,
-		Reason: view.Reason{Key: view.ReasonAbandoned},
-	}
-
-	hint := m.waitingHint(abandoned)
-	if strings.Contains(hint, "'"+m.keys.Resume.Help().Key+"'") {
-		t.Errorf("the banner on an abandoned task names the resume key: %q", hint)
-	}
-
-	if !strings.Contains(hint, "'"+m.keys.Start.Help().Key+"'") {
-		t.Errorf("the banner does not say how to set the task going again: %q", hint)
-	}
-
-	// And where resume is the verb — a run stopped at a phase boundary — it
-	// is still the one named.
-	held := view.Task{
-		ID: "ORB-103", Repo: "orbit", Band: view.NeedsYou, Live: view.LiveHeld,
-		Reason: view.Reason{Key: view.ReasonHeld},
-	}
-
-	if got := m.waitingHint(held); !strings.Contains(got, "'"+m.keys.Resume.Help().Key+"'") {
-		t.Errorf("the banner on a held run does not name the resume key: %q", got)
 	}
 }

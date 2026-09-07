@@ -39,14 +39,12 @@ func closePR(ctx Context, args []string) error {
 
 	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
-		logger.Error("cli/close-pr", "open repository %q failed: %v", *dir, err)
-		return err
+		return fmt.Errorf("open repository %q: %w", *dir, err)
 	}
 
 	where, err := worked(s, r, taskID)
 	if err != nil {
-		logger.Error("cli/close-pr", "read the repositories of task %q failed: %v", taskID, err)
-		return err
+		return fmt.Errorf("read the repositories of task %q: %w", taskID, err)
 	}
 
 	branch := "orbit/" + taskID

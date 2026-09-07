@@ -13,6 +13,9 @@ import (
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/clip"
 )
 
 // verbNote and verbDirect are the two commands the box can be opened for.
@@ -75,13 +78,13 @@ func (m Model) noteKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case msg.Code == tea.KeyEnter || key.Matches(msg, m.keys.Open):
 		return m.submitNote()
 	case (msg.Code == 'v' || msg.Code == 'V') && msg.Mod&tea.ModCtrl != 0:
-		if clip := readClipboard(); clip != "" {
+		if clip := clip.Read(); clip != "" {
 			m.note.text += clip
 		}
 
 		return m, nil
 	case msg.Code == tea.KeyBackspace || msg.Code == tea.KeyDelete:
-		m.note.text = trimLastRune(m.note.text)
+		m.note.text = cells.TrimLastRune(m.note.text)
 		return m, nil
 	}
 

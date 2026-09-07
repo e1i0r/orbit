@@ -3,6 +3,8 @@ package ui
 import (
 	"strings"
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/ui/patch"
 )
 
 const sampleDiff = `diff --git a/internal/ui/badge.go b/internal/ui/badge.go
@@ -24,7 +26,7 @@ new file mode 100644
 `
 
 func TestParseDiffFiles(t *testing.T) {
-	lines := parseDiffFiles(strings.Split(sampleDiff, "\n"))
+	lines := patch.Files(strings.Split(sampleDiff, "\n"))
 	if len(lines) != 2 {
 		t.Fatalf("expected 2 files parsed, got %d", len(lines))
 	}
@@ -41,7 +43,7 @@ func TestParseDiffFiles(t *testing.T) {
 		t.Errorf("file 1 path = %q, want internal/ui/badge_test.go", lines[1].Path)
 	}
 
-	add, del := diffStats(lines)
+	add, del := patch.Stats(lines)
 	if add == 0 {
 		t.Errorf("expected added lines > 0, got %d", add)
 	}

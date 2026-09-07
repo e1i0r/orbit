@@ -86,7 +86,7 @@ func TestAFinishedTaskCarriesItsStory(t *testing.T) {
 	}
 
 	f := flow.Flow{Name: "task", Phases: []flow.Phase{{Name: "implement", Engine: "fake"}}}
-	if err := Run(context.Background(), s, tk, f, map[string]engine.Engine{"fake": engine.NewFake(storyAnswer)}, nil); err != nil {
+	if err := Run(context.Background(), s, tk, f, fakes(engine.NewFake(storyAnswer)), nil); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 

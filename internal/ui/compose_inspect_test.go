@@ -1,44 +1,45 @@
 package ui
 
+// Looking at a flow from the form, which is the one thing on this screen
+// that opens another one.
+
 import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/point"
 )
 
-func TestComposeInspectFlow(t *testing.T) {
+// TestTheFormOpensTheDesignerOnTheFlowItIsSetTo, and leaving the designer
+// comes back to the form: the reader was in the middle of writing a task.
+func TestTheFormOpensTheDesignerOnTheFlowItIsSetTo(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m = m.openCompose()
-	m.compose.field = composeFlow
 
-	// 1. Pressing 'i' opens flow inspector preview
-	res, _ := m.composeKey(tea.KeyPressMsg{Text: "i"})
+	looking, _ := m.composeKey(tea.KeyPressMsg{Text: "i"})
 
-	mInspector := asModel(t, res)
-	if mInspector.screen != screenFlows || !mInspector.flows.showingDetail {
-		t.Fatalf("expected screenFlows with showingDetail, got screen=%v showingDetail=%v",
-			mInspector.screen, mInspector.flows.showingDetail)
+	inspector := asModel(t, looking)
+	if inspector.screen != screenFlows || !inspector.flows.Previewing() {
+		t.Fatalf("i left the window on %v, previewing=%v", inspector.screen, inspector.flows.Previewing())
 	}
 
-	// 2. Pressing Esc returns to screenCompose
-	resBack, _ := mInspector.flowsKey(tea.KeyPressMsg{Code: tea.KeyEscape})
-
-	mBack := asModel(t, resBack)
-	if mBack.screen != screenCompose {
-		t.Errorf("expected screenCompose after Esc from inspector, got %v", mBack.screen)
+	back, _ := inspector.flowsKey(tea.KeyPressMsg{Code: tea.KeyEscape})
+	if got := asModel(t, back); got.screen != screenCompose {
+		t.Errorf("esc from the designer left the window on %v, want the form", got.screen)
 	}
 }
 
-func TestComposeInspectFlowMouseClick(t *testing.T) {
+// TestPointingAtTheSummaryOpensItToo, which is the same answer the key gives.
+func TestPointingAtTheSummaryOpensItToo(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m = m.openCompose()
 
-	// Mouse click on inspect button
-	target := Target{Kind: TargetComposeInspectFlow}
-	res, _ := m.handleComposeClick(target)
+	clicked, _ := m.handleComposeClick(point.Target{Kind: point.ComposeInspectFlow})
 
-	mInspector := asModel(t, res)
-	if mInspector.screen != screenFlows || !mInspector.flows.showingDetail {
-		t.Fatalf("expected screenFlows with showingDetail after click, got screen=%v", mInspector.screen)
+	inspector := asModel(t, clicked)
+	if inspector.screen != screenFlows || !inspector.flows.Previewing() {
+		t.Fatalf("the click left the window on %v, previewing=%v",
+			inspector.screen, inspector.flows.Previewing())
 	}
 }

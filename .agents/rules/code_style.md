@@ -1,53 +1,48 @@
-# Orbit Code Style & Formatting Standards
+# Orbit code style
 
-These guidelines define the formatting, spacing, and structural conventions of Orbit.
+The rules and the reasons are in `CONTRIBUTING.md`; this is the checklist.
 
----
+## Files
 
-## 📏 1. Line Length & Spacing Standards
+- **Under 300 lines**, code and comment, blanks excluded. A file over it is two subjects that have not been told apart — split along the seam, never at line 300.
+- **Named for what a reader looks for**: the door it opens (`key.go`, `apply.go`, `view.go`) or the subject it holds (`tasks.go`, `repos.go`). A satellite carries its door's name: `overview.go` and `overview_blocks.go`, never `blocks.go`.
+- Tests sit beside their source. Fuzz targets are `Fuzz*`.
 
-- **Maximum Line Width:** **$\le 100$ characters** per line for code, signatures, and doc comments.
-- **Vertical Spacing:**
-  - Leave **1 blank line** between distinct logical steps inside a function (e.g., input validation $\rightarrow$ initialization $\rightarrow$ execution $\rightarrow$ error handling $\rightarrow$ return).
-  - Leave **1-2 blank lines** between top-level declarations, types, and functions.
-  - Avoid dense clusters of multi-statement blocks without breathing space.
-- **Comments & Documentation:**
-  - Wrap comment paragraphs at 80-90 characters.
-  - Focus comments on design rationale, edge cases, and why a certain trade-off was made.
+## Lines
 
----
+- **100 columns of code.** A string a person reads — a translated sentence, a prompt, a URL — is exempt: breaking one to fit a column makes it worse.
+- One blank line between the steps of a function: what it was given, what it checked, what it did, what it answers. No walls of statements.
+- Wrap comment prose at about 75 columns, which is where the repository already sits.
 
-## 🗂️ 2. File Organization & Sizing
+## Names
 
-- **Maximum Lines per File:** **$< 300$ lines** (strictly enforced). Target $\le 295$ lines.
-- **Naming Conventions:**
-  - Lowercase with underscores or compact compound names (e.g., `pane_overview.go`, `settings_dials.go`, `flow_template.go`).
-  - Unit tests placed beside their source files (`*_test.go`).
-  - Fuzz tests named `*_fuzz_test.go` or using `Fuzz*` functions.
+- Packages: one lowercase word, for what they provide. No `util`, `common`, `helpers`.
+- No stutter: `cells.Fit`, never `cells.CellsFit`.
+- No `Get`: `Language()`, not `GetLanguage()`.
+- Length follows scope: `i` in a loop, a sentence's worth at package level. One receiver name per type, everywhere.
+- Don't name a variable after its type: `tasks`, not `taskSlice`.
 
----
+## Signatures
 
-## 🛡️ 3. Error Handling & Wrapping
+- Never several parameters of the same type in a row — two strings side by side is a swap that compiles. Give them a struct with named fields.
+- Two return values, or a struct. Three anonymous ones say nothing about which is which.
+- Accept interfaces, return structs. Declare the interface where it is used, with the methods that caller needs, six at most.
 
-- **No Silent Discards:**
-  - Bad: `home, _ := os.UserHomeDir()`
-  - Good:
-    ```go
-    home, err := os.UserHomeDir()
-    if err != nil || home == "" {
-        home = os.Getenv("HOME")
-    }
-    ```
-- **Error Wrapping:**
-  - Always format error returns with `%w`: `return fmt.Errorf("read task %s: %w", id, err)`.
+## Errors
 
----
+- Wrap with `%w` and say what was being attempted: `fmt.Errorf("load task %q in %q: %w", id, repo, err)`.
+- Handle once: log where it stops, propagate everywhere else. Never both.
+- Never discard a return. `_ = f()` carries `//nolint:errcheck // reason`, in words.
 
-## 🪵 4. Diagnostic Logging
+## Comments
 
-- Use `internal/logger` for all internal diagnostic and operational logging.
-- Include the subsystem/module tag as the first argument:
-  ```go
-  logger.Info("cli/run", "starting task %s with flow %s", id, flowName)
-  logger.Error("engine/claude", "stream parse error: %v", err)
-  ```
+- Every exported name has a comment starting with that name.
+- Explain why. State the fact, not a verdict — `// the flag package stops at the first non-flag argument`, not `// this was a nasty bug`.
+- A decision that was weighed and rejected is worth a line: it is the question the next reader will ask.
+
+## Tests
+
+- Table-driven, cases named. No assertion libraries.
+- Name the behaviour: `TestADeletedIdIsFreeAgain`, not `TestDelete`.
+- The failure message says what was expected and what happened, in the words of the thing under test.
+- 90% coverage or better, and a package carries its own suite.

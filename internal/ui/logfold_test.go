@@ -11,6 +11,8 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/point"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -45,7 +47,7 @@ func timeline(t *testing.T, entries []view.Entry) (Model, []string) {
 func TestAnEntryWithMoreToShowSaysSo(t *testing.T) {
 	_, lines := timeline(t, wordyLog())
 
-	if rowOf(lines, foldShut) < 0 {
+	if rowOf(lines, cells.FoldShut) < 0 {
 		t.Errorf("no entry of the timeline offers to open:\n%s", strings.Join(lines, "\n"))
 	}
 
@@ -54,7 +56,7 @@ func TestAnEntryWithMoreToShowSaysSo(t *testing.T) {
 		t.Fatalf("the phase that named its engine was not drawn:\n%s", strings.Join(lines, "\n"))
 	}
 
-	if strings.Contains(lines[y], foldShut) || strings.Contains(lines[y], foldOpen) {
+	if strings.Contains(lines[y], cells.FoldShut) || strings.Contains(lines[y], cells.FoldOpen) {
 		t.Errorf("a row with nothing to open offers an arrow anyway: %q", lines[y])
 	}
 
@@ -77,7 +79,7 @@ func TestAClosedEntryIsOneRow(t *testing.T) {
 		t.Fatalf("a closed entry says nothing at all:\n%s", strings.Join(lines, "\n"))
 	}
 
-	if !strings.Contains(lines[head], foldShut) {
+	if !strings.Contains(lines[head], cells.FoldShut) {
 		t.Errorf("the row a closed entry was drawn on has no arrow: %q", lines[head])
 	}
 }
@@ -88,13 +90,13 @@ func TestAClosedEntryIsOneRow(t *testing.T) {
 func TestPointingAtAnEntryOpensAndClosesIt(t *testing.T) {
 	m, lines := timeline(t, wordyLog())
 
-	y := rowOf(lines, foldShut)
+	y := rowOf(lines, cells.FoldShut)
 	if y < 0 {
 		t.Fatalf("no entry of the timeline offers to open:\n%s", strings.Join(lines, "\n"))
 	}
 
 	got := m.hit(30, y)
-	if got.Kind != TargetPaneRow {
+	if got.Kind != point.PaneRow {
 		t.Fatalf("the row that offers to open answers as %+v, want an entry of the log", got)
 	}
 
@@ -107,7 +109,7 @@ func TestPointingAtAnEntryOpensAndClosesIt(t *testing.T) {
 	}
 
 	head := rowOf(shown, "make check is green")
-	if head < 0 || !strings.Contains(shown[head], foldOpen) {
+	if head < 0 || !strings.Contains(shown[head], cells.FoldOpen) {
 		t.Errorf("an open entry is not drawn as open: %q", shown[max(head, 0)])
 	}
 
@@ -123,7 +125,7 @@ func TestPointingAtAnEntryOpensAndClosesIt(t *testing.T) {
 func TestOnlyTheRowTheEntryOpensOnAnswersForIt(t *testing.T) {
 	m, lines := timeline(t, wordyLog())
 
-	y := rowOf(lines, foldShut)
+	y := rowOf(lines, cells.FoldShut)
 	if y < 0 {
 		t.Fatalf("no entry of the timeline offers to open:\n%s", strings.Join(lines, "\n"))
 	}
@@ -136,7 +138,7 @@ func TestOnlyTheRowTheEntryOpensOnAnswersForIt(t *testing.T) {
 		t.Fatal("the entry did not open")
 	}
 
-	if got := open.hit(30, tail); got.Kind == TargetPaneRow {
+	if got := open.hit(30, tail); got.Kind == point.PaneRow {
 		t.Errorf("a row the paragraph wrapped onto answers as the entry's head: %+v", got)
 	}
 }
@@ -147,19 +149,19 @@ func TestOnlyTheRowTheEntryOpensOnAnswersForIt(t *testing.T) {
 func TestTheEntryUnderThePointerIsTheOneThatOpens(t *testing.T) {
 	m, lines := timeline(t, longWordyLog())
 
-	y := rowOf(lines, foldShut)
+	y := rowOf(lines, cells.FoldShut)
 	if y < 0 {
 		t.Fatalf("no entry of the timeline offers to open:\n%s", strings.Join(lines, "\n"))
 	}
 
 	want := m.hit(30, y)
-	if want.Kind != TargetPaneRow {
+	if want.Kind != point.PaneRow {
 		t.Fatalf("the arrow's row answers as %+v, want an entry of the log", want)
 	}
 
 	scrolled := scrolledTo(m, lineAt(m)-3)
 
-	moved := rowOf(screenRows(scrolled), foldShut)
+	moved := rowOf(screenRows(scrolled), cells.FoldShut)
 	if moved < 0 {
 		t.Fatalf("scrolling took the entry off the screen:\n%s", strings.Join(screenRows(scrolled), "\n"))
 	}
@@ -198,7 +200,7 @@ func longWordyLog() []view.Entry {
 func TestExpandOpensEveryEntryAtOnce(t *testing.T) {
 	m, lines := timeline(t, wordyLog())
 
-	y := rowOf(lines, foldShut)
+	y := rowOf(lines, cells.FoldShut)
 	if y < 0 {
 		t.Fatalf("no entry of the timeline offers to open:\n%s", strings.Join(lines, "\n"))
 	}
@@ -208,7 +210,7 @@ func TestExpandOpensEveryEntryAtOnce(t *testing.T) {
 		t.Error("[e] did not open the entries")
 	}
 
-	if rowOf(screenRows(all), foldShut) >= 0 {
+	if rowOf(screenRows(all), cells.FoldShut) >= 0 {
 		t.Error("[e] left an entry drawn as closed")
 	}
 
@@ -275,7 +277,7 @@ func TestARowIsWrappedToTheMeasureAndNotCutToIt(t *testing.T) {
 		t.Fatalf("the tool call was not drawn:\n%s", strings.Join(closed, "\n"))
 	}
 
-	if !strings.Contains(closed[head], foldShut) {
+	if !strings.Contains(closed[head], cells.FoldShut) {
 		t.Errorf("the row that could not be wrapped offers nothing to open: %q", closed[head])
 	}
 
@@ -302,7 +304,7 @@ func TestOnlyAPaneThatDrawsEntriesFolds(t *testing.T) {
 	lines := screenRows(m)
 
 	for y := m.frame.Body.Y; y < m.frame.Body.Y+m.frame.Body.H-1 && y < len(lines); y++ {
-		if got := m.hit(30, y); got.Kind == TargetPaneRow {
+		if got := m.hit(30, y); got.Kind == point.PaneRow {
 			t.Fatalf("row %d of the overview answers as an entry of the log: %+v", y, got)
 		}
 	}

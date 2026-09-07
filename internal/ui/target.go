@@ -1,67 +1,13 @@
 package ui
 
+// Where a click lands: the routing, region by region and then screen by
+// screen. The vocabulary it answers in is internal/ui/point.
+
 import (
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/layout"
-	"github.com/e1i0r/orbit/internal/view"
+	"github.com/e1i0r/orbit/internal/ui/point"
 )
-
-// TargetKind is what sort of thing a cell holds.
-type TargetKind int
-
-// TargetKind values specify interactive screen target kinds.
-const (
-	TargetNone TargetKind = iota
-	TargetTask
-	TargetBandHeader
-	TargetBarHint
-	TargetHeaderField
-	TargetStatusField
-	TargetHeaderQueue
-	TargetSettingsRow
-	TargetEngineRow
-	TargetPaneTab
-	TargetPaneBody
-	TargetDialogPhase
-	TargetDialogSwitch
-	TargetCommand
-	TargetMenuEntry
-	TargetRepo
-	TargetFlowItem
-	TargetComposeField
-	TargetComposeCaret
-	TargetComposeTab
-	TargetComposeFlowChoice
-	TargetComposeNewFlow
-	TargetComposeInspectFlow
-	TargetComposeAction
-	TargetComposePaste
-	TargetDiffFile
-	TargetDiffSelectToggle
-	TargetFold
-	TargetSeam
-	TargetPaneRow
-	TargetScrollBar
-)
-
-// Target is one cell's hit target.
-type Target struct {
-	Kind   TargetKind
-	ID     string        // TargetTask, TargetRepo
-	Band   view.Band     // TargetTask, TargetBandHeader
-	Column layout.Column // TargetTask: which field of the row was pointed at
-	// TargetPaneTab, TargetPaneBody, TargetSettingsRow, TargetScrollBar: the
-	// row of the bar. TargetPaneRow: which entry. TargetSeam: which attempt.
-	Pane  int
-	Key   string // TargetBarHint, TargetMenuEntry, TargetCommand, TargetFold
-	Field string // TargetHeaderField, TargetStatusField
-	// TargetDialogPhase: which phase. TargetComposeCaret: which drawn line
-	// of the box, counted from the first one on screen.
-	Phase int
-	// Caret is the column of the drawn line that was pointed at, for
-	// TargetComposeCaret. A field is a place somebody points inside, not
-	// only one they land on.
-	Caret int
-}
 
 // The names of the two switches on the start dialog. They are constants
 // because the same string is written where the target is made and where it
@@ -84,22 +30,22 @@ const (
 // An arm with nothing to answer yet answers TargetNone rather than guessing,
 // so a cell whose meaning has not been decided does nothing when it is
 // clicked — the one behaviour a reader can safely be wrong about.
-func (m Model) hit(x, y int) Target {
+func (m Model) hit(x, y int) point.Target {
 	if m.width <= 0 || m.height <= 0 || m.tooNarrow {
 		// A refusal is one sentence and two numbers, and there is nothing
 		// on it to point at.
-		return Target{}
+		return point.Target{}
 	}
 
 	switch m.frame.At(y) {
 	case layout.RegionBar:
-		if m.palette.open || m.menu.open {
+		if m.palette.Up() || m.menu.Up() {
 			// The palette's line replaces the bar while it is up, and a
 			// menu up means the keyboard it names verbs with is spoken
 			// for. A line being typed into has no fields worth pointing
 			// at yet; when either grows one, this is where its answer
 			// starts.
-			return Target{}
+			return point.Target{}
 		}
 
 		return m.hitBar(x, y)
@@ -108,16 +54,16 @@ func (m Model) hit(x, y int) Target {
 	case layout.RegionStatus, layout.RegionBand:
 		return m.hitStatus(x, y)
 	case layout.RegionBody:
-		if m.palette.open {
+		if m.palette.Up() {
 			return m.hitPalette(x, y)
 		}
 
-		if m.menu.open {
+		if m.menu.Up() {
 			return m.hitMenu(x, y)
 		}
 
 		if m.watchUp {
-			return Target{}
+			return point.Target{}
 		}
 
 		switch m.screen {
@@ -142,13 +88,13 @@ func (m Model) hit(x, y int) Target {
 			// what keeps them from falling through to the board's rows
 			// below — where a click landed on whatever task happened to be
 			// at that height, and a second one opened it.
-			return Target{}
+			return point.Target{}
 		}
 
 		return m.hitRow(x, y)
 	}
 
-	return Target{}
+	return point.Target{}
 }
 
 // hitRow is one line of the body: a task, a band's heading, or neither.
@@ -157,32 +103,32 @@ func (m Model) hit(x, y int) Target {
 // one is a row the reader can see: the blank line between two bands, the
 // "… and N more" line the body spends its last row on, and the space below
 // a list shorter than the region.
-func (m Model) hitRow(x, y int) Target {
+func (m Model) hitRow(x, y int) point.Target {
 	line, ok := m.frame.BodyRow(y)
 	if !ok || line == 0 {
-		return Target{}
+		return point.Target{}
 	}
 
 	taskLine := line - 1
 
 	all := m.rows()
 	if taskLine >= page(m.frame.Body.H-1, len(all), m.offset) {
-		return Target{}
+		return point.Target{}
 	}
 
 	i := m.offset + taskLine
 	if i < 0 || i >= len(all) {
-		return Target{}
+		return point.Target{}
 	}
 
 	switch r := all[i]; {
 	case r.blank:
-		return Target{}
+		return point.Target{}
 	case r.head:
-		return Target{Kind: TargetBandHeader, Band: r.band}
+		return point.Target{Kind: point.BandHeader, Band: r.band}
 	default:
-		t := Target{Kind: TargetTask, ID: r.task.ID, Band: r.band}
-		t.Column, _ = m.plan.ColumnAt(x - gutter)
+		t := point.Target{Kind: point.Task, ID: r.task.ID, Band: r.band}
+		t.Column, _ = m.plan.ColumnAt(x - cells.Gutter)
 
 		return t
 	}
@@ -194,11 +140,11 @@ func (m Model) hitRow(x, y int) Target {
 // again here, so what is clickable is exactly what was drawn — including
 // the hints it dropped for want of width, which are not clickable because
 // they are not there.
-func (m Model) hitBar(x, y int) Target {
+func (m Model) hitBar(x, y int) point.Target {
 	if y != m.frame.BarLineY() {
 		// The bar is one row. A region taller than its content has blank
 		// rows under it, and nothing is on them.
-		return Target{}
+		return point.Target{}
 	}
 	// The chips at the right end and the hints at the left both answer
 	// from where the bar put them, so what is clickable is exactly what
@@ -213,16 +159,16 @@ func (m Model) hitBar(x, y int) Target {
 
 	for _, h := range hints {
 		if x >= h.x && x < h.x+h.w {
-			return Target{Kind: TargetBarHint, Key: h.key}
+			return point.Target{Kind: point.BarHint, Key: h.key}
 		}
 	}
 
-	return Target{}
+	return point.Target{}
 }
 
-func (m Model) hitHeader(x, y int) Target {
+func (m Model) hitHeader(x, y int) point.Target {
 	if y != m.frame.HeaderLineY() {
-		return Target{}
+		return point.Target{}
 	}
 
 	_, zones := m.headerLayout(m.frame.Header.W)
@@ -232,9 +178,9 @@ func (m Model) hitHeader(x, y int) Target {
 		}
 	}
 
-	return Target{}
+	return point.Target{}
 }
 
-func (m Model) hitStatus(x, y int) Target {
-	return Target{Kind: TargetStatusField}
+func (m Model) hitStatus(x, y int) point.Target {
+	return point.Target{Kind: point.StatusField}
 }

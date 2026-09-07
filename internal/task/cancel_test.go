@@ -100,7 +100,7 @@ func TestARunThatIsCancelledSaysSoAndKeepsWhatThePhasePrinted(t *testing.T) {
 	defer cancel()
 
 	done := make(chan error, 1)
-	go func() { done <- Run(ctx, s, tk, oneFlow(), map[string]engine.Engine{"fake": eng}, nil) }()
+	go func() { done <- Run(ctx, s, tk, oneFlow(), fakes(eng), nil) }()
 
 	<-eng.running
 	cancel()
@@ -140,7 +140,7 @@ func TestARunThatOutlivesItsDeadlineSaysItTimedOut(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
 
-	runErr := Run(ctx, s, tk, oneFlow(), map[string]engine.Engine{"fake": eng}, nil)
+	runErr := Run(ctx, s, tk, oneFlow(), fakes(eng), nil)
 
 	if !errors.Is(runErr, context.DeadlineExceeded) {
 		t.Fatalf("Run returned %v, want an error carrying context.DeadlineExceeded", runErr)
@@ -170,7 +170,7 @@ func TestARunHoldsAMarkerWhileItGoesAndTakesItOffAfterwards(t *testing.T) {
 	defer cancel()
 
 	done := make(chan error, 1)
-	go func() { done <- Run(ctx, s, tk, oneFlow(), map[string]engine.Engine{"fake": eng}, nil) }()
+	go func() { done <- Run(ctx, s, tk, oneFlow(), fakes(eng), nil) }()
 
 	<-eng.running
 

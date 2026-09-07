@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -116,7 +118,7 @@ func TestBandLeftPriority(t *testing.T) {
 	m.confirm = confirmNone
 
 	m.message, m.messageAt = "a fresh message", m.now
-	if m.bandLeft() != Paint(Accent).Render("a fresh message") {
+	if m.bandLeft() != theme.Paint(theme.Accent).Render("a fresh message") {
 		t.Errorf("bandLeft with a fresh message = %q, want it painted and shown", m.bandLeft())
 	}
 
@@ -198,22 +200,22 @@ func TestElapsedEveryUnit(t *testing.T) {
 		{now.Add(-50 * time.Hour), "2d"},
 	}
 	for _, tt := range tests {
-		if got := elapsed(now, tt.since); got != tt.want {
-			t.Errorf("elapsed(now, %v) = %q, want %q", tt.since, got, tt.want)
+		if got := cells.Elapsed(now, tt.since); got != tt.want {
+			t.Errorf("cells.Elapsed(now, %v) = %q, want %q", tt.since, got, tt.want)
 		}
 	}
 }
 
 func TestPadEdgeCases(t *testing.T) {
-	if got := pad("x", 0, false); got != "" {
+	if got := cells.Pad("x", 0, false); got != "" {
 		t.Errorf("pad with 0 cells = %q, want empty", got)
 	}
 
-	if got := pad("hi", 5, true); got != "   hi" {
+	if got := cells.Pad("hi", 5, true); got != "   hi" {
 		t.Errorf("pad right-aligned = %q, want %q", got, "   hi")
 	}
 
-	if got := pad("hi", 5, false); got != "hi   " {
+	if got := cells.Pad("hi", 5, false); got != "hi   " {
 		t.Errorf("pad left-aligned = %q, want %q", got, "hi   ")
 	}
 }
@@ -249,7 +251,7 @@ func TestHeadHintBranches(t *testing.T) {
 	// 3. The To Do band at the unread cap says so, ahead of the open hint.
 	m.expanded[view.ToDo] = false
 
-	m.opts.Settings = &settings{autopilot: true, lang: "en", unread: 1}
+	m.opts.Settings = &settingsFile{autopilot: true, lang: "en", unread: 1}
 	if got := m.headHint(row{band: view.ToDo, n: 4}); !strings.Contains(got, "unread cap") {
 		t.Errorf("headHint on To Do at the cap = %q, want the unread cap sentence", got)
 	}

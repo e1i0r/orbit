@@ -137,7 +137,7 @@ func TestRunPassesLastSessionToResumableEngine(t *testing.T) {
 		SessionID: "sess-next",
 		Resumable: true,
 	}
-	engines := map[string]engine.Engine{"fake": fake}
+	engines := fakes(fake)
 	f := flow.Flow{
 		Name: "single",
 		Phases: []flow.Phase{

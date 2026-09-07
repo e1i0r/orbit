@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -86,7 +87,7 @@ func TestARefusalIsWhatWasRefusedAndNotItsFirstLine(t *testing.T) {
 		t.Fatalf("the refusal was not drawn:\n%s", strings.Join(lines, "\n"))
 	}
 
-	if !strings.Contains(lines[head], foldShut) {
+	if !strings.Contains(lines[head], cells.FoldShut) {
 		t.Errorf("the refusal offers nothing to open: %q", lines[head])
 	}
 

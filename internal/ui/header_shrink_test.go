@@ -26,7 +26,7 @@ const lesserFields = "✨📦🧠🌐"
 func TestTheBrakeIsTheLastHeaderFieldGivenUp(t *testing.T) {
 	m, _ := testModel(t, 200, 30)
 	m.opts.Root = "~/work/acme/payments"
-	m.opts.Settings = &settings{autopilot: true, lang: "en", unread: 1}
+	m.opts.Settings = &settingsFile{autopilot: true, lang: "en", unread: 1}
 	m.upgradeAvailable = "1.2.3"
 
 	if line := ansi.Strip(m.headerLine(200)); !strings.Contains(line, "⚠️") || !strings.ContainsAny(line, lesserFields) {

@@ -5,19 +5,17 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
-
-	"github.com/e1i0r/orbit/internal/flow"
 )
 
 func TestFlowDetailRowsRendering(t *testing.T) {
 	m, _ := testModel(t, 100, 50)
 	m = m.openFlowPreview("tdd-fuzz-pr")
 
-	if !m.flows.showingDetail {
-		t.Fatalf("expected showingDetail to be true")
+	if !m.flows.Previewing() {
+		t.Fatalf("the preview did not open")
 	}
 
-	rows := m.flowDetailRows(m.frame.Body.H, m.frame.Body.W)
+	rows := m.flowsRows(m.frame.Body.H, m.frame.Body.W)
 	joined := strings.Join(rows, "\n")
 
 	// Verify Header & Origin Badge
@@ -48,8 +46,8 @@ func TestFlowDetailKeyNavigation(t *testing.T) {
 
 	// 1. Inspect from compose
 	m = m.openFlowPreview("careful")
-	if m.flows.fromScreen != screenCompose || !m.flows.showingDetail {
-		t.Fatalf("expected showingDetail from screenCompose")
+	if !m.flows.Previewing() {
+		t.Fatal("inspecting a flow from the compose form did not open the preview")
 	}
 
 	// 2. Select & Return with Enter
@@ -60,9 +58,8 @@ func TestFlowDetailKeyNavigation(t *testing.T) {
 		t.Errorf("expected return to compose after Enter, got %v", mSelected.screen)
 	}
 
-	if mSelected.compose.flows[mSelected.compose.flowIdx] != "careful" {
-		t.Errorf("expected compose flow to be set to careful, got %s",
-			mSelected.compose.flows[mSelected.compose.flowIdx])
+	if got := mSelected.compose.Flow(); got != "careful" {
+		t.Errorf("the form's flow is %q, want the one that was chosen", got)
 	}
 
 	// 3. Edit with 'e'
@@ -70,12 +67,8 @@ func TestFlowDetailKeyNavigation(t *testing.T) {
 	resEdit, _ := m.flowsKey(tea.KeyPressMsg{Text: "e"})
 
 	mEditing := asModel(t, resEdit)
-	if !mEditing.flows.creating || !mEditing.flows.isEditing {
-		t.Errorf("expected creating & isEditing after pressing 'e'")
-	}
-
-	if mEditing.flows.flowName != "quick" {
-		t.Errorf("expected flowName 'quick', got %s", mEditing.flows.flowName)
+	if !mEditing.flows.Creating() || mEditing.flows.Editing() != "quick" {
+		t.Errorf("e opened %q rather than the form on quick", mEditing.flows.Editing())
 	}
 
 	// 4. Back with Esc from flow list
@@ -84,29 +77,7 @@ func TestFlowDetailKeyNavigation(t *testing.T) {
 	resBack, _ := mList.flowsKey(tea.KeyPressMsg{Code: tea.KeyEscape})
 
 	mBack := asModel(t, resBack)
-	if mBack.flows.showingDetail {
+	if mBack.flows.Previewing() {
 		t.Errorf("expected showingDetail to be false after Esc from flow list")
 	}
-}
-
-func FuzzRenderFlowDiagram(f *testing.F) {
-	f.Add("phase-1", "claude", "opus", true, false, 80)
-	f.Add("p1", "codex", "sonnet", false, true, 40)
-	f.Add("long-phase-name-test", "opencode", "default", true, true, 120)
-
-	f.Fuzz(func(t *testing.T, name, engine, model string, feed, wait bool, width int) {
-		if width < 10 || width > 300 {
-			return
-		}
-
-		phases := []flow.Phase{
-			{Name: name, Engine: engine, Model: model, FeedOutput: feed, Wait: wait},
-			{Name: "2-" + name, Engine: engine, Model: model, FeedOutput: !feed, Wait: !wait},
-		}
-
-		lines := renderFlowDiagram(phases, width)
-		if len(lines) == 0 {
-			t.Errorf("expected diagram lines, got 0")
-		}
-	})
 }

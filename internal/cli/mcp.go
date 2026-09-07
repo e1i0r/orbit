@@ -73,7 +73,6 @@ func serveMCP(ctx Context, root string) error {
 
 	session := mcp.Session{Root: root, Version: Version}
 	if err := mcp.NewServer(os.Stdin, os.Stdout, session).Serve(); err != nil {
-		logger.Error("cli/mcp", "mcp server stopped: %v", err)
 		return fmt.Errorf("%s: %w", ctx.printer().T("mcp.server_failed", "the mcp server"), err)
 	}
 

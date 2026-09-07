@@ -4,6 +4,9 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 func (m Model) noteRows(h, w int) []string {
@@ -26,13 +29,13 @@ func (m Model) noteRows(h, w int) []string {
 
 	var contentLines []string
 	if raw == "" {
-		contentLines = []string{Paint(Dim).Render(said.placeholder)}
+		contentLines = []string{theme.Paint(theme.Dim).Render(said.placeholder)}
 	} else {
 		for _, part := range strings.Split(raw, "\n") {
 			if part == "" {
 				contentLines = append(contentLines, "")
 			} else {
-				contentLines = append(contentLines, splitIntoLines(part, innerW)...)
+				contentLines = append(contentLines, cells.Lines(part, innerW)...)
 			}
 		}
 	}
@@ -42,7 +45,7 @@ func (m Model) noteRows(h, w int) []string {
 	}
 
 	borderStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#38BDF8"))
-	headerBorder := "┌─ " + Paint(Accent).Bold(true).Render(title) + " "
+	headerBorder := "┌─ " + theme.Paint(theme.Accent).Bold(true).Render(title) + " "
 
 	remWidth := boxW - lipgloss.Width(headerBorder) - 1
 	if remWidth < 0 {
@@ -53,16 +56,16 @@ func (m Model) noteRows(h, w int) []string {
 
 	var out []string
 
-	out = append(out, fit(top, w))
+	out = append(out, cells.Fit(top, w))
 
 	for i, l := range contentLines {
 		lineContent := l
 		if i == 0 && raw != "" {
-			lineContent = Paint(Dim).Render(prompt) + lineContent
+			lineContent = theme.Paint(theme.Dim).Render(prompt) + lineContent
 		}
 
 		if i == len(contentLines)-1 {
-			lineContent += Paint(Sel).Render(" ")
+			lineContent += theme.Paint(theme.Sel).Render(" ")
 		}
 
 		wLine := lipgloss.Width(lineContent)
@@ -73,11 +76,11 @@ func (m Model) noteRows(h, w int) []string {
 		}
 
 		row := "  " + borderStyle.Render("│ ") + lineContent + strings.Repeat(" ", pad) + borderStyle.Render(" │")
-		out = append(out, fit(row, w))
+		out = append(out, cells.Fit(row, w))
 	}
 
 	actions := said.actions
-	actionLine := "  " + Paint(Dim).Render(actions)
+	actionLine := "  " + theme.Paint(theme.Dim).Render(actions)
 	wAct := lipgloss.Width(actionLine)
 
 	padAct := innerW - wAct
@@ -85,10 +88,10 @@ func (m Model) noteRows(h, w int) []string {
 		padAct = 0
 	}
 
-	out = append(out, fit("  "+borderStyle.Render("│ ")+actionLine+strings.Repeat(" ", padAct)+borderStyle.Render(" │"), w))
-	out = append(out, fit("  "+borderStyle.Render("└"+strings.Repeat("─", boxW-2)+"┘"), w))
+	out = append(out, cells.Fit("  "+borderStyle.Render("│ ")+actionLine+strings.Repeat(" ", padAct)+borderStyle.Render(" │"), w))
+	out = append(out, cells.Fit("  "+borderStyle.Render("└"+strings.Repeat("─", boxW-2)+"┘"), w))
 
-	return fill(out, h)
+	return cells.Fill(out, h)
 }
 
 // boxWords is what the message box calls itself, which follows the command

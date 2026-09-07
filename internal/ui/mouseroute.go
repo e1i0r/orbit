@@ -2,6 +2,7 @@ package ui
 
 import (
 	tea "charm.land/bubbletea/v2"
+	"github.com/e1i0r/orbit/internal/ui/point"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -34,8 +35,8 @@ func (m Model) flip(field string) (tea.Model, tea.Cmd) {
 }
 
 // rightClick opens the menu for what was pointed at.
-func (m Model) rightClick(t Target) (tea.Model, tea.Cmd) {
-	if t.Kind == TargetPaneBody {
+func (m Model) rightClick(t point.Target) (tea.Model, tea.Cmd) {
+	if t.Kind == point.PaneBody {
 		if s := m.subject(); s.ID != "" {
 			return m.openMenu(s.ID), nil
 		}
@@ -49,7 +50,7 @@ func (m Model) rightClick(t Target) (tea.Model, tea.Cmd) {
 	}
 
 	next := m.moveTo(i)
-	if t.Kind == TargetTask {
+	if t.Kind == point.Task {
 		return next.openMenu(t.ID), nil
 	}
 
@@ -63,50 +64,6 @@ func (m Model) jumpToBand(b view.Band) (tea.Model, tea.Cmd) {
 	for i, r := range all {
 		if r.band == b && !r.blank {
 			return m.moveTo(i).clampCursor(), nil
-		}
-	}
-
-	return m, nil
-}
-
-func (m Model) handleComposeClick(t Target) (tea.Model, tea.Cmd) {
-	switch t.Kind {
-	case TargetComposeTab:
-		m.compose.tab = t.Pane
-		m.compose.field = firstComposeField(t.Pane)
-
-		return m, nil
-	case TargetComposeFlowChoice:
-		if t.Pane >= 0 && t.Pane < len(m.compose.flows) {
-			if m.compose.flowIdx == t.Pane {
-				return m.openFlowPreview(m.compose.flows[t.Pane]), nil
-			}
-
-			m.compose.flowIdx = t.Pane
-		}
-
-		return m, nil
-	case TargetComposeNewFlow:
-		return m.openFlows(), nil
-	case TargetComposeInspectFlow:
-		return m.openFlowPreview(m.compose.chosenFlow()), nil
-	case TargetComposeField:
-		m.compose.field = t.Pane
-		return m, nil
-	case TargetComposeCaret:
-		return m.composeAim(t), nil
-	case TargetComposeAction:
-		switch t.Key {
-		case "save":
-			return m.composeSubmit(false)
-		case "save_and_run":
-			return m.composeSubmit(true)
-		case "cancel":
-			return m.abandonCompose(), nil
-		}
-	case TargetComposePaste:
-		if clip := readClipboard(); clip != "" {
-			return m.paste(clip), nil
 		}
 	}
 

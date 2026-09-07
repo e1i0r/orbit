@@ -19,23 +19,23 @@ func TestTabMenuInDetailView(t *testing.T) {
 	res, _ := m.Update(tea.KeyPressMsg{Code: 'm', Text: "m"})
 
 	m = asModel(t, res)
-	if !m.menu.open {
+	if !m.menu.Up() {
 		t.Fatal("expected menu to be open after pressing 'm' in detail view")
 	}
 
 	// The panes are one block of this menu now, under a heading, with the
 	// task's verbs under another.
-	entries := m.menuEntries()
+	entries := m.menu.Entries(m.menuEnv())
 	if len(entries) <= int(tabCount) {
 		t.Fatalf("menuEntries in detail = %d, want the tabs and the verbs both", len(entries))
 	}
 
-	if !entries[0].head {
+	if !entries[0].Head {
 		t.Errorf("entry 0 = %+v, expected the heading the panes are listed under", entries[0])
 	}
 
 	// Verify each entry has title and description
-	if entries[1].title != "overview" || entries[1].detail == "" {
+	if entries[1].Title != "overview" || entries[1].Detail == "" {
 		t.Errorf("entry 1 = %+v, expected overview with description", entries[1])
 	}
 
@@ -49,7 +49,7 @@ func TestTabMenuInDetailView(t *testing.T) {
 	res, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	m = asModel(t, res)
-	if m.menu.open {
+	if m.menu.Up() {
 		t.Error("expected menu to close after selection")
 	}
 
@@ -63,7 +63,7 @@ func TestTabMenuInDetailView(t *testing.T) {
 	res, _ = m.Update(tea.KeyPressMsg{Code: '6', Text: "6"})
 
 	m = asModel(t, res)
-	if m.menu.open {
+	if m.menu.Up() {
 		t.Error("expected menu to close after direct key shortcut")
 	}
 

@@ -6,7 +6,9 @@ import (
 	"slices"
 	"testing"
 
+	tea "charm.land/bubbletea/v2"
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/ui/settings"
 )
 
 // saveFlow writes one more flow into a directory that already exists, which
@@ -22,18 +24,18 @@ func saveFlow(t *testing.T, src flow.Source, name string) {
 }
 
 // flowDialOf is the settings screen's flow row.
-func flowDialOf(t *testing.T, m Model) settingRow {
+func flowDialOf(t *testing.T, m Model) settings.Row {
 	t.Helper()
 
 	for _, r := range m.settingRowsList() {
-		if r.key == "flow" {
+		if r.Key == "flow" {
 			return r
 		}
 	}
 
 	t.Fatal("the settings screen has no flow row")
 
-	return settingRow{}
+	return settings.Row{}
 }
 
 // TestTheFlowDialOffersEveryFlowTheBuildShips.
@@ -47,7 +49,7 @@ func TestTheFlowDialOffersEveryFlowTheBuildShips(t *testing.T) {
 	m, _ := testModel(t, 120, 40)
 	m = m.openSettings()
 
-	got := flowDialOf(t, m).options
+	got := flowDialOf(t, m).Options
 	for _, name := range flow.BuiltinNames() {
 		if !slices.Contains(got, name) {
 			t.Errorf("the flow dial offers %v, and this build ships %q", got, name)
@@ -63,7 +65,7 @@ func TestTheFlowDialOffersAFlowTheReaderWrote(t *testing.T) {
 	m.opts.Flows = userFlows(t, "midnight")
 	m = m.openSettings()
 
-	if got := flowDialOf(t, m).options; !slices.Contains(got, "midnight") {
+	if got := flowDialOf(t, m).Options; !slices.Contains(got, "midnight") {
 		t.Errorf("the flow dial offers %v, and the reader wrote midnight", got)
 	}
 }
@@ -83,7 +85,7 @@ func TestTheFlowDialIsReadWhenTheScreenOpens(t *testing.T) {
 
 	saveFlow(t, m.opts.Flows, "midnight")
 
-	if got := flowDialOf(t, m).options; slices.Contains(got, "midnight") {
+	if got := flowDialOf(t, m).Options; slices.Contains(got, "midnight") {
 		t.Errorf("the flow dial is %v, so it is reading the directory while it draws", got)
 	}
 }
@@ -100,15 +102,16 @@ func TestTheFlowDialPicksUpAFlowWrittenSinceItWasLastOpened(t *testing.T) {
 	m.opts.Flows = userFlows(t)
 
 	m = m.openSettings()
-	if got := flowDialOf(t, m).options; slices.Contains(got, "midnight") {
+	if got := flowDialOf(t, m).Options; slices.Contains(got, "midnight") {
 		t.Fatalf("the flow dial already offers midnight before it was written: %v", got)
 	}
 
 	saveFlow(t, m.opts.Flows, "midnight")
-	m = m.abandonSettings()
+	left, _ := m.settingsKey(tea.KeyPressMsg{Code: tea.KeyEscape})
+	m = asModel(t, left)
 	m = m.openSettings()
 
-	if got := flowDialOf(t, m).options; !slices.Contains(got, "midnight") {
+	if got := flowDialOf(t, m).Options; !slices.Contains(got, "midnight") {
 		t.Errorf("the flow dial offers %v, and midnight was written before it was opened again", got)
 	}
 }

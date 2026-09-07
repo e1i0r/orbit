@@ -7,16 +7,17 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/roster"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
 // onSubscription is a window whose engine buys a window of use rather than
 // an amount of it, which is what every claude and codex plan is.
 func onSubscription(m Model) Model {
-	m.opts.Quota = func(engine string) QuotaReading {
-		return QuotaReading{
+	m.opts.Quota = func(engine string) roster.Reading {
+		return roster.Reading{
 			Engine: engine, Money: false, Sourced: true,
-			Windows: []QuotaWindow{{Key: "5h", Label: "5h", Pct: 40, ResetsIn: time.Hour}},
+			Windows: []roster.Window{{Key: "5h", Label: "5h", Pct: 40, ResetsIn: time.Hour}},
 		}
 	}
 
@@ -25,8 +26,8 @@ func onSubscription(m Model) Model {
 
 // metered is a window whose engine bills for what it used.
 func metered(m Model) Model {
-	m.opts.Quota = func(engine string) QuotaReading {
-		return QuotaReading{Engine: engine, Money: true, Sourced: true}
+	m.opts.Quota = func(engine string) roster.Reading {
+		return roster.Reading{Engine: engine, Money: true, Sourced: true}
 	}
 
 	return m

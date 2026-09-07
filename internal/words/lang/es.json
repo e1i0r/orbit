@@ -4173,6 +4173,10 @@
         "other": "{n} más"
       }
     },
+    "supervisor.cannot_ask": {
+      "source": "this window cannot ask the supervisor",
+      "value": "esta ventana no puede preguntarle al supervisor"
+    },
     "supervisor.no_new": {
       "source": "this build cannot start a conversation",
       "value": "esta build no puede empezar una conversación"

@@ -13,7 +13,11 @@ package ui
 // holds a handle for some of this work and not for the rest, and a line that
 // offered a key that does nothing would be worse than one that offers none.
 
-import "time"
+import (
+	"time"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
+)
 
 // busy is one thing in flight.
 type busy struct {
@@ -28,20 +32,20 @@ func (m Model) waitingOn() []busy {
 
 	var out []busy
 
-	if m.flows.saying {
+	if m.flows.Saying() {
 		out = append(out, busy{
-			what:  p.T("wait.draft", "asking {engine} for a flow", about("engine", m.sayEngineName())),
-			since: m.flows.sayAt,
+			what:  p.T("wait.draft", "asking {engine} for a flow", about("engine", m.flows.AskingOf(m.flowsEnv()))),
+			since: m.flows.Since(),
 			// Orbit did not spawn that engine with a handle it can kill, so
 			// escape stops waiting and drops the answer: see stopWaiting.
 			stop: "esc",
 		})
 	}
 
-	if m.compose.reading {
+	if since, waiting := m.compose.Reading(); waiting {
 		out = append(out, busy{
 			what:  p.T("wait.issue", "reading the issue"),
-			since: m.compose.readAt,
+			since: since,
 		})
 	}
 
@@ -100,7 +104,7 @@ func (m Model) waitingLine() string {
 		line += " · " + m.opts.Words.P("wait.more", rest, "{n} more", "{n} more")
 	}
 
-	return m.spinner(Live) + Paint(Live).Render(line)
+	return m.spinner(theme.Live) + theme.Paint(theme.Live).Render(line)
 }
 
 // watchState is whether the command a watch is holding has finished, and

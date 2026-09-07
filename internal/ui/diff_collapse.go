@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/patch"
 )
 
 // collapseFile closes an open file of the diff and opens a closed one.
@@ -35,7 +37,7 @@ func (m Model) collapseFile(path string) Model {
 // and turned back into a path at once, because a rebuild moves the rows
 // under a file and does not move the file.
 func (m Model) collapseFileAt(i int) Model {
-	files := parseDiffFiles(strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n"))
+	files := patch.Files(strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n"))
 	if i < 0 || i >= len(files) {
 		return m
 	}
@@ -47,7 +49,7 @@ func (m Model) collapseFileAt(i int) Model {
 func (m Model) toggleCollapseCurrentFile() Model {
 	raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
 
-	files := parseDiffFiles(raw)
+	files := patch.Files(raw)
 	if len(files) == 0 {
 		return m
 	}
@@ -73,7 +75,7 @@ func (m Model) toggleCollapseCurrentFile() Model {
 func (m Model) toggleCollapseAll() Model {
 	raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
 
-	files := parseDiffFiles(raw)
+	files := patch.Files(raw)
 	if len(files) == 0 {
 		return m
 	}
@@ -111,7 +113,7 @@ func (m Model) toggleCollapseAll() Model {
 	return m.syncPanes().say(msg)
 }
 
-func fileIndexAtOffset(files []diffFile, offset int) int {
+func fileIndexAtOffset(files []patch.File, offset int) int {
 	for i := len(files) - 1; i >= 0; i-- {
 		if offset >= files[i].StartLine-2 {
 			return i
@@ -125,7 +127,7 @@ func fileIndexAtOffset(files []diffFile, offset int) int {
 func (m Model) openDiffFilePicker() Model {
 	m.diffFilePicker = !m.diffFilePicker
 	raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
-	files := parseDiffFiles(raw)
+	files := patch.Files(raw)
 	m.diffFileCursor = fileIndexAtOffset(files, m.panes[tabDiff].YOffset())
 
 	return m
@@ -137,7 +139,7 @@ func (m Model) openDiffFilePicker() Model {
 // the window does under the same gestures.
 func (m Model) movePickedFile(d int) Model {
 	raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
-	files := parseDiffFiles(raw)
+	files := patch.Files(raw)
 	m.diffFileCursor = min(max(m.diffFileCursor+d, 0), max(len(files)-1, 0))
 
 	return m
@@ -146,7 +148,7 @@ func (m Model) movePickedFile(d int) Model {
 // handleDiffFilePickerKey handles keystrokes while the file selector modal is open.
 func (m Model) handleDiffFilePickerKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
-	files := parseDiffFiles(raw)
+	files := patch.Files(raw)
 
 	switch k.String() {
 	case "esc", "q":

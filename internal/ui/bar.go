@@ -4,6 +4,10 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/point"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // barHint is one entry of the key bar: the hint as it is drawn, and the
@@ -26,7 +30,7 @@ type placedHint struct {
 // the widths are of translated words and vary with the language.
 type barChip struct {
 	text   string
-	target Target
+	target point.Target
 }
 
 // chipGap is what the chips are joined with, and what placeChips steps over.
@@ -47,22 +51,22 @@ func (m Model) barFooterChips() []barChip {
 	// Autopilot chip. The label is the bar's own ink like every other label
 	// on this line, and the only thing that carries a colour is the pip,
 	// which is the one part of the chip that is saying something.
-	pip, state := pipOff, Chrome()
+	pip, state := pipOff, theme.Chrome()
 	if m.autopilotOn() {
-		pip, state = pipOn, Paint(Live)
+		pip, state = pipOn, theme.Paint(theme.Live)
 	}
 
 	chips = append(chips, barChip{
-		text: Chrome().Render("⚡ "+p.T("header.autopilot", "autopilot")) + " " + state.Render(pip) + " " + Paint(Live).Bold(true).Render("["+m.keys.Autopilot.Help().Key+"]"),
+		text: theme.Chrome().Render("⚡ "+p.T("header.autopilot", "autopilot")) + " " + state.Render(pip) + " " + theme.Paint(theme.Live).Bold(true).Render("["+m.keys.Autopilot.Help().Key+"]"),
 		// The switch, through the same target the header's own chip uses.
-		target: Target{Kind: TargetStatusField, Field: "autopilot"},
+		target: point.Target{Kind: point.StatusField, Field: "autopilot"},
 	})
 
 	// Interactive CLI chip
 	if m.screen == screenList {
 		chips = append(chips, barChip{
-			text:   Chrome().Render("💬 "+p.T("header.cli_chip", "cli")) + " " + Paint(Live).Bold(true).Render("[c]"),
-			target: Target{Kind: TargetBarHint, Key: "c"},
+			text:   theme.Chrome().Render("💬 "+p.T("header.cli_chip", "cli")) + " " + theme.Paint(theme.Live).Bold(true).Render("[c]"),
+			target: point.Target{Kind: point.BarHint, Key: "c"},
 		})
 	}
 
@@ -81,7 +85,7 @@ func (m Model) barFooterChips() []barChip {
 		// The bar's own ink, like every other label on this line: Dim is
 		// faint grey on the bar's grey, which is a version that is there and
 		// cannot be read.
-		chips = append(chips, barChip{text: Chrome().Render(mark)})
+		chips = append(chips, barChip{text: theme.Chrome().Render(mark)})
 	}
 
 	return chips
@@ -123,7 +127,7 @@ func (m Model) barLayout(w int) (string, []placedHint, []headerZone) {
 	// The three keys that are always there, in the corner they have always
 	// been in: the menu of everything the thing under the cursor can be
 	// asked, the cheat sheet, and the way out.
-	tail := Chrome().Render("[" + m.keys.Menu.Help().Key + "] [" + m.keys.Help.Help().Key + "] [" + m.keys.Quit.Help().Key + "]")
+	tail := theme.Chrome().Render("[" + m.keys.Menu.Help().Key + "] [" + m.keys.Help.Help().Key + "] [" + m.keys.Quit.Help().Key + "]")
 	chips := m.barFooterChips()
 	chipsText := chipLine(chips)
 	chipsW := lipgloss.Width(chipsText)
@@ -144,10 +148,10 @@ func (m Model) barLayout(w int) (string, []placedHint, []headerZone) {
 			// No room for the chips, so they are not drawn and nothing at
 			// that end of the bar is clickable.
 			if leftW <= w {
-				return fit(leftStr, w), place(hints), nil
+				return cells.Fit(leftStr, w), place(hints), nil
 			}
 
-			return fit(leftStr, w), nil, nil
+			return cells.Fit(leftStr, w), nil, nil
 		}
 
 		hints = hints[:len(hints)-1]

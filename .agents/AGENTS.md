@@ -1,34 +1,61 @@
-# Orbit Agent Directives & Engineering Standards 🛰️
+# Orbit: how to work in this repository
 
-Welcome to Orbit. When contributing or modifying code in this repository, you must strictly follow these engineering principles:
+`CONTRIBUTING.md` is the source of truth for how this code is written, and it is short. Read it. What follows is the same rules in the form an agent needs them: what to check before writing, and what will fail if you do not.
+
+To read further: [Practical Go](https://dave.cheney.net/practical-go).
 
 ---
 
-## 🏛️ 1. Core Architectural Laws
+## Before you write
 
-1. **Strict File Size Ceiling ($< 300$ Lines):**
-   - No `.go` source file may exceed **300 lines** (target $\le 295$ lines).
-   - If a file approaches 300 lines, extract cohesive responsibilities into adjacent dedicated files (e.g. `settings_dials.go`, `flow_mouse.go`, `mouse_routing.go`).
-2. **Line Length & Spacing Discipline ($\le 100$ Characters):**
-   - Keep all lines of code, signatures, comments, and strings within **100 characters**.
-   - Code must breathe: separate logical thought blocks with single empty lines, avoid dense code walls.
-   - Place clear, explanatory comments above non-trivial decisions explaining *why*, not just *what*.
-3. **Explicit Error Handling (Zero Silent Discards):**
-   - Never ignore errors silently with `_ = f()` or unhandled assignments.
-   - Always check `if err != nil` and wrap with `%w` for error chain integrity (`fmt.Errorf("do thing: %w", err)`).
-4. **Structured Diagnostic Logging (`internal/logger`):**
-   - Log all actionable failures, timeouts, and state transitions through `internal/logger`.
-   - Always include the subsystem module tag: `logger.Error("cli/run", "failed: %v", err)`.
-   - Never write debug logs directly to `os.Stdout` or `os.Stderr` in Cockpit code to avoid corrupting the TUI.
-5. **Rigorous Test Coverage ($\ge 90\%$):**
-   - Maintain $\ge 90\%$ statement coverage across packages.
-   - Include unit tests, full task lifecycle E2E flows, native Go fuzzing (`testing.F`), and property invariants.
-6. **Translation & Internationalization Honesty (`words.Printer`):**
-   - All user-facing strings must be passed through `p.T("key", "default English")`.
-   - Every translation key in `es.json` and `en.json` must be actively referenced in Go code (`TestEveryTranslationKeyIsHonest`).
-7. **Pure Layout Calculations (`internal/ui/layout`):**
-   - Layout geometry calculations must remain pure functions without styling, escape codes, or side effects.
-8. **Strict Local-First Git Discipline (Zero Unsolicited Pushes):**
-   - Never execute `git push` or push changes to remote branches unless the user explicitly requests it.
-   - Keep all development, builds, and test validations strictly local for the user's manual review.
+1. **Find the door.** Every package is entered through the files that export its names — a screen through `Open`, `Key`, `Apply`, `View`; a reader through `Read`. `internal/arch/doors_test.go` lists them per package, and that list is the index: read it before opening files, and it will tell you where the thing you need lives.
+2. **Read the layers.** `internal/arch/layers_test.go` says which packages may import which, with the argument for each. If what you are about to write needs a new import between packages, that is a decision to argue in the pull request, not a line to add quietly.
+3. **Read the neighbours.** Match the file you are in: its comment density, its naming, its shape. A file that reads differently from the ones beside it is a file a reviewer has to learn twice.
 
+## What will fail if you get it wrong
+
+`make check` runs all of it. Read its exit status, never the output of something you piped it into.
+
+| Rule | What holds it |
+|---|---|
+| 300 lines per file, code and comment | `TestNoFileOverTheCeiling` |
+| 100 columns per line of code, strings exempt | `TestCodeStaysInsideTheColumn` (a ratchet: it may go down, never up) |
+| Only doors export | `TestEveryExportedNameIsBehindADoor` |
+| Interfaces of six methods or fewer | `TestInterfacesStaySmall` |
+| No `util`/`common`/`helpers` packages | `TestNoPackageIsADrawer` |
+| No `GetThing()` getters | `TestNoGetterSaysGet` |
+| Imports follow the layer map | `TestImportsFollowTheLayers` |
+| Every translation key is used and honest | `TestEveryTranslationKeyIsHonest` |
+| The window measures cells, not bytes | `TestUIMeasuresCellsNotBytes` |
+| Coverage at or above 90%, or the build fails | `make coverage` |
+
+## What a change brings with it
+
+Tests are not an afterthought and not one kind. Bring the ones that fit the change:
+
+1. **Unit** — always, in the package that owns the behaviour, named after it.
+2. **Property-based** — where there is an invariant: a lossless round-trip, a cost
+   that never decreases, a layout that never goes negative. Assert the law, not one
+   example of it.
+3. **Fuzzing** — where bytes arrive from outside: parsers, stream decoders, fitters.
+   `make fuzz PKG=./internal/engine/... FOR=2m`, and commit the corpus it finds.
+4. **Integration** — where the seam is the subject: a whole flow, a command that
+   opens the store and writes the record.
+5. **Mutation** — on the package you touched, before the pull request:
+   `make mutate PKG=./internal/ui/settings/...`. A surviving mutant is a statement no
+   test disagrees with. Kill it, or say why it does not matter.
+6. **Adversarial** — the case written to break it: empty, twice, out of order, after
+   the reader left, deleted between the listing and the read. Most bugs this project
+   shipped were one of those.
+
+## The five that are judgement, not tests
+
+1. **Nothing is hidden.** No error is swallowed or softened. `_ = f()` needs a `//nolint:errcheck // reason` that says why in words.
+2. **Handle an error once.** Wrap it with `%w` and the sentence saying what was being attempted, and return it. Log it only where it stops travelling — the command that gives up, the window that puts it in the band — with its subsystem tag: `logger.Error("cli/run", …)`. Never both.
+3. **Say it once, plainly.** Every sentence the operator sees goes through `p.T("key", "the English")`, is short, and says what happened and what to do. No adjectives, no apologies.
+4. **Comments explain why.** State the fact about the code, not a verdict on it. Where a decision was made — an alternative rejected, a constant that came from measurement, a guard that exists because something happened — say so, because the code cannot.
+5. **Interfaces are declared by whoever needs them**, with the two or three methods that caller uses. Not by whoever implements them.
+
+## Git
+
+Never `git push`, never open a pull request, and never merge unless you were asked to in words. Work stays local and committed only when the operator says so — they review before anything leaves the machine.

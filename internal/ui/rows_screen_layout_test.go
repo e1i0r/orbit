@@ -7,6 +7,9 @@ package ui
 
 import (
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/palette"
 )
 
 // TestNoWindowMakesThePaneTallerThanTheBody. The pane is the one region
@@ -158,7 +161,7 @@ func TestBarRowsUsesThePaletteLineWhenOpen(t *testing.T) {
 
 	m.frame.Bar.H = 1
 
-	m.palette.open = true
+	m.palette = palette.Open()
 	if rows := m.barRows(); len(rows) != 1 {
 		t.Errorf("barRows with the palette open has %d rows, want 1", len(rows))
 	}
@@ -177,15 +180,15 @@ func TestPageAndFitEdges(t *testing.T) {
 		t.Errorf("page with more rows below the fold = %d, want one fewer than the region", got)
 	}
 
-	if got := fit("hello", 0); got != "" {
-		t.Errorf("fit(..., 0) = %q, want empty", got)
+	if got := cells.Fit("hello", 0); got != "" {
+		t.Errorf("cells.Fit(..., 0) = %q, want empty", got)
 	}
 
-	if got := fit("hi", 10); got != "hi" {
+	if got := cells.Fit("hi", 10); got != "hi" {
 		t.Errorf("fit within width = %q, want it unchanged", got)
 	}
 
-	if got := fit("a long sentence", 5); len([]rune(got)) > 5 {
+	if got := cells.Fit("a long sentence", 5); len([]rune(got)) > 5 {
 		t.Errorf("fit truncated to %q, want at most 5 cells", got)
 	}
 }

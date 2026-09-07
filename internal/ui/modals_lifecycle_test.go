@@ -1,9 +1,12 @@
 package ui
 
 import (
+	"strings"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/palette"
 )
 
 func TestPaletteOperations(t *testing.T) {
@@ -16,16 +19,15 @@ func TestPaletteOperations(t *testing.T) {
 
 	// 1. Open and close palette
 	m = m.openPalette()
-	if !m.palette.open {
+	if !m.palette.Up() {
 		t.Error("expected palette to be open")
 	}
 
 	// 2. Typing into palette
-	m.palette.typed = "set"
+	m.palette = palette.OpenWith("set")
 
-	cands := m.palette.candidates(m.opts.Commands)
-	if len(cands) == 0 {
-		t.Error("expected candidates for 'set'")
+	if rows := strings.Join(m.paletteRows(20, 100), "\n"); !strings.Contains(rows, "settings") {
+		t.Errorf("typing set offered:\n%s", rows)
 	}
 
 	// 3. Navigation with up/down keys
@@ -45,9 +47,9 @@ func TestPaletteOperations(t *testing.T) {
 	// 6. Hit testing on palette
 	_ = m.hitPalette(10, 8)
 
-	// 7. Close palette
-	m = m.closePalette()
-	if m.palette.open {
+	// 7. Escape takes the line down
+	left, _ := m.paletteKey(tea.KeyPressMsg{Code: tea.KeyEscape})
+	if asModel(t, left).palette.Up() {
 		t.Error("expected palette to be closed")
 	}
 }
@@ -57,12 +59,12 @@ func TestMenuOperations(t *testing.T) {
 
 	// 1. Open context menu
 	m = m.openMenuForContext()
-	if !m.menu.open {
+	if !m.menu.Up() {
 		t.Error("expected menu to be open")
 	}
 
 	// 2. Entries
-	entries := m.menuEntries()
+	entries := m.menu.Entries(m.menuEnv())
 	if len(entries) == 0 {
 		t.Error("expected non-empty menu entries")
 	}
@@ -76,7 +78,7 @@ func TestMenuOperations(t *testing.T) {
 
 	// 5. Close menu
 	m = m.closeMenu()
-	if m.menu.open {
+	if m.menu.Up() {
 		t.Error("expected menu to be closed")
 	}
 }
@@ -98,7 +100,9 @@ func TestSettingsModalOperations(t *testing.T) {
 	_ = m.hitSettings(10, 10)
 
 	// 4. Abandon settings
-	m = m.abandonSettings()
+	next, _ := m.settingsKey(tea.KeyPressMsg{Code: tea.KeyEscape})
+	m = asModel(t, next)
+
 	if m.screen == screenSettings {
 		t.Error("expected to leave screenSettings")
 	}
@@ -120,9 +124,9 @@ func TestRepolistModalOperations(t *testing.T) {
 	// 3. Hit testing
 	_ = m.hitRepos(10, 10)
 
-	// 4. Abandon repos
-	m = m.abandonRepos()
-	if m.screen == screenRepos {
+	// 4. Escape leaves it
+	left, _ := m.repolistKey(tea.KeyPressMsg{Code: tea.KeyEscape})
+	if asModel(t, left).screen == screenRepos {
 		t.Error("expected to leave screenRepos")
 	}
 }

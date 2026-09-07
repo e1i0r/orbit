@@ -148,16 +148,12 @@ func openPR(ctx Context, s *store.Store, t task.Task, one aPullRequest, story *t
 	}
 
 	if err := r.CommitWorktree(wtDir, subjectOf(t)); err != nil {
-		logger.Error("cli/pr", "commit worktree %q failed: %v", wtDir, err)
-
-		return "", err
+		return "", fmt.Errorf("commit the work in %q: %w", wtDir, err)
 	}
 
 	delivers, err := r.WorktreeAhead(wtDir, r.Base)
 	if err != nil {
-		logger.Error("cli/pr", "read the work in %q failed: %v", wtDir, err)
-
-		return "", err
+		return "", fmt.Errorf("read the work in %q: %w", wtDir, err)
 	}
 
 	if !delivers {
@@ -185,9 +181,7 @@ func openPR(ctx Context, s *store.Store, t task.Task, one aPullRequest, story *t
 func pushAndOpen(ctx Context, t task.Task, r repo.Repo, wtDir string, story *task.Story) (string, error) {
 	branch := branchOf(t)
 	if err := r.PushBranch(wtDir, branch); err != nil {
-		logger.Error("cli/pr", "push branch %q failed: %v", branch, err)
-
-		return "", err
+		return "", fmt.Errorf("push branch %q: %w", branch, err)
 	}
 
 	url, err := r.CreatePR(wtDir, titleOf(t), bodyOf(t, nil, story), branch, r.Base)

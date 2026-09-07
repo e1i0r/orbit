@@ -1,0 +1,147 @@
+package prose
+
+import (
+	"strings"
+
+	"charm.land/lipgloss/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/theme"
+)
+
+// The shapes a screen is built out of.
+//
+// theme's tokens say what paper and what ink exist; this says what they are
+// assembled into — a card, a grid of fields, a badge.
+//
+// Every part returns lines rather than one string, because a pane is a list
+// of lines that the frame scrolls, and a part that returned a block would
+// have to be taken apart again by every caller.
+
+// cardChrome is what a card spends on being a card: two columns of border
+// and two of padding. lipgloss counts both inside the width it is given, so a
+// card is exactly as wide as it was asked to be and its body gets this much
+// less — which is what keeps a line from wrapping around its own border.
+const cardChrome = 4
+
+// cardFloor is the narrowest a card is drawn. Below it the chrome is most of
+// the card, so a strip that cannot afford this asks for something else.
+const cardFloor = 12
+
+// Card lays a block on raised paper inside a rounded border, with a quiet
+// uppercase title on the first line the way a detail page names the block
+// before stating it.
+//
+// A title is optional: the strip of figures at the top of a pane is four
+// cards whose titles are the figures' own labels, and a card around a code
+// listing has nothing to add above it.
+func Card(title string, body []string, width int) []string {
+	outer := max(cardFloor, width)
+	inner := outer - cardChrome
+
+	box := theme.Surface(theme.Raised).
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(theme.Rule()).
+		Padding(0, 1).
+		Width(outer)
+
+	lines := make([]string, 0, len(body)+1)
+	if title != "" {
+		lines = append(lines, theme.Text(theme.Tertiary).Render(cells.Fit(strings.ToUpper(title), inner)))
+	}
+
+	for _, l := range body {
+		lines = append(lines, cells.Fit(l, inner))
+	}
+
+	return strings.Split(box.Render(strings.Join(lines, "\n")), "\n")
+}
+
+// Field is one thing a card states about its subject: what it is called,
+// what it says, and the key that acts on it.
+//
+// The key is its own string rather than part of the label because the label
+// is upper-cased and a keystroke is not: written into the label, thinking's
+// t was drawn as [T], which on this screen is the key for more tests.
+type Field struct {
+	Label string
+	Value string
+	Key   string
+}
+
+// Fields sets label-over-value pairs in columns: the label small, quiet and
+// upper-cased above, the value at full contrast under it, and a blank line
+// between rows.
+//
+// Two lines per pair rather than a label column and a value column, because
+// a terminal has one type size — a label beside its value can only be told
+// from it by colour, and above it, it is told by position as well.
+func Fields(pairs []Field, columns, width int) []string {
+	if columns < 1 || len(pairs) == 0 {
+		return nil
+	}
+
+	cell := max(10, width/columns)
+
+	var out []string
+
+	for row := 0; row < len(pairs); row += columns {
+		labels, values := "", ""
+
+		for col := 0; col < columns && row+col < len(pairs); col++ {
+			p := pairs[row+col]
+
+			label := strings.ToUpper(p.Label)
+			if p.Key != "" {
+				label += " [" + p.Key + "]"
+			}
+
+			labels += cells.Pad(theme.Text(theme.Tertiary).Render(label), cell, false)
+			values += cells.Pad(p.Value, cell, false)
+		}
+
+		if row > 0 {
+			out = append(out, "")
+		}
+
+		out = append(out, strings.TrimRight(labels, " "), strings.TrimRight(values, " "))
+	}
+
+	return out
+}
+
+// Badge is a soft pill: the role's own hue, on paper tinted with it. It is
+// what the saturated blocks become — legible at a glance without being the
+// loudest thing on a pane that has ten other things to say.
+func Badge(text string, r theme.Role) string {
+	return theme.Tint(r).Render(text)
+}
+
+// Chip is one tab of the strip: its key, then its name, and — on the tab
+// being read — a band behind both.
+//
+// The band is the mark the chosen row of the knobs carries, for the same
+// reason: a strip of eleven chips is read by running an eye along it, and an
+// underline a cell high under one of them is what the eye does not catch.
+// The pad is part of the chip rather than the gap between chips, so that
+// what the band covers is what a click on it lands on.
+//
+// It returns what it drew and the plain text of it, because the strip is
+// clickable and a hit test on rendered text would be counting escape codes.
+func Chip(key, text string, active bool) (plain, rendered string) {
+	// A tab too narrow to be named keeps the brackets the named ones drop:
+	// a bare digit in a row of digits does not say it is a key to press.
+	if text == "" {
+		return "[" + key + "]", theme.Text(theme.Tertiary).Render("[") +
+			theme.Paint(theme.Accent).Bold(true).Render(key) + theme.Text(theme.Tertiary).Render("]")
+	}
+
+	plain = key + " " + text
+
+	if active {
+		plain = " " + plain + " "
+		return plain, theme.Paint(theme.Sel).Bold(true).Render(plain)
+	}
+
+	return plain, theme.Paint(theme.Accent).Bold(true).Render(key) + theme.Text(theme.Tertiary).Render(" "+text)
+}

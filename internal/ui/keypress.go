@@ -13,6 +13,8 @@ import (
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // confirmYes is the one keystroke that answers a question with yes.
@@ -46,9 +48,9 @@ func (m Model) key(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.tipKey(msg)
 	case m.note.open:
 		return m.noteKey(msg)
-	case m.palette.open:
+	case m.palette.Up():
 		return m.paletteKey(msg)
-	case m.menu.open:
+	case m.menu.Up():
 		return m.menuKey(msg)
 	case m.filtering:
 		return m.filterKey(msg)
@@ -221,11 +223,7 @@ func (m Model) confirmKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	m.confirm, m.confirmID = confirmNone, ""
 	if c == confirmPostCliTask {
 		if msg.String() == confirmYes || msg.String() == "s" || msg.String() == "S" || key.Matches(msg, m.keys.Open) {
-			m = m.openCompose()
-			if id != "" {
-				m.compose.repoPath = m.startsIn(id)
-				m.compose.field = composeText
-			}
+			m = m.openComposeFor(id)
 
 			return m.say(m.opts.Words.T("msg.compose_prompt", "write the task to run")), nil
 		}
@@ -238,13 +236,13 @@ func (m Model) confirmKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			t, ok := m.task(id)
 			if ok && m.opts.DeleteTask != nil {
 				if err := m.opts.DeleteTask(t); err != nil {
-					return m.say(Paint(Bad).Render(err.Error())), nil
+					return m.say(theme.Paint(theme.Bad).Render(err.Error())), nil
 				}
 			}
 
 			if m.opts.Reader != nil {
 				if err := m.opts.Reader.Rescan(); err != nil {
-					return m.say(Paint(Bad).Render(err.Error())), nil
+					return m.say(theme.Paint(theme.Bad).Render(err.Error())), nil
 				}
 			}
 

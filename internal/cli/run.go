@@ -68,14 +68,12 @@ func runTask(ctx Context, args []string) error {
 	// across the process boundary.
 	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
-		logger.Error("cli/run", "open repository %q failed: %v", *dir, err)
-		return err
+		return fmt.Errorf("open repository %q: %w", *dir, err)
 	}
 
 	t, err := task.Load(s, r, id)
 	if err != nil {
-		logger.Error("cli/run", "load task %q in %q failed: %v", id, r.Name, err)
-		return err
+		return fmt.Errorf("load task %q in %q: %w", id, r.Name, err)
 	}
 	// The task's own flow, unless this command overrode it — and the flow
 	// this program ships for a task written before the flow was recorded at
@@ -93,8 +91,7 @@ func runTask(ctx Context, args []string) error {
 
 	f, err := flow.Resolve(s, chosen)
 	if err != nil {
-		logger.Error("cli/run", "resolve flow %q for task %q failed: %v", chosen, id, err)
-		return err
+		return fmt.Errorf("resolve flow %q for task %q: %w", chosen, id, err)
 	}
 	// Installed here, after everything that can be wrong about the command
 	// itself has been found: a mistyped id should not go through a signal
@@ -127,8 +124,7 @@ func runTask(ctx Context, args []string) error {
 	logger.Info("cli/run", "starting task %s in repo %s on flow %s (timeout=%v)", id, r.Name, chosen, *timeout)
 
 	if err := task.Run(running, s, t, f, engines, task.FileGate(s, time.Second)); err != nil {
-		logger.Error("cli/run", "task %s execution failed: %v", id, err)
-		return err
+		return fmt.Errorf("task %s execution: %w", id, err)
 	}
 
 	logger.Info("cli/run", "task %s execution finished successfully", id)

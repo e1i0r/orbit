@@ -106,7 +106,7 @@ func TestABreakerThatCannotFlipTheSwitchSaysSo(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.seen = true
 
-	held, ok := m.opts.Settings.(*settings)
+	held, ok := m.opts.Settings.(*settingsFile)
 	if !ok {
 		t.Fatalf("the window's settings port is %T, want the fixture's", m.opts.Settings)
 	}

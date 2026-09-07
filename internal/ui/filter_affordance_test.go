@@ -8,16 +8,17 @@ package ui
 import (
 	"testing"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
 func TestTrimLastRune(t *testing.T) {
-	if got := trimLastRune(""); got != "" {
-		t.Errorf("trimLastRune(\"\") = %q, want empty", got)
+	if got := cells.TrimLastRune(""); got != "" {
+		t.Errorf("cells.TrimLastRune(\"\") = %q, want empty", got)
 	}
 
-	if got := trimLastRune("café"); got != "caf" {
-		t.Errorf("trimLastRune(\"café\") = %q, want \"caf\" (a rune, not a byte, trimmed)", got)
+	if got := cells.TrimLastRune("café"); got != "caf" {
+		t.Errorf("cells.TrimLastRune(\"café\") = %q, want \"caf\" (a rune, not a byte, trimmed)", got)
 	}
 }
 

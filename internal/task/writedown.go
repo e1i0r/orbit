@@ -100,8 +100,14 @@ func oneLine(e record.Event) string {
 // log entry wide enough to wrap in a terminal is one nobody skims.
 const noteWidth = 200
 
-// noted writes a failure down and hands it back, so that a caller can log
-// and return in the one line the caller already had.
+// noted writes a failure down and hands it back.
+//
+// This is the one place the house rule about handling an error once bends,
+// and it bends because of where it runs: a phase is a background process
+// whose stderr goes nowhere and whose caller is the run loop. The log is the
+// only place that failure is ever seen with the task it belongs to, so it is
+// written here, at the point it happened, and the error still travels — the
+// run turns it into what the record says about the phase.
 func noted(id string, err error) error {
 	logger.Error("task/run", "%s: %v", id, err)
 

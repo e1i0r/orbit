@@ -19,7 +19,7 @@ import (
 // blank is a window that has never seen a board, so that what a board does
 // to the frame clock is the only thing under test.
 func blank() Model {
-	return New(Options{Words: words.For("en"), Settings: &settings{}, Width: 100, Height: 30})
+	return New(Options{Words: words.For("en"), Settings: &settingsFile{}, Width: 100, Height: 30})
 }
 
 // after is the window a board left behind.

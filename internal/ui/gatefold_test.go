@@ -14,6 +14,8 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/point"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -50,7 +52,7 @@ func TestACheckWithMoreToSayOffersToOpen(t *testing.T) {
 
 	// A check whose whole story fits beside its name is offered no arrow:
 	// opening it would put nothing on the screen that was not already there.
-	if strings.Contains(lines[pass], foldShut) {
+	if strings.Contains(lines[pass], cells.FoldShut) {
 		t.Errorf("a check with nothing more to say offers to open: %q", lines[pass])
 	}
 
@@ -59,7 +61,7 @@ func TestACheckWithMoreToSayOffersToOpen(t *testing.T) {
 		t.Fatalf("the check that failed is not on the tab:\n%s", strings.Join(lines, "\n"))
 	}
 
-	if !strings.Contains(lines[fail], foldShut) {
+	if !strings.Contains(lines[fail], cells.FoldShut) {
 		t.Errorf("the check that failed does not offer to open: %q", lines[fail])
 	}
 
@@ -68,7 +70,7 @@ func TestACheckWithMoreToSayOffersToOpen(t *testing.T) {
 	}
 
 	at := m.hit(30, fail)
-	if at.Kind != TargetPaneRow || at.Pane != 1 {
+	if at.Kind != point.PaneRow || at.Pane != 1 {
 		t.Fatalf("pointing at the check that failed = %+v, want row 1 of the pane", at)
 	}
 
@@ -111,7 +113,7 @@ func TestARefusalSaysWhatTheSandboxSaid(t *testing.T) {
 		t.Fatalf("the refusal is not on the tab:\n%s", strings.Join(lines, "\n"))
 	}
 
-	if !strings.Contains(lines[y], foldShut) {
+	if !strings.Contains(lines[y], cells.FoldShut) {
 		t.Errorf("the refusal does not offer to open: %q", lines[y])
 	}
 
@@ -120,7 +122,7 @@ func TestARefusalSaysWhatTheSandboxSaid(t *testing.T) {
 	}
 
 	at := m.hit(30, y)
-	if at.Kind != TargetPaneRow || at.Pane != 0 {
+	if at.Kind != point.PaneRow || at.Pane != 0 {
 		t.Fatalf("pointing at the refusal = %+v, want row 0 of the pane", at)
 	}
 
@@ -154,7 +156,7 @@ func TestARefusalWithoutAToolIsStillNamed(t *testing.T) {
 
 	// One row of it and nothing to open: an arrow that opens onto the row it
 	// is already showing is an arrow that lies.
-	if strings.Contains(lines[y], foldShut) {
+	if strings.Contains(lines[y], cells.FoldShut) {
 		t.Errorf("a refusal with nothing more to say offers to open: %q", lines[y])
 	}
 }
@@ -175,7 +177,7 @@ func TestALongNoteIsClosedAndSaysHowMuchIsUnderIt(t *testing.T) {
 		t.Fatalf("the note is not on the tab:\n%s", strings.Join(lines, "\n"))
 	}
 
-	if !strings.Contains(lines[y], foldShut) {
+	if !strings.Contains(lines[y], cells.FoldShut) {
 		t.Errorf("the note does not offer to open: %q", lines[y])
 	}
 
@@ -191,7 +193,7 @@ func TestALongNoteIsClosedAndSaysHowMuchIsUnderIt(t *testing.T) {
 	}
 
 	at := m.hit(30, y)
-	if at.Kind != TargetPaneRow || at.Pane != 0 {
+	if at.Kind != point.PaneRow || at.Pane != 0 {
 		t.Fatalf("pointing at the note = %+v, want row 0 of the pane", at)
 	}
 
@@ -218,7 +220,7 @@ func TestAOneLineNoteHasNothingToOpen(t *testing.T) {
 		t.Fatalf("the note is not on the tab:\n%s", strings.Join(lines, "\n"))
 	}
 
-	if strings.Contains(lines[y], foldShut) {
+	if strings.Contains(lines[y], cells.FoldShut) {
 		t.Errorf("a note with nothing more to say offers to open: %q", lines[y])
 	}
 

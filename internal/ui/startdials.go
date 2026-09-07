@@ -1,5 +1,11 @@
 package ui
 
+import (
+	"github.com/e1i0r/orbit/internal/ui/theme"
+
+	"github.com/e1i0r/orbit/internal/ui/cells"
+)
+
 // cycleEffort moves the effort knob to the next one the engine offers.
 //
 // The list is not written out here — low, medium, high, xhigh — because that
@@ -8,7 +14,7 @@ package ui
 // runs.
 func (m Model) cycleEffort() Model {
 	efforts, _ := m.effortsFor(m.dialEngine(m.knobs.Engine))
-	m.knobs.Effort = nextOption(efforts, m.knobs.Effort, 1)
+	m.knobs.Effort = cells.NextOption(efforts, m.knobs.Effort, 1)
 
 	return m
 }
@@ -36,16 +42,16 @@ func (m Model) configLine(w int) string {
 	eng := m.dialEngine(m.knobs.Engine)
 
 	models, _ := m.modelsFor(eng)
-	mod := orDef(m.knobs.Model, first(models))
+	mod := cells.OrDef(m.knobs.Model, cells.First(models))
 
 	if s := m.opts.Settings; s != nil && m.knobs.Model == "" {
-		mod = orDef(s.Model(), mod)
+		mod = cells.OrDef(s.Model(), mod)
 	}
 
 	efforts, _ := m.effortsFor(eng)
-	eff := orDef(m.knobs.Effort, first(efforts))
+	eff := cells.OrDef(m.knobs.Effort, cells.First(efforts))
 
-	eng, mod, eff = orDef(eng, unsetDial), orDef(mod, unsetDial), orDef(eff, unsetDial)
+	eng, mod, eff = cells.OrDef(eng, unsetDial), cells.OrDef(mod, unsetDial), cells.OrDef(eff, unsetDial)
 
 	thk := m.knobs.Thinking
 
@@ -54,15 +60,15 @@ func (m Model) configLine(w int) string {
 		thkLabel = p.T("start.thinking_off", "thinking: off")
 	}
 
-	left := startIndent + Paint(Dim).Render(p.T("start.engine_config", "engine")) + "     " +
-		Paint(Live).Bold(true).Render(eng) + " · " +
-		Paint(Accent).Render(mod) + " · " +
-		Paint(Dim).Render(p.T("start.effort_label", "effort:")+eff) + " · " +
-		Paint(OK).Render(thkLabel)
+	left := startIndent + theme.Paint(theme.Dim).Render(p.T("start.engine_config", "engine")) + "     " +
+		theme.Paint(theme.Live).Bold(true).Render(eng) + " · " +
+		theme.Paint(theme.Accent).Render(mod) + " · " +
+		theme.Paint(theme.Dim).Render(p.T("start.effort_label", "effort:")+eff) + " · " +
+		theme.Paint(theme.OK).Render(thkLabel)
 
-	hints := Paint(Dim).Render(p.T("start.dials_hint", "[m] model  [o] effort  [t] thinking"))
+	hints := theme.Paint(theme.Dim).Render(p.T("start.dials_hint", "[m] model  [o] effort  [t] thinking"))
 
-	return spread(left, hints, w)
+	return cells.Spread(left, hints, w)
 }
 
 // unset is what a dial with nothing on it is drawn as. A window whose

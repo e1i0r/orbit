@@ -6,6 +6,8 @@ package ui
 import (
 	"fmt"
 
+	"github.com/e1i0r/orbit/internal/ui/roster"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -57,7 +59,7 @@ func (m Model) workspaceBrake(p *words.Printer) brake {
 	}
 
 	for _, w := range reading.Windows {
-		if left := 100 - pctUsed(w); left < float64(floor) {
+		if left := 100 - roster.Used(w); left < float64(floor) {
 			return brake{key: "quota", text: p.T("header.quota_brake", "quota floor ({left}% left)",
 				about("left", fmt.Sprintf("%.0f", left)))}
 		}
@@ -79,7 +81,7 @@ func (m Model) brakeField(p *words.Printer) []headerField {
 		return nil
 	}
 
-	return []headerField{{text: Paint(Warn).Render("⚠️ " + b.text)}}
+	return []headerField{{text: theme.Paint(theme.Warn).Render("⚠️ " + b.text)}}
 }
 
 // spentOnBoard is what the tasks on this board have cost between them.

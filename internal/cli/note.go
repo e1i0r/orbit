@@ -35,19 +35,16 @@ func noteTask(ctx Context, args []string) error {
 
 	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
-		logger.Error("cli/note", "open repository %q failed: %v", *dir, err)
-		return err
+		return fmt.Errorf("open repository %q: %w", *dir, err)
 	}
 
 	t, err := task.Load(s, r, id)
 	if err != nil {
-		logger.Error("cli/note", "load task %q in %q failed: %v", id, r.Name, err)
-		return err
+		return fmt.Errorf("load task %q in %q: %w", id, r.Name, err)
 	}
 
 	if err := task.Note(s, t, text); err != nil {
-		logger.Error("cli/note", "append note to %q in %q failed: %v", id, r.Name, err)
-		return err
+		return fmt.Errorf("append note to %q in %q: %w", id, r.Name, err)
 	}
 
 	logger.Info("cli/note", "note added to task %s in repo %s", id, r.Name)

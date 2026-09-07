@@ -20,27 +20,25 @@ func (m Model) paste(content string) Model {
 
 	switch {
 	case m.screen == screenSupervisor:
-		// While a line is being picked there is nothing being typed into,
-		// and text arriving would land in a field nobody can see.
-		if !m.supervisor.picking {
-			m.supervisor.input += trimmed
-		}
+		m.supervisor = m.supervisor.Type(trimmed)
 
 		return m
 	case m.note.open:
 		m.note.text += trimmed
 		return m
 	case m.screen == screenCompose:
-		return m.composeEdit(func(in *input) { in.insert(trimmed) })
+		m.compose = m.compose.Type(trimmed)
+
+		return m
 	case m.filtering:
 		m.filter += trimmed
 		return m.clampCursor()
-	case m.palette.open:
-		m.palette.typed += trimmed
-		return m.ensureVisible()
+	case m.palette.Up():
+		m.palette = m.palette.Type(trimmed)
+		return m
 	case m.screen == screenFlows:
-		if m.flows.creating {
-			m.flows.write(trimmed)
+		if m.flows.Creating() {
+			m.flows.Write(trimmed)
 		}
 
 		return m
