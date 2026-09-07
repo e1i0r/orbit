@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/ui/layout"
 	"github.com/e1i0r/orbit/internal/ui/prose"
@@ -93,15 +94,47 @@ type Env struct {
 	FilesFailed string
 
 	// DiffKnown and DiffFailed are the same two answers about the working
-	// tree, which the artifacts pane counts its second half by.
-	DiffKnown  bool
-	DiffFailed string
+	// tree, which the artifacts pane counts its second half by. DiffMissing
+	// says the checkout is not there at all, which is not a failure to
+	// report: a task whose worktree was removed changed nothing in it.
+	DiffKnown   bool
+	DiffFailed  string
+	DiffMissing bool
+
+	// Width is the terminal's rather than the body's. The diff is read
+	// across the whole window, and cutting it to a column the body happens
+	// to have would be cutting it twice.
+	Width int
+
+	// Collapsed is which files of the diff the reader has shut, and
+	// Rationale whether the sentence the record gives for each change is
+	// set beside it.
+	Collapsed map[string]bool
+	Rationale bool
 
 	// Read is what a file the reader opened turned out to hold, and whether
 	// it has been asked for at all. A file is read when it is opened and
 	// not before: reading every file of the directory on every tick to draw
 	// a list of names would be a read nobody asked for.
 	Read func(name string) (File, bool)
+
+	// Reach is what the window last read about what this change touches:
+	// the history's own answer, the checks run on both sides, and the three
+	// states each of those can be in. Nothing found and nothing read yet
+	// are different facts, and a pane that folded them into one would tell
+	// a reader a repository has no coupling when what happened is that git
+	// timed out.
+	Reach Reach
+
+	// Said is the window's word for an error. The panes are handed
+	// sentences rather than errors wherever there is one to hand over; this
+	// is for the errors that arrive inside a reading, where a check that
+	// could not be run carries its own.
+	Said func(error) string
+
+	// Spinner is a frame of the animation, painted, for the panes that are
+	// waiting on something.
+	Spinner string
 
 	// Raw is the reader's "show me what was written" switch: the panes that
 	// set markdown draw the record itself instead, framing and all, because
@@ -215,4 +248,45 @@ func (e Env) read(name string) (File, bool) {
 	}
 
 	return e.Read(name)
+}
+
+// Reach is what was read about what this change touches, and how far each
+// reading got.
+type Reach struct {
+	// History is what the repository's own log says usually moves with
+	// these files. Read is whether an answer has landed, Asking whether one
+	// is out, and Failed why it could not be read.
+	History repo.Impact
+	Read    bool
+	Asking  bool
+	Failed  string
+
+	// NoHistory says this build cannot read a repository at all, which is
+	// not a failure: it is a window built without that port.
+	NoHistory bool
+
+	// Checks is the flow's own checks run on both sides, Compared whether
+	// they have been, and Running whether they are out right now. Offered
+	// is what would be run, named so the reader can see the cost before
+	// paying it — this is a test suite twice on somebody's machine.
+	Checks       []repo.Divergence
+	Compared     bool
+	ChecksFailed string
+	Running      bool
+	Offered      []repo.Check
+	For          time.Duration
+}
+
+// said is the window's word for an error, and the error's own where the
+// window handed no port for it.
+func (e Env) said(err error) string {
+	if err == nil {
+		return ""
+	}
+
+	if e.Said == nil {
+		return err.Error()
+	}
+
+	return e.Said(err)
 }

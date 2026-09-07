@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/charmbracelet/x/ansi"
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -169,8 +170,13 @@ func TestTheAttemptThatStandsIsTheOneDrawn(t *testing.T) {
 		{Kind: "task.delta", Delta: &view.Delta{Needs: []string{"and the one that stands says this"}}},
 	}
 
-	if got := m.lastDelta(); got == nil || got.Needs[0] != "and the one that stands says this" {
-		t.Errorf("the pane draws %+v", got)
+	drawn := ansi.Strip(strings.Join(m.impactRows(), "\n"))
+	if !strings.Contains(drawn, "and the one that stands says this") {
+		t.Errorf("the pane does not draw the delta of the attempt that stands:\n%s", drawn)
+	}
+
+	if strings.Contains(drawn, "the first attempt said this") {
+		t.Errorf("the pane draws the delta of an attempt that was thrown away:\n%s", drawn)
 	}
 }
 

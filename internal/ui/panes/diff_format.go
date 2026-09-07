@@ -1,4 +1,4 @@
-package ui
+package panes
 
 import (
 	"strings"

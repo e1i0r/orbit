@@ -1,4 +1,4 @@
-package ui
+package panes
 
 // What the impact pane draws.
 //
@@ -23,57 +23,59 @@ import (
 	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
-// impactRows is the pane.
-func (m Model) impactRows() []string {
-	p := m.opts.Words
+// Impact is what this change reaches beyond the files it touched.
+func Impact(e Env) []string {
+	p, r := e.Words, e.Reach
 
 	switch {
-	case m.opts.Reader == nil:
+	case r.NoHistory:
 		return []string{theme.Paint(theme.Dim).Render(p.T("impact.no_port", "this build cannot read the history"))}
-	case m.weigh.reachAsking && !m.weigh.reachKnown:
-		return []string{m.spinner(theme.Live) + theme.Paint(theme.Live).Render(p.T("impact.reading", "reading the history…"))}
-	case !m.weigh.reachKnown:
+	case r.Asking && !r.Read:
+		return []string{e.Spinner + theme.Paint(theme.Live).Render(p.T("impact.reading", "reading the history…"))}
+	case !r.Read:
 		return []string{theme.Paint(theme.Dim).Render(p.T("impact.not_yet", "nothing read yet"))}
-	case m.weigh.reachErr != nil:
+	case r.Failed != "":
 		return []string{theme.Paint(theme.Bad).Render(p.T("impact.failed", "the history could not be read: {err}",
-			about("err", m.errSaid(m.weigh.reachErr))))}
-	case len(m.weigh.reach.Changed) == 0 && m.lastDelta() == nil && !m.weigh.checksKnown:
-		return []string{theme.Paint(theme.Dim).Render(p.T("impact.no_changes", "this task changed no files, so there is nothing to weigh"))}
+			about("err", r.Failed)))}
+	case len(r.History.Changed) == 0 && e.lastDelta() == nil && !r.Compared:
+		return []string{theme.Paint(theme.Dim).Render(p.T("impact.no_changes",
+			"this task changed no files, so there is nothing to weigh"))}
 	}
 
-	rows := m.compareRows()
-	rows = append(rows, m.impactCoupled()...)
-	rows = append(rows, m.impactContracts()...)
+	rows := e.compareRows()
+	rows = append(rows, e.impactCoupled()...)
+	rows = append(rows, e.impactContracts()...)
 
-	return append(rows, m.impactDelta()...)
+	return append(rows, e.impactDelta()...)
 }
 
 // impactCoupled is the first section: what the history says usually comes
 // along, and did not.
-func (m Model) impactCoupled() []string {
-	p := m.opts.Words
+func (e Env) impactCoupled() []string {
+	p := e.Words
 
-	rows := []string{"", m.impactHead(p.T("impact.reach_title", "WHAT USUALLY COMES ALONG"))}
-	rows = append(rows, m.explains(p.T("impact.reach_about",
+	rows := []string{"", e.impactHead(p.T("impact.reach_title", "WHAT USUALLY COMES ALONG"))}
+	rows = append(rows, e.explains(p.T("impact.reach_about",
 		"files this repository has committed together with the ones this task changed, and that it did not touch this time."))...)
-	rows = append(rows, m.explains(p.T("impact.reach_source",
+	rows = append(rows, e.explains(p.T("impact.reach_source",
 		"read from the last {n} commits. It is what the history does, not a rule: a file left out on purpose is the normal case.",
-		about("n", strconv.Itoa(m.weigh.reach.Commits))))...)
+		about("n", strconv.Itoa(e.Reach.History.Commits))))...)
 	rows = append(rows, "")
 
-	if len(m.weigh.reach.Coupled) == 0 {
+	if len(e.Reach.History.Coupled) == 0 {
 		return append(rows, theme.Paint(theme.OK).Render("  "+p.T("impact.reach_none",
 			"nothing else follows these files often enough to mention"))+"\n", "")
 	}
 
 	changed := map[string][]string{}
-	for _, c := range m.weigh.reach.Coupled {
-		changed[c.With] = append(changed[c.With], impactLine(m, c))
+	for _, c := range e.Reach.History.Coupled {
+		changed[c.With] = append(changed[c.With], impactLine(p, c))
 	}
 
-	for _, file := range m.weigh.reach.Changed {
+	for _, file := range e.Reach.History.Changed {
 		lines, held := changed[file]
 		if !held {
 			continue
@@ -94,10 +96,10 @@ func (m Model) impactCoupled() []string {
 // pattern in the history, and the engine's own account — and a reader who
 // cannot see where one ends reads the third as though it carried the weight
 // of the first. The rule is what says they are separate things.
-func (m Model) impactHead(title string) string {
+func (e Env) impactHead(title string) string {
 	head := theme.Paint(theme.Accent).Bold(true).Render(title) + " "
 
-	if rule := min(m.frame.Body.W, 104) - lipgloss.Width(title) - 3; rule > 0 {
+	if rule := min(e.Frame.Body.W, 104) - lipgloss.Width(title) - 3; rule > 0 {
 		head += theme.Paint(theme.Dim).Render(strings.Repeat("─", rule))
 	}
 
@@ -109,10 +111,10 @@ func (m Model) impactHead(title string) string {
 // The panes do not wrap on their own — a diff must not — so a paragraph that
 // explains what a section is has to be folded where it is written, or the
 // half of it past the right edge is the half nobody reads.
-func (m Model) explains(sentence string) []string {
+func (e Env) explains(sentence string) []string {
 	var out []string
 
-	for _, line := range cells.Lines(sentence, max(m.frame.Body.W-4, 20)) {
+	for _, line := range cells.Lines(sentence, max(e.Frame.Body.W-4, 20)) {
 		out = append(out, theme.Paint(theme.Dim).Render("  "+line))
 	}
 
@@ -121,9 +123,7 @@ func (m Model) explains(sentence string) []string {
 
 // impactLine is one file that follows: how often, out of how many, and that
 // nobody touched it.
-func impactLine(m Model, c repo.Coupled) string {
-	p := m.opts.Words
-
+func impactLine(p *words.Printer, c repo.Coupled) string {
 	return "    " + theme.Paint(theme.Warn).Render("⚠ ") + theme.Text(theme.Primary).Render(c.File) + " " +
 		theme.Paint(theme.Dim).Render(p.T("impact.follows", "{pct}% of the time ({times}/{of}) · not touched",
 			about("pct", strconv.Itoa(int(c.Ratio()*100+0.5))),
@@ -133,14 +133,14 @@ func impactLine(m Model, c repo.Coupled) string {
 
 // impactContracts is the second section: what the tests that were left out
 // say they hold.
-func (m Model) impactContracts() []string {
-	p := m.opts.Words
-	if len(m.weigh.reach.Contracts) == 0 {
+func (e Env) impactContracts() []string {
+	p := e.Words
+	if len(e.Reach.History.Contracts) == 0 {
 		return nil
 	}
 
-	rows := []string{m.impactHead(p.T("impact.contracts_title", "WHAT THOSE TESTS SAY THEY HOLD"))}
-	rows = append(rows, m.explains(p.T("impact.contracts_about",
+	rows := []string{e.impactHead(p.T("impact.contracts_title", "WHAT THOSE TESTS SAY THEY HOLD"))}
+	rows = append(rows, e.explains(p.T("impact.contracts_about",
 		"the names of the tests in the files above, read as sentences. Nothing here was run: it is what somebody wrote down that the code guarantees."))...)
 	rows = append(rows, "")
 
@@ -148,7 +148,7 @@ func (m Model) impactContracts() []string {
 
 	var order []string
 
-	for _, c := range m.weigh.reach.Contracts {
+	for _, c := range e.Reach.History.Contracts {
 		if _, seen := byFile[c.File]; !seen {
 			order = append(order, c.File)
 		}
@@ -168,10 +168,10 @@ func (m Model) impactContracts() []string {
 	return rows
 }
 
-// impactMark is the count beside the tab's name, and nothing when the
-// reading found nothing.
-func (m Model) impactMark() string {
-	n := m.impactWarnings()
+// Mark is the count beside the tab's name, and nothing when the reading
+// found nothing: a zero on a tab strip is a number nobody needs to read.
+func Mark(e Env) string {
+	n := e.Reach.warnings()
 	if n == 0 {
 		return ""
 	}
@@ -188,16 +188,16 @@ func (m Model) impactMark() string {
 // here because the discarded alternatives exist nowhere else: they die with
 // the run, and the next person to touch that code pays again to find out why
 // the obvious approach was not taken.
-func (m Model) impactDelta() []string {
-	p := m.opts.Words
+func (e Env) impactDelta() []string {
+	p := e.Words
 
-	d := m.lastDelta()
+	d := e.lastDelta()
 	if d == nil {
 		return nil
 	}
 
-	rows := []string{m.impactHead(p.T("impact.delta_title", "WHAT THE AGENT SAYS IT DID"))}
-	rows = append(rows, m.explains(p.T("impact.delta_about",
+	rows := []string{e.impactHead(p.T("impact.delta_title", "WHAT THE AGENT SAYS IT DID"))}
+	rows = append(rows, e.explains(p.T("impact.delta_about",
 		"the engine's own account of what this change asks of its callers and what it now promises them. Nobody verified it — no command can — and the last part is the only place a rejected approach is written down."))...)
 	rows = append(rows, "")
 
@@ -231,12 +231,21 @@ func (m Model) impactDelta() []string {
 // The last, for the reason the report pane draws the last: a task run three
 // times said this three times, and the two before it are about work that was
 // thrown away.
-func (m Model) lastDelta() *view.Delta {
-	for i := len(m.entries) - 1; i >= 0; i-- {
-		if m.entries[i].Delta != nil {
-			return m.entries[i].Delta
+func (e Env) lastDelta() *view.Delta {
+	for i := len(e.Entries) - 1; i >= 0; i-- {
+		if e.Entries[i].Delta != nil {
+			return e.Entries[i].Delta
 		}
 	}
 
 	return nil
+}
+
+// warnings is how many things the reading found, for the mark on the tab.
+func (r Reach) warnings() int {
+	if !r.Read || r.Failed != "" {
+		return 0
+	}
+
+	return len(r.History.Coupled)
 }

@@ -130,20 +130,22 @@ func TestMovingToAnotherTaskForgetsTheComparison(t *testing.T) {
 	}
 }
 
-// TestTheImpactPaneOffersToRunTheChecksAndSaysWhileItIs.
-func TestTheImpactPaneOffersToRunTheChecksAndSaysWhileItIs(t *testing.T) {
+// TestTheClockOnARunThatIsOut. The pane says how long the checks have been
+// going, because they are a test suite twice on somebody's machine and the
+// reader is entitled to know what they are waiting for.
+func TestTheClockOnARunThatIsOut(t *testing.T) {
 	m, _ := openWith(t, "ACME-2662", fixtureEntries())
-
-	offered := ansi.Strip(strings.Join(m.compareOffer(), "\n"))
-	if strings.TrimSpace(offered) == "" {
-		t.Error("the pane offers nothing at all")
-	}
+	m.weigh.reach, m.weigh.reachKnown = repo.Impact{Changed: []string{"pricing.py"}}, true
 
 	m.weigh.running = true
 	m.weigh.since = m.now.Add(-42 * time.Second)
 
 	if got := m.comparedFor(); got != 42*time.Second {
 		t.Errorf("the run has been out %v, want 42s", got)
+	}
+
+	if drawn := ansi.Strip(strings.Join(m.impactRows(), "\n")); !strings.Contains(drawn, "42s") {
+		t.Errorf("the pane does not say how long the checks have been out:\n%s", drawn)
 	}
 
 	// With nothing out, there is no count to make.

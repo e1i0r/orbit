@@ -39,10 +39,14 @@ var windowLayers = map[string][]string{
 	// run can be read. Every one of them is a function of the record and of
 	// what the reader has folded, which the window hands over — a pane can
 	// reach no port and decide nothing about the task it is drawing.
+	// internal/repo is in the list for one reason: the impact pane draws a
+	// reading of the repository's own history, and the vocabulary that
+	// reading comes back in is that package's. It reads nothing itself —
+	// the window does the reading and hands the answer over.
 	"internal/ui/panes": {
-		"internal/flow", "internal/ui/cells", "internal/ui/keymap", "internal/ui/layout",
-		"internal/ui/markdown", "internal/ui/prose", "internal/ui/theme", "internal/view",
-		"internal/words",
+		"internal/flow", "internal/repo", "internal/ui/cells", "internal/ui/keymap",
+		"internal/ui/layout", "internal/ui/markdown", "internal/ui/patch", "internal/ui/prose",
+		"internal/ui/theme", "internal/view", "internal/words",
 	},
 	// internal/ui/palette is the ':' line. It answers with the command the
 	// reader chose and the window runs it: what a command does is not this

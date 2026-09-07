@@ -128,14 +128,3 @@ func (m Model) staleImpact() bool {
 
 	return (len(m.weigh.reach.Changed) == 0) != (strings.TrimSpace(m.diff) == "")
 }
-
-// impactWarnings is how many things the reading found, for the mark on the
-// tab. Nothing found draws no mark: a zero on a tab strip is a number nobody
-// needs to read.
-func (m Model) impactWarnings() int {
-	if !m.weigh.reachKnown || m.weigh.reachErr != nil {
-		return 0
-	}
-
-	return len(m.weigh.reach.Coupled)
-}

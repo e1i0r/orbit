@@ -4,11 +4,13 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/ui/panes"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -39,10 +41,17 @@ func (m Model) panesEnv() panes.Env {
 		Diff:        m.diff,
 		DiffKnown:   m.diffKnown,
 		DiffFailed:  m.errSaid(m.diffErr),
+		DiffMissing: gitLostTheWorktree(m.diffErr),
+		Width:       m.width,
+		Collapsed:   m.collapsedFiles,
+		Rationale:   !m.hideDiffRationale,
 		Files:       m.files,
 		FilesKnown:  m.filesKnown,
 		FilesFailed: m.errSaid(m.filesErr),
 		Read:        m.fileHeld,
+		Reach:       m.reading(),
+		Said:        m.errSaid,
+		Spinner:     m.spinner(theme.Live),
 		Dials:       m.taskDials(t),
 		Raw:         m.rawText,
 		Priced:      m.spends(t.Engine),
@@ -207,3 +216,59 @@ func (m Model) artifactsLines() []string {
 func (m Model) artifactsRows() ([]string, map[int]int) {
 	return panes.Artifacts(m.paneEnv(tabArtifacts))
 }
+
+// gitLostTheWorktree matches git's own words, before they are translated: a
+// checkout that is not there is recognised by what git said, and what git
+// said is the same sentence whatever language this window is drawn in.
+func gitLostTheWorktree(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	said := err.Error()
+
+	return strings.Contains(said, "cannot change to") || strings.Contains(said, "no such file or directory")
+}
+
+// diffLines is what the task changed.
+func (m Model) diffLines() []string {
+	lines, _ := m.diffRows()
+
+	return lines
+}
+
+// diffRows is that content and where each file's card landed.
+func (m Model) diffRows() ([]string, map[int]int) {
+	return panes.Diff(m.paneEnv(tabDiff))
+}
+
+// reading is what the window last read about what this change touches, in
+// the words the pane draws it in.
+func (m Model) reading() panes.Reach {
+	t, held := m.task(m.detail)
+
+	out := panes.Reach{
+		History:      m.weigh.reach,
+		Read:         m.weigh.reachKnown,
+		Asking:       m.weigh.reachAsking,
+		Failed:       m.errSaid(m.weigh.reachErr),
+		NoHistory:    m.opts.Reader == nil,
+		Checks:       m.weigh.checks,
+		Compared:     m.weigh.checksKnown,
+		ChecksFailed: m.errSaid(m.weigh.checksErr),
+		Running:      m.weigh.running,
+		For:          m.comparedFor(),
+	}
+
+	if held {
+		out.Offered = m.checksOf(t)
+	}
+
+	return out
+}
+
+// impactRows is what this change reaches beyond the files it touched.
+func (m Model) impactRows() []string { return panes.Impact(m.paneEnv(tabImpact)) }
+
+// impactMark is the count beside the impact tab's name.
+func (m Model) impactMark() string { return panes.Mark(m.panesEnv()) }
