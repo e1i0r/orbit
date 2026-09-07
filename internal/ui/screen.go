@@ -70,7 +70,7 @@ func (m Model) View() tea.View {
 		lines = append(lines, m.paletteRows(m.frame.Body.H, m.frame.Body.W)...)
 	case m.note.open:
 		lines = append(lines, m.noteRows(m.frame.Body.H, m.frame.Body.W)...)
-	case m.menu.open:
+	case m.menu.Up():
 		lines = append(lines, m.menuRows(m.frame.Body.H, m.frame.Body.W)...)
 	case m.watchUp:
 		lines = append(lines, m.watchRows(m.frame.Body.H, m.frame.Body.W)...)

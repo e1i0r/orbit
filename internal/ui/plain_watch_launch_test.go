@@ -166,7 +166,7 @@ func TestWheelAndWatchMsgCommands(t *testing.T) {
 	m.palette = palette.Open()
 	_ = m.wheel(tea.Mouse{X: 10, Y: 8, Button: tea.MouseWheelDown})
 	m.palette = palette.State{}
-	m.menu.open = true
+	m = m.openMenu("")
 	_ = m.wheel(tea.Mouse{X: 10, Y: 8, Button: tea.MouseWheelDown})
 
 	// 4. runCommand and outputPump in watchmsg

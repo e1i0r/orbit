@@ -115,8 +115,8 @@ func TestHelpAndMenuKeys(t *testing.T) {
 	m = asModel(t, newM)
 
 	// 2. Menu popup
-	m.menu.open = true
-	m.menu.sel = 0
+	m = m.openMenu("")
+	m.menu = m.menu.Point(0)
 	newM, _ = m.menuKey(downKey)
 	m = asModel(t, newM)
 

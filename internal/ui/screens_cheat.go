@@ -20,11 +20,11 @@ func (m Model) cheatEnv() cheat.Env {
 		verbs = append(verbs, cheat.Verb{Key: b.Help().Key, Says: m.meaning(firstKey(b))})
 	}
 
-	entries := m.tabMenuEntries()
+	panes := m.paneMenu()
 
-	tabs := make([]cheat.Tab, 0, len(entries))
-	for _, e := range entries {
-		tabs = append(tabs, cheat.Tab{Glyph: e.glyph, Title: e.title, Detail: e.detail})
+	tabs := make([]cheat.Tab, 0, len(panes))
+	for _, p := range panes {
+		tabs = append(tabs, cheat.Tab{Glyph: "[" + p.Key + "]", Title: p.Title, Detail: p.Detail})
 	}
 
 	return cheat.Env{Words: m.opts.Words, Keys: m.keys, Verbs: verbs, Tabs: tabs}

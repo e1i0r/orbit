@@ -138,12 +138,12 @@ func TestHitTopLevelRefusalsAndDispatch(t *testing.T) {
 
 	m.palette = palette.State{}
 
-	m.menu.open = true
+	m = m.openMenu("")
 	if got := m.hit(5, m.frame.Bar.Y); got.Kind != point.None {
 		t.Errorf("hit on the bar with the menu open = %+v, want point.None", got)
 	}
 
-	m.menu.open = false
+	m = m.closeMenu()
 
 	// 3. Status and Band both answer through hitStatus.
 	if got := m.hit(5, m.frame.Status.Y); got.Kind != point.StatusField {

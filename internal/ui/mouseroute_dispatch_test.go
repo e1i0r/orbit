@@ -128,15 +128,15 @@ func TestRightClickOnThePaneBodyAndElsewhere(t *testing.T) {
 	next, _ := m.rightClick(point.Target{Kind: point.PaneBody})
 
 	after := asModel(t, next)
-	if !after.menu.open || after.menu.taskID != "ACME-2705" {
-		t.Errorf("rightClick(point.PaneBody) = open=%v taskID=%q, want the menu open on ACME-2705", after.menu.open, after.menu.taskID)
+	if !after.menu.Up() || after.menu.Task() != "ACME-2705" {
+		t.Errorf("rightClick(point.PaneBody) = open=%v taskID=%q, want the menu open on ACME-2705", after.menu.Up(), after.menu.Task())
 	}
 
 	// 2. No subject at all: right click on the pane body does nothing.
 	m2, _ := testModel(t, 100, 30)
 
 	next2, cmd2 := m2.rightClick(point.Target{Kind: point.PaneBody})
-	if cmd2 != nil || asModel(t, next2).menu.open {
+	if cmd2 != nil || asModel(t, next2).menu.Up() {
 		t.Error("rightClick(point.PaneBody) with no subject opened the menu")
 	}
 
@@ -144,7 +144,7 @@ func TestRightClickOnThePaneBodyAndElsewhere(t *testing.T) {
 	m3, _ := testModel(t, 100, 30)
 
 	next3, cmd3 := m3.rightClick(point.Target{Kind: point.Task, ID: "no-such-task"})
-	if cmd3 != nil || asModel(t, next3).menu.open {
+	if cmd3 != nil || asModel(t, next3).menu.Up() {
 		t.Error("rightClick on a target with no row opened the menu")
 	}
 
@@ -154,7 +154,7 @@ func TestRightClickOnThePaneBodyAndElsewhere(t *testing.T) {
 	next4, _ := m4.rightClick(point.Target{Kind: point.BandHeader, Band: view.Done})
 
 	after4 := asModel(t, next4)
-	if after4.menu.open {
+	if after4.menu.Up() {
 		t.Error("rightClick on a band header opened the menu")
 	}
 

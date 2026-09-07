@@ -19,12 +19,12 @@ func TestModalScreensNavigationAndRender(t *testing.T) {
 	m.palette = palette.State{}
 
 	// 2. Menu Rows
-	m.menu.open = true
+	m = m.openMenu("")
 	if lines := m.menuRows(20, 100); len(lines) == 0 {
 		t.Error("expected menuRows to render")
 	}
 
-	m.menu.open = false
+	m = m.closeMenu()
 
 	// 3. Engines screen
 	m.screen = screenEngines

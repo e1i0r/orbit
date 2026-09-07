@@ -50,7 +50,7 @@ func (m Model) key(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.noteKey(msg)
 	case m.palette.Up():
 		return m.paletteKey(msg)
-	case m.menu.open:
+	case m.menu.Up():
 		return m.menuKey(msg)
 	case m.filtering:
 		return m.filterKey(msg)

@@ -68,7 +68,7 @@ func TestPaletteAndMenuFullLifecycle(t *testing.T) {
 	// 2. Open Menu with 'm'
 	sendKey('m', 0, "")
 
-	if !m.menu.open {
+	if !m.menu.Up() {
 		t.Error("expected menu to be open")
 	}
 
@@ -88,7 +88,7 @@ func TestPaletteAndMenuFullLifecycle(t *testing.T) {
 	// Close menu with Esc
 	sendKey(0, tea.KeyEsc, "esc")
 
-	if m.menu.open {
+	if m.menu.Up() {
 		t.Error("expected menu to be closed")
 	}
 }

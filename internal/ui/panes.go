@@ -3,6 +3,8 @@ package ui
 // The twelve detail panes: overview, flow, gates, cost, refused, timeline,
 // report, artifacts, notes, diff, impact, and thinking.
 
+import "github.com/e1i0r/orbit/internal/ui/menu"
+
 // tab is which of the twelve panes is showing.
 type tab int
 
@@ -181,11 +183,12 @@ func (m Model) syncPanes() Model {
 	return m
 }
 
-// tabMenuEntries is the menu of a task's panes: the same list the tab strip
+// paneMenu is the menu of a task's panes: the same list the tab strip
 // draws, with a sentence under each name saying what is in it. It is here
-// rather than in menu.go because it is built out of this file's two answers
-// — which panes this task has, and which key each one is on.
-func (m Model) tabMenuEntries() []menuEntry {
+// rather than in the menu's own package because it is built out of this
+// file's two answers — which panes this task has, and which key each one is
+// on.
+func (m Model) paneMenu() []menu.Pane {
 	p := m.opts.Words
 	descs := map[tab]string{
 		tabOverview:  p.T("tab_desc.overview", "general status, live activity and metrics summary"),
@@ -201,17 +204,10 @@ func (m Model) tabMenuEntries() []menuEntry {
 		tabThinking:  p.T("tab_desc.thinking", "extended model thinking, chain of thought and reasoning"),
 	}
 
-	var out []menuEntry
+	out := make([]menu.Pane, 0, tabCount)
 
 	for _, n := range m.tabNames() {
-		tVal := n.tab
-		k := paneKey(tVal)
-		out = append(out, menuEntry{
-			glyph:  "[" + k + "]",
-			title:  n.text,
-			detail: descs[tVal],
-			tab:    &tVal,
-		})
+		out = append(out, menu.Pane{Key: paneKey(n.tab), Title: n.text, Detail: descs[n.tab]})
 	}
 
 	return out

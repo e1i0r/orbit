@@ -219,19 +219,19 @@ func TestLeftClickMenuFlowRepoAndQueueBranches(t *testing.T) {
 	m = m.openMenu("")
 
 	next, _ := m.leftClick(point.Target{Kind: point.MenuEntry, Key: "no-such-entry"})
-	if !asModel(t, next).menu.open {
+	if !asModel(t, next).menu.Up() {
 		t.Error("clicking a menu entry that does not exist should leave the menu open")
 	}
 
 	next2, _ := m.leftClick(point.Target{Kind: point.MenuEntry, Key: "repos"})
 
 	after2 := asModel(t, next2)
-	if !after2.menu.open || after2.menu.sel != 1 {
-		t.Errorf("clicking an unselected menu entry = open=%v sel=%v, want it only selected", after2.menu.open, after2.menu.sel)
+	if !after2.menu.Up() || after2.menu.At() != 1 {
+		t.Errorf("clicking an unselected menu entry = open=%v sel=%v, want it only selected", after2.menu.Up(), after2.menu.At())
 	}
 
 	next3, _ := m.leftClick(point.Target{Kind: point.MenuEntry, Key: "new"})
-	if asModel(t, next3).menu.open {
+	if asModel(t, next3).menu.Up() {
 		t.Error("clicking the already-selected menu entry should have chosen it")
 	}
 

@@ -270,31 +270,7 @@ func (m Model) leftClick(t point.Target) (tea.Model, tea.Cmd) {
 	case point.Command:
 		return m.chooseCommand(t.Key)
 	case point.MenuEntry:
-		// The palette's two-step again, on the menu's list. The entry is
-		// found by what identifies it — glyph for a verb, name for a
-		// command — never by where it sat when the button went down: the
-		// list is recomputed between press and release.
-		for i, e := range m.menuEntries() {
-			id := e.glyph
-			if id == "" && e.cmd != nil {
-				id = e.cmd.Name
-			}
-
-			if id != t.Key {
-				continue
-			}
-
-			if i == m.menu.sel {
-				return m.chooseMenu()
-			}
-
-			next := m
-			next.menu.sel = i
-
-			return next, nil
-		}
-
-		return m, nil
+		return m.chooseMenuEntry(t.Key)
 	case point.FlowItem:
 		return m.handleFlowClick(t)
 	case point.Repo:

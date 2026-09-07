@@ -77,7 +77,7 @@ func (m Model) wheel(e tea.Mouse) Model {
 		return m
 	}
 
-	if m.menu.open {
+	if m.menu.Up() {
 		// The menu's list moves its selection under the wheel, exactly as
 		// the palette's does.
 		d := wheelRows

@@ -68,10 +68,10 @@ func TestModelMouseInteractions(t *testing.T) {
 	})
 
 	mRightTyped := asModel(t, mRightRel)
-	if mRightTyped.menu.open {
+	if mRightTyped.menu.Up() {
 		// Context menu opened!
 		mClose, _ := mRightTyped.Update(tea.KeyPressMsg{Code: tea.KeyEsc})
-		if asModel(t, mClose).menu.open {
+		if asModel(t, mClose).menu.Up() {
 			t.Error("expected menu to close on Esc")
 		}
 	}

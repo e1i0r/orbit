@@ -59,12 +59,12 @@ func TestMenuOperations(t *testing.T) {
 
 	// 1. Open context menu
 	m = m.openMenuForContext()
-	if !m.menu.open {
+	if !m.menu.Up() {
 		t.Error("expected menu to be open")
 	}
 
 	// 2. Entries
-	entries := m.menuEntries()
+	entries := m.menu.Entries(m.menuEnv())
 	if len(entries) == 0 {
 		t.Error("expected non-empty menu entries")
 	}
@@ -78,7 +78,7 @@ func TestMenuOperations(t *testing.T) {
 
 	// 5. Close menu
 	m = m.closeMenu()
-	if m.menu.open {
+	if m.menu.Up() {
 		t.Error("expected menu to be closed")
 	}
 }

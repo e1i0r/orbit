@@ -19,6 +19,7 @@ import (
 	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/ui/known"
 	"github.com/e1i0r/orbit/internal/ui/layout"
+	"github.com/e1i0r/orbit/internal/ui/menu"
 	"github.com/e1i0r/orbit/internal/ui/palette"
 	"github.com/e1i0r/orbit/internal/ui/repos"
 	"github.com/e1i0r/orbit/internal/ui/settings"
@@ -107,7 +108,7 @@ type Model struct {
 	// lives in menu.go and owns the body while it is up, exactly as the
 	// palette does. The two never show at once: whichever is up owns the
 	// keyboard, and the other's opening key is swallowed by it.
-	menu menuState
+	menu menu.State
 
 	// compose is the form a task is written into, and pendingID is the id
 	// it just wrote: the board polls twice a second, so the new task is

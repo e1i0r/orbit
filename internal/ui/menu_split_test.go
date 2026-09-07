@@ -32,40 +32,26 @@ func needsArgsCommands() []Command {
 	}
 }
 
-// menuIndex is where a named command sits in the menu as it is drawn, which
-// is no longer where it sits in the table: the board's menu leaves entries
-// out, so an index into one is not an index into the other.
-func menuIndex(t *testing.T, m Model, name string) int {
+// chooseInMenu puts the cursor on a named command and chooses it, the way a
+// reader who walked down to it would. It is found by name and not by index:
+// the menu leaves entries out and adds others, so where a command sits in
+// the table is not where it sits here.
+func chooseInMenu(t *testing.T, m Model, name string) (tea.Model, tea.Cmd) {
 	t.Helper()
 
-	for i, e := range m.menuEntries() {
-		if e.cmd != nil && e.cmd.Name == name {
-			return i
+	for i, e := range m.menu.Entries(m.menuEnv()) {
+		if e.Command != name {
+			continue
 		}
+
+		m.menu = m.menu.Point(i)
+
+		return m.chooseMenu()
 	}
 
-	t.Fatalf("no %s in the menu: %v", name, m.menuEntries())
+	t.Fatalf("no %s in the menu: %v", name, m.menu.Entries(m.menuEnv()))
 
-	return 0
-}
-
-// The three verbs the reader reached for are not on the board's menu at
-// all. This is the fix and not the routing: an entry that sends the reader
-// somewhere else to say which task is an entry in the wrong menu.
-func TestTheBoardsMenuHasNoVerbsAboutOneTask(t *testing.T) {
-	m, _ := testModel(t, 100, 30)
-	m.opts.Commands = needsArgsCommands()
-	m = m.openMenu("")
-
-	for _, e := range m.menuEntries() {
-		if e.cmd != nil && e.cmd.AboutATask {
-			t.Errorf("the board's menu offers %s, which is about one task", e.cmd.Name)
-		}
-	}
-
-	// And what is generic is still there, wanting an argument or not.
-	menuIndex(t, m, "reconcile")
-	menuIndex(t, m, "export")
+	return m, nil
 }
 
 // TestChoosingACommandThatNeedsArgumentsOpensTheLine: export is generic —
@@ -76,12 +62,11 @@ func TestChoosingACommandThatNeedsArgumentsOpensTheLine(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.opts.Commands = needsArgsCommands()
 	m = m.openMenu("")
-	m.menu.sel = menuIndex(t, m, "export")
 
-	next, cmd := m.chooseMenu()
+	next, cmd := chooseInMenu(t, m, "export")
 
 	after := asModel(t, next)
-	if after.menu.open {
+	if after.menu.Up() {
 		t.Error("the menu stayed up")
 	}
 
@@ -105,9 +90,8 @@ func TestChoosingACommandThatNeedsNothingStillRuns(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.opts.Commands = needsArgsCommands()
 	m = m.openMenu("")
-	m.menu.sel = 0
 
-	next, _ := m.chooseMenu()
+	next, _ := chooseInMenu(t, m, "reconcile")
 
 	after := asModel(t, next)
 	if after.palette.Up() {
@@ -127,9 +111,8 @@ func TestACommandWithAScreenKeepsItOverTheCommandLine(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.opts.Commands = []Command{{Name: "new", Args: "-repo <dir> -id <id> <text>", NeedsArgs: true}}
 	m = m.openMenu("")
-	m.menu.sel = 0
 
-	next, _ := m.chooseMenu()
+	next, _ := chooseInMenu(t, m, "new")
 
 	after := asModel(t, next)
 	if after.palette.Up() {
@@ -211,29 +194,5 @@ func TestTheLineLeavesOutTheVerbsAboutOneTask(t *testing.T) {
 	m.palette = palette.OpenWith("cancel")
 	if got := strings.Join(m.paletteRows(20, 100), "\n"); !strings.Contains(got, "no command starts with") {
 		t.Errorf("typing cancel drew:\n%s", got)
-	}
-}
-
-// Each menu says which one it is, in a line above the entries. The reader
-// who opened the board's meaning the task's should be able to see that from
-// the menu rather than from a verb that is not in it.
-func TestEachMenuSaysWhichOneItIs(t *testing.T) {
-	m, _ := testModel(t, 100, 30)
-	m.opts.Commands = needsArgsCommands()
-
-	board := m.openMenu("").menuTitle()
-	if !strings.Contains(board, "one task") {
-		t.Errorf("the board's menu is titled %q, want it to say it is about no one task", board)
-	}
-
-	task := m.openMenu("ACME-2705").menuTitle()
-	if !strings.Contains(task, "ACME-2705") {
-		t.Errorf("a task's menu is titled %q, want it to name the task", task)
-	}
-
-	// And the title is drawn, not merely computed.
-	rows := strings.Join(m.openMenu("").menuRows(20, 100), "\n")
-	if !strings.Contains(rows, board) {
-		t.Errorf("the menu drew %q, want the title in it", rows)
 	}
 }

@@ -53,6 +53,12 @@ var doors = map[string][]string{
 	// draw.go is how it is set out.
 	"internal/ui/known":  {"known.go"},
 	"internal/ui/layout": {"columns.go", "frame.go", "repocell.go"},
+	// What can be done to the thing under the pointer: three doors. menu.go
+	// is the screen — State, Env, Out, and what it is a menu of — view.go is
+	// it drawn and what a click lands on, and key.go is every gesture that
+	// moves the cursor or chooses a row. entries.go and draw.go are how the
+	// list is built and one row of it set out.
+	"internal/ui/menu":   {"menu.go", "view.go", "key.go"},
 	"internal/ui/patch":  {"patch.go", "rationale.go"},
 	"internal/ui/point":  {"point.go"},
 	"internal/ui/prompt": {"deliver.go", "flowdraft.go", "phase.go"},

@@ -39,7 +39,7 @@ func (m Model) hit(x, y int) point.Target {
 
 	switch m.frame.At(y) {
 	case layout.RegionBar:
-		if m.palette.Up() || m.menu.open {
+		if m.palette.Up() || m.menu.Up() {
 			// The palette's line replaces the bar while it is up, and a
 			// menu up means the keyboard it names verbs with is spoken
 			// for. A line being typed into has no fields worth pointing
@@ -58,7 +58,7 @@ func (m Model) hit(x, y int) point.Target {
 			return m.hitPalette(x, y)
 		}
 
-		if m.menu.open {
+		if m.menu.Up() {
 			return m.hitMenu(x, y)
 		}
 

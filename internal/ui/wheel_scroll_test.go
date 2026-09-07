@@ -85,13 +85,13 @@ func TestWheelScrollsWhicheverScreenIsUnderIt(t *testing.T) {
 	menu = menu.openMenu("")
 
 	afterMenuDown := menu.wheel(tea.Mouse{X: 5, Y: menu.frame.Body.Y, Button: tea.MouseWheelDown})
-	if afterMenuDown.menu.sel == menu.menu.sel {
+	if afterMenuDown.menu.At() == menu.menu.At() {
 		t.Error("wheel down over an open menu did not move its selection")
 	}
 
 	afterMenuUp := afterMenuDown.wheel(tea.Mouse{X: 5, Y: menu.frame.Body.Y, Button: tea.MouseWheelUp})
-	if afterMenuUp.menu.sel != menu.menu.sel {
-		t.Errorf("wheel up should have wound the selection back to %d, got %d", menu.menu.sel, afterMenuUp.menu.sel)
+	if afterMenuUp.menu.At() != menu.menu.At() {
+		t.Errorf("wheel up should have wound the selection back to %d, got %d", menu.menu.At(), afterMenuUp.menu.At())
 	}
 
 	// 3. The palette's selection moves the same way.

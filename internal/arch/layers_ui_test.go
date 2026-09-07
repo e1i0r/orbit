@@ -21,6 +21,15 @@ var windowLayers = map[string][]string{
 	// is handed rather than keeping a copy: a sheet with its own list stops
 	// being true the day one of them changes.
 	"internal/ui/cheat": {"internal/ui/cells", "internal/ui/keymap", "internal/ui/theme", "internal/words"},
+	// internal/ui/menu is what can be done to the thing under the pointer,
+	// including what cannot and why not. It is handed the three lists it is
+	// a menu of — the affordances, the command table, the panes of the task
+	// being read — and answers with the row that was chosen: what a verb or
+	// a command then does is the window's business and not this screen's.
+	"internal/ui/menu": {
+		"internal/ui/cells", "internal/ui/keymap", "internal/ui/layout", "internal/ui/point",
+		"internal/ui/theme", "internal/words",
+	},
 	// internal/ui/palette is the ':' line. It answers with the command the
 	// reader chose and the window runs it: what a command does is not this
 	// screen's business, which is why it names no port at all.
