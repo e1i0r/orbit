@@ -19,3 +19,18 @@ jobs:
           version: v2.13.1
       - run: go test ./...
       - run: go mod tidy -diff
+
+      # install.sh is how everybody who is not building from source gets
+      # orbit, and it has a test suite that until now nothing ran. A change to
+      # the os/arch mapping or the asset name is a change nobody notices until
+      # somebody's install prints a 404.
+      - run: bash install_test.sh
+
+      # And .goreleaser.yml is only read during a release, which is the worst
+      # place to find out it does not parse: the tag has been pushed by then.
+      # The same v2 pin release.yml uses, for the same reason.
+      - uses: goreleaser/goreleaser-action@v7
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          args: check

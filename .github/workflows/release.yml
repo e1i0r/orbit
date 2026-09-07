@@ -10,9 +10,27 @@ on:
 permissions:
   contents: write
 
+# One release at a time. Both jobs push — a tag and then the assets under it —
+# and two runs overlapping would have the second computing its next version
+# from a tag the first had not pushed yet, so both would pick the same one and
+# one of the two pushes would fail after the other had already released. A
+# queued run is not cancelled, for the same reason the pages workflow does not
+# cancel one: the last commit on main is what has to end up released.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   tag:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    # A manual dispatch is offered on any branch the workflow file exists
+    # on, and this job tags what it is given and publishes it as a release.
+    # Dispatched from a feature branch it would cut a version tag off that
+    # branch, which is a release nobody could get back. The workflow_run
+    # trigger is already restricted to main by `branches:` above; this is
+    # the same restriction for the other way in.
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.next.outputs.version }}
@@ -54,10 +72,14 @@ jobs:
         with:
           go-version: '1.26'
 
+      # Pinned to the v2 line rather than latest: goreleaser's next major is
+      # a different configuration language, and `latest` would meet it on
+      # whichever release happened to run that day — with no change of ours to
+      # point at.
       - uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
-          version: latest
+          version: '~> v2'
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
