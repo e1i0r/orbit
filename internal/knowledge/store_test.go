@@ -169,6 +169,55 @@ func TestLoadBringsBothRootsTogether(t *testing.T) {
 	}
 }
 
+// TestLoadRepoBringsBackOnlyTheRepositorys is the other half of the pair.
+//
+// A caller walking every repository the record knows about already holds the
+// state root's facts, and Load would hand them back once per repository — a
+// walk and a decode each time, thrown away each time.
+func TestLoadRepoBringsBackOnlyTheRepositorys(t *testing.T) {
+	state, repo := roots(t)
+	s := NewStore(state)
+
+	for _, f := range []Fact{
+		{Scope: Scope{Kind: General}, Source: Human, Phrase: "of everything"},
+		{Scope: Scope{Kind: Language, Lang: "go"}, Source: Human, Phrase: "of Go"},
+		{Scope: Scope{Kind: Repo, Repo: repo}, Source: Human, Phrase: "of the repository"},
+	} {
+		if _, err := s.Save(f); err != nil {
+			t.Fatalf("Save %q: %v", f.Phrase, err)
+		}
+	}
+
+	got, err := s.LoadRepo(repo)
+	if err != nil {
+		t.Fatalf("LoadRepo: %v", err)
+	}
+
+	said := make([]string, 0, len(got))
+	for _, f := range got {
+		said = append(said, f.Phrase)
+	}
+
+	if want := []string{"of the repository"}; !slices.Equal(said, want) {
+		t.Errorf("LoadRepo answered %v, want %v", said, want)
+	}
+}
+
+// TestLoadRepoOnACheckoutNobodyHasWrittenAbout. Every repository starts as
+// one, and it is not a failure — the same answer Load gives.
+func TestLoadRepoOnACheckoutNobodyHasWrittenAbout(t *testing.T) {
+	state, repo := roots(t)
+
+	got, err := NewStore(state).LoadRepo(repo)
+	if err != nil {
+		t.Fatalf("LoadRepo: %v", err)
+	}
+
+	if len(got) != 0 {
+		t.Errorf("a checkout with nothing written about it answered %v", got)
+	}
+}
+
 // TestAFactWrittenByHandIsRead. The file is the source for anything somebody
 // typed themselves, so one dropped into the directory has to be picked up
 // with no ceremony.
