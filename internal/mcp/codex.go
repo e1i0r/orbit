@@ -22,7 +22,7 @@ const codexTable = "mcp_servers"
 // somebody's model, their reasoning effort and the list of projects they
 // have marked trusted. Orbit borrows a corner of it. Every byte outside its
 // own table comes out the way it went in.
-func registerCodex(configPath, binaryPath string) error {
+func registerCodex(configPath, binaryPath, root string) error {
 	if err := os.MkdirAll(filepath.Dir(configPath), 0o755); err != nil {
 		return fmt.Errorf("create config directory for %q: %w", configPath, err)
 	}
@@ -42,7 +42,7 @@ func registerCodex(configPath, binaryPath string) error {
 		return fmt.Errorf("read %q: %w", configPath, err)
 	}
 
-	merged, err := codexMerge(string(data), binaryPath)
+	merged, err := codexMerge(string(data), binaryPath, root)
 	if err != nil {
 		return fmt.Errorf("%q: %w", configPath, err)
 	}
@@ -53,7 +53,7 @@ func registerCodex(configPath, binaryPath string) error {
 // codexMerge is the edit itself, as a function of the text: everything
 // outside [mcp_servers.orbit] is carried through untouched, and that table
 // is replaced if it is there and appended if it is not.
-func codexMerge(text, binaryPath string) (string, error) {
+func codexMerge(text, binaryPath, root string) (string, error) {
 	lines := strings.Split(text, "\n")
 	ours := codexTable + "." + serverName
 	start, end, table := -1, len(lines), ""
@@ -92,7 +92,7 @@ func codexMerge(text, binaryPath string) (string, error) {
 		}
 	}
 
-	block := codexBlock(binaryPath)
+	block := codexBlock(binaryPath, root)
 
 	if start < 0 {
 		if strings.TrimSpace(text) == "" {
@@ -110,8 +110,13 @@ func codexMerge(text, binaryPath string) (string, error) {
 }
 
 // codexBlock is Orbit as a Codex table.
-func codexBlock(binaryPath string) string {
-	return fmt.Sprintf("[%s.%s]\ncommand = %s\nargs = [\"mcp\"]\n", codexTable, serverName, tomlString(binaryPath))
+func codexBlock(binaryPath, root string) string {
+	args := `["mcp"]`
+	if root != "" {
+		args = fmt.Sprintf(`["mcp", "-root", %s]`, tomlString(root))
+	}
+
+	return fmt.Sprintf("[%s.%s]\ncommand = %s\nargs = %s\n", codexTable, serverName, tomlString(binaryPath), args)
 }
 
 // tableName is the dotted name of a table header with the quoting taken off,

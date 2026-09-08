@@ -90,13 +90,21 @@ func ranked(m map[string]int) []Count {
 // digest of nothing, so a caller starts with one and hands it back.
 func Digested(d Digest, events []record.Event) Digest {
 	if d.AskedAt == nil {
-		d.AskedAt, d.Retried = map[string]int{}, map[string]int{}
+		d.AskedAt = map[string]int{}
+	}
+
+	// Guarded on its own and not on the other's: the fields are exported,
+	// and a Digest arriving with one map filled and the other nil panicked
+	// on the first phase.retried it met.
+	if d.Retried == nil {
+		d.Retried = map[string]int{}
 	}
 
 	var (
 		spent    float64
 		asked    bool
 		merged   bool
+		started  bool
 		finished bool
 		stuck    bool
 	)
@@ -114,10 +122,15 @@ func Digested(d Digest, events []record.Event) Digest {
 		case record.TaskNoted, record.TaskDialogue:
 			// A note left before the first run is the brief, not an
 			// interruption: what this counts is somebody having to step in
-			// while the work was going.
-			asked = asked || finished || stuck
+			// while the work was going. Which is what task.started tells —
+			// asked against finished or stuck only counted a note left
+			// after the run was over, so the ordinary case, a word said
+			// mid-run, was counted as a task nobody touched.
+			asked = asked || started
 		case record.PhaseRetried:
 			d.Retried[e.Phase]++
+		case record.TaskStarted:
+			started = true
 		case record.TaskRequeued:
 			d.Requeued++
 		case record.TaskStuck, record.TaskOverBudget, record.TaskOverDiff,

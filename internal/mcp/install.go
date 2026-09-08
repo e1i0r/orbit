@@ -41,14 +41,14 @@ type InstallResult struct {
 // binaryPath may be empty, in which case the running executable is
 // registered. A client spawns this command years after the install, so the
 // path has to be absolute and it has to be resolved now.
-func Install(binaryPath, home string) []InstallResult {
+func Install(binaryPath, home, root string) []InstallResult {
 	binaryPath = binary(binaryPath)
 	targets := clientConfigs(home)
 
 	results := make([]InstallResult, 0, len(targets))
 	for _, t := range targets {
 		res := InstallResult{Target: t.name, Path: t.path, Status: StatusInstalled}
-		if err := t.register(t.path, binaryPath); err != nil {
+		if err := t.register(t.path, binaryPath, root); err != nil {
 			res.Status = StatusFailed
 			res.Err = err
 		}
@@ -86,10 +86,19 @@ func binary(chosen string) string {
 // what the binary must still do then. It is one function because the
 // installer and the launcher both write it, and two spellings of one entry
 // is a session that has the server and a client that does not.
-func entry(binaryPath string) map[string]any {
+func entry(binaryPath, root string) map[string]any {
+	args := []string{"mcp"}
+	// The boundary is part of the entry or it is nothing. A reader who says
+	// `orbit mcp install -root ~/work` is asking for a server that acts on
+	// nothing outside that tree, and an entry without it registered a
+	// server that acts on everything — reported as a success.
+	if root != "" {
+		args = append(args, "-root", root)
+	}
+
 	return map[string]any{
 		"command": binaryPath,
-		"args":    []string{"mcp"},
+		"args":    args,
 	}
 }
 

@@ -178,7 +178,13 @@ type Task struct {
 	// went: a reader who sees one name is reading a task that joined one
 	// repository, not a task whose others were dropped.
 	Repos []string
-	Title string // the first line of task.md
+	// RepoPaths is the same list by absolute path, in the same order, so
+	// RepoPaths[i] is where Repos[i] is. Names are what a row draws and
+	// paths are what tells two checkouts apart: a reader with ~/a/payments
+	// and ~/b/payments has two repositories called payments, and anything
+	// choosing between them by name is choosing at random.
+	RepoPaths []string
+	Title     string // the first line of task.md
 	// Band is the band this task is drawn in. Fold writes it from the
 	// record and BandOf reads it, so the header counts and the list draws
 	// one value rather than two rules that agree by inspection. A Task

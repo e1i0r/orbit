@@ -59,15 +59,31 @@ func (r Repo) WorktreeChanges(wtDir string) ([]Change, error) {
 		_ = err //nolint:wsl // deliberate: the error is the answer, not a fault
 	}
 
-	args := append([]string{"diff", "--numstat"}, r.against(wtDir)...)
+	// --no-renames because git detects them by default and writes the pair
+	// as one path, `f => src/renamed.go`. Everything downstream reads the
+	// third column as a filename: path.Base of that is `pkg.json`, the
+	// `.orbit/` prefix test misses a file moved out of it, and coChanged
+	// looks for it in `git log --name-only`, which never spells a path that
+	// way. Counted as two paths, added and deleted, they are all right.
+	base := r.against(wtDir)
+	args := append([]string{"diff", "--numstat", "--no-renames"}, base...)
 
 	out, err := git(wtDir, args...)
 	if err != nil {
+		// Only when there was no base to compare against, and not for any
+		// other failure. A merge-base diff that broke on unrelated
+		// histories or a shallow clone fell back to a diff of the working
+		// tree alone, which counts none of the committed lines: the budget
+		// then read a small number that looked right and was not.
+		if len(base) > 0 {
+			return nil, fmt.Errorf("count what %q changed: %w", wtDir, err)
+		}
+
 		// Without a base there is nothing to compare against and the
 		// working tree is the whole answer — a worktree cut before its base
 		// existed, or one whose base has been deleted since, still has
 		// changes worth counting.
-		out, err = git(wtDir, "diff", "--numstat")
+		out, err = git(wtDir, "diff", "--numstat", "--no-renames")
 		if err != nil {
 			return nil, fmt.Errorf("count what %q changed: %w", wtDir, err)
 		}
@@ -84,11 +100,20 @@ func (r Repo) WorktreeChanges(wtDir string) ([]Change, error) {
 // the context lines around a change — which are somebody else's
 // dependencies, already there — are not read as new ones.
 func (r Repo) WorktreeAddedLines(wtDir, path string) ([]string, error) {
-	args := append([]string{"diff", "-U0"}, r.against(wtDir)...)
+	base := r.against(wtDir)
+	args := append([]string{"diff", "-U0"}, base...)
 	args = append(args, "--", path)
 
 	out, err := git(wtDir, args...)
 	if err != nil {
+		// As in WorktreeChanges: a base that was given and would not diff is
+		// a failure, not a reason to answer with the working tree — which
+		// carries none of the committed lines, and let the dependency gate
+		// approve a library the task had already committed.
+		if len(base) > 0 {
+			return nil, fmt.Errorf("read what %q added to %q: %w", wtDir, path, err)
+		}
+
 		out, err = git(wtDir, "diff", "-U0", "--", path)
 		if err != nil {
 			return nil, fmt.Errorf("read what %q added to %q: %w", wtDir, path, err)
@@ -120,15 +145,41 @@ func (r Repo) WorktreeAddedLines(wtDir, path string) ([]string, error) {
 // diff of the working tree alone — every committed line of the task missing,
 // silently.
 func (r Repo) against(wtDir string) []string {
-	if r.Base == "" {
+	base := r.cutFrom(wtDir)
+	if base == "" {
 		return nil
 	}
 
-	if tracking := r.Remote + "/" + r.Base; r.Remote != "" && r.resolves(wtDir, tracking) {
+	if tracking := r.Remote + "/" + base; r.Remote != "" && r.resolves(wtDir, tracking) {
 		return []string{"--merge-base", tracking}
 	}
 
-	return []string{"--merge-base", r.Base}
+	return []string{"--merge-base", base}
+}
+
+// cutFrom is the branch this worktree was cut from.
+//
+// Read off the branch, where AddWorktree wrote it, and not off r.Base. r.Base
+// is whichever branch the repository's own checkout is standing on right now,
+// which is a different question and a different answer the moment somebody
+// switches branches or detaches HEAD while a task is running — at which point
+// the count was taken against a branch the task never left, or against
+// nothing at all.
+//
+// A worktree from before this was recorded falls back to r.Base, which is
+// what it was measured against for its whole life.
+func (r Repo) cutFrom(wtDir string) string {
+	branch, err := git(wtDir, "rev-parse", "--abbrev-ref", "HEAD")
+	if err != nil {
+		return r.Base
+	}
+
+	base, err := git(wtDir, "config", "--get", baseKey(strings.TrimSpace(branch)))
+	if err != nil || strings.TrimSpace(base) == "" {
+		return r.Base
+	}
+
+	return strings.TrimSpace(base)
 }
 
 // numstat reads git's own three columns: added, deleted, path.

@@ -48,7 +48,7 @@ func read(t *testing.T, path string) string {
 // gives all of that back with the comments gone and the keys reordered.
 func TestCodexKeepsEverythingItDoesNotOwn(t *testing.T) {
 	path := codexFile(t, existing)
-	if err := registerCodex(path, "/usr/local/bin/orbit"); err != nil {
+	if err := registerCodex(path, "/usr/local/bin/orbit", ""); err != nil {
 		t.Fatalf("registerCodex: %v", err)
 	}
 
@@ -78,7 +78,7 @@ args = ["mcp"]
 command = "node"
 args = ["chrome.js"]
 `)
-	if err := registerCodex(path, "/usr/local/bin/orbit"); err != nil {
+	if err := registerCodex(path, "/usr/local/bin/orbit", ""); err != nil {
 		t.Fatalf("registerCodex: %v", err)
 	}
 
@@ -107,7 +107,7 @@ orbit = { command = "/somewhere/orbit", args = ["mcp"] }
 `
 	path := codexFile(t, before)
 
-	err := registerCodex(path, "/usr/local/bin/orbit")
+	err := registerCodex(path, "/usr/local/bin/orbit", "")
 	if err == nil {
 		t.Fatal("an entry this cannot edit was written over rather than refused")
 	}
@@ -125,7 +125,7 @@ orbit = { command = "/somewhere/orbit", args = ["mcp"] }
 // configured has no config.toml, and making one is the install.
 func TestCodexCreatesTheFileWhenThereIsNone(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "never", "existed", "config.toml")
-	if err := registerCodex(path, "/usr/local/bin/orbit"); err != nil {
+	if err := registerCodex(path, "/usr/local/bin/orbit", ""); err != nil {
 		t.Fatalf("registerCodex: %v", err)
 	}
 
@@ -149,7 +149,7 @@ func TestAPathIsQuotedForATOMLReader(t *testing.T) {
 // would write a second one.
 func TestATableIsTheSameTableHoweverItIsSpelled(t *testing.T) {
 	path := codexFile(t, "[mcp_servers.\"orbit\"]\ncommand = \"/old/orbit\"\nargs = [\"mcp\"]\n")
-	if err := registerCodex(path, "/usr/local/bin/orbit"); err != nil {
+	if err := registerCodex(path, "/usr/local/bin/orbit", ""); err != nil {
 		t.Fatalf("registerCodex: %v", err)
 	}
 
@@ -178,7 +178,7 @@ command = "/older/orbit"
 args = ["mcp"]
 `
 
-	got, err := codexMerge(twice, "/usr/local/bin/orbit")
+	got, err := codexMerge(twice, "/usr/local/bin/orbit", "")
 	if err == nil {
 		t.Fatalf("a file with orbit in it twice was merged into:\n%s", got)
 	}
@@ -188,7 +188,7 @@ args = ["mcp"]
 	}
 
 	path := codexFile(t, twice)
-	if registerCodex(path, "/usr/local/bin/orbit") == nil {
+	if registerCodex(path, "/usr/local/bin/orbit", "") == nil {
 		t.Error("registerCodex wrote a file it could not merge")
 	}
 
@@ -210,7 +210,7 @@ args = ["mcp"]
 command = "/somewhere/other"
 `
 
-	got, err := codexMerge(once, "/usr/local/bin/orbit")
+	got, err := codexMerge(once, "/usr/local/bin/orbit", "")
 	if err != nil {
 		t.Fatalf("codexMerge: %v", err)
 	}

@@ -208,12 +208,45 @@ func realPath(path string) string {
 // figure no reader could trace back to anything — so no tool reports it
 // rather than every tool reporting an invention.
 func mergeBoards(into, b board.Board) board.Board {
-	into.Tasks = append(into.Tasks, b.Tasks...)
-	into.RepoList = append(into.RepoList, b.RepoList...)
+	// By id, and by path for the repositories. A task joined to more than
+	// one repository is answered for by every root that holds one of them,
+	// and appending the rows made one task count as two — in the row list,
+	// in the band counts, in the spend, and in the unread cap retryTask
+	// hands to task.Start.
+	for _, t := range b.Tasks {
+		at := slices.IndexFunc(into.Tasks, func(had view.Task) bool { return had.ID == t.ID })
+		if at < 0 {
+			into.Tasks = append(into.Tasks, t)
+			continue
+		}
 
-	into.Repos += b.Repos
-	for i, n := range b.Counts {
-		into.Counts[i] += n
+		// Two roots answering for one task see different parts of it: a
+		// root holds only the checkouts under it, so the row that lists
+		// more of them is the one that saw more of the task, and its
+		// RepoPath is the checkout the work started in rather than one it
+		// reached into later.
+		if len(t.RepoPaths) > len(into.Tasks[at].RepoPaths) {
+			into.Tasks[at] = t
+		}
+	}
+
+	for _, r := range b.RepoList {
+		known := func(had board.RepoInfo) bool { return had.Path == r.Path }
+		if slices.ContainsFunc(into.RepoList, known) {
+			continue
+		}
+
+		into.RepoList = append(into.RepoList, r)
+	}
+
+	into.Repos = len(into.RepoList)
+
+	// Counted off the merged rows rather than summed from each board, so
+	// that the number above a band and the rows inside it stay one answer —
+	// which is the whole of what Counts promises.
+	into.Counts = [4]int{}
+	for _, t := range into.Tasks {
+		into.Counts[view.BandOf(t)]++
 	}
 
 	into.Errs = append(into.Errs, b.Errs...)

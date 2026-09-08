@@ -25,7 +25,7 @@ import (
 type clientConfig struct {
 	name     string
 	path     string
-	register func(configPath, binaryPath string) error
+	register func(configPath, binaryPath, root string) error
 }
 
 // clientConfigs is where each supported client keeps its MCP server list.
@@ -53,13 +53,16 @@ func clientConfigs(home string) []clientConfig {
 	)
 }
 
+// serverShape is how one client spells an entry.
+type serverShape func(binaryPath, root string) map[string]any
+
 // jsonClient is a client that keeps a map of servers in a JSON file.
-func jsonClient(name, path, key string, shape func(binaryPath string) map[string]any) clientConfig {
+func jsonClient(name, path, key string, shape serverShape) clientConfig {
 	return clientConfig{
 		name: name,
 		path: path,
-		register: func(configPath, binaryPath string) error {
-			return registerJSON(configPath, key, shape(binaryPath))
+		register: func(configPath, binaryPath, root string) error {
+			return registerJSON(configPath, key, shape(binaryPath, root))
 		},
 	}
 }
@@ -67,10 +70,15 @@ func jsonClient(name, path, key string, shape func(binaryPath string) map[string
 // opencodeEntry is Orbit as OpenCode reads one: a local server whose command
 // is one argv rather than a command and its arguments, under a key of its
 // own. Written in the Claude shape it parses and does nothing.
-func opencodeEntry(binaryPath string) map[string]any {
+func opencodeEntry(binaryPath, root string) map[string]any {
+	command := []string{binaryPath, "mcp"}
+	if root != "" {
+		command = append(command, "-root", root)
+	}
+
 	return map[string]any{
 		"type":    "local",
-		"command": []string{binaryPath, "mcp"},
+		"command": command,
 		"enabled": true,
 	}
 }

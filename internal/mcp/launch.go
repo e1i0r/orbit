@@ -21,7 +21,9 @@ import (
 // The entry is the installer's own, so a session started from the cockpit
 // talks to the same server a client configured by `orbit mcp install` does.
 func LaunchConfig(binaryPath string) (string, error) {
-	doc := map[string]any{"mcpServers": map[string]any{serverName: entry(binary(binaryPath))}}
+	// No root: a session started from the cockpit is already standing in the
+	// tree it is about, and the boundary is the installer's to record.
+	doc := map[string]any{"mcpServers": map[string]any{serverName: entry(binary(binaryPath), "")}}
 
 	raw, err := json.Marshal(doc)
 	if err != nil {
