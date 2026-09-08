@@ -2,7 +2,9 @@ package repo
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
+	"strings"
 )
 
 // AddWorktree creates a throwaway checkout of the base branch on a branch of
@@ -44,21 +46,44 @@ func (r Repo) AddWorktree(dir, branch string) error {
 		return fmt.Errorf("create a worktree for %q at %q: %w", branch, dir, err)
 	}
 
-	// What it was cut from, written on the branch itself. Nothing else
-	// records it: the repository's own checkout moves on, and a diff taken
-	// against wherever it stands now counts commits this task never made —
-	// or, once that checkout is detached, counts nothing at all and lets the
-	// over-diff gate pass anything. A branch-scoped key goes away with the
-	// branch, which is the one piece of bookkeeping git cleans up itself.
-	if _, err := git(r.Path, "config", baseKey(branch), r.Base); err != nil {
-		return fmt.Errorf("write down what %q was cut from: %w", branch, err)
-	}
+	// What it was cut from, written beside the worktree's own bookkeeping.
+	// Nothing else records it: the repository's own checkout moves on, and a
+	// diff taken against wherever it stands now counts commits this task
+	// never made — or, once that checkout is detached, counts nothing at all
+	// and lets the over-diff gate pass anything.
+	//
+	// A file under the worktree's git directory and not `git config`. The
+	// config is one file for the whole repository and git locks it to write:
+	// two tasks starting at once in one repository collided there, and the
+	// loser's run died on a lock rather than on anything about the work.
+	// This file is the worktree's own, and git removes it with the worktree.
+	//
+	// A base that could not be written down is not worth a failed run: the
+	// count falls back to the repository's own branch, which is what every
+	// worktree was measured against before any of this was recorded.
+	_ = writeBase(dir, r.Base) //nolint:errcheck // best effort: cutFrom falls back to r.Base
 
 	return nil
 }
 
-// baseKey is where a branch records what it was cut from.
-func baseKey(branch string) string { return "branch." + branch + ".orbitbase" }
+// baseFile is where a worktree records what it was cut from.
+const baseFile = "orbitbase"
+
+// writeBase puts the branch a worktree was cut from beside git's own
+// bookkeeping for it.
+func writeBase(dir, base string) error {
+	gitDir, err := git(dir, "rev-parse", "--absolute-git-dir")
+	if err != nil {
+		return fmt.Errorf("find the git directory of %q: %w", dir, err)
+	}
+
+	path := filepath.Join(strings.TrimSpace(gitDir), baseFile)
+	if err := os.WriteFile(path, []byte(base), 0o600); err != nil {
+		return fmt.Errorf("write %q: %w", path, err)
+	}
+
+	return nil
+}
 
 // hasBranch reports whether a branch already exists.
 func (r Repo) hasBranch(branch string) bool {
