@@ -115,11 +115,15 @@ func firstLine(s string) string {
 // looked for. What a reader wants off a row is the command that is running,
 // the file that is being read or the pattern that is being searched for, not
 // the JSON around it.
-var actionKeys = []string{"command", "file_path", "path", "pattern"}
+//
+// Both spellings of the path argument, because each engine writes its own:
+// claude file_path, opencode filePath. Missing one of them, a write showed
+// as the whole JSON of the call in the band row and the timeline.
+var actionKeys = []string{"command", "file_path", "filePath", "path", "pattern"}
 
 // actionPathKeys are the ones among them whose value is a path, and so the
 // ones worth shortening against the worktree the run was given.
-var actionPathKeys = map[string]bool{"file_path": true, "path": true}
+var actionPathKeys = map[string]bool{"file_path": true, "filePath": true, "path": true}
 
 // ToolLine is one tool call written for a reader: the name of the tool, and
 // then the one argument it is about.

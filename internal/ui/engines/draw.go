@@ -131,11 +131,11 @@ func (s State) engineLines(w int, e Env) ([]string, []int) {
 	return lines, at
 }
 
-// engineLine is one row: the cursor's cells.Gutter, what the row is called, the
-// cells.Dot on the one in force, and whatever the quota has to say about it.
+// engineLine is one row: the cursor's gutter, what the row is called, the
+// dot on the one in force, and whatever the quota has to say about it.
 //
 // The chosen row is painted across its whole width rather than marked only
-// in the cells.Gutter. This list is read by running an eye down it, and a cursor
+// in the gutter. This list is read by running an eye down it, and a cursor
 // that is one glyph three columns to the left of a name is the thing the eye
 // was not looking at.
 //

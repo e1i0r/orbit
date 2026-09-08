@@ -104,20 +104,14 @@ func (s *Store) Replace(was, now Fact) (string, error) {
 // about yet, which is what every repository starts as and is not a failure.
 func (s *Store) Load(repo string) ([]Fact, error) {
 	facts, err := s.read(filepath.Join(s.state, dirName), "")
-	if err != nil {
-		return nil, err
-	}
 
 	if repo == "" {
-		return facts, nil
+		return facts, err
 	}
 
-	own, err := s.read(filepath.Join(repo, ".orbit", dirName), repo)
-	if err != nil {
-		return nil, err
-	}
+	own, ownErr := s.read(filepath.Join(repo, ".orbit", dirName), repo)
 
-	return append(facts, own...), nil
+	return append(facts, own...), errors.Join(err, ownErr)
 }
 
 // LoadRepo is one checkout's own facts, and none of the state root's.
@@ -131,13 +125,23 @@ func (s *Store) Load(repo string) ([]Fact, error) {
 // A directory that is not there is a repository nobody has written anything
 // about yet, the same as in Load.
 func (s *Store) LoadRepo(repo string) ([]Fact, error) {
+	// Guarded as Load guards it: joined onto an empty repository the path is
+	// the relative `.orbit/knowledge`, and the walk would read whatever the
+	// process happens to be standing in.
+	if repo == "" {
+		return nil, nil
+	}
+
 	return s.read(filepath.Join(repo, ".orbit", dirName), repo)
 }
 
 // read walks one root. repo is the checkout the facts belong to, and empty
 // for the state root, where they belong to none.
 func (s *Store) read(root, repo string) ([]Fact, error) {
-	var facts []Fact
+	var (
+		facts  []Fact
+		failed []error
+	)
 
 	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -150,12 +154,16 @@ func (s *Store) read(root, repo string) ([]Fact, error) {
 
 		body, readErr := os.ReadFile(path)
 		if readErr != nil {
-			return fmt.Errorf("read the fact at %q: %w", path, readErr)
+			failed = append(failed, fmt.Errorf("read the fact at %q: %w", path, readErr))
+
+			return nil
 		}
 
 		f, decErr := decode(string(body), rel(root, path), repo)
 		if decErr != nil {
-			return fmt.Errorf("the fact at %q: %w", path, decErr)
+			failed = append(failed, fmt.Errorf("the fact at %q: %w", path, decErr))
+
+			return nil
 		}
 
 		facts = append(facts, f)
@@ -171,7 +179,11 @@ func (s *Store) read(root, repo string) ([]Fact, error) {
 		return nil, fmt.Errorf("read the facts under %q: %w", root, err)
 	}
 
-	return facts, nil
+	// A damaged file costs itself and no more. These are files a person is
+	// invited to write by hand, and aborting the walk on the first one meant
+	// a single typo left every repository's rules unread — the same shape
+	// store.Repos already answers a damaged marker with.
+	return facts, errors.Join(failed...)
 }
 
 // dirFor is the directory a scope files its facts in.

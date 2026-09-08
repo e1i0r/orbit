@@ -42,6 +42,10 @@ func (m Model) tookCompose(next compose.State, out compose.Out) (tea.Model, tea.
 		m = m.say(out.Said)
 	}
 
+	if out.Autopilot {
+		return m.autopilot()
+	}
+
 	if out.Flow != "" {
 		if out.Flow == compose.New {
 			return m.openFlows(), nil

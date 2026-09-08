@@ -142,6 +142,8 @@ const (
 
 	selectTasks = `SELECT task_id FROM task ORDER BY id`
 
+	selectLatest = `SELECT COALESCE(MAX(id), 0) FROM event`
+
 	selectSince = `SELECT e.id, t.task_id, e.kind, e.at, e.phase, e.text, e.data
 	                 FROM event e JOIN task t ON t.id = e.task_id
 	                WHERE e.id > ?

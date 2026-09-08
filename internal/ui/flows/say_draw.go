@@ -75,7 +75,7 @@ func (s State) sayRows(w int, sz boxSizes, e Env) []builderLine {
 	case s.sayNote != "":
 		out = append(out, plainLine(cells.Fit("  "+theme.Paint(theme.Bad).Render(s.sayNote), w)))
 	default:
-		button := theme.Pill(p.T("flows.btn_draft", "✨ Draft it"), "#FFFFFF", "#581C87")
+		button := theme.Pill(p.T("flows.btn_draft", "✨ Draft it"), theme.PillInk, theme.PillDraft)
 		also := theme.Paint(theme.Dim).Render(p.T("flows.draft_same_as", "or press ↵"))
 
 		out = append(out, builderLine{

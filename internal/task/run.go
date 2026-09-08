@@ -127,35 +127,54 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 			return stopSpending(s, t, p, spent, budget)
 		}
 
-		// A loop is a phase that is a block of phases. It is walked before
-		// the notes are taken and before the engine is asked for anything,
-		// because none of what follows is about one phase with one engine.
-		if p.Loop != nil {
-			if err := runLoop(ctx, s, t, f, p, wt, engines, others); err != nil {
-				return err
-			}
-
-			continue
-		}
-
 		notes, notesErr := unconsumedNotes(s, t)
 		if notesErr != nil {
 			return failed(s, t, fmt.Errorf("task %s, before phase %q: %w", t.ID, p.Name, notesErr))
 		}
 
-		out, err := attempts(ctx, phaseRun{
-			store:   s,
-			task:    t,
-			flow:    f,
-			phase:   p,
-			eng:     engines[p.Engine],
-			n:       i + 1,
-			wt:      wt,
-			notes:   notes,
-			reviews: unansweredReviews(s, t),
-			prev:    fedOutput(p, prevOutput),
-			others:  others,
-		}, f.AttemptCap())
+		reviews := unansweredReviews(s, t)
+
+		var (
+			out engine.Result
+			err error
+		)
+
+		// A loop is a phase that is a block of phases, and none of what
+		// follows is about one phase with one engine — but all of it is
+		// about the work the phase left behind, so the block answers to the
+		// same gates as any other phase. Walked with a continue of its own,
+		// a flow ending in a loop, which is the tdd shape Orbit ships, got
+		// no diff gate, no dependency gate and no contradiction check, and
+		// wrote neither a story nor a delta.
+		if p.Loop != nil {
+			out, err = runLoop(ctx, loopRun{
+				store:   s,
+				task:    t,
+				flow:    f,
+				phase:   p,
+				wt:      wt,
+				engines: engines,
+				others:  others,
+				notes:   notes,
+				reviews: reviews,
+				gate:    g,
+			})
+		} else {
+			out, err = attempts(ctx, phaseRun{
+				store:   s,
+				task:    t,
+				phase:   p,
+				eng:     engines[p.Engine],
+				n:       i + 1,
+				last:    i+1 == len(f.Phases),
+				wt:      wt,
+				notes:   notes,
+				reviews: reviews,
+				prev:    fedOutput(p, prevOutput),
+				others:  others,
+			}, f.AttemptCap())
+		}
+
 		if err != nil {
 			return err
 		}

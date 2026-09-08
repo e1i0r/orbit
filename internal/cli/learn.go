@@ -126,11 +126,12 @@ func knowsAllPort(r *board.Reader, s *store.Store) func() []knowledge.Fact {
 	return func() []knowledge.Fact {
 		ks := knowledge.NewStore(s.Root())
 
+		// Beside the error: Load answers with the facts it could read, so a
+		// file with a typo in its header costs that file and leaves the
+		// screen listing everything else.
 		facts, err := ks.Load("")
 		if err != nil {
-			logger.Error("cli/learn", "what orbit knows was not read: %v", err)
-
-			return nil
+			logger.Error("cli/learn", "what orbit knows was not read in full: %v", err)
 		}
 
 		b, _, err := r.Refresh()
@@ -141,10 +142,12 @@ func knowsAllPort(r *board.Reader, s *store.Store) func() []knowledge.Fact {
 		}
 
 		for _, repo := range b.RepoList {
-			own, err := ks.Load(repo.Path)
+			// LoadRepo and not Load: the state root's facts are already in
+			// hand, and Load would walk and decode them again for every
+			// checkout on the board only to have them filtered back out.
+			own, err := ks.LoadRepo(repo.Path)
 			if err != nil {
 				logger.Error("cli/learn", "what orbit knows about %s: %v", repo.Name, err)
-				continue
 			}
 
 			facts = append(facts, onlyOf(repo.Path, own)...)
@@ -156,9 +159,12 @@ func knowsAllPort(r *board.Reader, s *store.Store) func() []knowledge.Fact {
 	}
 }
 
-// onlyOf keeps the facts that belong to one checkout. Load answers the state
-// root's facts as well, and adding those once per repository would list the
-// general ones as many times as there are checkouts.
+// onlyOf keeps the facts that belong to one checkout.
+//
+// LoadRepo already reads only that checkout's directory, but a file's own
+// header outranks where it sits: one filed under this repository that calls
+// itself general or about a language belongs to no repository, and listing it
+// here would repeat it once per checkout.
 func onlyOf(repoPath string, facts []knowledge.Fact) []knowledge.Fact {
 	kept := make([]knowledge.Fact, 0, len(facts))
 

@@ -23,7 +23,9 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
+	"unicode/utf8"
 )
 
 // checkDeadline is how long one command is given. A test suite is minutes
@@ -65,8 +67,13 @@ type Divergence struct {
 // Same reports whether both sides answered alike. It compares the verdict
 // and not the output: a suite that prints a timestamp is not a divergence.
 func (d Divergence) Same() bool {
+	// A side that would not run has no verdict, so there is nothing to
+	// compare and the two are not known to agree. What that is worth saying
+	// about is the reader's, not this function's: Broke and Fixed are both
+	// false here, and the pane names the case rather than calling it a
+	// regression.
 	if d.Base.Failed != nil || d.Now.Failed != nil {
-		return d.Base.Failed == nil && d.Now.Failed == nil
+		return false
 	}
 
 	return d.Base.Passed() == d.Now.Passed()
@@ -116,6 +123,15 @@ func (r Repo) Compare(wtDir string, checks []Check) ([]Divergence, error) {
 	// repository's own commands, and two of them at once on the same
 	// checkout is a race nobody asked for — one writing a coverage profile
 	// the other is reading.
+	//
+	// What the two directories do not separate is anything outside them. A
+	// suite that binds a fixed port, names a fixed container or database, or
+	// shares a build cache runs into its own twin here, and the side that
+	// loses the collision is reported as a regression this change did not
+	// cause. Nothing in the exit code tells the two apart, so it is written
+	// down rather than guarded against: a check that cannot run twice at
+	// once belongs in a flow's gates, which run one at a time, and not in
+	// the comparison.
 	out := make([]Divergence, len(checks))
 
 	for i, c := range checks {
@@ -168,6 +184,15 @@ func runCheck(dir, command string) Ran {
 	cmd := exec.CommandContext(ctx, "sh", "-c", command)
 	cmd.Dir = dir
 	cmd.Env = environ()
+	// The shell gets a process group of its own, and the deadline signals
+	// the group. Killing `sh` alone leaves the `go test` underneath it
+	// running and holding the output pipe, so CombinedOutput waited past
+	// checkDeadline for ever — while the comment above promises the
+	// opposite. WaitDelay is the backstop for anything that escapes the
+	// group anyway.
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.Cancel = func() error { return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL) }
+	cmd.WaitDelay = waitGrace
 
 	out, err := cmd.CombinedOutput()
 	got := Ran{Out: tail(string(out))}
@@ -190,9 +215,14 @@ func runCheck(dir, command string) Ran {
 // says what failed.
 func tail(out string) string {
 	out = strings.TrimSpace(out)
-	if len(out) <= keptOutput {
+	if utf8.RuneCountInString(out) <= keptOutput {
 		return out
 	}
 
-	return "…" + out[len(out)-keptOutput:]
+	// By runes, as clipCommand counts them for the same job: sliced by
+	// bytes, the cut landed inside a character and the pane drew half of
+	// one.
+	runes := []rune(out)
+
+	return "…" + string(runes[len(runes)-keptOutput:])
 }

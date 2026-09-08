@@ -42,7 +42,7 @@ func (s State) applyFlowTemplate(tpl string, e Env) (State, Out) {
 				Effort:      "high",
 				Thinking:    "adaptive",
 				FeedOutput:  true,
-				Prompt:      "Implement the feature and Write unit tests, property tests, and Go fuzz tests (testing.F) achieving >=90% test coverage. Verify with make check.",
+				Prompt:      "Implement the feature and write unit tests, property tests, and Go fuzz tests (testing.F) achieving >=90% test coverage. Verify with make check.",
 				Permissions: []string{"repo"},
 			},
 			{

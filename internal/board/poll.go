@@ -42,6 +42,21 @@ func (r *Reader) follow() (map[string][]arrival, error) {
 		return nil, err
 	}
 
+	// The first refresh reads each task's history one task at a time, so
+	// asking here for everything written since row zero is a full scan of
+	// the record whose every row is then discarded. Where to start
+	// following is the only thing this call wanted at that point.
+	if !r.baseline {
+		at, err := d.Latest()
+		if err != nil {
+			return nil, err
+		}
+
+		r.at = at
+
+		return nil, nil
+	}
+
 	changes, err := d.Since(r.at, "")
 	if err != nil {
 		return nil, err
@@ -146,7 +161,7 @@ func (r *Reader) enumerate(repos []*repoState) ([]*taskState, map[string]*taskSt
 		}
 	}
 
-	return onTheBoard(found, index), index, nil
+	return onTheBoard(found), index, nil
 }
 
 // carried is what the previous enumeration remembered about a task, emptied
@@ -186,12 +201,15 @@ func (r *Reader) carried(id string) *taskState {
 // is the order the rows have always been in: predictable, and stable across
 // refreshes so that a cursor resting on a row stays on that row. The tasks
 // that are nowhere sort first, under a name no repository has.
-func onTheBoard(found []*taskState, index map[string]*taskState) []*taskState {
+func onTheBoard(found []*taskState) []*taskState {
 	tasks := make([]*taskState, 0, len(found))
 
 	for _, st := range found {
 		if st.repo == nil && len(st.repos) > 0 {
-			delete(index, st.id)
+			// Kept in the index and off the board. The state is what
+			// remembers the band this row was last seen in, and dropping it
+			// meant a checkout moved away and brought back re-announced
+			// every task that needs a person as though it had just arrived.
 			continue
 		}
 
@@ -220,7 +238,13 @@ func onTheBoard(found []*taskState, index map[string]*taskState) []*taskState {
 // has already been given, and taking them again would show a run attempted
 // twice over a record that says once.
 func (r *Reader) arrivals(st *taskState, arrived map[string][]arrival) ([]record.Event, error) {
-	if !st.seen && st.at == 0 {
+	// st.err is the previous refresh's verdict, because this one's is
+	// written down after this call. A task whose whole history would not
+	// read is asked for it again rather than moved onto the incremental
+	// branch: st.at never left zero, the rows written since are already
+	// past it, and the row would fold from nothing for ever while the
+	// error quietly dropped out of Board.Errs.
+	if (!st.seen || st.err != nil) && st.at == 0 {
 		return r.history(st)
 	}
 

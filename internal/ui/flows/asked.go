@@ -65,5 +65,3 @@ func (s State) Scroll(d int) State {
 
 	return s
 }
-
-// said is a sentence for the band and nothing else.

@@ -52,7 +52,7 @@ func TestInstallLeavesEverythingElseAlone(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := registerJSON(path, "mcpServers", entry("/usr/local/bin/orbit")); err != nil {
+	if err := registerJSON(path, "mcpServers", entry("/usr/local/bin/orbit", "")); err != nil {
 		t.Fatalf("registerJSON: %v", err)
 	}
 
@@ -95,7 +95,7 @@ func TestInstallLeavesEverythingElseAlone(t *testing.T) {
 func TestInstallIsIdempotent(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.json")
 	for i := range 2 {
-		if err := registerJSON(path, "mcpServers", entry("/usr/local/bin/orbit")); err != nil {
+		if err := registerJSON(path, "mcpServers", entry("/usr/local/bin/orbit", "")); err != nil {
 			t.Fatalf("registerJSON %d: %v", i+1, err)
 		}
 	}
@@ -110,7 +110,7 @@ func TestInstallIsIdempotent(t *testing.T) {
 // server configured has neither, and making both is the install.
 func TestInstallCreatesTheFileAndItsDirectory(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "never", "existed", "mcp.json")
-	if err := registerJSON(path, "mcpServers", entry("/usr/local/bin/orbit")); err != nil {
+	if err := registerJSON(path, "mcpServers", entry("/usr/local/bin/orbit", "")); err != nil {
 		t.Fatalf("registerJSON: %v", err)
 	}
 
@@ -132,7 +132,7 @@ func TestInstallRefusesAConfigurationItCannotParse(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err := registerJSON(path, "mcpServers", entry("/usr/local/bin/orbit"))
+	err := registerJSON(path, "mcpServers", entry("/usr/local/bin/orbit", ""))
 	if err == nil {
 		t.Fatal("a configuration that will not parse was overwritten rather than refused")
 	}
@@ -164,7 +164,7 @@ func TestInstallKeepsTheFileMode(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := registerJSON(path, "mcpServers", entry("/usr/local/bin/orbit")); err != nil {
+	if err := registerJSON(path, "mcpServers", entry("/usr/local/bin/orbit", "")); err != nil {
 		t.Fatalf("registerJSON: %v", err)
 	}
 
@@ -185,7 +185,7 @@ func TestInstallKeepsTheFileMode(t *testing.T) {
 func TestInstallWritesEveryClientUnderTheGivenHome(t *testing.T) {
 	home := t.TempDir()
 
-	results := Install("/opt/orbit/orbit", home)
+	results := Install("/opt/orbit/orbit", home, "")
 	if len(results) != len(ClientNames()) {
 		t.Fatalf("Install touched %d clients, want %d", len(results), len(ClientNames()))
 	}
@@ -254,7 +254,7 @@ func TestEveryClientIsGivenTheFileItActuallyReads(t *testing.T) {
 // argv, and parsed the other quite happily while running nothing.
 func TestOpenCodeIsWrittenInTheShapeOpenCodeReads(t *testing.T) {
 	home := t.TempDir()
-	Install("/opt/orbit/orbit", home)
+	Install("/opt/orbit/orbit", home, "")
 
 	got, ok := mapOf(t, filepath.Join(home, ".config", "opencode", "opencode.json"), "mcp")["orbit"].(map[string]any)
 	if !ok {
@@ -287,7 +287,7 @@ func TestOpenCodeWritesIntoTheConfigurationAlreadyThere(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	Install("/opt/orbit/orbit", home)
+	Install("/opt/orbit/orbit", home, "")
 
 	if mapOf(t, commented, "mcp")["orbit"] == nil {
 		t.Error("the configuration that was already there has no orbit entry")
@@ -344,7 +344,7 @@ func TestClaudeCodeIsWhereClaudeCodeLooks(t *testing.T) {
 // name a home directory is not a reason to write configuration into the
 // filesystem root.
 func TestInstallWithoutAHomeTouchesNothing(t *testing.T) {
-	if results := Install("/opt/orbit/orbit", ""); len(results) != 0 {
+	if results := Install("/opt/orbit/orbit", "", ""); len(results) != 0 {
 		t.Errorf("Install with no home touched %d configurations: %+v", len(results), results)
 	}
 }

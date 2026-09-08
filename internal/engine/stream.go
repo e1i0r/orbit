@@ -12,59 +12,6 @@ import (
 // maxStreamLine is the longest single line ParseStream will read.
 const maxStreamLine = 4 << 20
 
-type streamEnvelope struct {
-	Type         string          `json:"type"`
-	Subtype      string          `json:"subtype"`
-	Result       string          `json:"result"`
-	SessionID    string          `json:"session_id"`
-	Cost         float64         `json:"total_cost_usd"`
-	Usage        *streamUsage    `json:"usage"`
-	Message      *streamMessage  `json:"message"`
-	ContentBlock *streamContent  `json:"content_block"`
-	Delta        *streamDelta    `json:"delta"`
-	Name         string          `json:"name"`
-	Input        json.RawMessage `json:"input"`
-	Text         string          `json:"text"`
-	Thinking     string          `json:"thinking"`
-}
-
-type streamMessage struct {
-	Content []streamContent `json:"content"`
-	Usage   *streamUsage    `json:"usage"`
-}
-
-// streamUsage is claude's count of one turn, spelled as claude spells it.
-type streamUsage struct {
-	Input      int64 `json:"input_tokens"`
-	Output     int64 `json:"output_tokens"`
-	CacheRead  int64 `json:"cache_read_input_tokens"`
-	CacheWrite int64 `json:"cache_creation_input_tokens"`
-}
-
-func (u *streamUsage) usage() Usage {
-	if u == nil {
-		return Usage{}
-	}
-
-	return Usage{Input: u.Input, Output: u.Output, CacheRead: u.CacheRead, CacheWrite: u.CacheWrite}
-}
-
-type streamContent struct {
-	Type     string          `json:"type"`
-	Text     string          `json:"text"`
-	Thinking string          `json:"thinking"`
-	Name     string          `json:"name"`
-	Input    json.RawMessage `json:"input"`
-	Content  string          `json:"content"`
-	IsError  bool            `json:"is_error"`
-}
-
-type streamDelta struct {
-	Type     string `json:"type"`
-	Text     string `json:"text"`
-	Thinking string `json:"thinking"`
-}
-
 // ParseStream reads claude's streaming JSON and returns what the record keeps.
 func ParseStream(r io.Reader) (Result, error) {
 	return ParseStreamWithCallback(r, nil)
@@ -89,6 +36,10 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 		lines      int
 		found      bool
 		perMessage Usage
+		counted    = map[string]bool{}
+		// toolNames is the name of every tool call seen, by the id a
+		// tool_result names it back with.
+		toolNames = map[string]string{}
 	)
 
 	for sc.Scan() {
@@ -113,7 +64,17 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 		// still a phase that spent something. Summed here and used only if
 		// no result line ever arrives.
 		if u := usageOf(env.Message); u.Any() {
-			perMessage = addUsage(perMessage, u)
+			// Counted once per message. claude repeats one assistant
+			// message across several records carrying the identical usage
+			// object, and summing each record inflated what a killed or
+			// cancelled phase is said to have spent. A record naming no
+			// message is counted as it always was: there is nothing to tell
+			// it apart from the next one.
+			id := messageID(env.Message)
+			if id == "" || !counted[id] {
+				counted[id] = true
+				perMessage = addUsage(perMessage, u)
+			}
 		}
 
 		switch env.Type {
@@ -210,6 +171,8 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 							texts = append(texts, block.Text)
 						}
 					case "tool_use":
+						toolNames[block.ID] = block.Name
+
 						tc := StreamToolCall{
 							Name: block.Name,
 							Args: string(block.Input),
@@ -226,10 +189,10 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 			if env.Message != nil {
 				for _, block := range env.Message.Content {
 					if block.Type == "tool_result" && block.IsError {
-						if isPermissionRefusal(block.Content) {
+						if said := block.said(); isPermissionRefusal(said) {
 							ref := StreamRefusal{
-								Tool:  block.Name,
-								Input: block.Content,
+								Tool:  toolNames[block.ToolUseID],
+								Input: said,
 							}
 
 							out.Refusals = append(out.Refusals, ref)
@@ -253,9 +216,12 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 		}
 	}
 
-	if err := sc.Err(); err != nil {
-		return Result{}, fmt.Errorf("reading the engine's stream after %d lines: %w", lines, err)
-	}
+	// Held rather than returned here: what the stream did say before it
+	// broke is the phase's session id, its thoughts and its tool calls, and
+	// the three other parsers all answer with what they read. Thrown away,
+	// a stream that broke on its last line reported a phase that had done
+	// nothing at all.
+	scanErr := sc.Err()
 
 	// The result line is where the answer is when the run reached the end of
 	// itself. The text blocks are what is left when it did not: a phase
@@ -270,11 +236,25 @@ func ParseStreamWithCallback(r io.Reader, onEvent func(StreamEvent)) (Result, er
 		out.Usage = perMessage
 	}
 
+	if scanErr != nil {
+		return out, fmt.Errorf("reading the engine's stream after %d lines: %w", lines, scanErr)
+	}
+
 	if !found {
 		return out, fmt.Errorf("the engine's stream ended after %d lines with no result object: the session id and the cost are reported only there, so this phase has nothing to resume from and no price", lines)
 	}
 
 	return out, nil
+}
+
+// messageID is the message a count belongs to, and the empty string for a
+// record that names none — which counts once, as it did before.
+func messageID(m *streamMessage) string {
+	if m == nil {
+		return ""
+	}
+
+	return m.ID
 }
 
 // isPermissionRefusal is whether a failed tool result is the sandbox saying

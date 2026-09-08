@@ -75,13 +75,22 @@ func Paths(root string) ([]Found, error) {
 			return filepath.SkipDir
 		}
 
-		if name := d.Name(); path != abs && (strings.HasPrefix(name, ".") || isIgnoredDir(name)) {
+		if path != abs && strings.HasPrefix(d.Name(), ".") {
 			return filepath.SkipDir
 		}
 
 		dotGit := filepath.Join(path, ".git")
 
 		info, statErr := os.Stat(dotGit)
+
+		// The ignored names are asked after the probe and not before it.
+		// Asked first, a repository actually called build, dist, target or
+		// vendor was skipped as though it were the output directory it is
+		// named after — invisible to `orbit repos`, unjoinable, and with
+		// nothing said about why.
+		if statErr != nil && path != abs && isIgnoredDir(d.Name()) {
+			return filepath.SkipDir
+		}
 
 		switch {
 		case statErr != nil:

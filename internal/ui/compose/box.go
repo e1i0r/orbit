@@ -24,11 +24,22 @@ func (s State) composeBox(field int, label, placeholder, hint string, in typing.
 	active := s.field == field
 
 	boxW, innerW := s.composeBoxWidth(w, e), s.composeInnerWidth(w, e)
-	lines := s.composeBoxLines(in, innerW, active, theme.Paint(theme.Dim).Render(cells.Fit(placeholder, innerW)))
 
-	borderStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#334155"))
+	// A cell narrower while the caret is drawn, because the caret is a cell
+	// of its own in front of the placeholder. Fitted to the whole inner
+	// width, a focused empty box measured one cell more than the borders
+	// above and below it, and the row stuck out at any terminal narrow
+	// enough for the placeholder to reach the edge.
+	ghostW := innerW
 	if active {
-		borderStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#38BDF8"))
+		ghostW = max(0, innerW-1)
+	}
+
+	lines := s.composeBoxLines(in, innerW, active, theme.Paint(theme.Dim).Render(cells.Fit(placeholder, ghostW)))
+
+	borderStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(theme.BoxLine))
+	if active {
+		borderStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(theme.BoxLineActive))
 	}
 	// The label sits on the top border rather than on a line of its own, so
 	// the box starts where every other value of the form starts and the two
@@ -117,7 +128,7 @@ func (s State) composeBoxRowCount(e Env) int {
 // is drawn beside, and composePasteRoom is the width it needs with the cell
 // of space that separates it from that field.
 func composePasteTab(p *words.Printer) string {
-	return theme.Pill(" 📋 "+p.T("compose.btn_paste", "Paste (^V)")+" ", "#FFFFFF", "#0369A1")
+	return theme.Pill(" 📋 "+p.T("compose.btn_paste", "Paste (^V)")+" ", theme.PillInk, theme.PillPaste)
 }
 
 func composePasteRoom(p *words.Printer) int {

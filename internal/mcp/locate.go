@@ -2,14 +2,12 @@ package mcp
 
 import (
 	"fmt"
+	"slices"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/repo"
-	"github.com/e1i0r/orbit/internal/store"
-	"github.com/e1i0r/orbit/internal/task"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -93,8 +91,19 @@ func findTask(b board.Board, id string) (view.Task, error) {
 // anybody who watched it happen, and a tool that answered "no such task"
 // there would be denying its own report.
 func sameRepo(b board.Board, t view.Task, hint string) bool {
-	if t.RepoPath == hint {
+	// By path first and whole: the row carries every checkout it joined by
+	// path, and a caller who read one off orbit_list_repos means that
+	// checkout and not another of the same name. Matching the name it
+	// resolves to answered for the wrong one of two payments.
+	if slices.Contains(t.RepoPaths, hint) || t.RepoPath == hint {
 		return true
+	}
+
+	// A hint that is a checkout Orbit knows has had its whole answer above.
+	// Falling through to the name it resolves to let the other payments
+	// answer for this task, which is the one thing asking by path is for.
+	if slices.ContainsFunc(b.RepoList, func(r board.RepoInfo) bool { return r.Path == hint }) {
+		return false
 	}
 
 	name := repoNamed(b, hint)
@@ -165,10 +174,28 @@ func (sn Session) pickRepo(b board.Board, hint string) (repo.Repo, error) {
 // chooseRepo is the choice itself, without the confinement.
 func chooseRepo(b board.Board, hint string) (repo.Repo, error) {
 	if hint != "" {
+		var named []board.RepoInfo
+
 		for _, r := range b.RepoList {
-			if strings.EqualFold(r.Name, hint) || r.Path == hint {
+			if r.Path == hint {
 				return repo.Open(r.Path)
 			}
+
+			if strings.EqualFold(r.Name, hint) {
+				named = append(named, r)
+			}
+		}
+
+		// Refused rather than guessed, the way knownRepo refuses the same
+		// question: taking the first of two checkouts called payments meant
+		// this tool reported success while working in the other one.
+		if len(named) > 1 {
+			return repo.Repo{}, fmt.Errorf("orbit knows %d repositories called %q; say which one by path: %s",
+				len(named), hint, strings.Join(repoPathsOf(named), ", "))
+		}
+
+		if len(named) == 1 {
+			return repo.Open(named[0].Path)
 		}
 		// A path Orbit has never seen is still a repository, and refusing
 		// the first task against a fresh checkout would make this tool
@@ -191,6 +218,18 @@ func chooseRepo(b board.Board, hint string) (repo.Repo, error) {
 	}
 }
 
+// repoPathsOf is the paths of the repositories a name did not tell apart.
+func repoPathsOf(repos []board.RepoInfo) []string {
+	paths := make([]string, 0, len(repos))
+	for _, r := range repos {
+		paths = append(paths, r.Path)
+	}
+
+	sort.Strings(paths)
+
+	return paths
+}
+
 // repoNames is every repository on the board, named, for a refusal that
 // tells the caller what would have worked.
 func repoNames(b board.Board) []string {
@@ -202,86 +241,4 @@ func repoNames(b board.Board) []string {
 	sort.Strings(names)
 
 	return names
-}
-
-// nextTaskID mints an id for a task nobody named.
-//
-// The shape is the repository's name upper-cased and a number, which is what
-// a reader typing `orbit new -id` writes by hand, and the number is one past
-// the highest this repository already carries in that shape. It is checked
-// against store.ValidTaskID before it is returned, so a repository whose
-// name is not a legal id fragment is refused here rather than at the write.
-func nextTaskID(s *store.Store, r repo.Repo) (string, error) {
-	prefix := idPrefix(r.Name)
-
-	existing, err := task.List(s, r)
-	if err != nil {
-		return "", fmt.Errorf("list the tasks already in %s: %w", r.Name, err)
-	}
-
-	highest := 0
-
-	for _, id := range existing {
-		n, ok := suffixNumber(id, prefix)
-		if ok && n > highest {
-			highest = n
-		}
-	}
-
-	id := fmt.Sprintf("%s-%d", prefix, highest+1)
-	if err := store.ValidTaskID(id); err != nil {
-		return "", fmt.Errorf("an id built from repository %q is not usable: %w", r.Name, err)
-	}
-
-	return id, nil
-}
-
-// idPrefix turns a repository name into the leading fragment of an id: upper
-// case, and everything that is not a letter or a digit dropped. A name with
-// nothing usable in it falls back to TASK, which is a poor prefix and a
-// legal one.
-func idPrefix(name string) string {
-	var b strings.Builder
-
-	for _, r := range strings.ToUpper(name) {
-		if (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
-			b.WriteRune(r)
-		}
-	}
-
-	if b.Len() == 0 {
-		return "TASK"
-	}
-
-	return b.String()
-}
-
-// suffixNumber reads the number off an id this package would have minted,
-// and says so when the id is not one.
-//
-// The digits are counted by strconv rather than by multiplying through them,
-// which is what this did and is where it went wrong: a directory named
-// ORB-99999999999999999999 ran an int past its width and came back as some
-// unrelated number, so nextTaskID took that for the highest id in the
-// repository and minted its successor. Out of range is not a number this
-// package minted, and the answer to that is no.
-func suffixNumber(id, prefix string) (int, bool) {
-	rest, ok := strings.CutPrefix(id, prefix+"-")
-	if !ok {
-		return 0, false
-	}
-	// strconv accepts a sign and this must not: ORB--1 and ORB-+1 are not
-	// ids this package has ever written.
-	for _, c := range rest {
-		if c < '0' || c > '9' {
-			return 0, false
-		}
-	}
-
-	n, err := strconv.Atoi(rest)
-	if err != nil {
-		return 0, false
-	}
-
-	return n, true
 }

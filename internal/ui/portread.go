@@ -12,6 +12,7 @@ package ui
 
 import (
 	"github.com/e1i0r/orbit/internal/board"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -88,3 +89,9 @@ type Reader interface {
 	// SupervisorLog is the cockpit's persistent supervisor conversation thread.
 	SupervisorLog() ([]view.SupervisorLine, error)
 }
+
+// DefaultTheme is what the window draws in when the settings name none.
+// Re-exported because internal/cli has to print the same word and may not
+// reach into internal/ui/theme: a second copy of it is how `orbit settings`
+// came to say monokai for a cockpit drawing frauddi.
+const DefaultTheme = theme.DefaultTheme

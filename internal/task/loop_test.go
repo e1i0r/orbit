@@ -128,3 +128,43 @@ func TestAPhaseWithNoLoopIsUntouched(t *testing.T) {
 		t.Errorf("the engine ran %d times, want the two phases", len(fake.Calls))
 	}
 }
+
+// TestALoopPhaseIsAskedAsItself. The place a phase holds inside a loop says
+// nothing about the flow around it: reading the flow's phase at that index
+// asked the wrong phase its instructions, and panicked outright when the loop
+// held more phases than the flow did.
+func TestALoopPhaseIsAskedAsItself(t *testing.T) {
+	s, r := fixture(t)
+
+	tk, err := Create(s, r, "ACME-31", "the loop's phases speak for themselves", "")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	f := flow.Flow{Name: "loop-only", Phases: []flow.Phase{
+		{Name: "green", Loop: &flow.Loop{
+			Phases: []flow.Phase{
+				{Name: "write-test", Engine: "fake", Prompt: "write the failing test first"},
+				{Name: "make-it-pass", Engine: "fake", Prompt: "now make it pass"},
+			},
+			Until: []flow.Gate{{Name: "unit", Command: "true"}},
+			Max:   2,
+		}},
+	}}
+
+	fake := engine.NewFake("done")
+
+	if err := Run(context.Background(), s, tk, f, fakes(fake), nil); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	if len(fake.Calls) != 2 {
+		t.Fatalf("the engine ran %d times, want one per phase of the single turn", len(fake.Calls))
+	}
+
+	for i, want := range []string{"write the failing test first", "now make it pass"} {
+		if !strings.Contains(fake.Calls[i].Prompt, want) {
+			t.Errorf("phase %d was not asked its own instructions:\n%s", i+1, fake.Calls[i].Prompt)
+		}
+	}
+}

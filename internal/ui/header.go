@@ -25,7 +25,7 @@ const (
 	pipOn  = "●"
 	pipOff = "○"
 
-	// cells.Dot joins the pieces of a sentence the window assembles out of facts
+	// The dot joins the pieces of a sentence the window assembles out of facts
 	// — an id, a phase, a model. A comma would imply somebody wrote the
 	// sentence.
 
@@ -191,8 +191,8 @@ func (m Model) headerLeft(w int, spaced bool) (headerSide, bool) {
 // written down in target.go, not by measuring what was drawn here.
 func (m Model) name() string {
 	const (
-		fg = "#FFFFFF"
-		bg = "#0F766E"
+		fg = theme.PillInk
+		bg = theme.PillHeader
 	)
 
 	if m.showingEverything() {

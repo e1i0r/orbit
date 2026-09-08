@@ -44,8 +44,21 @@ func (r Repo) AddWorktree(dir, branch string) error {
 		return fmt.Errorf("create a worktree for %q at %q: %w", branch, dir, err)
 	}
 
+	// What it was cut from, written on the branch itself. Nothing else
+	// records it: the repository's own checkout moves on, and a diff taken
+	// against wherever it stands now counts commits this task never made —
+	// or, once that checkout is detached, counts nothing at all and lets the
+	// over-diff gate pass anything. A branch-scoped key goes away with the
+	// branch, which is the one piece of bookkeeping git cleans up itself.
+	if _, err := git(r.Path, "config", baseKey(branch), r.Base); err != nil {
+		return fmt.Errorf("write down what %q was cut from: %w", branch, err)
+	}
+
 	return nil
 }
+
+// baseKey is where a branch records what it was cut from.
+func baseKey(branch string) string { return "branch." + branch + ".orbitbase" }
 
 // hasBranch reports whether a branch already exists.
 func (r Repo) hasBranch(branch string) bool {

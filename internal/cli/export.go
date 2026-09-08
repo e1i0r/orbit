@@ -43,7 +43,10 @@ func exportRecord(ctx Context, args []string) error {
 	dir := fs.Arg(0)
 
 	out, err := export.Run(s, dir, *only)
-	if out.Tasks == 0 && out.Events == 0 && out.Messages == 0 {
+	// Only when nothing came out *and* something went wrong. A record that
+	// is simply empty exported successfully, and exiting silently on it read
+	// as a command that had failed to run at all.
+	if err != nil && out.Tasks == 0 && out.Events == 0 && out.Messages == 0 {
 		return err
 	}
 

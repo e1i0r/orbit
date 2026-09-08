@@ -3,6 +3,8 @@ package db
 // One event in, one event out — and the rows an event makes on the way past.
 
 import (
+	"encoding/json"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -274,5 +276,41 @@ func TestEveryWriterLandsItsEvents(t *testing.T) {
 
 	if len(events) != writers*each {
 		t.Errorf("%d events landed, want %d", len(events), writers*each)
+	}
+}
+
+// TestBothRecordsRefuseTheSameLine. The database and the file log have to
+// agree on what one row holds: an event this side accepted and the log
+// refused went into an export that read back as no events at all.
+func TestBothRecordsRefuseTheSameLine(t *testing.T) {
+	e := record.Event{Kind: record.TaskCreated, At: time.Now().UTC()}
+
+	bare, err := json.Marshal(e)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	e.Text = "x"
+
+	one, err := json.Marshal(e)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// The field name and its quotes, without the character itself.
+	overhead := len(one) - len(bare) - 1
+	e.Text = strings.Repeat("x", record.MaxLine-len(bare)-overhead)
+
+	line, err := json.Marshal(e)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(line) != record.MaxLine {
+		t.Fatalf("the event is %d bytes, want exactly the %d limit", len(line), record.MaxLine)
+	}
+
+	if tooBig(e) == nil {
+		t.Error("an event the file log refuses for its newline was accepted here")
 	}
 }

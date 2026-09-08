@@ -75,7 +75,7 @@ func (m Model) drawRow(r row, w int, selected bool) string {
 
 		parts = append(parts, rendered)
 	}
-	// The cells.Gutter says one of two things and the cursor wins, because a
+	// The gutter says one of two things and the cursor wins, because a
 	// cursor that vanished when it stepped onto a working row would read as
 	// a cursor that had been lost. It is also the only two cells on the row
 	// that are free: the state column is the narrowest field there is, and

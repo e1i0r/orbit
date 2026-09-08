@@ -21,6 +21,7 @@ package panes
 import (
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/patch"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
@@ -50,7 +51,11 @@ func Diff(e Env) ([]string, map[int]int) {
 		return []string{" " + theme.Paint(theme.Dim).Render(
 			p.T("diff.empty_no_worktree", "no working tree modifications recorded"))}, nil
 	case e.DiffFailed != "":
-		return []string{" " + theme.Paint(theme.Bad).Render(e.DiffFailed)}, nil
+		// Folded to the pane rather than drawn as one line. What follows
+		// the sentence is evidence — the command that timed out and the
+		// worktree it ran in — and errSaid keeps it on purpose, so a git
+		// that hung wrote a path across a pane three lines tall.
+		return failedLines(e.DiffFailed, e.Width), nil
 	case strings.TrimSpace(e.Diff) == "":
 		return []string{" " + theme.Paint(theme.Dim).Render(
 			p.T("diff.unchanged", "no changes in this task's worktree"))}, nil
@@ -70,4 +75,15 @@ func Diff(e Env) ([]string, map[int]int) {
 	}
 
 	return lines, heads
+}
+
+// failedLines is a refusal folded into the pane it is drawn in.
+func failedLines(said string, width int) []string {
+	var out []string
+
+	for _, line := range cells.Lines(said, max(20, width-2)) {
+		out = append(out, " "+theme.Paint(theme.Bad).Render(line))
+	}
+
+	return out
 }

@@ -42,13 +42,13 @@ func (s State) composeFlowLine(active bool, w int, e Env) string {
 		}
 
 		if selected {
-			pills = append(pills, theme.Pill(" ● "+glyph+f+" ", "#000000", "#A855F7"))
+			pills = append(pills, theme.Pill(" ● "+glyph+f+" ", theme.PillInkLit, theme.PillChosen))
 		} else {
-			pills = append(pills, theme.Pill(" "+glyph+f+" ", "#94A3B8", "#1E293B"))
+			pills = append(pills, theme.Pill(" "+glyph+f+" ", theme.PillInkRest, theme.PillRest))
 		}
 	}
 
-	newBtn := theme.Pill(" ➕ "+p.T("compose.new_flow_btn", "New")+" ", "#FFFFFF", "#6366F1")
+	newBtn := theme.Pill(" ➕ "+p.T("compose.new_flow_btn", "New")+" ", theme.PillInk, theme.PillCreate)
 	pills = append(pills, newBtn)
 
 	line := prefix + strings.Join(pills, " ")
@@ -129,8 +129,8 @@ const composeLabelStart = cells.Gutter + composeLabelWidth + 1
 
 func composePillWidth(name string, selected bool) int {
 	if selected {
-		return lipgloss.Width(theme.Pill(" ● "+name+" ", "#000000", "#FFFFFF"))
+		return lipgloss.Width(theme.Pill(" ● "+name+" ", theme.PillInkLit, theme.PillInk))
 	}
 
-	return lipgloss.Width(theme.Pill(" "+name+" ", "#94A3B8", "#1E293B"))
+	return lipgloss.Width(theme.Pill(" "+name+" ", theme.PillInkRest, theme.PillRest))
 }

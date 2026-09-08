@@ -21,11 +21,16 @@ type Step struct {
 
 // edits are the tools that change a file. Anything else a model calls —
 // reading, listing, running a build — is how it got there, not what it did.
+//
+// Keyed in lower case and looked up that way, because the same tool is
+// spelled differently by each engine: claude writes Edit and Write, opencode
+// writes edit and write. Matched as claude spells them, the story pane drew
+// an empty walk for every run of any other engine.
 var edits = map[string]bool{
-	"Edit":         true,
-	"MultiEdit":    true,
-	"Write":        true,
-	"NotebookEdit": true,
+	"edit":         true,
+	"multiedit":    true,
+	"write":        true,
+	"notebookedit": true,
 }
 
 // Walk is the files a task changed, in the order it first reached them.
@@ -67,7 +72,7 @@ func Walk(entries []Entry) []Step {
 			out = append(out, Step{Path: path})
 		}
 
-		if edits[e.Tool] {
+		if edits[strings.ToLower(e.Tool)] {
 			out[at].Touches++
 			continue
 		}
@@ -103,17 +108,21 @@ func changed(steps []Step) []Step {
 // breaks. Arguments that are not JSON at all, or name no file — a build
 // command, a search — are not files and say so by answering nothing.
 func filePath(args string) string {
+	// Two spellings of the one argument: claude writes file_path, opencode
+	// writes filePath. Go matches a tag case-insensitively but not across
+	// the underscore, so both are named here.
 	var fields struct {
-		FilePath string `json:"file_path"`
-		Path     string `json:"path"`
-		File     string `json:"file"`
+		FilePath  string `json:"file_path"`
+		FilePathC string `json:"filePath"`
+		Path      string `json:"path"`
+		File      string `json:"file"`
 	}
 
 	if err := json.Unmarshal([]byte(strings.TrimSpace(args)), &fields); err != nil {
 		return ""
 	}
 
-	for _, name := range []string{fields.FilePath, fields.Path, fields.File} {
+	for _, name := range []string{fields.FilePath, fields.FilePathC, fields.Path, fields.File} {
 		if name != "" {
 			return name
 		}

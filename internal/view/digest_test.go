@@ -99,6 +99,24 @@ func TestTheBriefIsNotAnInterruption(t *testing.T) {
 	}
 }
 
+// TestAWordMidRunIsAnInterruption, which is the ordinary shape of one: the
+// reader is watching the phases go by and says something. Counted against
+// the run being over, only a note left after the end was counted at all.
+func TestAWordMidRunIsAnInterruption(t *testing.T) {
+	d := Digested(Digest{}, []record.Event{
+		{Kind: record.TaskCreated, Text: "a task"},
+		{Kind: record.TaskStarted},
+		{Kind: record.PhaseStarted, Phase: "implement"},
+		{Kind: record.TaskNoted, Text: "use the other index"},
+		cost(record.PhaseFinished, "implement", "0.25"),
+		{Kind: record.TaskFinished},
+	})
+
+	if d.Untouched != 0 {
+		t.Error("a note left while the work was running counted as a task nobody touched")
+	}
+}
+
 // TestTheRoundsAreRankedByHowOftenTheyHappen. The phase at the top of the
 // list is the phase of the flow that is designed wrong.
 func TestTheRoundsAreRankedByHowOftenTheyHappen(t *testing.T) {

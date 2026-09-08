@@ -148,6 +148,16 @@ func (s spec) run(ctx context.Context, req Request) (Result, error) {
 		defer close(done)
 
 		streamResult, parseErr = s.parse(pr, req.OnEvent)
+
+		// Drained and not closed on the way out. Closing the read end of a
+		// pipe the engine is still writing to breaks it under a process
+		// that is working: the write fails, the child takes SIGPIPE, and
+		// cmd.Run reports `signal: broken pipe` — a finished run recorded
+		// as a failed one because a line partway through was malformed.
+		if _, drainErr := io.Copy(io.Discard, pr); drainErr != nil && parseErr == nil {
+			parseErr = drainErr
+		}
+
 		if closeErr := pr.Close(); closeErr != nil && parseErr == nil {
 			parseErr = closeErr
 		}

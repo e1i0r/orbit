@@ -27,6 +27,9 @@ const (
 	// those wait for as long as the window is open, and the task they belong
 	// to says "delivering" for exactly that long.
 	deadline = 10 * time.Minute
+	// waitGrace is how long a killed command has to let go of its output
+	// before Run stops waiting for it.
+	waitGrace = 5 * time.Second
 	// commandChars is how much of a command line is quoted back in an error.
 	// git's arguments are short and all of them fit; `gh pr create --body`
 	// carries the whole body of a pull request, and an error that reprints it
@@ -99,6 +102,13 @@ func runWithin(within time.Duration, dir, program string, args ...string) (strin
 	cmd := exec.CommandContext(ctx, program, args...)
 	cmd.Dir = dir
 	cmd.Env = environ()
+	// WaitDelay bounds the second wait, the one for the pipes. The context
+	// kill reaches the program named and nothing it spawned, and a
+	// credential or SSH helper that outlives `git push` holds the output
+	// pipe open — so Run went on waiting long past the deadline this
+	// function exists to keep, and the task sat on "delivering" for ever.
+	// internal/ui/clip says the same thing about the same failure.
+	cmd.WaitDelay = waitGrace
 
 	var stdout, stderr bytes.Buffer
 

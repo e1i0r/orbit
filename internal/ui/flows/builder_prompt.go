@@ -35,9 +35,9 @@ func (s State) builderPromptRows(w int, sz boxSizes, e Env) []builderLine {
 	head := s.labelled(flowFieldPrompt, p.T("flows.field_prompt", "Instructions"), "", w)
 	head.head = true
 	head.text = cells.Fit(strings.TrimRight(head.text, " ")+" "+
-		theme.Pill(p.T("flows.btn_paste", "📋 Paste"), "#FFFFFF", "#0C4A6E")+" "+
-		theme.Pill(p.T("flows.btn_autogen", "✨ Autogenerate"), "#FFFFFF", "#581C87")+" "+
-		theme.Pill(p.T("flows.btn_clear", "🗑 Clear"), "#FFFFFF", "#374151"), w)
+		theme.Pill(p.T("flows.btn_paste", "📋 Paste"), theme.PillInk, theme.PillEdit)+" "+
+		theme.Pill(p.T("flows.btn_autogen", "✨ Autogenerate"), theme.PillInk, theme.PillDraft)+" "+
+		theme.Pill(p.T("flows.btn_clear", "🗑 Clear"), theme.PillInk, theme.PillClear), w)
 
 	out := []builderLine{head}
 
@@ -62,7 +62,7 @@ func (s State) textBox(field int, content, placeholder string, rows, w int) []bu
 	wrapped := cells.WrapKeeping(shown, boxWidth-4)
 
 	// The placeholder is folded like anything else in the box: it is a
-	// sentence saying what to Write here, and one cut off at the edge with
+	// sentence saying what to write here, and one cut off at the edge with
 	// an ellipsis is a sentence nobody finishes reading.
 	ghost := len(wrapped) == 0
 	if ghost {
@@ -122,7 +122,7 @@ func (s State) builderActions(w int, e Env) []builderLine {
 	if s.readOnly {
 		return []builderLine{
 			plainLine(""),
-			plainLine("  " + theme.Pill(" ↵ "+p.T("flows.btn_return", "Return")+" ", "#FFFFFF", "#2563EB")),
+			plainLine("  " + theme.Pill(" ↵ "+p.T("flows.btn_return", "Return")+" ", theme.PillInk, theme.PillReturn)),
 			plainLine(""),
 			plainLine(cells.Fit("  "+theme.Paint(theme.Dim).Render(p.T("flows.ways_out_preview",
 				"[←/→ / tab] inspect phase · [enter / esc] return")), w)),
@@ -137,9 +137,9 @@ func (s State) builderActions(w int, e Env) []builderLine {
 		return "  "
 	}
 
-	buttons := "  " + mark(flowFieldAddPhase) + theme.Pill(p.T("flows.btn_add_phase", "+ Add Phase"), "#FFFFFF", "#0C4A6E") +
-		"    " + mark(flowFieldDelPhase) + theme.Pill(p.T("flows.btn_del_phase", "🗑 Delete Phase"), "#FFFFFF", "#7F1D1D") +
-		"    " + mark(flowFieldSave) + theme.Pill(p.T("flows.btn_save_flow", "✔ Save Flow"), "#FFFFFF", "#14532D")
+	buttons := "  " + mark(flowFieldAddPhase) + theme.Pill(p.T("flows.btn_add_phase", "+ Add Phase"), theme.PillInk, theme.PillEdit) +
+		"    " + mark(flowFieldDelPhase) + theme.Pill(p.T("flows.btn_del_phase", "🗑 Delete Phase"), theme.PillInk, theme.PillDelete) +
+		"    " + mark(flowFieldSave) + theme.Pill(p.T("flows.btn_save_flow", "✔ Save Flow"), theme.PillInk, theme.PillSave)
 
 	return []builderLine{
 		{text: cells.Fit(buttons, w), field: flowFieldAddPhase, phase: noPhase, pick: noPick},

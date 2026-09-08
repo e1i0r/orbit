@@ -21,9 +21,9 @@ func (s State) flowDetailRows(h, w int, e Env) []string {
 
 	out = append(out, "")
 	// 1. Header with Flow Name and Origin Badge
-	originBadge := theme.Pill(p.T("flows.badge_custom", "Custom"), "#FFFFFF", "#6366F1")
+	originBadge := theme.Pill(p.T("flows.badge_custom", "Custom"), theme.PillInk, theme.PillCreate)
 	if s.isBuiltin {
-		originBadge = theme.Pill(p.T("flows.badge_builtin", "Built-in"), "#FFFFFF", "#0284C7")
+		originBadge = theme.Pill(p.T("flows.badge_builtin", "Built-in"), theme.PillInk, theme.PillDetails)
 	}
 
 	title := "  " + theme.Paint(theme.Live).Bold(true).Render("⚡ "+p.T("flows.workflow_title", "Workflow")+": ") +
@@ -61,9 +61,9 @@ func (s State) flowDetailRows(h, w int, e Env) []string {
 
 	// 5. Actions Footer
 	out = append(out, "")
-	selectBtn := theme.Pill(" ↵ "+p.T("flows.btn_select_return", "Select & Return")+" ", "#FFFFFF", "#16A34A")
-	editBtn := theme.Pill(" e "+p.T("flows.btn_edit_designer", "Edit in Designer")+" ", "#FFFFFF", "#4F46E5")
-	backBtn := theme.Pill(" esc "+p.T("flows.btn_back", "Back")+" ", "#FFFFFF", "#334155")
+	selectBtn := theme.Pill(" ↵ "+p.T("flows.btn_select_return", "Select & Return")+" ", theme.PillInk, theme.PillSelect)
+	editBtn := theme.Pill(" e "+p.T("flows.btn_edit_designer", "Edit in Designer")+" ", theme.PillInk, theme.PillDesign)
+	backBtn := theme.Pill(" esc "+p.T("flows.btn_back", "Back")+" ", theme.PillInk, theme.PillBack)
 	out = append(out, "  "+selectBtn+"   "+editBtn+"   "+backBtn, "")
 
 	hints := p.T("flows.detail_hints", "[enter] select · [e] edit · [esc] return")

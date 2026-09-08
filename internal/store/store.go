@@ -165,6 +165,27 @@ func New(root string) (*Store, error) {
 		return nil, fmt.Errorf("create %q: %w", abs, err)
 	}
 
+	// And the mode again, because MkdirAll leaves a directory that was
+	// already there exactly as it found it: a state root made by hand, or by
+	// an older Orbit, kept its 0755 for ever — with the engines' credentials
+	// and every private checkout under it, readable by anyone with an
+	// account on the machine.
+	//
+	// Narrowed and never widened. What is taken away is what group and other
+	// were given; the owner's own bits are left as they are, so a root
+	// somebody deliberately made read-only stays read-only and the write
+	// that follows fails as they meant it to.
+	info, err := os.Stat(abs)
+	if err != nil {
+		return nil, fmt.Errorf("read %q: %w", abs, err)
+	}
+
+	if mode := info.Mode().Perm(); mode&^dirMode != 0 {
+		if err := os.Chmod(abs, mode&dirMode); err != nil {
+			return nil, fmt.Errorf("keep %q to its owner: %w", abs, err)
+		}
+	}
+
 	return &Store{root: abs}, nil
 }
 

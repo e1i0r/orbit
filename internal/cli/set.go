@@ -19,6 +19,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/store"
+	"github.com/e1i0r/orbit/internal/ui"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -68,7 +69,7 @@ func settingTable() []Setting {
 			return p.T("setting.autopilot", "whether a run walks its whole flow without stopping")
 		},
 		Set: func(p *words.Printer, cfg *store.Settings, value string) (string, error) {
-			on, err := onOff(p, value)
+			on, err := onOff(p, "autopilot", value)
 			if err != nil {
 				return "", err
 			}
@@ -147,7 +148,7 @@ func settingTable() []Setting {
 			return p.T("setting.check_record", "whether every command asks SQLite if the record is still readable")
 		},
 		Set: func(p *words.Printer, cfg *store.Settings, value string) (string, error) {
-			on, err := onOff(p, value)
+			on, err := onOff(p, "check-record", value)
 			if err != nil {
 				return "", err
 			}
@@ -166,7 +167,10 @@ func settingTable() []Setting {
 		},
 		Value: func(cfg store.Settings) string {
 			if cfg.Theme == "" {
-				return "monokai"
+				// The one the window will actually draw. Spelled here as a
+				// second copy of the word, this table printed monokai for a
+				// cockpit drawing frauddi.
+				return ui.DefaultTheme
 			}
 
 			return cfg.Theme
@@ -299,7 +303,7 @@ func assign(p *words.Printer, cfg *store.Settings, key, value string) (string, e
 // and a command line that disagreed with the screen would be two vocabularies
 // for one setting. strconv.ParseBool after it, so true/false/1/0 — what
 // anybody who has used a config file expects — are not refusals.
-func onOff(p *words.Printer, value string) (bool, error) {
+func onOff(p *words.Printer, name, value string) (bool, error) {
 	switch strings.ToLower(strings.TrimSpace(value)) {
 	case "on":
 		return true, nil
@@ -309,7 +313,8 @@ func onOff(p *words.Printer, value string) (bool, error) {
 
 	on, err := strconv.ParseBool(value)
 	if err != nil {
-		return false, errors.New(p.T("set.autopilot_on_or_off", "autopilot is on or off, not {value}",
+		return false, errors.New(p.T("set.on_or_off", "{setting} is on or off, not {value}",
+			words.Arg{Name: "setting", Value: name},
 			words.Arg{Name: "value", Value: value}))
 	}
 

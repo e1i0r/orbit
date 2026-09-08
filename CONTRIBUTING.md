@@ -117,6 +117,16 @@ Every log line carries its subsystem: `logger.Error("cli/run", ...)`, `logger.Wa
 
 ---
 
+## Colour
+
+Every hex the window draws is named in `internal/ui/theme` and nowhere else: paper and the three weights of text in `tokens.go`, per theme; pills and the line around a box the reader types into in `badge.go`, one value each. A screen asks for the job — `theme.Pill(label, theme.PillInk, theme.PillSave)` — and never spells `"#14532D"` itself.
+
+`TestColoursLiveInTheTheme` fails on a hex written outside that package. Test files are exempt: a golden that asserts what was drawn names the colour it expects, and that is what it is for.
+
+The reason is that a colour written at a call site is one no theme can reach. The window went from frauddi to dracula around a Save button that stayed the same green, and finding that green meant grepping nine files under `internal/ui`.
+
+---
+
 ## Comments
 
 Comments explain **why**, and state facts rather than verdicts. `// the flag package stops at the first non-flag argument, so the child read none of what followed` is a comment; `// this was a terrible bug` is not.

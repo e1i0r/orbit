@@ -64,7 +64,17 @@ func (m Model) panesEnv() panes.Env {
 // drawn whether or not it is the one on screen, so the rows being asked
 // about are never assumed to be the rows in front of the reader.
 func (m Model) paneEnv(t tab) panes.Env {
+	// The world syncPanes built for this pass, when there is one. Each pane
+	// asking for its own resolved the flow twice and asked the engines port,
+	// so twelve panes read the flow twenty-four times where one reading
+	// does — on every log line, every diff and every fold. Outside that pass
+	// m.world is nil and this builds its own, because a reading of an
+	// earlier instant would draw a task that has since moved on.
 	e := m.panesEnv()
+	if m.world != nil {
+		e = *m.world
+	}
+
 	e.RowOpen = func(i int) bool { return m.rowOpen(t, i) }
 
 	return e
@@ -271,4 +281,16 @@ func (m Model) reading() panes.Reach {
 func (m Model) impactRows() []string { return panes.Impact(m.paneEnv(tabImpact)) }
 
 // impactMark is the count beside the impact tab's name.
-func (m Model) impactMark() string { return panes.Mark(m.panesEnv()) }
+//
+// Built from the three fields Mark actually reads and not from the whole
+// pane world. tabNames calls this on every draw of the detail screen and on
+// every mouse motion over the tab strip, and panesEnv resolves the flow
+// twice and asks the engines port on its way to one number — which a task
+// with a running spinner paid for twice per animation frame.
+func (m Model) impactMark() string {
+	return panes.Mark(panes.Env{Reach: panes.Reach{
+		History: m.weigh.reach,
+		Read:    m.weigh.reachKnown,
+		Failed:  m.errSaid(m.weigh.reachErr),
+	}})
+}

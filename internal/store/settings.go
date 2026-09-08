@@ -13,9 +13,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
-
-	"github.com/e1i0r/orbit/internal/logger"
 )
 
 // defaultUnreadCap is what a store that has never saved settings starts
@@ -178,95 +175,6 @@ func (s *Store) changeSettings(change func(*Settings) error) error {
 	return s.SaveSettings(cfg)
 }
 
-// lockPatience is how long a change waits for another one to finish, and
-// lockStale is when a lock file is taken for the leftover of a process that
-// died holding it.
-//
-// A change holds the lock for one read and one write of a file measured in
-// hundreds of bytes, so two seconds is thousands of turns and a minute is
-// nobody's. The alternative to breaking a stale lock is a settings file that
-// no longer accepts changes because something was killed at the wrong
-// instant, and the person it happens to has no way to know what to delete.
-const (
-	lockPatience = 2 * time.Second
-	lockStale    = time.Minute
-)
-
-// lockSettings takes the settings lock and answers how to give it back.
-//
-// A file created with O_EXCL is the lock, because a file system promising
-// that exactly one of two creations succeeds is the one thing every one of
-// them promises across processes, without a library and without a syscall
-// this program would have to write twice for two operating systems.
-func (s *Store) lockSettings() (func() error, error) {
-	path := s.settingsPath() + lockSuffix
-	if err := os.MkdirAll(filepath.Dir(path), dirMode); err != nil {
-		return nil, fmt.Errorf("create %q: %w", filepath.Dir(path), err)
-	}
-
-	for waited := time.Duration(0); ; waited += lockPoll {
-		f, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, fileMode)
-		if err == nil {
-			return func() error { return errors.Join(f.Close(), os.Remove(path)) }, nil
-		}
-
-		if !errors.Is(err, os.ErrExist) {
-			return nil, fmt.Errorf("take the settings lock %q: %w", path, err)
-		}
-
-		if broken, err := breakStale(path); err != nil {
-			return nil, err
-		} else if broken {
-			continue
-		}
-
-		if waited >= lockPatience {
-			return nil, fmt.Errorf("another orbit has been changing the settings for %v; if none is, delete %q", lockPatience, path)
-		}
-
-		time.Sleep(lockPoll)
-	}
-}
-
-// lockPoll is how often the wait looks again. It is short enough that an
-// ordinary change is not noticeably delayed by having waited for one.
-const lockPoll = 10 * time.Millisecond
-
-// lockSuffix is what the settings lock is called, beside the file it guards
-// rather than in a directory of its own: whoever is told to delete it finds
-// it in the listing they are already looking at.
-const lockSuffix = ".lock"
-
-// breakStale removes a lock nobody is holding, and answers whether it did.
-//
-// Age is the only evidence available. A pid in the file would be better on
-// one machine and worse across a state root on a shared disk, where the
-// number belongs to somebody else's process table.
-func breakStale(path string) (bool, error) {
-	info, err := os.Stat(path)
-	if err != nil {
-		// It went away between the failed create and this look, which is
-		// the holder finishing. The next turn of the loop takes it.
-		return false, nil //nolint:nilerr // a lock that is gone is not a fault
-	}
-
-	if time.Since(info.ModTime()) < lockStale {
-		return false, nil
-	}
-
-	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
-		return false, fmt.Errorf("remove the stale settings lock %q: %w", path, err)
-	}
-	// Breaking it is the right thing to do and no reason to do it quietly.
-	// A lock older than a minute is the footprint of a process that died
-	// between taking it and giving it back, and that is worth knowing about
-	// on its own — the change that follows will succeed and say nothing.
-	logger.Warn("store/settings", "broke a settings lock left behind %s ago: something died holding it",
-		time.Since(info.ModTime()).Round(time.Second))
-
-	return true, nil
-}
-
 // unreadableSuffix is what an unparseable settings file is renamed with. It
 // is a suffix rather than a directory so the two sit side by side: whoever
 // opens the state root to find out why their engine reset sees both files in
@@ -278,9 +186,10 @@ const unreadableSuffix = ".unreadable"
 //
 // The parse it does is the same one Settings does — unmarshalling into
 // Settings, not merely checking the JSON is well formed — because the two
-// have to agree on what "unreadable" means. A file that is valid JSON but
-// has a string where the unread cap goes is a file Settings answers with the
-// defaults, so it is a file this has to keep.
+// have to agree on what "unreadable" means. That takes in a file which is
+// valid JSON with a string where the unread cap goes: json.Unmarshal refuses
+// it, so it is moved aside like any other file that will not parse, and the
+// write that follows starts from the defaults.
 //
 // A file that cannot be read at all is not this function's problem: the
 // write that follows will hit the same fault and report it in its own terms.

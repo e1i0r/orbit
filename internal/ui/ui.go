@@ -21,6 +21,7 @@ import (
 	"github.com/e1i0r/orbit/internal/ui/layout"
 	"github.com/e1i0r/orbit/internal/ui/menu"
 	"github.com/e1i0r/orbit/internal/ui/palette"
+	"github.com/e1i0r/orbit/internal/ui/panes"
 	"github.com/e1i0r/orbit/internal/ui/repos"
 	"github.com/e1i0r/orbit/internal/ui/settings"
 	"github.com/e1i0r/orbit/internal/ui/supervisor"
@@ -70,9 +71,11 @@ type Model struct {
 	// are the same evidence, and only a run that stopped after this one is
 	// new.
 	brokeAt time.Time
-	errs    int            // how many read failures the last board carried
-	noted   notedErrs      // the last failure each clocked source wrote down
-	totals  map[string]int // phases per flow name, for "review 2/3"
+	// world is the pane world of the pass syncPanes is inside; paneEnv says why.
+	world  *panes.Env
+	errs   int            // how many read failures the last board carried
+	noted  notedErrs      // the last failure each clocked source wrote down
+	totals map[string]int // phases per flow name, for "review 2/3"
 
 	width, height int
 	frame         layout.Frame

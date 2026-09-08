@@ -45,7 +45,7 @@ func joinRepo(ctx Context, args []string) error {
 			words.Arg{Name: "env", Value: task.IDEnv}))
 	}
 
-	wt, err := joined(*dir, *id, name)
+	wt, err := joined(fs, *dir, *id, name)
 	if err != nil {
 		return fmt.Errorf("join %q to task %q: %w", name, *id, err)
 	}
@@ -64,8 +64,12 @@ func joinRepo(ctx Context, args []string) error {
 // nothing runs in a directory that is no repository at all, so that door is
 // allowed to come back empty — the names then come from the repositories
 // Orbit has a record of, which is the whole of where such a task can go.
-func joined(dir, id, name string) (string, error) {
-	s, r, err := openMaybe(dir, false)
+func joined(fs *flag.FlagSet, dir, id, name string) (string, error) {
+	// given(fs, "repo") the way every other command asks it: a path the
+	// reader typed is theirs to have wrong, and swallowing the error left
+	// the name resolved against the whole state root and the checkout it
+	// found belonging to some other repository.
+	s, r, err := openMaybe(dir, given(fs, "repo"))
 	if err != nil {
 		return "", err
 	}

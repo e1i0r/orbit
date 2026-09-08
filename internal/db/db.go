@@ -75,13 +75,32 @@ func Open(path string) (*DB, error) {
 
 	d := &DB{sql: handle, path: path}
 
+	// The database's own mode goes on before the migration writes anything
+	// into it. Ping is what makes the file: the handle above is lazy, and a
+	// chmod of a path nothing has created yet is an ENOENT.
+	if fresh {
+		if err := handle.Ping(); err != nil {
+			return nil, errors.Join(fmt.Errorf("open %q: %w", path, err), handle.Close())
+		}
+
+		if err := os.Chmod(path, fileMode); err != nil {
+			return nil, errors.Join(fmt.Errorf("set the mode of %q: %w", path, err), handle.Close())
+		}
+	}
+
 	if err := d.migrate(); err != nil {
 		return nil, errors.Join(err, handle.Close())
 	}
 
+	// And the two files SQLite keeps beside it, which the first write is
+	// what creates. The -wal holds committed events until the process that
+	// wrote them closes, so a record at 0600 with its log at 0644 is the
+	// record readable by anyone with an account on the machine.
 	if fresh {
-		if err := os.Chmod(path, fileMode); err != nil {
-			return nil, errors.Join(fmt.Errorf("set the mode of %q: %w", path, err), handle.Close())
+		for _, beside := range []string{path + "-wal", path + "-shm"} {
+			if err := os.Chmod(beside, fileMode); err != nil && !errors.Is(err, os.ErrNotExist) {
+				return nil, errors.Join(fmt.Errorf("set the mode of %q: %w", beside, err), handle.Close())
+			}
 		}
 	}
 

@@ -193,6 +193,22 @@ func mcpConfigFlag(engineName string) string {
 	return ""
 }
 
+// openHead is the part of the opening sentence that names the task and
+// nothing that moves.
+//
+// filesession recognises Orbit's own priming by it. The rest of the sentence
+// carries the band and the phase, which are live board fields refreshed while
+// the session is open — so a run that finished mid-session rebuilt a
+// different sentence there, and the priming was filed as a turn the reader
+// had said.
+func openHead(t view.Task) string {
+	if t.ID == "" {
+		return ""
+	}
+
+	return fmt.Sprintf("I am looking at orbit task %s", t.ID)
+}
+
 // openContext is what the session is told before the reader types anything.
 //
 // It names the task and says the tools are there, and stops. Anything more
@@ -204,7 +220,7 @@ func openContext(t view.Task) string {
 	}
 
 	var b strings.Builder
-	fmt.Fprintf(&b, "I am looking at orbit task %s", t.ID)
+	b.WriteString(openHead(t))
 
 	if t.Repo != "" {
 		fmt.Fprintf(&b, " in %s", t.Repo)

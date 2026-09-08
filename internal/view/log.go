@@ -149,6 +149,12 @@ func storyOf(e record.Event) *Story {
 // build wrote, and showing it unstyled is a better answer than showing
 // nothing where it was.
 func Log(events []record.Event) []Entry {
+	// From the last task.created, as Fold reads it: an id can be written
+	// down again after it was deleted, and a log that ran on from the top
+	// drew the dead task's phases above the live one and went on counting
+	// its attempts.
+	events = thisLife(events)
+
 	out := make([]Entry, 0, len(events))
 	attempt := 0
 
@@ -161,6 +167,20 @@ func Log(events []record.Event) []Entry {
 	}
 
 	return out
+}
+
+// fullSize is how big what an event carried was before it was cut.
+//
+// Two names for the one figure: a phase's ending writes output_bytes, and a
+// thought, a tool call, a refusal and a gate all write bytes. Reading only
+// the first, Truncated() was false for every one of the second, and the
+// panes drew cut text with nothing saying anything was missing.
+func fullSize(data map[string]string) int {
+	if n := count(data["output_bytes"]); n > 0 {
+		return n
+	}
+
+	return count(data["bytes"])
 }
 
 // entry reads one event's fields. Indexing a nil Data map is a zero value
@@ -188,6 +208,6 @@ func entry(e record.Event, attempt int) Entry {
 		Story:   storyOf(e),
 		Delta:   deltaOf(e),
 		Kept:    len(e.Text),
-		Full:    count(e.Data["output_bytes"]),
+		Full:    fullSize(e.Data),
 	}
 }

@@ -84,8 +84,15 @@ func (e Env) compareLine(d repo.Divergence) []string {
 	}
 
 	mark, said := theme.Paint(theme.Bad).Render("✗ "), p.T("compare.broke", "passed before, fails now")
-	if d.Fixed() {
+
+	switch {
+	case d.Fixed():
 		mark, said = theme.Paint(theme.OK).Render("✓ "), p.T("compare.fixed", "failed before, passes now")
+	case d.Base.Failed != nil || d.Now.Failed != nil:
+		// Neither broke nor fixed: the command did not run, so there is no
+		// verdict on that side to have changed. Painted as a regression it
+		// read as work that broke a check nobody ever managed to run.
+		mark, said = theme.Paint(theme.Warn).Render("! "), p.T("compare.did_not_run", "the check did not run")
 	}
 
 	rows := []string{

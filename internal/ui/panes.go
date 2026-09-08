@@ -130,6 +130,12 @@ func (m Model) tabNames() []tabName {
 func (m Model) syncPanes() Model {
 	w := max(m.frame.Body.W, 1)
 
+	// One world for the twelve panes below, and gone again on the way out:
+	// it is a reading of this instant, and a pane asking for it at any other
+	// moment must build its own rather than draw a task that has moved on.
+	world := m.panesEnv()
+	m.world = &world
+
 	timeline := m.logRows()
 	report, reportSeams := m.reportRows()
 	thinking, thinkingHeads := m.thinkingRows()
@@ -179,6 +185,10 @@ func (m Model) syncPanes() Model {
 		vp.GotoBottom()
 		m.panes[tabTimeline] = vp
 	}
+
+	// And gone with the pass. Carried out of here it would be a reading of
+	// this instant answering questions asked at some later one.
+	m.world = nil
 
 	return m
 }

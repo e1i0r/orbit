@@ -1925,9 +1925,9 @@
       "source": "{key} is not a setting; the keys are {keys}",
       "value": "{key} no es un ajuste; las claves son {keys}"
     },
-    "set.autopilot_on_or_off": {
-      "source": "autopilot is on or off, not {value}",
-      "value": "el piloto automático está en on o en off, no en {value}"
+    "set.on_or_off": {
+      "source": "{setting} is on or off, not {value}",
+      "value": "{setting} está en on o en off, no en {value}"
     },
     "supervisor.retract_not_a_number": {
       "source": "-retract takes the number of a line in the thread, not {value}",
@@ -4372,6 +4372,10 @@
     "compare.fixed": {
       "source": "failed before, passes now",
       "value": "fallaba antes, ahora pasa"
+    },
+    "compare.did_not_run": {
+      "source": "the check did not run",
+      "value": "la comprobación no llegó a correr"
     },
     "compare.base_said": {
       "source": "base:     {said}",

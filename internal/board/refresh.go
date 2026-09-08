@@ -115,7 +115,7 @@ func (r *Reader) Refresh() (Board, Changed, error) {
 		// without waiting for their logs to move.
 		//
 		st.task.ID, st.task.Repo, st.task.RepoPath = st.id, st.repoName(), st.repoPath()
-		st.task.Repos = named(st.repos)
+		st.task.Repos, st.task.RepoPaths = named(st.repos), pathsOf(st.repos)
 
 		// Live is the one field on the row that does not come from the log,
 		// and cannot: a run killed with SIGKILL writes nothing on its way
@@ -205,22 +205,43 @@ func named(repos []RepoInfo) []string {
 	return names
 }
 
+// pathsOf is the same list by path, in the same order, so that a caller with
+// two checkouts of the same name can tell which one a row means.
+func pathsOf(repos []RepoInfo) []string {
+	paths := make([]string, 0, len(repos))
+	for _, one := range repos {
+		paths = append(paths, one.Path)
+	}
+
+	return paths
+}
+
 // recordSize is how big the record is on disk, for the panel that says so.
 //
-// One stat of one file, where the number it replaces was the sum of a stat
-// per task that the refresh was already paying for. A record that cannot be
-// stat'd reports nothing rather than failing a refresh over a panel.
+// The database and the two files SQLite keeps beside it, because the record
+// runs in WAL mode: what has been written and not yet checkpointed lives in
+// the -wal, and a panel that stated the database alone reported 164 KiB for
+// a record holding 4 MiB. A record that cannot be stat'd reports nothing
+// rather than failing a refresh over a panel.
 func (r *Reader) recordSize() int64 {
 	if r.store == nil {
 		return 0
 	}
 
-	info, err := os.Stat(r.store.DBPath())
-	if err != nil {
-		return 0
+	db := r.store.DBPath()
+
+	var total int64
+
+	for _, path := range []string{db, db + "-wal", db + "-shm"} {
+		info, err := os.Stat(path)
+		if err != nil {
+			continue
+		}
+
+		total += info.Size()
 	}
 
-	return info.Size()
+	return total
 }
 
 // Rescan walks the tree again: every repository under the root and every

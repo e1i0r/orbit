@@ -82,7 +82,7 @@ func TestEveryPhaseIsAskedForItsDelta(t *testing.T) {
 	tk := Task{ID: "ACME-1", Text: "do the thing"}
 
 	for n := 1; n <= len(f.Phases); n++ {
-		asked := promptFor(tk, f, n, nil, nil, nil, "", nil)
+		asked := build(tk, f.Phases[n-1], n == len(f.Phases), nil, nil, nil, "", nil)
 		if !strings.Contains(asked, "## Delta") {
 			t.Errorf("phase %d is not asked for a delta", n)
 		}
@@ -90,7 +90,7 @@ func TestEveryPhaseIsAskedForItsDelta(t *testing.T) {
 
 	// The story is still the last phase's alone: it is about the task, and a
 	// phase in the middle does not know how it ends.
-	if strings.Contains(promptFor(tk, f, 1, nil, nil, nil, "", nil), "## Story") {
+	if strings.Contains(build(tk, f.Phases[0], false, nil, nil, nil, "", nil), "## Story") {
 		t.Error("the first phase is asked for the story")
 	}
 }

@@ -165,8 +165,12 @@ func commitsOf(out string) [][]string {
 	for _, block := range strings.Split(out, "\x00") {
 		var files []string
 
-		for _, line := range strings.Split(block, "\n") {
-			if line = strings.TrimSpace(line); line != "" {
+		// The first line of a block is the commit's own hash: the pretty
+		// format writes it straight after the separator. Counted as a file
+		// it put the crowded-commit cutoff one out and left a key nothing
+		// matches in the pair map of every commit read.
+		for i, line := range strings.Split(block, "\n") {
+			if line = strings.TrimSpace(line); line != "" && i > 0 {
 				files = append(files, line)
 			}
 		}

@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/e1i0r/orbit/internal/record"
+	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 )
 
@@ -41,13 +42,29 @@ import (
 func Delete(s *store.Store, t Task) error {
 	var errs []error
 
-	wtDir, err := s.WorktreeDir(t.Repo.Path, t.ID)
+	// Every checkout the task reached into, and not only the one it is
+	// filed under. Join gives a task a worktree per repository, and the ones
+	// this gesture did not visit were left as a directory on disk and an
+	// entry under .git/worktrees that only `git worktree prune` clears —
+	// which is the state the paragraph above says this exists to prevent.
+	for _, path := range reposOf(s, t) {
+		wtDir, err := s.WorktreeDir(path, t.ID)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
 
-	switch {
-	case err != nil:
-		errs = append(errs, err)
-	case exists(wtDir):
-		if err := t.Repo.RemoveWorktree(wtDir); err != nil {
+		if !exists(wtDir) {
+			continue
+		}
+
+		r, err := repo.Open(path)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+
+		if err := r.RemoveWorktree(wtDir); err != nil {
 			errs = append(errs, err)
 		}
 	}

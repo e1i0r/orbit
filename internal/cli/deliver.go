@@ -90,8 +90,15 @@ func deliverTask(ctx Context, s *store.Store, t task.Task, where []repo.Repo) er
 	// two accounts of one task in two pull requests.
 	story := task.StoryOf(s, t)
 
+	// What was opened is said even when the next one fails. A pull request
+	// is already live on the repository it was made in, and returning here
+	// left its URL in the log and nowhere a reader would look — while
+	// checkouts goes to real trouble upstream so that a half delivery
+	// cannot happen quietly.
 	for i, one := range opened {
 		if opened[i].url, err = openPR(ctx, s, t, one, story); err != nil {
+			report(ctx, opened)
+
 			return err
 		}
 	}
