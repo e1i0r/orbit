@@ -23,6 +23,7 @@ import (
 	"time"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/e1i0r/orbit/internal/ui"
@@ -187,4 +188,62 @@ func drawn(t *testing.T, m tea.Model) string {
 	}
 
 	return strings.Join(strings.Fields(ansi.Strip(v.View().Content)), " ")
+}
+
+// lines is the frame as the terminal would show it, row by row, so that a
+// test can find where something was drawn before it clicks on it.
+func lines(t *testing.T, m tea.Model) []string {
+	t.Helper()
+
+	v, ok := m.(interface{ View() tea.View })
+	if !ok {
+		t.Fatalf("the window does not draw: %T", m)
+	}
+
+	return strings.Split(ansi.Strip(v.View().Content), "\n")
+}
+
+// at is where something is drawn: the cell its first character sits on.
+//
+// Found in the frame rather than written down as a coordinate. A test that
+// clicks on a number is an anchor on the layout — it breaks when the bar
+// moves and, worse, goes on passing when the thing it meant to click moved
+// somewhere else. Asked this way, the test says the one thing that matters:
+// what you can see, you can click, where you see it.
+func at(t *testing.T, m tea.Model, needle string) (int, int) {
+	t.Helper()
+
+	for y, line := range lines(t, m) {
+		if i := strings.Index(line, needle); i >= 0 {
+			// Cells and not bytes: the header and the bar are full of
+			// emoji, and a byte offset into one of those lines names a
+			// column some way to the right of what it meant.
+			return lipgloss.Width(line[:i]), y
+		}
+	}
+
+	t.Fatalf("%q is nowhere in the frame:\n%s", needle, strings.Join(lines(t, m), "\n"))
+
+	return 0, 0
+}
+
+// clicked is one whole click on a cell: the button down and up again on the
+// same one. mouse.go acts on the release — a press with nothing after it is
+// a reader still deciding — so a test that sent only the press would be
+// asserting that nothing happens.
+func clicked(t *testing.T, m tea.Model, x, y int) tea.Model {
+	t.Helper()
+
+	m = update(t, m, tea.MouseClickMsg{X: x, Y: y, Button: tea.MouseLeft})
+
+	return update(t, m, tea.MouseReleaseMsg{X: x, Y: y, Button: tea.MouseLeft})
+}
+
+// clickOn finds something in the frame and clicks it.
+func clickOn(t *testing.T, m tea.Model, needle string) tea.Model {
+	t.Helper()
+
+	x, y := at(t, m, needle)
+
+	return clicked(t, m, x, y)
 }

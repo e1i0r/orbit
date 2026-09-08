@@ -6,19 +6,23 @@ import (
 	"github.com/e1i0r/orbit/internal/view"
 )
 
-// sendKey puts a keystroke through the same map a pressed key goes through,
+// sendKey puts a keystroke through the same door a pressed key goes through,
 // which is how a clicked hint reaches the verb it names.
+//
+// key() and not the screen maps under it. Those are the second half of the
+// dispatch: key() answers the menu, the palette and the filter above them and
+// only then falls through, so a hint the bar drew for one of those was
+// promised to the reader and dropped — the click reached a map with no case
+// for it and nothing happened, which is the shape of "I clicked it and it did
+// nothing". One door for both, and a clicked hint is its key.
 func (m Model) sendKey(k keystroke) (tea.Model, tea.Cmd) {
-	switch {
-	case m.filtering:
+	// Except while a filter is being typed, where the character would land
+	// in the box. A hint clicked then is not a character the reader typed.
+	if m.filtering {
 		return m, nil
-	case m.screen == screenStart:
-		return m.startKey(k)
-	case m.screen == screenDetail:
-		return m.detailKey(k)
 	}
 
-	return m.listKey(k)
+	return m.key(tea.KeyPressMsg{Text: string(k)})
 }
 
 // flip is one of the start dialog's switches, clicked.
