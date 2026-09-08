@@ -34,3 +34,27 @@ jobs:
           distribution: goreleaser
           version: '~> v2'
           args: check
+
+  # The flows the landing shows, walked end to end: the real binary against a
+  # real git repository with a real Go module in it, real gates running real
+  # commands, and a stand-in engine on PATH under the name the flows ask for.
+  # Only the model is faked.
+  #
+  # A job of its own, and on both the systems a release ships for. It is
+  # slower than the rest, and a break that only happens on Linux is a break
+  # nobody sees on the machine this was written on.
+  #
+  # release.yml waits on this whole workflow's conclusion, so a red run here
+  # holds the release back without either file naming the other.
+  integration:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.26'
+      - run: make integration

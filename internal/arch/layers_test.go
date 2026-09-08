@@ -55,8 +55,16 @@ var program = map[string][]string{
 	// it stores, and it is the only entry — the record knows no store, no
 	// task and no engine, so nothing here can decide anything about a run
 	// or reach the state root to find one.
-	"internal/db":  {"internal/record"},
-	"internal/cli": {"internal/board", "internal/engine", "internal/export", "internal/flow", "internal/knowledge", "internal/logger", "internal/mcp", "internal/migrate", "internal/quota", "internal/repo", "internal/store", "internal/supervisor", "internal/task", "internal/tracker", "internal/ui", "internal/ui/roster", "internal/view", "internal/words"},
+	"internal/db": {"internal/record"},
+	// The flow tests and the stand-in engine they put on PATH import nothing
+	// of Orbit's, and that is the whole of what makes them what they are:
+	// they reach the program the way a person does, by running the binary. A
+	// test that imported internal/task would be asking the program about
+	// itself, and would go on passing after the command line stopped being
+	// able to ask the same question.
+	"test/integration":            {},
+	"test/integration/fakeengine": {},
+	"internal/cli":                {"internal/board", "internal/engine", "internal/export", "internal/flow", "internal/knowledge", "internal/logger", "internal/mcp", "internal/migrate", "internal/quota", "internal/repo", "internal/store", "internal/supervisor", "internal/task", "internal/tracker", "internal/ui", "internal/ui/roster", "internal/view", "internal/words"},
 	// internal/logger is on internal/engine's list for the one thing this
 	// package does that nothing else in Orbit does: it starts somebody
 	// else's program. What that cost, how long it took and which of the
