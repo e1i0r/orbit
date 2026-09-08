@@ -138,6 +138,12 @@ func commands() []Command {
 		InWindow: WindowRefuses,
 		Because:  func(p *words.Printer) string { return p.T("cmd.top.inside", "you are already in it") },
 	}, {
+		Name: "web", Args: "[dir]",
+		About:    func(p *words.Printer) string { return p.T("cmd.web", "read the same board in a browser") },
+		Run:      serveWeb,
+		InWindow: WindowRefuses,
+		Because:  func(p *words.Printer) string { return p.T("cmd.web.inside", "it would serve the window you are in") },
+	}, {
 		Name: "repos", Args: "[dir]",
 		About:    func(p *words.Printer) string { return p.T("cmd.repos", "list the repositories under a directory") },
 		Run:      repos,

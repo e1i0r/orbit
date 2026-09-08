@@ -1561,6 +1561,34 @@
       "source": "watch every task in one window",
       "value": "ver todas las tareas en una sola ventana"
     },
+    "cmd.web": {
+      "source": "read the same board in a browser",
+      "value": "leer el mismo tablero en un navegador"
+    },
+    "cmd.web.inside": {
+      "source": "it would serve the window you are in",
+      "value": "serviría la misma ventana en la que estás"
+    },
+    "web.rescan": {
+      "source": "look for repositories",
+      "value": "buscar repositorios"
+    },
+    "web.listen": {
+      "source": "listen on {addr}",
+      "value": "escuchar en {addr}"
+    },
+    "web.serving": {
+      "source": "orbit is at http://{addr} — press ctrl-c to stop",
+      "value": "orbit está en http://{addr} — ctrl-c para parar"
+    },
+    "web.serve": {
+      "source": "serve the window",
+      "value": "servir la ventana"
+    },
+    "web.one_directory": {
+      "source": "web watches one directory; pass one, or none for the one you are in",
+      "value": "web mira un solo directorio; pasá uno, o ninguno para el que estás"
+    },
     "cmd.top.inside": {
       "source": "you are already in it",
       "value": "ya estás dentro"

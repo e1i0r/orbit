@@ -133,15 +133,19 @@ var doors = map[string][]string{
 	},
 
 	// The rest: each of these is one subject already.
-	"internal/board":      {"board.go", "files.go", "filetext.go", "health.go", "log.go", "refresh.go", "supervisor.go"},
-	"internal/export":     {"export.go"},
-	"internal/flow":       {"draft.go", "flow.go", "load.go", "loop.go", "resolve.go", "save.go"},
-	"internal/knowledge":  {"fact.go", "scope.go", "store.go"},
-	"internal/logger":     {"logger.go", "openfiles.go"},
-	"internal/mcp":        {"clients.go", "handlers.go", "install.go", "launch.go", "server.go", "session.go", "tools.go", "types.go"},
-	"internal/migrate":    {"migrate.go"},
-	"internal/quota":      {"billing.go", "codex.go", "quota.go", "source.go"},
-	"internal/repo":       {"cochange.go", "compare.go", "discover.go", "impact.go", "repo.go", "review.go", "workspace.go", "worktree.go", "worktree_deliver.go", "worktree_diff.go"},
+	"internal/board":     {"board.go", "files.go", "filetext.go", "health.go", "log.go", "refresh.go", "supervisor.go"},
+	"internal/export":    {"export.go"},
+	"internal/flow":      {"draft.go", "flow.go", "load.go", "loop.go", "resolve.go", "save.go"},
+	"internal/knowledge": {"fact.go", "scope.go", "store.go"},
+	"internal/logger":    {"logger.go", "openfiles.go"},
+	"internal/mcp":       {"clients.go", "handlers.go", "install.go", "launch.go", "server.go", "session.go", "tools.go", "types.go"},
+	"internal/migrate":   {"migrate.go"},
+	"internal/quota":     {"billing.go", "codex.go", "quota.go", "source.go"},
+	"internal/repo":      {"cochange.go", "compare.go", "discover.go", "impact.go", "repo.go", "review.go", "workspace.go", "worktree.go", "worktree_deliver.go", "worktree_diff.go"},
+	// One door: the server and the two ports it is built with. answer.go
+	// holds the shapes it writes and page.go the page it serves, and
+	// neither exports anything.
+	"internal/web":        {"web.go"},
 	"internal/supervisor": {"conversation.go", "happened.go", "supervise.go", "thread.go"},
 	"internal/tracker":    {"linear.go", "provider.go", "providers.go", "read.go", "tracker.go"},
 	"internal/words":      {"load.go", "locale.go", "words.go"},

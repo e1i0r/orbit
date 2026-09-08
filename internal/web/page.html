@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>orbit</title>
+<style>
+/* Primitives: the only place a hex lives. Orbit's own palette, the same
+   values internal/ui/theme draws the cockpit in. */
+:root {
+  --base:    #0B1016;
+  --raised:  #131A23;
+  --sunken:  #080C11;
+  --line:    #1E2A38;
+  --text:    #E2E8F0;
+  --muted:   #94A3B8;
+  --dim:     #64748B;
+  --accent:  #38BDF8;
+  --ok:      #16B798;
+  --bad:     #EF4444;
+  --warn:    #F59E0B;
+  --live:    #2DD4BF;
+
+  /* Semantics: what a colour is for. Only these are used below. */
+  --surface-page:   var(--base);
+  --surface-raised: var(--raised);
+  --surface-well:   var(--sunken);
+  --border:         var(--line);
+  --text-primary:   var(--text);
+  --text-secondary: var(--muted);
+  --text-tertiary:  var(--dim);
+  --added:          var(--ok);
+  --removed:        var(--bad);
+  --hunk:           var(--accent);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  height: 100vh;
+}
+
+aside {
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  background: var(--surface-raised);
+}
+
+header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.band {
+  padding: 10px 16px 4px;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.task {
+  padding: 8px 16px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+}
+
+.task:hover { background: var(--surface-well); }
+.task[aria-selected="true"] { border-left-color: var(--accent); background: var(--surface-well); }
+.task .id { color: var(--text-secondary); font-family: ui-monospace, monospace; font-size: 12px; }
+.task .title { display: block; }
+
+main { overflow-y: auto; padding: 0 0 40px; }
+
+main h1 {
+  font-size: 16px;
+  margin: 0;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+}
+
+main h1 small { color: var(--text-secondary); font-weight: 400; margin-left: 10px; }
+
+pre.diff {
+  margin: 0;
+  padding: 16px 20px;
+  font: 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.diff .add  { color: var(--added); }
+.diff .del  { color: var(--removed); }
+.diff .hunk { color: var(--hunk); }
+.diff .meta { color: var(--text-tertiary); }
+
+.said { padding: 20px; color: var(--text-secondary); }
+</style>
+</head>
+<body>
+<aside>
+  <header>◉ orbit</header>
+  <div id="rows"></div>
+</aside>
+<main>
+  <h1 id="which">pick a task</h1>
+  <div id="body" class="said">the diff of whatever you pick lands here</div>
+</main>
+<script>
+const bands = ["needs_you", "running", "todo", "done"];
+const named = {needs_you: "needs you", running: "running", todo: "to do", done: "done"};
+let chosen = null;
+
+async function ask(path) {
+  const res = await fetch(path);
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || res.statusText);
+  return body;
+}
+
+function draw(board) {
+  const rows = document.getElementById("rows");
+  rows.textContent = "";
+
+  for (const band of bands) {
+    const inIt = board.tasks.filter(t => t.band === band);
+    if (inIt.length === 0) continue;
+
+    const head = document.createElement("div");
+    head.className = "band";
+    head.textContent = named[band] + " (" + inIt.length + ")";
+    rows.append(head);
+
+    for (const t of inIt) {
+      const row = document.createElement("div");
+      row.className = "task";
+      row.setAttribute("aria-selected", String(t.id === chosen));
+      row.innerHTML = '<span class="id"></span><span class="title"></span>';
+      row.querySelector(".id").textContent = t.id;
+      row.querySelector(".title").textContent = t.title || "";
+      row.onclick = () => open(t);
+      rows.append(row);
+    }
+  }
+}
+
+// The lines git writes about a file rather than about its contents. They are
+// furniture: what a reader came for is the + and the - under them.
+const header = [
+  "diff ", "index ", "new file mode", "deleted file mode", "old mode", "new mode",
+  "similarity index", "rename from", "rename to", "copy from", "copy to",
+  "Binary files", "\\ No newline",
+];
+
+function paint(text) {
+  const out = document.createElement("pre");
+  out.className = "diff";
+
+  for (const line of text.split("\n")) {
+    const row = document.createElement("span");
+    if (line.startsWith("+++") || line.startsWith("---")) row.className = "meta";
+    else if (line.startsWith("@@")) row.className = "hunk";
+    else if (line.startsWith("+")) row.className = "add";
+    else if (line.startsWith("-")) row.className = "del";
+    else if (header.some(w => line.startsWith(w))) row.className = "meta";
+    row.textContent = line + "\n";
+    out.append(row);
+  }
+
+  return out;
+}
+
+async function open(t) {
+  chosen = t.id;
+  document.getElementById("which").innerHTML =
+    '<span></span><small></small>';
+  document.getElementById("which").querySelector("span").textContent = t.id;
+  document.getElementById("which").querySelector("small").textContent = t.title || "";
+
+  const body = document.getElementById("body");
+  body.className = "said";
+  body.textContent = "reading the worktree…";
+
+  try {
+    const diff = await ask("/api/tasks/" + encodeURIComponent(t.id) + "/diff");
+    if (diff.missing) { body.textContent = "this task has no checkout to look at"; return; }
+    if (diff.failed)  { body.textContent = diff.failed; return; }
+    if (diff.empty)   { body.textContent = "nothing changed in this task's worktree"; return; }
+    body.className = "";
+    body.textContent = "";
+    body.append(paint(diff.text));
+  } catch (err) {
+    body.textContent = String(err.message || err);
+  }
+
+  await refresh();
+}
+
+async function refresh() {
+  try { draw(await ask("/api/board")); } catch (err) {
+    document.getElementById("rows").textContent = String(err.message || err);
+  }
+}
+
+refresh();
+setInterval(refresh, 3000);
+</script>
+</body>
+</html>

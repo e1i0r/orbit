@@ -94,6 +94,47 @@ func (r Repo) WorktreeChanges(wtDir string) ([]Change, error) {
 	return numstat(out), nil
 }
 
+// WorktreeDiff is what the task changed, as git writes it.
+//
+// The text and not the counts: a reader looking at the change wants the
+// hunks. WorktreeChanges answers the same question in numbers, for the gates
+// that only need a size.
+//
+// Against the branch the worktree was cut from, and the working tree alone
+// when there is none — the same rule the counts follow, for the same reason:
+// a worktree cut before its base existed still has changes worth reading.
+//
+// internal/ui has its own copy of this shaped for a window that redraws
+// every half second, with a pending state and a deadline of its own. The two
+// should end up as one; this one exists because a reader outside the
+// terminal needs the same answer and may not reach into internal/ui.
+func (r Repo) WorktreeDiff(wtDir string) (string, error) {
+	// Untracked files are marked intent-to-add so the diff mentions them. A
+	// file the agent wrote and never staged is the most interesting file
+	// there is, and it is invisible to git diff without this.
+	if _, err := git(wtDir, "add", "-N", "--ignore-errors", "."); err != nil {
+		_ = err //nolint:wsl // a worktree with nothing to add answers non-zero on some versions
+	}
+
+	base := r.against(wtDir)
+
+	out, err := git(wtDir, append([]string{"diff"}, base...)...)
+	if err == nil {
+		return out, nil
+	}
+
+	if len(base) > 0 {
+		return "", fmt.Errorf("read what %q changed: %w", wtDir, err)
+	}
+
+	out, err = git(wtDir, "diff")
+	if err != nil {
+		return "", fmt.Errorf("read what %q changed: %w", wtDir, err)
+	}
+
+	return out, nil
+}
+
 // WorktreeAddedLines is every line the task added to one file, without the
 // leading plus.
 //
