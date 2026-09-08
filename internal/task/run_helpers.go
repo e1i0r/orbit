@@ -20,11 +20,26 @@ const maxOutput = 1 << 20
 // silent loss is not. The second return is the size of what was said, zero
 // when nothing was cut.
 func captured(out string) (text string, full int) {
-	if len(out) <= maxOutput {
+	return cut(out, maxOutput)
+}
+
+// maxFed is how much of a phase's answer the next phase is handed.
+//
+// Smaller than maxOutput, and for a different reason: what the record keeps
+// is bounded so a log stays readable, and what goes into a prompt is bounded
+// because the prompt goes on a command line. Linux refuses a single argument
+// over 128 KiB, so a phase fed a megabyte of the phase before it did not run
+// at all — the next engine died at exec, with nothing in the record saying
+// why. 64 KiB leaves the rest of the prompt room under that ceiling.
+const maxFed = 64 << 10
+
+// cut is out, shortened to a limit, with a line saying how much there was.
+func cut(out string, limit int) (text string, full int) {
+	if len(out) <= limit {
 		return out, 0
 	}
 
-	n := maxOutput
+	n := limit
 	// Never cut a rune in half: the record is UTF-8, and a severed tail
 	// would come back from the log as a replacement character.
 	for n > 0 && !utf8.RuneStart(out[n]) {
@@ -62,7 +77,9 @@ func fedOutput(p flow.Phase, prev string) string {
 		return ""
 	}
 
-	return prev
+	fed, _ := cut(prev, maxFed)
+
+	return fed
 }
 
 // prompt is what the engine is told for one phase: the task, the phase it is
@@ -78,15 +95,6 @@ func fedOutput(p flow.Phase, prev string) string {
 // a prompt that asks in one shape for another is asking twice.
 func prompt(t Task, p flow.Phase, knows []knowledge.Fact, notes []string, prevOutput string, others []string, tried ...gateRefusal) string {
 	return build(t, p, false, knows, notes, nil, prevOutput, others, tried...)
-}
-
-// promptFor is prompt for a phase whose place in the flow is known, which is
-// the one thing that decides whether it is asked for the story: the last
-// phase is the only one that can tell how the task ended.
-func promptFor(t Task, f flow.Flow, n int, knows []knowledge.Fact, notes, reviews []string, prevOutput string, others []string, tried ...gateRefusal) string {
-	p := f.Phases[n-1]
-
-	return build(t, p, n == len(f.Phases), knows, notes, reviews, prevOutput, others, tried...)
 }
 
 func build(t Task, p flow.Phase, last bool, knows []knowledge.Fact, notes, reviews []string, prevOutput string, others []string, tried ...gateRefusal) string {

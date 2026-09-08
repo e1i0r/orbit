@@ -32,43 +32,101 @@ import (
 // the end. A reader watching a loop go round wants to know it is going
 // round; a count that only exists once it stops is a count for the post
 // mortem.
-func runLoop(ctx context.Context, s *store.Store, t Task, f flow.Flow, p flow.Phase, wt string, engines map[string]engine.Engine, others []string) error {
-	l := p.Loop
-
-	var tried []gateRefusal
+func runLoop(ctx context.Context, r loopRun) (engine.Result, error) {
+	var (
+		l     = r.phase.Loop
+		s, t  = r.store, r.task
+		p     = r.phase
+		out   engine.Result
+		tried []gateRefusal
+	)
 
 	for turn := 1; ; turn++ {
-		for i, inner := range l.Phases {
-			out, err := attempts(ctx, phaseRun{
-				store: s, task: t, flow: f, phase: inner, eng: engines[inner.Engine],
-				n: i + 1, wt: wt, others: others, tried: tried,
-			}, f.AttemptCap())
-			if err != nil {
-				return err
-			}
-
-			_ = out //nolint:wsl // the loop's checks are what judge the work, not what a phase printed
+		// The reader is asked between turns as they are asked between
+		// phases. A loop that went round twenty times without asking left
+		// pause, cancel and skip unanswered for as long as it ran, which is
+		// the one stretch of a run somebody is most likely to want to stop.
+		decision, gateErr := ask(ctx, r.gate, t, p, turn)
+		if gateErr != nil {
+			return out, failed(s, t, fmt.Errorf("task %s, before turn %d of %q: %w", t.ID, turn, p.Name, gateErr))
 		}
 
-		refused, err := runGates(ctx, s, t, checkPhase(p), turn, wt, engine.Result{})
+		switch decision {
+		case Stop:
+			return out, gateStop(s, t, p.Name, ctx.Err())
+		case Skip:
+			// Skipping a loop is leaving it. Half a turn is not a shape the
+			// record can describe, so the block ends here and the flow goes
+			// on to the phase after it.
+			return out, nil
+		}
+
+		// Asked every turn and not only where the flow's phases meet: a
+		// twenty-turn loop is where the money goes, and a cap checked only
+		// on the way in is a cap a loop walks straight past.
+		if spent, budget, over := overBudget(s, t); over {
+			return out, stopSpending(s, t, p, spent, budget)
+		}
+
+		for i, inner := range l.Phases {
+			one := phaseRun{
+				store: s, task: t, phase: inner, eng: r.engines[inner.Engine],
+				n: i + 1, wt: r.wt, others: r.others, tried: tried,
+			}
+
+			// What a person said goes to the first phase of the first turn
+			// and nowhere else. It was taken before the loop began, and the
+			// phase.started every inner phase emits is what marks it
+			// consumed — so a loop that never took it swallowed it, and the
+			// phase after the loop was told nothing either.
+			if turn == 1 && i == 0 {
+				one.notes, one.reviews = r.notes, r.reviews
+			}
+
+			var err error
+
+			out, err = attempts(ctx, one, r.flow.AttemptCap())
+			if err != nil {
+				return out, err
+			}
+		}
+
+		refused, err := runGates(ctx, s, t, checkPhase(p), turn, r.wt, engine.Result{})
 		if err != nil {
-			return err
+			return out, err
 		}
 
 		if err := checked(s, t, p, turn, l.Max, refused); err != nil {
-			return failed(s, t, err)
+			return out, failed(s, t, err)
 		}
 
 		if refused == nil {
-			return nil
+			return out, nil
 		}
 
 		if turn >= l.Max {
-			return stopLooping(s, t, p, append(tried, *refused))
+			return out, stopLooping(s, t, p, append(tried, *refused))
 		}
 
 		tried = append(tried, *refused)
 	}
+}
+
+// loopRun is one loop and everything it needs to go round.
+//
+// A struct rather than eleven parameters, for the reason phaseRun is one: a
+// call nobody can read is where the arguments start swapping places.
+type loopRun struct {
+	store   *store.Store
+	task    Task
+	flow    flow.Flow
+	phase   flow.Phase
+	wt      string
+	engines map[string]engine.Engine
+	others  []string
+	notes   []string
+	reviews []string
+	gate    Gate
 }
 
 // checkPhase is the loop's checks as a phase for runGates to run.

@@ -76,13 +76,14 @@ func refusals(tried []gateRefusal) string {
 type phaseRun struct {
 	store *store.Store
 	task  Task
-	// flow and n place the phase in its own flow, which is what says
-	// whether it is the last one — and the last one is the only phase that
-	// can tell how the task ended.
-	flow  flow.Flow
 	phase flow.Phase
 	eng   engine.Engine
-	n     int      // which phase of the flow this is
+	n     int // which phase of the flow this is
+	// last says whether this is the flow's last phase, which is what
+	// decides whether it is asked for the story: the last phase is the
+	// only one that can tell how the task ended. A phase inside a loop is
+	// never it, whatever its number within the loop.
+	last  bool
 	wt    string   // the worktree it runs in
 	notes []string // what the operator has said since the last phase
 	// reviews is what people said on the pull request and no phase has

@@ -65,12 +65,12 @@ func TestTheLastPhaseIsAskedForTheStory(t *testing.T) {
 		{Name: "2-implement", Engine: "fake"},
 	}}
 
-	last := promptFor(tk, f, 2, nil, nil, nil, "", nil)
+	last := build(tk, f.Phases[1], true, nil, nil, nil, "", nil)
 	if !strings.Contains(last, "## Story") {
 		t.Errorf("the last phase is not asked for the story:\n%s", last)
 	}
 
-	first := promptFor(tk, f, 1, nil, nil, nil, "", nil)
+	first := build(tk, f.Phases[0], false, nil, nil, nil, "", nil)
 	if strings.Contains(first, "## Story") {
 		t.Errorf("a phase in the middle is asked for the story anyway:\n%s", first)
 	}
@@ -109,5 +109,26 @@ func TestAFinishedTaskCarriesItsStory(t *testing.T) {
 
 	if story.Data["entry"] != "POST /items" || story.Data["cause"] != "the primary key collided" {
 		t.Errorf("the story carries %v, want the five fields the phase wrote", story.Data)
+	}
+}
+
+// TestWhatIsFedForwardIsBounded. The prompt goes on a command line, and
+// Linux refuses a single argument over 128 KiB: a phase handed a megabyte of
+// the phase before it died at exec with nothing in the record saying why.
+func TestWhatIsFedForwardIsBounded(t *testing.T) {
+	p := flow.Phase{Name: "2-implement", Engine: "fake", FeedOutput: true}
+
+	fed := fedOutput(p, strings.Repeat("x", maxFed*3))
+	if len(fed) > maxFed+200 {
+		t.Errorf("a phase is fed %d bytes, want it cut to about %d", len(fed), maxFed)
+	}
+
+	if !strings.Contains(fed, "truncated") {
+		t.Error("the cut is not admitted in what the phase is handed")
+	}
+
+	short := strings.Repeat("y", 100)
+	if got := fedOutput(p, short); got != short {
+		t.Error("an answer under the limit was changed on its way forward")
 	}
 }

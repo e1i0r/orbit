@@ -88,7 +88,11 @@ func inFlight(events []record.Event) bool {
 		case record.TaskFinished, record.TaskFailed, record.TaskCancelled,
 			record.TaskTimedOut, record.TaskAbandoned, record.TaskStuck,
 			record.TaskOverBudget, record.TaskOverDiff, record.TaskNewDependency,
-			record.TaskContradicts:
+			record.TaskContradicts,
+			// sendBack writes this one and the run returns behind it, so a
+			// requeued task is not a run still in flight. internal/db's
+			// closesRun reads the same list.
+			record.TaskRequeued:
 			open = false
 		}
 	}
