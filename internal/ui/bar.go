@@ -127,7 +127,19 @@ func (m Model) barLayout(w int) (string, []placedHint, []headerZone) {
 	// The three keys that are always there, in the corner they have always
 	// been in: the menu of everything the thing under the cursor can be
 	// asked, the cheat sheet, and the way out.
-	tail := theme.Chrome().Render("[" + m.keys.Menu.Help().Key + "] [" + m.keys.Help.Help().Key + "] [" + m.keys.Quit.Help().Key + "]")
+	//
+	// Hints of their own rather than one string, so that a click on them is
+	// answered. Drawn and not placed, they were three keys the bar promises
+	// and only the keyboard could reach — which is the one thing the window
+	// says it never does. The way out keeps no key of its own: a window that
+	// closed on a stray click in the corner is a window that lost whatever
+	// the reader was reading, and the q it draws is the way to mean it.
+	tailHints := []barHint{
+		{key: m.keys.Menu.Help().Key, text: theme.Chrome().Render("[" + m.keys.Menu.Help().Key + "]")},
+		{key: m.keys.Help.Help().Key, text: theme.Chrome().Render("[" + m.keys.Help.Help().Key + "]")},
+		{text: theme.Chrome().Render("[" + m.keys.Quit.Help().Key + "]")},
+	}
+	tail := strings.Join(drawn(tailHints), " ")
 	chips := m.barFooterChips()
 	chipsText := chipLine(chips)
 	chipsW := lipgloss.Width(chipsText)
@@ -141,14 +153,14 @@ func (m Model) barLayout(w int) (string, []placedHint, []headerZone) {
 			space := w - leftW - chipsW
 
 			return leftStr + strings.Repeat(" ", space) + chipsText,
-				place(hints), placeChips(chips, leftW+space)
+				place(hints, tailHints), placeChips(chips, leftW+space)
 		}
 
 		if len(hints) == 0 {
 			// No room for the chips, so they are not drawn and nothing at
 			// that end of the bar is clickable.
 			if leftW <= w {
-				return cells.Fit(leftStr, w), place(hints), nil
+				return cells.Fit(leftStr, w), place(hints, tailHints), nil
 			}
 
 			return cells.Fit(leftStr, w), nil, nil
@@ -170,14 +182,24 @@ func drawn(hints []barHint) []string {
 
 // place walks the hints the way the line was joined and says where each one
 // starts, measuring in cells.
-func place(hints []barHint) []placedHint {
-	out := make([]placedHint, 0, len(hints))
+func place(hints, tail []barHint) []placedHint {
+	out := make([]placedHint, 0, len(hints)+len(tail))
 	x := 1
 
 	for _, h := range hints {
 		cells := lipgloss.Width(h.text)
 		out = append(out, placedHint{key: h.key, x: x, w: cells})
 		x += cells + lipgloss.Width(hintGap)
+	}
+
+	// The three in the corner are joined to each other by one space and to
+	// the hints before them by hintGap, which is what barLayout draws — a
+	// zone stepped along by the wrong gap is a zone over the key beside the
+	// one it names, and that is the whole failure this is here to avoid.
+	for _, h := range tail {
+		cells := lipgloss.Width(h.text)
+		out = append(out, placedHint{key: h.key, x: x, w: cells})
+		x += cells + 1
 	}
 
 	return out
