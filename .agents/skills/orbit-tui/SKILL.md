@@ -50,6 +50,12 @@ read it before opening files.
 5. **Mouse and keyboard both reach everything.** Targets are registered as
    `Target{Kind, ID, Pane, Field}` and routed in `mouseroute.go`; a screen that can
    only be driven by one of the two is unfinished.
+6. **No hex outside the theme.** A colour is named in `internal/ui/theme` — paper and
+   text in `tokens.go`, pills and box lines in `badge.go` — and a screen asks for the
+   job: `theme.PillSave`, not `"#14532D"`. `TestColoursLiveInTheTheme` fails on a hex
+   written anywhere else. A colour spelled at the call site is one no theme can
+   reach: the window went from frauddi to dracula around a Save button that stayed
+   the same green.
 
 ## The task view
 
@@ -65,3 +71,8 @@ opened the menu to understand.
 
 `frauddi` is the default. The palette is process-wide state, which is the one global
 in the drawing path and is written down as such in `CONTRIBUTING.md`.
+
+Every hex the window draws lives in this package. `tokens.go` holds the paper and the
+three weights of text, per theme; `badge.go` holds the pills and the line around a
+box the reader types into, one value each. A new colour is a name here and a call
+site that asks for it — never a literal in the screen.

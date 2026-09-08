@@ -27,6 +27,7 @@ To read further: [Practical Go](https://dave.cheney.net/practical-go).
 | Imports follow the layer map | `TestImportsFollowTheLayers` |
 | Every translation key is used and honest | `TestEveryTranslationKeyIsHonest` |
 | The window measures cells, not bytes | `TestUIMeasuresCellsNotBytes` |
+| Colours are named in `internal/ui/theme` | `TestColoursLiveInTheTheme` |
 | Coverage at or above 90%, or the build fails | `make coverage` |
 
 ## What a change brings with it
