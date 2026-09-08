@@ -40,7 +40,7 @@ func runMCP(ctx Context, args []string) error {
 	}
 
 	if *install || fs.Arg(0) == "install" {
-		return installMCP(ctx)
+		return installMCP(ctx, *root)
 	}
 
 	if rest := fs.Arg(0); rest != "" {
@@ -87,8 +87,8 @@ func serveMCP(ctx Context, root string) error {
 // A client that could not be written is reported and does not stop the
 // others: somebody with Codex and no Claude Desktop should not have the
 // install fail over an application they have never had.
-func installMCP(ctx Context) error {
-	p := ctx.Words
+func installMCP(ctx Context, root string) error {
+	p := ctx.printer()
 
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -100,7 +100,7 @@ func installMCP(ctx Context) error {
 
 	failed := 0
 
-	for _, res := range mcp.Install("", home) {
+	for _, res := range mcp.Install("", home, root) {
 		if res.Err != nil {
 			failed++
 

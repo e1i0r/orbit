@@ -46,11 +46,16 @@ func (s State) learn(line spoken.Line, e Env) (State, Out) {
 	}
 
 	s, out := s.remember(line, stops, e)
+
+	// Synced whether or not the journal had something to say. e.Learn has
+	// already written the fact down by here, and returning early on a
+	// record that would not take the line left the rule stored and missing
+	// from the column that lists what Orbit knows.
+	s = s.Sync(e)
+
 	if out.Said != "" {
 		return s, out
 	}
-
-	s = s.Sync(e)
 
 	if stops {
 		return s, said(p.T("supervisor.learned_rule",

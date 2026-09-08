@@ -271,7 +271,7 @@ func whyNotTake(t view.Task, s Conditions) words.Arg {
 // whyNotHand answers for handing the keyboard back, and it asks the one
 // question the previous plan could not: did this reader take it.
 //
-// Until Conditions carried Taken, h was offered on any Parked run — including
+// Until Conditions carried Taken, h was offered on any parked run — including
 // one that was merely paused, where "hand the keyboard back" names a keyboard
 // nobody had.
 //

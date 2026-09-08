@@ -1,7 +1,7 @@
 package flows
 
 // The designer's third tab: say what the flow should do, and let an engine
-// Write the first draft of it.
+// write the first draft of it.
 //
 // What comes back is never saved. It lands in the same fields the other two
 // tabs edit, and the reader looks at it, changes what is wrong and presses

@@ -84,7 +84,7 @@ type Out struct {
 	Leave bool
 	Back  From
 	// Chose is the flow the reader picked, for the form that sent them here
-	// to Write into itself.
+	// to write into itself.
 	Chose string
 	// Waiting is a question that has gone out to an engine: the window
 	// starts the frame clock, because the spinner is the window's and two

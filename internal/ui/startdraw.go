@@ -21,7 +21,7 @@ import (
 )
 
 // startIndent is the three cells every line of the dialog is inset by, which
-// is the cells.Gutter the board draws its cursor in. The two screens line up
+// is the gutter the board draws its cursor in. The two screens line up
 // because one replaces the other in the same region.
 const startIndent = "   "
 

@@ -52,7 +52,7 @@ func approveTask(ctx Context, args []string) error {
 
 	pending := task.Pending(s, t, f)
 	if len(pending) == 0 {
-		fmt.Fprintln(ctx.Out, ctx.Words.T("approve.nothing", "{id} has added no dependency waiting on you",
+		fmt.Fprintln(ctx.Out, ctx.printer().T("approve.nothing", "{id} has added no dependency waiting on you",
 			words.Arg{Name: "id", Value: t.ID}))
 
 		return nil
@@ -62,7 +62,7 @@ func approveTask(ctx Context, args []string) error {
 		return fmt.Errorf("approve the dependencies of task %q: %w", id, err)
 	}
 
-	fmt.Fprintln(ctx.Out, ctx.Words.T("approve.done", "approved for {id}: {names}",
+	fmt.Fprintln(ctx.Out, ctx.printer().T("approve.done", "approved for {id}: {names}",
 		words.Arg{Name: "id", Value: t.ID},
 		words.Arg{Name: "names", Value: strings.Join(pending, ", ")}))
 

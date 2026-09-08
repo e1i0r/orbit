@@ -43,7 +43,7 @@ type builderLine struct {
 	// head is the label row of a field drawn over several rows, as opposed
 	// to the box under it. It is what tells a click on the instructions
 	// label from a click inside the instructions: the pills that paste,
-	// Write and clear a prompt sit on the label row alone.
+	// write and clear a prompt sit on the label row alone.
 	head bool
 }
 

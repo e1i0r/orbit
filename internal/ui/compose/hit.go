@@ -36,7 +36,7 @@ func (s State) hitComposeFlowPills(x int, field int, e Env) point.Target {
 		curX += pillWidth + 1
 	}
 
-	newBtn := theme.Pill(" ➕ "+p.T("compose.new_flow_btn", "New")+" ", "#FFFFFF", "#6366F1")
+	newBtn := theme.Pill(" ➕ "+p.T("compose.new_flow_btn", "New")+" ", theme.PillInk, theme.PillCreate)
 
 	newWidth := lipgloss.Width(newBtn)
 	if x >= curX && x < curX+newWidth {

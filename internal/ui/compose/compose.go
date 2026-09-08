@@ -176,6 +176,13 @@ func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
 		if s.isComposeFlowField() {
 			return s, Out{Flow: s.chosenFlow()}
 		}
+	// The form routes every keystroke here, so nothing else answers A while
+	// it is open: the view says "[A to toggle]" under the switch, and the
+	// key did nothing at all.
+	case msg.Text == "a" || msg.Text == "A" || key.Matches(msg, e.Keys.Autopilot):
+		if s.isPillField() {
+			return s, Out{Autopilot: true}
+		}
 	// The arrows themselves always move, and the letters bound alongside
 	// them only where nothing is being typed into. Up carries k and Down
 	// carries j, so a form that matched the binding everywhere could not be
@@ -298,7 +305,11 @@ type Out struct {
 	// Waiting is a question that has gone out to a tracker: the window
 	// starts the frame clock, because the spinner is the window's.
 	Waiting bool
-	Cmd     tea.Cmd
+	// Autopilot is the reader asking for the standing switch to be flipped.
+	// The form draws its state and cannot change it — the setting is the
+	// window's — so it says so and the window does it.
+	Autopilot bool
+	Cmd       tea.Cmd
 }
 
 // New is what Flow says when the reader asked for a flow that does not exist

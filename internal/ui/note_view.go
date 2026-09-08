@@ -44,7 +44,7 @@ func (m Model) noteRows(h, w int) []string {
 		contentLines = append(contentLines, "")
 	}
 
-	borderStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#38BDF8"))
+	borderStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(theme.BoxLineActive))
 	headerBorder := "┌─ " + theme.Paint(theme.Accent).Bold(true).Render(title) + " "
 
 	remWidth := boxW - lipgloss.Width(headerBorder) - 1

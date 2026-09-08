@@ -103,11 +103,18 @@ func top(ctx Context, args []string) error {
 // the window is given.
 func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 	// The reader's language, before the store this check stands in front of
-	// is open. Run has already weighed $ORBIT_LANG and the saved setting
-	// into the Context's printer, and the flag beats both.
+	// is open. The Context's printer is the saved setting and nothing else
+	// (cli.go says so), so the flag and then $ORBIT_LANG are weighed here on
+	// top of it — the same order the window below is given. Left to the
+	// printer alone, `orbit top /nowhere` refused in English in front of a
+	// window that would have drawn in Spanish.
 	p := ctx.printer()
-	if lang != "" {
+
+	switch env := os.Getenv("ORBIT_LANG"); {
+	case lang != "":
 		p = words.For(words.Resolve(lang, "", ""))
+	case env != "":
+		p = words.For(words.Resolve(env, "", ""))
 	}
 
 	if err := mustBeDirectory(p, dir); err != nil {

@@ -44,7 +44,7 @@ func upgrade(ctx Context, args []string) error {
 		return err
 	}
 
-	p := ctx.Words
+	p := ctx.printer()
 	fmt.Fprintf(ctx.Out, "%s\n", p.T("upgrade.checking", "checking for updates..."))
 
 	reqCtx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -58,7 +58,11 @@ func upgrade(ctx Context, args []string) error {
 	latestVer := strings.TrimPrefix(rel.TagName, "v")
 	curVer := strings.TrimPrefix(Version, "v")
 
-	if !*force && curVer != "dev" && curVer == latestVer {
+	// Not newer, rather than not equal. A build made from a checkout ahead
+	// of the published tag answered "different" to a string comparison and
+	// installed the older release over itself — a downgrade nobody asked
+	// for, on the machine most likely to be someone working on Orbit.
+	if !*force && curVer != "dev" && !newerThan(latestVer, curVer) {
 		fmt.Fprintf(ctx.Out, "%s\n", p.T("upgrade.already_latest",
 			"orbit is already on the latest version ({version})",
 			updateArg("version", rel.TagName)))
@@ -225,4 +229,57 @@ func goInstall(ctx context.Context, p *words.Printer) error {
 	}
 
 	return nil
+}
+
+// newerThan reports whether the released version is ahead of the one
+// running.
+//
+// Numbers where there are numbers, and a string comparison where there are
+// not: a tag this does not understand — a date, a name, a build with a
+// suffix — is answered by the old rule, that anything different is worth
+// installing. Being wrong there costs a reinstall of the same code; being
+// wrong the other way silently replaces a newer binary with an older one.
+func newerThan(released, running string) bool {
+	a, aok := versionParts(released)
+	b, bok := versionParts(running)
+
+	if !aok || !bok {
+		return released != running
+	}
+
+	for i := range a {
+		if a[i] != b[i] {
+			return a[i] > b[i]
+		}
+	}
+
+	return false
+}
+
+// versionParts reads major, minor and patch off a tag, and says whether it
+// was one.
+func versionParts(v string) ([3]int, bool) {
+	var out [3]int
+
+	// A pre-release or build suffix is not part of the ordering this can
+	// judge, so a tag carrying one is left to the caller's fallback.
+	if strings.ContainsAny(v, "-+") {
+		return out, false
+	}
+
+	parts := strings.Split(v, ".")
+	if len(parts) != 3 {
+		return out, false
+	}
+
+	for i, part := range parts {
+		n, err := strconv.Atoi(part)
+		if err != nil || n < 0 {
+			return out, false
+		}
+
+		out[i] = n
+	}
+
+	return out, true
 }

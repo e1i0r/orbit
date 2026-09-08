@@ -135,7 +135,7 @@ func (s State) flowsListLines(w int, e Env) []flowLine {
 
 	createBtn := "  " + theme.Paint(theme.Dim).Render(p.T("flows.create_btn_idle", "[+ Create Custom Flow] (press n)"))
 	if s.sel == -1 {
-		createBtn = "▸ " + theme.Pill(p.T("flows.create_btn", "+ Create Custom Flow"), "#FFFFFF", "#005F87") + "  " + theme.Paint(theme.Live).Render(p.T("flows.press_enter", "(press ⏎)"))
+		createBtn = "▸ " + theme.Pill(p.T("flows.create_btn", "+ Create Custom Flow"), theme.PillInk, theme.PillNew) + "  " + theme.Paint(theme.Live).Render(p.T("flows.press_enter", "(press ⏎)"))
 	}
 
 	plain := func(text string) flowLine { return flowLine{text: text, at: noFlow} }
@@ -175,11 +175,11 @@ func (s State) flowsListLines(w int, e Env) []flowLine {
 		}
 
 		if i == s.sel {
-			headerLine += "   " + theme.Pill("👁 "+p.T("flows.btn_view_details", "Details"), "#FFFFFF", "#0284C7")
+			headerLine += "   " + theme.Pill("👁 "+p.T("flows.btn_view_details", "Details"), theme.PillInk, theme.PillDetails)
 
-			headerLine += " " + theme.Pill("✏ "+p.T("flows.btn_edit", "Edit"), "#FFFFFF", "#0C4A6E")
+			headerLine += " " + theme.Pill("✏ "+p.T("flows.btn_edit", "Edit"), theme.PillInk, theme.PillEdit)
 			if d.Origin != flow.OriginBuiltin {
-				headerLine += " " + theme.Pill("🗑 "+p.T("flows.btn_delete", "Delete"), "#FFFFFF", "#7F1D1D")
+				headerLine += " " + theme.Pill("🗑 "+p.T("flows.btn_delete", "Delete"), theme.PillInk, theme.PillDelete)
 			}
 		}
 

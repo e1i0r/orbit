@@ -11,6 +11,7 @@ package cli
 // many there are.
 
 import (
+	"strings"
 	"time"
 
 	"github.com/e1i0r/orbit/internal/board"
@@ -53,12 +54,16 @@ func fileSessionPort(s *store.Store, r *board.Reader, engines map[string]engine.
 		// openJournal has already recorded that the terminal was handed
 		// over; filed as a turn it would read as the reader opening every
 		// session by reciting the task's own description at it.
-		opening := openContext(t)
+		//
+		// Recognised by its opening words rather than rebuilt whole: the
+		// rest of it names the band and the phase, and those move while the
+		// session is open.
+		opening := openHead(t)
 
 		filed := 0
 
 		for _, turn := range turns {
-			if turn.Text == opening {
+			if opening != "" && strings.HasPrefix(strings.TrimSpace(turn.Text), opening) {
 				continue
 			}
 
