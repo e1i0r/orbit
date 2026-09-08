@@ -96,6 +96,12 @@ var doors = map[string][]string{
 	"internal/cli": {
 		"cli.go", "commands.go", "critical.go", "engines.go", "set.go", "settings.go",
 		"top.go", "version.go",
+		// web_ports.go and web_verbs.go hold the methods that fill
+		// internal/web's ports — what the browser reads through, and what
+		// its buttons do. They are exported because a port only this
+		// package can implement is not a port, which is the same reason
+		// settings.go carries the window's.
+		"web_ports.go", "web_verbs.go",
 	},
 
 	// What a task is and what running one does. Twenty-one doors is a
@@ -141,11 +147,14 @@ var doors = map[string][]string{
 	"internal/mcp":       {"clients.go", "handlers.go", "install.go", "launch.go", "server.go", "session.go", "tools.go", "types.go"},
 	"internal/migrate":   {"migrate.go"},
 	"internal/quota":     {"billing.go", "codex.go", "quota.go", "source.go"},
-	"internal/repo":      {"cochange.go", "compare.go", "discover.go", "impact.go", "repo.go", "review.go", "workspace.go", "worktree.go", "worktree_deliver.go", "worktree_diff.go"},
-	// One door: the server and the two ports it is built with. answer.go
-	// holds the shapes it writes and page.go the page it serves, and
-	// neither exports anything.
-	"internal/web":        {"web.go"},
+	"internal/repo":      {"cochange.go", "compare.go", "discover.go", "impact.go", "repo.go", "review.go", "workspace.go", "worktree.go", "worktree_deliver.go", "worktree_diff.go", "worktree_file.go"},
+	// Two doors. web.go is the server and the ports built off the board;
+	// ports.go is the three the browser reads through that the board cannot
+	// answer — what Orbit knows, what has been said to the supervisor, and
+	// which engines this machine can run — with the shapes they speak in.
+	// answer.go, flow.go, impact.go, diff.go, screens.go and page.go are
+	// the routes and what they write, and none of them exports anything.
+	"internal/web":        {"web.go", "ports.go"},
 	"internal/supervisor": {"conversation.go", "happened.go", "supervise.go", "thread.go"},
 	"internal/tracker":    {"linear.go", "provider.go", "providers.go", "read.go", "tracker.go"},
 	"internal/words":      {"load.go", "locale.go", "words.go"},

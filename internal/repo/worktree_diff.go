@@ -108,7 +108,7 @@ func (r Repo) WorktreeChanges(wtDir string) ([]Change, error) {
 // every half second, with a pending state and a deadline of its own. The two
 // should end up as one; this one exists because a reader outside the
 // terminal needs the same answer and may not reach into internal/ui.
-func (r Repo) WorktreeDiff(wtDir string) (string, error) {
+func (r Repo) WorktreeDiff(wtDir string, how DiffOptions) (string, error) {
 	// Untracked files are marked intent-to-add so the diff mentions them. A
 	// file the agent wrote and never staged is the most interesting file
 	// there is, and it is invisible to git diff without this.
@@ -118,7 +118,9 @@ func (r Repo) WorktreeDiff(wtDir string) (string, error) {
 
 	base := r.against(wtDir)
 
-	out, err := git(wtDir, append([]string{"diff"}, base...)...)
+	args := append([]string{"diff"}, how.args()...)
+
+	out, err := git(wtDir, append(args, base...)...)
 	if err == nil {
 		return out, nil
 	}
@@ -127,12 +129,33 @@ func (r Repo) WorktreeDiff(wtDir string) (string, error) {
 		return "", fmt.Errorf("read what %q changed: %w", wtDir, err)
 	}
 
-	out, err = git(wtDir, "diff")
+	out, err = git(wtDir, args...)
 	if err != nil {
 		return "", fmt.Errorf("read what %q changed: %w", wtDir, err)
 	}
 
 	return out, nil
+}
+
+// DiffOptions is how a reader asked for the diff.
+//
+// The zero value is git's own default, which is what every caller before
+// this wanted: three lines of context, and whitespace counted.
+type DiffOptions struct {
+	// IgnoreWhitespace leaves out the lines that differ only in spacing. A
+	// reformatting run that touched two hundred files and changed nothing
+	// buries the one line somebody has to read, and this is the only way to
+	// see past it.
+	IgnoreWhitespace bool
+}
+
+// args is the options as git spells them.
+func (d DiffOptions) args() []string {
+	if d.IgnoreWhitespace {
+		return []string{"-w"}
+	}
+
+	return nil
 }
 
 // WorktreeAddedLines is every line the task added to one file, without the

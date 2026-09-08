@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/e1i0r/orbit/internal/board"
@@ -21,6 +22,7 @@ import (
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/web"
 	"github.com/e1i0r/orbit/internal/words"
+	"github.com/e1i0r/orbit/ui"
 )
 
 // webAddr is where the server listens when nobody says otherwise.
@@ -55,6 +57,14 @@ func serveWeb(ctx Context, args []string) error {
 		return err
 	}
 
+	// Resolved, because it is shown: a board headed "." tells the reader
+	// nothing about which tree they are looking at, and they may be looking
+	// at it from another machine.
+	dir, err = filepath.Abs(dir)
+	if err != nil {
+		return fmt.Errorf("%s: %w", p.T("web.resolve", "resolve the directory"), err)
+	}
+
 	s, err := store.Open()
 	if err != nil {
 		return err
@@ -65,7 +75,15 @@ func serveWeb(ctx Context, args []string) error {
 		return fmt.Errorf("%s: %w", p.T("web.rescan", "look for repositories"), err)
 	}
 
-	handler := web.New(r, r, dir).Handler()
+	files, err := ui.Files()
+	if err != nil {
+		return fmt.Errorf("%s: %w", p.T("web.built", "read the window built into orbit"), err)
+	}
+
+	ports := webPorts(r, s, newEngines(), dir)
+	ports.Files = files
+
+	handler := web.New(ports).Handler()
 
 	listener, err := net.Listen("tcp", *addr)
 	if err != nil {
@@ -73,8 +91,10 @@ func serveWeb(ctx Context, args []string) error {
 			words.Arg{Name: "addr", Value: *addr}), err)
 	}
 
-	fmt.Fprintf(ctx.Out, "%s\n", p.T("web.serving", "orbit is at http://{addr} — press ctrl-c to stop",
-		words.Arg{Name: "addr", Value: listener.Addr().String()}))
+	said := p.T("web.serving", "orbit is at http://{addr} — press ctrl-c to stop",
+		words.Arg{Name: "addr", Value: listener.Addr().String()})
+
+	fmt.Fprintf(ctx.Out, "%s\n", said)
 
 	logger.Info("cli/web", "orbit web started on %q over %q", listener.Addr().String(), dir)
 

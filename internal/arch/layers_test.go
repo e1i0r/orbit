@@ -61,7 +61,11 @@ var program = map[string][]string{
 	// JSON. It knows no store, no task and no engine — where a worktree
 	// lives arrives through a port its caller fills, the way the window is
 	// given one.
-	"internal/web": {"internal/board", "internal/repo", "internal/view"},
+	"internal/web": {"internal/board", "internal/flow", "internal/repo", "internal/view"},
+	// ui is the browser half, and the Go in it is one file: the built
+	// window, embedded. It imports nothing because there is nothing for it
+	// to import — what it carries is bytes.
+	"ui": {},
 	// The flow tests and the stand-in engine they put on PATH import nothing
 	// of Orbit's, and that is the whole of what makes them what they are:
 	// they reach the program the way a person does, by running the binary. A
@@ -70,7 +74,14 @@ var program = map[string][]string{
 	// able to ask the same question.
 	"test/integration":            {},
 	"test/integration/fakeengine": {},
-	"internal/cli":                {"internal/board", "internal/engine", "internal/export", "internal/flow", "internal/knowledge", "internal/logger", "internal/mcp", "internal/migrate", "internal/quota", "internal/repo", "internal/store", "internal/supervisor", "internal/task", "internal/tracker", "internal/ui", "internal/ui/roster", "internal/view", "internal/web", "internal/words"},
+	"internal/cli": {
+		"internal/board", "internal/engine", "internal/export", "internal/flow",
+		"internal/knowledge", "internal/logger", "internal/mcp", "internal/migrate",
+		"internal/quota", "internal/record", "internal/repo", "internal/store",
+		"internal/supervisor", "internal/task", "internal/tracker", "internal/ui",
+		"internal/ui/fact", "internal/ui/roster", "internal/view", "internal/web",
+		"internal/words", "ui",
+	},
 	// internal/logger is on internal/engine's list for the one thing this
 	// package does that nothing else in Orbit does: it starts somebody
 	// else's program. What that cost, how long it took and which of the

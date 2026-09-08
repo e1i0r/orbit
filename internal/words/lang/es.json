@@ -1569,6 +1569,14 @@
       "source": "it would serve the window you are in",
       "value": "serviría la misma ventana en la que estás"
     },
+    "web.resolve": {
+      "source": "resolve the directory",
+      "value": "resolver el directorio"
+    },
+    "web.built": {
+      "source": "read the window built into orbit",
+      "value": "leer la ventana que orbit trae dentro"
+    },
     "web.rescan": {
       "source": "look for repositories",
       "value": "buscar repositorios"

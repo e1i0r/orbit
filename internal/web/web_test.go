@@ -6,14 +6,20 @@ package web
 import (
 	"encoding/json"
 	"errors"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"testing/fstest"
 	"time"
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/view"
 )
+
+// built stands in for the window this binary carries: one file, so that the
+// page route can be asked what it does without a build having run.
+var built = fstest.MapFS{"index.html": {Data: []byte("<!doctype html><title>orbit</title>")}}
 
 // aBoard is a reader with the rows a test wants and nothing behind them.
 type aBoard struct {
@@ -64,6 +70,14 @@ func ask(t *testing.T, s *Server, path string) (int, map[string]any) {
 	return rec.Code, body
 }
 
+// server is the handler under test. The ports are named at one call rather
+// than at every one: what a test is about is the board behind the server,
+// and three interfaces in a row at nine call sites is nine chances to put
+// them in the wrong order.
+func server(b Reader, trees Worktrees, root string, files fs.FS) *Server {
+	return New(Ports{Board: b, Trees: trees, Root: root, Files: files})
+}
+
 // listIn is one list off an answer, and a failed test rather than an empty
 // slice when the field is not one.
 func listIn(t *testing.T, body map[string]any, field string) []any {
@@ -79,10 +93,10 @@ func listIn(t *testing.T, body map[string]any, field string) []any {
 
 // TestTheBoardIsAnsweredWithItsBandsAndRows.
 func TestTheBoardIsAnsweredWithItsBandsAndRows(t *testing.T) {
-	s := New(aBoard{tasks: []view.Task{
+	s := server(aBoard{tasks: []view.Task{
 		{ID: "LED-1", Title: "fix the total", Band: view.ToDo, Repo: "ledger"},
 		{ID: "LED-2", Title: "and the other one", Band: view.Done, Repo: "ledger"},
-	}}, nowhere{path: "/nowhere"}, "/code")
+	}}, nowhere{path: "/nowhere"}, "/code", built)
 
 	code, body := ask(t, s, "/api/board")
 	if code != http.StatusOK {
@@ -117,10 +131,10 @@ func TestTheBoardIsAnsweredWithItsBandsAndRows(t *testing.T) {
 
 // TestATaskCarriesItsRecord.
 func TestATaskCarriesItsRecord(t *testing.T) {
-	s := New(aBoard{
+	s := server(aBoard{
 		tasks:   []view.Task{{ID: "LED-1", Title: "fix the total", Band: view.Done}},
 		entries: []view.Entry{{Kind: "task.created", Text: "fix the total"}, {Kind: "task.finished"}},
-	}, nowhere{path: "/nowhere"}, "/code")
+	}, nowhere{path: "/nowhere"}, "/code", built)
 
 	code, body := ask(t, s, "/api/tasks/LED-1")
 	if code != http.StatusOK {
@@ -135,7 +149,7 @@ func TestATaskCarriesItsRecord(t *testing.T) {
 
 // TestATaskNobodyHasIsRefusedAndNotInvented.
 func TestATaskNobodyHasIsRefusedAndNotInvented(t *testing.T) {
-	s := New(aBoard{}, nowhere{path: "/nowhere"}, "/code")
+	s := server(aBoard{}, nowhere{path: "/nowhere"}, "/code", built)
 
 	code, body := ask(t, s, "/api/tasks/NOPE-1")
 	if code != http.StatusNotFound {
@@ -152,8 +166,8 @@ func TestATaskNobodyHasIsRefusedAndNotInvented(t *testing.T) {
 // The ordinary state of every row in To Do. Asked as a failure, git answers
 // with a chdir error about a path the reader never chose and cannot act on.
 func TestATaskWithNoCheckoutIsMissingRatherThanFailed(t *testing.T) {
-	s := New(aBoard{tasks: []view.Task{{ID: "LED-1", RepoPath: "/code/ledger", Band: view.ToDo}}},
-		nowhere{path: "/nowhere-at-all"}, "/code")
+	s := server(aBoard{tasks: []view.Task{{ID: "LED-1", RepoPath: "/code/ledger", Band: view.ToDo}}},
+		nowhere{path: "/nowhere-at-all"}, "/code", built)
 
 	code, body := ask(t, s, "/api/tasks/LED-1/diff")
 	if code != http.StatusOK {
@@ -171,7 +185,7 @@ func TestATaskWithNoCheckoutIsMissingRatherThanFailed(t *testing.T) {
 
 // TestATaskInNoRepositoryHasNothingToDiff.
 func TestATaskInNoRepositoryHasNothingToDiff(t *testing.T) {
-	s := New(aBoard{tasks: []view.Task{{ID: "LED-1", Band: view.ToDo}}}, nowhere{}, "/code")
+	s := server(aBoard{tasks: []view.Task{{ID: "LED-1", Band: view.ToDo}}}, nowhere{}, "/code", built)
 
 	code, body := ask(t, s, "/api/tasks/LED-1/diff")
 	if code != http.StatusOK || body["missing"] != true {
@@ -182,7 +196,7 @@ func TestATaskInNoRepositoryHasNothingToDiff(t *testing.T) {
 // TestABoardThatWillNotReadSaysSo, rather than answering an empty board —
 // which is a different picture and a true one.
 func TestABoardThatWillNotReadSaysSo(t *testing.T) {
-	s := New(aBoard{err: errors.New("the record is locked")}, nowhere{}, "/code")
+	s := server(aBoard{err: errors.New("the record is locked")}, nowhere{}, "/code", built)
 
 	code, body := ask(t, s, "/api/board")
 	if code != http.StatusInternalServerError {
@@ -194,25 +208,59 @@ func TestABoardThatWillNotReadSaysSo(t *testing.T) {
 	}
 }
 
-// TestThePageIsServedAtTheRootAndNowhereElse.
-func TestThePageIsServedAtTheRootAndNowhereElse(t *testing.T) {
-	s := New(aBoard{}, nowhere{}, "/code")
+// TestEveryPathThatIsNotAnAssetIsTheApp.
+//
+// A path the server does not recognise is not a mistake: it is a place in
+// the app, and index.html is what knows where. Answering 404 there would
+// break the back button and every link anybody pasted.
+func TestEveryPathThatIsNotAnAssetIsTheApp(t *testing.T) {
+	s := server(aBoard{}, nowhere{}, "/code", built)
+
+	for _, path := range []string{"/", "/task/LED-1", "/anything"} {
+		rec := httptest.NewRecorder()
+		s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
+
+		if rec.Code != http.StatusOK {
+			t.Errorf("%s answered %d, want the app", path, rec.Code)
+		}
+
+		if got := rec.Header().Get("Content-Type"); got != "text/html; charset=utf-8" {
+			t.Errorf("%s was served as %q", path, got)
+		}
+	}
+}
+
+// TestAnAssetIsServedAsItself, and not as the page — a stylesheet answered
+// with index.html is a page with no style and no error to explain it.
+func TestAnAssetIsServedAsItself(t *testing.T) {
+	files := fstest.MapFS{
+		"index.html":       {Data: []byte("<!doctype html>")},
+		"assets/orbit.css": {Data: []byte(":root{}")},
+	}
+
+	s := server(aBoard{}, nowhere{}, "/code", files)
+
+	rec := httptest.NewRecorder()
+	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/assets/orbit.css", nil))
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("the stylesheet answered %d", rec.Code)
+	}
+
+	if body := rec.Body.String(); body != ":root{}" {
+		t.Errorf("the stylesheet came back as %q", body)
+	}
+}
+
+// TestABinaryWithNoWindowSaysSo rather than answering an empty page: a
+// build that forgot the front end is a build, not a blank screen.
+func TestABinaryWithNoWindowSaysSo(t *testing.T) {
+	s := server(aBoard{}, nowhere{}, "/code", nil)
 
 	rec := httptest.NewRecorder()
 	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
 
-	if rec.Code != http.StatusOK {
-		t.Fatalf("the page answered %d", rec.Code)
-	}
-
-	if got := rec.Header().Get("Content-Type"); got != "text/html; charset=utf-8" {
-		t.Errorf("the page is served as %q", got)
-	}
-
-	other := httptest.NewRecorder()
-	s.Handler().ServeHTTP(other, httptest.NewRequest(http.MethodGet, "/nope", nil))
-
-	if other.Code != http.StatusNotFound {
-		t.Errorf("a path that is not the page answered %d", other.Code)
+	if rec.Code != http.StatusInternalServerError {
+		t.Errorf("a binary with no window answered %d", rec.Code)
 	}
 }
