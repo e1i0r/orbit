@@ -47,6 +47,7 @@ test:
 # nobody walked.
 integration:
 	$(GO) test -tags integration -count=1 ./test/integration/...
+	$(GO) test -tags integration -count=1 -run TestCockpit ./internal/cli/
 
 # coverage is a gate and not a report: it fails under the floor. A number
 # printed and ignored is a number that drifts, and the day somebody notices is

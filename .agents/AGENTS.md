@@ -44,7 +44,9 @@ Tests are not an afterthought and not one kind. Bring the ones that fit the chan
 4. **Integration** — where the seam is the subject: a whole flow, a command that
    opens the store and writes the record. `test/integration` walks the shipped
    flows against the real binary, a real git repository and a stand-in engine
-   on PATH; a new flow is a row there.
+   on PATH; a new flow is a row there. The six the landing shows that are about
+   the board are in `internal/cli`, named `TestCockpit…`, driving the window
+   `orbit top` builds with the keys the recordings press.
 5. **Mutation** — on the package you touched, before the pull request:
    `make mutate PKG=./internal/ui/settings/...`. A surviving mutant is a statement no
    test disagrees with. Kill it, or say why it does not matter.
