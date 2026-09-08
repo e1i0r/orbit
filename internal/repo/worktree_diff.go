@@ -4,6 +4,8 @@ package repo
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -169,17 +171,17 @@ func (r Repo) against(wtDir string) []string {
 // A worktree from before this was recorded falls back to r.Base, which is
 // what it was measured against for its whole life.
 func (r Repo) cutFrom(wtDir string) string {
-	branch, err := git(wtDir, "rev-parse", "--abbrev-ref", "HEAD")
+	gitDir, err := git(wtDir, "rev-parse", "--absolute-git-dir")
 	if err != nil {
 		return r.Base
 	}
 
-	base, err := git(wtDir, "config", "--get", baseKey(strings.TrimSpace(branch)))
-	if err != nil || strings.TrimSpace(base) == "" {
+	body, err := os.ReadFile(filepath.Join(strings.TrimSpace(gitDir), baseFile))
+	if err != nil || strings.TrimSpace(string(body)) == "" {
 		return r.Base
 	}
 
-	return strings.TrimSpace(base)
+	return strings.TrimSpace(string(body))
 }
 
 // numstat reads git's own three columns: added, deleted, path.

@@ -23,7 +23,6 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 	"unicode/utf8"
 )
@@ -189,9 +188,9 @@ func runCheck(dir, command string) Ran {
 	// running and holding the output pipe, so CombinedOutput waited past
 	// checkDeadline for ever — while the comment above promises the
 	// opposite. WaitDelay is the backstop for anything that escapes the
-	// group anyway.
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	cmd.Cancel = func() error { return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL) }
+	// group anyway, and the whole of it where there are no groups.
+	ownGroup(cmd)
+
 	cmd.WaitDelay = waitGrace
 
 	out, err := cmd.CombinedOutput()

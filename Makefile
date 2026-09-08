@@ -1,12 +1,12 @@
 export PATH := /usr/local/go/bin:$(HOME)/go/bin:$(PATH)
 GO ?= $(shell which go 2>/dev/null || echo /usr/local/go/bin/go)
 
-.PHONY: check fmt vet lint test coverage mutate fuzz tidy build install run site demo tapes posters
+.PHONY: check fmt vet lint test integration coverage mutate fuzz tidy build install run site demo tapes posters
 
 # check is what a contributor runs before pushing, so it has to be what CI
 # runs: lint used to be in CI and not here, which meant a green local check
 # and a red pull request over a rule the contributor never saw.
-check: fmt vet lint test tidy
+check: fmt vet lint test integration tidy
 
 fmt:
 	@test -z "$$($(GO) fmt ./...)" || { echo "gofmt made changes — commit them"; exit 1; }
@@ -35,6 +35,18 @@ lint:
 
 test:
 	$(GO) test ./...
+
+# integration walks the flows the landing shows, end to end: the real binary,
+# a real git repository with a real Go module in it, real gates, and a
+# stand-in engine on PATH under the name the flows ask for. Only the model is
+# faked, because a model is neither free nor the same twice.
+#
+# Behind a build tag so that `go test ./...` stays a second's work — these
+# build binaries and run git, and a contributor running the unit tests should
+# not pay for that. check calls this, so a release cannot go out on flows
+# nobody walked.
+integration:
+	$(GO) test -tags integration -count=1 ./test/integration/...
 
 # coverage is a gate and not a report: it fails under the floor. A number
 # printed and ignored is a number that drifts, and the day somebody notices is

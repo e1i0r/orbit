@@ -28,6 +28,7 @@ To read further: [Practical Go](https://dave.cheney.net/practical-go).
 | Every translation key is used and honest | `TestEveryTranslationKeyIsHonest` |
 | The window measures cells, not bytes | `TestUIMeasuresCellsNotBytes` |
 | Colours are named in `internal/ui/theme` | `TestColoursLiveInTheTheme` |
+| The flows the landing shows still walk | `make integration`, which `check` calls |
 | Coverage at or above 90%, or the build fails | `make coverage` |
 
 ## What a change brings with it
@@ -41,7 +42,9 @@ Tests are not an afterthought and not one kind. Bring the ones that fit the chan
 3. **Fuzzing** — where bytes arrive from outside: parsers, stream decoders, fitters.
    `make fuzz PKG=./internal/engine/... FOR=2m`, and commit the corpus it finds.
 4. **Integration** — where the seam is the subject: a whole flow, a command that
-   opens the store and writes the record.
+   opens the store and writes the record. `test/integration` walks the shipped
+   flows against the real binary, a real git repository and a stand-in engine
+   on PATH; a new flow is a row there.
 5. **Mutation** — on the package you touched, before the pull request:
    `make mutate PKG=./internal/ui/settings/...`. A surviving mutant is a statement no
    test disagrees with. Kill it, or say why it does not matter.

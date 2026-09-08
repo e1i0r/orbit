@@ -4,6 +4,8 @@ package repo
 // on now.
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -51,13 +53,13 @@ func TestTheBaseIsTheOneTheWorktreeWasCutFrom(t *testing.T) {
 func TestAWorktreeFromBeforeThisFallsBackToTheRepository(t *testing.T) {
 	r, wt := changed(t)
 
-	branch, err := git(wt, "rev-parse", "--abbrev-ref", "HEAD")
+	gitDir, err := git(wt, "rev-parse", "--absolute-git-dir")
 	if err != nil {
-		t.Fatalf("branch: %v", err)
+		t.Fatalf("git dir: %v", err)
 	}
 
-	if _, err := git(r.Path, "config", "--unset", baseKey(strings.TrimSpace(branch))); err != nil {
-		t.Fatalf("unset: %v", err)
+	if err := os.Remove(filepath.Join(strings.TrimSpace(gitDir), baseFile)); err != nil {
+		t.Fatalf("remove what was written down: %v", err)
 	}
 
 	if got := r.cutFrom(wt); got != r.Base {
