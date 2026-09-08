@@ -27,15 +27,20 @@ import (
 // choosing which one wins is not a choice a migration gets to make quietly.
 // It reports that pair and carries on with the rest.
 func (s *Store) Flatten() ([]string, error) {
-	repos, err := s.Repos()
-	if err != nil {
-		return nil, err
-	}
-
 	var (
 		moved  []string
 		failed []error
 	)
+
+	// Repos answers with the repositories it did read beside the error, so
+	// a damaged marker costs that one directory and the rest are still
+	// migrated — the reading internal/task and internal/supervisor give the
+	// same call. Returning here meant one bad marker stopped every healthy
+	// repository's tasks from being copied.
+	repos, err := s.Repos()
+	if err != nil {
+		failed = append(failed, err)
+	}
 
 	for _, r := range repos {
 		ids, err := s.filedTasks(r.Key)
@@ -103,6 +108,10 @@ func (s *Store) flattenTask(r RepoRef, id string) (bool, error) {
 		return false, err
 	}
 
+	// The link goes down after the copy, because the file that holds it
+	// lives inside the directory being copied into. A run interrupted
+	// between the two leaves a destination nothing points at, which
+	// alreadyThere finishes rather than reports.
 	if err := s.JoinRepo(id, r.Path); err != nil {
 		return false, err
 	}
@@ -114,6 +123,13 @@ func (s *Store) flattenTask(r RepoRef, id string) (bool, error) {
 // the same name in two repositories. The first is the ordinary second run
 // and is nothing; the second is a name collision, and it names both
 // directories because whoever reads it is the one who has to rename one.
+//
+// A third case sits between them: a destination that no repository claims.
+// The copy happens before the link, so a migration interrupted between the
+// two leaves exactly that, and reading it as a collision named one
+// repository as though it were two and did so on every run for ever. Nobody
+// having claimed it means this run is the one that copied it, and what is
+// left is the link.
 func (s *Store) alreadyThere(id string, r RepoRef, src, dst string) error {
 	joined, err := s.TaskRepos(id)
 	if err != nil {
@@ -124,6 +140,10 @@ func (s *Store) alreadyThere(id string, r RepoRef, src, dst string) error {
 		if p == r.Path {
 			return nil
 		}
+	}
+
+	if len(joined) == 0 {
+		return s.JoinRepo(id, r.Path)
 	}
 
 	return fmt.Errorf("two tasks are named %q — %q and %q — and one flat tree holds one of them: rename one of the two, and %q is the one orbit did not move", id, dst, src, src)

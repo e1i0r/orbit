@@ -328,3 +328,51 @@ func TestReadFromStartsOverWhenTheLogWasReplaced(t *testing.T) {
 		t.Errorf("next = %d, want less than %d — the caller must be able to see the offset moved backwards", newNext, next)
 	}
 }
+
+// TestAReplacedLogIsReadFromTheTop. An export restored over a log leaves the
+// caller holding a byte count into different content. At the same size or a
+// greater one nothing about the file says so, and resuming there began
+// mid-line: one unreadable event for the half it landed in, and everything
+// before that byte gone with nothing saying it was.
+func TestAReplacedLogIsReadFromTheTop(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "events.jsonl")
+
+	first := []Event{
+		{Kind: TaskCreated, Text: "aaaaaaaaaaaaaaaaaaaa"},
+		{Kind: TaskStarted, Text: "bbbbbbbbbbbbbbbbbbbb"},
+	}
+	if err := Write(path, first); err != nil {
+		t.Fatal(err)
+	}
+
+	_, offset, err := ReadFrom(path, 0)
+	if err != nil {
+		t.Fatalf("ReadFrom: %v", err)
+	}
+
+	// Replaced whole, and longer, so neither the size nor the offset says
+	// the content underneath has changed.
+	second := []Event{
+		{Kind: TaskCreated, Text: "cccccccccccccccccccccccccccccccccccccccc"},
+		{Kind: TaskStarted, Text: "dddddddddddddddddddddddddddddddddddddddd"},
+		{Kind: TaskFinished, Text: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"},
+	}
+	if err := Write(path, second); err != nil {
+		t.Fatal(err)
+	}
+
+	got, _, err := ReadFrom(path, offset)
+	if err != nil {
+		t.Fatalf("ReadFrom after the replacement: %v", err)
+	}
+
+	if len(got) != len(second) {
+		t.Fatalf("read %d events after the log was replaced, want all %d", len(got), len(second))
+	}
+
+	for _, e := range got {
+		if e.Kind == Unreadable {
+			t.Fatalf("the read landed mid-line: %+v", got)
+		}
+	}
+}

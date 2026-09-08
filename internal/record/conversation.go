@@ -132,6 +132,12 @@ func counts(e Event, gone map[string]bool) bool {
 	switch e.Kind {
 	case SupervisorRetracted, SupervisorConversationRemoved:
 		return false
+	case Unreadable:
+		// This reader's own note that a row would not read, which
+		// internal/view special-cases everywhere it draws one. Counted here
+		// it became a conversation nobody held, titled with the apology and
+		// dated year one.
+		return false
 	}
 
 	return !gone[Stamp(e.At)] && strings.TrimSpace(e.Text) != ""

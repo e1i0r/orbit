@@ -191,8 +191,25 @@ func (s *Store) ForgetRepo(repoPath string) (string, error) {
 		return "", err
 	}
 
+	// The tasks are read before the links are ended: ending them is what
+	// makes the record forget which tasks they were.
+	ids, err := d.TasksOfRepo(abs)
+	if err != nil {
+		return "", err
+	}
+
 	if _, err := d.Unjoin(abs); err != nil {
 		return "", err
+	}
+
+	// And the file each task directory keeps beside the record. Left
+	// standing, TaskRepos went on answering with the path this gesture had
+	// just forgotten, and orbit pr, task.Join and the diff budget all went
+	// on working in a repository nobody had asked them to.
+	for _, id := range ids {
+		if err := s.UnjoinRepo(id, abs); err != nil {
+			return "", err
+		}
 	}
 
 	if err := os.RemoveAll(dir); err != nil {

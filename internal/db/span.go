@@ -33,6 +33,11 @@ var (
 		record.TaskOverDiff:      true,
 		record.TaskNewDependency: true,
 		record.TaskContradicts:   true,
+		// A task the supervisor sends back ends its run there:
+		// internal/task's sendBack writes it and run.go returns with no
+		// other terminal event behind it, so the row kept ended_at NULL for
+		// ever and the run read as one still in flight.
+		record.TaskRequeued: true,
 	}
 
 	// closesPhase includes phase.retried because an attempt that a gate

@@ -293,3 +293,31 @@ func TestAppendAndReadErrorPaths(t *testing.T) {
 	// the path, not to assert which branch it takes.
 	_, _ = Read(dirPath) //nolint:errcheck
 }
+
+// TestALineTooLongDoesNotCostTheOnesBeforeIt. The scanner cannot go on past
+// a line it choked on, but what it read before that line is the record:
+// answering with nothing turned one damaged line into a task with no history
+// at all, and migrate carried none of it into the database.
+func TestALineTooLongDoesNotCostTheOnesBeforeIt(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "events.jsonl")
+
+	good := `{"kind":"task.created","at":"2026-09-07T10:00:00Z"}`
+	huge := `{"kind":"phase.finished","text":"` + strings.Repeat("x", MaxLine) + `"}`
+
+	if err := os.WriteFile(path, []byte(good+"\n"+huge+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	events, err := Read(path)
+	if err == nil {
+		t.Error("Read: the over-long line was not reported")
+	}
+
+	if len(events) != 1 {
+		t.Fatalf("Read answered %d events, want the one line that was readable", len(events))
+	}
+
+	if events[0].Kind != TaskCreated {
+		t.Errorf("the event came back as %q", events[0].Kind)
+	}
+}

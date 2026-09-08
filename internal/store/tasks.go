@@ -52,6 +52,48 @@ func (s *Store) JoinRepo(taskID, abs string) error {
 	return f.Close()
 }
 
+// UnjoinRepo takes one repository out of a task's marker, leaving the order
+// of the rest as it was.
+//
+// The file is rewritten whole rather than edited: it is three words a line
+// and a handful of lines, and a rewrite cannot leave half a path behind the
+// way a truncation can.
+func (s *Store) UnjoinRepo(taskID, abs string) error {
+	joined, err := s.TaskRepos(taskID)
+	if err != nil {
+		return err
+	}
+
+	kept := make([]string, 0, len(joined))
+
+	for _, p := range joined {
+		if p != abs {
+			kept = append(kept, p)
+		}
+	}
+
+	if len(kept) == len(joined) {
+		return nil
+	}
+
+	marker, err := s.TaskReposPath(taskID)
+	if err != nil {
+		return err
+	}
+
+	var body strings.Builder
+
+	for _, p := range kept {
+		body.WriteString("path: " + p + "\n")
+	}
+
+	if err := os.WriteFile(marker, []byte(body.String()), fileMode); err != nil {
+		return fmt.Errorf("write %q: %w", marker, err)
+	}
+
+	return nil
+}
+
 // TaskRepos is every repository one task has been worked in, in the order
 // they joined. A task whose marker is missing answers nothing rather than
 // failing: that is a task directory made by a hand or an older Orbit, and

@@ -8,7 +8,6 @@ package supervisor
 // wants the sentences that came back.
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -30,11 +29,12 @@ import (
 func standing(s *store.Store) []knowledge.Fact {
 	ks := knowledge.NewStore(s.Root())
 
+	// Beside the error and not instead of it: Load answers with the facts it
+	// could read, so a file with a typo in its header costs that file and
+	// leaves the rest of the rules standing.
 	facts, err := ks.Load("")
 	if err != nil {
-		logger.Error("supervisor", "what orbit knows was not read: %v", err)
-
-		return nil
+		logger.Error("supervisor", "what orbit knows was not read in full: %v", err)
 	}
 
 	// Repos always finishes its listing: a damaged marker costs that one
@@ -42,17 +42,11 @@ func standing(s *store.Store) []knowledge.Fact {
 	// contract internal/task/join.go reads it by too. Returning here on any
 	// error at all meant one unreadable marker took every healthy
 	// repository's rules with it — the opposite of what the paragraph above
-	// promises. The one failure that leaves nothing to walk is the repos/
-	// directory itself refusing to be listed, and that arrives as a
-	// *store.ReposError with no repositories at all.
+	// promises. The walk below is what reads the listing, and an empty one
+	// is walked in no time, so there is nothing to test the error for.
 	repos, err := s.Repos()
 	if err != nil {
 		logger.Error("supervisor", "the repositories to read facts from: %v", err)
-	}
-
-	var listing *store.ReposError
-	if errors.As(err, &listing) {
-		return knowledge.InScope(facts)
 	}
 
 	for _, r := range repos {

@@ -60,6 +60,24 @@ func ReadFrom(path string, offset int64) ([]Event, int64, error) {
 		offset = 0
 	}
 
+	// And when the offset no longer lands where a line begins. A log
+	// replaced whole — an export restored over it — at the same size or a
+	// greater one leaves an offset that is a byte count into different
+	// content: the read then starts mid-line, reports one unreadable event
+	// for the half it lands in, and every event before that byte is missing
+	// with nothing saying so. A line begins where the one before it ended,
+	// so the byte behind the offset is a newline or the offset is wrong.
+	if offset > 0 {
+		begins, err := afterNewline(f, offset)
+		if err != nil {
+			return nil, 0, fmt.Errorf("read %q: %w", path, err)
+		}
+
+		if !begins {
+			offset = 0
+		}
+	}
+
 	if offset == size {
 		return nil, offset, nil
 	}
@@ -93,4 +111,15 @@ func ReadFrom(path string, offset int64) ([]Event, int64, error) {
 	}
 
 	return s.events, s.lastStart, nil
+}
+
+// afterNewline is whether a byte offset sits just past the end of a line,
+// which is the only place a line can begin.
+func afterNewline(f *os.File, offset int64) (bool, error) {
+	prev := make([]byte, 1)
+	if _, err := f.ReadAt(prev, offset-1); err != nil {
+		return false, err
+	}
+
+	return prev[0] == '\n', nil
 }

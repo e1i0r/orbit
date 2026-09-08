@@ -95,8 +95,13 @@ func tooBig(e record.Event) error {
 		return fmt.Errorf("encode event %q: %w", e.Kind, err)
 	}
 
-	if len(line) > record.MaxLine {
-		return fmt.Errorf("event %q is %d bytes, over the %d one row of the record holds", e.Kind, len(line), record.MaxLine)
+	// The newline counts, because record.Append counts it: an event whose
+	// JSON is exactly MaxLine was accepted here and refused by the file log,
+	// and an export written on the strength of this check read back as no
+	// events at all.
+	if len(line)+1 > record.MaxLine {
+		return fmt.Errorf("event %q is %d bytes, over the %d one row of the record holds",
+			e.Kind, len(line)+1, record.MaxLine)
 	}
 
 	return nil

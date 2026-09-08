@@ -59,11 +59,21 @@ func Read(path string) ([]Event, error) {
 
 	s, err := scanEvents(io.LimitReader(f, size), 0)
 	if err != nil {
-		return nil, fmt.Errorf("read %q: %w", path, err)
+		return s.events, fmt.Errorf("read %q: %w", path, err)
 	}
 
 	if s.hasPending && whole {
 		s.events = append(s.events, unreadable(s.pending))
+	}
+
+	// A final line with no newline behind it is dropped whether or not it
+	// parsed. Append writes the JSON and its terminator in one call, so an
+	// unterminated last line is a write that was cut in half — and half a
+	// line that happens to parse is still half a line. ReadFrom has always
+	// read it that way; Read said so in its doc and did the opposite, so the
+	// two answered a different number of events for one file.
+	if !whole && s.lastWasEvent && len(s.events) > 0 {
+		s.events = s.events[:len(s.events)-1]
 	}
 
 	return s.events, nil
@@ -134,7 +144,11 @@ func scanEvents(r io.Reader, base int64) (scan, error) {
 	}
 
 	if serr := sc.Err(); serr != nil {
-		return scan{}, serr
+		// Beside the error and not instead of it. The scanner cannot go on
+		// past the line it choked on, but the events before it were read
+		// and are the record: answering with nothing turned one over-long
+		// line into a task with no history at all.
+		return s, serr
 	}
 
 	return s, nil

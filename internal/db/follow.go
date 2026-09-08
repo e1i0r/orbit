@@ -23,6 +23,24 @@ type Change struct {
 	Event record.Event
 }
 
+// Latest is the row the record was last written into, and zero for a record
+// nothing has been written to yet.
+//
+// It is what a reader with no history of its own asks for instead of Since:
+// starting at zero, Since hands back every event of every task, and a reader
+// that is about to read each task's history separately throws all of it
+// away. One number costs one query and answers the only thing that reader
+// wanted from it — where to start following.
+func (d *DB) Latest() (int64, error) {
+	var n int64
+
+	if err := d.sql.QueryRow(selectLatest).Scan(&n); err != nil {
+		return 0, fmt.Errorf("read where the record was last written: %w", err)
+	}
+
+	return n, nil
+}
+
 // Since is every event written after a row, oldest first.
 //
 // task is the one it is about, or the empty string for all of them at once.
