@@ -1241,6 +1241,10 @@
       "source": "{keys} scrolls",
       "value": "{keys} para desplazarte"
     },
+    "diff.too_large": {
+      "source": "{n} lines not drawn — a file this size stops the window; open it with [o]",
+      "value": "{n} líneas sin dibujar — un archivo así congela la ventana; ábrelo con [o]"
+    },
     "diff.unchanged": {
       "source": "no changes in this task's worktree",
       "value": "sin cambios en el árbol de trabajo de esta tarea"
