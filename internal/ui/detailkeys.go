@@ -27,7 +27,10 @@ func (m Model) openDetail(t view.Task) (Model, tea.Cmd) {
 	// The base is one of the things an open forgets: it belongs to the
 	// repository this task is in, and asking for it again is the one thing
 	// this window does per open rather than per tick.
-	m.diffBase, m.diffAsking = baseRef{}, true
+	// A different task is a different worktree, so the fingerprint in hand
+	// says nothing about it: cleared, or the first read of the new task
+	// would answer "the same" about the old one's.
+	m.diffBase, m.diffClock = baseRef{}, diffClock{asking: true}
 	m = m.forgetImpact().forgetComparison().forgetTree()
 
 	for i := range m.panes {
@@ -45,7 +48,7 @@ func (m Model) openDetail(t view.Task) (Model, tea.Cmd) {
 	next, shape := next.askTree()
 
 	return next, tea.Batch(logOf(m.opts.Reader, t), filesOf(m.opts.Reader, t),
-		diffOf(m.opts.Reader, t, m.diffBase), impact, shape)
+		diffOf(m.opts.Reader, t, m.diffBase, ""), impact, shape)
 }
 
 // detailKey is the task view's map.

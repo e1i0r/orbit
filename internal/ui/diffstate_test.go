@@ -90,9 +90,9 @@ func TestARescanDoesNotPileOnADiffThatIsStillOut(t *testing.T) {
 	asked, cmd := m.Update(rescanMsg(fixtureNow))
 
 	m = asModel(t, asked)
-	if !m.diffAsking || len(commandsIn(t, cmd)) != 3 {
+	if !m.diffClock.asking || len(commandsIn(t, cmd)) != 3 {
 		t.Fatalf("the first rescan asked for %d commands with diffAsking=%v, want the diff among three",
-			len(commandsIn(t, cmd)), m.diffAsking)
+			len(commandsIn(t, cmd)), m.diffClock.asking)
 	}
 
 	again, cmd := m.Update(rescanMsg(fixtureNow))
@@ -102,18 +102,18 @@ func TestARescanDoesNotPileOnADiffThatIsStillOut(t *testing.T) {
 		t.Errorf("a second rescan asked for %d commands while the first diff was still out, want the rescan and the tick alone", n)
 	}
 
-	if !m.diffAsking {
+	if !m.diffClock.asking {
 		t.Error("the second rescan cleared the outstanding diff without an answer having landed")
 	}
 	// The answer releases it. A flag that latched would leave the pane on
 	// the diff it opened with for as long as the reader stayed on it.
 	m = next(t, m, diffMsg{ID: "ACME-2662", Text: fixtureDiff})
-	if m.diffAsking {
+	if m.diffClock.asking {
 		t.Fatal("a diff that landed left the view still believing one was out")
 	}
 
 	after, cmd := m.Update(rescanMsg(fixtureNow))
-	if n := len(commandsIn(t, cmd)); n != 3 || !asModel(t, after).diffAsking {
+	if n := len(commandsIn(t, cmd)); n != 3 || !asModel(t, after).diffClock.asking {
 		t.Errorf("the rescan after an answer asked for %d commands, want the diff asked for again", n)
 	}
 }

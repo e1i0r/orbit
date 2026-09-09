@@ -17,7 +17,7 @@ import (
 func TestDiffOfWithNoRepositoryPath(t *testing.T) {
 	r := &fakeReader{worktree: "/somewhere"}
 
-	msg, ok := diffOf(r, view.Task{ID: "ACME-1"}, baseRef{})().(diffMsg)
+	msg, ok := diffOf(r, view.Task{ID: "ACME-1"}, baseRef{}, "")().(diffMsg)
 	if !ok {
 		t.Fatal("diffOf did not answer with a diffMsg")
 	}
@@ -42,7 +42,7 @@ func TestGitDiffAgainstANonRepository(t *testing.T) {
 	// The same failure, propagated all the way through diffOf.
 	r := &fakeReader{worktree: dir}
 
-	msg, ok := diffOf(r, view.Task{ID: "ACME-1", RepoPath: dir}, baseRef{known: true})().(diffMsg)
+	msg, ok := diffOf(r, view.Task{ID: "ACME-1", RepoPath: dir}, baseRef{known: true}, "")().(diffMsg)
 	if !ok {
 		t.Fatal("diffOf did not answer with a diffMsg")
 	}

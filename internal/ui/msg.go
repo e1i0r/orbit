@@ -75,6 +75,12 @@ type (
 		Err            error
 		NoBase         bool
 		Base           baseRef
+		// Print is the worktree's fingerprint at the moment it was read,
+		// and Same says the fingerprint had not moved since the last one —
+		// in which case Text was never asked for and the window keeps what
+		// it has. See diffprint.go.
+		Print string
+		Same  bool
 	}
 
 	// logMsg is one task's whole record, folded, or the reason there is
