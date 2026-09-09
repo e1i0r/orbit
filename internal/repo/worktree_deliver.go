@@ -7,10 +7,24 @@ import (
 )
 
 // CommitWorktree stages and commits all untracked and modified files in the worktree.
+//
+// Orbit's own directory is put out of the way first, by both doors: the
+// exclude, which is what stops the copies being staged at all, and the
+// unstaging, which is for a worktree made before the exclude existed and
+// holding them in its index already. A commit that carries Orbit's own files
+// into somebody's pull request is the thing this function exists not to do,
+// so neither door failing is passed over.
 func (r Repo) CommitWorktree(wtDir, message string) error {
+	_ = excludeOrbit(wtDir) //nolint:errcheck // best effort, and unstageOrbit is the other door
+	_ = unstageOrbit(wtDir) //nolint:errcheck // best effort, and the exclude is the other door
+
 	if _, err := git(wtDir, "add", "-A"); err != nil {
 		return fmt.Errorf("stage changes in %q: %w", wtDir, err)
 	}
+
+	// Again, because `add -A` is what stages a file the exclude does not
+	// cover: one an engine of its own accord marked with `git add -f`.
+	_ = unstageOrbit(wtDir) //nolint:errcheck // best effort
 
 	status, err := git(wtDir, "status", "--porcelain")
 	if err != nil {
