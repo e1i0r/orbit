@@ -1,0 +1,3 @@
+The built window goes here. `make ui` writes it, and CI writes it before
+it builds or releases anything. This file is committed so that go:embed has
+a directory to find: without it `go build ./...` fails on a fresh clone.

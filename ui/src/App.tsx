@@ -10,6 +10,7 @@ import { EnginesScreen } from "./screens/EnginesScreen";
 import { FlowsScreen } from "./screens/FlowsScreen";
 import { KnowledgeScreen } from "./screens/KnowledgeScreen";
 import { ReposScreen } from "./screens/ReposScreen";
+import { SettingsScreen } from "./screens/SettingsScreen";
 import { WriteScreen } from "./screens/WriteScreen";
 import { SupervisorScreen } from "./screens/SupervisorScreen";
 import { TaskScreen } from "./screens/TaskScreen";
@@ -129,6 +130,10 @@ const screens: Record<string, { title: string; said: string }> = {
     title: "Repositories",
     said: "The checkouts Orbit is watching, and the work in each.",
   },
+  settings: {
+    title: "Settings",
+    said: "What Orbit does when nobody says otherwise, and what holds a run back.",
+  },
 };
 
 function screen(where: string, board: Board | undefined, go: (to: string) => void) {
@@ -140,13 +145,15 @@ function screen(where: string, board: Board | undefined, go: (to: string) => voi
     case "supervisor":
       return <SupervisorScreen />;
     case "knowledge":
-      return <KnowledgeScreen />;
+      return <KnowledgeScreen board={board} />;
     case "flows":
       return <FlowsScreen />;
     case "engines":
       return <EnginesScreen />;
     case "repos":
       return <ReposScreen />;
+    case "settings":
+      return <SettingsScreen />;
   }
 
   return (

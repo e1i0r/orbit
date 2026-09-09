@@ -7,15 +7,20 @@
 // and is not one is the worst kind to have written down.
 
 import { useEffect, useMemo, useState } from "react";
-import { api, type Fact } from "../api";
+import { api, type Board, type Fact } from "../api";
 import { Empty } from "../parts/Empty";
 
-export function KnowledgeScreen() {
+export function KnowledgeScreen({ board }: { board?: Board }) {
   const [facts, setFacts] = useState<Fact[]>();
   const [read, setRead] = useState(false);
   const [failed, setFailed] = useState<string>();
   const [like, setLike] = useState("");
   const [shown, setShown] = useState<"told" | "all">("told");
+  const [wrote, setWrote] = useState("");
+  const [where, setWhere] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [refused, setRefused] = useState<string>();
+  const [again, setAgain] = useState(0);
 
   useEffect(() => {
     let stale = false;
@@ -32,7 +37,7 @@ export function KnowledgeScreen() {
     return () => {
       stale = true;
     };
-  }, []);
+  }, [again]);
 
   const list = useMemo(() => {
     const needle = like.trim().toLowerCase();
@@ -55,9 +60,69 @@ export function KnowledgeScreen() {
   }
 
   const off = facts.filter((f) => f.off).length;
+  const repos = board?.repos ?? [];
+
+  const learn = async () => {
+    const text = wrote.trim();
+    if (text === "" || saving) return;
+
+    setSaving(true);
+    setRefused(undefined);
+
+    try {
+      await api.did("learn", { text, repo: where || repos[0]?.path });
+      setWrote("");
+      setAgain((n) => n + 1);
+    } catch (e) {
+      setRefused((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="flex max-w-[900px] flex-col gap-2.5">
+      {/* A fact is about a repository, and which one is asked for rather
+          than guessed at wherever there is a choice: a rule filed under the
+          wrong checkout is told to the wrong runs, and nothing says so.
+          `orbit learn` refuses to pick for you for the same reason. */}
+      <div className="flex flex-col gap-1 rounded-md border border-edge bg-well/40 p-2">
+        <div className="flex flex-wrap items-end gap-1.5">
+          <input
+            value={wrote}
+            onChange={(e) => setWrote(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && void learn()}
+            placeholder="Amounts are in cents everywhere below internal/money."
+            className="min-w-0 flex-1 rounded border border-edge bg-well px-2 py-1 text-[11px] text-said outline-none placeholder:text-faint focus:border-accent/50"
+          />
+
+          {repos.length > 1 && (
+            <select
+              value={where}
+              onChange={(e) => setWhere(e.target.value)}
+              className="rounded border border-edge bg-well px-1.5 py-1 text-[11px] text-said outline-none focus:border-accent/50"
+            >
+              <option value="">which repository?</option>
+              {repos.map((r) => (
+                <option key={r.path} value={r.path}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <button
+            onClick={() => void learn()}
+            disabled={saving || wrote.trim() === "" || (repos.length > 1 && where === "")}
+            className="shrink-0 rounded border border-accent/40 bg-accent/10 px-2 py-1 text-[11px] text-accent transition-colors hover:bg-accent/20 disabled:opacity-40"
+          >
+            {saving ? "…" : "Write it down"}
+          </button>
+        </div>
+
+        {refused && <p className="text-[11px] text-bad">{refused}</p>}
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-2">
         <input
           value={like}

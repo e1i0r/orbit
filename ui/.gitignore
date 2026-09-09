@@ -9,10 +9,15 @@ lerna-debug.log*
 
 node_modules
 
-# dist is committed on purpose, and this is the line Vite's scaffold put
-# here to ignore it. See ui/embed.go: `go build` reads ui/dist, and a Go
-# project that needs npm to compile is a Go project that does not build.
-# `make ui` is what writes it.
+# The built window is not committed: it is 365 kB of bundle that changes on
+# every edit to the web, and a repository whose diffs are mostly minified
+# JavaScript is one nobody reads the diffs of. `make ui` writes it, and CI
+# writes it before it builds or releases.
+#
+# dist/.keep is committed all the same, so that go:embed has a directory to
+# find and `go build ./...` works on a fresh clone. See ui/embed.go.
+dist/*
+!dist/.keep
 dist-ssr
 *.local
 

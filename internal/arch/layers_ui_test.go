@@ -44,6 +44,11 @@ var windowLayers = map[string][]string{
 	// reading comes back in is that package's. It reads nothing itself —
 	// the window does the reading and hands the answer over.
 	"internal/ui/panes": {
+		// internal/verb for one type: the tree the map pane draws, which the
+		// browser draws as a honeycomb from the very same builder. Two
+		// packages growing a tree out of the same paths is two chances for
+		// them to disagree about what is in a repository.
+		"internal/verb",
 		"internal/flow", "internal/repo", "internal/ui/cells", "internal/ui/keymap",
 		"internal/ui/layout", "internal/ui/markdown", "internal/ui/patch", "internal/ui/prose",
 		"internal/ui/theme", "internal/view", "internal/words",

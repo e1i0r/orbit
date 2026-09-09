@@ -72,6 +72,17 @@ jobs:
         with:
           go-version: '1.26'
 
+      # The window is built before anything that compiles the binary. It is
+      # not committed — see ui/.gitignore — so without this the binary
+      # carries the .keep file and nothing else, `orbit web` refuses, and
+      # the goldens that draw the browser's half have nothing to draw.
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+      - run: make ui
+
       # Pinned to the v2 line rather than latest: goreleaser's next major is
       # a different configuration language, and `latest` would meet it on
       # whichever release happened to run that day — with no change of ours to

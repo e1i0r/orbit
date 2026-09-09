@@ -81,16 +81,39 @@ export interface Task extends TaskSummary {
 // union repeated in this file would be a fifth opinion about the vocabulary.
 export type Verb = string;
 
-/** What a verb carries, for the three that take the reader's own words. */
-export interface Says {
-  text?: string;
-  restart?: boolean;
-}
+// What a verb was asked with: its fields, by the names internal/verb
+// declares them under.
+//
+// Not two named fields. Every verb takes what it says it takes — a note
+// takes text, a join takes name, a permit takes yes — and a body keyed by
+// what this page felt like calling it is a body the verb reads as empty.
+export type Says = Record<string, string | boolean | undefined>;
 
 export interface Did {
   did: Verb;
   said: string;
   of?: string[];
+  /** saw is what a verb read, where it read something. */
+  saw?: unknown;
+}
+
+/** Side is one of the flow's checks, run on both sides of the change. */
+export interface Side {
+  name: string;
+  command: string;
+  base: Ran;
+  now: Ran;
+  /** broke is a check this change turned from passing to failing. */
+  broke?: boolean;
+  fixed?: boolean;
+}
+
+/** Ran is what one command answered on one side. */
+export interface Ran {
+  exit: number;
+  out?: string;
+  /** failed is why it could not be run at all, which is not a check failing. */
+  failed?: string;
 }
 
 export type Standing =
@@ -141,6 +164,24 @@ export interface Flow {
   diffBudget?: number;
   phases?: Phase[];
   failed?: string;
+}
+
+// Cell is one node of the repository's tree: a directory or a file, with
+// what the task did under it summed upward. It arrives whole, once — the
+// shape is paths and counts, no contents — so every gesture on the map after
+// that is local.
+export interface Cell {
+  name: string;
+  path: string;
+  cells?: Cell[];
+  /** How many files under this one the task touched. */
+  changed?: number;
+  /** What it wrote in them, added and deleted together. */
+  lines?: number;
+  /** The siblings the repository's history moves this one with, strongest
+   *  first. It is what a honeycomb seats its cells by: a drawing whose
+   *  cells touch claims that touching means something. */
+  with?: { path: string; times: number }[];
 }
 
 export interface Coupled {
@@ -220,6 +261,14 @@ export interface EngineInfo {
   money?: boolean;
   sourced?: boolean;
   quota?: Window[];
+}
+
+/** Setting is one of Orbit's own settings, as internal/verb reports it. */
+export interface Setting {
+  name: string;
+  /** value is what it holds now, and "—" for one nobody has chosen. */
+  value: string;
+  about: string;
 }
 
 export interface RepoDetail {
@@ -312,6 +361,11 @@ export const api = {
   flow: (id: string) => ask<Flow>(`/api/tasks/${encodeURIComponent(id)}/flow`),
   history: (id: string) => ask<Told>(`/api/tasks/${encodeURIComponent(id)}/history`),
   impact: (id: string) => ask<Impact>(`/api/tasks/${encodeURIComponent(id)}/impact`),
+  // Through the engine's own route rather than one written for this screen:
+  // internal/verb declares the reading and every way in offers it, so the
+  // page asks for it by name like the command line and the MCP server do.
+  tree: (id: string) =>
+    ask<{ said: string; saw: Cell }>(`/api/read/tree/${encodeURIComponent(id)}`),
   flows: () => ask<{ flows: FlowShape[] }>("/api/flows"),
   knowledge: () => ask<{ facts: Fact[]; read: boolean }>("/api/knowledge"),
   supervisor: () =>
@@ -320,5 +374,12 @@ export const api = {
   repos: () => ask<{ root: string; repos: RepoDetail[] }>("/api/repos"),
   do: (id: string, verb: Verb, says?: Says) =>
     tell<Did>(`/api/tasks/${encodeURIComponent(id)}/${verb}`, says),
+  // The verbs that are not about one task: said to the supervisor, written
+  // down about the code, changed in the settings. Same engine, same names —
+  // what differs is only that there is no task in the path.
+  did: (verb: Verb, says?: Says) => tell<Did>(`/api/do/${verb}`, says),
+  // And the readings of the same kind, which change nothing and so are a
+  // GET: settings, quota, the thread, whatever the declaration carries.
+  read: <T>(verb: Verb) => ask<{ said: string; saw: T }>(`/api/read/${verb}`),
   write: (one: Written) => tell<Wrote>("/api/do/new", { ...one, run: one.start }),
 };

@@ -4610,8 +4610,8 @@
       "value": "si es crítica"
     },
     "verb.reconcile": {
-      "source": "close the record of a run whose process is gone",
-      "value": "cierra el registro de una ejecución cuyo proceso ya no está"
+      "source": "close the records of runs whose processes are gone",
+      "value": "cierra los registros de ejecuciones cuyo proceso ya no está"
     },
     "verb.delete": {
       "source": "remove a task and everything written about it",
@@ -4756,6 +4756,54 @@
     "verb.takes_no_more": {
       "source": "{verb} takes nothing after {extra}",
       "value": "{verb} no admite nada después de {extra}"
+    },
+    "verb.tree": {
+      "source": "the repository as a tree, with what a task changed marked on it",
+      "value": "el repositorio como árbol, con lo que la tarea cambió marcado encima"
+    },
+    "verb.compare": {
+      "source": "run the flow's checks on both sides of a task's change, and say what differs",
+      "value": "ejecuta las comprobaciones del flow a ambos lados del cambio, y di qué difiere"
+    },
+    "tab.map": {
+      "source": "map",
+      "value": "mapa"
+    },
+    "tab_desc.map": {
+      "source": "the repository as a tree, lit where this task changed something",
+      "value": "el repositorio como árbol, encendido donde esta tarea cambió algo"
+    },
+    "map.reading": {
+      "source": "reading the repository…",
+      "value": "leyendo el repositorio…"
+    },
+    "map.not_yet": {
+      "source": "nothing read yet",
+      "value": "aún no se ha leído nada"
+    },
+    "map.failed": {
+      "source": "the repository could not be read: {err}",
+      "value": "no se pudo leer el repositorio: {err}"
+    },
+    "map.no_changes": {
+      "source": "this task has changed nothing in this checkout yet",
+      "value": "esta tarea aún no ha cambiado nada en esta copia de trabajo"
+    },
+    "map.head": {
+      "source": "{files} files · {lines} lines, in {name}",
+      "value": "{files} archivos · {lines} líneas, en {name}"
+    },
+    "verb.reconcile.task": {
+      "source": "just this one, rather than every task here",
+      "value": "solo esta, en vez de todas las de aquí"
+    },
+    "verb.learn.repo": {
+      "source": "which checkout it is about; the default is the one you are in",
+      "value": "sobre qué copia de trabajo va; por defecto, en la que estás"
+    },
+    "web.no_window": {
+      "source": "this orbit was built without the window; run `make ui` and build it again",
+      "value": "este orbit se compiló sin la ventana; ejecuta `make ui` y vuelve a compilar"
     }
   }
 }

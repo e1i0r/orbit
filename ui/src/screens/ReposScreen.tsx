@@ -19,6 +19,9 @@ export function ReposScreen() {
   const [repos, setRepos] = useState<RepoDetail[]>();
   const [root, setRoot] = useState("");
   const [failed, setFailed] = useState<string>();
+  const [busy, setBusy] = useState<string>();
+  const [said, setSaid] = useState<{ text: string; bad?: boolean }>();
+  const [into, setInto] = useState("");
 
   useEffect(() => {
     let stale = false;
@@ -36,6 +39,26 @@ export function ReposScreen() {
       stale = true;
     };
   }, []);
+
+  // Both answer with a sentence the verb wrote, and both leave it on
+  // screen: "every run here is accounted for" is the answer to Reconcile,
+  // and a button that said nothing would leave a reader pressing it again.
+  const ran = async (verb: "reconcile" | "export", says: Record<string, string>) => {
+    setBusy(verb);
+    setSaid(undefined);
+
+    try {
+      const did = await api.did(verb, says);
+      setSaid({ text: did.said });
+    } catch (e) {
+      setSaid({ text: (e as Error).message, bad: true });
+    } finally {
+      setBusy(undefined);
+    }
+  };
+
+  const reconcile = () => ran("reconcile", {});
+  const write = () => ran("export", { into: into.trim() });
 
   if (failed) return <p className="text-xs text-bad">{failed}</p>;
   if (!repos) return <p className="text-xs text-aside">Looking for repositories…</p>;
@@ -88,6 +111,44 @@ export function ReposScreen() {
           ))}
         </tbody>
       </table>
+
+      {/* The two things that are about the record rather than about one
+          task. The window reaches them through its command line; this is
+          where a browser does. */}
+      <div className="flex flex-wrap items-center gap-2 border-t border-edge bg-panel px-3 py-2">
+        <button
+          onClick={() => void reconcile()}
+          disabled={busy !== undefined}
+          title="Close the records of runs whose processes are gone"
+          className="rounded border border-edge bg-well px-2 py-0.5 text-[11px] text-aside transition-colors hover:bg-hover hover:text-said disabled:opacity-40"
+        >
+          {busy === "reconcile" ? "…" : "Reconcile"}
+        </button>
+
+        <span className="h-4 w-px bg-edge" aria-hidden />
+
+        <input
+          value={into}
+          onChange={(e) => setInto(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && void write()}
+          placeholder="/a/directory/that/is/empty"
+          className="w-60 rounded border border-edge bg-well px-2 py-0.5 font-mono text-[11px] text-said outline-none placeholder:text-faint focus:border-accent/50"
+        />
+        <button
+          onClick={() => void write()}
+          disabled={busy !== undefined || into.trim() === ""}
+          title="Write the whole record out as JSON lines, one file per task"
+          className="rounded border border-edge bg-well px-2 py-0.5 text-[11px] text-aside transition-colors hover:bg-hover hover:text-said disabled:opacity-40"
+        >
+          {busy === "export" ? "…" : "Export the record"}
+        </button>
+
+        {said && (
+          <span className={`min-w-0 truncate text-[11px] ${said.bad ? "text-bad" : "text-aside"}`}>
+            {said.text}
+          </span>
+        )}
+      </div>
 
       <p className="border-t border-edge bg-panel px-3 py-1.5 text-[10px] text-faint">
         Watching <span className="font-mono text-aside">{root}</span> · open a task from the board

@@ -28,7 +28,7 @@ func (m Model) openDetail(t view.Task) (Model, tea.Cmd) {
 	// repository this task is in, and asking for it again is the one thing
 	// this window does per open rather than per tick.
 	m.diffBase, m.diffAsking = baseRef{}, true
-	m = m.forgetImpact().forgetComparison()
+	m = m.forgetImpact().forgetComparison().forgetTree()
 
 	for i := range m.panes {
 		m.panes[i] = viewport.New()
@@ -40,7 +40,12 @@ func (m Model) openDetail(t view.Task) (Model, tea.Cmd) {
 	// whether or not the reader went looking.
 	next, impact := m.syncPanes().askImpact()
 
-	return next, tea.Batch(logOf(m.opts.Reader, t), filesOf(m.opts.Reader, t), diffOf(m.opts.Reader, t, m.diffBase), impact)
+	// And the tree with it, for the same reason and at about the same
+	// cost: it is one `git ls-files` of a checkout that is already open.
+	next, shape := next.askTree()
+
+	return next, tea.Batch(logOf(m.opts.Reader, t), filesOf(m.opts.Reader, t),
+		diffOf(m.opts.Reader, t, m.diffBase), impact, shape)
 }
 
 // detailKey is the task view's map.

@@ -172,6 +172,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		next, impact := m.syncPanes().askImpact()
 
 		return next, impact
+	case treeMsg:
+		return m.tookTree(msg), nil
 	case logMsg:
 		// The same guard, for the same reason: a record that arrives for a
 		// task the reader has since left would put one task's history under

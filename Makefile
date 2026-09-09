@@ -6,7 +6,17 @@ GO ?= $(shell which go 2>/dev/null || echo /usr/local/go/bin/go)
 # check is what a contributor runs before pushing, so it has to be what CI
 # runs: lint used to be in CI and not here, which meant a green local check
 # and a red pull request over a rule the contributor never saw.
-check: fmt vet lint test integration tidy
+# window first, because the binary carries it and dist/ is not committed:
+# see ui/.gitignore. It is one npm build of a few hundred milliseconds when
+# nothing changed, and without it every check below runs against a binary
+# with no window in it.
+check: window fmt vet lint test integration tidy
+
+# window builds the browser's half if it is not there, and leaves it alone
+# if it is. `make ui` always rebuilds; this is the one the checks depend on,
+# so that a check does not reinstall node_modules on every run.
+window:
+	@test -f ui/dist/index.html || $(MAKE) ui
 
 fmt:
 	@test -z "$$($(GO) fmt ./...)" || { echo "gofmt made changes — commit them"; exit 1; }
@@ -181,10 +191,14 @@ posters:
 # ui builds the browser half and puts it where the binary embeds it from.
 #
 # `go build` reads ui/dist, so this has to have run for the binary to carry a
-# window — and dist/ is committed for the reason site/ is: a Go project that
-# needs npm to compile is a Go project that does not build.
+# window. dist/ is not committed — see ui/.gitignore — so CI runs this before
+# it vets, tests or releases, and `make check` runs it through `window`.
 ui:
 	cd ui && npm ci && npm run build
+	@# vite empties dist/ on every build, and .keep is what go:embed finds
+	@# on a clone that has never run this. Written back after, so a build
+	@# does not delete the file that makes the next `go build` work.
+	@cp ui/keep.txt ui/dist/.keep
 
 # web builds both halves and runs the server over a directory.
 web: ui build

@@ -41,6 +41,23 @@ const (
 	webIdle  = 2 * time.Minute
 )
 
+// rescanning looks for repositories and tasks again, for as long as the
+// process lives.
+//
+// It never stops, and that is the whole of its lifetime: this goroutine
+// outlives nothing, because `orbit web` runs until the terminal it was
+// started in ends. A failed scan is logged and not fatal — the board that
+// was already read is still the right answer, and a server that exited
+// because one walk of a directory failed would be a server that exits when
+// somebody moves a folder.
+func rescanning(r *board.Reader) {
+	for range time.Tick(board.RescanEvery) {
+		if err := r.Rescan(); err != nil {
+			logger.Info("cli/web", "look for repositories again: %v", err)
+		}
+	}
+}
+
 // serveWeb runs the server until the process is stopped.
 func serveWeb(ctx Context, args []string) error {
 	p := ctx.printer()
@@ -75,10 +92,27 @@ func serveWeb(ctx Context, args []string) error {
 		return fmt.Errorf("%s: %w", p.T("web.rescan", "look for repositories"), err)
 	}
 
+	// Refused here rather than at the first request. A binary built without
+	// `make ui` carries no window, and a server that started, printed a URL
+	// and answered every page with an error is a server that looks broken
+	// where it is only incomplete.
+	if !ui.Built() {
+		return errors.New(p.T("web.no_window",
+			"this orbit was built without the window; run `make ui` and build it again"))
+	}
+
 	files, err := ui.Files()
 	if err != nil {
 		return fmt.Errorf("%s: %w", p.T("web.built", "read the window built into orbit"), err)
 	}
+
+	// And again on a clock, for as long as the server runs. Refresh only
+	// re-reads the tasks the reader already knows, so a task written at a
+	// terminal — or by any other process — never reached a browser tab that
+	// was already open: the page polled every three seconds and was told
+	// the same board every time. The window has ticked this since it was
+	// written; the server had it only at startup.
+	go rescanning(r)
 
 	ports := webPorts(r, s, newEngines(), dir, ctx.printer())
 	ports.Files = files

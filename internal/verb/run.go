@@ -81,6 +81,10 @@ func (v Verb) do(ctx context.Context, w World, in In) (Out, error) {
 		return shaped(w, in)
 	case "diff":
 		return diffed(w, in)
+	case "compare":
+		return weighed(w, in)
+	case "tree":
+		return mapped(w, in)
 	case "impact":
 		return reaches(w, in)
 	case "reconcile":

@@ -155,13 +155,22 @@ func askFor(ctx Context, v verb.Verb, args []string) error {
 	fs := flag.NewFlagSet(v.Name, flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 
-	dir := fs.String("repo", ".", "the repository the task is against")
-
 	// A flag per field, in the words the field says about itself, so
 	// `orbit <verb> -h` explains the verb rather than listing its shape.
 	said := map[string]*string{}
 	for _, f := range v.Takes {
 		said[f.Name] = fs.String(f.Name, "", f.About(ctx.printer()))
+	}
+
+	// And -repo, unless the verb declares one of its own. Registering it
+	// twice is what flag panics on, so a verb that named a field `repo`
+	// took every invocation of itself down with it: `orbit learn` did
+	// exactly that, and shipped green because nothing ran it. The verb's
+	// own wins, because it is the one carrying the sentence that explains
+	// what the repository means to it.
+	dir := said["repo"]
+	if dir == nil {
+		dir = fs.String("repo", ".", "the repository the task is against")
 	}
 
 	if err := parse(ctx, fs, args); err != nil {
@@ -189,9 +198,16 @@ func askFor(ctx Context, v verb.Verb, args []string) error {
 			words.Arg{Name: "extra", Value: strings.Join(over, " ")}))
 	}
 
-	s, r, err := openMaybe(*dir, given(fs, "repo"))
+	// A declared repo left empty is the caller standing where they are,
+	// which is what the built-in flag defaults to.
+	where := *dir
+	if where == "" {
+		where = "."
+	}
+
+	s, r, err := openMaybe(where, given(fs, "repo"))
 	if err != nil {
-		return fmt.Errorf("open repository %q: %w", *dir, err)
+		return fmt.Errorf("open repository %q: %w", where, err)
 	}
 
 	in.Repo = r.Path

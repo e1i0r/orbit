@@ -154,9 +154,15 @@ func Every() []Verb {
 				return p.T("verb.critical.on", "whether it is critical")
 			}}},
 		},
-		{Name: "reconcile", OnTask: true, About: func(p *words.Printer) string {
-			return p.T("verb.reconcile", "close the record of a run whose process is gone")
-		}},
+		{
+			Name: "reconcile",
+			About: func(p *words.Printer) string {
+				return p.T("verb.reconcile", "close the records of runs whose processes are gone")
+			},
+			Takes: []Field{{Name: "task", Kind: Named, About: func(p *words.Printer) string {
+				return p.T("verb.reconcile.task", "just this one, rather than every task here")
+			}}},
+		},
 		{Name: "delete", OnTask: true, About: func(p *words.Printer) string {
 			return p.T("verb.delete", "remove a task and everything written about it")
 		}},
@@ -204,6 +210,16 @@ func Every() []Verb {
 		{Name: "diff", OnTask: true, Reads: true, About: func(p *words.Printer) string {
 			return p.T("verb.diff", "what a task changed in its worktree")
 		}},
+		{
+			Name: "compare", OnTask: true,
+			About: func(p *words.Printer) string {
+				return p.T("verb.compare",
+					"run the flow's checks on both sides of a task's change, and say what differs")
+			},
+		},
+		{Name: "tree", OnTask: true, Reads: true, About: func(p *words.Printer) string {
+			return p.T("verb.tree", "the repository as a tree, with what a task changed marked on it")
+		}},
 		{Name: "impact", OnTask: true, Reads: true, About: func(p *words.Printer) string {
 			return p.T("verb.impact", "what a change reaches beyond the files it touched")
 		}},
@@ -236,9 +252,14 @@ func Every() []Verb {
 			About: func(p *words.Printer) string {
 				return p.T("verb.learn", "write down something true about this code")
 			},
-			Takes: []Field{{Name: "text", Kind: Words, Needed: true, About: func(p *words.Printer) string {
-				return p.T("verb.learn.text", "the fact, in a sentence")
-			}}},
+			Takes: []Field{
+				{Name: "text", Kind: Words, Needed: true, About: func(p *words.Printer) string {
+					return p.T("verb.learn.text", "the fact, in a sentence")
+				}},
+				{Name: "repo", Kind: Named, About: func(p *words.Printer) string {
+					return p.T("verb.learn.repo", "which checkout it is about; the default is the one you are in")
+				}},
+			},
 		},
 	}
 }

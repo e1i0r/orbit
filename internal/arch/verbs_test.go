@@ -192,6 +192,8 @@ func windowOffers(t *testing.T) map[string]bool {
 		"list":      "screenList",
 		"show":      "key.open",
 		"history":   "tab.history",
+		"tree":      "tab.map",
+		"compare":   "compare.running",
 		"flow":      "tab.flow",
 		"diff":      "tab.diff",
 		"impact":    "tab.impact",
@@ -229,6 +231,36 @@ func sees(body string, marks map[string]string) map[string]bool {
 }
 
 // read is every Go file of one package, joined.
+// readAll is every file of one suffix under a directory, joined.
+func readAll(t *testing.T, dir, suffix string) string {
+	t.Helper()
+
+	var b strings.Builder
+
+	where := filepath.Join(root(t), dir)
+
+	err := filepath.WalkDir(where, func(path string, d os.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasSuffix(path, suffix) {
+			return err
+		}
+
+		raw, readErr := os.ReadFile(path)
+		if readErr != nil {
+			return readErr
+		}
+
+		b.Write(raw)
+		b.WriteString("\n")
+
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("read %s: %v", dir, err)
+	}
+
+	return b.String()
+}
+
 func read(t *testing.T, dir string) string {
 	t.Helper()
 
