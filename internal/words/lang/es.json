@@ -4813,6 +4813,10 @@
       "source": "the repository could not be read: {err}",
       "value": "no se pudo leer el repositorio: {err}"
     },
+    "map.no_checkout": {
+      "source": "this task has no checkout any more, so there is nothing to map",
+      "value": "esta tarea ya no tiene checkout, así que no hay nada que mapear"
+    },
     "map.no_changes": {
       "source": "this task has changed nothing in this checkout yet",
       "value": "esta tarea aún no ha cambiado nada en esta copia de trabajo"

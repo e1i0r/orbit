@@ -268,6 +268,10 @@ type Shape struct {
 	Read   bool
 	Asking bool
 	Failed string
+	// Missing is a checkout that is not there any more, which is a
+	// different thing from a reading that broke: nothing is wrong, there is
+	// simply nothing left to map.
+	Missing bool
 }
 
 // Reach is what was read about what this change touches, and how far each
