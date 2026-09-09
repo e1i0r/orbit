@@ -132,13 +132,27 @@ func TestNotesLinesAllStates(t *testing.T) {
 
 	m.expandedDetail = false
 
-	// 4. A note with no attempt: the plain status, without a number.
+	// 4. A note with no attempt and no phase after it: nothing has read it
+	// yet, and saying "read by the run" over a note still waiting is how a
+	// reader comes to believe they steered a run they did not.
 	m.entries = []view.Entry{{Kind: "task.noted", Text: "one line"}}
-	plain := m.opts.Words.T("notes.read_by_run", "read by the run")
+	waiting := m.opts.Words.T("notes.waiting_for_a_phase", "the next phase reads it")
 
 	joined = strings.Join(m.notesLines(), "\n")
-	if !strings.Contains(joined, plain) || strings.Contains(joined, "read by run 0") {
-		t.Errorf("notesLines with attempt 0 = %q, want the plain status", joined)
+	if !strings.Contains(joined, waiting) || strings.Contains(joined, "read by run 0") {
+		t.Errorf("notesLines with attempt 0 = %q, want %q", joined, waiting)
+	}
+
+	// 5. The same note with a phase started after it: that phase was handed
+	// every note written since the one before it, so this one is read.
+	m.entries = []view.Entry{
+		{Kind: "task.noted", Text: "one line"},
+		{Kind: "phase.started", Phase: "implement"},
+	}
+	plain := m.opts.Words.T("notes.read_by_run", "read by the run")
+
+	if joined = strings.Join(m.notesLines(), "\n"); !strings.Contains(joined, plain) {
+		t.Errorf("notesLines after a phase started = %q, want %q", joined, plain)
 	}
 }
 

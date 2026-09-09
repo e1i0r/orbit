@@ -165,10 +165,6 @@
       "source": "{engine} cannot resume a session, so nothing was taken",
       "value": "{engine} no puede reanudar una sesión, así que no se tomó nada"
     },
-    "why.ask_not_built": {
-      "source": "orbit cannot ask an engine a question yet; take the keyboard with t and ask it there",
-      "value": "orbit todavía no puede preguntarle nada a un motor; toma el teclado con t y pregúntaselo ahí"
-    },
     "why.read_not_finished": {
       "source": "marking read needs a finished task; this one is not finished",
       "value": "marcar como leída necesita una tarea terminada; esta no lo está"
@@ -828,6 +824,10 @@
     "notes.hint_footer": {
       "source": "press 'a' to add a note · press 'c' or 't' to enter the interactive CLI",
       "value": "pulsa 'a' para agregar una nota · pulsa 'c' o 't' para entrar a la CLI interactiva"
+    },
+    "notes.waiting_for_a_phase": {
+      "source": "the next phase reads it",
+      "value": "la siguiente fase la lee"
     },
     "notes.read_by_run": {
       "source": "read by the run",
@@ -2140,6 +2140,10 @@
     "note.empty": {
       "source": "the note cannot be empty",
       "value": "la nota no puede estar vacía"
+    },
+    "note.recorded_running": {
+      "source": "note recorded for {id} — the next phase reads it",
+      "value": "nota anotada para {id} — la siguiente fase la lee"
     },
     "note.recorded": {
       "source": "note recorded for {id}",

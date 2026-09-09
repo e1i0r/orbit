@@ -31,9 +31,11 @@ func TestFOpensTheFlowsScreenFromTheBoard(t *testing.T) {
 // The width is wide because the bar drops hints from the end until what is
 // left fits, and this one and the supervisor's are at that end: on a hundred
 // column terminal with tasks on it neither is drawn and the task verbs are.
-// That order is the bar's own and is left alone here.
+// That order is the bar's own and is left alone here. It went from 180 to
+// 200 when ask stopped being refused: a verb that does something is drawn,
+// and one more chip is one more chip.
 func TestTheFlowsKeyIsOnTheBoardsBar(t *testing.T) {
-	m, _ := testModel(t, 180, 30)
+	m, _ := testModel(t, 200, 30)
 
 	bar, _, _ := m.barLayout(m.frame.Bar.W)
 	if drawn := ansi.Strip(bar); !strings.Contains(drawn, "["+m.keys.Flows.Help().Key+"]") {
