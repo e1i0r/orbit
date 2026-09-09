@@ -92,6 +92,15 @@ func serveWeb(ctx Context, args []string) error {
 		return fmt.Errorf("%s: %w", p.T("web.rescan", "look for repositories"), err)
 	}
 
+	// Refused here rather than at the first request. A binary built without
+	// `make ui` carries no window, and a server that started, printed a URL
+	// and answered every page with an error is a server that looks broken
+	// where it is only incomplete.
+	if !ui.Built() {
+		return errors.New(p.T("web.no_window",
+			"this orbit was built without the window; run `make ui` and build it again"))
+	}
+
 	files, err := ui.Files()
 	if err != nil {
 		return fmt.Errorf("%s: %w", p.T("web.built", "read the window built into orbit"), err)

@@ -4800,6 +4800,10 @@
     "verb.learn.repo": {
       "source": "which checkout it is about; the default is the one you are in",
       "value": "sobre qué copia de trabajo va; por defecto, en la que estás"
+    },
+    "web.no_window": {
+      "source": "this orbit was built without the window; run `make ui` and build it again",
+      "value": "este orbit se compiló sin la ventana; ejecuta `make ui` y vuelve a compilar"
     }
   }
 }
