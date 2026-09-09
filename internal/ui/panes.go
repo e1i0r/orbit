@@ -1,11 +1,13 @@
 package ui
 
-// The twelve detail panes: overview, flow, gates, cost, refused, timeline,
-// report, artifacts, notes, diff, impact, and thinking.
+// The detail panes, in the order the tab strip draws them. How many there
+// are is tabCount's answer and not a number written here: a count in prose
+// is a count that goes stale the first time somebody adds a pane, and this
+// one already had.
 
 import "github.com/e1i0r/orbit/internal/ui/menu"
 
-// tab is which of the twelve panes is showing.
+// tab is which pane is showing.
 type tab int
 
 const (
@@ -34,8 +36,8 @@ const (
 // paneKey returns the single keystroke that opens tab t directly.
 //
 // One function answers for every site — keyboard dispatch, mouse routing,
-// tab strip drawing, and the help overlay — so the eleven keys (1-9, 0, w)
-// never drift apart across the UI.
+// tab strip drawing, and the help overlay — so the keys never drift apart
+// across the UI.
 func paneKey(t tab) string {
 	switch t {
 	case tabOverview:
@@ -118,7 +120,7 @@ type tabName struct {
 	text string
 }
 
-// tabNames returns the twelve tabs in order.
+// tabNames returns every tab, in order.
 func (m Model) tabNames() []tabName {
 	p := m.opts.Words
 
@@ -148,11 +150,11 @@ func (m Model) tabNames() []tabName {
 	}
 }
 
-// syncPanes rebuilds all twelve panes and resizes them to the detail body region.
+// syncPanes rebuilds every pane and resizes them to the detail body region.
 func (m Model) syncPanes() Model {
 	w := max(m.frame.Body.W, 1)
 
-	// One world for the twelve panes below, and gone again on the way out:
+	// One world for the panes below, and gone again on the way out:
 	// it is a reading of this instant, and a pane asking for it at any other
 	// moment must build its own rather than draw a task that has moved on.
 	world := m.panesEnv()

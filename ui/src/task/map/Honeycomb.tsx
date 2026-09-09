@@ -20,7 +20,7 @@
 
 import { useMemo } from "react";
 import type { Cell } from "../../api";
-import { bounds, corners, place, spiral } from "./hex";
+import { bounds, corners, place, spiral, touching, type Axial } from "./hex";
 
 /** The radius of one cell, in pixels. */
 const r = 46;
@@ -35,15 +35,13 @@ interface Props {
 }
 
 export function Honeycomb({ cells, picked, onPick, onEnter }: Props) {
-  // Heaviest first, so the spiral puts the change in the middle. Ties go to
-  // the order the tree gave them, which is directories then names — stable
-  // between two readings, which a map has to be to be learnable.
-  const order = useMemo(
-    () => [...cells].sort((a, b) => (b.lines ?? 0) - (a.lines ?? 0) || (b.changed ?? 0) - (a.changed ?? 0)),
-    [cells],
-  );
-
-  const laid = useMemo(() => place(spiral(order.length), r), [order.length]);
+  // The heaviest cell takes the middle, and everything after it goes where
+  // the history says it belongs — see arrange. Two jobs, and the order they
+  // are done in is which one wins where they disagree: the change is what
+  // the reader came for, so it is never moved off the centre to make a
+  // neighbourhood tidier.
+  const order = useMemo(() => arrange(cells), [cells]);
+  const laid = useMemo(() => place(order.map((o) => o.at), r), [order]);
   const box = useMemo(() => bounds(laid, r), [laid]);
   const shape = useMemo(() => corners(r - 1.5), []);
 
@@ -51,7 +49,7 @@ export function Honeycomb({ cells, picked, onPick, onEnter }: Props) {
   // one-line fix invisible in a repository that has seen a big change, and
   // the question this answers is "where did this task go", not "how big is
   // this task compared to another".
-  const most = Math.max(...order.map((c) => c.lines ?? 0), 1);
+  const most = Math.max(...order.map((o) => o.cell.lines ?? 0), 1);
 
   if (order.length === 0) return null;
 
@@ -63,7 +61,7 @@ export function Honeycomb({ cells, picked, onPick, onEnter }: Props) {
       role="group"
       aria-label="the repository at this level"
     >
-      {order.map((cell, i) => (
+      {order.map(({ cell }, i) => (
         <Comb
           key={cell.path || cell.name}
           cell={cell}
@@ -209,4 +207,133 @@ function wrapped(name: string): string[] {
   const tail = name.slice(at);
 
   return [name.slice(0, at), tail.length > wide ? tail.slice(0, wide - 1) + "…" : tail];
+}
+
+/** Where one cell ended up. */
+interface Put {
+  cell: Cell;
+  at: Axial;
+}
+
+// arrange decides which cell goes in which seat.
+//
+// A honeycomb makes a claim a list does not: cells that touch are next to
+// each other, and a reader reads that as meaning something. Ordered by name
+// it means the alphabet, which is not a fact about the code. So the seats
+// are filled by what the repository's own history says moves together —
+// internal/record and internal/words were committed together nineteen
+// times, and on this drawing they touch.
+//
+// The seats are walked in spiral order and each is given the best remaining
+// cell, rather than each cell being given its best seat. That keeps the comb
+// solid: a cell-first pass leaves holes where a favourite seat was taken,
+// and a lattice with holes reads as a repository with gaps in it.
+//
+// It is a greedy pass and not an optimum. Six neighbours cannot hold every
+// pair a busy directory has, so what this promises is that a cell's
+// strongest surviving neighbours are ones it moves with — not that every
+// pair the history knows about is honoured on the drawing.
+function arrange(cells: Cell[]): Put[] {
+  if (cells.length === 0) return [];
+
+  // Heaviest first, so the change takes the middle seat, then by name so
+  // that two readings of an untouched level seat the same cell the same way.
+  const left = [...cells].sort(
+    (a, b) =>
+      (b.lines ?? 0) - (a.lines ?? 0) ||
+      (b.changed ?? 0) - (a.changed ?? 0) ||
+      a.name.localeCompare(b.name),
+  );
+
+  const taken = new Map<string, Cell>();
+  const out: Put[] = [];
+
+  for (const seat of spiral(cells.length)) {
+    // What is already beside this seat, to score a pick against.
+    const beside = touching(seat)
+      .map((n) => taken.get(key(n)))
+      .filter((c): c is Cell => c !== undefined);
+
+    let best = 0;
+
+    if (beside.length > 0) {
+      let strongest = -1;
+
+      left.forEach((cell, i) => {
+        const score = beside.reduce((sum, near) => sum + moves(cell, near), 0);
+        if (score > strongest) {
+          strongest = score;
+          best = i;
+        }
+      });
+    }
+
+    const [cell] = left.splice(best, 1);
+
+    taken.set(key(seat), cell);
+    out.push({ cell, at: seat });
+  }
+
+  return settle(out);
+}
+
+// settle swaps pairs of seats while that puts more of the history side by
+// side, and stops when a pass changes nothing.
+//
+// The greedy pass above fills each seat with the best cell for it at the
+// time, which is not the best arrangement: seating `words` beside `record`
+// early cost it the seat beside `cli`, and `cli`-with-`words` is the
+// strongest pair on that level. A few passes of "would these two be better
+// the other way round" find that without anything resembling a solver.
+//
+// The middle seat never moves. It holds the heaviest cell, which is what
+// the reader opened the map to find, and a neighbourhood is not worth
+// shifting the change off the centre for.
+function settle(put: Put[]): Put[] {
+  const seats = put.map((p) => p.at);
+  const cells = put.map((p) => p.cell);
+
+  // Which seats touch which, worked out once: the arithmetic does not
+  // change between passes and it is the inner loop of every score.
+  const beside = seats.map((seat) => {
+    const near = new Set(touching(seat).map(key));
+
+    return seats.flatMap((other, i) => (near.has(key(other)) ? [i] : []));
+  });
+
+  const around = (i: number, cell: Cell) =>
+    beside[i].reduce((sum, j) => sum + moves(cell, cells[j]), 0);
+
+  // Bounded, because this runs on every draw of a level. Three passes over
+  // twenty cells is a few hundred comparisons and settles in one or two;
+  // what it must never be is a loop whose length depends on the data.
+  for (let pass = 0; pass < 3; pass++) {
+    let moved = false;
+
+    for (let i = 1; i < cells.length; i++) {
+      for (let j = i + 1; j < cells.length; j++) {
+        const was = around(i, cells[i]) + around(j, cells[j]);
+        const would = around(i, cells[j]) + around(j, cells[i]);
+
+        if (would > was) {
+          [cells[i], cells[j]] = [cells[j], cells[i]];
+          moved = true;
+        }
+      }
+    }
+
+    if (!moved) break;
+  }
+
+  return cells.map((cell, i) => ({ cell, at: seats[i] }));
+}
+
+/** moves is how often the history committed these two together. */
+function moves(cell: Cell, near: Cell): number {
+  return cell.with?.find((n) => n.path === near.path)?.times ?? 0;
+}
+
+/** key is one seat, as a map key. */
+function key(at: Axial): string {
+  return `${at.q},${at.r}`;
 }

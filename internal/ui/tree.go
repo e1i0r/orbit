@@ -72,7 +72,13 @@ func treeOf(r Reader, t view.Task) tea.Cmd {
 		// nothing lit is still the answer to "what is in here".
 		changes, _ := one.WorktreeChanges(dir) //nolint:errcheck // see above
 
-		return treeMsg{id: t.ID, tree: verb.Grow(files, changes)}
+		// The neighbours are read too, so that both surfaces are handed
+		// the same tree. This pane does not draw them — a terminal has no
+		// lattice to arrange — but a tree that differed between the two
+		// would be the thing verb.Grow exists to stop.
+		near, _ := one.Neighbours(dir) //nolint:errcheck // see above
+
+		return treeMsg{id: t.ID, tree: verb.Grow(files, changes, near...)}
 	}
 }
 

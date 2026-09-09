@@ -191,8 +191,8 @@ posters:
 # ui builds the browser half and puts it where the binary embeds it from.
 #
 # `go build` reads ui/dist, so this has to have run for the binary to carry a
-# window — and dist/ is committed for the reason site/ is: a Go project that
-# needs npm to compile is a Go project that does not build.
+# window. dist/ is not committed — see ui/.gitignore — so CI runs this before
+# it vets, tests or releases, and `make check` runs it through `window`.
 ui:
 	cd ui && npm ci && npm run build
 	@# vite empties dist/ on every build, and .keep is what go:embed finds

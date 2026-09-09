@@ -159,7 +159,7 @@ var doors = map[string][]string{
 	},
 	"internal/migrate": {"migrate.go"},
 	"internal/quota":   {"billing.go", "codex.go", "quota.go", "source.go"},
-	"internal/repo":    {"cochange.go", "compare.go", "discover.go", "impact.go", "repo.go", "review.go", "workspace.go", "worktree.go", "worktree_deliver.go", "worktree_diff.go", "worktree_file.go", "worktree_tree.go"},
+	"internal/repo":    {"cochange.go", "compare.go", "discover.go", "impact.go", "repo.go", "review.go", "workspace.go", "worktree.go", "worktree_deliver.go", "worktree_diff.go", "neighbours.go", "worktree_file.go", "worktree_tree.go"},
 	// Two doors. web.go is the server and the ports built off the board;
 	// ports.go is the ones the browser reads through that the board cannot
 	// answer — what Orbit knows, what has been said to the supervisor,

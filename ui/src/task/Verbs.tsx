@@ -24,8 +24,11 @@ interface Shape {
   /** What the reader is asked to type, for the verbs that carry words.
    *  field is the name the verb takes it under, and "text" for most. */
   writes?: { placeholder: string; required: boolean; field?: string };
-  /** An extra yes-or-no the verb takes. */
-  also?: { name: string; said: string };
+  /** An extra yes-or-no the verb takes, by the name the verb declares it
+   *  under — internal/verb/every.go. A box posted under any other key is a
+   *  box the verb never sees, and it reads as the answer nobody gave.
+   *  on is what it starts as. */
+  also?: { name: string; said: string; on?: boolean };
 }
 
 // The keys are the names internal/verb declares, because they are what is
@@ -117,14 +120,17 @@ const verbs: Record<Verb, Shape> = {
     asks: (t) =>
       `Let ${t.id} do the irreversible thing it stopped in front of? It was marked critical so that a person would answer this.`,
     tone: "out",
-    also: { name: "no", said: "no — refuse it instead" },
+    // Checked is yes, and it starts checked: the button says Permit, and a
+    // box that had to be found and ticked before Permit permitted anything
+    // is a button that does the opposite of what it says.
+    also: { name: "yes", said: "yes — let it happen", on: true },
   },
   critical: {
     name: "Mark critical",
     asks: (t) =>
       `Mark ${t.id} as one that reaches something that matters? It stops and asks before anything that cannot be taken back.`,
     tone: "quiet",
-    also: { name: "off", said: "off — stop asking about this one" },
+    also: { name: "on", said: "critical — stop and ask before anything irreversible", on: true },
   },
   read: {
     name: "Mark read",
@@ -200,7 +206,7 @@ export function Verbs({ task, again }: { task: Task; again: () => void }) {
   const ask = (verb: Verb) => {
     setAsking(verb);
     setWrote("");
-    setAlso(false);
+    setAlso(verbs[verb].also?.on ?? false);
   };
 
   const press = async (verb: Verb) => {

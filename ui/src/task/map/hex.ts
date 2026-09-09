@@ -63,6 +63,11 @@ export function spiral(n: number): Axial[] {
   return out;
 }
 
+/** touching is the six coordinates around one, in lattice order. */
+export function touching(at: Axial): Axial[] {
+  return around.map((d) => ({ q: at.q + d.q, r: at.r + d.r }));
+}
+
 /** place turns axial coordinates into pixels for a hexagon of radius r. */
 export function place(cells: Axial[], r: number): Placed[] {
   const tall = Math.sqrt(3) * r;

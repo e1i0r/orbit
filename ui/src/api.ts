@@ -178,6 +178,10 @@ export interface Cell {
   changed?: number;
   /** What it wrote in them, added and deleted together. */
   lines?: number;
+  /** The siblings the repository's history moves this one with, strongest
+   *  first. It is what a honeycomb seats its cells by: a drawing whose
+   *  cells touch claims that touching means something. */
+  with?: { path: string; times: number }[];
 }
 
 export interface Coupled {

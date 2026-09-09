@@ -41,7 +41,6 @@ const (
 	webIdle  = 2 * time.Minute
 )
 
-// serveWeb runs the server until the process is stopped.
 // rescanning looks for repositories and tasks again, for as long as the
 // process lives.
 //
@@ -59,6 +58,7 @@ func rescanning(r *board.Reader) {
 	}
 }
 
+// serveWeb runs the server until the process is stopped.
 func serveWeb(ctx Context, args []string) error {
 	p := ctx.printer()
 

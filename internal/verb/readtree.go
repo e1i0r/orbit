@@ -36,6 +36,20 @@ type Cell struct {
 	// weight a map draws with: a directory of five files barely edited and
 	// one file rewritten are different things and read the same by count.
 	Lines int `json:"lines,omitempty"`
+	// With is the siblings the history moves this one with, strongest
+	// first. It is what lets a map put things that belong together side by
+	// side: a drawing whose cells touch claims that touching means
+	// something, and ordered by name it means the alphabet.
+	//
+	// Capped, because a hexagon has six neighbours and a seventh entry is a
+	// pair no lattice was ever going to honour.
+	With []Near `json:"with,omitempty"`
+}
+
+// Near is one sibling this cell moves with, and how often.
+type Near struct {
+	Path  string `json:"path"`
+	Times int    `json:"times"`
 }
 
 // mapped is the checkout as a tree, with the task's change marked on it.
@@ -64,7 +78,13 @@ func mapped(w World, in In) (Out, error) {
 	// is still the answer to "what is in here".
 	changes, _ := one.WorktreeChanges(dir) //nolint:errcheck // see above
 
-	root := Grow(files, changes)
+	// And the history, which costs one more walk of the log and buys the
+	// one thing a lattice cannot get from the paths: which cells belong
+	// beside which. A history that will not be read costs the neighbours
+	// and leaves the map standing.
+	near, _ := one.Neighbours(dir) //nolint:errcheck // see above
+
+	root := Grow(files, changes, near...)
 
 	return Out{Said: drawn(root), Saw: root}, nil
 }
@@ -97,10 +117,10 @@ func scaffolding(files []string) []string {
 func weigh(changes []repo.Change) map[string]int {
 	out := make(map[string]int, len(changes))
 	for _, c := range changes {
-		// A binary file counts as touched and weighs nothing: git counted
-		// no lines because there are none, and carrying its -1 through
-		// would make one image outweigh a rewritten package.
-		out[c.Path] = max(c.Added, 0) + max(c.Deleted, 0)
+		// Change.Lines is what a change weighs, and it is asked rather than
+		// worked out again here: a binary counts as touched and weighs
+		// nothing, and two answers to that would drift.
+		out[c.Path] = c.Lines()
 	}
 
 	return out
@@ -113,8 +133,74 @@ func weigh(changes []repo.Change) map[string]int {
 // disagree about what is in a repository. It takes the readings rather than
 // taking them itself: where a checkout is and how to ask git are the
 // caller's, and this is the rule about what the answers mean.
-func Grow(files []string, changes []repo.Change) Cell {
-	return grow(scaffolding(files), weigh(changes))
+func Grow(files []string, changes []repo.Change, near ...repo.Near) Cell {
+	root := grow(scaffolding(everything(files, changes)), weigh(changes))
+	beside(&root, sides(near))
+
+	return root
+}
+
+// everything is what git tracks, plus what the task has added and not yet
+// staged.
+//
+// `git ls-files` answers with the index, and a file an engine wrote a
+// minute ago is not in it. Built from that list alone the map dropped every
+// new file — and a phase that creates files is the ordinary case, so a task
+// whose whole change was new ones drew "this task has changed nothing"
+// beside a diff showing all of them.
+func everything(files []string, changes []repo.Change) []string {
+	known := make(map[string]bool, len(files))
+	for _, f := range files {
+		known[f] = true
+	}
+
+	out := files
+
+	for _, c := range changes {
+		if !known[c.Path] {
+			out = append(out, c.Path)
+		}
+	}
+
+	return out
+}
+
+// sides is the pairs, by the path on each end of them.
+func sides(near []repo.Near) map[string][]Near {
+	out := map[string][]Near{}
+
+	for _, n := range near {
+		out[n.A] = append(out[n.A], Near{Path: n.B, Times: n.Times})
+		out[n.B] = append(out[n.B], Near{Path: n.A, Times: n.Times})
+	}
+
+	for path := range out {
+		sort.SliceStable(out[path], func(i, j int) bool {
+			if out[path][i].Times != out[path][j].Times {
+				return out[path][i].Times > out[path][j].Times
+			}
+
+			return out[path][i].Path < out[path][j].Path
+		})
+
+		// Six, because that is how many neighbours a hexagon has. A
+		// seventh is a pair the lattice was never going to honour, and
+		// carrying it is bytes over the wire for a claim nobody can draw.
+		if len(out[path]) > 6 {
+			out[path] = out[path][:6]
+		}
+	}
+
+	return out
+}
+
+// beside hangs each cell's neighbours off it.
+func beside(at *Cell, near map[string][]Near) {
+	at.With = near[at.Path]
+
+	for i := range at.Cells {
+		beside(&at.Cells[i], near)
+	}
 }
 
 // grow builds the tree out of the paths, and sums the change upward.
@@ -155,13 +241,13 @@ func put(at *Cell, segments []string, path string, lines int, touched bool) {
 	// The path of a directory is the path of the file that made it, cut at
 	// this depth: that is what every other reading keys a directory by, and
 	// working it out from the segments in hand cannot drift from it.
-	cut := strings.Join(strings.Split(path, "/")[:depthOf(at, path, name)], "/")
+	cut := strings.Join(strings.Split(path, "/")[:depthOf(at)], "/")
 	at.Cells = append(at.Cells, Cell{Name: name, Path: cut})
 	put(&at.Cells[len(at.Cells)-1], segments[1:], path, lines, touched)
 }
 
-// depthOf is how many segments of path this new cell stands at.
-func depthOf(at *Cell, path, name string) int {
+// depthOf is how many segments deep a child of this cell stands.
+func depthOf(at *Cell) int {
 	if at.Path == "" {
 		return 1
 	}
