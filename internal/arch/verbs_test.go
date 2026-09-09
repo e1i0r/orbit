@@ -192,6 +192,8 @@ func windowOffers(t *testing.T) map[string]bool {
 		"list":      "screenList",
 		"show":      "key.open",
 		"history":   "tab.history",
+		"tree":      "tab.map",
+		"compare":   "compare.running",
 		"flow":      "tab.flow",
 		"diff":      "tab.diff",
 		"impact":    "tab.impact",

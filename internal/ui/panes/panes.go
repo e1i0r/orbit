@@ -23,6 +23,7 @@ import (
 	"github.com/e1i0r/orbit/internal/ui/layout"
 	"github.com/e1i0r/orbit/internal/ui/prose"
 	"github.com/e1i0r/orbit/internal/ui/theme"
+	"github.com/e1i0r/orbit/internal/verb"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -125,6 +126,12 @@ type Env struct {
 	// a reader a repository has no coupling when what happened is that git
 	// timed out.
 	Reach Reach
+
+	// Shape is the repository as a tree, with this task's change marked on
+	// it — what the map pane draws. Read, Asking and Failed draw the same
+	// distinction Reach's do: nothing found and nothing read yet are
+	// different facts.
+	Shape Shape
 
 	// Said is the window's word for an error. The panes are handed
 	// sentences rather than errors wherever there is one to hand over; this
@@ -248,6 +255,19 @@ func (e Env) read(name string) (File, bool) {
 	}
 
 	return e.Read(name)
+}
+
+// Shape is the checkout as a tree, and how far reading it got.
+//
+// The three states around the answer are Reach's, for the same reason:
+// nothing found and nothing read yet are different facts, and a pane that
+// folded them into one would tell a reader a task changed nothing when what
+// happened is that git has not answered yet.
+type Shape struct {
+	Tree   verb.Cell
+	Read   bool
+	Asking bool
+	Failed string
 }
 
 // Reach is what was read about what this change touches, and how far each

@@ -21,6 +21,7 @@ const screens = [
     items: [
       { id: "engines", name: "Engines" },
       { id: "repos", name: "Repositories" },
+      { id: "settings", name: "Settings" },
     ],
   },
 ];

@@ -21,14 +21,20 @@ interface Shape {
   name: string;
   asks: (t: Task) => string;
   tone: "go" | "quiet" | "bad" | "out";
-  /** What the reader is asked to type, for the verbs that carry words. */
-  writes?: { placeholder: string; required: boolean };
+  /** What the reader is asked to type, for the verbs that carry words.
+   *  field is the name the verb takes it under, and "text" for most. */
+  writes?: { placeholder: string; required: boolean; field?: string };
   /** An extra yes-or-no the verb takes. */
   also?: { name: string; said: string };
 }
 
+// The keys are the names internal/verb declares, because they are what is
+// posted: the page asks for a verb by name and the server looks it up in the
+// one vocabulary. A key that is not a declared verb is a button that comes
+// back with "that is not something Orbit can be asked for" — which is what
+// `start` did after the verb was named `run`.
 const verbs: Record<Verb, Shape> = {
-  start: {
+  run: {
     name: "Start",
     asks: (t) =>
       `Run ${t.id} through the ${t.flow || "default"} flow? This starts an engine and spends money.`,
@@ -106,6 +112,39 @@ const verbs: Record<Verb, Shape> = {
       `Accept ${(t.pending ?? []).join(", ")} for ${t.id}? The next run goes past the dependency gate.`,
     tone: "go",
   },
+  permit: {
+    name: "Permit",
+    asks: (t) =>
+      `Let ${t.id} do the irreversible thing it stopped in front of? It was marked critical so that a person would answer this.`,
+    tone: "out",
+    also: { name: "no", said: "no — refuse it instead" },
+  },
+  critical: {
+    name: "Mark critical",
+    asks: (t) =>
+      `Mark ${t.id} as one that reaches something that matters? It stops and asks before anything that cannot be taken back.`,
+    tone: "quiet",
+    also: { name: "off", said: "off — stop asking about this one" },
+  },
+  read: {
+    name: "Mark read",
+    asks: (t) =>
+      `Mark ${t.id} as looked at? The board stops counting it against the unread cap that holds new runs back.`,
+    tone: "quiet",
+  },
+  join: {
+    name: "Join a repository",
+    asks: (t) =>
+      `Open a checkout of another repository for ${t.id}, so its work can reach into both. Name it as \`orbit repos\` lists it.`,
+    tone: "quiet",
+    writes: { placeholder: "payments", required: true, field: "name" },
+  },
+  delete: {
+    name: "Delete",
+    asks: (t) =>
+      `Remove ${t.id} and everything written about it — its record, its notes, its worktree? Nothing here brings it back.`,
+    tone: "bad",
+  },
 };
 
 const tones = {
@@ -126,7 +165,7 @@ const tones = {
 export function offered(task: Task): Verb[] {
   const out: Verb[] = task.held
     ? ["continue", "skip", "pause", "resume", "cancel"]
-    : ["start"];
+    : ["run"];
 
   if ((task.pending ?? []).length > 0) out.push("approve");
 
@@ -134,7 +173,21 @@ export function offered(task: Task): Verb[] {
   // makes sense — there is no pull request yet, there is one already — is
   // the command's own question, and it answers in its own words; a second
   // opinion here would be a rule in two places that would drift.
-  return [...out, "direct", "note", "requeue", "pr", "merge", "close-pr"];
+  // Delivering is offered whatever the task is doing. Which of the three
+  // makes sense — there is no pull request yet, there is one already — is
+  // the command's own question, and it answers in its own words; a second
+  // opinion here would be a rule in two places that would drift.
+  //
+  // Critical, Join and Delete are offered whatever it is doing too, and for
+  // the same reason the recorded three are: none of them is about the run.
+  //
+  // Permit, Read, Critical, Join and Delete are offered on the same terms
+  // and for the same reason. Whether there is anything waiting to be
+  // permitted, or anything to mark read, is the verb's own question and it
+  // answers in its own words — a second rule here would be the one that
+  // drifts.
+  return [...out, "direct", "note", "requeue", "pr", "merge", "close-pr",
+    "permit", "read", "critical", "join", "delete"];
 }
 
 export function Verbs({ task, again }: { task: Task; again: () => void }) {
@@ -151,7 +204,21 @@ export function Verbs({ task, again }: { task: Task; again: () => void }) {
   };
 
   const press = async (verb: Verb) => {
-    const says: Says = { text: wrote.trim() || undefined, restart: also || undefined };
+    const shape = verbs[verb];
+
+    // Every verb takes its words under the name it declares them by, and
+    // most of them call it "text". A body keyed by what this page felt like
+    // calling it is a body the verb reads as empty — and an empty note is a
+    // note the next phase reads as nothing.
+    const says: Says = {};
+
+    if (shape.writes && wrote.trim() !== "") {
+      says[shape.writes.field ?? "text"] = wrote.trim();
+    }
+
+    if (shape.also) {
+      says[shape.also.name] = also;
+    }
 
     setAsking(undefined);
     setBusy(verb);

@@ -22,6 +22,7 @@ const (
 	tabImpact
 	tabThinking
 	tabHistory
+	tabMap
 	tabCount
 )
 
@@ -64,6 +65,12 @@ func paneKey(t tab) string {
 	case tabHistory:
 		// y, because h is the key that hands a paused run back.
 		return "y"
+	case tabMap:
+		// A comma, because the letters are gone. m is the menu, M the
+		// engine knobs, v the raw switch; this pane arrived after all
+		// three, and taking a key a reader already knows to give the
+		// newcomer a nicer one is the worst trade in a keyboard.
+		return ","
 	default:
 		return ""
 	}
@@ -98,6 +105,8 @@ func keyToPane(k string) (tab, bool) {
 		return tabThinking, true
 	case "y":
 		return tabHistory, true
+	case ",":
+		return tabMap, true
 	default:
 		return 0, false
 	}
@@ -133,6 +142,9 @@ func (m Model) tabNames() []tabName {
 		// is every word said about the task, across every program that has
 		// walked it.
 		{tabHistory, p.T("tab.history", "history")},
+		// Beside the history, because it is the other pane that is about
+		// the repository rather than about this run.
+		{tabMap, p.T("tab.map", "map")},
 	}
 }
 
@@ -150,6 +162,7 @@ func (m Model) syncPanes() Model {
 	report, reportSeams := m.reportRows()
 	thinking, thinkingHeads := m.thinkingRows()
 	history, historyHeads := m.historyRows()
+	shape := m.mapRows()
 	flowTree, flowHeads := m.flowRows()
 	gates, gateHeads := m.gatesRows()
 	refused, refusedHeads := m.refusedRows()
@@ -178,6 +191,7 @@ func (m Model) syncPanes() Model {
 		tabImpact:    m.impactRows(),
 		tabThinking:  thinking,
 		tabHistory:   history,
+		tabMap:       shape,
 	}
 	for i := range m.panes {
 		// Sized to the rows it is drawn into, so that the last page of a
@@ -229,6 +243,8 @@ func (m Model) paneMenu() []menu.Pane {
 		tabThinking: p.T("tab_desc.thinking", "extended model thinking, chain of thought and reasoning"),
 		tabHistory: p.T("tab_desc.history",
 			"every word said about this task, in whichever program it was said"),
+		tabMap: p.T("tab_desc.map",
+			"the repository as a tree, lit where this task changed something"),
 	}
 
 	out := make([]menu.Pane, 0, tabCount)

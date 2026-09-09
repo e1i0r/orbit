@@ -142,10 +142,19 @@ func spoken(_ context.Context, w World, in In) (Out, error) {
 // learnt writes down something true about the code, so the next run against
 // it is told before it starts.
 func learnt(w World, in In) (Out, error) {
+	// The repository the reader named, then the one they are in. A surface
+	// with no working directory — a browser tab, a tool call — has only the
+	// first, and a fact about no repository at all is refused by knowledge
+	// itself rather than filed somewhere nobody will read it.
+	where := in.Arg("repo")
+	if where == "" {
+		where = in.Repo
+	}
+
 	fact := knowledge.Fact{
 		Phrase: strings.TrimSpace(in.Arg("text")),
 		Source: knowledge.Human,
-		Scope:  knowledge.Scope{Kind: knowledge.Repo, Repo: in.Repo},
+		Scope:  knowledge.Scope{Kind: knowledge.Repo, Repo: where},
 	}
 
 	if err := w.Learn(fact); err != nil {
@@ -222,6 +231,17 @@ func marked_(w World, in In) (Out, error) {
 // reconciled closes the record of a run whose process is gone, so a task
 // does not read as running for ever because something was killed.
 func reconciled(w World, in In) (Out, error) {
+	// A task by name, or the one the caller was already about. Reconcile is
+	// a repository's question — `orbit reconcile` sweeps every task under a
+	// root — and naming one is the narrowing, not the whole of it.
+	if id := in.Arg("task"); id != "" {
+		in.Task = id
+	}
+
+	if in.Task == "" {
+		return swept(w, in)
+	}
+
 	t, err := found(w, in)
 	if err != nil {
 		return Out{}, err
@@ -237,6 +257,45 @@ func reconciled(w World, in In) (Out, error) {
 	}
 
 	return Out{Said: t.ID + " was left open by a run that is gone, and is closed now"}, nil
+}
+
+// swept closes every record in the repository whose run is gone.
+//
+// One damaged task does not stop the sweep: the reader asked what is still
+// open, and answering for the eleven that could be read is worth more than
+// refusing because the twelfth could not.
+func swept(w World, in In) (Out, error) {
+	_, r, err := w.Find("", in.Repo)
+	if err != nil {
+		return Out{}, err
+	}
+
+	ids, err := task.List(w.Store(), r)
+	if err != nil {
+		return Out{}, err
+	}
+
+	var closed []string
+
+	for _, id := range ids {
+		t, err := task.Load(w.Store(), r, id)
+		if err != nil {
+			continue
+		}
+
+		if changed, err := task.Reconcile(w.Store(), t); err == nil && changed {
+			closed = append(closed, id)
+		}
+	}
+
+	if len(closed) == 0 {
+		return Out{Said: "every run here is accounted for"}, nil
+	}
+
+	return Out{
+		Said: strings.Join(closed, ", ") + " were left open by runs that are gone, and are closed now",
+		Of:   closed,
+	}, nil
 }
 
 // deleted removes a task and everything written about it.

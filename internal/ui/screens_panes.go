@@ -50,6 +50,7 @@ func (m Model) panesEnv() panes.Env {
 		FilesFailed: m.errSaid(m.filesErr),
 		Read:        m.fileHeld,
 		Reach:       m.reading(),
+		Shape:       m.shaping(),
 		Said:        m.errSaid,
 		Spinner:     m.spinner(theme.Live),
 		Dials:       m.taskDials(t),
@@ -282,8 +283,21 @@ func (m Model) reading() panes.Reach {
 	return out
 }
 
+// shaping is the repository as a tree, in the words the map pane draws it in.
+func (m Model) shaping() panes.Shape {
+	return panes.Shape{
+		Tree:   m.shape.tree,
+		Read:   m.shape.known,
+		Asking: m.shape.asking,
+		Failed: m.errSaid(m.shape.err),
+	}
+}
+
 // impactRows is what this change reaches beyond the files it touched.
 func (m Model) impactRows() []string { return panes.Impact(m.paneEnv(tabImpact)) }
+
+// mapRows is the repository as a tree, lit where this task changed it.
+func (m Model) mapRows() []string { return panes.Map(m.paneEnv(tabMap)) }
 
 // impactMark is the count beside the impact tab's name.
 //

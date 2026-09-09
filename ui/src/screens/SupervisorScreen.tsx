@@ -10,6 +10,7 @@
 // list of sentences.
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Undo2 } from "lucide-react";
 import { api, type Chat, type Said } from "../api";
 import { Empty } from "../parts/Empty";
 
@@ -27,7 +28,15 @@ export function SupervisorScreen() {
   const [read, setRead] = useState(false);
   const [failed, setFailed] = useState<string>();
   const [at, setAt] = useState<string>();
+  const [wrote, setWrote] = useState("");
+  const [sending, setSending] = useState(false);
+  const [refused, setRefused] = useState<string>();
   const foot = useRef<HTMLDivElement>(null);
+
+  // read is a whole re-read of the thread, which is what a line said or
+  // taken back asks for: the record decides what the thread is, and a page
+  // that patched its own copy would be a second opinion about it.
+  const [again, setAgain] = useState(0);
 
   useEffect(() => {
     let stale = false;
@@ -47,7 +56,7 @@ export function SupervisorScreen() {
     return () => {
       stale = true;
     };
-  }, []);
+  }, [again]);
 
   // Every conversation the record lists, and — when there are turns that
   // belong to none of them — one more for those. Conversations were given
@@ -88,6 +97,38 @@ export function SupervisorScreen() {
     foot.current?.scrollIntoView({ block: "end" });
   }, [turns]);
 
+  const say = async () => {
+    const text = wrote.trim();
+    if (text === "" || sending) return;
+
+    setSending(true);
+    setRefused(undefined);
+
+    try {
+      await api.did("say", { text });
+      setWrote("");
+      setAgain((n) => n + 1);
+    } catch (e) {
+      setRefused((e as Error).message);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  // The line is pointed at by its number in the listing, which is what the
+  // record can be pointed at by: a turn has no id, and the thread only ever
+  // grows at the end. `orbit retract` reads it back the same way.
+  const takeBack = async (n: number) => {
+    setRefused(undefined);
+
+    try {
+      await api.did("retract", { line: String(n) });
+      setAgain((k) => k + 1);
+    } catch (e) {
+      setRefused((e as Error).message);
+    }
+  };
+
   if (failed) return <p className="text-xs text-bad">{failed}</p>;
   if (!chats) return <p className="text-xs text-aside">Reading the thread…</p>;
 
@@ -100,12 +141,46 @@ export function SupervisorScreen() {
     );
   }
 
+  const box = (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-end gap-1.5">
+        <textarea
+          value={wrote}
+          onChange={(e) => setWrote(e.target.value)}
+          onKeyDown={(e) => {
+            // Enter says it and shift-enter breaks the line, which is what
+            // every other box a person types into does.
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              void say();
+            }
+          }}
+          rows={2}
+          placeholder="Ask the supervisor something, or tell it what matters."
+          className="min-w-0 flex-1 resize-y rounded border border-edge bg-well px-2 py-1.5 text-xs text-said outline-none placeholder:text-faint focus:border-accent/50"
+        />
+        <button
+          onClick={() => void say()}
+          disabled={sending || wrote.trim() === ""}
+          className="shrink-0 rounded border border-accent/40 bg-accent/10 px-2.5 py-1.5 text-[11px] text-accent transition-colors hover:bg-accent/20 disabled:opacity-40"
+        >
+          {sending ? "…" : "Say"}
+        </button>
+      </div>
+
+      {refused && <p className="text-[11px] text-bad">{refused}</p>}
+    </div>
+  );
+
   if (said.length === 0) {
     return (
-      <Empty
-        said="Nobody has spoken to the supervisor yet"
-        next="orbit say asks it something, and it answers here with what it can see of the board."
-      />
+      <div className="flex max-w-[1000px] flex-col gap-3">
+        <Empty
+          said="Nobody has spoken to the supervisor yet"
+          next="Say the first thing here, or run orbit say. It answers with what it can see of the board."
+        />
+        {box}
+      </div>
     );
   }
 
@@ -130,16 +205,32 @@ export function SupervisorScreen() {
 
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         {turns.map((turn, i) => (
-          <Turn key={i} said={turn} />
+          <Turn
+            key={i}
+            said={turn}
+            // The number the record answers to, which is the position in the
+            // whole thread and not in the conversation being shown.
+            line={said.indexOf(turn) + 1}
+            takeBack={takeBack}
+          />
         ))}
         <div ref={foot} />
+        {box}
       </div>
     </div>
   );
 }
 
 // Turn is one thing said: who, when, and the words.
-function Turn({ said }: { said: Said }) {
+function Turn({
+  said,
+  line,
+  takeBack,
+}: {
+  said: Said;
+  line: number;
+  takeBack: (n: number) => void;
+}) {
   const person = people.has((said.by ?? "").toLowerCase());
 
   return (
@@ -158,6 +249,19 @@ function Turn({ said }: { said: Said }) {
         <time className="ml-auto shrink-0 text-[10px] text-faint tabular-nums">
           {when(said.at)}
         </time>
+
+        {/* Only what a person said. Taking back an engine's answer would be
+            editing the record of what it told you, which is the one thing
+            this thread is for keeping. */}
+        {person && (
+          <button
+            onClick={() => takeBack(line)}
+            title={`Take back line ${line}`}
+            className="shrink-0 text-faint transition-colors hover:text-bad"
+          >
+            <Undo2 className="size-3" />
+          </button>
+        )}
       </header>
 
       <p className="mt-1 max-w-[95ch] text-xs whitespace-pre-wrap text-aside">{said.text}</p>

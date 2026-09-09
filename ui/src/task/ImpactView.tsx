@@ -9,10 +9,11 @@
 // Each section says what it is before it says what it found: a list of
 // filenames under a heading nobody understands is a list nobody acts on.
 
-import type { Contract, Coupled, Impact } from "../api";
+import { useState } from "react";
+import { api, type Contract, type Coupled, type Did, type Impact, type Side } from "../api";
 import { Empty } from "../parts/Empty";
 
-export function ImpactView({ impact }: { impact?: Impact }) {
+export function ImpactView({ impact, task }: { impact?: Impact; task: string }) {
   if (!impact) return <p className="text-xs text-aside">Reading the history…</p>;
 
   if (impact.missing) {
@@ -37,10 +38,6 @@ export function ImpactView({ impact }: { impact?: Impact }) {
   const contracts = impact.contracts ?? [];
   const delta = impact.delta;
 
-  if (changed.length === 0 && !delta) {
-    return <Empty said="This task changed no files, so there is nothing to weigh" />;
-  }
-
   return (
     <div className="flex flex-col gap-4">
       <p className="text-[11px] text-faint">
@@ -53,39 +50,70 @@ export function ImpactView({ impact }: { impact?: Impact }) {
         name="What usually comes along"
         about="Files this repository has committed together with the ones this task changed, and that it did not touch this time. It is what the history does, not a rule — a file left out on purpose is the normal case."
       >
-        {coupled.length === 0 ? (
-          <p className="text-[11px] text-ok">
-            Nothing else follows these files often enough to mention.
-          </p>
-        ) : (
+        {coupled.length > 0 ? (
           <Coupling changed={changed} coupled={coupled} />
+        ) : changed.length === 0 ? (
+          <Nothing said="This task has changed no files yet, so there is nothing to follow." />
+        ) : impact.commits < 20 ? (
+          <Nothing
+            said={`This repository has ${impact.commits} commits behind it. The history has not seen enough of these files together to say anything worth acting on.`}
+          />
+        ) : (
+          <Nothing said="Nothing else follows these files often enough to mention." good />
         )}
       </Section>
 
-      {contracts.length > 0 && (
-        <Section
-          name="What those tests say they hold"
-          about="The names of the tests in the files above, read as sentences. Nothing here was run: it is what somebody wrote down that the code guarantees."
-        >
+      <Section
+        name="What those tests say they hold"
+        about="The names of the tests in the files above, read as sentences. Nothing here was run: it is what somebody wrote down that the code guarantees."
+      >
+        {contracts.length > 0 ? (
           <Contracts contracts={contracts} />
-        </Section>
-      )}
+        ) : (
+          <Nothing
+            said={
+              changed.length === 0
+                ? "This task has changed no files yet."
+                : "None of the files this task changed is a test, so there is no sentence here to read."
+            }
+          />
+        )}
+      </Section>
 
-      {delta && (
-        <Section
-          name="What the agent says it did"
-          about="The engine's own account of what this change asks of its callers and what it now promises them. Nobody verified it — no command can — and the last part is the only place a rejected approach is written down."
-        >
+      <Section
+        name="What the agent says it did"
+        about="The engine's own account of what this change asks of its callers and what it now promises them. Nobody verified it — no command can — and the last part is the only place a rejected approach is written down."
+      >
+        {delta ? (
           <div className="grid gap-3 sm:grid-cols-2">
             <Listed name="Callers must now" said={delta.needs} />
             <Listed name="It now holds" said={delta.guarantees} />
             <Listed name="It took for granted" said={delta.assumes} />
             <Listed name="Considered and not taken" said={delta.instead} />
           </div>
-        </Section>
-      )}
+        ) : (
+          <Nothing said="No phase of this task has written one. The engine writes it at the end of a phase that changed something, so it lands here on the next run." />
+        )}
+      </Section>
+
+      <Section
+        name="What the checks say on both sides"
+        about="The flow's own gates, run once on the base and once on this work. It is the only part of this page that was run rather than read — which is why it is asked for rather than fetched: it checks out the base and runs somebody's test suite twice."
+      >
+        <Sides task={task} />
+      </Section>
     </div>
   );
+}
+
+// Nothing is a finding that is not there, and why.
+//
+// Never an absent section. A claim that disappears when it has nothing to
+// say is a claim the reader never learns exists, and these three are the
+// most valuable things this page knows — a reader who has not seen the
+// heading cannot go looking for the data that would fill it.
+function Nothing({ said, good }: { said: string; good?: boolean }) {
+  return <p className={`text-[11px] ${good ? "text-ok" : "text-faint"}`}>{said}</p>;
 }
 
 // Coupling groups what follows under the changed file it follows, because
@@ -199,6 +227,76 @@ function Listed({ name, said }: { name: string; said?: string[] }) {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+// Sides is the one section with a button, because it is the one thing on
+// this page that has to be run rather than read.
+//
+// It is not fetched with the rest. Checking out the base and running a test
+// suite twice takes minutes and executes whatever the flow's gates say, and
+// something that costs that much is asked for on purpose — never by a page
+// that happened to be refreshed.
+function Sides({ task }: { task: string }) {
+  const [running, setRunning] = useState(false);
+  const [got, setGot] = useState<Did>();
+  const [failed, setFailed] = useState<string>();
+
+  const run = () => {
+    setRunning(true);
+    setFailed(undefined);
+
+    api
+      .do(task, "compare")
+      .then(setGot)
+      .catch((e: Error) => setFailed(e.message))
+      .finally(() => setRunning(false));
+  };
+
+  const sides = (got?.saw as Side[] | undefined) ?? [];
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <button
+          onClick={run}
+          disabled={running}
+          className="rounded border border-accent/40 bg-accent/10 px-2 py-0.5 text-[11px] text-accent transition-colors hover:bg-accent/20 disabled:opacity-50"
+        >
+          {running ? "Running on both sides…" : got ? "Run again" : "Run the checks"}
+        </button>
+
+        {running && (
+          <span className="text-[11px] text-faint">
+            The base is checked out and each gate runs twice. This takes as long as your suite does.
+          </span>
+        )}
+      </div>
+
+      {failed && <p className="text-[11px] text-bad">{failed}</p>}
+
+      {got && sides.length === 0 && <Nothing said={got.said} />}
+
+      {sides.length > 0 && (
+        <ul className="flex flex-col gap-1">
+          {sides.map((one) => (
+            <li key={one.name} className="flex items-baseline gap-2">
+              <span
+                className={`w-16 shrink-0 text-[10px] tracking-[0.06em] uppercase ${
+                  one.broke ? "text-bad" : one.fixed ? "text-ok" : "text-faint"
+                }`}
+              >
+                {one.broke ? "broke" : one.fixed ? "fixed" : one.base.failed || one.now.failed ? "no answer" : "same"}
+              </span>
+              <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-said">{one.name}</span>
+              <span className="shrink-0 font-mono text-[10px] text-faint tabular-nums">
+                {one.base.failed || one.now.failed ? "—" : `${one.base.exit} → ${one.now.exit}`}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

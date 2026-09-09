@@ -274,10 +274,10 @@ type Model struct {
 	collapsedFiles    map[string]bool
 	diffFilePicker    bool
 	diffFileCursor    int
-	// weigh is the impact pane: what the history says this change reaches,
-	// and the flow's own checks run on both sides of it. Its shape is in
-	// impact.go, beside what reads it.
+	// weigh is the impact pane and shape the map pane, both declared beside
+	// what reads them: impact.go and tree.go.
 	weigh weighed
+	shape mapped
 
 	// following is whether the log tab is taking every new entry as it
 	// arrives. It is armed when the view opens and released the moment the
