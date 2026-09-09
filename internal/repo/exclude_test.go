@@ -17,6 +17,7 @@ func worktreeOf(t *testing.T) (Repo, string) {
 
 	dir := t.TempDir()
 	makeRepo(t, dir, "main", "")
+	signs(t, dir)
 
 	r := Repo{Path: dir, Base: "main"}
 
@@ -26,6 +27,20 @@ func worktreeOf(t *testing.T) (Repo, string) {
 	}
 
 	return r, wt
+}
+
+// signs gives the repository an author, which the machine running the test
+// may not have. makeRepo commits through an environment of its own; these
+// tests commit through Orbit's own git runner, which carries the machine's
+// config and nothing else, and CI's git has no identity in it at all.
+func signs(t *testing.T, dir string) {
+	t.Helper()
+
+	for _, kv := range [][2]string{{"user.email", "t@t"}, {"user.name", "t"}} {
+		if _, err := git(dir, "config", kv[0], kv[1]); err != nil {
+			t.Fatalf("set %s: %v", kv[0], err)
+		}
+	}
 }
 
 // wrote puts a file in a worktree, making the directories it needs.
@@ -100,13 +115,14 @@ func TestAWorktreeMadeBeforeTheExcludeIsCleanedAnyway(t *testing.T) {
 	}
 }
 
-// TestARepositoryOfItsOwnorbitDirKeepsIt. An exclude says nothing about a
+// TestARepositoryOfItsOwnOrbitDirKeepsIt. An exclude says nothing about a
 // path git already tracks, and the unstaging is written to leave those
 // alone: a project that keeps its own .orbit/ commits changes to it like any
 // other file.
-func TestARepositoryOfItsOwnorbitDirKeepsIt(t *testing.T) {
+func TestARepositoryOfItsOwnOrbitDirKeepsIt(t *testing.T) {
 	dir := t.TempDir()
 	makeRepo(t, dir, "main", "")
+	signs(t, dir)
 
 	// Tracked before any task ever ran, which is what makes it the
 	// project's file rather than one of Orbit's copies.
