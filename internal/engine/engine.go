@@ -12,6 +12,15 @@ import (
 	"time"
 )
 
+// SupervisorVar carries the name of the engine a supervisor is running on
+// into everything that supervisor starts.
+//
+// It is put in Request.Env by internal/supervisor and read by internal/task,
+// which cannot see each other by design — a supervisor acts on tasks through
+// the front doors and never from inside — so the one name they both have to
+// spell is spelled once, here, beside the field that carries it.
+const SupervisorVar = "ORBIT_SUPERVISOR_ENGINE"
+
 // Request is everything an engine needs for one phase.
 type Request struct {
 	Prompt   string
