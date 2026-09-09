@@ -67,7 +67,7 @@ func TestASessionsTurnsGoIntoTheTaskItWasOpenedOn(t *testing.T) {
 		return `{"type":"` + kind + `","timestamp":"` + at + `","message":{"content":` + content + `}}` + "\n"
 	}
 
-	body := said("user", `"`+openContext(task)+`"`) +
+	body := said("user", `"`+openContext(task, "")+`"`) +
 		said("user", `"the review gate keeps failing"`) +
 		said("assistant", `[{"type":"text","text":"it is the line ceiling"}]`)
 

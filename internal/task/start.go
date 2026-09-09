@@ -51,6 +51,18 @@ import (
 // the same thing with it — the window draws the task as running again, and
 // mcp answers "task X is running again" — over a run that never began.
 func Start(s *store.Store, t Task, flowName string, unread int) (int, error) {
+	return StartWith(s, t, flowName, "", unread)
+}
+
+// StartWith is Start, with the phases pointed at one engine rather than at
+// the ones the flow names.
+//
+// It is a second door and not a fifth parameter on Start because the two
+// are different acts. Start runs the task as it was written; this runs it
+// with somebody else at the controls, which happens when the engine the
+// flow names cannot run — and the record says which, because phase.started
+// carries the engine that actually ran.
+func StartWith(s *store.Store, t Task, flowName, engineName string, unread int) (int, error) {
 	holder, alive, err := Alive(s, t)
 	if err != nil {
 		return 0, err
@@ -74,7 +86,7 @@ func Start(s *store.Store, t Task, flowName string, unread int) (int, error) {
 		return 0, fmt.Errorf("find the orbit binary to start task %s: %w", t.ID, err)
 	}
 
-	cmd := runCommand(exe, s.Root(), t, flowName)
+	cmd := runCommand(exe, s.Root(), t, flowName, engineName)
 	if err := cmd.Start(); err != nil {
 		return 0, fmt.Errorf("start a run of task %s: %w", t.ID, err)
 	}
@@ -103,10 +115,17 @@ func Start(s *store.Store, t Task, flowName string, unread int) (int, error) {
 // run` open the current directory and hand the run whatever repository the
 // window happens to be sitting in. The run reads the flag the same way, so
 // the absence is the answer.
-func runCommand(exe, root string, t Task, flowName string) *exec.Cmd {
+func runCommand(exe, root string, t Task, flowName, engineName string) *exec.Cmd {
 	args := []string{"run"}
 	if t.Repo.Path != "" {
 		args = append(args, "-repo", t.Repo.Path)
+	}
+
+	// The engine is passed only when one was named. An empty -engine would
+	// be a flag that means "the flow's own", which is what its absence
+	// already means, and one more thing for `orbit run` to interpret.
+	if engineName != "" {
+		args = append(args, "-engine", engineName)
 	}
 
 	args = append(args, "-flow", flowName, t.ID)

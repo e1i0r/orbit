@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/e1i0r/orbit/internal/ui/point"
@@ -48,6 +49,24 @@ func TestHitDetailAndTabs(t *testing.T) {
 	}
 }
 
+// drawnAt is where a tab starts in the strip, in cells.
+//
+// In cells and not in bytes, which is what strings.Index answers. A strip
+// narrow enough to cut its names carries an ellipsis, and one of those is
+// three bytes and one cell: measured in bytes, every tab after the first cut
+// one reads as two cells further right than it is. The comparison below is
+// against a cell position, so it has to be a cell position — otherwise this
+// test fails on a strip that is correct, and would pass on one that is two
+// cells out.
+func drawnAt(strip, tag string) int {
+	before, _, found := strings.Cut(strip, tag)
+	if !found {
+		return -1
+	}
+
+	return lipgloss.Width(before)
+}
+
 // TestEveryTabIsWhereTheStripDrewIt. A click is answered from placeTabs and
 // the strip is drawn by tabStrip, so the two agreeing is the whole of whether
 // pressing a tab opens the one under the pointer. They agree by both walking
@@ -66,7 +85,7 @@ func TestEveryTabIsWhereTheStripDrewIt(t *testing.T) {
 	}
 
 	for i, p := range placed {
-		at := strings.Index(strip, tags[i].text)
+		at := drawnAt(strip, tags[i].text)
 		if at != p.x {
 			t.Errorf("%q is drawn at cell %d and clicked at %d", tags[i].text, at, p.x)
 		}

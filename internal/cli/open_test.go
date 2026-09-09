@@ -190,14 +190,20 @@ func TestOpenContextNamesTheTaskAndSaysTheToolsAreThere(t *testing.T) {
 		Title:    "Retry the webhook on 5xx",
 		Band:     view.NeedsYou,
 		Phase:    "review",
-	})
-	for _, want := range []string{"PAY-1", "payments", "Retry the webhook on 5xx", "needs you", "review", "orbit_inspect_task", "orbit_add_note"} {
+	}, "/state/tasks/PAY-1/history.md")
+	for _, want := range []string{
+		"PAY-1", "payments", "Retry the webhook on 5xx", "needs you", "review",
+		"orbit_inspect_task", "orbit_add_note",
+		// And where the conversation so far is, which is what carries a
+		// task from one engine to the next.
+		"/state/tasks/PAY-1/history.md",
+	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("the session is not told %q:\n%s", want, got)
 		}
 	}
 
-	if openContext(view.Task{}) != "" {
+	if openContext(view.Task{}, "") != "" {
 		t.Error("a session opened on no task is told about one anyway")
 	}
 }

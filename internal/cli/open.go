@@ -32,7 +32,22 @@ import (
 // is.
 func openPort(s *store.Store, r *board.Reader) func(t view.Task, engineName, dir string) (*exec.Cmd, error) {
 	return func(t view.Task, engineName, dir string) (*exec.Cmd, error) {
-		cmd, err := openCommand(engineName, openDir(r, t, dir), openContext(t))
+		// The conversation so far is written out before the terminal is
+		// handed over, and the session is told where it is. This is what
+		// carries a task across programs: everything said to the engine
+		// that ran out of quota is in one file, and whichever one opens
+		// next can read it. It is refreshed here rather than kept up to
+		// date, because here is the moment something is about to read it.
+		//
+		// A file that could not be written is not a reason to refuse the
+		// session: the record is still there and the MCP server still
+		// reads it, so the sentence simply does not mention a file.
+		where, historyErr := task.WriteHistory(s, subject(t))
+		if historyErr != nil {
+			logger.Error("cli/open", "the history of %s was not written: %v", t.ID, historyErr)
+		}
+
+		cmd, err := openCommand(engineName, openDir(r, t, dir), openContext(t, where))
 		if err != nil {
 			return nil, err
 		}
@@ -214,7 +229,7 @@ func openHead(t view.Task) string {
 // It names the task and says the tools are there, and stops. Anything more
 // would be this file deciding what the reader wants done, which is the one
 // thing pressing `c` says they are about to decide themselves.
-func openContext(t view.Task) string {
+func openContext(t view.Task, history string) string {
 	if t.ID == "" {
 		return ""
 	}
@@ -234,6 +249,12 @@ func openContext(t view.Task) string {
 
 	if t.Phase != "" {
 		fmt.Fprintf(&b, ", in the %s phase", t.Phase)
+	}
+
+	if history != "" {
+		fmt.Fprintf(&b, ". Everything anybody has said about this task — in this program or in "+
+			"any other — is in %s, oldest first. Read it before you start: the last session may "+
+			"have been had with a different engine, and that file is the whole of what it knew", history)
 	}
 
 	b.WriteString(". Orbit's own mcp server is configured in this session: orbit_inspect_task reads this task's record — its notes, its gates and the last thing that went wrong — and orbit_add_note writes back to it, where the cockpit will show it. Read the record before changing anything.")

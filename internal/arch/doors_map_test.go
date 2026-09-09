@@ -65,8 +65,9 @@ var doors = map[string][]string{
 	// own workings — the rows of a gate, the blocks of the thinking — stay
 	// in its file.
 	"internal/ui/panes": {
-		"panes.go", "artifacts.go", "cost.go", "diff.go", "gates.go", "impact.go", "notes.go",
-		"overview.go", "pipeline.go", "pipeline_hand.go", "refused.go", "report.go",
+		"panes.go", "artifacts.go", "cost.go", "diff.go", "gates.go", "history.go",
+		"impact.go", "notes.go", "overview.go", "pipeline.go", "pipeline_hand.go",
+		"refused.go", "report.go",
 		"thinking.go", "timeline.go",
 	},
 	"internal/ui/point": {"point.go"},
@@ -104,8 +105,8 @@ var doors = map[string][]string{
 	"internal/task": {
 		"alive.go", "cancel.go", "control.go", "critical.go", "decision.go", "delete.go",
 		"deliver.go", "dependency.go", "dialogue.go", "direct.go", "gate.go", "join.go",
-		"note.go", "read.go", "reconcile.go", "requeue.go", "review.go", "run.go",
-		"start.go", "story.go", "task.go",
+		"history.go", "note.go", "read.go", "reconcile.go", "requeue.go",
+		"review.go", "run.go", "start.go", "story.go", "task.go",
 	},
 	// One file per engine, plus the stream and transcript each one answers
 	// in. The shape is the subject: adding an engine is adding three files
@@ -135,7 +136,7 @@ var doors = map[string][]string{
 	// The rest: each of these is one subject already.
 	"internal/board":      {"board.go", "files.go", "filetext.go", "health.go", "log.go", "refresh.go", "supervisor.go"},
 	"internal/export":     {"export.go"},
-	"internal/flow":       {"draft.go", "flow.go", "load.go", "loop.go", "resolve.go", "save.go"},
+	"internal/flow":       {"draft.go", "engine.go", "flow.go", "load.go", "loop.go", "resolve.go", "save.go"},
 	"internal/knowledge":  {"fact.go", "scope.go", "store.go"},
 	"internal/logger":     {"logger.go", "openfiles.go"},
 	"internal/mcp":        {"clients.go", "handlers.go", "install.go", "launch.go", "server.go", "session.go", "tools.go", "types.go"},
