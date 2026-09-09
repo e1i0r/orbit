@@ -192,6 +192,7 @@ func webPorts(
 		// one of them changes nothing — see internal/web/ports.go.
 		Verbs:     hand,
 		Says:      hand,
+		Told:      hand,
 		Standings: hand,
 		Roster: roll{
 			engines: enginesPort(engines),

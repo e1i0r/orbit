@@ -236,6 +236,13 @@ export interface RepoDetail {
   bands: Partial<Record<Band, number>>;
 }
 
+export interface Told {
+  id: string;
+  text?: string;
+  read: boolean;
+  failed?: string;
+}
+
 export interface FileText {
   id: string;
   path: string;
@@ -295,6 +302,7 @@ export const api = {
       `/api/tasks/${encodeURIComponent(id)}/file?path=${encodeURIComponent(path)}`,
     ),
   flow: (id: string) => ask<Flow>(`/api/tasks/${encodeURIComponent(id)}/flow`),
+  history: (id: string) => ask<Told>(`/api/tasks/${encodeURIComponent(id)}/history`),
   impact: (id: string) => ask<Impact>(`/api/tasks/${encodeURIComponent(id)}/impact`),
   flows: () => ask<{ flows: FlowShape[] }>("/api/flows"),
   knowledge: () => ask<{ facts: Fact[]; read: boolean }>("/api/knowledge"),

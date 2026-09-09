@@ -172,6 +172,17 @@ func (h hands) Approve(id, at string) ([]string, error) {
 	return names, nil
 }
 
+// History is everything ever said about the task, as markdown — the same
+// rendering `orbit history` prints and the window's history tab draws.
+func (h hands) History(id, at string) (string, error) {
+	t, err := h.find(id, at)
+	if err != nil {
+		return "", err
+	}
+
+	return task.History(h.store, t)
+}
+
 // Standing is what the task can be asked for right now: whether a process
 // holds it, and what is waiting to be approved.
 //

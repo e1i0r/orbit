@@ -67,6 +67,7 @@ type Ports struct {
 	// ports.go.
 	Verbs     Verbs
 	Says      Says
+	Told      Told
 	Standings Standings
 	Root      string
 	// Files is the built window. It is passed in rather than embedded here
@@ -86,6 +87,7 @@ type Server struct {
 	roster Roster
 	verbs  Verbs
 	says   Says
+	told   Told
 	stands Standings
 	root   string
 	files  fs.FS
@@ -96,8 +98,8 @@ func New(p Ports) *Server {
 	return &Server{
 		board: p.Board, trees: p.Trees, flows: p.Flows, knows: p.Knows,
 		talks: p.Talks, roster: p.Roster, verbs: p.Verbs, says: p.Says,
-		stands: p.Standings,
-		root:   p.Root, files: p.Files,
+		told: p.Told, stands: p.Standings,
+		root: p.Root, files: p.Files,
 	}
 }
 
@@ -111,6 +113,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/tasks/{id}/file", s.serveFile)
 	mux.HandleFunc("GET /api/tasks/{id}/flow", s.serveFlow)
 	mux.HandleFunc("GET /api/tasks/{id}/impact", s.serveImpact)
+	mux.HandleFunc("GET /api/tasks/{id}/history", s.serveHistory)
 	mux.HandleFunc("GET /api/flows", s.serveFlows)
 	mux.HandleFunc("GET /api/knowledge", s.serveKnowledge)
 	mux.HandleFunc("GET /api/supervisor", s.serveSupervisor)

@@ -165,6 +165,16 @@ type Says interface {
 	Approve(id, repo string) ([]string, error)
 }
 
+// Told is everything ever said about a task, as markdown.
+//
+// A port and not a reading of the record here, because it is the same
+// rendering the window draws and the same file an engine is handed when the
+// terminal is opened on a task. Three copies of one conversation would be
+// three chances for the browser to show something the terminal does not.
+type Told interface {
+	History(id, repo string) (string, error)
+}
+
 // Standings is the reading the buttons are chosen from.
 //
 // A port of its own and not a seventh verb, because it is not a verb: it

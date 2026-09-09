@@ -9,6 +9,7 @@ import { Empty } from "../parts/Empty";
 import { Page } from "../shell/Page";
 import { DiffView } from "../task/DiffView";
 import { FlowView } from "../task/FlowView";
+import { HistoryView } from "../task/HistoryView";
 import { ImpactView } from "../task/ImpactView";
 import { Overview } from "../task/Overview";
 import { Artifacts, Cost, Gates, Notes, Refused, Report, Thinking } from "../task/Panes";
@@ -28,6 +29,7 @@ const tabs = [
   { id: "diff", name: "Diff" },
   { id: "impact", name: "Impact" },
   { id: "thinking", name: "Thinking" },
+  { id: "history", name: "History" },
 ];
 
 export function TaskScreen({ id, back }: { id: string; back: () => void }) {
@@ -121,6 +123,7 @@ export function TaskScreen({ id, back }: { id: string; back: () => void }) {
       {at === "diff" && <DiffView diff={diff} task={id} />}
       {at === "impact" && <ImpactView impact={impact} />}
       {at === "thinking" && <Thinking task={task} />}
+      {at === "history" && <HistoryView task={id} />}
     </Page>
   );
 }
