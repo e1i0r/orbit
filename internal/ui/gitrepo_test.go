@@ -93,7 +93,7 @@ func TestTheDiffIsTheWorktreesAndNotTheRepositorys(t *testing.T) {
 
 	r := &fakeReader{worktree: tree}
 
-	msg, ok := diffOf(r, view.Task{ID: "ACME-2662", RepoPath: repoPath}, baseRef{})().(diffMsg)
+	msg, ok := diffOf(r, view.Task{ID: "ACME-2662", RepoPath: repoPath}, baseRef{}, "")().(diffMsg)
 	if !ok {
 		t.Fatal("diffOf did not answer with a diff")
 	}
@@ -147,7 +147,7 @@ func TestNoBaseIsSaidOnlyWhenGitActuallySaidIt(t *testing.T) {
 
 	task := view.Task{ID: "ACME-2662", RepoPath: repoPath}
 
-	absent, ok := diffOf(&fakeReader{worktree: tree}, task, baseRef{known: true})().(diffMsg)
+	absent, ok := diffOf(&fakeReader{worktree: tree}, task, baseRef{known: true}, "")().(diffMsg)
 	if !ok {
 		t.Fatal("diffOf did not answer with a diff")
 	}
@@ -157,7 +157,9 @@ func TestNoBaseIsSaidOnlyWhenGitActuallySaidIt(t *testing.T) {
 			absent.NoBase, absent.Err)
 	}
 
-	silent, ok := diffOf(&fakeReader{worktree: tree}, task, baseRef{known: true, timedOut: true})().(diffMsg)
+	gaveUp := baseRef{known: true, timedOut: true}
+
+	silent, ok := diffOf(&fakeReader{worktree: tree}, task, gaveUp, "")().(diffMsg)
 	if !ok {
 		t.Fatal("diffOf did not answer with a diff")
 	}
@@ -189,7 +191,9 @@ func TestABaseAlreadyKnownIsNotLookedUpAgain(t *testing.T) {
 
 	task := view.Task{ID: "ACME-2662", RepoPath: t.TempDir()}
 
-	msg, ok := diffOf(&fakeReader{worktree: tree}, task, baseRef{name: "main", known: true})().(diffMsg)
+	given := baseRef{name: "main", known: true}
+
+	msg, ok := diffOf(&fakeReader{worktree: tree}, task, given, "")().(diffMsg)
 	if !ok {
 		t.Fatal("diffOf did not answer with a diff")
 	}
@@ -209,7 +213,7 @@ func TestABaseAlreadyKnownIsNotLookedUpAgain(t *testing.T) {
 func TestADiffWithoutAWorktreeSaysSo(t *testing.T) {
 	r := &fakeReader{treeErr: os.ErrNotExist}
 
-	msg, ok := diffOf(r, view.Task{ID: "ACME-2662", RepoPath: "/nowhere"}, baseRef{})().(diffMsg)
+	msg, ok := diffOf(r, view.Task{ID: "ACME-2662", RepoPath: "/nowhere"}, baseRef{}, "")().(diffMsg)
 	if !ok {
 		t.Fatal("diffOf did not answer with a diff")
 	}

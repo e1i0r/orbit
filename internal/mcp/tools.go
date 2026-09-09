@@ -75,8 +75,12 @@ func taskTools() []Tool {
 			}, "task_id"),
 		},
 		{
-			Name:        "orbit_add_note",
-			Description: "Leave a note on a task. It is appended to the task's record and read by the next phase that starts, so a task already running picks it up at the next phase boundary without being stopped or restarted — and a note left while nothing is running is read when the next run begins. It is shown in the cockpit's notes tab, marked as coming from a supervisor rather than from the person at the keyboard.",
+			Name: "orbit_add_note",
+			Description: "Leave a note on a task. It is appended to the task's record and read by " +
+				"the next phase that starts, so a task already running picks it up at the next " +
+				"phase boundary without being stopped or restarted — and a note left while nothing " +
+				"is running is read when the next run begins. It is shown in the cockpit's notes " +
+				"tab, marked as coming from a supervisor rather than from the person at the keyboard.",
 			InputSchema: object(map[string]Property{
 				"task_id": {Type: "string", Description: "The task's id."},
 				"text":    {Type: "string", Description: "What to write down."},

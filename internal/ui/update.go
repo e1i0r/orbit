@@ -46,9 +46,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// repository slow enough to need the bound is the one that gets a
 		// second, third and sixth request piled on top of the first.
 		cmds := []tea.Cmd{rescan(m.opts.Reader), rescanTick()}
-		if m.screen == screenDetail && !m.diffAsking {
-			m.diffAsking = true
-			cmds = append(cmds, diffOf(m.opts.Reader, m.subject(), m.diffBase))
+		if m.screen == screenDetail && !m.diffClock.asking {
+			m.diffClock.asking = true
+			cmds = append(cmds, diffOf(m.opts.Reader, m.subject(), m.diffBase, m.diffClock.print))
 		}
 
 		return m, tea.Batch(cmds...)
@@ -155,9 +155,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
+		// Nothing moved in the worktree, so the text in hand is still the
+		// text on disk and nothing about the pane changes. The clock is
+		// let go of, and that is all this answer is for.
+		if msg.Same {
+			m.diffClock.asking, m.diffBase = false, msg.Base
+
+			return m, nil
+		}
+
 		m.diff, m.worktree = msg.Text, msg.Tree
 		m.diffErr, m.diffKnown, m.diffNoBase = msg.Err, true, msg.NoBase
-		m.diffBase, m.diffAsking = msg.Base, false
+		m.diffBase, m.diffClock = msg.Base, diffClock{print: msg.Print}
 
 		// The impact reading is taken once when the view opens, and a task
 		// that is still running had written nothing then. When the diff and

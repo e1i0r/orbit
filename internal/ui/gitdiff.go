@@ -58,6 +58,15 @@ var baseTimeout = 2 * time.Second
 // prove, still running somewhere.
 var errGitTimedOut = errors.New("git did not answer in time")
 
+// diffClock is what the diff's own tick remembers between beats: whether a
+// read is still out at git, and the fingerprint of the worktree the text in
+// hand was read from. An unchanged fingerprint is how the next beat answers
+// without writing a diff at all — see diffprint.go.
+type diffClock struct {
+	asking bool
+	print  string
+}
+
 // diffOf runs git diff in the task's worktree, against the branch the
 // repository's work is measured from.
 //
@@ -68,7 +77,7 @@ var errGitTimedOut = errors.New("git did not answer in time")
 // this did before the tab that draws it existed, shows the reader whatever
 // they happen to have uncommitted in their own checkout under the heading of
 // an agent's task.
-func diffOf(r Reader, t view.Task, base baseRef) tea.Cmd {
+func diffOf(r Reader, t view.Task, base baseRef, was string) tea.Cmd {
 	return func() tea.Msg {
 		if r == nil {
 			return diffMsg{ID: t.ID, Err: errNoWorktreePort}
@@ -87,6 +96,16 @@ func diffOf(r Reader, t view.Task, base baseRef) tea.Cmd {
 			base = boundedBaseOf(t.RepoPath)
 		}
 
+		// What changed, before what it changed to. An engine that is
+		// thinking moves no files, and thinking is most of a phase: the
+		// fingerprint costs a status and a handful of stats, and the diff
+		// it saves costs git the whole text and the window every line of
+		// it.
+		print := worktreePrint(dir)
+		if print != "" && print == was {
+			return diffMsg{ID: t.ID, Tree: dir, Base: base, Print: print, Same: true}
+		}
+
 		out, noBase, err := gitDiff(dir, base.name)
 		if err != nil {
 			return diffMsg{ID: t.ID, Tree: dir, Err: err, Base: base}
@@ -97,7 +116,10 @@ func diffOf(r Reader, t view.Task, base baseRef) tea.Cmd {
 		// but labelling it would be asserting something about the
 		// repository that this program timed out before observing, which is
 		// the rule the pending state upstairs exists to keep.
-		return diffMsg{ID: t.ID, Tree: dir, Text: out, NoBase: noBase && !base.timedOut, Base: base}
+		return diffMsg{
+			ID: t.ID, Tree: dir, Text: out,
+			NoBase: noBase && !base.timedOut, Base: base, Print: print,
+		}
 	}
 }
 

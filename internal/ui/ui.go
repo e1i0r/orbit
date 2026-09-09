@@ -262,14 +262,14 @@ type Model struct {
 	diffKnown  bool
 	diffNoBase bool
 	// diffBase is the branch the diff is measured against, looked up once
-	// when the view opens and carried from then on, and diffAsking is
-	// whether a diff is out at git right now. Both exist for the clock: a
-	// rescan every two seconds against a repository that takes twelve to
-	// answer would otherwise have six diffs in flight and pay for six base
+	// when the view opens and carried from then on, and diffClock is what
+	// the rescan keeps between beats. Both exist for the clock: a rescan
+	// every two seconds against a repository that takes twelve to answer
+	// would otherwise have six diffs in flight and pay for six base
 	// lookups, none of which can be cancelled. With these, at most one is
 	// out at a time and the base is asked for once per open.
 	diffBase          baseRef
-	diffAsking        bool
+	diffClock         diffClock
 	hideDiffRationale bool
 	collapsedFiles    map[string]bool
 	diffFilePicker    bool

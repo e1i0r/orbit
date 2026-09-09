@@ -288,7 +288,7 @@ func TestTheTaskViewTransitionTable(t *testing.T) {
 			// for a diff and by nothing else, so it is what tells the two
 			// apart. Running the commands would not: one of the three is
 			// the next rescan tick, and calling it sits for two seconds.
-			if !m.diffAsking {
+			if !m.diffClock.asking {
 				t.Error("a rescan under the task view left no diff outstanding, so the third command was not a diff")
 			}
 		},
