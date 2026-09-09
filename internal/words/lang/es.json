@@ -3041,6 +3041,22 @@
       "source": "{ago} so far",
       "value": "{ago} hasta ahora"
     },
+    "overview.deliver_landed": {
+      "source": "{verb} came back · {said}",
+      "value": "{verb} contestó · {said}"
+    },
+    "overview.deliver_landed_bare": {
+      "source": "{verb} came back",
+      "value": "{verb} contestó"
+    },
+    "overview.deliver_broke": {
+      "source": "{verb} came back broken · {cause}",
+      "value": "{verb} contestó roto · {cause}"
+    },
+    "overview.deliver_since": {
+      "source": "{ago} ago",
+      "value": "hace {ago}"
+    },
     "overview.deliver_nothing_waiting": {
       "source": "nothing is waiting on you",
       "value": "no hay nada esperándote"

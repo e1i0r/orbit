@@ -38,7 +38,23 @@ func (m Model) detailBandLine(t view.Task) string {
 		return m.spinner(theme.Live) + strings.Join(pieces, cells.Dot)
 	}
 
-	// 3. Supervisor active on this task.
+	// 3. A delivery verb that has just come back. Between the band going
+	// quiet and the reader opening the tree there was nothing on screen
+	// saying the pull request had been opened at all.
+	if st, back := panes.Landed(m.panesEnv()); back {
+		said := panes.CameBack(p, st, m.now)
+		role := theme.OK
+
+		if st.Cause != "" {
+			role = theme.Bad
+		}
+
+		pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(role).Render(said)}
+
+		return strings.Join(pieces, cells.Dot)
+	}
+
+	// 4. Supervisor active on this task.
 	if m.supervisorBusy && (m.delivering.task.ID == t.ID || m.detail == t.ID) {
 		said := p.T("supervisor.thinking", "supervisor is thinking...")
 		pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(theme.Live).Render(said)}
@@ -46,7 +62,7 @@ func (m Model) detailBandLine(t view.Task) string {
 		return m.spinner(theme.Live) + strings.Join(pieces, cells.Dot)
 	}
 
-	// 4. Per-band rendering for the viewed task.
+	// 5. Per-band rendering for the viewed task.
 	switch view.BandOf(t) {
 	case view.Running:
 		return m.detailRunningLine(t)
