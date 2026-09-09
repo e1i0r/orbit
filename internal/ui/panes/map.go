@@ -41,6 +41,12 @@ func Map(e Env) []string {
 			p.T("map.reading", "reading the repository…"))}
 	case !m.Read:
 		return []string{theme.Paint(theme.Dim).Render(p.T("map.not_yet", "nothing read yet"))}
+	case m.Missing:
+		// Said as a state and not as a failure. A checkout is taken away by
+		// hand and cleaned up after a task ends, and both are ordinary; the
+		// task's own record is still there to read.
+		return []string{theme.Paint(theme.Dim).Render(p.T("map.no_checkout",
+			"this task has no checkout any more, so there is nothing to map"))}
 	case m.Failed != "":
 		return []string{theme.Paint(theme.Bad).Render(p.T("map.failed",
 			"the repository could not be read: {err}", about("err", m.Failed)))}

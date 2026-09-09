@@ -286,10 +286,11 @@ func (m Model) reading() panes.Reach {
 // shaping is the repository as a tree, in the words the map pane draws it in.
 func (m Model) shaping() panes.Shape {
 	return panes.Shape{
-		Tree:   m.shape.tree,
-		Read:   m.shape.known,
-		Asking: m.shape.asking,
-		Failed: m.errSaid(m.shape.err),
+		Tree:    m.shape.tree,
+		Read:    m.shape.known,
+		Asking:  m.shape.asking,
+		Failed:  m.errSaid(m.shape.err),
+		Missing: m.shape.missing,
 	}
 }
 

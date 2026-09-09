@@ -9,6 +9,10 @@ package ui
 // things — see internal/ui/panes/map.go for why this one is not hexagons.
 
 import (
+	"errors"
+	"io/fs"
+	"os"
+
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/repo"
@@ -19,17 +23,24 @@ import (
 // mapped is what the map pane holds. The three fields around the answer draw
 // the distinction the impact pane's do: asked for, out, answered.
 type mapped struct {
-	tree   verb.Cell
-	err    error
-	known  bool
-	asking bool
+	tree    verb.Cell
+	err     error
+	known   bool
+	asking  bool
+	missing bool
 }
 
 // treeMsg is the reading, come back.
+//
+// missing is its own answer and not an error: a task whose checkout has been
+// taken away — deleted by hand, or cleaned up after the task finished — is
+// an ordinary state, and `git ls-files -z: chdir …: no such file or
+// directory` is that state said in a voice nobody can act on.
 type treeMsg struct {
-	id   string
-	tree verb.Cell
-	err  error
+	id      string
+	tree    verb.Cell
+	err     error
+	missing bool
 }
 
 // askTree reads it, unless it is already read or already out.
@@ -58,6 +69,13 @@ func treeOf(r Reader, t view.Task) tea.Cmd {
 		dir, err := r.Worktree(t.RepoPath, t.ID)
 		if err != nil {
 			return treeMsg{id: t.ID, err: err}
+		}
+
+		// The directory before the git command that would fail inside it.
+		// Asking git first turns a checkout that is simply not there into
+		// a sentence about chdir, which is true and is not an answer.
+		if _, err := os.Stat(dir); errors.Is(err, fs.ErrNotExist) {
+			return treeMsg{id: t.ID, missing: true}
 		}
 
 		one := repo.Repo{Path: t.RepoPath, Name: t.Repo, Base: baseOf(t.RepoPath)}
@@ -89,6 +107,7 @@ func (m Model) tookTree(msg treeMsg) Model {
 	}
 
 	m.shape.tree, m.shape.err, m.shape.known, m.shape.asking = msg.tree, msg.err, true, false
+	m.shape.missing = msg.missing
 
 	return m.syncPanes()
 }
