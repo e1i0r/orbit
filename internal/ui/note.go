@@ -16,6 +16,8 @@ import (
 
 	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/clip"
+
+	"github.com/e1i0r/orbit/internal/view"
 )
 
 // verbNote and verbDirect are the two commands the box can be opened for.
@@ -116,6 +118,14 @@ func (m Model) submitNote() (tea.Model, tea.Cmd) {
 	m.note = noteState{}
 
 	said := p.T("note.recorded", "note recorded for {id}", about("id", taskID))
+	// On a task that is running, the note is not filed and forgotten: the
+	// next phase to start reads it (task.unconsumedNotes), which is the
+	// whole reason a reader leaves one mid-run.
+	if view.BandOf(m.subject()) == view.Running {
+		said = p.T("note.recorded_running", "note recorded for {id} — the next phase reads it",
+			about("id", taskID))
+	}
+
 	if verb == verbDirect {
 		said = p.T("direct.given", "{id} redirected — the run it was in is stopped",
 			about("id", taskID))

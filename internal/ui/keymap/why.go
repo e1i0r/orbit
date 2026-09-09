@@ -40,8 +40,6 @@ const (
 	whyHandBackNotStopped         = "why.hand_back_not_stopped"
 	whyHandBackEngineCannotResume = "why.hand_back_engine_cannot_resume"
 
-	whyAskNotBuilt = "why.ask_not_built"
-
 	whyReadNotFinished = "why.read_not_finished"
 	whyReadAlreadyRead = "why.read_already_read"
 
@@ -101,8 +99,6 @@ func (a Affordance) Why(p *words.Printer) string {
 		return p.T("why.hand_back_not_stopped", "handing the keyboard back needs a run stopped at a phase; this one is not stopped")
 	case whyHandBackEngineCannotResume:
 		return p.T("why.hand_back_engine_cannot_resume", "{engine} cannot resume a session, so nothing was taken", a.engine())
-	case whyAskNotBuilt:
-		return p.T("why.ask_not_built", "orbit cannot ask an engine a question yet; take the keyboard with t and ask it there")
 	case whyReadNotFinished:
 		return p.T("why.read_not_finished", "marking read needs a finished task; this one is not finished")
 	case whyReadAlreadyRead:

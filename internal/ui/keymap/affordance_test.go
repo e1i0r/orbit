@@ -41,12 +41,12 @@ func everyCase() []affordanceCase {
 		name:     "a task written down and never started",
 		task:     view.Task{ID: "ACME-1", Band: view.ToDo},
 		settings: can,
-		offered:  []string{"enter", "D"},
+		offered:  []string{"enter", "a", "D"},
 	}, {
 		name:     "a run Working in a phase",
 		task:     view.Task{ID: "ACME-2", Band: view.Running, Phase: "implement", Live: view.LiveHeld, Attempt: 1, Engine: "claude"},
 		settings: can,
-		offered:  []string{"enter", "p", "x", "b"},
+		offered:  []string{"enter", "p", "x", "b", "a"},
 	}, {
 		// A run marker nobody could read. Every verb below turns on whether
 		// a process holds this task, and nothing here can say, so the only
@@ -54,7 +54,7 @@ func everyCase() []affordanceCase {
 		name:     "a run whose marker could not be read",
 		task:     view.Task{ID: "ACME-11", Band: view.Running, Live: view.LiveUnknown, Attempt: 1, Engine: "claude"},
 		settings: can,
-		offered:  []string{"enter"},
+		offered:  []string{"enter", "a"},
 	}, {
 		// h is not on these three lists, and that is the fix this plan
 		// made: handing the keyboard back is offered where a keyboard was
@@ -63,17 +63,17 @@ func everyCase() []affordanceCase {
 		name:     "a run the reader has paused",
 		task:     view.Task{ID: "ACME-3", Band: view.Running, Live: view.LiveHeld, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonHeld}},
 		settings: can,
-		offered:  []string{"enter", "r", "s", "x", "b", "t"},
+		offered:  []string{"enter", "r", "s", "x", "b", "t", "a"},
 	}, {
 		name:     "a phase waiting at the gate its flow asked for",
 		task:     view.Task{ID: "ACME-4", Band: view.NeedsYou, Live: view.LiveHeld, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonGate}},
 		settings: can,
-		offered:  []string{"enter", "r", "s", "x", "b", "t"},
+		offered:  []string{"enter", "r", "s", "x", "b", "t", "a"},
 	}, {
 		name:     "the same gate with autopilot on",
 		task:     view.Task{ID: "ACME-5", Band: view.NeedsYou, Live: view.LiveHeld, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonGate}},
 		settings: Conditions{Autopilot: true, CanResume: true},
-		offered:  []string{"enter", "r", "s", "x", "b", "t"},
+		offered:  []string{"enter", "r", "s", "x", "b", "t", "a"},
 	}, {
 		// The same paused run, with the keyboard actually taken. This is
 		// the only shape on the board where h means anything, and it is the
@@ -81,27 +81,27 @@ func everyCase() []affordanceCase {
 		name:     "a paused run whose keyboard this reader took",
 		task:     view.Task{ID: "ACME-10", Band: view.Running, Live: view.LiveHeld, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonHeld}},
 		settings: Conditions{CanResume: true, Taken: true},
-		offered:  []string{"enter", "r", "s", "x", "b", "t", "h"},
+		offered:  []string{"enter", "r", "s", "x", "b", "t", "h", "a"},
 	}, {
 		name:     "a run that failed and whose process is gone",
 		task:     view.Task{ID: "ACME-6", Band: view.NeedsYou, Attempt: 1, Engine: "claude", Reason: view.Reason{Key: view.ReasonFailed}},
 		settings: can,
-		offered:  []string{"enter", "b", "t", "D"},
+		offered:  []string{"enter", "b", "t", "a", "D"},
 	}, {
 		name:     "a finished task nobody has read",
 		task:     view.Task{ID: "ACME-7", Band: view.Done, Attempt: 1, Engine: "claude"},
 		settings: can,
-		offered:  []string{"enter", "b", "t", "d", "D"},
+		offered:  []string{"enter", "b", "t", "a", "d", "D"},
 	}, {
 		name:     "a finished task already read",
 		task:     view.Task{ID: "ACME-8", Band: view.Done, Attempt: 1, Engine: "claude", Read: true},
 		settings: can,
-		offered:  []string{"enter", "b", "t", "D"},
+		offered:  []string{"enter", "b", "t", "a", "D"},
 	}, {
 		name:     "a paused run on an engine that cannot resume a session",
 		task:     view.Task{ID: "ACME-9", Band: view.Running, Live: view.LiveHeld, Attempt: 1, Engine: "codex", Reason: view.Reason{Key: view.ReasonHeld}},
 		settings: Conditions{},
-		offered:  []string{"enter", "r", "s", "x", "b"},
+		offered:  []string{"enter", "r", "s", "x", "b", "a"},
 	}}
 }
 
@@ -268,18 +268,18 @@ func TestTheEngineThatCannotResumeIsNamed(t *testing.T) {
 // that engine. A standing bool — an AND over every engine configured — makes
 // a build with two engines, one of which cannot resume, refuse t on every
 // task and tell each of them that its own engine is the one at fault.
-func TestAskIsListedAndRefused(t *testing.T) {
+// TestAskIsOfferedOnEveryTask. A note is read by the next phase that starts,
+// so it is worth leaving on a task in any state: on a running one it reaches
+// the phase after this one without stopping anything, and on one that is not
+// running it is read when the next run begins. It was listed as refused for
+// as long as that was believed to be unbuilt.
+func TestAskIsOfferedOnEveryTask(t *testing.T) {
 	english, _ := printers(t)
 
 	keys := New(english)
 	for _, c := range everyCase() {
-		ask := find(keys.Affordances(c.task, c.settings), "a")
-		if ask.OK {
-			t.Fatalf("%s: ask is offered, and nothing implements it", c.name)
-		}
-
-		if ask.WhyNot.Name != whyAskNotBuilt {
-			t.Fatalf("%s: ask refuses with %q, want %q", c.name, ask.WhyNot.Name, whyAskNotBuilt)
+		if ask := find(keys.Affordances(c.task, c.settings), "a"); !ask.OK {
+			t.Fatalf("%s: ask is refused with %q", c.name, ask.WhyNot.Name)
 		}
 	}
 }

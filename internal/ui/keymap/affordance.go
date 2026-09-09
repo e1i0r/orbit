@@ -91,12 +91,12 @@ func (k Keys) Affordances(t view.Task, s Conditions) []Affordance {
 		answer(k.Requeue, whyNotRequeue(t)),
 		answer(k.Take, whyNotTake(t, s)),
 		answer(k.Hand, whyNotHand(t, s)),
-		// Ask is listed and refused. Orbit has no way to put a question to
-		// an engine yet, and the honest thing is to say so in the same
-		// voice it uses about an engine that cannot resume a session —
-		// rather than leaving a gap the reader discovers by pressing a key
-		// that does nothing.
-		answer(k.Ask, because(whyAskNotBuilt)),
+		// Ask leaves a message the run picks up on its own: the next phase
+		// to start is handed every note written since the last one began,
+		// so a reader who sees a task about to get a convention wrong can
+		// say so without stopping it. It was listed as refused for as long
+		// as that was believed to be unbuilt.
+		{Key: k.Ask, OK: true},
 		answer(k.MarkRead, whyNotMarkRead(t)),
 		answer(k.Delete, whyNotDelete(t)),
 	}

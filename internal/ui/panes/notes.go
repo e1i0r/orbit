@@ -33,6 +33,13 @@ func Notes(e Env) ([]string, map[int]int) {
 
 	var items []noteItem
 
+	// The notes no phase has picked up yet. A note is read by the next
+	// phase that starts (task.unconsumedNotes), so a note with a phase
+	// start after it has been read and one without is still waiting —
+	// which is the difference between steering a run and thinking you
+	// steered it.
+	var pending []int
+
 	noteIndex := 0
 
 	for _, entry := range e.Entries {
@@ -44,6 +51,13 @@ func Notes(e Env) ([]string, map[int]int) {
 		switch entry.What() {
 		case view.EntryNoted:
 			noteIndex++
+
+			// Only when the record does not already say which run took it.
+			// An attempt on a note is the record's own answer, and the
+			// record's answer is the one to draw.
+			if entry.Attempt == 0 {
+				pending = append(pending, len(items))
+			}
 
 			statusNote := p.T("notes.read_by_run", "read by the run")
 			if entry.Attempt > 0 {
@@ -59,6 +73,11 @@ func Notes(e Env) ([]string, map[int]int) {
 				status:  statusNote,
 				content: content,
 			})
+
+		case view.EntryStarted:
+			// Everything written before this phase began went into its
+			// prompt, whatever else this entry is drawn as below.
+			pending = nil
 
 		case view.EntryDialogue:
 			// Beside the notes and not among them. This is what a model or
@@ -95,6 +114,10 @@ func Notes(e Env) ([]string, map[int]int) {
 				})
 			}
 		}
+	}
+
+	for _, i := range pending {
+		items[i].status = p.T("notes.waiting_for_a_phase", "the next phase reads it")
 	}
 
 	out := []string{
