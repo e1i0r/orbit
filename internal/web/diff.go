@@ -134,3 +134,5 @@ func (s *Server) checkoutOf(w http.ResponseWriter, r *http.Request) (checkout, b
 
 	return checkout{task: t, repo: one, dir: dir}, true
 }
+
+// and here

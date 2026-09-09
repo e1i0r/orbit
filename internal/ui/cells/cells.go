@@ -285,3 +285,5 @@ func Elapsed(now, since time.Time) string {
 
 	return strconv.Itoa(int(d.Hours()/24)) + "d"
 }
+
+// a line for the map

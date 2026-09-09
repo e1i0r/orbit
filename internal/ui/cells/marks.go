@@ -112,3 +112,5 @@ func Fold(open bool) string {
 
 	return FoldShut
 }
+
+// another
