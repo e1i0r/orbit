@@ -121,6 +121,13 @@ func runCommand(exe, root string, t Task, flowName, engineName string) *exec.Cmd
 		args = append(args, "-repo", t.Repo.Path)
 	}
 
+	// A supervisor's engine when the caller named none: told to fix a task,
+	// a supervisor fixes it with its own hands rather than running the task
+	// again on the engine it was written against. See supervisorengine.go.
+	if engineName == "" {
+		engineName = supervisorEngine()
+	}
+
 	// The engine is passed only when one was named. An empty -engine would
 	// be a flag that means "the flow's own", which is what its absence
 	// already means, and one more thing for `orbit run` to interpret.
@@ -145,7 +152,7 @@ func runCommand(exe, root string, t Task, flowName, engineName string) *exec.Cmd
 	// events into a different root than its reader is reading would be a
 	// task that vanished at the moment it started; the environment is where
 	// the root already comes from, so this is the same door, held open.
-	cmd.Env = append(os.Environ(), "ORBIT_HOME="+root)
+	cmd.Env = append(withoutSupervisorEngine(os.Environ()), "ORBIT_HOME="+root)
 	// Its own process group, which is the point of spawning it this way. A
 	// terminal that goes away sends SIGHUP to its foreground group, and a
 	// run sharing that group dies with the window that started it — with
