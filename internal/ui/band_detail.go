@@ -22,35 +22,39 @@ func (m Model) detailBandLine(t view.Task) string {
 			by = deliverBySupervisor
 		}
 
-		said := p.T("overview.deliver_out", "{verb} is out with {by}",
-			about("verb", m.delivering.verb), about("by", by))
+		said := panes.StillWorking(p, m.delivering.verb, by, t.Since, m.now)
 
 		pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(theme.Live).Render(said)}
-		if age := cells.Elapsed(m.now, t.Since); age != "" {
-			pieces = append(pieces, p.T("band.elapsed", "{d} in", about("d", age)))
-		}
 
 		return m.spinner(theme.Live) + strings.Join(pieces, cells.Dot)
 	}
 
 	// 2. Uncompleted delivery recorded in the task history.
 	if st, out := panes.Waiting(m.panesEnv()); out {
-		said := p.T("overview.deliver_out_bare", "{verb} is out", about("verb", st.Verb))
-		if st.By != "" {
-			said = p.T("overview.deliver_out", "{verb} is out with {by}",
-				about("verb", st.Verb), about("by", st.By))
-		}
+		said := panes.StillWorking(p, st.Verb, st.By, st.At, m.now)
 
 		pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(theme.Live).Render(said)}
-		if ago := cells.Elapsed(m.now, st.At); ago != "" {
-			pieces = append(pieces, p.T("overview.deliver_ago", "asked {ago} ago",
-				about("ago", ago)))
-		}
 
 		return m.spinner(theme.Live) + strings.Join(pieces, cells.Dot)
 	}
 
-	// 3. Supervisor active on this task.
+	// 3. A delivery verb that has just come back. Between the band going
+	// quiet and the reader opening the tree there was nothing on screen
+	// saying the pull request had been opened at all.
+	if st, back := panes.Landed(m.panesEnv()); back {
+		said := panes.CameBack(p, st, m.now)
+		role := theme.OK
+
+		if st.Cause != "" {
+			role = theme.Bad
+		}
+
+		pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(role).Render(said)}
+
+		return strings.Join(pieces, cells.Dot)
+	}
+
+	// 4. Supervisor active on this task.
 	if m.supervisorBusy && (m.delivering.task.ID == t.ID || m.detail == t.ID) {
 		said := p.T("supervisor.thinking", "supervisor is thinking...")
 		pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(theme.Live).Render(said)}
@@ -58,7 +62,7 @@ func (m Model) detailBandLine(t view.Task) string {
 		return m.spinner(theme.Live) + strings.Join(pieces, cells.Dot)
 	}
 
-	// 4. Per-band rendering for the viewed task.
+	// 5. Per-band rendering for the viewed task.
 	switch view.BandOf(t) {
 	case view.Running:
 		return m.detailRunningLine(t)

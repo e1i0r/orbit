@@ -24,7 +24,12 @@ func TestDetailBandLineDeliveringAction(t *testing.T) {
 	m.delivering = deliverPending{task: tk, verb: "CREATE PR"}
 
 	got := ansi.Strip(m.bandLeft())
-	for _, want := range []string{"ACME-101", "CREATE PR", "supervisor", "2m in"} {
+	// "is working on" and not "is out with": a reader who read the old
+	// sentence as "blocked on a human" waited ten minutes for a question
+	// that was never coming (#134). Two minutes in, the line says so.
+	for _, want := range []string{
+		"ACME-101", "CREATE PR", "supervisor", "2m so far", "nothing is waiting on you",
+	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("bandLeft delivery supervisor = %q, want %q", got, want)
 		}

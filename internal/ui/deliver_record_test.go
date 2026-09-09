@@ -138,7 +138,7 @@ func TestTheFlowTreeDrawsWhatWasAskedForByHand(t *testing.T) {
 	rows, _ := m.flowRows()
 	drawn := strings.Join(rows, "\n")
 
-	wants := []string{"Asked for by hand", "CREATE PR", "came back", "FIX CHECKS", "still out"}
+	wants := []string{"Asked for by hand", "CREATE PR", "came back", "FIX CHECKS", "still working"}
 	for _, want := range wants {
 		if !strings.Contains(drawn, want) {
 			t.Errorf("the flow tree does not say %q:\n%s", want, drawn)
