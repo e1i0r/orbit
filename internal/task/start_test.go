@@ -27,7 +27,7 @@ func lastValue(env []string, name string) string {
 // told, and that it is put in a group of its own.
 func TestAStartedRunIsTheSameSubcommandAPersonWouldType(t *testing.T) {
 	tk := Task{ID: "ACME-1", Repo: repo.Repo{Name: "app", Path: "/repos/app"}}
-	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "review")
+	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "review", "")
 
 	want := []string{"/usr/local/bin/orbit", "run", "-repo", "/repos/app", "-flow", "review", "ACME-1"}
 	if len(cmd.Args) != len(want) {
@@ -57,7 +57,7 @@ func TestAStartedRunIsToldWhereTheStateIs(t *testing.T) {
 
 	tk := Task{ID: "ACME-1", Repo: repo.Repo{Name: "app", Path: "/repos/app"}}
 
-	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "task")
+	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "task", "")
 
 	if got := lastValue(cmd.Env, "ORBIT_HOME"); got != "/state" {
 		t.Errorf("ORBIT_HOME = %q, want /state — a run writing into another root is a task that vanished", got)
@@ -71,9 +71,26 @@ func TestAStartedRunIsToldWhereTheStateIs(t *testing.T) {
 func TestAStartedRunGetsAProcessGroupOfItsOwn(t *testing.T) {
 	tk := Task{ID: "ACME-1", Repo: repo.Repo{Name: "app", Path: "/repos/app"}}
 
-	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "task")
+	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "task", "")
 
 	if cmd.SysProcAttr == nil || !cmd.SysProcAttr.Setpgid {
 		t.Error("the run would share the window's process group, so closing the window would SIGHUP it away mid-phase")
+	}
+}
+
+// TestAnEngineOverrideReachesTheRun. A task handed to another engine is run
+// with -engine, and a run that is not handed over carries no such flag: an
+// empty one would mean "the flow's own", which is what its absence means.
+func TestAnEngineOverrideReachesTheRun(t *testing.T) {
+	tk := Task{ID: "ACME-9", Repo: repo.Repo{Path: "/code/ledger", Name: "ledger"}}
+
+	handed := strings.Join(runCommand("/bin/orbit", "/state", tk, "task", "codex").Args, " ")
+	if !strings.Contains(handed, "-engine codex") {
+		t.Errorf("a handed run does not name the engine: %s", handed)
+	}
+
+	plain := strings.Join(runCommand("/bin/orbit", "/state", tk, "task", "").Args, " ")
+	if strings.Contains(plain, "-engine") {
+		t.Errorf("an ordinary run names an engine anyway: %s", plain)
 	}
 }

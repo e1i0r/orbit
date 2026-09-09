@@ -187,7 +187,7 @@ func TestStartCapAndCommand(t *testing.T) {
 	}
 
 	// Test runCommand structure
-	cmd := runCommand("/bin/orbit", s.Root(), tk, "quick")
+	cmd := runCommand("/bin/orbit", s.Root(), tk, "quick", "")
 	if cmd.Dir != tk.Repo.Path {
 		t.Errorf("cmd.Dir = %q, want %q", cmd.Dir, tk.Repo.Path)
 	}

@@ -65,8 +65,9 @@ var doors = map[string][]string{
 	// own workings — the rows of a gate, the blocks of the thinking — stay
 	// in its file.
 	"internal/ui/panes": {
-		"panes.go", "artifacts.go", "cost.go", "diff.go", "gates.go", "impact.go", "notes.go",
-		"overview.go", "pipeline.go", "pipeline_hand.go", "refused.go", "report.go",
+		"panes.go", "artifacts.go", "cost.go", "diff.go", "gates.go", "history.go",
+		"impact.go", "notes.go", "overview.go", "pipeline.go", "pipeline_hand.go",
+		"refused.go", "report.go",
 		"thinking.go", "timeline.go",
 	},
 	"internal/ui/point": {"point.go"},
@@ -110,8 +111,8 @@ var doors = map[string][]string{
 	"internal/task": {
 		"alive.go", "cancel.go", "control.go", "critical.go", "decision.go", "delete.go",
 		"deliver.go", "dependency.go", "dialogue.go", "direct.go", "gate.go", "join.go",
-		"note.go", "read.go", "reconcile.go", "requeue.go", "review.go", "run.go",
-		"start.go", "story.go", "task.go",
+		"history.go", "note.go", "read.go", "reconcile.go", "requeue.go",
+		"review.go", "run.go", "start.go", "story.go", "task.go",
 	},
 	// One file per engine, plus the stream and transcript each one answers
 	// in. The shape is the subject: adding an engine is adding three files
@@ -141,7 +142,7 @@ var doors = map[string][]string{
 	// The rest: each of these is one subject already.
 	"internal/board":     {"board.go", "files.go", "filetext.go", "health.go", "log.go", "refresh.go", "supervisor.go"},
 	"internal/export":    {"export.go"},
-	"internal/flow":      {"draft.go", "flow.go", "load.go", "loop.go", "resolve.go", "save.go"},
+	"internal/flow":      {"draft.go", "engine.go", "flow.go", "load.go", "loop.go", "resolve.go", "save.go"},
 	"internal/knowledge": {"fact.go", "scope.go", "store.go"},
 	"internal/logger":    {"logger.go", "openfiles.go"},
 	"internal/mcp":       {"clients.go", "handlers.go", "install.go", "launch.go", "server.go", "session.go", "tools.go", "types.go"},
@@ -149,11 +150,12 @@ var doors = map[string][]string{
 	"internal/quota":     {"billing.go", "codex.go", "quota.go", "source.go"},
 	"internal/repo":      {"cochange.go", "compare.go", "discover.go", "impact.go", "repo.go", "review.go", "workspace.go", "worktree.go", "worktree_deliver.go", "worktree_diff.go", "worktree_file.go"},
 	// Two doors. web.go is the server and the ports built off the board;
-	// ports.go is the three the browser reads through that the board cannot
-	// answer — what Orbit knows, what has been said to the supervisor, and
-	// which engines this machine can run — with the shapes they speak in.
-	// answer.go, flow.go, impact.go, diff.go, screens.go and page.go are
-	// the routes and what they write, and none of them exports anything.
+	// ports.go is the ones the browser reads through that the board cannot
+	// answer — what Orbit knows, what has been said to the supervisor,
+	// which engines this machine can run, and what a reader may do — with
+	// the shapes they speak in. answer.go, flow.go, impact.go, diff.go,
+	// screens.go, verbs.go and page.go are the routes and what they write,
+	// and none of them exports anything.
 	"internal/web":        {"web.go", "ports.go"},
 	"internal/supervisor": {"conversation.go", "happened.go", "supervise.go", "thread.go"},
 	"internal/tracker":    {"linear.go", "provider.go", "providers.go", "read.go", "tracker.go"},

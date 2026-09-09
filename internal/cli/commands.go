@@ -198,6 +198,12 @@ func commands() []Command {
 		About: func(p *words.Printer) string { return p.T("cmd.cancel", "stop a run, and say so in its record") },
 		Run:   cancelTask,
 	}, {
+		Name: "history", Args: "[-repo <dir>] [-write] <id>", NeedsArgs: true, AboutATask: true,
+		About: func(p *words.Printer) string {
+			return p.T("cmd.history", "print everything ever said about a task, in any program")
+		},
+		Run: taskHistory,
+	}, {
 		Name: "requeue", Args: "-repo <dir> <id> [why]", NeedsArgs: true, AboutATask: true,
 		About: func(p *words.Printer) string {
 			return p.T("cmd.requeue", "stop a run and put the task back in to do")
