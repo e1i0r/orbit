@@ -20,11 +20,11 @@ const (
 	tabReport
 	tabArtifacts
 	tabNotes
+	tabMap
 	tabDiff
 	tabImpact
 	tabThinking
 	tabHistory
-	tabMap
 	tabCount
 )
 
@@ -68,11 +68,13 @@ func paneKey(t tab) string {
 		// y, because h is the key that hands a paused run back.
 		return "y"
 	case tabMap:
-		// A comma, because the letters are gone. m is the menu, M the
-		// engine knobs, v the raw switch; this pane arrived after all
-		// three, and taking a key a reader already knows to give the
-		// newcomer a nicer one is the worst trade in a keyboard.
-		return ","
+		// l, one of the three letters this keyboard has left — u and v are
+		// the others. Not m: that is the menu, M the engine knobs and V
+		// the raw switch, and taking a key a reader already knows to give
+		// the newcomer a nicer one is the worst trade in a keyboard. The
+		// comma this pane arrived on still opens it, because a key
+		// somebody has learned is not worth taking away either.
+		return "l"
 	default:
 		return ""
 	}
@@ -107,7 +109,7 @@ func keyToPane(k string) (tab, bool) {
 		return tabThinking, true
 	case "y":
 		return tabHistory, true
-	case ",":
+	case "l", "L", ",":
 		return tabMap, true
 	default:
 		return 0, false
@@ -134,6 +136,11 @@ func (m Model) tabNames() []tabName {
 		{tabReport, p.T("tab.report", "report")},
 		{tabArtifacts, p.T("tab.artifacts", "artifacts")},
 		{tabNotes, p.T("tab.notes", "notes")},
+		// Where the browser puts it. The two readers are one product and a
+		// tab that moves between them is a tab a reader has to look for
+		// twice; the browser's strip is the one with room to be read at a
+		// glance, so it is the order both follow.
+		{tabMap, p.T("tab.map", "map")},
 		{tabDiff, p.T("tab.diff", "diff")},
 		// The mark rides on the name so that every place the strip is drawn
 		// — the tabs, the menu, the help — says the same thing without
@@ -144,9 +151,6 @@ func (m Model) tabNames() []tabName {
 		// is every word said about the task, across every program that has
 		// walked it.
 		{tabHistory, p.T("tab.history", "history")},
-		// Beside the history, because it is the other pane that is about
-		// the repository rather than about this run.
-		{tabMap, p.T("tab.map", "map")},
 	}
 }
 

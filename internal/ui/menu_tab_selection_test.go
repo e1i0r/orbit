@@ -40,8 +40,10 @@ func TestTabMenuInDetailView(t *testing.T) {
 	}
 
 	// 2. Select diff tab using down arrows and press Enter. The cursor
-	// opened on overview, the first entry there is to choose.
-	for i := 0; i < 9; i++ {
+	// opened on overview, the first entry there is to choose. Ten steps
+	// and not nine since the map took its place before the diff, where the
+	// browser draws it.
+	for i := 0; i < 10; i++ {
 		res, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 		m = asModel(t, res)
 	}
