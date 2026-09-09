@@ -94,6 +94,13 @@ func SuperviseIn(ctx context.Context, s *store.Store, eng engine.Engine, convers
 		Prompt:      fullPrompt,
 		Dir:         s.Root(),
 		Permissions: []string{engine.PermissionRead, engine.PermissionRepo, engine.PermissionNetwork},
+		// Who is supervising, carried into everything this engine starts.
+		// The supervisor is above the board: told to fix a task, it fixes
+		// it with its own hands rather than running the task again on the
+		// engine the task was written against — which is the engine the
+		// reader has just dialled away from, and often the reason they
+		// dialled away. task/supervisorengine.go is the other end.
+		Env: []string{engine.SupervisorVar + "=" + eng.Name()},
 	}
 
 	out, runErr := eng.Run(ctx, req)
