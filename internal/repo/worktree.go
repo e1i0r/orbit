@@ -63,6 +63,14 @@ func (r Repo) AddWorktree(dir, branch string) error {
 	// worktree was measured against before any of this was recorded.
 	_ = writeBase(dir, r.Base) //nolint:errcheck // best effort: cutFrom falls back to r.Base
 
+	// Orbit's own directory, kept out of what the task hands back. Said
+	// rather than swallowed, unlike the base above: a base that could not be
+	// written costs a count its accuracy, and an exclude that could not be
+	// written puts Orbit's files in somebody's pull request.
+	if err := excludeOrbit(dir); err != nil {
+		return err
+	}
+
 	return nil
 }
 
