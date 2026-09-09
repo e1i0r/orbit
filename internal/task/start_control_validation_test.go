@@ -54,7 +54,7 @@ func TestStartCapAndRunCommand(t *testing.T) {
 	}
 
 	// 2. runCommand construction
-	cmd := runCommand("/bin/orbit", root, tk, "custom-flow")
+	cmd := runCommand("/bin/orbit", root, tk, "custom-flow", "")
 	if cmd.Path != "/bin/orbit" {
 		t.Errorf("cmd.Path = %q, want /bin/orbit", cmd.Path)
 	}

@@ -72,6 +72,7 @@ var wayInTheWindow = map[string]string{
 	"approve":  "the task's menu",
 	"permit":   "the task's menu",
 	"critical": "the task's menu",
+	"history":  "the history tab on the task's screen, which is the same reading",
 }
 
 func TestEveryVerbAboutATaskHasAWayInTheWindow(t *testing.T) {

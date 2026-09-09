@@ -21,6 +21,7 @@ const (
 	tabDiff
 	tabImpact
 	tabThinking
+	tabHistory
 	tabCount
 )
 
@@ -60,6 +61,9 @@ func paneKey(t tab) string {
 		return "i"
 	case tabThinking:
 		return "w"
+	case tabHistory:
+		// y, because h is the key that hands a paused run back.
+		return "y"
 	default:
 		return ""
 	}
@@ -92,6 +96,8 @@ func keyToPane(k string) (tab, bool) {
 		return tabImpact, true
 	case "w", "W":
 		return tabThinking, true
+	case "y":
+		return tabHistory, true
 	default:
 		return 0, false
 	}
@@ -123,6 +129,10 @@ func (m Model) tabNames() []tabName {
 		// each of them knowing what a warning is.
 		{tabImpact, p.T("tab.impact", "impact") + m.impactMark()},
 		{tabThinking, p.T("tab.thinking", "thinking")},
+		// Last, because it is the one pane that is not about this run: it
+		// is every word said about the task, across every program that has
+		// walked it.
+		{tabHistory, p.T("tab.history", "history")},
 	}
 }
 
@@ -139,6 +149,7 @@ func (m Model) syncPanes() Model {
 	timeline := m.logRows()
 	report, reportSeams := m.reportRows()
 	thinking, thinkingHeads := m.thinkingRows()
+	history, historyHeads := m.historyRows()
 	flowTree, flowHeads := m.flowRows()
 	gates, gateHeads := m.gatesRows()
 	refused, refusedHeads := m.refusedRows()
@@ -147,6 +158,7 @@ func (m Model) syncPanes() Model {
 	artifacts, artifactHeads := m.artifactsRows()
 
 	m.heads[tabTimeline], m.heads[tabThinking] = timeline.Heads, thinkingHeads
+	m.heads[tabHistory] = historyHeads
 	m.heads[tabFlow], m.heads[tabGates] = flowHeads, gateHeads
 	m.heads[tabRefused], m.heads[tabNotes] = refusedHeads, noteHeads
 	m.heads[tabDiff], m.heads[tabArtifacts] = diffHeads, artifactHeads
@@ -165,6 +177,7 @@ func (m Model) syncPanes() Model {
 		tabDiff:      diff,
 		tabImpact:    m.impactRows(),
 		tabThinking:  thinking,
+		tabHistory:   history,
 	}
 	for i := range m.panes {
 		// Sized to the rows it is drawn into, so that the last page of a
@@ -214,6 +227,8 @@ func (m Model) paneMenu() []menu.Pane {
 		tabImpact: p.T("tab_desc.impact",
 			"what usually changes with these files, what those tests hold, and what the checks say on both sides"),
 		tabThinking: p.T("tab_desc.thinking", "extended model thinking, chain of thought and reasoning"),
+		tabHistory: p.T("tab_desc.history",
+			"every word said about this task, in whichever program it was said"),
 	}
 
 	out := make([]menu.Pane, 0, tabCount)

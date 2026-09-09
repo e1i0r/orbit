@@ -4456,6 +4456,34 @@
     "compare.again": {
       "source": "[r] runs them again",
       "value": "[r] los vuelve a correr"
+    },
+    "cmd.history": {
+      "source": "print everything ever said about a task, in any program",
+      "value": "imprimir todo lo que se ha dicho de una tarea, en cualquier programa"
+    },
+    "history.written": {
+      "source": "also written to {where}",
+      "value": "también escrito en {where}"
+    },
+    "history.title": {
+      "source": "Everything said about this task",
+      "value": "Todo lo que se ha dicho de esta tarea"
+    },
+    "history.subtitle": {
+      "source": "a person's words and each engine's, whichever program they were typed in",
+      "value": "las palabras de una persona y las de cada motor, en el programa que se hayan escrito"
+    },
+    "history.empty": {
+      "source": "nothing has been said about it yet",
+      "value": "todavía no se ha dicho nada de ella"
+    },
+    "tab.history": {
+      "source": "history",
+      "value": "historial"
+    },
+    "tab_desc.history": {
+      "source": "every word said about this task, in whichever program it was said",
+      "value": "cada palabra dicha sobre esta tarea, en el programa que haya sido"
     }
   }
 }

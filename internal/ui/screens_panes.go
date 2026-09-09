@@ -96,6 +96,11 @@ func (m Model) thinkingRows() ([]string, map[int]int) {
 	return panes.Thinking(m.paneEnv(tabThinking))
 }
 
+// historyRows is every word said about this task, in any program.
+func (m Model) historyRows() ([]string, map[int]int) {
+	return panes.History(m.paneEnv(tabHistory))
+}
+
 // refusedLines is what the sandbox would not let this run do.
 func (m Model) refusedLines() []string {
 	lines, _ := m.refusedRows()

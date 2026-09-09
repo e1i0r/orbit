@@ -50,6 +50,11 @@ func runTask(ctx Context, args []string) error {
 	fs.SetOutput(io.Discard)
 	dir := fs.String("repo", ".", "the repository the task is against")
 	name := fs.String("flow", "", "walk this flow instead of the one the task was written against")
+	// The engine is overridden on the run and never on the flow. What it is
+	// for is an engine out of quota at four in the afternoon: the shape of
+	// the work has not changed, only who walks it, and the file on disk is
+	// what every other task still reads.
+	eng := fs.String("engine", "", "walk every phase with this engine instead of the ones the flow names")
 
 	timeout := fs.Duration("timeout", 0, "stop the run after this long, e.g. 45m; zero waits for as long as it takes")
 	if err := parse(ctx, fs, args); err != nil {
@@ -93,6 +98,8 @@ func runTask(ctx Context, args []string) error {
 	if err != nil {
 		return fmt.Errorf("resolve flow %q for task %q: %w", chosen, id, err)
 	}
+
+	f = flow.WithEngine(f, *eng)
 	// Installed here, after everything that can be wrong about the command
 	// itself has been found: a mistyped id should not go through a signal
 	// handler on its way to being reported.
