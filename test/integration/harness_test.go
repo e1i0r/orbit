@@ -21,6 +21,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -33,7 +34,11 @@ var built struct {
 }
 
 func TestMain(m *testing.M) {
-	dir, err := os.MkdirTemp("", "orbit-integration-")
+	// Before anything is built, because what an interrupted run left behind
+	// is still holding a worktree and still writing to a record.
+	sweep()
+
+	dir, err := os.MkdirTemp("", harnessDir)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "make a directory for the binaries:", err)
 		os.Exit(1)
@@ -45,8 +50,11 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
+	catchInterrupt(dir)
+
 	code := m.Run()
 
+	endWatched()
 	os.RemoveAll(dir) //nolint:errcheck // a temporary directory the OS will take back
 	os.Exit(code)
 }
@@ -141,6 +149,10 @@ func (b board) start(t *testing.T, args ...string) *exec.Cmd {
 	cmd := exec.Command(built.orbit, args...)
 	cmd.Dir = b.repo
 	cmd.Env = b.env()
+	// Its own process group, so that ending it ends the engine it spawned as
+	// well, and so that one hung run can be taken away without a signal
+	// aimed at this binary's group reaching the others.
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
 	var out bytes.Buffer
 
@@ -150,12 +162,8 @@ func (b board) start(t *testing.T, args ...string) *exec.Cmd {
 		t.Fatalf("start orbit %s: %v", strings.Join(args, " "), err)
 	}
 
-	t.Cleanup(func() {
-		if cmd.Process != nil {
-			_ = cmd.Process.Kill() //nolint:errcheck // the test is over either way
-			_ = cmd.Wait()         //nolint:errcheck // and so is the process
-		}
-	})
+	watch(cmd)
+	t.Cleanup(func() { end(cmd) })
 
 	return cmd
 }
