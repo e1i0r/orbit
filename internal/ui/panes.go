@@ -68,11 +68,13 @@ func paneKey(t tab) string {
 		// y, because h is the key that hands a paused run back.
 		return "y"
 	case tabMap:
-		// A comma, because the letters are gone. m is the menu, M the
-		// engine knobs, v the raw switch; this pane arrived after all
-		// three, and taking a key a reader already knows to give the
-		// newcomer a nicer one is the worst trade in a keyboard.
-		return ","
+		// l, one of the three letters this keyboard has left — u and v are
+		// the others. Not m: that is the menu, M the engine knobs and V
+		// the raw switch, and taking a key a reader already knows to give
+		// the newcomer a nicer one is the worst trade in a keyboard. The
+		// comma this pane arrived on still opens it, because a key
+		// somebody has learned is not worth taking away either.
+		return "l"
 	default:
 		return ""
 	}
@@ -107,7 +109,7 @@ func keyToPane(k string) (tab, bool) {
 		return tabThinking, true
 	case "y":
 		return tabHistory, true
-	case ",":
+	case "l", "L", ",":
 		return tabMap, true
 	default:
 		return 0, false
