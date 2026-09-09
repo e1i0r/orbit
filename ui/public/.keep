@@ -1,0 +1,9 @@
+The built window goes here. `make ui` writes it, and CI writes it before it
+builds or releases anything.
+
+This file lives in ui/public, which vite copies into dist on every build, and
+a copy of it is committed at ui/dist/.keep as well. The committed one is what
+go:embed finds on a clone that has never run a build; the copied one is what
+puts it back after vite empties dist. Neither alone is enough: without the
+first `go build ./...` fails on a fresh clone, and without the second the
+release refuses to publish from a tree git calls dirty.

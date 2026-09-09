@@ -195,10 +195,6 @@ posters:
 # it vets, tests or releases, and `make check` runs it through `window`.
 ui:
 	cd ui && npm ci && npm run build
-	@# vite empties dist/ on every build, and .keep is what go:embed finds
-	@# on a clone that has never run this. Written back after, so a build
-	@# does not delete the file that makes the next `go build` work.
-	@cp ui/keep.txt ui/dist/.keep
 
 # web builds both halves and runs the server over a directory.
 web: ui build
