@@ -103,6 +103,11 @@ var doors = map[string][]string{
 		// package can implement is not a port, which is the same reason
 		// settings.go carries the window's.
 		"web_ports.go", "web_verbs.go",
+		// world.go and world_reads.go fill internal/verb's ports: what a
+		// verb reaches the machine through, and what its readings are made
+		// of. Exported for the reason the web's are — a port only this
+		// package can implement is not a port.
+		"world.go", "world_reads.go",
 	},
 
 	// What a task is and what running one does. Twenty-one doors is a
@@ -145,10 +150,16 @@ var doors = map[string][]string{
 	"internal/flow":      {"draft.go", "engine.go", "flow.go", "load.go", "loop.go", "resolve.go", "save.go"},
 	"internal/knowledge": {"fact.go", "scope.go", "store.go"},
 	"internal/logger":    {"logger.go", "openfiles.go"},
-	"internal/mcp":       {"clients.go", "handlers.go", "install.go", "launch.go", "server.go", "session.go", "tools.go", "types.go"},
-	"internal/migrate":   {"migrate.go"},
-	"internal/quota":     {"billing.go", "codex.go", "quota.go", "source.go"},
-	"internal/repo":      {"cochange.go", "compare.go", "discover.go", "impact.go", "repo.go", "review.go", "workspace.go", "worktree.go", "worktree_deliver.go", "worktree_diff.go", "worktree_file.go"},
+	// world.go fills internal/verb's ports: what a verb reaches the machine
+	// through on this way in. Exported because a port only this package can
+	// implement is not a port.
+	"internal/mcp": {
+		"clients.go", "handlers.go", "install.go", "launch.go", "server.go",
+		"session.go", "tools.go", "types.go", "world.go",
+	},
+	"internal/migrate": {"migrate.go"},
+	"internal/quota":   {"billing.go", "codex.go", "quota.go", "source.go"},
+	"internal/repo":    {"cochange.go", "compare.go", "discover.go", "impact.go", "repo.go", "review.go", "workspace.go", "worktree.go", "worktree_deliver.go", "worktree_diff.go", "worktree_file.go"},
 	// Two doors. web.go is the server and the ports built off the board;
 	// ports.go is the ones the browser reads through that the board cannot
 	// answer — what Orbit knows, what has been said to the supervisor,

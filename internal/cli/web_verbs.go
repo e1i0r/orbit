@@ -2,11 +2,18 @@ package cli
 
 // What the browser's buttons actually do.
 //
-// Each one is the same call the command line makes — `orbit run`, `orbit
-// pause`, `orbit cancel`, `orbit approve` — so a task started from a browser
-// tab and one started from a terminal are the same run, written down the
-// same way. Nothing here is a second implementation of a verb; it is the
-// adapter that lets internal/web ask for one without naming internal/task.
+// They ask internal/verb, which is the same thing `orbit run` and the
+// cockpit's [s] ask: a task started from a browser tab and one started from
+// a terminal are the same run, written down the same way, refused for the
+// same reasons and reported in the same words.
+//
+// This file used to be a method per verb — Start, Pause, Resume, Continue,
+// Skip, Cancel, Note, Direct, Requeue, Approve, Write, Deliver — each one a
+// short call into internal/task, and each one a chance to differ from the
+// command line's version of the same word. They did differ: the browser's
+// resume was the cockpit's continue, and a note written here recorded a
+// different author than a note written there. What is left is the adapter,
+// and the two readings that are not verbs.
 //
 // A task is found by its id and the repository it is against, because that
 // pair is what internal/web has: it reads the board, and a row carries both.
@@ -19,7 +26,9 @@ import (
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/task"
+	"github.com/e1i0r/orbit/internal/verb"
 	"github.com/e1i0r/orbit/internal/web"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // by is who the record says did it. "operator" is the word `orbit requeue`
@@ -32,144 +41,26 @@ const by = "operator"
 type hands struct {
 	store *store.Store
 	board *board.Reader
+	words *words.Printer
 }
 
-// Start runs a task in a process of its own.
+// Ask does one verb, by the name the declaration gives it.
 //
-// The unread count comes off a fresh read of the board, because that is
-// where the cap is measured and task.Start will not work it out for itself:
-// internal/board is the reader of that format, and internal/task must not
-// become a second one.
-func (h hands) Start(id, at string) error {
-	t, err := h.find(id, at)
+// The whole of the browser's doing, in one method, because the browser is
+// not where it is decided what a verb means. A name nothing answers to is a
+// refusal with a sentence in it, which is what the page shows.
+func (h hands) Ask(name string, in web.Asked) (web.Answered, error) {
+	out, err := verb.Run(context.Background(), newWorld(h.store, h.board, h.words), name, verb.In{
+		Task: in.Task,
+		Repo: in.Repo,
+		Args: in.Args,
+		By:   by,
+	})
 	if err != nil {
-		return err
+		return web.Answered{}, err
 	}
 
-	unread := 0
-
-	if b, _, readErr := h.board.Refresh(); readErr == nil {
-		unread = board.Unread(b)
-	}
-
-	if _, err := task.Start(h.store, t, t.Flow, unread); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Pause, Resume and Cancel are the three words a run understands, written
-// where the run will look for them.
-func (h hands) Pause(id, at string) error  { return h.control(id, at, "pause") }
-func (h hands) Resume(id, at string) error { return h.control(id, at, "resume") }
-
-// Continue is the word that lets a phase past the gate its flow asked it to
-// stop at — what the cockpit's [h] sends, and not what [r] sends.
-func (h hands) Continue(id, at string) error { return h.control(id, at, "continue") }
-
-// Skip lets the run past the phase itself rather than past its gate.
-func (h hands) Skip(id, at string) error { return h.control(id, at, "skip") }
-
-// Cancel asks the process to stop rather than writing a word for it: a
-// cancel a reader pressed should not wait for the next phase boundary, and
-// `orbit cancel` does not either. The run turns the signal into a cancelled
-// context and writes down that it was stopped, which is why this asks
-// instead of killing.
-func (h hands) Cancel(id, at string) error {
-	t, err := h.find(id, at)
-	if err != nil {
-		return err
-	}
-
-	return task.Cancel(h.store, t)
-}
-
-func (h hands) control(id, at, word string) error {
-	t, err := h.find(id, at)
-	if err != nil {
-		return err
-	}
-
-	return task.Control(h.store, t, word)
-}
-
-// Note leaves a word for the phase that starts next. A note written while
-// nothing is running is still recorded, and read when a run begins.
-func (h hands) Note(id, at, text string) error {
-	t, err := h.find(id, at)
-	if err != nil {
-		return err
-	}
-
-	return task.Note(h.store, t, text)
-}
-
-// Direct records a correction and stops the run in flight so that the next
-// one starts having read it. With restart, it starts that next one too,
-// waiting for the old one to actually be gone first — which is why it can
-// take half a minute to answer.
-func (h hands) Direct(id, at, text string, restart bool) error {
-	t, err := h.find(id, at)
-	if err != nil {
-		return err
-	}
-
-	if !restart {
-		return task.Direct(h.store, t, by, text)
-	}
-
-	unread := 0
-
-	if b, _, readErr := h.board.Refresh(); readErr == nil {
-		unread = board.Unread(b)
-	}
-
-	if _, err := task.Reopen(context.Background(), h.store, t, by, text, t.Flow, unread); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Requeue takes a task back to the queue, stopping whatever holds it and
-// waiting for it to be gone — otherwise the run's own task.cancelled lands
-// after the requeue and the fold files the task under Done anyway.
-func (h hands) Requeue(id, at, why string) error {
-	t, err := h.find(id, at)
-	if err != nil {
-		return err
-	}
-
-	return task.Requeue(context.Background(), h.store, t, by, why)
-}
-
-// Approve says yes to what the dependency gate stopped the run for.
-//
-// What is approved is what is pending, read here and not taken from the
-// caller: a reader approves the question they were shown, and a list from
-// outside would be a yes to a question nobody put.
-func (h hands) Approve(id, at string) ([]string, error) {
-	t, err := h.find(id, at)
-	if err != nil {
-		return nil, err
-	}
-
-	f, err := flowOfTask(h.store, t)
-	if err != nil {
-		return nil, err
-	}
-
-	names := task.Pending(h.store, t, f)
-	if len(names) == 0 {
-		return nil, fmt.Errorf("%s has added no dependency waiting on you", t.ID)
-	}
-
-	if err := task.Approve(h.store, t, names); err != nil {
-		return nil, err
-	}
-
-	return names, nil
+	return web.Answered{Said: out.Said, Of: out.Of, Saw: out.Saw}, nil
 }
 
 // History is everything ever said about the task, as markdown — the same

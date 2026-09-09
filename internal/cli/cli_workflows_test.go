@@ -251,9 +251,9 @@ func TestSetCommandComprehensive(t *testing.T) {
 
 	var out, errOut bytes.Buffer
 
-	// 1. orbit set with no args (prints table)
-	if code := Run([]string{"set"}, &out, &errOut); code != 0 {
-		t.Errorf("orbit set failed: %d: %s", code, errOut.String())
+	// 1. orbit settings, which is the reading
+	if code := Run([]string{"settings"}, &out, &errOut); code != 0 {
+		t.Errorf("orbit settings failed: %d: %s", code, errOut.String())
 	}
 
 	if !strings.Contains(out.String(), "language") || !strings.Contains(out.String(), "autopilot") {

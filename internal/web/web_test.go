@@ -44,6 +44,8 @@ func (b aBoard) Refresh() (board.Board, board.Changed, error) {
 
 func (b aBoard) Log(_, _ string) ([]view.Entry, error) { return b.entries, b.logErr }
 
+func (b aBoard) Rescan() error { return nil }
+
 // nowhere is a worktree port that answers a path nothing is at.
 type nowhere struct{ path string }
 

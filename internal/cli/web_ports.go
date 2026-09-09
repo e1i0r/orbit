@@ -20,6 +20,7 @@ import (
 	"github.com/e1i0r/orbit/internal/ui/fact"
 	"github.com/e1i0r/orbit/internal/ui/roster"
 	"github.com/e1i0r/orbit/internal/web"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // knows fills the facts port off the same reader the cockpit's screen uses.
@@ -177,9 +178,9 @@ func labels(from []roster.Choice) []string {
 
 // webPorts is everything the browser reads through, built once.
 func webPorts(
-	r *board.Reader, s *store.Store, engines map[string]engine.Engine, dir string,
+	r *board.Reader, s *store.Store, engines map[string]engine.Engine, dir string, p *words.Printer,
 ) web.Ports {
-	hand := hands{store: s, board: r}
+	hand := hands{store: s, board: r, words: p}
 
 	return web.Ports{
 		Board: r,
@@ -187,11 +188,11 @@ func webPorts(
 		Flows: s,
 		Knows: knows{all: knowsAllPort(r, s)},
 		Talks: talks{store: s},
-		// One value fills both: what can be asked for and what asking does
-		// need the same store and the same flow. They are two ports because
-		// one of them changes nothing — see internal/web/ports.go.
-		Verbs:     hand,
-		Says:      hand,
+		// One value fills all three: what can be asked for and what asking
+		// does need the same store and the same flow. They are separate
+		// ports because two of them change nothing — see
+		// internal/web/ports.go.
+		Asks:      hand,
 		Told:      hand,
 		Standings: hand,
 		Roster: roll{

@@ -175,3 +175,19 @@ type Engine interface {
 	// the record is left as it was.
 	Transcript(dir string, since time.Time) ([]Turn, error)
 }
+
+// All is every engine this build knows, by the name a flow, a task and the
+// settings all spell it with.
+//
+// Here rather than in whoever asks, because a second copy of this table is a
+// second answer to "what can Orbit run" — and the copy that drifts is always
+// the one somebody reads. The command line, the MCP server and the readings
+// all take this one.
+func All() map[string]Engine {
+	return map[string]Engine{
+		"agy":      NewAgy(),
+		"claude":   NewClaude(),
+		"codex":    NewCodex(),
+		"opencode": NewOpenCode(),
+	}
+}

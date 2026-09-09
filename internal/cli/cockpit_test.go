@@ -68,14 +68,17 @@ func cockpitBoard(t *testing.T) (Context, string) {
 
 	ctx := Context{Out: &out, Err: &errOut, Words: words.For("en")}
 
-	verb(t, ctx, "new", "-repo", repo, "-id", "LED-1", "the refund lands on the total twice")
+	ranCommand(t, ctx, "new", "-repo", repo, "-id", "LED-1", "the refund lands on the total twice")
 
 	return ctx, code
 }
 
-// verb is one orbit command, found in the table the command line dispatches
-// on so that a test cannot call something the binary would not.
-func verb(t *testing.T, ctx Context, name string, args ...string) {
+// ranCommand runs one orbit command, found in the table the command line
+// dispatches on so that a test cannot call something the binary would not.
+//
+// Not called verb: internal/verb is the package this one asks for what a
+// verb means, and a helper by that name shadows it.
+func ranCommand(t *testing.T, ctx Context, name string, args ...string) {
 	t.Helper()
 
 	for _, c := range commands() {

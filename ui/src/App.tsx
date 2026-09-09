@@ -10,6 +10,7 @@ import { EnginesScreen } from "./screens/EnginesScreen";
 import { FlowsScreen } from "./screens/FlowsScreen";
 import { KnowledgeScreen } from "./screens/KnowledgeScreen";
 import { ReposScreen } from "./screens/ReposScreen";
+import { WriteScreen } from "./screens/WriteScreen";
 import { SupervisorScreen } from "./screens/SupervisorScreen";
 import { TaskScreen } from "./screens/TaskScreen";
 import { Caught } from "./parts/Caught";
@@ -76,7 +77,20 @@ export function App() {
           <TaskScreen id={task} back={() => go("board")} />
         </Caught>
       ) : (
-        <Page title={screens[where]?.title ?? named(where)} said={screens[where]?.said}>
+        <Page
+          title={screens[where]?.title ?? named(where)}
+          said={screens[where]?.said}
+          does={
+            where === "board" && (
+              <button
+                onClick={() => go("write")}
+                className="shrink-0 rounded border border-accent/40 bg-accent/10 px-2 py-0.5 text-[11px] text-accent transition-colors hover:bg-accent/20"
+              >
+                Write a task
+              </button>
+            )
+          }
+        >
           <Caught>{screen(where, board, go)}</Caught>
         </Page>
       )}
@@ -90,6 +104,10 @@ const screens: Record<string, { title: string; said: string }> = {
   board: {
     title: "Tasks",
     said: "Every task under this root, in the band that says what it waits for.",
+  },
+  write: {
+    title: "Write a task",
+    said: "What the work is, where it happens, and how carefully to go about it.",
   },
   supervisor: {
     title: "Supervisor",
@@ -117,6 +135,8 @@ function screen(where: string, board: Board | undefined, go: (to: string) => voi
   switch (where) {
     case "board":
       return <BoardScreen board={board} open={(id) => go(`task/${id}`)} />;
+    case "write":
+      return <WriteScreen board={board} open={(id) => go(`task/${id}`)} />;
     case "supervisor":
       return <SupervisorScreen />;
     case "knowledge":

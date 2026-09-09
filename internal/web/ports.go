@@ -99,70 +99,44 @@ type EngineInfo struct {
 	Quota   []Window `json:"quota,omitempty"`
 }
 
-// Verbs is what a reader can do to the run of a task.
+// Asks is the one thing a reader does anything through.
 //
-// Six words, and they are the whole of what steering a run means: begin one,
-// hold it, let it go on, let it past the gate it stopped at, let it past the
-// phase itself, and end it. None of them carries anything but the task —
-// what a reader has to say goes through Says, next door.
+// One method and not a port per verb, because what the verbs are is not this
+// package's to know: internal/verb declares them, once, for the command
+// line, the window, the browser and the MCP server together. A port per verb
+// was six methods that had to be added to in step with a list somewhere else
+// — and the list they were meant to match had already drifted twice by the
+// time this replaced them.
 //
-// Every one of these changes what is happening on somebody's machine, and
-// two of them spend money, so they arrive over POST and through the guard in
-// verbs.go — never as a reading. Each takes the task by its id and the
-// repository it is against, because that pair is what identifies a task
-// everywhere in Orbit, and answers when the word is on disk rather than when
-// the run has acted on it: whether it did is a question the record answers,
-// and the page is already reading it.
-//
-// A nil Verbs is a server that shows no buttons. It is what a build without
-// a store gets, and it is the honest state — not a set of controls that
-// refuse when pressed.
-type Verbs interface {
-	// Start runs a task in a process of its own. It refuses a task
-	// something else is already running, and a board over its unread cap.
-	Start(id, repo string) error
-	// Pause and Resume ask a run to stop and to carry on at its next phase
-	// boundary. They are a pair: a browser that could pause and not resume
-	// would be a way to strand a run nobody can reach from here.
-	Pause(id, repo string) error
-	Resume(id, repo string) error
-	// Continue is resume's other half, and not the same word. Resume undoes
-	// a pause somebody asked for; Continue lets a phase past the gate its
-	// own flow asked it to stop at, which is what a run sitting in "needs
-	// you" is waiting for. A browser with only Resume could not release
-	// the one state a reader opens the page to release.
-	Continue(id, repo string) error
-	// Skip lets the run past the phase itself rather than past its gate.
-	// Nothing is recorded for a phase that did not run.
-	Skip(id, repo string) error
-	// Cancel asks the run to stop where it stands, and to write down that
-	// it was stopped.
-	Cancel(id, repo string) error
+// A nil Asks is a server that shows no buttons. It is what a build without a
+// store gets, and it is the honest state — not a set of controls that refuse
+// when pressed.
+type Asks interface {
+	// Ask does one verb and answers what it said. A refusal is an error
+	// with a sentence in it: "this task is already being run", "the board
+	// is over its unread cap". Those are answers to the reader about the
+	// state of their own machine, not a server that broke.
+	Ask(name string, in Asked) (Answered, error)
 }
 
-// Says is what a reader can put on the record about a task, as against about
-// its run.
-//
-// The line between this and Verbs is what each acts on. A word to a run only
-// means something while one is walking; every one of these is recorded and
-// waits for the next run if none is going — a note written on a task nobody
-// is running is read by the phase that starts next, and that is the point of
-// it. Three of the four carry the reader's own words.
-type Says interface {
-	// Note leaves a word for the phase that starts next.
-	Note(id, repo, text string) error
-	// Direct is a note the run is stopped for: the correction goes on the
-	// record and the run in flight is asked to end, so the next one starts
-	// having read it. restart begins that next one straight away, which
-	// spends money.
-	Direct(id, repo, text string, restart bool) error
-	// Requeue takes a task back to the queue, stopping whatever holds it.
-	// why is the reader's reason if they gave one.
-	Requeue(id, repo, why string) error
-	// Approve says yes to the libraries a task added, and answers which —
-	// the reader is answering the question the record asked them, so what
-	// was approved is what was pending, not a list from the caller.
-	Approve(id, repo string) ([]string, error)
+// Asked is what a verb was asked with: the task if it is about one, and
+// whatever the reader typed, by the names the verb takes.
+type Asked struct {
+	Task string
+	Repo string
+	Args map[string]string
+}
+
+// Answered is what it said.
+type Answered struct {
+	// Said is the sentence the reader is shown, written by the verb so
+	// that the browser and the terminal report the same act in the same
+	// words.
+	Said string
+	// Of is what it acted on, where that is a list worth showing.
+	Of []string
+	// Saw is what a reading read, in the shape it was read in.
+	Saw any
 }
 
 // Told is everything ever said about a task, as markdown.

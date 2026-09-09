@@ -80,7 +80,7 @@ func serveWeb(ctx Context, args []string) error {
 		return fmt.Errorf("%s: %w", p.T("web.built", "read the window built into orbit"), err)
 	}
 
-	ports := webPorts(r, s, newEngines(), dir)
+	ports := webPorts(r, s, newEngines(), dir, ctx.printer())
 	ports.Files = files
 
 	handler := web.New(ports).Handler()

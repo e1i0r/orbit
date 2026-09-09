@@ -29,6 +29,13 @@ import (
 type Reader interface {
 	Refresh() (board.Board, board.Changed, error)
 	Log(repoPath, id string) ([]view.Entry, error)
+	// Rescan looks for repositories and tasks again.
+	//
+	// Refresh re-reads the records of the tasks it already knows; a task
+	// written since is not one of those. Without this a task written from
+	// this server did not appear on its own board until somebody restarted
+	// it, which is a form nobody would press twice.
+	Rescan() error
 }
 
 // Worktrees answers where a task's checkout of a repository is, which is the
@@ -62,11 +69,10 @@ type Ports struct {
 	Knows  Knows
 	Talks  Talks
 	Roster Roster
-	// Verbs is what a reader can do rather than read, and Standings which
+	// Asks is what a reader can do rather than read, and Standings which
 	// of it is worth offering. Nil is a window that shows no buttons — see
 	// ports.go.
-	Verbs     Verbs
-	Says      Says
+	Asks      Asks
 	Told      Told
 	Standings Standings
 	Root      string
@@ -85,8 +91,7 @@ type Server struct {
 	knows  Knows
 	talks  Talks
 	roster Roster
-	verbs  Verbs
-	says   Says
+	asks   Asks
 	told   Told
 	stands Standings
 	root   string
@@ -97,9 +102,8 @@ type Server struct {
 func New(p Ports) *Server {
 	return &Server{
 		board: p.Board, trees: p.Trees, flows: p.Flows, knows: p.Knows,
-		talks: p.Talks, roster: p.Roster, verbs: p.Verbs, says: p.Says,
-		told: p.Told, stands: p.Standings,
-		root: p.Root, files: p.Files,
+		talks: p.Talks, roster: p.Roster, asks: p.Asks, told: p.Told,
+		stands: p.Standings, root: p.Root, files: p.Files,
 	}
 }
 

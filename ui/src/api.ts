@@ -76,17 +76,10 @@ export interface Task extends TaskSummary {
   pending?: string[];
 }
 
-export type Verb =
-  | "start"
-  | "pause"
-  | "resume"
-  | "continue"
-  | "skip"
-  | "cancel"
-  | "note"
-  | "direct"
-  | "requeue"
-  | "approve";
+// Verb is a name from internal/verb's declaration. It is not a closed list
+// here on purpose: the server takes any verb the declaration carries, and a
+// union repeated in this file would be a fifth opinion about the vocabulary.
+export type Verb = string;
 
 /** What a verb carries, for the three that take the reader's own words. */
 export interface Says {
@@ -236,6 +229,21 @@ export interface RepoDetail {
   bands: Partial<Record<Band, number>>;
 }
 
+export interface Written {
+  id: string;
+  text: string;
+  repo?: string;
+  flow?: string;
+  start?: boolean;
+}
+
+export interface Wrote {
+  /** What was done, and what it was done to: the id of the new task. */
+  did: string;
+  said: string;
+  of?: string[];
+}
+
 export interface Told {
   id: string;
   text?: string;
@@ -275,19 +283,19 @@ async function ask<T>(path: string): Promise<T> {
 // from posting here. A cross-origin form can only send three types and none
 // of them is JSON, so this makes the browser ask permission first — and the
 // server never grants it. See internal/web/verbs.go.
-async function tell<T>(path: string, says: Says = {}): Promise<T> {
+async function tell<T>(path: string, sent: unknown = {}): Promise<T> {
   const res = await fetch(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(says),
+    body: JSON.stringify(sent),
   });
-  const body = await res.json();
+  const back = await res.json();
 
   if (!res.ok) {
-    throw new Error(body?.error ?? res.statusText);
+    throw new Error(back?.error ?? res.statusText);
   }
 
-  return body as T;
+  return back as T;
 }
 
 export const api = {
@@ -312,4 +320,5 @@ export const api = {
   repos: () => ask<{ root: string; repos: RepoDetail[] }>("/api/repos"),
   do: (id: string, verb: Verb, says?: Says) =>
     tell<Did>(`/api/tasks/${encodeURIComponent(id)}/${verb}`, says),
+  write: (one: Written) => tell<Wrote>("/api/do/new", { ...one, run: one.start }),
 };

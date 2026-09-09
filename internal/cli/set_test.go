@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/store"
-	"github.com/e1i0r/orbit/internal/words"
 )
 
 // settings reads back what `orbit set` wrote, through the store rather than
@@ -107,37 +106,6 @@ func TestSetCanTurnTheUnreadCapOff(t *testing.T) {
 	}
 }
 
-// The synopsis promises a set of keys and assign switches on them. This is
-// what keeps the two lists from drifting: a key added to one and not the
-// other fails here rather than at a reader's terminal.
-func TestEverySettingKeyCanBeSet(t *testing.T) {
-	values := map[string]string{
-		"language":     "es",
-		"autopilot":    "on",
-		"unread-cap":   "3",
-		"engine":       "claude",
-		"model":        "sonnet",
-		"flow":         "careful",
-		"theme":        "tokyo-night",
-		"check-record": "on",
-
-		"budget-task":      "1.50",
-		"budget-workspace": "20",
-		"quota-floor":      "15",
-	}
-	for _, key := range settingKeys() {
-		value, ok := values[key]
-		if !ok {
-			t.Fatalf("%q is offered as a key and this test has no value for it", key)
-		}
-
-		var cfg store.Settings
-		if _, err := assign(words.For("en"), &cfg, key, value); err != nil {
-			t.Errorf("set %s %s: %v", key, value, err)
-		}
-	}
-}
-
 // The default flow is a setting like any other, and `orbit new` with no
 // -flow is what reads it.
 func TestSetChoosesTheFlowANewTaskIsWrittenAgainst(t *testing.T) {
@@ -164,7 +132,7 @@ func TestSetRefusesWhatItCannotDoAndSaysWhy(t *testing.T) {
 		{"a cap below zero", []string{"set", "unread-cap", "-1"}, "negative"},
 		{"a switch that is neither", []string{"set", "autopilot", "maybe"}, "on or off"},
 		{"a flow name that is a path", []string{"set", "flow", "../task"}, "flow"},
-		{"no value at all", []string{"set", "autopilot"}, "key and a value"},
+		{"no value at all", []string{"set", "autopilot"}, "set needs value"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			_, orbitHome := workspace(t)
@@ -182,19 +150,6 @@ func TestSetRefusesWhatItCannotDoAndSaysWhy(t *testing.T) {
 				t.Errorf("a refused setting wrote the settings file anyway")
 			}
 		})
-	}
-}
-
-// A refusal that does not say what would have worked leaves the reader
-// guessing, and `orbit set -h` shows flags this command does not have.
-func TestARefusedKeyListsTheKeysThereAre(t *testing.T) {
-	workspace(t)
-
-	_, _, errOut := run(t, "set", "colour", "blue")
-	for _, key := range settingKeys() {
-		if !strings.Contains(errOut, key) {
-			t.Errorf("the refusal does not offer %q:\n%s", key, errOut)
-		}
 	}
 }
 

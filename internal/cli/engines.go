@@ -37,14 +37,7 @@ import (
 // A map and not a default, because the record already names its engine: a
 // task run by something this build does not have has to be answered by name
 // rather than by assumption.
-func newEngines() map[string]engine.Engine {
-	return map[string]engine.Engine{
-		"agy":      engine.NewAgy(),
-		"claude":   engine.NewClaude(),
-		"codex":    engine.NewCodex(),
-		"opencode": engine.NewOpenCode(),
-	}
-}
+func newEngines() map[string]engine.Engine { return engine.All() }
 
 // engineNames is the same table in the order a list of them is shown.
 //

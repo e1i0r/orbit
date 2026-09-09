@@ -13,7 +13,7 @@ import (
 	"github.com/e1i0r/orbit/internal/view"
 )
 
-// hands is a verbs port that writes down what it was asked for.
+// hands is an Asks port that writes down what it was asked for.
 type hands struct {
 	asked   []string
 	refuse  error
@@ -21,45 +21,32 @@ type hands struct {
 	held    bool
 }
 
-func (h *hands) Start(id, _ string) error  { return h.note("start", id) }
-func (h *hands) Pause(id, _ string) error  { return h.note("pause", id) }
-func (h *hands) Resume(id, _ string) error { return h.note("resume", id) }
-
-func (h *hands) Continue(id, _ string) error { return h.note("continue", id) }
-func (h *hands) Skip(id, _ string) error     { return h.note("skip", id) }
-func (h *hands) Cancel(id, _ string) error   { return h.note("cancel", id) }
-
-func (h *hands) Note(id, _, text string) error { return h.note("note "+text, id) }
-
-func (h *hands) Direct(id, _, text string, restart bool) error {
-	if restart {
-		return h.note("direct+restart "+text, id)
+// Ask records the verb, whatever it carried, and the task it was about — in
+// the order the fields are named, so a test can say what it expects to have
+// arrived without depending on a map's iteration.
+func (h *hands) Ask(name string, in Asked) (Answered, error) {
+	if h.refuse != nil {
+		return Answered{}, h.refuse
 	}
 
-	return h.note("direct "+text, id)
-}
+	said := name
 
-func (h *hands) Requeue(id, _, why string) error { return h.note("requeue "+why, id) }
-
-func (h *hands) Approve(id, _ string) ([]string, error) {
-	if err := h.note("approve", id); err != nil {
-		return nil, err
+	for _, f := range []string{"text", "restart"} {
+		if v := in.Args[f]; v != "" {
+			said += " " + v
+		}
 	}
 
-	return h.pending, nil
+	h.asked = append(h.asked, said+" "+in.Task)
+
+	if name == "approve" {
+		return Answered{Said: "approved", Of: h.pending}, nil
+	}
+
+	return Answered{Said: in.Task + " " + name + "ed"}, nil
 }
 
 func (h *hands) Standing(_, _ string) Standing { return Standing{Held: h.held, Pending: h.pending} }
-
-func (h *hands) note(verb, id string) error {
-	if h.refuse != nil {
-		return h.refuse
-	}
-
-	h.asked = append(h.asked, verb+" "+id)
-
-	return nil
-}
 
 // doing sends one verb the way the page sends it.
 func doing(t *testing.T, s *Server, verb string, head map[string]string) (int, map[string]any) {
@@ -100,8 +87,7 @@ func running(h *hands) *Server {
 			{ID: "LED-1", Title: "fix the total", Band: view.Running, Repo: "ledger"},
 		}},
 		Trees:     nowhere{path: "/nowhere"},
-		Verbs:     h,
-		Says:      h,
+		Asks:      h,
 		Standings: h,
 		Root:      "/code",
 		Files:     built,
@@ -173,7 +159,7 @@ func TestWhatTheReaderTypedReachesTheTask(t *testing.T) {
 
 	want := []string{
 		"note use cents, not floats LED-1",
-		"direct+restart start over LED-1",
+		"direct start over true LED-1",
 		"requeue the brief was wrong LED-1",
 	}
 

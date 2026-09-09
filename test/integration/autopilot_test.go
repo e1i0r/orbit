@@ -22,7 +22,7 @@ func TestAutopilotWalksThroughAGateTheFlowAsked(t *testing.T) {
 		"review": []any{map[string]any{"say": "it reads right"}},
 	})
 
-	b.must(t, "settings", "autopilot", "on")
+	b.must(t, "set", "autopilot", "on")
 	b.must(t, "new", "-repo", b.repo, "-id", "LED-9", "-flow", "task", "fix the total")
 	b.must(t, "run", "-repo", b.repo, "LED-9")
 

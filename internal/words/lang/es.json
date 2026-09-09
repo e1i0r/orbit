@@ -1609,14 +1609,6 @@
       "source": "list the flows a task can be written against",
       "value": "listar los flujos contra los que se puede escribir una tarea"
     },
-    "cmd.new": {
-      "source": "write a task down",
-      "value": "anotar una tarea"
-    },
-    "cmd.run": {
-      "source": "run a task through its flow",
-      "value": "llevar una tarea por su flujo"
-    },
     "cmd.pause": {
       "source": "stop a run at its next phase",
       "value": "detener una ejecución en su siguiente fase"
@@ -1628,10 +1620,6 @@
     "cmd.skip": {
       "source": "let a stopped run carry on without the phase it is waiting in front of",
       "value": "dejar que una ejecución detenida continúe sin la fase delante de la que espera"
-    },
-    "cmd.list": {
-      "source": "list the tasks of a repository",
-      "value": "listar las tareas de un repositorio"
     },
     "cmd.show": {
       "source": "print what happened to a task",
@@ -1764,10 +1752,6 @@
     "reconcile.all_accounted": {
       "source": "every run is accounted for",
       "value": "no falta ninguna corrida por cerrar"
-    },
-    "supervisor.thread_empty": {
-      "source": "the supervisor thread is empty",
-      "value": "el hilo del supervisor está vacío"
     },
     "top.window_failed": {
       "source": "the window",
@@ -1917,10 +1901,6 @@
       "source": "close the records of runs whose processes are gone",
       "value": "cerrar los registros de las ejecuciones cuyos procesos ya no están"
     },
-    "cmd.settings": {
-      "source": "view or change settings",
-      "value": "ver o cambiar configuraciones"
-    },
     "cmd.note": {
       "source": "record a note for a task",
       "value": "dejar una nota para una tarea"
@@ -1937,10 +1917,6 @@
       "source": "check for updates and upgrade orbit",
       "value": "buscar actualizaciones y actualizar orbit"
     },
-    "cmd.supervisor": {
-      "source": "read or write to the persistent supervisor conversation thread",
-      "value": "leer o escribir en el hilo persistente de conversación del supervisor"
-    },
     "cmd.mcp": {
       "source": "run the model context protocol server, or register it in the clients that speak it",
       "value": "ejecutar el servidor del protocolo de contexto de modelo, o registrarlo en los clientes que lo hablan"
@@ -1953,10 +1929,6 @@
       "source": "State lives in $ORBIT_HOME, or ~/.orbit when that is unset.",
       "value": "El estado vive en $ORBIT_HOME, o en ~/.orbit si no está definida."
     },
-    "set.needs_key_and_value": {
-      "source": "set needs a key and a value; the keys are {keys}",
-      "value": "a set le faltan una clave y un valor; las claves son {keys}"
-    },
     "set.no_such_setting": {
       "source": "{key} is not a setting; the keys are {keys}",
       "value": "{key} no es un ajuste; las claves son {keys}"
@@ -1964,30 +1936,6 @@
     "set.on_or_off": {
       "source": "{setting} is on or off, not {value}",
       "value": "{setting} está en on o en off, no en {value}"
-    },
-    "supervisor.retract_not_a_number": {
-      "source": "-retract takes the number of a line in the thread, not {value}",
-      "value": "-retract toma el número de una línea del hilo, no {value}"
-    },
-    "supervisor.recorded": {
-      "source": "recorded in supervisor thread: {text}",
-      "value": "anotado en el hilo del supervisor: {text}"
-    },
-    "supervisor.no_such_line": {
-      "source": "there is no line {n} in the supervisor thread; it has {count}",
-      "value": "no hay línea {n} en el hilo del supervisor; tiene {count}"
-    },
-    "supervisor.already_retracted": {
-      "source": "line {n} was already taken back",
-      "value": "la línea {n} ya se había retirado"
-    },
-    "supervisor.line_taken_back": {
-      "source": "took back line {n}: {text}",
-      "value": "línea {n} retirada: {text}"
-    },
-    "set.now": {
-      "source": "{key} is now {value}",
-      "value": "{key} ahora es {value}"
     },
     "engine.setup.agy.install": {
       "source": "1. Install the Antigravity CLI: agy is its binary",
@@ -4520,6 +4468,294 @@
     "tab_desc.history": {
       "source": "every word said about this task, in whichever program it was said",
       "value": "cada palabra dicha sobre esta tarea, en el programa que haya sido"
+    },
+    "verb.new": {
+      "source": "write a task down on the board",
+      "value": "anota una tarea en el tablero"
+    },
+    "verb.new.id": {
+      "source": "how you and Orbit will both refer to it",
+      "value": "cómo la nombraréis tú y Orbit"
+    },
+    "verb.new.text": {
+      "source": "what the work is, written for whoever does it",
+      "value": "en qué consiste el trabajo, escrito para quien lo haga"
+    },
+    "verb.new.repo": {
+      "source": "which checkout it is against, if it is against one yet",
+      "value": "sobre qué copia de trabajo va, si ya va sobre alguna"
+    },
+    "verb.new.flow": {
+      "source": "the shape of work it walks; the default is the one you set",
+      "value": "la forma de trabajo que recorre; por defecto, la que hayas fijado"
+    },
+    "verb.new.run": {
+      "source": "start it as soon as it is written",
+      "value": "arráncala en cuanto quede anotada"
+    },
+    "verb.run": {
+      "source": "run a task that is not running",
+      "value": "ejecuta una tarea que no esté ejecutándose"
+    },
+    "verb.run.flow": {
+      "source": "walk this flow instead of the one it was written against",
+      "value": "recorre este flujo en vez de aquel con el que se escribió"
+    },
+    "verb.run.engine": {
+      "source": "walk every phase with this engine instead of the ones the flow names",
+      "value": "recorre todas las fases con este motor en vez de con los que nombra el flujo"
+    },
+    "verb.pause": {
+      "source": "ask a run to stop at its next phase boundary",
+      "value": "pide a una ejecución que se detenga al terminar la fase en curso"
+    },
+    "verb.resume": {
+      "source": "let a run carry on from a pause",
+      "value": "deja que una ejecución continúe tras una pausa"
+    },
+    "verb.continue": {
+      "source": "let a phase past the gate its flow stopped it at",
+      "value": "deja pasar una fase por la compuerta donde su flujo la detuvo"
+    },
+    "verb.skip": {
+      "source": "let a run past the phase it is in, without running it",
+      "value": "deja pasar la fase en curso sin ejecutarla"
+    },
+    "verb.cancel": {
+      "source": "stop a run where it stands",
+      "value": "detén una ejecución donde esté"
+    },
+    "verb.requeue": {
+      "source": "stop whatever holds a task and put it back in to do",
+      "value": "detén lo que retenga la tarea y devuélvela a pendientes"
+    },
+    "verb.requeue.why": {
+      "source": "the reason, if you want it on the record",
+      "value": "el motivo, si quieres que conste"
+    },
+    "verb.note": {
+      "source": "leave a word for the phase that starts next",
+      "value": "deja un apunte para la fase que empiece después"
+    },
+    "verb.note.text": {
+      "source": "what you want it to know",
+      "value": "lo que quieres que sepa"
+    },
+    "verb.direct": {
+      "source": "correct a task, stopping the run so the next one reads it",
+      "value": "corrige una tarea y detén la ejecución para que la siguiente lo lea"
+    },
+    "verb.direct.text": {
+      "source": "the correction",
+      "value": "la corrección"
+    },
+    "verb.direct.restart": {
+      "source": "start the next run now, which spends money",
+      "value": "arranca ya la siguiente ejecución, lo cual cuesta dinero"
+    },
+    "verb.approve": {
+      "source": "say yes to the libraries a task added",
+      "value": "acepta las librerías que añadió una tarea"
+    },
+    "verb.read": {
+      "source": "mark a finished task as looked at",
+      "value": "marca como vista una tarea terminada"
+    },
+    "verb.history": {
+      "source": "everything ever said about a task, in any program",
+      "value": "todo lo dicho sobre una tarea, en cualquier programa"
+    },
+    "verb.pr": {
+      "source": "open a pull request from a task's worktree",
+      "value": "abre un pull request desde la copia de trabajo de una tarea"
+    },
+    "verb.merge": {
+      "source": "merge a task's pull request and delete its branch",
+      "value": "fusiona el pull request de una tarea y borra su rama"
+    },
+    "verb.close_pr": {
+      "source": "close a task's pull request without merging it",
+      "value": "cierra el pull request de una tarea sin fusionarlo"
+    },
+    "verb.say": {
+      "source": "say something in the supervisor thread",
+      "value": "di algo en el hilo del supervisor"
+    },
+    "verb.say.text": {
+      "source": "what to say",
+      "value": "qué decir"
+    },
+    "verb.join": {
+      "source": "open a checkout of another repository for a task",
+      "value": "abre para una tarea una copia de trabajo de otro repositorio"
+    },
+    "verb.join.name": {
+      "source": "the repository to join, by name",
+      "value": "el repositorio que se suma, por nombre"
+    },
+    "verb.permit": {
+      "source": "answer the question a critical action stopped for",
+      "value": "responde a la pregunta por la que se detuvo una acción crítica"
+    },
+    "verb.permit.yes": {
+      "source": "whether to let it happen",
+      "value": "si se permite o no"
+    },
+    "verb.critical": {
+      "source": "mark a task as one whose changes need answering for",
+      "value": "marca una tarea como una de cuyos cambios hay que responder"
+    },
+    "verb.critical.on": {
+      "source": "whether it is critical",
+      "value": "si es crítica"
+    },
+    "verb.reconcile": {
+      "source": "close the record of a run whose process is gone",
+      "value": "cierra el registro de una ejecución cuyo proceso ya no está"
+    },
+    "verb.delete": {
+      "source": "remove a task and everything written about it",
+      "value": "borra una tarea y todo lo escrito sobre ella"
+    },
+    "verb.take": {
+      "source": "hand a terminal to an engine, in the task's own checkout",
+      "value": "entrega un terminal a un motor, en la copia de trabajo de la tarea"
+    },
+    "verb.export": {
+      "source": "write the record out as JSON lines",
+      "value": "vuelca el registro como líneas JSON"
+    },
+    "verb.export.into": {
+      "source": "a directory that is empty or does not exist yet",
+      "value": "un directorio vacío o que aún no existe"
+    },
+    "verb.set": {
+      "source": "change one of Orbit's own settings",
+      "value": "cambia uno de los ajustes de Orbit"
+    },
+    "verb.set.key": {
+      "source": "which setting",
+      "value": "qué ajuste"
+    },
+    "verb.set.value": {
+      "source": "what to set it to",
+      "value": "a qué valor ponerlo"
+    },
+    "verb.settings": {
+      "source": "every setting and what it is set to",
+      "value": "todos los ajustes y a qué están puestos"
+    },
+    "verb.quota": {
+      "source": "what is left of each engine's windows",
+      "value": "cuánto queda de las ventanas de cada motor"
+    },
+    "verb.list": {
+      "source": "every task under this root, in the band that says what it waits for",
+      "value": "todas las tareas bajo esta raíz, en la banda que dice qué esperan"
+    },
+    "verb.show": {
+      "source": "everything the record says about one task",
+      "value": "todo lo que el registro dice de una tarea"
+    },
+    "verb.flow": {
+      "source": "the flow a task walks, and how far its run got through it",
+      "value": "el flujo que recorre una tarea, y hasta dónde llegó su ejecución"
+    },
+    "verb.diff": {
+      "source": "what a task changed in its worktree",
+      "value": "qué cambió una tarea en su copia de trabajo"
+    },
+    "verb.impact": {
+      "source": "what a change reaches beyond the files it touched",
+      "value": "hasta dónde llega un cambio más allá de los ficheros que tocó"
+    },
+    "verb.knowledge": {
+      "source": "everything Orbit has been told about this code",
+      "value": "todo lo que se le ha contado a Orbit sobre este código"
+    },
+    "verb.flows": {
+      "source": "every flow a task can be started under",
+      "value": "todos los flujos con los que se puede arrancar una tarea"
+    },
+    "verb.engines": {
+      "source": "what this build can run, and what this machine has installed",
+      "value": "qué puede ejecutar esta versión, y qué tiene instalado esta máquina"
+    },
+    "verb.repos": {
+      "source": "the checkouts Orbit is watching, and the work in each",
+      "value": "las copias de trabajo que Orbit vigila, y el trabajo en cada una"
+    },
+    "verb.thread": {
+      "source": "everything said in the supervisor thread",
+      "value": "todo lo dicho en el hilo del supervisor"
+    },
+    "verb.retract": {
+      "source": "take back a line of the supervisor thread",
+      "value": "retira una línea del hilo del supervisor"
+    },
+    "verb.retract.line": {
+      "source": "which line, as `orbit thread` numbers them",
+      "value": "qué línea, según las numera `orbit thread`"
+    },
+    "verb.learn": {
+      "source": "write down something true about this code",
+      "value": "anota algo cierto sobre este código"
+    },
+    "verb.learn.text": {
+      "source": "the fact, in a sentence",
+      "value": "el hecho, en una frase"
+    },
+    "cmd.new": {
+      "source": "write a task down",
+      "value": "anotar una tarea"
+    },
+    "cmd.run": {
+      "source": "run a task through its flow",
+      "value": "llevar una tarea por su flujo"
+    },
+    "cmd.list": {
+      "source": "list the tasks of a repository",
+      "value": "listar las tareas de un repositorio"
+    },
+    "verb.thread.empty": {
+      "source": "the supervisor thread is empty",
+      "value": "el hilo del supervisor está vacío"
+    },
+    "verb.retract.not_a_number": {
+      "source": "retract takes the number of a line in the thread, not {value}",
+      "value": "retract toma el número de una línea del hilo, no {value}"
+    },
+    "verb.retract.no_such_line": {
+      "source": "there is no line {n} in the supervisor thread; it has {count}",
+      "value": "no hay línea {n} en el hilo del supervisor; tiene {count}"
+    },
+    "verb.retract.already": {
+      "source": "line {n} was already taken back",
+      "value": "la línea {n} ya se había retirado"
+    },
+    "verb.retract.done": {
+      "source": "took back line {n}: {text}",
+      "value": "retirada la línea {n}: {text}"
+    },
+    "verb.set.now": {
+      "source": "{key} is now {value}",
+      "value": "{key} ahora es {value}"
+    },
+    "verb.say.done": {
+      "source": "said in the supervisor thread",
+      "value": "dicho en el hilo del supervisor"
+    },
+    "verb.needs_a_task": {
+      "source": "{verb} needs a task",
+      "value": "{verb} necesita una tarea"
+    },
+    "verb.needs_field": {
+      "source": "{verb} needs {field}",
+      "value": "a {verb} le falta {field}"
+    },
+    "verb.takes_no_more": {
+      "source": "{verb} takes nothing after {extra}",
+      "value": "{verb} no admite nada después de {extra}"
     }
   }
 }

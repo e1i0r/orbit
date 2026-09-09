@@ -35,7 +35,7 @@ var program = map[string][]string{
 	// checks is a generated file that has already drifted.
 	"web/build":     {},
 	"cmd/orbit":     {"internal/cli"},
-	"internal/arch": {},
+	"internal/arch": {"internal/verb"},
 	// internal/task is on internal/board's list for one function: task.Alive,
 	// which reads the run marker and asks the operating system whether the
 	// pid it names is still there. It is a widening, and it was argued
@@ -79,8 +79,8 @@ var program = map[string][]string{
 		"internal/knowledge", "internal/logger", "internal/mcp", "internal/migrate",
 		"internal/quota", "internal/record", "internal/repo", "internal/store",
 		"internal/supervisor", "internal/task", "internal/tracker", "internal/ui",
-		"internal/ui/fact", "internal/ui/roster", "internal/view", "internal/web",
-		"internal/words", "ui",
+		"internal/ui/fact", "internal/ui/roster", "internal/verb", "internal/view",
+		"internal/web", "internal/words", "ui",
 	},
 	// internal/logger is on internal/engine's list for the one thing this
 	// package does that nothing else in Orbit does: it starts somebody
@@ -119,7 +119,12 @@ var program = map[string][]string{
 	// before it starts. Reading it is the other half — a model that asks
 	// before planning starts from what is known rather than finding it out
 	// again.
-	"internal/mcp": {"internal/board", "internal/flow", "internal/knowledge", "internal/logger", "internal/record", "internal/repo", "internal/store", "internal/supervisor", "internal/task", "internal/view"},
+	"internal/mcp": {
+		"internal/board", "internal/export", "internal/flow", "internal/knowledge",
+		"internal/logger", "internal/record", "internal/repo", "internal/store",
+		"internal/supervisor", "internal/task", "internal/verb", "internal/view",
+		"internal/words",
+	},
 	// internal/migrate reads the files an older Orbit wrote and fills the
 	// database from them, so it is the one package that touches the record
 	// on both sides: internal/store to find the logs, internal/record to
@@ -189,7 +194,24 @@ var program = map[string][]string{
 	// fact reaches a model: the prompt of a phase, which this package
 	// writes. It is a read — internal/task tells the engine what is known
 	// and decides nothing about it.
-	"internal/task":    {"internal/engine", "internal/flow", "internal/knowledge", "internal/logger", "internal/record", "internal/repo", "internal/store"},
+	"internal/task": {"internal/engine", "internal/flow", "internal/knowledge", "internal/logger", "internal/record", "internal/repo", "internal/store"},
+	// internal/verb is every action Orbit can be asked for, declared once
+	// and done once. It sits under the four ways in and over the packages
+	// that do the work, which is why its list is long: it is the one place
+	// allowed to know what a verb means, so that the command line, the
+	// window, the browser and the MCP server can stop each having an
+	// opinion about it.
+	// internal/ui/theme is on the list for one constant: the theme the
+	// window draws in when the settings name none, which the settings
+	// reading has to print. It is a package of names and colours that
+	// imports nothing of Orbit's, so it widens nothing else — and the
+	// alternative was a second copy of the word, which is exactly how the
+	// settings table came to print monokai for a cockpit drawing frauddi.
+	"internal/verb": {
+		"internal/board", "internal/engine", "internal/flow", "internal/knowledge",
+		"internal/quota", "internal/repo", "internal/store", "internal/supervisor",
+		"internal/task", "internal/ui/theme", "internal/view", "internal/words",
+	},
 	"internal/tracker": {},
 	// internal/logger is on internal/ui's list for one reason: the window is
 	// where a failure a reader saw arrives, and a failure nobody wrote down

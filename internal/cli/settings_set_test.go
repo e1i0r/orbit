@@ -157,10 +157,10 @@ func TestSetEarlyExitsAndStoreFailures(t *testing.T) {
 
 	t.Setenv("ORBIT_HOME", filepath.Join(blocker, "orbit"))
 
-	if code, _, errOut := run(t, "set"); code == 0 {
-		t.Error("set with an unmakeable state root exited 0")
+	if code, _, errOut := run(t, "settings"); code == 0 {
+		t.Error("settings with an unmakeable state root exited 0")
 	} else if errOut == "" {
-		t.Error("set failed silently with an unmakeable state root")
+		t.Error("settings failed silently with an unmakeable state root")
 	}
 
 	// 3. s.Settings() fails: settings.json is a directory.
@@ -171,10 +171,10 @@ func TestSetEarlyExitsAndStoreFailures(t *testing.T) {
 		t.Fatalf("mkdir: %v", err)
 	}
 
-	if code, _, errOut := run(t, "set"); code == 0 {
-		t.Error("set over unreadable settings exited 0")
+	if code, _, errOut := run(t, "settings"); code == 0 {
+		t.Error("settings over unreadable settings exited 0")
 	} else if errOut == "" {
-		t.Error("set failed silently over unreadable settings")
+		t.Error("settings failed silently over unreadable settings")
 	}
 }
 

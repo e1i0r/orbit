@@ -131,7 +131,7 @@ func (c Command) Usage() string {
 // verbs of answering.go — which are there because this file met the size
 // ceiling.
 func commands() []Command {
-	return slices.Concat([]Command{{
+	return withVerbs(slices.Concat([]Command{{
 		Name: "top", Args: "[dir]",
 		About:    func(p *words.Printer) string { return p.T("cmd.top", "watch every task in one window") },
 		Run:      top,
@@ -222,11 +222,6 @@ func commands() []Command {
 		},
 		Run: reconcile,
 	}, {
-		Name: "settings", Args: "[key] [value]",
-		About:    func(p *words.Printer) string { return p.T("cmd.settings", "view or change settings") },
-		Run:      set,
-		InWindow: WindowOpens,
-	}, {
 		Name: "direct", Args: "-repo <dir> [-restart] <id> <message>", NeedsArgs: true, AboutATask: true,
 		About: func(p *words.Printer) string {
 			return p.T("cmd.direct", "interrupt or redirect a task and record the directive")
@@ -258,12 +253,6 @@ func commands() []Command {
 		About: func(p *words.Printer) string { return p.T("cmd.upgrade", "check for updates and upgrade orbit") },
 		Run:   upgrade,
 	}, {
-		Name: "supervisor", Args: "[-by <author>] [-retract <n>] [text]",
-		About: func(p *words.Printer) string {
-			return p.T("cmd.supervisor", "read or write to the persistent supervisor conversation thread")
-		},
-		Run: supervisorCommand,
-	}, {
 		Name: "mcp", Args: "[install] [-root <dir>]",
 		About: func(p *words.Printer) string {
 			return p.T("cmd.mcp", "run the model context protocol server, or register it in the clients that speak it")
@@ -277,7 +266,7 @@ func commands() []Command {
 		Because: func(p *words.Printer) string {
 			return p.T("cmd.mcp.inside", "it speaks over this terminal, which the window is already using")
 		},
-	}}, controlling(), answering())
+	}}, controlling(), answering()))
 }
 
 // lookup finds a command by the name that was typed.
@@ -285,14 +274,6 @@ func lookup(name string) (Command, bool) {
 	for _, c := range commands() {
 		if c.Name == name {
 			return c, true
-		}
-	}
-	//nolint:misspell // Spanish aliases for settings command
-	if name == "set" || name == "config" || name == "configuracion" || name == "configuraciones" {
-		for _, c := range commands() {
-			if c.Name == "settings" {
-				return c, true
-			}
 		}
 	}
 

@@ -20,7 +20,7 @@ import { api, type Says, type Task, type Verb } from "../api";
 interface Shape {
   name: string;
   asks: (t: Task) => string;
-  tone: "go" | "quiet" | "bad";
+  tone: "go" | "quiet" | "bad" | "out";
   /** What the reader is asked to type, for the verbs that carry words. */
   writes?: { placeholder: string; required: boolean };
   /** An extra yes-or-no the verb takes. */
@@ -83,6 +83,23 @@ const verbs: Record<Verb, Shape> = {
     tone: "bad",
     writes: { placeholder: "The brief was wrong.", required: false },
   },
+  pr: {
+    name: "Open a pull request",
+    asks: (t) =>
+      `Push ${t.id}'s branch and open a pull request on GitHub? This leaves your machine — other people will see it.`,
+    tone: "out",
+  },
+  merge: {
+    name: "Merge",
+    asks: (t) =>
+      `Merge ${t.id}'s pull request and delete its branch? The change goes into the branch everyone else works from, and this cannot be undone from here.`,
+    tone: "out",
+  },
+  "close-pr": {
+    name: "Close the pull request",
+    asks: (t) => `Close ${t.id}'s pull request without merging it? The work stays; the request goes.`,
+    tone: "bad",
+  },
   approve: {
     name: "Approve",
     asks: (t) =>
@@ -95,6 +112,10 @@ const tones = {
   go: "border-accent/40 bg-accent/10 text-accent hover:bg-accent/20",
   quiet: "border-edge bg-well text-aside hover:text-said hover:bg-hover",
   bad: "border-bad/40 bg-bad/10 text-bad hover:bg-bad/20",
+  // The three that leave this machine get their own colour, because the
+  // difference between them and the rest is not how careful to be — it is
+  // that everything else can be undone by asking again, and these cannot.
+  out: "border-ok/40 bg-ok/10 text-ok hover:bg-ok/20",
 };
 
 // offered is which verbs mean something for a task as it stands.
@@ -109,7 +130,11 @@ export function offered(task: Task): Verb[] {
 
   if ((task.pending ?? []).length > 0) out.push("approve");
 
-  return [...out, "direct", "note", "requeue"];
+  // Delivering is offered whatever the task is doing. Which of the three
+  // makes sense — there is no pull request yet, there is one already — is
+  // the command's own question, and it answers in its own words; a second
+  // opinion here would be a rule in two places that would drift.
+  return [...out, "direct", "note", "requeue", "pr", "merge", "close-pr"];
 }
 
 export function Verbs({ task, again }: { task: Task; again: () => void }) {
