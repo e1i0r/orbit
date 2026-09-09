@@ -94,6 +94,70 @@ func (r Repo) WorktreeChanges(wtDir string) ([]Change, error) {
 	return numstat(out), nil
 }
 
+// WorktreeDiff is what the task changed, as git writes it.
+//
+// The text and not the counts: a reader looking at the change wants the
+// hunks. WorktreeChanges answers the same question in numbers, for the gates
+// that only need a size.
+//
+// Against the branch the worktree was cut from, and the working tree alone
+// when there is none — the same rule the counts follow, for the same reason:
+// a worktree cut before its base existed still has changes worth reading.
+//
+// internal/ui has its own copy of this shaped for a window that redraws
+// every half second, with a pending state and a deadline of its own. The two
+// should end up as one; this one exists because a reader outside the
+// terminal needs the same answer and may not reach into internal/ui.
+func (r Repo) WorktreeDiff(wtDir string, how DiffOptions) (string, error) {
+	// Untracked files are marked intent-to-add so the diff mentions them. A
+	// file the agent wrote and never staged is the most interesting file
+	// there is, and it is invisible to git diff without this.
+	if _, err := git(wtDir, "add", "-N", "--ignore-errors", "."); err != nil {
+		_ = err //nolint:wsl // a worktree with nothing to add answers non-zero on some versions
+	}
+
+	base := r.against(wtDir)
+
+	args := append([]string{"diff"}, how.args()...)
+
+	out, err := git(wtDir, append(args, base...)...)
+	if err == nil {
+		return out, nil
+	}
+
+	if len(base) > 0 {
+		return "", fmt.Errorf("read what %q changed: %w", wtDir, err)
+	}
+
+	out, err = git(wtDir, args...)
+	if err != nil {
+		return "", fmt.Errorf("read what %q changed: %w", wtDir, err)
+	}
+
+	return out, nil
+}
+
+// DiffOptions is how a reader asked for the diff.
+//
+// The zero value is git's own default, which is what every caller before
+// this wanted: three lines of context, and whitespace counted.
+type DiffOptions struct {
+	// IgnoreWhitespace leaves out the lines that differ only in spacing. A
+	// reformatting run that touched two hundred files and changed nothing
+	// buries the one line somebody has to read, and this is the only way to
+	// see past it.
+	IgnoreWhitespace bool
+}
+
+// args is the options as git spells them.
+func (d DiffOptions) args() []string {
+	if d.IgnoreWhitespace {
+		return []string{"-w"}
+	}
+
+	return nil
+}
+
 // WorktreeAddedLines is every line the task added to one file, without the
 // leading plus.
 //

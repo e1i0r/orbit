@@ -1,0 +1,126 @@
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+@import "tailwindcss";
+
+/* Two layers, and the split is the point — the model frauddi's own tokens.css
+ * keeps, and internal/ui/theme keeps in Go.
+ *
+ * PRIMITIVES are the palette. They are named for their value, they are the
+ * only place a hex is allowed to live, and nothing below them names one.
+ *
+ * SEMANTICS name what a colour is FOR. They are what a component may use.
+ * `--color-edge` means the same thing wherever it is; `--slate-800` does not.
+ *
+ * The values are Orbit's own — the ones internal/ui/theme draws the cockpit
+ * in — so the window and the browser are one product in two places. */
+@theme {
+  /* Primitives */
+  --color-night-900: #080c11;
+  --color-night-800: #0b1016;
+  --color-night-700: #131a23;
+  --color-night-600: #1a232e;
+  --color-night-500: #1e2a38;
+  --color-ink-100: #e2e8f0;
+  --color-ink-300: #94a3b8;
+  --color-ink-500: #64748b;
+  --color-sky: #38bdf8;
+  --color-mint: #16b798;
+  --color-teal: #2dd4bf;
+  --color-amber: #f59e0b;
+  --color-rose: #ef4444;
+
+  /* Semantics: surfaces */
+  --color-page: var(--color-night-800);
+  --color-panel: var(--color-night-700);
+  --color-well: var(--color-night-900);
+  --color-hover: var(--color-night-600);
+  --color-edge: var(--color-night-500);
+
+  /* Semantics: text */
+  --color-said: var(--color-ink-100);
+  --color-aside: var(--color-ink-300);
+  --color-faint: var(--color-ink-500);
+
+  /* Semantics: meaning. Four states and one accent, and every one of them
+   * says something — nothing here is decoration. */
+  --color-accent: var(--color-sky);
+  --color-ok: var(--color-mint);
+  --color-live: var(--color-teal);
+  --color-wait: var(--color-amber);
+  --color-bad: var(--color-rose);
+
+  /* The measure.
+   *
+   * The cockpit fits a whole board into a terminal, and the browser should
+   * not need twice the room to say the same thing. Every size in the app is
+   * set from the two ramps below — one step under Tailwind's own type scale,
+   * and a spacing unit of 3.5px rather than 4 — so the whole product tightens
+   * from here and no component has to be tuned on its own. */
+  --spacing: 0.21875rem;
+
+  --text-xs: 0.6875rem;
+  --text-xs--line-height: 1.45;
+  --text-sm: 0.75rem;
+  --text-sm--line-height: 1.5;
+  --text-base: 0.8125rem;
+  --text-base--line-height: 1.55;
+  --text-lg: 0.9375rem;
+  --text-lg--line-height: 1.4;
+  --text-xl: 1.0625rem;
+  --text-xl--line-height: 1.3;
+  --text-2xl: 1.1875rem;
+  --text-2xl--line-height: 1.25;
+
+  /* Corners come in with everything else. A 12px radius on a 28px row is a
+   * pill; on a card it is a bubble. */
+  --radius-md: 0.25rem;
+  --radius-lg: 0.3125rem;
+  --radius-xl: 0.4375rem;
+  --radius-2xl: 0.625rem;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--color-page);
+  color: var(--color-said);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The one thing a keyboard reader cannot do without. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* The grammar's own colours, in Orbit's palette rather than a highlighter's.
+ *
+ * Six roles and no more: what a language calls a keyword, a name, a value, a
+ * string, a comment and everything else. A theme that gave every token type
+ * its own hue would be a rainbow, and a diff is already carrying two colours
+ * that mean something — a line added, a line taken away. */
+.hljs-keyword, .hljs-built_in, .hljs-literal, .hljs-type { color: #c4b5fd; }
+.hljs-string, .hljs-regexp, .hljs-char.escape_ { color: #86efac; }
+.hljs-number { color: #fbbf24; }
+.hljs-title, .hljs-title.function_, .hljs-title.class_, .hljs-section { color: #7dd3fc; }
+.hljs-comment, .hljs-quote { color: var(--color-ink-500); font-style: italic; }
+.hljs-attr, .hljs-attribute, .hljs-property, .hljs-variable, .hljs-params { color: #f0abfc; }
+.hljs-meta, .hljs-punctuation, .hljs-operator { color: var(--color-ink-300); }

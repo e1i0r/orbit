@@ -1,4 +1,4 @@
-package cli
+package verb
 
 // orbit set: the settings, as a table of what they are called, what they
 // mean, and what may be written into them.
@@ -10,20 +10,26 @@ package cli
 
 import (
 	"errors"
-	"flag"
-	"fmt"
-	"io"
 	"strconv"
 	"strings"
-	"text/tabwriter"
 
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/store"
-	"github.com/e1i0r/orbit/internal/ui"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
-// Setting is one line of the settings file.
+// Setting is one setting as a reader sees it: what it is called, what it
+// holds now, and what it means. It is what the settings reading answers
+// with, and carries none of the closures below — a surface is shown the
+// values, not the validators.
+type Setting struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+	About string `json:"about"`
+}
+
+// Rule is one line of the settings file.
 //
 // Set is the validator and the assignment together, because they are one
 // decision: what a setting will accept is what it means, and a validator
@@ -37,7 +43,7 @@ import (
 // sentence a reader reads, and the sentence a setting refuses with belongs
 // beside the rule it enforces. Most settings take anything and pass it
 // unread, which is why most of these closures never look at it.
-type Setting struct {
+type Rule struct {
 	Name  string
 	About func(*words.Printer) string
 	Set   func(*words.Printer, *store.Settings, string) (string, error)
@@ -49,8 +55,8 @@ type Setting struct {
 // It is a function and not a package variable for the reason view.Bands is:
 // a slice at package scope is state a caller can reorder, and this package
 // keeps none.
-func settingTable() []Setting {
-	return append([]Setting{{
+func settingTable() []Rule {
+	return append([]Rule{{
 		Name:  "language",
 		About: func(p *words.Printer) string { return p.T("setting.language", "the language orbit speaks") },
 		Set: func(p *words.Printer, cfg *store.Settings, value string) (string, error) {
@@ -170,7 +176,7 @@ func settingTable() []Setting {
 				// The one the window will actually draw. Spelled here as a
 				// second copy of the word, this table printed monokai for a
 				// cockpit drawing frauddi.
-				return ui.DefaultTheme
+				return theme.DefaultTheme
 			}
 
 			return cfg.Theme
@@ -186,96 +192,6 @@ func settingKeys() []string {
 	}
 
 	return out
-}
-
-// set changes one line of the settings file, or prints them all.
-//
-// A verb rather than an editor, because the settings file is JSON and the
-// two things a reader most wants to change — autopilot and the unread cap —
-// are the two a stray comma would take out. Reading the file, changing one
-// field and writing it back keeps every other setting exactly as it was,
-// which hand-editing does not promise.
-//
-// There is no -repo flag: settings are the user's and not a repository's,
-// and store.Settings reads them from the root of the state tree.
-func set(ctx Context, args []string) error {
-	fs := flag.NewFlagSet("set", flag.ContinueOnError)
-	fs.SetOutput(io.Discard)
-
-	if err := parse(ctx, fs, args); err != nil {
-		return err
-	}
-
-	s, err := store.Open()
-	if err != nil {
-		return err
-	}
-
-	// No argument at all is a question, not a mistake: it is the only way
-	// to see what the settings are without opening the file, and a reader
-	// who has forgotten a key's name is asking exactly this. One argument
-	// is still a mistake — half a change is not a question.
-	if fs.NArg() == 0 {
-		cfg, err := s.Settings()
-		if err != nil {
-			return err
-		}
-
-		printSettings(ctx, cfg)
-
-		return nil
-	}
-
-	if fs.NArg() < 2 {
-		return errors.New(ctx.printer().T("set.needs_key_and_value",
-			"set needs a key and a value; the keys are {keys}",
-			words.Arg{Name: "keys", Value: strings.Join(settingKeys(), ", ")}))
-	}
-
-	key, value := fs.Arg(0), fs.Arg(1)
-	// The read, the change and the write are one step. Between them, the
-	// window is another process writing the whole of this file back from a
-	// copy it read before this line ran: two settings changed at once would
-	// be one setting changed and one silently discarded.
-	var shown string
-
-	err = s.UpdateSettings(func(cfg *store.Settings) error {
-		var err error
-
-		shown, err = assign(ctx.printer(), cfg, key, value)
-
-		return err
-	})
-	if err != nil {
-		return err
-	}
-
-	fmt.Fprintf(ctx.Out, "%s\n", ctx.printer().T("set.now", "{key} is now {value}",
-		words.Arg{Name: "key", Value: key}, words.Arg{Name: "value", Value: shown}))
-
-	return nil
-}
-
-// printSettings is every setting, what it is now, and what it means.
-func printSettings(ctx Context, cfg store.Settings) {
-	p := ctx.printer()
-
-	w := tabwriter.NewWriter(ctx.Out, 0, 0, 2, ' ', 0)
-	for _, s := range settingTable() {
-		fmt.Fprintf(w, "  %s\t%s\t%s\n", s.Name, unset(s.Value(cfg)), s.About(p))
-	}
-
-	_ = w.Flush() // the writer under it is the one Run was handed
-}
-
-// unset is what a setting nobody has chosen prints as. A blank column reads
-// as a table that failed to render; a dash reads as an answer.
-func unset(value string) string {
-	if value == "" {
-		return "—"
-	}
-
-	return value
 }
 
 // assign writes one value into the settings and gives back the form of it

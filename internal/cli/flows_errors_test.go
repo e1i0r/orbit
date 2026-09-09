@@ -10,8 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/e1i0r/orbit/internal/flow"
 )
 
 func TestFlowsEarlyExitOnBadFlag(t *testing.T) {
@@ -59,12 +57,5 @@ func TestFlowsFailsWhenSettingsCannotBeRead(t *testing.T) {
 
 	if errOut == "" {
 		t.Error("flows failed silently over unreadable settings")
-	}
-}
-
-func TestFlowMarkAnswersEmptyForAnUnclassifiedOrigin(t *testing.T) {
-	p := printer()
-	if got := flowMark(p, flow.OriginUnknown); got != "" {
-		t.Errorf("flowMark(OriginUnknown) = %q, want empty", got)
 	}
 }

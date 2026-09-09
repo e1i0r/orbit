@@ -1,7 +1,7 @@
 export PATH := /usr/local/go/bin:$(HOME)/go/bin:$(PATH)
 GO ?= $(shell which go 2>/dev/null || echo /usr/local/go/bin/go)
 
-.PHONY: check fmt vet lint test integration coverage mutate fuzz tidy build install run site demo tapes posters
+.PHONY: check fmt vet lint test integration coverage mutate fuzz tidy build install run site demo tapes posters ui web
 
 # check is what a contributor runs before pushing, so it has to be what CI
 # runs: lint used to be in CI and not here, which meant a green local check
@@ -177,3 +177,15 @@ posters:
 		ffmpeg -y -v error -ss "$$at" -i "$$f" -frames:v 1 -q:v 3 "$$out"; \
 		echo "poster $$out at $${at}s"; \
 	done
+
+# ui builds the browser half and puts it where the binary embeds it from.
+#
+# `go build` reads ui/dist, so this has to have run for the binary to carry a
+# window — and dist/ is committed for the reason site/ is: a Go project that
+# needs npm to compile is a Go project that does not build.
+ui:
+	cd ui && npm ci && npm run build
+
+# web builds both halves and runs the server over a directory.
+web: ui build
+	./orbit web $(DIR)

@@ -21,7 +21,13 @@ import "strings"
 // the board. It stays on orbit_list_tasks, where it is a filter and means
 // something, and on orbit_create_task, where it says where to write.
 func Tools() []Tool {
-	return append(append(taskTools(), workspaceTools()...), supervisorTools()...)
+	hand := append(append(taskTools(), workspaceTools()...), supervisorTools()...)
+
+	// And one for every declared verb the list above does not carry. See
+	// verbs.go: what Orbit can be asked for is declared once, in
+	// internal/verb, and a verb added there turns up here without anybody
+	// remembering to come and add it.
+	return append(hand, verbTools()...)
 }
 
 // taskTools is everything a supervisor does to a task: read the board, write

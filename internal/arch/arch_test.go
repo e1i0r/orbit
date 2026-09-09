@@ -223,5 +223,9 @@ func outsideTheModule(root, path string, d os.DirEntry) bool {
 
 	n := d.Name()
 
-	return n == "vendor" || strings.HasPrefix(n, ".") || strings.HasPrefix(n, "_")
+	// node_modules is somebody else's code, the way vendor is: the browser
+	// half of Orbit brings a few thousand packages with it, and none of them
+	// answer to the rules this package keeps about ours.
+	return n == "vendor" || n == "node_modules" ||
+		strings.HasPrefix(n, ".") || strings.HasPrefix(n, "_")
 }

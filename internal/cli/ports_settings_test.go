@@ -95,12 +95,12 @@ func TestSetCommandInvocations(t *testing.T) {
 	root := t.TempDir()
 	t.Setenv("ORBIT_HOME", root)
 
-	// 1. Print all settings (0 args)
+	// 1. Print all settings, which is its own verb
 	var out, errOut bytes.Buffer
 
-	code := Run([]string{"set"}, &out, &errOut)
+	code := Run([]string{"settings"}, &out, &errOut)
 	if code != 0 {
-		t.Errorf("expected exit code 0 for `orbit set`, got %d: %s", code, errOut.String())
+		t.Errorf("expected exit code 0 for `orbit settings`, got %d: %s", code, errOut.String())
 	}
 
 	if !strings.Contains(out.String(), "language") || !strings.Contains(out.String(), "theme") {
@@ -256,11 +256,11 @@ func TestDoPortAndTopHelpers(t *testing.T) {
 		t.Error("expected error for top in doPort")
 	}
 
-	// 3. Command opening screen (set)
+	// 3. Command opening screen (settings)
 	buf.Reset()
 
-	if err := dp("set", []string{"language", "en"}, &buf); err == nil || !strings.Contains(err.Error(), "opens a screen") {
-		t.Errorf("expected WindowOpens error for set in doPort, got %v", err)
+	if err := dp("settings", nil, &buf); err == nil || !strings.Contains(err.Error(), "opens a screen") {
+		t.Errorf("expected WindowOpens error for settings in doPort, got %v", err)
 	}
 
 	// 4. Command executing in window (reconcile)

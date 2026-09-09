@@ -1,4 +1,4 @@
-package cli
+package verb
 
 // The three settings that stop a run, or a queue, spending more.
 //
@@ -17,8 +17,8 @@ import (
 
 // budgetSettings are the caps, in the order a reader meets them: the task
 // first, because that is the one that stops a run rather than a queue.
-func budgetSettings() []Setting {
-	return []Setting{{
+func budgetSettings() []Rule {
+	return []Rule{{
 		Name: "budget-task",
 		About: func(p *words.Printer) string {
 			return p.T("setting.budget_task", "the most one task may spend in dollars; 0 is no budget")
