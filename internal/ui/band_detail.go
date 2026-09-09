@@ -22,30 +22,18 @@ func (m Model) detailBandLine(t view.Task) string {
 			by = deliverBySupervisor
 		}
 
-		said := p.T("overview.deliver_out", "{verb} is out with {by}",
-			about("verb", m.delivering.verb), about("by", by))
+		said := panes.StillWorking(p, m.delivering.verb, by, t.Since, m.now)
 
 		pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(theme.Live).Render(said)}
-		if age := cells.Elapsed(m.now, t.Since); age != "" {
-			pieces = append(pieces, p.T("band.elapsed", "{d} in", about("d", age)))
-		}
 
 		return m.spinner(theme.Live) + strings.Join(pieces, cells.Dot)
 	}
 
 	// 2. Uncompleted delivery recorded in the task history.
 	if st, out := panes.Waiting(m.panesEnv()); out {
-		said := p.T("overview.deliver_out_bare", "{verb} is out", about("verb", st.Verb))
-		if st.By != "" {
-			said = p.T("overview.deliver_out", "{verb} is out with {by}",
-				about("verb", st.Verb), about("by", st.By))
-		}
+		said := panes.StillWorking(p, st.Verb, st.By, st.At, m.now)
 
 		pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(theme.Live).Render(said)}
-		if ago := cells.Elapsed(m.now, st.At); ago != "" {
-			pieces = append(pieces, p.T("overview.deliver_ago", "asked {ago} ago",
-				about("ago", ago)))
-		}
 
 		return m.spinner(theme.Live) + strings.Join(pieces, cells.Dot)
 	}

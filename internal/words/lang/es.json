@@ -582,8 +582,8 @@
       "value": "Pedido a mano"
     },
     "flow.hand_out": {
-      "source": "asked for, still out",
-      "value": "pedido, todavía sin contestar"
+      "source": "handed over, still working",
+      "value": "entregado, todavía trabajando"
     },
     "flow.hand_done": {
       "source": "came back",
@@ -3034,16 +3034,20 @@
       "value": "ver diff"
     },
     "overview.deliver_out": {
-      "source": "{verb} is out with {by}",
-      "value": "{verb} está en marcha con {by}"
+      "source": "{by} is working on {verb}",
+      "value": "{by} está trabajando en {verb}"
+    },
+    "overview.deliver_for": {
+      "source": "{ago} so far",
+      "value": "{ago} hasta ahora"
+    },
+    "overview.deliver_nothing_waiting": {
+      "source": "nothing is waiting on you",
+      "value": "no hay nada esperándote"
     },
     "overview.deliver_out_bare": {
-      "source": "{verb} is out",
-      "value": "{verb} está en marcha"
-    },
-    "overview.deliver_ago": {
-      "source": "asked {ago} ago",
-      "value": "pedido hace {ago}"
+      "source": "{verb} is still working",
+      "value": "{verb} sigue trabajando"
     },
     "key.tab_menu": {
       "source": "tab menu",
