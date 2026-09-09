@@ -66,4 +66,3 @@ Issues and pull requests are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) is how 
 ## License
 
 Apache 2.0. See [LICENSE](LICENSE).
-
