@@ -21,6 +21,12 @@ import { Honeycomb } from "./Honeycomb";
 
 export function MapView({ task }: { task: string }) {
   const [root, setRoot] = useState<Cell>();
+  // What the reading said, and whether it has landed at all. Nothing read
+  // yet and nothing to read are different facts: a task with no checkout
+  // answers at once and answers with a sentence, and a page that told them
+  // apart by whether a tree arrived sat on "reading…" for ever.
+  const [said, setSaid] = useState<string>();
+  const [read, setRead] = useState(false);
   const [failed, setFailed] = useState<string>();
   const [diff, setDiff] = useState<Diff>();
   // path is the level being shown, and "" is the root of the checkout.
@@ -37,7 +43,12 @@ export function MapView({ task }: { task: string }) {
 
     api
       .tree(task)
-      .then((t) => !stale && setRoot(t.saw))
+      .then((t) => {
+        if (stale) return;
+        setRoot(t.saw);
+        setSaid(t.said);
+        setRead(true);
+      })
       .catch((e: Error) => !stale && setFailed(e.message));
 
     // The diff is fetched beside the tree rather than when a file is
@@ -62,12 +73,14 @@ export function MapView({ task }: { task: string }) {
   const files = useMemo(() => (diff?.text ? parse(diff.text) : []), [diff]);
 
   if (failed) return <p className="text-xs text-bad">{failed}</p>;
-  if (!root) return <p className="text-xs text-aside">Reading the repository…</p>;
+  if (!read) return <p className="text-xs text-aside">Reading the repository…</p>;
 
-  if (!here || (here.cells ?? []).length === 0) {
+  if (!root || !here || (here.cells ?? []).length === 0) {
     return (
       <Empty
-        said="No checkout to map"
+        // The verb's own words where it has any: "FRA-71 has no checkout to
+        // map" says more than a heading this page invented.
+        said={said || "No checkout to map"}
         next="A task has a worktree from the moment its first phase runs. Start it, and the repository lands here."
       />
     );
