@@ -86,7 +86,7 @@ export function Shell({
 
         {screens.map((section) => (
           <div key={section.group} className="px-2">
-            <h2 className="px-2 pt-4 pb-1 text-[10px] font-semibold tracking-[0.09em] text-faint uppercase">
+            <h2 className="px-2 pt-4 pb-1 text-[11px] font-medium text-faint">
               {section.group}
             </h2>
             {section.items.map((item) => (

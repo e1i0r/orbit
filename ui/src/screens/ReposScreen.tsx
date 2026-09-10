@@ -76,7 +76,7 @@ export function ReposScreen() {
     <div className="max-w-[900px] overflow-hidden rounded-md border border-edge">
       <table className="w-full border-collapse text-xs">
         <thead>
-          <tr className="bg-panel text-[10px] tracking-[0.09em] text-faint uppercase">
+          <tr className="bg-panel text-[11px] text-faint">
             <th className="px-3 py-1.5 text-left font-semibold">Repository</th>
             <th className="px-3 py-1.5 text-left font-semibold">Where</th>
             <th className="w-20 px-3 py-1.5 text-right font-semibold">Tasks</th>

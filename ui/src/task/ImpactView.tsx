@@ -203,7 +203,7 @@ function Section({
   return (
     <section>
       <div className="flex items-center gap-2">
-        <h2 className="shrink-0 text-[10px] font-semibold tracking-[0.09em] text-accent uppercase">
+        <h2 className="shrink-0 text-[11px] font-medium text-accent">
           {name}
         </h2>
         <span className="h-px flex-1 bg-edge" aria-hidden />
@@ -219,7 +219,7 @@ function Listed({ name, said }: { name: string; said?: string[] }) {
 
   return (
     <div>
-      <h3 className="text-[10px] tracking-[0.09em] text-faint uppercase">{name}</h3>
+      <h3 className="text-[11px] text-faint">{name}</h3>
       <ul className="mt-1 flex flex-col gap-0.5">
         {said.map((one, i) => (
           <li key={i} className="text-[11px] text-aside">
@@ -283,7 +283,7 @@ function Sides({ task }: { task: string }) {
           {sides.map((one) => (
             <li key={one.name} className="flex items-baseline gap-2">
               <span
-                className={`w-16 shrink-0 text-[10px] tracking-[0.06em] uppercase ${
+                className={`w-16 shrink-0 text-[11px] ${
                   one.broke ? "text-bad" : one.fixed ? "text-ok" : "text-faint"
                 }`}
               >

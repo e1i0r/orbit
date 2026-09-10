@@ -14,7 +14,7 @@ export function Card({
       {(label || right) && (
         <header className="flex items-center justify-between gap-4 border-b border-edge px-3 py-2">
           {label && (
-            <h2 className="text-[10px] font-semibold tracking-[0.09em] text-faint uppercase">
+            <h2 className="text-[11px] font-medium text-faint">
               {label}
             </h2>
           )}

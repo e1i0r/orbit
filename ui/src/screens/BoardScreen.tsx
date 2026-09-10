@@ -58,7 +58,7 @@ export function BoardScreen({ board, open }: { board?: Board; open: (id: string)
             <div className="hidden overflow-hidden rounded-md border border-edge md:block">
               <table className="w-full border-collapse text-xs">
                 <thead>
-                  <tr className="bg-panel text-[10px] tracking-[0.09em] text-faint uppercase">
+                  <tr className="bg-panel text-[11px] text-faint">
                     <Th className="w-28">Task</Th>
                     <Th>What it is</Th>
                     <Th className="w-40">Repository</Th>
