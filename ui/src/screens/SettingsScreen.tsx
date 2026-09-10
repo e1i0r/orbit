@@ -10,6 +10,8 @@
 // here without anybody remembering to come and add it.
 
 import { useEffect, useState } from "react";
+
+import { permission, want, wanted } from "../shell/notify";
 import { api, type Setting } from "../api";
 
 export function SettingsScreen() {
@@ -55,6 +57,51 @@ export function SettingsScreen() {
       {all.map((one) => (
         <Row key={one.name} setting={one} busy={busy === one.name} set={set} />
       ))}
+
+      <Notifications />
+    </div>
+  );
+}
+
+// Notifications is the one setting that belongs to this browser rather than
+// to Orbit.
+//
+// Everything above is read from the state root and is the same on every
+// screen a reader opens the board on. This is not: it is a permission this
+// browser gave this page, so it is stored here and drawn here, under the
+// same shape as the rest so that it is not a special thing to learn.
+function Notifications() {
+  const [on, setOn] = useState(wanted);
+  const said = permission();
+
+  const flip = async () => setOn(await want(!on));
+
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-md border border-edge bg-panel px-3 py-2">
+      <div className="min-w-0">
+        <p className="text-xs text-said">Notifications on this device</p>
+        <p className="text-[11px] text-faint">
+          {said === "unsupported"
+            ? "This browser does not do notifications."
+            : said === "denied"
+              ? "This browser is blocking them. Turn them back on for this site in its settings."
+              : "A task that comes to need you, or finishes, says so — while the board is open, in a tab or installed."}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        onClick={flip}
+        disabled={said === "unsupported" || said === "denied"}
+        aria-pressed={on}
+        className={`shrink-0 rounded border px-2 py-0.5 text-[11px] transition-colors disabled:opacity-50 ${
+          on
+            ? "border-accent/40 bg-accent/10 text-accent"
+            : "border-edge text-aside hover:text-said"
+        }`}
+      >
+        {on ? "On" : "Off"}
+      </button>
     </div>
   );
 }

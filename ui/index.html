@@ -4,6 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>orbit</title>
+
+    <!-- Installed on a phone, this is what it is called, what it looks like
+         and what colour the browser paints around it. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#0b1016" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <!-- The old spelling as well, because iOS reads this one and nothing
+         else: on a phone it is the difference between an app and a browser
+         window with a bookmark's icon. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="orbit" />
   </head>
   <body>
     <div id="root"></div>

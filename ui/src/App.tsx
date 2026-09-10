@@ -17,6 +17,7 @@ import { TaskScreen } from "./screens/TaskScreen";
 import { Caught } from "./parts/Caught";
 import { Empty } from "./parts/Empty";
 import { Page } from "./shell/Page";
+import { tell } from "./shell/notify";
 import { Shell } from "./shell/Shell";
 
 // every is how often the board is asked again. The cockpit polls twice a
@@ -44,7 +45,15 @@ export function App() {
         .board()
         .then((b) => {
           if (stale) return;
-          setBoard(b);
+          // The poll is read for what changed before it is drawn: a task
+          // that has come to need a person is the one thing worth
+          // interrupting them for, and the page is the only thing that
+          // sees it. See shell/notify.ts.
+          setBoard((was) => {
+            tell(was?.tasks ?? [], b.tasks ?? []);
+
+            return b;
+          });
           setFailed(undefined);
         })
         .catch((e: Error) => !stale && setFailed(e.message));
