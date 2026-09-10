@@ -247,7 +247,7 @@ export function Verbs({ task, again }: { task: Task; again: () => void }) {
 
   return (
     <div className="flex flex-col items-end gap-1.5">
-      <div className="flex flex-wrap items-center justify-end gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5 md:justify-end">
         {offered(task).map((verb) => (
           <button
             key={verb}
@@ -261,7 +261,7 @@ export function Verbs({ task, again }: { task: Task; again: () => void }) {
       </div>
 
       {asking && shape && (
-        <div className="flex w-[46ch] flex-col gap-1.5 rounded-md border border-edge bg-panel px-3 py-2">
+        <div className="flex w-full flex-col gap-1.5 rounded-md border border-edge bg-panel px-3 py-2 md:w-[46ch]">
           <p className="text-[11px] text-said">{shape.asks(task)}</p>
 
           {shape.writes && (

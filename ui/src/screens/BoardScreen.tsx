@@ -46,7 +46,16 @@ export function BoardScreen({ board, open }: { board?: Board; open: (id: string)
               <span className="text-[11px] text-faint">{band.said}</span>
             </header>
 
-            <div className="overflow-hidden rounded-md border border-edge">
+            {/* In a hand, a row of five columns is a row with two of them
+                cut off. The same five facts stack instead: what it is on
+                top, and the rest under it in one dim line. */}
+            <ul className="flex flex-col gap-1.5 md:hidden">
+              {inIt.map((t) => (
+                <Held key={t.id} task={t} open={open} />
+              ))}
+            </ul>
+
+            <div className="hidden overflow-hidden rounded-md border border-edge md:block">
               <table className="w-full border-collapse text-xs">
                 <thead>
                   <tr className="bg-panel text-[10px] tracking-[0.09em] text-faint uppercase">
@@ -68,6 +77,35 @@ export function BoardScreen({ board, open }: { board?: Board; open: (id: string)
         );
       })}
     </div>
+  );
+}
+
+// Held is one task as a phone draws it: the id and what it is, and under
+// them the facts that would have been columns.
+function Held({ task, open }: { task: TaskSummary; open: (id: string) => void }) {
+  const under = [task.repo, task.flow, task.phase, task.engine].filter(Boolean);
+
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={() => open(task.id)}
+        className="w-full rounded-md border border-edge bg-page px-3 py-2 text-left transition-colors hover:bg-panel"
+      >
+        <span className="flex items-baseline gap-2">
+          <span className="shrink-0 font-mono text-[11px] text-accent">{task.id}</span>
+          <span className="truncate text-xs">
+            {task.title || <span className="text-faint">no description</span>}
+          </span>
+        </span>
+
+        {under.length > 0 && (
+          <span className="mt-1 block truncate font-mono text-[10px] text-faint">
+            {under.join(" · ")}
+          </span>
+        )}
+      </button>
+    </li>
   );
 }
 

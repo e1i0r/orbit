@@ -23,7 +23,7 @@ export function Page({
   return (
     <div className="mx-auto max-w-[1400px]">
       <div className="px-5 pt-5">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between md:gap-4">
           <div className="min-w-0">
             <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
             {said && <p className="mt-0.5 text-xs text-aside">{said}</p>}
