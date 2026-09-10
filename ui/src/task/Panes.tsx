@@ -48,7 +48,7 @@ export function Gates({ task }: { task?: Task }) {
   const failed = gates.filter((e) => e.kind === "gate.failed").length;
 
   return (
-    <div className="flex max-w-[900px] flex-col gap-2.5">
+    <div className="flex measure flex-col gap-2.5">
       <p className="text-[11px] text-faint">
         <span className="font-mono text-said">{gates.length}</span>{" "}
         {gates.length === 1 ? "check" : "checks"} ran
@@ -154,7 +154,7 @@ export function Cost({ task }: { task?: Task }) {
   const most = Math.max(...priced.map((e) => e.cost ?? 0));
 
   return (
-    <div className="flex max-w-[900px] flex-col gap-3">
+    <div className="flex measure flex-col gap-3">
       <p className="text-[11px] text-faint">
         <span className="font-mono text-sm text-said tabular-nums">{money(spent)}</span> over{" "}
         {priced.length} {priced.length === 1 ? "phase" : "phases"}
@@ -206,7 +206,7 @@ export function Refused({ task }: { task?: Task }) {
   }
 
   return (
-    <div className="flex max-w-[900px] flex-col gap-2.5">
+    <div className="flex measure flex-col gap-2.5">
       <p className="text-[11px] text-faint">
         <span className="font-mono text-bad">{refusals.length}</span>{" "}
         {refusals.length === 1 ? "call was" : "calls were"} turned down. Each is the sandbox saying
@@ -260,7 +260,7 @@ export function Notes({ task }: { task?: Task }) {
   }
 
   return (
-    <div className="flex max-w-[900px] flex-col gap-2.5">
+    <div className="flex measure flex-col gap-2.5">
       <p className="text-[11px] text-faint">
         <span className="font-mono text-said">{said.length}</span>{" "}
         {said.length === 1 ? "thing was" : "things were"} said to this task. Each is read by the
@@ -302,7 +302,7 @@ export function Thinking({ task }: { task?: Task }) {
   }
 
   return (
-    <div className="flex max-w-[900px] flex-col gap-2.5">
+    <div className="flex measure flex-col gap-2.5">
       <p className="text-[11px] text-faint">
         <span className="font-mono text-said">{thoughts.length}</span>{" "}
         {thoughts.length === 1 ? "block" : "blocks"} of the engine's own reasoning. Nothing here was
@@ -355,7 +355,7 @@ export function Report({ task }: { task?: Task }) {
   ];
 
   return (
-    <div className="flex max-w-[900px] flex-col gap-5">
+    <div className="flex measure flex-col gap-5">
       {told && (
         <dl className="flex flex-col gap-2.5">
           {parts
@@ -410,7 +410,7 @@ export function Artifacts({ task }: { task?: Task }) {
   const most = Math.max(...walk.map((one) => one.touches + one.read), 1);
 
   return (
-    <div className="flex max-w-[900px] flex-col gap-3">
+    <div className="flex measure flex-col gap-3">
       <p className="text-[11px] text-faint">
         <span className="font-mono text-said">{walk.length}</span>{" "}
         {walk.length === 1 ? "file" : "files"}, in the order the agent first reached them ·{" "}

@@ -33,7 +33,10 @@ export function BoardScreen({ board, open }: { board?: Board; open: (id: string)
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    // The same measure as every other screen: five short columns and a
+    // title fit inside it, and a board that ran to the window's edge made
+    // the reader's eye travel for nothing.
+    <div className="flex measure flex-col gap-5">
       {bands.map((band) => {
         const inIt = tasks.filter((t) => t.band === band.id);
         if (inIt.length === 0) return null;

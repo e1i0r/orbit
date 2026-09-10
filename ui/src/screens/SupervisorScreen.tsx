@@ -174,7 +174,7 @@ export function SupervisorScreen() {
 
   if (said.length === 0) {
     return (
-      <div className="flex max-w-[1000px] flex-col gap-3">
+      <div className="flex measure flex-col gap-3">
         <Empty
           said="Nobody has spoken to the supervisor yet"
           next="Say the first thing here, or run orbit say. It answers with what it can see of the board."
@@ -185,7 +185,7 @@ export function SupervisorScreen() {
   }
 
   return (
-    <div className="flex max-w-[1000px] gap-4">
+    <div className="flex measure gap-4">
       <aside className="sticky top-0 flex max-h-[calc(100vh-8rem)] w-52 shrink-0 flex-col gap-1 self-start overflow-y-auto">
         {[...threads].reverse().map((chat) => (
           <button
@@ -264,7 +264,7 @@ function Turn({
         )}
       </header>
 
-      <p className="mt-1 max-w-[95ch] text-xs whitespace-pre-wrap text-aside">{said.text}</p>
+      <p className="mt-1 measure text-xs whitespace-pre-wrap text-aside">{said.text}</p>
     </article>
   );
 }

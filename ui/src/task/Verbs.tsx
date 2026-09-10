@@ -331,7 +331,7 @@ export function Verbs({ task, again }: { task: Task; again: () => void }) {
       {said && (
         <p
           onClick={() => setSaid(undefined)}
-          className={`max-w-[60ch] cursor-pointer text-right text-[11px] ${said.bad ? "text-bad" : "text-ok"}`}
+          className={`measure-form cursor-pointer text-right text-[11px] ${said.bad ? "text-bad" : "text-ok"}`}
           title="Click to clear"
         >
           {said.text}

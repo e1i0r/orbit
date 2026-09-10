@@ -208,7 +208,7 @@ function Section({
         </h2>
         <span className="h-px flex-1 bg-edge" aria-hidden />
       </div>
-      <p className="mt-1 max-w-[86ch] text-[11px] text-faint">{about}</p>
+      <p className="mt-1 measure text-[11px] text-faint">{about}</p>
       <div className="mt-2.5">{children}</div>
     </section>
   );

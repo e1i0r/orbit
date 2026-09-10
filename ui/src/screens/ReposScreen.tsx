@@ -73,7 +73,7 @@ export function ReposScreen() {
   }
 
   return (
-    <div className="max-w-[900px] overflow-hidden rounded-md border border-edge">
+    <div className="measure overflow-hidden rounded-md border border-edge">
       <table className="w-full border-collapse text-xs">
         <thead>
           <tr className="bg-panel text-[11px] text-faint">

@@ -32,7 +32,7 @@ export function Overview({ task }: { task?: Task }) {
   const started = entries.find((e) => e.kind === "task.started")?.at;
 
   return (
-    <div className="flex max-w-[900px] flex-col gap-4">
+    <div className="flex measure flex-col gap-4">
       <dl className="grid gap-x-6 gap-y-3.5 sm:grid-cols-4">
         <Fact name="State">
           <Pill tone={band.tone}>{band.said}</Pill>

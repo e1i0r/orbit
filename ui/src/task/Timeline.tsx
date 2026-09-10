@@ -40,7 +40,7 @@ export function Timeline({ entries }: { entries: Entry[] | null }) {
     // A measure and not a pixel count: the time of an entry sits at the
     // right edge of this box, and at a thousand pixels that put it a hand's
     // width away from the line it belongs to.
-    <div className="max-w-[78ch]">
+    <div className="measure">
       <p className="border-b border-dashed border-edge pb-3 text-[11px] text-faint">
         Everything the record holds about this task — phases, gates, tool calls and what a person
         said. Newest first.

@@ -71,7 +71,7 @@ export function WriteScreen({ board, open }: { board?: Board; open: (id: string)
   };
 
   return (
-    <div className="flex max-w-[720px] flex-col gap-4">
+    <div className="flex measure-form flex-col gap-4">
       <Field
         name="Identifier"
         said="How you and Orbit will both refer to it. A tracker's id if you use one, anything short and unique if you do not."
@@ -182,7 +182,7 @@ function Field({
   return (
     <div className="flex flex-col gap-1">
       <label className="text-xs font-medium text-said">{name}</label>
-      <p className="max-w-[70ch] text-[11px] text-faint">{said}</p>
+      <p className="measure-form text-[11px] text-faint">{said}</p>
       <div className="mt-0.5">{children}</div>
     </div>
   );
