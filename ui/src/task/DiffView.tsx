@@ -8,6 +8,8 @@
 // become".
 
 import { useEffect, useMemo, useState } from "react";
+
+import { useDesk } from "../shell/narrow";
 import { api, type Diff } from "../api";
 import { Empty } from "../parts/Empty";
 import { FileDiff, anchorOf } from "./diff/FileDiff";
@@ -26,6 +28,9 @@ export function DiffView({ diff, task }: { diff?: Diff; task: string }) {
   const [space, setSpace] = useState<"keep" | "ignore">("keep");
   const [tight, setTight] = useState<Diff>();
   const [split, setSplit] = useState(false);
+  // Two columns of forty characters is not a diff, so on a phone the
+  // question is not asked: unified, and the switch is not drawn.
+  const desk = useDesk();
   const [wrap, setWrap] = useState(false);
   const [shut, setShut] = useState<Record<string, boolean>>({});
   const [viewed, setViewed] = useState<Record<string, boolean>>({});
@@ -113,8 +118,12 @@ export function DiffView({ diff, task }: { diff?: Diff; task: string }) {
   };
 
   return (
-    <div className="flex gap-4">
-      <Tree files={files} viewed={viewed} jump={jump} />
+    <div className="flex flex-col gap-3 lg:flex-row lg:gap-4">
+      {/* The list of files is what makes a thirty-file diff navigable, and
+          at 390 columns it is half the screen spent on navigation. Each
+          file's own card carries its name and its numbers, so on a phone
+          the diff is read by scrolling it. */}
+      {desk && <Tree files={files} viewed={viewed} jump={jump} />}
 
       <div className="flex min-w-0 flex-1 flex-col gap-2.5">
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-edge bg-panel px-3 py-2">
@@ -130,14 +139,16 @@ export function DiffView({ diff, task }: { diff?: Diff; task: string }) {
           </p>
 
           <div className="flex items-center gap-1.5">
-            <Pick
-              at={split}
-              set={setSplit}
-              of={[
-                [false, "Unified"],
-                [true, "Split"],
-              ]}
-            />
+            {desk && (
+              <Pick
+                at={split}
+                set={setSplit}
+                of={[
+                  [false, "Unified"],
+                  [true, "Split"],
+                ]}
+              />
+            )}
             <Switch on={wrap} flip={() => setWrap(!wrap)} said="Wrap" />
             <Switch
               on={space === "ignore"}
@@ -160,7 +171,7 @@ export function DiffView({ diff, task }: { diff?: Diff; task: string }) {
             key={file.name}
             file={file}
             task={task}
-            split={split}
+            split={split && desk}
             wrap={wrap}
             shut={shut[file.name] ?? false}
             toggle={() => setShut((was) => ({ ...was, [file.name]: !was[file.name] }))}
