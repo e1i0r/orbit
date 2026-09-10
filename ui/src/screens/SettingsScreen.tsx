@@ -49,7 +49,7 @@ export function SettingsScreen() {
   if (!all) return <p className="text-xs text-aside">Reading the settings…</p>;
 
   return (
-    <div className="flex measure flex-col gap-1.5">
+    <div className="flex flex-col gap-1.5">
       {refused && <p className="text-[11px] text-bad">{refused}</p>}
 
       {all.map((one) => (

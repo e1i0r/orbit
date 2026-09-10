@@ -9,6 +9,7 @@ export function Page({
   tabs,
   at,
   go,
+  wide,
   children,
 }: {
   title: React.ReactNode;
@@ -16,12 +17,21 @@ export function Page({
   /** What can be done to this subject, drawn opposite its name. */
   does?: React.ReactNode;
   tabs?: { id: string; name: string }[];
+  /** Wide when the page holds something a measure would cut: a diff, a map,
+      an impact reading. Everything else is one column, and the actions in
+      the header share its right-hand edge rather than floating out at the
+      window's. */
+  wide?: boolean;
   at?: string;
   go?: (id: string) => void;
   children: React.ReactNode;
 }) {
   return (
-    <div className="mx-auto max-w-[1400px]">
+    // The column sits against the rail rather than in the middle of what is
+    // left: navigation on the left and a column beside it is how a reader
+    // already reads a page like this, and a column floating in the middle
+    // of the window has a gutter on its left that means nothing.
+    <div className={wide ? "mx-auto max-w-[1400px]" : "measure"}>
       <div className="px-5 pt-5">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between md:gap-4">
           <div className="min-w-0">
