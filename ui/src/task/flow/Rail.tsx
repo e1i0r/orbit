@@ -11,6 +11,7 @@
 // of thing: an ordered list of moments, some of them nested.
 
 import { useState } from "react";
+import { money } from "../../parts/money";
 import { AlertTriangle, Check, Circle, Play, RotateCw, X, type LucideIcon } from "lucide-react";
 import type { Gate, Phase, Standing } from "../../api";
 
@@ -101,7 +102,7 @@ function Node({ phase, last, inner }: { phase: Phase; last: boolean; inner?: boo
           <span className="ml-auto flex shrink-0 items-baseline gap-2.5">
             {phase.cost ? (
               <span className="font-mono text-[10px] text-aside tabular-nums">
-                ${phase.cost.toFixed(4)}
+                {money(phase.cost)}
               </span>
             ) : null}
             {took(phase) && (

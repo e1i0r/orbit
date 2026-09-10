@@ -112,6 +112,7 @@ export function TaskScreen({ id, back }: { id: string; back: () => void }) {
       tabs={tabs}
       at={at}
       go={setAt}
+      wide
     >
       {at === "overview" && <Overview task={task} />}
       {at === "flow" && <FlowView flow={flow} />}

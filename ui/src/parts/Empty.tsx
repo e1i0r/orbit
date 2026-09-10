@@ -10,7 +10,7 @@ export function Empty({ said, next }: { said: string; next?: string }) {
         <div className="size-4 rounded-full border-2 border-faint" />
       </div>
       <p className="text-xs text-said">{said}</p>
-      {next && <p className="max-w-[46ch] text-[11px] text-faint">{next}</p>}
+      {next && <p className="measure-note text-[11px] text-faint">{next}</p>}
     </div>
   );
 }
