@@ -126,6 +126,23 @@ const (
 	countMessages = `SELECT count(*) FROM message`
 )
 
+// Proposals: sentences waiting to be told whether they were rules.
+//
+// The insert does nothing on a line that already has a row, because the
+// caller reads the whole thread every time it opens and most of what it
+// finds it has found before. The update carries the state it expects, so
+// deciding twice moves nothing rather than overwriting an answer.
+const (
+	insertProposal = `INSERT INTO proposal(said_at, said, state) VALUES(?,?,?)
+	                  ON CONFLICT(said_at) DO NOTHING`
+
+	selectWaiting = `SELECT said_at, said, state FROM proposal
+	                  WHERE state = ? ORDER BY said_at`
+
+	decideProposal = `UPDATE proposal SET state = ?, decided = ?
+	                   WHERE said_at = ? AND state = ?`
+)
+
 // Events.
 const insertEvent = `INSERT INTO event(task_id, run_id, phase_id, kind, at, phase, text, data)
                      VALUES(?,?,?,?,?,?,?,?)`

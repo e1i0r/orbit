@@ -12,7 +12,7 @@ import (
 // It is not the disposable version an index carries. Nothing here can be
 // rebuilt from anywhere else, so a schema that turns out wrong is migrated
 // forward against live data and never dropped and remade.
-const version = 1
+const version = 2
 
 // busyTimeoutMS is how long SQLite waits for its turn at the write lock
 // before refusing. Five seconds is far past any transaction this package
@@ -125,6 +125,29 @@ CREATE INDEX IF NOT EXISTS event_by_task ON event(task_id, id);
 CREATE INDEX IF NOT EXISTS event_by_kind ON event(kind);
 CREATE INDEX IF NOT EXISTS run_by_task   ON run(task_id, n);
 CREATE INDEX IF NOT EXISTS phase_by_run  ON phase(run_id, n);
+` + proposals
+
+// proposals is where a sentence waits between Orbit noticing it and a person
+// saying whether it was a rule.
+//
+// It is apart from the schema above so that adding it to a record already in
+// use and creating a fresh one are the same text.
+//
+// Nothing here is knowledge. A fact lives in a file a person can read and
+// edit, and putting a proposal there would mean the model is told about it
+// before anybody agreed to it. This table holds exactly the in-between.
+//
+// said_at is what the line is known by. The thread is append-only and no two
+// turns share an instant, so the moment it was said is its name — and that
+// is what keeps this from proposing the same sentence twice.
+const proposals = `
+CREATE TABLE IF NOT EXISTS proposal(
+  id       INTEGER PRIMARY KEY,
+  said_at  TEXT NOT NULL UNIQUE,
+  said     TEXT NOT NULL,
+  state    TEXT NOT NULL DEFAULT 'waiting',
+  decided  TEXT
+);
 `
 
 // migrate brings the file up to the version this binary knows.
@@ -169,14 +192,22 @@ func (d *DB) migrate() error {
 
 // stepsFrom runs every migration between the version on disk and this one.
 //
-// Version 1 is the whole schema, so a file at 0 gets it and there is nothing
-// else to do yet. The second entry here will be the first real migration, and
-// the shape it goes in is: a case that alters what exists and leaves the
-// rows alone.
+// Version 1 is the whole schema. Version 2 adds the proposal table, and it
+// is the shape every one after it should take: a case that adds what is
+// missing and leaves every row alone.
 func stepsFrom(tx *sql.Tx, found int) error {
 	if found < 1 {
 		if _, err := tx.Exec(schema); err != nil {
 			return fmt.Errorf("create the schema: %w", err)
+		}
+	}
+
+	// Idempotent against a record just created from schema above, which
+	// already holds it: every statement says IF NOT EXISTS, so both paths
+	// end in one shape rather than two that have to be kept in step.
+	if found < 2 {
+		if _, err := tx.Exec(proposals); err != nil {
+			return fmt.Errorf("add the proposal table: %w", err)
 		}
 	}
 

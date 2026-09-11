@@ -102,7 +102,12 @@ var program = map[string][]string{
 	// and a package that could reach the record or the store could decide
 	// things about a run instead of describing one.
 	"internal/knowledge": {},
-	"internal/logger":    {},
+	// internal/learn is where a sentence waits between being said and being
+	// agreed with. It reaches the record because the tray is a table, and
+	// internal/knowledge because a sentence somebody keeps becomes a fact —
+	// which is the one thing it does that anybody else can see.
+	"internal/learn":  {"internal/db", "internal/knowledge", "internal/store"},
+	"internal/logger": {},
 	// internal/mcp is the widest list on this map, and it is the same width
 	// as internal/cli's for the same reason: it is a second front door onto
 	// the very functions the command line calls, so it reaches internal/task
