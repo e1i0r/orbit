@@ -56,6 +56,12 @@ func (s *Server) mountVerbs(mux *http.ServeMux) {
 	// rather than beside the others because there is no task yet.
 	mux.HandleFunc("POST /api/do/{verb}", s.serveVerb)
 
+	// A verb that belongs to a family is asked for as both its words, a
+	// segment each: /api/do/rules/keep. The path is the name — internal/verb
+	// spells it with a space, which is not something a URL carries — and
+	// this is the one place that has to know it.
+	mux.HandleFunc("POST /api/do/{under}/{verb}", s.serveVerb)
+
 	// A reading changes nothing, so it is a GET and needs no guard. The
 	// screens with a shape of their own have routes of their own; this is
 	// how the rest are read, and how any verb added later is read before
@@ -75,7 +81,7 @@ func (s *Server) serveVerb(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	name := r.PathValue("verb")
+	name := verbNamed(r)
 	if s.asks == nil {
 		fail(w, http.StatusNotImplemented, "this build cannot "+name, nil)
 
@@ -107,6 +113,16 @@ func (s *Server) serveVerb(w http.ResponseWriter, r *http.Request) {
 	}
 
 	answer(w, didAnswer{Did: name, Said: out.Said, Of: out.Of, Saw: out.Saw})
+}
+
+// verbNamed is the verb the path names: one segment for most of them, and
+// both of a child's, joined the way internal/verb spells it.
+func verbNamed(r *http.Request) string {
+	if under := r.PathValue("under"); under != "" {
+		return under + " " + r.PathValue("verb")
+	}
+
+	return r.PathValue("verb")
 }
 
 // serveRead asks for a reading.

@@ -76,11 +76,11 @@ var program = map[string][]string{
 	"test/integration/fakeengine": {},
 	"internal/cli": {
 		"internal/board", "internal/engine", "internal/export", "internal/flow",
-		"internal/knowledge", "internal/logger", "internal/mcp", "internal/migrate",
-		"internal/quota", "internal/record", "internal/repo", "internal/store",
-		"internal/supervisor", "internal/task", "internal/tracker", "internal/ui",
-		"internal/ui/fact", "internal/ui/roster", "internal/verb", "internal/view",
-		"internal/web", "internal/words", "ui",
+		"internal/knowledge", "internal/learn", "internal/logger", "internal/mcp",
+		"internal/migrate", "internal/quota", "internal/record", "internal/repo",
+		"internal/store", "internal/supervisor", "internal/task", "internal/tracker",
+		"internal/ui", "internal/ui/fact", "internal/ui/known", "internal/ui/roster",
+		"internal/verb", "internal/view", "internal/web", "internal/words", "ui",
 	},
 	// internal/logger is on internal/engine's list for the one thing this
 	// package does that nothing else in Orbit does: it starts somebody
@@ -217,8 +217,8 @@ var program = map[string][]string{
 	// settings table came to print monokai for a cockpit drawing frauddi.
 	"internal/verb": {
 		"internal/board", "internal/engine", "internal/flow", "internal/knowledge",
-		"internal/quota", "internal/repo", "internal/store", "internal/supervisor",
-		"internal/task", "internal/ui/theme", "internal/view", "internal/words",
+		"internal/learn", "internal/quota", "internal/repo", "internal/store",
+		"internal/supervisor", "internal/task", "internal/ui/theme", "internal/view", "internal/words",
 	},
 	"internal/tracker": {},
 	// internal/logger is on internal/ui's list for one reason: the window is

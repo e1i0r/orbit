@@ -11,6 +11,7 @@ import (
 	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/fact"
 	"github.com/e1i0r/orbit/internal/ui/theme"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // rows is the whole screen: a title, the facts that belong to no
@@ -25,7 +26,7 @@ func (s State) rows(h, w int, e Env) []string {
 
 	out := []string{"", theme.Paint(theme.Accent).Render(p.T("knowledge.title", "What Orbit knows")), ""}
 
-	if len(s.facts) == 0 {
+	if len(s.facts) == 0 && len(s.waiting) == 0 {
 		out = append(out, theme.Paint(theme.Dim).Render(cells.Fit(p.T("knowledge.empty",
 			"Nothing written down yet. Say /rule or /aware to the supervisor, or drop a file in .orbit/knowledge/."), cw)))
 
@@ -34,7 +35,8 @@ func (s State) rows(h, w int, e Env) []string {
 
 	rootless, owned := s.ordered()
 
-	at := 0
+	out, at := s.tray(out, cw, e)
+
 	out, at = s.group(out, p.T("knowledge.general",
 		"Everywhere · this machine only, these do not travel"), rootless, at, cw, e)
 
@@ -47,6 +49,41 @@ func (s State) rows(h, w int, e Env) []string {
 	out = append(out, s.foot(cw, e)...)
 
 	return cells.Fill(rowsFit(out, w), h)
+}
+
+// tray draws what you said that nobody has answered yet, and how many rows
+// of it the cursor has to walk before it reaches the facts.
+func (s State) tray(out []string, cw int, e Env) ([]string, int) {
+	if len(s.waiting) == 0 {
+		return out, 0
+	}
+
+	out = append(out, theme.Paint(theme.Warn).Render(cells.Fit(e.Words.T("knowledge.said",
+		"You said this · keep it and Orbit applies it, or say it was not a rule"), cw)))
+
+	for i, one := range s.waiting {
+		out = append(out, s.sentence(one, i == s.sel, cw)...)
+	}
+
+	return append(out, ""), len(s.waiting)
+}
+
+// sentence is one row of the tray: when it was said, and what was said
+// under it — the same shape a fact is drawn in, because it is about to be
+// one.
+func (s State) sentence(one Said, chosen bool, cw int) []string {
+	mark := "  "
+	if chosen {
+		mark = theme.Paint(theme.Accent).Bold(true).Render("▸ ")
+	}
+
+	rows := []string{mark + theme.Paint(theme.Dim).Render(one.At.Local().Format(time.DateTime))}
+
+	for _, line := range cells.Lines(one.Text, max(cw-4, 8)) {
+		rows = append(rows, "    "+theme.Text(theme.Primary).Render(line))
+	}
+
+	return rows
 }
 
 // group draws one heading and the facts under it, and nothing when
@@ -211,8 +248,7 @@ func (s State) foot(cw int, e Env) []string {
 	p := e.Words
 
 	if !s.editing {
-		return []string{theme.Paint(theme.Dim).Render(cells.Fit(p.T("knowledge.ways",
-			"[↑↓] move · [e] edit · [n] new · [←→] wider or narrower · [space] turn off · [esc] back"), cw))}
+		return []string{theme.Paint(theme.Dim).Render(cells.Fit(s.ways(p), cw))}
 	}
 
 	return []string{
@@ -222,6 +258,19 @@ func (s State) foot(cw int, e Env) []string {
 		theme.Paint(theme.Dim).Render(cells.Fit(p.T("knowledge.editing_ways",
 			"[tab] the other field · [↵] save · [esc] leave it as it was"), cw)),
 	}
+}
+
+// ways is what the keys do, which is not the same sentence in the tray as it
+// is under it. The two halves of the screen answer different questions, and
+// a bar that listed the keys of both would be a bar nobody reads.
+func (s State) ways(p *words.Printer) string {
+	if _, waiting := s.onSaid(); waiting {
+		return p.T("knowledge.tray_ways",
+			"[↑↓] move · [k] keep it · [e] keep it in better words · [d] not a rule · [esc] back")
+	}
+
+	return p.T("knowledge.ways",
+		"[↑↓] move · [e] edit · [n] new · [←→] wider or narrower · [space] turn off · [esc] back")
 }
 
 // line is one field being typed into, with the caret where the next

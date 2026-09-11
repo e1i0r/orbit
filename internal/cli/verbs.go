@@ -42,11 +42,23 @@ func fromVerbs(hand []Command) []Command {
 	var out []Command
 
 	for _, v := range verb.Every() {
+		// A child is not a command of its own. It is reached through its
+		// parent, which is the whole point of it having one: `orbit rules
+		// keep` and never `orbit keep`, which says nothing about what.
+		if v.Under != "" {
+			continue
+		}
+
 		if slices.ContainsFunc(hand, func(c Command) bool { return c.Name == v.Name }) {
 			continue
 		}
 
-		out = append(out, commandFor(v))
+		c := commandFor(v)
+		if kids := v.Children(); len(kids) > 0 {
+			c.Args, c.Run = familyArgs(kids), runFamily(v, kids)
+		}
+
+		out = append(out, c)
 	}
 
 	return out
@@ -73,6 +85,37 @@ func commandFor(v verb.Verb) Command {
 	}
 
 	return c
+}
+
+// runFamily reads the first word after the command as the child it names,
+// and hands everything after it to that child.
+//
+// A line with no child at all is the parent itself, which is how `orbit
+// rules` lists what `orbit rules keep` acts on: the listing is the family's
+// front page and needs no word of its own.
+func runFamily(parent verb.Verb, kids []verb.Verb) func(Context, []string) error {
+	return func(ctx Context, args []string) error {
+		if len(args) > 0 {
+			for _, kid := range kids {
+				if args[0] == kid.Name {
+					return askFor(ctx, kid, args[1:])
+				}
+			}
+		}
+
+		return askFor(ctx, parent, args)
+	}
+}
+
+// familyArgs is the usage line: the children, and then what the first of
+// them takes, because they mostly take the same thing.
+func familyArgs(kids []verb.Verb) string {
+	names := make([]string, 0, len(kids))
+	for _, kid := range kids {
+		names = append(names, kid.Name)
+	}
+
+	return "[" + strings.Join(names, "|") + "] " + argsOf(kids[0])
 }
 
 // filled takes what is left on the line and puts it in the fields it is for.
@@ -132,19 +175,25 @@ func argsOf(v verb.Verb) string {
 		out += " <id>"
 	}
 
+	// Only the first field of words is written at the end of the line: that
+	// is the one filled takes the rest of the line for, and a second would
+	// swallow it. The others are reachable by their flag and are shown as
+	// what they are.
+	trailing, _ := wordsOf(v)
+
 	for _, f := range v.Takes {
 		switch {
-		case f.Kind == verb.Words:
+		case f.Name == trailing:
 			continue
-		case f.Needed:
-			out += " <" + f.Name + ">"
-		default:
+		case f.Kind == verb.Words || !f.Needed:
 			out += " [-" + f.Name + " <" + f.Name + ">]"
+		default:
+			out += " <" + f.Name + ">"
 		}
 	}
 
-	if f, ok := wordsOf(v); ok {
-		out += " <" + f + ">"
+	if trailing != "" {
+		out += " <" + trailing + ">"
 	}
 
 	return out
@@ -152,7 +201,7 @@ func argsOf(v verb.Verb) string {
 
 // askFor turns a command line into an In and asks for the verb.
 func askFor(ctx Context, v verb.Verb, args []string) error {
-	fs := flag.NewFlagSet(v.Name, flag.ContinueOnError)
+	fs := flag.NewFlagSet(v.Path(), flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 
 	// A flag per field, in the words the field says about itself, so
@@ -185,7 +234,7 @@ func askFor(ctx Context, v verb.Verb, args []string) error {
 	rest := fs.Args()
 	if v.OnTask {
 		if in.Task = fs.Arg(0); in.Task == "" {
-			return needsTaskID(ctx, v.Name)
+			return needsTaskID(ctx, v.Path())
 		}
 
 		rest = rest[1:]
@@ -194,7 +243,7 @@ func askFor(ctx Context, v verb.Verb, args []string) error {
 	if over := filled(v, in.Args, rest); len(over) > 0 {
 		return fmt.Errorf("%s", ctx.printer().T("verb.takes_no_more",
 			"{verb} takes nothing after {extra}",
-			words.Arg{Name: "verb", Value: v.Name},
+			words.Arg{Name: "verb", Value: v.Path()},
 			words.Arg{Name: "extra", Value: strings.Join(over, " ")}))
 	}
 
@@ -214,7 +263,7 @@ func askFor(ctx Context, v verb.Verb, args []string) error {
 
 	w := newWorld(s, board.NewReader(s, *dir), ctx.printer())
 
-	out, err := verb.Run(context.Background(), w, v.Name, in)
+	out, err := verb.Run(context.Background(), w, v.Path(), in)
 	if err != nil {
 		return err
 	}

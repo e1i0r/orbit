@@ -24,7 +24,8 @@ import (
 
 // notThere is a verb one way in does not offer, and the reason it does not.
 //
-// The key is "<way in>:<verb>". A verb missing from a surface with no line
+// The key is "<way in>:<verb>", and a verb that belongs to a family is both
+// of its words: "mcp:rules keep". A verb missing from a surface with no line
 // here fails, and a line here for a verb that is offered fails too: a
 // stale excuse reads as a decision somebody made.
 var notThere = map[string]string{
@@ -63,16 +64,17 @@ func TestEveryVerbIsOfferedByEveryWayIn(t *testing.T) {
 
 	for wayIn, offered := range offers {
 		for _, v := range verb.Every() {
-			key := wayIn + ":" + v.Name
+			name := v.Path()
+			key := wayIn + ":" + name
 			why, excused := notThere[key]
 
 			switch {
-			case offered[v.Name] && excused:
-				t.Errorf("%s offers %q, and %q says it does not — drop the line", wayIn, v.Name, key)
-			case !offered[v.Name] && !excused:
+			case offered[name] && excused:
+				t.Errorf("%s offers %q, and %q says it does not — drop the line", wayIn, name, key)
+			case !offered[name] && !excused:
 				t.Errorf("%s does not offer %q; give it a way in, or write down why not in notThere",
-					wayIn, v.Name)
-			case !offered[v.Name] && why == "":
+					wayIn, name)
+			case !offered[name] && why == "":
 				t.Errorf("%q is excused with no reason", key)
 			}
 		}
@@ -108,6 +110,7 @@ func webOffers(t *testing.T) map[string]bool {
 
 	body := read(t, "internal/web")
 	if !strings.Contains(body, `POST /api/tasks/{id}/{verb}`) ||
+		!strings.Contains(body, `POST /api/do/{under}/{verb}`) ||
 		!strings.Contains(body, `GET /api/read/{verb}`) {
 		t.Error("internal/web no longer routes every verb by name")
 
@@ -199,6 +202,12 @@ func windowOffers(t *testing.T) map[string]bool {
 		"impact":    "tab.impact",
 		"direct":    `{name: "direct", says: true}`,
 		"note":      `{name: "note", says: true}`,
+		// The tray on the knowledge screen: the sentences waiting, and the
+		// two answers to one of them. The marks are the sentences the screen
+		// says while offering them, because that is the offer.
+		"rules":      "knowledge.said",
+		"rules keep": "knowledge.kept",
+		"rules drop": "knowledge.left_said",
 	})
 }
 
@@ -207,7 +216,7 @@ func windowOffers(t *testing.T) map[string]bool {
 func all() map[string]bool {
 	out := map[string]bool{}
 	for _, v := range verb.Every() {
-		out[v.Name] = true
+		out[v.Path()] = true
 	}
 
 	return out
@@ -219,18 +228,17 @@ func sees(body string, marks map[string]string) map[string]bool {
 	out := map[string]bool{}
 
 	for _, v := range verb.Every() {
-		mark, given := marks[v.Name]
+		mark, given := marks[v.Path()]
 		if !given {
-			mark = `"` + v.Name + `"`
+			mark = `"` + v.Path() + `"`
 		}
 
-		out[v.Name] = strings.Contains(body, mark)
+		out[v.Path()] = strings.Contains(body, mark)
 	}
 
 	return out
 }
 
-// read is every Go file of one package, joined.
 // readAll is every file of one suffix under a directory, joined.
 func readAll(t *testing.T, dir, suffix string) string {
 	t.Helper()
@@ -261,6 +269,7 @@ func readAll(t *testing.T, dir, suffix string) string {
 	return b.String()
 }
 
+// read is every Go file of one package, joined.
 func read(t *testing.T, dir string) string {
 	t.Helper()
 

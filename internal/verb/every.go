@@ -13,6 +13,13 @@ import "github.com/e1i0r/orbit/internal/words"
 // that reached only one of them was the thing this package was written to
 // stop.
 func Every() []Verb {
+	return append(theRest(), rules()...)
+}
+
+// theRest is every verb that belongs to no family. It is one file because it
+// is one list; the day a second family appears it gets a file of its own, the
+// way rules has, and this shrinks by that much.
+func theRest() []Verb {
 	return []Verb{
 		{
 			Name:   "new",
@@ -265,9 +272,12 @@ func Every() []Verb {
 }
 
 // One is the verb by that name, and whether there is one.
+//
+// By Path, so that a child is asked for the way it is written: "rules keep"
+// and not "keep", which two families could both answer to.
 func One(name string) (Verb, bool) {
 	for _, v := range Every() {
-		if v.Name == name {
+		if v.Path() == name {
 			return v, true
 		}
 	}

@@ -107,13 +107,13 @@ func printer(w World) *words.Printer {
 func (v Verb) needs(p *words.Printer, in In) error {
 	if v.OnTask && in.Task == "" {
 		return errors.New(p.T("verb.needs_a_task", "{verb} needs a task",
-			words.Arg{Name: "verb", Value: v.Name}))
+			words.Arg{Name: "verb", Value: v.Path()}))
 	}
 
 	for _, f := range v.Takes {
 		if f.Needed && in.Arg(f.Name) == "" {
 			return errors.New(p.T("verb.needs_field", "{verb} needs {field}",
-				words.Arg{Name: "verb", Value: v.Name},
+				words.Arg{Name: "verb", Value: v.Path()},
 				words.Arg{Name: "field", Value: f.Name}))
 		}
 	}

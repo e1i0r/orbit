@@ -28,6 +28,19 @@ type Verb struct {
 	// own idiom — a command, a route, a tool — but they spell the same
 	// word, so a reader who runs two of them learns one vocabulary.
 	Name string
+	// Under is the verb this one belongs to, and empty for the ones that
+	// belong to nobody.
+	//
+	// Some things Orbit can be asked for come in families: a tray is listed,
+	// and a row of it is kept or dropped. Flat names make those read as
+	// three unrelated words that happen to share a prefix — and they sort
+	// apart in the one place somebody goes looking for them, which is the
+	// list of what can be asked for.
+	//
+	// A family is one level deep and stays that way. Two is a tree, a tree
+	// needs a way to be walked, and nothing Orbit does has been hard to say
+	// in two words.
+	Under string
 	// About is the sentence a reader is shown, through internal/words so
 	// that it is the same sentence in both languages.
 	About func(*words.Printer) string
@@ -54,6 +67,33 @@ type Verb struct {
 	// be undone by asking again; a pull request is on somebody's GitHub the
 	// moment it opens, and a merge is in the branch other people work from.
 	Outward bool
+}
+
+// Path is the whole of what this verb is called: its own word for the ones
+// that belong to nobody, and both words for a child.
+//
+// It is the identity every surface keys on. Name alone is not: two families
+// may each have a keep, and a map of those would hold one of them.
+func (v Verb) Path() string {
+	if v.Under == "" {
+		return v.Name
+	}
+
+	return v.Under + " " + v.Name
+}
+
+// Children is the verbs that belong to this one, in the order they were
+// declared.
+func (v Verb) Children() []Verb {
+	var out []Verb
+
+	for _, other := range Every() {
+		if other.Under == v.Name {
+			out = append(out, other)
+		}
+	}
+
+	return out
 }
 
 // Field is one thing a verb needs typed into it.

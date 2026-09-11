@@ -16,6 +16,8 @@ package known
 // the window lends it, and Out is the sentence or the exit it asks for.
 
 import (
+	"time"
+
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 
@@ -42,10 +44,34 @@ type Env struct {
 	Replace func(was, now knowledge.Fact) error
 	// Turn switches one fact off, or on again.
 	Turn func(f knowledge.Fact) error
+	// Waiting is what you said to the supervisor that read as a rule and
+	// nobody has answered yet. Nil in a window built without a store, and
+	// then the tray is simply not there.
+	Waiting func() []Said
+	// Keep writes one of them down as a fact of yours. The words are handed
+	// over rather than read back out of the tray, because correcting is how
+	// most of these are accepted.
+	Keep func(at time.Time, phrase, check string) error
+	// Drop says it was not a rule. The sentence stays in the thread where it
+	// was said, which is where it belonged all along.
+	Drop func(at time.Time) error
 	// Repo is the one repository on the board, and empty when there is more
 	// than one. A fact written here is about it; choosing one of several
 	// for somebody is how a rule ends up on the wrong project.
 	Repo string
+}
+
+// A Said is one sentence somebody said to the supervisor that read as a
+// rule, waiting to be told whether it was one.
+//
+// The screen's own shape, and not the shape of the package that holds the
+// tray: what reaches the window is data, through a port, here as everywhere
+// else.
+type Said struct {
+	// At is when it was said, and it is the sentence's name: the thread is
+	// append-only and no two turns share an instant.
+	At   time.Time
+	Text string
 }
 
 // Out is what the screen asks the window for.
@@ -71,8 +97,12 @@ func about(name, value string) words.Arg {
 // supervisor's side holds its own: the port reads two directories off disk,
 // and a frame is drawn ten times a second.
 type State struct {
-	sel   int
-	facts []knowledge.Fact
+	sel int
+	// waiting is the tray, and facts is what Orbit already knows. The cursor
+	// walks the two of them in the order they are drawn, which is why almost
+	// nothing here indexes either one directly.
+	waiting []Said
+	facts   []knowledge.Fact
 	// read is whether the port has been asked at all. It is not len(facts):
 	// a workspace where nothing has been written down answers an empty
 	// list, and without this the header's chip would ask again on every
@@ -110,6 +140,11 @@ func Open(e Env) State {
 // frame, and reading walks every repository on the board.
 func (s State) Count() int { return len(s.facts) }
 
+// Unanswered is how many sentences are in the tray, for the same chip. A
+// tray nobody is told about is a tray nobody opens, and this screen is not
+// one somebody passes by accident.
+func (s State) Unanswered() int { return len(s.waiting) }
+
 // SyncOnce reads the store if it never has been, and does nothing after
 // that. The header's chip is what wants it, on the first board that arrives:
 // reading walks every repository, and the count only changes when a fact is
@@ -129,11 +164,19 @@ func (s State) Sync(e Env) State {
 	}
 
 	s.facts = e.All()
+	if e.Waiting != nil {
+		s.waiting = e.Waiting()
+	}
+
 	s.read = true
-	s.sel = min(max(s.sel, 0), max(len(s.facts)-1, 0))
+	s.sel = min(max(s.sel, 0), s.last())
 
 	return s
 }
+
+// last is the bottom row the cursor can be on: the tray, and then the facts
+// under it, in the order they are drawn.
+func (s State) last() int { return max(len(s.waiting)+len(s.facts)-1, 0) }
 
 // View is the screen drawn: a title, the facts that belong to no repository,
 // then each repository's own.
@@ -154,12 +197,16 @@ func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
 		s.sel = max(s.sel-1, 0)
 		return s, Out{}
 	case msg.Code == tea.KeyDown:
-		s.sel = min(s.sel+1, max(len(s.facts)-1, 0))
+		s.sel = min(s.sel+1, s.last())
 		return s, Out{}
 	case msg.Code == tea.KeySpace:
 		return s.turnFact(e)
 	case msg.Code == 'e' || msg.Code == 'E':
 		return s.editFact(e), Out{}
+	case msg.Code == 'k' || msg.Code == 'K':
+		return s.keepAsSaid(e)
+	case msg.Code == 'd' || msg.Code == 'D':
+		return s.dropSaid(e)
 	case msg.Code == 'n' || msg.Code == 'N':
 		return s.newFact(e), Out{}
 	case msg.Code == tea.KeyLeft:
@@ -184,11 +231,10 @@ const (
 // everywhere. The language level is not on this ladder — a fact is about a
 // language because somebody said so, not because it drifted there.
 func (s State) moveFact(dir int, e Env) (State, Out) {
-	if e.Replace == nil || s.sel >= len(s.facts) {
+	was, ok := s.onFact()
+	if e.Replace == nil || !ok {
 		return s, Out{}
 	}
-
-	was := s.facts[s.sel]
 
 	now := was
 	switch {
@@ -220,11 +266,11 @@ func (s State) moveFact(dir int, e Env) (State, Out) {
 // keystroke should do. What it stops is the fact being told and the gate
 // refusing work over it.
 func (s State) turnFact(e Env) (State, Out) {
-	if e.Turn == nil || s.sel >= len(s.facts) {
+	f, ok := s.onFact()
+	if e.Turn == nil || !ok {
 		return s, Out{}
 	}
 
-	f := s.facts[s.sel]
 	f.Off = !f.Off
 
 	if err := e.Turn(f); err != nil {

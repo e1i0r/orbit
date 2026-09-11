@@ -19,8 +19,12 @@ import (
 // matter: a refusal is the ordinary answer for a verb that needs a task or
 // a word, and the refusal is proof the flags were built and parsed. What is
 // being held is that none of them panics.
+//
+// Nothing is held back as hand-written. A verb the command table spells for
+// itself is still generated here, because what is being asked is whether
+// the declaration can be turned into a command at all.
 func TestEveryGeneratedCommandCanBeAskedFor(t *testing.T) {
-	for _, c := range fromVerbs(handWritten(t)) {
+	for _, c := range fromVerbs(nil) {
 		t.Run(c.Name, func(t *testing.T) {
 			defer func() {
 				if died := recover(); died != nil {
@@ -52,18 +56,43 @@ func TestNoGeneratedCommandFightsTheRepoFlag(t *testing.T) {
 	}
 }
 
-// handWritten is the command table without the generated tail, which is
-// what fromVerbs is asked to fill in.
-func handWritten(t *testing.T) []Command {
+// TestAFamilyIsReachedByItsSecondWord.
+//
+// `orbit rules keep` and never `orbit keep`, which says nothing about what.
+// The refusal is the proof: the child is what answers, and it names itself
+// by both its words.
+func TestAFamilyIsReachedByItsSecondWord(t *testing.T) {
+	var out, said strings.Builder
+
+	err := commandNamed(t, "rules").Run(Context{Out: &out, Err: &said}, []string{"keep"})
+	if err == nil || !strings.Contains(err.Error(), "rules keep needs n") {
+		t.Errorf("orbit rules keep answered %v", err)
+	}
+}
+
+// TestAFamilysUsageLineNamesItsChildren, because that line is the whole of
+// what a reader is told before they type.
+func TestAFamilysUsageLineNamesItsChildren(t *testing.T) {
+	args := commandNamed(t, "rules").Args
+
+	for _, word := range []string{"keep", "drop", "<n>", "-check", "<text>"} {
+		if !strings.Contains(args, word) {
+			t.Errorf("orbit rules %s says nothing about %q", args, word)
+		}
+	}
+}
+
+// commandNamed is one of the generated commands.
+func commandNamed(t *testing.T, name string) Command {
 	t.Helper()
 
-	var hand []Command
-
-	for _, c := range commands() {
-		if c.Args == "" || !strings.HasPrefix(c.Args, "[-repo <dir>]") {
-			hand = append(hand, c)
+	for _, c := range fromVerbs(nil) {
+		if c.Name == name {
+			return c
 		}
 	}
 
-	return hand
+	t.Fatalf("nothing generated a command called %q", name)
+
+	return Command{}
 }

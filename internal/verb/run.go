@@ -18,7 +18,7 @@ import (
 
 // do is the verb, done.
 func (v Verb) do(ctx context.Context, w World, in In) (Out, error) {
-	switch v.Name {
+	switch v.Path() {
 	case "new":
 		return wrote(w, in)
 	case "run":
@@ -91,9 +91,15 @@ func (v Verb) do(ctx context.Context, w World, in In) (Out, error) {
 		return reconciled(w, in)
 	case "delete":
 		return deleted(w, in)
+	case "rules":
+		return waiting(w)
+	case "rules keep":
+		return agreed(w, in)
+	case "rules drop":
+		return dropped(w, in)
 	}
 
-	return Out{}, fmt.Errorf("%q is declared and not done", v.Name)
+	return Out{}, fmt.Errorf("%q is declared and not done", v.Path())
 }
 
 // wrote puts a task on the board, and starts it in the same breath when the

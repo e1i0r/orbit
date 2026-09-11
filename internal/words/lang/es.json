@@ -3311,6 +3311,16 @@
       "source": "[tab] the other field · [↵] save · [esc] leave it as it was",
       "value": "[tab] el otro campo · [↵] guardar · [esc] dejarlo como estaba"
     },
+    "header.waiting": {
+      "source": {
+        "one": "{n} waiting",
+        "other": "{n} waiting"
+      },
+      "value": {
+        "one": "{n} esperando",
+        "other": "{n} esperando"
+      }
+    },
     "header.knows": {
       "source": {
         "one": "{n} fact",
@@ -4744,6 +4754,76 @@
     "cmd.list": {
       "source": "list the tasks of a repository",
       "value": "listar las tareas de un repositorio"
+    },
+    "verb.rules": {
+      "source": "the rules you said that Orbit has not been told to keep yet",
+      "value": "las reglas que dijiste y que todavía nadie le mandó guardar a Orbit"
+    },
+    "verb.rules.keep": {
+      "source": "keep one of them, in your words or in better ones",
+      "value": "guardar una, con tus palabras o con unas mejores"
+    },
+    "verb.rules.n": {
+      "source": "which one, by its number in the list",
+      "value": "cuál, por su número en la lista"
+    },
+    "verb.rules.text": {
+      "source": "the rule as you would rather it read; the default is what you said",
+      "value": "la regla como preferirías que dijera; por defecto, lo que dijiste"
+    },
+    "verb.rules.check": {
+      "source": "a command that fails when the rule is broken, which is what makes it refuse work",
+      "value": "un comando que falla cuando la regla se rompe, que es lo que la hace frenar el trabajo"
+    },
+    "verb.rules.drop": {
+      "source": "say it was not a rule; the sentence stays where you said it",
+      "value": "decir que no era una regla; la frase queda donde la dijiste"
+    },
+    "verb.rules.drop.n": {
+      "source": "which one, by its number in the list",
+      "value": "cuál, por su número en la lista"
+    },
+    "verb.rules.empty": {
+      "source": "nothing you said is waiting to be kept",
+      "value": "no hay nada que dijiste esperando a ser guardado"
+    },
+    "verb.rules.kept": {
+      "source": "Orbit knows it: {rule}",
+      "value": "Orbit ya lo sabe: {rule}"
+    },
+    "verb.rules.dropped": {
+      "source": "left where you said it: {rule}",
+      "value": "queda donde lo dijiste: {rule}"
+    },
+    "verb.rules.not_a_number": {
+      "source": "a rule is named by its number in the list, and {value} is not a number",
+      "value": "una regla se nombra por su número en la lista, y {value} no es un número"
+    },
+    "verb.rules.no_such_rule": {
+      "source": {
+        "one": "there is no rule {asked}; one rule is waiting",
+        "other": "there is no rule {asked}; {n} rules are waiting"
+      },
+      "value": {
+        "one": "no hay una regla {asked}; hay una esperando",
+        "other": "no hay una regla {asked}; hay {n} esperando"
+      }
+    },
+    "knowledge.said": {
+      "source": "You said this · keep it and Orbit applies it, or say it was not a rule",
+      "value": "Esto lo dijiste vos · guardala y Orbit la aplica, o decí que no era una regla"
+    },
+    "knowledge.kept": {
+      "source": "Orbit knows it now, and every phase will be told",
+      "value": "Orbit ya lo sabe, y a cada fase se le va a decir"
+    },
+    "knowledge.left_said": {
+      "source": "left in the thread where you said it",
+      "value": "queda en el hilo donde lo dijiste"
+    },
+    "knowledge.tray_ways": {
+      "source": "[↑↓] move · [k] keep it · [e] keep it in better words · [d] not a rule · [esc] back",
+      "value": "[↑↓] mover · [k] guardarla · [e] guardarla con mejores palabras · [d] no era una regla · [esc] atrás"
     },
     "verb.thread.empty": {
       "source": "the supervisor thread is empty",

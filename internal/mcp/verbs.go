@@ -49,19 +49,29 @@ func spelledAs() map[string]string {
 	}
 }
 
-// verbTools is a tool for every declared verb the hand-written ones do not
-// already carry.
-func verbTools() []Tool {
+// built is every verb this server makes a tool of its own for: the whole
+// declaration, less the ones a hand-written tool already carries and the
+// ones it will not offer.
+func built() []verb.Verb {
 	hand := spelledAs()
-	p := words.For("")
 
-	var out []Tool
+	var out []verb.Verb
 
 	for _, v := range verb.Every() {
-		if hand[v.Name] != "" || cannot[v.Name] != "" {
-			continue
+		if hand[v.Path()] == "" && cannot[v.Path()] == "" {
+			out = append(out, v)
 		}
+	}
 
+	return out
+}
+
+// verbTools is a tool for every one of them.
+func verbTools() []Tool {
+	p := words.For("")
+
+	out := make([]Tool, 0, len(built()))
+	for _, v := range built() {
 		out = append(out, toolFor(v, p))
 	}
 
@@ -102,10 +112,19 @@ func toolFor(v verb.Verb, p *words.Printer) Tool {
 	}
 
 	return Tool{
-		Name:        "orbit_" + strings.ReplaceAll(v.Name, "-", "_"),
+		Name:        toolName(v),
 		Description: strings.ToUpper(v.About(p)[:1]) + v.About(p)[1:] + ".",
 		InputSchema: object(props, need...),
 	}
+}
+
+// toolName is what a verb is called here: the prefix every tool of this
+// server carries, and the whole of what the verb is called with the two
+// characters a tool name may not hold spelled as underscores. A child is
+// both of its words — orbit_rules_keep — because orbit_keep says nothing
+// about what.
+func toolName(v verb.Verb) string {
+	return "orbit_" + strings.NewReplacer("-", "_", " ", "_").Replace(v.Path())
 }
 
 // kindOf is the JSON type a field arrives as.
