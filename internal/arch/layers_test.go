@@ -103,10 +103,9 @@ var program = map[string][]string{
 	// things about a run instead of describing one.
 	"internal/knowledge": {},
 	// internal/learn is where a sentence waits between being said and being
-	// agreed with. It reaches the record because the tray is a table, and
-	// internal/knowledge because a sentence somebody keeps becomes a fact —
-	// which is the one thing it does that anybody else can see.
-	"internal/learn":  {"internal/db", "internal/knowledge", "internal/store"},
+	// agreed with: the record because the tray is a table, and
+	// internal/knowledge because a sentence somebody keeps becomes a fact.
+	"internal/learn":  {"internal/db", "internal/knowledge", "internal/logger", "internal/store"},
 	"internal/logger": {},
 	// internal/mcp is the widest list on this map, and it is the same width
 	// as internal/cli's for the same reason: it is a second front door onto
@@ -182,9 +181,13 @@ var program = map[string][]string{
 	// internal/logger is on it because a store that cannot be read costs the
 	// facts and not the answer: the supervisor keeps answering, and the line
 	// in the log is the only account of what it was answering without.
+	// internal/learn is on internal/supervisor's list for one call, at the
+	// door every line of the thread goes through: a rule is said in the
+	// middle of talking, so noticing it belongs where the sentence arrives —
+	// the same place for the cockpit, a command and a tool call alike.
 	"internal/supervisor": {
-		"internal/engine", "internal/knowledge", "internal/logger",
-		"internal/record", "internal/store",
+		"internal/engine", "internal/knowledge", "internal/learn",
+		"internal/logger", "internal/record", "internal/store",
 	},
 	// internal/logger is on internal/task's list for the same reason it is on
 	// internal/ui's, and for one more: a run that is SIGKILLed writes nothing

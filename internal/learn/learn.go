@@ -21,6 +21,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/db"
 	"github.com/e1i0r/orbit/internal/knowledge"
+	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/store"
 )
 
@@ -31,6 +32,36 @@ type Said struct {
 	// stops one line being offered twice.
 	At   time.Time
 	Text string
+}
+
+// itsOwn is the channel the supervisor answers itself on.
+//
+// The kind cannot tell it apart from yours: its answers are recorded as the
+// same sort of turn. Where the line came in is the difference, and this is
+// the one value that is never a person.
+const itsOwn = "supervisor"
+
+// Heard is told every line of the supervisor's thread, and puts the ones
+// that were rules in the tray.
+//
+// It answers nothing and cannot be made to fail. Saying something is the
+// thing that matters at that moment; noticing it was also a rule is a
+// question asked about it, and a question that cannot be asked is not a
+// reason to lose the sentence.
+//
+// A line the supervisor wrote itself is skipped. Everything else is
+// somebody: the cockpit, a command, a tool call — and a channel nobody has
+// invented yet counts as a person rather than being quietly ignored, which
+// is the way round that fails safe.
+func Heard(s *store.Store, channel string, at time.Time, text string) {
+	if s == nil || channel == itsOwn || !aboutTheFuture(text) {
+		return
+	}
+
+	if err := Propose(s, Said{At: at, Text: text}); err != nil {
+		logger.Warn("learn", "what you said at %s was not offered back: %v",
+			at.Format(time.RFC3339), err)
+	}
 }
 
 // Propose puts a sentence in the tray, and says nothing about one already

@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/e1i0r/orbit/internal/learn"
 	"github.com/e1i0r/orbit/internal/record"
 	"github.com/e1i0r/orbit/internal/store"
 )
@@ -103,7 +104,17 @@ func RecordIn(s *store.Store, conversation, kind, by, channel, taskID, repo, tex
 		return err
 	}
 
-	return d.AppendMessage(e)
+	if err := d.AppendMessage(e); err != nil {
+		return err
+	}
+
+	// After the line is safely down, and never instead of it. What somebody
+	// said is the fact about this moment; whether it was also a rule is a
+	// question asked about it, and a question that cannot be asked is not a
+	// reason to lose the sentence.
+	learn.Heard(s, channel, e.At, text)
+
+	return nil
 }
 
 // Events reads the whole global supervisor thread, oldest first.
