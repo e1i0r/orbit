@@ -42,15 +42,15 @@ func TestEveryVerbSaysWhatItIs(t *testing.T) {
 // itself which is which is how one of them forgets.
 func TestWhatSpendsAndWhatLeavesIsDeclared(t *testing.T) {
 	spends := map[string]bool{"run": true, "continue": true}
-	outward := map[string]bool{"pr": true, "merge": true, "close-pr": true}
+	outward := map[string]bool{"pr": true, "pr merge": true, "pr close": true}
 
 	for _, v := range Every() {
-		if v.Spends != spends[v.Name] {
-			t.Errorf("%q says it spends %v", v.Name, v.Spends)
+		if v.Spends != spends[v.Path()] {
+			t.Errorf("%q says it spends %v", v.Path(), v.Spends)
 		}
 
-		if v.Outward != outward[v.Name] {
-			t.Errorf("%q says it leaves this machine %v", v.Name, v.Outward)
+		if v.Outward != outward[v.Path()] {
+			t.Errorf("%q says it leaves this machine %v", v.Path(), v.Outward)
 		}
 	}
 }
@@ -62,17 +62,17 @@ func TestWhatOnlyReadsIsDeclared(t *testing.T) {
 	reads := map[string]bool{
 		"list": true, "show": true, "flow": true, "diff": true, "impact": true,
 		"knowledge": true, "flows": true, "engines": true, "repos": true,
-		"thread": true, "history": true, "settings": true, "quota": true,
-		"tree": true, "rules": true,
+		"thread": true, "history": true, "quota": true,
+		"tree": true, "rules": true, "settings": true,
 	}
 
 	for _, v := range Every() {
-		if v.Reads != reads[v.Name] {
-			t.Errorf("%q says it only reads: %v", v.Name, v.Reads)
+		if v.Reads != reads[v.Path()] {
+			t.Errorf("%q says it only reads: %v", v.Path(), v.Reads)
 		}
 
 		if v.Reads && (v.Spends || v.Outward) {
-			t.Errorf("%q only reads, and also spends or leaves the machine", v.Name)
+			t.Errorf("%q only reads, and also spends or leaves the machine", v.Path())
 		}
 	}
 }

@@ -86,8 +86,8 @@ func verbTools() []Tool {
 // obeyed.
 var cannot = map[string]string{
 	"pr":       "opening a pull request is a person's decision",
-	"merge":    "merging is a person's decision",
-	"close-pr": "closing a pull request is a person's decision",
+	"pr merge": "merging is a person's decision",
+	"pr close": "closing a pull request is a person's decision",
 	"approve":  "accepting a library a task reached for is the question the gate asked a person",
 	"take":     "this hands a terminal to an engine, and a tool call has no terminal to hand over",
 }

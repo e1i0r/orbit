@@ -1561,6 +1561,10 @@
       "source": "handing the keyboard back needs a run stopped at a phase; this one is not stopped",
       "value": "devolver el teclado necesita una ejecución detenida en una fase; esta no lo está"
     },
+    "cmd.was_called": {
+      "source": "the old name for orbit {new}",
+      "value": "el nombre viejo de orbit {new}"
+    },
     "cmd.top": {
       "source": "watch every task in one window",
       "value": "ver todas las tareas en una sola ventana"
@@ -1636,10 +1640,6 @@
     "cmd.pr": {
       "source": "create a pull request from a task's worktree",
       "value": "crear un pull request desde el worktree de una tarea"
-    },
-    "cmd.merge": {
-      "source": "merge a task's pull request and delete its branch",
-      "value": "fusionar el pull request de una tarea y borrar su rama"
     },
     "cli.needs_task_id": {
       "source": "{command} needs the id of a task",
@@ -1844,10 +1844,6 @@
     "close_pr.closed": {
       "source": "pull request closed: {branch}",
       "value": "pull request cerrado: {branch}"
-    },
-    "cmd.close_pr": {
-      "source": "close a task's pull request on GitHub",
-      "value": "cerrar el pull request de una tarea en GitHub"
     },
     "deliver.no_task": {
       "source": "select a task to continue",
@@ -4824,6 +4820,10 @@
     "knowledge.tray_ways": {
       "source": "[↑↓] move · [k] keep it · [e] keep it in better words · [d] not a rule · [esc] back",
       "value": "[↑↓] mover · [k] guardarla · [e] guardarla con mejores palabras · [d] no era una regla · [esc] atrás"
+    },
+    "verb.was_called": {
+      "source": "{old} is now {new}, and the old name still works",
+      "value": "{old} ahora es {new}, y el nombre viejo sigue funcionando"
     },
     "verb.thread.empty": {
       "source": "the supervisor thread is empty",

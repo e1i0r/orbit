@@ -47,8 +47,8 @@ var notThere = map[string]string{
 	// model has no business asking for on its own — plus the one it could
 	// not do if it wanted to.
 	"mcp:pr":       "opening a pull request is a person's decision, not a model's",
-	"mcp:merge":    "merging is a person's decision, not a model's",
-	"mcp:close-pr": "closing a pull request is a person's decision, not a model's",
+	"mcp:pr merge": "merging is a person's decision, not a model's",
+	"mcp:pr close": "closing a pull request is a person's decision, not a model's",
 	"mcp:approve":  "accepting a library a task reached for is the question the gate asked a person",
 	"mcp:take":     "this hands a terminal to an engine, and a tool call has no terminal to hand over",
 }
@@ -208,6 +208,11 @@ func windowOffers(t *testing.T) map[string]bool {
 		"rules":      "knowledge.said",
 		"rules keep": "knowledge.kept",
 		"rules drop": "knowledge.left_said",
+		// The window asks for these by the names they had, which still
+		// answer. What it offers is the verb, whatever it is spelled as.
+		"pr merge":     `Cmd: "merge"`,
+		"pr close":     `Cmd: "close-pr"`,
+		"settings set": "screenSettings",
 	})
 }
 

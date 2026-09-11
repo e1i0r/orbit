@@ -182,17 +182,17 @@ func commands() []Command {
 		},
 		Run: createPR,
 	}, {
+		// These two are what `orbit pr merge` and `orbit pr close` were
+		// called, still written by hand because they stream as they go and
+		// put their warnings where warnings belong. What they gained is the
+		// line that says the new name.
 		Name: "merge", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
-		About: func(p *words.Printer) string {
-			return p.T("cmd.merge", "merge a task's pull request and delete its branch")
-		},
-		Run: mergePR,
+		About: oldName("merge"),
+		Run:   wasCalled("merge", mergePR),
 	}, {
 		Name: "close-pr", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
-		About: func(p *words.Printer) string {
-			return p.T("cmd.close_pr", "close a task's pull request on GitHub")
-		},
-		Run: closePR,
+		About: oldName("close-pr"),
+		Run:   wasCalled("close-pr", closePR),
 	}, {
 		Name: "cancel", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
 		About: func(p *words.Printer) string { return p.T("cmd.cancel", "stop a run, and say so in its record") },

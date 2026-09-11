@@ -19,6 +19,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -83,7 +84,21 @@ func Run(ctx context.Context, w World, name string, in In) (Out, error) {
 		return Out{}, err
 	}
 
-	return v.do(ctx, w, in)
+	out, err := v.do(ctx, w, in)
+	if err != nil || name != v.Was {
+		return out, err
+	}
+
+	// Asked for by the name it used to have. It still works, and it says so
+	// once, above whatever the verb answered: a script left on a name that
+	// is going away with nothing to tell whoever wrote it is how a rename
+	// becomes a breakage six months later.
+	out.Said = strings.TrimSpace(printer(w).T("verb.was_called",
+		"{old} is now {new}, and the old name still works",
+		words.Arg{Name: "old", Value: v.Was},
+		words.Arg{Name: "new", Value: v.Path()}) + "\n" + out.Said)
+
+	return out, nil
 }
 
 // printer is the reader's language, and English where there is no world to

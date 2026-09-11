@@ -32,33 +32,45 @@ import (
 
 // withVerbs is the hand-written commands, and one for every declared verb
 // they do not already carry.
+//
+// A hand-written command whose verb has children gains the dispatch a
+// generated one gets, rather than this package writing it a second time.
+// What it does on its own stays its own: `orbit pr <id>` opens the pull
+// request the way it always has, streaming as it goes, and `orbit pr merge
+// <id>` is the child.
 func withVerbs(hand []Command) []Command {
-	return append(hand, fromVerbs(hand)...)
+	out := slices.Clone(hand)
+
+	for i, c := range out {
+		if v, declared := verb.One(c.Name); declared {
+			out[i] = family(c, v)
+		}
+	}
+
+	return append(out, fromVerbs(out)...)
 }
 
-// fromVerbs is a command for every declared verb the hand-written list does
-// not already carry.
+// fromVerbs is every command the declaration implies that the hand-written
+// list does not already carry: one for each verb, and one for each name a
+// verb answered to before it joined a family.
 func fromVerbs(hand []Command) []Command {
+	carried := func(name string) bool {
+		return slices.ContainsFunc(hand, func(c Command) bool { return c.Name == name })
+	}
+
 	var out []Command
 
 	for _, v := range verb.Every() {
 		// A child is not a command of its own. It is reached through its
 		// parent, which is the whole point of it having one: `orbit rules
 		// keep` and never `orbit keep`, which says nothing about what.
-		if v.Under != "" {
-			continue
+		if v.Under == "" && !carried(v.Name) {
+			out = append(out, family(commandFor(v), v))
 		}
 
-		if slices.ContainsFunc(hand, func(c Command) bool { return c.Name == v.Name }) {
-			continue
+		if v.Was != "" && !carried(v.Was) {
+			out = append(out, underItsOldName(v))
 		}
-
-		c := commandFor(v)
-		if kids := v.Children(); len(kids) > 0 {
-			c.Args, c.Run = familyArgs(kids), runFamily(v, kids)
-		}
-
-		out = append(out, c)
 	}
 
 	return out
@@ -87,13 +99,29 @@ func commandFor(v verb.Verb) Command {
 	return c
 }
 
+// family gives a command the dispatch its verb's children need, and hands it
+// back untouched when there are none.
+func family(c Command, v verb.Verb) Command {
+	kids := v.Children()
+	if len(kids) == 0 {
+		return c
+	}
+
+	c.Args, c.Run = familyArgs(c.Args, kids), runFamily(kids, c.Run)
+
+	return c
+}
+
 // runFamily reads the first word after the command as the child it names,
 // and hands everything after it to that child.
 //
-// A line with no child at all is the parent itself, which is how `orbit
-// rules` lists what `orbit rules keep` acts on: the listing is the family's
-// front page and needs no word of its own.
-func runFamily(parent verb.Verb, kids []verb.Verb) func(Context, []string) error {
+// A line with no child at all is the command as it was: `orbit rules` lists
+// what `orbit rules keep` acts on, and `orbit pr <id>` opens the pull
+// request. The family's front page is the parent itself and needs no word of
+// its own.
+func runFamily(
+	kids []verb.Verb, otherwise func(Context, []string) error,
+) func(Context, []string) error {
 	return func(ctx Context, args []string) error {
 		if len(args) > 0 {
 			for _, kid := range kids {
@@ -103,19 +131,23 @@ func runFamily(parent verb.Verb, kids []verb.Verb) func(Context, []string) error
 			}
 		}
 
-		return askFor(ctx, parent, args)
+		return otherwise(ctx, args)
 	}
 }
 
-// familyArgs is the usage line: the children, and then what the first of
-// them takes, because they mostly take the same thing.
-func familyArgs(kids []verb.Verb) string {
+// familyArgs is the usage line: what the command takes on its own, and then
+// the children and what they take.
+//
+// The repository flag is written once. Every line on this screen begins with
+// it, and twice on one line reads as two different flags.
+func familyArgs(own string, kids []verb.Verb) string {
 	names := make([]string, 0, len(kids))
 	for _, kid := range kids {
 		names = append(names, kid.Name)
 	}
 
-	return "[" + strings.Join(names, "|") + "] " + argsOf(kids[0])
+	return own + "  |  " + strings.Join(names, "|") +
+		strings.TrimPrefix(argsOf(kids[0]), "[-repo <dir>]")
 }
 
 // filled takes what is left on the line and puts it in the fields it is for.

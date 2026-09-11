@@ -39,8 +39,8 @@ func (v Verb) do(ctx context.Context, w World, in In) (Out, error) {
 		return marked(w, in)
 	case "history":
 		return told(w, in)
-	case "pr", "merge", "close-pr":
-		return given(ctx, w, in, v.Name)
+	case "pr", "pr merge", "pr close":
+		return given(ctx, w, in, v.Path())
 	case "say":
 		return spoken(ctx, w, in)
 	case "learn":
@@ -57,7 +57,7 @@ func (v Verb) do(ctx context.Context, w World, in In) (Out, error) {
 		return unsaid(w, in)
 	case "settings":
 		return kept(w)
-	case "set":
+	case "settings set":
 		return changed(w, in)
 	case "list":
 		return listed(w)

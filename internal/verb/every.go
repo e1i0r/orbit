@@ -4,7 +4,11 @@ package verb
 // run that results, saying something about it, answering what it asked, and
 // handing what it made to the world.
 
-import "github.com/e1i0r/orbit/internal/words"
+import (
+	"slices"
+
+	"github.com/e1i0r/orbit/internal/words"
+)
 
 // Every is the whole vocabulary.
 //
@@ -13,12 +17,15 @@ import "github.com/e1i0r/orbit/internal/words"
 // that reached only one of them was the thing this package was written to
 // stop.
 func Every() []Verb {
-	return append(theRest(), rules()...)
+	return slices.Concat(theRest(), rules(), pr(), settings())
 }
 
-// theRest is every verb that belongs to no family. It is one file because it
-// is one list; the day a second family appears it gets a file of its own, the
-// way rules has, and this shrinks by that much.
+// theRest is every verb that belongs to no family.
+//
+// A family lives in a file of its own, named after it — rules.go, pr.go, and
+// the settings beside the table of what they are — so that what a family is
+// can be read in one sitting. This is what is left over, and it shrinks
+// every time another one is named.
 func theRest() []Verb {
 	return []Verb{
 		{
@@ -116,15 +123,6 @@ func theRest() []Verb {
 		{Name: "history", OnTask: true, Reads: true, About: func(p *words.Printer) string {
 			return p.T("verb.history", "everything ever said about a task, in any program")
 		}},
-		{Name: "pr", OnTask: true, Outward: true, About: func(p *words.Printer) string {
-			return p.T("verb.pr", "open a pull request from a task's worktree")
-		}},
-		{Name: "merge", OnTask: true, Outward: true, About: func(p *words.Printer) string {
-			return p.T("verb.merge", "merge a task's pull request and delete its branch")
-		}},
-		{Name: "close-pr", OnTask: true, Outward: true, About: func(p *words.Printer) string {
-			return p.T("verb.close_pr", "close a task's pull request without merging it")
-		}},
 		{
 			Name: "say",
 			About: func(p *words.Printer) string {
@@ -185,23 +183,6 @@ func theRest() []Verb {
 				return p.T("verb.export.into", "a directory that is empty or does not exist yet")
 			}}},
 		},
-		{
-			Name: "set",
-			About: func(p *words.Printer) string {
-				return p.T("verb.set", "change one of Orbit's own settings")
-			},
-			Takes: []Field{
-				{Name: "key", Kind: Named, Needed: true, About: func(p *words.Printer) string {
-					return p.T("verb.set.key", "which setting")
-				}},
-				{Name: "value", Kind: Words, Needed: true, About: func(p *words.Printer) string {
-					return p.T("verb.set.value", "what to set it to")
-				}},
-			},
-		},
-		{Name: "settings", Reads: true, About: func(p *words.Printer) string {
-			return p.T("verb.settings", "every setting and what it is set to")
-		}},
 		{Name: "quota", Reads: true, About: func(p *words.Printer) string {
 			return p.T("verb.quota", "what is left of each engine's windows")
 		}},
@@ -274,10 +255,12 @@ func theRest() []Verb {
 // One is the verb by that name, and whether there is one.
 //
 // By Path, so that a child is asked for the way it is written: "rules keep"
-// and not "keep", which two families could both answer to.
+// and not "keep", which two families could both answer to. And by the name
+// it used to have, because a script written against the old one is a script
+// that has to keep running.
 func One(name string) (Verb, bool) {
 	for _, v := range Every() {
-		if v.Path() == name {
+		if v.Path() == name || v.Was == name {
 			return v, true
 		}
 	}

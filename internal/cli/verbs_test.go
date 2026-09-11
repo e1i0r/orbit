@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/verb"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // TestEveryGeneratedCommandCanBeAskedFor is the test that was missing when
@@ -64,7 +65,7 @@ func TestNoGeneratedCommandFightsTheRepoFlag(t *testing.T) {
 func TestAFamilyIsReachedByItsSecondWord(t *testing.T) {
 	var out, said strings.Builder
 
-	err := commandNamed(t, "rules").Run(Context{Out: &out, Err: &said}, []string{"keep"})
+	err := commandNamed(t, fromVerbs(nil), "rules").Run(Context{Out: &out, Err: &said}, []string{"keep"})
 	if err == nil || !strings.Contains(err.Error(), "rules keep needs n") {
 		t.Errorf("orbit rules keep answered %v", err)
 	}
@@ -73,7 +74,7 @@ func TestAFamilyIsReachedByItsSecondWord(t *testing.T) {
 // TestAFamilysUsageLineNamesItsChildren, because that line is the whole of
 // what a reader is told before they type.
 func TestAFamilysUsageLineNamesItsChildren(t *testing.T) {
-	args := commandNamed(t, "rules").Args
+	args := commandNamed(t, fromVerbs(nil), "rules").Args
 
 	for _, word := range []string{"keep", "drop", "<n>", "-check", "<text>"} {
 		if !strings.Contains(args, word) {
@@ -82,17 +83,77 @@ func TestAFamilysUsageLineNamesItsChildren(t *testing.T) {
 	}
 }
 
-// commandNamed is one of the generated commands.
-func commandNamed(t *testing.T, name string) Command {
+// TestAHandWrittenParentDispatchesItsChildren.
+//
+// `orbit pr` is written by hand because of what it does with the terminal,
+// and it still has to be the front of its family. The dispatch is the
+// generated one rather than a second copy written here.
+func TestAHandWrittenParentDispatchesItsChildren(t *testing.T) {
+	pr := commandNamed(t, commands(), "pr")
+
+	for _, word := range []string{"merge", "close"} {
+		if !strings.Contains(pr.Args, word) {
+			t.Errorf("orbit pr %s says nothing about %q", pr.Args, word)
+		}
+	}
+
+	if !strings.Contains(pr.Args, "-repo <dir> <id>") {
+		t.Errorf("orbit pr %s no longer says what it takes on its own", pr.Args)
+	}
+}
+
+// TestAnOldNameIsACommandThatSaysWhereItWent.
+//
+// It still works, so a script does not break. What it does not do is look
+// like a second verb on the help screen: the line says where the name went,
+// and the new spelling is the one that describes the work.
+func TestAnOldNameIsACommandThatSaysWhereItWent(t *testing.T) {
+	for was, now := range map[string]string{
+		"merge":    "orbit pr merge",
+		"close-pr": "orbit pr close",
+		"set":      "orbit settings set",
+	} {
+		c := commandNamed(t, commands(), was)
+
+		if got := c.About(words.For("")); got != "the old name for "+now {
+			t.Errorf("orbit %s says %q about itself", was, got)
+		}
+	}
+}
+
+// TestAnOldNameSaysWhatToTypeInsteadOnTheErrorStream, so that a reader who
+// piped the answer somewhere still gets told, and what they piped is only
+// the answer.
+func TestAnOldNameSaysWhatToTypeInsteadOnTheErrorStream(t *testing.T) {
+	var out, said strings.Builder
+
+	// Asked for with nothing after it, so what comes back is the refusal
+	// that says what it needs. The notice is said before the command runs,
+	// which is what makes it reach a reader either way.
+	if err := commandNamed(t, commands(), "set").Run(Context{Out: &out, Err: &said}, nil); err == nil {
+		t.Error("orbit set with no setting named was accepted")
+	}
+
+	if !strings.Contains(said.String(), "set is now settings set") {
+		t.Errorf("orbit set said %q on the error stream", said.String())
+	}
+
+	if strings.Contains(out.String(), "is now settings set") {
+		t.Errorf("the notice was mixed into the answer: %q", out.String())
+	}
+}
+
+// commandNamed is one command out of a table.
+func commandNamed(t *testing.T, table []Command, name string) Command {
 	t.Helper()
 
-	for _, c := range fromVerbs(nil) {
+	for _, c := range table {
 		if c.Name == name {
 			return c
 		}
 	}
 
-	t.Fatalf("nothing generated a command called %q", name)
+	t.Fatalf("nothing is called %q", name)
 
 	return Command{}
 }
