@@ -21,7 +21,7 @@ import (
 func TestTheThreadIsNumberedAndRetractable(t *testing.T) {
 	w := worldOf(t)
 
-	empty := mustAsk(t, w, "thread", In{By: "operator"})
+	empty := mustAsk(t, w, "supervisor thread", In{By: "operator"})
 	if !strings.Contains(empty.Said, "empty") {
 		t.Errorf("an empty thread reads %q", empty.Said)
 	}
@@ -32,7 +32,7 @@ func TestTheThreadIsNumberedAndRetractable(t *testing.T) {
 		}
 	}
 
-	out := mustAsk(t, w, "thread", In{By: "operator"})
+	out := mustAsk(t, w, "supervisor thread", In{By: "operator"})
 	if !strings.Contains(out.Said, "1") || !strings.Contains(out.Said, "never force-push") {
 		t.Errorf("the thread reads:\n%s", out.Said)
 	}
@@ -40,7 +40,7 @@ func TestTheThreadIsNumberedAndRetractable(t *testing.T) {
 	mustRefuse(t, w, "retract", In{Args: map[string]string{"line": "many"}, By: "operator"})
 	mustRefuse(t, w, "retract", In{Args: map[string]string{"line": "9"}, By: "operator"})
 
-	took := mustAsk(t, w, "retract", In{Args: map[string]string{"line": "1"}, By: "operator"})
+	took := mustAsk(t, w, "supervisor retract", In{Args: map[string]string{"line": "1"}, By: "operator"})
 	if !strings.Contains(took.Said, "never force-push") {
 		t.Errorf("retract answered %q", took.Said)
 	}
@@ -58,7 +58,7 @@ func TestSettingsReadAndWrite(t *testing.T) {
 		t.Errorf("settings reads:\n%s", out.Said)
 	}
 
-	changed := mustAsk(t, w, "set", In{
+	changed := mustAsk(t, w, "settings set", In{
 		Args: map[string]string{"key": "autopilot", "value": "on"}, By: "operator",
 	})
 	if !strings.Contains(changed.Said, "autopilot") {

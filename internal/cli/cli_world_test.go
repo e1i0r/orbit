@@ -143,7 +143,7 @@ func TestTakeNeedsATaskOnTheBoard(t *testing.T) {
 func TestDeliverRefusesWhatNothingDeliversBy(t *testing.T) {
 	w, s, repoDir := worldOf(t)
 
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "PAY-1", "x"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "PAY-1", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
@@ -173,7 +173,7 @@ func TestDeliverOpensAPullRequest(t *testing.T) {
 
 	dir := withRemote(t, t.TempDir(), "payments")
 
-	if code, _, errOut := run(t, "new", "-repo", dir, "-id", "PAY-1", "make the thing"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", dir, "-id", "PAY-1", "make the thing"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 

@@ -13,9 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/repo"
-	"github.com/e1i0r/orbit/internal/view"
 )
 
 // checkedOut is a task with a checkout on disk: a real worktree of the
@@ -53,19 +51,19 @@ func TestReadingWhatATaskChanged(t *testing.T) {
 	r := checkedOut(t, w, "ACME-8")
 	at := In{Task: "ACME-8", Repo: r.Path, By: "operator"}
 
-	nothing := mustAsk(t, w, "diff", at)
+	nothing := mustAsk(t, w, "task diff", at)
 	_ = nothing
 
-	tree := mustAsk(t, w, "tree", at)
+	tree := mustAsk(t, w, "task tree", at)
 	_ = tree
 
-	impact := mustAsk(t, w, "impact", at)
+	impact := mustAsk(t, w, "task impact", at)
 	_ = impact
 
-	compared := mustAsk(t, w, "compare", at)
+	compared := mustAsk(t, w, "task compare", at)
 	_ = compared
 
-	flow := mustAsk(t, w, "flow", at)
+	flow := mustAsk(t, w, "task flow", at)
 	if flow.Said == "" {
 		t.Error("flow said nothing at all")
 	}
@@ -79,7 +77,7 @@ func TestReadingWithoutACheckout(t *testing.T) {
 
 	w.wrote(t, "ACME-9", r.Path, "never started")
 
-	for _, name := range []string{"diff", "tree", "impact"} {
+	for _, name := range []string{"task diff", "task tree", "task impact"} {
 		out := mustAsk(t, w, name, In{Task: "ACME-9", By: "operator"})
 		if !strings.Contains(out.Said, "ACME-9") {
 			t.Errorf("%s answered %q, which names no task", name, out.Said)
@@ -88,7 +86,7 @@ func TestReadingWithoutACheckout(t *testing.T) {
 
 	// Comparing is running, not reading: with no checkout there is
 	// nothing to run anything in, and that is a refusal.
-	if err := refuseErr(t, w, "compare", In{Task: "ACME-9", By: "operator"}); !strings.Contains(err.Error(), "ACME-9") {
+	if err := refuseErr(t, w, "task compare", In{Task: "ACME-9", By: "operator"}); !strings.Contains(err.Error(), "ACME-9") {
 		t.Errorf("compare refused with %q, which names no task", err)
 	}
 }
@@ -106,7 +104,7 @@ func TestJoiningNeedsANameItKnows(t *testing.T) {
 
 	_ = b
 
-	out := mustAsk(t, w, "join", In{
+	out := mustAsk(t, w, "task join", In{
 		Task: "ACME-10", Repo: a.Path, Args: map[string]string{"name": "ledger"}, By: "operator",
 	})
 	if !strings.Contains(out.Said, "ledger") {
@@ -131,7 +129,7 @@ func TestComparingBothSidesOfAChange(t *testing.T) {
 		t.Fatalf("write the flow: %v", err)
 	}
 
-	mustAsk(t, w, "new", In{
+	mustAsk(t, w, "board new", In{
 		Args: map[string]string{"id": "ACME-13", "text": "check both sides", "repo": r.Path, "flow": "checked"},
 		By:   "operator",
 	})
@@ -152,7 +150,7 @@ func TestComparingBothSidesOfAChange(t *testing.T) {
 		t.Fatalf("write the work: %v", err)
 	}
 
-	compared := mustAsk(t, w, "compare", In{Task: "ACME-13", Repo: r.Path, By: "operator"})
+	compared := mustAsk(t, w, "task compare", In{Task: "ACME-13", Repo: r.Path, By: "operator"})
 	if compared.Said == "" {
 		t.Error("compare said nothing at all")
 	}
@@ -160,14 +158,12 @@ func TestComparingBothSidesOfAChange(t *testing.T) {
 
 func TestTheBoardListsWhatIsThere(t *testing.T) {
 	w := worldOf(t)
-	w.board = board.Board{
-		Tasks: []view.Task{
-			{ID: "ACME-11", Title: "pay the thing"},
-			{ID: "ACME-12", Title: "ship it"},
-		},
-	}
+	r := w.gitRepo(t, "acme")
 
-	out := mustAsk(t, w, "list", In{By: "operator"})
+	w.wrote(t, "ACME-11", r.Path, "pay the thing")
+	w.wrote(t, "ACME-12", r.Path, "ship it")
+
+	out := mustAsk(t, w, "board list", In{By: "operator"})
 	if !strings.Contains(out.Said, "ACME-11") || !strings.Contains(out.Said, "ACME-12") {
 		t.Errorf("list answered:\n%s", out.Said)
 	}

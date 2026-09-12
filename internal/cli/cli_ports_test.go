@@ -151,7 +151,7 @@ func TestNotingNeedsATaskOnTheBoard(t *testing.T) {
 		t.Error("a note on a task nobody wrote was accepted")
 	}
 
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 

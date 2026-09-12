@@ -64,11 +64,11 @@ func handsOf(t *testing.T) (hands, string) {
 func TestTheBrowsersButtonsAskTheVerbs(t *testing.T) {
 	h, repoDir := handsOf(t)
 
-	if _, err := h.Ask("say", web.Asked{Args: map[string]string{"text": "never force-push"}}); err != nil {
+	if _, err := h.Ask("supervisor say", web.Asked{Args: map[string]string{"text": "never force-push"}}); err != nil {
 		t.Fatalf("say: %v", err)
 	}
 
-	out, err := h.Ask("new", web.Asked{Args: map[string]string{
+	out, err := h.Ask("board new", web.Asked{Args: map[string]string{
 		"id": "ACME-1", "text": "pay the thing", "repo": repoDir,
 	}})
 	if err != nil {
@@ -79,15 +79,15 @@ func TestTheBrowsersButtonsAskTheVerbs(t *testing.T) {
 		t.Errorf("new acted on %v, want it to act on ACME-1", out.Of)
 	}
 
-	if _, err := h.Ask("note", web.Asked{Task: "ACME-1", Args: map[string]string{"text": "cents"}}); err != nil {
+	if _, err := h.Ask("task note", web.Asked{Task: "ACME-1", Args: map[string]string{"text": "cents"}}); err != nil {
 		t.Fatalf("note: %v", err)
 	}
 
-	if _, err := h.Ask("read", web.Asked{Task: "ACME-1"}); err != nil {
+	if _, err := h.Ask("task read", web.Asked{Task: "ACME-1"}); err != nil {
 		t.Fatalf("read: %v", err)
 	}
 
-	listed, err := h.Ask("list", web.Asked{})
+	listed, err := h.Ask("board list", web.Asked{})
 	if err != nil {
 		t.Fatalf("list: %v", err)
 	}
@@ -96,7 +96,7 @@ func TestTheBrowsersButtonsAskTheVerbs(t *testing.T) {
 		t.Errorf("list answered %q, want the row", listed.Said)
 	}
 
-	shown, err := h.Ask("show", web.Asked{Task: "ACME-1"})
+	shown, err := h.Ask("task show", web.Asked{Task: "ACME-1"})
 	if err != nil {
 		t.Fatalf("show: %v", err)
 	}
@@ -105,7 +105,7 @@ func TestTheBrowsersButtonsAskTheVerbs(t *testing.T) {
 		t.Errorf("show answered %q, want the task", shown.Said)
 	}
 
-	if _, err := h.Ask("history", web.Asked{Task: "ACME-1"}); err != nil {
+	if _, err := h.Ask("task history", web.Asked{Task: "ACME-1"}); err != nil {
 		t.Fatalf("history: %v", err)
 	}
 
@@ -119,7 +119,7 @@ func TestTheBrowsersButtonsAskTheVerbs(t *testing.T) {
 func TestTheBrowsersReadingsReadTheSameRecord(t *testing.T) {
 	h, repoDir := handsOf(t)
 
-	if _, err := h.Ask("new", web.Asked{Args: map[string]string{
+	if _, err := h.Ask("board new", web.Asked{Args: map[string]string{
 		"id": "ACME-2", "text": "ship it", "repo": repoDir,
 	}}); err != nil {
 		t.Fatalf("new: %v", err)

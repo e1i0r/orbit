@@ -75,12 +75,12 @@ func TestGeneratedVerbsReachTheTask(t *testing.T) {
 	s, sn, r := oneRepo(t)
 	addTask(t, s, r, "ACME-1", record.Event{Kind: record.TaskCreated, Text: "pay the thing"})
 
-	asked(t, sn, "say", "ACME-1", map[string]any{"text": "never force-push"})
-	asked(t, sn, "learn", "ACME-1", map[string]any{"text": "amounts are cents"})
-	asked(t, sn, "history", "ACME-1", nil)
-	asked(t, sn, "read", "ACME-1", nil)
-	asked(t, sn, "critical", "ACME-1", map[string]any{"on": true})
-	asked(t, sn, "critical", "ACME-1", map[string]any{"on": false})
+	asked(t, sn, "supervisor say", "ACME-1", map[string]any{"text": "never force-push"})
+	asked(t, sn, "knowledge learn", "ACME-1", map[string]any{"text": "amounts are cents"})
+	asked(t, sn, "task history", "ACME-1", nil)
+	asked(t, sn, "task read", "ACME-1", nil)
+	asked(t, sn, "task critical", "ACME-1", map[string]any{"on": true})
+	asked(t, sn, "task critical", "ACME-1", map[string]any{"on": false})
 
 	unanswered(t, sn, "permit", "ACME-1", nil)
 	unanswered(t, sn, "approve", "ACME-1", nil)
@@ -88,7 +88,7 @@ func TestGeneratedVerbsReachTheTask(t *testing.T) {
 	unanswered(t, sn, "take", "ACME-1", nil)
 
 	asked(t, sn, "export", "ACME-1", map[string]any{"into": t.TempDir() + "/out"})
-	asked(t, sn, "delete", "ACME-1", nil)
+	asked(t, sn, "task delete", "ACME-1", nil)
 	unanswered(t, sn, "read", "ACME-1", nil)
 }
 
@@ -98,7 +98,7 @@ func TestReconcilingThroughAToolCall(t *testing.T) {
 	s, sn, r := oneRepo(t)
 	addTask(t, s, r, "ACME-2", record.Event{Kind: record.TaskCreated, Text: "leave no process behind"})
 
-	if out := asked(t, sn, "reconcile", "ACME-2", nil); out == "" {
+	if out := asked(t, sn, "board reconcile", "ACME-2", nil); out == "" {
 		t.Error("reconcile said nothing at all")
 	}
 }
@@ -172,7 +172,7 @@ func TestJoiningTheSecondCheckout(t *testing.T) {
 
 	addTask(t, s, r, "ACME-3", record.Event{Kind: record.TaskCreated, Text: "reach into both"})
 
-	out := asked(t, sn, "join", "ACME-3", map[string]any{"name": second.Name})
+	out := asked(t, sn, "task join", "ACME-3", map[string]any{"name": second.Name})
 	if !strings.Contains(out, second.Name) {
 		t.Errorf("join answered %q, want the directory", out)
 	}

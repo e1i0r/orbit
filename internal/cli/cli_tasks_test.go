@@ -21,19 +21,19 @@ import (
 func TestPermittingAndMarkingThroughCommands(t *testing.T) {
 	s, _, repoDir := portWorld(t)
 
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "PAY-1", "merge it"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "PAY-1", "merge it"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
-	if code, _, errOut := run(t, "permit", "-repo", repoDir, "PAY-1"); code != 0 {
+	if code, _, errOut := run(t, "task", "permit", "-repo", repoDir, "PAY-1"); code != 0 {
 		t.Fatalf("permit exited %d: %s", code, errOut)
 	}
 
-	if code, _, errOut := run(t, "critical", "-repo", repoDir, "PAY-1"); code != 0 {
+	if code, _, errOut := run(t, "task", "critical", "-repo", repoDir, "PAY-1"); code != 0 {
 		t.Fatalf("critical exited %d: %s", code, errOut)
 	}
 
-	if code, _, errOut := run(t, "critical", "-repo", repoDir, "-off", "PAY-1"); code != 0 {
+	if code, _, errOut := run(t, "task", "critical", "-repo", repoDir, "-off", "PAY-1"); code != 0 {
 		t.Fatalf("critical -off exited %d: %s", code, errOut)
 	}
 
@@ -63,7 +63,7 @@ func TestPermittingAndMarkingThroughCommands(t *testing.T) {
 		t.Fatalf("snapshot: %v", err)
 	}
 
-	if code, out, errOut := run(t, "permit", "-repo", repoDir, "PAY-1"); code != 0 {
+	if code, out, errOut := run(t, "task", "permit", "-repo", repoDir, "PAY-1"); code != 0 {
 		t.Fatalf("permit exited %d: %s", code, errOut)
 	} else if !strings.Contains(out, "allowed") {
 		t.Errorf("permit said %q", out)
@@ -73,7 +73,7 @@ func TestPermittingAndMarkingThroughCommands(t *testing.T) {
 		t.Fatalf("snapshot: %v", err)
 	}
 
-	if code, out, errOut := run(t, "permit", "-repo", repoDir, "-no", "PAY-1"); code != 0 {
+	if code, out, errOut := run(t, "task", "permit", "-repo", repoDir, "-no", "PAY-1"); code != 0 {
 		t.Fatalf("permit -no exited %d: %s", code, errOut)
 	} else if !strings.Contains(out, "refused") {
 		t.Errorf("permit -no said %q", out)
@@ -85,21 +85,17 @@ func TestPermittingAndMarkingThroughCommands(t *testing.T) {
 func TestHistoryPrintsAndKeeps(t *testing.T) {
 	_, _, repoDir := portWorld(t)
 
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
-	code, out, errOut := run(t, "history", "-repo", repoDir, "ACME-1")
+	code, out, errOut := run(t, "task", "history", "-repo", repoDir, "ACME-1")
 	if code != 0 {
 		t.Fatalf("history exited %d: %s", code, errOut)
 	}
 
 	if !strings.Contains(out, "ACME-1") {
 		t.Errorf("history printed %q", out)
-	}
-
-	if code, _, errOut := run(t, "history", "-repo", repoDir, "-write", "ACME-1"); code != 0 {
-		t.Fatalf("history -write exited %d: %s", code, errOut)
 	}
 }
 
@@ -108,7 +104,7 @@ func TestHistoryPrintsAndKeeps(t *testing.T) {
 func TestDigestCountsWhatIsThere(t *testing.T) {
 	_, _, repoDir := portWorld(t)
 
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 

@@ -12,7 +12,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/task"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -25,31 +24,31 @@ func TestWritingAndSteeringATask(t *testing.T) {
 
 	w.wrote(t, "ACME-1", r.Path, "pay the thing")
 
-	for _, name := range []string{"pause", "resume", "continue", "skip"} {
+	for _, name := range []string{"task pause", "task resume", "task continue", "task skip"} {
 		out := mustAsk(t, w, name, In{Task: "ACME-1", By: "operator"})
 		if !strings.Contains(out.Said, "ACME-1") {
 			t.Errorf("%s answered %q, which names no task", name, out.Said)
 		}
 	}
 
-	mustAsk(t, w, "note", In{Task: "ACME-1", Args: map[string]string{"text": "cents, not floats"}, By: "operator"})
-	mustAsk(t, w, "direct", In{Task: "ACME-1", Args: map[string]string{"text": "use redis"}, By: "operator"})
-	mustAsk(t, w, "read", In{Task: "ACME-1", By: "operator"})
-	mustAsk(t, w, "requeue", In{Task: "ACME-1", Args: map[string]string{"why": "wrong brief"}, By: "operator"})
+	mustAsk(t, w, "task note", In{Task: "ACME-1", Args: map[string]string{"text": "cents, not floats"}, By: "operator"})
+	mustAsk(t, w, "task direct", In{Task: "ACME-1", Args: map[string]string{"text": "use redis"}, By: "operator"})
+	mustAsk(t, w, "task read", In{Task: "ACME-1", By: "operator"})
+	mustAsk(t, w, "task requeue", In{Task: "ACME-1", Args: map[string]string{"why": "wrong brief"}, By: "operator"})
 
 	// Cancelling asks a live process to stop, so the test lends it one:
 	// a sleep with a marker naming it, killed when the test ends.
 	cmd := holdARun(t, w, "ACME-1")
-	mustAsk(t, w, "cancel", In{Task: "ACME-1", By: "operator"})
+	mustAsk(t, w, "task cancel", In{Task: "ACME-1", By: "operator"})
 
 	_ = cmd.Process.Kill() //nolint:errcheck // the cleanup kills it again; this only hurries it
 
-	out := mustAsk(t, w, "history", In{Task: "ACME-1", By: "operator"})
+	out := mustAsk(t, w, "task history", In{Task: "ACME-1", By: "operator"})
 	if !strings.Contains(out.Said, "ACME-1") {
 		t.Errorf("history answered %q, which names no task", out.Said)
 	}
 
-	mustAsk(t, w, "delete", In{Task: "ACME-1", By: "operator"})
+	mustAsk(t, w, "task delete", In{Task: "ACME-1", By: "operator"})
 	mustRefuse(t, w, "read", In{Task: "ACME-1", By: "operator"})
 }
 
@@ -62,16 +61,20 @@ func TestAnsweringWhatATaskWaitsFor(t *testing.T) {
 
 	w.wrote(t, "ACME-2", r.Path, "take the keyboard")
 
-	if err := refuseErr(t, w, "approve", In{Task: "ACME-2", By: "operator"}); !strings.Contains(err.Error(), "ACME-2") {
-		t.Errorf("approve refused with %q, which names no task", err)
+	// Nothing waiting is an answer and not a refusal: the reader asked and
+	// was told. It names the task, because "nothing is waiting" about a
+	// board of forty is not an answer to anything.
+	told := mustAsk(t, w, "task approve", In{Task: "ACME-2", By: "operator"})
+	if !strings.Contains(told.Said, "ACME-2") {
+		t.Errorf("approve answered %q, which names no task", told.Said)
 	}
 
-	if err := refuseErr(t, w, "permit", In{Task: "ACME-2", By: "operator"}); !strings.Contains(err.Error(), "ACME-2") {
+	if err := refuseErr(t, w, "task permit", In{Task: "ACME-2", By: "operator"}); !strings.Contains(err.Error(), "ACME-2") {
 		t.Errorf("permit refused with %q, which names no task", err)
 	}
 
-	mustAsk(t, w, "critical", In{Task: "ACME-2", Args: map[string]string{"on": "true"}, By: "operator"})
-	mustAsk(t, w, "critical", In{Task: "ACME-2", Args: map[string]string{"on": "false"}, By: "operator"})
+	mustAsk(t, w, "task critical", In{Task: "ACME-2", Args: map[string]string{"on": "true"}, By: "operator"})
+	mustAsk(t, w, "task critical", In{Task: "ACME-2", Args: map[string]string{"on": "false"}, By: "operator"})
 }
 
 // TestPermittingWhatWasStopped. A snapshot before a critical action is the
@@ -105,14 +108,14 @@ func TestPermittingWhatWasStopped(t *testing.T) {
 
 	snapshot()
 
-	yes := mustAsk(t, w, "permit", In{Task: "ACME-20", Args: map[string]string{"yes": "true"}, By: "operator"})
+	yes := mustAsk(t, w, "task permit", In{Task: "ACME-20", Args: map[string]string{"yes": "true"}, By: "operator"})
 	if !strings.Contains(yes.Said, "may go ahead") {
 		t.Errorf("permit answered %q", yes.Said)
 	}
 
 	snapshot()
 
-	no := mustAsk(t, w, "permit", In{Task: "ACME-20", By: "operator"})
+	no := mustAsk(t, w, "task permit", In{Task: "ACME-20", By: "operator"})
 	if !strings.Contains(no.Said, "refused") {
 		t.Errorf("permit answered %q", no.Said)
 	}
@@ -147,7 +150,7 @@ func TestJoiningAnotherRepository(t *testing.T) {
 
 	w.wrote(t, "ACME-3", a.Path, "reach into both")
 
-	if err := refuseErr(t, w, "join", In{
+	if err := refuseErr(t, w, "task join", In{
 		Task: "ACME-3", Args: map[string]string{"name": "nowhere"}, By: "operator",
 	}); !strings.Contains(err.Error(), "nowhere") {
 		t.Errorf("join refused with %q, which names nothing", err)
@@ -162,12 +165,12 @@ func TestReconcilingWhatIsLeft(t *testing.T) {
 
 	w.wrote(t, "ACME-4", r.Path, "leave no process behind")
 
-	out := mustAsk(t, w, "reconcile", In{Task: "ACME-4", By: "operator"})
+	out := mustAsk(t, w, "board reconcile", In{Task: "ACME-4", By: "operator"})
 	if out.Said == "" {
 		t.Error("reconcile said nothing at all")
 	}
 
-	swept := mustAsk(t, w, "reconcile", In{Args: map[string]string{}, By: "operator"})
+	swept := mustAsk(t, w, "board reconcile", In{Args: map[string]string{}, By: "operator"})
 	if swept.Said == "" {
 		t.Error("the sweep said nothing at all")
 	}
@@ -182,7 +185,7 @@ func TestHandingWorkToTheWorld(t *testing.T) {
 
 	w.wrote(t, "ACME-5", r.Path, "ship it")
 
-	for _, name := range []string{"pr", "merge", "close-pr"} {
+	for _, name := range []string{"pr", "pr merge", "pr close"} {
 		out := mustAsk(t, w, name, In{Task: "ACME-5", Repo: r.Path, By: "operator"})
 		if !strings.Contains(out.Said, "example.test") {
 			t.Errorf("%s answered %q, want the delivered URL", name, out.Said)
@@ -195,13 +198,13 @@ func TestHandingWorkToTheWorld(t *testing.T) {
 func TestSayingAndLearning(t *testing.T) {
 	w := worldOf(t)
 
-	mustAsk(t, w, "say", In{Args: map[string]string{"text": "never force-push"}, By: "operator"})
+	mustAsk(t, w, "supervisor say", In{Args: map[string]string{"text": "never force-push"}, By: "operator"})
 
 	if len(w.said) != 1 || w.said[0].text != "never force-push" {
 		t.Errorf("say recorded %v, want the one line", w.said)
 	}
 
-	out := mustAsk(t, w, "learn", In{
+	out := mustAsk(t, w, "knowledge learn", In{
 		Args: map[string]string{"text": "amounts are cents", "repo": "/src/acme"}, By: "operator",
 	})
 	if !strings.Contains(out.Said, "cents") {
@@ -221,7 +224,7 @@ func TestTakingATerminal(t *testing.T) {
 
 	w.wrote(t, "ACME-6", r.Path, "type at it yourself")
 
-	out := mustAsk(t, w, "take", In{Task: "ACME-6", Repo: r.Path, By: "operator"})
+	out := mustAsk(t, w, "task take", In{Task: "ACME-6", Repo: r.Path, By: "operator"})
 	if out.Said == "" {
 		t.Error("take said nothing at all")
 	}
@@ -231,11 +234,14 @@ func TestTakingATerminal(t *testing.T) {
 // rows the record already folded, read back the same way.
 func TestTheBoardAsAReading(t *testing.T) {
 	w := worldOf(t)
-	w.board = board.Board{
-		Tasks: []view.Task{{ID: "ACME-7", Title: "pay the thing"}},
-	}
+	r := w.gitRepo(t, "acme")
 
-	out := mustAsk(t, w, "list", In{By: "operator"})
+	// Written down rather than handed over: the listing folds the record
+	// itself, so a board injected here would be answering a question it is
+	// no longer asked.
+	w.wrote(t, "ACME-7", r.Path, "pay the thing")
+
+	out := mustAsk(t, w, "board list", In{By: "operator"})
 	if !strings.Contains(out.Said, "ACME-7") {
 		t.Errorf("list answered %q, want the row", out.Said)
 	}
@@ -244,7 +250,7 @@ func TestTheBoardAsAReading(t *testing.T) {
 		"ACME-7": {{Kind: "task.created", Text: "pay the thing"}},
 	}
 
-	shown := mustAsk(t, w, "show", In{Task: "ACME-7", By: "operator"})
+	shown := mustAsk(t, w, "task show", In{Task: "ACME-7", By: "operator"})
 	if !strings.Contains(shown.Said, "ACME-7") {
 		t.Errorf("show answered %q, want the task", shown.Said)
 	}

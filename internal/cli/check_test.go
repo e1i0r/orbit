@@ -165,7 +165,7 @@ func TestTheCheckBeforeACommandWarnsAndLetsItRun(t *testing.T) {
 
 	// A command that reads the record, because the check runs in front of
 	// those and not in front of the off-record ones.
-	code, out, errOut := run(t, "list", "-repo", dir)
+	code, out, errOut := run(t, "board", "list", "-repo", dir)
 	if code != 0 {
 		t.Fatalf("a command over a damaged record exited %d: %s", code, errOut)
 	}

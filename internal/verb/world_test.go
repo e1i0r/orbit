@@ -171,7 +171,7 @@ func (w *testWorld) gitRepoIn(t *testing.T, ws, name string) repo.Repo {
 func (w *testWorld) wrote(t *testing.T, id, repoPath, text string) task.Task {
 	t.Helper()
 
-	out, err := Run(ctxOf(), w, "new", In{
+	out, err := Run(ctxOf(), w, "board new", In{
 		Args: map[string]string{"id": id, "text": text, "repo": repoPath},
 		By:   "operator",
 	})
