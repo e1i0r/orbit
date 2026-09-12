@@ -48,7 +48,7 @@ export function FlowsScreen() {
   }
 
   return (
-    <div className="flex max-w-[900px] flex-col gap-2">
+    <div className="flex flex-col gap-2">
       {flows.map((flow) => (
         <section key={flow.name} className="rounded-md border border-edge bg-panel px-3 py-2.5">
           <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1">

@@ -27,7 +27,7 @@ export function FlowView({ flow }: { flow?: Flow }) {
   }
 
   return (
-    <div className="flex max-w-[900px] flex-col gap-3">
+    <div className="flex measure flex-col gap-3">
       <div>
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h2 className="font-mono text-xs text-said">{flow.name}</h2>

@@ -81,7 +81,7 @@ export function KnowledgeScreen({ board }: { board?: Board }) {
   };
 
   return (
-    <div className="flex max-w-[900px] flex-col gap-2.5">
+    <div className="flex flex-col gap-2.5">
       {/* A fact is about a repository, and which one is asked for rather
           than guessed at wherever there is a choice: a rule filed under the
           wrong checkout is told to the wrong runs, and nothing says so.

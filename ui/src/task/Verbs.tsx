@@ -15,6 +15,8 @@
 // next phase reads as nothing.
 
 import { useState } from "react";
+
+import { useDesk } from "../shell/narrow";
 import { api, type Says, type Task, type Verb } from "../api";
 
 interface Shape {
@@ -232,12 +234,22 @@ export function offered(task: Task): Verb[] {
     "task permit", "task read", "task critical", "task join", "task delete"];
 }
 
+// firstFew is how many verbs a phone draws before the rest are folded away.
+//
+// Twelve buttons is three rows of them above the tabs, which is a screen of
+// controls before a reader reaches anything they came to read. The ones that
+// stay are the ones the board's own order puts first — what this task most
+// likely needs next.
+const firstFew = 3;
+
 export function Verbs({ task, again }: { task: Task; again: () => void }) {
   const [asking, setAsking] = useState<Verb>();
   const [busy, setBusy] = useState<Verb>();
   const [said, setSaid] = useState<{ text: string; bad?: boolean }>();
   const [wrote, setWrote] = useState("");
   const [also, setAlso] = useState(false);
+  const [all, setAll] = useState(false);
+  const desk = useDesk();
 
   const ask = (verb: Verb) => {
     setAsking(verb);
@@ -282,9 +294,9 @@ export function Verbs({ task, again }: { task: Task; again: () => void }) {
   const short = shape?.writes?.required === true && wrote.trim() === "";
 
   return (
-    <div className="flex flex-col items-end gap-1.5">
-      <div className="flex flex-wrap items-center justify-end gap-1.5">
-        {offered(task).map((verb) => (
+    <div className="flex flex-col items-start gap-1.5 md:items-end">
+      <div className="flex flex-wrap items-center gap-1.5 md:justify-end">
+        {(desk || all ? offered(task) : offered(task).slice(0, firstFew)).map((verb) => (
           <button
             key={verb}
             onClick={() => ask(verb)}
@@ -294,10 +306,20 @@ export function Verbs({ task, again }: { task: Task; again: () => void }) {
             {busy === verb ? "…" : verbs[verb].name}
           </button>
         ))}
+
+        {!desk && offered(task).length > firstFew && (
+          <button
+            type="button"
+            onClick={() => setAll(!all)}
+            className="rounded border border-edge px-2 py-0.5 text-[11px] text-aside transition-colors hover:text-said"
+          >
+            {all ? "Fewer" : `${offered(task).length - firstFew} more`}
+          </button>
+        )}
       </div>
 
       {asking && shape && (
-        <div className="flex w-[46ch] flex-col gap-1.5 rounded-md border border-edge bg-panel px-3 py-2">
+        <div className="flex w-full flex-col gap-1.5 rounded-md border border-edge bg-panel px-3 py-2 md:w-[46ch]">
           <p className="text-[11px] text-said">{shape.asks(task)}</p>
 
           {shape.writes && (
@@ -345,7 +367,7 @@ export function Verbs({ task, again }: { task: Task; again: () => void }) {
       {said && (
         <p
           onClick={() => setSaid(undefined)}
-          className={`max-w-[60ch] cursor-pointer text-right text-[11px] ${said.bad ? "text-bad" : "text-ok"}`}
+          className={`measure-form cursor-pointer text-right text-[11px] ${said.bad ? "text-bad" : "text-ok"}`}
           title="Click to clear"
         >
           {said.text}

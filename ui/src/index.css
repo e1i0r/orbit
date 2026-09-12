@@ -124,3 +124,24 @@ body {
 .hljs-comment, .hljs-quote { color: var(--color-ink-500); font-style: italic; }
 .hljs-attr, .hljs-attribute, .hljs-property, .hljs-variable, .hljs-params { color: #f0abfc; }
 .hljs-meta, .hljs-punctuation, .hljs-operator { color: var(--color-ink-300); }
+
+/* How wide a thing is allowed to be.
+ *
+ * The panes had grown their own answers — 720, 900 and 1000 pixels, and 46,
+ * 60, 70, 78, 86 and 95 characters — so moving between two screens moved the
+ * right-hand edge of the page, and nothing on screen explained why. Three
+ * measures, named by what they are for, and pixels only for the app's own
+ * frame.
+ *
+ * Characters and not pixels, because what bounds a line of text is how many
+ * words fit on it. Seventy-eight is inside the eighty The Elements of
+ * Typographic Style asks for and wide enough for a table of four columns. */
+@utility measure { max-width: 78ch; }
+
+/* A form, and the dialogue a verb opens: narrower, because a field you have
+ * to track back across is a field you lose your place in. */
+@utility measure-form { max-width: 62ch; }
+
+/* One sentence, standing on its own — an empty screen saying what to do
+ * next. */
+@utility measure-note { max-width: 46ch; }

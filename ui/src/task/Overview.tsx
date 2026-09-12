@@ -9,6 +9,7 @@
 // than the value on a line.
 
 import type { Task } from "../api";
+import { money } from "../parts/money";
 import { Pill } from "../parts/Pill";
 import { meaning } from "./kinds";
 
@@ -31,7 +32,7 @@ export function Overview({ task }: { task?: Task }) {
   const started = entries.find((e) => e.kind === "task.started")?.at;
 
   return (
-    <div className="flex max-w-[900px] flex-col gap-4">
+    <div className="flex measure flex-col gap-4">
       <dl className="grid gap-x-6 gap-y-3.5 sm:grid-cols-4">
         <Fact name="State">
           <Pill tone={band.tone}>{band.said}</Pill>
@@ -59,7 +60,7 @@ export function Overview({ task }: { task?: Task }) {
 
         <Fact name="Spent">
           <span className="font-mono text-xs text-said tabular-nums">
-            {task.spent ? `$${task.spent.toFixed(4)}` : "—"}
+            {task.spent ? money(task.spent) : "—"}
           </span>
         </Fact>
 
@@ -83,7 +84,7 @@ export function Overview({ task }: { task?: Task }) {
 
       {story?.fix && (
         <div>
-          <h2 className="text-[10px] tracking-[0.09em] text-faint uppercase">What was done</h2>
+          <h2 className="text-[11px] text-faint">What was done</h2>
           <p className="mt-1 text-xs text-said">{story.fix}</p>
           {story.cause && (
             <p className="mt-1 text-xs text-aside">
@@ -100,7 +101,7 @@ export function Overview({ task }: { task?: Task }) {
 function Fact({ name, children }: { name: string; children: React.ReactNode }) {
   return (
     <div className="min-w-0">
-      <dt className="text-[10px] tracking-[0.09em] text-faint uppercase">{name}</dt>
+      <dt className="text-[11px] text-faint">{name}</dt>
       <dd className="mt-1 truncate">{children}</dd>
     </div>
   );

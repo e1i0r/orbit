@@ -48,7 +48,7 @@ export function EnginesScreen() {
   }
 
   return (
-    <div className="flex max-w-[900px] flex-col gap-2">
+    <div className="flex flex-col gap-2">
       {engines.map((engine) => (
         <section key={engine.name} className="rounded-md border border-edge bg-panel">
           <header className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
@@ -103,7 +103,7 @@ export function EnginesScreen() {
             </div>
           ) : (
             <div className="border-t border-edge px-3 py-2">
-              <p className="mb-1 text-[10px] tracking-[0.09em] text-faint uppercase">
+              <p className="mb-1 text-[11px] text-faint">
                 To make it available
               </p>
               <ol className="flex flex-col gap-0.5">
@@ -133,7 +133,7 @@ function Dial({ name, of }: { name: string; of?: string[] }) {
 
   return (
     <div className="grid gap-1 sm:grid-cols-[80px_1fr] sm:gap-3">
-      <span className="text-[10px] tracking-[0.09em] text-faint uppercase">{name}</span>
+      <span className="text-[11px] text-faint">{name}</span>
       <p className="flex flex-wrap gap-1">
         {shown.map((one) => (
           <span key={one} className="rounded bg-well px-1.5 py-px font-mono text-[10px] text-aside">

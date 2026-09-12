@@ -6,6 +6,8 @@
 // all it has; here there is room to say it.
 
 import type { Entry } from "../api";
+import { money } from "../parts/money";
+import { plain } from "../parts/plain";
 import { Empty } from "../parts/Empty";
 import { meaning, type Tone } from "./kinds";
 
@@ -35,7 +37,10 @@ export function Timeline({ entries }: { entries: Entry[] | null }) {
   const newest = [...entries].reverse();
 
   return (
-    <div className="max-w-[1000px]">
+    // A measure and not a pixel count: the time of an entry sits at the
+    // right edge of this box, and at a thousand pixels that put it a hand's
+    // width away from the line it belongs to.
+    <div className="measure">
       <p className="border-b border-dashed border-edge pb-3 text-[11px] text-faint">
         Everything the record holds about this task — phases, gates, tool calls and what a person
         said. Newest first.
@@ -72,18 +77,20 @@ export function Timeline({ entries }: { entries: Entry[] | null }) {
                 {e.text && (
                   // pre-wrap under the clamp, so two lines of an engine's
                   // answer are its first two lines rather than forty of them
-                  // run together into a paragraph nobody can read.
+                  // run together into a paragraph nobody can read. And its
+                  // words rather than its markdown: "## Decisions" is the
+                  // heading of what was said, not any of it.
                   <p
                     className="mt-1 line-clamp-2 text-xs whitespace-pre-wrap text-aside"
                     title={e.text}
                   >
-                    {e.text}
+                    {plain(e.text)}
                   </p>
                 )}
 
                 {(e.cost || e.exit) && (
                   <p className="mt-1.5 flex gap-1.5">
-                    {e.cost ? <Chip>${e.cost.toFixed(4)}</Chip> : null}
+                    {e.cost ? <Chip>{money(e.cost)}</Chip> : null}
                     {e.exit ? <Chip>exit {e.exit}</Chip> : null}
                   </p>
                 )}

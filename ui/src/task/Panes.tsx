@@ -7,6 +7,7 @@
 // record, and say what is left in the shape that reading wants.
 
 import { useState } from "react";
+import { money } from "../parts/money";
 import type { Entry, Step, Task } from "../api";
 import { Empty } from "../parts/Empty";
 import { Pill } from "../parts/Pill";
@@ -47,7 +48,7 @@ export function Gates({ task }: { task?: Task }) {
   const failed = gates.filter((e) => e.kind === "gate.failed").length;
 
   return (
-    <div className="flex max-w-[900px] flex-col gap-2.5">
+    <div className="flex measure flex-col gap-2.5">
       <p className="text-[11px] text-faint">
         <span className="font-mono text-said">{gates.length}</span>{" "}
         {gates.length === 1 ? "check" : "checks"} ran
@@ -153,9 +154,9 @@ export function Cost({ task }: { task?: Task }) {
   const most = Math.max(...priced.map((e) => e.cost ?? 0));
 
   return (
-    <div className="flex max-w-[900px] flex-col gap-3">
+    <div className="flex measure flex-col gap-3">
       <p className="text-[11px] text-faint">
-        <span className="font-mono text-sm text-said tabular-nums">${spent.toFixed(4)}</span> over{" "}
+        <span className="font-mono text-sm text-said tabular-nums">{money(spent)}</span> over{" "}
         {priced.length} {priced.length === 1 ? "phase" : "phases"}
       </p>
 
@@ -169,7 +170,7 @@ export function Cost({ task }: { task?: Task }) {
                 {spent > 0 ? `${Math.round(((e.cost ?? 0) / spent) * 100)}%` : ""}
               </span>
               <span className="w-16 text-right font-mono text-[11px] text-aside tabular-nums">
-                ${(e.cost ?? 0).toFixed(4)}
+                {money(e.cost ?? 0)}
               </span>
             </span>
 
@@ -205,7 +206,7 @@ export function Refused({ task }: { task?: Task }) {
   }
 
   return (
-    <div className="flex max-w-[900px] flex-col gap-2.5">
+    <div className="flex measure flex-col gap-2.5">
       <p className="text-[11px] text-faint">
         <span className="font-mono text-bad">{refusals.length}</span>{" "}
         {refusals.length === 1 ? "call was" : "calls were"} turned down. Each is the sandbox saying
@@ -259,7 +260,7 @@ export function Notes({ task }: { task?: Task }) {
   }
 
   return (
-    <div className="flex max-w-[900px] flex-col gap-2.5">
+    <div className="flex measure flex-col gap-2.5">
       <p className="text-[11px] text-faint">
         <span className="font-mono text-said">{said.length}</span>{" "}
         {said.length === 1 ? "thing was" : "things were"} said to this task. Each is read by the
@@ -301,7 +302,7 @@ export function Thinking({ task }: { task?: Task }) {
   }
 
   return (
-    <div className="flex max-w-[900px] flex-col gap-2.5">
+    <div className="flex measure flex-col gap-2.5">
       <p className="text-[11px] text-faint">
         <span className="font-mono text-said">{thoughts.length}</span>{" "}
         {thoughts.length === 1 ? "block" : "blocks"} of the engine's own reasoning. Nothing here was
@@ -354,14 +355,14 @@ export function Report({ task }: { task?: Task }) {
   ];
 
   return (
-    <div className="flex max-w-[900px] flex-col gap-5">
+    <div className="flex measure flex-col gap-5">
       {told && (
         <dl className="flex flex-col gap-2.5">
           {parts
             .filter(([, what]) => what)
             .map(([name, what]) => (
               <div key={name} className="grid gap-1 sm:grid-cols-[140px_1fr] sm:gap-4">
-                <dt className="text-[10px] tracking-[0.09em] text-faint uppercase">{name}</dt>
+                <dt className="text-[11px] text-faint">{name}</dt>
                 <dd className="text-xs whitespace-pre-wrap text-said">{what}</dd>
               </div>
             ))}
@@ -409,7 +410,7 @@ export function Artifacts({ task }: { task?: Task }) {
   const most = Math.max(...walk.map((one) => one.touches + one.read), 1);
 
   return (
-    <div className="flex max-w-[900px] flex-col gap-3">
+    <div className="flex measure flex-col gap-3">
       <p className="text-[11px] text-faint">
         <span className="font-mono text-said">{walk.length}</span>{" "}
         {walk.length === 1 ? "file" : "files"}, in the order the agent first reached them ·{" "}
@@ -461,7 +462,7 @@ function Listed({ name, said }: { name: string; said?: string[] }) {
 
   return (
     <div>
-      <h3 className="text-[10px] tracking-[0.09em] text-faint uppercase">
+      <h3 className="text-[11px] text-faint">
         {name}
       </h3>
       <ul className="mt-1 flex flex-col gap-0.5">
