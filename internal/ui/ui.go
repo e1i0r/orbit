@@ -62,9 +62,9 @@ type Model struct {
 	opts Options
 	keys keymap.Keys
 
-	board board.Board
-	seen  bool // a board has arrived, so the next crossing is worth a bell
-	now   time.Time
+	board        board.Board
+	seen         bool      // a board has arrived, so the next crossing is worth a bell
+	now, logoTap time.Time // logoTap is the last badge click; header.go answers it for 400ms
 	// brokeAt is when the newest run of the stuck streak that last took
 	// autopilot off had stopped. It is what keeps the breaker from arguing
 	// with a reader who turns the switch back on: the same three stuck runs

@@ -160,6 +160,19 @@ func (m Model) wheel(e tea.Mouse) Model {
 		return m.pickEngineRow(d)
 	}
 
+	if m.screen == screenHelp {
+		// The sheet scrolls under the wheel by the same rows the arrows
+		// move — one distance for the hand, whatever it is holding.
+		d := wheelRows
+		if up {
+			d = -wheelRows
+		}
+
+		m.help = m.help.Wheel(d)
+
+		return m
+	}
+
 	if m.screen != screenList {
 		return m
 	}

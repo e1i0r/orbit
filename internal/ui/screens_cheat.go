@@ -67,7 +67,9 @@ func (m Model) cheatEnv() cheat.Env {
 		tabs = append(tabs, cheat.Tab{Glyph: "[" + p.Key + "]", Title: p.Title, Detail: p.Detail})
 	}
 
-	return cheat.Env{Words: m.opts.Words, Keys: m.keys, Verbs: verbs, Tabs: tabs}
+	return cheat.Env{
+		Words: m.opts.Words, Keys: m.keys, Version: m.opts.Version, Verbs: verbs, Tabs: tabs,
+	}
 }
 
 // openHelp puts the sheet up.

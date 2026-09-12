@@ -133,6 +133,34 @@ func TestWheelScrollsWhicheverScreenIsUnderIt(t *testing.T) {
 	if afterBoardUp.cursor < 0 {
 		t.Error("wheel up over the board moved the cursor below zero, want it clamped")
 	}
+
+	// 7. The help sheet scrolls under the wheel by the notch, and winds
+	// back up the same way. The offset lives in the cheat package, so it
+	// is read the way a reader reads it: whether the title is on screen.
+	help, _ := testModel(t, 100, 30)
+	help = help.openHelp()
+	title := help.cheatEnv().Words.T("help.title", "Help and keyboard shortcuts (cheat sheet)")
+
+	topRows := strings.Join(help.helpRows(40, 100), "\n")
+	if !strings.Contains(topRows, title) {
+		t.Errorf("the help sheet opened without its title:\n%s", topRows)
+	}
+
+	afterHelpDown := help.wheel(tea.Mouse{X: 5, Y: help.frame.Body.Y + 5, Button: tea.MouseWheelDown})
+
+	downRows := strings.Join(afterHelpDown.helpRows(40, 100), "\n")
+
+	if strings.Contains(downRows, title) {
+		t.Errorf("wheel down over the help sheet left its title on screen:\n%s", downRows)
+	}
+
+	afterHelpUp := afterHelpDown.wheel(tea.Mouse{X: 5, Y: help.frame.Body.Y + 5, Button: tea.MouseWheelUp})
+
+	upRows := strings.Join(afterHelpUp.helpRows(40, 100), "\n")
+
+	if !strings.Contains(upRows, title) {
+		t.Errorf("wheel up should have wound the sheet back to its title:\n%s", upRows)
+	}
 }
 
 func TestFirstKeyAnswersEmptyForABindingWithNoKeys(t *testing.T) {

@@ -59,6 +59,21 @@ func TestAMistypedFlagPrintsTheErrorAndTheFlags(t *testing.T) {
 	}
 }
 
+// TestHelpOpensWithTheBanner. The usage screen says whose it is before it
+// says what it takes: the mark with its rings on, and the build beside it.
+func TestHelpOpensWithTheBanner(t *testing.T) {
+	t.Setenv("ORBIT_HOME", t.TempDir())
+	_, out, _ := run(t, "help")
+
+	if !strings.Contains(out, "orbit "+Version) {
+		t.Errorf("usage does not name the build it is:\n%s", out)
+	}
+
+	if !strings.Contains(out, "--(   o   )--") {
+		t.Errorf("usage lost the mark with its rings on:\n%s", out)
+	}
+}
+
 // TestTheUsageTableLinesUp reads the columns rather than the spaces. The
 // table was aligned by hand and the `new` line is longer than the rest, so
 // its description started three columns to the right of everyone else's. It
