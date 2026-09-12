@@ -156,6 +156,10 @@ func (d *DB) TasksAndRepos() ([]Worked, error) {
 // A repository nothing was ever joined to is no links removed and no error:
 // it is the same answer as forgetting one that had them and now has none.
 func (d *DB) Unjoin(abs string) (int, error) {
+	if err := d.writable(); err != nil {
+		return 0, err
+	}
+
 	res, err := d.sql.Exec(unjoinRepo, abs)
 	if err != nil {
 		return 0, fmt.Errorf("end the links to %q: %w", abs, err)
@@ -185,6 +189,10 @@ func (d *DB) Unjoin(abs string) (int, error) {
 // It is harmless twice: both inserts already have to be, because a
 // repository joins again on every retry.
 func (d *DB) Join(taskID, abs, name string, at time.Time) error {
+	if err := d.writable(); err != nil {
+		return fmt.Errorf("join %q to %q: %w", abs, taskID, err)
+	}
+
 	e := record.Event{
 		Kind: record.RepoJoined,
 		At:   at,
@@ -200,6 +208,10 @@ func (d *DB) Join(taskID, abs, name string, at time.Time) error {
 
 // joinOnce is one attempt: the task's row if it has none yet, then the link.
 func (d *DB) joinOnce(taskID string, e record.Event) error {
+	if err := d.writable(); err != nil {
+		return err
+	}
+
 	tx, err := d.sql.Begin()
 	if err != nil {
 		return err

@@ -163,7 +163,10 @@ func TestTheCheckBeforeACommandWarnsAndLetsItRun(t *testing.T) {
 
 	unsound(t, orbitHome)
 
-	code, out, errOut := run(t, "version")
+	// A command that reads the record, because the check is in front of the
+	// commands the record is for. `version` prints a constant and never
+	// opens it, so there is nothing there for a check to warn about.
+	code, out, errOut := run(t, "board", "list")
 	if code != 0 {
 		t.Fatalf("a command over a damaged record exited %d: %s", code, errOut)
 	}
@@ -172,7 +175,7 @@ func TestTheCheckBeforeACommandWarnsAndLetsItRun(t *testing.T) {
 		t.Errorf("the command said %q, without a word about the record being damaged", errOut)
 	}
 
-	if !strings.Contains(out, "orbit") {
+	if !strings.Contains(out, "ACME-1") {
 		t.Errorf("the command printed %q, so the warning stopped it running", out)
 	}
 }

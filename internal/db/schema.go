@@ -178,9 +178,18 @@ const hasPRColumn = `SELECT count(*) FROM pragma_table_info('pr') WHERE name = ?
 
 // migrate brings the file up to the version this binary knows.
 //
-// A record newer than the binary is refused rather than opened: an older
-// Orbit writing into a shape it does not know is how a column silently stops
-// being filled, and the record is the one thing here that cannot be rebuilt.
+// A record newer than the binary is not opened for writing: an older Orbit
+// writing into a shape it does not know is how a column silently stops being
+// filled, and the record is the one thing here that cannot be rebuilt.
+//
+// It is opened for reading, though, and that is the whole of the difference
+// between this and a refusal. A newer schema is a superset in practice — every
+// migration so far has added a table and left the ones before it alone — so
+// the queries this binary knows still answer over it. Measured rather than
+// assumed: a record at version 4 answers every read version 1 has, including
+// the board. Refusing to look at it bought no safety at all, and cost a reader
+// who had run one newer orbit once the use of the whole program, with the one
+// command that could fix it stopped by the same refusal.
 func (d *DB) migrate() error {
 	var found int
 	if err := d.sql.QueryRow(readVersion).Scan(&found); err != nil {
@@ -188,7 +197,7 @@ func (d *DB) migrate() error {
 	}
 
 	if found > version {
-		return fmt.Errorf("%q is at schema version %d and this orbit knows %d: upgrade orbit rather than letting an older one write into it", d.path, found, version)
+		return AheadError{Path: d.path, Found: found, Known: version}
 	}
 
 	if found == version {

@@ -85,6 +85,23 @@ type Command struct {
 	// commands for a broken file down with it.
 	Salvage bool
 
+	// OffRecord says the command neither reads nor writes the record, so the
+	// record being unusable is none of its business and the three
+	// maintenance steps in front of every command are skipped for it.
+	// Three commands set it: `version`, which prints a constant this binary
+	// was built with; `upgrade`, which talks to GitHub and to `go install`
+	// and to nothing else; and `repos`, which walks a directory tree looking
+	// for git repositories.
+	//
+	// It is a different fact from Salvage and not a stronger one. A salvage
+	// command opens the record and tolerates what it finds; an off-record
+	// one never opens it, so there is nothing to tolerate.
+	//
+	// The reason it exists is a dead end rather than a convenience: the
+	// refusal a newer record gives says to run `orbit upgrade`, and that
+	// command was stopped by the refusal it was the way out of.
+	OffRecord bool
+
 	// NeedsArgs says the command refuses when it is given none — the id of a
 	// task, for most of them, and a directory for `export`. Every command
 	// that sets it has an Args fragment saying what it wants.
@@ -148,6 +165,11 @@ func commands() []Command {
 		About:    func(p *words.Printer) string { return p.T("cmd.repos", "list the repositories under a directory") },
 		Run:      repos,
 		InWindow: WindowOpens,
+
+		// It walks a directory tree and reports the git repositories in it.
+		// What Orbit has recorded about them is a different answer, and this
+		// one is asked before there is a record to ask it of.
+		OffRecord: true,
 	}, {
 		Name:     "flows",
 		About:    func(p *words.Printer) string { return p.T("cmd.flows", "list the flows a task can be written against") },
@@ -192,10 +214,15 @@ func commands() []Command {
 		Name:  "version",
 		About: func(p *words.Printer) string { return p.T("cmd.version", "print the version orbit was built at") },
 		Run:   version,
+		// A constant this binary was built with, and what somebody types to
+		// find out what they are running.
+		OffRecord: true,
 	}, {
 		Name:  "upgrade",
 		About: func(p *words.Printer) string { return p.T("cmd.upgrade", "check for updates and upgrade orbit") },
 		Run:   upgrade,
+		// The door the record's own refusal points at.
+		OffRecord: true,
 	}, {
 		Name: "mcp", Args: "[install] [-root <dir>]",
 		About: func(p *words.Printer) string {
