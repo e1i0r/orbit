@@ -6,6 +6,7 @@ package migrate
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -372,5 +373,17 @@ func TestTheLinkIsCarriedOnceHoweverOftenTheMigrationRuns(t *testing.T) {
 
 	if len(events) != 1 {
 		t.Errorf("after three passes the record holds %d events, want the one that was in the file", len(events))
+	}
+}
+
+// TestAResultSaysWhatItMoved. Events, tasks and turns in one sentence,
+// for the log line the migration writes.
+func TestAResultSaysWhatItMoved(t *testing.T) {
+	got := Result{Tasks: 2, Events: 3, Messages: 1}.String()
+
+	for _, want := range []string{"2", "3", "1"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("a result reads %q", got)
+		}
 	}
 }

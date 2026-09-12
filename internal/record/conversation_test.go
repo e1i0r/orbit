@@ -144,3 +144,13 @@ func TestATitleIsOneLineAndNotAParagraph(t *testing.T) {
 		t.Errorf("the title is %q", title)
 	}
 }
+
+// TestNewConversationIDNamesTheInstant. The stamp is the name: two turns
+// are never typed in the same nanosecond.
+func TestNewConversationIDNamesTheInstant(t *testing.T) {
+	at := time.Now().UTC()
+
+	if got := NewConversationID(at); got != Stamp(at) {
+		t.Errorf("a new conversation id reads %q, want the stamp", got)
+	}
+}

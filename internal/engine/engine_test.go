@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestFakeReturnsItsOutputAndRecordsTheCall(t *testing.T) {
@@ -135,5 +136,36 @@ func TestClaudeArgsOmitAnEmptySession(t *testing.T) {
 		if a == "--resume" {
 			t.Error("an empty session id was passed as a flag with no value")
 		}
+	}
+}
+
+// TestAllNamesEveryEngine. The catalogue is the whole of it: an engine
+// missing from the answer is one nobody can be told how to install.
+func TestAllNamesEveryEngine(t *testing.T) {
+	all := All()
+
+	for _, name := range []string{"agy", "claude", "codex", "opencode"} {
+		if all[name] == nil {
+			t.Errorf("the catalogue has no %s", name)
+		}
+	}
+}
+
+// TestFakeTranscriptAndLocate. Turns it was given, and a path it names.
+func TestFakeTranscriptAndLocate(t *testing.T) {
+	fake := NewFake("done")
+	fake.Turns = []Turn{{Text: "hi"}}
+
+	turns, err := fake.Transcript("", time.Now())
+	if err != nil {
+		t.Fatalf("transcript: %v", err)
+	}
+
+	if len(turns) != 1 {
+		t.Errorf("the transcript holds %d turns, want the one it was given", len(turns))
+	}
+
+	if path, err := fake.Locate(); err != nil || path == "" {
+		t.Errorf("locate answered %q, %v", path, err)
 	}
 }

@@ -236,3 +236,18 @@ func TestARefusalToTakeATurnIsTheOnlyThingRetried(t *testing.T) {
 type errText string
 
 func (e errText) Error() string { return string(e) }
+
+// TestLatestSaysWhereTheRecordWasLastWritten. One number, one query: the
+// reader that follows the record asks where to start, not for the rows.
+func TestLatestSaysWhereTheRecordWasLastWritten(t *testing.T) {
+	d := open(t)
+
+	at, err := d.Latest()
+	if err != nil {
+		t.Fatalf("latest: %v", err)
+	}
+
+	if at < 0 {
+		t.Errorf("latest reads %d", at)
+	}
+}

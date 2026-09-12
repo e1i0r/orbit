@@ -220,3 +220,18 @@ func TestBandsAreDrawnInOrder(t *testing.T) {
 		t.Errorf("Bands = %v after a caller wrote to a previous result, want %v", got, want)
 	}
 }
+
+// TestBandsNameThemselves. The window draws translated words and never
+// these; the names are for failures and debug lines.
+func TestBandsNameThemselves(t *testing.T) {
+	for band, want := range map[Band]string{
+		NeedsYou: "needs you",
+		Running:  "running",
+		ToDo:     "to do",
+		Done:     "done",
+	} {
+		if got := band.String(); got != want {
+			t.Errorf("a band reads %q, want %q", got, want)
+		}
+	}
+}

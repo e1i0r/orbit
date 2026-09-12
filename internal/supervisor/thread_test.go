@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/record"
+	"github.com/e1i0r/orbit/internal/store"
 )
 
 func TestRecordSupervisorAppendsEvents(t *testing.T) {
@@ -58,5 +59,33 @@ func TestSupervisorEventsReturnsEmptyOnMissingLog(t *testing.T) {
 
 	if _, err := Events(nil); err == nil {
 		t.Error("Events on nil store answered nil, want error")
+	}
+}
+
+// TestRemovingAConversationTakesItOffTheList. The turns stay in the
+// record; the list stops naming it.
+func TestRemovingAConversationTakesItOffTheList(t *testing.T) {
+	s, err := store.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Cleanup(func() { _ = s.Close() })
+
+	if err := Record(s, "", "operator", "cli", "", "", "never force-push"); err != nil {
+		t.Fatalf("record: %v", err)
+	}
+
+	id, err := Current(s)
+	if err != nil {
+		t.Fatalf("current: %v", err)
+	}
+
+	if err := Remove(s, id); err != nil {
+		t.Fatalf("remove: %v", err)
+	}
+
+	if err := Remove(nil, id); err == nil {
+		t.Error("removing with no store was accepted")
 	}
 }
