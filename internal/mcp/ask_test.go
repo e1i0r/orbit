@@ -220,8 +220,68 @@ func TestFlowsAreWrittenReadAndTakenAway(t *testing.T) {
 	}
 }
 
-// TestReposAreAddedListedAndForgotten. The workspace through the tools:
-// listed, inspected, added by path, and forgotten only when asked twice.
+// TestInstallingWritesEveryClientConfig. Into a home of the test's
+// own: every client file is written, and the answers say which.
+func TestInstallingWritesEveryClientConfig(t *testing.T) {
+	home := t.TempDir()
+
+	results := Install("/bin/orbit", home, "")
+
+	if len(results) == 0 {
+		t.Fatal("installing wrote no client file")
+	}
+
+	for _, res := range results {
+		if res.Status != StatusInstalled {
+			t.Errorf("%s: %s (%v)", res.Target, res.Status, res.Err)
+		}
+	}
+
+	if names := ClientNames(); len(names) == 0 {
+		t.Error("no client names came back")
+	}
+
+	if got := opencodeEntry("/bin/orbit", ""); !strings.Contains(got["command"].([]string)[0], "orbit") {
+		t.Errorf("the opencode entry reads %v", got)
+	}
+
+	if got := opencodeEntry("/bin/orbit", "/work"); len(got["command"].([]string)) != 4 {
+		t.Errorf("the rooted opencode entry reads %v", got)
+	}
+}
+
+// TestForgettingATasklessRepoJustForgets. Nothing worked there, so the
+// second asking is not needed: forgetting is one gesture.
+func TestForgettingATasklessRepoJustForgets(t *testing.T) {
+	_, sn, r := oneRepo(t)
+
+	if got := sn.Call("orbit_add_repo", map[string]any{"path": r.Path}); got.IsError {
+		t.Fatalf("add repo: %s", textOf(got))
+	}
+
+	if got := sn.Call("orbit_forget_repo", map[string]any{"repo": r.Name, "delete_tasks": true}); got.IsError {
+		t.Fatalf("forget repo: %s", textOf(got))
+	}
+}
+
+// TestCopyingAnExistingFlow. From names a flow to copy: the phases come
+// along, and the copy is a flow of its own.
+func TestCopyingAnExistingFlow(t *testing.T) {
+	_, sn, _ := oneRepo(t)
+
+	if got := sn.Call("orbit_save_flow", map[string]any{"name": "copied", "from": "task"}); got.IsError {
+		t.Fatalf("save flow from task: %s", textOf(got))
+	}
+
+	if got := sn.Call("orbit_get_flow", map[string]any{"name": "copied"}); got.IsError {
+		t.Fatalf("get flow: %s", textOf(got))
+	}
+
+	if got := sn.Call("orbit_get_flow", map[string]any{"name": "nobody-wrote-this"}); !got.IsError {
+		t.Error("reading a flow nobody wrote was accepted")
+	}
+}
+
 func TestReposAreAddedListedAndForgotten(t *testing.T) {
 	_, sn, r := oneRepo(t)
 
