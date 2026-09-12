@@ -155,7 +155,7 @@ func TestNothingIsCheckedBeforeACommandUntilItIsAskedFor(t *testing.T) {
 // out of the file.
 func TestTheCheckBeforeACommandWarnsAndLetsItRun(t *testing.T) {
 	root, orbitHome := workspace(t)
-	dir := writeTask(t, root)
+	writeTask(t, root)
 
 	if code, _, errOut := run(t, "settings", "set", "check-record", "on"); code != 0 {
 		t.Fatalf("turning the check on exited %d: %s", code, errOut)
@@ -163,9 +163,10 @@ func TestTheCheckBeforeACommandWarnsAndLetsItRun(t *testing.T) {
 
 	unsound(t, orbitHome)
 
-	// A command that reads the record, because the check runs in front of
-	// those and not in front of the off-record ones.
-	code, out, errOut := run(t, "board", "list", "-repo", dir)
+	// A command that reads the record, because the check is in front of the
+	// commands the record is for. `version` prints a constant and never
+	// opens it, so there is nothing there for a check to warn about.
+	code, out, errOut := run(t, "board", "list")
 	if code != 0 {
 		t.Fatalf("a command over a damaged record exited %d: %s", code, errOut)
 	}

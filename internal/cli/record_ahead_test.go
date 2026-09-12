@@ -175,7 +175,7 @@ func TestAReadingCommandRunsOverARecordAhead(t *testing.T) {
 	_, orbitHome := workspace(t)
 	aheadOfThisOrbit(t, orbitHome)
 
-	code, _, errOut := run(t, "list")
+	code, _, errOut := run(t, "board", "list")
 	if code != 0 {
 		t.Fatalf("list over a record ahead of it exited %d: %s", code, errOut)
 	}
@@ -194,7 +194,7 @@ func TestAWritingCommandIsRefusedOverARecordAhead(t *testing.T) {
 	root, orbitHome := workspace(t)
 	aheadOfThisOrbit(t, orbitHome)
 
-	code, _, errOut := run(t, "new", "-repo", filepath.Join(root, "payments"), "-id", "PAY-1", "a new task")
+	code, _, errOut := run(t, "board", "new", "-repo", filepath.Join(root, "payments"), "-id", "PAY-1", "a new task")
 	if code == 0 {
 		t.Fatal("new wrote into a record ahead of this orbit")
 	}
