@@ -45,7 +45,15 @@ func (r Result) String() string {
 // migration that gives up on the first damaged file leaves a state root
 // half moved, and half moved is the one shape nobody can reason about.
 // What went wrong is collected and answered at the end, after the work.
+//
+// A record ahead of the binary is left alone. Copying rows out of the files
+// into a schema nobody knows the shape of is the damage the refusal exists
+// to prevent, and the command in front of this one prints the way out.
 func Records(s *store.Store, d *db.DB) (Result, error) {
+	if d.Ahead() {
+		return Result{}, nil
+	}
+
 	var (
 		out    Result
 		failed []error

@@ -20,7 +20,14 @@ import (
 // of the model again, never whether it was said.
 
 // AppendMessage writes one turn of the supervisor thread.
+//
+// The record ahead is refused up front rather than per attempt, as Append
+// says: a refusal the fifth try would not change is not worth five tries.
 func (d *DB) AppendMessage(e record.Event) error {
+	if err := d.writable(); err != nil {
+		return fmt.Errorf("append %q to the supervisor thread: %w", e.Kind, err)
+	}
+
 	e = stamped(e)
 
 	if err := tooBig(e); err != nil {
@@ -36,6 +43,10 @@ func (d *DB) AppendMessage(e record.Event) error {
 
 // messageOnce is one attempt: the turn, and the retraction it carries.
 func (d *DB) messageOnce(e record.Event) error {
+	if err := d.writable(); err != nil {
+		return err
+	}
+
 	tx, err := d.sql.Begin()
 	if err != nil {
 		return err

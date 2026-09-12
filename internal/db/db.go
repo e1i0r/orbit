@@ -37,8 +37,15 @@ const (
 
 // DB is an open handle on the record.
 type DB struct {
-	sql  *sql.DB
+	sql *sql.DB
+
 	path string
+
+	// ahead is set when the file was written by an orbit that knows more
+	// than this one. The handle is open and every read answers; every write
+	// is refused with this, and the refusal is the whole reason the field
+	// exists. A zero AheadError means there is nothing ahead.
+	ahead AheadError
 }
 
 // Open opens the record, creating and migrating it if it is not there.
@@ -62,16 +69,10 @@ func Open(path string) (*DB, error) {
 		dsn = createDSN(path)
 	}
 
-	handle, err := sql.Open("sqlite", dsn)
+	handle, err := connect(path, dsn)
 	if err != nil {
-		return nil, fmt.Errorf("open %q: %w", path, err)
+		return nil, err
 	}
-
-	// One process is one writer. A pool would have a task contending with
-	// itself for the single write lock SQLite has, which is a queue behind a
-	// queue and buys nothing: the events of one task are written in order by
-	// one goroutine anyway.
-	handle.SetMaxOpenConns(1)
 
 	d := &DB{sql: handle, path: path}
 
@@ -89,7 +90,36 @@ func Open(path string) (*DB, error) {
 	}
 
 	if err := d.migrate(); err != nil {
-		return nil, errors.Join(err, handle.Close())
+		var ahead AheadError
+		if !errors.As(err, &ahead) {
+			return nil, errors.Join(err, handle.Close())
+		}
+
+		// The record was written by an orbit that knows more than this
+		// one, and no migration can bring it back. What is left is most
+		// of the program: reopen it read-only and let every read answer.
+		//
+		// The handle has to be let go of rather than kept, because the
+		// one above is open for writing and a write is what must not be
+		// possible.
+		if err := handle.Close(); err != nil {
+			return nil, fmt.Errorf("close %q: %w", path, err)
+		}
+
+		reading, err := connect(path, readDSN(path))
+		if err != nil {
+			return nil, err
+		}
+
+		// The handle is lazy, so a record that cannot even be looked at
+		// — a log orphaned without its index beside it, say — would only
+		// fail at the first read, far from what caused it. Ask for the
+		// connection now, while the cause is still in reach.
+		if err := reading.Ping(); err != nil {
+			return nil, errors.Join(fmt.Errorf("read %q with the schema ahead of this orbit: %w", path, err), reading.Close())
+		}
+
+		return &DB{sql: reading, path: path, ahead: ahead}, nil
 	}
 
 	// And the two files SQLite keeps beside it, which the first write is
@@ -105,6 +135,52 @@ func Open(path string) (*DB, error) {
 	}
 
 	return d, nil
+}
+
+// connect is one handle on the record, asked for either way round.
+func connect(path, dsn string) (*sql.DB, error) {
+	handle, err := sql.Open("sqlite", dsn)
+	if err != nil {
+		return nil, fmt.Errorf("open %q: %w", path, err)
+	}
+
+	// One process is one writer. A pool would have a task contending with
+	// itself for the single write lock SQLite has, which is a queue behind a
+	// queue and buys nothing: the events of one task are written in order by
+	// one goroutine anyway.
+	handle.SetMaxOpenConns(1)
+
+	return handle, nil
+}
+
+// readDSN is what a process opens with when the record is ahead of it.
+//
+// mode=ro is why this exists at all: the refusal to write is SQLite's and
+// not this package's, so a write that slipped past the guard below would
+// still be refused by the file rather than landing in a shape nobody knows.
+// busy_timeout stays, because a reader still has to wait its turn behind a
+// writer that is in the middle of appending an event.
+func readDSN(path string) string {
+	return fmt.Sprintf("file:%s?mode=ro&_pragma=busy_timeout(%d)", path, busyTimeoutMS)
+}
+
+// Ahead answers whether the record was written by an orbit that knows more
+// than this one, in which case the handle is read-only and every read
+// answers. The refusal a write gets carries the same news and names the way
+// out: `orbit upgrade`.
+func (d *DB) Ahead() bool {
+	return d.ahead.Found != 0
+}
+
+// writable is what a write in this package asks for first, before it begins
+// anything. A record ahead of the binary answers every read, and this is the
+// line that keeps that from ever becoming a write.
+func (d *DB) writable() error {
+	if d.Ahead() {
+		return d.ahead
+	}
+
+	return nil
 }
 
 // createDSN is what the process that makes the file opens with.
