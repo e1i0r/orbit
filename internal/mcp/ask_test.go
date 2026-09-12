@@ -241,12 +241,26 @@ func TestInstallingWritesEveryClientConfig(t *testing.T) {
 		t.Error("no client names came back")
 	}
 
-	if got := opencodeEntry("/bin/orbit", ""); !strings.Contains(got["command"].([]string)[0], "orbit") {
+	got := opencodeEntry("/bin/orbit", "")
+
+	command, ok := got["command"].([]string)
+	if !ok || len(command) == 0 {
+		t.Fatalf("the opencode entry has no command to run: %v", got)
+	}
+
+	if !strings.Contains(command[0], "orbit") {
 		t.Errorf("the opencode entry reads %v", got)
 	}
 
-	if got := opencodeEntry("/bin/orbit", "/work"); len(got["command"].([]string)) != 4 {
-		t.Errorf("the rooted opencode entry reads %v", got)
+	rooted := opencodeEntry("/bin/orbit", "/work")
+
+	command, ok = rooted["command"].([]string)
+	if !ok {
+		t.Fatalf("the rooted opencode entry has no command to run: %v", rooted)
+	}
+
+	if len(command) != 4 {
+		t.Errorf("the rooted opencode entry reads %v", rooted)
 	}
 }
 

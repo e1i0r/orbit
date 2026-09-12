@@ -20,6 +20,31 @@ import (
 // same run without them lost every event nine other writers tried.
 const retries = 4
 
+// AheadError is a record written by an orbit that knows more than this one.
+//
+// It is an error rather than a bool because it has to carry three numbers to
+// a human, and because Open answers it by doing something other than failing:
+// the record is reopened read-only and the command runs anyway. What makes it
+// an error at all is that migrate cannot bring the file to this version, so
+// from where migrate stands the answer really is "no".
+//
+// The door of this package is append.go — of all its files the one that says
+// the writes a record takes — and a refusal of a write is what this error
+// is, so it lives beside the writes rather than in the schema that detected
+// it.
+type AheadError struct {
+	Path  string
+	Found int
+	Known int
+}
+
+func (e AheadError) Error() string {
+	return fmt.Sprintf(
+		"%q is at schema version %d and this orbit knows %d: upgrade orbit rather than letting an older one write into it",
+		e.Path, e.Found, e.Known,
+	)
+}
+
 // Append writes one event down.
 //
 // The whole of the work is one transaction: the event row, and the run or
@@ -28,7 +53,17 @@ const retries = 4
 // that walked the events afterwards would leave a window in which the event
 // exists and the row derived from it does not, and that window is where two
 // answers to one question come from.
+//
+// The refusal of a record ahead of the binary is asked for once, up front,
+// rather than per attempt: keepTrying would ask a refusal that will be the
+// same the fifth time it is tried, and sleeping a second and a half to
+// learn that is patience spent on nothing. So a write into a newer record
+// says so immediately and by name.
 func (d *DB) Append(taskID string, e record.Event) error {
+	if err := d.writable(); err != nil {
+		return fmt.Errorf("append %q to %q: %w", e.Kind, taskID, err)
+	}
+
 	e = stamped(e)
 
 	if err := tooBig(e); err != nil {
@@ -119,6 +154,10 @@ func refused(err error) bool {
 
 // appendOnce is one attempt: open, write, commit.
 func (d *DB) appendOnce(taskID string, e record.Event) error {
+	if err := d.writable(); err != nil {
+		return err
+	}
+
 	tx, err := d.sql.Begin()
 	if err != nil {
 		return err

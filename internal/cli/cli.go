@@ -102,11 +102,23 @@ func Run(args []string, out, errOut io.Writer) (code int) {
 	// error below when it matters, and in the record always.
 	logger.Info("cli/"+c.Name, "ran")
 
-	flatten(errOut)
-	checkRecord(ctx)
+	// Maintenance of the record, and only in front of a command the record
+	// is for.
+	//
+	// All three of these open it, and the last refuses to run anything at
+	// all when it turns out to be one this binary cannot use. For a command
+	// that reads or writes the record that is the right answer, and a record
+	// half migrated is the one shape nobody can reason about. For a command
+	// that never touches it, it is a refusal with nothing behind it — and
+	// the refusal a newer record gives says to run `orbit upgrade`, which
+	// is itself one of the commands it used to stop.
+	if !c.OffRecord {
+		flatten(errOut)
+		checkRecord(ctx)
 
-	if moved := migrateRecord(quietFor(c, errOut)); !moved && !c.Salvage {
-		return 1
+		if moved := migrateRecord(quietFor(c, errOut)); !moved && !c.Salvage {
+			return 1
+		}
 	}
 
 	err := c.Run(ctx, args[1:])

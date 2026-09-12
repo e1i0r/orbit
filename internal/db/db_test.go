@@ -108,15 +108,23 @@ func TestTheCreatorAsksForWALAndNobodyElseDoes(t *testing.T) {
 	}
 }
 
-// TestARecordNewerThanTheBinaryIsRefused. An older Orbit writing into a
-// shape it does not know is how a column silently stops being filled, and
-// the record is the one thing here that cannot be rebuilt.
-func TestARecordNewerThanTheBinaryIsRefused(t *testing.T) {
+// TestARecordNewerThanTheBinaryOpensForReading. An older Orbit writing into
+// a shape it does not know is how a column silently stops being filled, and
+// the record is the one thing here that cannot be rebuilt — so the writes
+// are refused. But the reads are the program still working: the version on
+// disk is newer and the tables the queries ask about are still there, and a
+// reader locked out of those over a file it could have looked at is the
+// whole program stopped by one number.
+func TestARecordNewerThanTheBinaryOpensForReading(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "orbit.db")
 
 	d, err := Open(path)
 	if err != nil {
 		t.Fatalf("open: %v", err)
+	}
+
+	if err := d.Append("ACME-1", record.Event{Kind: record.TaskCreated, Text: "Retry the webhook"}); err != nil {
+		t.Fatalf("write the event a later reader has to find: %v", err)
 	}
 
 	if _, err := d.sql.Exec(`PRAGMA user_version = 99`); err != nil {
@@ -127,12 +135,35 @@ func TestARecordNewerThanTheBinaryIsRefused(t *testing.T) {
 		t.Fatalf("close: %v", err)
 	}
 
+	// Open answers a handle rather than an error: the record is ahead, not
+	// broken, and broken is what an error from Open means.
 	again, err := Open(path)
-	if err == nil {
-		t.Fatalf("a record at version 99 opened; want a refusal, and closing it: %v", again.Close())
+	if err != nil {
+		t.Fatalf("a record at version 99 did not open: %v", err)
+	}
+	defer again.Close()
+
+	if !again.Ahead() {
+		t.Error("a record opened ahead of the binary does not say so")
 	}
 
-	if got := err.Error(); !strings.Contains(got, "upgrade orbit") {
+	// What the reader came for: the row written before the stamp, which a
+	// newer orbit's writes would still be beside rather than instead of.
+	events, err := again.Events("ACME-1")
+	if err != nil {
+		t.Fatalf("read over a newer record: %v", err)
+	}
+
+	if len(events) != 1 || events[0].Text != "Retry the webhook" {
+		t.Errorf("a read over a newer record found %v, want the one event", events)
+	}
+
+	// The one refusal. A write into a shape this binary does not know is
+	// the damage the version exists to prevent, and the refusal names the
+	// way out because an error that says only no is where this story began.
+	if err := again.Append("ACME-1", record.Event{Kind: record.TaskRead}); err == nil {
+		t.Fatal("a write into a record ahead of the binary was allowed")
+	} else if got := err.Error(); !strings.Contains(got, "upgrade orbit") {
 		t.Errorf("the refusal reads %q, want it to say what to do about it", got)
 	}
 }
