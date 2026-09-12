@@ -21,7 +21,7 @@ import (
 // relied on. `orbit reconcile` is what closes that record afterwards, and
 // the message says so rather than leaving the reader to find out.
 func cancelTask(ctx Context, args []string) error {
-	fs := flag.NewFlagSet("cancel", flag.ContinueOnError)
+	fs := flag.NewFlagSet("task cancel", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	dir := fs.String("repo", ".", "the repository the task is against")
 
@@ -32,7 +32,7 @@ func cancelTask(ctx Context, args []string) error {
 
 	id := fs.Arg(0)
 	if id == "" {
-		return needsTaskID(ctx, "cancel")
+		return needsTaskID(ctx, "task cancel")
 	}
 
 	s, r, err := openMaybe(*dir, given(fs, "repo"))

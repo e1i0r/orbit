@@ -16,6 +16,9 @@ func (m Model) knownEnv() known.Env {
 		All:     m.opts.KnowsAll,
 		Replace: m.opts.ReplaceFact,
 		Turn:    m.opts.TurnFact,
+		Waiting: m.opts.Waiting,
+		Keep:    m.opts.KeepRule,
+		Drop:    m.opts.DropRule,
 		Repo:    m.oneRepo(),
 	}
 }

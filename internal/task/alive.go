@@ -292,7 +292,7 @@ func parsePid(body string) (int, error) {
 		// negative numbers are how kill(2) is told to signal a whole
 		// process group or every process on the machine, and 1 is worse
 		// than either: Kill negates a pid to reach its group, and -1 is
-		// POSIX for every process this user may signal. `orbit run` is pid
+		// POSIX for every process this user may signal. `orbit task start` is pid
 		// 1 in a container, so a marker naming 1 is not only a marker
 		// somebody hand-edited — and refusing it is the right answer there
 		// too, because a run that is its container's init is stopped by

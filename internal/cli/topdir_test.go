@@ -78,7 +78,7 @@ func TestTopOnOneDirectoryDoesNotShowAnothers(t *testing.T) {
 		dir := filepath.Join(r.root, r.dir)
 		initRepo(t, dir)
 
-		if code, _, errOut := run(t, "new", "-repo", dir, "-id", r.id, r.text); code != 0 {
+		if code, _, errOut := run(t, "board", "new", "-repo", dir, "-id", r.id, r.text); code != 0 {
 			t.Fatalf("new %s exited %d: %s", r.id, code, errOut)
 		}
 	}

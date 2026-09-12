@@ -68,14 +68,14 @@ func TestAllCliCommandsInvocations(t *testing.T) {
 	out.Reset()
 	errOut.Reset()
 
-	if code := Run([]string{"new", "-repo", repoPath, "-id", "PAY-1"}, &out, &errOut); code == 0 {
+	if code := Run([]string{"board", "new", "-repo", repoPath, "-id", "PAY-1"}, &out, &errOut); code == 0 {
 		t.Error("expected error on orbit new without text")
 	}
 
 	out.Reset()
 	errOut.Reset()
 
-	if code := Run([]string{"new", "-repo", repoPath, "-id", "PAY-1", "Fix stripe webhooks"}, &out, &errOut); code != 0 {
+	if code := Run([]string{"board", "new", "-repo", repoPath, "-id", "PAY-1", "Fix stripe webhooks"}, &out, &errOut); code != 0 {
 		t.Errorf("orbit new failed: %d: %s", code, errOut.String())
 	}
 
@@ -83,14 +83,14 @@ func TestAllCliCommandsInvocations(t *testing.T) {
 	out.Reset()
 	errOut.Reset()
 
-	if code := Run([]string{"list", "-repo", "/nonexistent/repo/dir"}, &out, &errOut); code == 0 {
+	if code := Run([]string{"board", "list", "-repo", "/nonexistent/repo/dir"}, &out, &errOut); code == 0 {
 		t.Error("expected error on orbit list with nonexistent -repo")
 	}
 
 	out.Reset()
 	errOut.Reset()
 
-	if code := Run([]string{"list", "-repo", repoPath}, &out, &errOut); code != 0 {
+	if code := Run([]string{"board", "list", "-repo", repoPath}, &out, &errOut); code != 0 {
 		t.Errorf("orbit list failed: %d: %s", code, errOut.String())
 	}
 
@@ -105,7 +105,7 @@ func TestAllCliCommandsInvocations(t *testing.T) {
 	out.Reset()
 	errOut.Reset()
 
-	if code := Run([]string{"show", "-repo", repoPath, "PAY-1"}, &out, &errOut); code != 0 {
+	if code := Run([]string{"task", "show", "-repo", repoPath, "PAY-1"}, &out, &errOut); code != 0 {
 		t.Errorf("orbit show failed: %d: %s", code, errOut.String())
 	}
 
@@ -120,7 +120,7 @@ func TestAllCliCommandsInvocations(t *testing.T) {
 	out.Reset()
 	errOut.Reset()
 
-	if code := Run([]string{"note", "-repo", repoPath, "PAY-1", "Operator note test"}, &out, &errOut); code != 0 {
+	if code := Run([]string{"task", "note", "-repo", repoPath, "PAY-1", "Operator note test"}, &out, &errOut); code != 0 {
 		t.Errorf("orbit note failed: %d: %s", code, errOut.String())
 	}
 
@@ -135,14 +135,14 @@ func TestAllCliCommandsInvocations(t *testing.T) {
 	out.Reset()
 	errOut.Reset()
 
-	if code := Run([]string{"pause", "-repo", repoPath, "PAY-1"}, &out, &errOut); code != 0 {
+	if code := Run([]string{"task", "pause", "-repo", repoPath, "PAY-1"}, &out, &errOut); code != 0 {
 		t.Errorf("orbit pause failed: %d: %s", code, errOut.String())
 	}
 
 	out.Reset()
 	errOut.Reset()
 
-	if code := Run([]string{"resume", "-repo", repoPath, "PAY-1"}, &out, &errOut); code != 0 {
+	if code := Run([]string{"task", "resume", "-repo", repoPath, "PAY-1"}, &out, &errOut); code != 0 {
 		t.Errorf("orbit resume failed: %d: %s", code, errOut.String())
 	}
 
@@ -157,7 +157,7 @@ func TestAllCliCommandsInvocations(t *testing.T) {
 	out.Reset()
 	errOut.Reset()
 
-	if code := Run([]string{"read", "-repo", repoPath, "PAY-1"}, &out, &errOut); code != 0 {
+	if code := Run([]string{"task", "read", "-repo", repoPath, "PAY-1"}, &out, &errOut); code != 0 {
 		t.Errorf("orbit read failed: %d: %s", code, errOut.String())
 	}
 
@@ -172,7 +172,7 @@ func TestAllCliCommandsInvocations(t *testing.T) {
 	out.Reset()
 	errOut.Reset()
 	// Cancel on non-running task returns error
-	if code := Run([]string{"cancel", "-now", "-repo", repoPath, "PAY-1"}, &out, &errOut); code == 0 {
+	if code := Run([]string{"task", "cancel", "-now", "-repo", repoPath, "PAY-1"}, &out, &errOut); code == 0 {
 		t.Error("expected error cancelling non-running task")
 	}
 
@@ -180,21 +180,21 @@ func TestAllCliCommandsInvocations(t *testing.T) {
 	out.Reset()
 	errOut.Reset()
 
-	if code := Run([]string{"reconcile", "-repo", "/nonexistent/repo"}, &out, &errOut); code == 0 {
+	if code := Run([]string{"board", "reconcile", "-repo", "/nonexistent/repo"}, &out, &errOut); code == 0 {
 		t.Error("expected error on orbit reconcile with invalid -repo")
 	}
 
 	out.Reset()
 	errOut.Reset()
 
-	if code := Run([]string{"reconcile", "-repo", repoPath}, &out, &errOut); code != 0 {
+	if code := Run([]string{"board", "reconcile", "-repo", repoPath}, &out, &errOut); code != 0 {
 		t.Errorf("orbit reconcile -repo failed: %d: %s", code, errOut.String())
 	}
 
 	out.Reset()
 	errOut.Reset()
 
-	if code := Run([]string{"reconcile", "-repo", repoPath, "PAY-1"}, &out, &errOut); code != 0 {
+	if code := Run([]string{"board", "reconcile", "-repo", repoPath, "PAY-1"}, &out, &errOut); code != 0 {
 		t.Errorf("orbit reconcile -repo task failed: %d: %s", code, errOut.String())
 	}
 
@@ -209,14 +209,14 @@ func TestAllCliCommandsInvocations(t *testing.T) {
 	out.Reset()
 	errOut.Reset()
 
-	if code := Run([]string{"run", "-repo", repoPath, "NONEXISTENT-99"}, &out, &errOut); code == 0 {
+	if code := Run([]string{"task", "start", "-repo", repoPath, "NONEXISTENT-99"}, &out, &errOut); code == 0 {
 		t.Error("expected error running nonexistent task")
 	}
 
 	out.Reset()
 	errOut.Reset()
 
-	if code := Run([]string{"run", "-repo", repoPath, "-flow", "nonexistent-flow", "PAY-1"}, &out, &errOut); code == 0 {
+	if code := Run([]string{"task", "start", "-repo", repoPath, "-flow", "nonexistent-flow", "PAY-1"}, &out, &errOut); code == 0 {
 		t.Error("expected error running task with nonexistent flow")
 	}
 

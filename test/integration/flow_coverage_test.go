@@ -29,14 +29,14 @@ func TestCoverageGoesRoundUntilTheChecksPass(t *testing.T) {
 		"3-review": []any{map[string]any{"say": "the coverage is real"}},
 	})
 
-	b.must(t, "new", "-repo", b.repo, "-id", "LED-5", "-flow", "coverage", "make the total right")
+	b.must(t, "board", "new", "-repo", b.repo, "-id", "LED-5", "-flow", "coverage", "make the total right")
 
-	run := b.start(t, "run", "-repo", b.repo, "LED-5")
+	run := b.start(t, "task", "start", "-repo", b.repo, "LED-5")
 
 	// The review at the end is what the run parks at, so reaching the gate
 	// means the loop before it went green.
 	b.waitFor(t, "LED-5", "phase.waiting", gateWait)
-	b.must(t, "resume", "-repo", b.repo, "LED-5")
+	b.must(t, "task", "resume", "-repo", b.repo, "LED-5")
 
 	if err := run.Wait(); err != nil {
 		t.Fatalf("the run did not end after the review was let go: %v", err)
@@ -71,9 +71,9 @@ func TestALoopThatNeverGoesGreenStopsAtItsCap(t *testing.T) {
 		"3-review": []any{map[string]any{"say": "never reached"}},
 	})
 
-	b.must(t, "new", "-repo", b.repo, "-id", "LED-6", "-flow", "coverage", "make the total right")
+	b.must(t, "board", "new", "-repo", b.repo, "-id", "LED-6", "-flow", "coverage", "make the total right")
 
-	if _, err := b.orbit(t, "run", "-repo", b.repo, "LED-6"); err == nil {
+	if _, err := b.orbit(t, "task", "start", "-repo", b.repo, "LED-6"); err == nil {
 		t.Fatal("a loop that never went green ended without saying so")
 	}
 

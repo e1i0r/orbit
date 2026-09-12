@@ -48,11 +48,12 @@ func directed(ctx context.Context, w World, in In) (Out, error) {
 		return Out{}, err
 	}
 
-	if _, err := task.Reopen(ctx, w.Store(), t, in.who(), in.Arg("text"), t.Flow, unread); err != nil {
+	pid, err := task.Reopen(ctx, w.Store(), t, in.who(), in.Arg("text"), t.Flow, unread)
+	if err != nil {
 		return Out{}, err
 	}
 
-	return Out{Said: t.ID + " redirected and started again"}, nil
+	return Out{Said: t.ID + " redirected and started again", Pid: pid}, nil
 }
 
 // approved says yes to what the dependency gate stopped the run for. What is
@@ -72,7 +73,10 @@ func approved(w World, in In) (Out, error) {
 
 	names := task.Pending(w.Store(), t, f)
 	if len(names) == 0 {
-		return Out{}, fmt.Errorf("%s has added no dependency waiting on you", t.ID)
+		// Nothing waiting is an answer, not a refusal: the reader asked
+		// and was told. Refusing would read as though asking were wrong,
+		// and "approved" would read as a decision nobody made.
+		return Out{Said: t.ID + " has added no dependency waiting on you"}, nil
 	}
 
 	if err := task.Approve(w.Store(), t, names); err != nil {
@@ -316,7 +320,7 @@ func deleted(w World, in In) (Out, error) {
 	return Out{Said: t.ID + " is gone"}, nil
 }
 
-// flowOf is the flow a task walks, by the same reading `orbit run` makes of
+// flowOf is the flow a task walks, by the same reading `orbit task start` makes of
 // it: the task's own, then the one Orbit ships. Not the settings default,
 // which is what the next task written gets.
 func flowOf(w World, t task.Task) (flow.Flow, error) {

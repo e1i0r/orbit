@@ -24,7 +24,7 @@ import (
 // A reader typing it by hand names the task with -task, from a directory
 // inside any repository of the workspace.
 func joinRepo(ctx Context, args []string) error {
-	fs := flag.NewFlagSet("join", flag.ContinueOnError)
+	fs := flag.NewFlagSet("task join", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	dir := fs.String("repo", ".", "a repository of the workspace")
 

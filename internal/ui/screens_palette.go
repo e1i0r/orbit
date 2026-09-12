@@ -26,6 +26,15 @@ func (m Model) paletteEnv() palette.Env {
 			AboutATask: c.AboutATask,
 		}
 
+		for _, kid := range c.Children {
+			about := ""
+			if kid.About != nil {
+				about = kid.About(p)
+			}
+
+			row.Children = append(row.Children, palette.Child{Name: kid.Name, About: about})
+		}
+
 		if c.About != nil {
 			row.About = c.About(p)
 		}

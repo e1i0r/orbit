@@ -157,7 +157,7 @@ func TestTheCheckBeforeACommandWarnsAndLetsItRun(t *testing.T) {
 	root, orbitHome := workspace(t)
 	dir := writeTask(t, root)
 
-	if code, _, errOut := run(t, "set", "check-record", "on"); code != 0 {
+	if code, _, errOut := run(t, "settings", "set", "check-record", "on"); code != 0 {
 		t.Fatalf("turning the check on exited %d: %s", code, errOut)
 	}
 
@@ -182,7 +182,7 @@ func TestTheCheckBeforeACommandWarnsAndLetsItRun(t *testing.T) {
 func TestCheckRecordIsASettingLikeAnyOther(t *testing.T) {
 	_, orbitHome := workspace(t)
 
-	code, out, errOut := run(t, "set", "check-record", "on")
+	code, out, errOut := run(t, "settings", "set", "check-record", "on")
 	if code != 0 {
 		t.Fatalf("set check-record on exited %d: %s", code, errOut)
 	}
@@ -195,7 +195,7 @@ func TestCheckRecordIsASettingLikeAnyOther(t *testing.T) {
 		t.Error("check-record is off on disk after being turned on")
 	}
 
-	if code, _, errOut := run(t, "set", "check-record", "off"); code != 0 {
+	if code, _, errOut := run(t, "settings", "set", "check-record", "off"); code != 0 {
 		t.Fatalf("set check-record off exited %d: %s", code, errOut)
 	}
 

@@ -113,7 +113,7 @@ func New(p *words.Printer) Keys {
 		Hand:     binding("h", p.T("key.hand", "hand it back"), "h"),
 		Ask:      binding("a", p.T("key.ask", "ask"), "a"),
 		MarkRead: binding("d", p.T("key.read", "mark read"), "d"),
-		Delete:   binding("D", p.T("key.delete_task", "delete task"), "D", "delete"),
+		Delete:   binding("D", p.T("key.delete_task", "delete"), "D", "delete"),
 		Edit:     binding("o", p.T("key.edit", "open in $EDITOR"), "o"),
 
 		Filter: binding("/", p.T("key.filter", "filter"), "/"),

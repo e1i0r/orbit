@@ -34,9 +34,9 @@ func TestTheBrowsersBoxesCarryTheNamesTheVerbsDeclare(t *testing.T) {
 	fields := map[string]map[string]bool{}
 
 	for _, v := range verb.Every() {
-		fields[v.Name] = map[string]bool{}
+		fields[v.Path()] = map[string]bool{}
 		for _, f := range v.Takes {
-			fields[v.Name][f.Name] = true
+			fields[v.Path()][f.Name] = true
 		}
 	}
 
@@ -64,9 +64,13 @@ func boxes(page string) []box {
 		trimmed := strings.TrimSpace(line)
 
 		// A verb opens a block: two spaces, its name, a colon and a brace.
+		// A family is both its words in quotes — `"task direct": {` — and
+		// the quotes are what tell it apart from any other keyed line.
 		if name, rest, found := strings.Cut(trimmed, ":"); found && strings.TrimSpace(rest) == "{" {
-			if quoted := strings.Trim(name, `"`); quoted != "" && !strings.Contains(quoted, " ") {
-				verb = quoted
+			if unquoted, isFamily := strings.CutPrefix(name, `"`); isFamily {
+				verb, _ = strings.CutSuffix(unquoted, `"`)
+			} else if name != "" && !strings.Contains(name, " ") {
+				verb = name
 			}
 		}
 

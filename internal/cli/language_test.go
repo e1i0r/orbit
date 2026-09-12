@@ -26,7 +26,7 @@ func speaking(t *testing.T, language string) (dir string) {
 
 	root, _ := workspace(t)
 
-	if code, _, errOut := run(t, "set", "language", language); code != 0 {
+	if code, _, errOut := run(t, "settings", "set", "language", language); code != 0 {
 		t.Fatalf("set language %s exited %d: %s", language, code, errOut)
 	}
 
@@ -116,26 +116,26 @@ func TestTheEverydayVerbsSpeakTheReadersLanguage(t *testing.T) {
 		english string
 		before  func(*testing.T)
 	}{
-		{args: []string{"list", "-repo", dir}, english: "no tasks against"},
-		{args: []string{"new", "-repo", dir}, english: "needs -id"},
-		{args: []string{"new", "-repo", dir, "-id", "PAY-1"}, english: "written out after the flags"},
-		{args: []string{"new", "-repo", dir, "-id", "PAY-1", "make the thing"}, english: "written against"},
-		{args: []string{"note", "-repo", dir, "PAY-1"}, english: "needs text for task"},
-		{args: []string{"note", "-repo", dir, "PAY-1", "look at the tests"}, english: "note recorded for"},
-		{args: []string{"read", "-repo", dir, "PAY-1"}, english: "marked read"},
-		{args: []string{"pause", "-repo", dir, "PAY-1"}, english: "a run in flight"},
-		{args: []string{"direct", "-repo", dir, "PAY-1"}, english: "needs a message for task"},
-		{args: []string{"direct", "-repo", dir, "PAY-1", "look again"}, english: "redirected"},
-		{args: []string{"show", "-repo", dir, "PAY-404"}, english: "nothing recorded for"},
+		{args: []string{"board", "list", "-repo", dir}, english: "no tasks against"},
+		{args: []string{"board", "new", "-repo", dir}, english: "needs -id"},
+		{args: []string{"board", "new", "-repo", dir, "-id", "PAY-1"}, english: "written out after the flags"},
+		{args: []string{"board", "new", "-repo", dir, "-id", "PAY-1", "make the thing"}, english: "written against"},
+		{args: []string{"task", "note", "-repo", dir, "PAY-1"}, english: "needs text for task"},
+		{args: []string{"task", "note", "-repo", dir, "PAY-1", "look at the tests"}, english: "note recorded for"},
+		{args: []string{"task", "read", "-repo", dir, "PAY-1"}, english: "marked read"},
+		{args: []string{"task", "pause", "-repo", dir, "PAY-1"}, english: "a run in flight"},
+		{args: []string{"task", "direct", "-repo", dir, "PAY-1"}, english: "needs a message for task"},
+		{args: []string{"task", "direct", "-repo", dir, "PAY-1", "look again"}, english: "redirected"},
+		{args: []string{"task", "show", "-repo", dir, "PAY-404"}, english: "nothing recorded for"},
 		// Stopping is asked of a run, so there has to be one: without a
 		// live marker cancel refuses instead, and the refusal it gives is
 		// task's rather than this layer's.
 		{
-			args:    []string{"cancel", "-repo", dir, "PAY-1"},
+			args:    []string{"task", "cancel", "-repo", dir, "PAY-1"},
 			english: "asked to stop",
 			before:  func(t *testing.T) { plantLiveMarker(t, "PAY-1") },
 		},
-		{args: []string{"reconcile", "-repo", dir}, english: "every run is accounted for"},
+		{args: []string{"board", "reconcile", "-repo", dir}, english: "every run is accounted for"},
 		{args: []string{"supervisor"}, english: "supervisor thread is empty"},
 		{args: []string{"repos", elsewhere}, english: "no repositories under"},
 		{args: []string{"top", elsewhere, dir}, english: "takes one directory"},

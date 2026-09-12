@@ -3,6 +3,7 @@ package ui
 // Where the window and the menu meet.
 
 import (
+	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/ui/keymap"
@@ -25,6 +26,17 @@ func (m Model) menuEnv() menu.Env {
 			row.About = c.About(p)
 		}
 
+		for _, kid := range c.Children {
+			about := ""
+			if kid.About != nil {
+				about = kid.About(p)
+			}
+
+			row.Children = append(row.Children, menu.Child{
+				Name: kid.Name, About: about, NeedsArgs: kid.NeedsArgs,
+			})
+		}
+
 		if c.Because != nil {
 			row.Because = c.Because(p)
 		}
@@ -40,6 +52,7 @@ func (m Model) menuEnv() menu.Env {
 		Commands: cmds,
 		Panes:    m.paneMenu(),
 		Verbs:    m.taskVerbs,
+		Says:     func(b key.Binding) string { return m.meaning(firstKey(b)) },
 		Args:     func(id string) []string { return repoArgs(m.taskRepoPath(id), id) },
 	}
 }
@@ -78,8 +91,10 @@ func (m Model) tookMenu(next menu.State, out menu.Out) (tea.Model, tea.Cmd) {
 		}
 
 		return m, nil
+	case out.Palette != "":
+		return m.openPaletteWith(out.Palette), nil
 	case out.Ask:
-		return m.openMessage(out.Run, id), nil
+		return m.openMessage(out.Run, out.Child, id), nil
 	case out.Run != "":
 		return m.launchNamed(out.Run, out.Args)
 	case out.Send != "":

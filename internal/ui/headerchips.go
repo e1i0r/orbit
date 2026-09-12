@@ -23,8 +23,16 @@ func (m Model) knowledgeChip() []headerField {
 	// Chrome at zero as well as at forty: the header shares one ink, and
 	// faint text on it is the thing theme_test.go refuses — a chip nobody
 	// can read is not a gentler way of saying nothing.
-	return []headerField{{"knowledge", theme.Chrome().Render("🧩 " +
-		m.opts.Words.P("header.knows", m.factCount(), "{n} fact", "{n} facts"))}}
+	chip := "🧩 " + m.opts.Words.P("header.knows", m.factCount(), "{n} fact", "{n} facts")
+
+	// And what is waiting to be answered, when anything is. A tray nobody is
+	// told about is a tray nobody opens, and this is the only place a reader
+	// who is not already on that screen would learn there is one.
+	if n := m.knowledge.Unanswered(); n > 0 {
+		chip += " · " + m.opts.Words.P("header.waiting", n, "{n} waiting", "{n} waiting")
+	}
+
+	return []headerField{{"knowledge", theme.Chrome().Render(chip)}}
 }
 
 // engineChip is the header's engine, which is the knob when one is set and

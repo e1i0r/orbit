@@ -17,12 +17,12 @@ func TestListSaysSoWhenThereAreNoTasks(t *testing.T) {
 	root, _ := workspace(t)
 	repoDir := filepath.Join(root, "payments")
 
-	code, out, errOut := run(t, "list", "-repo", repoDir)
+	code, out, errOut := run(t, "board", "list", "-repo", repoDir)
 	if code != 0 {
 		t.Fatalf("list on an empty repository exited %d: %s", code, errOut)
 	}
 
-	if !strings.Contains(out, "no tasks against") {
+	if !strings.Contains(out, "no tasks") {
 		t.Errorf("list did not say there were no tasks:\n%s", out)
 	}
 }
@@ -37,7 +37,7 @@ func TestListFailsWhenTheTasksDirCannotBeRead(t *testing.T) {
 	}
 	defer func() { _ = os.Chmod(tasksDir, 0o700) }() //nolint:errcheck
 
-	code, _, errOut := run(t, "list", "-repo", dir)
+	code, _, errOut := run(t, "board", "list", "-repo", dir)
 	if code == 0 {
 		t.Error("list over an unreadable tasks directory exited 0")
 	}
@@ -50,7 +50,7 @@ func TestListFailsWhenTheTasksDirCannotBeRead(t *testing.T) {
 func TestShowFailsOutsideARepository(t *testing.T) {
 	t.Setenv("ORBIT_HOME", t.TempDir())
 
-	code, _, errOut := run(t, "show", "-repo", t.TempDir(), "ACME-1")
+	code, _, errOut := run(t, "task", "show", "-repo", t.TempDir(), "ACME-1")
 	if code == 0 {
 		t.Error("show outside a repository exited 0")
 	}
@@ -64,7 +64,7 @@ func TestShowRefusesATaskWithNothingRecorded(t *testing.T) {
 	root, _ := workspace(t)
 	repoDir := filepath.Join(root, "payments")
 
-	code, _, errOut := run(t, "show", "-repo", repoDir, "ACME-GHOST")
+	code, _, errOut := run(t, "task", "show", "-repo", repoDir, "ACME-GHOST")
 	if code == 0 {
 		t.Error("show on a task with nothing recorded exited 0")
 	}
@@ -83,7 +83,7 @@ func TestShowFailsWhenTaskEventsErrors(t *testing.T) {
 	root, _ := workspace(t)
 	repoDir := filepath.Join(root, "payments")
 
-	code, _, errOut := run(t, "show", "-repo", repoDir, "bad/id")
+	code, _, errOut := run(t, "task", "show", "-repo", repoDir, "bad/id")
 	if code == 0 {
 		t.Error("show with a path-separator id exited 0")
 	}

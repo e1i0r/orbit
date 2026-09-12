@@ -10,10 +10,21 @@ package menu
 // and offered eleven panes and nothing else said, by omission, that looking
 // is all there is to do in here.
 
-import "github.com/e1i0r/orbit/internal/ui/keymap"
+import (
+	"slices"
 
-// entries is the menu as it stands, one of three lists.
+	"github.com/e1i0r/orbit/internal/ui/keymap"
+)
+
+// entries is the menu as it stands: the submenu drilled into, or one of
+// the three tops. Recomputed from the lists rather than remembered — a
+// menu frozen at open time would keep offering verbs for a run that
+// finished while it was up.
 func (s State) entries(e Env) []Entry {
+	if s.sub != "" {
+		return s.subEntries(e)
+	}
+
 	if e.Detail {
 		return s.detailEntries(e)
 	}
@@ -66,15 +77,22 @@ func head(title string) Entry { return Entry{Head: true, Title: title} }
 // verb.
 func gap() Entry { return Entry{Head: true} }
 
-// boardEntries is the commands that are not about one task.
+// boardEntries is the commands that are not about one task: one row per
+// family, and one row per command that belongs to none.
 func boardEntries(e Env) []Entry {
-	out := make([]Entry, 0, len(e.Commands))
+	var out []Entry
 
 	for _, c := range e.Commands {
 		// A verb about one task is not on this menu. This one is opened on
 		// no row, so there is no task for such a verb to be about:
 		// choosing it ran it bare and got its usage back.
 		if c.AboutATask {
+			continue
+		}
+
+		if len(c.Children) > 0 {
+			out = append(out, Entry{Title: c.Name, Detail: c.About, Family: c.Name})
+
 			continue
 		}
 
@@ -91,40 +109,54 @@ func boardEntries(e Env) []Entry {
 	return out
 }
 
-// taskEntries is what can be done to one task, refusals included and each
-// with its reason.
+// taskEntries is what can be done to one task: one row per family.
+// Choosing one drills into its verbs and commands; the keystrokes keep
+// working the way they always have, menu up or not.
 //
 // It is the same list on the board's menu and inside a task, from the same
 // call, because they are the same question asked from two places — and a
 // verb offered in one and missing from the other would be read as a verb
 // that does not apply here.
 func (s State) taskEntries(e Env) []Entry {
-	all, ok := e.verbs(s.task)
-	if !ok {
+	// A task that left the board has nothing on its menu: every verb on
+	// it would be a verb about a run that is no longer there.
+	if _, ok := e.verbs(s.task); !ok {
 		return nil
 	}
 
-	out := make([]Entry, 0, len(all))
+	var out []Entry
 
-	for i := range all {
-		a := &all[i]
+	var seen []string
 
-		row := Entry{Glyph: a.Key.Help().Key, Title: a.Key.Help().Desc}
-		if !a.OK {
-			row.Dim = true
-			row.Reason = a.Why(e.Words)
+	for _, want := range taskCommands {
+		if slices.Contains(seen, want.name) {
+			continue
 		}
 
-		out = append(out, row)
+		seen = append(seen, want.name)
+
+		// The task's own keys need no table behind them: choosing one
+		// sends the keystroke, and the window answers it the way a
+		// pressed key is answered. Every other family lists what the
+		// table carries, so a row never drills into nothing.
+		if want.name != "task" {
+			supported := false
+
+			for _, c := range e.Commands {
+				if c.Name == want.name && len(c.Children) > 0 {
+					supported = true
+				}
+			}
+
+			if !supported {
+				continue
+			}
+		}
+
+		out = append(out, familyRow(e, want.name))
 	}
 
-	// And what only a command or a dialog can do to it. They are in the
-	// same block rather than under a heading of their own: a reader asking
-	// what can be done to a task is not asking which of the answers is a
-	// key.
-	out = append(out, e.start())
-
-	return append(out, s.commandEntries(e)...)
+	return out
 }
 
 // verbs asks what can be done to a task, and answers no for a window built
@@ -138,19 +170,26 @@ func (e Env) verbs(id string) ([]keymap.Affordance, bool) {
 }
 
 // start is the verb that is a screen rather than a command run bare.
-// `orbit run` starts a task with the flow it was written for; the window
+// `orbit task start` starts a task with the flow it was written for; the window
 // asks which flow first, and that question is the start dialog. So the
 // entry sends the key that opens it, and there is one way to start a run
 // rather than two that answer the flow question differently.
 func (e Env) start() Entry {
-	return Entry{Glyph: e.Keys.Start.Help().Key, Title: e.Keys.Start.Help().Desc}
+	row := Entry{Glyph: e.Keys.Start.Help().Key, Title: e.Keys.Start.Help().Desc}
+
+	if e.Says != nil {
+		row.Detail = e.Says(e.Keys.Start)
+	}
+
+	return row
 }
 
 // saysSomething is a verb that takes a message, so the menu opens the box
 // rather than running it.
 type saysSomething struct {
-	name string
-	says bool
+	name  string
+	child string
+	says  bool
 }
 
 // taskCommands is the block of verbs that live only in the command table,
@@ -164,46 +203,20 @@ type saysSomething struct {
 // place in the window where there is no task for a verb about one to be
 // about.
 var taskCommands = []saysSomething{
-	{name: "note", says: true},
-	{name: "direct", says: true},
+	{name: "task", child: "note", says: true},
+	{name: "task", child: "direct", says: true},
 	{name: "pr"},
-	{name: "resolve"},
-	{name: "merge"},
-	{name: "close-pr"},
-	{name: "approve"},
-	{name: "permit"},
-	{name: "critical"},
-}
-
-// commandEntries is those commands as menu rows about one task, with the
-// repository and the id already filled in.
-//
-// Whether the task is in a state to be approved, merged or redirected is
-// not asked here. The command asks it and answers in the watch, in its own
-// words; a second opinion in the menu is a second place for that rule to
-// live, and the two would drift.
-func (s State) commandEntries(e Env) []Entry {
-	args := e.args(s.task)
-
-	out := make([]Entry, 0, len(taskCommands))
-
-	for _, want := range taskCommands {
-		for _, c := range e.Commands {
-			if c.Name != want.name {
-				continue
-			}
-
-			out = append(out, Entry{
-				Title:   c.Name,
-				Detail:  c.About,
-				Command: c.Name,
-				Args:    args,
-				Says:    want.says,
-			})
-		}
-	}
-
-	return out
+	{name: "pr", child: "show"},
+	{name: "pr", child: "resolve"},
+	{name: "pr", child: "merge"},
+	{name: "pr", child: "close"},
+	{name: "pr", child: "update"},
+	{name: "pr", child: "checks"},
+	{name: "pr", child: "tests"},
+	{name: "pr", child: "review"},
+	{name: "task", child: "approve"},
+	{name: "task", child: "permit"},
+	{name: "task", child: "critical"},
 }
 
 // args is what a command about the task is run with, and nothing for a

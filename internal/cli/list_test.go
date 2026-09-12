@@ -16,12 +16,12 @@ func TestListFromTheWorkspaceListsEverything(t *testing.T) {
 	initRepo(t, filepath.Join(root, "app"))
 
 	for repoName, id := range map[string]string{"payments": "ACME-1", "app": "ACME-2"} {
-		if code, _, errOut := run(t, "new", "-repo", filepath.Join(root, repoName), "-id", id, "x"); code != 0 {
+		if code, _, errOut := run(t, "board", "new", "-repo", filepath.Join(root, repoName), "-id", id, "x"); code != 0 {
 			t.Fatalf("new %s exited %d: %s", id, code, errOut)
 		}
 	}
 
-	code, out, errOut := run(t, "list")
+	code, out, errOut := run(t, "board", "list")
 	if code != 0 {
 		t.Fatalf("list from the workspace exited %d: %s", code, errOut)
 	}
@@ -37,13 +37,13 @@ func TestListFromTheWorkspaceListsEverything(t *testing.T) {
 func TestListNamesARepositoryWhenAskedTo(t *testing.T) {
 	root, _ := workspace(t)
 
-	if code, _, errOut := run(t, "new", "-repo", filepath.Join(root, "payments"), "-id", "ACME-1", "x"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", filepath.Join(root, "payments"), "-id", "ACME-1", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
 	initRepo(t, filepath.Join(root, "app"))
 
-	code, out, errOut := run(t, "list", "-repo", filepath.Join(root, "app"))
+	code, out, errOut := run(t, "board", "list", "-repo", filepath.Join(root, "app"))
 	if code != 0 {
 		t.Fatalf("list of another repository exited %d: %s", code, errOut)
 	}

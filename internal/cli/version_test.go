@@ -16,8 +16,12 @@ func TestVersionPrintsOrbitAndTheVersion(t *testing.T) {
 		t.Fatalf("version exited %d: %s", code, errOut)
 	}
 
-	if out != "orbit dev\n" {
-		t.Errorf("version printed %q, want %q", out, "orbit dev\n")
+	want := "    _____      orbit dev\n" +
+		"   /     \\     orbit — a cockpit for supervising coding agents\n" +
+		"--(   o   )--\n" +
+		"   \\_____/\n"
+	if out != want {
+		t.Errorf("version printed %q, want %q", out, want)
 	}
 }
 
@@ -37,8 +41,52 @@ func TestVersionPrintsAnOverriddenVersion(t *testing.T) {
 		t.Fatalf("version exited %d: %s", code, errOut)
 	}
 
-	if out != "orbit 1.2.3\n" {
-		t.Errorf("version printed %q, want %q", out, "orbit 1.2.3\n")
+	if out != "    _____      orbit 1.2.3\n"+
+		"   /     \\     orbit — a cockpit for supervising coding agents\n"+
+		"--(   o   )--\n"+
+		"   \\_____/\n" {
+		t.Errorf("version printed %q, want the banner with %q", out, "orbit 1.2.3")
+	}
+}
+
+func TestVersionBannerCarriesTheMark(t *testing.T) {
+	t.Setenv("ORBIT_HOME", t.TempDir())
+
+	_, out, _ := run(t, "version")
+
+	// The body with the rings on. This holds the shape rather than the
+	// exact drawing: re-aligning the art must stay green, dropping the
+	// mark must not.
+	if !strings.Contains(out, "--(   o   )--") {
+		t.Errorf("the version banner lost the rings around it:\n%s", out)
+	}
+
+	if !strings.HasPrefix(out, "    _____") {
+		t.Errorf("the version banner lost the body the rings go around:\n%s", out)
+	}
+}
+
+// TestVersionBannerMeasuresTheSameEverywhere. A glyph the terminal renders
+// wider than the code counts slides its line out of column — the banner
+// once drew its body as ◉, which reads two cells on fonts that render it
+// so, and the line beside it came out shifted. Everything before the words
+// on a line is plain ASCII, the one width every terminal agrees on.
+func TestVersionBannerMeasuresTheSameEverywhere(t *testing.T) {
+	t.Setenv("ORBIT_HOME", t.TempDir())
+
+	_, out, _ := run(t, "version")
+
+	for _, line := range strings.Split(out, "\n") {
+		i := strings.Index(line, "orbit")
+		if i < 0 {
+			continue
+		}
+
+		for _, r := range line[:i] {
+			if r > 127 {
+				t.Errorf("line %q draws %q before its words: ASCII only, or it will not line up", line, r)
+			}
+		}
 	}
 }
 

@@ -8,6 +8,7 @@ package ui
 import (
 	"strconv"
 	"strings"
+	"time"
 
 	"charm.land/lipgloss/v2"
 
@@ -195,11 +196,52 @@ func (m Model) name() string {
 		bg = theme.PillHeader
 	)
 
+	text := m.logoBody() + " orbit"
 	if m.showingEverything() {
-		return theme.PillSelected("◉ orbit", fg, bg)
+		return theme.PillSelected(text, fg, bg)
 	}
 
-	return theme.Pill("◉ orbit", fg, bg)
+	return theme.Pill(text, fg, bg)
+}
+
+// logoFrames is the badge's answer to a click: the body throbs over four
+// frames, one per frame-clock tick. Every frame is one plain-ASCII cell, so
+// the badge stays nine cells wide on every terminal — a mark like ◉ reads
+// two cells wide where the font renders it so, and a wiggle that wide would
+// shove every queue badge after it, and every click column hitHeader placed
+// by number, one cell sideways for a tenth of a second.
+var logoFrames = []string{"O", "o", "O", "o"}
+
+// logoWiggleFor is how long one tap is answered: four frames at the clock's
+// own hundred milliseconds.
+const logoWiggleFor = 400 * time.Millisecond
+
+// logoWiggling is whether the badge is still answering a click. A tap never
+// recorded reads as none — the zero timestamp is not a tap that just
+// happened, it is no tap at all.
+func (m Model) logoWiggling() bool {
+	if m.logoTap.IsZero() {
+		return false
+	}
+
+	return m.now.Sub(m.logoTap) < logoWiggleFor
+}
+
+// logoBody is the badge's body right now: a wiggle frame while a tap is
+// fresh, the mark at rest otherwise. Like spin(), it is a function of the
+// clock rather than of a counter, so a redraw that did not go through the
+// tick still lands on the frame its time says.
+func (m Model) logoBody() string {
+	if m.logoWiggling() {
+		i := int(m.now.Sub(m.logoTap) / (100 * time.Millisecond))
+		if i >= len(logoFrames) {
+			i = len(logoFrames) - 1
+		}
+
+		return logoFrames[i]
+	}
+
+	return "◉"
 }
 
 // showingEverything reports whether the board is holding nothing back, which

@@ -10,6 +10,12 @@ package mcp
 // Which is why a fact written here comes from the record and not from a
 // person: the screen that lists facts says where each one came from, and the
 // whole of why one can be trusted is that it can be traced back.
+//
+// It is written straight through rather than waiting to be agreed with, and
+// that is the trade this tool exists for — a fact that waits for a person is
+// a fact the next run does not have. Two things make it a fair trade, and
+// both are below: it can only be about the repository the task is worked in,
+// and it says where it came from.
 
 import (
 	"fmt"
@@ -19,49 +25,65 @@ import (
 	"github.com/e1i0r/orbit/internal/knowledge"
 )
 
-// learn writes down a fact.
+// learn writes down a fact about the code the task is worked in.
+//
+// The repository is the task's own and never an argument. A caller that
+// named its own scope could write a fact about everywhere, and everywhere is
+// the prompt of every phase of every run of every project on this machine —
+// which is not something anybody agreed to by asking an agent to fix a bug.
+// It is the rule openTaskRepo already keeps for every other tool here: act
+// on the checkout the record was folded from, and no other.
 func (sn Session) learn(args map[string]any) CallToolResult {
 	phrase := strings.TrimSpace(stringArg(args, "phrase"))
 	if phrase == "" {
 		return refuse(fmt.Errorf("a fact needs a sentence: what is true about this code"))
 	}
 
-	s, err := sn.open()
+	sb, err := sn.readBoard()
 	if err != nil {
 		return refuse(err)
 	}
 
-	defer func() { _ = s.Close() }() //nolint:errcheck // the answer is already made
+	defer sb.close()
 
-	scope, err := factScope(args)
+	t, err := findTask(sb.board, stringArg(args, "task_id"))
 	if err != nil {
 		return refuse(err)
+	}
+
+	if t.RepoPath == "" {
+		return refuse(fmt.Errorf("task %s is against no repository, and what is written here "+
+			"is written about one", t.ID))
 	}
 
 	f := knowledge.Fact{
-		Scope:  scope,
+		Scope:  knowledge.Scope{Kind: knowledge.Repo, Repo: t.RepoPath},
 		Source: knowledge.FromRecord,
 		Phrase: phrase,
 		Stops:  boolArg(args, "stops"),
 		Check:  strings.TrimSpace(stringArg(args, "check")),
-		Ref:    strings.TrimSpace(stringArg(args, "task_id")),
+		Ref:    t.ID,
 		At:     time.Now().UTC(),
 	}
 
-	where, err := knowledge.NewStore(s.Root()).Save(f)
+	where, err := knowledge.NewStore(sb.store.Root()).Save(f)
 	if err != nil {
 		return refuse(err)
 	}
 
 	// Said out loud rather than left to be discovered: a rule asked to stop
 	// with no check does not stop, and an agent told "written down" would
-	// carry on believing a gate is now watching for it.
+	// carry on believing a gate is now watching for it. The repository is
+	// named for the same reason — one told only "written down" carries on
+	// believing it wrote something everybody would be told.
 	if f.Stops && f.Action() != knowledge.Stops {
-		return done("written down at %s. It has no check, so it is told and not enforced: "+
-			"give it a command that exits non-zero when the rule is broken to make a gate of it.", where)
+		return done("written down about %s at %s. It has no check, so it is told and not enforced: "+
+			"give it a command that exits non-zero when the rule is broken to make a gate of it.",
+			t.Repo, where)
 	}
 
-	return done("written down at %s", where)
+	return done("written down about %s at %s. Every run against that repository is told, "+
+		"and nothing outside it.", t.Repo, where)
 }
 
 // knowledgeOf answers what Orbit knows, for an agent that would rather ask
@@ -116,26 +138,5 @@ func factWhere(s knowledge.Scope) string {
 		return "in " + s.Path + "#" + s.Symbol
 	default:
 		return "in " + s.Path
-	}
-}
-
-// factScope reads the scope out of what the tool was given.
-//
-// A repository is named by path and not guessed from where this server was
-// started: a supervising model works across several, and a fact filed against
-// the wrong one is a rule applied where nobody put it.
-func factScope(args map[string]any) (knowledge.Scope, error) {
-	lang := strings.TrimSpace(stringArg(args, "lang"))
-	repo := strings.TrimSpace(stringArg(args, "repo"))
-
-	switch {
-	case lang != "" && repo != "":
-		return knowledge.Scope{}, fmt.Errorf("a fact is about a language or about a repository, not both")
-	case lang != "":
-		return knowledge.Scope{Kind: knowledge.Language, Lang: lang}, nil
-	case repo != "":
-		return knowledge.Scope{Kind: knowledge.Repo, Repo: repo}, nil
-	default:
-		return knowledge.Scope{Kind: knowledge.General}, nil
 	}
 }

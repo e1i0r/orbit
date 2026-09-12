@@ -78,8 +78,8 @@
       "value": "marcar leída"
     },
     "key.delete_task": {
-      "source": "delete task",
-      "value": "eliminar tarea"
+      "source": "delete",
+      "value": "eliminar"
     },
     "key.edit": {
       "source": "open in $EDITOR",
@@ -1031,10 +1031,6 @@
       "source": "the supervisor was asked to review {id}",
       "value": "se le pidió al supervisor revisar {id}"
     },
-    "list.none": {
-      "source": "no tasks yet",
-      "value": "todavía no hay tareas"
-    },
     "cmd.digest": {
       "source": "what the record says about the work as a whole",
       "value": "lo que el record dice del trabajo en conjunto"
@@ -1106,40 +1102,6 @@
     "permit.allowed": {
       "source": "{action} on {id} is allowed; run it again to do it",
       "value": "{action} en {id} está permitido; volvé a correrlo para hacerlo"
-    },
-    "cmd.resolve": {
-      "source": "read what reviewers asked on the pull requests into the task, for the next run to answer",
-      "value": "traer a la tarea lo que pidieron los reviewers en los pull requests, para que la próxima corrida lo responda"
-    },
-    "resolve.unread": {
-      "source": "{repo}: the pull request could not be read",
-      "value": "{repo}: no se pudo leer el pull request"
-    },
-    "resolve.nothing": {
-      "source": "nobody has asked {id} for anything",
-      "value": "nadie le pidió nada a {id}"
-    },
-    "resolve.found": {
-      "source": {
-        "one": "{n} comment is now on {id}; `orbit run {id}` answers it",
-        "other": "{n} comments are now on {id}; `orbit run {id}` answers them"
-      },
-      "value": {
-        "one": "{n} comentario está ahora en {id}; `orbit run {id}` lo responde",
-        "other": "{n} comentarios están ahora en {id}; `orbit run {id}` los responde"
-      }
-    },
-    "cmd.approve": {
-      "source": "say yes to the libraries a task added, so its next run goes past the gate",
-      "value": "decir que sí a las librerías que agregó una tarea, para que su próxima corrida pase el gate"
-    },
-    "approve.nothing": {
-      "source": "{id} has added no dependency waiting on you",
-      "value": "{id} no agregó ninguna dependencia que te esté esperando"
-    },
-    "approve.done": {
-      "source": "approved for {id}: {names}",
-      "value": "aprobado para {id}: {names}"
     },
     "overview.story": {
       "source": "how it happened",
@@ -1613,33 +1575,9 @@
       "source": "list the flows a task can be written against",
       "value": "listar los flujos contra los que se puede escribir una tarea"
     },
-    "cmd.pause": {
-      "source": "stop a run at its next phase",
-      "value": "detener una ejecución en su siguiente fase"
-    },
-    "cmd.resume": {
-      "source": "let a stopped run carry on",
-      "value": "dejar que una ejecución detenida continúe"
-    },
-    "cmd.skip": {
-      "source": "let a stopped run carry on without the phase it is waiting in front of",
-      "value": "dejar que una ejecución detenida continúe sin la fase delante de la que espera"
-    },
-    "cmd.show": {
-      "source": "print what happened to a task",
-      "value": "contar qué le pasó a una tarea"
-    },
-    "cmd.read": {
-      "source": "mark a finished task as looked at",
-      "value": "marcar como leída una tarea terminada"
-    },
     "cmd.pr": {
       "source": "create a pull request from a task's worktree",
       "value": "crear un pull request desde el worktree de una tarea"
-    },
-    "cmd.merge": {
-      "source": "merge a task's pull request and delete its branch",
-      "value": "fusionar el pull request de una tarea y borrar su rama"
     },
     "cli.needs_task_id": {
       "source": "{command} needs the id of a task",
@@ -1649,57 +1587,13 @@
       "source": "locate the working directory",
       "value": "ubicar el directorio de trabajo"
     },
-    "new.needs_id": {
-      "source": "new needs -id",
-      "value": "new necesita -id"
-    },
-    "new.needs_text": {
-      "source": "new needs the task written out after the flags",
-      "value": "new necesita la tarea escrita después de las banderas"
-    },
-    "new.written": {
-      "source": "{id} written against {repo}, to walk the {flow} flow",
-      "value": "{id} escrita contra {repo}, para recorrer el flujo {flow}"
-    },
-    "new.written_nowhere": {
-      "source": "{id} written against no repository yet, to walk the {flow} flow",
-      "value": "{id} escrita todavía contra ningún repositorio, para recorrer el flujo {flow}"
-    },
-    "note.needs_text": {
-      "source": "note needs text for task {id}",
-      "value": "note necesita texto para la tarea {id}"
-    },
-    "note.written_down": {
-      "source": "note recorded for {id} — read by the next phase that starts",
-      "value": "nota registrada para {id} — la leerá la próxima etapa que empiece"
-    },
-    "read.marked": {
-      "source": "{id} marked read",
-      "value": "{id} marcada como leída"
-    },
     "run.finished": {
       "source": "{id} finished",
       "value": "{id} terminó"
     },
-    "show.nothing_recorded": {
-      "source": "nothing recorded for {id} in {repo}",
-      "value": "no hay nada registrado para {id} en {repo}"
-    },
-    "show.nothing_recorded_anywhere": {
-      "source": "nothing recorded for {id}",
-      "value": "no hay nada registrado para {id}"
-    },
-    "list.no_tasks": {
-      "source": "no tasks against {repo}",
-      "value": "no hay tareas contra {repo}"
-    },
     "repos.none_under": {
       "source": "no repositories under {root}",
       "value": "no hay repositorios bajo {root}"
-    },
-    "pause.asked": {
-      "source": "{id} asked to {word} — a run in flight notices at its next phase",
-      "value": "se le pidió {word} a {id} — una corrida en vuelo se entera en su próxima etapa"
     },
     "cancel.killed": {
       "source": "{id} killed — run `orbit reconcile -repo {repo}` to close its record",
@@ -1708,10 +1602,6 @@
     "cancel.asked_to_stop": {
       "source": "{id} asked to stop",
       "value": "se le pidió a {id} que se detenga"
-    },
-    "requeue.back_in_queue": {
-      "source": "{id} stopped and back in to do",
-      "value": "{id} detenida y de vuelta en pendientes"
     },
     "direct.needs_message": {
       "source": "direct needs a message for task {id}",
@@ -1748,14 +1638,6 @@
     "direct.actions": {
       "source": "↵ send directive · esc cancel · ^V paste",
       "value": "↵ enviar directiva · esc cancelar · ^V pegar"
-    },
-    "reconcile.abandoned": {
-      "source": "{id} was abandoned; its record says so now",
-      "value": "{id} fue abandonada; su registro ya lo dice"
-    },
-    "reconcile.all_accounted": {
-      "source": "every run is accounted for",
-      "value": "no falta ninguna corrida por cerrar"
     },
     "top.window_failed": {
       "source": "the window",
@@ -1845,10 +1727,6 @@
       "source": "pull request closed: {branch}",
       "value": "pull request cerrado: {branch}"
     },
-    "cmd.close_pr": {
-      "source": "close a task's pull request on GitHub",
-      "value": "cerrar el pull request de una tarea en GitHub"
-    },
     "deliver.no_task": {
       "source": "select a task to continue",
       "value": "selecciona una tarea para continuar"
@@ -1885,10 +1763,6 @@
       "source": "stop a run, and say so in its record",
       "value": "detener una ejecución y dejarlo dicho en su registro"
     },
-    "cmd.requeue": {
-      "source": "stop a run and put the task back in to do",
-      "value": "detener una ejecución y devolver la tarea a pendientes"
-    },
     "cmd.join": {
       "source": "open a checkout of another repository for a task",
       "value": "abre un checkout de otro repositorio para una tarea"
@@ -1900,14 +1774,6 @@
     "join.needs_a_task": {
       "source": "join needs a task: pass -task, or run it inside a phase, where {env} is already set",
       "value": "join necesita una tarea: pasá -task, o corrélo dentro de una fase, donde {env} ya está puesto"
-    },
-    "cmd.reconcile": {
-      "source": "close the records of runs whose processes are gone",
-      "value": "cerrar los registros de las ejecuciones cuyos procesos ya no están"
-    },
-    "cmd.note": {
-      "source": "record a note for a task",
-      "value": "dejar una nota para una tarea"
     },
     "cmd.direct": {
       "source": "interrupt or redirect a task and record the directive",
@@ -3311,6 +3177,16 @@
       "source": "[tab] the other field · [↵] save · [esc] leave it as it was",
       "value": "[tab] el otro campo · [↵] guardar · [esc] dejarlo como estaba"
     },
+    "header.waiting": {
+      "source": {
+        "one": "{n} waiting",
+        "other": "{n} waiting"
+      },
+      "value": {
+        "one": "{n} esperando",
+        "other": "{n} esperando"
+      }
+    },
     "header.knows": {
       "source": {
         "one": "{n} fact",
@@ -3724,12 +3600,12 @@
       "value": "detiene la ejecución y devuelve la tarea a por hacer, para arrancarla otra vez desde el principio"
     },
     "tip.take": {
-      "source": "hands you the engine's session in this task's worktree, to type at yourself",
-      "value": "te entrega la sesión del motor en el worktree de esta tarea, para que escribas tú"
+      "source": "you take the wheel for a while — the run waits",
+      "value": "permiso, manejo yo un rato — la corrida espera"
     },
     "tip.hand": {
-      "source": "gives the task back to orbit, and the run carries on from where you left it",
-      "value": "devuelve la tarea a orbit, y la ejecución sigue desde donde la dejaste"
+      "source": "you give the wheel back — the stopped run carries on",
+      "value": "listo, seguí vos — la corrida detenida sigue"
     },
     "tip.ask": {
       "source": "writes a note for this task, which the run reads at its next phase",
@@ -3806,6 +3682,18 @@
     "help.verbs.title": {
       "source": "🎛️ 2. WHAT YOU CAN DO TO A TASK",
       "value": "🎛️ 2. LO QUE PUEDES HACERLE A UNA TAREA"
+    },
+    "help.verbs.task": {
+      "source": "task",
+      "value": "tarea"
+    },
+    "help.verbs.pr": {
+      "source": "pr",
+      "value": "pull request"
+    },
+    "help.verbs.board": {
+      "source": "board",
+      "value": "tablero"
     },
     "help.live.supervisor": {
       "source": "The supervisor: what it has said about the board, and the line you answer it on",
@@ -4429,10 +4317,6 @@
       "source": "running the checks on both sides of {id}",
       "value": "corriendo los checks de los dos lados de {id}"
     },
-    "new.started": {
-      "source": "{id} started, process {pid}",
-      "value": "{id} arrancó, proceso {pid}"
-    },
     "compose.body_unreadable": {
       "source": "orbit cannot read this issue here, and a run will not be able to either: write what has to be done, or set LINEAR_API_KEY",
       "value": "orbit no puede leer esta issue aquí, y una corrida tampoco podrá: escribe qué hay que hacer, o define LINEAR_API_KEY"
@@ -4468,14 +4352,6 @@
     "compare.again": {
       "source": "[r] runs them again",
       "value": "[r] los vuelve a correr"
-    },
-    "cmd.history": {
-      "source": "print everything ever said about a task, in any program",
-      "value": "imprimir todo lo que se ha dicho de una tarea, en cualquier programa"
-    },
-    "history.written": {
-      "source": "also written to {where}",
-      "value": "también escrito en {where}"
     },
     "history.title": {
       "source": "Everything said about this task",
@@ -4521,9 +4397,21 @@
       "source": "start it as soon as it is written",
       "value": "arráncala en cuanto quede anotada"
     },
-    "verb.run": {
-      "source": "run a task that is not running",
-      "value": "ejecuta una tarea que no esté ejecutándose"
+    "verb.start": {
+      "source": "run the task through its flow",
+      "value": "corre la tarea por su flujo"
+    },
+    "verb.task": {
+      "source": "everything one task can be asked for",
+      "value": "todo lo que se le puede pedir a una tarea"
+    },
+    "verb.board": {
+      "source": "everything about the board rather than about one task",
+      "value": "todo lo del tablero, no lo de una tarea"
+    },
+    "verb.supervisor": {
+      "source": "everything said in the supervisor thread",
+      "value": "todo lo dicho en el hilo del supervisor"
     },
     "verb.run.flow": {
       "source": "walk this flow instead of the one it was written against",
@@ -4534,44 +4422,44 @@
       "value": "recorre todas las fases con este motor en vez de con los que nombra el flujo"
     },
     "verb.pause": {
-      "source": "ask a run to stop at its next phase boundary",
-      "value": "pide a una ejecución que se detenga al terminar la fase en curso"
+      "source": "pause the run at its next phase boundary",
+      "value": "pausa la corrida al terminar la fase en curso"
     },
     "verb.resume": {
-      "source": "let a run carry on from a pause",
-      "value": "deja que una ejecución continúe tras una pausa"
+      "source": "carry on from the pause",
+      "value": "sigue desde la pausa"
     },
     "verb.continue": {
-      "source": "let a phase past the gate its flow stopped it at",
-      "value": "deja pasar una fase por la compuerta donde su flujo la detuvo"
+      "source": "let the run past the gate it stopped at",
+      "value": "deja pasar la corrida por el gate donde se detuvo"
     },
     "verb.skip": {
-      "source": "let a run past the phase it is in, without running it",
-      "value": "deja pasar la fase en curso sin ejecutarla"
+      "source": "skip the waiting phase without running it",
+      "value": "salta la fase en espera sin correrla"
     },
     "verb.cancel": {
-      "source": "stop a run where it stands",
-      "value": "detén una ejecución donde esté"
+      "source": "stop the run now; what it wrote stays",
+      "value": "detiene la corrida ya; lo escrito queda"
     },
     "verb.requeue": {
-      "source": "stop whatever holds a task and put it back in to do",
-      "value": "detén lo que retenga la tarea y devuélvela a pendientes"
+      "source": "send the task back to to do",
+      "value": "devuelve la tarea a pendientes"
     },
     "verb.requeue.why": {
       "source": "the reason, if you want it on the record",
       "value": "el motivo, si quieres que conste"
     },
     "verb.note": {
-      "source": "leave a word for the phase that starts next",
-      "value": "deja un apunte para la fase que empiece después"
+      "source": "leave a note the next phase reads — the run keeps going",
+      "value": "deja una nota que lee la próxima fase — la corrida sigue"
     },
     "verb.note.text": {
       "source": "what you want it to know",
       "value": "lo que quieres que sepa"
     },
     "verb.direct": {
-      "source": "correct a task, stopping the run so the next one reads it",
-      "value": "corrige una tarea y detén la ejecución para que la siguiente lo lea"
+      "source": "correct the task and stop the run, so the next run starts corrected",
+      "value": "corrige la tarea y detiene la corrida, para que la próxima arranque corregida"
     },
     "verb.direct.text": {
       "source": "the correction",
@@ -4582,8 +4470,8 @@
       "value": "arranca ya la siguiente ejecución, lo cual cuesta dinero"
     },
     "verb.approve": {
-      "source": "say yes to the libraries a task added",
-      "value": "acepta las librerías que añadió una tarea"
+      "source": "accept the added libraries, so the run goes past the gate",
+      "value": "acepta las librerías agregadas, para que la corrida pase el gate"
     },
     "verb.read": {
       "source": "mark a finished task as looked at",
@@ -4594,16 +4482,48 @@
       "value": "todo lo dicho sobre una tarea, en cualquier programa"
     },
     "verb.pr": {
-      "source": "open a pull request from a task's worktree",
-      "value": "abre un pull request desde la copia de trabajo de una tarea"
+      "source": "open the task's pull request",
+      "value": "abre el pull request de la tarea"
     },
     "verb.merge": {
-      "source": "merge a task's pull request and delete its branch",
-      "value": "fusiona el pull request de una tarea y borra su rama"
+      "source": "merge the pull request and delete its branch",
+      "value": "fusiona el pull request y borra su rama"
     },
     "verb.close_pr": {
-      "source": "close a task's pull request without merging it",
-      "value": "cierra el pull request de una tarea sin fusionarlo"
+      "source": "close the pull request without merging",
+      "value": "cierra el pull request sin fusionarlo"
+    },
+    "verb.pr.show": {
+      "source": "list the task's pull requests and what became of each",
+      "value": "lista los pull requests de la tarea y en qué quedó cada uno"
+    },
+    "verb.pr.show.empty": {
+      "source": "{id} has no pull request open anywhere",
+      "value": "{id} no tiene ningún pull request abierto en ningún lado"
+    },
+    "show.nothing_recorded": {
+      "source": "nothing recorded for {id}",
+      "value": "nada registrado para {id}"
+    },
+    "verb.pr.resolve": {
+      "source": "answer the review threads on the pull request",
+      "value": "responde los hilos de revisión del pull request"
+    },
+    "verb.pr.update": {
+      "source": "merge the base branch into the task's branch",
+      "value": "fusiona la rama base en la rama de la tarea"
+    },
+    "verb.pr.checks": {
+      "source": "make the pull request's checks pass",
+      "value": "haz que pasen los checks del pull request"
+    },
+    "verb.pr.tests": {
+      "source": "add the tests the change is missing",
+      "value": "agrega los tests que le faltan al cambio"
+    },
+    "verb.pr.review": {
+      "source": "leave a senior-style review on the pull request",
+      "value": "deja una revisión de senior en el pull request"
     },
     "verb.say": {
       "source": "say something in the supervisor thread",
@@ -4614,24 +4534,24 @@
       "value": "qué decir"
     },
     "verb.join": {
-      "source": "open a checkout of another repository for a task",
-      "value": "abre para una tarea una copia de trabajo de otro repositorio"
+      "source": "open another repository's checkout for this task",
+      "value": "abre el checkout de otro repositorio para esta tarea"
     },
     "verb.join.name": {
       "source": "the repository to join, by name",
       "value": "el repositorio que se suma, por nombre"
     },
     "verb.permit": {
-      "source": "answer the question a critical action stopped for",
-      "value": "responde a la pregunta por la que se detuvo una acción crítica"
+      "source": "let the stopped critical action happen — or refuse it",
+      "value": "deja pasar la acción crítica detenida — o negala"
     },
     "verb.permit.yes": {
       "source": "whether to let it happen",
       "value": "si se permite o no"
     },
     "verb.critical": {
-      "source": "mark a task as one whose changes need answering for",
-      "value": "marca una tarea como una de cuyos cambios hay que responder"
+      "source": "mark the task critical, so it stops before anything irreversible",
+      "value": "marca la tarea como crítica, para que se detenga antes de lo irreversible"
     },
     "verb.critical.on": {
       "source": "whether it is critical",
@@ -4678,8 +4598,12 @@
       "value": "cuánto queda de las ventanas de cada motor"
     },
     "verb.list": {
-      "source": "every task under this root, in the band that says what it waits for",
-      "value": "todas las tareas bajo esta raíz, en la banda que dice qué esperan"
+      "source": "every task written down, in the band that says what it waits for",
+      "value": "todas las tareas anotadas, en la banda que dice qué esperan"
+    },
+    "verb.list.repo": {
+      "source": "only the tasks worked in this checkout",
+      "value": "solo las tareas trabajadas en este checkout"
     },
     "verb.show": {
       "source": "everything the record says about one task",
@@ -4733,17 +4657,75 @@
       "source": "the fact, in a sentence",
       "value": "el hecho, en una frase"
     },
-    "cmd.new": {
-      "source": "write a task down",
-      "value": "anotar una tarea"
+    "verb.rules": {
+      "source": "the rules you said that Orbit has not been told to keep yet",
+      "value": "las reglas que dijiste y que todavía nadie le mandó guardar a Orbit"
     },
-    "cmd.run": {
-      "source": "run a task through its flow",
-      "value": "llevar una tarea por su flujo"
+    "verb.rules.keep": {
+      "source": "keep one of them, in your words or in better ones",
+      "value": "guardar una, con tus palabras o con unas mejores"
     },
-    "cmd.list": {
-      "source": "list the tasks of a repository",
-      "value": "listar las tareas de un repositorio"
+    "verb.rules.n": {
+      "source": "which one, by its number in the list",
+      "value": "cuál, por su número en la lista"
+    },
+    "verb.rules.text": {
+      "source": "the rule as you would rather it read; the default is what you said",
+      "value": "la regla como preferirías que dijera; por defecto, lo que dijiste"
+    },
+    "verb.rules.check": {
+      "source": "a command that fails when the rule is broken, which is what makes it refuse work",
+      "value": "un comando que falla cuando la regla se rompe, que es lo que la hace frenar el trabajo"
+    },
+    "verb.rules.drop": {
+      "source": "say it was not a rule; the sentence stays where you said it",
+      "value": "decir que no era una regla; la frase queda donde la dijiste"
+    },
+    "verb.rules.drop.n": {
+      "source": "which one, by its number in the list",
+      "value": "cuál, por su número en la lista"
+    },
+    "verb.rules.empty": {
+      "source": "nothing you said is waiting to be kept",
+      "value": "no hay nada que dijiste esperando a ser guardado"
+    },
+    "verb.rules.kept": {
+      "source": "Orbit knows it: {rule}",
+      "value": "Orbit ya lo sabe: {rule}"
+    },
+    "verb.rules.dropped": {
+      "source": "left where you said it: {rule}",
+      "value": "queda donde lo dijiste: {rule}"
+    },
+    "verb.rules.not_a_number": {
+      "source": "a rule is named by its number in the list, and {value} is not a number",
+      "value": "una regla se nombra por su número en la lista, y {value} no es un número"
+    },
+    "verb.rules.no_such_rule": {
+      "source": {
+        "one": "there is no rule {asked}; one rule is waiting",
+        "other": "there is no rule {asked}; {n} rules are waiting"
+      },
+      "value": {
+        "one": "no hay una regla {asked}; hay una esperando",
+        "other": "no hay una regla {asked}; hay {n} esperando"
+      }
+    },
+    "knowledge.said": {
+      "source": "You said this · keep it and Orbit applies it, or say it was not a rule",
+      "value": "Esto lo dijiste vos · guardala y Orbit la aplica, o decí que no era una regla"
+    },
+    "knowledge.kept": {
+      "source": "Orbit knows it now, and every phase will be told",
+      "value": "Orbit ya lo sabe, y a cada fase se le va a decir"
+    },
+    "knowledge.left_said": {
+      "source": "left in the thread where you said it",
+      "value": "queda en el hilo donde lo dijiste"
+    },
+    "knowledge.tray_ways": {
+      "source": "[↑↓] move · [k] keep it · [e] keep it in better words · [d] not a rule · [esc] back",
+      "value": "[↑↓] mover · [k] guardarla · [e] guardarla con mejores palabras · [d] no era una regla · [esc] atrás"
     },
     "verb.thread.empty": {
       "source": "the supervisor thread is empty",

@@ -23,7 +23,7 @@ func TestPauseLeavesOneWordARunWillFind(t *testing.T) {
 	root, orbitHome := workspace(t)
 	dir := writeTask(t, root)
 
-	code, out, errOut := run(t, "pause", "-repo", dir, "ACME-1")
+	code, out, errOut := run(t, "task", "pause", "-repo", dir, "ACME-1")
 	if code != 0 {
 		t.Fatalf("pause exited %d: %s", code, errOut)
 	}
@@ -48,11 +48,11 @@ func TestResumeLeavesTheOtherWord(t *testing.T) {
 	root, orbitHome := workspace(t)
 	dir := writeTask(t, root)
 
-	if code, _, errOut := run(t, "pause", "-repo", dir, "ACME-1"); code != 0 {
+	if code, _, errOut := run(t, "task", "pause", "-repo", dir, "ACME-1"); code != 0 {
 		t.Fatalf("pause exited %d: %s", code, errOut)
 	}
 
-	if code, _, errOut := run(t, "resume", "-repo", dir, "ACME-1"); code != 0 {
+	if code, _, errOut := run(t, "task", "resume", "-repo", dir, "ACME-1"); code != 0 {
 		t.Fatalf("resume exited %d: %s", code, errOut)
 	}
 
@@ -67,7 +67,7 @@ func TestPausingATaskNoRunHoldsIsNotARefusal(t *testing.T) {
 	root, orbitHome := workspace(t)
 
 	dir := writeTask(t, root)
-	if code, _, errOut := run(t, "pause", "-repo", dir, "ACME-1"); code != 0 {
+	if code, _, errOut := run(t, "task", "pause", "-repo", dir, "ACME-1"); code != 0 {
 		t.Fatalf("pause exited %d: %s", code, errOut)
 	}
 
@@ -81,12 +81,12 @@ func TestPauseAndResumeNeedAnID(t *testing.T) {
 		root, _ := workspace(t)
 		dir := filepath.Join(root, "payments")
 
-		code, _, errOut := run(t, word, "-repo", dir)
+		code, _, errOut := run(t, "task", word, "-repo", dir)
 		if code == 0 {
 			t.Fatalf("%s with no id exited 0", word)
 		}
 
-		if !strings.Contains(errOut, word+" needs the id of a task") {
+		if !strings.Contains(errOut, "task "+word+" needs the id of a task") {
 			t.Errorf("the refusal is %q, and does not name the command that refused", errOut)
 		}
 	}
@@ -96,12 +96,12 @@ func TestPauseAndResumeNeedAnID(t *testing.T) {
 // line out of the synopsis. A single `pause|resume` row would match neither.
 func TestEachOfTheTwoShowsItsOwnLine(t *testing.T) {
 	for _, tc := range []struct{ word, says string }{
-		{"pause", "stop a run at its next phase"},
-		{"resume", "let a stopped run carry on"},
+		{"pause", "pause the run at its next phase boundary"},
+		{"resume", "carry on from the pause"},
 	} {
 		t.Setenv("ORBIT_HOME", t.TempDir())
 
-		code, out, errOut := run(t, tc.word, "-h")
+		code, out, errOut := run(t, "task", tc.word, "-h")
 		if code != 0 {
 			t.Fatalf("%s -h exited %d: %s", tc.word, code, errOut)
 		}
@@ -123,7 +123,7 @@ func TestSkipIsAWordTheCommandLineCanWrite(t *testing.T) {
 	root, orbitHome := workspace(t)
 	dir := writeTask(t, root)
 
-	code, out, errOut := run(t, "skip", "-repo", dir, "ACME-1")
+	code, out, errOut := run(t, "task", "skip", "-repo", dir, "ACME-1")
 	if code != 0 {
 		t.Fatalf("skip exited %d: %s", code, errOut)
 	}

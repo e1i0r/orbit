@@ -1,12 +1,12 @@
 package verb
 
-// orbit set: the settings, as a table of what they are called, what they
-// mean, and what may be written into them.
+// The settings: the family that reads them and writes one, and the table of
+// what they are called, what they mean, and what may be written into them.
 //
 // One table and not a switch beside a list of names beside a paragraph of
 // help. Every setting is one entry here, so a setting that is added is a
-// setting `orbit set` prints, refuses wrong values for, and lists in its own
-// refusal — rather than one that three of those four know about.
+// setting `orbit settings set` prints, refuses wrong values for, and lists
+// in its own refusal — rather than one that three of those four know about.
 
 import (
 	"errors"
@@ -18,6 +18,34 @@ import (
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/words"
 )
+
+// settings is the family, parent first. The parent keeps its own body: it
+// is the reading, and `orbit settings` has printed them for as long as there
+// have been any.
+func settings() []Verb {
+	return []Verb{
+		{
+			Name: "settings", Reads: true,
+			About: func(p *words.Printer) string {
+				return p.T("verb.settings", "every setting and what it is set to")
+			},
+		},
+		{
+			Name: "set", Under: "settings",
+			About: func(p *words.Printer) string {
+				return p.T("verb.set", "change one of Orbit's own settings")
+			},
+			Takes: []Field{
+				{Name: "key", Kind: Named, Needed: true, About: func(p *words.Printer) string {
+					return p.T("verb.set.key", "which setting")
+				}},
+				{Name: "value", Kind: Words, Needed: true, About: func(p *words.Printer) string {
+					return p.T("verb.set.value", "what to set it to")
+				}},
+			},
+		},
+	}
+}
 
 // Setting is one setting as a reader sees it: what it is called, what it
 // holds now, and what it means. It is what the settings reading answers

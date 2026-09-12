@@ -154,7 +154,7 @@ func TestATaskTheFormWroteIsRunAndThenWaitedFor(t *testing.T) {
 	}
 
 	joined := strings.Join(ran, " ")
-	for _, want := range []string{"-id ACME-9", "-repo /checkouts/app", "-flow careful", "-start", "write the importer"} {
+	for _, want := range []string{"-id ACME-9", "-repo /checkouts/app", "-flow careful", "-run=true", "write the importer"} {
 		if !strings.Contains(joined, want) {
 			t.Errorf("the command line is %q, want it to carry %q", joined, want)
 		}

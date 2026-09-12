@@ -43,7 +43,7 @@ func TestACommandOverAnOlderStateRootFindsItsTasks(t *testing.T) {
 		}
 	}
 
-	code, out, errOut := run(t, "list", "-repo", repoDir)
+	code, out, errOut := run(t, "board", "list", "-repo", repoDir)
 	if code != 0 {
 		t.Fatalf("list over an older state root exited %d: %s", code, errOut)
 	}
@@ -53,7 +53,7 @@ func TestACommandOverAnOlderStateRootFindsItsTasks(t *testing.T) {
 	}
 
 	// And what it says about it is what the old log said.
-	code, out, errOut = run(t, "show", "-repo", repoDir, "ACME-1")
+	code, out, errOut = run(t, "task", "show", "-repo", repoDir, "ACME-1")
 	if code != 0 {
 		t.Fatalf("show over an older state root exited %d: %s", code, errOut)
 	}

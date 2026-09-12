@@ -107,6 +107,23 @@ func TestScrollingPastTheEndClampsRatherThanSlicingOutOfRange(t *testing.T) {
 	}
 }
 
+// TestTheWheelMovesWhatTheArrowsMove. The wheel is the mouse doing what
+// the arrows do: rows down the sheet for a positive push, up for a
+// negative one, and the top stops it the same way. The notch size is the
+// window's own and arrives as the argument, so this package never repeats
+// it — three here is just the call the window makes.
+func TestTheWheelMovesWhatTheArrowsMove(t *testing.T) {
+	s, _ := sheet(t)
+
+	if down := s.Wheel(3); down.offset != 3 {
+		t.Errorf("wheel down = offset %d, want 3", down.offset)
+	}
+
+	if up := s.Wheel(-4); up.offset != 0 {
+		t.Errorf("wheel up past the top = offset %d, want 0", up.offset)
+	}
+}
+
 // press is one keystroke as the event loop delivers it. A key with no
 // character of its own — an arrow, escape — carries no text, which is how
 // the event loop tells the two apart.

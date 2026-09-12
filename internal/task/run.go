@@ -15,7 +15,7 @@ import (
 //
 // It stops at the first failure and says why, in the words the engine used,
 // and it stops before any phase its gate will not let past. A nil gate never
-// stops anything, which is what `orbit run` was before there was a window to
+// stops anything, which is what `orbit task start` was before there was a window to
 // release a run from.
 //
 // The worktree is never removed. Not on failure, where the work that did

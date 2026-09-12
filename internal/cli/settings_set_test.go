@@ -38,7 +38,7 @@ func TestSetWaitsForAChangeAlreadyUnderWayAndThenNamesTheLock(t *testing.T) {
 		t.Fatalf("write the held lock: %v", err)
 	}
 
-	code, _, errOut := run(t, "set", "engine", "codex")
+	code, _, errOut := run(t, "settings", "set", "engine", "codex")
 	if code == 0 {
 		t.Fatal("set wrote the settings while another change held them")
 	}
@@ -143,7 +143,7 @@ func TestSetEarlyExitsAndStoreFailures(t *testing.T) {
 	// 1. A flag parse failure.
 	t.Setenv("ORBIT_HOME", t.TempDir())
 
-	if code, _, errOut := run(t, "set", "-nosuchflag"); code == 0 {
+	if code, _, errOut := run(t, "settings", "set", "-nosuchflag"); code == 0 {
 		t.Error("set with an unknown flag exited 0")
 	} else if errOut == "" {
 		t.Error("set failed silently on a bad flag")
@@ -182,7 +182,7 @@ func TestSetFailsWhenSettingsCannotBeSaved(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("ORBIT_HOME", home)
 	// A first, real set to make settings.json exist as an ordinary file.
-	if code, _, errOut := run(t, "set", "autopilot", "on"); code != 0 {
+	if code, _, errOut := run(t, "settings", "set", "autopilot", "on"); code != 0 {
 		t.Fatalf("set autopilot on exited %d: %s", code, errOut)
 	}
 
@@ -193,7 +193,7 @@ func TestSetFailsWhenSettingsCannotBeSaved(t *testing.T) {
 	}
 	defer func() { _ = os.Chmod(home, 0o700) }() //nolint:errcheck
 
-	code, _, errOut := run(t, "set", "autopilot", "off")
+	code, _, errOut := run(t, "settings", "set", "autopilot", "off")
 	if code == 0 {
 		t.Error("set into a directory that refuses writes exited 0")
 	}

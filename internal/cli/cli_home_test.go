@@ -39,7 +39,7 @@ func TestOpenBothFailsWhenTheStateRootCannotBeCreated(t *testing.T) {
 
 	t.Setenv("ORBIT_HOME", filepath.Join(blocker, "orbit"))
 
-	code, _, errOut := run(t, "list", "-repo", repoDir)
+	code, _, errOut := run(t, "board", "list", "-repo", repoDir)
 	if code == 0 {
 		t.Error("list with an unmakeable state root exited 0")
 	}

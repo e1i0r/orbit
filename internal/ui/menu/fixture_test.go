@@ -34,7 +34,7 @@ func panes() []Pane {
 }
 
 // table is the commands: one about no task, one refused, and the nine a
-// task's menu carries.
+// task's menu carries — the family's parent once, with its children on it.
 func table() []Command {
 	out := []Command{
 		{Name: "reconcile", About: "read the board again"},
@@ -42,8 +42,24 @@ func table() []Command {
 		{Name: "export", About: "write the record out"},
 	}
 
+	seen := map[string]bool{}
+
 	for _, c := range taskCommands {
-		out = append(out, Command{Name: c.name, About: "what " + c.name + " does", AboutATask: true})
+		if seen[c.name] {
+			continue
+		}
+
+		seen[c.name] = true
+
+		cmd := Command{Name: c.name, About: "what " + c.name + " does", AboutATask: true}
+
+		for _, k := range taskCommands {
+			if k.name == c.name && k.child != "" {
+				cmd.Children = append(cmd.Children, Child{Name: k.child, About: "what " + k.child + " does"})
+			}
+		}
+
+		out = append(out, cmd)
 	}
 
 	return out
@@ -85,6 +101,7 @@ func world(t *testing.T) Env {
 
 			return verbs(), true
 		},
+		Says: func(b key.Binding) string { return b.Help().Desc },
 		Args: func(id string) []string { return []string{"-repo", "/checkouts/acme", id} },
 	}
 }

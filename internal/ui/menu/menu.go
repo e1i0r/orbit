@@ -16,6 +16,8 @@
 package menu
 
 import (
+	"charm.land/bubbles/v2/key"
+
 	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/ui/layout"
 	"github.com/e1i0r/orbit/internal/words"
@@ -45,6 +47,11 @@ type Env struct {
 	// a menu with nothing on it and a line saying so.
 	Verbs func(id string) (list []keymap.Affordance, ok bool)
 
+	// Says is what one key does, in words — the same sentence ? answers
+	// with. Every key row carries it; a refused one shows its reason
+	// instead, which is the part a reader acts on.
+	Says func(key.Binding) string
+
 	// Args is what a command about that task is run with: the repository
 	// and the id, already filled in, because the menu was opened on the
 	// task and the reader should not have to type either.
@@ -65,6 +72,17 @@ type Command struct {
 	// no row, so there is no task for such a verb to be about: choosing
 	// one ran the command bare and answered with its usage.
 	AboutATask bool
+	// Children are the family's words after the parent's. The menu lists
+	// them under it; every door runs them through the parent.
+	Children []Child
+}
+
+// Child is one subcommand of a family: its own word, what it does, and
+// whether it takes arguments the menu has none of.
+type Child struct {
+	Name      string
+	About     string
+	NeedsArgs bool
 }
 
 // A Pane is one of the task's, and the key that opens it.
@@ -77,9 +95,9 @@ type Pane struct {
 // An Entry is one drawn row: the glyph or the name, the sentence describing
 // it, and — where it cannot be done here — the reason on the same line.
 //
-// What choosing it does is one of three, and at most one is set. Pane shows
-// a pane, Command runs a command, and anything else sends Glyph as a
-// keystroke.
+// What choosing it does is one of four, and at most one is set. Pane shows
+// a pane, Family drills into the submenu, Command runs a command, and
+// anything else sends Glyph as a keystroke.
 type Entry struct {
 	Glyph  string // the keystroke the entry sends, when it has one
 	Title  string // what the entry is called
@@ -88,10 +106,13 @@ type Entry struct {
 	Reason string // why, when Dim
 	Head   bool   // names the block below it; not a thing to choose
 
-	Pane    string   // the pane it opens
-	Command string   // the command it runs
-	Args    []string // what that command is run with
-	Says    bool     // the command takes a message: the box is opened for it
+	Family    string   // the submenu it opens, when it opens one
+	Pane      string   // the pane it opens
+	Command   string   // the command it runs
+	Child     string   // the family's word after the parent's, when it has one
+	Args      []string // what that command is run with
+	Says      bool     // the command takes a message: the box is opened for it
+	NeedsArgs bool     // the command takes arguments the menu has none of: the line is opened for it
 }
 
 // Out is what the menu asks the window for. At most one of Pane, Send and
@@ -103,16 +124,26 @@ type Out struct {
 	// Send is a keystroke to put through the keyboard's own map, which is
 	// how a verb chosen here is the verb pressed.
 	Send string
-	// Run is the command to run and Args what with. Ask says it takes a
-	// message instead: the window opens the box rather than running it.
-	Run  string
-	Args []string
-	Ask  bool
+	// Run is the command to run and Args what with. Child is the family's
+	// word after the parent's, for the box a message is typed into. Ask
+	// says it takes a message instead: the window opens the box rather
+	// than running it.
+	Run   string
+	Args  []string
+	Child string
+	Ask   bool
+	// Palette is the line the palette opens with, for a command that
+	// takes arguments the menu has none of.
+	Palette string
 }
 
 // State is the menu while it is up, and nothing while it is down. task is
 // what the menu is about, and empty means the board's menu — the commands
 // that are not about any one task.
+//
+// sub is the family drilled into, and empty at the top. Families are one
+// level deep and so is the menu: a submenu holds no further families, only
+// the verbs and commands that belong to it.
 //
 // offset is the first entry drawn, moved only to keep the selection on
 // screen: a task's panes and verbs together are more rows than a small
@@ -120,6 +151,7 @@ type Out struct {
 type State struct {
 	open   bool
 	task   string
+	sub    string
 	sel    int
 	offset int
 }

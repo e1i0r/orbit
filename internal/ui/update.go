@@ -90,7 +90,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, outputPump(m.watching)
 	case commandMsg:
 		next := m
-		if m.delivering.cmd == msg.Name {
+		if answers(m.delivering.cmd, msg.Name) {
 			next = next.answered(msg.Text, msg.Err)
 		}
 

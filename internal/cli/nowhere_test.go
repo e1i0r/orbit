@@ -18,7 +18,7 @@ func TestATaskWrittenWhereThereIsNoRepositoryIsStillWrittenDown(t *testing.T) {
 	t.Setenv("ORBIT_HOME", t.TempDir())
 	t.Chdir(t.TempDir())
 
-	code, out, errOut := run(t, "new", "-id", "ACME-1", "--", "find out which service owns the retry")
+	code, out, errOut := run(t, "board", "new", "-id", "ACME-1", "--", "find out which service owns the retry")
 	if code != 0 {
 		t.Fatalf("exit %d: %s", code, errOut)
 	}
@@ -27,7 +27,7 @@ func TestATaskWrittenWhereThereIsNoRepositoryIsStillWrittenDown(t *testing.T) {
 		t.Errorf("the line does not say the task is against none:\n%s", out)
 	}
 
-	code, out, errOut = run(t, "show", "ACME-1")
+	code, out, errOut = run(t, "task", "show", "ACME-1")
 	if code != 0 {
 		t.Fatalf("show exit %d: %s", code, errOut)
 	}
@@ -46,7 +46,7 @@ func TestARepositoryTypedOutStillHasToOpen(t *testing.T) {
 
 	missing := t.TempDir() + "/not-a-checkout"
 
-	code, _, errOut := run(t, "new", "-repo", missing, "-id", "ACME-2", "--", "write the importer")
+	code, _, errOut := run(t, "board", "new", "-repo", missing, "-id", "ACME-2", "--", "write the importer")
 	if code == 0 {
 		t.Fatal("a -repo that is not a repository was accepted")
 	}
@@ -64,7 +64,7 @@ func TestAnIDNothingAnswersToIsRefusedWithoutNamingARepository(t *testing.T) {
 	t.Setenv("ORBIT_HOME", t.TempDir())
 	t.Chdir(t.TempDir())
 
-	code, _, errOut := run(t, "show", "ACME-404")
+	code, _, errOut := run(t, "task", "show", "ACME-404")
 	if code == 0 {
 		t.Fatal("show on an id nothing answers to exited 0")
 	}

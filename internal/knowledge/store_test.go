@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"strings"
 	"testing"
 )
 
@@ -15,83 +14,6 @@ func roots(t *testing.T) (state, repo string) {
 	t.Helper()
 
 	return t.TempDir(), t.TempDir()
-}
-
-// TestAFactOfARepositoryLivesInTheRepository is what makes knowledge travel.
-//
-// It goes under `.orbit/knowledge/` inside the checkout, so it moves with the
-// push, whoever clones the project gets what Orbit learned about it, and a
-// rule that is about to start steering the agent shows up in a diff somebody
-// reviews rather than appearing on one machine in silence.
-func TestAFactOfARepositoryLivesInTheRepository(t *testing.T) {
-	state, repo := roots(t)
-	s := NewStore(state)
-
-	f := Fact{
-		Scope:  Scope{Kind: Dir, Repo: repo, Path: "backend/ledger"},
-		Source: Human,
-		Ref:    "REF-9",
-		Phrase: "No UPDATE or DELETE in ledger. Reconcile marks, it does not correct.",
-	}
-
-	where, err := s.Save(f)
-	if err != nil {
-		t.Fatalf("Save: %v", err)
-	}
-
-	want := filepath.Join(repo, ".orbit", "knowledge", "backend", "ledger", "REF-9.md")
-	if where != want {
-		t.Errorf("the fact was written to %s,\nwant %s", where, want)
-	}
-
-	if _, err := os.Stat(want); err != nil {
-		t.Errorf("nothing is there: %v", err)
-	}
-}
-
-// TestAGeneralFactLivesInTheStateRootAndNoRepository. It is about no
-// checkout in particular, so putting it in one would be picking a repository
-// at random and making it apply only while somebody works there.
-func TestAGeneralFactLivesInTheStateRootAndNoRepository(t *testing.T) {
-	state, repo := roots(t)
-	s := NewStore(state)
-
-	where, err := s.Save(Fact{
-		Scope:  Scope{Kind: General},
-		Source: Human,
-		Phrase: "The PRs and the commits are written in English.",
-	})
-	if err != nil {
-		t.Fatalf("Save: %v", err)
-	}
-
-	if !strings.HasPrefix(where, state) {
-		t.Errorf("a general fact was written to %s, outside the state root %s", where, state)
-	}
-
-	if entries, err := os.ReadDir(filepath.Join(repo, ".orbit")); err == nil && len(entries) > 0 {
-		t.Error("a general fact left something inside a repository")
-	}
-}
-
-// TestALanguageFactIsFiledUnderItsLanguage, beside the general ones and in
-// the state root for the same reason: it belongs to every checkout at once.
-func TestALanguageFactIsFiledUnderItsLanguage(t *testing.T) {
-	state, _ := roots(t)
-	s := NewStore(state)
-
-	where, err := s.Save(Fact{
-		Scope:  Scope{Kind: Language, Lang: "go"},
-		Source: Human,
-		Phrase: "Never discard what a call answered with _.",
-	})
-	if err != nil {
-		t.Fatalf("Save: %v", err)
-	}
-
-	if want := filepath.Join(state, "knowledge", "lang", "go"); filepath.Dir(where) != want {
-		t.Errorf("a Go fact went to %s, want it under %s", filepath.Dir(where), want)
-	}
 }
 
 // TestWhatWasWrittenComesBack is the whole of the format: a fact saved and

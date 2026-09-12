@@ -52,7 +52,7 @@ func deliverable(t *testing.T, text string) (dir string) {
 
 	dir = withRemote(t, t.TempDir(), "payments")
 
-	if code, _, errOut := run(t, "new", "-repo", dir, "-id", "PAY-1", text); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", dir, "-id", "PAY-1", text); code != 0 {
 		t.Fatalf("orbit new exited %d: %s", code, errOut)
 	}
 
@@ -223,6 +223,43 @@ func TestTheAnswerToADeliveryIsTheUrlAndNothingElse(t *testing.T) {
 
 	if strings.Contains(out, "A new release") {
 		t.Errorf("gh's chatter came back inside the answer: %q", out)
+	}
+}
+
+// TestShowListsWhatOpeningOpened. The row is written where the pull
+// request opened, and `pr show` reads it back with what became of it.
+func TestShowListsWhatOpeningOpened(t *testing.T) {
+	dir := deliverable(t, "make the thing")
+	fakeGh(t, "echo https://github.test/acme/payments/pull/7")
+
+	if code, _, errOut := run(t, "pr", "-repo", dir, "PAY-1"); code != 0 {
+		t.Fatalf("pr exited %d: %s", code, errOut)
+	}
+
+	code, out, errOut := run(t, "pr", "show", "-repo", dir, "PAY-1")
+	if code != 0 {
+		t.Fatalf("pr show exited %d: %s", code, errOut)
+	}
+
+	for _, want := range []string{"payments", "open", "https://github.test/acme/payments/pull/7"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("the show does not mention %q:\n%s", want, out)
+		}
+	}
+}
+
+// TestShowWithNothingOpenedSaysSo. Most tasks have never been delivered,
+// and no rows is an empty reading rather than a refusal.
+func TestShowWithNothingOpenedSaysSo(t *testing.T) {
+	dir := deliverable(t, "make the thing")
+
+	code, out, errOut := run(t, "pr", "show", "-repo", dir, "PAY-1")
+	if code != 0 {
+		t.Fatalf("pr show exited %d: %s", code, errOut)
+	}
+
+	if !strings.Contains(out, "PAY-1") {
+		t.Errorf("an empty show reads %q", out)
 	}
 }
 

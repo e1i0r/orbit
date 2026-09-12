@@ -12,9 +12,10 @@ import (
 // honest answer for a checkout with no release tag.
 var Version = "dev"
 
-// version prints the release orbit was built at. It takes no flags of its
-// own; parse still runs so `-h` shows the same shape every other command
-// does, and an unknown flag is refused the same way.
+// version prints the release orbit was built at, under the mark from the
+// logo: a body with rings around it. It takes no flags of its own; parse
+// still runs so `-h` shows the same shape every other command does, and an
+// unknown flag is refused the same way.
 func version(ctx Context, args []string) error {
 	fs := flag.NewFlagSet("version", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
@@ -23,7 +24,13 @@ func version(ctx Context, args []string) error {
 		return err
 	}
 
-	fmt.Fprintf(ctx.Out, "orbit %s\n", Version)
+	// The mark, the name with the build, and the tagline in the reader's
+	// language — the key already exists for the usage screen, so no new
+	// entry. Colour only on a terminal of its own; see banner.go.
+	p := ctx.printer()
+	fmt.Fprint(ctx.Out, banner(Version,
+		p.T("cli.tagline", "orbit — a cockpit for supervising coding agents"),
+		useColor(ctx.Out)))
 
 	return nil
 }

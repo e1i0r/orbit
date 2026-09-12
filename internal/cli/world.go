@@ -132,8 +132,8 @@ func (w world) Say(text, by, about string) error {
 func (w world) Deliver(_ context.Context, t task.Task, verb string) (string, error) {
 	run, known := map[string]func(Context, []string) error{
 		"pr":       createPR,
-		"merge":    mergePR,
-		"close-pr": closePR,
+		"pr merge": mergePR,
+		"pr close": closePR,
 	}[verb]
 	if !known {
 		return "", fmt.Errorf("%q is not something a task can be delivered by", verb)

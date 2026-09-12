@@ -24,21 +24,26 @@ func about(name, value string) words.Arg {
 }
 
 // Env is what this screen needs of the world: the words it speaks, the keys
-// it answers, and the two lists it must not keep its own copy of.
+// it answers, the build it names, and the two lists it must not keep its
+// own copy of.
 type Env struct {
 	Words *words.Printer
 	Keys  keymap.Keys
+	// Version is the build the masthead names, beside the mark. Empty
+	// names no build: the sheet still opens, it just says orbit.
+	Version string
 	// Verbs is what a task offers, each with the sentence ? answers with.
 	Verbs []Verb
 	// Tabs is the detail screen's own list, in its own order.
 	Tabs []Tab
 }
 
-// A Verb is one thing that can be done to a task: the key that does it, and
-// what that key does in words.
+// A Verb is one thing that can be done to a task: the key that does it,
+// what that key does in words, and the family it belongs to for grouping.
 type Verb struct {
-	Key  string
-	Says string
+	Key    string
+	Says   string
+	Family string
 }
 
 // A Tab is one of the detail screen's tabs, as its menu shows it.
@@ -89,6 +94,32 @@ func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
 	return s, Out{}
 }
 
+// markRows is the program's mark with its rings on: the same thirteen
+// cells the command line prints under `orbit version`, art only and ASCII
+// only — a mark like the header pill's ◉ reads two cells on fonts that
+// render it so, and the line beside it comes out shifted. The language
+// test names these rows to skip them: art has no Spanish to differ into.
+var markRows = []string{
+	"    _____",
+	"   /     \\",
+	"--(   o   )--",
+	"   \\_____/",
+}
+
+// Wheel is the mouse doing what the arrows do: d rows down the sheet for a
+// positive d, up for a negative one. The top stops it; the bottom is the
+// drawing's to clamp, which is the only place that knows how many lines
+// there are. Three rows a notch is the window's own wheelRows, passed in
+// rather than repeated, so the hand learns one distance.
+func (s State) Wheel(d int) State {
+	s.offset += d
+	if s.offset < 0 {
+		s.offset = 0
+	}
+
+	return s
+}
+
 // View is the sheet drawn.
 func (s State) View(h, w int, e Env) []string {
 	if h <= 0 {
@@ -96,9 +127,28 @@ func (s State) View(h, w int, e Env) []string {
 	}
 
 	p := e.Words
+
+	name := "orbit"
+	if e.Version != "" {
+		name += " " + e.Version
+	}
+
+	// The masthead: the mark with the build's name and the sheet's title
+	// beside it, the way `orbit version` draws them. The body paints in
+	// the titles' own colour and the rings in the keys', so the block
+	// reads as the sheet's and not as a picture hung beside it.
+	body := theme.Paint(theme.Live).Render
+	rings := theme.Paint(theme.Accent).Render
+	head := theme.Paint(theme.Live).Bold(true).Render
 	out := []string{
 		"",
-		"  " + theme.Paint(theme.Accent).Bold(true).Render(p.T("help.title", "Help and keyboard shortcuts (cheat sheet)")),
+		body(cells.PadRight(markRows[0], 13)) + "  " + theme.Paint(theme.Accent).Bold(true).Render(name),
+		body(cells.PadRight(markRows[1], 13)) + "  " + head(p.T("help.title", "Help and keyboard shortcuts (cheat sheet)")),
+		rings("--(   ") + body("o") + rings("   )--"),
+		body(markRows[3]),
+		// Breathing room under the mark: the subtitle sitting against the
+		// rings reads as the logo's slogan, and it is the sheet's.
+		"",
 		"  " + theme.Paint(theme.Dim).Render(p.T("help.subtitle", "every function can be reached from the keyboard or by clicking it")),
 		"",
 	}
@@ -135,19 +185,52 @@ func (s State) View(h, w int, e Env) []string {
 	//
 	// The sentences are whole. They are longer than a column, so they are
 	// wrapped here and the continuation rows are given no key of their own.
-	verbs := make([][2]string, 0, len(e.Verbs))
+	//
+	// One section per family, in the order a reader meets them: what the
+	// keys do first, then what only a command does. A sheet that kept its
+	// own list stops being true the day one of them changes — the grouping
+	// is the families', read off each row, and never a second list.
+	groups := []string{"task", "pr", "board"}
+	byFamily := map[string][][2]string{}
+
 	for _, v := range e.Verbs {
+		family := v.Family
+		if family == "" {
+			family = "task"
+		}
+
 		for i, line := range cells.Lines(v.Says, max(w-36, 20)) {
 			glyph := ""
 			if i == 0 {
 				glyph = "[" + v.Key + "]"
 			}
 
-			verbs = append(verbs, [2]string{glyph, line})
+			byFamily[family] = append(byFamily[family], [2]string{glyph, line})
 		}
 	}
 
-	renderSection(p.T("help.verbs.title", "🎛️ 2. WHAT YOU CAN DO TO A TASK"), verbs)
+	out = append(out, "  "+theme.Paint(theme.Live).Bold(true).Render(p.T("help.verbs.title", "🎛️ 2. WHAT YOU CAN DO TO A TASK")))
+	familyTitle := map[string]string{
+		"task":  p.T("help.verbs.task", "task"),
+		"pr":    p.T("help.verbs.pr", "pr"),
+		"board": p.T("help.verbs.board", "board"),
+	}
+
+	for _, family := range groups {
+		if len(byFamily[family]) == 0 {
+			continue
+		}
+
+		out = append(out, "    "+theme.Paint(theme.Dim).Render(familyTitle[family]))
+
+		for _, item := range byFamily[family] {
+			k := cells.Pad(item[0], 28, false)
+			line := "    " + theme.Paint(theme.Accent).Render(k) + " " + theme.Paint(theme.Dim).Render(item[1])
+			out = append(out, cells.Fit(line, w))
+		}
+	}
+
+	out = append(out, "")
 
 	renderSection(p.T("help.live.title", "⚡ 3. LIVE CONTROL AND SETTINGS"), [][2]string{
 		{p.T("help.live.autopilot_key", "[A] / ⚡ click"), p.T("help.live.autopilot", "Toggle autopilot: tasks in to do start on their own")},

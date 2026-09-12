@@ -270,3 +270,28 @@ func TestABuildWithNoHandsShowsNoButtons(t *testing.T) {
 		t.Errorf("a build with no verbs answered %d: %v", code, body)
 	}
 }
+
+// TestAVerbInAFamilyIsBothItsWords.
+//
+// internal/verb spells a child's name with a space, and a URL carries none,
+// so the two words arrive as a segment each and are joined back here. Asking
+// for "keep" alone would be this package inventing a fifth vocabulary.
+func TestAVerbInAFamilyIsBothItsWords(t *testing.T) {
+	h := &hands{}
+	s := running(h)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/do/rules/keep",
+		strings.NewReader(`{"n":"1"}`))
+	req.Header.Set("Content-Type", "application/json")
+
+	rec := httptest.NewRecorder()
+	s.Handler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("/api/do/rules/keep answered %d: %s", rec.Code, rec.Body.String())
+	}
+
+	if !reached(h.asked, "rules keep") {
+		t.Errorf("the browser asked for %v", h.asked)
+	}
+}

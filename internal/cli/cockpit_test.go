@@ -68,7 +68,7 @@ func cockpitBoard(t *testing.T) (Context, string) {
 
 	ctx := Context{Out: &out, Err: &errOut, Words: words.For("en")}
 
-	ranCommand(t, ctx, "new", "-repo", repo, "-id", "LED-1", "the refund lands on the total twice")
+	ranCommand(t, ctx, "board", "new", "-repo", repo, "-id", "LED-1", "the refund lands on the total twice")
 
 	return ctx, code
 }

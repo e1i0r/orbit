@@ -14,11 +14,29 @@ import (
 func pointAt(t *testing.T, m Model, glyph string) Model {
 	t.Helper()
 
-	for i, e := range m.menu.Entries(m.menuEnv()) {
+	env := m.menuEnv()
+	for i, e := range m.menu.Entries(env) {
 		if e.Glyph == glyph {
 			m.menu = m.menu.Point(i)
 
 			return m
+		}
+	}
+
+	// Not on top: drill into each family and look there, the way a
+	// reader who opened the menu would.
+	for i, e := range m.menu.Entries(env) {
+		if e.Family == "" {
+			continue
+		}
+
+		sub, _ := m.menu.Point(i).Enter(env)
+		for j, s := range sub.Entries(env) {
+			if s.Glyph == glyph {
+				m.menu = sub.Point(j)
+
+				return m
+			}
 		}
 	}
 

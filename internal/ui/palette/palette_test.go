@@ -25,8 +25,6 @@ func three() []Command {
 	}
 }
 
-// world is the Env: the words, the keys, a body of five rows, and that
-// table.
 func world(t *testing.T) Env {
 	t.Helper()
 

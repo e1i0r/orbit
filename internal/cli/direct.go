@@ -19,10 +19,26 @@ import (
 	"github.com/e1i0r/orbit/internal/words"
 )
 
+// message is the words after the id: what direct is given to say.
+//
+// A leading "--" is dropped. It is the shell's way of saying the flags are
+// over, and a caller that puts it after the id — which is where a caller
+// naturally puts it, the id being what the flags come before — is saying so
+// once the flags are over already: flag.Parse stops at the id and never sees
+// it. Kept, it became the first word of every note the window wrote.
+func message(fs *flag.FlagSet) string {
+	rest := fs.Args()[1:]
+	if len(rest) > 0 && rest[0] == "--" {
+		rest = rest[1:]
+	}
+
+	return strings.Join(rest, " ")
+}
+
 // directTask interrupts an in-flight run while preserving memory, records the
 // directive and note, and optionally restarts the task.
 func directTask(ctx Context, args []string) error {
-	fs := flag.NewFlagSet("direct", flag.ContinueOnError)
+	fs := flag.NewFlagSet("task direct", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	dir := fs.String("repo", ".", "the repository the task is against")
 	by := fs.String("by", "operator", "who is giving the directive")
@@ -34,7 +50,7 @@ func directTask(ctx Context, args []string) error {
 
 	id := fs.Arg(0)
 	if id == "" {
-		return needsTaskID(ctx, "direct")
+		return needsTaskID(ctx, "task direct")
 	}
 
 	text := message(fs)
@@ -91,7 +107,7 @@ func directTask(ctx Context, args []string) error {
 }
 
 // unreadCount is how many finished tasks nobody has looked at yet, which is
-// the brake `orbit run` and this command are both refused by.
+// the brake `orbit task start` and this command are both refused by.
 //
 // A board that could not be read is a refusal and not a zero. Zero is the one
 // number task.Start never stops for — atCap is written as limit > 0 && unread

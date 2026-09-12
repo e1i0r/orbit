@@ -69,7 +69,7 @@ func Kill(s *store.Store, t Task) error {
 	// the group also holds work that has nothing to do with this task and
 	// signalling it would take that down too. It does not exclude a run
 	// typed at a terminal — an interactive shell puts each job in a new
-	// group led by its first process, so a hand-typed `orbit run` leads one
+	// group led by its first process, so a hand-typed `orbit task start` leads one
 	// as surely as a spawned one does, and killing that group is right for
 	// the same reason.
 	pgid, gerr := syscall.Getpgid(pid)
