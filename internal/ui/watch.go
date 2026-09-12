@@ -120,7 +120,7 @@ func (m Model) launch(c Command, args []string) (tea.Model, tea.Cmd) {
 	switch c.Name {
 	case "new":
 		return m.openCompose(), nil
-	case "set", "settings":
+	case "settings":
 		return m.openSettings(), nil
 	case "flows":
 		return m.openFlows(), nil

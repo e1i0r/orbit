@@ -12,10 +12,10 @@ import (
 // is touched and `run -h` never reaches an engine.
 
 func TestTheHelpFlagPrintsTheFlagsAndSucceeds(t *testing.T) {
-	for _, cmd := range []string{"new", "run"} {
+	for _, cmd := range [][]string{{"board", "new"}, {"task", "start"}} {
 		t.Setenv("ORBIT_HOME", t.TempDir())
 
-		code, out, errOut := run(t, cmd, "-h")
+		code, out, errOut := run(t, append(cmd, "-h")...)
 		if code != 0 {
 			t.Errorf("%s -h exited %d, want 0: %s", cmd, code, errOut)
 		}
@@ -28,20 +28,23 @@ func TestTheHelpFlagPrintsTheFlagsAndSucceeds(t *testing.T) {
 			t.Errorf("%s -h does not show its flags:\n%s", cmd, out)
 		}
 
-		if !strings.Contains(out, "orbit "+cmd) {
+		if !strings.Contains(out, "orbit "+strings.Join(cmd, " ")) {
 			t.Errorf("%s -h does not show the shape of the command:\n%s", cmd, out)
 		}
 	}
 }
 
 func TestAMistypedFlagPrintsTheErrorAndTheFlags(t *testing.T) {
-	for _, tc := range []struct{ cmd, bad string }{
-		{"list", "-repos"},
-		{"show", "-r"},
+	for _, tc := range []struct {
+		cmd []string
+		bad string
+	}{
+		{[]string{"board", "list"}, "-repos"},
+		{[]string{"task", "show"}, "-r"},
 	} {
 		t.Setenv("ORBIT_HOME", t.TempDir())
 
-		code, _, errOut := run(t, tc.cmd, tc.bad, ".")
+		code, _, errOut := run(t, append(tc.cmd, tc.bad, ".")...)
 		if code == 0 {
 			t.Errorf("%s %s exited 0", tc.cmd, tc.bad)
 		}

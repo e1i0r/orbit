@@ -2,7 +2,7 @@ package cli
 
 // What the browser's buttons actually do.
 //
-// They ask internal/verb, which is the same thing `orbit run` and the
+// They ask internal/verb, which is the same thing `orbit task start` and the
 // cockpit's [s] ask: a task started from a browser tab and one started from
 // a terminal are the same run, written down the same way, refused for the
 // same reasons and reported in the same words.
@@ -23,6 +23,7 @@ import (
 	"fmt"
 
 	"github.com/e1i0r/orbit/internal/board"
+	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/task"
@@ -55,6 +56,7 @@ func (h hands) Ask(name string, in web.Asked) (web.Answered, error) {
 		Repo: in.Repo,
 		Args: in.Args,
 		By:   by,
+		Door: "the browser",
 	})
 	if err != nil {
 		return web.Answered{}, err
@@ -103,6 +105,18 @@ func (h hands) Standing(id, at string) web.Standing {
 	}
 
 	return now
+}
+
+// flowOfTask is the flow a task walks, by the same reading `orbit task start` makes
+// of it: the task's own, then the one Orbit ships. Not the settings default,
+// which is what the next task written gets.
+func flowOfTask(s flow.Source, t task.Task) (flow.Flow, error) {
+	chosen := t.Flow
+	if chosen == "" {
+		chosen = flow.Default
+	}
+
+	return flow.Resolve(s, chosen)
 }
 
 // find is the task one id in one repository means.

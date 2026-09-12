@@ -32,7 +32,7 @@ func settings(t *testing.T, orbitHome string) store.Settings {
 func TestSetTurnsAutopilotOnAndSaysWhatItNowIs(t *testing.T) {
 	_, orbitHome := workspace(t)
 
-	code, out, errOut := run(t, "set", "autopilot", "on")
+	code, out, errOut := run(t, "settings", "set", "autopilot", "on")
 	if code != 0 {
 		t.Fatalf("set autopilot on exited %d: %s", code, errOut)
 	}
@@ -50,7 +50,7 @@ func TestSetTurnsAutopilotOnAndSaysWhatItNowIs(t *testing.T) {
 // which is not what the file holds.
 func TestSetSpeaksTheSwitchInTheWordsTheWindowUses(t *testing.T) {
 	_, orbitHome := workspace(t)
-	if code, out, errOut := run(t, "set", "autopilot", "1"); code != 0 {
+	if code, out, errOut := run(t, "settings", "set", "autopilot", "1"); code != 0 {
 		t.Fatalf("set autopilot 1 exited %d: %s", code, errOut)
 	} else if !strings.Contains(out, "autopilot is now on") {
 		t.Errorf("set said %q, want it to say on", out)
@@ -60,7 +60,7 @@ func TestSetSpeaksTheSwitchInTheWordsTheWindowUses(t *testing.T) {
 		t.Errorf("autopilot is %v on disk, want true", cfg.Autopilot)
 	}
 
-	if code, out, errOut := run(t, "set", "autopilot", "off"); code != 0 {
+	if code, out, errOut := run(t, "settings", "set", "autopilot", "off"); code != 0 {
 		t.Fatalf("set autopilot off exited %d: %s", code, errOut)
 	} else if !strings.Contains(out, "autopilot is now off") {
 		t.Errorf("set said %q, want it to say off", out)
@@ -76,10 +76,10 @@ func TestSetSpeaksTheSwitchInTheWordsTheWindowUses(t *testing.T) {
 func TestSetLeavesEverySettingItWasNotAskedAboutAlone(t *testing.T) {
 	_, orbitHome := workspace(t)
 	for _, args := range [][]string{
-		{"set", "unread-cap", "9"},
-		{"set", "language", "es"},
-		{"set", "autopilot", "on"},
-		{"set", "model", "sonnet"},
+		{"settings", "set", "unread-cap", "9"},
+		{"settings", "set", "language", "es"},
+		{"settings", "set", "autopilot", "on"},
+		{"settings", "set", "model", "sonnet"},
 	} {
 		if code, _, errOut := run(t, args...); code != 0 {
 			t.Fatalf("%v exited %d: %s", args, code, errOut)
@@ -97,7 +97,7 @@ func TestSetLeavesEverySettingItWasNotAskedAboutAlone(t *testing.T) {
 // exists to keep separate from never having chosen at all.
 func TestSetCanTurnTheUnreadCapOff(t *testing.T) {
 	_, orbitHome := workspace(t)
-	if code, _, errOut := run(t, "set", "unread-cap", "0"); code != 0 {
+	if code, _, errOut := run(t, "settings", "set", "unread-cap", "0"); code != 0 {
 		t.Fatalf("set unread-cap 0 exited %d: %s", code, errOut)
 	}
 
@@ -110,7 +110,7 @@ func TestSetCanTurnTheUnreadCapOff(t *testing.T) {
 // -flow is what reads it.
 func TestSetChoosesTheFlowANewTaskIsWrittenAgainst(t *testing.T) {
 	_, orbitHome := workspace(t)
-	if code, out, errOut := run(t, "set", "flow", "careful"); code != 0 {
+	if code, out, errOut := run(t, "settings", "set", "flow", "careful"); code != 0 {
 		t.Fatalf("set flow careful exited %d: %s", code, errOut)
 	} else if !strings.Contains(out, "flow is now careful") {
 		t.Errorf("set said %q, which does not say what the setting now is", out)
@@ -127,12 +127,12 @@ func TestSetRefusesWhatItCannotDoAndSaysWhy(t *testing.T) {
 		args []string
 		says string
 	}{
-		{"a key nothing knows", []string{"set", "colour", "blue"}, "colour"},
-		{"a cap that is not a number", []string{"set", "unread-cap", "lots"}, "whole number"},
-		{"a cap below zero", []string{"set", "unread-cap", "-1"}, "negative"},
-		{"a switch that is neither", []string{"set", "autopilot", "maybe"}, "on or off"},
-		{"a flow name that is a path", []string{"set", "flow", "../task"}, "flow"},
-		{"no value at all", []string{"set", "autopilot"}, "set needs value"},
+		{"a key nothing knows", []string{"settings", "set", "colour", "blue"}, "colour"},
+		{"a cap that is not a number", []string{"settings", "set", "unread-cap", "lots"}, "whole number"},
+		{"a cap below zero", []string{"settings", "set", "unread-cap", "-1"}, "negative"},
+		{"a switch that is neither", []string{"settings", "set", "autopilot", "maybe"}, "on or off"},
+		{"a flow name that is a path", []string{"settings", "set", "flow", "../task"}, "flow"},
+		{"no value at all", []string{"settings", "set", "autopilot"}, "settings set needs value"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			_, orbitHome := workspace(t)
@@ -159,11 +159,11 @@ func TestSetRefusesWhatItCannotDoAndSaysWhy(t *testing.T) {
 func TestTheConfirmationIsInTheReadersLanguage(t *testing.T) {
 	t.Setenv("ORBIT_HOME", t.TempDir())
 
-	if code, _, errOut := run(t, "set", "language", "es"); code != 0 {
+	if code, _, errOut := run(t, "settings", "set", "language", "es"); code != 0 {
 		t.Fatalf("set language es exited %d: %s", code, errOut)
 	}
 
-	code, out, errOut := run(t, "set", "autopilot", "on")
+	code, out, errOut := run(t, "settings", "set", "autopilot", "on")
 	if code != 0 {
 		t.Fatalf("set autopilot on exited %d: %s", code, errOut)
 	}
@@ -189,7 +189,7 @@ func TestTheRefusalsAreInTheReadersLanguage(t *testing.T) {
 		t.Helper()
 		t.Setenv("ORBIT_HOME", t.TempDir())
 
-		if code, _, errOut := run(t, "set", "language", language); code != 0 {
+		if code, _, errOut := run(t, "settings", "set", "language", language); code != 0 {
 			t.Fatalf("set language %s exited %d: %s", language, code, errOut)
 		}
 
@@ -202,11 +202,11 @@ func TestTheRefusalsAreInTheReadersLanguage(t *testing.T) {
 	}
 
 	for _, args := range [][]string{
-		{"set", "colour", "blue"},
-		{"set", "unread-cap", "lots"},
-		{"set", "unread-cap", "-1"},
-		{"set", "autopilot", "maybe"},
-		{"set", "autopilot"},
+		{"settings", "set", "colour", "blue"},
+		{"settings", "set", "unread-cap", "lots"},
+		{"settings", "set", "unread-cap", "-1"},
+		{"settings", "set", "autopilot", "maybe"},
+		{"settings", "set", "autopilot"},
 	} {
 		t.Run(strings.Join(args[1:], " "), func(t *testing.T) {
 			english := refusal(t, "en", args...)

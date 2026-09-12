@@ -57,23 +57,46 @@ func TestATaskThatLeftTheBoardHasNothingOnItsMenu(t *testing.T) {
 	}
 }
 
-// TestTheTaskMenuCarriesTheVerbsThatOnlyACommandDoes. Some of them had no
-// key and no letter anywhere in the window, so the command line was the
-// only place they were listed — and that line is opened on the board.
-func TestTheTaskMenuCarriesTheVerbsThatOnlyACommandDoes(t *testing.T) {
+// TestTheTaskMenuCarriesOneRowPerFamily. Choosing one drills into its
+// verbs and commands; the keystrokes keep working whether the menu is up
+// or not.
+func TestTheTaskMenuCarriesOneRowPerFamily(t *testing.T) {
 	e := world(t)
 
 	var named []string
 
 	for _, entry := range Open(theTask, e).Entries(e) {
-		if entry.Command != "" {
-			named = append(named, entry.Command)
+		if entry.Family != "" {
+			named = append(named, entry.Family)
 		}
 	}
 
-	want := []string{"note", "direct", "pr", "resolve", "merge", "close-pr", "approve", "permit", "critical"}
+	want := []string{"task", "pr"}
 	if !slices.Equal(named, want) {
 		t.Errorf("the task's menu names %v, want %v", named, want)
+	}
+}
+
+// TestADrilledMenuCarriesTheVerbsThatOnlyACommandDoes. Some of them had no
+// key and no letter anywhere in the window, so the command line was the
+// only place they were listed — and that line is opened on the board.
+func TestADrilledMenuCarriesTheVerbsThatOnlyACommandDoes(t *testing.T) {
+	e := world(t)
+
+	s := Open(theTask, e)
+	drilled, _ := s.Point(index(t, s, e, "task")).Enter(e)
+
+	var named []string
+
+	for _, entry := range drilled.Entries(e) {
+		if entry.Command != "" {
+			named = append(named, entry.Title)
+		}
+	}
+
+	want := []string{"note", "direct", "approve", "permit", "critical"}
+	if !slices.Equal(named, want) {
+		t.Errorf("the task's submenu names %v, want %v", named, want)
 	}
 }
 
@@ -83,12 +106,15 @@ func TestTheTaskMenuCarriesTheVerbsThatOnlyACommandDoes(t *testing.T) {
 func TestTheyArriveKnowingWhichTask(t *testing.T) {
 	e := world(t)
 
-	for _, entry := range Open(theTask, e).Entries(e) {
-		if entry.Command != "permit" {
+	s := Open(theTask, e)
+	drilled, _ := s.Point(index(t, s, e, "task")).Enter(e)
+
+	for _, entry := range drilled.Entries(e) {
+		if entry.Title != "permit" {
 			continue
 		}
 
-		if want := []string{"-repo", "/checkouts/acme", theTask}; !slices.Equal(entry.Args, want) {
+		if want := []string{"permit", "-repo", "/checkouts/acme", theTask}; !slices.Equal(entry.Args, want) {
 			t.Fatalf("permit is armed with %v, want %v", entry.Args, want)
 		}
 
@@ -112,20 +138,23 @@ func TestATableWithoutThemDrawsNothingForThem(t *testing.T) {
 	}
 }
 
-// TestStartingARunIsOnTheMenuAsWell. `orbit run` is about a task like every
+// TestStartingARunIsOnTheMenuAsWell. `orbit task start` is about a task like every
 // other verb here, and the window's answer to it is a dialog rather than a
 // command run bare — so the entry sends the key that opens the dialog.
 func TestStartingARunIsOnTheMenuAsWell(t *testing.T) {
 	e := world(t)
 
+	s := Open(theTask, e)
+	drilled, _ := s.Point(index(t, s, e, "task")).Enter(e)
+
 	want := e.Keys.Start.Help().Key
-	for _, entry := range Open(theTask, e).Entries(e) {
+	for _, entry := range drilled.Entries(e) {
 		if entry.Glyph == want && entry.Command == "" && entry.Pane == "" {
 			return
 		}
 	}
 
-	t.Fatalf("nothing on the task's menu starts a run: %v", Open(theTask, e).Entries(e))
+	t.Fatalf("nothing on the task's menu starts a run: %v", drilled.Entries(e))
 }
 
 // TestARefusedVerbCarriesItsReason. A greyed entry with nothing beside it
@@ -133,7 +162,10 @@ func TestStartingARunIsOnTheMenuAsWell(t *testing.T) {
 func TestARefusedVerbCarriesItsReason(t *testing.T) {
 	e := world(t)
 
-	for _, entry := range Open(theTask, e).Entries(e) {
+	s := Open(theTask, e)
+	drilled, _ := s.Point(index(t, s, e, "task")).Enter(e)
+
+	for _, entry := range drilled.Entries(e) {
 		if entry.Glyph != "c" {
 			continue
 		}
@@ -189,5 +221,34 @@ func TestInsideATaskThatLeftTheBoardThePanesAreStillThere(t *testing.T) {
 
 	if !strings.Contains(es[0].Title, "panes") {
 		t.Errorf("the first row is %q, want the heading the panes are listed under", es[0].Title)
+	}
+}
+
+// TestNoRowIsMute. A row with a name and no sentence next to it is a
+// verb nobody explained: key rows carry what the key does, command rows
+// what the command does, and refused rows the reason instead.
+func TestNoRowIsMute(t *testing.T) {
+	e := world(t)
+
+	top := Open(theTask, e)
+	all := top.Entries(e)
+
+	for _, row := range top.Entries(e) {
+		if row.Family == "" {
+			continue
+		}
+
+		sub, _ := top.Point(index(t, top, e, row.Family)).Enter(e)
+		all = append(all, sub.Entries(e)...)
+	}
+
+	for _, entry := range all {
+		if entry.Head || entry.Title == "" {
+			continue
+		}
+
+		if entry.Detail == "" && entry.Reason == "" {
+			t.Errorf("the %q row has no sentence next to it", entry.Title)
+		}
 	}
 }

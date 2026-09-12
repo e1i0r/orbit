@@ -24,32 +24,36 @@ import (
 
 // notThere is a verb one way in does not offer, and the reason it does not.
 //
-// The key is "<way in>:<verb>". A verb missing from a surface with no line
+// The key is "<way in>:<verb>", and a verb that belongs to a family is both
+// of its words: "mcp:rules keep". A verb missing from a surface with no line
 // here fails, and a line here for a verb that is offered fails too: a
 // stale excuse reads as a decision somebody made.
 var notThere = map[string]string{
 	// The window is a terminal, and a terminal is where a person already
 	// is: what it cannot do is what needs a second program in front of it.
-	"window:learn": "the knowledge screen writes facts through its own port, not as a task verb",
-	"window:reconcile": "opening the window reconciles every task in the state root, " +
+	"window:knowledge learn": "the knowledge screen writes facts through its own port, " +
+		"not as a task verb",
+	"window:board reconcile": "opening the window reconciles every task in the state root, " +
 		"so there is nothing left for a gesture to ask for",
 	"window:export": "it writes the record into a directory the reader names, " +
 		"and the window has nowhere to type a path that is not a task's",
-	"window:retract": "it points at a line by its number in a listing, and the window " +
+	"window:supervisor retract": "it points at a line by its number in a listing, and the window " +
 		"draws the thread as a conversation rather than a numbered list — a number " +
 		"typed against a screen that does not number its lines takes back whatever is there",
-	"window:join": "it names the task with -task because the caller it was written for is " +
+	"window:task join": "it names the task with -task because the caller it was written for is " +
 		"an engine inside a run, where the id is already in the environment; the menu " +
 		"passes a task positionally, the way every other verb about one takes it",
+	"window:pr show": "the deliver toolbar acts on the pull request rather than listing it; " +
+		"which ones are open is the command line's reading",
 
 	// The MCP server is spoken to by a model, and these are the four a
 	// model has no business asking for on its own — plus the one it could
 	// not do if it wanted to.
-	"mcp:pr":       "opening a pull request is a person's decision, not a model's",
-	"mcp:merge":    "merging is a person's decision, not a model's",
-	"mcp:close-pr": "closing a pull request is a person's decision, not a model's",
-	"mcp:approve":  "accepting a library a task reached for is the question the gate asked a person",
-	"mcp:take":     "this hands a terminal to an engine, and a tool call has no terminal to hand over",
+	"mcp:pr":           "opening a pull request is a person's decision, not a model's",
+	"mcp:pr merge":     "merging is a person's decision, not a model's",
+	"mcp:pr close":     "closing a pull request is a person's decision, not a model's",
+	"mcp:task approve": "accepting a library a task reached for is the question the gate asked a person",
+	"mcp:task take":    "this hands a terminal to an engine, and a tool call has no terminal to hand over",
 }
 
 // TestEveryVerbIsOfferedByEveryWayIn.
@@ -63,16 +67,17 @@ func TestEveryVerbIsOfferedByEveryWayIn(t *testing.T) {
 
 	for wayIn, offered := range offers {
 		for _, v := range verb.Every() {
-			key := wayIn + ":" + v.Name
+			name := v.Path()
+			key := wayIn + ":" + name
 			why, excused := notThere[key]
 
 			switch {
-			case offered[v.Name] && excused:
-				t.Errorf("%s offers %q, and %q says it does not — drop the line", wayIn, v.Name, key)
-			case !offered[v.Name] && !excused:
+			case offered[name] && excused:
+				t.Errorf("%s offers %q, and %q says it does not — drop the line", wayIn, name, key)
+			case !offered[name] && !excused:
 				t.Errorf("%s does not offer %q; give it a way in, or write down why not in notThere",
-					wayIn, v.Name)
-			case !offered[v.Name] && why == "":
+					wayIn, name)
+			case !offered[name] && why == "":
 				t.Errorf("%q is excused with no reason", key)
 			}
 		}
@@ -108,6 +113,7 @@ func webOffers(t *testing.T) map[string]bool {
 
 	body := read(t, "internal/web")
 	if !strings.Contains(body, `POST /api/tasks/{id}/{verb}`) ||
+		!strings.Contains(body, `POST /api/do/{under}/{verb}`) ||
 		!strings.Contains(body, `GET /api/read/{verb}`) {
 		t.Error("internal/web no longer routes every verb by name")
 
@@ -174,31 +180,55 @@ func windowOffers(t *testing.T) map[string]bool {
 	t.Helper()
 
 	return sees(read(t, "internal/ui"), map[string]string{
-		"new":       "key.compose",
-		"run":       "key.start",
-		"read":      "key.read",
-		"delete":    "key.delete_task",
-		"take":      "key.take",
-		"continue":  "key.hand",
-		"say":       "key.supervisor",
-		"thread":    "key.supervisor",
-		"knowledge": "key.knowledge",
-		"engines":   "key.engines",
-		"quota":     "key.quota",
-		"flows":     "key.flows",
-		"repos":     "key.repos",
-		"requeue":   "key.requeue",
-		"settings":  "screenSettings",
-		"list":      "screenList",
-		"show":      "key.open",
-		"history":   "tab.history",
-		"tree":      "tab.map",
-		"compare":   "compare.running",
-		"flow":      "tab.flow",
-		"diff":      "tab.diff",
-		"impact":    "tab.impact",
-		"direct":    `{name: "direct", says: true}`,
-		"note":      `{name: "note", says: true}`,
+		"board":             "boardEntries",
+		"board new":         "key.compose",
+		"board list":        "screenList",
+		"task start":        "key.start",
+		"task pause":        "key.pause",
+		"task resume":       "key.resume",
+		"task continue":     "key.hand",
+		"task skip":         "key.skip",
+		"task cancel":       "key.cancel",
+		"task requeue":      "key.requeue",
+		"task read":         "key.read",
+		"task delete":       "key.delete_task",
+		"task take":         "key.take",
+		"supervisor say":    "key.supervisor",
+		"supervisor thread": "key.supervisor",
+		"knowledge":         "key.knowledge",
+		"engines":           "key.engines",
+		"quota":             "key.quota",
+		"flows":             "key.flows",
+		"repos":             "key.repos",
+		"settings":          "screenSettings",
+		"task show":         "key.open",
+		"task history":      "tab.history",
+		"task tree":         "tab.map",
+		"task compare":      "compare.running",
+		"task flow":         "tab.flow",
+		"task diff":         "tab.diff",
+		"task impact":       "tab.impact",
+		"task direct":       `{name: "task", child: "direct", says: true}`,
+		"task note":         `{name: "task", child: "note", says: true}`,
+		"task approve":      "approve",
+		"task permit":       "permit",
+		"task critical":     "critical",
+		// The tray on the knowledge screen: the sentences waiting, and the
+		// two answers to one of them. The marks are the sentences the screen
+		// says while offering them, because that is the offer.
+		"rules":      "knowledge.said",
+		"rules keep": "knowledge.kept",
+		"rules drop": "knowledge.left_said",
+		// The window asks for these through the parent, which is what
+		// carries the streaming bodies: the toolbar watches `pr` run.
+		"pr merge":     `"MERGE PR"`,
+		"pr close":     `"CLOSE PR"`,
+		"pr update":    "updatePRBranch",
+		"pr checks":    "fixChecks",
+		"pr tests":     "addMoreTests",
+		"pr resolve":   "resolveComments",
+		"pr review":    "reviewPR",
+		"settings set": "screenSettings",
 	})
 }
 
@@ -207,7 +237,7 @@ func windowOffers(t *testing.T) map[string]bool {
 func all() map[string]bool {
 	out := map[string]bool{}
 	for _, v := range verb.Every() {
-		out[v.Name] = true
+		out[v.Path()] = true
 	}
 
 	return out
@@ -219,18 +249,17 @@ func sees(body string, marks map[string]string) map[string]bool {
 	out := map[string]bool{}
 
 	for _, v := range verb.Every() {
-		mark, given := marks[v.Name]
+		mark, given := marks[v.Path()]
 		if !given {
-			mark = `"` + v.Name + `"`
+			mark = `"` + v.Path() + `"`
 		}
 
-		out[v.Name] = strings.Contains(body, mark)
+		out[v.Path()] = strings.Contains(body, mark)
 	}
 
 	return out
 }
 
-// read is every Go file of one package, joined.
 // readAll is every file of one suffix under a directory, joined.
 func readAll(t *testing.T, dir, suffix string) string {
 	t.Helper()
@@ -261,6 +290,7 @@ func readAll(t *testing.T, dir, suffix string) string {
 	return b.String()
 }
 
+// read is every Go file of one package, joined.
 func read(t *testing.T, dir string) string {
 	t.Helper()
 

@@ -23,9 +23,9 @@ func TestTaskStopsAtItsReviewGateAndGoesOnWhenLetGo(t *testing.T) {
 		"review": []any{map[string]any{"say": "it reads right", "cost": 0.10}},
 	})
 
-	b.must(t, "new", "-repo", b.repo, "-id", "LED-3", "-flow", "task", "fix the total")
+	b.must(t, "board", "new", "-repo", b.repo, "-id", "LED-3", "-flow", "task", "fix the total")
 
-	run := b.start(t, "run", "-repo", b.repo, "LED-3")
+	run := b.start(t, "task", "start", "-repo", b.repo, "LED-3")
 
 	b.waitFor(t, "LED-3", "phase.waiting", gateWait)
 
@@ -38,7 +38,7 @@ func TestTaskStopsAtItsReviewGateAndGoesOnWhenLetGo(t *testing.T) {
 		t.Errorf("%d phases finished before the gate, want the one before it", n)
 	}
 
-	b.must(t, "resume", "-repo", b.repo, "LED-3")
+	b.must(t, "task", "resume", "-repo", b.repo, "LED-3")
 
 	if err := run.Wait(); err != nil {
 		t.Fatalf("the run did not end after the gate was let go: %v", err)
@@ -66,12 +66,12 @@ func TestAGateCanBeSkipped(t *testing.T) {
 		"review": []any{map[string]any{"say": "should never run"}},
 	})
 
-	b.must(t, "new", "-repo", b.repo, "-id", "LED-4", "-flow", "task", "fix the total")
+	b.must(t, "board", "new", "-repo", b.repo, "-id", "LED-4", "-flow", "task", "fix the total")
 
-	run := b.start(t, "run", "-repo", b.repo, "LED-4")
+	run := b.start(t, "task", "start", "-repo", b.repo, "LED-4")
 
 	b.waitFor(t, "LED-4", "phase.waiting", gateWait)
-	b.must(t, "skip", "-repo", b.repo, "LED-4")
+	b.must(t, "task", "skip", "-repo", b.repo, "LED-4")
 
 	if err := run.Wait(); err != nil {
 		t.Fatalf("the run did not end after the phase was skipped: %v", err)

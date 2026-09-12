@@ -34,13 +34,13 @@ func twoRepositories(t *testing.T, text string) (pay, led string) {
 	pay = withRemote(t, root, "payments")
 	led = withRemote(t, root, "ledger")
 
-	if code, _, errOut := run(t, "new", "-repo", pay, "-id", "PAY-1", text); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", pay, "-id", "PAY-1", text); code != 0 {
 		t.Fatalf("orbit new exited %d: %s", code, errOut)
 	}
 
 	plantWorktree(t, pay, text)
 
-	if code, _, errOut := run(t, "join", "-repo", pay, "-task", "PAY-1", "ledger"); code != 0 {
+	if code, _, errOut := run(t, "task", "join", "-repo", pay, "-task", "PAY-1", "ledger"); code != 0 {
 		t.Fatalf("orbit join exited %d: %s", code, errOut)
 	}
 

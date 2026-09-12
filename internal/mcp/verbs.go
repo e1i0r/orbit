@@ -30,38 +30,48 @@ import (
 // rename that changes nothing about what they do.
 func spelledAs() map[string]string {
 	return map[string]string{
-		"new":       "orbit_create_task",
-		"run":       "orbit_retry_task",
-		"list":      "orbit_list_tasks",
-		"show":      "orbit_inspect_task",
-		"note":      "orbit_add_note",
-		"say":       "orbit_supervisor_say",
-		"thread":    "orbit_supervisor_history",
-		"knowledge": "orbit_knowledge",
-		"learn":     "orbit_learn",
-		"pause":     "orbit_pause_task",
-		"cancel":    "orbit_cancel_task",
-		"requeue":   "orbit_requeue_task",
-		"direct":    "orbit_direct_task",
-		"flows":     "orbit_list_flows",
-		"flow":      "orbit_get_flow",
-		"repos":     "orbit_list_repos",
+		"board new":         "orbit_create_task",
+		"task start":        "orbit_retry_task",
+		"board list":        "orbit_list_tasks",
+		"task show":         "orbit_inspect_task",
+		"task note":         "orbit_add_note",
+		"supervisor say":    "orbit_supervisor_say",
+		"supervisor thread": "orbit_supervisor_history",
+		"knowledge":         "orbit_knowledge",
+		"knowledge learn":   "orbit_learn",
+		"task pause":        "orbit_pause_task",
+		"task cancel":       "orbit_cancel_task",
+		"task requeue":      "orbit_requeue_task",
+		"task direct":       "orbit_direct_task",
+		"flows":             "orbit_list_flows",
+		"task flow":         "orbit_get_flow",
+		"repos":             "orbit_list_repos",
 	}
 }
 
-// verbTools is a tool for every declared verb the hand-written ones do not
-// already carry.
-func verbTools() []Tool {
+// built is every verb this server makes a tool of its own for: the whole
+// declaration, less the ones a hand-written tool already carries and the
+// ones it will not offer.
+func built() []verb.Verb {
 	hand := spelledAs()
-	p := words.For("")
 
-	var out []Tool
+	var out []verb.Verb
 
 	for _, v := range verb.Every() {
-		if hand[v.Name] != "" || cannot[v.Name] != "" {
-			continue
+		if hand[v.Path()] == "" && cannot[v.Path()] == "" {
+			out = append(out, v)
 		}
+	}
 
+	return out
+}
+
+// verbTools is a tool for every one of them.
+func verbTools() []Tool {
+	p := words.For("")
+
+	out := make([]Tool, 0, len(built()))
+	for _, v := range built() {
 		out = append(out, toolFor(v, p))
 	}
 
@@ -75,11 +85,11 @@ func verbTools() []Tool {
 // is in internal/arch's notThere, where it is argued with rather than just
 // obeyed.
 var cannot = map[string]string{
-	"pr":       "opening a pull request is a person's decision",
-	"merge":    "merging is a person's decision",
-	"close-pr": "closing a pull request is a person's decision",
-	"approve":  "accepting a library a task reached for is the question the gate asked a person",
-	"take":     "this hands a terminal to an engine, and a tool call has no terminal to hand over",
+	"pr":           "opening a pull request is a person's decision",
+	"pr merge":     "merging is a person's decision",
+	"pr close":     "closing a pull request is a person's decision",
+	"task approve": "accepting a library a task reached for is the question the gate asked a person",
+	"task take":    "this hands a terminal to an engine, and a tool call has no terminal to hand over",
 }
 
 // toolFor is one verb as a tool.
@@ -102,10 +112,19 @@ func toolFor(v verb.Verb, p *words.Printer) Tool {
 	}
 
 	return Tool{
-		Name:        "orbit_" + strings.ReplaceAll(v.Name, "-", "_"),
+		Name:        toolName(v),
 		Description: strings.ToUpper(v.About(p)[:1]) + v.About(p)[1:] + ".",
 		InputSchema: object(props, need...),
 	}
+}
+
+// toolName is what a verb is called here: the prefix every tool of this
+// server carries, and the whole of what the verb is called with the two
+// characters a tool name may not hold spelled as underscores. A child is
+// both of its words — orbit_rules_keep — because orbit_keep says nothing
+// about what.
+func toolName(v verb.Verb) string {
+	return "orbit_" + strings.NewReplacer("-", "_", " ", "_").Replace(v.Path())
 }
 
 // kindOf is the JSON type a field arrives as.
@@ -126,7 +145,7 @@ func (sn Session) askVerb(name string, args map[string]any) CallToolResult {
 
 	defer sb.close()
 
-	in := verb.In{Args: wordsOf(args), By: journalBy}
+	in := verb.In{Args: wordsOf(args), By: journalBy, Door: "a tool call"}
 
 	if id := stringArg(args, "task_id"); id != "" {
 		row, err := findTask(sb.board, id)

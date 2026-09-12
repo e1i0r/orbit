@@ -33,12 +33,14 @@ func (s State) View(h, w int, e Env) []string {
 	out = append(out, cells.Fit("  "+theme.Paint(theme.Dim).Render(s.Title(e)), w), "")
 
 	off := s.offsetIn(len(es), view(h))
+	nameW := nameWidth(es)
+
 	for i, entry := range es[off:] {
 		if len(out) >= h {
 			break
 		}
 
-		out = append(out, row(entry, off+i == s.sel, w))
+		out = append(out, row(entry, off+i == s.sel, w, nameW))
 	}
 
 	return cells.Fill(out, h)
@@ -46,11 +48,14 @@ func (s State) View(h, w int, e Env) []string {
 
 // Title names the menu that is up: the two open on the same keystroke and
 // answer different questions, and a reader who meant the task's and got the
-// board's should not have to work that out from a missing verb.
+// board's should not have to work that out from a missing verb. A submenu
+// names its family, with the way back in front of it.
 func (s State) Title(e Env) string {
 	p := e.Words
 
 	switch {
+	case s.sub != "":
+		return "‹ " + s.sub
 	case e.Detail:
 		return p.T("menu.title_detail", "{id} — where to look, and what can be done",
 			about("id", s.task))
@@ -100,14 +105,25 @@ func (s State) Hit(x, y int, e Env) point.Target {
 }
 
 // ident is what identifies an entry between a press and the release that
-// chooses it: the glyph for a verb or a pane, the name for a command, and
-// nothing at all for a heading.
+// chooses it: the glyph for a verb or a pane, the family's name for the
+// row that drills into it, and the full path for a command — both words
+// for a family's child, so two rows never answer to one name. The title
+// is display only: a submenu shows the child's word alone, and what runs
+// is still the whole path.
 func ident(e Entry) string {
 	switch {
 	case e.Head:
 		return ""
 	case e.Glyph != "":
 		return e.Glyph
+	case e.Family != "":
+		return e.Family
+	case e.Command != "":
+		if e.Child != "" {
+			return e.Command + " " + e.Child
+		}
+
+		return e.Command
 	}
 
 	return e.Command

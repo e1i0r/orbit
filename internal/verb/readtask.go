@@ -31,7 +31,7 @@ func shaped(w World, in In) (Out, error) {
 	}
 
 	// The task's own flow, then the one Orbit ships — the same reading
-	// `orbit run` makes, and not the settings default, which is what the
+	// `orbit task start` makes, and not the settings default, which is what the
 	// next task written gets rather than what this one walks.
 	chosen := t.Flow
 	if chosen == "" {

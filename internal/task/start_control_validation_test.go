@@ -63,7 +63,7 @@ func TestStartCapAndRunCommand(t *testing.T) {
 		t.Errorf("cmd.Dir = %q, want /path/to/repo", cmd.Dir)
 	}
 
-	expectedArgs := []string{"/bin/orbit", "run", "-repo", "/path/to/repo", "-flow", "custom-flow", "TASK-1"}
+	expectedArgs := []string{"/bin/orbit", "task", "start", "-repo", "/path/to/repo", "-flow", "custom-flow", "TASK-1"}
 	for i, arg := range expectedArgs {
 		if i >= len(cmd.Args) || cmd.Args[i] != arg {
 			t.Errorf("cmd.Args[%d] = %q, want %q", i, cmd.Args[i], arg)
@@ -277,7 +277,7 @@ func TestTaskLoadAndFlowChoice(t *testing.T) {
 //
 // Start looks before it spawns, and a claim it cannot read is a claim it
 // cannot rule out. Treating it as "nothing is running" would put a second
-// `orbit run` on one worktree, one branch and one log -- which is the whole
+// `orbit task start` on one worktree, one branch and one log -- which is the whole
 // reason the look is there, and the run's own hold cannot help because the
 // two runs would each be holding a marker the other could not parse.
 func TestStartRefusesATaskWhoseMarkerWillNotRead(t *testing.T) {

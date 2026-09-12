@@ -38,14 +38,14 @@ func TestTheGhCommandsStopBeforeTheyReachGh(t *testing.T) {
 			dir := deliverable(t, "make the thing")
 			argv := recordArgv(t, "echo https://github.test/pr/1")
 
-			for _, command := range []string{"pr", "merge", "close-pr"} {
-				code, _, errOut := run(t, append([]string{command}, tc.args(t, dir)...)...)
+			for _, argv := range [][]string{{"pr"}, {"pr", "merge"}, {"pr", "close"}} {
+				code, _, errOut := run(t, append(argv, tc.args(t, dir)...)...)
 				if code == 0 {
-					t.Errorf("%s exited 0 on %s", command, tc.name)
+					t.Errorf("%s exited 0 on %s", argv, tc.name)
 				}
 
 				if !strings.Contains(errOut, tc.says) {
-					t.Errorf("%s refused with %q, which does not say %q", command, errOut, tc.says)
+					t.Errorf("%s refused with %q, which does not say %q", argv, errOut, tc.says)
 				}
 			}
 

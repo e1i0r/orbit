@@ -59,7 +59,7 @@ func TestTheGettersAnswerFromMemoryAndThePollIsWhatRefreshesThem(t *testing.T) {
 
 	// Another process — which is what `orbit set` is, and what an editor
 	// saving settings.json is.
-	if code, _, errOut := run(t, "set", "unread-cap", "9"); code != 0 {
+	if code, _, errOut := run(t, "settings", "set", "unread-cap", "9"); code != 0 {
 		t.Fatalf("set unread-cap exited %d: %s", code, errOut)
 	}
 
@@ -91,7 +91,7 @@ func TestTheWindowIsHandedAReaderThatKeepsItsSettingsInStep(t *testing.T) {
 		t.Fatalf("window: %v", err)
 	}
 
-	if code, _, errOut := run(t, "set", "unread-cap", "7"); code != 0 {
+	if code, _, errOut := run(t, "settings", "set", "unread-cap", "7"); code != 0 {
 		t.Fatalf("set unread-cap exited %d: %s", code, errOut)
 	}
 
@@ -212,7 +212,7 @@ func TestTheUnreadCapNeverBecomesNoCapByAccident(t *testing.T) {
 		t.Errorf("a settings file nobody has written answers %d, which is no cap at all", got)
 	}
 
-	if code, _, errOut := run(t, "set", "unread-cap", "0"); code != 0 {
+	if code, _, errOut := run(t, "settings", "set", "unread-cap", "0"); code != 0 {
 		t.Fatalf("set unread-cap exited %d: %s", code, errOut)
 	}
 

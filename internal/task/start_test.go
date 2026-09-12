@@ -29,7 +29,7 @@ func TestAStartedRunIsTheSameSubcommandAPersonWouldType(t *testing.T) {
 	tk := Task{ID: "ACME-1", Repo: repo.Repo{Name: "app", Path: "/repos/app"}}
 	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "review", "")
 
-	want := []string{"/usr/local/bin/orbit", "run", "-repo", "/repos/app", "-flow", "review", "ACME-1"}
+	want := []string{"/usr/local/bin/orbit", "task", "start", "-repo", "/repos/app", "-flow", "review", "ACME-1"}
 	if len(cmd.Args) != len(want) {
 		t.Fatalf("argv = %q, want %q", cmd.Args, want)
 	}

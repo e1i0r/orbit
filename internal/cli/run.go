@@ -46,7 +46,7 @@ import (
 // difference between the two is a decision somebody can see rather than a
 // bug that takes an afternoon.
 func runTask(ctx Context, args []string) error {
-	fs := flag.NewFlagSet("run", flag.ContinueOnError)
+	fs := flag.NewFlagSet("task start", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	dir := fs.String("repo", ".", "the repository the task is against")
 	name := fs.String("flow", "", "walk this flow instead of the one the task was written against")
@@ -63,7 +63,7 @@ func runTask(ctx Context, args []string) error {
 
 	id := fs.Arg(0)
 	if id == "" {
-		return needsTaskID(ctx, "run")
+		return needsTaskID(ctx, "task start")
 	}
 
 	// As in `orbit new`: a -repo the reader typed has to open, and the

@@ -56,21 +56,6 @@ func parse(ctx Context, fs *flag.FlagSet, args []string) error {
 	}
 }
 
-// help writes one subcommand's shape and its flags.
-//
-// The shape comes out of the table by name rather than by scanning the usage
-// screen for a line that starts with the right words, which is what this did
-// before: a command whose name was a prefix of another's printed both.
-func help(ctx Context, fs *flag.FlagSet) {
-	if c, ok := lookup(fs.Name()); ok {
-		fmt.Fprintf(ctx.Out, "%s — %s\n\n", c.Usage(), c.About(ctx.printer()))
-	}
-
-	fs.SetOutput(ctx.Out)
-	fs.PrintDefaults()
-	fs.SetOutput(io.Discard)
-}
-
 // Run dispatches one command and returns the exit code.
 //
 // The writers are parameters and the code is returned rather than passed to
@@ -84,7 +69,21 @@ func Run(args []string, out, errOut io.Writer) (code int) {
 
 	switch args[0] {
 	case "help", "-h", "--help":
+		if len(args) > 1 {
+			if line, ok := usageFor(ctx, strings.Join(args[1:], " ")); ok {
+				fmt.Fprintln(out, line)
+
+				return 0
+			}
+
+			fmt.Fprintf(errOut, "orbit: %q is not something Orbit can be asked for\n\n%s",
+				strings.Join(args[1:], " "), usage(ctx.Words))
+
+			return 2
+		}
+
 		fmt.Fprint(out, usage(ctx.Words))
+
 		return 0
 	}
 
@@ -100,7 +99,8 @@ func Run(args []string, out, errOut io.Writer) (code int) {
 	// prose somebody wrote, and prose in a diagnostic log is a paragraph
 	// between two facts; what the command was asked to act on is in the
 	// error below when it matters, and in the record always.
-	logger.Info("cli/"+c.Name, "ran")
+	name := commandPath(c, args)
+	logger.Info("cli/"+name, "ran")
 
 	flatten(errOut)
 	checkRecord(ctx)
@@ -122,7 +122,7 @@ func Run(args []string, out, errOut io.Writer) (code int) {
 		// failed silently as far as any file was concerned. The other
 		// thirteen now say it twice, in their own words and then in these,
 		// and a line repeated is a far smaller thing than a line missing.
-		logger.Error("cli/"+c.Name, "%v", err)
+		logger.Error("cli/"+name, "%v", err)
 		fmt.Fprintf(errOut, "orbit: %v\n", err)
 
 		return 1
@@ -150,7 +150,7 @@ func quietFor(c Command, errOut io.Writer) io.Writer {
 // function that closes it.
 //
 // It is here, in the dispatcher, because the version this replaces had it
-// in two commands out of nineteen. `orbit run` — the command that actually
+// in two commands out of nineteen. `orbit task start` — the command that actually
 // puts an agent on a repository — wrote every one of its failures to a nil
 // global logger, which drops them without a word; so did cancel, merge,
 // pr, close-pr and reconcile. Sixty-one logger calls existed and went
@@ -255,7 +255,7 @@ func openBoth(dir string) (*store.Store, repo.Repo, error) {
 // A task does not have to be against a repository any more, so `orbit new`
 // in an empty directory writes one that is against none, and a phase of such
 // a task runs somewhere no git command would work — which is where `orbit
-// join` is typed, and where `orbit run` is spawned from. For all three, a
+// join` is typed, and where `orbit task start` is spawned from. For all three, a
 // repository is a thing the caller may have and not a thing they must.
 //
 // A directory that was named on purpose is still opened on purpose: only the

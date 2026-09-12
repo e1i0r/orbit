@@ -156,7 +156,7 @@ func TestANilGateNeverStops(t *testing.T) {
 	tk := written(t, s, r)
 	fake := engine.NewFake("ok")
 
-	// A run with no gate is a run nothing can hold: `orbit run` before this
+	// A run with no gate is a run nothing can hold: `orbit task start` before this
 	// task existed, and every test that is not about the gate.
 	if err := Run(context.Background(), s, tk, gatedFlow(), fakes(fake), nil); err != nil {
 		t.Fatalf("Run: %v", err)

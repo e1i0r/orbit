@@ -203,7 +203,7 @@ func findFile(t *testing.T, root, name string) string {
 func TestCancelNeedsAnID(t *testing.T) {
 	root, _ := workspace(t)
 
-	code, _, errOut := run(t, "cancel", "-repo", filepath.Join(root, "payments"))
+	code, _, errOut := run(t, "task", "cancel", "-repo", filepath.Join(root, "payments"))
 	if code == 0 {
 		t.Error("cancel with no id exited 0")
 	}
@@ -217,11 +217,11 @@ func TestCancelSaysSoWhenNothingIsRunning(t *testing.T) {
 	root, _ := workspace(t)
 
 	repoDir := filepath.Join(root, "payments")
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
-	code, _, errOut := run(t, "cancel", "-repo", repoDir, "ACME-1")
+	code, _, errOut := run(t, "task", "cancel", "-repo", repoDir, "ACME-1")
 	if code == 0 {
 		t.Error("cancel reported success against a task no process holds")
 	}
@@ -235,13 +235,13 @@ func TestReconcileClosesARecordAndSaysWhatItDid(t *testing.T) {
 	root, _ := workspace(t)
 
 	repoDir := filepath.Join(root, "payments")
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
 	abandon(t, repoDir, "ACME-1")
 
-	code, out, errOut := run(t, "reconcile", "-repo", repoDir)
+	code, out, errOut := run(t, "board", "reconcile", "-repo", repoDir)
 	if code != 0 {
 		t.Fatalf("reconcile exited %d: %s", code, errOut)
 	}
@@ -250,7 +250,7 @@ func TestReconcileClosesARecordAndSaysWhatItDid(t *testing.T) {
 		t.Errorf("reconcile does not say which task it closed:\n%s", out)
 	}
 
-	code, out, errOut = run(t, "show", "-repo", repoDir, "ACME-1")
+	code, out, errOut = run(t, "task", "show", "-repo", repoDir, "ACME-1")
 	if code != 0 {
 		t.Fatalf("show exited %d: %s", code, errOut)
 	}
@@ -264,11 +264,11 @@ func TestReconcileSaysWhenThereIsNothingToDo(t *testing.T) {
 	root, _ := workspace(t)
 
 	repoDir := filepath.Join(root, "payments")
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
-	code, out, errOut := run(t, "reconcile", "-repo", repoDir)
+	code, out, errOut := run(t, "board", "reconcile", "-repo", repoDir)
 	if code != 0 {
 		t.Fatalf("reconcile exited %d: %s", code, errOut)
 	}
@@ -277,7 +277,7 @@ func TestReconcileSaysWhenThereIsNothingToDo(t *testing.T) {
 		t.Error("reconcile said nothing at all, so a reader cannot tell it ran")
 	}
 
-	code, out, _ = run(t, "show", "-repo", repoDir, "ACME-1")
+	code, out, _ = run(t, "task", "show", "-repo", repoDir, "ACME-1")
 	if code != 0 {
 		t.Fatalf("show exited %d", code)
 	}
@@ -290,7 +290,7 @@ func TestReconcileSaysWhenThereIsNothingToDo(t *testing.T) {
 // The one command that spends money must be stoppable, and the flag that
 // stops it on a clock has to be discoverable without reading the source.
 func TestRunOffersATimeout(t *testing.T) {
-	code, out, _ := run(t, "run", "-h")
+	code, out, _ := run(t, "task", "start", "-h")
 	if code != 0 {
 		t.Errorf("run -h exited %d", code)
 	}
@@ -307,11 +307,11 @@ func TestRequeueTakesATaskBackToTheQueue(t *testing.T) {
 	root, _ := workspace(t)
 
 	repoDir := filepath.Join(root, "payments")
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
-	code, out, errOut := run(t, "requeue", "-repo", repoDir, "ACME-1", "wrong", "brief")
+	code, out, errOut := run(t, "task", "requeue", "-repo", repoDir, "ACME-1", "wrong", "brief")
 	if code != 0 {
 		t.Fatalf("requeue exited %d: %s", code, errOut)
 	}
@@ -322,7 +322,7 @@ func TestRequeueTakesATaskBackToTheQueue(t *testing.T) {
 
 	// The reason is written down as it was typed, spaces and all: what the
 	// reader said is the only account of why the work was stopped.
-	code, shown, errOut := run(t, "show", "-repo", repoDir, "ACME-1")
+	code, shown, errOut := run(t, "task", "show", "-repo", repoDir, "ACME-1")
 	if code != 0 {
 		t.Fatalf("show exited %d: %s", code, errOut)
 	}

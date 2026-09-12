@@ -18,7 +18,7 @@ func TestMergingSquashesTheBranchAndDeletesIt(t *testing.T) {
 	dir := deliverable(t, "make the thing")
 	argv := recordArgv(t, "")
 
-	code, out, errOut := run(t, "merge", "-repo", dir, "PAY-1")
+	code, out, errOut := run(t, "pr", "merge", "-repo", dir, "PAY-1")
 	if code != 0 {
 		t.Fatalf("merge exited %d: %s", code, errOut)
 	}
@@ -48,7 +48,7 @@ func TestClosingCarriesTheCommentToGh(t *testing.T) {
 	dir := deliverable(t, "make the thing")
 	argv := recordArgv(t, "")
 
-	code, out, errOut := run(t, "close-pr", "-repo", dir, "PAY-1")
+	code, out, errOut := run(t, "pr", "close", "-repo", dir, "PAY-1")
 	if code != 0 {
 		t.Fatalf("close-pr exited %d: %s", code, errOut)
 	}
@@ -71,19 +71,19 @@ func TestClosingCarriesTheCommentToGh(t *testing.T) {
 // leave the reader a sentence naming the task and no reason for it.
 func TestWhatGhRefusedReachesTheReader(t *testing.T) {
 	for _, tc := range []struct {
-		command string
-		reason  string
+		args   []string
+		reason string
 	}{
-		{"merge", "pull request is not mergeable"},
-		{"close-pr", "no pull request found for branch"},
+		{[]string{"pr", "merge"}, "pull request is not mergeable"},
+		{[]string{"pr", "close"}, "no pull request found for branch"},
 	} {
-		t.Run(tc.command, func(t *testing.T) {
+		t.Run(strings.Join(tc.args, " "), func(t *testing.T) {
 			dir := deliverable(t, "make the thing")
 			fakeGh(t, "echo '"+tc.reason+"' >&2\nexit 1")
 
-			code, _, errOut := run(t, tc.command, "-repo", dir, "PAY-1")
+			code, _, errOut := run(t, append(tc.args, "-repo", dir, "PAY-1")...)
 			if code == 0 {
-				t.Fatalf("%s exited 0 against a gh that refused", tc.command)
+				t.Fatalf("%s exited 0 against a gh that refused", tc.args)
 			}
 
 			for _, want := range []string{"PAY-1", tc.reason} {

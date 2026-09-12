@@ -34,11 +34,12 @@ type Env struct {
 	Tabs []Tab
 }
 
-// A Verb is one thing that can be done to a task: the key that does it, and
-// what that key does in words.
+// A Verb is one thing that can be done to a task: the key that does it,
+// what that key does in words, and the family it belongs to for grouping.
 type Verb struct {
-	Key  string
-	Says string
+	Key    string
+	Says   string
+	Family string
 }
 
 // A Tab is one of the detail screen's tabs, as its menu shows it.
@@ -135,19 +136,52 @@ func (s State) View(h, w int, e Env) []string {
 	//
 	// The sentences are whole. They are longer than a column, so they are
 	// wrapped here and the continuation rows are given no key of their own.
-	verbs := make([][2]string, 0, len(e.Verbs))
+	//
+	// One section per family, in the order a reader meets them: what the
+	// keys do first, then what only a command does. A sheet that kept its
+	// own list stops being true the day one of them changes — the grouping
+	// is the families', read off each row, and never a second list.
+	groups := []string{"task", "pr", "board"}
+	byFamily := map[string][][2]string{}
+
 	for _, v := range e.Verbs {
+		family := v.Family
+		if family == "" {
+			family = "task"
+		}
+
 		for i, line := range cells.Lines(v.Says, max(w-36, 20)) {
 			glyph := ""
 			if i == 0 {
 				glyph = "[" + v.Key + "]"
 			}
 
-			verbs = append(verbs, [2]string{glyph, line})
+			byFamily[family] = append(byFamily[family], [2]string{glyph, line})
 		}
 	}
 
-	renderSection(p.T("help.verbs.title", "🎛️ 2. WHAT YOU CAN DO TO A TASK"), verbs)
+	out = append(out, "  "+theme.Paint(theme.Live).Bold(true).Render(p.T("help.verbs.title", "🎛️ 2. WHAT YOU CAN DO TO A TASK")))
+	familyTitle := map[string]string{
+		"task":  p.T("help.verbs.task", "task"),
+		"pr":    p.T("help.verbs.pr", "pr"),
+		"board": p.T("help.verbs.board", "board"),
+	}
+
+	for _, family := range groups {
+		if len(byFamily[family]) == 0 {
+			continue
+		}
+
+		out = append(out, "    "+theme.Paint(theme.Dim).Render(familyTitle[family]))
+
+		for _, item := range byFamily[family] {
+			k := cells.Pad(item[0], 28, false)
+			line := "    " + theme.Paint(theme.Accent).Render(k) + " " + theme.Paint(theme.Dim).Render(item[1])
+			out = append(out, cells.Fit(line, w))
+		}
+	}
+
+	out = append(out, "")
 
 	renderSection(p.T("help.live.title", "⚡ 3. LIVE CONTROL AND SETTINGS"), [][2]string{
 		{p.T("help.live.autopilot_key", "[A] / ⚡ click"), p.T("help.live.autopilot", "Toggle autopilot: tasks in to do start on their own")},

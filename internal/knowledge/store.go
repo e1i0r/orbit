@@ -210,18 +210,20 @@ func (s *Store) dirFor(sc Scope) string {
 	}
 }
 
-// fileName is what one fact is called on disk: the thing it came out of when
-// it has one, and a slug of its own sentence when it does not.
+// fileName is what one fact is called on disk: what it came out of and what
+// it says, or only what it says when it came out of nothing named.
 //
-// The reference is preferred because it is what a reader recognises — REF-9
-// beside the code it is about says where to go and read the argument.
+// Both halves, because neither is enough on its own. The reference is what a
+// reader recognises — PAY-1 beside the code says where to go and read what
+// happened — and one task can teach more than one thing, so a name that was
+// only the reference kept the last of them and dropped the rest without
+// saying so.
 func fileName(f Fact) string {
-	name := f.Ref
-	if name == "" {
-		name = slug(f.Phrase)
+	if f.Ref == "" {
+		return slug(f.Phrase) + ext
 	}
 
-	return name + ext
+	return f.Ref + "-" + slug(f.Phrase) + ext
 }
 
 // slug is a sentence turned into a file name: lowercase words joined by

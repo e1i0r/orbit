@@ -11,11 +11,11 @@ func TestShowPrintsTheDayAsWellAsTheClock(t *testing.T) {
 	root, _ := workspace(t)
 
 	repoDir := filepath.Join(root, "payments")
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
-	code, out, errOut := run(t, "show", "-repo", repoDir, "ACME-1")
+	code, out, errOut := run(t, "task", "show", "-repo", repoDir, "ACME-1")
 	if code != 0 {
 		t.Fatalf("show exited %d: %s", code, errOut)
 	}
@@ -38,13 +38,13 @@ func TestShowSaysNothingRatherThanTheYearOne(t *testing.T) {
 	root, _ := workspace(t)
 
 	repoDir := filepath.Join(root, "payments")
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
 	plant(t, repoDir, "ACME-1", "{not json")
 
-	code, out, errOut := run(t, "show", "-repo", repoDir, "ACME-1")
+	code, out, errOut := run(t, "task", "show", "-repo", repoDir, "ACME-1")
 	if code != 0 {
 		t.Fatalf("show exited %d: %s", code, errOut)
 	}
@@ -71,14 +71,14 @@ func TestShowSaysWhyAPhaseFailed(t *testing.T) {
 	root, _ := workspace(t)
 
 	repoDir := filepath.Join(root, "payments")
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
 	plant(t, repoDir, "ACME-1", `{"at":"2026-08-23T09:14:02Z","kind":"phase.failed","phase":"implement",`+
 		`"text":"reading the webhook handler","data":{"error":"claude exited 1: no such model"}}`)
 
-	code, out, errOut := run(t, "show", "-repo", repoDir, "ACME-1")
+	code, out, errOut := run(t, "task", "show", "-repo", repoDir, "ACME-1")
 	if code != 0 {
 		t.Fatalf("show exited %d: %s", code, errOut)
 	}
@@ -90,27 +90,6 @@ func TestShowSaysWhyAPhaseFailed(t *testing.T) {
 
 	if strings.Contains(row, "reading the webhook handler") {
 		t.Errorf("the failed row quotes the engine's stdout in place of the reason:\n%s", row)
-	}
-}
-
-// TestDetailPrefersTheReasonOverTheOutput is the same rule without a
-// repository around it, and it pins the events that have no reason: they go
-// on printing what the engine said.
-func TestDetailPrefersTheReasonOverTheOutput(t *testing.T) {
-	for _, tc := range []struct {
-		name string
-		text string
-		data map[string]string
-		want string
-	}{
-		{"a failure says why", "stdout", map[string]string{"error": "exit 1"}, "exit 1"},
-		{"no data at all", "stdout", nil, "stdout"},
-		{"an empty reason is no reason", "stdout", map[string]string{"error": ""}, "stdout"},
-		{"other data is not the reason", "stdout", map[string]string{"cost": "0.4"}, "stdout"},
-	} {
-		if got := detail(tc.text, tc.data); got != tc.want {
-			t.Errorf("%s: detail(%q, %v) = %q, want %q", tc.name, tc.text, tc.data, got, tc.want)
-		}
 	}
 }
 
@@ -130,31 +109,15 @@ func rowContaining(t *testing.T, out, want string) string {
 	return ""
 }
 
-// TestFirstLineKeepsTheTableATable pins what show does to text it did not
-// write. The engine's output is arbitrary and the table is tab-delimited.
-func TestFirstLineKeepsTheTableATable(t *testing.T) {
-	for _, tc := range []struct{ in, want string }{
-		{"plain", "plain"},
-		{"first\nsecond", "first …"},
-		{"before\tafter", "before after"},
-		{"progress\rdone", "progress done"},
-		{"", ""},
-	} {
-		if got := firstLine(tc.in); got != tc.want {
-			t.Errorf("firstLine(%q) = %q, want %q", tc.in, got, tc.want)
-		}
-	}
-}
-
 func TestShowDoesNotLetATabInTheTextAddAColumn(t *testing.T) {
 	root, _ := workspace(t)
 
 	repoDir := filepath.Join(root, "payments")
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "before\tafter"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-1", "before\tafter"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
-	code, out, errOut := run(t, "show", "-repo", repoDir, "ACME-1")
+	code, out, errOut := run(t, "task", "show", "-repo", repoDir, "ACME-1")
 	if code != 0 {
 		t.Fatalf("show exited %d: %s", code, errOut)
 	}

@@ -16,7 +16,7 @@ import (
 	"github.com/e1i0r/orbit/internal/view"
 )
 
-// claim writes a run marker naming a pid, the way `orbit run` does while it
+// claim writes a run marker naming a pid, the way `orbit task start` does while it
 // holds a task.
 func claim(t *testing.T, s *store.Store, repoPath, id string, pid int) {
 	t.Helper()

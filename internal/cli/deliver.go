@@ -101,6 +101,16 @@ func deliverTask(ctx Context, s *store.Store, t task.Task, where []repo.Repo) er
 
 			return err
 		}
+
+		// Written down where it opened. A pull request is already live by
+		// now, so a row that will not write is warned about and not
+		// refused: failing here would answer an error about work that is
+		// already on the remote.
+		if opened[i].url != "" {
+			if werr := s.OpenedPR(t.ID, one.repo.Path, opened[i].url); werr != nil {
+				logger.Warn("cli/pr", "write down the pull request of task %q in %q: %v", t.ID, one.repo.Name, werr)
+			}
+		}
 	}
 
 	report(ctx, opened)

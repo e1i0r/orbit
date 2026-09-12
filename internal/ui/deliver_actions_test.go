@@ -98,7 +98,7 @@ func TestAVerbSaysWhatWasAskedForWhenItLands(t *testing.T) {
 	m.detail, m.screen = "ACME-100", screenDetail
 	m.opts.Do = func(string, []string, io.Writer) error { return nil }
 
-	m = m.openMessage(verbNote, "ACME-100")
+	m = m.openMessage("task", verbNote, "ACME-100")
 	m.note.text = "check the retry path"
 
 	next, cmd := m.submitNote()

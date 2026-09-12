@@ -48,6 +48,10 @@ type Env struct {
 // so.
 type Command struct {
 	Name string
+	// Parent is the family this row drills out of, and empty for a row of
+	// its own. A child runs through its parent everywhere else, so what
+	// choosing it hands back names the parent and keeps the whole line.
+	Parent string
 	// Args is the usage fragment after the name; empty when there is none.
 	Args string
 	// About is what the command does, and Because is why it is refused. A
@@ -68,6 +72,15 @@ type Command struct {
 	// one here left the reader holding "pr takes -repo <dir> <id>", a usage
 	// string to satisfy by hand for a task on the screen behind it.
 	AboutATask bool
+	// Children are the family's words after the parent's. Choosing the
+	// parent drills into them rather than running anything.
+	Children []Child
+}
+
+// Child is one subcommand of a family: its own word and what it does.
+type Child struct {
+	Name  string
+	About string
 }
 
 // Out is what the screen asks the window for.
@@ -117,18 +130,6 @@ func (s State) Up() bool { return s.open }
 // chosen: the arguments after the name are the reader's.
 func (s State) Typed() string { return s.typed }
 
-// firstWord is the name part of what has been typed, through the same split
-// the runner uses on the same line: what it calls the command here is what
-// gets run there, and an empty line is a prefix everything matches.
-func firstWord(typed string) string {
-	fields := strings.Fields(typed)
-	if len(fields) == 0 {
-		return ""
-	}
-
-	return fields[0]
-}
-
 func matchesSettingsAlias(prefix string) bool {
 	for _, alias := range []string{"configuraciones", "config", "set", "ajustes"} {
 		if strings.HasPrefix(alias, prefix) {
@@ -139,10 +140,8 @@ func matchesSettingsAlias(prefix string) bool {
 	return false
 }
 
-// candidates is every command whose name starts with what has been typed,
-// in the order the table handed them over — the table's order is the one a
-// reader learned, and reshuffling it under a prefix would move rows between
-// two keystrokes.
+// candidates is every row the line matches: commands by their first word,
+// and a family's children once the parent is named.
 //
 // Only the first word is the prefix. What follows it is the command's own
 // arguments, and matching against the whole line meant that the moment a
@@ -152,8 +151,59 @@ func matchesSettingsAlias(prefix string) bool {
 // The match ignores case, as the board's filter does: a reader who types a
 // capital because a sentence started with one still means the command.
 func (s State) candidates(cmds []Command) []Command {
-	prefix := strings.ToLower(firstWord(s.typed))
+	fields := strings.Fields(s.typed)
 
+	if len(fields) == 0 {
+		return top(cmds)
+	}
+
+	for _, c := range cmds {
+		if c.AboutATask {
+			continue
+		}
+
+		if !strings.EqualFold(c.Name, fields[0]) || len(c.Children) == 0 {
+			continue
+		}
+
+		// The parent is named: the list is its children, in the order
+		// the table handed them over. With the parent alone on the line
+		// it stands at the head of them, so that choosing it drills in
+		// and choosing one of them runs it.
+		var out []Command
+
+		if len(fields) == 1 {
+			out = append(out, Command{
+				Name: c.Name, Args: c.Args, About: c.About, Because: c.Because,
+				Refused: c.Refused, NeedsArgs: c.NeedsArgs, Children: c.Children,
+			})
+		}
+
+		for _, kid := range c.Children {
+			if len(fields) > 1 && !strings.HasPrefix(strings.ToLower(kid.Name), strings.ToLower(fields[1])) {
+				continue
+			}
+
+			out = append(out, Command{
+				Name:      c.Name + " " + kid.Name,
+				Parent:    c.Name,
+				About:     kid.About,
+				Refused:   c.Refused,
+				Because:   c.Because,
+				NeedsArgs: c.NeedsArgs,
+			})
+		}
+
+		return out
+	}
+
+	return topMatching(cmds, fields[0])
+}
+
+// top is every command the line opens on, in the order the table handed
+// them over — the table's order is the one a reader learned, and
+// reshuffling it under a prefix would move rows between two keystrokes.
+func top(cmds []Command) []Command {
 	var out []Command
 
 	for _, c := range cmds {
@@ -167,6 +217,23 @@ func (s State) candidates(cmds []Command) []Command {
 			continue
 		}
 
+		out = append(out, Command{
+			Name: c.Name, Args: c.Args, About: c.About, Because: c.Because,
+			Refused: c.Refused, NeedsArgs: c.NeedsArgs, Children: c.Children,
+		})
+	}
+
+	return out
+}
+
+// topMatching is the top level filtered by what has been typed: the
+// commands whose name starts with it, in table order.
+func topMatching(cmds []Command, prefix string) []Command {
+	prefix = strings.ToLower(prefix)
+
+	var out []Command
+
+	for _, c := range top(cmds) {
 		name := strings.ToLower(c.Name)
 		if strings.HasPrefix(name, prefix) {
 			out = append(out, c)

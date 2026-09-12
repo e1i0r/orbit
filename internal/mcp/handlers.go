@@ -2,7 +2,6 @@ package mcp
 
 import (
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/board"
@@ -72,12 +71,15 @@ func (sn Session) answer(name string, args map[string]any) CallToolResult {
 	case "orbit_supervisor_history":
 		return sn.supervisorHistory(args)
 	default:
-		// A tool built from the declaration rather than written above.
-		// Checked against the list rather than trusting the prefix, so a
-		// misspelling still gets the refusal that names what would have
-		// worked.
-		if slices.ContainsFunc(verbTools(), func(t Tool) bool { return t.Name == name }) {
-			return sn.askVerb(strings.ReplaceAll(strings.TrimPrefix(name, "orbit_"), "_", "-"), args)
+		// A tool built from the declaration rather than written above. The
+		// verb is looked for by the name it was given rather than spelled
+		// back out of it — orbit_close_pr is close-pr and orbit_rules_keep
+		// is two words — so a misspelling still gets the refusal that names
+		// what would have worked.
+		for _, v := range built() {
+			if toolName(v) == name {
+				return sn.askVerb(v.Path(), args)
+			}
 		}
 
 		return refuse(fmt.Errorf("no tool is called %q; the tools are %s", name, strings.Join(toolNames(), ", ")))

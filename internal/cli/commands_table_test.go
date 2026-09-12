@@ -51,27 +51,27 @@ func TestNoteSubcommandExecution(t *testing.T) {
 	repoDir := filepath.Join(root, "payments")
 
 	// 1. Create a task with -id
-	code, out, errOut := run(t, "new", "-repo", repoDir, "-id", "PAY-100", "Improve retry backoff")
+	code, out, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "PAY-100", "Improve retry backoff")
 	if code != 0 {
 		t.Fatalf("new failed (exit %d): out=%q err=%q", code, out, errOut)
 	}
 
 	// 2. Add note
-	code, out, errOut = run(t, "note", "-repo", repoDir, "PAY-100", "Use exponential backoff with jitter")
+	code, out, errOut = run(t, "task", "note", "-repo", repoDir, "PAY-100", "Use exponential backoff with jitter")
 	if code != 0 {
 		t.Fatalf("note failed (exit %d): out=%q err=%q", code, out, errOut)
 	}
 
-	if !strings.Contains(out, "note recorded for PAY-100") {
+	if !strings.Contains(out, "noted on PAY-100") {
 		t.Errorf("unexpected note output: %q", out)
 	}
 
 	// 3. Error cases for note
-	if c, _, _ := run(t, "note"); c == 0 {
+	if c, _, _ := run(t, "task", "note"); c == 0 {
 		t.Error("expected note without args to fail")
 	}
 
-	if c, _, _ := run(t, "note", "-repo", repoDir, "PAY-100"); c == 0 {
+	if c, _, _ := run(t, "task", "note", "-repo", repoDir, "PAY-100"); c == 0 {
 		t.Error("expected note without text to fail")
 	}
 }
@@ -85,19 +85,19 @@ func TestTheFlagTerminatorIsNotPartOfWhatWasSaid(t *testing.T) {
 	root, _ := workspace(t)
 	repoDir := filepath.Join(root, "payments")
 
-	if code, out, errOut := run(t, "new", "-repo", repoDir, "-id", "PAY-200", "Retry backoff"); code != 0 {
+	if code, out, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "PAY-200", "Retry backoff"); code != 0 {
 		t.Fatalf("new failed (exit %d): out=%q err=%q", code, out, errOut)
 	}
 
-	if code, out, errOut := run(t, "note", "-repo", repoDir, "PAY-200", "--", "use jitter"); code != 0 {
+	if code, out, errOut := run(t, "task", "note", "-repo", repoDir, "PAY-200", "--", "use jitter"); code != 0 {
 		t.Fatalf("note failed (exit %d): out=%q err=%q", code, out, errOut)
 	}
 
-	if code, out, errOut := run(t, "direct", "-repo", repoDir, "PAY-200", "--", "stop and ask"); code != 0 {
+	if code, out, errOut := run(t, "task", "direct", "-repo", repoDir, "PAY-200", "--", "stop and ask"); code != 0 {
 		t.Fatalf("direct failed (exit %d): out=%q err=%q", code, out, errOut)
 	}
 
-	code, out, errOut := run(t, "show", "-repo", repoDir, "PAY-200")
+	code, out, errOut := run(t, "task", "show", "-repo", repoDir, "PAY-200")
 	if code != 0 {
 		t.Fatalf("show failed (exit %d): out=%q err=%q", code, out, errOut)
 	}
@@ -128,7 +128,7 @@ func TestReposAndReconcileSubcommands(t *testing.T) {
 	}
 
 	// 2. orbit reconcile
-	code, out, errOut = run(t, "reconcile", "-repo", repoDir)
+	code, out, errOut = run(t, "board", "reconcile", "-repo", repoDir)
 	if code != 0 {
 		t.Fatalf("reconcile failed (exit %d): out=%q err=%q", code, out, errOut)
 	}

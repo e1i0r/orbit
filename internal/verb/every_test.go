@@ -2,18 +2,19 @@ package verb
 
 import "testing"
 
-// TestEveryVerbIsSpelledOnce. The name is what the four ways in share, so a
-// duplicate is two verbs that would each claim the same command, route and
-// tool.
+// TestEveryVerbIsSpelledOnce. The path is what the four ways in share —
+// a child is both its words — so a duplicate is two verbs that would each
+// claim the same command, route and tool. The bare name is not: two
+// families may each have a show, and each answers through its parent.
 func TestEveryVerbIsSpelledOnce(t *testing.T) {
 	seen := map[string]bool{}
 
 	for _, v := range Every() {
-		if seen[v.Name] {
-			t.Errorf("%q is declared twice", v.Name)
+		if seen[v.Path()] {
+			t.Errorf("%q is declared twice", v.Path())
 		}
 
-		seen[v.Name] = true
+		seen[v.Path()] = true
 	}
 }
 
@@ -41,16 +42,22 @@ func TestEveryVerbSaysWhatItIs(t *testing.T) {
 // surface has to say out loud before it asks, and a surface deciding for
 // itself which is which is how one of them forgets.
 func TestWhatSpendsAndWhatLeavesIsDeclared(t *testing.T) {
-	spends := map[string]bool{"run": true, "continue": true}
-	outward := map[string]bool{"pr": true, "merge": true, "close-pr": true}
+	spends := map[string]bool{
+		"task start": true, "task continue": true,
+		"pr resolve": true, "pr update": true, "pr checks": true, "pr tests": true, "pr review": true,
+	}
+	outward := map[string]bool{
+		"pr": true, "pr merge": true, "pr close": true,
+		"pr update": true, "pr checks": true, "pr tests": true, "pr resolve": true, "pr review": true,
+	}
 
 	for _, v := range Every() {
-		if v.Spends != spends[v.Name] {
-			t.Errorf("%q says it spends %v", v.Name, v.Spends)
+		if v.Spends != spends[v.Path()] {
+			t.Errorf("%q says it spends %v", v.Path(), v.Spends)
 		}
 
-		if v.Outward != outward[v.Name] {
-			t.Errorf("%q says it leaves this machine %v", v.Name, v.Outward)
+		if v.Outward != outward[v.Path()] {
+			t.Errorf("%q says it leaves this machine %v", v.Path(), v.Outward)
 		}
 	}
 }
@@ -60,30 +67,36 @@ func TestWhatSpendsAndWhatLeavesIsDeclared(t *testing.T) {
 // be given every reading while being trusted with only some of the actions.
 func TestWhatOnlyReadsIsDeclared(t *testing.T) {
 	reads := map[string]bool{
-		"list": true, "show": true, "flow": true, "diff": true, "impact": true,
+		"board": true, "board list": true, "task": true, "task show": true,
+		"task flow": true, "task diff": true, "task impact": true,
 		"knowledge": true, "flows": true, "engines": true, "repos": true,
-		"thread": true, "history": true, "settings": true, "quota": true,
-		"tree": true,
+		"supervisor": true, "supervisor thread": true, "task history": true,
+		"quota": true, "pr show": true,
+		"task tree": true, "rules": true, "settings": true,
 	}
 
 	for _, v := range Every() {
-		if v.Reads != reads[v.Name] {
-			t.Errorf("%q says it only reads: %v", v.Name, v.Reads)
+		if v.Reads != reads[v.Path()] {
+			t.Errorf("%q says it only reads: %v", v.Path(), v.Reads)
 		}
 
 		if v.Reads && (v.Spends || v.Outward) {
-			t.Errorf("%q only reads, and also spends or leaves the machine", v.Name)
+			t.Errorf("%q only reads, and also spends or leaves the machine", v.Path())
 		}
 	}
 }
 
 // TestOneFindsThemAndRefusesTheRest.
 func TestOneFindsThemAndRefusesTheRest(t *testing.T) {
-	if _, ok := One("merge"); !ok {
-		t.Error("merge is not findable by name")
+	if _, ok := One("pr merge"); !ok {
+		t.Error("pr merge is not findable by name")
 	}
 
 	if _, ok := One("mergre"); ok {
 		t.Error("a name nothing answers to was found anyway")
+	}
+
+	if _, ok := One("merge"); ok {
+		t.Error("an old name still finds its verb")
 	}
 }

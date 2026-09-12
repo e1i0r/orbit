@@ -17,7 +17,7 @@ import (
 func TestAToolBuiltFromTheDeclarationDeclaresTheVerbsFields(t *testing.T) {
 	by := map[string]verb.Verb{}
 	for _, v := range verb.Every() {
-		by["orbit_"+strings.ReplaceAll(v.Name, "-", "_")] = v
+		by[toolName(v)] = v
 	}
 
 	for _, tool := range verbTools() {
@@ -79,7 +79,7 @@ func TestEveryDeclaredArgumentIsOneAHandlerReads(t *testing.T) {
 		"orbit_inspect_repo":       {"repo": true},
 		"orbit_add_repo":           {"path": true},
 		"orbit_forget_repo":        {"repo": true, "delete_tasks": true},
-		"orbit_learn":              {"phrase": true, "repo": true, "lang": true, "stops": true, "check": true, "task_id": true},
+		"orbit_learn":              {"phrase": true, "stops": true, "check": true, "task_id": true},
 		"orbit_knowledge":          {"repo": true},
 		"orbit_supervisor_say":     {"message": true, "by": true, "channel": true, "task_id": true, "repo": true},
 		"orbit_supervisor_history": {"limit": true},
@@ -88,13 +88,13 @@ func TestEveryDeclaredArgumentIsOneAHandlerReads(t *testing.T) {
 	// arguments are the verb's own fields, and askVerb hands every one of
 	// them to the verb by that name. What is checked for those is that the
 	// schema still says what the declaration says — see below.
-	built := map[string]bool{}
+	declared := map[string]bool{}
 	for _, one := range verbTools() {
-		built[one.Name] = true
+		declared[one.Name] = true
 	}
 
 	for _, tool := range Tools() {
-		if built[tool.Name] {
+		if declared[tool.Name] {
 			continue
 		}
 
@@ -273,5 +273,41 @@ func TestEveryToolThatStartsARunIsNamedAsOneThatCostsMoney(t *testing.T) {
 		if !strings.Contains(costly, name) {
 			t.Errorf("%q starts a run and is not in the sentence that says which tools cost money: %s", name, costly)
 		}
+	}
+}
+
+// TestAVerbInAFamilyIsNamedByBothItsWords.
+//
+// internal/verb spells a child's name with a space, and a tool name may not
+// hold one. orbit_keep would be a name that says nothing about what, and one
+// two families could both claim.
+func TestAVerbInAFamilyIsNamedByBothItsWords(t *testing.T) {
+	for _, one := range verbTools() {
+		if one.Name != "orbit_rules_keep" {
+			continue
+		}
+
+		if _, needs := one.InputSchema.Properties["n"]; !needs {
+			t.Errorf("%s does not ask which rule: %v", one.Name, one.InputSchema.Properties)
+		}
+
+		return
+	}
+
+	t.Error("no tool is built for rules keep")
+}
+
+// TestNoTwoToolsShareAName, because a tool call arrives as a name and
+// nothing else. Two families may each have a keep, and a name built from the
+// second word alone would hand a model one tool that does two things.
+func TestNoTwoToolsShareAName(t *testing.T) {
+	seen := map[string]string{}
+
+	for _, v := range built() {
+		if was, twice := seen[toolName(v)]; twice {
+			t.Errorf("%s is the tool for %q and for %q", toolName(v), was, v.Path())
+		}
+
+		seen[toolName(v)] = v.Path()
 	}
 }

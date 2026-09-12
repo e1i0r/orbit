@@ -25,8 +25,8 @@ func TestQuickWalksItsOnePhase(t *testing.T) {
 		}},
 	})
 
-	b.must(t, "new", "-repo", b.repo, "-id", "LED-1", "-flow", "quick", "fix the total")
-	b.must(t, "run", "-repo", b.repo, "LED-1")
+	b.must(t, "board", "new", "-repo", b.repo, "-id", "LED-1", "-flow", "quick", "fix the total")
+	b.must(t, "task", "start", "-repo", b.repo, "LED-1")
 
 	events := b.record(t, "LED-1")
 
@@ -59,8 +59,8 @@ func TestTheWorkIsOnDiskWhenTheRunEnds(t *testing.T) {
 		}},
 	})
 
-	b.must(t, "new", "-repo", b.repo, "-id", "LED-2", "-flow", "quick", "write down the bug")
-	b.must(t, "run", "-repo", b.repo, "LED-2")
+	b.must(t, "board", "new", "-repo", b.repo, "-id", "LED-2", "-flow", "quick", "write down the bug")
+	b.must(t, "task", "start", "-repo", b.repo, "LED-2")
 
 	found := worktreeFile(t, b, "NOTES.md")
 	if !strings.Contains(found, "twice") {

@@ -122,11 +122,11 @@ func TestNewThenListThenShow(t *testing.T) {
 	root, _ := workspace(t)
 	repoDir := filepath.Join(root, "payments")
 
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "retry the webhook on 5xx"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-1", "retry the webhook on 5xx"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
-	code, out, errOut := run(t, "list", "-repo", repoDir)
+	code, out, errOut := run(t, "board", "list", "-repo", repoDir)
 	if code != 0 {
 		t.Fatalf("list exited %d: %s", code, errOut)
 	}
@@ -135,7 +135,7 @@ func TestNewThenListThenShow(t *testing.T) {
 		t.Errorf("list does not show the task:\n%s", out)
 	}
 
-	code, out, errOut = run(t, "show", "-repo", repoDir, "ACME-1")
+	code, out, errOut = run(t, "task", "show", "-repo", repoDir, "ACME-1")
 	if code != 0 {
 		t.Fatalf("show exited %d: %s", code, errOut)
 	}
@@ -169,7 +169,7 @@ func TestRunNeedsAnID(t *testing.T) {
 	root, _ := workspace(t)
 	repoDir := filepath.Join(root, "payments")
 
-	code, _, errOut := run(t, "run", "-repo", repoDir)
+	code, _, errOut := run(t, "task", "start", "-repo", repoDir)
 	if code == 0 {
 		t.Error("run with no id exited 0")
 	}
@@ -183,7 +183,7 @@ func TestRunFailsOnAnUnknownFlow(t *testing.T) {
 	root, _ := workspace(t)
 	repoDir := filepath.Join(root, "payments")
 
-	code, _, errOut := run(t, "run", "-repo", repoDir, "-flow", "does-not-exist", "ACME-1")
+	code, _, errOut := run(t, "task", "start", "-repo", repoDir, "-flow", "does-not-exist", "ACME-1")
 	if code == 0 {
 		t.Error("run with an unknown flow exited 0")
 	}
@@ -197,7 +197,7 @@ func TestRunFailsOnATaskThatWasNeverCreated(t *testing.T) {
 	root, _ := workspace(t)
 	repoDir := filepath.Join(root, "payments")
 
-	code, _, errOut := run(t, "run", "-repo", repoDir, "ACME-404")
+	code, _, errOut := run(t, "task", "start", "-repo", repoDir, "ACME-404")
 	if code == 0 {
 		t.Error("run succeeded against a task that was never created")
 	}
@@ -210,7 +210,7 @@ func TestRunFailsOnATaskThatWasNeverCreated(t *testing.T) {
 func TestNewRefusesADirectoryThatIsNotARepository(t *testing.T) {
 	t.Setenv("ORBIT_HOME", t.TempDir())
 
-	code, _, errOut := run(t, "new", "-repo", t.TempDir(), "-id", "ACME-1", "x")
+	code, _, errOut := run(t, "board", "new", "-repo", t.TempDir(), "-id", "ACME-1", "x")
 	if code == 0 {
 		t.Error("new succeeded outside a repository")
 	}

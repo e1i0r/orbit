@@ -154,61 +154,15 @@ func commands() []Command {
 		Run:      flows,
 		InWindow: WindowOpens,
 	}, {
-		Name: "new", Args: "-repo <dir> -id <id> <text>",
-		About: func(p *words.Printer) string { return p.T("cmd.new", "write a task down") },
-		Run:   newTask,
-	}, {
-		Name: "run", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
-		About: func(p *words.Printer) string { return p.T("cmd.run", "run a task through its flow") },
-		Run:   runTask,
-	}, {
-		Name: "list", Args: "-repo <dir>",
-		About:    func(p *words.Printer) string { return p.T("cmd.list", "list the tasks of a repository") },
-		Run:      list,
-		InWindow: WindowOpens,
-	}, {
-		Name: "show", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
-		About:    func(p *words.Printer) string { return p.T("cmd.show", "print what happened to a task") },
-		Run:      show,
-		InWindow: WindowOpens,
-	}, {
-		Name: "read", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
-		About: func(p *words.Printer) string { return p.T("cmd.read", "mark a finished task as looked at") },
-		Run:   readTask,
-	}, {
 		Name: "pr", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
 		About: func(p *words.Printer) string {
 			return p.T("cmd.pr", "create a pull request from a task's worktree")
 		},
 		Run: createPR,
 	}, {
-		Name: "merge", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
-		About: func(p *words.Printer) string {
-			return p.T("cmd.merge", "merge a task's pull request and delete its branch")
-		},
-		Run: mergePR,
-	}, {
-		Name: "close-pr", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
-		About: func(p *words.Printer) string {
-			return p.T("cmd.close_pr", "close a task's pull request on GitHub")
-		},
-		Run: closePR,
-	}, {
 		Name: "cancel", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
 		About: func(p *words.Printer) string { return p.T("cmd.cancel", "stop a run, and say so in its record") },
 		Run:   cancelTask,
-	}, {
-		Name: "history", Args: "[-repo <dir>] [-write] <id>", NeedsArgs: true, AboutATask: true,
-		About: func(p *words.Printer) string {
-			return p.T("cmd.history", "print everything ever said about a task, in any program")
-		},
-		Run: taskHistory,
-	}, {
-		Name: "requeue", Args: "-repo <dir> <id> [why]", NeedsArgs: true, AboutATask: true,
-		About: func(p *words.Printer) string {
-			return p.T("cmd.requeue", "stop a run and put the task back in to do")
-		},
-		Run: requeueTask,
 	}, {
 		Name: "join", Args: "[-repo <dir>] [-task <id>] <name>", NeedsArgs: true,
 		About: func(p *words.Printer) string {
@@ -216,21 +170,11 @@ func commands() []Command {
 		},
 		Run: joinRepo,
 	}, {
-		Name: "reconcile", Args: "-repo <dir> [id]",
-		About: func(p *words.Printer) string {
-			return p.T("cmd.reconcile", "close the records of runs whose processes are gone")
-		},
-		Run: reconcile,
-	}, {
 		Name: "direct", Args: "-repo <dir> [-restart] <id> <message>", NeedsArgs: true, AboutATask: true,
 		About: func(p *words.Printer) string {
 			return p.T("cmd.direct", "interrupt or redirect a task and record the directive")
 		},
 		Run: directTask,
-	}, {
-		Name: "note", Args: "-repo <dir> <id> <text>", NeedsArgs: true, AboutATask: true,
-		About: func(p *words.Printer) string { return p.T("cmd.note", "record a note for a task") },
-		Run:   noteTask,
 	}, {
 		Name: "export", Args: "[-task <id>] <dir>", NeedsArgs: true,
 		About: func(p *words.Printer) string {
@@ -266,7 +210,7 @@ func commands() []Command {
 		Because: func(p *words.Printer) string {
 			return p.T("cmd.mcp.inside", "it speaks over this terminal, which the window is already using")
 		},
-	}}, controlling(), answering()))
+	}}, answering()))
 }
 
 // lookup finds a command by the name that was typed.

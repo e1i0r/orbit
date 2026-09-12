@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/e1i0r/orbit/internal/learn"
 	"github.com/e1i0r/orbit/internal/store"
 )
 
@@ -37,6 +38,16 @@ func Direct(s *store.Store, t Task, by, message string) error {
 	if err := Note(s, t, noteText); err != nil {
 		return fmt.Errorf("task %s note: %w", t.ID, err)
 	}
+
+	// Half of what gets typed at a run is not about that run. "never merge
+	// without the tests passing" is a rule, said here because here is where
+	// somebody was standing — so it is offered back the same way the
+	// supervisor's lines are. The correction above stands either way: this
+	// answers nothing and cannot fail.
+	learn.Heard(s, learn.Said{
+		At: time.Now().UTC(), Text: message,
+		By: by, About: t.ID, Repo: t.Repo.Path,
+	})
 
 	_, ok, err := Alive(s, t)
 	if err != nil {

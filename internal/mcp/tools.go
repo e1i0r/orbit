@@ -61,7 +61,7 @@ func taskTools() []Tool {
 				"title":  {Type: "string", Description: "One line saying what the task is."},
 				"prompt": {Type: "string", Description: "The instructions the engine is given, below the title."},
 				"repo":   {Type: "string", Description: "Which repository to write it against, by name or by path. Only needed when Orbit knows more than one."},
-				"flow":   {Type: "string", Description: "Which flow it walks, from orbit_list_flows. Defaults to the flow `orbit set flow` chose."},
+				"flow":   {Type: "string", Description: "Which flow it walks, from orbit_list_flows. Defaults to the flow `orbit settings set flow` chose."},
 				"id":     {Type: "string", Description: "The id to file it under. Defaults to the repository's name and the next free number."},
 			}, "title"),
 		},
@@ -88,18 +88,17 @@ func taskTools() []Tool {
 		},
 		{
 			Name: "orbit_learn",
-			Description: "Write down something true about this code, so the next run against it is told before it starts. " +
+			Description: "Write down something true about the code this task is worked in, so the next run against it is told before it starts. " +
 				"Use it when you hit something worth knowing that the task description did not say: a constraint, a trap, a convention the code keeps. " +
-				"Without stops it reaches the prompt of every phase that works here. With stops and a check it also becomes a gate: work that breaks it is sent back. " +
+				"It is filed under that task's repository and reaches every run against it, and nothing outside it — you cannot write a fact about another project or about every project. " +
+				"Without stops it is told to every phase that works there. With stops and a check it also becomes a gate: work that breaks it is sent back. " +
 				"A rule with no check cannot enforce itself and is told rather than enforced.",
 			InputSchema: object(map[string]Property{
 				"phrase":  {Type: "string", Description: "The fact, in a sentence. It is what the next agent reads."},
-				"repo":    {Type: "string", Description: "The repository's path, when the fact is about one project. It travels with that repository."},
-				"lang":    {Type: "string", Description: "A language name such as go or ts, when the fact is about every file of that language instead of one project."},
 				"stops":   {Type: "boolean", Description: "Whether work that breaks this should be refused rather than merely warned about. Needs check."},
 				"check":   {Type: "string", Description: "A shell command that exits non-zero when the rule is broken. This is what lets it stop work."},
-				"task_id": {Type: "string", Description: "The task this was learned in, so a reader can go and see what happened."},
-			}, "phrase"),
+				"task_id": {Type: "string", Description: "The task this was learned in. It says which repository the fact is about, and lets a reader go and see what happened."},
+			}, "phrase", "task_id"),
 		},
 		{
 			Name: "orbit_knowledge",

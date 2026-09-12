@@ -118,7 +118,7 @@ func TestTheListingIsInTheReadersOwnLanguage(t *testing.T) {
 	userFlow(t, orbitHome, "mine")
 	userFlow(t, orbitHome, "task")
 
-	if code, _, errOut := run(t, "set", "language", "es"); code != 0 {
+	if code, _, errOut := run(t, "settings", "set", "language", "es"); code != 0 {
 		t.Fatalf("set language exited %d: %s", code, errOut)
 	}
 
@@ -138,7 +138,7 @@ func TestNewSaysWhichFlowTheTaskWasWrittenAgainst(t *testing.T) {
 	root, _ := workspace(t)
 	repoDir := filepath.Join(root, "payments")
 
-	code, out, errOut := run(t, "new", "-repo", repoDir, "-flow", "careful", "-id", "ACME-1", "retry the webhook on 5xx")
+	code, out, errOut := run(t, "board", "new", "-repo", repoDir, "-flow", "careful", "-id", "ACME-1", "retry the webhook on 5xx")
 	if code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
@@ -155,11 +155,11 @@ func TestNewAgainstAFlowThatDoesNotExistStillWritesTheTaskDown(t *testing.T) {
 	root, _ := workspace(t)
 	repoDir := filepath.Join(root, "payments")
 
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-flow", "nonesuch", "-id", "ACME-1", "x"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-flow", "nonesuch", "-id", "ACME-1", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
-	code, out, errOut := run(t, "list", "-repo", repoDir)
+	code, out, errOut := run(t, "board", "list", "-repo", repoDir)
 	if code != 0 {
 		t.Fatalf("list exited %d: %s", code, errOut)
 	}

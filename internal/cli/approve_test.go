@@ -9,7 +9,7 @@ import (
 func TestApproveNeedsAnID(t *testing.T) {
 	root, _ := workspace(t)
 
-	code, _, errOut := run(t, "approve", "-repo", filepath.Join(root, "payments"))
+	code, _, errOut := run(t, "task", "approve", "-repo", filepath.Join(root, "payments"))
 	if code == 0 {
 		t.Error("approve with no id exited 0")
 	}
@@ -26,11 +26,11 @@ func TestApproveSaysSoWhenNothingWasAdded(t *testing.T) {
 	root, _ := workspace(t)
 
 	repoDir := filepath.Join(root, "payments")
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
-	code, out, errOut := run(t, "approve", "-repo", repoDir, "ACME-1")
+	code, out, errOut := run(t, "task", "approve", "-repo", repoDir, "ACME-1")
 	if code != 0 {
 		t.Fatalf("approve exited %d: %s", code, errOut)
 	}
@@ -46,7 +46,7 @@ func TestApproveSaysSoWhenNothingWasAdded(t *testing.T) {
 func TestApproveRefusesATaskNobodyWrote(t *testing.T) {
 	root, _ := workspace(t)
 
-	code, _, errOut := run(t, "approve", "-repo", filepath.Join(root, "payments"), "ACME-404")
+	code, _, errOut := run(t, "task", "approve", "-repo", filepath.Join(root, "payments"), "ACME-404")
 	if code == 0 {
 		t.Error("approve reported success about a task nobody wrote")
 	}
@@ -58,7 +58,7 @@ func TestApproveRefusesATaskNobodyWrote(t *testing.T) {
 
 // TestApproveRefusesADirectoryThatIsNotARepository.
 func TestApproveRefusesADirectoryThatIsNotARepository(t *testing.T) {
-	code, _, errOut := run(t, "approve", "-repo", t.TempDir(), "ACME-1")
+	code, _, errOut := run(t, "task", "approve", "-repo", t.TempDir(), "ACME-1")
 	if code == 0 {
 		t.Error("approve reported success against a directory that is not a repository")
 	}

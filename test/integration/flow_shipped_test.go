@@ -22,12 +22,12 @@ func TestCarefulRunsItsFixAfterTheReview(t *testing.T) {
 		"fix":    []any{map[string]any{"write": map[string]string{"NOTES.md": "tidied\n"}, "say": "tidied it"}},
 	})
 
-	b.must(t, "new", "-repo", b.repo, "-id", "LED-7", "-flow", "careful", "fix the total carefully")
+	b.must(t, "board", "new", "-repo", b.repo, "-id", "LED-7", "-flow", "careful", "fix the total carefully")
 
-	run := b.start(t, "run", "-repo", b.repo, "LED-7")
+	run := b.start(t, "task", "start", "-repo", b.repo, "LED-7")
 
 	b.waitFor(t, "LED-7", "phase.waiting", gateWait)
-	b.must(t, "resume", "-repo", b.repo, "LED-7")
+	b.must(t, "task", "resume", "-repo", b.repo, "LED-7")
 
 	if err := run.Wait(); err != nil {
 		t.Fatalf("the run did not end after the review was let go: %v", err)
@@ -58,12 +58,12 @@ func TestTddFuzzPrWalksItsThreePhasesInOrder(t *testing.T) {
 		"3-review-pr": []any{map[string]any{"say": "ready for a pull request"}},
 	})
 
-	b.must(t, "new", "-repo", b.repo, "-id", "LED-8", "-flow", "tdd-fuzz-pr", "make the total right")
+	b.must(t, "board", "new", "-repo", b.repo, "-id", "LED-8", "-flow", "tdd-fuzz-pr", "make the total right")
 
-	run := b.start(t, "run", "-repo", b.repo, "LED-8")
+	run := b.start(t, "task", "start", "-repo", b.repo, "LED-8")
 
 	b.waitFor(t, "LED-8", "phase.waiting", gateWait)
-	b.must(t, "resume", "-repo", b.repo, "LED-8")
+	b.must(t, "task", "resume", "-repo", b.repo, "LED-8")
 
 	if err := run.Wait(); err != nil {
 		t.Fatalf("the run did not end after the review was let go: %v", err)

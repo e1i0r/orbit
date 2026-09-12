@@ -85,6 +85,26 @@ const (
 	                    WHERE repo_id IN (SELECT id FROM repo WHERE abs_path = ?)`
 )
 
+// Pull requests. One row per opening, and what became of each is the state,
+// marked where the merge or the close happened.
+const (
+	insertPR = `INSERT INTO pr(task_id, repo_id, url, opened_at)
+	            SELECT (SELECT id FROM task WHERE task_id = ?),
+	                   (SELECT id FROM repo WHERE abs_path = ?),
+	                   ?, ?`
+
+	markPR = `UPDATE pr SET state = ?
+	          WHERE task_id = (SELECT id FROM task WHERE task_id = ?)
+	            AND repo_id = (SELECT id FROM repo WHERE abs_path = ?)`
+
+	selectPRs = `SELECT r.name, p.url, p.opened_at, p.state
+	               FROM pr p
+	               JOIN repo r ON r.id = p.repo_id
+	               JOIN task t ON t.id = p.task_id
+	              WHERE t.task_id = ?
+	              ORDER BY p.id DESC`
+)
+
 // Runs. An attempt is numbered by how many came before it, and it is ended
 // by whichever event ended it.
 const (
@@ -124,6 +144,23 @@ const (
 const (
 	countEvents   = `SELECT count(*) FROM event e JOIN task t ON t.id = e.task_id WHERE t.task_id = ?`
 	countMessages = `SELECT count(*) FROM message`
+)
+
+// Proposals: sentences waiting to be told whether they were rules.
+//
+// The insert does nothing on a line that already has a row, because the
+// caller reads the whole thread every time it opens and most of what it
+// finds it has found before. The update carries the state it expects, so
+// deciding twice moves nothing rather than overwriting an answer.
+const (
+	insertProposal = `INSERT INTO proposal(said_at, said, state, said_by, about_task, repo)
+	                  VALUES(?,?,?,?,?,?) ON CONFLICT(said_at) DO NOTHING`
+
+	selectWaiting = `SELECT said_at, said, state, said_by, about_task, repo FROM proposal
+	                  WHERE state = ? ORDER BY said_at`
+
+	decideProposal = `UPDATE proposal SET state = ?, decided = ?
+	                   WHERE said_at = ? AND state = ?`
 )
 
 // Events.

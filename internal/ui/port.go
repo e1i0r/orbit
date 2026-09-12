@@ -19,6 +19,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/knowledge"
+	"github.com/e1i0r/orbit/internal/ui/known"
 	"github.com/e1i0r/orbit/internal/ui/roster"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
@@ -130,6 +131,20 @@ type Options struct {
 	// ReplaceFact writes a corrected fact and takes away the one it
 	// replaces, which is not the same file whenever the sentence changed.
 	ReplaceFact func(was, now knowledge.Fact) error
+
+	// Waiting is what was said to the supervisor that read as a rule and
+	// nobody has answered yet. It is a port for the reason Knows is:
+	// reading it means reaching the record, which the window may not do.
+	Waiting func() []known.Said
+
+	// KeepRule writes one of them down as a fact of the operator's, in the
+	// words the tray was left with — what they said, or what they typed
+	// instead — and takes it out of the tray.
+	KeepRule func(at time.Time, phrase, check string) error
+
+	// DropRule says it was not a rule. The sentence stays in the thread
+	// where it was said.
+	DropRule func(at time.Time) error
 
 	// NoteTask puts a line in one task's notes, which is where a mention of
 	// it in the supervisor lands.

@@ -13,6 +13,9 @@ import (
 // Key answers the keyboard while the menu is up: pick, choose, leave. Every
 // other key does nothing rather than reaching past a menu the reader is
 // looking at.
+//
+// Leaving from a submenu goes back to the top instead: families are one
+// level deep, so back always knows where it goes.
 func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
 	// Inside a task, the key a pane is on opens it from here too — the
 	// menu is where a reader goes to find out which key that is.
@@ -24,6 +27,10 @@ func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
 
 	switch {
 	case key.Matches(msg, e.Keys.Back):
+		if s.sub != "" {
+			return s.moved("", e), Out{}
+		}
+
 		return s, Out{Leave: true}
 	case key.Matches(msg, e.Keys.Open):
 		return s.choose(e)
@@ -86,13 +93,43 @@ func (s State) choose(e Env) (State, Out) {
 	switch {
 	case entry.Pane != "":
 		return s, Out{Leave: true, Pane: entry.Pane}
+	case entry.Family != "":
+		return s.moved(entry.Family, e), Out{}
 	case entry.Command != "":
 		// A command that takes a message is handed the box rather than
 		// run: the menu has nothing to fill the sentence in with.
-		return s, Out{Leave: true, Run: entry.Command, Args: entry.Args, Ask: entry.Says}
+		if entry.Says {
+			return s, Out{
+				Leave: true, Run: entry.Command, Child: entry.Child,
+				Args: entry.Args, Ask: true,
+			}
+		}
+
+		// One that takes arguments is handed the line with its name on
+		// it: the menu chooses with no arguments at all, so running one
+		// of these bare came back with the refusal, which reads as an
+		// entry that is broken rather than as one in the wrong place.
+		if entry.NeedsArgs && len(entry.Args) <= 1 {
+			return s, Out{Leave: true, Palette: entry.Command + " " + entry.Child + " "}
+		}
+
+		return s, Out{
+			Leave: true, Run: entry.Command, Child: entry.Child,
+			Args: entry.Args,
+		}
 	}
 
 	return s, Out{Leave: true, Send: entry.Glyph}
+}
+
+// moved changes the level the menu is on: the cursor on the first entry
+// there is to choose, the way opening puts it.
+func (s State) moved(sub string, e Env) State {
+	s.sub = sub
+	s.sel = max(0, choice(s.entries(e), 0, 1))
+	s.offset = 0
+
+	return s.keepSeen(e)
 }
 
 // pick moves the selection within the entries there are.

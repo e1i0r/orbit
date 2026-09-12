@@ -36,6 +36,10 @@ type In struct {
 	// By is who asked, in the words the record shows: "operator" for a
 	// person at any of the controls, an engine's name for a model.
 	By string
+	// Door is where they asked it: the cockpit, the command line, the
+	// browser, a tool call. What the supervisor is handed names it, so
+	// that an instruction never claims a key was pressed that was not.
+	Door string
 }
 
 // Arg is one field, and the empty string for one nobody filled in.
@@ -60,6 +64,10 @@ type Out struct {
 	// Of is what the verb acted on, where that is a list worth showing:
 	// the libraries an approve accepted, the files a walk touched.
 	Of []string
+	// Pid is the process a start began, for the caller that watches for
+	// it. Zero when this asking started nothing: most verbs leave it
+	// alone, and no surface prints it unasked.
+	Pid int
 	// Saw is what a reading read, in the shape it was read in.
 	//
 	// Said carries the same answer written out for a terminal, so a
@@ -83,7 +91,9 @@ func Run(ctx context.Context, w World, name string, in In) (Out, error) {
 		return Out{}, err
 	}
 
-	return v.do(ctx, w, in)
+	out, err := v.do(ctx, w, in)
+
+	return out, err
 }
 
 // printer is the reader's language, and English where there is no world to
@@ -107,13 +117,13 @@ func printer(w World) *words.Printer {
 func (v Verb) needs(p *words.Printer, in In) error {
 	if v.OnTask && in.Task == "" {
 		return errors.New(p.T("verb.needs_a_task", "{verb} needs a task",
-			words.Arg{Name: "verb", Value: v.Name}))
+			words.Arg{Name: "verb", Value: v.Path()}))
 	}
 
 	for _, f := range v.Takes {
 		if f.Needed && in.Arg(f.Name) == "" {
 			return errors.New(p.T("verb.needs_field", "{verb} needs {field}",
-				words.Arg{Name: "verb", Value: v.Name},
+				words.Arg{Name: "verb", Value: v.Path()},
 				words.Arg{Name: "field", Value: f.Name}))
 		}
 	}

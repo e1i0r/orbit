@@ -11,7 +11,7 @@ import (
 // TestAFailedCommandIsWrittenDown.
 //
 // Sixty-three logger calls lived in this package and sixty-one of them went
-// nowhere: only top and mcp opened the log, so `orbit run`, cancel, merge,
+// nowhere: only top and mcp opened the log, so `orbit task start`, cancel, merge,
 // pr and reconcile each wrote their failures to a nil global logger, which
 // drops them without a word. The command that puts an agent on a repository
 // left no trace of why it did not.
@@ -22,7 +22,7 @@ func TestAFailedCommandIsWrittenDown(t *testing.T) {
 	t.Setenv("ORBIT_HOME", home)
 
 	var out, errOut bytes.Buffer
-	if code := Run([]string{"cancel", "-repo", filepath.Join(home, "nowhere"), "ABC-1"}, &out, &errOut); code == 0 {
+	if code := Run([]string{"task", "cancel", "-repo", filepath.Join(home, "nowhere"), "ABC-1"}, &out, &errOut); code == 0 {
 		t.Fatal("cancel answered 0 for a repository that is not there")
 	}
 
@@ -34,7 +34,7 @@ func TestAFailedCommandIsWrittenDown(t *testing.T) {
 			t.Fatalf("read %s: %v", name, err)
 		}
 
-		if !strings.Contains(string(b), "cli/cancel") {
+		if !strings.Contains(string(b), "cli/task cancel") {
 			t.Errorf("%s does not say the command failed: %q", name, b)
 		}
 	}
@@ -81,7 +81,7 @@ func TestACommandThatLogsNothingOfItsOwnIsStillWrittenDown(t *testing.T) {
 	t.Setenv("ORBIT_HOME", home)
 
 	var out, errOut bytes.Buffer
-	if code := Run([]string{"show", "-repo", filepath.Join(home, "nowhere"), "ABC-1"}, &out, &errOut); code == 0 {
+	if code := Run([]string{"task", "show", "-repo", filepath.Join(home, "nowhere"), "ABC-1"}, &out, &errOut); code == 0 {
 		t.Fatal("show answered 0 for a repository that is not there")
 	}
 
@@ -90,7 +90,7 @@ func TestACommandThatLogsNothingOfItsOwnIsStillWrittenDown(t *testing.T) {
 		t.Fatalf("read errors.log: %v", err)
 	}
 
-	if !strings.Contains(string(b), "[ERROR] [cli/show]") {
+	if !strings.Contains(string(b), "[ERROR] [cli/task show]") {
 		t.Errorf("the errors file does not say show failed: %q", b)
 	}
 }

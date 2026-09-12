@@ -13,7 +13,7 @@ import (
 	"github.com/e1i0r/orbit/internal/store"
 )
 
-// Start spawns `orbit run` for one task and returns the pid it was given.
+// Start spawns `orbit task start` for one task and returns the pid it was given.
 //
 // It runs the same subcommand a person would type, on purpose. A gesture in
 // the window and a line in a terminal have to reach the same code, or the
@@ -116,7 +116,7 @@ func StartWith(s *store.Store, t Task, flowName, engineName string, unread int) 
 // window happens to be sitting in. The run reads the flag the same way, so
 // the absence is the answer.
 func runCommand(exe, root string, t Task, flowName, engineName string) *exec.Cmd {
-	args := []string{"run"}
+	args := []string{"task", "start"}
 	if t.Repo.Path != "" {
 		args = append(args, "-repo", t.Repo.Path)
 	}
@@ -130,7 +130,7 @@ func runCommand(exe, root string, t Task, flowName, engineName string) *exec.Cmd
 
 	// The engine is passed only when one was named. An empty -engine would
 	// be a flag that means "the flow's own", which is what its absence
-	// already means, and one more thing for `orbit run` to interpret.
+	// already means, and one more thing for `orbit task start` to interpret.
 	if engineName != "" {
 		args = append(args, "-engine", engineName)
 	}

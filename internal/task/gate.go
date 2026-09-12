@@ -69,7 +69,7 @@ const howAutopilot = "autopilot"
 //
 // poll is how long it waits between looks at the control file. It is a
 // parameter rather than a constant so a test can have a gate that is patient
-// on a fake clock and `orbit run` can have one second.
+// on a fake clock and `orbit task start` can have one second.
 func FileGate(s *store.Store, poll time.Duration) Gate {
 	return fileGate{store: s, poll: poll}
 }
@@ -213,7 +213,7 @@ func autopilot(s *store.Store) (bool, error) {
 // ask puts the question, and answers Continue when there is no gate at all.
 //
 // A nil gate means never stop. That is what keeps a caller who has no reader
-// to release the run — a test, and `orbit run` before this existed — from
+// to release the run — a test, and `orbit task start` before this existed — from
 // having to supply a gate that says yes to everything.
 func ask(ctx context.Context, g Gate, t Task, p flow.Phase, n int) (Go, error) {
 	if g == nil {

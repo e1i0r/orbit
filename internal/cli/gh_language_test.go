@@ -17,8 +17,8 @@ import (
 func ghCommands() map[string]func(Context, []string) error {
 	return map[string]func(Context, []string) error{
 		"pr":       createPR,
-		"merge":    mergePR,
-		"close-pr": closePR,
+		"pr merge": mergePR,
+		"pr close": closePR,
 	}
 }
 

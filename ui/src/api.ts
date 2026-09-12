@@ -373,13 +373,13 @@ export const api = {
   engines: () => ask<{ engines: EngineInfo[]; settled?: string; read: boolean }>("/api/engines"),
   repos: () => ask<{ root: string; repos: RepoDetail[] }>("/api/repos"),
   do: (id: string, verb: Verb, says?: Says) =>
-    tell<Did>(`/api/tasks/${encodeURIComponent(id)}/${verb}`, says),
+    tell<Did>(`/api/tasks/${encodeURIComponent(id)}/${verb.split(" ").map(encodeURIComponent).join("/")}`, says),
   // The verbs that are not about one task: said to the supervisor, written
   // down about the code, changed in the settings. Same engine, same names —
   // what differs is only that there is no task in the path.
-  did: (verb: Verb, says?: Says) => tell<Did>(`/api/do/${verb}`, says),
+  did: (verb: Verb, says?: Says) => tell<Did>(`/api/do/${verb.split(" ").map(encodeURIComponent).join("/")}`, says),
   // And the readings of the same kind, which change nothing and so are a
   // GET: settings, quota, the thread, whatever the declaration carries.
-  read: <T>(verb: Verb) => ask<{ said: string; saw: T }>(`/api/read/${verb}`),
+  read: <T>(verb: Verb) => ask<{ said: string; saw: T }>(`/api/read/${verb.split(" ").map(encodeURIComponent).join("/")}`),
   write: (one: Written) => tell<Wrote>("/api/do/new", { ...one, run: one.start }),
 };

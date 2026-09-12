@@ -103,7 +103,7 @@ func noteCritical(s *store.Store, t task.Task, r repo.Repo, wtDir, url string) {
 // with two answers and a reader looking for how to refuse should find it
 // beside how to allow.
 func permitTask(ctx Context, args []string) error {
-	fs := flag.NewFlagSet("permit", flag.ContinueOnError)
+	fs := flag.NewFlagSet("task permit", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	dir := fs.String("repo", ".", "the repository the task is against")
 	no := fs.Bool("no", false, "refuse the action instead of allowing it")
@@ -115,7 +115,7 @@ func permitTask(ctx Context, args []string) error {
 
 	id := fs.Arg(0)
 	if id == "" {
-		return needsTaskID(ctx, "permit")
+		return needsTaskID(ctx, "task permit")
 	}
 
 	s, r, err := openMaybe(*dir, given(fs, "repo"))
@@ -160,7 +160,7 @@ func permitTask(ctx Context, args []string) error {
 // criticalTask marks a task as one that reaches something that matters, or
 // takes the mark off again.
 func criticalTask(ctx Context, args []string) error {
-	fs := flag.NewFlagSet("critical", flag.ContinueOnError)
+	fs := flag.NewFlagSet("task critical", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	dir := fs.String("repo", ".", "the repository the task is against")
 	off := fs.Bool("off", false, "take the mark off again")
@@ -172,7 +172,7 @@ func criticalTask(ctx Context, args []string) error {
 
 	id := fs.Arg(0)
 	if id == "" {
-		return needsTaskID(ctx, "critical")
+		return needsTaskID(ctx, "task critical")
 	}
 
 	s, r, err := openMaybe(*dir, given(fs, "repo"))

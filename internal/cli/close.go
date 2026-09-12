@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/e1i0r/orbit/internal/logger"
+	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -22,7 +23,7 @@ func closingComment(ctx Context) string {
 }
 
 func closePR(ctx Context, args []string) error {
-	fs := flag.NewFlagSet("close-pr", flag.ContinueOnError)
+	fs := flag.NewFlagSet("pr close", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 
 	dir := fs.String("repo", ".", "the repository the task is against")
@@ -31,7 +32,7 @@ func closePR(ctx Context, args []string) error {
 	}
 
 	if len(fs.Args()) < 1 {
-		return needsTaskID(ctx, "close-pr")
+		return needsTaskID(ctx, "pr close")
 	}
 
 	p := ctx.printer()
@@ -61,6 +62,10 @@ func closePR(ctx Context, args []string) error {
 
 			return fmt.Errorf("%s: %w", p.T("close_pr.refused", "closing the pull request of {id} failed",
 				words.Arg{Name: "id", Value: taskID}), err)
+		}
+
+		if werr := s.MarkPR(taskID, one.Path, store.PRClosed); werr != nil {
+			logger.Warn("cli/close-pr", "mark the pull request of %q in %q closed: %v", taskID, one.Name, werr)
 		}
 	}
 

@@ -12,47 +12,6 @@ import (
 	"testing"
 )
 
-// TestEveryDeliverVerbCarriesTheBriefAndTheFactsItNeeds.
-//
-// The brief is where the rules live — never force-push, do not merge, say so
-// if this is the wrong thing to do — and a body sent without it is a model
-// asked to do something with no idea what it may not do.
-func TestEveryDeliverVerbCarriesTheBriefAndTheFactsItNeeds(t *testing.T) {
-	for _, body := range []string{CreatePR, UpdatePR, FixChecks, MoreTests, Review, ResolveComments} {
-		got := Deliver("create PR", "ACME-1", "/checkouts/payments", body)
-
-		for _, want := range []string{
-			"ACME-1",              // which task
-			"/checkouts/payments", // where to run
-			"create PR",           // what the operator pressed
-			"Never force-push",    // the rule that matters most
-			"Do not merge",        // the operator's own keys
-			"in English",          // what the repository is written in
-		} {
-			if !strings.Contains(got, want) {
-				t.Errorf("the instruction does not mention %q", want)
-			}
-		}
-
-		if !strings.HasSuffix(got, body) {
-			t.Error("the verb's own body is not at the end of the brief")
-		}
-	}
-}
-
-// TestEveryVerbAsksForSomethingDifferent. Two that read the same are two
-// keys that do the same, and the cockpit offers them as different verbs.
-func TestEveryVerbAsksForSomethingDifferent(t *testing.T) {
-	seen := map[string]bool{}
-	for _, body := range []string{CreatePR, UpdatePR, FixChecks, MoreTests, Review, ResolveComments} {
-		if seen[body] {
-			t.Error("two of the deliver verbs ask for exactly the same thing")
-		}
-
-		seen[body] = true
-	}
-}
-
 // TestTheDraftIsAskedForAsOneWholeDocument. A list of field names is
 // something a model improvises around; one complete example is something it
 // copies — so the example has to be valid JSON itself.

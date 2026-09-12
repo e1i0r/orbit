@@ -9,7 +9,7 @@ package ui
 import (
 	tea "charm.land/bubbletea/v2"
 
-	"github.com/e1i0r/orbit/internal/ui/prompt"
+	"github.com/e1i0r/orbit/internal/supervisor"
 )
 
 // askSupervisorTo hands one of these verbs to the supervisor: the window
@@ -29,7 +29,7 @@ func (m Model) askSupervisorTo(e errand) (tea.Model, tea.Cmd) {
 			about("id", e.TaskID))), nil
 	}
 
-	next, cmd := m.sendSupervisorMessage(prompt.Deliver(e.Caption, e.TaskID, path, e.Body))
+	next, cmd := m.sendSupervisorMessage(supervisor.Deliver("the cockpit", e.Caption, e.TaskID, path, e.Body))
 	if cmd == nil {
 		// The thread refused the line. What it said about that is the
 		// only true sentence there is here.
@@ -52,7 +52,7 @@ type errand struct {
 	// it: CREATE PR, FIX CHECKS.
 	Caption string
 	TaskID  string
-	// Body is the instruction itself, out of internal/ui/prompt.
+	// Body is the instruction itself, out of internal/supervisor.
 	Body string
 	// Said is what the band says once the ask is out.
 	Said string

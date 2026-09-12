@@ -22,9 +22,9 @@ func TestAutopilotWalksThroughAGateTheFlowAsked(t *testing.T) {
 		"review": []any{map[string]any{"say": "it reads right"}},
 	})
 
-	b.must(t, "set", "autopilot", "on")
-	b.must(t, "new", "-repo", b.repo, "-id", "LED-9", "-flow", "task", "fix the total")
-	b.must(t, "run", "-repo", b.repo, "LED-9")
+	b.must(t, "settings", "set", "autopilot", "on")
+	b.must(t, "board", "new", "-repo", b.repo, "-id", "LED-9", "-flow", "task", "fix the total")
+	b.must(t, "task", "start", "-repo", b.repo, "LED-9")
 
 	events := b.record(t, "LED-9")
 
@@ -52,7 +52,7 @@ func TestTwoTasksRunSideBySide(t *testing.T) {
 	})
 
 	for _, id := range []string{"LED-10", "LED-11"} {
-		b.must(t, "new", "-repo", b.repo, "-id", id, "-flow", "quick", "fix the total")
+		b.must(t, "board", "new", "-repo", b.repo, "-id", id, "-flow", "quick", "fix the total")
 	}
 
 	var wg sync.WaitGroup
@@ -68,7 +68,7 @@ func TestTwoTasksRunSideBySide(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
-			out, err := b.orbit(t, "run", "-repo", b.repo, id)
+			out, err := b.orbit(t, "task", "start", "-repo", b.repo, id)
 
 			mu.Lock()
 			said[id], failed[id] = out, err
