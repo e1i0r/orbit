@@ -46,8 +46,10 @@ type Command struct {
 	Children []Child
 }
 
-// Child is one subcommand of a family: its own word and what it does.
+// Child is one subcommand of a family: its own word, what it does, and
+// whether it takes arguments the menu has none of.
 type Child struct {
-	Name  string
-	About func(*words.Printer) string
+	Name      string
+	About     func(*words.Printer) string
+	NeedsArgs bool
 }

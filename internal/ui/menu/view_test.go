@@ -155,8 +155,8 @@ func TestAClickIsKeyedByWhatIdentifiesTheEntry(t *testing.T) {
 	}
 
 	onTask := Open(theTask, e).Hit(0, e.Frame.Body.Y+TitleRows, e)
-	if onTask.Kind != point.MenuEntry || onTask.Key != "p" {
-		t.Errorf("clicking a task's first row answered %+v, want the verb's own key", onTask)
+	if onTask.Kind != point.MenuEntry || onTask.Key != "task" {
+		t.Errorf("clicking a task's first row answered %+v, want the family it drills into", onTask)
 	}
 }
 
@@ -196,8 +196,10 @@ func TestTheMenuFollowsItsCursorDownAndBackUp(t *testing.T) {
 // the reader was not looking at.
 func TestAnEntryIsWhereItWasDrawnAfterScrolling(t *testing.T) {
 	e := inside(t)
+	e.Frame.Body.H = 8
 
-	s := Open(theTask, e)
+	top := Open(theTask, e)
+	s, _ := top.Point(index(t, top, e, "task")).Enter(e)
 	for range s.Entries(e) {
 		s = s.Wheel(1, e)
 	}
@@ -249,5 +251,55 @@ func TestAHeadingIsShownWithTheEntryUnderIt(t *testing.T) {
 	s = s.Point(want).keepSeen(e)
 	if s.offset > want-1 {
 		t.Errorf("the list scrolled to %d with the entry at %d, want its heading shown above it", s.offset, want)
+	}
+}
+
+// TestTheDescriptionsStartUnderTheSameDot. Names are different lengths —
+// "skip this phase" against "ask" — and a dot per row at its own column
+// reads as noise rather than a table.
+func TestTheDescriptionsStartUnderTheSameDot(t *testing.T) {
+	e := world(t)
+
+	rows := Open(theTask, e).View(30, 100, e)
+
+	var dots []int
+
+	for _, r := range rows {
+		line := ansi.Strip(r)
+		if !strings.Contains(line, "·") {
+			continue
+		}
+
+		// In runes, not bytes: the cursor's mark is multibyte, and a
+		// byte index would read the selected row two columns to the
+		// right of where it is drawn.
+		dots = append(dots, len([]rune(line[:strings.Index(line, "·")])))
+	}
+
+	if len(dots) < 2 {
+		t.Fatalf("the menu drew %d dotted rows, want at least two to align", len(dots))
+	}
+
+	for _, at := range dots[1:] {
+		if at != dots[0] {
+			t.Errorf("a description starts at column %d, want every dot under %d", at, dots[0])
+		}
+	}
+}
+
+// TestTheSelectedRowReadsWhole. The cursor's paint used to sit on top of
+// the inner ones, whose dark ink on the selection ground read as a blank
+// bar with the cursor on it.
+func TestTheSelectedRowReadsWhole(t *testing.T) {
+	e := world(t)
+
+	s := Open(theTask, e).Point(1)
+	rows := s.View(30, 100, e)
+
+	got := ansi.Strip(rows[1+TitleRows])
+	want := s.Entries(e)[1].Title
+
+	if !strings.Contains(got, want) {
+		t.Errorf("the selected row reads %q, want it to carry %q", got, want)
 	}
 }

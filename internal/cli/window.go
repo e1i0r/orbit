@@ -120,7 +120,12 @@ func commandTable() []ui.Command {
 		// parent and the palette can drill into them.
 		if v, declared := verb.One(c.Name); declared {
 			for _, kid := range v.Children() {
-				uc.Children = append(uc.Children, ui.Child{Name: kid.Name, About: kid.About})
+				needs := kid.OnTask
+				for _, f := range kid.Takes {
+					needs = needs || f.Needed
+				}
+
+				uc.Children = append(uc.Children, ui.Child{Name: kid.Name, About: kid.About, NeedsArgs: needs})
 			}
 		}
 

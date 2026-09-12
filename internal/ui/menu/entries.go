@@ -10,10 +10,21 @@ package menu
 // and offered eleven panes and nothing else said, by omission, that looking
 // is all there is to do in here.
 
-import "github.com/e1i0r/orbit/internal/ui/keymap"
+import (
+	"slices"
 
-// entries is the menu as it stands, one of three lists.
+	"github.com/e1i0r/orbit/internal/ui/keymap"
+)
+
+// entries is the menu as it stands: the submenu drilled into, or one of
+// the three tops. Recomputed from the lists rather than remembered — a
+// menu frozen at open time would keep offering verbs for a run that
+// finished while it was up.
 func (s State) entries(e Env) []Entry {
+	if s.sub != "" {
+		return s.subEntries(e)
+	}
+
 	if e.Detail {
 		return s.detailEntries(e)
 	}
@@ -25,6 +36,110 @@ func (s State) entries(e Env) []Entry {
 	// A task menu with nothing on it is one whose run left the board while
 	// it was up, and the drawing says so.
 	return s.taskEntries(e)
+}
+
+// subEntries is one family drilled into: the key verbs when it is the
+// task's, and the family's commands in every case. No further families:
+// they are one level deep and so is the menu.
+func (s State) subEntries(e Env) []Entry {
+	// Same nothing when the task is gone: the submenu would list verbs
+	// about a run that is no longer there. The board's own submenus have
+	// no task, so they are never empty for this reason.
+	if s.task != "" {
+		if _, ok := e.verbs(s.task); !ok {
+			return nil
+		}
+	}
+
+	if s.sub != "task" {
+		return s.childEntries(e, s.sub)
+	}
+
+	out := s.verbEntries(e)
+
+	// verbEntries already ends in the start dialog; what follows are the
+	// family's own commands.
+	return append(out, s.childEntries(e, s.sub)...)
+}
+
+// verbEntries is what can be done to one task with a keystroke, refusals
+// included and each with its reason. It is the same list on the board's
+// menu and inside a task, from the same call, because they are the same
+// question asked from two places.
+func (s State) verbEntries(e Env) []Entry {
+	all, ok := e.verbs(s.task)
+	if !ok {
+		return nil
+	}
+
+	out := make([]Entry, 0, len(all))
+
+	for i := range all {
+		a := &all[i]
+
+		row := Entry{Glyph: a.Key.Help().Key, Title: a.Key.Help().Desc}
+		if e.Says != nil {
+			row.Detail = e.Says(a.Key)
+		}
+		if !a.OK {
+			row.Dim = true
+			row.Reason = a.Why(e.Words)
+		}
+
+		out = append(out, row)
+	}
+
+	// And what only a command or a dialog can do to it: the start dialog,
+	// which asks which flow before anything runs.
+	out = append(out, e.start())
+
+	return out
+}
+
+// childEntries is one family's commands on the menu of the task they are
+// about, with the repository and the id already filled in.
+func (s State) childEntries(e Env, parent string) []Entry {
+	args := e.args(s.task)
+
+	out := make([]Entry, 0, len(taskCommands))
+
+	for _, want := range taskCommands {
+		if want.name != parent {
+			continue
+		}
+
+		for _, c := range e.Commands {
+			if c.Name != want.name {
+				continue
+			}
+
+			row := Entry{Command: c.Name, Child: want.child, Args: args, Says: want.says}
+
+			if want.child == "" {
+				row.Title, row.Detail = c.Name, c.About
+				out = append(out, row)
+
+				continue
+			}
+
+			// The title is the child's word alone: the submenu already
+			// names the family, and "task note" under "< task" reads
+			// the parent twice. Command and Child still carry both
+			// words, which is what running it asks for.
+			row.Title = want.child
+			row.Args = append([]string{want.child}, args...)
+
+			for _, kid := range c.Children {
+				if kid.Name == want.child {
+					row.Detail, row.NeedsArgs = kid.About, kid.NeedsArgs
+				}
+			}
+
+			out = append(out, row)
+		}
+	}
+
+	return out
 }
 
 // detailEntries is the menu inside a task: the panes it can be shown in,
@@ -66,15 +181,22 @@ func head(title string) Entry { return Entry{Head: true, Title: title} }
 // verb.
 func gap() Entry { return Entry{Head: true} }
 
-// boardEntries is the commands that are not about one task.
+// boardEntries is the commands that are not about one task: one row per
+// family, and one row per command that belongs to none.
 func boardEntries(e Env) []Entry {
-	out := make([]Entry, 0, len(e.Commands))
+	var out []Entry
 
 	for _, c := range e.Commands {
 		// A verb about one task is not on this menu. This one is opened on
 		// no row, so there is no task for such a verb to be about:
 		// choosing it ran it bare and got its usage back.
 		if c.AboutATask {
+			continue
+		}
+
+		if len(c.Children) > 0 {
+			out = append(out, Entry{Title: c.Name, Detail: c.About, Family: c.Name})
+
 			continue
 		}
 
@@ -91,40 +213,68 @@ func boardEntries(e Env) []Entry {
 	return out
 }
 
-// taskEntries is what can be done to one task, refusals included and each
-// with its reason.
+// taskEntries is what can be done to one task: one row per family.
+// Choosing one drills into its verbs and commands; the keystrokes keep
+// working the way they always have, menu up or not.
 //
 // It is the same list on the board's menu and inside a task, from the same
 // call, because they are the same question asked from two places — and a
 // verb offered in one and missing from the other would be read as a verb
 // that does not apply here.
 func (s State) taskEntries(e Env) []Entry {
-	all, ok := e.verbs(s.task)
-	if !ok {
+	// A task that left the board has nothing on its menu: every verb on
+	// it would be a verb about a run that is no longer there.
+	if _, ok := e.verbs(s.task); !ok {
 		return nil
 	}
 
-	out := make([]Entry, 0, len(all))
+	var out []Entry
 
-	for i := range all {
-		a := &all[i]
+	var seen []string
 
-		row := Entry{Glyph: a.Key.Help().Key, Title: a.Key.Help().Desc}
-		if !a.OK {
-			row.Dim = true
-			row.Reason = a.Why(e.Words)
+	for _, want := range taskCommands {
+		if slices.Contains(seen, want.name) {
+			continue
 		}
 
-		out = append(out, row)
+		seen = append(seen, want.name)
+
+		// The task's own keys need no table behind them: choosing one
+		// sends the keystroke, and the window answers it the way a
+		// pressed key is answered. Every other family lists what the
+		// table carries, so a row never drills into nothing.
+		if want.name != "task" {
+			supported := false
+
+			for _, c := range e.Commands {
+				if c.Name == want.name && len(c.Children) > 0 {
+					supported = true
+				}
+			}
+
+			if !supported {
+				continue
+			}
+		}
+
+		out = append(out, familyRow(e, want.name))
 	}
 
-	// And what only a command or a dialog can do to it. They are in the
-	// same block rather than under a heading of their own: a reader asking
-	// what can be done to a task is not asking which of the answers is a
-	// key.
-	out = append(out, e.start())
+	return out
+}
 
-	return append(out, s.commandEntries(e)...)
+// familyRow is one family on the menu: its name, what it does when the
+// table says, and the submenu choosing it drills into.
+func familyRow(e Env, name string) Entry {
+	row := Entry{Title: name, Family: name}
+
+	for _, c := range e.Commands {
+		if c.Name == name {
+			row.Detail = c.About
+		}
+	}
+
+	return row
 }
 
 // verbs asks what can be done to a task, and answers no for a window built
@@ -143,7 +293,13 @@ func (e Env) verbs(id string) ([]keymap.Affordance, bool) {
 // entry sends the key that opens it, and there is one way to start a run
 // rather than two that answer the flow question differently.
 func (e Env) start() Entry {
-	return Entry{Glyph: e.Keys.Start.Help().Key, Title: e.Keys.Start.Help().Desc}
+	row := Entry{Glyph: e.Keys.Start.Help().Key, Title: e.Keys.Start.Help().Desc}
+
+	if e.Says != nil {
+		row.Detail = e.Says(e.Keys.Start)
+	}
+
+	return row
 }
 
 // saysSomething is a verb that takes a message, so the menu opens the box
@@ -168,54 +324,17 @@ var taskCommands = []saysSomething{
 	{name: "task", child: "note", says: true},
 	{name: "task", child: "direct", says: true},
 	{name: "pr"},
+	{name: "pr", child: "show"},
 	{name: "pr", child: "resolve"},
 	{name: "pr", child: "merge"},
 	{name: "pr", child: "close"},
+	{name: "pr", child: "update"},
+	{name: "pr", child: "checks"},
+	{name: "pr", child: "tests"},
+	{name: "pr", child: "review"},
 	{name: "task", child: "approve"},
 	{name: "task", child: "permit"},
 	{name: "task", child: "critical"},
-}
-
-// commandEntries is those commands as menu rows about one task, with the
-// repository and the id already filled in.
-//
-// Whether the task is in a state to be approved, merged or redirected is
-// not asked here. The command asks it and answers in the watch, in its own
-// words; a second opinion in the menu is a second place for that rule to
-// live, and the two would drift.
-func (s State) commandEntries(e Env) []Entry {
-	out := make([]Entry, 0, len(taskCommands))
-
-	for _, want := range taskCommands {
-		for _, c := range e.Commands {
-			if c.Name != want.name {
-				continue
-			}
-
-			title, detail, args := c.Name, c.About, e.args(s.task)
-			if want.child != "" {
-				title = c.Name + " " + want.child
-				args = append([]string{want.child}, args...)
-
-				for _, kid := range c.Children {
-					if kid.Name == want.child {
-						detail = kid.About
-					}
-				}
-			}
-
-			out = append(out, Entry{
-				Title:   title,
-				Detail:  detail,
-				Command: c.Name,
-				Child:   want.child,
-				Args:    args,
-				Says:    want.says,
-			})
-		}
-	}
-
-	return out
 }
 
 // args is what a command about the task is run with, and nothing for a

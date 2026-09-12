@@ -53,7 +53,7 @@ func aTaskWithCommands(t *testing.T) Model {
 func TestChoosingOneRunsItRatherThanAskingForArguments(t *testing.T) {
 	m := aTaskWithCommands(t).openMenu("ACME-7")
 
-	next, cmd := chooseInMenu(t, m, "task approve")
+	next, cmd := chooseInMenu(t, m, "approve")
 
 	after := asModel(t, next)
 	if after.palette.Up() {
@@ -74,7 +74,7 @@ func TestChoosingOneRunsItRatherThanAskingForArguments(t *testing.T) {
 // the menu has nothing to fill it in with.
 func TestAVerbThatTakesAMessageOpensTheBoxToTypeItIn(t *testing.T) {
 	for _, tc := range []struct{ title, child string }{
-		{"task note", "note"}, {"task direct", "direct"},
+		{"note", "note"}, {"direct", "direct"},
 	} {
 		m := aTaskWithCommands(t).openMenu("ACME-7")
 

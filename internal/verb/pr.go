@@ -26,62 +26,62 @@ func pr() []Verb {
 		{
 			Name: "pr", OnTask: true, Outward: true,
 			About: func(p *words.Printer) string {
-				return p.T("verb.pr", "open a pull request from a task's worktree")
+				return p.T("verb.pr", "open the task's pull request")
 			},
 		},
 		{
 			Name: "show", Under: "pr", OnTask: true, Reads: true,
 			About: func(p *words.Printer) string {
-				return p.T("verb.pr.show", "which pull requests a task has open, and where")
+				return p.T("verb.pr.show", "list the task's pull requests and what became of each")
 			},
 		},
 		{
 			Name: "merge", Under: "pr",
 			OnTask: true, Outward: true,
 			About: func(p *words.Printer) string {
-				return p.T("verb.merge", "merge a task's pull request and delete its branch")
+				return p.T("verb.merge", "merge the pull request and delete its branch")
 			},
 		},
 		{
 			Name: "close", Under: "pr",
 			OnTask: true, Outward: true,
 			About: func(p *words.Printer) string {
-				return p.T("verb.close_pr", "close a task's pull request without merging it")
+				return p.T("verb.close_pr", "close the pull request without merging")
 			},
 		},
 		{
 			Name: "resolve", Under: "pr",
 			OnTask: true, Spends: true, Outward: true,
 			About: func(p *words.Printer) string {
-				return p.T("verb.pr.resolve", "answer the reviews on a task's pull request")
+				return p.T("verb.pr.resolve", "answer the review threads on the pull request")
 			},
 		},
 		{
 			Name: "update", Under: "pr",
 			OnTask: true, Spends: true, Outward: true,
 			About: func(p *words.Printer) string {
-				return p.T("verb.pr.update", "bring a task's branch up to date with the branch it merges into")
+				return p.T("verb.pr.update", "merge the base branch into the task's branch")
 			},
 		},
 		{
 			Name: "checks", Under: "pr",
 			OnTask: true, Spends: true, Outward: true,
 			About: func(p *words.Printer) string {
-				return p.T("verb.pr.checks", "make the checks on a task's pull request pass")
+				return p.T("verb.pr.checks", "make the pull request's checks pass")
 			},
 		},
 		{
 			Name: "tests", Under: "pr",
 			OnTask: true, Spends: true, Outward: true,
 			About: func(p *words.Printer) string {
-				return p.T("verb.pr.tests", "raise the tests where a task's change is thin")
+				return p.T("verb.pr.tests", "add the tests the change is missing")
 			},
 		},
 		{
 			Name: "review", Under: "pr",
 			OnTask: true, Spends: true, Outward: true,
 			About: func(p *words.Printer) string {
-				return p.T("verb.pr.review", "review a task's pull request the way a senior reviewer would")
+				return p.T("verb.pr.review", "leave a senior-style review on the pull request")
 			},
 		},
 	}

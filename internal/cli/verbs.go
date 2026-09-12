@@ -212,5 +212,5 @@ func familyArgs(own string, kids []verb.Verb) string {
 	}
 
 	return own + "  |  " + strings.Join(names, "|") +
-		strings.TrimPrefix(argsOf(kids[0]), "[-repo <dir>]")
+		strings.TrimPrefix(" "+argsOf(kids[0]), " [-repo <dir>]")
 }

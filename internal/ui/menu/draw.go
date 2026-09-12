@@ -5,32 +5,48 @@ package menu
 import (
 	"strings"
 
+	"charm.land/lipgloss/v2"
+
 	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
-// row lays one entry out: glyph, name, description — or, where it cannot be
-// done here, the reason instead of the description. The pieces mirror the
-// palette's, because a reader who learned to read one list should be able to
-// read the other.
-func row(e Entry, selected bool, w int) string {
+// row lays one entry out: glyph, name padded to the column, description —
+// or, where it cannot be done here, the reason instead of the description.
+// The pieces mirror the palette's, because a reader who learned to read
+// one list should be able to read the other.
+//
+// The selected row wears one paint and no inner ones: accents stay dark
+// on the selection ground, which is how a hovered row read as a blank
+// bar with the cursor on it.
+func row(e Entry, selected bool, w, nameW int) string {
 	if e.Head {
 		return headRow(e, w)
 	}
 
-	line := e.Title
-	if e.Glyph != "" {
-		line = theme.Paint(theme.Accent).Render(e.Glyph) + "  " + line
+	var head, tail string
+
+	if selected {
+		head = cells.Pad(left(e), nameW, false)
+		tail = plainTail(e)
 	} else {
-		line = "   " + line
+		if e.Glyph != "" {
+			head = theme.Paint(theme.Accent).Render(e.Glyph) + "  " + e.Title
+		} else {
+			head = "   " + e.Title
+		}
+
+		head = cells.Pad(head, nameW, false)
+
+		switch {
+		case e.Reason != "":
+			tail = cells.Dot + theme.Paint(theme.Dim).Render(" "+e.Reason)
+		case e.Detail != "":
+			tail = cells.Dot + theme.Paint(theme.Dim).Render(" "+e.Detail)
+		}
 	}
 
-	switch {
-	case e.Reason != "":
-		line += cells.Dot + theme.Paint(theme.Dim).Render(" "+e.Reason)
-	case e.Detail != "":
-		line += cells.Dot + theme.Paint(theme.Dim).Render(" "+e.Detail)
-	}
+	line := head + tail
 
 	mark := strings.Repeat(" ", cells.Gutter)
 	if selected {
@@ -43,6 +59,47 @@ func row(e Entry, selected bool, w int) string {
 	}
 
 	return cells.Fit(mark+line, w)
+}
+
+// left is the row before its description: glyph, name, nothing else.
+func left(e Entry) string {
+	if e.Glyph != "" {
+		return e.Glyph + "  " + e.Title
+	}
+
+	return "   " + e.Title
+}
+
+// plainTail is the description with no paint on it, for the selected row.
+func plainTail(e Entry) string {
+	switch {
+	case e.Reason != "":
+		return cells.Dot + " " + e.Reason
+	case e.Detail != "":
+		return cells.Dot + " " + e.Detail
+	}
+
+	return ""
+}
+
+// nameWidth is the name column: every description starts under the same
+// dot, no matter how long the verb before it is. Measured over the whole
+// list rather than the window, so the column does not breathe while
+// scrolling.
+func nameWidth(es []Entry) int {
+	w := 0
+
+	for _, e := range es {
+		if e.Head {
+			continue
+		}
+
+		if n := lipgloss.Width(left(e)); n > w {
+			w = n
+		}
+	}
+
+	return w
 }
 
 // headRow draws a heading: no gutter, no glyph, the accent the sections of

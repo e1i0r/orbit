@@ -92,14 +92,14 @@ func wordsOf(v verb.Verb) (string, bool) {
 // that explains what the repository means to it, so the built-in flag is
 // not listed twice: one `-repo` on the line, not two that disagree.
 func argsOf(v verb.Verb) string {
-	out := ""
+	var parts []string
 
 	if !takes(v, "repo") {
-		out = "[-repo <dir>]"
+		parts = append(parts, "[-repo <dir>]")
 	}
 
 	if v.OnTask {
-		out += " <id>"
+		parts = append(parts, "<id>")
 	}
 
 	// Only the first field of words is written at the end of the line: that
@@ -113,17 +113,17 @@ func argsOf(v verb.Verb) string {
 		case f.Name == trailing:
 			continue
 		case f.Kind == verb.Words || !f.Needed:
-			out += " [-" + f.Name + " <" + f.Name + ">]"
+			parts = append(parts, "[-"+f.Name+" <"+f.Name+">]")
 		default:
-			out += " <" + f.Name + ">"
+			parts = append(parts, "<"+f.Name+">")
 		}
 	}
 
 	if trailing != "" {
-		out += " <" + trailing + ">"
+		parts = append(parts, "<"+trailing+">")
 	}
 
-	return out
+	return strings.Join(parts, " ")
 }
 
 // takes says whether the verb declares a field of that name.

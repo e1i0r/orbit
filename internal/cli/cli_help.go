@@ -45,7 +45,7 @@ func usageFor(ctx Context, path string) (string, bool) {
 	}
 
 	p := ctx.printer()
-	line := "orbit " + v.Path() + argsOf(v) + " — " + v.About(p)
+	line := strings.TrimSpace("orbit "+v.Path()+" "+argsOf(v)) + " — " + v.About(p)
 
 	if kids := v.Children(); len(kids) > 0 {
 		names := make([]string, 0, len(kids))

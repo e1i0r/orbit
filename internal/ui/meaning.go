@@ -49,9 +49,9 @@ func (m Model) meaning(k fmt.Stringer) string {
 	case key.Matches(k, m.keys.Requeue):
 		return p.T("tip.requeue", "stops the run and puts the task back in to do, to be started again from the top")
 	case key.Matches(k, m.keys.Take):
-		return p.T("tip.take", "hands you the engine's session in this task's worktree, to type at yourself")
+		return p.T("tip.take", "you take the wheel for a while — the run waits")
 	case key.Matches(k, m.keys.Hand):
-		return p.T("tip.hand", "gives the task back to orbit, and the run carries on from where you left it")
+		return p.T("tip.hand", "you give the wheel back — the stopped run carries on")
 	case key.Matches(k, m.keys.Ask):
 		return p.T("tip.ask", "writes a note for this task, which the run reads at its next phase")
 	case key.Matches(k, m.keys.MarkRead):

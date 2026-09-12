@@ -21,7 +21,7 @@ func taskFamily() []Verb {
 			Under: "task",
 			Name:  "start", OnTask: true, Spends: true,
 			About: func(p *words.Printer) string {
-				return p.T("verb.start", "start a task that is not running")
+				return p.T("verb.start", "run the task through its flow")
 			},
 			Takes: []Field{
 				{Name: "flow", Kind: Named, About: func(p *words.Printer) string {
@@ -36,38 +36,38 @@ func taskFamily() []Verb {
 		{
 			Under: "task",
 			Name:  "pause", OnTask: true, About: func(p *words.Printer) string {
-				return p.T("verb.pause", "ask a run to stop at its next phase boundary")
+				return p.T("verb.pause", "pause the run at its next phase boundary")
 			},
 		},
 		{
 			Under: "task",
 			Name:  "resume", OnTask: true, About: func(p *words.Printer) string {
-				return p.T("verb.resume", "let a run carry on from a pause")
+				return p.T("verb.resume", "carry on from the pause")
 			},
 		},
 		{
 			Under: "task",
 			Name:  "continue", OnTask: true, Spends: true, About: func(p *words.Printer) string {
-				return p.T("verb.continue", "let a phase past the gate its flow stopped it at")
+				return p.T("verb.continue", "let the run past the gate it stopped at")
 			},
 		},
 		{
 			Under: "task",
 			Name:  "skip", OnTask: true, About: func(p *words.Printer) string {
-				return p.T("verb.skip", "let a run past the phase it is in, without running it")
+				return p.T("verb.skip", "skip the waiting phase without running it")
 			},
 		},
 		{
 			Under: "task",
 			Name:  "cancel", OnTask: true, About: func(p *words.Printer) string {
-				return p.T("verb.cancel", "stop a run where it stands")
+				return p.T("verb.cancel", "stop the run now; what it wrote stays")
 			},
 		},
 		{
 			Under: "task",
 			Name:  "requeue", OnTask: true,
 			About: func(p *words.Printer) string {
-				return p.T("verb.requeue", "stop whatever holds a task and put it back in to do")
+				return p.T("verb.requeue", "send the task back to to do")
 			},
 			Takes: []Field{{Name: "why", Kind: Words, About: func(p *words.Printer) string {
 				return p.T("verb.requeue.why", "the reason, if you want it on the record")
@@ -77,7 +77,7 @@ func taskFamily() []Verb {
 			Under: "task",
 			Name:  "note", OnTask: true,
 			About: func(p *words.Printer) string {
-				return p.T("verb.note", "leave a word for the phase that starts next")
+				return p.T("verb.note", "leave a note the next phase reads — the run keeps going")
 			},
 			Takes: []Field{{Name: "text", Kind: Words, Needed: true, About: func(p *words.Printer) string {
 				return p.T("verb.note.text", "what you want it to know")
@@ -87,7 +87,7 @@ func taskFamily() []Verb {
 			Under: "task",
 			Name:  "direct", OnTask: true,
 			About: func(p *words.Printer) string {
-				return p.T("verb.direct", "correct a task, stopping the run so the next one reads it")
+				return p.T("verb.direct", "correct the task and stop the run, so the next run starts corrected")
 			},
 			Takes: []Field{
 				{Name: "text", Kind: Words, Needed: true, About: func(p *words.Printer) string {
@@ -101,7 +101,7 @@ func taskFamily() []Verb {
 		{
 			Under: "task",
 			Name:  "approve", OnTask: true, About: func(p *words.Printer) string {
-				return p.T("verb.approve", "say yes to the libraries a task added")
+				return p.T("verb.approve", "accept the added libraries, so the run goes past the gate")
 			},
 		},
 		{
@@ -120,7 +120,7 @@ func taskFamily() []Verb {
 			Under: "task",
 			Name:  "join", OnTask: true,
 			About: func(p *words.Printer) string {
-				return p.T("verb.join", "open a checkout of another repository for a task")
+				return p.T("verb.join", "open another repository's checkout for this task")
 			},
 			Takes: []Field{{Name: "name", Kind: Named, Needed: true, About: func(p *words.Printer) string {
 				return p.T("verb.join.name", "the repository to join, by name")
@@ -130,7 +130,7 @@ func taskFamily() []Verb {
 			Under: "task",
 			Name:  "permit", OnTask: true,
 			About: func(p *words.Printer) string {
-				return p.T("verb.permit", "answer the question a critical action stopped for")
+				return p.T("verb.permit", "let the stopped critical action happen — or refuse it")
 			},
 			Takes: []Field{{Name: "yes", Kind: YesOrNo, About: func(p *words.Printer) string {
 				return p.T("verb.permit.yes", "whether to let it happen")
@@ -140,7 +140,7 @@ func taskFamily() []Verb {
 			Under: "task",
 			Name:  "critical", OnTask: true,
 			About: func(p *words.Printer) string {
-				return p.T("verb.critical", "mark a task as one whose changes need answering for")
+				return p.T("verb.critical", "mark the task critical, so it stops before anything irreversible")
 			},
 			Takes: []Field{{Name: "on", Kind: YesOrNo, About: func(p *words.Printer) string {
 				return p.T("verb.critical.on", "whether it is critical")

@@ -128,15 +128,16 @@ func TestChoosingACommandRunsItWithWhatItNeeds(t *testing.T) {
 	e := world(t)
 
 	s := Open(theTask, e)
+	drilled, _ := s.Point(index(t, s, e, "task")).Enter(e)
 
 	for _, c := range []struct {
 		name string
 		run  string
 		ask  bool
-	}{{name: "task approve", run: "task"}, {name: "task note", run: "task", ask: true}} {
-		at := index(t, s, e, c.name)
+	}{{name: "approve", run: "task"}, {name: "note", run: "task", ask: true}} {
+		at := index(t, drilled, e, c.name)
 
-		_, out := s.Point(at).Enter(e)
+		_, out := drilled.Point(at).Enter(e)
 		if out.Run != c.run || out.Ask != c.ask {
 			t.Errorf("choosing %s asked for %+v, want run=%q ask=%v", c.name, out, c.run, c.ask)
 		}
@@ -154,8 +155,9 @@ func TestChoosingAVerbSendsItsKeystroke(t *testing.T) {
 	e := world(t)
 
 	s := Open(theTask, e)
+	drilled, _ := s.Point(index(t, s, e, "task")).Enter(e)
 
-	_, out := s.Enter(e)
+	_, out := drilled.Enter(e)
 	if out.Send != "p" {
 		t.Errorf("choosing the first verb asked for %+v, want the p it is bound to", out)
 	}

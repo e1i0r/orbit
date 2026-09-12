@@ -101,6 +101,7 @@ func world(t *testing.T) Env {
 
 			return verbs(), true
 		},
+		Says: func(b key.Binding) string { return b.Help().Desc },
 		Args: func(id string) []string { return []string{"-repo", "/checkouts/acme", id} },
 	}
 }

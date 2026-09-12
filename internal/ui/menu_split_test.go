@@ -39,7 +39,8 @@ func needsArgsCommands() []Command {
 func chooseInMenu(t *testing.T, m Model, name string) (tea.Model, tea.Cmd) {
 	t.Helper()
 
-	for i, e := range m.menu.Entries(m.menuEnv()) {
+	env := m.menuEnv()
+	for i, e := range m.menu.Entries(env) {
 		if e.Title != name {
 			continue
 		}
@@ -49,7 +50,26 @@ func chooseInMenu(t *testing.T, m Model, name string) (tea.Model, tea.Cmd) {
 		return m.chooseMenu()
 	}
 
-	t.Fatalf("no %s in the menu: %v", name, m.menu.Entries(m.menuEnv()))
+	// Not on top: drill into each family and look there, the way a
+	// reader who opened the menu would.
+	for i, e := range m.menu.Entries(env) {
+		if e.Family == "" {
+			continue
+		}
+
+		sub, _ := m.menu.Point(i).Enter(env)
+		for j, s := range sub.Entries(env) {
+			if s.Title != name {
+				continue
+			}
+
+			m.menu = sub.Point(j)
+
+			return m.chooseMenu()
+		}
+	}
+
+	t.Fatalf("no %s in the menu: %v", name, m.menu.Entries(env))
 
 	return m, nil
 }

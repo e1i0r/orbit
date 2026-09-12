@@ -46,12 +46,20 @@ func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
 // Run is the command under the selection going out, which ⏎ and a click both
 // do. Nothing is chosen when nothing matches, and the line stays up rather
 // than closing on a keystroke that did nothing.
+//
+// Choosing a parent drills into it: the line keeps the parent and the list
+// becomes its children, the way a menu opens onto what it names.
 func (s State) Run(e Env) (State, Out) {
 	c, ok := s.selected(e.Commands)
 	if !ok {
 		// Nothing under the selection: an empty list, usually. Staying open
 		// says "not yet" more honestly than closing would.
 		return s, Out{}
+	}
+
+	if c.Parent == "" && len(c.Children) > 0 && !namesChild(s.typed) {
+		s.typed = c.Name + " "
+		return s.reselect(), Out{}
 	}
 
 	if c.NeedsArgs && len(argsOf(s.typed)) == 0 {
@@ -61,7 +69,18 @@ func (s State) Run(e Env) (State, Out) {
 			about("name", c.Name), about("args", c.Args))}
 	}
 
-	return State{}, Out{Leave: true, Run: c.Name, Line: s.typed}
+	run := c.Name
+	if c.Parent != "" {
+		run = c.Parent
+	}
+
+	return State{}, Out{Leave: true, Run: run, Line: s.typed}
+}
+
+// namesChild says the line already says which child it is about: two words
+// in, the second is the family's to read.
+func namesChild(typed string) bool {
+	return len(strings.Fields(typed)) > 1
 }
 
 // Choose is a click on one of the rows: the same two-step a task row takes,
@@ -148,12 +167,19 @@ func (s State) ensureVisible(e Env) State {
 // prefix-filtered, so the selection always completes what was typed — tab
 // never jumps sideways to a command the reader did not start spelling.
 //
+// A parent completes with the space after it, so the list becomes its
+// children: choosing the family is choosing to say which of it.
+//
 // The selection goes back to the top with the line, because completing has
 // made the list shorter and an index past its end would leave ⏎ pointing at
 // nothing.
 func (s State) complete(e Env) State {
 	if c, ok := s.selected(e.Commands); ok {
 		s.typed = c.Name
+
+		if c.Parent == "" && len(c.Children) > 0 {
+			s.typed += " "
+		}
 
 		return s.reselect()
 	}
