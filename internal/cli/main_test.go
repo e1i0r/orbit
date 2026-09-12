@@ -53,8 +53,14 @@ func TestMain(m *testing.M) {
 		fmt.Fprintln(os.Stderr, "make a state root for the suite:", err)
 		os.Exit(1)
 	}
-	defer os.RemoveAll(root) //nolint:errcheck // the suite is over; there is nobody left to tell
-	os.Setenv("ORBIT_HOME", root)
 
-	os.Exit(m.Run())
+	if err := os.Setenv("ORBIT_HOME", root); err != nil {
+		fmt.Fprintln(os.Stderr, "point the suite at its state root:", err)
+		os.Exit(1)
+	}
+
+	code := m.Run()
+	_ = os.RemoveAll(root)
+
+	os.Exit(code)
 }
