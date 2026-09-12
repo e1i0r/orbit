@@ -31,7 +31,7 @@ func settings() []Verb {
 			},
 		},
 		{
-			Name: "set", Under: "settings", Was: "set",
+			Name: "set", Under: "settings",
 			About: func(p *words.Printer) string {
 				return p.T("verb.set", "change one of Orbit's own settings")
 			},

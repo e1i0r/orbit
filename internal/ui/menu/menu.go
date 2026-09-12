@@ -65,6 +65,15 @@ type Command struct {
 	// no row, so there is no task for such a verb to be about: choosing
 	// one ran the command bare and answered with its usage.
 	AboutATask bool
+	// Children are the family's words after the parent's. The menu lists
+	// them under it; every door runs them through the parent.
+	Children []Child
+}
+
+// Child is one subcommand of a family: its own word and what it does.
+type Child struct {
+	Name  string
+	About string
 }
 
 // A Pane is one of the task's, and the key that opens it.

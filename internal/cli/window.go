@@ -17,6 +17,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/ui"
+	"github.com/e1i0r/orbit/internal/verb"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -114,6 +115,14 @@ func commandTable() []ui.Command {
 		// the board's menu because of what it is about, not because of what
 		// the window can do with it.
 		uc.AboutATask = c.AboutATask
+
+		// The family's children, so the menu can list them under the
+		// parent and the palette can drill into them.
+		if v, declared := verb.One(c.Name); declared {
+			for _, kid := range v.Children() {
+				uc.Children = append(uc.Children, ui.Child{Name: kid.Name, About: kid.About})
+			}
+		}
 
 		out = append(out, uc)
 	}

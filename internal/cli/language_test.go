@@ -26,7 +26,7 @@ func speaking(t *testing.T, language string) (dir string) {
 
 	root, _ := workspace(t)
 
-	if code, _, errOut := run(t, "set", "language", language); code != 0 {
+	if code, _, errOut := run(t, "settings", "set", "language", language); code != 0 {
 		t.Fatalf("set language %s exited %d: %s", language, code, errOut)
 	}
 

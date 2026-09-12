@@ -98,13 +98,13 @@ const verbs: Record<Verb, Shape> = {
       `Push ${t.id}'s branch and open a pull request on GitHub? This leaves your machine — other people will see it.`,
     tone: "out",
   },
-  merge: {
+  "pr merge": {
     name: "Merge",
     asks: (t) =>
       `Merge ${t.id}'s pull request and delete its branch? The change goes into the branch everyone else works from, and this cannot be undone from here.`,
     tone: "out",
   },
-  "close-pr": {
+  "pr close": {
     name: "Close the pull request",
     asks: (t) => `Close ${t.id}'s pull request without merging it? The work stays; the request goes.`,
     tone: "bad",
@@ -192,7 +192,7 @@ export function offered(task: Task): Verb[] {
   // permitted, or anything to mark read, is the verb's own question and it
   // answers in its own words — a second rule here would be the one that
   // drifts.
-  return [...out, "direct", "note", "requeue", "pr", "merge", "close-pr",
+  return [...out, "direct", "note", "requeue", "pr", "pr merge", "pr close",
     "permit", "read", "critical", "join", "delete"];
 }
 

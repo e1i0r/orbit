@@ -100,14 +100,17 @@ func (s State) Hit(x, y int, e Env) point.Target {
 }
 
 // ident is what identifies an entry between a press and the release that
-// chooses it: the glyph for a verb or a pane, the name for a command, and
-// nothing at all for a heading.
+// chooses it: the glyph for a verb or a pane, the title for a command —
+// both words for a family's child, so two rows never answer to one name —
+// and nothing at all for a heading.
 func ident(e Entry) string {
 	switch {
 	case e.Head:
 		return ""
 	case e.Glyph != "":
 		return e.Glyph
+	case e.Command != "":
+		return e.Title
 	}
 
 	return e.Command

@@ -111,7 +111,7 @@ func TestSetCommandInvocations(t *testing.T) {
 	out.Reset()
 	errOut.Reset()
 
-	code = Run([]string{"set", "theme"}, &out, &errOut)
+	code = Run([]string{"settings", "set", "theme"}, &out, &errOut)
 	if code == 0 {
 		t.Error("expected error for `orbit set theme` without value")
 	}
@@ -120,7 +120,7 @@ func TestSetCommandInvocations(t *testing.T) {
 	out.Reset()
 	errOut.Reset()
 
-	code = Run([]string{"set", "nonexistent-key", "val"}, &out, &errOut)
+	code = Run([]string{"settings", "set", "nonexistent-key", "val"}, &out, &errOut)
 	if code == 0 {
 		t.Error("expected error for unknown setting key")
 	}
@@ -138,7 +138,7 @@ func TestSetCommandInvocations(t *testing.T) {
 		out.Reset()
 		errOut.Reset()
 
-		code = Run([]string{"set", pair[0], pair[1]}, &out, &errOut)
+		code = Run([]string{"settings", "set", pair[0], pair[1]}, &out, &errOut)
 		if code != 0 {
 			t.Errorf("failed setting %s to %s: %s", pair[0], pair[1], errOut.String())
 		}

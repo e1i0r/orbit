@@ -62,12 +62,16 @@ func (s *Server) mountVerbs(mux *http.ServeMux) {
 	// this is the one place that has to know it.
 	mux.HandleFunc("POST /api/do/{under}/{verb}", s.serveVerb)
 
+	// And one about a task in a family takes both: /api/tasks/{id}/pr/merge.
+	mux.HandleFunc("POST /api/tasks/{id}/{under}/{verb}", s.serveVerb)
+
 	// A reading changes nothing, so it is a GET and needs no guard. The
 	// screens with a shape of their own have routes of their own; this is
 	// how the rest are read, and how any verb added later is read before
 	// anybody draws it.
 	mux.HandleFunc("GET /api/read/{verb}", s.serveRead)
 	mux.HandleFunc("GET /api/read/{verb}/{id}", s.serveRead)
+	mux.HandleFunc("GET /api/read/{under}/{verb}/{id}", s.serveRead)
 }
 
 // serveVerb asks for one verb by the name in the path.
@@ -127,7 +131,7 @@ func verbNamed(r *http.Request) string {
 
 // serveRead asks for a reading.
 func (s *Server) serveRead(w http.ResponseWriter, r *http.Request) {
-	name := r.PathValue("verb")
+	name := verbNamed(r)
 	if s.asks == nil {
 		fail(w, http.StatusNotImplemented, "this build cannot read "+name, nil)
 

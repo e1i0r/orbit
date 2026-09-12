@@ -1561,10 +1561,6 @@
       "source": "handing the keyboard back needs a run stopped at a phase; this one is not stopped",
       "value": "devolver el teclado necesita una ejecución detenida en una fase; esta no lo está"
     },
-    "cmd.was_called": {
-      "source": "the old name for orbit {new}",
-      "value": "el nombre viejo de orbit {new}"
-    },
     "cmd.top": {
       "source": "watch every task in one window",
       "value": "ver todas las tareas en una sola ventana"
@@ -4820,10 +4816,6 @@
     "knowledge.tray_ways": {
       "source": "[↑↓] move · [k] keep it · [e] keep it in better words · [d] not a rule · [esc] back",
       "value": "[↑↓] mover · [k] guardarla · [e] guardarla con mejores palabras · [d] no era una regla · [esc] atrás"
-    },
-    "verb.was_called": {
-      "source": "{old} is now {new}, and the old name still works",
-      "value": "{old} ahora es {new}, y el nombre viejo sigue funcionando"
     },
     "verb.thread.empty": {
       "source": "the supervisor thread is empty",

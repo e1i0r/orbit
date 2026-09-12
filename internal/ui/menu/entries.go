@@ -149,8 +149,9 @@ func (e Env) start() Entry {
 // saysSomething is a verb that takes a message, so the menu opens the box
 // rather than running it.
 type saysSomething struct {
-	name string
-	says bool
+	name  string
+	child string
+	says  bool
 }
 
 // taskCommands is the block of verbs that live only in the command table,
@@ -168,8 +169,8 @@ var taskCommands = []saysSomething{
 	{name: "direct", says: true},
 	{name: "pr"},
 	{name: "resolve"},
-	{name: "merge"},
-	{name: "close-pr"},
+	{name: "pr", child: "merge"},
+	{name: "pr", child: "close"},
 	{name: "approve"},
 	{name: "permit"},
 	{name: "critical"},
@@ -183,8 +184,6 @@ var taskCommands = []saysSomething{
 // words; a second opinion in the menu is a second place for that rule to
 // live, and the two would drift.
 func (s State) commandEntries(e Env) []Entry {
-	args := e.args(s.task)
-
 	out := make([]Entry, 0, len(taskCommands))
 
 	for _, want := range taskCommands {
@@ -193,9 +192,21 @@ func (s State) commandEntries(e Env) []Entry {
 				continue
 			}
 
+			title, detail, args := c.Name, c.About, e.args(s.task)
+			if want.child != "" {
+				title = c.Name + " " + want.child
+				args = append([]string{want.child}, args...)
+
+				for _, kid := range c.Children {
+					if kid.Name == want.child {
+						detail = kid.About
+					}
+				}
+			}
+
 			out = append(out, Entry{
-				Title:   c.Name,
-				Detail:  c.About,
+				Title:   title,
+				Detail:  detail,
 				Command: c.Name,
 				Args:    args,
 				Says:    want.says,

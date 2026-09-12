@@ -2,6 +2,7 @@ package ui
 
 import (
 	"os"
+	"strings"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -134,6 +135,13 @@ func (m Model) answered(text string, err error) Model {
 	}
 
 	return m.deliver(out.task, Delivery{Verb: out.verb, Text: text, Failure: err, Done: true})
+}
+
+// answers says whether a command coming back is the answer to the verb
+// that is out: the same name, or its parent when the verb went through a
+// family — `pr merge` is watched as `pr` run.
+func answers(cmd, name string) bool {
+	return cmd == name || strings.HasPrefix(cmd, name+" ")
 }
 
 // deliver hands one of those to the port, and says what stopped it.
@@ -293,10 +301,10 @@ func (m Model) mergePR() (tea.Model, tea.Cmd) {
 	}
 
 	p := m.opts.Words
-	m = m.asked(ask{TaskID: hand.ID, Verb: "MERGE PR", By: "merge", Cmd: "merge"})
+	m = m.asked(ask{TaskID: hand.ID, Verb: "MERGE PR", By: "pr merge", Cmd: "pr merge"})
 	m = m.say(p.T("deliver.merging_pr", "merging pull request for {id}...", about("id", hand.ID)))
 
-	return m.runWatched(Command{Name: "merge"}, repoArgs(hand.RepoPath, hand.ID))
+	return m.runWatched(Command{Name: "pr"}, append([]string{"merge"}, repoArgs(hand.RepoPath, hand.ID)...))
 }
 
 // closePR closes the GitHub Pull Request for the viewed task.
@@ -307,8 +315,8 @@ func (m Model) closePR() (tea.Model, tea.Cmd) {
 	}
 
 	p := m.opts.Words
-	m = m.asked(ask{TaskID: hand.ID, Verb: "CLOSE PR", By: "close-pr", Cmd: "close-pr"})
+	m = m.asked(ask{TaskID: hand.ID, Verb: "CLOSE PR", By: "pr close", Cmd: "pr close"})
 	m = m.say(p.T("deliver.closing_pr", "closing pull request for {id}...", about("id", hand.ID)))
 
-	return m.runWatched(Command{Name: "close-pr"}, repoArgs(hand.RepoPath, hand.ID))
+	return m.runWatched(Command{Name: "pr"}, append([]string{"close"}, repoArgs(hand.RepoPath, hand.ID)...))
 }

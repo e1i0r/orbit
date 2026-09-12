@@ -255,12 +255,10 @@ func theRest() []Verb {
 // One is the verb by that name, and whether there is one.
 //
 // By Path, so that a child is asked for the way it is written: "rules keep"
-// and not "keep", which two families could both answer to. And by the name
-// it used to have, because a script written against the old one is a script
-// that has to keep running.
+// and not "keep", which two families could both answer to.
 func One(name string) (Verb, bool) {
 	for _, v := range Every() {
-		if v.Path() == name || v.Was == name {
+		if v.Path() == name {
 			return v, true
 		}
 	}

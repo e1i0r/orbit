@@ -25,6 +25,15 @@ func (m Model) menuEnv() menu.Env {
 			row.About = c.About(p)
 		}
 
+		for _, kid := range c.Children {
+			about := ""
+			if kid.About != nil {
+				about = kid.About(p)
+			}
+
+			row.Children = append(row.Children, menu.Child{Name: kid.Name, About: about})
+		}
+
 		if c.Because != nil {
 			row.Because = c.Because(p)
 		}

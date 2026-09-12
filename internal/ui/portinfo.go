@@ -39,4 +39,15 @@ type Command struct {
 	// opened on no row, and a verb about one task has no task there; the
 	// menu of the row it is about is where it belongs.
 	AboutATask bool
+
+	// Children are the family's words after the parent's, for a command
+	// that has them. The menu lists them under it and the palette drills
+	// into them; every door runs them through the parent.
+	Children []Child
+}
+
+// Child is one subcommand of a family: its own word and what it does.
+type Child struct {
+	Name  string
+	About func(*words.Printer) string
 }

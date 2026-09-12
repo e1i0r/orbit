@@ -24,14 +24,14 @@ func pr() []Verb {
 			},
 		},
 		{
-			Name: "merge", Under: "pr", Was: "merge",
+			Name: "merge", Under: "pr",
 			OnTask: true, Outward: true,
 			About: func(p *words.Printer) string {
 				return p.T("verb.merge", "merge a task's pull request and delete its branch")
 			},
 		},
 		{
-			Name: "close", Under: "pr", Was: "close-pr",
+			Name: "close", Under: "pr",
 			OnTask: true, Outward: true,
 			About: func(p *words.Printer) string {
 				return p.T("verb.close_pr", "close a task's pull request without merging it")

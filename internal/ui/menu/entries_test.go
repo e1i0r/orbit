@@ -67,11 +67,11 @@ func TestTheTaskMenuCarriesTheVerbsThatOnlyACommandDoes(t *testing.T) {
 
 	for _, entry := range Open(theTask, e).Entries(e) {
 		if entry.Command != "" {
-			named = append(named, entry.Command)
+			named = append(named, entry.Title)
 		}
 	}
 
-	want := []string{"note", "direct", "pr", "resolve", "merge", "close-pr", "approve", "permit", "critical"}
+	want := []string{"note", "direct", "pr", "resolve", "pr merge", "pr close", "approve", "permit", "critical"}
 	if !slices.Equal(named, want) {
 		t.Errorf("the task's menu names %v, want %v", named, want)
 	}

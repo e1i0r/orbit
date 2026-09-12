@@ -264,7 +264,7 @@ func TestSetCommandComprehensive(t *testing.T) {
 	out.Reset()
 	errOut.Reset()
 
-	if code := Run([]string{"set", "autopilot"}, &out, &errOut); code == 0 {
+	if code := Run([]string{"settings", "set", "autopilot"}, &out, &errOut); code == 0 {
 		t.Error("expected error on set with missing value")
 	}
 
@@ -272,7 +272,7 @@ func TestSetCommandComprehensive(t *testing.T) {
 	out.Reset()
 	errOut.Reset()
 
-	if code := Run([]string{"set", "unknown_key_99", "value"}, &out, &errOut); code == 0 {
+	if code := Run([]string{"settings", "set", "unknown_key_99", "value"}, &out, &errOut); code == 0 {
 		t.Error("expected error on set with unknown key")
 	}
 
@@ -290,7 +290,7 @@ func TestSetCommandComprehensive(t *testing.T) {
 		out.Reset()
 		errOut.Reset()
 
-		if code := Run([]string{"set", pair[0], pair[1]}, &out, &errOut); code != 0 {
+		if code := Run([]string{"settings", "set", pair[0], pair[1]}, &out, &errOut); code != 0 {
 			t.Errorf("orbit set %s %s failed: %d: %s", pair[0], pair[1], code, errOut.String())
 		}
 	}

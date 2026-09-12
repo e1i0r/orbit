@@ -22,7 +22,7 @@ func closingComment(ctx Context) string {
 }
 
 func closePR(ctx Context, args []string) error {
-	fs := flag.NewFlagSet("close-pr", flag.ContinueOnError)
+	fs := flag.NewFlagSet("pr close", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 
 	dir := fs.String("repo", ".", "the repository the task is against")
@@ -31,7 +31,7 @@ func closePR(ctx Context, args []string) error {
 	}
 
 	if len(fs.Args()) < 1 {
-		return needsTaskID(ctx, "close-pr")
+		return needsTaskID(ctx, "pr close")
 	}
 
 	p := ctx.printer()

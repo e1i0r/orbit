@@ -118,7 +118,7 @@ func TestTheListingIsInTheReadersOwnLanguage(t *testing.T) {
 	userFlow(t, orbitHome, "mine")
 	userFlow(t, orbitHome, "task")
 
-	if code, _, errOut := run(t, "set", "language", "es"); code != 0 {
+	if code, _, errOut := run(t, "settings", "set", "language", "es"); code != 0 {
 		t.Fatalf("set language exited %d: %s", code, errOut)
 	}
 

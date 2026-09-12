@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/view"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // aTaskWithCommands is one task on the board and the table those three
@@ -30,10 +31,11 @@ func aTaskWithCommands(t *testing.T) Model {
 		{Name: "reconcile"},
 		{Name: "note", Args: "-repo <dir> <id> <text>", NeedsArgs: true, AboutATask: true},
 		{Name: "direct", Args: "-repo <dir> [-restart] <id> <message>", NeedsArgs: true, AboutATask: true},
-		{Name: "pr", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true},
+		{Name: "pr", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true, Children: []Child{
+			{Name: "merge", About: func(p *words.Printer) string { return "merge it" }},
+			{Name: "close", About: func(p *words.Printer) string { return "close it" }},
+		}},
 		{Name: "resolve", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true},
-		{Name: "merge", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true},
-		{Name: "close-pr", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true},
 		{Name: "approve", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true},
 		{Name: "permit", Args: "-repo <dir> [-no] <id>", NeedsArgs: true, AboutATask: true},
 		{Name: "critical", Args: "-repo <dir> [-off] <id>", NeedsArgs: true, AboutATask: true},

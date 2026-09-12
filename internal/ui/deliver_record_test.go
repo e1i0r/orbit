@@ -100,11 +100,11 @@ func TestTheCommandVerbsAreWrittenDownToo(t *testing.T) {
 
 	next, _ := m.mergePR()
 
-	if len(*written) != 1 || (*written)[0].Verb != "MERGE PR" || (*written)[0].By != "merge" {
+	if len(*written) != 1 || (*written)[0].Verb != "MERGE PR" || (*written)[0].By != "pr merge" {
 		t.Fatalf("wrote %+v, want the ask naming the command that carries it", *written)
 	}
 
-	asModel(t, next).Update(commandMsg{Name: "merge", Text: "merged"})
+	asModel(t, next).Update(commandMsg{Name: "pr", Text: "merged"})
 
 	if len(*written) != 2 || !(*written)[1].Done {
 		t.Fatalf("wrote %+v, want the command's answer against the verb", *written)

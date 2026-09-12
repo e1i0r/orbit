@@ -61,7 +61,7 @@ func taskTools() []Tool {
 				"title":  {Type: "string", Description: "One line saying what the task is."},
 				"prompt": {Type: "string", Description: "The instructions the engine is given, below the title."},
 				"repo":   {Type: "string", Description: "Which repository to write it against, by name or by path. Only needed when Orbit knows more than one."},
-				"flow":   {Type: "string", Description: "Which flow it walks, from orbit_list_flows. Defaults to the flow `orbit set flow` chose."},
+				"flow":   {Type: "string", Description: "Which flow it walks, from orbit_list_flows. Defaults to the flow `orbit settings set flow` chose."},
 				"id":     {Type: "string", Description: "The id to file it under. Defaults to the repository's name and the next free number."},
 			}, "title"),
 		},

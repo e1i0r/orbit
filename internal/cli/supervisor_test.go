@@ -125,7 +125,7 @@ func TestTheThreadAnswersInTheReadersLanguage(t *testing.T) {
 		t.Helper()
 		t.Setenv("ORBIT_HOME", t.TempDir())
 
-		if code, _, errOut := run(t, "set", "language", language); code != 0 {
+		if code, _, errOut := run(t, "settings", "set", "language", language); code != 0 {
 			t.Fatalf("set language %s exited %d: %s", language, code, errOut)
 		}
 

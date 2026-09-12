@@ -32,12 +32,6 @@ import (
 
 // withVerbs is the hand-written commands, and one for every declared verb
 // they do not already carry.
-//
-// A hand-written command whose verb has children gains the dispatch a
-// generated one gets, rather than this package writing it a second time.
-// What it does on its own stays its own: `orbit pr <id>` opens the pull
-// request the way it always has, streaming as it goes, and `orbit pr merge
-// <id>` is the child.
 func withVerbs(hand []Command) []Command {
 	out := slices.Clone(hand)
 
@@ -47,12 +41,39 @@ func withVerbs(hand []Command) []Command {
 		}
 	}
 
+	for i, c := range out {
+		if c.Name == "pr" {
+			out[i].Run = streamingPR(c.Run)
+		}
+	}
+
 	return append(out, fromVerbs(out)...)
 }
 
+// streamingPR keeps merge and close on the bodies that stream as they go
+// and put their warnings where warnings belong. The generated asking runs
+// the verb and prints the answer after; these two are watched while they
+// run, which is what the window's toolbar and every script around them
+// were written against.
+func streamingPR(otherwise func(Context, []string) error) func(Context, []string) error {
+	return func(ctx Context, args []string) error {
+		if len(args) > 0 {
+			rest := args[1:]
+
+			switch args[0] {
+			case "merge":
+				return mergePR(ctx, rest)
+			case "close":
+				return closePR(ctx, rest)
+			}
+		}
+
+		return otherwise(ctx, args)
+	}
+}
+
 // fromVerbs is every command the declaration implies that the hand-written
-// list does not already carry: one for each verb, and one for each name a
-// verb answered to before it joined a family.
+// list does not already carry: one for each verb that belongs to nobody.
 func fromVerbs(hand []Command) []Command {
 	carried := func(name string) bool {
 		return slices.ContainsFunc(hand, func(c Command) bool { return c.Name == name })
@@ -66,10 +87,6 @@ func fromVerbs(hand []Command) []Command {
 		// keep` and never `orbit keep`, which says nothing about what.
 		if v.Under == "" && !carried(v.Name) {
 			out = append(out, family(commandFor(v), v))
-		}
-
-		if v.Was != "" && !carried(v.Was) {
-			out = append(out, underItsOldName(v))
 		}
 	}
 
@@ -101,6 +118,10 @@ func commandFor(v verb.Verb) Command {
 
 // family gives a command the dispatch its verb's children need, and hands it
 // back untouched when there are none.
+//
+// A hand-written command keeps what it does on its own: `orbit pr <id>`
+// opens the pull request the way it always has, and `orbit pr merge <id>`
+// is the child.
 func family(c Command, v verb.Verb) Command {
 	kids := v.Children()
 	if len(kids) == 0 {

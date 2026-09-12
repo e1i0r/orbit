@@ -41,15 +41,6 @@ type Verb struct {
 	// needs a way to be walked, and nothing Orbit does has been hard to say
 	// in two words.
 	Under string
-	// Was is what this verb answered to before it joined a family, and
-	// empty for the ones that have always had the name they have.
-	//
-	// A rename that breaks every script somebody wrote is not a rename; it
-	// is a removal with something new standing next to it. So the old name
-	// keeps working, everywhere, and the first thing it says is what to
-	// type instead. Declared here once so that the four ways in cannot
-	// disagree about which old name meant what.
-	Was string
 	// About is the sentence a reader is shown, through internal/words so
 	// that it is the same sentence in both languages.
 	About func(*words.Printer) string

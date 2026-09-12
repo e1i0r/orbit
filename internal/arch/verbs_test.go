@@ -208,10 +208,10 @@ func windowOffers(t *testing.T) map[string]bool {
 		"rules":      "knowledge.said",
 		"rules keep": "knowledge.kept",
 		"rules drop": "knowledge.left_said",
-		// The window asks for these by the names they had, which still
-		// answer. What it offers is the verb, whatever it is spelled as.
-		"pr merge":     `Cmd: "merge"`,
-		"pr close":     `Cmd: "close-pr"`,
+		// The window asks for these through the parent, which is what
+		// carries the streaming bodies: the toolbar watches `pr` run.
+		"pr merge":     `"MERGE PR"`,
+		"pr close":     `"CLOSE PR"`,
 		"settings set": "screenSettings",
 	})
 }

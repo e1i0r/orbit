@@ -11,7 +11,7 @@ import (
 )
 
 func mergePR(ctx Context, args []string) error {
-	fs := flag.NewFlagSet("merge", flag.ContinueOnError)
+	fs := flag.NewFlagSet("pr merge", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 
 	dir := fs.String("repo", ".", "the repository the task is against")
@@ -20,7 +20,7 @@ func mergePR(ctx Context, args []string) error {
 	}
 
 	if len(fs.Args()) < 1 {
-		return needsTaskID(ctx, "merge")
+		return needsTaskID(ctx, "pr merge")
 	}
 
 	p := ctx.printer()

@@ -79,11 +79,15 @@ func TestWhatOnlyReadsIsDeclared(t *testing.T) {
 
 // TestOneFindsThemAndRefusesTheRest.
 func TestOneFindsThemAndRefusesTheRest(t *testing.T) {
-	if _, ok := One("merge"); !ok {
-		t.Error("merge is not findable by name")
+	if _, ok := One("pr merge"); !ok {
+		t.Error("pr merge is not findable by name")
 	}
 
 	if _, ok := One("mergre"); ok {
 		t.Error("a name nothing answers to was found anyway")
+	}
+
+	if _, ok := One("merge"); ok {
+		t.Error("an old name still finds its verb")
 	}
 }
