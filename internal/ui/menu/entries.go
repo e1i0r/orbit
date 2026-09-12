@@ -168,7 +168,7 @@ var taskCommands = []saysSomething{
 	{name: "note", says: true},
 	{name: "direct", says: true},
 	{name: "pr"},
-	{name: "resolve"},
+	{name: "pr", child: "resolve"},
 	{name: "pr", child: "merge"},
 	{name: "pr", child: "close"},
 	{name: "approve"},

@@ -42,6 +42,8 @@ var notThere = map[string]string{
 	"window:join": "it names the task with -task because the caller it was written for is " +
 		"an engine inside a run, where the id is already in the environment; the menu " +
 		"passes a task positionally, the way every other verb about one takes it",
+	"window:pr show": "the deliver toolbar acts on the pull request rather than listing it; " +
+		"which ones are open is the command line's reading",
 
 	// The MCP server is spoken to by a model, and these are the four a
 	// model has no business asking for on its own — plus the one it could
@@ -212,6 +214,11 @@ func windowOffers(t *testing.T) map[string]bool {
 		// carries the streaming bodies: the toolbar watches `pr` run.
 		"pr merge":     `"MERGE PR"`,
 		"pr close":     `"CLOSE PR"`,
+		"pr update":    "updatePRBranch",
+		"pr checks":    "fixChecks",
+		"pr tests":     "addMoreTests",
+		"pr resolve":   "resolveComments",
+		"pr review":    "reviewPR",
 		"settings set": "screenSettings",
 	})
 }

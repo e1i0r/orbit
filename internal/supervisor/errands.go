@@ -1,8 +1,8 @@
-package prompt
+package supervisor
 
 import "fmt"
 
-// The instructions the deliver keys hand to the supervisor.
+// The instructions the deliver verbs hand to the supervisor.
 //
 // Five of those verbs are not one command each. What "update the pull
 // request" takes depends on what the base branch did since the branch left
@@ -13,11 +13,11 @@ import "fmt"
 //
 // They are in English, like everything else that leaves this repository,
 // and they are not translated: what reads them is an engine. What the
-// window says about them is a sentence for a person, and that one is.
+// surfaces say about them is a sentence for a person, and that one is.
 
 // supervisorBrief opens every one of them: who is being asked, why, where
 // the work is, and what holds whatever they find.
-const supervisorBrief = `You are Orbit's supervisor. The operator pressed %s in the cockpit, about task %s.
+const supervisorBrief = `You are Orbit's supervisor. The operator asked for %s %s, about task %s.
 
 The task's checkout is at %s — run every git and gh command there. The branch checked out in it is the task's branch, and the pull request is the one open for that branch.
 
@@ -90,7 +90,9 @@ const (
 6. Report how many threads there were, how many you applied, and which ones you pushed back on.`
 )
 
-// Deliver is one of those bodies with the brief in front of it.
-func Deliver(caption, taskID, path, body string) string {
-	return fmt.Sprintf(supervisorBrief, caption, taskID, path) + body
+// Deliver is one of those bodies with the brief in front of it. door is
+// where the operator asked: the cockpit, the command line, the browser, a
+// tool call.
+func Deliver(door, caption, taskID, path, body string) string {
+	return fmt.Sprintf(supervisorBrief, caption, door, taskID, path) + body
 }

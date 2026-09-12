@@ -12,7 +12,7 @@ import (
 // It is not the disposable version an index carries. Nothing here can be
 // rebuilt from anywhere else, so a schema that turns out wrong is migrated
 // forward against live data and never dropped and remade.
-const version = 3
+const version = 4
 
 // busyTimeoutMS is how long SQLite waits for its turn at the write lock
 // before refusing. Five seconds is far past any transaction this package
@@ -105,7 +105,8 @@ CREATE TABLE IF NOT EXISTS pr(
   task_id   INTEGER NOT NULL REFERENCES task(id),
   repo_id   INTEGER NOT NULL REFERENCES repo(id),
   url       TEXT NOT NULL,
-  opened_at TEXT NOT NULL
+  opened_at TEXT NOT NULL,
+  state     TEXT NOT NULL DEFAULT 'open'
 );
 
 CREATE TABLE IF NOT EXISTS message(
@@ -165,6 +166,15 @@ ALTER TABLE proposal ADD COLUMN repo       TEXT NOT NULL DEFAULT '';
 // hasProposalColumn asks whether the table already has one of them, because
 // SQLite has no IF NOT EXISTS for a column.
 const hasProposalColumn = `SELECT count(*) FROM pragma_table_info('proposal') WHERE name = ?`
+
+// prStateColumn is what a pull request became: the table predates it, from
+// when a pull request was only ever opened and never asked about after.
+const prStateColumn = `
+ALTER TABLE pr ADD COLUMN state TEXT NOT NULL DEFAULT 'open';
+`
+
+// hasPRColumn asks whether the table already says, for the same reason.
+const hasPRColumn = `SELECT count(*) FROM pragma_table_info('pr') WHERE name = ?`
 
 // migrate brings the file up to the version this binary knows.
 //
@@ -236,12 +246,36 @@ func stepsFrom(tx *sql.Tx, found int) error {
 		if err := widenProposals(tx); err != nil {
 			return err
 		}
+
+		if err := widenPR(tx); err != nil {
+			return err
+		}
 	}
 
 	// What fills stampVersion is a constant of this package and never
 	// anything a caller can reach.
 	if _, err := tx.Exec(fmt.Sprintf(stampVersion, version)); err != nil {
 		return fmt.Errorf("stamp the schema version: %w", err)
+	}
+
+	return nil
+}
+
+// widenPR adds what a pull request became to a table that only ever said
+// it was opened.
+func widenPR(tx *sql.Tx) error {
+	var there int
+
+	if err := tx.QueryRow(hasPRColumn, "state").Scan(&there); err != nil {
+		return fmt.Errorf("read the shape of the pr table: %w", err)
+	}
+
+	if there > 0 {
+		return nil
+	}
+
+	if _, err := tx.Exec(prStateColumn); err != nil {
+		return fmt.Errorf("widen the pr table: %w", err)
 	}
 
 	return nil

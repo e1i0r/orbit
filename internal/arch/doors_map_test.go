@@ -136,7 +136,7 @@ var doors = map[string][]string{
 	},
 	"internal/db": {
 		"append.go", "check.go", "db.go", "follow.go", "message.go",
-		"proposal.go", "read.go", "repo.go",
+		"proposal.go", "pr.go", "read.go", "repo.go",
 	},
 	"internal/store": {
 		"atomic.go", "control.go", "create.go", "flatten.go", "record.go", "repos.go",
@@ -172,7 +172,7 @@ var doors = map[string][]string{
 	// screens.go, verbs.go and page.go are the routes and what they write,
 	// and none of them exports anything.
 	"internal/web":        {"web.go", "ports.go"},
-	"internal/supervisor": {"conversation.go", "happened.go", "supervise.go", "thread.go"},
+	"internal/supervisor": {"conversation.go", "errands.go", "happened.go", "supervise.go", "thread.go"},
 	"internal/tracker":    {"linear.go", "provider.go", "providers.go", "read.go", "tracker.go"},
 	"internal/words":      {"load.go", "locale.go", "words.go"},
 }

@@ -32,10 +32,10 @@ func aTaskWithCommands(t *testing.T) Model {
 		{Name: "note", Args: "-repo <dir> <id> <text>", NeedsArgs: true, AboutATask: true},
 		{Name: "direct", Args: "-repo <dir> [-restart] <id> <message>", NeedsArgs: true, AboutATask: true},
 		{Name: "pr", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true, Children: []Child{
+			{Name: "resolve", About: func(p *words.Printer) string { return "resolve it" }},
 			{Name: "merge", About: func(p *words.Printer) string { return "merge it" }},
 			{Name: "close", About: func(p *words.Printer) string { return "close it" }},
 		}},
-		{Name: "resolve", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true},
 		{Name: "approve", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true},
 		{Name: "permit", Args: "-repo <dir> [-no] <id>", NeedsArgs: true, AboutATask: true},
 		{Name: "critical", Args: "-repo <dir> [-off] <id>", NeedsArgs: true, AboutATask: true},

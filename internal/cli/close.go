@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/e1i0r/orbit/internal/logger"
+	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -61,6 +62,10 @@ func closePR(ctx Context, args []string) error {
 
 			return fmt.Errorf("%s: %w", p.T("close_pr.refused", "closing the pull request of {id} failed",
 				words.Arg{Name: "id", Value: taskID}), err)
+		}
+
+		if werr := s.MarkPR(taskID, one.Path, store.PRClosed); werr != nil {
+			logger.Warn("cli/close-pr", "mark the pull request of %q in %q closed: %v", taskID, one.Name, werr)
 		}
 	}
 

@@ -279,7 +279,7 @@ func askFor(ctx Context, v verb.Verb, args []string) error {
 		return err
 	}
 
-	in := verb.In{Args: map[string]string{}, By: "operator"}
+	in := verb.In{Args: map[string]string{}, By: "operator", Door: "the command line"}
 	for name, value := range said {
 		in.Args[name] = *value
 	}

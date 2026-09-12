@@ -145,7 +145,7 @@ func (sn Session) askVerb(name string, args map[string]any) CallToolResult {
 
 	defer sb.close()
 
-	in := verb.In{Args: wordsOf(args), By: journalBy}
+	in := verb.In{Args: wordsOf(args), By: journalBy, Door: "a tool call"}
 
 	if id := stringArg(args, "task_id"); id != "" {
 		row, err := findTask(sb.board, id)

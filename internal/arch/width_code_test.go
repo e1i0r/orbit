@@ -25,7 +25,7 @@ const column = 100
 
 // overTheColumn is how many lines of code are still past it. It came down
 // from here and it does not go back up.
-const overTheColumn = 255
+const overTheColumn = 254
 
 // quoted is a string literal, whatever is inside it. What a person reads is
 // measured by them and not by this test.

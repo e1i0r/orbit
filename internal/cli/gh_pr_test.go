@@ -226,6 +226,43 @@ func TestTheAnswerToADeliveryIsTheUrlAndNothingElse(t *testing.T) {
 	}
 }
 
+// TestShowListsWhatOpeningOpened. The row is written where the pull
+// request opened, and `pr show` reads it back with what became of it.
+func TestShowListsWhatOpeningOpened(t *testing.T) {
+	dir := deliverable(t, "make the thing")
+	fakeGh(t, "echo https://github.test/acme/payments/pull/7")
+
+	if code, _, errOut := run(t, "pr", "-repo", dir, "PAY-1"); code != 0 {
+		t.Fatalf("pr exited %d: %s", code, errOut)
+	}
+
+	code, out, errOut := run(t, "pr", "show", "-repo", dir, "PAY-1")
+	if code != 0 {
+		t.Fatalf("pr show exited %d: %s", code, errOut)
+	}
+
+	for _, want := range []string{"payments", "open", "https://github.test/acme/payments/pull/7"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("the show does not mention %q:\n%s", want, out)
+		}
+	}
+}
+
+// TestShowWithNothingOpenedSaysSo. Most tasks have never been delivered,
+// and no rows is an empty reading rather than a refusal.
+func TestShowWithNothingOpenedSaysSo(t *testing.T) {
+	dir := deliverable(t, "make the thing")
+
+	code, out, errOut := run(t, "pr", "show", "-repo", dir, "PAY-1")
+	if code != 0 {
+		t.Fatalf("pr show exited %d: %s", code, errOut)
+	}
+
+	if !strings.Contains(out, "PAY-1") {
+		t.Errorf("an empty show reads %q", out)
+	}
+}
+
 // TestADeliveryCarriesTheTaskAndItsBranchToGh. The pull request is opened
 // for the branch the push just wrote, and it says which task it is for. Both
 // are built here out of the task identifier, and a delivery that got either

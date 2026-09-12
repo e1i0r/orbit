@@ -7,7 +7,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
-	"github.com/e1i0r/orbit/internal/ui/prompt"
+	"github.com/e1i0r/orbit/internal/supervisor"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
@@ -191,7 +191,7 @@ func (m Model) deliverPR() (tea.Model, tea.Cmd) {
 	return m.askSupervisorTo(errand{
 		Caption: "CREATE PR",
 		TaskID:  hand.ID,
-		Body:    prompt.CreatePR,
+		Body:    supervisor.CreatePR,
 		Said: m.opts.Words.T("deliver.pr_asked", "the supervisor was asked to open the pull request for {id}",
 			about("id", hand.ID)),
 	})
@@ -211,7 +211,7 @@ func (m Model) fixChecks() (tea.Model, tea.Cmd) {
 	return m.askSupervisorTo(errand{
 		Caption: "FIX CHECKS",
 		TaskID:  hand.ID,
-		Body:    prompt.FixChecks,
+		Body:    supervisor.FixChecks,
 		Said: m.opts.Words.T("deliver.checks_asked", "the supervisor was asked to make {id}'s checks pass",
 			about("id", hand.ID)),
 	})
@@ -227,7 +227,7 @@ func (m Model) addMoreTests() (tea.Model, tea.Cmd) {
 	return m.askSupervisorTo(errand{
 		Caption: "MORE TESTS",
 		TaskID:  hand.ID,
-		Body:    prompt.MoreTests,
+		Body:    supervisor.MoreTests,
 		Said: m.opts.Words.T("deliver.tests_asked", "the supervisor was asked for more tests on {id}",
 			about("id", hand.ID)),
 	})
@@ -249,7 +249,7 @@ func (m Model) resolveComments() (tea.Model, tea.Cmd) {
 	return m.askSupervisorTo(errand{
 		Caption: "RESOLVE COMMENTS",
 		TaskID:  hand.ID,
-		Body:    prompt.ResolveComments,
+		Body:    supervisor.ResolveComments,
 		Said: m.opts.Words.T("deliver.resolve_asked", "the supervisor was asked to answer the reviews on {id}",
 			about("id", hand.ID)),
 	})
@@ -267,7 +267,7 @@ func (m Model) reviewPR() (tea.Model, tea.Cmd) {
 	return m.askSupervisorTo(errand{
 		Caption: "DEEP REVIEW",
 		TaskID:  hand.ID,
-		Body:    prompt.Review,
+		Body:    supervisor.Review,
 		Said: m.opts.Words.T("deliver.review_asked", "the supervisor was asked to review {id}",
 			about("id", hand.ID)),
 	})
@@ -286,7 +286,7 @@ func (m Model) updatePRBranch() (tea.Model, tea.Cmd) {
 	return m.askSupervisorTo(errand{
 		Caption: "UPDATE PR",
 		TaskID:  hand.ID,
-		Body:    prompt.UpdatePR,
+		Body:    supervisor.UpdatePR,
 		Said: m.opts.Words.T("deliver.update_asked",
 			"the supervisor was asked to bring {id} up to date with its base branch",
 			about("id", hand.ID)),
@@ -304,7 +304,8 @@ func (m Model) mergePR() (tea.Model, tea.Cmd) {
 	m = m.asked(ask{TaskID: hand.ID, Verb: "MERGE PR", By: "pr merge", Cmd: "pr merge"})
 	m = m.say(p.T("deliver.merging_pr", "merging pull request for {id}...", about("id", hand.ID)))
 
-	return m.runWatched(Command{Name: "pr"}, append([]string{"merge"}, repoArgs(hand.RepoPath, hand.ID)...))
+	return m.runWatched(Command{Name: "pr"},
+		append([]string{"merge"}, repoArgs(hand.RepoPath, hand.ID)...))
 }
 
 // closePR closes the GitHub Pull Request for the viewed task.
@@ -318,5 +319,6 @@ func (m Model) closePR() (tea.Model, tea.Cmd) {
 	m = m.asked(ask{TaskID: hand.ID, Verb: "CLOSE PR", By: "pr close", Cmd: "pr close"})
 	m = m.say(p.T("deliver.closing_pr", "closing pull request for {id}...", about("id", hand.ID)))
 
-	return m.runWatched(Command{Name: "pr"}, append([]string{"close"}, repoArgs(hand.RepoPath, hand.ID)...))
+	return m.runWatched(Command{Name: "pr"},
+		append([]string{"close"}, repoArgs(hand.RepoPath, hand.ID)...))
 }

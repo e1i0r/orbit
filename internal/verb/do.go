@@ -36,6 +36,10 @@ type In struct {
 	// By is who asked, in the words the record shows: "operator" for a
 	// person at any of the controls, an engine's name for a model.
 	By string
+	// Door is where they asked it: the cockpit, the command line, the
+	// browser, a tool call. What the supervisor is handed names it, so
+	// that an instruction never claims a key was pressed that was not.
+	Door string
 }
 
 // Arg is one field, and the empty string for one nobody filled in.

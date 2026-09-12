@@ -13,12 +13,6 @@ import "github.com/e1i0r/orbit/internal/words"
 // is waiting on them.
 func answering() []Command {
 	return []Command{{
-		Name: "resolve", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
-		About: func(p *words.Printer) string {
-			return p.T("cmd.resolve", "read what reviewers asked on the pull requests into the task, for the next run to answer")
-		},
-		Run: resolveComments,
-	}, {
 		Name: "approve", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
 		About: func(p *words.Printer) string {
 			return p.T("cmd.approve", "say yes to the libraries a task added, so its next run goes past the gate")

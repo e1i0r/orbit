@@ -55,6 +55,7 @@ func (h hands) Ask(name string, in web.Asked) (web.Answered, error) {
 		Repo: in.Repo,
 		Args: in.Args,
 		By:   by,
+		Door: "the browser",
 	})
 	if err != nil {
 		return web.Answered{}, err

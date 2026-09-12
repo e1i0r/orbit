@@ -196,10 +196,12 @@ var program = map[string][]string{
 	// it is the window's business, and the caret arithmetic is the part that
 	// was worth being able to test on its own.
 	// internal/ui/prompt is what the window asks an engine for, in the
-	// engine's own words: the six deliver verbs, the instruction a phase is
-	// given, and the shape a flow drafted from a sentence must come back in.
-	// It imports nothing, because a prompt is a string and everything that
-	// decides which one to send is the window's.
+	// engine's own words: the instruction a phase is given, and the shape
+	// a flow drafted from a sentence must come back in. It imports
+	// nothing, because a prompt is a string and everything that decides
+	// which one to send is the window's. The deliver verbs live in
+	// internal/supervisor beside the thread they are said in, so that all
+	// four doors hand the supervisor the same words.
 	// internal/ui/clip is the pasteboard, which is three commands that may
 	// not be installed rather than a library: pbcopy and pbpaste on a mac,
 	// wl-copy and xclip on the two Linux display servers. It imports nothing.

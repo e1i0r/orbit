@@ -109,6 +109,41 @@ const verbs: Record<Verb, Shape> = {
     asks: (t) => `Close ${t.id}'s pull request without merging it? The work stays; the request goes.`,
     tone: "bad",
   },
+  "pr show": {
+    name: "Show the pull requests",
+    asks: (t) => `List the pull requests ${t.id} has open, and what became of each?`,
+    tone: "quiet",
+  },
+  "pr update": {
+    name: "Update the branch",
+    asks: (t) =>
+      `Bring ${t.id}'s branch up to date with its base? The supervisor runs it and pushes.`,
+    tone: "out",
+  },
+  "pr checks": {
+    name: "Fix checks",
+    asks: (t) =>
+      `Make the checks on ${t.id}'s pull request pass? The supervisor runs it and pushes.`,
+    tone: "out",
+  },
+  "pr tests": {
+    name: "More tests",
+    asks: (t) =>
+      `Raise the tests where ${t.id}'s change is thin? The supervisor runs it and pushes.`,
+    tone: "out",
+  },
+  "pr resolve": {
+    name: "Resolve comments",
+    asks: (t) =>
+      `Answer the reviews on ${t.id}'s pull request? The supervisor runs it and pushes.`,
+    tone: "out",
+  },
+  "pr review": {
+    name: "Deep review",
+    asks: (t) =>
+      `Review ${t.id}'s pull request the way a senior reviewer would? The findings land on the pull request itself.`,
+    tone: "out",
+  },
   approve: {
     name: "Approve",
     asks: (t) =>
@@ -192,7 +227,8 @@ export function offered(task: Task): Verb[] {
   // permitted, or anything to mark read, is the verb's own question and it
   // answers in its own words — a second rule here would be the one that
   // drifts.
-  return [...out, "direct", "note", "requeue", "pr", "pr merge", "pr close",
+  return [...out, "direct", "note", "requeue", "pr", "pr show", "pr merge", "pr close",
+    "pr update", "pr checks", "pr tests", "pr resolve", "pr review",
     "permit", "read", "critical", "join", "delete"];
 }
 

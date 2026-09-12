@@ -13,6 +13,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/e1i0r/orbit/internal/supervisor"
 	"github.com/e1i0r/orbit/internal/task"
 )
 
@@ -41,6 +42,18 @@ func (v Verb) do(ctx context.Context, w World, in In) (Out, error) {
 		return told(w, in)
 	case "pr", "pr merge", "pr close":
 		return given(ctx, w, in, v.Path())
+	case "pr show":
+		return shownPR(w, in)
+	case "pr resolve":
+		return erranded(w, in, "RESOLVE COMMENTS", supervisor.ResolveComments)
+	case "pr update":
+		return erranded(w, in, "UPDATE PR", supervisor.UpdatePR)
+	case "pr checks":
+		return erranded(w, in, "FIX CHECKS", supervisor.FixChecks)
+	case "pr tests":
+		return erranded(w, in, "MORE TESTS", supervisor.MoreTests)
+	case "pr review":
+		return erranded(w, in, "DEEP REVIEW", supervisor.Review)
 	case "say":
 		return spoken(ctx, w, in)
 	case "learn":

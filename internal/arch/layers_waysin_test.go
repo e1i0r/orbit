@@ -30,7 +30,14 @@ var waysIn = map[string][]string{
 	// somebody is about to write sits beside the ones already standing. It
 	// is a type and a read — the facts arrive through a port, because
 	// reaching the state root to load them is what the window may not do.
-	"internal/ui": {"internal/board", "internal/flow", "internal/knowledge", "internal/logger", "internal/repo", "internal/task", "internal/tracker", "internal/ui/cells", "internal/ui/cheat", "internal/ui/clip", "internal/ui/compose", "internal/ui/engines", "internal/ui/fact", "internal/ui/flows", "internal/ui/keymap", "internal/ui/known", "internal/ui/layout", "internal/ui/markdown", "internal/ui/menu", "internal/ui/palette", "internal/ui/panes", "internal/ui/prose", "internal/ui/patch", "internal/ui/point", "internal/ui/prompt", "internal/ui/quota", "internal/ui/repos", "internal/ui/roster", "internal/ui/settings", "internal/ui/spoken", "internal/ui/supervisor", "internal/ui/theme", "internal/ui/typing", "internal/ui/upgrade", "internal/verb", "internal/view", "internal/words"},
+	// internal/supervisor is on internal/ui's list for one thing: the words
+	// the window hands the supervisor's errands in. The deliver verbs live
+	// beside the thread they are said in so that all four doors hand over
+	// the same words, and the window reads them rather than keeping a copy
+	// that would drift. It is strings and nothing else — reaching the
+	// thread itself stays behind the ports, and the three absences at the
+	// top still hold.
+	"internal/ui": {"internal/board", "internal/flow", "internal/knowledge", "internal/logger", "internal/repo", "internal/task", "internal/tracker", "internal/ui/cells", "internal/ui/cheat", "internal/ui/clip", "internal/ui/compose", "internal/ui/engines", "internal/ui/fact", "internal/ui/flows", "internal/ui/keymap", "internal/ui/known", "internal/ui/layout", "internal/ui/markdown", "internal/ui/menu", "internal/ui/palette", "internal/ui/panes", "internal/ui/prose", "internal/ui/patch", "internal/ui/point", "internal/ui/prompt", "internal/ui/quota", "internal/ui/repos", "internal/ui/roster", "internal/ui/settings", "internal/ui/spoken", "internal/supervisor", "internal/ui/supervisor", "internal/ui/theme", "internal/ui/typing", "internal/ui/upgrade", "internal/verb", "internal/view", "internal/words"},
 	"internal/cli": {
 		"internal/board", "internal/engine", "internal/export", "internal/flow",
 		"internal/knowledge", "internal/learn", "internal/logger", "internal/mcp",

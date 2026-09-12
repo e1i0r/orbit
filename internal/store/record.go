@@ -57,3 +57,47 @@ func (s *Store) Close() error {
 
 	return d.Close()
 }
+
+// What became of a task's pull requests lives beside the record's other
+// tables: opened where the pull request was opened, marked where it was
+// merged or closed, and read wherever a reader asks what there is.
+
+// What a pull request is, named once where the rows are written. The
+// command line marks them through these doors and never touches the
+// database directly: the handle is the store's to hold, and a second
+// opener in one process would be two writers contending for one lock.
+const (
+	PRMerged = db.PRMerged
+	PRClosed = db.PRClosed
+)
+
+// OpenedPR writes down that a pull request was opened for a task.
+func (s *Store) OpenedPR(taskID, repoAbs, url string) error {
+	d, err := s.Record()
+	if err != nil {
+		return err
+	}
+
+	return d.OpenedPR(taskID, repoAbs, url)
+}
+
+// MarkPR says what became of every pull request a task has open in one
+// repository: PRMerged or PRClosed.
+func (s *Store) MarkPR(taskID, repoAbs, state string) error {
+	d, err := s.Record()
+	if err != nil {
+		return err
+	}
+
+	return d.MarkPR(taskID, repoAbs, state)
+}
+
+// PullRequests is every pull request opened for a task, newest first.
+func (s *Store) PullRequests(taskID string) ([]db.PullRequest, error) {
+	d, err := s.Record()
+	if err != nil {
+		return nil, err
+	}
+
+	return d.PullRequests(taskID)
+}

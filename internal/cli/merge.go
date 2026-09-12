@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/e1i0r/orbit/internal/logger"
+	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/task"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -54,6 +55,12 @@ func mergePR(ctx Context, args []string) error {
 
 			return fmt.Errorf("%s: %w", p.T("merge.refused", "merging the pull request of {id} failed",
 				words.Arg{Name: "id", Value: taskID}), err)
+		}
+
+		// Marked where it merged, like the row was opened where it opened:
+		// a mark that will not write is warned about for the same reason.
+		if werr := s.MarkPR(taskID, one.Path, store.PRMerged); werr != nil {
+			logger.Warn("cli/merge", "mark the pull request of %q in %q merged: %v", taskID, one.Name, werr)
 		}
 	}
 

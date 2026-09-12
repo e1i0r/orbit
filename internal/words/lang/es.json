@@ -1107,28 +1107,6 @@
       "source": "{action} on {id} is allowed; run it again to do it",
       "value": "{action} en {id} está permitido; volvé a correrlo para hacerlo"
     },
-    "cmd.resolve": {
-      "source": "read what reviewers asked on the pull requests into the task, for the next run to answer",
-      "value": "traer a la tarea lo que pidieron los reviewers en los pull requests, para que la próxima corrida lo responda"
-    },
-    "resolve.unread": {
-      "source": "{repo}: the pull request could not be read",
-      "value": "{repo}: no se pudo leer el pull request"
-    },
-    "resolve.nothing": {
-      "source": "nobody has asked {id} for anything",
-      "value": "nadie le pidió nada a {id}"
-    },
-    "resolve.found": {
-      "source": {
-        "one": "{n} comment is now on {id}; `orbit run {id}` answers it",
-        "other": "{n} comments are now on {id}; `orbit run {id}` answers them"
-      },
-      "value": {
-        "one": "{n} comentario está ahora en {id}; `orbit run {id}` lo responde",
-        "other": "{n} comentarios están ahora en {id}; `orbit run {id}` los responde"
-      }
-    },
     "cmd.approve": {
       "source": "say yes to the libraries a task added, so its next run goes past the gate",
       "value": "decir que sí a las librerías que agregó una tarea, para que su próxima corrida pase el gate"
@@ -4606,6 +4584,34 @@
     "verb.close_pr": {
       "source": "close a task's pull request without merging it",
       "value": "cierra el pull request de una tarea sin fusionarlo"
+    },
+    "verb.pr.show": {
+      "source": "which pull requests a task has open, and where",
+      "value": "qué pull requests tiene abiertos una tarea, y dónde"
+    },
+    "verb.pr.show.empty": {
+      "source": "{id} has no pull request open anywhere",
+      "value": "{id} no tiene ningún pull request abierto en ningún lado"
+    },
+    "verb.pr.resolve": {
+      "source": "answer the reviews on a task's pull request",
+      "value": "contesta las revisiones del pull request de una tarea"
+    },
+    "verb.pr.update": {
+      "source": "bring a task's branch up to date with the branch it merges into",
+      "value": "pon al día la rama de una tarea con la rama a la que se va a fusionar"
+    },
+    "verb.pr.checks": {
+      "source": "make the checks on a task's pull request pass",
+      "value": "haz que pasen los checks del pull request de una tarea"
+    },
+    "verb.pr.tests": {
+      "source": "raise the tests where a task's change is thin",
+      "value": "sube los tests donde el cambio de una tarea está flojo"
+    },
+    "verb.pr.review": {
+      "source": "review a task's pull request the way a senior reviewer would",
+      "value": "revisa el pull request de una tarea como lo haría un reviewer senior"
     },
     "verb.say": {
       "source": "say something in the supervisor thread",
