@@ -56,7 +56,7 @@ func (sn Session) createTask(args map[string]any) CallToolResult {
 		text = title + "\n\n" + prompt
 	}
 
-	out, err := verb.Run(sn.context(), sn.world(sb), "new", verb.In{
+	out, err := verb.Run(sn.context(), sn.world(sb), "board new", verb.In{
 		Args: map[string]string{
 			"id":   id,
 			"text": text,
@@ -157,7 +157,7 @@ func (sn Session) retryTask(args map[string]any) CallToolResult {
 	// nobody kept.
 	corrective := strings.TrimSpace(stringArg(args, "corrective_prompt"))
 	if corrective != "" {
-		if _, err := verb.Run(sn.context(), sn.world(sb), "note", verb.In{
+		if _, err := verb.Run(sn.context(), sn.world(sb), "task note", verb.In{
 			Task: t.ID,
 			Repo: r.Path,
 			Args: map[string]string{"text": supervisorNote(corrective)},
@@ -169,7 +169,7 @@ func (sn Session) retryTask(args map[string]any) CallToolResult {
 
 	flow := stringArg(args, "flow")
 
-	out, err := verb.Run(sn.context(), sn.world(sb), "run", verb.In{
+	out, err := verb.Run(sn.context(), sn.world(sb), "task start", verb.In{
 		Task: t.ID,
 		Repo: r.Path,
 		Args: map[string]string{"flow": flow},

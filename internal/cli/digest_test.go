@@ -32,7 +32,7 @@ func TestTheDigestCountsTheTasksThatAreThere(t *testing.T) {
 
 	repoDir := filepath.Join(root, "payments")
 	for _, id := range []string{"ACME-1", "ACME-2"} {
-		if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", id, "x"); code != 0 {
+		if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", id, "x"); code != 0 {
 			t.Fatalf("new %s exited %d: %s", id, code, errOut)
 		}
 	}

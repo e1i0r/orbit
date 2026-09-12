@@ -12,7 +12,7 @@ package cli
 // anybody remembering to add it, and the arch test that holds the four ways
 // in to the same vocabulary stops being a chore and starts being a promise.
 //
-// The hand-written commands stay hand-written. `orbit run` blocks until a
+// The hand-written commands stay hand-written. `orbit task start` blocks until a
 // phase finishes where a generated one would not, and `orbit pr merge`
 // streams as it goes; those are facts about the command line rather than
 // about the verb.
@@ -39,9 +39,43 @@ func withVerbs(hand []Command) []Command {
 		if c.Name == "pr" {
 			out[i].Run = streamingPR(c.Run)
 		}
+
+		// The task's verbs that stay written by hand: starting blocks
+		// until a phase finishes, and merging, killing, joining,
+		// directing, permitting and marking run their own way for the
+		// same reason merge and close keep theirs.
+		if c.Name == "task" {
+			out[i].Run = taskHands(c.Run)
+		}
 	}
 
 	return append(out, fromVerbs(out)...)
+}
+
+// taskHands keeps the task verbs that stay written by hand on their own
+// bodies. Starting blocks until a phase finishes where asking would not,
+// and the rest run their own way for the same reason merge and close keep
+// theirs: killing, joining with the run's environment, directing with a
+// name on it, and permit and critical answering with their own polarity.
+func taskHands(otherwise func(Context, []string) error) func(Context, []string) error {
+	hands := map[string]func(Context, []string) error{
+		"start":    runTask,
+		"cancel":   cancelTask,
+		"join":     joinRepo,
+		"direct":   directTask,
+		"permit":   permitTask,
+		"critical": criticalTask,
+	}
+
+	return func(ctx Context, args []string) error {
+		if len(args) > 0 {
+			if run, ok := hands[args[0]]; ok {
+				return run(ctx, args[1:])
+			}
+		}
+
+		return otherwise(ctx, args)
+	}
 }
 
 // streamingPR keeps merge and close on the bodies that stream as they go
@@ -80,7 +114,15 @@ func fromVerbs(hand []Command) []Command {
 		// parent, which is the whole point of it having one: `orbit rules
 		// keep` and never `orbit keep`, which says nothing about what.
 		if v.Under == "" && !carried(v.Name) {
-			out = append(out, family(commandFor(v), v))
+			c := family(commandFor(v), v)
+
+			// The task's verbs that stay written by hand ride the
+			// generated parent the same way merge and close ride pr.
+			if v.Name == "task" {
+				c.Run = taskHands(c.Run)
+			}
+
+			out = append(out, c)
 		}
 	}
 
@@ -155,10 +197,18 @@ func runFamily(
 //
 // The repository flag is written once. Every line on this screen begins with
 // it, and twice on one line reads as two different flags.
+//
+// A parent that already takes the task takes no child's: the id is the same
+// positional either way, and one child's flags are not the family's —
+// `orbit task` lists its children, and each one says its own line elsewhere.
 func familyArgs(own string, kids []verb.Verb) string {
 	names := make([]string, 0, len(kids))
 	for _, kid := range kids {
 		names = append(names, kid.Name)
+	}
+
+	if strings.Contains(own, "<id>") {
+		return own + "  |  " + strings.Join(names, "|")
 	}
 
 	return own + "  |  " + strings.Join(names, "|") +

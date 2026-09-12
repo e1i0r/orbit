@@ -4385,9 +4385,21 @@
       "source": "start it as soon as it is written",
       "value": "arráncala en cuanto quede anotada"
     },
-    "verb.run": {
-      "source": "run a task that is not running",
-      "value": "ejecuta una tarea que no esté ejecutándose"
+    "verb.start": {
+      "source": "start a task that is not running",
+      "value": "arranca una tarea que no esté corriendo"
+    },
+    "verb.task": {
+      "source": "everything one task can be asked for",
+      "value": "todo lo que se le puede pedir a una tarea"
+    },
+    "verb.board": {
+      "source": "everything about the board rather than about one task",
+      "value": "todo lo del tablero, no lo de una tarea"
+    },
+    "verb.supervisor": {
+      "source": "everything said in the supervisor thread",
+      "value": "todo lo dicho en el hilo del supervisor"
     },
     "verb.run.flow": {
       "source": "walk this flow instead of the one it was written against",
@@ -4632,10 +4644,6 @@
     "verb.learn.text": {
       "source": "the fact, in a sentence",
       "value": "el hecho, en una frase"
-    },
-    "cmd.run": {
-      "source": "run a task through its flow",
-      "value": "llevar una tarea por su flujo"
     },
     "verb.rules": {
       "source": "the rules you said that Orbit has not been told to keep yet",

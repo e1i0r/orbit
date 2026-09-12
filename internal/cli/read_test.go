@@ -15,7 +15,7 @@ func writeTask(t *testing.T, root string) string {
 	t.Helper()
 
 	dir := filepath.Join(root, "payments")
-	if code, _, errOut := run(t, "new", "-repo", dir, "-id", "ACME-1", "make the numbers add up"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", dir, "-id", "ACME-1", "make the numbers add up"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
@@ -26,7 +26,7 @@ func TestReadWritesDownThatSomebodyLooked(t *testing.T) {
 	root, _ := workspace(t)
 	dir := writeTask(t, root)
 
-	code, out, errOut := run(t, "read", "-repo", dir, "ACME-1")
+	code, out, errOut := run(t, "task", "read", "-repo", dir, "ACME-1")
 	if code != 0 {
 		t.Fatalf("read exited %d: %s", code, errOut)
 	}
@@ -45,7 +45,7 @@ func TestReadNeedsAnID(t *testing.T) {
 	root, _ := workspace(t)
 	dir := filepath.Join(root, "payments")
 
-	code, _, errOut := run(t, "read", "-repo", dir)
+	code, _, errOut := run(t, "task", "read", "-repo", dir)
 	if code == 0 {
 		t.Fatal("read with no id exited 0")
 	}

@@ -20,19 +20,21 @@ import (
 	"github.com/e1i0r/orbit/internal/view"
 )
 
-// verbNote and verbDirect are the two commands the box can be opened for.
-// They are the names in the command table, because they are handed to
-// runWatched as they are.
+// verbNote and verbDirect are the two children the box can be opened for,
+// both of the task family. The box is handed the parent to run and the
+// child to run it with.
 const (
 	verbNote   = "note"
 	verbDirect = "direct"
 )
 
-// noteState is the box while it is up: which command the typing goes to, the
-// task it is about, and what has been typed so far.
+// noteState is the box while it is up: which command the typing goes to,
+// which of its children, the task it is about, and what has been typed so
+// far.
 type noteState struct {
 	open   bool
 	verb   string
+	child  string
 	taskID string
 	text   string
 }
@@ -53,19 +55,19 @@ func (m Model) taskInHand() string {
 }
 
 // openMessage brings the box up for one command about one task.
-func (m Model) openMessage(verb, taskID string) Model {
+func (m Model) openMessage(verb, child, taskID string) Model {
 	if taskID == "" {
 		return m
 	}
 
-	m.note = noteState{open: true, verb: verb, taskID: taskID}
+	m.note = noteState{open: true, verb: verb, child: child, taskID: taskID}
 
 	return m
 }
 
 // openNote is the box on the note key, about whatever task is in hand.
 func (m Model) openNote() Model {
-	return m.openMessage(verbNote, m.taskInHand())
+	return m.openMessage("task", verbNote, m.taskInHand())
 }
 
 func (m Model) closeNote() Model {
@@ -107,14 +109,14 @@ func (m Model) submitNote() (tea.Model, tea.Cmd) {
 
 	text := strings.TrimSpace(m.note.text)
 	if text == "" {
-		if m.note.verb == verbDirect {
+		if m.note.child == verbDirect {
 			return m.say(p.T("direct.empty", "the directive cannot be empty")), nil
 		}
 
 		return m.say(p.T("note.empty", "the note cannot be empty")), nil
 	}
 
-	verb, taskID := m.note.verb, m.note.taskID
+	verb, child, taskID := m.note.verb, m.note.child, m.note.taskID
 	m.note = noteState{}
 
 	said := p.T("note.recorded", "note recorded for {id}", about("id", taskID))
@@ -126,7 +128,7 @@ func (m Model) submitNote() (tea.Model, tea.Cmd) {
 			about("id", taskID))
 	}
 
-	if verb == verbDirect {
+	if child == verbDirect {
 		said = p.T("direct.given", "{id} redirected — the run it was in is stopped",
 			about("id", taskID))
 	}
@@ -139,7 +141,7 @@ func (m Model) submitNote() (tea.Model, tea.Cmd) {
 	}
 
 	nextM, runCmd := m.runWatchedSaying(Command{Name: verb},
-		repoArgs(m.taskRepoPath(taskID), taskID, text), said)
+		append([]string{child}, repoArgs(m.taskRepoPath(taskID), taskID, text)...), said)
 	if runCmd != nil {
 		cmds = append(cmds, runCmd)
 	}

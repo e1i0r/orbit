@@ -320,7 +320,7 @@ func deleted(w World, in In) (Out, error) {
 	return Out{Said: t.ID + " is gone"}, nil
 }
 
-// flowOf is the flow a task walks, by the same reading `orbit run` makes of
+// flowOf is the flow a task walks, by the same reading `orbit task start` makes of
 // it: the task's own, then the one Orbit ships. Not the settings default,
 // which is what the next task written gets.
 func flowOf(w World, t task.Task) (flow.Flow, error) {

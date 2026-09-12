@@ -29,16 +29,18 @@ func aTaskWithCommands(t *testing.T) Model {
 	m.cursor = m.firstTask()
 	m.opts.Commands = []Command{
 		{Name: "reconcile"},
-		{Name: "note", Args: "-repo <dir> <id> <text>", NeedsArgs: true, AboutATask: true},
-		{Name: "direct", Args: "-repo <dir> [-restart] <id> <message>", NeedsArgs: true, AboutATask: true},
+		{Name: "task", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true, Children: []Child{
+			{Name: "note", About: func(p *words.Printer) string { return "leave a note" }},
+			{Name: "direct", About: func(p *words.Printer) string { return "direct it" }},
+			{Name: "approve", About: func(p *words.Printer) string { return "approve it" }},
+			{Name: "permit", About: func(p *words.Printer) string { return "permit it" }},
+			{Name: "critical", About: func(p *words.Printer) string { return "mark it" }},
+		}},
 		{Name: "pr", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true, Children: []Child{
 			{Name: "resolve", About: func(p *words.Printer) string { return "resolve it" }},
 			{Name: "merge", About: func(p *words.Printer) string { return "merge it" }},
 			{Name: "close", About: func(p *words.Printer) string { return "close it" }},
 		}},
-		{Name: "approve", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true},
-		{Name: "permit", Args: "-repo <dir> [-no] <id>", NeedsArgs: true, AboutATask: true},
-		{Name: "critical", Args: "-repo <dir> [-off] <id>", NeedsArgs: true, AboutATask: true},
 	}
 
 	return m
@@ -51,15 +53,15 @@ func aTaskWithCommands(t *testing.T) Model {
 func TestChoosingOneRunsItRatherThanAskingForArguments(t *testing.T) {
 	m := aTaskWithCommands(t).openMenu("ACME-7")
 
-	next, cmd := chooseInMenu(t, m, "approve")
+	next, cmd := chooseInMenu(t, m, "task approve")
 
 	after := asModel(t, next)
 	if after.palette.Up() {
 		t.Error("approve went to the command line, which is the board's and has no task on it")
 	}
 
-	if after.watching == nil || after.watching.name != "approve" {
-		t.Fatalf("choosing approve left the watch on %v, want approve running", after.watching)
+	if after.watching == nil || after.watching.name != "task" {
+		t.Fatalf("choosing approve left the watch on %v, want task running", after.watching)
 	}
 
 	if cmd == nil {
@@ -71,18 +73,20 @@ func TestChoosingOneRunsItRatherThanAskingForArguments(t *testing.T) {
 // run from the menu the way approve is: there is a sentence to write, and
 // the menu has nothing to fill it in with.
 func TestAVerbThatTakesAMessageOpensTheBoxToTypeItIn(t *testing.T) {
-	for _, verb := range []string{"note", "direct"} {
+	for _, tc := range []struct{ title, child string }{
+		{"task note", "note"}, {"task direct", "direct"},
+	} {
 		m := aTaskWithCommands(t).openMenu("ACME-7")
 
-		next, _ := chooseInMenu(t, m, verb)
+		next, _ := chooseInMenu(t, m, tc.title)
 
 		after := asModel(t, next)
 		if !after.note.open {
-			t.Fatalf("choosing %s left no box to type the message in", verb)
+			t.Fatalf("choosing %s left no box to type the message in", tc.title)
 		}
 
-		if after.note.verb != verb {
-			t.Errorf("the box was opened for %q, want %q", after.note.verb, verb)
+		if after.note.child != tc.child {
+			t.Errorf("the box was opened for %q, want %q", after.note.child, tc.child)
 		}
 
 		if after.note.taskID != "ACME-7" {
@@ -90,7 +94,7 @@ func TestAVerbThatTakesAMessageOpensTheBoxToTypeItIn(t *testing.T) {
 		}
 
 		if after.watching != nil {
-			t.Errorf("%s was run with no message, and the box was up asking for one", verb)
+			t.Errorf("%s was run with no message, and the box was up asking for one", tc.title)
 		}
 	}
 }
@@ -98,7 +102,7 @@ func TestAVerbThatTakesAMessageOpensTheBoxToTypeItIn(t *testing.T) {
 // TestWhatIsTypedGoesToTheVerbTheBoxWasOpenedFor, with the repository and
 // the id in front of it and nothing between them and the message.
 func TestWhatIsTypedGoesToTheVerbTheBoxWasOpenedFor(t *testing.T) {
-	m := aTaskWithCommands(t).openMessage("direct", "ACME-7")
+	m := aTaskWithCommands(t).openMessage("task", "direct", "ACME-7")
 	m.note.text = "stop and ask first"
 
 	var (
@@ -120,11 +124,11 @@ func TestWhatIsTypedGoesToTheVerbTheBoxWasOpenedFor(t *testing.T) {
 		one()
 	}
 
-	if ran != "direct" {
-		t.Errorf("the message went to %q, want direct", ran)
+	if ran != "task" {
+		t.Errorf("the message went to %q, want task", ran)
 	}
 
-	want := []string{"-repo", "/checkouts/acme", "ACME-7", "stop and ask first"}
+	want := []string{"direct", "-repo", "/checkouts/acme", "ACME-7", "stop and ask first"}
 	if !slices.Equal(args, want) {
 		t.Errorf("direct was run with %v, want %v", args, want)
 	}
@@ -136,8 +140,8 @@ func TestWhatIsTypedGoesToTheVerbTheBoxWasOpenedFor(t *testing.T) {
 func TestTheBoxSaysWhichVerbItIsFor(t *testing.T) {
 	m := aTaskWithCommands(t)
 
-	note := m.openMessage("note", "ACME-7").boxWords()
-	direct := m.openMessage("direct", "ACME-7").boxWords()
+	note := m.openMessage("task", "note", "ACME-7").boxWords()
+	direct := m.openMessage("task", "direct", "ACME-7").boxWords()
 
 	if note.title == direct.title || note.prompt == direct.prompt {
 		t.Errorf("the box calls itself the same thing either way: %q / %q", note.title, direct.title)
@@ -148,7 +152,7 @@ func TestTheBoxSaysWhichVerbItIsFor(t *testing.T) {
 	}
 }
 
-// TestStartingARunIsOnTheMenuAsWell. `orbit run` is about a task like every
+// TestStartingARunIsOnTheMenuAsWell. `orbit task start` is about a task like every
 // other verb here, and the window's answer to it is a dialog rather than a
 // command run bare — so the entry sends the key that opens the dialog.
 func TestStartingARunIsOnTheMenuAsWell(t *testing.T) {

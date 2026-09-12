@@ -138,7 +138,7 @@ func (e Env) verbs(id string) ([]keymap.Affordance, bool) {
 }
 
 // start is the verb that is a screen rather than a command run bare.
-// `orbit run` starts a task with the flow it was written for; the window
+// `orbit task start` starts a task with the flow it was written for; the window
 // asks which flow first, and that question is the start dialog. So the
 // entry sends the key that opens it, and there is one way to start a run
 // rather than two that answer the flow question differently.
@@ -165,15 +165,15 @@ type saysSomething struct {
 // place in the window where there is no task for a verb about one to be
 // about.
 var taskCommands = []saysSomething{
-	{name: "note", says: true},
-	{name: "direct", says: true},
+	{name: "task", child: "note", says: true},
+	{name: "task", child: "direct", says: true},
 	{name: "pr"},
 	{name: "pr", child: "resolve"},
 	{name: "pr", child: "merge"},
 	{name: "pr", child: "close"},
-	{name: "approve"},
-	{name: "permit"},
-	{name: "critical"},
+	{name: "task", child: "approve"},
+	{name: "task", child: "permit"},
+	{name: "task", child: "critical"},
 }
 
 // commandEntries is those commands as menu rows about one task, with the
@@ -208,6 +208,7 @@ func (s State) commandEntries(e Env) []Entry {
 				Title:   title,
 				Detail:  detail,
 				Command: c.Name,
+				Child:   want.child,
 				Args:    args,
 				Says:    want.says,
 			})

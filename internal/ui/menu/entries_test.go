@@ -71,7 +71,7 @@ func TestTheTaskMenuCarriesTheVerbsThatOnlyACommandDoes(t *testing.T) {
 		}
 	}
 
-	want := []string{"note", "direct", "pr", "pr resolve", "pr merge", "pr close", "approve", "permit", "critical"}
+	want := []string{"task note", "task direct", "pr", "pr resolve", "pr merge", "pr close", "task approve", "task permit", "task critical"}
 	if !slices.Equal(named, want) {
 		t.Errorf("the task's menu names %v, want %v", named, want)
 	}
@@ -84,11 +84,11 @@ func TestTheyArriveKnowingWhichTask(t *testing.T) {
 	e := world(t)
 
 	for _, entry := range Open(theTask, e).Entries(e) {
-		if entry.Command != "permit" {
+		if entry.Title != "task permit" {
 			continue
 		}
 
-		if want := []string{"-repo", "/checkouts/acme", theTask}; !slices.Equal(entry.Args, want) {
+		if want := []string{"permit", "-repo", "/checkouts/acme", theTask}; !slices.Equal(entry.Args, want) {
 			t.Fatalf("permit is armed with %v, want %v", entry.Args, want)
 		}
 
@@ -112,7 +112,7 @@ func TestATableWithoutThemDrawsNothingForThem(t *testing.T) {
 	}
 }
 
-// TestStartingARunIsOnTheMenuAsWell. `orbit run` is about a task like every
+// TestStartingARunIsOnTheMenuAsWell. `orbit task start` is about a task like every
 // other verb here, and the window's answer to it is a dialog rather than a
 // command run bare — so the entry sends the key that opens the dialog.
 func TestStartingARunIsOnTheMenuAsWell(t *testing.T) {

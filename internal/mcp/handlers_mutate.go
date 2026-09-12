@@ -33,7 +33,7 @@ func (sn Session) addNote(args map[string]any) CallToolResult {
 
 	defer sb.close()
 
-	if _, err := verb.Run(sn.context(), sn.world(sb), "note", verb.In{
+	if _, err := verb.Run(sn.context(), sn.world(sb), "task note", verb.In{
 		Task: t.ID,
 		Args: map[string]string{"text": supervisorNote(text)},
 		By:   journalBy,
@@ -54,7 +54,7 @@ func (sn Session) control(args map[string]any, word, past string) CallToolResult
 
 	defer sb.close()
 
-	out, err := verb.Run(sn.context(), sn.world(sb), word, verb.In{
+	out, err := verb.Run(sn.context(), sn.world(sb), "task "+word, verb.In{
 		Task: t.ID,
 		By:   journalBy,
 	})
@@ -80,7 +80,7 @@ func (sn Session) cancelTask(args map[string]any) CallToolResult {
 
 	defer sb.close()
 
-	out, err := verb.Run(sn.context(), sn.world(sb), "cancel", verb.In{
+	out, err := verb.Run(sn.context(), sn.world(sb), "task cancel", verb.In{
 		Task: t.ID,
 		By:   journalBy,
 	})
@@ -104,7 +104,7 @@ func (sn Session) requeueTask(args map[string]any) CallToolResult {
 
 	defer sb.close()
 
-	out, err := verb.Run(sn.context(), sn.world(sb), "requeue", verb.In{
+	out, err := verb.Run(sn.context(), sn.world(sb), "task requeue", verb.In{
 		Task: t.ID,
 		Args: map[string]string{"why": strings.TrimSpace(stringArg(args, "why"))},
 		By:   journalBy,
@@ -135,7 +135,7 @@ func (sn Session) directTask(args map[string]any) CallToolResult {
 
 	defer sb.close()
 
-	out, err := verb.Run(sn.context(), sn.world(sb), "direct", verb.In{
+	out, err := verb.Run(sn.context(), sn.world(sb), "task direct", verb.In{
 		Task: t.ID,
 		Args: map[string]string{
 			"text":    message,

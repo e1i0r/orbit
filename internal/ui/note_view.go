@@ -108,7 +108,7 @@ func (m Model) boxWords() boxWords {
 	p := m.opts.Words
 	id := m.note.taskID
 
-	if m.note.verb == verbDirect {
+	if m.note.child == verbDirect {
 		return boxWords{
 			title:       p.T("direct.dialog_title", "redirect {id}", about("id", id)),
 			prompt:      p.T("direct.prompt", "directive"),

@@ -89,7 +89,10 @@ func (s State) choose(e Env) (State, Out) {
 	case entry.Command != "":
 		// A command that takes a message is handed the box rather than
 		// run: the menu has nothing to fill the sentence in with.
-		return s, Out{Leave: true, Run: entry.Command, Args: entry.Args, Ask: entry.Says}
+		return s, Out{
+			Leave: true, Run: entry.Command, Child: entry.Child,
+			Args: entry.Args, Ask: entry.Says,
+		}
 	}
 
 	return s, Out{Leave: true, Send: entry.Glyph}

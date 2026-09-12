@@ -39,11 +39,11 @@ func TestMarkingATaskCriticalSaysWhatItMeans(t *testing.T) {
 	root, _ := workspace(t)
 
 	repoDir := filepath.Join(root, "payments")
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
-	code, out, errOut := run(t, "critical", "-repo", repoDir, "ACME-1")
+	code, out, errOut := run(t, "task", "critical", "-repo", repoDir, "ACME-1")
 	if code != 0 {
 		t.Fatalf("critical exited %d: %s", code, errOut)
 	}
@@ -54,7 +54,7 @@ func TestMarkingATaskCriticalSaysWhatItMeans(t *testing.T) {
 		}
 	}
 
-	code, out, _ = run(t, "critical", "-off", "-repo", repoDir, "ACME-1")
+	code, out, _ = run(t, "task", "critical", "-off", "-repo", repoDir, "ACME-1")
 	if code != 0 || !strings.Contains(out, "ordinary") {
 		t.Errorf("taking the mark off said %q", out)
 	}
@@ -65,11 +65,11 @@ func TestPermitSaysSoWhenNothingIsWaiting(t *testing.T) {
 	root, _ := workspace(t)
 
 	repoDir := filepath.Join(root, "payments")
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-2", "x"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-2", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
-	code, out, _ := run(t, "permit", "-repo", repoDir, "ACME-2")
+	code, out, _ := run(t, "task", "permit", "-repo", repoDir, "ACME-2")
 	if code != 0 {
 		t.Fatalf("permit exited %d", code)
 	}
@@ -86,18 +86,18 @@ func TestACriticalTaskWillNotPushWithoutAWord(t *testing.T) {
 	root, _ := workspace(t)
 
 	repoDir := filepath.Join(root, "payments")
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-3", "touch the ledger"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-3", "touch the ledger"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
-	if code, _, errOut := run(t, "critical", "-repo", repoDir, "ACME-3"); code != 0 {
+	if code, _, errOut := run(t, "task", "critical", "-repo", repoDir, "ACME-3"); code != 0 {
 		t.Fatalf("critical exited %d: %s", code, errOut)
 	}
 
 	// A worktree with something in it. A repository with nothing to deliver
 	// is not pushed at all, so it never reaches the boundary — which is
 	// correct, and would make this test pass for the wrong reason.
-	code, out, errOut := run(t, "join", "-repo", repoDir, "-task", "ACME-3", "payments")
+	code, out, errOut := run(t, "task", "join", "-repo", repoDir, "-task", "ACME-3", "payments")
 	if code != 0 {
 		t.Fatalf("join exited %d: %s", code, errOut)
 	}

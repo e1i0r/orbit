@@ -30,22 +30,22 @@ import (
 // rename that changes nothing about what they do.
 func spelledAs() map[string]string {
 	return map[string]string{
-		"new":       "orbit_create_task",
-		"run":       "orbit_retry_task",
-		"list":      "orbit_list_tasks",
-		"show":      "orbit_inspect_task",
-		"note":      "orbit_add_note",
-		"say":       "orbit_supervisor_say",
-		"thread":    "orbit_supervisor_history",
-		"knowledge": "orbit_knowledge",
-		"learn":     "orbit_learn",
-		"pause":     "orbit_pause_task",
-		"cancel":    "orbit_cancel_task",
-		"requeue":   "orbit_requeue_task",
-		"direct":    "orbit_direct_task",
-		"flows":     "orbit_list_flows",
-		"flow":      "orbit_get_flow",
-		"repos":     "orbit_list_repos",
+		"board new":         "orbit_create_task",
+		"task start":        "orbit_retry_task",
+		"board list":        "orbit_list_tasks",
+		"task show":         "orbit_inspect_task",
+		"task note":         "orbit_add_note",
+		"supervisor say":    "orbit_supervisor_say",
+		"supervisor thread": "orbit_supervisor_history",
+		"knowledge":         "orbit_knowledge",
+		"knowledge learn":   "orbit_learn",
+		"task pause":        "orbit_pause_task",
+		"task cancel":       "orbit_cancel_task",
+		"task requeue":      "orbit_requeue_task",
+		"task direct":       "orbit_direct_task",
+		"flows":             "orbit_list_flows",
+		"task flow":         "orbit_get_flow",
+		"repos":             "orbit_list_repos",
 	}
 }
 
@@ -85,11 +85,11 @@ func verbTools() []Tool {
 // is in internal/arch's notThere, where it is argued with rather than just
 // obeyed.
 var cannot = map[string]string{
-	"pr":       "opening a pull request is a person's decision",
-	"pr merge": "merging is a person's decision",
-	"pr close": "closing a pull request is a person's decision",
-	"approve":  "accepting a library a task reached for is the question the gate asked a person",
-	"take":     "this hands a terminal to an engine, and a tool call has no terminal to hand over",
+	"pr":           "opening a pull request is a person's decision",
+	"pr merge":     "merging is a person's decision",
+	"pr close":     "closing a pull request is a person's decision",
+	"task approve": "accepting a library a task reached for is the question the gate asked a person",
+	"task take":    "this hands a terminal to an engine, and a tool call has no terminal to hand over",
 }
 
 // toolFor is one verb as a tool.

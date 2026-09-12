@@ -62,7 +62,7 @@ func TestAnExportRestoredIsTheRecordItCameFrom(t *testing.T) {
 	// The restore: the export is the state root, exactly as it stands.
 	t.Setenv("ORBIT_HOME", backup)
 
-	code, out, errOut := run(t, "list", "-repo", dir)
+	code, out, errOut := run(t, "board", "list", "-repo", dir)
 	if code != 0 {
 		t.Fatalf("list against the restored record exited %d: %s", code, errOut)
 	}
@@ -71,7 +71,7 @@ func TestAnExportRestoredIsTheRecordItCameFrom(t *testing.T) {
 		t.Errorf("the restored board says %q, want the task the export was taken of", out)
 	}
 
-	code, out, errOut = run(t, "show", "-repo", dir, "ACME-1")
+	code, out, errOut = run(t, "task", "show", "-repo", dir, "ACME-1")
 	if code != 0 {
 		t.Fatalf("show against the restored record exited %d: %s", code, errOut)
 	}

@@ -141,7 +141,7 @@ func (b board) must(t *testing.T, args ...string) string {
 }
 
 // start runs a command that is meant to outlive the call, which is what a
-// run held at a gate is: `orbit run` parks there and waits for the word,
+// run held at a gate is: `orbit task start` parks there and waits for the word,
 // exactly as it does for a person who has walked away.
 func (b board) start(t *testing.T, args ...string) *exec.Cmd {
 	t.Helper()

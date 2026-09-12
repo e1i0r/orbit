@@ -41,7 +41,7 @@ func TestRunWalksAChosenFlowAndFailsInsideTaskRun(t *testing.T) {
 	// override walks chosen = t.Flow (run.go: `if chosen == "" { chosen =
 	// t.Flow }`), a branch none of the cli_test.go run tests reach because
 	// none of them gets past task.Load.
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-9", "-flow", "nope", "walk the custom flow"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-9", "-flow", "nope", "walk the custom flow"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
@@ -50,7 +50,7 @@ func TestRunWalksAChosenFlowAndFailsInsideTaskRun(t *testing.T) {
 	// reached and fails inside its phase-validation loop — covering the
 	// runTask branches from flow.Resolve's success onward through the
 	// task.Run error return, without spawning anything.
-	code, _, errOut := run(t, "run", "-repo", repoDir, "-timeout", "50ms", "ACME-9")
+	code, _, errOut := run(t, "task", "start", "-repo", repoDir, "-timeout", "50ms", "ACME-9")
 	if code == 0 {
 		t.Error("run with an unconfigured engine exited 0")
 	}
@@ -78,11 +78,11 @@ func TestRunWithExplicitFlowAndTimeoutReachesTaskRun(t *testing.T) {
 		t.Fatalf("write flow: %v", err)
 	}
 
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-10", "plain task"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-10", "plain task"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
-	code, _, errOut := run(t, "run", "-repo", repoDir, "-flow", "nope2", "-timeout", "1s", "ACME-10")
+	code, _, errOut := run(t, "task", "start", "-repo", repoDir, "-flow", "nope2", "-timeout", "1s", "ACME-10")
 	if code == 0 {
 		t.Error("run with an unconfigured engine exited 0")
 	}

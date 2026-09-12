@@ -131,13 +131,14 @@ func TestChoosingACommandRunsItWithWhatItNeeds(t *testing.T) {
 
 	for _, c := range []struct {
 		name string
+		run  string
 		ask  bool
-	}{{name: "approve"}, {name: "note", ask: true}} {
+	}{{name: "task approve", run: "task"}, {name: "task note", run: "task", ask: true}} {
 		at := index(t, s, e, c.name)
 
 		_, out := s.Point(at).Enter(e)
-		if out.Run != c.name || out.Ask != c.ask {
-			t.Errorf("choosing %s asked for %+v, want run=%q ask=%v", c.name, out, c.name, c.ask)
+		if out.Run != c.run || out.Ask != c.ask {
+			t.Errorf("choosing %s asked for %+v, want run=%q ask=%v", c.name, out, c.run, c.ask)
 		}
 
 		if len(out.Args) == 0 {
@@ -244,7 +245,7 @@ func index(t *testing.T, s State, e Env, name string) int {
 	t.Helper()
 
 	for i, entry := range s.Entries(e) {
-		if entry.Command == name {
+		if entry.Title == name {
 			return i
 		}
 	}

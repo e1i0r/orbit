@@ -81,7 +81,7 @@ func TestCancelTaskExecution(t *testing.T) {
 
 	var out, errOut bytes.Buffer
 	// Test cancel graceful
-	_ = Run([]string{"cancel", "-repo", repoPath, tk.ID}, &out, &errOut)
+	_ = Run([]string{"task", "cancel", "-repo", repoPath, tk.ID}, &out, &errOut)
 
 	// Plant marker again for -now test
 	_ = os.WriteFile(runPath, []byte(body), 0o600) //nolint:errcheck
@@ -89,7 +89,7 @@ func TestCancelTaskExecution(t *testing.T) {
 	// Test cancel -now
 	out.Reset()
 	errOut.Reset()
-	_ = Run([]string{"cancel", "-now", "-repo", repoPath, tk.ID}, &out, &errOut)
+	_ = Run([]string{"task", "cancel", "-now", "-repo", repoPath, tk.ID}, &out, &errOut)
 }
 
 func TestFullScreenAndTakePortWithReader(t *testing.T) {
@@ -192,14 +192,14 @@ func TestNotePauseResumeReadShowCommands(t *testing.T) {
 	var out, errOut bytes.Buffer
 
 	// 1. orbit note
-	if code := Run([]string{"note", "-repo", repoPath, tk.ID, "A", "helpful", "operator", "note"}, &out, &errOut); code != 0 {
+	if code := Run([]string{"task", "note", "-repo", repoPath, tk.ID, "A", "helpful", "operator", "note"}, &out, &errOut); code != 0 {
 		t.Errorf("orbit note failed: %d: %s", code, errOut.String())
 	}
 
 	out.Reset()
 	errOut.Reset()
 
-	if code := Run([]string{"note", "-repo", repoPath, tk.ID}, &out, &errOut); code == 0 {
+	if code := Run([]string{"task", "note", "-repo", repoPath, tk.ID}, &out, &errOut); code == 0 {
 		t.Error("expected error on note with empty text")
 	}
 
@@ -207,14 +207,14 @@ func TestNotePauseResumeReadShowCommands(t *testing.T) {
 	out.Reset()
 	errOut.Reset()
 
-	if code := Run([]string{"pause", "-repo", repoPath, tk.ID}, &out, &errOut); code != 0 {
+	if code := Run([]string{"task", "pause", "-repo", repoPath, tk.ID}, &out, &errOut); code != 0 {
 		t.Errorf("orbit pause failed: %d: %s", code, errOut.String())
 	}
 
 	out.Reset()
 	errOut.Reset()
 
-	if code := Run([]string{"resume", "-repo", repoPath, tk.ID}, &out, &errOut); code != 0 {
+	if code := Run([]string{"task", "resume", "-repo", repoPath, tk.ID}, &out, &errOut); code != 0 {
 		t.Errorf("orbit resume failed: %d: %s", code, errOut.String())
 	}
 
@@ -222,7 +222,7 @@ func TestNotePauseResumeReadShowCommands(t *testing.T) {
 	out.Reset()
 	errOut.Reset()
 
-	if code := Run([]string{"read", "-repo", repoPath, tk.ID}, &out, &errOut); code != 0 {
+	if code := Run([]string{"task", "read", "-repo", repoPath, tk.ID}, &out, &errOut); code != 0 {
 		t.Errorf("orbit read failed: %d: %s", code, errOut.String())
 	}
 
@@ -230,7 +230,7 @@ func TestNotePauseResumeReadShowCommands(t *testing.T) {
 	out.Reset()
 	errOut.Reset()
 
-	if code := Run([]string{"show", "-repo", repoPath, tk.ID}, &out, &errOut); code != 0 {
+	if code := Run([]string{"task", "show", "-repo", repoPath, tk.ID}, &out, &errOut); code != 0 {
 		t.Errorf("orbit show failed: %d: %s", code, errOut.String())
 	}
 
@@ -292,5 +292,5 @@ func TestSetCommandComprehensive(t *testing.T) {
 	// 5. orbit run execution path
 	out.Reset()
 	errOut.Reset()
-	_ = Run([]string{"run", "-timeout", "10s", "-repo", root, "NONEXISTENT-1"}, &out, &errOut)
+	_ = Run([]string{"task", "start", "-timeout", "10s", "-repo", root, "NONEXISTENT-1"}, &out, &errOut)
 }

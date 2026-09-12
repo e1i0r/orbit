@@ -2,7 +2,7 @@ package cli
 
 // What the browser's buttons actually do.
 //
-// They ask internal/verb, which is the same thing `orbit run` and the
+// They ask internal/verb, which is the same thing `orbit task start` and the
 // cockpit's [s] ask: a task started from a browser tab and one started from
 // a terminal are the same run, written down the same way, refused for the
 // same reasons and reported in the same words.
@@ -107,7 +107,7 @@ func (h hands) Standing(id, at string) web.Standing {
 	return now
 }
 
-// flowOfTask is the flow a task walks, by the same reading `orbit run` makes
+// flowOfTask is the flow a task walks, by the same reading `orbit task start` makes
 // of it: the task's own, then the one Orbit ships. Not the settings default,
 // which is what the next task written gets.
 func flowOfTask(s flow.Source, t task.Task) (flow.Flow, error) {

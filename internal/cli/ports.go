@@ -112,7 +112,7 @@ func deliverPort(s *store.Store) func(view.Task, ui.Delivery) error {
 // into one sentence naming the id, before anything is spawned.
 //
 // flowName is passed through exactly as the dialog chose it, empty included:
-// which flow an unnamed run walks is `orbit run`'s rule — the task's own,
+// which flow an unnamed run walks is `orbit task start`'s rule — the task's own,
 // then the built-in default — and answering it a second time here is how the
 // window and the command line start disagreeing about what was run.
 func startPort(s *store.Store) func(view.Task, string, int) (int, error) {

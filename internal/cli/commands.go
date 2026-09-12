@@ -154,10 +154,6 @@ func commands() []Command {
 		Run:      flows,
 		InWindow: WindowOpens,
 	}, {
-		Name: "run", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
-		About: func(p *words.Printer) string { return p.T("cmd.run", "run a task through its flow") },
-		Run:   runTask,
-	}, {
 		Name: "pr", Args: "-repo <dir> <id>", NeedsArgs: true, AboutATask: true,
 		About: func(p *words.Printer) string {
 			return p.T("cmd.pr", "create a pull request from a task's worktree")

@@ -19,28 +19,28 @@ func TestReadTaskEarlyExits(t *testing.T) {
 	repoDir := filepath.Join(root, "payments")
 
 	// 1. A flag parse failure.
-	if code, _, errOut := run(t, "read", "-repo", repoDir, "-nosuchflag"); code == 0 {
+	if code, _, errOut := run(t, "task", "read", "-repo", repoDir, "-nosuchflag"); code == 0 {
 		t.Error("read with an unknown flag exited 0")
 	} else if errOut == "" {
 		t.Error("read failed silently on a bad flag")
 	}
 
 	// 2. No id at all.
-	if code, _, errOut := run(t, "read", "-repo", repoDir); code == 0 {
+	if code, _, errOut := run(t, "task", "read", "-repo", repoDir); code == 0 {
 		t.Error("read with no id exited 0")
 	} else if errOut == "" {
 		t.Error("read failed silently with no id")
 	}
 
 	// 3. openBoth fails outside a repository.
-	if code, _, errOut := run(t, "read", "-repo", t.TempDir(), "ACME-1"); code == 0 {
+	if code, _, errOut := run(t, "task", "read", "-repo", t.TempDir(), "ACME-1"); code == 0 {
 		t.Error("read outside a repository exited 0")
 	} else if errOut == "" {
 		t.Error("read failed silently outside a repository")
 	}
 
 	// 4. task.Load fails: a real repository, a task never written.
-	if code, _, errOut := run(t, "read", "-repo", repoDir, "ACME-404"); code == 0 {
+	if code, _, errOut := run(t, "task", "read", "-repo", repoDir, "ACME-404"); code == 0 {
 		t.Error("read on a task that was never created exited 0")
 	} else if errOut == "" {
 		t.Error("read failed silently on an unknown task")
@@ -59,7 +59,7 @@ func TestReadTaskFailsOverARecordItCannotReach(t *testing.T) {
 
 	breakRecord(t)
 
-	code, _, errOut := run(t, "read", "-repo", dir, "ACME-1")
+	code, _, errOut := run(t, "task", "read", "-repo", dir, "ACME-1")
 	if code == 0 {
 		t.Error("read over a record nothing can reach exited 0")
 	}
@@ -73,7 +73,7 @@ func TestReconcileEarlyExitOnBadFlag(t *testing.T) {
 	root, _ := workspace(t)
 
 	repoDir := filepath.Join(root, "payments")
-	if code, _, errOut := run(t, "reconcile", "-repo", repoDir, "-nosuchflag"); code == 0 {
+	if code, _, errOut := run(t, "board", "reconcile", "-repo", repoDir, "-nosuchflag"); code == 0 {
 		t.Error("reconcile with an unknown flag exited 0")
 	} else if errOut == "" {
 		t.Error("reconcile failed silently on a bad flag")
@@ -90,7 +90,7 @@ func TestReconcileFailsWhenTheTasksDirCannotBeListed(t *testing.T) {
 	}
 	defer func() { _ = os.Chmod(tasksDir, 0o700) }() //nolint:errcheck
 
-	code, _, errOut := run(t, "reconcile", "-repo", dir)
+	code, _, errOut := run(t, "board", "reconcile", "-repo", dir)
 	if code == 0 {
 		t.Error("reconcile over an unlistable tasks directory exited 0")
 	}
@@ -111,7 +111,7 @@ func TestReconcileReportsAPerTaskFailureAndKeepsGoing(t *testing.T) {
 		t.Fatalf("write the run marker: %v", err)
 	}
 
-	code, _, errOut := run(t, "reconcile", "-repo", dir, "ACME-1")
+	code, _, errOut := run(t, "board", "reconcile", "-repo", dir, "ACME-1")
 	if code == 0 {
 		t.Error("reconcile over a damaged run marker exited 0")
 	}

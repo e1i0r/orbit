@@ -16,7 +16,7 @@ func TestNewStartsWhatItWroteWhenAskedTo(t *testing.T) {
 	root, _ := workspace(t)
 	repoDir := filepath.Join(root, "payments")
 
-	code, out, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-9", "-run=true", "do the thing")
+	code, out, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-9", "-run=true", "do the thing")
 	if code != 0 {
 		t.Fatalf("new -run=true exited %d: %s", code, errOut)
 	}
@@ -32,7 +32,7 @@ func TestNewWithoutTheFlagWritesAndStops(t *testing.T) {
 	root, _ := workspace(t)
 	repoDir := filepath.Join(root, "payments")
 
-	code, out, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-10", "do the thing")
+	code, out, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-10", "do the thing")
 	if code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}

@@ -40,7 +40,7 @@ func chooseInMenu(t *testing.T, m Model, name string) (tea.Model, tea.Cmd) {
 	t.Helper()
 
 	for i, e := range m.menu.Entries(m.menuEnv()) {
-		if e.Command != name {
+		if e.Title != name {
 			continue
 		}
 

@@ -52,7 +52,7 @@ func deliverable(t *testing.T, text string) (dir string) {
 
 	dir = withRemote(t, t.TempDir(), "payments")
 
-	if code, _, errOut := run(t, "new", "-repo", dir, "-id", "PAY-1", text); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", dir, "-id", "PAY-1", text); code != 0 {
 		t.Fatalf("orbit new exited %d: %s", code, errOut)
 	}
 

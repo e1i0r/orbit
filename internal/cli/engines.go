@@ -4,7 +4,7 @@ package cli
 // window asks of it.
 //
 // It is one table, and the questions asked of it live beside it. Written out
-// three times — twice as a map of constructors, in `orbit run` and in the
+// three times — twice as a map of constructors, in `orbit task start` and in the
 // window, and once more as a list of bare names for the settings screen — an
 // engine added to one is an engine the others do not have: startable from the
 // command line, and neither offered on the settings screen nor recognised

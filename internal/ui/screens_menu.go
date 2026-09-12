@@ -88,7 +88,7 @@ func (m Model) tookMenu(next menu.State, out menu.Out) (tea.Model, tea.Cmd) {
 
 		return m, nil
 	case out.Ask:
-		return m.openMessage(out.Run, id), nil
+		return m.openMessage(out.Run, out.Child, id), nil
 	case out.Run != "":
 		return m.launchNamed(out.Run, out.Args)
 	case out.Send != "":

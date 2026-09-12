@@ -99,6 +99,7 @@ type Entry struct {
 
 	Pane    string   // the pane it opens
 	Command string   // the command it runs
+	Child   string   // the family's word after the parent's, when it has one
 	Args    []string // what that command is run with
 	Says    bool     // the command takes a message: the box is opened for it
 }
@@ -112,11 +113,14 @@ type Out struct {
 	// Send is a keystroke to put through the keyboard's own map, which is
 	// how a verb chosen here is the verb pressed.
 	Send string
-	// Run is the command to run and Args what with. Ask says it takes a
-	// message instead: the window opens the box rather than running it.
-	Run  string
-	Args []string
-	Ask  bool
+	// Run is the command to run and Args what with. Child is the family's
+	// word after the parent's, for the box a message is typed into. Ask
+	// says it takes a message instead: the window opens the box rather
+	// than running it.
+	Run   string
+	Args  []string
+	Child string
+	Ask   bool
 }
 
 // State is the menu while it is up, and nothing while it is down. task is

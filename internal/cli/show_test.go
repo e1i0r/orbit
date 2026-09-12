@@ -11,11 +11,11 @@ func TestShowPrintsTheDayAsWellAsTheClock(t *testing.T) {
 	root, _ := workspace(t)
 
 	repoDir := filepath.Join(root, "payments")
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
-	code, out, errOut := run(t, "show", "-repo", repoDir, "ACME-1")
+	code, out, errOut := run(t, "task", "show", "-repo", repoDir, "ACME-1")
 	if code != 0 {
 		t.Fatalf("show exited %d: %s", code, errOut)
 	}
@@ -38,13 +38,13 @@ func TestShowSaysNothingRatherThanTheYearOne(t *testing.T) {
 	root, _ := workspace(t)
 
 	repoDir := filepath.Join(root, "payments")
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
 	plant(t, repoDir, "ACME-1", "{not json")
 
-	code, out, errOut := run(t, "show", "-repo", repoDir, "ACME-1")
+	code, out, errOut := run(t, "task", "show", "-repo", repoDir, "ACME-1")
 	if code != 0 {
 		t.Fatalf("show exited %d: %s", code, errOut)
 	}
@@ -71,14 +71,14 @@ func TestShowSaysWhyAPhaseFailed(t *testing.T) {
 	root, _ := workspace(t)
 
 	repoDir := filepath.Join(root, "payments")
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-1", "x"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
 	plant(t, repoDir, "ACME-1", `{"at":"2026-08-23T09:14:02Z","kind":"phase.failed","phase":"implement",`+
 		`"text":"reading the webhook handler","data":{"error":"claude exited 1: no such model"}}`)
 
-	code, out, errOut := run(t, "show", "-repo", repoDir, "ACME-1")
+	code, out, errOut := run(t, "task", "show", "-repo", repoDir, "ACME-1")
 	if code != 0 {
 		t.Fatalf("show exited %d: %s", code, errOut)
 	}
@@ -113,11 +113,11 @@ func TestShowDoesNotLetATabInTheTextAddAColumn(t *testing.T) {
 	root, _ := workspace(t)
 
 	repoDir := filepath.Join(root, "payments")
-	if code, _, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-1", "before\tafter"); code != 0 {
+	if code, _, errOut := run(t, "board", "new", "-repo", repoDir, "-id", "ACME-1", "before\tafter"); code != 0 {
 		t.Fatalf("new exited %d: %s", code, errOut)
 	}
 
-	code, out, errOut := run(t, "show", "-repo", repoDir, "ACME-1")
+	code, out, errOut := run(t, "task", "show", "-repo", repoDir, "ACME-1")
 	if code != 0 {
 		t.Fatalf("show exited %d: %s", code, errOut)
 	}

@@ -27,11 +27,11 @@ func TestWhatAVerbNeedsIsAskedForOnce(t *testing.T) {
 		in   In
 		want string
 	}{
-		{"note", In{Task: "ACME-1"}, "note needs text"},
-		{"note", In{Args: map[string]string{"text": "hi"}}, "note needs a task"},
-		{"direct", In{Task: "ACME-1"}, "direct needs text"},
-		{"new", In{Args: map[string]string{"text": "do it"}}, "new needs id"},
-		{"say", In{}, "say needs text"},
+		{"task note", In{Task: "ACME-1"}, "task note needs text"},
+		{"task note", In{Args: map[string]string{"text": "hi"}}, "task note needs a task"},
+		{"task direct", In{Task: "ACME-1"}, "task direct needs text"},
+		{"board new", In{Args: map[string]string{"text": "do it"}}, "board new needs id"},
+		{"supervisor say", In{}, "supervisor say needs text"},
 	} {
 		_, err := Run(context.Background(), nil, one.verb, one.in)
 		if err == nil || !strings.Contains(err.Error(), one.want) {
@@ -46,7 +46,7 @@ func TestWhatAVerbNeedsIsAskedForOnce(t *testing.T) {
 func TestWhatIsNeededIsRefusedBeforeAnythingIsWritten(t *testing.T) {
 	w := &counting{}
 
-	if _, err := Run(context.Background(), w, "note", In{Task: "ACME-1"}); err == nil {
+	if _, err := Run(context.Background(), w, "task note", In{Task: "ACME-1"}); err == nil {
 		t.Fatal("an empty note was accepted")
 	}
 

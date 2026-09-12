@@ -43,7 +43,7 @@ func TestEveryVerbSaysWhatItIs(t *testing.T) {
 // itself which is which is how one of them forgets.
 func TestWhatSpendsAndWhatLeavesIsDeclared(t *testing.T) {
 	spends := map[string]bool{
-		"run": true, "continue": true,
+		"task start": true, "task continue": true,
 		"pr resolve": true, "pr update": true, "pr checks": true, "pr tests": true, "pr review": true,
 	}
 	outward := map[string]bool{
@@ -67,10 +67,12 @@ func TestWhatSpendsAndWhatLeavesIsDeclared(t *testing.T) {
 // be given every reading while being trusted with only some of the actions.
 func TestWhatOnlyReadsIsDeclared(t *testing.T) {
 	reads := map[string]bool{
-		"list": true, "show": true, "flow": true, "diff": true, "impact": true,
+		"board": true, "board list": true, "task": true, "task show": true,
+		"task flow": true, "task diff": true, "task impact": true,
 		"knowledge": true, "flows": true, "engines": true, "repos": true,
-		"thread": true, "history": true, "quota": true, "pr show": true,
-		"tree": true, "rules": true, "settings": true,
+		"supervisor": true, "supervisor thread": true, "task history": true,
+		"quota": true, "pr show": true,
+		"task tree": true, "rules": true, "settings": true,
 	}
 
 	for _, v := range Every() {

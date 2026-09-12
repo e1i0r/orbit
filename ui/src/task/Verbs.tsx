@@ -37,47 +37,47 @@ interface Shape {
 // back with "that is not something Orbit can be asked for" — which is what
 // `start` did after the verb was named `run`.
 const verbs: Record<Verb, Shape> = {
-  run: {
+  "task start": {
     name: "Start",
     asks: (t) =>
       `Run ${t.id} through the ${t.flow || "default"} flow? This starts an engine and spends money.`,
     tone: "go",
   },
-  continue: {
+  "task continue": {
     name: "Continue",
     asks: (t) =>
       `Let ${t.id} past the gate its flow stopped it at? The next phase runs, and that spends money.`,
     tone: "go",
   },
-  skip: {
+  "task skip": {
     name: "Skip",
     asks: (t) =>
       `Let ${t.id} past the phase it is in, without running it? Nothing is recorded for a phase that did not run.`,
     tone: "quiet",
   },
-  pause: {
+  "task pause": {
     name: "Pause",
     asks: (t) => `Ask the run of ${t.id} to stop at its next phase? It finishes the one it is in.`,
     tone: "quiet",
   },
-  resume: {
+  "task resume": {
     name: "Resume",
     asks: (t) => `Let ${t.id} carry on from the pause you asked for?`,
     tone: "quiet",
   },
-  cancel: {
+  "task cancel": {
     name: "Cancel",
     asks: (t) =>
       `Stop the run of ${t.id} now? What the phase has written stays; what it was doing is lost.`,
     tone: "bad",
   },
-  note: {
+  "task note": {
     name: "Note",
     asks: (t) => `Leave a word on ${t.id}. The phase that starts next reads it.`,
     tone: "quiet",
     writes: { placeholder: "Use cents, not floats.", required: true },
   },
-  direct: {
+  "task direct": {
     name: "Direct",
     asks: (t) =>
       `Correct ${t.id}. It goes on the record and the run in flight is stopped, so the next one starts having read it.`,
@@ -85,7 +85,7 @@ const verbs: Record<Verb, Shape> = {
     writes: { placeholder: "The endpoint should reject negative amounts.", required: true },
     also: { name: "restart", said: "and start the next run now — this spends money" },
   },
-  requeue: {
+  "task requeue": {
     name: "Requeue",
     asks: (t) =>
       `Take ${t.id} back to the queue? Whatever is holding it is stopped first. Say why, if you want it on the record.`,
@@ -144,13 +144,13 @@ const verbs: Record<Verb, Shape> = {
       `Review ${t.id}'s pull request the way a senior reviewer would? The findings land on the pull request itself.`,
     tone: "out",
   },
-  approve: {
+  "task approve": {
     name: "Approve",
     asks: (t) =>
       `Accept ${(t.pending ?? []).join(", ")} for ${t.id}? The next run goes past the dependency gate.`,
     tone: "go",
   },
-  permit: {
+  "task permit": {
     name: "Permit",
     asks: (t) =>
       `Let ${t.id} do the irreversible thing it stopped in front of? It was marked critical so that a person would answer this.`,
@@ -160,27 +160,27 @@ const verbs: Record<Verb, Shape> = {
     // is a button that does the opposite of what it says.
     also: { name: "yes", said: "yes — let it happen", on: true },
   },
-  critical: {
+  "task critical": {
     name: "Mark critical",
     asks: (t) =>
       `Mark ${t.id} as one that reaches something that matters? It stops and asks before anything that cannot be taken back.`,
     tone: "quiet",
     also: { name: "on", said: "critical — stop and ask before anything irreversible", on: true },
   },
-  read: {
+  "task read": {
     name: "Mark read",
     asks: (t) =>
       `Mark ${t.id} as looked at? The board stops counting it against the unread cap that holds new runs back.`,
     tone: "quiet",
   },
-  join: {
+  "task join": {
     name: "Join a repository",
     asks: (t) =>
       `Open a checkout of another repository for ${t.id}, so its work can reach into both. Name it as \`orbit repos\` lists it.`,
     tone: "quiet",
     writes: { placeholder: "payments", required: true, field: "name" },
   },
-  delete: {
+  "task delete": {
     name: "Delete",
     asks: (t) =>
       `Remove ${t.id} and everything written about it — its record, its notes, its worktree? Nothing here brings it back.`,
@@ -205,10 +205,10 @@ const tones = {
 // running is read by the phase that starts next, which is the point of it.
 export function offered(task: Task): Verb[] {
   const out: Verb[] = task.held
-    ? ["continue", "skip", "pause", "resume", "cancel"]
-    : ["run"];
+    ? ["task continue", "task skip", "task pause", "task resume", "task cancel"]
+    : ["task start"];
 
-  if ((task.pending ?? []).length > 0) out.push("approve");
+  if ((task.pending ?? []).length > 0) out.push("task approve");
 
   // Delivering is offered whatever the task is doing. Which of the three
   // makes sense — there is no pull request yet, there is one already — is
@@ -227,9 +227,9 @@ export function offered(task: Task): Verb[] {
   // permitted, or anything to mark read, is the verb's own question and it
   // answers in its own words — a second rule here would be the one that
   // drifts.
-  return [...out, "direct", "note", "requeue", "pr", "pr show", "pr merge", "pr close",
+  return [...out, "task direct", "task note", "task requeue", "pr", "pr show", "pr merge", "pr close",
     "pr update", "pr checks", "pr tests", "pr resolve", "pr review",
-    "permit", "read", "critical", "join", "delete"];
+    "task permit", "task read", "task critical", "task join", "task delete"];
 }
 
 export function Verbs({ task, again }: { task: Task; again: () => void }) {

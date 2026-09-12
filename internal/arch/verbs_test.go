@@ -31,15 +31,16 @@ import (
 var notThere = map[string]string{
 	// The window is a terminal, and a terminal is where a person already
 	// is: what it cannot do is what needs a second program in front of it.
-	"window:learn": "the knowledge screen writes facts through its own port, not as a task verb",
-	"window:reconcile": "opening the window reconciles every task in the state root, " +
+	"window:knowledge learn": "the knowledge screen writes facts through its own port, " +
+		"not as a task verb",
+	"window:board reconcile": "opening the window reconciles every task in the state root, " +
 		"so there is nothing left for a gesture to ask for",
 	"window:export": "it writes the record into a directory the reader names, " +
 		"and the window has nowhere to type a path that is not a task's",
-	"window:retract": "it points at a line by its number in a listing, and the window " +
+	"window:supervisor retract": "it points at a line by its number in a listing, and the window " +
 		"draws the thread as a conversation rather than a numbered list — a number " +
 		"typed against a screen that does not number its lines takes back whatever is there",
-	"window:join": "it names the task with -task because the caller it was written for is " +
+	"window:task join": "it names the task with -task because the caller it was written for is " +
 		"an engine inside a run, where the id is already in the environment; the menu " +
 		"passes a task positionally, the way every other verb about one takes it",
 	"window:pr show": "the deliver toolbar acts on the pull request rather than listing it; " +
@@ -48,11 +49,11 @@ var notThere = map[string]string{
 	// The MCP server is spoken to by a model, and these are the four a
 	// model has no business asking for on its own — plus the one it could
 	// not do if it wanted to.
-	"mcp:pr":       "opening a pull request is a person's decision, not a model's",
-	"mcp:pr merge": "merging is a person's decision, not a model's",
-	"mcp:pr close": "closing a pull request is a person's decision, not a model's",
-	"mcp:approve":  "accepting a library a task reached for is the question the gate asked a person",
-	"mcp:take":     "this hands a terminal to an engine, and a tool call has no terminal to hand over",
+	"mcp:pr":           "opening a pull request is a person's decision, not a model's",
+	"mcp:pr merge":     "merging is a person's decision, not a model's",
+	"mcp:pr close":     "closing a pull request is a person's decision, not a model's",
+	"mcp:task approve": "accepting a library a task reached for is the question the gate asked a person",
+	"mcp:task take":    "this hands a terminal to an engine, and a tool call has no terminal to hand over",
 }
 
 // TestEveryVerbIsOfferedByEveryWayIn.
@@ -179,31 +180,39 @@ func windowOffers(t *testing.T) map[string]bool {
 	t.Helper()
 
 	return sees(read(t, "internal/ui"), map[string]string{
-		"new":       "key.compose",
-		"run":       "key.start",
-		"read":      "key.read",
-		"delete":    "key.delete_task",
-		"take":      "key.take",
-		"continue":  "key.hand",
-		"say":       "key.supervisor",
-		"thread":    "key.supervisor",
-		"knowledge": "key.knowledge",
-		"engines":   "key.engines",
-		"quota":     "key.quota",
-		"flows":     "key.flows",
-		"repos":     "key.repos",
-		"requeue":   "key.requeue",
-		"settings":  "screenSettings",
-		"list":      "screenList",
-		"show":      "key.open",
-		"history":   "tab.history",
-		"tree":      "tab.map",
-		"compare":   "compare.running",
-		"flow":      "tab.flow",
-		"diff":      "tab.diff",
-		"impact":    "tab.impact",
-		"direct":    `{name: "direct", says: true}`,
-		"note":      `{name: "note", says: true}`,
+		"board":             "boardEntries",
+		"board new":         "key.compose",
+		"board list":        "screenList",
+		"task start":        "key.start",
+		"task pause":        "key.pause",
+		"task resume":       "key.resume",
+		"task continue":     "key.hand",
+		"task skip":         "key.skip",
+		"task cancel":       "key.cancel",
+		"task requeue":      "key.requeue",
+		"task read":         "key.read",
+		"task delete":       "key.delete_task",
+		"task take":         "key.take",
+		"supervisor say":    "key.supervisor",
+		"supervisor thread": "key.supervisor",
+		"knowledge":         "key.knowledge",
+		"engines":           "key.engines",
+		"quota":             "key.quota",
+		"flows":             "key.flows",
+		"repos":             "key.repos",
+		"settings":          "screenSettings",
+		"task show":         "key.open",
+		"task history":      "tab.history",
+		"task tree":         "tab.map",
+		"task compare":      "compare.running",
+		"task flow":         "tab.flow",
+		"task diff":         "tab.diff",
+		"task impact":       "tab.impact",
+		"task direct":       `{name: "task", child: "direct", says: true}`,
+		"task note":         `{name: "task", child: "note", says: true}`,
+		"task approve":      "approve",
+		"task permit":       "permit",
+		"task critical":     "critical",
 		// The tray on the knowledge screen: the sentences waiting, and the
 		// two answers to one of them. The marks are the sentences the screen
 		// says while offering them, because that is the offer.

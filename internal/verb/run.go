@@ -21,26 +21,52 @@ import (
 // do is the verb, done.
 func (v Verb) do(ctx context.Context, w World, in In) (Out, error) {
 	switch v.Path() {
-	case "new":
+	case "board", "board list":
+		return listed(w, in)
+	case "board new":
 		return wrote(w, in)
-	case "run":
+	case "board reconcile":
+		return reconciled(w, in)
+	case "task", "task show":
+		return shown(w, in)
+	case "task start":
 		return started(w, in)
-	case "pause", "resume", "continue", "skip":
+	case "task pause", "task resume", "task continue", "task skip":
 		return controlled(w, in, v.Name)
-	case "cancel":
+	case "task cancel":
 		return cancelled(w, in)
-	case "requeue":
+	case "task requeue":
 		return requeued(ctx, w, in)
-	case "note":
+	case "task note":
 		return noted(w, in)
-	case "direct":
+	case "task direct":
 		return directed(ctx, w, in)
-	case "approve":
+	case "task approve":
 		return approved(w, in)
-	case "read":
+	case "task read":
 		return marked(w, in)
-	case "history":
+	case "task history":
 		return told(w, in)
+	case "task join":
+		return joined(w, in)
+	case "task permit":
+		return permitted(w, in)
+	case "task critical":
+		return marked_(w, in)
+	case "task delete":
+		return deleted(w, in)
+	case "task take":
+		return handed(w, in)
+	case "task flow":
+		return shaped(w, in)
+	case "task diff":
+		return diffed(w, in)
+	case "task compare":
+		return weighed(w, in)
+	case "task tree":
+		return mapped(w, in)
+	case "task impact":
+		return reaches(w, in)
 	case "pr", "pr merge", "pr close":
 		return given(ctx, w, in, v.Path())
 	case "pr show":
@@ -55,56 +81,30 @@ func (v Verb) do(ctx context.Context, w World, in In) (Out, error) {
 		return erranded(w, in, "MORE TESTS", supervisor.MoreTests)
 	case "pr review":
 		return erranded(w, in, "DEEP REVIEW", supervisor.Review)
-	case "say":
-		return spoken(ctx, w, in)
-	case "learn":
-		return learnt(w, in)
-	case "join":
-		return joined(w, in)
-	case "permit":
-		return permitted(w, in)
-	case "critical":
-		return marked_(w, in)
-	case "thread":
+	case "supervisor", "supervisor thread":
 		return heard(w)
-	case "retract":
+	case "supervisor say":
+		return spoken(ctx, w, in)
+	case "supervisor retract":
 		return unsaid(w, in)
+	case "knowledge":
+		return known(w)
+	case "knowledge learn":
+		return learnt(w, in)
 	case "settings":
 		return kept(w)
 	case "settings set":
 		return changed(w, in)
-	case "list":
-		return listed(w, in)
-	case "show":
-		return shown(w, in)
 	case "flows":
 		return shapes(w)
-	case "repos":
-		return checkouts(w)
-	case "export":
-		return written(w, in)
-	case "take":
-		return handed(w, in)
-	case "knowledge":
-		return known(w)
 	case "engines":
 		return running()
 	case "quota":
 		return left()
-	case "flow":
-		return shaped(w, in)
-	case "diff":
-		return diffed(w, in)
-	case "compare":
-		return weighed(w, in)
-	case "tree":
-		return mapped(w, in)
-	case "impact":
-		return reaches(w, in)
-	case "reconcile":
-		return reconciled(w, in)
-	case "delete":
-		return deleted(w, in)
+	case "repos":
+		return checkouts(w)
+	case "export":
+		return written(w, in)
 	case "rules":
 		return waiting(w)
 	case "rules keep":
