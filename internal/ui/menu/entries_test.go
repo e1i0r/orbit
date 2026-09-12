@@ -231,9 +231,7 @@ func TestNoRowIsMute(t *testing.T) {
 	e := world(t)
 
 	top := Open(theTask, e)
-
-	var all []Entry
-	all = append(all, top.Entries(e)...)
+	all := top.Entries(e)
 
 	for _, row := range top.Entries(e) {
 		if row.Family == "" {

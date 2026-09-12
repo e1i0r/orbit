@@ -34,6 +34,7 @@ func (s State) View(h, w int, e Env) []string {
 
 	off := s.offsetIn(len(es), view(h))
 	nameW := nameWidth(es)
+
 	for i, entry := range es[off:] {
 		if len(out) >= h {
 			break

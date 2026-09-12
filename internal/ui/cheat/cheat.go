@@ -166,6 +166,7 @@ func (s State) View(h, w int, e Env) []string {
 		"pr":    p.T("help.verbs.pr", "pr"),
 		"board": p.T("help.verbs.board", "board"),
 	}
+
 	for _, family := range groups {
 		if len(byFamily[family]) == 0 {
 			continue

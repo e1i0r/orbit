@@ -81,6 +81,7 @@ func (s State) verbEntries(e Env) []Entry {
 		if e.Says != nil {
 			row.Detail = e.Says(a.Key)
 		}
+
 		if !a.OK {
 			row.Dim = true
 			row.Reason = a.Why(e.Words)

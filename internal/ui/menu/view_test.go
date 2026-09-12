@@ -200,6 +200,7 @@ func TestAnEntryIsWhereItWasDrawnAfterScrolling(t *testing.T) {
 
 	top := Open(theTask, e)
 	s, _ := top.Point(index(t, top, e, "task")).Enter(e)
+
 	for range s.Entries(e) {
 		s = s.Wheel(1, e)
 	}
@@ -273,7 +274,8 @@ func TestTheDescriptionsStartUnderTheSameDot(t *testing.T) {
 		// In runes, not bytes: the cursor's mark is multibyte, and a
 		// byte index would read the selected row two columns to the
 		// right of where it is drawn.
-		dots = append(dots, len([]rune(line[:strings.Index(line, "·")])))
+		before, _, _ := strings.Cut(line, "·")
+		dots = append(dots, len([]rune(before)))
 	}
 
 	if len(dots) < 2 {
