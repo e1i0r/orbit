@@ -48,11 +48,12 @@ func directed(ctx context.Context, w World, in In) (Out, error) {
 		return Out{}, err
 	}
 
-	if _, err := task.Reopen(ctx, w.Store(), t, in.who(), in.Arg("text"), t.Flow, unread); err != nil {
+	pid, err := task.Reopen(ctx, w.Store(), t, in.who(), in.Arg("text"), t.Flow, unread)
+	if err != nil {
 		return Out{}, err
 	}
 
-	return Out{Said: t.ID + " redirected and started again"}, nil
+	return Out{Said: t.ID + " redirected and started again", Pid: pid}, nil
 }
 
 // approved says yes to what the dependency gate stopped the run for. What is

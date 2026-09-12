@@ -64,6 +64,10 @@ type Out struct {
 	// Of is what the verb acted on, where that is a list worth showing:
 	// the libraries an approve accepted, the files a walk touched.
 	Of []string
+	// Pid is the process a start began, for the caller that watches for
+	// it. Zero when this asking started nothing: most verbs leave it
+	// alone, and no surface prints it unasked.
+	Pid int
 	// Saw is what a reading read, in the shape it was read in.
 	//
 	// Said carries the same answer written out for a terminal, so a

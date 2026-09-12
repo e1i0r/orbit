@@ -219,11 +219,12 @@ func started(w World, in In) (Out, error) {
 		walking = t.Flow
 	}
 
-	if _, err := task.StartWith(w.Store(), t, walking, in.Arg("engine"), unread); err != nil {
+	pid, err := task.StartWith(w.Store(), t, walking, in.Arg("engine"), unread)
+	if err != nil {
 		return Out{}, err
 	}
 
-	return Out{Said: t.ID + " started"}, nil
+	return Out{Said: t.ID + " started", Pid: pid}, nil
 }
 
 // controlled leaves one of the words a run understands where it will find
