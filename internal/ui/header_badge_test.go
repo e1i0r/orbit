@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
@@ -107,6 +108,74 @@ func TestLightingTheBadgeDoesNotMoveIt(t *testing.T) {
 
 	if dim := lipgloss.Width(m.name()); dim != lit {
 		t.Errorf("the name badge is %d cells lit and %d cells not; every queue badge after it moves by %d", lit, dim, lit-dim)
+	}
+}
+
+// TestTappingTheBadgeWigglesThenSettles. A click on the name badge is
+// answered with four frames of the body throbbing — the logo moves the way
+// Claude's does — and the fifth hundred milliseconds finds it back at rest.
+func TestTappingTheBadgeWigglesThenSettles(t *testing.T) {
+	m, _ := testModel(t, 150, 30)
+	rest := ansi.Strip(m.name())
+
+	tapped, _ := m.leftClick(point.Target{Kind: point.HeaderField, Field: "orbit"})
+	nm := asModel(t, tapped)
+
+	nm.now = nm.logoTap.Add(100 * time.Millisecond)
+	if got := ansi.Strip(nm.name()); !strings.Contains(got, "o orbit") {
+		t.Errorf("100ms after the tap the badge reads %q, want the body throbbing", got)
+	}
+
+	nm.now = nm.logoTap.Add(500 * time.Millisecond)
+	if got := ansi.Strip(nm.name()); got != rest {
+		t.Errorf("after the wiggle the badge reads %q, want it back at rest %q", got, rest)
+	}
+}
+
+// TestTappingTheBadgeDoesNotMoveIt. The wiggle is four glyphs of one cell
+// each, for the same reason the lit badge is the same width unlit:
+// hitHeader places every queue badge after this one by columns written down
+// in target.go, and a frame one cell wider would click two cells off for a
+// tenth of a second — the exact state a tap leaves behind.
+func TestTappingTheBadgeDoesNotMoveIt(t *testing.T) {
+	m, _ := testModel(t, 150, 30)
+	want := lipgloss.Width(m.name())
+
+	tapped, _ := m.leftClick(point.Target{Kind: point.HeaderField, Field: "orbit"})
+	nm := asModel(t, tapped)
+
+	// Every frame of the wiggle and the rest after it: 0 to 500
+	// milliseconds in the clock's own hundred-millisecond steps.
+	for f := range 6 {
+		nm.now = nm.logoTap.Add(time.Duration(f) * 100 * time.Millisecond)
+		if w := lipgloss.Width(nm.name()); w != want {
+			t.Errorf("%v after the tap the badge is %d cells, want %d: the wiggle moved its neighbours",
+				nm.now.Sub(nm.logoTap), w, want)
+		}
+	}
+}
+
+// TestTappingTheBadgeStartsTheFrameClock. The wiggle rides the existing
+// spinner tick rather than a timer of its own, so the tap has to keep the
+// frame clock alive — and stop asking once the fourth frame has landed.
+func TestTappingTheBadgeStartsTheFrameClock(t *testing.T) {
+	m, _ := testModel(t, 150, 30)
+	if m.moving() {
+		t.Skip("the fixture is already moving, so the clock needs no starting")
+	}
+
+	m.logoTap = m.now
+	if !m.moving() {
+		t.Fatal("a fresh tap is not moving: no frame will ever arrive to draw it")
+	}
+
+	if _, cmd := m.nextFrame(); cmd == nil {
+		t.Error("a fresh tap asked for no frame: the wiggle never starts")
+	}
+
+	m.now = m.logoTap.Add(500 * time.Millisecond)
+	if m.moving() {
+		t.Error("the wiggle is over and the clock is still running on its account")
 	}
 }
 

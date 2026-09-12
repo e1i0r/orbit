@@ -77,19 +77,21 @@ func Run(args []string, out, errOut io.Writer) (code int) {
 			}
 
 			fmt.Fprintf(errOut, "orbit: %q is not something Orbit can be asked for\n\n%s",
-				strings.Join(args[1:], " "), usage(ctx.Words))
+				strings.Join(args[1:], " "), usage(ctx.Words, useColor(errOut)))
 
 			return 2
 		}
 
-		fmt.Fprint(out, usage(ctx.Words))
+		fmt.Fprint(out, usage(ctx.Words, useColor(out)))
 
 		return 0
 	}
 
 	c, ok := lookup(args[0])
 	if !ok {
-		fmt.Fprintf(errOut, "orbit: %q is not a command\n\n%s", args[0], usage(ctx.Words))
+		fmt.Fprintf(errOut, "orbit: %q is not a command\n\n%s",
+			args[0], usage(ctx.Words, useColor(errOut)))
+
 		return 2
 	}
 

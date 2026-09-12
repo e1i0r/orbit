@@ -24,10 +24,14 @@ func about(name, value string) words.Arg {
 }
 
 // Env is what this screen needs of the world: the words it speaks, the keys
-// it answers, and the two lists it must not keep its own copy of.
+// it answers, the build it names, and the two lists it must not keep its
+// own copy of.
 type Env struct {
 	Words *words.Printer
 	Keys  keymap.Keys
+	// Version is the build the masthead names, beside the mark. Empty
+	// names no build: the sheet still opens, it just says orbit.
+	Version string
 	// Verbs is what a task offers, each with the sentence ? answers with.
 	Verbs []Verb
 	// Tabs is the detail screen's own list, in its own order.
@@ -90,6 +94,32 @@ func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
 	return s, Out{}
 }
 
+// markRows is the program's mark with its rings on: the same thirteen
+// cells the command line prints under `orbit version`, art only and ASCII
+// only — a mark like the header pill's ◉ reads two cells on fonts that
+// render it so, and the line beside it comes out shifted. The language
+// test names these rows to skip them: art has no Spanish to differ into.
+var markRows = []string{
+	"    _____",
+	"   /     \\",
+	"--(   o   )--",
+	"   \\_____/",
+}
+
+// Wheel is the mouse doing what the arrows do: d rows down the sheet for a
+// positive d, up for a negative one. The top stops it; the bottom is the
+// drawing's to clamp, which is the only place that knows how many lines
+// there are. Three rows a notch is the window's own wheelRows, passed in
+// rather than repeated, so the hand learns one distance.
+func (s State) Wheel(d int) State {
+	s.offset += d
+	if s.offset < 0 {
+		s.offset = 0
+	}
+
+	return s
+}
+
 // View is the sheet drawn.
 func (s State) View(h, w int, e Env) []string {
 	if h <= 0 {
@@ -97,9 +127,28 @@ func (s State) View(h, w int, e Env) []string {
 	}
 
 	p := e.Words
+
+	name := "orbit"
+	if e.Version != "" {
+		name += " " + e.Version
+	}
+
+	// The masthead: the mark with the build's name and the sheet's title
+	// beside it, the way `orbit version` draws them. The body paints in
+	// the titles' own colour and the rings in the keys', so the block
+	// reads as the sheet's and not as a picture hung beside it.
+	body := theme.Paint(theme.Live).Render
+	rings := theme.Paint(theme.Accent).Render
+	head := theme.Paint(theme.Live).Bold(true).Render
 	out := []string{
 		"",
-		"  " + theme.Paint(theme.Accent).Bold(true).Render(p.T("help.title", "Help and keyboard shortcuts (cheat sheet)")),
+		body(cells.PadRight(markRows[0], 13)) + "  " + theme.Paint(theme.Accent).Bold(true).Render(name),
+		body(cells.PadRight(markRows[1], 13)) + "  " + head(p.T("help.title", "Help and keyboard shortcuts (cheat sheet)")),
+		rings("--(   ") + body("o") + rings("   )--"),
+		body(markRows[3]),
+		// Breathing room under the mark: the subtitle sitting against the
+		// rings reads as the logo's slogan, and it is the sheet's.
+		"",
 		"  " + theme.Paint(theme.Dim).Render(p.T("help.subtitle", "every function can be reached from the keyboard or by clicking it")),
 		"",
 	}

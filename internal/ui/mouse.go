@@ -172,8 +172,14 @@ func (m Model) leftClick(t point.Target) (tea.Model, tea.Cmd) {
 			m.queueFilter = nil
 			m.repoFilter = ""
 			m.filter = ""
+			// The tap is recorded before the cursor moves: moveTo hands
+			// back a copy, and a timestamp written after it would land on
+			// the model this click is about to throw away.
+			m.logoTap = m.now
 
-			return m.moveTo(0).clampCursor(), nil
+			next, cmd := m.moveTo(0).clampCursor().nextFrame()
+
+			return next, cmd
 		}
 
 		if t.Field == "lang" {

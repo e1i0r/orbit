@@ -231,9 +231,11 @@ func lookup(name string) (Command, bool) {
 // hand-counted spaces that once aligned them stopped aligning the moment it
 // was written, and a translated description is a width nobody can count in
 // advance at all.
-func usage(p *words.Printer) string {
+func usage(p *words.Printer, colored bool) string {
 	var b strings.Builder
-	b.WriteString(p.T("cli.tagline", "orbit — a cockpit for supervising coding agents") + "\n\n")
+	b.WriteString(banner(Version,
+		p.T("cli.tagline", "orbit — a cockpit for supervising coding agents"),
+		colored) + "\n")
 
 	w := tabwriter.NewWriter(&b, 0, 0, 2, ' ', 0)
 	for _, c := range commands() {

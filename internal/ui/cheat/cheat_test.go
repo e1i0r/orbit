@@ -28,6 +28,10 @@ func world(t *testing.T, p *words.Printer) Env {
 	return Env{
 		Words: p,
 		Keys:  keymap.New(p),
+		// The build the masthead names. The language comparison below
+		// skips the masthead's rows by these exact lines, so the version
+		// here is part of what that exemption names.
+		Version: "dev",
 		// Both lists arrive already in the reader's language: they are the
 		// window's to translate, and what this test is about is every other
 		// line on the sheet.
@@ -62,6 +66,14 @@ func TestEveryLineOfTheHelpScreenAnswersToTheLanguage(t *testing.T) {
 			continue
 		}
 
+		// The masthead is the mark with the build's name: art with no
+		// words in it, and a proper noun with a number. Neither has a
+		// Spanish to differ into, so exactly these rows sit out the
+		// comparison — art-only rows, and the row carrying the build.
+		if isMasthead(a, "dev") {
+			continue
+		}
+
 		if b := strings.TrimSpace(ansi.Strip(es[i])); a == b {
 			same++
 
@@ -71,5 +83,40 @@ func TestEveryLineOfTheHelpScreenAnswersToTheLanguage(t *testing.T) {
 
 	if same == 0 && len(en) == 0 {
 		t.Fatal("the help screen drew nothing, so the comparison above proved nothing")
+	}
+}
+
+// isMasthead is whether a stripped help line is the logo block: one of the
+// mark's own art rows, or the row carrying the build's name. It is named
+// from markRows rather than written out, so the exemption cannot drift from
+// the drawing — and it names rows, not the title beside them, so a sentence
+// smuggled into the block still fails the comparison above.
+func isMasthead(stripped, version string) bool {
+	for _, row := range markRows {
+		if stripped == strings.TrimSpace(row) {
+			return true
+		}
+	}
+
+	return strings.HasPrefix(stripped, strings.TrimSpace(markRows[0])) &&
+		strings.Contains(stripped, "orbit "+version)
+}
+
+// TestTheMastheadNamesTheMarkAndTheBuild. The sheet opens the way `orbit
+// version` reads: the mark with its rings on, and the build beside it.
+func TestTheMastheadNamesTheMarkAndTheBuild(t *testing.T) {
+	t.Setenv("ORBIT_HOME", t.TempDir())
+
+	rows := Open(0).View(60, 100, world(t, words.For("en")))
+	joined := strings.Join(rows, "\n")
+
+	if !strings.Contains(joined, "orbit dev") {
+		t.Errorf("the help screen does not name the build beside its mark:\n%s", joined)
+	}
+
+	for _, row := range markRows {
+		if !strings.Contains(ansi.Strip(joined), strings.TrimSpace(row)) {
+			t.Errorf("the help screen lost the mark's row %q:\n%s", row, joined)
+		}
 	}
 }
