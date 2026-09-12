@@ -1,6 +1,6 @@
 package cli
 
-// `orbit new -start`: written down and run, in one command.
+// `orbit new -run=true`: written down and run, in one command.
 
 import (
 	"path/filepath"
@@ -16,13 +16,13 @@ func TestNewStartsWhatItWroteWhenAskedTo(t *testing.T) {
 	root, _ := workspace(t)
 	repoDir := filepath.Join(root, "payments")
 
-	code, out, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-9", "-start", "do the thing")
+	code, out, errOut := run(t, "new", "-repo", repoDir, "-id", "ACME-9", "-run=true", "do the thing")
 	if code != 0 {
-		t.Fatalf("new -start exited %d: %s", code, errOut)
+		t.Fatalf("new -run=true exited %d: %s", code, errOut)
 	}
 
 	if !strings.Contains(out, "started") {
-		t.Errorf("new -start said %q", out)
+		t.Errorf("new -run=true said %q", out)
 	}
 }
 

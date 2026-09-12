@@ -13,6 +13,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/supervisor"
 	"github.com/e1i0r/orbit/internal/task"
 )
@@ -73,7 +74,7 @@ func (v Verb) do(ctx context.Context, w World, in In) (Out, error) {
 	case "settings set":
 		return changed(w, in)
 	case "list":
-		return listed(w)
+		return listed(w, in)
 	case "show":
 		return shown(w, in)
 	case "flows":
@@ -118,12 +119,7 @@ func (v Verb) do(ctx context.Context, w World, in In) (Out, error) {
 // wrote puts a task on the board, and starts it in the same breath when the
 // reader asked for that: two gestures raced the board's next refresh.
 func wrote(w World, in In) (Out, error) {
-	_, r, err := w.Find("", in.Arg("repo"))
-	if err != nil {
-		return Out{}, err
-	}
-
-	t, err := task.Create(w.Store(), r, in.Arg("id"), in.Arg("text"), in.Arg("flow"))
+	one, t, err := writeDown(w, in)
 	if err != nil {
 		return Out{}, err
 	}
@@ -136,17 +132,74 @@ func wrote(w World, in In) (Out, error) {
 	}
 
 	if !in.Yes("run") {
-		return Out{Said: t.ID + " written down", Of: []string{t.ID}}, nil
+		return Out{Said: writtenDown(t, one), Of: []string{t.ID}}, nil
 	}
 
 	if _, err := started(w, In{Task: t.ID, Repo: in.Arg("repo"), Args: in.Args}); err != nil {
 		// The task is written and that stands. A run that would not start
 		// is a second thing to tell the reader, not a reason to pretend
 		// the task is not there.
-		return Out{Said: t.ID + " written down", Of: []string{t.ID}}, err
+		return Out{Said: writtenDown(t, one), Of: []string{t.ID}}, err
 	}
 
-	return Out{Said: t.ID + " written down and started", Of: []string{t.ID}}, nil
+	return Out{Said: writtenDown(t, one) + " and started", Of: []string{t.ID}}, nil
+}
+
+// writeDown finds the repository and writes the task down: against one when
+// there is one, and against none when the reader is standing nowhere.
+func writeDown(w World, in In) (repo.Repo, task.Task, error) {
+	one, err := openRepo(w, in)
+	if err != nil {
+		return repo.Repo{}, task.Task{}, err
+	}
+
+	t, err := task.Create(w.Store(), one, in.Arg("id"), in.Arg("text"), in.Arg("flow"))
+	if err != nil {
+		return repo.Repo{}, task.Task{}, err
+	}
+
+	return one, t, nil
+}
+
+// openRepo is the checkout a task is written against, and none when the
+// reader named none and is standing in none either. A -repo the reader
+// typed has to open; the default is allowed to come back empty.
+func openRepo(w World, in In) (repo.Repo, error) {
+	at := in.Arg("repo")
+	if at == "" {
+		at = in.Repo
+	}
+
+	if at == "" {
+		return repo.Repo{}, nil
+	}
+
+	one, err := repo.Open(at)
+	if err != nil {
+		return repo.Repo{}, err
+	}
+
+	return one, nil
+}
+
+// writtenDown is the task on the board: what it is, where it will be
+// worked, and what it will walk.
+//
+// Two sentences rather than one with an empty name in it. "ACME-1 written
+// against , to walk the review flow" is a line that reads as a bug, and a
+// task that starts nowhere is not a bug — it is the thing the reader just
+// asked for, and the line says which one they got.
+func writtenDown(t task.Task, r repo.Repo) string {
+	walking := ""
+	if t.Flow != "" {
+		walking = " to walk " + t.Flow
+	}
+
+	if r.Name == "" {
+		return t.ID + " written down against no repository yet" + walking
+	}
+
+	return t.ID + " written down against " + r.Name + walking
 }
 
 // started runs a task in a process of its own.
@@ -196,7 +249,7 @@ var said = map[string]func(id string) string{
 	"pause":    func(id string) string { return id + " asked to pause at its next phase" },
 	"resume":   func(id string) string { return id + " asked to carry on" },
 	"continue": func(id string) string { return id + " let past the gate it was waiting at" },
-	"skip":     func(id string) string { return id + " let past the phase it was in" },
+	"skip":     func(id string) string { return id + " skipped past the phase it was in" },
 }
 
 // cancelled asks the run to stop where it stands, and to write down that it

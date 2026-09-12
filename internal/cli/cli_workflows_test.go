@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	tea "charm.land/bubbletea/v2"
 
@@ -237,11 +236,6 @@ func TestNotePauseResumeReadShowCommands(t *testing.T) {
 
 	if !strings.Contains(out.String(), tk.ID) && !strings.Contains(out.String(), "task.created") {
 		t.Errorf("expected show output to contain events, got %s", out.String())
-	}
-
-	// 5. stamp helper
-	if stamp(time.Time{}) != "—" {
-		t.Errorf("stamp(zero) = %q, want —", stamp(time.Time{}))
 	}
 }
 

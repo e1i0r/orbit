@@ -22,7 +22,7 @@ func TestListSaysSoWhenThereAreNoTasks(t *testing.T) {
 		t.Fatalf("list on an empty repository exited %d: %s", code, errOut)
 	}
 
-	if !strings.Contains(out, "no tasks against") {
+	if !strings.Contains(out, "no tasks") {
 		t.Errorf("list did not say there were no tasks:\n%s", out)
 	}
 }

@@ -186,9 +186,14 @@ func theRest() []Verb {
 		{Name: "quota", Reads: true, About: func(p *words.Printer) string {
 			return p.T("verb.quota", "what is left of each engine's windows")
 		}},
-		{Name: "list", Reads: true, About: func(p *words.Printer) string {
-			return p.T("verb.list", "every task under this root, in the band that says what it waits for")
-		}},
+		{
+			Name: "list", Reads: true, About: func(p *words.Printer) string {
+				return p.T("verb.list", "every task written down, in the band that says what it waits for")
+			},
+			Takes: []Field{{Name: "repo", Kind: Named, About: func(p *words.Printer) string {
+				return p.T("verb.list.repo", "only the tasks worked in this checkout")
+			}}},
+		},
 		{Name: "show", OnTask: true, Reads: true, About: func(p *words.Printer) string {
 			return p.T("verb.show", "everything the record says about one task")
 		}},

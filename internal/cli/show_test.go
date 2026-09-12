@@ -93,27 +93,6 @@ func TestShowSaysWhyAPhaseFailed(t *testing.T) {
 	}
 }
 
-// TestDetailPrefersTheReasonOverTheOutput is the same rule without a
-// repository around it, and it pins the events that have no reason: they go
-// on printing what the engine said.
-func TestDetailPrefersTheReasonOverTheOutput(t *testing.T) {
-	for _, tc := range []struct {
-		name string
-		text string
-		data map[string]string
-		want string
-	}{
-		{"a failure says why", "stdout", map[string]string{"error": "exit 1"}, "exit 1"},
-		{"no data at all", "stdout", nil, "stdout"},
-		{"an empty reason is no reason", "stdout", map[string]string{"error": ""}, "stdout"},
-		{"other data is not the reason", "stdout", map[string]string{"cost": "0.4"}, "stdout"},
-	} {
-		if got := detail(tc.text, tc.data); got != tc.want {
-			t.Errorf("%s: detail(%q, %v) = %q, want %q", tc.name, tc.text, tc.data, got, tc.want)
-		}
-	}
-}
-
 // rowContaining is the one printed row that mentions something, because an
 // assertion against the whole table cannot tell which row carried the text.
 func rowContaining(t *testing.T, out, want string) string {
@@ -128,22 +107,6 @@ func rowContaining(t *testing.T, out, want string) string {
 	t.Fatalf("no row mentioning %q:\n%s", want, out)
 
 	return ""
-}
-
-// TestFirstLineKeepsTheTableATable pins what show does to text it did not
-// write. The engine's output is arbitrary and the table is tab-delimited.
-func TestFirstLineKeepsTheTableATable(t *testing.T) {
-	for _, tc := range []struct{ in, want string }{
-		{"plain", "plain"},
-		{"first\nsecond", "first …"},
-		{"before\tafter", "before after"},
-		{"progress\rdone", "progress done"},
-		{"", ""},
-	} {
-		if got := firstLine(tc.in); got != tc.want {
-			t.Errorf("firstLine(%q) = %q, want %q", tc.in, got, tc.want)
-		}
-	}
 }
 
 func TestShowDoesNotLetATabInTheTextAddAColumn(t *testing.T) {

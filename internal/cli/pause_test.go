@@ -96,8 +96,8 @@ func TestPauseAndResumeNeedAnID(t *testing.T) {
 // line out of the synopsis. A single `pause|resume` row would match neither.
 func TestEachOfTheTwoShowsItsOwnLine(t *testing.T) {
 	for _, tc := range []struct{ word, says string }{
-		{"pause", "stop a run at its next phase"},
-		{"resume", "let a stopped run carry on"},
+		{"pause", "ask a run to stop at its next phase boundary"},
+		{"resume", "let a run carry on from a pause"},
 	} {
 		t.Setenv("ORBIT_HOME", t.TempDir())
 

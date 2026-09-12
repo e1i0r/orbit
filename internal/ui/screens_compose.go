@@ -82,7 +82,7 @@ func (m Model) writeTask(t compose.Task) (tea.Model, tea.Cmd) {
 	}
 
 	if t.Start {
-		args = append(args, "-start")
+		args = append(args, "-run=true")
 	}
 
 	args = append(args, "--", t.Text)

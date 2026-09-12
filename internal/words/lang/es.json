@@ -1031,10 +1031,6 @@
       "source": "the supervisor was asked to review {id}",
       "value": "se le pidió al supervisor revisar {id}"
     },
-    "list.none": {
-      "source": "no tasks yet",
-      "value": "todavía no hay tareas"
-    },
     "cmd.digest": {
       "source": "what the record says about the work as a whole",
       "value": "lo que el record dice del trabajo en conjunto"
@@ -1106,18 +1102,6 @@
     "permit.allowed": {
       "source": "{action} on {id} is allowed; run it again to do it",
       "value": "{action} en {id} está permitido; volvé a correrlo para hacerlo"
-    },
-    "cmd.approve": {
-      "source": "say yes to the libraries a task added, so its next run goes past the gate",
-      "value": "decir que sí a las librerías que agregó una tarea, para que su próxima corrida pase el gate"
-    },
-    "approve.nothing": {
-      "source": "{id} has added no dependency waiting on you",
-      "value": "{id} no agregó ninguna dependencia que te esté esperando"
-    },
-    "approve.done": {
-      "source": "approved for {id}: {names}",
-      "value": "aprobado para {id}: {names}"
     },
     "overview.story": {
       "source": "how it happened",
@@ -1591,26 +1575,6 @@
       "source": "list the flows a task can be written against",
       "value": "listar los flujos contra los que se puede escribir una tarea"
     },
-    "cmd.pause": {
-      "source": "stop a run at its next phase",
-      "value": "detener una ejecución en su siguiente fase"
-    },
-    "cmd.resume": {
-      "source": "let a stopped run carry on",
-      "value": "dejar que una ejecución detenida continúe"
-    },
-    "cmd.skip": {
-      "source": "let a stopped run carry on without the phase it is waiting in front of",
-      "value": "dejar que una ejecución detenida continúe sin la fase delante de la que espera"
-    },
-    "cmd.show": {
-      "source": "print what happened to a task",
-      "value": "contar qué le pasó a una tarea"
-    },
-    "cmd.read": {
-      "source": "mark a finished task as looked at",
-      "value": "marcar como leída una tarea terminada"
-    },
     "cmd.pr": {
       "source": "create a pull request from a task's worktree",
       "value": "crear un pull request desde el worktree de una tarea"
@@ -1623,57 +1587,13 @@
       "source": "locate the working directory",
       "value": "ubicar el directorio de trabajo"
     },
-    "new.needs_id": {
-      "source": "new needs -id",
-      "value": "new necesita -id"
-    },
-    "new.needs_text": {
-      "source": "new needs the task written out after the flags",
-      "value": "new necesita la tarea escrita después de las banderas"
-    },
-    "new.written": {
-      "source": "{id} written against {repo}, to walk the {flow} flow",
-      "value": "{id} escrita contra {repo}, para recorrer el flujo {flow}"
-    },
-    "new.written_nowhere": {
-      "source": "{id} written against no repository yet, to walk the {flow} flow",
-      "value": "{id} escrita todavía contra ningún repositorio, para recorrer el flujo {flow}"
-    },
-    "note.needs_text": {
-      "source": "note needs text for task {id}",
-      "value": "note necesita texto para la tarea {id}"
-    },
-    "note.written_down": {
-      "source": "note recorded for {id} — read by the next phase that starts",
-      "value": "nota registrada para {id} — la leerá la próxima etapa que empiece"
-    },
-    "read.marked": {
-      "source": "{id} marked read",
-      "value": "{id} marcada como leída"
-    },
     "run.finished": {
       "source": "{id} finished",
       "value": "{id} terminó"
     },
-    "show.nothing_recorded": {
-      "source": "nothing recorded for {id} in {repo}",
-      "value": "no hay nada registrado para {id} en {repo}"
-    },
-    "show.nothing_recorded_anywhere": {
-      "source": "nothing recorded for {id}",
-      "value": "no hay nada registrado para {id}"
-    },
-    "list.no_tasks": {
-      "source": "no tasks against {repo}",
-      "value": "no hay tareas contra {repo}"
-    },
     "repos.none_under": {
       "source": "no repositories under {root}",
       "value": "no hay repositorios bajo {root}"
-    },
-    "pause.asked": {
-      "source": "{id} asked to {word} — a run in flight notices at its next phase",
-      "value": "se le pidió {word} a {id} — una corrida en vuelo se entera en su próxima etapa"
     },
     "cancel.killed": {
       "source": "{id} killed — run `orbit reconcile -repo {repo}` to close its record",
@@ -1682,10 +1602,6 @@
     "cancel.asked_to_stop": {
       "source": "{id} asked to stop",
       "value": "se le pidió a {id} que se detenga"
-    },
-    "requeue.back_in_queue": {
-      "source": "{id} stopped and back in to do",
-      "value": "{id} detenida y de vuelta en pendientes"
     },
     "direct.needs_message": {
       "source": "direct needs a message for task {id}",
@@ -1722,14 +1638,6 @@
     "direct.actions": {
       "source": "↵ send directive · esc cancel · ^V paste",
       "value": "↵ enviar directiva · esc cancelar · ^V pegar"
-    },
-    "reconcile.abandoned": {
-      "source": "{id} was abandoned; its record says so now",
-      "value": "{id} fue abandonada; su registro ya lo dice"
-    },
-    "reconcile.all_accounted": {
-      "source": "every run is accounted for",
-      "value": "no falta ninguna corrida por cerrar"
     },
     "top.window_failed": {
       "source": "the window",
@@ -1855,10 +1763,6 @@
       "source": "stop a run, and say so in its record",
       "value": "detener una ejecución y dejarlo dicho en su registro"
     },
-    "cmd.requeue": {
-      "source": "stop a run and put the task back in to do",
-      "value": "detener una ejecución y devolver la tarea a pendientes"
-    },
     "cmd.join": {
       "source": "open a checkout of another repository for a task",
       "value": "abre un checkout de otro repositorio para una tarea"
@@ -1870,14 +1774,6 @@
     "join.needs_a_task": {
       "source": "join needs a task: pass -task, or run it inside a phase, where {env} is already set",
       "value": "join necesita una tarea: pasá -task, o corrélo dentro de una fase, donde {env} ya está puesto"
-    },
-    "cmd.reconcile": {
-      "source": "close the records of runs whose processes are gone",
-      "value": "cerrar los registros de las ejecuciones cuyos procesos ya no están"
-    },
-    "cmd.note": {
-      "source": "record a note for a task",
-      "value": "dejar una nota para una tarea"
     },
     "cmd.direct": {
       "source": "interrupt or redirect a task and record the directive",
@@ -4409,10 +4305,6 @@
       "source": "running the checks on both sides of {id}",
       "value": "corriendo los checks de los dos lados de {id}"
     },
-    "new.started": {
-      "source": "{id} started, process {pid}",
-      "value": "{id} arrancó, proceso {pid}"
-    },
     "compose.body_unreadable": {
       "source": "orbit cannot read this issue here, and a run will not be able to either: write what has to be done, or set LINEAR_API_KEY",
       "value": "orbit no puede leer esta issue aquí, y una corrida tampoco podrá: escribe qué hay que hacer, o define LINEAR_API_KEY"
@@ -4448,14 +4340,6 @@
     "compare.again": {
       "source": "[r] runs them again",
       "value": "[r] los vuelve a correr"
-    },
-    "cmd.history": {
-      "source": "print everything ever said about a task, in any program",
-      "value": "imprimir todo lo que se ha dicho de una tarea, en cualquier programa"
-    },
-    "history.written": {
-      "source": "also written to {where}",
-      "value": "también escrito en {where}"
     },
     "history.title": {
       "source": "Everything said about this task",
@@ -4593,6 +4477,10 @@
       "source": "{id} has no pull request open anywhere",
       "value": "{id} no tiene ningún pull request abierto en ningún lado"
     },
+    "show.nothing_recorded": {
+      "source": "nothing recorded for {id}",
+      "value": "nada registrado para {id}"
+    },
     "verb.pr.resolve": {
       "source": "answer the reviews on a task's pull request",
       "value": "contesta las revisiones del pull request de una tarea"
@@ -4686,8 +4574,12 @@
       "value": "cuánto queda de las ventanas de cada motor"
     },
     "verb.list": {
-      "source": "every task under this root, in the band that says what it waits for",
-      "value": "todas las tareas bajo esta raíz, en la banda que dice qué esperan"
+      "source": "every task written down, in the band that says what it waits for",
+      "value": "todas las tareas anotadas, en la banda que dice qué esperan"
+    },
+    "verb.list.repo": {
+      "source": "only the tasks worked in this checkout",
+      "value": "solo las tareas trabajadas en este checkout"
     },
     "verb.show": {
       "source": "everything the record says about one task",
@@ -4741,17 +4633,9 @@
       "source": "the fact, in a sentence",
       "value": "el hecho, en una frase"
     },
-    "cmd.new": {
-      "source": "write a task down",
-      "value": "anotar una tarea"
-    },
     "cmd.run": {
       "source": "run a task through its flow",
       "value": "llevar una tarea por su flujo"
-    },
-    "cmd.list": {
-      "source": "list the tasks of a repository",
-      "value": "listar las tareas de un repositorio"
     },
     "verb.rules": {
       "source": "the rules you said that Orbit has not been told to keep yet",

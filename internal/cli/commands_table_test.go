@@ -62,7 +62,7 @@ func TestNoteSubcommandExecution(t *testing.T) {
 		t.Fatalf("note failed (exit %d): out=%q err=%q", code, out, errOut)
 	}
 
-	if !strings.Contains(out, "note recorded for PAY-100") {
+	if !strings.Contains(out, "noted on PAY-100") {
 		t.Errorf("unexpected note output: %q", out)
 	}
 

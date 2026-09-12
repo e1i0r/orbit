@@ -19,6 +19,22 @@ import (
 	"github.com/e1i0r/orbit/internal/words"
 )
 
+// message is the words after the id: what direct is given to say.
+//
+// A leading "--" is dropped. It is the shell's way of saying the flags are
+// over, and a caller that puts it after the id — which is where a caller
+// naturally puts it, the id being what the flags come before — is saying so
+// once the flags are over already: flag.Parse stops at the id and never sees
+// it. Kept, it became the first word of every note the window wrote.
+func message(fs *flag.FlagSet) string {
+	rest := fs.Args()[1:]
+	if len(rest) > 0 && rest[0] == "--" {
+		rest = rest[1:]
+	}
+
+	return strings.Join(rest, " ")
+}
+
 // directTask interrupts an in-flight run while preserving memory, records the
 // directive and note, and optionally restarts the task.
 func directTask(ctx Context, args []string) error {

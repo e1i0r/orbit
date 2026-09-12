@@ -72,7 +72,10 @@ func approved(w World, in In) (Out, error) {
 
 	names := task.Pending(w.Store(), t, f)
 	if len(names) == 0 {
-		return Out{}, fmt.Errorf("%s has added no dependency waiting on you", t.ID)
+		// Nothing waiting is an answer, not a refusal: the reader asked
+		// and was told. Refusing would read as though asking were wrong,
+		// and "approved" would read as a decision nobody made.
+		return Out{Said: t.ID + " has added no dependency waiting on you"}, nil
 	}
 
 	if err := task.Approve(w.Store(), t, names); err != nil {

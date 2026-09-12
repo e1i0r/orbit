@@ -23,6 +23,7 @@ import (
 	"fmt"
 
 	"github.com/e1i0r/orbit/internal/board"
+	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/task"
@@ -104,6 +105,18 @@ func (h hands) Standing(id, at string) web.Standing {
 	}
 
 	return now
+}
+
+// flowOfTask is the flow a task walks, by the same reading `orbit run` makes
+// of it: the task's own, then the one Orbit ships. Not the settings default,
+// which is what the next task written gets.
+func flowOfTask(s flow.Source, t task.Task) (flow.Flow, error) {
+	chosen := t.Flow
+	if chosen == "" {
+		chosen = flow.Default
+	}
+
+	return flow.Resolve(s, chosen)
 }
 
 // find is the task one id in one repository means.
