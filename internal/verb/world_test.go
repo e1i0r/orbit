@@ -237,7 +237,17 @@ func mustAsk(t *testing.T, w *testWorld, name string, in In) Out {
 
 // mustRefuse runs one verb that is meant to refuse, and fails the test
 // when it does not.
-func mustRefuse(t *testing.T, w *testWorld, name string, in In) error {
+func mustRefuse(t *testing.T, w *testWorld, name string, in In) {
+	t.Helper()
+
+	if _, err := Run(ctxOf(), w, name, in); err == nil {
+		t.Fatalf("%s was accepted, want a refusal", name)
+	}
+}
+
+// refuseErr is mustRefuse for the caller that asserts on the refusal
+// itself: what it says is the behavior under test.
+func refuseErr(t *testing.T, w *testWorld, name string, in In) error {
 	t.Helper()
 
 	_, err := Run(ctxOf(), w, name, in)

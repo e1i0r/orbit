@@ -177,3 +177,67 @@ func TestJoiningTheSecondCheckout(t *testing.T) {
 		t.Errorf("join answered %q, want the directory", out)
 	}
 }
+
+// TestFlowsAreWrittenReadAndTakenAway. Saving, reading, listing and
+// deleting through the tools, with a refusal before the second asking.
+func TestFlowsAreWrittenReadAndTakenAway(t *testing.T) {
+	_, sn, _ := oneRepo(t)
+
+	doc := map[string]any{
+		"name":        "shaped",
+		"description": "a flow the test wrote",
+		"phases": []any{map[string]any{
+			"name": "work", "engine": "claude", "prompt": "work",
+		}},
+	}
+
+	if got := sn.Call("orbit_save_flow", doc); got.IsError {
+		t.Fatalf("save flow: %s", textOf(got))
+	}
+
+	if got := sn.Call("orbit_get_flow", map[string]any{"name": "shaped"}); got.IsError {
+		t.Fatalf("get flow: %s", textOf(got))
+	}
+
+	if got := sn.Call("orbit_list_flows", nil); got.IsError {
+		t.Fatalf("list flows: %s", textOf(got))
+	}
+
+	if got := sn.Call("orbit_save_flow", map[string]any{"name": ""}); !got.IsError {
+		t.Error("saving a flow with no name was accepted")
+	}
+
+	if got := sn.Call("orbit_save_flow", map[string]any{"name": "shapeless"}); !got.IsError {
+		t.Error("saving a flow with no phases was accepted")
+	}
+
+	if got := sn.Call("orbit_delete_flow", map[string]any{"name": "shaped"}); got.IsError {
+		t.Fatalf("delete flow: %s", textOf(got))
+	}
+
+	if got := sn.Call("orbit_get_flow", map[string]any{"name": "shaped"}); !got.IsError {
+		t.Error("reading a deleted flow was accepted")
+	}
+}
+
+// TestReposAreAddedListedAndForgotten. The workspace through the tools:
+// listed, inspected, added by path, and forgotten only when asked twice.
+func TestReposAreAddedListedAndForgotten(t *testing.T) {
+	_, sn, r := oneRepo(t)
+
+	if got := sn.Call("orbit_list_repos", nil); got.IsError {
+		t.Fatalf("list repos: %s", textOf(got))
+	}
+
+	if got := sn.Call("orbit_inspect_repo", map[string]any{"repo": r.Name}); got.IsError {
+		t.Fatalf("inspect repo: %s", textOf(got))
+	}
+
+	if got := sn.Call("orbit_add_repo", map[string]any{"path": r.Path}); got.IsError {
+		t.Fatalf("add repo: %s", textOf(got))
+	}
+
+	if got := sn.Call("orbit_forget_repo", map[string]any{"name": r.Name}); !got.IsError {
+		t.Error("forgetting a repo on the first asking was accepted")
+	}
+}

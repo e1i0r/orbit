@@ -41,6 +41,7 @@ func TestWritingAndSteeringATask(t *testing.T) {
 	// a sleep with a marker naming it, killed when the test ends.
 	cmd := holdARun(t, w, "ACME-1")
 	mustAsk(t, w, "cancel", In{Task: "ACME-1", By: "operator"})
+
 	_ = cmd.Process.Kill() //nolint:errcheck // the cleanup kills it again; this only hurries it
 
 	out := mustAsk(t, w, "history", In{Task: "ACME-1", By: "operator"})
@@ -61,11 +62,11 @@ func TestAnsweringWhatATaskWaitsFor(t *testing.T) {
 
 	w.wrote(t, "ACME-2", r.Path, "take the keyboard")
 
-	if err := mustRefuse(t, w, "approve", In{Task: "ACME-2", By: "operator"}); !strings.Contains(err.Error(), "ACME-2") {
+	if err := refuseErr(t, w, "approve", In{Task: "ACME-2", By: "operator"}); !strings.Contains(err.Error(), "ACME-2") {
 		t.Errorf("approve refused with %q, which names no task", err)
 	}
 
-	if err := mustRefuse(t, w, "permit", In{Task: "ACME-2", By: "operator"}); !strings.Contains(err.Error(), "ACME-2") {
+	if err := refuseErr(t, w, "permit", In{Task: "ACME-2", By: "operator"}); !strings.Contains(err.Error(), "ACME-2") {
 		t.Errorf("permit refused with %q, which names no task", err)
 	}
 
@@ -146,7 +147,7 @@ func TestJoiningAnotherRepository(t *testing.T) {
 
 	w.wrote(t, "ACME-3", a.Path, "reach into both")
 
-	if err := mustRefuse(t, w, "join", In{
+	if err := refuseErr(t, w, "join", In{
 		Task: "ACME-3", Args: map[string]string{"name": "nowhere"}, By: "operator",
 	}); !strings.Contains(err.Error(), "nowhere") {
 		t.Errorf("join refused with %q, which names nothing", err)

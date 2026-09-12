@@ -88,7 +88,7 @@ func TestReadingWithoutACheckout(t *testing.T) {
 
 	// Comparing is running, not reading: with no checkout there is
 	// nothing to run anything in, and that is a refusal.
-	if err := mustRefuse(t, w, "compare", In{Task: "ACME-9", By: "operator"}); !strings.Contains(err.Error(), "ACME-9") {
+	if err := refuseErr(t, w, "compare", In{Task: "ACME-9", By: "operator"}); !strings.Contains(err.Error(), "ACME-9") {
 		t.Errorf("compare refused with %q, which names no task", err)
 	}
 }
@@ -103,6 +103,7 @@ func TestJoiningNeedsANameItKnows(t *testing.T) {
 	b := w.gitRepoIn(t, ws, "ledger")
 
 	w.wrote(t, "ACME-10", a.Path, "reach into both")
+
 	_ = b
 
 	out := mustAsk(t, w, "join", In{
@@ -156,6 +157,7 @@ func TestComparingBothSidesOfAChange(t *testing.T) {
 		t.Error("compare said nothing at all")
 	}
 }
+
 func TestTheBoardListsWhatIsThere(t *testing.T) {
 	w := worldOf(t)
 	w.board = board.Board{

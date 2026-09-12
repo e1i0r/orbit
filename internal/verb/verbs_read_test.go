@@ -120,8 +120,10 @@ func TestWhatOrbitKnows(t *testing.T) {
 
 	w.facts = []knowledge.Fact{
 		{Phrase: "PRs in English", Scope: knowledge.Scope{Kind: knowledge.General}},
-		{Phrase: "amounts are cents", Scope: knowledge.Scope{Kind: knowledge.Repo, Repo: "/src/acme"},
-			Stops: true, Check: "make check"},
+		{
+			Phrase: "amounts are cents", Scope: knowledge.Scope{Kind: knowledge.Repo, Repo: "/src/acme"},
+			Stops: true, Check: "make check",
+		},
 		{Phrase: "wrap errors", Scope: knowledge.Scope{Kind: knowledge.Language, Lang: "go"}},
 		{Phrase: "retry on 5xx", Scope: knowledge.Scope{Kind: knowledge.Dir, Path: "webhook"}},
 		{Phrase: "never index", Scope: knowledge.Scope{Kind: knowledge.File, Path: "notes.md"}},
