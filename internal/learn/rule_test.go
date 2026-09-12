@@ -99,8 +99,8 @@ func TestWhatTheSupervisorSaysIsNotWhatYouSaid(t *testing.T) {
 
 	at := time.Date(2026, 9, 11, 9, 0, 0, 0, time.UTC)
 
-	Heard(s, "supervisor", at, "always run make check before opening a PR")
-	Heard(s, "orbit", at.Add(time.Minute), "never push without the tests passing")
+	Heard(s, Said{At: at, Text: "always run make check before opening a PR", By: "supervisor"})
+	Heard(s, Said{At: at.Add(time.Minute), Text: "never push without the tests passing", By: "orbit"})
 
 	waiting, err := Waiting(s)
 	if err != nil {
@@ -118,7 +118,7 @@ func TestWhatTheSupervisorSaysIsNotWhatYouSaid(t *testing.T) {
 
 // TestEveryWayInIsYou.
 //
-// The cockpit, a command and a tool call are all somebody talking. A channel
+// The cockpit, a command and a tool call are all somebody talking. A name
 // nobody has invented yet counts as a person too, which is the way round
 // that fails safe: an extra row to dismiss, rather than a rule silently not
 // noticed.
@@ -126,8 +126,8 @@ func TestEveryWayInIsYou(t *testing.T) {
 	s := root(t)
 
 	at := time.Date(2026, 9, 11, 9, 0, 0, 0, time.UTC)
-	for i, channel := range []string{"orbit", "mcp", "telegram"} {
-		Heard(s, channel, at.Add(time.Duration(i)*time.Minute), "never force-push")
+	for i, by := range []string{"orbit", "mcp", "telegram"} {
+		Heard(s, Said{At: at.Add(time.Duration(i) * time.Minute), Text: "never force-push", By: by})
 	}
 
 	waiting, err := Waiting(s)
@@ -148,7 +148,7 @@ func TestEveryWayInIsYou(t *testing.T) {
 func TestSayingSomethingStillWorksWhenTheTrayDoesNot(t *testing.T) {
 	var nothing *store.Store
 
-	Heard(nothing, "orbit", time.Now(), "never push without the tests passing")
+	Heard(nothing, Said{At: time.Now(), Text: "never push without the tests passing", By: "orbit"})
 }
 
 // TestARuleSaidToTheSupervisorReachesTheTray, end to end through the one
@@ -157,8 +157,8 @@ func TestARuleSaidToTheSupervisorReachesTheTray(t *testing.T) {
 	s := root(t)
 
 	// Written the way internal/supervisor writes it, which is what the hook
-	// sits on: the same kind for every turn, the channel saying who.
-	Heard(s, "orbit", time.Now().UTC(), "never open a PR before make check is green")
+	// sits on: the same kind for every turn, and the channel saying who.
+	Heard(s, Said{At: time.Now().UTC(), Text: "never open a PR before make check is green", By: "orbit"})
 
 	waiting, err := Waiting(s)
 	if err != nil {

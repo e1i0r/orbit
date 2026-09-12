@@ -196,6 +196,22 @@ func TestTheWaysOutAreTheOnesUnderTheCursor(t *testing.T) {
 	}
 }
 
+// TestARowSaysWhereItWasSaid.
+//
+// The same words typed while correcting one run and said to the supervisor
+// are the same rule, and which it was is how somebody decides whether it was
+// meant that widely.
+func TestARowSaysWhereItWasSaid(t *testing.T) {
+	one := saidAt(1, "never merge without the tests passing")
+	one.From = "PAY-1"
+
+	s, e, _ := withTray(t, []Said{one})
+
+	if drawn := drawnKnowledge(t, s, e); !strings.Contains(drawn, "PAY-1") {
+		t.Errorf("the row does not say where it came from:\n%s", drawn)
+	}
+}
+
 // TestAnEmptyTrayIsNotThere, because a heading over nothing is a question a
 // reader has to answer for themselves.
 func TestAnEmptyTrayIsNotThere(t *testing.T) {

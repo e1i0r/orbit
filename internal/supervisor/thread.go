@@ -112,7 +112,7 @@ func RecordIn(s *store.Store, conversation, kind, by, channel, taskID, repo, tex
 	// said is the fact about this moment; whether it was also a rule is a
 	// question asked about it, and a question that cannot be asked is not a
 	// reason to lose the sentence.
-	learn.Heard(s, channel, e.At, text)
+	learn.Heard(s, learn.Said{At: e.At, Text: text, By: channel})
 
 	return nil
 }

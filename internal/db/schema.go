@@ -12,7 +12,7 @@ import (
 // It is not the disposable version an index carries. Nothing here can be
 // rebuilt from anywhere else, so a schema that turns out wrong is migrated
 // forward against live data and never dropped and remade.
-const version = 2
+const version = 3
 
 // busyTimeoutMS is how long SQLite waits for its turn at the write lock
 // before refusing. Five seconds is far past any transaction this package
@@ -142,13 +142,29 @@ CREATE INDEX IF NOT EXISTS phase_by_run  ON phase(run_id, n);
 // is what keeps this from proposing the same sentence twice.
 const proposals = `
 CREATE TABLE IF NOT EXISTS proposal(
-  id       INTEGER PRIMARY KEY,
-  said_at  TEXT NOT NULL UNIQUE,
-  said     TEXT NOT NULL,
-  state    TEXT NOT NULL DEFAULT 'waiting',
-  decided  TEXT
+  id         INTEGER PRIMARY KEY,
+  said_at    TEXT NOT NULL UNIQUE,
+  said       TEXT NOT NULL,
+  state      TEXT NOT NULL DEFAULT 'waiting',
+  decided    TEXT,
+  said_by    TEXT NOT NULL DEFAULT 'operator',
+  about_task TEXT NOT NULL DEFAULT '',
+  repo       TEXT NOT NULL DEFAULT ''
 );
 `
+
+// proposalColumns is the three a proposal gained when a sentence could come
+// from somewhere other than the supervisor's thread: who said it, which task
+// it came out of, and the checkout it is about.
+const proposalColumns = `
+ALTER TABLE proposal ADD COLUMN said_by    TEXT NOT NULL DEFAULT 'operator';
+ALTER TABLE proposal ADD COLUMN about_task TEXT NOT NULL DEFAULT '';
+ALTER TABLE proposal ADD COLUMN repo       TEXT NOT NULL DEFAULT '';
+`
+
+// hasProposalColumn asks whether the table already has one of them, because
+// SQLite has no IF NOT EXISTS for a column.
+const hasProposalColumn = `SELECT count(*) FROM pragma_table_info('proposal') WHERE name = ?`
 
 // migrate brings the file up to the version this binary knows.
 //
@@ -192,9 +208,9 @@ func (d *DB) migrate() error {
 
 // stepsFrom runs every migration between the version on disk and this one.
 //
-// Version 1 is the whole schema. Version 2 adds the proposal table, and it
-// is the shape every one after it should take: a case that adds what is
-// missing and leaves every row alone.
+// Version 1 is the whole schema. Everything after it is the shape every step
+// should take: add what is missing, leave every row alone, and check for
+// what you are about to add rather than working it out from the number.
 func stepsFrom(tx *sql.Tx, found int) error {
 	if found < 1 {
 		if _, err := tx.Exec(schema); err != nil {
@@ -202,12 +218,23 @@ func stepsFrom(tx *sql.Tx, found int) error {
 		}
 	}
 
-	// Idempotent against a record just created from schema above, which
-	// already holds it: every statement says IF NOT EXISTS, so both paths
-	// end in one shape rather than two that have to be kept in step.
-	if found < 2 {
+	// The proposal table and its columns, for any record that has not got
+	// them. Idempotent against one just created from schema above, which
+	// already holds them, so both paths end in one shape rather than two
+	// that have to be kept in step.
+	//
+	// It asks rather than counting up from a version, and that is not
+	// caution for its own sake: a version number is only a promise inside
+	// one line of work, and a 2 written by a branch that was exploring
+	// something else means a different record than this 2 does. A step that
+	// trusted the number altered a table that was not there.
+	if found < version {
 		if _, err := tx.Exec(proposals); err != nil {
 			return fmt.Errorf("add the proposal table: %w", err)
+		}
+
+		if err := widenProposals(tx); err != nil {
+			return err
 		}
 	}
 
@@ -215,6 +242,29 @@ func stepsFrom(tx *sql.Tx, found int) error {
 	// anything a caller can reach.
 	if _, err := tx.Exec(fmt.Sprintf(stampVersion, version)); err != nil {
 		return fmt.Errorf("stamp the schema version: %w", err)
+	}
+
+	return nil
+}
+
+// widenProposals adds the columns a proposal gained to a table that does not
+// have them yet.
+//
+// The three arrived together and are added together, so finding one is
+// finding all of them.
+func widenProposals(tx *sql.Tx) error {
+	var there int
+
+	if err := tx.QueryRow(hasProposalColumn, "said_by").Scan(&there); err != nil {
+		return fmt.Errorf("read the shape of the proposal table: %w", err)
+	}
+
+	if there > 0 {
+		return nil
+	}
+
+	if _, err := tx.Exec(proposalColumns); err != nil {
+		return fmt.Errorf("widen the proposal table: %w", err)
 	}
 
 	return nil

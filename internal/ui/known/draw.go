@@ -68,16 +68,21 @@ func (s State) tray(out []string, cw int, e Env) ([]string, int) {
 	return append(out, ""), len(s.waiting)
 }
 
-// sentence is one row of the tray: when it was said, and what was said
-// under it — the same shape a fact is drawn in, because it is about to be
-// one.
+// sentence is one row of the tray: when and where it was said, and what was
+// said under it — the same shape a fact is drawn in, because it is about to
+// be one.
 func (s State) sentence(one Said, chosen bool, cw int) []string {
 	mark := "  "
 	if chosen {
 		mark = theme.Paint(theme.Accent).Bold(true).Render("▸ ")
 	}
 
-	rows := []string{mark + theme.Paint(theme.Dim).Render(one.At.Local().Format(time.DateTime))}
+	head := one.At.Local().Format(time.DateTime)
+	if one.From != "" {
+		head += " · " + one.From
+	}
+
+	rows := []string{mark + theme.Paint(theme.Dim).Render(head)}
 
 	for _, line := range cells.Lines(one.Text, max(cw-4, 8)) {
 		rows = append(rows, "    "+theme.Text(theme.Primary).Render(line))

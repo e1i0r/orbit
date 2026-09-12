@@ -72,6 +72,12 @@ type Said struct {
 	// append-only and no two turns share an instant.
 	At   time.Time
 	Text string
+	// From is where it was said: the task it was typed at, or the way in it
+	// came through when it was about no task. It is what a reader needs
+	// before they can agree with anything — the same words said while
+	// correcting one run and said to the supervisor are the same rule, and
+	// which it was is how somebody decides whether it was meant that widely.
+	From string
 }
 
 // Out is what the screen asks the window for.

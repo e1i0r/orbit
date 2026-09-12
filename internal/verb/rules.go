@@ -75,7 +75,8 @@ func waiting(w World) (Out, error) {
 
 	var b strings.Builder
 	for i, one := range said {
-		fmt.Fprintf(&b, "%3d  %s  %s\n", i+1, one.At.Local().Format(time.DateTime), one.Text)
+		fmt.Fprintf(&b, "%3d  %s  %-12s %s\n",
+			i+1, one.At.Local().Format(time.DateTime), one.From(), one.Text)
 	}
 
 	return Out{Said: strings.TrimRight(b.String(), "\n"), Saw: said}, nil

@@ -34,6 +34,20 @@ type Proposal struct {
 	SaidAt time.Time
 	Said   string
 	State  string
+	// By is where it was said: "operator" for one of the controls, the name
+	// of the channel it came in on, or of whoever typed a correction at a
+	// run. Whoever is about to decide reads it first, because a sentence
+	// cannot be agreed with until it can be placed.
+	By string
+	// About is the task it came out of, and empty for the supervisor's
+	// thread, which is about the board rather than about one task. It is
+	// what makes a proposal traceable back to the run that produced it.
+	About string
+	// Repo is the checkout it is about, and empty for a sentence that is
+	// about everything. There is nothing narrower here on purpose: a file
+	// or a symbol is a precision nobody has agreed to yet, and the screen
+	// that lists facts is where one is narrowed by somebody who read it.
+	Repo string
 }
 
 // Propose writes one down, and says nothing when this line already has a row.
@@ -42,7 +56,8 @@ type Proposal struct {
 // reads the whole thread every time and most of what it finds it has found
 // before.
 func (d *DB) Propose(p Proposal) error {
-	_, err := d.sql.Exec(insertProposal, record.Stamp(p.SaidAt), p.Said, Waiting)
+	_, err := d.sql.Exec(insertProposal, record.Stamp(p.SaidAt), p.Said, Waiting,
+		p.By, p.About, p.Repo)
 	if err != nil {
 		return fmt.Errorf("write down what you said at %s: %w", p.SaidAt, err)
 	}
@@ -67,7 +82,7 @@ func (d *DB) Waiting() ([]Proposal, error) {
 			at string
 		)
 
-		if err := rows.Scan(&at, &p.Said, &p.State); err != nil {
+		if err := rows.Scan(&at, &p.Said, &p.State, &p.By, &p.About, &p.Repo); err != nil {
 			return nil, fmt.Errorf("read a proposal: %w", err)
 		}
 
