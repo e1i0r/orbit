@@ -139,8 +139,9 @@ type Options struct {
 
 	// KeepRule writes one of them down as a fact of the operator's, in the
 	// words the tray was left with — what they said, or what they typed
-	// instead — and takes it out of the tray.
-	KeepRule func(at time.Time, phrase, check string) error
+	// instead — and in the place they put it: a folder inside the checkout,
+	// one file, or the whole of it. It then takes it out of the tray.
+	KeepRule func(at time.Time, phrase, check, where string) error
 
 	// DropRule says it was not a rule. The sentence stays in the thread
 	// where it was said.

@@ -259,6 +259,7 @@ func (s State) foot(cw int, e Env) []string {
 	return []string{
 		s.line(p.T("knowledge.field_phrase", "what it says"), factPhrase, cw),
 		s.line(p.T("knowledge.field_check", "the check that makes it stop"), factCheck, cw),
+		s.line(p.T("knowledge.field_where", "the folder or file, if it is about one"), factWhere, cw),
 		"",
 		theme.Paint(theme.Dim).Render(cells.Fit(p.T("knowledge.editing_ways",
 			"[tab] the other field · [↵] save · [esc] leave it as it was"), cw)),

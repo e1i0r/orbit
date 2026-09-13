@@ -3201,6 +3201,14 @@
       "source": "there is more than one repository here; say which with the supervisor",
       "value": "hay más de un repositorio aquí; di cuál desde el supervisor"
     },
+    "knowledge.field_where": {
+      "source": "the folder or file, if it is about one",
+      "value": "la carpeta o el archivo, si es sobre alguno"
+    },
+    "knowledge.no_repo_for_path": {
+      "source": "this one is about no checkout, so there is nothing for {path} to be inside",
+      "value": "ésta no es sobre ningún checkout, así que no hay nada adentro de lo cual {path} pueda estar"
+    },
     "knowledge.title": {
       "source": "What Orbit knows",
       "value": "Lo que Orbit sabe"
@@ -4688,6 +4696,14 @@
     "verb.rules.empty": {
       "source": "nothing you said is waiting to be kept",
       "value": "no hay nada que dijiste esperando a ser guardado"
+    },
+    "verb.rules.in": {
+      "source": "the folder or file it is about; the default is the whole checkout",
+      "value": "la carpeta o el archivo del que es; por defecto, el checkout entero"
+    },
+    "verb.rules.kept_in": {
+      "source": "Orbit knows it, in {where}: {rule}",
+      "value": "Orbit ya lo sabe, en {where}: {rule}"
     },
     "verb.rules.kept": {
       "source": "Orbit knows it: {rule}",

@@ -44,21 +44,21 @@ func (s State) keepAsSaid(e Env) (State, Out) {
 		return s, Out{}
 	}
 
-	return s.keepWith(one, one.Text, "", e)
+	return s.keepWith(one, one.Text, "", "", e)
 }
 
 // keepWith writes it down as a fact of yours, and takes it out of the tray.
 //
-// The words are a parameter rather than the sentence's own because
-// correcting is how most of these are accepted: what you meant is what you
-// typed the second time, and being asked is worth nothing if the only
-// answers are yes and no.
-func (s State) keepWith(one Said, phrase, check string, e Env) (State, Out) {
+// The words and the place are parameters rather than the sentence's own,
+// because correcting is how most of these are accepted: what you meant is
+// what you typed the second time, and where it belongs is almost always
+// narrower than where you happened to say it.
+func (s State) keepWith(one Said, phrase, check, where string, e Env) (State, Out) {
 	if e.Keep == nil {
 		return s, Out{}
 	}
 
-	if err := e.Keep(one.At, phrase, check); err != nil {
+	if err := e.Keep(one.At, phrase, check, where); err != nil {
 		return s, said(err.Error())
 	}
 

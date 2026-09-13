@@ -26,7 +26,7 @@ import (
 // sentence has no check yet, because nobody has been asked for one.
 func (s State) editFact(e Env) State {
 	if one, waiting := s.onSaid(); waiting {
-		return s.typeInto(one.Text, "")
+		return s.typeInto(one.Text, "", "")
 	}
 
 	f, ok := s.onFact()
@@ -34,15 +34,16 @@ func (s State) editFact(e Env) State {
 		return s
 	}
 
-	return s.typeInto(f.Phrase, f.Check)
+	return s.typeInto(f.Phrase, f.Check, f.Scope.Path)
 }
 
-// typeInto puts the two fields up with what is already in them, and the
+// typeInto puts the three fields up with what is already in them, and the
 // caret in the first.
-func (s State) typeInto(phrase, check string) State {
+func (s State) typeInto(phrase, check, where string) State {
 	s.editing, s.field = true, factPhrase
 	s.in[factPhrase] = typing.New(phrase)
 	s.in[factCheck] = typing.New(check)
+	s.in[factWhere] = typing.New(where)
 
 	return s
 }
@@ -64,7 +65,7 @@ func (s State) newFact(e Env) State {
 	})
 	s.sel = s.last()
 
-	return s.typeInto("", "")
+	return s.typeInto("", "", "")
 }
 
 // hereScope is what a fact written on this screen is about: the one
@@ -136,10 +137,11 @@ func (s State) saveFact(e Env) (State, Out) {
 	}
 
 	check := strings.TrimSpace(s.in[factCheck].Val)
+	where := strings.TrimSpace(s.in[factWhere].Val)
 	s.editing = false
 
 	if one, waiting := s.onSaid(); waiting {
-		return s.keepWith(one, phrase, check, e)
+		return s.keepWith(one, phrase, check, where, e)
 	}
 
 	was, ok := s.onFact()
@@ -147,8 +149,29 @@ func (s State) saveFact(e Env) (State, Out) {
 		return s, Out{}
 	}
 
-	now := was
+	now, moved := was, was.Scope
 	now.Phrase, now.Check = phrase, check
+
+	// A path typed into a fact that is about no checkout has nowhere to be
+	// relative to, so it is refused rather than filed against a repository
+	// picked for somebody.
+	switch {
+	case where == "":
+		if moved.Kind == knowledge.Dir || moved.Kind == knowledge.File {
+			now.Scope = knowledge.Scope{Kind: knowledge.Repo, Repo: moved.Repo}
+		}
+	case moved.Repo == "":
+		return s, said(e.Words.T("knowledge.no_repo_for_path",
+			"this one is about no checkout, so there is nothing for {path} to be inside",
+			about("path", where)))
+	default:
+		at, err := knowledge.At(moved.Repo, where)
+		if err != nil {
+			return s, said(err.Error())
+		}
+
+		now.Scope = at
+	}
 
 	if err := e.Replace(was, now); err != nil {
 		return s, said(err.Error())

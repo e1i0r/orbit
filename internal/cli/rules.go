@@ -40,9 +40,9 @@ func waitingPort(s *store.Store) func() []known.Said {
 }
 
 // keepRulePort writes one of them down as a fact of yours.
-func keepRulePort(s *store.Store) func(at time.Time, phrase, check string) error {
-	return func(at time.Time, phrase, check string) error {
-		if err := learn.Keep(s, at, phrase, check); err != nil {
+func keepRulePort(s *store.Store) func(at time.Time, phrase, check, where string) error {
+	return func(at time.Time, phrase, check, where string) error {
+		if err := learn.Keep(s, at, phrase, check, where); err != nil {
 			return err
 		}
 

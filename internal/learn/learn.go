@@ -158,7 +158,7 @@ func Waiting(s *store.Store) ([]Said, error) {
 // sentence when the write fails — an offer nobody can accept twice and a
 // fact that was never saved — and this way the worst case is being offered
 // something you already kept.
-func Keep(s *store.Store, at time.Time, text, check string) error {
+func Keep(s *store.Store, at time.Time, text, check, where string) error {
 	d, err := s.Record()
 	if err != nil {
 		return err
@@ -174,7 +174,12 @@ func Keep(s *store.Store, at time.Time, text, check string) error {
 		return err
 	}
 
-	if _, err := knowledge.NewStore(s.Root()).Save(factOf(said, text, check)); err != nil {
+	fact, err := factOf(said, text, check, where)
+	if err != nil {
+		return err
+	}
+
+	if _, err := knowledge.NewStore(s.Root()).Save(fact); err != nil {
 		return err
 	}
 
@@ -211,11 +216,12 @@ func waitingAt(s *store.Store, at time.Time) (Said, error) {
 // out on its own goes somewhere else entirely: it is written where it was
 // found, about the repository it was found in.
 //
-// The scope is the checkout the sentence was said about, and everything when
-// it was said about no checkout. Nothing narrower — a file or a symbol is a
-// precision nobody has agreed to, and the Knowledge screen is where somebody
-// who has read one moves it.
-func factOf(said Said, text, check string) knowledge.Fact {
+// The scope is where the reader put it: a folder inside the checkout, one
+// file, the whole checkout, or everything when the sentence was said about
+// no checkout at all. A rule almost always belongs somewhere narrower than
+// where it was said — you say it while correcting one run and it is true of
+// one folder — and this is the moment somebody knows which.
+func factOf(said Said, text, check, where string) (knowledge.Fact, error) {
 	f := knowledge.Fact{
 		Scope:  knowledge.Scope{Kind: knowledge.General},
 		Source: knowledge.Human,
@@ -226,11 +232,26 @@ func factOf(said Said, text, check string) knowledge.Fact {
 		At:     time.Now().UTC(),
 	}
 
-	if said.Repo != "" {
-		f.Scope = knowledge.Scope{Kind: knowledge.Repo, Repo: said.Repo}
+	if said.Repo == "" {
+		if strings.TrimSpace(where) != "" {
+			return knowledge.Fact{}, fmt.Errorf(
+				"%q was said about no repository, so there is no checkout for %q to be in", said.Text, where)
+		}
+
+		return f, nil
 	}
 
-	return f
+	// The place the reader named, and the whole checkout when they named
+	// none. Narrower than the sentence was said about is the ordinary case:
+	// you say it while correcting one run and it is true of one folder.
+	scope, err := knowledge.At(said.Repo, where)
+	if err != nil {
+		return knowledge.Fact{}, err
+	}
+
+	f.Scope = scope
+
+	return f, nil
 }
 
 // Drop says it was not a rule. The sentence stays in the thread where you

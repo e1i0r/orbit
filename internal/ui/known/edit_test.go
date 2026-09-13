@@ -71,9 +71,11 @@ func TestEveryKeyOfTheLineDoesItsOwnThing(t *testing.T) {
 	}
 }
 
-// TestTabIsTheOtherField, and comes back round: what a rule says and what
-// makes it stop are one thought, and the two are typed one after the other.
-func TestTabIsTheOtherField(t *testing.T) {
+// TestTabWalksTheFieldsAndComesBackRound.
+//
+// What a rule says, what makes it stop, and where it is about are one
+// thought, and they are typed one after the other.
+func TestTabWalksTheFieldsAndComesBackRound(t *testing.T) {
 	s, e := correcting(t, "coverage stays above 90%")
 
 	s, _ = s.Key(press("tab"), e)
@@ -86,8 +88,18 @@ func TestTabIsTheOtherField(t *testing.T) {
 		t.Errorf("what was typed after tab reads %q", got)
 	}
 
+	s, _ = s.Key(press("tab"), e)
+	if s.field != factWhere {
+		t.Fatalf("tab from the check left field %d, want the place", s.field)
+	}
+
+	s = typed(s, e, "internal/db")
+	if got := s.in[factWhere].Val; got != "internal/db" {
+		t.Errorf("the place reads %q", got)
+	}
+
 	if s, _ = s.Key(press("tab"), e); s.field != factPhrase {
-		t.Errorf("tab from the check left field %d, want back to the sentence", s.field)
+		t.Errorf("tab from the place left field %d, want back to the sentence", s.field)
 	}
 }
 

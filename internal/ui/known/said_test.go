@@ -14,8 +14,8 @@ import (
 
 // kept is one sentence the window asked to have written down.
 type kept struct {
-	at            time.Time
-	phrase, check string
+	at                   time.Time
+	phrase, check, where string
 }
 
 // answers is what the two ports were asked for, so that a gesture is read
@@ -37,8 +37,8 @@ func withTray(t *testing.T, said []Said, facts ...knowledge.Fact) (State, Env, *
 		Keys:    keymap.New(words.For("en")),
 		All:     func() []knowledge.Fact { return facts },
 		Waiting: func() []Said { return said },
-		Keep: func(at time.Time, phrase, check string) error {
-			got.keeps = append(got.keeps, kept{at: at, phrase: phrase, check: check})
+		Keep: func(at time.Time, phrase, check, where string) error {
+			got.keeps = append(got.keeps, kept{at: at, phrase: phrase, check: check, where: where})
 
 			return nil
 		},

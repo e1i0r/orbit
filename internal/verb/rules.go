@@ -43,6 +43,10 @@ func rules() []Verb {
 					return p.T("verb.rules.check",
 						"a command that fails when the rule is broken, which is what makes it refuse work")
 				}},
+				{Name: "in", Kind: Named, About: func(p *words.Printer) string {
+					return p.T("verb.rules.in",
+						"the folder or file it is about; the default is the whole checkout")
+				}},
 			},
 		},
 		{
@@ -89,6 +93,11 @@ func waiting(w World) (Out, error) {
 // The text is what the reader typed instead, and what they said when they
 // typed nothing. Correcting is how most of these are accepted — being asked
 // is worth nothing if the only answers are yes and no.
+//
+// And so is placing it. A rule is said in the middle of one thing and is
+// usually true of somewhere narrower than where it was said; this is the
+// moment somebody knows which folder, and the only one where they are
+// looking at the sentence while they decide.
 func agreed(w World, in In) (Out, error) {
 	one, err := nth(w, in)
 	if err != nil {
@@ -100,8 +109,14 @@ func agreed(w World, in In) (Out, error) {
 		text = one.Text
 	}
 
-	if err := learn.Keep(w.Store(), one.At, text, in.Arg("check")); err != nil {
+	if err := learn.Keep(w.Store(), one.At, text, in.Arg("check"), in.Arg("in")); err != nil {
 		return Out{}, err
+	}
+
+	if where := strings.TrimSpace(in.Arg("in")); where != "" {
+		return Out{Said: w.Words().T("verb.rules.kept_in", "Orbit knows it, in {where}: {rule}",
+			words.Arg{Name: "where", Value: where},
+			words.Arg{Name: "rule", Value: text})}, nil
 	}
 
 	return Out{Said: w.Words().T("verb.rules.kept", "Orbit knows it: {rule}",

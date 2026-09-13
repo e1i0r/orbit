@@ -102,7 +102,7 @@ func TestKeepingASentenceIsHowOrbitLearnsIt(t *testing.T) {
 		t.Fatalf("propose: %v", err)
 	}
 
-	if err := Keep(s, one.At, one.Text, ""); err != nil {
+	if err := Keep(s, one.At, one.Text, "", ""); err != nil {
 		t.Fatalf("keep: %v", err)
 	}
 
@@ -142,7 +142,7 @@ func TestCorrectingIsHowMostOfTheseAreAccepted(t *testing.T) {
 	}
 
 	better := "never open a pull request until make check is green"
-	if err := Keep(s, one.At, better, "make check"); err != nil {
+	if err := Keep(s, one.At, better, "make check", ""); err != nil {
 		t.Fatalf("keep: %v", err)
 	}
 
@@ -167,7 +167,7 @@ func TestARuleWithNoCommandAdvisesRatherThanRefuses(t *testing.T) {
 		t.Fatalf("propose: %v", err)
 	}
 
-	if err := Keep(s, one.At, one.Text, ""); err != nil {
+	if err := Keep(s, one.At, one.Text, "", ""); err != nil {
 		t.Fatalf("keep: %v", err)
 	}
 
@@ -215,7 +215,7 @@ func TestAnsweringTwiceIsRefused(t *testing.T) {
 		t.Fatalf("propose: %v", err)
 	}
 
-	if err := Keep(s, one.At, one.Text, ""); err != nil {
+	if err := Keep(s, one.At, one.Text, "", ""); err != nil {
 		t.Fatalf("keep: %v", err)
 	}
 
@@ -238,7 +238,7 @@ func TestASentenceThatSaysNothingIsRefused(t *testing.T) {
 		t.Fatalf("propose: %v", err)
 	}
 
-	if err := Keep(s, one.At, "   ", ""); err == nil {
+	if err := Keep(s, one.At, "   ", "", ""); err == nil {
 		t.Error("a rule with no sentence was written down")
 	}
 

@@ -90,7 +90,7 @@ func taskTools() []Tool {
 			Name: "orbit_learn",
 			Description: "Write down something true about the code this task is worked in, so the next run against it is told before it starts. " +
 				"Use it when you hit something worth knowing that the task description did not say: a constraint, a trap, a convention the code keeps. " +
-				"It is filed under that task's repository and reaches every run against it, and nothing outside it — you cannot write a fact about another project or about every project. " +
+				"It is filed under that task's repository — or under a folder or file inside it, if you name one — and reaches every run against that, and nothing outside it. You cannot write a fact about another project or about every project. " +
 				"Without stops it is told to every phase that works there. With stops and a check it also becomes a gate: work that breaks it is sent back. " +
 				"A rule with no check cannot enforce itself and is told rather than enforced.",
 			InputSchema: object(map[string]Property{
@@ -98,6 +98,7 @@ func taskTools() []Tool {
 				"stops":   {Type: "boolean", Description: "Whether work that breaks this should be refused rather than merely warned about. Needs check."},
 				"check":   {Type: "string", Description: "A shell command that exits non-zero when the rule is broken. This is what lets it stop work."},
 				"task_id": {Type: "string", Description: "The task this was learned in. It says which repository the fact is about, and lets a reader go and see what happened."},
+				"path":    {Type: "string", Description: "The folder or file inside that repository this is about, if it is about one — a rule on a folder reaches everything under it. Leave it out for the whole project."},
 			}, "phrase", "task_id"),
 		},
 		{
