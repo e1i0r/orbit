@@ -33,6 +33,12 @@ type testWorld struct {
 	facts  []knowledge.Fact
 	said   []saidLine
 	learnt []knowledge.Fact
+	// refuse is what every port answers instead of working, when a test
+	// wants to know what a verb does about the machine saying no.
+	refuse error
+	// unread is how many finished tasks nobody has looked at, which is the
+	// one number a run asks for before it starts.
+	unread int
 }
 
 // saidLine is one line handed to the supervisor's thread.
@@ -72,44 +78,44 @@ func (w *testWorld) Find(id, repoPath string) (task.Task, repo.Repo, error) {
 	return t, one, nil
 }
 
-func (w *testWorld) Unread(string) (int, error) { return 0, nil }
+func (w *testWorld) Unread(string) (int, error) { return w.unread, w.refuse }
 
-func (w *testWorld) Looked() error { return nil }
+func (w *testWorld) Looked() error { return w.refuse }
 
-func (w *testWorld) Facts() ([]knowledge.Fact, error) { return w.facts, nil }
+func (w *testWorld) Facts() ([]knowledge.Fact, error) { return w.facts, w.refuse }
 
-func (w *testWorld) Board() (board.Board, error) { return w.board, nil }
+func (w *testWorld) Board() (board.Board, error) { return w.board, w.refuse }
 
 func (w *testWorld) Log(repoPath, id string) ([]view.Entry, error) {
 	if w.log == nil {
-		return nil, nil
+		return nil, w.refuse
 	}
 
-	return w.log[id], nil
+	return w.log[id], w.refuse
 }
 
 func (w *testWorld) Deliver(_ context.Context, t task.Task, verb string) (string, error) {
-	return "https://example.test/pr/1", nil
+	return "https://example.test/pr/1", w.refuse
 }
 
 func (w *testWorld) Say(text, by, about string) error {
 	w.said = append(w.said, saidLine{text: text, by: by, task: about})
 
-	return nil
+	return w.refuse
 }
 
 func (w *testWorld) Learn(fact knowledge.Fact) error {
 	w.learnt = append(w.learnt, fact)
 
-	return nil
+	return w.refuse
 }
 
 func (w *testWorld) Export(into, only string) (string, error) {
-	return "written to " + into, nil
+	return "written to " + into, w.refuse
 }
 
 func (w *testWorld) Take(id, repoPath string) (string, error) {
-	return "a terminal in " + repoPath, nil
+	return "a terminal in " + repoPath, w.refuse
 }
 
 // worldOf is a world over a state root of the test's own.

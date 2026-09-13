@@ -49,7 +49,7 @@ func TestWritingAndSteeringATask(t *testing.T) {
 	}
 
 	mustAsk(t, w, "task delete", In{Task: "ACME-1", By: "operator"})
-	mustRefuse(t, w, "read", In{Task: "ACME-1", By: "operator"})
+	mustRefuse(t, w, "task read", In{Task: "ACME-1", By: "operator"})
 }
 
 // TestAnsweringWhatATaskWaitsFor. Approving, permitting, marking: the
@@ -255,5 +255,5 @@ func TestTheBoardAsAReading(t *testing.T) {
 		t.Errorf("show answered %q, want the task", shown.Said)
 	}
 
-	mustRefuse(t, w, "show", In{Task: "ACME-404", By: "operator"})
+	mustRefuse(t, w, "task show", In{Task: "ACME-404", By: "operator"})
 }

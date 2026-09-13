@@ -37,15 +37,15 @@ func TestTheThreadIsNumberedAndRetractable(t *testing.T) {
 		t.Errorf("the thread reads:\n%s", out.Said)
 	}
 
-	mustRefuse(t, w, "retract", In{Args: map[string]string{"line": "many"}, By: "operator"})
-	mustRefuse(t, w, "retract", In{Args: map[string]string{"line": "9"}, By: "operator"})
+	mustRefuse(t, w, "supervisor retract", In{Args: map[string]string{"line": "many"}, By: "operator"})
+	mustRefuse(t, w, "supervisor retract", In{Args: map[string]string{"line": "9"}, By: "operator"})
 
 	took := mustAsk(t, w, "supervisor retract", In{Args: map[string]string{"line": "1"}, By: "operator"})
 	if !strings.Contains(took.Said, "never force-push") {
 		t.Errorf("retract answered %q", took.Said)
 	}
 
-	mustRefuse(t, w, "retract", In{Args: map[string]string{"line": "1"}, By: "operator"})
+	mustRefuse(t, w, "supervisor retract", In{Args: map[string]string{"line": "1"}, By: "operator"})
 }
 
 // TestSettingsReadAndWrite. The whole table reads; one key writes, and a
@@ -65,7 +65,7 @@ func TestSettingsReadAndWrite(t *testing.T) {
 		t.Errorf("set answered %q", changed.Said)
 	}
 
-	mustRefuse(t, w, "set", In{
+	mustRefuse(t, w, "settings set", In{
 		Args: map[string]string{"key": "colour", "value": "blue"}, By: "operator",
 	})
 }
