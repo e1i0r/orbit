@@ -7,11 +7,13 @@ package cli
 // server, no port — with a state root and a reader of the test's own.
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/knowledge"
 	"github.com/e1i0r/orbit/internal/store"
+	"github.com/e1i0r/orbit/internal/ui/roster"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -102,5 +104,55 @@ func TestOneDirectoryTakesNoneOrOne(t *testing.T) {
 
 	if _, err := oneDirectory(ctx, []string{"a", "b", "c"}); err == nil {
 		t.Error("three directories were accepted")
+	}
+}
+
+// TestTheBrowserSaysHowToInstallAnEngineThatIsNotThere.
+//
+// The steps are the one part of that listing that is sentences a reader
+// reads, and they are only carried for an engine this machine cannot run.
+// Which is why the browser's roster handed them a nil printer for as long as
+// it did: every machine with the engines installed never reached the line,
+// and the one without them got a server that fell over instead of a page
+// saying how to install them.
+func TestTheBrowserSaysHowToInstallAnEngineThatIsNotThere(t *testing.T) {
+	_, _, p := portsOf(t)
+
+	missing := roll{
+		words: p,
+		engines: func() []roster.Engine {
+			return []roster.Engine{{
+				Name:      "claude",
+				Available: false,
+				Setup:     setupGuide("claude"),
+			}}
+		},
+	}
+
+	got := missing.Engines()
+	if len(got) != 1 {
+		t.Fatalf("the roster reads %d engines", len(got))
+	}
+
+	if len(got[0].Setup) == 0 {
+		t.Fatal("an engine that cannot run says nothing about how to install it")
+	}
+
+	// The instruction is translated and the command is not: a translated
+	// command is a command that does not run.
+	if !strings.Contains(strings.Join(got[0].Setup, "\n"), "npm install") {
+		t.Errorf("the steps do not say what to type:\n%s", strings.Join(got[0].Setup, "\n"))
+	}
+}
+
+// TestARosterBuiltWithoutALanguageStillAnswers, which is the other half of
+// the same fix: English is an answer and a nil dereference is not.
+func TestARosterBuiltWithoutALanguageStillAnswers(t *testing.T) {
+	missing := roll{engines: func() []roster.Engine {
+		return []roster.Engine{{Name: "claude", Setup: setupGuide("claude")}}
+	}}
+
+	if got := missing.Engines(); len(got) != 1 || len(got[0].Setup) == 0 {
+		t.Errorf("a roster with no language read %v", got)
 	}
 }

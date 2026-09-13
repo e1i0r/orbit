@@ -123,9 +123,25 @@ type roll struct {
 	engines func() []roster.Engine
 	quota   func(string) roster.Reading
 	settled string
+	// words is the reader's own, for the one part of this listing that is
+	// sentences: what to do about an engine this machine cannot run yet.
+	// Those are steps somebody follows, and the rest of the page is already
+	// in their language.
+	words *words.Printer
 }
 
 func (r roll) Settled() string { return r.settled }
+
+// printer is the reader's language, and English for a roll built without
+// one. Nothing in the program builds one that way, but the alternative to
+// answering here is the nil dereference this replaces.
+func (r roll) printer() *words.Printer {
+	if r.words == nil {
+		return words.For("")
+	}
+
+	return r.words
+}
 
 func (r roll) Engines() []web.EngineInfo {
 	if r.engines == nil {
@@ -143,8 +159,13 @@ func (r roll) Engines() []web.EngineInfo {
 			CanThink:  e.CanThink,
 		}
 
+		// Only an engine that cannot run carries these, which is why a nil
+		// printer here went unseen for as long as it did: every machine
+		// that had the engines installed never reached it, and the one
+		// that did not got a server that fell over instead of a page
+		// saying how to install them.
 		if e.Setup != nil {
-			one.Setup = e.Setup(nil)
+			one.Setup = e.Setup(r.printer())
 		}
 
 		if r.quota != nil {
@@ -199,6 +220,7 @@ func webPorts(
 			engines: enginesPort(engines),
 			quota:   quotaPort(quota.FromEnv(), false),
 			settled: settledEngine(s, engines),
+			words:   p,
 		},
 		Root: dir,
 	}
