@@ -171,6 +171,7 @@ func meaningful(text string) wording {
 	out := wording{}
 
 	for _, word := range strings.FieldsFunc(strings.ToLower(text), notAWord) {
+		word = plain(word)
 		if len([]rune(word)) < shortWord || filler[word] {
 			continue
 		}
@@ -179,6 +180,36 @@ func meaningful(text string) wording {
 	}
 
 	return out
+}
+
+// accents are the marks Spanish puts on a vowel, and what is underneath.
+//
+// Comparing the front of a word only works if the same word written two ways
+// starts the same, and in Spanish it often does not: "subí" and "subilo" are
+// one instruction and share three letters, because the accent sits on the
+// fourth. Folded, they share four and the rule finds them.
+//
+// The ñ is folded with them, which makes "año" and "ano" one word. That is
+// the price, it is a word nobody writes into a rule about code, and leaving
+// it out would mean "diseño" and "disenar" never meet.
+var accents = map[rune]rune{
+	'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ü': 'u', 'ñ': 'n',
+}
+
+// plain is a word with its accents taken off, for comparing only. What is
+// shown to a reader is always what they typed.
+func plain(word string) string {
+	var b strings.Builder
+
+	for _, r := range word {
+		if under, marked := accents[r]; marked {
+			r = under
+		}
+
+		b.WriteRune(r)
+	}
+
+	return b.String()
 }
 
 // notAWord is where one word ends and the next begins: anything that is not

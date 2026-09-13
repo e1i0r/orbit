@@ -55,3 +55,23 @@ func TestPunctuationIsNotPartOfAWord(t *testing.T) {
 		t.Errorf("one word written three ways reads as %v", got)
 	}
 }
+
+// TestAnAccentIsNotADifferentWord.
+//
+// Comparing the front of a word only works if the same word written two ways
+// starts the same, and in Spanish it often does not: "subí" and "subilo" are
+// one instruction and share three letters, because the accent sits on the
+// fourth. This is half of what makes the second language work as well as the
+// first, and without it the whole thing only ever groups English.
+func TestAnAccentIsNotADifferentWord(t *testing.T) {
+	shared := meaningful("subí el coverage de esto").
+		and(meaningful("falta coverage acá, subilo"))
+
+	if len(shared) < enoughWords {
+		t.Errorf("two ways of asking for the same thing share only %v", shared.sorted())
+	}
+
+	if _, same := sameWord(plain("cubrí"), plain("cubrir")); !same {
+		t.Error("cubrí and cubrir read as two different words")
+	}
+}

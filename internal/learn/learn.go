@@ -76,7 +76,7 @@ type Said struct {
 // the two are never printed the same.
 func (s Said) From() string {
 	if s.About == "" {
-		return s.By
+		return with(s.By, s.Topic)
 	}
 
 	if s.By == AModel {
@@ -84,6 +84,20 @@ func (s Said) From() string {
 	}
 
 	return s.About
+}
+
+// with puts the kind of thing a rule is about beside where it came from, so
+// that the one field a reader is shown says both.
+//
+// A topic nobody can see is a topic nobody can tell has gone wrong, and the
+// whole reason the model chooses from a fixed list is that two readings of
+// the same person should add up to something visible.
+func with(by, topic string) string {
+	if topic == "" {
+		return by
+	}
+
+	return by + " · " + topic
 }
 
 // Operator is what By says when it was typed at one of the controls and
