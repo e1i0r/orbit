@@ -9,6 +9,8 @@
 package knowledge
 
 import (
+	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -141,6 +143,62 @@ var languages = map[string]string{
 	".json": "json",
 	".yaml": "yaml",
 	".yml":  "yaml",
+}
+
+// At is the scope a path names inside a checkout: the directory and
+// everything below it, or the one file.
+//
+// Which of the two is read off the checkout rather than guessed from the
+// spelling. A name with no dot in it is usually a directory and sometimes a
+// file, and a rule filed as the wrong one is a rule that reaches half a
+// project or none of it.
+//
+// A path the checkout does not have is refused, and the refusal says the
+// rule was not written down rather than what would have happened to it. The
+// alternative was keeping it for a file that might appear later, and the
+// price is worse than the convenience: a typo becomes a rule that quietly
+// applies to nothing, and there is nothing on any screen that would ever say
+// so. Writing it after the file exists costs one more gesture; a rule that
+// reaches nothing costs whatever it was supposed to prevent.
+func At(repo, path string) (Scope, error) {
+	path = strings.Trim(strings.TrimSpace(filepath.ToSlash(path)), "/")
+	if repo == "" {
+		return Scope{}, fmt.Errorf("a rule about %s needs the repository it is in", path)
+	}
+
+	// Nothing, and the root written as a dot: both are the whole checkout.
+	// The dot is how somebody says so out loud, which is what they need
+	// when the place arrived filled in and is wrong.
+	if path == "" || path == "." {
+		return Scope{Kind: Repo, Repo: repo}, nil
+	}
+
+	// Where it lands rather than what was typed: `internal/../../etc` is a
+	// path out of the checkout written as one inside it, and what catches
+	// that is asking how to get there from the repository rather than
+	// reading the spelling.
+	full := filepath.Join(repo, filepath.FromSlash(path))
+
+	inside, err := filepath.Rel(repo, full)
+	if err != nil || inside == ".." || strings.HasPrefix(inside, ".."+string(filepath.Separator)) {
+		return Scope{}, fmt.Errorf("%s is outside the repository, so the rule was not written down", path)
+	}
+
+	at, err := os.Stat(full)
+	if err != nil {
+		return Scope{}, fmt.Errorf("there is no %s in this checkout, so the rule was not written down", path)
+	}
+
+	// The path as the walk found it, not as it was typed: `./internal//db`
+	// and `internal/db` are the same directory, and two facts filed under
+	// two spellings of it are two rules nobody can tell apart.
+	where := filepath.ToSlash(inside)
+
+	if at.IsDir() {
+		return Scope{Kind: Dir, Repo: repo, Path: where}, nil
+	}
+
+	return Scope{Kind: File, Repo: repo, Path: where}, nil
 }
 
 // LanguageOf is what a file is written in, read from its extension, and

@@ -36,29 +36,29 @@ func (s State) onFact() (knowledge.Fact, bool) {
 	return s.facts[at], true
 }
 
-// keepAsSaid keeps the sentence under the cursor word for word, which is the
-// answer when there is nothing to correct.
+// keepAsSaid keeps the sentence under the cursor word for word and where the
+// work was, which is the answer when there is nothing to correct.
 func (s State) keepAsSaid(e Env) (State, Out) {
 	one, waiting := s.onSaid()
 	if !waiting {
 		return s, Out{}
 	}
 
-	return s.keepWith(one, one.Text, "", e)
+	return s.keepWith(one, one.Text, "", one.Where, e)
 }
 
 // keepWith writes it down as a fact of yours, and takes it out of the tray.
 //
-// The words are a parameter rather than the sentence's own because
-// correcting is how most of these are accepted: what you meant is what you
-// typed the second time, and being asked is worth nothing if the only
-// answers are yes and no.
-func (s State) keepWith(one Said, phrase, check string, e Env) (State, Out) {
+// The words and the place are parameters rather than the sentence's own,
+// because correcting is how most of these are accepted: what you meant is
+// what you typed the second time, and where it belongs is almost always
+// narrower than where you happened to say it.
+func (s State) keepWith(one Said, phrase, check, where string, e Env) (State, Out) {
 	if e.Keep == nil {
 		return s, Out{}
 	}
 
-	if err := e.Keep(one.At, phrase, check); err != nil {
+	if err := e.Keep(one.At, phrase, check, where); err != nil {
 		return s, said(err.Error())
 	}
 

@@ -42,11 +42,12 @@ func Direct(s *store.Store, t Task, by, message string) error {
 	// Half of what gets typed at a run is not about that run. "never merge
 	// without the tests passing" is a rule, said here because here is where
 	// somebody was standing — so it is offered back the same way the
-	// supervisor's lines are. The correction above stands either way: this
-	// answers nothing and cannot fail.
+	// supervisor's lines are, and with the folder the work was in, which is
+	// the rest of where somebody was standing. The correction above stands
+	// either way: this answers nothing and cannot fail.
 	learn.Heard(s, learn.Said{
 		At: time.Now().UTC(), Text: message,
-		By: by, About: t.ID, Repo: t.Repo.Path,
+		By: by, About: t.ID, Repo: t.Repo.Path, Path: workedIn(s, t),
 	})
 
 	_, ok, err := Alive(s, t)

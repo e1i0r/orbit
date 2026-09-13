@@ -169,7 +169,7 @@ func TestARuleSaidToTheSupervisorReachesTheTray(t *testing.T) {
 		t.Fatalf("%d sentences reached the tray", len(waiting))
 	}
 
-	if err := Keep(s, waiting[0].At, waiting[0].Text, ""); err != nil {
+	if err := Keep(s, waiting[0].At, waiting[0].Text, "", Place{}); err != nil {
 		t.Fatalf("keep: %v", err)
 	}
 

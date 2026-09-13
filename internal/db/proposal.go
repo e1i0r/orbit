@@ -44,10 +44,17 @@ type Proposal struct {
 	// what makes a proposal traceable back to the run that produced it.
 	About string
 	// Repo is the checkout it is about, and empty for a sentence that is
-	// about everything. There is nothing narrower here on purpose: a file
-	// or a symbol is a precision nobody has agreed to yet, and the screen
-	// that lists facts is where one is narrowed by somebody who read it.
+	// about everything.
 	Repo string
+	// Path is the folder inside that checkout the work was in when the
+	// sentence was said, and empty when the work was spread across the
+	// whole of it or had not started.
+	//
+	// A folder and never a file: a rule almost always covers the folder the
+	// work was in, and naming one file is a precision only a person means.
+	// Nobody has agreed to this yet either — it is what the tray offers, and
+	// whoever keeps the sentence can type somewhere else instead.
+	Path string
 }
 
 // Propose writes one down, and says nothing when this line already has a row.
@@ -57,7 +64,7 @@ type Proposal struct {
 // before.
 func (d *DB) Propose(p Proposal) error {
 	_, err := d.sql.Exec(insertProposal, record.Stamp(p.SaidAt), p.Said, Waiting,
-		p.By, p.About, p.Repo)
+		p.By, p.About, p.Repo, p.Path)
 	if err != nil {
 		return fmt.Errorf("write down what you said at %s: %w", p.SaidAt, err)
 	}
@@ -82,7 +89,7 @@ func (d *DB) Waiting() ([]Proposal, error) {
 			at string
 		)
 
-		if err := rows.Scan(&at, &p.Said, &p.State, &p.By, &p.About, &p.Repo); err != nil {
+		if err := rows.Scan(&at, &p.Said, &p.State, &p.By, &p.About, &p.Repo, &p.Path); err != nil {
 			return nil, fmt.Errorf("read a proposal: %w", err)
 		}
 

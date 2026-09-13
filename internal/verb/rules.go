@@ -43,6 +43,19 @@ func rules() []Verb {
 					return p.T("verb.rules.check",
 						"a command that fails when the rule is broken, which is what makes it refuse work")
 				}},
+				{Name: "in", Kind: Named, About: func(p *words.Printer) string {
+					return p.T("verb.rules.in",
+						"the folder or file it is about; the default is where the work was, and . is the whole checkout")
+				}},
+				// Declared rather than left to the caller's own, because a
+				// sentence said to the supervisor knows no repository and a
+				// browser asking about the board carries none either. What
+				// the rule is about is where the reader is, and only the
+				// reader can say where that is.
+				{Name: "repo", Kind: Named, About: func(p *words.Printer) string {
+					return p.T("verb.rules.repo",
+						"the checkout the folder or file is in; the default is the one you are in")
+				}},
 			},
 		},
 		{
@@ -73,10 +86,21 @@ func waiting(w World) (Out, error) {
 			"nothing you said is waiting to be kept"), Saw: said}, nil
 	}
 
+	// The place is a column only when something has one, because most
+	// terminals here are a hundred columns wide and the sentence is what
+	// somebody came to read.
+	wide := 0
+
+	for _, one := range said {
+		if len(one.Path) > 0 {
+			wide = max(wide, len(one.Path)+2)
+		}
+	}
+
 	var b strings.Builder
 	for i, one := range said {
-		fmt.Fprintf(&b, "%3d  %s  %-12s %s\n",
-			i+1, one.At.Local().Format(time.DateTime), one.From(), one.Text)
+		fmt.Fprintf(&b, "%3d  %s  %-12s %-*s%s\n",
+			i+1, one.At.Local().Format(time.DateTime), one.From(), wide, one.Path, one.Text)
 	}
 
 	return Out{Said: strings.TrimRight(b.String(), "\n"), Saw: said}, nil
@@ -89,6 +113,11 @@ func waiting(w World) (Out, error) {
 // The text is what the reader typed instead, and what they said when they
 // typed nothing. Correcting is how most of these are accepted — being asked
 // is worth nothing if the only answers are yes and no.
+//
+// And so is placing it. A rule is said in the middle of one thing and is
+// usually true of somewhere narrower than where it was said; this is the
+// moment somebody knows which folder, and the only one where they are
+// looking at the sentence while they decide.
 func agreed(w World, in In) (Out, error) {
 	one, err := nth(w, in)
 	if err != nil {
@@ -100,12 +129,49 @@ func agreed(w World, in In) (Out, error) {
 		text = one.Text
 	}
 
-	if err := learn.Keep(w.Store(), one.At, text, in.Arg("check")); err != nil {
+	// The checkout the reader named, then the one they are standing in, and
+	// nowhere when there is neither — which is what a rule about everything
+	// is. openRepo is the same reading every other verb makes of it.
+	here, err := openRepo(w, in)
+	if err != nil {
 		return Out{}, err
+	}
+
+	where := learn.Place{Repo: here.Path, Path: in.Arg("in")}
+	if err := learn.Keep(w.Store(), one.At, text, in.Arg("check"), where); err != nil {
+		return Out{}, err
+	}
+
+	// Where it went and not what was typed. Most of these are kept without
+	// a path at all, because the folder the work was in came with the
+	// sentence — and an answer that left that out would be Orbit filing a
+	// rule somewhere and not saying so.
+	if named := placed(where.Path, one.Path); named != "" {
+		return Out{Said: w.Words().T("verb.rules.kept_in", "Orbit knows it, in {where}: {rule}",
+			words.Arg{Name: "where", Value: named},
+			words.Arg{Name: "rule", Value: text})}, nil
 	}
 
 	return Out{Said: w.Words().T("verb.rules.kept", "Orbit knows it: {rule}",
 		words.Arg{Name: "rule", Value: text})}, nil
+}
+
+// placed is the folder a kept rule ended up in: what the reader typed, then
+// the folder the work was in when the sentence was said.
+//
+// A dot is the reader saying the whole checkout out loud, which is a place
+// with no path — so it answers with nothing, the same as a rule nobody put
+// anywhere.
+func placed(typed, worked string) string {
+	if named := strings.TrimSpace(typed); named != "" {
+		if named == "." {
+			return ""
+		}
+
+		return named
+	}
+
+	return worked
 }
 
 // dropped says it was not a rule. The sentence stays in the thread where it

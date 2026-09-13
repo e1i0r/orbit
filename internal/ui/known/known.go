@@ -48,10 +48,10 @@ type Env struct {
 	// nobody has answered yet. Nil in a window built without a store, and
 	// then the tray is simply not there.
 	Waiting func() []Said
-	// Keep writes one of them down as a fact of yours. The words are handed
-	// over rather than read back out of the tray, because correcting is how
-	// most of these are accepted.
-	Keep func(at time.Time, phrase, check string) error
+	// Keep writes one of them down as a fact of yours. The words and the
+	// place are handed over rather than read back out of the tray, because
+	// correcting and placing are how most of these are accepted.
+	Keep func(at time.Time, phrase, check, where string) error
 	// Drop says it was not a rule. The sentence stays in the thread where it
 	// was said, which is where it belonged all along.
 	Drop func(at time.Time) error
@@ -78,6 +78,11 @@ type Said struct {
 	// correcting one run and said to the supervisor are the same rule, and
 	// which it was is how somebody decides whether it was meant that widely.
 	From string
+	// Where is the folder the work was in when it was said, relative to the
+	// checkout it came out of, and empty when it came out of no one folder.
+	// It is what the editor's place line opens with: the commonest correction
+	// is a path, and the commonest path is this one.
+	Where string
 }
 
 // Out is what the screen asks the window for.
@@ -117,22 +122,24 @@ type State struct {
 	read bool
 
 	// editing is the fact under the cursor being corrected in place, and in
-	// holds the two things about it that are text: what it says, and the
-	// command that decides whether it can stop the work.
+	// holds the three things about it that are text: what it says, the
+	// command that decides whether it can stop the work, and the folder or
+	// file it is about.
 	//
-	// Two fields and not the whole record. A fact's scope and its source are
-	// what make it traceable, and neither is something to retype — the
-	// source is where it came from, which nobody may edit, and the scope is
-	// moved with its own gesture rather than by typing a path.
+	// Three fields and not the whole record. What is absent is the source —
+	// where a fact came from is what makes it traceable, and it is not
+	// something anybody retypes. How wide it is stays on ←/→, because
+	// everywhere and one checkout are not paths and cannot be typed as one.
 	editing bool
 	field   int
 	in      [factFields]typing.Field
 }
 
-// The two fields of a fact that are typed into.
+// The three fields of a fact that are typed into.
 const (
 	factPhrase = iota
 	factCheck
+	factWhere
 	factFields
 )
 

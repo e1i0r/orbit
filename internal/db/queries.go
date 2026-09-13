@@ -153,10 +153,10 @@ const (
 // finds it has found before. The update carries the state it expects, so
 // deciding twice moves nothing rather than overwriting an answer.
 const (
-	insertProposal = `INSERT INTO proposal(said_at, said, state, said_by, about_task, repo)
-	                  VALUES(?,?,?,?,?,?) ON CONFLICT(said_at) DO NOTHING`
+	insertProposal = `INSERT INTO proposal(said_at, said, state, said_by, about_task, repo, path)
+	                  VALUES(?,?,?,?,?,?,?) ON CONFLICT(said_at) DO NOTHING`
 
-	selectWaiting = `SELECT said_at, said, state, said_by, about_task, repo FROM proposal
+	selectWaiting = `SELECT said_at, said, state, said_by, about_task, repo, path FROM proposal
 	                  WHERE state = ? ORDER BY said_at`
 
 	decideProposal = `UPDATE proposal SET state = ?, decided = ?

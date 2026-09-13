@@ -56,8 +56,18 @@ func (sn Session) learn(args map[string]any) CallToolResult {
 			"is written about one", t.ID))
 	}
 
+	// The path the agent named, inside its own task's checkout and nowhere
+	// else. An agent that just hit something knows better than anybody
+	// which file it was in, and a rule filed against the whole project when
+	// it was true of one folder is a rule that will be skipped everywhere
+	// else until somebody narrows it by hand.
+	scope, err := knowledge.At(t.RepoPath, stringArg(args, "path"))
+	if err != nil {
+		return refuse(err)
+	}
+
 	f := knowledge.Fact{
-		Scope:  knowledge.Scope{Kind: knowledge.Repo, Repo: t.RepoPath},
+		Scope:  scope,
 		Source: knowledge.FromRecord,
 		Phrase: phrase,
 		Stops:  boolArg(args, "stops"),
@@ -82,8 +92,8 @@ func (sn Session) learn(args map[string]any) CallToolResult {
 			t.Repo, where)
 	}
 
-	return done("written down about %s at %s. Every run against that repository is told, "+
-		"and nothing outside it.", t.Repo, where)
+	return done("written down about %s at %s. Every run against %s is told, and nothing "+
+		"outside it.", t.Repo, where, factWhere(f.Scope))
 }
 
 // knowledgeOf answers what Orbit knows, for an agent that would rather ask
