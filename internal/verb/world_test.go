@@ -120,6 +120,18 @@ func (w *testWorld) Learn(fact knowledge.Fact) error {
 	return w.refuse
 }
 
+// Replace writes the changed rule over the one it replaces, matched by the
+// name that survives everything else about it.
+func (w *testWorld) Replace(was, now knowledge.Fact) error {
+	for i, f := range w.facts {
+		if f.ID == was.ID {
+			w.facts[i] = now
+		}
+	}
+
+	return w.refuse
+}
+
 func (w *testWorld) Export(into, only string) (string, error) {
 	return "written to " + into, w.refuse
 }

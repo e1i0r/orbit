@@ -32,6 +32,7 @@ import (
 type World interface {
 	Here
 	Beyond
+	Knows
 	Speaks
 	Sees
 }
@@ -107,6 +108,24 @@ type Window struct {
 	ResetsIn int `json:"resetsIn"`
 }
 
+// Knows is writing down what Orbit has learned.
+//
+// Its own two rather than part of Beyond, which is about reaching past this
+// machine: these write files in a checkout and a row in the record, and both
+// are here. A port rather than a call because where a fact goes depends on
+// the state root, and which repositories are in view is the way in's.
+type Knows interface {
+	// Learn writes down something true about the code.
+	Learn(fact knowledge.Fact) error
+	// Replace writes a rule that has changed and takes away the one it
+	// replaces, and records what changed about it.
+	//
+	// The old one travels with it because a rule's file is named after its
+	// sentence: writing alone would leave the old copy behind, still told
+	// and still refusing work.
+	Replace(was, now knowledge.Fact) error
+}
+
 // Beyond is what a verb can reach past this machine: a model that has to be
 // paid for, and a pull request other people will see.
 type Beyond interface {
@@ -120,8 +139,6 @@ type Beyond interface {
 	// verb that quietly called a model would be one that spent money
 	// without saying so.
 	Say(text, by, about string) error
-	// Learn writes down something true about the code.
-	Learn(fact knowledge.Fact) error
 	// Ask puts one short question to a named model and answers with what it
 	// said, for the one reading that cannot be made without one: what four
 	// sentences somebody keeps saying have in common.

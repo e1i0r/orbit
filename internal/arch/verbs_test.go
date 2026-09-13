@@ -45,6 +45,11 @@ var notThere = map[string]string{
 		"passes a task positionally, the way every other verb about one takes it",
 	"window:pr show": "the deliver toolbar acts on the pull request rather than listing it; " +
 		"which ones are open is the command line's reading",
+	"window:rules pause": "pausing takes a written reason, and the knowledge screen has one line " +
+		"for the place and none for a sentence about why — the review module is where that is " +
+		"typed, and it does not exist yet",
+	"window:rules resume": "it is the answer to a pause, and the screen where a pause is read is " +
+		"the review module's, which does not exist yet",
 	"window:rules history": "the knowledge screen shows what a rule says now, and what it has been " +
 		"through is the review module's screen — which is where somebody acts on it, and which " +
 		"does not exist yet",
@@ -64,6 +69,9 @@ var notThere = map[string]string{
 	"mcp:task take":    "this hands a terminal to an engine, and a tool call has no terminal to hand over",
 	"mcp:rules draft": "it spends money with no task behind it, so a model asking for it would be " +
 		"making Orbit pay for another model on nobody's say-so",
+	"mcp:rules pause": "a model that could pause a rule could quietly clear away the ones it keeps " +
+		"running into; pausing is the answer a person gives after reading it",
+	"mcp:rules resume": "it is the other half of pausing, and belongs to whoever paused it",
 }
 
 // TestEveryVerbIsOfferedByEveryWayIn.

@@ -25,7 +25,13 @@ func rules() []Verb {
 		{
 			Name: "rules", Reads: true,
 			About: func(p *words.Printer) string {
-				return p.T("verb.rules", "the rules you said that Orbit has not been told to keep yet")
+				return p.T("verb.rules", "everything about your rules that is waiting for an answer")
+			},
+			Takes: []Field{
+				{Name: "state", Kind: Named, About: func(p *words.Printer) string {
+					return p.T("verb.rules.state",
+						"show the rules standing here instead: active, paused, off, or review")
+				}},
 			},
 		},
 		{
@@ -80,6 +86,33 @@ func rules() []Verb {
 			},
 		},
 		{
+			Name: "pause", Under: "rules",
+			About: func(p *words.Printer) string {
+				return p.T("verb.rules.pause",
+					"stop a rule applying for now, and say why; it goes to be looked at again")
+			},
+			Takes: []Field{
+				{Name: "rule", Kind: Named, Needed: true, About: func(p *words.Printer) string {
+					return p.T("verb.rules.pause.rule", "the rule's name, as orbit knowledge prints it")
+				}},
+				{Name: "why", Kind: Words, Needed: true, About: func(p *words.Printer) string {
+					return p.T("verb.rules.pause.why",
+						"what you are pausing it for; it is what you will read when you come back")
+				}},
+			},
+		},
+		{
+			Name: "resume", Under: "rules",
+			About: func(p *words.Printer) string {
+				return p.T("verb.rules.resume", "have a rule apply again, and stop asking about it")
+			},
+			Takes: []Field{
+				{Name: "rule", Kind: Named, Needed: true, About: func(p *words.Printer) string {
+					return p.T("verb.rules.resume.rule", "the rule's name, as orbit knowledge prints it")
+				}},
+			},
+		},
+		{
 			Name: "history", Under: "rules", Reads: true,
 			About: func(p *words.Printer) string {
 				return p.T("verb.rules.history", "what has happened to one rule since it was kept")
@@ -103,26 +136,25 @@ func rules() []Verb {
 	}
 }
 
-// waiting is the tray, numbered.
-//
-// The number is the position in this listing and nothing more durable than
-// that, the way the supervisor thread's is: keep and drop read it back the
-// same way, out of the same order.
-func waiting(w World) (Out, error) {
-	said, err := learn.Waiting(w.Store())
-	if err != nil {
-		return Out{}, err
+// waiting is what the reader asked about: the rules standing in one state,
+// or — with nothing asked — everything wanting a decision from them.
+func waiting(w World, in In) (Out, error) {
+	if asked := strings.TrimSpace(in.Arg("state")); asked != "" {
+		return where(w, asked)
 	}
 
-	if len(said) == 0 {
-		return Out{Said: w.Words().T("verb.rules.empty",
-			"nothing you said is waiting to be kept"), Saw: said}, nil
-	}
+	return unanswered(w)
+}
 
+// numbered is the tray: the sentences nobody has answered, by their position
+// in this listing and nothing more durable than that. Keep and drop read the
+// number back the same way, out of the same order.
+func numbered(said []learn.Said) string {
 	// Both columns are as wide as their widest row and no wider, and the
 	// place is not a column at all when nothing has one: most terminals
 	// here are a hundred columns across, and the sentence is what somebody
 	// came to read.
+	//
 	// Counted in runes and not in bytes, because a column width is what a
 	// reader sees: the mark between a task and the model that found
 	// something is one character and three bytes.
@@ -143,7 +175,7 @@ func waiting(w World) (Out, error) {
 			from, one.From(), place, one.Path, one.Text)
 	}
 
-	return Out{Said: strings.TrimRight(b.String(), "\n"), Saw: said}, nil
+	return strings.TrimRight(b.String(), "\n")
 }
 
 // agreed keeps one of them, and Orbit knows it from then on: it goes into

@@ -4670,7 +4670,7 @@
       "value": "el hecho, en una frase"
     },
     "verb.rules": {
-      "source": "the rules you said that Orbit has not been told to keep yet",
+      "source": "everything about your rules that is waiting for an answer",
       "value": "las reglas que dijiste y que todavía nadie le mandó guardar a Orbit"
     },
     "verb.rules.draft": {
@@ -4694,6 +4694,54 @@
         "one": "queda esperando en las reglas a que la guardes o la tires",
         "other": "quedan {n} esperando en las reglas a que las guardes o las tires"
       }
+    },
+    "verb.rules.state": {
+      "source": "show the rules standing here instead: active, paused, off, or review",
+      "value": "mostrar las reglas que están así: active, paused, off o review"
+    },
+    "verb.rules.pause": {
+      "source": "stop a rule applying for now, and say why; it goes to be looked at again",
+      "value": "frenar una regla por ahora, diciendo por qué; queda para volver a mirarla"
+    },
+    "verb.rules.pause.rule": {
+      "source": "the rule's name, as orbit knowledge prints it",
+      "value": "el nombre de la regla, como lo imprime orbit knowledge"
+    },
+    "verb.rules.pause.why": {
+      "source": "what you are pausing it for; it is what you will read when you come back",
+      "value": "para qué la frenás; es lo que vas a leer cuando vuelvas"
+    },
+    "verb.rules.resume": {
+      "source": "have a rule apply again, and stop asking about it",
+      "value": "que una regla vuelva a aplicar, y dejar de preguntarte por ella"
+    },
+    "verb.rules.resume.rule": {
+      "source": "the rule's name, as orbit knowledge prints it",
+      "value": "el nombre de la regla, como lo imprime orbit knowledge"
+    },
+    "verb.rules.paused": {
+      "source": "{rule} is paused: {why}",
+      "value": "{rule} queda frenada: {why}"
+    },
+    "verb.rules.resumed": {
+      "source": "{rule} applies again",
+      "value": "{rule} vuelve a aplicar"
+    },
+    "verb.rules.no_such_name": {
+      "source": "there is no rule called {rule}; orbit knowledge prints their names",
+      "value": "no hay ninguna regla llamada {rule}; orbit knowledge imprime sus nombres"
+    },
+    "verb.rules.no_such_state": {
+      "source": "{state} is not a state a rule can be in; they are active, paused, off and review",
+      "value": "{state} no es un estado en el que pueda estar una regla; son active, paused, off y review"
+    },
+    "verb.rules.none_standing": {
+      "source": "no rule is {state}",
+      "value": "ninguna regla está {state}"
+    },
+    "verb.rules.nothing_waiting": {
+      "source": "nothing is waiting for an answer from you",
+      "value": "no hay nada esperando una respuesta tuya"
     },
     "verb.rules.history": {
       "source": "what has happened to one rule since it was kept",

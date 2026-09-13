@@ -124,6 +124,15 @@ func (w world) Learn(fact knowledge.Fact) error {
 	})
 }
 
+// Replace writes a rule that has changed and takes away the one it replaces.
+//
+// The same port the window is handed, so that a rule corrected from a screen
+// and one corrected from a command line move the same way and leave the same
+// row behind in the record.
+func (w world) Replace(was, now knowledge.Fact) error {
+	return replaceFactPort(w.store)(was, now)
+}
+
 // Say puts something in the supervisor's thread, on whichever channel the
 // caller is: the same call `orbit supervisor` makes.
 func (w world) Say(text, by, about string) error {
