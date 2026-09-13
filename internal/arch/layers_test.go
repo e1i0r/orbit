@@ -89,9 +89,12 @@ var program = map[string][]string{
 	// things about a run instead of describing one.
 	"internal/knowledge": {},
 	// internal/learn is where a sentence waits between being said and being
-	// agreed with: the record because the tray is a table, and
+	// agreed with: internal/db because the tray is a table, and
 	// internal/knowledge because a sentence somebody keeps becomes a fact.
-	"internal/learn":  {"internal/db", "internal/knowledge", "internal/logger", "internal/store"},
+	// internal/record is on the list for the other half of this package —
+	// what somebody keeps telling runs is read back out of the events they
+	// were told in, and those are record.Event.
+	"internal/learn":  {"internal/db", "internal/knowledge", "internal/logger", "internal/record", "internal/store"},
 	"internal/logger": {},
 	// internal/migrate reads the files an older Orbit wrote and fills the
 	// database from them, so it is the one package that touches the record

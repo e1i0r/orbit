@@ -4669,6 +4669,24 @@
       "source": "the rules you said that Orbit has not been told to keep yet",
       "value": "las reglas que dijiste y que todavía nadie le mandó guardar a Orbit"
     },
+    "verb.rules.repeated": {
+      "source": "what you keep telling runs, that nobody ever wrote down as a rule",
+      "value": "lo que le repetís a las corridas, que nadie escribió nunca como regla"
+    },
+    "verb.rules.repeated.none": {
+      "source": "nothing you have told a run has come up often enough to be a habit",
+      "value": "nada de lo que le dijiste a una corrida se repitió lo suficiente para ser una costumbre"
+    },
+    "verb.rules.repeated.times": {
+      "source": {
+        "one": "said once",
+        "other": "said {n} times"
+      },
+      "value": {
+        "one": "dicho una vez",
+        "other": "dicho {n} veces"
+      }
+    },
     "verb.rules.keep": {
       "source": "keep one of them, in your words or in better ones",
       "value": "guardar una, con tus palabras o con unas mejores"
