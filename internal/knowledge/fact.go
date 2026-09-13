@@ -49,6 +49,21 @@ const (
 // told and what a person sees in the Knowledge screen. The rest is what
 // Orbit uses to decide when to say it and what to do about it.
 type Fact struct {
+	// ID is what this rule is called, for as long as it exists. It is
+	// coined once, when Orbit first writes the fact down, and nothing
+	// changes it after that — not correcting the sentence, not moving the
+	// scope, not turning it off.
+	//
+	// It is here because everything else about a fact can change. The file
+	// is named after the sentence, so rewording one renames it, and what
+	// the record wrote down about the old name stops being findable. A
+	// cycle that cannot say "this is the same thing you said differently
+	// three weeks ago" is not a cycle: it is a pile of separate rules.
+	//
+	// Empty is allowed and is not an error. A fact somebody wrote by hand
+	// has no id until Orbit writes it, and writing files by hand is half
+	// the reason these are files.
+	ID     string
 	Scope  Scope
 	Source Source
 	// Phrase is the fact, in a sentence. It is what gets read.
@@ -70,6 +85,16 @@ type Fact struct {
 	// told: disagreeing with a fact and losing the record that it existed
 	// are different things.
 	Off bool
+	// from is the file this fact was read out of, and empty for one that
+	// has never been on disk.
+	//
+	// Unexported because nobody outside sets it and nobody should: it is
+	// what the store saw, not something a screen decides. What it is for is
+	// replacing — a file somebody wrote by hand is called whatever they
+	// called it, and a replacement that worked out the old name from the
+	// fact's own fields left that file behind, still told and still
+	// refusing work.
+	from string
 }
 
 // Action is what this fact actually does, which is not always what it was
