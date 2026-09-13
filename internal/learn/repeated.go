@@ -57,6 +57,21 @@ type Habit struct {
 // Times is how often it was said.
 func (h Habit) Times() int { return len(h.Said) }
 
+// Handle is what this habit is known by afterwards, so that a rule drawn
+// from it and answered is not drawn from it again.
+//
+// The moment of the sentence it started with. The record only grows forward,
+// so a habit picks up newer sentences and never an older one — which makes
+// its first the one thing about it that does not move as it grows. The words
+// it shares do move: they narrow every time somebody says the thing again.
+func (h Habit) Handle() string {
+	if len(h.Said) == 0 {
+		return ""
+	}
+
+	return h.Said[0].At.UTC().Format(time.RFC3339Nano)
+}
+
 // Repeated is everything somebody has told runs often enough that it is a
 // habit rather than a correction, newest habit first.
 //

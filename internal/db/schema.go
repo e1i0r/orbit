@@ -12,7 +12,7 @@ import (
 // It is not the disposable version an index carries. Nothing here can be
 // rebuilt from anywhere else, so a schema that turns out wrong is migrated
 // forward against live data and never dropped and remade.
-const version = 5
+const version = 6
 
 // busyTimeoutMS is how long SQLite waits for its turn at the write lock
 // before refusing. Five seconds is far past any transaction this package
@@ -127,52 +127,6 @@ CREATE INDEX IF NOT EXISTS event_by_kind ON event(kind);
 CREATE INDEX IF NOT EXISTS run_by_task   ON run(task_id, n);
 CREATE INDEX IF NOT EXISTS phase_by_run  ON phase(run_id, n);
 ` + proposals
-
-// proposals is where a sentence waits between Orbit noticing it and a person
-// saying whether it was a rule.
-//
-// It is apart from the schema above so that adding it to a record already in
-// use and creating a fresh one are the same text.
-//
-// Nothing here is knowledge. A fact lives in a file a person can read and
-// edit, and putting a proposal there would mean the model is told about it
-// before anybody agreed to it. This table holds exactly the in-between.
-//
-// said_at is what the line is known by. The thread is append-only and no two
-// turns share an instant, so the moment it was said is its name — and that
-// is what keeps this from proposing the same sentence twice.
-const proposals = `
-CREATE TABLE IF NOT EXISTS proposal(
-  id         INTEGER PRIMARY KEY,
-  said_at    TEXT NOT NULL UNIQUE,
-  said       TEXT NOT NULL,
-  state      TEXT NOT NULL DEFAULT 'waiting',
-  decided    TEXT,
-  said_by    TEXT NOT NULL DEFAULT 'operator',
-  about_task TEXT NOT NULL DEFAULT '',
-  repo       TEXT NOT NULL DEFAULT '',
-  path       TEXT NOT NULL DEFAULT ''
-);
-`
-
-// proposalColumns is the three a proposal gained when a sentence could come
-// from somewhere other than the supervisor's thread: who said it, which task
-// it came out of, and the checkout it is about.
-const proposalColumns = `
-ALTER TABLE proposal ADD COLUMN said_by    TEXT NOT NULL DEFAULT 'operator';
-ALTER TABLE proposal ADD COLUMN about_task TEXT NOT NULL DEFAULT '';
-ALTER TABLE proposal ADD COLUMN repo       TEXT NOT NULL DEFAULT '';
-`
-
-// proposalPathColumn is the folder the work was in when the sentence was
-// said. It came later than the three above, so a record that has those and
-// not this one is a record somebody was already using.
-const proposalPathColumn = `
-ALTER TABLE proposal ADD COLUMN path TEXT NOT NULL DEFAULT '';
-`
-
-// hasProposalColumn asks whether the table already has one of them.
-const hasProposalColumn = `SELECT count(*) FROM pragma_table_info('proposal') WHERE name = ?`
 
 // prStateColumn is what a pull request became: the table predates it, from
 // when a pull request was only ever opened and never asked about after.
@@ -292,47 +246,6 @@ func widenPR(tx *sql.Tx) error {
 
 	if _, err := tx.Exec(prStateColumn); err != nil {
 		return fmt.Errorf("widen the pr table: %w", err)
-	}
-
-	return nil
-}
-
-// widenProposals adds the columns a proposal gained to a table that does not
-// have them yet.
-//
-// Two groups and two questions, because they arrived at different times: the
-// three when a sentence could come from somewhere other than the
-// supervisor's thread, and the path when a rule started arriving knowing
-// where the work was. A record that has the first three and not the fourth
-// is a record somebody was using in between.
-func widenProposals(tx *sql.Tx) error {
-	if err := widenProposal(tx, "said_by", proposalColumns); err != nil {
-		return err
-	}
-
-	return widenProposal(tx, "path", proposalPathColumn)
-}
-
-// widenProposal runs one group of columns when the one that names the group
-// is not there yet.
-//
-// It asks the table about its own shape because SQLite has no IF NOT EXISTS
-// for a column, and because the version number is not an answer: a 2 written
-// by a branch exploring something else means a different record than this 2
-// does.
-func widenProposal(tx *sql.Tx, named, add string) error {
-	var there int
-
-	if err := tx.QueryRow(hasProposalColumn, named).Scan(&there); err != nil {
-		return fmt.Errorf("read the shape of the proposal table: %w", err)
-	}
-
-	if there > 0 {
-		return nil
-	}
-
-	if _, err := tx.Exec(add); err != nil {
-		return fmt.Errorf("widen the proposal table: %w", err)
 	}
 
 	return nil

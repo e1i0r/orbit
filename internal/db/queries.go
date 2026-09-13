@@ -153,11 +153,19 @@ const (
 // finds it has found before. The update carries the state it expects, so
 // deciding twice moves nothing rather than overwriting an answer.
 const (
-	insertProposal = `INSERT INTO proposal(said_at, said, state, said_by, about_task, repo, path)
-	                  VALUES(?,?,?,?,?,?,?) ON CONFLICT(said_at) DO NOTHING`
+	insertProposal = `INSERT INTO
+	                    proposal(said_at, said, state, said_by, about_task,
+	                             repo, path, topic, habit)
+	                  VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(said_at) DO NOTHING`
 
-	selectWaiting = `SELECT said_at, said, state, said_by, about_task, repo, path FROM proposal
-	                  WHERE state = ? ORDER BY said_at`
+	selectWaiting = `SELECT said_at, said, state, said_by, about_task, repo, path, topic, habit
+	                   FROM proposal WHERE state = ? ORDER BY said_at`
+
+	// countHabit is whatever state it ended in, and not only waiting: a
+	// rule somebody dropped is an answer, and offering it again the next
+	// time the same sentences are read is asking a question already
+	// answered.
+	countHabit = `SELECT count(*) FROM proposal WHERE habit = ?`
 
 	decideProposal = `UPDATE proposal SET state = ?, decided = ?
 	                   WHERE said_at = ? AND state = ?`

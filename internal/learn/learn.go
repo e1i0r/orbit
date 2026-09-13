@@ -55,6 +55,13 @@ type Said struct {
 	// out to be about often enough that typing it again is work nobody
 	// should have to do. Keeping the sentence somewhere else overrides it.
 	Path string
+	// Topic is the kind of thing it is about, and Habit is which habit it
+	// was drawn from. Both are empty for a sentence somebody said outright,
+	// and both are filled for one a model wrote out of what they keep
+	// saying — the first so that two readings of the same person add up,
+	// the second so that a rule they dropped is not offered again.
+	Topic string
+	Habit string
 }
 
 // From is where it came from: the task it was typed at, or the way in it
@@ -146,6 +153,7 @@ func Propose(s *store.Store, said Said) error {
 	return d.Propose(db.Proposal{
 		SaidAt: said.At, Said: said.Text,
 		By: said.By, About: said.About, Repo: said.Repo, Path: said.Path,
+		Topic: said.Topic, Habit: said.Habit,
 	})
 }
 
@@ -166,6 +174,7 @@ func Waiting(s *store.Store) ([]Said, error) {
 		out = append(out, Said{
 			At: row.SaidAt, Text: row.Said,
 			By: row.By, About: row.About, Repo: row.Repo, Path: row.Path,
+			Topic: row.Topic, Habit: row.Habit,
 		})
 	}
 
