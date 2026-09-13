@@ -55,6 +55,13 @@ type Said struct {
 	// out to be about often enough that typing it again is work nobody
 	// should have to do. Keeping the sentence somewhere else overrides it.
 	Path string
+	// Topic is the kind of thing it is about, and Habit is which habit it
+	// was drawn from. Both are empty for a sentence somebody said outright,
+	// and both are filled for one a model wrote out of what they keep
+	// saying — the first so that two readings of the same person add up,
+	// the second so that a rule they dropped is not offered again.
+	Topic string
+	Habit string
 }
 
 // From is where it came from: the task it was typed at, or the way in it
@@ -69,7 +76,7 @@ type Said struct {
 // the two are never printed the same.
 func (s Said) From() string {
 	if s.About == "" {
-		return s.By
+		return with(s.By, s.Topic)
 	}
 
 	if s.By == AModel {
@@ -77,6 +84,20 @@ func (s Said) From() string {
 	}
 
 	return s.About
+}
+
+// with puts the kind of thing a rule is about beside where it came from, so
+// that the one field a reader is shown says both.
+//
+// A topic nobody can see is a topic nobody can tell has gone wrong, and the
+// whole reason the model chooses from a fixed list is that two readings of
+// the same person should add up to something visible.
+func with(by, topic string) string {
+	if topic == "" {
+		return by
+	}
+
+	return by + " · " + topic
 }
 
 // Operator is what By says when it was typed at one of the controls and
@@ -146,6 +167,7 @@ func Propose(s *store.Store, said Said) error {
 	return d.Propose(db.Proposal{
 		SaidAt: said.At, Said: said.Text,
 		By: said.By, About: said.About, Repo: said.Repo, Path: said.Path,
+		Topic: said.Topic, Habit: said.Habit,
 	})
 }
 
@@ -166,6 +188,7 @@ func Waiting(s *store.Store) ([]Said, error) {
 		out = append(out, Said{
 			At: row.SaidAt, Text: row.Said,
 			By: row.By, About: row.About, Repo: row.Repo, Path: row.Path,
+			Topic: row.Topic, Habit: row.Habit,
 		})
 	}
 

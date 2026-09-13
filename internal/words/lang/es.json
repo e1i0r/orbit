@@ -4669,6 +4669,28 @@
       "source": "the rules you said that Orbit has not been told to keep yet",
       "value": "las reglas que dijiste y que todavía nadie le mandó guardar a Orbit"
     },
+    "verb.rules.draft": {
+      "source": "have a model read what you keep telling runs and write the rule it amounts to",
+      "value": "que un modelo lea lo que le repetís a las corridas y escriba la regla que sale de ahí"
+    },
+    "verb.rules.draft.engine": {
+      "source": "which engine reads them; the default is the one in your settings",
+      "value": "qué motor las lee; por defecto, el de tus ajustes"
+    },
+    "verb.rules.draft.none": {
+      "source": "nothing you keep saying amounts to a rule that is not already answered",
+      "value": "nada de lo que repetís da una regla que no esté ya contestada"
+    },
+    "verb.rules.draft.waiting": {
+      "source": {
+        "one": "it is waiting in the rules for you to keep it or drop it",
+        "other": "{n} are waiting in the rules for you to keep them or drop them"
+      },
+      "value": {
+        "one": "queda esperando en las reglas a que la guardes o la tires",
+        "other": "quedan {n} esperando en las reglas a que las guardes o las tires"
+      }
+    },
     "verb.rules.repeated": {
       "source": "what you keep telling runs, that nobody ever wrote down as a rule",
       "value": "lo que le repetís a las corridas, que nadie escribió nunca como regla"

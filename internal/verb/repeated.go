@@ -11,6 +11,7 @@ package verb
 // need to write the rule themselves.
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -66,4 +67,40 @@ func heading(b *strings.Builder, p *words.Printer, h learn.Habit) {
 	fmt.Fprintf(b, "%s  %s  %s\n",
 		p.P("verb.rules.repeated.times", h.Times(), "said once", "said {n} times"),
 		where, strings.Join(h.Words, ", "))
+}
+
+// drafting asks a model to write down what somebody keeps saying, and puts
+// what it answers with in the tray.
+//
+// The one reading here that costs money, and the only place in Orbit a model
+// decides anything. What it produces is an offer like any other: it waits to
+// be kept or dropped, and nothing reaches a prompt until somebody says so.
+func drafting(ctx context.Context, w World, in In) (Out, error) {
+	named := in.Arg("engine")
+
+	ask := func(ctx context.Context, question string) (string, error) {
+		return w.Ask(ctx, named, question)
+	}
+
+	said, err := learn.Draft(ctx, w.Store(), ask)
+	if err != nil {
+		return Out{}, err
+	}
+
+	if len(said) == 0 {
+		return Out{Said: w.Words().T("verb.rules.draft.none",
+			"nothing you keep saying amounts to a rule that is not already answered"), Saw: said}, nil
+	}
+
+	var b strings.Builder
+
+	for _, one := range said {
+		fmt.Fprintf(&b, "%-14s %s\n", one.Topic, one.Text)
+	}
+
+	b.WriteString("\n" + w.Words().P("verb.rules.draft.waiting", len(said),
+		"it is waiting in the rules for you to keep it or drop it",
+		"{n} are waiting in the rules for you to keep them or drop them"))
+
+	return Out{Said: strings.TrimRight(b.String(), "\n"), Saw: said}, nil
 }

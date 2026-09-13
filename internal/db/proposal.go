@@ -55,6 +55,16 @@ type Proposal struct {
 	// Nobody has agreed to this yet either — it is what the tray offers, and
 	// whoever keeps the sentence can type somewhere else instead.
 	Path string
+	// Topic is the kind of thing the rule is about, chosen from a list
+	// written by hand, and empty for a sentence somebody said outright.
+	// Names nobody fixed would be fifteen names for three things, and two
+	// readings of the same person could not add up to anything.
+	Topic string
+	// Habit is which habit the rule was drawn from, and empty for a
+	// sentence somebody said outright. It is what stops a rule that was
+	// dropped being offered again the next time the same sentences are
+	// read: dropping it was an answer.
+	Habit string
 }
 
 // Propose writes one down, and says nothing when this line already has a row.
@@ -64,7 +74,7 @@ type Proposal struct {
 // before.
 func (d *DB) Propose(p Proposal) error {
 	_, err := d.sql.Exec(insertProposal, record.Stamp(p.SaidAt), p.Said, Waiting,
-		p.By, p.About, p.Repo, p.Path)
+		p.By, p.About, p.Repo, p.Path, p.Topic, p.Habit)
 	if err != nil {
 		return fmt.Errorf("write down what you said at %s: %w", p.SaidAt, err)
 	}
@@ -89,7 +99,8 @@ func (d *DB) Waiting() ([]Proposal, error) {
 			at string
 		)
 
-		if err := rows.Scan(&at, &p.Said, &p.State, &p.By, &p.About, &p.Repo, &p.Path); err != nil {
+		if err := rows.Scan(&at, &p.Said, &p.State, &p.By, &p.About,
+			&p.Repo, &p.Path, &p.Topic, &p.Habit); err != nil {
 			return nil, fmt.Errorf("read a proposal: %w", err)
 		}
 
@@ -107,6 +118,26 @@ func (d *DB) Waiting() ([]Proposal, error) {
 	}
 
 	return out, nil
+}
+
+// Answered says whether a rule drawn from this habit has already been put to
+// somebody, whatever they answered.
+//
+// Whatever they answered, because dropping one is an answer: offering it
+// again the next time the same sentences are read would be asking a question
+// that has been settled. A habit with no name has never been asked about.
+func (d *DB) Answered(habit string) (bool, error) {
+	if habit == "" {
+		return false, nil
+	}
+
+	var found int
+
+	if err := d.sql.QueryRow(countHabit, habit).Scan(&found); err != nil {
+		return false, fmt.Errorf("read what was already offered about %q: %w", habit, err)
+	}
+
+	return found > 0, nil
 }
 
 // Decide records what somebody said about one, and refuses to move a row
