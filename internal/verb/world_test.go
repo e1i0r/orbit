@@ -39,6 +39,10 @@ type testWorld struct {
 	// unread is how many finished tasks nobody has looked at, which is the
 	// one number a run asks for before it starts.
 	unread int
+	// answer is what the model says when it is asked what somebody keeps
+	// saying, and asked is the question it was put.
+	answer string
+	asked  string
 }
 
 // saidLine is one line handed to the supervisor's thread.
@@ -102,6 +106,12 @@ func (w *testWorld) Say(text, by, about string) error {
 	w.said = append(w.said, saidLine{text: text, by: by, task: about})
 
 	return w.refuse
+}
+
+func (w *testWorld) Ask(_ context.Context, _, question string) (string, error) {
+	w.asked = question
+
+	return w.answer, w.refuse
 }
 
 func (w *testWorld) Learn(fact knowledge.Fact) error {

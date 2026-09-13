@@ -67,6 +67,19 @@ func rules() []Verb {
 			},
 		},
 		{
+			Name: "draft", Under: "rules", Spends: true,
+			About: func(p *words.Printer) string {
+				return p.T("verb.rules.draft",
+					"have a model read what you keep telling runs and write the rule it amounts to")
+			},
+			Takes: []Field{
+				{Name: "engine", Kind: Named, About: func(p *words.Printer) string {
+					return p.T("verb.rules.draft.engine",
+						"which engine reads them; the default is the one in your settings")
+				}},
+			},
+		},
+		{
 			Name: "drop", Under: "rules",
 			About: func(p *words.Printer) string {
 				return p.T("verb.rules.drop", "say it was not a rule; the sentence stays where you said it")

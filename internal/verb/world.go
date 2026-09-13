@@ -122,6 +122,20 @@ type Beyond interface {
 	Say(text, by, about string) error
 	// Learn writes down something true about the code.
 	Learn(fact knowledge.Fact) error
+	// Ask puts one short question to a named model and answers with what it
+	// said, for the one reading that cannot be made without one: what four
+	// sentences somebody keeps saying have in common.
+	//
+	// The engine is named rather than chosen here. It runs with no
+	// permissions at all — the question is about words somebody typed, not
+	// about code — and not every engine will take a posture that narrow, so
+	// which one answers is a decision with a consequence and belongs to
+	// whoever is asking. Empty means the one they set as their default.
+	//
+	// A port because finding the program on this machine and paying for it
+	// are the way in's business, and because a way in with no engine has to
+	// be able to say so rather than pretend.
+	Ask(ctx context.Context, engine, question string) (string, error)
 	// Export writes the record back out as JSON lines, one file per task,
 	// into a directory that must not already hold anything. A port because
 	// where a way in is allowed to write files is the way in's business.

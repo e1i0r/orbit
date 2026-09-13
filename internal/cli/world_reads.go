@@ -10,12 +10,14 @@ package cli
 // away.
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 
 	"github.com/e1i0r/orbit/internal/board"
+	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/export"
 	"github.com/e1i0r/orbit/internal/knowledge"
 	"github.com/e1i0r/orbit/internal/view"
@@ -107,4 +109,83 @@ func (w world) Take(id, repoPath string) (string, error) {
 	}
 
 	return "back from " + row.Engine + " in " + id, nil
+}
+
+// Ask puts a question to a model and answers with what it said.
+//
+// With no permissions at all, which is the most restrictive posture an
+// engine can be given rather than an absence of opinion: what is being asked
+// is about words somebody typed, and an engine that went and read the code
+// would be answering a question nobody asked. Not every engine will take a
+// posture that narrow, and the ones that will not say so by name — which is
+// an answer a reader can act on, by naming another.
+//
+// It runs in Orbit's own state root. The question names no repository and
+// the answer is about none, so a checkout chosen here would only be one the
+// engine could wander into.
+func (w world) Ask(ctx context.Context, named, question string) (string, error) {
+	eng, err := w.reading(named)
+	if err != nil {
+		return "", err
+	}
+
+	out, err := eng.Run(ctx, engine.Request{Prompt: question, Dir: w.store.Root()})
+	if err != nil {
+		return "", fmt.Errorf("%s could not read what you keep saying: %w", eng.Name(), err)
+	}
+
+	return out.Output, nil
+}
+
+// reading is the engine that answers a question Orbit asks on its own
+// behalf: the one the reader named, and otherwise the one they set as their
+// default.
+//
+// Named or set, and never whichever happens to be installed. This is the one
+// reading that spends money with no task behind it, and an engine nobody
+// chose is a bill nobody expected — so with neither, it asks rather than
+// picking.
+func (w world) reading(named string) (engine.Engine, error) {
+	if named == "" {
+		named = w.settingsEngine()
+	}
+
+	if named == "" {
+		return nil, errors.New("say which engine reads what you keep saying, with -engine, " +
+			"or set a default with orbit settings set engine")
+	}
+
+	eng, there := w.engines[named]
+	if !there {
+		return nil, fmt.Errorf("this build has no engine called %q; it has %v",
+			named, engineNames(w.engines))
+	}
+
+	if !here(eng) {
+		return nil, fmt.Errorf("%s is not installed on this machine", named)
+	}
+
+	return eng, nil
+}
+
+// settingsEngine is the engine somebody set as their default, and empty when
+// the settings cannot be read.
+//
+// Empty rather than an error: not being able to read a preference is not a
+// reason to refuse the whole reading, and what happens instead is the
+// fallback below.
+func (w world) settingsEngine() string {
+	cfg, err := newSettings(w.store)
+	if err != nil {
+		return ""
+	}
+
+	return cfg.Engine()
+}
+
+// here says whether this machine actually has the program an engine runs.
+func here(e engine.Engine) bool {
+	_, err := e.Locate()
+
+	return err == nil
 }

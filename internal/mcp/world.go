@@ -132,6 +132,15 @@ func (w world) Deliver(context.Context, task.Task, string) (string, error) {
 	return "", errors.New("a pull request is a person's decision; ask them to run orbit pr")
 }
 
+// Ask is refused. Reading what somebody keeps saying spends money with no
+// task behind it, and this is the server a model speaks to: a model that
+// could ask for it would be making Orbit pay for another model, on nobody's
+// say-so.
+func (w world) Ask(context.Context, string, string) (string, error) {
+	return "", errors.New("reading what you keep saying spends money without a task; " +
+		"ask them to run orbit rules draft")
+}
+
 // Say puts something in the supervisor's thread, as the model.
 func (w world) Say(text, by, about string) error {
 	return supervisor.Record(w.sb.store, "", by, "mcp", about, "", text)

@@ -45,6 +45,8 @@ var notThere = map[string]string{
 		"passes a task positionally, the way every other verb about one takes it",
 	"window:pr show": "the deliver toolbar acts on the pull request rather than listing it; " +
 		"which ones are open is the command line's reading",
+	"window:rules draft": "it spends money with no task behind it, and the knowledge screen has no " +
+		"gesture that costs anything; what it produces lands in the tray this screen already draws",
 	"window:rules repeated": "every row of the knowledge screen is one somebody answers — kept, " +
 		"dropped, corrected — and a habit is not answerable yet: what turns it into a rule " +
 		"is 3.2, and what that produces is a proposal in the tray this screen already draws",
@@ -57,6 +59,8 @@ var notThere = map[string]string{
 	"mcp:pr close":     "closing a pull request is a person's decision, not a model's",
 	"mcp:task approve": "accepting a library a task reached for is the question the gate asked a person",
 	"mcp:task take":    "this hands a terminal to an engine, and a tool call has no terminal to hand over",
+	"mcp:rules draft": "it spends money with no task behind it, so a model asking for it would be " +
+		"making Orbit pay for another model on nobody's say-so",
 }
 
 // TestEveryVerbIsOfferedByEveryWayIn.
