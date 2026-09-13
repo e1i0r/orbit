@@ -67,6 +67,15 @@ func Keep(s *store.Store, at time.Time, text, check string, where Place) error {
 		return err
 	}
 
+	// What happened to it starts here, under the name it was given above.
+	// Reading this back is how a later screen can say "you kept this, and
+	// then you reworded it twice and switched it off".
+	if err := Happened(s, Turn{
+		Rule: fact.ID, At: fact.At, What: db.RuleKept, By: said.By,
+	}); err != nil {
+		return err
+	}
+
 	return d.Decide(at, db.Kept)
 }
 
@@ -107,6 +116,10 @@ func waitingAt(s *store.Store, at time.Time) (Said, error) {
 // one folder — and this is the moment somebody knows which.
 func factOf(said Said, text, check string, where Place) (knowledge.Fact, error) {
 	f := knowledge.Fact{
+		// Named here rather than left to Save, because what happened to
+		// this rule is written down in the same breath as the rule itself
+		// and cannot be told the name afterwards.
+		ID:     knowledge.Name(),
 		Scope:  knowledge.Scope{Kind: knowledge.General},
 		Source: foundBy(said),
 		Phrase: text,

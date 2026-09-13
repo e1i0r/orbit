@@ -12,7 +12,7 @@ import (
 // It is not the disposable version an index carries. Nothing here can be
 // rebuilt from anywhere else, so a schema that turns out wrong is migrated
 // forward against live data and never dropped and remade.
-const version = 6
+const version = 7
 
 // busyTimeoutMS is how long SQLite waits for its turn at the write lock
 // before refusing. Five seconds is far past any transaction this package
@@ -126,7 +126,7 @@ CREATE INDEX IF NOT EXISTS event_by_task ON event(task_id, id);
 CREATE INDEX IF NOT EXISTS event_by_kind ON event(kind);
 CREATE INDEX IF NOT EXISTS run_by_task   ON run(task_id, n);
 CREATE INDEX IF NOT EXISTS phase_by_run  ON phase(run_id, n);
-` + proposals
+` + proposals + rules
 
 // prStateColumn is what a pull request became: the table predates it, from
 // when a pull request was only ever opened and never asked about after.
@@ -154,6 +154,19 @@ const hasPRColumn = `SELECT count(*) FROM pragma_table_info('pr') WHERE name = ?
 func (d *DB) migrate() error {
 	var found int
 	if err := d.sql.QueryRow(readVersion).Scan(&found); err != nil {
+		// A record SQLite cannot read the version of is one no migration
+		// can help, and refusing to open it takes away the one command
+		// that can: `orbit check` has to be able to ask SQLite what is
+		// wrong with it. So it opens, and the first read says what the
+		// check would have said anyway.
+		//
+		// Torn and not merely unreadable: a file that was never a record
+		// is still refused, because opening it would be answering a
+		// question about a record that does not exist.
+		if torn(err) {
+			return nil
+		}
+
 		return fmt.Errorf("read the schema version of %q: %w", d.path, err)
 	}
 
@@ -219,6 +232,10 @@ func stepsFrom(tx *sql.Tx, found int) error {
 
 		if err := widenPR(tx); err != nil {
 			return err
+		}
+
+		if _, err := tx.Exec(rules); err != nil {
+			return fmt.Errorf("add the rule table: %w", err)
 		}
 	}
 

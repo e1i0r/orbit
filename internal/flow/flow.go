@@ -98,6 +98,14 @@ type Phase struct {
 type Gate struct {
 	Name    string `json:"name"`
 	Command string `json:"command"`
+	// Rule is the name of the rule this gate came from, and empty for a
+	// gate the flow file declares.
+	//
+	// The name and not the sentence, even though the sentence is what the
+	// gate is called. What the record writes down about a gate has to still
+	// be findable after somebody corrects the wording, and the wording is
+	// the one thing about a rule that changes.
+	Rule string `json:"rule,omitempty"`
 }
 
 // DefaultAttempts is how many times a phase whose gate refused it is run,

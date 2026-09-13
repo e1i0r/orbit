@@ -45,6 +45,9 @@ var notThere = map[string]string{
 		"passes a task positionally, the way every other verb about one takes it",
 	"window:pr show": "the deliver toolbar acts on the pull request rather than listing it; " +
 		"which ones are open is the command line's reading",
+	"window:rules history": "the knowledge screen shows what a rule says now, and what it has been " +
+		"through is the review module's screen — which is where somebody acts on it, and which " +
+		"does not exist yet",
 	"window:rules draft": "it spends money with no task behind it, and the knowledge screen has no " +
 		"gesture that costs anything; what it produces lands in the tray this screen already draws",
 	"window:rules repeated": "every row of the knowledge screen is one somebody answers — kept, " +

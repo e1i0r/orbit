@@ -171,6 +171,17 @@ const (
 	                   WHERE said_at = ? AND state = ?`
 )
 
+// What happened to a rule. Ordered by the row's own id and never by the
+// timestamp, for the reason the events below are: two processes' clocks have
+// no order between them.
+const (
+	insertRuleTurn = `INSERT INTO rule(rule_id, at, what, said_by, was)
+	                  VALUES(?,?,?,?,?)`
+
+	selectRuleTurns = `SELECT rule_id, at, what, said_by, was FROM rule
+	                    WHERE rule_id = ? ORDER BY id`
+)
+
 // Events.
 const insertEvent = `INSERT INTO event(task_id, run_id, phase_id, kind, at, phase, text, data)
                      VALUES(?,?,?,?,?,?,?,?)`

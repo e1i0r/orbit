@@ -51,7 +51,7 @@ func knowledgeGates(knows []knowledge.Fact) []flow.Gate {
 			continue
 		}
 
-		gates = append(gates, flow.Gate{Name: gateNamed(f), Command: f.Check})
+		gates = append(gates, flow.Gate{Name: gateNamed(f), Command: f.Check, Rule: f.ID})
 	}
 
 	return gates

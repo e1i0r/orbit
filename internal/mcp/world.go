@@ -15,6 +15,7 @@ import (
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/export"
 	"github.com/e1i0r/orbit/internal/knowledge"
+	"github.com/e1i0r/orbit/internal/learn"
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/supervisor"
@@ -146,17 +147,24 @@ func (w world) Say(text, by, about string) error {
 	return supervisor.Record(w.sb.store, "", by, "mcp", about, "", text)
 }
 
-// Learn writes down something true about the code.
+// Learn writes down something true about the code, under a name of its own
+// so that what happens to it afterwards can be followed.
 func (w world) Learn(fact knowledge.Fact) error {
 	if err := fact.Validate(); err != nil {
 		return err
+	}
+
+	if fact.ID == "" {
+		fact.ID = knowledge.Name()
 	}
 
 	if _, err := knowledge.NewStore(w.sb.store.Root()).Save(fact); err != nil {
 		return err
 	}
 
-	return nil
+	return learn.Happened(w.sb.store, learn.Turn{
+		Rule: fact.ID, At: fact.At, What: learn.Written, By: learn.AModel,
+	})
 }
 
 // Words is English. A tool call is read by a model and then quoted back to

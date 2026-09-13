@@ -115,6 +115,8 @@ func (v Verb) do(ctx context.Context, w World, in In) (Out, error) {
 		return repeating(w)
 	case "rules draft":
 		return drafting(ctx, w, in)
+	case "rules history":
+		return happened(w, in)
 	}
 
 	return Out{}, fmt.Errorf("%q is declared and not done", v.Path())

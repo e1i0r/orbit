@@ -38,7 +38,11 @@ func known(w World) (Out, error) {
 			does = "stops"
 		}
 
-		fmt.Fprintf(&b, "%-6s %-20s %s\n", does, scopeOf(f), f.Phrase)
+		// The name first, because it is what everything else about this
+		// rule is filed under: what happened to it is asked for by name,
+		// and a listing that did not print one would be a listing nobody
+		// could ask a second question from.
+		fmt.Fprintf(&b, "%-8s %-6s %-20s %s\n", f.ID, does, scopeOf(f), f.Phrase)
 	}
 
 	return Out{Said: strings.TrimRight(b.String(), "\n"), Saw: facts}, nil

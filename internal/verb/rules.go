@@ -80,6 +80,18 @@ func rules() []Verb {
 			},
 		},
 		{
+			Name: "history", Under: "rules", Reads: true,
+			About: func(p *words.Printer) string {
+				return p.T("verb.rules.history", "what has happened to one rule since it was kept")
+			},
+			Takes: []Field{
+				{Name: "rule", Kind: Named, Needed: true, About: func(p *words.Printer) string {
+					return p.T("verb.rules.history.rule",
+						"the rule's name, as orbit knowledge prints it")
+				}},
+			},
+		},
+		{
 			Name: "drop", Under: "rules",
 			About: func(p *words.Printer) string {
 				return p.T("verb.rules.drop", "say it was not a rule; the sentence stays where you said it")

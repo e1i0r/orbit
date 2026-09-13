@@ -13,6 +13,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/knowledge"
+	"github.com/e1i0r/orbit/internal/learn"
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
@@ -179,12 +180,28 @@ func onlyOf(repoPath string, facts []knowledge.Fact) []knowledge.Fact {
 
 // turnFactPort switches a fact off, or on again.
 //
-// Nothing about it moves, so Save writes over the file the fact is already
-// in: the path is made from the scope and the reference, and neither changed.
+// Replace and not Save, even though nothing about the fact moves. The file a
+// person wrote by hand is called whatever they called it, and Save writes to
+// the name the fact's own fields produce — which for one of those is a
+// second copy, still read, still told, still refusing work.
+//
+// was and now are the same fact because that is all this gesture has: the
+// screen hands over the fact with Off already flipped. What it was before is
+// worked out from that, which is the one case where there is nothing to
+// work out.
 func turnFactPort(s *store.Store) func(knowledge.Fact) error {
 	return func(f knowledge.Fact) error {
-		where, err := knowledge.NewStore(s.Root()).Save(f)
+		where, err := knowledge.NewStore(s.Root()).Replace(f, f)
 		if err != nil {
+			return err
+		}
+
+		what := learn.TurnedOn
+		if f.Off {
+			what = learn.TurnedOff
+		}
+
+		if err := learn.Happened(s, learn.Turn{Rule: f.ID, What: what, By: learn.Operator}); err != nil {
 			return err
 		}
 
@@ -201,8 +218,21 @@ func turnFactPort(s *store.Store) func(knowledge.Fact) error {
 // would leave the old copy behind, still told and still refusing work.
 func replaceFactPort(s *store.Store) func(was, now knowledge.Fact) error {
 	return func(was, now knowledge.Fact) error {
-		where, err := knowledge.NewStore(s.Root()).Replace(was, now)
+		ks := knowledge.NewStore(s.Root())
+
+		where, err := ks.Replace(was, now)
 		if err != nil {
+			return err
+		}
+
+		// Read back rather than assumed: a fact somebody wrote by hand had
+		// no name until this write, and what happened to it has to be
+		// written under the name it actually got.
+		if now.ID == "" {
+			now.ID = was.ID
+		}
+
+		if err := learn.Changed(s, was, now, learn.Operator); err != nil {
 			return err
 		}
 

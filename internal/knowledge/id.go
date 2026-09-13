@@ -17,6 +17,16 @@ import (
 // when the sentence did, which is the whole thing this exists to survive.
 const idBytes = 4
 
+// Name is a name nothing else has, for a caller that needs to know what a
+// rule will be called before it is written.
+//
+// Save coins one for a fact that arrives without, which is what every other
+// caller wants. This is for the one that has to write down what happened to
+// the rule in the same breath as writing the rule: it cannot read the name
+// back out of a path, and reading the file again to find out would be a
+// second answer to a question that was already settled.
+func Name() string { return coin() }
+
 // coin is a name nothing else has.
 //
 // crypto/rand and not a counter: a counter needs somewhere to keep the last

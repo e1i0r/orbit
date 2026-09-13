@@ -113,3 +113,28 @@ func widenProposal(tx *sql.Tx, named, add string) error {
 
 	return nil
 }
+
+// rules is what happened to a rule, one row per thing that happened.
+//
+// It is here and not in the file the rule lives in. The file says what is
+// true today and travels with the checkout; what a rule has been through is
+// of this machine, is append-only, and grows on every run — a history kept
+// in the file would put a diff in somebody's repository every time a gate
+// ran.
+//
+// rule_id is the rule's own name and not a row of anything: the rule may be
+// in a checkout this record has never seen, and a foreign key to a table
+// that cannot hold it would mean the history of a rule somebody cloned in is
+// unwritable.
+const rules = `
+CREATE TABLE IF NOT EXISTS rule(
+  id      INTEGER PRIMARY KEY,
+  rule_id TEXT NOT NULL,
+  at      TEXT NOT NULL,
+  what    TEXT NOT NULL,
+  said_by TEXT NOT NULL DEFAULT '',
+  was     TEXT NOT NULL DEFAULT ''
+);
+
+CREATE INDEX IF NOT EXISTS rule_by_name ON rule(rule_id, id);
+`

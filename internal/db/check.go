@@ -90,6 +90,22 @@ func malformed(err error) bool {
 	}
 }
 
+// torn says whether an error is a real record that has been damaged, as
+// against a file that was never a record at all.
+//
+// The difference matters in one place and it matters a lot: a torn record is
+// opened anyway, so that the command written to say what is wrong with it
+// can ask. A text file somebody pointed Orbit at is refused, because opening
+// it would be answering a question about a record that does not exist.
+func torn(err error) bool {
+	var e *sqlite.Error
+	if !errors.As(err, &e) {
+		return false
+	}
+
+	return e.Code()&0xff == codeCorrupt
+}
+
 // integrity asks the pragma and collects what it answered, with SQLite's
 // errors left exactly as they arrived so that Check can tell them apart.
 func (d *DB) integrity() ([]string, error) {
