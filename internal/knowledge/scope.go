@@ -166,7 +166,10 @@ func At(repo, path string) (Scope, error) {
 		return Scope{}, fmt.Errorf("a rule about %s needs the repository it is in", path)
 	}
 
-	if path == "" {
+	// Nothing, and the root written as a dot: both are the whole checkout.
+	// The dot is how somebody says so out loud, which is what they need
+	// when the place arrived filled in and is wrong.
+	if path == "" || path == "." {
 		return Scope{Kind: Repo, Repo: repo}, nil
 	}
 

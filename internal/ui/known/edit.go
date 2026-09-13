@@ -25,8 +25,10 @@ import (
 // correcting it more often than by agreeing with it word for word. A
 // sentence has no check yet, because nobody has been asked for one.
 func (s State) editFact(e Env) State {
+	// The place line opens with the folder the work was in, so that
+	// agreeing with it is enter and disagreeing is typing over it.
 	if one, waiting := s.onSaid(); waiting {
-		return s.typeInto(one.Text, "", "")
+		return s.typeInto(one.Text, "", one.Where)
 	}
 
 	f, ok := s.onFact()

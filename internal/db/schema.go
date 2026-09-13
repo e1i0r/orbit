@@ -12,7 +12,7 @@ import (
 // It is not the disposable version an index carries. Nothing here can be
 // rebuilt from anywhere else, so a schema that turns out wrong is migrated
 // forward against live data and never dropped and remade.
-const version = 4
+const version = 5
 
 // busyTimeoutMS is how long SQLite waits for its turn at the write lock
 // before refusing. Five seconds is far past any transaction this package
@@ -150,7 +150,8 @@ CREATE TABLE IF NOT EXISTS proposal(
   decided    TEXT,
   said_by    TEXT NOT NULL DEFAULT 'operator',
   about_task TEXT NOT NULL DEFAULT '',
-  repo       TEXT NOT NULL DEFAULT ''
+  repo       TEXT NOT NULL DEFAULT '',
+  path       TEXT NOT NULL DEFAULT ''
 );
 `
 
@@ -163,8 +164,14 @@ ALTER TABLE proposal ADD COLUMN about_task TEXT NOT NULL DEFAULT '';
 ALTER TABLE proposal ADD COLUMN repo       TEXT NOT NULL DEFAULT '';
 `
 
-// hasProposalColumn asks whether the table already has one of them, because
-// SQLite has no IF NOT EXISTS for a column.
+// proposalPathColumn is the folder the work was in when the sentence was
+// said. It came later than the three above, so a record that has those and
+// not this one is a record somebody was already using.
+const proposalPathColumn = `
+ALTER TABLE proposal ADD COLUMN path TEXT NOT NULL DEFAULT '';
+`
+
+// hasProposalColumn asks whether the table already has one of them.
 const hasProposalColumn = `SELECT count(*) FROM pragma_table_info('proposal') WHERE name = ?`
 
 // prStateColumn is what a pull request became: the table predates it, from
@@ -293,12 +300,30 @@ func widenPR(tx *sql.Tx) error {
 // widenProposals adds the columns a proposal gained to a table that does not
 // have them yet.
 //
-// The three arrived together and are added together, so finding one is
-// finding all of them.
+// Two groups and two questions, because they arrived at different times: the
+// three when a sentence could come from somewhere other than the
+// supervisor's thread, and the path when a rule started arriving knowing
+// where the work was. A record that has the first three and not the fourth
+// is a record somebody was using in between.
 func widenProposals(tx *sql.Tx) error {
+	if err := widenProposal(tx, "said_by", proposalColumns); err != nil {
+		return err
+	}
+
+	return widenProposal(tx, "path", proposalPathColumn)
+}
+
+// widenProposal runs one group of columns when the one that names the group
+// is not there yet.
+//
+// It asks the table about its own shape because SQLite has no IF NOT EXISTS
+// for a column, and because the version number is not an answer: a 2 written
+// by a branch exploring something else means a different record than this 2
+// does.
+func widenProposal(tx *sql.Tx, named, add string) error {
 	var there int
 
-	if err := tx.QueryRow(hasProposalColumn, "said_by").Scan(&there); err != nil {
+	if err := tx.QueryRow(hasProposalColumn, named).Scan(&there); err != nil {
 		return fmt.Errorf("read the shape of the proposal table: %w", err)
 	}
 
@@ -306,7 +331,7 @@ func widenProposals(tx *sql.Tx) error {
 		return nil
 	}
 
-	if _, err := tx.Exec(proposalColumns); err != nil {
+	if _, err := tx.Exec(add); err != nil {
 		return fmt.Errorf("widen the proposal table: %w", err)
 	}
 

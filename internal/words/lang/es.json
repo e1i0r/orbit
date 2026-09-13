@@ -4702,8 +4702,8 @@
       "value": "el checkout en el que está la carpeta o el archivo; por defecto, en el que estás"
     },
     "verb.rules.in": {
-      "source": "the folder or file it is about; the default is the whole checkout",
-      "value": "la carpeta o el archivo del que es; por defecto, el checkout entero"
+      "source": "the folder or file it is about; the default is where the work was, and . is the whole checkout",
+      "value": "la carpeta o el archivo del que es; por defecto, donde estaba el trabajo, y . es el checkout entero"
     },
     "verb.rules.kept_in": {
       "source": "Orbit knows it, in {where}: {rule}",

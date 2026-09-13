@@ -226,3 +226,42 @@ func TestAnEmptyTrayIsNotThere(t *testing.T) {
 		t.Error("the header is told there is something waiting")
 	}
 }
+
+// TestThePlaceArrivesFilledIn.
+//
+// A rule said in the middle of one folder is usually about that folder, and
+// the window already knows which folder because the tray carries it. Both
+// answers have to use it: agreeing with the sentence word for word, and
+// opening it to correct the words.
+func TestThePlaceArrivesFilledIn(t *testing.T) {
+	one := saidAt(1, "never push without the tests passing")
+	one.Where = "internal/db"
+
+	s, e, asked := withTray(t, []Said{one})
+
+	s, _ = s.Key(press("k"), e)
+
+	if len(asked.keeps) != 1 || asked.keeps[0].where != "internal/db" {
+		t.Fatalf("keeping it word for word asked for %v", asked.keeps)
+	}
+
+	// And the editor opens on it, so that the way out is typing over it
+	// rather than remembering the path.
+	s, _ = s.Key(press("e"), e)
+	if got := s.in[factWhere].Val; got != "internal/db" {
+		t.Errorf("the place line opens with %q", got)
+	}
+}
+
+// TestThePlaceIsOnTheRowThatAsks, because a place that arrives filled in and
+// is never shown is Orbit filing a rule somewhere and not saying so.
+func TestThePlaceIsOnTheRowThatAsks(t *testing.T) {
+	one := saidAt(1, "never push without the tests passing")
+	one.Where = "internal/db"
+
+	s, e, _ := withTray(t, []Said{one})
+
+	if drawn := drawnKnowledge(t, s, e); !strings.Contains(drawn, "internal/db") {
+		t.Errorf("the tray does not say where the work was:\n%s", drawn)
+	}
+}

@@ -42,6 +42,16 @@ type Said struct {
 	// Repo is the checkout it is about, and empty for a sentence that is
 	// about everything.
 	Repo string
+	// Path is the folder the work was in when it was said, relative to that
+	// checkout, and empty when the work was spread across the whole of it.
+	//
+	// It is not a guess about what the sentence meant. It is where the
+	// person was working at the moment they said it, which is the one thing
+	// about the place that is known rather than inferred — and it is what a
+	// rule turns out to be about often enough that typing it again is work
+	// nobody should have to do. Keeping the sentence somewhere else
+	// overrides it.
+	Path string
 }
 
 // From is where it was said: the task it was typed at, or the way in it came
@@ -127,7 +137,7 @@ func Propose(s *store.Store, said Said) error {
 
 	return d.Propose(db.Proposal{
 		SaidAt: said.At, Said: said.Text,
-		By: said.By, About: said.About, Repo: said.Repo,
+		By: said.By, About: said.About, Repo: said.Repo, Path: said.Path,
 	})
 }
 
@@ -147,7 +157,7 @@ func Waiting(s *store.Store) ([]Said, error) {
 	for _, row := range rows {
 		out = append(out, Said{
 			At: row.SaidAt, Text: row.Said,
-			By: row.By, About: row.About, Repo: row.Repo,
+			By: row.By, About: row.About, Repo: row.Repo, Path: row.Path,
 		})
 	}
 
@@ -254,7 +264,15 @@ func factOf(said Said, text, check string, where Place) (knowledge.Fact, error) 
 		repo = where.Repo
 	}
 
+	// What the reader typed, then where the work was when the sentence was
+	// said. A rule said in the middle of one folder is usually about that
+	// folder, and having to retype a path Orbit already watched being worked
+	// in is the kind of small tax that ends with nobody placing rules at
+	// all. Typing `.` is how somebody says the whole checkout instead.
 	path := strings.TrimSpace(where.Path)
+	if path == "" {
+		path = said.Path
+	}
 
 	if repo == "" {
 		if path != "" {

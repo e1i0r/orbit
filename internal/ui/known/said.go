@@ -36,15 +36,15 @@ func (s State) onFact() (knowledge.Fact, bool) {
 	return s.facts[at], true
 }
 
-// keepAsSaid keeps the sentence under the cursor word for word, which is the
-// answer when there is nothing to correct.
+// keepAsSaid keeps the sentence under the cursor word for word and where the
+// work was, which is the answer when there is nothing to correct.
 func (s State) keepAsSaid(e Env) (State, Out) {
 	one, waiting := s.onSaid()
 	if !waiting {
 		return s, Out{}
 	}
 
-	return s.keepWith(one, one.Text, "", "", e)
+	return s.keepWith(one, one.Text, "", one.Where, e)
 }
 
 // keepWith writes it down as a fact of yours, and takes it out of the tray.

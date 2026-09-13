@@ -82,6 +82,10 @@ func (s State) sentence(one Said, chosen bool, cw int) []string {
 		head += " · " + one.From
 	}
 
+	if one.Where != "" {
+		head += " · " + one.Where
+	}
+
 	rows := []string{mark + theme.Paint(theme.Dim).Render(head)}
 
 	for _, line := range cells.Lines(one.Text, max(cw-4, 8)) {

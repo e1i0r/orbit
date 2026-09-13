@@ -78,6 +78,11 @@ type Said struct {
 	// correcting one run and said to the supervisor are the same rule, and
 	// which it was is how somebody decides whether it was meant that widely.
 	From string
+	// Where is the folder the work was in when it was said, relative to the
+	// checkout it came out of, and empty when it came out of no one folder.
+	// It is what the editor's place line opens with: the commonest correction
+	// is a path, and the commonest path is this one.
+	Where string
 }
 
 // Out is what the screen asks the window for.

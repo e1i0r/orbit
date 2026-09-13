@@ -57,10 +57,14 @@ func TestAPathIsADirectoryOrAFile(t *testing.T) {
 
 	// And a rule about the whole checkout is still a rule about the whole
 	// checkout: naming no path is not an error, it is the widest place
-	// inside a repository.
-	whole, err := At(repo, "")
-	if err != nil || whole.Kind != Repo {
-		t.Errorf("naming no path read as %+v, %v", whole, err)
+	// inside a repository. The root written as a dot is the same place said
+	// out loud, which is what somebody needs when the place arrived filled
+	// in and is wrong.
+	for _, typed := range []string{"", "."} {
+		whole, err := At(repo, typed)
+		if err != nil || whole.Kind != Repo || whole.Path != "" {
+			t.Errorf("%q read as %+v, %v", typed, whole, err)
+		}
 	}
 }
 
