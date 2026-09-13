@@ -6,6 +6,7 @@ package learn
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/knowledge"
@@ -138,5 +139,78 @@ func TestASentenceFromNoFolderIsAboutTheWholeCheckout(t *testing.T) {
 	got := filed(t, s, repo)
 	if got[0].Scope.Kind != knowledge.Repo {
 		t.Errorf("it was filed as %+v", got[0].Scope)
+	}
+}
+
+// TestAgreeingWithAModelDoesNotMakeItYours.
+//
+// The screen that lists facts says where each one came from, and the whole
+// of why a fact can be trusted is that it can be traced back to where it
+// actually came from. A sentence an engine worked out mid-task stays the
+// engine's finding after somebody says yes to it; saying yes is agreement,
+// not authorship.
+func TestAgreeingWithAModelDoesNotMakeItYours(t *testing.T) {
+	s := root(t)
+	repo := aCheckout(t)
+
+	one := said(1, "the fuzz tests hang when the seed is fixed")
+	one.By, one.About, one.Repo = AModel, "ACME-40", repo
+
+	if err := Propose(s, one); err != nil {
+		t.Fatalf("propose: %v", err)
+	}
+
+	if err := Keep(s, one.At, one.Text, "", Place{}); err != nil {
+		t.Fatalf("keep: %v", err)
+	}
+
+	got := filed(t, s, repo)[0]
+	if got.Source != knowledge.FromRecord {
+		t.Errorf("a rule the model found is recorded as coming from %v", got.Source)
+	}
+
+	// And the run it came out of travels with it: a sentence nobody can
+	// trace back to the task that produced it is one the model may as well
+	// have made up.
+	if got.Ref != "ACME-40" {
+		t.Errorf("it says it came from %q", got.Ref)
+	}
+}
+
+// TestWhatAPersonSaysIsStillTheirs, which is the other half of the same
+// rule: everything that is not an engine working alone is somebody talking.
+func TestWhatAPersonSaysIsStillTheirs(t *testing.T) {
+	s := root(t)
+	repo := aCheckout(t)
+
+	one := waitingFromARun(t, s, repo, "", "never merge without the tests passing")
+
+	if err := Keep(s, one.At, one.Text, "", Place{}); err != nil {
+		t.Fatalf("keep: %v", err)
+	}
+
+	if got := filed(t, s, repo)[0]; got.Source != knowledge.Human {
+		t.Errorf("a rule somebody said is recorded as coming from %v", got.Source)
+	}
+}
+
+// TestTheTrayNeverPrintsAModelTheSameAsAPerson.
+//
+// A sentence an engine worked out on its own is read more carefully than one
+// somebody said, and a reader who cannot tell them apart is a reader
+// agreeing with both at the same speed.
+func TestTheTrayNeverPrintsAModelTheSameAsAPerson(t *testing.T) {
+	mine := Said{By: Operator, About: "ACME-40"}
+	if got := mine.From(); got != "ACME-40" {
+		t.Errorf("a sentence somebody said at a task reads %q", got)
+	}
+
+	its := Said{By: AModel, About: "ACME-40"}
+	if got := its.From(); got == mine.From() {
+		t.Errorf("a model's finding and a person's words both read %q", got)
+	}
+
+	if got := its.From(); !strings.Contains(got, "ACME-40") || !strings.Contains(got, AModel) {
+		t.Errorf("a model's finding reads %q, which does not say both", got)
 	}
 }

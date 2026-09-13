@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/e1i0r/orbit/internal/learn"
 	"github.com/e1i0r/orbit/internal/words"
@@ -86,21 +87,28 @@ func waiting(w World) (Out, error) {
 			"nothing you said is waiting to be kept"), Saw: said}, nil
 	}
 
-	// The place is a column only when something has one, because most
-	// terminals here are a hundred columns wide and the sentence is what
-	// somebody came to read.
-	wide := 0
+	// Both columns are as wide as their widest row and no wider, and the
+	// place is not a column at all when nothing has one: most terminals
+	// here are a hundred columns across, and the sentence is what somebody
+	// came to read.
+	// Counted in runes and not in bytes, because a column width is what a
+	// reader sees: the mark between a task and the model that found
+	// something is one character and three bytes.
+	from, place := 0, 0
 
 	for _, one := range said {
-		if len(one.Path) > 0 {
-			wide = max(wide, len(one.Path)+2)
+		from = max(from, utf8.RuneCountInString(one.From()))
+
+		if one.Path != "" {
+			place = max(place, utf8.RuneCountInString(one.Path)+2)
 		}
 	}
 
 	var b strings.Builder
 	for i, one := range said {
-		fmt.Fprintf(&b, "%3d  %s  %-12s %-*s%s\n",
-			i+1, one.At.Local().Format(time.DateTime), one.From(), wide, one.Path, one.Text)
+		fmt.Fprintf(&b, "%3d  %s  %-*s  %-*s%s\n",
+			i+1, one.At.Local().Format(time.DateTime),
+			from, one.From(), place, one.Path, one.Text)
 	}
 
 	return Out{Said: strings.TrimRight(b.String(), "\n"), Saw: said}, nil
