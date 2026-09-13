@@ -42,15 +42,15 @@ type Said struct {
 	// Repo is the checkout it is about, and empty for a sentence that is
 	// about everything.
 	Repo string
-	// Path is the folder the work was in when it was said, relative to that
-	// checkout, and empty when the work was spread across the whole of it.
+	// Path is the place the sentence arrived with, relative to that
+	// checkout, and empty when it arrived with none.
 	//
-	// It is not a guess about what the sentence meant. It is where the
-	// person was working at the moment they said it, which is the one thing
-	// about the place that is known rather than inferred — and it is what a
-	// rule turns out to be about often enough that typing it again is work
-	// nobody should have to do. Keeping the sentence somewhere else
-	// overrides it.
+	// It is not a guess about what the sentence meant. Said at a run it is
+	// the folder the work was in, which is where somebody was standing;
+	// found by a model it is the file or folder that model named. Either
+	// way it is known rather than inferred, and it is what the rule turns
+	// out to be about often enough that typing it again is work nobody
+	// should have to do. Keeping the sentence somewhere else overrides it.
 	Path string
 }
 
@@ -85,6 +85,16 @@ type Place struct {
 // nothing more particular is known. It is what a sentence with no By at all
 // becomes: a row somebody has to look at is the way round that fails safe.
 const Operator = "operator"
+
+// AModel is what By says when an engine worked the sentence out on its own,
+// mid-task, rather than being told it.
+//
+// Not the engine's name. The tool is served to whoever connected to it, and
+// the task's configured engine is a guess about who is calling — while what
+// the reader actually needs is the one thing that is certain: nobody said
+// this, something deduced it. That is what changes how carefully it is read,
+// and what the fact records as its source once it is agreed with.
+const AModel = "model"
 
 // itsOwn is what By says when Orbit said it to itself.
 //
