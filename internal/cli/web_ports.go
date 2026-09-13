@@ -46,7 +46,7 @@ func (k knows) Facts() []web.Fact {
 			Repo:   f.Scope.Repo,
 			At:     f.At,
 			Used:   f.Used,
-			Off:    f.Off,
+			Off:    !f.Tells(),
 		})
 	}
 

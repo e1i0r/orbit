@@ -33,6 +33,30 @@ const (
 	FromProduction
 )
 
+// State is where a rule stands: whether it applies, and whether somebody
+// stopped it applying.
+//
+// Three and not two. A rule used to be said or not said, and that one switch
+// is what forced switching a rule off when what was needed was something
+// else entirely — "skip this one while we get the coverage up" is not
+// disagreeing with it.
+type State int
+
+const (
+	// Active is confirmed and working. It is the zero value, so a fact
+	// somebody wrote by hand with a header of two lines applies, which is
+	// what they meant by writing it.
+	Active State = iota
+	// Paused is stopped by a person, with a reason written down. It is not
+	// a switch: the reason is what they will read when they come back, and
+	// the only thing that will tell them whether it made sense.
+	Paused
+	// Off is somebody deciding against it. It stays and stops being told:
+	// disagreeing with a rule and losing the record that it existed are
+	// different things.
+	Off
+)
+
 // Action is what a fact does when the work reaches its scope.
 type Action int
 
@@ -81,10 +105,19 @@ type Fact struct {
 	// Both are for the person deciding whether to keep it.
 	At   time.Time
 	Used int
-	// Off is a fact somebody disagreed with. It stays, and stops being
-	// told: disagreeing with a fact and losing the record that it existed
-	// are different things.
-	Off bool
+	// State is where the rule stands: applying, paused, or switched off.
+	State State
+	// Why is the reason it was paused, in the words of whoever paused it.
+	// A pause with no reason is a switch, and a switch is the thing this
+	// was added to stop being the only answer.
+	Why string
+	// Review is a rule waiting for somebody to decide about it. It is
+	// apart from the state because the two are different questions:
+	// skipping a rule at a run leaves it applying and asks for a decision,
+	// and pausing it stops it applying and asks for the same decision.
+	// Folded together, one of those two would have to lie about whether
+	// the rule is still in the prompt.
+	Review bool
 	// from is the file this fact was read out of, and empty for one that
 	// has never been on disk.
 	//
@@ -96,6 +129,12 @@ type Fact struct {
 	// refusing work.
 	from string
 }
+
+// Tells is whether this rule reaches a phase at all: it is what is written
+// into every prompt and what the gate refuses work over. Only an active rule
+// does — a paused one is the reader saying not now, and one switched off is
+// them saying no.
+func (f Fact) Tells() bool { return f.State == Active }
 
 // Action is what this fact actually does, which is not always what it was
 // asked to do.
@@ -209,7 +248,7 @@ func ordered(all []Fact, keep func(Scope) bool) []Fact {
 	kept := make([]Fact, 0, len(all))
 
 	for _, f := range all {
-		if !f.Off && keep(f.Scope) {
+		if f.Tells() && keep(f.Scope) {
 			kept = append(kept, f)
 		}
 	}

@@ -98,7 +98,7 @@ func TestTheFactsComeOffDiskFromEveryRepository(t *testing.T) {
 		{Scope: everywhere, Source: knowledge.Human, Phrase: "the PRs are written in English"},
 		{Scope: inLedger, Source: knowledge.Human, Phrase: "the ledger only appends"},
 		{Scope: inCheckout, Source: knowledge.Human, Phrase: "the card brand comes from the token"},
-		{Scope: inLedger, Source: knowledge.Human, Phrase: "the suite needs a Postgres", Off: true},
+		{Scope: inLedger, Source: knowledge.Human, Phrase: "the suite needs a Postgres", State: knowledge.Off},
 	} {
 		if _, err := ks.Save(f); err != nil {
 			t.Fatalf("save %q: %v", f.Phrase, err)

@@ -132,7 +132,7 @@ func TestEachFactSaysWhereItCameFrom(t *testing.T) {
 // can see they did.
 func TestAFactThatIsOffLooksOff(t *testing.T) {
 	off := knowledge.Fact{Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.Human, Phrase: "turned off"}
-	off.Off = true
+	off.State = knowledge.Off
 
 	s, e := onScreen(t, off)
 	if drawn := drawnKnowledge(t, s, e); !strings.Contains(strings.ToLower(drawn), "off") {
@@ -159,7 +159,7 @@ func TestSpaceTurnsAFactOffAndOnAgain(t *testing.T) {
 		t.Fatalf("space turned %d facts", len(turned))
 	}
 
-	if !turned[0].Off {
+	if turned[0].State != knowledge.Off {
 		t.Error("space did not turn the fact off")
 	}
 }

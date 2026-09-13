@@ -30,6 +30,7 @@ const (
 	MovedTo   = db.RuleMoved
 	TurnedOff = db.RuleOff
 	TurnedOn  = db.RuleOn
+	Paused    = db.RulePaused
 )
 
 // A Turn is one thing that happened to one rule.
@@ -106,18 +107,31 @@ func Changed(s *store.Store, was, now knowledge.Fact, by string) error {
 		}
 	}
 
-	if was.Off != now.Off {
-		what := db.RuleOn
-		if now.Off {
-			what = db.RuleOff
-		}
-
-		if err := Happened(s, Turn{Rule: now.ID, At: at, What: what, By: by}); err != nil {
+	if was.State != now.State {
+		if err := Happened(s, Turn{
+			Rule: now.ID, At: at, What: Stood(now.State), By: by, Was: now.Why,
+		}); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+// Stood is what a rule moving to one state is called in the record.
+//
+// Moving back to applying is one thing however it got away from it: a rule
+// that was paused and one that was switched off both come back the same way,
+// and which it was is the row before this one.
+func Stood(state knowledge.State) string {
+	switch state {
+	case knowledge.Paused:
+		return db.RulePaused
+	case knowledge.Off:
+		return db.RuleOff
+	default:
+		return db.RuleOn
+	}
 }
 
 // about is a scope in the words the history writes it down in, which are the

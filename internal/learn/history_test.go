@@ -56,7 +56,7 @@ func TestWhatChangedIsWrittenDownOnePieceAtATime(t *testing.T) {
 	now := was
 	now.Phrase = "every amount in this project is in cents"
 	now.Scope = knowledge.Scope{Kind: knowledge.Dir, Repo: repo, Path: "internal/db"}
-	now.Off = true
+	now.State = knowledge.Off
 
 	if err := Changed(s, was, now, Operator); err != nil {
 		t.Fatalf("write down what changed: %v", err)

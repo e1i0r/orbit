@@ -67,7 +67,7 @@ func TestTheGateIsNamedAfterWhatItIsAbout(t *testing.T) {
 // work, or it is not off.
 func TestAFactThatIsOffGatesNothing(t *testing.T) {
 	off := stopping("No UPDATE in ledger.", "false")
-	off.Off = true
+	off.State = knowledge.Off
 
 	if gates := knowledgeGates([]knowledge.Fact{off}); len(gates) != 0 {
 		t.Errorf("a fact that was turned off still gates: %+v", gates)
