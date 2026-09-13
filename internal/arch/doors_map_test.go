@@ -136,7 +136,7 @@ var doors = map[string][]string{
 	},
 	"internal/db": {
 		"append.go", "check.go", "db.go", "follow.go", "message.go",
-		"proposal.go", "pr.go", "read.go", "repo.go",
+		"proposal.go", "pr.go", "read.go", "repo.go", "rule.go",
 	},
 	"internal/store": {
 		"atomic.go", "control.go", "create.go", "flatten.go", "record.go", "repos.go",
@@ -151,8 +151,8 @@ var doors = map[string][]string{
 	"internal/board":     {"board.go", "files.go", "filetext.go", "health.go", "log.go", "refresh.go", "supervisor.go"},
 	"internal/export":    {"export.go"},
 	"internal/flow":      {"draft.go", "engine.go", "flow.go", "load.go", "loop.go", "resolve.go", "save.go"},
-	"internal/knowledge": {"fact.go", "scope.go", "store.go"},
-	"internal/learn":     {"draft.go", "keep.go", "learn.go", "repeated.go"},
+	"internal/knowledge": {"fact.go", "id.go", "scope.go", "store.go"},
+	"internal/learn":     {"draft.go", "history.go", "keep.go", "learn.go", "repeated.go"},
 	"internal/logger":    {"logger.go", "openfiles.go"},
 	// world.go fills internal/verb's ports: what a verb reaches the machine
 	// through on this way in. Exported because a port only this package can

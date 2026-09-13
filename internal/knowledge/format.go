@@ -8,7 +8,7 @@ package knowledge
 // reviewer reads in the diff.
 //
 // The header is parsed here rather than by a YAML library because these are
-// eight known keys on one line each, and a dependency that could bring in
+// a dozen known keys on one line each, and a dependency that could bring in
 // anchors, multi-line scalars and type coercion is a larger surface than the
 // thing it would parse.
 
@@ -27,6 +27,7 @@ const fence = "---"
 // says what it is about, and a reader of one file does not have to work out
 // where it sits to know what it covers.
 const (
+	keyID     = "id"
 	keyScope  = "scope"
 	keySource = "source"
 	keyRef    = "ref"
@@ -54,6 +55,7 @@ func encode(f Fact) string {
 	var b strings.Builder
 
 	b.WriteString(fence + "\n")
+	line(&b, keyID, f.ID)
 	line(&b, keyScope, kindNames[f.Scope.Kind])
 	line(&b, keySource, sourceNames[f.Source])
 	line(&b, keyRef, f.Ref)
@@ -101,7 +103,7 @@ func decode(body, where, repo string) (Fact, error) {
 		return Fact{}, fmt.Errorf("says nothing")
 	}
 
-	f := Fact{Phrase: phrase, Ref: head[keyRef], Check: head[keyCheck]}
+	f := Fact{ID: head[keyID], Phrase: phrase, Ref: head[keyRef], Check: head[keyCheck]}
 
 	source, ok := sourceNamed(head[keySource])
 	if !ok {

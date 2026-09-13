@@ -4691,6 +4691,18 @@
         "other": "quedan {n} esperando en las reglas a que las guardes o las tires"
       }
     },
+    "verb.rules.history": {
+      "source": "what has happened to one rule since it was kept",
+      "value": "qué le fue pasando a una regla desde que la guardaste"
+    },
+    "verb.rules.history.rule": {
+      "source": "the rule's name, as orbit knowledge prints it",
+      "value": "el nombre de la regla, como lo imprime orbit knowledge"
+    },
+    "verb.rules.history.none": {
+      "source": "nothing has happened to {rule} since it was kept",
+      "value": "no le pasó nada a {rule} desde que la guardaste"
+    },
     "verb.rules.repeated": {
       "source": "what you keep telling runs, that nobody ever wrote down as a rule",
       "value": "lo que le repetís a las corridas, que nadie escribió nunca como regla"

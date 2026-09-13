@@ -19,6 +19,7 @@ import (
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/knowledge"
+	"github.com/e1i0r/orbit/internal/learn"
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/supervisor"
@@ -100,16 +101,27 @@ func (w world) Looked() error {
 }
 
 // Learn writes down something true about the code.
+//
+// The name is coined here rather than left to Save, because what happened to
+// the rule is written down in the same breath as the rule and cannot be told
+// the name afterwards. Every rule's history starts with somebody keeping it,
+// however they kept it.
 func (w world) Learn(fact knowledge.Fact) error {
 	if err := fact.Validate(); err != nil {
 		return err
+	}
+
+	if fact.ID == "" {
+		fact.ID = knowledge.Name()
 	}
 
 	if _, err := knowledge.NewStore(w.store.Root()).Save(fact); err != nil {
 		return err
 	}
 
-	return nil
+	return learn.Happened(w.store, learn.Turn{
+		Rule: fact.ID, At: fact.At, What: learn.Written, By: learn.Operator,
+	})
 }
 
 // Say puts something in the supervisor's thread, on whichever channel the

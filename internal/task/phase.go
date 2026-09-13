@@ -198,6 +198,15 @@ func runGates(ctx context.Context, s *store.Store, t Task, p flow.Phase, n int, 
 			"gate": g.Name,
 			"n":    strconv.Itoa(n),
 		}
+
+		// The rule's name beside its sentence. The model reads the sentence
+		// — "gate `rule-7` refused it" is a wall with no sign on it — and
+		// what a later reader has to be able to follow is the rule, which
+		// keeps its name after somebody rewords it and the gate does not.
+		if g.Rule != "" {
+			data["rule"] = g.Rule
+		}
+
 		if full > 0 {
 			data["bytes"] = strconv.Itoa(full)
 		}

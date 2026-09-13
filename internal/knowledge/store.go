@@ -52,9 +52,20 @@ func NewStore(stateRoot string) *Store {
 }
 
 // Save writes one fact down and answers where it went.
+//
+// A fact with no name is given one here, which is the only place a name is
+// ever coined. That covers both of the ways one arrives without: a rule
+// Orbit is writing for the first time, and a file somebody wrote by hand and
+// has now edited through a screen. Reading does not coin one — a walk that
+// wrote to every file it read would put a diff in somebody's checkout for
+// having opened a list.
 func (s *Store) Save(f Fact) (string, error) {
 	if err := f.Validate(); err != nil {
 		return "", err
+	}
+
+	if f.ID == "" {
+		f.ID = coin()
 	}
 
 	path := filepath.Join(s.dirFor(f.Scope), fileName(f))
@@ -76,16 +87,34 @@ func (s *Store) Save(f Fact) (string, error) {
 // is filed under its path, so editing either writes somewhere new — and the
 // copy nobody meant to keep would go on being told and go on refusing work.
 //
+// What is removed is the file the old one was actually read out of, and not
+// the name its fields would produce. A fact somebody wrote by hand is called
+// whatever they called it, and working the name out from the sentence left
+// every one of those behind on the first edit.
+//
 // The old one is removed after the new one is written, so a failure in the
 // middle leaves two facts rather than none: a duplicate is visible in the
 // screen that lists them, and a fact that vanished is not.
 func (s *Store) Replace(was, now Fact) (string, error) {
+	// The name survives the change, which is the whole of what it is for.
+	// A screen that rebuilt the fact from what was typed rather than from
+	// what it read would otherwise coin a second name for one rule, and
+	// everything the record wrote down about the first would be about
+	// something that no longer exists.
+	if now.ID == "" {
+		now.ID = was.ID
+	}
+
 	where, err := s.Save(now)
 	if err != nil {
 		return "", err
 	}
 
-	before := filepath.Join(s.dirFor(was.Scope), fileName(was))
+	before := was.from
+	if before == "" {
+		before = filepath.Join(s.dirFor(was.Scope), fileName(was))
+	}
+
 	if before == where {
 		return where, nil
 	}
@@ -166,6 +195,7 @@ func (s *Store) read(root, repo string) ([]Fact, error) {
 			return nil
 		}
 
+		f.from = path
 		facts = append(facts, f)
 
 		return nil

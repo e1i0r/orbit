@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/e1i0r/orbit/internal/learn"
 	"github.com/e1i0r/orbit/internal/words"
@@ -103,4 +104,34 @@ func drafting(ctx context.Context, w World, in In) (Out, error) {
 		"{n} are waiting in the rules for you to keep them or drop them"))
 
 	return Out{Said: strings.TrimRight(b.String(), "\n"), Saw: said}, nil
+}
+
+// happened is what one rule has been through since somebody kept it.
+//
+// The sentence a rule says today is in its file, and that file travels with
+// the checkout. What it has been through is of this machine and only ever
+// grows, which is why it is asked for separately and why this is the one
+// place it can be read.
+func happened(w World, in In) (Out, error) {
+	rule := strings.TrimSpace(in.Arg("rule"))
+
+	turns, err := learn.History(w.Store(), rule)
+	if err != nil {
+		return Out{}, err
+	}
+
+	if len(turns) == 0 {
+		return Out{Said: w.Words().T("verb.rules.history.none",
+			"nothing has happened to {rule} since it was kept",
+			words.Arg{Name: "rule", Value: rule}), Saw: turns}, nil
+	}
+
+	var b strings.Builder
+
+	for _, one := range turns {
+		fmt.Fprintf(&b, "%s  %-10s %-10s %s\n",
+			one.At.Local().Format(time.DateTime), one.What, one.By, one.Was)
+	}
+
+	return Out{Said: strings.TrimRight(b.String(), "\n"), Saw: turns}, nil
 }
