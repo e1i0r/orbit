@@ -132,3 +132,21 @@ func TestWhatIsFedForwardIsBounded(t *testing.T) {
 		t.Error("an answer under the limit was changed on its way forward")
 	}
 }
+
+// TestAStoryIsWholeOrItIsNot. Five fields or none: a story with a link
+// missing draws as a chain that still looks whole, and the reader has no
+// way to see which claim was never made.
+func TestAStoryIsWholeOrItIsNot(t *testing.T) {
+	full := Story{Entry: "a", Purpose: "b", Symptom: "c", Cause: "d", Fix: "e"}
+	if !full.whole() {
+		t.Error("five fields read as not whole")
+	}
+
+	if (Story{Entry: "a"}).whole() {
+		t.Error("one field reads as whole")
+	}
+
+	if (Story{}).whole() {
+		t.Error("nothing reads as whole")
+	}
+}

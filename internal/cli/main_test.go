@@ -19,6 +19,7 @@ package cli
 // to that test and restored after it.
 
 import (
+	"fmt"
 	"os"
 	"testing"
 )
@@ -37,9 +38,29 @@ func TestMain(m *testing.M) {
 		os.Exit(0)
 	}
 
-	for _, name := range []string{"ORBIT_TASK", "ORBIT_WORKSPACE", "ORBIT_HOME"} {
+	for _, name := range []string{"ORBIT_TASK", "ORBIT_WORKSPACE"} {
 		os.Unsetenv(name)
 	}
 
-	os.Exit(m.Run())
+	// The suite's own state root. Unsetting ORBIT_HOME falls back to the
+	// reader's real ~/.orbit, so a test that names no home reads and
+	// writes where the developer works — and fails when that root was
+	// written by a newer orbit, for a reason with nothing to do with the
+	// change under test. A test that wants a home of its own still sets
+	// it with t.Setenv, which wins over this for that test.
+	root, err := os.MkdirTemp("", "orbit-cli-test")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "make a state root for the suite:", err)
+		os.Exit(1)
+	}
+
+	if err := os.Setenv("ORBIT_HOME", root); err != nil {
+		fmt.Fprintln(os.Stderr, "point the suite at its state root:", err)
+		os.Exit(1)
+	}
+
+	code := m.Run()
+	_ = os.RemoveAll(root)
+
+	os.Exit(code)
 }

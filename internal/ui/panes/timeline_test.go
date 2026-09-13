@@ -1,76 +1,59 @@
 package panes
 
-// logWord's whole vocabulary — every kind the task view knows a word for,
-// and the one it does not — plus clock's own two answers.
+// The timeline pane: every entry in the order it happened, with seams
+// between attempts and headings where a row folds.
 //
-// Every Kind here is spelled as the record's own constant would render it,
-// as a literal string: nothing under internal/ui may import internal/record
-// (see arch.layers), so every fixture entry in this repository is built the
-// same way.
+// Attempts are what the eye follows: a run that went round twice draws
+// the seam between its tries, and a row that folds carries its heading
+// with it.
 
 import (
 	"strings"
 	"testing"
-	"time"
 
-	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 )
 
-func TestLogWordCoversEveryKnownKindAndTheUnknownOne(t *testing.T) {
-	e := world(t, nil)
+// TestTimelineDrawsSeamsBetweenAttempts. Every attempt opens with a
+// seam naming it, so a run that went round twice reads as two tries.
+func TestTimelineDrawsSeamsBetweenAttempts(t *testing.T) {
+	e := world(t, []view.Entry{
+		{Kind: "task.started", Attempt: 1},
+		{Kind: "phase.finished", Phase: "implement", Attempt: 1},
+		{Kind: "task.started", Attempt: 2},
+		{Kind: "phase.failed", Phase: "implement", Attempt: 2},
+	})
 
-	cases := []struct {
-		kind string
-		want string
-	}{
-		{"task.created", "written down"},
-		{"task.started", "started"},
-		{"phase.started", "started"},
-		{"task.finished", "finished"},
-		{"phase.finished", "finished"},
-		{"task.failed", "failed"},
-		{"phase.failed", "failed"},
-		{"task.cancelled", "cancelled"},
-		{"phase.cancelled", "cancelled"},
-		{"task.timedout", "timed out"},
-		{"task.abandoned", "abandoned"},
-		{"task.read", "read"},
-		{"phase.waiting", "waiting"},
-		{"phase.resumed", "let go again"},
-		{"gate.passed", "gate passed"},
-		{"gate.failed", "gate failed"},
-		{"phase.thought", "thought"},
-		{"phase.tool_call", "tool call"},
-		{"phase.refused", "refused"},
-		{"record.unreadable", "could not be read"},
-	}
-	for _, c := range cases {
-		word, _ := e.logWord(view.Entry{Kind: c.kind})
-		if !strings.Contains(word, c.want) {
-			t.Errorf("logWord(%q) = %q, want it to say %q", c.kind, word, c.want)
-		}
+	drawn := Timeline(e)
+
+	if len(drawn.Rows) == 0 {
+		t.Fatal("the timeline drew nothing")
 	}
 
-	// A kind this build has never heard of is drawn exactly as the record
-	// spelled it, and not translated.
-	word, role := e.logWord(view.Entry{Kind: "custom.unknown.kind"})
-	if word != "custom.unknown.kind" {
-		t.Errorf("logWord on an unrecognised kind = %q, want the kind verbatim", word)
-	}
-
-	if role != theme.Dim {
-		t.Errorf("logWord on an unrecognised kind painted %v, want Dim", role)
+	if len(drawn.Seams) != 2 || drawn.Seams[0] != 1 || drawn.Seams[3] != 2 {
+		t.Errorf("the timeline seamed %v, want one seam per attempt", drawn.Seams)
 	}
 }
 
-func TestClockFormatsOrLeavesADamagedTimeBlank(t *testing.T) {
-	if got := clock(time.Time{}); got != "" {
-		t.Errorf("clock(zero time) = %q, want empty", got)
-	}
+// TestTimelineIsEmptyWhenNothingHappened. No entries is a sentence
+// saying so, not a blank pane.
+func TestTimelineIsEmptyWhenNothingHappened(t *testing.T) {
+	drawn := Timeline(world(t, nil))
 
-	at := time.Date(2026, 8, 23, 9, 5, 3, 0, time.UTC)
-	if got := clock(at); got != "09:05:03" {
-		t.Errorf("clock(9:05:03) = %q, want \"09:05:03\"", got)
+	if !strings.Contains(strings.Join(drawn.Rows, "\n"), "nothing has been recorded") {
+		t.Errorf("an empty timeline reads:\n%s", strings.Join(drawn.Rows, "\n"))
+	}
+}
+
+// TestTimelineSaysWhenReadingBroke. A failure reads as itself, in front
+// of everything the record might have said.
+func TestTimelineSaysWhenReadingBroke(t *testing.T) {
+	e := world(t, nil)
+	e.Failed = "the record would not open"
+
+	drawn := Timeline(e)
+
+	if !strings.Contains(strings.Join(drawn.Rows, "\n"), "would not open") {
+		t.Errorf("a broken timeline reads:\n%s", strings.Join(drawn.Rows, "\n"))
 	}
 }

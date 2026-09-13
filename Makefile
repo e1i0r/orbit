@@ -62,11 +62,17 @@ integration:
 # coverage is a gate and not a report: it fails under the floor. A number
 # printed and ignored is a number that drifts, and the day somebody notices is
 # the day it is 60% and nobody knows which change spent it.
+#
+# Only packages with tests are measured. A package without a single test
+# file makes the percent step fail — go reaches for covdata to say 0% of
+# nothing — so ./... breaks the gate on machines whose toolchain lacks it,
+# for packages that contribute no statements either way.
 COVERAGE_FLOOR ?= 90
 
 coverage:
 	@mkdir -p .coverage
-	@$(GO) test -count=1 -coverprofile=.coverage/coverage.out -covermode=atomic ./...
+	@pkgs=$$($(GO) list -e -f '{{if or .TestGoFiles .XTestGoFiles}}{{.ImportPath}}{{end}}' ./... | grep -v '^$$'); \
+	$(GO) test -count=1 -coverprofile=.coverage/coverage.out -covermode=atomic $$pkgs
 	@total=$$($(GO) tool cover -func=.coverage/coverage.out | tail -n 1 | grep -oE "[0-9]+\.[0-9]+"); \
 	echo ""; \
 	echo "total statement coverage: $$total% (floor $(COVERAGE_FLOOR)%)"; \
