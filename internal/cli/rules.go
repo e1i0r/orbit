@@ -39,10 +39,19 @@ func waitingPort(s *store.Store) func() []known.Said {
 	}
 }
 
-// keepRulePort writes one of them down as a fact of yours.
-func keepRulePort(s *store.Store) func(at time.Time, phrase, check, where string) error {
+// keepRulePort writes one of them down as a fact of yours, in the place the
+// screen was left with.
+//
+// repo is the checkout the window was opened over, and it is what a sentence
+// said to the supervisor has to go on: the supervisor is about the board
+// rather than about one task, so the sentence itself knows no repository.
+// A rule that came out of a task uses that task's own, which the tray
+// carries.
+func keepRulePort(
+	s *store.Store, repo string,
+) func(at time.Time, phrase, check, where string) error {
 	return func(at time.Time, phrase, check, where string) error {
-		if err := learn.Keep(s, at, phrase, check, where); err != nil {
+		if err := learn.Keep(s, at, phrase, check, learn.Place{Repo: repo, Path: where}); err != nil {
 			return err
 		}
 

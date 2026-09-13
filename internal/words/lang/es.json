@@ -4697,6 +4697,10 @@
       "source": "nothing you said is waiting to be kept",
       "value": "no hay nada que dijiste esperando a ser guardado"
     },
+    "verb.rules.repo": {
+      "source": "the checkout the folder or file is in; the default is the one you are in",
+      "value": "el checkout en el que está la carpeta o el archivo; por defecto, en el que estás"
+    },
     "verb.rules.in": {
       "source": "the folder or file it is about; the default is the whole checkout",
       "value": "la carpeta o el archivo del que es; por defecto, el checkout entero"

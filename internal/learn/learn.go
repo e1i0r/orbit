@@ -59,6 +59,18 @@ func (s Said) From() string {
 	return s.By
 }
 
+// A Place is where a kept rule belongs: the checkout it is about, and the
+// folder or file inside it that somebody named.
+//
+// The checkout is here because the commonest way a rule gets said is the
+// supervisor, and the supervisor is about the board rather than about one
+// task — so the sentence arrives knowing no repository at all. What it is
+// about is where the reader was standing when they agreed with it.
+type Place struct {
+	Repo string
+	Path string
+}
+
 // Operator is what By says when it was typed at one of the controls and
 // nothing more particular is known. It is what a sentence with no By at all
 // becomes: a row somebody has to look at is the way round that fails safe.
@@ -158,7 +170,7 @@ func Waiting(s *store.Store) ([]Said, error) {
 // sentence when the write fails — an offer nobody can accept twice and a
 // fact that was never saved — and this way the worst case is being offered
 // something you already kept.
-func Keep(s *store.Store, at time.Time, text, check, where string) error {
+func Keep(s *store.Store, at time.Time, text, check string, where Place) error {
 	d, err := s.Record()
 	if err != nil {
 		return err
@@ -221,7 +233,7 @@ func waitingAt(s *store.Store, at time.Time) (Said, error) {
 // no checkout at all. A rule almost always belongs somewhere narrower than
 // where it was said — you say it while correcting one run and it is true of
 // one folder — and this is the moment somebody knows which.
-func factOf(said Said, text, check, where string) (knowledge.Fact, error) {
+func factOf(said Said, text, check string, where Place) (knowledge.Fact, error) {
 	f := knowledge.Fact{
 		Scope:  knowledge.Scope{Kind: knowledge.General},
 		Source: knowledge.Human,
@@ -232,19 +244,36 @@ func factOf(said Said, text, check, where string) (knowledge.Fact, error) {
 		At:     time.Now().UTC(),
 	}
 
-	if said.Repo == "" {
-		if strings.TrimSpace(where) != "" {
+	// The task's checkout first: a rule said while correcting one run is
+	// about that run's code, wherever the reader happens to be standing
+	// when they get round to agreeing with it. Then the checkout they are
+	// standing in, which is the only thing a sentence said to the
+	// supervisor has to go on.
+	repo := said.Repo
+	if repo == "" {
+		repo = where.Repo
+	}
+
+	path := strings.TrimSpace(where.Path)
+
+	if repo == "" {
+		if path != "" {
 			return knowledge.Fact{}, fmt.Errorf(
-				"%q was said about no repository, so there is no checkout for %q to be in", said.Text, where)
+				"%q is about no checkout, so there is nothing for %q to be inside", said.Text, path)
 		}
 
 		return f, nil
 	}
 
-	// The place the reader named, and the whole checkout when they named
-	// none. Narrower than the sentence was said about is the ordinary case:
-	// you say it while correcting one run and it is true of one folder.
-	scope, err := knowledge.At(said.Repo, where)
+	// Nothing named is the whole checkout for a rule that came out of one,
+	// and everywhere for one said to the supervisor from nowhere in
+	// particular: agreeing with a sentence is not the same as saying it is
+	// about wherever the terminal happened to be.
+	if path == "" && said.Repo == "" {
+		return f, nil
+	}
+
+	scope, err := knowledge.At(repo, path)
 	if err != nil {
 		return knowledge.Fact{}, err
 	}

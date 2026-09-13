@@ -47,6 +47,15 @@ func rules() []Verb {
 					return p.T("verb.rules.in",
 						"the folder or file it is about; the default is the whole checkout")
 				}},
+				// Declared rather than left to the caller's own, because a
+				// sentence said to the supervisor knows no repository and a
+				// browser asking about the board carries none either. What
+				// the rule is about is where the reader is, and only the
+				// reader can say where that is.
+				{Name: "repo", Kind: Named, About: func(p *words.Printer) string {
+					return p.T("verb.rules.repo",
+						"the checkout the folder or file is in; the default is the one you are in")
+				}},
 			},
 		},
 		{
@@ -109,13 +118,22 @@ func agreed(w World, in In) (Out, error) {
 		text = one.Text
 	}
 
-	if err := learn.Keep(w.Store(), one.At, text, in.Arg("check"), in.Arg("in")); err != nil {
+	// The checkout the reader named, then the one they are standing in, and
+	// nowhere when there is neither — which is what a rule about everything
+	// is. openRepo is the same reading every other verb makes of it.
+	here, err := openRepo(w, in)
+	if err != nil {
 		return Out{}, err
 	}
 
-	if where := strings.TrimSpace(in.Arg("in")); where != "" {
+	where := learn.Place{Repo: here.Path, Path: in.Arg("in")}
+	if err := learn.Keep(w.Store(), one.At, text, in.Arg("check"), where); err != nil {
+		return Out{}, err
+	}
+
+	if named := strings.TrimSpace(where.Path); named != "" {
 		return Out{Said: w.Words().T("verb.rules.kept_in", "Orbit knows it, in {where}: {rule}",
-			words.Arg{Name: "where", Value: where},
+			words.Arg{Name: "where", Value: named},
 			words.Arg{Name: "rule", Value: text})}, nil
 	}
 

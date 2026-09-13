@@ -176,7 +176,7 @@ func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 		TurnFact:           turnFactPort(s),
 		ReplaceFact:        replaceFactPort(s),
 		Waiting:            waitingPort(s),
-		KeepRule:           keepRulePort(s),
+		KeepRule:           keepRulePort(s, dir),
 		DropRule:           dropRulePort(s),
 		Learn:              learnPort(s),
 		NoteTask:           notePort(r, s),
