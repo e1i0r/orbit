@@ -1,9 +1,15 @@
-// Package learn turns what you say into something Orbit knows.
+// Package learn turns what gets said around Orbit into something it knows.
 //
 // You tell the supervisor "never push a pull request without the tests
 // passing". That sentence is already the answer: it is about your code, in
 // your words, and you meant it. All that is missing is for Orbit to notice
 // it was a rule and ask whether to keep it.
+//
+// An engine that hits a wall mid-task offers what it found through the same
+// door, and waits in the same queue. One flow, and not two: a rule that
+// holds for a person and not for the model is not a rule, and a second way
+// in that skipped the asking would be exactly the way something nobody read
+// ends up in every prompt.
 //
 // So a sentence waits here between being said and being agreed with. It is
 // not knowledge yet and must not be kept as any: a fact is a file, and every
@@ -15,12 +21,9 @@
 package learn
 
 import (
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/e1i0r/orbit/internal/db"
-	"github.com/e1i0r/orbit/internal/knowledge"
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/store"
 )
@@ -54,31 +57,26 @@ type Said struct {
 	Path string
 }
 
-// From is where it was said: the task it was typed at, or the way in it came
-// through when it was about no task.
+// From is where it came from: the task it was typed at, or the way in it
+// came through when it was about no task — and whether anybody said it at
+// all.
 //
 // It is what a reader needs before they can agree with anything. "Never
 // merge without the tests passing" said while correcting one run and the
 // same words said to the supervisor are the same rule, and which it was is
-// how somebody decides whether it was meant that widely.
+// how somebody decides whether it was meant that widely. A sentence a model
+// worked out on its own is read differently again, and more carefully, so
+// the two are never printed the same.
 func (s Said) From() string {
-	if s.About != "" {
-		return s.About
+	if s.About == "" {
+		return s.By
 	}
 
-	return s.By
-}
+	if s.By == AModel {
+		return s.About + " · " + AModel
+	}
 
-// A Place is where a kept rule belongs: the checkout it is about, and the
-// folder or file inside it that somebody named.
-//
-// The checkout is here because the commonest way a rule gets said is the
-// supervisor, and the supervisor is about the board rather than about one
-// task — so the sentence arrives knowing no repository at all. What it is
-// about is where the reader was standing when they agreed with it.
-type Place struct {
-	Repo string
-	Path string
+	return s.About
 }
 
 // Operator is what By says when it was typed at one of the controls and
@@ -172,143 +170,6 @@ func Waiting(s *store.Store) ([]Said, error) {
 	}
 
 	return out, nil
-}
-
-// Keep writes the sentence down as a fact of yours and takes it out of the
-// tray.
-//
-// The text is a parameter rather than the proposal's own, because correcting
-// is how most of these are accepted: what you meant is what you typed the
-// second time, and a fact in words you just improved is the whole point of
-// being asked instead of told.
-//
-// It is yours, so it reaches every phase's prompt the way every fact does,
-// and it refuses work at the gate when you give it a command that can answer
-// yes or no without an opinion in it.
-//
-// The fact is written before the tray is cleared. The other order loses the
-// sentence when the write fails — an offer nobody can accept twice and a
-// fact that was never saved — and this way the worst case is being offered
-// something you already kept.
-func Keep(s *store.Store, at time.Time, text, check string, where Place) error {
-	d, err := s.Record()
-	if err != nil {
-		return err
-	}
-
-	text = strings.TrimSpace(text)
-	if text == "" {
-		return fmt.Errorf("a rule with no sentence says nothing")
-	}
-
-	said, err := waitingAt(s, at)
-	if err != nil {
-		return err
-	}
-
-	fact, err := factOf(said, text, check, where)
-	if err != nil {
-		return err
-	}
-
-	if _, err := knowledge.NewStore(s.Root()).Save(fact); err != nil {
-		return err
-	}
-
-	return d.Decide(at, db.Kept)
-}
-
-// waitingAt is the sentence in the tray said at that moment.
-//
-// It is read before anything is written, because what the fact says about
-// itself is on that row: who said it, and what it was about. A number off a
-// listing read a minute ago can name a row something has since decided, and
-// that is a refusal rather than a fact filed under a guess.
-func waitingAt(s *store.Store, at time.Time) (Said, error) {
-	waiting, err := Waiting(s)
-	if err != nil {
-		return Said{}, err
-	}
-
-	for _, one := range waiting {
-		if one.At.Equal(at) {
-			return one, nil
-		}
-	}
-
-	return Said{}, fmt.Errorf("nothing said at %s is waiting to be kept",
-		at.Format(time.RFC3339))
-}
-
-// factOf is the fact a kept sentence becomes.
-//
-// Always a person's. Everything that reaches this tray is somebody talking —
-// the cockpit, a command, a tool call, a correction typed at a run — and the
-// one thing that is not is skipped before it gets here. What a model works
-// out on its own goes somewhere else entirely: it is written where it was
-// found, about the repository it was found in.
-//
-// The scope is where the reader put it: a folder inside the checkout, one
-// file, the whole checkout, or everything when the sentence was said about
-// no checkout at all. A rule almost always belongs somewhere narrower than
-// where it was said — you say it while correcting one run and it is true of
-// one folder — and this is the moment somebody knows which.
-func factOf(said Said, text, check string, where Place) (knowledge.Fact, error) {
-	f := knowledge.Fact{
-		Scope:  knowledge.Scope{Kind: knowledge.General},
-		Source: knowledge.Human,
-		Phrase: text,
-		Stops:  check != "",
-		Check:  strings.TrimSpace(check),
-		Ref:    said.About,
-		At:     time.Now().UTC(),
-	}
-
-	// The task's checkout first: a rule said while correcting one run is
-	// about that run's code, wherever the reader happens to be standing
-	// when they get round to agreeing with it. Then the checkout they are
-	// standing in, which is the only thing a sentence said to the
-	// supervisor has to go on.
-	repo := said.Repo
-	if repo == "" {
-		repo = where.Repo
-	}
-
-	// What the reader typed, then where the work was when the sentence was
-	// said. A rule said in the middle of one folder is usually about that
-	// folder, and having to retype a path Orbit already watched being worked
-	// in is the kind of small tax that ends with nobody placing rules at
-	// all. Typing `.` is how somebody says the whole checkout instead.
-	path := strings.TrimSpace(where.Path)
-	if path == "" {
-		path = said.Path
-	}
-
-	if repo == "" {
-		if path != "" {
-			return knowledge.Fact{}, fmt.Errorf(
-				"%q is about no checkout, so there is nothing for %q to be inside", said.Text, path)
-		}
-
-		return f, nil
-	}
-
-	// Nothing named is the whole checkout for a rule that came out of one,
-	// and everywhere for one said to the supervisor from nowhere in
-	// particular: agreeing with a sentence is not the same as saying it is
-	// about wherever the terminal happened to be.
-	if path == "" && said.Repo == "" {
-		return f, nil
-	}
-
-	scope, err := knowledge.At(repo, path)
-	if err != nil {
-		return knowledge.Fact{}, err
-	}
-
-	f.Scope = scope
-
-	return f, nil
 }
 
 // Drop says it was not a rule. The sentence stays in the thread where you
