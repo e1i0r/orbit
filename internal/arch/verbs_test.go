@@ -45,6 +45,9 @@ var notThere = map[string]string{
 		"passes a task positionally, the way every other verb about one takes it",
 	"window:pr show": "the deliver toolbar acts on the pull request rather than listing it; " +
 		"which ones are open is the command line's reading",
+	"window:rules repeated": "every row of the knowledge screen is one somebody answers — kept, " +
+		"dropped, corrected — and a habit is not answerable yet: what turns it into a rule " +
+		"is 3.2, and what that produces is a proposal in the tray this screen already draws",
 
 	// The MCP server is spoken to by a model, and these are the four a
 	// model has no business asking for on its own — plus the one it could

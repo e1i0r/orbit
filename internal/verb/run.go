@@ -111,6 +111,8 @@ func (v Verb) do(ctx context.Context, w World, in In) (Out, error) {
 		return agreed(w, in)
 	case "rules drop":
 		return dropped(w, in)
+	case "rules repeated":
+		return repeating(w)
 	}
 
 	return Out{}, fmt.Errorf("%q is declared and not done", v.Path())

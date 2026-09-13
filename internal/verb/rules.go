@@ -59,6 +59,13 @@ func rules() []Verb {
 			},
 		},
 		{
+			Name: "repeated", Under: "rules", Reads: true,
+			About: func(p *words.Printer) string {
+				return p.T("verb.rules.repeated",
+					"what you keep telling runs, that nobody ever wrote down as a rule")
+			},
+		},
+		{
 			Name: "drop", Under: "rules",
 			About: func(p *words.Printer) string {
 				return p.T("verb.rules.drop", "say it was not a rule; the sentence stays where you said it")
