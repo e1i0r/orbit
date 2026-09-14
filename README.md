@@ -40,7 +40,7 @@ Ten things you will actually do, each with its own page and its own recording.
 | 9 | [**What Orbit knows**](docs/knowledge.md) | the facts it carries into every prompt, and how you correct them |
 | 10 | [**Flows you write yourself**](docs/flows.md) | a list of phases, each with its own engine, prompt and permissions; five ship, the rest are yours |
 
-Reference: [keys and screens](docs/cockpit.md) · [engines and models](docs/engines.md)
+Reference: [keys and screens](docs/cockpit.md) · [engines and models](docs/engines.md) · [the map](docs/map.md)
 
 ---
 

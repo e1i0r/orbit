@@ -92,7 +92,7 @@ key printed against it there.
 
 ## Behind every key
 
-Everything the cockpit does has a command behind it: `orbit new`, `run`,
+Everything the cockpit does has a command behind it: `orbit board new`, `task start`,
 `pause`, `resume`, `skip`, `list`, `show`, `read`, `pr`, `merge`, `close-pr`,
 `cancel`, `requeue`, `note`, `direct`, `approve`, `permit`, `critical`,
 `resolve`, `supervisor`, `settings`, `export`, `digest`. Run `orbit help` for

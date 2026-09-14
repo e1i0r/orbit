@@ -77,7 +77,7 @@ rather than what was made of it.
 ## Six months later
 
 ```bash
-orbit show -repo ~/code/api fix-auth   # every phase, its gates, its refusals, its cost
+orbit task show -repo ~/code/api fix-auth   # every phase, its gates, its refusals, its cost
 orbit export ~/somewhere               # the whole record back out as JSONL
 ```
 
