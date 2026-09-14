@@ -63,12 +63,34 @@ const (
 // near the front and what is at the end is usually history.
 const aPaper = 60000
 
+// Answered says whether anything has already been offered out of this, and
+// answered: a habit, a file at the state it was in, a reading of the history.
+//
+// A door because the four ways in cannot reach the record, and because what
+// it stops is the same thing everywhere — asking a question that has already
+// been settled.
+func Answered(s *store.Store, mark string) (bool, error) {
+	d, err := s.Record()
+	if err != nil {
+		return false, err
+	}
+
+	return d.Answered(mark)
+}
+
 // Read offers rules out of what the project already says about itself.
+//
+// does is what the history says the project actually does, measured before
+// this is called. It goes in with the file so that a rule the commits do not
+// back is not offered: a document says what somebody wanted, and something
+// nobody has held to for a year is not a rule, it is a sentence.
 //
 // It runs when somebody asks and not on every run: this is money spent on
 // files that have not changed, and the answer would be the same every time.
 // A file already read is not read again until it changes.
-func Read(ctx context.Context, s *store.Store, ask Ask, repo string) ([]Said, error) {
+func Read(
+	ctx context.Context, s *store.Store, ask Ask, repo string, does []string,
+) ([]Said, error) {
 	if ask == nil {
 		return nil, fmt.Errorf("there is no engine here to read what the project says")
 	}
@@ -108,7 +130,7 @@ func Read(ctx context.Context, s *store.Store, ask Ask, repo string) ([]Said, er
 
 		read++
 
-		said, err := outOf(ctx, s, ask, repo, paper, body, mark, atMostCold-len(out))
+		said, err := outOf(ctx, s, ask, repo, paper, body, mark, atMostCold-len(out), does)
 		if err != nil {
 			return out, err
 		}
@@ -147,9 +169,9 @@ func paperAt(repo, paper string) (body, mark string, ok bool) {
 // outOf is the rules one file turned into, put in the tray.
 func outOf(
 	ctx context.Context, s *store.Store, ask Ask,
-	repo, paper, body, mark string, room int,
+	repo, paper, body, mark string, room int, does []string,
 ) ([]Said, error) {
-	answer, err := ask(ctx, aboutThisProject(paper, body, room))
+	answer, err := ask(ctx, aboutThisProject(paper, body, room, does))
 	if err != nil {
 		return nil, fmt.Errorf("reading %s: %w", paper, err)
 	}

@@ -58,6 +58,22 @@ It brings few and good rather than everything it can find — forty weak offers 
 a tray you stop opening, and that would take the other three sources with it. It
 runs when you ask, and a file already read is not read again until it changes.
 
+**And the history says which of those are true.** The documents say what somebody
+wanted; the commits say what the team kept doing:
+
+```
+testing   the last 362 commits   a change under internal comes with a change to a test,
+                                 as 264 of the last 281 did
+```
+
+Every reading carries the count that backs it, which is what lets you say yes
+without going to look. And it works the other way too: a rule the file asks for
+that the commits contradict is **not offered at all** — a sentence nobody has
+held to for a year is not a rule.
+
+A repository with too little history says so rather than answering with an empty
+list. Reading git costs nothing, so this half is free.
+
 All four land in the same place.
 
 ## The tray

@@ -174,10 +174,26 @@ func reading(ctx context.Context, w World, in In) (Out, error) {
 		return w.Ask(ctx, named, question)
 	}
 
-	said, err := learn.Read(ctx, w.Store(), ask, here.Path)
+	// What the project says about itself, and then what it has actually
+	// done. The second costs nothing and disagrees with the first often
+	// enough to be worth having beside it.
+	customs, commits, err := here.Customs()
 	if err != nil {
 		return Out{}, err
 	}
+
+	said, err := learn.Read(ctx, w.Store(), ask, here.Path,
+		whatItActuallyDoes(w.Words(), customs))
+	if err != nil {
+		return Out{}, err
+	}
+
+	fromGit, err := fromTheHistory(w, here, customs, commits)
+	if err != nil {
+		return Out{}, err
+	}
+
+	said = append(said, fromGit...)
 
 	if len(said) == 0 {
 		return Out{
@@ -187,15 +203,7 @@ func reading(ctx context.Context, w World, in In) (Out, error) {
 		}, nil
 	}
 
-	var b strings.Builder
-
-	for _, one := range said {
-		fmt.Fprintf(&b, "%-14s %-22s %s\n", one.Topic, one.About, one.Text)
-	}
-
-	b.WriteString("\n" + w.Words().P("verb.rules.draft.waiting", len(said),
+	return Out{Said: coldRows(said) + "\n\n" + w.Words().P("verb.rules.draft.waiting", len(said),
 		"it is waiting in the rules for you to keep it or drop it",
-		"{n} are waiting in the rules for you to keep them or drop them"))
-
-	return Out{Said: strings.TrimRight(b.String(), "\n"), Saw: said}, nil
+		"{n} are waiting in the rules for you to keep them or drop them"), Saw: said}, nil
 }
