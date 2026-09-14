@@ -236,6 +236,7 @@ func (s State) from(f knowledge.Fact, e Env) string {
 		knowledge.FromRecord:     p.T("knowledge.from_record", "from the record"),
 		knowledge.FromProduction: p.T("knowledge.from_prod", "from production"),
 		knowledge.FromDocs:       p.T("knowledge.from_docs", "the project already said it"),
+		knowledge.FromHistory:    p.T("knowledge.from_history", "the history says so"),
 	}[f.Source]
 
 	if f.Ref != "" {

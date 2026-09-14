@@ -42,6 +42,15 @@ const (
 	// keep a rule is owed that difference. Ref carries the file and the
 	// line, so they can go and look.
 	FromDocs
+	// FromHistory is read off what the repository has actually done: the
+	// commits, and what travels with what.
+	//
+	// Apart from FromDocs because they answer different questions and
+	// disagree often. A document says what somebody wanted; the history
+	// says what the team kept doing. A rule backed by the second is one a
+	// reader can trust without going to look, and Ref carries the count
+	// that backs it.
+	FromHistory
 )
 
 // State is where a rule stands: whether it applies, and whether somebody
@@ -174,7 +183,7 @@ func (f Fact) Validate() error {
 		return fmt.Errorf("a fact with no sentence says nothing")
 	}
 
-	if f.Source <= unsourced || f.Source > FromDocs {
+	if f.Source <= unsourced || f.Source > FromHistory {
 		return fmt.Errorf("the fact %q comes from nowhere", f.Phrase)
 	}
 

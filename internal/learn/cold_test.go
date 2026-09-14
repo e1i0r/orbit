@@ -30,6 +30,10 @@ func aProject(t *testing.T, files map[string]string) string {
 	return repo
 }
 
+// heldUp is one line of an answer whose quote really is in the file below.
+const heldUp = "testing | a change comes with a test | " +
+	"Every change ships with a test that fails without it."
+
 const aContributing = `# Contributing
 
 This project is written in Go.
@@ -48,10 +52,9 @@ func TestARuleHasToPointAtALineOfTheFile(t *testing.T) {
 	s := root(t)
 	repo := aProject(t, map[string]string{"CONTRIBUTING.md": aContributing})
 
-	answer := "testing | a change comes with a test | Every change ships with a test that fails without it.\n" +
-		"process | deploys go out on Tuesdays | Deploys go out on Tuesdays."
+	answer := heldUp + "\n" + "process | deploys go out on Tuesdays | Deploys go out on Tuesdays."
 
-	got, err := Read(context.Background(), s, answering(answer, nil), repo)
+	got, err := Read(context.Background(), s, answering(answer, nil), repo, nil)
 	if err != nil {
 		t.Fatalf("reading: %v", err)
 	}
@@ -82,13 +85,11 @@ func TestAFileAlreadyReadIsNotReadAgain(t *testing.T) {
 	s := root(t)
 	repo := aProject(t, map[string]string{"CONTRIBUTING.md": aContributing})
 
-	answer := "testing | a change comes with a test | Every change ships with a test that fails without it."
-
-	if _, err := Read(context.Background(), s, answering(answer, nil), repo); err != nil {
+	if _, err := Read(context.Background(), s, answering(heldUp, nil), repo, nil); err != nil {
 		t.Fatalf("reading: %v", err)
 	}
 
-	again, err := Read(context.Background(), s, answering(answer, nil), repo)
+	again, err := Read(context.Background(), s, answering(heldUp, nil), repo, nil)
 	if err != nil {
 		t.Fatalf("reading again: %v", err)
 	}
@@ -99,11 +100,13 @@ func TestAFileAlreadyReadIsNotReadAgain(t *testing.T) {
 
 	// Rewritten, it is read again: what changed may be a rule.
 	rewritten := aContributing + "\nAlways wrap an error with what you were doing.\n"
-	if err := os.WriteFile(filepath.Join(repo, "CONTRIBUTING.md"), []byte(rewritten), 0o600); err != nil {
+	at := filepath.Join(repo, "CONTRIBUTING.md")
+
+	if err := os.WriteFile(at, []byte(rewritten), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
-	after, err := Read(context.Background(), s, answering(answer, nil), repo)
+	after, err := Read(context.Background(), s, answering(heldUp, nil), repo, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -148,11 +151,11 @@ func TestAQuoteTheFileWrappedIsStillTheQuote(t *testing.T) {
 func TestReadingNeedsAnEngineAndACheckout(t *testing.T) {
 	s := root(t)
 
-	if _, err := Read(context.Background(), s, nil, t.TempDir()); err == nil {
+	if _, err := Read(context.Background(), s, nil, t.TempDir(), nil); err == nil {
 		t.Error("reading with no engine answered as though it had one")
 	}
 
-	if _, err := Read(context.Background(), s, answering("", nil), ""); err == nil {
+	if _, err := Read(context.Background(), s, answering("", nil), "", nil); err == nil {
 		t.Error("reading no checkout answered as though there were one")
 	}
 }

@@ -3285,6 +3285,10 @@
       "source": "the project already said it",
       "value": "el proyecto ya lo decía"
     },
+    "knowledge.from_history": {
+      "source": "the history says so",
+      "value": "lo dice la historia"
+    },
     "knowledge.from_prod": {
       "source": "from production",
       "value": "de producción"
@@ -4708,6 +4712,24 @@
     "verb.rules.read.engine": {
       "source": "which engine reads it; the default is the one in your settings",
       "value": "qué motor lo lee; por defecto, el de tus ajustes"
+    },
+    "verb.rules.read.commits": {
+      "source": {
+        "one": "the last commit",
+        "other": "the last {n} commits"
+      },
+      "value": {
+        "one": "el último commit",
+        "other": "los últimos {n} commits"
+      }
+    },
+    "verb.rules.read.tests": {
+      "source": "a change under {where} comes with a change to a test, as {times} of the last {of} did",
+      "value": "un cambio bajo {where} viene con un cambio a un test, como {times} de los últimos {of}"
+    },
+    "verb.rules.read.shape": {
+      "source": "commit messages here are written with {shape}, as {times} of the last {of} were",
+      "value": "acá los mensajes de commit se escriben con {shape}, como {times} de los últimos {of}"
     },
     "verb.rules.read.none": {
       "source": "nothing this project has written down amounts to a rule that is not already answered",

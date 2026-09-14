@@ -28,6 +28,14 @@ import (
 // this" but "the project says this, here".
 const FromAPaper = "the project"
 
+// FromTheHistory is what By says when the rule was read off what the
+// repository has actually done rather than off what it says about itself.
+//
+// Its own value because the two disagree often and the difference is the
+// point: a document says what somebody wanted, and the history says what the
+// team kept doing.
+const FromTheHistory = "the history"
+
 // aFound is one rule the model got out of a file, with where it is.
 type aFound struct {
 	topic  string
@@ -41,10 +49,22 @@ type aFound struct {
 // Its own words and nothing around them — not the code, not the record. What
 // is being asked is which sentences in this file are still rules, which is a
 // reading of the file and not an analysis of the project.
-func aboutThisProject(paper, body string, room int) string {
+func aboutThisProject(paper, body string, room int, does []string) string {
 	var b strings.Builder
 
 	b.WriteString("Here is " + paper + " from a software project:\n\n---\n" + body + "\n---\n\n")
+
+	if len(does) > 0 {
+		b.WriteString("And here is what the project's own commit history says it actually does:\n\n")
+
+		for _, one := range does {
+			b.WriteString("- " + one + "\n")
+		}
+
+		b.WriteString("\nLeave out anything the file asks for that the history above contradicts. " +
+			"A sentence nobody has held to for a year is not a rule.\n\n")
+	}
+
 	b.WriteString("Find the standing rules in it — the things it expects anybody working " +
 		"here to do or not do. Ignore what merely describes the project, explains how to " +
 		"install it, or lists its features.\n\n" +

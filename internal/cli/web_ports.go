@@ -70,6 +70,8 @@ func sourceName(s knowledge.Source) string {
 		return "from an incident"
 	case knowledge.FromDocs:
 		return "the project already said it"
+	case knowledge.FromHistory:
+		return "the history says so"
 	}
 
 	return "unsourced"
