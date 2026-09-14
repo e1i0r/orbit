@@ -45,14 +45,9 @@ var notThere = map[string]string{
 		"passes a task positionally, the way every other verb about one takes it",
 	"window:pr show": "the deliver toolbar acts on the pull request rather than listing it; " +
 		"which ones are open is the command line's reading",
-	"window:rules pause": "pausing takes a written reason, and the knowledge screen has one line " +
-		"for the place and none for a sentence about why — the review module is where that is " +
-		"typed, and it does not exist yet",
-	"window:rules resume": "it is the answer to a pause, and the screen where a pause is read is " +
-		"the review module's, which does not exist yet",
-	"window:rules history": "the knowledge screen shows what a rule says now, and what it has been " +
-		"through is the review module's screen — which is where somebody acts on it, and which " +
-		"does not exist yet",
+	"window:rules history": "the review draws what a rule has been through as sentences rather " +
+		"than as rows — the reader there is deciding, not auditing, and the rows are the " +
+		"command line's reading",
 	"window:rules draft": "it spends money with no task behind it, and the knowledge screen has no " +
 		"gesture that costs anything; what it produces lands in the tray this screen already draws",
 	"window:rules repeated": "every row of the knowledge screen is one somebody answers — kept, " +
@@ -237,6 +232,14 @@ func windowOffers(t *testing.T) map[string]bool {
 		"rules":      "knowledge.said",
 		"rules keep": "knowledge.kept",
 		"rules drop": "knowledge.left_said",
+		// The review, opened on one rule with everything it has put you
+		// through under it. The marks are the sentences it answers with,
+		// because that is the decision landing.
+		"rules review":  "knowledge.review_ways",
+		"rules correct": "knowledge.field_where",
+		"rules off":     "knowledge.switched_off",
+		"rules pause":   "knowledge.pause_needs_why",
+		"rules resume":  "knowledge.applies_again",
 		// The window asks for these through the parent, which is what
 		// carries the streaming bodies: the toolbar watches `pr` run.
 		"pr merge":     `"MERGE PR"`,

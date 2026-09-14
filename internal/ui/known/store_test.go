@@ -74,20 +74,22 @@ func TestTheKeysThatDoNothingHereDoNothing(t *testing.T) {
 	}
 }
 
-// TestTurningAFactOffIsRefusedWhenThereIsNowhereToWriteIt, rather than
-// leaving the screen showing a change nothing recorded.
-func TestTurningAFactOffIsRefusedWhenThereIsNowhereToWriteIt(t *testing.T) {
+// TestDecidingAgainstARuleIsRefusedWhenThereIsNowhereToWriteIt, rather than
+// leaving the screen showing a decision nothing recorded.
+func TestDecidingAgainstARuleIsRefusedWhenThereIsNowhereToWriteIt(t *testing.T) {
 	s, e := onScreen(t, known("of everything", knowledge.Scope{Kind: knowledge.General}))
-	e.Turn = nil
+	e.Replace = nil
 
-	if after, out := s.Key(press("space"), e); after.facts[0].State != knowledge.Active || out.Said != "" {
-		t.Errorf("space with no door to write through answered %+v", out)
+	s, _ = s.Key(press("r"), e)
+
+	if after, out := s.Key(press("o"), e); after.facts[0].State != knowledge.Active || out.Said != "" {
+		t.Errorf("deciding against it with no door to write through answered %+v", out)
 	}
 
 	// And the store's own refusal is said in the store's words.
-	e.Turn = func(knowledge.Fact) error { return errors.New("the store is read-only") }
+	e.Replace = func(_, _ knowledge.Fact) error { return errors.New("the store is read-only") }
 
-	if _, out := s.Key(press("space"), e); !strings.Contains(out.Said, "read-only") {
+	if _, out := s.Key(press("o"), e); !strings.Contains(out.Said, "read-only") {
 		t.Errorf("the refusal reads %q", out.Said)
 	}
 }

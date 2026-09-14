@@ -18,6 +18,8 @@ import (
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/task"
+	"github.com/e1i0r/orbit/internal/verb"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // learnPort writes down a fact the operator stated.
@@ -248,5 +250,28 @@ func replaceFactPort(s *store.Store) func(was, now knowledge.Fact, where learn.T
 func windowReplacePort(s *store.Store) func(was, now knowledge.Fact) error {
 	return func(was, now knowledge.Fact) error {
 		return replaceFactPort(s)(was, now, learn.Turn{By: learn.Operator})
+	}
+}
+
+// ruleStoryPort is what one rule has put you through, in the same sentences
+// the command line tells it in.
+//
+// The same sentences and not a second set. What a rule has cost you is one
+// reading, and two surfaces telling it two ways would be two accounts of the
+// evidence a person is about to decide on.
+//
+// A failure answers with nothing rather than with an error: the review is a
+// screen, and a screen that refused to draw because a table could not be read
+// would be the worse answer.
+func ruleStoryPort(s *store.Store, p *words.Printer) func(knowledge.Fact) []string {
+	return func(f knowledge.Fact) []string {
+		turns, err := learn.History(s, f.ID)
+		if err != nil {
+			logger.Error("cli/learn", "what happened to rule %s was not read back: %v", f.ID, err)
+
+			return nil
+		}
+
+		return verb.Story(p, f, turns)
 	}
 }
