@@ -140,30 +140,6 @@ func TestAFactThatIsOffLooksOff(t *testing.T) {
 	}
 }
 
-// TestSpaceTurnsAFactOffAndOnAgain. Disagreeing with a fact and losing the
-// record that it existed are different things, so it is turned off and not
-// deleted.
-func TestSpaceTurnsAFactOffAndOnAgain(t *testing.T) {
-	var turned []knowledge.Fact
-
-	s, e := onScreen(t, knowledge.Fact{
-		Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.Human, Phrase: "of everything",
-	})
-	e.Turn = func(f knowledge.Fact) error {
-		turned = append(turned, f)
-
-		return nil
-	}
-
-	if _, _ = s.Key(press("space"), e); len(turned) != 1 {
-		t.Fatalf("space turned %d facts", len(turned))
-	}
-
-	if turned[0].State != knowledge.Off {
-		t.Error("space did not turn the fact off")
-	}
-}
-
 // TestNothingKnownSaysSoRatherThanDrawingAnEmptyList.
 func TestNothingKnownSaysSoRatherThanDrawingAnEmptyList(t *testing.T) {
 	s, e := onScreen(t)
@@ -172,21 +148,10 @@ func TestNothingKnownSaysSoRatherThanDrawingAnEmptyList(t *testing.T) {
 	}
 }
 
-// TestEOpensTheFactForEditing, with what it says already in the line: a fact
-// is corrected far more often than it is rewritten.
-func TestEOpensTheFactForEditing(t *testing.T) {
-	s, e := onScreen(t, knowledge.Fact{
-		Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.Human,
-		Phrase: "the fuxx tests hang sometimes",
-	})
-	// Nothing opens for editing without somewhere to save it to: typing into
-	// a line that cannot be written back is worse than not offering it.
-	e.Replace = func(knowledge.Fact, knowledge.Fact) error { return nil }
-
-	s, _ = s.Key(press("e"), e)
-	if !s.editing {
-		t.Fatal("e did not open the fact for editing")
-	}
+// TestCorrectingOpensTheRuleWithWhatItSays, so that a correction is a
+// correction and not a retyping.
+func TestCorrectingOpensTheRuleWithWhatItSays(t *testing.T) {
+	s, _ := correcting(t, "the fuxx tests hang sometimes")
 
 	if got := s.in[factPhrase].Val; got != "the fuxx tests hang sometimes" {
 		t.Errorf("the line holds %q, want the sentence it is about to correct", got)
@@ -207,7 +172,8 @@ func TestEditingTheSentenceReplacesTheFact(t *testing.T) {
 		return nil
 	}
 
-	s, _ = s.Key(press("e"), e)
+	s, _ = s.Key(press("r"), e)
+	s, _ = s.Key(press("c"), e)
 	s = typed(s, e, "y")
 	s, _ = s.Key(press("enter"), e)
 
@@ -242,7 +208,8 @@ func TestACheckCanBeGivenToARuleThatHasNone(t *testing.T) {
 		return nil
 	}
 
-	s, _ = s.Key(press("e"), e)
+	s, _ = s.Key(press("r"), e)
+	s, _ = s.Key(press("c"), e)
 	s, _ = s.Key(press("tab"), e)
 	s = typed(s, e, "make cover")
 
@@ -268,7 +235,8 @@ func TestEscapeLeavesTheFactAsItWas(t *testing.T) {
 		return nil
 	}
 
-	s, _ = s.Key(press("e"), e)
+	s, _ = s.Key(press("r"), e)
+	s, _ = s.Key(press("c"), e)
 	s = typed(s, e, "x")
 
 	s, out := s.Key(press("esc"), e)
@@ -311,51 +279,5 @@ func TestNWritesANewFact(t *testing.T) {
 
 	if now.Source != knowledge.Human {
 		t.Errorf("a fact typed by a person came from %v", now.Source)
-	}
-}
-
-// TestLeftWidensAFactAndRightNarrowsIt.
-//
-// The common move: a rule written in the supervisor defaults to the
-// repository being worked in, and then turns out to be true everywhere.
-func TestLeftWidensAFactAndRightNarrowsIt(t *testing.T) {
-	var now knowledge.Fact
-
-	s, e := onScreen(t, knowledge.Fact{
-		Scope: knowledge.Scope{Kind: knowledge.Repo, Repo: "/w/orbit"}, Source: knowledge.Human, Phrase: "of the repo",
-	})
-	e.Replace = func(_, b knowledge.Fact) error {
-		now = b
-
-		return nil
-	}
-
-	if _, _ = s.Key(press("left"), e); now.Scope.Kind != knowledge.General {
-		t.Errorf("left left the fact at %v, want everywhere", now.Scope.Kind)
-	}
-
-	if now.Scope.Repo != "" {
-		t.Errorf("a general fact still names the repository %q", now.Scope.Repo)
-	}
-}
-
-// TestNarrowingWithNothingToNarrowToSaysSo, rather than picking a repository
-// on the reader's behalf.
-func TestNarrowingWithNothingToNarrowToSaysSo(t *testing.T) {
-	s, e := onScreen(t, knowledge.Fact{
-		Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.Human, Phrase: "of everything",
-	})
-	e.Replace = func(knowledge.Fact, knowledge.Fact) error { return nil }
-	// More than one repository on the board, so there is nothing to narrow
-	// to and nothing to pick on the reader's behalf.
-	e.Repo = ""
-
-	s, out := s.Key(press("right"), e)
-	if s.facts[0].Scope.Kind != knowledge.General {
-		t.Error("right narrowed a fact to a repository that was never named")
-	}
-
-	if out.Said == "" {
-		t.Error("right did nothing and said nothing about it")
 	}
 }

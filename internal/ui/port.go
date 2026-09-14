@@ -128,6 +128,14 @@ type Options struct {
 	// today is only whether it is switched off.
 	TurnFact func(f knowledge.Fact) error
 
+	// RuleStory is what one rule has put you through, in sentences: when it
+	// was kept, where it stopped the work and how often somebody got past
+	// it, and what it was paused for.
+	//
+	// Sentences and not numbers, because a rule that works perfectly never
+	// stops anything — so a count of nothing means two opposite things and
+	// no number tells them apart.
+	RuleStory func(f knowledge.Fact) []string
 	// ReplaceFact writes a corrected fact and takes away the one it
 	// replaces, which is not the same file whenever the sentence changed.
 	ReplaceFact func(was, now knowledge.Fact) error

@@ -46,9 +46,34 @@ func (s State) rows(h, w int, e Env) []string {
 	}
 
 	out = append(out, "")
+	out = append(out, s.told(cw, e)...)
 	out = append(out, s.foot(cw, e)...)
 
 	return cells.Fill(rowsFit(out, w), h)
+}
+
+// told is what the open rule has put you through, above the keys that decide
+// about it.
+//
+// The evidence first and the decisions under it, in that order, because the
+// whole point of this screen is that nothing is decided before it is read.
+func (s State) told(cw int, e Env) []string {
+	if !s.reviewing {
+		return nil
+	}
+
+	lines := s.story(e)
+	if len(lines) == 0 {
+		return []string{theme.Paint(theme.Dim).Render(cells.Fit(e.Words.T("knowledge.nothing_happened",
+			"nothing has happened to this one yet"), cw)), ""}
+	}
+
+	out := make([]string, 0, len(lines)+1)
+	for _, one := range lines {
+		out = append(out, theme.Text(theme.Primary).Render(cells.Fit("  "+one, cw)))
+	}
+
+	return append(out, "")
 }
 
 // tray draws what you said that nobody has answered yet, and how many rows
@@ -279,13 +304,18 @@ func (s State) foot(cw int, e Env) []string {
 // is under it. The two halves of the screen answer different questions, and
 // a bar that listed the keys of both would be a bar nobody reads.
 func (s State) ways(p *words.Printer) string {
+	if s.reviewing {
+		return p.T("knowledge.review_ways",
+			"[c] say it better or move it · [o] decide against it · [u] have it apply again · [esc] back")
+	}
+
 	if _, waiting := s.onSaid(); waiting {
 		return p.T("knowledge.tray_ways",
 			"[↑↓] move · [k] keep it · [e] keep it in better words · [d] not a rule · [esc] back")
 	}
 
 	return p.T("knowledge.ways",
-		"[↑↓] move · [e] edit · [n] new · [←→] wider or narrower · [space] turn off · [esc] back")
+		"[↑↓] move · [r] decide about it · [p] pause it · [n] new · [esc] back")
 }
 
 // line is one field being typed into, with the caret where the next

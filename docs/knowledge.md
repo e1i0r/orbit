@@ -129,6 +129,50 @@ Switching a rule off and rewording it are not offered in the moment. They
 decide a rule's fate, and that is not a decision taken in a hurry with a task
 half done.
 
+## Sitting down to decide
+
+`r` on a rule in the knowledge screen, or `orbit rules review`, opens it with
+everything it has put you through:
+
+```
+$ orbit rules review -rule 875c38ec
+875c38ec internal/db          coverage stays above 90%
+         the repo has never been past 80, we are fixing that first
+
+  you kept it on 12 August
+  it stopped the work 4 times in test, and you got past it every time
+  it stopped the work twice in build, and every one was fixed
+  you paused it on 9 September: the repo has never been past 80
+```
+
+**There is no score.** A rule that works perfectly never stops anything — the
+model reads it and obeys — so "it stopped the work zero times" means two
+opposite things and no number tells them apart. A rule is good until it annoys
+you: the silence is the good case and is not measured, and what is written
+down is the friction.
+
+And there is a case no score would have understood: you asked for 90% coverage
+and the repository has never been past 80. The rule is not wrong — it arrived
+early. Only you know that, which is why this shows and does not decide.
+
+Four decisions, here and only here:
+
+```bash
+orbit rules correct -rule 875c38ec -text "say it better"
+orbit rules correct -rule 875c38ec -in internal/db     # narrow it to where it was true
+orbit rules off -rule 875c38ec                         # decide against it
+orbit rules resume -rule 875c38ec                      # have it apply again
+```
+
+**Narrowing is the one that was almost always wanted.** A rule that annoys you
+in `docs` and earns its keep in `payments` is not a rule to switch off — it is
+a rule about `payments` that was written too wide, and until it could be moved
+the only answer was to lose it.
+
+Nothing comes back on its own. A paused rule waits until you return to it:
+maybe it made sense, maybe you were wrong, maybe you want it said differently.
+Orbit does not guess.
+
 ## Warning or stopping
 
 A rule either says something before the work, or refuses the work.

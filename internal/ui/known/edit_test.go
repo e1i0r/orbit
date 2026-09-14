@@ -12,18 +12,26 @@ import (
 	"github.com/e1i0r/orbit/internal/knowledge"
 )
 
-// correcting is the screen with one fact open for editing.
+// correcting is the screen with one rule open in the review and its line up
+// for correcting, which is the only way a rule is reworded now: r to read
+// what it has put you through, then c to say it better.
 func correcting(t *testing.T, phrase string) (State, Env) {
 	t.Helper()
 
 	s, e := onScreen(t, knowledge.Fact{
-		Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.Human, Phrase: phrase,
+		ID: "aaaa1111", Scope: knowledge.Scope{Kind: knowledge.General},
+		Source: knowledge.Human, Phrase: phrase,
 	})
 	e.Replace = func(knowledge.Fact, knowledge.Fact) error { return nil }
 
-	s, _ = s.Key(press("e"), e)
+	s, _ = s.Key(press("r"), e)
+	if !s.reviewing {
+		t.Fatal("r did not open the rule for review")
+	}
+
+	s, _ = s.Key(press("c"), e)
 	if !s.editing {
-		t.Fatal("e did not open the fact for editing")
+		t.Fatal("c did not open the rule for correcting")
 	}
 
 	return s, e

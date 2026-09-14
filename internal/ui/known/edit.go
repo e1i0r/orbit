@@ -17,26 +17,25 @@ import (
 	"github.com/e1i0r/orbit/internal/ui/typing"
 )
 
-// editFact opens what the cursor is on, with what it already says in the
+// editSaid opens a sentence in the tray with what it already says in the
 // line.
 //
-// The same two fields for both halves of the screen: a fact is corrected far
-// more often than it is rewritten, and a sentence in the tray is accepted by
-// correcting it more often than by agreeing with it word for word. A
-// sentence has no check yet, because nobody has been asked for one.
-func (s State) editFact(e Env) State {
-	// The place line opens with the folder the work was in, so that
-	// agreeing with it is enter and disagreeing is typing over it.
-	if one, waiting := s.onSaid(); waiting {
-		return s.typeInto(one.Text, "", one.Where)
-	}
-
-	f, ok := s.onFact()
-	if e.Replace == nil || !ok {
+// The tray and not the rules under it. A sentence is accepted by correcting
+// it more often than by agreeing with it word for word, which is the whole
+// reason the tray asks instead of telling — and rewording a rule somebody
+// already agreed to is a decision about that rule, which happens in the
+// review. See the note in known.go.
+//
+// A sentence has no check yet, because nobody has been asked for one.
+func (s State) editSaid(e Env) State {
+	one, waiting := s.onSaid()
+	if e.Keep == nil || !waiting {
 		return s
 	}
 
-	return s.typeInto(f.Phrase, f.Check, f.Scope.Path)
+	// The place line opens with the folder the work was in, so that
+	// agreeing with it is enter and disagreeing is typing over it.
+	return s.typeInto(one.Text, "", one.Where)
 }
 
 // pauseFact opens the one line a pause takes: what it is being paused for.
@@ -230,6 +229,11 @@ func (s State) saveFact(e Env) (State, Out) {
 
 		now.Scope = at
 	}
+
+	// Correcting a rule is a decision about it, so it stops waiting for
+	// one — which is the whole reason somebody opened it.
+	now.Review = false
+	s.reviewing = false
 
 	if err := e.Replace(was, now); err != nil {
 		return s, said(err.Error())

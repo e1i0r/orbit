@@ -3197,10 +3197,6 @@
         "other": "{n} hechos"
       }
     },
-    "knowledge.no_repo_here": {
-      "source": "there is more than one repository here; say which with the supervisor",
-      "value": "hay más de un repositorio aquí; di cuál desde el supervisor"
-    },
     "knowledge.field_where": {
       "source": "the folder or file, if it is about one",
       "value": "la carpeta o el archivo, si es sobre alguno"
@@ -3226,8 +3222,24 @@
       "value": "viaja con el repositorio"
     },
     "knowledge.ways": {
-      "source": "[↑↓] move · [e] edit · [n] new · [←→] wider or narrower · [space] turn off · [esc] back",
+      "source": "[↑↓] move · [r] decide about it · [p] pause it · [n] new · [esc] back",
       "value": "[↑↓] mover · [e] editar · [n] nuevo · [←→] más amplio o más estrecho · [espacio] apagar · [esc] atrás"
+    },
+    "knowledge.switched_off": {
+      "source": "it is off; it stays where it is and nothing is told it",
+      "value": "queda apagada; sigue donde está y no se le dice a nadie"
+    },
+    "knowledge.applies_again": {
+      "source": "it applies again, and nothing is waiting on it",
+      "value": "vuelve a aplicar, y no queda nada esperando por ella"
+    },
+    "knowledge.nothing_happened": {
+      "source": "nothing has happened to this one yet",
+      "value": "a ésta todavía no le pasó nada"
+    },
+    "knowledge.review_ways": {
+      "source": "[c] say it better or move it · [o] decide against it · [u] have it apply again · [esc] back",
+      "value": "[c] decirla mejor o moverla · [o] decidir que no · [u] que vuelva a aplicar · [esc] volver"
     },
     "knowledge.pause_needs_why": {
       "source": "say what you are pausing it for; it is what you will read when you come back",
@@ -4754,6 +4766,98 @@
     "verb.rules.nothing_waiting": {
       "source": "nothing is waiting for an answer from you",
       "value": "no hay nada esperando una respuesta tuya"
+    },
+    "verb.rules.review": {
+      "source": "everything one rule has put you through, so you can decide about it",
+      "value": "todo lo que una regla te hizo pasar, para que puedas decidir sobre ella"
+    },
+    "verb.rules.review.rule": {
+      "source": "the rule's name, as orbit knowledge prints it",
+      "value": "el nombre de la regla, como lo imprime orbit knowledge"
+    },
+    "verb.rules.review.kept": {
+      "source": "you kept it on {when}",
+      "value": "la guardaste el {when}"
+    },
+    "verb.rules.review.paused": {
+      "source": "you paused it on {when}: {why}",
+      "value": "la frenaste el {when}: {why}"
+    },
+    "verb.rules.review.quiet": {
+      "source": "it has not stopped anything since, which is what a rule that is working looks like",
+      "value": "no frenó nada desde entonces, que es como se ve una regla que funciona"
+    },
+    "verb.rules.review.refused": {
+      "source": {
+        "one": "it stopped the work once in {phase}",
+        "other": "it stopped the work {n} times in {phase}"
+      },
+      "value": {
+        "one": "frenó el trabajo una vez en {phase}",
+        "other": "frenó el trabajo {n} veces en {phase}"
+      }
+    },
+    "verb.rules.review.all_fixed": {
+      "source": ", and every one was fixed",
+      "value": ", y todas se arreglaron"
+    },
+    "verb.rules.review.all_skipped": {
+      "source": ", and you got past it every time",
+      "value": ", y la saltaste todas las veces"
+    },
+    "verb.rules.review.some_skipped": {
+      "source": {
+        "one": ", and you got past one of them",
+        "other": ", and you got past {n} of them"
+      },
+      "value": {
+        "one": ", y una la saltaste",
+        "other": ", y {n} las saltaste"
+      }
+    },
+    "verb.rules.review.nowhere": {
+      "source": "a phase nobody named",
+      "value": "una fase que nadie nombró"
+    },
+    "verb.rules.correct": {
+      "source": "say a rule better, or narrow it to where it was actually true",
+      "value": "decir una regla mejor, o angostarla a donde sí valía"
+    },
+    "verb.rules.correct.rule": {
+      "source": "the rule's name, as orbit knowledge prints it",
+      "value": "el nombre de la regla, como lo imprime orbit knowledge"
+    },
+    "verb.rules.correct.in": {
+      "source": "the folder or file it is really about, and . for the whole checkout",
+      "value": "la carpeta o el archivo del que es en realidad, y . para el checkout entero"
+    },
+    "verb.rules.correct.check": {
+      "source": "the command that makes it stop the work; empty takes the command away",
+      "value": "el comando que la hace frenar el trabajo; vacío le saca el comando"
+    },
+    "verb.rules.correct.text": {
+      "source": "the rule as you would rather it read",
+      "value": "la regla como preferirías que dijera"
+    },
+    "verb.rules.corrected": {
+      "source": "{rule} now reads: {text}",
+      "value": "{rule} ahora dice: {text}"
+    },
+    "verb.rules.nowhere_to_narrow": {
+      "source": "{rule} is about no checkout, so there is nothing for {path} to be inside",
+      "value": "{rule} no es de ningún checkout, así que no hay nada adentro de lo que {path} pueda estar"
+    },
+    "verb.rules.off": {
+      "source": "decide against a rule; it stays where it is and nothing is told it",
+      "value": "decidir que no; queda donde está y no se le dice a nadie"
+    },
+    "verb.rules.off.rule": {
+      "source": "the rule's name, as orbit knowledge prints it",
+      "value": "el nombre de la regla, como lo imprime orbit knowledge"
+    },
+    "verb.rules.switched_off": {
+      "source": "{rule} is off; it stays where it is and nothing is told it",
+      "value": "{rule} queda apagada; sigue donde está y no se le dice a nadie"
     },
     "verb.rules.history": {
       "source": "what has happened to one rule since it was kept",
