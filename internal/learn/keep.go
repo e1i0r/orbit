@@ -177,13 +177,17 @@ func factOf(said Said, text, check string, where Place) (knowledge.Fact, error) 
 }
 
 // foundBy is where a kept sentence came from, in the words a fact records it
-// in: the record when an engine worked it out on its own, and a person for
+// in: the record when an engine worked it out on its own, the documents when
+// it was read out of what the project already said, and a person for
 // everything else — the cockpit, a command, a channel, a correction typed at
 // a run.
 func foundBy(said Said) knowledge.Source {
-	if said.By == AModel {
+	switch said.By {
+	case AModel:
 		return knowledge.FromRecord
+	case FromAPaper:
+		return knowledge.FromDocs
+	default:
+		return knowledge.Human
 	}
-
-	return knowledge.Human
 }

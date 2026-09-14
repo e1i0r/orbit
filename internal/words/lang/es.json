@@ -3281,6 +3281,10 @@
       "source": "from the record",
       "value": "del record"
     },
+    "knowledge.from_docs": {
+      "source": "the project already said it",
+      "value": "el proyecto ya lo decía"
+    },
     "knowledge.from_prod": {
       "source": "from production",
       "value": "de producción"
@@ -4692,6 +4696,22 @@
     "verb.rules": {
       "source": "everything about your rules that is waiting for an answer",
       "value": "las reglas que dijiste y que todavía nadie le mandó guardar a Orbit"
+    },
+    "verb.rules.read": {
+      "source": "have a model read what this project already says about itself, and offer the rules in it",
+      "value": "que un modelo lea lo que este proyecto ya dice de sí mismo, y te ofrezca las reglas que hay ahí"
+    },
+    "verb.rules.read.repo": {
+      "source": "the checkout to read; the default is the one you are in",
+      "value": "el checkout que hay que leer; por defecto, en el que estás"
+    },
+    "verb.rules.read.engine": {
+      "source": "which engine reads it; the default is the one in your settings",
+      "value": "qué motor lo lee; por defecto, el de tus ajustes"
+    },
+    "verb.rules.read.none": {
+      "source": "nothing this project has written down amounts to a rule that is not already answered",
+      "value": "nada de lo que este proyecto tiene escrito da una regla que no esté ya contestada"
     },
     "verb.rules.draft": {
       "source": "have a model read what you keep telling runs and write the rule it amounts to",

@@ -154,3 +154,48 @@ func happened(w World, in In) (Out, error) {
 
 	return Out{Said: strings.TrimRight(b.String(), "\n"), Saw: turns}, nil
 }
+
+// reading offers the rules this project already has written down about
+// itself: the notes each engine keeps in its own file, the CONTRIBUTING, the
+// README.
+//
+// The second reading here that costs money, and it is spent on files rather
+// than on what you did — which is why it runs when somebody asks and never on
+// its own. A file already read is not read again until it changes.
+func reading(ctx context.Context, w World, in In) (Out, error) {
+	here, err := openRepo(w, in)
+	if err != nil {
+		return Out{}, err
+	}
+
+	named := in.Arg("engine")
+
+	ask := func(ctx context.Context, question string) (string, error) {
+		return w.Ask(ctx, named, question)
+	}
+
+	said, err := learn.Read(ctx, w.Store(), ask, here.Path)
+	if err != nil {
+		return Out{}, err
+	}
+
+	if len(said) == 0 {
+		return Out{
+			Said: w.Words().T("verb.rules.read.none",
+				"nothing this project has written down amounts to a rule that is not already answered"),
+			Saw: said,
+		}, nil
+	}
+
+	var b strings.Builder
+
+	for _, one := range said {
+		fmt.Fprintf(&b, "%-14s %-22s %s\n", one.Topic, one.About, one.Text)
+	}
+
+	b.WriteString("\n" + w.Words().P("verb.rules.draft.waiting", len(said),
+		"it is waiting in the rules for you to keep it or drop it",
+		"{n} are waiting in the rules for you to keep them or drop them"))
+
+	return Out{Said: strings.TrimRight(b.String(), "\n"), Saw: said}, nil
+}

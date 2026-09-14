@@ -43,7 +43,7 @@ func TestEveryVerbSaysWhatItIs(t *testing.T) {
 // itself which is which is how one of them forgets.
 func TestWhatSpendsAndWhatLeavesIsDeclared(t *testing.T) {
 	spends := map[string]bool{
-		"task start": true, "task continue": true, "rules draft": true,
+		"task start": true, "task continue": true, "rules draft": true, "rules read": true,
 		"pr resolve": true, "pr update": true, "pr checks": true, "pr tests": true, "pr review": true,
 	}
 	outward := map[string]bool{

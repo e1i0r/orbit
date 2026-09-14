@@ -48,6 +48,9 @@ var notThere = map[string]string{
 	"window:rules history": "the review draws what a rule has been through as sentences rather " +
 		"than as rows — the reader there is deciding, not auditing, and the rows are the " +
 		"command line's reading",
+	"window:rules read": "it is the first thing done to a repository and not something done from a " +
+		"screen about one — the gesture belongs beside adding the checkout, and what it produces " +
+		"lands in the tray this screen already draws",
 	"window:rules draft": "it spends money with no task behind it, and the knowledge screen has no " +
 		"gesture that costs anything; what it produces lands in the tray this screen already draws",
 	"window:rules repeated": "every row of the knowledge screen is one somebody answers — kept, " +
@@ -64,6 +67,8 @@ var notThere = map[string]string{
 	"mcp:task take":    "this hands a terminal to an engine, and a tool call has no terminal to hand over",
 	"mcp:rules draft": "it spends money with no task behind it, so a model asking for it would be " +
 		"making Orbit pay for another model on nobody's say-so",
+	"mcp:rules read": "it spends money with no task behind it, and a model reading the file another " +
+		"model wrote about this project is a loop nobody asked to pay for",
 	"mcp:rules pause": "a model that could pause a rule could quietly clear away the ones it keeps " +
 		"running into; pausing is the answer a person gives after reading it",
 	"mcp:rules resume": "it is the other half of pausing, and belongs to whoever paused it",

@@ -31,6 +31,17 @@ const (
 	// FromProduction is an incident. Nothing reads these yet; the source
 	// exists so the shape does not have to change when something does.
 	FromProduction
+	// FromDocs is read out of what the project already says about itself:
+	// the CONTRIBUTING, the README, the docs, and the notes each engine
+	// keeps in its own file.
+	//
+	// Its own source and not Human, even though a person wrote every word
+	// of those. What a person typed into the supervisor they meant, now,
+	// about this; what a CONTRIBUTING says is what somebody meant two years
+	// ago and may have stopped meaning — and a reader deciding whether to
+	// keep a rule is owed that difference. Ref carries the file and the
+	// line, so they can go and look.
+	FromDocs
 )
 
 // State is where a rule stands: whether it applies, and whether somebody
@@ -163,7 +174,7 @@ func (f Fact) Validate() error {
 		return fmt.Errorf("a fact with no sentence says nothing")
 	}
 
-	if f.Source <= unsourced || f.Source > FromProduction {
+	if f.Source <= unsourced || f.Source > FromDocs {
 		return fmt.Errorf("the fact %q comes from nowhere", f.Phrase)
 	}
 
