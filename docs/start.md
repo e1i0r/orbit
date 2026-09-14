@@ -47,7 +47,7 @@ repository, and the flow it runs under.
 From the terminal:
 
 ```bash
-orbit new -repo ~/code/api -id fix-auth "the refresh token is not rotated on login"
+orbit board new -repo ~/code/api fix-auth "the refresh token is not rotated on login"
 ```
 
 Or ask your CLI, in plain language: *"create three orbit tasks in ~/code/api

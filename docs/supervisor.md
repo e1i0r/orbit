@@ -22,8 +22,8 @@ that came back needing attention before you are asked to look at it.
 supervisor does from then on carries what you said:
 
 ```bash
-orbit supervisor "the migration has to be reversible"
-orbit supervisor "stop opening PRs against main"
+orbit supervisor say "the migration has to be reversible"
+orbit supervisor say "stop opening PRs against main"
 ```
 
 It is still there next session, and next month. That is the difference between
@@ -35,7 +35,7 @@ the window closes.
 | `S` | open the thread |
 | type, `⏎` | say something to it |
 | `orbit supervisor` | read it from a script |
-| `orbit supervisor -retract <n>` | take a line back |
+| `orbit supervisor retract -line <n>` | take a line back |
 
 ## How it learns
 

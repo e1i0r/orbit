@@ -15,8 +15,8 @@ editing the same file in the same directory is a race, and two agents editing
 their own checkouts is just two branches.
 
 ```bash
-orbit run -repo ~/code/api fix-auth &
-orbit run -repo ~/code/api add-index &
+orbit task start -repo ~/code/api fix-auth &
+orbit task start -repo ~/code/api add-index &
 ```
 
 Or turn on [autopilot](autopilot.md) and let it take them off the queue.

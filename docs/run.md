@@ -40,8 +40,8 @@ You**, where it stays until you look at it.
 | `x` `b` | cancel it, put it back in To Do |
 | `a` | leave a note the next phase will read |
 
-The same from a script: `orbit run`, `pause`, `resume`, `skip`, `cancel`,
-`requeue`, `note`.
+The same from a script: `orbit task start`, and `task pause`, `resume`, `skip`,
+`cancel`, `requeue`, `note` under the same word.
 
 ## Its own worktree
 
