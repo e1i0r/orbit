@@ -13,20 +13,20 @@
 <meta name="author" content="Elio Rincón — e1i0.com">
 <link rel="icon" href="{{.Assets}}icon.png">
 <link rel="canonical" href="{{.Canonical}}">
-<link rel="alternate" hreflang="en" href="https://getorbit.sh/">
-<link rel="alternate" hreflang="es" href="https://getorbit.sh/es/">
-<link rel="alternate" hreflang="x-default" href="https://getorbit.sh/">
+<link rel="alternate" hreflang="en" href="{{.Site}}">
+<link rel="alternate" hreflang="es" href="{{.Site}}es/">
+<link rel="alternate" hreflang="x-default" href="{{.Site}}">
 
 <meta property="og:type" content="website">
 <meta property="og:url" content="{{.Canonical}}">
 <meta property="og:locale" content="{{.T.og_locale}}">
 <meta property="og:title" content="{{.T.title}}">
 <meta property="og:description" content="{{.T.description}}">
-<meta property="og:image" content="https://getorbit.sh/flow-reading-poster.jpg">
+<meta property="og:image" content="{{.Site}}flow-reading-poster.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{{.T.title}}">
 <meta name="twitter:description" content="{{.T.description}}">
-<meta name="twitter:image" content="https://getorbit.sh/flow-reading-poster.jpg">
+<meta name="twitter:image" content="{{.Site}}flow-reading-poster.jpg">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-N9D1HEEMRD"></script>
 <script>
@@ -356,7 +356,7 @@
 
     <div class="install">
       <span class="install__prompt mono">$</span>
-      <code class="mono" id="install-cmd">curl -fsSL https://getorbit.sh/install.sh | bash</code>
+      <code class="mono" id="install-cmd">curl -fsSL {{.Site}}install.sh | bash</code>
       <button class="install__copy mono" id="install-copy" type="button">{{.T.copy}}</button>
     </div>
 

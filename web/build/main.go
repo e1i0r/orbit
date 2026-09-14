@@ -24,6 +24,14 @@ import (
 	"text/template"
 )
 
+// site is where the landing is published. It is one constant because the
+// address reaches the page in four places — the canonical link, the hreflang
+// alternates, the preview image and the install command the reader copies —
+// and spread across the template, moving the site means finding all four. The
+// one that gets missed keeps pointing at the old address until somebody
+// notices, which for a preview image can be months.
+const site = "https://getorbit.sh/"
+
 // A language is one page: which catalogue it reads, where it is written, and
 // what a link inside it has to reach back up through to find the videos.
 //
@@ -35,12 +43,12 @@ type language struct {
 	catalog string // the file its sentences come from
 	out     string // where the page is written, under the site directory
 	assets  string // what a video's src is prefixed with
-	url     string // the page's own address, for the canonical link
+	path    string // where the page answers, under site
 }
 
 var languages = []language{
-	{code: "en", catalog: "en.json", out: "index.html", assets: "", url: "https://getorbit.sh/"},
-	{code: "es", catalog: "es.json", out: "es/index.html", assets: "../", url: "https://getorbit.sh/es/"},
+	{code: "en", catalog: "en.json", out: "index.html", assets: "", path: ""},
+	{code: "es", catalog: "es.json", out: "es/index.html", assets: "../", path: "es/"},
 }
 
 // page is what the template is given.
@@ -57,6 +65,7 @@ var languages = []language{
 // a reader types reaches here.
 type page struct {
 	Lang      string
+	Site      string
 	Canonical string
 	Assets    string
 	T         map[string]string
@@ -145,7 +154,8 @@ func one(tmpl *template.Template, l language, words map[string]string) ([]byte, 
 
 	err := tmpl.Execute(&b, page{
 		Lang:      l.code,
-		Canonical: l.url,
+		Site:      site,
+		Canonical: site + l.path,
 		Assets:    l.assets,
 		T:         words,
 	})
