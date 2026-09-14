@@ -99,6 +99,10 @@ func rules() []Verb {
 					return p.T("verb.rules.pause.why",
 						"what you are pausing it for; it is what you will read when you come back")
 				}},
+				{Name: "task", Kind: Named, About: func(p *words.Printer) string {
+					return p.T("verb.rules.pause.task",
+						"the task it was in your way at, if it was; it says where to look later")
+				}},
 			},
 		},
 		{

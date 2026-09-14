@@ -4711,6 +4711,10 @@
       "source": "what you are pausing it for; it is what you will read when you come back",
       "value": "para qué la frenás; es lo que vas a leer cuando vuelvas"
     },
+    "verb.rules.pause.task": {
+      "source": "the task it was in your way at, if it was; it says where to look later",
+      "value": "la tarea en la que te estorbaba, si te estorbaba; dice dónde mirar después"
+    },
     "verb.rules.resume": {
       "source": "have a rule apply again, and stop asking about it",
       "value": "que una regla vuelva a aplicar, y dejar de preguntarte por ella"

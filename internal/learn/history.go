@@ -31,6 +31,8 @@ const (
 	TurnedOff = db.RuleOff
 	TurnedOn  = db.RuleOn
 	Paused    = db.RulePaused
+	Skipped   = db.RuleSkipped
+	Failed    = db.RuleFailed
 )
 
 // A Turn is one thing that happened to one rule.
@@ -42,6 +44,12 @@ type Turn struct {
 	// Was is what it was before, for the two turns where that is the whole
 	// point: the old sentence, or the old place.
 	Was string
+	// Task and Phase are where it happened, for the turns that happen
+	// inside a run. What makes a rule worth reconsidering is the pattern,
+	// and "I always skip this in the test phase" is a pattern where "I
+	// skipped it once" is not.
+	Task  string
+	Phase string
 }
 
 // Happened writes down one turn.
@@ -51,7 +59,10 @@ func Happened(s *store.Store, t Turn) error {
 		return err
 	}
 
-	return d.Happened(db.RuleTurn{Rule: t.Rule, At: t.At, What: t.What, By: t.By, Was: t.Was})
+	return d.Happened(db.RuleTurn{
+		Rule: t.Rule, At: t.At, What: t.What, By: t.By, Was: t.Was,
+		Task: t.Task, Phase: t.Phase,
+	})
 }
 
 // History is everything that happened to one rule, oldest first.
@@ -68,7 +79,10 @@ func History(s *store.Store, rule string) ([]Turn, error) {
 
 	out := make([]Turn, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, Turn{Rule: row.Rule, At: row.At, What: row.What, By: row.By, Was: row.Was})
+		out = append(out, Turn{
+			Rule: row.Rule, At: row.At, What: row.What, By: row.By, Was: row.Was,
+			Task: row.Task, Phase: row.Phase,
+		})
 	}
 
 	return out, nil

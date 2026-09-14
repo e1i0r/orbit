@@ -133,8 +133,44 @@ CREATE TABLE IF NOT EXISTS rule(
   at      TEXT NOT NULL,
   what    TEXT NOT NULL,
   said_by TEXT NOT NULL DEFAULT '',
-  was     TEXT NOT NULL DEFAULT ''
+  was     TEXT NOT NULL DEFAULT '',
+  task_id TEXT NOT NULL DEFAULT '',
+  phase   TEXT NOT NULL DEFAULT ''
 );
 
 CREATE INDEX IF NOT EXISTS rule_by_name ON rule(rule_id, id);
 `
+
+// ruleWhereColumns are where a turn happened: the task and the phase.
+//
+// Empty for a turn somebody took from a terminal, which is about the rule and
+// not about any run. Filled for the two that happen inside one — a gate
+// refusing work, and somebody skipping past it — because what makes a rule
+// worth reconsidering is the pattern, and "I always skip this in the test
+// phase" is a pattern where "I skipped it once" is not.
+const ruleWhereColumns = `
+ALTER TABLE rule ADD COLUMN task_id TEXT NOT NULL DEFAULT '';
+ALTER TABLE rule ADD COLUMN phase   TEXT NOT NULL DEFAULT '';
+`
+
+// hasRuleColumn asks whether the rule table already has one.
+const hasRuleColumn = `SELECT count(*) FROM pragma_table_info('rule') WHERE name = ?`
+
+// widenRules adds where a turn happened to a table that does not say.
+func widenRules(tx *sql.Tx) error {
+	var there int
+
+	if err := tx.QueryRow(hasRuleColumn, "task_id").Scan(&there); err != nil {
+		return fmt.Errorf("read the shape of the rule table: %w", err)
+	}
+
+	if there > 0 {
+		return nil
+	}
+
+	if _, err := tx.Exec(ruleWhereColumns); err != nil {
+		return fmt.Errorf("widen the rule table: %w", err)
+	}
+
+	return nil
+}

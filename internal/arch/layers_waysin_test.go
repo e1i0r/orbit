@@ -88,9 +88,14 @@ var waysIn = map[string][]string{
 	// imports nothing of Orbit's, so it widens nothing else — and the
 	// alternative was a second copy of the word, which is exactly how the
 	// settings table came to print monokai for a cockpit drawing frauddi.
+	// internal/record is on the list for one reading: which rule a run is
+	// stopped in front of, which is the last refusal in its record. Skipping
+	// past a gate is something said about the rule that put it there, and
+	// the only place the rule's name is written is that event.
 	"internal/verb": {
 		"internal/board", "internal/engine", "internal/flow", "internal/knowledge",
-		"internal/learn", "internal/quota", "internal/repo", "internal/store",
-		"internal/supervisor", "internal/task", "internal/ui/theme", "internal/view", "internal/words",
+		"internal/learn", "internal/quota", "internal/record", "internal/repo",
+		"internal/store", "internal/supervisor", "internal/task", "internal/ui/theme",
+		"internal/view", "internal/words",
 	},
 }

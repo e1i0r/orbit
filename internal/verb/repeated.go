@@ -106,6 +106,25 @@ func drafting(ctx context.Context, w World, in In) (Out, error) {
 	return Out{Said: strings.TrimRight(b.String(), "\n"), Saw: said}, nil
 }
 
+// whereAt is the one column that says where a turn happened: the task and
+// the phase for the ones that happen inside a run, and whoever did it for the
+// ones somebody took from a terminal.
+//
+// One column and not two, because they never both apply. A gate refusing
+// belongs to a run and to nobody; a pause typed at a terminal belongs to a
+// person and to no run.
+func whereAt(t learn.Turn) string {
+	if t.Task == "" {
+		return t.By
+	}
+
+	if t.Phase == "" {
+		return t.Task
+	}
+
+	return t.Task + " · " + t.Phase
+}
+
 // happened is what one rule has been through since somebody kept it.
 //
 // The sentence a rule says today is in its file, and that file travels with
@@ -129,8 +148,8 @@ func happened(w World, in In) (Out, error) {
 	var b strings.Builder
 
 	for _, one := range turns {
-		fmt.Fprintf(&b, "%s  %-10s %-10s %s\n",
-			one.At.Local().Format(time.DateTime), one.What, one.By, one.Was)
+		fmt.Fprintf(&b, "%s  %-8s %-16s %s\n",
+			one.At.Local().Format(time.DateTime), one.What, whereAt(one), one.Was)
 	}
 
 	return Out{Said: strings.TrimRight(b.String(), "\n"), Saw: turns}, nil

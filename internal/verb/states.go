@@ -102,9 +102,41 @@ func paused(w World, in In) (Out, error) {
 		return Out{}, err
 	}
 
+	// Where it was in the way, when it was. A pause typed from a terminal
+	// is about the rule and about no run; one taken while a task sat
+	// blocked is the beginning of a pattern, and the pattern is what makes
+	// a rule worth reconsidering.
+	at, phase := whileWorkingOn(w, in)
+
+	_ = learn.Happened(w.Store(), learn.Turn{ //nolint:errcheck // the pause stands either way
+		Rule: was.ID, What: learn.Paused, By: learn.Operator, Was: why, Task: at, Phase: phase,
+	})
+
 	return Out{Said: w.Words().T("verb.rules.paused", "{rule} is paused: {why}",
 		words.Arg{Name: "rule", Value: was.ID},
 		words.Arg{Name: "why", Value: why})}, nil
+}
+
+// whileWorkingOn is the task a pause was taken at and the phase it was
+// stopped in, and nothing when the reader named no task.
+//
+// The phase is read the way a skip reads it: the last refusal in the record
+// is the one the run is waiting at. A task named with no refusal behind it
+// still says which task, which is most of the answer.
+func whileWorkingOn(w World, in In) (at, phase string) {
+	named := strings.TrimSpace(in.Arg("task"))
+	if named == "" {
+		return "", ""
+	}
+
+	t, _, err := w.Find(named, in.Repo)
+	if err != nil {
+		return named, ""
+	}
+
+	_, phase = inTheWay(w, t)
+
+	return named, phase
 }
 
 // resumed has a rule apply again and stops asking about it, which is the
