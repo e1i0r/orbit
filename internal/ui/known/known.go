@@ -274,7 +274,8 @@ func (s State) moveFact(dir int, e Env) (State, Out) {
 
 // turnFact turns the fact under the cursor off, or on again.
 //
-// Off and not deleted: disagreeing with a fact and losing the record that it
+// Off and not paused, and off and not deleted: disagreeing with a fact and
+// losing the record that it
 // was ever there are different things, and the second is not something a
 // keystroke should do. What it stops is the fact being told and the gate
 // refusing work over it.
@@ -284,7 +285,13 @@ func (s State) turnFact(e Env) (State, Out) {
 		return s, Out{}
 	}
 
-	f.Off = !f.Off
+	// Between applying and switched off, and never into paused: pausing
+	// takes a reason, and a reason is not something a keystroke collects.
+	if f.State == knowledge.Off {
+		f.State = knowledge.Active
+	} else {
+		f.State = knowledge.Off
+	}
 
 	if err := e.Turn(f); err != nil {
 		return s, said(err.Error())

@@ -38,12 +38,19 @@ const (
 	keySymbol = "symbol"
 	keyLang   = "lang"
 	keyOff    = "off"
+	keyState  = "state"
+	keyWhy    = "why"
+	keyReview = "review"
 	keyUsed   = "used"
 )
 
 var kindNames = map[Kind]string{
 	General: "general", Language: "lang", Repo: "repo",
 	Dir: "dir", File: "file", Symbol: "symbol",
+}
+
+var stateNames = map[State]string{
+	Active: "active", Paused: "paused", Off: "off",
 }
 
 var sourceNames = map[Source]string{
@@ -73,8 +80,16 @@ func encode(f Fact) string {
 
 	line(&b, keyCheck, f.Check)
 
-	if f.Off {
-		line(&b, keyOff, "true")
+	// Nothing for a rule that applies: it is the ordinary case and the zero
+	// value, and a header that said so on every file would be a line
+	// somebody learns to stop reading.
+	if f.State != Active {
+		line(&b, keyState, stateNames[f.State])
+		line(&b, keyWhy, f.Why)
+	}
+
+	if f.Review {
+		line(&b, keyReview, "true")
 	}
 
 	if f.Used > 0 {
@@ -112,7 +127,9 @@ func decode(body, where, repo string) (Fact, error) {
 
 	f.Source = source
 	f.Stops = head[keyAction] == "stop"
-	f.Off = head[keyOff] == "true"
+	f.State = stateNamed(head)
+	f.Why = head[keyWhy]
+	f.Review = head[keyReview] == "true"
 	f.Used, _ = strconv.Atoi(head[keyUsed]) //nolint:errcheck // a count nobody wrote is none
 
 	if at := head[keyAt]; at != "" {
@@ -127,6 +144,27 @@ func decode(body, where, repo string) (Fact, error) {
 	f.Scope = scopeFrom(head, where, repo)
 
 	return f, f.Validate()
+}
+
+// stateNamed is where the header says the rule stands, and active when it
+// says nothing — which is what a file somebody wrote by hand means.
+//
+// `off: true` is read as switched off, because that is what every file
+// written before there were three states says, and a rule somebody
+// disagreed with silently coming back on would be the worst way to find out
+// this changed.
+func stateNamed(head map[string]string) State {
+	for state, spelled := range stateNames {
+		if head[keyState] == spelled {
+			return state
+		}
+	}
+
+	if head[keyOff] == "true" {
+		return Off
+	}
+
+	return Active
 }
 
 // scopeFrom builds the scope from what the header says, falling back to

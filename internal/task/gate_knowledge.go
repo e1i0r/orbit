@@ -47,7 +47,7 @@ func knowledgeGates(knows []knowledge.Fact) []flow.Gate {
 	var gates []flow.Gate
 
 	for _, f := range knows {
-		if f.Off || f.Action() != knowledge.Stops {
+		if !f.Tells() || f.Action() != knowledge.Stops {
 			continue
 		}
 

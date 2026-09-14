@@ -27,10 +27,12 @@ const (
 	// RuleMoved is the same rule about somewhere else. Was carries where it
 	// was about before.
 	RuleMoved = "moved"
-	// RuleOff is somebody disagreeing with it, and RuleOn is them changing
-	// their mind. Neither deletes anything.
-	RuleOff = "off"
-	RuleOn  = "on"
+	// RulePaused is somebody stopping it for now, with the reason they
+	// gave in Was. RuleOff is them disagreeing with it, and RuleOn is it
+	// applying again after either. None of them deletes anything.
+	RulePaused = "paused"
+	RuleOff    = "off"
+	RuleOn     = "on"
 )
 
 // A RuleTurn is one thing that happened to one rule.

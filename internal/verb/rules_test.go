@@ -14,18 +14,32 @@ import (
 	"github.com/e1i0r/orbit/internal/words"
 )
 
-// onAStore is a world with somewhere to write and nothing else. The rules
-// family reaches the record and the reader's language and no further, so a
-// world that answered more would be saying this test covers more than it
-// does.
+// onAStore is a world with somewhere to write, the rules already written
+// down, and nothing else. The rules family reaches those two and the
+// reader's language and no further, so a world that answered more would be
+// saying this test covers more than it does.
 type onAStore struct {
 	World
 
 	store *store.Store
+	facts []knowledge.Fact
 }
 
-func (o onAStore) Store() *store.Store   { return o.store }
-func (o onAStore) Words() *words.Printer { return words.For("") }
+func (o onAStore) Store() *store.Store              { return o.store }
+func (o onAStore) Words() *words.Printer            { return words.For("") }
+func (o onAStore) Facts() ([]knowledge.Fact, error) { return o.facts, nil }
+
+// Replace writes the changed rule over the one it replaces, matched by the
+// name that survives everything else about it.
+func (o onAStore) Replace(was, now knowledge.Fact) error {
+	for i, f := range o.facts {
+		if f.ID == was.ID {
+			o.facts[i] = now
+		}
+	}
+
+	return nil
+}
 
 // trayOf is a world whose tray holds the sentences given, oldest first.
 func trayOf(t *testing.T, said ...string) onAStore {

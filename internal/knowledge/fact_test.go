@@ -88,7 +88,7 @@ func TestTheFactsOfAFileArriveWidestFirst(t *testing.T) {
 // with it without losing the record that it was ever there.
 func TestAFactThatIsOffIsNotTold(t *testing.T) {
 	off := humanFact(Scope{Kind: General}, "of everything")
-	off.Off = true
+	off.State = Off
 
 	if got := For(Target{Repo: "/w/orbit", Path: "a.go"}, []Fact{off}); len(got) != 0 {
 		t.Errorf("a fact that was turned off was still told: %v", got)
@@ -101,7 +101,7 @@ func TestAFactThatIsOffIsNotTold(t *testing.T) {
 func TestEveryKeepsWhatWasTurnedOff(t *testing.T) {
 	all := []Fact{
 		{Scope: Scope{Kind: Repo, Repo: "/w/api"}, Phrase: "narrow", Source: Human},
-		{Scope: Scope{Kind: General}, Phrase: "off and wide", Source: Human, Off: true},
+		{Scope: Scope{Kind: General}, Phrase: "off and wide", Source: Human, State: Off},
 	}
 
 	got := Every(all)

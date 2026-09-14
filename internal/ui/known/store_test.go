@@ -80,7 +80,7 @@ func TestTurningAFactOffIsRefusedWhenThereIsNowhereToWriteIt(t *testing.T) {
 	s, e := onScreen(t, known("of everything", knowledge.Scope{Kind: knowledge.General}))
 	e.Turn = nil
 
-	if after, out := s.Key(press("space"), e); after.facts[0].Off || out.Said != "" {
+	if after, out := s.Key(press("space"), e); after.facts[0].State != knowledge.Active || out.Said != "" {
 		t.Errorf("space with no door to write through answered %+v", out)
 	}
 
@@ -137,7 +137,7 @@ func TestARuleWithACheckSaysItStops(t *testing.T) {
 	}
 
 	off := armed
-	off.Off = true
+	off.State = knowledge.Off
 
 	s, e = onScreen(t, off)
 	if drawn := drawnKnowledge(t, s, e); !strings.Contains(drawn, "off") {

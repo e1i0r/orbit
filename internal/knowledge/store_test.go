@@ -231,7 +231,7 @@ func TestReplacingInPlaceKeepsTheOneFile(t *testing.T) {
 	}
 
 	now := was
-	now.Off = true
+	now.State = Off
 
 	if _, err := s.Replace(was, now); err != nil {
 		t.Fatalf("Replace: %v", err)
@@ -242,7 +242,7 @@ func TestReplacingInPlaceKeepsTheOneFile(t *testing.T) {
 		t.Fatalf("Load: %v", err)
 	}
 
-	if len(got) != 1 || !got[0].Off {
-		t.Errorf("the repository holds %d facts and the first is off=%v", len(got), len(got) > 0 && got[0].Off)
+	if len(got) != 1 || got[0].State != Off {
+		t.Errorf("the repository holds %d facts and the first stands at %v", len(got), got[0].State)
 	}
 }

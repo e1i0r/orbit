@@ -161,8 +161,11 @@ func (s State) fact(f knowledge.Fact, chosen bool, cw int, e Env) []string {
 
 	rows := []string{mark + head}
 
+	// Dimmed when it is not reaching a phase, whichever of the two reasons
+	// that is: what the eye is looking for down this column is which of
+	// these are actually steering anything.
 	ink := theme.Text(theme.Primary)
-	if f.Off {
+	if !f.Tells() {
 		ink = theme.Paint(theme.Dim)
 	}
 
@@ -179,8 +182,10 @@ func (s State) does(f knowledge.Fact, e Env) string {
 	p := e.Words
 
 	switch {
-	case f.Off:
+	case f.State == knowledge.Off:
 		return theme.Paint(theme.Dim).Render(p.T("knowledge.is_off", "off"))
+	case f.State == knowledge.Paused:
+		return theme.Paint(theme.Warn).Render(p.T("knowledge.is_paused", "paused"))
 	case f.Action() == knowledge.Stops:
 		return theme.Paint(theme.Bad).Bold(true).Render(p.T("knowledge.stops", "stops"))
 	case f.Stops:

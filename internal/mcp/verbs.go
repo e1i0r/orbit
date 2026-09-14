@@ -91,6 +91,8 @@ var cannot = map[string]string{
 	"task approve": "accepting a library a task reached for is the question the gate asked a person",
 	"task take":    "this hands a terminal to an engine, and a tool call has no terminal to hand over",
 	"rules draft":  "this spends money with no task behind it, which is a person's decision",
+	"rules pause":  "pausing a rule is the answer a person gives after reading it",
+	"rules resume": "it is the other half of pausing, and belongs to whoever paused it",
 }
 
 // toolFor is one verb as a tool.

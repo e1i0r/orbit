@@ -106,7 +106,7 @@ func (v Verb) do(ctx context.Context, w World, in In) (Out, error) {
 	case "export":
 		return written(w, in)
 	case "rules":
-		return waiting(w)
+		return waiting(w, in)
 	case "rules keep":
 		return agreed(w, in)
 	case "rules drop":
@@ -117,6 +117,10 @@ func (v Verb) do(ctx context.Context, w World, in In) (Out, error) {
 		return drafting(ctx, w, in)
 	case "rules history":
 		return happened(w, in)
+	case "rules pause":
+		return paused(w, in)
+	case "rules resume":
+		return resumed(w, in)
 	}
 
 	return Out{}, fmt.Errorf("%q is declared and not done", v.Path())

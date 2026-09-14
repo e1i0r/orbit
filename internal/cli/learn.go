@@ -196,16 +196,13 @@ func turnFactPort(s *store.Store) func(knowledge.Fact) error {
 			return err
 		}
 
-		what := learn.TurnedOn
-		if f.Off {
-			what = learn.TurnedOff
-		}
-
-		if err := learn.Happened(s, learn.Turn{Rule: f.ID, What: what, By: learn.Operator}); err != nil {
+		if err := learn.Happened(s, learn.Turn{
+			Rule: f.ID, What: learn.Stood(f.State), By: learn.Operator, Was: f.Why,
+		}); err != nil {
 			return err
 		}
 
-		logger.Info("cli/learn", "turned %q at %q, off=%v", f.Phrase, where, f.Off)
+		logger.Info("cli/learn", "turned %q at %q, state=%v", f.Phrase, where, f.State)
 
 		return nil
 	}

@@ -167,6 +167,14 @@ func (w world) Learn(fact knowledge.Fact) error {
 	})
 }
 
+// Replace is refused. Changing where a rule stands — pausing it, switching
+// it off, rewording it — is the answer a person gives after reading it, and
+// a model that could give that answer could quietly clear away the rules it
+// keeps running into.
+func (w world) Replace(_, _ knowledge.Fact) error {
+	return errors.New("changing a rule is a person's decision; ask them to run orbit rules")
+}
+
 // Words is English. A tool call is read by a model and then quoted back to
 // whoever is watching, and the language that reaches them is the client's to
 // choose — not this server's, which has no reader of its own.
