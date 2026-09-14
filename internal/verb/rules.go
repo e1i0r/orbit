@@ -63,6 +63,23 @@ func rules() []Verb {
 			},
 		},
 		{
+			Name: "read", Under: "rules", Spends: true,
+			About: func(p *words.Printer) string {
+				return p.T("verb.rules.read",
+					"have a model read what this project already says about itself, and offer the rules in it")
+			},
+			Takes: []Field{
+				{Name: "repo", Kind: Named, About: func(p *words.Printer) string {
+					return p.T("verb.rules.read.repo",
+						"the checkout to read; the default is the one you are in")
+				}},
+				{Name: "engine", Kind: Named, About: func(p *words.Printer) string {
+					return p.T("verb.rules.read.engine",
+						"which engine reads it; the default is the one in your settings")
+				}},
+			},
+		},
+		{
 			Name: "draft", Under: "rules", Spends: true,
 			About: func(p *words.Printer) string {
 				return p.T("verb.rules.draft",

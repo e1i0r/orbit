@@ -14,7 +14,7 @@ one. Every CLI keeps its own notes in its own file — `CLAUDE.md`, `AGENTS.md`
 What Orbit knows is Orbit's, kept outside all of them. Change the engine and
 it still knows that the ledger only appends.
 
-## Three ways it learns
+## Four ways it learns
 
 **You say it.** Tell the supervisor *"never push a pull request without the
 tests passing"* and Orbit notices the sentence was a rule and offers it back.
@@ -35,7 +35,30 @@ orbit rules repeated                    # what you keep telling runs
 orbit rules draft -engine claude        # and the rule it amounts to
 ```
 
-All three land in the same place.
+**And the project already said it.** A repository with two years behind it has
+half of this written down already — the CONTRIBUTING, the README, and the notes
+each engine keeps in its own file:
+
+```bash
+orbit rules read -engine claude
+```
+
+```
+process        CONTRIBUTING.md:182    Run `make check` and read its exit status before opening a pull request.
+testing        CONTRIBUTING.md:20     Every change ships with the tests that would have caught the bug.
+style          CONTRIBUTING.md:122    Never write a hex colour outside `internal/ui/theme`.
+```
+
+Every rule points at **the line it came from**, and a rule the model cannot
+point at a line for is thrown away. That is the whole reason this can be
+trusted: asked to summarise two years of CONTRIBUTING, a model will produce
+plausible rules nobody ever wrote.
+
+It brings few and good rather than everything it can find — forty weak offers is
+a tray you stop opening, and that would take the other three sources with it. It
+runs when you ask, and a file already read is not read again until it changes.
+
+All four land in the same place.
 
 ## The tray
 

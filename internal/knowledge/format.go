@@ -54,7 +54,8 @@ var stateNames = map[State]string{
 }
 
 var sourceNames = map[Source]string{
-	FromCode: "code", Human: "human", FromRecord: "record", FromProduction: "production",
+	FromCode: "code", Human: "human", FromRecord: "record",
+	FromProduction: "production", FromDocs: "docs",
 }
 
 // encode writes a fact out.

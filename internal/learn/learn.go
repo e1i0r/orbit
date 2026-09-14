@@ -39,8 +39,10 @@ type Said struct {
 	// name of whoever typed a correction at a run. The tray shows it, so
 	// that a sentence can be placed before it is agreed with.
 	By string
-	// About is the task it came out of, and empty for the supervisor's
-	// thread, which is about the board rather than about one task.
+	// About is what it came out of, so that a reader can go and see for
+	// themselves: the task it was said at, or the file and the line it was
+	// read off. Empty for the supervisor's thread, which is about the board
+	// rather than about any one thing.
 	About string
 	// Repo is the checkout it is about, and empty for a sentence that is
 	// about everything.
