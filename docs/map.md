@@ -10,13 +10,14 @@ stop being able to change safely.
 
 ## The shape of it
 
-```
-                        one vocabulary
-    terminal ─┐        ┌──────────────┐
-    browser  ─┼───────▶│ internal/verb│───▶ task · board · knowledge · learn
-    tool call ─┤        └──────────────┘         │
-    window   ─┘                                  ▼
-                                        store (files) · db (SQLite)
+```mermaid
+flowchart LR
+    T[terminal]  --> V
+    B[browser]   --> V
+    C[tool call] --> V
+    W[window]    --> V
+    V["internal/verb<br/><i>one vocabulary</i>"] --> D["task · board · knowledge · learn"]
+    D --> S["store (files) · db (SQLite)"]
 ```
 
 Four ways in. One place that says what every action means. One record.
