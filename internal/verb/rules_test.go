@@ -31,7 +31,7 @@ func (o onAStore) Facts() ([]knowledge.Fact, error) { return o.facts, nil }
 
 // Replace writes the changed rule over the one it replaces, matched by the
 // name that survives everything else about it.
-func (o onAStore) Replace(was, now knowledge.Fact) error {
+func (o onAStore) Replace(was, now knowledge.Fact, _ learn.Turn) error {
 	for i, f := range o.facts {
 		if f.ID == was.ID {
 			o.facts[i] = now

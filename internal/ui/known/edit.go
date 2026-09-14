@@ -39,6 +39,27 @@ func (s State) editFact(e Env) State {
 	return s.typeInto(f.Phrase, f.Check, f.Scope.Path)
 }
 
+// pauseFact opens the one line a pause takes: what it is being paused for.
+//
+// The cheapest thing this screen can do to a rule, and the only reversible
+// one. Switching a rule off decides its fate; pausing it says not now and
+// asks somebody to come back — which is what you mean when a rule stops you
+// in the middle of something else.
+//
+// The reason is the whole difference between the two. A pause with no reason
+// is a switch under another name, and the reason is what somebody reads when
+// they come back: the only thing that will tell them whether it made sense.
+func (s State) pauseFact(e Env) State {
+	f, ok := s.onFact()
+	if e.Replace == nil || !ok || f.State == knowledge.Paused {
+		return s
+	}
+
+	s.pausing = true
+
+	return s.typeInto("", "", "")
+}
+
 // typeInto puts the three fields up with what is already in them, and the
 // caret in the first.
 func (s State) typeInto(phrase, check, where string) State {
@@ -70,6 +91,37 @@ func (s State) newFact(e Env) State {
 	return s.typeInto("", "", "")
 }
 
+// savePause stops the rule under the cursor applying, and sends it to be
+// looked at again.
+//
+// A reason emptied is refused rather than written, for the reason a sentence
+// emptied is: pausing with nothing typed is the switch beside it, and the
+// switch is not what was asked for.
+func (s State) savePause(e Env) (State, Out) {
+	why := strings.TrimSpace(s.in[factPhrase].Val)
+	if why == "" {
+		return s, said(e.Words.T("knowledge.pause_needs_why",
+			"say what you are pausing it for; it is what you will read when you come back"))
+	}
+
+	s.editing, s.pausing = false, false
+
+	was, ok := s.onFact()
+	if !ok {
+		return s, Out{}
+	}
+
+	now := was
+	now.State, now.Why, now.Review = knowledge.Paused, why, true
+
+	if err := e.Replace(was, now); err != nil {
+		return s, said(err.Error())
+	}
+
+	return s.Sync(e), said(e.Words.T("knowledge.paused",
+		"it is paused, and waiting for you to decide about it"))
+}
+
 // hereScope is what a fact written on this screen is about: the one
 // repository the window is on, and everything when there is more than one to
 // choose between. Choosing one for somebody is how a rule ends up on the
@@ -86,7 +138,7 @@ func hereScope(e Env) knowledge.Scope {
 func (s State) editingKey(msg tea.KeyPressMsg, e Env) (State, Out) {
 	switch msg.Code {
 	case tea.KeyEscape:
-		s.editing = false
+		s.editing, s.pausing = false, false
 		return s, Out{}
 	case tea.KeyEnter:
 		return s.saveFact(e)
@@ -133,6 +185,10 @@ func (s State) factEdit(do func(*typing.Field)) State {
 // A sentence emptied is refused rather than written. A fact with nothing in
 // it says nothing, and deleting one is not something this gesture does.
 func (s State) saveFact(e Env) (State, Out) {
+	if s.pausing {
+		return s.savePause(e)
+	}
+
 	phrase := strings.TrimSpace(s.in[factPhrase].Val)
 	if phrase == "" {
 		return s, said(e.Words.T("knowledge.needs_words", "a fact with no sentence says nothing"))

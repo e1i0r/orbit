@@ -18,6 +18,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/knowledge"
+	"github.com/e1i0r/orbit/internal/learn"
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/task"
@@ -122,7 +123,7 @@ func (w *testWorld) Learn(fact knowledge.Fact) error {
 
 // Replace writes the changed rule over the one it replaces, matched by the
 // name that survives everything else about it.
-func (w *testWorld) Replace(was, now knowledge.Fact) error {
+func (w *testWorld) Replace(was, now knowledge.Fact, _ learn.Turn) error {
 	for i, f := range w.facts {
 		if f.ID == was.ID {
 			w.facts[i] = now

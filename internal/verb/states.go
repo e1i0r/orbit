@@ -98,19 +98,16 @@ func paused(w World, in In) (Out, error) {
 	now := was
 	now.State, now.Why, now.Review = knowledge.Paused, why, true
 
-	if err := w.Replace(was, now); err != nil {
-		return Out{}, err
-	}
-
 	// Where it was in the way, when it was. A pause typed from a terminal
 	// is about the rule and about no run; one taken while a task sat
 	// blocked is the beginning of a pattern, and the pattern is what makes
 	// a rule worth reconsidering.
 	at, phase := whileWorkingOn(w, in)
 
-	_ = learn.Happened(w.Store(), learn.Turn{ //nolint:errcheck // the pause stands either way
-		Rule: was.ID, What: learn.Paused, By: learn.Operator, Was: why, Task: at, Phase: phase,
-	})
+	where := learn.Turn{By: learn.Operator, Task: at, Phase: phase}
+	if err := w.Replace(was, now, where); err != nil {
+		return Out{}, err
+	}
 
 	return Out{Said: w.Words().T("verb.rules.paused", "{rule} is paused: {why}",
 		words.Arg{Name: "rule", Value: was.ID},
@@ -151,7 +148,7 @@ func resumed(w World, in In) (Out, error) {
 	now := was
 	now.State, now.Why, now.Review = knowledge.Active, "", false
 
-	if err := w.Replace(was, now); err != nil {
+	if err := w.Replace(was, now, learn.Turn{By: learn.Operator}); err != nil {
 		return Out{}, err
 	}
 

@@ -58,7 +58,7 @@ func TestWhatChangedIsWrittenDownOnePieceAtATime(t *testing.T) {
 	now.Scope = knowledge.Scope{Kind: knowledge.Dir, Repo: repo, Path: "internal/db"}
 	now.State = knowledge.Off
 
-	if err := Changed(s, was, now, Operator); err != nil {
+	if err := Changed(s, was, now, Turn{By: Operator}); err != nil {
 		t.Fatalf("write down what changed: %v", err)
 	}
 
@@ -101,7 +101,7 @@ func TestAnEditThatChangedNothingWritesNothing(t *testing.T) {
 		Scope: knowledge.Scope{Kind: knowledge.General},
 	}
 
-	if err := Changed(s, same, same, Operator); err != nil {
+	if err := Changed(s, same, same, Turn{By: Operator}); err != nil {
 		t.Fatalf("write down what changed: %v", err)
 	}
 
@@ -131,7 +131,7 @@ func TestARuleWithNoNameWritesNoHistoryAndIsNotAnError(t *testing.T) {
 	now := byHand
 	now.Phrase = "never push on a Friday afternoon"
 
-	if err := Changed(s, byHand, now, Operator); err != nil {
+	if err := Changed(s, byHand, now, Turn{By: Operator}); err != nil {
 		t.Errorf("editing a rule with no name was refused: %v", err)
 	}
 }

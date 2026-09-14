@@ -16,6 +16,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/knowledge"
+	"github.com/e1i0r/orbit/internal/learn"
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/task"
@@ -123,7 +124,13 @@ type Knows interface {
 	// The old one travels with it because a rule's file is named after its
 	// sentence: writing alone would leave the old copy behind, still told
 	// and still refusing work.
-	Replace(was, now knowledge.Fact) error
+	//
+	// where is who did it and the run they were in the middle of, when
+	// there was one. It is here rather than worked out inside because only
+	// the caller knows: the same pause is about the rule when it is typed
+	// at a terminal and the beginning of a pattern when it is taken with a
+	// task sitting blocked.
+	Replace(was, now knowledge.Fact, where learn.Turn) error
 }
 
 // Beyond is what a verb can reach past this machine: a model that has to be

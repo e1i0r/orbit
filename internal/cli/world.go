@@ -129,8 +129,8 @@ func (w world) Learn(fact knowledge.Fact) error {
 // The same port the window is handed, so that a rule corrected from a screen
 // and one corrected from a command line move the same way and leave the same
 // row behind in the record.
-func (w world) Replace(was, now knowledge.Fact) error {
-	return replaceFactPort(w.store)(was, now)
+func (w world) Replace(was, now knowledge.Fact, where learn.Turn) error {
+	return replaceFactPort(w.store)(was, now, where)
 }
 
 // Say puts something in the supervisor's thread, on whichever channel the

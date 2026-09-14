@@ -98,33 +98,41 @@ func History(s *store.Store, rule string) ([]Turn, error) {
 //
 // A rule with no name writes nothing, and that is not a failure: it is one
 // somebody wrote by hand that Orbit has not written since.
-func Changed(s *store.Store, was, now knowledge.Fact, by string) error {
+//
+// where is who did it and, when there was one, the run they were in the
+// middle of. It is the caller's because only the caller knows: a pause typed
+// at a terminal is about the rule and about no run, and the same pause taken
+// while a task sat blocked is the beginning of a pattern.
+func Changed(s *store.Store, was, now knowledge.Fact, where Turn) error {
 	if now.ID == "" {
 		return nil
 	}
 
-	at := time.Now().UTC()
+	where.Rule, where.At = now.ID, time.Now().UTC()
 
 	if was.Phrase != now.Phrase {
-		if err := Happened(s, Turn{
-			Rule: now.ID, At: at, What: db.RuleReworded, By: by, Was: was.Phrase,
-		}); err != nil {
+		one := where
+		one.What, one.Was = db.RuleReworded, was.Phrase
+
+		if err := Happened(s, one); err != nil {
 			return err
 		}
 	}
 
 	if was.Scope != now.Scope {
-		if err := Happened(s, Turn{
-			Rule: now.ID, At: at, What: db.RuleMoved, By: by, Was: about(was.Scope),
-		}); err != nil {
+		one := where
+		one.What, one.Was = db.RuleMoved, about(was.Scope)
+
+		if err := Happened(s, one); err != nil {
 			return err
 		}
 	}
 
 	if was.State != now.State {
-		if err := Happened(s, Turn{
-			Rule: now.ID, At: at, What: Stood(now.State), By: by, Was: now.Why,
-		}); err != nil {
+		one := where
+		one.What, one.Was = Stood(now.State), now.Why
+
+		if err := Happened(s, one); err != nil {
 			return err
 		}
 	}

@@ -171,7 +171,7 @@ func (w world) Learn(fact knowledge.Fact) error {
 // it off, rewording it — is the answer a person gives after reading it, and
 // a model that could give that answer could quietly clear away the rules it
 // keeps running into.
-func (w world) Replace(_, _ knowledge.Fact) error {
+func (w world) Replace(_, _ knowledge.Fact, _ learn.Turn) error {
 	return errors.New("changing a rule is a person's decision; ask them to run orbit rules")
 }
 

@@ -66,6 +66,10 @@ func inTheWay(w World, t task.Task) (rule, phase string) {
 //
 // Applying, because skipping is not disagreeing: the rule stands and the next
 // run is still told it. What changed is that somebody now has to look at it.
+//
+// Nothing is written to the rule's history here — the skip above already
+// said what happened, and the state did not change, so there is nothing for
+// Replace to find worth writing down.
 func sendToReview(w World, rule string) {
 	facts, err := w.Facts()
 	if err != nil {
@@ -80,7 +84,7 @@ func sendToReview(w World, rule string) {
 		now := was
 		now.Review = true
 
-		_ = w.Replace(was, now) //nolint:errcheck // the skip stands either way
+		_ = w.Replace(was, now, learn.Turn{}) //nolint:errcheck // the skip stands either way
 
 		return
 	}
