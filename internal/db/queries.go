@@ -175,11 +175,11 @@ const (
 // timestamp, for the reason the events below are: two processes' clocks have
 // no order between them.
 const (
-	insertRuleTurn = `INSERT INTO rule(rule_id, at, what, said_by, was)
-	                  VALUES(?,?,?,?,?)`
+	insertRuleTurn = `INSERT INTO rule(rule_id, at, what, said_by, was, task_id, phase)
+	                  VALUES(?,?,?,?,?,?,?)`
 
-	selectRuleTurns = `SELECT rule_id, at, what, said_by, was FROM rule
-	                    WHERE rule_id = ? ORDER BY id`
+	selectRuleTurns = `SELECT rule_id, at, what, said_by, was, task_id, phase
+	                     FROM rule WHERE rule_id = ? ORDER BY id`
 )
 
 // Events.

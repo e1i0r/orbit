@@ -15,6 +15,7 @@ import (
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/knowledge"
+	"github.com/e1i0r/orbit/internal/learn"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -94,18 +95,19 @@ func TestLearningDownWritesFactsDown(t *testing.T) {
 		Scope: knowledge.Scope{Kind: knowledge.General},
 	}
 
-	if err := replaceFactPort(s)(was, now); err != nil {
+	if err := replaceFactPort(s)(was, now, learn.Turn{}); err != nil {
 		t.Fatalf("replace: %v", err)
 	}
 
 	// Replacing what is not there still writes the correction: the new
 	// sentence stands on its own, and there is nothing to take away.
-	if err := replaceFactPort(s)(knowledge.Fact{Phrase: "nobody wrote this"}, now); err != nil {
+	if err := replaceFactPort(s)(knowledge.Fact{Phrase: "nobody wrote this"}, now,
+		learn.Turn{}); err != nil {
 		t.Fatalf("replace: %v", err)
 	}
 
 	if got := knowsPort(s, ""); len(got()) == 0 {
-		t.Error("nothing is known after learning, turning and replacing")
+		t.Error("nothing is known after learning and replacing")
 	}
 }
 

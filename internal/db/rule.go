@@ -33,6 +33,16 @@ const (
 	RulePaused = "paused"
 	RuleOff    = "off"
 	RuleOn     = "on"
+	// RuleSkipped is somebody getting past it this once, which leaves it
+	// applying. RuleFailed is the rule doing its job: a gate refusing work
+	// over it.
+	//
+	// A gate that passed is not written down. A rule that works is silent
+	// and a rule that is in the way is not, so what is worth keeping is the
+	// friction — and a row per passing gate per phase per run would bury it
+	// under what nobody needs to read.
+	RuleSkipped = "skipped"
+	RuleFailed  = "failed"
 )
 
 // A RuleTurn is one thing that happened to one rule.
@@ -49,6 +59,10 @@ type RuleTurn struct {
 	// Was is what it was before, for the two turns where that is the point:
 	// the old sentence, or the old place. Empty for the rest.
 	Was string
+	// Task and Phase are where it happened, and empty for a turn somebody
+	// took from a terminal — which is about the rule and not about any run.
+	Task  string
+	Phase string
 }
 
 // Happened writes down one turn, and says nothing about a rule with no name.
@@ -65,7 +79,8 @@ func (d *DB) Happened(t RuleTurn) error {
 		t.At = time.Now().UTC()
 	}
 
-	_, err := d.sql.Exec(insertRuleTurn, t.Rule, record.Stamp(t.At), t.What, t.By, t.Was)
+	_, err := d.sql.Exec(insertRuleTurn, t.Rule, record.Stamp(t.At), t.What, t.By, t.Was,
+		t.Task, t.Phase)
 	if err != nil {
 		return fmt.Errorf("write down what happened to rule %s: %w", t.Rule, err)
 	}
@@ -90,7 +105,7 @@ func (d *DB) RuleHistory(rule string) ([]RuleTurn, error) {
 			at string
 		)
 
-		if err := rows.Scan(&t.Rule, &at, &t.What, &t.By, &t.Was); err != nil {
+		if err := rows.Scan(&t.Rule, &at, &t.What, &t.By, &t.Was, &t.Task, &t.Phase); err != nil {
 			return nil, fmt.Errorf("read a turn of rule %s: %w", rule, err)
 		}
 

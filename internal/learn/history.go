@@ -31,6 +31,8 @@ const (
 	TurnedOff = db.RuleOff
 	TurnedOn  = db.RuleOn
 	Paused    = db.RulePaused
+	Skipped   = db.RuleSkipped
+	Failed    = db.RuleFailed
 )
 
 // A Turn is one thing that happened to one rule.
@@ -42,6 +44,12 @@ type Turn struct {
 	// Was is what it was before, for the two turns where that is the whole
 	// point: the old sentence, or the old place.
 	Was string
+	// Task and Phase are where it happened, for the turns that happen
+	// inside a run. What makes a rule worth reconsidering is the pattern,
+	// and "I always skip this in the test phase" is a pattern where "I
+	// skipped it once" is not.
+	Task  string
+	Phase string
 }
 
 // Happened writes down one turn.
@@ -51,7 +59,10 @@ func Happened(s *store.Store, t Turn) error {
 		return err
 	}
 
-	return d.Happened(db.RuleTurn{Rule: t.Rule, At: t.At, What: t.What, By: t.By, Was: t.Was})
+	return d.Happened(db.RuleTurn{
+		Rule: t.Rule, At: t.At, What: t.What, By: t.By, Was: t.Was,
+		Task: t.Task, Phase: t.Phase,
+	})
 }
 
 // History is everything that happened to one rule, oldest first.
@@ -68,7 +79,10 @@ func History(s *store.Store, rule string) ([]Turn, error) {
 
 	out := make([]Turn, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, Turn{Rule: row.Rule, At: row.At, What: row.What, By: row.By, Was: row.Was})
+		out = append(out, Turn{
+			Rule: row.Rule, At: row.At, What: row.What, By: row.By, Was: row.Was,
+			Task: row.Task, Phase: row.Phase,
+		})
 	}
 
 	return out, nil
@@ -84,33 +98,41 @@ func History(s *store.Store, rule string) ([]Turn, error) {
 //
 // A rule with no name writes nothing, and that is not a failure: it is one
 // somebody wrote by hand that Orbit has not written since.
-func Changed(s *store.Store, was, now knowledge.Fact, by string) error {
+//
+// where is who did it and, when there was one, the run they were in the
+// middle of. It is the caller's because only the caller knows: a pause typed
+// at a terminal is about the rule and about no run, and the same pause taken
+// while a task sat blocked is the beginning of a pattern.
+func Changed(s *store.Store, was, now knowledge.Fact, where Turn) error {
 	if now.ID == "" {
 		return nil
 	}
 
-	at := time.Now().UTC()
+	where.Rule, where.At = now.ID, time.Now().UTC()
 
 	if was.Phrase != now.Phrase {
-		if err := Happened(s, Turn{
-			Rule: now.ID, At: at, What: db.RuleReworded, By: by, Was: was.Phrase,
-		}); err != nil {
+		one := where
+		one.What, one.Was = db.RuleReworded, was.Phrase
+
+		if err := Happened(s, one); err != nil {
 			return err
 		}
 	}
 
 	if was.Scope != now.Scope {
-		if err := Happened(s, Turn{
-			Rule: now.ID, At: at, What: db.RuleMoved, By: by, Was: about(was.Scope),
-		}); err != nil {
+		one := where
+		one.What, one.Was = db.RuleMoved, about(was.Scope)
+
+		if err := Happened(s, one); err != nil {
 			return err
 		}
 	}
 
 	if was.State != now.State {
-		if err := Happened(s, Turn{
-			Rule: now.ID, At: at, What: Stood(now.State), By: by, Was: now.Why,
-		}); err != nil {
+		one := where
+		one.What, one.Was = Stood(now.State), now.Why
+
+		if err := Happened(s, one); err != nil {
 			return err
 		}
 	}

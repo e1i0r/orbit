@@ -9,6 +9,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/learn"
 	"github.com/e1i0r/orbit/internal/record"
 	"github.com/e1i0r/orbit/internal/store"
 )
@@ -248,6 +249,23 @@ func runGates(ctx context.Context, s *store.Store, t Task, p flow.Phase, n int, 
 
 		data["exit"] = strconv.Itoa(exitCode)
 		_ = emit(s, t, record.Event{Kind: record.GateFailed, Phase: p.Name, Text: text, Data: data}) //nolint:errcheck // best-effort event emission on gate failure
+
+		// Against the rule as well as against the phase, when the gate came
+		// from one. The phase's record says this run was refused; the
+		// rule's says this rule refuses work, here, again — which is what
+		// somebody deciding whether to keep it needs and cannot fold out of
+		// twenty task logs.
+		//
+		// A gate that passed is not written down. A rule that works is
+		// silent and a rule in the way is not, so what is kept is the
+		// friction.
+		if g.Rule != "" {
+			// Nobody did this, so nobody is named: the gate ran on its
+			// own and the task and the phase are where it happened.
+			_ = learn.Happened(s, learn.Turn{ //nolint:errcheck // the refusal stands either way
+				Rule: g.Rule, What: learn.Failed, Task: t.ID, Phase: p.Name,
+			})
+		}
 
 		return &gateRefusal{Gate: g.Name, Exit: exitCode, Output: text}, nil
 	}

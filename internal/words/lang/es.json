@@ -3229,6 +3229,14 @@
       "source": "[↑↓] move · [e] edit · [n] new · [←→] wider or narrower · [space] turn off · [esc] back",
       "value": "[↑↓] mover · [e] editar · [n] nuevo · [←→] más amplio o más estrecho · [espacio] apagar · [esc] atrás"
     },
+    "knowledge.pause_needs_why": {
+      "source": "say what you are pausing it for; it is what you will read when you come back",
+      "value": "decí para qué la frenás; es lo que vas a leer cuando vuelvas"
+    },
+    "knowledge.paused": {
+      "source": "it is paused, and waiting for you to decide about it",
+      "value": "queda frenada, esperando que decidas sobre ella"
+    },
     "knowledge.is_paused": {
       "source": "paused",
       "value": "pausada"
@@ -4710,6 +4718,10 @@
     "verb.rules.pause.why": {
       "source": "what you are pausing it for; it is what you will read when you come back",
       "value": "para qué la frenás; es lo que vas a leer cuando vuelvas"
+    },
+    "verb.rules.pause.task": {
+      "source": "the task it was in your way at, if it was; it says where to look later",
+      "value": "la tarea en la que te estorbaba, si te estorbaba; dice dónde mirar después"
     },
     "verb.rules.resume": {
       "source": "have a rule apply again, and stop asking about it",

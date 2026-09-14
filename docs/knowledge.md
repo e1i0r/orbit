@@ -107,9 +107,27 @@ else — *"skip this while we get the coverage up"* is not disagreeing with it.
 The reason is what you read when you come back, and the only thing that will
 tell you whether it made sense.
 
-Waiting for a decision is a separate thing from where a rule stands, because
-skipping one leaves it applying and pausing one does not, and both ask you the
-same question.
+## When a rule stops you
+
+You are in the middle of something else. Two things are cheap and reversible,
+and nothing else is offered:
+
+- **skip it** — `s` on the task, or `orbit task skip`. You get past this once
+  and the rule stays on.
+- **pause it** — `p` on the knowledge screen, or `orbit rules pause`. It stops
+  applying, and you say what for.
+
+Either one sends the rule to be looked at again, **the first time**. Nobody
+skips a rule they agree with: if you skipped it, you have already said
+something without saying it.
+
+Waiting for a decision is separate from where a rule stands, because skipping
+one leaves it applying and pausing one does not, and both ask you the same
+question.
+
+Switching a rule off and rewording it are not offered in the moment. They
+decide a rule's fate, and that is not a decision taken in a hurry with a task
+half done.
 
 ## Warning or stopping
 
@@ -153,10 +171,17 @@ orbit rules history -rule 875c38ec
 ```
 
 ```
-2026-09-13 18:52:34  kept    operator
-2026-09-13 18:52:35  paused  operator   the repo has never been past 80
-2026-09-13 18:52:40  on      operator
+2026-09-13 18:52:34  kept     operator
+2026-09-13 18:52:35  failed   ACME-3 · test
+2026-09-13 18:52:36  failed   ACME-7 · test
+2026-09-13 18:52:37  skipped  ACME-7 · test
+2026-09-13 18:52:40  paused   ACME-7 · test    the repo has never been past 80
 ```
+
+It reads by itself: the rule refused work twice in the test phase, you got
+past it once, then you stopped it. A gate that *passed* is not written down —
+a rule that works is silent and a rule in the way is not, so what is kept is
+the friction.
 
 A rule you wrote by hand has no name until Orbit writes it, and is read
 anyway: a header of two lines works, because writing these by hand is half the

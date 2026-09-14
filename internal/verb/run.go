@@ -249,6 +249,14 @@ func controlled(w World, in In, word string) (Out, error) {
 		return Out{}, err
 	}
 
+	// Skipping past a gate a rule put there is something said about that
+	// rule, so it is written down against it and the rule goes to be looked
+	// at. Every other control word is about the run and not about anything
+	// it was told.
+	if word == "skip" {
+		gotPast(w, t)
+	}
+
 	return Out{Said: said[word](t.ID)}, nil
 }
 

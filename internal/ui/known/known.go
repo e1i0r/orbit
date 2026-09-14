@@ -131,6 +131,10 @@ type State struct {
 	// something anybody retypes. How wide it is stays on ←/→, because
 	// everywhere and one checkout are not paths and cannot be typed as one.
 	editing bool
+	// pausing says the line being typed is a reason rather than a
+	// correction. One line, two gestures: what is typed is a sentence
+	// either way, and this is which sentence it is.
+	pausing bool
 	field   int
 	in      [factFields]typing.Field
 }
@@ -222,6 +226,8 @@ func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
 		return s.dropSaid(e)
 	case msg.Code == 'n' || msg.Code == 'N':
 		return s.newFact(e), Out{}
+	case msg.Code == 'p' || msg.Code == 'P':
+		return s.pauseFact(e), Out{}
 	case msg.Code == tea.KeyLeft:
 		return s.moveFact(wider, e)
 	case msg.Code == tea.KeyRight:

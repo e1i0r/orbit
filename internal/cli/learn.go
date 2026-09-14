@@ -213,11 +213,11 @@ func turnFactPort(s *store.Store) func(knowledge.Fact) error {
 // Replace and not Save, because correcting the sentence moves the file: a
 // fact with no reference is filed under a slug of what it says. Saving alone
 // would leave the old copy behind, still told and still refusing work.
-func replaceFactPort(s *store.Store) func(was, now knowledge.Fact) error {
-	return func(was, now knowledge.Fact) error {
+func replaceFactPort(s *store.Store) func(was, now knowledge.Fact, where learn.Turn) error {
+	return func(was, now knowledge.Fact, where learn.Turn) error {
 		ks := knowledge.NewStore(s.Root())
 
-		where, err := ks.Replace(was, now)
+		at, err := ks.Replace(was, now)
 		if err != nil {
 			return err
 		}
@@ -229,12 +229,24 @@ func replaceFactPort(s *store.Store) func(was, now knowledge.Fact) error {
 			now.ID = was.ID
 		}
 
-		if err := learn.Changed(s, was, now, learn.Operator); err != nil {
+		if err := learn.Changed(s, was, now, where); err != nil {
 			return err
 		}
 
-		logger.Info("cli/learn", "replaced %q with %q at %q", was.Phrase, now.Phrase, where)
+		logger.Info("cli/learn", "replaced %q with %q at %q", was.Phrase, now.Phrase, at)
 
 		return nil
+	}
+}
+
+// windowReplacePort is the same write, for a screen that has no run to name.
+//
+// The knowledge screen is opened over the board and not over a task, so a
+// correction taken there is about the rule and about nothing else. The
+// command line's own pause can say which task it was in the way at, because
+// the reader typed it.
+func windowReplacePort(s *store.Store) func(was, now knowledge.Fact) error {
+	return func(was, now knowledge.Fact) error {
+		return replaceFactPort(s)(was, now, learn.Turn{By: learn.Operator})
 	}
 }

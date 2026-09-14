@@ -12,7 +12,7 @@ import (
 // It is not the disposable version an index carries. Nothing here can be
 // rebuilt from anywhere else, so a schema that turns out wrong is migrated
 // forward against live data and never dropped and remade.
-const version = 7
+const version = 8
 
 // busyTimeoutMS is how long SQLite waits for its turn at the write lock
 // before refusing. Five seconds is far past any transaction this package
@@ -236,6 +236,10 @@ func stepsFrom(tx *sql.Tx, found int) error {
 
 		if _, err := tx.Exec(rules); err != nil {
 			return fmt.Errorf("add the rule table: %w", err)
+		}
+
+		if err := widenRules(tx); err != nil {
+			return err
 		}
 	}
 

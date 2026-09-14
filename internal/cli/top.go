@@ -174,7 +174,7 @@ func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 		Knows:              knowsPort(s, dir),
 		KnowsAll:           knowsAllPort(r, s),
 		TurnFact:           turnFactPort(s),
-		ReplaceFact:        replaceFactPort(s),
+		ReplaceFact:        windowReplacePort(s),
 		Waiting:            waitingPort(s),
 		KeepRule:           keepRulePort(s, dir),
 		DropRule:           dropRulePort(s),
