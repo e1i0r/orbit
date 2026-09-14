@@ -57,7 +57,9 @@ board is told to look again.
 | | |
 | --- | --- |
 | `internal/knowledge` | a rule: a sentence about some code, with a name, a source, a place and a state. Rules are Markdown files. It imports nothing of Orbit's — a package that could reach the record could decide things about a run. |
-| `internal/learn` | the tray, and everything that happens between somebody saying a sentence and Orbit knowing it. Also what a rule has been through, because this is the one package that reaches both the rules and the record. |
+| `internal/learn` | the tray, and everything that happens between somebody saying a sentence and Orbit knowing it: the four ways in, what a rule has been through, and what the project's own documents say. This is the one package that reaches both the rules and the record. |
+
+The whole loop, end to end, is [what Orbit knows](knowledge.md).
 
 ### Saying it
 
