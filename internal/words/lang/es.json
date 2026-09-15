@@ -4709,9 +4709,9 @@
       "source": "the checkout to read; the default is the one you are in",
       "value": "el checkout que hay que leer; por defecto, en el que estás"
     },
-    "verb.rules.read.engine": {
-      "source": "which engine reads it; the default is the one in your settings",
-      "value": "qué motor lo lee; por defecto, el de tus ajustes"
+    "verb.rules.read.with": {
+      "source": "which engine does the reading; the default is the one in your settings",
+      "value": "qué motor hace la lectura; por defecto, el de tus ajustes"
     },
     "verb.rules.read.commits": {
       "source": {
@@ -4739,9 +4739,9 @@
       "source": "have a model read what you keep telling runs and write the rule it amounts to",
       "value": "que un modelo lea lo que le repetís a las corridas y escriba la regla que sale de ahí"
     },
-    "verb.rules.draft.engine": {
-      "source": "which engine reads them; the default is the one in your settings",
-      "value": "qué motor las lee; por defecto, el de tus ajustes"
+    "verb.rules.draft.with": {
+      "source": "which engine does the reading; the default is the one in your settings",
+      "value": "qué motor hace la lectura; por defecto, el de tus ajustes"
     },
     "verb.rules.draft.none": {
       "source": "nothing you keep saying amounts to a rule that is not already answered",
