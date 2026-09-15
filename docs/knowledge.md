@@ -51,7 +51,7 @@ Orbit groups what you repeat, and a cheap model writes the rule in your words:
 
 ```bash
 orbit rules repeated                    # what you keep telling runs
-orbit rules draft -engine claude        # and the rule it amounts to
+orbit rules draft -with claude        # and the rule it amounts to
 ```
 
 **The project already said it.** A repository with two years behind it has half
@@ -59,7 +59,7 @@ of this written down — the CONTRIBUTING, the README, and the notes each engine
 keeps in its own file — and its commits say which of those are still true:
 
 ```bash
-orbit rules read -engine claude
+orbit rules read -with claude
 ```
 
 ```

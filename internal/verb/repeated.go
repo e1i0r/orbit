@@ -77,7 +77,7 @@ func heading(b *strings.Builder, p *words.Printer, h learn.Habit) {
 // decides anything. What it produces is an offer like any other: it waits to
 // be kept or dropped, and nothing reaches a prompt until somebody says so.
 func drafting(ctx context.Context, w World, in In) (Out, error) {
-	named := in.Arg("engine")
+	named := in.Arg("with")
 
 	ask := func(ctx context.Context, question string) (string, error) {
 		return w.Ask(ctx, named, question)
@@ -168,7 +168,7 @@ func reading(ctx context.Context, w World, in In) (Out, error) {
 		return Out{}, err
 	}
 
-	named := in.Arg("engine")
+	named := in.Arg("with")
 
 	ask := func(ctx context.Context, question string) (string, error) {
 		return w.Ask(ctx, named, question)

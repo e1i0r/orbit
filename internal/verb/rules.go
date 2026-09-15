@@ -73,9 +73,13 @@ func rules() []Verb {
 					return p.T("verb.rules.read.repo",
 						"the checkout to read; the default is the one you are in")
 				}},
-				{Name: "engine", Kind: Named, About: func(p *words.Printer) string {
-					return p.T("verb.rules.read.engine",
-						"which engine reads it; the default is the one in your settings")
+				// `with` and not `engine`, because what this reads is the
+				// files each engine keeps — and a rule is Orbit's and every
+				// engine is told it, which is the whole point. Named
+				// `engine`, the flag read as though the rule were for one.
+				{Name: "with", Kind: Named, About: func(p *words.Printer) string {
+					return p.T("verb.rules.read.with",
+						"which engine does the reading; the default is the one in your settings")
 				}},
 			},
 		},
@@ -86,9 +90,9 @@ func rules() []Verb {
 					"have a model read what you keep telling runs and write the rule it amounts to")
 			},
 			Takes: []Field{
-				{Name: "engine", Kind: Named, About: func(p *words.Printer) string {
-					return p.T("verb.rules.draft.engine",
-						"which engine reads them; the default is the one in your settings")
+				{Name: "with", Kind: Named, About: func(p *words.Printer) string {
+					return p.T("verb.rules.draft.with",
+						"which engine does the reading; the default is the one in your settings")
 				}},
 			},
 		},
