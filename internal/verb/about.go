@@ -136,7 +136,15 @@ func given(ctx context.Context, w World, in In, verb string) (Out, error) {
 // schedule, and a verb that called a model here would spend money in a place
 // nobody was told to expect it.
 func spoken(_ context.Context, w World, in In) (Out, error) {
-	if err := w.Say(in.Arg("text"), in.who(), in.Task); err != nil {
+	// Whoever the caller named, and otherwise whoever is at the controls.
+	// A channel carrying a line in from somewhere else knows the author and
+	// this surface does not.
+	by := in.Arg("by")
+	if by == "" {
+		by = in.who()
+	}
+
+	if err := w.Say(in.Arg("text"), by, in.Task); err != nil {
 		return Out{}, err
 	}
 

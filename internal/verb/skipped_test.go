@@ -52,14 +52,16 @@ func TestSkippingAGateIsSomethingSaidAboutTheRuleBehindIt(t *testing.T) {
 		t.Fatalf("read what happened to it: %v", err)
 	}
 
-	if len(turns) != 1 || turns[0].What != learn.Skipped {
-		t.Fatalf("skipping past it wrote %+v", turns)
+	// Two turns and one story: the gate refusing is already in the record,
+	// and the skip is written down beside it.
+	if len(turns) != 2 || turns[0].What != learn.Failed || turns[1].What != learn.Skipped {
+		t.Fatalf("skipping past it reads as %+v", turns)
 	}
 
 	// Where it happened, because the pattern is the point: "I always skip
 	// this in the test phase" is one, and "I skipped it once" is not.
-	if turns[0].Task != "ACME-60" || turns[0].Phase != "test" {
-		t.Errorf("it says it happened at %q, %q", turns[0].Task, turns[0].Phase)
+	if turns[1].Task != "ACME-60" || turns[1].Phase != "test" {
+		t.Errorf("it says it happened at %q, %q", turns[1].Task, turns[1].Phase)
 	}
 
 	// And the rule goes to be looked at, still applying: skipping is not
@@ -120,13 +122,13 @@ func TestSkippingARuleAlreadyWaitingDoesNotAskTwice(t *testing.T) {
 	mustAsk(t, w, "task skip", In{Task: "ACME-62", Repo: r.Path, By: "operator"})
 
 	// The skip is still written down — twice skipped is twice, and that is
-	// the number somebody reads later.
+	// the number somebody reads later — beside the refusal that caused it.
 	turns, err := learn.History(w.store, "aaaa1111")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if len(turns) != 1 {
-		t.Errorf("the second skip wrote %d turns", len(turns))
+	if len(turns) != 2 {
+		t.Errorf("the second skip reads as %+v", turns)
 	}
 }
