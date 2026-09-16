@@ -89,7 +89,7 @@ func (s State) takePick(r aRow) State {
 
 // pickBox is the list, drawn where the form's rows would be.
 func (s State) pickBox(r aRow, cw int, e Env) []string {
-	inner := max(cw-4, 20)
+	inner := max(cw-2, 20)
 	line := theme.Paint(theme.Dim)
 
 	out := []string{edge("┌", "┐", theme.Paint(theme.Accent).Bold(true).Render(r.label), cw)}
@@ -101,18 +101,32 @@ func (s State) pickBox(r aRow, cw int, e Env) []string {
 
 	rail := cells.Track(pickRows, len(r.options), top)
 
+	// The names in a column of their own, so the reasons beside them line
+	// up and the eye can run down either one.
+	wide := 0
+	for _, o := range r.options {
+		wide = max(wide, lipgloss.Width(o.label))
+	}
+
 	for i := top; i < len(r.options) && i < top+pickRows; i++ {
+		one := r.options[i]
+
 		mark, ink := "   ", theme.Text(theme.Primary)
 		if i == s.pick {
 			mark, ink = theme.Paint(theme.Live).Bold(true).Render(" ▸ "), theme.Paint(theme.Live).Bold(true)
 		}
 
 		held := "  "
-		if r.options[i].value == s.held(r) {
+		if one.value == s.held(r) {
 			held = theme.Paint(theme.OK).Render("● ")
 		}
 
-		text := ansi.Truncate(mark+held+ink.Render(r.options[i].label), inner, "…")
+		named := ink.Render(cells.Pad(one.label, wide, false))
+		if one.note != "" {
+			named += "  " + theme.Paint(theme.Dim).Render(one.note)
+		}
+
+		text := ansi.Truncate(mark+held+named, inner, "…")
 
 		right := line.Render("│")
 		if rail != nil {

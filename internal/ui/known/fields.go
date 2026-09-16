@@ -38,8 +38,14 @@ type aRow struct {
 	button string
 }
 
-// option is one pill: what it puts in the field, and what it reads as.
-type option struct{ value, label string }
+// option is one answer a row offers: what it puts in the field, the short
+// name it is picked by, and the one line that says what picking it means.
+//
+// The name and the line are two fields and not one sentence. A list of
+// sentences is read word by word; a column of names with the reasons beside
+// them is scanned, and what somebody opening it wants is to find the one
+// they already had in mind.
+type option struct{ value, label, note string }
 
 // rows is the form, which is not the same form for every gesture.
 func (s State) rows2(e Env) []aRow {
@@ -100,16 +106,26 @@ func (s State) places(e Env) []option {
 
 	repo := s.repoOf(e)
 	if repo == "" {
-		return []option{{label: p.T("knowledge.place_all", "everywhere")}}
+		return []option{{
+			label: p.T("knowledge.place_all", "everywhere"),
+			note:  p.T("knowledge.place_all_note", "every repository on this machine, and it travels to none of them"),
+		}}
 	}
 
-	out := []option{{label: p.T("knowledge.place_repo", "all of {repo}",
-		about("repo", fact.Repo(repo)))}}
+	out := []option{{
+		label: p.T("knowledge.place_repo", "all of {repo}", about("repo", fact.Repo(repo))),
+		note:  p.T("knowledge.place_repo_note", "every run against this checkout is told it"),
+	}}
 
-	if e.Places != nil {
-		for _, dir := range e.Places(repo) {
-			out = append(out, option{value: dir, label: dir + "/"})
-		}
+	if e.Places == nil {
+		return out
+	}
+
+	// The folders carry no line of their own. A path says what it means,
+	// and five rows all reading "only when the work is inside it" is five
+	// rows of the same sentence for the eye to skip.
+	for _, dir := range e.Places(repo) {
+		out = append(out, option{value: dir, label: dir + "/"})
 	}
 
 	return out
@@ -143,15 +159,27 @@ func (s State) doings(e Env) []option {
 	p := e.Words
 
 	return []option{
-		{label: p.T("knowledge.does_pill_says", "says it before the work")},
-		{value: "stops", label: p.T("knowledge.does_pill_stops", "and refuses the work")},
+		{
+			label: p.T("knowledge.does_pill_says", "say"),
+			note:  p.T("knowledge.does_says_note", "the agent is told it before it works, and the work goes ahead"),
+		},
+		{
+			value: "stops",
+			label: p.T("knowledge.does_pill_stops", "reject"),
+			note:  p.T("knowledge.does_stops_note", "the same, and a command at the gate sends the work back when it fails"),
+		},
 	}
 }
 
 // commands is what this repository already runs on itself, so a check is
 // picked rather than remembered.
 func (s State) commands(e Env) []option {
-	out := []option{{label: e.Words.T("knowledge.check_none", "(none yet)")}}
+	p := e.Words
+
+	out := []option{{
+		label: p.T("knowledge.check_none", "none"),
+		note:  p.T("knowledge.check_none_note", "the rule only says its sentence, and refuses nothing"),
+	}}
 
 	repo := s.repoOf(e)
 	if e.Commands == nil || repo == "" {

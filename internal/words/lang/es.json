@@ -5254,16 +5254,16 @@
       "value": "todo {repo}"
     },
     "knowledge.check_none": {
-      "source": "(none yet)",
-      "value": "(ninguno todavía)"
+      "source": "none",
+      "value": "ninguno"
     },
     "knowledge.does_pill_says": {
-      "source": "says it before the work",
-      "value": "lo dice antes del trabajo"
+      "source": "say",
+      "value": "decir"
     },
     "knowledge.does_pill_stops": {
-      "source": "and refuses the work",
-      "value": "y rechaza el trabajo"
+      "source": "reject",
+      "value": "rechazar"
     },
     "knowledge.or_type": {
       "source": "· or type one",
@@ -5320,6 +5320,26 @@
     "knowledge.pick_open": {
       "source": "▾ {n} to choose from",
       "value": "▾ {n} para elegir"
+    },
+    "knowledge.does_says_note": {
+      "source": "the agent is told it before it works, and the work goes ahead",
+      "value": "se le dice al agente antes de trabajar, y el trabajo sigue"
+    },
+    "knowledge.does_stops_note": {
+      "source": "the same, and a command at the gate sends the work back when it fails",
+      "value": "lo mismo, y un comando en la puerta devuelve el trabajo cuando falla"
+    },
+    "knowledge.place_all_note": {
+      "source": "every repository on this machine, and it travels to none of them",
+      "value": "todos los repos de esta máquina, y no viaja a ninguno"
+    },
+    "knowledge.place_repo_note": {
+      "source": "every run against this checkout is told it",
+      "value": "se le dice a toda corrida contra este checkout"
+    },
+    "knowledge.check_none_note": {
+      "source": "the rule only says its sentence, and refuses nothing",
+      "value": "la regla solo dice su frase, y no rechaza nada"
     }
   }
 }
