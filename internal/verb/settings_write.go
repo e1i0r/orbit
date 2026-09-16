@@ -36,6 +36,49 @@ func Fresh(key string) string {
 	return ""
 }
 
+// Kept is every setting there is, as a surface shows one: what it is called,
+// what it holds now, and what it means.
+//
+// It is a door because the window draws the same table the terminal prints,
+// and used to draw it from a list written out by hand. Six settings were
+// added to this package and to no screen — among them whether Orbit is
+// allowed to interrupt you, and which account may command it over a chat —
+// so the window quietly showed seven of thirteen. A table read from the
+// declaration cannot fall behind it.
+//
+// It carries none of the closures: a surface is shown the values, not the
+// validators. Writing goes back through Choose, which is where they live.
+func Kept(p *words.Printer, cfg store.Settings) []Setting {
+	all := make([]Setting, 0, len(settingTable()))
+	for _, one := range settingTable() {
+		all = append(all, Setting{Name: one.Name, Value: one.Value(cfg), About: one.About(p)})
+	}
+
+	return all
+}
+
+// Shipped is every setting at the value Orbit ships it with, which is the
+// table before anybody has chosen anything.
+//
+// A door because a surface that has to stand in for the settings file — the
+// window's own fixtures, a preview — should stand in for the real table and
+// not a list of rows somebody typed out. A fixture with its own table is a
+// fixture that passes while the screen it stands for has gone stale, which
+// is the exact failure this pair of doors exists to end.
+func Shipped(p *words.Printer) []Setting { return Kept(p, store.Shipped()) }
+
+// Choose writes one setting by name, through the validator declared beside
+// it, and answers the form of the value worth showing.
+//
+// The window had its own copy of one of those validators — the same two
+// checks on the unread cap, in the same words, out of the same catalogue —
+// and none of the other twelve. So a number the command line refused, the
+// window wrote, and the only setting both agreed about was the one somebody
+// had remembered to write twice.
+func Choose(p *words.Printer, cfg *store.Settings, key, value string) (string, error) {
+	return assign(p, cfg, key, value)
+}
+
 // settingKeys is every key set accepts, in the order a refusal lists them.
 func settingKeys() []string {
 	out := make([]string, 0, len(settingTable()))

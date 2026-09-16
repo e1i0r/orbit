@@ -14,33 +14,64 @@ import (
 	"github.com/e1i0r/orbit/internal/words"
 )
 
-// file is the settings file, in memory, with a way to make any write fail.
+// file is the settings file as this screen sees one: a name to a value, and
+// a way to make any write fail.
+//
+// A map and not a struct of typed fields, because that is the shape the
+// screen now works in — it is handed a table and hands one value back, and
+// knows nothing about which field of which struct either ends up in. The
+// real validators live in internal/verb, which this package may not name;
+// what is checked here is that the screen carries a refusal to the band, not
+// which values are refused.
 type file struct {
-	lang      string
-	autopilot bool
-	unread    int
-	engine    string
-	model     string
-	flow      string
-	theme     string
-	refuse    error
+	held   map[string]string
+	wrote  []string
+	refuse error
 }
 
-func (f *file) Language() string { return f.lang }
-func (f *file) Autopilot() bool  { return f.autopilot }
-func (f *file) UnreadCap() int   { return f.unread }
-func (f *file) Engine() string   { return f.engine }
-func (f *file) Model() string    { return f.model }
-func (f *file) Flow() string     { return f.flow }
-func (f *file) Theme() string    { return f.theme }
+// kept is the table this file answers with, in the order the vocabulary
+// declares it.
+//
+// The order is written out because a fixture cannot ask internal/verb for
+// it, and it matters: the screen splices the two window-kept dials in after
+// the model, so a table in another order is a different screen.
+var kept = []struct{ name, about string }{
+	{"language", "the language orbit speaks"},
+	{"autopilot", "whether a run walks its whole flow without stopping"},
+	{"unread-cap", "how many finished tasks may sit unread before nothing new starts"},
+	{"engine", "the engine a task runs on when it names none"},
+	{"model", "the model a phase asks for when it names none"},
+	{"flow", "the flow a new task is written against"},
+	{"check-record", "whether every command asks SQLite if the record is still readable"},
+	{"theme", "the visual color theme for the window"},
+	{"notify", "whether Orbit interrupts you when a run stops and needs somebody"},
+	{"chat-id", "the one account `orbit chat` answers over a service"},
+	{"budget-task", "the most one task may spend in dollars; 0 is no budget"},
+	{"budget-workspace", "the most the board may have spent before nothing new starts on its own"},
+	{"quota-floor", "how much of an engine's window must be left for the queue to go on"},
+}
 
-func (f *file) SetLanguage(v string) error { f.lang = v; return f.refuse }
-func (f *file) SetAutopilot(v bool) error  { f.autopilot = v; return f.refuse }
-func (f *file) SetUnreadCap(v int) error   { f.unread = v; return f.refuse }
-func (f *file) SetEngine(v string) error   { f.engine = v; return f.refuse }
-func (f *file) SetModel(v string) error    { f.model = v; return f.refuse }
-func (f *file) SetFlow(v string) error     { f.flow = v; return f.refuse }
-func (f *file) SetTheme(v string) error    { f.theme = v; return f.refuse }
+// Kept is every setting and what this file holds for it.
+func (f *file) Kept() []Kept {
+	out := make([]Kept, 0, len(kept))
+	for _, one := range kept {
+		out = append(out, Kept{Name: one.name, Value: f.held[one.name], About: one.about})
+	}
+
+	return out
+}
+
+// Choose writes one down, or refuses everything.
+func (f *file) Choose(key, value string) error {
+	if f.refuse != nil {
+		return f.refuse
+	}
+
+	f.held[key] = value
+	f.wrote = append(f.wrote, key+"="+value)
+
+	return nil
+}
 
 // Fresh is what a setting comes as, written out here rather than asked of
 // internal/verb — this package may not see it, and that is the point of the
@@ -65,6 +96,8 @@ func env(t *testing.T, f *file) Env {
 		Words:   words.For("en"),
 		Keys:    keymap.New(words.For("en")),
 		Store:   f,
+		Kept:    f.Kept,
+		Choose:  f.Choose,
 		Dials:   Dials{Engine: "zeta", Effort: "brisk", Thinking: "adaptive"},
 		Engines: func() []string { return []string{"zeta", "omega"} },
 		Models: func(string) (ids, labels []string) {
@@ -81,10 +114,15 @@ func env(t *testing.T, f *file) Env {
 	}
 }
 
-// newFile is a settings file with something in every field, so that a test
+// newFile is a settings file with something in every row, so that a test
 // that changes one can tell it apart from a zero value.
 func newFile() *file {
-	return &file{lang: "en", unread: 3, engine: "zeta", model: "zeta/one", flow: "cover", theme: "frauddi"}
+	return &file{held: map[string]string{
+		"language": "en", "autopilot": "off", "unread-cap": "3",
+		"engine": "zeta", "model": "zeta/one", "flow": "cover",
+		"check-record": "off", "theme": "frauddi", "notify": "off",
+		"chat-id": "", "budget-task": "0", "budget-workspace": "0", "quota-floor": "0",
+	}}
 }
 
 // TestOpenReadsTheFlowsOnce. The dial is asked for when the screen comes up,
@@ -115,7 +153,7 @@ func TestOpenReadsTheFlowsOnce(t *testing.T) {
 // and the values are the file's.
 func TestTheTableIsTheFileAndTheBuild(t *testing.T) {
 	f := newFile()
-	f.autopilot = true
+	f.held["autopilot"] = "on"
 
 	e := env(t, f)
 	rows := map[string]Row{}
@@ -165,7 +203,7 @@ func TestAValueTheBuildDoesNotOfferFallsToTheFirst(t *testing.T) {
 // that leaves: a screen with nothing on it must still let go of the keyboard.
 func TestWithoutAFileThereIsNoTable(t *testing.T) {
 	e := env(t, nil)
-	e.Store = nil
+	e.Store, e.Kept, e.Choose = nil, nil, nil
 
 	s := Open(e)
 	if rows := s.Rows(e); rows != nil {

@@ -112,6 +112,12 @@ var doors = map[string][]string{
 		// of. Exported for the reason the web's are — a port only this
 		// package can implement is not a port.
 		"world.go", "world_reads.go",
+		// settings_table.go is the other half of settings.go's port: the
+		// whole settings table as the window draws it, and the one writer
+		// that takes a setting by name. It is a file of its own because
+		// settings.go was over the ceiling, and its methods are exported
+		// for the reason settings.go's are — they are the interface's.
+		"settings_table.go",
 	},
 
 	// What a task is and what running one does. Twenty-one doors is a

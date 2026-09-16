@@ -165,7 +165,7 @@ func TestTheViewIsHeldInsideATableThatShrank(t *testing.T) {
 	e.Flows = func() []string { return []string{"cover"} }
 
 	small := e
-	small.Store = nil
+	small.Kept = nil
 
 	if held := s.Off(small); held != 0 {
 		t.Errorf("an empty table is %d lines down, want the top", held)

@@ -7,6 +7,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/ui/patch"
 	"github.com/e1i0r/orbit/internal/ui/point"
+	"github.com/e1i0r/orbit/internal/ui/settings"
 )
 
 // Dialog and subscreen hit detection: task detail, start dialog, settings, repos, compose.
@@ -167,8 +168,8 @@ func (m Model) hitSettings(x, y int) point.Target {
 	if rowIdx >= 0 && rowIdx < len(rows) {
 		r := rows[rowIdx]
 
-		if x >= 20 {
-			curX := 20
+		if x >= settings.PillsAt {
+			curX := settings.PillsAt
 
 			for i, opt := range r.Options {
 				pillLen := lipgloss.Width(" "+r.Label(i)+" ") + 1

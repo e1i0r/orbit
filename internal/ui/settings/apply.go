@@ -7,11 +7,8 @@ package settings
 // its own list.
 
 import (
-	"errors"
 	"slices"
-	"strconv"
 
-	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -102,23 +99,9 @@ func shown(e Env, val string) string {
 // What comes back is the dials, when one of them moved: effort and thinking
 // are not in the file at all, and the window is what keeps them.
 func write(name, val string, e Env) (*Dials, error) {
-	if e.Store == nil {
-		return nil, nil
-	}
-
-	var st writer = e.Store
-
+	// The two the settings file does not hold. They never reach Choose,
+	// because there is nothing for it to write them into.
 	switch name {
-	case "language":
-		return nil, st.SetLanguage(val)
-	case "autopilot":
-		return nil, st.SetAutopilot(val == "on")
-	case "unread-cap":
-		return nil, unreadCap(val, e)
-	case "engine":
-		return engine(val, e)
-	case "model":
-		return nil, st.SetModel(val)
 	case "effort":
 		d := e.Dials
 		d.Effort = val
@@ -129,60 +112,43 @@ func write(name, val string, e Env) (*Dials, error) {
 		d.Thinking = val
 
 		return &d, nil
-	case "flow":
-		// A name that is a path could never be a flow in any future, and
-		// it is the one thing `orbit set` refused that this screen did
-		// not — it typed the same value into the same file without the
-		// check, so what the command line would not take, the window did.
-		if err := flow.ValidName(val); err != nil {
-			return nil, err
-		}
+	}
 
-		return nil, st.SetFlow(val)
+	if e.Choose == nil {
+		return nil, nil
+	}
+
+	// Everything else goes through the validator declared beside the
+	// setting. The screen used to carry its own copy of one of those — the
+	// two checks on the unread cap, in the same words, out of the same
+	// catalogue — and none of the other twelve, so a number the command
+	// line refused, the window wrote.
+	if err := e.Choose(name, val); err != nil {
+		return nil, err
+	}
+
+	// What is left is what a value being written *also* does to the window,
+	// which is not the file's business and cannot be declared beside it.
+	switch name {
 	case "theme":
-		if err := st.SetTheme(val); err != nil {
-			return nil, err
-		}
-
 		theme.SetCurrentTheme(val)
+	case "engine":
+		return followed(val, e)
 	}
 
 	return nil, nil
 }
 
-// unreadCap is the one setting a number is typed into, and the two ways that
-// goes wrong.
+// followed moves the model and the effort when the engine they were chosen
+// for is no longer the one selected.
 //
-// A value that was not a number was dropped on the floor and the band still
-// said "unread-cap is now lots". A negative one was written, and both this
-// window and internal/task read anything but a positive number as no cap at
-// all — so typing -1 turned the brake off while looking like it set one.
-func unreadCap(val string, e Env) error {
-	p := e.Words
-
-	n, err := strconv.Atoi(val)
-	if err != nil {
-		return errors.New(p.T("settings.not_a_number", "{val} is not a whole number", words.Arg{Name: "val", Value: val}))
-	}
-
-	if n < 0 {
-		return errors.New(p.T("settings.negative_cap", "the unread cap cannot be negative; zero is no cap at all"))
-	}
-
-	return e.Store.SetUnreadCap(n)
-}
-
-// engine also moves the model and the effort when the engine they were
-// chosen for is no longer the one selected.
-func engine(val string, e Env) (*Dials, error) {
-	st := e.Store
-	if err := st.SetEngine(val); err != nil {
-		return nil, err
-	}
-
+// It runs after the engine is written rather than instead of writing it: a
+// model belongs to an engine, and leaving one engine's model selected under
+// another is a phase asking for something nobody has.
+func followed(val string, e Env) (*Dials, error) {
 	models, _ := e.Models(val)
-	if !slices.Contains(models, st.Model()) && len(models) > 0 {
-		if err := st.SetModel(models[0]); err != nil {
+	if len(models) > 0 && !slices.Contains(models, modelNow(e)) {
+		if err := e.Choose("model", models[0]); err != nil {
 			return nil, err
 		}
 	}
@@ -197,4 +163,20 @@ func engine(val string, e Env) (*Dials, error) {
 	}
 
 	return nil, nil
+}
+
+// modelNow is the model the file holds, read back off the table rather than
+// through a getter of its own.
+func modelNow(e Env) string {
+	if e.Kept == nil {
+		return ""
+	}
+
+	for _, one := range e.Kept() {
+		if one.Name == "model" {
+			return one.Value
+		}
+	}
+
+	return ""
 }

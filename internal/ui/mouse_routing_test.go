@@ -160,10 +160,10 @@ func TestLeftClickSettingsEngineAndCommandBranches(t *testing.T) {
 	// applying a specific option.
 	m, _ := testModel(t, 100, 30)
 	m.screen = screenSettings
-	before := m.opts.Settings.(*settingsFile).lang //nolint:errcheck
+	before := m.opts.Settings.(*settingsFile).Language() //nolint:errcheck
 	next, _ := m.leftClick(point.Target{Kind: point.SettingsRow, Pane: 0, Field: ""})
 
-	after := asModel(t, next).opts.Settings.(*settingsFile).lang //nolint:errcheck
+	after := asModel(t, next).opts.Settings.(*settingsFile).Language() //nolint:errcheck
 	if after == before {
 		t.Error("clicking a settings row with no field should still cycle it")
 	}

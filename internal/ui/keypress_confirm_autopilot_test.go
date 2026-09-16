@@ -31,7 +31,7 @@ func TestAutopilotRefusesOrTurnsBothWays(t *testing.T) {
 
 	// 3. Off to on: the band says autopilot is on, and the switch is on.
 	m3, _ := testModel(t, 100, 30)
-	m3.opts.Settings.(*settingsFile).autopilot = false //nolint:errcheck
+	m3.opts.Settings.(*settingsFile).flip(t, false) //nolint:errcheck
 	next3, _ := m3.autopilot()
 
 	after3 := asModel(t, next3)

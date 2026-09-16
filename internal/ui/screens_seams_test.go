@@ -192,7 +192,7 @@ func TestATaskTheFormWroteIsRunAndThenWaitedFor(t *testing.T) {
 // calls for one answer.
 func TestAutopilotLooksAtWhatNeedsSomebodyOnceEach(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m.opts.Settings = &settingsFile{autopilot: true, lang: "en", unread: 9}
+	m.opts.Settings = settingsWith(true, "en", 9)
 
 	var asked [][]string
 
@@ -241,14 +241,14 @@ func TestAutopilotLooksAtWhatNeedsSomebodyOnceEach(t *testing.T) {
 // to ask.
 func TestAutopilotOffAsksNothing(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m.opts.Settings = &settingsFile{lang: "en"}
+	m.opts.Settings = settingsWith(false, "en", 0)
 	m.opts.AutoSupervise = func(string, []string) (string, error) { return "", nil }
 
 	if _, cmd := m.autoSuperviseNeedsYou(); cmd != nil {
 		t.Error("autopilot asked with the switch off")
 	}
 
-	m.opts.Settings = &settingsFile{autopilot: true, lang: "en", unread: 9}
+	m.opts.Settings = settingsWith(true, "en", 9)
 	m.opts.AutoSupervise = nil
 
 	if _, cmd := m.autoSuperviseNeedsYou(); cmd != nil {

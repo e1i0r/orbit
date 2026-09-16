@@ -50,8 +50,8 @@ func TestTypingIntoARow(t *testing.T) {
 		t.Error("saving left the line open")
 	}
 
-	if f.unread != 7 {
-		t.Errorf("the file holds a cap of %d, want 7", f.unread)
+	if f.held["unread-cap"] != "7" {
+		t.Errorf("the file holds a cap of %q, want 7", f.held["unread-cap"])
 	}
 
 	if out.Said == "" {
@@ -71,8 +71,8 @@ func TestALineAbandonedChangesNothing(t *testing.T) {
 		t.Error("esc out of a line said something or left it open")
 	}
 
-	if f.unread != 3 {
-		t.Errorf("the file holds %d, want what it held before the line was opened", f.unread)
+	if f.held["unread-cap"] != "3" {
+		t.Errorf("the file holds %q, want what it held before the line was opened", f.held["unread-cap"])
 	}
 }
 
@@ -179,7 +179,7 @@ func TestTypingRunesIntoTheLine(t *testing.T) {
 // in a terminal is half a screen.
 func TestXPutsTheRowBack(t *testing.T) {
 	f := newFile()
-	f.autopilot, f.unread = true, 40
+	f.held["autopilot"], f.held["unread-cap"] = "on", "40"
 
 	e := env(t, f)
 
@@ -188,7 +188,7 @@ func TestXPutsTheRowBack(t *testing.T) {
 
 	next, out := s.Key(tea.KeyPressMsg{Text: "x"}, e)
 
-	if f.autopilot {
+	if f.held["autopilot"] == "on" {
 		t.Error("x left autopilot on")
 	}
 

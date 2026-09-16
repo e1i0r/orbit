@@ -13,11 +13,13 @@ package ui
 import (
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/ui/theme"
+	"github.com/e1i0r/orbit/internal/verb"
 	"github.com/e1i0r/orbit/internal/view"
+	"github.com/e1i0r/orbit/internal/words"
 )
 
 // Settings is the window's port to the settings file: the standing answers
-// it reads and the two it writes.
+// it reads, the few it writes by name, and the whole table it draws.
 //
 // It has five methods, where this repository's convention is one to three,
 // and that is deliberate. The alternative — an interface per answer — would
@@ -54,6 +56,22 @@ type Settings interface {
 	// The settings screen asks it to put a row back; internal/verb is where
 	// the answer is declared, beside what the setting means.
 	Fresh(key string) string
+	// Kept is every setting there is, as a row shows one, and Choose writes
+	// one by the name the vocabulary gives it.
+	//
+	// The pair is what the settings screen draws and writes its whole table
+	// through, and it is why the typed getters above have stopped growing.
+	// One method per setting was thirteen promises this interface had to
+	// make and every implementation had to keep, and the screen was reached
+	// by adding a fourteenth — so six settings were declared without ever
+	// being drawn, including whether Orbit may interrupt you and which
+	// account may command it.
+	//
+	// The typed getters that remain are the ones something other than that
+	// screen asks: the header wants the autopilot switch and the theme on
+	// every frame, and neither wants to walk a table to find one.
+	Kept(*words.Printer) []verb.Setting
+	Choose(p *words.Printer, key, value string) (string, error)
 }
 
 // Reader is the window's port to the state root, and everything it may ask

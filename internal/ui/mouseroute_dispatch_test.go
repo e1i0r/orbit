@@ -64,7 +64,7 @@ func TestFlipTheStartDialogSwitches(t *testing.T) {
 	}
 
 	// 2. Autopilot on, clicking the "on" half does nothing further...
-	m.opts.Settings.(*settingsFile).autopilot = false //nolint:errcheck
+	m.opts.Settings.(*settingsFile).flip(t, false) //nolint:errcheck
 
 	nextOn, _ := m.flip(fieldAutopilotOn)
 	if !asModel(t, nextOn).autopilotOn() {
@@ -72,7 +72,7 @@ func TestFlipTheStartDialogSwitches(t *testing.T) {
 	}
 
 	// 3. ...and clicking the "off" half while it is already on turns it off.
-	m.opts.Settings.(*settingsFile).autopilot = true //nolint:errcheck
+	m.opts.Settings.(*settingsFile).flip(t, true) //nolint:errcheck
 
 	nextOff, _ := m.flip(fieldAutopilotOff)
 	if asModel(t, nextOff).autopilotOn() {

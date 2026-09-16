@@ -22,7 +22,6 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/board"
-	"github.com/e1i0r/orbit/internal/verb"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -35,61 +34,6 @@ func ago(d time.Duration) time.Time { return fixtureNow.Add(-d) }
 
 // settingsFile is the settings file, in memory. It is the whole of what
 // internal/cli will satisfy with a store-backed type.
-type settingsFile struct {
-	autopilot bool
-	lang      string
-	unread    int
-	budget    float64
-	floor     int
-	fail      error
-}
-
-func (s *settingsFile) Autopilot() bool { return s.autopilot }
-
-func (s *settingsFile) SetAutopilot(v bool) error {
-	if s.fail != nil {
-		return s.fail
-	}
-
-	s.autopilot = v
-
-	return nil
-}
-
-func (s *settingsFile) Language() string { return s.lang }
-
-func (s *settingsFile) SetLanguage(v string) error {
-	if s.fail != nil {
-		return s.fail
-	}
-
-	s.lang = v
-
-	return nil
-}
-
-// The rest keep no value — nothing reads one back — but every one of them
-// answers fail, because every one of them can refuse in the file this
-// stands for: the settings file has a lock, and a second orbit holding it
-// makes any of these say so after waiting two seconds.
-func (s *settingsFile) UnreadCap() int           { return s.unread }
-func (s *settingsFile) BudgetWorkspace() float64 { return s.budget }
-func (s *settingsFile) QuotaFloor() int          { return s.floor }
-func (s *settingsFile) SetUnreadCap(int) error   { return s.fail }
-func (s *settingsFile) Engine() string           { return "" }
-func (s *settingsFile) SetEngine(string) error   { return s.fail }
-func (s *settingsFile) Model() string            { return "" }
-func (s *settingsFile) SetModel(string) error    { return s.fail }
-func (s *settingsFile) Flow() string             { return "task" }
-func (s *settingsFile) SetFlow(string) error     { return s.fail }
-func (s *settingsFile) Theme() string            { return "monokai" }
-func (s *settingsFile) SetTheme(string) error    { return s.fail }
-
-// Fresh is what internal/verb declares a setting comes as, which is what the
-// real adapter answers: the fixture goes through the same table rather than
-// keeping a second set of defaults nobody would update.
-func (s *settingsFile) Fresh(key string) string { return verb.Fresh(key) }
-
 // arg is one placeholder for a reason, spelled the way internal/view spells
 // it so a fixture reads like the record it stands for.
 func arg(name, value string) view.Arg { return view.Arg{Name: name, Value: value} }
@@ -216,7 +160,7 @@ func modelWith(t *testing.T, p *words.Printer, b board.Board, w, h int, got *rec
 	t.Helper()
 
 	o := got.ports()
-	o.Root, o.Settings, o.Words = "~/work", &settingsFile{autopilot: true, lang: "en", unread: 5}, p
+	o.Root, o.Settings, o.Words = "~/work", settingsWith(true, "en", 5), p
 	o.Width, o.Height = w, h
 	// Every engine in the fixture can resume. The port is a function of the
 	// engine's name, and the one test that is about an engine that cannot

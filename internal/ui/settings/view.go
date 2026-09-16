@@ -49,6 +49,13 @@ func (s State) row(r Row, chosen bool, w int) []string {
 	switch {
 	case chosen && s.editing:
 		pills = append(pills, theme.Paint(theme.Accent).Render(s.typed)+theme.Paint(theme.Sel).Render(" "))
+	case len(r.Options) == 0:
+		// A row with nothing to offer shows what it holds. There is no
+		// list of chat ids or of dollar figures worth putting under a
+		// cursor, and a row that drew neither pills nor a value was a name
+		// with an empty space after it — which reads as a setting that is
+		// broken rather than one that is typed into.
+		pills = append(pills, theme.Paint(theme.Sel).Bold(true).Render(" "+written(r.Val)+" "))
 	default:
 		for i, opt := range r.Options {
 			if opt == r.Val {
@@ -60,11 +67,38 @@ func (s State) row(r Row, chosen bool, w int) []string {
 		}
 	}
 
-	name := theme.Paint(keyRole).Bold(true).Render(cells.PadRight(r.Key, 14))
+	name := theme.Paint(keyRole).Bold(true).Render(cells.PadRight(r.Key, nameWidth))
 	head := mark + name + "  " + strings.Join(pills, " ")
 	about := "      " + theme.Paint(aboutRole).Render(r.About)
 
 	return []string{cells.Fit(head, w), cells.Fit(about, w), ""}
+}
+
+// nameWidth is the column the settings' names are padded to: the longest of
+// them, so that every dial on the screen starts at the same cell. A name
+// longer than the column does not truncate, it pushes — and one row's pills
+// out of line with the rest is the whole table looking crooked.
+const nameWidth = 16
+
+// PillsAt is the column a row's options start at: the pointer's margin, the
+// name column, and the two spaces after it.
+//
+// A door because the window measures a click against it. It was a 20 written
+// out in the hit-tester while the drawing added its own three numbers up, and
+// the two agreed only for as long as nobody touched either — the name column
+// widened by two for budget-workspace, and every click on a pill would have
+// landed two cells to the left of the one it was on.
+const PillsAt = 4 + nameWidth + 2
+
+// written is a value as a row without a dial shows it. A setting that holds
+// nothing says so in a word: an empty space beside a name is a row a reader
+// cannot tell from a broken one.
+func written(val string) string {
+	if val == "" {
+		return "—"
+	}
+
+	return val
 }
 
 // waysOut is the line at the bottom, which says different things while a row

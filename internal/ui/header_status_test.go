@@ -107,7 +107,7 @@ func TestHeaderFieldsUnreadBrake(t *testing.T) {
 	// fixture's unread count has already reached — SetUnreadCap on the
 	// fixture stub does not persist, so the cap can only move by replacing
 	// the port outright.
-	m.opts.Settings = &settingsFile{autopilot: true, lang: "en", unread: 1}
+	m.opts.Settings = settingsWith(true, "en", 1)
 	if fields := m.headerFields(); !strings.Contains(strings.Join(fieldTexts(fields), " "), "brake") {
 		t.Errorf("headerFields at the cap = %v, want the brake field", fields)
 	}
