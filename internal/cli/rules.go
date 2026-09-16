@@ -34,6 +34,7 @@ func waitingPort(s *store.Store) func() []known.Said {
 		for _, row := range rows {
 			out = append(out, known.Said{
 				At: row.At, Text: row.Text, From: row.From(), Where: row.Path,
+				Gate: row.Gate,
 			})
 		}
 

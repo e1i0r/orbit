@@ -155,10 +155,11 @@ const (
 const (
 	insertProposal = `INSERT INTO
 	                    proposal(said_at, said, state, said_by, about_task,
-	                             repo, path, topic, habit)
-	                  VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(said_at) DO NOTHING`
+	                             repo, path, topic, habit, gate)
+	                  VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(said_at) DO NOTHING`
 
-	selectWaiting = `SELECT said_at, said, state, said_by, about_task, repo, path, topic, habit
+	selectWaiting = `SELECT said_at, said, state, said_by, about_task, repo, path,
+	                        topic, habit, gate
 	                   FROM proposal WHERE state = ? ORDER BY said_at`
 
 	// countHabit is whatever state it ended in, and not only waiting: a

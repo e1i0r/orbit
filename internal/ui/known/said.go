@@ -17,7 +17,7 @@ func (s State) keepAsSaid(e Env) (State, Out) {
 		return s, Out{}
 	}
 
-	return s.keepWith(one, one.Text, "", one.Where, e)
+	return s.keepWith(one, one.Text, one.Gate, one.Where, e)
 }
 
 // keepWith writes it down as a fact of yours, and takes it out of the tray.

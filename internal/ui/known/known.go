@@ -113,6 +113,12 @@ type Said struct {
 	// It is what the editor's place line opens with: the commonest correction
 	// is a path, and the commonest path is this one.
 	Where string
+	// Gate is the command this sentence arrived with, and empty for the
+	// sources that bring only words. It is what the form's check row opens
+	// with: a rule read off what the checkout already refuses work over
+	// arrives with a command that has been running for years, and retyping
+	// it is copying it out of a file Orbit already read.
+	Gate string
 }
 
 // Out is what the screen asks the window for.

@@ -91,8 +91,18 @@ func agreed(w World, in In) (Out, error) {
 		return Out{}, err
 	}
 
+	// The command the sentence arrived with, unless the reader named one.
+	// A rule read off what the checkout already refuses work over is a
+	// command that has been running for years; asking whoever keeps it to
+	// type that command again is asking them to copy it out of a file
+	// Orbit already read.
+	check := in.Arg("check")
+	if _, said := in.Args["check"]; !said {
+		check = one.Gate
+	}
+
 	where := learn.Place{Repo: here.Path, Path: in.Arg("in")}
-	if err := learn.Keep(w.Store(), one.At, text, in.Arg("check"), where); err != nil {
+	if err := learn.Keep(w.Store(), one.At, text, check, where); err != nil {
 		return Out{}, err
 	}
 

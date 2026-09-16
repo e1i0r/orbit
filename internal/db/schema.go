@@ -12,7 +12,7 @@ import (
 // It is not the disposable version an index carries. Nothing here can be
 // rebuilt from anywhere else, so a schema that turns out wrong is migrated
 // forward against live data and never dropped and remade.
-const version = 8
+const version = 9
 
 // busyTimeoutMS is how long SQLite waits for its turn at the write lock
 // before refusing. Five seconds is far past any transaction this package
