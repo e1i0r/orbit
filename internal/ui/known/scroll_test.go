@@ -13,9 +13,9 @@ import (
 	"github.com/e1i0r/orbit/internal/ui/point"
 )
 
-// many is more rules than any terminal can show at once, each with a
+// lots is more rules than any terminal can show at once, each with a
 // sentence of its own so that a test can look for one of them.
-func many(n int) []knowledge.Fact {
+func lots(n int) []knowledge.Fact {
 	out := make([]knowledge.Fact, 0, n)
 
 	for i := range n {
@@ -54,7 +54,7 @@ func rowAt(s State, e Env, i int) (int, bool) {
 // grows on its own — and a list with a ceiling nobody declared is a list
 // where the rules past the bottom are the ones nobody can find.
 func TestTheListScrollsRatherThanStoppingAtTheBottomOfTheScreen(t *testing.T) {
-	s, e := onScreen(t, many(40)...)
+	s, e := onScreen(t, lots(40)...)
 
 	if got := shown(t, s, e); !strings.Contains(got, "the rule numbered 0") {
 		t.Fatalf("the first rule is not on the screen it opens at:\n%s", got)
@@ -78,7 +78,7 @@ func TestTheListScrollsRatherThanStoppingAtTheBottomOfTheScreen(t *testing.T) {
 // rules is exactly the reader who needs to be told what [r] does, and a hint
 // that scrolled off the bottom is a hint nobody has.
 func TestWhatTheKeysDoStaysOnScreenWhileTheListMoves(t *testing.T) {
-	s, e := onScreen(t, many(40)...)
+	s, e := onScreen(t, lots(40)...)
 
 	for range 39 {
 		s = s.Move(1, e)
@@ -95,7 +95,7 @@ func TestWhatTheKeysDoStaysOnScreenWhileTheListMoves(t *testing.T) {
 // TestTheWheelMovesOneRuleANotch. A rule is its sentence wrapped, so counted
 // in lines the wheel crawled through a single row.
 func TestTheWheelMovesOneRuleANotch(t *testing.T) {
-	s, e := onScreen(t, many(40)...)
+	s, e := onScreen(t, lots(40)...)
 
 	if s = s.Scroll(1, e); s.sel != 1 {
 		t.Errorf("a notch down left the cursor on row %d, want the second rule", s.sel)
@@ -115,7 +115,7 @@ func TestTheWheelMovesOneRuleANotch(t *testing.T) {
 // in the window has: it is not a double-click, because a timer would make
 // the same two clicks do different things depending on how fast somebody is.
 func TestAClickPutsTheCursorOnTheRowAndASecondOpensIt(t *testing.T) {
-	s, e := onScreen(t, many(6)...)
+	s, e := onScreen(t, lots(6)...)
 
 	y, on := rowAt(s, e, 3)
 	if !on {
@@ -145,7 +145,7 @@ func TestAClickPutsTheCursorOnTheRowAndASecondOpensIt(t *testing.T) {
 // moved the cursor to whatever was nearest is the gesture a reader learns
 // not to trust.
 func TestAClickOnFurnitureDoesNothing(t *testing.T) {
-	s, e := onScreen(t, many(6)...)
+	s, e := onScreen(t, lots(6)...)
 
 	y, on := rowAt(s, e, 0)
 	if !on {
@@ -163,7 +163,7 @@ func TestAClickOnFurnitureDoesNothing(t *testing.T) {
 // parked past the end of a list that shrank is a screen of blank rows with
 // no way to tell why.
 func TestAListThatGotShorterDoesNotLeaveTheViewPastItsEnd(t *testing.T) {
-	facts := many(40)
+	facts := lots(40)
 
 	e := world(t, facts...)
 	e.All = func() []knowledge.Fact { return facts }

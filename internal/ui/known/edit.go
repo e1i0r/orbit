@@ -56,6 +56,8 @@ func (s State) correctFact(e Env) State {
 		return s
 	}
 
+	s.repo = f.Scope.Repo
+
 	return s.typeInto(f.Phrase, f.Check, f.Scope.Path, false)
 }
 
@@ -69,8 +71,9 @@ func (s State) newFact(e Env) State {
 		return s
 	}
 
+	s.repo = hereRepo(e)
 	s.facts = append(s.facts, knowledge.Fact{
-		Scope:  hereScope(e),
+		Scope:  hereScope(s.repo),
 		Source: knowledge.Human,
 		At:     time.Now().UTC(),
 	})
@@ -90,13 +93,21 @@ func (s State) typeInto(phrase, check, where string, fresh bool) State {
 	return s
 }
 
-// hereScope is what a rule written on this screen is about: the one
-// repository the window is on, and everything when there is more than one to
-// choose between. Choosing one for somebody is how a rule ends up on the
-// wrong project.
-func hereScope(e Env) knowledge.Scope {
-	if e.Repo != "" {
-		return knowledge.Scope{Kind: knowledge.Repo, Repo: e.Repo}
+// hereRepo is the checkout a new rule opens filed against: the only one on
+// the board, or the first of several — which the form then shows as a row
+// somebody can change, rather than guessing silently.
+func hereRepo(e Env) string {
+	if len(e.Repos) == 0 {
+		return ""
+	}
+
+	return e.Repos[0]
+}
+
+// hereScope is what a rule written on this screen is about.
+func hereScope(repo string) knowledge.Scope {
+	if repo != "" {
+		return knowledge.Scope{Kind: knowledge.Repo, Repo: repo}
 	}
 
 	return knowledge.Scope{Kind: knowledge.General}
@@ -203,7 +214,7 @@ func (s State) shut() State {
 // factEdit does something to the line behind the row, and nothing at all to
 // a row that has no line.
 func (s State) factEdit(r aRow, do func(*typing.Field)) State {
-	if r.button != "" || r.which == rowDoes {
+	if r.button != "" || r.which == rowDoes || r.which == rowRepo {
 		return s
 	}
 
@@ -281,6 +292,13 @@ func (s State) saveOver(phrase, check, where string, e Env) (State, Out) {
 
 	now, moved := was, was.Scope
 	now.Phrase, now.Check, now.Stops = phrase, check, check != ""
+
+	// A rule moved to another checkout starts from that checkout's root,
+	// because the path beside it was read against the one it is leaving.
+	if s.repo != moved.Repo {
+		moved = knowledge.Scope{Kind: knowledge.Repo, Repo: s.repo}
+		now.Scope = moved
+	}
 
 	// A path typed into a rule that is about no checkout has nowhere to be
 	// relative to, so it is refused rather than filed against a repository

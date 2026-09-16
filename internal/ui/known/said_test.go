@@ -49,7 +49,7 @@ func withTray(t *testing.T, said []Said, facts ...knowledge.Fact) (State, Env, *
 
 			return nil
 		},
-		Repo: "/w/orbit",
+		Repos: []string{"/w/orbit"},
 	}
 
 	return Open(e), e, got

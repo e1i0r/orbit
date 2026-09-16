@@ -5340,6 +5340,42 @@
     "knowledge.check_none_note": {
       "source": "the rule only says its sentence, and refuses nothing",
       "value": "la regla solo dice su frase, y no rechaza nada"
+    },
+    "knowledge.field_repo": {
+      "source": "Which repository",
+      "value": "En qué repositorio"
+    },
+    "knowledge.hint_repo": {
+      "source": "the rule is written inside this checkout and travels with it, so whoever clones the project gets it",
+      "value": "la regla se escribe adentro de este checkout y viaja con él, así que le llega a quien clone el proyecto"
+    },
+    "knowledge.repo_none": {
+      "source": "none of them",
+      "value": "ninguno"
+    },
+    "knowledge.repo_none_note": {
+      "source": "about every project on this machine, and it travels to none of them",
+      "value": "sobre todos los proyectos de esta máquina, y no viaja a ninguno"
+    },
+    "knowledge.card_state": {
+      "source": "right now",
+      "value": "ahora mismo"
+    },
+    "knowledge.stands_paused": {
+      "source": "paused",
+      "value": "pausada"
+    },
+    "knowledge.stands_off": {
+      "source": "switched off",
+      "value": "apagada"
+    },
+    "knowledge.stands_active": {
+      "source": "applying",
+      "value": "aplicando"
+    },
+    "knowledge.off_why": {
+      "source": "you decided against it. It stays where it is, nothing is told it, and 'u' has it apply again.",
+      "value": "decidiste que no. Sigue donde está, no se le dice a nadie, y con 'u' vuelve a aplicar."
     }
   }
 }

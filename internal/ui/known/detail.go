@@ -17,7 +17,6 @@ import (
 
 	"github.com/e1i0r/orbit/internal/knowledge"
 	"github.com/e1i0r/orbit/internal/ui/cells"
-	"github.com/e1i0r/orbit/internal/ui/fact"
 	"github.com/e1i0r/orbit/internal/ui/prose"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
@@ -60,7 +59,7 @@ func (s State) detailHead(f knowledge.Fact, cw int, e Env) []string {
 
 	return append(out, prose.Gutter+prose.Meta(
 		theme.Paint(theme.Accent).Render(cells.OrDef(f.ID, e.Words.T("knowledge.no_name_yet", "no name yet"))),
-		fact.Where(f.Scope),
+		where(f, e),
 		bandName(bandOf(f), e),
 	), "")
 }
@@ -97,7 +96,10 @@ func (s State) figures(f knowledge.Fact, e Env) []prose.Stat {
 		travels = p.T("knowledge.travels_repo", "with the repo")
 	}
 
+	stands, role := standing(f, e)
+
 	return []prose.Stat{
+		{Label: p.T("knowledge.card_state", "right now"), Value: stands, Role: role},
 		{Label: p.T("knowledge.card_said_by", "said by"), Value: shortFrom(f, e), Role: theme.Accent},
 		{Label: p.T("knowledge.card_since", "since"), Value: cells.OrDef(when(f.At), "—"), Role: theme.Accent},
 		{
@@ -108,6 +110,26 @@ func (s State) figures(f knowledge.Fact, e Env) []prose.Stat {
 		},
 		{Label: p.T("knowledge.card_travels", "travels"), Value: travels, Role: theme.OK},
 	}
+}
+
+// standing is where the rule stands with the reader, and the colour that
+// says it at a glance.
+//
+// A card of its own, and the loudest thing on the screen after the sentence
+// itself. Somebody who has just switched a rule off and come back to look
+// needs the answer in the place their eye already is, not worked out from
+// which heading the row is under.
+func standing(f knowledge.Fact, e Env) (string, theme.Role) {
+	p := e.Words
+
+	switch f.State {
+	case knowledge.Paused:
+		return p.T("knowledge.stands_paused", "paused"), theme.Warn
+	case knowledge.Off:
+		return p.T("knowledge.stands_off", "switched off"), theme.Bad
+	}
+
+	return p.T("knowledge.stands_active", "applying"), theme.OK
 }
 
 // tells is the section that answers what the rule does when work reaches it.
@@ -139,13 +161,21 @@ func (s State) tells(f knowledge.Fact, cw int, e Env) []string {
 // A pause with no reason is a switch under another name, and this is what it
 // was for: the sentence somebody reads when they come back.
 func (s State) paused(f knowledge.Fact, cw int, e Env) []string {
-	if f.Why == "" {
+	if f.Tells() {
 		return nil
 	}
 
-	out := []string{prose.Section(e.Words.T("knowledge.sec_paused", "why it is not applying"), "", cw, true)}
+	p := e.Words
 
-	return append(append(out, quoted(f.Why, cw)...), "")
+	why := f.Why
+	if why == "" {
+		why = p.T("knowledge.off_why", "you decided against it. It stays where it is, "+
+			"nothing is told it, and 'u' has it apply again.")
+	}
+
+	out := []string{prose.Section(p.T("knowledge.sec_paused", "why it is not applying"), "", cw, true)}
+
+	return append(append(out, quoted(why, cw)...), "")
 }
 
 // friction is everything the rule has put somebody through.

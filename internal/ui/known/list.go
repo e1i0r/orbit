@@ -27,8 +27,11 @@ import (
 const (
 	colID    = 8
 	colWhere = 14
-	colWhen  = 10
-	colGap   = 2
+	// colWheres is the same column on a board of several checkouts, where
+	// every path carries the name of the one it is in.
+	colWheres = 21
+	colWhen   = 10
+	colGap    = 2
 	// gutter is the two cells every row opens with: the cursor's mark.
 	gutter = 2
 	// ruleLeast is the narrowest the sentence is allowed to get before the
@@ -42,8 +45,11 @@ type widths struct{ id, rule, where, when int }
 // plan shares the width out, dropping columns a narrow terminal has no room
 // for. What goes is what a reader can find another way: the date and the
 // name are both on the rule's own screen.
-func plan(cw int) widths {
+func plan(cw int, many bool) widths {
 	w := widths{id: colID, where: colWhere, when: colWhen}
+	if many {
+		w.where = colWheres
+	}
 
 	for range 2 {
 		if cw-gutter-w.id-w.where-w.when-4*colGap >= ruleLeast {
@@ -129,7 +135,7 @@ func (s State) head(cw int, e Env) []string {
 		p.P("knowledge.tally", len(s.facts), "{n} rule", "{n} rules",
 			about("n", strconv.Itoa(len(s.facts)))))
 
-	return []string{"", cells.Spread(title, tally, cw), "", s.columns(plan(cw), cw, e)}
+	return []string{"", cells.Spread(title, tally, cw), "", s.columns(plan(cw, many(e)), cw, e)}
 }
 
 // columns is the row of column names, which is drawn once at the top because
@@ -165,7 +171,7 @@ func (s State) body(cw int, e Env) ([]string, []span) {
 		at  []span
 	)
 
-	w := plan(cw)
+	w := plan(cw, many(e))
 
 	for _, b := range bands {
 		held := s.inBand(b)
@@ -225,7 +231,7 @@ func (s State) ruleRow(f knowledge.Fact, chosen bool, w widths, cw int, e Env) [
 		mark(chosen)+
 			pad(cells.OrDef(f.ID, "—"), w.id, theme.Paint(theme.Dim).Render)+
 			ink.Render(cells.Pad(said[0], w.rule, false)),
-		pad(cells.Tail(fact.Where(f.Scope), w.where), w.where, theme.Text(theme.Secondary).Render)+
+		pad(cells.Tail(where(f, e), w.where), w.where, theme.Text(theme.Secondary).Render)+
 			theme.Paint(theme.Dim).Render(cells.Pad(when(f.At), w.when, false)), cw)}
 
 	lead := strings.Repeat(" ", gutter+w.id+colGap)
@@ -257,6 +263,32 @@ func (s State) saidRow(one Said, chosen bool, w widths, cw int) []string {
 	}
 
 	return rows
+}
+
+// many is whether the board has more than one checkout on it, which is the
+// question that decides how a place has to be named.
+func many(e Env) bool { return len(e.Repos) > 1 }
+
+// where is how far a rule reaches, named so that it cannot be mistaken on
+// the board it is being read on.
+//
+// With one checkout the path is the whole answer. With several, the same
+// path exists in all of them — a rule about migrations says nothing about
+// which project's migrations — so the checkout's name goes in front of it.
+func where(f knowledge.Fact, e Env) string {
+	// Everywhere is the one scope with no path behind it, so it is the one
+	// whose name is a word rather than a string off the record — and a word
+	// is said in the reader's own language.
+	if f.Scope.Kind == knowledge.General {
+		return e.Words.T("knowledge.place_all", "everywhere")
+	}
+
+	named := fact.Where(f.Scope)
+	if !many(e) || f.Scope.Repo == "" || f.Scope.Kind == knowledge.Repo {
+		return named
+	}
+
+	return fact.Repo(f.Scope.Repo) + "/" + named
 }
 
 // mark is the two cells a row opens with.

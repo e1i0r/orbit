@@ -30,7 +30,7 @@ func world(t *testing.T, facts ...knowledge.Fact) Env {
 		Keys:  keymap.New(words.For("en")),
 		Frame: frame,
 		All:   func() []knowledge.Fact { return facts },
-		Repo:  "/w/orbit",
+		Repos: []string{"/w/orbit"},
 	}
 }
 

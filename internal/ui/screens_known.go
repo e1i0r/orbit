@@ -24,18 +24,18 @@ func (m Model) knownEnv() known.Env {
 		Commands: m.opts.RepoChecks,
 		Keep:     m.opts.KeepRule,
 		Drop:     m.opts.DropRule,
-		Repo:     m.oneRepo(),
+		Repos:    m.repoPaths(),
 	}
 }
 
-// oneRepo is the single repository the board is on, and nothing when there
-// is more than one to choose between.
-func (m Model) oneRepo() string {
-	if len(m.board.RepoList) == 1 {
-		return m.board.RepoList[0].Path
+// repoPaths is every checkout on the board, in the order it lists them.
+func (m Model) repoPaths() []string {
+	out := make([]string, 0, len(m.board.RepoList))
+	for _, one := range m.board.RepoList {
+		out = append(out, one.Path)
 	}
 
-	return ""
+	return out
 }
 
 // tookKnowledge does what the screen asked the window for.

@@ -81,10 +81,14 @@ type Env struct {
 	// that stops the work is worth nothing without one, and a command
 	// somebody half-remembers is worse than none.
 	Commands func(repo string) []string
-	// Repo is the one repository on the board, and empty when there is more
-	// than one. A fact written here is about it; choosing one of several
-	// for somebody is how a rule ends up on the wrong project.
-	Repo string
+	// Repos is every checkout on the board, in the order it lists them.
+	//
+	// All of them and not the one there happens to be. With one, a rule
+	// written here is about it and nothing has to be asked; with several,
+	// which one is the first question the form has — and it used to be
+	// answered by filing the rule against everywhere, which is every
+	// project on this machine and was nobody's intention.
+	Repos []string
 }
 
 // A Said is one sentence somebody said to the supervisor that read as a
@@ -165,6 +169,9 @@ type State struct {
 	// something anybody retypes. How wide it is stays on ←/→, because
 	// everywhere and one checkout are not paths and cannot be typed as one.
 	editing bool
+	// repo is the checkout the form is filing against, which only matters
+	// while there is more than one on the board.
+	repo string
 	// pausing says the line being typed is a reason rather than a
 	// correction. One line, two gestures: what is typed is a sentence
 	// either way, and this is which sentence it is.

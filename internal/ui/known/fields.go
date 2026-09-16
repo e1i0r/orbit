@@ -19,6 +19,7 @@ import (
 // The rows of the form, in the order tab walks them.
 const (
 	rowPhrase = iota
+	rowRepo
 	rowWhere
 	rowDoes
 	rowCheck
@@ -70,6 +71,22 @@ func (s State) rows2(e Env) []aRow {
 			label: p.T("knowledge.field_phrase", "What it says"),
 			hint:  p.T("knowledge.hint_phrase", "the sentence every run is told before it starts work"),
 		},
+	}
+
+	// Which checkout, but only where there is a choice. One repository on
+	// the board is not a question, and a form that asked it anyway would be
+	// a row somebody tabs past forever.
+	if len(e.Repos) > 1 {
+		out = append(out, aRow{
+			which: rowRepo,
+			label: p.T("knowledge.field_repo", "Which repository"),
+			hint: p.T("knowledge.hint_repo", "the rule is written inside this checkout and "+
+				"travels with it, so whoever clones the project gets it"),
+			options: s.checkouts(e),
+		})
+	}
+
+	out = append(out, []aRow{
 		{
 			which: rowWhere, typed: factWhere,
 			label:   p.T("knowledge.field_where", "Where it applies"),
@@ -84,7 +101,7 @@ func (s State) rows2(e Env) []aRow {
 				"when that command fails."),
 			options: s.doings(e),
 		},
-	}
+	}...)
 
 	out = append(out, aRow{
 		which: rowCheck, typed: factCheck,
@@ -195,16 +212,35 @@ func (s State) commands(e Env) []option {
 
 // repoOf is the checkout the rule being written is about.
 func (s State) repoOf(e Env) string {
-	if f, ok := s.onFact(); ok && f.Scope.Repo != "" {
-		return f.Scope.Repo
+	if s.repo != "" {
+		return s.repo
 	}
 
-	return e.Repo
+	return hereRepo(e)
+}
+
+// checkouts is every repository on the board, for the row that picks one.
+func (s State) checkouts(e Env) []option {
+	out := make([]option, 0, len(e.Repos)+1)
+
+	for _, one := range e.Repos {
+		out = append(out, option{value: one, label: fact.Repo(one)})
+	}
+
+	return append(out, option{
+		label: e.Words.T("knowledge.repo_none", "none of them"),
+		note: e.Words.T("knowledge.repo_none_note",
+			"about every project on this machine, and it travels to none of them"),
+	})
 }
 
 // held is what a row is holding right now: the typed value for a row with a
 // field behind it, and the switch for the one that has none.
 func (s State) held(r aRow) string {
+	if r.which == rowRepo {
+		return s.repo
+	}
+
 	if r.which == rowDoes {
 		if strings.TrimSpace(s.in[factCheck].Val) != "" {
 			return "stops"
@@ -237,6 +273,16 @@ func (s State) walk(r aRow, d int, e Env) State {
 
 // walkTo puts one option into the row.
 func (s State) walkTo(r aRow, next option) State {
+	// Moving to another checkout takes the place with it: the folder beside
+	// it was read off the one being left, and a path that means nothing in
+	// the new one is worse than none.
+	if r.which == rowRepo {
+		s.repo = next.value
+		s.in[factWhere] = oneLine("")
+
+		return s
+	}
+
 	// Asking for a gate is asking for the command that is one, so it puts
 	// the cursor where that is typed rather than setting a switch nothing
 	// is behind.
