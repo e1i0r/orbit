@@ -23,8 +23,12 @@ func (r phaseRun) run(ctx context.Context) (engine.Result, error, error) { //nol
 		streamedThoughts, streamedRefusals, streamedToolCalls int
 	)
 
+	before := soFar(r.store, r.task, r.phase.Name, r.wt)
+	ask := build(r.task, r.phase, r.last, r.knows(), r.notes, r.reviews,
+		r.prev, before, r.others, r.tried...)
+
 	out, runErr := r.eng.Run(ctx, engine.Request{
-		Prompt:      build(r.task, r.phase, r.last, r.knows(), r.notes, r.reviews, r.prev, r.others, r.tried...),
+		Prompt:      ask,
 		Model:       r.phase.Model,
 		Effort:      r.phase.Effort,
 		Thinking:    r.phase.Thinking,
