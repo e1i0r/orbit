@@ -166,12 +166,21 @@ demo:
 # by hand; assets/tapes/README.md says which and how.
 SEEDED = flow-start flow-menus flow-reading flow-supervisor flow-knowledge flow-flows
 
+# ffmpeg 7 and not whatever is on the PATH. vhs still passes `-vsync`, which
+# ffmpeg 9 removed, so a newer one makes it write nothing at all — and vhs
+# swallows the error and exits 0, which is the part worth knowing: a take can
+# look shot and not be. `brew install ffmpeg@7` puts one beside the system's
+# without replacing it. If the directory is not there, this falls through to
+# whatever is on the PATH.
+FFMPEG7 = /opt/homebrew/opt/ffmpeg@7/bin
+
 tapes: demo
 	@for t in $(SEEDED); do \
 		echo "shooting $$t"; \
 		ORBIT_DEMO_HOME=$(PWD)/.demo/home \
 		ORBIT_DEMO_FRESH=$(HOME)/.orbit-demo \
 		ORBIT_DEMO_BIN=$(PWD) \
+		PATH="$(FFMPEG7):$$PATH" \
 		vhs assets/tapes/$$t.tape || exit 1; \
 	done
 	@$(MAKE) posters
