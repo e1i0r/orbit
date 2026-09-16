@@ -5500,16 +5500,16 @@
       "value": "qué fase; por defecto la última que corrió"
     },
     "reason.needs_engine": {
-      "source": "{engine} ran out: {phase} \u00b7 {engines} could take it",
-      "value": "{engine} se qued\u00f3 sin cuota: {phase} \u00b7 {engines} pueden seguirla"
+      "source": "{engine} ran out: {phase} · {engines} could take it",
+      "value": "{engine} se quedó sin cuota: {phase} · {engines} pueden seguirla"
     },
     "reason.no_engine": {
-      "source": "{engine} ran out: {phase} \u00b7 no engine has anything left",
-      "value": "{engine} se qued\u00f3 sin cuota: {phase} \u00b7 ning\u00fan motor tiene cuota"
+      "source": "{engine} ran out: {phase} · no engine has anything left",
+      "value": "{engine} se quedó sin cuota: {phase} · ningún motor tiene cuota"
     },
     "log.relayed": {
       "source": "changed engine",
-      "value": "cambi\u00f3 de motor"
+      "value": "cambió de motor"
     },
     "log.needs_engine": {
       "source": "needs an engine",
@@ -5517,11 +5517,19 @@
     },
     "log.no_engine": {
       "source": "no engine free",
-      "value": "ning\u00fan motor libre"
+      "value": "ningún motor libre"
     },
     "reason.no_engine_back": {
-      "source": "{engine} ran out: {phase} \u00b7 no engine for another {back}",
-      "value": "{engine} se qued\u00f3 sin cuota: {phase} \u00b7 sin motores por {back}"
+      "source": "{engine} ran out: {phase} · no engine for another {back}",
+      "value": "{engine} se quedó sin cuota: {phase} · sin motores por {back}"
+    },
+    "reason.denied": {
+      "source": "{phase} was refused {tool} and wrote nothing",
+      "value": "a {phase} le negaron {tool} y no escribió nada"
+    },
+    "log.denied": {
+      "source": "refused, and wrote nothing",
+      "value": "denegada, y no escribió nada"
     }
   }
 }

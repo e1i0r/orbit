@@ -35,7 +35,13 @@ func TestPipelineThoughtsAndRefusalsEmitted(t *testing.T) {
 	testFlow := flow.Flow{
 		Name: "rich-flow",
 		Phases: []flow.Phase{
-			{Name: "execute", Engine: "rich"},
+			// The gate writes what a phase that did the work would have
+			// left. Without it this fixture is the shape of the bug
+			// phase.denied exists for — refused something, wrote nothing —
+			// and the run rightly stops before the assertions below.
+			{Name: "execute", Engine: "rich", Gates: []flow.Gate{
+				{Name: "write", Command: "echo done > NOTES.md"},
+			}},
 		},
 	}
 

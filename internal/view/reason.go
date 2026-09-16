@@ -108,4 +108,11 @@ const (
 	// and "abandoned" is not. It is empty when nothing on this machine can
 	// say, and the sentence says that rather than naming an hour it made up.
 	ReasonNoEngine = "reason.no_engine"
+	// ReasonDenied is a phase refused what it needed that wrote nothing.
+	// Args: phase, tool.
+	//
+	// Its own reason because it sends a reader somewhere neither of the
+	// others does: not to wait and not to debug, but to look at what the
+	// phase was allowed to do.
+	ReasonDenied = "reason.denied"
 )
