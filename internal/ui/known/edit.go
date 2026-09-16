@@ -142,7 +142,12 @@ func (s State) editingKey(msg tea.KeyPressMsg, e Env) (State, Out) {
 	case tea.KeyEnter:
 		return s.saveFact(e)
 	case tea.KeyTab:
-		s.field = (s.field + 1) % factFields
+		// Round the fields this gesture actually has. A pause is one
+		// sentence, and a tab that walked off it into a check nobody was
+		// being asked for is a form that lies about what it is doing.
+		fields := s.fields(e)
+		s.field = fields[(s.at(fields)+1)%len(fields)].which
+
 		return s, Out{}
 	case tea.KeyBackspace:
 		return s.factEdit(func(in *typing.Field) { in.Backspace() }), Out{}
@@ -163,6 +168,18 @@ func (s State) editingKey(msg tea.KeyPressMsg, e Env) (State, Out) {
 	}
 
 	return s, Out{}
+}
+
+// at is which of the form's rows the caret is in, and the first when the
+// field being typed into is not one of them.
+func (s State) at(fields []aField) int {
+	for i, f := range fields {
+		if f.which == s.field {
+			return i
+		}
+	}
+
+	return 0
 }
 
 // factEdit does something to the field being typed into.

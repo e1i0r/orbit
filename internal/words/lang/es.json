@@ -3170,12 +3170,12 @@
       "value": "qué dice"
     },
     "knowledge.field_check": {
-      "source": "the check that makes it stop",
-      "value": "el check que lo hace detener"
+      "source": "the check",
+      "value": "el check"
     },
     "knowledge.editing_ways": {
-      "source": "[tab] the other field · [↵] save · [esc] leave it as it was",
-      "value": "[tab] el otro campo · [↵] guardar · [esc] dejarlo como estaba"
+      "source": "[tab] the next field · [↵] save · [esc] leave it as it was",
+      "value": "[tab] el campo siguiente · [↵] guardar · [esc] dejarlo como estaba"
     },
     "header.waiting": {
       "source": {
@@ -3198,8 +3198,8 @@
       }
     },
     "knowledge.field_where": {
-      "source": "the folder or file, if it is about one",
-      "value": "la carpeta o el archivo, si es sobre alguno"
+      "source": "where",
+      "value": "dónde"
     },
     "knowledge.no_repo_for_path": {
       "source": "this one is about no checkout, so there is nothing for {path} to be inside",
@@ -5160,6 +5160,66 @@
     "knowledge.wants_a_check": {
       "source": "it asked to stop the work and has no command to stop it with, so it only says its sentence",
       "value": "pidió detener el trabajo y no tiene con qué detenerlo, así que solo dice su frase"
+    },
+    "knowledge.form_pausing": {
+      "source": "Pausing {rule}",
+      "value": "Pausando {rule}"
+    },
+    "knowledge.form_pausing_why": {
+      "source": "It stops applying, and goes to be looked at again.",
+      "value": "Deja de aplicar, y queda para revisar."
+    },
+    "knowledge.form_keeping": {
+      "source": "Keeping what you said · {from}",
+      "value": "Guardando lo que dijiste · {from}"
+    },
+    "knowledge.form_keeping_why": {
+      "source": "Correct the words if they were not quite it, and put it where it is true.",
+      "value": "Corregí las palabras si no eran exactamente eso, y ponela donde es verdad."
+    },
+    "knowledge.form_new": {
+      "source": "A new rule",
+      "value": "Una regla nueva"
+    },
+    "knowledge.form_new_why": {
+      "source": "Say what is true about the code, in the words a run should be told it in.",
+      "value": "Decí qué es verdad sobre el código, con las palabras con que hay que decírselo a una corrida."
+    },
+    "knowledge.form_correcting_why": {
+      "source": "Correcting a rule. It keeps the name it has had all along.",
+      "value": "Corrigiendo una regla. Conserva el nombre que tuvo siempre."
+    },
+    "knowledge.no_name_yet": {
+      "source": "this rule",
+      "value": "esta regla"
+    },
+    "knowledge.field_why": {
+      "source": "what for",
+      "value": "para qué"
+    },
+    "knowledge.hint_why": {
+      "source": "a pause with no reason is a switch under another name",
+      "value": "una pausa sin motivo es un interruptor con otro nombre"
+    },
+    "knowledge.hint_phrase": {
+      "source": "the sentence every run is told before it starts work",
+      "value": "la frase que se le dice a cada corrida antes de empezar"
+    },
+    "knowledge.hint_check": {
+      "source": "a command that answers yes or no. Leave it empty and the rule only says its sentence.",
+      "value": "un comando que responde sí o no. Dejalo vacío y la regla solo dice su frase."
+    },
+    "knowledge.hint_where": {
+      "source": "the folder or file it is about; empty is the whole checkout",
+      "value": "la carpeta o el archivo del que trata; vacío es todo el checkout"
+    },
+    "knowledge.form_review_why": {
+      "source": "Everything this rule has put you through. There is no score — only the friction.",
+      "value": "Todo lo que esta regla te hizo pasar. No hay puntaje: solo la fricción."
+    },
+    "knowledge.typing_ways": {
+      "source": "[↵] save · [esc] leave it as it was",
+      "value": "[↵] guardar · [esc] dejarlo como estaba"
     }
   }
 }
