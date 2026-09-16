@@ -157,7 +157,7 @@ func TestASentenceEmptiedIsRefusedRatherThanWritten(t *testing.T) {
 func TestTheLineBeingTypedIntoCarriesTheCaret(t *testing.T) {
 	s, e := correcting(t, "of everything")
 
-	drawn := strings.Join(s.foot(80, e), "\n")
+	drawn := strings.Join(s.foot(80, screenH, e), "\n")
 	if n := strings.Count(ansi.Strip(drawn), "█"); n != 1 {
 		t.Errorf("the two fields carry %d carets between them:\n%s", n, ansi.Strip(drawn))
 	}
@@ -166,7 +166,7 @@ func TestTheLineBeingTypedIntoCarriesTheCaret(t *testing.T) {
 	// one: a correction is made in the middle of a sentence.
 	s, _ = s.Key(press("home"), e)
 
-	drawn = ansi.Strip(strings.Join(s.foot(80, e), "\n"))
+	drawn = ansi.Strip(strings.Join(s.foot(80, screenH, e), "\n"))
 	if !strings.Contains(drawn, "of everything") {
 		t.Errorf("the sentence is not on the line with the caret at its head:\n%s", drawn)
 	}
@@ -181,7 +181,7 @@ func TestTheLineBeingTypedIntoCarriesTheCaret(t *testing.T) {
 func TestTheWaysOutSayWhichKeysTheLineAnswers(t *testing.T) {
 	s, e := correcting(t, "of everything")
 
-	drawn := ansi.Strip(strings.Join(s.foot(80, e), "\n"))
+	drawn := ansi.Strip(strings.Join(s.foot(80, screenH, e), "\n"))
 	for _, want := range []string{"tab", "save", "esc"} {
 		if !strings.Contains(strings.ToLower(drawn), want) {
 			t.Errorf("the ways out do not mention %q:\n%s", want, drawn)

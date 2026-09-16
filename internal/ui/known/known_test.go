@@ -11,6 +11,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/knowledge"
 	"github.com/e1i0r/orbit/internal/ui/keymap"
+	"github.com/e1i0r/orbit/internal/ui/layout"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -19,13 +20,26 @@ import (
 func world(t *testing.T, facts ...knowledge.Fact) Env {
 	t.Helper()
 
+	frame, err := layout.Fit(screenW, screenH)
+	if err != nil {
+		t.Fatalf("a terminal of %dx%d: %v", screenW, screenH, err)
+	}
+
 	return Env{
 		Words: words.For("en"),
 		Keys:  keymap.New(words.For("en")),
+		Frame: frame,
 		All:   func() []knowledge.Fact { return facts },
 		Repo:  "/w/orbit",
 	}
 }
+
+// The terminal every test draws on: the width Elio works at, and a height
+// short enough that a handful of rules is already more than fits.
+const (
+	screenW = 100
+	screenH = 24
+)
 
 // known is one fact somebody typed.
 func known(phrase string, sc knowledge.Scope) knowledge.Fact {

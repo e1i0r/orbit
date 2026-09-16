@@ -50,6 +50,30 @@ func Fill(lines []string, h int) []string {
 	return lines
 }
 
+// Tail cuts a string to a width in cells from the front rather than the
+// back, so that what survives is the end of it.
+//
+// It is for paths. "internal/task/run.go#Start" cut the usual way is
+// "internal/task/r…", which is the half every path in the repository shares;
+// cut this way it is "…l/task/run.go#Start", which is the half that says
+// which one it is.
+func Tail(text string, w int) string {
+	if w <= 0 {
+		return ""
+	}
+
+	if lipgloss.Width(text) <= w {
+		return text
+	}
+
+	runes := []rune(text)
+	for len(runes) > 0 && lipgloss.Width("…"+string(runes)) > w {
+		runes = runes[1:]
+	}
+
+	return "…" + string(runes)
+}
+
 // PadRight fills a string out to a width in cells, and leaves alone anything
 // already that wide or wider.
 func PadRight(s string, width int) string {

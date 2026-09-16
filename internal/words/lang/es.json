@@ -3223,7 +3223,7 @@
     },
     "knowledge.ways": {
       "source": "[↑↓] move · [r] decide about it · [p] pause it · [n] new · [esc] back",
-      "value": "[↑↓] mover · [e] editar · [n] nuevo · [←→] más amplio o más estrecho · [espacio] apagar · [esc] atrás"
+      "value": "[↑↓] mover · [r] decidir sobre ella · [p] pausarla · [n] nueva · [esc] atrás"
     },
     "knowledge.switched_off": {
       "source": "it is off; it stays where it is and nothing is told it",
@@ -3255,19 +3255,15 @@
     },
     "knowledge.is_off": {
       "source": "off",
-      "value": "apagado"
+      "value": "apagada"
     },
     "knowledge.stops": {
       "source": "stops",
       "value": "detiene"
     },
     "knowledge.no_check": {
-      "source": "rule, no check yet",
-      "value": "regla, sin check todavía"
-    },
-    "knowledge.warns": {
-      "source": "aware",
-      "value": "avisa"
+      "source": "no check",
+      "value": "sin check"
     },
     "knowledge.from_code": {
       "source": "from the code",
@@ -5108,6 +5104,62 @@
     "web.no_window": {
       "source": "this orbit was built without the window; run `make ui` and build it again",
       "value": "este orbit se compiló sin la ventana; ejecuta `make ui` y vuelve a compilar"
+    },
+    "knowledge.says": {
+      "source": "says",
+      "value": "dice"
+    },
+    "knowledge.is_active": {
+      "source": "active",
+      "value": "activa"
+    },
+    "knowledge.col_name": {
+      "source": "NAME",
+      "value": "NOMBRE"
+    },
+    "knowledge.col_does": {
+      "source": "DOES",
+      "value": "HACE"
+    },
+    "knowledge.col_state": {
+      "source": "STATE",
+      "value": "ESTADO"
+    },
+    "knowledge.col_where": {
+      "source": "WHERE",
+      "value": "DÓNDE"
+    },
+    "knowledge.col_rule": {
+      "source": "THE RULE",
+      "value": "LA REGLA"
+    },
+    "knowledge.tally": {
+      "source": {
+        "one": "{n} rule",
+        "other": "{n} rules"
+      },
+      "value": {
+        "one": "{n} regla",
+        "other": "{n} reglas"
+      }
+    },
+    "knowledge.tally_waiting": {
+      "source": {
+        "one": "{n} waiting on you",
+        "other": "{n} waiting on you"
+      },
+      "value": {
+        "one": "{n} esperando por ti",
+        "other": "{n} esperando por ti"
+      }
+    },
+    "knowledge.paused_for": {
+      "source": "paused: {why}",
+      "value": "pausada: {why}"
+    },
+    "knowledge.wants_a_check": {
+      "source": "it asked to stop the work and has no command to stop it with, so it only says its sentence",
+      "value": "pidió detener el trabajo y no tiene con qué detenerlo, así que solo dice su frase"
     }
   }
 }

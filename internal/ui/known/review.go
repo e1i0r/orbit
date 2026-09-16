@@ -123,3 +123,18 @@ func (s State) story(e Env) []string {
 
 	return e.Story(f)
 }
+
+// chosen is the row under the cursor being opened, which is the second of
+// the pointer's two clicks and nothing a key does not also do.
+//
+// A rule opens its review, where its fate is decided with the evidence in
+// front of you. A sentence in the tray opens in the line, because correcting
+// it is how most of them are accepted — and neither gesture decides anything
+// that escape does not take back.
+func (s State) chosen(e Env) (State, Out) {
+	if _, waiting := s.onSaid(); waiting {
+		return s.editSaid(e), Out{}
+	}
+
+	return s.openReview(e), Out{}
+}

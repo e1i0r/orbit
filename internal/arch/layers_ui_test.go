@@ -97,7 +97,8 @@ var windowLayers = map[string][]string{
 	// no board — which repository is being worked in arrives as a path.
 	"internal/ui/known": {
 		"internal/knowledge", "internal/ui/cells", "internal/ui/fact", "internal/ui/keymap",
-		"internal/ui/theme", "internal/ui/typing", "internal/words",
+		"internal/ui/layout", "internal/ui/point", "internal/ui/theme", "internal/ui/typing",
+		"internal/words",
 	},
 	// internal/ui/fact names a piece of knowledge in the window. Two
 	// screens draw the same facts and both have to call a scope the same
