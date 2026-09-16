@@ -24,6 +24,8 @@ func TestEverySettingKeyCanBeSet(t *testing.T) {
 		"flow":         "careful",
 		"theme":        "tokyo-night",
 		"check-record": "on",
+		"chat-id":      "8477112",
+		"notify":       "on",
 
 		"budget-task":      "1.50",
 		"budget-workspace": "20",

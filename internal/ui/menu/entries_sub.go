@@ -65,9 +65,64 @@ func (s State) verbEntries(e Env) []Entry {
 	return out
 }
 
-// childEntries is one family's commands on the menu of the task they are
-// about, with the repository and the id already filled in.
+// childEntries is one family drilled into: its commands, with the
+// repository and the id already filled in when they are about a task.
+//
+// taskCommands is consulted first because the families about a task are
+// ordered and annotated there — which of them take a sentence, which take
+// arguments. A family that is not in it is not a mistake: settings, rules,
+// board, supervisor and knowledge all have children and none of them is
+// about a task, so their rows come from the declaration itself.
 func (s State) childEntries(e Env, parent string) []Entry {
+	if listed := s.fromTable(e, parent); len(listed) > 0 {
+		return listed
+	}
+
+	return s.fromCommand(e, parent)
+}
+
+// fromCommand is a family's children as the command table declares them.
+//
+// Every family on the board's menu used to end here with nothing. The rows
+// were drawn, choosing one drilled into an empty submenu, and an empty
+// submenu says the task it was opened on is gone — about a menu that was
+// never about a task. Five of them: settings, rules, board, supervisor and
+// knowledge.
+func (s State) fromCommand(e Env, parent string) []Entry {
+	for _, c := range e.Commands {
+		if c.Name != parent {
+			continue
+		}
+
+		out := make([]Entry, 0, len(c.Children)+1)
+
+		// The family's own word first. `settings` lists them and
+		// `settings set` changes one, and a submenu that offered only the
+		// second would have lost the reading the parent is.
+		out = append(out, Entry{
+			Title: c.Name, Command: c.Name, Detail: c.About,
+			Dim: c.Refused, Reason: c.Because,
+		})
+
+		for _, kid := range c.Children {
+			// The child's word alone: the submenu already names the
+			// family, and "settings set" under "< settings" reads the
+			// parent twice.
+			out = append(out, Entry{
+				Title: kid.Name, Command: c.Name, Child: kid.Name,
+				Detail: kid.About, NeedsArgs: kid.NeedsArgs,
+				Args: []string{kid.Name},
+			})
+		}
+
+		return out
+	}
+
+	return nil
+}
+
+// fromTable is one family's commands as taskCommands orders them.
+func (s State) fromTable(e Env, parent string) []Entry {
 	args := e.args(s.task)
 
 	out := make([]Entry, 0, len(taskCommands))

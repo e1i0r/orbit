@@ -230,6 +230,8 @@ func (e Env) logWord(entry view.Entry) (string, theme.Role) {
 		return p.T("log.needs_engine", "needs an engine"), theme.Warn
 	case view.EntryNoEngine:
 		return p.T("log.no_engine", "no engine free"), theme.Warn
+	case view.EntryDenied:
+		return p.T("log.denied", "refused, and wrote nothing"), theme.Bad
 	case view.EntryLoopChecked:
 		return p.T("log.loop_checked", "loop checked"), theme.Accent
 	case view.EntryApproved:

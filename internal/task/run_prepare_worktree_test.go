@@ -81,7 +81,12 @@ func TestRunMultiPhaseFeedOutputAndThoughts(t *testing.T) {
 	testFlow := flow.Flow{
 		Name: "multi-phase-flow",
 		Phases: []flow.Phase{
-			{Name: "phase-1", Engine: "mock-engine", FeedOutput: false},
+			// The gate leaves what a phase that did the work would have
+			// left: this engine streams a refusal, and a phase refused
+			// something that writes nothing is a denied phase now.
+			{Name: "phase-1", Engine: "mock-engine", FeedOutput: false, Gates: []flow.Gate{
+				{Name: "write", Command: "echo done > NOTES.md"},
+			}},
 			{Name: "phase-2", Engine: "mock-engine", FeedOutput: true},
 		},
 	}

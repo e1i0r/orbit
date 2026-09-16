@@ -39,6 +39,30 @@ type Settings struct {
 	Flow      string `json:"flow,omitempty"`
 	Theme     string `json:"theme,omitempty"`
 
+	// Notify is whether Orbit interrupts you when a run stops and needs
+	// somebody.
+	//
+	// Off by default, because a program that starts interrupting a person
+	// the day they install it has made a decision that was theirs. On, it
+	// reaches whatever is configured: the desktop, and a chat if one is set
+	// up. One switch and not one per channel — the question is whether you
+	// want to be told, and where is a fact about what you have set up.
+	Notify bool `json:"notify,omitempty"`
+
+	// ChatID is the one account `orbit chat` answers over a service, as
+	// that service numbers its conversations.
+	//
+	// One and not a list, because this is the whole of the gate: a channel
+	// anybody can join is a channel anybody can cancel a run from, and a
+	// list is a thing that grows by accident. Empty means the chat answers
+	// nobody — which is what a machine that has not been told yet has to
+	// do.
+	//
+	// The token is not here. It is a secret and it lives in the
+	// environment; an id is a number somebody should be able to read back
+	// out of `orbit settings`.
+	ChatID string `json:"chatId,omitempty"`
+
 	// BudgetTask is the most one task may spend, in dollars, and zero is
 	// no budget at all — the working zero every field of this file has.
 	//

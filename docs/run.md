@@ -58,6 +58,23 @@ opposite things.
 **It broke.** The engine fell over — a bad prompt, a tool that was not there,
 a crash. The row says `failed: implement` and what you do is go and look.
 
+**It was refused.** The phase asked for something its posture does not grant
+— a write, a command, the network — and a headless run has nobody to ask, so
+the tool was denied without a word. The engine handled it, wrote a sentence
+saying it could not, and exited zero. The row says
+`implement was refused Write and wrote nothing`, and what you do is look at
+what that phase is allowed.
+
+It is told apart from the other two by the one thing that cannot be argued
+with: something was denied **and** the worktree is empty. A refusal on its own
+is ordinary — a phase turned down once that went another way did the work —
+and an empty worktree on its own is ordinary too, because a plan and a review
+write nothing by design.
+
+Until this had a name, that run was a success: Orbit reads the exit code, the
+exit code was zero, and a task that did nothing sat in done where nobody looks
+again.
+
 **It ran out.** The engine had nothing left to spend. The row says
 `claude ran out: implement · back in 2h`, and what you do is wait, or hand
 the same work to another engine.
