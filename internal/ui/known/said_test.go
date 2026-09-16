@@ -228,7 +228,7 @@ func TestAnEmptyTrayIsNotThere(t *testing.T) {
 	s, e, _ := withTray(t, nil,
 		known("errors are wrapped", knowledge.Scope{Kind: knowledge.General}))
 
-	if drawn := drawnKnowledge(t, s, e); strings.Contains(drawn, "🛑 WAITING") {
+	if drawn := drawnKnowledge(t, s, e); strings.Contains(drawn, "🛑 PENDING") {
 		t.Errorf("an empty tray is drawn anyway:\n%s", drawn)
 	}
 

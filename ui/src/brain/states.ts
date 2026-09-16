@@ -20,12 +20,15 @@ export const mark: Record<State, string> = {
   off: "🚫",
 };
 
+/** Five adjectives and not five verbs. A state is where a rule ended up
+ *  because of something somebody did to it, so the word says how it stands
+ *  and not what it is in the middle of doing. */
 export const named: Record<State, string> = {
-  waiting: "WAITING",
-  blocks: "BLOCKS",
-  says: "SAYS",
+  waiting: "PENDING",
+  blocks: "BLOCKED",
+  says: "ACTIVE",
   paused: "PAUSED",
-  off: "OFF",
+  off: "TURNED OFF",
 };
 
 /** The tint each one is said in, and it is the same tint wherever it is

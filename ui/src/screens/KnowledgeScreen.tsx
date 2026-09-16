@@ -155,9 +155,6 @@ export function KnowledgeScreen() {
     <div className="flex flex-col gap-4">
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <h1 className="text-lg">
-            Brain <span className="text-sm text-faint">everything Orbit has learned about your code</span>
-          </h1>
           <p className="text-xs text-faint">
             Every rule is put in front of the agent before it works. The ones that block also run a
             command, and send the work back when it fails.

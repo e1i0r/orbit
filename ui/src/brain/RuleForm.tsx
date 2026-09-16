@@ -162,7 +162,7 @@ export function RuleForm({
           disabled={busy}
           className="rounded-md bg-ok/20 px-3 py-1.5 text-sm text-ok hover:bg-ok/30 disabled:opacity-50"
         >
-          {busy ? "…" : one.said ? "✔ Keep it" : "✔ Save the rule"}
+          {busy ? "…" : one.rule ? "Edit" : "Save"}
         </button>
         {onDrop && (
           <button
@@ -171,7 +171,7 @@ export function RuleForm({
             disabled={busy}
             className="rounded-md border border-edge px-3 py-1.5 text-sm hover:bg-edge/60 disabled:opacity-50"
           >
-            ✖ It was not a rule
+            Not a rule
           </button>
         )}
         <button
@@ -179,7 +179,7 @@ export function RuleForm({
           onClick={onBack}
           className="rounded-md border border-edge px-3 py-1.5 text-sm hover:bg-edge/60"
         >
-          Leave it as it was
+          Cancel
         </button>
       </footer>
     </form>

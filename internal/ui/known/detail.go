@@ -75,7 +75,7 @@ func (s State) asked(f knowledge.Rule, cw int, e Env) []string {
 	p := e.Words
 
 	out := []string{prose.Gutter + theme.Paint(theme.Warn).Bold(true).Render("│ "+
-		p.T("knowledge.band_waiting", "WAITING"))}
+		p.T("knowledge.band_waiting", "PENDING"))}
 
 	for _, line := range cells.Lines(p.T("knowledge.asked_why",
 		"it stopped you, or you paused it. Say it better with 'c', switch it off "+

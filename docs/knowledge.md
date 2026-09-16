@@ -17,24 +17,27 @@ rule is doing, and one line a rule.
   block also run a command, and send the work back when it fails.
 
     ID        THE RULE                          WHERE         WHEN
-  🛑 WAITING (2) ─────────────────────────────────────────────────────
+  🛑 PENDING (2) ─────────────────────────────────────────────────────
   ❯ —         never push without the tests       internal/db   2026-09-14
     d42b7f60  anything that drops a column…      migrations    2026-08-12
 
-  ⚡ BLOCKS (1) ───────────────────────────────────────────────────────
+  ⚡ BLOCKED (1) ───────────────────────────────────────────────────────
     f0021bb4  coverage stays above 90%           ledger        2026-08-12
 
-  💬 SAYS (1) ────────────────────────────────────────────────────────
+  💬 ACTIVE (1) ────────────────────────────────────────────────────────
     a1f4c209  pull requests are written in Eng…  every repo    2026-08-12
 
   😴 PAUSED (1) ──────────────────────────────────────────────────────
     c0ffee11  the site is generated              web           2026-09-01
 
-  🚫 OFF (1) ─────────────────────────────────────────────────────────
+  🚫 TURNED OFF (1) ─────────────────────────────────────────────────────────
     0091ccd2  the ledger only ever appends       repo: orbit   2026-08-12
 ```
 
-Five states and one set of words for them. **Waiting** is a question — a
+Five states and one set of words for them. They are adjectives and not
+verbs: a state is where a rule ended up because of something somebody did to
+it, so the word says how it stands rather than what it is in the middle of
+doing. **Pending** is a question — a
 sentence nobody has answered, or a rule that stopped you and is waiting to
 be decided about. **Blocks** and **says** are the two things a rule that is
 applying can do. **Paused** and **off** are the two ways it can not be.
@@ -59,14 +62,14 @@ key.
 
 ```
   anything that drops a column stops for a person to look at it
-  d42b7f60 · migrations · 🛑 WAITING
+  d42b7f60 · migrations · 🛑 PENDING
 
-  │ WAITING
+  │ PENDING
   it stopped you, or you paused it. Edit it with 'c', turn it on with 'u',
   or switch it off with 'o'.
 
   ┌ STATUS ─┐ ┌ CREATED BY ┐ ┌ CREATED ───┐ ┌ HITS ┐ ┌ REACH ────────┐
-  │ WAITING │ │ you        │ │ 2026-08-12 │ │ 6    │ │ with the repo │
+  │ PENDING │ │ you        │ │ 2026-08-12 │ │ 6    │ │ with the repo │
   └─────────┘ └────────────┘ └────────────┘ └──────┘ └───────────────┘
 
   ▾ WHAT IT DOES ─────────────────────────────────────────────────────
