@@ -99,6 +99,13 @@ func (m Model) clickedKnowledge(i int) (tea.Model, tea.Cmd) {
 	return m.tookKnowledge(m.knowledge.Chosen(m.knownEnv()))
 }
 
+// pickedKnowledge is an option of an open list, clicked.
+func (m Model) pickedKnowledge(at int) (tea.Model, tea.Cmd) {
+	m.knowledge = m.knowledge.Pick(at, m.knownEnv())
+
+	return m, nil
+}
+
 // wheelKnowledge is one notch of the wheel over the list.
 func (m Model) wheelKnowledge(d int) Model {
 	m.knowledge = m.knowledge.Scroll(d, m.knownEnv())

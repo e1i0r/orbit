@@ -107,6 +107,10 @@ func (s State) editingKey(msg tea.KeyPressMsg, e Env) (State, Out) {
 	rows := s.rows2(e)
 	here := max(s.at(rows), 0)
 
+	if r, up := s.picked(e); up {
+		return s.pickingKey(msg, r), Out{}
+	}
+
 	switch msg.Code {
 	case tea.KeyEscape:
 		return s.shut(), Out{}
@@ -139,6 +143,29 @@ func (s State) editingKey(msg tea.KeyPressMsg, e Env) (State, Out) {
 	return s, Out{}
 }
 
+// pickingKey is every key while one row's list of options is open. It is a
+// list with one row chosen and nothing else, so it answers what every such
+// list in this window answers and nothing more.
+func (s State) pickingKey(msg tea.KeyPressMsg, r aRow) State {
+	switch msg.Code {
+	case tea.KeyEscape:
+		s.picking = false
+	case tea.KeyEnter:
+		return s.takePick(r)
+	case tea.KeyUp:
+		s.pick = max(s.pick-1, 0)
+	case tea.KeyDown:
+		s.pick = min(s.pick+1, len(r.options)-1)
+	default:
+		next, moved := s.pickKey(msg.Code, r)
+		if moved {
+			return next
+		}
+	}
+
+	return s
+}
+
 // sideways is ←→ on a row: it walks the options of a row that has them, and
 // moves the caret inside one that is only typed into.
 func (s State) sideways(r aRow, d int, e Env) State {
@@ -156,12 +183,19 @@ func (s State) pressed(r aRow, e Env) (State, Out) {
 		return s.shut(), Out{}
 	}
 
+	// A row with more answers than fit beside it opens them instead, which
+	// is what enter means on the diff's file selector and on every other
+	// list in this window.
+	if len(r.options) >= pickFrom {
+		return s.openPicker(r), Out{}
+	}
+
 	return s.saveFact(e)
 }
 
 // shut closes the form without writing anything.
 func (s State) shut() State {
-	s.editing, s.pausing, s.fresh, s.deep = false, false, false, 0
+	s.editing, s.pausing, s.fresh, s.picking, s.deep = false, false, false, false, 0
 
 	return s
 }

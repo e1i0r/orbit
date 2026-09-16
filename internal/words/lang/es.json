@@ -5198,8 +5198,8 @@
       "value": "LA REGLA · qué dice, y sobre qué es"
     },
     "knowledge.group_gate": {
-      "source": "THE GATE · whether it refuses the work or only says it",
-      "value": "LA PUERTA · si rechaza el trabajo o solo lo dice"
+      "source": "THE GATE · whether it also refuses the work, or only says it",
+      "value": "LA PUERTA · si además rechaza el trabajo, o solo lo dice"
     },
     "knowledge.field_phrase": {
       "source": "What it says",
@@ -5226,8 +5226,8 @@
       "value": "Qué hace"
     },
     "knowledge.hint_does": {
-      "source": "saying it is enough for most rules; stopping the work needs a command that answers yes or no",
-      "value": "decirlo alcanza para casi todas; detener el trabajo necesita un comando que responda sí o no"
+      "source": "every rule is put in front of the agent before it works. This one also runs a command at the gate, and the work is sent back when that command fails.",
+      "value": "toda regla se le pone adelante al agente antes de que trabaje. Ésta además corre un comando en la puerta, y el trabajo se devuelve cuando ese comando falla."
     },
     "knowledge.field_check": {
       "source": "The check",
@@ -5258,12 +5258,12 @@
       "value": "(ninguno todavía)"
     },
     "knowledge.does_pill_says": {
-      "source": "just says it",
-      "value": "solo lo dice"
+      "source": "says it before the work",
+      "value": "lo dice antes del trabajo"
     },
     "knowledge.does_pill_stops": {
-      "source": "stops the work",
-      "value": "detiene el trabajo"
+      "source": "and refuses the work",
+      "value": "y rechaza el trabajo"
     },
     "knowledge.or_type": {
       "source": "· or type one",
@@ -5312,6 +5312,14 @@
     "knowledge.no_repo_for_path": {
       "source": "this one is about no checkout, so there is nothing for {path} to be inside",
       "value": "ésta no es sobre ningún checkout, así que no hay nada adentro de lo cual {path} pueda estar"
+    },
+    "knowledge.pick_ways": {
+      "source": "[↑↓] move · [↵] choose it · [esc] leave it",
+      "value": "[↑↓] moverte · [↵] elegirla · [esc] dejarla"
+    },
+    "knowledge.pick_open": {
+      "source": "▾ {n} to choose from",
+      "value": "▾ {n} para elegir"
     }
   }
 }

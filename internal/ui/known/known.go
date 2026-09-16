@@ -169,6 +169,13 @@ type State struct {
 	// correction. One line, two gestures: what is typed is a sentence
 	// either way, and this is which sentence it is.
 	pausing bool
+	// picking is one row's list of options open over the form, and pick is
+	// where its cursor is. A row of pills is right for two answers and
+	// wrong for fourteen, and which of those a row is depends on the
+	// repository — so the many go behind a list, exactly as the diff's
+	// files do.
+	picking bool
+	pick    int
 	// fresh says the form is writing a rule nobody had written before,
 	// which is the one case its heading cannot work out from the fields: a
 	// new rule and a rule whose sentence was emptied look the same.
@@ -286,3 +293,16 @@ func (s State) PointAt(i int, e Env) (State, bool) { return s.pointAt(i, e) }
 // Chosen is the row under the cursor being opened: the second of the
 // pointer's two clicks, and nothing a key does not also do.
 func (s State) Chosen(e Env) (State, Out) { return s.chosen(e) }
+
+// Pick takes the option a pointer landed on in an open list, which is the
+// same gesture enter is on the row the cursor is already on.
+func (s State) Pick(at int, e Env) State {
+	r, up := s.picked(e)
+	if !up || at < 0 || at >= len(r.options) {
+		return s
+	}
+
+	s.pick = at
+
+	return s.takePick(r)
+}

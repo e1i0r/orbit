@@ -32,40 +32,82 @@ func label(text string, on bool) string {
 
 // value is what a row is holding, drawn as its options with the one in force
 // lit — or, for a row that offers none, as what has been typed into it.
-func (s State) value(r aRow, cw int, e Env) string {
+//
+// The options wrap rather than run off the edge. A repository with a dozen
+// make targets had half of them past the right-hand side, where the reader
+// could see there were more and not what they were, which is the one thing
+// worse than not offering them at all.
+func (s State) value(r aRow, cw int, e Env) []string {
+	room := max(cw-labelWidth-3, 12)
+
 	if len(r.options) == 0 {
-		return s.typedValue(r, cw-labelWidth-3)
+		return []string{s.typedValue(r, room)}
 	}
 
 	held, found := s.held(r), false
+	on := r.which == s.field
 
-	var out []string
+	var parts []string
 
 	for _, o := range r.options {
 		if o.value == held {
 			found = true
 
-			out = append(out, theme.Paint(theme.Sel).Render(" "+o.label+" "))
+			parts = append(parts, theme.Paint(theme.Sel).Render(" "+o.label+" "))
 
 			continue
 		}
 
-		out = append(out, theme.Paint(theme.Dim).Render(o.label))
+		// The others are shown on the row the cursor is on and nowhere
+		// else, so the form stays the height of its questions rather than
+		// of its answers.
+		if on && len(r.options) < pickFrom {
+			parts = append(parts, theme.Paint(theme.Dim).Render(o.label))
+		}
 	}
 
 	// What somebody typed that none of the options offers is a pill of its
-	// own at the end, lit: a row whose value is on screen nowhere reads as
-	// a row holding nothing.
+	// own, lit: a row whose value is on screen nowhere reads as a row
+	// holding nothing.
 	if !found && held != "" {
-		out = append(out, theme.Paint(theme.Sel).Render(" "+held+" "))
+		parts = append(parts, theme.Paint(theme.Sel).Render(" "+held+" "))
 	}
 
-	if r.which == s.field {
-		out = append(out, theme.Paint(theme.Dim).Render(
+	if hint := s.pickHint(r, e); hint != "" {
+		parts = append(parts, hint)
+	}
+
+	// Only where typing is actually an answer. What a rule does is one of
+	// two things and neither is typed, and a row that offered to take a
+	// third would be offering something that cannot be saved.
+	if on && r.which != rowDoes && len(r.options) < pickFrom {
+		parts = append(parts, theme.Paint(theme.Dim).Render(
 			e.Words.T("knowledge.or_type", "· or type one")))
 	}
 
-	return strings.Join(out, " ")
+	return packed(parts, room)
+}
+
+// packed lays the options out across as many lines as they need, greedily.
+func packed(parts []string, room int) []string {
+	var (
+		out  []string
+		line string
+	)
+
+	for _, one := range parts {
+		switch {
+		case line == "":
+			line = one
+		case lipgloss.Width(line)+1+lipgloss.Width(one) <= room:
+			line += " " + one
+		default:
+			out = append(out, line)
+			line = one
+		}
+	}
+
+	return append(out, line)
 }
 
 // typedValue is what a line holds, with the caret in it while it is the line

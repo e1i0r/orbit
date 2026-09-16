@@ -283,6 +283,8 @@ func (m Model) leftClick(t point.Target) (tea.Model, tea.Cmd) {
 		return m.chooseRepo(t.ID)
 	case point.KnowledgeRow:
 		return m.clickedKnowledge(t.Pane)
+	case point.KnowledgePick:
+		return m.pickedKnowledge(t.Pane)
 	}
 
 	return m, nil

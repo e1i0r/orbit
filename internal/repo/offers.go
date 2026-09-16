@@ -21,10 +21,12 @@ import (
 	"strings"
 )
 
-// atMostOffered is how many of each are handed back. A row of pills wider
-// than the terminal is a row nobody reads to the end, and a project with
-// forty top folders has no useful answer to offer anyway.
-const atMostOffered = 8
+// atMostOffered is how many of each are handed back. It is a ceiling against
+// a pathological repository and not a shortlist: a screen that showed eight
+// of a project's twelve make targets is a screen where the one somebody
+// wanted is the one missing, so what is offered is everything up to a number
+// no real Makefile reaches.
+const atMostOffered = 40
 
 // Folders are the top-level directories of a checkout, in the order a reader
 // would look for them.

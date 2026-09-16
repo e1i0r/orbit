@@ -143,7 +143,21 @@ func (s State) move(d int, e Env) State {
 // not to trust.
 func (s State) hit(x, y int, e Env) point.Target {
 	line, ok := e.Frame.BodyRow(y)
-	if !ok || s.reading || s.editing {
+	if !ok {
+		return point.Target{}
+	}
+
+	if r, up := s.picked(e); up {
+		// The list's own rows, counted from the line under its top border.
+		at := s.pickAt(line, r, content(e.Frame.Body.W), e)
+		if at < 0 {
+			return point.Target{}
+		}
+
+		return point.Target{Kind: point.KnowledgePick, Pane: at}
+	}
+
+	if s.reading || s.editing {
 		// A screen opened over the list owns the pointer while it is up,
 		// the way it owns the keyboard. A click that reached the list
 		// behind it would move a cursor nobody can see.

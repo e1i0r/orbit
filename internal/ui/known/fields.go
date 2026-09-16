@@ -71,9 +71,11 @@ func (s State) rows2(e Env) []aRow {
 			options: s.places(e),
 		},
 		{
-			which:   rowDoes,
-			label:   p.T("knowledge.field_does", "What it does"),
-			hint:    p.T("knowledge.hint_does", "saying it is enough for most rules; stopping the work needs a command that answers yes or no"),
+			which: rowDoes,
+			label: p.T("knowledge.field_does", "What it does"),
+			hint: p.T("knowledge.hint_does", "every rule is put in front of the agent before "+
+				"it works. This one also runs a command at the gate, and the work is sent back "+
+				"when that command fails."),
 			options: s.doings(e),
 		},
 	}
@@ -141,8 +143,8 @@ func (s State) doings(e Env) []option {
 	p := e.Words
 
 	return []option{
-		{label: p.T("knowledge.does_pill_says", "just says it")},
-		{value: "stops", label: p.T("knowledge.does_pill_stops", "stops the work")},
+		{label: p.T("knowledge.does_pill_says", "says it before the work")},
+		{value: "stops", label: p.T("knowledge.does_pill_stops", "and refuses the work")},
 	}
 }
 
@@ -202,8 +204,11 @@ func (s State) walk(r aRow, d int, e Env) State {
 		}
 	}
 
-	next := r.options[(at+d+2*len(r.options))%len(r.options)]
+	return s.walkTo(r, r.options[(at+d+2*len(r.options))%len(r.options)])
+}
 
+// walkTo puts one option into the row.
+func (s State) walkTo(r aRow, next option) State {
 	// Asking for a gate is asking for the command that is one, so it puts
 	// the cursor where that is typed rather than setting a switch nothing
 	// is behind.

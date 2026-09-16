@@ -36,13 +36,17 @@ func (s State) formRows(h, w int, e Env) []string {
 	cw := content(w)
 	rows := s.rows2(e)
 
-	above := []string{"", s.formHead(cw, e), ""}
+	above := s.formAbove(cw, e)
 	below := s.beneath(rows, cw, e)
 
 	var (
 		body []string
 		here span
 	)
+
+	if r, up := s.picked(e); up {
+		return cells.Fill(gutterAll(framed(above, s.pickBox(r, cw, e), below, h, 0), w), h)
+	}
 
 	for _, g := range s.groups(rows, e) {
 		if g.head != "" {
@@ -79,6 +83,11 @@ func (s State) formRows(h, w int, e Env) []string {
 		max(1, h-len(above)-len(below)), len(body))
 
 	return cells.Fill(gutterAll(framed(above, body, below, h, off), w), h)
+}
+
+// formAbove is the two rows every form opens with, and the air under them.
+func (s State) formAbove(cw int, e Env) []string {
+	return []string{"", s.formHead(cw, e), ""}
 }
 
 // formHead is what the form says it is doing, with what that means beside it.
@@ -154,7 +163,8 @@ func (s State) groups(rows []aRow, e Env) []aGroup {
 
 	return []aGroup{
 		{head: p.T("knowledge.group_rule", "THE RULE · what it says, and what it is about"), rows: said},
-		{head: p.T("knowledge.group_gate", "THE GATE · whether it refuses the work or only says it"), rows: gate},
+		{head: p.T("knowledge.group_gate",
+			"THE GATE · whether it also refuses the work, or only says it"), rows: gate},
 		{rows: done, buttons: true},
 	}
 }
@@ -190,15 +200,25 @@ func (s State) formRow(r aRow, cw int, e Env) []string {
 		return []string{s.mark(r) + button(r.button, r.which == s.field)}
 	}
 
+	lead := s.mark(r) + label(r.label, r.which == s.field)
+
 	if r.which == rowPhrase {
 		// The sentence is written in a well of its own under its label. It
 		// is the one row that is prose, and prose on a line that scrolls
 		// sideways is prose nobody can re-read while they write it.
-		return append([]string{cells.Fit(s.mark(r)+label(r.label, r.which == s.field), cw)},
-			s.well(cw, e)...)
+		return append([]string{cells.Fit(lead, cw)}, s.well(cw, e)...)
 	}
 
-	return []string{cells.Fit(s.mark(r)+label(r.label, r.which == s.field)+s.value(r, cw, e), cw)}
+	held := s.value(r, cw, e)
+	out := []string{cells.Fit(lead+held[0], cw)}
+
+	// A row whose options ran to a second line keeps them in their own
+	// column, so the label column stays a column.
+	for _, line := range held[1:] {
+		out = append(out, cells.Fit(strings.Repeat(" ", labelWidth+3)+line, cw))
+	}
+
+	return out
 }
 
 // beneath holds the foot against the bottom of the screen: the sentence
