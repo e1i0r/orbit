@@ -284,5 +284,6 @@ func (e *failingEngine) Models() []engine.Choice                             { r
 func (e *failingEngine) Efforts() []engine.Choice                            { return nil }
 func (e *failingEngine) CanThink() bool                                      { return true }
 func (e *failingEngine) Transcript(string, time.Time) ([]engine.Turn, error) { return nil, nil }
+func (e *failingEngine) RanOut(engine.Result, error) bool                    { return false }
 func (e *failingEngine) Locate() (string, error)                             { return "failing", nil }
 func (e *failingEngine) CanResume() bool                                     { return false }

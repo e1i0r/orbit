@@ -92,6 +92,7 @@ const (
 	stateHeld                       // stopped at a gate because the reader asked
 	stateWaiting                    // stopped at a gate because the flow asked
 	statePhaseFailed                // a phase failed and the task-level event has not arrived
+	stateRanOut                     // a phase stopped because the engine had nothing left to spend
 	stateFailed                     // the run stopped and task.failed says so
 	stateTimedOut                   // task.timedout
 	stateAbandoned                  // task.abandoned
@@ -277,8 +278,9 @@ func bandOfState(s state) Band {
 		return ToDo
 	case stateRunning, stateHeld:
 		return Running
-	case stateWaiting, statePhaseFailed, stateFailed, stateTimedOut, stateAbandoned, stateStuck,
-		stateOverBudget, stateOverDiff, stateNewDependency, stateContradicts:
+	case stateWaiting, statePhaseFailed, stateRanOut, stateFailed, stateTimedOut,
+		stateAbandoned, stateStuck, stateOverBudget, stateOverDiff,
+		stateNewDependency, stateContradicts:
 		return NeedsYou
 	case stateCancelled, stateFinished:
 		return Done
@@ -301,7 +303,7 @@ func bandOfState(s state) Band {
 // belongs to something that is over.
 func inAttempt(s state) bool {
 	switch s {
-	case stateRunning, stateHeld, stateWaiting, statePhaseFailed:
+	case stateRunning, stateHeld, stateWaiting, statePhaseFailed, stateRanOut:
 		return true
 	default:
 		return false

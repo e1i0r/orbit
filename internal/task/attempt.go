@@ -186,10 +186,20 @@ func (r phaseRun) broke(ctx context.Context, out engine.Result, runErr error) er
 	if ctxErr := ctx.Err(); ctxErr != nil {
 		return stopped(r.store, r.task, r.phase.Name, out, ctxErr)
 	}
+	// An engine with nothing left to spend did not break. The two send a
+	// reader to do opposite things — one is a bug to look at, the other is
+	// a wait or another engine — and the engine is the only thing that
+	// knows which happened, because the words are in what it printed.
+	ending := record.PhaseFailed
+	if r.eng != nil && r.eng.RanOut(out, runErr) {
+		ending = record.PhaseRanOut
+	}
+
 	// The engine's error is what the caller needs; a failure to record it
 	// must not replace or mask that error, so this emit is best-effort and
 	// its own error is discarded, for the same reason as the one in failed.
-	_ = emit(r.store, r.task, phaseEnd(record.PhaseFailed, r.phase.Name, out, runErr)) //nolint:errcheck // deliberate: see above
+	//nolint:errcheck // deliberate: see above
+	_ = emit(r.store, r.task, phaseEnd(ending, r.phase.Name, out, runErr))
 
 	return failed(r.store, r.task, fmt.Errorf("task %s, phase %q: %w", r.task.ID, r.phase.Name, runErr))
 }

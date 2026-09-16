@@ -171,35 +171,10 @@ func fold(t *Task, e record.Event) {
 		t.state = statePhaseFailed
 		t.Reason = failure(e.Phase)
 		stamp(&t.Since, e.At)
+	case record.PhaseRanOut:
+		ranOut(t, e)
 	case record.TaskFailed:
-		// One event, two situations, and internal/task writes the same
-		// thing for both from one function. Where the fold already is
-		// decides which this is.
-		if inAttempt(t.state) {
-			// A run was under way, so the phase it is holding is the phase
-			// it died in — phase.failed put it there a moment ago.
-			t.state = stateFailed
-			t.Reason = failure(t.Phase)
-		} else {
-			// Nothing was under way, so this event landed on the end of a
-			// log whose last phase belongs to an attempt that is over.
-			// Naming that phase would tell the reader a run died in review
-			// when it never started, so the phase goes with the attempt it
-			// belonged to.
-			//
-			// Since internal/task began writing task.started first, a
-			// refused re-run reaches here with the phase already cleared and
-			// this branch changes nothing. It still matters for two logs:
-			// one written before that ordering changed, and one where the
-			// run that opened the attempt ended without a task-level event
-			// of its own — a phase.failed whose task.failed never got
-			// written, and then a re-run.
-			t.Phase, t.PhaseN, t.Engine, t.Model = "", 0, "", ""
-			t.state = stateFailed
-			t.Reason = Reason{Key: ReasonFailedToStart}
-		}
-
-		stamp(&t.Since, e.At)
+		failedRun(t, e)
 	case record.PhaseCancelled:
 		// Cost again: a phase stopped halfway spent whatever it spent, and
 		// the reader who stopped it is the one most likely to be asking.

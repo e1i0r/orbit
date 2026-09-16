@@ -160,3 +160,9 @@ func codexPermissionArgs(names []string) ([]string, error) {
 		"-c", fmt.Sprintf("sandbox_workspace_write.network_access=%t", network),
 	}, nil
 }
+
+// RanOut is whether this run stopped because the allowance is gone.
+//
+// codex surfaces OpenAI's refusal, which spells it insufficient_quota and
+// says rate limit on the way there.
+func (Codex) RanOut(out Result, err error) bool { return ranOut(out, err) }

@@ -150,8 +150,22 @@ const (
 	// engine prices itself, and tokens_in, tokens_out, cache_read and
 	// cache_write where it counts. Failed and cancelled phases carry the
 	// same fields — a phase that broke halfway still spent what it spent.
-	PhaseFinished  = "phase.finished"
-	PhaseFailed    = "phase.failed"    // the engine broke; Text is what it printed, Data["error"] why it stopped
+	PhaseFinished = "phase.finished"
+	// PhaseFailed ends a phase whose engine broke. Text is what it printed
+	// and Data["error"] why it stopped.
+	PhaseFailed = "phase.failed"
+	// PhaseRanOut ends a phase whose engine had nothing left to spend.
+	//
+	// Apart from PhaseFailed because they send a reader to do opposite
+	// things. A phase that broke is a bug to go and look at; a phase that
+	// ran out is a wait, or the same work handed to another engine — and a
+	// task that said only "it broke" made somebody open the log to find out
+	// which of the two it had been.
+	//
+	// Text is what the engine printed and Data["error"] why it stopped, the
+	// same as a failure: what changes is the name, because the name is what
+	// a reader acts on.
+	PhaseRanOut    = "phase.ran_out"
 	PhaseCancelled = "phase.cancelled" // the phase was stopped from outside; Text is what it printed first
 	PhaseWaiting   = "phase.waiting"   // stopped at a gate; Data["why"] says whose gate
 	PhaseResumed   = "phase.resumed"   // let go again

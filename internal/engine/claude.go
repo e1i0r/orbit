@@ -222,3 +222,10 @@ func claudeArgs(req Request) ([]string, error) {
 
 	return append(args, perms...), nil
 }
+
+// RanOut is whether this run stopped because the allowance is gone.
+//
+// claude prints Anthropic's own refusal above its exit, so the shared
+// reading of what a provider says when the allowance is gone is the whole of
+// what this engine needs.
+func (Claude) RanOut(out Result, err error) bool { return ranOut(out, err) }

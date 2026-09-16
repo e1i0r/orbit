@@ -230,6 +230,7 @@ func (e resultEngine) Models() []engine.Choice                             { ret
 func (e resultEngine) Efforts() []engine.Choice                            { return nil }
 func (e resultEngine) CanThink() bool                                      { return false }
 func (e resultEngine) Transcript(string, time.Time) ([]engine.Turn, error) { return nil, nil }
+func (e resultEngine) RanOut(engine.Result, error) bool                    { return false }
 func (e resultEngine) Locate() (string, error)                             { return "result", nil }
 
 func (e resultEngine) Run(context.Context, engine.Request) (engine.Result, error) {

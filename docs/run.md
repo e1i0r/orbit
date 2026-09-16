@@ -50,6 +50,31 @@ That is what lets several tasks touch the same repository at once — see
 [many tasks at once](parallel.md) — and it is why nothing a run does is in
 your checkout until you say so.
 
+## When it ends badly
+
+Two of the ways are told apart on purpose, because they send you to do
+opposite things.
+
+**It broke.** The engine fell over — a bad prompt, a tool that was not there,
+a crash. The row says `failed: implement` and what you do is go and look.
+
+**It ran out.** The engine had nothing left to spend. The row says
+`claude ran out: implement · back in 2h`, and what you do is wait, or hand
+the same work to another engine.
+
+Until these were apart, a task said only that something had broken and you
+had to open the log to find out which. The engine is the only thing that
+knows: `exec` gives a program one way to say it stopped — a non-zero exit —
+and every one of these CLIs prints the provider's own refusal above it, so
+each engine reads its own.
+
+An engine that says nothing Orbit recognises is written down as broken, which
+is what used to happen to all of them. Nothing gets worse by not knowing.
+
+The window says when the allowance comes back because it already knows —
+that number is in the header on every frame — and being told an engine ran
+out without being told for how long is half an answer.
+
 ---
 
 Next: [autopilot](autopilot.md) · [reading what it did](reading.md)

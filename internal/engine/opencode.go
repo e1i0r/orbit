@@ -147,3 +147,9 @@ func openCodePermissionArgs(names []string) ([]string, error) {
 
 	return []string{"--auto"}, nil
 }
+
+// RanOut is whether this run stopped because the allowance is gone.
+//
+// opencode is a command line over whichever provider it was pointed at, so
+// what it prints when the allowance is gone is that provider's words.
+func (OpenCode) RanOut(out Result, err error) bool { return ranOut(out, err) }

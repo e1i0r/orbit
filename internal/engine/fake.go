@@ -74,3 +74,9 @@ func (f *Fake) Run(ctx context.Context, req Request) (Result, error) {
 
 	return Result{Output: f.Output, SessionID: f.SessionID}, nil
 }
+
+// RanOut is whether this run stopped because the allowance is gone.
+//
+// The fake reads its own output the way the real engines read theirs, so a
+// test that wants a run that ran out writes the words a provider would.
+func (f *Fake) RanOut(out Result, err error) bool { return ranOut(out, err) }

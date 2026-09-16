@@ -5430,6 +5430,14 @@
     "knowledge.by_gates": {
       "source": "this repo's gates",
       "value": "las puertas del repo"
+    },
+    "reason.ran_out": {
+      "source": "{engine} ran out: {phase}",
+      "value": "{engine} se quedó sin cuota: {phase}"
+    },
+    "reason.ran_out_back": {
+      "source": "back in {when}",
+      "value": "vuelve en {when}"
     }
   }
 }
