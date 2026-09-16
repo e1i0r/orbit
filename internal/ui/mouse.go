@@ -234,6 +234,17 @@ func (m Model) leftClick(t point.Target) (tea.Model, tea.Cmd) {
 			if t.Field != "" && slices.Contains(r.Options, t.Field) {
 				return m.applySetting(r.Key, t.Field)
 			}
+
+			// A row with no dial is written into rather than turned. A
+			// chat id, a budget and a percentage have no list worth
+			// putting under a cursor, so the click that turns every other
+			// row opens the line on these — which is what the e key does,
+			// and the only gesture that changes one at all.
+			if len(r.Options) == 0 {
+				m.settings = m.settings.Edit(r.Val)
+
+				return m, nil
+			}
 		}
 
 		return m.cycleSetting(1)

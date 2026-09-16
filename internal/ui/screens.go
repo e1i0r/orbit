@@ -30,11 +30,48 @@ func (m Model) settingsEnv() settings.Env {
 			Effort:   m.knobs.Effort,
 			Thinking: m.knobs.Thinking,
 		},
+		Kept:    m.settingsKept,
+		Choose:  m.chooseSetting,
 		Engines: m.engineNames,
 		Models:  m.modelsFor,
 		Efforts: m.effortsFor,
 		Flows:   func() []string { return flow.Names(m.opts.Flows) },
 	}
+}
+
+// settingsKept is every setting the vocabulary declares, in the shape the
+// screen was written against.
+//
+// The conversion is here rather than in the screen because internal/verb is
+// one of the packages internal/ui/settings may not name. It is the same job
+// this file does for every other screen: build the little world it reads,
+// out of the world this one has.
+func (m Model) settingsKept() []settings.Kept {
+	if m.opts.Settings == nil {
+		return nil
+	}
+
+	all := m.opts.Settings.Kept(m.opts.Words)
+
+	out := make([]settings.Kept, 0, len(all))
+	for _, one := range all {
+		out = append(out, settings.Kept{Name: one.Name, Value: one.Value, About: one.About})
+	}
+
+	return out
+}
+
+// chooseSetting writes one setting by name, through the validator declared
+// beside it. What it answered with is not kept: the screen says what a row
+// now reads as by drawing the table again.
+func (m Model) chooseSetting(key, value string) error {
+	if m.opts.Settings == nil {
+		return nil
+	}
+
+	_, err := m.opts.Settings.Choose(m.opts.Words, key, value)
+
+	return err
 }
 
 // tookSettings does what the settings screen asked the window for.

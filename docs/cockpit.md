@@ -95,6 +95,20 @@ key printed against it there.
 `:` then `settings` opens them. Arrows walk the dials, `e` types a value that
 is on no dial, and `x` puts one back to what Orbit ships.
 
+Every setting Orbit has is a row here. That is a claim the build keeps rather
+than a promise somebody remembers: the table is read off the same declaration
+`orbit settings` prints from, and a test fails if a setting is declared that
+the window draws no row for. It used to be a list written out by hand in the
+window's own code, and six settings were added to Orbit without ever reaching
+it — among them whether Orbit may interrupt you, and which account may
+command it over a chat.
+
+Four of the rows offer nothing to choose from — a chat id, the two budgets
+and the quota floor, where no list of values is the list anybody wants. Those
+show what they hold, and `e` or a click opens the line to type into. What
+each will accept is checked in one place for every way in, so a number the
+terminal refuses is a number the window refuses.
+
 There are more dials than a terminal has rows, so the table scrolls: the
 arrows and the wheel bring whatever the cursor is on into view, one setting a
 notch, and the title and the line of keys stay where they are while it moves.

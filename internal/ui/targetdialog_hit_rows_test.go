@@ -13,6 +13,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/e1i0r/orbit/internal/ui/point"
+	"github.com/e1i0r/orbit/internal/ui/settings"
 )
 
 func TestHitDetailAndTabs(t *testing.T) {
@@ -150,7 +151,10 @@ func TestHitSettingsEveryOutcome(t *testing.T) {
 		t.Errorf("hitSettings left of the pills = %+v, want the row with no field", got)
 	}
 
-	if got := m.hitSettings(21, y+4); got.Kind != point.SettingsRow || got.Field != rows[0].Options[0] {
+	// The first cell of the first pill, measured from the same constant the
+	// drawing pads the name column to.
+	at := settings.PillsAt + 1
+	if got := m.hitSettings(at, y+4); got.Kind != point.SettingsRow || got.Field != rows[0].Options[0] {
 		t.Errorf("hitSettings on the first pill = %+v, want field %q", got, rows[0].Options[0])
 	}
 

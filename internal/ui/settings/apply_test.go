@@ -17,11 +17,11 @@ func TestTurningADialWritesIt(t *testing.T) {
 		t.Error("turning the dial said nothing")
 	}
 
-	if !f.autopilot {
+	if f.held["autopilot"] != "on" {
 		t.Error("turning autopilot one to the right left it off")
 	}
 
-	if out := s.Cycle(-1, e); out.Said == "" || f.autopilot {
+	if out := s.Cycle(-1, e); out.Said == "" || f.held["autopilot"] != "off" {
 		t.Error("turning it back left it on")
 	}
 }
@@ -42,45 +42,35 @@ func TestAnEngineTakesItsEffortWithIt(t *testing.T) {
 		t.Errorf("the effort is %q, want the one omega offers", out.Dials.Effort)
 	}
 
-	if f.engine != "omega" {
-		t.Errorf("the file holds engine %q", f.engine)
+	if f.held["engine"] != "omega" {
+		t.Errorf("the file holds engine %q", f.held["engine"])
 	}
 }
 
-// TestTheNumberRowRefusesWhatIsNotOne. Both ways it goes wrong: a word, and
-// a negative cap, which every reader of the setting treats as no cap at all.
-func TestTheNumberRowRefusesWhatIsNotOne(t *testing.T) {
+// TestARefusedValueReachesTheBandAndNotTheFile. What a setting will accept
+// is declared in internal/verb, beside what it means; this screen's share of
+// that is to carry the refusal to the reader and write nothing.
+//
+// It used to be the screen's share to decide as well, for exactly one
+// setting — the two checks on the unread cap, in the same words, out of the
+// same catalogue — and for none of the other twelve. So the only setting the
+// window and the command line agreed about was the one somebody had
+// remembered to write twice.
+func TestARefusedValueReachesTheBandAndNotTheFile(t *testing.T) {
 	f := newFile()
-	e := env(t, f)
+	f.refuse = errors.New("not a whole number")
 
-	for _, c := range []struct{ val, want string }{
-		{val: "not-a-number", want: "not a whole number"},
-		{val: "-1", want: "cannot be negative"},
-	} {
-		out := Apply("unread-cap", c.val, e)
-		if !contains(out.Said, c.want) {
-			t.Errorf("a cap of %q said %q, want it to say %q", c.val, out.Said, c.want)
-		}
-
-		if f.unread != 3 {
-			t.Errorf("a cap of %q was written anyway: the file holds %d", c.val, f.unread)
-		}
-	}
-}
-
-// TestAFlowNameThatIsAPathIsRefused. It is the one thing `orbit set` checked
-// and this screen did not, so what the command line would not take, the
-// window wrote.
-func TestAFlowNameThatIsAPathIsRefused(t *testing.T) {
-	f := newFile()
-
-	out := Apply("flow", "../etc/passwd", env(t, f))
-	if out.Said == "" {
-		t.Error("a flow name that is a path was written without a word")
+	out := Apply("unread-cap", "not-a-number", env(t, f))
+	if !contains(out.Said, "not a whole number") {
+		t.Errorf("the band says %q, want the refusal it was given", out.Said)
 	}
 
-	if f.flow != "cover" {
-		t.Errorf("the file holds flow %q", f.flow)
+	if f.held["unread-cap"] != "3" {
+		t.Errorf("a refused cap was written anyway: the file holds %q", f.held["unread-cap"])
+	}
+
+	if len(f.wrote) != 0 {
+		t.Errorf("a refused value still wrote %v", f.wrote)
 	}
 }
 
@@ -101,18 +91,32 @@ func TestEverySettingReachesTheFile(t *testing.T) {
 		val   string
 		check func(*file, Out) bool
 	}{
-		{name: "language", val: "es", check: func(f *file, o Out) bool { return f.lang == "es" && o.Lang == "es" }},
-		{name: "autopilot", val: "on", check: func(f *file, _ Out) bool { return f.autopilot }},
-		{name: "unread-cap", val: "9", check: func(f *file, _ Out) bool { return f.unread == 9 }},
-		{name: "model", val: "zeta/one", check: func(f *file, _ Out) bool { return f.model == "zeta/one" }},
-		{name: "flow", val: "quick", check: func(f *file, _ Out) bool { return f.flow == "quick" }},
-		{name: "theme", val: "frauddi", check: func(f *file, _ Out) bool { return f.theme == "frauddi" }},
+		{name: "language", val: "es", check: func(f *file, o Out) bool {
+			return f.held["language"] == "es" && o.Lang == "es"
+		}},
+		{name: "autopilot", val: "on", check: held("autopilot", "on")},
+		{name: "unread-cap", val: "9", check: held("unread-cap", "9")},
+		{name: "model", val: "zeta/one", check: held("model", "zeta/one")},
+		{name: "flow", val: "quick", check: held("flow", "quick")},
+		{name: "theme", val: "frauddi", check: held("theme", "frauddi")},
+		// The six that were declared and never drawn. One case each,
+		// because a table read off the vocabulary is only worth having if
+		// the rows it grew actually reach the file.
+		{name: "check-record", val: "on", check: held("check-record", "on")},
+		{name: "notify", val: "on", check: held("notify", "on")},
+		{name: "chat-id", val: "7912204269", check: held("chat-id", "7912204269")},
+		{name: "budget-task", val: "5", check: held("budget-task", "5")},
+		{name: "budget-workspace", val: "50", check: held("budget-workspace", "50")},
+		{name: "quota-floor", val: "20", check: held("quota-floor", "20")},
 		{name: "effort", val: "hasty", check: func(_ *file, o Out) bool {
 			return o.Dials != nil && o.Dials.Effort == "hasty"
 		}},
 		{name: "thinking", val: "on", check: func(_ *file, o Out) bool {
 			return o.Dials != nil && o.Dials.Thinking == "on"
 		}},
+		// A name the vocabulary does not have is refused by it, and this
+		// fixture is not the vocabulary — so what is checked here is that
+		// the screen wrote it wherever it was told to, and nothing else.
 		{name: "nothing-of-the-sort", val: "x", check: func(_ *file, o Out) bool { return o.Said != "" }},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -156,9 +160,15 @@ func TestAnEngineTheFileRefusesChangesNothingElse(t *testing.T) {
 // are wired, and a screen that dereferences one is a window that dies.
 func TestWithoutAFileNothingIsWritten(t *testing.T) {
 	e := env(t, newFile())
-	e.Store = nil
+	e.Store, e.Kept, e.Choose = nil, nil, nil
 
 	if out := Apply("language", "es", e); out.Said == "" && out.Lang == "" {
 		t.Skip("nothing was written and nothing was said, which is the whole of what this asks")
 	}
+}
+
+// held is the commonest check in the table above: the file holds this value
+// under this name.
+func held(key, want string) func(*file, Out) bool {
+	return func(f *file, _ Out) bool { return f.held[key] == want }
 }

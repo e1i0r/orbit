@@ -53,6 +53,20 @@ type Env struct {
 	Frame layout.Frame
 	Store Store
 	Dials Dials
+	// Kept is every setting the vocabulary declares, in the order it
+	// declares them, and Choose writes one by the name it gives it.
+	//
+	// The table used to be written out here by hand, row by row, and every
+	// setting added since went into the vocabulary and not into it: six of
+	// thirteen were declared and never drawn, among them whether Orbit may
+	// interrupt you and which account may command it over a chat. A table
+	// read off the declaration cannot fall behind it.
+	//
+	// Functions and not an interface, for the reason Engines and Models
+	// are: what they answer is shaped by internal/verb, which this package
+	// may not name, so the window converts on the way in.
+	Kept   func() []Kept
+	Choose func(key, value string) error
 	// Engines, Models and Efforts are the build's catalogue, which this
 	// screen reads and never decides: an engine the build does not have is
 	// still the reader's setting, and the dial simply has no pill lit.
@@ -60,6 +74,17 @@ type Env struct {
 	Models  func(engine string) (ids, labels []string)
 	Efforts func(engine string) (ids, labels []string)
 	Flows   func() []string
+}
+
+// Kept is one setting as this screen draws it: what it is called, what it
+// holds now, and what it means.
+//
+// The screen's own shape and not internal/verb's, for the reason every
+// screen here has one: what crosses into a screen is data, through a port.
+type Kept struct {
+	Name  string
+	Value string
+	About string
 }
 
 // Dials are the four choices a run is made with, as the window holds them.
@@ -72,28 +97,23 @@ type Dials struct {
 	Thinking string
 }
 
-// Store is the settings file as this screen holds it. It is two interfaces
-// and not one: what the table reads is in reader, what a change writes is in
-// writer, and each door names only the half it uses — a door that can only
-// read cannot write by accident, and the compiler is what says so.
+// Store is the settings file as this screen holds it, and it is down to one
+// question.
 //
-// Both are declared here rather than imported because the caller is what has
+// It used to be two interfaces of thirteen methods — one getter and one
+// setter per setting — and that shape is what let six settings be declared
+// and never drawn: reaching this screen meant adding a fourteenth and
+// fifteenth method to a port every implementation had to keep. The table now
+// arrives through Env.Kept and goes back through Env.Choose, which name
+// settings rather than having a method each, so a setting added to the
+// vocabulary is a row here the same afternoon.
+//
+// What is left is the one question neither of those answers.
+//
+// It is declared here rather than imported because the caller is what has
 // one: the window passes whatever satisfies this, and the settings file's
 // own shape stays its own.
 type Store interface {
-	reader
-	writer
-}
-
-// reader is the settings the table shows.
-type reader interface {
-	Language() string
-	Autopilot() bool
-	UnreadCap() int
-	Engine() string
-	Model() string
-	Flow() string
-	Theme() string
 	// Fresh is what one setting reads as when nobody has chosen anything.
 	//
 	// Asked rather than known, because what a setting comes as is declared
@@ -103,17 +123,6 @@ type reader interface {
 	// empty, which is what the two dials the file does not hold come back
 	// as, and the right answer for them.
 	Fresh(key string) string
-}
-
-// writer is the settings a change puts back.
-type writer interface {
-	SetLanguage(string) error
-	SetAutopilot(bool) error
-	SetUnreadCap(int) error
-	SetEngine(string) error
-	SetModel(string) error
-	SetFlow(string) error
-	SetTheme(string) error
 }
 
 // Out is what the screen asks the window for, having done what it could

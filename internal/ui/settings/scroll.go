@@ -37,6 +37,10 @@ func window(off, lines, view int) int {
 // scrolled, and a window that did not add it would turn the dial of
 // whichever row used to be there.
 func (s State) Off(e Env) int {
+	if e.Frame.Body.H <= 0 {
+		return 0
+	}
+
 	return window(s.off, rowLines*len(s.Rows(e)), room(e.Frame.Body.H))
 }
 
@@ -63,8 +67,11 @@ func (s State) Scroll(d int, e Env) State {
 // on in sight. The reader is moving a cursor; the scrolling is this screen's
 // business rather than theirs.
 func (s State) keepSeen(e Env) State {
+	// A window that has not been sized yet holds nothing, and the height
+	// this would scroll against is not the height View will be given. The
+	// table starts at the top until there is a body to keep it inside.
 	rows := s.Rows(e)
-	if len(rows) == 0 || s.sel < 0 || s.sel >= len(rows) {
+	if len(rows) == 0 || s.sel < 0 || s.sel >= len(rows) || e.Frame.Body.H <= 0 {
 		s.off = 0
 
 		return s

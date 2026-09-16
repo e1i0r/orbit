@@ -37,7 +37,7 @@ func TestTheQueueStopsWhenTheWorkspaceHasSpentItsBudget(t *testing.T) {
 		t.Fatalf("the window's settings port is %T, want the fixture's", m.opts.Settings)
 	}
 
-	held.budget = 1.00
+	held.put(t, "budget-workspace", "1.00")
 
 	tasks := append(spentBoard(0.50, 2), view.Task{
 		Repo: "payments", ID: "ACME-9", Title: "waiting its turn", Band: view.ToDo, Since: ago(time.Minute),
@@ -68,7 +68,7 @@ func TestTheQueueGoesOnUnderTheBudget(t *testing.T) {
 		t.Fatalf("the window's settings port is %T, want the fixture's", m.opts.Settings)
 	}
 
-	held.budget = 10.00
+	held.put(t, "budget-workspace", "10.00")
 
 	tasks := append(spentBoard(0.50, 2), view.Task{
 		Repo: "payments", ID: "ACME-9", Title: "waiting its turn", Band: view.ToDo, Since: ago(time.Minute),
@@ -101,7 +101,7 @@ func TestTheQueueStopsWhenTheQuotaWindowIsNearlySpent(t *testing.T) {
 		t.Fatalf("the window's settings port is %T, want the fixture's", m.opts.Settings)
 	}
 
-	held.floor = 20
+	held.put(t, "quota-floor", "20")
 
 	m.opts.Quota = func(engine string) roster.Reading {
 		return roster.Reading{
@@ -140,7 +140,7 @@ func TestAnEngineThatChargesIsNotHeldByAQuotaFloor(t *testing.T) {
 		t.Fatalf("the window's settings port is %T, want the fixture's", m.opts.Settings)
 	}
 
-	held.floor = 20
+	held.put(t, "quota-floor", "20")
 
 	m.opts.Quota = func(engine string) roster.Reading {
 		return roster.Reading{Engine: engine, Money: true, Sourced: true}

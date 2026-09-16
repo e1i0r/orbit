@@ -251,7 +251,7 @@ func TestHeadHintBranches(t *testing.T) {
 	// 3. The To Do band at the unread cap says so, ahead of the open hint.
 	m.expanded[view.ToDo] = false
 
-	m.opts.Settings = &settingsFile{autopilot: true, lang: "en", unread: 1}
+	m.opts.Settings = settingsWith(true, "en", 1)
 	if got := m.headHint(row{band: view.ToDo, n: 4}); !strings.Contains(got, "unread cap") {
 		t.Errorf("headHint on To Do at the cap = %q, want the unread cap sentence", got)
 	}

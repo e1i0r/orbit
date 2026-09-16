@@ -298,7 +298,7 @@ func TestTheStartDialogTransitionTable(t *testing.T) {
 func cappedModel(t *testing.T) (Model, *recorder) {
 	t.Helper()
 	m, got := testModel(t, 100, 30)
-	m.opts.Settings = &settingsFile{autopilot: true, lang: "en", unread: 3}
+	m.opts.Settings = settingsWith(true, "en", 3)
 
 	return m, got
 }

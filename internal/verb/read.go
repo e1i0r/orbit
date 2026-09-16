@@ -116,12 +116,7 @@ func kept(w World) (Out, error) {
 		return Out{}, err
 	}
 
-	p := w.Words()
-	all := make([]Setting, 0, len(settingTable()))
-
-	for _, one := range settingTable() {
-		all = append(all, Setting{Name: one.Name, Value: one.Value(cfg), About: one.About(p)})
-	}
+	all := Kept(w.Words(), cfg)
 
 	name, value := 0, 0
 	for _, s := range all {
