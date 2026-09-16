@@ -171,6 +171,8 @@ func fold(t *Task, e record.Event) {
 		t.state = statePhaseFailed
 		t.Reason = failure(e.Phase)
 		stamp(&t.Since, e.At)
+	case record.PhaseDenied:
+		denied(t, e)
 	case record.PhaseRanOut:
 		ranOut(t, e)
 	case record.TaskFailed:

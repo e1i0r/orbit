@@ -217,7 +217,21 @@ const (
 	// Text is what the engine printed and Data["error"] why it stopped, the
 	// same as a failure: what changes is the name, because the name is what
 	// a reader acts on.
-	PhaseRanOut    = "phase.ran_out"
+	PhaseRanOut = "phase.ran_out"
+	// PhaseDenied ends a phase that was refused what it needed and left
+	// nothing behind.
+	//
+	// Apart from PhaseFinished because it is the opposite of one, and apart
+	// from PhaseFailed because nothing broke. A headless run has nobody to
+	// ask, so a tool the posture does not grant is denied without a word:
+	// the engine handles it, writes a sentence saying it could not, and
+	// exits zero. Read by its exit code alone that is a success, and a task
+	// that did nothing sat in done where nobody would look at it again.
+	//
+	// Data["tool"] is what it was denied. What it sends a reader to do is
+	// neither wait nor debug: it is to look at what the phase was allowed.
+	PhaseDenied = "phase.denied"
+
 	PhaseCancelled = "phase.cancelled" // the phase was stopped from outside; Text is what it printed first
 	PhaseWaiting   = "phase.waiting"   // stopped at a gate; Data["why"] says whose gate
 	PhaseResumed   = "phase.resumed"   // let go again

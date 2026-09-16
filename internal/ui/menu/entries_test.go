@@ -15,8 +15,8 @@ func TestTheBoardsMenuShowsRefusalsWhole(t *testing.T) {
 	e := world(t)
 
 	es := Open("", e).Entries(e)
-	if len(es) != 3 {
-		t.Fatalf("the board's menu is %d entries, want the three commands that are not about one task", len(es))
+	if len(es) != 4 {
+		t.Fatalf("the board's menu is %d entries, want the four commands that are not about one task", len(es))
 	}
 
 	if es[0].Dim || es[0].Detail != "read the board again" {
