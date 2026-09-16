@@ -36,11 +36,98 @@ func Reply(out verb.Out, p *words.Printer) string {
 		return p.T("chat.nothing_said", "done")
 	}
 
-	if laidOut(said) {
-		said = "```\n" + said + "\n```"
+	return cut(narrowed(said), p)
+}
+
+// phone is how wide a line may be and still be read without dragging it
+// sideways.
+//
+// A guess, and a conservative one: a phone in portrait shows about forty
+// monospaced characters at a comfortable size. It is not a measurement of
+// anybody's screen — there is no way to have one — it is the width past
+// which laying something out in columns stops buying anything, because
+// nobody can see two columns at once anyway.
+const phone = 40
+
+// narrowed is an answer as a phone can read it.
+//
+// The verbs write for a terminal, where a column is padded out to line up
+// under the one above it. That padding is invisible on a wide screen and is
+// the whole problem on a narrow one: a monospaced block does not wrap, so a
+// hundred-character line becomes a horizontal scroll bar over three words.
+//
+// So the padding goes — runs of spaces become two, which still separates the
+// columns — and what is still too wide afterwards gives up on being a table
+// at all. Plain text wraps, and four wrapped lines a reader can see are
+// worth more than one aligned line they have to drag.
+func narrowed(said string) string {
+	lines := strings.Split(said, "\n")
+
+	widest := 0
+
+	for i, line := range lines {
+		lines[i] = squeezed(line)
+		if n := utf8.RuneCountInString(lines[i]); n > widest {
+			widest = n
+		}
 	}
 
-	return cut(said, p)
+	said = strings.Join(lines, "\n")
+
+	// A table is a table only while it has rows. One line is a sentence
+	// whatever it was padded into, and a monospaced sentence is a person
+	// being shouted at in a typewriter font.
+	if widest > phone || !laidOut(said) {
+		return said
+	}
+
+	return "```\n" + said + "\n```"
+}
+
+// squeezed is one line with the column padding taken out.
+//
+// Two spaces and not one, because the columns are still columns: "ACME-3 to
+// do" reads as three things and "ACME-3  to do" as two, which is what the
+// padding was there to say.
+func squeezed(line string) string {
+	var (
+		b     strings.Builder
+		blank int
+	)
+
+	for _, r := range strings.TrimRight(line, " \t") {
+		if r == ' ' || r == '\t' {
+			blank++
+
+			continue
+		}
+
+		if blank > 0 {
+			b.WriteString(padding(blank, b.Len()))
+
+			blank = 0
+		}
+
+		b.WriteRune(r)
+	}
+
+	return b.String()
+}
+
+// padding is what a run of spaces becomes: itself when it was a single space
+// inside a sentence, and two when it was a column being lined up.
+//
+// A leading run is kept as one space rather than dropped, because an indent
+// is how a listing says a line belongs under the one above it.
+func padding(blank, written int) string {
+	switch {
+	case written == 0:
+		return " "
+	case blank == 1:
+		return " "
+	}
+
+	return "  "
 }
 
 // laidOut says whether the answer was written to be read in columns.
