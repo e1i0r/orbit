@@ -31,6 +31,15 @@ type board struct {
 func newBoard(t *testing.T, phases map[string]any) board {
 	t.Helper()
 
+	return newBoardOn(t, map[string]any{"phases": phases})
+}
+
+// newBoardOn is the same board with the whole script written out rather than
+// only its phases, for the scenarios where an engine has to behave
+// differently from what the phase says — which is what a relay is.
+func newBoardOn(t *testing.T, script map[string]any) board {
+	t.Helper()
+
 	dir := t.TempDir()
 	b := board{
 		home:   filepath.Join(dir, "home"),
@@ -46,17 +55,17 @@ func newBoard(t *testing.T, phases map[string]any) board {
 		}
 	}
 
-	b.write(t, phases)
+	b.write(t, script)
 	b.module(t)
 
 	return b
 }
 
 // write puts the script where the stand-in engine will look for it.
-func (b board) write(t *testing.T, phases map[string]any) {
+func (b board) write(t *testing.T, script map[string]any) {
 	t.Helper()
 
-	body, err := json.MarshalIndent(map[string]any{"phases": phases}, "", "  ")
+	body, err := json.MarshalIndent(script, "", "  ")
 	if err != nil {
 		t.Fatalf("encode the script: %v", err)
 	}
