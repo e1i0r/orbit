@@ -212,6 +212,16 @@ func corrected(w World, in In) (Out, error) {
 		return Out{}, err
 	}
 
+	// Where it went, when that is what moved. Narrowing a rule and leaving
+	// its sentence alone is the commonest correction there is, and an
+	// answer that only read the sentence back said nothing had happened.
+	if now.Scope != was.Scope {
+		return Out{Said: w.Words().T("verb.rules.moved", "{rule} now applies {where}: {text}",
+			words.Arg{Name: "rule", Value: was.ID},
+			words.Arg{Name: "where", Value: scopeOf(now)},
+			words.Arg{Name: "text", Value: now.Phrase})}, nil
+	}
+
 	return Out{Said: w.Words().T("verb.rules.corrected", "{rule} now reads: {text}",
 		words.Arg{Name: "rule", Value: was.ID},
 		words.Arg{Name: "text", Value: now.Phrase})}, nil

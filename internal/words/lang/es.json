@@ -4885,6 +4885,10 @@
       "source": "the rule as you would rather it read",
       "value": "la regla como preferirías que dijera"
     },
+    "verb.rules.moved": {
+      "source": "{rule} now applies {where}: {text}",
+      "value": "{rule} ahora aplica {where}: {text}"
+    },
     "verb.rules.corrected": {
       "source": "{rule} now reads: {text}",
       "value": "{rule} ahora dice: {text}"

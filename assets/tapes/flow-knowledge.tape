@@ -33,23 +33,18 @@ Sleep 3s
 Type `orbit rules keep -in migrations -check "make migrate-check" 2` Enter
 Sleep 3s
 
-Type "clear" Enter
-Sleep 500ms
-
 # The rule that has been all the way round: what it stopped, how often you got
 # past it, and what you paused it for.
 Type "orbit rules review -rule d42b7f60" Enter
 Sleep 4s
 
-Type "clear" Enter
-Sleep 500ms
-
 # And the decision that was almost always the one wanted: not off — narrower.
 Type "orbit rules correct -rule d42b7f60 -in migrations" Enter
 Sleep 3s
 
-Type "clear" Enter
-Sleep 500ms
+# The four of them are one sitting, so nothing is cleared between them: a
+# frame with two lines at the top of it and the rest black says less than the
+# same four commands stacked.
 
 # The screen the same rules are read on, walked by how far each one reaches.
 Type "orbit top ~/code" Enter
