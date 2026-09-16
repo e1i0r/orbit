@@ -13,26 +13,36 @@ func happened(task, kind, phase string, data map[string]string) Happening {
 	return Happening{Task: task, Event: record.Event{Kind: kind, Phase: phase, Data: data}}
 }
 
-// TestOnlyWhatStopsARunIsWorthAMessage. A channel that tells you everything
-// is a channel you mute, and a muted channel is worse than none — you
-// believed you would be told.
-func TestOnlyWhatStopsARunIsWorthAMessage(t *testing.T) {
+// TestWhatHappensInsideAPhaseIsNotNews. The line is what changes where a
+// task is; everything inside a phase is a run working rather than a run
+// moving, and there are hundreds of them. A channel that carried those is a
+// channel you mute, which is worse than none — you believed you would be
+// told.
+func TestWhatHappensInsideAPhaseIsNotNews(t *testing.T) {
 	for _, kind := range []string{
 		record.PhaseStarted, record.PhaseToolCall, record.PhaseThought,
-		record.PhaseFinished, record.TaskStarted, record.PhaseAsked,
-		record.GatePassed, record.TaskRelayed,
+		record.PhaseFinished, record.PhaseAsked, record.PhaseRetried,
+		record.GatePassed, record.TaskNoted, record.TaskRead, record.TaskCreated,
 	} {
 		if said := News(happened("ACME-1", kind, "implement", nil), en()); said != "" {
 			t.Errorf("%s was worth a message: %q", kind, said)
 		}
 	}
 
+	// And the arc of a task is: it began, it changed hands, it stopped, it
+	// ended. Somebody away from their desk can follow that.
 	for _, kind := range []string{
+		record.TaskStarted, record.TaskRelayed,
 		record.PhaseWaiting, record.TaskStuck, record.TaskNeedsEngine,
-		record.TaskNoEngine, record.TaskFinished,
+		record.TaskNoEngine, record.TaskFailed, record.TaskOverBudget,
+		record.TaskOverDiff, record.TaskNewDependency, record.TaskContradicts,
+		record.TaskFinished, record.TaskMerged, record.TaskCancelled,
+		record.TaskTimedOut, record.TaskAbandoned,
 	} {
 		said := News(happened("ACME-1", kind, "implement", map[string]string{
-			"attempts": "3", "from": "claude", "engines": "codex,opencode",
+			"attempts": "3", "from": "claude", "to": "codex", "engines": "codex,opencode",
+			"spent": "$2", "budget": "$1", "lines": "900", "names": "left-pad",
+			"decision": "REF-9",
 		}), en())
 
 		if said == "" {
@@ -82,5 +92,37 @@ func TestTheOneWithNothingToOfferOffersNothing(t *testing.T) {
 
 	if !strings.Contains(said, "claude") {
 		t.Errorf("it does not say which engine ran out: %q", said)
+	}
+}
+
+// TestAPullRequestIsNewsAndKeepingOneUpToDateIsNot. Opening one is where a
+// task stops being Orbit's and starts being the team's, which is the one
+// thing here somebody else will see.
+func TestAPullRequestIsNewsAndKeepingOneUpToDateIsNot(t *testing.T) {
+	opened := News(happened("ACME-3", record.DeliverAnswered, "", map[string]string{"verb": "pr"}), en())
+	if !strings.Contains(opened, "pull request is open") {
+		t.Errorf("a pull request opening was not news: %q", opened)
+	}
+
+	for _, verb := range []string{"update", "checks", "resolve", "tests", "review"} {
+		said := News(happened("ACME-3", record.DeliverAnswered, "", map[string]string{"verb": verb}), en())
+		if said != "" {
+			t.Errorf("%s was news: %q", verb, said)
+		}
+	}
+
+	// And one that did not open says so, with why.
+	broke := News(happened("ACME-3", record.DeliverAnswered, "", map[string]string{
+		"verb": "pr", "error": "no upstream\nand more",
+	}), en())
+
+	if !strings.Contains(broke, "did not open") || !strings.Contains(broke, "no upstream") {
+		t.Errorf("a pull request that broke says %q", broke)
+	}
+
+	// The first line of it and no more: a notification is one line somebody
+	// reads on the way past.
+	if strings.Contains(broke, "and more") {
+		t.Errorf("it carried the whole failure: %q", broke)
 	}
 }

@@ -5618,6 +5618,58 @@
     "setting.notify": {
       "source": "whether Orbit interrupts you when a run stops and needs somebody",
       "value": "si Orbit te interrumpe cuando una corrida para y necesita a alguien"
+    },
+    "news.started": {
+      "source": "started",
+      "value": "arrancó"
+    },
+    "news.relayed": {
+      "source": "{from} handed it to {to} in {phase}",
+      "value": "{from} se la pasó a {to} en {phase}"
+    },
+    "news.failed": {
+      "source": "the run stopped: {why}",
+      "value": "la corrida paró: {why}"
+    },
+    "news.over_budget": {
+      "source": "it has spent {spent} of {budget}",
+      "value": "gastó {spent} de {budget}"
+    },
+    "news.over_diff": {
+      "source": "it changed {lines} lines of {budget}",
+      "value": "cambió {lines} líneas de {budget}"
+    },
+    "news.new_dependency": {
+      "source": "it reached for {names}",
+      "value": "se trajo {names}"
+    },
+    "news.contradicts": {
+      "source": "the change goes against {decision}",
+      "value": "el cambio va contra {decision}"
+    },
+    "news.cancelled": {
+      "source": "cancelled",
+      "value": "cancelada"
+    },
+    "news.timed_out": {
+      "source": "it outlived its deadline",
+      "value": "se pasó de su tiempo"
+    },
+    "news.abandoned": {
+      "source": "its process is gone",
+      "value": "su proceso ya no está"
+    },
+    "news.merged": {
+      "source": "merged",
+      "value": "mergeada"
+    },
+    "news.pr": {
+      "source": "a pull request is open",
+      "value": "hay un pull request abierto"
+    },
+    "news.pr_failed": {
+      "source": "the pull request did not open: {why}",
+      "value": "el pull request no abrió: {why}"
     }
   }
 }

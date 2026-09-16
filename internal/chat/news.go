@@ -6,11 +6,13 @@ package chat
 // which tells you everything is a channel you mute, and a muted channel is
 // worse than none — you believed you would be told.
 //
-// So the list is short and it is closed. Five endings, all of them already
-// named in the record, and nothing else: a phase starting, a tool call, a
-// cost going up are things happening, not news. What they have in common is
-// that each one is a run that has stopped and will not start again on its
-// own.
+// So the line is drawn at **what changes where a task is**, and the list is
+// closed. A task's whole arc is a handful of these: it started, it changed
+// engine, it stopped for a reason, a pull request opened, it merged. Somebody
+// away from their desk can follow that. What is left out is everything
+// inside a phase — a phase starting, a tool call, a thought, a cost going
+// up — which is a run working rather than a run moving, and there are
+// hundreds of them.
 //
 // And every one of them carries what to do about it. A message saying
 // "ACME-3 needs you" is a phone opened for nothing; the same message with the
@@ -30,13 +32,31 @@ type Happening struct {
 	Event record.Event
 }
 
-// worthTelling is every kind that stops a run and needs a person.
+// worthTelling is every kind that moves a task, in the order a task meets
+// them.
 var worthTelling = map[string]bool{
-	record.PhaseWaiting:    true,
-	record.TaskStuck:       true,
-	record.TaskNeedsEngine: true,
-	record.TaskNoEngine:    true,
+	// It began, and it changed hands.
+	record.TaskStarted: true,
+	record.TaskRelayed: true,
+
+	// It stopped and nothing moves on its own.
+	record.PhaseWaiting:      true,
+	record.TaskStuck:         true,
+	record.TaskNeedsEngine:   true,
+	record.TaskNoEngine:      true,
+	record.TaskFailed:        true,
+	record.TaskOverBudget:    true,
+	record.TaskOverDiff:      true,
+	record.TaskNewDependency: true,
+	record.TaskContradicts:   true,
+
+	// It ended.
 	record.TaskFinished:    true,
+	record.DeliverAnswered: true,
+	record.TaskMerged:      true,
+	record.TaskCancelled:   true,
+	record.TaskTimedOut:    true,
+	record.TaskAbandoned:   true,
 }
 
 // News is the message one happening is worth, and nothing for the ones that
@@ -64,6 +84,39 @@ func saying(h Happening, p *words.Printer) (said, next string) {
 	e := h.Event
 
 	switch e.Kind {
+	case record.TaskStarted:
+		return p.T("news.started", "started"), "/task show " + h.Task
+	case record.TaskRelayed:
+		return p.T("news.relayed", "{from} handed it to {to} in {phase}",
+			about("from", e.Data["from"]), about("to", e.Data["to"]),
+			about("phase", e.Phase)), ""
+	case record.TaskFailed:
+		return p.T("news.failed", "the run stopped: {why}", about("why", firstLine(e.Text))),
+			"/task show " + h.Task
+	case record.TaskOverBudget:
+		return p.T("news.over_budget", "it has spent {spent} of {budget}",
+				about("spent", e.Data["spent"]), about("budget", e.Data["budget"])),
+			"/task show " + h.Task
+	case record.TaskOverDiff:
+		return p.T("news.over_diff", "it changed {lines} lines of {budget}",
+				about("lines", e.Data["lines"]), about("budget", e.Data["budget"])),
+			"/task diff " + h.Task
+	case record.TaskNewDependency:
+		return p.T("news.new_dependency", "it reached for {names}", about("names", e.Data["names"])),
+			"/task approve " + h.Task
+	case record.TaskContradicts:
+		return p.T("news.contradicts", "the change goes against {decision}",
+			about("decision", e.Data["decision"])), "/task show " + h.Task
+	case record.TaskCancelled:
+		return p.T("news.cancelled", "cancelled"), ""
+	case record.TaskTimedOut:
+		return p.T("news.timed_out", "it outlived its deadline"), "/task show " + h.Task
+	case record.TaskAbandoned:
+		return p.T("news.abandoned", "its process is gone"), "/task start " + h.Task
+	case record.TaskMerged:
+		return p.T("news.merged", "merged"), ""
+	case record.DeliverAnswered:
+		return delivered(e, p), "/pr show " + h.Task
 	case record.PhaseWaiting:
 		return p.T("news.waiting", "waiting at a gate in {phase}", about("phase", e.Phase)),
 			"/task continue " + h.Task
@@ -89,6 +142,31 @@ func saying(h Happening, p *words.Printer) (said, next string) {
 	}
 
 	return "", ""
+}
+
+// delivered is what one delivery verb came back with, and nothing for the
+// ones that are not a milestone.
+//
+// A pull request opening is where a task stops being Orbit's and starts being
+// the team's, which is the one thing here somebody else will see. Bringing a
+// branch up to date or answering a review is the same task carrying on.
+func delivered(e record.Event, p *words.Printer) string {
+	if e.Data["verb"] != "pr" {
+		return ""
+	}
+
+	if why := e.Data["error"]; why != "" {
+		return p.T("news.pr_failed", "the pull request did not open: {why}", about("why", firstLine(why)))
+	}
+
+	return p.T("news.pr", "a pull request is open")
+}
+
+// firstLine is as much of something as belongs in a notification.
+func firstLine(text string) string {
+	said, _, _ := strings.Cut(strings.TrimSpace(text), "\n")
+
+	return said
 }
 
 // first is the first of a comma-separated list, for the command a message
