@@ -140,3 +140,58 @@ func coldRows(said []learn.Said) string {
 
 	return strings.TrimRight(b.String(), "\n")
 }
+
+// enforcing offers a rule for each thing the checkout already refuses work
+// over: the commands its own pull requests have to pass.
+//
+// It spends nothing and asks no model, which is why it takes no engine and
+// is not marked as spending. A workflow either parses or it does not — there
+// is no sentence here that needs verifying against a citation, because the
+// sentence is the command.
+func enforcing(w World, in In) (Out, error) {
+	here, err := openRepo(w, in)
+	if err != nil {
+		return Out{}, err
+	}
+
+	var gates []learn.Gate
+
+	for _, g := range repo.Gates(here.Path) {
+		gates = append(gates, learn.Gate{Command: g.Command, Where: g.Where})
+	}
+
+	said, err := learn.Enforced(w.Store(), here.Path, gates)
+	if err != nil {
+		return Out{}, err
+	}
+
+	if len(said) == 0 {
+		return Out{
+			Said: w.Words().T("verb.rules.enforced.none",
+				"nothing this checkout refuses work over is unanswered; "+
+					"a rule here comes from what a pull request has to pass"),
+			Saw: said,
+		}, nil
+	}
+
+	return Out{Said: gateRows(said) + "\n\n" + w.Words().P("verb.rules.enforced.waiting", len(said),
+		"it is waiting in the rules for you to keep it or drop it",
+		"{n} are waiting in the rules for you to keep them or drop them",
+		words.Arg{Name: "n", Value: strconv.Itoa(len(said))}), Saw: said}, nil
+}
+
+// gateRows is the listing: the command a rule would refuse work with, and
+// the sentence beside it.
+//
+// The command first, because it is the whole of why this reading is worth
+// anything — every other source leaves a reader deciding what the gate would
+// be, and here it is already written and already running.
+func gateRows(said []learn.Said) string {
+	var b strings.Builder
+
+	for _, one := range said {
+		fmt.Fprintf(&b, "%-34s %s\n", one.Gate, one.Text)
+	}
+
+	return strings.TrimRight(b.String(), "\n")
+}

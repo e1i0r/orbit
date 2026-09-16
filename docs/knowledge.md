@@ -177,6 +177,32 @@ orbit rules repeated                    # what you keep telling runs
 orbit rules draft -with claude        # and the rule it amounts to
 ```
 
+**The repository already refuses it.** Whatever a pull request has to pass is,
+by definition, what the project does not let through — and it is the one
+source that brings a rule **with its gate already written**:
+
+```bash
+orbit rules enforced                    # or `g` on the Brain screen
+```
+
+```
+go vet ./...                       go vet ./... has to pass
+golangci-lint run                  golangci-lint run has to pass
+make check                         make check has to pass
+```
+
+Every other source brings a sentence and leaves you to decide whether it
+deserves a gate and what the gate would run. Here the command exists and has
+been refusing work for years; the only thing missing was Orbit knowing about
+it. So these arrive with `stops` and their command already set — and still
+wait in the tray, because a project running something is not the same as
+wanting Orbit to send work back over it.
+
+It costs nothing and asks no model: a workflow either parses or it does not.
+A workflow nothing goes through — a release, a schedule — brings nothing,
+because a rule out of one would refuse work over a command that has never
+refused any.
+
 **The project already said it.** A repository with two years behind it has half
 of this written down — the CONTRIBUTING, the README, and the notes each engine
 keeps in its own file — and its commits say which of those are still true:
@@ -279,6 +305,7 @@ wins over that, and `-in .` is how you say the whole checkout.
 | `record` | an engine worked it out mid-task |
 | `docs` | the project already said it, with the file and the line |
 | `history` | the commits say so, with the count |
+| `gates` | the checkout already refuses work over it, with the file and the command |
 | `code` | read off the map — regenerated rather than stored |
 
 A sentence in the agent's context that nobody can trace is indistinguishable

@@ -40,6 +40,8 @@ func (s State) key(msg tea.KeyPressMsg, e Env) (State, Out) {
 		return s.dropSaid(e)
 	case msg.Code == 'n' || msg.Code == 'N':
 		return s.newFact(e), Out{}
+	case msg.Code == 'g' || msg.Code == 'G':
+		return s.readGates(e)
 	case msg.Code == 'p' || msg.Code == 'P':
 		return s.pauseFact(e), Out{}
 	}

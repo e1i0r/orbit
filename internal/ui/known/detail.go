@@ -220,6 +220,7 @@ func shortFrom(f knowledge.Rule, e Env) string {
 		knowledge.FromProduction: p.T("knowledge.by_prod", "production"),
 		knowledge.FromDocs:       p.T("knowledge.by_docs", "the project"),
 		knowledge.FromHistory:    p.T("knowledge.by_history", "the history"),
+		knowledge.FromGates:      p.T("knowledge.by_gates", "this repo's gates"),
 	}[f.Source]
 }
 

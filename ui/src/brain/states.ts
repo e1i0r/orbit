@@ -59,5 +59,6 @@ export const from: Record<string, string> = {
   "from an incident": "production",
   "the project already said it": "the project",
   "the history says so": "the history",
+  "what this repo enforces": "this repo's gates",
   unsourced: "nowhere",
 };

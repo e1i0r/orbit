@@ -124,6 +124,13 @@ type Options struct {
 	// the board and the state root, for the screen that lists it whole.
 	KnowsAll func() []knowledge.Rule
 
+	// RepoGates offers a rule for each thing a checkout already refuses
+	// work over — the commands its own pull requests have to pass — and
+	// answers with how many were not already waiting. It is the one reading
+	// the window offers a key for, because it is the one that asks no model
+	// and spends nothing.
+	RepoGates func(repo string) (int, error)
+
 	// RepoFolders are the top-level folders of one checkout, and RepoChecks
 	// the commands it already runs on itself. The form that writes a rule
 	// offers both rather than asking somebody to remember them: a path
