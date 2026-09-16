@@ -34,15 +34,17 @@ const (
 	RuleOff    = "off"
 	RuleOn     = "on"
 	// RuleSkipped is somebody getting past it this once, which leaves it
-	// applying. RuleFailed is the rule doing its job: a gate refusing work
-	// over it.
-	//
-	// A gate that passed is not written down. A rule that works is silent
-	// and a rule that is in the way is not, so what is worth keeping is the
-	// friction — and a row per passing gate per phase per run would bury it
-	// under what nobody needs to read.
+	// applying.
 	RuleSkipped = "skipped"
-	RuleFailed  = "failed"
+	// RuleFailed is the rule doing its job: a gate refusing work over it.
+	//
+	// It is never a row of this table. A gate that refuses already writes
+	// gate.failed against the task, with the rule's name on it, so a second
+	// copy here would be a write on every failing gate of every run — kept
+	// in two places and wrong in one of them the first time something went
+	// half way. The name is here because the reading that folds the two
+	// together has to call it something.
+	RuleFailed = "failed"
 )
 
 // A RuleTurn is one thing that happened to one rule.

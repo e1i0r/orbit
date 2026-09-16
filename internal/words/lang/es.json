@@ -4569,6 +4569,10 @@
       "source": "say something in the supervisor thread",
       "value": "di algo en el hilo del supervisor"
     },
+    "verb.say.by": {
+      "source": "who said it; the default is you",
+      "value": "quién lo dijo; por defecto, vos"
+    },
     "verb.say.text": {
       "source": "what to say",
       "value": "qué decir"
@@ -4880,6 +4884,10 @@
     "verb.rules.correct.text": {
       "source": "the rule as you would rather it read",
       "value": "la regla como preferirías que dijera"
+    },
+    "verb.rules.moved": {
+      "source": "{rule} now applies {where}: {text}",
+      "value": "{rule} ahora aplica {where}: {text}"
     },
     "verb.rules.corrected": {
       "source": "{rule} now reads: {text}",

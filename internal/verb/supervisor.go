@@ -22,9 +22,20 @@ func supervisorFamily() []Verb {
 			About: func(p *words.Printer) string {
 				return p.T("verb.say", "say something in the supervisor thread")
 			},
-			Takes: []Field{{Name: "text", Kind: Words, Needed: true, About: func(p *words.Printer) string {
-				return p.T("verb.say.text", "what to say")
-			}}},
+			Takes: []Field{
+				{Name: "text", Kind: Words, Needed: true, About: func(p *words.Printer) string {
+					return p.T("verb.say.text", "what to say")
+				}},
+				// Who said it, for a caller speaking on somebody's behalf: a
+				// channel carrying a message in from Telegram, a script
+				// seeding a thread. The thread is a conversation between
+				// several and a line with the wrong name on it is a line
+				// nobody can place afterwards.
+				{Name: "by", Kind: Named, About: func(p *words.Printer) string {
+					return p.T("verb.say.by",
+						"who said it; the default is you")
+				}},
+			},
 		},
 		{
 			Under: "supervisor",

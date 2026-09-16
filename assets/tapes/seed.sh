@@ -63,6 +63,12 @@ package ledger
 // Deliver is the endpoint the processor calls back on.
 func Deliver(orderID string, cents int) error { return Charge(orderID, cents) }
 EOF
+# The directory the migration rule is about. It is in shot: a rule narrowed to
+# a folder that is not in the checkout is refused, and refused on camera.
+mkdir -p migrations
+cat > migrations/0030_amount_minor.sql <<'EOF'
+ALTER TABLE ledger ADD COLUMN amount_minor BIGINT NOT NULL DEFAULT 0;
+EOF
 cat > invoice.go <<'EOF'
 package ledger
 
@@ -128,7 +134,7 @@ git add -A && git commit -qm "the checkout page"
 cd "$D"
 
 # ---- the tasks
-new() { "$ORBIT" new -repo "$CODE/$1" -id "$2" "$3" >/dev/null; }
+new() { "$ORBIT" board new -repo "$CODE/$1" "$2" "$3" >/dev/null; }
 
 new ledger   LED-4  "Charge() is not idempotent: a retried webhook charges twice"
 new ledger   LED-7  "drop the legacy amount_cents column"
@@ -185,7 +191,7 @@ PY
 
 # ---- the supervisor thread, written through the door that writes it: -by
 # names the author and no engine is called.
-say() { "$ORBIT" supervisor -by "$1" "$2" >/dev/null; }
+say() { "$ORBIT" supervisor say -by "$1" "$2" >/dev/null; }
 say operator   "PRs are written in English, however the task was written."
 say supervisor "Noted. I will write them in English."
 say operator   "Anything that drops a column or writes a migration stops for me, autopilot or not."
@@ -193,12 +199,33 @@ say supervisor "Understood. I have written that down against the ledger, so a ru
 say supervisor "LED-4 came back with one post per order and a test that fails without the guard. The report says the map is per process, which is true: two instances still double-charge. I opened #482 and left a note asking for a follow-up on the unique index."
 say operator   "Good. Do not touch the charges table without me."
 
+# ---- what the learning loop has to have in it to be worth a recording: a
+# tray with sentences waiting in it, and a rule somebody has already been
+# round the cycle with.
+#
+# Written through the doors that write them. A directive at a run is how a
+# sentence reaches the tray; skipping a gate is how a rule ends up waiting for
+# a decision; pausing one is how it stops applying. Nothing here reaches into
+# the record and writes a row.
+direct() { "$ORBIT" task direct -repo "$CODE/ledger" "$1" "$2" >/dev/null; }
+
+direct LED-7  "never merge without the tests passing"
+direct LED-9  "always name the migration after what it does, not after the ticket"
+
+# The one the review take is shot on. It was skipped at two different runs,
+# which is what sends it to be looked at, and then paused with the reason
+# somebody would actually write.
+"$ORBIT" task skip -repo "$CODE/ledger" LED-7 >/dev/null
+"$ORBIT" task skip -repo "$CODE/ledger" LED-11 >/dev/null
+"$ORBIT" rules pause -repo "$CODE/ledger" -rule d42b7f60 -task LED-11 \
+  -why "we are moving the migrations to a tool of their own this week" >/dev/null
+
 # ---- the dials the recordings are shot on
-"$ORBIT" settings engine claude >/dev/null
-"$ORBIT" settings model opus >/dev/null
+"$ORBIT" settings set engine claude >/dev/null
+"$ORBIT" settings set model opus >/dev/null
 # Written down rather than left to the default, so a take is the same take
 # whatever a later build decides the default is.
-"$ORBIT" settings theme frauddi >/dev/null
+"$ORBIT" settings set theme frauddi >/dev/null
 
 # ---- and a home with nothing in it, for the getting-started take: the state
 # root does not exist yet, and HOME is this directory so `orbit mcp install`

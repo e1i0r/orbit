@@ -14,10 +14,13 @@ package learn
 // and the command line is allowed to reach the rules but not the record.
 
 import (
+	"fmt"
+	"sort"
 	"time"
 
 	"github.com/e1i0r/orbit/internal/db"
 	"github.com/e1i0r/orbit/internal/knowledge"
+	"github.com/e1i0r/orbit/internal/record"
 	"github.com/e1i0r/orbit/internal/store"
 )
 
@@ -66,7 +69,18 @@ func Happened(s *store.Store, t Turn) error {
 }
 
 // History is everything that happened to one rule, oldest first.
+//
+// Two sources and one story. What somebody did to the rule is written down
+// here when they do it; what the rule did is already in the record, because a
+// gate that refuses work writes gate.failed against the task with the rule's
+// name on it. Copying those into a second table would be a write on every
+// failing gate of every run, kept in two places, and wrong in one of them the
+// first time something went half way.
 func History(s *store.Store, rule string) ([]Turn, error) {
+	if rule == "" {
+		return nil, nil
+	}
+
 	d, err := s.Record()
 	if err != nil {
 		return nil, err
@@ -83,6 +97,52 @@ func History(s *store.Store, rule string) ([]Turn, error) {
 			Rule: row.Rule, At: row.At, What: row.What, By: row.By, Was: row.Was,
 			Task: row.Task, Phase: row.Phase,
 		})
+	}
+
+	stopped, err := refusals(s, rule)
+	if err != nil {
+		return nil, err
+	}
+
+	out = append(out, stopped...)
+
+	sort.SliceStable(out, func(i, j int) bool { return out[i].At.Before(out[j].At) })
+
+	return out, nil
+}
+
+// refusals is every time this rule refused work, read off the record.
+//
+// Nobody is named on one: the gate ran on its own, and the task and the phase
+// are the whole of where it happened.
+func refusals(s *store.Store, rule string) ([]Turn, error) {
+	d, err := s.Record()
+	if err != nil {
+		return nil, err
+	}
+
+	ids, err := d.Tasks()
+	if err != nil {
+		return nil, err
+	}
+
+	var out []Turn
+
+	for _, id := range ids {
+		events, err := d.Events(id)
+		if err != nil {
+			return nil, fmt.Errorf("read what rule %s refused in task %s: %w", rule, id, err)
+		}
+
+		for _, e := range events {
+			if e.Kind != record.GateFailed || e.Data["rule"] != rule {
+				continue
+			}
+
+			out = append(out, Turn{
+				Rule: rule, At: e.At, What: Failed, Task: id, Phase: e.Phase,
+			})
+		}
 	}
 
 	return out, nil

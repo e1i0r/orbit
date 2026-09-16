@@ -109,7 +109,11 @@ led7 = [
     ev(112, "phase.tool_call", "implement", text='{"file_path":"migrations/0031_drop_amount_cents.sql"}', tool="Write"),
     ev(110, "gate.passed", "implement", text="go build ./...", gate="build"),
     ev(109, "phase.finished", "implement", text="Wrote the migration and took the column out of the model. It is a one-way change, so the review gate is where it should stop.", cost="0.24", attempt=1),
-    ev(108, "phase.waiting", "review", cause="dropping a column is not reversible; somebody has to say yes"),
+    # A gate a rule put there, and the rule's name on it: what the record has
+    # to carry for `orbit task skip` to know which rule it was getting past.
+    ev(108, "gate.failed", "review", text="migrations/0031_drop_amount_cents.sql",
+       gate="Anything that drops a column or writes a migration stops for a person",
+       rule="d42b7f60", exit="1"),
 ]
 
 # ---------------------------------------------------------------- LED-9
@@ -140,7 +144,15 @@ chk2 = [
 # ---------------------------------------------------------------- to do
 # Nothing but the line that wrote them down.
 
-led11 = [ev(60, "task.created", text="the reconciliation job double-counts refunds\n\nA refund lands as its own row and is also subtracted from the charge.")]
+led11 = [
+    ev(60, "task.created", text="the reconciliation job double-counts refunds\n\nA refund lands as its own row and is also subtracted from the charge."),
+    ev(40, "task.started", attempt=1),
+    ev(40, "phase.started", "implement", engine="claude", model="opus", attempt=1),
+    ev(36, "phase.tool_call", "implement", text='{"file_path":"migrations/0032_refund_rows.sql"}', tool="Write"),
+    ev(34, "gate.failed", "review", text="migrations/0032_refund_rows.sql",
+       gate="Anything that drops a column or writes a migration stops for a person",
+       rule="d42b7f60", exit="1"),
+]
 chk3 = [ev(45, "task.created", text="read the card brand from the token, not the PAN\n\nThe PAN is not ours to keep and the token already carries the brand.")]
 
 for task, events in [("LED-4", led4), ("LED-7", led7), ("LED-9", led9),
@@ -152,9 +164,12 @@ for task, events in [("LED-4", led4), ("LED-7", led7), ("LED-9", led9),
 # of key: value lines and the sentence as the body, which is the shape a
 # person reads in a pull request.
 
-def fact(path, scope, source, phrase, ref=None, at=None, check=None,
+def fact(path, scope, source, phrase, name, ref=None, at=None, check=None,
          stops=False, off=False, used=0, p=None, symbol=None, lang=None):
-    head = ["---", "scope: " + scope, "source: " + source]
+    # The name is fixed rather than coined, because a tape names one of these
+    # on a command line: a rule whose id changed on every re-seed would make
+    # the recording refer to nothing the second time it was shot.
+    head = ["---", "id: " + name, "scope: " + scope, "source: " + source]
     if ref:    head.append("ref: " + ref)
     if p:      head.append("path: " + p)
     if symbol: head.append("symbol: " + symbol)
@@ -173,24 +188,25 @@ STATE = D / "home" / "knowledge"
 LEDGER = CODE / "ledger" / ".orbit" / "knowledge"
 
 fact(STATE / "general" / "prs-are-written-in-english.md", "general", "human",
-     "Pull requests and commit messages are written in English, however the task was written.", used=14)
+     "Pull requests and commit messages are written in English, however the task was written.",
+     "a1f4c209", used=14)
 fact(STATE / "lang" / "go" / "never-discard-an-error.md", "lang", "human",
      "In Go, never discard an error with `_`. If it cannot be handled, wrap it and return it.",
-     lang="go", used=31)
+     "b7e33d81", lang="go", used=31)
 fact(LEDGER / "the-ledger-only-appends.md", "repo", "code",
      "The ledger only appends. `Write` inserts and nothing updates a posted row, so a correction is a new row and never an edit.",
-     used=9)
+     "c0a95e14", used=9)
 fact(LEDGER / "migrations-stop-for-a-person.md", "repo", "human",
      "Anything that drops a column or writes a migration stops for a person, autopilot or not.",
-     stops=True, check="! git diff --name-only | grep -q '^migrations/'", used=2)
+     "d42b7f60", stops=True, check="! git diff --name-only | grep -q '^migrations/'", used=2)
 fact(LEDGER / "money" / "round-half-to-even.md", "dir", "record",
      "Everything under money/ is in minor units and rounds half to even. A float in this directory is a bug.",
-     p="money", ref="LED-2", used=6)
+     "e81c3a55", p="money", ref="LED-2", used=6)
 fact(LEDGER / "charge-must-stay-idempotent.md", "symbol", "record",
      "Charge() is called from the webhook, which the processor retries with a new request id. It must stay idempotent on the order id.",
-     p="ledger.go", symbol="Charge", ref="LED-4", used=1)
+     "f39d0b72", p="ledger.go", symbol="Charge", ref="LED-4", used=1)
 fact(LEDGER / "the-test-suite-needs-postgres.md", "repo", "record",
      "The test suite needs a Postgres on :5432. Without it every test fails on connection refused, which is not the change's fault.",
-     ref="LED-9", off=True, used=3)
+     "0b6e24af", ref="LED-9", off=True, used=3)
 
 print("wrote 7 facts")

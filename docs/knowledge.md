@@ -266,6 +266,12 @@ A rule's file says what is true about it today. What it has been through only
 ever grows, so it is in SQLite: a history written into the file would leave a
 diff in your checkout every time a gate ran.
 
+Two sources and one story. What you did to a rule is written down when you do
+it; **what the rule did is already in the task's own record**, because a gate
+that refuses work writes `gate.failed` with the rule's name on it. Keeping a
+second copy would be a write on every failing gate of every run, held in two
+places and wrong in one of them the first time something went half way.
+
 ```bash
 orbit rules history -rule 875c38ec
 ```
