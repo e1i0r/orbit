@@ -86,6 +86,19 @@ Codex has no sandbox that opens the network without also granting writes, so a
 Codex phase asking for `network` alone is refused rather than run under a
 posture the record would describe wrongly.
 
+**Orbit's own tools are granted to every posture**, including the one that
+asks for nothing. They do not reach the checkout: they are the phase asking
+Orbit about Orbit, and [what a model may ask for](cli.md) is already curated —
+no pull request, no merge, no approving a library, no terminal handed over. A
+read-only phase telling Orbit something true about the code it just read is
+the posture working rather than a hole in it.
+
+It was missing until 2026-09-16, and the absence failed silently: a headless
+run refuses an un-allowed tool instead of asking, so a phase told in its
+prompt that it could reach Orbit tried, was denied without a word, and carried
+on from whatever text it had been handed. Every `orbit_learn` a run ever
+attempted went the same way.
+
 ## Defaults
 
 ```bash
