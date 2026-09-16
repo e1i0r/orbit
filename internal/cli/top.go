@@ -27,6 +27,7 @@ import (
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/quota"
+	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/supervisor"
 	"github.com/e1i0r/orbit/internal/ui"
@@ -175,6 +176,8 @@ func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 		RemoveConversation: func(id string) error { return supervisor.Remove(s, id) },
 		Knows:              knowsPort(s, dir),
 		KnowsAll:           knowsAllPort(r, s),
+		RepoFolders:        repo.Folders,
+		RepoChecks:         repo.Checks,
 		TurnFact:           turnFactPort(s),
 		ReplaceFact:        windowReplacePort(s),
 		RuleStory:          ruleStoryPort(s, spoken),
