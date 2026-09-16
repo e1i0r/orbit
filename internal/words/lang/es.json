@@ -5370,6 +5370,10 @@
     "knowledge.at_repo": {
       "source": "repo: {name}",
       "value": "repo: {name}"
+    },
+    "verb.knowledge.none": {
+      "source": "nothing is being told to a run about this code",
+      "value": "no se le está diciendo nada a una corrida sobre este código"
     }
   }
 }

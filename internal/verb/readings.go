@@ -20,11 +20,24 @@ import (
 	"github.com/e1i0r/orbit/internal/quota"
 )
 
-// known is everything Orbit has been told about the code.
+// known is everything a run is told about the code.
+//
+// What is told and not what is on disk: a rule paused or switched off
+// reaches no prompt and refuses no work, and a reading that listed it beside
+// the live ones would be telling a person — and, through the tool a model
+// calls, a model — that something is in force when it is not. The screen
+// that lists every rule whatever its state is `orbit rules`, which is where
+// one gets turned back on.
 func known(w World) (Out, error) {
-	facts, err := w.Facts()
+	all, err := w.Facts()
 	if err != nil {
 		return Out{}, err
+	}
+
+	facts := knowledge.InScope(all)
+	if len(facts) == 0 {
+		return Out{Said: w.Words().T("verb.knowledge.none",
+			"nothing is being told to a run about this code")}, nil
 	}
 
 	var b strings.Builder
