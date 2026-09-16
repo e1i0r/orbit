@@ -40,6 +40,13 @@ func table() []Command {
 		{Name: "reconcile", About: "read the board again"},
 		{Name: "top", Refused: true, Because: "you are already in it"},
 		{Name: "export", About: "write the record out"},
+		// A family about no task, which is what settings, rules, board,
+		// supervisor and knowledge are. Every one of them was a dead end
+		// on this menu: drawn, drilled into, and empty.
+		{Name: "settings", About: "every setting and what it is set to", Children: []Child{
+			{Name: "set", About: "change one", NeedsArgs: true},
+			{Name: "clear", About: "put one back", NeedsArgs: true},
+		}},
 	}
 
 	seen := map[string]bool{}

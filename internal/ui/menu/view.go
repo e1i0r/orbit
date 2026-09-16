@@ -24,9 +24,7 @@ func (s State) View(h, w int, e Env) []string {
 
 	es := s.entries(e)
 	if len(es) == 0 {
-		gone := e.Words.T("menu.gone", "the task this menu was opened on is no longer on the board")
-
-		return cells.Fill([]string{"", cells.Fit("  "+theme.Paint(theme.Dim).Render(gone), w)}, h)
+		return cells.Fill([]string{"", cells.Fit("  "+theme.Paint(theme.Dim).Render(s.nothing(e)), w)}, h)
 	}
 
 	out := make([]string, 0, h)
@@ -44,6 +42,21 @@ func (s State) View(h, w int, e Env) []string {
 	}
 
 	return cells.Fill(out, h)
+}
+
+// nothing is why the menu has no rows.
+//
+// Two reasons, and only one of them was ever said. A menu opened on a task
+// empties when that task leaves the board, which is the sentence below. A
+// menu opened on no task cannot empty for that reason, and saying it anyway
+// sent a reader looking for a task they never had — which is what five dead
+// ends on the board's own menu said for as long as they were dead ends.
+func (s State) nothing(e Env) string {
+	if s.task != "" {
+		return e.Words.T("menu.gone", "the task this menu was opened on is no longer on the board")
+	}
+
+	return e.Words.T("menu.empty", "there is nothing under this one")
 }
 
 // Title names the menu that is up: the two open on the same keystroke and
