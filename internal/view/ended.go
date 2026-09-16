@@ -44,13 +44,31 @@ func ranOut(t *Task, e record.Event) {
 	stamp(&t.Since, e.At)
 }
 
+// denied folds the ending a phase gets when it was refused what it needed
+// and left nothing behind.
+//
+// Read by its exit code alone this was a success, which is how a task that
+// did nothing came to sit in done. The state is its own for the reason
+// stateRanOut is: the task.failed that follows carries no phase, and what a
+// reader does about this is different from both of the others.
+func denied(t *Task, e record.Event) {
+	t.Phase = e.Phase
+	t.Cost += money(e.Data["cost"])
+	t.state = stateDenied
+	t.Reason = Reason{Key: ReasonDenied, Args: []Arg{
+		{Name: "phase", Value: e.Phase},
+		{Name: "tool", Value: e.Data["tool"]},
+	}}
+	stamp(&t.Since, e.At)
+}
+
 // failedRun folds the event internal/task writes for every way a run ends
 // badly, which is why where the fold already is decides what it means.
 func failedRun(t *Task, e record.Event) {
 	// One event, two situations, and internal/task writes the same
 	// thing for both from one function. Where the fold already is
 	// decides which this is.
-	if t.state == stateRanOut {
+	if t.state == stateRanOut || t.state == stateDenied {
 		// The phase already said why, and this event does not know:
 		// internal/task writes one task.failed for every way a run
 		// ends badly, so reading it as a failure here would throw away

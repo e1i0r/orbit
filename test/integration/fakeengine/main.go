@@ -53,6 +53,13 @@ type turn struct {
 	Cost     float64           `json:"cost"`
 	// Exit is what to leave with, for the scenario where an engine fails.
 	Exit int `json:"exit"`
+	// Refuse is the tool a headless run was denied, and saying so is the
+	// whole of what this turn does: it writes nothing and exits zero, which
+	// is what an engine does when the posture refuses it something.
+	//
+	// It is the case that cost a real task: the engine answers in prose
+	// that it could not, and read by its exit code alone that is a success.
+	Refuse string `json:"refuse"`
 	// RanOut is what a provider prints when the allowance is gone, and
 	// saying it is what makes this turn a run that ran out rather than one
 	// that broke.
@@ -114,6 +121,12 @@ func run() error {
 	if t.RanOut != "" {
 		fmt.Fprintln(os.Stderr, t.RanOut)
 		os.Exit(1)
+	}
+
+	// Before anything is written, because a turn that was refused wrote
+	// nothing: that is the half that makes it worth testing.
+	if t.Refuse != "" {
+		return refused(t, phase)
 	}
 
 	if err := apply(t); err != nil {

@@ -163,6 +163,10 @@ func (r phaseRun) once(ctx context.Context) (engine.Result, *gateRefusal, error)
 		return out, refused, err
 	}
 
+	if denied := r.denied(out); denied != "" {
+		return out, nil, r.wasDenied(out, denied)
+	}
+
 	if err := emit(r.store, r.task, phaseEnd(record.PhaseFinished, r.phase.Name, out, nil)); err != nil {
 		return out, nil, failed(r.store, r.task, err)
 	}

@@ -58,6 +58,7 @@ const (
 	EntryRelayed                          // another engine took the task on
 	EntryNeedsEngine                      // it ran out, and somebody picks who carries on
 	EntryNoEngine                         // it ran out, and nothing has anything left
+	EntryDenied                           // it was refused what it needed and wrote nothing
 	EntryLoopChecked                      // a turn of a loop, and what its checks answered
 	EntryApproved                         // a reader said yes to those libraries
 	EntryDecision                         // something was decided, and the decision is in the line
@@ -134,6 +135,8 @@ func (e Entry) What() EntryKind {
 		return EntryNeedsEngine
 	case record.TaskNoEngine:
 		return EntryNoEngine
+	case record.PhaseDenied:
+		return EntryDenied
 	case record.LoopChecked:
 		return EntryLoopChecked
 	case record.DependencyApproved:

@@ -77,3 +77,50 @@ func message(id string, block map[string]any) map[string]any {
 		},
 	}
 }
+
+// refused is a turn a headless run was denied: the tool call, the error that
+// came back, and a result that says so and exits zero.
+//
+// The shape is the one internal/engine reads — a tool_result block marked
+// is_error whose text says permission denied — and the wording is the
+// provider's own. It is what a real engine does when the posture refuses it
+// something and there is nobody to ask.
+func refused(t turn, phase string) error {
+	session := "fake-" + phase
+	call := "call_refused"
+
+	lines := []any{
+		map[string]any{"type": "system", "subtype": "init", "session_id": session},
+		message("msg_refused", map[string]any{
+			"type": "tool_use", "id": call, "name": t.Refuse,
+			"input": map[string]any{"file_path": "CONTRIBUTING.md"},
+		}),
+		map[string]any{
+			"type": "user",
+			"message": map[string]any{
+				"content": []any{map[string]any{
+					"type": "tool_result", "tool_use_id": call, "is_error": true,
+					"content": t.Refuse + ": permission denied",
+				}},
+			},
+		},
+		map[string]any{
+			"type": "result", "subtype": "success", "session_id": session,
+			"result": "I could not write it: a permission prompt was not approved. " +
+				"Could you approve it and ask me again?",
+		},
+	}
+
+	for _, line := range lines {
+		body, err := json.Marshal(line)
+		if err != nil {
+			return fmt.Errorf("encode a line of the stream: %w", err)
+		}
+
+		if _, err := fmt.Fprintln(os.Stdout, string(body)); err != nil {
+			return fmt.Errorf("write a line of the stream: %w", err)
+		}
+	}
+
+	return nil
+}

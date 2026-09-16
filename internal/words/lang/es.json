@@ -5595,6 +5595,14 @@
       "source": "{engine} ran out: {phase} · no engine for another {back}",
       "value": "{engine} se quedó sin cuota: {phase} · sin motores por {back}"
     },
+    "reason.denied": {
+      "source": "{phase} was refused {tool} and wrote nothing",
+      "value": "a {phase} le negaron {tool} y no escribió nada"
+    },
+    "log.denied": {
+      "source": "refused, and wrote nothing",
+      "value": "denegada, y no escribió nada"
+    },
     "news.waiting": {
       "source": "waiting at a gate in {phase}",
       "value": "esperando en una puerta en {phase}"

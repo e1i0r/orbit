@@ -105,6 +105,7 @@ const (
 	stateContradicts                // task.contradicts: the change goes against a decision
 	stateNeedsEngine                // task.needs_engine: it ran out and somebody picks who carries on
 	stateNoEngine                   // task.no_engine: it ran out and nothing has anything left
+	stateDenied                     // phase.denied: it was refused what it needed and wrote nothing
 
 	// stateCount is not a state. It is how many there are, so a test can
 	// walk every one and fail when a new state arrives without a band.
@@ -282,7 +283,8 @@ func bandOfState(s state) Band {
 		return Running
 	case stateWaiting, statePhaseFailed, stateRanOut, stateFailed, stateTimedOut,
 		stateAbandoned, stateStuck, stateOverBudget, stateOverDiff,
-		stateNewDependency, stateContradicts, stateNeedsEngine, stateNoEngine:
+		stateNewDependency, stateContradicts, stateNeedsEngine, stateNoEngine,
+		stateDenied:
 		return NeedsYou
 	case stateCancelled, stateFinished:
 		return Done
@@ -305,7 +307,8 @@ func bandOfState(s state) Band {
 // belongs to something that is over.
 func inAttempt(s state) bool {
 	switch s {
-	case stateRunning, stateHeld, stateWaiting, statePhaseFailed, stateRanOut:
+	case stateRunning, stateHeld, stateWaiting, statePhaseFailed, stateRanOut,
+		stateDenied:
 		return true
 	default:
 		return false
