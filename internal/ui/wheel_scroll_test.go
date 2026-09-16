@@ -184,3 +184,39 @@ func marked(rows []string) string {
 
 	return ""
 }
+
+// TestWheelMovesTheSettingsTable. The table outgrew the body, so it is one of
+// the screens the wheel has to answer for — and it answers a notch at a time,
+// because a setting is three lines tall.
+func TestWheelMovesTheSettingsTable(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+	m = m.openSettings()
+
+	y := m.frame.Body.Y
+
+	down := m.wheel(tea.Mouse{X: 5, Y: y, Button: tea.MouseWheelDown})
+	if down.settings.Chosen() != 1 {
+		t.Errorf("a notch down put the cursor on row %d, want the second", down.settings.Chosen())
+	}
+
+	up := down.wheel(tea.Mouse{X: 5, Y: y, Button: tea.MouseWheelUp})
+	if up.settings.Chosen() != 0 {
+		t.Errorf("a notch up put the cursor on row %d, want the first", up.settings.Chosen())
+	}
+
+	// Far enough down that the table has to move, and the last dial is on
+	// the screen when it gets there.
+	rows := m.settingRowsList()
+	for range len(rows) {
+		m = m.wheel(tea.Mouse{X: 5, Y: y, Button: tea.MouseWheelDown})
+	}
+
+	if m.settingsOff() == 0 {
+		t.Fatalf("the table never scrolled in a body of %d rows", m.frame.Body.H)
+	}
+
+	whole := strings.Join(m.settingsRows(m.frame.Body.H, m.frame.Body.W), "\n")
+	if !strings.Contains(whole, rows[len(rows)-1].Key) {
+		t.Errorf("the wheel reached the last dial and the screen does not draw it")
+	}
+}

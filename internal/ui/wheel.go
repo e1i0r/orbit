@@ -174,6 +174,19 @@ func (m Model) wheel(e tea.Mouse) Model {
 		return m.pickEngineRow(d)
 	}
 
+	if m.screen == screenSettings {
+		// One setting a notch, and not three lines. A setting is its name,
+		// the sentence under it and the blank between, so counted in lines
+		// the wheel crawled through a single dial; counted in settings it
+		// covers about the distance three plain rows do everywhere else.
+		d := 1
+		if up {
+			d = -1
+		}
+
+		return m.wheelSettings(d)
+	}
+
 	if m.screen == screenHelp {
 		// The sheet scrolls under the wheel by the same rows the arrows
 		// move — one distance for the hand, whatever it is holding.

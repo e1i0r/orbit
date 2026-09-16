@@ -11,7 +11,7 @@ func TestTurningADialWritesIt(t *testing.T) {
 	e := env(t, f)
 
 	// row 1 is autopilot: off, on.
-	s := Open(e).Point(1)
+	s := Open(e).Point(1, e)
 
 	if out := s.Cycle(1, e); out.Said == "" {
 		t.Error("turning the dial said nothing")

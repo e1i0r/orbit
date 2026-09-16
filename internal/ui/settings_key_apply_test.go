@@ -201,7 +201,7 @@ func TestSettingsKeyEditingAndNavigation(t *testing.T) {
 
 	// 1. Navigating with j/k and arrow keys wraps at both ends.
 	rows := m.settingRowsList()
-	m.settings = m.settings.Point(0)
+	m.settings = m.settings.Point(0, m.settingsEnv())
 	next, _ := m.settingsKey(tea.KeyPressMsg{Code: 'k', Text: "k"})
 
 	m = asModel(t, next)
@@ -255,7 +255,7 @@ func TestSettingsKeyEditingAndNavigation(t *testing.T) {
 	}
 
 	// 4. Enter submits a typed value; left/right cycle an option.
-	m.settings = m.settings.Point(0)
+	m.settings = m.settings.Point(0, m.settingsEnv())
 	m.settings = m.settings.Edit("es")
 	next, _ = m.settingsKey(tea.KeyPressMsg{Code: tea.KeyEnter})
 
@@ -302,7 +302,7 @@ func TestSettingsKeyWithoutASettingsPort(t *testing.T) {
 
 func TestCycleSettingOutOfRangeIsANoOp(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m.settings = m.settings.Point(-1)
+	m.settings = m.settings.Point(-1, m.settingsEnv())
 	next, cmd := m.cycleSetting(1)
 
 	got := asModel(t, next)
@@ -313,7 +313,7 @@ func TestCycleSettingOutOfRangeIsANoOp(t *testing.T) {
 
 func TestSettingsSubmitOutOfRangeClearsEditing(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m.settings = m.settings.Point(999).Edit("")
+	m.settings = m.settings.Point(999, m.settingsEnv()).Edit("")
 
 	next, _ := m.settingsKey(tea.KeyPressMsg{Code: tea.KeyEnter})
 

@@ -13,6 +13,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/ui/keymap"
+	"github.com/e1i0r/orbit/internal/ui/layout"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -30,6 +31,11 @@ type State struct {
 	// os.ReadDir per frame — and, worse, two readings taken at two moments
 	// deciding the same dial.
 	flows []string
+	// off is the first line of the table on show. Lines and not rows,
+	// because a click lands on a line: the mouse has to add back exactly
+	// what the drawing took off, and a count of rows would have to be
+	// multiplied out at both ends by whoever remembered to.
+	off int
 }
 
 // Env is what this screen needs of the world, and nothing more. It is built
@@ -39,6 +45,12 @@ type State struct {
 type Env struct {
 	Words *words.Printer
 	Keys  keymap.Keys
+	// Frame is the room the window lends it. The table is taller than the
+	// screen, so how many lines there are to scroll into is part of every
+	// gesture and not only of drawing: a cursor moved is a cursor that has
+	// to be brought back on screen, and that cannot be worked out at draw
+	// time from a height the key press already threw away.
+	Frame layout.Frame
 	Store Store
 	Dials Dials
 	// Engines, Models and Efforts are the build's catalogue, which this

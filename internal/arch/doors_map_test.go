@@ -78,7 +78,7 @@ var doors = map[string][]string{
 	// The engines and their quota, as the ports answer: one file, because
 	// it is a vocabulary and not an action.
 	"internal/ui/roster":   {"roster.go"},
-	"internal/ui/settings": {"apply.go", "key.go", "rows.go", "settings.go", "view.go"},
+	"internal/ui/settings": {"apply.go", "key.go", "rows.go", "scroll.go", "settings.go", "view.go"},
 	"internal/ui/spoken":   {"spoken.go"},
 	// The supervisor's screen: two doors. supervisor.go is the screen
 	// itself — State, Env, Out, opening it, reading the record, drawing it

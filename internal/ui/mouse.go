@@ -226,7 +226,7 @@ func (m Model) leftClick(t point.Target) (tea.Model, tea.Cmd) {
 
 		return m.jumpToBand(band)
 	case point.SettingsRow:
-		m.settings = m.settings.Point(t.Pane)
+		m.settings = m.settings.Point(t.Pane, m.settingsEnv())
 
 		rows := m.settingRowsList()
 		if t.Pane >= 0 && t.Pane < len(rows) {

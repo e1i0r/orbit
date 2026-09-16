@@ -124,8 +124,11 @@ var windowLayers = map[string][]string{
 	// state, is handed what it needs in an Env, and asks the window for the
 	// rest in an Out. It writes to the settings file through a port the
 	// window passes and reaches nothing else.
-	"internal/ui/settings": {"internal/flow", "internal/ui/cells", "internal/ui/keymap", "internal/ui/theme", "internal/words"},
-	"internal/ui/spoken":   {},
+	"internal/ui/settings": {
+		"internal/flow", "internal/ui/cells", "internal/ui/keymap",
+		"internal/ui/layout", "internal/ui/theme", "internal/words",
+	},
+	"internal/ui/spoken": {},
 	// internal/ui/theme is the whole vocabulary of colour: the seven roles,
 	// the palettes that answer them, the paper each surface is drawn on, and
 	// the lexer that decides which role a run of code takes. It imports

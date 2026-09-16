@@ -37,7 +37,7 @@ func contains(whole, part string) bool { return strings.Contains(whole, part) }
 // it offers is not what matters — what is in the line is.
 func TestTheLineIsDrawnWhereThePillsWere(t *testing.T) {
 	e := env(t, newFile())
-	rows := Open(e).Point(0).Edit("por-escribir").View(40, 100, e)
+	rows := Open(e).Point(0, e).Edit("por-escribir").View(40, 100, e)
 
 	whole := strings.Join(rows, "\n")
 	if !strings.Contains(whole, "por-escribir") {

@@ -148,14 +148,20 @@ func (m Model) hitStart(x, y int) point.Target {
 	return point.Target{}
 }
 
+// hitSettings is the row of the table under the pointer, and the pill of it
+// if the pointer is on one.
+//
+// The table scrolls, so how far it has been scrolled is added back before
+// the line is divided into rows. Without it a click lands on whichever
+// setting used to be drawn there, which is the one gesture in this window
+// that turns a dial nobody pointed at.
 func (m Model) hitSettings(x, y int) point.Target {
 	line, ok := m.frame.BodyRow(y)
-	if !ok || line < 4 {
+	if !ok || line < settingsHead {
 		return point.Target{}
 	}
 
-	offset := line - 4
-	rowIdx := offset / 3
+	rowIdx := (line - settingsHead + m.settingsOff()) / settingsRowLines
 
 	rows := m.settingRowsList()
 	if rowIdx >= 0 && rowIdx < len(rows) {
@@ -183,6 +189,15 @@ func (m Model) hitSettings(x, y int) point.Target {
 
 	return point.Target{}
 }
+
+// settingsHead is how many lines the settings screen's title takes, and
+// settingsRowLines how tall one setting is drawn. They are the same two
+// numbers internal/ui/settings scrolls by; a click measured against
+// different ones would land on a different row than the one drawn.
+const (
+	settingsHead     = 4
+	settingsRowLines = 3
+)
 
 func (m Model) hitRepos(x, y int) point.Target {
 	line, ok := m.frame.BodyRow(y)

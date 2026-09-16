@@ -31,7 +31,7 @@ func TestTypingIntoARow(t *testing.T) {
 	f := newFile()
 	e := env(t, f)
 
-	s := Open(e).Point(2) // unread-cap
+	s := Open(e).Point(2, e) // unread-cap
 
 	s, _ = s.Key(tea.KeyPressMsg{Code: 'e', Text: "e"}, e)
 	if !s.Editing() {
@@ -64,7 +64,7 @@ func TestALineAbandonedChangesNothing(t *testing.T) {
 	f := newFile()
 	e := env(t, f)
 
-	s := Open(e).Point(2).Edit("999")
+	s := Open(e).Point(2, e).Edit("999")
 
 	s, out := s.Key(tea.KeyPressMsg{Code: tea.KeyEscape}, e)
 	if s.Editing() || out.Said != "" {
@@ -89,7 +89,7 @@ func TestEveryWayToTurnADial(t *testing.T) {
 		f := newFile()
 		e := env(t, f)
 
-		if _, out := Open(e).Point(1).Key(k, e); out.Said == "" {
+		if _, out := Open(e).Point(1, e).Key(k, e); out.Said == "" {
 			t.Errorf("%v turned nothing", k)
 		}
 	}
@@ -137,7 +137,7 @@ func TestAKeyThatMeansNothingHereDoesNothing(t *testing.T) {
 func TestALineOnARowThatIsNotThereCloses(t *testing.T) {
 	e := env(t, newFile())
 
-	s, out := Open(e).Point(999).Edit("x").Key(tea.KeyPressMsg{Code: tea.KeyEnter}, e)
+	s, out := Open(e).Point(999, e).Edit("x").Key(tea.KeyPressMsg{Code: tea.KeyEnter}, e)
 	if s.Editing() || out.Said != "" {
 		t.Errorf("saving a row that is not there said %q and left editing %v", out.Said, s.Editing())
 	}
@@ -147,7 +147,7 @@ func TestALineOnARowThatIsNotThereCloses(t *testing.T) {
 func TestTurningADialThatIsNotThere(t *testing.T) {
 	e := env(t, newFile())
 
-	if out := Open(e).Point(999).Cycle(1, e); out.Said != "" || out.Dials != nil {
+	if out := Open(e).Point(999, e).Cycle(1, e); out.Said != "" || out.Dials != nil {
 		t.Errorf("turning a row that is not there answered %+v", out)
 	}
 }
@@ -156,7 +156,7 @@ func TestTurningADialThatIsNotThere(t *testing.T) {
 func TestTypingRunesIntoTheLine(t *testing.T) {
 	e := env(t, newFile())
 
-	s := Open(e).Point(0).Edit("")
+	s := Open(e).Point(0, e).Edit("")
 	for _, r := range "es" {
 		s, _ = s.Key(tea.KeyPressMsg{Code: r, Text: string(r)}, e)
 	}
