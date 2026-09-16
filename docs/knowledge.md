@@ -415,6 +415,32 @@ Nothing comes back on its own. A paused rule waits until you return to it:
 maybe it made sense, maybe you were wrong, maybe you want it said differently.
 Orbit does not guess.
 
+## How much of it a run is told
+
+Every rule that reaches the code a phase is about goes into that phase's
+prompt, up to forty of them. Past forty the list is cut, and what is cut is
+decided rather than incidental:
+
+1. **Every rule a gate enforces stays.** Those are the ones that send the
+   work back. A phase that never read one walks into it, and then the run
+   costs an attempt to learn something the prompt could have said.
+2. **Then the ones closest to the code being worked in** — the file, then the
+   directory, then the checkout, then the language, then everything.
+
+What is kept is still written widest first, because the agent reads them in
+order and the narrowest rule has to be the last thing it reads.
+
+**And the prompt says it was cut**, with the number. A prompt that quietly
+dropped half of what Orbit knows would be one that claims to be the whole of
+it — an agent told the list is short can ask for the rest; an agent told
+nothing cannot know there was anything to ask about.
+
+This is one of the few things in Orbit that grows on its own: it learns four
+ways and keeps everything it is told. Without a ceiling, every phase of every
+task pays for the whole store in tokens before it reads a line of code, and
+the rules at the end of a long list are the ones a model with a full context
+stops looking at — silently.
+
 ## Where all of this lives
 
 Two places, and the question is one: **does it travel?**
