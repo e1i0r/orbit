@@ -144,3 +144,86 @@ func TestNoMoreThanAHandfulAreOffered(t *testing.T) {
 		t.Errorf("twenty steps offered %d gates, want the cap of %d", len(got), atMostGates)
 	}
 }
+
+// TestAHookIsAGate. It runs on every commit on the machine of whoever
+// installed it, which is a rule the project is already keeping.
+func TestAHookIsAGate(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, ".pre-commit-config.yaml"),
+		[]byte("repos: []\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	got := Gates(root)
+	if len(got) != 1 || got[0].Command != "pre-commit run --all-files" {
+		t.Errorf("a pre-commit config brought %+v", got)
+	}
+}
+
+// TestALinterConfigIsAGate. A project does not carry a .golangci.yml by
+// accident: somebody configured that tool for this code, and the rule is
+// that the code passes it.
+func TestALinterConfigIsAGate(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, ".golangci.yml"), []byte("linters:\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	got := Gates(root)
+	if len(got) != 1 || got[0].Command != "golangci-lint run" {
+		t.Errorf("a linter config brought %+v", got)
+	}
+
+	if got[0].Where != ".golangci.yml" {
+		t.Errorf("it does not say which file said so: %q", got[0].Where)
+	}
+}
+
+// TestTheStrongestClaimWins.
+//
+// A workflow running a linter and that linter's own config are the same
+// command twice. The workflow is the one to keep — it is the reading that
+// says something actually refuses work — and the config then adds nothing.
+func TestTheStrongestClaimWins(t *testing.T) {
+	root := checkedIn(t, "check.yml", `
+on: [pull_request]
+jobs:
+  check:
+    steps:
+      - uses: golangci/golangci-lint-action@v9
+`)
+
+	if err := os.WriteFile(filepath.Join(root, ".golangci.yml"), []byte("linters:\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	got := Gates(root)
+	if len(got) != 1 {
+		t.Fatalf("one command read twice was offered %d times: %+v", len(got), got)
+	}
+
+	if got[0].Where != ".github/workflows/check.yml" {
+		t.Errorf("the weaker reading won: %q", got[0].Where)
+	}
+}
+
+// TestALocalHookIsNotAGate.
+//
+// .git/hooks does not travel. A rule written inside the repository about a
+// hook only this machine has is a rule that refuses work for everybody who
+// clones the project and has nothing to run.
+func TestALocalHookIsNotAGate(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, ".git", "hooks"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(filepath.Join(root, ".git", "hooks", "pre-commit"),
+		[]byte("#!/bin/sh\nmake check\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	if got := Gates(root); len(got) != 0 {
+		t.Errorf("a hook that does not travel brought %+v", got)
+	}
+}

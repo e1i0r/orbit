@@ -198,10 +198,15 @@ it. So these arrive with `stops` and their command already set — and still
 wait in the tray, because a project running something is not the same as
 wanting Orbit to send work back over it.
 
-It costs nothing and asks no model: a workflow either parses or it does not.
-A workflow nothing goes through — a release, a schedule — brings nothing,
-because a rule out of one would refuse work over a command that has never
-refused any.
+Three readings, strongest first and deduplicated by command:
+
+| | the claim |
+| --- | --- |
+| `.github/workflows/` | what a pull request has to pass. The strongest there is: a team that stopped meaning it would have a red branch. A workflow nothing goes through — a release, a schedule — brings nothing. |
+| `.pre-commit-config.yaml`, `.husky/pre-commit`, `lefthook.yml` | what runs before a commit lands. `.git/hooks` is left alone on purpose: it does not travel, and a rule about a hook only your machine has refuses work for everybody who clones the project and has nothing to run. |
+| `.golangci.yml`, `ruff.toml`, `.eslintrc*`, `.rubocop.yml`, `biome.json` | what the project is configured to lint with. The weakest: a file saying how a tool is set up does not say anything runs it — and when something does, the reading above already brought that command. |
+
+It costs nothing and asks no model: these files either parse or they do not.
 
 **The project already said it.** A repository with two years behind it has half
 of this written down — the CONTRIBUTING, the README, and the notes each engine

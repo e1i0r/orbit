@@ -69,21 +69,104 @@ var byAction = map[string]string{
 }
 
 // Gates is what this checkout already refuses work over.
+//
+// Three readings, strongest first, deduplicated by command. What a pull
+// request has to pass is the strongest claim there is — a team that stopped
+// meaning it would have a red branch. A hook is next: it runs on every
+// commit, on the machines of whoever installed it. A linter's configuration
+// is last and is the weakest of the three, because a file saying how a tool
+// is configured does not say anything runs it — and when something does, the
+// stronger reading already brought that command and this one adds nothing.
 func Gates(root string) []Gate {
 	var out []Gate
 
 	seen := map[string]bool{}
 
-	for _, file := range workflows(root) {
-		for _, g := range gatesIn(root, file) {
-			if seen[g.Command] || len(out) == atMostGates {
-				continue
-			}
-
-			seen[g.Command] = true
-
-			out = append(out, g)
+	for _, g := range append(append(fromWorkflows(root), fromHooks(root)...), fromLinters(root)...) {
+		if seen[g.Command] || len(out) == atMostGates {
+			continue
 		}
+
+		seen[g.Command] = true
+
+		out = append(out, g)
+	}
+
+	return out
+}
+
+// fromWorkflows is every command a pull request has to pass.
+func fromWorkflows(root string) []Gate {
+	var out []Gate
+
+	for _, file := range workflows(root) {
+		out = append(out, gatesIn(root, file)...)
+	}
+
+	return out
+}
+
+// byHook is the files that say a repository runs something before a commit
+// lands, and what running it means.
+//
+// .git/hooks is not among them, deliberately. It does not travel: a rule
+// written inside the repository about a hook only this machine has is a rule
+// that refuses work for everybody who clones the project and has nothing to
+// run.
+var byHook = []struct{ file, command string }{
+	{".pre-commit-config.yaml", "pre-commit run --all-files"},
+	{".pre-commit-config.yml", "pre-commit run --all-files"},
+	{".husky/pre-commit", "sh .husky/pre-commit"},
+	{"lefthook.yml", "lefthook run pre-commit"},
+}
+
+// fromHooks is what the repository runs before a commit lands.
+func fromHooks(root string) []Gate {
+	var out []Gate
+
+	for _, hook := range byHook {
+		if _, err := os.Stat(filepath.Join(root, hook.file)); err != nil {
+			continue
+		}
+
+		out = append(out, Gate{Command: hook.command, Where: hook.file})
+	}
+
+	return out
+}
+
+// byLinter is the configuration files that name a linter, and the command
+// that runs it.
+//
+// The file is the claim. A project does not carry a .golangci.yml by
+// accident: somebody configured that tool for this code, and the rule is
+// that the code passes it. What the file says inside — which checks are on —
+// is the tool's business and not Orbit's.
+var byLinter = []struct{ file, command string }{
+	{".golangci.yml", "golangci-lint run"},
+	{".golangci.yaml", "golangci-lint run"},
+	{".golangci.toml", "golangci-lint run"},
+	{"ruff.toml", "ruff check ."},
+	{".ruff.toml", "ruff check ."},
+	{".rubocop.yml", "rubocop"},
+	{"biome.json", "npx biome check ."},
+	{"eslint.config.js", "npx eslint ."},
+	{"eslint.config.mjs", "npx eslint ."},
+	{".eslintrc.json", "npx eslint ."},
+	{".eslintrc.js", "npx eslint ."},
+	{".eslintrc.yml", "npx eslint ."},
+}
+
+// fromLinters is what the repository is configured to lint with.
+func fromLinters(root string) []Gate {
+	var out []Gate
+
+	for _, one := range byLinter {
+		if _, err := os.Stat(filepath.Join(root, one.file)); err != nil {
+			continue
+		}
+
+		out = append(out, Gate{Command: one.command, Where: one.file})
 	}
 
 	return out
