@@ -13,8 +13,6 @@ package known
 // apart. What is written down is the friction.
 
 import (
-	"strconv"
-
 	"github.com/e1i0r/orbit/internal/knowledge"
 	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/prose"
@@ -102,7 +100,6 @@ func (s State) figures(f knowledge.Rule, e Env) []prose.Stat {
 		{Label: p.T("knowledge.card_state", "status"), Value: stateName(at, e), Role: bandRole(at)},
 		{Label: p.T("knowledge.card_said_by", "created by"), Value: shortFrom(f, e), Role: theme.Accent},
 		{Label: p.T("knowledge.card_since", "created"), Value: cells.OrDef(when(f.At), "—"), Role: theme.Accent},
-		{Label: p.T("knowledge.card_told", "hits"), Value: strconv.Itoa(f.Used), Role: theme.Live},
 		{Label: p.T("knowledge.card_travels", "reach"), Value: travels, Role: theme.OK},
 	}
 }

@@ -53,10 +53,15 @@ type Rule struct {
 	// Ref names what the rule came out of — a task, a decision, an
 	// incident — so that a reader can go and see for themselves.
 	Ref string
-	// At is when it entered, and Used is how many times it has been told.
-	// Both are for the person deciding whether to keep it.
-	At   time.Time
-	Used int
+	// At is when it entered, for the person deciding whether to keep it.
+	//
+	// There was a count beside it once — how many times the rule had been
+	// told — and nothing ever incremented it, so every rule's card read
+	// "hits 0" for ever and a reader concluded the rule had never been
+	// used. What answers that question is Story, in sentences: a rule that
+	// works perfectly never stops anything, so a count of nothing means two
+	// opposite things and no number tells them apart.
+	At time.Time
 	// State is where the rule stands: applying, paused, or switched off.
 	State State
 	// Why is the reason it was paused, in the words of whoever paused it.

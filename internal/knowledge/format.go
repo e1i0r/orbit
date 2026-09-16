@@ -14,7 +14,6 @@ package knowledge
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -41,8 +40,14 @@ const (
 	keyState  = "state"
 	keyWhy    = "why"
 	keyReview = "review"
-	keyUsed   = "used"
 )
+
+// A key nothing here names is read and dropped, which is what lets a file
+// written by an older Orbit be read by this one.
+//
+// `used:` is the one that matters today. Orbit wrote a count under it for a
+// while and never incremented it, so rules on disk carry a zero that meant
+// nothing; this parser walks past it and the next write leaves it out.
 
 var kindNames = map[Kind]string{
 	General: "general", Language: "lang", Repo: "repo",
@@ -94,10 +99,6 @@ func encode(f Rule) string {
 		line(&b, keyReview, "true")
 	}
 
-	if f.Used > 0 {
-		line(&b, keyUsed, strconv.Itoa(f.Used))
-	}
-
 	b.WriteString(fence + "\n\n" + strings.TrimSpace(f.Phrase) + "\n")
 
 	return b.String()
@@ -132,7 +133,6 @@ func decode(body, where, repo string) (Rule, error) {
 	f.State = stateNamed(head)
 	f.Why = head[keyWhy]
 	f.Review = head[keyReview] == "true"
-	f.Used, _ = strconv.Atoi(head[keyUsed]) //nolint:errcheck // a count nobody wrote is none
 
 	if at := head[keyAt]; at != "" {
 		when, err := time.Parse(time.RFC3339, at)

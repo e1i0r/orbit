@@ -88,8 +88,15 @@ key.
 ```
 
 Everything that cannot fit on one line of a list is here, where there is room
-for it: where the rule came from, how often it has been told, whether it
-travels with the repository or stays on this machine, and the friction.
+for it: where the rule came from, whether it travels with the repository or
+stays on this machine, and the friction.
+
+There is no count of how often it has been told, and there was one for a
+while. It was never incremented, so every rule read `hits 0` whatever it had
+done — but a real number would not have helped either: a rule that works
+perfectly never stops anything, so a count of nothing means two opposite
+things and no number tells them apart. What the card says instead is what the
+rule has put you through, in sentences.
 
 ### Writing one
 
@@ -469,9 +476,9 @@ names — so the browser, the cockpit and the command line cannot drift in what
 pausing a rule means or in what the record says happened.
 
 A rule reaches the page whole: its name, its sentence, where it reaches, the
-path as a form types it, where it came from, since when, how often it has
-been told, what it was paused for, and the one word for where it stands. A
-page handed less than that could list a rule and not act on it.
+path as a form types it, where it came from, since when, what it was paused
+for, and the one word for where it stands. A page handed less than that could
+list a rule and not act on it.
 
 **A verb no page names is a verb nobody can do in a browser.** That is
 checked, in `internal/arch`, against the declaration — and the reasons the

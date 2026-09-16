@@ -111,12 +111,16 @@ func TestEditingIsRefusedWhenThereIsNowhereToSaveIt(t *testing.T) {
 	}
 }
 
-// TestAFactSaysHowMuchUseItHasHadAndWhereItCameFrom. A sentence in the
-// agent's context that nobody can trace is indistinguishable from one the
-// model made up.
-func TestAFactSaysHowMuchUseItHasHadAndWhereItCameFrom(t *testing.T) {
+// TestAFactSaysWhereItCameFrom. A sentence in the agent's context that
+// nobody can trace is indistinguishable from one the model made up.
+//
+// It used to say how much use it had had as well, out of a count nothing
+// ever incremented — so the card read "hits 0" for every rule Orbit has,
+// however often it had been told. What answers that question is the story
+// under it, in sentences.
+func TestAFactSaysWhereItCameFrom(t *testing.T) {
 	told := known("the api refuses a body over 1MB", knowledge.Scope{Kind: knowledge.General})
-	told.Source, told.Ref, told.Used = knowledge.FromCode, "internal/api/limits.go", 12
+	told.Source, told.Ref = knowledge.FromCode, "internal/api/limits.go"
 	told.At = time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
 
 	s, e := onScreen(t, told)
@@ -125,7 +129,7 @@ func TestAFactSaysHowMuchUseItHasHadAndWhereItCameFrom(t *testing.T) {
 	// on the sentence; the question "can I trust this" is asked of one rule
 	// at a time, and this is where it is answered.
 	drawn := ansi.Strip(strings.Join(s.openDetail(e).View(30, 96, e), "\n"))
-	for _, want := range []string{"the code", "2026-09-01", "HITS"} {
+	for _, want := range []string{"the code", "2026-09-01"} {
 		if !strings.Contains(drawn, want) {
 			t.Errorf("the rule does not say %q:\n%s", want, drawn)
 		}

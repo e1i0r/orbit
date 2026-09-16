@@ -5063,10 +5063,6 @@
       "source": "created",
       "value": "creada el"
     },
-    "knowledge.card_told": {
-      "source": "hits",
-      "value": "usos"
-    },
     "knowledge.card_travels": {
       "source": "reach",
       "value": "alcance"
