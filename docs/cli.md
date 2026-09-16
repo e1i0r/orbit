@@ -50,6 +50,50 @@ happened while you were away.
 
 Writing a task and paying to run it stay two separate decisions.
 
+## Orbit by chat
+
+```bash
+orbit chat
+```
+
+A fifth way in, for a screen too small to draw a board on. You type a command
+and it answers:
+
+```
+/board
+  ACME-3  needs you   claude ran out: implement · back in 1h
+  ACME-7  running     implement · $0.42
+
+/task start ACME-3 -engine codex
+  started ACME-3 on codex
+
+/board new -id ACME-12 "the webhook retries on 5xx"
+  ACME-12 written down against payments
+```
+
+**The words are the ones you already know.** `/task show` and `orbit task
+show` are the same verb reaching the same body: the list of commands is built
+from the one declaration every way in is built from, so a verb added to Orbit
+can be asked for from a chat the same day. `/help` prints it.
+
+A few are not offered, and say so rather than failing somewhere deeper: a
+terminal cannot be handed to an engine through a chat, and a diff, a tree and
+an impact are read in columns that a phone would turn into a scroll bar.
+
+**What cannot be taken back asks twice.** `/pr merge`, `/pr close`, `/task
+delete` answer *send /yes to go ahead* — and changing the subject clears it,
+so a confirmation cannot fire later against something nobody was talking
+about any more.
+
+Prose is not a command and not a mistake either. A line without a slash is
+answered with nothing, because a channel that replies to every stray sentence
+is a channel that gets muted.
+
+Today the only chat it speaks is the terminal itself. That is on purpose: it
+is the same loop, the same gate and the same confirmations a service adapter
+will run, so an adapter that behaves differently from `orbit chat` is a bug
+in the adapter.
+
 ## The other direction
 
 The agents Orbit runs report back through the same protocol. They do not have

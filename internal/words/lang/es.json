@@ -5439,6 +5439,50 @@
       "source": "back in {when}",
       "value": "vuelve en {when}"
     },
+    "chat.no_verb": {
+      "source": "a slash with nothing after it asks for nothing",
+      "value": "una barra sin nada atrás no pide nada"
+    },
+    "chat.no_such_verb": {
+      "source": "{name} is not something Orbit can be asked for; /help lists what is",
+      "value": "{name} no es algo que se le pueda pedir a Orbit; /help dice qué sí"
+    },
+    "chat.needs_task": {
+      "source": "{verb} is about one task, and none was named",
+      "value": "{verb} es sobre una tarea, y no se nombró ninguna"
+    },
+    "chat.help_title": {
+      "source": "What you can ask for:",
+      "value": "Lo que le podés pedir:"
+    },
+    "chat.nothing_said": {
+      "source": "done",
+      "value": "listo"
+    },
+    "chat.cut": {
+      "source": "…too long for one message; ask for it at a terminal",
+      "value": "…muy largo para un mensaje; pedilo en una terminal"
+    },
+    "chat.not_here": {
+      "source": "{verb} is not something a chat can do: {why}",
+      "value": "{verb} no es algo que un chat pueda hacer: {why}"
+    },
+    "chat.confirm": {
+      "source": "{verb} cannot be taken back. Send /yes to go ahead.",
+      "value": "{verb} no se puede deshacer. Mandá /yes para seguir."
+    },
+    "chat.terminal_open": {
+      "source": "type a command, or /help for the list. ctrl-c to leave.",
+      "value": "escribí un comando, o /help para la lista. ctrl-c para salir."
+    },
+    "cmd.chat": {
+      "source": "ask Orbit for things by typing commands at it",
+      "value": "pedirle cosas a Orbit escribiéndole comandos"
+    },
+    "cmd.chat.inside": {
+      "source": "you are already talking to it",
+      "value": "ya le estás hablando"
+    },
     "verb.clear": {
       "source": "put one setting back to what Orbit ships",
       "value": "devolver un setting a como viene Orbit"
