@@ -73,7 +73,7 @@ type Here interface {
 // tool call has whatever the client's session names.
 type Sees interface {
 	// Facts is everything Orbit has been told, across those repositories.
-	Facts() ([]knowledge.Fact, error)
+	Facts() ([]knowledge.Rule, error)
 	// Board is every task in them, in the band that says what it waits for.
 	Board() (board.Board, error)
 	// Log is one task's record, folded by the package that owns the format.
@@ -117,7 +117,7 @@ type Window struct {
 // the state root, and which repositories are in view is the way in's.
 type Knows interface {
 	// Learn writes down something true about the code.
-	Learn(fact knowledge.Fact) error
+	Learn(fact knowledge.Rule) error
 	// Replace writes a rule that has changed and takes away the one it
 	// replaces, and records what changed about it.
 	//
@@ -130,7 +130,7 @@ type Knows interface {
 	// the caller knows: the same pause is about the rule when it is typed
 	// at a terminal and the beginning of a pattern when it is taken with a
 	// task sitting blocked.
-	Replace(was, now knowledge.Fact, where learn.Turn) error
+	Replace(was, now knowledge.Rule, where learn.Turn) error
 }
 
 // Beyond is what a verb can reach past this machine: a model that has to be

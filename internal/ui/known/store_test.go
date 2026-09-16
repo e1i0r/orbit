@@ -21,10 +21,10 @@ func TestTheStoreIsReadOnceForTheHeadersChip(t *testing.T) {
 	reads := 0
 
 	e := world(t)
-	e.All = func() []knowledge.Fact {
+	e.All = func() []knowledge.Rule {
 		reads++
 
-		return []knowledge.Fact{
+		return []knowledge.Rule{
 			known("of everything", knowledge.Scope{Kind: knowledge.General}),
 			known("of Go", knowledge.Scope{Kind: knowledge.Language, Lang: "go"}),
 		}
@@ -89,7 +89,7 @@ func TestDecidingAgainstARuleIsRefusedWhenThereIsNowhereToWriteIt(t *testing.T) 
 	}
 
 	// And the store's own refusal is said in the store's words.
-	e.Replace = func(_, _ knowledge.Fact) error { return errors.New("the store is read-only") }
+	e.Replace = func(_, _ knowledge.Rule) error { return errors.New("the store is read-only") }
 
 	if _, out := s.Key(press("o"), e); !strings.Contains(out.Said, "read-only") {
 		t.Errorf("the refusal reads %q", out.Said)

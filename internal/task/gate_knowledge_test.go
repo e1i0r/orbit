@@ -12,7 +12,7 @@ import (
 	"github.com/e1i0r/orbit/internal/knowledge"
 )
 
-func stopping(phrase, check string) knowledge.Fact {
+func stopping(phrase, check string) knowledge.Rule {
 	f := aFact(phrase, knowledge.Scope{Kind: knowledge.General})
 	f.Stops, f.Check = true, check
 
@@ -26,10 +26,10 @@ func stopping(phrase, check string) knowledge.Fact {
 // a gate is a command that runs after it and sends the work back. The two
 // are different powers and only one of them needs no trust.
 func TestOnlyAFactThatCanCheckItselfBecomesAGate(t *testing.T) {
-	gates := knowledgeGates([]knowledge.Fact{
+	gates := knowledgeGates([]knowledge.Rule{
 		aFact("The PRs are written in English.", knowledge.Scope{Kind: knowledge.General}),
 		stopping("No UPDATE or DELETE in ledger.", "! git diff | grep -q 'UPDATE ledger'"),
-		func() knowledge.Fact {
+		func() knowledge.Rule {
 			asked := aFact("Coverage stays above 90%.", knowledge.Scope{Kind: knowledge.General})
 			asked.Stops = true // and no check: it cannot enforce itself
 
@@ -50,7 +50,7 @@ func TestOnlyAFactThatCanCheckItselfBecomesAGate(t *testing.T) {
 // names the gate, so the name has to be the thing that was broken — "exit 1"
 // against a check nobody can see is a wall with no sign on it.
 func TestTheGateIsNamedAfterWhatItIsAbout(t *testing.T) {
-	gates := knowledgeGates([]knowledge.Fact{
+	gates := knowledgeGates([]knowledge.Rule{
 		stopping("No UPDATE or DELETE in ledger. Reconcile marks, it does not correct.", "false"),
 	})
 
@@ -69,7 +69,7 @@ func TestAFactThatIsOffGatesNothing(t *testing.T) {
 	off := stopping("No UPDATE in ledger.", "false")
 	off.State = knowledge.Off
 
-	if gates := knowledgeGates([]knowledge.Fact{off}); len(gates) != 0 {
+	if gates := knowledgeGates([]knowledge.Rule{off}); len(gates) != 0 {
 		t.Errorf("a fact that was turned off still gates: %+v", gates)
 	}
 }
@@ -80,7 +80,7 @@ func TestAFactThatIsOffGatesNothing(t *testing.T) {
 func TestThePhasesOwnGatesRunFirst(t *testing.T) {
 	p := flow.Phase{Name: "implement", Gates: []flow.Gate{{Name: "build", Command: "go build ./..."}}}
 
-	all := gatesOf(p, []knowledge.Fact{stopping("No UPDATE in ledger.", "false")})
+	all := gatesOf(p, []knowledge.Rule{stopping("No UPDATE in ledger.", "false")})
 	if len(all) != 2 || all[0].Name != "build" {
 		t.Errorf("the gates run as %+v, want the phase's own first", all)
 	}

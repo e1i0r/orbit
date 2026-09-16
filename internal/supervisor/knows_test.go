@@ -21,7 +21,7 @@ import (
 // a gate would refuse an hour later, and could be told a rule it had already
 // been given without noticing.
 func TestTheSupervisorIsToldWhatOrbitAlreadyKnows(t *testing.T) {
-	asked := buildSupervisorPrompt("", nil, "what should I look at?", []knowledge.Fact{
+	asked := buildSupervisorPrompt("", nil, "what should I look at?", []knowledge.Rule{
 		{Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.Human, Phrase: "the PRs are written in English"},
 	})
 
@@ -94,7 +94,7 @@ func TestTheFactsComeOffDiskFromEveryRepository(t *testing.T) {
 	inLedger := knowledge.Scope{Kind: knowledge.Repo, Repo: ledger}
 	inCheckout := knowledge.Scope{Kind: knowledge.Repo, Repo: checkout}
 
-	for _, f := range []knowledge.Fact{
+	for _, f := range []knowledge.Rule{
 		{Scope: everywhere, Source: knowledge.Human, Phrase: "the PRs are written in English"},
 		{Scope: inLedger, Source: knowledge.Human, Phrase: "the ledger only appends"},
 		{Scope: inCheckout, Source: knowledge.Human, Phrase: "the card brand comes from the token"},
@@ -149,7 +149,7 @@ func TestAStateRootWithNothingInItSaysNothing(t *testing.T) {
 // arrives as a bare sentence is a rule it will apply to the checkout beside
 // the one it was written for.
 func TestARuleSaysWhichRepositoryItIsAbout(t *testing.T) {
-	said := alreadyKnown([]knowledge.Fact{
+	said := alreadyKnown([]knowledge.Rule{
 		{Scope: knowledge.Scope{Kind: knowledge.General}, Phrase: "the PRs are written in English"},
 		{Scope: knowledge.Scope{Kind: knowledge.Language, Lang: "go"}, Phrase: "never discard an error"},
 		{Scope: knowledge.Scope{Kind: knowledge.Repo, Repo: "/code/ledger"}, Phrase: "the ledger only appends"},
@@ -197,7 +197,7 @@ func TestOneDamagedRepositoryDoesNotCostTheRest(t *testing.T) {
 
 	ks := knowledge.NewStore(root)
 
-	saved := knowledge.Fact{
+	saved := knowledge.Rule{
 		Scope:  knowledge.Scope{Kind: knowledge.Repo, Repo: sound},
 		Source: knowledge.Human,
 		Phrase: "the ledger only appends",
@@ -254,7 +254,7 @@ func TestADamagedRepoMarkerDoesNotCostTheRest(t *testing.T) {
 
 	ks := knowledge.NewStore(root)
 
-	saved := knowledge.Fact{
+	saved := knowledge.Rule{
 		Scope:  knowledge.Scope{Kind: knowledge.Repo, Repo: sound},
 		Source: knowledge.Human,
 		Phrase: "the ledger only appends",

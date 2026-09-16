@@ -1,6 +1,6 @@
 package knowledge
 
-// Where a fact lands on disk, and whether it comes back the same.
+// Where a rule lands on disk, and whether it comes back the same.
 
 import (
 	"os"
@@ -16,13 +16,13 @@ func roots(t *testing.T) (state, repo string) {
 	return t.TempDir(), t.TempDir()
 }
 
-// TestWhatWasWrittenComesBack is the whole of the format: a fact saved and
-// loaded is the same fact.
+// TestWhatWasWrittenComesBack is the whole of the format: a rule saved and
+// loaded is the same rule.
 func TestWhatWasWrittenComesBack(t *testing.T) {
 	state, repo := roots(t)
 	s := NewStore(state)
 
-	want := Fact{
+	want := Rule{
 		Scope:  Scope{Kind: File, Repo: repo, Path: "internal/ui/bar.go"},
 		Source: Human,
 		Ref:    "ORB-115",
@@ -41,7 +41,7 @@ func TestWhatWasWrittenComesBack(t *testing.T) {
 	}
 
 	if len(got) != 1 {
-		t.Fatalf("loaded %d facts, want 1", len(got))
+		t.Fatalf("loaded %d rules, want 1", len(got))
 	}
 
 	if got[0].Phrase != want.Phrase || got[0].Check != want.Check || !got[0].Stops {
@@ -59,12 +59,12 @@ func TestWhatWasWrittenComesBack(t *testing.T) {
 
 // TestLoadBringsBothRootsTogether. Two places on disk, one answer: the
 // caller asks what is known while working in a repository and gets the
-// general facts, the ones of its languages, and the repository's own.
+// general rules, the ones of its languages, and the repository's own.
 func TestLoadBringsBothRootsTogether(t *testing.T) {
 	state, repo := roots(t)
 	s := NewStore(state)
 
-	for _, f := range []Fact{
+	for _, f := range []Rule{
 		{Scope: Scope{Kind: General}, Source: Human, Phrase: "of everything"},
 		{Scope: Scope{Kind: Language, Lang: "go"}, Source: Human, Phrase: "of Go"},
 		{Scope: Scope{Kind: Repo, Repo: repo}, Source: Human, Phrase: "of the repository"},
@@ -94,13 +94,13 @@ func TestLoadBringsBothRootsTogether(t *testing.T) {
 // TestLoadRepoBringsBackOnlyTheRepositorys is the other half of the pair.
 //
 // A caller walking every repository the record knows about already holds the
-// state root's facts, and Load would hand them back once per repository — a
+// state root's rules, and Load would hand them back once per repository — a
 // walk and a decode each time, thrown away each time.
 func TestLoadRepoBringsBackOnlyTheRepositorys(t *testing.T) {
 	state, repo := roots(t)
 	s := NewStore(state)
 
-	for _, f := range []Fact{
+	for _, f := range []Rule{
 		{Scope: Scope{Kind: General}, Source: Human, Phrase: "of everything"},
 		{Scope: Scope{Kind: Language, Lang: "go"}, Source: Human, Phrase: "of Go"},
 		{Scope: Scope{Kind: Repo, Repo: repo}, Source: Human, Phrase: "of the repository"},
@@ -162,7 +162,7 @@ func TestAFactWrittenByHandIsRead(t *testing.T) {
 	}
 
 	if len(got) != 1 {
-		t.Fatalf("loaded %d facts, want the one written by hand", len(got))
+		t.Fatalf("loaded %d rules, want the one written by hand", len(got))
 	}
 
 	if got[0].Phrase != "The cockpit is checked at 100 columns, not 180." {
@@ -176,14 +176,14 @@ func TestAFactWrittenByHandIsRead(t *testing.T) {
 
 // TestChangingASentenceDoesNotLeaveTheOldOneBehind.
 //
-// A fact with no reference is filed under a slug of its own sentence, so
+// A rule with no reference is filed under a slug of its own sentence, so
 // editing the sentence writes to a different path. Saving alone would leave
 // both, and the one nobody meant to keep would go on being told.
 func TestChangingASentenceDoesNotLeaveTheOldOneBehind(t *testing.T) {
 	state, repo := roots(t)
 	s := NewStore(state)
 
-	was := Fact{
+	was := Rule{
 		Scope:  Scope{Kind: Repo, Repo: repo},
 		Source: Human,
 		Phrase: "the fuxx tests hang sometimes",
@@ -211,21 +211,21 @@ func TestChangingASentenceDoesNotLeaveTheOldOneBehind(t *testing.T) {
 			phrases = append(phrases, f.Phrase)
 		}
 
-		t.Fatalf("the repository holds %d facts: %v", len(got), phrases)
+		t.Fatalf("the repository holds %d rules: %v", len(got), phrases)
 	}
 
 	if got[0].Phrase != now.Phrase {
-		t.Errorf("the fact says %q, want the sentence it was changed to", got[0].Phrase)
+		t.Errorf("the rule says %q, want the sentence it was changed to", got[0].Phrase)
 	}
 }
 
-// TestReplacingInPlaceKeepsTheOneFile, so that turning a fact off does not
+// TestReplacingInPlaceKeepsTheOneFile, so that turning a rule off does not
 // depend on the sentence having stayed the same.
 func TestReplacingInPlaceKeepsTheOneFile(t *testing.T) {
 	state, repo := roots(t)
 	s := NewStore(state)
 
-	was := Fact{Scope: Scope{Kind: Repo, Repo: repo}, Source: Human, Ref: "REF-9", Phrase: "no UPDATE in ledger"}
+	was := Rule{Scope: Scope{Kind: Repo, Repo: repo}, Source: Human, Ref: "REF-9", Phrase: "no UPDATE in ledger"}
 	if _, err := s.Save(was); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
@@ -243,6 +243,6 @@ func TestReplacingInPlaceKeepsTheOneFile(t *testing.T) {
 	}
 
 	if len(got) != 1 || got[0].State != Off {
-		t.Errorf("the repository holds %d facts and the first stands at %v", len(got), got[0].State)
+		t.Errorf("the repository holds %d rules and the first stands at %v", len(got), got[0].State)
 	}
 }

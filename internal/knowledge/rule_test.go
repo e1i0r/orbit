@@ -1,25 +1,25 @@
 package knowledge
 
-// What a fact is, what it is allowed to claim, and which ones reach a file.
+// What a rule is, what it is allowed to claim, and which ones reach a file.
 
 import (
 	"slices"
 	"testing"
 )
 
-func humanFact(s Scope, phrase string) Fact {
-	return Fact{Scope: s, Source: Human, Phrase: phrase}
+func humanFact(s Scope, phrase string) Rule {
+	return Rule{Scope: s, Source: Human, Phrase: phrase}
 }
 
 // TestAFactThatCannotCheckItselfOnlyWarns is the honesty of the whole thing.
 //
 // "Warns" is a sentence in the context and needs nothing else. "Stops" is the
 // gate refusing the work, and refusing needs something that answers yes or no
-// without opinion — a command, a pattern over the diff, a test. A fact that
+// without opinion — a command, a pattern over the diff, a test. A rule that
 // asks to stop and brings no check would be a rule that never fires while
 // reading as though it did, which is worse than no rule.
 func TestAFactThatCannotCheckItselfOnlyWarns(t *testing.T) {
-	asked := Fact{
+	asked := Rule{
 		Scope:  Scope{Kind: Repo, Repo: "/w/orbit"},
 		Source: Human,
 		Phrase: "no UPDATE in ledger",
@@ -27,21 +27,21 @@ func TestAFactThatCannotCheckItselfOnlyWarns(t *testing.T) {
 	}
 
 	if asked.Action() != Warns {
-		t.Error("a fact asked to stop, with no check, claims to stop")
+		t.Error("a rule asked to stop, with no check, claims to stop")
 	}
 
 	withCheck := asked
 	withCheck.Check = "! git diff | grep -q 'UPDATE ledger'"
 
 	if withCheck.Action() != Stops {
-		t.Error("a fact asked to stop, with a check, only warns")
+		t.Error("a rule asked to stop, with a check, only warns")
 	}
 }
 
-// TestAFactWithoutASourceOrAPhraseIsRefused. From FRA-47: every fact has a
+// TestAFactWithoutASourceOrAPhraseIsRefused. From FRA-47: every rule has a
 // source and a scope, and without a file behind it, it does not get in.
 func TestAFactWithoutASourceOrAPhraseIsRefused(t *testing.T) {
-	for what, f := range map[string]Fact{
+	for what, f := range map[string]Rule{
 		"no phrase": {Scope: Scope{Kind: General}, Source: Human},
 		"no source": {Scope: Scope{Kind: General}, Phrase: "the PRs are in English"},
 		"a language scope naming no language": {
@@ -52,7 +52,7 @@ func TestAFactWithoutASourceOrAPhraseIsRefused(t *testing.T) {
 		},
 	} {
 		if err := f.Validate(); err == nil {
-			t.Errorf("a fact with %s was accepted", what)
+			t.Errorf("a rule with %s was accepted", what)
 		}
 	}
 }
@@ -60,7 +60,7 @@ func TestAFactWithoutASourceOrAPhraseIsRefused(t *testing.T) {
 // TestTheFactsOfAFileArriveWidestFirst. The agent reads them in order, so
 // the last word belongs to whatever was written about the file itself.
 func TestTheFactsOfAFileArriveWidestFirst(t *testing.T) {
-	all := []Fact{
+	all := []Rule{
 		humanFact(Scope{Kind: Dir, Repo: "/w/orbit", Path: "internal"}, "of internal"),
 		humanFact(Scope{Kind: General}, "of everything"),
 		humanFact(Scope{Kind: File, Repo: "/w/orbit", Path: "internal/ui/bar.go"}, "of the file"),
@@ -90,23 +90,23 @@ func TestAFactThatIsOffIsNotTold(t *testing.T) {
 	off := humanFact(Scope{Kind: General}, "of everything")
 	off.State = Off
 
-	if got := For(Target{Repo: "/w/orbit", Path: "a.go"}, []Fact{off}); len(got) != 0 {
-		t.Errorf("a fact that was turned off was still told: %v", got)
+	if got := For(Target{Repo: "/w/orbit", Path: "a.go"}, []Rule{off}); len(got) != 0 {
+		t.Errorf("a rule that was turned off was still told: %v", got)
 	}
 }
 
-// TestEveryKeepsWhatWasTurnedOff, because the screen that lists facts is the
-// one where a fact is turned back on: dropping them there would leave a file
+// TestEveryKeepsWhatWasTurnedOff, because the screen that lists rules is the
+// one where a rule is turned back on: dropping them there would leave a file
 // on disk that nothing in the window admits exists.
 func TestEveryKeepsWhatWasTurnedOff(t *testing.T) {
-	all := []Fact{
+	all := []Rule{
 		{Scope: Scope{Kind: Repo, Repo: "/w/api"}, Phrase: "narrow", Source: Human},
 		{Scope: Scope{Kind: General}, Phrase: "off and wide", Source: Human, State: Off},
 	}
 
 	got := Every(all)
 	if len(got) != 2 {
-		t.Fatalf("Every kept %d of 2 facts", len(got))
+		t.Fatalf("Every kept %d of 2 rules", len(got))
 	}
 
 	// Widest first, the same order everything else reads them in.
@@ -115,6 +115,6 @@ func TestEveryKeepsWhatWasTurnedOff(t *testing.T) {
 	}
 
 	if kept := InScope(all); len(kept) != 1 {
-		t.Errorf("InScope told a phase %d facts, want only the one that is on", len(kept))
+		t.Errorf("InScope told a phase %d rules, want only the one that is on", len(kept))
 	}
 }

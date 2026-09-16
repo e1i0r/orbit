@@ -17,7 +17,7 @@ import (
 // only earn their place if the two that are not active both stay out of the
 // prompt.
 func TestOnlyAnActiveRuleReachesAPhase(t *testing.T) {
-	all := []Fact{
+	all := []Rule{
 		{Scope: Scope{Kind: General}, Source: Human, Phrase: "applying"},
 		{
 			Scope: Scope{Kind: General}, Source: Human, Phrase: "paused", State: Paused,
@@ -47,7 +47,7 @@ func TestOnlyAnActiveRuleReachesAPhase(t *testing.T) {
 func TestAPausedRuleRemembersWhy(t *testing.T) {
 	s, repo := aRepo(t)
 
-	if _, err := s.Save(Fact{
+	if _, err := s.Save(Rule{
 		Scope: Scope{Kind: Repo, Repo: repo}, Source: Human,
 		Phrase: "coverage stays above 90%", State: Paused,
 		Why: "the repo has never been past 80, we are fixing that first",
@@ -73,7 +73,7 @@ func TestAPausedRuleRemembersWhy(t *testing.T) {
 func TestARuleThatAppliesSaysNothingAboutItself(t *testing.T) {
 	s, repo := aRepo(t)
 
-	if _, err := s.Save(Fact{
+	if _, err := s.Save(Rule{
 		Scope: Scope{Kind: Repo, Repo: repo}, Source: Human, Phrase: "amounts are cents",
 	}); err != nil {
 		t.Fatalf("save: %v", err)
@@ -126,7 +126,7 @@ func TestAFileWrittenBeforeThereWereStatesIsStillOff(t *testing.T) {
 func TestARuleWaitingForAnAnswerSaysSoAndStillApplies(t *testing.T) {
 	s, repo := aRepo(t)
 
-	if _, err := s.Save(Fact{
+	if _, err := s.Save(Rule{
 		Scope: Scope{Kind: Repo, Repo: repo}, Source: Human,
 		Phrase: "coverage stays above 90%", Review: true,
 	}); err != nil {

@@ -41,7 +41,7 @@ func TestSkippingAGateIsSomethingSaidAboutTheRuleBehindIt(t *testing.T) {
 	w.wrote(t, "ACME-60", r.Path, "pay the thing")
 
 	rule := aRule("aaaa1111", "coverage stays above 90%")
-	w.facts = []knowledge.Fact{rule}
+	w.facts = []knowledge.Rule{rule}
 
 	refusedBy(t, w, "ACME-60", "aaaa1111", "test")
 
@@ -86,7 +86,7 @@ func TestSkippingSomethingThatIsNotARuleSaysNothingAboutAnyRule(t *testing.T) {
 	r := w.gitRepo(t, "acme")
 	w.wrote(t, "ACME-61", r.Path, "pay the thing")
 
-	w.facts = []knowledge.Fact{aRule("aaaa1111", "coverage stays above 90%")}
+	w.facts = []knowledge.Rule{aRule("aaaa1111", "coverage stays above 90%")}
 
 	refusedBy(t, w, "ACME-61", "", "test")
 
@@ -115,7 +115,7 @@ func TestSkippingARuleAlreadyWaitingDoesNotAskTwice(t *testing.T) {
 
 	was := aRule("aaaa1111", "coverage stays above 90%")
 	was.Review = true
-	w.facts = []knowledge.Fact{was}
+	w.facts = []knowledge.Rule{was}
 
 	refusedBy(t, w, "ACME-62", "aaaa1111", "test")
 

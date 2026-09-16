@@ -163,7 +163,7 @@ func refusals(s *store.Store, rule string) ([]Turn, error) {
 // middle of. It is the caller's because only the caller knows: a pause typed
 // at a terminal is about the rule and about no run, and the same pause taken
 // while a task sat blocked is the beginning of a pattern.
-func Changed(s *store.Store, was, now knowledge.Fact, where Turn) error {
+func Changed(s *store.Store, was, now knowledge.Rule, where Turn) error {
 	if now.ID == "" {
 		return nil
 	}

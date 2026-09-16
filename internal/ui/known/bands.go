@@ -102,7 +102,7 @@ func bandCount(b band) theme.Role {
 // bandOf is where a rule belongs, which is the one question its record
 // folds down to. The fold is internal/knowledge's, so this screen and the
 // browser cannot disagree about a rule they are both looking at.
-func bandOf(f knowledge.Fact) band {
+func bandOf(f knowledge.Rule) band {
 	switch f.Standing() {
 	case knowledge.Waiting:
 		return waits
@@ -170,10 +170,10 @@ func (s State) onSaid() (Said, bool) {
 
 // onFact is the rule under the cursor, and false when the cursor is on a
 // sentence in the tray instead.
-func (s State) onFact() (knowledge.Fact, bool) {
+func (s State) onFact() (knowledge.Rule, bool) {
 	all := s.order()
 	if s.sel < 0 || s.sel >= len(all) || all[s.sel].said {
-		return knowledge.Fact{}, false
+		return knowledge.Rule{}, false
 	}
 
 	return s.facts[all[s.sel].at], true

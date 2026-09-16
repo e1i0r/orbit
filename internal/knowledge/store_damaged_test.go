@@ -36,7 +36,7 @@ func TestATypoCostsItsOwnFileAndNoOther(t *testing.T) {
 	}
 
 	if len(got) != 1 {
-		t.Fatalf("loaded %d facts, want the sound one beside the error", len(got))
+		t.Fatalf("loaded %d rules, want the sound one beside the error", len(got))
 	}
 
 	if got[0].Phrase != "The ledger only appends." {
@@ -55,6 +55,6 @@ func TestLoadRepoRefusesAnEmptyRepository(t *testing.T) {
 	}
 
 	if got != nil {
-		t.Errorf("LoadRepo(\"\") answered with %d facts, want none", len(got))
+		t.Errorf("LoadRepo(\"\") answered with %d rules, want none", len(got))
 	}
 }

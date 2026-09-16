@@ -39,7 +39,7 @@ const knownIntro = "What Orbit has learned about this code, kept across sessions
 // An empty heading is worse than no heading: it is a question the model has
 // to answer for itself — whether Orbit knows nothing about this code, or
 // knows something this program dropped on the way.
-func whatIsKnown(facts []knowledge.Fact) string {
+func whatIsKnown(facts []knowledge.Rule) string {
 	if len(facts) == 0 {
 		return ""
 	}
@@ -59,7 +59,7 @@ func whatIsKnown(facts []knowledge.Fact) string {
 // stopMark is what a fact that stops the work is written with. A sentence that
 // advises and a sentence that will send the work back are different
 // instructions, and a model can only act on the difference if it is drawn.
-func stopMark(f knowledge.Fact) string {
+func stopMark(f knowledge.Rule) string {
 	if f.Action() == knowledge.Stops {
 		return "**stops** "
 	}
@@ -98,15 +98,15 @@ func about(s knowledge.Scope) string {
 // are how a rule is explained; the gate is how one is enforced, and the gate
 // reads its own copy. Failing the whole task because one file has a typo in
 // it would trade a run for a paragraph.
-func (r phaseRun) knows() []knowledge.Fact {
-	return factsFor(r.store, r.task)
+func (r phaseRun) knows() []knowledge.Rule {
+	return rulesFor(r.store, r.task)
 }
 
-// factsFor reads both roots for one task and orders what it finds. It is the
+// rulesFor reads both roots for one task and orders what it finds. It is the
 // one door: the prompt says the sentences and the gates enforce the ones
 // that can enforce themselves, and neither should be reading a different set
 // from the other.
-func factsFor(s *store.Store, t Task) []knowledge.Fact {
+func rulesFor(s *store.Store, t Task) []knowledge.Rule {
 	if s == nil {
 		return nil
 	}

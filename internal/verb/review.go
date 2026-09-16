@@ -68,7 +68,7 @@ func reviewed(w World, in In) (Out, error) {
 // you through is one reading, and two surfaces telling it two ways would be
 // two accounts of the same evidence — which is exactly the thing a person is
 // about to decide on.
-func Story(p *words.Printer, f knowledge.Fact, turns []learn.Turn) []string {
+func Story(p *words.Printer, f knowledge.Rule, turns []learn.Turn) []string {
 	var told []string
 
 	if kept := first(turns, learn.Written); kept != nil {
@@ -233,7 +233,7 @@ func corrected(w World, in In) (Out, error) {
 // Its own checkout and no other. A rule moved into a repository it was never
 // about is a rule steering code nobody meant it to, and the reader moving it
 // is deciding how narrow it should be — not which project it belongs to.
-func whereItGoes(w World, was knowledge.Fact, where string) (knowledge.Scope, error) {
+func whereItGoes(w World, was knowledge.Rule, where string) (knowledge.Scope, error) {
 	if was.Scope.Repo == "" {
 		return knowledge.Scope{}, errors.New(w.Words().T("verb.rules.nowhere_to_narrow",
 			"{rule} is about no checkout, so there is nothing for {path} to be inside",

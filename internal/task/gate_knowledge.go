@@ -9,7 +9,7 @@ package task
 // does not.
 //
 // Which is why a fact that asks to stop and brings no check is only ever a
-// warning (knowledge.Fact.Action says so): there is nothing to run, so there
+// warning (knowledge.Rule.Action says so): there is nothing to run, so there
 // is nothing to enforce, and pretending otherwise would put a rule in front
 // of a reader that never fires.
 
@@ -31,7 +31,7 @@ const gateName = 90
 // do — a build that does not compile is the more useful thing to be told
 // about than a rule that was true before the task started, and the first
 // refusal is the one the next attempt reads.
-func gatesOf(p flow.Phase, knows []knowledge.Fact) []flow.Gate {
+func gatesOf(p flow.Phase, knows []knowledge.Rule) []flow.Gate {
 	return append(append([]flow.Gate{}, p.Gates...), knowledgeGates(knows)...)
 }
 
@@ -43,7 +43,7 @@ func gatesOf(p flow.Phase, knows []knowledge.Fact) []flow.Gate {
 // them it passes without being asked to. A second filter here would be a
 // second opinion about where a rule applies, in a place that cannot see the
 // diff the check can.
-func knowledgeGates(knows []knowledge.Fact) []flow.Gate {
+func knowledgeGates(knows []knowledge.Rule) []flow.Gate {
 	var gates []flow.Gate
 
 	for _, f := range knows {
@@ -64,7 +64,7 @@ func knowledgeGates(knows []knowledge.Fact) []flow.Gate {
 // fails. So the name has to carry the meaning: "gate `No UPDATE or DELETE in
 // ledger` refused it" tells a model what it broke, where "gate `rule-7`
 // refused it, exit 1" is a wall with no sign on it.
-func gateNamed(f knowledge.Fact) string {
+func gateNamed(f knowledge.Rule) string {
 	phrase := strings.TrimSpace(strings.SplitN(f.Phrase, "\n", 2)[0])
 	if len(phrase) > gateName {
 		phrase = strings.TrimSpace(phrase[:gateName]) + "…"

@@ -29,7 +29,7 @@ import (
 // knows fills the Brain's port off the same readers the cockpit's screen
 // uses, so the two surfaces answer from one place.
 type knows struct {
-	all   func() []knowledge.Fact
+	all   func() []knowledge.Rule
 	said  func() []known.Said
 	board *board.Reader
 }

@@ -44,7 +44,7 @@ type Env struct {
 	// marked and the removed conversations already gone.
 	Log func() ([]view.SupervisorLine, error)
 	// Knows is what Orbit has learned about the code being worked in.
-	Knows func() []knowledge.Fact
+	Knows func() []knowledge.Rule
 	// Record writes one line into one conversation.
 	Record func(conversation, by, channel, message string) error
 	// Retract takes back the turn written at that moment.
@@ -122,7 +122,7 @@ type State struct {
 	// knows is what Orbit has learned about the code being worked in, drawn
 	// down the side. It is read when the thread is, for the reason Sync
 	// gives.
-	knows []knowledge.Fact
+	knows []knowledge.Rule
 
 	// picking is the mode that takes a turn back: ↑↓ choose a line instead
 	// of scrolling and ↵ withdraws it instead of sending. It is a mode

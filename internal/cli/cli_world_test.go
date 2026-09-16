@@ -96,11 +96,11 @@ func TestUnreadCountsWhatNobodyLookedAt(t *testing.T) {
 func TestLearningValidatesBeforeWriting(t *testing.T) {
 	w, _, _ := worldOf(t)
 
-	if err := w.Learn(knowledge.Fact{}); err == nil {
+	if err := w.Learn(knowledge.Rule{}); err == nil {
 		t.Error("a fact from nowhere was accepted")
 	}
 
-	fact := knowledge.Fact{
+	fact := knowledge.Rule{
 		Phrase: "amounts are cents",
 		Source: knowledge.Human,
 		Scope:  knowledge.Scope{Kind: knowledge.General},

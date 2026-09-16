@@ -128,7 +128,7 @@ func TestAPathCannotLeaveTheCheckout(t *testing.T) {
 }
 
 // TestOneFolderHasOneSpelling. `./backend//ledger` and `backend/ledger` are
-// the same folder, and two facts filed under two spellings of it are two
+// the same folder, and two rules filed under two spellings of it are two
 // rules nobody can tell apart.
 func TestOneFolderHasOneSpelling(t *testing.T) {
 	repo := aCheckout(t)

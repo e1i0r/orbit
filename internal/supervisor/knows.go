@@ -26,7 +26,7 @@ import (
 // A store that cannot be read costs the facts and not the answer. The
 // sentences are how a rule is explained; the gate is what enforces one, and
 // the gate reads its own copy.
-func standing(s *store.Store) []knowledge.Fact {
+func standing(s *store.Store) []knowledge.Rule {
 	ks := knowledge.NewStore(s.Root())
 
 	// Beside the error and not instead of it: Load answers with the facts it
@@ -84,7 +84,7 @@ func standing(s *store.Store) []knowledge.Fact {
 // whether the operator is repeating themselves is comparing meaning, which a
 // model does and matching text does not — the same thing said in other words
 // is not the same string.
-func alreadyKnown(facts []knowledge.Fact) string {
+func alreadyKnown(facts []knowledge.Rule) string {
 	if len(facts) == 0 {
 		return ""
 	}

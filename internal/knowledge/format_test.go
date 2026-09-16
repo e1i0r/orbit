@@ -1,6 +1,6 @@
 package knowledge
 
-// How a fact written by hand is read back: the kind its header names, and
+// How a rule written by hand is read back: the kind its header names, and
 // where the file sits when the header says nothing.
 
 import "testing"

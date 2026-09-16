@@ -44,13 +44,13 @@ type Env struct {
 	// All is everything Orbit has learned, across every repository on the
 	// board. Nil in a window built without a store, and then the screen
 	// says there is nothing rather than pretending it read.
-	All func() []knowledge.Fact
+	All func() []knowledge.Rule
 	// Replace writes one fact over another. The old one travels with it
 	// because a fact's file is named after its sentence: writing alone
 	// would leave the old copy behind, still told and still refusing work.
-	Replace func(was, now knowledge.Fact) error
+	Replace func(was, now knowledge.Rule) error
 	// Turn switches one fact off, or on again.
-	Turn func(f knowledge.Fact) error
+	Turn func(f knowledge.Rule) error
 	// Waiting is what you said to the supervisor that read as a rule and
 	// nobody has answered yet. Nil in a window built without a store, and
 	// then the tray is simply not there.
@@ -71,7 +71,7 @@ type Env struct {
 	// no number tells them apart. Nil in a window built without a store,
 	// and then the review says there is nothing to show rather than
 	// pretending it read.
-	Story func(f knowledge.Fact) []string
+	Story func(f knowledge.Rule) []string
 	// Places are the folders of one checkout, offered when a rule is being
 	// filed so that choosing where it applies is picking rather than
 	// remembering which folders the project has and spelling one right.
@@ -151,7 +151,7 @@ type State struct {
 	// walks the two of them in the order they are drawn, which is why almost
 	// nothing here indexes either one directly.
 	waiting []Said
-	facts   []knowledge.Fact
+	facts   []knowledge.Rule
 	// read is whether the port has been asked at all. It is not len(facts):
 	// a workspace where nothing has been written down answers an empty
 	// list, and without this the header's chip would ask again on every

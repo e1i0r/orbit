@@ -1,7 +1,7 @@
-// Package knowledge holds what Orbit has learned: facts about the code, with
+// Package knowledge holds what Orbit has learned: rules about the code, with
 // a source and a scope, that reach the agent before it works.
 //
-// A fact is not a memory of the model's. The model forgets between sessions
+// A rule is not a memory of the model's. The model forgets between sessions
 // and forgets when it is swapped for another one; every CLI keeps its own
 // notes in its own file — CLAUDE.md, AGENTS.md — and each of those is a silo
 // that empties the day the engine changes. What Orbit knows is Orbit's, kept
@@ -15,11 +15,11 @@ import (
 	"strings"
 )
 
-// Kind is how far a fact reaches, from everything to one symbol.
+// Kind is how far a rule reaches, from everything to one symbol.
 //
 // The order is the order the agent reads them in, and it is not arbitrary:
 // the last thing read is the most specific to what is about to be touched, so
-// a fact about one file has the last word over a fact about every repository.
+// a rule about one file has the last word over a rule about every repository.
 // Two of these — General and Language — are not path prefixes at all, which
 // is why the chain has a shape rather than being a single ladder.
 type Kind int
@@ -44,7 +44,7 @@ const (
 	Symbol
 )
 
-// A Scope is what a fact is about.
+// A Scope is what a rule is about.
 //
 // Which fields are read depends on Kind, and the ones that are not read are
 // empty rather than ignored: a Language scope has no repository, and saying
@@ -62,7 +62,7 @@ type Scope struct {
 	Symbol string
 }
 
-// A Target is what is about to be worked on, and what the facts are asked
+// A Target is what is about to be worked on, and what the rules are asked
 // for. Symbol is empty when the question is about a whole file.
 type Target struct {
 	Repo   string
@@ -70,7 +70,7 @@ type Target struct {
 	Symbol string
 }
 
-// Covers is whether this fact reaches that target.
+// Covers is whether this rule reaches that target.
 func (s Scope) Covers(t Target) bool {
 	switch s.Kind {
 	case General:
@@ -90,7 +90,7 @@ func (s Scope) Covers(t Target) bool {
 	}
 }
 
-// Depth is how specific a scope is, and the order facts are read in: the
+// Depth is how specific a scope is, and the order rules are read in: the
 // deeper the number, the later it is read and the more it has the last word.
 //
 // The path kinds carry their own depth on top of their kind's, so that two
@@ -123,7 +123,7 @@ func under(dir, path string) bool {
 	return strings.HasPrefix(strings.Trim(path, "/"), dir+"/")
 }
 
-// languages is the extensions this understands, mapped to the name a fact
+// languages is the extensions this understands, mapped to the name a rule
 // is written against. The variants of one language answer to one name — a
 // rule about TypeScript is about .ts and .tsx both, and nobody writing it
 // down should have to say so twice.
@@ -190,7 +190,7 @@ func At(repo, path string) (Scope, error) {
 	}
 
 	// The path as the walk found it, not as it was typed: `./internal//db`
-	// and `internal/db` are the same directory, and two facts filed under
+	// and `internal/db` are the same directory, and two rules filed under
 	// two spellings of it are two rules nobody can tell apart.
 	where := filepath.ToSlash(inside)
 
@@ -206,7 +206,7 @@ func At(repo, path string) (Scope, error) {
 //
 // The extension is enough to start with and it is all there is before
 // anything has been parsed. A file with no extension — a Makefile, a script
-// named for what it does — answers nothing rather than guessing, and a fact
+// named for what it does — answers nothing rather than guessing, and a rule
 // about a language simply does not reach it.
 func LanguageOf(path string) string {
 	return languages[strings.ToLower(filepath.Ext(path))]

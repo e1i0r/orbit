@@ -10,8 +10,8 @@ import (
 	"github.com/e1i0r/orbit/internal/knowledge"
 )
 
-func aFact(phrase string, sc knowledge.Scope) knowledge.Fact {
-	return knowledge.Fact{Scope: sc, Source: knowledge.Human, Phrase: phrase}
+func aFact(phrase string, sc knowledge.Scope) knowledge.Rule {
+	return knowledge.Rule{Scope: sc, Source: knowledge.Human, Phrase: phrase}
 }
 
 // TestThePromptCarriesWhatOrbitKnows.
@@ -21,7 +21,7 @@ func aFact(phrase string, sc knowledge.Scope) knowledge.Fact {
 // CLI, nothing to configure, and it arrives every time rather than when a
 // model remembers to ask.
 func TestThePromptCarriesWhatOrbitKnows(t *testing.T) {
-	knows := []knowledge.Fact{
+	knows := []knowledge.Rule{
 		aFact("The PRs and the commits are written in English.", knowledge.Scope{Kind: knowledge.General}),
 		aFact("Never discard what a call answered with _.", knowledge.Scope{Kind: knowledge.Language, Lang: "go"}),
 	}
@@ -51,7 +51,7 @@ func TestAFactThatStopsSaysSoInThePrompt(t *testing.T) {
 
 	full := prompt(
 		Task{ID: "ACME-1", Text: "Fix the ledger.", Repo: repoTaskRepo(t)},
-		flow.Phase{Name: "implement"}, []knowledge.Fact{stops}, nil, "", nil,
+		flow.Phase{Name: "implement"}, []knowledge.Rule{stops}, nil, "", nil,
 	)
 
 	line := ""
@@ -75,7 +75,7 @@ func TestWhatIsKnownIsReadBeforeWhatWasSaidNow(t *testing.T) {
 	full := prompt(
 		Task{ID: "ACME-1", Text: "Retry the webhook.", Repo: repoTaskRepo(t)},
 		flow.Phase{Name: "implement"},
-		[]knowledge.Fact{aFact("The PRs are in English.", knowledge.Scope{Kind: knowledge.General})},
+		[]knowledge.Rule{aFact("The PRs are in English.", knowledge.Scope{Kind: knowledge.General})},
 		[]string{"hold off on the backoff"}, "", nil,
 	)
 

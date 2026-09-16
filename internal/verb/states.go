@@ -47,7 +47,7 @@ func where(w World, asked string) (Out, error) {
 		return Out{}, err
 	}
 
-	var kept []knowledge.Fact
+	var kept []knowledge.Rule
 
 	for _, f := range knowledge.Every(facts) {
 		if (asked == inReview && f.Review) || (asked != inReview && f.State == standing[asked]) {
@@ -67,7 +67,7 @@ func where(w World, asked string) (Out, error) {
 //
 // The reason gets its own line rather than a column, because it is a
 // sentence somebody wrote and a sentence in a column is a sentence cut off.
-func ruleRows(facts []knowledge.Fact) string {
+func ruleRows(facts []knowledge.Rule) string {
 	var b strings.Builder
 
 	for _, f := range facts {
@@ -161,12 +161,12 @@ func resumed(w World, in In) (Out, error) {
 // A rule somebody wrote by hand has no name, so it cannot be reached this
 // way — and the refusal says where the names are printed rather than only
 // that this one was not found.
-func ruleNamed(w World, in In) (knowledge.Fact, error) {
+func ruleNamed(w World, in In) (knowledge.Rule, error) {
 	name := strings.TrimSpace(in.Arg("rule"))
 
 	facts, err := w.Facts()
 	if err != nil {
-		return knowledge.Fact{}, err
+		return knowledge.Rule{}, err
 	}
 
 	for _, f := range facts {
@@ -175,7 +175,7 @@ func ruleNamed(w World, in In) (knowledge.Fact, error) {
 		}
 	}
 
-	return knowledge.Fact{}, errors.New(w.Words().T("verb.rules.no_such_name",
+	return knowledge.Rule{}, errors.New(w.Words().T("verb.rules.no_such_name",
 		"there is no rule called {rule}; orbit knowledge prints their names",
 		words.Arg{Name: "rule", Value: name}))
 }
@@ -196,7 +196,7 @@ func unanswered(w World) (Out, error) {
 		return Out{}, err
 	}
 
-	var again []knowledge.Fact
+	var again []knowledge.Rule
 
 	for _, f := range knowledge.Every(facts) {
 		if f.Review {
@@ -215,7 +215,7 @@ func unanswered(w World) (Out, error) {
 // bothHalves is the two lists under one another, with a blank line between
 // them: the sentences are answered by their number and the rules by their
 // name, and running them together would leave a reader guessing which.
-func bothHalves(said []learn.Said, again []knowledge.Fact) string {
+func bothHalves(said []learn.Said, again []knowledge.Rule) string {
 	parts := make([]string, 0, 2)
 	if len(said) > 0 {
 		parts = append(parts, numbered(said))

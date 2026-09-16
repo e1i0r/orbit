@@ -118,11 +118,11 @@ type Options struct {
 	//
 	// It is a port because reading them means reaching the state root and the
 	// checkout, which the window may not do. What comes back is data.
-	Knows func() []knowledge.Fact
+	Knows func() []knowledge.Rule
 
 	// KnowsAll is everything Orbit has learned, across the repositories on
 	// the board and the state root, for the screen that lists it whole.
-	KnowsAll func() []knowledge.Fact
+	KnowsAll func() []knowledge.Rule
 
 	// RepoFolders are the top-level folders of one checkout, and RepoChecks
 	// the commands it already runs on itself. The form that writes a rule
@@ -135,7 +135,7 @@ type Options struct {
 
 	// TurnFact writes a fact back with whatever was changed about it, which
 	// today is only whether it is switched off.
-	TurnFact func(f knowledge.Fact) error
+	TurnFact func(f knowledge.Rule) error
 
 	// RuleStory is what one rule has put you through, in sentences: when it
 	// was kept, where it stopped the work and how often somebody got past
@@ -144,10 +144,10 @@ type Options struct {
 	// Sentences and not numbers, because a rule that works perfectly never
 	// stops anything — so a count of nothing means two opposite things and
 	// no number tells them apart.
-	RuleStory func(f knowledge.Fact) []string
+	RuleStory func(f knowledge.Rule) []string
 	// ReplaceFact writes a corrected fact and takes away the one it
 	// replaces, which is not the same file whenever the sentence changed.
-	ReplaceFact func(was, now knowledge.Fact) error
+	ReplaceFact func(was, now knowledge.Rule) error
 
 	// Waiting is what was said to the supervisor that read as a rule and
 	// nobody has answered yet. It is a port for the reason Knows is:

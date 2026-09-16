@@ -20,7 +20,7 @@ const idBytes = 4
 // Name is a name nothing else has, for a caller that needs to know what a
 // rule will be called before it is written.
 //
-// Save coins one for a fact that arrives without, which is what every other
+// Save coins one for a rule that arrives without, which is what every other
 // caller wants. This is for the one that has to write down what happened to
 // the rule in the same breath as writing the rule: it cannot read the name
 // back out of a path, and reading the file again to find out would be a
@@ -36,7 +36,7 @@ func Name() string { return coin() }
 // It cannot fail in a way worth handling. rand.Read on every platform Orbit
 // runs on either fills the buffer or the process is already in no state to
 // write files, and Go's own docs say to treat an error here as fatal — so an
-// error would have to become a fact that could not be written for a reason
+// error would have to become a rule that could not be written for a reason
 // nobody could act on.
 func coin() string {
 	b := make([]byte, idBytes)

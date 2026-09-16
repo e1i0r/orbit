@@ -1,6 +1,6 @@
 package knowledge
 
-// Which facts reach a file, and in what order they are read.
+// Which rules reach a file, and in what order they are read.
 
 import (
 	"testing"
@@ -27,18 +27,18 @@ func TestGeneralReachesEverything(t *testing.T) {
 // file is but what it is written in, which is the one scope that cuts across
 // the path chain instead of hanging from it.
 func TestALanguageReachesItsOwnFilesInEveryRepository(t *testing.T) {
-	goFacts := Scope{Kind: Language, Lang: "go"}
+	goRules := Scope{Kind: Language, Lang: "go"}
 
-	if !goFacts.Covers(Target{Repo: "/w/orbit", Path: "internal/ui/bar.go"}) {
-		t.Error("a Go fact does not reach a .go file")
+	if !goRules.Covers(Target{Repo: "/w/orbit", Path: "internal/ui/bar.go"}) {
+		t.Error("a Go rule does not reach a .go file")
 	}
 
-	if !goFacts.Covers(Target{Repo: "/w/other", Path: "main.go"}) {
-		t.Error("a Go fact stops at the repository it was written in")
+	if !goRules.Covers(Target{Repo: "/w/other", Path: "main.go"}) {
+		t.Error("a Go rule stops at the repository it was written in")
 	}
 
-	if goFacts.Covers(Target{Repo: "/w/orbit", Path: "web/app.ts"}) {
-		t.Error("a Go fact reaches a TypeScript file")
+	if goRules.Covers(Target{Repo: "/w/orbit", Path: "web/app.ts"}) {
+		t.Error("a Go rule reaches a TypeScript file")
 	}
 }
 
@@ -98,8 +98,8 @@ func TestASymbolReachesOnlyItself(t *testing.T) {
 }
 
 // TestTheOrderIsFromTheWidestToTheNarrowest. What the agent reads last is
-// what is most specific to what it is about to touch, so a fact about one
-// file has the last word over a fact about every repository.
+// what is most specific to what it is about to touch, so a rule about one
+// file has the last word over a rule about every repository.
 func TestTheOrderIsFromTheWidestToTheNarrowest(t *testing.T) {
 	want := []Kind{General, Language, Repo, Dir, File, Symbol}
 

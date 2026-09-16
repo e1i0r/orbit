@@ -93,11 +93,11 @@ func fedOutput(p flow.Phase, prev string) string {
 //
 // It is written in Markdown because the answer is asked for in Markdown, and
 // a prompt that asks in one shape for another is asking twice.
-func prompt(t Task, p flow.Phase, knows []knowledge.Fact, notes []string, prevOutput string, others []string, tried ...gateRefusal) string {
+func prompt(t Task, p flow.Phase, knows []knowledge.Rule, notes []string, prevOutput string, others []string, tried ...gateRefusal) string {
 	return build(t, p, false, knows, notes, nil, prevOutput, others, tried...)
 }
 
-func build(t Task, p flow.Phase, last bool, knows []knowledge.Fact, notes, reviews []string, prevOutput string, others []string, tried ...gateRefusal) string {
+func build(t Task, p flow.Phase, last bool, knows []knowledge.Rule, notes, reviews []string, prevOutput string, others []string, tried ...gateRefusal) string {
 	var b strings.Builder
 
 	fmt.Fprintf(&b, "# %s\n\n%s\n\n", t.ID, strings.TrimSpace(t.Text))

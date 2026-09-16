@@ -31,7 +31,7 @@ func aCheckout(t *testing.T) string {
 
 // filed is the checkout's own facts, which is where a placed rule lands: a
 // rule about a folder travels with the clone it is about.
-func filed(t *testing.T, s *store.Store, repo string) []knowledge.Fact {
+func filed(t *testing.T, s *store.Store, repo string) []knowledge.Rule {
 	t.Helper()
 
 	got, err := knowledge.NewStore(s.Root()).LoadRepo(repo)

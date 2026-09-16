@@ -17,7 +17,7 @@ import (
 
 // world is the Env: the words, the keys, and a store held in the test's own
 // variables so that what a gesture wrote is read back rather than guessed at.
-func world(t *testing.T, facts ...knowledge.Fact) Env {
+func world(t *testing.T, facts ...knowledge.Rule) Env {
 	t.Helper()
 
 	frame, err := layout.Fit(screenW, screenH)
@@ -29,7 +29,7 @@ func world(t *testing.T, facts ...knowledge.Fact) Env {
 		Words: words.For("en"),
 		Keys:  keymap.New(words.For("en")),
 		Frame: frame,
-		All:   func() []knowledge.Fact { return facts },
+		All:   func() []knowledge.Rule { return facts },
 		Repos: []string{"/w/orbit"},
 	}
 }
@@ -42,12 +42,12 @@ const (
 )
 
 // known is one fact somebody typed.
-func known(phrase string, sc knowledge.Scope) knowledge.Fact {
-	return knowledge.Fact{Scope: sc, Source: knowledge.Human, Phrase: phrase}
+func known(phrase string, sc knowledge.Scope) knowledge.Rule {
+	return knowledge.Rule{Scope: sc, Source: knowledge.Human, Phrase: phrase}
 }
 
 // onScreen is the screen open on those facts.
-func onScreen(t *testing.T, facts ...knowledge.Fact) (State, Env) {
+func onScreen(t *testing.T, facts ...knowledge.Rule) (State, Env) {
 	t.Helper()
 
 	e := world(t, facts...)
@@ -114,8 +114,8 @@ func typed(s State, e Env, word string) State {
 // only ever applied to them.
 func TestTheGeneralOnesComeFirstAndSayTheyDoNotTravel(t *testing.T) {
 	s, e := onScreen(t,
-		knowledge.Fact{Scope: knowledge.Scope{Kind: knowledge.Repo, Repo: "/w/orbit"}, Source: knowledge.Human, Phrase: "of the repository"},
-		knowledge.Fact{Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.Human, Phrase: "of everything"},
+		knowledge.Rule{Scope: knowledge.Scope{Kind: knowledge.Repo, Repo: "/w/orbit"}, Source: knowledge.Human, Phrase: "of the repository"},
+		knowledge.Rule{Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.Human, Phrase: "of everything"},
 	)
 	drawn := drawnKnowledge(t, s, e)
 
@@ -139,7 +139,7 @@ func TestTheGeneralOnesComeFirstAndSayTheyDoNotTravel(t *testing.T) {
 // nobody can trace is indistinguishable from one the model made up.
 func TestEachFactSaysWhereItCameFrom(t *testing.T) {
 	s, e := onScreen(t,
-		knowledge.Fact{Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.FromRecord, Phrase: "learned from a refusal"},
+		knowledge.Rule{Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.FromRecord, Phrase: "learned from a refusal"},
 	)
 	// On the rule's own screen and not beside every row: a column of
 	// sources is a column nobody reads, and the question "can I trust this"
@@ -154,7 +154,7 @@ func TestEachFactSaysWhereItCameFrom(t *testing.T) {
 // TestAFactThatIsOffLooksOff, so that turning one off is a thing somebody
 // can see they did.
 func TestAFactThatIsOffLooksOff(t *testing.T) {
-	off := knowledge.Fact{Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.Human, Phrase: "turned off"}
+	off := knowledge.Rule{Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.Human, Phrase: "turned off"}
 	off.State = knowledge.Off
 
 	s, e := onScreen(t, off)
@@ -184,12 +184,12 @@ func TestCorrectingOpensTheRuleWithWhatItSays(t *testing.T) {
 // TestEditingTheSentenceReplacesTheFact rather than leaving both: the file is
 // named after the sentence when nothing else names it.
 func TestEditingTheSentenceReplacesTheFact(t *testing.T) {
-	var was, now knowledge.Fact
+	var was, now knowledge.Rule
 
-	s, e := onScreen(t, knowledge.Fact{
+	s, e := onScreen(t, knowledge.Rule{
 		Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.Human, Phrase: "fuxx",
 	})
-	e.Replace = func(a, b knowledge.Fact) error {
+	e.Replace = func(a, b knowledge.Rule) error {
 		was, now = a, b
 
 		return nil
@@ -217,15 +217,15 @@ func TestEditingTheSentenceReplacesTheFact(t *testing.T) {
 // sentence into a gate: the screen already says which rules cannot fire, and
 // this is where that is answered.
 func TestACheckCanBeGivenToARuleThatHasNone(t *testing.T) {
-	var now knowledge.Fact
+	var now knowledge.Rule
 
-	asked := knowledge.Fact{
+	asked := knowledge.Rule{
 		Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.Human,
 		Phrase: "coverage stays above 90%", Stops: true,
 	}
 
 	s, e := onScreen(t, asked)
-	e.Replace = func(_, b knowledge.Fact) error {
+	e.Replace = func(_, b knowledge.Rule) error {
 		now = b
 
 		return nil
@@ -253,10 +253,10 @@ func TestACheckCanBeGivenToARuleThatHasNone(t *testing.T) {
 func TestEscapeLeavesTheFactAsItWas(t *testing.T) {
 	saved := false
 
-	s, e := onScreen(t, knowledge.Fact{
+	s, e := onScreen(t, knowledge.Rule{
 		Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.Human, Phrase: "as it was",
 	})
-	e.Replace = func(knowledge.Fact, knowledge.Fact) error {
+	e.Replace = func(knowledge.Rule, knowledge.Rule) error {
 		saved = true
 
 		return nil
@@ -283,10 +283,10 @@ func TestEscapeLeavesTheFactAsItWas(t *testing.T) {
 // supervisor is where most of them are written, mid-conversation; this is for
 // the one somebody thinks of while reading the others.
 func TestNWritesANewFact(t *testing.T) {
-	var now knowledge.Fact
+	var now knowledge.Rule
 
 	s, e := onScreen(t)
-	e.Replace = func(_, b knowledge.Fact) error {
+	e.Replace = func(_, b knowledge.Rule) error {
 		now = b
 
 		return nil

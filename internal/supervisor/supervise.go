@@ -143,7 +143,7 @@ func AutoSupervise(ctx context.Context, s *store.Store, eng engine.Engine, needi
 // in the cockpit, and a prompt that asks in one shape for another is asking
 // twice.
 func buildSupervisorPrompt(
-	history string, happened []string, newPrompt string, knows []knowledge.Fact,
+	history string, happened []string, newPrompt string, knows []knowledge.Rule,
 ) string {
 	var b strings.Builder
 

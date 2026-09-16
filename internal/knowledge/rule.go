@@ -1,6 +1,6 @@
 package knowledge
 
-// One fact: a sentence about some code, where it came from, and whether it
+// One rule: a sentence about some code, where it came from, and whether it
 // merely says something or refuses to let the work through.
 
 import (
@@ -9,12 +9,12 @@ import (
 	"time"
 )
 
-// Source is where a fact came from, and there are four because there are
+// Source is where a rule came from, and there are four because there are
 // four ways Orbit finds anything out. None of them is "the model thought so".
 type Source int
 
 const (
-	// unsourced is the zero value, and it is not a source. A fact built by
+	// unsourced is the zero value, and it is not a source. A rule built by
 	// somebody who forgot to say where it came from would otherwise pass as
 	// having been read off the code, which is the one source nobody has to
 	// justify — the mistake would look like the most trustworthy answer.
@@ -25,7 +25,7 @@ const (
 	// Human is somebody saying it, at a gate or in the supervisor.
 	Human
 	// FromRecord is a lesson: a gate rejected something, or an attempt
-	// failed, and what happened became a fact with the scope of what the
+	// failed, and what happened became a rule with the scope of what the
 	// task touched. This is the one that grows without anybody writing.
 	FromRecord
 	// FromProduction is an incident. Nothing reads these yet; the source
@@ -63,7 +63,7 @@ const (
 type State int
 
 const (
-	// Active is confirmed and working. It is the zero value, so a fact
+	// Active is confirmed and working. It is the zero value, so a rule
 	// somebody wrote by hand with a header of two lines applies, which is
 	// what they meant by writing it.
 	Active State = iota
@@ -77,7 +77,7 @@ const (
 	Off
 )
 
-// Action is what a fact does when the work reaches its scope.
+// Action is what a rule does when the work reaches its scope.
 type Action int
 
 const (
@@ -87,38 +87,38 @@ const (
 	Stops
 )
 
-// A Fact is everything Orbit knows about one piece of code.
+// A Rule is everything Orbit knows about one piece of code.
 //
 // Phrase is the only field written for a reader — it is what the agent is
 // told and what a person sees in the Knowledge screen. The rest is what
 // Orbit uses to decide when to say it and what to do about it.
-type Fact struct {
+type Rule struct {
 	// ID is what this rule is called, for as long as it exists. It is
-	// coined once, when Orbit first writes the fact down, and nothing
+	// coined once, when Orbit first writes the rule down, and nothing
 	// changes it after that — not correcting the sentence, not moving the
 	// scope, not turning it off.
 	//
-	// It is here because everything else about a fact can change. The file
+	// It is here because everything else about a rule can change. The file
 	// is named after the sentence, so rewording one renames it, and what
 	// the record wrote down about the old name stops being findable. A
 	// cycle that cannot say "this is the same thing you said differently
 	// three weeks ago" is not a cycle: it is a pile of separate rules.
 	//
-	// Empty is allowed and is not an error. A fact somebody wrote by hand
+	// Empty is allowed and is not an error. A rule somebody wrote by hand
 	// has no id until Orbit writes it, and writing files by hand is half
 	// the reason these are files.
 	ID     string
 	Scope  Scope
 	Source Source
-	// Phrase is the fact, in a sentence. It is what gets read.
+	// Phrase is the rule, in a sentence. It is what gets read.
 	Phrase string
-	// Stops is what the fact was asked to do. Whether it can is Action's
+	// Stops is what the rule was asked to do. Whether it can is Action's
 	// answer, not this field's: see there.
 	Stops bool
-	// Check is the command that says yes or no without opinion. A fact that
+	// Check is the command that says yes or no without opinion. A rule that
 	// wants to stop is worth nothing without one.
 	Check string
-	// Ref names what the fact came out of — a task, a decision, an
+	// Ref names what the rule came out of — a task, a decision, an
 	// incident — so that a reader can go and see for themselves.
 	Ref string
 	// At is when it entered, and Used is how many times it has been told.
@@ -138,14 +138,14 @@ type Fact struct {
 	// Folded together, one of those two would have to lie about whether
 	// the rule is still in the prompt.
 	Review bool
-	// from is the file this fact was read out of, and empty for one that
+	// from is the file this rule was read out of, and empty for one that
 	// has never been on disk.
 	//
 	// Unexported because nobody outside sets it and nobody should: it is
 	// what the store saw, not something a screen decides. What it is for is
 	// replacing — a file somebody wrote by hand is called whatever they
 	// called it, and a replacement that worked out the old name from the
-	// fact's own fields left that file behind, still told and still
+	// rule's own fields left that file behind, still told and still
 	// refusing work.
 	from string
 }
@@ -154,17 +154,17 @@ type Fact struct {
 // into every prompt and what the gate refuses work over. Only an active rule
 // does — a paused one is the reader saying not now, and one switched off is
 // them saying no.
-func (f Fact) Tells() bool { return f.State == Active }
+func (f Rule) Tells() bool { return f.State == Active }
 
-// Action is what this fact actually does, which is not always what it was
+// Action is what this rule actually does, which is not always what it was
 // asked to do.
 //
 // Warning is a sentence and needs nothing else. Stopping is the gate refusing
 // the work, and refusing needs something that answers yes or no without an
 // opinion in it — a command, a pattern over the diff, a test that runs. A
-// fact that asked to stop and brought no check would never fire while reading
+// rule that asked to stop and brought no check would never fire while reading
 // as though it would, so it warns, and the screen says so.
-func (f Fact) Action() Action {
+func (f Rule) Action() Action {
 	if f.Stops && f.Check != "" {
 		return Stops
 	}
@@ -201,7 +201,7 @@ const (
 )
 
 // Standing folds a rule down to the one of the five it is in.
-func (f Fact) Standing() Standing {
+func (f Rule) Standing() Standing {
 	switch {
 	case f.Review:
 		return Waiting
@@ -216,19 +216,19 @@ func (f Fact) Standing() Standing {
 	return Says
 }
 
-// Validate reports the first thing that would make a fact untrustworthy.
+// Validate reports the first thing that would make a rule untrustworthy.
 //
-// Every fact has a source and a scope; without something behind it, it does
+// Every rule has a source and a scope; without something behind it, it does
 // not get in. That is not tidiness — a sentence in the agent's context that
 // nobody can trace is indistinguishable from one the model made up, and the
 // whole point of keeping this outside the model is that it can be traced.
-func (f Fact) Validate() error {
+func (f Rule) Validate() error {
 	if f.Phrase == "" {
-		return fmt.Errorf("a fact with no sentence says nothing")
+		return fmt.Errorf("a rule with no sentence says nothing")
 	}
 
 	if f.Source <= unsourced || f.Source > FromHistory {
-		return fmt.Errorf("the fact %q comes from nowhere", f.Phrase)
+		return fmt.Errorf("the rule %q comes from nowhere", f.Phrase)
 	}
 
 	return f.Scope.validate(f.Phrase)
@@ -241,35 +241,35 @@ func (s Scope) validate(phrase string) error {
 		return nil
 	case Language:
 		if s.Lang == "" {
-			return fmt.Errorf("the fact %q is about a language and names none", phrase)
+			return fmt.Errorf("the rule %q is about a language and names none", phrase)
 		}
 	case Repo, Dir, File, Symbol:
 		if s.Repo == "" {
-			return fmt.Errorf("the fact %q is about code and names no repository", phrase)
+			return fmt.Errorf("the rule %q is about code and names no repository", phrase)
 		}
 
 		if s.Kind != Repo && s.Path == "" {
-			return fmt.Errorf("the fact %q is about a path and names none", phrase)
+			return fmt.Errorf("the rule %q is about a path and names none", phrase)
 		}
 
 		if s.Kind == Symbol && s.Symbol == "" {
-			return fmt.Errorf("the fact %q is about a symbol and names none", phrase)
+			return fmt.Errorf("the rule %q is about a symbol and names none", phrase)
 		}
 	default:
-		return fmt.Errorf("the fact %q has a scope of no kind", phrase)
+		return fmt.Errorf("the rule %q has a scope of no kind", phrase)
 	}
 
 	return nil
 }
 
-// InScope is every fact that is on, widest first, with nothing to narrow
+// InScope is every rule that is on, widest first, with nothing to narrow
 // them by.
 //
 // It is what a phase is told: when the prompt is written nothing has been
 // touched yet, so there is no file to ask about and the answer is everything
 // known about the code the phase is going to work in. For is the same
 // ordering once there is a file to narrow it by.
-func InScope(all []Fact) []Fact {
+func InScope(all []Rule) []Rule {
 	return ordered(all, func(Scope) bool { return true })
 }
 
@@ -277,39 +277,39 @@ func InScope(all []Fact) []Fact {
 // included.
 //
 // It is what the screen that lists them shows. InScope is what a phase is
-// told, and a fact turned off is not told — but a screen that dropped them
+// told, and a rule turned off is not told — but a screen that dropped them
 // too would be a screen with no way to turn one back on, and a file on disk
 // that nothing in the window admits exists.
-func Every(all []Fact) []Fact {
+func Every(all []Rule) []Rule {
 	kept := slices.Clone(all)
 
-	slices.SortStableFunc(kept, func(a, b Fact) int {
+	slices.SortStableFunc(kept, func(a, b Rule) int {
 		return a.Scope.Depth() - b.Scope.Depth()
 	})
 
 	return kept
 }
 
-// For is every fact that reaches a target, widest first.
+// For is every rule that reaches a target, widest first.
 //
 // The order is the point. The agent reads them in this order, so what was
 // written about the file itself is the last thing it reads and has the last
-// word over what was written about every repository. Facts that were turned
+// word over what was written about every repository. Rules that were turned
 // off are not told at all.
 //
-// Two facts of the same depth keep the order they came in, which is the
+// Two rules of the same depth keep the order they came in, which is the
 // order they were written down: between "in Go, never discard an error" and
 // "in Go, wrap errors with %w", neither outranks the other and the older one
 // is read first.
-func For(t Target, all []Fact) []Fact {
+func For(t Target, all []Rule) []Rule {
 	return ordered(all, func(s Scope) bool { return s.Covers(t) })
 }
 
-// ordered keeps the facts that are on and that the test lets through, widest
-// first. The sort is stable, so two facts of the same depth stay in the order
+// ordered keeps the rules that are on and that the test lets through, widest
+// first. The sort is stable, so two rules of the same depth stay in the order
 // they were written down.
-func ordered(all []Fact, keep func(Scope) bool) []Fact {
-	kept := make([]Fact, 0, len(all))
+func ordered(all []Rule, keep func(Scope) bool) []Rule {
+	kept := make([]Rule, 0, len(all))
 
 	for _, f := range all {
 		if f.Tells() && keep(f.Scope) {
@@ -317,7 +317,7 @@ func ordered(all []Fact, keep func(Scope) bool) []Fact {
 		}
 	}
 
-	slices.SortStableFunc(kept, func(a, b Fact) int {
+	slices.SortStableFunc(kept, func(a, b Rule) int {
 		return a.Scope.Depth() - b.Scope.Depth()
 	})
 

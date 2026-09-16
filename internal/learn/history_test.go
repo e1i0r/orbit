@@ -48,7 +48,7 @@ func TestWhatChangedIsWrittenDownOnePieceAtATime(t *testing.T) {
 	s := root(t)
 	repo := aCheckout(t)
 
-	was := knowledge.Fact{
+	was := knowledge.Rule{
 		ID: "abc12345", Source: knowledge.Human, Phrase: "amounts are cents",
 		Scope: knowledge.Scope{Kind: knowledge.Repo, Repo: repo},
 	}
@@ -96,7 +96,7 @@ func TestWhatChangedIsWrittenDownOnePieceAtATime(t *testing.T) {
 func TestAnEditThatChangedNothingWritesNothing(t *testing.T) {
 	s := root(t)
 
-	same := knowledge.Fact{
+	same := knowledge.Rule{
 		ID: "abc12345", Source: knowledge.Human, Phrase: "amounts are cents",
 		Scope: knowledge.Scope{Kind: knowledge.General},
 	}
@@ -123,7 +123,7 @@ func TestAnEditThatChangedNothingWritesNothing(t *testing.T) {
 func TestARuleWithNoNameWritesNoHistoryAndIsNotAnError(t *testing.T) {
 	s := root(t)
 
-	byHand := knowledge.Fact{
+	byHand := knowledge.Rule{
 		Source: knowledge.Human, Phrase: "never push on a Friday",
 		Scope: knowledge.Scope{Kind: knowledge.General},
 	}

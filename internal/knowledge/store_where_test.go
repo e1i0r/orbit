@@ -1,9 +1,9 @@
 package knowledge
 
-// Where a fact lands on disk, and what it is called there.
+// Where a rule lands on disk, and what it is called there.
 //
 // Both halves are the design and not an implementation detail. Where it
-// lands is what makes a fact travel: one about a checkout lives inside that
+// lands is what makes a rule travel: one about a checkout lives inside that
 // checkout, so it arrives with a clone and goes through review, rather than
 // existing on one machine in silence. What it is called is what keeps two of
 // them apart.
@@ -25,7 +25,7 @@ func TestAFactOfARepositoryLivesInTheRepository(t *testing.T) {
 	state, repo := roots(t)
 	s := NewStore(state)
 
-	f := Fact{
+	f := Rule{
 		Scope:  Scope{Kind: Dir, Repo: repo, Path: "backend/ledger"},
 		Source: Human,
 		Ref:    "REF-9",
@@ -40,7 +40,7 @@ func TestAFactOfARepositoryLivesInTheRepository(t *testing.T) {
 	want := filepath.Join(repo, ".orbit", "knowledge", "backend", "ledger",
 		"REF-9-no-update-or-delete-in-ledger.md")
 	if where != want {
-		t.Errorf("the fact was written to %s,\nwant %s", where, want)
+		t.Errorf("the rule was written to %s,\nwant %s", where, want)
 	}
 
 	if _, err := os.Stat(want); err != nil {
@@ -50,7 +50,7 @@ func TestAFactOfARepositoryLivesInTheRepository(t *testing.T) {
 
 // TestOneTaskCanTeachMoreThanOneThing.
 //
-// A fact is named after what it came out of, and every fact an agent writes
+// A rule is named after what it came out of, and every rule an agent writes
 // mid-task comes out of that task. Named by the reference alone, the second
 // thing it learned wrote over the first and said "written down" about it.
 func TestOneTaskCanTeachMoreThanOneThing(t *testing.T) {
@@ -63,7 +63,7 @@ func TestOneTaskCanTeachMoreThanOneThing(t *testing.T) {
 		"amounts are cents, never floats",
 		"the fuzz test hangs on a fixed seed",
 	} {
-		at, err := s.Save(Fact{
+		at, err := s.Save(Rule{
 			Scope:  Scope{Kind: Repo, Repo: repo},
 			Source: FromRecord,
 			Ref:    "PAY-1",
@@ -97,7 +97,7 @@ func TestAGeneralFactLivesInTheStateRootAndNoRepository(t *testing.T) {
 	state, repo := roots(t)
 	s := NewStore(state)
 
-	where, err := s.Save(Fact{
+	where, err := s.Save(Rule{
 		Scope:  Scope{Kind: General},
 		Source: Human,
 		Phrase: "The PRs and the commits are written in English.",
@@ -107,11 +107,11 @@ func TestAGeneralFactLivesInTheStateRootAndNoRepository(t *testing.T) {
 	}
 
 	if !strings.HasPrefix(where, state) {
-		t.Errorf("a general fact was written to %s, outside the state root %s", where, state)
+		t.Errorf("a general rule was written to %s, outside the state root %s", where, state)
 	}
 
 	if entries, err := os.ReadDir(filepath.Join(repo, ".orbit")); err == nil && len(entries) > 0 {
-		t.Error("a general fact left something inside a repository")
+		t.Error("a general rule left something inside a repository")
 	}
 }
 
@@ -121,7 +121,7 @@ func TestALanguageFactIsFiledUnderItsLanguage(t *testing.T) {
 	state, _ := roots(t)
 	s := NewStore(state)
 
-	where, err := s.Save(Fact{
+	where, err := s.Save(Rule{
 		Scope:  Scope{Kind: Language, Lang: "go"},
 		Source: Human,
 		Phrase: "Never discard what a call answered with _.",
@@ -131,6 +131,6 @@ func TestALanguageFactIsFiledUnderItsLanguage(t *testing.T) {
 	}
 
 	if want := filepath.Join(state, "knowledge", "lang", "go"); filepath.Dir(where) != want {
-		t.Errorf("a Go fact went to %s, want it under %s", filepath.Dir(where), want)
+		t.Errorf("a Go rule went to %s, want it under %s", filepath.Dir(where), want)
 	}
 }
