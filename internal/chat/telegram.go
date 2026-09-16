@@ -108,18 +108,11 @@ func (t *Telegram) Listen(ctx context.Context, said func(Message)) error {
 
 // Say answers into one conversation.
 //
-// Twice, if the first one is refused. MarkdownV2 is strict — one unescaped
-// character out of eighteen and the whole message is rejected — and what
-// this carries is not all Orbit's to escape: the supervisor answers in
-// markdown because it was asked to, and escaping that would be deleting the
-// formatting rather than protecting it.
-//
-// So the formatted send is attempted and a refusal falls back to plain text.
-// A stray character then costs the formatting of one message instead of the
-// message itself, which is the trade worth making: an answer nobody sees is
-// worse than an answer with an asterisk in it.
+// Twice, if the first one is refused. Formatting is worth having and it is
+// not worth a message: a send the service rejects is an answer nobody sees,
+// and the second attempt carries the same words with the markup taken out.
 func (t *Telegram) Say(ctx context.Context, where, text string) error {
-	if err := t.send(ctx, where, asMarkdown(text), "MarkdownV2"); err == nil {
+	if err := t.send(ctx, where, asHTML(text), "HTML"); err == nil {
 		return nil
 	}
 
@@ -245,43 +238,92 @@ func (t *Telegram) post(ctx context.Context, method string, body []byte) (*http.
 	return res, nil
 }
 
-// asMarkdown is an answer in the markup this service reads.
+// asHTML is an answer in the markup this service can actually be handed.
 //
-// A fence Reply put around a listing stays a fence — it is already what
-// MarkdownV2 spells a code block with — and what is inside one needs only
-// the backslash and the backtick escaped. Outside, this package's own
-// emphasis becomes the asterisks the service wants.
+// MarkdownV2 was tried and is not usable here, and the reason is worth
+// writing down so nobody tries it again. It reserves eighteen characters and
+// rejects — not mangles, rejects — any message with one of them unescaped.
+// Two of them are the full stop and the hyphen. So Orbit's own output cannot
+// go unescaped (`unread-cap` is enough to lose the message) and the
+// supervisor's prose cannot go escaped (its formatting would be deleted) and
+// it cannot go unescaped either, because an ordinary sentence ends in a full
+// stop. There is no arrangement of those that works.
 //
-// What is deliberately not escaped is everything else. Telegram's own rule
-// is that eighteen characters must be, and obeying it here would mean
-// escaping the supervisor's markdown out of existence: it answers in
-// markdown because it was asked to. Say sends this first and falls back to
-// plain text if the service refuses it, which is what makes the gamble
-// affordable.
-func asMarkdown(text string) string {
+// HTML reserves three characters. Orbit's own text is escaped, the
+// supervisor is asked to answer in HTML rather than markdown, and a fence
+// Reply put around a listing becomes <pre>, which is what makes columns line
+// up on a phone. The fences are this package's marker rather than the
+// service's: a second service turns them into whatever it has.
+func asHTML(text string) string {
 	var b strings.Builder
 
 	for i, part := range strings.Split(text, "```") {
 		// Odd parts are what the fences held.
 		if i%2 == 1 {
-			b.WriteString("```\n" + inCode(strings.Trim(part, "\n")) + "\n```")
+			b.WriteString("<pre>" + escape(strings.Trim(part, "\n")) + "</pre>")
 
 			continue
 		}
 
-		b.WriteString(strings.NewReplacer(Strong, "*", endStrong, "*").Replace(part))
+		b.WriteString(outside(part))
 	}
 
 	return b.String()
 }
 
-// inCode is the two characters a fenced block still has to escape.
-func inCode(text string) string {
-	return strings.NewReplacer("\\", "\\\\", "`", "\\`").Replace(text)
+// outside is everything that is not in a fence: this package's emphasis
+// becomes the service's, what somebody else already formatted is left alone,
+// and everything Orbit wrote itself is escaped.
+func outside(part string) string {
+	var b strings.Builder
+
+	for i, span := range strings.Split(part, Raw) {
+		// The first span is never raw; every one after a Raw mark is, up to
+		// its own end mark.
+		if i == 0 {
+			b.WriteString(escape(span))
+
+			continue
+		}
+
+		raw, rest, _ := strings.Cut(span, endRaw)
+
+		b.WriteString(raw)
+		b.WriteString(escape(rest))
+	}
+
+	return strings.NewReplacer(Strong, "<b>", endStrong, "</b>").Replace(b.String())
+}
+
+// reserved is every character MarkdownV2 refuses a message over.
+//
+// All eighteen, from the service's own documentation. A message with one of
+// them unescaped is not rendered badly — it is rejected outright, which is
+// how an answer comes to arrive as plain text with no sign that anything was
+// meant to be bold.
+const reserved = `_*[]()~` + "`" + `>#+-=|{}.!\`
+
+// escape puts a backslash before every one of them.
+func escape(text string) string {
+	var b strings.Builder
+
+	for _, r := range text {
+		// The two marks this package carries are not content and must not
+		// be escaped into visibility.
+		if strings.ContainsRune(reserved, r) {
+			b.WriteRune('\\')
+		}
+
+		b.WriteRune(r)
+	}
+
+	return b.String()
 }
 
 // plain is the same answer with the markup taken out, for the send that
 // follows one the service refused.
 func plain(text string) string {
-	return strings.NewReplacer(Strong, "", endStrong, "", "```", "").Replace(text)
+	return strings.NewReplacer(
+		Strong, "", endStrong, "", Raw, "", endRaw, "", "```", "",
+	).Replace(text)
 }

@@ -240,8 +240,9 @@ func (d *Desk) toldTheSupervisor(ctx context.Context, text string, p *words.Prin
 func forAPhone(said string, p *words.Printer) string {
 	return said + "\n\n" + p.T("chat.answer_shape",
 		"Answer for a phone screen: a few short paragraphs, no tables, no headings. "+
-			"Telegram MarkdownV2 is rendered, so *bold* and `code` work and nothing else is needed. "+
-			"Lead with the answer, then the detail. Keep it under fifteen lines.")
+			"Use HTML and not markdown — <b>bold</b> and <code>code</code> are rendered and "+
+			"nothing else is needed. Lead with the answer, then the detail. "+
+			"Keep it under fifteen lines.")
 }
 
 // run asks for the verb and dresses what it answered.

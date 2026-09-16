@@ -34,6 +34,9 @@ import (
 const (
 	Strong    = "\x02"
 	endStrong = "\x03"
+	// Raw marks text that is already formatted and must not be escaped.
+	Raw    = "\x04"
+	endRaw = "\x05"
 )
 
 // atMost is how long one answer may be.
@@ -45,13 +48,15 @@ const (
 const atMost = 3800
 
 // Prose is an answer that was already written for a person to read, and is
-// left alone.
+// marked so that no adapter escapes it.
 //
 // The supervisor answers in markdown because it was asked to. Everything
-// else here is a verb's output — columns padded for a terminal — and the two
-// want opposite treatment: one is formatting and the other is text that
-// happens to contain punctuation.
-func Prose(said string) string { return said }
+// else here is a verb's output — columns padded for a terminal, full of
+// hyphens and dots that nobody meant as formatting — and the two want
+// opposite treatment. Escaping both deletes the first's formatting; escaping
+// neither loses whole messages, which is what shipped for an hour: MarkdownV2
+// refuses over an unescaped hyphen, and `unread-cap` has one.
+func Prose(said string) string { return Raw + said + endRaw }
 
 // Reply is one verb's answer, dressed for a chat.
 func Reply(out verb.Out, p *words.Printer) string {
