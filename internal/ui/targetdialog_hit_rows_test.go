@@ -186,3 +186,52 @@ func TestHitReposEveryOutcome(t *testing.T) {
 		t.Errorf("hitRepos past every row = %+v, want point.None", got)
 	}
 }
+
+// TestHitSettingsFollowsTheScrolledTable. The table is taller than the body,
+// so a click has to be measured from where the table now starts. Measured
+// from the top of it, a click lands on whichever dial used to be drawn
+// there — the one gesture in this window that turns a knob nobody pointed at.
+func TestHitSettingsFollowsTheScrolledTable(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+	m = m.openSettings()
+
+	rows := m.settingRowsList()
+	if len(rows) == 0 {
+		t.Fatal("the fixture settings port produced no rows")
+	}
+
+	// The cursor walks to the last dial, which is what pulls the table up.
+	for range len(rows) - 1 {
+		m.settings = m.settings.Scroll(1, m.settingsEnv())
+	}
+
+	off := m.settingsOff()
+	if off == 0 {
+		t.Fatalf("the table never scrolled in a body of %d rows", m.frame.Body.H)
+	}
+
+	last := len(rows) - 1
+	line := settingsHead + settingsRowLines*last - off
+
+	got := m.hitSettings(5, m.frame.Body.Y+line)
+	if got.Kind != point.SettingsRow || got.Pane != last {
+		t.Errorf("a click on the last dial = %+v, want row %d", got, last)
+	}
+
+	// And the row it named is the row that is drawn there, which is the
+	// half of this a coordinate alone cannot check.
+	drawn := m.settingsRows(m.frame.Body.H, m.frame.Body.W)
+	if line >= len(drawn) || !strings.Contains(drawn[line], rows[last].Key) {
+		t.Errorf("line %d draws %q, want the %q row", line, safeLine(drawn, line), rows[last].Key)
+	}
+}
+
+// safeLine is one line of a screen, for an error message that must not panic
+// while saying what went wrong.
+func safeLine(rows []string, i int) string {
+	if i < 0 || i >= len(rows) {
+		return ""
+	}
+
+	return rows[i]
+}

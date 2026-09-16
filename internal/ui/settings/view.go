@@ -18,18 +18,22 @@ func (s State) View(h, w int, e Env) []string {
 	}
 
 	p := e.Words
-	out := []string{
+	head := []string{
 		"",
 		"  " + theme.Paint(theme.Accent).Bold(true).Render(p.T("settings.title", "Settings")),
 		"  " + theme.Paint(theme.Dim).Render(p.T("settings.subtitle", "changes take effect immediately")),
 		"",
 	}
 
+	var body []string
+
 	for i, r := range s.Rows(e) {
-		out = append(out, s.row(r, i == s.sel, w)...)
+		body = append(body, s.row(r, i == s.sel, w)...)
 	}
 
-	return cells.Fill(append(out, cells.Fit("  "+theme.Paint(theme.Dim).Render(s.waysOut(e)), w)), h)
+	foot := []string{cells.Fit("  "+theme.Paint(theme.Dim).Render(s.waysOut(e)), w)}
+
+	return cells.Fill(framed(head, body, foot, h, s.off), h)
 }
 
 // row is one setting drawn: its name, its pills, and the sentence under it.

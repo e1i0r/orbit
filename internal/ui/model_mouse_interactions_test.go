@@ -110,7 +110,7 @@ func TestSettingsSubmitAndEditing(t *testing.T) {
 	m, _ := testModel(t, 120, 40)
 	m.screen = screenSettings
 	m.settings = m.settings.Edit("es")
-	m.settings = m.settings.Point(0) // Language setting row
+	m.settings = m.settings.Point(0, m.settingsEnv()) // Language setting row
 
 	// Press Enter to submit edited setting
 	mSub, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})

@@ -22,6 +22,7 @@ func (m Model) settingsEnv() settings.Env {
 	return settings.Env{
 		Words: m.opts.Words,
 		Keys:  m.keys,
+		Frame: m.frame,
 		Store: m.opts.Settings,
 		Dials: settings.Dials{
 			Engine:   m.knobs.Engine,
@@ -88,6 +89,19 @@ func (m Model) applySetting(name, val string) (tea.Model, tea.Cmd) {
 // cycleSetting turns the chosen row's dial by one.
 func (m Model) cycleSetting(delta int) (tea.Model, tea.Cmd) {
 	return m.tookSettings(m.settings.Cycle(delta, m.settingsEnv()))
+}
+
+// wheelSettings is one notch of the wheel over the table.
+func (m Model) wheelSettings(d int) Model {
+	m.settings = m.settings.Scroll(d, m.settingsEnv())
+
+	return m
+}
+
+// settingsOff is how far the table has been scrolled, which is what a click
+// on it has to be measured from.
+func (m Model) settingsOff() int {
+	return m.settings.Off(m.settingsEnv())
 }
 
 // settingRowsList is the table as the mouse and the tip need it.

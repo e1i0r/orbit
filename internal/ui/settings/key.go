@@ -37,14 +37,14 @@ func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
 			s.sel = len(rows) - 1
 		}
 
-		return s, Out{}
+		return s.keepSeen(e), Out{}
 	case key.Matches(msg, e.Keys.Down), msg.Text == "j":
 		s.sel++
 		if s.sel >= len(rows) {
 			s.sel = 0
 		}
 
-		return s, Out{}
+		return s.keepSeen(e), Out{}
 	case key.Matches(msg, e.Keys.Open), msg.Text == " ", msg.Code == tea.KeyRight, msg.Text == "l":
 		return s, s.Cycle(1, e)
 	case msg.Code == tea.KeyLeft, msg.Text == "h":
@@ -140,10 +140,15 @@ func (s State) Typed() string { return s.typed }
 func (s State) Chosen() int { return s.sel }
 
 // Point puts the cursor on a row, which is what a click does.
-func (s State) Point(at int) State {
+//
+// It takes the world because putting the cursor somewhere is also bringing
+// it on screen: a click can only land on a row that is already drawn, but
+// the row under it is measured against a table that the board behind this
+// screen may have re-read in between.
+func (s State) Point(at int, e Env) State {
 	s.sel = at
 
-	return s
+	return s.keepSeen(e)
 }
 
 // Editing is whether the chosen row is being typed into.

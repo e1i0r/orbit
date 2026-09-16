@@ -95,6 +95,13 @@ key printed against it there.
 `:` then `settings` opens them. Arrows walk the dials, `e` types a value that
 is on no dial, and `x` puts one back to what Orbit ships.
 
+There are more dials than a terminal has rows, so the table scrolls: the
+arrows and the wheel bring whatever the cursor is on into view, one setting a
+notch, and the title and the line of keys stay where they are while it moves.
+A click is measured from where the table now starts — before that it was
+measured from the top of the screen, which on a scrolled table turned the
+dial of whichever row used to be drawn there.
+
 Putting one back is its own gesture and not typing the default in by hand,
 because what a setting comes as is Orbit's to know: a person who set the
 unread cap to 40 and wants the leash back should not have to remember that it
