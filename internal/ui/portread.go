@@ -50,6 +50,10 @@ type Settings interface {
 	SetFlow(string) error
 	Theme() string
 	SetTheme(string) error
+	// Fresh is what one setting reads as when nobody has chosen anything.
+	// The settings screen asks it to put a row back; internal/verb is where
+	// the answer is declared, beside what the setting means.
+	Fresh(key string) string
 }
 
 // Reader is the window's port to the state root, and everything it may ask

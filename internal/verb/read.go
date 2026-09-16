@@ -162,6 +162,50 @@ func changed(w World, in In) (Out, error) {
 		words.Arg{Name: "value", Value: now})}, nil
 }
 
+// blanked puts one setting back to what Orbit ships.
+//
+// A setting that was already there is not a failure and does not pretend to
+// be one: it says so. "Nothing to do" is an answer, and a reader who typed
+// this because they were not sure what the setting held is owed it — telling
+// them only "cleared" leaves them no wiser than before.
+func blanked(w World, in In) (Out, error) {
+	var was, now string
+
+	err := w.Store().UpdateSettings(func(cfg *store.Settings) error {
+		var err error
+
+		was, now, err = blank(w.Words(), cfg, in.Arg("key"))
+
+		return err
+	})
+	if err != nil {
+		return Out{}, err
+	}
+
+	// A word and not the dash the listing draws. "engine is back to —" is a
+	// table cell in the middle of a sentence; a setting that comes as
+	// nothing has to say so in a word.
+	value := words.Arg{Name: "value", Value: nothing(w, now)}
+	key := words.Arg{Name: "key", Value: in.Arg("key")}
+
+	if was == now {
+		return Out{Said: w.Words().T("verb.clear.already", "{key} was already {value}",
+			key, value)}, nil
+	}
+
+	return Out{Said: w.Words().T("verb.clear.back", "{key} is back to {value}",
+		key, value)}, nil
+}
+
+// nothing is what a setting that comes as no value reads as in a sentence.
+func nothing(w World, value string) string {
+	if value == "" {
+		return w.Words().T("settings.nothing", "nothing")
+	}
+
+	return value
+}
+
 // unset is what an empty setting prints as. An empty column reads as a table
 // that failed to render; a dash reads as an answer.
 func unset(value string) string {

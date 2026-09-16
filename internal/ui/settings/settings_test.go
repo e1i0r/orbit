@@ -42,6 +42,19 @@ func (f *file) SetModel(v string) error    { f.model = v; return f.refuse }
 func (f *file) SetFlow(v string) error     { f.flow = v; return f.refuse }
 func (f *file) SetTheme(v string) error    { f.theme = v; return f.refuse }
 
+// Fresh is what a setting comes as, written out here rather than asked of
+// internal/verb — this package may not see it, and that is the point of the
+// port. What matters to a test of clearing is that the screen writes back
+// whatever it is told, not which values Orbit happens to ship.
+func (f *file) Fresh(key string) string {
+	return map[string]string{
+		"autopilot":  "off",
+		"unread-cap": "5",
+		"flow":       "task",
+		"theme":      "frauddi",
+	}[key]
+}
+
 // env is the world this screen is given in these tests: one engine with two
 // models and two efforts, and a settings file nobody else is writing to.
 func env(t *testing.T, f *file) Env {

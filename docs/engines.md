@@ -89,8 +89,9 @@ posture the record would describe wrongly.
 ## Defaults
 
 ```bash
-orbit settings engine claude
-orbit settings model opus
+orbit settings set engine claude
+orbit settings set model opus
+orbit settings clear model        # let every phase ask for its own again
 ```
 
 A phase that names its own engine or model overrides these. A phase that names

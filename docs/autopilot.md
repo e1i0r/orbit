@@ -24,7 +24,7 @@ Autopilot lifts the flow's gates. It does **not** lift:
 
 ## The brake
 
-`unread-cap` is 10 by default. Once that many finished tasks are sitting
+`unread-cap` is 5 by default. Once that many finished tasks are sitting
 unread, nothing new starts.
 
 That is the whole design: the queue cannot outrun you. An agent that can work
@@ -32,8 +32,9 @@ all night is only useful if what it produced is still readable in the morning,
 and ten unread runs is already more than anyone reads in one sitting.
 
 ```bash
-orbit settings unread-cap 4      # a smaller leash
-orbit settings autopilot on      # the same switch, from a script
+orbit settings set unread-cap 4      # a smaller leash
+orbit settings set autopilot on      # the same switch, from a script
+orbit settings clear unread-cap      # back to the leash Orbit ships with
 ```
 
 `d` marks a task read and gives you one slot back.

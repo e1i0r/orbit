@@ -51,6 +51,10 @@ func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
 		return s, s.Cycle(-1, e)
 	case msg.Text == "e":
 		return s.Edit(rows[s.sel].Val), Out{}
+	case msg.Text == "x":
+		// x, the letter this window already uses for undoing something: it
+		// cancels a run on the board, and here it takes back a choice.
+		return s, Blank(rows[s.sel].Key, e)
 	}
 
 	return s, Out{}

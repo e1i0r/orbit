@@ -45,6 +45,23 @@ export function SettingsScreen() {
     }
   };
 
+  // Putting one back is its own verb and not a set with the default typed
+  // in: what a setting comes as is Orbit's to know, and a page that typed
+  // "5" into the unread cap would be a second copy of the defaults.
+  const clear = async (name: string) => {
+    setBusy(name);
+    setRefused(undefined);
+
+    try {
+      await api.did("settings clear", { key: name });
+      await read();
+    } catch (e) {
+      setRefused((e as Error).message);
+    } finally {
+      setBusy(undefined);
+    }
+  };
+
   if (failed) return <p className="text-xs text-bad">{failed}</p>;
   if (!all) return <p className="text-xs text-aside">Reading the settings…</p>;
 
@@ -53,7 +70,7 @@ export function SettingsScreen() {
       {refused && <p className="text-[11px] text-bad">{refused}</p>}
 
       {all.map((one) => (
-        <Row key={one.name} setting={one} busy={busy === one.name} set={set} />
+        <Row key={one.name} setting={one} busy={busy === one.name} set={set} clear={clear} />
       ))}
     </div>
   );
@@ -70,10 +87,12 @@ function Row({
   setting,
   busy,
   set,
+  clear,
 }: {
   setting: Setting;
   busy: boolean;
   set: (name: string, value: string) => void;
+  clear: (name: string) => void;
 }) {
   const [draft, setDraft] = useState(setting.value === "—" ? "" : setting.value);
   const toggle = setting.value === "on" || setting.value === "off";
@@ -83,7 +102,7 @@ function Row({
   }, [setting.value]);
 
   return (
-    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded border border-edge bg-well/40 px-2.5 py-2">
+    <div className="group flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded border border-edge bg-well/40 px-2.5 py-2">
       <span className="w-40 shrink-0 font-mono text-[11px] text-said">{setting.name}</span>
 
       {toggle ? (
@@ -112,6 +131,18 @@ function Row({
       )}
 
       <span className="min-w-0 flex-1 text-[11px] text-faint">{setting.about}</span>
+
+      {/* Quiet until the row is pointed at or reached by keyboard: every
+          setting can be put back, and a column of reset buttons would be
+          the loudest thing on a page about eleven quiet choices. */}
+      <button
+        onClick={() => clear(setting.name)}
+        disabled={busy}
+        title="put it back to what Orbit ships"
+        className="shrink-0 text-[10px] text-faint opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100 hover:text-said disabled:opacity-40"
+      >
+        reset
+      </button>
     </div>
   );
 }

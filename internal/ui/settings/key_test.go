@@ -1,6 +1,7 @@
 package settings
 
 import (
+	"strings"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
@@ -171,4 +172,48 @@ func TestTypingRunesIntoTheLine(t *testing.T) {
 	if s.Typed() != before {
 		t.Errorf("a key with nothing to type wrote %q", s.Typed())
 	}
+}
+
+// TestXPutsTheRowBack. The screen and the command line are two ways to the
+// same file, and a setting a reader can choose on screen and only unchoose
+// in a terminal is half a screen.
+func TestXPutsTheRowBack(t *testing.T) {
+	f := newFile()
+	f.autopilot, f.unread = true, 40
+
+	e := env(t, f)
+
+	s := Open(e)
+	s.sel = rowOf(t, s, e, "autopilot")
+
+	next, out := s.Key(tea.KeyPressMsg{Text: "x"}, e)
+
+	if f.autopilot {
+		t.Error("x left autopilot on")
+	}
+
+	if !strings.Contains(out.Said, "back to") {
+		t.Errorf("the screen said %q, want it to say what the setting went back to", out.Said)
+	}
+
+	// And it is the whole gesture: nothing is left open, and the next key
+	// lands on the list rather than in a field.
+	if next.editing {
+		t.Error("x left the row being typed into")
+	}
+}
+
+// rowOf is where one setting sits on the screen.
+func rowOf(t *testing.T, s State, e Env, key string) int {
+	t.Helper()
+
+	for i, r := range s.Rows(e) {
+		if r.Key == key {
+			return i
+		}
+	}
+
+	t.Fatalf("the screen has no row for %q", key)
+
+	return 0
 }

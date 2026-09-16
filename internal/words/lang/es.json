@@ -5439,6 +5439,30 @@
       "source": "back in {when}",
       "value": "vuelve en {when}"
     },
+    "verb.clear": {
+      "source": "put one setting back to what Orbit ships",
+      "value": "devolver un setting a como viene Orbit"
+    },
+    "verb.clear.key": {
+      "source": "which setting",
+      "value": "qué setting"
+    },
+    "verb.clear.back": {
+      "source": "{key} is back to {value}",
+      "value": "{key} vuelve a {value}"
+    },
+    "verb.clear.already": {
+      "source": "{key} was already {value}",
+      "value": "{key} ya estaba en {value}"
+    },
+    "settings.back_to": {
+      "source": "{key} is back to {val}",
+      "value": "{key} vuelve a {val}"
+    },
+    "settings.nothing": {
+      "source": "nothing",
+      "value": "nada"
+    },
     "prompt.title": {
       "source": "What each phase was asked",
       "value": "Lo que se le pidió a cada fase"
