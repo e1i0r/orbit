@@ -416,5 +416,8 @@ export const api = {
   // And the readings of the same kind, which change nothing and so are a
   // GET: settings, quota, the thread, whatever the declaration carries.
   read: <T>(verb: Verb) => ask<{ said: string; saw: T }>(`/api/read/${verb.split(" ").map(encodeURIComponent).join("/")}`),
-  write: (one: Written) => tell<Wrote>("/api/do/new", { ...one, run: one.start }),
+  // By both its words, like every other verb in a family. Asked for as
+  // "new" alone it reached no verb at all, and writing a task from the
+  // browser answered "new is not something Orbit can be asked for".
+  write: (one: Written) => api.did("board new", { ...one, run: one.start }) as Promise<Wrote>,
 };

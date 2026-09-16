@@ -105,7 +105,7 @@ export function SupervisorScreen() {
     setRefused(undefined);
 
     try {
-      await api.did("say", { text });
+      await api.did("supervisor say", { text });
       setWrote("");
       setAgain((n) => n + 1);
     } catch (e) {
@@ -122,7 +122,7 @@ export function SupervisorScreen() {
     setRefused(undefined);
 
     try {
-      await api.did("retract", { line: String(n) });
+      await api.did("supervisor retract", { line: String(n) });
       setAgain((k) => k + 1);
     } catch (e) {
       setRefused((e as Error).message);

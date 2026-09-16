@@ -38,7 +38,7 @@ export function RuleCard({
     if (!rule.id) return;
 
     api
-      .read<unknown>(`rules history?rule=${encodeURIComponent(rule.id)}`)
+      .read<unknown>(`rules review?rule=${encodeURIComponent(rule.id)}`)
       .then((got) => !stale && setStory(got.said))
       .catch(() => !stale && setStory(""));
 

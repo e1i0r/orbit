@@ -43,7 +43,7 @@ export function ReposScreen() {
   // Both answer with a sentence the verb wrote, and both leave it on
   // screen: "every run here is accounted for" is the answer to Reconcile,
   // and a button that said nothing would leave a reader pressing it again.
-  const ran = async (verb: "reconcile" | "export", says: Record<string, string>) => {
+  const ran = async (verb: "board reconcile" | "export", says: Record<string, string>) => {
     setBusy(verb);
     setSaid(undefined);
 
@@ -57,7 +57,7 @@ export function ReposScreen() {
     }
   };
 
-  const reconcile = () => ran("reconcile", {});
+  const reconcile = () => ran("board reconcile", {});
   const write = () => ran("export", { into: into.trim() });
 
   if (failed) return <p className="text-xs text-bad">{failed}</p>;
@@ -122,7 +122,7 @@ export function ReposScreen() {
           title="Close the records of runs whose processes are gone"
           className="rounded border border-edge bg-well px-2 py-0.5 text-[11px] text-aside transition-colors hover:bg-hover hover:text-said disabled:opacity-40"
         >
-          {busy === "reconcile" ? "…" : "Reconcile"}
+          {busy === "board reconcile" ? "…" : "Reconcile"}
         </button>
 
         <span className="h-4 w-px bg-edge" aria-hidden />
