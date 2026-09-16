@@ -45,7 +45,6 @@ func (s State) value(r aRow, cw int, e Env) []string {
 	}
 
 	held, found := s.held(r), false
-	on := r.which == s.field
 
 	var parts []string
 
@@ -54,15 +53,6 @@ func (s State) value(r aRow, cw int, e Env) []string {
 			found = true
 
 			parts = append(parts, theme.Paint(theme.Sel).Render(" "+o.label+" "))
-
-			continue
-		}
-
-		// The others are shown on the row the cursor is on and nowhere
-		// else, so the form stays the height of its questions rather than
-		// of its answers.
-		if on && len(r.options) < pickFrom {
-			parts = append(parts, theme.Paint(theme.Dim).Render(o.label))
 		}
 	}
 
@@ -80,7 +70,7 @@ func (s State) value(r aRow, cw int, e Env) []string {
 	// Only where typing is actually an answer. What a rule does is one of
 	// two things and neither is typed, and a row that offered to take a
 	// third would be offering something that cannot be saved.
-	if on && r.which != rowDoes && len(r.options) < pickFrom {
+	if r.which == s.field && r.which != rowDoes {
 		parts = append(parts, theme.Paint(theme.Dim).Render(
 			e.Words.T("knowledge.or_type", "· or type one")))
 	}

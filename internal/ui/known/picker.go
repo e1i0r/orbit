@@ -20,10 +20,16 @@ import (
 )
 
 // pickRows is how many of the list are on screen at once, and pickFrom how
-// many options a row needs before it is worth opening one at all.
+// many options a row needs before its answers are put behind one.
+//
+// Two. Every row that offers a choice at all offers it the same way, and
+// that is the whole of why: the ones with two used to lay them out side by
+// side, and a lit word beside a grey word does not read as a choice — it
+// reads as a value with something after it, and the reader has to work out
+// which. A row that always says "▾ 2 to choose from" needs working out once.
 const (
 	pickRows = 7
-	pickFrom = 4
+	pickFrom = 2
 )
 
 // picked is the row whose list is open, and nothing when none is.
