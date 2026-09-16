@@ -8,39 +8,106 @@ refuse the work at the gate when you give them a command. `K` in the cockpit.
 ## The screen
 
 `K` in the cockpit is every rule Orbit holds, across every repository on the
-board, as a table:
+board. It is the board's own shape: bands that say what you have to do about
+what is under them, and one line a rule.
 
 ```
-  What Orbit knows                                    6 rules · 2 waiting on you
+  What Orbit knows                                            6 rules
 
-  Everywhere · this machine only, these do not travel
-    NAME      DOES       STATE    WHERE             THE RULE
-    a1f4c209  says       active   everywhere        pull requests are written in English
+    ID        THE RULE                          WHERE         WHEN
+  🛑 WAITING ON YOU (2) ──────────────────────────────────────────────
+  ❯ —         never push without the tests       internal/db   2026-09-14
+    d42b7f60  anything that drops a column…      migrations    2026-08-12
 
-  ledger · travels with the repository
-    NAME      DOES       STATE    WHERE             THE RULE
-  • d42b7f60  stops      paused   migrations        anything that drops a column stops
-                                                    for a person to look at it
-                                                    you said it · 2026-08-12
-                                                    paused: we are moving the migrations
-    f0021bb4  no check   active   ledger            coverage stays above 90%
+  ⚡ STOP THE WORK (1) ───────────────────────────────────────────────
+    f0021bb4  coverage stays above 90%           ledger        2026-08-12
+
+  💬 JUST SAID, BEFORE EVERY RUN (1) ─────────────────────────────────
+    a1f4c209  pull requests are written in Eng…  everywhere    2026-08-12
+
+  😴 TOLD TO NOBODY (1) ──────────────────────────────────────────────
+    0091ccd2  the ledger only ever appends       orbit         2026-08-12
 ```
 
-**Two columns and not one.** `DOES` is what the rule does when the work
-reaches it — `says` its sentence, `stops` the work, or `no check`: it asked to
-stop and brought no command, so it can only say. `STATE` is where it stands
-with you — `active`, `paused`, `off`. They are different questions, and a
-paused rule is still the one that will refuse the work when it comes back.
+**The band is the answer**, not a column. A reader opens this screen with one
+question — is there anything here for me — and two columns saying "paused"
+and "no check" made them do the sorting themselves. The first band holds both
+kinds of question: sentences nobody has answered, and rules sent back to be
+decided about.
 
-**A dot in the margin** is a rule waiting to be decided about, and the count
-at the top says how many. Where a rule came from shows under the row the
-cursor is on: every row would be a column of dates nobody reads, and the row
-being looked at is the row the question is about.
+`↑↓` walk it, the wheel scrolls it, a click puts the cursor on a rule and a
+second opens it. `↵` opens, `p` pauses, `n` writes one, `k` keeps a sentence
+word for word, `d` says it was not a rule.
 
-The list scrolls. `↑↓` walk it, `PgUp`/`PgDn` a page, the wheel a rule a
-notch; a click puts the cursor on a rule and a second opens its review. `r`
-decides about one, `p` pauses one, `n` writes one, `e` keeps a sentence out of
-the tray in better words, `esc` leaves.
+### One rule, opened
+
+`↵` on a rule opens it on its own screen, built the way a task's overview is:
+the strip of figures, the folding sections, the actions as a label over its
+key.
+
+```
+  anything that drops a column stops for a person to look at it
+  d42b7f60 · migrations · 🛑 WAITING ON YOU
+
+  │ WAITING ON YOU
+  it stopped you, or you paused it. Say it better with 'c', have it apply
+  again with 'u', or decide against it with 'o'.
+
+  ┌ SAID BY ──┐ ┌ SINCE ─────┐ ┌ TOLD ────┐ ┌ TRAVELS ──────┐
+  │ you       │ │ 2026-08-12 │ │ 6 times  │ │ with the repo │
+  └───────────┘ └────────────┘ └──────────┘ └───────────────┘
+
+  ▾ WHAT IT DOES ─────────────────────────────────────────────────────
+    it stops the work · the check is make migrate-check
+
+  ▾ WHY IT IS NOT APPLYING ───────────────────────────────────────────
+    we are moving the migrations this week
+
+  ▾ WHAT IT HAS PUT YOU THROUGH ──────────────────────────────────────
+    you kept it on 12 August
+    it stopped the work 4 times in test, and you got past it every time
+```
+
+Everything that cannot fit on one line of a list is here, where there is room
+for it: where the rule came from, how often it has been told, whether it
+travels with the repository or stays on this machine, and the friction.
+
+### Writing one
+
+`n`, or `c` on an open rule, or `↵` on a sentence in the tray. It is the flow
+designer's form: groups under a heading, a column of labels, and the options
+of each row beside it with the one in force lit.
+
+```
+  A new rule   a sentence about your code, told to every run before it works
+
+  THE RULE · what it says, and what it is about ──────────────────────
+  ▸ What it says
+      ┌──────────────────────────────────────────────────────────────┐
+      │ (write the rule here)                                        │
+      └──────────────────────────────────────────────────────────────┘
+    Where it applies      all of orbit  cmd/ docs/ internal/ web/
+
+  THE GATE · whether it refuses the work or only says it ─────────────
+    What it does          just says it   stops the work
+    The check             (none yet) make check make test
+
+      ✔ Save the rule      ✖ Leave it as it was
+
+  the sentence every run is told before it starts work
+  [tab] next row · [↑↓] move · [←→] change · [↵] do it · [esc] back
+```
+
+**The options are real.** Where a rule applies is picked from the folders the
+checkout actually has, and the check from the commands its Makefile already
+runs — so filing a rule is choosing rather than remembering a path and
+spelling it right. Typing is still there for anything neither offers.
+
+**The gate is a shortcut over the check**, and not a switch of its own. What
+decides whether a rule refuses work is whether it has a command that answers
+yes or no, so a switch beside the command could disagree with it — and a
+check typed under a switch left off would be a gate somebody wrote and Orbit
+threw away without saying so.
 
 ## Why not the model's memory
 
