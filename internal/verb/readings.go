@@ -30,12 +30,13 @@ func known(w World) (Out, error) {
 	var b strings.Builder
 
 	for _, f := range facts {
-		// What it does and not what it asked to do: a fact that asked to
-		// stop and brought no check warns, and a reader deciding whether to
-		// trust it has to be told which they are looking at.
-		does := "warns"
+		// What it does and not what it asked to do: a rule that asked to
+		// block and brought no check only says its sentence, and a reader
+		// deciding whether to trust it has to be told which of the two
+		// they are looking at. The words are the window's own.
+		does := "says"
 		if f.Action() == knowledge.Stops {
-			does = "stops"
+			does = "blocks"
 		}
 
 		// The name first, because it is what everything else about this

@@ -131,7 +131,7 @@ func TestWhatOrbitKnows(t *testing.T) {
 	}
 
 	out := mustAsk(t, w, "knowledge", In{By: "operator"})
-	for _, want := range []string{"stops", "warns", "acme", "go", "Sum"} {
+	for _, want := range []string{"blocks", "says", "acme", "go", "Sum"} {
 		if !strings.Contains(out.Said, want) {
 			t.Errorf("knowledge does not mention %q:\n%s", want, out.Said)
 		}
