@@ -33,6 +33,15 @@ import (
 // it did last rather than failing on a missing entry.
 type script struct {
 	Phases map[string][]turn `json:"phases"`
+	// Engines is what one engine does, whatever phase it is called for, and
+	// it outranks Phases.
+	//
+	// The relay needs it and a script keyed only by phase cannot say it:
+	// the scenario is one engine running out of allowance and another
+	// finishing the same phase, which is two behaviours for one phase name.
+	// The stand-in knows which it is because it is installed under each
+	// engine's name and reads its own.
+	Engines map[string][]turn `json:"engines"`
 }
 
 // turn is one call: what it writes, what it says, and what it cost.
@@ -44,6 +53,15 @@ type turn struct {
 	Cost     float64           `json:"cost"`
 	// Exit is what to leave with, for the scenario where an engine fails.
 	Exit int `json:"exit"`
+	// RanOut is what a provider prints when the allowance is gone, and
+	// saying it is what makes this turn a run that ran out rather than one
+	// that broke.
+	//
+	// It goes to stderr and leaves non-zero, which is how a real one arrives:
+	// exec gives a program one way to say it stopped, and the provider's own
+	// words are above it. internal/engine reads both halves, so a scenario
+	// written here is read the same way a provider's refusal is.
+	RanOut string `json:"ranOut"`
 }
 
 func main() {
@@ -65,18 +83,38 @@ func run() error {
 	}
 
 	phase := phaseOf(prompt)
-	turns := s.Phases[phase]
 
-	if len(turns) == 0 {
-		return fmt.Errorf("the script says nothing about the phase %q", phase)
+	// The engine's own script first. Which engine this is, is the name it
+	// was installed under and called by.
+	me := filepath.Base(os.Args[0])
+	counted := phase
+
+	turns := s.Engines[me]
+	if len(turns) > 0 {
+		counted = me
+	} else {
+		turns = s.Phases[phase]
 	}
 
-	n, err := nth(phase)
+	if len(turns) == 0 {
+		return fmt.Errorf("the script says nothing about the phase %q or the engine %q", phase, me)
+	}
+
+	n, err := nth(counted)
 	if err != nil {
 		return err
 	}
 
 	t := turns[min(n, len(turns)-1)]
+
+	// Before anything is written or said. An engine the provider refused
+	// did no work and printed no stream: it was turned away on the request,
+	// and a stand-in that wrote files first would be describing something
+	// that never happens.
+	if t.RanOut != "" {
+		fmt.Fprintln(os.Stderr, t.RanOut)
+		os.Exit(1)
+	}
 
 	if err := apply(t); err != nil {
 		return err
@@ -120,13 +158,27 @@ func load(path string) (script, error) {
 	return s, nil
 }
 
-// promptOf is the prompt off the command line, which every engine Orbit
-// drives is given as one argument after -p.
+// promptOf is the prompt off the command line.
+//
+// The four engines take it two ways and this stands in for all four, so it
+// reads both: claude and agy name it with a flag, codex and opencode put it
+// last with no flag at all. Reading only the flag was enough while nothing
+// ever ran a second engine — and the first thing that did, the relay, got
+// "no prompt on the command line" from the engine that took the task on.
 func promptOf(args []string) string {
 	for i, a := range args {
 		if (a == "-p" || a == "--print") && i+1 < len(args) {
 			return args[i+1]
 		}
+	}
+
+	// The last argument, which is where the ones with no flag put it. A
+	// flag's own value is never last for these two — every argument they
+	// pass before the prompt is a switch or a switch with a value — so a
+	// command line ending in something is a command line ending in the
+	// prompt.
+	if len(args) > 0 {
+		return args[len(args)-1]
 	}
 
 	return ""

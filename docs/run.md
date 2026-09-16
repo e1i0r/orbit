@@ -182,6 +182,41 @@ real cost shows: three allowances spent, one task.
 same line, with *you chose it* as the reason. Changing engine by hand was
 always possible; what was missing was the record saying it happened.
 
+### Seeing it without waiting for an afternoon
+
+Whether a run is read as having run out comes down to matching what the
+provider printed against a list of phrases written by hand, in
+`internal/engine/ranout.go`. Between that list and a real refusal stand a
+process, a pipe, a stream parser and the adapter that decides whether the
+words went to stdout or into the error — so the only test worth much is one
+that goes through all four.
+
+```bash
+go test -tags integration ./test/integration/ -run TestAnEngineRefused -v
+```
+
+A stand-in binary, installed under the engine's own name, prints what the
+provider prints and leaves non-zero. Everything after that is Orbit. Run with
+`-v` it prints the relay as a person would read it:
+
+```
+task.started
+phase.started    implement    claude
+phase.ran_out    implement             Claude AI usage limit reached, resets at 3pm
+task.relayed     implement             claude ran out in phase "implement", and codex took the task on from there.
+phase.started    implement    codex
+phase.finished   implement
+task.finished
+```
+
+If a provider one day refuses in words that list does not know, the run is
+written down as broken instead — nothing gets worse, but the relay does not
+happen. What it printed is in the record on the `phase.failed`, and in
+`errors.log`; that text is what a new phrase should be added from. A phrase
+added there turns a broken run into one that ran out, which changes what a
+reader is told, so it stays a list somebody reads rather than a regular
+expression somebody trusts.
+
 ---
 
 Next: [autopilot](autopilot.md) · [reading what it did](reading.md)
