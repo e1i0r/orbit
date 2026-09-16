@@ -13,11 +13,12 @@ board, as a table:
 ```
   What Orbit knows                                    6 rules · 2 waiting on you
 
-    NAME      DOES       STATE    WHERE             THE RULE
   Everywhere · this machine only, these do not travel
+    NAME      DOES       STATE    WHERE             THE RULE
     a1f4c209  says       active   everywhere        pull requests are written in English
 
   ledger · travels with the repository
+    NAME      DOES       STATE    WHERE             THE RULE
   • d42b7f60  stops      paused   migrations        anything that drops a column stops
                                                     for a person to look at it
                                                     you said it · 2026-08-12

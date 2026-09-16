@@ -71,10 +71,11 @@ func (s State) keepSeen(e Env) State {
 		// rule it is.
 		off = row.from
 	case row.from < off:
-		// The heading above a row comes on screen with it: "orbit · travels
-		// with the repository" is what says which project the rule under it
-		// is about, and a rule alone at the top of the screen does not.
-		off = max(0, row.from-1)
+		// The two rows above come on screen with it: "orbit · travels with
+		// the repository" is what says which project the rule is about, and
+		// the row of column names under it is what says which field is
+		// which. A rule alone at the top of the screen says neither.
+		off = max(0, row.from-2)
 	case row.last() >= off+room:
 		off = row.last() - room + 1
 	}

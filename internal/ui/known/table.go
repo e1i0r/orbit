@@ -84,11 +84,12 @@ func (w widths) left() int {
 	return n
 }
 
-// heading is the row of column names.
+// heading is the row of column names, drawn under every group's own.
 //
-// Once, above the first group, and not repeated over each one. The words are
-// furniture: they say what the columns are to somebody meeting the screen,
-// and after that they are four cells of grey the eye skips.
+// Under every one, and not once at the top. The list scrolls, and a heading
+// that only ever appeared above the first group was gone by the time
+// anybody was far enough down to need it. It costs a line a group and the
+// words are grey furniture the eye skips once it knows them.
 func heading(w widths, e Env) string {
 	p := e.Words
 	dim := theme.Paint(theme.Dim).Render

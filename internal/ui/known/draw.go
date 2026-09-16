@@ -112,9 +112,6 @@ func (s State) body(cw int, e Env) ([]string, []span) {
 	out, at := s.tray(nil, nil, cw, e)
 
 	rootless, owned := s.ordered()
-	if len(rootless)+len(owned) > 0 {
-		out = append(out, heading(w, e))
-	}
 
 	out, at = s.group(out, at, p.T("knowledge.general",
 		"Everywhere · this machine only, these do not travel"), rootless, w, e)
@@ -198,7 +195,9 @@ func (s State) group(
 		return out, at
 	}
 
-	out = append(out, theme.Paint(theme.Dim).Render(cells.Fit(head, w.left()+w.says)))
+	out = append(out,
+		theme.Paint(theme.Dim).Render(cells.Fit(head, w.left()+w.says)),
+		heading(w, e))
 
 	for _, f := range facts {
 		row := s.factRow(f, len(at) == s.sel, w, e)
