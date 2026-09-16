@@ -19,6 +19,20 @@ type hands struct {
 	refuse  error
 	pending []string
 	held    bool
+	// names is what this fixture calls a verb. The declaration is what the
+	// real port reads; a test says which two-word names it means to be
+	// reachable and nothing else is.
+	names []string
+}
+
+func (h *hands) Named(name string) bool {
+	for _, one := range h.names {
+		if one == name {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Ask records the verb, whatever it carried, and the task it was about — in

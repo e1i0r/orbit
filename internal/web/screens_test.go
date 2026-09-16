@@ -29,9 +29,15 @@ type told struct{ body string }
 func (t told) History(id, repo string) (string, error) { return t.body, nil }
 
 // known is a Knows port that answers what it was told.
-type known struct{ facts []Fact }
+type known struct {
+	rules   []Rule
+	waiting []Unanswered
+	repos   []Checkout
+}
 
-func (k known) Facts() []Fact { return k.facts }
+func (k known) Rules() []Rule         { return k.rules }
+func (k known) Waiting() []Unanswered { return k.waiting }
+func (k known) Checkouts() []Checkout { return k.repos }
 
 // talked is a Talks port with one conversation in it.
 type talked struct{}
@@ -71,7 +77,7 @@ func full() *Server {
 	return New(Ports{
 		Board:     listedBoard{},
 		Trees:     nowhere{path: "/nowhere"},
-		Knows:     known{facts: []Fact{{Phrase: "amounts are cents", Scope: "ledger"}}},
+		Knows:     known{rules: []Rule{{Phrase: "amounts are cents", Scope: "ledger"}}},
 		Talks:     talked{},
 		Roster:    crewed{},
 		Told:      told{body: "# LED-1\n"},

@@ -83,10 +83,18 @@ func originName(o flow.Origin) string {
 	return "unknown"
 }
 
-// knowledgeAnswer is everything Orbit has been told.
+// knowledgeAnswer is everything the Brain holds, in one answer.
+//
+// One and not four. The screen needs the rules, the sentences waiting to
+// become rules, and — the moment somebody writes one — the folders and the
+// commands of every checkout it could be about; asked for separately, the
+// form would open before it knew what to offer, and the reader would watch
+// it fill in.
 type knowledgeAnswer struct {
-	Facts []Fact `json:"facts"`
-	// Read says a store was there to ask. No facts and no store are
+	Rules   []Rule       `json:"rules"`
+	Waiting []Unanswered `json:"waiting"`
+	Repos   []Checkout   `json:"repos"`
+	// Read says a store was there to ask. No rules and no store are
 	// different sentences, and the screen says a different thing about each.
 	Read bool `json:"read"`
 }
@@ -94,17 +102,33 @@ type knowledgeAnswer struct {
 // serveKnowledge is what Orbit knows.
 func (s *Server) serveKnowledge(w http.ResponseWriter, _ *http.Request) {
 	if s.knows == nil {
-		answer(w, knowledgeAnswer{Facts: []Fact{}})
+		answer(w, knowledgeAnswer{Rules: []Rule{}, Waiting: []Unanswered{}, Repos: []Checkout{}})
 
 		return
 	}
 
-	facts := s.knows.Facts()
-	if facts == nil {
-		facts = []Fact{}
+	held := knowledgeAnswer{
+		Rules:   s.knows.Rules(),
+		Waiting: s.knows.Waiting(),
+		Repos:   s.knows.Checkouts(),
+		Read:    true,
 	}
 
-	answer(w, knowledgeAnswer{Facts: facts, Read: true})
+	// An empty list and no list are the same thing to a reader and
+	// different things to a page: one draws nothing, the other throws.
+	if held.Rules == nil {
+		held.Rules = []Rule{}
+	}
+
+	if held.Waiting == nil {
+		held.Waiting = []Unanswered{}
+	}
+
+	if held.Repos == nil {
+		held.Repos = []Checkout{}
+	}
+
+	answer(w, held)
 }
 
 // supervisorAnswer is the thread: the conversations, and every turn.
