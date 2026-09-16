@@ -408,6 +408,30 @@ orbit rules history -rule 875c38ec
 A gate that **passed** is not written down. A rule that works is silent and a
 rule in the way is not, so what is kept is the friction.
 
+## In the browser
+
+`orbit web` draws the same Brain: the five bands, the tray in the first, a
+rule opened with its figures and its friction, and the form with the
+checkout's own folders and the Makefile's own targets in it.
+
+It is the same verbs underneath. Every gesture on the page is `POST
+/api/do/rules/<verb>` or `GET /api/read/rules/<verb>` — the paths are the
+names — so the browser, the cockpit and the command line cannot drift in what
+pausing a rule means or in what the record says happened.
+
+A rule reaches the page whole: its name, its sentence, where it reaches, the
+path as a form types it, where it came from, since when, how often it has
+been told, what it was paused for, and the one word for where it stands. A
+page handed less than that could list a rule and not act on it.
+
+**A verb no page names is a verb nobody can do in a browser.** That is
+checked, in `internal/arch`, against the declaration — and the reasons the
+twelve exceptions are exceptions are written down beside them. Routing every
+verb by name and a page being able to reach one are different claims, and for
+a year only the first was checked: talking to the supervisor, taking back a
+line, changing a setting, reconciling and writing a task were all broken in
+the browser, each answering "that is not something Orbit can be asked for".
+
 ## From the CLI you plan in
 
 Two of Orbit's MCP tools, not shell commands — your CLI calls them once

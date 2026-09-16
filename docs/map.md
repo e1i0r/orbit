@@ -109,6 +109,7 @@ than being noticed in review or not.
 | **the ceiling** | no `.go` file past 300 lines of code and comment. Over it, split it. |
 | **the column budget** | a global count of lines past column 100, which may go down and not up. String literals are elided first, so a sentence in a message is free. |
 | **one vocabulary** | every verb is offered by every way in, or the reason it is not is written down in `notThere`. A stale excuse fails too. |
+| **every verb is drawn** | and the browser's own pages name every verb they can reach, or say why not in `notDrawn`. Routing a verb and a page being able to press it are different claims; only the first was checked, and five buttons were broken for a year. |
 | **what is said out loud** | a verb declares whether it spends money and whether it leaves this machine, and every surface has to say so before it asks. |
 | **two languages** | a key used and not translated fails; a key translated and not used fails; English that changed without the Spanish being revisited fails. |
 | **no junk drawers** | no `util`, `helpers`, `common`. No `Get` prefixes. |
