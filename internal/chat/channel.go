@@ -41,6 +41,27 @@ type Channel interface {
 	Name() string
 }
 
+// A Command is one thing a chat can be asked for, as a service's own menu
+// wants it: a name with no spaces in it, and a line saying what it does.
+type Command struct {
+	Name  string
+	About string
+}
+
+// An Announcing channel can show the reader what can be asked for.
+//
+// Optional, like Working, and for the same reason: a terminal has no menu to
+// put one in. What makes it worth a method rather than a message is that a
+// service's own menu appears as the reader types, which is the difference
+// between a command list somebody has to remember to ask for and one that is
+// simply there.
+type Announcing interface {
+	// Announce replaces whatever menu the channel was showing. It is called
+	// once, when the desk opens, because what can be asked for changes only
+	// when Orbit itself does.
+	Announce(ctx context.Context, all []Command) error
+}
+
 // A Working channel can show that an answer is coming.
 //
 // Optional, and asked for by type rather than declared in Channel, because

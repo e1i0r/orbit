@@ -101,6 +101,17 @@ func Read(text string, p *words.Printer) (Asked, bool, error) {
 // `start` — and a parent that swallowed the line would run the listing when
 // somebody asked for the child.
 func verbOf(line []string) (verb.Verb, []string, bool) {
+	// The menu's spelling, and only when it is one: a service will not take
+	// a space in a command, so what a reader taps arrives as one word.
+	// Asked unconditionally this swallowed the two-word form below — "task"
+	// has no underscore in it and answers to the family's parent, so
+	// `/task show` ran the listing.
+	if strings.Contains(line[0], "_") {
+		if v, ok := verb.One(strings.ReplaceAll(line[0], "_", " ")); ok {
+			return v, line[1:], true
+		}
+	}
+
 	if len(line) > 1 {
 		if v, ok := verb.One(line[0] + " " + line[1]); ok {
 			return v, line[2:], true

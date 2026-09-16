@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/e1i0r/orbit/internal/verb"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -146,4 +147,50 @@ func TestTheRecordSaysItCameFromAChat(t *testing.T) {
 	if got.In.Door != door || got.In.By != "operator" {
 		t.Errorf("it was asked by %q through %q", got.In.By, got.In.Door)
 	}
+}
+
+// TestTheMenuSpellingIsAcceptedBack. A service will not take a space in a
+// command, so what a reader taps arrives as one word — and the tapped
+// command and the typed one have to be the same thing.
+func TestTheMenuSpellingIsAcceptedBack(t *testing.T) {
+	for _, one := range Menu(en()) {
+		got, isCommand, err := Read("/"+one.Name+shapeFor(t, one.Name), en())
+		if err != nil {
+			t.Errorf("/%s is offered in the menu and refused when tapped: %v", one.Name, err)
+			continue
+		}
+
+		if !isCommand {
+			t.Errorf("/%s was not read as a command", one.Name)
+			continue
+		}
+
+		if want := strings.ReplaceAll(one.Name, "_", " "); got.Verb != want {
+			t.Errorf("/%s asked for %q, want %q", one.Name, got.Verb, want)
+		}
+	}
+}
+
+// shapeFor is enough of a line to satisfy what a verb must have, so that the
+// test above is about the spelling of the name and not about its arguments.
+func shapeFor(t *testing.T, name string) string {
+	t.Helper()
+
+	v, ok := verb.One(strings.ReplaceAll(name, "_", " "))
+	if !ok {
+		t.Fatalf("%q is in the menu and not in the declaration", name)
+	}
+
+	line := ""
+	if v.OnTask {
+		line += " ACME-1"
+	}
+
+	for _, f := range v.Takes {
+		if f.Needed {
+			line += " x"
+		}
+	}
+
+	return line
 }

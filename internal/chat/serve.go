@@ -70,6 +70,15 @@ func Open(e Env, to Channel) *Desk {
 
 // Serve hands every message to the verbs until the context is done.
 func (d *Desk) Serve(ctx context.Context) error {
+	if menu, ok := d.to.(Announcing); ok {
+		// Best-effort. A menu that could not be published is a reader who
+		// has to type the command instead of tapping it, which is not a
+		// reason to refuse to run.
+		if err := menu.Announce(ctx, Menu(d.env.Words)); err != nil {
+			logger.Warn("chat", "%s: the command menu was not published: %v", d.to.Name(), err)
+		}
+	}
+
 	return d.to.Listen(ctx, func(m Message) { d.heard(ctx, m) })
 }
 

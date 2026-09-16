@@ -139,6 +139,36 @@ func (t *Telegram) send(ctx context.Context, where, text, markup string) error {
 	return res.Body.Close()
 }
 
+// Announce publishes the command menu, which is what a reader sees the
+// moment they type a slash.
+//
+// Telegram takes at most a hundred, and every name has to be lower case with
+// nothing but letters, digits and underscores in it. Both hold for what the
+// declaration produces today; a name that stopped holding would be refused
+// by the service rather than silently dropped, which is why the refusal is
+// carried back rather than swallowed.
+func (t *Telegram) Announce(ctx context.Context, all []Command) error {
+	commands := make([]map[string]string, 0, len(all))
+	for _, one := range all {
+		commands = append(commands, map[string]string{
+			"command":     one.Name,
+			"description": one.About,
+		})
+	}
+
+	body, err := json.Marshal(map[string]any{"commands": commands})
+	if err != nil {
+		return fmt.Errorf("encode the menu: %w", err)
+	}
+
+	res, err := t.post(ctx, "setMyCommands", body)
+	if err != nil {
+		return err
+	}
+
+	return res.Body.Close()
+}
+
 // Working shows "typing…" in the conversation.
 //
 // Telegram stops showing it after about five seconds or when a message
@@ -295,29 +325,14 @@ func outside(part string) string {
 	return strings.NewReplacer(Strong, "<b>", endStrong, "</b>").Replace(b.String())
 }
 
-// reserved is every character MarkdownV2 refuses a message over.
+// escape is the three characters HTML cannot take literally.
 //
-// All eighteen, from the service's own documentation. A message with one of
-// them unescaped is not rendered badly — it is rejected outright, which is
-// how an answer comes to arrive as plain text with no sign that anything was
-// meant to be bold.
-const reserved = `_*[]()~` + "`" + `>#+-=|{}.!\`
-
-// escape puts a backslash before every one of them.
+// Three, and that is the whole argument for this markup over the other one.
+// MarkdownV2 reserves eighteen and rejects a message carrying any of them
+// unescaped — the full stop and the hyphen among them — so there is no
+// arrangement where both Orbit's own columns and a model's prose survive it.
 func escape(text string) string {
-	var b strings.Builder
-
-	for _, r := range text {
-		// The two marks this package carries are not content and must not
-		// be escaped into visibility.
-		if strings.ContainsRune(reserved, r) {
-			b.WriteRune('\\')
-		}
-
-		b.WriteRune(r)
-	}
-
-	return b.String()
+	return strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;").Replace(text)
 }
 
 // plain is the same answer with the markup taken out, for the send that

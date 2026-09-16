@@ -47,6 +47,27 @@ func Offers() []verb.Verb {
 	return out
 }
 
+// Menu is what can be asked for, in the shape a service's own menu wants.
+//
+// A service will not take a space in a command, so a family's two words are
+// joined with an underscore — and Read accepts that spelling back, so the
+// menu a reader taps and the line a reader types are the same thing.
+//
+// The description is the verb's own sentence about itself, which is the same
+// one `orbit <verb> -h` prints. One declaration, five doors.
+func Menu(p *words.Printer) []Command {
+	var out []Command
+
+	for _, v := range Offers() {
+		out = append(out, Command{
+			Name:  strings.ReplaceAll(v.Path(), " ", "_"),
+			About: v.About(p),
+		})
+	}
+
+	return out
+}
+
 // Help is the list of what can be asked for, as one message.
 //
 // Built from the declaration, so a verb added to Orbit appears here without
