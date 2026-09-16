@@ -166,7 +166,7 @@ var doors = map[string][]string{
 	"internal/migrate": {"migrate.go"},
 	"internal/quota":   {"billing.go", "codex.go", "quota.go", "source.go"},
 	"internal/repo": {
-		"cochange.go", "compare.go", "customs.go", "discover.go", "impact.go",
+		"cochange.go", "compare.go", "customs.go", "discover.go", "enforced.go", "impact.go",
 		"neighbours.go", "offers.go", "repo.go", "review.go", "workspace.go", "worktree.go",
 		"worktree_deliver.go", "worktree_diff.go", "worktree_file.go", "worktree_tree.go",
 	},
