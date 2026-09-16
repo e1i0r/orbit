@@ -189,6 +189,8 @@ func foundBy(said Said) knowledge.Source {
 		return knowledge.FromDocs
 	case FromTheHistory:
 		return knowledge.FromHistory
+	case FromTheGates:
+		return knowledge.FromGates
 	default:
 		return knowledge.Human
 	}

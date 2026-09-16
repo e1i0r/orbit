@@ -35,7 +35,8 @@ CREATE TABLE IF NOT EXISTS proposal(
   repo       TEXT NOT NULL DEFAULT '',
   path       TEXT NOT NULL DEFAULT '',
   topic      TEXT NOT NULL DEFAULT '',
-  habit      TEXT NOT NULL DEFAULT ''
+  habit      TEXT NOT NULL DEFAULT '',
+  gate       TEXT NOT NULL DEFAULT ''
 );
 `
 
@@ -66,6 +67,20 @@ ALTER TABLE proposal ADD COLUMN topic TEXT NOT NULL DEFAULT '';
 ALTER TABLE proposal ADD COLUMN habit TEXT NOT NULL DEFAULT '';
 `
 
+// proposalGateColumn is the command a sentence arrived with.
+//
+// One source can bring it: what the checkout already refuses work over. A
+// rule out of a workflow is a command that has been running for years, and
+// the sentence is only a way of saying what it does — so the command travels
+// with the sentence rather than being invented again by whoever keeps it.
+//
+// It is called gate and not check because that is what it makes the rule:
+// the column holds what the rule would refuse work with, and a proposal is
+// not a rule yet.
+const proposalGateColumn = `
+ALTER TABLE proposal ADD COLUMN gate TEXT NOT NULL DEFAULT '';
+`
+
 // hasProposalColumn asks whether the table already has one of them.
 const hasProposalColumn = `SELECT count(*) FROM pragma_table_info('proposal') WHERE name = ?`
 
@@ -75,7 +90,8 @@ const hasProposalColumn = `SELECT count(*) FROM pragma_table_info('proposal') WH
 // One question per group, because they arrived at different times: the three
 // when a sentence could come from somewhere other than the supervisor's
 // thread, the path when a rule started arriving knowing where the work was,
-// and the last two when a rule could be drawn from a habit. A record holding
+// the two when a rule could be drawn from a habit, and the gate when a
+// sentence could arrive with the command already behind it. A record holding
 // any prefix of those is a record somebody was using in between.
 func widenProposals(tx *sql.Tx) error {
 	if err := widenProposal(tx, "said_by", proposalColumns); err != nil {
@@ -86,7 +102,11 @@ func widenProposals(tx *sql.Tx) error {
 		return err
 	}
 
-	return widenProposal(tx, "habit", proposalHabitColumns)
+	if err := widenProposal(tx, "habit", proposalHabitColumns); err != nil {
+		return err
+	}
+
+	return widenProposal(tx, "gate", proposalGateColumn)
 }
 
 // widenProposal runs one group of columns when the one that names the group

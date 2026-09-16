@@ -241,11 +241,12 @@ func windowOffers(t *testing.T) map[string]bool {
 		// The review, opened on one rule with everything it has put you
 		// through under it. The marks are the sentences it answers with,
 		// because that is the decision landing.
-		"rules review":  "knowledge.sec_friction",
-		"rules correct": "knowledge.field_where",
-		"rules off":     "knowledge.switched_off",
-		"rules pause":   "knowledge.pause_needs_why",
-		"rules resume":  "knowledge.applies_again",
+		"rules review":   "knowledge.sec_friction",
+		"rules enforced": "knowledge.gates_read",
+		"rules correct":  "knowledge.field_where",
+		"rules off":      "knowledge.switched_off",
+		"rules pause":    "knowledge.pause_needs_why",
+		"rules resume":   "knowledge.applies_again",
 		// The window asks for these through the parent, which is what
 		// carries the streaming bodies: the toolbar watches `pr` run.
 		"pr merge":     `"MERGE PR"`,

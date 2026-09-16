@@ -65,6 +65,16 @@ type Proposal struct {
 	// dropped being offered again the next time the same sentences are
 	// read: dropping it was an answer.
 	Habit string
+	// Gate is the command this sentence arrived with, and empty for the
+	// three sources that bring only words.
+	//
+	// One source can fill it: what the checkout already refuses work over.
+	// A rule out of a workflow is a command that has been running for
+	// years, and the sentence is a way of saying what it does — so the
+	// command travels with it rather than being invented again by whoever
+	// keeps it. Nobody has agreed to it either: it is what the form opens
+	// with, and it can be emptied there.
+	Gate string
 }
 
 // Propose writes one down, and says nothing when this line already has a row.
@@ -74,7 +84,7 @@ type Proposal struct {
 // before.
 func (d *DB) Propose(p Proposal) error {
 	_, err := d.sql.Exec(insertProposal, record.Stamp(p.SaidAt), p.Said, Waiting,
-		p.By, p.About, p.Repo, p.Path, p.Topic, p.Habit)
+		p.By, p.About, p.Repo, p.Path, p.Topic, p.Habit, p.Gate)
 	if err != nil {
 		return fmt.Errorf("write down what you said at %s: %w", p.SaidAt, err)
 	}
@@ -100,7 +110,7 @@ func (d *DB) Waiting() ([]Proposal, error) {
 		)
 
 		if err := rows.Scan(&at, &p.Said, &p.State, &p.By, &p.About,
-			&p.Repo, &p.Path, &p.Topic, &p.Habit); err != nil {
+			&p.Repo, &p.Path, &p.Topic, &p.Habit, &p.Gate); err != nil {
 			return nil, fmt.Errorf("read a proposal: %w", err)
 		}
 

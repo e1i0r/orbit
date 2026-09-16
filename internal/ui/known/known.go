@@ -81,6 +81,14 @@ type Env struct {
 	// that stops the work is worth nothing without one, and a command
 	// somebody half-remembers is worse than none.
 	Commands func(repo string) []string
+	// Enforced offers a rule for each thing a checkout already refuses work
+	// over — the commands its own pull requests have to pass — and answers
+	// with how many were not already waiting.
+	//
+	// It is on this screen and the other three readings are not, for one
+	// reason: it costs nothing and asks no model. A key that spends money
+	// is a key somebody presses by accident; this one reads files.
+	Enforced func(repo string) (int, error)
 	// Repos is every checkout on the board, in the order it lists them.
 	//
 	// All of them and not the one there happens to be. With one, a rule
@@ -113,6 +121,12 @@ type Said struct {
 	// It is what the editor's place line opens with: the commonest correction
 	// is a path, and the commonest path is this one.
 	Where string
+	// Gate is the command this sentence arrived with, and empty for the
+	// sources that bring only words. It is what the form's check row opens
+	// with: a rule read off what the checkout already refuses work over
+	// arrives with a command that has been running for years, and retyping
+	// it is copying it out of a file Orbit already read.
+	Gate string
 }
 
 // Out is what the screen asks the window for.

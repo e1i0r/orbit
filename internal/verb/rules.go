@@ -67,6 +67,19 @@ func rules() []Verb {
 			},
 		},
 		{
+			Name: "enforced", Under: "rules",
+			About: func(p *words.Printer) string {
+				return p.T("verb.rules.enforced",
+					"offer a rule for each thing this checkout already refuses work over")
+			},
+			Takes: []Field{
+				{Name: "repo", Kind: Named, About: func(p *words.Printer) string {
+					return p.T("verb.rules.enforced.repo",
+						"the checkout to read; the default is the one you are in")
+				}},
+			},
+		},
+		{
 			Name: "read", Under: "rules", Spends: true,
 			About: func(p *words.Printer) string {
 				return p.T("verb.rules.read",

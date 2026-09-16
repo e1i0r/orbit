@@ -151,9 +151,10 @@ var doors = map[string][]string{
 	"internal/board":     {"board.go", "files.go", "filetext.go", "health.go", "log.go", "refresh.go", "supervisor.go"},
 	"internal/export":    {"export.go"},
 	"internal/flow":      {"draft.go", "engine.go", "flow.go", "load.go", "loop.go", "resolve.go", "save.go"},
-	"internal/knowledge": {"rule.go", "id.go", "scope.go", "store.go"},
+	"internal/knowledge": {"id.go", "rule.go", "scope.go", "source.go", "store.go"},
 	"internal/learn": {
-		"cold.go", "draft.go", "history.go", "keep.go", "learn.go", "quoted.go", "repeated.go",
+		"cold.go", "draft.go", "enforced.go", "history.go", "keep.go", "learn.go", "quoted.go",
+		"repeated.go",
 	},
 	"internal/logger": {"logger.go", "openfiles.go"},
 	// world.go fills internal/verb's ports: what a verb reaches the machine
@@ -166,7 +167,7 @@ var doors = map[string][]string{
 	"internal/migrate": {"migrate.go"},
 	"internal/quota":   {"billing.go", "codex.go", "quota.go", "source.go"},
 	"internal/repo": {
-		"cochange.go", "compare.go", "customs.go", "discover.go", "impact.go",
+		"cochange.go", "compare.go", "customs.go", "discover.go", "enforced.go", "impact.go",
 		"neighbours.go", "offers.go", "repo.go", "review.go", "workspace.go", "worktree.go",
 		"worktree_deliver.go", "worktree_diff.go", "worktree_file.go", "worktree_tree.go",
 	},

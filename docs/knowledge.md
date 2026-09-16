@@ -177,6 +177,37 @@ orbit rules repeated                    # what you keep telling runs
 orbit rules draft -with claude        # and the rule it amounts to
 ```
 
+**The repository already refuses it.** Whatever a pull request has to pass is,
+by definition, what the project does not let through — and it is the one
+source that brings a rule **with its gate already written**:
+
+```bash
+orbit rules enforced                    # or `g` on the Brain screen
+```
+
+```
+go vet ./...                       go vet ./... has to pass
+golangci-lint run                  golangci-lint run has to pass
+make check                         make check has to pass
+```
+
+Every other source brings a sentence and leaves you to decide whether it
+deserves a gate and what the gate would run. Here the command exists and has
+been refusing work for years; the only thing missing was Orbit knowing about
+it. So these arrive with `stops` and their command already set — and still
+wait in the tray, because a project running something is not the same as
+wanting Orbit to send work back over it.
+
+Three readings, strongest first and deduplicated by command:
+
+| | the claim |
+| --- | --- |
+| `.github/workflows/` | what a pull request has to pass. The strongest there is: a team that stopped meaning it would have a red branch. A workflow nothing goes through — a release, a schedule — brings nothing. |
+| `.pre-commit-config.yaml`, `.husky/pre-commit`, `lefthook.yml` | what runs before a commit lands. `.git/hooks` is left alone on purpose: it does not travel, and a rule about a hook only your machine has refuses work for everybody who clones the project and has nothing to run. |
+| `.golangci.yml`, `ruff.toml`, `.eslintrc*`, `.rubocop.yml`, `biome.json` | what the project is configured to lint with. The weakest: a file saying how a tool is set up does not say anything runs it — and when something does, the reading above already brought that command. |
+
+It costs nothing and asks no model: these files either parse or they do not.
+
 **The project already said it.** A repository with two years behind it has half
 of this written down — the CONTRIBUTING, the README, and the notes each engine
 keeps in its own file — and its commits say which of those are still true:
@@ -279,6 +310,7 @@ wins over that, and `-in .` is how you say the whole checkout.
 | `record` | an engine worked it out mid-task |
 | `docs` | the project already said it, with the file and the line |
 | `history` | the commits say so, with the count |
+| `gates` | the checkout already refuses work over it, with the file and the command |
 | `code` | read off the map — regenerated rather than stored |
 
 A sentence in the agent's context that nobody can trace is indistinguishable

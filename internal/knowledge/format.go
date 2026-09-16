@@ -56,6 +56,7 @@ var stateNames = map[State]string{
 var sourceNames = map[Source]string{
 	FromCode: "code", Human: "human", FromRecord: "record",
 	FromProduction: "production", FromDocs: "docs", FromHistory: "history",
+	FromGates: "gates",
 }
 
 // encode writes a rule out.

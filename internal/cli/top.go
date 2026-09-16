@@ -176,6 +176,7 @@ func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 		RemoveConversation: func(id string) error { return supervisor.Remove(s, id) },
 		Knows:              knowsPort(s, dir),
 		KnowsAll:           knowsAllPort(r, s),
+		RepoGates:          gatesPort(s),
 		RepoFolders:        repo.Folders,
 		RepoChecks:         repo.Checks,
 		TurnFact:           turnFactPort(s),

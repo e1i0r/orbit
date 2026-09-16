@@ -12,6 +12,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/learn"
 	"github.com/e1i0r/orbit/internal/logger"
+	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/ui/known"
 )
@@ -34,6 +35,7 @@ func waitingPort(s *store.Store) func() []known.Said {
 		for _, row := range rows {
 			out = append(out, known.Said{
 				At: row.At, Text: row.Text, From: row.From(), Where: row.Path,
+				Gate: row.Gate,
 			})
 		}
 
@@ -73,5 +75,25 @@ func dropRulePort(s *store.Store) func(at time.Time) error {
 		logger.Info("cli/rules", "what you said at %s was not a rule", at.Format(time.RFC3339))
 
 		return nil
+	}
+}
+
+// gatesPort offers a rule for each thing a checkout already refuses work
+// over, and answers with how many arrived.
+//
+// It reaches the disk and the record, which the window may not, so it is a
+// port like every other reading — and what comes back is a count, because
+// what the screen does next is read the tray again.
+func gatesPort(s *store.Store) func(string) (int, error) {
+	return func(root string) (int, error) {
+		var gates []learn.Gate
+
+		for _, g := range repo.Gates(root) {
+			gates = append(gates, learn.Gate{Command: g.Command, Where: g.Where})
+		}
+
+		said, err := learn.Enforced(s, root, gates)
+
+		return len(said), err
 	}
 }

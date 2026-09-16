@@ -117,6 +117,8 @@ func (v Verb) do(ctx context.Context, w World, in In) (Out, error) {
 		return drafting(ctx, w, in)
 	case "rules read":
 		return reading(ctx, w, in)
+	case "rules enforced":
+		return enforcing(w, in)
 	case "rules history":
 		return happened(w, in)
 	case "rules review":

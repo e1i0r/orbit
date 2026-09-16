@@ -20,6 +20,7 @@ func (m Model) knownEnv() known.Env {
 		Story:    m.opts.RuleStory,
 		Turn:     m.opts.TurnFact,
 		Waiting:  m.opts.Waiting,
+		Enforced: m.opts.RepoGates,
 		Places:   m.opts.RepoFolders,
 		Commands: m.opts.RepoChecks,
 		Keep:     m.opts.KeepRule,

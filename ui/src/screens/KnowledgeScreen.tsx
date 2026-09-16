@@ -160,18 +160,31 @@ export function KnowledgeScreen() {
             command, and send the work back when it fails.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() =>
-            setOpen({
-              at: "form",
-              draft: { phrase: "", repo: repos[0]?.path ?? "", where: "", check: "" },
-            })
-          }
-          className="rounded-md border border-edge px-3 py-1.5 text-sm hover:bg-edge/60"
-        >
-          + A new rule
-        </button>
+        <div className="flex gap-2">
+          {/* What the checkout already refuses work over. It is the one
+              reading with a button, because it is the one that asks no
+              model and spends nothing — the others are a command away. */}
+          <button
+            type="button"
+            disabled={busy !== undefined || repos.length === 0}
+            onClick={() => void ask("rules enforced", { repo: repos[0]?.path })}
+            className="rounded-md border border-edge px-3 py-1.5 text-sm hover:bg-edge/60 disabled:opacity-50"
+          >
+            Read this repo's gates
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              setOpen({
+                at: "form",
+                draft: { phrase: "", repo: repos[0]?.path ?? "", where: "", check: "" },
+              })
+            }
+            className="rounded-md border border-edge px-3 py-1.5 text-sm hover:bg-edge/60"
+          >
+            + A new rule
+          </button>
+        </div>
       </header>
 
       {said && <p className="text-sm text-ok">{said}</p>}

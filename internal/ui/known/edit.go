@@ -25,7 +25,10 @@ func (s State) editSaid(e Env) State {
 		return s
 	}
 
-	return s.typeInto(one.Text, "", one.Where, false)
+	// The check opens with the command the sentence arrived with. Only one
+	// source fills it, and when it does, the gate is the whole of what the
+	// rule is worth.
+	return s.typeInto(one.Text, one.Gate, one.Where, false)
 }
 
 // pauseFact opens the one question a pause asks: what it is being paused for.

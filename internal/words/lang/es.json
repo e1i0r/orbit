@@ -5024,8 +5024,8 @@
       "value": "CUÁNDO"
     },
     "knowledge.ways": {
-      "source": "[↑↓] move · [↵] open it · [p] pause it · [n] a new one · [esc] back",
-      "value": "[↑↓] moverte · [↵] abrirla · [p] pausarla · [n] una nueva · [esc] volver"
+      "source": "[↑↓] move · [↵] open it · [p] pause it · [n] a new one · [g] read the repo's gates · [esc] back",
+      "value": "[↑↓] moverte · [↵] abrirla · [p] pausarla · [n] una nueva · [g] leer las puertas del repo · [esc] volver"
     },
     "knowledge.tray_ways": {
       "source": "[↑↓] move · [↵] look at it · [k] keep it as said · [d] not a rule · [esc] back",
@@ -5390,6 +5390,46 @@
     "verb.rules.gone": {
       "source": "nothing said at {when} is waiting to be kept; somebody may have answered it already",
       "value": "nada dicho en {when} está esperando que lo guarden; puede que alguien ya lo haya respondido"
+    },
+    "verb.rules.enforced": {
+      "source": "offer a rule for each thing this checkout already refuses work over",
+      "value": "ofrecer una regla por cada cosa que este checkout ya rechaza trabajo por"
+    },
+    "verb.rules.enforced.repo": {
+      "source": "the checkout to read; the default is the one you are in",
+      "value": "el checkout a leer; por defecto, en el que estás"
+    },
+    "verb.rules.enforced.none": {
+      "source": "nothing this checkout refuses work over is unanswered; a rule here comes from what a pull request has to pass",
+      "value": "no queda nada sin responder de lo que este checkout rechaza trabajo por; una regla de acá sale de lo que un pull request tiene que pasar"
+    },
+    "verb.rules.enforced.waiting": {
+      "source": {
+        "one": "it is waiting in the rules for you to keep it or drop it",
+        "other": "{n} are waiting in the rules for you to keep them or drop them"
+      },
+      "value": {
+        "one": "está esperando en las reglas a que la guardes o la descartes",
+        "other": "{n} están esperando en las reglas a que las guardes o las descartes"
+      }
+    },
+    "knowledge.gates_none": {
+      "source": "nothing this checkout refuses work over is unanswered",
+      "value": "no queda nada sin responder de lo que este checkout rechaza trabajo por"
+    },
+    "knowledge.gates_read": {
+      "source": {
+        "one": "{n} rule is waiting: what this repository already refuses work over",
+        "other": "{n} rules are waiting: what this repository already refuses work over"
+      },
+      "value": {
+        "one": "{n} regla esperando: lo que este repositorio ya rechaza trabajo por",
+        "other": "{n} reglas esperando: lo que este repositorio ya rechaza trabajo por"
+      }
+    },
+    "knowledge.by_gates": {
+      "source": "this repo's gates",
+      "value": "las puertas del repo"
     }
   }
 }

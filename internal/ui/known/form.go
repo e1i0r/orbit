@@ -279,7 +279,7 @@ func (s State) ways(p *words.Printer) string {
 	}
 
 	return p.T("knowledge.ways",
-		"[↑↓] move · [↵] open it · [p] pause it · [n] a new one · [esc] back")
+		"[↑↓] move · [↵] open it · [p] pause it · [n] a new one · [g] read the repo's gates · [esc] back")
 }
 
 // dimmed paints every line of a hint, which wraps rather than being cut: a

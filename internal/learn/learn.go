@@ -64,6 +64,11 @@ type Said struct {
 	// the second so that a rule they dropped is not offered again.
 	Topic string
 	Habit string
+	// Gate is the command this sentence arrived with, and empty for the
+	// sources that bring only words. One can fill it: what the checkout
+	// already refuses work over, where the command has been running for
+	// years and the sentence is a way of saying what it does.
+	Gate string
 }
 
 // From is where it came from: the task it was typed at, or the way in it
@@ -169,7 +174,7 @@ func Propose(s *store.Store, said Said) error {
 	return d.Propose(db.Proposal{
 		SaidAt: said.At, Said: said.Text,
 		By: said.By, About: said.About, Repo: said.Repo, Path: said.Path,
-		Topic: said.Topic, Habit: said.Habit,
+		Topic: said.Topic, Habit: said.Habit, Gate: said.Gate,
 	})
 }
 
@@ -190,7 +195,7 @@ func Waiting(s *store.Store) ([]Said, error) {
 		out = append(out, Said{
 			At: row.SaidAt, Text: row.Said,
 			By: row.By, About: row.About, Repo: row.Repo, Path: row.Path,
-			Topic: row.Topic, Habit: row.Habit,
+			Topic: row.Topic, Habit: row.Habit, Gate: row.Gate,
 		})
 	}
 
