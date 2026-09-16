@@ -67,7 +67,7 @@ func TestARunCancelledWhileAGateIsUpSaysItWasCancelled(t *testing.T) {
 
 	events := eventsOf(t, s, tk)
 	wantKinds(t, events,
-		record.TaskCreated, record.TaskStarted, record.PhaseStarted,
+		record.TaskCreated, record.TaskStarted, record.PhaseStarted, record.PhaseAsked,
 		record.PhaseCancelled, record.TaskCancelled)
 
 	// The phase keeps what the engine printed before the run was stopped,
@@ -101,9 +101,9 @@ func TestAGateThatFailsOnItsOwnStillSaysSo(t *testing.T) {
 	events := eventsOf(t, s, tk)
 	wantKinds(t, events,
 		record.TaskCreated, record.TaskStarted,
-		record.PhaseStarted, record.GateFailed, record.PhaseRetried,
-		record.PhaseStarted, record.GateFailed, record.PhaseRetried,
-		record.PhaseStarted, record.GateFailed, record.PhaseFailed, record.TaskStuck)
+		record.PhaseStarted, record.PhaseAsked, record.GateFailed, record.PhaseRetried,
+		record.PhaseStarted, record.PhaseAsked, record.GateFailed, record.PhaseRetried,
+		record.PhaseStarted, record.PhaseAsked, record.GateFailed, record.PhaseFailed, record.TaskStuck)
 
 	for _, e := range events {
 		if e.Kind != record.GateFailed {

@@ -11,7 +11,7 @@
 
 import {
   AlertTriangle, Ban, BookOpen, Check, CircleDot, Clock, FileDiff, Flag,
-  GitMerge, GitPullRequest, Hand, Hammer, Lightbulb, MessageSquare, Play,
+  FileText, GitMerge, GitPullRequest, Hand, Hammer, Lightbulb, MessageSquare, Play,
   RotateCcw, Scale, ShieldAlert, Terminal, Trash2, X, type LucideIcon,
 } from "lucide-react";
 
@@ -47,6 +47,7 @@ const meanings: Record<string, Meaning> = {
   "phase.cancelled": { said: "Phase cancelled", icon: Ban, tone: "quiet" },
   "phase.tool_call": { said: "Tool call", icon: Terminal, tone: "quiet" },
   "phase.thought": { said: "Thinking", icon: Lightbulb, tone: "quiet" },
+  "phase.asked": { said: "Asked", icon: FileText, tone: "quiet" },
   "phase.refused": { said: "Refused by the sandbox", icon: ShieldAlert, tone: "bad" },
   "gate.passed": { said: "Check passed", icon: Check, tone: "ok" },
   "gate.failed": { said: "Check failed", icon: X, tone: "bad" },

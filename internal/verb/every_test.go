@@ -69,7 +69,8 @@ func TestWhatOnlyReadsIsDeclared(t *testing.T) {
 	reads := map[string]bool{
 		"board": true, "board list": true, "task": true, "task show": true,
 		"task flow": true, "task diff": true, "task impact": true,
-		"knowledge": true, "flows": true, "engines": true, "repos": true,
+		"task prompt": true,
+		"knowledge":   true, "flows": true, "engines": true, "repos": true,
 		"supervisor": true, "supervisor thread": true, "task history": true,
 		"quota": true, "pr show": true,
 		"task tree": true, "rules": true, "rules repeated": true, "rules history": true,

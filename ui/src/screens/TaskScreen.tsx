@@ -13,7 +13,7 @@ import { HistoryView } from "../task/HistoryView";
 import { ImpactView } from "../task/ImpactView";
 import { MapView } from "../task/map/MapView";
 import { Overview } from "../task/Overview";
-import { Artifacts, Cost, Gates, Notes, Refused, Report, Thinking } from "../task/Panes";
+import { Artifacts, Cost, Gates, Notes, Prompt, Refused, Report, Thinking } from "../task/Panes";
 import { Timeline } from "../task/Timeline";
 import { Verbs } from "../task/Verbs";
 
@@ -31,6 +31,7 @@ const tabs = [
   { id: "diff", name: "Diff" },
   { id: "impact", name: "Impact" },
   { id: "thinking", name: "Thinking" },
+  { id: "prompt", name: "Prompt" },
   { id: "history", name: "History" },
 ];
 
@@ -127,6 +128,7 @@ export function TaskScreen({ id, back }: { id: string; back: () => void }) {
       {at === "map" && <MapView task={id} />}
       {at === "impact" && <ImpactView impact={impact} task={id} />}
       {at === "thinking" && <Thinking task={task} />}
+      {at === "prompt" && <Prompt task={task} />}
       {at === "history" && <HistoryView task={id} />}
     </Page>
   );

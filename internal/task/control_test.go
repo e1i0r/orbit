@@ -126,7 +126,7 @@ func TestAPauseWordStopsTheRunAndAResumeWordLetsItGo(t *testing.T) {
 	wantKinds(t, events,
 		record.TaskCreated, record.TaskStarted,
 		record.PhaseWaiting, record.PhaseResumed,
-		record.PhaseStarted, record.PhaseFinished,
+		record.PhaseStarted, record.PhaseAsked, record.PhaseFinished,
 		record.TaskFinished)
 
 	if got := find(t, events, record.PhaseResumed).Data["how"]; got != "resume" {
@@ -250,7 +250,7 @@ func TestASkipWordPutsTheRunPastTheNextPhaseAndNoFurther(t *testing.T) {
 	events := eventsOf(t, s, tk)
 	wantKinds(t, events,
 		record.TaskCreated, record.TaskStarted,
-		record.PhaseStarted, record.PhaseFinished, record.TaskFinished)
+		record.PhaseStarted, record.PhaseAsked, record.PhaseFinished, record.TaskFinished)
 
 	for _, e := range events {
 		if e.Phase == "implement" {

@@ -57,7 +57,7 @@ func TestRunWalksEveryPhaseAndRecordsIt(t *testing.T) {
 		kinds = append(kinds, e.Kind)
 	}
 
-	want := []string{"task.created", "task.started", "phase.started", "phase.finished", "task.finished"}
+	want := []string{"task.created", "task.started", "phase.started", "phase.asked", "phase.finished", "task.finished"}
 	if len(kinds) != len(want) {
 		t.Fatalf("events = %v, want %v", kinds, want)
 	}

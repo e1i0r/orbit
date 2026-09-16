@@ -45,6 +45,7 @@ const (
 	EntryGatePassed                       // verification gate passed
 	EntryGateFailed                       // verification gate failed
 	EntryThought                          // thinking block
+	EntryAsked                            // the prompt a phase was given
 	EntryToolCall                         // tool call invocation
 	EntryRefused                          // permission refused
 	EntryNoted                            // user note
@@ -107,6 +108,8 @@ func (e Entry) What() EntryKind {
 		return EntryGateFailed
 	case record.PhaseThought:
 		return EntryThought
+	case record.PhaseAsked:
+		return EntryAsked
 	case record.PhaseToolCall:
 		return EntryToolCall
 	case record.PhaseRefused:

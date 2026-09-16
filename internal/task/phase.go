@@ -183,6 +183,29 @@ func phaseRefused(phase string, n int, r engine.StreamRefusal) record.Event {
 	return record.Event{Kind: record.PhaseRefused, Phase: phase, Text: c, Data: data}
 }
 
+// phaseAsked is the prompt, written down before the engine is handed it.
+//
+// Before and not after, for the reason phase.started is written before the
+// run: a phase whose engine never comes back is exactly the phase somebody
+// needs the prompt of, and a line written afterwards is a line that is never
+// written when it matters most.
+//
+// It is the assembled prompt and not the parts it was made of. Some of those
+// parts are in the record already — the phase before it answered, a person
+// left a note — and keeping only what cannot be reconstructed would be
+// keeping something that is not the prompt. What was sent is what is worth
+// having.
+func phaseAsked(phase, on, ask string) record.Event {
+	text, full := captured(ask)
+
+	data := map[string]string{"engine": on}
+	if full > 0 {
+		data["bytes"] = strconv.Itoa(full)
+	}
+
+	return record.Event{Kind: record.PhaseAsked, Phase: phase, Text: text, Data: data}
+}
+
 // runGates runs every gate the phase declares and writes down what each one
 // answered.
 //

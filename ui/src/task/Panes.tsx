@@ -325,6 +325,97 @@ export function Thinking({ task }: { task?: Task }) {
   );
 }
 
+// Prompt is what each phase was asked, word for word.
+//
+// The one thing Orbit sends and the only one that used to be invisible.
+// Every other side of a run can be read back — the diff, the turns, the tool
+// calls, what the engine answered — so a phase that came out strange could
+// be examined from every direction except the one that caused it.
+//
+// Word for word and not summarised. A pane that drew the headings would be
+// drawing what the program believes it sent, and the reason to look at all
+// is that the two might differ.
+//
+// Newest first, and the newest opened: a phase that ran three times ran
+// three times for a reason, and the reader is almost always asking about the
+// run they just watched.
+export function Prompt({ task }: { task?: Task }) {
+  const asked = of(task?.entries ?? null, "phase.asked");
+
+  if (asked.length === 0) {
+    return (
+      <Empty
+        said="No phase has been asked anything yet"
+        next="The prompt a phase is given is written down before the engine is called, so even a phase that never answers says what it was asked."
+      />
+    );
+  }
+
+  const newest = [...asked].reverse();
+
+  return (
+    <div className="flex measure flex-col gap-2.5">
+      <p className="text-[11px] text-faint">
+        <span className="font-mono text-said">{asked.length}</span>{" "}
+        {asked.length === 1 ? "prompt" : "prompts"}, newest first. This is the text the engine was
+        handed — the task, the phase, the rules in force, what a person said, and what the attempt
+        before it got as far as doing.
+      </p>
+
+      <ol className="flex flex-col gap-1.5">
+        {newest.map((e, i) => (
+          <Asked key={i} asked={e} open={i === 0} />
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+// Asked is one prompt: which phase, who was given it, how long it is, and
+// then the thing itself.
+function Asked({ asked, open: first }: { asked: Entry; open: boolean }) {
+  const [open, setOpen] = useState(first);
+  const text = (asked.text ?? "").trimEnd();
+
+  return (
+    <li className="rounded-md border border-edge bg-panel">
+      <div className="flex items-baseline gap-2 px-3 py-1.5">
+        <span className="font-mono text-[11px] text-said">{asked.phase || "—"}</span>
+
+        {asked.engine && (
+          <span className="shrink-0 font-mono text-[10px] text-faint">{asked.engine}</span>
+        )}
+
+        {asked.truncated && (
+          <span className="shrink-0 text-[10px] text-wait">
+            the record kept less than was sent
+          </span>
+        )}
+
+        <time className="ml-auto shrink-0 text-[10px] text-faint tabular-nums">
+          {when(asked.at)}
+        </time>
+
+        {text && (
+          <button
+            onClick={() => setOpen(!open)}
+            aria-expanded={open}
+            className="shrink-0 text-[10px] text-faint transition-colors hover:text-said"
+          >
+            {open ? "hide it" : said(lines(text))}
+          </button>
+        )}
+      </div>
+
+      {open && text && (
+        <pre className="max-h-[32rem] overflow-auto border-t border-edge bg-well px-3 py-2 font-mono text-[11px] leading-[1.5] whitespace-pre-wrap text-aside">
+          {text}
+        </pre>
+      )}
+    </li>
+  );
+}
+
 // Report is the story a task told about itself: how the change came about,
 // in the parts the record keeps it in.
 //

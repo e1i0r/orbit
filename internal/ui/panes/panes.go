@@ -187,6 +187,10 @@ func (e Env) attempt(n int) bool {
 // about names a value and what the sentence calls it.
 func about(name, value string) words.Arg { return words.Arg{Name: name, Value: value} }
 
+// Prompt is every prompt this run was given, newest first, and beside it
+// which one each row that folds stands for. prompt.go is where it is built.
+func Prompt(e Env) ([]string, map[int]int) { return promptPane(e) }
+
 // Dials are the four settings a run is made under, as the reader would read
 // them: what the task itself carries where it has run, and what the knobs
 // say where it has not.

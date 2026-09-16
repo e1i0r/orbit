@@ -59,6 +59,31 @@ UTC timestamps" — and the discarded alternatives exist nowhere else. They die
 with the run, and the next person to touch that code pays again to find out
 why the obvious approach was not taken.
 
+## Prompt — what it was asked
+
+Everything above reads what came *out* of a run. `u` reads what went in: the
+prompt each phase was given, word for word, as the engine received it.
+
+It is not a small thing to be unable to see. What goes into a prompt is the
+task, the phase's own instructions, the rules in force from the Brain, your
+notes, what reviewers asked, what the phase before it answered, the gates that
+turned it back, and what the attempt before it got as far as doing. A phase
+that came out strange could be examined from every side except the one that
+caused it.
+
+Word for word, and not a summary of it. A pane that drew the headings would
+be drawing what Orbit believes it sent, and the reason to look at all is that
+the two might differ.
+
+```bash
+orbit task prompt fix-auth                 # the last phase that ran
+orbit task prompt fix-auth -phase plan     # a particular one
+```
+
+It is written down before the engine is called, so a phase whose engine never
+answers — it broke, it ran out, you stopped it — still says what it was asked.
+That is exactly the phase whose prompt somebody needs.
+
 ## The rest
 
 | | |
@@ -70,6 +95,7 @@ why the obvious approach was not taken.
 | `8` artifacts | every file the run left, opened where you want to read one |
 | `9` notes | your notes, the sessions beside the run, what it stopped to ask |
 | `w` thinking | the reasoning it showed its work in |
+| `u` prompt | what each phase was asked, word for word |
 
 `e` opens every row of any of them at once; `v` shows what was written down
 rather than what was made of it.

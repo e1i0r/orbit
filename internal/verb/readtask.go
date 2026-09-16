@@ -11,8 +11,10 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/record"
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/task"
 )
@@ -84,6 +86,77 @@ func diffed(w World, in In) (Out, error) {
 	}
 
 	return Out{Said: text, Saw: text}, nil
+}
+
+// prompted is the prompt a phase was given, word for word.
+//
+// The last one, because a phase that was run three times was run three times
+// for a reason and the reader is almost always asking about the run they
+// just watched. -phase names one when they are not.
+//
+// The whole prompt and no summary of it. A reading that showed the headings
+// would be a reading of what this package believes the prompt contains, and
+// the reason to look at all is that the two might differ.
+func prompted(w World, in In) (Out, error) {
+	t, err := found(w, in)
+	if err != nil {
+		return Out{}, err
+	}
+
+	events, err := task.Events(w.Store(), t)
+	if err != nil {
+		return Out{}, err
+	}
+
+	want := in.Arg("phase")
+
+	var got record.Event
+
+	for _, e := range events {
+		if e.Kind == record.PhaseAsked && (want == "" || e.Phase == want) {
+			got = e
+		}
+	}
+
+	if got.Kind == "" {
+		return Out{Said: nothingAsked(t.ID, want, events)}, nil
+	}
+
+	return Out{Said: got.Text, Saw: promptSeen{
+		Task: t.ID, Phase: got.Phase, Engine: got.Data["engine"],
+		At: got.At, Text: got.Text, Bytes: got.Data["bytes"],
+	}}, nil
+}
+
+// promptSeen is one prompt as a surface that draws structures gets it.
+type promptSeen struct {
+	Task   string    `json:"task"`
+	Phase  string    `json:"phase"`
+	Engine string    `json:"engine"`
+	At     time.Time `json:"at"`
+	Text   string    `json:"text"`
+	// Bytes is how long the prompt really was, and empty unless the record
+	// had to keep less than the engine was handed.
+	Bytes string `json:"bytes,omitempty"`
+}
+
+// nothingAsked says which of the two nothings this is.
+//
+// A task that has never run and a task whose phases all ran before Orbit
+// wrote prompts down look identical from here, and both are worth saying
+// plainly: a reader who is told only "nothing" goes looking for a bug.
+func nothingAsked(id, want string, events []record.Event) string {
+	if want != "" {
+		return fmt.Sprintf("%s has no phase %q that was given a prompt", id, want)
+	}
+
+	for _, e := range events {
+		if e.Kind == record.PhaseStarted {
+			return id + " ran before Orbit kept the prompts, so there is none to read"
+		}
+	}
+
+	return id + " has not run yet, so no phase has been given a prompt"
 }
 
 // reaches is what a change touches beyond the files it changed.

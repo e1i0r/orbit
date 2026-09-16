@@ -178,6 +178,15 @@ func taskFamily() []Verb {
 		},
 		{
 			Under: "task",
+			Name:  "prompt", OnTask: true, Reads: true, About: func(p *words.Printer) string {
+				return p.T("verb.prompt", "the prompt a phase was given, word for word")
+			},
+			Takes: []Field{{Name: "phase", Kind: Named, About: func(p *words.Printer) string {
+				return p.T("verb.prompt.phase", "which phase; the last one that ran by default")
+			}}},
+		},
+		{
+			Under: "task",
 			Name:  "compare", OnTask: true,
 			About: func(p *words.Printer) string {
 				return p.T("verb.compare",

@@ -97,6 +97,12 @@ func (m Model) thinkingRows() ([]string, map[int]int) {
 	return panes.Thinking(m.paneEnv(tabThinking))
 }
 
+// promptRows is what each phase was asked, and which prompt each row that
+// folds stands for.
+func (m Model) promptRows() ([]string, map[int]int) {
+	return panes.Prompt(m.paneEnv(tabPrompt))
+}
+
 // historyRows is every word said about this task, in any program.
 func (m Model) historyRows() ([]string, map[int]int) {
 	return panes.History(m.paneEnv(tabHistory))
