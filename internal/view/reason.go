@@ -92,4 +92,20 @@ const (
 	// is one of two — change the code back, or supersede the decision —
 	// and both are about that one. Args: decision.
 	ReasonContradicts = "reason.contradicts"
+	// ReasonNeedsEngine is a run whose engine ran out while nobody had said
+	// to carry on without asking. Args: engine, phase, engines.
+	//
+	// Apart from ReasonRanOut because it says something ReasonRanOut cannot:
+	// that there is somewhere for the work to go. A reader told only that
+	// claude ran out has to go and find out who else could take it; this row
+	// already names them.
+	ReasonNeedsEngine = "reason.needs_engine"
+	// ReasonNoEngine is a run that ran out with nowhere to go. Args: engine,
+	// phase, back.
+	//
+	// back is how long until the first allowance returns, and it is the
+	// whole point of the row: allowances come back, so an hour is an answer
+	// and "abandoned" is not. It is empty when nothing on this machine can
+	// say, and the sentence says that rather than naming an hour it made up.
+	ReasonNoEngine = "reason.no_engine"
 )

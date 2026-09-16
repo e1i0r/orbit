@@ -33,8 +33,12 @@ import (
 // nothing, which is how the ending events already treat a session id and a
 // cost they do not have. An empty string would read as a posture somebody
 // wrote down, and nobody did.
-func phaseStart(p flow.Phase, n int, notes []string) record.Event {
-	data := map[string]string{"engine": p.Engine, "n": strconv.Itoa(n)}
+func phaseStart(p flow.Phase, on string, n int, notes []string) record.Event {
+	// on and not p.Engine. After a relay the phase is run by an engine the
+	// flow never named, and a record that kept naming the flow's would be
+	// the one thing this whole mechanism cannot afford: a log that says
+	// claude did work codex did.
+	data := map[string]string{"engine": on, "n": strconv.Itoa(n)}
 	if p.Model != "" {
 		data["model"] = p.Model
 	}

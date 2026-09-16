@@ -134,7 +134,8 @@ func Digested(d Digest, events []record.Event) Digest {
 		case record.TaskRequeued:
 			d.Requeued++
 		case record.TaskStuck, record.TaskOverBudget, record.TaskOverDiff,
-			record.TaskNewDependency, record.TaskContradicts:
+			record.TaskNewDependency, record.TaskContradicts,
+			record.TaskNeedsEngine, record.TaskNoEngine:
 			stuck = true
 		case record.TaskFinished:
 			finished, stuck = true, false

@@ -116,7 +116,7 @@ var doors = map[string][]string{
 	"internal/task": {
 		"alive.go", "cancel.go", "control.go", "critical.go", "decision.go", "delete.go",
 		"deliver.go", "dependency.go", "dialogue.go", "direct.go", "gate.go", "join.go",
-		"history.go", "note.go", "read.go", "reconcile.go", "requeue.go",
+		"history.go", "note.go", "read.go", "reconcile.go", "relay.go", "requeue.go",
 		"review.go", "run.go", "start.go", "story.go", "task.go",
 	},
 	// One file per engine, plus the stream and transcript each one answers

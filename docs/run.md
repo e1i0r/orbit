@@ -124,6 +124,64 @@ It costs nothing: no engine is asked, no tokens are spent. The same is true
 of switching engine halfway — the new one has no session to resume, and this
 is what it reads instead.
 
+## When it changes engine
+
+Running out is not the end of the task. The work is in the worktree, the
+record says how far it got, and there are three other engines on the machine.
+So the task is handed to one that has something left, told what the engine
+before it got as far as doing, and carries on.
+
+**Whether that happens without asking is autopilot's decision**, and not a
+switch of its own. Autopilot already means exactly this — whether a run walks
+its flow without stopping for you — and a second question about the same
+decision is a second place to answer it differently.
+
+| | what happens when the engine runs out |
+|---|---|
+| autopilot on | it changes to an engine with allowance and carries on; you read about it afterwards |
+| autopilot off | it stops and names the engines that could take it. You choose |
+
+**Which engine it takes**: the first with allowance left, your default engine
+first and the rest in name order. An engine nobody can read the allowance of
+counts as available — "nobody can see opencode's quota" and "opencode has
+none left" are different sentences, and three of the four engines here have
+never reported a number.
+
+**If none has anything left**, the task waits and says until when:
+
+```
+claude ran out: implement · no engine for another 1h30m
+```
+
+Until when is the point of it. Allowances come back, so an hour is an answer
+and "abandoned" is not. When nothing on the machine can say what the hour is,
+the row says that instead of naming one it made up.
+
+**Only running out hands a task on.** A phase that broke, was cancelled, or
+was turned back by a gate stays where it is: a compile error is a compile
+error whoever is typing, and spending another allowance on it buys nothing.
+And no engine is handed the same phase twice — one that ran out a minute ago
+can still read as available, because a proxy caches and a rollout file is
+only as fresh as the last run.
+
+### What gets written down
+
+Every hand-over is a line in the task's record: which engine had it, why it
+stopped, which one took it, and from which phase.
+
+```
+task.relayed  claude → codex  ·  implement  ·  ran out
+```
+
+Without it, a task that passed through three engines is one whose result
+cannot be judged — if the code came out strange, was that the flow, or the
+third engine arriving with half the context? It is also the only place the
+real cost shows: three allowances spent, one task.
+
+`orbit task start -engine <name>` on a task that has already run writes the
+same line, with *you chose it* as the reason. Changing engine by hand was
+always possible; what was missing was the record saying it happened.
+
 ---
 
 Next: [autopilot](autopilot.md) · [reading what it did](reading.md)

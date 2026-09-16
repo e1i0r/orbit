@@ -12,6 +12,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/logger"
+	"github.com/e1i0r/orbit/internal/quota"
 	"github.com/e1i0r/orbit/internal/task"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -100,6 +101,18 @@ func runTask(ctx Context, args []string) error {
 	}
 
 	f = flow.WithEngine(f, *eng)
+
+	// An engine named on the command line for a task that has already run
+	// under another one is a relay somebody did by hand, and it is written
+	// down as one. Without this the run that follows reads as an ordinary
+	// run that happened to be on codex, and the reason it was on codex —
+	// that claude ran out an hour ago — exists nowhere.
+	//
+	// Best-effort: a line about how the run came to be on this engine is
+	// not worth refusing to start it over.
+	if err := task.HandedTo(s, t, *eng); err != nil {
+		logger.Error("cli/run", "write down that task %s changed engine: %v", id, err)
+	}
 	// Installed here, after everything that can be wrong about the command
 	// itself has been found: a mistyped id should not go through a signal
 	// handler on its way to being reported.
@@ -130,7 +143,8 @@ func runTask(ctx Context, args []string) error {
 
 	logger.Info("cli/run", "starting task %s in repo %s on flow %s (timeout=%v)", id, r.Name, chosen, *timeout)
 
-	if err := task.Run(running, s, t, f, engines, task.FileGate(s, time.Second)); err != nil {
+	if err := task.Run(running, s, t, f, engines, task.FileGate(s, time.Second),
+		allowancePort(quota.FromEnv())); err != nil {
 		return fmt.Errorf("task %s execution: %w", id, err)
 	}
 
