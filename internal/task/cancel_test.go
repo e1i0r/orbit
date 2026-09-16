@@ -114,7 +114,7 @@ func TestARunThatIsCancelledSaysSoAndKeepsWhatThePhasePrinted(t *testing.T) {
 
 	events := eventsOf(t, s, tk)
 	wantKinds(t, events,
-		record.TaskCreated, record.TaskStarted, record.PhaseStarted,
+		record.TaskCreated, record.TaskStarted, record.PhaseStarted, record.PhaseAsked,
 		record.PhaseCancelled, record.TaskCancelled)
 
 	if got := find(t, events, record.PhaseCancelled).Text; got != "wrote half of the retry" {
@@ -149,7 +149,7 @@ func TestARunThatOutlivesItsDeadlineSaysItTimedOut(t *testing.T) {
 
 	events := eventsOf(t, s, tk)
 	wantKinds(t, events,
-		record.TaskCreated, record.TaskStarted, record.PhaseStarted,
+		record.TaskCreated, record.TaskStarted, record.PhaseStarted, record.PhaseAsked,
 		record.PhaseCancelled, record.TaskTimedOut)
 
 	if got := find(t, events, record.PhaseCancelled).Text; got != "thinking about it" {

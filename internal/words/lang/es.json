@@ -5439,6 +5439,42 @@
       "source": "back in {when}",
       "value": "vuelve en {when}"
     },
+    "prompt.title": {
+      "source": "What each phase was asked",
+      "value": "Lo que se le pidió a cada fase"
+    },
+    "prompt.subtitle": {
+      "source": "the prompt as the engine received it, word for word",
+      "value": "el prompt tal como lo recibió el motor, palabra por palabra"
+    },
+    "prompt.none": {
+      "source": "no phase of this run has been given a prompt yet",
+      "value": "todavía ninguna fase de esta corrida recibió un prompt"
+    },
+    "prompt.size": {
+      "source": "{n} lines",
+      "value": "{n} líneas"
+    },
+    "prompt.truncated": {
+      "source": "the record kept less than was sent",
+      "value": "el registro guardó menos de lo que se mandó"
+    },
+    "tab.prompt": {
+      "source": "prompt",
+      "value": "prompt"
+    },
+    "tab_desc.prompt": {
+      "source": "the prompt each phase was given, word for word, as the engine received it",
+      "value": "el prompt que recibió cada fase, palabra por palabra, tal como le llegó al motor"
+    },
+    "verb.prompt": {
+      "source": "the prompt a phase was given, word for word",
+      "value": "el prompt que recibió una fase, palabra por palabra"
+    },
+    "verb.prompt.phase": {
+      "source": "which phase; the last one that ran by default",
+      "value": "qué fase; por defecto la última que corrió"
+    },
     "reason.needs_engine": {
       "source": "{engine} ran out: {phase} \u00b7 {engines} could take it",
       "value": "{engine} se qued\u00f3 sin cuota: {phase} \u00b7 {engines} pueden seguirla"

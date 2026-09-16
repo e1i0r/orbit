@@ -27,6 +27,14 @@ func (r phaseRun) run(ctx context.Context) (engine.Result, error, error) { //nol
 	ask := build(r.task, r.phase, r.last, r.knows(), r.notes, r.reviews,
 		r.prev, before, r.others, r.tried...)
 
+	// Not best-effort, for the reason the stream's own emits are not: a
+	// record that will not take this line will not take the phase's ending
+	// either, and a run whose log stops here reads for ever as one still
+	// going.
+	if err := emit(r.store, r.task, phaseAsked(r.phase.Name, callsItself(r.eng), ask)); err != nil {
+		return engine.Result{}, nil, failed(r.store, r.task, err)
+	}
+
 	out, runErr := r.eng.Run(ctx, engine.Request{
 		Prompt:      ask,
 		Model:       r.phase.Model,

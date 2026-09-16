@@ -24,6 +24,7 @@ const (
 	tabDiff
 	tabImpact
 	tabThinking
+	tabPrompt
 	tabHistory
 	tabCount
 )
@@ -64,6 +65,12 @@ func paneKey(t tab) string {
 		return "i"
 	case tabThinking:
 		return "w"
+	case tabPrompt:
+		// u, one of the two letters this keyboard had left. p is the pane
+		// key for nothing and was never free: it pauses a run, which is the
+		// gesture a reader would be sorry to press by accident while
+		// looking for a prompt.
+		return "u"
 	case tabHistory:
 		// y, because h is the key that hands a paused run back.
 		return "y"
@@ -107,6 +114,8 @@ func keyToPane(k string) (tab, bool) {
 		return tabImpact, true
 	case "w", "W":
 		return tabThinking, true
+	case "u", "U":
+		return tabPrompt, true
 	case "y":
 		return tabHistory, true
 	case "l", "L", ",":
@@ -147,6 +156,9 @@ func (m Model) tabNames() []tabName {
 		// each of them knowing what a warning is.
 		{tabImpact, p.T("tab.impact", "impact") + m.impactMark()},
 		{tabThinking, p.T("tab.thinking", "thinking")},
+		// Beside thinking, because the two are the pair: what the engine was
+		// asked, and what it made of it.
+		{tabPrompt, p.T("tab.prompt", "prompt")},
 		// Last, because it is the one pane that is not about this run: it
 		// is every word said about the task, across every program that has
 		// walked it.
@@ -167,6 +179,7 @@ func (m Model) syncPanes() Model {
 	timeline := m.logRows()
 	report, reportSeams := m.reportRows()
 	thinking, thinkingHeads := m.thinkingRows()
+	prompts, promptHeads := m.promptRows()
 	history, historyHeads := m.historyRows()
 	shape := m.mapRows()
 	flowTree, flowHeads := m.flowRows()
@@ -177,7 +190,7 @@ func (m Model) syncPanes() Model {
 	artifacts, artifactHeads := m.artifactsRows()
 
 	m.heads[tabTimeline], m.heads[tabThinking] = timeline.Heads, thinkingHeads
-	m.heads[tabHistory] = historyHeads
+	m.heads[tabHistory], m.heads[tabPrompt] = historyHeads, promptHeads
 	m.heads[tabFlow], m.heads[tabGates] = flowHeads, gateHeads
 	m.heads[tabRefused], m.heads[tabNotes] = refusedHeads, noteHeads
 	m.heads[tabDiff], m.heads[tabArtifacts] = diffHeads, artifactHeads
@@ -196,6 +209,7 @@ func (m Model) syncPanes() Model {
 		tabDiff:      diff,
 		tabImpact:    m.impactRows(),
 		tabThinking:  thinking,
+		tabPrompt:    prompts,
 		tabHistory:   history,
 		tabMap:       shape,
 	}
@@ -247,6 +261,8 @@ func (m Model) paneMenu() []menu.Pane {
 		tabImpact: p.T("tab_desc.impact",
 			"what usually changes with these files, what those tests hold, and what the checks say on both sides"),
 		tabThinking: p.T("tab_desc.thinking", "extended model thinking, chain of thought and reasoning"),
+		tabPrompt: p.T("tab_desc.prompt",
+			"the prompt each phase was given, word for word, as the engine received it"),
 		tabHistory: p.T("tab_desc.history",
 			"every word said about this task, in whichever program it was said"),
 		tabMap: p.T("tab_desc.map",

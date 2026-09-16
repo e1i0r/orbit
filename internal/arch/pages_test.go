@@ -50,6 +50,7 @@ var notDrawn = map[string]string{
 	"task history":      "the task's timeline tab is this reading, drawn",
 	"task flow":         "the task's flow tab is this reading, drawn",
 	"task diff":         "the task's diff tab is this reading, drawn",
+	"task prompt":       "the task's prompt tab is this reading, drawn",
 	"task tree":         "the task's map tab is this reading, drawn",
 	"task impact":       "the task's impact tab is this reading, drawn",
 	"task compare":      "the task's diff tab draws what the checks say on both sides",

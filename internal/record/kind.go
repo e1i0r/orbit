@@ -179,6 +179,24 @@ const (
 	TaskDelta = "task.delta"
 
 	PhaseStarted = "phase.started" // Data carries engine, model, n, and the permissions the phase was given
+	// PhaseAsked is the prompt a phase was given, as the engine received it.
+	//
+	// The one thing Orbit sends and the only one that used to be invisible.
+	// Everything else about a run can be read back — the diff, the turns,
+	// the tool calls, what the engine answered — so a phase that came out
+	// strange could be examined from every side except the one that caused
+	// it. What goes into a prompt is not small either: the task, the phase,
+	// the rules in force, what a person said, what the reviewers asked,
+	// what the phase before answered, what the gates refused, and what the
+	// attempt before got as far as doing.
+	//
+	// Text is the prompt and Data["engine"] is who was given it, which
+	// after a relay is not the engine the flow named. Data["bytes"] is how
+	// long it really was when the record could not keep all of it.
+	//
+	// One event per attempt, written before the engine is called — so a
+	// phase that never answers still says what it was asked.
+	PhaseAsked = "phase.asked"
 	// PhaseFinished ends a phase that ran through. Text is what the engine
 	// printed, and Data carries what it spent doing so: cost where the
 	// engine prices itself, and tokens_in, tokens_out, cache_read and

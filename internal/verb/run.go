@@ -61,6 +61,8 @@ func (v Verb) do(ctx context.Context, w World, in In) (Out, error) {
 		return shaped(w, in)
 	case "task diff":
 		return diffed(w, in)
+	case "task prompt":
+		return prompted(w, in)
 	case "task compare":
 		return weighed(w, in)
 	case "task tree":
