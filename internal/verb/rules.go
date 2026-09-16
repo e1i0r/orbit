@@ -30,8 +30,12 @@ func rules() []Verb {
 				return p.T("verb.rules.keep", "keep one of them, in your words or in better ones")
 			},
 			Takes: []Field{
-				{Name: "n", Kind: Named, Needed: true, About: func(p *words.Printer) string {
+				{Name: "n", Kind: Named, Needed: true, Or: "at", About: func(p *words.Printer) string {
 					return p.T("verb.rules.n", "which one, by its number in the list")
+				}},
+				{Name: "at", Kind: Named, About: func(p *words.Printer) string {
+					return p.T("verb.rules.at",
+						"which one, by when it was said; for a caller with no numbered list in front of it")
 				}},
 				{Name: "text", Kind: Words, About: func(p *words.Printer) string {
 					return p.T("verb.rules.text", "the rule as you would rather it read; the default is what you said")
@@ -191,9 +195,14 @@ func rules() []Verb {
 			About: func(p *words.Printer) string {
 				return p.T("verb.rules.drop", "say it was not a rule; the sentence stays where you said it")
 			},
-			Takes: []Field{{Name: "n", Kind: Named, Needed: true, About: func(p *words.Printer) string {
-				return p.T("verb.rules.drop.n", "which one, by its number in the list")
-			}}},
+			Takes: []Field{
+				{Name: "n", Kind: Named, Needed: true, Or: "at", About: func(p *words.Printer) string {
+					return p.T("verb.rules.drop.n", "which one, by its number in the list")
+				}},
+				{Name: "at", Kind: Named, About: func(p *words.Printer) string {
+					return p.T("verb.rules.drop.at", "which one, by when it was said")
+				}},
+			},
 		},
 	}
 }

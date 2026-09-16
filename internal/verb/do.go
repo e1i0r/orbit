@@ -121,11 +121,17 @@ func (v Verb) needs(p *words.Printer, in In) error {
 	}
 
 	for _, f := range v.Takes {
-		if f.Needed && in.Arg(f.Name) == "" {
-			return errors.New(p.T("verb.needs_field", "{verb} needs {field}",
-				words.Arg{Name: "verb", Value: v.Path()},
-				words.Arg{Name: "field", Value: f.Name}))
+		if !f.Needed || in.Arg(f.Name) != "" {
+			continue
 		}
+
+		if f.Or != "" && in.Arg(f.Or) != "" {
+			continue
+		}
+
+		return errors.New(p.T("verb.needs_field", "{verb} needs {field}",
+			words.Arg{Name: "verb", Value: v.Path()},
+			words.Arg{Name: "field", Value: f.Name}))
 	}
 
 	return nil

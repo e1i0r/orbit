@@ -19,29 +19,80 @@ import "time"
 
 // Knows is everything Orbit has been told, across every repository.
 type Knows interface {
-	Facts() []Fact
+	Rules() []Rule
+	// Waiting is what somebody said that read as a rule and nobody has
+	// answered yet. It is on this port and not the supervisor's because it
+	// is a question about a rule, and the screen that answers it is this
+	// one.
+	Waiting() []Unanswered
+	// Checkouts is the repositories a rule can be written about, each with
+	// the folders it actually has and the commands it already runs on
+	// itself. A form that asked somebody to remember a path spelled it
+	// wrong; a form that offers what is there cannot.
+	Checkouts() []Checkout
 }
 
-// Fact is one thing Orbit has learned, as a reader reads it.
-type Fact struct {
+// Unanswered is one sentence in the tray: something said that read as a rule
+// and is waiting to be kept or dropped.
+type Unanswered struct {
+	// At is when it was said, and it is the sentence's name: the thread is
+	// append-only and no two turns share an instant.
+	At time.Time `json:"at"`
+	// Text is what was said, and From where — the task it was typed at, or
+	// the way in it came through. A reader deciding whether a sentence was
+	// meant that widely needs to know which it was.
+	Text string `json:"text"`
+	From string `json:"from,omitempty"`
+	// Where is the folder the work was in when it was said, and what the
+	// form opens with: the commonest correction to a place is this one.
+	Where string `json:"where,omitempty"`
+	Repo  string `json:"repo,omitempty"`
+}
+
+// Checkout is one repository, and what a form filing a rule against it can
+// offer instead of asking somebody to remember.
+type Checkout struct {
+	Path    string   `json:"path"`
+	Name    string   `json:"name"`
+	Folders []string `json:"folders"`
+	Checks  []string `json:"checks"`
+}
+
+// Rule is one rule, as a reader reads it.
+type Rule struct {
+	// ID is what the rule is called, and what every verb about it is asked
+	// for by. A page that could list a rule and not name it could show it
+	// and not act on it.
+	ID     string `json:"id"`
 	Phrase string `json:"phrase"`
 	// Scope is what it is about, already spelled: "repo ledger", "go", the
 	// path of a file. The shape of a scope is internal/knowledge's, and a
 	// page working it out from parts would be a second opinion about it.
 	Scope string `json:"scope"`
+	// Path is the same place as the form types it — the path inside the
+	// checkout, and empty for a rule about the whole of one or about no
+	// checkout at all.
+	Path string `json:"path,omitempty"`
 	// Source is where it came from — read off the code, said by a person,
 	// learned from a run.
 	Source string `json:"source"`
-	// Action is what it actually does, "stops" or "warns", and not what it
-	// was asked to do: a fact that asked to stop and brought no check
-	// warns, and a reader has to be told which they are looking at.
-	Action string    `json:"action"`
-	Check  string    `json:"check,omitempty"`
-	Ref    string    `json:"ref,omitempty"`
-	Repo   string    `json:"repo,omitempty"`
-	At     time.Time `json:"at"`
-	Used   int       `json:"used"`
-	Off    bool      `json:"off,omitempty"`
+	// State is the one thing a reader wants to know about a rule, folded
+	// from the three fields that decide it: "waiting", "blocks", "says",
+	// "paused" or "off". Whether it is waiting to be decided about, whether
+	// somebody stopped it, and what it would do if it were applying are
+	// three questions, and every surface folds them the same way.
+	State string `json:"state"`
+	// Stops is what the rule asked to do, which is not always what it does:
+	// one that asked to block and brought no command only says its
+	// sentence. The form needs the question as well as the answer.
+	Stops bool   `json:"stops,omitempty"`
+	Check string `json:"check,omitempty"`
+	// Why is what it was paused for, in the words of whoever paused it.
+	Why  string    `json:"why,omitempty"`
+	Ref  string    `json:"ref,omitempty"`
+	Repo string    `json:"repo,omitempty"`
+	At   time.Time `json:"at"`
+	Used int       `json:"used"`
 }
 
 // Talks is the supervisor's thread: the conversations, and every turn in
@@ -117,6 +168,13 @@ type Asks interface {
 	// is over its unread cap". Those are answers to the reader about the
 	// state of their own machine, not a server that broke.
 	Ask(name string, in Asked) (Answered, error)
+	// Named says whether a name is a verb at all. Two segments of a path
+	// are ambiguous by shape — `rules/history` is one verb of two words and
+	// `tree/ACME-1` is a verb and a task — and the declaration is the only
+	// thing that settles it. It is on this port and not a list in Ports
+	// because the answer has to stay true as verbs are declared: a copy
+	// taken at start-up is a copy that goes stale silently.
+	Named(name string) bool
 }
 
 // Asked is what a verb was asked with: the task if it is about one, and

@@ -50,6 +50,18 @@ type hands struct {
 // The whole of the browser's doing, in one method, because the browser is
 // not where it is decided what a verb means. A name nothing answers to is a
 // refusal with a sentence in it, which is what the page shows.
+// Named says whether a name is a verb, read off the declaration itself so
+// the answer cannot go stale as verbs are added.
+func (h hands) Named(name string) bool {
+	for _, v := range verb.Every() {
+		if v.Path() == name {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (h hands) Ask(name string, in web.Asked) (web.Answered, error) {
 	out, err := verb.Run(context.Background(), newWorld(h.store, h.board, h.words), name, verb.In{
 		Task: in.Task,

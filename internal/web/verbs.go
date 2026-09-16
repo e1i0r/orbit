@@ -70,6 +70,13 @@ func (s *Server) mountVerbs(mux *http.ServeMux) {
 	// how the rest are read, and how any verb added later is read before
 	// anybody draws it.
 	mux.HandleFunc("GET /api/read/{verb}", s.serveRead)
+
+	// Two segments are two words of one verb — `rules history` — or one
+	// verb and the task it is about. They are the same shape, so the
+	// routing cannot tell them apart and the handler does: what is a
+	// declared verb is a verb, and what is not is a task's id. Read as a
+	// task, `rules history` went looking for one called "history" and every
+	// two-word reading was unreachable from a browser.
 	mux.HandleFunc("GET /api/read/{verb}/{id}", s.serveRead)
 	mux.HandleFunc("GET /api/read/{under}/{verb}/{id}", s.serveRead)
 }
@@ -109,6 +116,15 @@ func (s *Server) serveVerb(w http.ResponseWriter, r *http.Request) {
 		in.Task, in.Repo = t.ID, t.RepoPath
 	}
 
+	// A verb about no task can still be about a checkout — writing a rule
+	// down is — and the page is the only thing that knows which. It says so
+	// in the body under the name every other way in uses for it; without
+	// this, every such verb was asked about nowhere, and a rule filed
+	// against a folder was refused for having no repository to be inside.
+	if in.Repo == "" {
+		in.Repo = in.Args["repo"]
+	}
+
 	out, err := s.asks.Ask(name, in)
 	if err != nil {
 		fail(w, http.StatusConflict, err.Error(), nil)
@@ -129,9 +145,28 @@ func verbNamed(r *http.Request) string {
 	return r.PathValue("verb")
 }
 
+// readNamed is the verb a reading asked for, and the task it is about.
+//
+// Two segments under /api/read are ambiguous by shape: `rules/history` is
+// one verb of two words, and `tree/ACME-1` is one verb and a task. What
+// settles it is the declaration — a pair that names a verb is that verb, and
+// anything else is a verb and an id.
+func (s *Server) readNamed(r *http.Request) (name, about string) {
+	if under := r.PathValue("under"); under != "" {
+		return under + " " + r.PathValue("verb"), r.PathValue("id")
+	}
+
+	one, id := r.PathValue("verb"), r.PathValue("id")
+	if id != "" && s.asks != nil && s.asks.Named(one+" "+id) {
+		return one + " " + id, ""
+	}
+
+	return one, id
+}
+
 // serveRead asks for a reading.
 func (s *Server) serveRead(w http.ResponseWriter, r *http.Request) {
-	name := verbNamed(r)
+	name, about := s.readNamed(r)
 	if s.asks == nil {
 		fail(w, http.StatusNotImplemented, "this build cannot read "+name, nil)
 
@@ -140,7 +175,7 @@ func (s *Server) serveRead(w http.ResponseWriter, r *http.Request) {
 
 	in := Asked{}
 
-	if r.PathValue("id") != "" {
+	if about != "" {
 		t, ok := s.find(w, r)
 		if !ok {
 			return

@@ -5374,6 +5374,22 @@
     "verb.knowledge.none": {
       "source": "nothing is being told to a run about this code",
       "value": "no se le está diciendo nada a una corrida sobre este código"
+    },
+    "verb.rules.at": {
+      "source": "which one, by when it was said; for a caller with no numbered list in front of it",
+      "value": "cuál, por cuándo se dijo; para quien no tiene una lista numerada adelante"
+    },
+    "verb.rules.drop.at": {
+      "source": "which one, by when it was said",
+      "value": "cuál, por cuándo se dijo"
+    },
+    "verb.rules.not_an_instant": {
+      "source": "a sentence is named by when it was said, and {value} is not an instant",
+      "value": "una frase se nombra por cuándo se dijo, y {value} no es un instante"
+    },
+    "verb.rules.gone": {
+      "source": "nothing said at {when} is waiting to be kept; somebody may have answered it already",
+      "value": "nada dicho en {when} está esperando que lo guarden; puede que alguien ya lo haya respondido"
     }
   }
 }

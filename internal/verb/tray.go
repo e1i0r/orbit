@@ -144,8 +144,21 @@ func dropped(w World, in In) (Out, error) {
 		words.Arg{Name: "rule", Value: one.Text})}, nil
 }
 
-// nth is the sentence a reader meant by its number in the listing.
+// nth is the sentence a caller meant: by the instant it was said, or by its
+// number in the listing.
+//
+// Two ways because two callers. A person reads a numbered list and types the
+// number, and asking them for a timestamp would be asking them to copy one.
+// A screen has no list in front of a reader to count down, and a number is
+// not a name anyway: between reading the tray and answering it, another
+// sentence can arrive and push the one that was meant along. The instant is
+// the sentence's own name — the thread is append-only and no two turns share
+// one — so a caller that has it says it.
 func nth(w World, in In) (learn.Said, error) {
+	if at := strings.TrimSpace(in.Arg("at")); at != "" {
+		return saidAt(w, at)
+	}
+
 	n, err := strconv.Atoi(in.Arg("n"))
 	if err != nil {
 		return learn.Said{}, errors.New(w.Words().T("verb.rules.not_a_number",
@@ -172,4 +185,31 @@ func nth(w World, in In) (learn.Said, error) {
 	}
 
 	return said[n-1], nil
+}
+
+// saidAt is the sentence said at that instant, and a refusal when the tray
+// no longer holds one — which is what somebody else having answered it
+// first looks like from here.
+func saidAt(w World, at string) (learn.Said, error) {
+	when, err := time.Parse(time.RFC3339Nano, at)
+	if err != nil {
+		return learn.Said{}, errors.New(w.Words().T("verb.rules.not_an_instant",
+			"a sentence is named by when it was said, and {value} is not an instant",
+			words.Arg{Name: "value", Value: at}))
+	}
+
+	said, err := learn.Waiting(w.Store())
+	if err != nil {
+		return learn.Said{}, err
+	}
+
+	for _, one := range said {
+		if one.At.Equal(when) {
+			return one, nil
+		}
+	}
+
+	return learn.Said{}, errors.New(w.Words().T("verb.rules.gone",
+		"nothing said at {when} is waiting to be kept; somebody may have answered it already",
+		words.Arg{Name: "when", Value: at}))
 }
