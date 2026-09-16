@@ -99,25 +99,22 @@ func bandCount(b band) theme.Role {
 	return theme.Dim
 }
 
-// bandOf is where a rule belongs.
-//
-// Waiting first, whatever else is true of it: a rule somebody sent back to
-// be decided about is a question, and a question filed under what it happens
-// to do meanwhile is a question nobody answers. Then what stopped it
-// applying, and only then what it would do if it were.
+// bandOf is where a rule belongs, which is the one question its record
+// folds down to. The fold is internal/knowledge's, so this screen and the
+// browser cannot disagree about a rule they are both looking at.
 func bandOf(f knowledge.Fact) band {
-	switch {
-	case f.Review:
+	switch f.Standing() {
+	case knowledge.Waiting:
 		return waits
-	case f.State == knowledge.Paused:
-		return paused
-	case !f.Tells():
-		return off
-	case f.Action() == knowledge.Stops:
+	case knowledge.Blocks:
 		return stops
+	case knowledge.Says:
+		return says
+	case knowledge.Stopped:
+		return paused
 	}
 
-	return says
+	return off
 }
 
 // entry is one row the cursor can be on: a sentence in the tray, or a rule.

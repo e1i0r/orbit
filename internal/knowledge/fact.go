@@ -172,6 +172,50 @@ func (f Fact) Action() Action {
 	return Warns
 }
 
+// Standing is what a rule is doing, as one answer rather than three fields.
+//
+// Five, and they are exclusive. Whether a rule is waiting to be decided
+// about, whether somebody stopped it applying, and what it would do if it
+// were applying are three questions in the record — and every surface that
+// shows a rule has to fold them into the one thing a reader wants to know.
+// Folded here, the cockpit and the browser cannot disagree about a rule they
+// are both looking at.
+type Standing int
+
+// The five, in the order a list draws them: what wants an answer first, then
+// what is working, then what is not.
+const (
+	// Waiting is a rule sent back to be decided about — it stopped somebody,
+	// or somebody paused it. It is first whatever else is true of it: a
+	// question filed under what it happens to do meanwhile is a question
+	// nobody answers.
+	Waiting Standing = iota
+	// Blocks runs its command at the gate and sends the work back when that
+	// command fails. Says only reaches the prompt.
+	Blocks
+	Says
+	// Stopped is paused, and Silent is switched off. They are apart because
+	// they are different answers: one is not now, the other is no.
+	Stopped
+	Silent
+)
+
+// Standing folds a rule down to the one of the five it is in.
+func (f Fact) Standing() Standing {
+	switch {
+	case f.Review:
+		return Waiting
+	case f.State == Paused:
+		return Stopped
+	case !f.Tells():
+		return Silent
+	case f.Action() == Stops:
+		return Blocks
+	}
+
+	return Says
+}
+
 // Validate reports the first thing that would make a fact untrustworthy.
 //
 // Every fact has a source and a scope; without something behind it, it does
