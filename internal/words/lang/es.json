@@ -5434,6 +5434,10 @@
     "reason.ran_out": {
       "source": "{engine} ran out: {phase}",
       "value": "{engine} se quedó sin cuota: {phase}"
+    },
+    "reason.ran_out_back": {
+      "source": "back in {when}",
+      "value": "vuelve en {when}"
     }
   }
 }
