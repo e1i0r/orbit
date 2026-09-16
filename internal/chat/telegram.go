@@ -125,6 +125,26 @@ func (t *Telegram) Say(ctx context.Context, where, text string) error {
 	return res.Body.Close()
 }
 
+// Working shows "typing…" in the conversation.
+//
+// Telegram stops showing it after about five seconds or when a message
+// arrives, whichever comes first, which is exactly the shape this wants: the
+// indicator ends by itself when the answer lands, and nothing has to be
+// taken back down.
+func (t *Telegram) Working(ctx context.Context, where string) error {
+	body, err := json.Marshal(map[string]any{"chat_id": where, "action": "typing"})
+	if err != nil {
+		return fmt.Errorf("encode the action: %w", err)
+	}
+
+	res, err := t.post(ctx, "sendChatAction", body)
+	if err != nil {
+		return err
+	}
+
+	return res.Body.Close()
+}
+
 // update is one thing Telegram had waiting.
 type update struct {
 	UpdateID int `json:"update_id"`

@@ -11,6 +11,7 @@ import (
 	"context"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/verb"
@@ -89,7 +90,12 @@ func (d *Desk) heard(ctx context.Context, m Message) {
 		return
 	}
 
-	if answer := d.answer(ctx, m); answer != "" {
+	stop := d.waiting(ctx, m.Where)
+	answer := d.answer(ctx, m)
+
+	stop()
+
+	if answer != "" {
 		d.send(ctx, m.Where, answer)
 	}
 }
@@ -102,6 +108,50 @@ func (d *Desk) send(ctx context.Context, where, text string) {
 	if err := d.to.Say(ctx, where, text); err != nil {
 		logger.Error("chat", "%s: answer to %q not delivered: %v", d.to.Name(), where, err)
 	}
+}
+
+// showing is how often a channel is reminded that an answer is coming.
+//
+// Under the few seconds these indicators last, so the wait looks continuous
+// rather than blinking. It is a message to the service and nothing to the
+// record: a reader sees one indicator, not a trail.
+const showing = 4 * time.Second
+
+// waiting keeps the channel showing that something is coming, until the
+// answer is ready.
+//
+// It is started for every message and not only the slow ones, because which
+// ones are slow is not knowable here: a verb that reads the board is instant
+// and one that walks a repository's history is not, and guessing wrong in
+// the second direction is the silence this exists to remove.
+func (d *Desk) waiting(ctx context.Context, where string) func() {
+	shows, ok := d.to.(Working)
+	if !ok {
+		return func() {}
+	}
+
+	done := make(chan struct{})
+
+	go func() {
+		for {
+			if err := shows.Working(ctx, where); err != nil {
+				// Nothing is said about it twice. An indicator that cannot
+				// be shown is not worth a line in the log on every tick,
+				// and the answer it was covering for is still coming.
+				return
+			}
+
+			select {
+			case <-done:
+				return
+			case <-ctx.Done():
+				return
+			case <-time.After(showing):
+			}
+		}
+	}()
+
+	return func() { close(done) }
 }
 
 // answer is what one message is worth saying back, and nothing for a message

@@ -128,7 +128,10 @@ func askSupervisorPort(s *store.Store, engines map[string]engine.Engine) func(st
 			return "", err
 		}
 
-		return supervisor.SuperviseIn(context.Background(), s, eng, conversation, prompt)
+		// No model: the window has a dial of its own for the engine and
+		// none for what answers in the thread, so this stays the engine's
+		// default until there is a place to choose it.
+		return supervisor.SuperviseIn(context.Background(), s, eng, "", conversation, prompt)
 	}
 }
 

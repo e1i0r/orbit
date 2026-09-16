@@ -215,7 +215,10 @@ func supervising() func(context.Context, string) (string, error) {
 			return "", err
 		}
 
-		return supervisor.SuperviseIn(ctx, s, eng, theThread, said)
+		// And the model the settings name. A chat has no dial to turn, so
+		// the standing choice is the only honest one — and until now it was
+		// a setting that reached nothing at all.
+		return supervisor.SuperviseIn(ctx, s, eng, cfg.Model, theThread, said)
 	}
 }
 

@@ -40,3 +40,22 @@ type Channel interface {
 	// Name is what this channel is called, for the log and for the record.
 	Name() string
 }
+
+// A Working channel can show that an answer is coming.
+//
+// Optional, and asked for by type rather than declared in Channel, because
+// not every service has one: a terminal has nowhere to put it, and a channel
+// that had to implement an empty method to say so would be a channel
+// pretending.
+//
+// It matters more here than in most places. A verb answers in a moment; a
+// sentence said to the supervisor runs a model, and forty seconds of silence
+// on a phone is indistinguishable from a bot that is not running. The
+// alternative — a message saying "working on it" — leaves a line in the
+// conversation for ever about something that has since finished.
+type Working interface {
+	// Working says an answer is coming. It is called again while the wait
+	// lasts, because the services that have this show it for a few seconds
+	// and then stop.
+	Working(ctx context.Context, where string) error
+}
