@@ -183,6 +183,20 @@ type Engine interface {
 	// nothing rather than with a guess: the session is not read back, and
 	// the record is left as it was.
 	Transcript(dir string, since time.Time) ([]Turn, error)
+
+	// RanOut is whether this engine stopped because its allowance ran out
+	// rather than because it broke.
+	//
+	// On the interface and not in whoever calls it, for the reason
+	// Transcript is: every engine says it and no two say it alike. It is
+	// read off what the program printed, because exec gives a program one
+	// way to say it stopped — a non-zero exit — and the difference between
+	// "the model failed" and "you have no tokens left" is in the words
+	// above it.
+	//
+	// An engine that has not been taught to recognise its own answers no,
+	// and the run is written down as broken, which is what happens today.
+	RanOut(out Result, err error) bool
 }
 
 // All is every engine this build knows, by the name a flow, a task and the

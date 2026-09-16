@@ -108,6 +108,8 @@ func (m Model) stateWord(t view.Task) (string, theme.Role) {
 	switch t.Reason.Key {
 	case view.ReasonFailed:
 		return p.T("reason.failed", "failed: {phase}", reasonArgs(t.Reason)...), theme.Bad
+	case view.ReasonRanOut:
+		return p.T("reason.ran_out", "{engine} ran out: {phase}", reasonArgs(t.Reason)...), theme.Warn
 	case view.ReasonFailedToStart:
 		return p.T("reason.failed_to_start", "would not start"), theme.Bad
 	case view.ReasonGate:

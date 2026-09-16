@@ -153,3 +153,9 @@ func agyPermissionArgs(names []string) ([]string, error) {
 
 	return []string{"--dangerously-skip-permissions"}, nil
 }
+
+// RanOut is whether this run stopped because the allowance is gone.
+//
+// agy is a command line over whichever provider it was pointed at, so what it
+// prints when the allowance is gone is that provider's words.
+func (Agy) RanOut(out Result, err error) bool { return ranOut(out, err) }

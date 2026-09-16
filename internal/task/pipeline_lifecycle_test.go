@@ -284,5 +284,6 @@ func (e *richResultEngine) Models() []engine.Choice                             
 func (e *richResultEngine) Efforts() []engine.Choice                            { return nil }
 func (e *richResultEngine) CanThink() bool                                      { return true }
 func (e *richResultEngine) Transcript(string, time.Time) ([]engine.Turn, error) { return nil, nil }
+func (e *richResultEngine) RanOut(engine.Result, error) bool                    { return false }
 func (e *richResultEngine) Locate() (string, error)                             { return "rich", nil }
 func (e *richResultEngine) CanResume() bool                                     { return false }

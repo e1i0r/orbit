@@ -154,6 +154,7 @@ func TestEveryStateHasABand(t *testing.T) {
 		stateHeld:          Running,
 		stateWaiting:       NeedsYou,
 		statePhaseFailed:   NeedsYou,
+		stateRanOut:        NeedsYou,
 		stateFailed:        NeedsYou,
 		stateTimedOut:      NeedsYou,
 		stateAbandoned:     NeedsYou,

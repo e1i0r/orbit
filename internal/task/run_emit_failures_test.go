@@ -34,6 +34,7 @@ func (capableEngine) Models() []engine.Choice { return []engine.Choice{{ID: "mod
 func (capableEngine) Efforts() []engine.Choice                            { return []engine.Choice{{ID: "effort-a"}} }
 func (capableEngine) CanThink() bool                                      { return true }
 func (capableEngine) Transcript(string, time.Time) ([]engine.Turn, error) { return nil, nil }
+func (capableEngine) RanOut(engine.Result, error) bool                    { return false }
 func (capableEngine) Locate() (string, error)                             { return "capable", nil }
 func (capableEngine) CanResume() bool                                     { return false }
 
@@ -136,6 +137,7 @@ func (oversizedSessionEngine) Models() []engine.Choice                          
 func (oversizedSessionEngine) Efforts() []engine.Choice                            { return nil }
 func (oversizedSessionEngine) CanThink() bool                                      { return false }
 func (oversizedSessionEngine) Transcript(string, time.Time) ([]engine.Turn, error) { return nil, nil }
+func (oversizedSessionEngine) RanOut(engine.Result, error) bool                    { return false }
 
 func (oversizedSessionEngine) Locate() (string, error) { return "oversized", nil }
 func (oversizedSessionEngine) CanResume() bool         { return false }
@@ -258,6 +260,7 @@ func (unrecordableEngine) Name() string                                        {
 func (unrecordableEngine) CanResume() bool                                     { return false }
 func (unrecordableEngine) CanThink() bool                                      { return false }
 func (unrecordableEngine) Transcript(string, time.Time) ([]engine.Turn, error) { return nil, nil }
+func (unrecordableEngine) RanOut(engine.Result, error) bool                    { return false }
 func (unrecordableEngine) Models() []engine.Choice                             { return nil }
 func (unrecordableEngine) Efforts() []engine.Choice                            { return nil }
 func (unrecordableEngine) Locate() (string, error)                             { return "unrecordable", nil }

@@ -43,6 +43,7 @@ func (e *blockingEngine) Models() []engine.Choice                             { 
 func (e *blockingEngine) Efforts() []engine.Choice                            { return nil }
 func (e *blockingEngine) CanThink() bool                                      { return false }
 func (e *blockingEngine) Transcript(string, time.Time) ([]engine.Turn, error) { return nil, nil }
+func (e *blockingEngine) RanOut(engine.Result, error) bool                    { return false }
 func (e *blockingEngine) Locate() (string, error)                             { return "blocking", nil }
 
 func (e *blockingEngine) Run(ctx context.Context, _ engine.Request) (engine.Result, error) {

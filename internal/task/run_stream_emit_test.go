@@ -94,6 +94,7 @@ func (quiet) Name() string                                        { return "quie
 func (quiet) CanResume() bool                                     { return false }
 func (quiet) CanThink() bool                                      { return false }
 func (quiet) Transcript(string, time.Time) ([]engine.Turn, error) { return nil, nil }
+func (quiet) RanOut(engine.Result, error) bool                    { return false }
 func (quiet) Models() []engine.Choice                             { return nil }
 func (quiet) Efforts() []engine.Choice                            { return nil }
 func (quiet) Locate() (string, error)                             { return "quiet", nil }

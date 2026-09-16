@@ -39,6 +39,12 @@ type Arg struct {
 const (
 	// ReasonFailed is a run that stopped inside a phase. Args: phase.
 	ReasonFailed = "reason.failed"
+	// ReasonRanOut is a run whose engine had nothing left to spend.
+	//
+	// Its own reason and not ReasonFailed, because the two send a reader to
+	// do opposite things: a failure is a bug to go and look at, and this is
+	// a wait or the same work handed to another engine. Args: phase, engine.
+	ReasonRanOut = "reason.ran_out"
 	// ReasonFailedToStart is a run that never reached a phase — an invalid
 	// flow, an engine nobody configured, a worktree that could not be made.
 	// It names no phase because the record has none to name, and that holds
