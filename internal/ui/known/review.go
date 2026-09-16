@@ -52,8 +52,6 @@ func (s State) readingKey(msg tea.KeyPressMsg, e Env) (State, Out) {
 		return s, Out{}
 	case 'c', 'C':
 		return s.correctFact(e), Out{}
-	case 'p', 'P':
-		return s.pauseFact(e), Out{}
 	case 'o', 'O':
 		return s.decideAgainst(e)
 	case 'u', 'U':

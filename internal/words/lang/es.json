@@ -5048,8 +5048,8 @@
       "value": "todavía sin nombre"
     },
     "knowledge.asked_why": {
-      "source": "it stopped you, or you paused it. Say it better with 'c', have it apply again with 'u', or decide against it with 'o'.",
-      "value": "te frenó, o la pausaste. Dila mejor con 'c', que vuelva a aplicar con 'u', o decidí que no con 'o'."
+      "source": "it stopped you, or you paused it. Edit it with 'c', turn it on with 'u', or switch it off with 'o'.",
+      "value": "te frenó, o la pausaste. Editala con 'c', prendela con 'u', o apagala con 'o'."
     },
     "knowledge.travels_machine": {
       "source": "this machine",
@@ -5060,30 +5060,20 @@
       "value": "con el repo"
     },
     "knowledge.card_said_by": {
-      "source": "said by",
-      "value": "la dijo"
+      "source": "created by",
+      "value": "creada por"
     },
     "knowledge.card_since": {
-      "source": "since",
-      "value": "desde"
+      "source": "created",
+      "value": "creada el"
     },
     "knowledge.card_told": {
-      "source": "told",
-      "value": "dicha"
-    },
-    "knowledge.card_times": {
-      "source": {
-        "one": "{n} time",
-        "other": "{n} times"
-      },
-      "value": {
-        "one": "{n} vez",
-        "other": "{n} veces"
-      }
+      "source": "hits",
+      "value": "usos"
     },
     "knowledge.card_travels": {
-      "source": "travels",
-      "value": "viaja"
+      "source": "reach",
+      "value": "alcance"
     },
     "knowledge.sec_does": {
       "source": "what it does",
@@ -5117,25 +5107,17 @@
       "source": "nothing has happened to this one yet",
       "value": "a ésta todavía no le pasó nada"
     },
-    "knowledge.act_pause": {
-      "source": "pause it",
-      "value": "pausarla"
-    },
     "knowledge.act_resume": {
-      "source": "apply again",
-      "value": "que vuelva a aplicar"
+      "source": "turn on",
+      "value": "prender"
     },
     "knowledge.act_correct": {
-      "source": "say it better",
-      "value": "decirla mejor"
+      "source": "edit",
+      "value": "editar"
     },
     "knowledge.act_off": {
-      "source": "switch it off",
-      "value": "apagarla"
-    },
-    "knowledge.act_back": {
-      "source": "back",
-      "value": "volver"
+      "source": "switch off",
+      "value": "apagar"
     },
     "knowledge.by_code": {
       "source": "the code",
@@ -5358,8 +5340,8 @@
       "value": "sobre todos los proyectos de esta máquina, y no viaja a ninguno"
     },
     "knowledge.card_state": {
-      "source": "right now",
-      "value": "ahora mismo"
+      "source": "status",
+      "value": "estado"
     },
     "knowledge.stands_paused": {
       "source": "paused",
@@ -5376,6 +5358,10 @@
     "knowledge.off_why": {
       "source": "you decided against it. It stays where it is, nothing is told it, and 'u' has it apply again.",
       "value": "decidiste que no. Sigue donde está, no se le dice a nadie, y con 'u' vuelve a aplicar."
+    },
+    "knowledge.detail_ways": {
+      "source": "[esc] back to the list",
+      "value": "[esc] volver a la lista"
     }
   }
 }

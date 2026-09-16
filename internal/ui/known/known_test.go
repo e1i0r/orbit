@@ -124,14 +124,14 @@ func TestTheGeneralOnesComeFirstAndSayTheyDoNotTravel(t *testing.T) {
 		t.Errorf("one of the two rules is not on the screen:\n%s", drawn)
 	}
 
-	// Which of the two travels is on the rule's own screen, in the strip:
-	// it is a fact about one rule, and a column of it beside every row was
-	// a column nobody read.
-	s = s.Move(0, e)
-
-	if opened := ansi.Strip(strings.Join(s.openDetail(e).View(30, 96, e), "\n")); !strings.Contains(
-		strings.ToLower(opened), "travel") {
-		t.Errorf("a rule does not say whether it travels:\n%s", opened)
+	// How far each reaches is on the rule's own screen, in the strip: it is
+	// a fact about one rule, and a column of it beside every row was a
+	// column nobody read.
+	for at, want := range map[int]string{0: "with the repo", 1: "this machine"} {
+		opened := ansi.Strip(strings.Join(s.Move(at, e).openDetail(e).View(30, 96, e), "\n"))
+		if !strings.Contains(opened, want) {
+			t.Errorf("the rule at %d does not say it reaches %q:\n%s", at, want, opened)
+		}
 	}
 }
 

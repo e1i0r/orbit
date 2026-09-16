@@ -125,7 +125,7 @@ func TestAFactSaysHowMuchUseItHasHadAndWhereItCameFrom(t *testing.T) {
 	// on the sentence; the question "can I trust this" is asked of one rule
 	// at a time, and this is where it is answered.
 	drawn := ansi.Strip(strings.Join(s.openDetail(e).View(30, 96, e), "\n"))
-	for _, want := range []string{"the code", "2026-09-01", "12 times"} {
+	for _, want := range []string{"the code", "2026-09-01", "HITS"} {
 		if !strings.Contains(drawn, want) {
 			t.Errorf("the rule does not say %q:\n%s", want, drawn)
 		}

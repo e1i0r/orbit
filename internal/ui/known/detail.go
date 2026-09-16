@@ -78,8 +78,8 @@ func (s State) asked(f knowledge.Fact, cw int, e Env) []string {
 		p.T("knowledge.band_waiting", "WAITING ON YOU"))}
 
 	for _, line := range cells.Lines(p.T("knowledge.asked_why",
-		"it stopped you, or you paused it. Say it better with 'c', have it apply "+
-			"again with 'u', or decide against it with 'o'."), cw-len(prose.Gutter)) {
+		"it stopped you, or you paused it. Say it better with 'c', switch it off "+
+			"with 'o', or leave it as it is with 'u'."), cw-len(prose.Gutter)) {
 		out = append(out, prose.Gutter+theme.Text(theme.Secondary).Render(line))
 	}
 
@@ -99,16 +99,11 @@ func (s State) figures(f knowledge.Fact, e Env) []prose.Stat {
 	stands, role := standing(f, e)
 
 	return []prose.Stat{
-		{Label: p.T("knowledge.card_state", "right now"), Value: stands, Role: role},
-		{Label: p.T("knowledge.card_said_by", "said by"), Value: shortFrom(f, e), Role: theme.Accent},
-		{Label: p.T("knowledge.card_since", "since"), Value: cells.OrDef(when(f.At), "—"), Role: theme.Accent},
-		{
-			Label: p.T("knowledge.card_told", "told"),
-			Value: p.P("knowledge.card_times", f.Used, "{n} time", "{n} times",
-				about("n", strconv.Itoa(f.Used))),
-			Role: theme.Live,
-		},
-		{Label: p.T("knowledge.card_travels", "travels"), Value: travels, Role: theme.OK},
+		{Label: p.T("knowledge.card_state", "status"), Value: stands, Role: role},
+		{Label: p.T("knowledge.card_said_by", "created by"), Value: shortFrom(f, e), Role: theme.Accent},
+		{Label: p.T("knowledge.card_since", "created"), Value: cells.OrDef(when(f.At), "—"), Role: theme.Accent},
+		{Label: p.T("knowledge.card_told", "hits"), Value: strconv.Itoa(f.Used), Role: theme.Live},
+		{Label: p.T("knowledge.card_travels", "reach"), Value: travels, Role: theme.OK},
 	}
 }
 
@@ -199,24 +194,25 @@ func (s State) friction(cw int, e Env) []string {
 
 // pinned holds the decisions against the bottom of the screen, so they are
 // in the same place however long the story above them ran.
-func (s State) pinned(f knowledge.Fact, cw int, e Env) []string {
+func (s State) pinned(_ knowledge.Fact, cw int, e Env) []string {
 	p := e.Words
 
-	apply := prose.Field{Label: p.T("knowledge.act_pause", "pause it"), Key: "p"}
-	if !f.Tells() {
-		apply = prose.Field{Label: p.T("knowledge.act_resume", "apply again"), Key: "u"}
-	}
-
+	// Three, and the same three whatever the rule is doing. A row that
+	// swapped one of them for another by state is a row somebody has to
+	// read before they can press anything; these three are always here and
+	// always mean what they say.
 	foot := prose.Fields([]prose.Field{
-		{Label: p.T("knowledge.act_correct", "say it better"), Key: "c"},
-		apply,
-		{Label: p.T("knowledge.act_off", "switch it off"), Key: "o"},
-		{Label: p.T("knowledge.act_back", "back"), Key: "esc"},
-	}, 4, cw-len(prose.Gutter))
+		{Label: p.T("knowledge.act_resume", "turn on"), Key: "u"},
+		{Label: p.T("knowledge.act_off", "switch off"), Key: "o"},
+		{Label: p.T("knowledge.act_correct", "edit"), Key: "c"},
+	}, 3, cw-len(prose.Gutter))
 
 	for i, line := range foot {
 		foot[i] = prose.Gutter + line
 	}
+
+	foot = append(foot, "", theme.Paint(theme.Dim).Render(prose.Gutter+
+		p.T("knowledge.detail_ways", "[esc] back to the list")))
 
 	return append([]string{""}, foot...)
 }
