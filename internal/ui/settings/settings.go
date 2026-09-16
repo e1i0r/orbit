@@ -82,6 +82,15 @@ type reader interface {
 	Model() string
 	Flow() string
 	Theme() string
+	// Fresh is what one setting reads as when nobody has chosen anything.
+	//
+	// Asked rather than known, because what a setting comes as is declared
+	// once in internal/verb beside what it means and what it accepts — and
+	// a screen that kept its own copy of the defaults would be the copy
+	// that drifts. A name this screen has that the table does not answers
+	// empty, which is what the two dials the file does not hold come back
+	// as, and the right answer for them.
+	Fresh(key string) string
 }
 
 // writer is the settings a change puts back.

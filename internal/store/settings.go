@@ -66,6 +66,18 @@ type Settings struct {
 	CheckRecord bool `json:"checkRecord,omitempty"`
 }
 
+// Shipped is the configuration Orbit comes with: every field's working
+// default, for a machine where nobody has chosen anything.
+//
+// One place and not three literals. A reader that answers the defaults for a
+// file that is not there, a reader that answers them for a file that will
+// not parse, and whatever puts one setting back to how it came all have to
+// agree about what "how it came" is — and three copies of a struct literal
+// agree only until somebody changes one.
+func Shipped() Settings {
+	return Settings{UnreadCap: defaultUnreadCap, Flow: defaultFlow}
+}
+
 // settingsPath is the one file settings live in, at the root of the state
 // tree rather than under any one repository: settings are not scoped to a
 // repository.
@@ -83,7 +95,7 @@ func (s *Store) Settings() (Settings, error) {
 
 	body, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
-		return Settings{UnreadCap: defaultUnreadCap, Flow: defaultFlow}, nil
+		return Shipped(), nil
 	}
 
 	if err != nil {
@@ -95,7 +107,7 @@ func (s *Store) Settings() (Settings, error) {
 		// A settings file that will not parse yields the defaults, not a
 		// failure — the same reasoning a broken catalogue answers with
 		// English rather than an error.
-		return Settings{UnreadCap: defaultUnreadCap, Flow: defaultFlow}, nil //nolint:nilerr // deliberate: unparseable settings yield the defaults
+		return Shipped(), nil //nolint:nilerr // deliberate: unparseable settings yield the defaults
 	}
 
 	return cfg, nil

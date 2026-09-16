@@ -198,14 +198,15 @@ func windowOffers(t *testing.T) map[string]bool {
 		"rules resume":   "knowledge.applies_again",
 		// The window asks for these through the parent, which is what
 		// carries the streaming bodies: the toolbar watches `pr` run.
-		"pr merge":     `"MERGE PR"`,
-		"pr close":     `"CLOSE PR"`,
-		"pr update":    "updatePRBranch",
-		"pr checks":    "fixChecks",
-		"pr tests":     "addMoreTests",
-		"pr resolve":   "resolveComments",
-		"pr review":    "reviewPR",
-		"settings set": "screenSettings",
+		"pr merge":       `"MERGE PR"`,
+		"pr close":       `"CLOSE PR"`,
+		"pr update":      "updatePRBranch",
+		"pr checks":      "fixChecks",
+		"pr tests":       "addMoreTests",
+		"pr resolve":     "resolveComments",
+		"pr review":      "reviewPR",
+		"settings set":   "screenSettings",
+		"settings clear": "settings.back_to",
 	})
 }
 

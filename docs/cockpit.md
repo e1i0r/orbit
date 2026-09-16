@@ -90,6 +90,26 @@ key printed against it there.
 | `z` `Z` | fold every section (overview), collapse every file (diff) |
 | `r` | on impact and diff: read it again |
 
+## Settings
+
+`:` then `settings` opens them. Arrows walk the dials, `e` types a value that
+is on no dial, and `x` puts one back to what Orbit ships.
+
+Putting one back is its own gesture and not typing the default in by hand,
+because what a setting comes as is Orbit's to know: a person who set the
+unread cap to 40 and wants the leash back should not have to remember that it
+was 5. The same from a terminal, and from a browser tab where every row has a
+reset:
+
+```bash
+orbit settings                       # every setting and what it is set to
+orbit settings set unread-cap 40
+orbit settings clear unread-cap      # unread-cap is back to 5
+```
+
+A setting that was already what it ships as says so rather than pretending
+something happened.
+
 ## Behind every key
 
 Everything the cockpit does has a command behind it: `orbit board new`, `task start`,

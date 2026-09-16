@@ -31,6 +31,17 @@ func settings() []Verb {
 			},
 		},
 		{
+			Name: "clear", Under: "settings",
+			About: func(p *words.Printer) string {
+				return p.T("verb.clear", "put one setting back to what Orbit ships")
+			},
+			Takes: []Field{
+				{Name: "key", Kind: Named, Needed: true, About: func(p *words.Printer) string {
+					return p.T("verb.clear.key", "which setting")
+				}},
+			},
+		},
+		{
 			Name: "set", Under: "settings",
 			About: func(p *words.Printer) string {
 				return p.T("verb.set", "change one of Orbit's own settings")
@@ -76,6 +87,20 @@ type Rule struct {
 	About func(*words.Printer) string
 	Set   func(*words.Printer, *store.Settings, string) (string, error)
 	Value func(store.Settings) string
+	// Clear puts this one setting back to what Orbit ships, and it is here
+	// beside Set for the reason Set is here beside About: what a setting
+	// means, what it accepts and what it comes as are one decision, and a
+	// list of defaults kept somewhere else is the list that goes stale.
+	//
+	// It takes no value and answers nothing. What the setting reads as
+	// afterwards is Value's to say, which is what keeps clearing and
+	// listing from ever disagreeing about the same field.
+	//
+	// It writes the shipped value rather than taking the line out of the
+	// file, and the difference is worth knowing: every field is omitempty,
+	// so a zero written on purpose and a field never written are the same
+	// bytes on disk. There is no line to remove that would mean anything.
+	Clear func(*store.Settings)
 }
 
 // settingTable is every setting there is, in the order a refusal lists them.
@@ -97,6 +122,7 @@ func settingTable() []Rule {
 			return value, nil
 		},
 		Value: func(cfg store.Settings) string { return cfg.Language },
+		Clear: func(cfg *store.Settings) { cfg.Language = store.Shipped().Language },
 	}, {
 		Name: "autopilot",
 		About: func(p *words.Printer) string {
@@ -113,6 +139,7 @@ func settingTable() []Rule {
 			return offOn(on), nil
 		},
 		Value: func(cfg store.Settings) string { return offOn(cfg.Autopilot) },
+		Clear: func(cfg *store.Settings) { cfg.Autopilot = store.Shipped().Autopilot },
 	}, {
 		Name: "unread-cap",
 		About: func(p *words.Printer) string {
@@ -135,6 +162,7 @@ func settingTable() []Rule {
 			return value, nil
 		},
 		Value: func(cfg store.Settings) string { return strconv.Itoa(cfg.UnreadCap) },
+		Clear: func(cfg *store.Settings) { cfg.UnreadCap = store.Shipped().UnreadCap },
 	}, {
 		Name: "engine",
 		About: func(p *words.Printer) string {
@@ -145,6 +173,7 @@ func settingTable() []Rule {
 			return value, nil
 		},
 		Value: func(cfg store.Settings) string { return cfg.Engine },
+		Clear: func(cfg *store.Settings) { cfg.Engine = store.Shipped().Engine },
 	}, {
 		Name: "model",
 		About: func(p *words.Printer) string {
@@ -155,6 +184,7 @@ func settingTable() []Rule {
 			return value, nil
 		},
 		Value: func(cfg store.Settings) string { return cfg.Model },
+		Clear: func(cfg *store.Settings) { cfg.Model = store.Shipped().Model },
 	}, {
 		Name:  "flow",
 		About: func(p *words.Printer) string { return p.T("setting.flow", "the flow a new task is written against") },
@@ -176,6 +206,7 @@ func settingTable() []Rule {
 			return value, nil
 		},
 		Value: func(cfg store.Settings) string { return cfg.Flow },
+		Clear: func(cfg *store.Settings) { cfg.Flow = store.Shipped().Flow },
 	}, {
 		Name: "check-record",
 		About: func(p *words.Printer) string {
@@ -192,6 +223,7 @@ func settingTable() []Rule {
 			return offOn(on), nil
 		},
 		Value: func(cfg store.Settings) string { return offOn(cfg.CheckRecord) },
+		Clear: func(cfg *store.Settings) { cfg.CheckRecord = store.Shipped().CheckRecord },
 	}, {
 		Name:  "theme",
 		About: func(p *words.Printer) string { return p.T("setting.theme", "the visual color theme for the window") },
@@ -209,36 +241,8 @@ func settingTable() []Rule {
 
 			return cfg.Theme
 		},
+		Clear: func(cfg *store.Settings) { cfg.Theme = store.Shipped().Theme },
 	}}, budgetSettings()...)
-}
-
-// settingKeys is every key set accepts, in the order a refusal lists them.
-func settingKeys() []string {
-	out := make([]string, 0, len(settingTable()))
-	for _, s := range settingTable() {
-		out = append(out, s.Name)
-	}
-
-	return out
-}
-
-// assign writes one value into the settings and gives back the form of it
-// that is worth printing.
-//
-// A key nothing recognises is refused and named. That is the opposite of
-// what task.take does with a control word it does not know, and the reason
-// is the same asymmetry read the other way round: nothing is running, there
-// is a person at the terminal to tell, and silently doing nothing to a
-// setting somebody believes they changed is the worst of the three outcomes.
-func assign(p *words.Printer, cfg *store.Settings, key, value string) (string, error) {
-	for _, s := range settingTable() {
-		if s.Name == key {
-			return s.Set(p, cfg, value)
-		}
-	}
-
-	return "", errors.New(p.T("set.no_such_setting", "{key} is not a setting; the keys are {keys}",
-		words.Arg{Name: "key", Value: key}, words.Arg{Name: "keys", Value: strings.Join(settingKeys(), ", ")}))
 }
 
 // onOff reads a switch the way a person writes one.

@@ -47,6 +47,50 @@ func Apply(name, val string, e Env) Out {
 	return out
 }
 
+// Blank puts one setting back to what Orbit ships.
+//
+// Through write, like every other change on this screen, because putting a
+// setting back is choosing the value it came with: the theme has to repaint,
+// the catalogue has to reload, and a dial the file does not hold has to be
+// let go of. A clear that wrote straight to the file would leave the window
+// drawing what it used to be.
+//
+// The sentence is its own. "autopilot is now off" and "autopilot is back to
+// off" are the same fact and different answers — one says somebody chose it,
+// and the other that nobody has.
+func Blank(name string, e Env) Out {
+	if e.Store == nil {
+		return Out{}
+	}
+
+	val := e.Store.Fresh(name)
+
+	dials, err := write(name, val, e)
+	if err != nil {
+		return Out{Said: err.Error()}
+	}
+
+	out := Out{Dials: dials, Said: e.Words.T("settings.back_to", "{key} is back to {val}",
+		words.Arg{Name: "key", Value: name}, words.Arg{Name: "val", Value: shown(e, val)})}
+
+	if name == "language" {
+		out.Lang = val
+	}
+
+	return out
+}
+
+// shown is a value as a row shows it, which for a setting that comes as
+// nothing is a word and not an empty space. A line ending in "is back to"
+// reads as a sentence that broke off.
+func shown(e Env, val string) string {
+	if val == "" {
+		return e.Words.T("settings.nothing", "nothing")
+	}
+
+	return val
+}
+
 // write puts one setting down, and answers what stopped it.
 //
 // The new value is already drawn by the time this runs, so a write that

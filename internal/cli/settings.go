@@ -14,6 +14,7 @@ import (
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/ui"
+	"github.com/e1i0r/orbit/internal/verb"
 )
 
 // settingsAdapter answers ui.Settings out of the settings file.
@@ -192,6 +193,14 @@ func (a *settingsAdapter) write(change func(*store.Settings)) error {
 
 	return nil
 }
+
+// Fresh is what one setting reads as when nobody has chosen anything.
+//
+// Straight through to internal/verb, which declares it beside what the
+// setting means and what it will accept. This adapter keeps no defaults of
+// its own for the reason it keeps no validators: a second copy of either is
+// the one that goes stale.
+func (a *settingsAdapter) Fresh(key string) string { return verb.Fresh(key) }
 
 // BudgetWorkspace is the most the board may have spent before the queue
 // stops picking tasks up, and QuotaFloor the share of a subscription

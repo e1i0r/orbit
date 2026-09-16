@@ -59,7 +59,7 @@ looked anyway, and the run stops there — see [a run, end to end](run.md).
 ```bash
 orbit flows                       # what this machine can run
 orbit board new -repo ~/code/api x "…"   # written against the default flow
-orbit settings flow careful       # or change which one that is
+orbit settings set flow careful   # or change which one that is
 ```
 
 ---

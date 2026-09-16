@@ -97,6 +97,8 @@ func (v Verb) do(ctx context.Context, w World, in In) (Out, error) {
 		return kept(w)
 	case "settings set":
 		return changed(w, in)
+	case "settings clear":
+		return blanked(w, in)
 	case "flows":
 		return shapes(w)
 	case "engines":

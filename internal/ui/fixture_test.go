@@ -22,6 +22,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/board"
+	"github.com/e1i0r/orbit/internal/verb"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -83,6 +84,11 @@ func (s *settingsFile) Flow() string             { return "task" }
 func (s *settingsFile) SetFlow(string) error     { return s.fail }
 func (s *settingsFile) Theme() string            { return "monokai" }
 func (s *settingsFile) SetTheme(string) error    { return s.fail }
+
+// Fresh is what internal/verb declares a setting comes as, which is what the
+// real adapter answers: the fixture goes through the same table rather than
+// keeping a second set of defaults nobody would update.
+func (s *settingsFile) Fresh(key string) string { return verb.Fresh(key) }
 
 // arg is one placeholder for a reason, spelled the way internal/view spells
 // it so a fixture reads like the record it stands for.

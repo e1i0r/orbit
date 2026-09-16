@@ -34,6 +34,7 @@ func budgetSettings() []Rule {
 			return value, nil
 		},
 		Value: func(cfg store.Settings) string { return money(cfg.BudgetTask) },
+		Clear: func(cfg *store.Settings) { cfg.BudgetTask = store.Shipped().BudgetTask },
 	}, {
 		Name: "budget-workspace",
 		About: func(p *words.Printer) string {
@@ -51,6 +52,7 @@ func budgetSettings() []Rule {
 			return value, nil
 		},
 		Value: func(cfg store.Settings) string { return money(cfg.BudgetWorkspace) },
+		Clear: func(cfg *store.Settings) { cfg.BudgetWorkspace = store.Shipped().BudgetWorkspace },
 	}, {
 		Name: "quota-floor",
 		About: func(p *words.Printer) string {
@@ -78,6 +80,7 @@ func budgetSettings() []Rule {
 			return value, nil
 		},
 		Value: func(cfg store.Settings) string { return strconv.Itoa(cfg.QuotaFloor) },
+		Clear: func(cfg *store.Settings) { cfg.QuotaFloor = store.Shipped().QuotaFloor },
 	}}
 }
 
