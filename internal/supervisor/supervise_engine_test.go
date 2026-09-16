@@ -18,7 +18,7 @@ func TestTheSupervisorNamesItselfToWhatItStarts(t *testing.T) {
 	s := fixture(t)
 	eng := &engine.Fake{Output: "done"}
 
-	if _, err := SuperviseIn(context.Background(), s, eng, "c-1", "look at task 2900"); err != nil {
+	if _, err := SuperviseIn(context.Background(), s, eng, "", "c-1", "look at task 2900"); err != nil {
 		t.Fatalf("supervise: %v", err)
 	}
 
@@ -43,7 +43,7 @@ func TestTheNameIsTheEngineThatIsRunning(t *testing.T) {
 	s := fixture(t)
 	eng := &engine.Fake{Output: "done"}
 
-	if _, err := SuperviseIn(context.Background(), s, eng, "c-1", "anything"); err != nil {
+	if _, err := SuperviseIn(context.Background(), s, eng, "", "c-1", "anything"); err != nil {
 		t.Fatalf("supervise: %v", err)
 	}
 
@@ -79,4 +79,34 @@ func mustEnv(t *testing.T, env []string) string {
 	t.Fatalf("no %s in %q", engine.SupervisorVar, env)
 
 	return ""
+}
+
+// TestTheModelReachesTheEngine. `orbit settings model` was a knob with no
+// cable: it was written, read back by the settings screen, and reached no
+// run anywhere. The supervisor is the first place it does something.
+func TestTheModelReachesTheEngine(t *testing.T) {
+	s := fixture(t)
+	eng := &engine.Fake{Output: "done"}
+
+	if _, err := SuperviseIn(context.Background(), s, eng, "opus", "c-1", "anything"); err != nil {
+		t.Fatalf("SuperviseIn: %v", err)
+	}
+
+	if len(eng.Calls) != 1 {
+		t.Fatalf("the engine ran %d times, want one", len(eng.Calls))
+	}
+
+	if eng.Calls[0].Model != "opus" {
+		t.Errorf("it was asked for model %q, want opus", eng.Calls[0].Model)
+	}
+
+	// And nothing named is still the engine's own default rather than a
+	// model called "".
+	if _, err := SuperviseIn(context.Background(), s, eng, "", "c-1", "anything"); err != nil {
+		t.Fatalf("SuperviseIn: %v", err)
+	}
+
+	if eng.Calls[1].Model != "" {
+		t.Errorf("with no model named it asked for %q", eng.Calls[1].Model)
+	}
 }

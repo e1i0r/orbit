@@ -121,25 +121,18 @@ func TestAnEmptyPostureIsTheMostRestrictiveArgvRatherThanNone(t *testing.T) {
 		t.Fatalf("the empty posture produced %q, which leaves the tool half to the machine's settings", joined)
 	}
 
-	if got[at+1] != noTools {
-		t.Errorf("the empty posture allowed %q, want %q — the list is stated and grants nothing", got[at+1], noTools)
+	// Orbit's own server and nothing else. The empty posture states its
+	// list rather than leaving the question to the machine's settings, and
+	// what it states is the one thing that is not a grant over the
+	// checkout: a phase asking Orbit about Orbit.
+	if got[at+1] != strings.Join(orbitTools, ",") {
+		t.Errorf("the empty posture allowed %q, want only %q", got[at+1], orbitTools)
 	}
 
 	for _, forbidden := range []string{"Edit", "Write", "Bash", "WebFetch", "WebSearch"} {
 		if strings.Contains(joined, forbidden) {
 			t.Errorf("the empty posture allowed %s: %q", forbidden, joined)
 		}
-	}
-}
-
-// TestTheEmptySentinelNamesNoToolThisPackageGrants is what makes noTools
-// safe to write on a command line. It is a name chosen because nothing
-// matches it; a tool that arrived later under that name would turn the
-// posture that asks for nothing into a posture that asks for something, and
-// this is the assertion that would notice.
-func TestTheEmptySentinelNamesNoToolThisPackageGrants(t *testing.T) {
-	if slices.Contains(toolOrder, noTools) {
-		t.Fatalf("%q is a tool this package grants, so the posture that asks for nothing is asking for it", noTools)
 	}
 }
 
@@ -250,5 +243,35 @@ func TestRepoImpliesRead(t *testing.T) {
 	joined := strings.Join(argvFor(t, []string{PermissionRepo}), " ")
 	if !strings.Contains(joined, "Read") {
 		t.Errorf("repo produced %q, which cannot read the worktree it may write to", joined)
+	}
+}
+
+// TestEveryPostureCanReachOrbitItself is the one grant that is not about the
+// checkout, and the absence of it failed silently for as long as it was
+// missing: a headless run refuses an un-allowed tool instead of asking, so a
+// model told in its prompt that it could inspect the board tried, was denied
+// without a word, and answered from whatever text it had been handed.
+func TestEveryPostureCanReachOrbitItself(t *testing.T) {
+	for _, set := range postures() {
+		got := argvFor(t, set)
+
+		at := slices.Index(got, "--allowedTools")
+		if at < 0 || at == len(got)-1 {
+			t.Errorf("posture %v states no tool list", set)
+			continue
+		}
+
+		if !strings.Contains(got[at+1], "mcp__orbit") {
+			t.Errorf("posture %v cannot reach Orbit's own tools: %q", set, got[at+1])
+		}
+	}
+}
+
+// TestTheServerIsNamedOnceRatherThanItsTools. A list of every tool
+// internal/mcp offers would be the copy that goes stale the day one is
+// added; the prefix is the same promise the declaration makes everywhere.
+func TestTheServerIsNamedOnceRatherThanItsTools(t *testing.T) {
+	if len(orbitTools) != 1 || orbitTools[0] != "mcp__orbit" {
+		t.Errorf("orbit's own tools are named %v, want the server once", orbitTools)
 	}
 }

@@ -5439,6 +5439,78 @@
       "source": "back in {when}",
       "value": "vuelve en {when}"
     },
+    "setting.chat_id": {
+      "source": "the one account `orbit chat` answers over a service",
+      "value": "la única cuenta a la que `orbit chat` le contesta en un servicio"
+    },
+    "chat.no_token": {
+      "source": "{env} is not set; @BotFather gives you one when you make a bot",
+      "value": "{env} no está seteada; @BotFather te da una cuando creás un bot"
+    },
+    "chat.no_such_channel": {
+      "source": "{name} is not a chat orbit knows; it knows terminal and telegram",
+      "value": "{name} no es un chat que orbit conozca; conoce terminal y telegram"
+    },
+    "chat.your_id": {
+      "source": "nobody is allowed to command this Orbit yet. Your chat id is {id} — run `orbit settings set chat-id {id}` and start me again.",
+      "value": "todavía nadie puede darle órdenes a este Orbit. Tu chat id es {id} — corré `orbit settings set chat-id {id}` y arrancame de nuevo."
+    },
+    "chat.waiting_for_id": {
+      "source": "no chat-id is set: write to the bot and it will tell you yours.",
+      "value": "no hay chat-id seteado: escribile al bot y te dice el tuyo."
+    },
+    "chat.listening": {
+      "source": "listening, and answering {id} only",
+      "value": "escuchando, y contestándole sólo a {id}"
+    },
+    "chat.answer_shape": {
+      "source": "Answer for a phone screen: a few short paragraphs, no tables, no headings. Use HTML and not markdown — <b>bold</b> and <code>code</code> are rendered and nothing else is needed. Lead with the answer, then the detail. Keep it under fifteen lines.",
+      "value": "Contestá para una pantalla de teléfono: unos párrafos cortos, sin tablas, sin títulos. Usá HTML y no markdown — <b>negrita</b> y <code>código</code> se renderizan y no hace falta nada más. Empezá por la respuesta y después el detalle. No más de quince líneas."
+    },
+    "chat.no_verb": {
+      "source": "a slash with nothing after it asks for nothing",
+      "value": "una barra sin nada atrás no pide nada"
+    },
+    "chat.no_such_verb": {
+      "source": "{name} is not something Orbit can be asked for; /help lists what is",
+      "value": "{name} no es algo que se le pueda pedir a Orbit; /help dice qué sí"
+    },
+    "chat.needs_task": {
+      "source": "{verb} is about one task, and none was named",
+      "value": "{verb} es sobre una tarea, y no se nombró ninguna"
+    },
+    "chat.help_title": {
+      "source": "What you can ask for:",
+      "value": "Lo que le podés pedir:"
+    },
+    "chat.nothing_said": {
+      "source": "done",
+      "value": "listo"
+    },
+    "chat.cut": {
+      "source": "…too long for one message; ask for it at a terminal",
+      "value": "…muy largo para un mensaje; pedilo en una terminal"
+    },
+    "chat.not_here": {
+      "source": "{verb} is not something a chat can do: {why}",
+      "value": "{verb} no es algo que un chat pueda hacer: {why}"
+    },
+    "chat.confirm": {
+      "source": "{verb} cannot be taken back. Send /yes to go ahead.",
+      "value": "{verb} no se puede deshacer. Mandá /yes para seguir."
+    },
+    "chat.terminal_open": {
+      "source": "type a command, or /help for the list. ctrl-c to leave.",
+      "value": "escribí un comando, o /help para la lista. ctrl-c para salir."
+    },
+    "cmd.chat": {
+      "source": "ask Orbit for things by typing commands at it",
+      "value": "pedirle cosas a Orbit escribiéndole comandos"
+    },
+    "cmd.chat.inside": {
+      "source": "you are already talking to it",
+      "value": "ya le estás hablando"
+    },
     "verb.clear": {
       "source": "put one setting back to what Orbit ships",
       "value": "devolver un setting a como viene Orbit"
@@ -5500,16 +5572,16 @@
       "value": "qué fase; por defecto la última que corrió"
     },
     "reason.needs_engine": {
-      "source": "{engine} ran out: {phase} \u00b7 {engines} could take it",
-      "value": "{engine} se qued\u00f3 sin cuota: {phase} \u00b7 {engines} pueden seguirla"
+      "source": "{engine} ran out: {phase} · {engines} could take it",
+      "value": "{engine} se quedó sin cuota: {phase} · {engines} pueden seguirla"
     },
     "reason.no_engine": {
-      "source": "{engine} ran out: {phase} \u00b7 no engine has anything left",
-      "value": "{engine} se qued\u00f3 sin cuota: {phase} \u00b7 ning\u00fan motor tiene cuota"
+      "source": "{engine} ran out: {phase} · no engine has anything left",
+      "value": "{engine} se quedó sin cuota: {phase} · ningún motor tiene cuota"
     },
     "log.relayed": {
       "source": "changed engine",
-      "value": "cambi\u00f3 de motor"
+      "value": "cambió de motor"
     },
     "log.needs_engine": {
       "source": "needs an engine",
@@ -5517,11 +5589,87 @@
     },
     "log.no_engine": {
       "source": "no engine free",
-      "value": "ning\u00fan motor libre"
+      "value": "ningún motor libre"
     },
     "reason.no_engine_back": {
-      "source": "{engine} ran out: {phase} \u00b7 no engine for another {back}",
-      "value": "{engine} se qued\u00f3 sin cuota: {phase} \u00b7 sin motores por {back}"
+      "source": "{engine} ran out: {phase} · no engine for another {back}",
+      "value": "{engine} se quedó sin cuota: {phase} · sin motores por {back}"
+    },
+    "news.waiting": {
+      "source": "waiting at a gate in {phase}",
+      "value": "esperando en una puerta en {phase}"
+    },
+    "news.stuck": {
+      "source": "stuck after {attempts} attempts; nothing moves on its own",
+      "value": "atascada después de {attempts} intentos; nada se mueve solo"
+    },
+    "news.needs_engine": {
+      "source": "{engine} ran out in {phase}; {free} could take it on",
+      "value": "{engine} se quedó sin cuota en {phase}; {free} puede seguirla"
+    },
+    "news.no_engine": {
+      "source": "{engine} ran out in {phase}, and no engine has anything left",
+      "value": "{engine} se quedó sin cuota en {phase}, y ningún motor tiene nada"
+    },
+    "news.finished": {
+      "source": "finished",
+      "value": "terminó"
+    },
+    "setting.notify": {
+      "source": "whether Orbit interrupts you when a run stops and needs somebody",
+      "value": "si Orbit te interrumpe cuando una corrida para y necesita a alguien"
+    },
+    "news.started": {
+      "source": "started",
+      "value": "arrancó"
+    },
+    "news.relayed": {
+      "source": "{from} handed it to {to} in {phase}",
+      "value": "{from} se la pasó a {to} en {phase}"
+    },
+    "news.failed": {
+      "source": "the run stopped: {why}",
+      "value": "la corrida paró: {why}"
+    },
+    "news.over_budget": {
+      "source": "it has spent {spent} of {budget}",
+      "value": "gastó {spent} de {budget}"
+    },
+    "news.over_diff": {
+      "source": "it changed {lines} lines of {budget}",
+      "value": "cambió {lines} líneas de {budget}"
+    },
+    "news.new_dependency": {
+      "source": "it reached for {names}",
+      "value": "se trajo {names}"
+    },
+    "news.contradicts": {
+      "source": "the change goes against {decision}",
+      "value": "el cambio va contra {decision}"
+    },
+    "news.cancelled": {
+      "source": "cancelled",
+      "value": "cancelada"
+    },
+    "news.timed_out": {
+      "source": "it outlived its deadline",
+      "value": "se pasó de su tiempo"
+    },
+    "news.abandoned": {
+      "source": "its process is gone",
+      "value": "su proceso ya no está"
+    },
+    "news.merged": {
+      "source": "merged",
+      "value": "mergeada"
+    },
+    "news.pr": {
+      "source": "a pull request is open",
+      "value": "hay un pull request abierto"
+    },
+    "news.pr_failed": {
+      "source": "the pull request did not open: {why}",
+      "value": "el pull request no abrió: {why}"
     }
   }
 }

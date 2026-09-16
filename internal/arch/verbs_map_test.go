@@ -41,6 +41,18 @@ var notThere = map[string]string{
 		"dropped, corrected — and a habit is not answerable yet: what turns it into a rule " +
 		"is 3.2, and what that produces is a proposal in the tray this screen already draws",
 
+	// A chat carries one message at a time to somebody holding a phone.
+	// What it cannot do is hand over a terminal, and what it should not do
+	// is answer in columns nobody can read at that width.
+	"chat:task take": "this hands a terminal to an engine, and a chat has no terminal to hand over",
+	"chat:task diff": "a diff is read in columns against a wide window; a phone would get the " +
+		"first file and a scroll bar",
+	"chat:task tree":   "the same: a tree of a repository is a shape, not a paragraph",
+	"chat:task impact": "the same, and it is the slowest reading there is",
+	"chat:export":      "it writes the record into a directory the reader names, and a chat has no filesystem",
+	"chat:task compare": "it runs the flow's checks on both sides of a change, which takes minutes " +
+		"and answers in columns",
+
 	// The MCP server is spoken to by a model, and these are the four a
 	// model has no business asking for on its own — plus the one it could
 	// not do if it wanted to.

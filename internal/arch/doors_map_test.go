@@ -96,7 +96,11 @@ var doors = map[string][]string{
 	// command is a function in a table and the table is commands.go.
 	"internal/cli": {
 		"cli.go", "commands.go", "critical.go", "engines.go", "set.go", "settings.go",
-		"top.go", "topframe.go", "version.go",
+		// chat.go fills internal/chat's Channel with the plainest one there
+		// is, a terminal. Its methods are exported because they are the
+		// interface's, which is the same reason the web and window ports
+		// below are.
+		"chat.go", "top.go", "topframe.go", "version.go",
 		// web_ports.go and web_verbs.go hold the methods that fill
 		// internal/web's ports — what the browser reads through, and what
 		// its buttons do. They are exported because a port only this

@@ -161,6 +161,12 @@ func commands() []Command {
 		InWindow: WindowRefuses,
 		Because:  func(p *words.Printer) string { return p.T("cmd.web.inside", "it would serve the window you are in") },
 	}, {
+		Name: "chat", Args: "[dir]",
+		About:    func(p *words.Printer) string { return p.T("cmd.chat", "ask Orbit for things by typing commands at it") },
+		Run:      chatting,
+		InWindow: WindowRefuses,
+		Because:  func(p *words.Printer) string { return p.T("cmd.chat.inside", "you are already talking to it") },
+	}, {
 		Name: "repos", Args: "[dir]",
 		About:    func(p *words.Printer) string { return p.T("cmd.repos", "list the repositories under a directory") },
 		Run:      repos,

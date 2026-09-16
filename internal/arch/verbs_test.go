@@ -22,6 +22,30 @@ import (
 	"github.com/e1i0r/orbit/internal/verb"
 )
 
+// chatOffers is what a chat can be asked for.
+//
+// Built from the declaration like the command line and the tool calls: the
+// list is verb.Every() and nothing in that package writes a second one. The
+// handful it turns down are read off its own list rather than assumed from
+// notThere, so that the two have to agree.
+func chatOffers(t *testing.T) map[string]bool {
+	t.Helper()
+
+	body := read(t, "internal/chat")
+	if !strings.Contains(body, "verb.Every()") {
+		t.Error("internal/chat no longer builds its commands from the declaration")
+
+		return map[string]bool{}
+	}
+
+	offered := all()
+	for _, name := range namesIn(body, "var cannot = map[string]string{") {
+		delete(offered, name)
+	}
+
+	return offered
+}
+
 // TestEveryVerbIsOfferedByEveryWayIn.
 func TestEveryVerbIsOfferedByEveryWayIn(t *testing.T) {
 	offers := map[string]map[string]bool{
@@ -29,6 +53,7 @@ func TestEveryVerbIsOfferedByEveryWayIn(t *testing.T) {
 		"web":    webOffers(t),
 		"mcp":    mcpOffers(t),
 		"window": windowOffers(t),
+		"chat":   chatOffers(t),
 	}
 
 	for wayIn, offered := range offers {

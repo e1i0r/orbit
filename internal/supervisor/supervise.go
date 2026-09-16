@@ -38,17 +38,24 @@ func Supervise(ctx context.Context, s *store.Store, eng engine.Engine, prompt st
 		return "", err
 	}
 
-	return SuperviseIn(ctx, s, eng, conversation, prompt)
+	return SuperviseIn(ctx, s, eng, "", conversation, prompt)
 }
 
-// SuperviseIn is the same, told which conversation it is in.
+// SuperviseIn is the same, told which conversation it is in and which model
+// to answer with.
 //
 // What the model is shown is that conversation and no other. The thread used
 // to be one list with no ends, so every answer carried every line anybody had
 // ever written — including the ones about a repository nobody has touched
 // since. What survives between conversations is what Orbit knows, which is
 // the point of writing a fact down rather than saying it.
-func SuperviseIn(ctx context.Context, s *store.Store, eng engine.Engine, conversation, prompt string) (string, error) {
+//
+// An empty model is the engine's own default, which is what every caller
+// asked for before there was a way to say otherwise. It is a parameter
+// rather than a setting read in here for the reason the engine is one: which
+// model answers is the surface's question, and this package has no opinion
+// about where the surface got it.
+func SuperviseIn(ctx context.Context, s *store.Store, eng engine.Engine, model, conversation, prompt string) (string, error) {
 	if s == nil {
 		return "", fmt.Errorf("store cannot be nil")
 	}
@@ -92,6 +99,7 @@ func SuperviseIn(ctx context.Context, s *store.Store, eng engine.Engine, convers
 	fullPrompt := buildSupervisorPrompt(thread, happened, prompt, standing(s))
 	req := engine.Request{
 		Prompt:      fullPrompt,
+		Model:       model,
 		Dir:         s.Root(),
 		Permissions: []string{engine.PermissionRead, engine.PermissionRepo, engine.PermissionNetwork},
 		// Who is supervising, carried into everything this engine starts.

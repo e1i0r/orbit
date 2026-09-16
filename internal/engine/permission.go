@@ -59,16 +59,35 @@ var (
 	networkTools = []string{"WebFetch", "WebSearch"}
 )
 
+// orbitTools is Orbit's own MCP server, allowed to every posture including
+// the one that asks for nothing.
+//
+// It was missing, and the absence was invisible because it fails silently.
+// A headless run refuses an un-allowed tool instead of asking — that is what
+// makes this argv safe — so a model told in its prompt that it can inspect
+// the board through Orbit's tools tried, was denied without a word, and
+// answered from whatever it had been handed in text. The supervisor said so
+// out loud from a phone before anybody noticed; every phase that ever called
+// orbit_learn had been denied the same way.
+//
+// Every posture and not the wide ones, because what these tools reach is not
+// the checkout: they are Orbit asking itself, and internal/mcp already says
+// which of them a model may have — no pull request, no merge, no approving a
+// library, no terminal handed over. A read-only phase telling Orbit
+// something true about the code it just read is the posture working, not a
+// hole in it.
+//
+// The server prefix and not each tool by name. A tool added to internal/mcp
+// is a tool a phase can call the same day, which is the same promise the
+// declaration makes everywhere else — and a list of twenty-two names here
+// would be the copy that goes stale.
+var orbitTools = []string{"mcp__orbit"}
+
 // toolOrder is the order tools are written in, so that the same posture
 // always produces the same command line whatever order the flow file listed
 // its names in. A command line that varies with the spelling of a file is a
 // command line nobody can compare between two runs.
-var toolOrder = slices.Concat(readTools, writeTools, networkTools)
-
-// noTools is what the posture that asks for nothing writes in its
-// --allowedTools. It is a name no tool has; the argument for stating an
-// empty grant rather than omitting the flag is in claudePermissionArgs.
-const noTools = "none"
+var toolOrder = slices.Concat(readTools, writeTools, networkTools, orbitTools)
 
 // Permitted reports whether the engines in this package can honour a
 // posture.
@@ -155,12 +174,9 @@ func Permitted(names []string) error {
 // --allowedTools off would hand the tool question to the settings files and
 // the binary's own default, which is exactly the failure the mode half of
 // this file refuses; an empty flag value risks being read as no flag at all.
-// So the flag is written with noTools, a name nothing matches: non-empty to
-// the parser, empty in effect, and a reader of `ps` sees a phase that asked
-// for nothing instead of an absence they have to interpret. Given the floor
-// above, it narrows nothing the settings can widen — what it buys is that
-// the argv says what the phase asked for. permission_test.go holds the
-// sentinel to naming no tool this package knows.
+// It used to write a sentinel nothing matched, which is no longer reachable:
+// every posture is granted Orbit's own server, so the list is never empty
+// and the flag always names something real.
 func claudePermissionArgs(names []string) ([]string, error) {
 	if err := Permitted(names); err != nil {
 		return nil, err
@@ -168,6 +184,11 @@ func claudePermissionArgs(names []string) ([]string, error) {
 
 	mode := "plan"
 	allowed := map[string]bool{}
+
+	// Before the postures are read, because this one is not a posture: it
+	// is Orbit reaching itself, and it is granted whatever the flow asked
+	// for — including nothing.
+	allow(allowed, orbitTools)
 
 	for _, n := range names {
 		switch n {
@@ -193,10 +214,6 @@ func claudePermissionArgs(names []string) ([]string, error) {
 		if allowed[t] {
 			tools = append(tools, t)
 		}
-	}
-
-	if len(tools) == 0 {
-		tools = []string{noTools}
 	}
 
 	args = append(args, "--allowedTools", strings.Join(tools, ","))
