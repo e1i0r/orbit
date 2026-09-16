@@ -25,13 +25,13 @@ rule is doing, and one line a rule.
     f0021bb4  coverage stays above 90%           ledger        2026-08-12
 
   💬 SAYS (1) ────────────────────────────────────────────────────────
-    a1f4c209  pull requests are written in Eng…  everywhere    2026-08-12
+    a1f4c209  pull requests are written in Eng…  every repo    2026-08-12
 
   😴 PAUSED (1) ──────────────────────────────────────────────────────
     c0ffee11  the site is generated              web           2026-09-01
 
   🚫 OFF (1) ─────────────────────────────────────────────────────────
-    0091ccd2  the ledger only ever appends       orbit         2026-08-12
+    0091ccd2  the ledger only ever appends       repo: orbit   2026-08-12
 ```
 
 Five states and one set of words for them. **Waiting** is a question — a
@@ -253,7 +253,7 @@ Six, and the agent reads them in this order, so the last word goes to the one
 closest to what is about to be touched:
 
 ```
-everything          "PRs are written in English"
+every repo          "PRs are written in English"
 a language          "in Go, never discard an error with _"
 a repository        "this service owns no migrations"
 a directory         "everything under billing/ is money; round half to even"

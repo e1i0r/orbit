@@ -291,15 +291,22 @@ func many(e Env) bool { return len(e.Repos) > 1 }
 // path exists in all of them — a rule about migrations says nothing about
 // which project's migrations — so the checkout's name goes in front of it.
 func where(f knowledge.Fact, e Env) string {
-	// Everywhere is the one scope with no path behind it, so it is the one
-	// whose name is a word rather than a string off the record — and a word
-	// is said in the reader's own language.
-	if f.Scope.Kind == knowledge.General {
-		return e.Words.T("knowledge.place_all", "everywhere")
+	p := e.Words
+
+	// The two that are words rather than paths, and the two that are most
+	// easily read as each other. One checkout and every checkout look alike
+	// in a column and are opposites in consequence: a rule about the
+	// project travels inside it and reaches whoever clones it, and a rule
+	// about every project stays on this machine and reaches nobody else.
+	switch f.Scope.Kind {
+	case knowledge.General:
+		return p.T("knowledge.at_all_repos", "every repo")
+	case knowledge.Repo:
+		return p.T("knowledge.at_repo", "repo: {name}", about("name", fact.Repo(f.Scope.Repo)))
 	}
 
 	named := fact.Where(f.Scope)
-	if !many(e) || f.Scope.Repo == "" || f.Scope.Kind == knowledge.Repo {
+	if !many(e) || f.Scope.Repo == "" {
 		return named
 	}
 

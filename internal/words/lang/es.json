@@ -5362,6 +5362,14 @@
     "knowledge.lede": {
       "source": "Every rule is put in front of the agent before it works. The ones that block also run a command, and send the work back when it fails.",
       "value": "Cada regla se le pone adelante al agente antes de que trabaje. Las que bloquean además corren un comando, y devuelven el trabajo cuando falla."
+    },
+    "knowledge.at_all_repos": {
+      "source": "every repo",
+      "value": "todos los repos"
+    },
+    "knowledge.at_repo": {
+      "source": "repo: {name}",
+      "value": "repo: {name}"
     }
   }
 }

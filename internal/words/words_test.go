@@ -118,6 +118,7 @@ var borrowedWholesale = map[string]string{
 	"compose.id":                "ID is ID",
 	"compose.url":               "url is url",
 	"board.col_repo":            "repo is repo, and it is a column head three cells wide",
+	"knowledge.at_repo":         "repo is repo, and the rest of the line is the checkout's own name",
 	"compose.tab_manual":        "a tab number and a word Spanish spells the same",
 	"tab.gates":                 "the engines call them gates and so does the record",
 	"tab.thinking":              "the dial, the flag and the engines all say thinking",
