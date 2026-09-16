@@ -145,7 +145,7 @@ function screen(where: string, board: Board | undefined, go: (to: string) => voi
     case "supervisor":
       return <SupervisorScreen />;
     case "knowledge":
-      return <KnowledgeScreen board={board} />;
+      return <KnowledgeScreen />;
     case "flows":
       return <FlowsScreen />;
     case "engines":

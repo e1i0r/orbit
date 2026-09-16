@@ -212,17 +212,49 @@ export interface FlowShape extends Flow {
   origin: "builtin" | "yours" | "shadow" | "unknown";
 }
 
-export interface Fact {
+export interface Rule {
+  /** id is what the rule is called, and what every verb about it is asked
+   *  for by. */
+  id: string;
   phrase: string;
+  /** scope is what it is about, already spelled by the server: the shape of
+   *  a scope is internal/knowledge's, and a page working it out from parts
+   *  would be a second opinion about it. path is the same place as the form
+   *  types it. */
   scope: string;
+  path?: string;
   source: string;
-  action: "stops" | "warns";
+  /** state is the one thing a reader wants to know, folded from the three
+   *  fields that decide it. stops is what the rule asked to do, which is not
+   *  always what it does: one that asked to block and brought no command
+   *  only says its sentence. */
+  state: "waiting" | "blocks" | "says" | "paused" | "off";
+  stops?: boolean;
   check?: string;
+  why?: string;
   ref?: string;
   repo?: string;
   at: string;
   used: number;
-  off?: boolean;
+}
+
+/** Unanswered is one sentence in the tray: something said that read as a
+ *  rule and is waiting to be kept or dropped. */
+export interface Unanswered {
+  at: string;
+  text: string;
+  from?: string;
+  where?: string;
+  repo?: string;
+}
+
+/** Checkout is one repository, and what a form filing a rule against it can
+ *  offer instead of asking somebody to remember a path or a command. */
+export interface Checkout {
+  path: string;
+  name: string;
+  folders: string[];
+  checks: string[];
 }
 
 export interface Chat {
@@ -367,7 +399,10 @@ export const api = {
   tree: (id: string) =>
     ask<{ said: string; saw: Cell }>(`/api/read/tree/${encodeURIComponent(id)}`),
   flows: () => ask<{ flows: FlowShape[] }>("/api/flows"),
-  knowledge: () => ask<{ facts: Fact[]; read: boolean }>("/api/knowledge"),
+  knowledge: () =>
+    ask<{ rules: Rule[]; waiting: Unanswered[]; repos: Checkout[]; read: boolean }>(
+      "/api/knowledge",
+    ),
   supervisor: () =>
     ask<{ chats: Chat[]; said: Said[]; read: boolean; failed?: string }>("/api/supervisor"),
   engines: () => ask<{ engines: EngineInfo[]; settled?: string; read: boolean }>("/api/engines"),
