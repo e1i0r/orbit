@@ -21,6 +21,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/e1i0r/orbit/internal/board"
@@ -56,8 +57,11 @@ func (t atTheTerminal) Listen(ctx context.Context, said func(chat.Message)) erro
 	return lines.Err()
 }
 
+// Say prints the answer, with the emphasis taken out: a terminal has one,
+// and it belongs to whatever is drawing the screen rather than to a line
+// being printed into a pipe.
 func (t atTheTerminal) Say(_ context.Context, _, text string) error {
-	_, err := fmt.Fprintln(t.out, text)
+	_, err := fmt.Fprintln(t.out, strings.NewReplacer(chat.Strong, "", "\x03", "").Replace(text))
 
 	return err
 }

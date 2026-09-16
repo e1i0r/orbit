@@ -218,12 +218,30 @@ func (d *Desk) toldTheSupervisor(ctx context.Context, text string, p *words.Prin
 		}, p)
 	}
 
-	answer, err := d.env.Answers(ctx, said)
+	answer, err := d.env.Answers(ctx, forAPhone(said, p))
 	if err != nil {
 		return err.Error()
 	}
 
-	return Reply(verb.Out{Said: answer}, p)
+	// Not dressed. What comes back was written by something that was asked
+	// to write for a person, and squeezing its paragraphs into columns
+	// would be undoing that.
+	return cut(Prose(answer), p)
+}
+
+// forAPhone is the sentence, with how to answer it.
+//
+// The supervisor writes for whatever is reading it, and what is reading it
+// here is somebody standing up. Its own prompt says nothing about width
+// because the window has none to speak of, so the ask is added by the
+// surface that has the constraint — which is also why it is here and not in
+// internal/supervisor: the thread is the same one, and the shape of the
+// answer is this door's business.
+func forAPhone(said string, p *words.Printer) string {
+	return said + "\n\n" + p.T("chat.answer_shape",
+		"Answer for a phone screen: a few short paragraphs, no tables, no headings. "+
+			"Telegram MarkdownV2 is rendered, so *bold* and `code` work and nothing else is needed. "+
+			"Lead with the answer, then the detail. Keep it under fifteen lines.")
 }
 
 // run asks for the verb and dresses what it answered.

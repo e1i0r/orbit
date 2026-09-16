@@ -21,6 +21,21 @@ import (
 	"github.com/e1i0r/orbit/internal/words"
 )
 
+// Strong and endStrong mark the one thing an answer emphasises: the name a
+// row is filed under.
+//
+// Control characters and not asterisks, because what is being marked up is
+// text the verbs wrote for a terminal and it is full of every punctuation
+// mark there is. A marker that could occur in the content is a marker that
+// will, and the answer that carries it arrives with half a sentence in bold.
+//
+// They are this package's own and mean nothing to any service: an adapter
+// turns them into whatever it has, and one with nothing takes them out.
+const (
+	Strong    = "\x02"
+	endStrong = "\x03"
+)
+
 // atMost is how long one answer may be.
 //
 // Telegram's own ceiling is 4096 characters and every other service is near
@@ -28,6 +43,15 @@ import (
 // by the service for being one character over is an answer nobody sees at
 // all, which is worse than an answer that ends early and says so.
 const atMost = 3800
+
+// Prose is an answer that was already written for a person to read, and is
+// left alone.
+//
+// The supervisor answers in markdown because it was asked to. Everything
+// else here is a verb's output — columns padded for a terminal — and the two
+// want opposite treatment: one is formatting and the other is text that
+// happens to contain punctuation.
+func Prose(said string) string { return said }
 
 // Reply is one verb's answer, dressed for a chat.
 func Reply(out verb.Out, p *words.Printer) string {
@@ -72,16 +96,66 @@ func narrowed(said string) string {
 		}
 	}
 
-	said = strings.Join(lines, "\n")
-
 	// A table is a table only while it has rows. One line is a sentence
 	// whatever it was padded into, and a monospaced sentence is a person
 	// being shouted at in a typewriter font.
-	if widest > phone || !laidOut(said) {
-		return said
+	if !laidOut(strings.Join(lines, "\n")) {
+		return lines[0]
 	}
 
-	return "```\n" + said + "\n```"
+	if widest > phone {
+		return spaced(lines)
+	}
+
+	return "```\n" + strings.Join(lines, "\n") + "\n```"
+}
+
+// spaced is a listing that has given up being a table: a blank line between
+// its rows, so that a reader can tell where one ends.
+//
+// It is the whole of what is left to work with. The rows wrap now — that is
+// the point of dropping the block — and twelve wrapped rows with nothing
+// between them are one paragraph of twelve settings, which is harder to read
+// than the scroll bar was.
+//
+// A line that begins with a space is not a row. It is the one above it,
+// continued, which is how the verbs write a value too long for its column;
+// separating it from what it belongs to would be inventing a row that is not
+// there.
+func spaced(lines []string) string {
+	var b strings.Builder
+
+	for i, line := range lines {
+		switch {
+		case i == 0:
+		case strings.HasPrefix(line, " "):
+			b.WriteString("\n")
+		default:
+			b.WriteString("\n\n")
+		}
+
+		b.WriteString(named(line))
+	}
+
+	return b.String()
+}
+
+// named is one row with the name it is filed under set apart.
+//
+// The first column and nothing else. Wrapped rows run into one another
+// otherwise — twelve settings become one paragraph — and what a reader is
+// scanning for is the name, which is the only part of a row they knew before
+// they opened the message.
+//
+// The separator is the one squeezed just wrote, so this is reading its own
+// output rather than guessing where a column ended.
+func named(line string) string {
+	at := strings.Index(line, "  ")
+	if at <= 0 || strings.HasPrefix(line, " ") {
+		return line
+	}
+
+	return Strong + line[:at] + endStrong + line[at:]
 }
 
 // squeezed is one line with the column padding taken out.

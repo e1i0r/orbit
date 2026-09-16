@@ -5463,6 +5463,10 @@
       "source": "listening, and answering {id} only",
       "value": "escuchando, y contestándole sólo a {id}"
     },
+    "chat.answer_shape": {
+      "source": "Answer for a phone screen: a few short paragraphs, no tables, no headings. Telegram MarkdownV2 is rendered, so *bold* and `code` work and nothing else is needed. Lead with the answer, then the detail. Keep it under fifteen lines.",
+      "value": "Contestá para una pantalla de teléfono: unos párrafos cortos, sin tablas, sin títulos. Se renderiza MarkdownV2 de Telegram, así que *negrita* y `código` andan y no hace falta nada más. Empezá por la respuesta y después el detalle. No más de quince líneas."
+    },
     "chat.no_verb": {
       "source": "a slash with nothing after it asks for nothing",
       "value": "una barra sin nada atrás no pide nada"

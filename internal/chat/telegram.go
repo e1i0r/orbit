@@ -107,12 +107,33 @@ func (t *Telegram) Listen(ctx context.Context, said func(Message)) error {
 }
 
 // Say answers into one conversation.
+//
+// Twice, if the first one is refused. MarkdownV2 is strict — one unescaped
+// character out of eighteen and the whole message is rejected — and what
+// this carries is not all Orbit's to escape: the supervisor answers in
+// markdown because it was asked to, and escaping that would be deleting the
+// formatting rather than protecting it.
+//
+// So the formatted send is attempted and a refusal falls back to plain text.
+// A stray character then costs the formatting of one message instead of the
+// message itself, which is the trade worth making: an answer nobody sees is
+// worse than an answer with an asterisk in it.
 func (t *Telegram) Say(ctx context.Context, where, text string) error {
-	body, err := json.Marshal(map[string]any{
-		"chat_id":    where,
-		"text":       asHTML(text),
-		"parse_mode": "HTML",
-	})
+	if err := t.send(ctx, where, asMarkdown(text), "MarkdownV2"); err == nil {
+		return nil
+	}
+
+	return t.send(ctx, where, plain(text), "")
+}
+
+// send is one attempt, in one markup.
+func (t *Telegram) send(ctx context.Context, where, text, markup string) error {
+	message := map[string]any{"chat_id": where, "text": text}
+	if markup != "" {
+		message["parse_mode"] = markup
+	}
+
+	body, err := json.Marshal(message)
 	if err != nil {
 		return fmt.Errorf("encode the message: %w", err)
 	}
@@ -224,35 +245,43 @@ func (t *Telegram) post(ctx context.Context, method string, body []byte) (*http.
 	return res, nil
 }
 
-// asHTML is an answer in the one markup this service can be trusted with.
+// asMarkdown is an answer in the markup this service reads.
 //
-// Telegram's Markdown modes refuse a message over any stray underscore or
-// asterisk — and a task's own text is full of both — so an answer would
-// arrive mangled or not at all. HTML needs three characters escaped and
-// nothing else, which is a rule that cannot be got wrong by content nobody
-// wrote for it.
+// A fence Reply put around a listing stays a fence — it is already what
+// MarkdownV2 spells a code block with — and what is inside one needs only
+// the backslash and the backtick escaped. Outside, this package's own
+// emphasis becomes the asterisks the service wants.
 //
-// The fences Reply puts around a listing become <pre>, which is what makes
-// columns line up on a phone. They are this package's own marker rather than
-// Telegram's: a second service turns them into whatever it has.
-func asHTML(text string) string {
+// What is deliberately not escaped is everything else. Telegram's own rule
+// is that eighteen characters must be, and obeying it here would mean
+// escaping the supervisor's markdown out of existence: it answers in
+// markdown because it was asked to. Say sends this first and falls back to
+// plain text if the service refuses it, which is what makes the gamble
+// affordable.
+func asMarkdown(text string) string {
 	var b strings.Builder
 
 	for i, part := range strings.Split(text, "```") {
 		// Odd parts are what the fences held.
 		if i%2 == 1 {
-			b.WriteString("<pre>" + escape(strings.Trim(part, "\n")) + "</pre>")
+			b.WriteString("```\n" + inCode(strings.Trim(part, "\n")) + "\n```")
 
 			continue
 		}
 
-		b.WriteString(escape(part))
+		b.WriteString(strings.NewReplacer(Strong, "*", endStrong, "*").Replace(part))
 	}
 
 	return b.String()
 }
 
-// escape is the three characters HTML cannot take literally.
-func escape(text string) string {
-	return strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;").Replace(text)
+// inCode is the two characters a fenced block still has to escape.
+func inCode(text string) string {
+	return strings.NewReplacer("\\", "\\\\", "`", "\\`").Replace(text)
+}
+
+// plain is the same answer with the markup taken out, for the send that
+// follows one the service refused.
+func plain(text string) string {
+	return strings.NewReplacer(Strong, "", endStrong, "", "```", "").Replace(text)
 }
