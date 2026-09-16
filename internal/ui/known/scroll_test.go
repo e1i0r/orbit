@@ -85,7 +85,7 @@ func TestWhatTheKeysDoStaysOnScreenWhileTheListMoves(t *testing.T) {
 	}
 
 	got := shown(t, s, e)
-	for _, want := range []string{"What Orbit knows", "decide about it"} {
+	for _, want := range []string{"What Orbit knows", "open it"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("%q left the screen when the list did:\n%s", want, got)
 		}
@@ -136,7 +136,7 @@ func TestAClickPutsTheCursorOnTheRowAndASecondOpensIt(t *testing.T) {
 	}
 
 	s, _ = s.Chosen(e)
-	if !s.reviewing {
+	if !s.reading {
 		t.Error("opening a rule did not open its review")
 	}
 }

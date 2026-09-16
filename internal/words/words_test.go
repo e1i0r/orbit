@@ -112,6 +112,7 @@ var borrowedWholesale = map[string]string{
 	"mcp.install_failed":        "placeholders and a colon, no prose",
 	"flows.thinking_badge":      "a label that is itself a loanword, plus a placeholder",
 	"board.col_id":              "ID is ID",
+	"knowledge.col_id":          "ID is ID",
 	"compose.id":                "ID is ID",
 	"compose.url":               "url is url",
 	"board.col_repo":            "repo is repo, and it is a column head three cells wide",

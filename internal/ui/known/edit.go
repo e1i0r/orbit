@@ -1,11 +1,6 @@
 package known
 
-// Writing a fact down, and correcting one.
-//
-// Two fields and not the whole record. A fact's scope and its source are what
-// make it traceable, and neither is something to retype — the source is where
-// it came from, which nobody may edit, and the scope is moved with its own
-// gesture rather than by typing a path.
+// Opening the form, and writing down what was typed into it.
 
 import (
 	"strings"
@@ -17,28 +12,23 @@ import (
 	"github.com/e1i0r/orbit/internal/ui/typing"
 )
 
-// editSaid opens a sentence in the tray with what it already says in the
-// line.
+// editSaid opens a sentence from the tray with what it already says in the
+// form.
 //
-// The tray and not the rules under it. A sentence is accepted by correcting
-// it more often than by agreeing with it word for word, which is the whole
-// reason the tray asks instead of telling — and rewording a rule somebody
-// already agreed to is a decision about that rule, which happens in the
-// review. See the note in known.go.
-//
-// A sentence has no check yet, because nobody has been asked for one.
+// A sentence is accepted by correcting it more often than by agreeing with
+// it word for word, which is the whole reason the tray asks instead of
+// telling. The place opens with the folder the work was in, so that agreeing
+// is enter and disagreeing is walking the options.
 func (s State) editSaid(e Env) State {
 	one, waiting := s.onSaid()
 	if e.Keep == nil || !waiting {
 		return s
 	}
 
-	// The place line opens with the folder the work was in, so that
-	// agreeing with it is enter and disagreeing is typing over it.
-	return s.typeInto(one.Text, "", one.Where)
+	return s.typeInto(one.Text, "", one.Where, false)
 }
 
-// pauseFact opens the one line a pause takes: what it is being paused for.
+// pauseFact opens the one question a pause asks: what it is being paused for.
 //
 // The cheapest thing this screen can do to a rule, and the only reversible
 // one. Switching a rule off decides its fate; pausing it says not now and
@@ -56,25 +46,24 @@ func (s State) pauseFact(e Env) State {
 
 	s.pausing = true
 
-	return s.typeInto("", "", "")
+	return s.typeInto("", "", "", false)
 }
 
-// typeInto puts the three fields up with what is already in them, and the
-// caret in the first.
-func (s State) typeInto(phrase, check, where string) State {
-	s.editing, s.field = true, factPhrase
-	s.in[factPhrase] = typing.New(phrase)
-	s.in[factCheck] = typing.New(check)
-	s.in[factWhere] = typing.New(where)
+// correctFact opens the rule under the cursor with everything it holds.
+func (s State) correctFact(e Env) State {
+	f, ok := s.onFact()
+	if e.Replace == nil || !ok {
+		return s
+	}
 
-	return s
+	return s.typeInto(f.Phrase, f.Check, f.Scope.Path, false)
 }
 
-// newFact opens an empty line, scoped to the repository being worked in.
+// newFact opens an empty form, filed against the repository being worked in.
 //
-// Most facts are written in the supervisor, mid-conversation, which is where
-// somebody is when they think of one. This is for the one they think of while
-// reading the others.
+// Most rules are written in the supervisor, mid-conversation, which is where
+// somebody is when they think of one. This is for the one they think of
+// while reading the others.
 func (s State) newFact(e Env) State {
 	if e.Replace == nil {
 		return s
@@ -87,7 +76,108 @@ func (s State) newFact(e Env) State {
 	})
 	s.sel = s.last()
 
-	return s.typeInto("", "", "")
+	return s.typeInto("", "", "", true)
+}
+
+// typeInto puts the form up with what is already in it, and the cursor on
+// the first row.
+func (s State) typeInto(phrase, check, where string, fresh bool) State {
+	s.editing, s.fresh, s.field = true, fresh, rowPhrase
+	s.in[factPhrase] = typing.New(phrase)
+	s.in[factCheck] = typing.New(check)
+	s.in[factWhere] = typing.New(where)
+
+	return s
+}
+
+// hereScope is what a rule written on this screen is about: the one
+// repository the window is on, and everything when there is more than one to
+// choose between. Choosing one for somebody is how a rule ends up on the
+// wrong project.
+func hereScope(e Env) knowledge.Scope {
+	if e.Repo != "" {
+		return knowledge.Scope{Kind: knowledge.Repo, Repo: e.Repo}
+	}
+
+	return knowledge.Scope{Kind: knowledge.General}
+}
+
+// editingKey is every key while the form is up.
+func (s State) editingKey(msg tea.KeyPressMsg, e Env) (State, Out) {
+	rows := s.rows2(e)
+	here := max(s.at(rows), 0)
+
+	switch msg.Code {
+	case tea.KeyEscape:
+		return s.shut(), Out{}
+	case tea.KeyEnter:
+		return s.pressed(rows[here], e)
+	case tea.KeyTab, tea.KeyDown:
+		s.field = rows[(here+1)%len(rows)].which
+		return s, Out{}
+	case tea.KeyUp:
+		s.field = rows[(here+len(rows)-1)%len(rows)].which
+		return s, Out{}
+	case tea.KeyLeft:
+		return s.sideways(rows[here], -1, e), Out{}
+	case tea.KeyRight:
+		return s.sideways(rows[here], 1, e), Out{}
+	case tea.KeyBackspace:
+		return s.factEdit(rows[here], func(in *typing.Field) { in.Backspace() }), Out{}
+	case tea.KeyDelete:
+		return s.factEdit(rows[here], func(in *typing.Field) { in.DeleteForward() }), Out{}
+	case tea.KeyHome:
+		return s.factEdit(rows[here], (*typing.Field).LineStart), Out{}
+	case tea.KeyEnd:
+		return s.factEdit(rows[here], (*typing.Field).LineEnd), Out{}
+	}
+
+	if msg.Text != "" {
+		return s.factEdit(rows[here], func(in *typing.Field) { in.Insert(msg.Text) }), Out{}
+	}
+
+	return s, Out{}
+}
+
+// sideways is ←→ on a row: it walks the options of a row that has them, and
+// moves the caret inside one that is only typed into.
+func (s State) sideways(r aRow, d int, e Env) State {
+	if len(r.options) > 0 {
+		return s.walk(r, d, e)
+	}
+
+	return s.factEdit(r, func(in *typing.Field) { in.MoveBy(d) })
+}
+
+// pressed is enter on a row: it does the button, and otherwise saves — the
+// form has one obvious answer and enter is it, wherever the cursor is.
+func (s State) pressed(r aRow, e Env) (State, Out) {
+	if r.which == rowCancel {
+		return s.shut(), Out{}
+	}
+
+	return s.saveFact(e)
+}
+
+// shut closes the form without writing anything.
+func (s State) shut() State {
+	s.editing, s.pausing, s.fresh, s.deep = false, false, false, 0
+
+	return s
+}
+
+// factEdit does something to the line behind the row, and nothing at all to
+// a row that has no line.
+func (s State) factEdit(r aRow, do func(*typing.Field)) State {
+	if r.button != "" || r.which == rowDoes {
+		return s
+	}
+
+	in := s.in[r.typed]
+	do(&in)
+	s.in[r.typed] = in
+
+	return s
 }
 
 // savePause stops the rule under the cursor applying, and sends it to be
@@ -103,8 +193,6 @@ func (s State) savePause(e Env) (State, Out) {
 			"say what you are pausing it for; it is what you will read when you come back"))
 	}
 
-	s.editing, s.pausing = false, false
-
 	was, ok := s.onFact()
 	if !ok {
 		return s, Out{}
@@ -117,89 +205,19 @@ func (s State) savePause(e Env) (State, Out) {
 		return s, said(err.Error())
 	}
 
+	s = s.shut()
+	s.reading = false
+
 	return s.Sync(e), said(e.Words.T("knowledge.paused",
 		"it is paused, and waiting for you to decide about it"))
 }
 
-// hereScope is what a fact written on this screen is about: the one
-// repository the window is on, and everything when there is more than one to
-// choose between. Choosing one for somebody is how a rule ends up on the
-// wrong project.
-func hereScope(e Env) knowledge.Scope {
-	if e.Repo != "" {
-		return knowledge.Scope{Kind: knowledge.Repo, Repo: e.Repo}
-	}
-
-	return knowledge.Scope{Kind: knowledge.General}
-}
-
-// editingKey is every key while a fact is being corrected.
-func (s State) editingKey(msg tea.KeyPressMsg, e Env) (State, Out) {
-	switch msg.Code {
-	case tea.KeyEscape:
-		s.editing, s.pausing = false, false
-		return s, Out{}
-	case tea.KeyEnter:
-		return s.saveFact(e)
-	case tea.KeyTab:
-		// Round the fields this gesture actually has. A pause is one
-		// sentence, and a tab that walked off it into a check nobody was
-		// being asked for is a form that lies about what it is doing.
-		fields := s.fields(e)
-		s.field = fields[(s.at(fields)+1)%len(fields)].which
-
-		return s, Out{}
-	case tea.KeyBackspace:
-		return s.factEdit(func(in *typing.Field) { in.Backspace() }), Out{}
-	case tea.KeyDelete:
-		return s.factEdit(func(in *typing.Field) { in.DeleteForward() }), Out{}
-	case tea.KeyLeft:
-		return s.factEdit(func(in *typing.Field) { in.MoveBy(-1) }), Out{}
-	case tea.KeyRight:
-		return s.factEdit(func(in *typing.Field) { in.MoveBy(1) }), Out{}
-	case tea.KeyHome:
-		return s.factEdit((*typing.Field).LineStart), Out{}
-	case tea.KeyEnd:
-		return s.factEdit((*typing.Field).LineEnd), Out{}
-	}
-
-	if msg.Text != "" {
-		return s.factEdit(func(in *typing.Field) { in.Insert(msg.Text) }), Out{}
-	}
-
-	return s, Out{}
-}
-
-// at is which of the form's rows the caret is in, and the first when the
-// field being typed into is not one of them.
-func (s State) at(fields []aField) int {
-	for i, f := range fields {
-		if f.which == s.field {
-			return i
-		}
-	}
-
-	return 0
-}
-
-// factEdit does something to the field being typed into.
-func (s State) factEdit(do func(*typing.Field)) State {
-	in := s.in[s.field]
-	do(&in)
-	s.in[s.field] = in
-
-	return s
-}
-
-// saveFact writes what was typed and closes the line: a sentence in the tray
-// becomes a fact, and a fact already written is corrected in place.
+// saveFact writes what was typed and closes the form: a sentence in the tray
+// becomes a rule, and a rule already written is corrected in place.
 //
-// The fact a correction replaces travels with it, because the file is named
+// The rule a correction replaces travels with it, because the file is named
 // after the sentence when nothing else names it: saving alone would leave
 // the old copy behind, still told and still refusing work.
-//
-// A sentence emptied is refused rather than written. A fact with nothing in
-// it says nothing, and deleting one is not something this gesture does.
 func (s State) saveFact(e Env) (State, Out) {
 	if s.pausing {
 		return s.savePause(e)
@@ -207,26 +225,30 @@ func (s State) saveFact(e Env) (State, Out) {
 
 	phrase := strings.TrimSpace(s.in[factPhrase].Val)
 	if phrase == "" {
-		return s, said(e.Words.T("knowledge.needs_words", "a fact with no sentence says nothing"))
+		return s, said(e.Words.T("knowledge.needs_words", "a rule with no sentence says nothing"))
 	}
 
 	check := strings.TrimSpace(s.in[factCheck].Val)
 	where := strings.TrimSpace(s.in[factWhere].Val)
-	s.editing = false
 
 	if one, waiting := s.onSaid(); waiting {
-		return s.keepWith(one, phrase, check, where, e)
+		return s.shut().keepWith(one, phrase, check, where, e)
 	}
 
+	return s.saveOver(phrase, check, where, e)
+}
+
+// saveOver writes the corrected rule over the one it came from.
+func (s State) saveOver(phrase, check, where string, e Env) (State, Out) {
 	was, ok := s.onFact()
 	if !ok {
 		return s, Out{}
 	}
 
 	now, moved := was, was.Scope
-	now.Phrase, now.Check = phrase, check
+	now.Phrase, now.Check, now.Stops = phrase, check, check != ""
 
-	// A path typed into a fact that is about no checkout has nowhere to be
+	// A path typed into a rule that is about no checkout has nowhere to be
 	// relative to, so it is refused rather than filed against a repository
 	// picked for somebody.
 	switch {
@@ -250,11 +272,10 @@ func (s State) saveFact(e Env) (State, Out) {
 	// Correcting a rule is a decision about it, so it stops waiting for
 	// one — which is the whole reason somebody opened it.
 	now.Review = false
-	s.reviewing = false
 
 	if err := e.Replace(was, now); err != nil {
 		return s, said(err.Error())
 	}
 
-	return s.Sync(e), Out{}
+	return s.shut().Sync(e), Out{}
 }

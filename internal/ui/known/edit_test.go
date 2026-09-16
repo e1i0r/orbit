@@ -24,9 +24,9 @@ func correcting(t *testing.T, phrase string) (State, Env) {
 	})
 	e.Replace = func(knowledge.Fact, knowledge.Fact) error { return nil }
 
-	s, _ = s.Key(press("r"), e)
-	if !s.reviewing {
-		t.Fatal("r did not open the rule for review")
+	s, _ = s.Key(press("enter"), e)
+	if !s.reading {
+		t.Fatal("enter did not open the rule")
 	}
 
 	s, _ = s.Key(press("c"), e)
@@ -87,18 +87,8 @@ func TestTabWalksTheFieldsAndComesBackRound(t *testing.T) {
 	s, e := correcting(t, "coverage stays above 90%")
 
 	s, _ = s.Key(press("tab"), e)
-	if s.field != factCheck {
-		t.Fatalf("tab left the cursor on field %d, want the check", s.field)
-	}
-
-	s = typed(s, e, "make coverage")
-	if got := s.in[factCheck].Val; got != "make coverage" {
-		t.Errorf("what was typed after tab reads %q", got)
-	}
-
-	s, _ = s.Key(press("tab"), e)
-	if s.field != factWhere {
-		t.Fatalf("tab from the check left field %d, want the place", s.field)
+	if s.field != rowWhere {
+		t.Fatalf("tab left the cursor on row %d, want where it applies", s.field)
 	}
 
 	s = typed(s, e, "internal/db")
@@ -106,8 +96,26 @@ func TestTabWalksTheFieldsAndComesBackRound(t *testing.T) {
 		t.Errorf("the place reads %q", got)
 	}
 
-	if s, _ = s.Key(press("tab"), e); s.field != factPhrase {
-		t.Errorf("tab from the place left field %d, want back to the sentence", s.field)
+	s, _ = s.Key(press("tab"), e)
+	s, _ = s.Key(press("tab"), e)
+
+	if s.field != rowCheck {
+		t.Fatalf("tab twice from the place left row %d, want the check", s.field)
+	}
+
+	s = typed(s, e, "make coverage")
+	if got := s.in[factCheck].Val; got != "make coverage" {
+		t.Errorf("what was typed after tab reads %q", got)
+	}
+
+	// Round the buttons and back to the top: a form the cursor cannot leave
+	// by going on is a form somebody has to reverse out of.
+	for range 3 {
+		s, _ = s.Key(press("tab"), e)
+	}
+
+	if s.field != rowPhrase {
+		t.Errorf("tab round the form left row %d, want back to the sentence", s.field)
 	}
 }
 
@@ -157,7 +165,7 @@ func TestASentenceEmptiedIsRefusedRatherThanWritten(t *testing.T) {
 func TestTheLineBeingTypedIntoCarriesTheCaret(t *testing.T) {
 	s, e := correcting(t, "of everything")
 
-	drawn := strings.Join(s.foot(80, screenH, e), "\n")
+	drawn := strings.Join(s.formRows(screenH, 96, e), "\n")
 	if n := strings.Count(ansi.Strip(drawn), "█"); n != 1 {
 		t.Errorf("the two fields carry %d carets between them:\n%s", n, ansi.Strip(drawn))
 	}
@@ -166,7 +174,7 @@ func TestTheLineBeingTypedIntoCarriesTheCaret(t *testing.T) {
 	// one: a correction is made in the middle of a sentence.
 	s, _ = s.Key(press("home"), e)
 
-	drawn = ansi.Strip(strings.Join(s.foot(80, screenH, e), "\n"))
+	drawn = ansi.Strip(strings.Join(s.formRows(screenH, 96, e), "\n"))
 	if !strings.Contains(drawn, "of everything") {
 		t.Errorf("the sentence is not on the line with the caret at its head:\n%s", drawn)
 	}
@@ -181,7 +189,7 @@ func TestTheLineBeingTypedIntoCarriesTheCaret(t *testing.T) {
 func TestTheWaysOutSayWhichKeysTheLineAnswers(t *testing.T) {
 	s, e := correcting(t, "of everything")
 
-	drawn := ansi.Strip(strings.Join(s.foot(80, screenH, e), "\n"))
+	drawn := ansi.Strip(strings.Join(s.formRows(screenH, 96, e), "\n"))
 	for _, want := range []string{"tab", "save", "esc"} {
 		if !strings.Contains(strings.ToLower(drawn), want) {
 			t.Errorf("the ways out do not mention %q:\n%s", want, drawn)

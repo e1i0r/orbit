@@ -3161,22 +3161,6 @@
       "source": "what orbit has learned about this code: the rules that stop a run, and what it is told before one",
       "value": "lo que orbit aprendió de este código: las reglas que detienen una corrida, y lo que se le dice antes de una"
     },
-    "knowledge.needs_words": {
-      "source": "a fact with no sentence says nothing",
-      "value": "un hecho sin frase no dice nada"
-    },
-    "knowledge.field_phrase": {
-      "source": "what it says",
-      "value": "qué dice"
-    },
-    "knowledge.field_check": {
-      "source": "the check",
-      "value": "el check"
-    },
-    "knowledge.editing_ways": {
-      "source": "[tab] the next field · [↵] save · [esc] leave it as it was",
-      "value": "[tab] el campo siguiente · [↵] guardar · [esc] dejarlo como estaba"
-    },
     "header.waiting": {
       "source": {
         "one": "{n} waiting",
@@ -3196,102 +3180,6 @@
         "one": "{n} hecho",
         "other": "{n} hechos"
       }
-    },
-    "knowledge.field_where": {
-      "source": "where",
-      "value": "dónde"
-    },
-    "knowledge.no_repo_for_path": {
-      "source": "this one is about no checkout, so there is nothing for {path} to be inside",
-      "value": "ésta no es sobre ningún checkout, así que no hay nada adentro de lo cual {path} pueda estar"
-    },
-    "knowledge.title": {
-      "source": "What Orbit knows",
-      "value": "Lo que Orbit sabe"
-    },
-    "knowledge.empty": {
-      "source": "Nothing written down yet. Say /rule or /aware to the supervisor, or drop a file in .orbit/knowledge/.",
-      "value": "Todavía no hay nada anotado. Dile /rule o /aware al supervisor, o deja un archivo en .orbit/knowledge/."
-    },
-    "knowledge.general": {
-      "source": "Everywhere · this machine only, these do not travel",
-      "value": "En todas partes · solo en esta máquina, estos no viajan"
-    },
-    "knowledge.travels": {
-      "source": "travels with the repository",
-      "value": "viaja con el repositorio"
-    },
-    "knowledge.ways": {
-      "source": "[↑↓] move · [r] decide about it · [p] pause it · [n] new · [esc] back",
-      "value": "[↑↓] mover · [r] decidir sobre ella · [p] pausarla · [n] nueva · [esc] atrás"
-    },
-    "knowledge.switched_off": {
-      "source": "it is off; it stays where it is and nothing is told it",
-      "value": "queda apagada; sigue donde está y no se le dice a nadie"
-    },
-    "knowledge.applies_again": {
-      "source": "it applies again, and nothing is waiting on it",
-      "value": "vuelve a aplicar, y no queda nada esperando por ella"
-    },
-    "knowledge.nothing_happened": {
-      "source": "nothing has happened to this one yet",
-      "value": "a ésta todavía no le pasó nada"
-    },
-    "knowledge.review_ways": {
-      "source": "[c] say it better or move it · [o] decide against it · [u] have it apply again · [esc] back",
-      "value": "[c] decirla mejor o moverla · [o] decidir que no · [u] que vuelva a aplicar · [esc] volver"
-    },
-    "knowledge.pause_needs_why": {
-      "source": "say what you are pausing it for; it is what you will read when you come back",
-      "value": "decí para qué la frenás; es lo que vas a leer cuando vuelvas"
-    },
-    "knowledge.paused": {
-      "source": "it is paused, and waiting for you to decide about it",
-      "value": "queda frenada, esperando que decidas sobre ella"
-    },
-    "knowledge.is_paused": {
-      "source": "paused",
-      "value": "pausada"
-    },
-    "knowledge.is_off": {
-      "source": "off",
-      "value": "apagada"
-    },
-    "knowledge.stops": {
-      "source": "stops",
-      "value": "detiene"
-    },
-    "knowledge.no_check": {
-      "source": "no check",
-      "value": "sin check"
-    },
-    "knowledge.from_code": {
-      "source": "from the code",
-      "value": "del código"
-    },
-    "knowledge.from_human": {
-      "source": "you said it",
-      "value": "lo dijiste tú"
-    },
-    "knowledge.from_record": {
-      "source": "from the record",
-      "value": "del record"
-    },
-    "knowledge.from_docs": {
-      "source": "the project already said it",
-      "value": "el proyecto ya lo decía"
-    },
-    "knowledge.from_history": {
-      "source": "the history says so",
-      "value": "lo dice la historia"
-    },
-    "knowledge.from_prod": {
-      "source": "from production",
-      "value": "de producción"
-    },
-    "knowledge.used": {
-      "source": "told {n}×",
-      "value": "dicho {n}×"
     },
     "known.more": {
       "source": "{n} more, in the Knowledge screen",
@@ -4997,22 +4885,6 @@
         "other": "no hay una regla {asked}; hay {n} esperando"
       }
     },
-    "knowledge.said": {
-      "source": "You said this · keep it and Orbit applies it, or say it was not a rule",
-      "value": "Esto lo dijiste vos · guardala y Orbit la aplica, o decí que no era una regla"
-    },
-    "knowledge.kept": {
-      "source": "Orbit knows it now, and every phase will be told",
-      "value": "Orbit ya lo sabe, y a cada fase se le va a decir"
-    },
-    "knowledge.left_said": {
-      "source": "left in the thread where you said it",
-      "value": "queda en el hilo donde lo dijiste"
-    },
-    "knowledge.tray_ways": {
-      "source": "[↑↓] move · [k] keep it · [e] keep it in better words · [d] not a rule · [esc] back",
-      "value": "[↑↓] mover · [k] guardarla · [e] guardarla con mejores palabras · [d] no era una regla · [esc] atrás"
-    },
     "verb.thread.empty": {
       "source": "the supervisor thread is empty",
       "value": "el hilo del supervisor está vacío"
@@ -5105,33 +4977,29 @@
       "source": "this orbit was built without the window; run `make ui` and build it again",
       "value": "este orbit se compiló sin la ventana; ejecuta `make ui` y vuelve a compilar"
     },
-    "knowledge.says": {
-      "source": "says",
-      "value": "dice"
+    "knowledge.band_waiting": {
+      "source": "WAITING ON YOU",
+      "value": "TE ESPERAN"
     },
-    "knowledge.is_active": {
-      "source": "active",
-      "value": "activa"
+    "knowledge.band_stops": {
+      "source": "STOP THE WORK",
+      "value": "DETIENEN EL TRABAJO"
     },
-    "knowledge.col_name": {
-      "source": "NAME",
-      "value": "NOMBRE"
+    "knowledge.band_says": {
+      "source": "JUST SAID, BEFORE EVERY RUN",
+      "value": "SOLO SE DICEN, ANTES DE CADA CORRIDA"
     },
-    "knowledge.col_does": {
-      "source": "DOES",
-      "value": "HACE"
+    "knowledge.band_silent": {
+      "source": "TOLD TO NOBODY",
+      "value": "NO SE LE DICEN A NADIE"
     },
-    "knowledge.col_state": {
-      "source": "STATE",
-      "value": "ESTADO"
+    "knowledge.title": {
+      "source": "What Orbit knows",
+      "value": "Lo que Orbit sabe"
     },
-    "knowledge.col_where": {
-      "source": "WHERE",
-      "value": "DÓNDE"
-    },
-    "knowledge.col_rule": {
-      "source": "THE RULE",
-      "value": "LA REGLA"
+    "knowledge.empty": {
+      "source": "Nothing written down yet. Say /rule or /aware to the supervisor, or drop a file in .orbit/knowledge/.",
+      "value": "Todavía no hay nada anotado. Dile /rule o /aware al supervisor, o deja un archivo en .orbit/knowledge/."
     },
     "knowledge.tally": {
       "source": {
@@ -5143,83 +5011,307 @@
         "other": "{n} reglas"
       }
     },
-    "knowledge.tally_waiting": {
+    "knowledge.col_id": {
+      "source": "ID",
+      "value": "ID"
+    },
+    "knowledge.col_rule": {
+      "source": "THE RULE",
+      "value": "LA REGLA"
+    },
+    "knowledge.col_where": {
+      "source": "WHERE",
+      "value": "DÓNDE"
+    },
+    "knowledge.col_when": {
+      "source": "WHEN",
+      "value": "CUÁNDO"
+    },
+    "knowledge.ways": {
+      "source": "[↑↓] move · [↵] open it · [p] pause it · [n] a new one · [esc] back",
+      "value": "[↑↓] moverte · [↵] abrirla · [p] pausarla · [n] una nueva · [esc] volver"
+    },
+    "knowledge.tray_ways": {
+      "source": "[↑↓] move · [↵] look at it · [k] keep it as said · [d] not a rule · [esc] back",
+      "value": "[↑↓] moverte · [↵] mirarla · [k] guardarla tal cual · [d] no era una regla · [esc] volver"
+    },
+    "knowledge.kept": {
+      "source": "Orbit knows it now, and every phase will be told",
+      "value": "Orbit ya la sabe, y se le va a decir a cada fase"
+    },
+    "knowledge.left_said": {
+      "source": "left in the thread where you said it",
+      "value": "queda en la conversación donde la dijiste"
+    },
+    "knowledge.no_name_yet": {
+      "source": "no name yet",
+      "value": "todavía sin nombre"
+    },
+    "knowledge.asked_why": {
+      "source": "it stopped you, or you paused it. Say it better with 'c', have it apply again with 'u', or decide against it with 'o'.",
+      "value": "te frenó, o la pausaste. Dila mejor con 'c', que vuelva a aplicar con 'u', o decidí que no con 'o'."
+    },
+    "knowledge.travels_machine": {
+      "source": "this machine",
+      "value": "esta máquina"
+    },
+    "knowledge.travels_repo": {
+      "source": "with the repo",
+      "value": "con el repo"
+    },
+    "knowledge.card_said_by": {
+      "source": "said by",
+      "value": "la dijo"
+    },
+    "knowledge.card_since": {
+      "source": "since",
+      "value": "desde"
+    },
+    "knowledge.card_told": {
+      "source": "told",
+      "value": "dicha"
+    },
+    "knowledge.card_times": {
       "source": {
-        "one": "{n} waiting on you",
-        "other": "{n} waiting on you"
+        "one": "{n} time",
+        "other": "{n} times"
       },
       "value": {
-        "one": "{n} esperando por ti",
-        "other": "{n} esperando por ti"
+        "one": "{n} vez",
+        "other": "{n} veces"
       }
     },
-    "knowledge.paused_for": {
-      "source": "paused: {why}",
-      "value": "pausada: {why}"
+    "knowledge.card_travels": {
+      "source": "travels",
+      "value": "viaja"
     },
-    "knowledge.wants_a_check": {
-      "source": "it asked to stop the work and has no command to stop it with, so it only says its sentence",
-      "value": "pidió detener el trabajo y no tiene con qué detenerlo, así que solo dice su frase"
+    "knowledge.sec_does": {
+      "source": "what it does",
+      "value": "qué hace"
     },
-    "knowledge.form_pausing": {
-      "source": "Pausing {rule}",
-      "value": "Pausando {rule}"
+    "knowledge.does_stops": {
+      "source": "it stops the work",
+      "value": "detiene el trabajo"
     },
-    "knowledge.form_pausing_why": {
-      "source": "It stops applying, and goes to be looked at again.",
-      "value": "Deja de aplicar, y queda para revisar."
+    "knowledge.does_check": {
+      "source": "the check is",
+      "value": "el check es"
     },
-    "knowledge.form_keeping": {
-      "source": "Keeping what you said · {from}",
-      "value": "Guardando lo que dijiste · {from}"
+    "knowledge.does_no_check": {
+      "source": "it was asked to stop the work and has no command to stop it with, so it only says its sentence. Give it one with 'c'.",
+      "value": "le pidieron detener el trabajo y no tiene con qué detenerlo, así que solo dice su frase. Dale uno con 'c'."
     },
-    "knowledge.form_keeping_why": {
-      "source": "Correct the words if they were not quite it, and put it where it is true.",
-      "value": "Corregí las palabras si no eran exactamente eso, y ponela donde es verdad."
+    "knowledge.does_says": {
+      "source": "it is put in front of the agent before every run, and the work goes ahead",
+      "value": "se le pone adelante al agente antes de cada corrida, y el trabajo sigue"
+    },
+    "knowledge.sec_paused": {
+      "source": "why it is not applying",
+      "value": "por qué no está aplicando"
+    },
+    "knowledge.sec_friction": {
+      "source": "what it has put you through",
+      "value": "lo que te hizo pasar"
+    },
+    "knowledge.nothing_happened": {
+      "source": "nothing has happened to this one yet",
+      "value": "a ésta todavía no le pasó nada"
+    },
+    "knowledge.act_pause": {
+      "source": "pause it",
+      "value": "pausarla"
+    },
+    "knowledge.act_resume": {
+      "source": "apply again",
+      "value": "que vuelva a aplicar"
+    },
+    "knowledge.act_correct": {
+      "source": "say it better",
+      "value": "decirla mejor"
+    },
+    "knowledge.act_off": {
+      "source": "switch it off",
+      "value": "apagarla"
+    },
+    "knowledge.act_back": {
+      "source": "back",
+      "value": "volver"
+    },
+    "knowledge.by_code": {
+      "source": "the code",
+      "value": "el código"
+    },
+    "knowledge.by_human": {
+      "source": "you",
+      "value": "vos"
+    },
+    "knowledge.by_record": {
+      "source": "a model",
+      "value": "un modelo"
+    },
+    "knowledge.by_prod": {
+      "source": "production",
+      "value": "producción"
+    },
+    "knowledge.by_docs": {
+      "source": "the project",
+      "value": "el proyecto"
+    },
+    "knowledge.by_history": {
+      "source": "the history",
+      "value": "la historia"
     },
     "knowledge.form_new": {
       "source": "A new rule",
       "value": "Una regla nueva"
     },
     "knowledge.form_new_why": {
-      "source": "Say what is true about the code, in the words a run should be told it in.",
-      "value": "Decí qué es verdad sobre el código, con las palabras con que hay que decírselo a una corrida."
+      "source": "a sentence about your code, told to every run before it works",
+      "value": "una frase sobre tu código, que se le dice a cada corrida antes de trabajar"
+    },
+    "knowledge.form_pausing": {
+      "source": "Pausing {rule}",
+      "value": "Pausando {rule}"
+    },
+    "knowledge.form_pausing_why": {
+      "source": "it stops applying, and goes to be looked at again",
+      "value": "deja de aplicar, y queda para revisar"
+    },
+    "knowledge.form_keeping": {
+      "source": "Keeping what you said",
+      "value": "Guardando lo que dijiste"
+    },
+    "knowledge.form_keeping_why": {
+      "source": "said at {where} · correct the words if they were not quite it",
+      "value": "dicho en {where} · corregí las palabras si no eran exactamente eso"
+    },
+    "knowledge.form_correcting": {
+      "source": "Correcting {rule}",
+      "value": "Corrigiendo {rule}"
     },
     "knowledge.form_correcting_why": {
-      "source": "Correcting a rule. It keeps the name it has had all along.",
-      "value": "Corrigiendo una regla. Conserva el nombre que tuvo siempre."
+      "source": "it keeps the name it has had all along",
+      "value": "conserva el nombre que tuvo siempre"
     },
-    "knowledge.no_name_yet": {
-      "source": "this rule",
-      "value": "esta regla"
+    "knowledge.group_rule": {
+      "source": "THE RULE · what it says, and what it is about",
+      "value": "LA REGLA · qué dice, y sobre qué es"
     },
-    "knowledge.field_why": {
-      "source": "what for",
-      "value": "para qué"
+    "knowledge.group_gate": {
+      "source": "THE GATE · whether it refuses the work or only says it",
+      "value": "LA PUERTA · si rechaza el trabajo o solo lo dice"
     },
-    "knowledge.hint_why": {
-      "source": "a pause with no reason is a switch under another name",
-      "value": "una pausa sin motivo es un interruptor con otro nombre"
+    "knowledge.field_phrase": {
+      "source": "What it says",
+      "value": "Qué dice"
     },
     "knowledge.hint_phrase": {
       "source": "the sentence every run is told before it starts work",
-      "value": "la frase que se le dice a cada corrida antes de empezar"
+      "value": "la frase que se le dice a cada corrida antes de empezar a trabajar"
+    },
+    "knowledge.field_where": {
+      "source": "Where it applies",
+      "value": "Dónde aplica"
+    },
+    "knowledge.hint_where_all": {
+      "source": "every run against this checkout is told it, whatever it is touching",
+      "value": "se le dice a toda corrida contra este checkout, toque lo que toque"
+    },
+    "knowledge.hint_where_in": {
+      "source": "it is only told when the work is inside {path} — type another path to move it",
+      "value": "solo se le dice cuando el trabajo está dentro de {path} — escribí otra ruta para moverla"
+    },
+    "knowledge.field_does": {
+      "source": "What it does",
+      "value": "Qué hace"
+    },
+    "knowledge.hint_does": {
+      "source": "saying it is enough for most rules; stopping the work needs a command that answers yes or no",
+      "value": "decirlo alcanza para casi todas; detener el trabajo necesita un comando que responda sí o no"
+    },
+    "knowledge.field_check": {
+      "source": "The check",
+      "value": "El check"
     },
     "knowledge.hint_check": {
-      "source": "a command that answers yes or no. Leave it empty and the rule only says its sentence.",
-      "value": "un comando que responde sí o no. Dejalo vacío y la regla solo dice su frase."
+      "source": "the work is sent back when this command does not exit zero. It is yours and never a model's: it runs on every future phase in this repository.",
+      "value": "el trabajo se devuelve cuando este comando no sale con cero. Es tuyo y nunca de un modelo: corre en cada fase futura de este repositorio."
     },
-    "knowledge.hint_where": {
-      "source": "the folder or file it is about; empty is the whole checkout",
-      "value": "la carpeta o el archivo del que trata; vacío es todo el checkout"
+    "knowledge.field_why": {
+      "source": "What for",
+      "value": "Para qué"
     },
-    "knowledge.form_review_why": {
-      "source": "Everything this rule has put you through. There is no score — only the friction.",
-      "value": "Todo lo que esta regla te hizo pasar. No hay puntaje: solo la fricción."
+    "knowledge.hint_why": {
+      "source": "a pause with no reason is a switch under another name; this is what you will read when you come back",
+      "value": "una pausa sin motivo es un interruptor con otro nombre; esto es lo que vas a leer cuando vuelvas"
     },
-    "knowledge.typing_ways": {
-      "source": "[↵] save · [esc] leave it as it was",
-      "value": "[↵] guardar · [esc] dejarlo como estaba"
+    "knowledge.place_all": {
+      "source": "everywhere",
+      "value": "en todas partes"
+    },
+    "knowledge.place_repo": {
+      "source": "all of {repo}",
+      "value": "todo {repo}"
+    },
+    "knowledge.check_none": {
+      "source": "(none yet)",
+      "value": "(ninguno todavía)"
+    },
+    "knowledge.does_pill_says": {
+      "source": "just says it",
+      "value": "solo lo dice"
+    },
+    "knowledge.does_pill_stops": {
+      "source": "stops the work",
+      "value": "detiene el trabajo"
+    },
+    "knowledge.or_type": {
+      "source": "· or type one",
+      "value": "· o escribí una"
+    },
+    "knowledge.phrase_placeholder": {
+      "source": "(write the rule here)",
+      "value": "(escribí la regla acá)"
+    },
+    "knowledge.btn_save": {
+      "source": "✔ Save the rule",
+      "value": "✔ Guardar la regla"
+    },
+    "knowledge.btn_pause": {
+      "source": "✔ Pause it",
+      "value": "✔ Pausarla"
+    },
+    "knowledge.btn_cancel": {
+      "source": "✖ Leave it as it was",
+      "value": "✖ Dejarla como estaba"
+    },
+    "knowledge.editing_ways": {
+      "source": "[tab] next row · [↑↓] move · [←→] change · [↵] do it · [esc] back",
+      "value": "[tab] fila siguiente · [↑↓] moverte · [←→] cambiar · [↵] hacerlo · [esc] volver"
+    },
+    "knowledge.needs_words": {
+      "source": "a rule with no sentence says nothing",
+      "value": "una regla sin frase no dice nada"
+    },
+    "knowledge.pause_needs_why": {
+      "source": "say what you are pausing it for; it is what you will read when you come back",
+      "value": "decí para qué la frenás; es lo que vas a leer cuando vuelvas"
+    },
+    "knowledge.paused": {
+      "source": "it is paused, and waiting for you to decide about it",
+      "value": "queda frenada, esperando que decidas sobre ella"
+    },
+    "knowledge.switched_off": {
+      "source": "it is off; it stays where it is and nothing is told it",
+      "value": "queda apagada; sigue donde está y no se le dice a nadie"
+    },
+    "knowledge.applies_again": {
+      "source": "it applies again, and nothing is waiting on it",
+      "value": "vuelve a aplicar, y no queda nada esperando por ella"
+    },
+    "knowledge.no_repo_for_path": {
+      "source": "this one is about no checkout, so there is nothing for {path} to be inside",
+      "value": "ésta no es sobre ningún checkout, así que no hay nada adentro de lo cual {path} pueda estar"
     }
   }
 }

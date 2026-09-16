@@ -72,6 +72,15 @@ type Env struct {
 	// and then the review says there is nothing to show rather than
 	// pretending it read.
 	Story func(f knowledge.Fact) []string
+	// Places are the folders of one checkout, offered when a rule is being
+	// filed so that choosing where it applies is picking rather than
+	// remembering which folders the project has and spelling one right.
+	Places func(repo string) []string
+	// Commands are what a checkout already runs on itself — its Makefile's
+	// targets — offered as the check of a rule that refuses work. A rule
+	// that stops the work is worth nothing without one, and a command
+	// somebody half-remembers is worse than none.
+	Commands func(repo string) []string
 	// Repo is the one repository on the board, and empty when there is more
 	// than one. A fact written here is about it; choosing one of several
 	// for somebody is how a rule ends up on the wrong project.
@@ -126,6 +135,10 @@ func about(name, value string) words.Arg {
 // and a frame is drawn ten times a second.
 type State struct {
 	sel int
+	// deep is the first line on show of a screen opened over the list: the
+	// form, and a rule's own. It is apart from offset because coming back
+	// from one of them should find the list where it was left.
+	deep int
 	// offset is the first line of the list on show. It is lines and not
 	// rules: a rule is as tall as its sentence wraps, and a list scrolled
 	// by rules jumps by however tall the next one happens to be.
@@ -156,13 +169,17 @@ type State struct {
 	// correction. One line, two gestures: what is typed is a sentence
 	// either way, and this is which sentence it is.
 	pausing bool
-	// reviewing is the rule under the cursor opened with everything it has
-	// put you through under it, which is the one place its fate is decided.
-	// Nothing here is a decision taken in a hurry: this is opened on
-	// purpose, by somebody who sat down to it.
-	reviewing bool
-	field     int
-	in        [factFields]typing.Field
+	// fresh says the form is writing a rule nobody had written before,
+	// which is the one case its heading cannot work out from the fields: a
+	// new rule and a rule whose sentence was emptied look the same.
+	fresh bool
+	// reading is the rule under the cursor opened on its own screen, with
+	// everything about it and everything it has put you through. It is the
+	// one place a rule's fate is decided: nothing here is a decision taken
+	// in a hurry, because it is opened on purpose.
+	reading bool
+	field   int
+	in      [factFields]typing.Field
 }
 
 // The three fields of a fact that are typed into.

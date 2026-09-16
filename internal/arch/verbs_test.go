@@ -233,14 +233,15 @@ func windowOffers(t *testing.T) map[string]bool {
 		"task critical":     "critical",
 		// The tray on the knowledge screen: the sentences waiting, and the
 		// two answers to one of them. The marks are the sentences the screen
-		// says while offering them, because that is the offer.
-		"rules":      "knowledge.said",
+		// says while offering them, because that is the offer. The tray is
+		// the band they are listed under.
+		"rules":      "knowledge.band_waiting",
 		"rules keep": "knowledge.kept",
 		"rules drop": "knowledge.left_said",
 		// The review, opened on one rule with everything it has put you
 		// through under it. The marks are the sentences it answers with,
 		// because that is the decision landing.
-		"rules review":  "knowledge.review_ways",
+		"rules review":  "knowledge.sec_friction",
 		"rules correct": "knowledge.field_where",
 		"rules off":     "knowledge.switched_off",
 		"rules pause":   "knowledge.pause_needs_why",

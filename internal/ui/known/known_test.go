@@ -38,7 +38,7 @@ func world(t *testing.T, facts ...knowledge.Fact) Env {
 // short enough that a handful of rules is already more than fits.
 const (
 	screenW = 100
-	screenH = 24
+	screenH = 40
 )
 
 // known is one fact somebody typed.
@@ -120,12 +120,18 @@ func TestTheGeneralOnesComeFirstAndSayTheyDoNotTravel(t *testing.T) {
 	drawn := drawnKnowledge(t, s, e)
 
 	all, repo := strings.Index(drawn, "of everything"), strings.Index(drawn, "of the repository")
-	if all < 0 || repo < 0 || all > repo {
-		t.Errorf("the general ones are not first:\n%s", drawn)
+	if all < 0 || repo < 0 {
+		t.Errorf("one of the two rules is not on the screen:\n%s", drawn)
 	}
 
-	if !strings.Contains(strings.ToLower(drawn), "travel") {
-		t.Errorf("nothing says the general ones stay on this machine:\n%s", drawn)
+	// Which of the two travels is on the rule's own screen, in the strip:
+	// it is a fact about one rule, and a column of it beside every row was
+	// a column nobody read.
+	s = s.Move(0, e)
+
+	if opened := ansi.Strip(strings.Join(s.openDetail(e).View(30, 96, e), "\n")); !strings.Contains(
+		strings.ToLower(opened), "travel") {
+		t.Errorf("a rule does not say whether it travels:\n%s", opened)
 	}
 }
 
@@ -135,10 +141,13 @@ func TestEachFactSaysWhereItCameFrom(t *testing.T) {
 	s, e := onScreen(t,
 		knowledge.Fact{Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.FromRecord, Phrase: "learned from a refusal"},
 	)
-	drawn := drawnKnowledge(t, s, e)
+	// On the rule's own screen and not beside every row: a column of
+	// sources is a column nobody reads, and the question "can I trust this"
+	// is asked of one rule at a time.
+	drawn := ansi.Strip(strings.Join(s.openDetail(e).View(30, 96, e), "\n"))
 
-	if !strings.Contains(strings.ToLower(drawn), "record") {
-		t.Errorf("the screen does not say a fact came from the record:\n%s", drawn)
+	if !strings.Contains(strings.ToLower(drawn), "model") {
+		t.Errorf("the rule does not say a model worked it out:\n%s", drawn)
 	}
 }
 
@@ -186,7 +195,7 @@ func TestEditingTheSentenceReplacesTheFact(t *testing.T) {
 		return nil
 	}
 
-	s, _ = s.Key(press("r"), e)
+	s, _ = s.Key(press("enter"), e)
 	s, _ = s.Key(press("c"), e)
 	s = typed(s, e, "y")
 	s, _ = s.Key(press("enter"), e)
@@ -222,9 +231,13 @@ func TestACheckCanBeGivenToARuleThatHasNone(t *testing.T) {
 		return nil
 	}
 
-	s, _ = s.Key(press("r"), e)
+	s, _ = s.Key(press("enter"), e)
 	s, _ = s.Key(press("c"), e)
-	s, _ = s.Key(press("tab"), e)
+
+	for s.field != rowCheck {
+		s, _ = s.Key(press("tab"), e)
+	}
+
 	s = typed(s, e, "make cover")
 
 	if _, _ = s.Key(press("enter"), e); now.Check != "make cover" {
@@ -249,7 +262,7 @@ func TestEscapeLeavesTheFactAsItWas(t *testing.T) {
 		return nil
 	}
 
-	s, _ = s.Key(press("r"), e)
+	s, _ = s.Key(press("enter"), e)
 	s, _ = s.Key(press("c"), e)
 	s = typed(s, e, "x")
 

@@ -7,34 +7,7 @@ package known
 // your words, and you meant it — so the only thing left is to be asked
 // whether to keep it. This is where the asking happens.
 //
-// It sits above what Orbit already knows rather than below it. This is the
-// one part of the screen with a question in it, and a question under two
-// pages of facts is a question nobody answers.
-
-import (
-	"github.com/e1i0r/orbit/internal/knowledge"
-)
-
-// onSaid is the sentence under the cursor, and false once the cursor has
-// moved past the tray into what Orbit already knows.
-func (s State) onSaid() (Said, bool) {
-	if s.sel >= len(s.waiting) {
-		return Said{}, false
-	}
-
-	return s.waiting[s.sel], true
-}
-
-// onFact is the fact under the cursor, and false while the cursor is still
-// in the tray.
-func (s State) onFact() (knowledge.Fact, bool) {
-	at := s.sel - len(s.waiting)
-	if at < 0 || at >= len(s.facts) {
-		return knowledge.Fact{}, false
-	}
-
-	return s.facts[at], true
-}
+// Which band it sits in, and how the cursor reaches it, is in bands.go.
 
 // keepAsSaid keeps the sentence under the cursor word for word and where the
 // work was, which is the answer when there is nothing to correct.

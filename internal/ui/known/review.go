@@ -19,33 +19,41 @@ import (
 	"github.com/e1i0r/orbit/internal/knowledge"
 )
 
-// openReview opens the rule under the cursor, with its story under it.
-func (s State) openReview(e Env) State {
+// openDetail opens the rule under the cursor, with everything about it.
+func (s State) openDetail(e Env) State {
 	if _, ok := s.onFact(); !ok {
 		return s
 	}
 
-	s.reviewing = true
+	s.reading = true
 
 	return s
 }
 
-// reviewKey is every key while a rule is open.
+// readingKey is every key while a rule is open.
 //
 // Four decisions and a way out. Correcting reuses the line the screen already
 // types into, because a rule said better and a rule narrowed are the same
 // edit — and the third field of that line is where it goes.
-func (s State) reviewKey(msg tea.KeyPressMsg, e Env) (State, Out) {
+func (s State) readingKey(msg tea.KeyPressMsg, e Env) (State, Out) {
 	if s.editing {
 		return s.editingKey(msg, e)
 	}
 
 	switch msg.Code {
 	case tea.KeyEscape:
-		s.reviewing = false
+		s.reading, s.deep = false, 0
+		return s, Out{}
+	case tea.KeyUp:
+		s.deep = max(s.deep-1, 0)
+		return s, Out{}
+	case tea.KeyDown:
+		s.deep++
 		return s, Out{}
 	case 'c', 'C':
 		return s.correctFact(e), Out{}
+	case 'p', 'P':
+		return s.pauseFact(e), Out{}
 	case 'o', 'O':
 		return s.decideAgainst(e)
 	case 'u', 'U':
@@ -53,21 +61,6 @@ func (s State) reviewKey(msg tea.KeyPressMsg, e Env) (State, Out) {
 	}
 
 	return s, Out{}
-}
-
-// correctFact opens the rule with what it already says in the line: the
-// sentence, the command that makes it stop the work, and where it applies.
-//
-// Here and not on the screen above. Rewording a rule and moving it decide
-// what it will do from now on, and those are not decisions taken with a task
-// half done — which is what somebody has open when they glance at the list.
-func (s State) correctFact(e Env) State {
-	f, ok := s.onFact()
-	if e.Replace == nil || !ok {
-		return s
-	}
-
-	return s.typeInto(f.Phrase, f.Check, f.Scope.Path)
 }
 
 // decideAgainst switches the rule off: it stays where it is, and nothing is
@@ -108,7 +101,7 @@ func (s State) stand(e Env, where knowledge.State, sentence string) (State, Out)
 		return s, said(err.Error())
 	}
 
-	s.reviewing = false
+	s.reading = false
 
 	return s.Sync(e), said(sentence)
 }
@@ -136,5 +129,5 @@ func (s State) chosen(e Env) (State, Out) {
 		return s.editSaid(e), Out{}
 	}
 
-	return s.openReview(e), Out{}
+	return s.openDetail(e), Out{}
 }

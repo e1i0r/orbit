@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/charmbracelet/x/ansi"
+
 	"github.com/e1i0r/orbit/internal/knowledge"
 	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/words"
@@ -110,9 +112,13 @@ func TestKeepingOneIsOneKeystroke(t *testing.T) {
 func TestCorrectingItIsHowMostOfTheseAreAccepted(t *testing.T) {
 	s, e, asked := withTray(t, []Said{saidAt(1, "never push without tests")})
 
-	s, _ = s.Key(press("e"), e)
+	s, _ = s.Key(press("enter"), e)
 	s = typed(s, e, " passing")
-	s, _ = s.Key(press("tab"), e)
+
+	for s.field != rowCheck {
+		s, _ = s.Key(press("tab"), e)
+	}
+
 	s = typed(s, e, "make check")
 
 	if _, out := s.Key(press("enter"), e); out.Said == "" {
@@ -185,14 +191,14 @@ func TestTheWaysOutAreTheOnesUnderTheCursor(t *testing.T) {
 		[]Said{saidAt(1, "never push without the tests passing")},
 		known("errors are wrapped", knowledge.Scope{Kind: knowledge.General}))
 
-	if drawn := drawnKnowledge(t, s, e); !strings.Contains(drawn, "[k] keep it") {
+	if drawn := drawnKnowledge(t, s, e); !strings.Contains(drawn, "[k] keep it as said") {
 		t.Errorf("the tray does not say how to keep one:\n%s", drawn)
 	}
 
 	s, _ = s.Key(press("down"), e)
 
-	if drawn := drawnKnowledge(t, s, e); !strings.Contains(drawn, "[n] new") {
-		t.Errorf("on a fact, the screen says:\n%s", drawn)
+	if drawn := drawnKnowledge(t, s, e); !strings.Contains(drawn, "[p] pause it") {
+		t.Errorf("on a rule, the screen says:\n%s", drawn)
 	}
 }
 
@@ -207,8 +213,12 @@ func TestARowSaysWhereItWasSaid(t *testing.T) {
 
 	s, e, _ := withTray(t, []Said{one})
 
-	if drawn := drawnKnowledge(t, s, e); !strings.Contains(drawn, "PAY-1") {
-		t.Errorf("the row does not say where it came from:\n%s", drawn)
+	// On the form it opens in rather than in the row: the list has one line
+	// a rule and it spends it on the sentence, and where it was said is
+	// what you read while deciding — which is what the form is.
+	drawn := ansi.Strip(strings.Join(s.editSaid(e).View(30, 96, e), "\n"))
+	if !strings.Contains(drawn, "PAY-1") {
+		t.Errorf("keeping it does not say where it came from:\n%s", drawn)
 	}
 }
 
@@ -218,7 +228,7 @@ func TestAnEmptyTrayIsNotThere(t *testing.T) {
 	s, e, _ := withTray(t, nil,
 		known("errors are wrapped", knowledge.Scope{Kind: knowledge.General}))
 
-	if drawn := drawnKnowledge(t, s, e); strings.Contains(drawn, "You said this") {
+	if drawn := drawnKnowledge(t, s, e); strings.Contains(drawn, "WAITING ON YOU") {
 		t.Errorf("an empty tray is drawn anyway:\n%s", drawn)
 	}
 
@@ -247,7 +257,7 @@ func TestThePlaceArrivesFilledIn(t *testing.T) {
 
 	// And the editor opens on it, so that the way out is typing over it
 	// rather than remembering the path.
-	s, _ = s.Key(press("e"), e)
+	s, _ = s.Key(press("enter"), e)
 	if got := s.in[factWhere].Val; got != "internal/db" {
 		t.Errorf("the place line opens with %q", got)
 	}

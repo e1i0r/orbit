@@ -23,6 +23,42 @@ func (sp span) last() int { return sp.from + max(sp.rows, 1) - 1 }
 // holds is whether a line of the body is part of this row.
 func (sp span) holds(line int) bool { return line >= sp.from && line <= sp.last() }
 
+// framed is a screen in three parts: a head and a foot that stay where they
+// are, and a body that scrolls between them.
+//
+// The head says what is being looked at and the foot what the keys do, and
+// both are needed most by the reader who has scrolled furthest — which is
+// exactly the reader who would have lost them.
+func framed(head, body, foot []string, h, off int) []string {
+	room := max(1, h-len(head)-len(foot))
+	off = min(max(off, 0), max(0, len(body)-room))
+
+	out := append([]string{}, head...)
+	for i := off; i < len(body) && i < off+room; i++ {
+		out = append(out, body[i])
+	}
+
+	for len(out) < max(h-len(foot), 0) {
+		out = append(out, "")
+	}
+
+	return append(out, foot...)
+}
+
+// deepEnough brings one stretch of a body on screen, moving as little as it
+// can: it is what keeps the row being typed into visible as the form is
+// walked, and what the arrow keys move on a rule's own screen.
+func deepEnough(off, from, rows, room, total int) int {
+	switch {
+	case rows >= room || from < off:
+		off = from
+	case from+rows > off+room:
+		off = from + rows - room
+	}
+
+	return min(max(off, 0), max(0, total-room))
+}
+
 // content is how wide the screen draws, which is the window less its margins
 // and capped so that a sentence does not stretch across a monitor.
 func content(w int) int { return max(min(w-4, 110), 24) }
@@ -41,7 +77,7 @@ func (s State) window(lines, view int) int {
 // view is how many rows of the list the screen has room for: what the head
 // and the foot did not take.
 func (s State) view(cw, h int, e Env) int {
-	return max(1, h-len(s.head(cw, e))-len(s.foot(cw, h, e)))
+	return max(1, h-len(s.head(cw, e))-len(s.foot(cw, e)))
 }
 
 // keepSeen moves the list as little as it can to keep the row the cursor is
@@ -85,8 +121,15 @@ func (s State) keepSeen(e Env) State {
 	return s
 }
 
-// move walks the cursor, and brings the list with it.
+// move walks the cursor, and brings the list with it. On a screen opened
+// over the list it moves that screen instead: one gesture, whatever is up.
 func (s State) move(d int, e Env) State {
+	if s.reading || s.editing {
+		s.deep = max(s.deep+d, 0)
+
+		return s
+	}
+
 	s.sel = min(max(s.sel+d, 0), s.last())
 
 	return s.keepSeen(e)
@@ -100,7 +143,10 @@ func (s State) move(d int, e Env) State {
 // not to trust.
 func (s State) hit(x, y int, e Env) point.Target {
 	line, ok := e.Frame.BodyRow(y)
-	if !ok {
+	if !ok || s.reading || s.editing {
+		// A screen opened over the list owns the pointer while it is up,
+		// the way it owns the keyboard. A click that reached the list
+		// behind it would move a cursor nobody can see.
 		return point.Target{}
 	}
 

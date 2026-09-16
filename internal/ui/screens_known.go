@@ -12,17 +12,19 @@ import (
 // knownEnv is the world the knowledge screen was written against.
 func (m Model) knownEnv() known.Env {
 	return known.Env{
-		Words:   m.opts.Words,
-		Keys:    m.keys,
-		Frame:   m.frame,
-		All:     m.opts.KnowsAll,
-		Replace: m.opts.ReplaceFact,
-		Story:   m.opts.RuleStory,
-		Turn:    m.opts.TurnFact,
-		Waiting: m.opts.Waiting,
-		Keep:    m.opts.KeepRule,
-		Drop:    m.opts.DropRule,
-		Repo:    m.oneRepo(),
+		Words:    m.opts.Words,
+		Keys:     m.keys,
+		Frame:    m.frame,
+		All:      m.opts.KnowsAll,
+		Replace:  m.opts.ReplaceFact,
+		Story:    m.opts.RuleStory,
+		Turn:     m.opts.TurnFact,
+		Waiting:  m.opts.Waiting,
+		Places:   m.opts.RepoFolders,
+		Commands: m.opts.RepoChecks,
+		Keep:     m.opts.KeepRule,
+		Drop:     m.opts.DropRule,
+		Repo:     m.oneRepo(),
 	}
 }
 
