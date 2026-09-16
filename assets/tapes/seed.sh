@@ -63,6 +63,12 @@ package ledger
 // Deliver is the endpoint the processor calls back on.
 func Deliver(orderID string, cents int) error { return Charge(orderID, cents) }
 EOF
+# The directory the migration rule is about. It is in shot: a rule narrowed to
+# a folder that is not in the checkout is refused, and refused on camera.
+mkdir -p migrations
+cat > migrations/0030_amount_minor.sql <<'EOF'
+ALTER TABLE ledger ADD COLUMN amount_minor BIGINT NOT NULL DEFAULT 0;
+EOF
 cat > invoice.go <<'EOF'
 package ledger
 

@@ -25,7 +25,12 @@ Sleep 3s
 
 # Keeping one, narrowed to where it is true, and with the command that makes
 # it refuse work rather than merely say something.
-Type `orbit rules keep -in migrations -check "make migrate-check" 1` Enter
+#
+# The second and not the first: it is the one about migrations, so the folder
+# and the command it is given are the folder and command it is about. A take
+# that narrowed a rule about tests into migrations would be teaching the wrong
+# thing carefully.
+Type `orbit rules keep -in migrations -check "make migrate-check" 2` Enter
 Sleep 3s
 
 Type "clear" Enter
