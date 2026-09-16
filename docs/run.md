@@ -75,6 +75,55 @@ The window says when the allowance comes back because it already knows —
 that number is in the header on every frame — and being told an engine ran
 out without being told for how long is half an answer.
 
+## When the same phase runs again
+
+A phase that ran out, broke, or was turned back by a gate gets another run.
+The work it did is still in the worktree — that is never lost — but the
+account of it was, and the next engine used to open a folder of half-finished
+changes with nothing saying what had already been tried.
+
+So the second attempt is handed a short section before it starts:
+
+```
+## The attempt before you
+
+It ran out of tokens before it could finish. What follows is read off the
+record and off the worktree — what happened, not what was meant to.
+
+### What the worktree holds now (7 files, this phase and every one before it)
+
+- `internal/task/sofar.go` +180 −0
+- `internal/task/run_helpers.go` +6 −2
+…
+
+### Commands it ran (3)
+
+- `go build ./...`
+- `make check`
+…
+
+### What it was not allowed to do (1)
+
+- `WebFetch`
+```
+
+Every line of it is read off the record or off the disk. Nothing is written
+by a model, and nothing is inferred — a summary that says something was done
+when it was not is worse than no summary, because the one reading it builds
+on top.
+
+That is also why the files are credited to the worktree rather than to the
+attempt. The diff cannot say which phase wrote which line, so the heading
+does not pretend it can. The commands and the refusals *are* the attempt's,
+because the record says when each one happened.
+
+A first attempt is told none of this. There is no attempt before it, and an
+empty heading is a question the engine would spend a turn answering.
+
+It costs nothing: no engine is asked, no tokens are spent. The same is true
+of switching engine halfway — the new one has no session to resume, and this
+is what it reads instead.
+
 ---
 
 Next: [autopilot](autopilot.md) · [reading what it did](reading.md)

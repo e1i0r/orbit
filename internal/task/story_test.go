@@ -65,12 +65,12 @@ func TestTheLastPhaseIsAskedForTheStory(t *testing.T) {
 		{Name: "2-implement", Engine: "fake"},
 	}}
 
-	last := build(tk, f.Phases[1], true, nil, nil, nil, "", nil)
+	last := build(tk, f.Phases[1], true, nil, nil, nil, "", "", nil)
 	if !strings.Contains(last, "## Story") {
 		t.Errorf("the last phase is not asked for the story:\n%s", last)
 	}
 
-	first := build(tk, f.Phases[0], false, nil, nil, nil, "", nil)
+	first := build(tk, f.Phases[0], false, nil, nil, nil, "", "", nil)
 	if strings.Contains(first, "## Story") {
 		t.Errorf("a phase in the middle is asked for the story anyway:\n%s", first)
 	}
