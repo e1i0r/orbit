@@ -36,7 +36,7 @@ export function SettingsScreen() {
     setRefused(undefined);
 
     try {
-      await api.did("set", { key: name, value });
+      await api.did("settings set", { key: name, value });
       await read();
     } catch (e) {
       setRefused((e as Error).message);

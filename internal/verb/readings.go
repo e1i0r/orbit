@@ -66,7 +66,7 @@ func known(w World) (Out, error) {
 //
 // The columns are for a terminal; Saw carries the scope itself, so a surface
 // that wants to draw it does not read this back.
-func scopeOf(f knowledge.Fact) string {
+func scopeOf(f knowledge.Rule) string {
 	switch {
 	case f.Scope.Symbol != "":
 		return f.Scope.Path + ":" + f.Scope.Symbol

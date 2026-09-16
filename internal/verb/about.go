@@ -163,7 +163,7 @@ func learnt(w World, in In) (Out, error) {
 		where = in.Repo
 	}
 
-	fact := knowledge.Fact{
+	fact := knowledge.Rule{
 		Phrase: strings.TrimSpace(in.Arg("text")),
 		Source: knowledge.Human,
 		Scope:  knowledge.Scope{Kind: knowledge.Repo, Repo: where},

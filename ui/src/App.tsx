@@ -115,8 +115,8 @@ const screens: Record<string, { title: string; said: string }> = {
     said: "What has been said to Orbit about the board, and what it said back.",
   },
   knowledge: {
-    title: "Facts",
-    said: "What Orbit has been told, and what each one does when work reaches it.",
+    title: "Brain",
+    said: "Everything Orbit has learned about your code.",
   },
   flows: {
     title: "Flows",
@@ -145,7 +145,7 @@ function screen(where: string, board: Board | undefined, go: (to: string) => voi
     case "supervisor":
       return <SupervisorScreen />;
     case "knowledge":
-      return <KnowledgeScreen board={board} />;
+      return <KnowledgeScreen />;
     case "flows":
       return <FlowsScreen />;
     case "engines":

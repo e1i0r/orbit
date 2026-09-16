@@ -4978,16 +4978,16 @@
       "value": "este orbit se compiló sin la ventana; ejecuta `make ui` y vuelve a compilar"
     },
     "knowledge.band_waiting": {
-      "source": "WAITING",
-      "value": "ESPERA"
+      "source": "PENDING",
+      "value": "PENDIENTE"
     },
     "knowledge.band_stops": {
-      "source": "BLOCKS",
-      "value": "BLOQUEA"
+      "source": "BLOCKED",
+      "value": "BLOQUEADA"
     },
     "knowledge.band_says": {
-      "source": "SAYS",
-      "value": "DICE"
+      "source": "ACTIVE",
+      "value": "ACTIVA"
     },
     "knowledge.title": {
       "source": "Brain",
@@ -5252,16 +5252,16 @@
       "value": "(escribí la regla acá)"
     },
     "knowledge.btn_save": {
-      "source": "✔ Save the rule",
-      "value": "✔ Guardar la regla"
+      "source": "Save",
+      "value": "Guardar"
     },
     "knowledge.btn_pause": {
-      "source": "✔ Pause it",
-      "value": "✔ Pausarla"
+      "source": "Pause",
+      "value": "Pausar"
     },
     "knowledge.btn_cancel": {
-      "source": "✖ Leave it as it was",
-      "value": "✖ Dejarla como estaba"
+      "source": "Cancel",
+      "value": "Cancelar"
     },
     "knowledge.editing_ways": {
       "source": "[tab] next row · [↑↓] move · [←→] change · [↵] do it · [esc] back",
@@ -5352,7 +5352,7 @@
       "value": "PAUSADA"
     },
     "knowledge.band_off": {
-      "source": "OFF",
+      "source": "TURNED OFF",
       "value": "APAGADA"
     },
     "knowledge.tagline": {
@@ -5374,6 +5374,22 @@
     "verb.knowledge.none": {
       "source": "nothing is being told to a run about this code",
       "value": "no se le está diciendo nada a una corrida sobre este código"
+    },
+    "verb.rules.at": {
+      "source": "which one, by when it was said; for a caller with no numbered list in front of it",
+      "value": "cuál, por cuándo se dijo; para quien no tiene una lista numerada adelante"
+    },
+    "verb.rules.drop.at": {
+      "source": "which one, by when it was said",
+      "value": "cuál, por cuándo se dijo"
+    },
+    "verb.rules.not_an_instant": {
+      "source": "a sentence is named by when it was said, and {value} is not an instant",
+      "value": "una frase se nombra por cuándo se dijo, y {value} no es un instante"
+    },
+    "verb.rules.gone": {
+      "source": "nothing said at {when} is waiting to be kept; somebody may have answered it already",
+      "value": "nada dicho en {when} está esperando que lo guarden; puede que alguien ya lo haya respondido"
     }
   }
 }

@@ -31,9 +31,9 @@ type testWorld struct {
 	store  *store.Store
 	board  board.Board
 	log    map[string][]view.Entry
-	facts  []knowledge.Fact
+	facts  []knowledge.Rule
 	said   []saidLine
-	learnt []knowledge.Fact
+	learnt []knowledge.Rule
 	// refuse is what every port answers instead of working, when a test
 	// wants to know what a verb does about the machine saying no.
 	refuse error
@@ -87,7 +87,7 @@ func (w *testWorld) Unread(string) (int, error) { return w.unread, w.refuse }
 
 func (w *testWorld) Looked() error { return w.refuse }
 
-func (w *testWorld) Facts() ([]knowledge.Fact, error) { return w.facts, w.refuse }
+func (w *testWorld) Facts() ([]knowledge.Rule, error) { return w.facts, w.refuse }
 
 func (w *testWorld) Board() (board.Board, error) { return w.board, w.refuse }
 
@@ -115,7 +115,7 @@ func (w *testWorld) Ask(_ context.Context, _, question string) (string, error) {
 	return w.answer, w.refuse
 }
 
-func (w *testWorld) Learn(fact knowledge.Fact) error {
+func (w *testWorld) Learn(fact knowledge.Rule) error {
 	w.learnt = append(w.learnt, fact)
 
 	return w.refuse
@@ -123,7 +123,7 @@ func (w *testWorld) Learn(fact knowledge.Fact) error {
 
 // Replace writes the changed rule over the one it replaces, matched by the
 // name that survives everything else about it.
-func (w *testWorld) Replace(was, now knowledge.Fact, _ learn.Turn) error {
+func (w *testWorld) Replace(was, now knowledge.Rule, _ learn.Turn) error {
 	for i, f := range w.facts {
 		if f.ID == was.ID {
 			w.facts[i] = now

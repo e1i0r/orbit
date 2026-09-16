@@ -18,11 +18,11 @@ import (
 func correcting(t *testing.T, phrase string) (State, Env) {
 	t.Helper()
 
-	s, e := onScreen(t, knowledge.Fact{
+	s, e := onScreen(t, knowledge.Rule{
 		ID: "aaaa1111", Scope: knowledge.Scope{Kind: knowledge.General},
 		Source: knowledge.Human, Phrase: phrase,
 	})
-	e.Replace = func(knowledge.Fact, knowledge.Fact) error { return nil }
+	e.Replace = func(knowledge.Rule, knowledge.Rule) error { return nil }
 
 	s, _ = s.Key(press("enter"), e)
 	if !s.reading {
@@ -136,7 +136,7 @@ func TestASentenceEmptiedIsRefusedRatherThanWritten(t *testing.T) {
 	s, e := correcting(t, "hi")
 
 	wrote := false
-	e.Replace = func(knowledge.Fact, knowledge.Fact) error {
+	e.Replace = func(knowledge.Rule, knowledge.Rule) error {
 		wrote = true
 
 		return nil

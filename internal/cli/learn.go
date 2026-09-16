@@ -27,11 +27,11 @@ import (
 // The source is always Human here, because that is what this door is: a
 // person saying something. A fact typed as a sentence brings no check, so
 // one asked to stop is still written asking to — the store keeps what was
-// meant, and knowledge.Fact.Action is what decides that without a check it
+// meant, and knowledge.Rule.Action is what decides that without a check it
 // only warns. The window says so when it confirms.
 func learnPort(s *store.Store) func(stops bool, scope, repoPath, phrase string) error {
 	return func(stops bool, scope, repoPath, phrase string) error {
-		f := knowledge.Fact{
+		f := knowledge.Rule{
 			Scope:  factScope(scope, repoPath),
 			Source: knowledge.Human,
 			Phrase: phrase,
@@ -107,8 +107,8 @@ func notePort(r *board.Reader, s *store.Store) func(id, text string) error {
 // The repository is the one the window was opened over, resolved once when
 // the port is built: the side is about where somebody is working, and the
 // task under the cursor moving does not change that.
-func knowsPort(s *store.Store, repoPath string) func() []knowledge.Fact {
-	return func() []knowledge.Fact {
+func knowsPort(s *store.Store, repoPath string) func() []knowledge.Rule {
+	return func() []knowledge.Rule {
 		facts, err := knowledge.NewStore(s.Root()).Load(repoPath)
 		if err != nil {
 			logger.Error("cli/learn", "what orbit knows was not read: %v", err)
@@ -125,8 +125,8 @@ func knowsPort(s *store.Store, repoPath string) func() []knowledge.Fact {
 //
 // The board is asked rather than a fixed list, so a repository that gains its
 // first fact appears the moment the screen is opened again.
-func knowsAllPort(r *board.Reader, s *store.Store) func() []knowledge.Fact {
-	return func() []knowledge.Fact {
+func knowsAllPort(r *board.Reader, s *store.Store) func() []knowledge.Rule {
+	return func() []knowledge.Rule {
 		ks := knowledge.NewStore(s.Root())
 
 		// Beside the error: Load answers with the facts it could read, so a
@@ -168,8 +168,8 @@ func knowsAllPort(r *board.Reader, s *store.Store) func() []knowledge.Fact {
 // header outranks where it sits: one filed under this repository that calls
 // itself general or about a language belongs to no repository, and listing it
 // here would repeat it once per checkout.
-func onlyOf(repoPath string, facts []knowledge.Fact) []knowledge.Fact {
-	kept := make([]knowledge.Fact, 0, len(facts))
+func onlyOf(repoPath string, facts []knowledge.Rule) []knowledge.Rule {
+	kept := make([]knowledge.Rule, 0, len(facts))
 
 	for _, f := range facts {
 		if f.Scope.Repo == repoPath {
@@ -191,8 +191,8 @@ func onlyOf(repoPath string, facts []knowledge.Fact) []knowledge.Fact {
 // screen hands over the fact with Off already flipped. What it was before is
 // worked out from that, which is the one case where there is nothing to
 // work out.
-func turnFactPort(s *store.Store) func(knowledge.Fact) error {
-	return func(f knowledge.Fact) error {
+func turnFactPort(s *store.Store) func(knowledge.Rule) error {
+	return func(f knowledge.Rule) error {
 		where, err := knowledge.NewStore(s.Root()).Replace(f, f)
 		if err != nil {
 			return err
@@ -215,8 +215,8 @@ func turnFactPort(s *store.Store) func(knowledge.Fact) error {
 // Replace and not Save, because correcting the sentence moves the file: a
 // fact with no reference is filed under a slug of what it says. Saving alone
 // would leave the old copy behind, still told and still refusing work.
-func replaceFactPort(s *store.Store) func(was, now knowledge.Fact, where learn.Turn) error {
-	return func(was, now knowledge.Fact, where learn.Turn) error {
+func replaceFactPort(s *store.Store) func(was, now knowledge.Rule, where learn.Turn) error {
+	return func(was, now knowledge.Rule, where learn.Turn) error {
 		ks := knowledge.NewStore(s.Root())
 
 		at, err := ks.Replace(was, now)
@@ -247,8 +247,8 @@ func replaceFactPort(s *store.Store) func(was, now knowledge.Fact, where learn.T
 // correction taken there is about the rule and about nothing else. The
 // command line's own pause can say which task it was in the way at, because
 // the reader typed it.
-func windowReplacePort(s *store.Store) func(was, now knowledge.Fact) error {
-	return func(was, now knowledge.Fact) error {
+func windowReplacePort(s *store.Store) func(was, now knowledge.Rule) error {
+	return func(was, now knowledge.Rule) error {
 		return replaceFactPort(s)(was, now, learn.Turn{By: learn.Operator})
 	}
 }
@@ -263,8 +263,8 @@ func windowReplacePort(s *store.Store) func(was, now knowledge.Fact) error {
 // A failure answers with nothing rather than with an error: the review is a
 // screen, and a screen that refused to draw because a table could not be read
 // would be the worse answer.
-func ruleStoryPort(s *store.Store, p *words.Printer) func(knowledge.Fact) []string {
-	return func(f knowledge.Fact) []string {
+func ruleStoryPort(s *store.Store, p *words.Printer) func(knowledge.Rule) []string {
+	return func(f knowledge.Rule) []string {
 		turns, err := learn.History(s, f.ID)
 		if err != nil {
 			logger.Error("cli/learn", "what happened to rule %s was not read back: %v", f.ID, err)

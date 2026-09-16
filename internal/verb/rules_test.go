@@ -22,16 +22,16 @@ type onAStore struct {
 	World
 
 	store *store.Store
-	facts []knowledge.Fact
+	facts []knowledge.Rule
 }
 
 func (o onAStore) Store() *store.Store              { return o.store }
 func (o onAStore) Words() *words.Printer            { return words.For("") }
-func (o onAStore) Facts() ([]knowledge.Fact, error) { return o.facts, nil }
+func (o onAStore) Facts() ([]knowledge.Rule, error) { return o.facts, nil }
 
 // Replace writes the changed rule over the one it replaces, matched by the
 // name that survives everything else about it.
-func (o onAStore) Replace(was, now knowledge.Fact, _ learn.Turn) error {
+func (o onAStore) Replace(was, now knowledge.Rule, _ learn.Turn) error {
 	for i, f := range o.facts {
 		if f.ID == was.ID {
 			o.facts[i] = now
@@ -71,7 +71,7 @@ func asked(t *testing.T, w onAStore, name string, args map[string]string) (Out, 
 }
 
 // facts is what Orbit knows.
-func facts(t *testing.T, w onAStore) []knowledge.Fact {
+func facts(t *testing.T, w onAStore) []knowledge.Rule {
 	t.Helper()
 
 	got, err := knowledge.NewStore(w.store.Root()).Load("")

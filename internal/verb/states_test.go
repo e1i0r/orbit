@@ -10,8 +10,8 @@ import (
 )
 
 // aRule is one rule of a checkout, under a name of its own.
-func aRule(id, phrase string) knowledge.Fact {
-	return knowledge.Fact{
+func aRule(id, phrase string) knowledge.Rule {
+	return knowledge.Rule{
 		ID: id, Source: knowledge.Human, Phrase: phrase,
 		Scope: knowledge.Scope{Kind: knowledge.Repo, Repo: "/w/acme"},
 	}
@@ -28,7 +28,7 @@ func TestOneListingAnsweringOneQuestion(t *testing.T) {
 
 	again := aRule("aaaa1111", "coverage stays above 90%")
 	again.State, again.Why, again.Review = knowledge.Paused, "until we are past 80", true
-	w.facts = []knowledge.Fact{again, aRule("bbbb2222", "amounts are cents")}
+	w.facts = []knowledge.Rule{again, aRule("bbbb2222", "amounts are cents")}
 
 	out, err := asked(t, w, "rules", nil)
 	if err != nil {
@@ -58,7 +58,7 @@ func TestTheListingFiltersByWhereARuleStands(t *testing.T) {
 	off := aRule("cccc3333", "never push on a Friday")
 	off.State = knowledge.Off
 
-	w.facts = []knowledge.Fact{paused, off, aRule("bbbb2222", "amounts are cents")}
+	w.facts = []knowledge.Rule{paused, off, aRule("bbbb2222", "amounts are cents")}
 
 	for _, one := range []struct{ state, want, gone string }{
 		{"active", "amounts are cents", "coverage stays"},
@@ -105,7 +105,7 @@ func TestAStateNobodyCanBeInIsRefusedInWords(t *testing.T) {
 // whether it made sense or they were wrong.
 func TestPausingTakesAReasonAndAsksAboutItLater(t *testing.T) {
 	w := trayOf(t)
-	w.facts = []knowledge.Fact{aRule("aaaa1111", "coverage stays above 90%")}
+	w.facts = []knowledge.Rule{aRule("aaaa1111", "coverage stays above 90%")}
 
 	out, err := asked(t, w, "rules pause", map[string]string{
 		"rule": "aaaa1111", "why": "the repo has never been past 80",
@@ -139,7 +139,7 @@ func TestResumingIsTheAnswerToBothWaysItGotThere(t *testing.T) {
 
 	was := aRule("aaaa1111", "coverage stays above 90%")
 	was.State, was.Why, was.Review = knowledge.Paused, "until we are past 80", true
-	w.facts = []knowledge.Fact{was}
+	w.facts = []knowledge.Rule{was}
 
 	if _, err := asked(t, w, "rules resume", map[string]string{"rule": "aaaa1111"}); err != nil {
 		t.Fatalf("resume: %v", err)
@@ -158,7 +158,7 @@ func TestResumingIsTheAnswerToBothWaysItGotThere(t *testing.T) {
 // rather than only that this one was not found.
 func TestARuleNobodyHasNamedCannotBeReachedByName(t *testing.T) {
 	w := trayOf(t)
-	w.facts = []knowledge.Fact{aRule("", "written by hand, with no name")}
+	w.facts = []knowledge.Rule{aRule("", "written by hand, with no name")}
 
 	_, err := asked(t, w, "rules pause", map[string]string{"rule": "aaaa1111", "why": "because"})
 	if err == nil {

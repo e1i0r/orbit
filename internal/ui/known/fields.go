@@ -60,8 +60,8 @@ func (s State) rows2(e Env) []aRow {
 				hint: p.T("knowledge.hint_why", "a pause with no reason is a switch under "+
 					"another name; this is what you will read when you come back"),
 			},
-			{which: rowSave, button: p.T("knowledge.btn_pause", "✔ Pause it")},
-			{which: rowCancel, button: p.T("knowledge.btn_cancel", "✖ Leave it as it was")},
+			{which: rowSave, button: p.T("knowledge.btn_pause", "Pause")},
+			{which: rowCancel, button: p.T("knowledge.btn_cancel", "Cancel")},
 		}
 	}
 
@@ -113,8 +113,8 @@ func (s State) rows2(e Env) []aRow {
 	})
 
 	return append(out,
-		aRow{which: rowSave, button: p.T("knowledge.btn_save", "✔ Save the rule")},
-		aRow{which: rowCancel, button: p.T("knowledge.btn_cancel", "✖ Leave it as it was")})
+		aRow{which: rowSave, button: p.T("knowledge.btn_save", "Save")},
+		aRow{which: rowCancel, button: p.T("knowledge.btn_cancel", "Cancel")})
 }
 
 // places is everywhere a rule can be filed, read off the checkout it is

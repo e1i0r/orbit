@@ -41,7 +41,7 @@ func TestTheBrowserReadsWhatOrbitKnows(t *testing.T) {
 	s, r, p := portsOf(t)
 	ports := webPorts(r, s, newEngines(), t.TempDir(), p)
 
-	if facts := ports.Knows.Facts(); facts == nil {
+	if facts := ports.Knows.Rules(); facts == nil {
 		t.Error("facts reads nothing at all, not even an empty list")
 	}
 
@@ -76,12 +76,18 @@ func TestSourceAndActionNameEveryKind(t *testing.T) {
 		t.Errorf("no source reads %q, want it to say so", got)
 	}
 
-	if got := actionName(knowledge.Stops); got != "stops" {
-		t.Errorf("a stopping fact reads %q", got)
-	}
-
-	if got := actionName(knowledge.Warns); got != "warns" {
-		t.Errorf("a warning fact reads %q", got)
+	// The five the window says, and the browser has to say the same five or
+	// the two disagree about a rule they are both looking at.
+	for standing, want := range map[knowledge.Standing]string{
+		knowledge.Waiting: "waiting",
+		knowledge.Blocks:  "blocks",
+		knowledge.Says:    "says",
+		knowledge.Stopped: "paused",
+		knowledge.Silent:  "off",
+	} {
+		if got := standingName(standing); got != want {
+			t.Errorf("standing %v reads %q, want %q", standing, got, want)
+		}
 	}
 }
 

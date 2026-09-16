@@ -25,7 +25,7 @@ import (
 
 // Facts is everything Orbit has been told, across every repository the board
 // knows.
-func (w world) Facts() ([]knowledge.Fact, error) {
+func (w world) Facts() ([]knowledge.Rule, error) {
 	return knowsAllPort(w.reader, w.store)(), nil
 }
 

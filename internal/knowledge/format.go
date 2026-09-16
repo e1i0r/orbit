@@ -1,6 +1,6 @@
 package knowledge
 
-// What a fact looks like in a file.
+// What a rule looks like in a file.
 //
 // A header of plain `key: value` lines, and then the sentence. The sentence
 // is the body rather than another field because it is the part written for a
@@ -23,7 +23,7 @@ import (
 const fence = "---"
 
 // The header's keys. Everything the scope needs is written out even when the
-// file's own location implies it: a fact that has been moved by hand still
+// file's own location implies it: a rule that has been moved by hand still
 // says what it is about, and a reader of one file does not have to work out
 // where it sits to know what it covers.
 const (
@@ -58,8 +58,8 @@ var sourceNames = map[Source]string{
 	FromProduction: "production", FromDocs: "docs", FromHistory: "history",
 }
 
-// encode writes a fact out.
-func encode(f Fact) string {
+// encode writes a rule out.
+func encode(f Rule) string {
 	var b strings.Builder
 
 	b.WriteString(fence + "\n")
@@ -109,21 +109,21 @@ func line(b *strings.Builder, key, value string) {
 	}
 }
 
-// decode reads a fact back. where is the file's path under its root and repo
+// decode reads a rule back. where is the file's path under its root and repo
 // is the checkout it belongs to, both used to fill in what the header leaves
 // out — which is how a file dropped in by hand works with a header of two
 // lines.
-func decode(body, where, repo string) (Fact, error) {
+func decode(body, where, repo string) (Rule, error) {
 	head, phrase := split(body)
 	if phrase == "" {
-		return Fact{}, fmt.Errorf("says nothing")
+		return Rule{}, fmt.Errorf("says nothing")
 	}
 
-	f := Fact{ID: head[keyID], Phrase: phrase, Ref: head[keyRef], Check: head[keyCheck]}
+	f := Rule{ID: head[keyID], Phrase: phrase, Ref: head[keyRef], Check: head[keyCheck]}
 
 	source, ok := sourceNamed(head[keySource])
 	if !ok {
-		return Fact{}, fmt.Errorf("comes from %q, which is not a source", head[keySource])
+		return Rule{}, fmt.Errorf("comes from %q, which is not a source", head[keySource])
 	}
 
 	f.Source = source
@@ -136,7 +136,7 @@ func decode(body, where, repo string) (Fact, error) {
 	if at := head[keyAt]; at != "" {
 		when, err := time.Parse(time.RFC3339, at)
 		if err != nil {
-			return Fact{}, fmt.Errorf("entered at %q, which is not a time: %w", at, err)
+			return Rule{}, fmt.Errorf("entered at %q, which is not a time: %w", at, err)
 		}
 
 		f.At = when
@@ -224,7 +224,7 @@ func kindNamed(name, where, repo string) Kind {
 }
 
 // sourceNamed reads a source, and says so when the name is not one. There is
-// no default: a fact whose origin cannot be read is a fact nobody can trace,
+// no default: a rule whose origin cannot be read is a rule nobody can trace,
 // and the whole reason this is kept outside the model is that it can be.
 func sourceNamed(name string) (Source, bool) {
 	for source, spelled := range sourceNames {

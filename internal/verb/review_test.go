@@ -78,7 +78,7 @@ func TestNarrowingIsTheAnswerThatWasAlmostAlwaysWanted(t *testing.T) {
 	was := aRule("aaaa1111", "coverage stays above 90%")
 	was.Scope = knowledge.Scope{Kind: knowledge.Repo, Repo: repo}
 	was.Review, was.State, was.Why = true, knowledge.Paused, "it is too wide"
-	w.facts = []knowledge.Fact{was}
+	w.facts = []knowledge.Rule{was}
 
 	if _, err := asked(t, w, "rules correct", map[string]string{
 		"rule": "aaaa1111", "in": "internal/db",
@@ -105,7 +105,7 @@ func TestWhatIsNotNamedIsLeftAlone(t *testing.T) {
 
 	was := aRule("aaaa1111", "coverage stays above 90%")
 	was.Check, was.Stops = "make coverage", true
-	w.facts = []knowledge.Fact{was}
+	w.facts = []knowledge.Rule{was}
 
 	if _, err := asked(t, w, "rules correct", map[string]string{
 		"rule": "aaaa1111", "text": "coverage stays above 90% in this project",
@@ -138,7 +138,7 @@ func TestDecidingAgainstARuleKeepsIt(t *testing.T) {
 
 	was := aRule("aaaa1111", "coverage stays above 90%")
 	was.Review = true
-	w.facts = []knowledge.Fact{was}
+	w.facts = []knowledge.Rule{was}
 
 	out, err := asked(t, w, "rules off", map[string]string{"rule": "aaaa1111"})
 	if err != nil {
@@ -159,7 +159,7 @@ func TestDecidingAgainstARuleKeepsIt(t *testing.T) {
 // rather than filed against a repository picked for somebody.
 func TestARuleAboutNoCheckoutHasNowhereToNarrowTo(t *testing.T) {
 	w := trayOf(t)
-	w.facts = []knowledge.Fact{{
+	w.facts = []knowledge.Rule{{
 		ID: "aaaa1111", Source: knowledge.Human, Phrase: "PRs are written in English",
 		Scope: knowledge.Scope{Kind: knowledge.General},
 	}}

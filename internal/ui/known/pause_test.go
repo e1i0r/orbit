@@ -16,13 +16,13 @@ import (
 // back to it. A pause with no reason is refused, because a pause with no
 // reason is the switch beside it under another name.
 func TestPausingTakesAReasonAndAsksAboutItLater(t *testing.T) {
-	var paused []knowledge.Fact
+	var paused []knowledge.Rule
 
-	s, e := onScreen(t, knowledge.Fact{
+	s, e := onScreen(t, knowledge.Rule{
 		ID: "aaaa1111", Scope: knowledge.Scope{Kind: knowledge.General},
 		Source: knowledge.Human, Phrase: "of everything",
 	})
-	e.Replace = func(_, now knowledge.Fact) error {
+	e.Replace = func(_, now knowledge.Rule) error {
 		paused = append(paused, now)
 
 		return nil
@@ -57,7 +57,7 @@ func TestPausingTakesAReasonAndAsksAboutItLater(t *testing.T) {
 // TestARuleAlreadyPausedIsNotPausedAgain, so that the one gesture that
 // changes a rule cannot quietly overwrite the reason already on it.
 func TestARuleAlreadyPausedIsNotPausedAgain(t *testing.T) {
-	already := knowledge.Fact{
+	already := knowledge.Rule{
 		ID: "aaaa1111", Scope: knowledge.Scope{Kind: knowledge.General},
 		Source: knowledge.Human, Phrase: "of everything",
 		State: knowledge.Paused, Why: "until we are past 80",

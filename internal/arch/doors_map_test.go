@@ -151,7 +151,7 @@ var doors = map[string][]string{
 	"internal/board":     {"board.go", "files.go", "filetext.go", "health.go", "log.go", "refresh.go", "supervisor.go"},
 	"internal/export":    {"export.go"},
 	"internal/flow":      {"draft.go", "engine.go", "flow.go", "load.go", "loop.go", "resolve.go", "save.go"},
-	"internal/knowledge": {"fact.go", "id.go", "scope.go", "store.go"},
+	"internal/knowledge": {"rule.go", "id.go", "scope.go", "store.go"},
 	"internal/learn": {
 		"cold.go", "draft.go", "history.go", "keep.go", "learn.go", "quoted.go", "repeated.go",
 	},

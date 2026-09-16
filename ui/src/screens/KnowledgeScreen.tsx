@@ -1,213 +1,208 @@
-// What Orbit has been told.
+// The Brain: everything Orbit has learned about your code.
 //
-// Two things decide whether a fact is worth keeping, and the row leads with
-// both: what it actually does when work reaches it, and how often it has
-// been told. A fact that asked to stop and brought no command to check with
-// only warns — it is said plainly here, because a rule that reads as a gate
-// and is not one is the worst kind to have written down.
+// Three places and one screen: the rules in bands that say what each is
+// doing, one rule opened with everything about it and the decisions under
+// that, and the form a rule is written in. It is the cockpit's own shape,
+// because a reader who has used one should not have to learn the other.
+//
+// Every gesture here goes through internal/verb by name — `rules keep`,
+// `rules pause`, `rules off` — which is the same door the command line and a
+// model's tool call reach. There is no verb on this page that is only here.
 
-import { useEffect, useMemo, useState } from "react";
-import { api, type Board, type Fact } from "../api";
+import { useCallback, useEffect, useState } from "react";
+import { api, type Checkout, type Rule, type Unanswered, type Verb } from "../api";
 import { Empty } from "../parts/Empty";
+import { RuleCard } from "../brain/RuleCard";
+import { RuleForm, type Draft } from "../brain/RuleForm";
+import { RuleList } from "../brain/RuleList";
 
-export function KnowledgeScreen({ board }: { board?: Board }) {
-  const [facts, setFacts] = useState<Fact[]>();
+type Open =
+  | { at: "list" }
+  | { at: "rule"; id: string }
+  | { at: "form"; draft: Draft };
+
+export function KnowledgeScreen() {
+  const [rules, setRules] = useState<Rule[]>();
+  const [waiting, setWaiting] = useState<Unanswered[]>([]);
+  const [repos, setRepos] = useState<Checkout[]>([]);
   const [read, setRead] = useState(false);
   const [failed, setFailed] = useState<string>();
-  const [like, setLike] = useState("");
-  const [shown, setShown] = useState<"told" | "all">("told");
-  const [wrote, setWrote] = useState("");
-  const [where, setWhere] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [open, setOpen] = useState<Open>({ at: "list" });
+  const [busy, setBusy] = useState<string>();
+  const [said, setSaid] = useState<string>();
   const [refused, setRefused] = useState<string>();
-  const [again, setAgain] = useState(0);
+
+  const load = useCallback(async () => {
+    try {
+      const got = await api.knowledge();
+
+      setRules(got.rules);
+      setWaiting(got.waiting ?? []);
+      setRepos(got.repos ?? []);
+      setRead(got.read);
+    } catch (e) {
+      setFailed((e as Error).message);
+    }
+  }, []);
 
   useEffect(() => {
-    let stale = false;
+    void load();
+  }, [load]);
 
-    api
-      .knowledge()
-      .then((got) => {
-        if (stale) return;
-        setFacts(got.facts);
-        setRead(got.read);
-      })
-      .catch((e: Error) => !stale && setFailed(e.message));
+  // Every verb lands the same way: it says what it did, the store is read
+  // again, and the sentence stays on screen — a button that answered nothing
+  // is a button somebody presses twice.
+  const ask = async (verb: Verb, says: Record<string, string | undefined>) => {
+    setBusy(verb);
+    setRefused(undefined);
 
-    return () => {
-      stale = true;
-    };
-  }, [again]);
+    try {
+      const did = await api.did(verb, says);
 
-  const list = useMemo(() => {
-    const needle = like.trim().toLowerCase();
+      setSaid(did.said);
+      await load();
 
-    return (facts ?? [])
-      .filter((f) => (shown === "all" ? true : !f.off))
-      .filter((f) => !needle || `${f.phrase} ${f.scope} ${f.ref}`.toLowerCase().includes(needle));
-  }, [facts, like, shown]);
+      return true;
+    } catch (e) {
+      setRefused((e as Error).message);
 
-  if (failed) return <p className="text-xs text-bad">{failed}</p>;
-  if (!facts) return <p className="text-xs text-aside">Reading what Orbit knows…</p>;
+      return false;
+    } finally {
+      setBusy(undefined);
+    }
+  };
+
+  if (failed) return <Empty said="What Orbit knows could not be read." next={failed} />;
+  if (!rules) return <Empty said="Reading what Orbit knows…" />;
 
   if (!read) {
+    return <Empty said="This build has no store to ask." next="Run orbit from a workspace." />;
+  }
+
+  if (open.at === "rule") {
+    const one = rules.find((f) => f.id === open.id);
+
+    if (!one) return <Empty said="That rule is no longer there." />;
+
     return (
-      <Empty
-        said="Nothing was read"
-        next="This build has no store to ask, so it says nothing rather than pretending it found nothing."
+      <RuleCard
+        rule={one}
+        busy={busy}
+        said={said}
+        onBack={() => setOpen({ at: "list" })}
+        onDo={async (verb) => {
+          if (await ask(verb, { rule: one.id })) setOpen({ at: "list" });
+        }}
+        onEdit={() =>
+          setOpen({
+            at: "form",
+            draft: {
+              rule: one,
+              phrase: one.phrase,
+              repo: one.repo ?? "",
+              where: one.path || ".",
+              check: one.check ?? "",
+            },
+          })
+        }
       />
     );
   }
 
-  const off = facts.filter((f) => f.off).length;
-  const repos = board?.repos ?? [];
+  if (open.at === "form") {
+    const { draft } = open;
 
-  const learn = async () => {
-    const text = wrote.trim();
-    if (text === "" || saving) return;
+    return (
+      <RuleForm
+        draft={draft}
+        repos={repos}
+        busy={busy !== undefined}
+        refused={refused}
+        onBack={() => setOpen({ at: "list" })}
+        onDrop={
+          draft.said
+            ? async () => {
+                if (await ask("rules drop", { at: draft.said?.at })) setOpen({ at: "list" });
+              }
+            : undefined
+        }
+        onSave={async (one) => {
+          // Correcting names the rule; keeping names the sentence. Both
+          // take the same three fields, because both are answering the
+          // same three questions about the same thing.
+          const done = one.rule
+            ? await ask("rules correct", {
+                rule: one.rule.id,
+                text: one.phrase,
+                in: one.where,
+                check: one.check,
+              })
+            : await ask("rules keep", {
+                at: one.said?.at,
+                text: one.phrase,
+                repo: one.repo || undefined,
+                in: one.where,
+                check: one.check,
+              });
 
-    setSaving(true);
-    setRefused(undefined);
-
-    try {
-      await api.did("learn", { text, repo: where || repos[0]?.path });
-      setWrote("");
-      setAgain((n) => n + 1);
-    } catch (e) {
-      setRefused((e as Error).message);
-    } finally {
-      setSaving(false);
-    }
-  };
+          if (done) setOpen({ at: "list" });
+        }}
+      />
+    );
+  }
 
   return (
-    <div className="flex flex-col gap-2.5">
-      {/* A fact is about a repository, and which one is asked for rather
-          than guessed at wherever there is a choice: a rule filed under the
-          wrong checkout is told to the wrong runs, and nothing says so.
-          `orbit learn` refuses to pick for you for the same reason. */}
-      <div className="flex flex-col gap-1 rounded-md border border-edge bg-well/40 p-2">
-        <div className="flex flex-wrap items-end gap-1.5">
-          <input
-            value={wrote}
-            onChange={(e) => setWrote(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && void learn()}
-            placeholder="Amounts are in cents everywhere below internal/money."
-            className="min-w-0 flex-1 rounded border border-edge bg-well px-2 py-1 text-[11px] text-said outline-none placeholder:text-faint focus:border-accent/50"
-          />
-
-          {repos.length > 1 && (
-            <select
-              value={where}
-              onChange={(e) => setWhere(e.target.value)}
-              className="rounded border border-edge bg-well px-1.5 py-1 text-[11px] text-said outline-none focus:border-accent/50"
-            >
-              <option value="">which repository?</option>
-              {repos.map((r) => (
-                <option key={r.path} value={r.path}>
-                  {r.name}
-                </option>
-              ))}
-            </select>
-          )}
-
-          <button
-            onClick={() => void learn()}
-            disabled={saving || wrote.trim() === "" || (repos.length > 1 && where === "")}
-            className="shrink-0 rounded border border-accent/40 bg-accent/10 px-2 py-1 text-[11px] text-accent transition-colors hover:bg-accent/20 disabled:opacity-40"
-          >
-            {saving ? "…" : "Write it down"}
-          </button>
+    <div className="flex flex-col gap-4">
+      <header className="flex flex-wrap items-baseline justify-between gap-2">
+        <div>
+          <p className="text-xs text-faint">
+            Every rule is put in front of the agent before it works. The ones that block also run a
+            command, and send the work back when it fails.
+          </p>
         </div>
+        <button
+          type="button"
+          onClick={() =>
+            setOpen({
+              at: "form",
+              draft: { phrase: "", repo: repos[0]?.path ?? "", where: "", check: "" },
+            })
+          }
+          className="rounded-md border border-edge px-3 py-1.5 text-sm hover:bg-edge/60"
+        >
+          + A new rule
+        </button>
+      </header>
 
-        {refused && <p className="text-[11px] text-bad">{refused}</p>}
-      </div>
+      {said && <p className="text-sm text-ok">{said}</p>}
 
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <input
-          value={like}
-          onChange={(e) => setLike(e.target.value)}
-          placeholder="Filter facts"
-          className="w-56 rounded border border-edge bg-well px-2 py-1 text-[11px] text-said placeholder:text-faint"
-        />
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-faint">
-            {list.length} of {facts.length}
-            {off > 0 ? ` · ${off} switched off` : ""}
-          </span>
-          <button
-            onClick={() => setShown(shown === "all" ? "told" : "all")}
-            aria-pressed={shown === "all"}
-            className={`rounded px-2 py-0.5 text-[11px] transition-colors ${
-              shown === "all" ? "bg-accent/15 text-accent" : "text-aside hover:text-said"
-            }`}
-          >
-            Show the ones switched off
-          </button>
-        </div>
-      </div>
-
-      {facts.length === 0 ? (
+      {rules.length + waiting.length === 0 ? (
         <Empty
-          said="Orbit has been told nothing yet"
-          next="orbit learn writes a fact, and a gate or the supervisor can add one as it goes."
+          said="Nothing written down yet."
+          next="Say a rule to the supervisor, or write one here."
         />
-      ) : list.length === 0 ? (
-        // Filtered down to nothing is not the same as knowing nothing, and
-        // an empty area under a count that says "0 of 1" is a screen that
-        // looks broken.
-        <p className="rounded-md border border-edge bg-panel px-3 py-2 text-[11px] text-aside">
-          {like.trim()
-            ? `Nothing here matches "${like.trim()}".`
-            : "Every fact Orbit holds is switched off. Show them to see what they said."}
-        </p>
       ) : (
-        <ul className="flex flex-col gap-1.5">
-          {list.map((fact, i) => (
-            <li
-              key={i}
-              className={`rounded-md border border-edge bg-panel px-3 py-2 ${fact.off ? "opacity-50" : ""}`}
-            >
-              <div className="flex items-start gap-2">
-                <span
-                  className={`mt-0.5 shrink-0 rounded px-1.5 py-px text-[10px] ${
-                    fact.action === "stops" ? "bg-bad/15 text-bad" : "bg-wait/15 text-wait"
-                  }`}
-                >
-                  {fact.action}
-                </span>
-                <p className="min-w-0 flex-1 text-xs text-said">{fact.phrase}</p>
-                <span className="shrink-0 font-mono text-[10px] text-faint tabular-nums">
-                  told {fact.used}×
-                </span>
-              </div>
-
-              <p className="mt-1 flex flex-wrap gap-x-3 text-[10px] text-faint">
-                <span className="font-mono">{fact.scope}</span>
-                <span>{fact.source}</span>
-                {fact.ref && <span className="font-mono">{fact.ref}</span>}
-                <span className="tabular-nums">{when(fact.at)}</span>
-                {fact.off && <span className="text-wait">switched off</span>}
-              </p>
-
-              {fact.check && (
-                <p className="mt-1 truncate font-mono text-[10px] text-aside" title={fact.check}>
-                  <span className="text-faint">checks with </span>
-                  {fact.check}
-                </p>
-              )}
-            </li>
-          ))}
-        </ul>
+        <RuleList
+          rules={rules}
+          waiting={waiting}
+          onRule={(f) => {
+            setSaid(undefined);
+            setOpen({ at: "rule", id: f.id });
+          }}
+          onSaid={(one) =>
+            setOpen({
+              at: "form",
+              draft: {
+                said: one,
+                phrase: one.text,
+                repo: one.repo ?? repos[0]?.path ?? "",
+                where: one.where ?? "",
+                check: "",
+              },
+            })
+          }
+        />
       )}
     </div>
   );
-}
-
-function when(at: string): string {
-  const t = new Date(at);
-
-  return Number.isNaN(t.getTime())
-    ? "—"
-    : t.toLocaleString([], { day: "numeric", month: "short", year: "numeric" });
 }

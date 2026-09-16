@@ -75,7 +75,7 @@ func (w world) Looked() error { return nil }
 
 // Facts is everything Orbit has been told, across every repository this
 // session looks in.
-func (w world) Facts() ([]knowledge.Fact, error) {
+func (w world) Facts() ([]knowledge.Rule, error) {
 	ks := knowledge.NewStore(w.sb.store.Root())
 
 	// Beside the error: Load answers with the facts it could read, so a file
@@ -149,7 +149,7 @@ func (w world) Say(text, by, about string) error {
 
 // Learn writes down something true about the code, under a name of its own
 // so that what happens to it afterwards can be followed.
-func (w world) Learn(fact knowledge.Fact) error {
+func (w world) Learn(fact knowledge.Rule) error {
 	if err := fact.Validate(); err != nil {
 		return err
 	}
@@ -171,7 +171,7 @@ func (w world) Learn(fact knowledge.Fact) error {
 // it off, rewording it — is the answer a person gives after reading it, and
 // a model that could give that answer could quietly clear away the rules it
 // keeps running into.
-func (w world) Replace(_, _ knowledge.Fact, _ learn.Turn) error {
+func (w world) Replace(_, _ knowledge.Rule, _ learn.Turn) error {
 	return errors.New("changing a rule is a person's decision; ask them to run orbit rules")
 }
 

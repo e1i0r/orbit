@@ -72,7 +72,7 @@ func (s State) newFact(e Env) State {
 	}
 
 	s.repo = hereRepo(e)
-	s.facts = append(s.facts, knowledge.Fact{
+	s.facts = append(s.facts, knowledge.Rule{
 		Scope:  hereScope(s.repo),
 		Source: knowledge.Human,
 		At:     time.Now().UTC(),

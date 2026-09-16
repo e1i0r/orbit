@@ -18,14 +18,14 @@ func aRepo(t *testing.T) (*Store, string) {
 
 // TestARuleIsNamedOnceAndKeepsItsName.
 //
-// Everything else about a fact can change. The file is named after the
+// Everything else about a rule can change. The file is named after the
 // sentence, so rewording one renames it, and what the record wrote down
 // about the old name stops being findable — which would make a cycle that
 // cannot say "this is the same thing you said differently three weeks ago".
 func TestARuleIsNamedOnceAndKeepsItsName(t *testing.T) {
 	s, repo := aRepo(t)
 
-	was := Fact{
+	was := Rule{
 		Scope: Scope{Kind: Repo, Repo: repo}, Source: Human,
 		Phrase: "amounts are cents",
 	}
@@ -36,7 +36,7 @@ func TestARuleIsNamedOnceAndKeepsItsName(t *testing.T) {
 
 	written := only(t, s, repo)
 	if written.ID == "" {
-		t.Fatal("a fact Orbit wrote has no name")
+		t.Fatal("a rule Orbit wrote has no name")
 	}
 
 	// Reworded, which renames the file: the name has to come through it.
@@ -63,24 +63,24 @@ func TestTwoRulesAreNotTheSameRule(t *testing.T) {
 	s, repo := aRepo(t)
 
 	for _, phrase := range []string{"amounts are cents", "errors are wrapped"} {
-		if _, err := s.Save(Fact{
+		if _, err := s.Save(Rule{
 			Scope: Scope{Kind: Repo, Repo: repo}, Source: Human, Phrase: phrase,
 		}); err != nil {
 			t.Fatalf("save %q: %v", phrase, err)
 		}
 	}
 
-	facts, err := s.LoadRepo(repo)
+	rules, err := s.LoadRepo(repo)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if len(facts) != 2 {
-		t.Fatalf("the checkout holds %d facts", len(facts))
+	if len(rules) != 2 {
+		t.Fatalf("the checkout holds %d rules", len(rules))
 	}
 
-	if facts[0].ID == facts[1].ID {
-		t.Errorf("two rules are both called %q", facts[0].ID)
+	if rules[0].ID == rules[1].ID {
+		t.Errorf("two rules are both called %q", rules[0].ID)
 	}
 }
 
@@ -105,7 +105,7 @@ func TestAFactWrittenByHandIsReadWithoutAName(t *testing.T) {
 
 	written := only(t, s, repo)
 	if written.ID != "" {
-		t.Errorf("reading a hand-written fact named it %q", written.ID)
+		t.Errorf("reading a hand-written rule named it %q", written.ID)
 	}
 
 	// And the file on disk is untouched by the reading.
@@ -115,7 +115,7 @@ func TestAFactWrittenByHandIsReadWithoutAName(t *testing.T) {
 	}
 
 	if string(again) != body {
-		t.Errorf("reading the fact rewrote it:\n%s", again)
+		t.Errorf("reading the rule rewrote it:\n%s", again)
 	}
 
 	// Edited through a screen, it gets one, and the file says so.
@@ -127,7 +127,7 @@ func TestAFactWrittenByHandIsReadWithoutAName(t *testing.T) {
 	}
 
 	if after := only(t, s, repo); after.ID == "" {
-		t.Error("a hand-written fact Orbit has now written still has no name")
+		t.Error("a hand-written rule Orbit has now written still has no name")
 	}
 }
 
@@ -139,7 +139,7 @@ func TestAFactWrittenByHandIsReadWithoutAName(t *testing.T) {
 func TestTheNameIsInTheFileAndNotInItsName(t *testing.T) {
 	s, repo := aRepo(t)
 
-	if _, err := s.Save(Fact{
+	if _, err := s.Save(Rule{
 		Scope: Scope{Kind: Repo, Repo: repo}, Source: Human,
 		Phrase: "amounts are cents", Ref: "PAY-1",
 	}); err != nil {
@@ -158,26 +158,26 @@ func TestTheNameIsInTheFileAndNotInItsName(t *testing.T) {
 	}
 }
 
-// only is the single fact the checkout holds.
-func only(t *testing.T, s *Store, repo string) Fact {
+// only is the single rule the checkout holds.
+func only(t *testing.T, s *Store, repo string) Rule {
 	t.Helper()
 
-	facts, err := s.LoadRepo(repo)
+	rules, err := s.LoadRepo(repo)
 	if err != nil {
 		t.Fatalf("read what the checkout knows: %v", err)
 	}
 
-	if len(facts) != 1 {
-		t.Fatalf("the checkout holds %d facts, want one", len(facts))
+	if len(rules) != 1 {
+		t.Fatalf("the checkout holds %d rules, want one", len(rules))
 	}
 
-	return facts[0]
+	return rules[0]
 }
 
 // TestEditingAFactSomebodyWroteByHandLeavesNoCopyBehind.
 //
 // A file written by hand is called whatever they called it, and a
-// replacement that worked the old name out of the fact's own fields put the
+// replacement that worked the old name out of the rule's own fields put the
 // new copy somewhere else and left the original where it was — still read,
 // still told to every phase, still refusing work over a sentence nobody
 // meant to keep.
@@ -203,7 +203,7 @@ func TestEditingAFactSomebodyWroteByHandLeavesNoCopyBehind(t *testing.T) {
 		t.Fatalf("replace: %v", err)
 	}
 
-	// One fact, and only takes care of saying so.
+	// One rule, and only takes care of saying so.
 	after := only(t, s, repo)
 	if !strings.Contains(after.Phrase, "afternoon") {
 		t.Errorf("the one left reads %q", after.Phrase)

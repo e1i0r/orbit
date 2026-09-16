@@ -106,7 +106,7 @@ func (w world) Looked() error {
 // the rule is written down in the same breath as the rule and cannot be told
 // the name afterwards. Every rule's history starts with somebody keeping it,
 // however they kept it.
-func (w world) Learn(fact knowledge.Fact) error {
+func (w world) Learn(fact knowledge.Rule) error {
 	if err := fact.Validate(); err != nil {
 		return err
 	}
@@ -129,7 +129,7 @@ func (w world) Learn(fact knowledge.Fact) error {
 // The same port the window is handed, so that a rule corrected from a screen
 // and one corrected from a command line move the same way and leave the same
 // row behind in the record.
-func (w world) Replace(was, now knowledge.Fact, where learn.Turn) error {
+func (w world) Replace(was, now knowledge.Rule, where learn.Turn) error {
 	return replaceFactPort(w.store)(was, now, where)
 }
 

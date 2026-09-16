@@ -231,7 +231,7 @@ func (s State) entryRow(one entry, chosen bool, w widths, cw int, e Env) []strin
 
 // ruleRow is a rule: its name, its sentence, how far it reaches and since
 // when. What it does and where it stands are the band it is under.
-func (s State) ruleRow(f knowledge.Fact, chosen bool, w widths, cw int, e Env) []string {
+func (s State) ruleRow(f knowledge.Rule, chosen bool, w widths, cw int, e Env) []string {
 	ink := theme.Text(theme.Primary)
 	if !f.Tells() {
 		ink = theme.Paint(theme.Dim)
@@ -290,7 +290,7 @@ func many(e Env) bool { return len(e.Repos) > 1 }
 // With one checkout the path is the whole answer. With several, the same
 // path exists in all of them — a rule about migrations says nothing about
 // which project's migrations — so the checkout's name goes in front of it.
-func where(f knowledge.Fact, e Env) string {
+func where(f knowledge.Rule, e Env) string {
 	p := e.Words
 
 	// The two that are words rather than paths, and the two that are most

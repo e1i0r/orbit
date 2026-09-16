@@ -30,7 +30,7 @@ func said(n int, text string) Said {
 }
 
 // facts is what Orbit knows.
-func facts(t *testing.T, s *store.Store) []knowledge.Fact {
+func facts(t *testing.T, s *store.Store) []knowledge.Rule {
 	t.Helper()
 
 	got, err := knowledge.NewStore(s.Root()).Load("")

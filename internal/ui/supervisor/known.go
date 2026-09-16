@@ -119,7 +119,7 @@ func (s State) sideFits(w int) bool {
 // The ones that stop come first wherever they are drawn: they are what will
 // send work back, and a reader scanning for what is standing over them looks
 // for those.
-func split(facts []knowledge.Fact) (rules, warns []knowledge.Fact) {
+func split(facts []knowledge.Rule) (rules, warns []knowledge.Rule) {
 	for _, f := range facts {
 		if f.Stops {
 			rules = append(rules, f)
@@ -135,7 +135,7 @@ func split(facts []knowledge.Fact) (rules, warns []knowledge.Fact) {
 // sideSection is one heading and what is under it, and nothing when there is
 // nothing under it — an empty heading is a question a reader has to answer
 // for themselves.
-func (s State) sideSection(head string, facts []knowledge.Fact, e Env) []string {
+func (s State) sideSection(head string, facts []knowledge.Rule, e Env) []string {
 	if len(facts) == 0 {
 		return nil
 	}
@@ -155,7 +155,7 @@ func (s State) sideSection(head string, facts []knowledge.Fact, e Env) []string 
 // it, because a general fact and the repository's own sit side by side here
 // and a line that did not say which is which reads as a rule about
 // everything.
-func (s State) sideFact(f knowledge.Fact, e Env) []string {
+func (s State) sideFact(f knowledge.Rule, e Env) []string {
 	where := fact.Where(f.Scope)
 	if f.Stops && f.Action() != knowledge.Stops {
 		where += " · " + e.Words.T("known.no_check", "no check yet")
@@ -219,7 +219,7 @@ const sinceLearned = 24 * time.Hour
 
 // learnedRecently is whether a fact was written down by a run rather than by
 // the reader, and recently enough to be part of what they missed.
-func (s State) learnedRecently(f knowledge.Fact, e Env) bool {
+func (s State) learnedRecently(f knowledge.Rule, e Env) bool {
 	if f.Source != knowledge.FromRecord || f.At.IsZero() || e.Now.IsZero() {
 		return false
 	}

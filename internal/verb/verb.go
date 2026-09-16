@@ -105,6 +105,15 @@ type Field struct {
 	// not needed has a working zero: no reason given, no restart, no flow
 	// named and so the one the settings chose.
 	Needed bool
+	// Or names a field that answers the same question another way, and
+	// satisfies this one when it is given.
+	//
+	// One question, two ways to say it, because there are two kinds of
+	// caller. A person reads a numbered list and types the number; a screen
+	// has no list in front of a reader to count down and names the sentence
+	// by when it was said. Declared here rather than checked by each
+	// surface, so all four refuse the same thing for the same reason.
+	Or string
 }
 
 // Kind is what a field holds. Three, because three is what the verbs

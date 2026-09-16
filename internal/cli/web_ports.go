@@ -13,40 +13,99 @@ import (
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/knowledge"
+	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/quota"
 	"github.com/e1i0r/orbit/internal/record"
+	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/supervisor"
 	"github.com/e1i0r/orbit/internal/ui/fact"
+	"github.com/e1i0r/orbit/internal/ui/known"
 	"github.com/e1i0r/orbit/internal/ui/roster"
 	"github.com/e1i0r/orbit/internal/web"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
-// knows fills the facts port off the same reader the cockpit's screen uses.
+// knows fills the Brain's port off the same readers the cockpit's screen
+// uses, so the two surfaces answer from one place.
 type knows struct {
-	all func() []knowledge.Fact
+	all   func() []knowledge.Rule
+	said  func() []known.Said
+	board *board.Reader
 }
 
-func (k knows) Facts() []web.Fact {
+// Waiting is the tray: what somebody said that read as a rule and nobody has
+// answered yet.
+func (k knows) Waiting() []web.Unanswered {
+	if k.said == nil {
+		return nil
+	}
+
+	rows := k.said()
+
+	out := make([]web.Unanswered, 0, len(rows))
+	for _, one := range rows {
+		out = append(out, web.Unanswered{
+			At: one.At, Text: one.Text, From: one.From, Where: one.Where,
+		})
+	}
+
+	return out
+}
+
+// Checkouts is every repository on the board, each with the folders it has
+// and the commands it already runs on itself.
+//
+// Read here rather than by the page, because reading them means reaching the
+// disk — which the browser may not do, and which is the whole reason these
+// arrive as data.
+func (k knows) Checkouts() []web.Checkout {
+	if k.board == nil {
+		return nil
+	}
+
+	b, _, err := k.board.Refresh()
+	if err != nil {
+		logger.Error("cli/web", "the repositories were not read: %v", err)
+
+		return nil
+	}
+
+	out := make([]web.Checkout, 0, len(b.RepoList))
+	for _, one := range b.RepoList {
+		out = append(out, web.Checkout{
+			Path:    one.Path,
+			Name:    fact.Repo(one.Path),
+			Folders: repo.Folders(one.Path),
+			Checks:  repo.Checks(one.Path),
+		})
+	}
+
+	return out
+}
+
+func (k knows) Rules() []web.Rule {
 	if k.all == nil {
 		return nil
 	}
 
-	out := make([]web.Fact, 0)
+	out := make([]web.Rule, 0)
 
 	for _, f := range k.all() {
-		out = append(out, web.Fact{
+		out = append(out, web.Rule{
+			ID:     f.ID,
 			Phrase: f.Phrase,
 			Scope:  fact.Where(f.Scope),
+			Path:   f.Scope.Path,
 			Source: sourceName(f.Source),
-			Action: actionName(f.Action()),
+			State:  standingName(f.Standing()),
+			Stops:  f.Stops,
 			Check:  f.Check,
+			Why:    f.Why,
 			Ref:    f.Ref,
 			Repo:   f.Scope.Repo,
 			At:     f.At,
 			Used:   f.Used,
-			Off:    !f.Tells(),
 		})
 	}
 
@@ -77,14 +136,24 @@ func sourceName(s knowledge.Source) string {
 	return "unsourced"
 }
 
-// actionName is what a fact does when work reaches its scope — which is not
-// always what it was asked to do, and Action is what settles that.
-func actionName(a knowledge.Action) string {
-	if a == knowledge.Stops {
-		return "stops"
+// standingName is what a rule is doing, in the word the window uses for it.
+//
+// The fold is internal/knowledge's and only the spelling is here, which is
+// what keeps the browser and the cockpit from disagreeing about a rule they
+// are both looking at.
+func standingName(s knowledge.Standing) string {
+	switch s {
+	case knowledge.Waiting:
+		return "waiting"
+	case knowledge.Blocks:
+		return "blocks"
+	case knowledge.Says:
+		return "says"
+	case knowledge.Stopped:
+		return "paused"
 	}
 
-	return "warns"
+	return "off"
 }
 
 // talks fills the supervisor port.
@@ -211,7 +280,7 @@ func webPorts(
 		Board: r,
 		Trees: r,
 		Flows: s,
-		Knows: knows{all: knowsAllPort(r, s)},
+		Knows: knows{all: knowsAllPort(r, s), said: waitingPort(s), board: r},
 		Talks: talks{store: s},
 		// One value fills all three: what can be asked for and what asking
 		// does need the same store and the same flow. They are separate

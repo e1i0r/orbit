@@ -79,18 +79,18 @@ func TestLearningDownWritesFactsDown(t *testing.T) {
 		t.Error("nothing is known right after learning two facts")
 	}
 
-	if err := turnFactPort(s)(knowledge.Fact{
+	if err := turnFactPort(s)(knowledge.Rule{
 		Phrase: "amounts are cents", Source: knowledge.Human,
 		Scope: knowledge.Scope{Kind: knowledge.General},
 	}); err != nil {
 		t.Fatalf("turn: %v", err)
 	}
 
-	was := knowledge.Fact{
+	was := knowledge.Rule{
 		Phrase: "amounts are cents", Source: knowledge.Human,
 		Scope: knowledge.Scope{Kind: knowledge.General},
 	}
-	now := knowledge.Fact{
+	now := knowledge.Rule{
 		Phrase: "amounts are always cents", Source: knowledge.Human,
 		Scope: knowledge.Scope{Kind: knowledge.General},
 	}
@@ -101,7 +101,7 @@ func TestLearningDownWritesFactsDown(t *testing.T) {
 
 	// Replacing what is not there still writes the correction: the new
 	// sentence stands on its own, and there is nothing to take away.
-	if err := replaceFactPort(s)(knowledge.Fact{Phrase: "nobody wrote this"}, now,
+	if err := replaceFactPort(s)(knowledge.Rule{Phrase: "nobody wrote this"}, now,
 		learn.Turn{}); err != nil {
 		t.Fatalf("replace: %v", err)
 	}
@@ -130,7 +130,7 @@ func TestFactScopeNamesEveryScope(t *testing.T) {
 // TestOnlyOfKeepsItsOwn. Only the facts about that checkout: the window
 // narrows what the model is told to where its work is.
 func TestOnlyOfKeepsItsOwn(t *testing.T) {
-	facts := []knowledge.Fact{
+	facts := []knowledge.Rule{
 		{Phrase: "everywhere", Scope: knowledge.Scope{Kind: knowledge.General}},
 		{Phrase: "in go", Scope: knowledge.Scope{Kind: knowledge.Language, Lang: "go"}},
 		{Phrase: "in acme", Scope: knowledge.Scope{Kind: knowledge.Repo, Repo: "/src/acme"}},

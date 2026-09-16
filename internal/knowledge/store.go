@@ -1,14 +1,14 @@
 package knowledge
 
-// Where the facts live, which is two places for one reason: whether they
+// Where the rules live, which is two places for one reason: whether they
 // travel.
 //
-// A fact about a repository goes inside it, under `.orbit/knowledge/`, so it
+// A rule about a repository goes inside it, under `.orbit/knowledge/`, so it
 // moves with the push — whoever clones the project gets what Orbit learned
 // about it, and a rule that is about to start steering the agent arrives in a
 // diff somebody reviews rather than appearing on one machine in silence.
 //
-// A fact about everything, or about a language, belongs to no checkout. There
+// A rule about everything, or about a language, belongs to no checkout. There
 // is no repository to put it in that would not be picked at random, so it
 // lives in the state root, and the price is paid knowingly: it does not
 // travel and nobody else sees it.
@@ -39,7 +39,7 @@ const (
 	fileMode = 0o644
 )
 
-// A Store reads and writes facts across both roots.
+// A Store reads and writes rules across both roots.
 type Store struct {
 	state string
 }
@@ -51,15 +51,15 @@ func NewStore(stateRoot string) *Store {
 	return &Store{state: stateRoot}
 }
 
-// Save writes one fact down and answers where it went.
+// Save writes one rule down and answers where it went.
 //
-// A fact with no name is given one here, which is the only place a name is
+// A rule with no name is given one here, which is the only place a name is
 // ever coined. That covers both of the ways one arrives without: a rule
 // Orbit is writing for the first time, and a file somebody wrote by hand and
 // has now edited through a screen. Reading does not coin one — a walk that
 // wrote to every file it read would put a diff in somebody's checkout for
 // having opened a list.
-func (s *Store) Save(f Fact) (string, error) {
+func (s *Store) Save(f Rule) (string, error) {
 	if err := f.Validate(); err != nil {
 		return "", err
 	}
@@ -70,34 +70,34 @@ func (s *Store) Save(f Fact) (string, error) {
 
 	path := filepath.Join(s.dirFor(f.Scope), fileName(f))
 	if err := os.MkdirAll(filepath.Dir(path), dirMode); err != nil {
-		return "", fmt.Errorf("make room for the fact at %q: %w", path, err)
+		return "", fmt.Errorf("make room for the rule at %q: %w", path, err)
 	}
 
 	if err := os.WriteFile(path, []byte(encode(f)), fileMode); err != nil {
-		return "", fmt.Errorf("write the fact at %q: %w", path, err)
+		return "", fmt.Errorf("write the rule at %q: %w", path, err)
 	}
 
 	return path, nil
 }
 
-// Replace writes a changed fact and takes the one it replaces away.
+// Replace writes a changed rule and takes the one it replaces away.
 //
-// Saving alone is not enough whenever the change moves the file. A fact with
+// Saving alone is not enough whenever the change moves the file. A rule with
 // no reference is filed under a slug of its own sentence and one with a scope
 // is filed under its path, so editing either writes somewhere new — and the
 // copy nobody meant to keep would go on being told and go on refusing work.
 //
 // What is removed is the file the old one was actually read out of, and not
-// the name its fields would produce. A fact somebody wrote by hand is called
+// the name its fields would produce. A rule somebody wrote by hand is called
 // whatever they called it, and working the name out from the sentence left
 // every one of those behind on the first edit.
 //
 // The old one is removed after the new one is written, so a failure in the
-// middle leaves two facts rather than none: a duplicate is visible in the
-// screen that lists them, and a fact that vanished is not.
-func (s *Store) Replace(was, now Fact) (string, error) {
+// middle leaves two rules rather than none: a duplicate is visible in the
+// screen that lists them, and a rule that vanished is not.
+func (s *Store) Replace(was, now Rule) (string, error) {
 	// The name survives the change, which is the whole of what it is for.
-	// A screen that rebuilt the fact from what was typed rather than from
+	// A screen that rebuilt the rule from what was typed rather than from
 	// what it read would otherwise coin a second name for one rule, and
 	// everything the record wrote down about the first would be about
 	// something that no longer exists.
@@ -120,40 +120,40 @@ func (s *Store) Replace(was, now Fact) (string, error) {
 	}
 
 	if err := os.Remove(before); err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return where, fmt.Errorf("remove the fact it replaces at %q: %w", before, err)
+		return where, fmt.Errorf("remove the rule it replaces at %q: %w", before, err)
 	}
 
 	return where, nil
 }
 
 // Load is everything known while working in one repository: the general
-// facts, the ones of every language, and the repository's own.
+// rules, the ones of every language, and the repository's own.
 //
 // A directory that is not there is a repository nobody has written anything
 // about yet, which is what every repository starts as and is not a failure.
-func (s *Store) Load(repo string) ([]Fact, error) {
-	facts, err := s.read(filepath.Join(s.state, dirName), "")
+func (s *Store) Load(repo string) ([]Rule, error) {
+	rules, err := s.read(filepath.Join(s.state, dirName), "")
 
 	if repo == "" {
-		return facts, err
+		return rules, err
 	}
 
 	own, ownErr := s.read(filepath.Join(repo, ".orbit", dirName), repo)
 
-	return append(facts, own...), errors.Join(err, ownErr)
+	return append(rules, own...), errors.Join(err, ownErr)
 }
 
-// LoadRepo is one checkout's own facts, and none of the state root's.
+// LoadRepo is one checkout's own rules, and none of the state root's.
 //
 // Load answers with both, which is what a phase wants: it works in one
 // repository and everything known reaches it. A caller walking every
 // repository the record has heard of wants the other shape — it already
-// holds the state root's facts, and Load would hand them back once per
+// holds the state root's rules, and Load would hand them back once per
 // repository, to be walked, decoded and thrown away N times over.
 //
 // A directory that is not there is a repository nobody has written anything
 // about yet, the same as in Load.
-func (s *Store) LoadRepo(repo string) ([]Fact, error) {
+func (s *Store) LoadRepo(repo string) ([]Rule, error) {
 	// Guarded as Load guards it: joined onto an empty repository the path is
 	// the relative `.orbit/knowledge`, and the walk would read whatever the
 	// process happens to be standing in.
@@ -164,11 +164,11 @@ func (s *Store) LoadRepo(repo string) ([]Fact, error) {
 	return s.read(filepath.Join(repo, ".orbit", dirName), repo)
 }
 
-// read walks one root. repo is the checkout the facts belong to, and empty
+// read walks one root. repo is the checkout the rules belong to, and empty
 // for the state root, where they belong to none.
-func (s *Store) read(root, repo string) ([]Fact, error) {
+func (s *Store) read(root, repo string) ([]Rule, error) {
 	var (
-		facts  []Fact
+		rules  []Rule
 		failed []error
 	)
 
@@ -183,20 +183,20 @@ func (s *Store) read(root, repo string) ([]Fact, error) {
 
 		body, readErr := os.ReadFile(path)
 		if readErr != nil {
-			failed = append(failed, fmt.Errorf("read the fact at %q: %w", path, readErr))
+			failed = append(failed, fmt.Errorf("read the rule at %q: %w", path, readErr))
 
 			return nil
 		}
 
 		f, decErr := decode(string(body), rel(root, path), repo)
 		if decErr != nil {
-			failed = append(failed, fmt.Errorf("the fact at %q: %w", path, decErr))
+			failed = append(failed, fmt.Errorf("the rule at %q: %w", path, decErr))
 
 			return nil
 		}
 
 		f.from = path
-		facts = append(facts, f)
+		rules = append(rules, f)
 
 		return nil
 	})
@@ -206,19 +206,19 @@ func (s *Store) read(root, repo string) ([]Fact, error) {
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("read the facts under %q: %w", root, err)
+		return nil, fmt.Errorf("read the rules under %q: %w", root, err)
 	}
 
 	// A damaged file costs itself and no more. These are files a person is
 	// invited to write by hand, and aborting the walk on the first one meant
 	// a single typo left every repository's rules unread — the same shape
 	// store.Repos already answers a damaged marker with.
-	return facts, errors.Join(failed...)
+	return rules, errors.Join(failed...)
 }
 
-// dirFor is the directory a scope files its facts in.
+// dirFor is the directory a scope files its rules in.
 //
-// The path kinds mirror the code: a fact about `backend/ledger` sits in
+// The path kinds mirror the code: a rule about `backend/ledger` sits in
 // `.orbit/knowledge/backend/ledger/`, so finding what is known about a
 // directory is looking in the directory of the same name.
 func (s *Store) dirFor(sc Scope) string {
@@ -240,7 +240,7 @@ func (s *Store) dirFor(sc Scope) string {
 	}
 }
 
-// fileName is what one fact is called on disk: what it came out of and what
+// fileName is what one rule is called on disk: what it came out of and what
 // it says, or only what it says when it came out of nothing named.
 //
 // Both halves, because neither is enough on its own. The reference is what a
@@ -248,7 +248,7 @@ func (s *Store) dirFor(sc Scope) string {
 // happened — and one task can teach more than one thing, so a name that was
 // only the reference kept the last of them and dropped the rest without
 // saying so.
-func fileName(f Fact) string {
+func fileName(f Rule) string {
 	if f.Ref == "" {
 		return slug(f.Phrase) + ext
 	}
@@ -280,10 +280,10 @@ func slug(phrase string) string {
 		return name
 	}
 
-	return "fact"
+	return "rule"
 }
 
-// rel is a fact's path under its root, in slash form, which is what the
+// rel is a rule's path under its root, in slash form, which is what the
 // scope is read from.
 func rel(root, path string) string {
 	r, err := filepath.Rel(root, path)

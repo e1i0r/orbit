@@ -124,7 +124,7 @@ func (sn Session) knowledgeOf(args map[string]any) CallToolResult {
 // advised and being sent back are different instructions. It is the window's
 // own word for it, so a model and a person reading the same rule read the
 // same thing about it.
-func stopsMark(f knowledge.Fact) string {
+func stopsMark(f knowledge.Rule) string {
 	if f.Action() == knowledge.Stops {
 		return "[blocks] "
 	}

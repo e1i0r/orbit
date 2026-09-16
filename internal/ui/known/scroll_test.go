@@ -15,11 +15,11 @@ import (
 
 // lots is more rules than any terminal can show at once, each with a
 // sentence of its own so that a test can look for one of them.
-func lots(n int) []knowledge.Fact {
-	out := make([]knowledge.Fact, 0, n)
+func lots(n int) []knowledge.Rule {
+	out := make([]knowledge.Rule, 0, n)
 
 	for i := range n {
-		out = append(out, knowledge.Fact{
+		out = append(out, knowledge.Rule{
 			ID:     fmt.Sprintf("rule%04d", i),
 			Scope:  knowledge.Scope{Kind: knowledge.Repo, Repo: "/w/orbit"},
 			Source: knowledge.Human,
@@ -166,7 +166,7 @@ func TestAListThatGotShorterDoesNotLeaveTheViewPastItsEnd(t *testing.T) {
 	facts := lots(40)
 
 	e := world(t, facts...)
-	e.All = func() []knowledge.Fact { return facts }
+	e.All = func() []knowledge.Rule { return facts }
 
 	s := Open(e)
 	for range 39 {

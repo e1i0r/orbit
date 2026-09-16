@@ -29,7 +29,7 @@ type answers struct {
 
 // withTray is the screen open on a tray and whatever facts are already
 // written down.
-func withTray(t *testing.T, said []Said, facts ...knowledge.Fact) (State, Env, *answers) {
+func withTray(t *testing.T, said []Said, facts ...knowledge.Rule) (State, Env, *answers) {
 	t.Helper()
 
 	got := &answers{}
@@ -37,7 +37,7 @@ func withTray(t *testing.T, said []Said, facts ...knowledge.Fact) (State, Env, *
 	e := Env{
 		Words:   words.For("en"),
 		Keys:    keymap.New(words.For("en")),
-		All:     func() []knowledge.Fact { return facts },
+		All:     func() []knowledge.Rule { return facts },
 		Waiting: func() []Said { return said },
 		Keep: func(at time.Time, phrase, check, where string) error {
 			got.keeps = append(got.keeps, kept{at: at, phrase: phrase, check: check, where: where})
@@ -228,7 +228,7 @@ func TestAnEmptyTrayIsNotThere(t *testing.T) {
 	s, e, _ := withTray(t, nil,
 		known("errors are wrapped", knowledge.Scope{Kind: knowledge.General}))
 
-	if drawn := drawnKnowledge(t, s, e); strings.Contains(drawn, "🛑 WAITING") {
+	if drawn := drawnKnowledge(t, s, e); strings.Contains(drawn, "🛑 PENDING") {
 		t.Errorf("an empty tray is drawn anyway:\n%s", drawn)
 	}
 

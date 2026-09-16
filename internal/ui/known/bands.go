@@ -55,21 +55,28 @@ func bandMark(b band) string {
 }
 
 // stateName is the one word for a state, wherever it is said.
+//
+// Five adjectives and not five verbs. A state is where a rule ended up
+// because of something somebody did to it — kept, given a command, paused,
+// decided against — so the word describes how it stands and not what it is
+// in the middle of doing. "Blocks" read as an action happening now; what is
+// true is that the rule is blocking, and has been since it was given a
+// command.
 func stateName(b band, e Env) string {
 	p := e.Words
 
 	switch b {
 	case waits:
-		return p.T("knowledge.band_waiting", "WAITING")
+		return p.T("knowledge.band_waiting", "PENDING")
 	case stops:
-		return p.T("knowledge.band_stops", "BLOCKS")
+		return p.T("knowledge.band_stops", "BLOCKED")
 	case says:
-		return p.T("knowledge.band_says", "SAYS")
+		return p.T("knowledge.band_says", "ACTIVE")
 	case paused:
 		return p.T("knowledge.band_paused", "PAUSED")
 	}
 
-	return p.T("knowledge.band_off", "OFF")
+	return p.T("knowledge.band_off", "TURNED OFF")
 }
 
 // bandRole is the colour a state is said in, and it is the same colour
@@ -99,25 +106,22 @@ func bandCount(b band) theme.Role {
 	return theme.Dim
 }
 
-// bandOf is where a rule belongs.
-//
-// Waiting first, whatever else is true of it: a rule somebody sent back to
-// be decided about is a question, and a question filed under what it happens
-// to do meanwhile is a question nobody answers. Then what stopped it
-// applying, and only then what it would do if it were.
-func bandOf(f knowledge.Fact) band {
-	switch {
-	case f.Review:
+// bandOf is where a rule belongs, which is the one question its record
+// folds down to. The fold is internal/knowledge's, so this screen and the
+// browser cannot disagree about a rule they are both looking at.
+func bandOf(f knowledge.Rule) band {
+	switch f.Standing() {
+	case knowledge.Waiting:
 		return waits
-	case f.State == knowledge.Paused:
-		return paused
-	case !f.Tells():
-		return off
-	case f.Action() == knowledge.Stops:
+	case knowledge.Blocks:
 		return stops
+	case knowledge.Says:
+		return says
+	case knowledge.Stopped:
+		return paused
 	}
 
-	return says
+	return off
 }
 
 // entry is one row the cursor can be on: a sentence in the tray, or a rule.
@@ -173,10 +177,10 @@ func (s State) onSaid() (Said, bool) {
 
 // onFact is the rule under the cursor, and false when the cursor is on a
 // sentence in the tray instead.
-func (s State) onFact() (knowledge.Fact, bool) {
+func (s State) onFact() (knowledge.Rule, bool) {
 	all := s.order()
 	if s.sel < 0 || s.sel >= len(all) || all[s.sel].said {
-		return knowledge.Fact{}, false
+		return knowledge.Rule{}, false
 	}
 
 	return s.facts[all[s.sel].at], true

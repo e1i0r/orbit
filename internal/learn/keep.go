@@ -114,8 +114,8 @@ func waitingAt(s *store.Store, at time.Time) (Said, error) {
 // no checkout at all. A rule almost always belongs somewhere narrower than
 // where it was said — you say it while correcting one run and it is true of
 // one folder — and this is the moment somebody knows which.
-func factOf(said Said, text, check string, where Place) (knowledge.Fact, error) {
-	f := knowledge.Fact{
+func factOf(said Said, text, check string, where Place) (knowledge.Rule, error) {
+	f := knowledge.Rule{
 		// Named here rather than left to Save, because what happened to
 		// this rule is written down in the same breath as the rule itself
 		// and cannot be told the name afterwards.
@@ -151,7 +151,7 @@ func factOf(said Said, text, check string, where Place) (knowledge.Fact, error) 
 
 	if repo == "" {
 		if path != "" {
-			return knowledge.Fact{}, fmt.Errorf(
+			return knowledge.Rule{}, fmt.Errorf(
 				"%q is about no checkout, so there is nothing for %q to be inside", said.Text, path)
 		}
 
@@ -168,7 +168,7 @@ func factOf(said Said, text, check string, where Place) (knowledge.Fact, error) 
 
 	scope, err := knowledge.At(repo, path)
 	if err != nil {
-		return knowledge.Fact{}, err
+		return knowledge.Rule{}, err
 	}
 
 	f.Scope = scope

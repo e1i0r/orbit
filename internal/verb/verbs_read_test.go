@@ -118,7 +118,7 @@ func TestWhatOrbitKnows(t *testing.T) {
 	bare := mustAsk(t, w, "knowledge", In{By: "operator"})
 	_ = bare
 
-	w.facts = []knowledge.Fact{
+	w.facts = []knowledge.Rule{
 		{Phrase: "PRs in English", Scope: knowledge.Scope{Kind: knowledge.General}},
 		{
 			Phrase: "amounts are cents", Scope: knowledge.Scope{Kind: knowledge.Repo, Repo: "/src/acme"},

@@ -13,20 +13,20 @@ import (
 )
 
 // knowing is the screen open on a store that holds these facts.
-func knowing(t *testing.T, facts ...knowledge.Fact) (State, Env) {
+func knowing(t *testing.T, facts ...knowledge.Rule) (State, Env) {
 	t.Helper()
 
 	e := world(t, &held{})
-	e.Knows = func() []knowledge.Fact { return facts }
+	e.Knows = func() []knowledge.Rule { return facts }
 
 	return Open(0, e), e
 }
 
-func known(phrase string, sc knowledge.Scope) knowledge.Fact {
-	return knowledge.Fact{Scope: sc, Source: knowledge.Human, Phrase: phrase}
+func known(phrase string, sc knowledge.Scope) knowledge.Rule {
+	return knowledge.Rule{Scope: sc, Source: knowledge.Human, Phrase: phrase}
 }
 
-func stopper(phrase string, sc knowledge.Scope) knowledge.Fact {
+func stopper(phrase string, sc knowledge.Scope) knowledge.Rule {
 	f := known(phrase, sc)
 	f.Stops, f.Check = true, "false"
 
@@ -194,7 +194,7 @@ func TestTheThreadIsNotCutByTheSide(t *testing.T) {
 // that quietly stops listing is worse than a short one: somebody reading it
 // believes they have seen what Orbit knows.
 func TestTheSideSaysWhatItCouldNotFit(t *testing.T) {
-	many := make([]knowledge.Fact, 0, 30)
+	many := make([]knowledge.Rule, 0, 30)
 	for i := range 30 {
 		many = append(many, known(fmt.Sprintf("fact number %02d", i), knowledge.Scope{Kind: knowledge.General}))
 	}
@@ -215,7 +215,7 @@ func TestTheSideSaysWhatItCouldNotFit(t *testing.T) {
 // TestTheRulesSurviveTheCut. What stops the work is what somebody most needs
 // to know is standing, so it is the last thing given up for room.
 func TestTheRulesSurviveTheCut(t *testing.T) {
-	facts := []knowledge.Fact{stopper("the one rule", knowledge.Scope{Kind: knowledge.General})}
+	facts := []knowledge.Rule{stopper("the one rule", knowledge.Scope{Kind: knowledge.General})}
 	for i := range 30 {
 		facts = append(facts, known(fmt.Sprintf("aware %02d", i), knowledge.Scope{Kind: knowledge.General}))
 	}
@@ -235,14 +235,14 @@ func TestAFactARunWroteWhileYouWereAwayIsMarked(t *testing.T) {
 	s, e := knowing(t)
 	e.Now = time.Now()
 
-	learned := knowledge.Fact{
+	learned := knowledge.Rule{
 		Scope:  knowledge.Scope{Kind: knowledge.General},
 		Source: knowledge.FromRecord,
 		Phrase: "the api refuses a body over 1MB",
 		At:     e.Now.Add(-2 * time.Hour),
 	}
 
-	typed := knowledge.Fact{
+	typed := knowledge.Rule{
 		Scope:  knowledge.Scope{Kind: knowledge.General},
 		Source: knowledge.Human,
 		Phrase: "never force-push",

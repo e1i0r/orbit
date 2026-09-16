@@ -45,7 +45,7 @@ func (s State) detailRows(h, w int, e Env) []string {
 
 // detailHead is the rule itself, and the line under it that says which rule
 // this is: its name, how far it reaches, and where it stands.
-func (s State) detailHead(f knowledge.Fact, cw int, e Env) []string {
+func (s State) detailHead(f knowledge.Rule, cw int, e Env) []string {
 	out := []string{""}
 
 	for i, line := range cells.Lines(f.Phrase, cw-len(prose.Gutter)) {
@@ -67,7 +67,7 @@ func (s State) detailHead(f knowledge.Fact, cw int, e Env) []string {
 // asked is the block that says this rule is waiting on somebody, and which
 // keys answer it. It is the board's own NEEDS YOU, in the one place it means
 // the same thing.
-func (s State) asked(f knowledge.Fact, cw int, e Env) []string {
+func (s State) asked(f knowledge.Rule, cw int, e Env) []string {
 	if !f.Review {
 		return nil
 	}
@@ -75,7 +75,7 @@ func (s State) asked(f knowledge.Fact, cw int, e Env) []string {
 	p := e.Words
 
 	out := []string{prose.Gutter + theme.Paint(theme.Warn).Bold(true).Render("│ "+
-		p.T("knowledge.band_waiting", "WAITING"))}
+		p.T("knowledge.band_waiting", "PENDING"))}
 
 	for _, line := range cells.Lines(p.T("knowledge.asked_why",
 		"it stopped you, or you paused it. Say it better with 'c', switch it off "+
@@ -88,7 +88,7 @@ func (s State) asked(f knowledge.Fact, cw int, e Env) []string {
 
 // figures is the strip: four things a reader compares at a glance rather
 // than four more rows of grey label and bold value.
-func (s State) figures(f knowledge.Fact, e Env) []prose.Stat {
+func (s State) figures(f knowledge.Rule, e Env) []prose.Stat {
 	p := e.Words
 
 	travels := p.T("knowledge.travels_machine", "this machine")
@@ -108,7 +108,7 @@ func (s State) figures(f knowledge.Fact, e Env) []prose.Stat {
 }
 
 // tells is the section that answers what the rule does when work reaches it.
-func (s State) tells(f knowledge.Fact, cw int, e Env) []string {
+func (s State) tells(f knowledge.Rule, cw int, e Env) []string {
 	p := e.Words
 
 	out := []string{prose.Section(p.T("knowledge.sec_does", "what it does"), "", cw, true)}
@@ -135,7 +135,7 @@ func (s State) tells(f knowledge.Fact, cw int, e Env) []string {
 //
 // A pause with no reason is a switch under another name, and this is what it
 // was for: the sentence somebody reads when they come back.
-func (s State) paused(f knowledge.Fact, cw int, e Env) []string {
+func (s State) paused(f knowledge.Rule, cw int, e Env) []string {
 	if f.Tells() {
 		return nil
 	}
@@ -174,7 +174,7 @@ func (s State) friction(cw int, e Env) []string {
 
 // pinned holds the decisions against the bottom of the screen, so they are
 // in the same place however long the story above them ran.
-func (s State) pinned(_ knowledge.Fact, cw int, e Env) []string {
+func (s State) pinned(_ knowledge.Rule, cw int, e Env) []string {
 	p := e.Words
 
 	// Three, and the same three whatever the rule is doing. A row that
@@ -210,7 +210,7 @@ func quoted(text string, cw int) []string {
 
 // shortFrom is where a rule came from, in the two or three words a card has
 // room for.
-func shortFrom(f knowledge.Fact, e Env) string {
+func shortFrom(f knowledge.Rule, e Env) string {
 	p := e.Words
 
 	return map[knowledge.Source]string{

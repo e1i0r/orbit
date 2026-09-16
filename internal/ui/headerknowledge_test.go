@@ -16,15 +16,15 @@ import (
 func withFacts(t *testing.T, n int) Model {
 	t.Helper()
 
-	facts := make([]knowledge.Fact, 0, n)
+	facts := make([]knowledge.Rule, 0, n)
 	for range n {
-		facts = append(facts, knowledge.Fact{
+		facts = append(facts, knowledge.Rule{
 			Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.Human, Phrase: "something",
 		})
 	}
 
 	m, _ := testModel(t, 140, 30)
-	m.opts.KnowsAll = func() []knowledge.Fact { return facts }
+	m.opts.KnowsAll = func() []knowledge.Rule { return facts }
 
 	// The chip counts what was loaded, never the port: the header is drawn
 	// on every frame and the port walks every repository.

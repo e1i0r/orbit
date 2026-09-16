@@ -21,10 +21,10 @@ func TestTheStoreIsReadOnceForTheHeadersChip(t *testing.T) {
 	reads := 0
 
 	e := world(t)
-	e.All = func() []knowledge.Fact {
+	e.All = func() []knowledge.Rule {
 		reads++
 
-		return []knowledge.Fact{
+		return []knowledge.Rule{
 			known("of everything", knowledge.Scope{Kind: knowledge.General}),
 			known("of Go", knowledge.Scope{Kind: knowledge.Language, Lang: "go"}),
 		}
@@ -89,7 +89,7 @@ func TestDecidingAgainstARuleIsRefusedWhenThereIsNowhereToWriteIt(t *testing.T) 
 	}
 
 	// And the store's own refusal is said in the store's words.
-	e.Replace = func(_, _ knowledge.Fact) error { return errors.New("the store is read-only") }
+	e.Replace = func(_, _ knowledge.Rule) error { return errors.New("the store is read-only") }
 
 	if _, out := s.Key(press("o"), e); !strings.Contains(out.Said, "read-only") {
 		t.Errorf("the refusal reads %q", out.Said)
@@ -139,7 +139,7 @@ func TestARuleWithACheckSaysItStops(t *testing.T) {
 	armed.Stops, armed.Check = true, "make coverage"
 
 	s, e := onScreen(t, armed)
-	if drawn := drawnKnowledge(t, s, e); !strings.Contains(drawn, "⚡ BLOCKS") {
+	if drawn := drawnKnowledge(t, s, e); !strings.Contains(drawn, "⚡ BLOCKED") {
 		t.Errorf("a rule with a check is not under what stops the work:\n%s", drawn)
 	}
 
@@ -147,7 +147,7 @@ func TestARuleWithACheckSaysItStops(t *testing.T) {
 	off.State = knowledge.Off
 
 	s, e = onScreen(t, off)
-	if drawn := drawnKnowledge(t, s, e); !strings.Contains(drawn, "🚫 OFF") {
+	if drawn := drawnKnowledge(t, s, e); !strings.Contains(drawn, "🚫 TURNED OFF") {
 		t.Errorf("a rule that is off is not under OFF:\n%s", drawn)
 	}
 }

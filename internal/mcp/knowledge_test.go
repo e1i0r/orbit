@@ -173,7 +173,7 @@ func workingOn(t *testing.T, id string) (*store.Store, string, repo.Repo) {
 
 // onlyFact is the single fact the checkout holds, and a failure when it
 // holds any other number of them.
-func onlyFact(t *testing.T, s *store.Store, repoPath string) knowledge.Fact {
+func onlyFact(t *testing.T, s *store.Store, repoPath string) knowledge.Rule {
 	t.Helper()
 
 	facts, err := knowledge.NewStore(s.Root()).Load(repoPath)

@@ -15,7 +15,7 @@ const screens = [
     group: "What Orbit knows",
     items: [
       { id: "supervisor", name: "Supervisor" },
-      { id: "knowledge", name: "Facts" },
+      { id: "knowledge", name: "Brain" },
       { id: "flows", name: "Flows" },
     ],
   },
