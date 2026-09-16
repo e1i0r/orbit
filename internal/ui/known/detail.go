@@ -75,7 +75,7 @@ func (s State) asked(f knowledge.Fact, cw int, e Env) []string {
 	p := e.Words
 
 	out := []string{prose.Gutter + theme.Paint(theme.Warn).Bold(true).Render("│ "+
-		p.T("knowledge.band_waiting", "WAITING ON YOU"))}
+		p.T("knowledge.band_waiting", "WAITING"))}
 
 	for _, line := range cells.Lines(p.T("knowledge.asked_why",
 		"it stopped you, or you paused it. Say it better with 'c', switch it off "+
@@ -96,35 +96,15 @@ func (s State) figures(f knowledge.Fact, e Env) []prose.Stat {
 		travels = p.T("knowledge.travels_repo", "with the repo")
 	}
 
-	stands, role := standing(f, e)
+	at := bandOf(f)
 
 	return []prose.Stat{
-		{Label: p.T("knowledge.card_state", "status"), Value: stands, Role: role},
+		{Label: p.T("knowledge.card_state", "status"), Value: stateName(at, e), Role: bandRole(at)},
 		{Label: p.T("knowledge.card_said_by", "created by"), Value: shortFrom(f, e), Role: theme.Accent},
 		{Label: p.T("knowledge.card_since", "created"), Value: cells.OrDef(when(f.At), "—"), Role: theme.Accent},
 		{Label: p.T("knowledge.card_told", "hits"), Value: strconv.Itoa(f.Used), Role: theme.Live},
 		{Label: p.T("knowledge.card_travels", "reach"), Value: travels, Role: theme.OK},
 	}
-}
-
-// standing is where the rule stands with the reader, and the colour that
-// says it at a glance.
-//
-// A card of its own, and the loudest thing on the screen after the sentence
-// itself. Somebody who has just switched a rule off and come back to look
-// needs the answer in the place their eye already is, not worked out from
-// which heading the row is under.
-func standing(f knowledge.Fact, e Env) (string, theme.Role) {
-	p := e.Words
-
-	switch f.State {
-	case knowledge.Paused:
-		return p.T("knowledge.stands_paused", "paused"), theme.Warn
-	case knowledge.Off:
-		return p.T("knowledge.stands_off", "switched off"), theme.Bad
-	}
-
-	return p.T("knowledge.stands_active", "applying"), theme.OK
 }
 
 // tells is the section that answers what the rule does when work reaches it.

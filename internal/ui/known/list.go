@@ -26,7 +26,7 @@ import (
 // read.
 const (
 	colID    = 8
-	colWhere = 14
+	colWhere = 16
 	// colWheres is the same column on a board of several checkouts, where
 	// every path carries the name of the one it is in.
 	colWheres = 21

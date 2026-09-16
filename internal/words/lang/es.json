@@ -4978,20 +4978,16 @@
       "value": "este orbit se compiló sin la ventana; ejecuta `make ui` y vuelve a compilar"
     },
     "knowledge.band_waiting": {
-      "source": "WAITING ON YOU",
-      "value": "TE ESPERAN"
+      "source": "WAITING",
+      "value": "ESPERA"
     },
     "knowledge.band_stops": {
-      "source": "STOP THE WORK",
-      "value": "DETIENEN EL TRABAJO"
+      "source": "STOPS",
+      "value": "PARA"
     },
     "knowledge.band_says": {
-      "source": "JUST SAID, BEFORE EVERY RUN",
-      "value": "SOLO SE DICEN, ANTES DE CADA CORRIDA"
-    },
-    "knowledge.band_silent": {
-      "source": "TOLD TO NOBODY",
-      "value": "NO SE LE DICEN A NADIE"
+      "source": "SAYS",
+      "value": "DICE"
     },
     "knowledge.title": {
       "source": "What Orbit knows",
@@ -5343,18 +5339,6 @@
       "source": "status",
       "value": "estado"
     },
-    "knowledge.stands_paused": {
-      "source": "paused",
-      "value": "pausada"
-    },
-    "knowledge.stands_off": {
-      "source": "switched off",
-      "value": "apagada"
-    },
-    "knowledge.stands_active": {
-      "source": "applying",
-      "value": "aplicando"
-    },
     "knowledge.off_why": {
       "source": "you decided against it. It stays where it is, nothing is told it, and 'u' has it apply again.",
       "value": "decidiste que no. Sigue donde está, no se le dice a nadie, y con 'u' vuelve a aplicar."
@@ -5362,6 +5346,14 @@
     "knowledge.detail_ways": {
       "source": "[esc] back to the list",
       "value": "[esc] volver a la lista"
+    },
+    "knowledge.band_paused": {
+      "source": "PAUSED",
+      "value": "PAUSADA"
+    },
+    "knowledge.band_off": {
+      "source": "OFF",
+      "value": "APAGADA"
     }
   }
 }

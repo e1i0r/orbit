@@ -15,38 +15,84 @@ import (
 // band is one heading of the list.
 type band int
 
-// The bands, in the order they are drawn: what wants an answer first, then
-// what is working, then what is not being told to anybody.
+// The five states a rule can be in, in the order the list draws them: what
+// wants an answer first, then what is working, then what is not.
+//
+// Five words and one set of them. The band a rule is listed under and the
+// word on its own screen are the same word, because they are the same
+// question — a screen that said "told to nobody" over a rule whose card said
+// "switched off" was two vocabularies for one fact, and the reader had to
+// hold both.
 const (
-	waitsOnYou band = iota
-	refuses
-	onlySays
-	silent
+	waits band = iota
+	stops
+	says
+	paused
+	off
 )
 
 // bands is that order, for a caller walking them.
-var bands = []band{waitsOnYou, refuses, onlySays, silent}
+var bands = []band{waits, stops, says, paused, off}
 
-// bandName is the heading, with the glyph the board would have given it.
-func bandName(b band, e Env) string {
+// bandName is the state, with the glyph the board would have given it.
+func bandName(b band, e Env) string { return bandMark(b) + " " + stateName(b, e) }
+
+// bandMark is the glyph beside a state, which is how the eye finds the band
+// it is looking for before it has read anything.
+func bandMark(b band) string {
+	switch b {
+	case waits:
+		return "🛑"
+	case stops:
+		return "⚡"
+	case says:
+		return "💬"
+	case paused:
+		return "😴"
+	}
+
+	return "🚫"
+}
+
+// stateName is the one word for a state, wherever it is said.
+func stateName(b band, e Env) string {
 	p := e.Words
 
 	switch b {
-	case waitsOnYou:
-		return "🛑 " + p.T("knowledge.band_waiting", "WAITING ON YOU")
-	case refuses:
-		return "⚡ " + p.T("knowledge.band_stops", "STOP THE WORK")
-	case onlySays:
-		return "💬 " + p.T("knowledge.band_says", "JUST SAID, BEFORE EVERY RUN")
+	case waits:
+		return p.T("knowledge.band_waiting", "WAITING")
+	case stops:
+		return p.T("knowledge.band_stops", "STOPS")
+	case says:
+		return p.T("knowledge.band_says", "SAYS")
+	case paused:
+		return p.T("knowledge.band_paused", "PAUSED")
 	}
 
-	return "😴 " + p.T("knowledge.band_silent", "TOLD TO NOBODY")
+	return p.T("knowledge.band_off", "OFF")
 }
 
-// bandCount paints the number over a band, and only one of the four is ever
+// bandRole is the colour a state is said in, and it is the same colour
+// wherever it is said.
+func bandRole(b band) theme.Role {
+	switch b {
+	case waits:
+		return theme.Warn
+	case stops:
+		return theme.Bad
+	case says:
+		return theme.Live
+	case paused:
+		return theme.Warn
+	}
+
+	return theme.Dim
+}
+
+// bandCount paints the number over a band, and only one of the five is ever
 // worth a colour: how many things are waiting on a person.
 func bandCount(b band) theme.Role {
-	if b == waitsOnYou {
+	if b == waits {
 		return theme.Warn
 	}
 
@@ -57,18 +103,21 @@ func bandCount(b band) theme.Role {
 //
 // Waiting first, whatever else is true of it: a rule somebody sent back to
 // be decided about is a question, and a question filed under what it happens
-// to do meanwhile is a question nobody answers.
+// to do meanwhile is a question nobody answers. Then what stopped it
+// applying, and only then what it would do if it were.
 func bandOf(f knowledge.Fact) band {
 	switch {
 	case f.Review:
-		return waitsOnYou
+		return waits
+	case f.State == knowledge.Paused:
+		return paused
 	case !f.Tells():
-		return silent
+		return off
 	case f.Action() == knowledge.Stops:
-		return refuses
+		return stops
 	}
 
-	return onlySays
+	return says
 }
 
 // entry is one row the cursor can be on: a sentence in the tray, or a rule.
@@ -84,7 +133,7 @@ func (s State) inBand(b band) []entry {
 	// Every sentence in the tray is a question, so they are all in the
 	// first band, above the rules that are only waiting to be looked at
 	// again. Nothing has been decided about them at all.
-	if b == waitsOnYou {
+	if b == waits {
 		for i := range s.waiting {
 			out = append(out, entry{said: true, at: i})
 		}

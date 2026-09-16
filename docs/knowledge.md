@@ -15,25 +15,35 @@ what is under them, and one line a rule.
   What Orbit knows                                            6 rules
 
     ID        THE RULE                          WHERE         WHEN
-  🛑 WAITING ON YOU (2) ──────────────────────────────────────────────
+  🛑 WAITING (2) ─────────────────────────────────────────────────────
   ❯ —         never push without the tests       internal/db   2026-09-14
     d42b7f60  anything that drops a column…      migrations    2026-08-12
 
-  ⚡ STOP THE WORK (1) ───────────────────────────────────────────────
+  ⚡ STOPS (1) ───────────────────────────────────────────────────────
     f0021bb4  coverage stays above 90%           ledger        2026-08-12
 
-  💬 JUST SAID, BEFORE EVERY RUN (1) ─────────────────────────────────
+  💬 SAYS (1) ────────────────────────────────────────────────────────
     a1f4c209  pull requests are written in Eng…  everywhere    2026-08-12
 
-  😴 TOLD TO NOBODY (1) ──────────────────────────────────────────────
+  😴 PAUSED (1) ──────────────────────────────────────────────────────
+    c0ffee11  the site is generated              web           2026-09-01
+
+  🚫 OFF (1) ─────────────────────────────────────────────────────────
     0091ccd2  the ledger only ever appends       orbit         2026-08-12
 ```
 
+Five states and one set of words for them. **Waiting** is a question — a
+sentence nobody has answered, or a rule that stopped you and is waiting to
+be decided about. **Stops** and **says** are the two things a rule that is
+applying can do. **Paused** and **off** are the two ways it can not be.
+
+The same word is on the rule's own screen, in the card that says where it
+stands: a screen that said "told to nobody" over a rule whose card said
+"switched off" was two vocabularies for one fact.
+
 **The band is the answer**, not a column. A reader opens this screen with one
 question — is there anything here for me — and two columns saying "paused"
-and "no check" made them do the sorting themselves. The first band holds both
-kinds of question: sentences nobody has answered, and rules sent back to be
-decided about.
+and "no check" made them do the sorting themselves.
 
 `↑↓` walk it, the wheel scrolls it, a click puts the cursor on a rule and a
 second opens it. `↵` opens, `p` pauses, `n` writes one, `k` keeps a sentence
@@ -47,15 +57,15 @@ key.
 
 ```
   anything that drops a column stops for a person to look at it
-  d42b7f60 · migrations · 🛑 WAITING ON YOU
+  d42b7f60 · migrations · 🛑 WAITING
 
-  │ WAITING ON YOU
-  it stopped you, or you paused it. Say it better with 'c', have it apply
-  again with 'u', or decide against it with 'o'.
+  │ WAITING
+  it stopped you, or you paused it. Edit it with 'c', turn it on with 'u',
+  or switch it off with 'o'.
 
-  ┌ SAID BY ──┐ ┌ SINCE ─────┐ ┌ TOLD ────┐ ┌ TRAVELS ──────┐
-  │ you       │ │ 2026-08-12 │ │ 6 times  │ │ with the repo │
-  └───────────┘ └────────────┘ └──────────┘ └───────────────┘
+  ┌ STATUS ─┐ ┌ CREATED BY ┐ ┌ CREATED ───┐ ┌ HITS ┐ ┌ REACH ────────┐
+  │ WAITING │ │ you        │ │ 2026-08-12 │ │ 6    │ │ with the repo │
+  └─────────┘ └────────────┘ └────────────┘ └──────┘ └───────────────┘
 
   ▾ WHAT IT DOES ─────────────────────────────────────────────────────
     it stops the work · the check is make migrate-check
@@ -66,6 +76,10 @@ key.
   ▾ WHAT IT HAS PUT YOU THROUGH ──────────────────────────────────────
     you kept it on 12 August
     it stopped the work 4 times in test, and you got past it every time
+
+  TURN ON [u]              SWITCH OFF [o]             EDIT [c]
+
+  [esc] back to the list
 ```
 
 Everything that cannot fit on one line of a list is here, where there is room
