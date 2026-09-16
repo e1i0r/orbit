@@ -5599,6 +5599,14 @@
       "source": "there is nothing under this one",
       "value": "no hay nada debajo de esta"
     },
+    "reason.denied": {
+      "source": "{phase} was refused {tool} and wrote nothing",
+      "value": "a {phase} le negaron {tool} y no escribió nada"
+    },
+    "log.denied": {
+      "source": "refused, and wrote nothing",
+      "value": "denegada, y no escribió nada"
+    },
     "news.waiting": {
       "source": "waiting at a gate in {phase}",
       "value": "esperando en una puerta en {phase}"

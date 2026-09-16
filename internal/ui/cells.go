@@ -140,6 +140,9 @@ func (m Model) stateWord(t view.Task) (string, theme.Role) {
 			reasonArgs(t.Reason)...), theme.Warn
 	case view.ReasonNoEngine:
 		return m.noEngineWord(t), theme.Warn
+	case view.ReasonDenied:
+		return p.T("reason.denied", "{phase} was refused {tool} and wrote nothing",
+			reasonArgs(t.Reason)...), theme.Bad
 	}
 
 	if t.Damaged > 0 {

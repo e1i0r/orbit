@@ -19,8 +19,12 @@ import (
 // which has already ended the run by the time it is handed back.
 func (r phaseRun) run(ctx context.Context) (engine.Result, error, error) { //nolint:revive // the engine's error is a value here, not this function's failure
 	var (
-		streamErr                                             error
-		streamedThoughts, streamedRefusals, streamedToolCalls int
+		streamErr                           error
+		streamedThoughts, streamedToolCalls int
+		// The refusals themselves and not a count of them: what was denied
+		// is the half a reader acts on, and it is gone from here by the
+		// time anything asks.
+		refused []engine.StreamRefusal
 	)
 
 	before := soFar(r.store, r.task, r.phase.Name, r.wt)
@@ -60,7 +64,7 @@ func (r phaseRun) run(ctx context.Context) (engine.Result, error, error) { //nol
 				streamedToolCalls++
 				err = emit(r.store, r.task, phaseToolCall(r.phase.Name, r.n, ev.ToolCall))
 			case "refusal":
-				streamedRefusals++
+				refused = append(refused, ev.Refusal)
 				err = emit(r.store, r.task, phaseRefused(r.phase.Name, r.n, ev.Refusal))
 			}
 
@@ -73,10 +77,18 @@ func (r phaseRun) run(ctx context.Context) (engine.Result, error, error) { //nol
 		return out, nil, failed(r.store, r.task, fmt.Errorf("task %s, phase %q stream event emit: %w", r.task.ID, r.phase.Name, streamErr))
 	}
 
+	// What it streamed and what it reported at the end are the same fact
+	// arriving two ways, and only one of them is in out.Refusals. Put there
+	// so that once reads one field rather than two, and does not go back to
+	// the record for something it has just written.
+	if len(refused) > 0 && len(out.Refusals) == 0 {
+		out.Refusals = refused
+	}
+
 	// The fallbacks are for an engine that answered in one piece rather than
 	// in a stream: what it streamed is already in the record, and writing
 	// the same thoughts twice would double the noisiest kinds there are.
-	if err := r.fallback(streamedThoughts, streamedRefusals, streamedToolCalls, out); err != nil {
+	if err := r.fallback(streamedThoughts, len(refused), streamedToolCalls, out); err != nil {
 		return out, nil, err
 	}
 

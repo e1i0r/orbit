@@ -111,7 +111,13 @@ func TestAPhaseWithNoAttemptBeforeItIsToldNothing(t *testing.T) {
 	}
 
 	fake := worked("wrote it")
-	one := flow.Flow{Name: "task", Phases: []flow.Phase{{Name: "implement", Engine: "fake"}}}
+
+	// The gate leaves something behind, because worked() streams a refusal
+	// and a phase refused something that writes nothing does not finish.
+	one := flow.Flow{Name: "task", Phases: []flow.Phase{{
+		Name: "implement", Engine: "fake",
+		Gates: []flow.Gate{{Name: "write", Command: "echo done > NOTES.md"}},
+	}}}
 
 	if err := Run(context.Background(), s, tk, one, fakes(fake), nil); err != nil {
 		t.Fatalf("Run: %v", err)
