@@ -418,6 +418,20 @@ Two places, and the question is one: **does it travel?**
 | `$ORBIT_HOME/knowledge/` | rules about everything, and about a language. They belong to no checkout, so they stay on this machine — and the price is paid knowingly. |
 | the record | what every rule has been through. |
 
+Travelling is the whole point of the first row, so it is worth saying what
+makes it true. Orbit tells your repository to ignore `.orbit/decisions/` —
+its own copies of what a run decided, which are not your project's files —
+and it stops there. `.orbit/knowledge/` is left alone, so a rule filed
+against a checkout is committed, pushed and reviewed like anything else you
+wrote.
+
+It did not always stop there. Orbit used to exclude the whole of `.orbit/`,
+which took the rules with it: a rule filed against a repository never left
+the machine it was written on, and "this checkout" and "this machine" were
+the same answer with two names. A checkout Orbit already touched is corrected
+the next time it runs — the broad line in `.git/info/exclude` is rewritten,
+not added to.
+
 A rule's file says what is true about it today. What it has been through only
 ever grows, so it is in SQLite: a history written into the file would leave a
 diff in your checkout every time a gate ran.
