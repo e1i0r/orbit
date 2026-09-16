@@ -100,14 +100,17 @@ export function RuleForm({
         <Row
           label="Where it applies"
           hint={
-            one.where
+            one.where && one.where !== "."
               ? `it is only told when the work is inside ${one.where}`
               : "every run against this checkout is told it, whatever it is touching"
           }
         >
           <Choice
             options={[
-              { value: "", label: here ? `all of ${here.name}` : "every repo" },
+              // A dot is how the whole checkout is said out loud, and it is
+              // what widens a rule that was narrowed. Empty is the rule
+              // staying where it is, which is a different answer.
+              { value: ".", label: here ? `all of ${here.name}` : "every repo" },
               ...(here?.folders ?? []).map((d) => ({ value: d, label: `${d}/` })),
             ]}
             value={one.where}

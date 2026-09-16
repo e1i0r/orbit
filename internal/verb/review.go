@@ -234,6 +234,15 @@ func corrected(w World, in In) (Out, error) {
 // about is a rule steering code nobody meant it to, and the reader moving it
 // is deciding how narrow it should be — not which project it belongs to.
 func whereItGoes(w World, was knowledge.Rule, where string) (knowledge.Scope, error) {
+	// A place left empty is the rule staying where it is, not a place of
+	// nowhere. A caller that names every field it takes — which a form does,
+	// because it draws them all — would otherwise be moving a rule every
+	// time it corrected a sentence, and a rule about every repository, which
+	// has no checkout for a path to be inside, could not be reworded at all.
+	if where == "" {
+		return was.Scope, nil
+	}
+
 	if was.Scope.Repo == "" {
 		return knowledge.Scope{}, errors.New(w.Words().T("verb.rules.nowhere_to_narrow",
 			"{rule} is about no checkout, so there is nothing for {path} to be inside",

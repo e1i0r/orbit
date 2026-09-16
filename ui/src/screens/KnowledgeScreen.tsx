@@ -100,7 +100,7 @@ export function KnowledgeScreen() {
               rule: one,
               phrase: one.phrase,
               repo: one.repo ?? "",
-              where: one.path ?? "",
+              where: one.path || ".",
               check: one.check ?? "",
             },
           })
