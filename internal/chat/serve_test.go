@@ -108,11 +108,22 @@ func TestHelpIsBuiltFromTheDeclaration(t *testing.T) {
 	}
 }
 
-// TestProseIsNotAnswered. Answering every stray sentence with a usage message
-// is how a channel gets muted.
-func TestProseIsNotAnswered(t *testing.T) {
-	if said := served(t, anyone, "dale con codex"); len(said) != 0 {
-		t.Errorf("prose was answered: %v", said)
+// TestProseGoesToTheSupervisorThread. A chat with commands in it and nowhere
+// to say a sentence is half a chat — and the thread is where a sentence
+// already belongs, so something said from a bus reaches the next run's
+// prompt exactly as it would have from the desk.
+//
+// It reaches the world, which this test has not got. Failing there is the
+// proof it was taken as a sentence rather than dropped.
+func TestProseGoesToTheSupervisorThread(t *testing.T) {
+	said := served(t, anyone, "dale con codex")
+	if len(said) != 1 || !strings.Contains(said[0], "no machine") {
+		t.Errorf("prose was not put in the thread: %v", said)
+	}
+
+	// An empty line is still nothing.
+	if blank := served(t, anyone, "   "); len(blank) != 0 {
+		t.Errorf("an empty line was answered: %v", blank)
 	}
 }
 

@@ -5439,6 +5439,30 @@
       "source": "back in {when}",
       "value": "vuelve en {when}"
     },
+    "setting.chat_id": {
+      "source": "the one account `orbit chat` answers over a service",
+      "value": "la única cuenta a la que `orbit chat` le contesta en un servicio"
+    },
+    "chat.no_token": {
+      "source": "{env} is not set; @BotFather gives you one when you make a bot",
+      "value": "{env} no está seteada; @BotFather te da una cuando creás un bot"
+    },
+    "chat.no_such_channel": {
+      "source": "{name} is not a chat orbit knows; it knows terminal and telegram",
+      "value": "{name} no es un chat que orbit conozca; conoce terminal y telegram"
+    },
+    "chat.your_id": {
+      "source": "nobody is allowed to command this Orbit yet. Your chat id is {id} — run `orbit settings set chat-id {id}` and start me again.",
+      "value": "todavía nadie puede darle órdenes a este Orbit. Tu chat id es {id} — corré `orbit settings set chat-id {id}` y arrancame de nuevo."
+    },
+    "chat.waiting_for_id": {
+      "source": "no chat-id is set: write to the bot and it will tell you yours.",
+      "value": "no hay chat-id seteado: escribile al bot y te dice el tuyo."
+    },
+    "chat.listening": {
+      "source": "listening, and answering {id} only",
+      "value": "escuchando, y contestándole sólo a {id}"
+    },
     "chat.no_verb": {
       "source": "a slash with nothing after it asks for nothing",
       "value": "una barra sin nada atrás no pide nada"

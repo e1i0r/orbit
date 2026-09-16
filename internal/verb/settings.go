@@ -242,6 +242,17 @@ func settingTable() []Rule {
 			return cfg.Theme
 		},
 		Clear: func(cfg *store.Settings) { cfg.Theme = store.Shipped().Theme },
+	}, {
+		Name: "chat-id",
+		About: func(p *words.Printer) string {
+			return p.T("setting.chat_id", "the one account `orbit chat` answers over a service")
+		},
+		Set: func(p *words.Printer, cfg *store.Settings, value string) (string, error) {
+			cfg.ChatID = strings.TrimSpace(value)
+			return cfg.ChatID, nil
+		},
+		Value: func(cfg store.Settings) string { return cfg.ChatID },
+		Clear: func(cfg *store.Settings) { cfg.ChatID = store.Shipped().ChatID },
 	}}, budgetSettings()...)
 }
 

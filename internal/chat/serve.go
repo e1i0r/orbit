@@ -30,6 +30,24 @@ type Env struct {
 	// this is not optional and it is not a list: nil turns every message
 	// away, which is the safe answer for a build that forgot to say.
 	Allowed func(who string) bool
+	// Stranger is what to say to somebody who is not allowed, and nothing
+	// for the usual case.
+	//
+	// The usual case is silence: a bot that argues with whoever finds it is
+	// a bot telling strangers that something is here. The exception is the
+	// first message of all — a machine with nobody allowed yet has no way
+	// to learn who its reader is, and answering that one message with the
+	// id it arrived from is the difference between setting this up in ten
+	// seconds and going to read an API by hand.
+	Stranger func(m Message) string
+	// Answers is the supervisor, asked, and what it said back.
+	//
+	// It is the one thing in this package that spends money: a sentence with
+	// no slash runs an engine over the thread and the record. Nil is a chat
+	// that writes the line down and does not answer — which is what a build
+	// with no engine reachable has to do, and a sensible default for one
+	// nobody has said yes to the spending on.
+	Answers func(ctx context.Context, said string) (string, error)
 }
 
 // A Desk is one channel, served.
@@ -62,15 +80,27 @@ func (d *Desk) heard(ctx context.Context, m Message) {
 	if d.env.Allowed == nil || !d.env.Allowed(m.Who) {
 		logger.Warn("chat", "%s: a message from %q was turned away", d.to.Name(), m.Who)
 
+		if d.env.Stranger != nil {
+			if said := d.env.Stranger(m); said != "" {
+				d.send(ctx, m.Where, said)
+			}
+		}
+
 		return
 	}
 
 	if answer := d.answer(ctx, m); answer != "" {
-		if err := d.to.Say(ctx, m.Where, answer); err != nil {
-			// Logged and dropped. A chat that is down must not be able to
-			// stop anything, which is the rule a gate follows too.
-			logger.Error("chat", "%s: answer to %q not delivered: %v", d.to.Name(), m.Where, err)
-		}
+		d.send(ctx, m.Where, answer)
+	}
+}
+
+// send answers, and gives up rather than failing.
+//
+// Logged and dropped. A chat that is down must not be able to stop anything,
+// which is the rule a gate follows too.
+func (d *Desk) send(ctx context.Context, where, text string) {
+	if err := d.to.Say(ctx, where, text); err != nil {
+		logger.Error("chat", "%s: answer to %q not delivered: %v", d.to.Name(), where, err)
 	}
 }
 
@@ -93,9 +123,7 @@ func (d *Desk) answer(ctx context.Context, m Message) string {
 	}
 
 	if !isCommand {
-		// A chat is a place people also talk. Answering every stray
-		// sentence with a usage message is how a channel gets muted.
-		return ""
+		return d.toldTheSupervisor(ctx, m.Text, p)
 	}
 
 	if v, ok := verb.One(asked.Verb); ok && cannot[v.Path()] != "" {
@@ -109,6 +137,43 @@ func (d *Desk) answer(ctx context.Context, m Message) string {
 	}
 
 	return d.run(ctx, asked, p)
+}
+
+// toldTheSupervisor is a line with no slash: a sentence, said to the
+// supervisor.
+//
+// The thread is where a sentence already belongs — the same one `S` opens in
+// the window — so something said from a bus reaches the next run's prompt
+// exactly as it would have from the desk. What is different here is that a
+// chat expects an answer: a screen shows the line landing in a thread the
+// reader is looking at, and a phone shows nothing at all.
+//
+// So the supervisor is asked, and what it says comes back as the reply. That
+// costs a model call per sentence, which is why it is a port and why a chat
+// without one still takes the line down rather than dropping it.
+func (d *Desk) toldTheSupervisor(ctx context.Context, text string, p *words.Printer) string {
+	said := strings.TrimSpace(text)
+	if said == "" {
+		return ""
+	}
+
+	if d.env.Answers == nil {
+		return d.run(ctx, Asked{
+			Verb: "supervisor say",
+			In: verb.In{
+				Args: map[string]string{"text": said},
+				By:   "operator",
+				Door: door,
+			},
+		}, p)
+	}
+
+	answer, err := d.env.Answers(ctx, said)
+	if err != nil {
+		return err.Error()
+	}
+
+	return Reply(verb.Out{Said: answer}, p)
 }
 
 // run asks for the verb and dresses what it answered.
