@@ -70,7 +70,7 @@ func runLoop(ctx context.Context, r loopRun) (engine.Result, error) {
 
 		for i, inner := range l.Phases {
 			one := phaseRun{
-				store: s, task: t, phase: inner, eng: r.engines[inner.Engine],
+				store: s, task: t, phase: inner, eng: r.engines[putTo(inner.Engine, r.on)],
 				n: i + 1, wt: r.wt, others: r.others, tried: tried,
 			}
 
@@ -123,6 +123,10 @@ type loopRun struct {
 	phase   flow.Phase
 	wt      string
 	engines map[string]engine.Engine
+	// on is the engine a relay has handed the task to, which outranks what
+	// every inner phase names for the reason it does in Run: the flow was
+	// written before anybody knew which engine would still have allowance.
+	on      string
 	others  []string
 	notes   []string
 	reviews []string

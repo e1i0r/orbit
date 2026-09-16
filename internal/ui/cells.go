@@ -11,7 +11,6 @@ package ui
 import (
 	"strconv"
 	"strings"
-	"time"
 
 	"charm.land/lipgloss/v2"
 
@@ -133,6 +132,14 @@ func (m Model) stateWord(t view.Task) (string, theme.Role) {
 		return p.T("reason.over_budget", "spent {spent} of {budget}", reasonArgs(t.Reason)...), theme.Bad
 	case view.ReasonStuck:
 		return p.T("reason.stuck", "stuck after {attempts} attempts", reasonArgs(t.Reason)...), theme.Bad
+	case view.ReasonNeedsEngine:
+		// Warn and not Bad, and it names who could take it. Nothing is
+		// broken here: the work stands and what it is waiting for is a
+		// reader to pick one of these.
+		return p.T("reason.needs_engine", "{engine} ran out: {phase} · {engines} could take it",
+			reasonArgs(t.Reason)...), theme.Warn
+	case view.ReasonNoEngine:
+		return m.noEngineWord(t), theme.Warn
 	}
 
 	if t.Damaged > 0 {
@@ -196,40 +203,6 @@ func phaseTotals(tasks []view.Task) map[string]int {
 	}
 
 	return totals
-}
-
-// ranOutWord is a run whose engine had nothing left, and when it comes back.
-//
-// The second half is the one somebody actually wants: told an engine ran
-// out, the next question is always how long, and the window already has the
-// answer — it draws it in the header on every frame. Saying it here saves
-// the reader going to look for the number they were about to be sent to.
-//
-// An engine nobody can read a window for says only that it ran out, which is
-// still the thing that matters: an engine with no reading is not an engine
-// with nothing left.
-func (m Model) ranOutWord(t view.Task) string {
-	p := m.opts.Words
-
-	said := p.T("reason.ran_out", "{engine} ran out: {phase}", reasonArgs(t.Reason)...)
-	if m.opts.Quota == nil || t.Engine == "" {
-		return said
-	}
-
-	back := time.Duration(0)
-
-	for _, w := range m.opts.Quota(t.Engine).Windows {
-		if w.ResetsIn > 0 && (back == 0 || w.ResetsIn < back) {
-			back = w.ResetsIn
-		}
-	}
-
-	if back == 0 {
-		return said
-	}
-
-	return said + cells.Dot + p.T("reason.ran_out_back", "back in {when}",
-		words.Arg{Name: "when", Value: cells.Elapsed(m.now, m.now.Add(-back))})
 }
 
 // reasonArgs converts a reason's values into the printer's, field for

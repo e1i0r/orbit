@@ -136,7 +136,7 @@ func TestPhaseHelpersAndRunGates(t *testing.T) {
 		Permissions: []string{"bash", "write"},
 	}
 
-	evStart := phaseStart(pFull, 2, []string{"note1", "note2"})
+	evStart := phaseStart(pFull, pFull.Engine, 2, []string{"note1", "note2"})
 	if evStart.Data["model"] != "sonnet" || evStart.Data["effort"] != "high" || evStart.Data["notes"] != "2" {
 		t.Errorf("unexpected phaseStart data: %+v", evStart.Data)
 	}

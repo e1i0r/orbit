@@ -18,6 +18,11 @@ import (
 // stops anything, which is what `orbit task start` was before there was a window to
 // release a run from.
 //
+// left is how the run finds out what an engine has left to spend, and it is
+// variadic for the reason tried is in prompt(): a caller with no way to read
+// an allowance should not have to say so, and every caller had none until
+// relays existed. With none, every engine reads as free — see relay.go.
+//
 // The worktree is never removed. Not on failure, where the work that did
 // happen is the most valuable thing in the run and is not this function's to
 // throw away — and not on success either, where the design's answer to a
@@ -28,7 +33,9 @@ import (
 // settled worktree. repo.RemoveWorktree is written and nothing calls it, so
 // every run leaves a .git/worktrees entry behind in a repository Orbit does
 // not own, and `git worktree prune` by hand is the only remedy.
-func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[string]engine.Engine, g Gate) error {
+func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow,
+	engines map[string]engine.Engine, g Gate, left ...Allowance,
+) error {
 	// The run marker goes down before anything is written, and comes off on
 	// every way out of here. It is what lets any reader tell a phase still
 	// running from a phase whose process is gone, and it is also the only
@@ -96,7 +103,14 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 	// repository has its directory before it is told what it could join.
 	others := elsewhere(s, t)
 
-	var prevOutput string
+	var (
+		prevOutput string
+		// on is the engine a relay has handed the task to. Empty until one
+		// runs out, and from then on it outranks what every phase of the
+		// flow names: the flow was written before anybody knew which engine
+		// would still have allowance at four in the afternoon.
+		on string
+	)
 
 	for i, p := range f.Phases {
 		// Every phase is put to the gate, not only the ones whose Wait says
@@ -137,42 +151,68 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		var (
 			out engine.Result
 			err error
+			// dry is every engine that has already run out on this phase.
+			// It is what keeps a relay from being a loop: an engine that
+			// ran out a minute ago can still read as free — a proxy
+			// caches, a rollout file is as fresh as the last run — so who
+			// has been asked is remembered here rather than re-read.
+			dry []string
 		)
 
-		// A loop is a phase that is a block of phases, and none of what
-		// follows is about one phase with one engine — but all of it is
-		// about the work the phase left behind, so the block answers to the
-		// same gates as any other phase. Walked with a continue of its own,
-		// a flow ending in a loop, which is the tdd shape Orbit ships, got
-		// no diff gate, no dependency gate and no contradiction check, and
-		// wrote neither a story nor a delta.
-		if p.Loop != nil {
-			out, err = runLoop(ctx, loopRun{
-				store:   s,
-				task:    t,
-				flow:    f,
-				phase:   p,
-				wt:      wt,
-				engines: engines,
-				others:  others,
-				notes:   notes,
-				reviews: reviews,
-				gate:    g,
-			})
-		} else {
-			out, err = attempts(ctx, phaseRun{
-				store:   s,
-				task:    t,
-				phase:   p,
-				eng:     engines[p.Engine],
-				n:       i + 1,
-				last:    i+1 == len(f.Phases),
-				wt:      wt,
-				notes:   notes,
-				reviews: reviews,
-				prev:    fedOutput(p, prevOutput),
-				others:  others,
-			}, f.AttemptCap())
+		// Round again for each engine that runs out, and once for every
+		// other outcome. A phase that broke, was cancelled or was refused
+		// by a gate is not something another engine answers: a compile
+		// error is a compile error whoever is typing.
+		for {
+			// A loop is a phase that is a block of phases, and none of what
+			// follows is about one phase with one engine — but all of it is
+			// about the work the phase left behind, so the block answers to
+			// the same gates as any other phase. Walked with a continue of
+			// its own, a flow ending in a loop, which is the tdd shape
+			// Orbit ships, got no diff gate, no dependency gate and no
+			// contradiction check, and wrote neither a story nor a delta.
+			if p.Loop != nil {
+				out, err = runLoop(ctx, loopRun{
+					store:   s,
+					task:    t,
+					flow:    f,
+					phase:   p,
+					wt:      wt,
+					engines: engines,
+					on:      on,
+					others:  others,
+					notes:   notes,
+					reviews: reviews,
+					gate:    g,
+				})
+			} else {
+				out, err = attempts(ctx, phaseRun{
+					store:   s,
+					task:    t,
+					phase:   p,
+					eng:     engines[putTo(p.Engine, on)],
+					n:       i + 1,
+					last:    i+1 == len(f.Phases),
+					wt:      wt,
+					notes:   notes,
+					reviews: reviews,
+					prev:    fedOutput(p, prevOutput),
+					others:  others,
+				}, f.AttemptCap())
+			}
+
+			none := ranDry(err)
+			if none == nil {
+				break
+			}
+
+			took, stop := passTo(s, t, p, none.engine, engines, dry, allowance(left))
+			if stop != nil {
+				return stop
+			}
+
+			dry = append(dry, none.engine)
+			on = took
 		}
 
 		if err != nil {
@@ -201,7 +241,7 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 		// Last of the gates, because it is the only one that costs a model
 		// call: a change already refused for its size or for a library it
 		// reached for is not worth paying to judge.
-		if c := contradicts(ctx, s, t, f, p, engines[p.Engine], wt); c != nil {
+		if c := contradicts(ctx, s, t, f, p, engines[putTo(p.Engine, on)], wt); c != nil {
 			return stopContradicting(s, t, p, *c)
 		}
 
@@ -222,7 +262,7 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 	// sends the task round again or hands it to a person writes its own
 	// terminal event, and this run ends there rather than also saying it
 	// finished.
-	if err := validate(ctx, s, t, f, engines[lastEngine(f)], wt); err != nil {
+	if err := validate(ctx, s, t, f, engines[putTo(lastEngine(f), on)], wt); err != nil {
 		return err
 	}
 
@@ -241,6 +281,25 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow, engines map[s
 	}
 
 	return nil
+}
+
+// putTo is which engine a phase is put to: the one the flow names, unless
+// a relay has handed the task to another.
+func putTo(named, on string) string {
+	if on != "" {
+		return on
+	}
+
+	return named
+}
+
+// allowance is the port the caller passed, or none at all.
+func allowance(left []Allowance) Allowance {
+	if len(left) == 0 {
+		return nil
+	}
+
+	return left[0]
 }
 
 // stopped writes down that a run was stopped from outside.

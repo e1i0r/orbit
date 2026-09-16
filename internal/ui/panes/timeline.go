@@ -222,6 +222,14 @@ func (e Env) logWord(entry view.Entry) (string, theme.Role) {
 		return p.T("log.new_dependency", "new dependency"), theme.Bad
 	case view.EntryContradicts:
 		return p.T("log.contradicts", "against a decision"), theme.Bad
+	case view.EntryRelayed:
+		// Accent and not Warn. Nothing went wrong here — this is the line
+		// that says the task survived its engine.
+		return p.T("log.relayed", "changed engine"), theme.Accent
+	case view.EntryNeedsEngine:
+		return p.T("log.needs_engine", "needs an engine"), theme.Warn
+	case view.EntryNoEngine:
+		return p.T("log.no_engine", "no engine free"), theme.Warn
 	case view.EntryLoopChecked:
 		return p.T("log.loop_checked", "loop checked"), theme.Accent
 	case view.EntryApproved:

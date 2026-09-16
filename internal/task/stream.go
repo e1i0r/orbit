@@ -35,7 +35,12 @@ func (r phaseRun) run(ctx context.Context) (engine.Result, error, error) { //nol
 		Dir:         r.wt,
 		Permissions: r.phase.Permissions,
 		Env:         childEnv(r.task),
-		Resume:      lastSession(r.store, r.task, r.phase.Engine, r.eng),
+		// The engine that is actually running and not the one the flow
+		// names. After a relay they are different, and asking for the
+		// session of the engine that ran out would hand codex a session id
+		// claude wrote — which the engine either refuses or, worse, silently
+		// ignores while the run reads as a resumed one.
+		Resume: lastSession(r.store, r.task, callsItself(r.eng), r.eng),
 		OnEvent: func(ev engine.StreamEvent) {
 			var err error
 

@@ -89,6 +89,11 @@ func inFlight(events []record.Event) bool {
 			record.TaskTimedOut, record.TaskAbandoned, record.TaskStuck,
 			record.TaskOverBudget, record.TaskOverDiff, record.TaskNewDependency,
 			record.TaskContradicts,
+			// A run that ran out and had nowhere to go is over. Left off
+			// this list it reads as a run still in flight, and reconcile
+			// writes task.abandoned over a task that is only waiting for
+			// an allowance to come back.
+			record.TaskNeedsEngine, record.TaskNoEngine,
 			// sendBack writes this one and the run returns behind it, so a
 			// requeued task is not a run still in flight. internal/db's
 			// closesRun reads the same list.

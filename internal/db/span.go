@@ -33,6 +33,11 @@ var (
 		record.TaskOverDiff:      true,
 		record.TaskNewDependency: true,
 		record.TaskContradicts:   true,
+		// The two endings of a run whose engine ran out: one waiting on a
+		// person to pick who carries on, one waiting on an allowance. Both
+		// end the run, for the reason internal/task's inFlight says.
+		record.TaskNeedsEngine: true,
+		record.TaskNoEngine:    true,
 		// A task the supervisor sends back ends its run there:
 		// internal/task's sendBack writes it and run.go returns with no
 		// other terminal event behind it, so the row kept ended_at NULL for

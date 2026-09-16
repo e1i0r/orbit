@@ -8,7 +8,20 @@ package view
 // two send them to do opposite things: one is a bug to look at, the other is
 // a wait or another engine.
 
-import "github.com/e1i0r/orbit/internal/record"
+import (
+	"strings"
+
+	"github.com/e1i0r/orbit/internal/record"
+)
+
+// spaced is a comma-separated list of names as a person reads one.
+//
+// The record writes them tight because a field of a log is a field of a log;
+// a row on a board is a sentence, and "claude,codex,opencode" is the seam
+// where a reader can see the machine.
+func spaced(list string) string {
+	return strings.Join(strings.Split(list, ","), ", ")
+}
 
 // ranOut folds the ending a phase gets when the allowance is gone.
 func ranOut(t *Task, e record.Event) {

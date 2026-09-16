@@ -5438,6 +5438,30 @@
     "reason.ran_out_back": {
       "source": "back in {when}",
       "value": "vuelve en {when}"
+    },
+    "reason.needs_engine": {
+      "source": "{engine} ran out: {phase} \u00b7 {engines} could take it",
+      "value": "{engine} se qued\u00f3 sin cuota: {phase} \u00b7 {engines} pueden seguirla"
+    },
+    "reason.no_engine": {
+      "source": "{engine} ran out: {phase} \u00b7 no engine has anything left",
+      "value": "{engine} se qued\u00f3 sin cuota: {phase} \u00b7 ning\u00fan motor tiene cuota"
+    },
+    "log.relayed": {
+      "source": "changed engine",
+      "value": "cambi\u00f3 de motor"
+    },
+    "log.needs_engine": {
+      "source": "needs an engine",
+      "value": "necesita un motor"
+    },
+    "log.no_engine": {
+      "source": "no engine free",
+      "value": "ning\u00fan motor libre"
+    },
+    "reason.no_engine_back": {
+      "source": "{engine} ran out: {phase} \u00b7 no engine for another {back}",
+      "value": "{engine} se qued\u00f3 sin cuota: {phase} \u00b7 sin motores por {back}"
     }
   }
 }

@@ -103,6 +103,8 @@ const (
 	stateOverDiff                   // task.over_diff: it changed more than was agreed
 	stateNewDependency              // task.new_dependency: it reached for a library nobody approved
 	stateContradicts                // task.contradicts: the change goes against a decision
+	stateNeedsEngine                // task.needs_engine: it ran out and somebody picks who carries on
+	stateNoEngine                   // task.no_engine: it ran out and nothing has anything left
 
 	// stateCount is not a state. It is how many there are, so a test can
 	// walk every one and fail when a new state arrives without a band.
@@ -280,7 +282,7 @@ func bandOfState(s state) Band {
 		return Running
 	case stateWaiting, statePhaseFailed, stateRanOut, stateFailed, stateTimedOut,
 		stateAbandoned, stateStuck, stateOverBudget, stateOverDiff,
-		stateNewDependency, stateContradicts:
+		stateNewDependency, stateContradicts, stateNeedsEngine, stateNoEngine:
 		return NeedsYou
 	case stateCancelled, stateFinished:
 		return Done

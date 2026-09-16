@@ -258,6 +258,29 @@ func fold(t *Task, e record.Event) {
 			{Name: "decision", Value: e.Data["decision"]},
 		}}
 		stamp(&t.Since, e.At)
+	case record.TaskRelayed:
+		// The task changed hands and the run carried straight on, so
+		// nothing about where it is has changed — only who is holding it.
+		// Read as an ending it would stop a working run dead; folded away
+		// entirely it would leave the row still naming the engine that ran
+		// out an hour ago.
+		t.Engine = e.Data["to"]
+	case record.TaskNeedsEngine:
+		t.state = stateNeedsEngine
+		t.Reason = Reason{Key: ReasonNeedsEngine, Args: []Arg{
+			{Name: "engine", Value: e.Data["from"]},
+			{Name: "phase", Value: e.Data["phase"]},
+			{Name: "engines", Value: spaced(e.Data["engines"])},
+		}}
+		stamp(&t.Since, e.At)
+	case record.TaskNoEngine:
+		t.state = stateNoEngine
+		t.Reason = Reason{Key: ReasonNoEngine, Args: []Arg{
+			{Name: "engine", Value: e.Data["from"]},
+			{Name: "phase", Value: e.Data["phase"]},
+			{Name: "back", Value: e.Data["back"]},
+		}}
+		stamp(&t.Since, e.At)
 	case record.DecisionMade, record.DecisionSuperseded, record.RepoJoined, record.DependencyApproved:
 		// Written down and deliberately not folded. What was decided and
 		// which repositories the task reached are facts about the task, but

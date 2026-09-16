@@ -125,6 +125,40 @@ const (
 	// decision.
 	TaskContradicts = "task.contradicts"
 
+	// TaskRelayed is the engine changing hands in the middle of a task.
+	//
+	// Data["from"] is the engine that had it, Data["to"] the one that took
+	// it, Data["phase"] where it changed, and Data["why"] whether the first
+	// one ran out or a person chose the second. Text is the line a human
+	// reads.
+	//
+	// Written down because a task that passed through three engines is a
+	// task whose result cannot be judged without knowing it: code that came
+	// out strange is either the flow's doing or the third engine arriving
+	// with half the context, and nothing else in the record tells those
+	// apart. It is also the only place the real cost shows — three
+	// allowances spent, one task.
+	TaskRelayed = "task.relayed"
+
+	// TaskNeedsEngine is a run that stopped because its engine ran out and
+	// nobody had said to carry on without asking.
+	//
+	// Data["engines"] names the ones that could take it, Data["from"] the
+	// one that ran out and Data["phase"] where it stopped. It is a run
+	// waiting on a person and not a run that failed: nothing is broken, and
+	// what it needs is a choice.
+	TaskNeedsEngine = "task.needs_engine"
+
+	// TaskNoEngine is a run that stopped because no engine has anything
+	// left to spend.
+	//
+	// Data["back"] is how long until the first allowance comes back, in the
+	// form time.Duration prints, and Data["from"] and Data["phase"] are
+	// where it stopped. The duration is the whole point of the kind:
+	// allowances come back, so "no engines until 16:30" is an answer and
+	// "abandoned" is not.
+	TaskNoEngine = "task.no_engine"
+
 	// TaskStory is how this prompt became this diff, in the five fields the
 	// task story spec settles on: entry, purpose, symptom, cause, fix. The
 	// engine writes them and the record is what proves them — every claim

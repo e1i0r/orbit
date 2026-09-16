@@ -54,6 +54,9 @@ const (
 	EntryOverDiff                         // it changed more than was agreed
 	EntryNewDependency                    // it reached for a library nobody approved
 	EntryContradicts                      // the change goes against a decision
+	EntryRelayed                          // another engine took the task on
+	EntryNeedsEngine                      // it ran out, and somebody picks who carries on
+	EntryNoEngine                         // it ran out, and nothing has anything left
 	EntryLoopChecked                      // a turn of a loop, and what its checks answered
 	EntryApproved                         // a reader said yes to those libraries
 	EntryDecision                         // something was decided, and the decision is in the line
@@ -122,6 +125,12 @@ func (e Entry) What() EntryKind {
 		return EntryNewDependency
 	case record.TaskContradicts:
 		return EntryContradicts
+	case record.TaskRelayed:
+		return EntryRelayed
+	case record.TaskNeedsEngine:
+		return EntryNeedsEngine
+	case record.TaskNoEngine:
+		return EntryNoEngine
 	case record.LoopChecked:
 		return EntryLoopChecked
 	case record.DependencyApproved:

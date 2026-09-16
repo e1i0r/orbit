@@ -145,7 +145,7 @@ func (r phaseRun) once(ctx context.Context) (engine.Result, *gateRefusal, error)
 	// is released cleanly when Run returns. So an emit that failed would
 	// leave task.started with nothing after it: a task that reads as running
 	// for ever, in every reader of the record.
-	if err := emit(r.store, r.task, phaseStart(r.phase, r.n, r.notes)); err != nil {
+	if err := emit(r.store, r.task, phaseStart(r.phase, callsItself(r.eng), r.n, r.notes)); err != nil {
 		return engine.Result{}, nil, failed(r.store, r.task, err)
 	}
 
@@ -190,8 +190,10 @@ func (r phaseRun) broke(ctx context.Context, out engine.Result, runErr error) er
 	// reader to do opposite things — one is a bug to look at, the other is
 	// a wait or another engine — and the engine is the only thing that
 	// knows which happened, because the words are in what it printed.
+	dry := r.eng != nil && r.eng.RanOut(out, runErr)
+
 	ending := record.PhaseFailed
-	if r.eng != nil && r.eng.RanOut(out, runErr) {
+	if dry {
 		ending = record.PhaseRanOut
 	}
 
@@ -201,7 +203,17 @@ func (r phaseRun) broke(ctx context.Context, out engine.Result, runErr error) er
 	//nolint:errcheck // deliberate: see above
 	_ = emit(r.store, r.task, phaseEnd(ending, r.phase.Name, out, runErr))
 
-	return failed(r.store, r.task, fmt.Errorf("task %s, phase %q: %w", r.task.ID, r.phase.Name, runErr))
+	err := fmt.Errorf("task %s, phase %q: %w", r.task.ID, r.phase.Name, runErr)
+
+	// A phase that ran out ends without task.failed, because the task has
+	// not failed yet: another engine may take it on, and the run that
+	// relays writes no terminal event at all. Whoever catches this decides
+	// what the task's own ending is — see relay.go.
+	if dry {
+		return &noneLeft{engine: callsItself(r.eng), err: err}
+	}
+
+	return failed(r.store, r.task, err)
 }
 
 // retried writes down the seam between one attempt and the next.
