@@ -179,8 +179,102 @@ func allowedChat(ctx Context, e *chat.Env) (string, error) {
 
 	e.Allowed = func(who string) bool { return who == cfg.ChatID }
 
+	if err := telling(e, cfg); err != nil {
+		return "", err
+	}
+
 	return p.T("chat.listening", "listening, and answering {id} only",
 		words.Arg{Name: "id", Value: cfg.ChatID}), nil
+}
+
+// telling sets up the half that speaks without being asked, or leaves it
+// switched off.
+//
+// One switch for the lot. Whether you want to be interrupted is the
+// question; where it reaches is a fact about what you have set up — the
+// desktop always, a chat when one is configured. A switch per channel would
+// be asking the same question twice.
+func telling(e *chat.Env, cfg store.Settings) error {
+	if !cfg.Notify {
+		return nil
+	}
+
+	watch, err := watching()
+	if err != nil {
+		return err
+	}
+
+	e.Watch = watch
+
+	// The same conversation the gate lets command it. A channel that could
+	// be commanded by one person and told things by another would be two
+	// decisions where the reader made one.
+	e.Tells = cfg.ChatID
+
+	desk := theDesktop{}
+	e.Also = func(said string) { desk.say(context.Background(), "Orbit", said) }
+
+	return nil
+}
+
+// watching is the record, asked what has been written since it was last
+// asked.
+//
+// It starts from wherever the record is now rather than from the beginning.
+// A chat opened this afternoon telling you about a task that finished on
+// Tuesday is a chat that has taught you to scroll past it, and the history
+// is what the board is for.
+//
+// A store per look and not one held open: this runs every few seconds for as
+// long as the chat is open, and a handle held across an afternoon is a
+// handle held against every run on the machine.
+func watching() (func(context.Context) ([]chat.Happening, error), error) {
+	s, err := store.Open()
+	if err != nil {
+		return nil, err
+	}
+
+	defer s.Close() //nolint:errcheck // opened to read one number
+
+	d, err := s.Record()
+	if err != nil {
+		return nil, err
+	}
+
+	at, err := d.Latest()
+	if err != nil {
+		return nil, err
+	}
+
+	return func(context.Context) ([]chat.Happening, error) {
+		s, err := store.Open()
+		if err != nil {
+			return nil, err
+		}
+
+		defer s.Close() //nolint:errcheck // read-only, on the way out
+
+		d, err := s.Record()
+		if err != nil {
+			return nil, err
+		}
+
+		// Every task at once, which is one query however many are running.
+		changes, err := d.Since(at, "")
+		if err != nil {
+			return nil, err
+		}
+
+		out := make([]chat.Happening, 0, len(changes))
+
+		for _, c := range changes {
+			at = c.N
+
+			out = append(out, chat.Happening{Task: c.Task, Event: c.Event})
+		}
+
+		return out, nil
+	}, nil
 }
 
 // theThread is the conversation a chat holds with the supervisor.

@@ -39,11 +39,16 @@ var waysIn = map[string][]string{
 	// top still hold.
 	"internal/ui": {"internal/board", "internal/flow", "internal/knowledge", "internal/logger", "internal/repo", "internal/task", "internal/tracker", "internal/ui/cells", "internal/ui/cheat", "internal/ui/clip", "internal/ui/compose", "internal/ui/engines", "internal/ui/fact", "internal/ui/flows", "internal/ui/keymap", "internal/ui/known", "internal/ui/layout", "internal/ui/markdown", "internal/ui/menu", "internal/ui/palette", "internal/ui/panes", "internal/ui/prose", "internal/ui/patch", "internal/ui/point", "internal/ui/prompt", "internal/ui/quota", "internal/ui/repos", "internal/ui/roster", "internal/ui/settings", "internal/ui/spoken", "internal/supervisor", "internal/ui/supervisor", "internal/ui/theme", "internal/ui/typing", "internal/ui/upgrade", "internal/verb", "internal/view", "internal/words"},
 	// internal/chat is the fifth way in, and the thinnest: it reads a
-	// message as a verb and dresses what the verb answered. It reaches the
-	// declaration and the reader's language and nothing else — which service
+	// message as a verb and dresses what the verb answered. Which service
 	// carries the words is a port it hands out, and whoever implements one
 	// lives where the network is allowed.
-	"internal/chat": {"internal/logger", "internal/verb", "internal/words"},
+	//
+	// internal/record is on its list for the other direction. Deciding what
+	// is worth interrupting somebody for is a decision about kinds — five of
+	// them, named — and it belongs beside the wording it produces rather
+	// than in whichever surface happens to be polling. It is a read of a
+	// type; the record itself arrives through a port.
+	"internal/chat": {"internal/logger", "internal/record", "internal/verb", "internal/words"},
 
 	"internal/cli": {
 		"internal/board", "internal/chat", "internal/engine", "internal/export", "internal/flow",

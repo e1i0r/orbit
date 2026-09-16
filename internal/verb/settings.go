@@ -243,6 +243,23 @@ func settingTable() []Rule {
 		},
 		Clear: func(cfg *store.Settings) { cfg.Theme = store.Shipped().Theme },
 	}, {
+		Name: "notify",
+		About: func(p *words.Printer) string {
+			return p.T("setting.notify", "whether Orbit interrupts you when a run stops and needs somebody")
+		},
+		Set: func(p *words.Printer, cfg *store.Settings, value string) (string, error) {
+			on, err := onOff(p, "notify", value)
+			if err != nil {
+				return "", err
+			}
+
+			cfg.Notify = on
+
+			return offOn(on), nil
+		},
+		Value: func(cfg store.Settings) string { return offOn(cfg.Notify) },
+		Clear: func(cfg *store.Settings) { cfg.Notify = store.Shipped().Notify },
+	}, {
 		Name: "chat-id",
 		About: func(p *words.Printer) string {
 			return p.T("setting.chat_id", "the one account `orbit chat` answers over a service")

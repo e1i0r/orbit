@@ -5594,6 +5594,30 @@
     "reason.no_engine_back": {
       "source": "{engine} ran out: {phase} · no engine for another {back}",
       "value": "{engine} se quedó sin cuota: {phase} · sin motores por {back}"
+    },
+    "news.waiting": {
+      "source": "waiting at a gate in {phase}",
+      "value": "esperando en una puerta en {phase}"
+    },
+    "news.stuck": {
+      "source": "stuck after {attempts} attempts; nothing moves on its own",
+      "value": "atascada después de {attempts} intentos; nada se mueve solo"
+    },
+    "news.needs_engine": {
+      "source": "{engine} ran out in {phase}; {free} could take it on",
+      "value": "{engine} se quedó sin cuota en {phase}; {free} puede seguirla"
+    },
+    "news.no_engine": {
+      "source": "{engine} ran out in {phase}, and no engine has anything left",
+      "value": "{engine} se quedó sin cuota en {phase}, y ningún motor tiene nada"
+    },
+    "news.finished": {
+      "source": "finished",
+      "value": "terminó"
+    },
+    "setting.notify": {
+      "source": "whether Orbit interrupts you when a run stops and needs somebody",
+      "value": "si Orbit te interrumpe cuando una corrida para y necesita a alguien"
     }
   }
 }

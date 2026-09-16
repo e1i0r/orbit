@@ -49,6 +49,23 @@ type Env struct {
 	// with no engine reachable has to do, and a sensible default for one
 	// nobody has said yes to the spending on.
 	Answers func(ctx context.Context, said string) (string, error)
+	// Watch is what the record has had written to it since it was last
+	// asked. Nil is a chat that only answers.
+	Watch func(ctx context.Context) ([]Happening, error)
+	// Tells is the conversation news is pushed into, and empty is a chat
+	// that says nothing unasked.
+	//
+	// The same account the gate lets command it: a channel that could be
+	// commanded by one person and told things by another would be two
+	// decisions where the reader made one.
+	Tells string
+	// Also is somewhere else the same news goes, and nil for nowhere.
+	//
+	// A desktop, today. It is a function and not a second Channel because
+	// nothing arrives back from a notification: a place to say things is
+	// not a conversation, and an interface with a Listen nobody can
+	// implement is an interface that lies.
+	Also func(said string)
 }
 
 // A Desk is one channel, served.
@@ -79,44 +96,9 @@ func (d *Desk) Serve(ctx context.Context) error {
 		}
 	}
 
+	go d.telling(ctx)
+
 	return d.to.Listen(ctx, func(m Message) { d.heard(ctx, m) })
-}
-
-// heard is one message, answered.
-func (d *Desk) heard(ctx context.Context, m Message) {
-	// Before anything is parsed. A message from somebody else is not a
-	// command with a bad argument; it is not a command at all, and reading
-	// it far enough to say why would be reading it.
-	if d.env.Allowed == nil || !d.env.Allowed(m.Who) {
-		logger.Warn("chat", "%s: a message from %q was turned away", d.to.Name(), m.Who)
-
-		if d.env.Stranger != nil {
-			if said := d.env.Stranger(m); said != "" {
-				d.send(ctx, m.Where, said)
-			}
-		}
-
-		return
-	}
-
-	stop := d.waiting(ctx, m.Where)
-	answer := d.answer(ctx, m)
-
-	stop()
-
-	if answer != "" {
-		d.send(ctx, m.Where, answer)
-	}
-}
-
-// send answers, and gives up rather than failing.
-//
-// Logged and dropped. A chat that is down must not be able to stop anything,
-// which is the rule a gate follows too.
-func (d *Desk) send(ctx context.Context, where, text string) {
-	if err := d.to.Say(ctx, where, text); err != nil {
-		logger.Error("chat", "%s: answer to %q not delivered: %v", d.to.Name(), where, err)
-	}
 }
 
 // showing is how often a channel is reminded that an answer is coming.

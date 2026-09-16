@@ -21,6 +21,7 @@ func TestEverySettingCanBePutBack(t *testing.T) {
 		Language: "es", Autopilot: true, UnreadCap: 40, Engine: "codex",
 		Model: "sonnet", Flow: "careful", Theme: "tokyo-night", CheckRecord: true,
 		ChatID:     "8477112",
+		Notify:     true,
 		BudgetTask: 9, BudgetWorkspace: 99, QuotaFloor: 15,
 	}
 
