@@ -147,6 +147,20 @@ func (m Model) wheel(e tea.Mouse) Model {
 		return m
 	}
 
+	if m.screen == screenKnowledge {
+		// One rule a notch, and not three lines. A rule is its sentence
+		// wrapped, and the one under the cursor says where it came from as
+		// well, so counted in lines the wheel crawled through a single row;
+		// counted in rules it covers about the distance three plain rows do
+		// everywhere else.
+		d := 1
+		if up {
+			d = -1
+		}
+
+		return m.wheelKnowledge(d)
+	}
+
 	if m.screen == screenEngines {
 		// The knobs are a list with one row chosen, so the wheel moves the
 		// choice and the list follows it — the palette's rule, on the one

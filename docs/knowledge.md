@@ -5,6 +5,126 @@ refuse the work at the gate when you give them a command. `K` in the cockpit.
 
 <img src="../assets/flow-knowledge.gif" alt="the knowledge screen: facts by scope, one being corrected, one widened, one turned off, and where each came from" width="900">
 
+## The screen
+
+`K` in the cockpit — the Brain — is every rule Orbit holds, across every
+repository on the board. It is the board's own shape: bands that say what a
+rule is doing, and one line a rule.
+
+```
+  Brain  everything Orbit has learned about your code          6 rules
+  Every rule is put in front of the agent before it works. The ones that
+  block also run a command, and send the work back when it fails.
+
+    ID        THE RULE                          WHERE         WHEN
+  🛑 WAITING (2) ─────────────────────────────────────────────────────
+  ❯ —         never push without the tests       internal/db   2026-09-14
+    d42b7f60  anything that drops a column…      migrations    2026-08-12
+
+  ⚡ BLOCKS (1) ───────────────────────────────────────────────────────
+    f0021bb4  coverage stays above 90%           ledger        2026-08-12
+
+  💬 SAYS (1) ────────────────────────────────────────────────────────
+    a1f4c209  pull requests are written in Eng…  every repo    2026-08-12
+
+  😴 PAUSED (1) ──────────────────────────────────────────────────────
+    c0ffee11  the site is generated              web           2026-09-01
+
+  🚫 OFF (1) ─────────────────────────────────────────────────────────
+    0091ccd2  the ledger only ever appends       repo: orbit   2026-08-12
+```
+
+Five states and one set of words for them. **Waiting** is a question — a
+sentence nobody has answered, or a rule that stopped you and is waiting to
+be decided about. **Blocks** and **says** are the two things a rule that is
+applying can do. **Paused** and **off** are the two ways it can not be.
+
+The same word is on the rule's own screen, in the card that says where it
+stands: a screen that said "told to nobody" over a rule whose card said
+"switched off" was two vocabularies for one fact.
+
+**The band is the answer**, not a column. A reader opens this screen with one
+question — is there anything here for me — and two columns saying "paused"
+and "no check" made them do the sorting themselves.
+
+`↑↓` walk it, the wheel scrolls it, a click puts the cursor on a rule and a
+second opens it. `↵` opens, `p` pauses, `n` writes one, `k` keeps a sentence
+word for word, `d` says it was not a rule.
+
+### One rule, opened
+
+`↵` on a rule opens it on its own screen, built the way a task's overview is:
+the strip of figures, the folding sections, the actions as a label over its
+key.
+
+```
+  anything that drops a column stops for a person to look at it
+  d42b7f60 · migrations · 🛑 WAITING
+
+  │ WAITING
+  it stopped you, or you paused it. Edit it with 'c', turn it on with 'u',
+  or switch it off with 'o'.
+
+  ┌ STATUS ─┐ ┌ CREATED BY ┐ ┌ CREATED ───┐ ┌ HITS ┐ ┌ REACH ────────┐
+  │ WAITING │ │ you        │ │ 2026-08-12 │ │ 6    │ │ with the repo │
+  └─────────┘ └────────────┘ └────────────┘ └──────┘ └───────────────┘
+
+  ▾ WHAT IT DOES ─────────────────────────────────────────────────────
+    it blocks the work · the check is make migrate-check
+
+  ▾ WHY IT IS NOT APPLYING ───────────────────────────────────────────
+    we are moving the migrations this week
+
+  ▾ WHAT IT HAS PUT YOU THROUGH ──────────────────────────────────────
+    you kept it on 12 August
+    it stopped the work 4 times in test, and you got past it every time
+
+  TURN ON [u]              SWITCH OFF [o]             EDIT [c]
+
+  [esc] back to the list
+```
+
+Everything that cannot fit on one line of a list is here, where there is room
+for it: where the rule came from, how often it has been told, whether it
+travels with the repository or stays on this machine, and the friction.
+
+### Writing one
+
+`n`, or `c` on an open rule, or `↵` on a sentence in the tray. It is the flow
+designer's form: groups under a heading, a column of labels, and the options
+of each row beside it with the one in force lit.
+
+```
+  A new rule   a sentence about your code, told to every run before it works
+
+  THE RULE · what it says, and what it is about ──────────────────────
+  ▸ What it says
+      ┌──────────────────────────────────────────────────────────────┐
+      │ (write the rule here)                                        │
+      └──────────────────────────────────────────────────────────────┘
+    Where it applies      all of orbit  cmd/ docs/ internal/ web/
+
+  THE GATE · whether it also blocks the work, or only says it ────────
+    What it does          say            block
+    The check             (none yet) make check make test
+
+      ✔ Save the rule      ✖ Leave it as it was
+
+  the sentence every run is told before it starts work
+  [tab] next row · [↑↓] move · [←→] change · [↵] do it · [esc] back
+```
+
+**The options are real.** Where a rule applies is picked from the folders the
+checkout actually has, and the check from the commands its Makefile already
+runs — so filing a rule is choosing rather than remembering a path and
+spelling it right. Typing is still there for anything neither offers.
+
+**The gate is a shortcut over the check**, and not a switch of its own. What
+decides whether a rule blocks work is whether it has a command that answers
+yes or no, so a switch beside the command could disagree with it — and a
+check typed under a switch left off would be a gate somebody wrote and Orbit
+threw away without saying so.
+
 ## Why not the model's memory
 
 The model forgets between sessions, and forgets when you swap it for another
@@ -133,7 +253,7 @@ Six, and the agent reads them in this order, so the last word goes to the one
 closest to what is about to be touched:
 
 ```
-everything          "PRs are written in English"
+every repo          "PRs are written in English"
 a language          "in Go, never discard an error with _"
 a repository        "this service owns no migrations"
 a directory         "everything under billing/ is money; round half to even"
@@ -169,7 +289,8 @@ A rule either says something before the work, or refuses it.
 Refusing needs something that answers yes or no without an opinion in it: a
 command, a pattern over the diff, a test that runs. A rule that asks to stop
 and brings no check would never fire while reading as though it would — so it
-warns instead, and the screen says which of the two it is.
+only says its sentence, and the screen calls it `no check` rather than
+letting it sit in the list looking like a gate.
 
 **The command is yours and never a model's.** A check runs on every future
 phase in that repository, and a wrong or slow one is an hour of a task spent on

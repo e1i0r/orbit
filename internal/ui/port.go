@@ -124,6 +124,15 @@ type Options struct {
 	// the board and the state root, for the screen that lists it whole.
 	KnowsAll func() []knowledge.Fact
 
+	// RepoFolders are the top-level folders of one checkout, and RepoChecks
+	// the commands it already runs on itself. The form that writes a rule
+	// offers both rather than asking somebody to remember them: a path
+	// spelled wrong files a rule where nothing will ever reach it, and a
+	// check half-remembered is a gate that refuses work for the wrong
+	// reason on every future run.
+	RepoFolders func(repo string) []string
+	RepoChecks  func(repo string) []string
+
 	// TurnFact writes a fact back with whatever was changed about it, which
 	// today is only whether it is switched off.
 	TurnFact func(f knowledge.Fact) error

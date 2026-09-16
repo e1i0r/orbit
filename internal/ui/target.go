@@ -79,6 +79,8 @@ func (m Model) hit(x, y int) point.Target {
 			return m.hitFlows(x, y)
 		case screenRepos:
 			return m.hitRepos(x, y)
+		case screenKnowledge:
+			return m.hitKnowledge(x, y)
 		case screenCompose:
 			return m.hitCompose(x, y)
 		case screenHelp, screenSupervisor, screenQuota:

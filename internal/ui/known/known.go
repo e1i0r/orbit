@@ -18,11 +18,12 @@ package known
 import (
 	"time"
 
-	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/knowledge"
 	"github.com/e1i0r/orbit/internal/ui/keymap"
+	"github.com/e1i0r/orbit/internal/ui/layout"
+	"github.com/e1i0r/orbit/internal/ui/point"
 	"github.com/e1i0r/orbit/internal/ui/typing"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -34,6 +35,12 @@ import (
 type Env struct {
 	Words *words.Printer
 	Keys  keymap.Keys
+	// Frame is the room the window lends it. The list scrolls, so how many
+	// rows there are to scroll into is part of every gesture and not only
+	// of drawing: a cursor moved is a cursor that has to be brought back
+	// on screen, and that cannot be worked out at draw time from a value
+	// the key press already threw away.
+	Frame layout.Frame
 	// All is everything Orbit has learned, across every repository on the
 	// board. Nil in a window built without a store, and then the screen
 	// says there is nothing rather than pretending it read.
@@ -65,10 +72,23 @@ type Env struct {
 	// and then the review says there is nothing to show rather than
 	// pretending it read.
 	Story func(f knowledge.Fact) []string
-	// Repo is the one repository on the board, and empty when there is more
-	// than one. A fact written here is about it; choosing one of several
-	// for somebody is how a rule ends up on the wrong project.
-	Repo string
+	// Places are the folders of one checkout, offered when a rule is being
+	// filed so that choosing where it applies is picking rather than
+	// remembering which folders the project has and spelling one right.
+	Places func(repo string) []string
+	// Commands are what a checkout already runs on itself — its Makefile's
+	// targets — offered as the check of a rule that refuses work. A rule
+	// that stops the work is worth nothing without one, and a command
+	// somebody half-remembers is worse than none.
+	Commands func(repo string) []string
+	// Repos is every checkout on the board, in the order it lists them.
+	//
+	// All of them and not the one there happens to be. With one, a rule
+	// written here is about it and nothing has to be asked; with several,
+	// which one is the first question the form has — and it used to be
+	// answered by filing the rule against everywhere, which is every
+	// project on this machine and was nobody's intention.
+	Repos []string
 }
 
 // A Said is one sentence somebody said to the supervisor that read as a
@@ -119,6 +139,14 @@ func about(name, value string) words.Arg {
 // and a frame is drawn ten times a second.
 type State struct {
 	sel int
+	// deep is the first line on show of a screen opened over the list: the
+	// form, and a rule's own. It is apart from offset because coming back
+	// from one of them should find the list where it was left.
+	deep int
+	// offset is the first line of the list on show. It is lines and not
+	// rules: a rule is as tall as its sentence wraps, and a list scrolled
+	// by rules jumps by however tall the next one happens to be.
+	offset int
 	// waiting is the tray, and facts is what Orbit already knows. The cursor
 	// walks the two of them in the order they are drawn, which is why almost
 	// nothing here indexes either one directly.
@@ -141,17 +169,31 @@ type State struct {
 	// something anybody retypes. How wide it is stays on ←/→, because
 	// everywhere and one checkout are not paths and cannot be typed as one.
 	editing bool
+	// repo is the checkout the form is filing against, which only matters
+	// while there is more than one on the board.
+	repo string
 	// pausing says the line being typed is a reason rather than a
 	// correction. One line, two gestures: what is typed is a sentence
 	// either way, and this is which sentence it is.
 	pausing bool
-	// reviewing is the rule under the cursor opened with everything it has
-	// put you through under it, which is the one place its fate is decided.
-	// Nothing here is a decision taken in a hurry: this is opened on
-	// purpose, by somebody who sat down to it.
-	reviewing bool
-	field     int
-	in        [factFields]typing.Field
+	// picking is one row's list of options open over the form, and pick is
+	// where its cursor is. A row of pills is right for two answers and
+	// wrong for fourteen, and which of those a row is depends on the
+	// repository — so the many go behind a list, exactly as the diff's
+	// files do.
+	picking bool
+	pick    int
+	// fresh says the form is writing a rule nobody had written before,
+	// which is the one case its heading cannot work out from the fields: a
+	// new rule and a rule whose sentence was emptied look the same.
+	fresh bool
+	// reading is the rule under the cursor opened on its own screen, with
+	// everything about it and everything it has put you through. It is the
+	// one place a rule's fate is decided: nothing here is a decision taken
+	// in a hurry, because it is opened on purpose.
+	reading bool
+	field   int
+	in      [factFields]typing.Field
 }
 
 // The three fields of a fact that are typed into.
@@ -203,8 +245,12 @@ func (s State) Sync(e Env) State {
 	s.read = true
 	s.sel = min(max(s.sel, 0), s.last())
 
-	return s
+	return s.keepSeen(e)
 }
+
+// pageRules is how far a page key moves: far enough to be worth pressing,
+// and short enough that the reader can still tell where they landed.
+const pageRules = 10
 
 // last is the bottom row the cursor can be on: the tray, and then the facts
 // under it, in the order they are drawn.
@@ -217,65 +263,53 @@ func (s State) View(h, w int, e Env) []string {
 }
 
 // Key is every key on this screen.
+//
+// Everything it hands back goes through keepSeen on the way out. A gesture
+// changes how tall the foot is — the form is six rows where the line of keys
+// was one — and a list left where it was when the window under it shrank is
+// a list showing rows nobody is looking at.
 func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
-	if s.reviewing {
-		return s.reviewKey(msg, e)
+	next, out := s.key(msg, e)
+	if out.Leave {
+		return next, out
 	}
 
-	if s.editing {
-		return s.editingKey(msg, e)
-	}
-
-	switch {
-	case msg.Code == tea.KeyEscape || key.Matches(msg, e.Keys.Back):
-		return State{}, Out{Leave: true}
-	case msg.Code == tea.KeyUp:
-		s.sel = max(s.sel-1, 0)
-		return s, Out{}
-	case msg.Code == tea.KeyDown:
-		s.sel = min(s.sel+1, s.last())
-		return s, Out{}
-	case msg.Code == 'e' || msg.Code == 'E':
-		return s.editSaid(e), Out{}
-	case msg.Code == 'k' || msg.Code == 'K':
-		return s.keepAsSaid(e)
-	case msg.Code == 'd' || msg.Code == 'D':
-		return s.dropSaid(e)
-	case msg.Code == 'n' || msg.Code == 'N':
-		return s.newFact(e), Out{}
-	case msg.Code == 'p' || msg.Code == 'P':
-		return s.pauseFact(e), Out{}
-	case msg.Code == 'r' || msg.Code == 'R':
-		return s.openReview(e), Out{}
-	}
-
-	return s, Out{}
+	return next.keepSeen(e), out
 }
 
-// What this screen does not do any more, on purpose.
-//
-// Switching a rule off, rewording one and moving where it applies all decide
-// a rule's fate, and this screen is glanced at in the middle of something
-// else. They live in the review now — `r` — where the evidence is read
-// before anything is decided.
-//
-// What is left here is reading, and pausing: cheap, reversible, and it asks
-// the question rather than answering it.
+// Move walks the cursor, and brings the list with it.
+func (s State) Move(d int, e Env) State { return s.move(d, e) }
 
-// ordered is the facts in the order the screen draws them: the ones that
-// belong to no repository first, then each repository's own.
+// Scroll is the wheel, a notch of which is one rule rather than three lines.
 //
-// General first because it is what applies everywhere and what somebody
-// looking for "why did it do that" checks before anything narrower.
-func (s State) ordered() (rootless, owned []knowledge.Fact) {
-	for _, f := range s.facts {
-		if f.Scope.Kind == knowledge.General || f.Scope.Kind == knowledge.Language {
-			rootless = append(rootless, f)
-			continue
-		}
+// Three lines is what a plain list moves and about what one rule is: a rule
+// is its sentence wrapped, and the one under the cursor says where it came
+// from as well. Counted in lines the wheel crawled through a single rule;
+// counted in rules it covers the distance three plain rows do everywhere
+// else.
+func (s State) Scroll(d int, e Env) State { return s.move(d, e) }
 
-		owned = append(owned, f)
+// Hit is what the screen has at that cell.
+func (s State) Hit(x, y int, e Env) point.Target { return s.hit(x, y, e) }
+
+// PointAt puts the cursor on the row that was clicked, and says whether it
+// was already there — which is what makes the second click the one that
+// opens.
+func (s State) PointAt(i int, e Env) (State, bool) { return s.pointAt(i, e) }
+
+// Chosen is the row under the cursor being opened: the second of the
+// pointer's two clicks, and nothing a key does not also do.
+func (s State) Chosen(e Env) (State, Out) { return s.chosen(e) }
+
+// Pick takes the option a pointer landed on in an open list, which is the
+// same gesture enter is on the row the cursor is already on.
+func (s State) Pick(at int, e Env) State {
+	r, up := s.picked(e)
+	if !up || at < 0 || at >= len(r.options) {
+		return s
 	}
 
-	return rootless, owned
+	s.pick = at
+
+	return s.takePick(r)
 }

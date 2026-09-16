@@ -49,6 +49,8 @@ const (
 	Seam
 	PaneRow
 	ScrollBar
+	KnowledgeRow
+	KnowledgePick
 )
 
 // Target is what one cell holds.
@@ -59,6 +61,9 @@ type Target struct {
 	Column layout.Column // Task: which field of the row was pointed at
 	// PaneTab, PaneBody, SettingsRow, ScrollBar: the
 	// row of the bar. PaneRow: which entry. Seam: which attempt.
+	// KnowledgeRow: which row of the knowledge screen, counted the way its
+	// cursor counts them — the tray first, then the rules. KnowledgePick:
+	// which option of the list a row of the rule form has open.
 	Pane  int
 	Key   string // BarHint, MenuEntry, Command, Fold
 	Field string // HeaderField, StatusField

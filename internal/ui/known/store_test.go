@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/charmbracelet/x/ansi"
+
 	"github.com/e1i0r/orbit/internal/knowledge"
 )
 
@@ -80,7 +82,7 @@ func TestDecidingAgainstARuleIsRefusedWhenThereIsNowhereToWriteIt(t *testing.T) 
 	s, e := onScreen(t, known("of everything", knowledge.Scope{Kind: knowledge.General}))
 	e.Replace = nil
 
-	s, _ = s.Key(press("r"), e)
+	s, _ = s.Key(press("enter"), e)
 
 	if after, out := s.Key(press("o"), e); after.facts[0].State != knowledge.Active || out.Said != "" {
 		t.Errorf("deciding against it with no door to write through answered %+v", out)
@@ -100,8 +102,8 @@ func TestEditingIsRefusedWhenThereIsNowhereToSaveIt(t *testing.T) {
 	s, e := onScreen(t, known("of everything", knowledge.Scope{Kind: knowledge.General}))
 	e.Replace = nil
 
-	if after, _ := s.Key(press("e"), e); after.editing {
-		t.Error("e opened a line with nowhere to save it to")
+	if after, _ := s.Key(press("enter"), e); after.editing {
+		t.Error("enter opened a form with nowhere to save it to")
 	}
 
 	if after, _ := s.Key(press("n"), e); after.editing {
@@ -119,10 +121,13 @@ func TestAFactSaysHowMuchUseItHasHadAndWhereItCameFrom(t *testing.T) {
 
 	s, e := onScreen(t, told)
 
-	drawn := drawnKnowledge(t, s, e)
-	for _, want := range []string{"from the code", "internal/api/limits.go", "2026-09-01", "12"} {
+	// On the rule's own screen. The list has one line a rule and spends it
+	// on the sentence; the question "can I trust this" is asked of one rule
+	// at a time, and this is where it is answered.
+	drawn := ansi.Strip(strings.Join(s.openDetail(e).View(30, 96, e), "\n"))
+	for _, want := range []string{"the code", "2026-09-01", "HITS"} {
 		if !strings.Contains(drawn, want) {
-			t.Errorf("the fact does not say %q:\n%s", want, drawn)
+			t.Errorf("the rule does not say %q:\n%s", want, drawn)
 		}
 	}
 }
@@ -134,15 +139,15 @@ func TestARuleWithACheckSaysItStops(t *testing.T) {
 	armed.Stops, armed.Check = true, "make coverage"
 
 	s, e := onScreen(t, armed)
-	if drawn := drawnKnowledge(t, s, e); !strings.Contains(drawn, "stops") {
-		t.Errorf("a rule with a check does not say it stops the work:\n%s", drawn)
+	if drawn := drawnKnowledge(t, s, e); !strings.Contains(drawn, "⚡ BLOCKS") {
+		t.Errorf("a rule with a check is not under what stops the work:\n%s", drawn)
 	}
 
 	off := armed
 	off.State = knowledge.Off
 
 	s, e = onScreen(t, off)
-	if drawn := drawnKnowledge(t, s, e); !strings.Contains(drawn, "off") {
-		t.Errorf("a rule that is off does not say so:\n%s", drawn)
+	if drawn := drawnKnowledge(t, s, e); !strings.Contains(drawn, "🚫 OFF") {
+		t.Errorf("a rule that is off is not under OFF:\n%s", drawn)
 	}
 }

@@ -165,8 +165,16 @@ func askFor(ctx Context, v verb.Verb, args []string) error {
 	}
 
 	in := verb.In{Args: map[string]string{}, By: "operator", Door: "the command line"}
+
+	// Only what was actually typed. A declared flag is not an answer, and a
+	// verb that leaves alone whatever the caller did not name cannot tell
+	// `-check ""` from no -check at all if every flag arrives empty: `rules
+	// correct -in migrations` threw away the command that made the rule
+	// block the work, and said nothing about having done it.
 	for name, value := range said {
-		in.Args[name] = *value
+		if given(fs, name) {
+			in.Args[name] = *value
+		}
 	}
 
 	rest := fs.Args()

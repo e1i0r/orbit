@@ -55,9 +55,13 @@ func (s State) knownSide(h, w int, e Env) []string {
 
 	rules, warns := split(s.knows)
 
-	rows := []string{theme.Paint(theme.Dim).Render(e.Words.T("known.side", "What Orbit knows")), ""}
-	rows = append(rows, s.sideSection(e.Words.T("known.rules", "Rules"), rules, e)...)
-	rows = append(rows, s.sideSection(e.Words.T("known.aware", "Aware"), warns, e)...)
+	rows := []string{theme.Paint(theme.Dim).Render(e.Words.T("known.side", "Brain")), ""}
+	// Named for what each was asked to do, which is how they are split —
+	// see split below. "Aware" was the word for neither of them: it named a
+	// state as often as it named an action, and nobody could tell from it
+	// whether the rule under it was about to send their work back.
+	rows = append(rows, s.sideSection(e.Words.T("known.rules", "Meant to stop the work"), rules, e)...)
+	rows = append(rows, s.sideSection(e.Words.T("known.aware", "Just says it"), warns, e)...)
 
 	return s.cutSide(rows, h, len(s.knows), e)
 }
