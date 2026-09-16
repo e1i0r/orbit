@@ -62,7 +62,7 @@ func stateName(b band, e Env) string {
 	case waits:
 		return p.T("knowledge.band_waiting", "WAITING")
 	case stops:
-		return p.T("knowledge.band_stops", "STOPS")
+		return p.T("knowledge.band_stops", "BLOCKS")
 	case says:
 		return p.T("knowledge.band_says", "SAYS")
 	case paused:

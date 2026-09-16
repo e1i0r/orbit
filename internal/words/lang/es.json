@@ -3190,8 +3190,8 @@
       "value": "sin check todavía"
     },
     "known.side": {
-      "source": "What Orbit knows",
-      "value": "Lo que Orbit sabe"
+      "source": "Brain",
+      "value": "Brain"
     },
     "known.rules": {
       "source": "Meant to stop the work",
@@ -4982,16 +4982,16 @@
       "value": "ESPERA"
     },
     "knowledge.band_stops": {
-      "source": "STOPS",
-      "value": "PARA"
+      "source": "BLOCKS",
+      "value": "BLOQUEA"
     },
     "knowledge.band_says": {
       "source": "SAYS",
       "value": "DICE"
     },
     "knowledge.title": {
-      "source": "What Orbit knows",
-      "value": "Lo que Orbit sabe"
+      "source": "Brain",
+      "value": "Brain"
     },
     "knowledge.empty": {
       "source": "Nothing written down yet. Say /rule or /aware to the supervisor, or drop a file in .orbit/knowledge/.",
@@ -5076,16 +5076,16 @@
       "value": "qué hace"
     },
     "knowledge.does_stops": {
-      "source": "it stops the work",
-      "value": "detiene el trabajo"
+      "source": "it blocks the work",
+      "value": "bloquea el trabajo"
     },
     "knowledge.does_check": {
       "source": "the check is",
       "value": "el check es"
     },
     "knowledge.does_no_check": {
-      "source": "it was asked to stop the work and has no command to stop it with, so it only says its sentence. Give it one with 'c'.",
-      "value": "le pidieron detener el trabajo y no tiene con qué detenerlo, así que solo dice su frase. Dale uno con 'c'."
+      "source": "it was asked to block the work and has no command to block it with, so it only says its sentence. Give it one with 'c'.",
+      "value": "le pidieron bloquear el trabajo y no tiene con qué bloquearlo, así que solo dice su frase. Dale uno con 'c'."
     },
     "knowledge.does_says": {
       "source": "it is put in front of the agent before every run, and the work goes ahead",
@@ -5176,8 +5176,8 @@
       "value": "LA REGLA · qué dice, y sobre qué es"
     },
     "knowledge.group_gate": {
-      "source": "THE GATE · whether it also refuses the work, or only says it",
-      "value": "LA PUERTA · si además rechaza el trabajo, o solo lo dice"
+      "source": "THE GATE · whether it also blocks the work, or only says it",
+      "value": "LA PUERTA · si además bloquea el trabajo, o solo lo dice"
     },
     "knowledge.field_phrase": {
       "source": "What it says",
@@ -5204,16 +5204,16 @@
       "value": "Qué hace"
     },
     "knowledge.hint_does": {
-      "source": "every rule is put in front of the agent before it works. This one also runs a command at the gate, and the work is sent back when that command fails.",
-      "value": "toda regla se le pone adelante al agente antes de que trabaje. Ésta además corre un comando en la puerta, y el trabajo se devuelve cuando ese comando falla."
+      "source": "every rule is put in front of the agent before it works. This one also runs a command at the gate, and blocks the work when that command fails.",
+      "value": "toda regla se le pone adelante al agente antes de que trabaje. Ésta además corre un comando en la puerta, y bloquea el trabajo cuando ese comando falla."
     },
     "knowledge.field_check": {
       "source": "The check",
       "value": "El check"
     },
     "knowledge.hint_check": {
-      "source": "the work is sent back when this command does not exit zero. It is yours and never a model's: it runs on every future phase in this repository.",
-      "value": "el trabajo se devuelve cuando este comando no sale con cero. Es tuyo y nunca de un modelo: corre en cada fase futura de este repositorio."
+      "source": "the work is blocked when this command does not exit zero. It is yours and never a model's: it runs on every future phase in this repository.",
+      "value": "el trabajo se bloquea cuando este comando no sale con cero. Es tuyo y nunca de un modelo: corre en cada fase futura de este repositorio."
     },
     "knowledge.field_why": {
       "source": "What for",
@@ -5240,8 +5240,8 @@
       "value": "decir"
     },
     "knowledge.does_pill_stops": {
-      "source": "reject",
-      "value": "rechazar"
+      "source": "block",
+      "value": "bloquear"
     },
     "knowledge.or_type": {
       "source": "· or type one",
@@ -5304,8 +5304,8 @@
       "value": "se le dice al agente antes de trabajar, y el trabajo sigue"
     },
     "knowledge.does_stops_note": {
-      "source": "the same, and a command at the gate sends the work back when it fails",
-      "value": "lo mismo, y un comando en la puerta devuelve el trabajo cuando falla"
+      "source": "the same, and a command at the gate blocks the work when it fails",
+      "value": "lo mismo, y un comando en la puerta bloquea el trabajo cuando falla"
     },
     "knowledge.place_all_note": {
       "source": "every repository on this machine, and it travels to none of them",
@@ -5316,8 +5316,8 @@
       "value": "se le dice a toda corrida contra este checkout"
     },
     "knowledge.check_none_note": {
-      "source": "the rule only says its sentence, and refuses nothing",
-      "value": "la regla solo dice su frase, y no rechaza nada"
+      "source": "the rule only says its sentence, and blocks nothing",
+      "value": "la regla solo dice su frase, y no bloquea nada"
     },
     "knowledge.field_repo": {
       "source": "Which repository",
@@ -5354,6 +5354,14 @@
     "knowledge.band_off": {
       "source": "OFF",
       "value": "APAGADA"
+    },
+    "knowledge.tagline": {
+      "source": "everything Orbit has learned about your code",
+      "value": "todo lo que Orbit aprendió de tu código"
+    },
+    "knowledge.lede": {
+      "source": "Every rule is put in front of the agent before it works. The ones that block also run a command, and send the work back when it fails.",
+      "value": "Cada regla se le pone adelante al agente antes de que trabaje. Las que bloquean además corren un comando, y devuelven el trabajo cuando falla."
     }
   }
 }

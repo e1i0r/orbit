@@ -97,7 +97,7 @@ func (s State) rows2(e Env) []aRow {
 			which: rowDoes,
 			label: p.T("knowledge.field_does", "What it does"),
 			hint: p.T("knowledge.hint_does", "every rule is put in front of the agent before "+
-				"it works. This one also runs a command at the gate, and the work is sent back "+
+				"it works. This one also runs a command at the gate, and blocks the work "+
 				"when that command fails."),
 			options: s.doings(e),
 		},
@@ -105,8 +105,10 @@ func (s State) rows2(e Env) []aRow {
 
 	out = append(out, aRow{
 		which: rowCheck, typed: factCheck,
-		label:   p.T("knowledge.field_check", "The check"),
-		hint:    p.T("knowledge.hint_check", "the work is sent back when this command does not exit zero. It is yours and never a model's: it runs on every future phase in this repository."),
+		label: p.T("knowledge.field_check", "The check"),
+		hint: p.T("knowledge.hint_check", "the work is blocked when this command does not exit "+
+			"zero. It is yours and never a model's: it runs on every future phase in this "+
+			"repository."),
 		options: s.commands(e),
 	})
 
@@ -182,8 +184,8 @@ func (s State) doings(e Env) []option {
 		},
 		{
 			value: "stops",
-			label: p.T("knowledge.does_pill_stops", "reject"),
-			note:  p.T("knowledge.does_stops_note", "the same, and a command at the gate sends the work back when it fails"),
+			label: p.T("knowledge.does_pill_stops", "block"),
+			note:  p.T("knowledge.does_stops_note", "the same, and a command at the gate blocks the work when it fails"),
 		},
 	}
 }
@@ -195,7 +197,7 @@ func (s State) commands(e Env) []option {
 
 	out := []option{{
 		label: p.T("knowledge.check_none", "none"),
-		note:  p.T("knowledge.check_none_note", "the rule only says its sentence, and refuses nothing"),
+		note:  p.T("knowledge.check_none_note", "the rule only says its sentence, and blocks nothing"),
 	}}
 
 	repo := s.repoOf(e)

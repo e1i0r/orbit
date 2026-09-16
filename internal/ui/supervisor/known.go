@@ -55,7 +55,7 @@ func (s State) knownSide(h, w int, e Env) []string {
 
 	rules, warns := split(s.knows)
 
-	rows := []string{theme.Paint(theme.Dim).Render(e.Words.T("known.side", "What Orbit knows")), ""}
+	rows := []string{theme.Paint(theme.Dim).Render(e.Words.T("known.side", "Brain")), ""}
 	// Named for what each was asked to do, which is how they are split —
 	// see split below. "Aware" was the word for neither of them: it named a
 	// state as often as it named an action, and nobody could tell from it

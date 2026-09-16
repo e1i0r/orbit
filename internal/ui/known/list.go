@@ -117,7 +117,7 @@ func (s State) nothing(cw int, e Env) []string {
 
 	return []string{
 		"",
-		theme.Paint(theme.Accent).Render(p.T("knowledge.title", "What Orbit knows")),
+		theme.Paint(theme.Accent).Bold(true).Render(p.T("knowledge.title", "Brain")),
 		"",
 		theme.Paint(theme.Dim).Render(cells.Fit(p.T("knowledge.empty",
 			"Nothing written down yet. Say /rule or /aware to the supervisor, "+
@@ -125,17 +125,32 @@ func (s State) nothing(cw int, e Env) []string {
 	}
 }
 
-// head is the title, what the screen holds, and the row of column names.
+// head is what this screen is, what it is for, and the row of column names.
+//
+// The name and a sentence under it, and not only a list. Somebody arriving
+// here for the first time is looking at rules they did not write, with keys
+// that change what a coding agent is told — and nothing on the screen said
+// what the place was or what putting something in it would do.
 func (s State) head(cw int, e Env) []string {
 	p := e.Words
 
-	title := theme.Paint(theme.Accent).Render(p.T("knowledge.title", "What Orbit knows"))
+	name := theme.Paint(theme.Accent).Bold(true).Render(p.T("knowledge.title", "Brain")) + "  " +
+		theme.Text(theme.Tertiary).Render(p.T("knowledge.tagline",
+			"everything Orbit has learned about your code"))
 
 	tally := theme.Paint(theme.Dim).Render(
 		p.P("knowledge.tally", len(s.facts), "{n} rule", "{n} rules",
 			about("n", strconv.Itoa(len(s.facts)))))
 
-	return []string{"", cells.Spread(title, tally, cw), "", s.columns(plan(cw, many(e)), cw, e)}
+	out := []string{"", cells.Spread(name, tally, cw)}
+
+	for _, line := range cells.Lines(p.T("knowledge.lede",
+		"Every rule is put in front of the agent before it works. The ones that block "+
+			"also run a command, and send the work back when it fails."), cw) {
+		out = append(out, theme.Paint(theme.Dim).Render(line))
+	}
+
+	return append(out, "", s.columns(plan(cw, many(e)), cw, e))
 }
 
 // columns is the row of column names, which is drawn once at the top because

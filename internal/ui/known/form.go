@@ -164,7 +164,7 @@ func (s State) groups(rows []aRow, e Env) []aGroup {
 	return []aGroup{
 		{head: p.T("knowledge.group_rule", "THE RULE · what it says, and what it is about"), rows: said},
 		{head: p.T("knowledge.group_gate",
-			"THE GATE · whether it also refuses the work, or only says it"), rows: gate},
+			"THE GATE · whether it also blocks the work, or only says it"), rows: gate},
 		{rows: done, buttons: true},
 	}
 }

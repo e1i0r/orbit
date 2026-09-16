@@ -116,12 +116,12 @@ func (s State) tells(f knowledge.Fact, cw int, e Env) []string {
 	switch {
 	case f.Action() == knowledge.Stops:
 		out = append(out, prose.Gutter+prose.Gutter+theme.Paint(theme.Bad).Bold(true).Render(
-			p.T("knowledge.does_stops", "it stops the work"))+
+			p.T("knowledge.does_stops", "it blocks the work"))+
 			theme.Paint(theme.Dim).Render(cells.Dot+p.T("knowledge.does_check", "the check is")+" ")+
 			theme.Text(theme.Primary).Render(f.Check))
 	case f.Stops:
 		out = append(out, quoted(p.T("knowledge.does_no_check",
-			"it was asked to stop the work and has no command to stop it with, "+
+			"it was asked to block the work and has no command to block it with, "+
 				"so it only says its sentence. Give it one with 'c'."), cw)...)
 	default:
 		out = append(out, quoted(p.T("knowledge.does_says",

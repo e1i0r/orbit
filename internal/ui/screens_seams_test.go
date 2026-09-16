@@ -67,7 +67,7 @@ func TestTheBodyOfEachScreenIsDrawnByItsOwnSeam(t *testing.T) {
 		want string
 	}{
 		{"the quota screen", Model.quotaRows, "CLAUDE"},
-		{"what Orbit knows", Model.knowledgeRows, "Orbit knows"},
+		{"what Orbit knows", Model.knowledgeRows, "Brain"},
 		{"the engine knobs", Model.enginesRows, "claude"},
 		{"the repository list", Model.repolistRows, "Repositories"},
 		{"the cheat sheet", Model.helpRows, "BOARD"},

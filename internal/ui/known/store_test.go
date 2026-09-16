@@ -139,7 +139,7 @@ func TestARuleWithACheckSaysItStops(t *testing.T) {
 	armed.Stops, armed.Check = true, "make coverage"
 
 	s, e := onScreen(t, armed)
-	if drawn := drawnKnowledge(t, s, e); !strings.Contains(drawn, "⚡ STOPS") {
+	if drawn := drawnKnowledge(t, s, e); !strings.Contains(drawn, "⚡ BLOCKS") {
 		t.Errorf("a rule with a check is not under what stops the work:\n%s", drawn)
 	}
 

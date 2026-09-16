@@ -7,19 +7,21 @@ refuse the work at the gate when you give them a command. `K` in the cockpit.
 
 ## The screen
 
-`K` in the cockpit is every rule Orbit holds, across every repository on the
-board. It is the board's own shape: bands that say what you have to do about
-what is under them, and one line a rule.
+`K` in the cockpit — the Brain — is every rule Orbit holds, across every
+repository on the board. It is the board's own shape: bands that say what a
+rule is doing, and one line a rule.
 
 ```
-  What Orbit knows                                            6 rules
+  Brain  everything Orbit has learned about your code          6 rules
+  Every rule is put in front of the agent before it works. The ones that
+  block also run a command, and send the work back when it fails.
 
     ID        THE RULE                          WHERE         WHEN
   🛑 WAITING (2) ─────────────────────────────────────────────────────
   ❯ —         never push without the tests       internal/db   2026-09-14
     d42b7f60  anything that drops a column…      migrations    2026-08-12
 
-  ⚡ STOPS (1) ───────────────────────────────────────────────────────
+  ⚡ BLOCKS (1) ───────────────────────────────────────────────────────
     f0021bb4  coverage stays above 90%           ledger        2026-08-12
 
   💬 SAYS (1) ────────────────────────────────────────────────────────
@@ -34,7 +36,7 @@ what is under them, and one line a rule.
 
 Five states and one set of words for them. **Waiting** is a question — a
 sentence nobody has answered, or a rule that stopped you and is waiting to
-be decided about. **Stops** and **says** are the two things a rule that is
+be decided about. **Blocks** and **says** are the two things a rule that is
 applying can do. **Paused** and **off** are the two ways it can not be.
 
 The same word is on the rule's own screen, in the card that says where it
@@ -68,7 +70,7 @@ key.
   └─────────┘ └────────────┘ └────────────┘ └──────┘ └───────────────┘
 
   ▾ WHAT IT DOES ─────────────────────────────────────────────────────
-    it stops the work · the check is make migrate-check
+    it blocks the work · the check is make migrate-check
 
   ▾ WHY IT IS NOT APPLYING ───────────────────────────────────────────
     we are moving the migrations this week
@@ -102,8 +104,8 @@ of each row beside it with the one in force lit.
       └──────────────────────────────────────────────────────────────┘
     Where it applies      all of orbit  cmd/ docs/ internal/ web/
 
-  THE GATE · whether it refuses the work or only says it ─────────────
-    What it does          just says it   stops the work
+  THE GATE · whether it also blocks the work, or only says it ────────
+    What it does          say            block
     The check             (none yet) make check make test
 
       ✔ Save the rule      ✖ Leave it as it was
@@ -118,7 +120,7 @@ runs — so filing a rule is choosing rather than remembering a path and
 spelling it right. Typing is still there for anything neither offers.
 
 **The gate is a shortcut over the check**, and not a switch of its own. What
-decides whether a rule refuses work is whether it has a command that answers
+decides whether a rule blocks work is whether it has a command that answers
 yes or no, so a switch beside the command could disagree with it — and a
 check typed under a switch left off would be a gate somebody wrote and Orbit
 threw away without saying so.

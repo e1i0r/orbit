@@ -85,7 +85,7 @@ func TestWhatTheKeysDoStaysOnScreenWhileTheListMoves(t *testing.T) {
 	}
 
 	got := shown(t, s, e)
-	for _, want := range []string{"What Orbit knows", "open it"} {
+	for _, want := range []string{"Brain", "open it"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("%q left the screen when the list did:\n%s", want, got)
 		}
