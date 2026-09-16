@@ -71,7 +71,7 @@ func TestTheSideIsInTwoCategories(t *testing.T) {
 
 	drawn := sideOf(t, s, e, 180)
 
-	rules, aware := strings.Index(drawn, "Rules"), strings.Index(drawn, "Aware")
+	rules, aware := strings.Index(drawn, "Meant to stop"), strings.Index(drawn, "Just says it")
 	if rules < 0 || aware < 0 {
 		t.Fatalf("the side has no two categories:\n%s", drawn)
 	}
@@ -79,7 +79,7 @@ func TestTheSideIsInTwoCategories(t *testing.T) {
 	// The ones that stop come first: they are the ones that will send work
 	// back, and the ones somebody most needs to know are standing.
 	if rules > aware {
-		t.Errorf("the side reads Aware before Rules:\n%s", drawn)
+		t.Errorf("the side reads what only says its sentence before what stops the work:\n%s", drawn)
 	}
 
 	stops, warns := strings.Index(drawn, "no UPDATE in ledger"), strings.Index(drawn, "something to keep in mind")
@@ -139,8 +139,8 @@ func TestNothingKnownIsNoSide(t *testing.T) {
 
 // TestARuleWaitingForACheckIsStillUnderRules.
 //
-// Written with /rule, it arrives under Aware if the side groups by what a
-// fact does — because with no check it can only warn. From the operator's
+// Written with /rule, it arrives under what only says its sentence if the
+// side groups by what a fact does — because with no check it can only warn. From the operator's
 // side that reads as the gesture having been ignored. It goes where they put
 // it, marked as not yet able to fire: what was asked for decides the heading,
 // and what it can do decides the mark.
@@ -151,11 +151,11 @@ func TestARuleWaitingForACheckIsStillUnderRules(t *testing.T) {
 	s, e := knowing(t, asked)
 	drawn := sideOf(t, s, e, 140)
 
-	rules, aware := strings.Index(drawn, "Rules"), strings.Index(drawn, "Aware")
+	rules, aware := strings.Index(drawn, "Meant to stop"), strings.Index(drawn, "Just says it")
 	at := strings.Index(drawn, "coverage stays above")
 
 	if at < 0 || rules < 0 || at < rules || (aware >= 0 && at > aware) {
-		t.Errorf("a rule with no check is not under Rules:\n%s", drawn)
+		t.Errorf("a rule with no check is not under what was meant to stop the work:\n%s", drawn)
 	}
 
 	line := ""

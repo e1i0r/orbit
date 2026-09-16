@@ -5,6 +5,42 @@ refuse the work at the gate when you give them a command. `K` in the cockpit.
 
 <img src="../assets/flow-knowledge.gif" alt="the knowledge screen: facts by scope, one being corrected, one widened, one turned off, and where each came from" width="900">
 
+## The screen
+
+`K` in the cockpit is every rule Orbit holds, across every repository on the
+board, as a table:
+
+```
+  What Orbit knows                                    6 rules · 2 waiting on you
+
+    NAME      DOES       STATE    WHERE             THE RULE
+  Everywhere · this machine only, these do not travel
+    a1f4c209  says       active   everywhere        pull requests are written in English
+
+  ledger · travels with the repository
+  • d42b7f60  stops      paused   migrations        anything that drops a column stops
+                                                    for a person to look at it
+                                                    you said it · 2026-08-12
+                                                    paused: we are moving the migrations
+    f0021bb4  no check   active   ledger            coverage stays above 90%
+```
+
+**Two columns and not one.** `DOES` is what the rule does when the work
+reaches it — `says` its sentence, `stops` the work, or `no check`: it asked to
+stop and brought no command, so it can only say. `STATE` is where it stands
+with you — `active`, `paused`, `off`. They are different questions, and a
+paused rule is still the one that will refuse the work when it comes back.
+
+**A dot in the margin** is a rule waiting to be decided about, and the count
+at the top says how many. Where a rule came from shows under the row the
+cursor is on: every row would be a column of dates nobody reads, and the row
+being looked at is the row the question is about.
+
+The list scrolls. `↑↓` walk it, `PgUp`/`PgDn` a page, the wheel a rule a
+notch; a click puts the cursor on a rule and a second opens its review. `r`
+decides about one, `p` pauses one, `n` writes one, `e` keeps a sentence out of
+the tray in better words, `esc` leaves.
+
 ## Why not the model's memory
 
 The model forgets between sessions, and forgets when you swap it for another
@@ -169,7 +205,8 @@ A rule either says something before the work, or refuses it.
 Refusing needs something that answers yes or no without an opinion in it: a
 command, a pattern over the diff, a test that runs. A rule that asks to stop
 and brings no check would never fire while reading as though it would — so it
-warns instead, and the screen says which of the two it is.
+only says its sentence, and the screen calls it `no check` rather than
+letting it sit in the list looking like a gate.
 
 **The command is yours and never a model's.** A check runs on every future
 phase in that repository, and a wrong or slow one is an hour of a task spent on

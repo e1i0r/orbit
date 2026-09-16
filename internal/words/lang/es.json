@@ -3306,12 +3306,12 @@
       "value": "Lo que Orbit sabe"
     },
     "known.rules": {
-      "source": "Rules",
-      "value": "Reglas"
+      "source": "Meant to stop the work",
+      "value": "Para detener el trabajo"
     },
     "known.aware": {
-      "source": "Aware",
-      "value": "Ten en cuenta"
+      "source": "Just says it",
+      "value": "Solo lo dice"
     },
     "complete.rule": {
       "source": "a rule with a check: the gate sends the work back",
