@@ -5678,6 +5678,38 @@
     "news.pr_failed": {
       "source": "the pull request did not open: {why}",
       "value": "el pull request no abrió: {why}"
+    },
+    "knowledge.forget_did": {
+      "source": "this one has a history: it was {what}. Switch it off instead — it stops applying, and what it put you through stays readable",
+      "value": "esta tiene historial: fue {what}. Apagala en vez de borrarla — deja de aplicar, y lo que te hizo pasar se sigue leyendo"
+    },
+    "knowledge.act_forget": {
+      "source": "forget",
+      "value": "olvidar"
+    },
+    "knowledge.forget_sure": {
+      "source": "press it again to forget this rule for good; it has done nothing, so nothing is lost",
+      "value": "apretala de nuevo para olvidar esta regla para siempre; no hizo nada, así que no se pierde nada"
+    },
+    "knowledge.forgotten": {
+      "source": "it is gone. It had done nothing, so there was nothing to lose",
+      "value": "se fue. No había hecho nada, así que no había nada que perder"
+    },
+    "verb.rules.forget.did": {
+      "source": "{rule} has a history: it was {what}. Switch it off instead — it stops applying, and what it put you through stays readable",
+      "value": "{rule} tiene historial: fue {what}. Apagala en vez de borrarla — deja de aplicar, y lo que te hizo pasar se sigue leyendo"
+    },
+    "verb.rules.forgotten": {
+      "source": "{rule} is gone. It had done nothing, so there was nothing to lose",
+      "value": "{rule} se fue. No había hecho nada, así que no había nada que perder"
+    },
+    "verb.rules.forget": {
+      "source": "take a rule off the disk; only one that never did anything, and only ever for a rule nobody meant to write",
+      "value": "sacar una regla del disco; sólo una que nunca hizo nada, y sólo para una que nadie quiso escribir"
+    },
+    "verb.rules.forget.rule": {
+      "source": "the rule's name, as orbit knowledge prints it",
+      "value": "el nombre de la regla, como lo imprime orbit knowledge"
     }
   }
 }

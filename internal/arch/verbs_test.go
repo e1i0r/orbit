@@ -221,6 +221,7 @@ func windowOffers(t *testing.T) map[string]bool {
 		"rules off":      "knowledge.switched_off",
 		"rules pause":    "knowledge.pause_needs_why",
 		"rules resume":   "knowledge.applies_again",
+		"rules forget":   "knowledge.forgotten",
 		// The window asks for these through the parent, which is what
 		// carries the streaming bodies: the toolbar watches `pr` run.
 		"pr merge":       `"MERGE PR"`,

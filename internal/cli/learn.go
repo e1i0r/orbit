@@ -8,6 +8,7 @@ package cli
 // it. See the layer table in internal/arch.
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -263,6 +264,29 @@ func windowReplacePort(s *store.Store) func(was, now knowledge.Rule) error {
 // A failure answers with nothing rather than with an error: the review is a
 // screen, and a screen that refused to draw because a table could not be read
 // would be the worse answer.
+// forgetRulePort takes a rule off the disk, and refuses one the record has
+// anything to say about.
+//
+// The refusal comes back as the sentence the reader sees, said here because
+// this is where the catalogue is: internal/learn decides whether a rule can
+// go and carries what it did in a typed error, and the words are this
+// layer's.
+func forgetRulePort(s *store.Store, p *words.Printer) func(knowledge.Rule) error {
+	return func(f knowledge.Rule) error {
+		err := learn.Forget(s, f, learn.Operator)
+
+		var did learn.DidSomethingError
+		if errors.As(err, &did) {
+			return errors.New(p.T("knowledge.forget_did",
+				"this one has a history: it was {what}. Switch it off instead — it stops applying, "+
+					"and what it put you through stays readable",
+				words.Arg{Name: "what", Value: did.What}))
+		}
+
+		return err
+	}
+}
+
 func ruleStoryPort(s *store.Store, p *words.Printer) func(knowledge.Rule) []string {
 	return func(f knowledge.Rule) []string {
 		turns, err := learn.History(s, f.ID)

@@ -185,6 +185,7 @@ func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 		Waiting:            waitingPort(s),
 		KeepRule:           keepRulePort(s, dir),
 		DropRule:           dropRulePort(s),
+		ForgetRule:         forgetRulePort(s, spoken),
 		Learn:              learnPort(s),
 		NoteTask:           notePort(r, s),
 		RetractSupervisor: func(at time.Time) error {

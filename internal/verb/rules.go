@@ -192,6 +192,19 @@ func rules() []Verb {
 			},
 		},
 		{
+			Name: "forget", Under: "rules",
+			About: func(p *words.Printer) string {
+				return p.T("verb.rules.forget",
+					"take a rule off the disk; only one that never did anything, "+
+						"and only ever for a rule nobody meant to write")
+			},
+			Takes: []Field{
+				{Name: "rule", Kind: Named, Needed: true, About: func(p *words.Printer) string {
+					return p.T("verb.rules.forget.rule", "the rule's name, as orbit knowledge prints it")
+				}},
+			},
+		},
+		{
 			Name: "history", Under: "rules", Reads: true,
 			About: func(p *words.Printer) string {
 				return p.T("verb.rules.history", "what has happened to one rule since it was kept")

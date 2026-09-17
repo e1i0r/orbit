@@ -183,11 +183,24 @@ func (s State) pinned(_ knowledge.Rule, cw int, e Env) []string {
 	// swapped one of them for another by state is a row somebody has to
 	// read before they can press anything; these three are always here and
 	// always mean what they say.
-	foot := prose.Fields([]prose.Field{
+	acts := []prose.Field{
 		{Label: p.T("knowledge.act_resume", "turn on"), Key: "u"},
 		{Label: p.T("knowledge.act_off", "switch off"), Key: "o"},
 		{Label: p.T("knowledge.act_correct", "edit"), Key: "c"},
-	}, 3, cw-len(prose.Gutter))
+	}
+
+	// And a fourth that is not always here, which is the one exception and
+	// the reason for it: a rule nothing has happened to can be taken off
+	// the disk, and one that has a history cannot. The key is absent rather
+	// than present and refusing — a control that says no is a control
+	// somebody goes looking for a way to force.
+	if s.didNothing(e) {
+		acts = append(acts, prose.Field{
+			Label: p.T("knowledge.act_forget", "forget"), Key: "f",
+		})
+	}
+
+	foot := prose.Fields(acts, len(acts), cw-len(prose.Gutter))
 
 	for i, line := range foot {
 		foot[i] = prose.Gutter + line

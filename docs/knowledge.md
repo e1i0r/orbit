@@ -90,6 +90,37 @@ key.
 Everything that cannot fit on one line of a list is here, where there is room
 for it: where the rule came from, what it applies to, and the friction.
 
+### Forgetting one
+
+A fourth key turns up on rules nothing has happened to: **FORGET [f]**, which
+takes the rule off the disk. It takes two presses, because it cannot be
+undone.
+
+Switching a rule off and losing the record that it existed are different
+things, and only the first is what you usually want: a rule you decided and
+stopped wanting stays where it is, nothing is told it, and what it put you
+through is still readable. Forgetting is for the other case — a duplicate of
+one already there, a test rule, one that came out wrong. Leaving those in the
+list for ever is a screen that fills up with things nobody meant.
+
+**What decides it is the record, not an opinion.** A rule it has anything to
+say about — it stopped work, you paused it, you reworded it, you moved it —
+cannot be forgotten, and the key is not offered on it at all. A control that
+says no is a control somebody goes looking for a way to force.
+
+Being written down does not count. That is how every rule starts, and a rule
+whose whole story is that somebody wrote it is exactly the one worth being
+able to take back.
+
+Nothing is lost when one goes. The rule had done nothing by definition, and
+the prompts that carried it are in the record with its sentence in them. And
+the removal is itself a line in the record: something vanishing with no trace
+at all is the only outcome worse than not being able to remove it.
+
+```bash
+orbit rules forget -rule never-log-a-card-number
+```
+
 There is no count of how often it has been told, and there was one for a
 while. It was never incremented, so every rule read `hits 0` whatever it had
 done — but a real number would not have helped either: a rule that works

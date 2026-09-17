@@ -42,23 +42,25 @@ func (s State) readingKey(msg tea.KeyPressMsg, e Env) (State, Out) {
 
 	switch msg.Code {
 	case tea.KeyEscape:
-		s.reading, s.deep = false, 0
+		s.reading, s.deep, s.forgetting = false, 0, false
 		return s, Out{}
 	case tea.KeyUp:
 		s.deep = max(s.deep-1, 0)
-		return s, Out{}
+		return s.letGo(), Out{}
 	case tea.KeyDown:
 		s.deep++
-		return s, Out{}
+		return s.letGo(), Out{}
 	case 'c', 'C':
-		return s.correctFact(e), Out{}
+		return s.letGo().correctFact(e), Out{}
 	case 'o', 'O':
 		return s.decideAgainst(e)
 	case 'u', 'U':
 		return s.haveItApplyAgain(e)
+	case 'f', 'F':
+		return s.forgetFact(e)
 	}
 
-	return s, Out{}
+	return s.letGo(), Out{}
 }
 
 // decideAgainst switches the rule off: it stays where it is, and nothing is

@@ -152,6 +152,14 @@ type Options struct {
 	// stops anything — so a count of nothing means two opposite things and
 	// no number tells them apart.
 	RuleStory func(f knowledge.Rule) []string
+	// ForgetRule takes a rule off the disk, and refuses one the record has
+	// anything to say about.
+	//
+	// The refusal is the port's, because what makes a rule safe to lose is
+	// a question about the record and the window may not ask the record
+	// anything. Nil in a window built without a store, and then the key is
+	// simply not offered.
+	ForgetRule func(f knowledge.Rule) error
 	// ReplaceFact writes a corrected fact and takes away the one it
 	// replaces, which is not the same file whenever the sentence changed.
 	ReplaceFact func(was, now knowledge.Rule) error

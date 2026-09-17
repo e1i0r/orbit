@@ -51,7 +51,11 @@ var doors = map[string][]string{
 	"internal/ui/keymap":   {"affordance.go", "keys.go", "why.go"},
 	// What Orbit knows, read whole. One door: the list is one subject, and
 	// draw.go is how it is set out.
-	"internal/ui/known":  {"known.go"},
+	// tray.go carries Said, which is the shape of one row of the tray and
+	// as much a door as State is: it is what the window fills the screen
+	// with. It is apart from known.go because the two together went over
+	// the ceiling.
+	"internal/ui/known":  {"known.go", "tray.go"},
 	"internal/ui/layout": {"columns.go", "frame.go", "repocell.go"},
 	// What can be done to the thing under the pointer: three doors. menu.go
 	// is the screen — State, Env, Out, and what it is a menu of — view.go is
@@ -163,8 +167,8 @@ var doors = map[string][]string{
 	"internal/flow":      {"draft.go", "engine.go", "flow.go", "load.go", "loop.go", "resolve.go", "save.go"},
 	"internal/knowledge": {"id.go", "rule.go", "scope.go", "source.go", "store.go"},
 	"internal/learn": {
-		"cold.go", "draft.go", "enforced.go", "history.go", "keep.go", "learn.go", "quoted.go",
-		"repeated.go",
+		"cold.go", "draft.go", "enforced.go", "forget.go", "history.go", "keep.go",
+		"learn.go", "quoted.go", "repeated.go",
 	},
 	"internal/logger": {"logger.go", "openfiles.go"},
 	// world.go fills internal/verb's ports: what a verb reaches the machine

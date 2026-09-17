@@ -25,6 +25,7 @@ func (m Model) knownEnv() known.Env {
 		Commands: m.opts.RepoChecks,
 		Keep:     m.opts.KeepRule,
 		Drop:     m.opts.DropRule,
+		Forget:   m.opts.ForgetRule,
 		Repos:    m.repoPaths(),
 	}
 }
