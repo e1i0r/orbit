@@ -88,8 +88,7 @@ key.
 ```
 
 Everything that cannot fit on one line of a list is here, where there is room
-for it: where the rule came from, whether it travels with the repository or
-stays on this machine, and the friction.
+for it: where the rule came from, what it applies to, and the friction.
 
 There is no count of how often it has been told, and there was one for a
 while. It was never incremented, so every rule read `hits 0` whatever it had
@@ -443,13 +442,28 @@ stops looking at — silently.
 
 ## Where all of this lives
 
-Two places, and the question is one: **does it travel?**
+Two places, and the question is one: **what does it apply to?**
 
 | | |
 | --- | --- |
-| `<repo>/.orbit/knowledge/` | rules about that checkout. They travel with the push, so whoever clones the project gets them, and a rule about to start steering an agent arrives in a diff somebody reviews. |
-| `$ORBIT_HOME/knowledge/` | rules about everything, and about a language. They belong to no checkout, so they stay on this machine — and the price is paid knowingly. |
+| `<repo>/.orbit/knowledge/` | rules about that checkout. They apply to work in it and nowhere else. |
+| `$ORBIT_HOME/knowledge/` | rules about everything, and about a language. They belong to no checkout, so they apply wherever you work. |
 | the record | what every rule has been through. |
+
+**Nothing Orbit writes reaches your repository.** A repository-scoped rule
+lives in a folder inside the checkout, but that whole folder — rules and
+decision copies alike — is in git's `info/exclude`, so it is never staged and
+never pushed. The checkout is where the rule is *filed*, not a way of
+shipping it to anyone.
+
+That is deliberate, and it is the same rule Orbit follows everywhere: it
+reads the repository that is there rather than leaving things in it. A
+project that wants these rules shared commits them on purpose, which is a
+decision somebody makes and not one Orbit makes for them.
+
+The form used to say the opposite — that a rule filed against a checkout
+"travels with it, so whoever clones the project gets it" — and it never did.
+The sentence has been corrected rather than the behaviour.
 
 A rule's file says what is true about it today. What it has been through only
 ever grows, so it is in SQLite: a history written into the file would leave a

@@ -201,3 +201,33 @@ func TestTheExcludeIsTheOneEveryWorktreeReads(t *testing.T) {
 		t.Errorf("the worktree still sees Orbit's directory:\n%s", out)
 	}
 }
+
+// TestNothingOrbitWritesReachesTheCommit is the promise, and it covers the
+// rules as well as the decisions.
+//
+// A rule filed against a checkout lives in .orbit/knowledge/ inside it, and
+// for a while the window said that meant it "travels with it, so whoever
+// clones the project gets it". It never did, and it must not start: Orbit
+// reads the repository that is there rather than leaving things in it, and
+// a project that wants these rules shared commits them on purpose.
+func TestNothingOrbitWritesReachesTheCommit(t *testing.T) {
+	r, wt := worktreeOf(t)
+
+	wrote(t, wt, "app.go", "package app\n")
+	wrote(t, wt, ".orbit/decisions/one.md", "# a decision\n")
+	wrote(t, wt, ".orbit/knowledge/repo/never-log-a-card-number.md", "phrase: never log a card number\n")
+
+	if err := r.CommitWorktree(wt, "the work"); err != nil {
+		t.Fatalf("commit the worktree: %v", err)
+	}
+
+	in := committed(t, wt)
+
+	if !strings.Contains(in, "app.go") {
+		t.Errorf("the work is not in the commit:\n%s", in)
+	}
+
+	if strings.Contains(in, orbitDir) {
+		t.Errorf("something Orbit wrote is in the commit:\n%s", in)
+	}
+}

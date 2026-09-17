@@ -89,9 +89,14 @@ func (s State) asked(f knowledge.Rule, cw int, e Env) []string {
 func (s State) figures(f knowledge.Rule, e Env) []prose.Stat {
 	p := e.Words
 
-	travels := p.T("knowledge.travels_machine", "this machine")
+	// Where it applies, and not where it goes. Every rule stays on this
+	// machine: Orbit keeps its own files out of the branch a task hands
+	// back, which covers .orbit/knowledge/ along with everything else under
+	// .orbit/. The chip said "with the repo" and a reader took that for a
+	// promise it would reach whoever cloned the project.
+	travels := p.T("knowledge.travels_machine", "everywhere")
 	if f.Scope.Repo != "" {
-		travels = p.T("knowledge.travels_repo", "with the repo")
+		travels = p.T("knowledge.travels_repo", "this checkout only")
 	}
 
 	at := bandOf(f)
@@ -100,7 +105,7 @@ func (s State) figures(f knowledge.Rule, e Env) []prose.Stat {
 		{Label: p.T("knowledge.card_state", "status"), Value: stateName(at, e), Role: bandRole(at)},
 		{Label: p.T("knowledge.card_said_by", "created by"), Value: shortFrom(f, e), Role: theme.Accent},
 		{Label: p.T("knowledge.card_since", "created"), Value: cells.OrDef(when(f.At), "—"), Role: theme.Accent},
-		{Label: p.T("knowledge.card_travels", "reach"), Value: travels, Role: theme.OK},
+		{Label: p.T("knowledge.card_travels", "applies"), Value: travels, Role: theme.OK},
 	}
 }
 
