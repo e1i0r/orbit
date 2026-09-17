@@ -80,8 +80,8 @@ func (s State) rows2(e Env) []aRow {
 		out = append(out, aRow{
 			which: rowRepo,
 			label: p.T("knowledge.field_repo", "Which repository"),
-			hint: p.T("knowledge.hint_repo", "the rule is written inside this checkout and "+
-				"travels with it, so whoever clones the project gets it"),
+			hint: p.T("knowledge.hint_repo", "the rule applies to work in this checkout "+
+				"and nowhere else; it stays on this machine, like every rule"),
 			options: s.checkouts(e),
 		})
 	}

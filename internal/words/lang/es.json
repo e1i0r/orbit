@@ -5048,12 +5048,12 @@
       "value": "te frenó, o la pausaste. Editala con 'c', prendela con 'u', o apagala con 'o'."
     },
     "knowledge.travels_machine": {
-      "source": "this machine",
-      "value": "esta máquina"
+      "source": "everywhere",
+      "value": "en todos lados"
     },
     "knowledge.travels_repo": {
-      "source": "with the repo",
-      "value": "con el repo"
+      "source": "this checkout only",
+      "value": "sólo este checkout"
     },
     "knowledge.card_said_by": {
       "source": "created by",
@@ -5063,13 +5063,9 @@
       "source": "created",
       "value": "creada el"
     },
-    "knowledge.card_told": {
-      "source": "hits",
-      "value": "usos"
-    },
     "knowledge.card_travels": {
-      "source": "reach",
-      "value": "alcance"
+      "source": "applies",
+      "value": "aplica"
     },
     "knowledge.sec_does": {
       "source": "what it does",
@@ -5324,8 +5320,8 @@
       "value": "En qué repositorio"
     },
     "knowledge.hint_repo": {
-      "source": "the rule is written inside this checkout and travels with it, so whoever clones the project gets it",
-      "value": "la regla se escribe adentro de este checkout y viaja con él, así que le llega a quien clone el proyecto"
+      "source": "the rule applies to work in this checkout and nowhere else; it stays on this machine, like every rule",
+      "value": "la regla aplica al trabajo en este checkout y en ningún otro lado; se queda en esta máquina, como todas"
     },
     "knowledge.repo_none": {
       "source": "none of them",

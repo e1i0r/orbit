@@ -105,14 +105,14 @@ func typed(s State, e Env, word string) State {
 	return s
 }
 
-// TestTheGeneralOnesComeFirstAndSayTheyDoNotTravel.
+// TestTheGeneralOnesComeFirstAndSayWhatTheyApplyTo.
 //
 // A general fact lives in the state root, so it is one person's on one
 // machine. Everything else here travels in the repository it is about, gets
 // reviewed in a pull request, and arrives for whoever clones it. The screen
 // has to say which is which, or somebody writes a rule for their team that
 // only ever applied to them.
-func TestTheGeneralOnesComeFirstAndSayTheyDoNotTravel(t *testing.T) {
+func TestTheGeneralOnesComeFirstAndSayWhatTheyApplyTo(t *testing.T) {
 	s, e := onScreen(t,
 		knowledge.Rule{Scope: knowledge.Scope{Kind: knowledge.Repo, Repo: "/w/orbit"}, Source: knowledge.Human, Phrase: "of the repository"},
 		knowledge.Rule{Scope: knowledge.Scope{Kind: knowledge.General}, Source: knowledge.Human, Phrase: "of everything"},
@@ -124,13 +124,18 @@ func TestTheGeneralOnesComeFirstAndSayTheyDoNotTravel(t *testing.T) {
 		t.Errorf("one of the two rules is not on the screen:\n%s", drawn)
 	}
 
-	// How far each reaches is on the rule's own screen, in the strip: it is
+	// What each applies to is on the rule's own screen, in the strip: it is
 	// a fact about one rule, and a column of it beside every row was a
 	// column nobody read.
-	for at, want := range map[int]string{0: "with the repo", 1: "this machine"} {
+	//
+	// What it applies to and not where it goes: nothing Orbit writes leaves
+	// this machine, and the chip said "with the repo" for long enough that
+	// a reader took it for a promise the rule would reach whoever cloned
+	// the project.
+	for at, want := range map[int]string{0: "this checkout only", 1: "everywhere"} {
 		opened := ansi.Strip(strings.Join(s.Move(at, e).openDetail(e).View(30, 96, e), "\n"))
 		if !strings.Contains(opened, want) {
-			t.Errorf("the rule at %d does not say it reaches %q:\n%s", at, want, opened)
+			t.Errorf("the rule at %d does not say it applies %q:\n%s", at, want, opened)
 		}
 	}
 }

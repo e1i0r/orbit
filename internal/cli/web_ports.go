@@ -105,7 +105,6 @@ func (k knows) Rules() []web.Rule {
 			Ref:    f.Ref,
 			Repo:   f.Scope.Repo,
 			At:     f.At,
-			Used:   f.Used,
 		})
 	}
 

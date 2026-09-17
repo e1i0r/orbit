@@ -92,7 +92,6 @@ type Rule struct {
 	Ref  string    `json:"ref,omitempty"`
 	Repo string    `json:"repo,omitempty"`
 	At   time.Time `json:"at"`
-	Used int       `json:"used"`
 }
 
 // Talks is the supervisor's thread: the conversations, and every turn in

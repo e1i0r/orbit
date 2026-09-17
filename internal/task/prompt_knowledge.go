@@ -44,16 +44,34 @@ func whatIsKnown(facts []knowledge.Rule) string {
 		return ""
 	}
 
+	kept, left := told(facts)
+
 	var b strings.Builder
 
 	b.WriteString("\n## What Orbit knows\n\n")
 	b.WriteString(knownIntro)
 
-	for _, f := range facts {
+	for _, f := range kept {
 		fmt.Fprintf(&b, "- %s%s%s\n", stopMark(f), about(f.Scope), strings.TrimSpace(f.Phrase))
 	}
 
+	if left > 0 {
+		fmt.Fprintf(&b, "\n%s", cutTo(left))
+	}
+
 	return b.String()
+}
+
+// cutTo is the line that says the list was cut, and how it was cut.
+//
+// Said rather than left out, and this is the whole reason the line exists: a
+// prompt that quietly dropped half of what Orbit knows is a prompt that
+// claims to be the whole of it. An agent told the list is short can ask; an
+// agent told nothing cannot know there was anything to ask about.
+func cutTo(left int) string {
+	return fmt.Sprintf("%d more rules are not in this prompt. What was kept: "+
+		"every rule enforced by a gate, then the ones written about the "+
+		"narrowest part of this code. Ask if you need the rest.\n", left)
 }
 
 // stopMark is what a fact that stops the work is written with. A sentence that

@@ -88,8 +88,14 @@ key.
 ```
 
 Everything that cannot fit on one line of a list is here, where there is room
-for it: where the rule came from, how often it has been told, whether it
-travels with the repository or stays on this machine, and the friction.
+for it: where the rule came from, what it applies to, and the friction.
+
+There is no count of how often it has been told, and there was one for a
+while. It was never incremented, so every rule read `hits 0` whatever it had
+done — but a real number would not have helped either: a rule that works
+perfectly never stops anything, so a count of nothing means two opposite
+things and no number tells them apart. What the card says instead is what the
+rule has put you through, in sentences.
 
 ### Writing one
 
@@ -408,15 +414,56 @@ Nothing comes back on its own. A paused rule waits until you return to it:
 maybe it made sense, maybe you were wrong, maybe you want it said differently.
 Orbit does not guess.
 
+## How much of it a run is told
+
+Every rule that reaches the code a phase is about goes into that phase's
+prompt, up to forty of them. Past forty the list is cut, and what is cut is
+decided rather than incidental:
+
+1. **Every rule a gate enforces stays.** Those are the ones that send the
+   work back. A phase that never read one walks into it, and then the run
+   costs an attempt to learn something the prompt could have said.
+2. **Then the ones closest to the code being worked in** — the file, then the
+   directory, then the checkout, then the language, then everything.
+
+What is kept is still written widest first, because the agent reads them in
+order and the narrowest rule has to be the last thing it reads.
+
+**And the prompt says it was cut**, with the number. A prompt that quietly
+dropped half of what Orbit knows would be one that claims to be the whole of
+it — an agent told the list is short can ask for the rest; an agent told
+nothing cannot know there was anything to ask about.
+
+This is one of the few things in Orbit that grows on its own: it learns four
+ways and keeps everything it is told. Without a ceiling, every phase of every
+task pays for the whole store in tokens before it reads a line of code, and
+the rules at the end of a long list are the ones a model with a full context
+stops looking at — silently.
+
 ## Where all of this lives
 
-Two places, and the question is one: **does it travel?**
+Two places, and the question is one: **what does it apply to?**
 
 | | |
 | --- | --- |
-| `<repo>/.orbit/knowledge/` | rules about that checkout. They travel with the push, so whoever clones the project gets them, and a rule about to start steering an agent arrives in a diff somebody reviews. |
-| `$ORBIT_HOME/knowledge/` | rules about everything, and about a language. They belong to no checkout, so they stay on this machine — and the price is paid knowingly. |
+| `<repo>/.orbit/knowledge/` | rules about that checkout. They apply to work in it and nowhere else. |
+| `$ORBIT_HOME/knowledge/` | rules about everything, and about a language. They belong to no checkout, so they apply wherever you work. |
 | the record | what every rule has been through. |
+
+**Nothing Orbit writes reaches your repository.** A repository-scoped rule
+lives in a folder inside the checkout, but that whole folder — rules and
+decision copies alike — is in git's `info/exclude`, so it is never staged and
+never pushed. The checkout is where the rule is *filed*, not a way of
+shipping it to anyone.
+
+That is deliberate, and it is the same rule Orbit follows everywhere: it
+reads the repository that is there rather than leaving things in it. A
+project that wants these rules shared commits them on purpose, which is a
+decision somebody makes and not one Orbit makes for them.
+
+The form used to say the opposite — that a rule filed against a checkout
+"travels with it, so whoever clones the project gets it" — and it never did.
+The sentence has been corrected rather than the behaviour.
 
 A rule's file says what is true about it today. What it has been through only
 ever grows, so it is in SQLite: a history written into the file would leave a
@@ -455,9 +502,9 @@ names — so the browser, the cockpit and the command line cannot drift in what
 pausing a rule means or in what the record says happened.
 
 A rule reaches the page whole: its name, its sentence, where it reaches, the
-path as a form types it, where it came from, since when, how often it has
-been told, what it was paused for, and the one word for where it stands. A
-page handed less than that could list a rule and not act on it.
+path as a form types it, where it came from, since when, what it was paused
+for, and the one word for where it stands. A page handed less than that could
+list a rule and not act on it.
 
 **A verb no page names is a verb nobody can do in a browser.** That is
 checked, in `internal/arch`, against the declaration — and the reasons the
