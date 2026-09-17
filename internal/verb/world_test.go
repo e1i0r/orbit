@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -44,6 +45,10 @@ type testWorld struct {
 	// saying, and asked is the question it was put.
 	answer string
 	asked  string
+	// did is what a rule under test has already done, for the half of
+	// forgetting that is a refusal. Empty is a rule with no history, which
+	// is the only kind that can be taken off the disk.
+	did string
 }
 
 // saidLine is one line handed to the supervisor's thread.
@@ -129,6 +134,26 @@ func (w *testWorld) Replace(was, now knowledge.Rule, _ learn.Turn) error {
 			w.facts[i] = now
 		}
 	}
+
+	return w.refuse
+}
+
+// Forget takes the rule out of the list, or refuses it the way the record
+// refuses one with a history: the field says what it did, and an empty one
+// is a rule that did nothing.
+func (w *testWorld) Forget(f knowledge.Rule) error {
+	if w.did != "" {
+		return learn.DidSomethingError{What: w.did}
+	}
+
+	kept := w.facts[:0]
+	for _, one := range w.facts {
+		if one.ID != f.ID {
+			kept = append(kept, one)
+		}
+	}
+
+	w.facts = kept
 
 	return w.refuse
 }
@@ -285,4 +310,52 @@ func refuseErr(t *testing.T, w *testWorld, name string, in In) error {
 	}
 
 	return err
+}
+
+// TestForgettingARuleThroughTheVerb, which is the one shape the command
+// line, the browser and the MCP server all go through.
+func TestForgettingARuleThroughTheVerb(t *testing.T) {
+	w := worldOf(t)
+	w.facts = []knowledge.Rule{{ID: "card-number", Phrase: "never log a card number"}}
+
+	in := In{Args: map[string]string{"rule": "card-number"}}
+
+	out, err := Run(t.Context(), w, "rules forget", in)
+	if err != nil {
+		t.Fatalf("forget a rule that did nothing: %v", err)
+	}
+
+	if len(w.facts) != 0 {
+		t.Errorf("the rule is still there: %+v", w.facts)
+	}
+
+	if !strings.Contains(out.Said, "card-number") {
+		t.Errorf("it said %q, want the rule named", out.Said)
+	}
+}
+
+// TestForgettingARuleWithAHistoryIsRefusedAndSaysWhy. "No" on its own leaves
+// somebody wondering whether the rule is special or the verb is broken — and
+// the answer it wants them to hear is "switch it off instead".
+func TestForgettingARuleWithAHistoryIsRefusedAndSaysWhy(t *testing.T) {
+	w := worldOf(t)
+	w.facts = []knowledge.Rule{{ID: "card-number", Phrase: "never log a card number"}}
+	w.did = "paused"
+
+	in := In{Args: map[string]string{"rule": "card-number"}}
+
+	_, err := Run(t.Context(), w, "rules forget", in)
+	if err == nil {
+		t.Fatal("a rule with a history was forgotten")
+	}
+
+	for _, want := range []string{"card-number", "paused", "Switch it off"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("the refusal does not say %q: %v", want, err)
+		}
+	}
+
+	if len(w.facts) != 1 {
+		t.Errorf("a refused forget removed the rule anyway: %+v", w.facts)
+	}
 }

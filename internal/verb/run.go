@@ -135,6 +135,8 @@ func (v Verb) do(ctx context.Context, w World, in In) (Out, error) {
 		return paused(w, in)
 	case "rules resume":
 		return resumed(w, in)
+	case "rules forget":
+		return forgotten(w, in)
 	}
 
 	return Out{}, fmt.Errorf("%q is declared and not done", v.Path())

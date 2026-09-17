@@ -131,6 +131,15 @@ type Knows interface {
 	// at a terminal and the beginning of a pattern when it is taken with a
 	// task sitting blocked.
 	Replace(was, now knowledge.Rule, where learn.Turn) error
+	// Forget takes a rule off the disk, and refuses one the record has
+	// anything to say about.
+	//
+	// The refusal is the port's and not the caller's, because what makes a
+	// rule safe to lose is a question about the record and the record is
+	// the machine's. A way in that asked the question itself would be a
+	// second copy of the rule that decides it — and the first way in to get
+	// it wrong would lose somebody's history.
+	Forget(f knowledge.Rule) error
 }
 
 // Beyond is what a verb can reach past this machine: a model that has to be

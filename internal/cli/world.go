@@ -133,6 +133,12 @@ func (w world) Replace(was, now knowledge.Rule, where learn.Turn) error {
 	return replaceFactPort(w.store)(was, now, where)
 }
 
+// Forget takes a rule off the disk, and refuses one the record has anything
+// to say about.
+func (w world) Forget(f knowledge.Rule) error {
+	return learn.Forget(w.store, f, learn.Operator)
+}
+
 // Say puts something in the supervisor's thread, on whichever channel the
 // caller is: the same call `orbit supervisor` makes.
 func (w world) Say(text, by, about string) error {

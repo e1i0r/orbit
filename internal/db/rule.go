@@ -36,6 +36,18 @@ const (
 	// RuleSkipped is somebody getting past it this once, which leaves it
 	// applying.
 	RuleSkipped = "skipped"
+	// RuleForgotten is the rule taken off the disk, which is the one thing
+	// here that loses something — and the reason this row exists.
+	//
+	// It is only ever written for a rule that had done nothing: a rule the
+	// record has anything else to say about cannot be forgotten at all. So
+	// this row is never the last line of a story, it is the whole of one,
+	// and a name that turns up in the record exactly twice — kept, then
+	// forgotten — is a rule somebody wrote and thought better of.
+	//
+	// Something vanishing with no trace at all is the only outcome worse
+	// than not being able to remove it.
+	RuleForgotten = "forgotten"
 	// RuleFailed is the rule doing its job: a gate refusing work over it.
 	//
 	// It is never a row of this table. A gate that refuses already writes

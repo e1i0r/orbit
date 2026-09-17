@@ -62,6 +62,16 @@ type Env struct {
 	// Drop says it was not a rule. The sentence stays in the thread where it
 	// was said, which is where it belonged all along.
 	Drop func(at time.Time) error
+	// Forget takes a rule off the disk, and refuses one the record has
+	// anything to say about.
+	//
+	// The refusal is the port's and not this screen's: what makes a rule
+	// safe to lose is a question about the record, and a screen that
+	// answered it itself would be a second copy of the rule that decides
+	// it. What this screen does with the answer is not offer the key at
+	// all — a control that says no is one somebody goes looking for a way
+	// to force.
+	Forget func(f knowledge.Rule) error
 	// Story is what one rule has put you through, in sentences: when you
 	// kept it, where it stopped the work and how often you got past it,
 	// and what you paused it for.
@@ -97,36 +107,6 @@ type Env struct {
 	// answered by filing the rule against everywhere, which is every
 	// project on this machine and was nobody's intention.
 	Repos []string
-}
-
-// A Said is one sentence somebody said to the supervisor that read as a
-// rule, waiting to be told whether it was one.
-//
-// The screen's own shape, and not the shape of the package that holds the
-// tray: what reaches the window is data, through a port, here as everywhere
-// else.
-type Said struct {
-	// At is when it was said, and it is the sentence's name: the thread is
-	// append-only and no two turns share an instant.
-	At   time.Time
-	Text string
-	// From is where it was said: the task it was typed at, or the way in it
-	// came through when it was about no task. It is what a reader needs
-	// before they can agree with anything — the same words said while
-	// correcting one run and said to the supervisor are the same rule, and
-	// which it was is how somebody decides whether it was meant that widely.
-	From string
-	// Where is the folder the work was in when it was said, relative to the
-	// checkout it came out of, and empty when it came out of no one folder.
-	// It is what the editor's place line opens with: the commonest correction
-	// is a path, and the commonest path is this one.
-	Where string
-	// Gate is the command this sentence arrived with, and empty for the
-	// sources that bring only words. It is what the form's check row opens
-	// with: a rule read off what the checkout already refuses work over
-	// arrives with a command that has been running for years, and retyping
-	// it is copying it out of a file Orbit already read.
-	Gate string
 }
 
 // Out is what the screen asks the window for.
@@ -206,8 +186,12 @@ type State struct {
 	// one place a rule's fate is decided: nothing here is a decision taken
 	// in a hurry, because it is opened on purpose.
 	reading bool
-	field   int
-	in      [factFields]typing.Field
+	// forgetting is the forget key armed by its first press, waiting for
+	// the second. It is the confirmation every irreversible gesture in this
+	// window has, and every other key on this screen disarms it.
+	forgetting bool
+	field      int
+	in         [factFields]typing.Field
 }
 
 // The three fields of a fact that are typed into.

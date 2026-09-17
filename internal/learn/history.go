@@ -36,6 +36,7 @@ const (
 	Paused    = db.RulePaused
 	Skipped   = db.RuleSkipped
 	Failed    = db.RuleFailed
+	Forgotten = db.RuleForgotten
 )
 
 // A Turn is one thing that happened to one rule.

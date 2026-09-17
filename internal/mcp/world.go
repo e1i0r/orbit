@@ -175,6 +175,13 @@ func (w world) Replace(_, _ knowledge.Rule, _ learn.Turn) error {
 	return errors.New("changing a rule is a person's decision; ask them to run orbit rules")
 }
 
+// Forget is refused here for the reason Replace is, and more so: this one
+// loses something. An agent that could remove the rules it keeps being
+// stopped by is an agent that edits its own instructions.
+func (w world) Forget(_ knowledge.Rule) error {
+	return errors.New("removing a rule is a person's decision; ask them to run orbit rules forget")
+}
+
 // Words is English. A tool call is read by a model and then quoted back to
 // whoever is watching, and the language that reaches them is the client's to
 // choose — not this server's, which has no reader of its own.

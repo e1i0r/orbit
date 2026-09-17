@@ -126,6 +126,32 @@ func (s *Store) Replace(was, now Rule) (string, error) {
 	return where, nil
 }
 
+// Delete takes a rule off the disk.
+//
+// It is the one door here that loses something, and what stops that from
+// being a hole in the record is upstream of this package: nothing is deleted
+// that the record has anything to say about. This walks the same path
+// Replace removes — the file the rule was actually read out of, and not the
+// name its fields would produce, because a rule somebody wrote by hand is
+// called whatever they called it.
+//
+// A file that is already gone is not a failure. Two windows on one workspace
+// can both be looking at a rule when one of them removes it, and the second
+// asking for something that has already happened has got the outcome it
+// wanted.
+func (s *Store) Delete(f Rule) error {
+	path := f.from
+	if path == "" {
+		path = filepath.Join(s.dirFor(f.Scope), fileName(f))
+	}
+
+	if err := os.Remove(path); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("remove the rule at %q: %w", path, err)
+	}
+
+	return nil
+}
+
 // Load is everything known while working in one repository: the general
 // rules, the ones of every language, and the repository's own.
 //

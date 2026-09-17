@@ -23,11 +23,19 @@ export function RuleCard({
   rule: Rule;
   busy?: string;
   said?: string;
-  onDo: (verb: "rules resume" | "rules off") => void;
+  onDo: (verb: "rules resume" | "rules off" | "rules forget") => void;
   onEdit: () => void;
   onBack: () => void;
 }) {
   const [story, setStory] = useState<string>();
+  const [sure, setSure] = useState(false);
+
+  // Forgetting is offered only for a rule nothing has happened to, which is
+  // the same question the story above answers: a rule with a history is
+  // switched off instead, and what it put you through stays readable. The
+  // button is absent rather than present and refusing — a control that says
+  // no is a control somebody goes looking for a way to force.
+  const didNothing = story === "";
 
   // What it has put somebody through, read by name off the same verb the
   // command line asks: a second answer written for this page would be a
@@ -110,6 +118,13 @@ export function RuleCard({
         <Act label="Turn on" busy={busy === "rules resume"} onClick={() => onDo("rules resume")} />
         <Act label="Switch off" busy={busy === "rules off"} onClick={() => onDo("rules off")} />
         <Act label="Edit" onClick={onEdit} />
+        {didNothing && (
+          <Act
+            label={sure ? "Forget it, for good" : "Forget"}
+            busy={busy === "rules forget"}
+            onClick={() => (sure ? onDo("rules forget") : setSure(true))}
+          />
+        )}
       </footer>
     </div>
   );
