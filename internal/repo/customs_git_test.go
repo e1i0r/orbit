@@ -47,7 +47,14 @@ func worked(t *testing.T, n int, subject func(int) string, files func(int) []str
 		}
 	}
 
+	// gc.auto off, and not for speed. Twenty-two commits is enough to
+	// trigger git's own housekeeping, which forks and keeps writing into
+	// .git/objects/pack after the last command returned — and t.TempDir's
+	// cleanup then fails on a directory that is not empty, in a test that
+	// had already passed. It failed one run in ten that way.
 	git("init", "-q", "-b", "main")
+	git("config", "gc.auto", "0")
+	git("config", "maintenance.auto", "false")
 
 	for i := range n {
 		for _, name := range files(i) {
