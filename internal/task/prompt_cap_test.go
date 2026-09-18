@@ -92,24 +92,90 @@ func TestALongListKeepsWhatIsClosest(t *testing.T) {
 // TestWhatIsKeptIsStillWidestFirst. The agent reads them in order, so the
 // narrowest has to be last and have the last word — which is the opposite of
 // the order they are chosen in.
+//
+// The two orders are told apart only by a list whose kept rules are at more
+// than one depth: a cut that kept forty rules about the same folder reads
+// the same whichever way it is sorted, and would agree with a reading that
+// had both orders backwards.
 func TestWhatIsKeptIsStillWidestFirst(t *testing.T) {
 	var facts []knowledge.Rule
 
-	for range atMostTold {
+	// Narrowest first, which is neither of the orders under test, so
+	// neither can pass by leaving the list as it found it.
+	for i := range 5 {
 		facts = append(facts, rule("about the ledger", deep("backend/ledger")))
+		facts[i].Phrase = "about the ledger"
 	}
 
 	for range atMostTold {
 		facts = append(facts, rule("about everything", general()))
 	}
 
-	kept, _ := told(facts)
+	kept, left := told(facts)
+	if left != 5 {
+		t.Fatalf("%d rules were left out, want the five over the cap", left)
+	}
+
+	// Chosen narrowest first: all five about the folder survived a cut that
+	// dropped five rules about everything.
+	if got := countOf(kept, "about the ledger"); got != 5 {
+		t.Errorf("%d of the five rules closest to the code were kept", got)
+	}
+
+	// And written widest first, so the narrowest is read last.
+	if kept[0].Phrase != "about everything" {
+		t.Errorf("the first rule the agent reads is %q, want the widest", kept[0].Phrase)
+	}
+
+	if last := kept[len(kept)-1]; last.Phrase != "about the ledger" {
+		t.Errorf("the last word goes to %q, want the rule closest to the code", last.Phrase)
+	}
 
 	for i := 1; i < len(kept); i++ {
 		if kept[i].Scope.Depth() < kept[i-1].Scope.Depth() {
 			t.Fatalf("row %d is narrower than the one after it; the last word goes to the wrong rule", i-1)
 		}
 	}
+}
+
+// TestAListThatFitsIsHandedOverUntouched.
+//
+// A list of exactly the cap is a list that fits, and the order it arrives in
+// is the one the store already chose. Sorting it anyway would be Orbit
+// re-deciding something it did not have to decide, and the boundary is where
+// that starts: one rule fewer and nothing is sorted, one more and everything
+// is.
+func TestAListThatFitsIsHandedOverUntouched(t *testing.T) {
+	facts := []knowledge.Rule{
+		rule("about the ledger", deep("backend/ledger")),
+		rule("about everything", general()),
+	}
+
+	for len(facts) < atMostTold {
+		facts = append(facts, rule("about everything", general()))
+	}
+
+	kept, left := told(facts)
+	if len(kept) != atMostTold || left != 0 {
+		t.Fatalf("a list of exactly %d was cut to %d with %d left over", atMostTold, len(kept), left)
+	}
+
+	if kept[0].Phrase != "about the ledger" {
+		t.Errorf("a list that fits came back reordered: it now opens with %q", kept[0].Phrase)
+	}
+}
+
+// countOf is how many of the kept rules say one thing.
+func countOf(kept []knowledge.Rule, phrase string) int {
+	n := 0
+
+	for _, f := range kept {
+		if f.Phrase == phrase {
+			n++
+		}
+	}
+
+	return n
 }
 
 // TestTheCutIsSaidInThePrompt. A prompt that quietly dropped half of what
