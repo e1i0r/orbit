@@ -44,13 +44,21 @@ func TestAModelIsNotAllowedToDecideForAPerson(t *testing.T) {
 		wants []string
 	}{
 		{
-			name:  "opening a pull request",
-			try:   func(w world) error { _, err := w.Deliver(context.Background(), task.Task{}, "pr"); return err },
+			name: "opening a pull request",
+			try: func(w world) error {
+				_, err := w.Deliver(context.Background(), task.Task{}, "pr")
+
+				return err
+			},
 			wants: []string{"person's decision", "orbit pr"},
 		},
 		{
-			name:  "reading what you keep saying",
-			try:   func(w world) error { _, err := w.Ask(context.Background(), "", "what do I keep saying"); return err },
+			name: "reading what you keep saying",
+			try: func(w world) error {
+				_, err := w.Ask(context.Background(), "", "what do I keep saying")
+
+				return err
+			},
 			wants: []string{"spends money", "orbit rules draft"},
 		},
 		{

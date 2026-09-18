@@ -10,13 +10,17 @@ package store
 
 import (
 	"testing"
-
-	"github.com/e1i0r/orbit/internal/record"
+	"time"
 )
 
 // delivered is a task worked in one checkout, which is what a pull request
 // needs behind it: the task and the repository are rows by the time one is
 // opened, because a task is worked before it is delivered.
+//
+// Through Join rather than by appending the two events that would also do
+// it: internal/store may not reach internal/record — the layers say so —
+// and a test that had to would be a test importing what the package it
+// covers cannot.
 func delivered(t *testing.T, s *Store, id, repoAbs string) {
 	t.Helper()
 
@@ -25,17 +29,8 @@ func delivered(t *testing.T, s *Store, id, repoAbs string) {
 		t.Fatalf("open the record: %v", err)
 	}
 
-	if err := d.Append(id, record.Event{Kind: record.TaskCreated, Text: "pay the thing"}); err != nil {
-		t.Fatalf("write the task down: %v", err)
-	}
-
-	joined := record.Event{
-		Kind: record.RepoJoined,
-		Data: map[string]string{"path": repoAbs, "repo": "acme"},
-	}
-
-	if err := d.Append(id, joined); err != nil {
-		t.Fatalf("join the checkout: %v", err)
+	if err := d.Join(id, repoAbs, "acme", time.Now().UTC()); err != nil {
+		t.Fatalf("work the task in the checkout: %v", err)
 	}
 }
 

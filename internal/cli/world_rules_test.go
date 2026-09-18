@@ -130,7 +130,8 @@ func TestARuleWithAHistoryIsNotForgotten(t *testing.T) {
 
 	f := aFact(t, s, "the fuzz tests hang")
 
-	if err := learn.Happened(s, learn.Turn{Rule: f.ID, What: learn.Paused, Was: "too noisy"}); err != nil {
+	paused := learn.Turn{Rule: f.ID, What: learn.Paused, Was: "too noisy"}
+	if err := learn.Happened(s, paused); err != nil {
 		t.Fatalf("pause it: %v", err)
 	}
 

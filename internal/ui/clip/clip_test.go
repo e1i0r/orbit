@@ -27,6 +27,25 @@ func helperNamed(t *testing.T, name, script string) {
 	t.Setenv("PATH", dir+sep+"/bin"+sep+"/usr/bin")
 }
 
+// patient widens the deadline for the length of one test.
+//
+// Two seconds is right for a real clipboard helper and wrong for a fake one
+// here: these scripts are a /bin/sh spawn, and `go test ./...` runs this
+// package beside fifty others on one machine. Four of the tests below died
+// at exactly 2.00s in a full run and passed on their own — a deadline the
+// machine's load decides is a red build that says nothing about the code.
+//
+// The one test that is about the deadline narrows it instead, and it is the
+// only one that may.
+func patient(t *testing.T) {
+	t.Helper()
+
+	was := timeout
+	timeout = time.Minute
+
+	t.Cleanup(func() { timeout = was })
+}
+
 // TestAClipboardThatNeverAnswersDoesNotFreezeTheWindow.
 //
 // Read is called from Update — from compose, from the note, from
@@ -42,9 +61,10 @@ func TestAClipboardThatNeverAnswersDoesNotFreezeTheWindow(t *testing.T) {
 	// at once, so the deadline has to bound the wait and not only the call.
 	helperNamed(t, "wl-paste", "sleep 5 &")
 
+	was := timeout
 	timeout = 150 * time.Millisecond
 
-	t.Cleanup(func() { timeout = 2 * time.Second })
+	t.Cleanup(func() { timeout = was })
 
 	done := time.Now()
 	out, ok := from("wl-paste")
@@ -62,6 +82,7 @@ func TestAClipboardThatNeverAnswersDoesNotFreezeTheWindow(t *testing.T) {
 // TestAHelperThatAnsweredIsBelieved is the other half: the deadline must not
 // cost the ordinary case, where the helper prints the selection and exits.
 func TestAHelperThatAnsweredIsBelieved(t *testing.T) {
+	patient(t)
 	helperNamed(t, "wl-paste", "printf 'pegado'")
 
 	out, ok := from("wl-paste")
@@ -86,6 +107,8 @@ func TestAHelperThatIsNotInstalledIsNotAnAnswer(t *testing.T) {
 // back. The helper is handed it on standard input, which is the half of
 // this the read tests above never exercise.
 func TestWhatIsCopiedReachesTheHelper(t *testing.T) {
+	patient(t)
+
 	taken := filepath.Join(t.TempDir(), "taken")
 	helperNamed(t, "wl-copy", "cat > "+taken)
 
@@ -120,6 +143,8 @@ func TestACopyWithNoHelperToTakeItIsNotACopy(t *testing.T) {
 // spends two more process spawns to be told so twice. Everywhere else
 // Wayland is tried before X11, and the first helper that answers wins.
 func TestTheHelpersAreTriedInTheOrderThisMachineIsLikelyToHaveThem(t *testing.T) {
+	patient(t)
+
 	if runtime.GOOS == "darwin" {
 		helperNamed(t, "pbpaste", "printf 'from the mac'")
 
@@ -156,6 +181,8 @@ func TestACopyThatWentNowhereSaysSo(t *testing.T) {
 
 // TestAHelperThatTakesItSaysSo.
 func TestAHelperThatTakesItSaysSo(t *testing.T) {
+	patient(t)
+
 	name := "wl-copy"
 	if runtime.GOOS == "darwin" {
 		name = "pbcopy"
