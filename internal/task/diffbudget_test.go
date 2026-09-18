@@ -254,3 +254,55 @@ func TestAFileThePlanNamedIsInScope(t *testing.T) {
 		t.Fatalf("Run: %v", err)
 	}
 }
+
+// TestABudgetCountsEveryCheckoutTheTaskHasWorkedIn.
+//
+// All of them and not only the one the run started in: a task that spans
+// three repositories is one piece of work, and a budget that counted one of
+// them would be three budgets nobody set.
+//
+// The record is asked first, because it is the only account of where the
+// work actually went — and a task that has worked nowhere yet falls back to
+// the checkout it was written against, which is where it is about to.
+func TestABudgetCountsEveryCheckoutTheTaskHasWorkedIn(t *testing.T) {
+	s, repos := workspaceFixture(t, "api", "ledger")
+
+	tk, err := Create(s, repos[0], "ACME-18", "one piece of work", "")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	if _, err := Join(s, tk, repos[1]); err != nil {
+		t.Fatalf("Join: %v", err)
+	}
+
+	both := reposOf(s, tk)
+	if len(both) != 2 {
+		t.Fatalf("a task worked in two checkouts is measured over %d: %v", len(both), both)
+	}
+
+	seen := map[string]bool{}
+	for _, p := range both {
+		seen[p] = true
+	}
+
+	for _, r := range repos {
+		if !seen[r.Path] {
+			t.Errorf("%q is not among the checkouts the budget covers: %v", r.Path, both)
+		}
+	}
+
+	// A task the record knows nothing about is the one it was written
+	// against, which is the state every task passes through before its
+	// first phase joins anything.
+	fresh := reposOf(s, Task{ID: "NOT-WRITTEN-1", Repo: repos[0]})
+	if len(fresh) != 1 || fresh[0] != repos[0].Path {
+		t.Errorf("a task that has worked nowhere is measured over %v", fresh)
+	}
+
+	// And one written against nothing has nothing to measure, rather than a
+	// path made of the empty string.
+	if none := reposOf(s, Task{ID: "NOT-WRITTEN-2"}); len(none) != 0 {
+		t.Errorf("a task with no checkout is measured over %v", none)
+	}
+}

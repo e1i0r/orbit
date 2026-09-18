@@ -10,6 +10,7 @@ package task
 import (
 	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -105,6 +106,14 @@ func TestADirectoryLeftBehindByAnOlderDeleteIsNotATask(t *testing.T) {
 		t.Fatalf("the fixture did not leave a directory behind: %v", err)
 	}
 
+	// Something the first life wrote, which the second must not inherit: a
+	// task that starts holding another task's notes is a run reading work
+	// nobody did for it.
+	stale := filepath.Join(dir, "notes.md")
+	if err := os.WriteFile(stale, []byte("what the first life was told\n"), 0o600); err != nil {
+		t.Fatalf("write what the first life left: %v", err)
+	}
+
 	again, err := Create(s, r, "ACME-2", "the second life", "")
 	if err != nil {
 		t.Fatalf("the leftover directory refused the id: %v", err)
@@ -112,6 +121,10 @@ func TestADirectoryLeftBehindByAnOlderDeleteIsNotATask(t *testing.T) {
 
 	if again.Text != "the second life" {
 		t.Errorf("the new task reads %q", again.Text)
+	}
+
+	if _, err := os.Stat(stale); !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("the second life inherited what the first left behind: %v", err)
 	}
 }
 
