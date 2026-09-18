@@ -34,9 +34,18 @@ import (
 // anything. Fifty seconds leaves room under the client's own timeout.
 const waitFor = 50
 
+// api is the service. It is a field rather than a constant so the suite can
+// put a stand-in in front of it: everything below — the offset that stops a
+// message being answered twice, the fallback from HTML to plain text, the
+// refusal Telegram answers with inside a 200 — is this package's own
+// behaviour, and none of it could be exercised while the host was written
+// into the string.
+const api = "https://api.telegram.org"
+
 // Telegram is the bot, and the conversation it is allowed to have.
 type Telegram struct {
 	token string
+	base  string
 	http  *http.Client
 	// offset is the first update not yet seen. Telegram keeps an update
 	// until it is acknowledged by asking for the one after it, so this is
@@ -49,6 +58,7 @@ type Telegram struct {
 func Bot(token string) *Telegram {
 	return &Telegram{
 		token: token,
+		base:  api,
 		// Longer than the poll it holds open, or every poll ends as a
 		// client timeout and the log fills with failures of nothing.
 		http: &http.Client{Timeout: (waitFor + 15) * time.Second},
@@ -245,7 +255,7 @@ func (t *Telegram) poll(ctx context.Context) ([]update, error) {
 func (t *Telegram) post(ctx context.Context, method string, body []byte) (*http.Response, error) {
 	// The token is in the path, which is how this API is built. It is never
 	// logged: every error below names the method and not the URL.
-	url := "https://api.telegram.org/bot" + t.token + "/" + method
+	url := t.base + "/bot" + t.token + "/" + method
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {

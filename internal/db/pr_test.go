@@ -107,3 +107,67 @@ func TestATaskNobodyOpenedForHasNone(t *testing.T) {
 		t.Errorf("there are %d pull requests, want none", len(prs))
 	}
 }
+
+// TestAnOpeningAlreadyAnsweredIsNotAnsweredAgain. A task delivered twice
+// into one repository has a row per opening, and the older one has already
+// been merged or closed. Marking the newer one must leave it alone: the
+// record is what happened, and a merge restated as a close is a merge the
+// history says never happened.
+func TestAnOpeningAlreadyAnsweredIsNotAnsweredAgain(t *testing.T) {
+	d := open(t)
+	worked(t, d)
+
+	if err := d.OpenedPR("ACME-1", "/src/acme", "https://github.test/acme/pull/1"); err != nil {
+		t.Fatalf("open the first pull request: %v", err)
+	}
+
+	if err := d.MarkPR("ACME-1", "/src/acme", PRMerged); err != nil {
+		t.Fatalf("merge the first: %v", err)
+	}
+
+	if err := d.OpenedPR("ACME-1", "/src/acme", "https://github.test/acme/pull/2"); err != nil {
+		t.Fatalf("open the second pull request: %v", err)
+	}
+
+	if err := d.MarkPR("ACME-1", "/src/acme", PRClosed); err != nil {
+		t.Fatalf("close the second: %v", err)
+	}
+
+	prs, err := d.PullRequests("ACME-1")
+	if err != nil {
+		t.Fatalf("read the pull requests: %v", err)
+	}
+
+	if len(prs) != 2 {
+		t.Fatalf("there are %d pull requests, want two", len(prs))
+	}
+
+	if prs[0].State != PRClosed {
+		t.Errorf("the second pull request is %q, want %q", prs[0].State, PRClosed)
+	}
+
+	if prs[1].State != PRMerged {
+		t.Errorf("the first pull request is %q, want the %q it was", prs[1].State, PRMerged)
+	}
+}
+
+// TestMarkingWhereNothingIsOpenChangesNothing. `orbit merge` marks whatever
+// the task has open in the repository, and a task with nothing open there is
+// not an error: the verb reports what GitHub did and the record follows it.
+func TestMarkingWhereNothingIsOpenChangesNothing(t *testing.T) {
+	d := open(t)
+	worked(t, d)
+
+	if err := d.MarkPR("ACME-1", "/src/acme", PRMerged); err != nil {
+		t.Fatalf("mark a repository with no pull request: %v", err)
+	}
+
+	prs, err := d.PullRequests("ACME-1")
+	if err != nil {
+		t.Fatalf("read the pull requests: %v", err)
+	}
+
+	if len(prs) != 0 {
+		t.Errorf("marking made %d rows, want none", len(prs))
+	}
+}

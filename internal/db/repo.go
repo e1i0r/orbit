@@ -160,7 +160,15 @@ func (d *DB) Unjoin(abs string) (int, error) {
 		return 0, err
 	}
 
-	res, err := d.sql.Exec(unjoinRepo, abs)
+	var res sql.Result
+
+	err := keepTrying(func() error {
+		var err error
+
+		res, err = d.sql.Exec(unjoinRepo, abs)
+
+		return err
+	})
 	if err != nil {
 		return 0, fmt.Errorf("end the links to %q: %w", abs, err)
 	}

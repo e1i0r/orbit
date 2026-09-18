@@ -36,10 +36,24 @@ type PullRequest struct {
 }
 
 // OpenedPR writes down that a pull request was opened for a task.
+//
+// Like every write here it is refused against a record ahead of this binary
+// and asks again for a turn at the lock: a pull request exists on GitHub by
+// the time this is called, and one the record lost is one nothing on the
+// board will ever mention again.
 func (d *DB) OpenedPR(taskID, repoAbs, url string) error {
+	if err := d.writable(); err != nil {
+		return fmt.Errorf("write down the pull request of %q in %q: %w", taskID, repoAbs, err)
+	}
+
 	at := record.Stamp(time.Now().UTC())
 
-	if _, err := d.sql.Exec(insertPR, taskID, repoAbs, url, at); err != nil {
+	err := keepTrying(func() error {
+		_, err := d.sql.Exec(insertPR, taskID, repoAbs, url, at)
+
+		return err
+	})
+	if err != nil {
 		return fmt.Errorf("write down the pull request of %q in %q: %w", taskID, repoAbs, err)
 	}
 
@@ -48,8 +62,20 @@ func (d *DB) OpenedPR(taskID, repoAbs, url string) error {
 
 // MarkPR says what became of every pull request a task has open in one
 // repository. Merging and closing are per repository, and so is the mark.
+//
+// Open is the whole of what it touches, for the reason markPR says: the
+// openings already answered are history and history does not change.
 func (d *DB) MarkPR(taskID, repoAbs, state string) error {
-	if _, err := d.sql.Exec(markPR, state, taskID, repoAbs); err != nil {
+	if err := d.writable(); err != nil {
+		return fmt.Errorf("mark the pull requests of %q in %q %s: %w", taskID, repoAbs, state, err)
+	}
+
+	err := keepTrying(func() error {
+		_, err := d.sql.Exec(markPR, state, taskID, repoAbs)
+
+		return err
+	})
+	if err != nil {
 		return fmt.Errorf("mark the pull requests of %q in %q %s: %w", taskID, repoAbs, state, err)
 	}
 
