@@ -17,6 +17,11 @@ import (
 
 // checkout is a directory with those entries in it: a name ending in / is a
 // folder, anything else is a file with that content.
+//
+// A file's own folder is made first rather than relied on being in the map
+// already: Go walks a map in a different order every run, so a test that
+// only worked when "internal/" came before "internal/x.go" is a test that
+// fails one run in two and passes the other — which it did.
 func checkout(t *testing.T, entries map[string]string) string {
 	t.Helper()
 
@@ -31,6 +36,10 @@ func checkout(t *testing.T, entries map[string]string) string {
 			}
 
 			continue
+		}
+
+		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
+			t.Fatalf("make room for %s: %v", name, err)
 		}
 
 		if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
