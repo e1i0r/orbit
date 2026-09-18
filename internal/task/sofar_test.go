@@ -74,6 +74,20 @@ func TestTheSecondAttemptIsToldWhatTheFirstGotDone(t *testing.T) {
 	if strings.Contains(said, "internal/task/run.go") {
 		t.Errorf("a file the attempt read was listed as a command it ran:\n%s", said)
 	}
+
+	// An attempt that did something is never described as having done
+	// nothing. "It left no trace" is what the next attempt reads to decide
+	// whether to start over, and told it wrongly it starts over on top of
+	// work that is already there.
+	if strings.Contains(said, "left no trace") {
+		t.Errorf("an attempt that ran a command was described as leaving nothing:\n%s", said)
+	}
+
+	// And what it is told is that attempt and not the one before it: the
+	// event that opened it belongs to the attempt, not to its account.
+	if n := strings.Count(said, "refused by a gate"); n != 1 {
+		t.Errorf("the account of one attempt says how it ended %d times:\n%s", n, said)
+	}
 }
 
 // TestTheSummarySaysTheWorktreeIsEveryPhasesWork is the whole rule of this
