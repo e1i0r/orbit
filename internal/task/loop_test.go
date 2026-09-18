@@ -83,6 +83,23 @@ func TestALoopStopsAtItsCap(t *testing.T) {
 	if !strings.Contains(last.Text, "FAIL: TestIdempotent") {
 		t.Errorf("the task is stuck without the history of what failed:\n%s", last.Text)
 	}
+
+	// Every turn is there and numbered from the first, because the reader
+	// is following what changed between them: counted from anywhere else,
+	// the account opens with a turn nobody can see the start of.
+	for _, want := range []string{"Turn 1 — ", "Turn 2 — "} {
+		if !strings.Contains(last.Text, want) {
+			t.Errorf("the account of the stuck loop does not carry %q:\n%s", want, last.Text)
+		}
+	}
+
+	if strings.Contains(last.Text, "Turn 0") {
+		t.Errorf("the turns are numbered from zero:\n%s", last.Text)
+	}
+
+	if last.Data["attempts"] != "2" {
+		t.Errorf("it says %q attempts, want the two turns the loop allowed", last.Data["attempts"])
+	}
 }
 
 // TestEachTurnIsToldWhatTheCheckSaid. Retrying without the error is
