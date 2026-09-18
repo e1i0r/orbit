@@ -125,3 +125,37 @@ func TestAStandingRuleRefusesTheWork(t *testing.T) {
 		t.Errorf("the refusal carries exit %d, want the check's own 3", refused.Exit)
 	}
 }
+
+// TestAGateIsNamedAfterWhatItMeans.
+//
+// A check like `! git diff | grep -q X` prints nothing at all when it fails,
+// so the refusal a later attempt reads has only the name to go on: "gate `No
+// UPDATE or DELETE in ledger` refused it" tells a model what it broke, where
+// "gate `rule-7` refused it, exit 1" is a wall with no sign on it.
+//
+// Cut at the length it is cut at and not one character sooner: the sentence
+// carries the meaning, and a rule of exactly that length is one somebody
+// wrote to fit.
+func TestAGateIsNamedAfterWhatItMeans(t *testing.T) {
+	exact := strings.Repeat("a", gateName)
+	if got := gateNamed(knowledge.Rule{Phrase: exact}); got != exact {
+		t.Errorf("a rule of exactly %d characters is named %q", gateName, got)
+	}
+
+	over := gateNamed(knowledge.Rule{Phrase: strings.Repeat("a", gateName+1)})
+	if !strings.HasSuffix(over, "…") {
+		t.Errorf("a rule one character too long is named %q, with nothing saying it was cut", over)
+	}
+
+	if len([]rune(over)) > gateName+1 {
+		t.Errorf("the name is %d characters, want no more than %d and the mark", len([]rune(over)), gateName)
+	}
+
+	// The first line, because a rule with its reasoning under it is one
+	// rule and the name is the sentence at the top of it.
+	if got := gateNamed(knowledge.Rule{
+		Phrase: "no UPDATE or DELETE in ledger\n\nbecause the ledger is the account",
+	}); got != "no UPDATE or DELETE in ledger" {
+		t.Errorf("a rule with its reasoning under it is named %q", got)
+	}
+}
