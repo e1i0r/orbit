@@ -181,7 +181,7 @@ func TestANoteGoesOnTheTaskItNames(t *testing.T) {
 		return nil
 	}
 
-	_, out := s.Say(spoken.AtWord+"ORB-1 the webhook retries", e)
+	_, out := s.Say(spoken.AtWord+"ACME-1 the webhook retries", e)
 
 	if onTask == "" || said == "" {
 		t.Fatalf("the note went to task %q saying %q", onTask, said)
@@ -195,7 +195,7 @@ func TestAWindowThatCannotWriteSaysSoRatherThanLosingTheLine(t *testing.T) {
 	s, e := opened(t, &held{})
 	e.Note, e.Learn = nil, nil
 
-	if _, out := s.Say(spoken.AtWord+"ORB-1 something", e); !strings.Contains(out.Said, "cannot write notes") {
+	if _, out := s.Say(spoken.AtWord+"ACME-1 something", e); !strings.Contains(out.Said, "cannot write notes") {
 		t.Errorf("a window with no note door said %q", out.Said)
 	}
 

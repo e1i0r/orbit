@@ -4,6 +4,7 @@ package knowledge
 
 import (
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -38,8 +39,8 @@ func TestAFactThatCannotCheckItselfOnlyWarns(t *testing.T) {
 	}
 }
 
-// TestAFactWithoutASourceOrAPhraseIsRefused. From FRA-47: every rule has a
-// source and a scope, and without a file behind it, it does not get in.
+// TestAFactWithoutASourceOrAPhraseIsRefused. Every rule has a source and a
+// scope, and without a file behind it, it does not get in.
 func TestAFactWithoutASourceOrAPhraseIsRefused(t *testing.T) {
 	for what, f := range map[string]Rule{
 		"no phrase": {Scope: Scope{Kind: General}, Source: Human},
@@ -116,5 +117,68 @@ func TestEveryKeepsWhatWasTurnedOff(t *testing.T) {
 
 	if kept := InScope(all); len(kept) != 1 {
 		t.Errorf("InScope told a phase %d rules, want only the one that is on", len(kept))
+	}
+}
+
+// TestARuleFromNowhereIsRefusedAtBothEndsOfTheList.
+//
+// Every rule has a source: a sentence in the agent's context that nobody can
+// trace is indistinguishable from one the model made up, and the whole point
+// of keeping this outside the model is that it can be traced. The check is a
+// range, so both of its ends are worth a case — the one below the first real
+// source, and the one above the last.
+func TestARuleFromNowhereIsRefusedAtBothEndsOfTheList(t *testing.T) {
+	cases := []struct {
+		name   string
+		source Source
+		want   bool
+	}{
+		{"none at all", unsourced, false},
+		{"one below the list", unsourced - 1, false},
+		{"the first real one", Human, true},
+		{"the last real one", FromGates, true},
+		{"one past the last", FromGates + 1, false},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			f := Rule{
+				Phrase: "never log a card number",
+				Scope:  Scope{Kind: General},
+				Source: c.source,
+			}
+
+			err := f.Validate()
+			if (err == nil) != c.want {
+				t.Errorf("a rule from source %d answered %v, want allowed=%v", c.source, err, c.want)
+			}
+		})
+	}
+}
+
+// TestARuleAboutASymbolNamesOne. "About a symbol" is the narrowest a rule can
+// be, and one that named no symbol would be a rule about a file wearing the
+// wrong kind — told to runs that touch the file and about nothing in it.
+func TestARuleAboutASymbolNamesOne(t *testing.T) {
+	named := Rule{
+		Phrase: "this one is not safe for two goroutines",
+		Source: Human,
+		Scope:  Scope{Kind: Symbol, Repo: "/w/orbit", Path: "internal/db/append.go", Symbol: "Append"},
+	}
+
+	if err := named.Validate(); err != nil {
+		t.Errorf("a rule about a symbol was refused: %v", err)
+	}
+
+	unnamed := named
+	unnamed.Scope.Symbol = ""
+
+	err := unnamed.Validate()
+	if err == nil {
+		t.Fatal("a rule about a symbol that names none was allowed")
+	}
+
+	if !strings.Contains(err.Error(), "symbol") {
+		t.Errorf("the refusal is %q, want it to say what is missing", err)
 	}
 }

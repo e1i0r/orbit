@@ -111,7 +111,7 @@ func TestTheBannerNamesAKeyThatDoesSomething(t *testing.T) {
 	e := world(t, nil)
 
 	abandoned := view.Task{
-		ID: "ORB-102", Repo: "orbit", Band: view.NeedsYou,
+		ID: "ACME-102", Repo: "orbit", Band: view.NeedsYou,
 		Reason: view.Reason{Key: view.ReasonAbandoned},
 	}
 
@@ -127,7 +127,7 @@ func TestTheBannerNamesAKeyThatDoesSomething(t *testing.T) {
 	// And where resume is the verb — a run stopped at a phase boundary — it
 	// is still the one named.
 	held := view.Task{
-		ID: "ORB-103", Repo: "orbit", Band: view.NeedsYou, Live: view.LiveHeld,
+		ID: "ACME-103", Repo: "orbit", Band: view.NeedsYou, Live: view.LiveHeld,
 		Reason: view.Reason{Key: view.ReasonHeld},
 	}
 

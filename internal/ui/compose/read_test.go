@@ -31,9 +31,9 @@ func urlForm(t *testing.T, readable bool, iss tracker.Issue) (State, Env) {
 func TestATaskThatIsOnlyALinkIsRefused(t *testing.T) {
 	s, e := urlForm(t, false, tracker.Issue{
 		Kind:   "linear",
-		ID:     "FRA-71",
+		ID:     "ACME-71",
 		Title:  "prueba de extremo a extremo",
-		RawURL: "https://linear.app/frauddi/issue/FRA-71/prueba-de-extremo-a-extremo",
+		RawURL: "https://tracker.test/acme/issue/ACME-71/prueba-de-extremo-a-extremo",
 	})
 
 	_, out := s.Submit(true, e)
@@ -51,7 +51,7 @@ func TestATaskThatIsOnlyALinkIsRefused(t *testing.T) {
 // TestSomethingWrittenByHandIsEnough: the guard is about a task with nothing
 // in it, not about tasks that came from a tracker.
 func TestSomethingWrittenByHandIsEnough(t *testing.T) {
-	s, _ := urlForm(t, false, tracker.Issue{Kind: "linear", ID: "FRA-71", Title: "the slug"})
+	s, _ := urlForm(t, false, tracker.Issue{Kind: "linear", ID: "ACME-71", Title: "the slug"})
 	s.text.SetValue("the slug\n\nadd ago() to internal/ui and test it")
 
 	if s.onlyALink(s.text.String()) {
@@ -62,9 +62,9 @@ func TestSomethingWrittenByHandIsEnough(t *testing.T) {
 // TestABodyThatCanBeReadIsReadBeforeTheTaskIsWritten, and the save the
 // reader asked for finishes once it lands.
 func TestABodyThatCanBeReadIsReadBeforeTheTaskIsWritten(t *testing.T) {
-	s, e := urlForm(t, true, tracker.Issue{Kind: "linear", ID: "FRA-71", Title: "the slug"})
+	s, e := urlForm(t, true, tracker.Issue{Kind: "linear", ID: "ACME-71", Title: "the slug"})
 
-	read := tracker.Issue{Kind: "linear", ID: "FRA-71", Title: "the real title", Description: "the real body"}
+	read := tracker.Issue{Kind: "linear", ID: "ACME-71", Title: "the real title", Description: "the real body"}
 	e.Read = func(tracker.Issue) (tracker.Issue, error) { return read, nil }
 
 	if !s.needsBody() {
@@ -102,10 +102,10 @@ func TestABodyThatCanBeReadIsReadBeforeTheTaskIsWritten(t *testing.T) {
 
 // TestAnIssueThatCouldNotBeReadFallsBackToAskingTheReader.
 func TestAnIssueThatCouldNotBeReadFallsBackToAskingTheReader(t *testing.T) {
-	s, e := urlForm(t, true, tracker.Issue{Kind: "linear", ID: "FRA-71", Title: "the slug"})
+	s, e := urlForm(t, true, tracker.Issue{Kind: "linear", ID: "ACME-71", Title: "the slug"})
 	s.reading = true
 
-	after, out := s.Took(ReadMsg{id: "FRA-71", err: tracker.ErrNoKey}, e)
+	after, out := s.Took(ReadMsg{id: "ACME-71", err: tracker.ErrNoKey}, e)
 	if after.readable {
 		t.Error("a tracker that refused is still believed readable")
 	}
@@ -118,11 +118,11 @@ func TestAnIssueThatCouldNotBeReadFallsBackToAskingTheReader(t *testing.T) {
 // "no body yet": it asked again, and again, one call to the tracker for
 // every turn, for as long as the form stayed open.
 func TestAnIssueWithNoBodyIsAskedForOnce(t *testing.T) {
-	s, e := urlForm(t, true, tracker.Issue{Kind: "linear", ID: "FRA-71", Title: "the slug"})
+	s, e := urlForm(t, true, tracker.Issue{Kind: "linear", ID: "ACME-71", Title: "the slug"})
 	s.reading = true
 
-	after, out := s.Took(ReadMsg{id: "FRA-71", issue: tracker.Issue{
-		Kind: "linear", ID: "FRA-71", Title: "the slug",
+	after, out := s.Took(ReadMsg{id: "ACME-71", issue: tracker.Issue{
+		Kind: "linear", ID: "ACME-71", Title: "the slug",
 	}}, e)
 
 	if after.needsBody() {
@@ -136,11 +136,11 @@ func TestAnIssueWithNoBodyIsAskedForOnce(t *testing.T) {
 // the form again for something else, while the tracker was still answering:
 // what comes back belongs to a question they have left behind.
 func TestAnAnswerAboutAnotherIssueIsDropped(t *testing.T) {
-	s, e := urlForm(t, true, tracker.Issue{Kind: "linear", ID: "FRA-71", Title: "the slug"})
+	s, e := urlForm(t, true, tracker.Issue{Kind: "linear", ID: "ACME-71", Title: "the slug"})
 	s.reading = true
 
-	after, _ := s.Took(ReadMsg{id: "FRA-70", issue: tracker.Issue{
-		Kind: "linear", ID: "FRA-70", Title: "another", Description: "another body",
+	after, _ := s.Took(ReadMsg{id: "PAY-70", issue: tracker.Issue{
+		Kind: "linear", ID: "PAY-70", Title: "another", Description: "another body",
 	}}, e)
 
 	if strings.Contains(after.text.String(), "another body") {
@@ -157,7 +157,7 @@ func TestAnAnswerAboutAnotherIssueIsDropped(t *testing.T) {
 // — so the second press used to write the task with its title as the whole
 // body, which is what those guards exist to stop.
 func TestASecondPressWhileReadingWritesNothing(t *testing.T) {
-	s, e := urlForm(t, true, tracker.Issue{Kind: "linear", ID: "FRA-71", Title: "the slug"})
+	s, e := urlForm(t, true, tracker.Issue{Kind: "linear", ID: "ACME-71", Title: "the slug"})
 	s.reading = true
 
 	_, out := s.Submit(false, e)

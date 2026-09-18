@@ -2,11 +2,9 @@ package db
 
 // Asking again for a turn at the lock.
 //
-// Nothing exercised this before: the mutation run took the count of
-// attempts out of the condition and the suite agreed. A retry nobody
-// measures is a retry that can become one attempt, or none, and the failure
-// it was written for — an event lost because another process held the lock
-// across work it should not have — is silent either way.
+// A retry nobody measures is a retry that can become one attempt, or none,
+// and the failure it was written for — an event lost because another process
+// held the lock across work it should not have — is silent either way.
 
 import (
 	"errors"

@@ -76,7 +76,7 @@ func idPrefix(name string) string {
 //
 // The digits are counted by strconv rather than by multiplying through them,
 // which is what this did and is where it went wrong: a directory named
-// ORB-99999999999999999999 ran an int past its width and came back as some
+// ACME-99999999999999999999 ran an int past its width and came back as some
 // unrelated number, so nextTaskID took that for the highest id in the
 // repository and minted its successor. Out of range is not a number this
 // package minted, and the answer to that is no.

@@ -172,7 +172,7 @@ func openSays(engineName string, flagged bool, context string) []string {
 // claude and codex do read it as one. opencode reads a bare argument as the
 // directory to start in, so the session died before it drew anything —
 // "ENAMETOOLONG: name too long, lstat '<worktree>/I am looking at orbit task
-// FRA-62...'", the whole sentence lstat'ed as a path. agy reads no bare
+// ACME-1...'", the whole sentence lstat'ed as a path. agy reads no bare
 // argument at all, and the flag it does read is the one that opens a
 // terminal rather than the one that runs without one.
 //

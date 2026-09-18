@@ -127,8 +127,9 @@ func lastAttempt(s *store.Store, t Task, phase string) ([]record.Event, bool) {
 
 // endings is how an attempt's last event reads as a sentence.
 //
-// The word for each is the record's own: phase.ran_out is the ending FRA-111
-// gave a name to, and a reader told "it ran out of tokens" knows something
+// The word for each is the record's own: phase.ran_out is the ending an
+// engine with nothing left gets, and a reader told "it ran out of tokens"
+// knows something
 // quite different from one told "it broke" — the first means the work was
 // going fine and the clock stopped, the second that something was wrong.
 var endings = map[string]string{

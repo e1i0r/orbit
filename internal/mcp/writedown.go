@@ -111,7 +111,7 @@ func census() {
 // noteAnswer writes down what the tool said.
 //
 // A refusal is an error in the file, and it is the reason this exists: "no
-// task ORB-9 on the board" is answered to the model and to nobody else, so a
+// task ACME-9 on the board" is answered to the model and to nobody else, so a
 // supervisor that spent an afternoon calling tools against ids it invented
 // left an Orbit that looked idle and a log that said nothing.
 func noteAnswer(name string, start time.Time, res CallToolResult) {

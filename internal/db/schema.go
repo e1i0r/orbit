@@ -205,13 +205,11 @@ func (d *DB) migrate() error {
 // should take: add what is missing, leave every row alone, and check for
 // what you are about to add rather than working it out from the number.
 //
-// Both comparisons below survive a mutation run as boundaries, and neither
-// is a test that is missing. `found < 1` widened to `<= 1` runs a schema of
-// CREATE TABLE IF NOT EXISTS over a record that already has those tables,
-// which is the no-op the statements were written to be; `found < version`
-// widened to `<= version` names a case that cannot arrive, because migrate
-// returns before this on a record already at the version. Neither mutant
-// changes anything a caller can see, so neither has a test to write.
+// Both comparisons below are safe at their own boundary. The schema is
+// CREATE TABLE IF NOT EXISTS throughout, so running it over a record that
+// already holds those tables is the no-op it was written to be; and a record
+// already at this version never reaches here at all, because migrate returns
+// before it.
 func stepsFrom(tx *sql.Tx, found int) error {
 	if found < 1 {
 		if _, err := tx.Exec(schema); err != nil {

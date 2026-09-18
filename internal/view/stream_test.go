@@ -1,9 +1,9 @@
 package view
 
 // What a reader gets out of an engine's stream. The fixtures below are the
-// shapes the three engines actually wrote — the claude one is a phase of
-// ORB-102 that was cancelled mid-run, 76 kilobytes of frames whose whole
-// human content was two sentences.
+// shapes the three engines actually wrote — the claude one is a phase that
+// was cancelled mid-run, 76 kilobytes of frames whose whole human content
+// was two sentences.
 
 import (
 	"strings"

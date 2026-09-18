@@ -2,10 +2,10 @@ package db
 
 // The size one row holds, from both sides of the line.
 //
-// These are here because the mutation run said they were missing. Negating
-// the comparison in tooBig, and taking the newline back out of the number it
-// reports, both survived the suite: the cap was tested from above and never
-// from below, and nothing read the sentence the refusal gives a person.
+// The cap is tested from both sides, because a check one byte too strict
+// refuses the largest event the record can hold and says nothing about it —
+// and because the number the refusal names is the one a person compares
+// against the cap beside it.
 
 import (
 	"encoding/json"

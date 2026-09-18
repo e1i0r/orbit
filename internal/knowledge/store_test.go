@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -25,7 +26,7 @@ func TestWhatWasWrittenComesBack(t *testing.T) {
 	want := Rule{
 		Scope:  Scope{Kind: File, Repo: repo, Path: "internal/ui/bar.go"},
 		Source: Human,
-		Ref:    "ORB-115",
+		Ref:    "ACME-115",
 		Phrase: "The bar drops hints from the end: what matters goes first.",
 		Stops:  true,
 		Check:  "go test ./internal/ui/ -run TestTheFlowsKey",
@@ -52,7 +53,7 @@ func TestWhatWasWrittenComesBack(t *testing.T) {
 		t.Errorf("the scope came back as %+v, want %+v", got[0].Scope, want.Scope)
 	}
 
-	if got[0].Source != Human || got[0].Ref != "ORB-115" {
+	if got[0].Source != Human || got[0].Ref != "ACME-115" {
 		t.Errorf("the source came back as %v ref %q", got[0].Source, got[0].Ref)
 	}
 }
@@ -244,5 +245,71 @@ func TestReplacingInPlaceKeepsTheOneFile(t *testing.T) {
 
 	if len(got) != 1 || got[0].State != Off {
 		t.Errorf("the repository holds %d rules and the first stands at %v", len(got), got[0].State)
+	}
+}
+
+// TestARuleCorrectedKeepsItsName. The name survives the change, which is the
+// whole of what it is for: a screen that rebuilt the rule from what was typed
+// would coin a second name for one rule, and everything the record wrote
+// about the first would be about something that no longer exists.
+func TestARuleCorrectedKeepsItsName(t *testing.T) {
+	s, repo := aRepo(t)
+
+	was := Rule{Scope: Scope{Kind: Repo, Repo: repo}, Source: Human, Phrase: "amounts are cents"}
+	if _, err := s.Save(was); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+
+	written := only(t, s, repo)
+	if written.ID == "" {
+		t.Fatal("a rule Orbit wrote has no name")
+	}
+
+	// What a screen hands back: the sentence changed, and no name on it.
+	now := written
+	now.ID = ""
+	now.Phrase = "amounts are cents, never floats"
+
+	if _, err := s.Replace(written, now); err != nil {
+		t.Fatalf("correct it: %v", err)
+	}
+
+	after := only(t, s, repo)
+	if after.ID != written.ID {
+		t.Errorf("the corrected rule is called %q, want the %q it was", after.ID, written.ID)
+	}
+
+	if after.Phrase != now.Phrase {
+		t.Errorf("it says %q, want the corrected sentence", after.Phrase)
+	}
+}
+
+// TestAFileNameIsCutToItsFirstFewWords. The file is named after the sentence
+// so a reader can find it in a listing, and a sentence of forty words would
+// otherwise be a filename of forty words.
+func TestAFileNameIsCutToItsFirstFewWords(t *testing.T) {
+	// Six, which is what slug cuts at: enough that the name still reads as
+	// the sentence it came from.
+	const kept = 6
+
+	long := "amounts are always cents and never floats because a float loses a penny somewhere"
+
+	got := fileName(Rule{Phrase: long, Scope: Scope{Kind: General}, Source: Human})
+
+	parts := strings.Split(strings.TrimSuffix(got, ".md"), "-")
+	if len(parts) > kept {
+		t.Errorf("the file is called %q, which is %d words and the cut is %d", got, len(parts), kept)
+	}
+
+	if !strings.HasPrefix(got, "amounts") {
+		t.Errorf("the file is called %q, want it to start with the sentence's first word", got)
+	}
+
+	// And one already short enough keeps every word it has.
+	short := fileName(Rule{Phrase: "amounts are cents", Scope: Scope{Kind: General}, Source: Human})
+	for _, word := range []string{"amounts", "are", "cents"} {
+		if !strings.Contains(short, word) {
+			t.Errorf("the file is called %q, want %q in it", short, word)
+		}
 	}
 }

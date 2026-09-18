@@ -319,7 +319,7 @@ func TestOpenPortStillOpensWhenNothingCanBeWritten(t *testing.T) {
 //
 // A bare argument is the directory to start in for opencode, so the task
 // arrived as a path: "ENAMETOOLONG: name too long, lstat
-// '<worktree>/I am looking at orbit task FRA-62...'", over and over, and no
+// '<worktree>/I am looking at orbit task ACME-1...'", over and over, and no
 // session.
 func TestOpenCommandGivesOpenCodeTheSentenceOnItsOwnFlag(t *testing.T) {
 	cmd, err := openCommand("opencode", "", "look at PAY-1")

@@ -52,8 +52,8 @@ func claudeTurns(dir, engineName string, since time.Time) ([]Turn, error) {
 
 // claudeSlug is what claude calls a directory: the path with every
 // character that is not a letter or a digit turned into a dash. A dot
-// becomes one too, which is why /Users/who/.orbit/worktrees/ab12/FRA-62 is
-// kept under -Users-who--orbit-worktrees-ab12-FRA-62.
+// becomes one too, which is why /Users/who/.orbit/worktrees/ab12/ACME-1 is
+// kept under -Users-who--orbit-worktrees-ab12-ACME-1.
 func claudeSlug(dir string) string {
 	return strings.Map(func(r rune) rune {
 		switch {

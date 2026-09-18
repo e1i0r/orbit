@@ -16,8 +16,8 @@ func halfWritten(t *testing.T, input string) (State, Env) {
 
 	s, e := open(t)
 	e.Tasks = []Mention{
-		{ID: "ORB-1", Title: "the webhook retries"},
-		{ID: "ORB-2", Title: "the report reads long"},
+		{ID: "ACME-1", Title: "the webhook retries"},
+		{ID: "ACME-2", Title: "the report reads long"},
 	}
 	s.input = input
 
@@ -102,7 +102,7 @@ func TestAnAtOffersTheTasksOnTheBoard(t *testing.T) {
 // TestOrdinaryTextOffersNothing. A conversation is not a command line, and a
 // list popping up over somebody's sentence is the window interrupting them.
 func TestOrdinaryTextOffersNothing(t *testing.T) {
-	for _, said := range []string{"what happened", "", "/rule coverage stays above 90%", "look at ORB-1"} {
+	for _, said := range []string{"what happened", "", "/rule coverage stays above 90%", "look at ACME-1"} {
 		s, e := halfWritten(t, said)
 		if got := s.completions(e); len(got) != 0 {
 			t.Errorf("%q offered %+v, want nothing", said, got)

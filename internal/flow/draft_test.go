@@ -120,3 +120,101 @@ func TestAFenceIsTakenOffWhateverIsInsideIt(t *testing.T) {
 		t.Errorf("an unclosed fence came back as %q", got)
 	}
 }
+
+// TestAClosingBraceBeforeAnyOpeningOneIsNotDepth.
+//
+// The reading counts braces to find where an object starts and ends. A
+// model that printed prose with a stray } in it — the end of a sentence
+// about a template, say — would take the count below zero, and every object
+// after it would be read from the wrong place.
+func TestAClosingBraceBeforeAnyOpeningOneIsNotDepth(t *testing.T) {
+	out := `} here is the flow you asked for:
+{"name":"careful","phases":[{"name":"implement","engine":"claude"}]}`
+
+	raw, held := flowJSON(out)
+	if !held {
+		t.Fatal("a stray closing brace lost the flow that came after it")
+	}
+
+	if !strings.Contains(raw, `"phases"`) {
+		t.Errorf("it read %q, want the object with phases in it", raw)
+	}
+
+	if strings.HasPrefix(raw, "}") {
+		t.Errorf("it read %q, want an object that starts where one does", raw)
+	}
+}
+
+// TestAnObjectThatIsNotJSONIsNotTheFlow. The first object with phases in it
+// wins, and "with phases in it" means the document parsed and had them —
+// not that the characters p-h-a-s-e-s were somewhere in the braces.
+func TestAnObjectThatIsNotJSONIsNotTheFlow(t *testing.T) {
+	out := `{"phases": this is not json at all}
+{"name":"careful","phases":[{"name":"implement","engine":"claude"}]}`
+
+	raw, held := flowJSON(out)
+	if !held {
+		t.Fatal("nothing was read as a flow")
+	}
+
+	if strings.Contains(raw, "not json") {
+		t.Errorf("it read %q, want the object that parses", raw)
+	}
+}
+
+// TestTheLongestOfTwoEqualObjectsIsTheFirst.
+//
+// The fallback is the longest object, which is the best guess left when
+// nothing parses. Two of the same length is a tie, and a tie broken
+// differently on two runs of the same answer is a draft that cannot be
+// reproduced — so it is the first, and this says so.
+func TestTheLongestOfTwoEqualObjectsIsTheFirst(t *testing.T) {
+	out := `{"a":"first one here!"}
+{"b":"second one here"}`
+
+	raw, held := flowJSON(out)
+	if !held {
+		t.Fatal("neither object came back")
+	}
+
+	if !strings.Contains(raw, `"a"`) {
+		t.Errorf("it read %q, want the first of the two", raw)
+	}
+}
+
+// TestAFenceWithNothingInsideItIsNothing. An engine that opened a block and
+// closed it without writing anything said nothing, and a reading that
+// answered with the fence itself would hand three backticks to the parser.
+func TestAFenceWithNothingInsideItIsNothing(t *testing.T) {
+	if got := fenced("```json\n```"); strings.Contains(got, "`") {
+		t.Errorf("an empty fenced block came back as %q", got)
+	}
+
+	// And one with something in it comes back with the something.
+	got := fenced("```json\n{\"name\":\"careful\"}\n```")
+	if !strings.Contains(got, "careful") {
+		t.Errorf("a fenced block came back as %q", got)
+	}
+
+	if strings.Contains(got, "`") {
+		t.Errorf("the fence came back with it: %q", got)
+	}
+}
+
+// TestALineExactlyAtTheLimitIsNotCutShort. The message says what came back
+// instead of a flow without printing a page of it, and a line of exactly the
+// length allowed is one that fits — cutting it would put an ellipsis on an
+// answer that was already whole.
+func TestALineExactlyAtTheLimitIsNotCutShort(t *testing.T) {
+	const limit = 120
+
+	exact := strings.Repeat("x", limit)
+	if got := opening(exact); got != exact {
+		t.Errorf("a line of exactly %d characters came back %d long", limit, len(got))
+	}
+
+	over := strings.Repeat("x", limit+1)
+	if got := opening(over); !strings.HasSuffix(got, "…") {
+		t.Errorf("a line of %d characters came back whole: %q", limit+1, got)
+	}
+}

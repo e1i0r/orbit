@@ -3,6 +3,7 @@ package record
 // The thread cut into conversations.
 
 import (
+	"strings"
 	"testing"
 	"time"
 )
@@ -152,5 +153,40 @@ func TestNewConversationIDNamesTheInstant(t *testing.T) {
 
 	if got := NewConversationID(at); got != Stamp(at) {
 		t.Errorf("a new conversation id reads %q, want the stamp", got)
+	}
+}
+
+// TestATitleExactlyAsLongAsItMayBeIsNotCut. The cut is how much of the first
+// sentence a list can show, and a title of exactly that length is one that
+// fits: an ellipsis on it would tell a reader there is more to read when
+// there is not.
+func TestATitleExactlyAsLongAsItMayBeIsNotCut(t *testing.T) {
+	exact := strings.Repeat("a", titleCut)
+
+	if got := title(Event{Text: exact}); got != exact {
+		t.Errorf("a title of exactly %d characters came back as %q", titleCut, got)
+	}
+
+	over := strings.Repeat("a", titleCut+1)
+
+	got := title(Event{Text: over})
+	if !strings.HasSuffix(got, "…") {
+		t.Errorf("a title of %d characters came back whole: %q", titleCut+1, got)
+	}
+
+	if len([]rune(got)) != titleCut+1 {
+		t.Errorf("the cut title is %d characters, want the %d it may be plus the ellipsis",
+			len([]rune(got)), titleCut)
+	}
+}
+
+// TestATitleIsCountedInCharactersAndNotInBytes. A conversation started in
+// Spanish is as long as its words are, and a cut measured in bytes would
+// take a title of thirty accented characters for one of sixty.
+func TestATitleIsCountedInCharactersAndNotInBytes(t *testing.T) {
+	accented := strings.Repeat("á", titleCut)
+
+	if got := title(Event{Text: accented}); got != accented {
+		t.Errorf("a title of %d accented characters came back as %q", titleCut, got)
 	}
 }

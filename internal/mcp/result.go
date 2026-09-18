@@ -32,7 +32,7 @@ func reply(v any) CallToolResult {
 // It is a result with isError rather than a JSON-RPC error object, because
 // the model is the one that has to fix it: a client turns an error object
 // into a transport failure the model never sees, and "there is no task
-// ORB-9" is exactly the kind of thing the model should read and correct.
+// ACME-9" is exactly the kind of thing the model should read and correct.
 func refuse(err error) CallToolResult {
 	return CallToolResult{
 		Content: []ContentItem{{Type: "text", Text: err.Error()}},

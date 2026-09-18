@@ -196,7 +196,7 @@ func TestShiftEnterIsANewLineInTheBoxAndNothingElsewhere(t *testing.T) {
 	}
 
 	// On the id it is the key that moves on, because an id has one line.
-	one, e := composeOn(t, composeID, "ORB-1")
+	one, e := composeOn(t, composeID, "ACME-1")
 
 	one, _ = one.Key(tea.KeyPressMsg{Code: tea.KeyEnter, Mod: tea.ModShift}, e)
 	if strings.Contains(one.id.String(), "\n") {

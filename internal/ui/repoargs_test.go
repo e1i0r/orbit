@@ -149,9 +149,8 @@ func TestTheVerbsHandedToTheSupervisorCarryTheTaskAndItsCheckout(t *testing.T) {
 }
 
 // TestAVerbForTheSupervisorNeedsACheckout. A task written against no
-// repository — which FRA-61 made a thing a reader can do — has nowhere for
-// the supervisor to run git, and a run spent finding that out is a run spent
-// for nothing.
+// repository — which a reader can write — has nowhere for the supervisor to
+// run git, and a run spent finding that out is a run spent for nothing.
 func TestAVerbForTheSupervisorNeedsACheckout(t *testing.T) {
 	m, _ := testModel(t, 120, 30)
 	m.board = fixtureBoard([]view.Task{{

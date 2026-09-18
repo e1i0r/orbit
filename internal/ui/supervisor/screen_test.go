@@ -68,12 +68,12 @@ func TestTheScreenDrawsItsTitleAndWhatWasSaid(t *testing.T) {
 		At:      time.Date(2026, 8, 28, 14, 0, 0, 0, time.UTC),
 		By:      "supervisor",
 		Channel: "autopilot",
-		TaskID:  "ORB-1",
-		Text:    "task ORB-1 completed all gates",
+		TaskID:  "ACME-1",
+		Text:    "task ACME-1 completed all gates",
 	}}
 
 	full := strings.Join(s.rows(25, 100, e), "\n")
-	if !strings.Contains(full, "ORB-1") || !strings.Contains(full, "completed all gates") {
+	if !strings.Contains(full, "ACME-1") || !strings.Contains(full, "completed all gates") {
 		t.Errorf("what was said is not on the screen:\n%s", full)
 	}
 }
@@ -110,7 +110,7 @@ func TestTheScreenFitsTheTerminal(t *testing.T) {
 	s, e := open(t)
 	s.lines = []view.SupervisorLine{
 		{At: fixtureNow, By: "zeta", Channel: "mcp", Text: "a reply long enough to wrap more than once on a narrow terminal, with a `code span` in it"},
-		{At: fixtureNow.Add(time.Minute), By: "operator", Channel: "tui", TaskID: "ORB-1", Text: "short one"},
+		{At: fixtureNow.Add(time.Minute), By: "operator", Channel: "tui", TaskID: "ACME-1", Text: "short one"},
 	}
 
 	for _, size := range []struct{ w, h int }{{120, 34}, {80, 24}, {60, 16}, {200, 50}} {

@@ -9,7 +9,7 @@ import "testing"
 // accident becomes a command by accident either.
 func TestPlainTextIsAMessage(t *testing.T) {
 	for _, said := range []string{
-		"look at ORB-115, it is stuck",
+		"look at ACME-115, it is stuck",
 		"/ruleset the thing",
 		"/",
 		"and/or this",
@@ -55,8 +55,8 @@ func TestAScopeCanBeSaidOutLoud(t *testing.T) {
 // TestAtPointsAtATask. What follows lands in that task's notes, where
 // somebody opening it tomorrow will read it.
 func TestAtPointsAtATask(t *testing.T) {
-	got := Parse("@ORB-115 this one is stuck, do not let it hang")
-	if got.Kind != Note || got.Task != "ORB-115" {
+	got := Parse("@ACME-115 this one is stuck, do not let it hang")
+	if got.Kind != Note || got.Task != "ACME-115" {
 		t.Errorf("the mention was read as %+v", got)
 	}
 
@@ -68,7 +68,7 @@ func TestAtPointsAtATask(t *testing.T) {
 // TestAGestureWithNothingAfterItSaysNothing. "/rule" alone is somebody who
 // has not finished typing, not a rule with an empty sentence.
 func TestAGestureWithNothingAfterItSaysNothing(t *testing.T) {
-	for _, said := range []string{"/rule", "/rule   ", "/aware", "@ORB-115", "/rule --general"} {
+	for _, said := range []string{"/rule", "/rule   ", "/aware", "@ACME-115", "/rule --general"} {
 		if got := Parse(said); got.Kind != Nothing {
 			t.Errorf("%q was read as %+v, want nothing to act on", said, got)
 		}

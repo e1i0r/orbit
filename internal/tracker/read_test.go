@@ -18,7 +18,7 @@ func TestAnIssueThisMachineCannotReadComesBackAsItWasParsed(t *testing.T) {
 
 	for _, iss := range []Issue{
 		{Kind: "jira", ID: "ACME-1", Title: "the slug"},
-		{Kind: "linear", ID: "FRA-71", Title: "the slug"},
+		{Kind: "linear", ID: "PAY-71", Title: "the slug"},
 	} {
 		got, err := Read(context.Background(), iss)
 		if !errors.Is(err, ErrNoKey) {

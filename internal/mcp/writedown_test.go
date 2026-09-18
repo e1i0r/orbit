@@ -40,7 +40,7 @@ func logs(t *testing.T, fn func()) (string, string) {
 // sentence without them.
 func TestEveryToolCallIsWrittenDownWithWhatItWasGiven(t *testing.T) {
 	s, sn, r := oneRepo(t)
-	addTask(t, s, r, "ORB-1")
+	addTask(t, s, r, "ACME-1")
 
 	all, _ := logs(t, func() {
 		sn.Call("orbit_list_tasks", map[string]any{"repo": r.Path, "limit": float64(5)})
@@ -83,10 +83,10 @@ func TestARefusalIsAnErrorAndSaysWhatItRefused(t *testing.T) {
 	_, sn, r := oneRepo(t)
 
 	all, bad := logs(t, func() {
-		refused(t, sn, "orbit_inspect_task", map[string]any{"repo": r.Path, "task_id": "ORB-404"})
+		refused(t, sn, "orbit_inspect_task", map[string]any{"repo": r.Path, "task_id": "ACME-404"})
 	})
 
-	if !strings.Contains(bad, "ORB-404") {
+	if !strings.Contains(bad, "ACME-404") {
 		t.Errorf("the errors file does not name the task that was refused:\n%s", bad)
 	}
 
@@ -94,7 +94,7 @@ func TestARefusalIsAnErrorAndSaysWhatItRefused(t *testing.T) {
 		t.Errorf("a refusal was not written down as a refusal:\n%s", bad)
 	}
 
-	if !strings.Contains(all, "ORB-404") {
+	if !strings.Contains(all, "ACME-404") {
 		t.Errorf("the log kept a refusal out of the file that holds everything:\n%s", all)
 	}
 }
@@ -105,7 +105,7 @@ func TestARefusalIsAnErrorAndSaysWhatItRefused(t *testing.T) {
 // in the file would have answered in under a millisecond.
 func TestAToolIsTimedFromBeforeItRunsAndNotAfterIt(t *testing.T) {
 	s, sn, r := oneRepo(t)
-	addTask(t, s, r, "ORB-1")
+	addTask(t, s, r, "ACME-1")
 
 	all, _ := logs(t, func() {
 		start := noteCall("orbit_slow", nil)
@@ -160,7 +160,7 @@ func TestWhatIsShortEnoughToReadIsWrittenOutInFull(t *testing.T) {
 		want string
 		why  string
 	}{
-		{"ORB-12", `"ORB-12"`, "a task id is quoted so an empty one is visible as one"},
+		{"ACME-12", `"ACME-12"`, "a task id is quoted so an empty one is visible as one"},
 		{"", `""`, "an argument that arrived empty is a fact, not an absence"},
 		{true, "true", "a boolean is not a string and is not quoted like one"},
 		{float64(5), "5", "JSON numbers arrive as float64 and read as numbers"},
@@ -221,7 +221,7 @@ func TestAToolThatCrashedDoesNotEndTheSession(t *testing.T) {
 	var after CallToolResult
 
 	all, bad := logs(t, func() {
-		crashed := guard("orbit_boom", map[string]any{"task_id": "ORB-1"}, func() CallToolResult {
+		crashed := guard("orbit_boom", map[string]any{"task_id": "ACME-1"}, func() CallToolResult {
 			panic("a nil map somewhere")
 		})
 

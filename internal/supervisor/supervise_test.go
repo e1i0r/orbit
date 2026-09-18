@@ -67,19 +67,19 @@ func TestSuperviseRefusesNilStoreOrEngineOrEmptyPrompt(t *testing.T) {
 func TestAutoSuperviseBuildsPromptWithTaskIDs(t *testing.T) {
 	s := fixture(t)
 	fake := &engine.Fake{
-		Output: "Addressed failures in ORB-10 and ORB-12.",
+		Output: "Addressed failures in ACME-10 and ACME-12.",
 	}
 
-	res, err := AutoSupervise(context.Background(), s, fake, []string{"ORB-10", "ORB-12"})
+	res, err := AutoSupervise(context.Background(), s, fake, []string{"ACME-10", "ACME-12"})
 	if err != nil {
 		t.Fatalf("AutoSupervise failed: %v", err)
 	}
 
-	if !strings.Contains(fake.Calls[0].Prompt, "ORB-10, ORB-12") {
+	if !strings.Contains(fake.Calls[0].Prompt, "ACME-10, ACME-12") {
 		t.Errorf("prompt missing task list: %s", fake.Calls[0].Prompt)
 	}
 
-	if res != "Addressed failures in ORB-10 and ORB-12." {
+	if res != "Addressed failures in ACME-10 and ACME-12." {
 		t.Errorf("res = %q", res)
 	}
 }
@@ -90,7 +90,7 @@ func TestAutoSuperviseBuildsPromptWithTaskIDs(t *testing.T) {
 // does the same thing twice.
 func TestTheSecondCallShowsTheModelWhatTheFirstOneSaid(t *testing.T) {
 	s := fixture(t)
-	fake := &engine.Fake{Output: "ORB-3 is stuck on a gate"}
+	fake := &engine.Fake{Output: "ACME-3 is stuck on a gate"}
 
 	if _, err := Supervise(context.Background(), s, fake, "what is stuck?"); err != nil {
 		t.Fatalf("first Supervise: %v", err)
@@ -105,7 +105,7 @@ func TestTheSecondCallShowsTheModelWhatTheFirstOneSaid(t *testing.T) {
 		t.Errorf("the second prompt carries no history section:\n%s", second)
 	}
 
-	if !strings.Contains(second, "ORB-3 is stuck on a gate") {
+	if !strings.Contains(second, "ACME-3 is stuck on a gate") {
 		t.Errorf("the second prompt does not carry what the first call answered:\n%s", second)
 	}
 }
