@@ -4,12 +4,14 @@ package task
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/knowledge"
+	"github.com/e1i0r/orbit/internal/record"
 )
 
 func stopping(phrase, check string) knowledge.Rule {
@@ -157,5 +159,89 @@ func TestAGateIsNamedAfterWhatItMeans(t *testing.T) {
 		Phrase: "no UPDATE or DELETE in ledger\n\nbecause the ledger is the account",
 	}); got != "no UPDATE or DELETE in ledger" {
 		t.Errorf("a rule with its reasoning under it is named %q", got)
+	}
+}
+
+// TestWhatTheRecordSaysAboutAGateThatRan.
+//
+// The rule's name beside its sentence, because the sentence is what a model
+// reads and the name is what a later reader follows: the name survives
+// somebody rewording the rule and the gate's own does not. A gate the flow
+// declares has no rule behind it and must carry none, or the name points at
+// a rule nobody wrote.
+func TestWhatTheRecordSaysAboutAGateThatRan(t *testing.T) {
+	s, r := fixture(t)
+
+	tk, err := Create(s, r, "KNOW-GATE-2", "touch the ledger", "quick")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fact := stopping("No UPDATE or DELETE in ledger.", "exit 3")
+	fact.Scope = knowledge.Scope{Kind: knowledge.Repo, Repo: r.Path}
+
+	if _, err := knowledge.NewStore(s.Root()).Save(fact); err != nil {
+		t.Fatalf("save the fact: %v", err)
+	}
+
+	// The name it was given when it was written down, which is what the
+	// record has to point at: it survives somebody rewording the sentence.
+	filed, err := knowledge.NewStore(s.Root()).LoadRepo(r.Path)
+	if err != nil || len(filed) != 1 {
+		t.Fatalf("read the fact back: %d rules, %v", len(filed), err)
+	}
+
+	saved := filed[0].ID
+
+	// A gate the flow declares, beside the one the rule brought, and a
+	// phase number that is not the first.
+	const phaseNumber = 3
+
+	own := flow.Phase{Name: "implement", Gates: []flow.Gate{{Name: "build", Command: "true"}}}
+
+	_, err = runGates(context.Background(), s, tk, own, phaseNumber, t.TempDir(), engine.Result{})
+	if err != nil {
+		t.Fatalf("runGates: %v", err)
+	}
+
+	byGate := map[string]record.Event{}
+
+	for _, e := range mustEvents(t, s, tk) {
+		if e.Kind == record.GatePassed || e.Kind == record.GateFailed {
+			byGate[e.Data["gate"]] = e
+		}
+	}
+
+	if len(byGate) != 2 {
+		t.Fatalf("%d gates were written down, want the flow's own and the rule's", len(byGate))
+	}
+
+	declared, there := byGate["build"]
+	if !there {
+		t.Fatalf("the gate the flow declares is not in the record: %v", byGate)
+	}
+
+	if got, said := declared.Data["rule"]; said {
+		t.Errorf("a gate the flow declares says it came from the rule %q", got)
+	}
+
+	if declared.Data["n"] != strconv.Itoa(phaseNumber) {
+		t.Errorf("the gate says it ran in phase %q, want %d", declared.Data["n"], phaseNumber)
+	}
+
+	var fromARule record.Event
+
+	for name, e := range byGate {
+		if name != "build" {
+			fromARule = e
+		}
+	}
+
+	if fromARule.Data["rule"] != saved {
+		t.Errorf("the gate a rule brought says it came from %q, want %q", fromARule.Data["rule"], saved)
+	}
+
+	if fromARule.Data["n"] != strconv.Itoa(phaseNumber) {
+		t.Errorf("it says it ran in phase %q, want %d", fromARule.Data["n"], phaseNumber)
 	}
 }
