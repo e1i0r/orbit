@@ -150,3 +150,66 @@ func TestAStoryIsWholeOrItIsNot(t *testing.T) {
 		t.Error("nothing reads as whole")
 	}
 }
+
+// TestTheStoryThatStandsIsTheLastOneTold.
+//
+// A task run three times told its story three times, and the two before it
+// are about work that was thrown away. This is the door the panes read, so
+// the one it answers with is the one a reader is shown.
+func TestTheStoryThatStandsIsTheLastOneTold(t *testing.T) {
+	s, r := fixture(t)
+
+	tk, err := Create(s, r, "ACME-29", "the endpoint drops duplicates", "")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	// Nothing has been run, so there is no story — and that is an answer.
+	if got := StoryOf(s, tk); got != nil {
+		t.Errorf("a task nobody has run carries the story %+v", got)
+	}
+
+	f := flow.Flow{Name: "task", Phases: []flow.Phase{{Name: "implement", Engine: "fake"}}}
+	if err := Run(context.Background(), s, tk, f,
+		fakes(engine.NewFake(storyAnswer)), nil); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	first := StoryOf(s, tk)
+	if first == nil {
+		t.Fatal("a task that told its story carries none")
+	}
+
+	if first.Entry != "POST /items" || first.Cause != "the primary key collided" {
+		t.Errorf("the story reads %+v, want the five fields the phase wrote", first)
+	}
+
+	// Run again, telling a different story: the one that stands is the one
+	// about the work that is there.
+	again := strings.ReplaceAll(storyAnswer, "POST /items", "PUT /items")
+	if err := Run(context.Background(), s, tk, f, fakes(engine.NewFake(again)), nil); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	last := StoryOf(s, tk)
+	if last == nil || last.Entry != "PUT /items" {
+		t.Errorf("the story that stands is %+v, want the one the second run told", last)
+	}
+}
+
+// TestOnlyTheFiveFieldsAreReadOutOfAStory. The five are a closed list:
+// anything else a phase writes under the heading is prose, and reading it as
+// a field would put whatever a model invented into the shape a pane draws.
+func TestOnlyTheFiveFieldsAreReadOutOfAStory(t *testing.T) {
+	for _, one := range storyFields {
+		if !known(one) {
+			t.Errorf("%q is one of the five and does not read as one", one)
+		}
+	}
+
+	for _, one := range []string{"", "entries", "purposes", "symptoms", "why", "ENTRY"} {
+		if known(one) {
+			t.Errorf("%q is not one of the five and reads as one", one)
+		}
+	}
+}
