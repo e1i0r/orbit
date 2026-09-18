@@ -9,6 +9,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/record"
 )
 
 // worked is a fake that ran a command, was refused another, and streamed both
@@ -139,5 +140,66 @@ func TestAPhaseWithNoAttemptBeforeItIsToldNothing(t *testing.T) {
 
 	if strings.Contains(fake.Calls[0].Prompt, "## The attempt before you") {
 		t.Errorf("a first attempt was told about an attempt before it:\n%s", fake.Calls[0].Prompt)
+	}
+}
+
+// TestACountAndTheWordForWhatItCounts.
+//
+// A prompt is read by something that reads English, and "1 files" is the
+// kind of seam that makes a reader wonder what else was assembled without
+// being looked at.
+func TestACountAndTheWordForWhatItCounts(t *testing.T) {
+	for _, one := range []struct {
+		n    int
+		want string
+	}{
+		{0, "0 files"},
+		{1, "1 file"},
+		{2, "2 files"},
+		{12, "12 files"},
+	} {
+		if got := many(one.n, "file"); got != one.want {
+			t.Errorf("many(%d) = %q, want %q", one.n, got, one.want)
+		}
+	}
+}
+
+// TestACommandIsShownByItsShapeAndNotItsWholeScript.
+//
+// The arguments are whatever the engine wrote and may be a whole script.
+// What the reader wants is the shape of what was tried, and a heredoc pasted
+// into a prompt is the room the files needed — so it is the first line, and
+// no more of it than a command can be recognised by.
+func TestACommandIsShownByItsShapeAndNotItsWholeScript(t *testing.T) {
+	ran := func(tool, args string) record.Event {
+		return record.Event{Kind: record.PhaseToolCall, Text: args, Data: map[string]string{"tool": tool}}
+	}
+
+	if got := command(ran("Bash", "go build ./...")); got != "go build ./..." {
+		t.Errorf("a command came back as %q", got)
+	}
+
+	// A tool that reads a file is not a command somebody could type again.
+	if got := command(ran("Read", "internal/task/run.go")); got != "" {
+		t.Errorf("a file that was read came back as the command %q", got)
+	}
+
+	// The first line, and a mark saying there was more.
+	script := command(ran("Bash", "cat <<'EOF' > f.txt\nline one\nline two\nEOF"))
+	if script != "cat <<'EOF' > f.txt …" {
+		t.Errorf("a script came back as %q", script)
+	}
+
+	// A single line exactly as wide as is shown is shown whole: a mark
+	// saying something was cut, over nothing, is a reader going to look for
+	// the rest of a command that is all there.
+	exact := strings.Repeat("a", lineWidth)
+	if got := command(ran("Bash", exact)); got != exact {
+		t.Errorf("a command of exactly %d characters came back as %q", lineWidth, got)
+	}
+
+	over := command(ran("Bash", strings.Repeat("a", lineWidth+1)))
+	if !strings.HasSuffix(over, "…") || len(over) != lineWidth+len("…") {
+		t.Errorf("a command one character too long came back as %d characters", len(over))
 	}
 }
