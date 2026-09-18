@@ -76,6 +76,46 @@ func TestTheLastPhaseIsAskedForTheStory(t *testing.T) {
 	}
 }
 
+// TestItIsTheLastPhaseOfTheFlowThatIsAsked.
+//
+// Which phase is the last one is worked out from where the run has got to,
+// and nothing was reading it back: the prompts were built by hand with the
+// answer handed in, and the record holds a story whether the phase was asked
+// for one or not — a fake answers with what it was given either way.
+//
+// So it is read off a run: two phases, and only the second is asked.
+func TestItIsTheLastPhaseOfTheFlowThatIsAsked(t *testing.T) {
+	s, r := fixture(t)
+
+	tk, err := Create(s, r, "ACME-31", "the endpoint drops duplicates", "")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	fake := engine.NewFake(storyAnswer)
+
+	f := flow.Flow{Name: "task", Phases: []flow.Phase{
+		{Name: "1-plan", Engine: "fake"},
+		{Name: "2-implement", Engine: "fake"},
+	}}
+
+	if err := Run(context.Background(), s, tk, f, fakes(fake), nil); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	if len(fake.Calls) != 2 {
+		t.Fatalf("the engine ran %d times, want both phases", len(fake.Calls))
+	}
+
+	if strings.Contains(fake.Calls[0].Prompt, "## Story") {
+		t.Errorf("the first of two phases was asked for the story:\n%s", fake.Calls[0].Prompt)
+	}
+
+	if !strings.Contains(fake.Calls[1].Prompt, "## Story") {
+		t.Errorf("the last phase was not asked for the story:\n%s", fake.Calls[1].Prompt)
+	}
+}
+
 // TestAFinishedTaskCarriesItsStory.
 func TestAFinishedTaskCarriesItsStory(t *testing.T) {
 	s, r := fixture(t)
