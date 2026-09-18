@@ -14,6 +14,8 @@ import (
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/repo"
+
+	"github.com/e1i0r/orbit/internal/flow"
 )
 
 // checkedOut is a task with a checkout on disk: a real worktree of the
@@ -207,5 +209,42 @@ func TestTheBoardListsWhatIsThere(t *testing.T) {
 	out := mustAsk(t, w, "board list", In{By: "operator"})
 	if !strings.Contains(out.Said, "ACME-11") || !strings.Contains(out.Said, "ACME-12") {
 		t.Errorf("list answered:\n%s", out.Said)
+	}
+}
+
+// TestATaskWalksItsOwnFlowAndNotTheOneOrbitShips.
+//
+// The task's own, then the one Orbit ships — and not the settings default,
+// which is what the next task written gets rather than what this one walks.
+// Every task on a fresh board already carries the shipped name, so a reading
+// that reached for the default whatever the task said would agree with this
+// one everywhere except on the tasks somebody chose a flow for, which are
+// the only tasks the question is ever asked about.
+func TestATaskWalksItsOwnFlowAndNotTheOneOrbitShips(t *testing.T) {
+	w := worldOf(t)
+	r := w.gitRepo(t, "acme")
+
+	mustAsk(t, w, "board new", In{
+		Args: map[string]string{"id": "ACME-50", "text": "ship it", "repo": r.Path, "flow": "quick"},
+		By:   "operator",
+	})
+
+	own := mustAsk(t, w, "task flow", In{Task: "ACME-50", Repo: r.Path, By: "operator"})
+	if !strings.Contains(own.Said, "quick") {
+		t.Errorf("a task written to walk quick reads %q", own.Said)
+	}
+
+	// Approving reads the flow the same way, to know which dependencies the
+	// task's phases could have been waiting on.
+	waiting := mustAsk(t, w, "task approve", In{Task: "ACME-50", Repo: r.Path, By: "operator"})
+	if !strings.Contains(waiting.Said, "ACME-50") {
+		t.Errorf("approving answered %q, which names no task", waiting.Said)
+	}
+
+	w.wrote(t, "ACME-51", r.Path, "pay the thing")
+
+	shipped := mustAsk(t, w, "task flow", In{Task: "ACME-51", Repo: r.Path, By: "operator"})
+	if !strings.Contains(shipped.Said, flow.Default) {
+		t.Errorf("a task with no flow of its own reads %q, want the one Orbit ships", shipped.Said)
 	}
 }
