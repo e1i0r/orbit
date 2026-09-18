@@ -167,3 +167,35 @@ func write(t *testing.T, at, body string) {
 		t.Fatalf("write %s: %v", at, err)
 	}
 }
+
+// TestHowMuchOfTwoPathsIsTheSame.
+//
+// One path being the whole front of another is where the walk has to stop on
+// its own: `internal/db` and `internal/db/pr.go` agree until the shorter one
+// runs out, and reading one segment further is reading past the end of it.
+func TestHowMuchOfTwoPathsIsTheSame(t *testing.T) {
+	for _, one := range []struct {
+		a, b []string
+		want []string
+	}{
+		{[]string{"internal", "db"}, []string{"internal", "db", "pr.go"}, []string{"internal", "db"}},
+		{[]string{"internal", "db", "pr.go"}, []string{"internal", "db"}, []string{"internal", "db"}},
+		{[]string{"internal", "db"}, []string{"internal", "ui"}, []string{"internal"}},
+		{[]string{"internal"}, []string{"site"}, nil},
+		{nil, []string{"internal"}, nil},
+		{[]string{"internal"}, nil, nil},
+	} {
+		got := sharedHead(one.a, one.b)
+		if len(got) != len(one.want) {
+			t.Errorf("%v and %v share %v, want %v", one.a, one.b, got, one.want)
+			continue
+		}
+
+		for i := range got {
+			if got[i] != one.want[i] {
+				t.Errorf("%v and %v share %v, want %v", one.a, one.b, got, one.want)
+				break
+			}
+		}
+	}
+}

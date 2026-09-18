@@ -84,11 +84,41 @@ func TestWhatWasNotCutSaysNothingAboutBeingCut(t *testing.T) {
 		t.Errorf("the call reads %q with tool %q", call.Text, call.Data["tool"])
 	}
 
+	// A refusal the model was given carries the same silence, and so does
+	// the prompt the phase was sent — which is the one event somebody opens
+	// when a phase's engine never came back.
+	refused := phaseRefused("implement", 1, engine.StreamRefusal{Tool: "WebFetch", Input: "https://example.test"})
+	if got, there := refused.Data["bytes"]; there {
+		t.Errorf("a refusal nothing was cut from says %q bytes were", got)
+	}
+
+	if refused.Data["tool"] != "WebFetch" || refused.Text != "https://example.test" {
+		t.Errorf("the refusal reads %q for tool %q", refused.Text, refused.Data["tool"])
+	}
+
+	asked := phaseAsked("implement", "claude", "do the thing")
+	if got, there := asked.Data["bytes"]; there {
+		t.Errorf("a prompt nothing was cut from says %q bytes were", got)
+	}
+
+	if asked.Data["engine"] != "claude" || asked.Text != "do the thing" {
+		t.Errorf("the prompt was written down as %q, sent to %q", asked.Text, asked.Data["engine"])
+	}
+
 	// One byte over, and the count is there: the boundary is where the
 	// number starts meaning something.
-	over := phaseThought("plan", 1, longEnoughToCut())
-	if over.Data["bytes"] != strconv.Itoa(maxOutput+1) {
-		t.Errorf("a thought one byte over says %q bytes", over.Data["bytes"])
+	long := longEnoughToCut()
+	for _, one := range []struct {
+		what  string
+		event record.Event
+	}{
+		{"thought", phaseThought("plan", 1, long)},
+		{"refusal", phaseRefused("plan", 1, engine.StreamRefusal{Tool: "Bash", Input: long})},
+		{"prompt", phaseAsked("plan", "claude", long)},
+	} {
+		if one.event.Data["bytes"] != strconv.Itoa(maxOutput+1) {
+			t.Errorf("a %s one byte over says %q bytes", one.what, one.event.Data["bytes"])
+		}
 	}
 }
 

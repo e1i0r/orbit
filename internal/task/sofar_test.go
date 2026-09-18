@@ -203,3 +203,34 @@ func TestACommandIsShownByItsShapeAndNotItsWholeScript(t *testing.T) {
 		t.Errorf("a command one character too long came back as %d characters", len(over))
 	}
 }
+
+// TestHowAnAttemptEndedIsReadOffItsLastTerminalEvent.
+//
+// The newest one, because an attempt that was retried and then cancelled
+// ended by being cancelled. And an attempt whose only event is the one that
+// ended it is the ordinary shape of a phase that failed at once — read from
+// the wrong end, or one event short, it would read as an attempt nobody can
+// account for.
+func TestHowAnAttemptEndedIsReadOffItsLastTerminalEvent(t *testing.T) {
+	only := howItEnded([]record.Event{{Kind: record.PhaseFailed}})
+	if only != endings[record.PhaseFailed] {
+		t.Errorf("an attempt of one event reads as %q", only)
+	}
+
+	after := howItEnded([]record.Event{
+		{Kind: record.PhaseToolCall},
+		{Kind: record.PhaseRetried},
+		{Kind: record.PhaseCancelled},
+	})
+	if after != endings[record.PhaseCancelled] {
+		t.Errorf("an attempt that was retried and then stopped reads as %q", after)
+	}
+
+	// A record with no terminal event at all is what an attempt whose
+	// process was killed outright leaves. Guessing there would be inventing
+	// the one fact this section exists to get right.
+	none := howItEnded([]record.Event{{Kind: record.PhaseToolCall}, {Kind: record.PhaseThought}})
+	if !strings.Contains(none, "does not say what stopped it") {
+		t.Errorf("an attempt the record cannot account for reads as %q", none)
+	}
+}

@@ -214,9 +214,19 @@ func TestAFailureIsCutToOneLine(t *testing.T) {
 			"the model fell over",
 		},
 		{
+			"a break at the very front is whitespace, and goes",
+			record.Event{Text: "\n  the model fell over\nand a second line"},
+			"the model fell over",
+		},
+		{
 			"as wide as one line may be",
 			record.Event{Text: wide},
 			wide[:noteWidth],
+		},
+		{
+			"exactly as wide as one line may be, and not cut",
+			record.Event{Text: strings.Repeat("w", noteWidth)},
+			strings.Repeat("w", noteWidth),
 		},
 		{
 			"nothing to say",

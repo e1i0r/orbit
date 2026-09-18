@@ -134,3 +134,50 @@ func TestAnAnswerNobodyCanReadIsDone(t *testing.T) {
 		t.Errorf("an upper-case verdict reads as %d, %q", got, why)
 	}
 }
+
+// TestWhichEngineHadTheLastWordOfAFlow.
+//
+// The validator asks the engine that ran last, because it is the one holding
+// the session the work is in — and the last phase of a flow may be a loop,
+// whose own last phase is the one that actually ran. A reading that took the
+// loop's name would ask an engine called "", which is not a mistake anybody
+// made.
+func TestWhichEngineHadTheLastWordOfAFlow(t *testing.T) {
+	for _, one := range []struct {
+		why  string
+		flow flow.Flow
+		want string
+	}{
+		{
+			"an ordinary phase at the end",
+			flow.Flow{Phases: []flow.Phase{
+				{Name: "implement", Engine: "claude"},
+				{Name: "review", Engine: "codex"},
+			}},
+			"codex",
+		},
+		{
+			"a loop at the end answers with its own last phase",
+			flow.Flow{Phases: []flow.Phase{
+				{Name: "implement", Engine: "claude"},
+				{Name: "check", Loop: &flow.Loop{Phases: []flow.Phase{
+					{Name: "fix", Engine: "codex"},
+					{Name: "recheck", Engine: "opencode"},
+				}}},
+			}},
+			"opencode",
+		},
+		{
+			"a loop with no phases in it is not a loop to ask",
+			flow.Flow{Phases: []flow.Phase{
+				{Name: "check", Engine: "claude", Loop: &flow.Loop{}},
+			}},
+			"claude",
+		},
+		{"a flow with no phases at all", flow.Flow{}, ""},
+	} {
+		if got := lastEngine(one.flow); got != one.want {
+			t.Errorf("lastEngine = %q, want %q — %s", got, one.want, one.why)
+		}
+	}
+}
