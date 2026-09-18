@@ -89,7 +89,7 @@ func TestTheShapesAMessageCanKeep(t *testing.T) {
 	}{
 		{"fix: the fuzz tests hang", true, false},
 		{"feat(ui): a ringed mark over version", true, false},
-		{"FRA-105: skipping a gate", false, true},
+		{"PAY-105: skipping a gate", false, true},
 		{"ABC-12 tidy the reader", false, true},
 		{"Handle an error once", false, false},
 		{"Merge pull request #157", false, false},

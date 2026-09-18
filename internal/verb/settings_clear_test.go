@@ -114,3 +114,72 @@ func TestEveryRuleIsWhole(t *testing.T) {
 		}
 	}
 }
+
+// TestClearingSaysWhatTheSettingIsNowAndWhetherItMoved.
+//
+// "Nothing to do" is an answer. A reader who typed this because they were
+// not sure what the setting held is owed it — told only "cleared", they are
+// no wiser than before, and a second reader looking over their shoulder
+// cannot tell whether anything happened.
+func TestClearingSaysWhatTheSettingIsNowAndWhetherItMoved(t *testing.T) {
+	w := worldOf(t)
+
+	// Something chosen, so clearing it has something to undo.
+	mustAsk(t, w, "settings set", In{Args: map[string]string{"key": "language", "value": "es"}})
+
+	out := mustAsk(t, w, "settings clear", In{Args: map[string]string{"key": "language"}})
+
+	if !strings.Contains(out.Said, "language") {
+		t.Errorf("it said %q, want the setting named", out.Said)
+	}
+
+	if strings.Contains(out.Said, "already") {
+		t.Errorf("it said %q about a setting that had been chosen", out.Said)
+	}
+
+	// Cleared twice, the second says nothing moved rather than repeating
+	// the first sentence.
+	again := mustAsk(t, w, "settings clear", In{Args: map[string]string{"key": "language"}})
+	if !strings.Contains(again.Said, "already") {
+		t.Errorf("clearing a setting that was already back said %q", again.Said)
+	}
+}
+
+// TestASettingThatComesAsNothingSaysSoInAWord. "engine is back to —" is a
+// table cell in the middle of a sentence; a dash is what a listing draws and
+// a word is what a sentence needs.
+func TestASettingThatComesAsNothingSaysSoInAWord(t *testing.T) {
+	w := worldOf(t)
+
+	mustAsk(t, w, "settings set", In{Args: map[string]string{"key": "engine", "value": "codex"}})
+
+	out := mustAsk(t, w, "settings clear", In{Args: map[string]string{"key": "engine"}})
+
+	if strings.Contains(out.Said, "—") {
+		t.Errorf("it said %q, want a word rather than the listing's dash", out.Said)
+	}
+
+	if !strings.Contains(out.Said, "nothing") {
+		t.Errorf("it said %q, want it to say the setting comes as nothing", out.Said)
+	}
+
+	// And the listing draws the dash, which is the other half of the same
+	// decision: an empty column reads as a table that failed to render.
+	if got := unset(""); got != "—" {
+		t.Errorf("the listing draws an empty setting as %q, want a dash", got)
+	}
+
+	if got := unset("codex"); got != "codex" {
+		t.Errorf("the listing draws a chosen setting as %q", got)
+	}
+}
+
+// TestClearingASettingNobodyDeclaredIsRefused, and the file is not rewritten
+// on the way.
+func TestClearingASettingNobodyDeclaredIsRefused(t *testing.T) {
+	w := worldOf(t)
+
+	if _, err := Run(ctxOf(), w, "settings clear", In{Args: map[string]string{"key": "gravity"}}); err == nil {
+		t.Error("a setting nobody declared was cleared")
+	}
+}

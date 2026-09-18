@@ -222,3 +222,47 @@ func TestATaskCanBeWorkedInTwoRepositories(t *testing.T) {
 		t.Errorf("after joining twice the task names %v", again)
 	}
 }
+
+// TestFlattenCarriesTheWholeTaskDirectoryAndNotOnlyItsFiles.
+//
+// A task keeps folders as well as files: what a run was given, what it wrote
+// down. Stopping at the first folder would bring a task up with its record
+// intact and its work missing, and nothing would say so — the move reports
+// the task as moved either way.
+func TestFlattenCarriesTheWholeTaskDirectoryAndNotOnlyItsFiles(t *testing.T) {
+	s, err := New(t.TempDir())
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	was := filedTask(t, s, "/w/app", "ACME-1", map[string]string{
+		"task.md":      "retry the webhook on 5xx\n",
+		"events.jsonl": `{"at":"2026-08-01T10:00:00Z","kind":"task.created"}` + "\n",
+	})
+
+	// A folder whose name sorts before the files beside it, so that stopping
+	// at it stops before them.
+	inside := filepath.Join(was, "artifacts", "plan")
+	if err := os.MkdirAll(inside, dirMode); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+
+	if err := os.WriteFile(filepath.Join(inside, "notes.md"), []byte("the plan\n"), fileMode); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	if _, err := s.Flatten(); err != nil {
+		t.Fatalf("Flatten: %v", err)
+	}
+
+	dir, err := s.TaskDir("ACME-1")
+	if err != nil {
+		t.Fatalf("TaskDir: %v", err)
+	}
+
+	for _, want := range []string{"task.md", "events.jsonl", "artifacts/plan/notes.md"} {
+		if _, err := os.Stat(filepath.Join(dir, filepath.FromSlash(want))); err != nil {
+			t.Errorf("%s did not come up with the task: %v", want, err)
+		}
+	}
+}

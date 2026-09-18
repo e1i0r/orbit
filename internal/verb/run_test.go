@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/e1i0r/orbit/internal/repo"
+	"github.com/e1i0r/orbit/internal/task"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -78,6 +80,49 @@ func TestAYesIsOnlyAYes(t *testing.T) {
 	} {
 		if got := (In{Args: map[string]string{"x": word}}).Yes("x"); got != want {
 			t.Errorf("%q read as %v", word, got)
+		}
+	}
+}
+
+// TestWhatTheBoardSaysWhenATaskIsWrittenDown.
+//
+// Two sentences rather than one with an empty name in it: "ACME-1 written
+// against , to walk the review flow" reads as a bug, and a task that starts
+// nowhere is not one — it is what the reader just asked for.
+func TestWhatTheBoardSaysWhenATaskIsWrittenDown(t *testing.T) {
+	for _, one := range []struct {
+		why  string
+		task task.Task
+		repo repo.Repo
+		want string
+	}{
+		{
+			"a task with a checkout and a flow says both",
+			task.Task{ID: "ACME-1", Flow: "review"},
+			repo.Repo{Name: "acme"},
+			"ACME-1 written down against acme to walk review",
+		},
+		{
+			"a task with a checkout and no flow says nothing about one",
+			task.Task{ID: "ACME-2"},
+			repo.Repo{Name: "acme"},
+			"ACME-2 written down against acme",
+		},
+		{
+			"and a task with no checkout says so rather than naming none",
+			task.Task{ID: "ACME-3", Flow: "review"},
+			repo.Repo{},
+			"ACME-3 written down against no repository yet to walk review",
+		},
+		{
+			"neither one nor the other",
+			task.Task{ID: "ACME-4"},
+			repo.Repo{},
+			"ACME-4 written down against no repository yet",
+		},
+	} {
+		if got := writtenDown(one.task, one.repo); got != one.want {
+			t.Errorf("writtenDown = %q, want %q — %s", got, one.want, one.why)
 		}
 	}
 }

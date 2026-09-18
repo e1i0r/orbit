@@ -131,7 +131,7 @@ func TestNothingWasSaidInADirectoryWithNoSessions(t *testing.T) {
 // TestTheSlugIsThePathWithEveryOtherCharacterDashed, which is the whole of
 // how a directory is found again.
 func TestTheSlugIsThePathWithEveryOtherCharacterDashed(t *testing.T) {
-	if got := claudeSlug("/Users/who/.orbit/worktrees/ab12/FRA-62"); got != "-Users-who--orbit-worktrees-ab12-FRA-62" {
+	if got := claudeSlug("/Users/who/.orbit/worktrees/ab12/PAY-62"); got != "-Users-who--orbit-worktrees-ab12-PAY-62" {
 		t.Errorf("the slug is %q, want the one claude writes", got)
 	}
 }

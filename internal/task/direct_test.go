@@ -101,3 +101,28 @@ func TestReopenReturnsErrorWhenDirectFails(t *testing.T) {
 		t.Error("Reopen on empty message answered nil, want error")
 	}
 }
+
+// TestWhichFlowAReopenedRunTakes.
+//
+// The one the reader named, and otherwise the one the task already carries.
+// A run is a child process started and let go, so what this decides is spent
+// somewhere nothing here can see it — which is why the decision is a
+// function of its own and not a line inside the spawn.
+func TestWhichFlowAReopenedRunTakes(t *testing.T) {
+	carrying := Task{ID: "ACME-40", Flow: "quick"}
+
+	if got := walks("careful", carrying); got != "careful" {
+		t.Errorf("a reader who named a flow got %q", got)
+	}
+
+	if got := walks("", carrying); got != "quick" {
+		t.Errorf("a reader who named none got %q, want the task's own", got)
+	}
+
+	// A task carrying none either is started with none, and whoever reads
+	// the flag decides what that means — passing a name made up here would
+	// be this deciding it for them.
+	if got := walks("", Task{ID: "ACME-41"}); got != "" {
+		t.Errorf("a task with no flow of its own was started with %q", got)
+	}
+}

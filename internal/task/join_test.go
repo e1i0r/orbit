@@ -284,3 +284,27 @@ func TestAWorkspaceThatCannotBeWalkedStillRunsThePhase(t *testing.T) {
 		t.Errorf("the prompt offers a workspace it could not read: %q", said)
 	}
 }
+
+// TestARefusalToJoinNamesWhereItLooked.
+//
+// A workspace has a directory to name, and the repositories Orbit has a
+// record of are not a directory. A refusal naming "" or "." would send
+// whoever reads it looking in the wrong place for a name that was never
+// going to be there.
+func TestARefusalToJoinNamesWhereItLooked(t *testing.T) {
+	t.Setenv(repo.WorkspaceEnv, "")
+
+	inside := among(repo.Repo{Path: "/w/acme", Name: "acme"})
+	if inside != "/w" {
+		t.Errorf("a checkout in a workspace looked in %q, want the directory beside it", inside)
+	}
+
+	alone := among(repo.Repo{})
+	if alone != "the repositories orbit knows" {
+		t.Errorf("a checkout with no workspace looked in %q", alone)
+	}
+
+	if strings.TrimSpace(alone) == "" || alone == "." {
+		t.Errorf("the refusal names %q, which is a place nobody can go and look", alone)
+	}
+}

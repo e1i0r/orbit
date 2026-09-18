@@ -122,3 +122,27 @@ func TestTheCoverageFlowIsALoopThatCanRun(t *testing.T) {
 		t.Errorf("the coverage flow declares %d loops, want one", loops)
 	}
 }
+
+// TestALoopOfOneTurnIsACapAndNotAMissingOne. A loop that may go round once
+// is bounded, which is the whole of what the cap is for — refusing it would
+// be refusing the tightest loop somebody can write.
+func TestALoopOfOneTurnIsACapAndNotAMissingOne(t *testing.T) {
+	one := &Loop{
+		Max:    1,
+		Until:  []Gate{{Name: "tests", Command: "make test"}},
+		Phases: []Phase{{Name: "fix", Engine: "claude"}},
+	}
+
+	if err := one.validate("careful", "green"); err != nil {
+		t.Errorf("a loop of one turn was refused: %v", err)
+	}
+
+	// And none at all is still refused, because a loop with no cap is a
+	// loop with no end.
+	none := *one
+	none.Max = 0
+
+	if err := none.validate("careful", "green"); err == nil {
+		t.Error("a loop with no cap was allowed")
+	}
+}

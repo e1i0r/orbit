@@ -84,14 +84,19 @@ var doors = map[string][]string{
 	"internal/ui/roster":   {"roster.go"},
 	"internal/ui/settings": {"apply.go", "key.go", "rows.go", "scroll.go", "settings.go", "view.go"},
 	"internal/ui/spoken":   {"spoken.go"},
-	// The supervisor's screen: two doors. supervisor.go is the screen
+	// The supervisor's screen: three doors. supervisor.go is the screen
 	// itself — State, Env, Out, opening it, reading the record, drawing it
-	// — and keys.go is everything that puts a line in the thread: a
-	// keystroke, the wheel, and the sentence a delivery key sends. What is
-	// left in the directory — the conversations, the offers over a
-	// half-typed word, the column of what Orbit knows — is a satellite of
-	// one of them.
-	"internal/ui/supervisor": {"supervisor.go", "keys.go"},
+	// — keys.go is everything that puts a line in the thread with a
+	// keystroke, the wheel, or the sentence a delivery key sends, and
+	// hit.go is the same screen answered with a pointer: what is under the
+	// cell, and what a click on it does. What is left in the directory —
+	// the conversations, the offers over a half-typed word, the column of
+	// what Orbit knows — is a satellite of one of them.
+	//
+	// The pointer is a door of its own rather than part of keys.go because
+	// it is a different question the world asks: keys.go is told what was
+	// pressed, and this is asked what is there.
+	"internal/ui/supervisor": {"supervisor.go", "keys.go", "hit.go"},
 	"internal/ui/theme":      {"badge.go", "syntax.go", "theme.go", "tokens.go"},
 	"internal/ui/typing":     {"field.go", "paint.go", "select.go", "wrap.go"},
 	"internal/ui/upgrade":    {"upgrade.go"},

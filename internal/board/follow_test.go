@@ -6,6 +6,7 @@ package board
 
 import (
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -132,3 +133,131 @@ func TestAnEventReachesATaskOnce(t *testing.T) {
 		t.Errorf("the log folded to %d entries, want the 3 rows the record holds", len(entries))
 	}
 }
+
+// TestATaskWhoseHistoryWouldNotReadIsAskedForItAgain.
+//
+// st.err is the previous refresh's verdict. A task whose whole history would
+// not read must go back to the history branch rather than onto the
+// incremental one: its cursor never left zero, the rows written since are
+// already past it, and the row would fold from nothing for ever while the
+// error quietly dropped out of the board's own list of them.
+func TestATaskWhoseHistoryWouldNotReadIsAskedForItAgain(t *testing.T) {
+	s, work, repoPath := oneRepo(t)
+	addTask(t, s, repoPath, "ACME-1", created("Retry the webhook on 5xx"))
+
+	r := NewReader(s, work)
+	refresh(t, r)
+
+	st, held := r.index["ACME-1"]
+	if !held {
+		t.Fatal("the task is not on the board")
+	}
+
+	// The state a refresh leaves when the history would not read: seen,
+	// remembered, and stuck at row zero with a verdict on it.
+	st.err = errReadingHistory
+	st.at = 0
+	st.events = nil
+
+	appendTo(t, s, repoPath, "ACME-1", finishedEvent())
+
+	refresh(t, r)
+
+	if len(st.events) == 0 {
+		t.Fatal("a task whose history failed was moved onto the incremental branch and folds from nothing")
+	}
+
+	if st.err != nil {
+		t.Errorf("the task still carries %v after its history was read", st.err)
+	}
+
+	// The whole history and not only what was written since: the task was
+	// created before the failure and that event has to be back.
+	var kinds []string
+	for _, e := range st.events {
+		kinds = append(kinds, e.Kind)
+	}
+
+	if !strings.Contains(strings.Join(kinds, " "), "task.created") {
+		t.Errorf("it read %v, want the whole history", kinds)
+	}
+}
+
+// TestAnArrivalExactlyAtTheCursorIsNotReadTwice.
+//
+// The one rule the whole design rests on, at its boundary: the cursor is the
+// last row read, so a row at exactly that number has been read. Reading it
+// again would put one event in a task's fold twice — and an event folded
+// twice is a cost counted twice, a phase started twice, a task that says it
+// did something once that it did once.
+func TestAnArrivalExactlyAtTheCursorIsNotReadTwice(t *testing.T) {
+	s, work, repoPath := oneRepo(t)
+	addTask(t, s, repoPath, "ACME-1", created("Retry the webhook on 5xx"))
+
+	r := NewReader(s, work)
+	refresh(t, r)
+
+	st := r.index["ACME-1"]
+
+	cursor := st.at
+
+	if cursor == 0 {
+		t.Fatal("after a refresh the task has read up to row zero")
+	}
+
+	// The same rows offered again, as a stream that has not moved would.
+	again := map[string][]arrival{
+		"ACME-1": {{at: cursor, event: st.events[len(st.events)-1]}},
+	}
+
+	fresh, err := r.arrivals(st, again)
+	if err != nil {
+		t.Fatalf("read the arrivals: %v", err)
+	}
+
+	if len(fresh) != 0 {
+		t.Errorf("a row at the cursor was read again: %d events", len(fresh))
+	}
+
+	if st.at != cursor {
+		t.Errorf("the cursor moved to %d from %d over a row it had already read", st.at, cursor)
+	}
+}
+
+// TestARowPastTheCursorIsRead, which is the other half of the same boundary:
+// a cursor that refused everything would be a board that stopped at its
+// first refresh.
+func TestARowPastTheCursorIsRead(t *testing.T) {
+	s, work, repoPath := oneRepo(t)
+	addTask(t, s, repoPath, "ACME-1", created("Retry the webhook on 5xx"))
+
+	r := NewReader(s, work)
+	refresh(t, r)
+
+	st := r.index["ACME-1"]
+
+	cursor := st.at
+
+	fresh, err := r.arrivals(st, map[string][]arrival{
+		"ACME-1": {{at: cursor + 1, event: finishedEvent()}},
+	})
+	if err != nil {
+		t.Fatalf("read the arrivals: %v", err)
+	}
+
+	if len(fresh) != 1 {
+		t.Fatalf("a row past the cursor was read %d times, want once", len(fresh))
+	}
+
+	if st.at != cursor+1 {
+		t.Errorf("the cursor is at %d, want it moved to the row that was read", st.at)
+	}
+}
+
+// errReadingHistory stands in for the verdict a refresh leaves on a task
+// whose whole history would not read.
+var errReadingHistory = errHistory{}
+
+type errHistory struct{}
+
+func (errHistory) Error() string { return "the record of this task could not be read" }

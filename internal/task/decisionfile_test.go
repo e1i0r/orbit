@@ -113,3 +113,89 @@ func TestOrbitsOwnFilesAreNotTheTasksDiff(t *testing.T) {
 		t.Fatalf("Run: %v — Orbit's own decision file was counted against the task's budget", err)
 	}
 }
+
+// TestADecisionsFileIsNamedAfterWhatItDecided.
+//
+// The name is what a reader browsing the folder sees before they open
+// anything, so it has to carry the decision and stop before it becomes the
+// whole sentence: a directory of filenames a line long is a directory
+// nobody reads.
+func TestADecisionsFileIsNamedAfterWhatItDecided(t *testing.T) {
+	for _, one := range []struct {
+		text string
+		want string
+	}{
+		{"Cents, not floats!", "cents-not-floats"},
+		{"Retry the webhook on 5xx", "retry-the-webhook-on-5xx"},
+		// Six words is where it stops, and a sentence of exactly six keeps
+		// all of them: cutting one earlier loses the word that usually
+		// carries the decision.
+		{"one two three four five six", "one-two-three-four-five-six"},
+		{"amounts are always in cents and never floats", "amounts-are-always-in-cents-and"},
+		{"", ""},
+		{"   ", ""},
+		{"---", ""},
+	} {
+		if got := slug(one.text); got != one.want {
+			t.Errorf("slug(%q) = %q, want %q", one.text, got, one.want)
+		}
+	}
+}
+
+// TestADecisionsCopyGoesBesideTheCodeItNames.
+//
+// One copy and not one per repository: a decision written into three
+// checkouts is three files that will disagree the first time one of them is
+// edited, and the scope is what says which of the three the reader will look
+// in. A task that reaches into two repositories is the ordinary case for
+// this — with one, every answer is the same answer.
+func TestADecisionsCopyGoesBesideTheCodeItNames(t *testing.T) {
+	s, repos := workspaceFixture(t, "api", "ledger")
+
+	tk, err := Create(s, repos[0], "ACME-22", "decide something", "")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	second, err := Join(s, tk, repos[1])
+	if err != nil {
+		t.Fatalf("Join: %v", err)
+	}
+
+	// The file the decision names, in the second checkout and nowhere else.
+	if err := os.MkdirAll(second, 0o750); err != nil {
+		t.Fatalf("make the second worktree: %v", err)
+	}
+
+	if err := os.WriteFile(filepath.Join(second, "postings.go"), []byte("package ledger\n"), 0o600); err != nil {
+		t.Fatalf("write the file it is about: %v", err)
+	}
+
+	where, found := worktreeFor(s, tk, decision{ID: "d1", Scope: "postings.go"})
+	if !found {
+		t.Fatal("a decision naming a file that is there found nowhere to go")
+	}
+
+	if where != second {
+		t.Errorf("the copy goes to %q, want the checkout holding the file it names (%q)", where, second)
+	}
+
+	// A decision naming nothing that can be found falls back to where the
+	// task is being worked, which is an answer and not a refusal.
+	first, err := s.WorktreeDir(repos[0].Path, tk.ID)
+	if err != nil {
+		t.Fatalf("WorktreeDir: %v", err)
+	}
+
+	back, found := worktreeFor(s, tk, decision{ID: "d2", Scope: "nowhere.go"})
+	if !found || back != first {
+		t.Errorf("a decision naming nothing anybody has goes to %q, want %q", back, first)
+	}
+
+	// And one that names no place at all is the same case, rather than the
+	// empty scope matching everything it is split into.
+	bare, found := worktreeFor(s, tk, decision{ID: "d3"})
+	if !found || bare != first {
+		t.Errorf("a decision naming no place goes to %q, want %q", bare, first)
+	}
+}

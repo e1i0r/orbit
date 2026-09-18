@@ -48,8 +48,14 @@ Tests are not an afterthought and not one kind. Bring the ones that fit the chan
    the board are in `internal/cli`, named `TestCockpit…`, driving the window
    `orbit top` builds with the keys the recordings press.
 5. **Mutation** — on the package you touched, before the pull request:
-   `make mutate PKG=./internal/ui/settings/...`. A surviving mutant is a statement no
-   test disagrees with. Kill it, or say why it does not matter.
+   `make mutate PKG=./internal/ui/settings/...`. Read the timed-out count before the
+   score: efficacy leaves those out, so a run where everything timed out prints 100%
+   and means nothing. A surviving mutant is a statement no test disagrees with. Kill
+   it, or say why it does not matter — in the pull request, never as a comment in the
+   source, where it outlives the mutant it was about. Nothing about the work goes in
+   the source: not a note about a run, not a review that asked for something, and
+   never a task id. Names are real too — a file, a test or a variable is named for
+   what it is, never `zz_scratch`, `foo` or `tmp2`.
 6. **Adversarial** — the case written to break it: empty, twice, out of order, after
    the reader left, deleted between the listing and the read. Most bugs this project
    shipped were one of those.

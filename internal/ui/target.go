@@ -83,13 +83,19 @@ func (m Model) hit(x, y int) point.Target {
 			return m.hitKnowledge(x, y)
 		case screenCompose:
 			return m.hitCompose(x, y)
-		case screenHelp, screenSupervisor, screenQuota:
-			// None of the three has anything to point at: the cheat sheet
-			// and the quota are read, the supervisor's log is scrolled.
-			// Answering nothing is
-			// what keeps them from falling through to the board's rows
-			// below — where a click landed on whatever task happened to be
-			// at that height, and a second one opened it.
+		case screenSupervisor:
+			return m.hitSupervisor(x, y)
+		case screenHelp, screenQuota:
+			// Two screens with nothing in the body to point at: the cheat
+			// sheet is a list of what other screens' keys do, and the
+			// quota is a reading. Both scroll under the wheel and both are
+			// left through the bar, which is clicked above this switch —
+			// what is not here is a gesture, it is a body with none.
+			//
+			// Answering nothing is also what keeps them from falling
+			// through to the board's rows below, where a click landed on
+			// whatever task happened to be at that height and a second one
+			// opened it.
 			return point.Target{}
 		}
 

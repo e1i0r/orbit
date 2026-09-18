@@ -169,3 +169,83 @@ func TestADialogueEntryCarriesWhatActed(t *testing.T) {
 		t.Errorf("By = %q on an event that named nothing, want empty and not a guess", bare.By)
 	}
 }
+
+// TestATitleThatStartsWithABlankLineIsEmpty.
+//
+// The title is everything up to the first break, and a task whose first
+// character is a newline has no title — not the second line of its body. A
+// reader is owed the truth about that: a row that quietly promoted the next
+// line would show a title the file does not have.
+func TestATitleThatStartsWithABlankLineIsEmpty(t *testing.T) {
+	cases := map[string]string{
+		"\nretry the webhook":                   "",
+		"\r\nretry the webhook":                 "",
+		"retry the webhook\nand the rest of it": "retry the webhook",
+		"retry the webhook\rand the rest of it": "retry the webhook",
+		"  retry the webhook  ":                 "retry the webhook",
+		"":                                      "",
+	}
+
+	for whole, want := range cases {
+		if got := firstLine(whole); got != want {
+			t.Errorf("%q has the title %q, want %q", whole, got, want)
+		}
+	}
+}
+
+// TestAnEntryTheRecordKeptWholeIsNotTruncated. Full and Kept being equal is
+// the ordinary case — most of what an engine writes fits — and a reader told
+// "the record kept less than was sent" about a whole answer goes looking for
+// something that is not missing.
+func TestAnEntryTheRecordKeptWholeIsNotTruncated(t *testing.T) {
+	cases := []struct {
+		name  string
+		entry Entry
+		want  bool
+	}{
+		{"kept whole", Entry{Kept: 100, Full: 100}, false},
+		{"cut", Entry{Kept: 100, Full: 4096}, true},
+		{"the record never said how big it was", Entry{Kept: 100}, false},
+		{"nothing was written at all", Entry{}, false},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := c.entry.Truncated(); got != c.want {
+				t.Errorf("it reads as truncated %v, want %v", got, c.want)
+			}
+		})
+	}
+}
+
+// TestHowBigSomethingWasIsReadFromWhicheverFieldTheRecordUsed.
+//
+// A phase writes output_bytes and a thought, a tool call, a refusal and a
+// gate all write bytes. Reading only the first, Truncated() was false for
+// every one of the second, and the panes drew cut text with nothing saying
+// anything was missing — so a zero in the first field has to fall through
+// rather than be an answer.
+func TestHowBigSomethingWasIsReadFromWhicheverFieldTheRecordUsed(t *testing.T) {
+	cases := []struct {
+		name string
+		data map[string]string
+		want int
+	}{
+		{"a phase, which writes output_bytes", map[string]string{"output_bytes": "4096"}, 4096},
+		{"a tool call, which writes bytes", map[string]string{"bytes": "512"}, 512},
+		{
+			"output_bytes present and zero falls through",
+			map[string]string{"output_bytes": "0", "bytes": "512"},
+			512,
+		},
+		{"neither", map[string]string{}, 0},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := fullSize(c.data); got != c.want {
+				t.Errorf("it reads as %d bytes, want %d", got, c.want)
+			}
+		})
+	}
+}

@@ -23,8 +23,8 @@ const deliverBySupervisor = "supervisor"
 // repositories, so "." is the workspace: handing it to -repo makes the
 // command answer that it is not a repository, which is a sentence about
 // Orbit's own working directory in front of a reader who asked something
-// about a task. A task written against no repository — which FRA-61 made a
-// thing a reader can do — hit that on every verb.
+// about a task. A task written against no repository — which a reader can
+// write — hit that on every verb.
 //
 // And never the repository's name either. A row carries the name to draw it;
 // a name handed to -repo is a directory that is not there.

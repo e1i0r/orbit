@@ -9,6 +9,7 @@ package db
 // see it.
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -83,8 +84,16 @@ type Proposal struct {
 // reads the whole thread every time and most of what it finds it has found
 // before.
 func (d *DB) Propose(p Proposal) error {
-	_, err := d.sql.Exec(insertProposal, record.Stamp(p.SaidAt), p.Said, Waiting,
-		p.By, p.About, p.Repo, p.Path, p.Topic, p.Habit, p.Gate)
+	if err := d.writable(); err != nil {
+		return fmt.Errorf("write down what you said at %s: %w", p.SaidAt, err)
+	}
+
+	err := keepTrying(func() error {
+		_, err := d.sql.Exec(insertProposal, record.Stamp(p.SaidAt), p.Said, Waiting,
+			p.By, p.About, p.Repo, p.Path, p.Topic, p.Habit, p.Gate)
+
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("write down what you said at %s: %w", p.SaidAt, err)
 	}
@@ -154,8 +163,20 @@ func (d *DB) Answered(habit string) (bool, error) {
 // that has already been decided: two answers to one question is not a thing
 // a screen should be able to produce by being clicked twice.
 func (d *DB) Decide(saidAt time.Time, state string) error {
-	out, err := d.sql.Exec(decideProposal, state, record.Stamp(time.Now().UTC()),
-		record.Stamp(saidAt), Waiting)
+	if err := d.writable(); err != nil {
+		return fmt.Errorf("write down what you decided: %w", err)
+	}
+
+	var out sql.Result
+
+	err := keepTrying(func() error {
+		var err error
+
+		out, err = d.sql.Exec(decideProposal, state, record.Stamp(time.Now().UTC()),
+			record.Stamp(saidAt), Waiting)
+
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("write down what you decided: %w", err)
 	}

@@ -203,3 +203,22 @@ func TestEveryBuiltinFlowStillValidates(t *testing.T) {
 		}
 	}
 }
+
+// TestAPhaseWithNoNameIsNamedByItsPlaceCountingFromOne. The reader is going
+// to open the file and look for it, and they count phases the way the file
+// lists them — from one.
+func TestAPhaseWithNoNameIsNamedByItsPlaceCountingFromOne(t *testing.T) {
+	f := Flow{Name: "careful", Phases: []Phase{
+		{Name: "implement", Engine: "claude"},
+		{Engine: "claude"},
+	}}
+
+	err := f.Validate()
+	if err == nil {
+		t.Fatal("a phase with no name was allowed")
+	}
+
+	if !strings.Contains(err.Error(), "phase 2") {
+		t.Errorf("the refusal is %q, want it to name the second phase", err)
+	}
+}

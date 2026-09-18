@@ -204,6 +204,12 @@ func (d *DB) migrate() error {
 // Version 1 is the whole schema. Everything after it is the shape every step
 // should take: add what is missing, leave every row alone, and check for
 // what you are about to add rather than working it out from the number.
+//
+// Both comparisons below are safe at their own boundary. The schema is
+// CREATE TABLE IF NOT EXISTS throughout, so running it over a record that
+// already holds those tables is the no-op it was written to be; and a record
+// already at this version never reaches here at all, because migrate returns
+// before it.
 func stepsFrom(tx *sql.Tx, found int) error {
 	if found < 1 {
 		if _, err := tx.Exec(schema); err != nil {

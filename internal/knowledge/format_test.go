@@ -63,3 +63,46 @@ func TestARuleWrittenByAnOlderOrbitStillReads(t *testing.T) {
 		t.Errorf("the count was written again:\n%s", encode(f))
 	}
 }
+
+// TestALanguageScopeWithNoLanguageTakesItFromWhereTheFileIs. The rules of one
+// language live in a directory named after it, so a file that says it is
+// about a language without saying which is answered by where it was found —
+// and one that says which keeps what it said.
+func TestALanguageScopeWithNoLanguageTakesItFromWhereTheFileIs(t *testing.T) {
+	// The file the reading came out of: its own directory is the language.
+	const from = "lang/go/amounts-are-cents.md"
+
+	got := scopeFrom(map[string]string{keyScope: "language"}, from, "")
+	if got.Lang != "go" {
+		t.Errorf("a rule under %q is about %q, want go", from, got.Lang)
+	}
+
+	said := scopeFrom(map[string]string{keyScope: "language", keyLang: "rust"}, from, "")
+	if said.Lang != "rust" {
+		t.Errorf("a rule that says it is about rust was read as %q", said.Lang)
+	}
+
+	// And a rule about a language is about no checkout, wherever its file
+	// happens to sit.
+	if got.Repo != "" {
+		t.Errorf("a rule about a language is filed under the checkout %q", got.Repo)
+	}
+}
+
+// TestTheLastPartOfAPathIsTheWholeOfItWhenThereIsOnlyOne, which is what a
+// language directory at the top of a state root looks like.
+func TestTheLastPartOfAPathIsTheWholeOfItWhenThereIsOnlyOne(t *testing.T) {
+	cases := map[string]string{
+		"go":              "go",
+		"lang/go":         "go",
+		"a/b/c/rust":      "rust",
+		"/leading/python": "python",
+		"":                "",
+	}
+
+	for path, want := range cases {
+		if got := lastSegment(path); got != want {
+			t.Errorf("the last part of %q is %q, want %q", path, got, want)
+		}
+	}
+}

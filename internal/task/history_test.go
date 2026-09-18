@@ -102,3 +102,26 @@ func TestTheHistoryLandsInTheTasksOwnDirectory(t *testing.T) {
 		t.Errorf("the file does not carry what was said:\n%s", body)
 	}
 }
+
+// TestTheRuleUnderTheHeadingIsDrawnOnceAndAboveTheFirstTurn.
+//
+// It is what separates Orbit's own sentence at the top from the
+// conversation under it. Drawn once per turn it would be a document ruled
+// into stripes, and drawn below the first turn it would put that turn in
+// with the heading it is not part of.
+func TestTheRuleUnderTheHeadingIsDrawnOnceAndAboveTheFirstTurn(t *testing.T) {
+	tk := Task{ID: "ACME-43", Text: "make the endpoint reject negatives"}
+
+	body := historyOf(tk, []record.Event{
+		{Kind: record.TaskDialogue, Text: "start with the router", Data: map[string]string{"by": "operator"}},
+		{Kind: record.TaskDialogue, Text: "and then the handler", Data: map[string]string{"by": "operator"}},
+	})
+
+	if got := strings.Count(body, "\n---\n"); got != 1 {
+		t.Errorf("the history is ruled %d times:\n%s", got, body)
+	}
+
+	if strings.Index(body, "\n---\n") > strings.Index(body, "start with the router") {
+		t.Errorf("the first turn is above the rule:\n%s", body)
+	}
+}

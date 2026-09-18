@@ -6,6 +6,9 @@ package verb
 import (
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/e1i0r/orbit/internal/record"
 )
 
 // TestTheBoardCanBeAskedAboutOneRepository.
@@ -57,9 +60,16 @@ func TestReconcileSweepsEveryTaskOfARepository(t *testing.T) {
 	w.wrote(t, "ACME-31", r.Path, "pay the thing")
 	w.wrote(t, "ACME-32", r.Path, "ship it")
 
+	// Nothing was running, so nothing was left open — and that is an
+	// answer. A sweep that found nothing and reported it as a list of
+	// nothing sends the reader looking for the tasks it named.
 	swept := mustAsk(t, w, "board reconcile", In{Repo: r.Path, By: "operator"})
-	if swept.Said == "" {
-		t.Error("a sweep of the whole repository said nothing at all")
+	if !strings.Contains(swept.Said, "every run here is accounted for") {
+		t.Errorf("a sweep that found nothing to close answered %q", swept.Said)
+	}
+
+	if len(swept.Of) != 0 {
+		t.Errorf("it says it closed %v", swept.Of)
 	}
 
 	one := mustAsk(t, w, "board reconcile",
@@ -164,5 +174,52 @@ func TestCorrectingAndStartingAgainIsTwoThings(t *testing.T) {
 	told := mustAsk(t, w, "task history", In{Task: "ACME-37", Repo: r.Path, By: "operator"})
 	if !strings.Contains(told.Said, "use redis") {
 		t.Errorf("the correction is not in the record:\n%s", told.Said)
+	}
+}
+
+// TestASweepClosesTheRunsWhoseProcessesAreGone.
+//
+// This is the whole of what reconciling is for. A machine that was rebooted,
+// or a terminal that was closed, leaves a task claiming to be running with
+// nothing running it — and the board shows it in the running band for ever,
+// because the only thing that would move it is the process that is gone.
+func TestASweepClosesTheRunsWhoseProcessesAreGone(t *testing.T) {
+	w := worldOf(t)
+	r := w.gitRepo(t, "acme")
+
+	w.wrote(t, "ACME-34", r.Path, "pay the thing")
+
+	// A log that ends in a phase that started, which is what a run killed
+	// mid-flight leaves behind: the dying process wrote no line.
+	d, err := w.store.Record()
+	if err != nil {
+		t.Fatalf("open the record: %v", err)
+	}
+
+	for _, e := range []record.Event{
+		{Kind: record.TaskStarted, At: time.Now().UTC()},
+		{Kind: record.PhaseStarted, At: time.Now().UTC(), Phase: "implement"},
+	} {
+		if err := d.Append("ACME-34", e); err != nil {
+			t.Fatalf("append %s: %v", e.Kind, err)
+		}
+	}
+
+	cmd := holdARun(t, w, "ACME-34")
+	if err := cmd.Process.Kill(); err != nil {
+		t.Fatalf("stop the process that held it: %v", err)
+	}
+
+	if _, err := cmd.Process.Wait(); err != nil {
+		t.Fatalf("wait for it to go: %v", err)
+	}
+
+	out := mustAsk(t, w, "board reconcile", In{Repo: r.Path, By: "operator"})
+	if !strings.Contains(out.Said, "ACME-34") || !strings.Contains(out.Said, "left open") {
+		t.Errorf("a sweep over a run whose process is gone answered %q", out.Said)
+	}
+
+	if len(out.Of) != 1 || out.Of[0] != "ACME-34" {
+		t.Errorf("it says it closed %v, want the one task it did", out.Of)
 	}
 }

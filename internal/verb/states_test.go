@@ -5,8 +5,10 @@ package verb
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/e1i0r/orbit/internal/knowledge"
+	"github.com/e1i0r/orbit/internal/learn"
 )
 
 // aRule is one rule of a checkout, under a name of its own.
@@ -167,5 +169,36 @@ func TestARuleNobodyHasNamedCannotBeReachedByName(t *testing.T) {
 
 	if !strings.Contains(err.Error(), "orbit knowledge") {
 		t.Errorf("the refusal reads %q, without saying where the names are", err)
+	}
+}
+
+// TestTheTwoHalvesOfTheTrayAreTold apart by the blank line between them, and
+// by nothing else: the sentences are answered by their number and the rules
+// by their name, and running them together would leave a reader guessing
+// which they were looking at.
+func TestTheTwoHalvesOfTheTrayAreTold(t *testing.T) {
+	at := time.Date(2026, 9, 18, 9, 30, 0, 0, time.UTC)
+	said := []learn.Said{{At: at, Text: "amounts are cents", By: learn.Operator}}
+	again := []knowledge.Rule{aRule("aaaa1111", "coverage stays above 90%")}
+
+	both := bothHalves(said, again)
+	if !strings.Contains(both, "\n\n") {
+		t.Errorf("the two halves run together:\n%s", both)
+	}
+
+	// And one half on its own is one half: a blank line above or below it
+	// is a second list the reader goes looking for.
+	only := bothHalves(said, nil)
+	if strings.Contains(only, "\n\n") || strings.HasSuffix(only, "\n") {
+		t.Errorf("the tray with no rules waiting reads:\n%q", only)
+	}
+
+	rules := bothHalves(nil, again)
+	if strings.HasPrefix(rules, "\n") || strings.Contains(rules, "\n\n") {
+		t.Errorf("the tray with nothing said reads:\n%q", rules)
+	}
+
+	if empty := bothHalves(nil, nil); empty != "" {
+		t.Errorf("an empty tray reads %q", empty)
 	}
 }

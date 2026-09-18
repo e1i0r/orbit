@@ -141,3 +141,45 @@ func TestTheLanguageOfAFileComesFromItsExtension(t *testing.T) {
 		}
 	}
 }
+
+// TestAFolderIsAsDeepAsItsPath. The depth is what decides which of two rules
+// about the same work is the more particular one, so a folder three levels
+// down has to outrank one at the top — counted as the separators it holds
+// plus the folder itself.
+func TestAFolderIsAsDeepAsItsPath(t *testing.T) {
+	depths := []struct {
+		path string
+		want int
+	}{
+		{"internal", 1},
+		{"internal/db", 2},
+		{"internal/ui/panes", 3},
+		{"/internal/db/", 2},
+	}
+
+	var last int
+
+	for i, c := range depths {
+		got := Scope{Kind: Dir, Path: c.path}.Depth()
+
+		shallow := Scope{Kind: Dir, Path: "internal"}.Depth()
+		if got-shallow != c.want-1 {
+			t.Errorf("%q is %d deeper than the top folder, want %d", c.path, got-shallow, c.want-1)
+		}
+
+		if i > 0 && c.path == "internal/ui/panes" && got <= last {
+			t.Errorf("%q is at depth %d, want it past the %d before it", c.path, got, last)
+		}
+
+		last = got
+	}
+
+	// A rule about a whole checkout is shallower than one about a folder
+	// inside it, whatever the folder is called.
+	whole := Scope{Kind: Repo}.Depth()
+	inside := Scope{Kind: Dir, Path: "internal"}.Depth()
+
+	if whole >= inside {
+		t.Errorf("a checkout is at depth %d and a folder in it at %d", whole, inside)
+	}
+}

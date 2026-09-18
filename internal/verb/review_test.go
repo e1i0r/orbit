@@ -80,10 +80,18 @@ func TestNarrowingIsTheAnswerThatWasAlmostAlwaysWanted(t *testing.T) {
 	was.Review, was.State, was.Why = true, knowledge.Paused, "it is too wide"
 	w.facts = []knowledge.Rule{was}
 
-	if _, err := asked(t, w, "rules correct", map[string]string{
+	out, err := asked(t, w, "rules correct", map[string]string{
 		"rule": "aaaa1111", "in": "internal/db",
-	}); err != nil {
+	})
+	if err != nil {
 		t.Fatalf("correct: %v", err)
+	}
+
+	// And the answer says where it went. Narrowing a rule and leaving its
+	// sentence alone is the commonest correction there is, and an answer
+	// that only read the sentence back said nothing had happened.
+	if !strings.Contains(out.Said, "now applies") || !strings.Contains(out.Said, "internal/db") {
+		t.Errorf("narrowing it answered %q", out.Said)
 	}
 
 	now := w.facts[0]
@@ -187,4 +195,64 @@ func aCheckoutWith(t *testing.T, folder string) string {
 	}
 
 	return repo
+}
+
+// TestSayingARuleBetterAnswersWithWhatItNowReads, which is the other of the
+// two answers: nothing moved, so naming a place would tell the reader about
+// a change nobody made.
+func TestSayingARuleBetterAnswersWithWhatItNowReads(t *testing.T) {
+	w := trayOf(t)
+
+	was := aRule("bbbb2222", "coverage stays high")
+	was.Scope = knowledge.Scope{Kind: knowledge.General}
+	w.facts = []knowledge.Rule{was}
+
+	out, err := asked(t, w, "rules correct", map[string]string{
+		"rule": "bbbb2222", "text": "coverage stays above 90%",
+	})
+	if err != nil {
+		t.Fatalf("correct: %v", err)
+	}
+
+	if !strings.Contains(out.Said, "now reads") || !strings.Contains(out.Said, "above 90%") {
+		t.Errorf("saying it better answered %q", out.Said)
+	}
+
+	if strings.Contains(out.Said, "now applies") {
+		t.Errorf("a rule that did not move was said to have moved: %q", out.Said)
+	}
+}
+
+// TestTheFirstAndTheLastOfAKindOfTurn.
+//
+// A rule's story is bracketed by them — when it began, and what was last
+// done to it — and both have to be able to find a turn that is the only one
+// there: a reading that skipped the first entry would say a rule kept once
+// and never touched again has no beginning.
+func TestTheFirstAndTheLastOfAKindOfTurn(t *testing.T) {
+	turns := []learn.Turn{
+		{What: learn.Written, Was: "the day it was kept"},
+		{What: learn.Reworded, Was: "the first rewording"},
+		{What: learn.Reworded, Was: "the second rewording"},
+	}
+
+	if got := first(turns, learn.Written); got == nil || got.Was != "the day it was kept" {
+		t.Errorf("the first Written turn is %+v, want the one at the front of the story", got)
+	}
+
+	if got := last(turns, learn.Written); got == nil || got.Was != "the day it was kept" {
+		t.Errorf("the last Written turn is %+v, want the only one there is", got)
+	}
+
+	if got := first(turns, learn.Reworded); got == nil || got.Was != "the first rewording" {
+		t.Errorf("the first rewording is %+v", got)
+	}
+
+	if got := last(turns, learn.Reworded); got == nil || got.Was != "the second rewording" {
+		t.Errorf("the last rewording is %+v", got)
+	}
+
+	if got := last(turns, learn.TurnedOff); got != nil {
+		t.Errorf("a turn that never happened reads as %+v", got)
+	}
 }

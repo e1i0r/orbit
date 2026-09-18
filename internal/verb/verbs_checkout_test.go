@@ -14,6 +14,8 @@ import (
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/repo"
+
+	"github.com/e1i0r/orbit/internal/flow"
 )
 
 // checkedOut is a task with a checkout on disk: a real worktree of the
@@ -51,21 +53,62 @@ func TestReadingWhatATaskChanged(t *testing.T) {
 	r := checkedOut(t, w, "ACME-8")
 	at := In{Task: "ACME-8", Repo: r.Path, By: "operator"}
 
-	nothing := mustAsk(t, w, "task diff", at)
-	_ = nothing
+	// The diff is git's own, whole: what a reader asked for is the change,
+	// and a verb that read it and answered nothing reads the same as one
+	// that found nothing.
+	diff := mustAsk(t, w, "task diff", at)
+	for _, want := range []string{"diff --git", "done.txt", "+did it"} {
+		if !strings.Contains(diff.Said, want) {
+			t.Errorf("the diff answered %q, want it to carry %q", diff.Said, want)
+		}
+	}
 
 	tree := mustAsk(t, w, "task tree", at)
-	_ = tree
+	if !strings.Contains(tree.Said, "done.txt") {
+		t.Errorf("the tree answered %q, which names no file", tree.Said)
+	}
 
 	impact := mustAsk(t, w, "task impact", at)
-	_ = impact
+	if !strings.Contains(impact.Said, "1 files changed") {
+		t.Errorf("what it reaches answered %q", impact.Said)
+	}
 
+	// The flow Orbit ships has no checks, so there is nothing to run on
+	// either side — which is an answer and not a refusal.
 	compared := mustAsk(t, w, "task compare", at)
-	_ = compared
+	if !strings.Contains(compared.Said, "no checks") {
+		t.Errorf("comparing answered %q", compared.Said)
+	}
 
+	// The task's own flow, then the one Orbit ships, with its phases
+	// numbered from one the way a reader counts them.
 	flow := mustAsk(t, w, "task flow", at)
-	if flow.Said == "" {
-		t.Error("flow said nothing at all")
+	for _, want := range []string{"ACME-8: task", " 1  implement", " 2  review"} {
+		if !strings.Contains(flow.Said, want) {
+			t.Errorf("the flow answered %q, want it to carry %q", flow.Said, want)
+		}
+	}
+}
+
+// TestACheckoutWithNothingInItSaysSo, which is a different answer from a
+// task that never had a checkout at all: one has been worked in and changed
+// nothing, the other has not been started.
+func TestACheckoutWithNothingInItSaysSo(t *testing.T) {
+	w := worldOf(t)
+	r := checkedOut(t, w, "ACME-10")
+
+	dir, err := w.store.WorktreeDir(r.Path, "ACME-10")
+	if err != nil {
+		t.Fatalf("worktree dir: %v", err)
+	}
+
+	if err := os.Remove(filepath.Join(dir, "done.txt")); err != nil {
+		t.Fatalf("take the work back out: %v", err)
+	}
+
+	out := mustAsk(t, w, "task diff", In{Task: "ACME-10", Repo: r.Path, By: "operator"})
+	if !strings.Contains(out.Said, "ACME-10 has changed nothing yet") {
+		t.Errorf("a checkout with nothing in it answered %q", out.Said)
 	}
 }
 
@@ -166,5 +209,42 @@ func TestTheBoardListsWhatIsThere(t *testing.T) {
 	out := mustAsk(t, w, "board list", In{By: "operator"})
 	if !strings.Contains(out.Said, "ACME-11") || !strings.Contains(out.Said, "ACME-12") {
 		t.Errorf("list answered:\n%s", out.Said)
+	}
+}
+
+// TestATaskWalksItsOwnFlowAndNotTheOneOrbitShips.
+//
+// The task's own, then the one Orbit ships — and not the settings default,
+// which is what the next task written gets rather than what this one walks.
+// Every task on a fresh board already carries the shipped name, so a reading
+// that reached for the default whatever the task said would agree with this
+// one everywhere except on the tasks somebody chose a flow for, which are
+// the only tasks the question is ever asked about.
+func TestATaskWalksItsOwnFlowAndNotTheOneOrbitShips(t *testing.T) {
+	w := worldOf(t)
+	r := w.gitRepo(t, "acme")
+
+	mustAsk(t, w, "board new", In{
+		Args: map[string]string{"id": "ACME-50", "text": "ship it", "repo": r.Path, "flow": "quick"},
+		By:   "operator",
+	})
+
+	own := mustAsk(t, w, "task flow", In{Task: "ACME-50", Repo: r.Path, By: "operator"})
+	if !strings.Contains(own.Said, "quick") {
+		t.Errorf("a task written to walk quick reads %q", own.Said)
+	}
+
+	// Approving reads the flow the same way, to know which dependencies the
+	// task's phases could have been waiting on.
+	waiting := mustAsk(t, w, "task approve", In{Task: "ACME-50", Repo: r.Path, By: "operator"})
+	if !strings.Contains(waiting.Said, "ACME-50") {
+		t.Errorf("approving answered %q, which names no task", waiting.Said)
+	}
+
+	w.wrote(t, "ACME-51", r.Path, "pay the thing")
+
+	shipped := mustAsk(t, w, "task flow", In{Task: "ACME-51", Repo: r.Path, By: "operator"})
+	if !strings.Contains(shipped.Said, flow.Default) {
+		t.Errorf("a task with no flow of its own reads %q, want the one Orbit ships", shipped.Said)
 	}
 }

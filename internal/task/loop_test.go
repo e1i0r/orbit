@@ -83,6 +83,23 @@ func TestALoopStopsAtItsCap(t *testing.T) {
 	if !strings.Contains(last.Text, "FAIL: TestIdempotent") {
 		t.Errorf("the task is stuck without the history of what failed:\n%s", last.Text)
 	}
+
+	// Every turn is there and numbered from the first, because the reader
+	// is following what changed between them: counted from anywhere else,
+	// the account opens with a turn nobody can see the start of.
+	for _, want := range []string{"Turn 1 — ", "Turn 2 — "} {
+		if !strings.Contains(last.Text, want) {
+			t.Errorf("the account of the stuck loop does not carry %q:\n%s", want, last.Text)
+		}
+	}
+
+	if strings.Contains(last.Text, "Turn 0") {
+		t.Errorf("the turns are numbered from zero:\n%s", last.Text)
+	}
+
+	if last.Data["attempts"] != "2" {
+		t.Errorf("it says %q attempts, want the two turns the loop allowed", last.Data["attempts"])
+	}
 }
 
 // TestEachTurnIsToldWhatTheCheckSaid. Retrying without the error is
@@ -166,5 +183,63 @@ func TestALoopPhaseIsAskedAsItself(t *testing.T) {
 		if !strings.Contains(fake.Calls[i].Prompt, want) {
 			t.Errorf("phase %d was not asked its own instructions:\n%s", i+1, fake.Calls[i].Prompt)
 		}
+	}
+}
+
+// TestWhatAPersonSaidGoesToTheFirstPhaseOfTheFirstTurnAndNowhereElse.
+//
+// It was taken before the loop began, and the phase.started every inner
+// phase emits is what marks it consumed — so a loop that never took it
+// swallowed it, and the phase after the loop was told nothing either.
+// Repeated into every turn, a note becomes an instruction the model answers
+// three times.
+func TestWhatAPersonSaidGoesToTheFirstPhaseOfTheFirstTurnAndNowhereElse(t *testing.T) {
+	s, r := fixture(t)
+
+	tk, err := Create(s, r, "ACME-35", "make the tests green", "")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	const note = "hold off on the backoff"
+	if err := Note(s, tk, note); err != nil {
+		t.Fatalf("Note: %v", err)
+	}
+
+	// A loop of two phases that goes round twice, so there are four inner
+	// prompts and only the first of them may carry it.
+	twice := flow.Flow{Name: "tdd", Phases: []flow.Phase{
+		{Name: "green", Loop: &flow.Loop{
+			Phases: []flow.Phase{{Name: "fix", Engine: "fake"}, {Name: "recheck", Engine: "fake"}},
+			Until:  []flow.Gate{{Name: "unit", Command: countingGate("2")}},
+			Max:    3,
+		}},
+	}}
+
+	fake := engine.NewFake("tried")
+	if err := Run(context.Background(), s, tk, twice, fakes(fake), nil); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	if len(fake.Calls) != 4 {
+		t.Fatalf("the engine ran %d times, want two phases over two turns", len(fake.Calls))
+	}
+
+	carried := 0
+
+	for i, c := range fake.Calls {
+		if !strings.Contains(c.Prompt, note) {
+			continue
+		}
+
+		carried++
+
+		if i != 0 {
+			t.Errorf("call %d was told what a person said, and it is not the first", i)
+		}
+	}
+
+	if carried != 1 {
+		t.Errorf("what a person said reached %d of the four prompts, want the first alone", carried)
 	}
 }

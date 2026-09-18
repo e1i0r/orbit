@@ -170,7 +170,7 @@ func TestAnUnknownMethodIsRefusedByName(t *testing.T) {
 
 // TestAToolThatSaysNoIsNotATransportError is the distinction the protocol
 // draws and the reason this server keeps them apart: a client turns an error
-// object into a failure the model never sees, and "there is no task ORB-9"
+// object into a failure the model never sees, and "there is no task ACME-9"
 // is exactly the thing the model has to read and correct.
 func TestAToolThatSaysNoIsNotATransportError(t *testing.T) {
 	_, sn, _ := oneRepo(t)

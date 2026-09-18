@@ -51,6 +51,13 @@ const (
 	ScrollBar
 	KnowledgeRow
 	KnowledgePick
+	// The three things the supervisor's screen has to point at. It
+	// answered no target at all until now, so every gesture it has — the
+	// conversations, the offers over an unfinished word, and picking a
+	// line to take back — could only be reached from the keyboard.
+	SupervisorConversation
+	SupervisorOffer
+	SupervisorLine
 )
 
 // Target is what one cell holds.
@@ -64,6 +71,10 @@ type Target struct {
 	// KnowledgeRow: which row of the knowledge screen, counted the way its
 	// cursor counts them — the tray first, then the rules. KnowledgePick:
 	// which option of the list a row of the rule form has open.
+	// SupervisorConversation: which conversation of the list.
+	// SupervisorOffer: which offer of the completion list.
+	// SupervisorLine: which line of the thread, counted as the screen
+	// counts them for picking one to take back.
 	Pane  int
 	Key   string // BarHint, MenuEntry, Command, Fold
 	Field string // HeaderField, StatusField

@@ -14,6 +14,10 @@ import (
 // would have missed the case this whole thing is for: somebody asks for
 // "fuzz testing" once and "fuzz tests" the next time, and means the same
 // thing both times.
+//
+// One word being the whole front of another is where the walk has to stop on
+// its own: "test" and "testing" agree until the shorter one runs out, and
+// reading one rune further is reading past the end of it.
 func TestAWordSaidTwoWaysIsOneWord(t *testing.T) {
 	for _, one := range []struct {
 		a, b string
@@ -26,6 +30,8 @@ func TestAWordSaidTwoWaysIsOneWord(t *testing.T) {
 		{"pruebas", "probar", "", false},
 		{"rename", "reads", "", false},
 		{"fuzz", "fuzzing", "fuzz", true},
+		{"test", "testing", "test", true},
+		{"testing", "test", "test", true},
 	} {
 		stem, same := sameWord(one.a, one.b)
 		if same != one.same || stem != one.stem {

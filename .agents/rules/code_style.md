@@ -39,6 +39,9 @@ The rules and the reasons are in `CONTRIBUTING.md`; this is the checklist.
 - Every exported name has a comment starting with that name.
 - Explain why. State the fact, not a verdict — `// the flag package stops at the first non-flag argument`, not `// this was a nasty bug`.
 - A decision that was weighed and rejected is worth a line: it is the question the next reader will ask.
+- **Nothing about the work, only about the code.** A comment describes what is there and why it is not the other thing. It never describes the session that produced it: no note that a mutation run left this statement alive, that a lint rule was waived here, that coverage does not reach this line, that a review asked for this, or that this is the second attempt. Those are true of one afternoon — the mutant gets killed, the rule changes, the line gets covered — and the sentence stays describing a problem that is gone. Where it goes is the pull request.
+- **Real names, of the thing.** A file, a test, a variable or a fixture is named for what it is in this project's own words: `supervisor_mouse_test.go`, `twoConversations`, `saidThree`. Never a placeholder — no `zz_scratch_test.go`, no `foo`, no `tmp2`, no `x1` — and never a prefix whose only job is to sort the file last. A name nobody can read is a file nobody opens, and the one thing worse than no test is a test named so that nobody ever looks at what it does not assert.
+- **No task ids.** Never `FRA-61`, `ORB-115` or any other name from a tracker, in a comment or anywhere else in the source. Somebody reading the code has no access to it, the issue gets closed, renumbered or moved, and what is left is a reference to nothing. Say the thing itself: "a task written against no repository", not "which FRA-61 made possible". Where a made-up id is needed as an example, the repository already uses `ACME-1` and `PAY-1`.
 
 ## Tests
 

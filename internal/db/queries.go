@@ -93,9 +93,15 @@ const (
 	                   (SELECT id FROM repo WHERE abs_path = ?),
 	                   ?, ?`
 
+	// markPR touches only the rows still open. A task delivered twice into
+	// one repository has a row per opening, and the older ones have already
+	// been answered: without the last line, closing the second pull request
+	// would restate the first one — merged a moment ago — as closed, and the
+	// history would show a merge that never happened.
 	markPR = `UPDATE pr SET state = ?
 	          WHERE task_id = (SELECT id FROM task WHERE task_id = ?)
-	            AND repo_id = (SELECT id FROM repo WHERE abs_path = ?)`
+	            AND repo_id = (SELECT id FROM repo WHERE abs_path = ?)
+	            AND state = '` + PROpen + `'`
 
 	selectPRs = `SELECT r.name, p.url, p.opened_at, p.state
 	               FROM pr p

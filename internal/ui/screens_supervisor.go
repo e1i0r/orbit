@@ -12,6 +12,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/e1i0r/orbit/internal/ui/point"
 	"github.com/e1i0r/orbit/internal/ui/supervisor"
 )
 
@@ -167,4 +168,22 @@ func (m Model) scrollThread(d int) Model {
 // supervisorRows is the screen drawn.
 func (m Model) supervisorRows(h, w int) []string {
 	return m.supervisor.View(h, w, m.supervisorEnv())
+}
+
+// hitSupervisor is what the screen has at that cell.
+func (m Model) hitSupervisor(x, y int) point.Target {
+	return m.supervisor.Hit(x, y, m.supervisorEnv())
+}
+
+// clickedSupervisor is one of its lists pointed at: a conversation, an offer
+// over an unfinished word, or the line a pick would take back.
+//
+// One click and not two, unlike the board's rows. The board's first click
+// moves a cursor somebody then presses a key against; these three are lists
+// opened for one answer, and a reader who opened them has already chosen to
+// choose something.
+func (m Model) clickedSupervisor(t point.Target) (tea.Model, tea.Cmd) {
+	next, out := m.supervisor.Click(t, m.supervisorEnv())
+
+	return m.tookSupervisor(next, out)
 }

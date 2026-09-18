@@ -33,3 +33,33 @@ func TestADeltaWithNothingInItIsNotADelta(t *testing.T) {
 		t.Errorf("one sentence read as %d: %v", len(one.Guarantees), one.Guarantees)
 	}
 }
+
+// TestADeltaWithOneFieldFilledIsStillSomethingSaid.
+//
+// Unlike the story, a delta with three of its four fields empty is a whole
+// one: an engine that needed nothing and promised one thing said that. The
+// sum is over all four, and dropping any of them from it would read a
+// complete answer as silence.
+func TestADeltaWithOneFieldFilledIsStillSomethingSaid(t *testing.T) {
+	only := []struct {
+		name  string
+		delta Delta
+	}{
+		{"it needed something", Delta{Needs: []string{"a token"}}},
+		{"it promised something", Delta{Guarantees: []string{"the total is cents"}}},
+		{"it assumed something", Delta{Assumes: []string{"the clock is UTC"}}},
+		{"it decided against something", Delta{Instead: []string{"not a cache"}}},
+	}
+
+	for _, c := range only {
+		t.Run(c.name, func(t *testing.T) {
+			if !c.delta.Any() {
+				t.Error("a delta with this field filled reads as nothing said")
+			}
+		})
+	}
+
+	if (Delta{}).Any() {
+		t.Error("a delta with nothing in it reads as something said")
+	}
+}

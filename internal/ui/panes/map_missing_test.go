@@ -9,7 +9,7 @@ import (
 
 // TestAMapWithNoCheckoutSaysSo. Before this, the pane drew git's own words —
 // "the repository could not be read: git ls-files -z: chdir
-// /Users/…/worktrees/5a14f7401345/FRA-71: no such file or directory" — over
+// /Users/…/worktrees/5a14f7401345/ACME-1: no such file or directory" — over
 // a task whose worktree had simply been cleaned up. Nothing was wrong, and
 // nothing a reader could do about it was in the sentence.
 func TestAMapWithNoCheckoutSaysSo(t *testing.T) {

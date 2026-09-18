@@ -6,7 +6,10 @@ package view
 import (
 	"strings"
 	"testing"
+	"time"
 	"unicode/utf8"
+
+	"github.com/e1i0r/orbit/internal/record"
 )
 
 // TestAnActionIsTheArgumentAndNotTheDocument.
@@ -116,7 +119,7 @@ func TestAnActionNamesTheFileAndNotTheWorktree(t *testing.T) {
 	}{
 		{
 			"the worktree a run was given is the same on every row",
-			`{"file_path":"/Users/ana/.orbit/worktrees/5a14f7401345/FRA-62/internal/ui/repoargs_test.go"}`,
+			`{"file_path":"/Users/ana/.orbit/worktrees/5a14f7401345/PAY-62/internal/ui/repoargs_test.go"}`,
 			"Bash: internal/ui/repoargs_test.go",
 		},
 		{
@@ -131,8 +134,8 @@ func TestAnActionNamesTheFileAndNotTheWorktree(t *testing.T) {
 		},
 		{
 			"and the worktree root itself still names itself",
-			`{"path":"/Users/ana/.orbit/worktrees/5a14f7401345/FRA-62"}`,
-			"Bash: /Users/ana/.orbit/worktrees/5a14f7401345/FRA-62",
+			`{"path":"/Users/ana/.orbit/worktrees/5a14f7401345/PAY-62"}`,
+			"Bash: /Users/ana/.orbit/worktrees/5a14f7401345/PAY-62",
 		},
 	} {
 		if got := ToolLine("Bash", c.args); got != c.want {
@@ -166,5 +169,32 @@ func TestAnActionOnMoreThanOneLineIsJoined(t *testing.T) {
 		if got := ToolLine("Bash", c.args); got != c.want {
 			t.Errorf("ToolLine(%s) = %q, want %q — %s", c.args, got, c.want, c.why)
 		}
+	}
+}
+
+// TestTheFirstThingAnEngineSaidIsWhatTheRowKeeps.
+//
+// The row says what the run is doing, and a thought arriving while a tool
+// call is already on the row must not replace it: what a reader wants to see
+// is the thing that is happening, and thinking about the next one is not it.
+func TestTheFirstThingAnEngineSaidIsWhatTheRowKeeps(t *testing.T) {
+	at := time.Now().UTC()
+
+	one := Fold([]record.Event{
+		{Kind: record.TaskCreated, At: at},
+		{Kind: record.TaskStarted, At: at},
+		{Kind: record.PhaseStarted, At: at, Phase: "implement"},
+		{Kind: record.PhaseThought, At: at, Phase: "implement", Text: "first, read the file"},
+		{Kind: record.PhaseThought, At: at, Phase: "implement", Text: "then, write the test"},
+	})
+
+	if one.CurrentAction != "first, read the file" {
+		t.Errorf("the row says %q, want the first thing it said", one.CurrentAction)
+	}
+
+	// The thought itself is the newest, because that is what a thought is:
+	// what it is thinking now.
+	if one.CurrentThought != "then, write the test" {
+		t.Errorf("the thought is %q, want the newest", one.CurrentThought)
 	}
 }

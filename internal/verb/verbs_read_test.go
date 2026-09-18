@@ -115,8 +115,12 @@ func TestExportWritesWhereItIsTold(t *testing.T) {
 func TestWhatOrbitKnows(t *testing.T) {
 	w := worldOf(t)
 
+	// A run is told nothing, and the listing says so rather than printing
+	// an empty answer that reads as a listing that failed.
 	bare := mustAsk(t, w, "knowledge", In{By: "operator"})
-	_ = bare
+	if !strings.Contains(bare.Said, "nothing is being told to a run") {
+		t.Errorf("a checkout nobody has told Orbit anything about reads %q", bare.Said)
+	}
 
 	w.facts = []knowledge.Rule{
 		{Phrase: "PRs in English", Scope: knowledge.Scope{Kind: knowledge.General}},
@@ -124,6 +128,10 @@ func TestWhatOrbitKnows(t *testing.T) {
 			Phrase: "amounts are cents", Scope: knowledge.Scope{Kind: knowledge.Repo, Repo: "/src/acme"},
 			Stops: true, Check: "make check",
 		},
+		// It asked to block and brought no check, so all it can do is say
+		// its sentence — and a reader deciding whether to trust it has to
+		// be told which of the two they are looking at.
+		{Phrase: "no raw SQL", Scope: knowledge.Scope{Kind: knowledge.General}, Stops: true},
 		{Phrase: "wrap errors", Scope: knowledge.Scope{Kind: knowledge.Language, Lang: "go"}},
 		{Phrase: "retry on 5xx", Scope: knowledge.Scope{Kind: knowledge.Dir, Path: "webhook"}},
 		{Phrase: "never index", Scope: knowledge.Scope{Kind: knowledge.File, Path: "notes.md"}},
@@ -136,6 +144,30 @@ func TestWhatOrbitKnows(t *testing.T) {
 			t.Errorf("knowledge does not mention %q:\n%s", want, out.Said)
 		}
 	}
+
+	// And each word is against the rule it is true of. Both words appear in
+	// any listing holding one of each, so a reading that swapped them would
+	// print a rule that stops the work as one that only says something.
+	for _, one := range []struct{ phrase, does string }{
+		{"amounts are cents", "blocks"},
+		{"PRs in English", "says"},
+		{"no raw SQL", "says"},
+	} {
+		if !rowSays(out.Said, one.phrase, one.does) {
+			t.Errorf("the row for %q does not say %q:\n%s", one.phrase, one.does, out.Said)
+		}
+	}
+}
+
+// rowSays is whether the listing's row for one rule carries a word.
+func rowSays(listing, phrase, word string) bool {
+	for _, line := range strings.Split(listing, "\n") {
+		if strings.Contains(line, phrase) {
+			return strings.Contains(line, word)
+		}
+	}
+
+	return false
 }
 
 // TestEnginesAndQuota. The catalogue and the windows, read without spending

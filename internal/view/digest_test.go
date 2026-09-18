@@ -1,7 +1,9 @@
 package view
 
 import (
+	"slices"
 	"testing"
+	"time"
 
 	"github.com/e1i0r/orbit/internal/record"
 )
@@ -135,5 +137,58 @@ func TestTheRoundsAreRankedByHowOftenTheyHappen(t *testing.T) {
 
 	if d.Requeued != 1 {
 		t.Errorf("the digest counts %d requeues, want 1", d.Requeued)
+	}
+}
+
+// TestTheDigestRanksByCountAndThenByName.
+//
+// The order is the whole of what a ranking is, and two phases stopped at the
+// same number of times is the ordinary case rather than a corner: without
+// the second key they would come back in whatever order the map was walked
+// in, which is a different order every time the window is opened.
+func TestTheDigestRanksByCountAndThenByName(t *testing.T) {
+	got := ranked(map[string]int{"review": 1, "implement": 3, "check": 1})
+
+	var names []string
+	for _, one := range got {
+		names = append(names, one.Name)
+	}
+
+	// The biggest first, then the two that tied, in the order their names
+	// sort in.
+	want := []string{"implement", "check", "review"}
+	if !slices.Equal(names, want) {
+		t.Errorf("the ranking is %v, want %v", names, want)
+	}
+
+	if got[0].N != 3 {
+		t.Errorf("the first is counted %d, want 3", got[0].N)
+	}
+}
+
+// TestBeingStoppedTwiceInOnePhaseCountsTwice. The digest is read by somebody
+// asking where this task keeps needing them, and a count that stopped at one
+// would make a phase that stopped them four times look like every other.
+func TestBeingStoppedTwiceInOnePhaseCountsTwice(t *testing.T) {
+	at := time.Now().UTC()
+
+	d := Digested(Digest{}, []record.Event{
+		{Kind: record.TaskStarted, At: at},
+		{Kind: record.PhaseWaiting, At: at, Phase: "implement"},
+		{Kind: record.PhaseWaiting, At: at, Phase: "implement"},
+		{Kind: record.PhaseWaiting, At: at, Phase: "review"},
+	})
+
+	if d.AskedAt["implement"] != 2 {
+		t.Errorf("implement stopped somebody %d times, want two", d.AskedAt["implement"])
+	}
+
+	if d.AskedAt["review"] != 1 {
+		t.Errorf("review stopped somebody %d times, want one", d.AskedAt["review"])
+	}
+
+	asked := d.Asked()
+	if len(asked) != 2 || asked[0].Name != "implement" {
+		t.Errorf("the ranking is %+v, want implement first", asked)
 	}
 }

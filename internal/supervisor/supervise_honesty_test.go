@@ -38,14 +38,14 @@ func TestTheSupervisorReportsAnEngineThatStoppedMidAnswer(t *testing.T) {
 	s := fixture(t)
 
 	broke := errors.New("the model stopped answering")
-	eng := halfSpokenEngine{&engine.Fake{}, "ORB-10 looks stuck, I was about to", broke}
+	eng := halfSpokenEngine{&engine.Fake{}, "ACME-10 looks stuck, I was about to", broke}
 
 	ans, err := Supervise(context.Background(), s, eng, "how is the board doing?")
 	if !errors.Is(err, broke) {
 		t.Fatalf("Supervise returned %v, want the error the engine stopped with", err)
 	}
 
-	if ans != "ORB-10 looks stuck, I was about to" {
+	if ans != "ACME-10 looks stuck, I was about to" {
 		t.Errorf("Supervise answered %q, want what the supervisor managed to say", ans)
 	}
 
@@ -54,7 +54,7 @@ func TestTheSupervisorReportsAnEngineThatStoppedMidAnswer(t *testing.T) {
 		t.Fatalf("Events: %v", err)
 	}
 
-	if len(events) != 1 || events[0].Text != "ORB-10 looks stuck, I was about to" {
+	if len(events) != 1 || events[0].Text != "ACME-10 looks stuck, I was about to" {
 		t.Errorf("the thread holds %+v, want the half answer written down", events)
 	}
 }
@@ -70,7 +70,7 @@ func TestTheSupervisorReportsAnEngineThatStoppedMidAnswer(t *testing.T) {
 func TestTheSupervisorRefusesAThreadItCannotRead(t *testing.T) {
 	s := fixture(t)
 
-	if err := Record(s, record.SupervisorMessage, "operator", "tui", "", "", "ORB-10 is yours"); err != nil {
+	if err := Record(s, record.SupervisorMessage, "operator", "tui", "", "", "ACME-10 is yours"); err != nil {
 		t.Fatalf("Record: %v", err)
 	}
 

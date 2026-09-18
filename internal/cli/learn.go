@@ -70,7 +70,7 @@ func factScope(scope, repoPath string) knowledge.Scope {
 
 // notePort puts a line in one task's notes, found by its id alone.
 //
-// The id is the whole of what the window has: somebody typing `@ORB-115` in
+// The id is the whole of what the window has: somebody typing `@ACME-1` in
 // the supervisor is looking at a row, not at a path. The board is what turns
 // one into the other, the same way every other tool that takes an id does.
 func notePort(r *board.Reader, s *store.Store) func(id, text string) error {

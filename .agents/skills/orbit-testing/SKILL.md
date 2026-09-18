@@ -72,6 +72,20 @@ Every change brings the ones that fit it. Most bring two or three.
    lives is a statement no test disagrees with — kill it, or write down why it does
    not matter. This is the check that coverage cannot make: a line can run and prove
    nothing.
+
+   **Read the timed-out count before the score.** Efficacy is computed over killed
+   and lived mutants and leaves the timed-out ones out of it, so a run where almost
+   everything timed out prints 100% and means nothing: `internal/db` once answered
+   "Test efficacy: 100.00%" over 4 killed and 188 timeouts, and `internal/record`
+   answered the same over 6. A mutant that timed out was never tested. The target
+   sets a coefficient for this; raise it with `MUTATE_COEFFICIENT=24` when a
+   package's suite is slower still.
+
+   **Write nothing in the source about the run.** A comment saying a statement
+   survived is a note about one afternoon — the mutant gets killed and the sentence
+   stays describing a problem that is gone. Where it goes is the pull request. The
+   same holds for every other note about the work rather than about the code, and
+   for task ids: a tracker's name means nothing to whoever reads this next.
 6. **Adversarial** — the case somebody wrote trying to break it. Empty input. The same
    message twice. An answer that arrives after the reader pressed esc. A file deleted
    between the listing and the read. A value that is legal and absurd — a negative

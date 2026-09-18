@@ -123,3 +123,82 @@ func TestATaskCanBeWrittenAgainstNoRepository(t *testing.T) {
 		t.Errorf("writing it down answered %q", out.Said)
 	}
 }
+
+// TestNamesAreWrappedToTheWidthAndNoneIsLost.
+//
+// The engines' models are a list nobody reads across a hundred columns, and
+// a name dropped in the wrapping is a model a reader is never told they can
+// ask for. Every line but the last carries the comma that says it goes on.
+func TestNamesAreWrappedToTheWidthAndNoneIsLost(t *testing.T) {
+	got := wrapped([]string{"sonnet", "opus", "haiku", "", "fable"}, 20)
+
+	joined := strings.Join(got, " ")
+	for _, want := range []string{"sonnet", "opus", "haiku", "fable"} {
+		if !strings.Contains(joined, want) {
+			t.Errorf("the wrapping lost %q: %v", want, got)
+		}
+	}
+
+	// The empty one is not a name, and a comma with nothing after it is
+	// what it would have read as.
+	if strings.Contains(joined, ", ,") || strings.HasSuffix(joined, ",") {
+		t.Errorf("the wrapping kept something that is not a name: %v", got)
+	}
+
+	for i, line := range got {
+		if len(line) > 20 {
+			t.Errorf("line %d is %d columns wide: %q", i, len(line), line)
+		}
+	}
+
+	// A single name is one line and carries no comma at all.
+	if one := wrapped([]string{"sonnet"}, 20); len(one) != 1 || one[0] != "sonnet" {
+		t.Errorf("one name wrapped to %v", one)
+	}
+
+	if none := wrapped(nil, 20); len(none) != 0 {
+		t.Errorf("no names wrapped to %v", none)
+	}
+}
+
+// TestEveryEngineIsAskedHowItIsPaidFor.
+//
+// The catalogue says what an engine can do and the meter says what it costs
+// to ask: a subscription with a window that resets, or a key charged per
+// token. A listing that carried only the first would show a reader four
+// engines they can pick between and nothing about which of them is about to
+// stop answering.
+func TestEveryEngineIsAskedHowItIsPaidFor(t *testing.T) {
+	got := windows()
+	if len(got) == 0 {
+		t.Fatal("no engine at all is in the catalogue")
+	}
+
+	// A subscription engine is the one that is never charged per token, so
+	// it is the one that proves the meter was read at all.
+	named := map[string]Engine{}
+	for _, one := range got {
+		named[one.Name] = one
+	}
+
+	agy, there := named["agy"]
+	if !there {
+		t.Fatalf("the catalogue holds %d engines and none of them is agy", len(got))
+	}
+
+	if agy.Money {
+		t.Error("a subscription engine is listed as spending money by the token")
+	}
+
+	// And one that is charged per token is, which is the other half: both
+	// answers come from the meter and neither is the zero value of a
+	// listing that never asked.
+	opencode, there := named["opencode"]
+	if !there {
+		t.Fatal("the catalogue does not hold opencode")
+	}
+
+	if !opencode.Money {
+		t.Error("an engine charged by the token is listed as spending nothing")
+	}
+}

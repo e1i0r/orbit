@@ -296,6 +296,12 @@ func (m Model) leftClick(t point.Target) (tea.Model, tea.Cmd) {
 		return m.clickedKnowledge(t.Pane)
 	case point.KnowledgePick:
 		return m.pickedKnowledge(t.Pane)
+	case point.SupervisorConversation, point.SupervisorOffer, point.SupervisorLine:
+		// One arm for the three, because the screen tells them apart and
+		// this file has nothing to add: a switch here would be the
+		// supervisor's own decisions written down a second time, one
+		// package away from the first.
+		return m.clickedSupervisor(t)
 	}
 
 	return m, nil

@@ -87,3 +87,47 @@ func TestAnEmptyReviewIsNotAComment(t *testing.T) {
 		t.Errorf("an empty review became something to answer: %v", said)
 	}
 }
+
+// TestACommentCarriesItsLinkWhenItHasOneAndNoneWhenItDoesNot.
+//
+// The link is how somebody gets from the row back to the thread it came
+// from, and half of these arrive without one — a review left on the pull
+// request itself, a comment from a channel that has no permalink. A field
+// holding the empty string reads as a link that is there and goes nowhere.
+func TestACommentCarriesItsLinkWhenItHasOneAndNoneWhenItDoesNot(t *testing.T) {
+	s, r := fixture(t)
+
+	tk, err := Create(s, r, "ACME-34", "answer the review", "")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	const link = "https://github.com/e1i0r/orbit/pull/1#discussion_r1"
+
+	if _, err := Review(s, tk, r, []repo.Comment{
+		{Author: "elio", Body: "this needs a test", URL: link},
+		{Author: "elio", Body: "and the name is wrong"},
+	}); err != nil {
+		t.Fatalf("Review: %v", err)
+	}
+
+	var said []record.Event
+
+	for _, e := range mustEvents(t, s, tk) {
+		if e.Kind == record.ReviewComment {
+			said = append(said, e)
+		}
+	}
+
+	if len(said) != 2 {
+		t.Fatalf("the record holds %d comments, want 2", len(said))
+	}
+
+	if said[0].Data["url"] != link {
+		t.Errorf("a comment with a link carries %q", said[0].Data["url"])
+	}
+
+	if got, there := said[1].Data["url"]; there {
+		t.Errorf("a comment with no link carries url=%q", got)
+	}
+}

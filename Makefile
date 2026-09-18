@@ -86,9 +86,35 @@ coverage:
 # Coverage says a line ran. This says the line matters — a mutant that lives
 # is a statement no test disagrees with, which is a test that watches without
 # looking.
+# The trailing /... comes off before gremlins sees it. gremlins appends its
+# own, so a PKG written the way every other target here takes one becomes
+# ./internal/db/.../..., which matches no package — and the run ends in "no
+# packages to test" rather than in a mutation score. Both this default and
+# the example in CONTRIBUTING.md were written with the suffix, so the target
+# failed for everyone who followed either of them.
+MUTATE_PKG = $(patsubst %/...,%,$(or $(PKG),./internal/ui/settings))
+
+# The timeout is what makes the score mean anything. gremlins derives one
+# from how long the suite took to gather coverage, and its default multiple
+# is far too tight for a package that opens files or a database: internal/db
+# answered "Test efficacy: 100.00%" over 188 timed-out mutants and 4 killed
+# ones. A mutant that timed out was never tested, and a score computed
+# without it is a number that says the tests are perfect because they were
+# not run.
+#
+# Eight is what left that package with four timeouts instead of 188, and
+# workers keeps a mutation run off every core of the machine — the run takes
+# minutes either way, and one that makes the laptop unusable is one nobody
+# does before a pull request.
+MUTATE_COEFFICIENT ?= 8
+MUTATE_WORKERS ?= 4
+
 mutate:
 	@command -v gremlins >/dev/null || { 		echo "gremlins is not installed:"; 		echo "  go install github.com/go-gremlins/gremlins/cmd/gremlins@latest"; 		exit 1; 	}
-	gremlins unleash --tags "" $(or $(PKG),./internal/ui/settings/...)
+	gremlins unleash --tags "" \
+		--timeout-coefficient $(MUTATE_COEFFICIENT) \
+		--workers $(MUTATE_WORKERS) \
+		$(MUTATE_PKG)
 
 # fuzz runs every fuzz target in one package for a while. New corpus entries
 # it finds are committed: a crash found once is a case the suite keeps.

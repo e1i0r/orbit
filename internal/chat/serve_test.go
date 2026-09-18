@@ -39,6 +39,15 @@ func (c *aChannel) Say(_ context.Context, _, text string) error {
 	return nil
 }
 
+// heard is what the channel was asked to say, safe to read while the desk is
+// still serving on another goroutine.
+func (c *aChannel) heard() []string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	return append([]string(nil), c.said...)
+}
+
 // served runs the desk over those messages and answers what it said back.
 func served(t *testing.T, allowed func(string) bool, texts ...string) []string {
 	t.Helper()

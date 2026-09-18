@@ -89,12 +89,20 @@ func (d *DB) Happened(t RuleTurn) error {
 		return nil
 	}
 
+	if err := d.writable(); err != nil {
+		return fmt.Errorf("write down what happened to rule %s: %w", t.Rule, err)
+	}
+
 	if t.At.IsZero() {
 		t.At = time.Now().UTC()
 	}
 
-	_, err := d.sql.Exec(insertRuleTurn, t.Rule, record.Stamp(t.At), t.What, t.By, t.Was,
-		t.Task, t.Phase)
+	err := keepTrying(func() error {
+		_, err := d.sql.Exec(insertRuleTurn, t.Rule, record.Stamp(t.At), t.What, t.By, t.Was,
+			t.Task, t.Phase)
+
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("write down what happened to rule %s: %w", t.Rule, err)
 	}

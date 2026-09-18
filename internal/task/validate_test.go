@@ -134,3 +134,98 @@ func TestAnAnswerNobodyCanReadIsDone(t *testing.T) {
 		t.Errorf("an upper-case verdict reads as %d, %q", got, why)
 	}
 }
+
+// TestWhichEngineHadTheLastWordOfAFlow.
+//
+// The validator asks the engine that ran last, because it is the one holding
+// the session the work is in — and the last phase of a flow may be a loop,
+// whose own last phase is the one that actually ran. A reading that took the
+// loop's name would ask an engine called "", which is not a mistake anybody
+// made.
+func TestWhichEngineHadTheLastWordOfAFlow(t *testing.T) {
+	for _, one := range []struct {
+		why  string
+		flow flow.Flow
+		want string
+	}{
+		{
+			"an ordinary phase at the end",
+			flow.Flow{Phases: []flow.Phase{
+				{Name: "implement", Engine: "claude"},
+				{Name: "review", Engine: "codex"},
+			}},
+			"codex",
+		},
+		{
+			"a loop at the end answers with its own last phase",
+			flow.Flow{Phases: []flow.Phase{
+				{Name: "implement", Engine: "claude"},
+				{Name: "check", Loop: &flow.Loop{Phases: []flow.Phase{
+					{Name: "fix", Engine: "codex"},
+					{Name: "recheck", Engine: "opencode"},
+				}}},
+			}},
+			"opencode",
+		},
+		{
+			"a loop with no phases in it is not a loop to ask",
+			flow.Flow{Phases: []flow.Phase{
+				{Name: "check", Engine: "claude", Loop: &flow.Loop{}},
+			}},
+			"claude",
+		},
+		{"a flow with no phases at all", flow.Flow{}, ""},
+	} {
+		if got := lastEngine(one.flow); got != one.want {
+			t.Errorf("lastEngine = %q, want %q — %s", got, one.want, one.why)
+		}
+	}
+}
+
+// TestOnlyTheValidatorsOwnRequeueCountsAsItsWord.
+//
+// It is read back from the record rather than returned from validate,
+// because what ends a run is the event and not the function that wrote it.
+// A task somebody requeued by hand is not the validator having spoken, and
+// reading it as one would leave the run with nothing written about how it
+// actually ended.
+func TestOnlyTheValidatorsOwnRequeueCountsAsItsWord(t *testing.T) {
+	s, r := fixture(t)
+
+	tk, err := Create(s, r, "ACME-36", "answer for the change", "")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	if requeued(s, tk) {
+		t.Error("a task nobody has requeued reads as one the validator ended")
+	}
+
+	byHand := record.Event{Kind: record.TaskRequeued, Data: map[string]string{"by": "operator"}}
+	if err := emit(s, tk, byHand); err != nil {
+		t.Fatalf("emit: %v", err)
+	}
+
+	if requeued(s, tk) {
+		t.Error("a task somebody requeued by hand reads as the validator's own word")
+	}
+
+	itsOwn := record.Event{Kind: record.TaskRequeued, Data: map[string]string{"by": "supervisor"}}
+	if err := emit(s, tk, itsOwn); err != nil {
+		t.Fatalf("emit: %v", err)
+	}
+
+	if !requeued(s, tk) {
+		t.Error("the validator's own requeue does not read as its word")
+	}
+
+	// A run that started after it is a new run, and the word before it was
+	// about the one that is over.
+	if err := emit(s, tk, record.Event{Kind: record.TaskStarted}); err != nil {
+		t.Fatalf("emit: %v", err)
+	}
+
+	if requeued(s, tk) {
+		t.Error("a word about the run before this one was read as this run's")
+	}
+}
