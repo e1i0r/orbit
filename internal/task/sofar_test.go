@@ -4,12 +4,14 @@ package task
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/record"
+	"github.com/e1i0r/orbit/internal/repo"
 )
 
 // worked is a fake that ran a command, was refused another, and streamed both
@@ -232,5 +234,49 @@ func TestHowAnAttemptEndedIsReadOffItsLastTerminalEvent(t *testing.T) {
 	none := howItEnded([]record.Event{{Kind: record.PhaseToolCall}, {Kind: record.PhaseThought}})
 	if !strings.Contains(none, "does not say what stopped it") {
 		t.Errorf("an attempt the record cannot account for reads as %q", none)
+	}
+}
+
+// TestTheFilesAreCappedAndTheRestAreCounted.
+//
+// "… and 30 more" is itself a fact about the attempt, and a prompt listing
+// four hundred paths is one where the files are the prompt. The cap has to
+// bite once: a line after every file but the twentieth is a list with
+// thirty counts in it and nothing to count.
+func TestTheFilesAreCappedAndTheRestAreCounted(t *testing.T) {
+	var all []repo.Change
+	for i := range atMostFiles + 5 {
+		all = append(all, repo.Change{Path: fmt.Sprintf("internal/f%02d.go", i), Added: 1})
+	}
+
+	var b strings.Builder
+
+	writeFiles(&b, all)
+
+	listing := b.String()
+	if n := strings.Count(listing, "… and "); n != 1 {
+		t.Errorf("the listing counts what was left out %d times:\n%s", n, listing)
+	}
+
+	if !strings.Contains(listing, "… and 5 more") {
+		t.Errorf("the listing does not say how many were left out:\n%s", listing)
+	}
+
+	// The first twenty are there and the twenty-first is not.
+	if !strings.Contains(listing, "internal/f19.go") {
+		t.Errorf("the last file inside the cap is missing:\n%s", listing)
+	}
+
+	if strings.Contains(listing, "internal/f20.go") {
+		t.Errorf("a file past the cap was listed anyway:\n%s", listing)
+	}
+
+	// And a tree with nothing in it writes no heading at all.
+	var empty strings.Builder
+
+	writeFiles(&empty, nil)
+
+	if empty.String() != "" {
+		t.Errorf("a tree holding nothing wrote %q", empty.String())
 	}
 }
