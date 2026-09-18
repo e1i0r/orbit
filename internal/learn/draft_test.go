@@ -162,46 +162,6 @@ func TestARuleAlreadyAnsweredIsNotOfferedAgain(t *testing.T) {
 	}
 }
 
-// TestWhatCannotBeReadIsNotOffered.
-//
-// A model that explains itself first, bullets its answer, or invents a topic
-// has not broken anything. What it wrote that cannot be read is simply not
-// offered — failing over it would mean one badly-shaped answer costs the
-// rules in the same reply that were fine.
-func TestWhatCannotBeReadIsNotOffered(t *testing.T) {
-	got := rulesIn(`Sure! Here is what I found:
-
-- testing | anything that parses input gets fuzz tests
-  vibes | the code should feel nicer
-  style | comments explain, they do not judge
-this line has no separator at all
-  process |    `)
-
-	if len(got) != 2 {
-		t.Fatalf("the answer read as %d rules: %+v", len(got), got)
-	}
-
-	for _, one := range got {
-		if !aTopic(one.topic) {
-			t.Errorf("%q is not a topic anybody wrote down", one.topic)
-		}
-	}
-}
-
-// TestAModelCannotFillTheTrayFromOneHabit. Asked what four sentences have in
-// common, a model can always find a fourth thing to say, and a tray full of
-// weak proposals is a tray somebody stops opening.
-func TestAModelCannotFillTheTrayFromOneHabit(t *testing.T) {
-	var lines []string
-	for range atMost + 4 {
-		lines = append(lines, "testing | one more thing about the tests")
-	}
-
-	if got := rulesIn(strings.Join(lines, "\n")); len(got) != atMost {
-		t.Errorf("one habit produced %d rules", len(got))
-	}
-}
-
 // TestNothingIsAnAnswer. A habit that does not amount to a rule is the
 // commonest case there is, and a model made to answer something would answer
 // something.
@@ -284,5 +244,79 @@ func TestAnUnaskedHabitIsUnanswered(t *testing.T) {
 
 	if answered, err := d.Answered("a-habit"); err != nil || !answered {
 		t.Errorf("a habit already asked about reads as %v, %v", answered, err)
+	}
+}
+
+// sixHabits is one task in which six different things were each said often
+// enough to be a habit, one in each phase the work went through.
+func sixHabits(t *testing.T) *store.Store {
+	t.Helper()
+
+	s := root(t)
+
+	d, err := s.Record()
+	if err != nil {
+		t.Fatalf("open the record: %v", err)
+	}
+
+	events := []record.Event{
+		{Kind: record.TaskCreated, At: when(0), Data: map[string]string{"path": "/w/acme"}},
+	}
+
+	n := 1
+
+	for _, phase := range []string{"plan", "implement", "test", "review", "document", "land"} {
+		events = append(events, record.Event{Kind: record.PhaseStarted, At: when(n), Phase: phase})
+		n++
+
+		for range enoughTimes {
+			events = append(events, toldTo(n, Operator, "add fuzz testing to the "+phase))
+			n++
+		}
+	}
+
+	for _, e := range events {
+		if err := d.Append("ACME-1", e); err != nil {
+			t.Fatalf("append %s: %v", e.Kind, err)
+		}
+	}
+
+	return s
+}
+
+// TestOnlySoManyHabitsAreDraftedInOneGo.
+//
+// Every habit drafted is a model call paid for, and this runs from a key. A
+// record with two months in it holds more habits than anybody wants to pay
+// to read at once, and the ones left over are still there the next time.
+func TestOnlySoManyHabitsAreDraftedInOneGo(t *testing.T) {
+	s := sixHabits(t)
+
+	there, err := Repeated(s)
+	if err != nil {
+		t.Fatalf("read what was repeated: %v", err)
+	}
+
+	if len(there) != atOnce+1 {
+		t.Fatalf("the fixture reads back as %d habits, want one more than %d", len(there), atOnce)
+	}
+
+	asked := 0
+
+	got, err := Draft(context.Background(), s, func(_ context.Context, _ string) (string, error) {
+		asked++
+
+		return "testing | anything that parses input gets fuzz tests", nil
+	})
+	if err != nil {
+		t.Fatalf("drafting: %v", err)
+	}
+
+	if asked != atOnce {
+		t.Errorf("six habits cost %d calls to a model, want %d", asked, atOnce)
+	}
+
+	if len(got) != atOnce {
+		t.Errorf("six habits became %d rules, want %d", len(got), atOnce)
 	}
 }

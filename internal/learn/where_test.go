@@ -214,3 +214,42 @@ func TestTheTrayNeverPrintsAModelTheSameAsAPerson(t *testing.T) {
 		t.Errorf("a model's finding reads %q, which does not say both", got)
 	}
 }
+
+// TestASentenceSaidToTheSupervisorIsAboutEverything.
+//
+// Nothing named is the whole checkout for a rule that came out of one, and
+// everywhere for one said to the supervisor from nowhere in particular:
+// agreeing with a sentence is not the same as saying it is about wherever
+// the terminal happened to be.
+//
+// It asks where the rule goes rather than keeping it, because a rule about
+// everything is not filed in any checkout and so there is nothing to read
+// back out of one.
+func TestASentenceSaidToTheSupervisorIsAboutEverything(t *testing.T) {
+	repo := aCheckout(t)
+
+	one := said(1, "comments explain rather than judge")
+
+	got, err := factOf(one, one.Text, "", Place{Repo: repo})
+	if err != nil {
+		t.Fatalf("work out where it goes: %v", err)
+	}
+
+	if got.Scope.Kind != knowledge.General {
+		t.Errorf("a sentence about no checkout was filed as %+v", got.Scope)
+	}
+
+	// And the same sentence said at a run in that checkout is about that
+	// checkout, which is the whole of the difference between the two.
+	fromARun := one
+	fromARun.Repo = repo
+
+	got, err = factOf(fromARun, fromARun.Text, "", Place{Repo: repo})
+	if err != nil {
+		t.Fatalf("work out where it goes: %v", err)
+	}
+
+	if got.Scope.Kind != knowledge.Repo || got.Scope.Repo != repo {
+		t.Errorf("a sentence said at a run in the checkout was filed as %+v", got.Scope)
+	}
+}

@@ -197,3 +197,82 @@ func TestReadingTheRecordWithNothingInItSaysSo(t *testing.T) {
 		t.Errorf("an empty record holds %d habits", len(got))
 	}
 }
+
+// saidIn is one directive, in a checkout and a phase.
+func saidIn(repo, phase, text string, n int) Directive {
+	return Directive{At: when(n), Task: "ACME-1", Repo: repo, Phase: phase, Text: text}
+}
+
+// threeTimesIn is the same thing said often enough to be a habit.
+func threeTimesIn(repo, phase, text string, from int) []Directive {
+	out := make([]Directive, 0, enoughTimes)
+	for i := range enoughTimes {
+		out = append(out, saidIn(repo, phase, text, from+i))
+	}
+
+	return out
+}
+
+// TestTheListReadsTheSameWayTwice.
+//
+// The directives are grouped through a map, and a map is walked in a
+// different order every time. A listing that reshuffles itself between two
+// readings is one nobody trusts — and this is a screen somebody opens to
+// decide which of these are rules, which means comparing it against what
+// they saw a minute ago.
+func TestTheListReadsTheSameWayTwice(t *testing.T) {
+	var told []Directive
+
+	told = append(told, threeTimesIn("/w/bravo", "plan", "write the plan down first", 0)...)
+	told = append(told, threeTimesIn("/w/acme", "test", "add fuzz testing here", 10)...)
+	told = append(told, threeTimesIn("/w/acme", "plan", "check the schema first", 20)...)
+
+	want := []where{
+		{repo: "/w/acme", phase: "plan"},
+		{repo: "/w/acme", phase: "test"},
+		{repo: "/w/bravo", phase: "plan"},
+	}
+
+	for range 5 {
+		got := habits(told)
+		if len(got) != len(want) {
+			t.Fatalf("three habits read back as %d: %+v", len(got), got)
+		}
+
+		for i, one := range got {
+			if (where{repo: one.Repo, phase: one.Phase}) != want[i] {
+				t.Fatalf("habit %d is %q %q, want %q %q",
+					i, one.Repo, one.Phase, want[i].repo, want[i].phase)
+			}
+		}
+	}
+}
+
+// TestTheThingSaidMostOftenIsFirst, because how often somebody has said it
+// is the whole reason to look at one of these, and the rest keep the order
+// their places put them in so that two readings agree.
+func TestTheThingSaidMostOftenIsFirst(t *testing.T) {
+	var told []Directive
+
+	told = append(told, threeTimesIn("/w/acme", "test", "add fuzz testing here", 0)...)
+	told = append(told, saidIn("/w/acme", "test", "add fuzz testing here", 3))
+	told = append(told, threeTimesIn("/w/acme", "plan", "check the schema first", 10)...)
+	told = append(told, threeTimesIn("/w/bravo", "plan", "write the plan down first", 20)...)
+
+	got := habits(told)
+	if len(got) != 3 {
+		t.Fatalf("three habits read back as %d: %+v", len(got), got)
+	}
+
+	if got[0].Times() != enoughTimes+1 {
+		t.Errorf("the first was said %d times, want the %d that puts it there",
+			got[0].Times(), enoughTimes+1)
+	}
+
+	// The two said the same number of times keep the order their places gave
+	// them: acme before bravo.
+	if got[1].Repo != "/w/acme" || got[2].Repo != "/w/bravo" {
+		t.Errorf("the two said as often as each other came back as %q then %q",
+			got[1].Repo, got[2].Repo)
+	}
+}

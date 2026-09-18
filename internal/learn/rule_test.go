@@ -3,6 +3,7 @@ package learn
 // Which sentences read as somebody laying down a rule.
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -175,5 +176,23 @@ func TestARuleSaidToTheSupervisorReachesTheTray(t *testing.T) {
 
 	if got := facts(t, s); len(got) != 1 || got[0].Source != knowledge.Human {
 		t.Errorf("Orbit learned %v", got)
+	}
+}
+
+// TestASentenceAsLongAsARuleMayBeIsStillARule.
+//
+// The length is what tells a rule from a paragraph, and the boundary matters
+// in both directions: one character too strict and the longest rule somebody
+// can type is dropped in silence, one too loose and a briefing lands in the
+// tray as an order.
+func TestASentenceAsLongAsARuleMayBeIsStillARule(t *testing.T) {
+	longest := "always " + strings.Repeat("a", aRule-len("always "))
+
+	if !aboutTheFuture(longest) {
+		t.Errorf("a rule of exactly %d characters was not read as one", aRule)
+	}
+
+	if aboutTheFuture(longest + "a") {
+		t.Errorf("a paragraph one character past %d was read as a rule", aRule)
 	}
 }
