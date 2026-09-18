@@ -1,6 +1,7 @@
 package verb
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/repo"
@@ -79,4 +80,72 @@ func find(at Cell, path string) *Cell {
 	}
 
 	return nil
+}
+
+// TestOneDirectoryIsOneCellHoweverManyFilesAreUnderIt.
+//
+// The tree is walked segment by segment and a segment already there is
+// descended into rather than added again. A second cell of the same name is
+// a directory drawn twice, each holding half of what is in it, and the
+// weight the map draws with split between them.
+func TestOneDirectoryIsOneCellHoweverManyFilesAreUnderIt(t *testing.T) {
+	root := Grow([]string{"internal/db/pr.go", "internal/db/rule.go", "internal/ui/wheel.go"}, nil)
+
+	if len(root.Cells) != 1 || root.Cells[0].Name != "internal" {
+		t.Fatalf("the root holds %d cells, want the one directory they are all under", len(root.Cells))
+	}
+
+	inside := root.Cells[0]
+	if len(inside.Cells) != 2 {
+		t.Fatalf("internal holds %d cells, want db and ui", len(inside.Cells))
+	}
+
+	if len(inside.Cells[0].Cells) != 2 {
+		t.Errorf("db holds %d files, want the two written under it", len(inside.Cells[0].Cells))
+	}
+}
+
+// TestTheMapReadsTheSameWayTwice.
+//
+// Directories first, because they are where the reader goes next, and then
+// by name. The same tree is drawn on a terminal and in a browser, and a map
+// whose cells move between two readings is one nobody can learn the shape
+// of.
+func TestTheMapReadsTheSameWayTwice(t *testing.T) {
+	root := Grow([]string{"zebra.md", "internal/b/y.go", "apple.md", "alpha/x.go"}, nil)
+
+	want := []string{"alpha", "internal", "apple.md", "zebra.md"}
+	if len(root.Cells) != len(want) {
+		t.Fatalf("the root holds %d cells, want %d", len(root.Cells), len(want))
+	}
+
+	for i, name := range want {
+		if root.Cells[i].Name != name {
+			t.Errorf("cell %d is %q, want %q — directories first, then by name",
+				i, root.Cells[i].Name, name)
+		}
+	}
+}
+
+// TestWhatTheTaskTouchedIsMarkedAndNothingElseIs, because the mark is the
+// whole of what the drawing says: a map with everything lit says the task
+// changed the repository, and one with nothing lit says it changed nothing.
+func TestWhatTheTaskTouchedIsMarkedAndNothingElseIs(t *testing.T) {
+	root := Grow(
+		[]string{"touched.go", "untouched.go"},
+		[]repo.Change{{Path: "touched.go", Added: 3}},
+	)
+
+	lines := strings.Split(drawn(root), "\n")
+	if len(lines) != 2 {
+		t.Fatalf("a checkout of two files drew %d lines: %q", len(lines), drawn(root))
+	}
+
+	if lines[0] != " ● touched.go" {
+		t.Errorf("the file the task changed reads %q", lines[0])
+	}
+
+	if lines[1] != "   untouched.go" {
+		t.Errorf("a file the task never reached reads %q", lines[1])
+	}
 }
