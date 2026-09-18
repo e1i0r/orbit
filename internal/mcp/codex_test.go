@@ -235,3 +235,74 @@ command = "/somewhere/other"
 		t.Errorf("the old command survived the replacement:\n%s", got)
 	}
 }
+
+// TestOrbitAtTheVeryTopOfTheFileIsStillReplaced.
+//
+// A config whose first line is our own table is the shape a file gets when
+// orbit was the first thing installed into it, which is the ordinary way it
+// happens. The arithmetic that finds where the table ends counts from where
+// it starts, and a reading that treated the first line as "not found" would
+// append a second copy — a duplicate key, which stops the whole file
+// parsing and takes every other server down with it.
+func TestOrbitAtTheVeryTopOfTheFileIsStillReplaced(t *testing.T) {
+	first := `[mcp_servers.orbit]
+command = "/old/orbit"
+args = ["mcp"]
+
+[mcp_servers.other]
+command = "/somewhere/other"
+`
+
+	got, err := codexMerge(first, "/usr/local/bin/orbit", "")
+	if err != nil {
+		t.Fatalf("codexMerge: %v", err)
+	}
+
+	if n := strings.Count(got, "[mcp_servers.orbit]"); n != 1 {
+		t.Errorf("orbit appears %d times, want once:\n%s", n, got)
+	}
+
+	if strings.Contains(got, "/old/orbit") {
+		t.Errorf("the old command survived the replacement:\n%s", got)
+	}
+
+	// The table after it is carried through whole, which is what says the
+	// replacement stopped where the next table began.
+	for _, want := range []string{
+		`command = "/usr/local/bin/orbit"`,
+		"[mcp_servers.other]",
+		`command = "/somewhere/other"`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("the merged file lost %q:\n%s", want, got)
+		}
+	}
+
+	// And nothing of ours was left above the table it replaced.
+	if strings.Index(got, "[mcp_servers.orbit]") != 0 {
+		t.Errorf("the table moved away from the top of the file:\n%s", got)
+	}
+}
+
+// TestOrbitAloneInTheFileIsReplacedToTheEnd, which is the same reading with
+// nothing after it: the table runs to the last line, and a replacement that
+// stopped short would leave half of the old one behind.
+func TestOrbitAloneInTheFileIsReplacedToTheEnd(t *testing.T) {
+	alone := `[mcp_servers.orbit]
+command = "/old/orbit"
+args = ["mcp"]
+`
+
+	got, err := codexMerge(alone, "/usr/local/bin/orbit", "")
+	if err != nil {
+		t.Fatalf("codexMerge: %v", err)
+	}
+
+	if strings.Contains(got, "/old/orbit") {
+		t.Errorf("the old command survived:\n%s", got)
+	}
+
+	if n := strings.Count(got, "command ="); n != 1 {
+		t.Errorf("the file holds %d commands, want the one that replaced the other:\n%s", n, got)
+	}
+}
