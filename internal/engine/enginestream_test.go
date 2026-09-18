@@ -196,6 +196,12 @@ func TestTheThinkingBudgetIsANumberOrNothing(t *testing.T) {
 		{"31999", "MAX_THINKING_TOKENS=31999"},
 		{"lots", ""},
 		{"-5", ""},
+		// A budget of nothing, written any way but the one the switch
+		// above already answers. Zero is not a budget: it is thinking
+		// turned off, and the reader who typed it meant the word.
+		{"00", ""},
+		{"+0", ""},
+		{"1", "MAX_THINKING_TOKENS=1"},
 		{"12.5", ""},
 		{"1e6", ""},
 	} {

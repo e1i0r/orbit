@@ -203,3 +203,59 @@ func TestParseStreamCapturesEarlySessionIDOnInterruptedStream(t *testing.T) {
 		t.Errorf("Thoughts = %v, want ['pondering']", res.Thoughts)
 	}
 }
+
+// TestOnlyAThinkingDeltaIsSentOnAsAThought.
+//
+// A text delta is a fragment of the answer, and the answer is taken whole
+// from the block that carries it. A fragment sent on as a thought would be
+// the prose of the report arriving a second time, in pieces — under the
+// thoughts, where a reader is looking for what the model was working out
+// rather than for what it has already said.
+func TestOnlyAThinkingDeltaIsSentOnAsAThought(t *testing.T) {
+	streamData := strings.Join([]string{
+		`{"type":"content_block_delta","delta":{"type":"text_delta","text":"I moved "}}`,
+		`{"type":"content_block_delta","delta":{"type":"text_delta","text":"the check."}}`,
+		`{"type":"content_block_delta","delta":{"type":"thinking_delta","thinking":"the gate runs first"}}`,
+		// A thinking delta carrying nothing is a keep-alive, not a thought.
+		`{"type":"content_block_delta","delta":{"type":"thinking_delta","thinking":""}}`,
+		// And a delta with nothing under it at all.
+		`{"type":"content_block_delta"}`,
+		`{"type":"result","subtype":"success","result":"I moved the check.","session_id":"s","total_cost_usd":0.01}`,
+	}, "\n") + "\n"
+
+	var thoughts []string
+
+	res, err := ParseStreamWithCallback(strings.NewReader(streamData), func(ev StreamEvent) {
+		if ev.Type == "thought" {
+			thoughts = append(thoughts, ev.Thought)
+		}
+	})
+	if err != nil {
+		t.Fatalf("ParseStreamWithCallback: %v", err)
+	}
+
+	if len(thoughts) != 1 || thoughts[0] != "the gate runs first" {
+		t.Errorf("the stream sent on %q as thoughts, want the one thinking delta", thoughts)
+	}
+
+	// The answer still arrives whole, from the block that carries it.
+	if res.Output != "I moved the check." {
+		t.Errorf("the answer reads %q", res.Output)
+	}
+}
+
+// TestAStreamWithNobodyListeningIsStillRead, because the callback is
+// optional and a run that parses its own output afterwards passes none.
+func TestAStreamWithNobodyListeningIsStillRead(t *testing.T) {
+	streamData := `{"type":"content_block_delta","delta":{"type":"thinking_delta","thinking":"a thought"}}` + "\n" +
+		`{"type":"result","subtype":"success","result":"done","session_id":"s"}` + "\n"
+
+	res, err := ParseStreamWithCallback(strings.NewReader(streamData), nil)
+	if err != nil {
+		t.Fatalf("ParseStreamWithCallback with no listener: %v", err)
+	}
+
+	if res.Output != "done" {
+		t.Errorf("the answer reads %q", res.Output)
+	}
+}
