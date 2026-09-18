@@ -96,4 +96,22 @@ func TestACrowdedCommitSaysNothing(t *testing.T) {
 	if got := pairsIn(small); len(got) != 1 {
 		t.Errorf("the same pair in small commits came back as %d entries", len(got))
 	}
+
+	// A commit of exactly as many files as one may hold is still a commit
+	// worth counting. The number is where a change stops being one change;
+	// one file stricter and the largest ordinary commit in the repository
+	// says nothing about anything.
+	full := make([]string, 0, crowdedCommit)
+	for i := range crowdedCommit {
+		full = append(full, fmt.Sprintf("g%d.go", i))
+	}
+
+	var atTheEdge [][]string
+	for range floorTimes {
+		atTheEdge = append(atTheEdge, full)
+	}
+
+	if got := pairsIn(atTheEdge); len(got) == 0 {
+		t.Errorf("a commit of exactly %d files was not counted", crowdedCommit)
+	}
 }

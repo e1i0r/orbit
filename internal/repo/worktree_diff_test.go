@@ -210,3 +210,28 @@ func TestABackupIsATagThatDoesNotMove(t *testing.T) {
 		t.Errorf("the repository holds %q, want both backups", tags)
 	}
 }
+
+// TestGitCountsNoLinesForAFileThatHasNone.
+//
+// A binary file is not a file with an empty diff: git answers `-` for both
+// counts, which arrives here as a negative. An empty text file added, or one
+// whose only change was its mode, really does weigh nothing — and reading
+// that as binary would leave it out of a diff budget it belongs in, and mark
+// it in the map as something nobody can read.
+func TestGitCountsNoLinesForAFileThatHasNone(t *testing.T) {
+	for _, one := range []struct {
+		why    string
+		change Change
+		binary bool
+	}{
+		{"git counted neither side", Change{Added: -1, Deleted: -1}, true},
+		{"it counted one side and not the other", Change{Added: -1, Deleted: 0}, true},
+		{"or the other way round", Change{Added: 0, Deleted: -1}, true},
+		{"an empty file added weighs nothing and is still text", Change{Added: 0, Deleted: 0}, false},
+		{"and an ordinary change is text", Change{Added: 3, Deleted: 1}, false},
+	} {
+		if got := one.change.Binary(); got != one.binary {
+			t.Errorf("%+v reads as binary=%v — %s", one.change, got, one.why)
+		}
+	}
+}
