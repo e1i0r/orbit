@@ -239,3 +239,27 @@ func TestANumberNothingIsWaitingUnderIsRefused(t *testing.T) {
 		t.Errorf("Orbit learned %d things from numbers that named nothing", len(got))
 	}
 }
+
+// TestKeepingARuleSaysWhereItWent.
+//
+// Most of these are kept without a path at all, because the folder the work
+// was in came with the sentence — so the answer that names one is the answer
+// a reader checks. Leaving it out would be Orbit filing a rule somewhere and
+// not saying so, and naming one where there is none would send them looking
+// for a folder nobody chose.
+func TestKeepingARuleSaysWhereItWent(t *testing.T) {
+	w := trayOf(t, "amounts are cents")
+
+	out, err := asked(t, w, "rules keep", map[string]string{"n": "1"})
+	if err != nil {
+		t.Fatalf("rules keep: %v", err)
+	}
+
+	if !strings.Contains(out.Said, "amounts are cents") {
+		t.Errorf("keeping it answered %q", out.Said)
+	}
+
+	if strings.Contains(out.Said, ", in ") {
+		t.Errorf("a rule nobody placed was said to have gone somewhere: %q", out.Said)
+	}
+}

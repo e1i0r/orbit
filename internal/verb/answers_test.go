@@ -136,3 +136,33 @@ func TestTheThreadIsNumberedFromOne(t *testing.T) {
 		t.Errorf("the second line reads %q, want it numbered 2", lines[1])
 	}
 }
+
+// TestStoppingAndRequeueingSayWhichTheyDid.
+//
+// They are two different things to have asked for — one stops the run where
+// it stands, the other takes the task back — and both are read from a bar
+// that shows one line. A pair of answers that could be each other's is a
+// reader who cannot tell which of the two keys they pressed.
+func TestStoppingAndRequeueingSayWhichTheyDid(t *testing.T) {
+	w := worldOf(t)
+	r := w.gitRepo(t, "acme")
+
+	w.wrote(t, "ACME-60", r.Path, "pay the thing")
+
+	back := mustAsk(t, w, "task requeue", In{
+		Task: "ACME-60", Args: map[string]string{"why": "wrong brief"}, By: "operator",
+	})
+	if !strings.Contains(back.Said, "ACME-60") || !strings.Contains(back.Said, "back in the queue") {
+		t.Errorf("requeueing answered %q", back.Said)
+	}
+
+	cmd := holdARun(t, w, "ACME-60")
+
+	stop := mustAsk(t, w, "task cancel", In{Task: "ACME-60", By: "operator"})
+
+	_ = cmd.Process.Kill() //nolint:errcheck // the cleanup kills it again; this only hurries it
+
+	if !strings.Contains(stop.Said, "ACME-60") || !strings.Contains(stop.Said, "stop") {
+		t.Errorf("cancelling answered %q", stop.Said)
+	}
+}
