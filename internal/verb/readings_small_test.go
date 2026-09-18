@@ -123,3 +123,40 @@ func TestATaskCanBeWrittenAgainstNoRepository(t *testing.T) {
 		t.Errorf("writing it down answered %q", out.Said)
 	}
 }
+
+// TestNamesAreWrappedToTheWidthAndNoneIsLost.
+//
+// The engines' models are a list nobody reads across a hundred columns, and
+// a name dropped in the wrapping is a model a reader is never told they can
+// ask for. Every line but the last carries the comma that says it goes on.
+func TestNamesAreWrappedToTheWidthAndNoneIsLost(t *testing.T) {
+	got := wrapped([]string{"sonnet", "opus", "haiku", "", "fable"}, 20)
+
+	joined := strings.Join(got, " ")
+	for _, want := range []string{"sonnet", "opus", "haiku", "fable"} {
+		if !strings.Contains(joined, want) {
+			t.Errorf("the wrapping lost %q: %v", want, got)
+		}
+	}
+
+	// The empty one is not a name, and a comma with nothing after it is
+	// what it would have read as.
+	if strings.Contains(joined, ", ,") || strings.HasSuffix(joined, ",") {
+		t.Errorf("the wrapping kept something that is not a name: %v", got)
+	}
+
+	for i, line := range got {
+		if len(line) > 20 {
+			t.Errorf("line %d is %d columns wide: %q", i, len(line), line)
+		}
+	}
+
+	// A single name is one line and carries no comma at all.
+	if one := wrapped([]string{"sonnet"}, 20); len(one) != 1 || one[0] != "sonnet" {
+		t.Errorf("one name wrapped to %v", one)
+	}
+
+	if none := wrapped(nil, 20); len(none) != 0 {
+		t.Errorf("no names wrapped to %v", none)
+	}
+}
