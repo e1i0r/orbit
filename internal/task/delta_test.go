@@ -94,3 +94,22 @@ func TestEveryPhaseIsAskedForItsDelta(t *testing.T) {
 		t.Error("the first phase is asked for the story")
 	}
 }
+
+// TestOnlyTheFourFieldsAreReadOutOfAnAnswer.
+//
+// The four are a closed list: anything else a phase writes under a heading
+// of its own is prose, and reading it as a delta field would put whatever a
+// model invented into the shape the next phase is handed.
+func TestOnlyTheFourFieldsAreReadOutOfAnAnswer(t *testing.T) {
+	for _, one := range deltaFields {
+		if !isDeltaField(one) {
+			t.Errorf("%q is one of the four and does not read as one", one)
+		}
+	}
+
+	for _, one := range []string{"", "need", "guarantee", "assumed", "insteadof", "summary", "NEEDS"} {
+		if isDeltaField(one) {
+			t.Errorf("%q is not one of the four and reads as one", one)
+		}
+	}
+}

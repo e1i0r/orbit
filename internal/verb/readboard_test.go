@@ -35,6 +35,9 @@ func TestFirstLineKeepsTheTableATable(t *testing.T) {
 	for _, tc := range []struct{ in, want string }{
 		{"plain", "plain"},
 		{"first\nsecond", "first …"},
+		// A break at the very front is still a break: the row would open
+		// with a newline and every column below it would drift by one.
+		{"\nsecond", " …"},
 		{"before\tafter", "before after"},
 		{"progress\rdone", "progress done"},
 		{"", ""},
@@ -42,5 +45,34 @@ func TestFirstLineKeepsTheTableATable(t *testing.T) {
 		if got := firstLine(tc.in); got != tc.want {
 			t.Errorf("firstLine(%q) = %q, want %q", tc.in, got, tc.want)
 		}
+	}
+}
+
+// TestARowNamesTheCheckoutItWasWorkedIn, and a task joined to none names
+// none rather than falling over: a task written before any repository was
+// named is the state every task passes through.
+func TestARowNamesTheCheckoutItWasWorkedIn(t *testing.T) {
+	w := worldOf(t)
+	r := w.gitRepo(t, "acme")
+
+	w.wrote(t, "ACME-1", r.Path, "pay the thing")
+	w.wrote(t, "ACME-2", "", "decide what to build")
+
+	joined, there, err := rowAnywhere(w, "ACME-1")
+	if err != nil || !there {
+		t.Fatalf("the row of a task in a checkout: there %v, %v", there, err)
+	}
+
+	if joined.RepoPath != r.Path || joined.Repo != "acme" {
+		t.Errorf("it names %q, %q, want %q and acme", joined.RepoPath, joined.Repo, r.Path)
+	}
+
+	alone, there, err := rowAnywhere(w, "ACME-2")
+	if err != nil || !there {
+		t.Fatalf("the row of a task in no checkout: there %v, %v", there, err)
+	}
+
+	if alone.RepoPath != "" || alone.Repo != "" {
+		t.Errorf("a task in no checkout names %q, %q", alone.RepoPath, alone.Repo)
 	}
 }

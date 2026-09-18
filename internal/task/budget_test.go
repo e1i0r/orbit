@@ -100,3 +100,39 @@ func TestWhatATaskHasSpentIsEveryPhaseItPaidFor(t *testing.T) {
 		t.Errorf("spentOn = %v, want 1.0 — the four phase endings and nothing else", got)
 	}
 }
+
+// TestATaskThatHasSpentExactlyItsBudgetHasSpentIt.
+//
+// The number is what a task may spend, so at exactly that number it has
+// spent it and the phase after it is money past what anybody agreed to. A
+// reading one cent looser is a cap that never quite holds, and a board that
+// shows the budget beside the spend would say they were equal while the run
+// carried on.
+func TestATaskThatHasSpentExactlyItsBudgetHasSpentIt(t *testing.T) {
+	s, r := fixture(t)
+
+	// Exactly what one phase of costlyEngine costs.
+	if err := s.SaveSettings(store.Settings{BudgetTask: 0.25}); err != nil {
+		t.Fatalf("SaveSettings: %v", err)
+	}
+
+	tk, err := Create(s, r, "ACME-17", "a task that spends exactly its budget", "")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	eng := costlyEngine{engine.NewFake("done")}
+
+	if runErr := Run(context.Background(), s, tk, twoPhases(), fakes(eng), nil); runErr == nil {
+		t.Fatal("Run: want an error when the task has spent exactly its budget")
+	}
+
+	if len(eng.Calls) != 1 {
+		t.Errorf("the engine ran %d times, want 1 — a task that has spent its budget has nothing left", len(eng.Calls))
+	}
+
+	spent, budget, over := overBudget(s, tk)
+	if !over || spent != budget {
+		t.Errorf("a task that spent %v of a budget of %v reads as over: %v", spent, budget, over)
+	}
+}

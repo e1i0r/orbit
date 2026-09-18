@@ -51,21 +51,62 @@ func TestReadingWhatATaskChanged(t *testing.T) {
 	r := checkedOut(t, w, "ACME-8")
 	at := In{Task: "ACME-8", Repo: r.Path, By: "operator"}
 
-	nothing := mustAsk(t, w, "task diff", at)
-	_ = nothing
+	// The diff is git's own, whole: what a reader asked for is the change,
+	// and a verb that read it and answered nothing reads the same as one
+	// that found nothing.
+	diff := mustAsk(t, w, "task diff", at)
+	for _, want := range []string{"diff --git", "done.txt", "+did it"} {
+		if !strings.Contains(diff.Said, want) {
+			t.Errorf("the diff answered %q, want it to carry %q", diff.Said, want)
+		}
+	}
 
 	tree := mustAsk(t, w, "task tree", at)
-	_ = tree
+	if !strings.Contains(tree.Said, "done.txt") {
+		t.Errorf("the tree answered %q, which names no file", tree.Said)
+	}
 
 	impact := mustAsk(t, w, "task impact", at)
-	_ = impact
+	if !strings.Contains(impact.Said, "1 files changed") {
+		t.Errorf("what it reaches answered %q", impact.Said)
+	}
 
+	// The flow Orbit ships has no checks, so there is nothing to run on
+	// either side — which is an answer and not a refusal.
 	compared := mustAsk(t, w, "task compare", at)
-	_ = compared
+	if !strings.Contains(compared.Said, "no checks") {
+		t.Errorf("comparing answered %q", compared.Said)
+	}
 
+	// The task's own flow, then the one Orbit ships, with its phases
+	// numbered from one the way a reader counts them.
 	flow := mustAsk(t, w, "task flow", at)
-	if flow.Said == "" {
-		t.Error("flow said nothing at all")
+	for _, want := range []string{"ACME-8: task", " 1  implement", " 2  review"} {
+		if !strings.Contains(flow.Said, want) {
+			t.Errorf("the flow answered %q, want it to carry %q", flow.Said, want)
+		}
+	}
+}
+
+// TestACheckoutWithNothingInItSaysSo, which is a different answer from a
+// task that never had a checkout at all: one has been worked in and changed
+// nothing, the other has not been started.
+func TestACheckoutWithNothingInItSaysSo(t *testing.T) {
+	w := worldOf(t)
+	r := checkedOut(t, w, "ACME-10")
+
+	dir, err := w.store.WorktreeDir(r.Path, "ACME-10")
+	if err != nil {
+		t.Fatalf("worktree dir: %v", err)
+	}
+
+	if err := os.Remove(filepath.Join(dir, "done.txt")); err != nil {
+		t.Fatalf("take the work back out: %v", err)
+	}
+
+	out := mustAsk(t, w, "task diff", In{Task: "ACME-10", Repo: r.Path, By: "operator"})
+	if !strings.Contains(out.Said, "ACME-10 has changed nothing yet") {
+		t.Errorf("a checkout with nothing in it answered %q", out.Said)
 	}
 }
 

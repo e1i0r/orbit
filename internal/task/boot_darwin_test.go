@@ -11,8 +11,14 @@ import (
 // timeval is what the kernel would hand back for a machine that booted at
 // this moment: seconds, then microseconds, both little-endian.
 func timeval(sec uint64) string {
-	b := make([]byte, 16)
-	binary.LittleEndian.PutUint64(b[:8], sec)
+	return secondsOnly(sec) + string(make([]byte, 8))
+}
+
+// secondsOnly is the seconds field and nothing after it, which is all this
+// reads and so all it may require.
+func secondsOnly(sec uint64) string {
+	b := make([]byte, 8)
+	binary.LittleEndian.PutUint64(b, sec)
 
 	return string(b)
 }
@@ -30,6 +36,18 @@ func TestBootTimeIsReadOffTheSecondsOfTheTimeval(t *testing.T) {
 
 	if !got.Equal(want) {
 		t.Errorf("parseBootTime = %s, want %s", got, want)
+	}
+
+	// The seconds and nothing after them is enough, because the seconds are
+	// the whole of what this reads: asking for a byte more would refuse an
+	// answer that holds everything the comparison needs.
+	bare, ok := parseBootTime(secondsOnly(uint64(want.Unix())))
+	if !ok {
+		t.Fatal("an answer holding only the seconds was refused")
+	}
+
+	if !bare.Equal(want) {
+		t.Errorf("parseBootTime = %s, want %s", bare, want)
 	}
 }
 
