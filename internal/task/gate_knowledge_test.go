@@ -245,3 +245,51 @@ func TestWhatTheRecordSaysAboutAGateThatRan(t *testing.T) {
 		t.Errorf("it says it ran in phase %q, want %d", fromARule.Data["n"], phaseNumber)
 	}
 }
+
+// TestAGateThatPrintedTooMuchSaysHowMuchThereWas.
+//
+// A gate's output is whatever the command wrote, and a test suite can print
+// megabytes. What is kept is cut, and the count of what there was is the
+// only thing telling a reader the tail they are looking at is a tail — a
+// gate nothing was cut from must not carry a number they would compare
+// against the text and find agrees.
+func TestAGateThatPrintedTooMuchSaysHowMuchThereWas(t *testing.T) {
+	s, r := fixture(t)
+
+	tk, err := Create(s, r, "KNOW-GATE-3", "print a great deal", "quick")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	loud := flow.Phase{Name: "implement", Gates: []flow.Gate{
+		{Name: "quiet", Command: "echo ok"},
+		// One byte over what is kept, written without holding it in a
+		// shell variable.
+		{Name: "loud", Command: "head -c " + strconv.Itoa(maxOutput+1) + " /dev/zero | tr '\\0' 'a'"},
+	}}
+
+	_, err = runGates(context.Background(), s, tk, loud, 1, t.TempDir(), engine.Result{})
+	if err != nil {
+		t.Fatalf("runGates: %v", err)
+	}
+
+	byGate := map[string]record.Event{}
+
+	for _, e := range mustEvents(t, s, tk) {
+		if e.Kind == record.GatePassed || e.Kind == record.GateFailed {
+			byGate[e.Data["gate"]] = e
+		}
+	}
+
+	if got, there := byGate["quiet"].Data["bytes"]; there {
+		t.Errorf("a gate nothing was cut from says %q bytes were", got)
+	}
+
+	if byGate["loud"].Data["bytes"] != strconv.Itoa(maxOutput+1) {
+		t.Errorf("a gate one byte over says %q bytes", byGate["loud"].Data["bytes"])
+	}
+
+	if kept := len(byGate["loud"].Text); kept > maxOutput+64 {
+		t.Errorf("what was kept is %d bytes, which is not a cut at %d", kept, maxOutput)
+	}
+}

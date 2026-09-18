@@ -100,12 +100,21 @@ func Reopen(ctx context.Context, s *store.Store, t Task, by, message, flowName s
 		return 0, err
 	}
 
-	chosen := flowName
-	if chosen == "" {
-		chosen = t.Flow
+	return Start(s, t, walks(flowName, t), unread)
+}
+
+// walks is the flow a reopened run takes: the one the reader named, and
+// otherwise the one the task already carries.
+//
+// A function of its own for the reason runCommand is one. What it decides is
+// spent on a process this cannot see — the run is a child, started and let
+// go — so the only place the decision can be read back is here.
+func walks(named string, t Task) string {
+	if named != "" {
+		return named
 	}
 
-	return Start(s, t, chosen, unread)
+	return t.Flow
 }
 
 // awaitStopped waits until nothing live holds the task.
