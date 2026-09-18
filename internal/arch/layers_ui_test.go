@@ -109,11 +109,18 @@ var windowLayers = map[string][]string{
 	// side. It reads and writes the thread through the doors the window
 	// hands it in an Env, and has no board: it can decide nothing about a
 	// task.
+	//
+	// internal/ui/point is on its list for the reason it is on
+	// internal/ui/known's: this screen has lists a reader clicks, and the
+	// vocabulary a click is answered in is that package's. It arrived when
+	// the screen gained a Hit — before that the window answered no target
+	// here at all, and three gestures could only be reached from the
+	// keyboard.
 	"internal/ui/supervisor": {
 		"internal/knowledge", "internal/ui/cells", "internal/ui/clip", "internal/ui/fact",
 		"internal/ui/keymap", "internal/ui/known", "internal/ui/layout", "internal/ui/markdown",
-		"internal/ui/spoken", "internal/ui/theme", "internal/ui/typing", "internal/view",
-		"internal/words",
+		"internal/ui/point", "internal/ui/spoken", "internal/ui/theme", "internal/ui/typing",
+		"internal/view", "internal/words",
 	},
 	// internal/ui/spoken is a line the operator typed into the supervisor,
 	// taken apart: which of the gestures it is, what it is about, and what
