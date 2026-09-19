@@ -274,9 +274,15 @@ func numstat(out string) []Change {
 
 // count reads one of numstat's two figures, and answers -1 for the "-" git
 // prints where a file has no lines to count.
+//
+// A negative is not a count either, and -1 is the only one that means
+// anything here: Binary reads any negative as "git counted no lines", so a
+// -2 arriving from a line this could not read would mark a text file as one
+// nobody can read. git prints no such line, which is exactly why nothing
+// downstream is written to survive one.
 func count(field string) int {
 	n, err := strconv.Atoi(strings.TrimSpace(field))
-	if err != nil {
+	if err != nil || n < 0 {
 		return -1
 	}
 
