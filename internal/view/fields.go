@@ -108,7 +108,9 @@ func firstLine(s string) string {
 		s = s[:i]
 	}
 
-	return strings.TrimSpace(s)
+	// A title is the first line of a file, and a file can hold anything:
+	// see tame.go for what a terminal does with the rest of it.
+	return strings.TrimSpace(tame(s))
 }
 
 // actionKeys are the arguments a tool call is about, in the order they are

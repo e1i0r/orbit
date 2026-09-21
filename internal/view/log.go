@@ -186,25 +186,29 @@ func fullSize(data map[string]string) int {
 // entry reads one event's fields. Indexing a nil Data map is a zero value
 // rather than a panic, which is why no event needs a guard of its own.
 func entry(e record.Event, attempt int) Entry {
+	// Every field an engine or a file had a hand in is tamed on the way
+	// through: see tame.go. Kept counts what the record holds and not what
+	// survives the taming, because it is the record's own measure of how
+	// much of the output was written down.
 	return Entry{
 		At:      e.At,
 		Kind:    e.Kind,
-		Phase:   e.Phase,
-		Text:    e.Text,
+		Phase:   tame(e.Phase),
+		Text:    tame(e.Text),
 		Attempt: attempt,
 		PhaseN:  count(e.Data["n"]),
-		Engine:  e.Data["engine"],
-		Model:   e.Data["model"],
-		Session: e.Data["session"],
-		Cause:   e.Data["error"],
+		Engine:  tame(e.Data["engine"]),
+		Model:   tame(e.Data["model"]),
+		Session: tame(e.Data["session"]),
+		Cause:   tame(e.Data["error"]),
 		Cost:    money(e.Data["cost"]),
-		Gate:    e.Data["gate"],
-		Exit:    e.Data["exit"],
-		Tool:    e.Data["tool"],
-		Notes:   e.Data["notes"],
-		By:      e.Data["by"],
-		Repo:    e.Data["repo"],
-		Verb:    e.Data["verb"],
+		Gate:    tame(e.Data["gate"]),
+		Exit:    tame(e.Data["exit"]),
+		Tool:    tame(e.Data["tool"]),
+		Notes:   tame(e.Data["notes"]),
+		By:      tame(e.Data["by"]),
+		Repo:    tame(e.Data["repo"]),
+		Verb:    tame(e.Data["verb"]),
 		Story:   storyOf(e),
 		Delta:   deltaOf(e),
 		Kept:    len(e.Text),
