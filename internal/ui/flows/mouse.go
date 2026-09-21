@@ -40,18 +40,31 @@ func (s State) Hit(x, y int, e Env) point.Target {
 	}
 
 	if s.showingDetail {
-		rows := s.flowDetailRows(e.Frame.Body.H, e.Frame.Body.W, e)
-		if line >= len(rows)-3 {
-			if x < 25 {
-				return point.Target{Kind: point.FlowItem, Field: "detail_select"}
-			} else if x < 50 {
-				return point.Target{Kind: point.FlowItem, Field: "edit", ID: s.flowName}
-			}
-
-			return point.Target{Kind: point.FlowItem, Field: "detail_back"}
+		// The buttons are the third row from the floor, and a click is on
+		// one of them only where one is drawn.
+		//
+		// Both halves of that were wrong: the row was found by counting
+		// back from the length of what View returned, which is the whole
+		// body because it is padded to it — so the strip that answered
+		// was the blank floor under a short reading and never the buttons
+		// themselves. And the columns were 25 and 50, written against
+		// labels in English; the pills are translated and neither number
+		// had anything to do with where they end.
+		foot, buttons := s.detailFoot(e.Frame.Body.H, e.Frame.Body.W, e)
+		if line != e.Frame.Body.H-len(foot)+buttons {
+			return point.Target{}
 		}
 
-		return point.Target{}
+		b, ok := detailButtonAt(x, e)
+		if !ok {
+			return point.Target{}
+		}
+
+		if b.field == "edit" {
+			return point.Target{Kind: point.FlowItem, Field: b.field, ID: s.flowName}
+		}
+
+		return point.Target{Kind: point.FlowItem, Field: b.field}
 	}
 
 	if !s.creating {

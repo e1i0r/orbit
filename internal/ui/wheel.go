@@ -120,6 +120,20 @@ func (m Model) wheel(e tea.Mouse) Model {
 		return m.scrollThread(d)
 	}
 
+	if m.screen == screenFlows && m.flows.Previewing() {
+		// One flow read on its own is a diagram, a card per phase and a
+		// footer — longer than a short terminal, and it had nothing to
+		// scroll it with.
+		d := wheelRows
+		if up {
+			d = -wheelRows
+		}
+
+		m.flows = m.flows.Scroll(d)
+
+		return m
+	}
+
 	if m.screen == screenFlows && m.flows.Listing() {
 		// The list is longer than the screen as soon as a few flows have
 		// phases, and the cursor still pulls the page to whatever it is on.
