@@ -39,6 +39,13 @@ func runLoop(ctx context.Context, r loopRun) (engine.Result, error) {
 		p     = r.phase
 		out   engine.Result
 		tried []gateRefusal
+		// prev is the last thing said, which on the first turn is what the
+		// phase before the loop said and after that what the turn before
+		// said. A phase inside a loop reads feed_output exactly as a phase
+		// outside one does: the coverage flow Orbit ships asks for it on
+		// the phase that fixes what the checks caught, and nothing here
+		// set it, so that phase was handed nothing.
+		prev = r.prev
 	)
 
 	for turn := 1; ; turn++ {
@@ -72,6 +79,7 @@ func runLoop(ctx context.Context, r loopRun) (engine.Result, error) {
 			one := phaseRun{
 				store: s, task: t, phase: inner, eng: r.engines[putTo(inner.Engine, r.on)],
 				n: i + 1, wt: r.wt, others: r.others, tried: tried,
+				prev: fedOutput(inner, prev),
 			}
 
 			// What a person said goes to the first phase of the first turn
@@ -88,6 +96,13 @@ func runLoop(ctx context.Context, r loopRun) (engine.Result, error) {
 			out, err = attempts(ctx, one, r.flow.AttemptCap())
 			if err != nil {
 				return out, err
+			}
+
+			// Only when there is something to carry, as Run does it: a
+			// phase that finished silently leaves the last real answer
+			// standing rather than blanking it.
+			if out.Output != "" {
+				prev = out.Output
 			}
 		}
 
@@ -126,7 +141,12 @@ type loopRun struct {
 	// on is the engine a relay has handed the task to, which outranks what
 	// every inner phase names for the reason it does in Run: the flow was
 	// written before anybody knew which engine would still have allowance.
-	on      string
+	on string
+	// prev is what the phase before the loop said, for an inner phase that
+	// asked to be fed it. Untamed by fedOutput here: whether a phase is
+	// fed at all is that phase's own flag, and the inner phases each have
+	// one.
+	prev    string
 	others  []string
 	notes   []string
 	reviews []string

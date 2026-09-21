@@ -183,6 +183,7 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow,
 					others:  others,
 					notes:   notes,
 					reviews: reviews,
+					prev:    prevOutput,
 					gate:    g,
 				})
 			} else {

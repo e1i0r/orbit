@@ -243,3 +243,58 @@ func TestWhatAPersonSaidGoesToTheFirstPhaseOfTheFirstTurnAndNowhereElse(t *testi
 		t.Errorf("what a person said reached %d of the four prompts, want the first alone", carried)
 	}
 }
+
+// fedLoopFlow is a phase, then a loop whose inner phase asked to be fed
+// what the phase before it said — which is the shape of the coverage flow
+// Orbit ships: implement, then fix until the checks pass, reading what the
+// last try left behind.
+func fedLoopFlow(check string, max int) flow.Flow {
+	return flow.Flow{Name: "fed", Phases: []flow.Phase{
+		{Name: "implement", Engine: "fake"},
+		{Name: "green", Loop: &flow.Loop{
+			Phases: []flow.Phase{{Name: "fix", Engine: "fake", FeedOutput: true}},
+			Until:  []flow.Gate{{Name: "unit", Command: check}},
+			Max:    max,
+		}},
+	}}
+}
+
+// TestAPhaseInsideALoopIsFedWhatItAskedFor. feed_output was read for every
+// phase of a flow except the ones inside a loop, where nothing set it at
+// all: the coverage flow Orbit ships says feed_output on the phase that
+// fixes what the checks caught, and that phase was handed nothing. On the
+// first turn what it is owed is the output of the phase before the loop,
+// and on every turn after that the last thing the loop itself said.
+func TestAPhaseInsideALoopIsFedWhatItAskedFor(t *testing.T) {
+	s, r := fixture(t)
+
+	tk, err := Create(s, r, "ACME-31", "fix it until it passes", "")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	fake := engine.NewFake("what the phase said")
+
+	f := fedLoopFlow(countingGate("3"), 5)
+	if err := Run(context.Background(), s, tk, f, fakes(fake), nil); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	// The first call is implement, which asked for nothing; the three
+	// after it are the loop's turns.
+	if len(fake.Calls) != 4 {
+		t.Fatalf("the engine ran %d times, want 4 — implement and three turns", len(fake.Calls))
+	}
+
+	for i, call := range fake.Calls[1:] {
+		if !strings.Contains(call.Prompt, "## Previous phase output") {
+			t.Errorf("turn %d was fed nothing, and its phase asked to be fed:\n%s", i+1, call.Prompt)
+
+			continue
+		}
+
+		if !strings.Contains(call.Prompt, "what the phase said") {
+			t.Errorf("turn %d was fed something other than the last output:\n%s", i+1, call.Prompt)
+		}
+	}
+}
