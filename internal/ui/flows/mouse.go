@@ -173,6 +173,23 @@ func (s State) hitBuilder(x, line int, e Env) point.Target {
 		return point.Target{Kind: point.FlowItem, Field: buttonAt(x, e)}
 	}
 
+	// The phase being edited is chosen by pointing at it, the same gesture
+	// the pipeline above the form already answers.
+	if row.field == flowFieldPhaseSelect {
+		if at, on := s.phaseTabAt(x); on {
+			return point.Target{Kind: point.FlowItem, Field: "select_phase", Phase: at}
+		}
+	}
+
+	// A short dial is a row of pills, and a click on one of them is that
+	// option: the row's own action steps the dial one along, which is what
+	// ⏎ means and not what pointing at a word does.
+	if opts, current, ok := s.choices(row.field, e); ok {
+		if at, on := choiceAt(x, opts, current); on {
+			return point.Target{Kind: point.FlowItem, Field: "dial", Phase: row.field, Pane: at}
+		}
+	}
+
 	return point.Target{Kind: point.FlowItem, Phase: row.field}
 }
 
