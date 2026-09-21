@@ -39,6 +39,25 @@ orbit settings clear unread-cap      # back to the leash Orbit ships with
 
 `d` marks a task read and gives you one slot back.
 
+## The other brake: how long a run may take
+
+`run-timeout` is how long a run the window or the queue starts may take
+before it is stopped. It is empty by default — no limit — because there is
+no honest default: a phase that reads a repository is seconds and one that
+writes a migration is an hour.
+
+What it is for is the run nobody is sitting in front of. An engine wedged on
+a network read holds its worktree and its slot until somebody notices, and
+noticing is the part a person asleep cannot do.
+
+```bash
+orbit settings set run-timeout 2h    # nothing the queue starts runs longer
+orbit settings clear run-timeout     # no limit again
+```
+
+A run you start by hand takes the same limit as a flag: `orbit run -timeout
+45m`. The setting is what that flag becomes when the window starts the run.
+
 ## What it is recorded as
 
 Every gate autopilot lifts is written into the record as a decision nobody was

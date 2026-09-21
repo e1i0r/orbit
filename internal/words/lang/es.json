@@ -2103,9 +2103,21 @@
       "source": "the most the board may have spent before nothing new starts on its own; 0 is no budget",
       "value": "lo máximo que el tablero puede haber gastado antes de que nada arranque solo; 0 es sin presupuesto"
     },
+    "setting.run_timeout": {
+      "source": "how long a run started by the window may take before it is stopped, as 45m or 2h; 0 is no limit",
+      "value": "cuánto puede tardar una tarea que arranca la ventana antes de que se la detenga, como 45m o 2h; 0 es sin límite"
+    },
     "setting.quota_floor": {
       "source": "how much of a subscription engine's window must be left for the queue to go on, as a percentage; 0 is no floor",
       "value": "cuánto tiene que quedar de la ventana de un motor por suscripción para que la cola siga, en porcentaje; 0 es sin piso"
+    },
+    "settings.not_a_duration": {
+      "source": "{val} is not a length of time; write it as 45m, 2h or 90s",
+      "value": "{val} no es una duración; escríbela como 45m, 2h o 90s"
+    },
+    "settings.negative_duration": {
+      "source": "a timeout cannot be negative; 0 is no timeout at all",
+      "value": "un límite de tiempo no puede ser negativo; 0 es sin límite"
     },
     "settings.not_an_amount": {
       "source": "{val} is not an amount of money",
