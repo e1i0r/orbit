@@ -90,7 +90,10 @@ var program = map[string][]string{
 	// point — the sentence an agent is told has to be traceable to a source,
 	// and a package that could reach the record or the store could decide
 	// things about a run instead of describing one.
-	"internal/knowledge": {},
+	// internal/tame is the one exception to that, and it decides nothing:
+	// a rule is a file a model usually wrote, and its sentence is drawn
+	// and handed on.
+	"internal/knowledge": {"internal/tame"},
 	// internal/learn is where a sentence waits between being said and being
 	// agreed with: internal/db because the tray is a table, and
 	// internal/knowledge because a sentence somebody keeps becomes a fact.
@@ -178,8 +181,11 @@ var program = map[string][]string{
 	// knows — a sentence there is not knowledge until somebody agrees with
 	// it — and internal/learn imports nothing of this package's, so no
 	// cycle can be made of it.
-	"internal/task":    {"internal/engine", "internal/flow", "internal/knowledge", "internal/learn", "internal/logger", "internal/record", "internal/repo", "internal/store"},
-	"internal/tracker": {},
+	"internal/task": {"internal/engine", "internal/flow", "internal/knowledge", "internal/learn", "internal/logger", "internal/record", "internal/repo", "internal/store"},
+	// internal/tame because what a tracker answers with is somebody else's
+	// text: an issue title is drawn in the form and its body becomes the
+	// task.
+	"internal/tracker": {"internal/tame"},
 	// internal/ui/layout is widened to internal/view for one reason:
 	// layout.Columns plans a row's columns from the board it is about to
 	// draw, and the board is []view.Task. It is a widening, and it was
