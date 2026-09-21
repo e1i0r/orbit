@@ -194,6 +194,15 @@ func detailButtonAt(x int, e Env) (detailButton, bool) {
 	return detailButton{}, false
 }
 
+// What a phase's box is drawn at: the floor a short name is held to, the
+// margin the stacked form is drawn in, and the narrowest box that is still
+// a box, for a window with no room for anything.
+const (
+	diagramBoxFloor = 14
+	diagramIndent   = 2
+	diagramBoxMin   = 4
+)
+
 // renderFlowDiagram builds an ASCII box-and-arrow flowchart diagram for the given phases.
 func renderFlowDiagram(phases []flow.Phase, maxW int) []string {
 	if len(phases) == 0 {
@@ -227,18 +236,21 @@ func renderFlowDiagram(phases []flow.Phase, maxW int) []string {
 			line2 += " ⏸"
 		}
 
-		w1 := lipgloss.Width(line1)
-		w2 := lipgloss.Width(line2)
-
-		boxW := w1
-		if w2 > boxW {
-			boxW = w2
-		}
-
-		boxW += 2
-		if boxW < 14 {
-			boxW = 14
-		}
+		// As wide as its widest line and the two sides it is drawn in,
+		// never under the floor that keeps a one-word phase from reading
+		// as a tick box — and never wider than the room the diagram was
+		// given.
+		//
+		// That last was missing. The stack this falls back to when the
+		// boxes will not sit side by side is drawn two cells in and was
+		// never measured against anything, so a phase with a long name
+		// drew a box ten cells past the right of the window: the
+		// terminal wraps it, and every row of the reading below it lands
+		// where the reader is not looking.
+		boxW := min(
+			max(max(lipgloss.Width(line1), lipgloss.Width(line2))+2, diagramBoxFloor),
+			max(maxW-diagramIndent, diagramBoxMin),
+		)
 
 		padLine1 := cells.Pad(line1, boxW-2, false)
 		padLine2 := cells.Pad(line2, boxW-2, false)
