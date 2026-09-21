@@ -102,3 +102,29 @@ func framed(head, body, foot []string, h, off int) []string {
 
 	return append(out, foot...)
 }
+
+// RowAt is the repository drawn on a line of the body, and whether that
+// line is one of the list at all.
+//
+// The window used to work this out for itself — the line, less the rows of
+// the head, plus the offset — and it left out the one thing the drawing
+// knows: the list stops short of the floor, where the ways out are. So a
+// click on the blank above them, or on the line of keys itself, named the
+// repository just under the window and filtered the board to a checkout
+// the reader had never seen. That is the failure this file was written to
+// stop, arrived at by the mouse instead of the cursor.
+func (s State) RowAt(line int, e Env) (Item, bool) {
+	list := collect(e)
+
+	on := line - headRows
+	if on < 0 || on >= room(e.Frame.Body.H) {
+		return Item{}, false
+	}
+
+	at := on + s.Off(e)
+	if at < 0 || at >= len(list) {
+		return Item{}, false
+	}
+
+	return list[at], true
+}

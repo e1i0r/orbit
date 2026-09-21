@@ -83,6 +83,17 @@ func (s State) hitList(x, line int, e Env) point.Target {
 	lines := s.flowsListLines(e.Frame.Body.W, e)
 	rows := max(e.Frame.Body.H-1, 0)
 
+	// The floor is the ways out, drawn outside the page so that scrolling
+	// never takes it off the screen — so the page is the rows above it, and
+	// a click on the last row of the body is on none of the list. Counted
+	// from the top it answered the row after the page instead: on a screen
+	// with more flows than room, clicking the line that says what the keys
+	// do inspected the flow just below the window, and on a short one it
+	// opened the designer.
+	if line < 0 || line >= rows {
+		return point.Target{}
+	}
+
 	at := s.flowsListStart(lines, rows) + line
 	if at < 0 || at >= len(lines) {
 		return point.Target{}

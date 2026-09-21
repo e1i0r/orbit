@@ -59,10 +59,6 @@ func (m Model) wheelRepos(d int) Model {
 	return m
 }
 
-// reposOff is how far the list has been scrolled, which is what a click on
-// it has to be measured from.
-func (m Model) reposOff() int { return m.repolist.Off(m.reposEnv()) }
-
 // repolistKey hands one keystroke to the list.
 func (m Model) repolistKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	next, out := m.repolist.Key(msg, m.reposEnv())
