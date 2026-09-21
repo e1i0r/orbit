@@ -52,7 +52,7 @@ const supervisorHeadRows = 4
 func (s State) layout(h, w int, e Env) (cw, threadH int) {
 	cw = max(min(w-4, 110), 24)
 	if s.sideFits(w) {
-		cw = min(cw, w-sideGap-sideWidth)
+		cw = min(cw, sideRoom(w))
 	}
 	// The offers take their rows from the thread, not from the line being
 	// typed: a list that pushed the input off the bottom would hide the

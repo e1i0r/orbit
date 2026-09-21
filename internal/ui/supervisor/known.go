@@ -104,8 +104,19 @@ func (s State) cutSide(rows []string, h, facts int, e Env) []string {
 // actually have. So it takes its columns from the thread, down to the point
 // where the thread would stop being readable.
 func (s State) sideFits(w int) bool {
-	return len(s.knows) > 0 && w-sideGap-sideWidth >= sideMinThread
+	return len(s.knows) > 0 && sideRoom(w) >= sideMinThread
 }
+
+// sideRoom is the widest the thread may be drawn while the column beside it
+// still fits whole.
+//
+// The window less four things, and two of them were missing: the gutter the
+// whole screen is indented by, the cell the scroll rail stands in past the
+// text, the gap between the two columns, and the column itself. Without the
+// first two the column ran three cells past the right of the window at every
+// width it was drawn at — and what was cut off was the end of every sentence
+// in it, which is the half that says what a rule actually is.
+func sideRoom(w int) int { return w - gutter - 1 - sideGap - sideWidth }
 
 // split takes the facts apart by what was asked of them, not by what they
 // can do.

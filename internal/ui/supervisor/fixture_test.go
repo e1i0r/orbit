@@ -8,6 +8,7 @@ package supervisor
 // window.
 
 import (
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -52,7 +53,18 @@ func (h *held) record(conversation, by, channel, text string) error {
 }
 
 func (h *held) retract(at time.Time) error { h.back = append(h.back, at); return nil }
-func (h *held) forget(id string) error     { h.gone = append(h.gone, id); return nil }
+
+// forget takes the conversation off the record, which is what the real one
+// does: a fixture that only wrote the id down left every reading afterwards
+// looking at a list nothing had been taken out of.
+func (h *held) forget(id string) error {
+	h.gone = append(h.gone, id)
+	h.lines = slices.DeleteFunc(h.lines, func(l view.SupervisorLine) bool {
+		return l.Conversation == id
+	})
+
+	return nil
+}
 
 // world is the Env, with a record of its own and nothing else lent to it.
 func world(t *testing.T, kept *held) Env {
@@ -81,6 +93,28 @@ func world(t *testing.T, kept *held) Env {
 	if kept != nil {
 		e.Log, e.Record, e.Retract, e.Forget = kept.log, kept.record, kept.retract, kept.forget
 	}
+
+	return e
+}
+
+// wideWorld is that world on a terminal with room for the column beside the
+// thread.
+//
+// The column needs a hundred and three columns — seventy for the thread, a
+// gap of three, and thirty of its own — and the window above is a hundred,
+// so every test that asked for the side on it skipped itself and reported
+// a pass for a screen it never drew.
+func wideWorld(t *testing.T, kept *held) Env {
+	t.Helper()
+
+	e := world(t, kept)
+
+	frame, err := layout.Fit(sideMinThread+gutter+1+sideGap+sideWidth+gutter*2, 30)
+	if err != nil {
+		t.Fatalf("a window wide enough for the side column will not fit: %v", err)
+	}
+
+	e.Frame = frame
 
 	return e
 }
