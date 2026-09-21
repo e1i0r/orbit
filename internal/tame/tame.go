@@ -1,28 +1,29 @@
-package view
+package tame
 
 // Text that came from somewhere else, made fit to draw.
 //
-// An entry's text is whatever the engine printed, and a title is the first
-// line of a file somebody — or something — else wrote. Both reach the
-// window as they were, and the window hands them to a terminal, which reads
-// an escape sequence as an instruction rather than as characters. A phase
-// whose output holds ESC[2J clears the reader's screen on every frame that
-// draws it; one holding a colour sequence paints the rest of the row, and
-// the rows after it, in a colour no theme chose. A bell rings.
+// An entry's text is whatever the engine printed, a title is the first line
+// of a file, and a flow is a file somebody — or something — else wrote.
+// They reach the window as they were, and the window hands them to a
+// terminal, which reads an escape sequence as an instruction rather than as
+// characters. Text holding ESC[2J clears the reader's screen on every frame
+// that draws it; a colour sequence paints the rest of the row, and the rows
+// after it, in a colour no theme chose; an OSC renames the window. A bell
+// rings.
 //
-// Stripping happens here, where a record becomes something a reader is
-// shown, rather than in the drawing: the drawing adds escape sequences of
-// its own, and a pass over the finished row could not tell which were the
-// window's and which came out of an engine.
+// Stripping happens where the outside becomes something a reader is shown —
+// a record folded into entries, a flow file decoded — and not in the
+// drawing: the drawing adds escape sequences of its own, and a pass over a
+// finished row could not tell those from an engine's.
 
 import "strings"
 
-// tame is one piece of somebody else's text with the control characters
+// Text is one piece of somebody else's text with the control characters
 // taken out: escape sequences whole, and every other control character on
 // its own. Line breaks stay — the panes split on them — and a tab becomes a
 // space, because a terminal jumps to the next stop and nothing measuring
 // the row in cells knows where that is.
-func tame(s string) string {
+func Text(s string) string {
 	if !strings.ContainsFunc(s, isControl) {
 		return s
 	}

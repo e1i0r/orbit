@@ -81,7 +81,10 @@ var program = map[string][]string{
 	// nothing but files a person asked for, starts nothing, and — like the
 	// migration — nothing imports it but the front door that triggers it.
 	"internal/export": {"internal/db", "internal/record", "internal/store"},
-	"internal/flow":   {},
+	// internal/tame for one thing: a flow file is text somebody else wrote
+	// and every word of it is drawn, so it is stripped of what a terminal
+	// would read as an instruction on the way out of the decoder.
+	"internal/flow": {"internal/tame"},
 	// internal/knowledge is what Orbit has learned: a fact, its scope and
 	// where it came from. It imports nothing of Orbit's and that is the
 	// point — the sentence an agent is told has to be traceable to a source,
@@ -240,6 +243,11 @@ var program = map[string][]string{
 		"internal/words",
 	},
 	"internal/ui/prompt": {},
-	"internal/view":      {"internal/record"},
-	"internal/words":     {},
+	// internal/tame is the one thing nothing else may be: a leaf every
+	// layer is allowed to reach, because "text from outside, fit to draw"
+	// is a rule with one reading and the packages that need it — the fold
+	// and the flow decoder — sit at different heights.
+	"internal/tame":  {},
+	"internal/view":  {"internal/record", "internal/tame"},
+	"internal/words": {},
 }
