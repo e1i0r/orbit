@@ -4,11 +4,13 @@ package flows
 // on the screen when there are more than there is room for.
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/layout"
 )
 
@@ -149,5 +151,52 @@ func TestTheRailIsThereOnlyWhenThereIsMoreThanFits(t *testing.T) {
 	top := ansi.Strip(strings.Join(s.View(short, e.Frame.Body.W, e), "\n"))
 	if !strings.Contains(top, "┃") && !strings.Contains(top, "│") {
 		t.Errorf("a list longer than the screen draws no rail:\n%s", top)
+	}
+}
+
+// TestAFlowTallerThanThePageKeepsItsHead. A flow's head is the one row that
+// carries its name, the mark saying it is chosen, and the pills that
+// inspect, edit and delete it. The page followed the end of the chosen
+// flow, so twenty phases on a short terminal drew phases seven to nineteen
+// and nothing else: nothing on the screen said which flow was chosen, and
+// d deleted one whose name was not drawn anywhere.
+func TestAFlowTallerThanThePageKeepsItsHead(t *testing.T) {
+	dir := t.TempDir()
+
+	phases := make([]string, 0, 20)
+	for i := range 20 {
+		phases = append(phases, fmt.Sprintf(`{"name":"phase-%02d","engine":"zeta","prompt":"do %d"}`, i, i))
+	}
+
+	writeFlowFile(t, dir, "tall", `{"name":"tall","description":"a flow with twenty phases","phases":[`+
+		strings.Join(phases, ",")+`]}`)
+
+	e := world(t)
+	e.Flows = flowsTestDir(dir)
+
+	frame, err := layout.Fit(100, 24)
+	if err != nil {
+		t.Skip("a 100x24 terminal does not fit this build's frame")
+	}
+
+	e.Frame = frame
+
+	s := Open(FromBoard, e)
+
+	for at, d := range s.listed {
+		if d.Name == "tall" {
+			s.sel = at
+		}
+	}
+
+	drawn := ansi.Strip(strings.Join(s.View(e.Frame.Body.H, e.Frame.Body.W, e), "\n"))
+	if !strings.Contains(drawn, cells.Mark+"  tall") {
+		t.Errorf("the chosen flow's own row is not on the screen:\n%s", drawn)
+	}
+
+	for _, pill := range []string{"Details", "Edit", "Delete"} {
+		if !strings.Contains(drawn, pill) {
+			t.Errorf("the chosen flow's %s pill is not on the screen:\n%s", pill, drawn)
+		}
 	}
 }

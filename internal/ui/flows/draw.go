@@ -116,7 +116,13 @@ func (s State) flowsListStart(lines []flowLine, rows int) int {
 	case first < start:
 		return first
 	case last >= start+rows:
-		return min(last-rows+1, len(lines)-rows)
+		// The end of the flow, unless the flow is taller than the page —
+		// then its head, which is the row carrying the name, the mark and
+		// the pills that inspect, edit and delete it. A flow of twenty
+		// phases chosen on a short terminal showed phases seven to
+		// nineteen and nothing else: no name, no mark, and d deleted a
+		// flow whose name was not on the screen.
+		return min(min(last-rows+1, first), len(lines)-rows)
 	}
 
 	return start
