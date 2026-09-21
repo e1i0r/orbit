@@ -200,13 +200,21 @@ const (
 	settingsRowLines = 3
 )
 
+// reposHeadRows is what stands above the repository list and does not
+// scroll: the blank row, the title, the sentence under it, and the blank
+// that sets the list off.
+const reposHeadRows = 4
+
 func (m Model) hitRepos(x, y int) point.Target {
 	line, ok := m.frame.BodyRow(y)
 	if !ok {
 		return point.Target{}
 	}
 
-	rowIdx := line - 4
+	// The rows the list is drawn under, and however far it has been
+	// scrolled: a click is a line of the body, and the row it names is
+	// that line plus the offset the drawing took off.
+	rowIdx := line - reposHeadRows + m.reposOff()
 
 	repos := m.collectRepos()
 	if rowIdx >= 0 && rowIdx < len(repos) {

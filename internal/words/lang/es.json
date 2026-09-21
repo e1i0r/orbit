@@ -2650,8 +2650,8 @@
       "value": "qué queda de las ventanas de cada motor, y cuándo vuelve cada una"
     },
     "quota.ways_out": {
-      "source": "{back} back",
-      "value": "{back} volver"
+      "source": "{up_down} move · {back} back",
+      "value": "{up_down} mover · {back} volver"
     },
     "key.quota": {
       "source": "quota",

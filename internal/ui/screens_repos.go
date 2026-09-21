@@ -15,6 +15,7 @@ func (m Model) reposEnv() repos.Env {
 		Keys:   m.keys,
 		Board:  m.board,
 		Filter: m.repoFilter,
+		Frame:  m.frame,
 	}
 }
 
@@ -49,6 +50,18 @@ func (m Model) openRepos() Model {
 
 	return m
 }
+
+// wheelRepos moves the cursor a notch, and the list follows it — which is
+// what every other list in this window does under the same notch.
+func (m Model) wheelRepos(d int) Model {
+	m.repolist = m.repolist.Scroll(d, m.reposEnv())
+
+	return m
+}
+
+// reposOff is how far the list has been scrolled, which is what a click on
+// it has to be measured from.
+func (m Model) reposOff() int { return m.repolist.Off(m.reposEnv()) }
 
 // repolistKey hands one keystroke to the list.
 func (m Model) repolistKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {

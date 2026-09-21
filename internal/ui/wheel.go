@@ -187,6 +187,29 @@ func (m Model) wheel(e tea.Mouse) Model {
 		return m.wheelSettings(d)
 	}
 
+	if m.screen == screenQuota {
+		// A reading and not a list: there is nothing on it to choose, so
+		// the wheel moves the page rather than a cursor.
+		d := wheelRows
+		if up {
+			d = -wheelRows
+		}
+
+		return m.wheelQuota(d)
+	}
+
+	if m.screen == screenRepos {
+		// A list with one row chosen: the wheel moves the choice and the
+		// list follows it, which is the palette's rule and the one every
+		// other list here follows.
+		d := wheelRows
+		if up {
+			d = -wheelRows
+		}
+
+		return m.wheelRepos(d)
+	}
+
 	if m.screen == screenHelp {
 		// The sheet scrolls under the wheel by the same rows the arrows
 		// move — one distance for the hand, whatever it is holding.
