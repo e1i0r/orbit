@@ -94,6 +94,50 @@ func stopSpending(s *store.Store, t Task, p flow.Phase, spent, budget float64) e
 	return fmt.Errorf("task %s: %s", t.ID, text)
 }
 
+// stopRetrying ends a run whose next attempt at a phase would take it past
+// the budget.
+//
+// The same event as stopSpending and a different sentence: the phase did
+// run — twice, or three times — and what did not happen is another go at
+// it. A reader deciding whether to raise the cap is being told which
+// attempt it was, because a phase that was refused three times is a
+// different question from a phase that was never tried.
+func stopRetrying(s *store.Store, t Task, p flow.Phase, n int, spent, budget float64) error {
+	text := fmt.Sprintf("Spent %s of the %s this task was allowed, so phase %q was not tried a %s time.",
+		money(spent), money(budget), p.Name, ordinal(n))
+
+	_ = emit(s, t, record.Event{ //nolint:errcheck // best-effort: the run is ending either way
+		Kind: record.TaskOverBudget,
+		Text: text,
+		Data: map[string]string{
+			"spent":   money(spent),
+			"budget":  money(budget),
+			"phase":   p.Name,
+			"attempt": strconv.Itoa(n),
+		},
+	})
+
+	return fmt.Errorf("task %s: %s", t.ID, text)
+}
+
+// ordinal is how the sentence above counts: an attempt number a reader
+// reads rather than one they decode. Past the fifth it is the number and a
+// suffix, which no flow has yet needed.
+func ordinal(n int) string {
+	switch n {
+	case 2:
+		return "second"
+	case 3:
+		return "third"
+	case 4:
+		return "fourth"
+	case 5:
+		return "fifth"
+	}
+
+	return strconv.Itoa(n) + "th"
+}
+
 // money is a figure as the record spells one: the shortest form that reads
 // back as the same number, which is how phase.finished writes a cost.
 func money(v float64) string { return strconv.FormatFloat(v, 'f', -1, 64) }
