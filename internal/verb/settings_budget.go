@@ -10,6 +10,7 @@ package verb
 import (
 	"errors"
 	"strconv"
+	"strings"
 
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/words"
@@ -81,6 +82,57 @@ func budgetSettings() []Rule {
 		},
 		Value: func(cfg store.Settings) string { return strconv.Itoa(cfg.QuotaFloor) },
 		Clear: func(cfg *store.Settings) { cfg.QuotaFloor = store.Shipped().QuotaFloor },
+	}, {
+		Name: "decisions",
+		About: func(p *words.Printer) string {
+			return p.T("setting.decisions",
+				"whether a decision engine answers for the supervisor: off, shadow (it writes down what "+
+					"it would have said), or on")
+		},
+		Set: func(p *words.Printer, cfg *store.Settings, value string) (string, error) {
+			value = strings.TrimSpace(strings.ToLower(value))
+
+			switch value {
+			case store.DecisionsOff, store.DecisionsShadow, store.DecisionsOn:
+				cfg.Decisions = value
+
+				return value, nil
+			}
+
+			return "", errors.New(p.T("settings.not_a_decision_mode",
+				"{val} is not one of off, shadow or on", words.Arg{Name: "val", Value: value}))
+		},
+		Value: func(cfg store.Settings) string { return cfg.Deciding() },
+		Clear: func(cfg *store.Settings) { cfg.Decisions = store.Shipped().Decisions },
+	}, {
+		Name: "decision-floor",
+		About: func(p *words.Printer) string {
+			return p.T("setting.decision_floor",
+				"how sure the decision engine has to be before Orbit acts on what it says, as a "+
+					"percentage; below it the run waits for you")
+		},
+		Set: func(p *words.Printer, cfg *store.Settings, value string) (string, error) {
+			n, err := strconv.Atoi(strings.TrimSpace(value))
+			if err != nil {
+				return "", errors.New(p.T("settings.not_a_number", "{val} is not a whole number",
+					words.Arg{Name: "val", Value: value}))
+			}
+
+			// Under fifty is a coin toss with an opinion, and a hundred is
+			// a floor nothing clears. Both are refused where they are
+			// typed rather than found out by a supervisor that acts on
+			// everything, or on nothing.
+			if n < 50 || n > 99 {
+				return "", errors.New(p.T("settings.not_a_bar",
+					"a decision floor is a percentage between 50 and 99; below fifty is a coin toss"))
+			}
+
+			cfg.DecisionFloor = n
+
+			return value, nil
+		},
+		Value: func(cfg store.Settings) string { return strconv.Itoa(cfg.DecisionBar()) },
+		Clear: func(cfg *store.Settings) { cfg.DecisionFloor = store.Shipped().DecisionFloor },
 	}}
 }
 

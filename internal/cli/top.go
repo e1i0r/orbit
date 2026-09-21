@@ -25,6 +25,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/e1i0r/orbit/internal/board"
+	"github.com/e1i0r/orbit/internal/env"
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/quota"
 	"github.com/e1i0r/orbit/internal/repo"
@@ -110,11 +111,11 @@ func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 	// window that would have drawn in Spanish.
 	p := ctx.printer()
 
-	switch env := os.Getenv("ORBIT_LANG"); {
+	switch spoken := env.Read(env.Lang); {
 	case lang != "":
 		p = words.For(words.Resolve(lang, "", ""))
-	case env != "":
-		p = words.For(words.Resolve(env, "", ""))
+	case spoken != "":
+		p = words.For(words.Resolve(spoken, "", ""))
 	}
 
 	if err := mustBeDirectory(p, dir); err != nil {
@@ -150,7 +151,7 @@ func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 	// speaks: the flag beats $ORBIT_LANG, which beats the saved setting,
 	// which beats the locale the process was started in. The window is
 	// given the answer, not the question, and so are its ports.
-	spoken := words.For(words.Resolve(lang, os.Getenv("ORBIT_LANG"), cfg.Language()))
+	spoken := words.For(words.Resolve(lang, env.Read(env.Lang), cfg.Language()))
 
 	return ui.Options{
 		Root: underHome(dir, home),

@@ -3,7 +3,7 @@ package flows
 import (
 	"testing"
 
-	"charm.land/bubbletea/v2"
+	tea "charm.land/bubbletea/v2"
 )
 
 func TestFlowsBuilderFullLifecycle(t *testing.T) {

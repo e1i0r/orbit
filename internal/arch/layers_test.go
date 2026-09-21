@@ -73,7 +73,7 @@ var program = map[string][]string{
 	// else's program. What that cost, how long it took and which of the
 	// binaries on this machine it was are facts no other package sees. It
 	// widens nothing else: engine still knows no record, store or task.
-	"internal/engine": {"internal/logger"},
+	"internal/engine": {"internal/env", "internal/logger"},
 	// internal/export is internal/migrate read backwards, and it carries the
 	// same three imports for the same three reasons: internal/db to read the
 	// record, internal/record to turn a row back into the line it was
@@ -103,7 +103,7 @@ var program = map[string][]string{
 	// nothing else — it starts no run, and nothing imports it but the two
 	// front doors that trigger it.
 	"internal/migrate": {"internal/db", "internal/record", "internal/store"},
-	"internal/quota":   {},
+	"internal/quota":   {"internal/env"},
 	"internal/record":  {},
 	"internal/repo":    {"internal/store"},
 	// internal/store lists internal/db for one method: Record, which opens
@@ -122,7 +122,7 @@ var program = map[string][]string{
 	// either. It widens nothing else — the store still decides nothing about
 	// a run and still reaches no engine, no task and no board — and
 	// internal/logger imports nothing of Orbit's, so there is no cycle.
-	"internal/store": {"internal/db", "internal/logger"},
+	"internal/store": {"internal/env", "internal/env", "internal/db", "internal/logger"},
 	// internal/supervisor is the one conversation in Orbit that belongs to
 	// no task: a global, append-only thread hanging off the state root. It
 	// lived inside internal/task for as long as there was nowhere else to
@@ -175,8 +175,11 @@ var program = map[string][]string{
 	// knows — a sentence there is not knowledge until somebody agrees with
 	// it — and internal/learn imports nothing of this package's, so no
 	// cycle can be made of it.
-	"internal/task":    {"internal/engine", "internal/flow", "internal/knowledge", "internal/learn", "internal/logger", "internal/record", "internal/repo", "internal/store"},
-	"internal/tracker": {},
+	"internal/task": {
+		"internal/engine", "internal/flow", "internal/hunch", "internal/knowledge", "internal/learn",
+		"internal/logger", "internal/record", "internal/repo", "internal/store",
+	},
+	"internal/tracker": {"internal/env"},
 	// internal/ui/layout is widened to internal/view for one reason:
 	// layout.Columns plans a row's columns from the board it is about to
 	// draw, and the board is []view.Task. It is a widening, and it was
@@ -240,6 +243,17 @@ var program = map[string][]string{
 		"internal/words",
 	},
 	"internal/ui/prompt": {},
-	"internal/view":      {"internal/record"},
-	"internal/words":     {},
+	// internal/env is the list of what Orbit reads from the environment,
+	// spelled once. Every layer may reach it and it reaches nothing: a
+	// list of names that decides nothing is the only kind of thing that
+	// can sit under all of them.
+	"internal/env": {},
+	// internal/hunch is the supervisor's fast half: one typed answer about a
+	// run that stopped, and how sure it is. A hunch and not a decision,
+	// because a decision in this record is already what somebody chose and
+	// why. A leaf that imports nothing of Orbit's, like every port whose
+	// absence has to mean "as it was".
+	"internal/hunch": {"internal/env"},
+	"internal/view":  {"internal/record"},
+	"internal/words": {"internal/env"},
 }

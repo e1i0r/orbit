@@ -108,8 +108,12 @@ var theDials = map[string][]string{
 	"check-record": {"off", "on"},
 	"notify":       {"off", "on"},
 	"quota-floor":  {"0", "10", "25", "50"},
-	"effort":       nil,
-	"thinking":     nil,
+	// The decision engine, and how sure it has to be. Shadow sits between
+	// the two because it is how a reader finds out whether to trust it.
+	"decisions":      {"off", "shadow", "on"},
+	"decision-floor": {"60", "70", "80", "90"},
+	"effort":         nil,
+	"thinking":       nil,
 }
 
 // offers is what one row puts under the cursor, and the labels for them when

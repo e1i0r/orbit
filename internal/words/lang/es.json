@@ -2103,9 +2103,25 @@
       "source": "the most the board may have spent before nothing new starts on its own; 0 is no budget",
       "value": "lo máximo que el tablero puede haber gastado antes de que nada arranque solo; 0 es sin presupuesto"
     },
+    "setting.decisions": {
+      "source": "whether a decision engine answers for the supervisor: off, shadow (it writes down what it would have said), or on",
+      "value": "si un motor de decisión responde por el supervisor: off, shadow (anota lo que habría dicho) u on"
+    },
+    "setting.decision_floor": {
+      "source": "how sure the decision engine has to be before Orbit acts on what it says, as a percentage; below it the run waits for you",
+      "value": "qué tan seguro tiene que estar el motor de decisión para que Orbit actúe, en porcentaje; por debajo la tarea te espera"
+    },
     "setting.quota_floor": {
       "source": "how much of a subscription engine's window must be left for the queue to go on, as a percentage; 0 is no floor",
       "value": "cuánto tiene que quedar de la ventana de un motor por suscripción para que la cola siga, en porcentaje; 0 es sin piso"
+    },
+    "settings.not_a_decision_mode": {
+      "source": "{val} is not one of off, shadow or on",
+      "value": "{val} no es off, shadow ni on"
+    },
+    "settings.not_a_bar": {
+      "source": "a decision floor is a percentage between 50 and 99; below fifty is a coin toss",
+      "value": "un piso de decisión es un porcentaje entre 50 y 99; por debajo de cincuenta es lanzar una moneda"
     },
     "settings.not_an_amount": {
       "source": "{val} is not an amount of money",

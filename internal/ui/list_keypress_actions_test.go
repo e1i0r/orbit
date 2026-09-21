@@ -3,7 +3,7 @@ package ui
 import (
 	"testing"
 
-	"charm.land/bubbletea/v2"
+	tea "charm.land/bubbletea/v2"
 	"github.com/e1i0r/orbit/internal/view"
 )
 

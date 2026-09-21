@@ -1,8 +1,9 @@
 package ui
 
-import "github.com/e1i0r/orbit/internal/ui/roster"
-
-import "github.com/e1i0r/orbit/internal/ui/cells"
+import (
+	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/roster"
+)
 
 // The one answer in this package to "what engines are there, and what do
 // they offer".

@@ -17,9 +17,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"time"
+
+	"github.com/e1i0r/orbit/internal/env"
 )
 
 // ErrNoKey says the issue could be named but not read: there is no
@@ -47,7 +48,7 @@ func Read(ctx context.Context, iss Issue) (Issue, error) {
 		return iss, fmt.Errorf("%s: %w", iss.Kind, ErrNoKey)
 	}
 
-	key := strings.TrimSpace(os.Getenv("LINEAR_API_KEY"))
+	key := env.Read(env.LinearKey)
 	if key == "" {
 		return iss, fmt.Errorf("linear %s: %w", iss.ID, ErrNoKey)
 	}
@@ -70,7 +71,7 @@ func Read(ctx context.Context, iss Issue) (Issue, error) {
 // of an issue of this kind. It is what a form asks before it offers to.
 func Readable(kind string) bool {
 	if strings.EqualFold(kind, "linear") {
-		return strings.TrimSpace(os.Getenv("LINEAR_API_KEY")) != ""
+		return env.Set(env.LinearKey)
 	}
 
 	return false

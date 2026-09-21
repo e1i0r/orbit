@@ -51,8 +51,8 @@ var waysIn = map[string][]string{
 	"internal/chat": {"internal/logger", "internal/record", "internal/verb", "internal/words"},
 
 	"internal/cli": {
-		"internal/board", "internal/chat", "internal/engine", "internal/export", "internal/flow",
-		"internal/knowledge", "internal/learn", "internal/logger", "internal/mcp",
+		"internal/env", "internal/board", "internal/chat", "internal/engine", "internal/export", "internal/flow",
+		"internal/hunch", "internal/knowledge", "internal/learn", "internal/logger", "internal/mcp",
 		"internal/migrate", "internal/quota", "internal/record", "internal/repo",
 		"internal/store", "internal/supervisor", "internal/task", "internal/tracker",
 		"internal/ui", "internal/ui/fact", "internal/ui/known", "internal/ui/roster",

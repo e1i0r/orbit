@@ -257,6 +257,16 @@ const (
 	// it printed — which is what the next turn is told.
 	LoopChecked = "loop.checked"
 
+	// Decided is the decision engine answering about a run that stopped:
+	// Data["choice"] is one of done, again or human, Data["confidence"] is
+	// how sure it was, Data["by"] names the model and Data["mode"] says
+	// whether Orbit acted on it or only wrote it down.
+	//
+	// Written whether or not it was acted on, because a supervisor that
+	// decided quietly is a supervisor no reader can check. In shadow it is
+	// the whole of what the engine does.
+	Decided = "decision.made"
+
 	GatePassed = "gate.passed" // a phase gate verification check passed
 	GateFailed = "gate.failed" // a phase gate verification check failed
 

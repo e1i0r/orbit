@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/hunch"
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/quota"
 	"github.com/e1i0r/orbit/internal/task"
@@ -143,7 +144,16 @@ func runTask(ctx Context, args []string) error {
 
 	logger.Info("cli/run", "starting task %s in repo %s on flow %s (timeout=%v)", id, r.Name, chosen, *timeout)
 
-	if err := task.Run(running, s, t, f, engines, task.FileGate(s, time.Second),
+	// The decision engine, when this machine has a key for one. Without it
+	// the gate is what it was: see internal/hunch, and the `hunches`
+	// setting, which is off until somebody turns it on even where a key is
+	// there.
+	gate := task.FileGate(s, time.Second)
+	if port, ready := hunch.FromEnv(); ready {
+		gate = task.FileGate(s, time.Second, port)
+	}
+
+	if err := task.Run(running, s, t, f, engines, gate,
 		allowancePort(quota.FromEnv())); err != nil {
 		return fmt.Errorf("task %s execution: %w", id, err)
 	}

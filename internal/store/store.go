@@ -22,6 +22,7 @@ import (
 	"unicode"
 
 	"github.com/e1i0r/orbit/internal/db"
+	"github.com/e1i0r/orbit/internal/env"
 )
 
 // dirMode and fileMode keep the state root to its owner.
@@ -121,7 +122,7 @@ func ValidTaskID(taskID string) error {
 // walking a tree, and merely listing repositories must not mint a state
 // directory.
 func RootPath() (string, error) {
-	root := os.Getenv("ORBIT_HOME")
+	root := env.Read(env.Home)
 	if root == "" {
 		home, err := os.UserHomeDir()
 		if err != nil {
