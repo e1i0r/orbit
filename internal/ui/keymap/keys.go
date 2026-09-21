@@ -29,7 +29,7 @@ type Keys struct {
 	Open, Back, NextTab, PrevTab, Sideways key.Binding
 
 	// Starting work.
-	Start, Run, ChangeFlow, Menu, Compose key.Binding
+	Start, Run, ChangeFlow, Menu, Board, Compose key.Binding
 
 	// Doing something to the run in front of you.
 	Pause, Resume, Skip, Cancel, Requeue    key.Binding
@@ -95,7 +95,15 @@ func New(p *words.Printer) Keys {
 		// done to the thing under the cursor, including what cannot, with
 		// the reason. It is bound beside Start because both are about the
 		// row, not about a standing setting.
-		Menu: binding("m", p.T("key.menu", "menu"), "m"),
+		Menu: binding("m", p.T("key.menu", "task menu"), "m"),
+		// The board's own commands, on the shift of the same letter. Both
+		// menus were m, and which one it opened depended on whether the
+		// cursor happened to be on a row: one keystroke, two different
+		// menus, and no way to tell in advance which you would get. The
+		// shifted pair says it — m is about this task, M is about the
+		// board — and the bar carries both so neither is a key somebody
+		// has to be told about.
+		Board: binding("M", p.T("key.board_menu", "board menu"), "M"),
 
 		Pause:  binding("p", p.T("key.pause", "pause"), "p"),
 		Resume: binding("r", p.T("key.resume", "resume"), "r"),
@@ -130,8 +138,12 @@ func New(p *words.Printer) Keys {
 		// of this map are told apart.
 		Flows: binding("F", p.T("key.flows", "flows"), "F"),
 		// K for what Orbit knows, a capital like the screens beside it.
-		Knowledge:   binding("K", p.T("key.knowledge", "what orbit knows"), "K"),
-		EngineKnobs: binding("M", p.T("key.engines", "engine & model knobs"), "M"),
+		Knowledge: binding("K", p.T("key.knowledge", "what orbit knows"), "K"),
+		// E for engine, which is what this screen is about. It was M for
+		// model, and M is the board's own menu now: the pair of menus
+		// wanted the shifted letter more than the knobs did, and a screen
+		// named after the first word of what it holds is no worse for it.
+		EngineKnobs: binding("E", p.T("key.engines", "engine & model knobs"), "E"),
 		Quota:       binding("Q", p.T("key.quota", "quota"), "Q"),
 		Supervisor:  binding("S", p.T("key.supervisor", "supervisor"), "S"),
 		Autopilot:   binding("A", p.T("key.autopilot", "autopilot"), "A"),
@@ -150,7 +162,7 @@ func New(p *words.Printer) Keys {
 // purpose: a reader who has read one is not learning the other from scratch.
 func (k Keys) TaskVerbs() []key.Binding {
 	return []key.Binding{
-		k.Menu, k.Pause, k.Resume, k.Skip, k.Cancel, k.Requeue,
+		k.Menu, k.Board, k.Pause, k.Resume, k.Skip, k.Cancel, k.Requeue,
 		k.Take, k.Hand, k.Ask, k.MarkRead, k.Delete, k.Edit,
 	}
 }

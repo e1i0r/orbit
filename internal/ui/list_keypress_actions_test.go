@@ -73,10 +73,10 @@ func TestAllListKeypressActions(t *testing.T) {
 
 	sendKey(0, tea.KeyEsc, "esc") // back to list
 
-	sendKey('M', 0, "") // EngineKnobs (capital 'M')
+	sendKey('E', 0, "") // EngineKnobs (capital 'E')
 
 	if m.screen != screenEngines {
-		t.Errorf("screen after M = %v, want screenEngines", m.screen)
+		t.Errorf("screen after E = %v, want screenEngines", m.screen)
 	}
 
 	sendKey(0, tea.KeyEsc, "esc") // back to list

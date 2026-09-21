@@ -203,7 +203,11 @@ func (m Model) startKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.openFlows(), nil
 	case key.Matches(k, key.NewBinding(key.WithKeys("m", "e"))):
 		return m.openEngines(), nil
-	case key.Matches(k, key.NewBinding(key.WithKeys("o", "E"))):
+	// o alone. E was an alias for it here and is the engine knobs
+	// everywhere, so inside this dialog the same shifted letter did two
+	// things — and the dialog's own case won, which is how a key that
+	// opens a screen quietly cycled a dial instead.
+	case key.Matches(k, key.NewBinding(key.WithKeys("o"))):
 		return m.cycleEffort(), nil
 	case key.Matches(k, key.NewBinding(key.WithKeys("t", "w"))):
 		return m.cycleThinking(), nil

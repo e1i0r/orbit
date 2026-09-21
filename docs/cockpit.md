@@ -44,7 +44,8 @@ Open a task and twelve tabs cover it.
 | `↑` `↓` / `k` `j` | move through the queue |
 | `g` `G` | first, last |
 | `⏎` | open the task, or fold the band under the cursor |
-| `m` | the menu: everything that can be done to this row |
+| `m` | the task's menu: everything that can be done to this row |
+| `M` | the board's menu: the commands that are about no task |
 | `n` | start a run |
 | `N` | write a task |
 | `p` `r` `s` | pause, resume, skip the phase it is waiting in front of |
@@ -66,7 +67,7 @@ cursor. That is the whole of how the two halves are told apart.
 | :--- | :--- |
 | `R` | repositories |
 | `F` | flows, and the designer |
-| `M` | engine and model knobs |
+| `E` | engine and model knobs |
 | `Q` | what is left of each engine's quota |
 | `S` | the supervisor thread |
 | `K` | what Orbit knows |

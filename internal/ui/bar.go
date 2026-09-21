@@ -139,6 +139,19 @@ func (m Model) barLayout(w int) (string, []placedHint, []headerZone) {
 		{key: m.keys.Help.Help().Key, text: theme.Chrome().Render("[" + m.keys.Help.Help().Key + "]")},
 		{text: theme.Chrome().Render("[" + m.keys.Quit.Help().Key + "]")},
 	}
+	// The board's menu is offered where it is a different door from m:
+	// on a task's own screen, and on the list when the cursor is on a
+	// row. With no row under the cursor m already opens the board's menu,
+	// and two hints for one answer is a bar making a distinction the
+	// window does not. A dialog or a form takes every keystroke while it
+	// is up, so neither offers it at all.
+	if m.boardMenuDiffers() {
+		tailHints = append([]barHint{tailHints[0], {
+			key:  m.keys.Board.Help().Key,
+			text: theme.Chrome().Render("[" + m.keys.Board.Help().Key + "]"),
+		}}, tailHints[1:]...)
+	}
+
 	tail := strings.Join(drawn(tailHints), " ")
 	chips := m.barFooterChips()
 	chipsText := chipLine(chips)

@@ -84,6 +84,8 @@ func (m Model) key(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.openPalette(), nil
 	case key.Matches(msg, m.keys.Menu):
 		return m.openMenuForContext(), nil
+	case key.Matches(msg, m.keys.Board):
+		return m.openMenu(""), nil
 	}
 
 	return m.listKey(msg)

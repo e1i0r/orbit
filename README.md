@@ -42,7 +42,7 @@ Ten things you will actually do, each with its own page and its own recording.
 
 | 11 | [**Orbit by chat**](docs/chat.md) | every verb as a command on your phone, and a sentence the supervisor answers |
 
-Reference: [keys and screens](docs/cockpit.md) · [engines and models](docs/engines.md) · [the map](docs/map.md)
+Reference: [keys and screens](docs/cockpit.md) · [engines and models](docs/engines.md) · [the environment](docs/env.md) · [the map](docs/map.md)
 
 ---
 

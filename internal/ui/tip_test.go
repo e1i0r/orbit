@@ -110,21 +110,29 @@ func TestPointingAtAHintExplainsIt(t *testing.T) {
 
 	_, hints, _ := m.barLayout(m.frame.Bar.W)
 
-	x, found := 0, false
+	// Whichever hint the bar is carrying here, rather than a key written
+	// into the test: what fits on the bar depends on the width and on how
+	// many verbs this row offers, and a test pinned to one letter fails
+	// the day another hint is added rather than the day this breaks.
+	x, key, found := 0, "", false
 
 	for _, h := range hints {
-		if h.key == "r" {
-			x, found = h.x, true
+		if h.key != "" && m.meaning(keystroke(h.key)) != "" {
+			x, key, found = h.x, h.key, true
+
+			break
 		}
 	}
 
 	if !found {
-		t.Fatal("the bar offers no r to point at")
+		t.Fatal("the bar offers no hint to point at")
 	}
 
+	means := m.meaning(keystroke(key))
+
 	on := m.hover(tea.Mouse{X: x, Y: y})
-	if band := ansi.Strip(on.bandLine(120)); !strings.Contains(band, "beginning with the phase") {
-		t.Errorf("the band says %q, want what the hint under the pointer does", band)
+	if band := ansi.Strip(on.bandLine(120)); !strings.Contains(band, means) {
+		t.Errorf("the band says %q, want %q — what the hint under the pointer does", band, means)
 	}
 
 	if got.word != "" {
@@ -132,7 +140,7 @@ func TestPointingAtAHintExplainsIt(t *testing.T) {
 	}
 
 	off := on.hover(tea.Mouse{X: x, Y: y + 5})
-	if band := ansi.Strip(off.bandLine(120)); strings.Contains(band, "beginning with the phase") {
+	if band := ansi.Strip(off.bandLine(120)); strings.Contains(band, means) {
 		t.Errorf("the sentence stayed behind the pointer: %q", band)
 	}
 }

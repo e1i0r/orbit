@@ -1899,9 +1899,13 @@
       "source": "interactive CLI",
       "value": "cli interactiva"
     },
+    "key.board_menu": {
+      "source": "board menu",
+      "value": "menú del tablero"
+    },
     "key.menu": {
-      "source": "menu",
-      "value": "menú"
+      "source": "task menu",
+      "value": "menú de la tarea"
     },
     "menu.gone": {
       "source": "the task this menu was opened on is no longer on the board",
