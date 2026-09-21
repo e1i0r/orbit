@@ -137,3 +137,39 @@ func root(t *testing.T) string {
 
 	return ""
 }
+
+// TestTheWindowMayRunAChildOfAScreenCommand.
+//
+// `orbit board` is a screen the window already is, so the parent is
+// WindowOpens; `board new` writes a task down and is a verb like any
+// other. The policy was read off the parent, so the port refused the
+// child — and the form's save, which is exactly that child, was refused
+// from the day writing a task moved under board.
+func TestTheWindowMayRunAChildOfAScreenCommand(t *testing.T) {
+	said := &strings.Builder{}
+
+	run := doPort(inSpanish{})
+
+	// The child of a screen command: refused before, and now only refused
+	// by whatever the verb itself says.
+	err := run("board", []string{"new", "-id", ""}, said)
+	if err != nil && strings.Contains(err.Error(), "pantalla") {
+		t.Errorf("the window refused `board new` because `board` draws a screen: %v", err)
+	}
+
+	// And the parent on its own is still a screen.
+	if err := run("board", nil, said); err == nil || !strings.Contains(err.Error(), "pantalla") {
+		t.Errorf("`board` on its own answered %v, want the screen it opens", err)
+	}
+
+	// A word that is not one of its children is not a child.
+	if err := run("board", []string{"nonsense"}, said); err == nil ||
+		!strings.Contains(err.Error(), "pantalla") {
+		t.Errorf("`board nonsense` answered %v, want the parent's own answer", err)
+	}
+}
+
+// inSpanish is the language port these tests read refusals in.
+type inSpanish struct{}
+
+func (inSpanish) Language() string { return "es" }

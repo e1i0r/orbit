@@ -114,6 +114,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return next.say(m.errSaid(msg.Err)), nil
 		}
 
+		// A command that finished with nothing to say leaves no pane: the
+		// reader asked for a task to be written, not for a window with
+		// "no output yet" in it. What they want to see is the board, with
+		// the task on it — which is what pendingID already brings them
+		// to. A command that printed something keeps its pane, because
+		// somebody may want to read it.
+		if strings.TrimSpace(next.output) == "" {
+			next.watchUp = false
+		}
+
 		return next.say(next.commandSaid(msg)), nil
 	case sessionMsg:
 		return m.session(msg)
