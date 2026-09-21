@@ -121,6 +121,38 @@ func TestTheWordJumpCrossesTheBlanksAndThenTheWord(t *testing.T) {
 	}
 }
 
+// TestAWalkStopsAtTheEndOfTheValue. Each of these walks reads the rune
+// beside the caret to decide whether to take another step, so the test it
+// makes before reading is the whole of what keeps it inside the value: home
+// on the first line, end on the last, and a word jump from either edge —
+// the four places a reader reaches by holding a key down.
+func TestAWalkStopsAtTheEndOfTheValue(t *testing.T) {
+	const val = "uno\ndos\ntres" // twelve runes, three lines
+
+	for _, c := range []struct {
+		name string
+		at   int
+		walk func(*Field)
+		want int
+	}{
+		{"home on the first line", 0, (*Field).LineStart, 0},
+		{"home at the head of a line", 4, (*Field).LineStart, 4},
+		{"end on the last line", len(val), (*Field).LineEnd, len(val)},
+		{"end at the tail of a line", 3, (*Field).LineEnd, 3},
+		{"a word back from the start", 0, (*Field).WordLeft, 0},
+		{"a word on from the end", len(val), (*Field).WordRight, len(val)},
+	} {
+		in := New(val)
+		in.MoveTo(c.at)
+
+		c.walk(&in)
+
+		if in.At != c.want {
+			t.Errorf("%s left the caret at %d, want %d", c.name, in.At, c.want)
+		}
+	}
+}
+
 // A value handed to the field from somewhere else — a fetched issue, the
 // clipboard — is somebody else's, and the reader has never been anywhere
 // inside it. The caret goes where they would carry on typing.

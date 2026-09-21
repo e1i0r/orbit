@@ -196,14 +196,4 @@ func (in *Field) WordRight() {
 
 func isBlank(r rune) bool { return r == ' ' || r == '\t' || r == '\n' }
 
-func clamp(v, lo, hi int) int {
-	if v < lo {
-		return lo
-	}
-
-	if v > hi {
-		return hi
-	}
-
-	return v
-}
+func clamp(v, lo, hi int) int { return min(max(v, lo), hi) }
