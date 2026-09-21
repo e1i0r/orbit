@@ -18,8 +18,9 @@ func (m Model) quotaEnv() quota.Env {
 	}
 }
 
-// openQuota brings the screen up.
+// openQuota brings the screen up, at the top of the reading.
 func (m Model) openQuota() Model {
+	m.quota = quota.Open()
 	m.screen = screenQuota
 
 	return m
@@ -27,14 +28,25 @@ func (m Model) openQuota() Model {
 
 // quotaKey hands one keystroke to the screen.
 func (m Model) quotaKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
-	if out := quota.Key(msg, m.quotaEnv()); out.Leave {
+	next, out := m.quota.Key(msg, m.quotaEnv())
+
+	m.quota = next
+	if out.Leave {
 		m.screen = screenList
 	}
 
 	return m, nil
 }
 
+// wheelQuota takes the reading a notch, which is the gesture a reading this
+// long is read with.
+func (m Model) wheelQuota(d int) Model {
+	m.quota = m.quota.Scroll(d, m.quotaEnv())
+
+	return m
+}
+
 // quotaRows is the screen drawn.
 func (m Model) quotaRows(h, w int) []string {
-	return quota.View(h, w, m.quotaEnv())
+	return m.quota.View(h, w, m.quotaEnv())
 }

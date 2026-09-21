@@ -279,6 +279,8 @@ func (s State) Click(t point.Target, e Env) (State, Out) {
 		s.scroll = 0
 
 		return s, Out{}
+	case "dial":
+		return s.setChoice(t.Phase, t.Pane, e)
 	case "pick":
 		return s.takePick(t.Phase, e), Out{}
 	case "select_phase":

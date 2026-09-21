@@ -209,13 +209,12 @@ func TestHitSettingsFollowsTheScrolledTable(t *testing.T) {
 		m.settings = m.settings.Scroll(1, m.settingsEnv())
 	}
 
-	off := m.settingsOff()
-	if off == 0 {
-		t.Fatalf("the table never scrolled in a body of %d rows", m.frame.Body.H)
-	}
-
 	last := len(rows) - 1
-	line := settingsHead + settingsRowLines*last - off
+
+	line := settingsLine(t, m, rows[last].Key)
+	if line >= m.frame.Body.H {
+		t.Fatalf("the last dial is drawn on row %d of a body of %d", line, m.frame.Body.H)
+	}
 
 	got := m.hitSettings(5, m.frame.Body.Y+line)
 	if got.Kind != point.SettingsRow || got.Pane != last {

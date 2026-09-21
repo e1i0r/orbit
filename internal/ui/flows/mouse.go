@@ -40,18 +40,31 @@ func (s State) Hit(x, y int, e Env) point.Target {
 	}
 
 	if s.showingDetail {
-		rows := s.flowDetailRows(e.Frame.Body.H, e.Frame.Body.W, e)
-		if line >= len(rows)-3 {
-			if x < 25 {
-				return point.Target{Kind: point.FlowItem, Field: "detail_select"}
-			} else if x < 50 {
-				return point.Target{Kind: point.FlowItem, Field: "edit", ID: s.flowName}
-			}
-
-			return point.Target{Kind: point.FlowItem, Field: "detail_back"}
+		// The buttons are the third row from the floor, and a click is on
+		// one of them only where one is drawn.
+		//
+		// Both halves of that were wrong: the row was found by counting
+		// back from the length of what View returned, which is the whole
+		// body because it is padded to it — so the strip that answered
+		// was the blank floor under a short reading and never the buttons
+		// themselves. And the columns were 25 and 50, written against
+		// labels in English; the pills are translated and neither number
+		// had anything to do with where they end.
+		foot, buttons := s.detailFoot(e.Frame.Body.H, e.Frame.Body.W, e)
+		if line != e.Frame.Body.H-len(foot)+buttons {
+			return point.Target{}
 		}
 
-		return point.Target{}
+		b, ok := detailButtonAt(x, e)
+		if !ok {
+			return point.Target{}
+		}
+
+		if b.field == "edit" {
+			return point.Target{Kind: point.FlowItem, Field: b.field, ID: s.flowName}
+		}
+
+		return point.Target{Kind: point.FlowItem, Field: b.field}
 	}
 
 	if !s.creating {
@@ -69,6 +82,17 @@ func (s State) Hit(x, y int, e Env) point.Target {
 func (s State) hitList(x, line int, e Env) point.Target {
 	lines := s.flowsListLines(e.Frame.Body.W, e)
 	rows := max(e.Frame.Body.H-1, 0)
+
+	// The floor is the ways out, drawn outside the page so that scrolling
+	// never takes it off the screen — so the page is the rows above it, and
+	// a click on the last row of the body is on none of the list. Counted
+	// from the top it answered the row after the page instead: on a screen
+	// with more flows than room, clicking the line that says what the keys
+	// do inspected the flow just below the window, and on a short one it
+	// opened the designer.
+	if line < 0 || line >= rows {
+		return point.Target{}
+	}
 
 	at := s.flowsListStart(lines, rows) + line
 	if at < 0 || at >= len(lines) {
@@ -96,27 +120,78 @@ func (s State) hitList(x, line int, e Env) point.Target {
 	return point.Target{Kind: point.FlowItem, Field: "details", ID: d.Name}
 }
 
-// flowPill is which of the row's own pills the pointer is over, measured off
-// the pills themselves rather than written down: a translation makes every
-// one of them a different width.
-func flowPill(d flow.Listed, x int, e Env) string {
+// rowPill is one of the pills a chosen row of the list carries.
+type rowPill struct {
+	drawn string
+	field string
+}
+
+// rowPillGap is the space between two of them, and rowPillsAt the space
+// between the row's own words and the first.
+const (
+	rowPillGap  = 1
+	rowPillsAt  = 3
+	rowOriginAt = 2
+)
+
+// rowPills is what a chosen row offers: to look at the flow, to edit it,
+// and — for one of your own — to take it away. A built-in cannot be taken
+// away, so it carries no pill for it.
+//
+// One reading, two uses: the row is drawn from this and the pointer is
+// measured against it. They were two — a drawing that joined the pills with
+// a space, and a hit-test that added four cells for a pill padded by two
+// and counted no space at all — so every zone sat one to three cells right
+// of the pill it was named for. The first cell of Edit inspected, and three
+// cells of blank air past it edited.
+func rowPills(d flow.Listed, e Env) []rowPill {
 	p := e.Words
 
-	at := cells.Gutter + lipgloss.Width(d.Name)
-	if origin := OriginSaid(p, d.Origin); origin != "" {
-		at += 2 + lipgloss.Width(origin) + 2
+	out := []rowPill{
+		{
+			drawn: theme.Pill("👁 "+p.T("flows.btn_view_details", "Details"), theme.PillInk, theme.PillDetails),
+			field: "details",
+		},
+		{
+			drawn: theme.Pill("✏ "+p.T("flows.btn_edit", "Edit"), theme.PillInk, theme.PillEdit),
+			field: "edit",
+		},
 	}
 
-	at += 3
+	if d.Origin == flow.OriginBuiltin {
+		return out
+	}
 
-	detW := lipgloss.Width("👁 "+p.T("flows.btn_view_details", "Details")) + 4
-	editW := lipgloss.Width("✏ "+p.T("flows.btn_edit", "Edit")) + 4
+	return append(out, rowPill{
+		drawn: theme.Pill("🗑 "+p.T("flows.btn_delete", "Delete"), theme.PillInk, theme.PillDelete),
+		field: "delete",
+	})
+}
 
-	switch {
-	case x >= at+detW && x < at+detW+editW:
-		return "edit"
-	case d.Origin != flow.OriginBuiltin && x >= at+detW+editW:
-		return "delete"
+// rowPillsStart is the column the pills begin in: the gutter, the flow's
+// name, where it came from when it says so, and the gap before the first.
+func rowPillsStart(d flow.Listed, e Env) int {
+	at := cells.Gutter + lipgloss.Width(d.Name)
+	if origin := OriginSaid(e.Words, d.Origin); origin != "" {
+		at += rowOriginAt + lipgloss.Width("("+origin+")")
+	}
+
+	return at + rowPillsAt
+}
+
+// flowPill is which of the row's own pills the pointer is over, measured
+// off the pills themselves rather than written down: a translation makes
+// every one of them a different width.
+func flowPill(d flow.Listed, x int, e Env) string {
+	at := rowPillsStart(d, e)
+
+	for _, pill := range rowPills(d, e) {
+		wide := lipgloss.Width(pill.drawn)
+		if x >= at && x < at+wide {
+			return pill.field
+		}
+
+		at += wide + rowPillGap
 	}
 
 	return ""
@@ -139,6 +214,25 @@ func (s State) hitBuilder(x, line int, e Env) point.Target {
 
 	switch {
 	case row.act != "":
+		// A row that acts, acts where it is drawn. The whole width of the
+		// window answered before, so a click on the blank forty columns
+		// to the right of "✨ Draft it" sent a question to an engine.
+		if x >= lipgloss.Width(row.text) {
+			return point.Target{}
+		}
+
+		// The two dials of the describe tab are pills with a way to see
+		// the rest beside them: pointing at one of the pills chooses it,
+		// and pointing anywhere else on the row opens the list, which is
+		// what the row says pressing ⏎ there does.
+		if field, ok := sayDialField(row.act); ok {
+			if opts, current, has := s.choices(field, e); has {
+				if at, on := choiceAt(x, opts, current); on {
+					return point.Target{Kind: point.FlowItem, Field: "dial", Phase: field, Pane: at}
+				}
+			}
+		}
+
 		return point.Target{Kind: point.FlowItem, Field: row.act}
 	case row.strip:
 		if at := s.flowTabAt(x, e); at >= 0 {
@@ -160,7 +254,37 @@ func (s State) hitBuilder(x, line int, e Env) point.Target {
 		return point.Target{Kind: point.FlowItem, Field: buttonAt(x, e)}
 	}
 
+	// The phase being edited is chosen by pointing at it, the same gesture
+	// the pipeline above the form already answers.
+	if row.field == flowFieldPhaseSelect {
+		if at, on := s.phaseTabAt(x); on {
+			return point.Target{Kind: point.FlowItem, Field: "select_phase", Phase: at}
+		}
+	}
+
+	// A short dial is a row of pills, and a click on one of them is that
+	// option: the row's own action steps the dial one along, which is what
+	// ⏎ means and not what pointing at a word does.
+	if opts, current, ok := s.choices(row.field, e); ok {
+		if at, on := choiceAt(x, opts, current); on {
+			return point.Target{Kind: point.FlowItem, Field: "dial", Phase: row.field, Pane: at}
+		}
+	}
+
 	return point.Target{Kind: point.FlowItem, Phase: row.field}
+}
+
+// sayDialField is the field one of the describe tab's two dial rows stands
+// for, and whether the row is one of them at all.
+func sayDialField(act string) (int, bool) {
+	switch act {
+	case "say_engine":
+		return flowFieldSayEngine, true
+	case "say_model":
+		return flowFieldSayModel, true
+	}
+
+	return 0, false
 }
 
 // promptPill is which of the instruction row's three pills the pointer is

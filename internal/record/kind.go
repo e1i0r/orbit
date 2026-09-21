@@ -257,7 +257,12 @@ const (
 	// it printed — which is what the next turn is told.
 	LoopChecked = "loop.checked"
 
-	GatePassed = "gate.passed" // a phase gate verification check passed
+	// GatePassed is a phase's verification check answering yes.
+	// Data["left_running"] is written when the gate's shell exited but
+	// something it started still held the output open: the check passed,
+	// and Text is as much of what it printed as could be read before the
+	// run stopped waiting on a child nobody is waiting for.
+	GatePassed = "gate.passed"
 	GateFailed = "gate.failed" // a phase gate verification check failed
 
 	SupervisorMessage    = "supervisor.message"    // a dialogue turn in the global supervisor thread

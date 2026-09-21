@@ -64,8 +64,8 @@ var windowLayers = map[string][]string{
 	// It reads the board because a repository with work going on in it is a
 	// fact about the tasks, and it decides nothing about one.
 	"internal/ui/repos": {
-		"internal/board", "internal/ui/cells", "internal/ui/keymap", "internal/ui/theme",
-		"internal/view", "internal/words",
+		"internal/board", "internal/ui/cells", "internal/ui/keymap", "internal/ui/layout",
+		"internal/ui/theme", "internal/view", "internal/words",
 	},
 	// internal/ui/engines is the engine and model knobs: which engine a run
 	// goes to, which of its models, how hard it thinks. It holds the dials

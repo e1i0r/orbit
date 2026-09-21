@@ -170,8 +170,17 @@ func (s State) hit(x, y int, e Env) point.Target {
 
 	// The head is drawn above the body and the window is scrolled under it,
 	// so a cell's line in the body is where it was drawn plus how far down
-	// the list has been taken.
-	want := line - len(s.head(cw, e)) + s.window(len(body), s.view(cw, e.Frame.Body.H, e))
+	// the list has been taken — and only where the list is drawn at all.
+	// The foot is the line that says what the keys do: counted from the
+	// head alone, a click on it landed on the rule below the window.
+	view := s.view(cw, e.Frame.Body.H, e)
+
+	on := line - len(s.head(cw, e))
+	if on < 0 || on >= view {
+		return point.Target{}
+	}
+
+	want := on + s.window(len(body), view)
 
 	for i, row := range at {
 		if row.holds(want) {

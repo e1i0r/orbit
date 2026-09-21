@@ -136,3 +136,53 @@ func TestATaskThatHasSpentExactlyItsBudgetHasSpentIt(t *testing.T) {
 		t.Errorf("a task that spent %v of a budget of %v reads as over: %v", spent, budget, over)
 	}
 }
+
+// TestTheBudgetIsAskedBetweenAttemptsToo.
+//
+// A phase whose gate refuses it is run again, and every attempt is charged
+// for: three attempts at a phase that costs a quarter is seventy-five
+// cents against a budget that stopped at twenty. The cap was asked where
+// two phases meet and nowhere else, so a flow of one phase with attempts to
+// spare walked straight past it — which is the same hole the loop's own
+// check was written to close, in the other place a run goes round.
+//
+// Between attempts is as safe a place to stop as between phases: nothing is
+// running, the gate has already said no, and what would happen next is a
+// fresh call somebody has to pay for.
+func TestTheBudgetIsAskedBetweenAttemptsToo(t *testing.T) {
+	s, r := fixture(t)
+
+	if err := s.SaveSettings(store.Settings{BudgetTask: 0.30}); err != nil {
+		t.Fatalf("SaveSettings: %v", err)
+	}
+
+	tk, err := Create(s, r, "ACME-42", "a phase that keeps being refused", "")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	eng := costlyEngine{engine.NewFake("done")}
+
+	// One phase, a gate nothing satisfies, and four attempts at it: the
+	// third would take the task past the budget, so it never happens.
+	f := flow.Flow{Name: "stubborn", Attempts: 4, Phases: []flow.Phase{{
+		Name: "implement", Engine: "fake",
+		Gates: []flow.Gate{{Name: "never", Command: "exit 1"}},
+	}}}
+
+	if err := Run(context.Background(), s, tk, f, fakes(eng), nil); err == nil {
+		t.Fatal("Run: want an error when the task has spent its budget")
+	}
+
+	if len(eng.Calls) != 2 {
+		t.Errorf("the engine ran %d times, want 2 — the third attempt costs money the task does not have",
+			len(eng.Calls))
+	}
+
+	events := mustEvents(t, s, tk)
+
+	last := events[len(events)-1]
+	if last.Kind != record.TaskOverBudget {
+		t.Fatalf("the record ends in %q, want task.over_budget: %v", last.Kind, kindsOf(events))
+	}
+}

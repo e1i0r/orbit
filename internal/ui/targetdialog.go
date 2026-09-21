@@ -158,14 +158,14 @@ func (m Model) hitStart(x, y int) point.Target {
 // that turns a dial nobody pointed at.
 func (m Model) hitSettings(x, y int) point.Target {
 	line, ok := m.frame.BodyRow(y)
-	if !ok || line < settingsHead {
+	if !ok {
 		return point.Target{}
 	}
 
-	rowIdx := (line - settingsHead + m.settingsOff()) / settingsRowLines
+	rowIdx, on := m.settings.RowAt(line, m.settingsEnv())
 
 	rows := m.settingRowsList()
-	if rowIdx >= 0 && rowIdx < len(rows) {
+	if on && rowIdx < len(rows) {
 		r := rows[rowIdx]
 
 		if x >= settings.PillsAt {
@@ -191,27 +191,19 @@ func (m Model) hitSettings(x, y int) point.Target {
 	return point.Target{}
 }
 
-// settingsHead is how many lines the settings screen's title takes, and
-// settingsRowLines how tall one setting is drawn. They are the same two
-// numbers internal/ui/settings scrolls by; a click measured against
-// different ones would land on a different row than the one drawn.
-const (
-	settingsHead     = 4
-	settingsRowLines = 3
-)
-
+// hitRepos is the repository a click landed on, asked of the list itself:
+// the head above it, the offset it was scrolled to and the floor it stops
+// at are one reading there, and were a second one here.
 func (m Model) hitRepos(x, y int) point.Target {
 	line, ok := m.frame.BodyRow(y)
 	if !ok {
 		return point.Target{}
 	}
 
-	rowIdx := line - 4
-
-	repos := m.collectRepos()
-	if rowIdx >= 0 && rowIdx < len(repos) {
-		return point.Target{Kind: point.Repo, ID: repos[rowIdx].Name}
+	r, on := m.repolist.RowAt(line, m.reposEnv())
+	if !on {
+		return point.Target{}
 	}
 
-	return point.Target{}
+	return point.Target{Kind: point.Repo, ID: r.Name}
 }

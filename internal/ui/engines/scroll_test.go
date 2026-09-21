@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/charmbracelet/x/ansi"
+
 	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/point"
 	"github.com/e1i0r/orbit/internal/ui/roster"
@@ -147,5 +149,47 @@ func TestTheWheelWalksTheKnobsAndStops(t *testing.T) {
 
 	if top := s.Wheel(-1000, e); top.sel != 0 {
 		t.Errorf("wheeling past the top = row %d, want the first one", top.sel)
+	}
+}
+
+// TestAKnobIsClickedWhereItIsDrawn, at every scroll and on every row of the
+// body.
+//
+// The chrome above the list and the ways out below it do not scroll, so the
+// list is the strip between them — and the click was counted from the top
+// of the body alone. Clicking the line that says what the keys do chose the
+// row just under the window, and with the list scrolled the title and the
+// filter line above it chose rows further down still: a model set for the
+// run that the reader never saw.
+func TestAKnobIsClickedWhereItIsDrawn(t *testing.T) {
+	s, e := knobsOnALongList(t)
+
+	for _, walk := range []int{0, 5, 20, 39} {
+		at := s
+		for range walk {
+			at, _ = at.Key(press("down"), e)
+		}
+
+		h, w := e.Frame.Body.H, e.Frame.Body.W
+		drawn := at.View(h, w, e)
+		rows := at.collectEngineRows(e)
+
+		for line := range h {
+			got := at.Hit(4, e.Frame.Body.Y+line, e)
+			if got.Kind != point.EngineRow {
+				continue
+			}
+
+			idxs := selectableEngineIndices(rows)
+			if got.Pane < 0 || got.Pane >= len(idxs) {
+				t.Fatalf("walked %d, row %d answers knob %d of %d", walk, line, got.Pane, len(idxs))
+			}
+
+			title := strings.TrimSpace(rows[idxs[got.Pane]].title)
+			if !strings.Contains(drawn[line], title) {
+				t.Errorf("walked %d, row %d draws %q and a click there chooses %q",
+					walk, line, strings.TrimSpace(ansi.Strip(drawn[line])), title)
+			}
+		}
 	}
 }

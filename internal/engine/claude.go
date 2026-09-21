@@ -191,6 +191,20 @@ func noteDropped(text string, dropped int) string {
 	return text + "\n" + note
 }
 
+// noteOutlived says on the phase's own text that the engine left something
+// running: the output stops where the pipe was closed and not where the
+// engine stopped talking, and a text that read exactly like a whole one
+// would be the record stating something it cannot know. It is noteDropped's
+// twin, for the other way a stream ends early.
+func noteOutlived(text string) string {
+	note := "…[the engine exited leaving something running; what it printed after that was not read]"
+	if text == "" {
+		return note
+	}
+
+	return text + "\n" + note
+}
+
 // claudeArgs is separate from Run so the command line can be tested without
 // a claude binary present and without spending anything.
 //

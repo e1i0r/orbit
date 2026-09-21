@@ -135,12 +135,6 @@ func (m Model) wheelSettings(d int) Model {
 	return m
 }
 
-// settingsOff is how far the table has been scrolled, which is what a click
-// on it has to be measured from.
-func (m Model) settingsOff() int {
-	return m.settings.Off(m.settingsEnv())
-}
-
 // settingRowsList is the table as the mouse and the tip need it.
 func (m Model) settingRowsList() []settings.Row {
 	return m.settings.Rows(m.settingsEnv())

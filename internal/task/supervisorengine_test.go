@@ -20,7 +20,7 @@ func TestASupervisorStartsARunOnItsOwnEngine(t *testing.T) {
 	t.Setenv(engine.SupervisorVar, "agy")
 
 	tk := Task{ID: "ACME-1", Repo: repo.Repo{Name: "app", Path: "/repos/app"}}
-	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "task", "")
+	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "task", "", "")
 
 	if !slices.Contains(cmd.Args, "-engine") || !slices.Contains(cmd.Args, "agy") {
 		t.Errorf("argv = %q, want the supervisor's engine in it", cmd.Args)
@@ -34,7 +34,7 @@ func TestAnEngineTheCallerNamedBeatsTheSupervisors(t *testing.T) {
 	t.Setenv(engine.SupervisorVar, "agy")
 
 	tk := Task{ID: "ACME-1", Repo: repo.Repo{Name: "app", Path: "/repos/app"}}
-	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "task", "codex")
+	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "task", "codex", "")
 
 	if slices.Contains(cmd.Args, "agy") {
 		t.Errorf("argv = %q, want codex, which the caller named", cmd.Args)
@@ -48,7 +48,7 @@ func TestWithoutASupervisorNothingChanges(t *testing.T) {
 	t.Setenv(engine.SupervisorVar, "")
 
 	tk := Task{ID: "ACME-1", Repo: repo.Repo{Name: "app", Path: "/repos/app"}}
-	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "task", "")
+	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "task", "", "")
 
 	if slices.Contains(cmd.Args, "-engine") {
 		t.Errorf("argv = %q, want no engine flag at all", cmd.Args)
@@ -63,7 +63,7 @@ func TestTheSupervisorsEngineTravelsOneHop(t *testing.T) {
 	t.Setenv(engine.SupervisorVar, "agy")
 
 	tk := Task{ID: "ACME-1", Repo: repo.Repo{Name: "app", Path: "/repos/app"}}
-	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "task", "")
+	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "task", "", "")
 
 	for _, kv := range cmd.Env {
 		if strings.HasPrefix(kv, engine.SupervisorVar+"=") {

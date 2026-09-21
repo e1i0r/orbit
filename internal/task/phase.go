@@ -6,12 +6,19 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/record"
 	"github.com/e1i0r/orbit/internal/store"
 )
+
+// gateGrace is how long a gate whose shell has exited is given to let go of
+// its output before the run stops waiting for it. The same five seconds
+// internal/repo gives its own checks, and for the same reason: what holds
+// the pipe open is a child nobody is waiting for.
+const gateGrace = 5 * time.Second
 
 // The two events that bracket a phase.
 //
@@ -218,7 +225,29 @@ func runGates(ctx context.Context, s *store.Store, t Task, p flow.Phase, n int, 
 	for _, g := range gatesOf(p, rulesFor(s, t)) {
 		cmd := exec.CommandContext(ctx, "sh", "-c", g.Command)
 		cmd.Dir = wt
+		// The shell gets a group of its own and a cancelled run signals
+		// the group, or the work under `sh` outlives the run that started
+		// it. WaitDelay is the other half: CombinedOutput waits for the
+		// output pipe to close, and a child the gate left in the
+		// background holds it open long after the shell has exited — a
+		// gate ending in `&` held the run, and its slot, for as long as
+		// that child lived.
+		ownGroup(cmd)
+
+		cmd.WaitDelay = gateGrace
+
 		combined, err := cmd.CombinedOutput()
+
+		// A shell that exited cleanly and left something running behind
+		// it: the delay above closed the pipe and Wait reported that it
+		// had, which is not the gate answering no. Exit zero is what the
+		// gate said, and what the record adds is that the reading stops
+		// where the pipe was closed rather than where the command did.
+		left := errors.Is(err, exec.ErrWaitDelay)
+		if left {
+			err = nil
+		}
+
 		text, full := captured(string(combined))
 
 		data := map[string]string{
@@ -240,6 +269,11 @@ func runGates(ctx context.Context, s *store.Store, t Task, p flow.Phase, n int, 
 
 		if err == nil {
 			data["exit"] = "0"
+
+			if left {
+				data["left_running"] = "true"
+			}
+
 			if emitErr := emit(s, t, record.Event{Kind: record.GatePassed, Phase: p.Name, Text: text, Data: data}); emitErr != nil {
 				return nil, emitErr
 			}
