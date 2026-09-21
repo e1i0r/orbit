@@ -149,9 +149,16 @@ func (s State) View(h, w int, e Env) []string {
 		// Breathing room under the mark: the subtitle sitting against the
 		// rings reads as the logo's slogan, and it is the sheet's.
 		"",
-		"  " + theme.Paint(theme.Dim).Render(p.T("help.subtitle", "every function can be reached from the keyboard or by clicking it")),
-		"",
 	}
+
+	// Sixty-seven cells, drawn unmeasured: on a window narrower than that
+	// it wrapped and took every key under it down a row.
+	for _, l := range cells.Lines(p.T("help.subtitle",
+		"every function can be reached from the keyboard or by clicking it"), max(w-2, 1)) {
+		out = append(out, "  "+theme.Paint(theme.Dim).Render(l))
+	}
+
+	out = append(out, "")
 
 	renderSection := func(title string, items [][2]string) {
 		out = append(out, "  "+theme.Paint(theme.Live).Bold(true).Render(title))

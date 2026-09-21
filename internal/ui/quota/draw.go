@@ -44,8 +44,15 @@ func (s State) View(h, w int, e Env) []string {
 	head := []string{
 		"",
 		"  " + theme.Paint(theme.Accent).Render(p.T("quota.title", "Quota")),
-		"  " + theme.Paint(theme.Dim).Render(p.T("quota.subtitle",
-			"what is left of each engine's windows, and when each comes back")),
+	}
+
+	// Wrapped rather than cut: the half a narrow window would lose is
+	// "and when each comes back", which is the half a reader who has run
+	// out of a window is here for. Sixty-five cells in English, and
+	// longer in Spanish.
+	for _, l := range cells.Lines(p.T("quota.subtitle",
+		"what is left of each engine's windows, and when each comes back"), max(w-2, 1)) {
+		head = append(head, "  "+theme.Paint(theme.Dim).Render(l))
 	}
 
 	waysOut := p.T("quota.ways_out", "{up_down} move · {back} back",
