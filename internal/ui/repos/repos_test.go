@@ -7,8 +7,10 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/x/ansi"
 
 	"github.com/e1i0r/orbit/internal/board"
+	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
@@ -89,6 +91,58 @@ func TestARepositoryATaskReachesIntoIsStillOnTheList(t *testing.T) {
 	}
 }
 
+// TestEveryBandCountsAgainstTheRepositoryItIsIn. The four numbers beside a
+// repository are what the reader chooses one by, and the band a task is in
+// is what decides which of them moves: a band left out counts nowhere, and
+// the row then says a repository has less going on in it than it has.
+func TestEveryBandCountsAgainstTheRepositoryItIsIn(t *testing.T) {
+	e := world(t)
+	e.Board = board.Board{
+		RepoList: []board.RepoInfo{{Name: "payments", Path: "/r/payments"}},
+		Tasks: []view.Task{
+			{Repo: "payments", ID: "ACME-1", Band: view.ToDo},
+			{Repo: "payments", ID: "ACME-2", Band: view.Running},
+			{Repo: "payments", ID: "ACME-3", Band: view.NeedsYou},
+			{Repo: "payments", ID: "ACME-4", Band: view.Done},
+		},
+	}
+
+	got := List(e)
+	if len(got) != 1 {
+		t.Fatalf("one repository with four tasks came back as %d rows", len(got))
+	}
+
+	for band, want := range map[view.Band]int{
+		view.ToDo: 1, view.NeedsYou: 1, view.Running: 1, view.Done: 1,
+	} {
+		if n := got[0].counts[band]; n != want {
+			t.Errorf("the %s column counts %d, want %d", band, n, want)
+		}
+	}
+
+	if got[0].total != 4 {
+		t.Errorf("four tasks in one repository total %d", got[0].total)
+	}
+}
+
+// TestARowWithNoListOfCheckoutsCountsUnderTheOneItIsFiledIn. Most rows carry
+// no list at all — one task, one repository — and a row read as reaching
+// into nothing is a task counted against no repository on a screen whose
+// whole subject is which repository the work is in.
+func TestARowWithNoListOfCheckoutsCountsUnderTheOneItIsFiledIn(t *testing.T) {
+	e := world(t)
+	e.Board = board.Board{Tasks: []view.Task{{Repo: "payments", ID: "ACME-1", Band: view.Running}}}
+
+	got := List(e)
+	if len(got) != 1 || got[0].Name != "payments" {
+		t.Fatalf("a task filed under payments and reaching nowhere listed %+v", got)
+	}
+
+	if got[0].total != 1 {
+		t.Errorf("it counts %d tasks against payments, want 1", got[0].total)
+	}
+}
+
 // TestWithNoListTheRepositoriesComeFromTheTasks, once each.
 func TestWithNoListTheRepositoriesComeFromTheTasks(t *testing.T) {
 	e := world(t)
@@ -123,6 +177,14 @@ func TestTheArrowsWrapAtBothEnds(t *testing.T) {
 
 	if down, _ := up.Key(press("down"), e); down.sel != 0 {
 		t.Errorf("down from the last row = %d, want 0", down.sel)
+	}
+
+	// And the row above the second one is the first, not the last: the
+	// wrap is the end of the list and not every step through it.
+	second, _ := Open().Key(press("down"), e)
+
+	if back, _ := second.Key(press("up"), e); back.sel != 0 {
+		t.Errorf("up from the second row = %d, want the first", back.sel)
 	}
 }
 
@@ -205,5 +267,66 @@ func TestTheListMarksWhatIsFilteredAndSaysWhenThereIsNothing(t *testing.T) {
 
 	if drawn := strings.Join(Open().View(20, 100, e), "\n"); !strings.Contains(drawn, "no repositories") {
 		t.Errorf("an empty list says nothing about being empty:\n%s", drawn)
+	}
+}
+
+// TestOneRowCarriesTheCursorAndEveryRowStartsInTheSameColumn. The mark is
+// what says which row a keystroke will act on, so a second one is a reader
+// acting on the wrong repository — and a mark that does not take the width
+// of the gutter it stands in steps its own row a cell out of the column the
+// rest of the list is in.
+func TestOneRowCarriesTheCursorAndEveryRowStartsInTheSameColumn(t *testing.T) {
+	e := world(t)
+
+	s, _ := Open().Key(press("down"), e)
+
+	var rows []string
+
+	for _, l := range s.View(20, 100, e) {
+		if stripped := ansi.Strip(l); strings.Contains(stripped, "to do ·") {
+			rows = append(rows, stripped)
+		}
+	}
+
+	if len(rows) != len(List(e)) {
+		t.Fatalf("the list drew %d rows for %d repositories", len(rows), len(List(e)))
+	}
+
+	marked := 0
+
+	for i, row := range rows {
+		if strings.HasPrefix(row, cells.Mark) {
+			marked++
+
+			if i != s.sel {
+				t.Errorf("row %d carries the cursor and row %d is the one chosen", i, s.sel)
+			}
+		}
+
+		// Whatever stands in the gutter, the name after it starts in the
+		// same column on every row.
+		if at := len([]rune(row)) - len([]rune(strings.TrimLeft(row, " "+cells.Mark))); at != cells.Gutter {
+			t.Errorf("row %d starts its name at cell %d, want %d", i, at, cells.Gutter)
+		}
+	}
+
+	if marked != 1 {
+		t.Errorf("%d rows carry the cursor, want one", marked)
+	}
+}
+
+// TestAListWithNoRowsToDrawDrawsNothing, which is what every window passes
+// through while somebody drags its corner.
+func TestAListWithNoRowsToDrawDrawsNothing(t *testing.T) {
+	e := world(t)
+
+	for _, h := range []int{-1, 0} {
+		if got := Open().View(h, 100, e); got != nil {
+			t.Errorf("a list %d rows tall drew %d lines, want none", h, len(got))
+		}
+	}
+
+	if got := Open().View(1, 100, e); len(got) == 0 {
+		t.Error("a list with a row in it drew nothing")
 	}
 }
