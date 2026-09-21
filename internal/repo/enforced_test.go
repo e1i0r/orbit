@@ -227,3 +227,36 @@ func TestALocalHookIsNotAGate(t *testing.T) {
 		t.Errorf("a hook that does not travel brought %+v", got)
 	}
 }
+
+// TestTheCommandAGateRunsIsTheOneTheWorkflowWrote.
+//
+// A workflow's `run:` is YAML, so a command with a colon in it arrives
+// quoted and the quotes are not part of the command. A pair that is not a
+// pair is not quoting: `'make check` is somebody's typo and handing a gate
+// the text without its apostrophe would run something they did not write.
+//
+// And a block opened with | or > is a shell program — several commands, a
+// conditional, a heredoc — which is not a gate whatever it says.
+func TestTheCommandAGateRunsIsTheOneTheWorkflowWrote(t *testing.T) {
+	for _, one := range []struct {
+		why  string
+		run  string
+		want string
+	}{
+		{"an unquoted command is itself", "make check", "make check"},
+		{"single quotes are the YAML and not the command", "'go test ./...'", "go test ./..."},
+		{"and so are double ones", `"go test ./..."`, "go test ./..."},
+		{"quotes that are not a pair are not quoting", "'make check", "'make check"},
+		{"nor are two different ones", `'make check"`, `'make check"`},
+		{"one character cannot be a pair", "'", "'"},
+		{"a pair around nothing is nothing", "''", ""},
+		{"a block is not a command", "|", ""},
+		{"nor is one with a program under it", "|\n  make check\n  make lint", ""},
+		{"nor a folded one", ">", ""},
+		{"and the space around it is not part of it", "  make check  ", "make check"},
+	} {
+		if got := oneCommand(one.run); got != one.want {
+			t.Errorf("oneCommand(%q) = %q, want %q — %s", one.run, got, one.want, one.why)
+		}
+	}
+}

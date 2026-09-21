@@ -2,7 +2,11 @@ package repo
 
 // What the history says a project does.
 
-import "testing"
+import (
+	"fmt"
+	"strings"
+	"testing"
+)
 
 // commitsWith is a history, one commit per list of files.
 func commitsWith(commits ...[]string) [][]string { return commits }
@@ -93,6 +97,27 @@ func TestTheShapesAMessageCanKeep(t *testing.T) {
 		{"ABC-12 tidy the reader", false, true},
 		{"Handle an error once", false, false},
 		{"Merge pull request #157", false, false},
+		// The letters at the ends of the alphabet are letters. A reading
+		// that stopped one short of them would call `zip:` no shape and
+		// `AZ-1` no ticket, and a project that keeps either would read as
+		// keeping nothing.
+		{"az: the ends of the alphabet", true, false},
+		{"AZ-90: the ends of the alphabet", false, true},
+		// And the characters beside them are not. They sit either side of
+		// the letters in ASCII, which is what the reading is really about.
+		{"a`z: not a word", false, false},
+		{"a{z: not a word", false, false},
+		{"A[Z-1: not a key", false, false},
+		{"A@Z-1: not a key", false, false},
+		// The digits at the ends of their own run, and the characters
+		// beside them.
+		{"PAY-09: the ends of the digits", false, true},
+		{"PAY-0/9: not a number", false, false},
+		{"PAY-0:9 not a number", false, false},
+		// A head of exactly the length one may be is one; a character more
+		// is a sentence with a colon in it, not a shape.
+		{strings.Repeat("a", 24) + ": still a shape", true, false},
+		{strings.Repeat("a", 25) + ": a sentence", false, false},
 	} {
 		if got := conventional(one.subject); got != one.is {
 			t.Errorf("%q reads as conventional=%v", one.subject, got)
@@ -119,6 +144,66 @@ func TestATestIsRecognisedInTheSpellingsLanguagesUse(t *testing.T) {
 	for _, one := range []string{"internal/db/read.go", "README.md", "latest/thing.go"} {
 		if aTest(one) {
 			t.Errorf("%q reads as a test", one)
+		}
+	}
+}
+
+// TestACommitExactlyAsCrowdedAsOneMayBeIsStillEvidence.
+//
+// The number is where a commit stops being one change and starts being a
+// squashed merge or a rename, and it is somebody's judgement — so it has to
+// be read at its own edge. One file too strict and the largest ordinary
+// change in the repository is thrown away, with nothing anywhere saying so.
+func TestACommitExactlyAsCrowdedAsOneMayBeIsStillEvidence(t *testing.T) {
+	filled := func(n int) []string {
+		files := make([]string, 0, n)
+		for i := range n - 1 {
+			files = append(files, fmt.Sprintf("internal/db/f%02d.go", i))
+		}
+
+		return append(files, "internal/db/read_test.go")
+	}
+
+	var atTheEdge, over [][]string
+
+	for range enoughCommits {
+		atTheEdge = append(atTheEdge, filled(crowdedCommit))
+		over = append(over, filled(crowdedCommit+1))
+	}
+
+	held := testsTravel(atTheEdge)
+	if len(held) != 1 || !held[0].Holds() {
+		t.Errorf("commits of exactly %d files read as %+v", crowdedCommit, held)
+	}
+
+	if got := testsTravel(over); len(got) != 0 {
+		t.Errorf("commits of %d files read as %+v", crowdedCommit+1, got)
+	}
+}
+
+// TestWhatHoldsOftenEnoughToBeACustom.
+//
+// Four in five: a rule the team keeps most of the time is still the rule,
+// and demanding every commit would find nothing in any repository with
+// people in it. A reading one commit stricter would answer that a project
+// keeping its own rule four times in five does not keep it.
+func TestWhatHoldsOftenEnoughToBeACustom(t *testing.T) {
+	for _, one := range []struct {
+		times, of int
+		holds     bool
+	}{
+		{times: 8, of: 10, holds: true},
+		{times: 79, of: 100, holds: false},
+		{times: 10, of: 10, holds: true},
+		{times: 0, of: 10, holds: false},
+		// Nothing was ever measured, so nothing holds — rather than a
+		// division by nothing reading as a custom the project always keeps.
+		{times: 0, of: 0, holds: false},
+		{times: 3, of: 0, holds: false},
+	} {
+		c := Custom{Times: one.times, Of: one.of}
+		if got := c.Holds(); got != one.holds {
+			t.Errorf("%d of %d holds: %v, want %v (ratio %.3f)", one.times, one.of, got, one.holds, c.Ratio())
 		}
 	}
 }

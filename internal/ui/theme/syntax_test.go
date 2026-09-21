@@ -167,3 +167,97 @@ func TestEveryAliasAModelTypesIsRead(t *testing.T) {
 		}
 	}
 }
+
+// TestWhatCountsAsADigitAndAsAWord. Every token this file finds is bounded
+// by these two answers, so a bound one character out cuts an identifier in
+// half or swallows the punctuation beside it — and the characters that say
+// so are the ones on either side of each range, which no line of Go anybody
+// writes happens to contain.
+func TestWhatCountsAsADigitAndAsAWord(t *testing.T) {
+	for _, c := range []struct {
+		r     rune
+		digit bool
+		word  bool
+	}{
+		{'0', true, true},
+		{'9', true, true},
+		{'/', false, false},
+		{':', false, false},
+		{'a', false, true},
+		{'z', false, true},
+		{'`', false, false},
+		{'{', false, false},
+		{'A', false, true},
+		{'Z', false, true},
+		{'@', false, false},
+		{'[', false, false},
+		{'_', false, true},
+		{'-', false, false},
+		{' ', false, false},
+		// Letters outside ASCII count: a language that allows them is a
+		// language whose identifiers this should not cut in half.
+		{'ñ', false, true},
+		{'字', false, true},
+		{rune(127), false, false},
+	} {
+		if got := isDigit(c.r); got != c.digit {
+			t.Errorf("isDigit(%q) = %v, want %v", c.r, got, c.digit)
+		}
+
+		if got := isWordRune(c.r); got != c.word {
+			t.Errorf("isWordRune(%q) = %v, want %v", c.r, got, c.word)
+		}
+	}
+}
+
+// TestANumberTakesItsHexBodyAndStopsAfterIt. 0xFF in a stack trace is a
+// number, and reading it as two things is worse than reading it as one —
+// but the letters that belong to it stop at f, and a body that reached past
+// them would take the word after the number with it.
+func TestANumberTakesItsHexBodyAndStopsAfterIt(t *testing.T) {
+	for _, c := range []struct {
+		in   string
+		want string
+	}{
+		{"0xff)", "0xff"},
+		{"0xFF)", "0xFF"},
+		{"0xa", "0xa"},
+		{"0xA", "0xA"},
+		{"0xf", "0xf"},
+		{"0xF", "0xF"},
+		// g is not a hex digit and neither is G: the number stops and
+		// what follows is a word of its own.
+		{"0xg", "0x"},
+		{"0xG", "0x"},
+		{"0X1F", "0X1F"},
+		{"1_000_000 ", "1_000_000"},
+		{"3.14159 rad", "3.14159"},
+		{"42, 43", "42"},
+	} {
+		if got := codeNumberAt([]rune(c.in)); got != c.want {
+			t.Errorf("the number opening %q is %q, want %q", c.in, got, c.want)
+		}
+	}
+}
+
+// TestNothingLexedIsEmpty. The plain runs between the coloured ones are
+// gathered as they are walked and handed over whenever something else
+// opens, so a run handed over before anything went into it is a token with
+// no text — nothing drawn, and one more thing for every reader of the list
+// to skip.
+func TestNothingLexedIsEmpty(t *testing.T) {
+	for _, line := range []string{
+		`func main() { fmt.Println("hola", 0x2A) } // y ya`,
+		`"opens with a string" and then some words`,
+		`// the whole line is a comment`,
+		`0x2A`,
+		`   `,
+		``,
+	} {
+		for i, tok := range LexCode(line, "go") {
+			if tok.Text == "" {
+				t.Errorf("token %d of %q has no text in it", i, line)
+			}
+		}
+	}
+}

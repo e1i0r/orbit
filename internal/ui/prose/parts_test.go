@@ -124,6 +124,83 @@ func TestFieldsRefuseWhatTheyCannotLay(t *testing.T) {
 	if got := Fields(nil, 2, 60); got != nil {
 		t.Errorf("fields with no pairs returned %q", got)
 	}
+
+	// One column is a column: the narrow panes lay their pairs down the
+	// left rather than dropping the block.
+	got := Fields([]Field{{Label: "a", Value: "1"}, {Label: "b", Value: "2"}}, 1, 60)
+	if len(got) != 5 {
+		t.Fatalf("two pairs in one column came back as %d lines, want a row each", len(got))
+	}
+
+	if strings.Contains(ansi.Strip(got[0]), "B") {
+		t.Errorf("the second pair was laid beside the first in a single column: %q", got[0])
+	}
+}
+
+// TestEachRowHoldsItsColumnsAndNoMore. The row is what the reader's eye
+// runs along, and a row with one more pair on it than the grid was laid for
+// pushes that pair off the pane — or repeats it on the row below, where it
+// reads as a second fact about something else.
+func TestEachRowHoldsItsColumnsAndNoMore(t *testing.T) {
+	got := Fields([]Field{
+		{Label: "aaa", Value: "1"},
+		{Label: "bbb", Value: "2"},
+		{Label: "ccc", Value: "3"},
+		{Label: "ddd", Value: "4"},
+	}, 2, 80)
+
+	if len(got) != 5 {
+		t.Fatalf("four pairs in two columns came back as %d lines, want two rows and a blank", len(got))
+	}
+
+	first, second := ansi.Strip(got[0]), ansi.Strip(got[3])
+
+	for _, c := range []struct {
+		line, label string
+		want        bool
+	}{
+		{first, "AAA", true},
+		{first, "BBB", true},
+		{first, "CCC", false},
+		{second, "CCC", true},
+		{second, "DDD", true},
+		{second, "AAA", false},
+	} {
+		if strings.Contains(c.line, c.label) != c.want {
+			t.Errorf("the row %q says %q, want %v", c.line, c.label, c.want)
+		}
+	}
+}
+
+// TestAColumnIsTheWidthSharedOutAmongThem. The value under a label is read
+// as that label's while the two start in the same cell, and the cell a
+// column starts in is its share of the pane: a pitch that is not what the
+// width divides into leaves the last column hanging off the right of it.
+func TestAColumnIsTheWidthSharedOutAmongThem(t *testing.T) {
+	pairs := []Field{{Label: "aaa", Value: "1"}, {Label: "bbb", Value: "2"}}
+
+	for _, c := range []struct {
+		width, pitch int
+	}{
+		{80, 40},
+		{60, 30},
+		{41, 20},
+		// Below twenty cells a pair is two characters and an ellipsis,
+		// so the columns stop narrowing and the pane keeps the pitch it
+		// can still be read at.
+		{12, 10},
+	} {
+		got := Fields(pairs, 2, c.width)
+		if len(got) != 2 {
+			t.Fatalf("a pane of %d columns laid %d lines, want a label line and a value line",
+				c.width, len(got))
+		}
+
+		if at := strings.Index(ansi.Strip(got[0]), "BBB"); at != c.pitch {
+			t.Errorf("in a pane of %d columns the second column starts at cell %d, want %d",
+				c.width, at, c.pitch)
+		}
+	}
 }
 
 // TestABadgeIsItsRoleOnItsOwnTint, which is the whole point of a badge: a

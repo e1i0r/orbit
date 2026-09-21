@@ -105,11 +105,14 @@ func quoted(answer, body string, room int) []aFound {
 			continue
 		}
 
-		out = append(out, one)
-
-		if len(out) == room {
+		// Before it is kept rather than after: room is what is left of the
+		// cap, and a caller with none left was handed the whole answer by
+		// a check that could only fire on the way past.
+		if len(out) >= room {
 			break
 		}
+
+		out = append(out, one)
 	}
 
 	return out

@@ -63,11 +63,7 @@ type Choice struct {
 // a proxy reporting more used than there was is reporting an overage, and
 // 140% of a window drawn as a bar is a bar with nowhere to go.
 func Used(w Window) float64 {
-	if w.Pct > 100 {
-		return 100
-	}
-
-	return w.Pct
+	return min(w.Pct, 100)
 }
 
 // Says is one quota window as a reader reads it.

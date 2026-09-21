@@ -66,8 +66,12 @@ func (s State) inputLines(cw int, e Env) []string {
 	// the first line's text does.
 	const indent = "  "
 
+	// Two cells for the mark in front of the first line, and one more for
+	// the cursor that goes on the end of the last: wrapped against the two
+	// alone, a line that filled the box put its cursor a cell past the
+	// column every other row of the screen closes in.
 	for _, raw := range plainLines(s.input) {
-		wrapped := cells.Lines(raw, max(cw-2, 8))
+		wrapped := cells.Lines(raw, max(cw-len(indent)-1, 8))
 		if len(wrapped) == 0 {
 			wrapped = []string{""}
 		}

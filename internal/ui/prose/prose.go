@@ -49,7 +49,11 @@ func Section(label, note string, width int, open bool) string {
 		head += theme.Text(theme.Tertiary).Render(note) + " "
 	}
 
-	fill := max(0, width-lipgloss.Width(head)-2*len(Gutter))
+	// One gutter, not two: the head carries the left margin itself, and
+	// subtracting the pair of them stopped the rule two cells short of
+	// where the figure strip under it ends — two blocks of the same pane
+	// closing in different columns.
+	fill := max(0, width-lipgloss.Width(head)-len(Gutter))
 	if fill == 0 {
 		return head
 	}
@@ -80,7 +84,11 @@ func Meta(parts ...string) string {
 // left, and painted in nothing at all — the terminal's own foreground is the
 // brightest thing available and this is the text the reader came for.
 func Quote(text string, width int, indent string) []string {
-	measure := max(20, min(markdown.Measure, width-lipgloss.Width(indent)-len(rule)-2))
+	// The rule is measured in cells and not in bytes: its bar is three of
+	// them, so len read it as four cells wide where two are drawn, and
+	// every quoted paragraph stopped two columns short of the pane.
+	measure := max(20, min(markdown.Measure,
+		width-lipgloss.Width(indent)-lipgloss.Width(rule)-len(Gutter)))
 	ruled := theme.Text(theme.Tertiary).Render(rule)
 
 	var out []string

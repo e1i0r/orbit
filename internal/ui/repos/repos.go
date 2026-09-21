@@ -85,12 +85,9 @@ func collect(e Env) []Item {
 
 	seen := make(map[string]int)
 
-	if len(e.Board.RepoList) > 0 {
-		for _, r := range e.Board.RepoList {
-			idx := len(list)
-			seen[strings.ToLower(r.Name)] = idx
-			list = append(list, Item{Name: r.Name, Path: r.Path})
-		}
+	for _, r := range e.Board.RepoList {
+		seen[strings.ToLower(r.Name)] = len(list)
+		list = append(list, Item{Name: r.Name, Path: r.Path})
 	}
 
 	// A task counts in every repository it was worked in. This screen is a
@@ -106,6 +103,10 @@ func collect(e Env) []Item {
 				list = append(list, Item{Name: name, Path: pathOf(t, name)})
 			}
 
+			// BandOf answers one of the four and nothing else — a row
+			// filed under anything it does not know comes back as
+			// NeedsYou — so the guard is against a fifth band added
+			// here without a column to count it in.
 			band := view.BandOf(t)
 			if band >= 0 && int(band) < len(list[idx].counts) {
 				list[idx].counts[band]++

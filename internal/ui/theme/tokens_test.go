@@ -164,3 +164,47 @@ func TestTheThreeTonesAreThreeColours(t *testing.T) {
 func lum(c [3]float64) float64 {
 	return 0.2126*c[0] + 0.7152*c[1] + 0.0722*c[2]
 }
+
+// TestAHexColourIsItsThreeChannels. Every contrast this file computes is
+// computed off these three numbers, so a digit read as the wrong value is a
+// colour pair that passes a check it should not — and the letters are where
+// that happens: a to f and A to F are two ranges, each with two ends, and a
+// palette written in one case never exercises the other.
+func TestAHexColourIsItsThreeChannels(t *testing.T) {
+	for _, c := range []struct {
+		in   string
+		want [3]float64
+		ok   bool
+	}{
+		{"#000000", [3]float64{0, 0, 0}, true},
+		{"#ffffff", [3]float64{255, 255, 255}, true},
+		{"#FFFFFF", [3]float64{255, 255, 255}, true},
+		// One channel at a time, in both cases, so a digit taken for
+		// another shows as the wrong channel rather than as grey.
+		{"#0a0b0c", [3]float64{10, 11, 12}, true},
+		{"#0A0B0C", [3]float64{10, 11, 12}, true},
+		{"#a0b0c0", [3]float64{160, 176, 192}, true},
+		{"#123456", [3]float64{18, 52, 86}, true},
+		{"#f0e1d2", [3]float64{240, 225, 210}, true},
+
+		// What it refuses. Three digits and a name are both things this
+		// file does not write, and guessing at one would hide the token
+		// that went missing.
+		{"#fff", [3]float64{}, false},
+		{"#fffffff", [3]float64{}, false},
+		{"ffffff", [3]float64{}, false},
+		{"#gggggg", [3]float64{}, false},
+		{"", [3]float64{}, false},
+	} {
+		got, ok := hexRGB(c.in)
+		if ok != c.ok {
+			t.Errorf("hexRGB(%q) read it = %v, want %v", c.in, ok, c.ok)
+
+			continue
+		}
+
+		if ok && got != c.want {
+			t.Errorf("hexRGB(%q) = %v, want %v", c.in, got, c.want)
+		}
+	}
+}

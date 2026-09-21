@@ -139,6 +139,27 @@ func TestCheckUpgradeCmdFailure(t *testing.T) {
 	}
 }
 
+// TestCheckUpgradeCmdWhenNothingAnswers. The two ways a check comes back
+// with nothing are not the same way: a server that answers 404 answers, and
+// one that is not there does not, and only the second leaves no response to
+// read anything off. A window whose hourly check meets an aeroplane's wifi
+// takes the second path every hour.
+func TestCheckUpgradeCmdWhenNothingAnswers(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	url := ts.URL
+
+	ts.Close()
+
+	old := endpoint
+	endpoint = url
+
+	t.Cleanup(func() { endpoint = old })
+
+	if msg := Check("v0.1.0")(); msg != nil {
+		t.Errorf("a check nobody answered offered %+v", msg)
+	}
+}
+
 func TestUpgradeTickCmd(t *testing.T) {
 	cmd := Tick()
 	if cmd == nil {

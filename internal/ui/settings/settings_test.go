@@ -79,6 +79,7 @@ func (f *file) Choose(key, value string) error {
 // whatever it is told, not which values Orbit happens to ship.
 func (f *file) Fresh(key string) string {
 	return map[string]string{
+		"language":   "en",
 		"autopilot":  "off",
 		"unread-cap": "5",
 		"flow":       "task",

@@ -10,6 +10,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/ui/markdown"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
@@ -32,6 +33,32 @@ func TestASectionHeadRulesOutToTheEdge(t *testing.T) {
 	// with a negative one.
 	if got := ansi.Strip(Section("changes", "", 8, true)); strings.Contains(got, "─") {
 		t.Errorf("a head with no room drew a rule anyway: %q", got)
+	}
+}
+
+// TestASectionAndTheFiguresUnderItCloseInTheSameColumn. The rule and the
+// boxes are two blocks of one pane, and the pane reads as one thing only
+// while they end in the same place: the rule subtracted the gutter twice —
+// once inside the head that already carries it — and stopped two cells
+// short of every box under it, at every width.
+func TestASectionAndTheFiguresUnderItCloseInTheSameColumn(t *testing.T) {
+	stats := []Stat{
+		{Label: "cost", Value: "$1.20", Role: theme.OK},
+		{Label: "duration", Value: "40m", Role: theme.Accent},
+	}
+
+	for w := 60; w <= 200; w++ {
+		head := lipgloss.Width(Section("changes", "", w, true))
+		if head != w-len(Gutter) {
+			t.Fatalf("at %d columns the head closes at %d, want one gutter from the edge", w, head)
+		}
+
+		// The boxes are whole cells split between them, so the last one
+		// can land a cell or two short of the rule; what it must not do
+		// is close past it.
+		if got := lipgloss.Width(Strip(stats, w)[0]); got > head {
+			t.Fatalf("at %d columns the figures close at %d, past the rule at %d", w, got, head)
+		}
 	}
 }
 
@@ -98,6 +125,32 @@ func TestAQuotedParagraphIsRuledAndWrapped(t *testing.T) {
 	}
 }
 
+// TestAQuoteFillsThePaneAndStopsAtItsEdge. Wrapped prose lands wherever the
+// last word before the measure ends, so a measure that is a few cells out
+// never shows on prose — it shows on a token with nowhere to break, which
+// is where a path or a hash in what the model wrote puts it. One long token
+// per width says exactly where the measure is.
+func TestAQuoteFillsThePaneAndStopsAtItsEdge(t *testing.T) {
+	token := strings.Repeat("x", 400)
+
+	for w := 30; w <= 160; w++ {
+		var widest int
+
+		for _, l := range Quote(token, w, Gutter) {
+			widest = max(widest, lipgloss.Width(l))
+		}
+
+		// The indent and the rule stand to the left of the measure, and
+		// one gutter is left to the right of it: the same column every
+		// other block of the pane closes in, until the measure caps the
+		// line at something narrower than the pane.
+		want := min(w-len(Gutter), len(Gutter)+lipgloss.Width(rule)+markdown.Measure)
+		if widest != want {
+			t.Errorf("a quote in a pane of %d columns is %d cells wide, want %d", w, widest, want)
+		}
+	}
+}
+
 // TestTheStripIsBoxesWhenThereIsRoomAndOneLineWhenThereIsNot. Four figures
 // side by side are read by comparing them, and a border is what tells the
 // eye where one stops — but below sixty cells there is no room for four of
@@ -134,5 +187,15 @@ func TestTheStripIsBoxesWhenThereIsRoomAndOneLineWhenThereIsNot(t *testing.T) {
 
 	if got := Strip(nil, 140); got != nil {
 		t.Errorf("a strip of no figures drew %q", got)
+	}
+
+	// Sixty is where the boxes start, not where they stop: a pane exactly
+	// that wide has the room the rule asks for.
+	if got := Strip(stats, 60); len(got) < 3 {
+		t.Errorf("a pane of 60 columns drew %d lines, want the boxes", len(got))
+	}
+
+	if got := Strip(stats, 59); len(got) != 1 {
+		t.Errorf("a pane of 59 columns drew %d lines, want the one line", len(got))
 	}
 }

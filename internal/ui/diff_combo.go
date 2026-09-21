@@ -37,18 +37,7 @@ func renderDiffFileSelect(files []patch.File, activeIdx int, width int, p *words
 		}
 
 		title := fmt.Sprintf("📁 %s [%d/%d]", p.T("diff.select_title", "File"), activeIdx+1, len(files))
-		actionHint := p.T("diff.select_hint", "[▾ select / f]")
-		titleW := lipgloss.Width(title)
-		hintW := lipgloss.Width(actionHint)
-
-		borderW := max(2, contentW-titleW-hintW-4)
-		topBorder := strings.Repeat("─", borderW)
-
-		cardTop := fmt.Sprintf("  ┌─ %s %s %s─┐",
-			theme.Paint(theme.Accent).Bold(true).Render(title),
-			theme.Paint(theme.Dim).Render(topBorder),
-			theme.Paint(theme.Dim).Render(actionHint),
-		)
+		cardTop := topOf(title, p.T("diff.select_hint", "[▾ select / f]"), contentW)
 
 		leftContent := fmt.Sprintf("%s %s  %s  %s%s", icon, theme.Paint(theme.Live).Bold(true).Render(curr.Path), stats, badge, collapseTag)
 		navHint := theme.Paint(theme.Dim).Render(p.T("diff.select_nav", "(] next · [ prev · space fold)"))
@@ -59,22 +48,11 @@ func renderDiffFileSelect(files []patch.File, activeIdx int, width int, p *words
 		cardBody := fmt.Sprintf("  │ %s%s │", fittedBody, padRight)
 		cardBottom := fmt.Sprintf("  └%s┘", strings.Repeat("─", contentW+1))
 
-		return fmt.Sprintf("%s\n%s\n%s", cardTop, cardBody, cardBottom)
+		return heldTo([]string{cardTop, cardBody, cardBottom}, width)
 	}
 
 	title := fmt.Sprintf("📁 %s (%d)", p.T("diff.select_open_title", "Select File"), len(files))
-	closeHint := p.T("diff.select_close_hint", "[▴ close / esc]")
-	titleW := lipgloss.Width(title)
-	hintW := lipgloss.Width(closeHint)
-
-	borderW := max(2, contentW-titleW-hintW-4)
-	topBorder := strings.Repeat("─", borderW)
-
-	cardTop := fmt.Sprintf("  ┌─ %s %s %s─┐",
-		theme.Paint(theme.Accent).Bold(true).Render(title),
-		theme.Paint(theme.Dim).Render(topBorder),
-		theme.Paint(theme.Dim).Render(closeHint),
-	)
+	cardTop := topOf(title, p.T("diff.select_close_hint", "[▴ close / esc]"), contentW)
 
 	var lines []string
 
@@ -140,5 +118,60 @@ func renderDiffFileSelect(files []patch.File, activeIdx int, width int, p *words
 	lines = append(lines, fmt.Sprintf("  │ %s%s │", fittedHelp, padHelp))
 	lines = append(lines, fmt.Sprintf("  └%s┘", strings.Repeat("─", contentW+1)))
 
-	return strings.Join(lines, "\n")
+	return heldTo(lines, width)
+}
+
+// topOf is the box's top border: the title, some dashes, and the hint that
+// says which key opens or closes the list.
+//
+// The dashes are counted by measuring what is already on the line rather
+// than by adding up the pieces of the format string, because that sum was
+// wrong and nothing could see it: the top came out one to three cells wider
+// than the sides, so the border stuck out past the box on every window
+// narrow enough for the two words to fill it.
+//
+// When there is no room for both, the hint is the half to drop. The title
+// says which file is being looked at; the hint says which key opens the
+// list, and a reader can find that in the cheat sheet.
+func topOf(title, hint string, contentW int) string {
+	const leastDashes = 2
+
+	// The width of every line of the box, which is what the bottom border
+	// below is built to.
+	want := lipgloss.Width(fmt.Sprintf("  └%s┘", strings.Repeat("─", contentW+1)))
+
+	shell := func(hint string, dashes int) string {
+		return fmt.Sprintf("  ┌─ %s %s %s─┐",
+			theme.Paint(theme.Accent).Bold(true).Render(title),
+			theme.Paint(theme.Dim).Render(strings.Repeat("─", dashes)),
+			theme.Paint(theme.Dim).Render(hint),
+		)
+	}
+
+	for _, said := range []string{hint, ""} {
+		bare := lipgloss.Width(shell(said, 0))
+		if dashes := want - bare; dashes >= leastDashes {
+			return shell(said, dashes)
+		}
+	}
+
+	return shell("", leastDashes)
+}
+
+// heldTo keeps the box inside the window it is drawn in.
+//
+// contentW has a floor: a picker narrower than thirty columns is not one a
+// reader can tell two paths apart in, so on a very narrow terminal the box
+// is wider than the window on purpose. What must not follow is the box
+// running off the right — a line wider than the terminal wraps where the
+// terminal decides, which puts the bottom border a row below where every
+// other reading of this view expects it. noteRows holds its own box the
+// same way and for the same reason.
+func heldTo(lines []string, width int) string {
+	out := make([]string, 0, len(lines))
+	for _, line := range lines {
+		out = append(out, cells.Fit(line, width))
+	}
+
+	return strings.Join(out, "\n")
 }

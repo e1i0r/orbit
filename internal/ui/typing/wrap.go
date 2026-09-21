@@ -43,7 +43,13 @@ func Wrap(rs []rune, w int) []Span {
 
 // wrapOne breaks one line of the value, between two newlines.
 func wrapOne(rs []rune, from, to, w int) []Span {
-	if w <= 0 || to-from <= w {
+	// Two lines the loop below cannot take. A box of less than a column
+	// would be walked a column at a time without ever reaching the end of
+	// the line, and a line with nothing on it — the blank between two
+	// paragraphs — would come back as no line at all, which takes a row
+	// off the box and puts the caret a row above where the reader left
+	// it. Everything else the loop answers, a line that fits included.
+	if w < 1 || from >= to {
 		return []Span{{From: from, To: to}}
 	}
 

@@ -272,7 +272,7 @@ func TestAClickOnNothingChangesNothing(t *testing.T) {
 func TestTheColumnBesideTheThreadIsNotTheThread(t *testing.T) {
 	kept := saidThree()
 
-	e := world(t, kept)
+	e := wideWorld(t, kept)
 	e.Knows = func() []knowledge.Rule {
 		return []knowledge.Rule{{
 			ID: "aaaa1111", Scope: knowledge.Scope{Kind: knowledge.General},
@@ -288,7 +288,8 @@ func TestTheColumnBesideTheThreadIsNotTheThread(t *testing.T) {
 	}
 
 	if !s.sideFits(e.Frame.Body.W) {
-		t.Skip("this terminal is too narrow to draw the column beside the thread")
+		t.Fatalf("a body of %d columns does not fit the side, and this test is about it",
+			e.Frame.Body.W)
 	}
 
 	cw, threadH := s.layout(e.Frame.Body.H, e.Frame.Body.W, e)
