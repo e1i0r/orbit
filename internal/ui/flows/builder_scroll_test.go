@@ -196,3 +196,68 @@ func TestThePipelineHoldsItsQuotedPromptInside(t *testing.T) {
 		}
 	}
 }
+
+// TestNoRowOfTheListRunsPastTheWindow, at every width, with and without
+// the rail beside it.
+//
+// The measuring was part of drawing the rail, so a list short enough not to
+// need one was drawn unmeasured — and the sentence about where flows live
+// is a hundred and twenty-five cells, which wraps on every terminal
+// narrower than that and moves every row under it down one.
+func TestNoRowOfTheListRunsPastTheWindow(t *testing.T) {
+	for w := layout.MinWidth; w <= 160; w += 3 {
+		for _, h := range []int{14, 24, 40, 70} {
+			e := world(t)
+
+			frame, err := layout.Fit(w, h)
+			if err != nil {
+				continue
+			}
+
+			e.Frame = frame
+
+			s := Open(FromBoard, e)
+
+			for i, r := range s.View(e.Frame.Body.H, e.Frame.Body.W, e) {
+				if got := lipgloss.Width(r); got > e.Frame.Body.W {
+					t.Fatalf("the list at %dx%d: row %d is %d cells wide in a body of %d: %q",
+						w, h, i, got, e.Frame.Body.W, ansi.Strip(r))
+				}
+			}
+		}
+	}
+}
+
+// TestTheWholeSentenceAboutWhereFlowsLiveIsReadable. It is two facts, and
+// an ellipsis took the second of them off every terminal narrower than a
+// hundred and twenty-seven columns.
+func TestTheWholeSentenceAboutWhereFlowsLiveIsReadable(t *testing.T) {
+	for _, w := range []int{60, 80, 100, 140} {
+		e := world(t)
+
+		frame, err := layout.Fit(w, 40)
+		if err != nil {
+			t.Fatalf("a window of %d columns will not fit: %v", w, err)
+		}
+
+		e.Frame = frame
+
+		s := Open(FromBoard, e)
+
+		var joined strings.Builder
+
+		for _, l := range s.flowsListLines(e.Frame.Body.W, e) {
+			joined.WriteString(ansi.Strip(l.text) + " ")
+		}
+
+		// The indent of each wrapped row is furniture: what is being
+		// asked is whether the sentence is all there, word for word.
+		said := strings.Join(strings.Fields(joined.String()), " ")
+
+		for _, want := range []string{"$ORBIT_HOME/flows/", "saving your own under its name covers it"} {
+			if !strings.Contains(said, want) {
+				t.Errorf("at %d columns the list does not say %q:\n%s", w, want, said)
+			}
+		}
+	}
+}

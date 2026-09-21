@@ -66,9 +66,13 @@ func (s State) flowsListRows(h, w int, e Env) []string {
 			break
 		}
 
-		row := lines[at].text
+		// Held to the window whether or not there is a rail beside it.
+		// The Fit used to be part of drawing the rail, so a list short
+		// enough not to need one was drawn unmeasured — and the sentence
+		// about where flows live is a hundred and twenty-five cells.
+		row := cells.Fit(lines[at].text, w)
 		if track != nil {
-			row = cells.PadRight(cells.Fit(row, cw), cw) + track[i]
+			row = cells.PadRight(cells.Fit(lines[at].text, cw), cw) + track[i]
 		}
 
 		out = append(out, row)
@@ -149,12 +153,24 @@ func (s State) flowsListLines(w int, e Env) []flowLine {
 		// the half about where they live, and that a built-in is inside the
 		// binary: saving one of your own under its name covers it, which is
 		// the only way a shipped flow changes.
-		plain("  " + theme.Paint(theme.Dim).Render(p.T("flows.where_they_live",
-			"your own flows are files under $ORBIT_HOME/flows/; a built-in is inside orbit, and saving your own under its name covers it"))),
-		plain(""),
-		{text: createBtn, at: noFlow, create: true},
-		plain(""),
 	}
+
+	// Wrapped rather than cut: it is two facts — where your own flows are,
+	// and that a built-in lives inside the binary and is covered by saving
+	// one of your own under its name — and an ellipsis takes the second of
+	// them off every terminal narrower than a hundred and twenty-seven
+	// columns.
+	for _, l := range cells.Lines(p.T("flows.where_they_live",
+		"your own flows are files under $ORBIT_HOME/flows/; a built-in is inside orbit, and saving your own under its name covers it"),
+		max(w-2, 1)) {
+		out = append(out, plain("  "+theme.Paint(theme.Dim).Render(l)))
+	}
+
+	out = append(out,
+		plain(""),
+		flowLine{text: createBtn, at: noFlow, create: true},
+		plain(""),
+	)
 
 	descriptors := s.listed
 	if len(descriptors) == 0 {

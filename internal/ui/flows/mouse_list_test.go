@@ -74,9 +74,25 @@ func TestHitFlowsOutsideBody(t *testing.T) {
 
 func TestHitFlowsListCreateButton(t *testing.T) {
 	s, e := designer(t)
-	y := e.Frame.Body.Y + 4
 
-	got := s.Hit(10, y, e)
+	// Found by reading the rows rather than by counting them: the sentence
+	// above the button wraps, so which row it lands on is a fact about the
+	// width and not a number to write down here.
+	row := -1
+
+	for i, l := range s.flowsListLines(e.Frame.Body.W, e) {
+		if l.create {
+			row = i
+
+			break
+		}
+	}
+
+	if row < 0 {
+		t.Fatal("the create button is on no row of the list")
+	}
+
+	got := s.Hit(10, e.Frame.Body.Y+row, e)
 	if got.Kind != point.FlowItem || got.Field != "create" {
 		t.Errorf("hitFlows at the create row = %+v, want Field \"create\"", got)
 	}
