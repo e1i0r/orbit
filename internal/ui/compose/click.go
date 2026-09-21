@@ -93,7 +93,11 @@ func (s State) Hit(x, y int, e Env) point.Target {
 		return point.Target{Kind: point.ComposeField, Pane: boxField}
 	case line > plan.boxTop && line < plan.boxBot:
 		return caretAt(boxField, line-plan.boxTop-1, x-composeBoxStart)
-	case line >= plan.actions:
+	// The buttons are one row, and only that row: every blank line under
+	// it answered for them, so a click anywhere in the empty half of the
+	// form saved the task — and at the columns Save & Run is drawn in, it
+	// saved it and started spending on it.
+	case line == plan.actions:
 		return hitComposeActions(e.Words, x)
 	}
 

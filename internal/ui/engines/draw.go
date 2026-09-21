@@ -253,7 +253,19 @@ func (s State) hit(x, y int, e Env) point.Target {
 
 	lines, at := s.engineLines(e.Frame.Body.W, e)
 
-	want := line - engineTop + s.engineOffset(len(lines), engineView(e.Frame.Body.H))
+	// The list is drawn between the chrome above it and the ways out
+	// below, and a click outside that strip is on neither. Counted from
+	// the top alone it was: a click on the line saying what the keys do
+	// named the row just under the window, and once the list had been
+	// scrolled a click on the title named one further down still.
+	view := engineView(e.Frame.Body.H)
+
+	on := line - engineTop
+	if on < 0 || on >= view {
+		return point.Target{}
+	}
+
+	want := on + s.engineOffset(len(lines), view)
 	for i, l := range at {
 		if l == want {
 			return point.Target{Kind: point.EngineRow, Pane: i}

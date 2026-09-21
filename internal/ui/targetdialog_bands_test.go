@@ -125,7 +125,7 @@ func TestEveryColumnOfASettingsRowBelongsToOnePillAtMost(t *testing.T) {
 	}
 
 	// The first row's own line, which is where its pills are drawn.
-	y := m.frame.Body.Y + settingsHead
+	y := m.frame.Body.Y + settingsLine(t, m, rows[0].Key)
 
 	for x := 0; x < m.frame.Body.W+4; x++ {
 		got := m.hitSettings(x, y)

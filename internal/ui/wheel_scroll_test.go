@@ -211,7 +211,7 @@ func TestWheelMovesTheSettingsTable(t *testing.T) {
 		m = m.wheel(tea.Mouse{X: 5, Y: y, Button: tea.MouseWheelDown})
 	}
 
-	if m.settingsOff() == 0 {
+	if m.settings.Off(m.settingsEnv()) == 0 {
 		t.Fatalf("the table never scrolled in a body of %d rows", m.frame.Body.H)
 	}
 
