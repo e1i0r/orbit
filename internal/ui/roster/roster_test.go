@@ -34,12 +34,23 @@ func TestHowLongUntilItComesBack(t *testing.T) {
 // was is reporting an overage, and 140% of a window drawn as a bar is a bar
 // with nowhere to go.
 func TestAnOverageIsDrawnAsAFullWindow(t *testing.T) {
-	if got := Used(Window{Pct: 140}); got != 100 {
-		t.Errorf("Used(140%%) = %v, want it capped at the whole window", got)
-	}
-
-	if got := Used(Window{Pct: 42}); got != 42 {
-		t.Errorf("Used(42%%) = %v, want what was read", got)
+	for _, c := range []struct {
+		in   float64
+		want float64
+	}{
+		{140, 100},
+		{100.4, 100},
+		// The whole window and nothing over it: the cap is what a
+		// reading above the edge is held to, not a rounding of the
+		// edge itself.
+		{100, 100},
+		{99.6, 99.6},
+		{42, 42},
+		{0, 0},
+	} {
+		if got := Used(Window{Pct: c.in}); got != c.want {
+			t.Errorf("Used(%v%%) = %v, want %v", c.in, got, c.want)
+		}
 	}
 }
 
