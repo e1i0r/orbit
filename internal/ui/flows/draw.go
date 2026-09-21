@@ -187,15 +187,21 @@ func (s State) flowsListLines(w int, e Env) []flowLine {
 
 		headerLine := mark + theme.Paint(theme.Accent).Render(d.Name)
 		if originStr != "" {
-			headerLine += "  " + theme.Paint(theme.Dim).Render("("+originStr+")")
+			headerLine += strings.Repeat(" ", rowOriginAt) +
+				theme.Paint(theme.Dim).Render("("+originStr+")")
 		}
 
+		// Drawn from the same list the pointer is measured against: see
+		// rowPills.
 		if i == s.sel {
-			headerLine += "   " + theme.Pill("👁 "+p.T("flows.btn_view_details", "Details"), theme.PillInk, theme.PillDetails)
+			headerLine += strings.Repeat(" ", rowPillsAt)
 
-			headerLine += " " + theme.Pill("✏ "+p.T("flows.btn_edit", "Edit"), theme.PillInk, theme.PillEdit)
-			if d.Origin != flow.OriginBuiltin {
-				headerLine += " " + theme.Pill("🗑 "+p.T("flows.btn_delete", "Delete"), theme.PillInk, theme.PillDelete)
+			for at, pill := range rowPills(d, e) {
+				if at > 0 {
+					headerLine += strings.Repeat(" ", rowPillGap)
+				}
+
+				headerLine += pill.drawn
 			}
 		}
 

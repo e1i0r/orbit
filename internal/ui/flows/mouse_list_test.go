@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"charm.land/lipgloss/v2"
+
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/e1i0r/orbit/internal/flow"
@@ -164,13 +166,33 @@ func TestHitFlowsListDeleteVsEdit(t *testing.T) {
 	if got := s.Hit(10, line, e); got.Field != "details" || got.ID != "zzz-mine" {
 		t.Errorf("hitFlows on flow name = %+v, want a details click", got)
 	}
-	// Clicking Edit button
-	if got := s.Hit(44, line, e); got.Field != "edit" || got.ID != "zzz-mine" {
-		t.Errorf("hitFlows on the edit pill = %+v, want an edit click", got)
+
+	// The pills, found where they are drawn rather than at two columns
+	// written down here. The numbers that used to be here were 44 and 56,
+	// and they agreed with a hit-test that measured a pill two cells wider
+	// than it is and counted no space between them: both were written from
+	// the same wrong idea of the row, and neither was ever compared with it.
+	var mine flow.Listed
+
+	for _, d := range flow.List(e.Flows) {
+		if d.Name == "zzz-mine" {
+			mine = d
+		}
 	}
-	// Clicking Delete button
-	if got := s.Hit(56, line, e); got.Field != "delete" || got.ID != "zzz-mine" {
-		t.Errorf("hitFlows on the delete pill = %+v, want a delete click", got)
+
+	at := rowPillsStart(mine, e)
+
+	for _, pill := range rowPills(mine, e) {
+		wide := lipgloss.Width(pill.drawn)
+
+		for _, x := range []int{at, at + wide - 1} {
+			got := s.Hit(x, line, e)
+			if got.Field != pill.field || got.ID != "zzz-mine" {
+				t.Errorf("column %d of the %s pill = %+v", x, pill.field, got)
+			}
+		}
+
+		at += wide + rowPillGap
 	}
 
 	if got := flow.List(e.Flows); len(got) != len(flow.BuiltinNames())+1 {

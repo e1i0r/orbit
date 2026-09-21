@@ -10,6 +10,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/point"
 )
@@ -226,5 +227,154 @@ func TestChoosingAnEngineInTheDescribeTabLetsItsModelGo(t *testing.T) {
 
 	if next.sayModel != "" {
 		t.Errorf("the model stayed %q across a change of engine", next.sayModel)
+	}
+}
+
+// TestTheChosenRowOfTheListIsOnTheScreen, at every height and wherever the
+// cursor has been walked to. The list is longer than the screen and the row
+// being chosen is the one that has to be on it.
+func TestTheChosenRowOfTheListIsOnTheScreen(t *testing.T) {
+	s, e := designing(t, 110, 45)
+	s = s.openPicker(flowFieldModel, e)
+
+	ids, _ := s.pickerRows(e)
+	if len(ids) < 3 {
+		t.Fatalf("the picker offers %d models, and this needs three", len(ids))
+	}
+
+	for _, h := range []int{8, 12, 20, 40} {
+		for sel := range len(ids) {
+			at := s
+			at.picker.sel = sel
+
+			lines := at.pickerLines(h, e.Frame.Body.W, e)
+			if len(lines) > h {
+				t.Fatalf("at %d rows the list drew %d lines", h, len(lines))
+			}
+
+			marked, chosen := 0, false
+
+			for _, l := range lines {
+				if l.pick == sel {
+					chosen = true
+				}
+
+				if strings.Contains(ansi.Strip(l.text), "▸") {
+					marked++
+
+					if l.pick != sel {
+						t.Errorf("at %d rows with %d chosen, the mark is on row %d", h, sel, l.pick)
+					}
+				}
+			}
+
+			if !chosen {
+				t.Errorf("at %d rows, choice %d of %d is on no row of the list", h, sel, len(ids))
+			}
+
+			if marked != 1 {
+				t.Errorf("at %d rows with %d chosen, %d rows carry the mark", h, sel, marked)
+			}
+		}
+	}
+}
+
+// TestTheListSaysWhichOneIsInUse, and says it of one row only.
+func TestTheListSaysWhichOneIsInUse(t *testing.T) {
+	s, e := designing(t, 110, 45)
+
+	s.edited().Model = "zeta/two"
+	s = s.openPicker(flowFieldModel, e)
+
+	ids, _ := s.pickerRows(e)
+
+	at, said := -1, 0
+
+	for i, id := range ids {
+		if id == "zeta/two" {
+			at = i
+		}
+	}
+
+	if at < 0 {
+		t.Fatalf("the model in use is on no row of the list: %v", ids)
+	}
+
+	for _, l := range s.pickerLines(e.Frame.Body.H, e.Frame.Body.W, e) {
+		if !strings.Contains(ansi.Strip(l.text), "in use") {
+			continue
+		}
+
+		said++
+
+		if l.pick != at {
+			t.Errorf("row %d is marked as in use and the model is on row %d", l.pick, at)
+		}
+	}
+
+	if said != 1 {
+		t.Errorf("%d rows say they are in use, want one", said)
+	}
+}
+
+// TestEveryPillOfAFlowRowIsWhereItIsDrawn. The pills on the row the cursor
+// is on were measured two cells wider than they are, with no space counted
+// between them, so every zone sat one to three cells right of the pill it
+// was named for: the first cell of Edit inspected the flow, and three cells
+// of blank air past it edited.
+func TestEveryPillOfAFlowRowIsWhereItIsDrawn(t *testing.T) {
+	e := world(t)
+	s := Open(FromBoard, e)
+
+	for at := range s.listed {
+		s.sel = at
+		d := s.listed[at]
+
+		row := -1
+
+		for i, l := range s.flowsListLines(e.Frame.Body.W, e) {
+			if l.at == at && l.head {
+				row = i
+
+				break
+			}
+		}
+
+		if row < 0 {
+			t.Fatalf("flow %q is on no row of the list", d.Name)
+		}
+
+		x := rowPillsStart(d, e)
+
+		for _, pill := range rowPills(d, e) {
+			wide := lipgloss.Width(pill.drawn)
+
+			for _, col := range []int{x, x + wide/2, x + wide - 1} {
+				got := s.Hit(col, e.Frame.Body.Y+row, e)
+				if got.Field != pill.field || got.ID != d.Name {
+					t.Errorf("%s: column %d of the %s pill answers %q for %q",
+						d.Name, col, pill.field, got.Field, got.ID)
+				}
+			}
+
+			// The space between two pills belongs to the row, which
+			// inspects — not to either of them.
+			if got := s.Hit(x+wide, e.Frame.Body.Y+row, e); got.Field == "delete" {
+				t.Errorf("%s: the gap at column %d deletes it", d.Name, x+wide)
+			}
+
+			x += wide + rowPillGap
+		}
+
+		// And a built-in offers no way to delete it, at any column.
+		if d.Origin != flow.OriginBuiltin {
+			continue
+		}
+
+		for col := range e.Frame.Body.W {
+			if got := s.Hit(col, e.Frame.Body.Y+row, e); got.Field == "delete" {
+				t.Errorf("%s is a built-in and column %d offers to delete it", d.Name, col)
+			}
+		}
 	}
 }

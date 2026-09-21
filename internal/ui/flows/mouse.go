@@ -109,27 +109,78 @@ func (s State) hitList(x, line int, e Env) point.Target {
 	return point.Target{Kind: point.FlowItem, Field: "details", ID: d.Name}
 }
 
-// flowPill is which of the row's own pills the pointer is over, measured off
-// the pills themselves rather than written down: a translation makes every
-// one of them a different width.
-func flowPill(d flow.Listed, x int, e Env) string {
+// rowPill is one of the pills a chosen row of the list carries.
+type rowPill struct {
+	drawn string
+	field string
+}
+
+// rowPillGap is the space between two of them, and rowPillsAt the space
+// between the row's own words and the first.
+const (
+	rowPillGap  = 1
+	rowPillsAt  = 3
+	rowOriginAt = 2
+)
+
+// rowPills is what a chosen row offers: to look at the flow, to edit it,
+// and — for one of your own — to take it away. A built-in cannot be taken
+// away, so it carries no pill for it.
+//
+// One reading, two uses: the row is drawn from this and the pointer is
+// measured against it. They were two — a drawing that joined the pills with
+// a space, and a hit-test that added four cells for a pill padded by two
+// and counted no space at all — so every zone sat one to three cells right
+// of the pill it was named for. The first cell of Edit inspected, and three
+// cells of blank air past it edited.
+func rowPills(d flow.Listed, e Env) []rowPill {
 	p := e.Words
 
-	at := cells.Gutter + lipgloss.Width(d.Name)
-	if origin := OriginSaid(p, d.Origin); origin != "" {
-		at += 2 + lipgloss.Width(origin) + 2
+	out := []rowPill{
+		{
+			drawn: theme.Pill("👁 "+p.T("flows.btn_view_details", "Details"), theme.PillInk, theme.PillDetails),
+			field: "details",
+		},
+		{
+			drawn: theme.Pill("✏ "+p.T("flows.btn_edit", "Edit"), theme.PillInk, theme.PillEdit),
+			field: "edit",
+		},
 	}
 
-	at += 3
+	if d.Origin == flow.OriginBuiltin {
+		return out
+	}
 
-	detW := lipgloss.Width("👁 "+p.T("flows.btn_view_details", "Details")) + 4
-	editW := lipgloss.Width("✏ "+p.T("flows.btn_edit", "Edit")) + 4
+	return append(out, rowPill{
+		drawn: theme.Pill("🗑 "+p.T("flows.btn_delete", "Delete"), theme.PillInk, theme.PillDelete),
+		field: "delete",
+	})
+}
 
-	switch {
-	case x >= at+detW && x < at+detW+editW:
-		return "edit"
-	case d.Origin != flow.OriginBuiltin && x >= at+detW+editW:
-		return "delete"
+// rowPillsStart is the column the pills begin in: the gutter, the flow's
+// name, where it came from when it says so, and the gap before the first.
+func rowPillsStart(d flow.Listed, e Env) int {
+	at := cells.Gutter + lipgloss.Width(d.Name)
+	if origin := OriginSaid(e.Words, d.Origin); origin != "" {
+		at += rowOriginAt + lipgloss.Width("("+origin+")")
+	}
+
+	return at + rowPillsAt
+}
+
+// flowPill is which of the row's own pills the pointer is over, measured
+// off the pills themselves rather than written down: a translation makes
+// every one of them a different width.
+func flowPill(d flow.Listed, x int, e Env) string {
+	at := rowPillsStart(d, e)
+
+	for _, pill := range rowPills(d, e) {
+		wide := lipgloss.Width(pill.drawn)
+		if x >= at && x < at+wide {
+			return pill.field
+		}
+
+		at += wide + rowPillGap
 	}
 
 	return ""
