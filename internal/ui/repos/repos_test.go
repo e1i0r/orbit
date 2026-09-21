@@ -305,7 +305,9 @@ func TestOneRowCarriesTheCursorAndEveryRowStartsInTheSameColumn(t *testing.T) {
 
 		// Whatever stands in the gutter, the name after it starts in the
 		// same column on every row.
-		if at := len([]rune(row)) - len([]rune(strings.TrimLeft(row, " "+cells.Mark))); at != cells.Gutter {
+		bare := strings.TrimLeft(row, " "+cells.Mark)
+
+		if at := len([]rune(row)) - len([]rune(bare)); at != cells.Gutter {
 			t.Errorf("row %d starts its name at cell %d, want %d", i, at, cells.Gutter)
 		}
 	}

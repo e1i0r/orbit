@@ -192,7 +192,8 @@ func TestAColumnIsTheWidthSharedOutAmongThem(t *testing.T) {
 	} {
 		got := Fields(pairs, 2, c.width)
 		if len(got) != 2 {
-			t.Fatalf("a pane of %d columns laid %d lines, want a label line and a value line", c.width, len(got))
+			t.Fatalf("a pane of %d columns laid %d lines, want a label line and a value line",
+				c.width, len(got))
 		}
 
 		if at := strings.Index(ansi.Strip(got[0]), "BBB"); at != c.pitch {
