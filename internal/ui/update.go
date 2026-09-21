@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strings"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -100,6 +101,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if msg.Err != nil {
+			// The pane is where the reader is looking: it opened when the
+			// command started and it is still up. A command that failed
+			// having printed nothing left it reading "no output yet…
+			// finished", with the only account of the failure on the band
+			// — under a form that had just closed over it, beside
+			// whatever had been said before. Put it where the eye is.
+			if strings.TrimSpace(next.output) == "" {
+				next.output = m.errSaid(msg.Err)
+			}
+
 			return next.say(m.errSaid(msg.Err)), nil
 		}
 

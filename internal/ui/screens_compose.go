@@ -89,7 +89,13 @@ func (m Model) writeTask(t compose.Task) (tea.Model, tea.Cmd) {
 
 	m.pendingID, m.pendTries = t.ID, 0
 
-	return m.runWatched(Command{Name: "new"}, args)
+	// `board new`, parent and child, the way pr merge and note are run.
+	// It was `new` alone, and there has never been a command by that name:
+	// writing a task down lives under board, so every save from this form
+	// came back "no such command: new" — on the band, where a reader who
+	// had just watched the form close was not looking. The form worked,
+	// the click worked, and nothing was ever written.
+	return m.runWatched(Command{Name: "board"}, append([]string{"new"}, args...))
 }
 
 // openCompose brings the form up, on the repository the cursor was over.
