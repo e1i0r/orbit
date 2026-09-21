@@ -13,6 +13,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/ui/roster"
+	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -112,6 +113,63 @@ func TestTheBarIsTheShareThatIsGone(t *testing.T) {
 
 	if got := bar(50, 0); got != "" {
 		t.Errorf("a bar of no cells = %q, want nothing drawn", got)
+	}
+
+	// Spent and left are one bar of a fixed width: a bar that grows with
+	// what has been used pushes the sentence beside it off the line, and
+	// the line under it reads as a different engine's.
+	for _, pct := range []float64{0, 1, 33.3, 50, 74.9, 75, 99.9, 100, 140} {
+		if got := len([]rune(ansi.Strip(bar(pct, quotaBarCells)))); got != quotaBarCells {
+			t.Errorf("a window %.1f%% used drew a bar of %d cells, want %d",
+				pct, got, quotaBarCells)
+		}
+	}
+}
+
+// TestTheBarTurnsAtTheShareWorthNoticing. The colour is the glance and the
+// number is the reading, so the two have to change at the same place: a bar
+// that stays calm through three quarters of a window and then reports an
+// overage is a bar nobody looked at in time.
+func TestTheBarTurnsAtTheShareWorthNoticing(t *testing.T) {
+	warned := func(pct float64) bool {
+		drawn := bar(pct, quotaBarCells)
+		spent := strings.Count(ansi.Strip(drawn), quotaSpent)
+
+		return strings.HasPrefix(drawn,
+			theme.Paint(theme.Warn).Render(strings.Repeat(quotaSpent, spent)))
+	}
+
+	for _, c := range []struct {
+		pct  float64
+		want bool
+	}{
+		{1, false},
+		{50, false},
+		{quotaFull - 0.1, false},
+		{quotaFull, true},
+		{90, true},
+		{140, true},
+	} {
+		if got := warned(c.pct); got != c.want {
+			t.Errorf("a window %.1f%% used drew a warned bar = %v, want %v", c.pct, got, c.want)
+		}
+	}
+}
+
+// TestAScreenWithNoRowsToDrawDrawsNothing. Every window passes through no
+// height at all while somebody drags its corner, and a screen that draws its
+// title into a body with no room for it is a title the terminal wraps.
+func TestAScreenWithNoRowsToDrawDrawsNothing(t *testing.T) {
+	e := world(t)
+
+	for _, h := range []int{-1, 0} {
+		if got := View(h, 100, e); got != nil {
+			t.Errorf("a screen %d rows tall drew %d lines, want none", h, len(got))
+		}
+	}
+
+	if got := View(1, 100, e); len(got) == 0 {
+		t.Error("a screen with a row in it drew nothing")
 	}
 }
 
