@@ -97,7 +97,7 @@ func TestTheRowTheCursorIsOnIsOnTheScreen(t *testing.T) {
 			// where there is room for one line only, one of them is.
 			shown := func(line int) bool { return line >= off && line <= off+view-1 }
 
-			if view > 1 && !(shown(from) && shown(last)) {
+			if view > 1 && (!shown(from) || !shown(last)) {
 				t.Fatalf("at a body of %d the cursor's row is lines %d and %d, outside the %d from %d",
 					h, from, last, view, off)
 			}

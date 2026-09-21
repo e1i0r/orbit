@@ -191,6 +191,7 @@ func TestARuleStopsAndANoteDoesNot(t *testing.T) {
 		line := spoken.Line{Kind: c.kind, Phrase: "never log a card number"}
 
 		next, out := s.learn(line, e)
+
 		if len(got) != 1 || got[0] != c.stops {
 			t.Fatalf("%v was written down as stops=%v, want %v", c.kind, got, c.stops)
 		}

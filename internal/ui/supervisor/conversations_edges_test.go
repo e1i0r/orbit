@@ -185,6 +185,7 @@ func TestForgettingTheLastConversationLeavesTheCursorOnTheNewLast(t *testing.T) 
 	gone := conversationsOf(s.all)[s.listSel].id
 
 	next, _ := s.removeConversation(e)
+
 	if len(kept.gone) != 1 || kept.gone[0] != gone {
 		t.Fatalf("d forgot %v, want %q", kept.gone, gone)
 	}

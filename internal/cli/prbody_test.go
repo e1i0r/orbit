@@ -21,9 +21,15 @@ import (
 	"github.com/e1i0r/orbit/internal/words"
 )
 
-// opened is a pull request this delivery opened, or a repository it left as
+// pull is a pull request this delivery opened, or a repository it left as
 // it found it.
-func opened(name, url string) aPullRequest {
+//
+// Named for what it answers rather than for what happened to it: the
+// cockpit's own suite has an `opened` of its own, behind the integration
+// tag, so two files of this package declared the same name and the package
+// only failed to build when that tag was on — which is make check and not
+// make test.
+func pull(name, url string) aPullRequest {
 	return aPullRequest{repo: repo.Repo{Name: name}, url: url}
 }
 
@@ -47,8 +53,8 @@ func TestAPullRequestSaysWhatElseTheTaskTouched(t *testing.T) {
 	// And one worked in three names the other two, with the link for the
 	// one that changed something and a word for the one that did not.
 	spread := bodyOf(one, []aPullRequest{
-		opened("ledger", "https://github.com/e1i0r/ledger/pull/7"),
-		opened("scripts", ""),
+		pull("ledger", "https://github.com/e1i0r/ledger/pull/7"),
+		pull("scripts", ""),
 	}, nil)
 
 	if !strings.Contains(spread, heading) {
@@ -72,7 +78,7 @@ func TestAPullRequestSaysWhatElseTheTaskTouched(t *testing.T) {
 // order in every one of the three bodies, or they cannot tell they are
 // looking at the same task.
 func TestWhatTheOtherRepositoriesAre(t *testing.T) {
-	all := []aPullRequest{opened("api", "u1"), opened("ledger", "u2"), opened("scripts", "u3")}
+	all := []aPullRequest{pull("api", "u1"), pull("ledger", "u2"), pull("scripts", "u3")}
 
 	for i, want := range [][]string{
 		{"ledger", "scripts"},
@@ -94,7 +100,7 @@ func TestWhatTheOtherRepositoriesAre(t *testing.T) {
 	// The list it was given is not the list it hands back: a caller that
 	// appended to what it got would rewrite the delivery's own record of
 	// what it opened.
-	if grown := append(siblings(all, 0), opened("intruder", "u4")); len(grown) != 3 {
+	if grown := append(siblings(all, 0), pull("intruder", "u4")); len(grown) != 3 {
 		t.Fatalf("two siblings and one more came to %d", len(grown))
 	}
 
