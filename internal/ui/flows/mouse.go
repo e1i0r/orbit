@@ -152,6 +152,25 @@ func (s State) hitBuilder(x, line int, e Env) point.Target {
 
 	switch {
 	case row.act != "":
+		// A row that acts, acts where it is drawn. The whole width of the
+		// window answered before, so a click on the blank forty columns
+		// to the right of "✨ Draft it" sent a question to an engine.
+		if x >= lipgloss.Width(row.text) {
+			return point.Target{}
+		}
+
+		// The two dials of the describe tab are pills with a way to see
+		// the rest beside them: pointing at one of the pills chooses it,
+		// and pointing anywhere else on the row opens the list, which is
+		// what the row says pressing ⏎ there does.
+		if field, ok := sayDialField(row.act); ok {
+			if opts, current, has := s.choices(field, e); has {
+				if at, on := choiceAt(x, opts, current); on {
+					return point.Target{Kind: point.FlowItem, Field: "dial", Phase: field, Pane: at}
+				}
+			}
+		}
+
 		return point.Target{Kind: point.FlowItem, Field: row.act}
 	case row.strip:
 		if at := s.flowTabAt(x, e); at >= 0 {
@@ -191,6 +210,19 @@ func (s State) hitBuilder(x, line int, e Env) point.Target {
 	}
 
 	return point.Target{Kind: point.FlowItem, Phase: row.field}
+}
+
+// sayDialField is the field one of the describe tab's two dial rows stands
+// for, and whether the row is one of them at all.
+func sayDialField(act string) (int, bool) {
+	switch act {
+	case "say_engine":
+		return flowFieldSayEngine, true
+	case "say_model":
+		return flowFieldSayModel, true
+	}
+
+	return 0, false
 }
 
 // promptPill is which of the instruction row's three pills the pointer is

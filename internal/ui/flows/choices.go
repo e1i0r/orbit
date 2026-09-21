@@ -69,6 +69,18 @@ func (s State) choices(field int, e Env) (opts []choice, current string, ok bool
 		no, yes := p.T("flows.repeat_no", "runs once"), p.T("flows.repeat_yes", "repeats ↻")
 
 		return plainChoices([]string{no, yes}), pickOne(s.looping(), no, yes), true
+	case flowFieldSayEngine:
+		return plainChoices(e.Engines()), s.sayEngineName(e), true
+	case flowFieldSayModel:
+		// Only while it is drawn as pills. Past that the row is one value
+		// and a count, and what a click on it means is "see them all" —
+		// which is the picker, and is what the row says it does.
+		ids, labels := s.pickerChoices(flowFieldSayModel, e)
+		if len(ids) > dialShown {
+			return nil, "", false
+		}
+
+		return labelledChoices(ids, labels), s.sayModel, true
 	}
 
 	return nil, "", false
@@ -81,6 +93,18 @@ func pickOne(on bool, off, yes string) string {
 	}
 
 	return off
+}
+
+// labelledChoices is a dial whose ids and words are not the same string,
+// which is opencode's models: the id it is picked by is
+// opencode/claude-opus-5 and what belongs on a pill is the rest.
+func labelledChoices(ids, labels []string) []choice {
+	out := make([]choice, 0, len(ids))
+	for i, id := range ids {
+		out = append(out, choice{id: id, label: cells.DialLabel(ids, labels, i)})
+	}
+
+	return out
 }
 
 // plainChoices is a dial whose ids are the words it is drawn as.
@@ -230,6 +254,14 @@ func (s State) setChoice(field, at int, e Env) (State, Out) {
 		// dial is turned by the one function that knows how to put a
 		// phase into one and take it back out.
 		return s.toggleLoop(), Out{}
+	case flowFieldSayEngine:
+		// The model is one engine's own name for it, so it goes with the
+		// engine it belonged to — the same rule takePick follows.
+		s.sayEngine, s.sayModel = want.id, ""
+		s.sayFocus = sayOnEngine
+	case flowFieldSayModel:
+		s.sayModel = want.id
+		s.sayFocus = sayOnModel
 	}
 
 	return s, Out{}

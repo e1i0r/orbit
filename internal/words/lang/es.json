@@ -3831,9 +3831,13 @@
       "source": "· in use",
       "value": "· en uso"
     },
-    "flows.pick_ways": {
-      "source": "[↑↓] move · [↵] choose · [esc] back",
-      "value": "[↑↓] mover · [↵] elegir · [esc] volver"
+    "flows.pick_none": {
+      "source": "nothing here is called that · [⌫] to cut the word back · [esc] back",
+      "value": "acá no hay nada que se llame así · [⌫] para borrar · [esc] volver"
+    },
+    "flows.pick_ways2": {
+      "source": "[↑↓] move · [pgup/pgdn] page · [home/end] ends · [↵] choose · [esc] back",
+      "value": "[↑↓] mover · [pgup/pgdn] página · [home/end] extremos · [↵] elegir · [esc] volver"
     },
     "flows.pick_default": {
       "source": "default",
