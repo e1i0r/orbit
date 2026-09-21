@@ -73,7 +73,7 @@ var program = map[string][]string{
 	// else's program. What that cost, how long it took and which of the
 	// binaries on this machine it was are facts no other package sees. It
 	// widens nothing else: engine still knows no record, store or task.
-	"internal/engine": {"internal/logger"},
+	"internal/engine": {"internal/kin", "internal/logger"},
 	// internal/export is internal/migrate read backwards, and it carries the
 	// same three imports for the same three reasons: internal/db to read the
 	// record, internal/record to turn a row back into the line it was
@@ -181,7 +181,7 @@ var program = map[string][]string{
 	// knows — a sentence there is not knowledge until somebody agrees with
 	// it — and internal/learn imports nothing of this package's, so no
 	// cycle can be made of it.
-	"internal/task": {"internal/engine", "internal/flow", "internal/knowledge", "internal/learn", "internal/logger", "internal/record", "internal/repo", "internal/store"},
+	"internal/task": {"internal/engine", "internal/flow", "internal/kin", "internal/knowledge", "internal/learn", "internal/logger", "internal/record", "internal/repo", "internal/store"},
 	// internal/tame because what a tracker answers with is somebody else's
 	// text: an issue title is drawn in the form and its body becomes the
 	// task.
@@ -249,6 +249,11 @@ var program = map[string][]string{
 		"internal/words",
 	},
 	"internal/ui/prompt": {},
+	// internal/kin is the other leaf of that kind: "stop this process and
+	// everything it started" is one rule, and the two callers of it — the
+	// engine and a flow's gates — are the two places Orbit runs somebody
+	// else's program.
+	"internal/kin": {},
 	// internal/tame is the one thing nothing else may be: a leaf every
 	// layer is allowed to reach, because "text from outside, fit to draw"
 	// is a rule with one reading and the packages that need it — the fold

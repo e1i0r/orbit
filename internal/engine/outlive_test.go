@@ -62,6 +62,9 @@ func TestAnEngineThatLeavesSomethingRunningDoesNotHoldTheRun(t *testing.T) {
 // TestCancellingAPhaseKillsWhatTheEngineStarted. A tool call is a process
 // of the engine's own, and killing the engine alone left it running in a
 // worktree the run had finished with — a build, a test suite, a server.
+//
+// The engine here leaves its child in the group it was given. The one that
+// leaves the group is below.
 func TestCancellingAPhaseKillsWhatTheEngineStarted(t *testing.T) {
 	mark := filepath.Join(t.TempDir(), "still-here")
 	s := toy(t, "(sleep 2; touch "+mark+") & sleep 20")
@@ -94,5 +97,45 @@ func TestCancellingAPhaseKillsWhatTheEngineStarted(t *testing.T) {
 
 	if _, err := os.Stat(mark); err == nil {
 		t.Error("the phase was cancelled and what the engine started carried on")
+	}
+}
+
+// TestCancellingAPhaseKillsAChildThatLeftTheGroup.
+//
+// The shape read off a real run: opencode puts every shell command its bash
+// tool is asked for in a group of its own, so a cancel that signalled the
+// engine's group killed the engine and left the command behind with ppid 1
+// — still writing into the worktree of a task the record already called
+// cancelled. What is stopped is the family and not the group; this is that
+// rule seen from the engine, where a run meets it.
+func TestCancellingAPhaseKillsAChildThatLeftTheGroup(t *testing.T) {
+	mark := filepath.Join(t.TempDir(), "still-here")
+
+	// setsid is not on every machine; this does the same thing with the
+	// shell's own job control, which puts the pipeline in a new group.
+	s := toy(t, "set -m; (sleep 2; touch "+mark+") & sleep 20")
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	done := make(chan answered, 1)
+
+	go func() {
+		out, err := s.run(ctx, Request{Dir: t.TempDir()})
+		done <- answered{out: out, err: err}
+	}()
+
+	time.Sleep(500 * time.Millisecond)
+	cancel()
+
+	select {
+	case <-done:
+	case <-time.After(15 * time.Second):
+		t.Fatal("the run did not stop when the phase was cancelled")
+	}
+
+	time.Sleep(3 * time.Second)
+
+	if _, err := os.Stat(mark); err == nil {
+		t.Error("a child that left the engine's group carried on after the cancel")
 	}
 }

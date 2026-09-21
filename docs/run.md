@@ -43,10 +43,12 @@ You**, where it stays until you look at it.
 The same from a script: `orbit task start`, and `task pause`, `resume`, `skip`,
 `cancel`, `requeue`, `note` under the same word.
 
-Cancelling reaches what the run started, and not only the run: an engine and
-a gate's shell each lead a process group of their own, so the build or the
-test suite underneath them stops too rather than carrying on in a worktree
-nobody is watching.
+Cancelling reaches what the run started, and not only the run: the engine
+and a gate's shell are stopped along with everything descended from them,
+so the build or the test suite underneath them stops too rather than
+carrying on in a worktree nobody is watching. A tool call that put itself
+in a process group of its own — which is what opencode does with every
+shell command — is reached as well.
 
 ## Its own worktree
 
