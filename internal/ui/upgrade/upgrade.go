@@ -59,15 +59,19 @@ func Check(current string) tea.Cmd {
 		req.Header.Set("User-Agent", "orbit-cockpit")
 		req.Header.Set("Accept", "application/vnd.github.v3+json")
 
+		// A request that came back at all came back with a body, and one
+		// that did not came back with no response to read a body off: the
+		// two are separate questions, and asking them together needed a
+		// guard against a nil nobody can produce to make the answer safe.
 		resp, err := http.DefaultClient.Do(req)
-		if err != nil || resp.StatusCode != http.StatusOK {
-			if resp != nil && resp.Body != nil {
-				_ = resp.Body.Close()
-			}
-
+		if err != nil {
 			return nil
 		}
 		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return nil
+		}
 
 		var rel latestRelease
 		if err := json.NewDecoder(resp.Body).Decode(&rel); err != nil || rel.TagName == "" {
@@ -187,7 +191,7 @@ func versionParts(v string) (nums []int, pre string, ok bool) {
 }
 
 // interval is the cadence at which Orbit checks for new releases.
-const interval = 1 * time.Hour
+const interval = time.Hour
 
 // TickMsg triggers periodic release checks.
 type TickMsg time.Time
