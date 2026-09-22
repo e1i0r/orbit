@@ -1,7 +1,7 @@
 package cli
 
 // flows() branches the hand-written flows_test.go never reaches: a bad
-// flag, a state root store.Open cannot create, a settings file it cannot
+// flag, a state root store.Open cannot create, a settings file nobody can
 // read, and flowMark's default case, which List (internal/flow) never
 // actually returns but which this file's own doc comment says is answered
 // with "" rather than a panic.
@@ -10,6 +10,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/flow"
 )
 
 func TestFlowsEarlyExitOnBadFlag(t *testing.T) {
@@ -42,7 +44,17 @@ func TestFlowsFailsWhenTheStateRootCannotBeCreated(t *testing.T) {
 	}
 }
 
-func TestFlowsFailsWhenSettingsCannotBeRead(t *testing.T) {
+// TestFlowsStillListsWhenSettingsCannotBeRead. This command used to open the
+// settings file for its own language and refuse the whole listing when it
+// could not be read. The language is the dispatcher's now — see printer in
+// cli.go — and it answers English for a file it cannot read, the way it
+// already did for every other command.
+//
+// What a flow is does not live in that file, so the listing is the same
+// listing. A settings file nobody can read is `orbit check`'s to say and
+// `orbit settings`' to refuse over; it is not a reason to withhold an answer
+// that never depended on it.
+func TestFlowsStillListsWhenSettingsCannotBeRead(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("ORBIT_HOME", home)
 	// A directory where settings.json goes fails the read for every user.
@@ -50,12 +62,13 @@ func TestFlowsFailsWhenSettingsCannotBeRead(t *testing.T) {
 		t.Fatalf("mkdir: %v", err)
 	}
 
-	code, _, errOut := run(t, "flows")
-	if code == 0 {
-		t.Error("flows over unreadable settings exited 0")
+	code, out, errOut := run(t, "flows")
+	if code != 0 {
+		t.Fatalf("flows over unreadable settings exited %d: %s", code, errOut)
 	}
 
-	if errOut == "" {
-		t.Error("flows failed silently over unreadable settings")
+	if lines := listed(t, out); len(lines) != len(flow.BuiltinNames()) {
+		t.Errorf("flows listed %d flows, want the %d builtins:\n%s",
+			len(lines), len(flow.BuiltinNames()), out)
 	}
 }

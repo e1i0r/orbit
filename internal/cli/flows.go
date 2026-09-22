@@ -8,7 +8,6 @@ import (
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/verb"
-	"github.com/e1i0r/orbit/internal/words"
 )
 
 // flows lists the names a task can be written against.
@@ -34,17 +33,12 @@ func flows(ctx Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	// The language is the saved setting and nothing else. words.Resolve
-	// falls through to $LANG, and a listing that changed language with the
-	// terminal it was run in would make this command's own tests depend on
-	// the machine running them. The flag and the environment variable join
-	// in at the composition root, once, where every command can see them.
-	cfg, err := s.Settings()
-	if err != nil {
-		return err
-	}
 
-	p := words.For(cfg.Language)
+	// The Context's printer and not a second reading of the settings file:
+	// this command used to open that file for the language itself, and so
+	// was the one listing $ORBIT_LANG could not reach even after every other
+	// command could. Whatever the dispatcher weighed, this speaks.
+	p := ctx.printer()
 	for _, f := range flow.List(s) {
 		fmt.Fprintf(ctx.Out, "%s (%s)\n", f.Name, verb.FlowMark(p, f.Origin))
 	}

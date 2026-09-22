@@ -65,8 +65,12 @@ func listed(w World, in In) (Out, error) {
 		fmt.Fprintf(&out, "%-14s %-12s %-10s %s\n", t.ID, view.BandOf(t), t.Repo, t.Title)
 	}
 
+	// The one sentence this listing has of its own, and it was the one
+	// written in English where it was printed: a board with rows on it is
+	// ids and titles somebody typed, so an empty board is the only answer
+	// here a reader reads rather than recognises.
 	if len(rows) == 0 {
-		return Out{Said: "no tasks yet", Saw: rows}, nil
+		return Out{Said: w.Words().T("verb.board.empty", "no tasks yet"), Saw: rows}, nil
 	}
 
 	return Out{Said: strings.TrimRight(out.String(), "\n"), Saw: rows}, nil

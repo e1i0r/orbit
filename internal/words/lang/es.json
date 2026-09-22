@@ -4509,6 +4509,10 @@
       "source": "nothing recorded for {id}",
       "value": "nada registrado para {id}"
     },
+    "verb.board.empty": {
+      "source": "no tasks yet",
+      "value": "aún no hay tareas"
+    },
     "verb.pr.resolve": {
       "source": "answer the review threads on the pull request",
       "value": "responde los hilos de revisión del pull request"

@@ -21,6 +21,12 @@ ORBIT_HOME=~/.orbit-demo orbit top ~/work/payments
 ORBIT_LANG=en orbit quota
 ```
 
+The language of a command is weighed from four sources, in this order:
+`-lang`, where a command takes one — `orbit top` does, and nothing else —
+then `ORBIT_LANG`, then the `language` line of `orbit settings`, and last
+the `LANG` the shell was started in. Every command weighs the same four, so
+the variable in front of any of them is read by all of them.
+
 Orbit sets `ORBIT_TASK` and `ORBIT_SUPERVISOR_ENGINE` itself, on the
 processes it starts: the id of the task being run, and the engine a
 supervisor is running under. A run reads them. You never write them.

@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/env"
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
@@ -203,15 +204,25 @@ func logging(errOut io.Writer, code *int) func() {
 	}
 }
 
-// printer is the language everything orbit prints is in.
+// printer is the language everything orbit prints is in: $ORBIT_LANG, then
+// the saved setting, then the locale this process was started in.
 //
-// It is the saved setting and nothing else. words.Resolve falls through to
-// $LANG, and a command whose output changed language with the terminal it
-// was run in would make this package's own tests depend on the machine
-// running them. The flag and the environment variable join in at the
-// window's composition root, once, where there is a person watching — see
-// top.go.
-func printer() *words.Printer { return words.For(language()) }
+// The same four sources `orbit top` weighs, in the same order, minus the one
+// this side of the program has no access to — a --lang flag belongs to a
+// command's own flag set, which is parsed after the dispatcher has already
+// built this. A command that has one weighs it over this answer, which is
+// what top.go does.
+//
+// What this replaces was the saved setting alone, so $ORBIT_LANG reached
+// the window and nothing else: `ORBIT_LANG=es orbit board list` answered in
+// English, against the sentence in docs/env.md calling it the language for
+// one command. The price of reading $LANG here is that this package's own
+// tests would otherwise speak whatever the machine running them is set to,
+// and main_test.go decides that for the suite the way it already decides
+// $ORBIT_TASK and $ORBIT_WORKSPACE.
+func printer() *words.Printer {
+	return words.For(words.Resolve("", env.Read(env.Lang), language()))
+}
 
 // language reads the saved language without creating anything.
 //
