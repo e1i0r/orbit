@@ -51,6 +51,7 @@ func (m Model) panesEnv() panes.Env {
 		Read:        m.fileHeld,
 		Reach:       m.reading(),
 		Shape:       m.shaping(),
+		RunFromKey:  m.keys.RetryPhase.Help().Key,
 		Said:        m.errSaid,
 		Spinner:     m.spinner(theme.Live),
 		Dials:       m.taskDials(t),
@@ -319,4 +320,27 @@ func (m Model) impactMark() string {
 		Read:    m.weigh.reachKnown,
 		Failed:  m.errSaid(m.weigh.reachErr),
 	}})
+}
+
+// runFromAt is which phase's button one row of the flow pane is, counting
+// the scroll the reader has done.
+func (m Model) runFromAt(row int) (int, bool) {
+	if m.tab != tabFlow || row < 0 {
+		return 0, false
+	}
+
+	at, on := panes.RunFroms(m.paneEnv(tabFlow))[row+m.panes[tabFlow].YOffset()]
+
+	return at, on
+}
+
+// phaseNamed is the name of one phase of the flow this task is walking, by
+// its place in it.
+func (m Model) phaseNamed(at int) (string, bool) {
+	f, err := flow.Resolve(m.opts.Flows, m.subject().Flow)
+	if err != nil || at < 0 || at >= len(f.Phases) {
+		return "", false
+	}
+
+	return f.Phases[at].Name, true
 }

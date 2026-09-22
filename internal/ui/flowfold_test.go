@@ -203,9 +203,20 @@ func TestTheTailOfAnOutcomeHangsOffTheRowItContinues(t *testing.T) {
 		t.Errorf("the rest of the outcome hangs off a branch of its own: %q", tail)
 	}
 
-	// The node still closes, and on the row that starts the last thing under
-	// it rather than on whatever that thing's last row happens to be.
-	if got := ansi.Strip(rows[label]); !strings.Contains(got, "└──") {
+	// The node still closes on the row that starts the last thing under it
+	// rather than on whatever that thing's last row happens to be. The
+	// last thing is the button, not the outcome: the outcome hangs off a
+	// branch that carries on, and the button closes it.
+	button := rowOf(rows, "▶")
+	if button < 0 {
+		t.Fatalf("the open node offers no button:\n%s", strings.Join(rows, "\n"))
+	}
+
+	if got := ansi.Strip(rows[button]); !strings.Contains(got, "└──") {
 		t.Errorf("the last thing under the phase does not close its branch: %q", got)
+	}
+
+	if got := ansi.Strip(rows[label]); strings.Contains(got, "└──") {
+		t.Errorf("the outcome closes the branch and something follows it: %q", got)
 	}
 }
