@@ -131,8 +131,8 @@ func (m Model) verbOn(t view.Task, b key.Binding, word string) (Model, tea.Cmd) 
 	// just started is minutes away, and the reader who pressed x watched
 	// the task go on spending. Every other word is a thing to do between
 	// phases and the file is the right place for it.
-	if word == gestureCancel && next.opts.Stop != nil {
-		return next.awaiting(t.ID, word), stop(next.opts.Stop, t)
+	if word == gestureCancel {
+		return next.cancelNow(t)
 	}
 
 	return next.awaiting(t.ID, word), control(next.opts.Control, t, word)
@@ -171,7 +171,8 @@ func (m Model) handBack() (tea.Model, tea.Cmd) {
 		return next, nil
 	}
 
-	return next.took(t.ID, false), control(next.opts.Control, t, "continue")
+	return next.took(t.ID, false).awaiting(t.ID, gestureContinue),
+		control(next.opts.Control, t, gestureContinue)
 }
 
 // session is what the window does with a command line it asked for: suspend
