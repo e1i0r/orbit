@@ -17,7 +17,6 @@ import (
 
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/tracker"
-	"github.com/e1i0r/orbit/internal/ui/clip"
 	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/ui/layout"
 	"github.com/e1i0r/orbit/internal/ui/typing"
@@ -171,11 +170,7 @@ func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
 	case (msg.Code == 'u' || msg.Code == 'U') && msg.Mod&tea.ModCtrl != 0:
 		return s.cleared(), Out{}
 	case (msg.Code == 'v' || msg.Code == 'V') && msg.Mod&tea.ModCtrl != 0:
-		if pasted := clip.Read(); pasted != "" {
-			return s.Type(pasted), Out{}
-		}
-
-		return s, Out{}
+		return s.pasted(e)
 	case msg.Text == "+":
 		if s.isComposeFlowField() {
 			return s, Out{Flow: New}

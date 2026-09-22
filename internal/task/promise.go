@@ -83,31 +83,53 @@ func unfinished(verb, text string) error {
 		return errors.New("it came back having said nothing, so there is no account of what it did")
 	}
 
-	low := strings.ToLower(said)
-	for _, p := range promises {
-		if strings.Contains(low, p) {
-			return errors.New("it said it had started the work and would finish later, " +
-				"which is not the same as having done it: " + quoted(said))
+	// The contract first, because it is evidence and the rest is reading
+	// tone. A verb told to answer with the URL that answered with one did
+	// the thing: whatever it said on the way there, the pull request is
+	// open and a reader can click it.
+	if want, held := wants[strings.ToUpper(strings.TrimSpace(verb))]; held {
+		if want.MatchString(said) {
+			return nil
 		}
-	}
 
-	if want, held := wants[strings.ToUpper(strings.TrimSpace(verb))]; held && !want.MatchString(said) {
 		return errors.New("it was asked to answer with the pull request's URL and there is " +
 			"no URL in what it said, so there is nothing to show a reader")
+	}
+
+	// Then the tone, and only of the last thing it said.
+	//
+	// Anywhere in the answer was too blunt. CREATE PR ran the checks,
+	// pushed, opened the pull request and reported the URL, and narrated
+	// "I have launched `make check` in the foreground and am waiting" on
+	// the way past — a true sentence about a step, in an answer that then
+	// finished the job. What tells a promise from a report is where it
+	// stops: an engine that ends on "I have begun" has not finished, and
+	// one that ends on what happened has.
+	low := strings.ToLower(endsOn(said))
+	for _, p := range promises {
+		if strings.Contains(low, p) {
+			// Not quoted back. Whatever it said is written into the same
+			// event and drawn one line under this on the task's tree, so
+			// a quotation here is the answer twice, cut short the first
+			// time.
+			return errors.New("it said it had started the work and would finish later, " +
+				"which is not the same as having done it")
+		}
 	}
 
 	return nil
 }
 
-// quoted is enough of an answer to recognise it by, cut to what fits on
-// one row of a tree.
-func quoted(said string) string {
-	line := firstLine(said)
-
-	const most = 120
-	if runes := []rune(line); len(runes) > most {
-		return string(runes[:most]) + "…"
+// endsOn is the final non-empty line of an answer, which is where an
+// engine puts its verdict. A harness error or a progress note above it is
+// not what the answer came to.
+func endsOn(said string) string {
+	lines := strings.Split(said, "\n")
+	for i := len(lines) - 1; i >= 0; i-- {
+		if line := strings.TrimSpace(lines[i]); line != "" {
+			return line
+		}
 	}
 
-	return line
+	return said
 }

@@ -30,6 +30,14 @@ func (s State) pickerLines(h, w int, e Env) []builderLine {
 		plainLine(""),
 	}
 
+	// A filter nothing matches drew an empty box: the count in the head
+	// said nought and the list was blank, which reads as a screen that
+	// broke rather than as a word that is in nothing.
+	if len(ids) == 0 {
+		return append(out, plainLine(cells.Fit("  "+theme.Paint(theme.Dim).Render(
+			p.T("flows.pick_none", "nothing here is called that · [⌫] to cut the word back · [esc] back")), w)))
+	}
+
 	// The window follows the cursor, because the list is longer than the
 	// screen and the row being chosen is the one that has to be on it.
 	rows := max(h-len(out)-2, 1)
@@ -49,6 +57,6 @@ func (s State) pickerLines(h, w int, e Env) []builderLine {
 		out = append(out, builderLine{text: cells.Fit(line, w), field: s.picker.field, phase: noPhase, pick: i})
 	}
 
-	return append(out, plainLine(""), plainLine(cells.Fit("  "+theme.Paint(theme.Dim).Render(p.T("flows.pick_ways",
-		"[↑↓] move · [↵] choose · [esc] back")), w)))
+	return append(out, plainLine(""), plainLine(cells.Fit("  "+theme.Paint(theme.Dim).Render(p.T("flows.pick_ways2",
+		"[↑↓] move · [pgup/pgdn] page · [home/end] ends · [↵] choose · [esc] back")), w)))
 }

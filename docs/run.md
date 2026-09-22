@@ -43,12 +43,32 @@ You**, where it stays until you look at it.
 The same from a script: `orbit task start`, and `task pause`, `resume`, `skip`,
 `cancel`, `requeue`, `note` under the same word.
 
+Cancelling reaches what the run started, and not only the run: the engine
+and a gate's shell are stopped along with everything descended from them,
+so the build or the test suite underneath them stops too rather than
+carrying on in a worktree nobody is watching. A tool call that put itself
+in a process group of its own — which is what opencode does with every
+shell command — is reached as well.
+
 ## Its own worktree
 
-Every task runs in a git worktree of its own, on a branch named after it.
-That is what lets several tasks touch the same repository at once, see
-[many tasks at once](parallel.md), and it is why nothing a run does is in
-your checkout until you say so.
+Every task runs in a git worktree of its own, on a branch of its own. That
+is what lets several tasks touch the same repository at once, see [many
+tasks at once](parallel.md), and it is why nothing a run does is in your
+checkout until you say so.
+
+The branch is named after the task with four characters nobody can guess
+on the end, `orbit/PAY-1-a3f9`. The suffix is there so a task written
+again under an id somebody used before starts clean instead of finding
+the last one's commits already in its worktree.
+
+It is cut from the branch you were standing on, not from the default. A
+task written while you are on a feature branch belongs against that
+branch, and its pull request is opened there.
+
+Deleting a task takes the worktree and the branch with it. What the run
+committed goes too, so push it or open its pull request first if you want
+to keep it.
 
 ## When it ends badly
 
@@ -140,6 +160,26 @@ empty heading is a question the engine would spend a turn answering.
 It costs nothing: no engine is asked, no tokens are spent. The same is true
 of switching engine halfway. The new one has no session to resume, and this
 is what it reads instead.
+
+## What stops a run
+
+A run walks its flow until something says stop, and everything that can say
+it is a number somebody chose. All of them are asked where a run can stop
+without throwing away work that has already been paid for: between phases,
+between a loop's turns, and between attempts at one phase.
+
+| | what it caps | where it is set |
+| :--- | :--- | :--- |
+| attempts | how many times one phase may be run before the task is stuck | `attempts` in the flow |
+| a loop's turns | how many times a block goes round, for the phase and not for each engine that ran it | `max` in the flow |
+| the money | what one task may spend before nothing more starts | `orbit settings set budget-task` |
+| the size | how many lines it may change before a person decides | `diff_budget` in the flow |
+| the supervisor | how many times a verdict of `again` may send one task round | two, and then it is yours |
+| the clock | how long a run started by the window may take | `orbit settings set run-timeout` |
+
+A cap that stops a run writes down which one it was and what the two numbers
+were, so the task in **Needs You** says what to decide rather than only that
+something stopped.
 
 ## When it changes engine
 

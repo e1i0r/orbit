@@ -179,3 +179,44 @@ func TestAListThatGotShorterDoesNotLeaveTheViewPastItsEnd(t *testing.T) {
 		t.Errorf("the list shrank and the view stayed where it was:\n%s", got)
 	}
 }
+
+// TestARuleIsClickedWhereItIsDrawn, on every row of the body and at every
+// scroll.
+//
+// The line a click landed on was counted from the head above the list and
+// the distance the list had been scrolled, and against no floor: the foot
+// says what the keys do and is drawn under the list, so a click on it put
+// the cursor on the rule below the window — and a second click there opened
+// a rule the reader had never seen.
+func TestARuleIsClickedWhereItIsDrawn(t *testing.T) {
+	s, e := onScreen(t, lots(40)...)
+
+	for _, walk := range []int{0, 4, 20, 39} {
+		at := s
+		for range walk {
+			at = at.Move(1, e)
+		}
+
+		drawn := at.View(e.Frame.Body.H, e.Frame.Body.W, e)
+
+		for line := range e.Frame.Body.H {
+			got := at.Hit(0, e.Frame.Body.Y+line, e)
+			if got.Kind != point.KnowledgeRow {
+				continue
+			}
+
+			_, rows := at.body(content(e.Frame.Body.W), e)
+			if got.Pane < 0 || got.Pane >= len(rows) {
+				t.Fatalf("walked %d, row %d answers rule %d of %d", walk, line, got.Pane, len(rows))
+			}
+
+			// The sentence of the rule that was answered has to be the
+			// one drawn on the row that was clicked.
+			phrase := fmt.Sprintf("the rule numbered %d", got.Pane)
+			if !strings.Contains(ansi.Strip(drawn[line]), phrase) {
+				t.Errorf("walked %d, row %d draws %q and a click there is rule %d",
+					walk, line, strings.TrimSpace(ansi.Strip(drawn[line])), got.Pane)
+			}
+		}
+	}
+}

@@ -157,15 +157,63 @@ func said(line, word string) string {
 	return strings.TrimSpace(line[at+len(word):])
 }
 
+// supervisorRuns is how many times the supervisor may send one task round
+// again before it becomes a person's to look at.
+//
+// Two, for the three runs that makes: the one that was judged and two
+// more. A verdict of `again` puts the task back in To Do and autopilot
+// starts what is in To Do, so nothing about this loop stops on its own —
+// the same model judges the same work and says the same thing, at a full
+// run's cost each time round. Two is the number the attempt cap uses for
+// the same argument one level down: a second try is worth paying for and a
+// fourth is a decision somebody has to make.
+const supervisorRuns = 2
+
+// sentBack is how many times the supervisor has already asked for another
+// run of this task.
+//
+// Over the task's whole life and not this run's: every requeue starts a
+// run of its own, so counting since the newest task.started would count
+// one and never more.
+func sentBack(s *store.Store, t Task) int {
+	events, err := Events(s, t)
+	if err != nil {
+		// A record that will not read is a task that gets its tries, which
+		// is what it had before this was written.
+		return 0
+	}
+
+	sent := 0
+
+	for _, e := range events {
+		if e.Kind == record.TaskRequeued && e.Data["by"] == "supervisor" {
+			sent++
+		}
+	}
+
+	return sent
+}
+
 // sendBack puts the task in the queue again with what it is missing.
 //
 // The reason is written as a note as well as into the requeue, because the
 // note is what the next run reads: a task sent round again without being
 // told why is the same run a second time, which is the mistake the attempt
 // cap already exists to stop.
+//
+// Once the supervisor has used its tries the task is handed to a person
+// instead: it is the other answer the validator already has, and what is
+// left after three runs that did not satisfy it is a judgement rather than
+// more work.
 func sendBack(s *store.Store, t Task, why string) error {
 	if why == "" {
 		why = "the supervisor asked for another run and said no more than that"
+	}
+
+	if sent := sentBack(s, t); sent >= supervisorRuns {
+		return handOver(s, t, fmt.Sprintf(
+			"The supervisor asked for another run %d times and is still not satisfied. "+
+				"The last thing it asked for: %s", sent, why))
 	}
 
 	if err := Note(s, t, why); err != nil {

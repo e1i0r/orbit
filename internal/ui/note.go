@@ -26,6 +26,12 @@ import (
 const (
 	verbNote   = "note"
 	verbDirect = "direct"
+	// verbClose is the third, and the odd one: its parent is `pr` rather
+	// than `task`, and what is typed is not a message to a run but the
+	// reason a pull request is being closed. It shares the box because it
+	// is the same gesture — a line of prose, typed, that goes out with a
+	// command — and a second box would be a second place to learn.
+	verbClose = "close"
 )
 
 // noteState is the box while it is up: which command the typing goes to,
@@ -109,8 +115,15 @@ func (m Model) submitNote() (tea.Model, tea.Cmd) {
 
 	text := strings.TrimSpace(m.note.text)
 	if text == "" {
-		if m.note.child == verbDirect {
+		switch m.note.child {
+		case verbDirect:
 			return m.say(p.T("direct.empty", "the directive cannot be empty")), nil
+		case verbClose:
+			// Refused rather than closed with nothing. A pull request
+			// closed without a reason is a question left on somebody
+			// else's repository, and this box was opened to answer it.
+			return m.say(p.T("close_pr.why_empty",
+				"say why it is being closed; the reason is the comment that is left")), nil
 		}
 
 		return m.say(p.T("note.empty", "the note cannot be empty")), nil
@@ -131,6 +144,17 @@ func (m Model) submitNote() (tea.Model, tea.Cmd) {
 	if child == verbDirect {
 		said = p.T("direct.given", "{id} redirected — the run it was in is stopped",
 			about("id", taskID))
+	}
+
+	if child == verbClose {
+		said = p.T("close_pr.closing_with_reason", "closing the pull request for {id}",
+			about("id", taskID))
+		// Recorded here and not when the box opened: opening it is not
+		// asking for anything, and a reader who pressed X and thought
+		// better of it has not closed a pull request. "CLOSE PR" is the
+		// caption the key was offered under, and the record says what the
+		// reader read.
+		m = m.asked(ask{TaskID: taskID, Verb: "CLOSE PR", By: "pr close", Cmd: "pr close"})
 	}
 
 	m = m.say(said)

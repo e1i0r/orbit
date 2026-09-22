@@ -9,10 +9,13 @@ import (
 	"strings"
 	"testing"
 
+	"charm.land/lipgloss/v2"
+
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/layout"
 	"github.com/e1i0r/orbit/internal/ui/point"
 )
 
@@ -74,9 +77,25 @@ func TestHitFlowsOutsideBody(t *testing.T) {
 
 func TestHitFlowsListCreateButton(t *testing.T) {
 	s, e := designer(t)
-	y := e.Frame.Body.Y + 4
 
-	got := s.Hit(10, y, e)
+	// Found by reading the rows rather than by counting them: the sentence
+	// above the button wraps, so which row it lands on is a fact about the
+	// width and not a number to write down here.
+	row := -1
+
+	for i, l := range s.flowsListLines(e.Frame.Body.W, e) {
+		if l.create {
+			row = i
+
+			break
+		}
+	}
+
+	if row < 0 {
+		t.Fatal("the create button is on no row of the list")
+	}
+
+	got := s.Hit(10, e.Frame.Body.Y+row, e)
 	if got.Kind != point.FlowItem || got.Field != "create" {
 		t.Errorf("hitFlows at the create row = %+v, want Field \"create\"", got)
 	}
@@ -148,13 +167,33 @@ func TestHitFlowsListDeleteVsEdit(t *testing.T) {
 	if got := s.Hit(10, line, e); got.Field != "details" || got.ID != "zzz-mine" {
 		t.Errorf("hitFlows on flow name = %+v, want a details click", got)
 	}
-	// Clicking Edit button
-	if got := s.Hit(44, line, e); got.Field != "edit" || got.ID != "zzz-mine" {
-		t.Errorf("hitFlows on the edit pill = %+v, want an edit click", got)
+
+	// The pills, found where they are drawn rather than at two columns
+	// written down here. The numbers that used to be here were 44 and 56,
+	// and they agreed with a hit-test that measured a pill two cells wider
+	// than it is and counted no space between them: both were written from
+	// the same wrong idea of the row, and neither was ever compared with it.
+	var mine flow.Listed
+
+	for _, d := range flow.List(e.Flows) {
+		if d.Name == "zzz-mine" {
+			mine = d
+		}
 	}
-	// Clicking Delete button
-	if got := s.Hit(56, line, e); got.Field != "delete" || got.ID != "zzz-mine" {
-		t.Errorf("hitFlows on the delete pill = %+v, want a delete click", got)
+
+	at := rowPillsStart(mine, e)
+
+	for _, pill := range rowPills(mine, e) {
+		wide := lipgloss.Width(pill.drawn)
+
+		for _, x := range []int{at, at + wide - 1} {
+			got := s.Hit(x, line, e)
+			if got.Field != pill.field || got.ID != "zzz-mine" {
+				t.Errorf("column %d of the %s pill = %+v", x, pill.field, got)
+			}
+		}
+
+		at += wide + rowPillGap
 	}
 
 	if got := flow.List(e.Flows); len(got) != len(flow.BuiltinNames())+1 {
@@ -225,5 +264,79 @@ func TestTheListScrollsAndTheRailSaysSo(t *testing.T) {
 	got := s.Hit(10, e.Frame.Body.Y+flowRow-start, e)
 	if got.Kind != point.FlowItem || got.ID != s.listed[want].Name {
 		t.Errorf("a click after scrolling landed on %+v, want %q", got, s.listed[want].Name)
+	}
+}
+
+// TestTheFloorOfTheListAnswersNoClick. The ways out are drawn outside the
+// page, so the last row of the body belongs to no flow — but the hit-test
+// counted it as one more row of the list and answered the row underneath
+// the window: the line that says what the keys do inspected a flow that
+// was not on the screen, and on a body short enough that the create button
+// was the row below the page, clicking it opened the designer.
+func TestTheFloorOfTheListAnswersNoClick(t *testing.T) {
+	for _, h := range []int{6, 8, 12, 14, 24} {
+		e := world(t)
+
+		frame, err := layout.Fit(100, h)
+		if err != nil {
+			continue
+		}
+
+		e.Frame = frame
+		s := Open(FromBoard, e)
+
+		body := e.Frame.Body.H
+
+		rows := s.View(body, e.Frame.Body.W, e)
+		floor := ansi.Strip(rows[len(rows)-1])
+
+		if !strings.Contains(floor, "back") {
+			t.Fatalf("at %d rows the last line is %q, want the ways out", body, floor)
+		}
+
+		if got := s.Hit(4, e.Frame.Body.Y+body-1, e); got.Kind != point.None {
+			t.Errorf("at %d rows a click on the ways out answers %v %q %q",
+				body, got.Kind, got.Field, got.ID)
+		}
+	}
+}
+
+// TestNoClickAnswersARowUnderTheWindow, at any height and anywhere down the
+// list: what the page holds is what can be clicked.
+func TestNoClickAnswersARowUnderTheWindow(t *testing.T) {
+	e := world(t)
+
+	frame, err := layout.Fit(100, 24)
+	if err != nil {
+		t.Skip("a 100x24 terminal does not fit this build's frame")
+	}
+
+	e.Frame = frame
+
+	s := Open(FromBoard, e)
+	body := e.Frame.Body.H
+	lines := s.flowsListLines(e.Frame.Body.W, e)
+	page := max(body-1, 0)
+
+	if len(lines) <= page {
+		t.Skip("this build's flows fit the window, so nothing is under it")
+	}
+
+	for _, scroll := range []int{0, 3, 6, len(lines)} {
+		at := s
+		at.scroll = scroll
+		start := at.flowsListStart(lines, page)
+
+		for line := range body {
+			got := at.Hit(4, e.Frame.Body.Y+line, e)
+			if got.Kind == point.None {
+				continue
+			}
+
+			if line >= page {
+				t.Errorf("scrolled to %d, row %d is under the page of %d and answers %v %q",
+					start, line, page, got.Kind, got.Field)
+			}
+		}
 	}
 }

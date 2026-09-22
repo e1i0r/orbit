@@ -20,6 +20,7 @@ import (
 	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/x/ansi"
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/view"
@@ -285,3 +286,19 @@ func wantBand(t *testing.T, m Model, want string) {
 type flowsTestDir string
 
 func (d flowsTestDir) FlowDir() string { return string(d) }
+
+// settingsLine is the body row a dial is drawn on, found in what the screen
+// drew rather than counted from a head and a row height kept beside it.
+func settingsLine(t *testing.T, m Model, key string) int {
+	t.Helper()
+
+	for i, row := range m.settingsRows(m.frame.Body.H, m.frame.Body.W) {
+		if strings.Contains(ansi.Strip(row), key) {
+			return i
+		}
+	}
+
+	t.Fatalf("the settings screen draws no row for %q", key)
+
+	return -1
+}

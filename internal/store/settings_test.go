@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestSettingsDefaultUnreadCapWhenTheFileIsAbsent(t *testing.T) {
@@ -224,5 +225,28 @@ func TestSaveSettingsLeavesNoTemporaryFileBehind(t *testing.T) {
 
 	if info.Mode().Perm() != 0o600 {
 		t.Errorf("mode = %v, want 0600: a file arriving by rename must not be more open than one written in place", info.Mode().Perm())
+	}
+}
+
+// TestTheTimeoutIsReadAsALengthOfTime, and anything that is not one is no
+// timeout at all: the value is refused where it is typed, so a file holding
+// a bad one was edited by hand, and a run that refused to start over it
+// would be a settings file that stops work rather than shaping it.
+func TestTheTimeoutIsReadAsALengthOfTime(t *testing.T) {
+	for _, c := range []struct {
+		held string
+		want time.Duration
+	}{
+		{"", 0},
+		{"45m", 45 * time.Minute},
+		{"2h", 2 * time.Hour},
+		{" 90s ", 90 * time.Second},
+		{"0", 0},
+		{"-5m", 0},
+		{"a while", 0},
+	} {
+		if got := (Settings{RunTimeout: c.held}).Timeout(); got != c.want {
+			t.Errorf("a timeout of %q reads as %v, want %v", c.held, got, c.want)
+		}
 	}
 }

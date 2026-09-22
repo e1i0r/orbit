@@ -78,9 +78,11 @@ func TestTheArgumentsCarryWhateverFollowsThem(t *testing.T) {
 // against no repository must reach them without the workspace being handed
 // over as its checkout.
 func TestEveryDeliverVerbReachesItsCommand(t *testing.T) {
+	// Closing goes through the why box, so the gesture is two steps and
+	// it is driven as two below.
 	for name, verb := range map[string]func(Model) (tea.Model, tea.Cmd){
 		"merge PR": Model.mergePR,
-		"close PR": Model.closePR,
+		"close PR": closeWithAReason,
 	} {
 		m, _ := testModel(t, 120, 30)
 		m.board = fixtureBoard([]view.Task{{
@@ -183,4 +185,21 @@ func TestADeliverVerbWithNoTaskSaysSo(t *testing.T) {
 	if !strings.Contains(asModel(t, next).message, "select") {
 		t.Errorf("it said %q, want it asking for a task", asModel(t, next).message)
 	}
+}
+
+// closeWithAReason is the close gesture whole: X opens the box, the reason
+// is typed, and submitting it runs the command.
+func closeWithAReason(m Model) (tea.Model, tea.Cmd) {
+	next, _ := m.closePR()
+
+	asked, ok := next.(Model)
+	if !ok {
+		// Answered back as something else: the caller's cmd == nil check
+		// fails and names the verb, which is the whole assertion anyway.
+		return next, nil
+	}
+
+	asked.note.text = "superseded by another change"
+
+	return asked.submitNote()
 }

@@ -61,7 +61,14 @@ func (s State) Listing() bool { return !s.creating && !s.showingDetail }
 
 // Scroll moves the list under the wheel.
 func (s State) Scroll(d int) State {
-	s.scroll = max(s.scroll+d, 0)
+	// Saturating rather than wrapping: End asks to move a million rows,
+	// and a sum that went round would land the reading at the top.
+	switch {
+	case d > 0 && s.scroll > detailEnd-d:
+		s.scroll = detailEnd
+	default:
+		s.scroll = max(s.scroll+d, 0)
+	}
 
 	return s
 }

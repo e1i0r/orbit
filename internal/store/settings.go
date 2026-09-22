@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // defaultUnreadCap is what a store that has never saved settings starts
@@ -102,6 +103,21 @@ type Settings struct {
 	// person exactly as it does now. Zero is not a floor of nothing — it
 	// is nobody having chosen, and DecisionBar reads it as seventy.
 	DecisionFloor int `json:"decisionFloor,omitempty"`
+	// RunTimeout is how long a run started by the window or by the queue
+	// may take before it is stopped, written the way a person writes a
+	// duration: 45m, 2h. Empty is no timeout, which is the working zero
+	// every field here has and was the only behaviour there was.
+	//
+	// A setting and not a default, because there is no honest default: a
+	// phase that reads a repository is seconds and one that writes a
+	// migration is an hour, and a number Orbit picked would stop the
+	// second kind for a reason nobody chose. What it is for is the other
+	// end — an engine that has wedged on a network read holds a worktree
+	// and a slot until somebody notices, and noticing is the part a person
+	// asleep cannot do. `orbit run -timeout` is the same stop for a run
+	// started by hand, and this is what the flag becomes when the window
+	// starts one.
+	RunTimeout string `json:"runTimeout,omitempty"`
 
 	// CheckRecord makes every command ask SQLite whether the record is
 	// still readable before it does anything. It is off by default because
@@ -158,6 +174,21 @@ func (s Settings) DecisionBar() int {
 	}
 
 	return s.DecisionFloor
+}
+
+// Timeout is RunTimeout as a duration, and zero for a run nothing stops.
+//
+// Anything that will not parse is zero as well: the value is refused where
+// it is typed, so a file holding one was edited by hand, and a run that
+// refused to start over it would be a settings file that stops work rather
+// than shaping it.
+func (s Settings) Timeout() time.Duration {
+	d, err := time.ParseDuration(strings.TrimSpace(s.RunTimeout))
+	if err != nil || d <= 0 {
+		return 0
+	}
+
+	return d
 }
 
 // settingsPath is the one file settings live in, at the root of the state

@@ -35,7 +35,18 @@ func (e Env) vitals(t view.Task, w int) []string {
 
 	out := prose.Strip([]prose.Stat{
 		{Label: p.T("overview.cost", "cost"), Value: cost, Role: theme.OK},
-		{Label: p.T("overview.duration", "duration"), Value: cells.Elapsed(e.Now, t.Since), Role: theme.Accent},
+		// Since Started and not since Since: Since is when the state on
+		// screen began, which on a task parked at a gate is how long it
+		// has been waiting on the reader. That is a useful number and the
+		// band already carries it — "espera: review · lleva 1m". Here it
+		// sat beside a cost of $4.03 for the whole run and read as a
+		// contradiction: four dollars in one minute. The two figures on
+		// one row now measure the same span.
+		{
+			Label: p.T("overview.duration", "duration"),
+			Value: cells.Elapsed(e.Now, t.Started),
+			Role:  theme.Accent,
+		},
 		{
 			Label: p.T("overview.phases", "flow"),
 			Value: cells.OrDef(t.Flow, flow.Default),

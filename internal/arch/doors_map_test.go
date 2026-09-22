@@ -10,12 +10,19 @@ package arch
 // habit, because a name that appears anywhere else fails the build.
 
 var doors = map[string][]string{
-	// The window. Twelve of its files export, and the rest are the Model's
-	// own methods, which are lowercase and stay that way. The screens are
-	// leaving one at a time — each one that goes takes names off this line.
+	// The window. Thirteen of its files export, and the rest are the
+	// Model's own methods, which are lowercase and stay that way. The
+	// screens are leaving one at a time — each one that goes takes names
+	// off this line.
+	//
+	// new.go is how a window is built and what it asks the world for once
+	// it is running: it left ui.go when that file went over the ceiling,
+	// and a struct of the window's memory and the two functions that bring
+	// one to life are two subjects anyway.
 	"internal/ui": {
-		"bytes.go", "engines.go", "mouse.go", "plain.go", "port.go", "portinfo.go",
-		"portread.go", "screen.go", "target.go", "ui.go", "update.go", "watch.go",
+		"bytes.go", "engines.go", "mouse.go", "new.go", "plain.go", "port.go",
+		"portinfo.go", "portread.go", "screen.go", "target.go", "ui.go", "update.go",
+		"watch.go",
 	},
 	// The window's own packages: each is one subject, entered by an action
 	// or by the vocabulary its actions share.
@@ -188,7 +195,7 @@ var doors = map[string][]string{
 	"internal/quota":   {"billing.go", "codex.go", "quota.go", "source.go"},
 	"internal/repo": {
 		"cochange.go", "compare.go", "customs.go", "discover.go", "enforced.go", "impact.go",
-		"neighbours.go", "offers.go", "repo.go", "review.go", "workspace.go", "worktree.go",
+		"neighbours.go", "offers.go", "prchecks.go", "repo.go", "review.go", "workspace.go", "worktree.go",
 		"worktree_deliver.go", "worktree_diff.go", "worktree_file.go", "worktree_tree.go",
 	},
 	// Two doors. web.go is the server and the ports built off the board;

@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/e1i0r/orbit/internal/env"
+	"github.com/e1i0r/orbit/internal/tame"
 )
 
 // ErrNoKey says the issue could be named but not read: there is no
@@ -58,11 +59,14 @@ func Read(ctx context.Context, iss Issue) (Issue, error) {
 		return iss, err
 	}
 
+	// What a tracker answers with is drawn in the form and written into
+	// the task: see internal/tame for what a terminal makes of an escape
+	// sequence that arrives inside an issue's title.
 	if title != "" {
-		iss.Title = title
+		iss.Title = tame.Text(title)
 	}
 
-	iss.Description = body
+	iss.Description = tame.Text(body)
 
 	return iss, nil
 }

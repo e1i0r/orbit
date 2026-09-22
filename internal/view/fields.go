@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/e1i0r/orbit/internal/record"
+	"github.com/e1i0r/orbit/internal/tame"
 )
 
 // waiting decides which of the two stops this is. The flow asking a phase to
@@ -56,6 +57,13 @@ func failure(phase string) Reason {
 func flow(t *Task, e record.Event) {
 	if name, ok := e.Data["flow"]; ok {
 		t.Flow = name
+	}
+
+	// The branch the task was cut from, which is what its pull request
+	// belongs against. See internal/task/branch.go for why it is not the
+	// repository's default.
+	if name, ok := e.Data["base"]; ok {
+		t.Base = name
 	}
 }
 
@@ -108,7 +116,9 @@ func firstLine(s string) string {
 		s = s[:i]
 	}
 
-	return strings.TrimSpace(s)
+	// A title is the first line of a file, and a file can hold anything:
+	// see internal/tame for what a terminal does with the rest of it.
+	return strings.TrimSpace(tame.Text(s))
 }
 
 // actionKeys are the arguments a tool call is about, in the order they are

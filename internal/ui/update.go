@@ -226,9 +226,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.weigh.reread = true
 		}
 
+		// The map is read once for the same reason and went stale the same
+		// way: "this task has changed nothing in this checkout" beside a
+		// diff pane listing four files.
+		if m.staleTree() {
+			m = m.forgetTreeReading()
+		}
+
 		next, impact := m.syncPanes().askImpact()
 
-		return next, impact
+		grown, tree := next.askTree()
+
+		return grown, tea.Batch(impact, tree)
 	case treeMsg:
 		return m.tookTree(msg), nil
 	case logMsg:

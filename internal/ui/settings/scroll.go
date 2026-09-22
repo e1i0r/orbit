@@ -138,3 +138,26 @@ func framed(head, body, foot []string, h, off int) []string {
 
 	return append(out, foot...)
 }
+
+// RowAt is the setting drawn on a line of the body, and whether that line
+// is one of the table at all.
+//
+// The window worked this out for itself and knew two of the three numbers:
+// the head above the table and the offset it was scrolled to, but not the
+// floor the table stops at, where the line saying how to leave is drawn.
+// So a click on that line, or on the blank above it, named the setting
+// under the window — and a click at the columns the pills are drawn in
+// turned the dial of a setting that was not on the screen.
+func (s State) RowAt(line int, e Env) (int, bool) {
+	on := line - headLines
+	if on < 0 || on >= room(e.Frame.Body.H) {
+		return 0, false
+	}
+
+	at := (on + s.Off(e)) / rowLines
+	if at < 0 || at >= len(s.Rows(e)) {
+		return 0, false
+	}
+
+	return at, true
+}

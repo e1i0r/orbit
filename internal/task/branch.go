@@ -93,3 +93,41 @@ func writtenBranch(s *store.Store, t Task) string {
 
 	return name
 }
+
+// Base is the branch this task's work was cut from, which is the branch
+// its pull request belongs against.
+//
+// It is not the repository's default branch, and the two are only the same
+// when the reader was standing on the default when they wrote the task.
+// FRA-128 was cut from jev/decision-engine and its pull request was opened
+// against main, because the errand said "the repository's default branch":
+// twelve commits and a hundred and thirty-two files, of which three and
+// four were the task's. What the reader was working on is the thing the
+// task is an increment of.
+//
+// Empty for a task written before this was recorded, and the caller falls
+// back to whatever the checkout is on now — which is what every one of
+// them did before.
+func Base(t Task) string { return strings.TrimSpace(t.BaseName) }
+
+// writtenBase is the branch named in this task's own record.
+func writtenBase(s *store.Store, t Task) string {
+	events, err := Events(s, t)
+	if err != nil {
+		return ""
+	}
+
+	name := ""
+
+	for _, e := range events {
+		if e.Kind != record.TaskCreated {
+			continue
+		}
+
+		if recorded, ok := e.Data["base"]; ok {
+			name = recorded
+		}
+	}
+
+	return name
+}

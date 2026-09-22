@@ -6,7 +6,11 @@ package compose
 // in rather than by a column written into the test.
 
 import (
+	"strings"
 	"testing"
+
+	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
 
 	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/point"
@@ -219,5 +223,53 @@ func TestTheBlankRowsOfTheFormAnswerForNothing(t *testing.T) {
 	tabs := formRow(t, s, e, "Manual")
 	if at := s.Hit(2, tabs+1, e); at.Kind != point.None {
 		t.Errorf("the blank line under the tabs answers with kind %d, want nothing", at.Kind)
+	}
+}
+
+// TestNothingUnderTheButtonsSavesTheTask. The three buttons are one row of
+// the form, and every row below it answered for them: the form is drawn
+// into a body that is taller than it, so a click in the blank half saved
+// the task — and at the columns Save & Run is drawn in, it saved it and
+// started an engine on it. The row itself still answers where each button
+// is drawn, and nowhere else.
+func TestNothingUnderTheButtonsSavesTheTask(t *testing.T) {
+	s, e := form(t)
+
+	plan := s.composeLayout(e)
+	h, w := e.Frame.Body.H, e.Frame.Body.W
+
+	drawn := s.View(h, w, e)
+	if plan.actions >= h {
+		t.Fatalf("the buttons are on row %d of a body of %d", plan.actions, h)
+	}
+
+	// Every button is answered on its own row, read off what was drawn.
+	for _, b := range []struct{ mark, key string }{
+		{"↵ Save", "save"},
+		{"^R Save & Run", "save_and_run"},
+		{"esc Cancel", "cancel"},
+	} {
+		before, _, found := strings.Cut(ansi.Strip(drawn[plan.actions]), b.mark)
+		if !found {
+			t.Errorf("the %s button is not drawn: %q", b.key, ansi.Strip(drawn[plan.actions]))
+
+			continue
+		}
+
+		at := lipgloss.Width(before)
+		if got := s.Hit(at, e.Frame.Body.Y+plan.actions, e); got.Key != b.key {
+			t.Errorf("the %s button is drawn in column %d and a click there is %q",
+				b.key, at, got.Key)
+		}
+	}
+
+	// And nothing under them answers at all, at any column.
+	for line := plan.actions + 1; line < h; line++ {
+		for _, x := range []int{0, 4, 12, 20, 34, w - 1} {
+			if got := s.Hit(x, e.Frame.Body.Y+line, e); got.Kind != point.None {
+				t.Errorf("row %d column %d is under the buttons and answers %v %q",
+					line, x, got.Kind, got.Key)
+			}
+		}
 	}
 }

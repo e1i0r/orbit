@@ -105,7 +105,7 @@ func start(s *store.Store, t Task, flowName, engineName, from string, unread int
 		return 0, fmt.Errorf("find the orbit binary to start task %s: %w", t.ID, err)
 	}
 
-	cmd := runCommand(exe, s.Root(), t, flowName, engineName, from)
+	cmd := runCommand(exe, s.Root(), t, flowName, engineName, from, cfg.RunTimeout)
 	if err := cmd.Start(); err != nil {
 		return 0, fmt.Errorf("start a run of task %s: %w", t.ID, err)
 	}
@@ -134,7 +134,7 @@ func start(s *store.Store, t Task, flowName, engineName, from string, unread int
 // run` open the current directory and hand the run whatever repository the
 // window happens to be sitting in. The run reads the flag the same way, so
 // the absence is the answer.
-func runCommand(exe, root string, t Task, flowName, engineName, from string) *exec.Cmd {
+func runCommand(exe, root string, t Task, flowName, engineName, from, timeout string) *exec.Cmd {
 	args := []string{"task", "start"}
 	if t.Repo.Path != "" {
 		args = append(args, "-repo", t.Repo.Path)
@@ -159,6 +159,17 @@ func runCommand(exe, root string, t Task, flowName, engineName, from string) *ex
 	// its absence already means.
 	if from != "" {
 		args = append(args, "-from", from)
+	}
+
+	// How long the run may take, when the settings file says. A run
+	// started by hand takes it as a flag and one started from the window
+	// took nothing at all: an engine wedged on a network read held a
+	// worktree and a slot until somebody noticed, and the run that most
+	// needs a limit is the one nobody is sitting in front of. Absent when
+	// it is not set, because the flag's own zero is already no limit and
+	// one more thing on the command line is one more thing to read.
+	if timeout != "" {
+		args = append(args, "-timeout", timeout)
 	}
 
 	args = append(args, "-flow", flowName, t.ID)
