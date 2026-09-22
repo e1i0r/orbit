@@ -284,6 +284,8 @@ func (m Model) leftClick(t point.Target) (tea.Model, tea.Cmd) {
 		return m.pickFlow(t.Phase)
 	case point.RunFrom:
 		return m.runFromPhase(t.Pane)
+	case point.MapFile:
+		return m.showDiffOf(t.Key), nil
 	// Every target the form can answer. A kind left off this list is a
 	// button that is drawn, answers a hit, and does nothing when it is
 	// pressed — which is what happened to Clear the day it was added.
