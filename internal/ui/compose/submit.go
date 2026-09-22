@@ -19,7 +19,7 @@ func (s State) Submit(startNow bool, e Env) (State, Out) {
 	// title as its whole body, which is the one thing those two exist to
 	// stop.
 	if s.reading {
-		return s, said(p.T("compose.still_reading", "still reading the issue; give it a moment"))
+		return refuse(s, p.T("compose.still_reading", "still reading the issue; give it a moment"))
 	}
 
 	path := strings.TrimSpace(s.repoPath)
@@ -50,10 +50,10 @@ func (s State) Submit(startNow bool, e Env) (State, Out) {
 
 	switch {
 	case id == "":
-		return s, said(p.T("compose.id_required",
+		return refuse(s, p.T("compose.id_required",
 			"the id is required; what is this task called?"))
 	case text == "":
-		return s, said(p.T("compose.text_required",
+		return refuse(s, p.T("compose.text_required",
 			"the task needs something written in it"))
 	case s.emptyIssue(text):
 		// The tracker answered and the issue had no description in it. It
@@ -61,7 +61,7 @@ func (s State) Submit(startNow bool, e Env) (State, Out) {
 		// sentence: nothing is wrong with the key or the connection, and a
 		// reader told "orbit cannot read this issue" would go looking for
 		// a fault that is not there.
-		return s, said(p.T("compose.issue_empty",
+		return refuse(s, p.T("compose.issue_empty",
 			"that issue has no description; write what has to be done"))
 	case s.onlyALink(text):
 		// A URL and a title are a name, not a task. Orbit cannot read the
@@ -69,7 +69,7 @@ func (s State) Submit(startNow bool, e Env) (State, Out) {
 		// either: its tool calls are auto-denied with nobody there to
 		// approve them. What it does then is invent the requirements or
 		// nothing at all, and both cost a run.
-		return s, said(p.T("compose.body_unreadable",
+		return refuse(s, p.T("compose.body_unreadable",
 			"orbit cannot read this issue here, and a run will not be able to either: write what has to be done, or set LINEAR_API_KEY"))
 	}
 
@@ -82,9 +82,12 @@ func (s State) Submit(startNow bool, e Env) (State, Out) {
 		return s.readIssue(e)
 	}
 
+	// The store's own id rule, phrased by the store. It is the refusal
+	// the reader is most likely to earn and most able to fix, so it goes
+	// on the form beside the box the id is typed in.
 	if e.ValidID != nil {
 		if err := e.ValidID(id); err != nil {
-			return s, said(err.Error())
+			return refuse(s, err.Error())
 		}
 	}
 
@@ -100,7 +103,14 @@ func (s State) Submit(startNow bool, e Env) (State, Out) {
 	// Start is what makes "save and start" true. It used to be taken and
 	// dropped: the task was written down, the window went back to the
 	// board, and the row sat in to do with nobody able to say why.
-	return State{}, Out{
+	// The form is handed back whole rather than emptied. The window is
+	// leaving it — Leave puts the board up — but the write has not
+	// happened yet, and a write that fails comes back to this form with
+	// what was typed still in it. Emptying here threw that away before
+	// anybody knew whether it was needed, so a refused save cost the
+	// reader the task as well as the save. The window clears it when the
+	// write lands.
+	return s, Out{
 		Leave: true,
 		Write: &Task{ID: id, Repo: path, Flow: s.chosenFlow(), Text: text, Start: startNow},
 	}
@@ -130,4 +140,36 @@ func (s State) onlyALink(text string) bool {
 	written := strings.TrimSpace(text)
 
 	return written == "" || written == strings.TrimSpace(iss.Title)
+}
+
+// refuse is the form saying why it will not write this task: on the form,
+// beside the field that has to change, and on the band for the reader who
+// was watching that instead.
+//
+// Both, because the two are read at different moments. These used to be
+// the band alone, which put "the id is required" at the foot of the window
+// under a form whose id box is the thing it is about.
+func refuse(s State, why string) (State, Out) {
+	return s.Refused(why), said(why)
+}
+
+// Refused is the form told why the window could not write the task, with
+// everything that was typed still in it.
+//
+// The form's refusals used to be a sentence for the band and nothing
+// else. The band is a line at the foot of the window, under whatever
+// screen is up, that holds what it is given for a few seconds — and a
+// reader who has just pressed Save is looking at the form. A save that
+// failed and a save that worked were the same screen for as long as it
+// took somebody to notice the task was not on the board.
+//
+// A door rather than a field the window writes, because the state is this
+// package's: the window hands over the sentence the command answered with
+// and this decides where it is drawn. The next keystroke clears it, since
+// a refusal that outlived the keystroke answering it would be the form
+// arguing with a field that has already changed.
+func (s State) Refused(why string) State {
+	s.refused = why
+
+	return s
 }

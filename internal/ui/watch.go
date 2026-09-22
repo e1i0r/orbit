@@ -45,6 +45,11 @@ const outputTick = 150 * time.Millisecond
 type commandWatch struct {
 	name string
 	said string // the sentence to leave behind, when the name is not one
+	// quiet is whether this was run with no pane over the board. Its one
+	// consequence is on the band: a command nobody watched has nowhere
+	// else to put the line it answered with, so the band carries that
+	// line instead of "<name> finished".
+	quiet bool
 	// at is when it was started, for the line in the band that says how
 	// long it has been: see waiting.go.
 	at time.Time
@@ -167,9 +172,36 @@ func (m Model) runWatchedSaying(c Command, args []string, said string) (tea.Mode
 			about("name", m.watching.name))), nil
 	}
 
-	w := &commandWatch{name: c.Name, said: said, at: m.now}
+	return m.runCommandWatching(c, args, said, true)
+}
+
+// runQuietly runs a command with no pane over the board.
+//
+// It is for the commands a reader does not watch, because they are over
+// before the pane has finished opening and what they answer is one line.
+// Saving the compose form is the whole of that category today: somebody
+// filled in a form, pressed save, and wants the board with their task on
+// it. What they got was a pane with "TST-1 written down against proj" in
+// it and an esc to press, which is a window asking to be dismissed before
+// it will show the thing that was asked for. Elio said so twice.
+//
+// It is not silent. The command's own line goes on the band, the new row
+// is selected under it by pendingID, and a command that fails raises the
+// pane after all — see update.go, where that is decided. Quiet is about
+// the success, which needs no reading; a failure is exactly the thing
+// that must not be quiet.
+func (m Model) runQuietly(c Command, args []string) (tea.Model, tea.Cmd) {
+	return m.runCommandWatching(c, args, "", false)
+}
+
+// runCommandWatching is the one runner both go through, with whether the
+// pane comes up as the only difference between them.
+func (m Model) runCommandWatching(
+	c Command, args []string, said string, up bool,
+) (tea.Model, tea.Cmd) {
+	w := &commandWatch{name: c.Name, said: said, at: m.now, quiet: !up}
 	next := m
-	next.watching, next.watchUp, next.output = w, true, ""
+	next.watching, next.watchUp, next.output = w, up, ""
 
 	return next, tea.Batch(runCommand(m.opts.Do, w, args), outputPump(w))
 }

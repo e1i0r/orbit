@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/e1i0r/orbit/internal/board"
+	"github.com/e1i0r/orbit/internal/env"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/ui"
 	"github.com/e1i0r/orbit/internal/verb"
@@ -214,6 +215,29 @@ func (a *settingsAdapter) QuotaFloor() int { return a.read().QuotaFloor }
 
 // Autopilot is whether a run walks its gates without asking.
 func (a *settingsAdapter) Autopilot() bool { return a.read().Autopilot }
+
+// Deciding is the decision engine's two halves: what the file allows, and
+// which variable the key is missing from. Off answers empty, and so does a
+// key that is there, so the window draws a sentence only when there is one
+// to draw.
+//
+// The key is read from this process on every call, and that is the point.
+// A run is a child of this window and inherits this environment, so what
+// env.Set answers here is what the gate in that child will have. A key
+// exported into another shell after the window opened is a key no run will
+// ever see, and this reports the window rather than the shell the reader
+// happens to be typing in.
+func (a *settingsAdapter) Deciding() (allowed, missing string) {
+	if state := a.read().Deciding(); state != store.DecisionsOff {
+		allowed = state
+	}
+
+	if !env.Set(env.DecisionKey) {
+		missing = env.DecisionKey
+	}
+
+	return allowed, missing
+}
 
 // SetAutopilot writes that switch down.
 func (a *settingsAdapter) SetAutopilot(on bool) error {

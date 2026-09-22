@@ -54,6 +54,17 @@ func (s State) View(h, w int, e Env) []string {
 		actions += "   " + theme.Paint(theme.Dim).Render("⚡ "+p.T("compose.autopilot_off_note", "autopilot is OFF: saves to To Do backlog"))
 	}
 
+	// Why the last save did not happen, between the fields and the button
+	// that was pressed.
+	//
+	// Here and not on the band: a reader who has just pressed Save is
+	// looking at this form, and the band is a line at the foot of the
+	// window that holds a sentence for a few seconds. The task is still
+	// in the fields above, so the sentence is next to what has to change.
+	if s.refused != "" {
+		out = append(out, "", cells.Fit("  "+theme.Paint(theme.Bad).Render("✗ "+s.refused), w))
+	}
+
 	out = append(out, "", cells.Fit(actions, w))
 
 	return cells.Fill(out, h)

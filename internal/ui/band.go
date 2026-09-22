@@ -263,7 +263,7 @@ func (m Model) startedSaid(msg startedMsg) string {
 // keystroke left to be said about landing, and the command's own name when
 // it left nothing: a verb the reader pressed is not always the command that
 // carries it out.
-func (m Model) commandSaid(msg commandMsg) string {
+func (m Model) commandSaid(msg commandMsg, quiet bool) string {
 	if msg.Err != nil {
 		return m.errSaid(msg.Err)
 	}
@@ -272,5 +272,37 @@ func (m Model) commandSaid(msg commandMsg) string {
 		return msg.Said
 	}
 
+	if line, ok := saidItself(msg.Text); ok && quiet {
+		return line
+	}
+
 	return m.opts.Words.T("msg.command_done", "{name} finished", about("name", msg.Name))
+}
+
+// bandLine is the most of a command's own output the band will carry.
+// Longer than that is a paragraph, and a paragraph belongs in the pane.
+const bandLine = 120
+
+// saidItself is a command's whole output when that output is one short line.
+//
+// Only a command run with no pane borrows the band this way. One that was
+// watched has its output on screen already, and repeating the last line of
+// it underneath is the band saying what the reader is looking at.
+//
+// "board finished" is what the band said after the compose form wrote a
+// task, while the command itself had answered "TST-1 written down against
+// payments to walk task" — the id, the repository and the flow, which is
+// every question a reader has at that moment. The good sentence existed
+// and was thrown away for a template naming the parent verb.
+//
+// Only one line, and only a short one. Anything more is output somebody
+// may want to read twice, and the band holds it for a few seconds over a
+// screen it does not belong to.
+func saidItself(text string) (string, bool) {
+	line := strings.TrimSpace(text)
+	if line == "" || strings.Contains(line, "\n") || len([]rune(line)) > bandLine {
+		return "", false
+	}
+
+	return line, true
 }

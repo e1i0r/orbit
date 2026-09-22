@@ -78,4 +78,7 @@ orbit settings set decisions shadow   # it writes down what it would decide
 orbit settings set decisions on       # it acts on what it is sure about
 ```
 
-Either one alone does nothing, and says so rather than looking switched on.
+Either one alone does nothing, and says so in three places: `orbit settings
+set` names the variable it cannot find, the cockpit's status line carries
+the same sentence while the two disagree, and every run writes which half
+it got into `orbit.log` before its first gate.

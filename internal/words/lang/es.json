@@ -2689,6 +2689,14 @@
       "source": "no quota source for {engine}",
       "value": "sin fuente de quota para {engine}"
     },
+    "set.decisions_unkeyed": {
+      "source": "there is no {key} in the environment, so every gate still waits for you",
+      "value": "no hay {key} en el entorno, así que cada puerta sigue esperándote"
+    },
+    "status.decisions_unkeyed": {
+      "source": "decisions {state}, no {key} in the environment",
+      "value": "decisiones en {state}, falta {key} en el entorno"
+    },
     "key.repos": {
       "source": "repositories",
       "value": "repositorios"

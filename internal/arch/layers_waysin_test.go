@@ -104,10 +104,21 @@ var waysIn = map[string][]string{
 	// stopped in front of, which is the last refusal in its record. Skipping
 	// past a gate is something said about the rule that put it there, and
 	// the only place the rule's name is written is that event.
+	// internal/env is on internal/verb's list for one answer: whether the
+	// key a setting needs is in the environment. `decisions` is the only
+	// setting with a half that does not live in the settings file — the
+	// key is deliberately not a setting, because this package prints its
+	// table to a terminal, to a screen and into a chat — so switching it
+	// on and saying nothing about the missing key is a confirmation that
+	// is true and useless. It is a widening, and it was argued rather
+	// than assumed: internal/env is a list of names that imports nothing,
+	// so no cycle can be made of it, and it is already reached from here
+	// through internal/quota and internal/store. What is read is whether
+	// a variable is set and never its value.
 	"internal/verb": {
-		"internal/board", "internal/engine", "internal/flow", "internal/knowledge",
-		"internal/learn", "internal/quota", "internal/record", "internal/repo",
-		"internal/store", "internal/supervisor", "internal/task", "internal/ui/theme",
-		"internal/view", "internal/words",
+		"internal/board", "internal/engine", "internal/env", "internal/flow",
+		"internal/knowledge", "internal/learn", "internal/quota", "internal/record",
+		"internal/repo", "internal/store", "internal/supervisor", "internal/task",
+		"internal/ui/theme", "internal/view", "internal/words",
 	},
 }

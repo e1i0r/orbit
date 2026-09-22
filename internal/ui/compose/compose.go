@@ -62,6 +62,9 @@ type State struct {
 	// loop.
 	asked bool
 
+	// refused is why the last save did not happen. See submit.go.
+	refused string
+
 	flows   []string
 	flowIdx int
 }
@@ -138,6 +141,11 @@ func startsIn(hint string, e Env) string {
 
 // Key is one press.
 func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
+	// Whatever the last save was refused for, the reader is now doing
+	// something about it. A refusal that outlived the keystroke answering
+	// it would be the form arguing with a field that has already changed.
+	s.refused = ""
+
 	switch {
 	case msg.Code == tea.KeyEscape || key.Matches(msg, e.Keys.Back):
 		return State{}, Out{Leave: true}

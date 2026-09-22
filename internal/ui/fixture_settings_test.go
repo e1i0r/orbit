@@ -28,6 +28,12 @@ import (
 type settingsFile struct {
 	tbl  *verb.Table
 	fail error
+	// missing is the variable Deciding reports the decision engine's key
+	// as absent from, and empty when it is there. It is a field and not a
+	// read of the real environment for the same reason the rest of this
+	// is a fixture: a test that passed or failed on whether the machine
+	// running it had somebody's API key exported is not a test.
+	missing string
 }
 
 // newSettingsFile is the table as Orbit ships it.
@@ -98,6 +104,18 @@ func (s *settingsFile) Engine() string   { return s.table().Value("engine") }
 func (s *settingsFile) Model() string    { return s.table().Value("model") }
 func (s *settingsFile) Flow() string     { return s.table().Value("flow") }
 func (s *settingsFile) Theme() string    { return s.table().Value("theme") }
+
+// Deciding is the two halves the status line draws its warning out of. The
+// table answers the setting, and the fixture's own field stands for the
+// environment, which internal/ui cannot reach and a test should not depend
+// on.
+func (s *settingsFile) Deciding() (allowed, missing string) {
+	if state := s.table().Value("decisions"); state != "off" {
+		allowed = state
+	}
+
+	return allowed, s.missing
+}
 
 func (s *settingsFile) BudgetWorkspace() float64 { return money(s.table().Value("budget-workspace")) }
 func (s *settingsFile) QuotaFloor() int          { return number(s.table().Value("quota-floor")) }

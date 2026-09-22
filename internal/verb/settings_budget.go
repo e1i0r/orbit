@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/env"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -157,3 +158,30 @@ func dollars(p *words.Printer, value string) (float64, error) {
 
 // money is a budget as `orbit set` prints one back.
 func money(v float64) string { return strconv.FormatFloat(v, 'f', -1, 64) }
+
+// caveat is what is said after a setting has been written, when writing it
+// was not enough to make it work. Empty when there is nothing to add, which
+// is every setting but one.
+//
+// `decisions` is the only setting with a half that does not live in the
+// settings file. The key is in the environment on purpose — `orbit
+// settings` prints its table to a terminal, to a screen and into a chat,
+// and a secret that can be printed is a secret that will be — so the two
+// halves get written in different places, on different days, and one of
+// them can be forgotten.
+//
+// Forgetting it is silent. The setting takes the value, the table reads
+// back "on", and every gate goes on waiting for a person exactly as it did
+// before; a whole task ran that way before this line existed. The moment
+// somebody types the half that is a setting is the moment they still have
+// the other half in mind, so it is said here as well as in the cockpit's
+// status line and in the log the run writes.
+func caveat(p *words.Printer, key, value string) string {
+	if key != "decisions" || value == store.DecisionsOff || env.Set(env.DecisionKey) {
+		return ""
+	}
+
+	return p.T("set.decisions_unkeyed",
+		"there is no {key} in the environment, so every gate still waits for you",
+		words.Arg{Name: "key", Value: env.DecisionKey})
+}

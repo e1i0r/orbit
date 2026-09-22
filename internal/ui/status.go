@@ -1,8 +1,10 @@
 package ui
 
-// The status line: five fields across the terminal — spent, tasks, events,
-// the heartbeat, quota remaining — giving up fields from the right as the
-// terminal narrows, and disappearing entirely on a short terminal.
+// The status line: the decision engine when it is switched on and cannot
+// work, spent, tasks, events, the heartbeat, quota remaining. It gives up
+// fields from the right as the terminal narrows, and disappears entirely on
+// a short terminal, so the order it builds them in is what survives a
+// narrow one.
 
 import (
 	"fmt"
@@ -36,20 +38,34 @@ func (m Model) statusLine(w int) string {
 
 	var segments []statusSegment
 
-	// 1. Spent (gastado)
+	// 1. A decision engine that is switched on and cannot answer.
+	//
+	// First, because this line gives up fields from the right and keeps
+	// the leftmost one whatever the width: the order here is priority,
+	// not reading order. A warning appended after the readings is correct
+	// at 200 columns and gone at 60, and the only thing on this line that
+	// somebody has to do something about is the one that would go.
+	//
+	// It costs the other fields nothing, because it is absent every time
+	// there is nothing wrong.
+	if stalled, ok := m.decisionSegment(p); ok {
+		segments = append(segments, stalled)
+	}
+
+	// 2. Spent (gastado)
 	if spent, ok := m.spentSegment(p); ok {
 		segments = append(segments, spent)
 	}
 
-	// 2. Tasks (tareas totales)
+	// 3. Tasks (tareas totales)
 	tasksStr := p.P("status.total_tasks", len(m.board.Tasks), "{n} task", "{n} tasks")
 	segments = append(segments, statusSegment{text: tasksStr, role: theme.Dim})
 
-	// 3. Events (eventos)
+	// 4. Events (eventos)
 	eventsStr := p.T("status.events", "{events} events", about("events", strconv.Itoa(m.board.Health.EventsRead)))
 	segments = append(segments, statusSegment{text: eventsStr, role: theme.Dim})
 
-	// 4. Heartbeat (latido)
+	// 5. Heartbeat (latido)
 	//
 	// This was "{ms}ms read": how long the last board read took, painted red
 	// past 100ms. Three things were wrong with it. There is no screen that
@@ -67,7 +83,7 @@ func (m Model) statusLine(w int) string {
 		segments = append(segments, statusSegment{text: m.spin(), role: theme.Dim})
 	}
 
-	// 5. Quota remaining (quota restante)
+	// 6. Quota remaining (quota restante)
 	if quota, ok := m.quotaSegment(p); ok {
 		segments = append(segments, quota)
 	}
@@ -169,6 +185,40 @@ func (m Model) quotaSegment(p *words.Printer) (statusSegment, bool) {
 		about("engine", reading.Engine))
 
 	return statusSegment{text: text, role: theme.Dim}, true
+}
+
+// decisionSegment is the one thing the window says about the decision
+// engine, and it says it only when the setting and the key disagree.
+//
+// Nothing when it is off, which is what it ships as: a reader who has not
+// turned it on is not waiting for it. Nothing when it works, for the
+// reason the quota field says nothing about an engine paid per token —
+// there is no action behind the sentence. It is the third case this is
+// for: `decisions` set, no key in the environment, and a run that walks to
+// its gate and waits for a person while the window looks like a window
+// with a decision engine in it. Both halves were readable and neither was
+// read out.
+//
+// Warn and not Alert, because nothing is broken. The run is doing what a
+// run did before any of this existed.
+//
+// It is here rather than in the key bar because a chip is glanced at on
+// every frame and this is a sentence acted on once.
+func (m Model) decisionSegment(p *words.Printer) (statusSegment, bool) {
+	if m.opts.Settings == nil {
+		return statusSegment{}, false
+	}
+
+	allowed, missing := m.opts.Settings.Deciding()
+	if allowed == "" || missing == "" {
+		return statusSegment{}, false
+	}
+
+	text := p.T("status.decisions_unkeyed", "decisions {state}, no {key} in the environment",
+		words.Arg{Name: "state", Value: allowed},
+		words.Arg{Name: "key", Value: missing})
+
+	return statusSegment{text: text, role: theme.Warn}, true
 }
 
 // quotaChip is what the header carries about the engine's quota: the share

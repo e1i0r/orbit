@@ -44,6 +44,10 @@ start a run. See [engines](engines.md).
 In the cockpit, `N` opens the form. A title, what has to be done, the
 repository, and the flow it runs under.
 
+Saving puts you back on the board with the new row under the cursor. If
+the task cannot be written, the form comes back holding everything you
+typed, with the reason above the buttons.
+
 From the terminal:
 
 ```bash

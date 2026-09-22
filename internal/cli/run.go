@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/e1i0r/orbit/internal/env"
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/hunch"
 	"github.com/e1i0r/orbit/internal/logger"
@@ -145,13 +146,23 @@ func runTask(ctx Context, args []string) error {
 	logger.Info("cli/run", "starting task %s in repo %s on flow %s (timeout=%v)", id, r.Name, chosen, *timeout)
 
 	// The decision engine, when this machine has a key for one. Without it
-	// the gate is what it was: see internal/hunch, and the `hunches`
+	// the gate is what it was: see internal/hunch, and the `decisions`
 	// setting, which is off until somebody turns it on even where a key is
 	// there.
+	//
+	// Which of the two it is goes in the log every time, including the
+	// ordinary case. A run reads the key once, here, and a run started
+	// without one is indistinguishable from a run with one until a gate
+	// arrives and quietly waits for a person — so the line that says which
+	// happened has to be written before the gate, not after.
 	gate := task.FileGate(s, time.Second)
-	if port, ready := hunch.FromEnv(); ready {
+
+	port, ready := hunch.FromEnv()
+	if ready {
 		gate = task.FileGate(s, time.Second, port)
 	}
+
+	logger.Info("cli/run", "task %s: decision engine %s", id, keyed(ready))
 
 	if err := task.Run(running, s, t, f, engines, gate,
 		allowancePort(quota.FromEnv())); err != nil {
@@ -186,4 +197,20 @@ func restoreOnCancel(ctx context.Context, stop func()) {
 		<-ctx.Done()
 		stop()
 	}()
+}
+
+// keyed is what the log says about the decision engine's key, in words
+// rather than a bool: "decision engine false" in a log file is a line a
+// reader has to go and look up.
+//
+// It reports the key and not the setting. The setting is read again at
+// every gate and can change while the run is going; the key is read once,
+// at the start, and is the half that cannot be fixed without starting
+// over.
+func keyed(ready bool) string {
+	if ready {
+		return "keyed, and will decide what the settings allow"
+	}
+
+	return "no key in " + env.DecisionKey + ", so every gate waits for a person"
 }
