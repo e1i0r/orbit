@@ -92,7 +92,7 @@ func RunFrom(ctx context.Context, s *store.Store, t Task, f flow.Flow,
 	// repository's path and the id (store.CreateWorktreeParent), so nothing
 	// would be knowable only from that field — whereas an attempt with no
 	// line in the log is knowable from nowhere at all.
-	if err := emit(s, t, record.Event{Kind: record.TaskStarted, Data: map[string]string{"flow": f.Name}}); err != nil {
+	if err := emit(s, t, record.Event{Kind: record.TaskStarted, Data: attempt(f.Name, from)}); err != nil {
 		return err
 	}
 

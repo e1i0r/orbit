@@ -22,6 +22,7 @@ package task
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/hunch"
@@ -160,6 +161,11 @@ func decisionEvent(p flow.Phase, v hunch.Verdict, mode string, acted bool) recor
 // This run and not the last one, for the reason planText reads from the
 // newest task.started: a verdict about what the previous attempt printed is
 // a verdict about work that has already been replaced.
+//
+// Unless the run is a retry from a phase. It runs none of the phases before
+// that one, so what they said is the work it stands on, and forgetting it
+// asked the gate about a run that had said nothing: ORB-121 was answered
+// "again" ten times over an implement that had reported make check green.
 func lastSaid(s *store.Store, t Task) string {
 	events, err := Events(s, t)
 	if err != nil {
@@ -171,7 +177,9 @@ func lastSaid(s *store.Store, t Task) string {
 	for _, e := range events {
 		switch e.Kind {
 		case record.TaskStarted:
-			said = ""
+			if e.Data["from"] == "" {
+				said = ""
+			}
 		case record.PhaseFinished, record.PhaseFailed, record.GateFailed:
 			if e.Text != "" {
 				said = e.Text
@@ -180,4 +188,16 @@ func lastSaid(s *store.Store, t Task) string {
 	}
 
 	return said
+}
+
+// attempt is what task.started says about the attempt it begins: the flow,
+// and the phase a retry began at. from is what lets lastSaid tell a retry
+// that keeps the phases before it from a run that replaces them.
+func attempt(flowName, from string) map[string]string {
+	data := map[string]string{"flow": flowName}
+	if name := strings.TrimSpace(from); name != "" {
+		data["from"] = name
+	}
+
+	return data
 }
