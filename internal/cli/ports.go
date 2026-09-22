@@ -223,6 +223,10 @@ func reconcileAll(s *store.Store) error {
 			if _, wroteErr := task.Reconcile(s, task.Task{ID: id, Repo: r}); wroteErr != nil {
 				errs = append(errs, wroteErr)
 			}
+
+			if _, wroteErr := task.ReconcileDeliveries(s, task.Task{ID: id, Repo: r}); wroteErr != nil {
+				errs = append(errs, wroteErr)
+			}
 		}
 	}
 

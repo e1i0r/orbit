@@ -5,6 +5,8 @@ package task
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/record"
@@ -32,7 +34,11 @@ func Delivering(s *store.Store, t Task, verb, by string) error {
 		return fmt.Errorf("task %s: a delivery needs the verb it was asked under", t.ID)
 	}
 
-	e := record.Event{Kind: record.DeliverAsked, Data: map[string]string{"verb": verb}}
+	// pid is the window asking, which is what carries the work: see
+	// ReconcileDeliveries for what happens when it closes first.
+	e := record.Event{Kind: record.DeliverAsked, Data: map[string]string{
+		"verb": verb, "pid": strconv.Itoa(os.Getpid()),
+	}}
 	if by = strings.TrimSpace(by); by != "" {
 		e.Data["by"] = by
 	}

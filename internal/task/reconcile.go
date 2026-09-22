@@ -3,6 +3,11 @@ package task
 // Closing the record of a run that is not coming back.
 
 import (
+	"errors"
+	"os"
+	"sort"
+	"strconv"
+
 	"github.com/e1i0r/orbit/internal/record"
 	"github.com/e1i0r/orbit/internal/store"
 )
@@ -103,4 +108,64 @@ func inFlight(events []record.Event) bool {
 	}
 
 	return open
+}
+
+// errCarrierGone is why a delivery closed here broke.
+var errCarrierGone = errors.New("the window carrying it closed before it came back")
+
+// ReconcileDeliveries answers, as broken, every delivery verb still open on
+// a task whose carrier is gone, and reports how many it closed.
+//
+// A delivery is carried by the window it was asked in: the supervisor runs
+// inside it, and so does the command a key starts. When that window closes,
+// what it was carrying dies with it and nothing writes the answer, so the
+// tree said "in progress" for as long as anybody looked. Reconcile does the
+// same for a run; this is the other half, called beside it when a window
+// opens, for the reason it gives for writing rather than displaying.
+//
+// An ask with no pid on it was written before asks carried one, by a window
+// that is not this one, and is taken as gone.
+func ReconcileDeliveries(s *store.Store, t Task) (int, error) {
+	events, err := Events(s, t)
+	if err != nil {
+		return 0, err
+	}
+
+	open := map[string]record.Event{}
+
+	for _, e := range events {
+		switch e.Kind {
+		case record.DeliverAsked:
+			open[e.Data["verb"]] = e
+		case record.DeliverAnswered:
+			delete(open, e.Data["verb"])
+		}
+	}
+
+	verbs := make([]string, 0, len(open))
+	for verb, ask := range open {
+		if !carried(ask) {
+			verbs = append(verbs, verb)
+		}
+	}
+
+	sort.Strings(verbs)
+
+	for i, verb := range verbs {
+		if err := Delivered(s, t, verb, "", errCarrierGone); err != nil {
+			return i, err
+		}
+	}
+
+	return len(verbs), nil
+}
+
+// carried is whether the window an ask was made in is still there.
+func carried(ask record.Event) bool {
+	pid, err := strconv.Atoi(ask.Data["pid"])
+	if err != nil || pid <= 0 {
+		return false
+	}
+
+	return pid == os.Getpid() || running(pid)
 }

@@ -76,8 +76,8 @@ const (
 	// DeliverAsked is a delivery verb the operator pressed in the cockpit:
 	// open the pull request, bring it up to date, make its checks pass,
 	// answer its reviews. Data["verb"] is which one, in the caption the key
-	// was offered under, and Data["by"] is what was handed the work — the
-	// supervisor, or the command that carries it.
+	// was offered under, Data["by"] what was handed the work (the supervisor
+	// or a command), and Data["pid"] the window it was asked in, which carries it.
 	//
 	// It is written where the key is pressed rather than by whatever does
 	// the work, because most of these verbs are carried out by an engine
