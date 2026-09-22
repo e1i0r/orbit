@@ -89,26 +89,19 @@ func TestLeavingThePickTakesNothingBack(t *testing.T) {
 	}
 }
 
-// TestTheCursorStopsAtBothEndsOfTheThread. It is a list with one row chosen,
-// and a cursor that ran off either end would take back a line the reader
-// cannot see.
-func TestTheCursorStopsAtBothEndsOfTheThread(t *testing.T) {
+// TestTheCursorGoesRoundTheEndsOfTheThread. It is a list with one row
+// chosen, and off either end it comes round to the other, never past it.
+func TestTheCursorGoesRoundTheEndsOfTheThread(t *testing.T) {
 	s, e := picking(t, saidThree())
+	last := len(s.lines) - 1
 
-	for range 10 {
-		s, _ = s.Key(press("down"), e)
+	s.pick = last
+	if s, _ = s.Key(press("down"), e); s.pick != 0 {
+		t.Errorf("down from the last line ran to %d, want the first", s.pick)
 	}
 
-	if s.pick != len(s.lines)-1 {
-		t.Errorf("the cursor ran to %d, want it to stop at %d", s.pick, len(s.lines)-1)
-	}
-
-	for range 10 {
-		s, _ = s.Key(press("up"), e)
-	}
-
-	if s.pick != 0 {
-		t.Errorf("the cursor ran to %d, want it to stop at the top", s.pick)
+	if s, _ = s.Key(press("up"), e); s.pick != last {
+		t.Errorf("up from the first line ran to %d, want the last, %d", s.pick, last)
 	}
 }
 

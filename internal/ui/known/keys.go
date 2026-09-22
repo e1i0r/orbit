@@ -21,9 +21,9 @@ func (s State) key(msg tea.KeyPressMsg, e Env) (State, Out) {
 	case msg.Code == tea.KeyEscape || key.Matches(msg, e.Keys.Back):
 		return State{}, Out{Leave: true}
 	case msg.Code == tea.KeyUp:
-		return s.Move(-1, e), Out{}
+		return s.step(-1, e), Out{}
 	case msg.Code == tea.KeyDown:
-		return s.Move(1, e), Out{}
+		return s.step(1, e), Out{}
 	case msg.Code == tea.KeyPgUp:
 		return s.Move(-pageRules, e), Out{}
 	case msg.Code == tea.KeyPgDown:

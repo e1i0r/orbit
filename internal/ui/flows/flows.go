@@ -256,16 +256,16 @@ func (s State) flowsListKey(msg tea.KeyPressMsg, e Env) (State, Out) {
 	switch {
 	case key.Matches(msg, e.Keys.Back):
 		return s.leave()
+	// The list runs from -1, the row that creates a flow, to the last
+	// flow, and the arrows go round from one end to the other.
 	case key.Matches(msg, e.Keys.Up):
-		if s.sel > -1 {
-			s.sel--
-		}
+		n := len(descriptors) + 1
+		s.sel = (s.sel+n)%n - 1
 
 		return s, Out{}
 	case key.Matches(msg, e.Keys.Down):
-		if s.sel < len(descriptors)-1 {
-			s.sel++
-		}
+		n := len(descriptors) + 1
+		s.sel = (s.sel+2)%n - 1
 
 		return s, Out{}
 	case key.Matches(msg, e.Keys.Start):

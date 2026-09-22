@@ -104,21 +104,21 @@ func TestTypingNarrowsTheListAndBackspaceGivesItBack(t *testing.T) {
 	}
 }
 
-// TestTheCursorStopsAtBothEndsOfTheList: a list that comes back round has no
-// bottom, and somebody holding a key down never finds out they reached it.
-func TestTheCursorStopsAtBothEndsOfTheList(t *testing.T) {
+// TestTheCursorGoesRoundTheEndsOfTheList: up from the first row is the
+// last one and down from the last is the first, as in every list here.
+func TestTheCursorGoesRoundTheEndsOfTheList(t *testing.T) {
 	s, e := picking(t, flowFieldModel)
 	s.picker.sel = 0
 
-	if up, _ := s.pickerKey(press("up"), e); up.picker.sel != 0 {
-		t.Errorf("up from the first row left the cursor on %d", up.picker.sel)
+	ids, _ := s.pickerRows(e)
+	if up, _ := s.pickerKey(press("up"), e); up.picker.sel != len(ids)-1 {
+		t.Errorf("up from the first row left the cursor on %d, want %d", up.picker.sel, len(ids)-1)
 	}
 
-	ids, _ := s.pickerRows(e)
 	s.picker.sel = len(ids) - 1
 
-	if down, _ := s.pickerKey(press("down"), e); down.picker.sel != len(ids)-1 {
-		t.Errorf("down from the last row left the cursor on %d", down.picker.sel)
+	if down, _ := s.pickerKey(press("down"), e); down.picker.sel != 0 {
+		t.Errorf("down from the last row left the cursor on %d, want 0", down.picker.sel)
 	}
 }
 

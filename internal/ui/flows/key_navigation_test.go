@@ -88,25 +88,20 @@ func TestFlowsListKeyConfirmDelete(t *testing.T) {
 func TestFlowsListKeyNavigationBoundaries(t *testing.T) {
 	s, e := designer(t)
 
-	// sel starts at -1 and Up must not go lower.
-	m2, _ := s.flowsListKey(press("up"), e)
-	if m2.sel != -1 {
-		t.Errorf("Up at sel=-1 moved: %d", m2.sel)
-	}
-
-	// Down walks off the end of the descriptor list and no further. Counted
-	// against the builtins themselves: a number written here goes stale the
-	// day a flow ships, and the test that fails then is not about what
-	// changed.
+	// sel starts at -1, the create button, and the arrows go round the
+	// ends. Counted against the builtins themselves: a number written here
+	// goes stale the day a flow ships, and the test that fails then is not
+	// about what changed.
 	builtinCount := len(flow.BuiltinNames())
 
-	for range builtinCount + 2 {
-		next, _ := m2.flowsListKey(press("down"), e)
-		m2 = next
+	m2, _ := s.flowsListKey(press("up"), e)
+	if m2.sel != builtinCount-1 {
+		t.Errorf("up from the create button is %d, want the last flow, %d", m2.sel, builtinCount-1)
 	}
 
-	if m2.sel != builtinCount-1 {
-		t.Errorf("sel after walking past the end = %d, want %d", m2.sel, builtinCount-1)
+	m2, _ = m2.flowsListKey(press("down"), e)
+	if m2.sel != -1 {
+		t.Errorf("down from the last flow is %d, want the create button", m2.sel)
 	}
 
 	// Back leaves the screen.

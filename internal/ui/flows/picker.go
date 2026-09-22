@@ -176,10 +176,10 @@ func (s State) pickerKey(msg tea.KeyPressMsg, e Env) (State, Out) {
 	case tea.KeyEnter:
 		return s.takePick(s.picker.sel, e), Out{}
 	case tea.KeyUp:
-		s.picker.sel = max(s.picker.sel-1, 0)
+		s.picker.sel = (s.picker.sel - 1 + max(len(ids), 1)) % max(len(ids), 1)
 		return s, Out{}
 	case tea.KeyDown:
-		s.picker.sel = min(s.picker.sel+1, max(len(ids)-1, 0))
+		s.picker.sel = (s.picker.sel + 1) % max(len(ids), 1)
 		return s, Out{}
 	case tea.KeyPgUp:
 		s.picker.sel = max(s.picker.sel-pickerPage, 0)

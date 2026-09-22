@@ -135,6 +135,20 @@ func (s State) move(d int, e Env) State {
 	return s.keepSeen(e)
 }
 
+// step is one press of an arrow: move does it, except that off either end
+// of the list it comes round to the other. A screen being read is text,
+// and text stops where it stops.
+func (s State) step(d int, e Env) State {
+	if s.reading || s.editing {
+		return s.move(d, e)
+	}
+
+	n := s.last() + 1
+	s.sel = (s.sel + d + n) % n
+
+	return s.keepSeen(e)
+}
+
 // hit is what the screen has at that cell.
 //
 // Only the rows answer. The headings, the column names and the blank rows

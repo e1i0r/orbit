@@ -195,10 +195,10 @@ func (s State) conversationKey(msg tea.KeyPressMsg, e Env) (State, Out) {
 		s.list = false
 		return s, Out{}
 	case msg.Code == tea.KeyUp:
-		s.listSel = max(s.listSel-1, 0)
+		s.listSel = (s.listSel - 1 + max(len(convs), 1)) % max(len(convs), 1)
 		return s, Out{}
 	case msg.Code == tea.KeyDown:
-		s.listSel = min(s.listSel+1, max(len(convs)-1, 0))
+		s.listSel = (s.listSel + 1) % max(len(convs), 1)
 		return s, Out{}
 	case msg.Code == tea.KeyEnter || key.Matches(msg, e.Keys.Open):
 		if s.listSel < len(convs) {

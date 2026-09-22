@@ -155,10 +155,15 @@ func TestPickingTakesTheChosenLineBack(t *testing.T) {
 		t.Errorf("up moved to %d, want 0", s.pick)
 	}
 
-	// And it stops at the top rather than walking off it.
+	// Past the top it comes round to the last line, and back down again.
 	s, _ = s.Key(press("up"), e)
+	if s.pick != 1 {
+		t.Errorf("up past the first line moved to %d, want the last", s.pick)
+	}
+
+	s, _ = s.Key(press("down"), e)
 	if s.pick != 0 {
-		t.Errorf("up past the first line moved to %d", s.pick)
+		t.Errorf("down past the last line moved to %d, want the first", s.pick)
 	}
 
 	s, out := s.Key(press("enter"), e)

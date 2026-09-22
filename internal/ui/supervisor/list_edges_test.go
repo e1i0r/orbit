@@ -112,25 +112,15 @@ func TestAPickPastTheEndTakesTheLastOffer(t *testing.T) {
 		t.Errorf("a pick past the end took %q, want the last offer", got)
 	}
 
-	// And walking the list stops at its ends rather than coming back round.
-	down := s
-
-	for range len(offers) + 5 {
-		down = down.moveCompletion(1, e)
+	// And walking the list comes back round from either end to the other.
+	s.pick = len(offers) - 1
+	if down := s.moveCompletion(1, e); down.pick != 0 {
+		t.Errorf("down past the end left the pick at %d, want the first", down.pick)
 	}
 
-	if down.pick != len(offers)-1 {
-		t.Errorf("walking down past the end left the pick at %d of %d", down.pick, len(offers))
-	}
-
-	up := down
-
-	for range len(offers) + 5 {
-		up = up.moveCompletion(-1, e)
-	}
-
-	if up.pick != 0 {
-		t.Errorf("walking up past the start left the pick at %d", up.pick)
+	s.pick = 0
+	if up := s.moveCompletion(-1, e); up.pick != len(offers)-1 {
+		t.Errorf("up past the start left the pick at %d, want the last of %d", up.pick, len(offers))
 	}
 }
 
