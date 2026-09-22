@@ -310,10 +310,34 @@ func opening(t task.Task) string {
 }
 
 // branchOf is the branch a task's work is on, and it is the same name in
-// every repository the task joined: three checkouts of orbit/PAY-1 are three
-// halves of one task, and a reviewer reading any of them reads the same name.
+// every repository the task joined: three checkouts of one task's branch
+// are three halves of it, and a reviewer reading any of them reads the
+// same name.
+//
+// It asks internal/task rather than spelling the name, because the name is
+// no longer a function of the id alone — a task carries its own, so that a
+// second task written under an id somebody used before does not inherit
+// the first one's commits. See internal/task/branch.go.
 func branchOf(t task.Task) string {
-	return "orbit/" + t.ID
+	return task.Branch(t)
+}
+
+// branchFor is the same answer for a caller holding only an id, which is
+// what `orbit merge` and `orbit close-pr` are given.
+//
+// A task the record cannot be read for falls back to the name Orbit used
+// before branches carried a suffix. Both of these verbs reach GitHub, and
+// the worse of the two failures is refusing to merge a pull request that
+// is open and waiting because a file could not be read locally.
+func branchFor(s *store.Store, r repo.Repo, taskID string) string {
+	t, err := task.Load(s, r, taskID)
+	if err != nil {
+		logger.Error("cli/deliver", "read task %q to find its branch: %v", taskID, err)
+
+		return task.Branch(task.Task{ID: taskID})
+	}
+
+	return task.Branch(t)
 }
 
 // subjectOf is the commit subject the delivery writes.

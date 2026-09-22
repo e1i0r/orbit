@@ -27,9 +27,13 @@ func TestMergingSquashesTheBranchAndDeletesIt(t *testing.T) {
 		t.Errorf("the reader is not told which branch went in: %q", out)
 	}
 
+	// The prefix and not the whole name: a task's branch carries a
+	// suffix nothing can guess, so that a second task written under an id
+	// somebody used before cannot inherit the first one's commits. See
+	// internal/task/branch.go.
 	asked := flagValue(t, argv, "merge")
-	if asked != "orbit/PAY-1" {
-		t.Errorf("gh was asked to merge %q", asked)
+	if !strings.HasPrefix(asked, "orbit/PAY-1") {
+		t.Errorf("gh was asked to merge %q, want PAY-1's own branch", asked)
 	}
 
 	given := gaveGh(t, argv)
@@ -57,8 +61,8 @@ func TestClosingCarriesTheCommentToGh(t *testing.T) {
 		t.Errorf("the reader is not told which branch was closed: %q", out)
 	}
 
-	if closed := flagValue(t, argv, "close"); closed != "orbit/PAY-1" {
-		t.Errorf("gh was asked to close %q", closed)
+	if closed := flagValue(t, argv, "close"); !strings.HasPrefix(closed, "orbit/PAY-1") {
+		t.Errorf("gh was asked to close %q, want PAY-1's own branch", closed)
 	}
 
 	if comment := flagValue(t, argv, "--comment"); comment != closingComment(Context{}) {

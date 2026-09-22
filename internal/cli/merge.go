@@ -41,7 +41,7 @@ func mergePR(ctx Context, args []string) error {
 		return fmt.Errorf("read the repositories of task %q: %w", taskID, err)
 	}
 
-	branch := "orbit/" + taskID
+	branch := branchFor(s, r, taskID)
 
 	for _, one := range where {
 		wtDir, wtErr := s.WorktreeDir(one.Path, taskID)

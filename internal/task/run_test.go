@@ -98,8 +98,8 @@ func TestRunRunsInsideAWorktreeOnItsOwnBranch(t *testing.T) {
 	// other assertion here is satisfied by a worktree checked out on the
 	// repository's own HEAD, which would have the engine committing
 	// straight onto main — the one outcome the branch exists to prevent.
-	if got := headOf(t, wt); got != "orbit/ACME-1" {
-		t.Errorf("the worktree is on %q, want orbit/ACME-1", got)
+	if got := headOf(t, wt); !strings.HasPrefix(got, "orbit/ACME-1") {
+		t.Errorf("the worktree is on %q, want a branch of ACME-1's own", got)
 	}
 }
 

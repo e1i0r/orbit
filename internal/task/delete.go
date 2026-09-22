@@ -54,17 +54,29 @@ func Delete(s *store.Store, t Task) error {
 			continue
 		}
 
-		if !exists(wtDir) {
-			continue
-		}
-
 		r, err := repo.Open(path)
 		if err != nil {
 			errs = append(errs, err)
 			continue
 		}
 
-		if err := r.RemoveWorktree(wtDir); err != nil {
+		if exists(wtDir) {
+			if err := r.RemoveWorktree(wtDir); err != nil {
+				errs = append(errs, err)
+			}
+		}
+
+		// And the branch, after the worktree, because git will not delete
+		// a branch a worktree has checked out.
+		//
+		// Deleting a task used to leave it, and a branch with no task is
+		// worse than litter: the next task written under the same id
+		// checked it out and started from somebody else's three commits,
+		// which is how FRA-128 came back cherry-picking work its own
+		// record had never heard of. The name carries a suffix now so that
+		// cannot happen twice, and this is the other half — a delete that
+		// says it deleted the task should not leave the work on disk.
+		if err := r.DeleteBranch(Branch(t)); err != nil {
 			errs = append(errs, err)
 		}
 	}
