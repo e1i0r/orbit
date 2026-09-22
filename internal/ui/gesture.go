@@ -90,6 +90,30 @@ func (m Model) pointedAt() (view.Task, bool) {
 	return r.task, true
 }
 
+// ask opens the confirm in front of a cancel.
+//
+// Cancelling is the one gesture here that cannot be undone by pressing
+// something else — a run that was ended did not keep going — so it is the
+// one that asks first.
+//
+// About the task pointedAt names, as skip is: on a task's own screen that is
+// the task being read, and the board's cursor may be on another one.
+func (m Model) ask() (tea.Model, tea.Cmd) {
+	t, ok := m.pointedAt()
+	if !ok {
+		return m, nil
+	}
+
+	next, ok := m.allowed(t, m.keys.Cancel)
+	if !ok {
+		return next, nil
+	}
+
+	next.confirm, next.confirmID = confirmCancel, t.ID
+
+	return next, nil
+}
+
 // askSkip opens the confirm in front of a skip.
 //
 // It asks because a phase that did not run cannot be un-run: the gate is let

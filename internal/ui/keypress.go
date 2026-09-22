@@ -319,19 +319,3 @@ func (m Model) verb(b key.Binding, word string) (Model, tea.Cmd) {
 
 	return m.verbOn(r.task, b, word)
 }
-
-// ask opens the confirm in front of a cancel.
-//
-// Cancelling is the one gesture here that cannot be undone by pressing
-// something else — a run that was ended did not keep going — so it is the
-// one that asks first.
-func (m Model) ask() (tea.Model, tea.Cmd) {
-	t, next, ok := m.gesture(m.keys.Cancel)
-	if !ok {
-		return next, nil
-	}
-
-	next.confirm, next.confirmID = confirmCancel, t.ID
-
-	return next, nil
-}

@@ -188,13 +188,14 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 			"effort level set to {effort}", about("effort", eff))), nil
 	case k.String() == "F":
 		return m.openFlows(), nil
-	// The three keys the needs-you banner names are r, a and c, and all
-	// three are answered here. The diff tab's own r is matched above, so a
-	// reader reading a change still toggles the rationale with it.
+	// The needs-you banner names r, a and c, all answered here; the diff
+	// tab's own r is matched above, so it still toggles the rationale.
 	case key.Matches(k, m.keys.Resume):
 		return m.verbOn(m.subject(), m.keys.Resume, "resume")
 	case key.Matches(k, m.keys.Skip):
 		return m.askSkip()
+	case key.Matches(k, m.keys.Cancel):
+		return m.ask()
 	case key.Matches(k, m.keys.RetryPhase):
 		return m.retryPhase()
 	case key.Matches(k, m.keys.Ask):
