@@ -47,6 +47,9 @@ const (
 	// it. DialogSwitch's fieldFlow still means "the next one", which is
 	// what the key does and what a click on the row's empty end means.
 	DialogFlow
+	// RunFrom is a phase's button on the flow tree, by its place in the
+	// flow. Pane carries that index.
+	RunFrom
 	DiffFile
 	DiffSelectToggle
 	Fold

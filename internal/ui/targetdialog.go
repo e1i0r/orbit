@@ -31,6 +31,18 @@ func (m Model) hitDetail(x, y int) point.Target {
 	bodyStart := tabLine + 1
 	paneTop, _ := m.paneBand()
 
+	// The button on a phase's node, before anything else this screen
+	// answers: it is a row of the pane and not of the screen, so the
+	// pane's own offset and its scroll come off first, and which row is
+	// which phase is answered by the thing that drew them.
+	//
+	// Checked here rather than as an arm of the switch below, because an
+	// arm that matched the whole flow tab would swallow every other click
+	// on it — which is what folding a node is.
+	if at, on := m.runFromAt(line - bodyStart); on {
+		return point.Target{Kind: point.RunFrom, Pane: at}
+	}
+
 	switch {
 	case line < tabLine:
 		return point.Target{}

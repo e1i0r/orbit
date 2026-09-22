@@ -122,16 +122,33 @@ func (e Env) execOf(phaseName string) phaseExec {
 // still a branch off the trunk with its standing on it, and what it hides is
 // how it was configured and what it said.
 func Pipeline(e Env) ([]string, map[int]int) {
+	rows, heads, _ := pipeline(e)
+
+	return rows, heads
+}
+
+// RunFroms is the same tree read for its buttons: which drawn row is the
+// "run from here" of which phase.
+//
+// A second door rather than a third return on Pipeline, because every
+// caller but the hit test wants the rows and nothing else.
+func RunFroms(e Env) map[int]int {
+	_, _, at := pipeline(e)
+
+	return at
+}
+
+func pipeline(e Env) ([]string, map[int]int, map[int]int) {
 	p := e.Words
 
 	t := e.Task
 	if e.Gone {
 		return []string{"  " + theme.Paint(theme.Dim).Render(
-			p.T("detail.gone", "this task is no longer on the board"))}, nil
+			p.T("detail.gone", "this task is no longer on the board"))}, nil, nil
 	}
 
 	if e.FlowFailed != "" {
-		return []string{"  " + theme.Paint(theme.Bad).Render(e.FlowFailed)}, nil
+		return []string{"  " + theme.Paint(theme.Bad).Render(e.FlowFailed)}, nil, nil
 	}
 
 	f := e.Flow
@@ -143,14 +160,20 @@ func Pipeline(e Env) ([]string, map[int]int) {
 		"",
 	}
 
-	heads := map[int]int{}
+	heads, buttons := map[int]int{}, map[int]int{}
 
 	// Every node opens onto something: a phase of a resolved flow always
 	// names an engine, because flow.Validate refuses a flow whose phases do
 	// not, so there is no node whose whole content is its own head.
 	for i, phase := range f.Phases {
 		heads[len(out)] = i
-		out = append(out, e.flowNode(t, phase, i, len(f.Phases), e.pastPhase(f, i))...)
+
+		node, button := e.flowNode(t, phase, i, len(f.Phases), e.pastPhase(f, i))
+		if button >= 0 {
+			buttons[len(out)+button] = i
+		}
+
+		out = append(out, node...)
 	}
 
 	// The delivery verbs hang off the same trunk, under a heading of their
@@ -167,13 +190,13 @@ func Pipeline(e Env) ([]string, map[int]int) {
 		out = append(out, e.handNode(st, len(f.Phases)+j, j == len(steps)-1)...)
 	}
 
-	return out, heads
+	return out, heads, buttons
 }
 
 // flowNode is one phase of the tree: the branch it hangs off, what happened
 // to it, and — once the reader has opened it — how it was set up and what it
 // said.
-func (e Env) flowNode(t view.Task, phase flow.Phase, i, total int, past bool) []string {
+func (e Env) flowNode(t view.Task, phase flow.Phase, i, total int, past bool) ([]string, int) {
 	branch, subBranch := "├──", "│  "
 	if i == total-1 {
 		branch, subBranch = "└──", "   "
@@ -202,11 +225,19 @@ func (e Env) flowNode(t view.Task, phase flow.Phase, i, total int, past bool) []
 	}
 
 	out := []string{head}
+
+	// Where the button landed, and -1 for a node nobody has opened: the
+	// sub-items are the last thing drawn, and the button is the last of
+	// them.
+	button := -1
+
 	if open {
-		out = append(out, subRows(e.phaseSubItems(phase, ex), subBranch)...)
+		sub := subRows(e.phaseSubItems(phase, ex), subBranch)
+		button = len(out) + len(sub) - 1
+		out = append(out, sub...)
 	}
 
 	// The trunk carries on past the node whether it is open or shut, which
 	// is what keeps a folded tree a tree.
-	return append(out, "  "+theme.Paint(theme.Dim).Render(subBranch))
+	return append(out, "  "+theme.Paint(theme.Dim).Render(subBranch)), button
 }
