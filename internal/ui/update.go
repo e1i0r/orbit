@@ -275,6 +275,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
+		// The same record as the one in hand builds the same panes: see
+		// sameread.go for what rebuilding them anyway cost.
+		if sameLog(m.entries, msg.Entries) && sameErr(m.logErr, msg.Err) {
+			return m, nil
+		}
+
 		m.entries, m.logErr = msg.Entries, msg.Err
 
 		return m.syncPanes(), nil
@@ -282,6 +288,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// The same guard again: a listing that arrives for a task the reader
 		// has since left would put one task's files under another's heading.
 		if msg.ID != m.detail {
+			return m, nil
+		}
+
+		if m.filesKnown && sameFiles(m.files, msg.Files) && sameErr(m.filesErr, msg.Err) {
 			return m, nil
 		}
 
