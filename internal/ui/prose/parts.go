@@ -96,8 +96,14 @@ func Fields(pairs []Field, columns, width int) []string {
 				label += " [" + p.Key + "]"
 			}
 
-			labels += cells.Pad(theme.Text(theme.Tertiary).Render(label), cell, false)
-			values += cells.Pad(p.Value, cell, false)
+			// Cut to the cell less its gap, then padded out to the cell.
+			// Padding alone was the separation, so a value that exactly
+			// filled its column got none and the next one began against
+			// it: at a hundred columns the cell is 25 and
+			// "agy gemini-3.8-flash-high" is 25, which drew as
+			// "…flash-highhigh" with the effort column reading empty.
+			labels += column(theme.Text(theme.Tertiary).Render(label), cell)
+			values += column(p.Value, cell)
 		}
 
 		if row > 0 {
@@ -144,4 +150,14 @@ func Chip(key, text string, active bool) (plain, rendered string) {
 	}
 
 	return plain, theme.Paint(theme.Accent).Bold(true).Render(key) + theme.Text(theme.Tertiary).Render(" "+text)
+}
+
+// columnGap is the least space between one column of Fields and the next,
+// so that a full cell is still a cell somebody can tell from its neighbour.
+const columnGap = 2
+
+// column is one cell of a Fields row: cut to what fits beside the gap, and
+// padded out to the whole cell.
+func column(text string, cell int) string {
+	return cells.Pad(cells.Pad(text, cell-columnGap, false), cell, false)
 }

@@ -106,8 +106,13 @@ func TestFieldsHoldTheirColumns(t *testing.T) {
 
 	labels, values := ansi.Strip(got[0]), ansi.Strip(got[1])
 
+	// In cells and not in bytes. This compared strings.Index of both rows,
+	// which is a byte offset: the day a label was long enough to be cut,
+	// the ellipsis put the labels three bytes further along than the
+	// values and the two columns read as misaligned while they were drawn
+	// in the same place.
 	for _, c := range []struct{ label, value string }{{"A", "1"}, {"BBBB", "2"}, {"C", "3"}} {
-		labelAt, valueAt := strings.Index(labels, c.label), strings.Index(values, c.value)
+		labelAt, valueAt := cellOf(labels, c.label), cellOf(values, c.value)
 		if labelAt != valueAt {
 			t.Errorf("%s starts at cell %d and its value at %d", c.label, labelAt, valueAt)
 		}
@@ -307,4 +312,14 @@ func setsBackground(params []string) bool {
 	}
 
 	return false
+}
+
+// cellOf is where a word starts, counted the way a terminal counts.
+func cellOf(row, word string) int {
+	before, _, found := strings.Cut(row, word)
+	if !found {
+		return -1
+	}
+
+	return lipgloss.Width(before)
 }
