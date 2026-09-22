@@ -23,16 +23,16 @@ import (
 // an allowance should not have to say so, and every caller had none until
 // relays existed. With none, every engine reads as free — see relay.go.
 //
-// The worktree is never removed. Not on failure, where the work that did
-// happen is the most valuable thing in the run and is not this function's to
-// throw away — and not on success either, where the design's answer to a
-// phase that settles green is to let a human take the keyboard and carry on
-// in that same checkout. This is worth saying plainly because the doc
-// comment here once said "never removed on failure", which implied a
-// cleanup on success that does not exist: Orbit has no verb that removes a
-// settled worktree. repo.RemoveWorktree is written and nothing calls it, so
-// every run leaves a .git/worktrees entry behind in a repository Orbit does
-// not own, and `git worktree prune` by hand is the only remedy.
+// The worktree outlives the run. It is not removed when a phase ends and
+// not when the run ends: not on failure, where the work that did happen is
+// the most valuable thing in the run and is not this function's to throw
+// away — and not on success either, where the design's answer to a phase
+// that settles green is to let a human take the keyboard and carry on in
+// that same checkout. What does remove it is deleting the task:
+// internal/task/delete.go gives the checkout up through git, and the branch
+// with it, for every repository the task reached into. Until then the
+// checkout and its .git/worktrees entry stand in a repository Orbit does
+// not own.
 func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow,
 	engines map[string]engine.Engine, g Gate, left ...Allowance,
 ) error {
