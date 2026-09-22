@@ -120,6 +120,8 @@ func (e Env) handNode(st handStep, i int, last bool) ([]string, int) {
 // A verb that has not come back is drawn as work in progress and not as
 // something pending, which is the whole point of writing the ask down: the
 // supervisor is out doing it, and the reader pressed the key minutes ago.
+// In the words a phase in flight is drawn with. "Handed over" read as the
+// pull request already delivered, and there was none to find.
 func (e Env) handStanding(st handStep) standing {
 	p := e.Words
 
@@ -140,7 +142,7 @@ func (e Env) handStanding(st handStep) standing {
 		return standing{
 			glyph: theme.Paint(theme.Live).Render("⚡"),
 			text: theme.Paint(theme.Live).Bold(true).Render(
-				p.T("flow.hand_out", "handed over, still working")),
+				p.T("flow.hand_out", "in progress")),
 			role: theme.Live,
 		}
 	}

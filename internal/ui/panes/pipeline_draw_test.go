@@ -157,11 +157,11 @@ func TestTheVerbsAskedForByHandHangOffTheSameTrunk(t *testing.T) {
 	got := text(rowsOf(Pipeline(e)))
 	for _, want := range []string{
 		"Asked for by hand",
-		"opened #12",                 // one that came back
-		"came back broken",           // one that broke
-		"checks are still red",       // and why
-		"handed over, still working", // one that has not
-		"supervisor",                 // what was handed the work
+		"opened #12",           // one that came back
+		"came back broken",     // one that broke
+		"checks are still red", // and why
+		"in progress",          // one that has not
+		"supervisor",           // what was handed the work
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("the tree does not carry %q under the verbs:\n%s", want, got)
