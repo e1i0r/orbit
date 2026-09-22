@@ -124,6 +124,11 @@ type Model struct {
 	// It lives in tip.go, beside the sentences it answers with.
 	tip tipState
 
+	// await is the gesture this window is waiting to see land, so that a
+	// verb can say what it is doing and then say that it happened. One at
+	// a time: see landing.go.
+	await awaited
+
 	note           noteState
 	settings       settings.State
 	flows          flows.State

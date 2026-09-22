@@ -126,7 +126,16 @@ func (m Model) verbOn(t view.Task, b key.Binding, word string) (Model, tea.Cmd) 
 		return next, nil
 	}
 
-	return next, control(next.opts.Control, t, word)
+	// A cancel is signalled rather than asked for. The word in the control
+	// file is read at the next phase boundary, which on a phase that has
+	// just started is minutes away, and the reader who pressed x watched
+	// the task go on spending. Every other word is a thing to do between
+	// phases and the file is the right place for it.
+	if word == gestureCancel && next.opts.Stop != nil {
+		return next.awaiting(t.ID, word), stop(next.opts.Stop, t)
+	}
+
+	return next.awaiting(t.ID, word), control(next.opts.Control, t, word)
 }
 
 // markReadKey is d: one finished task read, and the brake one notch looser.
@@ -136,7 +145,7 @@ func (m Model) markReadKey() (tea.Model, tea.Cmd) {
 		return next, nil
 	}
 
-	return next, markRead(next.opts.MarkRead, t)
+	return next.awaiting(t.ID, gestureRead), markRead(next.opts.MarkRead, t)
 }
 
 // takeKey is t: build the session, and do not run it.

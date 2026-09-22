@@ -255,7 +255,7 @@ func (m Model) runIt() (tea.Model, tea.Cmd) {
 
 	m.screen, m.start = screenList, startModel{}
 
-	return m, start(m.opts.Start, t, chosen.name, len(waiting))
+	return m.awaiting(t.ID, gestureStart), start(m.opts.Start, t, chosen.name, len(waiting))
 }
 
 // atUnreadCap is whether the brake is on.

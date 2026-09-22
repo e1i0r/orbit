@@ -321,10 +321,6 @@
       "source": "delete task {id}? [y/n]",
       "value": "¿borrar la tarea {id}? [y/n]"
     },
-    "msg.task_deleted": {
-      "source": "task {id} deleted",
-      "value": "tarea {id} eliminada"
-    },
     "msg.delete_cancelled": {
       "source": "deletion cancelled",
       "value": "eliminación cancelada"
@@ -2733,6 +2729,35 @@
       "source": "{id} was not merged: {checks} still running on GitHub — try again when they land",
       "value": "{id} no se mergeó: {checks} sigue corriendo en GitHub. Inténtalo cuando terminen"
     },
+    "doing.start": {"source": "starting {id}…", "value": "arrancando {id}…"},
+    "doing.delete": {"source": "deleting {id}…", "value": "eliminando {id}…"},
+    "landed.start": {"source": "{id} is running", "value": "{id} está corriendo"},
+    "landed.delete": {"source": "{id} is gone, with its worktree and its branch", "value": "{id} ya no está, con su worktree y su rama"},
+    "cell.starting": {"source": "starting…", "value": "arrancando…"},
+    "cell.deleting": {"source": "deleting…", "value": "eliminando…"},
+    "doing.pause": {"source": "pausing {id}…", "value": "pausando {id}…"},
+    "doing.resume": {"source": "resuming {id}…", "value": "reanudando {id}…"},
+    "doing.continue": {"source": "letting {id} carry on…", "value": "dejando seguir a {id}…"},
+    "doing.cancel": {"source": "cancelling {id}…", "value": "cancelando {id}…"},
+    "doing.skip": {"source": "skipping this phase of {id}…", "value": "saltando esta fase de {id}…"},
+    "doing.requeue": {"source": "putting {id} back in to do…", "value": "devolviendo {id} a por hacer…"},
+    "doing.read": {"source": "marking {id} read…", "value": "marcando {id} como leída…"},
+    "doing.other": {"source": "{verb} on {id}…", "value": "{verb} en {id}…"},
+    "landed.pause": {"source": "{id} is paused", "value": "{id} está en pausa"},
+    "landed.resume": {"source": "{id} is running again", "value": "{id} está corriendo otra vez"},
+    "landed.continue": {"source": "{id} carried on", "value": "{id} siguió"},
+    "landed.cancel": {"source": "{id} cancelled", "value": "{id} cancelada"},
+    "landed.skip": {"source": "{id} skipped that phase", "value": "{id} se saltó esa fase"},
+    "landed.requeue": {"source": "{id} is back in to do", "value": "{id} volvió a por hacer"},
+    "landed.read": {"source": "{id} is marked read", "value": "{id} quedó marcada como leída"},
+    "landed.other": {"source": "{verb} landed on {id}", "value": "{verb} llegó a {id}"},
+    "cell.pausing": {"source": "pausing…", "value": "pausando…"},
+    "cell.resuming": {"source": "resuming…", "value": "reanudando…"},
+    "cell.continuing": {"source": "carrying on…", "value": "siguiendo…"},
+    "cell.cancelling": {"source": "cancelling…", "value": "cancelando…"},
+    "cell.skipping": {"source": "skipping…", "value": "saltando…"},
+    "cell.requeuing": {"source": "putting back…", "value": "devolviendo…"},
+    "cell.reading": {"source": "marking read…", "value": "marcando leída…"},
     "compose.nothing_to_paste": {
       "source": "there is nothing in the clipboard to paste",
       "value": "no hay nada en el portapapeles para pegar"
