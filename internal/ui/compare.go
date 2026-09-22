@@ -9,9 +9,12 @@ package ui
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/knowledge"
 
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/repo"
@@ -48,7 +51,51 @@ func (m Model) checksOf(t view.Task) []repo.Check {
 		out = append(out, checksIn(p)...)
 	}
 
+	return append(out, m.ruleChecks()...)
+}
+
+// ruleChecks is the standing rules that stop the work, as checks.
+//
+// A run's gates are its phase's own and then these (internal/task/
+// gate_knowledge.go), and this counted only the first kind. `careful`
+// declares no checks at all, so the pane said "this task's flow carries no
+// checks, so there is nothing to run on either side" while the reader
+// watched `make check` run and pass at three gates in a row. Both
+// sentences were true about different sets, and only one of them was on
+// screen.
+//
+// The scope is not consulted, for the reason knowledgeGates does not
+// consult it: a check carries its own, inside the command.
+func (m Model) ruleChecks() []repo.Check {
+	if m.opts.Knows == nil {
+		return nil
+	}
+
+	var out []repo.Check
+
+	for _, f := range m.opts.Knows() {
+		if !f.Tells() || f.Action() != knowledge.Stops {
+			continue
+		}
+
+		out = append(out, repo.Check{Name: ruleCheckName(f), Command: f.Check})
+	}
+
 	return out
+}
+
+// ruleCheckName is the rule's own sentence, cut to what a heading holds —
+// the same name the gate runs under, so a reader comparing the two screens
+// is reading one thing called one thing.
+func ruleCheckName(f knowledge.Rule) string {
+	const most = 90
+
+	phrase := strings.TrimSpace(strings.SplitN(f.Phrase, "\n", 2)[0])
+	if len([]rune(phrase)) > most {
+		phrase = strings.TrimSpace(string([]rune(phrase)[:most])) + "…"
+	}
+
+	return phrase
 }
 
 // checksIn is one phase's checks: its gates, and the ones a loop inside it
