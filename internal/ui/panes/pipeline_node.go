@@ -141,7 +141,7 @@ func lastStart(items []subItem) int {
 
 // phaseSubItems is everything hanging off one node: how it was set up, what
 // it has to pass, why it broke, and what it wrote.
-func (e Env) phaseSubItems(phase flow.Phase, ex phaseExec) []subItem {
+func (e Env) phaseSubItems(phase flow.Phase, ex phaseExec, inFlight bool) []subItem {
 	p := e.Words
 
 	var items []subItem
@@ -179,27 +179,33 @@ func (e Env) phaseSubItems(phase flow.Phase, ex phaseExec) []subItem {
 	// anywhere to press. A run that stopped after `implement` left the
 	// reader with a tree saying review is pending and no way to say "then
 	// do review", short of a command line.
-	return append(items, subItem{text: "  " + e.runFrom(phase, ex)})
+	return append(items, subItem{text: "  " + e.runFrom(ex, inFlight)})
 }
 
-// runFrom is what pressing the node offers, which depends on what became
-// of the phase. Three wordings for one gesture, because "run it again" and
-// "start here" are different sentences to a reader looking at a tree and
-// the same call underneath.
-func (e Env) runFrom(phase flow.Phase, ex phaseExec) string {
+// runFrom is what pressing the node offers, which depends on whether the
+// phase has run.
+//
+// No key beside it. The first one was ^R, which sits next to R — and R is
+// RESOLVE COMMENTS, a verb that calls the supervisor and costs money. A
+// cheap gesture one keystroke away from an expensive one is a trap, and
+// Elio fell into it within a minute of it existing: thirty-four of them
+// spent resolving comments on a cancelled task with no pull request. This
+// is a button, and a button is pressed with the pointer.
+func (e Env) runFrom(ex phaseExec, inFlight bool) string {
 	p := e.Words
-	at := about("phase", phase.Name)
-
-	word := p.T("flow.run_from_here", "▶ start here [{key}]", at, about("key", e.RunFromKey))
 
 	switch {
+	case inFlight:
+		// The one that is not a run: a phase in flight is stopped, and
+		// the icon says so before the words do.
+		return theme.Paint(theme.Bad).Render(p.T("flow.stop_it", "■ stop it"))
 	case ex.failed || ex.cancelled:
-		word = p.T("flow.retry_here", "▶ try {phase} again [{key}]", at, about("key", e.RunFromKey))
+		return theme.Paint(theme.Live).Render(p.T("flow.try_again", "↻ try it again"))
 	case ex.finished:
-		word = p.T("flow.redo_here", "▶ run {phase} again [{key}]", at, about("key", e.RunFromKey))
+		return theme.Paint(theme.Live).Render(p.T("flow.run_again", "↻ run it again"))
 	}
 
-	return theme.Paint(theme.Live).Render(word)
+	return theme.Paint(theme.Live).Render(p.T("flow.run_it", "▶ run it"))
 }
 
 // phaseConfig is the dials the phase ran on: what the record says it was,

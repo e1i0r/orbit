@@ -64,42 +64,8 @@ func (m Model) canRetryPhase() (string, bool) {
 	return troubled(m.entries)
 }
 
-// aimed is the phase the reader has open on the flow tree, and whether
-// there is exactly one.
-//
-// Exactly one, because two open nodes is two answers and picking either
-// would be the window choosing for them. It is how the keyboard aims: the
-// buttons on the tree are pressed with the mouse, and ^R presses the one
-// whose node is open.
-func (m Model) aimed() (string, bool) {
-	if m.tab != tabFlow {
-		return "", false
-	}
-
-	found, at := 0, -1
-
-	for i := range m.opened[tabFlow] {
-		if m.rowOpen(tabFlow, i) {
-			found, at = found+1, i
-		}
-	}
-
-	if found != 1 {
-		return "", false
-	}
-
-	return m.phaseNamed(at)
-}
-
-// retryPhase runs the phase the reader is pointing at, and otherwise the
-// one that went wrong.
+// retryPhase runs the phase that went wrong.
 func (m Model) retryPhase() (tea.Model, tea.Cmd) {
-	// A node open on the tree is the reader saying which one they mean,
-	// and it wins: they opened it to press its button.
-	if phase, aiming := m.aimed(); aiming {
-		return m.runFrom(phase)
-	}
-
 	phase, ok := m.canRetryPhase()
 	if !ok {
 		return m.say(m.opts.Words.T("retry.nothing_wrong",
@@ -128,17 +94,17 @@ func retryFrom(
 	}
 }
 
-// runFromPhase starts the task again at one phase of its flow, named by
-// where it sits in it.
+// runFromPhase answers one of the tree's buttons, by the number the node it
+// hangs off carries.
 //
-// This is what the tree's buttons press. `^R` without one picks the phase
-// that went wrong, which is the common case and needs no aiming; the
-// buttons are for every other case, and there is no other way to say "the
-// work is done, now do review" short of a command line.
+// The phases are numbered first and the verbs asked for by hand after them,
+// so a number past the last phase is one of those and goes to its own door.
+// One map of buttons and one target kind, because to a reader they are the
+// same gesture: press the thing on the node and the node does its thing.
 func (m Model) runFromPhase(at int) (tea.Model, tea.Cmd) {
 	name, ok := m.phaseNamed(at)
 	if !ok {
-		return m, nil
+		return m.pressedHand(at)
 	}
 
 	return m.runFrom(name)
@@ -147,13 +113,25 @@ func (m Model) runFromPhase(at int) (tea.Model, tea.Cmd) {
 // runFrom is the call both doors make.
 func (m Model) runFrom(phase string) (tea.Model, tea.Cmd) {
 	t := m.subject()
-	if t.ID == "" || m.opts.Retry == nil {
+	if t.ID == "" {
 		return m, nil
 	}
 
+	// A phase in flight is stopped rather than started, which is what its
+	// button says. Signalled and not asked for, because the word in the
+	// control file is read at the next phase boundary and the phase this
+	// is about is the one that has not reached it.
 	if t.Live == view.LiveHeld {
-		return m.say(m.opts.Words.T("retry.running",
-			"{id} is running; stop it before starting a phase again", about("id", t.ID))), nil
+		if m.opts.Stop == nil {
+			return m.say(m.opts.Words.T("retry.running",
+				"{id} is running; stop it before starting a phase again", about("id", t.ID))), nil
+		}
+
+		return m.awaiting(t.ID, gestureCancel), stop(m.opts.Stop, t)
+	}
+
+	if m.opts.Retry == nil {
+		return m, nil
 	}
 
 	return m.awaiting(t.ID, gestureStart),

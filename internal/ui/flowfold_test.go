@@ -207,7 +207,7 @@ func TestTheTailOfAnOutcomeHangsOffTheRowItContinues(t *testing.T) {
 	// rather than on whatever that thing's last row happens to be. The
 	// last thing is the button, not the outcome: the outcome hangs off a
 	// branch that carries on, and the button closes it.
-	button := rowOf(rows, "▶")
+	button := buttonRow(rows)
 	if button < 0 {
 		t.Fatalf("the open node offers no button:\n%s", strings.Join(rows, "\n"))
 	}

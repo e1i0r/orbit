@@ -37,6 +37,27 @@ Open a task and twelve tabs cover it.
 `tab` and `shift+tab` walk them. Inside a pane, `e` opens every row at once and
 `v` shows what was written down rather than what was made of it.
 
+### Buttons on the flow tree
+
+Open a node on `flow` and the last thing under it is a button. The icon says
+what the press does, and the wording follows it.
+
+| Button | On a node that |
+| --- | --- |
+| `▶ run it` | never ran |
+| `↻ run it again` | finished |
+| `↻ try it again` | broke, or was stopped |
+| `■ stop it` | is running now |
+
+The verbs you asked for by hand hang off the foot of the same tree and carry
+the same button. One still out offers `■ stop it`, which ends the wait: the
+cockpit stops holding the verb open, and whatever the supervisor says later
+still lands in its thread. One that came back offers `↻ ask for it again`.
+
+There is no keystroke on them. They sit a press away from the delivery keys,
+and a cheap gesture next to an expensive one is a trap, so these are pressed
+with the pointer.
+
 ## On the board
 
 | Key | What |

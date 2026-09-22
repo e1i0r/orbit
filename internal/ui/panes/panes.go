@@ -32,11 +32,6 @@ import (
 type Env struct {
 	Words *words.Printer
 	Frame layout.Frame
-	// RunFromKey is the keystroke that runs a task from one phase, named
-	// here so the tree can offer it on every node. The window owns the
-	// key map; a pane that spelled a key out would be a second place to
-	// change when it moves.
-	RunFromKey string
 	// Now is the clock the elapsed columns are counted against, so that
 	// every row of a frame is measured from the same instant.
 	Now time.Time

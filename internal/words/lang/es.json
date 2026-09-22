@@ -2693,10 +2693,6 @@
       "source": "no quota source for {engine}",
       "value": "sin fuente de quota para {engine}"
     },
-    "flow.hand_retry": {
-      "source": "press {key} to ask for it again",
-      "value": "presiona {key} para pedirlo de nuevo"
-    },
     "close_pr.dialog_title": {
       "source": "close the pull request for {id}",
       "value": "cerrar el pull request de {id}"
@@ -2735,9 +2731,15 @@
     "landed.delete": {"source": "{id} is gone, with its worktree and its branch", "value": "{id} ya no está, con su worktree y su rama"},
     "cell.starting": {"source": "starting…", "value": "arrancando…"},
     "cell.deleting": {"source": "deleting…", "value": "eliminando…"},
-    "flow.run_from_here": {"source": "▶ start here [{key}]", "value": "▶ empezar acá [{key}]"},
-    "flow.retry_here": {"source": "▶ try {phase} again [{key}]", "value": "▶ reintentar {phase} [{key}]"},
-    "flow.redo_here": {"source": "▶ run {phase} again [{key}]", "value": "▶ correr {phase} de nuevo [{key}]"},
+    "flow.run_it": {"source": "▶ run it", "value": "▶ Ejecutarla"},
+    "flow.run_again": {"source": "↻ run it again", "value": "↻ Volver a ejecutarla"},
+    "flow.try_again": {"source": "↻ try it again", "value": "↻ Reintentarla"},
+    "flow.stop_it": {"source": "■ stop it", "value": "■ Pararla"},
+    "flow.ask_again": {"source": "↻ ask for it again", "value": "↻ Volver a pedirla"},
+    "hand.not_ours": {"source": "{verb} was asked for somewhere else, so this window cannot stop it", "value": "{verb} se pidió desde otro lado, así que esta ventana no puede pararla"},
+    "hand.stopped": {"source": "nothing is waiting on {verb} any more", "value": "ya no hay nada esperando a {verb}"},
+    "hand.gave_up": {"source": "stopped from the cockpit: nobody waited for {verb} to answer", "value": "parada desde la cabina: nadie esperó la respuesta de {verb}"},
+    "hand.no_gesture": {"source": "{verb} is not something this window can ask for again", "value": "{verb} no es algo que esta ventana pueda volver a pedir"},
     "retry.running": {"source": "{id} is running; stop it before starting a phase again", "value": "{id} está corriendo: detenela antes de arrancar una fase de nuevo"},
     "doing.pause": {"source": "{id} pauses when this phase ends…", "value": "{id} se pausa al terminar esta fase…"},
     "doing.resume": {"source": "resuming {id}…", "value": "reanudando {id}…"},
