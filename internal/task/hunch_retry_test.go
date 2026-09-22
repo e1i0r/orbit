@@ -10,11 +10,11 @@ import (
 )
 
 // TestARetryFromAPhaseIsShownTheWorkBeforeIt. ORB-121 was moved back to
-// review ten times and jev was asked each time about a run that had said
-// nothing: the attempt began at the gate, and what implement reported was
-// forgotten with the attempt before it. A retry from a phase keeps every
-// phase before it, so what they said still stands. A run from the top
-// replaces them, so it starts with nothing said.
+// review twelve times and jev was asked each time about a run that had said
+// nothing: what implement reported was forgotten at every new attempt,
+// though no attempt ran implement again. A phase's words stand until that
+// phase runs again, whatever the attempts in between wrote about where
+// they began.
 func TestARetryFromAPhaseIsShownTheWorkBeforeIt(t *testing.T) {
 	s, r := fixture(t)
 
@@ -23,25 +23,30 @@ func TestARetryFromAPhaseIsShownTheWorkBeforeIt(t *testing.T) {
 		t.Fatalf("Create: %v", err)
 	}
 
-	for _, e := range []record.Event{
-		{Kind: record.TaskStarted},
-		{Kind: record.PhaseFinished, Phase: "implement", Text: "make check is green"},
-		{Kind: record.TaskStarted, Data: map[string]string{"from": "review"}},
-	} {
-		if err := emit(s, tk, e); err != nil {
-			t.Fatalf("emit: %v", err)
+	said := func(events ...record.Event) string {
+		t.Helper()
+
+		for _, e := range events {
+			if err := emit(s, tk, e); err != nil {
+				t.Fatalf("emit: %v", err)
+			}
 		}
+
+		return lastSaid(s, tk)
 	}
 
-	if got := lastSaid(s, tk); got != "make check is green" {
-		t.Errorf("a retry from review was shown %q, want what implement said", got)
+	// An attempt that says nothing of where it began, as every one before
+	// the from field did.
+	if got := said(
+		record.Event{Kind: record.TaskStarted},
+		record.Event{Kind: record.PhaseStarted, Phase: "implement"},
+		record.Event{Kind: record.PhaseFinished, Phase: "implement", Text: "make check is green"},
+		record.Event{Kind: record.TaskStarted},
+	); got != "make check is green" {
+		t.Errorf("a new attempt at review was shown %q, want what implement said", got)
 	}
 
-	if err := emit(s, tk, record.Event{Kind: record.TaskStarted}); err != nil {
-		t.Fatalf("emit: %v", err)
-	}
-
-	if got := lastSaid(s, tk); got != "" {
-		t.Errorf("a run from the top was shown %q from the attempt it replaces", got)
+	if got := said(record.Event{Kind: record.PhaseStarted, Phase: "implement"}); got != "" {
+		t.Errorf("implement running again was shown %q, the words of the run it replaces", got)
 	}
 }
