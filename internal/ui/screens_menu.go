@@ -98,6 +98,15 @@ func (m Model) tookMenu(next menu.State, out menu.Out) (tea.Model, tea.Cmd) {
 	case out.Run != "":
 		return m.launchNamed(out.Run, out.Args)
 	case out.Send != "":
+		// On a task's screen a verb is done rather than typed: p, t and D
+		// are that screen's own letters, and the menu's pause landed on
+		// the pull request.
+		if m.screen == screenDetail {
+			if next, cmd, ok := m.taskVerb(tea.KeyPressMsg{Text: out.Send}); ok {
+				return next, cmd
+			}
+		}
+
 		return m.sendKey(keystroke(out.Send))
 	}
 

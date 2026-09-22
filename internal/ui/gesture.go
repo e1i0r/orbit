@@ -40,18 +40,22 @@ import (
 // the window is most tempted to have an opinion — it knows the task, it knows
 // the rule, it could phrase it better — and the rule it knows is a copy of
 // the one internal/task enforces, which is the copy that goes stale.
+//
+// The task is the one pointedAt names: on a task's own screen, the task
+// being read. It was the board's cursor, so a verb chosen from a task's
+// menu acted on whatever row the board had been left on.
 func (m Model) gesture(b key.Binding) (view.Task, Model, bool) {
-	r, ok := m.selected()
-	if !ok || r.head {
+	t, ok := m.pointedAt()
+	if !ok {
 		return view.Task{}, m, false
 	}
 
-	next, ok := m.allowed(r.task, b)
+	next, ok := m.allowed(t, b)
 	if !ok {
 		return view.Task{}, next, false
 	}
 
-	return r.task, next, true
+	return t, next, true
 }
 
 // allowed is the affordance asked and its refusal said, which is the half of
@@ -95,16 +99,8 @@ func (m Model) pointedAt() (view.Task, bool) {
 // Cancelling is the one gesture here that cannot be undone by pressing
 // something else — a run that was ended did not keep going — so it is the
 // one that asks first.
-//
-// About the task pointedAt names, as skip is: on a task's own screen that is
-// the task being read, and the board's cursor may be on another one.
 func (m Model) ask() (tea.Model, tea.Cmd) {
-	t, ok := m.pointedAt()
-	if !ok {
-		return m, nil
-	}
-
-	next, ok := m.allowed(t, m.keys.Cancel)
+	t, next, ok := m.gesture(m.keys.Cancel)
 	if !ok {
 		return next, nil
 	}

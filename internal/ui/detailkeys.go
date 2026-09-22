@@ -188,14 +188,6 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 			"effort level set to {effort}", about("effort", eff))), nil
 	case k.String() == "F":
 		return m.openFlows(), nil
-	// The needs-you banner names r, a and c, all answered here; the diff
-	// tab's own r is matched above, so it still toggles the rationale.
-	case key.Matches(k, m.keys.Resume):
-		return m.verbOn(m.subject(), m.keys.Resume, "resume")
-	case key.Matches(k, m.keys.Skip):
-		return m.askSkip()
-	case key.Matches(k, m.keys.Cancel):
-		return m.ask()
 	case key.Matches(k, m.keys.RetryPhase):
 		return m.retryPhase()
 	case key.Matches(k, m.keys.Ask):
@@ -221,6 +213,12 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.armTip(), nil
 	case key.Matches(k, m.keys.Quit):
 		return m, tea.Quit
+	}
+
+	// What is left of the verbs about a task, r and x among them: the ones
+	// whose letter this screen has not taken for something of its own.
+	if next, cmd, ok := m.taskVerb(k); ok {
+		return next, cmd
 	}
 
 	return m.scroll(k), nil
