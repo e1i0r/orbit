@@ -1,11 +1,21 @@
 name: release
 
+# Released when somebody says so, and never by merging.
+#
+# It ran on every green check on main, so a pull request landing was also a
+# release: whoever ran `orbit upgrade` that afternoon got whatever had just
+# been merged, including the halves of a thing still being built. Merging is
+# a decision about main and releasing is a decision about everybody else,
+# and they are not the same decision.
 on:
-  workflow_run:
-    workflows: ["check"]
-    types: [completed]
-    branches: [main]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Which part of the version moves"
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+        required: true
 
 permissions:
   contents: write
@@ -14,23 +24,19 @@ permissions:
 # and two runs overlapping would have the second computing its next version
 # from a tag the first had not pushed yet, so both would pick the same one and
 # one of the two pushes would fail after the other had already released. A
-# queued run is not cancelled, for the same reason the pages workflow does not
-# cancel one: the last commit on main is what has to end up released.
+# queued run is not cancelled: somebody asked for each of these by hand, and
+# cancelling one would be throwing away a release they meant to cut.
 concurrency:
   group: release
   cancel-in-progress: false
 
 jobs:
   tag:
-    # A manual dispatch is offered on any branch the workflow file exists
-    # on, and this job tags what it is given and publishes it as a release.
+    # A dispatch is offered on any branch the workflow file exists on, and
+    # this job tags what it is given and publishes it as a release.
     # Dispatched from a feature branch it would cut a version tag off that
-    # branch, which is a release nobody could get back. The workflow_run
-    # trigger is already restricted to main by `branches:` above; this is
-    # the same restriction for the other way in.
-    if: >-
-      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
-      github.event.workflow_run.conclusion == 'success'
+    # branch, which is a release nobody could get back.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.next.outputs.version }}
@@ -38,17 +44,26 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
+      # Which part moves is the dispatcher's to choose. It was always the
+      # patch, so the first v0.2.0 would have been a tag pushed by hand —
+      # and a version pushed by hand is one the next run of this computes
+      # from and gets wrong.
       - name: Compute next version
         id: next
+        env:
+          BUMP: ${{ inputs.bump }}
         run: |
           latest=$(git tag --list 'v*' --sort=-v:refname | head -n1)
           if [ -z "$latest" ]; then
             next="v0.1.0"
           else
             IFS='.' read -r major minor patch <<< "${latest#v}"
-            next="v${major}.${minor}.$((patch + 1))"
+            case "$BUMP" in
+              major) next="v$((major + 1)).0.0" ;;
+              minor) next="v${major}.$((minor + 1)).0" ;;
+              *)     next="v${major}.${minor}.$((patch + 1))" ;;
+            esac
           fi
           echo "version=${next}" >> "$GITHUB_OUTPUT"
 
