@@ -20,8 +20,12 @@ const (
 	tabReport
 	tabArtifacts
 	tabNotes
-	tabMap
+	// tabDiff before tabMap, because the strip draws these in this order
+	// and the keys have to count the way a keyboard row reads: the nine
+	// digits, then 0, then the letters. With the map here the strip drew
+	// 9 l 0 i, and a reader looking for the next number found a letter.
 	tabDiff
+	tabMap
 	tabImpact
 	tabThinking
 	tabPrompt
