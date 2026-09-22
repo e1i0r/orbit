@@ -70,6 +70,15 @@ func (m Model) takeBoard(msg boardMsg) (Model, tea.Cmd) {
 	}
 
 	m = m.selectPending().breaker()
+
+	// The gesture somebody pressed a key for, if this is the board that
+	// shows it happened. Said before the read failures below, because a
+	// reader waiting on a cancel is waiting on that sentence and not on
+	// how many logs could not be parsed. See landing.go.
+	if said, over := m.tookAwaited(m); over {
+		m.await = awaited{}
+		m = m.say(said)
+	}
 	// A read failure is said when the count of them changes and not on
 	// every refresh, because the poll is twice a second and one unreadable
 	// log would otherwise own the band for as long as it stayed unreadable.

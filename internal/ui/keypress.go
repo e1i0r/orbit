@@ -13,8 +13,6 @@ import (
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
-
-	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
 // confirmYes is the one keystroke that answers a question with yes.
@@ -236,19 +234,18 @@ func (m Model) confirmKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if c == confirmDeleteTask {
 		if msg.String() == confirmYes || msg.String() == "s" || msg.String() == "S" || key.Matches(msg, m.keys.Open) {
 			t, ok := m.task(id)
-			if ok && m.opts.DeleteTask != nil {
-				if err := m.opts.DeleteTask(t); err != nil {
-					return m.say(theme.Paint(theme.Bad).Render(err.Error())), nil
-				}
+			if !ok {
+				return m, nil
 			}
 
+			// Off the draw loop: removing a worktree and a branch is git,
+			// and the window used to sit frozen through it. See landing.go.
+			var rescan func() error
 			if m.opts.Reader != nil {
-				if err := m.opts.Reader.Rescan(); err != nil {
-					return m.say(theme.Paint(theme.Bad).Render(err.Error())), nil
-				}
+				rescan = m.opts.Reader.Rescan
 			}
 
-			return m.say(m.opts.Words.T("msg.task_deleted", "task {id} deleted", about("id", id))), nil
+			return m.awaiting(t.ID, gestureDelete), deleted(m.opts.DeleteTask, rescan, t)
 		}
 
 		return m.say(m.opts.Words.T("msg.delete_cancelled", "deletion cancelled")), nil
@@ -264,7 +261,7 @@ func (m Model) confirmKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	}
 
 	if c == confirmRequeue {
-		return m, requeue(m.opts.Requeue, t)
+		return m.awaiting(t.ID, gestureRequeue), requeue(m.opts.Requeue, t)
 	}
 
 	if c == confirmSkip {

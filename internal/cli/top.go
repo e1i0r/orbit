@@ -167,6 +167,7 @@ func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 		Settings: cfg,
 		Words:    spoken,
 		Control:  controlPort(s),
+		Stop:     stopPort(s),
 		Start:    startPort(s),
 		Retry:    retryPort(s),
 		MarkRead: markReadPort(s),
