@@ -8,6 +8,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/ui/cells"
+	"github.com/e1i0r/orbit/internal/ui/prose"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
@@ -28,30 +29,26 @@ func (s State) composeFlowLine(active bool, w int, e Env) string {
 	p := e.Words
 	prefix := composeLabel(p.T("compose.flow", "flow"), active)
 
-	var pills []string
-
-	for i, f := range s.flows {
-		selected := i == s.flowIdx
-		glyph := "⚡ "
-
-		switch f {
-		case "quick":
-			glyph = "🚀 "
-		case "careful":
-			glyph = "🛡️ "
-		}
-
-		if selected {
-			pills = append(pills, theme.Pill(" ● "+glyph+f+" ", theme.PillInkLit, theme.PillChosen))
-		} else {
-			pills = append(pills, theme.Pill(" "+glyph+f+" ", theme.PillInkRest, theme.PillRest))
-		}
+	// The row is internal/ui/prose's, and the start dialog draws the same
+	// one. Two drawings of one row is two rows that drift: the dialog's
+	// was already a worse version of this, showing only the flow it was
+	// on and cycling blind to the rest.
+	choices := make([]prose.Choice, 0, len(s.flows))
+	for _, f := range s.flows {
+		choices = append(choices, prose.Choice{Label: f, Glyph: prose.FlowGlyph(f)})
 	}
 
-	newBtn := theme.Pill(" ➕ "+p.T("compose.new_flow_btn", "New")+" ", theme.PillInk, theme.PillCreate)
-	pills = append(pills, newBtn)
+	// One line here, as this form has always drawn it: the width is
+	// passed as nought, which Row reads as "do not wrap". The form's
+	// caret arithmetic is per line and the box below it is placed from a
+	// fixed plan, so a flow row that grew a second line would move
+	// everything under it. The start dialog wraps because its plan is
+	// built from what each block actually took.
+	rows, _ := prose.Row(choices, s.flowIdx, 0, 0)
 
-	line := prefix + strings.Join(pills, " ")
+	newBtn := theme.Pill(" ➕ "+p.T("compose.new_flow_btn", "New")+" ", theme.PillInk, theme.PillCreate)
+
+	line := prefix + rows[0] + " " + newBtn
 	if active {
 		line += " " + theme.Paint(theme.Dim).Render(p.T("compose.flow_hint", "(←/→ to cycle, click again/i for details, + new)"))
 	}
