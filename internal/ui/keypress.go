@@ -13,6 +13,8 @@ import (
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/e1i0r/orbit/internal/view"
 )
 
 // confirmYes is the one keystroke that answers a question with yes.
@@ -265,10 +267,30 @@ func (m Model) confirmKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	}
 
 	if c == confirmSkip {
-		return m, control(m.opts.Control, t, "skip")
+		return m.awaiting(t.ID, gestureSkip), control(m.opts.Control, t, gestureSkip)
 	}
 
-	return m, control(m.opts.Control, t, "cancel")
+	// The same door every other gesture goes through, so that the cancel a
+	// reader confirmed is the signalled one and the row says it is
+	// happening.
+	//
+	// It was its own line here writing the control word, and the word is
+	// read at the next phase boundary: Elio pressed x on a phase a minute
+	// old, watched the row go on saying "implement" and the task go on
+	// spending, and had no way to tell whether anything had been taken at
+	// all. This is the path `x` actually takes — the one in gesture.go is
+	// only reached where there is nothing to confirm.
+	return m.cancelNow(t)
+}
+
+// cancelNow signals the run and says so, or falls back to the word where
+// this window was given no port to signal through.
+func (m Model) cancelNow(t view.Task) (Model, tea.Cmd) {
+	if m.opts.Stop != nil {
+		return m.awaiting(t.ID, gestureCancel), stop(m.opts.Stop, t)
+	}
+
+	return m.awaiting(t.ID, gestureCancel), control(m.opts.Control, t, gestureCancel)
 }
 
 // open is one key doing two things, and it is not an overload: on a band
