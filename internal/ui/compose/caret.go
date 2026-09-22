@@ -168,3 +168,16 @@ func (s State) composeCopy(cut bool) State {
 
 	return s
 }
+
+// cleared empties the field the caret is in and puts the caret at its
+// start, which is where somebody about to type again wants it.
+//
+// The field and not the form: esc already throws the whole form away, and
+// a button beside one box that emptied the others would be a button nobody
+// would press twice.
+func (s State) cleared() State {
+	return s.composeCaret(func(in *typing.Field) {
+		in.SetValue("")
+		in.MoveTo(0)
+	})
+}

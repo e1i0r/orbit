@@ -23,6 +23,7 @@ func TestEverySettingCanBePutBack(t *testing.T) {
 		ChatID:     "8477112",
 		Notify:     true,
 		BudgetTask: 9, BudgetWorkspace: 99, QuotaFloor: 15,
+		Decisions: "on", DecisionFloor: 90,
 		RunTimeout: "45m",
 	}
 

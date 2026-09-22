@@ -1,13 +1,14 @@
 # What you can do
 
-Press `m` on anything. That is the whole answer.
+Press `m` on anything. Press `M` for the board's own commands. That is the
+whole answer.
 
 <img src="../assets/flow-menus.gif" alt="the menu on the board and the menu inside a task: the panes, the verbs, and a refused verb greyed with the reason" width="900">
 
 ## The menu is the documentation
 
 A cockpit with thirty keys is a cockpit where you use six. So the menu lists
-every verb that applies to what the cursor is on — **and the ones that do
+every verb that applies to what the cursor is on, **and the ones that do
 not**, greyed, each with the sentence saying why.
 
 ```
@@ -23,9 +24,14 @@ press it again.
 
 **On the board**, `m` on a row is that task's verbs: pause, resume, skip,
 cancel, put it back in To Do, mark read, delete, start a run, open a pull
-request, merge it, leave a note, redirect it. On a band header, or on nothing,
-it is the commands that are not about one task — the ones the `:` line
-reaches.
+request, merge it, leave a note, redirect it.
+
+**`M` is the board's own**, wherever the cursor is: the commands the `:`
+line reaches, the ones that are about no task. Both menus used to be `m`,
+and which one you got depended on whether the cursor happened to be sitting
+on a row. On a band header or on nothing, where there is no task to be
+about, `m` still opens the board's. The bar offers `M` only where the two
+differ.
 
 **Inside a task**, `m` carries both blocks under a heading each: the twelve
 panes with a line saying what is in each one, and under them everything that
@@ -37,11 +43,11 @@ place.
 | | |
 | --- | --- |
 | `?` | the full sheet: every key, and what each verb says it does |
-| `:` | the command line — everything no key was given, with what it takes |
+| `:` | the command line: everything no key was given, with what it takes |
 | right click | the same menu, from the pointer |
 
 Every verb in the menu is a command you can also run from a script. The
-cockpit is a keyboard in front of `orbit`, not a second copy of its rules —
+cockpit is a keyboard in front of `orbit` rather than a second copy of its rules,
 which is why a refusal in the menu is word for word the refusal you get in the
 terminal.
 

@@ -111,14 +111,14 @@ type Model struct {
 	// keyboard, and the other's opening key is swallowed by it.
 	menu menu.State
 
-	// compose is the form a task is written into, and pendingID is the id
-	// it just wrote: the board polls twice a second, so the new task is
-	// selected the moment it shows up — and if it has not arrived after
-	// two refreshes, nothing is said, because a write that answered no
-	// error has nothing to apologise for. Both live in compose.go.
+	// compose is the form a task is written into, pendingID the id it just
+	// wrote — the board polls twice a second, so the new row is selected
+	// the moment it shows up — and writing whether that write is still out,
+	// because a failed one goes back to the form. All in compose.go.
 	compose   compose.State
 	pendingID string
 	pendTries int
+	writing   bool
 
 	// tip is the reader asking what a key does, with ? and then that key.
 	// It lives in tip.go, beside the sentences it answers with.

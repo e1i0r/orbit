@@ -139,35 +139,101 @@ func (m Model) barLayout(w int) (string, []placedHint, []headerZone) {
 		{key: m.keys.Help.Help().Key, text: theme.Chrome().Render("[" + m.keys.Help.Help().Key + "]")},
 		{text: theme.Chrome().Render("[" + m.keys.Quit.Help().Key + "]")},
 	}
-	tail := strings.Join(drawn(tailHints), " ")
-	chips := m.barFooterChips()
-	chipsText := chipLine(chips)
-	chipsW := lipgloss.Width(chipsText)
+	// The board's menu is offered where it is a different door from m:
+	// on a task's own screen, and on the list when the cursor is on a
+	// row. With no row under the cursor m already opens the board's menu,
+	// and two hints for one answer is a bar making a distinction the
+	// window does not. A dialog or a form takes every keystroke while it
+	// is up, so neither offers it at all.
+	if m.boardMenuDiffers() {
+		tailHints = append([]barHint{tailHints[0], {
+			key:  m.keys.Board.Help().Key,
+			text: theme.Chrome().Render("[" + m.keys.Board.Help().Key + "]"),
+		}}, tailHints[1:]...)
+	}
+
+	corner := strings.Join(drawn(tailHints), " ")
+	all := m.barFooterChips()
 	hints := m.hints()
 
-	for {
-		leftStr := " " + strings.Join(append(drawn(hints), tail), hintGap)
+	// What gives way first, and in what order.
+	//
+	// The chips were fixed and the hints gave way to them, which in
+	// Spanish at a hundred columns left a bar reading `[m] [M] [?] [q]`
+	// and nothing else: no move, no open, and no `n`, under a band saying
+	// "pulsa n para poner una en marcha". Sixty-eight of those cells were
+	// three chips, and the last of them is a version number.
+	//
+	// Making the chips give way first was the other mistake. At a hundred
+	// and twenty columns there is room for all of it, and a bar that
+	// spends every spare cell on a seventh affordance rather than on the
+	// version is a bar nobody can quote in a bug report.
+	//
+	// So the spare verbs go first, then the chips, and the first few
+	// verbs are protected from both. The autopilot switch is last of all,
+	// because it is the only thing on this line that is a control with a
+	// state.
+	floor := min(essentialHints, len(hints))
 
-		leftW := lipgloss.Width(leftStr)
-		if leftW+chipsW+4 <= w && chipsText != "" {
-			space := w - leftW - chipsW
-
-			return leftStr + strings.Repeat(" ", space) + chipsText,
-				place(hints, tailHints), placeChips(chips, leftW+space)
+	// 1. The affordances past the first few, while every chip stays.
+	for keep := len(hints); keep >= floor; keep-- {
+		if line, at, zones, ok := m.fitBar(w, hints[:keep], tailHints, corner, all); ok {
+			return line, at, zones
 		}
-
-		if len(hints) == 0 {
-			// No room for the chips, so they are not drawn and nothing at
-			// that end of the bar is clickable.
-			if leftW <= w {
-				return cells.Fit(leftStr, w), place(hints, tailHints), nil
-			}
-
-			return cells.Fit(leftStr, w), nil, nil
-		}
-
-		hints = hints[:len(hints)-1]
 	}
+
+	// 2. The chips, down to the switch, while the first few verbs stay.
+	for keep := len(all); keep >= switchOnly; keep-- {
+		if line, at, zones, ok := m.fitBar(w, hints[:floor], tailHints, corner, all[:keep]); ok {
+			return line, at, zones
+		}
+	}
+
+	// 3. Those verbs too, beside the switch on its own.
+	for keep := floor; keep >= 0; keep-- {
+		if line, at, zones, ok := m.fitBar(w, hints[:keep], tailHints, corner, all[:switchOnly]); ok {
+			return line, at, zones
+		}
+	}
+
+	// 4. Not even the corner beside the switch. Nothing at that end of
+	// the bar is drawn, and nothing there is clickable.
+	leftStr := " " + corner
+	if lipgloss.Width(leftStr) <= w {
+		return cells.Fit(leftStr, w), place(nil, tailHints), nil
+	}
+
+	return cells.Fit(leftStr, w), nil, nil
+}
+
+// essentialHints is how many of the bar's verbs are worth more than any
+// chip: where the cursor goes, how to open what it is on, and the one
+// thing to do with it. Below that the bar stops answering the band, which
+// says things like "pulsa n para poner una en marcha".
+const essentialHints = 3
+
+// switchOnly is the chips cut down to the autopilot switch, which is the
+// last of them to go.
+const switchOnly = 1
+
+// fitBar lays the line out with one set of hints and one set of chips, and
+// says whether it fitted. Every rank of barLayout's search asks it the same
+// question with a smaller set.
+func (m Model) fitBar(
+	w int, hints, tailHints []barHint, corner string, chips []barChip,
+) (string, []placedHint, []headerZone, bool) {
+	text := chipLine(chips)
+	leftStr := " " + strings.Join(append(drawn(hints), corner), hintGap)
+	leftW := lipgloss.Width(leftStr)
+
+	if text == "" || leftW+lipgloss.Width(text)+4 > w {
+		return "", nil, nil, false
+	}
+
+	space := w - leftW - lipgloss.Width(text)
+
+	return leftStr + strings.Repeat(" ", space) + text,
+		place(hints, tailHints), placeChips(chips, leftW+space), true
 }
 
 // drawn is the hints as barLine joins them.

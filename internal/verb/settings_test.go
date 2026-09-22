@@ -30,6 +30,8 @@ func TestEverySettingKeyCanBeSet(t *testing.T) {
 		"budget-task":      "1.50",
 		"budget-workspace": "20",
 		"quota-floor":      "15",
+		"decisions":        "shadow",
+		"decision-floor":   "80",
 		"run-timeout":      "45m",
 	}
 	for _, key := range settingKeys() {

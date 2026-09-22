@@ -275,8 +275,9 @@ func TestADeliveryCarriesTheTaskAndItsBranchToGh(t *testing.T) {
 		t.Fatalf("pr exited %d: %s", code, errOut)
 	}
 
-	if head := flagValue(t, argv, "--head"); head != "orbit/PAY-1" {
-		t.Errorf("the pull request was opened for %q", head)
+	// The branch carries a suffix of its own; see internal/task/branch.go.
+	if head := flagValue(t, argv, "--head"); !strings.HasPrefix(head, "orbit/PAY-1") {
+		t.Errorf("the pull request was opened for %q, want PAY-1's own branch", head)
 	}
 
 	if base := flagValue(t, argv, "--base"); base != "main" {

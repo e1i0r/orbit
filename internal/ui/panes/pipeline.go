@@ -48,6 +48,7 @@ func (e Env) execOf(phaseName string) phaseExec {
 
 		if entry.What() == view.EntryStarted {
 			exec.started = true
+			exec.waiting = false
 
 			start = entry
 			if entry.Engine != "" {
@@ -61,6 +62,7 @@ func (e Env) execOf(phaseName string) phaseExec {
 
 		if entry.What() == view.EntryFinished {
 			exec.finished = true
+			exec.waiting = false
 			exec.cost = entry.Cost
 
 			exec.text = entry.Said()
@@ -71,6 +73,7 @@ func (e Env) execOf(phaseName string) phaseExec {
 
 		if entry.What() == view.EntryFailed {
 			exec.failed = true
+			exec.waiting = false
 			exec.cause = entry.Cause
 			exec.exit = entry.Exit
 			exec.cost = entry.Cost
@@ -83,12 +86,28 @@ func (e Env) execOf(phaseName string) phaseExec {
 
 		if entry.What() == view.EntryCancelled {
 			exec.cancelled = true
+			exec.waiting = false
 			exec.text = entry.Said()
 		}
 
+		// A gate this phase stopped at, and anything after it that means
+		// it is not stopped there any more.
+		//
+		// waiting was written once and never taken back, so a phase that
+		// waited at its gate and then ran drew as "waiting at gate" for
+		// the rest of the task's life. FRA-128 finished all three of its
+		// phases and its tree read implement completed, review waiting at
+		// gate, fix completed — a run that had plainly gone past the
+		// thing it was said to be stuck on. Every branch above clears it
+		// for the same reason this one does: the entries are in order, so
+		// the last one that spoke is the one that is true.
 		if entry.What() == view.EntryWaiting {
 			exec.waiting = true
 			exec.cause = entry.Cause
+		}
+
+		if entry.What() == view.EntryResumed {
+			exec.waiting = false
 		}
 	}
 

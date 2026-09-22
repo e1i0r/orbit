@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/e1i0r/orbit/internal/env"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -84,6 +85,57 @@ func budgetSettings() []Rule {
 		},
 		Value: func(cfg store.Settings) string { return strconv.Itoa(cfg.QuotaFloor) },
 		Clear: func(cfg *store.Settings) { cfg.QuotaFloor = store.Shipped().QuotaFloor },
+	}, {
+		Name: "decisions",
+		About: func(p *words.Printer) string {
+			return p.T("setting.decisions",
+				"whether a decision engine answers for the supervisor: off, shadow (it writes down what "+
+					"it would have said), or on")
+		},
+		Set: func(p *words.Printer, cfg *store.Settings, value string) (string, error) {
+			value = strings.TrimSpace(strings.ToLower(value))
+
+			switch value {
+			case store.DecisionsOff, store.DecisionsShadow, store.DecisionsOn:
+				cfg.Decisions = value
+
+				return value, nil
+			}
+
+			return "", errors.New(p.T("settings.not_a_decision_mode",
+				"{val} is not one of off, shadow or on", words.Arg{Name: "val", Value: value}))
+		},
+		Value: func(cfg store.Settings) string { return cfg.Deciding() },
+		Clear: func(cfg *store.Settings) { cfg.Decisions = store.Shipped().Decisions },
+	}, {
+		Name: "decision-floor",
+		About: func(p *words.Printer) string {
+			return p.T("setting.decision_floor",
+				"how sure the decision engine has to be before Orbit acts on what it says, as a "+
+					"percentage; below it the run waits for you")
+		},
+		Set: func(p *words.Printer, cfg *store.Settings, value string) (string, error) {
+			n, err := strconv.Atoi(strings.TrimSpace(value))
+			if err != nil {
+				return "", errors.New(p.T("settings.not_a_number", "{val} is not a whole number",
+					words.Arg{Name: "val", Value: value}))
+			}
+
+			// Under fifty is a coin toss with an opinion, and a hundred is
+			// a floor nothing clears. Both are refused where they are
+			// typed rather than found out by a supervisor that acts on
+			// everything, or on nothing.
+			if n < 50 || n > 99 {
+				return "", errors.New(p.T("settings.not_a_bar",
+					"a decision floor is a percentage between 50 and 99; below fifty is a coin toss"))
+			}
+
+			cfg.DecisionFloor = n
+
+			return value, nil
+		},
+		Value: func(cfg store.Settings) string { return strconv.Itoa(cfg.DecisionBar()) },
+		Clear: func(cfg *store.Settings) { cfg.DecisionFloor = store.Shipped().DecisionFloor },
 	}, {
 		Name: "run-timeout",
 		About: func(p *words.Printer) string {
@@ -176,3 +228,30 @@ func dollars(p *words.Printer, value string) (float64, error) {
 
 // money is a budget as `orbit set` prints one back.
 func money(v float64) string { return strconv.FormatFloat(v, 'f', -1, 64) }
+
+// caveat is what is said after a setting has been written, when writing it
+// was not enough to make it work. Empty when there is nothing to add, which
+// is every setting but one.
+//
+// `decisions` is the only setting with a half that does not live in the
+// settings file. The key is in the environment on purpose — `orbit
+// settings` prints its table to a terminal, to a screen and into a chat,
+// and a secret that can be printed is a secret that will be — so the two
+// halves get written in different places, on different days, and one of
+// them can be forgotten.
+//
+// Forgetting it is silent. The setting takes the value, the table reads
+// back "on", and every gate goes on waiting for a person exactly as it did
+// before; a whole task ran that way before this line existed. The moment
+// somebody types the half that is a setting is the moment they still have
+// the other half in mind, so it is said here as well as in the cockpit's
+// status line and in the log the run writes.
+func caveat(p *words.Printer, key, value string) string {
+	if key != "decisions" || value == store.DecisionsOff || env.Set(env.DecisionKey) {
+		return ""
+	}
+
+	return p.T("set.decisions_unkeyed",
+		"there is no {key} in the environment, so every gate still waits for you",
+		words.Arg{Name: "key", Value: env.DecisionKey})
+}

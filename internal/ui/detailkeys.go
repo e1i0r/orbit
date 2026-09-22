@@ -101,6 +101,11 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.showTab((m.tab + tabCount - 1) % tabCount), nil
 	case key.Matches(k, m.keys.Edit):
 		return m.edit()
+	case key.Matches(k, m.keys.Board):
+		// The board's commands are reachable from a task's screen too: what
+		// they are about is not the task, and a reader should not have to
+		// leave one screen to reach the other.
+		return m.openMenu(""), nil
 	case key.Matches(k, m.keys.Menu), k.String() == "m":
 		return m.openMenuForContext(), nil
 	case k.String() == "M":
@@ -186,6 +191,8 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.verbOn(m.subject(), m.keys.Resume, "resume")
 	case key.Matches(k, m.keys.Skip):
 		return m.askSkip()
+	case key.Matches(k, m.keys.RetryPhase):
+		return m.retryPhase()
 	case key.Matches(k, m.keys.Ask):
 		return m.openNote(), nil
 	// Starting a run is offered on the task's own screen and not only on the

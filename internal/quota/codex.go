@@ -27,6 +27,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/e1i0r/orbit/internal/env"
 )
 
 const (
@@ -64,7 +66,7 @@ func newRollouts(dir string) Source {
 // codexSessions is where codex keeps its rollouts on this machine. CODEX_HOME
 // is codex's own variable for moving them.
 func codexSessions() string {
-	if home := strings.TrimSpace(os.Getenv("CODEX_HOME")); home != "" {
+	if home := env.Read(env.CodexHome); home != "" {
 		return filepath.Join(home, "sessions")
 	}
 

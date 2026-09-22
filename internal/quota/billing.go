@@ -3,7 +3,11 @@ package quota
 // How each engine is paid for, where its quota is read from, and the answer
 // a caller gets when it asks about one.
 
-import "os"
+import (
+	"os"
+
+	"github.com/e1i0r/orbit/internal/env"
+)
 
 // Mode is how an engine is paid for.
 type Mode int
@@ -97,7 +101,7 @@ type metered struct {
 func FromEnv() *Meter {
 	return &Meter{engines: []metered{
 		{name: "agy", mode: Subscription},
-		{name: "claude", mode: keyed("ANTHROPIC_API_KEY"), from: New(os.Getenv("ANTHROPIC_BASE_URL"))},
+		{name: "claude", mode: keyed(env.AnthropicKey), from: New(env.Read(env.AnthropicBase))},
 		{name: "codex", mode: keyed("OPENAI_API_KEY"), from: codexQuota()},
 		{name: "opencode", mode: PerToken},
 	}}
@@ -112,7 +116,7 @@ func FromEnv() *Meter {
 // answers wins; a base URL pointed at something that has never heard of
 // codex is the common case, and it falls through to the file.
 func codexQuota() *Client {
-	return over(behind(newProxy(os.Getenv("OPENAI_BASE_URL")), newRollouts(codexSessions())))
+	return over(behind(newProxy(env.Read(env.OpenAIBase)), newRollouts(codexSessions())))
 }
 
 // keyed is the mode of an engine that can be either, decided by whether a

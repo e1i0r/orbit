@@ -126,6 +126,24 @@ func startPort(s *store.Store) func(view.Task, string, int) (int, error) {
 	}
 }
 
+// retryPort runs a task again from one phase, leaving the phases before it
+// as the record already has them.
+//
+// It is its own port and not a flag on startPort for the reason
+// task.Retry is its own door: the window offers it in a different place,
+// for a different reason, and only when the record says a phase went
+// wrong.
+func retryPort(s *store.Store) func(view.Task, string, int) (int, error) {
+	return func(t view.Task, phase string, unread int) (int, error) {
+		loaded, err := task.Load(s, subject(t).Repo, t.ID)
+		if err != nil {
+			return 0, err
+		}
+
+		return task.Retry(s, loaded, t.Flow, phase, unread)
+	}
+}
+
 // lastSession is the newest session id one task's record carries, or "" for
 // a task whose engine never reported one.
 //

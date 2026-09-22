@@ -197,6 +197,7 @@ type Task struct {
 	// an exported field and not a private conclusion.
 	Band   Band
 	Flow   string // the flow it was written against, or the one a run overrode it with
+	Base   string // the branch it was cut from, which its pull request belongs against
 	Phase  string // the phase now, or the phase it stopped in
 	PhaseN int    // 1-based, from Data["n"]; 0 when the record does not say
 	Engine string // from Data["engine"]

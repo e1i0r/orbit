@@ -10,7 +10,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/e1i0r/orbit/internal/env"
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/hunch"
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/quota"
 	"github.com/e1i0r/orbit/internal/task"
@@ -56,6 +58,11 @@ func runTask(ctx Context, args []string) error {
 	// the work has not changed, only who walks it, and the file on disk is
 	// what every other task still reads.
 	eng := fs.String("engine", "", "walk every phase with this engine instead of the ones the flow names")
+
+	// A retry of one phase. Everything before it is left as the record
+	// already has it, because a phase that ended well does not need doing
+	// again and re-running it would be paid for twice.
+	from := fs.String("from", "", "begin at this phase instead of the first, leaving the ones before it as they ran")
 
 	timeout := fs.Duration("timeout", 0, "stop the run after this long, e.g. 45m; zero waits for as long as it takes")
 	if err := parse(ctx, fs, args); err != nil {
@@ -143,7 +150,26 @@ func runTask(ctx Context, args []string) error {
 
 	logger.Info("cli/run", "starting task %s in repo %s on flow %s (timeout=%v)", id, r.Name, chosen, *timeout)
 
-	if err := task.Run(running, s, t, f, engines, task.FileGate(s, time.Second),
+	// The decision engine, when this machine has a key for one. Without it
+	// the gate is what it was: see internal/hunch, and the `decisions`
+	// setting, which is off until somebody turns it on even where a key is
+	// there.
+	//
+	// Which of the two it is goes in the log every time, including the
+	// ordinary case. A run reads the key once, here, and a run started
+	// without one is indistinguishable from a run with one until a gate
+	// arrives and quietly waits for a person — so the line that says which
+	// happened has to be written before the gate, not after.
+	gate := task.FileGate(s, time.Second)
+
+	port, ready := hunch.FromEnv()
+	if ready {
+		gate = task.FileGate(s, time.Second, port)
+	}
+
+	logger.Info("cli/run", "task %s: decision engine %s", id, keyed(ready))
+
+	if err := task.RunFrom(running, s, t, f, engines, gate, *from,
 		allowancePort(quota.FromEnv())); err != nil {
 		return fmt.Errorf("task %s execution: %w", id, err)
 	}
@@ -176,4 +202,20 @@ func restoreOnCancel(ctx context.Context, stop func()) {
 		<-ctx.Done()
 		stop()
 	}()
+}
+
+// keyed is what the log says about the decision engine's key, in words
+// rather than a bool: "decision engine false" in a log file is a line a
+// reader has to go and look up.
+//
+// It reports the key and not the setting. The setting is read again at
+// every gate and can change while the run is going; the key is read once,
+// at the start, and is the half that cannot be fixed without starting
+// over.
+func keyed(ready bool) string {
+	if ready {
+		return "keyed, and will decide what the settings allow"
+	}
+
+	return "no key in " + env.DecisionKey + ", so every gate waits for a person"
 }

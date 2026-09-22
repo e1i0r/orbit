@@ -5,7 +5,7 @@
 
  ACME-2662  Retry the webhook on 5xx                                        payments · failed: gates
 
- [1]  [2]  [3]  [4]  [5]  [6]   7 report   [8]  [9]  [l]  [0]  [i]  [w]  [u]  [y]          attempt 2
+ [1]  [2]  [3]  [4]  [5]  [6]   7 report   [8]  [9]  [0]  [l]  [i]  [w]  [u]  [y]          attempt 2
                                                                                                     
   Summary Report & Review                                                                           
   what it wrote about the change, and what the review concluded                                     
@@ -26,5 +26,5 @@
 ────────────────────────────────────────────────────────────────────────────────────────────────────
  ACME-2662 · failed: gates · 31m in · careful
 ────────────────────────────────────────────────────────────────────────────────────────────────────
- [esc] back  [tab] next tab  [m] tab menu  [v] md / raw  [a] ask  [m] [?] [q]     ⚡ autopilot ● [A]
+ [esc] back  [tab] next tab  [m] tab menu  [v] md / raw  [m] [M] [?] [q]          ⚡ autopilot ● [A]
 

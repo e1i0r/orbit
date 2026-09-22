@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/hunch"
 	"github.com/e1i0r/orbit/internal/record"
 	"github.com/e1i0r/orbit/internal/store"
 )
@@ -70,13 +71,24 @@ const howAutopilot = "autopilot"
 // poll is how long it waits between looks at the control file. It is a
 // parameter rather than a constant so a test can have a gate that is patient
 // on a fake clock and `orbit task start` can have one second.
-func FileGate(s *store.Store, poll time.Duration) Gate {
-	return fileGate{store: s, poll: poll}
+// deciding is the decision engine, when this machine has one. Variadic for
+// the reason Run's allowance is: a caller with nothing to ask should not
+// have to say so, and every caller had nothing until there was a key.
+func FileGate(s *store.Store, poll time.Duration, deciding ...hunch.Port) Gate {
+	g := fileGate{store: s, poll: poll}
+	if len(deciding) > 0 {
+		g.decider = deciding[0]
+	}
+
+	return g
 }
 
 type fileGate struct {
 	store *store.Store
 	poll  time.Duration
+	// decider answers what should happen to a run that stopped, and nil is
+	// a machine that was given nothing to ask: see decided.go.
+	decider hunch.Port
 }
 
 // Before answers for one phase: take the word a reader left, and if there is
@@ -125,6 +137,18 @@ func (g fileGate) Before(ctx context.Context, t Task, p flow.Phase, _ int) (Go, 
 		return g.wait(ctx, t, p, whyFlow, word == wordPause)
 	case word == wordPause:
 		return g.wait(ctx, t, p, whyPaused, true)
+	case p.Wait && auto:
+		// Autopilot lifts the flow's gates, and until there was something
+		// that could read the work in half a second it lifted them
+		// blind: every phase that asked to stop was waved through with
+		// nothing having looked at what it did. Where there is a decision
+		// engine, autopilot is what hands it the decision — and the one
+		// thing it does here is the opposite of what it does below. It
+		// holds a run it is sure needs a person, and lets everything else
+		// through exactly as before.
+		if why, hold := g.holds(ctx, t, p); hold {
+			return g.wait(ctx, t, p, why, false)
+		}
 	}
 
 	return Continue, nil
@@ -144,6 +168,14 @@ func (g fileGate) wait(ctx context.Context, t Task, p flow.Phase, why string, by
 		Data:  map[string]string{"why": why},
 	}); err != nil {
 		return Continue, err
+	}
+
+	// Asked once, here: the phase has stopped, the record now says so, and
+	// nothing about the answer changes while the run sits still. Not where
+	// the reader pressed pause — that brake is theirs, and the rule is
+	// autopilot's own.
+	if !byReader && g.lets(ctx, t, p) {
+		return Continue, g.resumed(t, p, howDecided)
 	}
 
 	for {

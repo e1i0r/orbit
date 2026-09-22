@@ -84,6 +84,25 @@ type Settings struct {
 	// money for an engine that charges, the window for one that does not.
 	QuotaFloor int `json:"quotaFloor,omitempty"`
 
+	// Decisions is whether the decision engine answers for the supervisor,
+	// and how far it is trusted: "off", "shadow" or "on". Empty is off,
+	// the working zero every field here has.
+	//
+	// Shadow is the one worth explaining. It asks the same question at the
+	// same moment and writes the answer into the record beside what
+	// actually happened, and acts on nothing. A week of that is the only
+	// honest way to find out whether a machine's judgement matches yours
+	// on your own work, and it costs a fraction of a cent to find out.
+	//
+	// The key itself is not here. It is a secret and it lives in the
+	// environment, which is the rule ChatID's comment states above: this
+	// table is printed to a terminal, to a screen and into a chat.
+	Decisions string `json:"decisions,omitempty"`
+	// DecisionFloor is how sure the decision engine has to be before what
+	// it says is acted on, as a percentage. Below it the run waits for a
+	// person exactly as it does now. Zero is not a floor of nothing — it
+	// is nobody having chosen, and DecisionBar reads it as seventy.
+	DecisionFloor int `json:"decisionFloor,omitempty"`
 	// RunTimeout is how long a run started by the window or by the queue
 	// may take before it is stopped, written the way a person writes a
 	// duration: 45m, 2h. Empty is no timeout, which is the working zero
@@ -118,6 +137,43 @@ type Settings struct {
 // agree only until somebody changes one.
 func Shipped() Settings {
 	return Settings{UnreadCap: defaultUnreadCap, Flow: defaultFlow}
+}
+
+// The three things the decision engine may be doing, as the settings file
+// spells them.
+const (
+	// DecisionsOff is no decision engine: the supervisor is what it was.
+	DecisionsOff = "off"
+	// DecisionsShadow asks and writes down the answer, and acts on nothing.
+	DecisionsShadow = "shadow"
+	// DecisionsOn acts on what it is sure enough about.
+	DecisionsOn = "on"
+	// defaultDecisionFloor is how sure it has to be when nobody has said.
+	defaultDecisionFloor = 70
+)
+
+// Deciding is what the decision engine is allowed to do here. A file that
+// says nothing, or says something this build does not know, reads as off:
+// the safe half of this decision is the one that changes nothing.
+func (s Settings) Deciding() string {
+	switch strings.TrimSpace(s.Decisions) {
+	case DecisionsShadow:
+		return DecisionsShadow
+	case DecisionsOn:
+		return DecisionsOn
+	}
+
+	return DecisionsOff
+}
+
+// DecisionBar is how sure it has to be before Orbit acts on it, as a
+// percentage, and seventy where nobody has chosen.
+func (s Settings) DecisionBar() int {
+	if s.DecisionFloor <= 0 || s.DecisionFloor > 100 {
+		return defaultDecisionFloor
+	}
+
+	return s.DecisionFloor
 }
 
 // Timeout is RunTimeout as a duration, and zero for a run nothing stops.

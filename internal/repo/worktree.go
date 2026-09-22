@@ -120,3 +120,30 @@ func (r Repo) RemoveWorktree(dir string) error {
 
 	return nil
 }
+
+// DeleteBranch removes a branch this repository holds, with whatever is on
+// it.
+//
+// Unmerged work and all: the caller is deleting the task the branch was
+// made for, and a branch left behind is not a saved copy of anything, it
+// is a trap. The next task written under the same id used to check that
+// branch out and find a stranger's commits already in its worktree.
+//
+// A branch that is not there is not a failure. Delete walks every
+// repository a task reached into and most tasks reached into one, so the
+// ordinary answer for the others is "there was nothing to remove".
+func (r Repo) DeleteBranch(branch string) error {
+	if branch == "" || !r.hasBranch(branch) {
+		return nil
+	}
+
+	// -D and not -d: -d refuses a branch whose commits are on no other
+	// branch, which is every branch a task that never opened a pull
+	// request leaves behind — so -d would refuse exactly the ones this is
+	// for.
+	if _, err := git(r.Path, "branch", "-D", branch); err != nil {
+		return fmt.Errorf("delete the branch %q of %q: %w", branch, r.Path, err)
+	}
+
+	return nil
+}

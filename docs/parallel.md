@@ -35,7 +35,7 @@ You** while the others carry on.
 
 `orbit top ~/code` is one window over every repository under that directory,
 so the queue is not per project. A task can also reach a second checkout:
-`orbit join` opens another repository for a task that turns out to need one —
+`orbit join` opens another repository for a task that turns out to need one,
 a change to the API and its client, in one task, with both worktrees under it.
 
 ## What limits it

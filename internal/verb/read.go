@@ -152,9 +152,18 @@ func changed(w World, in In) (Out, error) {
 		return Out{}, err
 	}
 
-	return Out{Said: w.Words().T("verb.set.now", "{key} is now {value}",
+	said := w.Words().T("verb.set.now", "{key} is now {value}",
 		words.Arg{Name: "key", Value: in.Arg("key")},
-		words.Arg{Name: "value", Value: now})}, nil
+		words.Arg{Name: "value", Value: now})
+
+	// A setting that has been written and still cannot work says so on the
+	// line under it, rather than leaving the reader with a confirmation
+	// that is true and useless.
+	if note := caveat(w.Words(), in.Arg("key"), now); note != "" {
+		said += "\n" + note
+	}
+
+	return Out{Said: said}, nil
 }
 
 // blanked puts one setting back to what Orbit ships.

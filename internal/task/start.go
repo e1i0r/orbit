@@ -54,6 +54,19 @@ func Start(s *store.Store, t Task, flowName string, unread int) (int, error) {
 	return StartWith(s, t, flowName, "", unread)
 }
 
+// Retry runs the task again from one phase, leaving the phases before it
+// as the record already has them.
+//
+// A third door for the reason StartWith is a second: this is a different
+// act. Start runs the flow, StartWith runs it with somebody else at the
+// controls, and this runs the part of it that did not work. What is not
+// different is anything about the run itself — the same flow, the same
+// numbering, the same gates — so all three meet in the same command line
+// one line further down.
+func Retry(s *store.Store, t Task, flowName, phase string, unread int) (int, error) {
+	return start(s, t, flowName, "", phase, unread)
+}
+
 // StartWith is Start, with the phases pointed at one engine rather than at
 // the ones the flow names.
 //
@@ -63,6 +76,12 @@ func Start(s *store.Store, t Task, flowName string, unread int) (int, error) {
 // flow names cannot run — and the record says which, because phase.started
 // carries the engine that actually ran.
 func StartWith(s *store.Store, t Task, flowName, engineName string, unread int) (int, error) {
+	return start(s, t, flowName, engineName, "", unread)
+}
+
+// start is what the three doors do, with the one argument that tells them
+// apart handed in rather than decided here.
+func start(s *store.Store, t Task, flowName, engineName, from string, unread int) (int, error) {
 	holder, alive, err := Alive(s, t)
 	if err != nil {
 		return 0, err
@@ -86,7 +105,7 @@ func StartWith(s *store.Store, t Task, flowName, engineName string, unread int) 
 		return 0, fmt.Errorf("find the orbit binary to start task %s: %w", t.ID, err)
 	}
 
-	cmd := runCommand(exe, s.Root(), t, flowName, engineName, cfg.RunTimeout)
+	cmd := runCommand(exe, s.Root(), t, flowName, engineName, from, cfg.RunTimeout)
 	if err := cmd.Start(); err != nil {
 		return 0, fmt.Errorf("start a run of task %s: %w", t.ID, err)
 	}
@@ -115,7 +134,7 @@ func StartWith(s *store.Store, t Task, flowName, engineName string, unread int) 
 // run` open the current directory and hand the run whatever repository the
 // window happens to be sitting in. The run reads the flag the same way, so
 // the absence is the answer.
-func runCommand(exe, root string, t Task, flowName, engineName, timeout string) *exec.Cmd {
+func runCommand(exe, root string, t Task, flowName, engineName, from, timeout string) *exec.Cmd {
 	args := []string{"task", "start"}
 	if t.Repo.Path != "" {
 		args = append(args, "-repo", t.Repo.Path)
@@ -133,6 +152,13 @@ func runCommand(exe, root string, t Task, flowName, engineName, timeout string) 
 	// already means, and one more thing for `orbit task start` to interpret.
 	if engineName != "" {
 		args = append(args, "-engine", engineName)
+	}
+
+	// Only when a phase was named, for the reason -engine is only passed
+	// when an engine was: an empty -from means "the first", which is what
+	// its absence already means.
+	if from != "" {
+		args = append(args, "-from", from)
 	}
 
 	// How long the run may take, when the settings file says. A run

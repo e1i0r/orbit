@@ -118,6 +118,23 @@ func (m Model) closeMenu() Model {
 	return m
 }
 
+// boardMenuDiffers is whether M opens something m would not, which is the
+// only place the bar offers it: on a task's own screen, and on the list
+// with the cursor on a row.
+func (m Model) boardMenuDiffers() bool {
+	if m.screen == screenDetail && m.detail != "" {
+		return true
+	}
+
+	if m.screen != screenList {
+		return false
+	}
+
+	r, ok := m.selected()
+
+	return ok && !r.head
+}
+
 // openMenuForContext is m: the menu for the row under the cursor, for the
 // task being viewed one level down, or — with no cursor at all — the
 // board's own menu.

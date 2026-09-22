@@ -87,7 +87,7 @@ func (s State) Took(msg ReadMsg, e Env) (State, Out) {
 	if msg.err != nil {
 		s.readable = false
 
-		return s, said(e.Words.T("compose.read_failed", "could not read the issue: {err}",
+		return refuse(s, e.Words.T("compose.read_failed", "could not read the issue: {err}",
 			about("err", msg.err.Error())))
 	}
 

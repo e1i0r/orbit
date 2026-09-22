@@ -46,9 +46,9 @@ func (s State) Click(t point.Target, e Env) (State, Out) {
 			return State{}, Out{Leave: true}
 		}
 	case point.ComposePaste:
-		if pasted := clip.Read(); pasted != "" {
-			return s.Type(pasted), Out{}
-		}
+		return s.pasted(e)
+	case point.ComposeClear:
+		return s.cleared(), Out{}
 	}
 
 	return s, Out{}
@@ -89,6 +89,8 @@ func (s State) Hit(x, y int, e Env) point.Target {
 	// so that row answers for it before it answers for the field.
 	case line == plan.boxTop && s.onComposePaste(x, e):
 		return point.Target{Kind: point.ComposePaste}
+	case line == plan.boxTop && s.onComposeClear(x, e):
+		return point.Target{Kind: point.ComposeClear}
 	case line == plan.boxTop, line == plan.boxBot:
 		return point.Target{Kind: point.ComposeField, Pane: boxField}
 	case line > plan.boxTop && line < plan.boxBot:
@@ -121,4 +123,20 @@ func (s State) Aim(t point.Target, e Env) State {
 	}
 
 	return s.composeCaret(func(in *typing.Field) { in.MoveTo(t.Caret) })
+}
+
+// pasted reads the clipboard into the field the caret is in.
+//
+// The button and ^V are one gesture and go through one function, because
+// they were two and only one of them said anything: an empty clipboard
+// used to leave the form exactly as it was, which is indistinguishable
+// from a button that is broken.
+func (s State) pasted(e Env) (State, Out) {
+	text := clip.Read()
+	if text == "" {
+		return s, said(e.Words.T("compose.nothing_to_paste",
+			"there is nothing in the clipboard to paste"))
+	}
+
+	return s.Type(text), Out{}
 }

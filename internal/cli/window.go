@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
+	"slices"
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/ui"
@@ -162,15 +163,36 @@ func doPort(lang interface{ Language() string }) func(string, []string, io.Write
 			// The table owns the reason; this only delivers it.
 			return errors.New(c.Because(p))
 		case WindowOpens:
-			// The screens these commands open are tasks 9 and 13, and
-			// until they exist an honest nothing is better than a table
-			// printed into a pane nobody asked for.
-			return errors.New(p.T("msg.no_screen_yet",
-				"{name} opens a screen this window does not have yet", about(name)))
+			// The policy belongs to what is being run, and a parent's is
+			// about the parent: `orbit board` is a screen the window
+			// already is, while `board new` writes a task down. Refusing
+			// the child because the parent draws a screen is the window
+			// refusing the very thing it asked for — which is what the
+			// form's save did, silently, from the moment writing a task
+			// moved under board.
+			if !namesChild(name, args) {
+				return errors.New(p.T("msg.no_screen_yet",
+					"{name} opens a screen this window does not have yet", about(name)))
+			}
 		}
 
 		return c.Run(Context{Out: out, Err: out, Words: p}, args)
 	}
+}
+
+// namesChild is whether the first argument names one of this command's own
+// children, which is how `board new` is told from `board`.
+func namesChild(name string, args []string) bool {
+	if len(args) == 0 {
+		return false
+	}
+
+	v, declared := verb.One(name)
+	if !declared {
+		return false
+	}
+
+	return slices.ContainsFunc(v.Children(), func(kid verb.Verb) bool { return kid.Name == args[0] })
 }
 
 // about is the one substitution doPort's two sentences share.

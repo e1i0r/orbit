@@ -17,7 +17,6 @@ import (
 
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/tracker"
-	"github.com/e1i0r/orbit/internal/ui/clip"
 	"github.com/e1i0r/orbit/internal/ui/keymap"
 	"github.com/e1i0r/orbit/internal/ui/layout"
 	"github.com/e1i0r/orbit/internal/ui/typing"
@@ -61,6 +60,8 @@ type State struct {
 	// long as the reader left it open — one HTTPS call per turn of the
 	// loop.
 	asked bool
+
+	refused string // why the last save did not happen; see submit.go
 
 	flows   []string
 	flowIdx int
@@ -138,6 +139,10 @@ func startsIn(hint string, e Env) string {
 
 // Key is one press.
 func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
+	// A refusal that outlived the keystroke answering it would be the
+	// form arguing with a field that has already changed.
+	s.refused = ""
+
 	switch {
 	case msg.Code == tea.KeyEscape || key.Matches(msg, e.Keys.Back):
 		return State{}, Out{Leave: true}
@@ -162,12 +167,10 @@ func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
 		return s.composeCopy(false), Out{}
 	case (msg.Code == 'x' || msg.Code == 'X') && msg.Mod&tea.ModCtrl != 0:
 		return s.composeCopy(true), Out{}
+	case (msg.Code == 'u' || msg.Code == 'U') && msg.Mod&tea.ModCtrl != 0:
+		return s.cleared(), Out{}
 	case (msg.Code == 'v' || msg.Code == 'V') && msg.Mod&tea.ModCtrl != 0:
-		if pasted := clip.Read(); pasted != "" {
-			return s.Type(pasted), Out{}
-		}
-
-		return s, Out{}
+		return s.pasted(e)
 	case msg.Text == "+":
 		if s.isComposeFlowField() {
 			return s, Out{Flow: New}

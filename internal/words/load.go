@@ -8,6 +8,8 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+
+	"github.com/e1i0r/orbit/internal/env"
 )
 
 //go:embed lang/*.json
@@ -157,7 +159,7 @@ func overlayPath(lang string) (string, bool) {
 // unset. It returns false only when the home directory cannot be found —
 // there is no error to report it through, because a Printer never fails.
 func overlayDir() (string, bool) {
-	root := os.Getenv("ORBIT_HOME")
+	root := env.Read(env.Home)
 	if root == "" {
 		home, err := os.UserHomeDir()
 		if err != nil {

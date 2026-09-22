@@ -88,8 +88,25 @@ func (m Model) writeTask(t compose.Task) (tea.Model, tea.Cmd) {
 	args = append(args, "--", t.Text)
 
 	m.pendingID, m.pendTries = t.ID, 0
+	// The form is kept, not cleared, until the write lands. A write that
+	// fails goes back to it with everything still typed in — see
+	// writeFailed — and a form emptied on submit would have thrown that
+	// away before knowing whether it was needed.
+	m.writing = true
 
-	return m.runWatched(Command{Name: "new"}, args)
+	// `board new`, parent and child, the way pr merge and note are run.
+	// It was `new` alone, and there has never been a command by that name:
+	// writing a task down lives under board, so every save from this form
+	// came back "no such command: new" — on the band, where a reader who
+	// had just watched the form close was not looking. The form worked,
+	// the click worked, and nothing was ever written.
+	//
+	// Quietly, because the answer to saving a form is the board. `board
+	// new` prints one line and the pane it used to open held that line
+	// and an esc to press, in front of the task the reader had just
+	// asked to see. The line is said on the band instead, over a board
+	// with the new row already selected.
+	return m.runQuietly(Command{Name: "board"}, append([]string{"new"}, args...))
 }
 
 // openCompose brings the form up, on the repository the cursor was over.
@@ -196,6 +213,26 @@ func (m Model) selectPending() Model {
 	if m.pendTries > 2 {
 		m.pendingID, m.pendTries = "", 0
 	}
+
+	return m
+}
+
+// writeFailed puts the reader back on the form they pressed Save on, with
+// what they typed still in it and the reason it did not save drawn above
+// the buttons.
+//
+// The pane was the other answer and it is the wrong one. A command's
+// output pane is for reading what a run did; this is a form that refused,
+// and the thing to do about it is in the fields. Sending the reader to a
+// pane means dismissing it and opening the form again, which is two
+// gestures to get back to the screen they never wanted to leave — and on
+// the way the task they typed is gone.
+func (m Model) writeFailed(why string) Model {
+	m.writing = false
+	m.pendingID, m.pendTries = "", 0
+	m.watchUp = false
+	m.screen = screenCompose
+	m.compose = m.compose.Refused(why)
 
 	return m
 }

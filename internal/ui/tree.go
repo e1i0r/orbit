@@ -12,6 +12,7 @@ import (
 	"errors"
 	"io/fs"
 	"os"
+	"strings"
 
 	tea "charm.land/bubbletea/v2"
 
@@ -28,6 +29,11 @@ type mapped struct {
 	known   bool
 	asking  bool
 	missing bool
+	// reread marks a reading that has already been taken again, so that a
+	// checkout the tree genuinely reads as unchanged is not asked about
+	// on every diff that lands. The impact reading carries the same flag
+	// for the same reason; see internal/ui/impact.go.
+	reread bool
 }
 
 // treeMsg is the reading, come back.
@@ -115,6 +121,32 @@ func (m Model) tookTree(msg treeMsg) Model {
 // forgetTree drops the reading when the view moves to another task.
 func (m Model) forgetTree() Model {
 	m.shape = mapped{}
+
+	return m
+}
+
+// staleTree is whether the tree and the diff disagree about whether this
+// task has changed anything.
+//
+// The tree is read once, when the task's screen opens, and a task that is
+// still running had written nothing then. Left alone it went on saying
+// "this task has changed nothing in this checkout" for the rest of the
+// run, beside a diff pane listing four files — which is the same fault
+// the impact reading had, answered the same way.
+func (m Model) staleTree() bool {
+	if !m.shape.known || m.shape.err != nil || m.shape.missing || m.shape.reread {
+		return false
+	}
+
+	return (m.shape.tree.Changed == 0) != (strings.TrimSpace(m.diff) == "")
+}
+
+// forgetTreeReading drops the reading so the next sync takes it again,
+// and remembers that it did.
+func (m Model) forgetTreeReading() Model {
+	m.shape.tree, m.shape.err = verb.Cell{}, nil
+	m.shape.known, m.shape.asking = false, false
+	m.shape.reread = true
 
 	return m
 }

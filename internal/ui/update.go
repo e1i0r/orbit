@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strings"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -94,16 +95,63 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			next = next.answered(msg.Text, msg.Err)
 		}
 
+		// Whether this one was run with no pane, read off the watch
+		// before it is cleared: it decides what the band says.
+		quiet := false
+
 		if m.watching != nil && m.watching.name == msg.Name {
+			quiet = m.watching.quiet
 			next.output = msg.Text
 			next.watching = nil
 		}
 
 		if msg.Err != nil {
+			// A save that did not save goes back to the form it was
+			// pressed on, with the task still typed into it and the
+			// reason drawn above the buttons. There is nothing to read in
+			// a pane here: what has to change is in the fields.
+			if next.writing {
+				return next.writeFailed(m.errSaid(msg.Err)).
+					say(m.errSaid(msg.Err)), nil
+			}
+
+			// Everything else: the pane is where the reader is looking.
+			// It opened when the command started and it is still up. A
+			// command that failed having printed nothing left it reading
+			// "no output yet… finished", with the only account of the
+			// failure on the band — under a screen that had closed over
+			// it, beside whatever had been said before.
+			if strings.TrimSpace(next.output) == "" {
+				next.output = m.errSaid(msg.Err)
+			}
+
+			// And raise it, for a command that was run without one. A
+			// quiet run is quiet about succeeding; a failure with nowhere
+			// to be seen is the defect this window keeps repeating.
+			next.watchUp = true
+
 			return next.say(m.errSaid(msg.Err)), nil
 		}
 
-		return next.say(next.commandSaid(msg)), nil
+		// The write landed. The form has done its job and is emptied now
+		// rather than at submit, which is what let a refused save hand
+		// the reader back everything they had typed.
+		if next.writing {
+			next.writing = false
+			next.compose = compose.State{}
+		}
+
+		// A command that finished with nothing to say leaves no pane: the
+		// reader asked for a task to be written, not for a window with
+		// "no output yet" in it. What they want to see is the board, with
+		// the task on it — which is what pendingID already brings them
+		// to. A command that printed something keeps its pane, because
+		// somebody may want to read it.
+		if strings.TrimSpace(next.output) == "" {
+			next.watchUp = false
+		}
+
+		return next.say(next.commandSaid(msg, quiet)), nil
 	case sessionMsg:
 		return m.session(msg)
 	case sessionEndedMsg:
@@ -178,9 +226,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.weigh.reread = true
 		}
 
+		// The map is read once for the same reason and went stale the same
+		// way: "this task has changed nothing in this checkout" beside a
+		// diff pane listing four files.
+		if m.staleTree() {
+			m = m.forgetTreeReading()
+		}
+
 		next, impact := m.syncPanes().askImpact()
 
-		return next, impact
+		grown, tree := next.askTree()
+
+		return grown, tea.Batch(impact, tree)
 	case treeMsg:
 		return m.tookTree(msg), nil
 	case logMsg:

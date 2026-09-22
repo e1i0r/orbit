@@ -8,7 +8,7 @@ run and writes new ones.
 ## What a phase carries
 
 Each one names its own engine, model, reasoning effort, thinking mode, the
-prompt it is given, and what it is allowed to touch — `read`, `repo`,
+prompt it is given, and what it is allowed to touch: `read`, `repo`,
 `network`. A phase marked `wait` is a gate: the run stops in front of it and
 waits for you.
 
@@ -30,7 +30,7 @@ trusting rather than choosing.
 
 ## Writing one
 
-`n` on that screen opens the designer. Or write the JSON — they are files in
+`n` on that screen opens the designer. Or write the JSON, since they are files in
 `~/.orbit/flows/`, and saving one under a built-in's name covers it:
 
 ```json
@@ -44,7 +44,7 @@ trusting rather than choosing.
 ```
 
 The phase names are yours. Nothing in Orbit assumes a flow is about writing
-code — a release flow, a migration flow, a triage flow are all the same shape,
+code. A release flow, a migration flow and a triage flow are all the same shape,
 and they all get the same record, the same gates and the same cockpit.
 
 ## Why the phases are small
@@ -54,7 +54,7 @@ then the wrong assumption from minute three is buried under four hundred lines
 that all look plausible.
 
 A flow is how you say where the checks go. Put a gate where you would have
-looked anyway, and the run stops there — see [a run, end to end](run.md).
+looked anyway, and the run stops there. See [a run, end to end](run.md).
 
 ```bash
 orbit flows                       # what this machine can run

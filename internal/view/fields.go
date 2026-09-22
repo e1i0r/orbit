@@ -58,6 +58,13 @@ func flow(t *Task, e record.Event) {
 	if name, ok := e.Data["flow"]; ok {
 		t.Flow = name
 	}
+
+	// The branch the task was cut from, which is what its pull request
+	// belongs against. See internal/task/branch.go for why it is not the
+	// repository's default.
+	if name, ok := e.Data["base"]; ok {
+		t.Base = name
+	}
 }
 
 // stamp moves a time only when the event carried an honest one. A zero At is

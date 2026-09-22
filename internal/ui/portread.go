@@ -44,6 +44,28 @@ type Settings interface {
 	// make.
 	BudgetWorkspace() float64
 	QuotaFloor() int
+	// Deciding is the decision engine's standing state: what it is
+	// allowed to do, empty when it is off, and the name of the
+	// environment variable its key is missing from, empty when the key is
+	// there. Both empty is the ordinary case.
+	//
+	// One answer rather than two ports because the window draws one
+	// sentence out of the two halves, and two ports can disagree: the
+	// sentence that comes of that says the engine is on while the run it
+	// is about decides nothing.
+	//
+	// Both come back as words the window prints rather than as words it
+	// compares. internal/ui may not reach internal/store or internal/env
+	// and cannot spell "off" or the variable's name without keeping a
+	// second copy of each, which is the failure internal/env exists to
+	// stop. The emptiness carries the meaning; the strings are only read
+	// out.
+	//
+	// The half that is not a setting is answered by the composition root
+	// on purpose. What matters is not whether some shell has the key but
+	// whether the process that will spawn `orbit run` has it, because the
+	// run inherits this environment and nothing else.
+	Deciding() (allowed, missing string)
 	Engine() string
 	SetEngine(string) error
 	Model() string

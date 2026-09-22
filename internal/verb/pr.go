@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/supervisor"
+	"github.com/e1i0r/orbit/internal/task"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -104,7 +105,7 @@ func erranded(w World, in In, caption, body string) (Out, error) {
 		return Out{}, errNoCheckout(w, t.ID)
 	}
 
-	text := supervisor.Deliver(in.Door, caption, t.ID, dir, body)
+	text := supervisor.Deliver(in.Door, caption, t.ID, dir, task.Base(t), body)
 
 	if err := w.Say(text, in.who(), t.ID); err != nil {
 		return Out{}, err

@@ -58,11 +58,11 @@ func TestControlSaid(t *testing.T) {
 
 func TestCommandSaid(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	if got := m.commandSaid(commandMsg{Name: "sync"}); got != "sync finished" {
+	if got := m.commandSaid(commandMsg{Name: "sync"}, false); got != "sync finished" {
 		t.Errorf("commandSaid = %q, want %q", got, "sync finished")
 	}
 
-	if got := m.commandSaid(commandMsg{Name: "sync", Err: errors.New("broke")}); got != "broke" {
+	if got := m.commandSaid(commandMsg{Name: "sync", Err: errors.New("broke")}, false); got != "broke" {
 		t.Errorf("commandSaid with an error = %q, want the error verbatim", got)
 	}
 }

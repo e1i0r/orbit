@@ -11,6 +11,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/e1i0r/orbit/internal/env"
 )
 
 // Transcript is what was said in a session codex was opened in dir for.
@@ -35,7 +37,7 @@ func (c Codex) Transcript(dir string, since time.Time) ([]Turn, error) {
 // it correct: a file untouched while the terminal was out is not this
 // session's.
 func codexTurns(dir, engineName string, since time.Time) ([]Turn, error) {
-	home := os.Getenv("CODEX_HOME")
+	home := env.Read(env.CodexHome)
 	if home == "" {
 		user, err := os.UserHomeDir()
 		if err != nil {

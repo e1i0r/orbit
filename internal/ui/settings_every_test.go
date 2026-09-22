@@ -170,8 +170,24 @@ func TestARowWithNoDialShowsWhatItHolds(t *testing.T) {
 		t.Fatalf("the fixture refused a chat id: %v", err)
 	}
 
-	rows := m.settingRowsList()
-	for m.settings.Chosen() < len(rows)-1 {
+	// To the chat id's own row, and not to the end of the table: which
+	// setting is last is a fact about the vocabulary, and this test is
+	// about a row that has no pills.
+	at := -1
+
+	for i, r := range m.settingRowsList() {
+		if r.Key == "chat-id" {
+			at = i
+
+			break
+		}
+	}
+
+	if at < 0 {
+		t.Fatal("there is no chat id row")
+	}
+
+	for m.settings.Chosen() < at {
 		m = m.wheelSettings(1)
 	}
 

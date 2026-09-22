@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/store"
@@ -18,7 +19,18 @@ import (
 // comment is read on GitHub rather than in the terminal, and that is a
 // reason to translate it and not a reason to leave it: whoever closed the
 // task from a Spanish cockpit is the one who will read it back.
-func closingComment(ctx Context) string {
+// closingComment is what is left on the pull request when it is closed.
+//
+// why is the reason the operator gave, and it is the whole of the comment
+// when they gave one. "Closed from Orbit." tells a reader who did it and
+// nothing about why, which on somebody else's repository is the least
+// useful sentence there is to leave behind — so the cockpit asks, and this
+// falls back only for a close from a script that did not.
+func closingComment(ctx Context, why string) string {
+	if why = strings.TrimSpace(why); why != "" {
+		return why
+	}
+
 	return ctx.printer().T("close_pr.comment", "Closed from Orbit.")
 }
 
@@ -37,6 +49,9 @@ func closePR(ctx Context, args []string) error {
 
 	p := ctx.printer()
 	taskID := fs.Args()[0]
+	// Everything after the id is the reason, joined: the cockpit passes it
+	// as one argument and a shell may not have.
+	why := strings.TrimSpace(strings.Join(fs.Args()[1:], " "))
 
 	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
@@ -48,7 +63,7 @@ func closePR(ctx Context, args []string) error {
 		return fmt.Errorf("read the repositories of task %q: %w", taskID, err)
 	}
 
-	branch := "orbit/" + taskID
+	branch := branchFor(s, r, taskID)
 
 	for _, one := range where {
 		wtDir, wtErr := s.WorktreeDir(one.Path, taskID)
@@ -57,7 +72,7 @@ func closePR(ctx Context, args []string) error {
 			return wtErr
 		}
 
-		if err := one.ClosePR(wtDir, branch, closingComment(ctx)); err != nil {
+		if err := one.ClosePR(wtDir, branch, closingComment(ctx, why)); err != nil {
 			logger.Error("cli/close-pr", "gh pr close failed: %v", err)
 
 			return fmt.Errorf("%s: %w", p.T("close_pr.refused", "closing the pull request of {id} failed",

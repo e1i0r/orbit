@@ -44,7 +44,7 @@ func Join(s *store.Store, t Task, r repo.Repo) (string, error) {
 	}
 
 	if _, statErr := os.Stat(wt); statErr != nil {
-		if err := r.AddWorktree(wt, "orbit/"+t.ID); err != nil {
+		if err := r.AddWorktree(wt, Branch(t)); err != nil {
 			return "", err
 		}
 	}

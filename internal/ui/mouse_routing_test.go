@@ -309,7 +309,7 @@ func TestLeftClickMenuFlowRepoAndQueueBranches(t *testing.T) {
 		t.Error("clicking a bar hint with no key produced a command")
 	}
 
-	next13, _ := m5.leftClick(point.Target{Kind: point.BarHint, Key: "M"})
+	next13, _ := m5.leftClick(point.Target{Kind: point.BarHint, Key: "E"})
 	if asModel(t, next13).screen != screenEngines {
 		t.Error("clicking the engine-knobs bar hint should open the engine knobs")
 	}
