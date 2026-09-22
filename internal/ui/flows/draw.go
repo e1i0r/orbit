@@ -66,9 +66,13 @@ func (s State) flowsListRows(h, w int, e Env) []string {
 			break
 		}
 
-		row := lines[at].text
+		// Held to the window whether or not there is a rail beside it.
+		// The Fit used to be part of drawing the rail, so a list short
+		// enough not to need one was drawn unmeasured — and the sentence
+		// about where flows live is a hundred and twenty-five cells.
+		row := cells.Fit(lines[at].text, w)
 		if track != nil {
-			row = cells.PadRight(cells.Fit(row, cw), cw) + track[i]
+			row = cells.PadRight(cells.Fit(lines[at].text, cw), cw) + track[i]
 		}
 
 		out = append(out, row)
@@ -112,7 +116,13 @@ func (s State) flowsListStart(lines []flowLine, rows int) int {
 	case first < start:
 		return first
 	case last >= start+rows:
-		return min(last-rows+1, len(lines)-rows)
+		// The end of the flow, unless the flow is taller than the page —
+		// then its head, which is the row carrying the name, the mark and
+		// the pills that inspect, edit and delete it. A flow of twenty
+		// phases chosen on a short terminal showed phases seven to
+		// nineteen and nothing else: no name, no mark, and d deleted a
+		// flow whose name was not on the screen.
+		return min(min(last-rows+1, first), len(lines)-rows)
 	}
 
 	return start
@@ -149,12 +159,24 @@ func (s State) flowsListLines(w int, e Env) []flowLine {
 		// the half about where they live, and that a built-in is inside the
 		// binary: saving one of your own under its name covers it, which is
 		// the only way a shipped flow changes.
-		plain("  " + theme.Paint(theme.Dim).Render(p.T("flows.where_they_live",
-			"your own flows are files under $ORBIT_HOME/flows/; a built-in is inside orbit, and saving your own under its name covers it"))),
-		plain(""),
-		{text: createBtn, at: noFlow, create: true},
-		plain(""),
 	}
+
+	// Wrapped rather than cut: it is two facts — where your own flows are,
+	// and that a built-in lives inside the binary and is covered by saving
+	// one of your own under its name — and an ellipsis takes the second of
+	// them off every terminal narrower than a hundred and twenty-seven
+	// columns.
+	for _, l := range cells.Lines(p.T("flows.where_they_live",
+		"your own flows are files under $ORBIT_HOME/flows/; a built-in is inside orbit, and saving your own under its name covers it"),
+		max(w-2, 1)) {
+		out = append(out, plain("  "+theme.Paint(theme.Dim).Render(l)))
+	}
+
+	out = append(out,
+		plain(""),
+		flowLine{text: createBtn, at: noFlow, create: true},
+		plain(""),
+	)
 
 	descriptors := s.listed
 	if len(descriptors) == 0 {
@@ -171,15 +193,21 @@ func (s State) flowsListLines(w int, e Env) []flowLine {
 
 		headerLine := mark + theme.Paint(theme.Accent).Render(d.Name)
 		if originStr != "" {
-			headerLine += "  " + theme.Paint(theme.Dim).Render("("+originStr+")")
+			headerLine += strings.Repeat(" ", rowOriginAt) +
+				theme.Paint(theme.Dim).Render("("+originStr+")")
 		}
 
+		// Drawn from the same list the pointer is measured against: see
+		// rowPills.
 		if i == s.sel {
-			headerLine += "   " + theme.Pill("👁 "+p.T("flows.btn_view_details", "Details"), theme.PillInk, theme.PillDetails)
+			headerLine += strings.Repeat(" ", rowPillsAt)
 
-			headerLine += " " + theme.Pill("✏ "+p.T("flows.btn_edit", "Edit"), theme.PillInk, theme.PillEdit)
-			if d.Origin != flow.OriginBuiltin {
-				headerLine += " " + theme.Pill("🗑 "+p.T("flows.btn_delete", "Delete"), theme.PillInk, theme.PillDelete)
+			for at, pill := range rowPills(d, e) {
+				if at > 0 {
+					headerLine += strings.Repeat(" ", rowPillGap)
+				}
+
+				headerLine += pill.drawn
 			}
 		}
 

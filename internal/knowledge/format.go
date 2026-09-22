@@ -16,6 +16,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/e1i0r/orbit/internal/tame"
 )
 
 // fence is what opens and closes the header.
@@ -121,7 +123,16 @@ func decode(body, where, repo string) (Rule, error) {
 		return Rule{}, fmt.Errorf("says nothing")
 	}
 
-	f := Rule{ID: head[keyID], Phrase: phrase, Ref: head[keyRef], Check: head[keyCheck]}
+	// A rule is a file, and a supervising model writes most of them: the
+	// sentence is drawn on the knowledge screen and handed to the next
+	// engine, so it is stripped of what a terminal would read as an
+	// instruction. See internal/tame.
+	f := Rule{
+		ID:     head[keyID],
+		Phrase: tame.Text(phrase),
+		Ref:    tame.Text(head[keyRef]),
+		Check:  tame.Text(head[keyCheck]),
+	}
 
 	source, ok := sourceNamed(head[keySource])
 	if !ok {
@@ -131,7 +142,7 @@ func decode(body, where, repo string) (Rule, error) {
 	f.Source = source
 	f.Stops = head[keyAction] == "stop"
 	f.State = stateNamed(head)
-	f.Why = head[keyWhy]
+	f.Why = tame.Text(head[keyWhy])
 	f.Review = head[keyReview] == "true"
 
 	if at := head[keyAt]; at != "" {

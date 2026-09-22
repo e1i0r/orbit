@@ -213,10 +213,30 @@ func (s State) flowDetailKey(msg tea.KeyPressMsg, e Env) (State, Out) {
 		return s, Out{}
 	case msg.Text == "e" || msg.Text == "E":
 		return s.editNamedFlow(s.flowName, e)
+	case key.Matches(msg, e.Keys.Up), msg.Text == "k":
+		return s.Scroll(-1), Out{}
+	case key.Matches(msg, e.Keys.Down), msg.Text == "j":
+		return s.Scroll(1), Out{}
+	case msg.Code == tea.KeyPgUp:
+		return s.Scroll(-detailPage), Out{}
+	case msg.Code == tea.KeyPgDown:
+		return s.Scroll(detailPage), Out{}
+	case msg.Code == tea.KeyHome:
+		return s.Scroll(-detailEnd), Out{}
+	case msg.Code == tea.KeyEnd:
+		return s.Scroll(detailEnd), Out{}
 	}
 
 	return s, Out{}
 }
+
+// How far the page keys move the reading, and the number that reaches
+// either end of it whatever is in it. The draw holds both inside what
+// there is, which is the one place the length is known.
+const (
+	detailPage = 10
+	detailEnd  = 1 << 20
+)
 
 func (s State) flowsListKey(msg tea.KeyPressMsg, e Env) (State, Out) {
 	p := e.Words

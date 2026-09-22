@@ -88,9 +88,11 @@ func (m Model) hit(x, y int) point.Target {
 		case screenHelp, screenQuota:
 			// Two screens with nothing in the body to point at: the cheat
 			// sheet is a list of what other screens' keys do, and the
-			// quota is a reading. Both scroll under the wheel and both are
-			// left through the bar, which is clicked above this switch —
-			// what is not here is a gesture, it is a body with none.
+			// quota is a reading. Both scroll under the wheel — the quota
+			// only since it was given an offset; the comment here said it
+			// did for as long as it did not — and both are left through
+			// the bar, which is clicked above this switch: what is not
+			// here is a gesture, it is a body with none.
 			//
 			// Answering nothing is also what keeps them from falling
 			// through to the board's rows below, where a click landed on

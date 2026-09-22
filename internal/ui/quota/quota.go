@@ -9,9 +9,11 @@
 // now, and it is the only place the whole reading is written down: every
 // engine Orbit can run, the windows each has, and the hour each returns.
 //
-// It is entered through this file. The screen holds nothing — there is
-// nothing on it to choose — so there is no State: it is drawn from what the
-// Env answers and left again.
+// It is entered through this file. There is still nothing on it to choose,
+// so what it holds is an offset and not a cursor: four engines with two
+// windows each is more rows than a short terminal has, and the screen was
+// drawn whole into a body that cut it — with nothing to press, the engines
+// past the bottom were a reading nobody could reach.
 package quota
 
 import (
@@ -57,13 +59,31 @@ type Out struct {
 // Q, and a reader whose caps lock is down opens it without meaning to — and
 // then presses the key that closes everything else and is answered with
 // nothing.
-func Key(msg tea.KeyPressMsg, e Env) Out {
-	if msg.Code == tea.KeyEscape || key.Matches(msg, e.Keys.Back) || key.Matches(msg, e.Keys.Quit) {
-		return Out{Leave: true}
+func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
+	switch {
+	case msg.Code == tea.KeyEscape, key.Matches(msg, e.Keys.Back), key.Matches(msg, e.Keys.Quit):
+		return Open(), Out{Leave: true}
+	case key.Matches(msg, e.Keys.Up), msg.Text == "k":
+		return s.Scroll(-1, e), Out{}
+	case key.Matches(msg, e.Keys.Down), msg.Text == "j":
+		return s.Scroll(1, e), Out{}
+	case msg.Code == tea.KeyPgUp:
+		return s.Scroll(-pageRows, e), Out{}
+	case msg.Code == tea.KeyPgDown:
+		return s.Scroll(pageRows, e), Out{}
+	case msg.Code == tea.KeyHome:
+		return Open(), Out{}
+	case msg.Code == tea.KeyEnd:
+		return s.Scroll(len(readingRows(0, e)), e), Out{}
 	}
 
-	return Out{}
+	return s, Out{}
 }
+
+// pageRows is how far a page key moves the reading. A screenful is not a
+// number this screen knows — it is given one at draw time and asked for a
+// keystroke at another — so it moves by a fixed page, the way a pager does.
+const pageRows = 10
 
 // Readings is every engine the window offers, each with what is known about
 // its quota right now. An engine with no source is still a row — silence is

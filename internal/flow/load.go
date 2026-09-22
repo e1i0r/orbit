@@ -65,5 +65,5 @@ func decode(raw []byte, source string) (Flow, error) {
 		return Flow{}, err
 	}
 
-	return f, nil
+	return f.tamed(), nil
 }

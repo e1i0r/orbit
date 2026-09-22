@@ -6,6 +6,8 @@ package tracker
 import (
 	"context"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 )
@@ -82,5 +84,40 @@ func TestAnIssueWithNoProviderOfItsOwnStillReadsAsATask(t *testing.T) {
 	withBody := defaultPrompt(Issue{Kind: "asana", ID: "ACME-1", Description: "the real requirements"})
 	if !strings.Contains(withBody, "the real requirements") {
 		t.Errorf("the prompt drops the body it was given:\n%s", withBody)
+	}
+}
+
+// TestWhatATrackerAnswersWithCannotDriveTheTerminal. An issue's title is
+// drawn in the form and its body becomes the task: both come off somebody
+// else's server, and a terminal reads an escape sequence in either as an
+// instruction.
+func TestWhatATrackerAnswersWithCannotDriveTheTerminal(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		answer := `{"data":{"issue":{"title":"fix \u001b[2J the thing",` +
+			`"description":"first \u001b[31mline\u001b[0m"}}}`
+		if _, err := w.Write([]byte(answer)); err != nil {
+			t.Errorf("the fake tracker could not answer: %v", err)
+		}
+	}))
+	defer srv.Close()
+
+	t.Setenv("LINEAR_API_KEY", "k")
+
+	was := linearEndpoint
+	linearEndpoint = srv.URL
+
+	defer func() { linearEndpoint = was }()
+
+	iss, err := Read(context.Background(), Issue{Kind: "linear", ID: "FRA-1"})
+	if err != nil {
+		t.Fatalf("read the issue: %v", err)
+	}
+
+	if strings.ContainsAny(iss.Title+iss.Description, "\x1b\x07") {
+		t.Errorf("an issue carries control characters: %q / %q", iss.Title, iss.Description)
+	}
+
+	if !strings.Contains(iss.Title, "fix") || !strings.Contains(iss.Description, "line") {
+		t.Errorf("taming the issue lost its words: %q / %q", iss.Title, iss.Description)
 	}
 }

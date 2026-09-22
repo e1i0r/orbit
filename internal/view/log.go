@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/e1i0r/orbit/internal/record"
+	"github.com/e1i0r/orbit/internal/tame"
 )
 
 // Entry is one event of one task's record, with the fields the task view
@@ -186,25 +187,29 @@ func fullSize(data map[string]string) int {
 // entry reads one event's fields. Indexing a nil Data map is a zero value
 // rather than a panic, which is why no event needs a guard of its own.
 func entry(e record.Event, attempt int) Entry {
+	// Every field an engine or a file had a hand in is tamed on the way
+	// through: see internal/tame. Kept counts what the record holds and
+	// not what survives the taming, because it is the record's own measure
+	// of how much of the output was written down.
 	return Entry{
 		At:      e.At,
 		Kind:    e.Kind,
-		Phase:   e.Phase,
-		Text:    e.Text,
+		Phase:   tame.Text(e.Phase),
+		Text:    tame.Text(e.Text),
 		Attempt: attempt,
 		PhaseN:  count(e.Data["n"]),
-		Engine:  e.Data["engine"],
-		Model:   e.Data["model"],
-		Session: e.Data["session"],
-		Cause:   e.Data["error"],
+		Engine:  tame.Text(e.Data["engine"]),
+		Model:   tame.Text(e.Data["model"]),
+		Session: tame.Text(e.Data["session"]),
+		Cause:   tame.Text(e.Data["error"]),
 		Cost:    money(e.Data["cost"]),
-		Gate:    e.Data["gate"],
-		Exit:    e.Data["exit"],
-		Tool:    e.Data["tool"],
-		Notes:   e.Data["notes"],
-		By:      e.Data["by"],
-		Repo:    e.Data["repo"],
-		Verb:    e.Data["verb"],
+		Gate:    tame.Text(e.Data["gate"]),
+		Exit:    tame.Text(e.Data["exit"]),
+		Tool:    tame.Text(e.Data["tool"]),
+		Notes:   tame.Text(e.Data["notes"]),
+		By:      tame.Text(e.Data["by"]),
+		Repo:    tame.Text(e.Data["repo"]),
+		Verb:    tame.Text(e.Data["verb"]),
 		Story:   storyOf(e),
 		Delta:   deltaOf(e),
 		Kept:    len(e.Text),

@@ -27,7 +27,7 @@ func lastValue(env []string, name string) string {
 // told, and that it is put in a group of its own.
 func TestAStartedRunIsTheSameSubcommandAPersonWouldType(t *testing.T) {
 	tk := Task{ID: "ACME-1", Repo: repo.Repo{Name: "app", Path: "/repos/app"}}
-	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "review", "", "")
+	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "review", "", "", "")
 
 	want := []string{"/usr/local/bin/orbit", "task", "start", "-repo", "/repos/app", "-flow", "review", "ACME-1"}
 	if len(cmd.Args) != len(want) {
@@ -57,7 +57,7 @@ func TestAStartedRunIsToldWhereTheStateIs(t *testing.T) {
 
 	tk := Task{ID: "ACME-1", Repo: repo.Repo{Name: "app", Path: "/repos/app"}}
 
-	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "task", "", "")
+	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "task", "", "", "")
 
 	if got := lastValue(cmd.Env, "ORBIT_HOME"); got != "/state" {
 		t.Errorf("ORBIT_HOME = %q, want /state — a run writing into another root is a task that vanished", got)
@@ -71,7 +71,7 @@ func TestAStartedRunIsToldWhereTheStateIs(t *testing.T) {
 func TestAStartedRunGetsAProcessGroupOfItsOwn(t *testing.T) {
 	tk := Task{ID: "ACME-1", Repo: repo.Repo{Name: "app", Path: "/repos/app"}}
 
-	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "task", "", "")
+	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "task", "", "", "")
 
 	if cmd.SysProcAttr == nil || !cmd.SysProcAttr.Setpgid {
 		t.Error("the run would share the window's process group, so closing the window would SIGHUP it away mid-phase")
@@ -84,13 +84,34 @@ func TestAStartedRunGetsAProcessGroupOfItsOwn(t *testing.T) {
 func TestAnEngineOverrideReachesTheRun(t *testing.T) {
 	tk := Task{ID: "ACME-9", Repo: repo.Repo{Path: "/code/ledger", Name: "ledger"}}
 
-	handed := strings.Join(runCommand("/bin/orbit", "/state", tk, "task", "codex", "").Args, " ")
+	handed := strings.Join(runCommand("/bin/orbit", "/state", tk, "task", "codex", "", "").Args, " ")
 	if !strings.Contains(handed, "-engine codex") {
 		t.Errorf("a handed run does not name the engine: %s", handed)
 	}
 
-	plain := strings.Join(runCommand("/bin/orbit", "/state", tk, "task", "", "").Args, " ")
+	plain := strings.Join(runCommand("/bin/orbit", "/state", tk, "task", "", "", "").Args, " ")
 	if strings.Contains(plain, "-engine") {
 		t.Errorf("an ordinary run names an engine anyway: %s", plain)
+	}
+}
+
+// TestARunStartedByTheWindowCarriesTheTimeout. `orbit run -timeout` is the
+// stop for a run somebody typed, and a run the window or the queue starts
+// took nothing at all: an engine wedged on a network read held a worktree
+// and a slot until a person noticed, which is the one thing a person asleep
+// cannot do.
+func TestARunStartedByTheWindowCarriesTheTimeout(t *testing.T) {
+	tk := Task{ID: "ACME-60", Repo: repo.Repo{Name: "payments", Path: "/r/payments"}}
+
+	timed := strings.Join(runCommand("/bin/orbit", "/state", tk, "task", "", "", "45m").Args, " ")
+	if !strings.Contains(timed, "-timeout 45m") {
+		t.Errorf("the command line is %q, want the timeout the settings file holds", timed)
+	}
+
+	// And nothing when it is not set: the flag's own zero already means no
+	// limit, and an empty one on the line is one more thing to read.
+	plain := strings.Join(runCommand("/bin/orbit", "/state", tk, "task", "", "", "").Args, " ")
+	if strings.Contains(plain, "-timeout") {
+		t.Errorf("the command line is %q, want no timeout flag when none is set", plain)
 	}
 }

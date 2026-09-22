@@ -18,6 +18,7 @@ import (
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/keymap"
+	"github.com/e1i0r/orbit/internal/ui/layout"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
@@ -35,6 +36,11 @@ type Env struct {
 	// Filter is the repository the board is showing, and empty when it is
 	// showing all of them.
 	Filter string
+	// Frame is the room the window lends it. The list is longer than the
+	// screen as soon as somebody works in a handful of repositories, and a
+	// keystroke that moves the cursor has to know what is on show to keep
+	// it there.
+	Frame layout.Frame
 }
 
 // Out is what the screen asks the window for.
@@ -50,9 +56,14 @@ type Out struct {
 	Cleared bool
 }
 
-// State is the screen: which row the cursor is on.
+// State is the screen: which row the cursor is on, and the first row of the
+// list on show.
 type State struct {
 	sel int
+	// off is the first row of the list drawn. Rows and not repositories,
+	// because a click lands on a line: the mouse has to add back exactly
+	// what the drawing took off.
+	off int
 }
 
 // about names a value and what the sentence calls it.
@@ -160,14 +171,14 @@ func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
 			s.sel = len(repos) - 1
 		}
 
-		return s, Out{}
+		return s.keepSeen(e), Out{}
 	case key.Matches(msg, e.Keys.Down):
 		s.sel++
 		if s.sel >= len(repos) {
 			s.sel = 0
 		}
 
-		return s, Out{}
+		return s.keepSeen(e), Out{}
 	case key.Matches(msg, e.Keys.Open), msg.Text == " ":
 		return s.chose(repos[s.sel], e)
 	}
@@ -219,12 +230,14 @@ func (s State) View(h, w int, e Env) []string {
 	}
 
 	p := e.Words
-	out := []string{
+	head := []string{
 		"",
 		"  " + theme.Paint(theme.Accent).Render(p.T("repos.title", "Repositories")),
 		"  " + theme.Paint(theme.Dim).Render(p.T("repos.subtitle", "choose a repository to filter the board")),
 		"",
 	}
+
+	var out []string
 
 	repos := collect(e)
 	if len(repos) == 0 {
@@ -261,7 +274,7 @@ func (s State) View(h, w int, e Env) []string {
 		about("open", e.Keys.Open.Help().Key),
 		about("up_down", e.Keys.Up.Help().Key+e.Keys.Down.Help().Key),
 		about("back", e.Keys.Back.Help().Key))
-	out = append(out, "", cells.Fit("  "+theme.Paint(theme.Dim).Render(waysOut), w))
+	foot := []string{"", cells.Fit("  "+theme.Paint(theme.Dim).Render(waysOut), w)}
 
-	return cells.Fill(out, h)
+	return cells.Fill(framed(head, out, foot, h, s.Off(e)), h)
 }

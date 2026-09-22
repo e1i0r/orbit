@@ -90,3 +90,61 @@ func TestAQuotaFloorIsAPercentageBetweenNoneAndNinetyNine(t *testing.T) {
 		})
 	}
 }
+
+// TestATimeoutIsWrittenDownTheWayItWasTyped, and read back as a length of
+// time rather than as a number of nanoseconds.
+func TestATimeoutIsWrittenDownTheWayItWasTyped(t *testing.T) {
+	w := worldOf(t)
+
+	// Read back the way they were written: the screen offers 30m, 1h and
+	// 2h as pills, and a value spelled "2h0m0s" is a dial with nothing
+	// chosen on it.
+	for _, one := range []struct{ typed, back string }{
+		{"45m", "45m"},
+		{"2h", "2h"},
+		{"90s", "90s"},
+	} {
+		out := set(t, w, "run-timeout", one.typed)
+		if !strings.Contains(out.Said, one.back) {
+			t.Errorf("setting run-timeout to %s answered %q, want %s", one.typed, out.Said, one.back)
+		}
+
+		table := mustAsk(t, w, "settings", In{By: "operator"})
+		if !strings.Contains(table.Said, one.back) {
+			t.Errorf("the table reads back the timeout as something else:\n%s", table.Said)
+		}
+	}
+}
+
+// TestZeroIsHowATimeoutIsTurnedOff. Every field of the settings file has a
+// working zero, and for a limit the working zero is that there is none — so
+// "0" has to be something a reader can type, and the table has to say it
+// back in the same word they would type to turn it off again.
+func TestZeroIsHowATimeoutIsTurnedOff(t *testing.T) {
+	w := worldOf(t)
+
+	set(t, w, "run-timeout", "2h")
+
+	out := set(t, w, "run-timeout", "0")
+	if !strings.Contains(out.Said, "0") {
+		t.Errorf("turning the timeout off answered %q", out.Said)
+	}
+
+	// The stored form and not "2h": the sentence beside the row says
+	// "as 45m or 2h", and a test looking for that in the whole table is
+	// reading the help rather than the value.
+	table := mustAsk(t, w, "settings", In{By: "operator"})
+	if strings.Contains(table.Said, "  2h ") {
+		t.Errorf("the timeout was turned off and the table still holds it:\n%s", table.Said)
+	}
+
+	// A negative deadline is a run that has already run out, and a word
+	// that is not a length of time is a typo somebody wants told about.
+	mustRefuse(t, w, "settings set", In{
+		Args: map[string]string{"key": "run-timeout", "value": "-5m"}, By: "operator",
+	})
+
+	mustRefuse(t, w, "settings set", In{
+		Args: map[string]string{"key": "run-timeout", "value": "a while"}, By: "operator",
+	})
+}

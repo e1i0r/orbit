@@ -108,6 +108,7 @@ var theDials = map[string][]string{
 	"check-record": {"off", "on"},
 	"notify":       {"off", "on"},
 	"quota-floor":  {"0", "10", "25", "50"},
+	"run-timeout":  {"0", "30m", "1h", "2h", "4h"},
 	// The decision engine, and how sure it has to be. Shadow sits between
 	// the two because it is how a reader finds out whether to trust it.
 	"decisions":      {"off", "shadow", "on"},

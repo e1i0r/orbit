@@ -132,12 +132,10 @@ func RunFrom(ctx context.Context, s *store.Store, t Task, f flow.Flow,
 
 	for i, p := range f.Phases {
 		// A phase before the one a retry asked for is not run and nothing
-		// is written for it. Elio's rule: a phase that ended well does not
-		// need doing again, and re-running it would spend money to
-		// reproduce work the record already holds. Its number is still
-		// i+1, so the phase that does run is [2/3] in the tree and not
-		// [1/1] — a retry is a second attempt at the same flow, not a
-		// shorter flow.
+		// is written for it: a phase that ended well does not need doing
+		// again. Its number is still i+1, so the phase that does run is
+		// [2/3] and not [1/1] — a retry is a second attempt at the same
+		// flow, not a shorter flow.
 		if !begun {
 			if !strings.EqualFold(p.Name, strings.TrimSpace(from)) {
 				continue
@@ -216,6 +214,7 @@ func RunFrom(ctx context.Context, s *store.Store, t Task, f flow.Flow,
 					others:  others,
 					notes:   notes,
 					reviews: reviews,
+					prev:    prevOutput,
 					gate:    g,
 				})
 			} else {

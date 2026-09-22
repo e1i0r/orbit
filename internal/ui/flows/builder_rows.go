@@ -234,8 +234,12 @@ func (s State) builderHead(w int, e Env) []builderLine {
 func (s State) builderPipeline(w int, e Env) []builderLine {
 	p := e.Words
 
-	out := []builderLine{plainLine("  " + theme.Paint(theme.Live).Bold(true).Render(
-		p.T("flows.builder_pipeline_title", "Pipeline (Click on a phase to edit it):")))}
+	// Held to the width like every other row: the sentence is forty-one
+	// cells with its indent, so on a window of forty it wrapped — and a
+	// heading that takes two rows moves the whole pipeline under it down
+	// one, which is where the reader clicks.
+	out := []builderLine{plainLine(cells.Fit("  "+theme.Paint(theme.Live).Bold(true).Render(
+		p.T("flows.builder_pipeline_title", "Pipeline (Click on a phase to edit it):")), w))}
 
 	for i, ph := range s.phases {
 		prefix := "    ➔ "

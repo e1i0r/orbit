@@ -10,7 +10,6 @@ package flows
 // is joined to the phase before.
 
 import (
-	"strconv"
 	"strings"
 
 	"charm.land/lipgloss/v2"
@@ -30,9 +29,9 @@ func (s State) builderFieldRows(w int, sz boxSizes, e Env) []builderLine {
 
 	out := []builderLine{s.groupRow(p.T("flows.group_flow", "THE FLOW · what it is called and what it is for"), w)}
 
-	tpls := []string{"ninguna", "TDD Fuzz & PR", "TDD Cycle", "Security Audit", "Turbo Fix"}
 	out = append(out,
-		s.labelled(flowFieldTemplate, p.T("flows.field_template", "Template / Preset"), renderComboPills(tpls, s.template), w),
+		s.labelled(flowFieldTemplate, p.T("flows.field_template", "Template / Preset"),
+			s.dialRow(flowFieldTemplate, e), w),
 		s.labelled(flowFieldName, p.T("flows.field_flow_name", "Flow name"), s.typedValue(flowFieldName, s.flowName, e), w),
 		s.labelled(flowFieldDescription, p.T("flows.field_description", "Purpose"),
 			theme.Paint(theme.Dim).Render(p.T("flows.desc_hint", "one line, or several — shift+↵ for a new one")), w),
@@ -58,36 +57,14 @@ func (s State) builderFieldRows(w int, sz boxSizes, e Env) []builderLine {
 func (s State) phaseFieldRows(w int, sz boxSizes, e Env) []builderLine {
 	p := e.Words
 
-	var tabs []string
-
-	for i, ph := range s.phases {
-		label := strconv.Itoa(i+1) + "." + ph.Name
-		if ph.Loop != nil {
-			label += " ↻"
-		}
-
-		if i == s.activePhase {
-			tabs = append(tabs, theme.Paint(theme.Sel).Bold(true).Render(" ● "+label+" "))
-			continue
-		}
-
-		tabs = append(tabs, theme.Paint(theme.Dim).Render(" "+label+" "))
-	}
-
 	out := []builderLine{
-		s.labelled(flowFieldPhaseSelect, p.T("flows.field_editing_phase", "Editing phase"), strings.Join(tabs, " "), w),
+		s.labelled(flowFieldPhaseSelect, p.T("flows.field_editing_phase", "Editing phase"),
+			s.renderPhaseTabs(), w),
 		s.labelled(flowFieldPhaseName, p.T("flows.field_phase_name", "Phase name"), s.typedValue(flowFieldPhaseName, s.cur().Name, e), w),
 	}
 
-	no, yes := p.T("flows.repeat_no", "runs once"), p.T("flows.repeat_yes", "repeats ↻")
-
-	val := no
-	if s.looping() {
-		val = yes
-	}
-
 	out = append(out, s.labelled(flowFieldIsLoop, p.T("flows.field_is_loop", "Repeat until it passes"),
-		renderComboPills([]string{no, yes}, val), w))
+		s.dialRow(flowFieldIsLoop, e), w))
 
 	if !s.looping() {
 		return out
@@ -107,13 +84,13 @@ func (s State) engineFieldRows(w int, e Env) []builderLine {
 	effs, effLabels := e.Efforts(eng)
 
 	return []builderLine{
-		s.labelled(flowFieldEngine, p.T("flows.field_engine", "Engine"), renderComboPills(e.Engines(), eng), w),
+		s.labelled(flowFieldEngine, p.T("flows.field_engine", "Engine"), s.dialRow(flowFieldEngine, e), w),
 		s.labelled(flowFieldModel, p.T("flows.field_model", "Model"),
 			s.dialValue(flowFieldModel, mdls, mdlLabels, s.edited().Model, e), w),
 		s.labelled(flowFieldEffort, p.T("flows.field_effort", "Effort"),
 			s.dialValue(flowFieldEffort, effs, effLabels, s.edited().Effort, e), w),
 		s.labelled(flowFieldThinking, p.T("flows.field_thinking", "Thinking"),
-			renderComboPills([]string{"adaptive", "on", "off"}, cells.OrDef(s.edited().Thinking, "adaptive")), w),
+			s.dialRow(flowFieldThinking, e), w),
 	}
 }
 
@@ -121,23 +98,11 @@ func (s State) engineFieldRows(w int, e Env) []builderLine {
 func (s State) wiringFieldRows(w int, e Env) []builderLine {
 	p := e.Words
 
-	off, on := p.T("flows.feed_off", "starts fresh"), p.T("flows.feed_on", "takes the last output")
-
-	feed := off
-	if s.edited().FeedOutput {
-		feed = on
-	}
-
-	auto, human := p.T("flows.wait_auto", "carries on"), p.T("flows.wait_human", "wait (human)")
-
-	wait := auto
-	if s.cur().Wait {
-		wait = human
-	}
-
 	return []builderLine{
-		s.labelled(flowFieldFeedOutput, p.T("flows.field_feed_output", "Previous output"), renderComboPills([]string{off, on}, feed), w),
-		s.labelled(flowFieldWait, p.T("flows.field_wait", "When it ends"), renderComboPills([]string{auto, human}, wait), w),
+		s.labelled(flowFieldFeedOutput, p.T("flows.field_feed_output", "Previous output"),
+			s.dialRow(flowFieldFeedOutput, e), w),
+		s.labelled(flowFieldWait, p.T("flows.field_wait", "When it ends"),
+			s.dialRow(flowFieldWait, e), w),
 	}
 }
 
@@ -168,6 +133,18 @@ func (s State) labelled(field int, label, val string, w int) builderLine {
 	}
 
 	return builderLine{text: cells.Fit(mark+lbl+" "+val, w), field: field, phase: noPhase, pick: noPick}
+}
+
+// dialRow is one short dial drawn as its pills, read from the one place
+// that says what the dial offers — which is the same place the pointer
+// reads, so a click lands on the pill it is over.
+func (s State) dialRow(field int, e Env) string {
+	opts, current, ok := s.choices(field, e)
+	if !ok {
+		return ""
+	}
+
+	return renderChoices(opts, current)
 }
 
 // typedValue is a one-line text field: what it holds, with the caret after
