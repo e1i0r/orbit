@@ -2,8 +2,8 @@ package task
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
@@ -35,6 +35,19 @@ import (
 // not own, and `git worktree prune` by hand is the only remedy.
 func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow,
 	engines map[string]engine.Engine, g Gate, left ...Allowance,
+) error {
+	return RunFrom(ctx, s, t, f, engines, g, "", left...)
+}
+
+// RunFrom is Run beginning at one phase, with the phases before it left as
+// the record already has them.
+//
+// A second door and not a parameter on Run, the way StartWith is a second
+// door on Start: this is a retry of the part that did not work, and a
+// phase that ended well does not need doing again. Every other caller
+// walks the whole flow and should not have to say so.
+func RunFrom(ctx context.Context, s *store.Store, t Task, f flow.Flow,
+	engines map[string]engine.Engine, g Gate, from string, left ...Allowance,
 ) error {
 	// The run marker goes down before anything is written, and comes off on
 	// every way out of here. It is what lets any reader tell a phase still
@@ -112,7 +125,27 @@ func Run(ctx context.Context, s *store.Store, t Task, f flow.Flow,
 		on string
 	)
 
+	// begun is whether the walk has reached the phase a retry named. A
+	// run that named none begins at the first, which is every run but a
+	// retry.
+	begun := strings.TrimSpace(from) == ""
+
 	for i, p := range f.Phases {
+		// A phase before the one a retry asked for is not run and nothing
+		// is written for it. Elio's rule: a phase that ended well does not
+		// need doing again, and re-running it would spend money to
+		// reproduce work the record already holds. Its number is still
+		// i+1, so the phase that does run is [2/3] in the tree and not
+		// [1/1] — a retry is a second attempt at the same flow, not a
+		// shorter flow.
+		if !begun {
+			if !strings.EqualFold(p.Name, strings.TrimSpace(from)) {
+				continue
+			}
+
+			begun = true
+		}
+
 		// Every phase is put to the gate, not only the ones whose Wait says
 		// so; Gate says why. A gate that cannot read what it needs is a
 		// failure of the run, because a run that cannot be held is not the
@@ -300,26 +333,4 @@ func allowance(left []Allowance) Allowance {
 	}
 
 	return left[0]
-}
-
-// stopped writes down that a run was stopped from outside.
-func stopped(s *store.Store, t Task, phase string, out engine.Result, cause error) error {
-	_ = emit(s, t, phaseEnd(record.PhaseCancelled, phase, out, nil)) //nolint:errcheck
-
-	kind := record.TaskCancelled
-	if errors.Is(cause, context.DeadlineExceeded) {
-		kind = record.TaskTimedOut
-	}
-
-	_ = emit(s, t, record.Event{Kind: kind}) //nolint:errcheck
-
-	return fmt.Errorf("task %s, phase %q: %w", t.ID, phase, cause)
-}
-
-// failed writes down that the run stopped and why.
-func failed(s *store.Store, t Task, err error) error {
-	text, _ := captured(err.Error())
-	_ = emit(s, t, record.Event{Kind: record.TaskFailed, Text: text}) //nolint:errcheck
-
-	return err
 }

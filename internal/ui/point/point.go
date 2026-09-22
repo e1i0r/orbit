@@ -43,6 +43,7 @@ const (
 	ComposeInspectFlow
 	ComposeAction
 	ComposePaste
+	ComposeClear
 	DiffFile
 	DiffSelectToggle
 	Fold

@@ -2689,6 +2689,22 @@
       "source": "no quota source for {engine}",
       "value": "sin fuente de quota para {engine}"
     },
+    "compose.btn_clear": {
+      "source": "Clear (^U)",
+      "value": "Limpiar (^U)"
+    },
+    "key.retry_phase": {
+      "source": "run the failed phase again",
+      "value": "volver a correr la fase que falló"
+    },
+    "retry.asked": {
+      "source": "{phase} is being run again for {id}",
+      "value": "se está volviendo a correr {phase} de {id}"
+    },
+    "retry.nothing_wrong": {
+      "source": "no phase of this task went wrong, so there is nothing to run again",
+      "value": "ninguna fase de esta tarea falló, así que no hay nada que volver a correr"
+    },
     "set.decisions_unkeyed": {
       "source": "there is no {key} in the environment, so every gate still waits for you",
       "value": "no hay {key} en el entorno, así que cada puerta sigue esperándote"

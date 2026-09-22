@@ -49,6 +49,8 @@ func (s State) Click(t point.Target, e Env) (State, Out) {
 		if pasted := clip.Read(); pasted != "" {
 			return s.Type(pasted), Out{}
 		}
+	case point.ComposeClear:
+		return s.cleared(), Out{}
 	}
 
 	return s, Out{}
@@ -89,6 +91,8 @@ func (s State) Hit(x, y int, e Env) point.Target {
 	// so that row answers for it before it answers for the field.
 	case line == plan.boxTop && s.onComposePaste(x, e):
 		return point.Target{Kind: point.ComposePaste}
+	case line == plan.boxTop && s.onComposeClear(x, e):
+		return point.Target{Kind: point.ComposeClear}
 	case line == plan.boxTop, line == plan.boxBot:
 		return point.Target{Kind: point.ComposeField, Pane: boxField}
 	case line > plan.boxTop && line < plan.boxBot:

@@ -33,6 +33,7 @@ type Keys struct {
 
 	// Doing something to the run in front of you.
 	Pause, Resume, Skip, Cancel, Requeue    key.Binding
+	RetryPhase                              key.Binding
 	Take, Hand, Ask, MarkRead, Delete, Edit key.Binding
 
 	// The screens, and the switches that belong to no one task.
@@ -110,8 +111,13 @@ func New(p *words.Printer) Keys {
 		// s is beside r because the two answer the same question — the run
 		// is stopped in front of a phase, does that phase happen — and the
 		// letter is the word.
-		Skip:   binding("s", p.T("key.skip", "skip this phase"), "s"),
-		Cancel: binding("x", p.T("key.cancel", "cancel"), "x"),
+		Skip: binding("s", p.T("key.skip", "skip this phase"), "s"),
+		// ^R and not a letter: every letter a reader would reach for is
+		// taken, and the two nearest — r for resume and R for resolve
+		// comments — are both verbs somebody would be sorry to press by
+		// mistake on a task whose phase has just failed.
+		RetryPhase: binding("^R", p.T("key.retry_phase", "run the failed phase again"), "ctrl+r"),
+		Cancel:     binding("x", p.T("key.cancel", "cancel"), "x"),
 		// b for back. It is beside x because it is the other way a run
 		// stops, and it is not x because the two say different things about
 		// the work: x is finished with it, b is starting it over.

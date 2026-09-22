@@ -59,6 +59,11 @@ func runTask(ctx Context, args []string) error {
 	// what every other task still reads.
 	eng := fs.String("engine", "", "walk every phase with this engine instead of the ones the flow names")
 
+	// A retry of one phase. Everything before it is left as the record
+	// already has it, because a phase that ended well does not need doing
+	// again and re-running it would be paid for twice.
+	from := fs.String("from", "", "begin at this phase instead of the first, leaving the ones before it as they ran")
+
 	timeout := fs.Duration("timeout", 0, "stop the run after this long, e.g. 45m; zero waits for as long as it takes")
 	if err := parse(ctx, fs, args); err != nil {
 		return err
@@ -164,7 +169,7 @@ func runTask(ctx Context, args []string) error {
 
 	logger.Info("cli/run", "task %s: decision engine %s", id, keyed(ready))
 
-	if err := task.Run(running, s, t, f, engines, gate,
+	if err := task.RunFrom(running, s, t, f, engines, gate, *from,
 		allowancePort(quota.FromEnv())); err != nil {
 		return fmt.Errorf("task %s execution: %w", id, err)
 	}

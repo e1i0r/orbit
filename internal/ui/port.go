@@ -327,4 +327,9 @@ type Options struct {
 	// under a subscription has a window and no dollars, codex on an API key
 	// has dollars and no window, and a board can hold tasks of both.
 	Quota func(engine string) roster.Reading
+
+	// Retry runs a task again from one named phase, leaving the phases
+	// before it as the record already has them. It answers the pid, the
+	// way Start does, and a nil port is a window that cannot offer it.
+	Retry func(t view.Task, phase string, unread int) (int, error)
 }

@@ -12,11 +12,11 @@
                     Thorough multiphase workflow with human review gates and fix cycles. Best for
                     complex, mission-critical features where code quality and careful verification
                     are essential.
-❯  url:           ┌────────────────────────────────────────────────────────────┐   📋 Paste (^V)  
-                  │  https://linear.app/... or https://...atlassian.net/...    │
-                  │                                                            │
-                  │                                                            │
-                  └────────────────────────────────────────────────────────────┘
+❯  url:           ┌───────────────────────────────────────────┐   📋 Paste (^V)     ✕ Clear (^U)  
+                  │  https://linear.app/... or https://...at… │
+                  │                                           │
+                  │                                           │
+                  └───────────────────────────────────────────┘
 
   [ ↵ Save ]   [ ^R Save & Run ]   [ esc Cancel ]   ⚡ autopilot is ON: starts automatically [A to …
 

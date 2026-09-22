@@ -54,6 +54,19 @@ func Delivered(s *store.Store, t Task, verb, text string, failure error) error {
 		return fmt.Errorf("task %s: a delivery needs the verb it was asked under", t.ID)
 	}
 
+	// An engine that answered without doing the work is a failure that
+	// reported none, and this is the one place every delivery answer
+	// passes through. See promise.go: CREATE PR came back "Wait for
+	// background task task-50 to complete." and the tree drew a green
+	// tick over a pull request that did not exist.
+	//
+	// Whatever the engine actually said is kept either way. The engine's
+	// own error wins when there is one, because "the process died" is a
+	// better account than "there is no URL in what it said".
+	if failure == nil {
+		failure = unfinished(verb, text)
+	}
+
 	e := record.Event{
 		Kind: record.DeliverAnswered,
 		Text: strings.TrimSpace(text),

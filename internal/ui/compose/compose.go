@@ -62,8 +62,7 @@ type State struct {
 	// loop.
 	asked bool
 
-	// refused is why the last save did not happen. See submit.go.
-	refused string
+	refused string // why the last save did not happen; see submit.go
 
 	flows   []string
 	flowIdx int
@@ -141,9 +140,8 @@ func startsIn(hint string, e Env) string {
 
 // Key is one press.
 func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
-	// Whatever the last save was refused for, the reader is now doing
-	// something about it. A refusal that outlived the keystroke answering
-	// it would be the form arguing with a field that has already changed.
+	// A refusal that outlived the keystroke answering it would be the
+	// form arguing with a field that has already changed.
 	s.refused = ""
 
 	switch {
@@ -170,6 +168,8 @@ func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
 		return s.composeCopy(false), Out{}
 	case (msg.Code == 'x' || msg.Code == 'X') && msg.Mod&tea.ModCtrl != 0:
 		return s.composeCopy(true), Out{}
+	case (msg.Code == 'u' || msg.Code == 'U') && msg.Mod&tea.ModCtrl != 0:
+		return s.cleared(), Out{}
 	case (msg.Code == 'v' || msg.Code == 'V') && msg.Mod&tea.ModCtrl != 0:
 		if pasted := clip.Read(); pasted != "" {
 			return s.Type(pasted), Out{}

@@ -168,6 +168,7 @@ func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 		Words:    spoken,
 		Control:  controlPort(s),
 		Start:    startPort(s),
+		Retry:    retryPort(s),
 		MarkRead: markReadPort(s),
 		Requeue:  requeuePort(s),
 		RecordSupervisor: func(conversation, by, channel, message string) error {

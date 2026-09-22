@@ -48,7 +48,7 @@ func (s State) composeBox(field int, label, placeholder, hint string, in typing.
 	// one of them hanging below the other.
 	top := composeLabel(label, active) +
 		borderStyle.Render("┌"+strings.Repeat("─", boxW-2)+"┐") +
-		" " + composePasteTab(p)
+		" " + composePasteTab(p) + " " + composeClearTab(p)
 
 	indent := strings.Repeat(" ", composeLabelStart)
 	out := []string{cells.Fit(top, w)}
@@ -131,8 +131,22 @@ func composePasteTab(p *words.Printer) string {
 	return theme.Pill(" 📋 "+p.T("compose.btn_paste", "Paste (^V)")+" ", theme.PillInk, theme.PillPaste)
 }
 
+// composeClearTab empties the field it is drawn beside.
+//
+// Beside paste and not somewhere else, because the two are one gesture in
+// practice: a reader who pasted the wrong link wants the box empty and the
+// right one in it, and selecting a URL that has wrapped over two lines to
+// type over it is the fiddliest thing this form asks of anybody.
+//
+// PillClear is the paper it is already set on elsewhere — the designer
+// throws away what is written on the same grey — so a reader who has seen
+// one knows this one.
+func composeClearTab(p *words.Printer) string {
+	return theme.Pill(" ✕ "+p.T("compose.btn_clear", "Clear (^U)")+" ", theme.PillInk, theme.PillClear)
+}
+
 func composePasteRoom(p *words.Printer) int {
-	return lipgloss.Width(composePasteTab(p)) + 1
+	return lipgloss.Width(composePasteTab(p)) + lipgloss.Width(composeClearTab(p)) + 2
 }
 
 // unpainted is the box: what is typed into it is drawn as it was typed.

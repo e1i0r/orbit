@@ -63,6 +63,17 @@ func (s State) onComposePaste(x int, e Env) bool {
 	return x >= from && x < from+lipgloss.Width(composePasteTab(e.Words))
 }
 
+// onComposeClear is whether a column is over the clear button, which
+// follows the paste button with a cell between them. Its start is worked
+// out from the paste button's own width for the reason that one is: the
+// words on both are translated.
+func (s State) onComposeClear(x int, e Env) bool {
+	from := composeLabelStart + s.composeBoxWidth(e.Frame.Body.W, e) + 1 +
+		lipgloss.Width(composePasteTab(e.Words)) + 1
+
+	return x >= from && x < from+lipgloss.Width(composeClearTab(e.Words))
+}
+
 // caretAt is a click inside a field, as the place in the value it points
 // at. A click to the left of where the value starts is the start of it,
 // which is where a reader who lands on the label meant to be.

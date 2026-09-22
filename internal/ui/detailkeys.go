@@ -191,6 +191,8 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.verbOn(m.subject(), m.keys.Resume, "resume")
 	case key.Matches(k, m.keys.Skip):
 		return m.askSkip()
+	case key.Matches(k, m.keys.RetryPhase):
+		return m.retryPhase()
 	case key.Matches(k, m.keys.Ask):
 		return m.openNote(), nil
 	// Starting a run is offered on the task's own screen and not only on the

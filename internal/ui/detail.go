@@ -341,6 +341,14 @@ func (m Model) detailHints() []barHint {
 		out = append(out, hintFor(m.keys.Edit))
 	}
 
+	// Only when there is a phase to run again. A hint for a gesture that
+	// would answer "nothing went wrong" is a bar making a promise the
+	// keyboard does not keep, and this bar is already full at a hundred
+	// columns.
+	if _, can := m.canRetryPhase(); can {
+		out = append(out, hintFor(m.keys.RetryPhase))
+	}
+
 	return append(out, hint(m.keys.Up.Help().Key+m.keys.Down.Help().Key,
 		m.opts.Words.T("key.scroll", "scroll")))
 }
