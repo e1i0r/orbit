@@ -2689,6 +2689,10 @@
       "source": "no quota source for {engine}",
       "value": "sin fuente de quota para {engine}"
     },
+    "compose.nothing_to_paste": {
+      "source": "there is nothing in the clipboard to paste",
+      "value": "no hay nada en el portapapeles para pegar"
+    },
     "compose.btn_clear": {
       "source": "Clear (^U)",
       "value": "Limpiar (^U)"

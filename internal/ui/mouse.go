@@ -280,9 +280,14 @@ func (m Model) leftClick(t point.Target) (tea.Model, tea.Cmd) {
 		return m, nil
 	case point.DialogSwitch:
 		return m.flip(t.Field)
+	// Every target the form can answer. A kind left off this list is a
+	// button that is drawn, answers a hit, and does nothing when it is
+	// pressed — which is what happened to Clear the day it was added.
+	// TestEveryComposeTargetIsRouted keeps the list honest.
 	case point.ComposeTab, point.ComposeFlowChoice,
 		point.ComposeNewFlow, point.ComposeInspectFlow,
-		point.ComposeField, point.ComposeCaret, point.ComposeAction, point.ComposePaste:
+		point.ComposeField, point.ComposeCaret, point.ComposeAction,
+		point.ComposePaste, point.ComposeClear:
 		return m.handleComposeClick(t)
 	case point.Command:
 		return m.chooseCommand(t.Key)
