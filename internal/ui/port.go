@@ -328,6 +328,12 @@ type Options struct {
 	// has dollars and no window, and a board can hold tasks of both.
 	Quota func(engine string) roster.Reading
 
+	// Stop signals the process holding a task rather than leaving a word
+	// for it to read at its next phase boundary, which on a phase that has
+	// just started is minutes away. It is what `x` uses; a nil port falls
+	// back to the word.
+	Stop func(t view.Task) error
+
 	// Retry runs a task again from one named phase, leaving the phases
 	// before it as the record already has them. It answers the pid, the
 	// way Start does, and a nil port is a window that cannot offer it.
