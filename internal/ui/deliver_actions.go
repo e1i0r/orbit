@@ -315,10 +315,10 @@ func (m Model) closePR() (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	p := m.opts.Words
-	m = m.asked(ask{TaskID: hand.ID, Verb: "CLOSE PR", By: "pr close", Cmd: "pr close"})
-	m = m.say(p.T("deliver.closing_pr", "closing pull request for {id}...", about("id", hand.ID)))
-
-	return m.runWatched(Command{Name: "pr"},
-		append([]string{"close"}, repoArgs(hand.RepoPath, hand.ID)...))
+	// The reason first. A pull request is closed on somebody else's
+	// repository and the comment left behind is the whole of what a
+	// reader outside Orbit will ever know about it — "Closed from Orbit."
+	// answers who and not why. The box collects it and submitNote runs
+	// the command, so this gesture is one keystroke plus a sentence.
+	return m.openMessage("pr", verbClose, hand.ID), nil
 }

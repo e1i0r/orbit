@@ -108,6 +108,15 @@ func (m Model) boxWords() boxWords {
 	p := m.opts.Words
 	id := m.note.taskID
 
+	if m.note.child == verbClose {
+		return boxWords{
+			title:       p.T("close_pr.dialog_title", "close the pull request for {id}", about("id", id)),
+			prompt:      p.T("close_pr.prompt", "why"),
+			placeholder: p.T("close_pr.placeholder", "why it is being closed — this is the comment it is closed with..."),
+			actions:     p.T("close_pr.actions", "↵ close it · esc cancel · ^V paste"),
+		}
+	}
+
 	if m.note.child == verbDirect {
 		return boxWords{
 			title:       p.T("direct.dialog_title", "redirect {id}", about("id", id)),

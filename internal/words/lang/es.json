@@ -1747,10 +1747,6 @@
       "source": "merging pull request for {id}...",
       "value": "fusionando pull request para {id}..."
     },
-    "deliver.closing_pr": {
-      "source": "closing pull request for {id}...",
-      "value": "cerrando pull request para {id}..."
-    },
     "deliver.checks_asked": {
       "source": "the supervisor was asked to make {id}'s checks pass",
       "value": "se le pidió al supervisor que los checks de {id} pasen"
@@ -2688,6 +2684,42 @@
     "status.quota_unread": {
       "source": "no quota source for {engine}",
       "value": "sin fuente de quota para {engine}"
+    },
+    "flow.hand_retry": {
+      "source": "press {key} to ask for it again",
+      "value": "presiona {key} para pedirlo de nuevo"
+    },
+    "close_pr.dialog_title": {
+      "source": "close the pull request for {id}",
+      "value": "cerrar el pull request de {id}"
+    },
+    "close_pr.prompt": {
+      "source": "why",
+      "value": "por qué"
+    },
+    "close_pr.placeholder": {
+      "source": "why it is being closed — this is the comment it is closed with...",
+      "value": "por qué se cierra: este es el comentario con el que se cierra..."
+    },
+    "close_pr.actions": {
+      "source": "↵ close it · esc cancel · ^V paste",
+      "value": "↵ cerrarlo · esc cancelar · ^V pegar"
+    },
+    "close_pr.why_empty": {
+      "source": "say why it is being closed; the reason is the comment that is left",
+      "value": "dí por qué se cierra: la razón es el comentario que queda"
+    },
+    "close_pr.closing_with_reason": {
+      "source": "closing the pull request for {id}",
+      "value": "cerrando el pull request de {id}"
+    },
+    "merge.checks_red": {
+      "source": "{id} was not merged: {checks} failed on GitHub — fix them with the checks key, or merge it there yourself if you mean to override them",
+      "value": "{id} no se mergeó: {checks} falló en GitHub. Arréglalos con la tecla de checks, o mergéalo allá si quieres pasarles por encima"
+    },
+    "merge.checks_pending": {
+      "source": "{id} was not merged: {checks} still running on GitHub — try again when they land",
+      "value": "{id} no se mergeó: {checks} sigue corriendo en GitHub. Inténtalo cuando terminen"
     },
     "compose.nothing_to_paste": {
       "source": "there is nothing in the clipboard to paste",

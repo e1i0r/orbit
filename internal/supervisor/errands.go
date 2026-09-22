@@ -26,6 +26,7 @@ These hold whatever you find:
 - Do not merge, close or reopen the pull request. Those are the operator's own keys.
 - If what you were asked for turns out to be the wrong thing to do, stop and say why. A refusal with a reason is a good answer; a change made to look obedient is not.
 - Everything you write into the repository — commits, pull request bodies, review replies — is in English.
+- Run every command in the foreground and wait for it. Do not put a build, a test run or a push into a background job and answer while it is still going: you get one turn, nothing will ask you again, and the operator is told what you said. "I have launched the checks and am waiting" is not an answer, and Orbit records it as a failure.
 
 Finish in three lines at most: what you found, what you did, and where that leaves the pull request.
 
@@ -35,14 +36,16 @@ Now do this:
 // The five bodies. Each one is the verb's caption spelled out far enough
 // that two runs of it do the same thing.
 const (
-	CreatePR = `Open the pull request for this task.
+	CreatePR = `Open the pull request for this task: run the repository's checks, push, and open it.
 
 1. Check first whether one is already open for the branch (gh pr list --head <branch>). If there is, say so and stop: you were asked to create one, not to update one.
-2. Read the repository's own pull request template — .github/pull_request_template.md, .github/PULL_REQUEST_TEMPLATE/, or whatever that repository keeps. If there is one, fill in every section it asks for, with facts taken from the task and from the diff. A template returned with its headings and no answers is worse than no template.
-3. If there is none, write a body that says: what the task asked for, what changed and why, and how a reviewer can check it.
-4. The title is one line in the imperative, naming what changed. Not the task id on its own.
-5. Push the branch and open the pull request against the repository's default branch.
-6. Answer with the URL.`
+2. Run the repository's own checks, in the foreground, and wait for them to finish. Whatever that repository uses — make check, the test target its CI runs, the script its contributing guide names. A pull request opened over a red tree is a review somebody starts and abandons.
+3. If they fail, stop and say what failed. Do not open the pull request, and do not fix it: fixing the checks is its own verb and the operator decides when to spend it.
+4. Read the repository's own pull request template — .github/pull_request_template.md, .github/PULL_REQUEST_TEMPLATE/, or whatever that repository keeps. If there is one, fill in every section it asks for, with facts taken from the task and from the diff. A template returned with its headings and no answers is worse than no template.
+5. If there is none, write a body that says: what the task asked for, what changed and why, and how a reviewer can check it.
+6. The title is one line in the imperative, naming what changed. Not the task id on its own.
+7. Push the branch and open the pull request against the repository's default branch.
+8. Answer with the URL. That is the last thing you do, and the answer is not finished without it.`
 
 	UpdatePR = `Bring this task's branch up to date with the branch it will be merged into.
 

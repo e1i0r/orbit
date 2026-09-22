@@ -66,8 +66,30 @@ func TestTheGhCommandsRefuseInTheReadersLanguage(t *testing.T) {
 func TestTheClosingCommentIsInTheReadersLanguage(t *testing.T) {
 	t.Setenv("ORBIT_HOME", t.TempDir())
 
-	english := closingComment(Context{Words: words.For("en")})
-	if spanish := closingComment(Context{Words: words.For("es")}); spanish == english {
+	english := closingComment(Context{Words: words.For("en")}, "")
+	if spanish := closingComment(Context{Words: words.For("es")}, ""); spanish == english {
 		t.Errorf("both readers leave %q on the pull request", english)
+	}
+}
+
+// TestTheReasonIsTheWholeComment.
+//
+// A pull request closed on somebody else's repository leaves one sentence
+// behind, and "Closed from Orbit." says who and not why. The cockpit asks
+// for the reason now; the canned line is what a script that did not ask
+// still gets.
+func TestTheReasonIsTheWholeComment(t *testing.T) {
+	ctx := Context{Words: words.For("en")}
+
+	if got := closingComment(ctx, "superseded by #184"); got != "superseded by #184" {
+		t.Errorf("the comment is %q, want the reason the operator gave", got)
+	}
+
+	if got := closingComment(ctx, "   "); got == "   " {
+		t.Error("whitespace was taken as a reason")
+	}
+
+	if closingComment(ctx, "") == "" {
+		t.Error("a close with no reason leaves no comment at all")
 	}
 }

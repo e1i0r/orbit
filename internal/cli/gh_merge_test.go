@@ -65,7 +65,7 @@ func TestClosingCarriesTheCommentToGh(t *testing.T) {
 		t.Errorf("gh was asked to close %q, want PAY-1's own branch", closed)
 	}
 
-	if comment := flagValue(t, argv, "--comment"); comment != closingComment(Context{}) {
+	if comment := flagValue(t, argv, "--comment"); comment != closingComment(Context{}, "") {
 		t.Errorf("gh was left the comment %q", comment)
 	}
 }

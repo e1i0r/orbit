@@ -86,8 +86,12 @@ func unfinished(verb, text string) error {
 	low := strings.ToLower(said)
 	for _, p := range promises {
 		if strings.Contains(low, p) {
+			// Not quoted back. Whatever it said is written into the same
+			// event and drawn one line under this on the task's tree, so
+			// a quotation here is the answer twice, cut short the first
+			// time.
 			return errors.New("it said it had started the work and would finish later, " +
-				"which is not the same as having done it: " + quoted(said))
+				"which is not the same as having done it")
 		}
 	}
 
@@ -97,17 +101,4 @@ func unfinished(verb, text string) error {
 	}
 
 	return nil
-}
-
-// quoted is enough of an answer to recognise it by, cut to what fits on
-// one row of a tree.
-func quoted(said string) string {
-	line := firstLine(said)
-
-	const most = 120
-	if runes := []rune(line); len(runes) > most {
-		return string(runes[:most]) + "…"
-	}
-
-	return line
 }

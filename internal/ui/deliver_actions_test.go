@@ -82,9 +82,21 @@ func TestDeliverActionsSelectedTask(t *testing.T) {
 		t.Errorf("mergePR on selected task should return non-nil cmd")
 	}
 
+	// Closing asks why first, so it opens the box rather than running
+	// anything: the reason is the comment the pull request is closed with,
+	// and it is the whole of what a reader outside Orbit ever sees.
 	nextM, cmd = m.closePR()
-	if nextM == nil || cmd == nil {
-		t.Errorf("closePR on selected task should return non-nil cmd")
+	if nextM == nil {
+		t.Fatal("closePR returned no model")
+	}
+
+	if cmd != nil {
+		t.Errorf("closePR ran a command before asking why: %v", cmd)
+	}
+
+	asked := asModel(t, nextM)
+	if !asked.note.open || asked.note.child != verbClose {
+		t.Errorf("closePR left note=%+v, want the why box open", asked.note)
 	}
 }
 

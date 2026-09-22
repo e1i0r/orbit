@@ -188,7 +188,7 @@ var doors = map[string][]string{
 	"internal/quota":   {"billing.go", "codex.go", "quota.go", "source.go"},
 	"internal/repo": {
 		"cochange.go", "compare.go", "customs.go", "discover.go", "enforced.go", "impact.go",
-		"neighbours.go", "offers.go", "repo.go", "review.go", "workspace.go", "worktree.go",
+		"neighbours.go", "offers.go", "prchecks.go", "repo.go", "review.go", "workspace.go", "worktree.go",
 		"worktree_deliver.go", "worktree_diff.go", "worktree_file.go", "worktree_tree.go",
 	},
 	// Two doors. web.go is the server and the ports built off the board;
