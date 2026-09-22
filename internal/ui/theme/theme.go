@@ -51,7 +51,7 @@ var themePalettes = map[string]Palette{
 		OK:       "#16B798",
 		Bad:      "#EF4444",
 		Warn:     "#F59E0B",
-		Live:     "#2DD4BF",
+		Live:     "#A78BFA",
 		Dim:      "#64748B",
 		SelText:  "#FFFFFF",
 		SelBlock: "#0F766E",
@@ -160,7 +160,7 @@ type Ink struct{ Fg, Bg string }
 // after changing the theme.
 var (
 	InkToDo     = Ink{Fg: "#38BDF8", Bg: "#0C4A6E"}
-	InkRunning  = Ink{Fg: "#2DD4BF", Bg: "#134E4A"}
+	InkRunning  = Ink{Fg: "#A78BFA", Bg: "#4C1D95"}
 	InkNeedsYou = Ink{Fg: "#FBBF24", Bg: "#78350F"}
 	InkDone     = Ink{Fg: "#4ADE80", Bg: "#14532D"}
 
