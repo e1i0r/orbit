@@ -78,6 +78,21 @@ diff --git a/b.go b/b.go
 		t.Errorf("expected cursor=1, got %d", m.diffFileCursor)
 	}
 
+	// Down from the last file comes round to the first, and up goes back.
+	for _, step := range []struct {
+		key  string
+		want int
+	}{{"down", 0}, {"up", 1}} {
+		res, _ = m.handleDiffFilePickerKey(keystroke(step.key))
+		if m, ok = res.(Model); !ok {
+			t.Fatal("expected Model from handleDiffFilePickerKey")
+		}
+
+		if m.diffFileCursor != step.want {
+			t.Errorf("%s left the cursor on %d, want %d", step.key, m.diffFileCursor, step.want)
+		}
+	}
+
 	// Space to collapse
 	res, _ = m.handleDiffFilePickerKey(keystroke("space"))
 	if m, ok = res.(Model); !ok {
