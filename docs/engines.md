@@ -31,7 +31,7 @@ fails depending on where a different dial is pointing.
 
 ## OpenCode
 
-Runs `opencode run`. Model ids carry the `opencode/` prefix; the dial shows them
+Runs `opencode run`. Model ids carry the `opencode/` prefix, and the dial shows them
 without it.
 
 | | |
@@ -48,11 +48,11 @@ on the machine answers to `antigravity`.
 
 | | |
 | --- | --- |
-| **Models** | `gemini-3.8-flash`, `gemini-3.7-flash`, `gemini-3.6-flash` and `gemini-3.1-pro`, each in the reasoning tiers Gemini names inside the model; plus `claude-sonnet-4-6`, `claude-opus-4-6-thinking`, `gpt-oss-120b-medium` |
+| **Models** | `gemini-3.8-flash`, `gemini-3.7-flash`, `gemini-3.6-flash` and `gemini-3.1-pro`, each in the reasoning tiers Gemini names inside the model, plus `claude-sonnet-4-6`, `claude-opus-4-6-thinking`, `gpt-oss-120b-medium` |
 | **Reasoning effort** | `low`, `medium`, `high` |
 
-Gemini names its reasoning inside the model — a family appears three times, high,
-medium and low — while `--effort` says the same thing beside it. Both are offered
+Gemini names its reasoning inside the model, so a family appears three times,
+high, medium and low, while `--effort` says the same thing beside it. Both are offered
 as they are printed, because what a dial shows and what the binary is told have
 to be the same string. Refresh the catalogue with `agy models`.
 
@@ -62,8 +62,8 @@ effort. A second dial would be a second name for the one beside it.
 
 **No transcript.** agy keeps each conversation in a SQLite database of its own
 whose steps are protobuf blobs with no schema shipped. Which conversation belongs
-to a worktree is answerable; what was said in it is not. Orbit says so rather
-than guessing — walking that wire format field by field would be a guess written
+to a worktree is answerable. What was said in it is not. Orbit says so rather
+than guessing. Walking that wire format field by field would be a guess written
 into a task's record as if it were an account of the session.
 
 ## Thinking
@@ -88,7 +88,7 @@ posture the record would describe wrongly.
 
 **Orbit's own tools are granted to every posture**, including the one that
 asks for nothing. They do not reach the checkout: they are the phase asking
-Orbit about Orbit, and [what a model may ask for](cli.md) is already curated —
+Orbit about Orbit, and [what a model may ask for](cli.md) is already curated,
 no pull request, no merge, no approving a library, no terminal handed over. A
 read-only phase telling Orbit something true about the code it just read is
 the posture working rather than a hole in it.

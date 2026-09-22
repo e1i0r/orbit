@@ -40,8 +40,8 @@ the window closes.
 ## How it learns
 
 Down the side of the thread is the column of what Orbit knows. A conclusion
-the supervisor reaches — this repository owns no migrations, this check is
-flaky, that directory is money — goes in as a fact with its scope and its
+the supervisor reaches, whether this repository owns no migrations, this
+check is flaky or that directory is money, goes in as a fact with its scope and its
 source, and reaches the next run's prompt before it works.
 
 Which means the conversation is not chat. What you say in it becomes something

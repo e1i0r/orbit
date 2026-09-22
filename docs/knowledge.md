@@ -7,7 +7,7 @@ refuse the work at the gate when you give them a command. `K` in the cockpit.
 
 ## The screen
 
-`K` in the cockpit — the Brain — is every rule Orbit holds, across every
+`K` in the cockpit opens the Brain: every rule Orbit holds, across every
 repository on the board. It is the board's own shape: bands that say what a
 rule is doing, and one line a rule.
 
@@ -37,9 +37,8 @@ rule is doing, and one line a rule.
 Five states and one set of words for them. They are adjectives and not
 verbs: a state is where a rule ended up because of something somebody did to
 it, so the word says how it stands rather than what it is in the middle of
-doing. **Pending** is a question — a
-sentence nobody has answered, or a rule that stopped you and is waiting to
-be decided about. **Blocks** and **says** are the two things a rule that is
+doing. **Pending** is a question. A sentence nobody has answered, or a rule that
+stopped you and is waiting to be decided about. **Blocks** and **says** are the two things a rule that is
 applying can do. **Paused** and **off** are the two ways it can not be.
 
 The same word is on the rule's own screen, in the card that says where it
@@ -47,7 +46,7 @@ stands: a screen that said "told to nobody" over a rule whose card said
 "switched off" was two vocabularies for one fact.
 
 **The band is the answer**, not a column. A reader opens this screen with one
-question — is there anything here for me — and two columns saying "paused"
+question, is there anything here for me, and two columns saying "paused"
 and "no check" made them do the sorting themselves.
 
 `↑↓` walk it, the wheel scrolls it, a click puts the cursor on a rule and a
@@ -99,12 +98,12 @@ undone.
 Switching a rule off and losing the record that it existed are different
 things, and only the first is what you usually want: a rule you decided and
 stopped wanting stays where it is, nothing is told it, and what it put you
-through is still readable. Forgetting is for the other case — a duplicate of
+through is still readable. Forgetting is for the other case, a duplicate of
 one already there, a test rule, one that came out wrong. Leaving those in the
 list for ever is a screen that fills up with things nobody meant.
 
 **What decides it is the record, not an opinion.** A rule it has anything to
-say about — it stopped work, you paused it, you reworded it, you moved it —
+say about. It stopped work, you paused it, you reworded it, you moved it,
 cannot be forgotten, and the key is not offered on it at all. A control that
 says no is a control somebody goes looking for a way to force.
 
@@ -123,7 +122,7 @@ orbit rules forget -rule never-log-a-card-number
 
 There is no count of how often it has been told, and there was one for a
 while. It was never incremented, so every rule read `hits 0` whatever it had
-done — but a real number would not have helped either: a rule that works
+done. A real number would not have helped either: a rule that works
 perfectly never stops anything, so a count of nothing means two opposite
 things and no number tells them apart. What the card says instead is what the
 rule has put you through, in sentences.
@@ -156,20 +155,21 @@ of each row beside it with the one in force lit.
 
 **The options are real.** Where a rule applies is picked from the folders the
 checkout actually has, and the check from the commands its Makefile already
-runs — so filing a rule is choosing rather than remembering a path and
+runs, so filing a rule is choosing rather than remembering a path and
 spelling it right. Typing is still there for anything neither offers.
 
 **The gate is a shortcut over the check**, and not a switch of its own. What
 decides whether a rule blocks work is whether it has a command that answers
-yes or no, so a switch beside the command could disagree with it — and a
+yes or no, so a switch beside the command could disagree with it, and a
 check typed under a switch left off would be a gate somebody wrote and Orbit
 threw away without saying so.
 
 ## Why not the model's memory
 
 The model forgets between sessions, and forgets when you swap it for another
-one. Every CLI keeps its own notes in its own file — `CLAUDE.md`, `AGENTS.md`
-— and each of those is a silo that empties the day the engine changes.
+one. Every CLI keeps its own notes in its own file, `CLAUDE.md`,
+`AGENTS.md`, and each of those is a silo that empties the day the engine
+changes.
 
 What Orbit knows is Orbit's, kept outside all of them. Change the engine and
 it still knows that the ledger only appends.
@@ -197,15 +197,15 @@ annoyed you once.
 
 **You say it.** Tell the supervisor *"never push a pull request without the
 tests passing"* and Orbit notices the sentence was a rule and offers it back.
-It notices by shape — a hand-written list of openings in two languages — not
+It notices by shape, a hand-written list of openings in two languages, not
 by asking a model, so it costs nothing and never surprises anybody.
 
 **A model finds it.** An agent that hits a wall mid-task offers what it found
-through `orbit_learn`. It offers; it does not write. One flow, and not two: a
+through `orbit_learn`. It offers, and does not write. One flow, and not two: a
 rule that holds for you and not for the model is not a rule.
 
 **You keep saying it.** The rules you mean to lay down you type. The other
-half is what you would never think to say because you do not know you do it —
+half is what you would never think to say because you do not know you do it.
 "add fuzz testing" at six tasks in a row is a rule nobody ever enunciated.
 Orbit groups what you repeat, and a cheap model writes the rule in your words:
 
@@ -215,7 +215,7 @@ orbit rules draft -with claude        # and the rule it amounts to
 ```
 
 **The repository already refuses it.** Whatever a pull request has to pass is,
-by definition, what the project does not let through — and it is the one
+by definition, what the project does not let through, and it is the one
 source that brings a rule **with its gate already written**:
 
 ```bash
@@ -230,8 +230,8 @@ make check                         make check has to pass
 
 Every other source brings a sentence and leaves you to decide whether it
 deserves a gate and what the gate would run. Here the command exists and has
-been refusing work for years; the only thing missing was Orbit knowing about
-it. So these arrive with `stops` and their command already set — and still
+been refusing work for years, and the only thing missing was Orbit knowing about
+it. So these arrive with `stops` and their command already set, and still
 wait in the tray, because a project running something is not the same as
 wanting Orbit to send work back over it.
 
@@ -239,15 +239,16 @@ Three readings, strongest first and deduplicated by command:
 
 | | the claim |
 | --- | --- |
-| `.github/workflows/` | what a pull request has to pass. The strongest there is: a team that stopped meaning it would have a red branch. A workflow nothing goes through — a release, a schedule — brings nothing. |
+| `.github/workflows/` | what a pull request has to pass. The strongest there is: a team that stopped meaning it would have a red branch. A workflow nothing goes through, a release or a schedule, brings nothing. |
 | `.pre-commit-config.yaml`, `.husky/pre-commit`, `lefthook.yml` | what runs before a commit lands. `.git/hooks` is left alone on purpose: it does not travel, and a rule about a hook only your machine has refuses work for everybody who clones the project and has nothing to run. |
-| `.golangci.yml`, `ruff.toml`, `.eslintrc*`, `.rubocop.yml`, `biome.json` | what the project is configured to lint with. The weakest: a file saying how a tool is set up does not say anything runs it — and when something does, the reading above already brought that command. |
+| `.golangci.yml`, `ruff.toml`, `.eslintrc*`, `.rubocop.yml`, `biome.json` | what the project is configured to lint with. The weakest: a file saying how a tool is set up does not say anything runs it, and when something does, the reading above already brought that command. |
 
 It costs nothing and asks no model: these files either parse or they do not.
 
 **The project already said it.** A repository with two years behind it has half
-of this written down — the CONTRIBUTING, the README, and the notes each engine
-keeps in its own file — and its commits say which of those are still true:
+of this written down: the CONTRIBUTING, the README, and the notes each
+engine keeps in its own file. Its commits say which of those are still
+true:
 
 ```bash
 orbit rules read -with claude
@@ -264,7 +265,7 @@ Every rule from a document points at **the line it came from**, and one the
 model cannot point at a line for is thrown away: asked to summarise two years
 of CONTRIBUTING, a model will produce plausible rules nobody ever wrote. Every
 rule from the history carries **the count that backs it**, and a rule the file
-asks for that the commits contradict is not offered at all — a sentence nobody
+asks for that the commits contradict is not offered at all, a sentence nobody
 has held to for a year is not a rule.
 
 It brings few and good rather than everything it can find. Forty weak offers is
@@ -272,8 +273,8 @@ a tray you stop opening, and that would take the other three sources with it.
 
 ## The tray
 
-`orbit rules` is the one question you have when you sit down — what do I have
-to decide — answered with both halves of it:
+`orbit rules` is the one question you have when you sit down, what do I
+have to decide, answered with both halves of it:
 
 ```
   1  2026-09-13 18:52  ACME-1 · model  internal/db  the migrations are generated
@@ -282,7 +283,7 @@ e2dada18 acme                 coverage stays above 90%
          the repo has never been past 80, we are fixing that first
 ```
 
-The numbered ones are sentences nobody has answered; the named ones are rules
+The numbered ones are sentences nobody has answered. The named ones are rules
 that were sent to be looked at again.
 
 ```bash
@@ -309,7 +310,7 @@ the migrations are generated, never hand-edited
 
 ### Its name
 
-Coined once, when Orbit first writes it, and never again — not by correcting
+Coined once, when Orbit first writes it, and never again. Not by correcting
 the sentence, not by moving the place, not by turning it off. Everything else
 about a rule can change, and the file is named after what it says, so without
 this nothing that comes after could tell it was the same rule.
@@ -328,11 +329,11 @@ every repo          "PRs are written in English"
 a language          "in Go, never discard an error with _"
 a repository        "this service owns no migrations"
 a directory         "everything under billing/ is money; round half to even"
-a file              "schema.sql is generated — edit the generator"
+a file              "schema.sql is generated, edit the generator"
 a symbol            "Charge() is called from the webhook and must stay idempotent"
 ```
 
-Two of them — everything, and a language — are not paths at all, so they cut
+Two of them, everything and a language, are not paths at all, so they cut
 across the chain instead of hanging from it.
 
 A rule said at a run **arrives knowing where the work was**: Orbit sees which
@@ -348,7 +349,7 @@ wins over that, and `-in .` is how you say the whole checkout.
 | `docs` | the project already said it, with the file and the line |
 | `history` | the commits say so, with the count |
 | `gates` | the checkout already refuses work over it, with the file and the command |
-| `code` | read off the map — regenerated rather than stored |
+| `code` | read off the map, regenerated rather than stored |
 
 A sentence in the agent's context that nobody can trace is indistinguishable
 from one the model made up, which is the whole point of keeping this outside
@@ -360,7 +361,7 @@ A rule either says something before the work, or refuses it.
 
 Refusing needs something that answers yes or no without an opinion in it: a
 command, a pattern over the diff, a test that runs. A rule that asks to stop
-and brings no check would never fire while reading as though it would — so it
+and brings no check would never fire while reading as though it would, so it
 only says its sentence, and the screen calls it `no check` rather than
 letting it sit in the list looking like a gate.
 
@@ -373,8 +374,8 @@ something nobody agreed to.
 | | in the prompt? |
 | --- | --- |
 | **active** | yes |
-| **paused** — stopped by you, with a reason written down | no |
-| **off** — you decided against it. It stays, and stops being told. | no |
+| **paused** | stopped by you, with a reason written down | no |
+| **off** | you decided against it. It stays, and stops being told. | no |
 
 Active says nothing in the header: it is the ordinary case, and a line on every
 file is a line somebody learns to stop reading.
@@ -384,9 +385,9 @@ file is a line somebody learns to stop reading.
 You are in the middle of something else. Two things are cheap and reversible,
 and nothing else is offered:
 
-- **skip it** — `s` on the task, or `orbit task skip`. You get past this once
+- **skip it.** `s` on the task, or `orbit task skip`. You get past this once
   and the rule stays on.
-- **pause it** — `p` on the knowledge screen, or `orbit rules pause`. It stops
+- **pause it.** `p` on the knowledge screen, or `orbit rules pause`. It stops
   applying, and you say what for.
 
 Either one sends the rule to be looked at again, **the first time**. Nobody
@@ -417,14 +418,14 @@ $ orbit rules review -rule 875c38ec
   you paused it on 9 September: the repo has never been past 80
 ```
 
-**There is no score.** A rule that works perfectly never stops anything — the
-model reads it and obeys — so "it stopped the work zero times" means two
+**There is no score.** A rule that works perfectly never stops anything,
+because the model reads it and obeys, so "it stopped the work zero times" means two
 opposite things and no number tells them apart. A rule is good until it annoys
 you: the silence is the good case and is not measured, and what is written down
 is the friction.
 
 And there is a case no score would have understood: you asked for 90% coverage
-and the repository has never been past 80. The rule is not wrong — it arrived
+and the repository has never been past 80. The rule is not wrong. It arrived
 early. Only you know that, which is why this shows and does not decide.
 
 Four decisions, here and only here:
@@ -437,7 +438,7 @@ orbit rules resume -rule 875c38ec                      # have it apply again
 ```
 
 **Narrowing is the one that was almost always wanted.** A rule that annoys you
-in `docs` and earns its keep in `payments` is not a rule to switch off — it is
+in `docs` and earns its keep in `payments` is not a rule to switch off. It is
 a rule about `payments` that was written too wide, and until it could be moved
 the only answer was to lose it.
 
@@ -454,7 +455,7 @@ decided rather than incidental:
 1. **Every rule a gate enforces stays.** Those are the ones that send the
    work back. A phase that never read one walks into it, and then the run
    costs an attempt to learn something the prompt could have said.
-2. **Then the ones closest to the code being worked in** — the file, then the
+2. **Then the ones closest to the code being worked in:** the file, then the
    directory, then the checkout, then the language, then everything.
 
 What is kept is still written widest first, because the agent reads them in
@@ -462,14 +463,14 @@ order and the narrowest rule has to be the last thing it reads.
 
 **And the prompt says it was cut**, with the number. A prompt that quietly
 dropped half of what Orbit knows would be one that claims to be the whole of
-it — an agent told the list is short can ask for the rest; an agent told
+it. An agent told the list is short can ask for the rest. An agent told
 nothing cannot know there was anything to ask about.
 
 This is one of the few things in Orbit that grows on its own: it learns four
 ways and keeps everything it is told. Without a ceiling, every phase of every
 task pays for the whole store in tokens before it reads a line of code, and
 the rules at the end of a long list are the ones a model with a full context
-stops looking at — silently.
+stops looking at, silently.
 
 ## Where all of this lives
 
@@ -482,8 +483,8 @@ Two places, and the question is one: **what does it apply to?**
 | the record | what every rule has been through. |
 
 **Nothing Orbit writes reaches your repository.** A repository-scoped rule
-lives in a folder inside the checkout, but that whole folder — rules and
-decision copies alike — is in git's `info/exclude`, so it is never staged and
+lives in a folder inside the checkout, and that whole folder, rules and
+decision copies alike, is in git's `info/exclude`, so it is never staged and
 never pushed. The checkout is where the rule is *filed*, not a way of
 shipping it to anyone.
 
@@ -492,8 +493,8 @@ reads the repository that is there rather than leaving things in it. A
 project that wants these rules shared commits them on purpose, which is a
 decision somebody makes and not one Orbit makes for them.
 
-The form used to say the opposite — that a rule filed against a checkout
-"travels with it, so whoever clones the project gets it" — and it never did.
+The form used to say the opposite: that a rule filed against a checkout
+"travels with it, so whoever clones the project gets it". It never did.
 The sentence has been corrected rather than the behaviour.
 
 A rule's file says what is true about it today. What it has been through only
@@ -501,7 +502,7 @@ ever grows, so it is in SQLite: a history written into the file would leave a
 diff in your checkout every time a gate ran.
 
 Two sources and one story. What you did to a rule is written down when you do
-it; **what the rule did is already in the task's own record**, because a gate
+it. **What the rule did is already in the task's own record**, because a gate
 that refuses work writes `gate.failed` with the rule's name on it. Keeping a
 second copy would be a write on every failing gate of every run, held in two
 places and wrong in one of them the first time something went half way.
@@ -528,8 +529,8 @@ rule opened with its figures and its friction, and the form with the
 checkout's own folders and the Makefile's own targets in it.
 
 It is the same verbs underneath. Every gesture on the page is `POST
-/api/do/rules/<verb>` or `GET /api/read/rules/<verb>` — the paths are the
-names — so the browser, the cockpit and the command line cannot drift in what
+/api/do/rules/<verb>` or `GET /api/read/rules/<verb>`. The paths are the
+names, so the browser, the cockpit and the command line cannot drift in what
 pausing a rule means or in what the record says happened.
 
 A rule reaches the page whole: its name, its sentence, where it reaches, the
@@ -538,7 +539,7 @@ for, and the one word for where it stands. A page handed less than that could
 list a rule and not act on it.
 
 **A verb no page names is a verb nobody can do in a browser.** That is
-checked, in `internal/arch`, against the declaration — and the reasons the
+checked, in `internal/arch`, against the declaration, and the reasons the
 twelve exceptions are exceptions are written down beside them. Routing every
 verb by name and a page being able to reach one are different claims, and for
 a year only the first was checked: talking to the supervisor, taking back a
@@ -547,7 +548,7 @@ the browser, each answering "that is not something Orbit can be asked for".
 
 ## From the CLI you plan in
 
-Two of Orbit's MCP tools, not shell commands — your CLI calls them once
+Two of Orbit's MCP tools rather than shell commands. Your CLI calls them once
 `orbit mcp install` has registered the server. See [the CLI, both
 ways](cli.md).
 
@@ -557,7 +558,7 @@ ways](cli.md).
 | `orbit_knowledge` | read what is already agreed before planning |
 
 So the CLI you plan in can offer what it just worked out, and the run tomorrow
-starts with it — once you have said yes.
+starts with it, once you have said yes.
 
 What a model is **not** offered: pausing a rule, switching one off, correcting
 one, or asking Orbit to spend money reading. A model that could pause a rule

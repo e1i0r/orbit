@@ -60,7 +60,7 @@ Open a task and twelve tabs cover it.
 
 ## The screens
 
-Capitals open a screen; small letters do something to the task under the
+Capitals open a screen. Small letters do something to the task under the
 cursor. That is the whole of how the two halves are told apart.
 
 | Key | Screen |
@@ -101,10 +101,10 @@ than a promise somebody remembers: the table is read off the same declaration
 `orbit settings` prints from, and a test fails if a setting is declared that
 the window draws no row for. It used to be a list written out by hand in the
 window's own code, and six settings were added to Orbit without ever reaching
-it — among them whether Orbit may interrupt you, and which account may
+it, among them whether Orbit may interrupt you, and which account may
 command it over a chat.
 
-Four of the rows offer nothing to choose from — a chat id, the two budgets
+Four of the rows offer nothing to choose from: a chat id, the two budgets
 and the quota floor, where no list of values is the list anybody wants. Those
 show what they hold, and `e` or a click opens the line to type into. What
 each will accept is checked in one place for every way in, so a number the
@@ -113,7 +113,7 @@ terminal refuses is a number the window refuses.
 There are more dials than a terminal has rows, so the table scrolls: the
 arrows and the wheel bring whatever the cursor is on into view, one setting a
 notch, and the title and the line of keys stay where they are while it moves.
-A click is measured from where the table now starts — before that it was
+A click is measured from where the table now starts. Before that it was
 measured from the top of the screen, which on a scrolled table turned the
 dial of whichever row used to be drawn there.
 

@@ -8,7 +8,7 @@ whole answer.
 ## The menu is the documentation
 
 A cockpit with thirty keys is a cockpit where you use six. So the menu lists
-every verb that applies to what the cursor is on — **and the ones that do
+every verb that applies to what the cursor is on, **and the ones that do
 not**, greyed, each with the sentence saying why.
 
 ```
@@ -43,11 +43,11 @@ place.
 | | |
 | --- | --- |
 | `?` | the full sheet: every key, and what each verb says it does |
-| `:` | the command line — everything no key was given, with what it takes |
+| `:` | the command line: everything no key was given, with what it takes |
 | right click | the same menu, from the pointer |
 
 Every verb in the menu is a command you can also run from a script. The
-cockpit is a keyboard in front of `orbit`, not a second copy of its rules —
+cockpit is a keyboard in front of `orbit` rather than a second copy of its rules,
 which is why a refusal in the menu is word for word the refusal you get in the
 terminal.
 

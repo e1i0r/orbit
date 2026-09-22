@@ -19,7 +19,7 @@ same. macOS and Linux.
 orbit mcp install
 ```
 
-Registers the Orbit MCP server in every client found — Claude Code, Claude
+Registers the Orbit MCP server in every client found: Claude Code, Claude
 Desktop, Codex, OpenCode, Gemini. Restart the CLI and it can write tasks, run
 them, read what happened and leave notes without you copying anything between
 windows. What it can do is in [the CLI page](cli.md).
@@ -35,9 +35,9 @@ list to register: the directory you open it on is the answer, and `R` shows
 what it found.
 
 Orbit runs the CLI you already have under the subscription you already pay
-for — Claude Code, Codex, OpenCode, Antigravity. Press `M` and pick one; the
+for: Claude Code, Codex, OpenCode, Antigravity. Press `M` and pick one, and the
 model dial fills with that engine's own catalogue. Nothing is called until you
-start a run — see [engines](engines.md).
+start a run. See [engines](engines.md).
 
 ## 4. Write the first task
 
@@ -60,7 +60,7 @@ starts on its own.
 
 State is in `$ORBIT_HOME`, or `~/.orbit` when that is unset: a directory per
 repository, a directory per task under it, and the record of every run in one
-SQLite file — so a question that crosses tasks can be asked without opening
+SQLite file, so a question that crosses tasks can be asked without opening
 every log to answer it. It is not a lock-in: `orbit export` writes the whole
 thing back out as JSONL, one file per task.
 
