@@ -17,6 +17,7 @@ import (
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/flows"
+	"github.com/e1i0r/orbit/internal/ui/prose"
 	"github.com/e1i0r/orbit/internal/ui/theme"
 )
 
@@ -40,7 +41,8 @@ const startGap = 3
 //
 // Head is row zero and is not here, because nothing is ever pointed at it.
 type startPlan struct {
-	flow      int // the flow line
+	flow      int // the first line of the flow block
+	nFlow     int // how many lines it took, the tail under it included
 	config    int // engine dials line
 	phases    int // the first phase row
 	nPhases   int // how many rows the phases took, error line included
@@ -49,7 +51,9 @@ type startPlan struct {
 
 // startLayout works out where the blocks go at width w.
 func (m Model) startLayout(w int) startPlan {
-	p := startPlan{flow: 2, config: 4, phases: 6, nPhases: len(m.phaseRows(w))}
+	p := startPlan{flow: 2, nFlow: len(m.flowBlock(w)), nPhases: len(m.phaseRows(w))}
+	p.config = p.flow + p.nFlow + 1
+	p.phases = p.config + 2
 	p.autopilot = p.phases + p.nPhases + 1
 
 	return p
@@ -65,7 +69,7 @@ func (m Model) startRows(h, w int) []string {
 	auto := m.autopilotRows(w)
 	out := make([]string, p.autopilot+len(auto))
 	out[0] = m.startHead(w)
-	out[p.flow] = m.flowLine(w)
+	copy(out[p.flow:], m.flowBlock(w))
 	out[p.config] = m.configLine(w)
 	copy(out[p.phases:], m.phaseRows(w))
 	copy(out[p.autopilot:], auto)
@@ -91,36 +95,53 @@ func (m Model) startHead(w int) string {
 	return cells.Spread(" "+left, theme.Paint(theme.Dim).Render(t.Repo), w)
 }
 
-// flowLine is the first line and the one that changes the rest: the flow
-// showing on the left, the order f visits them in on the right.
-func (m Model) flowLine(w int) string {
+// flowLine is the first line and the one that changes the rest: every flow
+// there is, with the one about to run marked.
+//
+// It drew the chosen one and, off to the right, the order `f` would visit
+// the others in. At a hundred columns that order was cut off, so choosing
+// `gated` out of eight meant pressing f until it appeared — with nothing
+// saying how many were left, or that you had just gone past it. Elio did,
+// twice, and then asked for a selector.
+//
+// The row is internal/ui/prose's, which is the one the compose form has
+// drawn its flows with since it was written. Two drawings of one row is
+// two rows that drift, and this was already the worse of the two.
+func (m Model) flowBlock(w int) []string {
+	lines, _ := m.flowRow(w)
+
+	return lines
+}
+
+// flowRow is that line and where each flow landed on it, so that a click is
+// answered by the cell the pill was drawn in. See hitStart.
+func (m Model) flowRow(w int) ([]string, []prose.Placed) {
 	p := m.opts.Words
-	chosen := m.start.chosen()
+	label := startIndent + theme.Paint(theme.Dim).Render(p.T("start.flow", "flow")) + "  "
 
-	left := startIndent + theme.Paint(theme.Dim).Render(p.T("start.flow", "flow")) + "  " +
-		theme.Paint(theme.Accent).Render(chosen.name)
-	if mark := m.flowMark(chosen); mark != "" {
-		left += "  " + theme.Paint(theme.Dim).Render(mark)
+	choices := make([]prose.Choice, 0, len(m.start.flows))
+	for _, f := range m.start.flows {
+		choices = append(choices, prose.Choice{Label: f.name, Glyph: prose.FlowGlyph(f.name)})
 	}
 
-	cycle := m.start.cycle()
-	if len(cycle) < 2 {
-		return cells.Fit(left, w)
+	rows, placed := prose.Row(choices, m.start.at, lipgloss.Width(label), w)
+	rows[0] = label + rows[0]
+
+	// What the chosen flow is and where it came from go under the row
+	// rather than after it. Eight pills already fill a hundred columns, so
+	// a tail on the first line is a tail nobody at that width ever reads.
+	tail := startIndent + theme.Paint(theme.Dim).Render(p.T("start.new_flow_tag", "[+] new flow"))
+	if mark := m.flowMark(m.start.chosen()); mark != "" {
+		tail += "  " + theme.Paint(theme.Dim).Render(mark)
 	}
 
-	parts := make([]string, 0, len(cycle))
-	for i, f := range cycle {
-		role := theme.Dim
-		if i == len(cycle)-1 {
-			role = theme.Accent
-		}
+	rows = append(rows, tail)
 
-		parts = append(parts, theme.Paint(role).Render(f.name))
+	for i, r := range rows {
+		rows[i] = cells.Fit(r, w)
 	}
 
-	right := strings.Join(parts, theme.Paint(theme.Dim).Render(cells.Dot)) + "  " + theme.Paint(theme.Dim).Render(p.T("start.new_flow_tag", "[+] new flow"))
-
-	return cells.Spread(left, right, w)
+	return rows, placed
 }
 
 // flowMark says where a flow came from, in the words `orbit flows` uses.

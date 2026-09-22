@@ -105,13 +105,19 @@ func TestHitStartEveryRow(t *testing.T) {
 	p := m.startLayout(m.frame.Body.W)
 	y := m.frame.Body.Y
 
+	// Column 5 is inside the label, before the first pill, so the row's
+	// own answer is the one that comes back. A click on a pill is
+	// TestAClickPicksTheFlowItLandedOn's.
 	if got := m.hitStart(5, y+p.flow); got.Kind != point.DialogSwitch || got.Field != fieldFlow {
 		t.Errorf("hitStart on the flow line = %+v, want the flow switch", got)
 	}
 
+	// The phase rows answer nothing: they are a preview of what the flow
+	// will do, not a thing to choose. They used to answer a target nothing
+	// routed, which is a cell that takes a click and drops it.
 	if p.nPhases > 0 {
-		if got := m.hitStart(5, y+p.phases); got.Kind != point.DialogPhase || got.Phase != 0 {
-			t.Errorf("hitStart on the first phase = %+v, want phase 0", got)
+		if got := m.hitStart(5, y+p.phases); got.Kind != point.None {
+			t.Errorf("hitStart on the first phase = %+v, want nothing", got)
 		}
 	}
 

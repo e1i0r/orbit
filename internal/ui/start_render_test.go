@@ -254,7 +254,11 @@ func TestTheDialogSaysAFlowIsTheReadersOwn(t *testing.T) {
 		t.Fatalf("f never reaches the reader's own flow; the cycle is %v", m.start.flows)
 	}
 
-	if line := ansi.Strip(m.flowLine(100)); !strings.Contains(line, "yours") {
-		t.Errorf("the flow line is %q, want it to say the flow is the reader's own", line)
+	// Under the row rather than after it: eight pills fill a hundred
+	// columns, so a tail on the first line is a tail nobody at that width
+	// ever reads.
+	block := ansi.Strip(strings.Join(m.flowBlock(100), "\n"))
+	if !strings.Contains(block, "yours") {
+		t.Errorf("the flow block is %q, want it to say the flow is the reader's own", block)
 	}
 }
