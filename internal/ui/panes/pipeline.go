@@ -48,7 +48,7 @@ func (e Env) execOf(phaseName string) phaseExec {
 
 		if entry.What() == view.EntryStarted {
 			exec.started = true
-			exec.waiting = false
+			exec.waiting, exec.failed, exec.cancelled = false, false, false
 
 			start = entry
 			if entry.Engine != "" {
@@ -101,8 +101,14 @@ func (e Env) execOf(phaseName string) phaseExec {
 		// thing it was said to be stuck on. Every branch above clears it
 		// for the same reason this one does: the entries are in order, so
 		// the last one that spoke is the one that is true.
+		//
+		// Cancelled and failed are taken back the same way. A phase
+		// requeued after a cancel waits at its gate again, and ORB-121's
+		// tree read review cancelled under a header that said waiting for
+		// review.
 		if entry.What() == view.EntryWaiting {
 			exec.waiting = true
+			exec.failed, exec.cancelled = false, false
 			exec.cause = entry.Cause
 		}
 
