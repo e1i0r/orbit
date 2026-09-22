@@ -5,7 +5,9 @@
 
  ACME-2662  Retry the webhook on 5xx                                                        payments
 
-   flujo  careful                   coverage · quick · task · tdd-fuzz-pr · careful  [+] nuevo flujo
+   flujo   ● 🛡️ careful          ⚡ coverage         🚀 quick            ⚡ task        
+             ⚡ tdd-fuzz-pr 
+   [+] nuevo flujo
 
    motor     claude · opus · esfuerzo:low · thinking: activado
 
@@ -15,8 +17,6 @@
 
    piloto automático  ● activado      cada fase se ejecuta sin preguntar
                       ○ desactivado   se detiene en cada fase
-
-
 
 
 

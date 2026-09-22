@@ -29,7 +29,6 @@ const (
 	EngineRow
 	PaneTab
 	PaneBody
-	DialogPhase
 	DialogSwitch
 	Command
 	MenuEntry
@@ -44,6 +43,10 @@ const (
 	ComposeAction
 	ComposePaste
 	ComposeClear
+	// DialogFlow is one flow on the start dialog's row, by its place in
+	// it. DialogSwitch's fieldFlow still means "the next one", which is
+	// what the key does and what a click on the row's empty end means.
+	DialogFlow
 	DiffFile
 	DiffSelectToggle
 	Fold
@@ -79,7 +82,7 @@ type Target struct {
 	Pane  int
 	Key   string // BarHint, MenuEntry, Command, Fold
 	Field string // HeaderField, StatusField
-	// DialogPhase: which phase. ComposeCaret: which drawn line
+	// DialogFlow: which flow on the row. ComposeCaret: which drawn line
 	// of the box, counted from the first one on screen.
 	Phase int
 	// Caret is the column of the drawn line that was pointed at, for

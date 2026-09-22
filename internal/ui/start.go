@@ -84,18 +84,6 @@ func (s startModel) chosen() startFlow {
 	return s.flows[s.at%len(s.flows)]
 }
 
-// cycle is the flows in the order f visits them, ending on the one showing.
-// "quick · task · careful" is read as "press f twice more and you are back".
-func (s startModel) cycle() []startFlow {
-	if len(s.flows) == 0 {
-		return nil
-	}
-
-	at := s.at % len(s.flows)
-
-	return append(slices.Clone(s.flows[at+1:]), s.flows[:at+1]...)
-}
-
 // newStart builds the dialog's state for one task.
 //
 // The built-ins and the reader's own are sorted into one list rather than
@@ -224,6 +212,21 @@ func (m Model) startKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// pickFlow chooses one by where it sits on the row.
+//
+// Out of range is ignored rather than clamped: the row and the hit test
+// are drawn from the same list, so an index outside it means they have
+// disagreed, and picking the nearest flow would be acting on that.
+func (m Model) pickFlow(at int) (tea.Model, tea.Cmd) {
+	if at < 0 || at >= len(m.start.flows) {
+		return m, nil
+	}
+
+	m.start.at = at
+
+	return m, nil
+}
+
 // cycleFlow moves to the next flow in the cycle, wrapping.
 func (m Model) cycleFlow() Model {
 	if n := len(m.start.flows); n > 1 {
@@ -255,7 +258,7 @@ func (m Model) runIt() (tea.Model, tea.Cmd) {
 
 	m.screen, m.start = screenList, startModel{}
 
-	return m.awaiting(t.ID, gestureStart), start(m.opts.Start, t, chosen.name, len(waiting))
+	return m, start(m.opts.Start, t, chosen.name, len(waiting))
 }
 
 // atUnreadCap is whether the brake is on.

@@ -7,6 +7,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/ui/patch"
 	"github.com/e1i0r/orbit/internal/ui/point"
+	"github.com/e1i0r/orbit/internal/ui/prose"
 	"github.com/e1i0r/orbit/internal/ui/settings"
 )
 
@@ -135,14 +136,29 @@ func (m Model) hitStart(x, y int) point.Target {
 	}
 
 	p := m.startLayout(m.frame.Body.W)
-	switch {
-	case line == p.flow:
+
+	// The flow block is as many lines as the row wrapped onto, so the
+	// pill is looked for by line as well as by column: the same column
+	// two lines down is a different flow. Where each one was drawn is
+	// answered by the thing that drew it, so a glyph changing width
+	// cannot move the zones out from under them.
+	if line >= p.flow && line < p.flow+p.nFlow {
+		_, placed := m.flowRow(m.frame.Body.W)
+		if at, on := prose.At(placed, x, line-p.flow); on {
+			return point.Target{Kind: point.DialogFlow, Phase: at}
+		}
+
 		return point.Target{Kind: point.DialogSwitch, Field: fieldFlow}
-	case line >= p.phases && line < p.phases+p.nPhases:
-		return point.Target{Kind: point.DialogPhase, Phase: line - p.phases}
-	case line == p.autopilot:
+	}
+
+	switch line {
+	// The phase rows answer nothing on purpose. They are a preview of what
+	// the chosen flow will do, not a thing to choose, and they used to
+	// return a target that mouse.go never named — a cell that looked
+	// clickable, took the click and did nothing with it.
+	case p.autopilot:
 		return point.Target{Kind: point.DialogSwitch, Field: fieldAutopilotOn}
-	case line == p.autopilot+1:
+	case p.autopilot + 1:
 		return point.Target{Kind: point.DialogSwitch, Field: fieldAutopilotOff}
 	}
 
