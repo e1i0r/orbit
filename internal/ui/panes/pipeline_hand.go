@@ -99,6 +99,10 @@ func (e Env) handNode(st handStep, i int, last bool) ([]string, int) {
 		head += " " + theme.Paint(theme.Dim).Render(fmt.Sprintf("(%s)", st.took))
 	}
 
+	if link := prLink(st.verb, st.text); link != "" && !st.failed {
+		head += " · " + theme.Paint(theme.Accent).Render(link)
+	}
+
 	out := []string{head}
 
 	// Where the button landed, and -1 for a node nobody has opened: it is
@@ -140,7 +144,7 @@ func (e Env) handStanding(st handStep) standing {
 		}
 	default:
 		return standing{
-			glyph: theme.Paint(theme.Live).Render("⚡"),
+			glyph: theme.Paint(theme.Live).Render(SpinMark),
 			text: theme.Paint(theme.Live).Bold(true).Render(
 				p.T("flow.hand_out", "in progress")),
 			role: theme.Live,

@@ -79,7 +79,7 @@ func (e Env) phaseStanding(ex phaseExec, at where) standing {
 		}
 	case at.inFlight:
 		return standing{
-			glyph: theme.Paint(theme.Live).Render("⚡"),
+			glyph: theme.Paint(theme.Live).Render(SpinMark),
 			text:  theme.Paint(theme.Live).Bold(true).Render(p.T("flow.step_status_in_flight", "in progress")),
 			role:  theme.Live,
 		}

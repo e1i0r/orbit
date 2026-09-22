@@ -23,6 +23,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/markdown"
+	"github.com/e1i0r/orbit/internal/ui/panes"
 	"github.com/e1i0r/orbit/internal/ui/patch"
 	"github.com/e1i0r/orbit/internal/ui/prose"
 	"github.com/e1i0r/orbit/internal/ui/theme"
@@ -260,7 +261,12 @@ func (m Model) placeTabs() []placedTab {
 func (m Model) paneRows(h, w int) []string {
 	vp := m.panes[m.tab]
 
-	out := cells.Fill(strings.Split(vp.View(), "\n"), h)
+	drawn := vp.View()
+	if m.tab == tabFlow && m.moving() {
+		drawn = strings.ReplaceAll(drawn, panes.SpinMark, m.spin())
+	}
+
+	out := cells.Fill(strings.Split(drawn, "\n"), h)
 
 	track := cells.Track(h, vp.TotalLineCount(), vp.YOffset())
 	for i, line := range out {

@@ -318,3 +318,12 @@ func (e Env) said(err error) string {
 
 	return e.Said(err)
 }
+
+// SpinMark is the glyph a pane draws where something is in motion, for the
+// window to turn into the spinner's frame of the moment as it draws.
+//
+// A pane is built when what it shows changes, not ten times a second, so a
+// frame painted into it at build time stands still. Swapping one cell at
+// draw time turns it without building the pane again, which on the flow
+// tree is the whole of its record read back.
+const SpinMark = "⠿"
