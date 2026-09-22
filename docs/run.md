@@ -45,10 +45,23 @@ The same from a script: `orbit task start`, and `task pause`, `resume`, `skip`,
 
 ## Its own worktree
 
-Every task runs in a git worktree of its own, on a branch named after it.
-That is what lets several tasks touch the same repository at once, see
-[many tasks at once](parallel.md), and it is why nothing a run does is in
-your checkout until you say so.
+Every task runs in a git worktree of its own, on a branch of its own. That
+is what lets several tasks touch the same repository at once, see [many
+tasks at once](parallel.md), and it is why nothing a run does is in your
+checkout until you say so.
+
+The branch is named after the task with four characters nobody can guess
+on the end, `orbit/PAY-1-a3f9`. The suffix is there so a task written
+again under an id somebody used before starts clean instead of finding
+the last one's commits already in its worktree.
+
+It is cut from the branch you were standing on, not from the default. A
+task written while you are on a feature branch belongs against that
+branch, and its pull request is opened there.
+
+Deleting a task takes the worktree and the branch with it. What the run
+committed goes too, so push it or open its pull request first if you want
+to keep it.
 
 ## When it ends badly
 
