@@ -56,26 +56,22 @@ func TestTheArrowsWalkTheNodes(t *testing.T) {
 	}
 }
 
-// TestTheCursorStopsAtBothEnds: an arrow held down runs off neither end.
-func TestTheCursorStopsAtBothEnds(t *testing.T) {
+// TestTheCursorGoesRoundTheEnds: up from the first node is the last stop on
+// the tree and down from there is the first again, as in every menu.
+func TestTheCursorGoesRoundTheEnds(t *testing.T) {
 	m := onTheTree(t, -1)
+	first := caretAt(t, m)
 
-	for range 20 {
-		next, _ := m.stepTree(1)
-		m = asModel(t, next)
+	next, _ := m.stepTree(-1)
+	m = asModel(t, next)
+
+	if at := caretAt(t, m); at <= first {
+		t.Fatalf("up from the first node left the caret on row %d, want the last stop below %d", at, first)
 	}
 
-	if at := caretAt(t, m); at < 0 {
-		t.Error("twenty downs walked the cursor off the tree")
-	}
-
-	for range 20 {
-		next, _ := m.stepTree(-1)
-		m = asModel(t, next)
-	}
-
-	if at := caretAt(t, m); at < 0 {
-		t.Error("twenty ups walked the cursor off the tree")
+	next, _ = m.stepTree(1)
+	if at := caretAt(t, asModel(t, next)); at != first {
+		t.Errorf("down from the last stop left the caret on row %d, want the first, %d", at, first)
 	}
 }
 

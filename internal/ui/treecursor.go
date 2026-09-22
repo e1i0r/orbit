@@ -91,8 +91,8 @@ func rowOfStop(stops []treeStop, at treeAt) (int, bool) {
 	return 0, false
 }
 
-// stepTree moves the cursor one stop, and onto the first one when it is
-// nowhere.
+// stepTree moves the cursor one stop, off either end round to the other,
+// and onto the first one when it is nowhere.
 func (m Model) stepTree(by int) (tea.Model, tea.Cmd) {
 	stops := m.treeStops()
 	if len(stops) == 0 {
@@ -106,7 +106,7 @@ func (m Model) stepTree(by int) (tea.Model, tea.Cmd) {
 
 	for i, s := range stops {
 		if s.at == m.tree {
-			next = min(max(i+by, 0), len(stops)-1)
+			next = (i + by + len(stops)) % len(stops)
 
 			break
 		}
