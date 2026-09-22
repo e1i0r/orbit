@@ -24,6 +24,10 @@ func (m Model) openDetail(t view.Task) (Model, tea.Cmd) {
 	m.diffErr, m.diffKnown, m.diffNoBase = nil, false, false
 	m.expandedDetail, m.shutAttempts = false, nil
 	m.opened = [tabCount]map[int]bool{}
+	// Back to the top of the tree, with everything else this open forgets.
+	// A cursor kept across tasks would be standing on the fourth phase of
+	// a flow the new task does not walk.
+	m.tree = treeAt{}
 	// The base is one of the things an open forgets: it belongs to the
 	// repository this task is in, and asking for it again is the one thing
 	// this window does per open rather than per tick.
@@ -202,6 +206,14 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.openStart()
 	case key.Matches(k, m.keys.CLI):
 		return m.launchInteractiveCLI()
+	// The tree is the one pane made of nodes, so on it the arrows walk the
+	// nodes and ↵ presses what they stand on. Everywhere else they scroll.
+	case m.tab == tabFlow && key.Matches(k, m.keys.Up):
+		return m.stepTree(-1)
+	case m.tab == tabFlow && key.Matches(k, m.keys.Down):
+		return m.stepTree(1)
+	case m.tab == tabFlow && key.Matches(k, m.keys.Open):
+		return m.pressTree()
 	case key.Matches(k, m.keys.Open), key.Matches(k, m.keys.Last):
 		return m.newest(), nil
 	case key.Matches(k, m.keys.Help):

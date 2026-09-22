@@ -105,7 +105,7 @@ func TestAFlowThatCouldNotBeResolvedSaysSo(t *testing.T) {
 	e := world(t, nil)
 	e.FlowFailed = `flow "nope": no such flow`
 
-	got := strings.Join(first(Pipeline(e)), "\n")
+	got := strings.Join(rowsOf(Pipeline(e)), "\n")
 	if !strings.Contains(got, "no such flow") {
 		t.Errorf("the pane drew %q, want the reason the flow could not be read", got)
 	}

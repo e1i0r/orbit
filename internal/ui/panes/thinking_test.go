@@ -96,3 +96,6 @@ func TestAPaneWithNoThinkingSaysSo(t *testing.T) {
 
 // first is the lines of a pane that answers with its rows as well.
 func first(lines []string, _ map[int]int) []string { return lines }
+
+// rowsOf is the same for the tree, which answers its buttons too.
+func rowsOf(lines []string, _, _ map[int]int) []string { return lines }
