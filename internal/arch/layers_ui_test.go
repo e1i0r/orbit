@@ -11,10 +11,16 @@ var windowLayers = map[string][]string{
 	// from the URL of an issue. It reads an issue through a door the window
 	// hands it and answers with the task to write down: what a command does
 	// is the window's business and not this form's.
+	// internal/ui/prose is on its list for one thing: the row of flow
+	// pills. The start dialog drew its own worse version of the same row —
+	// only the flow it was on, cycled blind — so the row moved to prose,
+	// which is where the shapes a screen is built out of already live. It
+	// imports cells, markdown and theme and nothing of this package's, so
+	// no cycle can be made of it.
 	"internal/ui/compose": {
 		"internal/flow", "internal/tracker", "internal/ui/cells", "internal/ui/clip",
-		"internal/ui/keymap", "internal/ui/layout", "internal/ui/point", "internal/ui/theme",
-		"internal/ui/typing", "internal/words",
+		"internal/ui/keymap", "internal/ui/layout", "internal/ui/point", "internal/ui/prose",
+		"internal/ui/theme", "internal/ui/typing", "internal/words",
 	},
 	// internal/ui/cheat is the sheet that says what every key does. What it
 	// lists — the verbs a task offers, the tabs the detail screen has — it
