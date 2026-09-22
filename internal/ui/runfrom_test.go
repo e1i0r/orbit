@@ -250,6 +250,82 @@ func TestEveryDeliveryVerbCanBeAskedForAgain(t *testing.T) {
 	}
 }
 
+// TestALiveRunOffersNoStart is the bug Elio's logs caught three times in
+// four minutes.
+//
+// ORB-121 was parked at the review gate: needs_you on the board, a process
+// still on the phase. Every node of the tree read "▶ run it", and pressing
+// one signalled a cancel — "task ORB-121, waiting to start phase review:
+// context canceled", then again, then again. The button has to be drawn
+// from the same fact the press acts on.
+func TestALiveRunOffersNoStart(t *testing.T) {
+	m := onTheTree(t, -1)
+
+	for i, task := range m.board.Tasks {
+		if task.ID == m.detail {
+			m.board.Tasks[i].Live = view.LiveHeld
+		}
+	}
+
+	// Every node open at once, so no node is missed for being shut.
+	for i := range 3 {
+		m = m.openRow(i)
+	}
+
+	m = m.syncPanes()
+
+	rows, _ := m.flowRows()
+	for _, r := range rows {
+		if drawn := ansi.Strip(r); strings.Contains(drawn, "▶") || strings.Contains(drawn, "↻") {
+			t.Errorf("a task whose run is up offers to start a phase: %q", strings.TrimSpace(drawn))
+		}
+	}
+}
+
+// TestNoButtonDrawnMeansNoButtonHit: a row the hit test answers and the
+// tree never drew is a click that does something invisible, which is the
+// same bug from the other end.
+func TestNoButtonDrawnMeansNoButtonHit(t *testing.T) {
+	m := onTheTree(t, 0)
+
+	for i, task := range m.board.Tasks {
+		if task.ID == m.detail {
+			m.board.Tasks[i].Live = view.LiveFree
+		}
+	}
+
+	m = m.syncPanes()
+
+	rows, _ := m.flowRows()
+	for i, r := range rows {
+		_, on := m.runFromAt(i)
+		if drawn := strings.ContainsAny(ansi.Strip(r), buttonGlyphs); drawn != on {
+			t.Errorf("row %d: drawn=%v answered=%v: %q", i, drawn, on, ansi.Strip(r))
+		}
+	}
+}
+
+// TestAStartLandsWhenTheRunStopsAtItsFirstGate.
+//
+// ORB-121 started and was at the review gate eight seconds later, which
+// puts it in needs_you. "arrancando…" sat on the header, the badge and the
+// row of a task that was plainly up and asking a question.
+func TestAStartLandsWhenTheRunStopsAtItsFirstGate(t *testing.T) {
+	gated := view.Task{ID: "ORB-121", Live: view.LiveHeld}
+	if view.BandOf(gated) == view.Running {
+		t.Fatal("the fixture is running, so it tests nothing")
+	}
+
+	if !landed(gestureStart, gated, true) {
+		t.Error("a run parked at its first gate still reads as starting…")
+	}
+
+	// And a task nothing is running is still not started.
+	if landed(gestureStart, view.Task{ID: "ORB-121", Live: view.LiveFree}, true) {
+		t.Error("a task with no process reads as started")
+	}
+}
+
 // taskByID is one task off the fixture board.
 func taskByID(t *testing.T, m Model, id string) view.Task {
 	t.Helper()

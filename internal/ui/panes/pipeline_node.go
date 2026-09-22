@@ -141,7 +141,7 @@ func lastStart(items []subItem) int {
 
 // phaseSubItems is everything hanging off one node: how it was set up, what
 // it has to pass, why it broke, and what it wrote.
-func (e Env) phaseSubItems(phase flow.Phase, ex phaseExec, inFlight bool) []subItem {
+func (e Env) phaseSubItems(phase flow.Phase, ex phaseExec) []subItem {
 	p := e.Words
 
 	var items []subItem
@@ -169,36 +169,42 @@ func (e Env) phaseSubItems(phase flow.Phase, ex phaseExec, inFlight bool) []subI
 		}
 	}
 
-	items = append(items, e.phaseOutcome(ex.text)...)
-
-	// The button, last, under everything the node says about itself.
-	//
-	// The tree already knows which phase each node is and what became of
-	// it, and orbit already knows how to begin at a named phase — `orbit
-	// task start -from`, which is what `^R` runs. What was missing was
-	// anywhere to press. A run that stopped after `implement` left the
-	// reader with a tree saying review is pending and no way to say "then
-	// do review", short of a command line.
-	return append(items, subItem{text: "  " + e.runFrom(ex, inFlight)})
+	return append(items, e.phaseOutcome(ex.text)...)
 }
 
-// runFrom is what pressing the node offers, which depends on whether the
-// phase has run.
+// runFrom is what pressing the node offers, and nothing at all for a node
+// that offers nothing.
 //
-// No key beside it. The first one was ^R, which sits next to R — and R is
-// RESOLVE COMMENTS, a verb that calls the supervisor and costs money. A
-// cheap gesture one keystroke away from an expensive one is a trap, and
-// Elio fell into it within a minute of it existing: thirty-four of them
-// spent resolving comments on a cancelled task with no pull request. This
-// is a button, and a button is pressed with the pointer.
-func (e Env) runFrom(ex phaseExec, inFlight bool) string {
+// held is the run holding this very phase, and busy is a run holding the
+// task anywhere. The two are separate because what the press does turns on
+// both: a run in flight is signalled to stop, and no phase of a task whose
+// run is up can be started, because a second engine in the same worktree
+// is the one mistake this cannot make.
+//
+// They are read off the task rather than off the band. A run parked at a
+// gate has the task in needs_you and a process still on the phase, and for
+// one release every node of it read "▶ run it" while pressing one sent a
+// cancel. The button has to be drawn from the same fact the press acts on
+// or it is a lie with a click target.
+//
+// No key beside it either. The first one was ^R, which sits next to R —
+// and R is RESOLVE COMMENTS, a verb that calls the supervisor and costs
+// money. A cheap gesture one keystroke away from an expensive one is a
+// trap, and Elio fell into it within a minute of it existing. This is a
+// button, and a button is pressed with the pointer.
+func (e Env) runFrom(ex phaseExec, held, busy bool) string {
 	p := e.Words
 
 	switch {
-	case inFlight:
-		// The one that is not a run: a phase in flight is stopped, and
-		// the icon says so before the words do.
+	case held:
+		// The one press that is not a run: the icon says so before the
+		// words do.
 		return theme.Paint(theme.Bad).Render(p.T("flow.stop_it", "■ stop it"))
+	case busy:
+		// Some other phase, while the run is up. Nothing to offer, so
+		// nothing is drawn: a button that refuses is a button that was
+		// never worth pressing.
+		return ""
 	case ex.failed || ex.cancelled:
 		return theme.Paint(theme.Live).Render(p.T("flow.try_again", "↻ try it again"))
 	case ex.finished:

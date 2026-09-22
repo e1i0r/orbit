@@ -233,6 +233,13 @@ func (e Env) flowNode(t view.Task, phase flow.Phase, i, total int, past bool) ([
 	inFlight := t.Band == view.Running && strings.EqualFold(t.Phase, phase.Name)
 	st := e.phaseStanding(ex, where{inFlight: inFlight, past: past})
 
+	// What the button is drawn from, and it is not the band. A run parked
+	// at a gate has its task in needs_you with a process still on the
+	// phase, so the band says nothing about whether a press can start
+	// anything — the liveness does.
+	busy := t.Live == view.LiveHeld
+	held := busy && strings.EqualFold(t.Phase, phase.Name)
+
 	open := e.row(i)
 
 	// The arrow stands between the branch and the icon, where a tree's
@@ -259,8 +266,18 @@ func (e Env) flowNode(t view.Task, phase flow.Phase, i, total int, past bool) ([
 	button := -1
 
 	if open {
-		sub := subRows(e.phaseSubItems(phase, ex, inFlight), subBranch)
-		button = len(out) + len(sub) - 1
+		items := e.phaseSubItems(phase, ex)
+
+		word := e.runFrom(ex, held, busy)
+		if word != "" {
+			items = append(items, subItem{text: "  " + word})
+		}
+
+		sub := subRows(items, subBranch)
+		if word != "" {
+			button = len(out) + len(sub) - 1
+		}
+
 		out = append(out, sub...)
 	}
 

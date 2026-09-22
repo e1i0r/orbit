@@ -192,7 +192,12 @@ func landed(verb string, t view.Task, on bool) bool {
 	case gestureRequeue:
 		return view.BandOf(t) == view.ToDo
 	case gestureStart:
-		return view.BandOf(t) == view.Running
+		// Running, or already stopped at a gate. A run that reached its
+		// first gate in eight seconds started, and the band puts it in
+		// needs_you the moment it does — which left "starting…" on the
+		// header, the badge and the row of a task that was up and asking
+		// a question, until the ninety seconds ran out.
+		return view.BandOf(t) == view.Running || t.Live == view.LiveHeld
 	case gestureDelete:
 		// Only the row leaving the board, which the clause above answers.
 		// A task still listed is a task still there, whatever else the
