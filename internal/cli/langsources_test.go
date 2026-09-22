@@ -60,6 +60,46 @@ func TestORBITLANGIsWeighedByCommandsThatAreNotTop(t *testing.T) {
 	}
 }
 
+// TestACommandTypedInTheWindowSpeaksTheWindowsLanguage. A command run from
+// the window's command line was handed the saved setting alone, so
+// `ORBIT_LANG=es orbit top` over an empty settings file drew a Spanish
+// window whose commands refused in English. The command speaks what the
+// window speaks: the four sources when it opens, the reader's pick after.
+func TestACommandTypedInTheWindowSpeaksTheWindowsLanguage(t *testing.T) {
+	root, _ := workspace(t)
+	dir := filepath.Join(root, "payments")
+
+	t.Setenv("LANG", "")
+	t.Setenv("ORBIT_LANG", "es")
+
+	opts, _, err := window(Context{}, root, "")
+	if err != nil {
+		t.Fatalf("open the window: %v", err)
+	}
+
+	note := func() string {
+		var said strings.Builder
+
+		if err := opts.Do("task", []string{"note", "-repo", dir, "PAY-1"}, &said); err != nil {
+			return said.String() + err.Error()
+		}
+
+		return said.String()
+	}
+
+	if got := note(); strings.Contains(got, "needs text") {
+		t.Errorf("the window opened in es and its command refused %q", got)
+	}
+
+	if err := opts.Settings.SetLanguage("en"); err != nil {
+		t.Fatalf("pick English in the window: %v", err)
+	}
+
+	if got := note(); !strings.Contains(got, "needs text") {
+		t.Errorf("the reader picked en in the window and its command refused %q", got)
+	}
+}
+
 // TestORBITLANGWinsOverTheSavedLanguage is the other half of the documented
 // sentence: it is the language for one command, over the settings file, so a
 // reader who saved Spanish and typed the variable in front of one command

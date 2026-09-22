@@ -147,8 +147,14 @@ func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 	// The reader's language, weighed once and handed to everything that
 	// speaks: the flag beats $ORBIT_LANG, which beats the saved setting,
 	// which beats the locale the process was started in. The window is
-	// given the answer, not the question, and so are its ports.
-	spoken := words.For(words.Resolve(lang, env.Read(env.Lang), cfg.Language()))
+	// given the answer, not the question, and so are its ports — the
+	// command line inside it included, which speaks the reader's later pick
+	// as well: see spokenSettings.
+	speech := &spokenSettings{
+		settingsAdapter: cfg,
+		code:            words.Resolve(lang, env.Read(env.Lang), cfg.Language()),
+	}
+	spoken := words.For(speech.speaking())
 
 	return ui.Options{
 		Root: underHome(dir, home),
@@ -161,7 +167,7 @@ func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 		// its clock: see poll. The settings adapter answers from memory, and
 		// this is what keeps what it holds in step with the file.
 		Reader:   poll{Reader: r, cfg: cfg},
-		Settings: cfg,
+		Settings: speech,
 		Words:    spoken,
 		Control:  controlPort(s),
 		Start:    startPort(s),
@@ -204,10 +210,10 @@ func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 		// session can be carried on, and that name lives on the task.
 		CanResume: func(name string) bool { return canResume(engines, name) },
 		// The palette's two halves: the list it shows, read off the table,
-		// and the way it runs one, which is the table's own Run with the
-		// settings adapter answering what language the refusal is in.
+		// and the way it runs one, which is the table's own Run in the
+		// language the window is speaking.
 		Commands: commandTable(),
-		Do:       doPort(cfg),
+		Do:       doPort(spokenPort(speech.speaking)),
 		// The id rule the compose form types against: the store's own, the
 		// one every write goes through, and nobody's second copy of it.
 		ValidID: store.ValidTaskID,
