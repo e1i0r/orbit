@@ -72,3 +72,23 @@ func TestCreatePRRunsTheChecksBeforeItOpensAnything(t *testing.T) {
 		t.Error("CREATE PR does not say to stop on a red tree; fixing the checks is its own verb")
 	}
 }
+
+// TestTheBriefNamesTheBaseTheTaskWasCutFrom.
+func TestTheBriefNamesTheBaseTheTaskWasCutFrom(t *testing.T) {
+	said := Deliver("the cockpit", "CREATE PR", "FRA-128", "/tmp/wt", "jev/decision-engine", CreatePR)
+
+	if !strings.Contains(said, "jev/decision-engine") {
+		t.Errorf("the brief never names the base branch:\n%s", said)
+	}
+
+	if strings.Contains(CreatePR, "against the repository's default branch") {
+		t.Error("CREATE PR still says to open against the default branch")
+	}
+
+	// A task written before the base was recorded is told to go and read
+	// it, rather than handed a default that is probably wrong.
+	blank := Deliver("the cockpit", "CREATE PR", "FRA-9", "/tmp/wt", "", CreatePR)
+	if !strings.Contains(blank, "rev-parse") {
+		t.Errorf("a task with no base recorded is not told how to find one:\n%s", blank)
+	}
+}

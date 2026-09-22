@@ -1,6 +1,9 @@
 package supervisor
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // The instructions the deliver verbs hand to the supervisor.
 //
@@ -20,6 +23,8 @@ import "fmt"
 const supervisorBrief = `You are Orbit's supervisor. The operator asked for %s %s, about task %s.
 
 The task's checkout is at %s — run every git and gh command there. The branch checked out in it is the task's branch, and the pull request is the one open for that branch.
+
+The task was cut from %s. That is the base: the branch a pull request for this task is opened against, and the branch to take in when it needs bringing up to date. It is not necessarily the repository's default — a task written while its author was working on a feature branch belongs against that branch, and opening it against the default would put every commit of theirs in it.
 
 These hold whatever you find:
 - Never force-push, and never rewrite a commit that is already on the remote.
@@ -44,7 +49,7 @@ const (
 4. Read the repository's own pull request template — .github/pull_request_template.md, .github/PULL_REQUEST_TEMPLATE/, or whatever that repository keeps. If there is one, fill in every section it asks for, with facts taken from the task and from the diff. A template returned with its headings and no answers is worse than no template.
 5. If there is none, write a body that says: what the task asked for, what changed and why, and how a reviewer can check it.
 6. The title is one line in the imperative, naming what changed. Not the task id on its own.
-7. Push the branch and open the pull request against the repository's default branch.
+7. Push the branch and open the pull request against the base branch named above (gh pr create --base <base>). Not the repository's default, unless they are the same branch.
 8. Answer with the URL. That is the last thing you do, and the answer is not finished without it.`
 
 	UpdatePR = `Bring this task's branch up to date with the branch it will be merged into.
@@ -96,6 +101,14 @@ const (
 // Deliver is one of those bodies with the brief in front of it. door is
 // where the operator asked: the cockpit, the command line, the browser, a
 // tool call.
-func Deliver(door, caption, taskID, path, body string) string {
-	return fmt.Sprintf(supervisorBrief, caption, door, taskID, path) + body
+func Deliver(door, caption, taskID, path, base, body string) string {
+	// A task whose record never named a base — written before it was
+	// recorded — is described honestly rather than given the default:
+	// the supervisor can read what the checkout is on, and telling it the
+	// wrong branch is worse than telling it to look.
+	if base = strings.TrimSpace(base); base == "" {
+		base = "the branch the checkout's own base is on; read it with `git rev-parse --abbrev-ref HEAD` in the repository itself"
+	}
+
+	return fmt.Sprintf(supervisorBrief, caption, door, taskID, path, base) + body
 }

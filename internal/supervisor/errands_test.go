@@ -17,7 +17,7 @@ import (
 // asked to do something with no idea what it may not do.
 func TestEveryDeliverVerbCarriesTheBriefAndTheFactsItNeeds(t *testing.T) {
 	for _, body := range []string{CreatePR, UpdatePR, FixChecks, MoreTests, Review, ResolveComments} {
-		got := Deliver("the cockpit", "create PR", "ACME-1", "/checkouts/payments", body)
+		got := Deliver("the cockpit", "create PR", "ACME-1", "/checkouts/payments", "main", body)
 
 		for _, want := range []string{
 			"ACME-1",              // which task

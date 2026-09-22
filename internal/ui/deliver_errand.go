@@ -29,7 +29,12 @@ func (m Model) askSupervisorTo(e errand) (tea.Model, tea.Cmd) {
 			about("id", e.TaskID))), nil
 	}
 
-	next, cmd := m.sendSupervisorMessage(supervisor.Deliver("the cockpit", e.Caption, e.TaskID, path, e.Body))
+	// The branch the task was cut from, off the folded board: the pull
+	// request belongs against that and not against the repository's
+	// default. A task the board does not carry answers empty, and the
+	// brief tells the supervisor to go and read it.
+	next, cmd := m.sendSupervisorMessage(supervisor.Deliver(
+		"the cockpit", e.Caption, e.TaskID, path, m.taskBase(e.TaskID), e.Body))
 	if cmd == nil {
 		// The thread refused the line. What it said about that is the
 		// only true sentence there is here.
@@ -56,4 +61,14 @@ type errand struct {
 	Body string
 	// Said is what the band says once the ask is out.
 	Said string
+}
+
+// taskBase is the branch one task was cut from, as the board holds it.
+func (m Model) taskBase(id string) string {
+	t, held := m.task(id)
+	if !held {
+		return ""
+	}
+
+	return t.Base
 }

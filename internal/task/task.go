@@ -39,6 +39,9 @@ type Task struct {
 	// names it, and empty for a task written before branches carried a
 	// suffix. Read it through Branch, never directly: see branch.go.
 	BranchName string
+	// BaseName is the branch it was cut from, which is what its pull
+	// request belongs against. Read it through Base, for the same reason.
+	BaseName string
 }
 
 // Create writes the task down and records that it exists.
@@ -93,7 +96,7 @@ func Create(s *store.Store, r repo.Repo, id, text, flowName string) (Task, error
 		return Task{}, fmt.Errorf("write %q: %w", path, err)
 	}
 
-	t := Task{ID: id, Repo: r, Text: text, Flow: flowName, BranchName: newBranch(id)}
+	t := Task{ID: id, Repo: r, Text: text, Flow: flowName, BranchName: newBranch(id), BaseName: r.Base}
 
 	// The repository rides in the event that writes the task down rather
 	// than in an event of its own, and rather than in the row the directory
@@ -155,7 +158,7 @@ func Create(s *store.Store, r repo.Repo, id, text, flowName string) (Task, error
 // exactly as long as the task has reached into nothing, and repo.joined adds
 // the first one the moment it does.
 func details(r repo.Repo, flowName, branch string) map[string]string {
-	data := map[string]string{"flow": flowName, "branch": branch}
+	data := map[string]string{"flow": flowName, "branch": branch, "base": r.Base}
 	if r.Path == "" {
 		return data
 	}
@@ -189,6 +192,7 @@ func Load(s *store.Store, r repo.Repo, id string) (Task, error) {
 	t := Task{ID: id, Repo: r, Text: strings.TrimSuffix(string(body), "\n")}
 	t.Flow = writtenFlow(s, t)
 	t.BranchName = writtenBranch(s, t)
+	t.BaseName = writtenBase(s, t)
 
 	return t, nil
 }

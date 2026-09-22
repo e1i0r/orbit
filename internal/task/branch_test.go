@@ -133,3 +133,43 @@ func branchIsThere(t *testing.T, path, branch string) bool {
 
 	return cmd.Run() == nil
 }
+
+// TestATaskRemembersTheBranchItWasCutFrom.
+//
+// FRA-128 was written while this checkout stood on jev/decision-engine, so
+// its worktree was cut from there — and its pull request was opened against
+// main, because the errand said "the repository's default branch". Twelve
+// commits and a hundred and thirty-two files, of which three and four were
+// the task's. Nothing recorded which branch the work was an increment of,
+// so nothing could open the pull request against it.
+func TestATaskRemembersTheBranchItWasCutFrom(t *testing.T) {
+	s, r := fixture(t)
+
+	made, err := Create(s, r, "BASE-1", "a task cut from somewhere", "quick")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	if Base(made) != r.Base {
+		t.Errorf("the task was cut from %q and remembers %q", r.Base, Base(made))
+	}
+
+	// And it survives the round trip, so a `orbit pr` in another process
+	// opens it against the same branch.
+	read, err := Load(s, r, "BASE-1")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+
+	if Base(read) != Base(made) {
+		t.Errorf("Load reads the base as %q and Create recorded %q", Base(read), Base(made))
+	}
+}
+
+// TestATaskWrittenBeforeBasesWereRecordedSaysNothing: the caller falls back
+// to reading the checkout, which is what every one of them did before.
+func TestATaskWrittenBeforeBasesWereRecordedSaysNothing(t *testing.T) {
+	if got := Base(Task{ID: "FRA-9"}); got != "" {
+		t.Errorf("a task with no base recorded answers %q, want empty so the caller reads it", got)
+	}
+}
