@@ -161,8 +161,10 @@ func parseRepoMarker(body string) (string, bool) {
 // repos/ — see WorktreeDir — and they are checkouts git itself has
 // registered in the repository; removing them from underneath it would leave
 // the repository's worktree list naming directories that are not there. A
-// caller that wants them gone runs `orbit cancel` first, which is what
-// removes a worktree through git.
+// caller that wants them gone deletes the tasks first: `orbit delete` is the
+// gesture that gives a worktree up through git (internal/task/delete.go).
+// Cancelling a run only asks its process to stop, and leaves the checkout
+// where it is.
 //
 // A repository the root has no record of is an error rather than a silent
 // success: "forgotten" and "never known" are different answers, and a caller
