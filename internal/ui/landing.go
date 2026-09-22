@@ -74,7 +74,14 @@ func (m Model) doingSaid(id, verb string) string {
 
 	switch verb {
 	case gesturePause:
-		return p.T("doing.pause", "pausing {id}…", id_)
+		// What it is waiting for, because it is waiting for something a
+		// reader cannot see. A cancel kills a process and a pause cannot:
+		// the run is inside an engine call, and there is no way to
+		// suspend that and have anything resume cleanly. So the word is
+		// read at the next phase boundary, which on a long phase is
+		// minutes away — and a row saying only "pausing…" for ten of them
+		// reads as a gesture that did not take.
+		return p.T("doing.pause", "{id} pauses when this phase ends…", id_)
 	case gestureResume:
 		return p.T("doing.resume", "resuming {id}…", id_)
 	case gestureContinue:
@@ -210,7 +217,7 @@ func (m Model) awaitedWord(id string) (string, bool) {
 
 	switch m.await.verb {
 	case gesturePause:
-		return p.T("cell.pausing", "pausing…"), true
+		return p.T("cell.pausing", "pausing at the end…"), true
 	case gestureResume:
 		return p.T("cell.resuming", "resuming…"), true
 	case gestureContinue:

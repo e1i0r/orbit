@@ -171,7 +171,8 @@ func (m Model) handBack() (tea.Model, tea.Cmd) {
 		return next, nil
 	}
 
-	return next.took(t.ID, false), control(next.opts.Control, t, "continue")
+	return next.took(t.ID, false).awaiting(t.ID, gestureContinue),
+		control(next.opts.Control, t, gestureContinue)
 }
 
 // session is what the window does with a command line it asked for: suspend
