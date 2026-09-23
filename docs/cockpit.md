@@ -55,6 +55,11 @@ the same button. One still out offers `■ stop it`, which ends the wait: the
 cockpit stops holding the verb open, and whatever the supervisor says later
 still lands in its thread. One that came back offers `↻ ask for it again`.
 
+A verb is carried by the window it was asked in. If that window closes
+before the answer comes back, nothing is working on it any more, and the
+tree says it broke: on the next tick in a window that is open, or as soon
+as the next one opens. It never sits on `in progress` with nothing behind it.
+
 Whatever is happening right now, a phase or a verb, turns with the spinner
 and says `in progress`, in the theme's live colour. A pull request verb that
 came back carries the pull request's link on its line.

@@ -198,15 +198,16 @@ func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 		RetractSupervisor: func(at time.Time) error {
 			return supervisor.Retract(s, at)
 		},
-		RecordDeliver: deliverPort(s),
-		AskSupervisor: askSupervisorPort(s, engines),
-		Draft:         draftPort(engines),
-		AutoSupervise: autoSupervisePort(s, engines),
-		DeleteTask:    deleteTaskPort(s),
-		Take:          takePort(r, engines),
-		Open:          openPort(s, r),
-		FileSession:   fileSessionPort(s, r, engines),
-		Flows:         s,
+		RecordDeliver:    deliverPort(s),
+		SettleDeliveries: settlePort(s),
+		AskSupervisor:    askSupervisorPort(s, engines),
+		Draft:            draftPort(engines),
+		AutoSupervise:    autoSupervisePort(s, engines),
+		DeleteTask:       deleteTaskPort(s),
+		Take:             takePort(r, engines),
+		Open:             openPort(s, r),
+		FileSession:      fileSessionPort(s, r, engines),
+		Flows:            s,
 		// canResume is asked per task rather than once for the build: the
 		// engine a task ran under is the one that decides whether its
 		// session can be carried on, and that name lives on the task.

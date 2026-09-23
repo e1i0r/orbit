@@ -192,14 +192,13 @@ type Options struct {
 
 	// RecordDeliver writes one of the delivery keys onto the task it was
 	// pressed about: the ask when the key goes down, and the answer when it
-	// lands. A nil port writes nothing, which is what every one of those
-	// keys did before there was one.
-	//
-	// It is a port and not a call to internal/task for the reason Control
-	// is, and it is the same trip Delivery's own doc argues for: the window
-	// says which task and what was asked of it, and the side that may append
+	// lands. A nil port writes nothing. It is a port for the reason Control
+	// is: the window says what was asked, and the side that may append
 	// decides how that is written down.
 	RecordDeliver func(t view.Task, d Delivery) error
+
+	// SettleDeliveries says broken what a dead window left out: settle.go.
+	SettleDeliveries func(t view.Task) error
 
 	// AskSupervisor asks the active engine to answer, in the conversation
 	// the reader has open. What the model is shown is that conversation and

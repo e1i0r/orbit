@@ -20,6 +20,7 @@ import (
 	"errors"
 
 	"github.com/e1i0r/orbit/internal/board"
+	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/task"
@@ -109,6 +110,19 @@ func deliverPort(s *store.Store) func(view.Task, ui.Delivery) error {
 		}
 
 		return task.Delivering(s, subject(t), d.Verb, d.By)
+	}
+}
+
+// settlePort closes the deliveries a dead window left open on a task. How
+// many it closed is the record's to say: the next reading shows them.
+func settlePort(s *store.Store) func(view.Task) error {
+	return func(t view.Task) error {
+		closed, err := task.ReconcileDeliveries(s, subject(t))
+		if closed > 0 {
+			logger.Info("cli/settle", "%s: closed %d deliveries whose window was gone", t.ID, closed)
+		}
+
+		return err
 	}
 }
 
@@ -221,6 +235,10 @@ func reconcileAll(s *store.Store) error {
 
 		for _, id := range ids {
 			if _, wroteErr := task.Reconcile(s, task.Task{ID: id, Repo: r}); wroteErr != nil {
+				errs = append(errs, wroteErr)
+			}
+
+			if _, wroteErr := task.ReconcileDeliveries(s, task.Task{ID: id, Repo: r}); wroteErr != nil {
 				errs = append(errs, wroteErr)
 			}
 		}
