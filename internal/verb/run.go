@@ -13,6 +13,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/e1i0r/orbit/internal/queue"
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/supervisor"
 	"github.com/e1i0r/orbit/internal/task"
@@ -161,14 +162,24 @@ func wrote(w World, in In) (Out, error) {
 		return Out{Said: writtenDown(t, one), Of: []string{t.ID}}, nil
 	}
 
-	if _, err := started(w, In{Task: t.ID, Repo: in.Arg("repo"), Args: in.Args}); err != nil {
+	ran, err := started(w, In{Task: t.ID, Repo: in.Arg("repo"), Args: in.Args})
+	if err != nil {
 		// The task is written and that stands. A run that would not start
 		// is a second thing to tell the reader, not a reason to pretend
 		// the task is not there.
 		return Out{Said: writtenDown(t, one), Of: []string{t.ID}}, err
 	}
 
-	return Out{Said: writtenDown(t, one) + " and started", Of: []string{t.ID}}, nil
+	// No pid is a start the queue is holding: saying "started" over it
+	// sent a reader looking for a run that was not there yet.
+	if ran.Pid == 0 {
+		return Out{
+			Said: writtenDown(t, one) + " and waiting in the queue; it starts on its own",
+			Of:   []string{t.ID},
+		}, nil
+	}
+
+	return Out{Said: writtenDown(t, one) + " and started", Of: []string{t.ID}, Pid: ran.Pid}, nil
 }
 
 // writeDown finds the repository and writes the task down: against one when
@@ -245,9 +256,17 @@ func started(w World, in In) (Out, error) {
 		walking = t.Flow
 	}
 
-	pid, err := task.StartWith(w.Store(), t, walking, in.Arg("engine"), unread)
+	pid, err := queue.StartWith(w.Store(), t, walking, in.Arg("engine"), unread)
 	if err != nil {
 		return Out{}, err
+	}
+
+	// A pid of zero is a start the queue is holding: every slot taken, or
+	// memory over the ceiling. It starts on its own; saying "started" over
+	// it would send a reader looking for a run that is not there yet.
+	if pid == 0 {
+		return Out{Said: t.ID + " is waiting in the queue and starts on its own " +
+			"when a slot frees up"}, nil
 	}
 
 	return Out{Said: t.ID + " started", Pid: pid}, nil
@@ -285,22 +304,6 @@ var said = map[string]func(id string) string{
 	"resume":   func(id string) string { return id + " asked to carry on" },
 	"continue": func(id string) string { return id + " let past the gate it was waiting at" },
 	"skip":     func(id string) string { return id + " skipped past the phase it was in" },
-}
-
-// cancelled asks the run to stop where it stands, and to write down that it
-// was stopped — the signal rather than a word, because a cancel should not
-// wait for a phase to end.
-func cancelled(w World, in In) (Out, error) {
-	t, err := found(w, in)
-	if err != nil {
-		return Out{}, err
-	}
-
-	if err := task.Cancel(w.Store(), t); err != nil {
-		return Out{}, err
-	}
-
-	return Out{Said: "asked the run of " + t.ID + " to stop"}, nil
 }
 
 // requeued takes a task back, stopping whatever holds it and waiting for it

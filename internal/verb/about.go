@@ -11,6 +11,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/knowledge"
+	"github.com/e1i0r/orbit/internal/queue"
 	"github.com/e1i0r/orbit/internal/task"
 )
 
@@ -48,7 +49,7 @@ func directed(ctx context.Context, w World, in In) (Out, error) {
 		return Out{}, err
 	}
 
-	pid, err := task.Reopen(ctx, w.Store(), t, in.who(), in.Arg("text"), t.Flow, unread)
+	pid, err := queue.Reopen(ctx, w.Store(), t, in.who(), in.Arg("text"), t.Flow, unread)
 	if err != nil {
 		return Out{}, err
 	}

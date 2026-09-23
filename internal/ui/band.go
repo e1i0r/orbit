@@ -252,6 +252,11 @@ func (m Model) startedSaid(msg startedMsg) string {
 		return m.errSaid(msg.Err)
 	}
 
+	if msg.Pid == 0 {
+		return m.opts.Words.T("msg.queued", "{id} is waiting in the queue: every slot is taken, "+
+			"or memory is over the ceiling; it starts on its own", about("id", msg.ID))
+	}
+
 	return m.opts.Words.T("msg.started", "{id} is running, as process {pid}",
 		about("id", msg.ID), about("pid", strconv.Itoa(msg.Pid)))
 }

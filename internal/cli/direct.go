@@ -14,6 +14,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/logger"
+	"github.com/e1i0r/orbit/internal/queue"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/task"
 	"github.com/e1i0r/orbit/internal/words"
@@ -82,7 +83,7 @@ func directTask(ctx Context, args []string) error {
 		signalled, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 		defer stop()
 
-		pid, err := task.Reopen(signalled, s, t, *by, text, t.Flow, unread)
+		pid, err := queue.Reopen(signalled, s, t, *by, text, t.Flow, unread)
 		if err != nil {
 			return fmt.Errorf("reopen task %q: %w", id, err)
 		}
