@@ -180,7 +180,8 @@ func runCheck(dir, command string) Ran {
 	ctx, cancel := context.WithTimeout(context.Background(), checkDeadline)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "sh", "-c", command)
+	line := shellLine(command)
+	cmd := exec.CommandContext(ctx, line[0], line[1:]...)
 	cmd.Dir = dir
 	cmd.Env = environ()
 	// The shell gets a process group of its own, and the deadline signals

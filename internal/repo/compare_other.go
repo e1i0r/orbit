@@ -12,3 +12,7 @@ import "os/exec"
 // work outliving its shell is reported as timed out on time, and the work
 // itself is left to the operating system.
 func ownGroup(cmd *exec.Cmd) {}
+
+// shellLine is how a check is started. There is no nice to run it under
+// here, so it runs at the ordinary priority.
+func shellLine(command string) []string { return []string{"sh", "-c", command} }
