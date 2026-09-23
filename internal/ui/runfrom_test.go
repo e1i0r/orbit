@@ -12,6 +12,22 @@ import (
 	"github.com/e1i0r/orbit/internal/view"
 )
 
+// buttonGlyphs is every icon a node's button can be drawn under. The icon
+// is the whole of what tells a press that starts something from a press
+// that ends it, so a test looking for the button has to know all of them.
+const buttonGlyphs = "▶↻■"
+
+// buttonRow is the first row of lines carrying a node's button, or -1.
+func buttonRow(lines []string) int {
+	for i, l := range lines {
+		if strings.ContainsAny(ansi.Strip(l), buttonGlyphs) {
+			return i
+		}
+	}
+
+	return -1
+}
+
 // onTheTree is a task screen with the flow tab up and its first node open.
 func onTheTree(t *testing.T, open int) Model {
 	t.Helper()
@@ -55,13 +71,8 @@ func TestAnOpenNodeOffersToRunFromThere(t *testing.T) {
 	rows, _ := m.flowRows()
 	drawn := ansi.Strip(strings.Join(rows, "\n"))
 
-	if !strings.Contains(drawn, "▶") {
+	if !strings.ContainsAny(drawn, buttonGlyphs) {
 		t.Errorf("an open node offers no button:\n%s", drawn)
-	}
-
-	// And it names the key, so the gesture explains itself.
-	if !strings.Contains(drawn, m.keys.RetryPhase.Help().Key) {
-		t.Errorf("the button does not name the key that presses it:\n%s", drawn)
 	}
 }
 
@@ -71,7 +82,7 @@ func TestAShutNodeOffersNothing(t *testing.T) {
 	m := onTheTree(t, -1)
 
 	rows, _ := m.flowRows()
-	if drawn := ansi.Strip(strings.Join(rows, "\n")); strings.Contains(drawn, "▶") {
+	if drawn := ansi.Strip(strings.Join(rows, "\n")); strings.ContainsAny(drawn, buttonGlyphs) {
 		t.Errorf("a tree with every node shut still draws a button:\n%s", drawn)
 	}
 }
@@ -83,15 +94,7 @@ func TestTheButtonAnswersWhereItIsDrawn(t *testing.T) {
 
 	rows, _ := m.flowRows()
 
-	drawnAt := -1
-
-	for i, r := range rows {
-		if strings.Contains(ansi.Strip(r), "▶") {
-			drawnAt = i
-
-			break
-		}
-	}
+	drawnAt := buttonRow(rows)
 
 	if drawnAt < 0 {
 		t.Fatal("no button was drawn")
@@ -112,39 +115,44 @@ func TestTheButtonAnswersWhereItIsDrawn(t *testing.T) {
 	}
 }
 
-// TestTheKeyPressesTheOpenNodesButton is the keyboard half. Opening a node
-// is how a reader says which phase they mean, and ^R presses that one.
-func TestTheKeyPressesTheOpenNodesButton(t *testing.T) {
-	m := onTheTree(t, 1)
+// TestAPhaseInFlightIsStoppedRatherThanStarted.
+//
+// The button says ■ on a phase that is running, and it means it: a second
+// engine in the same worktree is the one mistake this cannot make, so the
+// press stops the run instead. Signalled, because the control word is read
+// at the next phase boundary and this phase has not reached one.
+func TestAPhaseInFlightIsStoppedRatherThanStarted(t *testing.T) {
+	m := onTheTree(t, 0)
 
-	phase, aiming := m.aimed()
-	if !aiming {
-		t.Fatal("one open node and the key has nothing to aim at")
+	stopped := ""
+	m.opts.Stop = func(task view.Task) error { stopped = task.ID; return nil }
+
+	for i, task := range m.board.Tasks {
+		if task.ID == m.detail {
+			m.board.Tasks[i].Live = view.LiveHeld
+		}
 	}
 
-	if phase == "" {
-		t.Error("the open node names no phase")
+	next, cmd := m.runFromPhase(0)
+	if cmd == nil {
+		t.Fatal("pressing ■ ran nothing")
 	}
 
-	// Two open nodes is two answers, and picking either would be the
-	// window choosing for the reader.
-	two := m.openRow(0)
-	if _, aiming := two.aimed(); aiming {
-		t.Error("two open nodes still aimed at one")
+	cmd()
+
+	if stopped != m.detail {
+		t.Errorf("the run was not signalled; stopped = %q", stopped)
 	}
 
-	// None open falls back to the phase that went wrong, which is what
-	// the key did before there were buttons.
-	none := onTheTree(t, -1)
-	if _, aiming := none.aimed(); aiming {
-		t.Error("no open node still aimed at one")
+	if got := asModel(t, next).await.verb; got != gestureCancel {
+		t.Errorf("the window is awaiting %q, want %q", got, gestureCancel)
 	}
 }
 
-// TestRunningFromAPhaseIsRefusedWhileTheTaskIsHeld: a second engine in the
-// same worktree is the one mistake this cannot make.
-func TestRunningFromAPhaseIsRefusedWhileTheTaskIsHeld(t *testing.T) {
+// TestAHeldTaskWithNoStopPortIsRefusedOutLoud.
+func TestAHeldTaskWithNoStopPortIsRefusedOutLoud(t *testing.T) {
 	m := onTheTree(t, 0)
+	m.opts.Stop = nil
 
 	for i, task := range m.board.Tasks {
 		if task.ID == m.detail {
@@ -173,6 +181,148 @@ func TestTheButtonIsRouted(t *testing.T) {
 
 	if got := asModel(t, after).await.verb; got != gestureStart {
 		t.Errorf("the click left the window awaiting %q, want %q", got, gestureStart)
+	}
+}
+
+// TestAVerbStillOutIsLetGoOfByItsButton.
+//
+// The press on ■ ends the wait and writes down that it ended. What it does
+// not do is pretend the verb was answered: the record keeps a cause saying
+// nobody waited for it, which is what the tree then has under the node.
+func TestAVerbStillOutIsLetGoOfByItsButton(t *testing.T) {
+	m := onTheTree(t, 0)
+	m.supervisorBusy = true
+	m.delivering = deliverPending{task: taskByID(t, m, m.detail), verb: "RESOLVE COMMENTS", at: m.now}
+
+	var wrote Delivery
+
+	m.opts.RecordDeliver = func(_ view.Task, d Delivery) error { wrote = d; return nil }
+
+	next, _ := m.stopWaiting("RESOLVE COMMENTS")
+	after := asModel(t, next)
+
+	if after.supervisorBusy {
+		t.Error("the spinner is still turning on a verb nobody is waiting for")
+	}
+
+	if after.delivering.verb != "" {
+		t.Errorf("the window is still waiting on %q", after.delivering.verb)
+	}
+
+	if !wrote.Done || wrote.Failure == nil {
+		t.Errorf("the record does not say the verb was given up on: %+v", wrote)
+	}
+}
+
+// TestAVerbThisWindowNeverAskedForIsNotStopped: stopping a wait nobody here
+// is holding would write an ending onto work that is still running.
+func TestAVerbThisWindowNeverAskedForIsNotStopped(t *testing.T) {
+	m := onTheTree(t, 0)
+	m.delivering = deliverPending{}
+
+	wrote := false
+	m.opts.RecordDeliver = func(view.Task, Delivery) error { wrote = true; return nil }
+
+	next, _ := m.stopWaiting("RESOLVE COMMENTS")
+
+	if wrote {
+		t.Error("a verb asked for somewhere else was written down as ended here")
+	}
+
+	if got := asModel(t, next).message; !strings.Contains(got, "somewhere else") {
+		t.Errorf("it refused silently: %q", got)
+	}
+}
+
+// TestEveryDeliveryVerbCanBeAskedForAgain: a caption the button cannot
+// route is a red node with a button on it that does nothing, which is the
+// shape of bug this whole pass was about.
+func TestEveryDeliveryVerbCanBeAskedForAgain(t *testing.T) {
+	m := onTheTree(t, 0)
+
+	for _, verb := range []string{
+		"CREATE PR", "UPDATE PR", "FIX CHECKS", "MORE TESTS", "RESOLVE COMMENTS", "DEEP REVIEW",
+	} {
+		next, _ := m.askAgain(verb)
+		if got := asModel(t, next).message; strings.Contains(got, "ask for again") {
+			t.Errorf("%q has no gesture behind its button: %q", verb, got)
+		}
+	}
+}
+
+// TestALiveRunOffersNoStart is the bug Elio's logs caught three times in
+// four minutes.
+//
+// ORB-121 was parked at the review gate: needs_you on the board, a process
+// still on the phase. Every node of the tree read "▶ run it", and pressing
+// one signalled a cancel — "task ORB-121, waiting to start phase review:
+// context canceled", then again, then again. The button has to be drawn
+// from the same fact the press acts on.
+func TestALiveRunOffersNoStart(t *testing.T) {
+	m := onTheTree(t, -1)
+
+	for i, task := range m.board.Tasks {
+		if task.ID == m.detail {
+			m.board.Tasks[i].Live = view.LiveHeld
+		}
+	}
+
+	// Every node open at once, so no node is missed for being shut.
+	for i := range 3 {
+		m = m.openRow(i)
+	}
+
+	m = m.syncPanes()
+
+	rows, _ := m.flowRows()
+	for _, r := range rows {
+		if drawn := ansi.Strip(r); strings.Contains(drawn, "▶") || strings.Contains(drawn, "↻") {
+			t.Errorf("a task whose run is up offers to start a phase: %q", strings.TrimSpace(drawn))
+		}
+	}
+}
+
+// TestNoButtonDrawnMeansNoButtonHit: a row the hit test answers and the
+// tree never drew is a click that does something invisible, which is the
+// same bug from the other end.
+func TestNoButtonDrawnMeansNoButtonHit(t *testing.T) {
+	m := onTheTree(t, 0)
+
+	for i, task := range m.board.Tasks {
+		if task.ID == m.detail {
+			m.board.Tasks[i].Live = view.LiveFree
+		}
+	}
+
+	m = m.syncPanes()
+
+	rows, _ := m.flowRows()
+	for i, r := range rows {
+		_, on := m.runFromAt(i)
+		if drawn := strings.ContainsAny(ansi.Strip(r), buttonGlyphs); drawn != on {
+			t.Errorf("row %d: drawn=%v answered=%v: %q", i, drawn, on, ansi.Strip(r))
+		}
+	}
+}
+
+// TestAStartLandsWhenTheRunStopsAtItsFirstGate.
+//
+// ORB-121 started and was at the review gate eight seconds later, which
+// puts it in needs_you. "arrancando…" sat on the header, the badge and the
+// row of a task that was plainly up and asking a question.
+func TestAStartLandsWhenTheRunStopsAtItsFirstGate(t *testing.T) {
+	gated := view.Task{ID: "ORB-121", Live: view.LiveHeld}
+	if view.BandOf(gated) == view.Running {
+		t.Fatal("the fixture is running, so it tests nothing")
+	}
+
+	if !landed(gestureStart, gated, true) {
+		t.Error("a run parked at its first gate still reads as starting…")
+	}
+
+	// And a task nothing is running is still not started.
+	if landed(gestureStart, view.Task{ID: "ORB-121", Live: view.LiveFree}, true) {
+		t.Error("a task with no process reads as started")
 	}
 }
 

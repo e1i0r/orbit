@@ -134,7 +134,8 @@ func Pipeline(e Env) ([]string, map[int]int) {
 }
 
 // RunFroms is the same tree read for its buttons: which drawn row is the
-// "run from here" of which phase.
+// button of which node, numbered the way the folds are — the phases first,
+// the verbs asked for by hand after them.
 //
 // A second door rather than a third return on Pipeline, because every
 // caller but the hit test wants the rows and nothing else.
@@ -142,6 +143,25 @@ func RunFroms(e Env) map[int]int {
 	_, _, at := pipeline(e)
 
 	return at
+}
+
+// Hands is every delivery verb on the tree, in the order it draws them, so
+// that the window can say what the button under the pointer is about.
+//
+// The tree numbers its nodes with the phases first and these after, which
+// is what a press hands back: a number past the last phase is one of these.
+func Hands(e Env) []Step {
+	steps := e.byHand()
+
+	out := make([]Step, 0, len(steps))
+	for _, st := range steps {
+		out = append(out, Step{
+			Verb: st.verb, By: st.by, At: st.at,
+			Ended: st.ended, Said: st.text, Cause: st.cause,
+		})
+	}
+
+	return out
 }
 
 func pipeline(e Env) ([]string, map[int]int, map[int]int) {
@@ -192,8 +212,15 @@ func pipeline(e Env) ([]string, map[int]int, map[int]int) {
 	}
 
 	for j, st := range steps {
-		heads[len(out)] = len(f.Phases) + j
-		out = append(out, e.handNode(st, len(f.Phases)+j, j == len(steps)-1)...)
+		at := len(f.Phases) + j
+		heads[len(out)] = at
+
+		node, button := e.handNode(st, at, j == len(steps)-1)
+		if button >= 0 {
+			buttons[len(out)+button] = at
+		}
+
+		out = append(out, node...)
 	}
 
 	return out, heads, buttons
@@ -211,6 +238,13 @@ func (e Env) flowNode(t view.Task, phase flow.Phase, i, total int, past bool) ([
 	ex := e.execOf(phase.Name)
 	inFlight := t.Band == view.Running && strings.EqualFold(t.Phase, phase.Name)
 	st := e.phaseStanding(ex, where{inFlight: inFlight, past: past})
+
+	// What the button is drawn from, and it is not the band. A run parked
+	// at a gate has its task in needs_you with a process still on the
+	// phase, so the band says nothing about whether a press can start
+	// anything — the liveness does.
+	busy := t.Live == view.LiveHeld
+	held := busy && strings.EqualFold(t.Phase, phase.Name)
 
 	open := e.row(i)
 
@@ -238,8 +272,18 @@ func (e Env) flowNode(t view.Task, phase flow.Phase, i, total int, past bool) ([
 	button := -1
 
 	if open {
-		sub := subRows(e.phaseSubItems(phase, ex), subBranch)
-		button = len(out) + len(sub) - 1
+		items := e.phaseSubItems(phase, ex)
+
+		word := e.runFrom(ex, held, busy)
+		if word != "" {
+			items = append(items, subItem{text: "  " + word})
+		}
+
+		sub := subRows(items, subBranch)
+		if word != "" {
+			button = len(out) + len(sub) - 1
+		}
+
 		out = append(out, sub...)
 	}
 

@@ -83,7 +83,7 @@ func (e Env) byHand() []handStep {
 // handNode is one of those steps on the tree, in the shape a phase has: the
 // branch it hangs off, where it got to, and — once opened — what was handed
 // the work and what came back.
-func (e Env) handNode(st handStep, i int, last bool) []string {
+func (e Env) handNode(st handStep, i int, last bool) ([]string, int) {
 	branch, subBranch := "├──", "│  "
 	if last {
 		branch, subBranch = "└──", "   "
@@ -100,11 +100,18 @@ func (e Env) handNode(st handStep, i int, last bool) []string {
 	}
 
 	out := []string{head}
+
+	// Where the button landed, and -1 for a node nobody has opened: it is
+	// the last of the sub-items, the way a phase's is.
+	button := -1
+
 	if e.row(i) {
-		out = append(out, subRows(e.handSubItems(st), subBranch)...)
+		sub := subRows(e.handSubItems(st), subBranch)
+		button = len(out) + len(sub) - 1
+		out = append(out, sub...)
 	}
 
-	return append(out, "  "+theme.Paint(theme.Dim).Render(subBranch))
+	return append(out, "  "+theme.Paint(theme.Dim).Render(subBranch)), button
 }
 
 // handStanding is where a delivery verb got to: the glyph, the word, and the
@@ -155,40 +162,31 @@ func (e Env) handSubItems(st handStep) []subItem {
 		items = append(items, subItem{text: fmt.Sprintf("❌ %s: %s",
 			theme.Paint(theme.Bad).Bold(true).Render(p.T("flow.tree_error", "error details")),
 			theme.Paint(theme.Bad).Render(st.cause))})
-
-		// And the way to ask again. A verb that came back broken is
-		// retried by pressing the key it was offered under, which is
-		// true and which nobody knows: the red node said what went
-		// wrong and left the reader looking for a button that is not
-		// there, because the gesture is the same key they pressed the
-		// first time.
-		if key, named := retryKey(st.verb); named {
-			items = append(items, subItem{text: "↻ " + theme.Paint(theme.Dim).Render(
-				p.T("flow.hand_retry", "press {key} to ask for it again", about("key", key)))})
-		}
 	}
 
-	return append(items, e.phaseOutcome(st.text)...)
+	items = append(items, e.phaseOutcome(st.text)...)
+
+	return append(items, subItem{text: "  " + e.handButton(st)})
 }
 
-// retryKey is the key a delivery verb is offered under, by the caption the
-// record holds.
+// handButton is what pressing the node offers, which depends on where the
+// verb got to. The icon carries it: ■ is the one press that ends something
+// and ↻ is the one that starts it over.
 //
-// The same pairs the deliver grid draws (overview_blocks.go). They are
-// written out rather than derived, for the reason that grid writes them
-// out: the caption is what the record kept and the key is what the window
-// offers, and nothing in between maps one to the other.
-func retryKey(verb string) (string, bool) {
-	key, ok := map[string]string{
-		"CREATE PR":        "p",
-		"UPDATE PR":        "u",
-		"FIX CHECKS":       "C",
-		"MORE TESTS":       "T",
-		"RESOLVE COMMENTS": "R",
-		"DEEP REVIEW":      "D",
-	}[strings.ToUpper(strings.TrimSpace(verb))]
+// A verb still out used to offer nothing at all. The node sat on ⚡ with a
+// spinner turning beside it and no way to be done with it, which is the
+// state Elio was left in with RESOLVE COMMENTS out on a cancelled task.
+func (e Env) handButton(st handStep) string {
+	p := e.Words
 
-	return key, ok
+	switch {
+	case !st.done:
+		return theme.Paint(theme.Bad).Render(p.T("flow.stop_it", "■ stop it"))
+	case st.failed:
+		return theme.Paint(theme.Live).Render(p.T("flow.try_again", "↻ try it again"))
+	}
+
+	return theme.Paint(theme.Live).Render(p.T("flow.ask_again", "↻ ask for it again"))
 }
 
 // A Step is a delivery verb that was asked for by hand: what was asked for,
