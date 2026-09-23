@@ -192,6 +192,12 @@ var program = map[string][]string{
 		"internal/learn", "internal/logger", "internal/lowly", "internal/record", "internal/repo",
 		"internal/store",
 	},
+	// internal/queue decides when a run starts, and task starts it: the
+	// queue is above task and reads the machine to know if there is room.
+	"internal/queue": {
+		"internal/logger", "internal/machine", "internal/record", "internal/repo", "internal/store",
+		"internal/task",
+	},
 	// internal/tame because what a tracker answers with is somebody else's
 	// text: an issue title is drawn in the form and its body becomes the
 	// task. internal/env because the key that reads it is read there.

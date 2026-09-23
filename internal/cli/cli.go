@@ -14,6 +14,7 @@ import (
 	"github.com/e1i0r/orbit/internal/env"
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/lowly"
+	"github.com/e1i0r/orbit/internal/queue"
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/words"
@@ -99,6 +100,16 @@ func Run(args []string, out, errOut io.Writer) (code int) {
 		}
 
 		return 0
+	}
+
+	// The queue's service, which orbit starts itself: see
+	// internal/queue/service.go. Not a command either. It writes to the
+	// log like any command, since the log is the only place anybody hears
+	// from it.
+	if args[0] == queue.ServiceArg {
+		defer logging(errOut, &code)()
+
+		return serveQueue(errOut)
 	}
 
 	c, ok := lookup(args[0])

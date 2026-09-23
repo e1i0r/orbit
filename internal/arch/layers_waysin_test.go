@@ -54,7 +54,7 @@ var waysIn = map[string][]string{
 		"internal/env", "internal/board", "internal/chat", "internal/engine", "internal/export", "internal/flow",
 		"internal/hunch", "internal/knowledge", "internal/learn", "internal/logger", "internal/lowly",
 		"internal/mcp",
-		"internal/migrate", "internal/quota", "internal/record", "internal/repo",
+		"internal/migrate", "internal/queue", "internal/quota", "internal/record", "internal/repo",
 		"internal/store", "internal/supervisor", "internal/task", "internal/tracker",
 		"internal/ui", "internal/ui/fact", "internal/ui/known", "internal/ui/roster",
 		"internal/verb", "internal/view", "internal/web", "internal/words", "ui",
