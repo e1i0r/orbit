@@ -89,6 +89,12 @@ can be wrong in a way that costs you something.
 Anything it is not sure enough about, anything it cannot reach, and every
 answer that is not a plain verdict leave the run exactly as it was.
 
+What it reads at a gate is the task and the last report a phase wrote. A
+phase's report stands until that phase runs again, so a task you move
+back to a gate is judged on the work it already has. Before, every new
+attempt started with nothing to read, and a task retried at review was
+answered "again" over an implement that had reported everything green.
+
 ---
 
 Next: [what Orbit knows](knowledge.md) · [autopilot](autopilot.md)
