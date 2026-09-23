@@ -25,6 +25,7 @@ func TestEverySettingCanBePutBack(t *testing.T) {
 		BudgetTask: 9, BudgetWorkspace: 99, QuotaFloor: 15,
 		Decisions: "on", DecisionFloor: 90,
 		RunTimeout: "45m",
+		MaxRunning: 5, MemoryCeiling: 70,
 	}
 
 	for _, key := range settingKeys() {

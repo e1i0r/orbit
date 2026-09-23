@@ -108,16 +108,16 @@ type Settings struct {
 	// duration: 45m, 2h. Empty is no timeout, which is the working zero
 	// every field here has and was the only behaviour there was.
 	//
-	// A setting and not a default, because there is no honest default: a
-	// phase that reads a repository is seconds and one that writes a
-	// migration is an hour, and a number Orbit picked would stop the
-	// second kind for a reason nobody chose. What it is for is the other
-	// end — an engine that has wedged on a network read holds a worktree
-	// and a slot until somebody notices, and noticing is the part a person
-	// asleep cannot do. `orbit run -timeout` is the same stop for a run
-	// started by hand, and this is what the flag becomes when the window
-	// starts one.
+	// A setting and not a default: a phase that reads a repository is
+	// seconds and one that writes a migration is an hour. What it is for is
+	// an engine wedged on a network read, holding a worktree and a slot
+	// until somebody notices. `orbit run -timeout` is the same stop for a
+	// run started by hand.
 	RunTimeout string `json:"runTimeout,omitempty"`
+
+	// MaxRunning and MemoryCeiling are the queue's limits: settings_queue.go.
+	MaxRunning    int `json:"maxRunning,omitempty"`
+	MemoryCeiling int `json:"memoryCeiling,omitempty"`
 
 	// CheckRecord makes every command ask SQLite whether the record is
 	// still readable before it does anything. It is off by default because

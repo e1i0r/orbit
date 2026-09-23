@@ -167,7 +167,7 @@ var doors = map[string][]string{
 	},
 	"internal/store": {
 		"atomic.go", "control.go", "create.go", "flatten.go", "record.go", "repos.go",
-		"run.go", "settings.go", "store.go", "tasks.go",
+		"run.go", "settings.go", "settings_queue.go", "store.go", "tasks.go",
 	},
 	"internal/view": {
 		"delta.go", "digest.go", "entrykind.go", "fields.go", "file.go", "fold.go", "log.go",
