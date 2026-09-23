@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"charm.land/lipgloss/v2"
-
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/ui/cells"
 	"github.com/e1i0r/orbit/internal/ui/prose"
@@ -33,20 +31,15 @@ func (s State) composeFlowLine(active bool, w int, e Env) string {
 	// one. Two drawings of one row is two rows that drift: the dialog's
 	// was already a worse version of this, showing only the flow it was
 	// on and cycling blind to the rest.
-	choices := make([]prose.Choice, 0, len(s.flows))
-	for _, f := range s.flows {
-		choices = append(choices, prose.Choice{Label: f, Glyph: prose.FlowGlyph(f)})
-	}
-
 	// One line here, as this form has always drawn it: the width is
 	// passed as nought, which Row reads as "do not wrap". The form's
 	// caret arithmetic is per line and the box below it is placed from a
 	// fixed plan, so a flow row that grew a second line would move
 	// everything under it. The start dialog wraps because its plan is
 	// built from what each block actually took.
-	rows, _ := prose.Row(choices, s.flowIdx, 0, 0)
+	rows, _ := prose.Row(s.flowChoices(), s.flowIdx, 0, 0)
 
-	newBtn := theme.Pill(" ➕ "+p.T("compose.new_flow_btn", "New")+" ", theme.PillInk, theme.PillCreate)
+	newBtn := composeNewFlowBtn(e)
 
 	line := prefix + rows[0] + " " + newBtn
 	if active {
@@ -124,10 +117,18 @@ func (s State) flowPhaseRow(n int, ph flow.Phase, e Env) string {
 
 const composeLabelStart = cells.Gutter + composeLabelWidth + 1
 
-func composePillWidth(name string, selected bool) int {
-	if selected {
-		return lipgloss.Width(theme.Pill(" ● "+name+" ", theme.PillInkLit, theme.PillInk))
+// flowChoices is the row of flows as prose.Row draws it. The drawing and the
+// hit test both take it from here, so the two cannot count the row apart.
+func (s State) flowChoices() []prose.Choice {
+	choices := make([]prose.Choice, 0, len(s.flows))
+	for _, f := range s.flows {
+		choices = append(choices, prose.Choice{Label: f, Glyph: prose.FlowGlyph(f)})
 	}
 
-	return lipgloss.Width(theme.Pill(" "+name+" ", theme.PillInkRest, theme.PillRest))
+	return choices
+}
+
+// composeNewFlowBtn is the button after the flows that opens the designer.
+func composeNewFlowBtn(e Env) string {
+	return theme.Pill(" ➕ "+e.Words.T("compose.new_flow_btn", "New")+" ", theme.PillInk, theme.PillCreate)
 }
