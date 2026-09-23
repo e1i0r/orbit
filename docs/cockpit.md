@@ -115,6 +115,12 @@ key printed against it there.
 | `z` `Z` | fold every section (overview), collapse every file (diff) |
 | `r` | on impact and diff: read it again |
 
+The task's own verbs work here too, on the task you are reading and not on
+whichever row the board was left on: `r` `s` `x` `b` `h` `d` resume, skip,
+cancel, put back in To Do, hand back and mark read. `p`, `t` and `D` mean
+something else on this screen, so pause, take the keyboard and delete are
+reached through `m`, whose entries act on this task the same way.
+
 ## Settings
 
 `:` then `settings` opens them. Arrows walk the dials, `e` types a value that
