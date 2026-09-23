@@ -102,6 +102,9 @@ var program = map[string][]string{
 	// were told in, and those are record.Event.
 	"internal/learn":  {"internal/db", "internal/knowledge", "internal/logger", "internal/record", "internal/store"},
 	"internal/logger": {},
+	// internal/lowly starts a program behind a step that lowers its
+	// priority. It is the standard library and nothing else.
+	"internal/lowly": {},
 	// internal/migrate reads the files an older Orbit wrote and fills the
 	// database from them, so it is the one package that touches the record
 	// on both sides: internal/store to find the logs, internal/record to
@@ -183,7 +186,8 @@ var program = map[string][]string{
 	// cycle can be made of it.
 	"internal/task": {
 		"internal/engine", "internal/flow", "internal/hunch", "internal/kin", "internal/knowledge",
-		"internal/learn", "internal/logger", "internal/record", "internal/repo", "internal/store",
+		"internal/learn", "internal/logger", "internal/lowly", "internal/record", "internal/repo",
+		"internal/store",
 	},
 	// internal/tame because what a tracker answers with is somebody else's
 	// text: an issue title is drawn in the form and its body becomes the

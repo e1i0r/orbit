@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/engine"
+	"github.com/e1i0r/orbit/internal/lowly"
 )
 
 // The answer is about the engine the task in front of the reader ran under,
@@ -58,8 +59,8 @@ func TestTakingTheKeyboardResumesAForkAndNotTheRunnersSession(t *testing.T) {
 	}
 
 	want := []string{"claude", "--resume", "sess-1", "--fork-session"}
-	if strings.Join(cmd.Args, " ") != strings.Join(want, " ") {
-		t.Errorf("argv is %q, want %q", cmd.Args, want)
+	if got := lowly.Behind(cmd); strings.Join(got, " ") != strings.Join(want, " ") {
+		t.Errorf("argv is %q, want %q behind the lowered step", cmd.Args, want)
 	}
 
 	if cmd.Dir != "/w/.orbit/worktrees/ACME-1" {

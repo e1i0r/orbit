@@ -40,6 +40,11 @@ a change to the API and its client, in one task, with both worktrees under it.
 
 ## What limits it
 
+**Priority.** Everything a run starts, and every CLI session the window
+opens, runs at the lowest priority your system has. On an idle machine that
+changes nothing; when you are using it, a lint that wants every core gives
+way, and the window keeps answering.
+
 Not Orbit. The engine's own rate limits are the ceiling, and `Q` shows what is
 left of each one's window before you start something that will hit it. The
 unread cap is the other limit, and it is deliberate: see

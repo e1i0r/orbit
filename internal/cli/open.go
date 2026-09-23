@@ -17,6 +17,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/logger"
+	"github.com/e1i0r/orbit/internal/lowly"
 	"github.com/e1i0r/orbit/internal/mcp"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/task"
@@ -139,7 +140,9 @@ func openCommand(engineName, dir, context string) (*exec.Cmd, error) {
 		args = append(args, openSays(engineName, len(args) > 0, context)...)
 	}
 
-	cmd := exec.Command(engineName, args...)
+	// At the lowest priority, like a run: a make check the session runs
+	// took every core and froze the machine the cockpit was open on.
+	cmd := lowly.Command(engineName, args...)
 	cmd.Dir = dir
 
 	return cmd, nil

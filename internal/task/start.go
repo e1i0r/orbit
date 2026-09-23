@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"syscall"
 
+	"github.com/e1i0r/orbit/internal/lowly"
 	"github.com/e1i0r/orbit/internal/store"
 )
 
@@ -174,7 +175,10 @@ func runCommand(exe, root string, t Task, flowName, engineName, from, timeout st
 
 	args = append(args, "-flow", flowName, t.ID)
 
-	cmd := exec.Command(exe, args...)
+	// Behind the lowered step, so the run and everything it starts, the
+	// engine, the gates and every make check, give the CPU to the reader
+	// first. See internal/lowly.
+	cmd := exec.Command(exe, lowly.Args(exe, args...)...)
 	// The repository the task is against, and not whatever directory the
 	// caller happens to be in. -repo is absolute so nothing depends on this,
 	// but a child inheriting a working directory that may be deleted while

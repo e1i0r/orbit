@@ -17,6 +17,7 @@ import (
 	"slices"
 
 	"github.com/e1i0r/orbit/internal/engine"
+	"github.com/e1i0r/orbit/internal/lowly"
 	"github.com/e1i0r/orbit/internal/ui"
 	"github.com/e1i0r/orbit/internal/verb"
 	"github.com/e1i0r/orbit/internal/words"
@@ -80,7 +81,7 @@ func takeCommand(eng engine.Engine, session, dir string) (*exec.Cmd, error) {
 		return nil, nil
 	}
 
-	cmd := exec.Command(eng.Name(), "--resume", session, "--fork-session")
+	cmd := lowly.Command(eng.Name(), "--resume", session, "--fork-session")
 	cmd.Dir = dir
 
 	return cmd, nil
