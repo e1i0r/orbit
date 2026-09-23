@@ -35,6 +35,7 @@ type handStep struct {
 	text   string
 	cause  string
 	took   string
+	doing  []string // what its carrier has done so far, oldest first
 }
 
 // byHand reads the delivery verbs out of the record, oldest first, each with
@@ -53,6 +54,10 @@ func (e Env) byHand() []handStep {
 		if entry.What() == view.EntryDeliverAsked {
 			steps = append(steps, handStep{verb: entry.Verb, by: entry.By, at: entry.At})
 			continue
+		}
+
+		if entry.What() == view.EntryDeliverStep {
+			steps = withStep(steps, entry)
 		}
 
 		if entry.What() != view.EntryDeliverAnswered {
@@ -171,6 +176,7 @@ func (e Env) handSubItems(st handStep) []subItem {
 	}
 
 	items = append(items, e.phaseOutcome(st.text)...)
+	items = append(items, stepItems(st)...)
 
 	return append(items, subItem{text: "  " + e.handButton(st)})
 }
@@ -206,6 +212,7 @@ type Step struct {
 	Ended time.Time
 	Said  string
 	Cause string
+	Doing string // the last thing its carrier did, while it is out
 }
 
 // justLanded is how long a verb that has come back stays on the band.
@@ -281,7 +288,7 @@ func Waiting(e Env) (Step, bool) {
 	steps := e.byHand()
 	for i := len(steps) - 1; i >= 0; i-- {
 		if st := steps[i]; !st.done {
-			return Step{Verb: st.verb, By: st.by, At: st.at}, true
+			return Step{Verb: st.verb, By: st.by, At: st.at, Doing: last(st.doing)}, true
 		}
 	}
 
@@ -302,7 +309,7 @@ func HandOut(e Env) []string {
 		return nil
 	}
 
-	said := StillWorking(e.Words, st.Verb, st.By, st.At, e.Now)
+	said := WithDoing(StillWorking(e.Words, st.Verb, st.By, st.At, e.Now), st)
 
 	return []string{prose.Gutter + theme.Paint(theme.Live).Render("⚡ "+said)}
 }

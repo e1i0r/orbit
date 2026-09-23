@@ -280,3 +280,13 @@ func (e Env) flowNode(t view.Task, phase flow.Phase, i, total int, past bool) ([
 	// is what keeps a folded tree a tree.
 	return append(out, "  "+theme.Paint(theme.Dim).Render(subBranch)), button
 }
+
+// WithDoing is a still-working sentence with the step in hand on the end of
+// it: "supervisor is working on CREATE PR · 2m so far · Bash: gh pr create".
+func WithDoing(said string, st Step) string {
+	if st.Doing == "" {
+		return said
+	}
+
+	return said + cells.Dot + cells.Fit(st.Doing, 80)
+}

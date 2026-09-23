@@ -197,7 +197,7 @@ var recordKinds = []string{
 	"phase.asked", "phase.denied",
 	"gate.passed", "gate.failed", "loop.checked",
 	"decision.made", "decision.superseded", "dependency.approved",
-	"repo.joined", "deliver.asked", "deliver.answered", "record.unreadable",
+	"repo.joined", "deliver.asked", "deliver.answered", "deliver.step", "record.unreadable",
 }
 
 // TestTheSpellingsThisTestUsesAreTheRecordsOwn. A spelling that has gone

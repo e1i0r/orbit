@@ -55,6 +55,11 @@ the same button. One still out offers `■ stop it`, which ends the wait: the
 cockpit stops holding the verb open, and whatever the supervisor says later
 still lands in its thread. One that came back offers `↻ ask for it again`.
 
+While a verb the supervisor carries is out, its node lists the last five
+things the supervisor did for it, the newest turning: `Bash: git push`,
+then `Bash: gh pr create`. The bar says the one in hand, and the timeline
+keeps every one of them as a `step`.
+
 A verb is carried by the window it was asked in. If that window closes
 before the answer comes back, nothing is working on it any more, and the
 tree says it broke: on the next tick in a window that is open, or as soon

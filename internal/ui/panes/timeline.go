@@ -256,6 +256,8 @@ func (e Env) logWord(entry view.Entry) (string, theme.Role) {
 		return p.T("log.deliver_answered", "came back"), theme.OK
 	case view.EntryUnreadable:
 		return p.T("log.unreadable", "this line could not be read"), theme.Bad
+	case view.EntryDeliverStep:
+		return p.T("log.deliver_step", "step"), theme.Dim
 	}
 
 	return entry.Kind, theme.Dim
@@ -299,6 +301,8 @@ func logDetail(e view.Entry) string {
 		}
 
 		return e.Verb
+	case view.EntryDeliverStep:
+		return e.Verb + ": " + view.ToolLine(e.Tool, e.Text)
 	case view.EntryDeliverAnswered:
 		if e.Cause != "" {
 			return e.Verb + ": " + e.Cause

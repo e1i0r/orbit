@@ -991,6 +991,10 @@
       "source": "asked for",
       "value": "se pidió"
     },
+    "log.deliver_step": {
+      "source": "step",
+      "value": "paso"
+    },
     "log.deliver_answered": {
       "source": "came back",
       "value": "contestó"
