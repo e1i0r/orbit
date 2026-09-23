@@ -133,6 +133,9 @@ func (m Model) stateWord(t view.Task) (string, theme.Role) {
 		return p.T("reason.abandoned", "abandoned"), theme.Warn
 	case view.ReasonCancelled:
 		return p.T("reason.cancelled", "cancelled"), theme.Dim
+	case view.ReasonQueued:
+		return p.T("reason.queued", "queued · {place} in line",
+			about("place", strconv.Itoa(m.placeInQueue(t)))), theme.Dim
 	case view.ReasonContradicts:
 		return p.T("reason.contradicts", "goes against {decision}", reasonArgs(t.Reason)...), theme.Bad
 	case view.ReasonNewDependency:

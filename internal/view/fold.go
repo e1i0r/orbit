@@ -97,9 +97,8 @@ func fold(t *Task, e record.Event) {
 		// in is cleared before the task.failed that refuses this one
 		// arrives. It reads as "failed to start", which is what happened.
 		//
-		// Logs written before that ordering changed have no task.started on
-		// the refused attempt at all, and record.TaskFailed below is what
-		// catches those.
+		// Older logs have no task.started on a refused attempt; TaskFailed
+		// below catches those.
 		t.Attempt++
 		t.state = stateRunning
 		t.Reason = Reason{}
@@ -185,16 +184,18 @@ func fold(t *Task, e record.Event) {
 		t.state = stateCancelled
 		t.Reason = Reason{Key: ReasonCancelled}
 		stamp(&t.Since, e.At)
+	case record.TaskQueued:
+		t.state = stateQueued
+		t.Reason = Reason{Key: ReasonQueued}
+		stamp(&t.Since, e.At)
 	case record.TaskCancelled:
 		t.state = stateCancelled
 		t.Reason = Reason{Key: ReasonCancelled}
 		stamp(&t.Since, e.At)
 	case record.TaskRequeued:
-		// Back to where a task sits before anything has run: the attempt is
-		// over and there is nothing of it left to draw. What it spent stays
-		// — the money and the tokens were spent whoever changed their mind
-		// — and so does Attempt, because the next run is the next attempt
-		// and not the first one again.
+		// Back to where a task sits before anything has run. What it spent
+		// stays — the money was spent whoever changed their mind — and so
+		// does Attempt: the next run is the next attempt, not the first.
 		t.state = stateNew
 		t.Reason = Reason{}
 		t.Phase, t.PhaseN, t.Engine, t.Model = "", 0, "", ""

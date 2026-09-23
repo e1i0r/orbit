@@ -106,6 +106,7 @@ const (
 	stateNeedsEngine                // task.needs_engine: it ran out and somebody picks who carries on
 	stateNoEngine                   // task.no_engine: it ran out and nothing has anything left
 	stateDenied                     // phase.denied: it was refused what it needed and wrote nothing
+	stateQueued                     // task.queued: asked to start, waiting in the queue for a slot
 
 	// stateCount is not a state. It is how many there are, so a test can
 	// walk every one and fail when a new state arrives without a band.
@@ -280,7 +281,7 @@ func bandOfState(s state) Band {
 	switch s {
 	case stateNew:
 		return ToDo
-	case stateRunning, stateHeld:
+	case stateRunning, stateHeld, stateQueued:
 		return Running
 	case stateWaiting, statePhaseFailed, stateRanOut, stateFailed, stateTimedOut,
 		stateAbandoned, stateStuck, stateOverBudget, stateOverDiff,

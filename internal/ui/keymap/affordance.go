@@ -219,7 +219,8 @@ func whyNotCancel(t view.Task) words.Arg {
 		return because(WhyMarkerUnreadable)
 	}
 
-	if t.Live == view.LiveHeld {
+	// Held by a process, or waiting in the queue for one.
+	if t.Live == view.LiveHeld || t.Reason.Key == view.ReasonQueued {
 		return words.Arg{}
 	}
 

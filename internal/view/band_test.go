@@ -152,6 +152,7 @@ func TestEveryStateHasABand(t *testing.T) {
 		stateNew:           ToDo,
 		stateRunning:       Running,
 		stateHeld:          Running,
+		stateQueued:        Running,
 		stateWaiting:       NeedsYou,
 		statePhaseFailed:   NeedsYou,
 		stateRanOut:        NeedsYou,
