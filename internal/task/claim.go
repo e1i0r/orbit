@@ -44,6 +44,18 @@ func hold(s *store.Store, t Task) (release func(), err error) {
 	}
 
 	if alive {
+		// This process's own pid: whoever started it wrote the marker in
+		// its name the moment it was spawned, so that it counted as a run
+		// from that instant and not from here. See pledge.
+		if pid == os.Getpid() {
+			path, pathErr := s.RunPath(t.ID)
+			if pathErr != nil {
+				return nil, pathErr
+			}
+
+			return released(s, t, pid, path), nil
+		}
+
 		return nil, fmt.Errorf("task %s is already being run by process %d", t.ID, pid)
 	}
 
@@ -68,14 +80,55 @@ func hold(s *store.Store, t Task) (release func(), err error) {
 // answered not alive — and if claiming still fails after that, somebody
 // else won the race and this run is the one that stops.
 func claim(s *store.Store, t Task, pid int) (func(), error) {
-	path, body, err := marker(s, t, pid)
+	if err := claimFor(s, t, pid); err != nil {
+		return nil, err
+	}
+
+	path, err := s.RunPath(t.ID)
 	if err != nil {
 		return nil, err
 	}
 
+	return released(s, t, pid, path), nil
+}
+
+// pledge writes the marker for a run this process has just spawned, in the
+// child's name, before the child has done anything.
+//
+// The child used to write its own, a few hundred milliseconds in, and at
+// the lowest priority on a busy machine later still. Until then the run
+// was invisible: three starts close together each found a free slot and
+// all three ran against a limit of one, and a cancel in that window took a
+// task out of the queue that then started anyway. Written here, the run
+// counts from the moment it exists. The child finds its own pid on it and
+// keeps it: see hold.
+func pledge(s *store.Store, t Task, pid int) error {
+	err := claimFor(s, t, pid)
+	if err == nil {
+		return nil
+	}
+
+	// A child quick enough to have claimed it first claimed it in the
+	// same name, which is the marker this was going to write.
+	if held, alive, aliveErr := Alive(s, t); aliveErr == nil && alive && held == pid {
+		return nil
+	}
+
+	return err
+}
+
+// claimFor writes the marker naming pid where there is none. A marker left
+// by a run that is gone is taken off first; one held by a live run is
+// refused.
+func claimFor(s *store.Store, t Task, pid int) error {
+	path, body, err := marker(s, t, pid)
+	if err != nil {
+		return err
+	}
+
 	took, err := store.WriteIfAbsent(path, body)
 	if err != nil {
-		return nil, fmt.Errorf("claim task %s for this process: %w", t.ID, err)
+		return fmt.Errorf("claim task %s for this process: %w", t.ID, err)
 	}
 
 	if !took {
@@ -84,11 +137,11 @@ func claim(s *store.Store, t Task, pid int) (func(), error) {
 		// one — that look is what the race got between.
 		held, alive, aliveErr := Alive(s, t)
 		if aliveErr != nil {
-			return nil, aliveErr
+			return aliveErr
 		}
 
 		if alive {
-			return nil, fmt.Errorf("task %s is already being run by process %d", t.ID, held)
+			return fmt.Errorf("task %s is already being run by process %d", t.ID, held)
 		}
 
 		// A marker left behind by a run that is gone, which is what
@@ -96,19 +149,19 @@ func claim(s *store.Store, t Task, pid int) (func(), error) {
 		// again can still lose — another process may be doing exactly
 		// this at the same moment — and losing is the answer.
 		if rmErr := removeMarker(s, t); rmErr != nil {
-			return nil, rmErr
+			return rmErr
 		}
 
 		if took, err = store.WriteIfAbsent(path, body); err != nil {
-			return nil, fmt.Errorf("claim task %s for this process: %w", t.ID, err)
+			return fmt.Errorf("claim task %s for this process: %w", t.ID, err)
 		}
 	}
 
 	if !took {
-		return nil, fmt.Errorf("task %s was claimed by another process while this one was starting", t.ID)
+		return fmt.Errorf("task %s was claimed by another process while this one was starting", t.ID)
 	}
 
-	return released(s, t, pid, path), nil
+	return nil
 }
 
 // marker is where a task's claim goes and what it says.

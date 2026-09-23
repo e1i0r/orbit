@@ -5,6 +5,7 @@ package task
 // process itself.
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -153,7 +154,28 @@ func spawn(
 		_ = cmd.Wait() //nolint:errcheck // deliberate: see above
 	}()
 
+	// The run counts from this instant: its marker is written now, in its
+	// name, rather than by the child a few hundred milliseconds in. See
+	// pledge. A marker somebody else holds is a run already going, and
+	// this one is stopped before it does anything.
+	if err := pledge(s, t, cmd.Process.Pid); err != nil {
+		if killErr := cmd.Process.Kill(); killErr != nil {
+			err = errors.Join(err, killErr)
+		}
+
+		return 0, err
+	}
+
 	return cmd.Process.Pid, nil
+}
+
+// NotStarted writes down that a run was asked for and never began: the
+// task could not be read, its repository opened, or its flow resolved.
+// Without it nothing was written at all, so a task started from the queue
+// stayed waiting and was started again on every look, holding a slot, and
+// the reader saw nothing wrong. It folds to a task that would not start.
+func NotStarted(s *store.Store, id string, cause error) error {
+	return emit(s, Task{ID: id}, record.Event{Kind: record.TaskFailed, Text: cause.Error()})
 }
 
 // runCommand is the command line Start spawns. It is split out so it can be
