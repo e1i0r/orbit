@@ -85,6 +85,7 @@ type Kept struct {
 	Name  string
 	Value string
 	About string
+	Group string // the heading it is listed under
 }
 
 // Dials are the four choices a run is made with, as the window holds them.

@@ -141,6 +141,13 @@ reached through `m`, whose entries act on this task the same way.
 `:` then `settings` opens them. Arrows walk the dials, `e` types a value that
 is on no dial, and `x` puts one back to what Orbit ships.
 
+They are listed in groups, here and in `orbit settings`: **Queue** (how many
+runs go at once, memory, autopilot, the unread cap), **Tasks** (engine, model,
+effort, thinking, flow, how long a run may take), **Spending**, **Decisions**
+(the decision engine and how sure it has to be), **Notifications**,
+**Appearance** and **Maintenance**. The ones that only mean something together
+sit together.
+
 Every setting Orbit has is a row here. That is a claim the build keeps rather
 than a promise somebody remembers: the table is read off the same declaration
 `orbit settings` prints from, and a test fails if a setting is declared that

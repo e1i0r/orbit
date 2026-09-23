@@ -55,7 +55,9 @@ func (m Model) settingsKept() []settings.Kept {
 
 	out := make([]settings.Kept, 0, len(all))
 	for _, one := range all {
-		out = append(out, settings.Kept{Name: one.Name, Value: one.Value, About: one.About})
+		out = append(out, settings.Kept{
+			Name: one.Name, Value: one.Value, About: one.About, Group: one.Group,
+		})
 	}
 
 	return out

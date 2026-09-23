@@ -124,9 +124,24 @@ func kept(w World) (Out, error) {
 		value = max(value, len(unset(s.Value)))
 	}
 
-	var b strings.Builder
+	var (
+		b     strings.Builder
+		group string
+	)
+
 	for _, s := range all {
-		fmt.Fprintf(&b, "%-*s  %-*s  %s\n", name, s.Name, value, unset(s.Value), s.About)
+		// A heading where the group changes, with a blank line before
+		// every one but the first.
+		if s.Group != group {
+			if group != "" {
+				b.WriteString("\n")
+			}
+
+			b.WriteString(s.Group + "\n")
+			group = s.Group
+		}
+
+		fmt.Fprintf(&b, "  %-*s  %-*s  %s\n", name, s.Name, value, unset(s.Value), s.About)
 	}
 
 	return Out{Said: strings.TrimRight(b.String(), "\n"), Saw: all}, nil

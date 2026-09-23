@@ -161,7 +161,8 @@ func TestLeftClickSettingsEngineAndCommandBranches(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.screen = screenSettings
 	before := m.opts.Settings.(*settingsFile).Language() //nolint:errcheck
-	next, _ := m.leftClick(point.Target{Kind: point.SettingsRow, Pane: 0, Field: ""})
+	lang := settingRow(t, m, "language")
+	next, _ := m.leftClick(point.Target{Kind: point.SettingsRow, Pane: lang, Field: ""})
 
 	after := asModel(t, next).opts.Settings.(*settingsFile).Language() //nolint:errcheck
 	if after == before {

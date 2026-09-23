@@ -41,7 +41,38 @@ func (s State) Off(e Env) int {
 		return 0
 	}
 
-	return window(s.off, rowLines*len(s.Rows(e)), room(e.Frame.Body.H))
+	_, lines := placed(s.Rows(e))
+
+	return window(s.off, lines, room(e.Frame.Body.H))
+}
+
+// headingLines is how tall a group's heading is.
+const headingLines = 1
+
+// placed is where each row starts in the table, and how many lines the
+// table is: rowLines a row, and a heading above the first row of every
+// group. Scrolling and clicks both read it, so neither can disagree with
+// what was drawn about where a setting is.
+func placed(rows []Row) ([]int, int) {
+	starts := make([]int, len(rows))
+	line := 0
+
+	for i := range rows {
+		if headed(rows, i) {
+			line += headingLines
+		}
+
+		starts[i] = line
+		line += rowLines
+	}
+
+	return starts, line
+}
+
+// headed is whether row i is the first of its group, and so drawn under
+// the group's heading.
+func headed(rows []Row, i int) bool {
+	return rows[i].Group != "" && (i == 0 || rows[i-1].Group != rows[i].Group)
 }
 
 // Scroll is the wheel. One notch is one setting and not three lines: a
@@ -77,14 +108,15 @@ func (s State) keepSeen(e Env) State {
 		return s
 	}
 
-	lines, view := rowLines*len(rows), room(e.Frame.Body.H)
+	starts, lines := placed(rows)
+	view := room(e.Frame.Body.H)
 	off := window(s.off, lines, view)
 
 	// The blank under a row is not part of what has to be seen. A dial with
 	// its name and its sentence both on the screen has been read, and
 	// scrolling one line further to show the gap beneath it would move the
 	// table for nothing.
-	from, last := s.sel*rowLines, s.sel*rowLines+1
+	from, last := starts[s.sel], starts[s.sel]+1
 
 	switch {
 	case from < off:
@@ -93,7 +125,7 @@ func (s State) keepSeen(e Env) State {
 		off = last - view + 1
 	}
 
-	s.off = window(atTheTop(off, view), lines, view)
+	s.off = window(atTheTop(off, view, rows, starts), lines, view)
 
 	return s
 }
@@ -103,18 +135,36 @@ func (s State) keepSeen(e Env) State {
 //
 // A view that lands mid-row draws that row's blank separator under the
 // title, which reads as a gap somebody left there and spends a line of the
-// table on nothing. Rounding up is always safe: the cursor's row starts on a
-// multiple of three, so a view that had room for it below the old top still
-// has room for it below this one.
+// table on nothing. It rounds up to the nearest place a block begins: a
+// group's heading, or a row. Every row's start is one of those places, so
+// the cursor's own row is never rounded off the top.
 //
 // Not on a screen with less room than a row, where rounding up would push
 // the row the cursor is on off the top of the view it was brought into.
-func atTheTop(off, view int) int {
+func atTheTop(off, view int, rows []Row, starts []int) int {
 	if view < rowLines {
 		return off
 	}
 
-	return (off + rowLines - 1) / rowLines * rowLines
+	best := -1
+
+	for i, start := range starts {
+		for _, at := range []int{start - headingLines, start} {
+			if at == start-headingLines && !headed(rows, i) {
+				continue
+			}
+
+			if at >= off && (best < 0 || at < best) {
+				best = at
+			}
+		}
+	}
+
+	if best < 0 {
+		return off
+	}
+
+	return best
 }
 
 // framed is the screen in three parts: a head and a foot that stay where
@@ -154,10 +204,32 @@ func (s State) RowAt(line int, e Env) (int, bool) {
 		return 0, false
 	}
 
-	at := (on + s.Off(e)) / rowLines
-	if at < 0 || at >= len(s.Rows(e)) {
+	at := on + s.Off(e)
+	starts, _ := placed(s.Rows(e))
+
+	for i, start := range starts {
+		if at >= start && at < start+rowLines {
+			return i, true
+		}
+	}
+
+	// A heading, or past the table.
+	return 0, false
+}
+
+// LineOf is the line of the screen row i's name is drawn on, and whether it
+// is on the screen at all: RowAt the other way round, for whoever has to
+// point at a setting rather than find one under the pointer.
+func (s State) LineOf(i int, e Env) (int, bool) {
+	starts, _ := placed(s.Rows(e))
+	if i < 0 || i >= len(starts) {
 		return 0, false
 	}
 
-	return at, true
+	on := starts[i] - s.Off(e)
+	if on < 0 || on >= room(e.Frame.Body.H) {
+		return 0, false
+	}
+
+	return headLines + on, true
 }

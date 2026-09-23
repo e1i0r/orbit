@@ -66,6 +66,7 @@ type Setting struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
 	About string `json:"about"`
+	Group string `json:"group"` // the heading it is listed under: settings_groups.go
 }
 
 // Rule is one line of the settings file.
