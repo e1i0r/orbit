@@ -50,6 +50,15 @@ func theRest() []Verb {
 		{Name: "repos", Reads: true, About: func(p *words.Printer) string {
 			return p.T("verb.repos", "the checkouts Orbit is watching, and the work in each")
 		}},
+		{
+			Name: "queue", Reads: true,
+			About: func(p *words.Printer) string {
+				return p.T("verb.queue", "what is running, who is waiting and why; with a task, its way through")
+			},
+			Takes: []Field{{Name: "task", Kind: Named, About: func(p *words.Printer) string {
+				return p.T("verb.queue.task", "one task: when it was queued, started, each phase, the last steps")
+			}}},
+		},
 	}
 }
 

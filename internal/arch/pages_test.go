@@ -32,6 +32,7 @@ var notDrawn = map[string]string{
 		"listing into",
 	"task show": "a task's page is what showing one is",
 	"quota":     "the header draws what is left of every engine's allowance, on every page",
+	"queue":     "the board's rows say a task is queued; the line itself is a reading for the terminal and tools",
 
 	"rules history": "the rule's own page reads `rules review`, which is these same turns " +
 		"written as sentences; the raw rows are what a terminal greps",

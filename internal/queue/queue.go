@@ -42,10 +42,11 @@ type waiting struct {
 	since time.Time
 }
 
-// state is what the queue holds right now: how many runs are going, and
-// who is waiting, oldest first.
+// state is what the queue holds right now: how many runs are going, which,
+// and who is waiting, oldest first.
 type state struct {
 	running int
+	going   []string
 	waiting []waiting
 }
 
@@ -278,6 +279,7 @@ func look(s *store.Store) (state, error) {
 
 		if _, going, aliveErr := alive(s, t); aliveErr == nil && going {
 			st.running++
+			st.going = append(st.going, id)
 
 			continue
 		}
