@@ -123,15 +123,14 @@ func TestTheOffersWalkUnderTheArrowsAndAreTakenWithEnter(t *testing.T) {
 		t.Errorf("down on the offers left the cursor on %d", down.pick)
 	}
 
-	// It stops at the ends rather than wrapping: a list that comes back
-	// round has no bottom.
+	// Off the top it comes round to the last one.
 	up, _ := down.Key(press("up"), e)
 	if up.pick != 0 {
-		t.Errorf("up from the first offer left the cursor on %d", up.pick)
+		t.Errorf("up from the second offer left the cursor on %d", up.pick)
 	}
 
-	if again, _ := up.Key(press("up"), e); again.pick != 0 {
-		t.Errorf("up past the first offer left the cursor on %d", again.pick)
+	if again, _ := up.Key(press("up"), e); again.pick != len(offers)-1 {
+		t.Errorf("up past the first offer left the cursor on %d, want the last", again.pick)
 	}
 
 	took, _ := down.Key(press("enter"), e)
@@ -266,9 +265,9 @@ func TestTheConversationsAnswerTheirOwnKeys(t *testing.T) {
 	s, e, kept := twoConversations(t)
 	s = s.openConversationList()
 
-	// The cursor stops at both ends rather than wrapping.
-	if up, _ := s.conversationKey(press("up"), e); up.listSel != 0 {
-		t.Errorf("up from the first row left the cursor on %d", up.listSel)
+	// The cursor comes round from either end to the other.
+	if up, _ := s.conversationKey(press("up"), e); up.listSel != 1 {
+		t.Errorf("up from the first row left the cursor on %d, want the last", up.listSel)
 	}
 
 	down, _ := s.conversationKey(press("down"), e)
@@ -276,8 +275,8 @@ func TestTheConversationsAnswerTheirOwnKeys(t *testing.T) {
 		t.Errorf("down left the cursor on %d", down.listSel)
 	}
 
-	if end, _ := down.conversationKey(press("down"), e); end.listSel != 1 {
-		t.Errorf("down from the last row left the cursor on %d", end.listSel)
+	if end, _ := down.conversationKey(press("down"), e); end.listSel != 0 {
+		t.Errorf("down from the last row left the cursor on %d, want the first", end.listSel)
 	}
 
 	// esc puts the thread back without changing which one is open.

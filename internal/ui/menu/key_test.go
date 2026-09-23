@@ -74,13 +74,30 @@ func TestWalkingDownReachesTheVerbs(t *testing.T) {
 	e := inside(t)
 
 	s := Open(theTask, e)
-	for range s.Entries(e) {
-		s, _ = s.Key(down, e)
+
+	s, _ = s.Key(up, e)
+	if got := s.Entries(e)[s.At()]; got.Head || got.Pane != "" {
+		t.Errorf("the bottom of the menu is %+v, want a verb about the task", got)
+	}
+}
+
+// TestTheArrowsGoRoundTheEnds. Up from the first row is the last one and
+// down from the last is the first, so the far end of a long menu is one
+// key away rather than a whole walk.
+func TestTheArrowsGoRoundTheEnds(t *testing.T) {
+	e := inside(t)
+
+	s := Open(theTask, e)
+	first := s.At()
+
+	s, _ = s.Key(up, e)
+	if s.At() == first {
+		t.Fatalf("up from the first row stayed on it, want the last one")
 	}
 
-	got := s.Entries(e)[s.At()]
-	if got.Head || got.Pane != "" {
-		t.Errorf("the bottom of the menu is %+v, want a verb about the task", got)
+	s, _ = s.Key(down, e)
+	if s.At() != first {
+		t.Errorf("down from the last row is %+v, want the first", s.Entries(e)[s.At()])
 	}
 }
 

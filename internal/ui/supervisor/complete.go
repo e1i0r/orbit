@@ -112,11 +112,11 @@ func (s State) takeCompletion(e Env) State {
 	return s
 }
 
-// moveCompletion walks the list, and stops at either end rather than
-// wrapping: a list that comes back round has no bottom, and somebody holding
-// a key down never finds out they reached it.
+// moveCompletion walks the list, and off either end it comes round to the
+// other, as every list in the window does under the arrows.
 func (s State) moveCompletion(d int, e Env) State {
-	s.pick = min(max(s.pick+d, 0), max(len(s.completions(e))-1, 0))
+	n := max(len(s.completions(e)), 1)
+	s.pick = (s.pick + d + n) % n
 
 	return s
 }

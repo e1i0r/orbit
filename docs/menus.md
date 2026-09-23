@@ -38,6 +38,11 @@ panes with a line saying what is in each one, and under them everything that
 can be done to the run. Reading a task and acting on it happen in the same
 place.
 
+In every menu and every list you pick from, `↑` on the first row goes to the
+last and `↓` on the last goes to the first, so the far end of a long menu is
+one key away. The wheel stops at the ends, because a notch that jumped from
+the bottom to the top would read as the list moving under your hand.
+
 ## Everything else
 
 | | |

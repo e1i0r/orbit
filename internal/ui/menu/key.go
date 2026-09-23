@@ -35,9 +35,9 @@ func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
 	case key.Matches(msg, e.Keys.Open):
 		return s.choose(e)
 	case msg.String() == "up" || key.Matches(msg, e.Keys.Up):
-		return s.pick(-1, e), Out{}
+		return s.step(-1, e), Out{}
 	case msg.String() == "down" || key.Matches(msg, e.Keys.Down):
-		return s.pick(1, e), Out{}
+		return s.step(1, e), Out{}
 	}
 
 	return s, Out{}
@@ -128,6 +128,30 @@ func (s State) moved(sub string, e Env) State {
 	s.sub = sub
 	s.sel = max(0, choice(s.entries(e), 0, 1))
 	s.offset = 0
+
+	return s.keepSeen(e)
+}
+
+// step is one press of an arrow, and off either end it comes round to the
+// row there is to choose at the other. The wheel does not: it stops at the
+// ends, as it does in every list here, because a notch that carried the
+// reader from the bottom to the top would read as the menu jumping.
+func (s State) step(d int, e Env) State {
+	es := s.entries(e)
+	for i := s.sel + d; i >= 0 && i < len(es); i += d {
+		if !es[i].Head {
+			return s.pick(d, e)
+		}
+	}
+
+	from := 0
+	if d < 0 {
+		from = len(es) - 1
+	}
+
+	if at := choice(es, from, d); at >= 0 {
+		s.sel = at
+	}
 
 	return s.keepSeen(e)
 }

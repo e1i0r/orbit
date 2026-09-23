@@ -145,6 +145,16 @@ func (m Model) movePickedFile(d int) Model {
 	return m
 }
 
+// stepPickedFile is one press of an arrow in the picker, and off either end
+// it comes round to the other, as every menu does. The wheel holds at the
+// ends, which is movePickedFile.
+func (m Model) stepPickedFile(d int) Model {
+	n := max(len(patch.Files(strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n"))), 1)
+	m.diffFileCursor = (m.diffFileCursor + d + n) % n
+
+	return m
+}
+
 // handleDiffFilePickerKey handles keystrokes while the file selector modal is open.
 func (m Model) handleDiffFilePickerKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	raw := strings.Split(strings.TrimSuffix(m.diff, "\n"), "\n")
@@ -155,9 +165,9 @@ func (m Model) handleDiffFilePickerKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		m.diffFilePicker = false
 		return m, nil
 	case "up", "k":
-		return m.movePickedFile(-1), nil
+		return m.stepPickedFile(-1), nil
 	case "down", "j":
-		return m.movePickedFile(1), nil
+		return m.stepPickedFile(1), nil
 	case "enter":
 		if m.diffFileCursor >= 0 && m.diffFileCursor < len(files) {
 			m.diffFilePicker = false

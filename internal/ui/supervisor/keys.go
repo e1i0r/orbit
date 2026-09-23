@@ -158,10 +158,10 @@ func (s State) pickingKey(msg tea.KeyPressMsg, e Env) (State, Out) {
 		s.picking = false
 		return s, Out{}
 	case msg.Code == tea.KeyUp:
-		s.pick = max(s.pick-1, 0)
+		s.pick = (s.pick - 1 + max(len(s.lines), 1)) % max(len(s.lines), 1)
 		return s, Out{}
 	case msg.Code == tea.KeyDown:
-		s.pick = min(s.pick+1, len(s.lines)-1)
+		s.pick = (s.pick + 1) % max(len(s.lines), 1)
 		return s, Out{}
 	case msg.Code == tea.KeyEnter || key.Matches(msg, e.Keys.Open):
 		return s.retractPicked(e)
