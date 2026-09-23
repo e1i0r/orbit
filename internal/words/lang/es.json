@@ -574,8 +574,8 @@
       "value": "Pedido a mano"
     },
     "flow.hand_out": {
-      "source": "handed over, still working",
-      "value": "entregado, todavía trabajando"
+      "source": "in progress",
+      "value": "en progreso"
     },
     "flow.hand_done": {
       "source": "came back",

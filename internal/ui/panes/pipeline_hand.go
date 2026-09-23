@@ -99,6 +99,10 @@ func (e Env) handNode(st handStep, i int, last bool) ([]string, int) {
 		head += " " + theme.Paint(theme.Dim).Render(fmt.Sprintf("(%s)", st.took))
 	}
 
+	if link := prLink(st.verb, st.text); link != "" && !st.failed {
+		head += " · " + theme.Paint(theme.Accent).Render(link)
+	}
+
 	out := []string{head}
 
 	// Where the button landed, and -1 for a node nobody has opened: it is
@@ -120,6 +124,8 @@ func (e Env) handNode(st handStep, i int, last bool) ([]string, int) {
 // A verb that has not come back is drawn as work in progress and not as
 // something pending, which is the whole point of writing the ask down: the
 // supervisor is out doing it, and the reader pressed the key minutes ago.
+// In the words a phase in flight is drawn with. "Handed over" read as the
+// pull request already delivered, and there was none to find.
 func (e Env) handStanding(st handStep) standing {
 	p := e.Words
 
@@ -138,9 +144,9 @@ func (e Env) handStanding(st handStep) standing {
 		}
 	default:
 		return standing{
-			glyph: theme.Paint(theme.Live).Render("⚡"),
+			glyph: theme.Paint(theme.Live).Render(SpinMark),
 			text: theme.Paint(theme.Live).Bold(true).Render(
-				p.T("flow.hand_out", "handed over, still working")),
+				p.T("flow.hand_out", "in progress")),
 			role: theme.Live,
 		}
 	}

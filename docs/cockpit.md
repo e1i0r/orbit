@@ -55,6 +55,10 @@ the same button. One still out offers `■ stop it`, which ends the wait: the
 cockpit stops holding the verb open, and whatever the supervisor says later
 still lands in its thread. One that came back offers `↻ ask for it again`.
 
+Whatever is happening right now, a phase or a verb, turns with the spinner
+and says `in progress`, in the theme's live colour. A pull request verb that
+came back carries the pull request's link on its line.
+
 There is no letter on them. They sit a press away from the delivery keys,
 and a cheap gesture next to an expensive one is a trap. On this tab the
 arrows walk the tree instead: `↑` and `↓` move a cursor from node to node

@@ -149,6 +149,11 @@ func TestTheVerbsAskedForByHandHangOffTheSameTrunk(t *testing.T) {
 	e := tree(t, []view.Entry{
 		{Kind: "deliver.asked", Verb: "PR", By: "supervisor", At: ago(10 * time.Minute)},
 		{Kind: "deliver.answered", Verb: "PR", Text: "opened #12", At: ago(9 * time.Minute)},
+		{Kind: "deliver.asked", Verb: "CREATE PR", By: "supervisor", At: ago(9 * time.Minute)},
+		{
+			Kind: "deliver.answered", Verb: "CREATE PR", At: ago(8 * time.Minute),
+			Text: "CI is at https://github.com/o/r/actions/runs/1 and the PR is https://github.com/o/r/pull/7.",
+		},
 		{Kind: "deliver.asked", Verb: "MERGE", By: "supervisor", At: ago(8 * time.Minute)},
 		{Kind: "deliver.answered", Verb: "MERGE", Cause: "checks are still red", At: ago(7 * time.Minute)},
 		{Kind: "deliver.asked", Verb: "FIX CHECKS", By: "supervisor", At: ago(time.Minute)},
@@ -157,11 +162,12 @@ func TestTheVerbsAskedForByHandHangOffTheSameTrunk(t *testing.T) {
 	got := text(rowsOf(Pipeline(e)))
 	for _, want := range []string{
 		"Asked for by hand",
-		"opened #12",                 // one that came back
-		"came back broken",           // one that broke
-		"checks are still red",       // and why
-		"handed over, still working", // one that has not
-		"supervisor",                 // what was handed the work
+		"opened #12",                      // one that came back
+		"https://github.com/o/r/pull/7\n", // a pull request, by its link
+		"came back broken",                // one that broke
+		"checks are still red",            // and why
+		"in progress",                     // one that has not
+		"supervisor",                      // what was handed the work
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("the tree does not carry %q under the verbs:\n%s", want, got)
