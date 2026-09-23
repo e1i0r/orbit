@@ -134,9 +134,14 @@ func (g fileGate) Before(ctx context.Context, t Task, p flow.Phase, _ int) (Go, 
 	// autopilot from lifting a brake the reader put on.
 	switch {
 	case p.Wait && !auto:
-		return g.wait(ctx, t, p, whyFlow, word == wordPause)
+		by := heldByFlow
+		if word == wordPause {
+			by = heldByReader
+		}
+
+		return g.wait(ctx, t, p, whyFlow, by)
 	case word == wordPause:
-		return g.wait(ctx, t, p, whyPaused, true)
+		return g.wait(ctx, t, p, whyPaused, heldByReader)
 	case p.Wait && auto:
 		// Autopilot lifts the flow's gates, and until there was something
 		// that could read the work in half a second it lifted them
@@ -147,7 +152,7 @@ func (g fileGate) Before(ctx context.Context, t Task, p flow.Phase, _ int) (Go, 
 		// holds a run it is sure needs a person, and lets everything else
 		// through exactly as before.
 		if why, hold := g.holds(ctx, t, p); hold {
-			return g.wait(ctx, t, p, why, false)
+			return g.wait(ctx, t, p, why, heldByDecision)
 		}
 	}
 
@@ -158,10 +163,12 @@ func (g fileGate) Before(ctx context.Context, t Task, p flow.Phase, _ int) (Go, 
 // which is what lets the window say "needs you" about a run it did not see
 // stop and answer "how long has this been sitting on me?".
 //
-// byReader says the stop is the reader's own. Autopilot lifts the flow's
-// gates and only those: flipping the switch on releases a phase its flow held,
-// and never one a person pressed pause on — that one is theirs to lift.
-func (g fileGate) wait(ctx context.Context, t Task, p flow.Phase, why string, byReader bool) (Go, error) {
+// by says who stopped the run. Autopilot lifts the flow's gates and only
+// those: flipping the switch on releases a phase its flow held, and never one
+// a person pressed pause on, nor one the decision engine held under
+// autopilot. The engine's hold is autopilot's own answer that a person is
+// needed, and the switch that asked for it released it one poll later.
+func (g fileGate) wait(ctx context.Context, t Task, p flow.Phase, why string, by heldBy) (Go, error) {
 	if err := emit(g.store, t, record.Event{
 		Kind:  record.PhaseWaiting,
 		Phase: p.Name,
@@ -171,10 +178,10 @@ func (g fileGate) wait(ctx context.Context, t Task, p flow.Phase, why string, by
 	}
 
 	// Asked once, here: the phase has stopped, the record now says so, and
-	// nothing about the answer changes while the run sits still. Not where
-	// the reader pressed pause — that brake is theirs, and the rule is
-	// autopilot's own.
-	if !byReader && g.lets(ctx, t, p) {
+	// nothing about the answer changes while the run sits still. Only for
+	// the flow's own gate: a pause is the reader's brake, and a hold is the
+	// engine's answer to this same question, already written down.
+	if by == heldByFlow && g.lets(ctx, t, p) {
 		return Continue, g.resumed(t, p, howDecided)
 	}
 
@@ -201,7 +208,7 @@ func (g fileGate) wait(ctx context.Context, t Task, p flow.Phase, why string, by
 			return Continue, nil
 		}
 
-		if !byReader {
+		if by == heldByFlow {
 			auto, err := autopilot(g.store)
 			if err != nil {
 				return Continue, err
@@ -219,6 +226,16 @@ func (g fileGate) wait(ctx context.Context, t Task, p flow.Phase, why string, by
 		}
 	}
 }
+
+// heldBy is who stopped a run at a phase boundary, which decides what may
+// let it go.
+type heldBy int
+
+const (
+	heldByFlow     heldBy = iota // the flow's gate: autopilot lifts it
+	heldByReader                 // a pause: only the reader lifts it
+	heldByDecision               // the engine, under autopilot: only the reader lifts it
+)
 
 // resumed writes down that the phase was let go, and what let it go. The
 // record has to answer that on its own: a reader coming back to a log wants

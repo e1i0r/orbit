@@ -14,9 +14,11 @@ back needing attention.
 
 ## What it does not lift
 
-Autopilot lifts the flow's gates. Three things it leaves alone:
+Autopilot lifts the flow's gates. Four things it leaves alone:
 
 - a pause you set by hand, because that decision is yours
+- a run the decision engine held because it is sure a person is needed
+  (`decisions on`); it waits for your resume, skip or cancel
 - a task marked critical, which waits for `orbit permit` before anything
   irreversible
 - the unread cap
