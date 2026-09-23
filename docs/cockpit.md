@@ -54,9 +54,12 @@ the same button. One still out offers `■ stop it`, which ends the wait: the
 cockpit stops holding the verb open, and whatever the supervisor says later
 still lands in its thread. One that came back offers `↻ ask for it again`.
 
-There is no keystroke on them. They sit a press away from the delivery keys,
-and a cheap gesture next to an expensive one is a trap, so these are pressed
-with the pointer.
+There is no letter on them. They sit a press away from the delivery keys,
+and a cheap gesture next to an expensive one is a trap. On this tab the
+arrows walk the tree instead: `↑` and `↓` move a cursor from node to node
+and onto an open node's button, going round from the last to the first,
+and `↵` opens or closes the node it is on or presses the button. The bar
+says which of the two `↵` will do.
 
 ## On the board
 
