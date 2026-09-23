@@ -11,35 +11,21 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/e1i0r/orbit/internal/ui/point"
-	"github.com/e1i0r/orbit/internal/ui/theme"
+	"github.com/e1i0r/orbit/internal/ui/prose"
 )
 
+// hitComposeFlowPills is the flow, or the New button, under a column of the
+// flow row. The zones come from prose.Row, the call that draws the row: the
+// widths were worked out here a second time, and the error built up across
+// the row until a click on "quick" chose the flow after it.
 func (s State) hitComposeFlowPills(x int, field int, e Env) point.Target {
-	p := e.Words
-	curX := composeLabelStart
-
-	for i, f := range s.flows {
-		glyph := "⚡ "
-
-		switch f {
-		case "quick":
-			glyph = "🚀 "
-		case "careful":
-			glyph = "🛡️ "
-		}
-
-		pillWidth := composePillWidth(glyph+f, i == s.flowIdx)
-		if x >= curX && x < curX+pillWidth {
-			return point.Target{Kind: point.ComposeFlowChoice, Pane: i}
-		}
-
-		curX += pillWidth + 1
+	rows, placed := prose.Row(s.flowChoices(), s.flowIdx, composeLabelStart, 0)
+	if i, ok := prose.At(placed, x, 0); ok {
+		return point.Target{Kind: point.ComposeFlowChoice, Pane: i}
 	}
 
-	newBtn := theme.Pill(" ➕ "+p.T("compose.new_flow_btn", "New")+" ", theme.PillInk, theme.PillCreate)
-
-	newWidth := lipgloss.Width(newBtn)
-	if x >= curX && x < curX+newWidth {
+	from := composeLabelStart + lipgloss.Width(rows[0]) + 1
+	if x >= from && x < from+lipgloss.Width(composeNewFlowBtn(e)) {
 		return point.Target{Kind: point.ComposeNewFlow}
 	}
 

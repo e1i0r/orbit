@@ -273,3 +273,34 @@ func TestNothingUnderTheButtonsSavesTheTask(t *testing.T) {
 		}
 	}
 }
+
+// TestAFlowIsChosenWhereItsNameIsDrawn. The row is drawn by prose.Row and
+// was measured again here with other widths, and the error built up across
+// it: a click on "quick" chose the flow after it, and further along the New
+// button answered on a flow's name. Each name, clicked where it is drawn,
+// chooses itself.
+func TestAFlowIsChosenWhereItsNameIsDrawn(t *testing.T) {
+	s, e := form(t)
+
+	y := formRow(t, s, e, "flow:")
+	row := ansi.Strip(screenRows(s, e)[y])
+
+	for i, name := range s.flows {
+		at := strings.Index(row, " "+name+" ")
+		if at < 0 {
+			t.Fatalf("flow %q is not drawn on its row:\n%s", name, row)
+		}
+
+		x := ansi.StringWidth(row[:at+1])
+
+		next, _ := s.Click(s.Hit(x, y, e), e)
+		if next.flowIdx != i {
+			t.Errorf("a click on %q at column %d chose %q", name, x, s.flows[next.flowIdx])
+		}
+	}
+
+	at := strings.Index(row, "New")
+	if got := s.Hit(ansi.StringWidth(row[:at]), y, e); got.Kind != point.ComposeNewFlow {
+		t.Errorf("a click on New is kind %d, want the new-flow button", got.Kind)
+	}
+}
