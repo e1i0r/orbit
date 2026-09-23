@@ -19,16 +19,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"syscall"
 	"time"
 
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/store"
 )
-
-// serviceLockFile is the lock the service holds for as long as it runs,
-// under the state root.
-const serviceLockFile = "queue.service.lock"
 
 // ServiceArg is the first argument that makes orbit the queue's service. It
 // is not a command a reader types, so it is not in the table.
@@ -56,6 +53,19 @@ func Serve(ctx context.Context, s *store.Store) error {
 	}
 
 	defer unlock()
+
+	// Its pid is written down for `orbit queue` to name. The lock is what
+	// says it is alive; the file only says which process it is.
+	pidPath := filepath.Join(s.Root(), servicePIDFile)
+	if err := os.WriteFile(pidPath, []byte(strconv.Itoa(os.Getpid())), 0o600); err != nil {
+		logger.Warn("queue", "the service's pid could not be written down: %v", err)
+	}
+
+	defer func() {
+		if err := os.Remove(pidPath); err != nil && !errors.Is(err, os.ErrNotExist) {
+			logger.Warn("queue", "the service's pid could not be taken back: %v", err)
+		}
+	}()
 
 	logger.Info("queue", "the queue's service started as process %d", os.Getpid())
 

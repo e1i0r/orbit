@@ -11,3 +11,6 @@ func lockQueue(_ *store.Store) (func(), error) { return func() {}, nil }
 
 // lockFile always succeeds here, for the reason lockQueue does.
 func lockFile(_ string, _ bool) (func(), error) { return func() {}, nil }
+
+// processAlive cannot be asked here; a pid written down is taken at its word.
+func processAlive(pid int) bool { return pid > 0 }

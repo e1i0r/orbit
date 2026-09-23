@@ -49,6 +49,8 @@ board is told to look again.
 | `internal/flow` | the phases of a task, as data rather than as code. Adding one is writing a file. |
 | `internal/engine` | the CLIs Orbit runs: claude, codex, opencode, agy. Each answers for itself where it is, what models it has, what postures it can hold and how to read its transcript. The compiler is the reviewer for a new one. |
 | `internal/task` | a run: prepare the worktree, walk the phases, run the gates, write down what happened. |
+| `internal/queue` | when a run starts: how many go at once, who waits, and the service that moves the line. See [the queue](#the-queue). |
+| `internal/lowly`, `internal/machine` | what the queue and the window need from the system: starting a program at the lowest priority, and how full memory is. |
 | `internal/board` | walks every repository under a directory, folds every task, answers what is on screen and what changed since last time. |
 | `internal/quota` | how much of an engine's allowance is left, and what a number about that engine means at all. |
 
@@ -72,6 +74,41 @@ The whole loop, end to end, is [what Orbit knows](knowledge.md).
 | `internal/mcp` | the server a model talks to. The same verbs, minus the ones a model has no business asking for. |
 | `internal/words` | two languages, one catalogue. English is the source, Spanish is beside it, and a test refuses a key that only one of them has. |
 | `internal/arch` | the rules the code keeps, as tests. See below. |
+
+### The queue
+
+Every start goes through `internal/queue`, never straight to `task.Start`.
+
+```
+start ─▶ queue.Start ─▶ room? ── yes ─▶ task.Start ─▶ `orbit task start` (its own process)
+                          │
+                          no ─▶ writes task.queued ─▶ starts `orbit __queue` if none
+                                                              │
+     `orbit __queue`: every 2s, Dispatch: while room, start the oldest waiting
+     it stops when nothing waits
+```
+
+- **The record is the queue.** A task waits while the last word about starting
+  it is `task.queued`; `task.started`, `task.requeued`, `task.cancelled` or
+  `task.deleted` take it out. There are no messages between processes: each
+  one writes events to SQLite and the others read them.
+- **Room** is fewer runs going than `max-running` (3), and memory under
+  `memory-ceiling` (85%). A run is going when its marker's process is alive.
+  Memory unknown never holds a run back.
+- **Processes, not goroutines.** The window, the service and every run are
+  separate processes, which is why closing the window does not stop either.
+- **One service per machine.** It holds a `flock` on `queue.service.lock` for
+  its whole life; a second one finds it taken and leaves. Its pid is in
+  `queue.service.pid`, for `orbit queue` to name.
+- **One start at a time.** `queue.lock` is held while the line is read and a
+  run started, so two starts cannot both take the last slot. `flock` is let
+  go by the kernel when a process dies, so a crash leaves no stale lock.
+- **Priority.** A run, and a CLI session the window opens, start behind
+  `orbit __lowered -- <program>`: it calls `setpriority(19)` and `exec`s the
+  program, keeping pid and terminal. Everything they start inherits it.
+- **Seeing it.** `orbit queue` is the line and why each task waits;
+  `orbit queue <task>` is one task's way through it. The window's rows say
+  `queued · 2nd in line`.
 
 ## Where things live on disk
 
@@ -124,6 +161,7 @@ around.
 | --- | --- |
 | a run did nothing, or the wrong thing | `internal/task/run.go`, then the task's `timeline` tab |
 | the board shows something stale | `internal/board/refresh.go` |
+| a task stays queued | `orbit queue`: the reason it waits, and whether the service is running. The service's lines are in `orbit.log` under `[queue]` |
 | a key does nothing | `internal/ui/keymap`, then the verb behind it |
 | a command and the same thing in the window disagree | they should not. `internal/verb` is the one place either can be wrong |
 | the record will not open | `orbit check`. A torn record still opens so that it can be asked. |

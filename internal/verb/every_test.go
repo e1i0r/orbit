@@ -74,7 +74,7 @@ func TestWhatOnlyReadsIsDeclared(t *testing.T) {
 		"supervisor": true, "supervisor thread": true, "task history": true,
 		"quota": true, "pr show": true,
 		"task tree": true, "rules": true, "rules repeated": true, "rules history": true,
-		"rules review": true, "settings": true,
+		"rules review": true, "settings": true, "queue": true,
 	}
 
 	for _, v := range Every() {

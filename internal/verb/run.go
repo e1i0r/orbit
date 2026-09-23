@@ -24,6 +24,8 @@ func (v Verb) do(ctx context.Context, w World, in In) (Out, error) {
 	switch v.Path() {
 	case "board", "board list":
 		return listed(w, in)
+	case "queue":
+		return queued(w, in)
 	case "board new":
 		return wrote(w, in)
 	case "board reconcile":

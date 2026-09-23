@@ -51,3 +51,15 @@ func lockFile(path string, wait bool) (func(), error) {
 		}
 	}, nil
 }
+
+// processAlive is whether a process with this pid is there. Signal 0
+// delivers nothing; EPERM is one that exists and is not ours.
+func processAlive(pid int) bool {
+	if pid <= 0 {
+		return false
+	}
+
+	err := syscall.Kill(pid, 0)
+
+	return err == nil || errors.Is(err, syscall.EPERM)
+}

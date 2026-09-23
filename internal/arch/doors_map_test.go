@@ -146,7 +146,7 @@ var doors = map[string][]string{
 		"history.go", "note.go", "read.go", "reconcile.go", "relay.go", "requeue.go",
 		"review.go", "run.go", "start.go", "story.go", "task.go",
 	},
-	"internal/queue": {"queue.go", "service.go"},
+	"internal/queue": {"queue.go", "service.go", "status.go"},
 	// One file per engine, plus the stream and transcript each one answers
 	// in. The shape is the subject: adding an engine is adding three files
 	// and a line here.
