@@ -2746,6 +2746,7 @@
     "settings.not_a_ceiling": {"source": "a memory ceiling is a percentage between 50 and 99", "value": "un techo de memoria es un porcentaje entre 50 y 99"},
     "cancel.dequeued": {"source": "{id} taken out of the queue before it started", "value": "{id} salió de la cola antes de arrancar"},
     "msg.queued": {"source": "{id} is waiting in the queue: every slot is taken, or memory is over the ceiling; it starts on its own", "value": "{id} está esperando en la cola: todos los lugares están ocupados o la memoria pasó el techo; arranca sola"},
+    "reason.queued": {"source": "queued · {place} in line", "value": "en cola · {place}.º"},
     "key.walk_tree": {"source": "node", "value": "nodo"},
     "key.open_node": {"source": "open", "value": "abrir"},
     "key.shut_node": {"source": "close", "value": "cerrar"},

@@ -40,8 +40,8 @@ a change to the API and its client, in one task, with both worktrees under it.
 
 ## What limits it
 
-**The queue.** Three runs go at once; start a fourth and it waits in line
-and starts on its own when one finishes. Starting
+**The queue.** Three runs go at once; start a fourth and it waits, marked
+`queued · 1st in line`, and starts on its own when one finishes. Starting
 five tasks no longer means five engines and five `make check`s fighting
 for one machine.
 
@@ -51,8 +51,8 @@ orbit settings set memory-ceiling 80  # no new run above 80% memory
 ```
 
 A run also waits while the machine's memory is over the ceiling (85% unless
-you set it). `orbit task cancel` takes a waiting task out of the queue,
-and `orbit task requeue` puts it back in To Do.
+you set it). `x` takes a waiting task out of the queue, `b` puts it back in
+To Do; on the command line, `orbit task cancel` and `orbit task requeue`.
 
 The queue keeps moving with the window closed. When something is waiting,
 Orbit starts a small service of its own, `orbit __queue`, that starts the

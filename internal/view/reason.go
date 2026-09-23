@@ -61,6 +61,9 @@ const (
 	// ReasonCancelled is a run the reader stopped. Its band is Done and this
 	// is how the row says which kind of done. Args: none.
 	ReasonCancelled = "reason.cancelled"
+	// ReasonQueued is a start waiting in the queue for a slot. Since is when
+	// it was asked, which is its place in line. Args: none.
+	ReasonQueued = "reason.queued"
 	// ReasonTimedOut is a run that outlived the deadline it was given.
 	// Nobody chose it, so unlike a cancellation it needs you. Args: none.
 	ReasonTimedOut = "reason.timed_out"
