@@ -43,6 +43,10 @@ func (m Model) hitDetail(x, y int) point.Target {
 		return point.Target{Kind: point.RunFrom, Pane: at}
 	}
 
+	if file, on := m.mapFileAt(line - bodyStart); on {
+		return point.Target{Kind: point.MapFile, Key: file}
+	}
+
 	switch {
 	case line < tabLine:
 		return point.Target{}

@@ -146,3 +146,45 @@ func weight(lines, most int) string {
 	return theme.Paint(theme.Accent).Render(strings.Repeat("█", full)) +
 		theme.Paint(theme.Dim).Render(strings.Repeat("░", bar-full))
 }
+
+// mapHeadRows is how many rows Map draws above the tree: the line that
+// counts the change, and the blank under it.
+const mapHeadRows = 2
+
+// MapFiles is which drawn row of the map is a file, and its path from the
+// root of the checkout — the key the diff is read by.
+//
+// A walk of the same tree in the order branch draws it, with nothing
+// painted: the hit test asks this on every mouse move, and drawing the
+// whole map to answer it is what the flow tree used to do.
+func MapFiles(e Env) map[int]string {
+	m := e.Shape
+	if !m.Read || m.Missing || m.Failed != "" || m.Tree.Changed == 0 {
+		return nil
+	}
+
+	out := map[int]string{}
+	at := mapHeadRows
+
+	var walk func(c verb.Cell)
+
+	walk = func(c verb.Cell) {
+		for _, kid := range c.Cells {
+			if kid.Changed == 0 {
+				continue
+			}
+
+			if len(kid.Cells) == 0 {
+				out[at] = kid.Path
+			}
+
+			at++
+
+			walk(kid)
+		}
+	}
+
+	walk(m.Tree)
+
+	return out
+}

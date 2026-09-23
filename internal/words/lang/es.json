@@ -2735,6 +2735,7 @@
     "flow.run_again": {"source": "↻ run it again", "value": "↻ Volver a ejecutarla"},
     "flow.try_again": {"source": "↻ try it again", "value": "↻ Reintentarla"},
     "flow.stop_it": {"source": "■ stop it", "value": "■ Pararla"},
+    "map.no_diff_for": {"source": "{file} is not in the diff yet", "value": "{file} todavía no está en el diff"},
     "key.walk_tree": {"source": "node", "value": "nodo"},
     "key.open_node": {"source": "open", "value": "abrir"},
     "key.shut_node": {"source": "close", "value": "cerrar"},

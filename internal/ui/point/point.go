@@ -50,6 +50,9 @@ const (
 	// RunFrom is a phase's button on the flow tree, by its place in the
 	// flow. Pane carries that index.
 	RunFrom
+	// MapFile is a file on the map, by its path from the root of the
+	// checkout, which Key carries. Pointing at it opens its diff.
+	MapFile
 	DiffFile
 	DiffSelectToggle
 	Fold
