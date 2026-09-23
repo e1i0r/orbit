@@ -111,3 +111,20 @@ func serviceProcess(s *store.Store) error {
 
 	return nil
 }
+
+// Ensure starts the service when tasks are waiting, so a line left behind
+// by a service that died, or by a machine that restarted, moves again the
+// next time the window opens. When one is already running the new one sees
+// its lock and leaves, so asking is harmless.
+func Ensure(s *store.Store) error {
+	st, err := look(s)
+	if err != nil {
+		return err
+	}
+
+	if len(st.waiting) == 0 {
+		return nil
+	}
+
+	return startService(s)
+}

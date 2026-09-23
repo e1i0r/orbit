@@ -58,6 +58,9 @@ The queue keeps moving with the window closed. When something is waiting,
 Orbit starts a small service of its own, `orbit __queue`, that starts the
 next run as a slot frees up and goes away when nothing is left. There is
 nothing to install.
+If that service dies, or the machine restarts with tasks still waiting,
+opening the window starts it again. A task whose run fails before it begins
+leaves the queue as failed, with the reason, instead of waiting for ever.
 
 **Priority.** Everything a run starts, and every CLI session the window
 opens, runs at the lowest priority your system has. On an idle machine

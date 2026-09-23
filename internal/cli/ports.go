@@ -196,7 +196,8 @@ func lastSession(r *board.Reader, t view.Task) (string, error) {
 }
 
 // reconcileAll closes the records of runs whose processes are gone, once,
-// before the window draws anything.
+// before the window draws anything, and restarts the queue's service when
+// tasks wait and none is running.
 //
 // This is the single write the window's whole existence is responsible for,
 // and it is here rather than behind a gesture because the alternative is a
@@ -243,6 +244,12 @@ func reconcileAll(s *store.Store) error {
 				errs = append(errs, wroteErr)
 			}
 		}
+	}
+
+	// After the sweep, so runs that died are no longer counted: a line
+	// whose service is gone moves again when the window opens.
+	if err := queue.Ensure(s); err != nil {
+		errs = append(errs, err)
 	}
 
 	return errors.Join(errs...)

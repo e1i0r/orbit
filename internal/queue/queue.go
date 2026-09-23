@@ -251,7 +251,8 @@ func queuedAsk(events []record.Event) (record.Event, bool) {
 		switch e.Kind {
 		case record.TaskQueued:
 			ask, isWaiting = e, true
-		case record.TaskStarted, record.TaskRequeued, record.TaskCancelled, record.TaskDeleted:
+		case record.TaskStarted, record.TaskRequeued, record.TaskCancelled, record.TaskDeleted,
+			record.TaskFailed:
 			isWaiting = false
 		}
 	}

@@ -7,6 +7,7 @@ package task
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -118,8 +119,25 @@ func TestMarkMakesTheTaskDirectoryItself(t *testing.T) {
 func TestHoldRefusesATaskAnotherRunIsWalking(t *testing.T) {
 	s, r := fixture(t)
 	held := Task{ID: "HELD-1", Repo: r}
-	// A marker naming this process, which is alive by construction.
-	release, err := mark(s, held, os.Getpid())
+
+	// A process of its own: this one's pid is a marker the run adopts, as
+	// the one its parent pledged in its name.
+	other := exec.Command("sleep", "30")
+	if err := other.Start(); err != nil {
+		t.Fatalf("start a process to hold the task: %v", err)
+	}
+
+	t.Cleanup(func() {
+		if err := other.Process.Kill(); err != nil {
+			t.Logf("kill the holder: %v", err)
+		}
+
+		if _, err := other.Process.Wait(); err != nil {
+			t.Logf("wait for the holder: %v", err)
+		}
+	})
+
+	release, err := mark(s, held, other.Process.Pid)
 	if err != nil {
 		t.Fatalf("mark: %v", err)
 	}
