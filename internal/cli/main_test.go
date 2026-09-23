@@ -38,7 +38,12 @@ func TestMain(m *testing.M) {
 		os.Exit(0)
 	}
 
-	for _, name := range []string{"ORBIT_TASK", "ORBIT_WORKSPACE"} {
+	// $ORBIT_LANG and $LANG are here for the same reason as the two above:
+	// every command weighs both now, so a machine whose shell is set to
+	// Spanish would answer the English these tests assert in Spanish, and
+	// the failure would be one nobody else could reproduce. A test about
+	// the language sets them itself, with t.Setenv.
+	for _, name := range []string{"ORBIT_TASK", "ORBIT_WORKSPACE", "ORBIT_LANG", "LANG"} {
 		os.Unsetenv(name)
 	}
 
