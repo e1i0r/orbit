@@ -184,6 +184,11 @@ type Model struct {
 	opened [tabCount]map[int]bool
 	heads  [tabCount]map[int]int
 
+	// tree is where the keyboard is standing on the flow tab, in
+	// treecursor.go. It is the one pane the arrows walk rather than
+	// scroll, because it is the one pane made of nodes.
+	tree treeAt
+
 	// shutAttempts is which attempts the reader has closed, by their number.
 	// Absent is open, the way folds is and the way opened is not: an attempt
 	// is a heading over a block of the record, and a reader who opens the

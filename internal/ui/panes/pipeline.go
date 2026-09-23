@@ -127,22 +127,11 @@ func (e Env) execOf(phaseName string) phaseExec {
 // The tree is the pane and folding does not take it down: a closed node is
 // still a branch off the trunk with its standing on it, and what it hides is
 // how it was configured and what it said.
-func Pipeline(e Env) ([]string, map[int]int) {
-	rows, heads, _ := pipeline(e)
-
-	return rows, heads
-}
-
-// RunFroms is the same tree read for its buttons: which drawn row is the
-// button of which node, numbered the way the folds are — the phases first,
-// the verbs asked for by hand after them.
-//
-// A second door rather than a third return on Pipeline, because every
-// caller but the hit test wants the rows and nothing else.
-func RunFroms(e Env) map[int]int {
-	_, _, at := pipeline(e)
-
-	return at
+// The three are one door and not two. The buttons used to be their own,
+// which built the tree a second time on every mouse move, and a third the
+// day the keyboard needed to know where they were.
+func Pipeline(e Env) ([]string, map[int]int, map[int]int) {
+	return pipeline(e)
 }
 
 // Hands is every delivery verb on the tree, in the order it draws them, so

@@ -349,6 +349,16 @@ func (m Model) detailHints() []barHint {
 		out = append(out, hintFor(m.keys.RetryPhase))
 	}
 
+	// What the arrows do on the tree is not what they do anywhere else,
+	// and a bar that says scroll on a pane that walks nodes is the window
+	// telling the reader the wrong thing about the key under their hand.
+	if m.tab == tabFlow {
+		return append(out,
+			hint(m.keys.Up.Help().Key+m.keys.Down.Help().Key,
+				m.opts.Words.T("key.walk_tree", "node")),
+			hint(m.keys.Open.Help().Key, m.treeSaid()))
+	}
+
 	return append(out, hint(m.keys.Up.Help().Key+m.keys.Down.Help().Key,
 		m.opts.Words.T("key.scroll", "scroll")))
 }

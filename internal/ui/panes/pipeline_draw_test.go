@@ -34,7 +34,7 @@ func tree(t *testing.T, entries []view.Entry) Env {
 func TestEveryPhaseOfTheFlowIsANodeOfTheTree(t *testing.T) {
 	e := tree(t, nil)
 
-	rows, heads := Pipeline(e)
+	rows, heads, _ := Pipeline(e)
 	if len(heads) != len(e.Flow.Phases) {
 		t.Errorf("the tree offers %d nodes for a flow of %d phases", len(heads), len(e.Flow.Phases))
 	}
@@ -65,7 +65,7 @@ func TestANodeSaysWhereItsPhaseGotTo(t *testing.T) {
 		},
 	}
 
-	got := text(first(Pipeline(e)))
+	got := text(rowsOf(Pipeline(e)))
 	for _, want := range []string{"completed", "claude", "opus", "wrote the endpoint", "$0.5000"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("an opened node does not carry %q:\n%s", want, got)
@@ -84,7 +84,7 @@ func TestAPhaseThatBrokeCarriesTheReasonOrItsExitCode(t *testing.T) {
 		{Kind: "phase.failed", Phase: name, At: ago(20 * time.Minute), Cause: "the build would not link"},
 	}
 
-	if got := text(first(Pipeline(e))); !strings.Contains(got, "the build would not link") {
+	if got := text(rowsOf(Pipeline(e))); !strings.Contains(got, "the build would not link") {
 		t.Errorf("a broken phase does not say why:\n%s", got)
 	}
 
@@ -94,7 +94,7 @@ func TestAPhaseThatBrokeCarriesTheReasonOrItsExitCode(t *testing.T) {
 		{Kind: "phase.failed", Phase: name, At: ago(20 * time.Minute), Exit: "137"},
 	}
 
-	if got := text(first(Pipeline(e))); !strings.Contains(got, "137") {
+	if got := text(rowsOf(Pipeline(e))); !strings.Contains(got, "137") {
 		t.Errorf("a broken phase with no reason does not name its exit code:\n%s", got)
 	}
 }
@@ -107,7 +107,7 @@ func TestAPhaseWaitingAtItsGateSaysSo(t *testing.T) {
 
 	e.Entries = []view.Entry{{Kind: "phase.waiting", Phase: name, At: ago(time.Minute), Cause: "gate: tests"}}
 
-	if got := text(first(Pipeline(e))); !strings.Contains(got, "waiting at gate") {
+	if got := text(rowsOf(Pipeline(e))); !strings.Contains(got, "waiting at gate") {
 		t.Errorf("a phase stopped at its gate does not say so:\n%s", got)
 	}
 }
@@ -124,7 +124,7 @@ func TestAPhaseCancelledAndThenRequeuedWaitsAtItsGate(t *testing.T) {
 		{Kind: "phase.waiting", Phase: name, At: ago(time.Minute), Cause: "gate: review"},
 	}
 
-	got := text(first(Pipeline(e)))
+	got := text(rowsOf(Pipeline(e)))
 	if !strings.Contains(got, "waiting at gate") || strings.Contains(got, "cancelled") {
 		t.Errorf("a requeued phase still reads as it was before it was requeued:\n%s", got)
 	}
@@ -136,7 +136,7 @@ func TestThePhaseInFlightIsMarkedAsGoing(t *testing.T) {
 	e := tree(t, nil)
 	e.Task.Band, e.Task.Phase = view.Running, e.Flow.Phases[0].Name
 
-	if got := text(first(Pipeline(e))); !strings.Contains(got, "in progress") {
+	if got := text(rowsOf(Pipeline(e))); !strings.Contains(got, "in progress") {
 		t.Errorf("the phase the run is in is not marked as going:\n%s", got)
 	}
 }
@@ -154,7 +154,7 @@ func TestTheVerbsAskedForByHandHangOffTheSameTrunk(t *testing.T) {
 		{Kind: "deliver.asked", Verb: "FIX CHECKS", By: "supervisor", At: ago(time.Minute)},
 	})
 
-	got := text(first(Pipeline(e)))
+	got := text(rowsOf(Pipeline(e)))
 	for _, want := range []string{
 		"Asked for by hand",
 		"opened #12",                 // one that came back
@@ -174,7 +174,7 @@ func TestATaskThatLeftTheBoardDrawsNoTree(t *testing.T) {
 	e := tree(t, nil)
 	e.Gone = true
 
-	if got := text(first(Pipeline(e))); !strings.Contains(got, "no longer on the board") {
+	if got := text(rowsOf(Pipeline(e))); !strings.Contains(got, "no longer on the board") {
 		t.Errorf("the tree of a task that left drew %q", got)
 	}
 }

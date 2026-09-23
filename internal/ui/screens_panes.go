@@ -186,9 +186,19 @@ func (m Model) flowLines() []string {
 	return lines
 }
 
-// flowRows is that tree and which phase each node that folds stands for.
+// flowRows is that tree with the keyboard's cursor drawn on it, and which
+// phase each node that folds stands for.
 func (m Model) flowRows() ([]string, map[int]int) {
-	return panes.Pipeline(m.paneEnv(tabFlow))
+	rows, heads, buttons := panes.Pipeline(m.paneEnv(tabFlow))
+
+	return m.withTreeCaret(rows, heads, buttons), heads
+}
+
+// flowButtons is which drawn row is the button of which node.
+func (m Model) flowButtons() map[int]int {
+	_, _, buttons := panes.Pipeline(m.paneEnv(tabFlow))
+
+	return buttons
 }
 
 // overviewLines is what became of this task, in the order a reader asks for
@@ -328,7 +338,7 @@ func (m Model) runFromAt(row int) (int, bool) {
 		return 0, false
 	}
 
-	at, on := panes.RunFroms(m.paneEnv(tabFlow))[row+m.panes[tabFlow].YOffset()]
+	at, on := m.flowButtons()[row+m.panes[tabFlow].YOffset()]
 
 	return at, on
 }
