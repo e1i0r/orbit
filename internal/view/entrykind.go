@@ -66,6 +66,7 @@ const (
 	EntryRepoJoined                       // a repository joined the task by being worked in
 	EntryDeliverAsked                     // a delivery verb was pressed in the cockpit
 	EntryDeliverAnswered                  // that verb came back, with what it did or why it broke
+	EntryDeliverStep                      // one thing whatever carries that verb did on the way
 	EntryUnreadable                       // this line of the record itself is damaged
 )
 
@@ -151,6 +152,8 @@ func (e Entry) What() EntryKind {
 		return EntryDeliverAsked
 	case record.DeliverAnswered:
 		return EntryDeliverAnswered
+	case record.DeliverStep:
+		return EntryDeliverStep
 	case record.Unreadable:
 		// Not a kind anything wrote: the reader synthesises it where a line
 		// would not parse, and it is a fact about the log rather than about

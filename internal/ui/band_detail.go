@@ -23,6 +23,9 @@ func (m Model) detailBandLine(t view.Task) string {
 		}
 
 		said := panes.StillWorking(p, m.delivering.verb, by, t.Since, m.now)
+		if st, out := panes.Waiting(panes.Env{Entries: m.entries}); out {
+			said = panes.WithDoing(said, st)
+		}
 
 		pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(theme.Live).Render(said)}
 
@@ -30,8 +33,8 @@ func (m Model) detailBandLine(t view.Task) string {
 	}
 
 	// 2. Uncompleted delivery recorded in the task history.
-	if st, out := panes.Waiting(m.panesEnv()); out {
-		said := panes.StillWorking(p, st.Verb, st.By, st.At, m.now)
+	if st, out := panes.Waiting(panes.Env{Entries: m.entries}); out {
+		said := panes.WithDoing(panes.StillWorking(p, st.Verb, st.By, st.At, m.now), st)
 
 		pieces := []string{theme.Paint(theme.Accent).Render(t.ID), theme.Paint(theme.Live).Render(said)}
 
