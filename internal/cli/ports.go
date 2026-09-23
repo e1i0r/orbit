@@ -21,6 +21,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/board"
 	"github.com/e1i0r/orbit/internal/logger"
+	"github.com/e1i0r/orbit/internal/queue"
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/task"
@@ -56,7 +57,7 @@ func controlPort(s *store.Store) func(view.Task, string) error {
 // thing at the next phase boundary, which is not what somebody watching
 // the screen means by cancel.
 func stopPort(s *store.Store) func(view.Task) error {
-	return func(t view.Task) error { return task.Cancel(s, subject(t)) }
+	return func(t view.Task) error { return queue.Cancel(s, subject(t)) }
 }
 
 // requeuePort stops whatever holds a task and puts it back in the queue.
@@ -147,7 +148,7 @@ func startPort(s *store.Store) func(view.Task, string, int) (int, error) {
 			return 0, err
 		}
 
-		return task.Start(s, loaded, flowName, unread)
+		return queue.Start(s, loaded, flowName, unread)
 	}
 }
 
@@ -165,7 +166,7 @@ func retryPort(s *store.Store) func(view.Task, string, int) (int, error) {
 			return 0, err
 		}
 
-		return task.Retry(s, loaded, t.Flow, phase, unread)
+		return queue.Retry(s, loaded, t.Flow, phase, unread)
 	}
 }
 

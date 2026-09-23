@@ -118,7 +118,7 @@ var waysIn = map[string][]string{
 	// a variable is set and never its value.
 	"internal/verb": {
 		"internal/board", "internal/engine", "internal/env", "internal/flow",
-		"internal/knowledge", "internal/learn", "internal/quota", "internal/record",
+		"internal/knowledge", "internal/learn", "internal/queue", "internal/quota", "internal/record",
 		"internal/repo", "internal/store", "internal/supervisor", "internal/task",
 		"internal/ui/theme", "internal/view", "internal/words",
 	},

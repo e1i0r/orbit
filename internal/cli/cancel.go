@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/e1i0r/orbit/internal/logger"
+	"github.com/e1i0r/orbit/internal/queue"
 	"github.com/e1i0r/orbit/internal/task"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -54,6 +55,18 @@ func cancelTask(ctx Context, args []string) error {
 		fmt.Fprintf(ctx.Out, "%s\n", ctx.printer().T("cancel.killed",
 			"{id} killed — run `orbit reconcile -repo {repo}` to close its record",
 			words.Arg{Name: "id", Value: id}, words.Arg{Name: "repo", Value: *dir}))
+
+		return nil
+	}
+
+	left, err := queue.Leave(s, t)
+	if err != nil {
+		return fmt.Errorf("cancel task %q in %q: %w", id, r.Name, err)
+	}
+
+	if left {
+		fmt.Fprintf(ctx.Out, "%s\n", ctx.printer().T("cancel.dequeued",
+			"{id} taken out of the queue before it started", words.Arg{Name: "id", Value: id}))
 
 		return nil
 	}

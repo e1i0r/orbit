@@ -40,14 +40,33 @@ a change to the API and its client, in one task, with both worktrees under it.
 
 ## What limits it
 
-**Priority.** Everything a run starts, and every CLI session the window
-opens, runs at the lowest priority your system has. On an idle machine that
-changes nothing; when you are using it, a lint that wants every core gives
-way, and the window keeps answering.
+**The queue.** Three runs go at once; start a fourth and it waits in line
+and starts on its own when one finishes. Starting
+five tasks no longer means five engines and five `make check`s fighting
+for one machine.
 
-Not Orbit. The engine's own rate limits are the ceiling, and `Q` shows what is
+```bash
+orbit settings set max-running 5      # how many go at once
+orbit settings set memory-ceiling 80  # no new run above 80% memory
+```
+
+A run also waits while the machine's memory is over the ceiling (85% unless
+you set it). `orbit task cancel` takes a waiting task out of the queue,
+and `orbit task requeue` puts it back in To Do.
+
+The queue keeps moving with the window closed. When something is waiting,
+Orbit starts a small service of its own, `orbit __queue`, that starts the
+next run as a slot frees up and goes away when nothing is left. There is
+nothing to install.
+
+**Priority.** Everything a run starts, and every CLI session the window
+opens, runs at the lowest priority your system has. On an idle machine
+that changes nothing; when you are using it, a lint that wants every core
+gives way, and the window keeps answering.
+
+The engines' own rate limits are the other ceiling, and `Q` shows what is
 left of each one's window before you start something that will hit it. The
-unread cap is the other limit, and it is deliberate: see
+unread cap is the last limit, and it is deliberate: see
 [autopilot](autopilot.md).
 
 ---

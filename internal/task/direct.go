@@ -100,18 +100,6 @@ func Redirect(ctx context.Context, s *store.Store, t Task, by, message string) e
 	return awaitStopped(ctx, s, t, stopWait, stopPoll)
 }
 
-// Reopen is Redirect and then a start, the way it was before the queue.
-// Its callers move to internal/queue's Reopen, and this goes when they have.
-func Reopen(
-	ctx context.Context, s *store.Store, t Task, by, message, flowName string, unread int,
-) (int, error) {
-	if err := Redirect(ctx, s, t, by, message); err != nil {
-		return 0, err
-	}
-
-	return Start(s, t, Walks(flowName, t), unread)
-}
-
 // Walks is the flow a reopened run takes: the one the reader named, and
 // otherwise the one the task already carries.
 //
