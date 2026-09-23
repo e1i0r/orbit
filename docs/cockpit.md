@@ -31,6 +31,7 @@ Open a task and twelve tabs cover it.
 | `8` | `artifacts` | every file the run left, and what each one is |
 | `9` | `notes` | notes you filed, sessions beside the run, questions it asked |
 | `0` | `diff` | the worktree diff, one card per file |
+| `l` | `map` | the repository as a tree, lit where the task changed it; click a file to open its diff |
 | `i` | `impact` | what the change reaches that the diff cannot show |
 | `w` | `thinking` | the reasoning the engine showed its work in |
 
