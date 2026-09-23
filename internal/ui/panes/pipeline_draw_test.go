@@ -112,6 +112,24 @@ func TestAPhaseWaitingAtItsGateSaysSo(t *testing.T) {
 	}
 }
 
+// TestAPhaseCancelledAndThenRequeuedWaitsAtItsGate. ORB-121 was cancelled
+// in review and moved back to the board: its header said waiting for
+// review and its tree said review cancelled, the older of the two.
+func TestAPhaseCancelledAndThenRequeuedWaitsAtItsGate(t *testing.T) {
+	e := tree(t, nil)
+	name := e.Flow.Phases[0].Name
+
+	e.Entries = []view.Entry{
+		{Kind: "phase.cancelled", Phase: name, At: ago(2 * time.Minute)},
+		{Kind: "phase.waiting", Phase: name, At: ago(time.Minute), Cause: "gate: review"},
+	}
+
+	got := text(first(Pipeline(e)))
+	if !strings.Contains(got, "waiting at gate") || strings.Contains(got, "cancelled") {
+		t.Errorf("a requeued phase still reads as it was before it was requeued:\n%s", got)
+	}
+}
+
 // TestThePhaseInFlightIsMarkedAsGoing. The task says which phase it is in,
 // and the tree is where a reader watches it move.
 func TestThePhaseInFlightIsMarkedAsGoing(t *testing.T) {

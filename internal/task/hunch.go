@@ -22,6 +22,7 @@ package task
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	"github.com/e1i0r/orbit/internal/flow"
 	"github.com/e1i0r/orbit/internal/hunch"
@@ -157,27 +158,44 @@ func decisionEvent(p flow.Phase, v hunch.Verdict, mode string, acted bool) recor
 // lastSaid is the last thing the run said before it stopped, which is what
 // a supervisor reads.
 //
-// This run and not the last one, for the reason planText reads from the
-// newest task.started: a verdict about what the previous attempt printed is
-// a verdict about work that has already been replaced.
+// A phase's words stand until that phase runs again: then they are about
+// work that is being replaced. They used to be dropped at every new
+// attempt, and an attempt that picks up at a gate runs none of the phases
+// before it, so ORB-121 was asked about twelve times at review with nothing
+// to read and answered "again" each time over an implement that had
+// reported make check green.
 func lastSaid(s *store.Store, t Task) string {
 	events, err := Events(s, t)
 	if err != nil {
 		return ""
 	}
 
-	said := ""
+	said, by := "", ""
 
 	for _, e := range events {
 		switch e.Kind {
-		case record.TaskStarted:
-			said = ""
+		case record.PhaseStarted:
+			if strings.EqualFold(e.Phase, by) {
+				said, by = "", ""
+			}
 		case record.PhaseFinished, record.PhaseFailed, record.GateFailed:
 			if e.Text != "" {
-				said = e.Text
+				said, by = e.Text, e.Phase
 			}
 		}
 	}
 
 	return said
+}
+
+// attempt is what task.started says about the attempt it begins: the flow,
+// and the phase a retry began at, so a reader of the record can tell a
+// retry from a run from the top.
+func attempt(flowName, from string) map[string]string {
+	data := map[string]string{"flow": flowName}
+	if name := strings.TrimSpace(from); name != "" {
+		data["from"] = name
+	}
+
+	return data
 }
