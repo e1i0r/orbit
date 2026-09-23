@@ -13,6 +13,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/env"
 	"github.com/e1i0r/orbit/internal/logger"
+	"github.com/e1i0r/orbit/internal/lowly"
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/words"
@@ -84,6 +85,18 @@ func Run(args []string, out, errOut io.Writer) (code int) {
 		}
 
 		fmt.Fprint(out, usage(ctx.Words, useColor(out)))
+
+		return 0
+	}
+
+	// The step orbit puts in front of what it starts on its own: see
+	// internal/lowly. It is not a command, so it is not in the table.
+	if args[0] == lowly.Arg {
+		if err := lowly.Exec(args[1:]); err != nil {
+			fmt.Fprintf(errOut, "orbit: %v\n", err)
+
+			return 1
+		}
 
 		return 0
 	}

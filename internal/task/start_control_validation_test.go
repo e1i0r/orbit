@@ -10,6 +10,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/flow"
+	"github.com/e1i0r/orbit/internal/lowly"
 	"github.com/e1i0r/orbit/internal/repo"
 	"github.com/e1i0r/orbit/internal/store"
 )
@@ -64,9 +65,13 @@ func TestStartCapAndRunCommand(t *testing.T) {
 	}
 
 	expectedArgs := []string{"/bin/orbit", "task", "start", "-repo", "/path/to/repo", "-flow", "custom-flow", "TASK-1"}
+	behind := lowly.Behind(cmd)
+
 	for i, arg := range expectedArgs {
-		if i >= len(cmd.Args) || cmd.Args[i] != arg {
-			t.Errorf("cmd.Args[%d] = %q, want %q", i, cmd.Args[i], arg)
+		if i >= len(behind) || behind[i] != arg {
+			t.Errorf("the run's argv = %q, want %q behind the lowered step", behind, expectedArgs)
+
+			break
 		}
 	}
 

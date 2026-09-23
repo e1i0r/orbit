@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/e1i0r/orbit/internal/board"
+	"github.com/e1i0r/orbit/internal/lowly"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/view"
 )
@@ -48,7 +49,7 @@ func TestOpenCommandGivesClaudeOrbitsOwnServer(t *testing.T) {
 		t.Errorf("Dir = %q, want %q", cmd.Dir, dir)
 	}
 
-	args := cmd.Args[1:]
+	args := lowly.Behind(cmd)[1:]
 
 	at := slices.Index(args, "--mcp-config")
 	if at < 0 || at+1 >= len(args) {
@@ -83,7 +84,7 @@ func TestTheSentenceIsNotReadAsAnotherConfiguration(t *testing.T) {
 		t.Fatalf("openCommand: %v", err)
 	}
 
-	args := cmd.Args[1:]
+	args := lowly.Behind(cmd)[1:]
 
 	at := slices.Index(args, "--")
 	if at < 0 {
@@ -108,7 +109,7 @@ func TestOpenCommandLeavesAnEngineWithoutTheFlagAlone(t *testing.T) {
 		t.Fatalf("openCommand: %v", err)
 	}
 
-	if got := cmd.Args[1:]; len(got) != 1 || got[0] != "look at PAY-1" {
+	if got := lowly.Behind(cmd)[1:]; len(got) != 1 || got[0] != "look at PAY-1" {
 		t.Errorf("args = %v, want only what the session is about", got)
 	}
 
@@ -117,7 +118,7 @@ func TestOpenCommandLeavesAnEngineWithoutTheFlagAlone(t *testing.T) {
 		t.Fatalf("openCommand: %v", err)
 	}
 
-	if got := bare.Args[1:]; len(got) != 0 {
+	if got := lowly.Behind(bare)[1:]; len(got) != 0 {
 		t.Errorf("args = %v, want none: there is no task to open on", got)
 	}
 }
@@ -223,8 +224,14 @@ func TestOpenPortBuildsTheSessionTheWindowAsksFor(t *testing.T) {
 		t.Fatalf("the open port: %v", err)
 	}
 
-	if filepath.Base(cmd.Path) != "claude" {
-		t.Errorf("the session runs %q, want claude", cmd.Path)
+	if filepath.Base(lowly.Behind(cmd)[0]) != "claude" {
+		t.Errorf("the session runs %q, want claude", lowly.Behind(cmd)[0])
+	}
+
+	// Behind the step: a make check the session runs gives way to the
+	// machine the cockpit is open on.
+	if len(cmd.Args) < 2 || cmd.Args[1] != lowly.Arg {
+		t.Errorf("the session is not lowered: %v", cmd.Args)
 	}
 
 	if cmd.Dir != root {
@@ -328,7 +335,7 @@ func TestOpenCommandGivesOpenCodeTheSentenceOnItsOwnFlag(t *testing.T) {
 	}
 
 	want := []string{"--prompt", "look at PAY-1"}
-	if got := cmd.Args[1:]; !slices.Equal(got, want) {
+	if got := lowly.Behind(cmd)[1:]; !slices.Equal(got, want) {
 		t.Errorf("args = %v, want %v", got, want)
 	}
 }
@@ -346,7 +353,7 @@ func TestOpenCommandOpensAgyInteractively(t *testing.T) {
 	}
 
 	want := []string{"--prompt-interactive", "look at PAY-1"}
-	if got := cmd.Args[1:]; !slices.Equal(got, want) {
+	if got := lowly.Behind(cmd)[1:]; !slices.Equal(got, want) {
 		t.Errorf("args = %v, want %v", got, want)
 	}
 }

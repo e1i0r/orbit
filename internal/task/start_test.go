@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/e1i0r/orbit/internal/lowly"
 	"github.com/e1i0r/orbit/internal/repo"
 )
 
@@ -29,14 +30,21 @@ func TestAStartedRunIsTheSameSubcommandAPersonWouldType(t *testing.T) {
 	tk := Task{ID: "ACME-1", Repo: repo.Repo{Name: "app", Path: "/repos/app"}}
 	cmd := runCommand("/usr/local/bin/orbit", "/state", tk, "review", "", "", "")
 
+	// Behind the step that lowers it: see internal/lowly.
+	if len(cmd.Args) < 2 || cmd.Args[1] != lowly.Arg {
+		t.Errorf("the run is not lowered: %q", cmd.Args)
+	}
+
 	want := []string{"/usr/local/bin/orbit", "task", "start", "-repo", "/repos/app", "-flow", "review", "ACME-1"}
-	if len(cmd.Args) != len(want) {
-		t.Fatalf("argv = %q, want %q", cmd.Args, want)
+
+	got := lowly.Behind(cmd)
+	if len(got) != len(want) {
+		t.Fatalf("argv = %q, want %q", got, want)
 	}
 
 	for i := range want {
-		if cmd.Args[i] != want[i] {
-			t.Fatalf("argv = %q, want %q", cmd.Args, want)
+		if got[i] != want[i] {
+			t.Fatalf("argv = %q, want %q", got, want)
 		}
 	}
 
