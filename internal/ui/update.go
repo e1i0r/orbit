@@ -29,7 +29,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// pressed a key would not be a tail.
 		cmds := []tea.Cmd{refresh(m.opts.Reader), tick()}
 		if m.screen == screenDetail {
-			cmds = append(cmds, logOf(m.opts.Reader, m.subject()), filesOf(m.opts.Reader, m.subject()))
+			cmds = append(cmds, logOf(m.opts.Reader, m.subject()), filesOf(m.opts.Reader, m.subject()),
+				m.settle())
 		}
 
 		return m, tea.Batch(cmds...)
