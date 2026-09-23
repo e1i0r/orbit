@@ -202,15 +202,15 @@ func (m Model) askRequeue() (tea.Model, tea.Cmd) {
 }
 
 func (m Model) askDeleteTask() (tea.Model, tea.Cmd) {
-	r, ok := m.selected()
-	if !ok || r.head || r.blank {
+	t, ok := m.pointedAt()
+	if !ok {
 		return m, nil
 	}
 
 	m.confirm = confirmDeleteTask
-	m.confirmID = r.task.ID
+	m.confirmID = t.ID
 
-	return m.say(m.opts.Words.T("msg.confirm_delete_task", "delete task {id}? [y/n]", about("id", r.task.ID))), nil
+	return m.say(m.opts.Words.T("msg.confirm_delete_task", "delete task {id}? [y/n]", about("id", t.ID))), nil
 }
 
 // confirmKey answers the one question the window ever asks.
@@ -312,26 +312,10 @@ func (m Model) open() (tea.Model, tea.Cmd) {
 // verb asks the command behind one key to write one word. Whether the key is
 // allowed at all is gesture's answer, in gesture.go.
 func (m Model) verb(b key.Binding, word string) (Model, tea.Cmd) {
-	r, ok := m.selected()
-	if !ok || r.head {
+	t, ok := m.pointedAt()
+	if !ok {
 		return m, nil
 	}
 
-	return m.verbOn(r.task, b, word)
-}
-
-// ask opens the confirm in front of a cancel.
-//
-// Cancelling is the one gesture here that cannot be undone by pressing
-// something else — a run that was ended did not keep going — so it is the
-// one that asks first.
-func (m Model) ask() (tea.Model, tea.Cmd) {
-	t, next, ok := m.gesture(m.keys.Cancel)
-	if !ok {
-		return next, nil
-	}
-
-	next.confirm, next.confirmID = confirmCancel, t.ID
-
-	return next, nil
+	return m.verbOn(t, b, word)
 }
