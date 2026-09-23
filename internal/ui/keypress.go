@@ -201,8 +201,10 @@ func (m Model) askRequeue() (tea.Model, tea.Cmd) {
 	return next, nil
 }
 
+// askDeleteTask asks before deleting, and asks the affordance first: a
+// running task is refused with the reason rather than asked about.
 func (m Model) askDeleteTask() (tea.Model, tea.Cmd) {
-	t, ok := m.pointedAt()
+	t, m, ok := m.gesture(m.keys.Delete)
 	if !ok {
 		return m, nil
 	}

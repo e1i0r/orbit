@@ -165,3 +165,21 @@ func TestDeletingATaskIsAskedAboutFirst(t *testing.T) {
 		}
 	}
 }
+
+// TestDeletingARunningTaskIsRefusedWithTheReason. D on a task whose run is
+// still going says to cancel it first, and asks nothing: a yes would have
+// taken the worktree from under a live engine.
+func TestDeletingARunningTaskIsRefusedWithTheReason(t *testing.T) {
+	m := onto(t, armed(t), "PARKED-1")
+
+	asked, _ := m.askDeleteTask()
+
+	after := asModel(t, asked)
+	if after.confirm != confirmNone {
+		t.Errorf("the window asked %v about deleting a running task", after.confirm)
+	}
+
+	if !strings.Contains(after.message, "cancel it first") {
+		t.Errorf("the bar says %q, want the reason it was refused", after.message)
+	}
+}
