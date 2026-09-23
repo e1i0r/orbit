@@ -152,6 +152,13 @@ func (m Model) barLayout(w int) (string, []placedHint, []headerZone) {
 		}}, tailHints[1:]...)
 	}
 
+	// A screen of its own answers none of the three: [m] and [?] did
+	// nothing on settings, and on the supervisor they were typed into the
+	// line. Its own keys are in its footer.
+	if !m.onBoardKeys() {
+		tailHints = nil
+	}
+
 	corner := strings.Join(drawn(tailHints), " ")
 	all := m.barFooterChips()
 	hints := m.hints()
