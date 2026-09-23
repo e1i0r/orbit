@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/e1i0r/orbit/internal/logger"
+	"github.com/e1i0r/orbit/internal/record"
 	"github.com/e1i0r/orbit/internal/store"
 )
 
@@ -117,4 +118,13 @@ func notRunning(t Task, pid int) error {
 	}
 
 	return fmt.Errorf("task %s is not running", t.ID)
+}
+
+// Dequeued writes down that a task waiting in the queue was taken out of it
+// before it started: a cancel with nothing to signal. See internal/queue.
+func Dequeued(s *store.Store, t Task) error {
+	return emit(s, t, record.Event{
+		Kind: record.TaskCancelled,
+		Text: "taken out of the queue before it started",
+	})
 }

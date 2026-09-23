@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/e1i0r/orbit/internal/store"
 )
 
 // child starts a process that will sit there until something signals it, and
@@ -54,7 +56,7 @@ func TestReopenStartsTheTaskAgainOnceNothingHoldsIt(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pid, err := Reopen(context.Background(), s, tk, "operator", "try the other approach", "task", 0)
+	pid, err := reopen(context.Background(), s, tk, "operator", "try the other approach", "task", 0)
 	if err != nil {
 		t.Fatalf("Reopen on a task nothing holds: %v", err)
 	}
@@ -100,7 +102,7 @@ func TestReopenUsesTheFlowTheTaskCarriesWhenNoneIsNamed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pid, err := Reopen(context.Background(), s, tk, "", "again please", "", 0)
+	pid, err := reopen(context.Background(), s, tk, "", "again please", "", 0)
 	if err != nil {
 		t.Fatalf("Reopen with no flow named: %v", err)
 	}
@@ -122,7 +124,7 @@ func TestReopenAtTheUnreadCapIsRefusedAndSaysSo(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pid, err := Reopen(context.Background(), s, tk, "operator", "again", "quick", 99)
+	pid, err := reopen(context.Background(), s, tk, "operator", "again", "quick", 99)
 	if err == nil {
 		t.Fatal("Reopen started a run past the unread cap")
 	}
@@ -213,4 +215,16 @@ func TestADirectiveThatCannotBeWrittenDownIsRefused(t *testing.T) {
 	if err := Direct(s, tk, "operator", "stop"); err == nil {
 		t.Fatal("Direct answered nil over a record it could not write to")
 	}
+}
+
+// reopen is what a restart after a directive does, without the queue in
+// front of it: internal/queue's Reopen is this with a slot to wait for.
+func reopen(
+	ctx context.Context, s *store.Store, tk Task, by, message, flowName string, unread int,
+) (int, error) {
+	if err := Redirect(ctx, s, tk, by, message); err != nil {
+		return 0, err
+	}
+
+	return Start(s, tk, Walks(flowName, tk), unread)
 }

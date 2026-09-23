@@ -11,6 +11,7 @@ import (
 	"syscall"
 
 	"github.com/e1i0r/orbit/internal/lowly"
+	"github.com/e1i0r/orbit/internal/record"
 	"github.com/e1i0r/orbit/internal/store"
 )
 
@@ -81,26 +82,58 @@ func StartWith(s *store.Store, t Task, flowName, engineName string, unread int) 
 }
 
 // start is what the three doors do, with the one argument that tells them
-// apart handed in rather than decided here.
+// apart handed in rather than decided here: refuse what cannot start, and
+// start the rest now. Whether it should wait for a slot is internal/queue's
+// question, asked before this one.
 func start(s *store.Store, t Task, flowName, engineName, from string, unread int) (int, error) {
-	holder, alive, err := Alive(s, t)
+	cfg, err := Refuse(s, t, unread)
 	if err != nil {
 		return 0, err
 	}
 
+	return spawn(s, cfg, t, flowName, engineName, from)
+}
+
+// Refuse is why a task may not start at all, and the settings it was read
+// against when it may: a run already holding it, or the unread cap reached.
+// The queue asks it before writing a task down as waiting, so a task that
+// could never start is refused at once rather than after waiting its turn.
+func Refuse(s *store.Store, t Task, unread int) (store.Settings, error) {
+	holder, alive, err := Alive(s, t)
+	if err != nil {
+		return store.Settings{}, err
+	}
+
 	if alive {
-		return 0, fmt.Errorf("task %s is already being run by process %d", t.ID, holder)
+		return store.Settings{}, fmt.Errorf("task %s is already being run by process %d",
+			t.ID, holder)
 	}
 
 	cfg, err := s.Settings()
 	if err != nil {
-		return 0, err
+		return store.Settings{}, err
 	}
 
 	if atCap(unread, cfg.UnreadCap) {
-		return 0, fmt.Errorf("task %s was not started: %d finished tasks are unread and the cap is %d — read one with `orbit read`, or change the cap with `orbit set unread-cap <n>`", t.ID, unread, cfg.UnreadCap)
+		return store.Settings{}, fmt.Errorf("task %s was not started: %d finished tasks are unread and the cap is %d — read one with `orbit read`, or change the cap with `orbit set unread-cap <n>`", t.ID, unread, cfg.UnreadCap)
 	}
 
+	return cfg, nil
+}
+
+// Enqueued writes down that a task is waiting in the queue, with what it
+// was asked to run: the queue's own record of its line. See internal/queue.
+func Enqueued(s *store.Store, t Task, flowName, engineName, from string) error {
+	return emit(s, t, record.Event{Kind: record.TaskQueued, Data: map[string]string{
+		"repo": t.Repo.Path, "flow": flowName, "engine": engineName, "from": from,
+	}})
+}
+
+// spawn starts one run in a process of its own, behind the lowered step,
+// and reaps it when it ends.
+func spawn(
+	s *store.Store, cfg store.Settings, t Task, flowName, engineName, from string,
+) (int, error) {
 	exe, err := os.Executable()
 	if err != nil {
 		return 0, fmt.Errorf("find the orbit binary to start task %s: %w", t.ID, err)
@@ -111,19 +144,16 @@ func start(s *store.Store, t Task, flowName, engineName, from string, unread int
 		return 0, fmt.Errorf("start a run of task %s: %w", t.ID, err)
 	}
 
-	pid := cmd.Process.Pid
 	// The child is waited on in a goroutine, and its verdict is thrown
 	// away. Nothing here wants the exit status — the record carries the
-	// outcome, and the caller is a window that will read it from there —
-	// but a child nobody waits on becomes a zombie, and a zombie answers
-	// kill(pid, 0) as though it were alive. That would make Alive say a
-	// dead run is running for as long as the window stays open, which is
-	// exactly the lie this task exists to remove.
+	// outcome — but a child nobody waits on becomes a zombie, and a zombie
+	// answers kill(pid, 0) as though it were alive, which would make Alive
+	// say a dead run is running for as long as the window stays open.
 	go func() {
 		_ = cmd.Wait() //nolint:errcheck // deliberate: see above
 	}()
 
-	return pid, nil
+	return cmd.Process.Pid, nil
 }
 
 // runCommand is the command line Start spawns. It is split out so it can be

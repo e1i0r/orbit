@@ -78,8 +78,9 @@ const stopWait = 30 * time.Second
 // process unwinding rather than a person deciding.
 const stopPoll = 50 * time.Millisecond
 
-// Reopen applies a directive and starts a new run of the task once the old
-// one is actually gone.
+// Redirect applies a directive and waits for the run it stops to be gone, so
+// the caller can start a new one: through the queue, which is why the start
+// is not here.
 //
 // Waiting is the whole of it. Cancel returns as soon as the signal is sent —
 // it is documented to, and it has no way not to — while the run it asked to
@@ -91,25 +92,33 @@ const stopPoll = 50 * time.Millisecond
 //
 // A run that will not stop inside the window is reported rather than
 // restarted over the top of, and the message names the verb that ends it.
-func Reopen(ctx context.Context, s *store.Store, t Task, by, message, flowName string, unread int) (int, error) {
+func Redirect(ctx context.Context, s *store.Store, t Task, by, message string) error {
 	if err := Direct(s, t, by, message); err != nil {
-		return 0, err
+		return err
 	}
 
-	if err := awaitStopped(ctx, s, t, stopWait, stopPoll); err != nil {
-		return 0, err
-	}
-
-	return Start(s, t, walks(flowName, t), unread)
+	return awaitStopped(ctx, s, t, stopWait, stopPoll)
 }
 
-// walks is the flow a reopened run takes: the one the reader named, and
+// Reopen is Redirect and then a start, the way it was before the queue.
+// Its callers move to internal/queue's Reopen, and this goes when they have.
+func Reopen(
+	ctx context.Context, s *store.Store, t Task, by, message, flowName string, unread int,
+) (int, error) {
+	if err := Redirect(ctx, s, t, by, message); err != nil {
+		return 0, err
+	}
+
+	return Start(s, t, Walks(flowName, t), unread)
+}
+
+// Walks is the flow a reopened run takes: the one the reader named, and
 // otherwise the one the task already carries.
 //
 // A function of its own for the reason runCommand is one. What it decides is
 // spent on a process this cannot see — the run is a child, started and let
 // go — so the only place the decision can be read back is here.
-func walks(named string, t Task) string {
+func Walks(named string, t Task) string {
 	if named != "" {
 		return named
 	}

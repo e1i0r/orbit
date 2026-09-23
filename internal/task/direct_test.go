@@ -97,7 +97,7 @@ func TestReopenReturnsErrorWhenDirectFails(t *testing.T) {
 		t.Fatalf("Create: %v", err)
 	}
 
-	if _, err := Reopen(context.Background(), s, tk, "supervisor", "", "quick", 0); err == nil {
+	if _, err := reopen(context.Background(), s, tk, "supervisor", "", "quick", 0); err == nil {
 		t.Error("Reopen on empty message answered nil, want error")
 	}
 }
@@ -111,18 +111,18 @@ func TestReopenReturnsErrorWhenDirectFails(t *testing.T) {
 func TestWhichFlowAReopenedRunTakes(t *testing.T) {
 	carrying := Task{ID: "ACME-40", Flow: "quick"}
 
-	if got := walks("careful", carrying); got != "careful" {
+	if got := Walks("careful", carrying); got != "careful" {
 		t.Errorf("a reader who named a flow got %q", got)
 	}
 
-	if got := walks("", carrying); got != "quick" {
+	if got := Walks("", carrying); got != "quick" {
 		t.Errorf("a reader who named none got %q, want the task's own", got)
 	}
 
 	// A task carrying none either is started with none, and whoever reads
 	// the flag decides what that means — passing a name made up here would
 	// be this deciding it for them.
-	if got := walks("", Task{ID: "ACME-41"}); got != "" {
+	if got := Walks("", Task{ID: "ACME-41"}); got != "" {
 		t.Errorf("a task with no flow of its own was started with %q", got)
 	}
 }

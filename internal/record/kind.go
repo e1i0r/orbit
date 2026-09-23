@@ -16,6 +16,7 @@ package record
 const (
 	TaskCreated   = "task.created"   // written down; Text is the whole of task.md
 	TaskStarted   = "task.started"   // an attempt begins, and the boundary between one and the next
+	TaskQueued    = "task.queued"    // waiting for a slot; Data: repo, flow, engine, from
 	TaskFinished  = "task.finished"  // every phase of the flow ran through
 	TaskFailed    = "task.failed"    // the run stopped and Text says why
 	TaskCancelled = "task.cancelled" // a reader stopped it
@@ -64,9 +65,8 @@ const (
 	// of what it did. The record is the only account of what an engine was
 	// asked, what it cost and what it changed, and a reader tidying a board
 	// is not saying they want that account gone — they are saying they do
-	// not want to look at this row any more. So it is an event like the
-	// others rather than a row removed: the fold ignores it, and the one
-	// query that enumerates tasks leaves out whatever has it.
+	// not want to look at this row any more. So it is an event, which the
+	// fold ignores and the one query that enumerates tasks leaves out.
 	TaskDeleted = "task.deleted"
 	// TaskMerged is work that landed: somebody merged the pull request a
 	// task opened. It is written where the merge happens rather than
