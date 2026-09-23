@@ -50,7 +50,9 @@ already wrote, and it is the cheapest one any repository has.
 branch this work was cut from and on the work itself, at the same time. An
 exit code decided every line of it, so nothing there is anybody's reading. It is
 a test suite twice on your machine, so the pane names the cost before you pay
-it.
+it. Both run at the lowest priority your system has, so the window and any
+run beside them keep the CPU they ask for; on an idle machine that costs
+nothing.
 
 **What the agent says it did.** Last, and marked: what the change now asks of
 its callers, what it promises them, what it took for granted, and what it
