@@ -84,3 +84,18 @@ func Delivered(s *store.Store, t Task, verb, text string, failure error) error {
 
 	return emit(s, t, e)
 }
+
+// DeliveryStep records one thing the carrier of a delivery verb did, as it
+// did it: the tool and what it was given, cut the way a phase's tool call
+// is. It is what the tree and the band show while the verb is out, so a
+// reader watching a CREATE PR sees `gh pr create` rather than a clock.
+func DeliveryStep(s *store.Store, t Task, verb, tool, args string) error {
+	c, full := captured(args)
+
+	data := map[string]string{"verb": strings.TrimSpace(verb), "tool": tool}
+	if full > 0 {
+		data["bytes"] = strconv.Itoa(full)
+	}
+
+	return emit(s, t, record.Event{Kind: record.DeliverStep, Text: c, Data: data})
+}

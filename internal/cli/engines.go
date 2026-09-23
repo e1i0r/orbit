@@ -26,6 +26,7 @@ import (
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/supervisor"
+	"github.com/e1i0r/orbit/internal/ui"
 	"github.com/e1i0r/orbit/internal/ui/roster"
 	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
@@ -121,8 +122,14 @@ func engineNamed(engines map[string]engine.Engine, name string) (engine.Engine, 
 
 // askSupervisorPort is the supervisor thread: what a reader types in it goes
 // to the engine their dial names, and the answer comes back into the thread.
-func askSupervisorPort(s *store.Store, engines map[string]engine.Engine) func(string, string, string) (string, error) {
-	return func(name, conversation, prompt string) (string, error) {
+//
+// A line sent for a delivery verb has every step the engine takes written
+// onto its task as it takes it, which is what the window shows while the
+// verb is out.
+func askSupervisorPort(
+	s *store.Store, engines map[string]engine.Engine,
+) func(string, string, string, ui.Errand) (string, error) {
+	return func(name, conversation, prompt string, about ui.Errand) (string, error) {
 		eng, err := engineNamed(engines, name)
 		if err != nil {
 			return "", err
@@ -131,7 +138,8 @@ func askSupervisorPort(s *store.Store, engines map[string]engine.Engine) func(st
 		// No model: the window has a dial of its own for the engine and
 		// none for what answers in the thread, so this stays the engine's
 		// default until there is a place to choose it.
-		return supervisor.SuperviseIn(context.Background(), s, eng, "", conversation, prompt)
+		return supervisor.SuperviseWatched(context.Background(), s, eng, "", conversation, prompt,
+			stepsOnto(s, about))
 	}
 }
 

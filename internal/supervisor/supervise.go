@@ -56,6 +56,16 @@ func Supervise(ctx context.Context, s *store.Store, eng engine.Engine, prompt st
 // model answers is the surface's question, and this package has no opinion
 // about where the surface got it.
 func SuperviseIn(ctx context.Context, s *store.Store, eng engine.Engine, model, conversation, prompt string) (string, error) {
+	return SuperviseWatched(ctx, s, eng, model, conversation, prompt, nil)
+}
+
+// SuperviseWatched is SuperviseIn with every step the engine takes handed
+// to onEvent as it takes it: a delivery verb writes them onto its task, so
+// the reader sees what the supervisor is doing rather than a clock.
+func SuperviseWatched(
+	ctx context.Context, s *store.Store, eng engine.Engine,
+	model, conversation, prompt string, onEvent func(engine.StreamEvent),
+) (string, error) {
 	if s == nil {
 		return "", fmt.Errorf("store cannot be nil")
 	}
@@ -108,7 +118,8 @@ func SuperviseIn(ctx context.Context, s *store.Store, eng engine.Engine, model, 
 		// engine the task was written against — which is the engine the
 		// reader has just dialled away from, and often the reason they
 		// dialled away. task/supervisorengine.go is the other end.
-		Env: []string{engine.SupervisorVar + "=" + eng.Name()},
+		Env:     []string{engine.SupervisorVar + "=" + eng.Name()},
+		OnEvent: onEvent,
 	}
 
 	out, runErr := eng.Run(ctx, req)

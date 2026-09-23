@@ -189,6 +189,10 @@ type Model struct {
 	// scroll, because it is the one pane made of nodes.
 	tree treeAt
 
+	// errandOut is the delivery a line to the supervisor is being sent for,
+	// set only for the length of the send: see askSupervisorTo.
+	errandOut Errand
+
 	// shutAttempts is which attempts the reader has closed, by their number.
 	// Absent is open, the way folds is and the way opened is not: an attempt
 	// is a heading over a block of the record, and a reader who opens the
@@ -294,3 +298,15 @@ type Model struct {
 	following bool
 	panes     [tabCount]viewport.Model
 }
+
+// Errand is the task and the verb a line to the supervisor is carrying out,
+// and empty for a line somebody typed. The side that runs the engine writes
+// every step it takes onto that task, under that verb, which is what the
+// tree and the band show while the verb is out.
+type Errand struct {
+	Task view.Task
+	Verb string
+}
+
+// askPort is the shape of Options.AskSupervisor.
+type askPort = func(engineName, conversation, prompt string, about Errand) (string, error)

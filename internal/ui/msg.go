@@ -333,13 +333,13 @@ func takeSession(port func(view.Task) (*exec.Cmd, error), t view.Task) tea.Cmd {
 }
 
 // askSupervisorCmd queries the supervisor model in the background.
-func askSupervisorCmd(ask func(string, string, string) (string, error), engineName, conversation, prompt string) tea.Cmd {
+func askSupervisorCmd(ask askPort, engineName, conversation, prompt string, about Errand) tea.Cmd {
 	return func() tea.Msg {
 		if ask == nil {
 			return supervisorReplyMsg{Err: errNoSupervisor}
 		}
 
-		ans, err := ask(engineName, conversation, prompt)
+		ans, err := ask(engineName, conversation, prompt, about)
 
 		return supervisorReplyMsg{Text: ans, Err: err}
 	}

@@ -81,14 +81,14 @@ const (
 	//
 	// It is written where the key is pressed rather than by whatever does
 	// the work, because most of these verbs are carried out by an engine
-	// that answers minutes later somewhere else entirely. The ask is a fact
-	// about the task the moment it is made, and a reader who pressed a key
-	// and saw nothing appear has no way to tell a slow verb from a dead one.
+	// that answers minutes later somewhere else entirely. A reader who saw
+	// nothing appear could not tell a slow verb from a dead one.
 	DeliverAsked = "deliver.asked"
-	// DeliverAnswered ends one of those. Data["verb"] names the same verb,
-	// Data["error"] is why it broke where it did, and Text is what came
-	// back — the supervisor's own account, or what the command printed.
+	// DeliverAnswered ends one of those: Data["verb"], Data["error"] for why it
+	// broke, and Text for what came back.
 	DeliverAnswered = "deliver.answered"
+	// DeliverStep is one step its carrier took: Data["verb"], "tool", and Text.
+	DeliverStep = "deliver.step"
 
 	// TaskStuck is a task that ran out of attempts. It is not a failure of
 	// one run — task.failed already says that — it is the run after the

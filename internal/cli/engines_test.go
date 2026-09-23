@@ -10,6 +10,7 @@ import (
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/quota"
 	"github.com/e1i0r/orbit/internal/store"
+	"github.com/e1i0r/orbit/internal/ui"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -64,7 +65,7 @@ func TestTheSupervisorAnswersOnTheEngineItWasAskedFor(t *testing.T) {
 
 	engines := newEngines()
 
-	_, err = askSupervisorPort(s, engines)("an-engine-nobody-has", "", "how is it going?")
+	_, err = askSupervisorPort(s, engines)("an-engine-nobody-has", "", "how is it going?", ui.Errand{})
 	if err == nil {
 		t.Fatal("the supervisor answered on an engine that was not asked for")
 	}

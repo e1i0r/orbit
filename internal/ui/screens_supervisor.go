@@ -53,7 +53,7 @@ func (m Model) supervisorEnv() supervisor.Env {
 // askSupervisor is the question going out, as the command that carries the
 // answer back into this window's own update loop.
 func (m Model) askSupervisor(conversation, text string) tea.Cmd {
-	return askSupervisorCmd(m.opts.AskSupervisor, m.dialEngine(m.knobs.Engine), conversation, text)
+	return askSupervisorCmd(m.opts.AskSupervisor, m.dialEngine(m.knobs.Engine), conversation, text, m.errandOut)
 }
 
 // onTheRoster is whether a name is one of the engines this build has.
