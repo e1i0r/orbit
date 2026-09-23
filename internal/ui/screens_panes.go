@@ -51,7 +51,6 @@ func (m Model) panesEnv() panes.Env {
 		Read:        m.fileHeld,
 		Reach:       m.reading(),
 		Shape:       m.shaping(),
-		RunFromKey:  m.keys.RetryPhase.Help().Key,
 		Said:        m.errSaid,
 		Spinner:     m.spinner(theme.Live),
 		Dials:       m.taskDials(t),
