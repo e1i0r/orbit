@@ -25,6 +25,14 @@ func (m Model) hints() []barHint {
 		return m.detailHints()
 	case screenStart:
 		return m.startHints()
+	case screenList:
+	default:
+		// Every other screen draws its own keys in its footer, and the
+		// board's here were keys that screen does not answer: [x] on
+		// settings reset a setting, and on the supervisor a click typed a
+		// letter into the line. The one key they all answer is the way
+		// back.
+		return []barHint{hintFor(m.keys.Back)}
 	}
 
 	var out []barHint
@@ -83,4 +91,10 @@ func hintKey(glyph, desc string) barHint {
 	h.key = glyph
 
 	return h
+}
+
+// onBoardKeys is whether the screen answers the board's keys: the board, a
+// task, and the start dialog over them. The rest are screens of their own.
+func (m Model) onBoardKeys() bool {
+	return m.screen == screenList || m.screen == screenDetail || m.screen == screenStart
 }

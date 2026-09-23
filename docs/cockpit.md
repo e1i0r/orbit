@@ -102,6 +102,9 @@ says which of the two `↵` will do.
 Capitals open a screen. Small letters do something to the task under the
 cursor. That is the whole of how the two halves are told apart.
 
+On a screen of its own the bar offers one key, `esc` back; the screen's own
+keys are in its footer.
+
 | Key | Screen |
 | :--- | :--- |
 | `R` | repositories |
