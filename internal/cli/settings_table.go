@@ -79,11 +79,19 @@ func (a *settingsAdapter) Choose(p *words.Printer, key, value string) (string, e
 // Language is left as the settings file answers it, because the settings
 // screen shows what is saved and not what is spoken. Speaking is the other
 // question, and it is the one doPort asks.
+//
+// Only while something forced it, though. A window opened with no -lang
+// and no $ORBIT_LANG speaks the saved setting as it stands now, which the
+// poll rereads: `orbit settings set language es` from another shell reached
+// the window's commands before speaking existed, and it still does.
 type spokenSettings struct {
 	*settingsAdapter
 
 	mu   sync.Mutex
 	code string
+	// forced is whether code outranks the saved setting: the window opened
+	// under -lang or $ORBIT_LANG, or the reader picked a language in it.
+	forced bool
 }
 
 // SetLanguage writes the reader's pick down and speaks it from now on — the
@@ -95,7 +103,7 @@ func (s *spokenSettings) SetLanguage(lang string) error {
 	}
 
 	s.mu.Lock()
-	s.code = lang
+	s.code, s.forced = lang, true
 	s.mu.Unlock()
 
 	return nil
@@ -107,7 +115,11 @@ func (s *spokenSettings) speaking() string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.code
+	if s.forced {
+		return s.code
+	}
+
+	return words.Resolve("", "", s.Language())
 }
 
 // spokenPort is speaking in the shape doPort asks for.

@@ -153,6 +153,7 @@ func window(ctx Context, dir, lang string) (ui.Options, *store.Store, error) {
 	speech := &spokenSettings{
 		settingsAdapter: cfg,
 		code:            words.Resolve(lang, env.Read(env.Lang), cfg.Language()),
+		forced:          lang != "" || env.Read(env.Lang) != "",
 	}
 	spoken := words.For(speech.speaking())
 

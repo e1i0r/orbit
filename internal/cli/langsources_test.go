@@ -13,9 +13,12 @@ package cli
 // is read at all, and it beats what was saved.
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/e1i0r/orbit/internal/store"
 )
 
 // TestORBITLANGIsWeighedByCommandsThatAreNotTop runs everyday commands over
@@ -57,6 +60,43 @@ func TestORBITLANGIsWeighedByCommandsThatAreNotTop(t *testing.T) {
 				t.Errorf("$ORBIT_LANG is es and %v answered %q", step.args, said)
 			}
 		})
+	}
+}
+
+// TestAWindowNobodyForcedFollowsTheSavedLanguage. With no -lang and no
+// $ORBIT_LANG, the window's commands speak the saved setting as it stands:
+// `orbit settings set language es` from another shell reaches them on the
+// next poll, as it did before the window remembered what it spoke.
+func TestAWindowNobodyForcedFollowsTheSavedLanguage(t *testing.T) {
+	root, home := workspace(t)
+	dir := filepath.Join(root, "payments")
+
+	t.Setenv("LANG", "")
+	t.Setenv("ORBIT_LANG", "")
+
+	opts, _, err := window(Context{}, root, "")
+	if err != nil {
+		t.Fatalf("open the window: %v", err)
+	}
+
+	elsewhere, err := store.New(home)
+	if err != nil {
+		t.Fatalf("store.New: %v", err)
+	}
+
+	if err := elsewhere.SaveSettings(store.Settings{Language: "es"}); err != nil {
+		t.Fatalf("save es from another process: %v", err)
+	}
+
+	if _, _, err := opts.Reader.Refresh(); err != nil {
+		t.Fatalf("poll: %v", err)
+	}
+
+	var said strings.Builder
+
+	err = opts.Do("task", []string{"note", "-repo", dir, "PAY-1"}, &said)
+	if got := said.String() + fmt.Sprint(err); strings.Contains(got, "needs text") {
+		t.Errorf("the saved language is es and the window's command refused %q", got)
 	}
 }
 
