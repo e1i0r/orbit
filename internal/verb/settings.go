@@ -270,7 +270,7 @@ func settingTable() []Rule {
 		},
 		Value: func(cfg store.Settings) string { return cfg.ChatID },
 		Clear: func(cfg *store.Settings) { cfg.ChatID = store.Shipped().ChatID },
-	}}, budgetSettings()...)
+	}}, append(budgetSettings(), queueSettings()...)...)
 }
 
 // onOff reads a switch the way a person writes one.

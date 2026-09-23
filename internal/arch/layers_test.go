@@ -105,6 +105,9 @@ var program = map[string][]string{
 	// internal/lowly starts a program behind a step that lowers its
 	// priority. It is the standard library and nothing else.
 	"internal/lowly": {},
+	// internal/machine reads how full the machine is, for the queue. It is
+	// the standard library and nothing else.
+	"internal/machine": {},
 	// internal/migrate reads the files an older Orbit wrote and fills the
 	// database from them, so it is the one package that touches the record
 	// on both sides: internal/store to find the logs, internal/record to

@@ -33,6 +33,9 @@ func TestEverySettingKeyCanBeSet(t *testing.T) {
 		"decisions":        "shadow",
 		"decision-floor":   "80",
 		"run-timeout":      "45m",
+
+		"max-running":    "5",
+		"memory-ceiling": "80",
 	}
 	for _, key := range settingKeys() {
 		value, ok := values[key]
