@@ -321,10 +321,6 @@
       "source": "delete task {id}? [y/n]",
       "value": "¿borrar la tarea {id}? [y/n]"
     },
-    "msg.task_deleted": {
-      "source": "task {id} deleted",
-      "value": "tarea {id} eliminada"
-    },
     "msg.delete_cancelled": {
       "source": "deletion cancelled",
       "value": "eliminación cancelada"
@@ -2111,6 +2107,10 @@
       "source": "how sure the decision engine has to be before Orbit acts on what it says, as a percentage; below it the run waits for you",
       "value": "qué tan seguro tiene que estar el motor de decisión para que Orbit actúe, en porcentaje; por debajo la tarea te espera"
     },
+    "setting.run_timeout": {
+      "source": "how long a run started by the window may take before it is stopped, as 45m or 2h; 0 is no limit",
+      "value": "cuánto puede tardar una tarea que arranca la ventana antes de que se la detenga, como 45m o 2h; 0 es sin límite"
+    },
     "setting.quota_floor": {
       "source": "how much of a subscription engine's window must be left for the queue to go on, as a percentage; 0 is no floor",
       "value": "cuánto tiene que quedar de la ventana de un motor por suscripción para que la cola siga, en porcentaje; 0 es sin piso"
@@ -2122,6 +2122,14 @@
     "settings.not_a_bar": {
       "source": "a decision floor is a percentage between 50 and 99; below fifty is a coin toss",
       "value": "un piso de decisión es un porcentaje entre 50 y 99; por debajo de cincuenta es lanzar una moneda"
+    },
+    "settings.not_a_duration": {
+      "source": "{val} is not a length of time; write it as 45m, 2h or 90s",
+      "value": "{val} no es una duración; escríbela como 45m, 2h o 90s"
+    },
+    "settings.negative_duration": {
+      "source": "a timeout cannot be negative; 0 is no timeout at all",
+      "value": "un límite de tiempo no puede ser negativo; 0 es sin límite"
     },
     "settings.not_an_amount": {
       "source": "{val} is not an amount of money",
@@ -2666,8 +2674,8 @@
       "value": "qué queda de las ventanas de cada motor, y cuándo vuelve cada una"
     },
     "quota.ways_out": {
-      "source": "{back} back",
-      "value": "{back} volver"
+      "source": "{up_down} move · {back} back",
+      "value": "{up_down} mover · {back} volver"
     },
     "key.quota": {
       "source": "quota",
@@ -2721,6 +2729,39 @@
       "source": "{id} was not merged: {checks} still running on GitHub — try again when they land",
       "value": "{id} no se mergeó: {checks} sigue corriendo en GitHub. Inténtalo cuando terminen"
     },
+    "doing.start": {"source": "starting {id}…", "value": "arrancando {id}…"},
+    "doing.delete": {"source": "deleting {id}…", "value": "eliminando {id}…"},
+    "landed.start": {"source": "{id} is running", "value": "{id} está corriendo"},
+    "landed.delete": {"source": "{id} is gone, with its worktree and its branch", "value": "{id} ya no está, con su worktree y su rama"},
+    "cell.starting": {"source": "starting…", "value": "arrancando…"},
+    "cell.deleting": {"source": "deleting…", "value": "eliminando…"},
+    "flow.run_from_here": {"source": "▶ start here [{key}]", "value": "▶ empezar acá [{key}]"},
+    "flow.retry_here": {"source": "▶ try {phase} again [{key}]", "value": "▶ reintentar {phase} [{key}]"},
+    "flow.redo_here": {"source": "▶ run {phase} again [{key}]", "value": "▶ correr {phase} de nuevo [{key}]"},
+    "retry.running": {"source": "{id} is running; stop it before starting a phase again", "value": "{id} está corriendo: detenela antes de arrancar una fase de nuevo"},
+    "doing.pause": {"source": "{id} pauses when this phase ends…", "value": "{id} se pausa al terminar esta fase…"},
+    "doing.resume": {"source": "resuming {id}…", "value": "reanudando {id}…"},
+    "doing.continue": {"source": "letting {id} carry on…", "value": "dejando seguir a {id}…"},
+    "doing.cancel": {"source": "cancelling {id}…", "value": "cancelando {id}…"},
+    "doing.skip": {"source": "skipping this phase of {id}…", "value": "saltando esta fase de {id}…"},
+    "doing.requeue": {"source": "putting {id} back in to do…", "value": "devolviendo {id} a por hacer…"},
+    "doing.read": {"source": "marking {id} read…", "value": "marcando {id} como leída…"},
+    "doing.other": {"source": "{verb} on {id}…", "value": "{verb} en {id}…"},
+    "landed.pause": {"source": "{id} is paused", "value": "{id} está en pausa"},
+    "landed.resume": {"source": "{id} is running again", "value": "{id} está corriendo otra vez"},
+    "landed.continue": {"source": "{id} carried on", "value": "{id} siguió"},
+    "landed.cancel": {"source": "{id} cancelled", "value": "{id} cancelada"},
+    "landed.skip": {"source": "{id} skipped that phase", "value": "{id} se saltó esa fase"},
+    "landed.requeue": {"source": "{id} is back in to do", "value": "{id} volvió a por hacer"},
+    "landed.read": {"source": "{id} is marked read", "value": "{id} quedó marcada como leída"},
+    "landed.other": {"source": "{verb} landed on {id}", "value": "{verb} llegó a {id}"},
+    "cell.pausing": {"source": "pausing at the end…", "value": "pausa al terminar…"},
+    "cell.resuming": {"source": "resuming…", "value": "reanudando…"},
+    "cell.continuing": {"source": "carrying on…", "value": "siguiendo…"},
+    "cell.cancelling": {"source": "cancelling…", "value": "cancelando…"},
+    "cell.skipping": {"source": "skipping…", "value": "saltando…"},
+    "cell.requeuing": {"source": "putting back…", "value": "devolviendo…"},
+    "cell.reading": {"source": "marking read…", "value": "marcando leída…"},
     "compose.nothing_to_paste": {
       "source": "there is nothing in the clipboard to paste",
       "value": "no hay nada en el portapapeles para pegar"
@@ -3911,9 +3952,13 @@
       "source": "· in use",
       "value": "· en uso"
     },
-    "flows.pick_ways": {
-      "source": "[↑↓] move · [↵] choose · [esc] back",
-      "value": "[↑↓] mover · [↵] elegir · [esc] volver"
+    "flows.pick_none": {
+      "source": "nothing here is called that · [⌫] to cut the word back · [esc] back",
+      "value": "acá no hay nada que se llame así · [⌫] para borrar · [esc] volver"
+    },
+    "flows.pick_ways2": {
+      "source": "[↑↓] move · [pgup/pgdn] page · [home/end] ends · [↵] choose · [esc] back",
+      "value": "[↑↓] mover · [pgup/pgdn] página · [home/end] extremos · [↵] elegir · [esc] volver"
     },
     "flows.pick_default": {
       "source": "default",

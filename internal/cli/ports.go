@@ -47,6 +47,17 @@ func controlPort(s *store.Store) func(view.Task, string) error {
 	}
 }
 
+// stopPort signals the process holding a task to stop now.
+//
+// task.Cancel and not task.Control: the signal becomes a cancelled context
+// inside `orbit run`, which stops the engine and writes phase.cancelled
+// and task.cancelled on the way out. The control word would do the same
+// thing at the next phase boundary, which is not what somebody watching
+// the screen means by cancel.
+func stopPort(s *store.Store) func(view.Task) error {
+	return func(t view.Task) error { return task.Cancel(s, subject(t)) }
+}
+
 // requeuePort stops whatever holds a task and puts it back in the queue.
 //
 // The context is the window's and not a signalled one: a window has no

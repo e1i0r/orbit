@@ -73,7 +73,7 @@ var program = map[string][]string{
 	// else's program. What that cost, how long it took and which of the
 	// binaries on this machine it was are facts no other package sees. It
 	// widens nothing else: engine still knows no record, store or task.
-	"internal/engine": {"internal/env", "internal/logger"},
+	"internal/engine": {"internal/env", "internal/kin", "internal/logger"},
 	// internal/export is internal/migrate read backwards, and it carries the
 	// same three imports for the same three reasons: internal/db to read the
 	// record, internal/record to turn a row back into the line it was
@@ -81,13 +81,19 @@ var program = map[string][]string{
 	// nothing but files a person asked for, starts nothing, and — like the
 	// migration — nothing imports it but the front door that triggers it.
 	"internal/export": {"internal/db", "internal/record", "internal/store"},
-	"internal/flow":   {},
+	// internal/tame for one thing: a flow file is text somebody else wrote
+	// and every word of it is drawn, so it is stripped of what a terminal
+	// would read as an instruction on the way out of the decoder.
+	"internal/flow": {"internal/tame"},
 	// internal/knowledge is what Orbit has learned: a fact, its scope and
 	// where it came from. It imports nothing of Orbit's and that is the
 	// point — the sentence an agent is told has to be traceable to a source,
 	// and a package that could reach the record or the store could decide
 	// things about a run instead of describing one.
-	"internal/knowledge": {},
+	// internal/tame is the one exception to that, and it decides nothing:
+	// a rule is a file a model usually wrote, and its sentence is drawn
+	// and handed on.
+	"internal/knowledge": {"internal/tame"},
 	// internal/learn is where a sentence waits between being said and being
 	// agreed with: internal/db because the tray is a table, and
 	// internal/knowledge because a sentence somebody keeps becomes a fact.
@@ -176,10 +182,13 @@ var program = map[string][]string{
 	// it — and internal/learn imports nothing of this package's, so no
 	// cycle can be made of it.
 	"internal/task": {
-		"internal/engine", "internal/flow", "internal/hunch", "internal/knowledge", "internal/learn",
-		"internal/logger", "internal/record", "internal/repo", "internal/store",
+		"internal/engine", "internal/flow", "internal/hunch", "internal/kin", "internal/knowledge",
+		"internal/learn", "internal/logger", "internal/record", "internal/repo", "internal/store",
 	},
-	"internal/tracker": {"internal/env"},
+	// internal/tame because what a tracker answers with is somebody else's
+	// text: an issue title is drawn in the form and its body becomes the
+	// task. internal/env because the key that reads it is read there.
+	"internal/tracker": {"internal/env", "internal/tame"},
 	// internal/ui/layout is widened to internal/view for one reason:
 	// layout.Columns plans a row's columns from the board it is about to
 	// draw, and the board is []view.Task. It is a widening, and it was
@@ -254,6 +263,16 @@ var program = map[string][]string{
 	// why. A leaf that imports nothing of Orbit's, like every port whose
 	// absence has to mean "as it was".
 	"internal/hunch": {"internal/env"},
-	"internal/view":  {"internal/record"},
+	// internal/kin is the other leaf of that kind: "stop this process and
+	// everything it started" is one rule, and the two callers of it — the
+	// engine and a flow's gates — are the two places Orbit runs somebody
+	// else's program.
+	"internal/kin": {},
+	// internal/tame is the one thing nothing else may be: a leaf every
+	// layer is allowed to reach, because "text from outside, fit to draw"
+	// is a rule with one reading and the packages that need it — the fold
+	// and the flow decoder — sit at different heights.
+	"internal/tame":  {},
+	"internal/view":  {"internal/record", "internal/tame"},
 	"internal/words": {"internal/env"},
 }

@@ -105,13 +105,19 @@ func TestHitStartEveryRow(t *testing.T) {
 	p := m.startLayout(m.frame.Body.W)
 	y := m.frame.Body.Y
 
+	// Column 5 is inside the label, before the first pill, so the row's
+	// own answer is the one that comes back. A click on a pill is
+	// TestAClickPicksTheFlowItLandedOn's.
 	if got := m.hitStart(5, y+p.flow); got.Kind != point.DialogSwitch || got.Field != fieldFlow {
 		t.Errorf("hitStart on the flow line = %+v, want the flow switch", got)
 	}
 
+	// The phase rows answer nothing: they are a preview of what the flow
+	// will do, not a thing to choose. They used to answer a target nothing
+	// routed, which is a cell that takes a click and drops it.
 	if p.nPhases > 0 {
-		if got := m.hitStart(5, y+p.phases); got.Kind != point.DialogPhase || got.Phase != 0 {
-			t.Errorf("hitStart on the first phase = %+v, want phase 0", got)
+		if got := m.hitStart(5, y+p.phases); got.Kind != point.None {
+			t.Errorf("hitStart on the first phase = %+v, want nothing", got)
 		}
 	}
 
@@ -209,13 +215,12 @@ func TestHitSettingsFollowsTheScrolledTable(t *testing.T) {
 		m.settings = m.settings.Scroll(1, m.settingsEnv())
 	}
 
-	off := m.settingsOff()
-	if off == 0 {
-		t.Fatalf("the table never scrolled in a body of %d rows", m.frame.Body.H)
-	}
-
 	last := len(rows) - 1
-	line := settingsHead + settingsRowLines*last - off
+
+	line := settingsLine(t, m, rows[last].Key)
+	if line >= m.frame.Body.H {
+		t.Fatalf("the last dial is drawn on row %d of a body of %d", line, m.frame.Body.H)
+	}
 
 	got := m.hitSettings(5, m.frame.Body.Y+line)
 	if got.Kind != point.SettingsRow || got.Pane != last {

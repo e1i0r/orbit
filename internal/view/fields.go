@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/e1i0r/orbit/internal/record"
+	"github.com/e1i0r/orbit/internal/tame"
 )
 
 // waiting decides which of the two stops this is. The flow asking a phase to
@@ -115,7 +116,9 @@ func firstLine(s string) string {
 		s = s[:i]
 	}
 
-	return strings.TrimSpace(s)
+	// A title is the first line of a file, and a file can hold anything:
+	// see internal/tame for what a terminal does with the rest of it.
+	return strings.TrimSpace(tame.Text(s))
 }
 
 // actionKeys are the arguments a tool call is about, in the order they are

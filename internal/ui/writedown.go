@@ -52,6 +52,8 @@ func (m Model) writeDown(msg tea.Msg) Model {
 		writeLine("ui/start", msg.ID, oneLine(msg.Err))
 	case readMsg:
 		writeLine("ui/read", msg.ID, oneLine(msg.Err))
+	case deletedMsg:
+		writeLine("ui/delete", msg.ID, oneLine(msg.Err))
 	case requeuedMsg:
 		writeLine("ui/requeue", msg.ID, oneLine(msg.Err))
 	case fileTextMsg:

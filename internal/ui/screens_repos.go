@@ -15,6 +15,7 @@ func (m Model) reposEnv() repos.Env {
 		Keys:   m.keys,
 		Board:  m.board,
 		Filter: m.repoFilter,
+		Frame:  m.frame,
 	}
 }
 
@@ -46,6 +47,14 @@ func (m Model) tookRepos(next repos.State, out repos.Out) (tea.Model, tea.Cmd) {
 func (m Model) openRepos() Model {
 	m.repolist = repos.Open()
 	m.screen = screenRepos
+
+	return m
+}
+
+// wheelRepos moves the cursor a notch, and the list follows it — which is
+// what every other list in this window does under the same notch.
+func (m Model) wheelRepos(d int) Model {
+	m.repolist = m.repolist.Scroll(d, m.reposEnv())
 
 	return m
 }

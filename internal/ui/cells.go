@@ -105,6 +105,17 @@ func (m Model) drawRow(r row, w int, selected bool) string {
 func (m Model) stateWord(t view.Task) (string, theme.Role) {
 	p := m.opts.Words
 
+	// A gesture that is still out owns this cell. The row said "running"
+	// for as long as a cancel took to reach the process, which is the
+	// question the reader is asking the row: not what the task was doing
+	// before I pressed the key, but whether the key did anything. It is
+	// said in the present and in Live, because something is happening.
+	// See landing.go, and the band, which says the same thing at the same
+	// time.
+	if word, out := m.awaitedWord(t.ID); out {
+		return word, theme.Live
+	}
+
 	switch t.Reason.Key {
 	case view.ReasonFailed:
 		return p.T("reason.failed", "failed: {phase}", reasonArgs(t.Reason)...), theme.Bad

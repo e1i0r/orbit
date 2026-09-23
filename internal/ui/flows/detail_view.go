@@ -2,7 +2,6 @@ package flows
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"charm.land/lipgloss/v2"
@@ -59,140 +58,144 @@ func (s State) flowDetailRows(h, w int, e Env) []string {
 	out = append(out, "  "+theme.Paint(theme.Live).Bold(true).Render(p.T("flows.phase_breakdown", "Phases Breakdown:")))
 	out = append(out, s.phaseCards(s.phases, w, e)...)
 
-	// 5. Actions Footer
-	out = append(out, "")
-	selectBtn := theme.Pill(" ↵ "+p.T("flows.btn_select_return", "Select & Return")+" ", theme.PillInk, theme.PillSelect)
-	editBtn := theme.Pill(" e "+p.T("flows.btn_edit_designer", "Edit in Designer")+" ", theme.PillInk, theme.PillDesign)
-	backBtn := theme.Pill(" esc "+p.T("flows.btn_back", "Back")+" ", theme.PillInk, theme.PillBack)
-	out = append(out, "  "+selectBtn+"   "+editBtn+"   "+backBtn, "")
-
-	hints := p.T("flows.detail_hints", "[enter] select · [e] edit · [esc] return")
-	out = append(out, cells.Fit("  "+theme.Paint(theme.Dim).Render(hints), w))
-
-	return cells.Fill(out, h)
+	return s.detailFramed(out, h, w, e)
 }
 
-// renderFlowDiagram builds an ASCII box-and-arrow flowchart diagram for the given phases.
-func renderFlowDiagram(phases []flow.Phase, maxW int) []string {
-	if len(phases) == 0 {
-		return nil
-	}
-
-	type box struct {
-		top, mid1, mid2, bot string
-		width                int
-	}
-
-	var boxes []box
-
-	for i, ph := range phases {
-		line1 := fmt.Sprintf("%d. %s", i+1, ph.Name)
-
-		// A loop names no engine of its own — what runs is the phase inside
-		// it — so the box says how many turns it takes, where a phase says
-		// what runs it. It used to say "/def": an empty engine and a model
-		// nobody set, which reads as a phase that was never configured.
-		line2 := fmt.Sprintf("%s/%s", ph.Engine, cells.OrDef(ph.Model, "def"))
-		if ph.Loop != nil {
-			line2 = "↻ ×" + strconv.Itoa(ph.Loop.Max)
-		}
-
-		if runsIn(ph).FeedOutput {
-			line2 += " ➔"
-		}
-
-		if ph.Wait {
-			line2 += " ⏸"
-		}
-
-		w1 := lipgloss.Width(line1)
-		w2 := lipgloss.Width(line2)
-
-		boxW := w1
-		if w2 > boxW {
-			boxW = w2
-		}
-
-		boxW += 2
-		if boxW < 14 {
-			boxW = 14
-		}
-
-		padLine1 := cells.Pad(line1, boxW-2, false)
-		padLine2 := cells.Pad(line2, boxW-2, false)
-
-		b := box{
-			top:   "┌" + strings.Repeat("─", boxW-2) + "┐",
-			mid1:  "│" + padLine1 + "│",
-			mid2:  "│" + padLine2 + "│",
-			bot:   "└" + strings.Repeat("─", boxW-2) + "┘",
-			width: boxW,
-		}
-		boxes = append(boxes, b)
-	}
-
-	arrow := " ──▶ "
-	arrowPad := "     "
-
-	var rowTop, rowMid1, rowMid2, rowBot string
-
-	for i, b := range boxes {
-		if i > 0 {
-			rowTop += arrowPad
-			rowMid1 += arrow
-			rowMid2 += arrowPad
-			rowBot += arrowPad
-		}
-
-		rowTop += b.top
-		rowMid1 += b.mid1
-		rowMid2 += b.mid2
-		rowBot += b.bot
-	}
-
-	if lipgloss.Width(rowTop) <= maxW {
-		return []string{
-			theme.Paint(theme.Dim).Render(rowTop),
-			theme.Paint(theme.Accent).Render(rowMid1),
-			theme.Paint(theme.OK).Render(rowMid2),
-			theme.Paint(theme.Dim).Render(rowBot),
-		}
-	}
-
-	// Fallback to vertical stack when horizontal space is limited
-	var out []string
-
-	for i, b := range boxes {
-		if i > 0 {
-			out = append(out, "        │", "        ▼")
-		}
-
-		out = append(out,
-			theme.Paint(theme.Dim).Render("  "+b.top),
-			theme.Paint(theme.Accent).Render("  "+b.mid1),
-			theme.Paint(theme.OK).Render("  "+b.mid2),
-			theme.Paint(theme.Dim).Render("  "+b.bot),
-		)
-	}
-
-	return out
-}
-
-// phaseCards is one card per phase: what runs it, how it is joined to the
-// phase before, and what it is told to do.
+// detailFramed puts the reading in the room there is: the buttons and the
+// keys under them pinned to the floor, and everything above them scrolling
+// between the top of the body and that.
 //
-// It is shared by the flow inspector and the designer's diagram tab, because
-// they are two windows onto the same list of phases and a second copy of
-// this would be a second answer to "what does this flow do".
-func (s State) phaseCards(phases []flow.Phase, w int, e Env) []string {
-	var out []string
+// A flow of three phases is a diagram, a card each and a footer — more rows
+// than a short terminal has. It was drawn whole and then cut, so a reader on
+// anything under about thirty rows saw the first phase and nothing else: not
+// the rest of the phases, not the buttons, and not the line that says which
+// keys do what.
+func (s State) detailFramed(body []string, h, w int, e Env) []string {
+	foot, _ := s.detailFoot(h, w, e)
 
-	for i, ph := range phases {
-		out = append(out, s.phaseCard(i, ph, w, e)...)
+	rows := max(h-len(foot), 0)
+	if rows <= 0 {
+		return cells.Fill(foot, h)
 	}
 
-	return out
+	start := min(max(s.scroll, 0), max(0, len(body)-rows))
+
+	cw := max(w-2, 1)
+	track := cells.Track(rows, len(body), start)
+
+	out := make([]string, 0, h)
+
+	for i := range rows {
+		at := start + i
+		if at >= len(body) {
+			break
+		}
+
+		row := body[at]
+		if track != nil {
+			row = cells.PadRight(cells.Fit(row, cw), cw) + track[i]
+		}
+
+		out = append(out, row)
+	}
+
+	return append(cells.Fill(out, rows), foot...)
 }
+
+// detailFoot is the three buttons and the line of keys under them, which
+// stay on the floor however far the reading has been scrolled: they are
+// what a reader who has read to the end reaches for. It answers the rows
+// and which of them carries the buttons, because a click has to find that
+// row and counting it twice is how the two readings drift apart.
+//
+// The blank rows that set it off are the first thing given up: on a window
+// with four rows of body they are the difference between two rows of the
+// flow and none at all.
+func (s State) detailFoot(h, w int, e Env) (rows []string, buttons int) {
+	p := e.Words
+
+	line := "  "
+
+	for i, b := range detailButtons(e) {
+		if i > 0 {
+			line += strings.Repeat(" ", detailButtonGap)
+		}
+
+		line += b.pill
+	}
+
+	pills := cells.Fit(line, w)
+	hints := cells.Fit("  "+theme.Paint(theme.Dim).Render(
+		p.T("flows.detail_hints", "[enter] select · [e] edit · [esc] return")), w)
+
+	if h >= detailRoomForBlanks {
+		return []string{"", pills, "", hints}, 1
+	}
+
+	return []string{pills, hints}, 0
+}
+
+// detailRoomForBlanks is the body height at which the footer can afford the
+// blank rows that set it off and still leave two rows of the flow.
+const detailRoomForBlanks = 6
+
+// detailButton is one of the three: the pill as it is drawn, and what a
+// click on it asks for.
+type detailButton struct {
+	pill  string
+	field string
+}
+
+// detailButtonGap is the space between two of them.
+const detailButtonGap = 3
+
+// detailButtons is the row of them, in the order they are drawn.
+//
+// One reading, two uses: the drawing lays them out and the hit-test measures
+// the same pills. They were two — a drawing that translated its labels and a
+// hit-test written against two column numbers — so the zones a click landed
+// in had nothing to do with where the buttons were, in either language.
+func detailButtons(e Env) []detailButton {
+	p := e.Words
+
+	return []detailButton{
+		{
+			pill: theme.Pill(" ↵ "+p.T("flows.btn_select_return", "Select & Return")+" ",
+				theme.PillInk, theme.PillSelect),
+			field: "detail_select",
+		},
+		{
+			pill: theme.Pill(" e "+p.T("flows.btn_edit_designer", "Edit in Designer")+" ",
+				theme.PillInk, theme.PillDesign),
+			field: "edit",
+		},
+		{
+			pill:  theme.Pill(" esc "+p.T("flows.btn_back", "Back")+" ", theme.PillInk, theme.PillBack),
+			field: "detail_back",
+		},
+	}
+}
+
+// detailButtonAt is which button a column of the buttons row holds, and
+// whether it holds one at all.
+func detailButtonAt(x int, e Env) (detailButton, bool) {
+	at := 2 // the gutter the row starts in
+
+	for _, b := range detailButtons(e) {
+		wide := lipgloss.Width(b.pill)
+		if x >= at && x < at+wide {
+			return b, true
+		}
+
+		at += wide + detailButtonGap
+	}
+
+	return detailButton{}, false
+}
+
+// badgeIndent is how far in the badges are drawn when they will not fit
+// beside the phase's name.
+const badgeIndent = 6
 
 // phaseCard is one of them, numbered from where it sits in the flow.
 func (s State) phaseCard(i int, ph flow.Phase, w int, e Env) []string {
@@ -219,8 +222,21 @@ func (s State) phaseCard(i int, ph flow.Phase, w int, e Env) []string {
 		badgeText += " · " + p.T("flows.gate_badge", "⏸ human gate")
 	}
 
-	out := []string{theme.Paint(theme.Accent).Bold(true).Render(fmt.Sprintf("    [%s %d: %s] (%s)",
-		p.T("flows.phase_label", "Phase"), i+1, ph.Name, badgeText))}
+	head := fmt.Sprintf("    [%s %d: %s]", p.T("flows.phase_label", "Phase"), i+1, ph.Name)
+
+	// One line while there is room for one. A phase that runs on a named
+	// model, at an effort, with thinking turned on, that is fed the last
+	// output and stops for a human carries five badges: a hundred and
+	// twenty-five cells, which wrapped on every terminal narrower than
+	// that — and a card that takes an extra row moves every card under it
+	// down, on a screen that is read by counting phases.
+	out := []string{theme.Paint(theme.Accent).Bold(true).Render(head + " (" + badgeText + ")")}
+	if lipgloss.Width(out[0]) > w {
+		out = []string{theme.Paint(theme.Accent).Bold(true).Render(cells.Fit(head, w))}
+		for _, l := range cells.Lines(badgeText, max(w-badgeIndent, 8)) {
+			out = append(out, strings.Repeat(" ", badgeIndent)+theme.Paint(theme.Dim).Render(l))
+		}
+	}
 
 	if ph.Prompt != "" {
 		for _, pl := range cells.WrapKeeping(`"`+ph.Prompt+`"`, w-14) {

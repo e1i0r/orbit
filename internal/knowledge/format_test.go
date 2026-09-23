@@ -106,3 +106,33 @@ func TestTheLastPartOfAPathIsTheWholeOfItWhenThereIsOnlyOne(t *testing.T) {
 		}
 	}
 }
+
+// TestARuleCannotDriveTheTerminal. A rule is a file, and a supervising
+// model writes most of them: the sentence is drawn on the knowledge screen
+// and handed to the next engine. One holding ESC[2J cleared the reader's
+// screen every time the screen was drawn.
+func TestARuleCannotDriveTheTerminal(t *testing.T) {
+	body := "---\n" +
+		"id: r1\n" +
+		"source: human\n" +
+		"why: because \x1b[31mred\x1b[0m\n" +
+		"ref: see \x1b[2J\n" +
+		"---\n" +
+		"never \x1b]0;stolen\x07do that\a\n"
+
+	r, err := decode(body, "repo/orbit/r1.md", "/w/orbit")
+	if err != nil {
+		t.Fatalf("decode the rule: %v", err)
+	}
+
+	said := r.Phrase + r.Why + r.Ref + r.Check
+	if strings.ContainsAny(said, "\x1b\x07") {
+		t.Errorf("a rule read from a file carries control characters: %q", said)
+	}
+
+	for _, want := range []string{"never do that", "because red", "see"} {
+		if !strings.Contains(said, want) {
+			t.Errorf("taming the rule lost %q: %q", want, said)
+		}
+	}
+}

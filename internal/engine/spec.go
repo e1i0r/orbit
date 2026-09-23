@@ -2,13 +2,23 @@ package engine
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
+
+	"github.com/e1i0r/orbit/internal/logger"
 )
+
+// waitGrace is how long an engine that has exited is given to let go of its
+// output before the run stops waiting for it. What holds the pipe open is a
+// child nobody is waiting for — the same five seconds internal/repo and the
+// flow's gates give a shell for the same reason.
+const waitGrace = 5 * time.Second
 
 // A spec is how one program is driven, and it is the whole of what differs
 // between the engines.
@@ -118,6 +128,16 @@ func (s spec) run(ctx context.Context, req Request) (Result, error) {
 
 	cmd := exec.CommandContext(ctx, bin, args...)
 	cmd.Dir = req.Dir
+	// The engine leads a group of its own, and a cancelled phase signals
+	// the group: a tool call is a process, and killing the engine alone
+	// left the build it had started running in the worktree. WaitDelay is
+	// the other half — Wait waits for the output pipe to be drained, and a
+	// child that inherited stdout holds it open long after the engine has
+	// exited, so a phase that finished in a second was held for as long as
+	// whatever it left behind lived.
+	ownGroup(cmd)
+
+	cmd.WaitDelay = waitGrace
 
 	// The run's own variables first and the engine's after them, so that a
 	// spec that has an opinion about a name the run also set is the one
@@ -187,6 +207,20 @@ func (s spec) report(
 	req Request, out Result, stdout, stderr *boundedBuffer, runErr, parseErr error,
 ) (Result, error) {
 	raw := strings.TrimSpace(stdout.String())
+
+	// An engine that exited cleanly and left something running behind it.
+	// The delay closed the pipe and Wait reported that it had, which is
+	// not the engine failing: what was read is the answer, and the note
+	// says the reading stops where the pipe was closed rather than where
+	// the engine did. Without this a phase that finished in a second was
+	// recorded as failed because a tool call was still going.
+	if errors.Is(runErr, exec.ErrWaitDelay) {
+		logger.Warn("engine/"+s.name,
+			"exited and left something running in %q; stopped waiting on its output", req.Dir)
+
+		runErr = nil
+		out.Output = noteOutlived(out.Output)
+	}
 
 	if runErr != nil {
 		// The run died before the engine summarised it, so there is no

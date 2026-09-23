@@ -17,12 +17,12 @@ import (
 func TestTheSpawnedRunCarriesTheStartingPhase(t *testing.T) {
 	tk := Task{ID: "RET-1"}
 
-	with := strings.Join(runCommand("orbit", "/root", tk, "careful", "claude", "review").Args, " ")
+	with := strings.Join(runCommand("orbit", "/root", tk, "careful", "claude", "review", "").Args, " ")
 	if !strings.Contains(with, "-from review") {
 		t.Errorf("a retry spawned %q, want -from review in it", with)
 	}
 
-	without := strings.Join(runCommand("orbit", "/root", tk, "careful", "claude", "").Args, " ")
+	without := strings.Join(runCommand("orbit", "/root", tk, "careful", "claude", "", "").Args, " ")
 	if strings.Contains(without, "-from") {
 		t.Errorf("an ordinary run spawned %q, want no -from at all", without)
 	}

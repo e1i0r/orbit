@@ -120,6 +120,20 @@ func (m Model) wheel(e tea.Mouse) Model {
 		return m.scrollThread(d)
 	}
 
+	if m.screen == screenFlows && m.flows.Previewing() {
+		// One flow read on its own is a diagram, a card per phase and a
+		// footer — longer than a short terminal, and it had nothing to
+		// scroll it with.
+		d := wheelRows
+		if up {
+			d = -wheelRows
+		}
+
+		m.flows = m.flows.Scroll(d)
+
+		return m
+	}
+
 	if m.screen == screenFlows && m.flows.Listing() {
 		// The list is longer than the screen as soon as a few flows have
 		// phases, and the cursor still pulls the page to whatever it is on.
@@ -185,6 +199,29 @@ func (m Model) wheel(e tea.Mouse) Model {
 		}
 
 		return m.wheelSettings(d)
+	}
+
+	if m.screen == screenQuota {
+		// A reading and not a list: there is nothing on it to choose, so
+		// the wheel moves the page rather than a cursor.
+		d := wheelRows
+		if up {
+			d = -wheelRows
+		}
+
+		return m.wheelQuota(d)
+	}
+
+	if m.screen == screenRepos {
+		// A list with one row chosen: the wheel moves the choice and the
+		// list follows it, which is the palette's rule and the one every
+		// other list here follows.
+		d := wheelRows
+		if up {
+			d = -wheelRows
+		}
+
+		return m.wheelRepos(d)
 	}
 
 	if m.screen == screenHelp {

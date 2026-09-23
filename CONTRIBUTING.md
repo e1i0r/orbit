@@ -188,6 +188,23 @@ Then:
 1. Branch from `main` with a name that says what the batch is: `ui/split-1`, `fix/task-stream-parsing`.
 2. Write the commit message as prose: what changed, and why it is the right change. The subject line is one line in the imperative.
 3. Open the pull request against `main` with what it does, what it fixes, and how a reviewer can check it.
+4. Keep it to ten changed files. A pull request larger than that cannot be reviewed, only trusted, and the work is better split before it is written than after.
+
+---
+
+## Releases
+
+Merging does not release. It used to: every green check on `main` cut a tag and published it, so whoever ran `orbit upgrade` that afternoon got whatever had just landed, halves of unfinished things included.
+
+A release is its own decision. Run the `release` workflow from `main` and pick which part of the version moves:
+
+```bash
+gh workflow run release.yml --ref main -f bump=patch
+```
+
+`patch` is the default and is what most releases are. `minor` for a version people should read the notes of, `major` for one that breaks something. The workflow computes the next number from the newest tag, pushes it, and goreleaser builds the assets under it. Nothing should ever be tagged by hand: the run after it computes from the newest tag, and a tag it does not understand is a version it gets wrong.
+
+It refuses to run anywhere but `main`, because a tag cut off a feature branch is a release nobody can take back.
 
 ---
 

@@ -59,6 +59,36 @@ orbit direct -repo ~/code/api -restart fix-auth "use the existing retry helper"
 
 which interrupts what is going and records the directive against that task.
 
+## The decision engine
+
+A run that stops at a gate waits for you. With a decision engine the
+supervisor can read what it did and answer in about half a second, and
+gates it is sure about stop waiting.
+
+It needs two things and does nothing with one of them: `TYPESAFE_API_KEY`
+in the environment, and the setting switched on. See [the
+environment](env.md).
+
+```bash
+orbit settings set decisions shadow   # it writes down what it would decide
+orbit settings set decisions on       # it acts on what it is sure about
+orbit settings set decision-floor 80  # how sure that has to be, 50 to 99
+```
+
+Start on shadow. It asks at every gate and writes the verdict into the
+record, and acts on nothing, so a few tasks tell you whether it agrees
+with you before it decides anything.
+
+What it does on `on` depends on the switch beside it. With autopilot off
+it can let a gate go that it is sure the work has cleared. With
+[autopilot](autopilot.md) on it does the opposite: autopilot lifts every
+gate, and the engine holds the runs it is sure need a person. One of them
+interrupts you less and the other interrupts you more, and only the first
+can be wrong in a way that costs you something.
+
+Anything it is not sure enough about, anything it cannot reach, and every
+answer that is not a plain verdict leave the run exactly as it was.
+
 ---
 
 Next: [what Orbit knows](knowledge.md) · [autopilot](autopilot.md)

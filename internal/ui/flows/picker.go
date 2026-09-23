@@ -156,6 +156,15 @@ func (s State) takePick(at int, e Env) State {
 	return s
 }
 
+// pickerPage is how far a page key moves the cursor. The list is drawn
+// against a height this does not know — it is handed one when it draws and
+// asked for a keystroke at another moment — so it moves by a fixed page,
+// the way a pager does.
+//
+// Sixty models is what this is for: opencode answers to that many, and
+// reaching the last of them one arrow at a time is sixty presses.
+const pickerPage = 10
+
 // pickerKey is every key while the list is up.
 func (s State) pickerKey(msg tea.KeyPressMsg, e Env) (State, Out) {
 	ids, _ := s.pickerRows(e)
@@ -171,6 +180,18 @@ func (s State) pickerKey(msg tea.KeyPressMsg, e Env) (State, Out) {
 		return s, Out{}
 	case tea.KeyDown:
 		s.picker.sel = min(s.picker.sel+1, max(len(ids)-1, 0))
+		return s, Out{}
+	case tea.KeyPgUp:
+		s.picker.sel = max(s.picker.sel-pickerPage, 0)
+		return s, Out{}
+	case tea.KeyPgDown:
+		s.picker.sel = min(s.picker.sel+pickerPage, max(len(ids)-1, 0))
+		return s, Out{}
+	case tea.KeyHome:
+		s.picker.sel = 0
+		return s, Out{}
+	case tea.KeyEnd:
+		s.picker.sel = max(len(ids)-1, 0)
 		return s, Out{}
 	case tea.KeyBackspace:
 		s.picker.filter = cells.TrimLastRune(s.picker.filter)

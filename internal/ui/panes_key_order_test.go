@@ -12,12 +12,22 @@ import (
 	"testing"
 )
 
-// TestTheTabStripCountsBeforeItSpells.
+// TestTheTabStripCountsBeforeItSpells reads the strip the reader sees.
+//
+// It walked paneKey over the tab constants the first time, which is a
+// different list: the order the strip draws is tabNames', and the two are
+// kept the same by hand. So the constants were put right, the test went
+// green, and the strip on screen still read 9 l 0 i.
+//
+// Reading the drawn row is the only assertion that could have caught that,
+// and it is the one a reader could have made by looking.
 func TestTheTabStripCountsBeforeItSpells(t *testing.T) {
+	m := openOn(t, "PAY-1")
+
 	var keys []string
 
-	for i := range int(tabCount) {
-		if k := paneKey(tab(i)); k != "" {
+	for _, tab := range m.tabNames() {
+		if k := paneKey(tab.tab); k != "" {
 			keys = append(keys, k)
 		}
 	}
@@ -27,7 +37,7 @@ func TestTheTabStripCountsBeforeItSpells(t *testing.T) {
 
 	if got != want {
 		t.Errorf("the strip draws [%s], want [%s] — the digits in order, 0 last of them,\n"+
-			"then the letters; the order is the const block's in panes.go", got, want)
+			"then the letters. The order is tabNames' in panes.go, not the const block's.", got, want)
 	}
 }
 

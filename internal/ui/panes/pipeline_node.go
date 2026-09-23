@@ -169,7 +169,37 @@ func (e Env) phaseSubItems(phase flow.Phase, ex phaseExec) []subItem {
 		}
 	}
 
-	return append(items, e.phaseOutcome(ex.text)...)
+	items = append(items, e.phaseOutcome(ex.text)...)
+
+	// The button, last, under everything the node says about itself.
+	//
+	// The tree already knows which phase each node is and what became of
+	// it, and orbit already knows how to begin at a named phase — `orbit
+	// task start -from`, which is what `^R` runs. What was missing was
+	// anywhere to press. A run that stopped after `implement` left the
+	// reader with a tree saying review is pending and no way to say "then
+	// do review", short of a command line.
+	return append(items, subItem{text: "  " + e.runFrom(phase, ex)})
+}
+
+// runFrom is what pressing the node offers, which depends on what became
+// of the phase. Three wordings for one gesture, because "run it again" and
+// "start here" are different sentences to a reader looking at a tree and
+// the same call underneath.
+func (e Env) runFrom(phase flow.Phase, ex phaseExec) string {
+	p := e.Words
+	at := about("phase", phase.Name)
+
+	word := p.T("flow.run_from_here", "▶ start here [{key}]", at, about("key", e.RunFromKey))
+
+	switch {
+	case ex.failed || ex.cancelled:
+		word = p.T("flow.retry_here", "▶ try {phase} again [{key}]", at, about("key", e.RunFromKey))
+	case ex.finished:
+		word = p.T("flow.redo_here", "▶ run {phase} again [{key}]", at, about("key", e.RunFromKey))
+	}
+
+	return theme.Paint(theme.Live).Render(word)
 }
 
 // phaseConfig is the dials the phase ran on: what the record says it was,

@@ -106,8 +106,28 @@ type phaseRun struct {
 // are three identical shots at the same wall, which is what a retry loop is
 // worth nothing as.
 func attempts(ctx context.Context, r phaseRun, allowed int) (engine.Result, error) {
+	var last engine.Result
+
 	for n := 1; ; n++ {
+		// The cap is asked between attempts as it is between phases and
+		// between a loop's turns: nothing is running, the gate has
+		// already said no, and what happens next is a fresh call
+		// somebody pays for. Asked from the second attempt on, because
+		// whoever decided to run this phase asked it for the first.
+		//
+		// Without it a flow of one phase with four attempts spent four
+		// times its budget and the run ended as stuck rather than as
+		// over budget: a cap checked only where two phases meet is a cap
+		// a retry walks straight past.
+		if n > 1 {
+			if spent, budget, over := overBudget(r.store, r.task); over {
+				return last, stopRetrying(r.store, r.task, r.phase, n, spent, budget)
+			}
+		}
+
 		out, refused, err := r.once(ctx)
+		last = out
+
 		if err != nil {
 			return out, err
 		}

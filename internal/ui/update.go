@@ -69,7 +69,34 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Batch(upgrade.Check(m.opts.Version), upgrade.Tick())
 	case boardMsg:
 		return m.applyBoard(msg)
+	case deletedMsg:
+		// The row is gone from the board on the next poll, which is what
+		// says the delete landed; only a failure is said here.
+		if msg.Err != nil {
+			if m.await.id == msg.ID {
+				m.await = awaited{}
+			}
+
+			return m.say(m.errSaid(msg.Err)), nil
+		}
+
+		return m, nil
 	case controlMsg:
+		// A word that could not even be sent is a gesture that will never
+		// land, so the window stops saying it is happening. What went
+		// wrong is said instead, and the row goes back to what it was.
+		if msg.Err != nil && m.await.id == msg.ID {
+			m.await = awaited{}
+		}
+
+		// Nothing is said about a control that went out cleanly: the band
+		// already carries "cancelling ORB-121…" from the keypress, and
+		// the sentence worth replacing it with is the one that says it
+		// landed, which the board brings.
+		if msg.Err == nil && m.await.id == msg.ID {
+			return m, nil
+		}
+
 		return m.say(m.controlSaid(msg)), nil
 	case startedMsg:
 		return m.say(m.startedSaid(msg)), nil

@@ -20,10 +20,10 @@ const (
 	tabReport
 	tabArtifacts
 	tabNotes
-	// tabDiff before tabMap, because the strip draws these in this order
-	// and the keys have to count the way a keyboard row reads: the nine
-	// digits, then 0, then the letters. With the map here the strip drew
-	// 9 l 0 i, and a reader looking for the next number found a letter.
+	// The order here is the values, not the order the strip draws. That
+	// is the table in paneNames below, and the two have to be kept the
+	// same by hand — which is how the strip came to read 9 l 0 i with
+	// this block already in the right order.
 	tabDiff
 	tabMap
 	tabImpact
@@ -153,8 +153,8 @@ func (m Model) tabNames() []tabName {
 		// tab that moves between them is a tab a reader has to look for
 		// twice; the browser's strip is the one with room to be read at a
 		// glance, so it is the order both follow.
-		{tabMap, p.T("tab.map", "map")},
 		{tabDiff, p.T("tab.diff", "diff")},
+		{tabMap, p.T("tab.map", "map")},
 		// The mark rides on the name so that every place the strip is drawn
 		// — the tabs, the menu, the help — says the same thing without
 		// each of them knowing what a warning is.

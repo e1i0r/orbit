@@ -32,20 +32,45 @@ const (
 	quotaLeft  = "░"
 )
 
-// View draws the screen: a block per engine, a line per window.
-func View(h, w int, e Env) []string {
+// View draws the screen: a block per engine, a line per window, scrolled to
+// wherever the reader has taken it.
+func (s State) View(h, w int, e Env) []string {
 	if h <= 0 {
 		return nil
 	}
 
 	p := e.Words
 
-	out := []string{
+	head := []string{
 		"",
 		"  " + theme.Paint(theme.Accent).Render(p.T("quota.title", "Quota")),
-		"  " + theme.Paint(theme.Dim).Render(p.T("quota.subtitle",
-			"what is left of each engine's windows, and when each comes back")),
 	}
+
+	// Wrapped rather than cut: the half a narrow window would lose is
+	// "and when each comes back", which is the half a reader who has run
+	// out of a window is here for. Sixty-five cells in English, and
+	// longer in Spanish.
+	for _, l := range cells.Lines(p.T("quota.subtitle",
+		"what is left of each engine's windows, and when each comes back"), max(w-2, 1)) {
+		head = append(head, "  "+theme.Paint(theme.Dim).Render(l))
+	}
+
+	waysOut := p.T("quota.ways_out", "{up_down} move · {back} back",
+		about("up_down", e.Keys.Up.Help().Key+e.Keys.Down.Help().Key),
+		about("back", e.Keys.Back.Help().Key))
+	foot := []string{"", cells.Fit("  "+theme.Paint(theme.Dim).Render(waysOut), w)}
+
+	return cells.Fill(framed(head, readingRows(w, e), foot, h, s.Off(h, e)), h)
+}
+
+// readingRows is the reading itself: a blank row, the engine's name, and a
+// line per window it has, for every engine there is.
+//
+// It is its own function because the scroll is measured in these rows and
+// the drawing lays them out — two readings of one count, and the screen
+// only holds together while they are the same one.
+func readingRows(w int, e Env) []string {
+	var out []string
 
 	for _, reading := range Readings(e) {
 		out = append(out, "", "  "+theme.Paint(theme.Accent).Render(strings.ToUpper(reading.Engine)))
@@ -54,10 +79,7 @@ func View(h, w int, e Env) []string {
 		}
 	}
 
-	waysOut := p.T("quota.ways_out", "{back} back", about("back", e.Keys.Back.Help().Key))
-	out = append(out, "", cells.Fit("  "+theme.Paint(theme.Dim).Render(waysOut), w))
-
-	return cells.Fill(out, h)
+	return out
 }
 
 // engineLines is one engine's block: a line per window it has, or the

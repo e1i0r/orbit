@@ -7,6 +7,7 @@ import (
 
 	"github.com/e1i0r/orbit/internal/ui/patch"
 	"github.com/e1i0r/orbit/internal/ui/point"
+	"github.com/e1i0r/orbit/internal/ui/prose"
 	"github.com/e1i0r/orbit/internal/ui/settings"
 )
 
@@ -29,6 +30,18 @@ func (m Model) hitDetail(x, y int) point.Target {
 
 	bodyStart := tabLine + 1
 	paneTop, _ := m.paneBand()
+
+	// The button on a phase's node, before anything else this screen
+	// answers: it is a row of the pane and not of the screen, so the
+	// pane's own offset and its scroll come off first, and which row is
+	// which phase is answered by the thing that drew them.
+	//
+	// Checked here rather than as an arm of the switch below, because an
+	// arm that matched the whole flow tab would swallow every other click
+	// on it — which is what folding a node is.
+	if at, on := m.runFromAt(line - bodyStart); on {
+		return point.Target{Kind: point.RunFrom, Pane: at}
+	}
 
 	switch {
 	case line < tabLine:
@@ -135,14 +148,29 @@ func (m Model) hitStart(x, y int) point.Target {
 	}
 
 	p := m.startLayout(m.frame.Body.W)
-	switch {
-	case line == p.flow:
+
+	// The flow block is as many lines as the row wrapped onto, so the
+	// pill is looked for by line as well as by column: the same column
+	// two lines down is a different flow. Where each one was drawn is
+	// answered by the thing that drew it, so a glyph changing width
+	// cannot move the zones out from under them.
+	if line >= p.flow && line < p.flow+p.nFlow {
+		_, placed := m.flowRow(m.frame.Body.W)
+		if at, on := prose.At(placed, x, line-p.flow); on {
+			return point.Target{Kind: point.DialogFlow, Phase: at}
+		}
+
 		return point.Target{Kind: point.DialogSwitch, Field: fieldFlow}
-	case line >= p.phases && line < p.phases+p.nPhases:
-		return point.Target{Kind: point.DialogPhase, Phase: line - p.phases}
-	case line == p.autopilot:
+	}
+
+	switch line {
+	// The phase rows answer nothing on purpose. They are a preview of what
+	// the chosen flow will do, not a thing to choose, and they used to
+	// return a target that mouse.go never named — a cell that looked
+	// clickable, took the click and did nothing with it.
+	case p.autopilot:
 		return point.Target{Kind: point.DialogSwitch, Field: fieldAutopilotOn}
-	case line == p.autopilot+1:
+	case p.autopilot + 1:
 		return point.Target{Kind: point.DialogSwitch, Field: fieldAutopilotOff}
 	}
 
@@ -158,14 +186,14 @@ func (m Model) hitStart(x, y int) point.Target {
 // that turns a dial nobody pointed at.
 func (m Model) hitSettings(x, y int) point.Target {
 	line, ok := m.frame.BodyRow(y)
-	if !ok || line < settingsHead {
+	if !ok {
 		return point.Target{}
 	}
 
-	rowIdx := (line - settingsHead + m.settingsOff()) / settingsRowLines
+	rowIdx, on := m.settings.RowAt(line, m.settingsEnv())
 
 	rows := m.settingRowsList()
-	if rowIdx >= 0 && rowIdx < len(rows) {
+	if on && rowIdx < len(rows) {
 		r := rows[rowIdx]
 
 		if x >= settings.PillsAt {
@@ -191,27 +219,19 @@ func (m Model) hitSettings(x, y int) point.Target {
 	return point.Target{}
 }
 
-// settingsHead is how many lines the settings screen's title takes, and
-// settingsRowLines how tall one setting is drawn. They are the same two
-// numbers internal/ui/settings scrolls by; a click measured against
-// different ones would land on a different row than the one drawn.
-const (
-	settingsHead     = 4
-	settingsRowLines = 3
-)
-
+// hitRepos is the repository a click landed on, asked of the list itself:
+// the head above it, the offset it was scrolled to and the floor it stops
+// at are one reading there, and were a second one here.
 func (m Model) hitRepos(x, y int) point.Target {
 	line, ok := m.frame.BodyRow(y)
 	if !ok {
 		return point.Target{}
 	}
 
-	rowIdx := line - 4
-
-	repos := m.collectRepos()
-	if rowIdx >= 0 && rowIdx < len(repos) {
-		return point.Target{Kind: point.Repo, ID: repos[rowIdx].Name}
+	r, on := m.repolist.RowAt(line, m.reposEnv())
+	if !on {
+		return point.Target{}
 	}
 
-	return point.Target{}
+	return point.Target{Kind: point.Repo, ID: r.Name}
 }

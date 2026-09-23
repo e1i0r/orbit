@@ -14,7 +14,7 @@ import (
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 
-	"github.com/e1i0r/orbit/internal/ui/theme"
+	"github.com/e1i0r/orbit/internal/view"
 )
 
 // confirmYes is the one keystroke that answers a question with yes.
@@ -236,19 +236,18 @@ func (m Model) confirmKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if c == confirmDeleteTask {
 		if msg.String() == confirmYes || msg.String() == "s" || msg.String() == "S" || key.Matches(msg, m.keys.Open) {
 			t, ok := m.task(id)
-			if ok && m.opts.DeleteTask != nil {
-				if err := m.opts.DeleteTask(t); err != nil {
-					return m.say(theme.Paint(theme.Bad).Render(err.Error())), nil
-				}
+			if !ok {
+				return m, nil
 			}
 
+			// Off the draw loop: removing a worktree and a branch is git,
+			// and the window used to sit frozen through it. See landing.go.
+			var rescan func() error
 			if m.opts.Reader != nil {
-				if err := m.opts.Reader.Rescan(); err != nil {
-					return m.say(theme.Paint(theme.Bad).Render(err.Error())), nil
-				}
+				rescan = m.opts.Reader.Rescan
 			}
 
-			return m.say(m.opts.Words.T("msg.task_deleted", "task {id} deleted", about("id", id))), nil
+			return m.awaiting(t.ID, gestureDelete), deleted(m.opts.DeleteTask, rescan, t)
 		}
 
 		return m.say(m.opts.Words.T("msg.delete_cancelled", "deletion cancelled")), nil
@@ -264,14 +263,34 @@ func (m Model) confirmKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	}
 
 	if c == confirmRequeue {
-		return m, requeue(m.opts.Requeue, t)
+		return m.awaiting(t.ID, gestureRequeue), requeue(m.opts.Requeue, t)
 	}
 
 	if c == confirmSkip {
-		return m, control(m.opts.Control, t, "skip")
+		return m.awaiting(t.ID, gestureSkip), control(m.opts.Control, t, gestureSkip)
 	}
 
-	return m, control(m.opts.Control, t, "cancel")
+	// The same door every other gesture goes through, so that the cancel a
+	// reader confirmed is the signalled one and the row says it is
+	// happening.
+	//
+	// It was its own line here writing the control word, and the word is
+	// read at the next phase boundary: Elio pressed x on a phase a minute
+	// old, watched the row go on saying "implement" and the task go on
+	// spending, and had no way to tell whether anything had been taken at
+	// all. This is the path `x` actually takes — the one in gesture.go is
+	// only reached where there is nothing to confirm.
+	return m.cancelNow(t)
+}
+
+// cancelNow signals the run and says so, or falls back to the word where
+// this window was given no port to signal through.
+func (m Model) cancelNow(t view.Task) (Model, tea.Cmd) {
+	if m.opts.Stop != nil {
+		return m.awaiting(t.ID, gestureCancel), stop(m.opts.Stop, t)
+	}
+
+	return m.awaiting(t.ID, gestureCancel), control(m.opts.Control, t, gestureCancel)
 }
 
 // open is one key doing two things, and it is not an overload: on a band

@@ -54,7 +54,7 @@ func world(t *testing.T) Env {
 func TestTheScreenNamesEveryEngineAndWhatItHasLeft(t *testing.T) {
 	e := world(t)
 
-	joined := ansi.Strip(strings.Join(View(30, 100, e), "\n"))
+	joined := ansi.Strip(strings.Join(Open().View(30, 100, e), "\n"))
 
 	for _, want := range []string{
 		"CLAUDE",
@@ -76,16 +76,16 @@ func TestTheScreenNamesEveryEngineAndWhatItHasLeft(t *testing.T) {
 func TestTheScreenSaysHowToLeave(t *testing.T) {
 	e := world(t)
 
-	joined := ansi.Strip(strings.Join(View(30, 100, e), "\n"))
+	joined := ansi.Strip(strings.Join(Open().View(30, 100, e), "\n"))
 	if !strings.Contains(joined, e.Keys.Back.Help().Key) {
 		t.Errorf("the quota screen does not say which key leaves it:\n%s", joined)
 	}
 
-	if out := Key(tea.KeyPressMsg{Code: 'j', Text: "j"}, e); out.Leave {
+	if _, out := Open().Key(tea.KeyPressMsg{Code: 'j', Text: "j"}, e); out.Leave {
 		t.Error("a key the screen has no use for closed it")
 	}
 
-	if out := Key(tea.KeyPressMsg{Code: tea.KeyEscape}, e); !out.Leave {
+	if _, out := Open().Key(tea.KeyPressMsg{Code: tea.KeyEscape}, e); !out.Leave {
 		t.Error("escape did not close the screen")
 	}
 }
@@ -163,12 +163,12 @@ func TestAScreenWithNoRowsToDrawDrawsNothing(t *testing.T) {
 	e := world(t)
 
 	for _, h := range []int{-1, 0} {
-		if got := View(h, 100, e); got != nil {
+		if got := Open().View(h, 100, e); got != nil {
 			t.Errorf("a screen %d rows tall drew %d lines, want none", h, len(got))
 		}
 	}
 
-	if got := View(1, 100, e); len(got) == 0 {
+	if got := Open().View(1, 100, e); len(got) == 0 {
 		t.Error("a screen with a row in it drew nothing")
 	}
 }

@@ -10,12 +10,19 @@ package arch
 // habit, because a name that appears anywhere else fails the build.
 
 var doors = map[string][]string{
-	// The window. Twelve of its files export, and the rest are the Model's
-	// own methods, which are lowercase and stay that way. The screens are
-	// leaving one at a time — each one that goes takes names off this line.
+	// The window. Thirteen of its files export, and the rest are the
+	// Model's own methods, which are lowercase and stay that way. The
+	// screens are leaving one at a time — each one that goes takes names
+	// off this line.
+	//
+	// new.go is how a window is built and what it asks the world for once
+	// it is running: it left ui.go when that file went over the ceiling,
+	// and a struct of the window's memory and the two functions that bring
+	// one to life are two subjects anyway.
 	"internal/ui": {
-		"bytes.go", "engines.go", "mouse.go", "plain.go", "port.go", "portinfo.go",
-		"portread.go", "screen.go", "target.go", "ui.go", "update.go", "watch.go",
+		"bytes.go", "engines.go", "mouse.go", "new.go", "plain.go", "port.go",
+		"portinfo.go", "portread.go", "screen.go", "target.go", "ui.go", "update.go",
+		"watch.go",
 	},
 	// The window's own packages: each is one subject, entered by an action
 	// or by the vocabulary its actions share.
@@ -77,7 +84,7 @@ var doors = map[string][]string{
 	"internal/ui/point": {"point.go"},
 	// How a block of text is set, and the shapes a screen is built out of:
 	// prose.go is the typography and parts.go the assemblies.
-	"internal/ui/prose":  {"prose.go", "parts.go"},
+	"internal/ui/prose":  {"prose.go", "parts.go", "pills.go"},
 	"internal/ui/prompt": {"deliver.go", "flowdraft.go", "phase.go"},
 	// The engines and their quota, as the ports answer: one file, because
 	// it is a vocabulary and not an action.
