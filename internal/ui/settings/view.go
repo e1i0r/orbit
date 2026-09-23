@@ -27,7 +27,13 @@ func (s State) View(h, w int, e Env) []string {
 
 	var body []string
 
-	for i, r := range s.Rows(e) {
+	rows := s.Rows(e)
+	for i, r := range rows {
+		if headed(rows, i) {
+			heading := theme.Paint(theme.Accent).Bold(true).Render(r.Group)
+			body = append(body, cells.Fit("  "+heading, w))
+		}
+
 		body = append(body, s.row(r, i == s.sel, w)...)
 	}
 

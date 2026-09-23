@@ -150,21 +150,38 @@ func TestHitSettingsEveryOutcome(t *testing.T) {
 	y := m.frame.Body.Y
 
 	if got := m.hitSettings(5, y); got.Kind != point.None {
-		t.Errorf("hitSettings above row 4 = %+v, want point.None", got)
+		t.Errorf("hitSettings above the table = %+v, want point.None", got)
 	}
 
-	if got := m.hitSettings(10, y+4); got.Kind != point.SettingsRow || got.Field != "" {
+	// A heading is not a setting.
+	if got := m.hitSettings(10, y+4); got.Kind != point.None {
+		t.Errorf("hitSettings on the first group's heading = %+v, want point.None", got)
+	}
+
+	// The language row, which offers pills, brought into view the way a
+	// reader brings it, and on the line the screen says it drew it on.
+	lang := settingRow(t, m, "language")
+	m.settings = m.settings.Point(lang, m.settingsEnv())
+
+	line, shown := m.settings.LineOf(lang, m.settingsEnv())
+	if !shown {
+		t.Fatal("the language row is not on the screen")
+	}
+
+	if got := m.hitSettings(10, y+line); got.Kind != point.SettingsRow || got.Field != "" {
 		t.Errorf("hitSettings left of the pills = %+v, want the row with no field", got)
 	}
 
 	// The first cell of the first pill, measured from the same constant the
 	// drawing pads the name column to.
 	at := settings.PillsAt + 1
-	if got := m.hitSettings(at, y+4); got.Kind != point.SettingsRow || got.Field != rows[0].Options[0] {
-		t.Errorf("hitSettings on the first pill = %+v, want field %q", got, rows[0].Options[0])
+
+	got := m.hitSettings(at, y+line)
+	if got.Kind != point.SettingsRow || got.Field != rows[lang].Options[0] {
+		t.Errorf("hitSettings on the first pill = %+v, want field %q", got, rows[lang].Options[0])
 	}
 
-	if got := m.hitSettings(5000, y+4); got.Kind != point.SettingsRow || got.Field != "" {
+	if got := m.hitSettings(5000, y+line); got.Kind != point.SettingsRow || got.Field != "" {
 		t.Errorf("hitSettings past every pill = %+v, want the row with no field", got)
 	}
 

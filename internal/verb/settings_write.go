@@ -54,7 +54,7 @@ func Kept(p *words.Printer, cfg store.Settings) []Setting {
 		all = append(all, Setting{Name: one.Name, Value: one.Value(cfg), About: one.About(p)})
 	}
 
-	return all
+	return grouped(p, all)
 }
 
 // Shipped is every setting at the value Orbit ships it with, which is the

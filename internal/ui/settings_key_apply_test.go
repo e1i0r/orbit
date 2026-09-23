@@ -255,7 +255,8 @@ func TestSettingsKeyEditingAndNavigation(t *testing.T) {
 	}
 
 	// 4. Enter submits a typed value; left/right cycle an option.
-	m.settings = m.settings.Point(0, m.settingsEnv())
+	lang := settingRow(t, m, "language")
+	m.settings = m.settings.Point(lang, m.settingsEnv())
 	m.settings = m.settings.Edit("es")
 	next, _ = m.settingsKey(tea.KeyPressMsg{Code: tea.KeyEnter})
 
@@ -264,11 +265,11 @@ func TestSettingsKeyEditingAndNavigation(t *testing.T) {
 		t.Error("enter did not leave editing mode")
 	}
 
-	before := m.settingRowsList()[0].Val
+	before := m.settingRowsList()[lang].Val
 	next, _ = m.settingsKey(tea.KeyPressMsg{Code: tea.KeyRight})
 
 	m = asModel(t, next)
-	if m.settingRowsList()[0].Val == before {
+	if m.settingRowsList()[lang].Val == before {
 		t.Error("right did not cycle the first row's option")
 	}
 

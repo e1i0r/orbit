@@ -32,6 +32,7 @@ type Row struct {
 	// row leaves it nil.
 	Labels []string
 	About  string
+	Group  string // the heading it sits under; see placed
 }
 
 // Label is what the option at i is drawn as.
@@ -51,9 +52,12 @@ func (s State) Rows(e Env) []Row {
 		// The two the settings file does not hold sit beside the dial they
 		// belong to. Effort is the engine's, so it follows the model; the
 		// alternative is a table where the four choices a run is made with
-		// are not next to each other.
+		// are not next to each other. They are in the model's group.
 		if one.Name == "model" {
-			out = append(out, s.window(e)...)
+			for _, r := range s.window(e) {
+				r.Group = one.Group
+				out = append(out, r)
+			}
 		}
 	}
 
@@ -66,6 +70,7 @@ func (s State) dial(one Kept, e Env) Row {
 	ids, labels := s.offers(one.Name, e)
 
 	return Row{
+		Group:   one.Group,
 		Key:     one.Name,
 		Val:     chosen(one.Value, ids),
 		Options: ids,
