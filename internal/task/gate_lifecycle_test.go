@@ -169,7 +169,7 @@ func TestWaitErrorPaths(t *testing.T) {
 
 	// 1. The opening phase.waiting write fails: a bad id.
 	bad := Task{ID: "has/slash", Repo: r}
-	if _, err := gate.wait(context.Background(), bad, p, whyFlow, false); err == nil {
+	if _, err := gate.wait(context.Background(), bad, p, whyFlow, heldByFlow); err == nil {
 		t.Error("wait should have failed when phase.waiting cannot be recorded")
 	}
 
@@ -189,7 +189,7 @@ func TestWaitErrorPaths(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := gate.wait(context.Background(), tk, p, whyFlow, false); err == nil {
+	if _, err := gate.wait(context.Background(), tk, p, whyFlow, heldByFlow); err == nil {
 		t.Error("wait should have failed when take cannot read the control word")
 	}
 
@@ -209,7 +209,7 @@ func TestWaitErrorPaths(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := gate.wait(context.Background(), tk2, p, whyFlow, false); err == nil {
+	if _, err := gate.wait(context.Background(), tk2, p, whyFlow, heldByFlow); err == nil {
 		t.Error("wait should have failed when the autopilot switch cannot be read")
 	}
 }
@@ -231,7 +231,7 @@ func TestWaitResumedEmitFailure(t *testing.T) {
 		done := make(chan error, 1)
 
 		go func() {
-			_, err := gate.wait(context.Background(), tk, p, whyFlow, false)
+			_, err := gate.wait(context.Background(), tk, p, whyFlow, heldByFlow)
 			done <- err
 		}()
 		// wait returns from synctest.Wait once phase.waiting is written and
