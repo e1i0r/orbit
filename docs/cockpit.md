@@ -90,7 +90,7 @@ says which of the two `↵` will do.
 | `p` `r` `s` | pause, resume, skip the phase it is waiting in front of |
 | `x` `b` | cancel, put it back in To Do |
 | `a` | leave a note for it |
-| `d` `D` | mark read, delete |
+| `d` `D` | mark read, delete (a running task: cancel it first) |
 | `c` | hand the terminal to your CLI in this task's worktree |
 | `t` `h` | take the keyboard from a run, hand it back |
 | `A` | autopilot on and off |

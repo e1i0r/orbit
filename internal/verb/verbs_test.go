@@ -8,6 +8,8 @@ package verb
 // store, canned answers for everything past it.
 
 import (
+	"errors"
+	"os"
 	"os/exec"
 	"strings"
 	"testing"
@@ -41,7 +43,16 @@ func TestWritingAndSteeringATask(t *testing.T) {
 	cmd := holdARun(t, w, "ACME-1")
 	mustAsk(t, w, "task cancel", In{Task: "ACME-1", By: "operator"})
 
-	_ = cmd.Process.Kill() //nolint:errcheck // the cleanup kills it again; this only hurries it
+	// And reaped, not only killed: a process nobody has waited on still
+	// answers as alive, and a task with a run going cannot be deleted.
+	if err := cmd.Process.Kill(); err != nil && !errors.Is(err, os.ErrProcessDone) {
+		t.Fatalf("kill the run: %v", err)
+	}
+
+	var exit *exec.ExitError
+	if err := cmd.Wait(); err != nil && !errors.As(err, &exit) {
+		t.Fatalf("reap the run: %v", err)
+	}
 
 	out := mustAsk(t, w, "task history", In{Task: "ACME-1", By: "operator"})
 	if !strings.Contains(out.Said, "ACME-1") {

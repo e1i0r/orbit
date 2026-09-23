@@ -15,6 +15,7 @@ import (
 	"github.com/e1i0r/orbit/internal/hunch"
 	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/quota"
+	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/task"
 	"github.com/e1i0r/orbit/internal/words"
 )
@@ -81,12 +82,12 @@ func runTask(ctx Context, args []string) error {
 	// across the process boundary.
 	s, r, err := openMaybe(*dir, given(fs, "repo"))
 	if err != nil {
-		return fmt.Errorf("open repository %q: %w", *dir, err)
+		return notStarted(id, fmt.Errorf("open repository %q: %w", *dir, err))
 	}
 
 	t, err := task.Load(s, r, id)
 	if err != nil {
-		return fmt.Errorf("load task %q in %q: %w", id, r.Name, err)
+		return notStarted(id, fmt.Errorf("load task %q in %q: %w", id, r.Name, err))
 	}
 	// The task's own flow, unless this command overrode it — and the flow
 	// this program ships for a task written before the flow was recorded at
@@ -104,7 +105,7 @@ func runTask(ctx Context, args []string) error {
 
 	f, err := flow.Resolve(s, chosen)
 	if err != nil {
-		return fmt.Errorf("resolve flow %q for task %q: %w", chosen, id, err)
+		return notStarted(id, fmt.Errorf("resolve flow %q for task %q: %w", chosen, id, err))
 	}
 
 	f = flow.WithEngine(f, *eng)
@@ -218,4 +219,28 @@ func keyed(ready bool) string {
 	}
 
 	return "no key in " + env.DecisionKey + ", so every gate waits for a person"
+}
+
+// notStarted writes down why a run never began, and hands the reason back.
+//
+// A run that fails here has written nothing: the record still says whatever
+// it said before it was asked, and for a task started from the queue that is
+// task.queued, so it was started again on every look of the queue and held
+// a slot while doing nothing. Written down, it leaves the queue and the
+// reader sees a task that would not start, and why. The store is opened on
+// its own because a repository that would not open took the one above with
+// it; a store that will not open either is only logged.
+func notStarted(id string, cause error) error {
+	s, err := store.Open()
+	if err != nil {
+		logger.Error("cli/run", "%s would not start (%v), and that could not be written down: %v", id, cause, err)
+
+		return cause
+	}
+
+	if err := task.NotStarted(s, id, cause); err != nil {
+		logger.Error("cli/run", "%s would not start (%v), and that could not be written down: %v", id, cause, err)
+	}
+
+	return cause
 }

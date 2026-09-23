@@ -136,3 +136,39 @@ func worktrees(t *testing.T, repoPath string) string {
 
 	return string(out)
 }
+
+// TestDeleteRefusesATaskWithARunGoing. Taking the worktree from under a live
+// engine leaves it working in a directory that is gone; every way in (the
+// window, `orbit delete`, the MCP tools) comes through here.
+func TestDeleteRefusesATaskWithARunGoing(t *testing.T) {
+	s, r := fixture(t)
+	tk := written(t, s, r)
+
+	run := exec.Command("sleep", "30")
+	if err := run.Start(); err != nil {
+		t.Fatalf("start a process to stand in for the run: %v", err)
+	}
+
+	t.Cleanup(func() {
+		if err := run.Process.Kill(); err != nil {
+			t.Logf("kill the run: %v", err)
+		}
+
+		if _, err := run.Process.Wait(); err != nil {
+			t.Logf("wait for the run: %v", err)
+		}
+	})
+
+	if _, err := mark(s, tk, run.Process.Pid); err != nil {
+		t.Fatalf("mark: %v", err)
+	}
+
+	err := Delete(s, tk)
+	if err == nil || !strings.Contains(err.Error(), "cancel it first") {
+		t.Errorf("Delete = %v, want a refusal that says to cancel first", err)
+	}
+
+	if last := lastEvent(t, s, tk); last.Kind == "task.deleted" {
+		t.Error("a task with a run going was written down as deleted")
+	}
+}

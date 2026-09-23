@@ -4,6 +4,7 @@ package task
 
 import (
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/e1i0r/orbit/internal/record"
@@ -39,7 +40,17 @@ import (
 // What went wrong comes back, joined. The window puts it in the activity
 // band, which is the difference between a row that stays for a reason and
 // one that stays for none.
+//
+// A task with a run still going is refused, as the window's D refuses it:
+// deleting the worktree under a live engine leaves a process working in a
+// directory that is gone and a record that ends before the run does.
 func Delete(s *store.Store, t Task) error {
+	if pid, alive, err := Alive(s, t); err != nil {
+		return err
+	} else if alive {
+		return fmt.Errorf("task %s is being run by process %d; cancel it first", t.ID, pid)
+	}
+
 	var errs []error
 
 	// Every checkout the task reached into, and not only the one it is
