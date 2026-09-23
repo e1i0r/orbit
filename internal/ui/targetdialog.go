@@ -181,6 +181,10 @@ func (m Model) hitStart(x, y int) point.Target {
 	return point.Target{}
 }
 
+// settingsPointOnly marks a click on a setting's description or the blank
+// under it: the cursor goes to the row and nothing is changed.
+const settingsPointOnly = "point"
+
 // hitSettings is the row of the table under the pointer, and the pill of it
 // if the pointer is on one.
 //
@@ -199,6 +203,14 @@ func (m Model) hitSettings(x, y int) point.Target {
 	rows := m.settingRowsList()
 	if on && rowIdx < len(rows) {
 		r := rows[rowIdx]
+
+		// A row is three lines, and only the first is its name and its
+		// dial. The description under it and the blank after answer the
+		// columns of the pills too, so a click there turned a setting
+		// nobody pointed at; there it only puts the cursor on the row.
+		if nameLine, shown := m.settings.LineOf(rowIdx, m.settingsEnv()); !shown || nameLine != line {
+			return point.Target{Kind: point.SettingsRow, Pane: rowIdx, Key: settingsPointOnly}
+		}
 
 		if x >= settings.PillsAt {
 			curX := settings.PillsAt

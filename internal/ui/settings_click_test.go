@@ -4,6 +4,7 @@ package ui
 // the pointer, and of no other.
 
 import (
+	"maps"
 	"strings"
 	"testing"
 
@@ -63,6 +64,53 @@ func TestASettingIsTurnedWhereItIsDrawn(t *testing.T) {
 			if key := list[got.Pane].Key; !strings.Contains(drawn, key) {
 				t.Errorf("wheel %d, row %d turns %q, which is not on the screen:\n%s",
 					notch, line, key, drawn)
+			}
+		}
+	}
+}
+
+// TestAClickUnderASettingsNameChangesNothing. A row is three lines and only
+// the first carries the dial; the description and the blank under it
+// answered the pills' columns too, so a click on "whether a run walks its
+// whole flow" turned autopilot off. There the click only moves the cursor.
+func TestAClickUnderASettingsNameChangesNothing(t *testing.T) {
+	m, _ := testModel(t, 100, 40)
+	m = m.openSettings()
+
+	values := func(m Model) map[string]string {
+		held := map[string]string{}
+		for _, r := range m.settingRowsList() {
+			held[r.Key] = r.Val
+		}
+
+		return held
+	}
+
+	before := values(m)
+
+	for i, r := range m.settingRowsList() {
+		name, shown := m.settings.LineOf(i, m.settingsEnv())
+		if !shown {
+			continue
+		}
+
+		for _, under := range []int{1, 2} {
+			for x := 2; x < m.frame.Body.W; x += 3 {
+				hit := m.hitSettings(x, m.frame.Body.Y+name+under)
+				if hit.Kind != point.SettingsRow {
+					continue
+				}
+
+				after := clicked(t, m, hit)
+				if got := values(after); !maps.Equal(got, before) {
+					t.Fatalf("a click %d lines under %q at column %d changed the settings: %v, want %v",
+						under, r.Key, x, got, before)
+				}
+
+				if after.settings.Chosen() != i {
+					t.Errorf("a click under %q put the cursor on row %d, want %d",
+						r.Key, after.settings.Chosen(), i)
+				}
 			}
 		}
 	}
