@@ -59,3 +59,26 @@ func TestADeliveryWhoseWindowClosedIsClosedToo(t *testing.T) {
 		t.Errorf("a second window closed %d more, want none", again)
 	}
 }
+
+// TestAStepOfADeliveryIsWrittenOntoItsTask. What the supervisor does while
+// a verb is out is what the reader watches, so each step is a line of the
+// task's record under the verb it is for.
+func TestAStepOfADeliveryIsWrittenOntoItsTask(t *testing.T) {
+	s, r := fixture(t)
+
+	tk, err := Create(s, r, "ACME-82", "open the pull request", "")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	if err := DeliveryStep(s, tk, "CREATE PR", "Bash", `{"command":"gh pr create"}`); err != nil {
+		t.Fatalf("DeliveryStep: %v", err)
+	}
+
+	events := mustEvents(t, s, tk)
+
+	got := events[len(events)-1]
+	if got.Kind != record.DeliverStep || got.Data["verb"] != "CREATE PR" || got.Data["tool"] != "Bash" {
+		t.Errorf("the record ends %+v, want the step under CREATE PR", got)
+	}
+}

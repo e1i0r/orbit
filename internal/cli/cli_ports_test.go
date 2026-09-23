@@ -17,6 +17,7 @@ import (
 	"github.com/e1i0r/orbit/internal/knowledge"
 	"github.com/e1i0r/orbit/internal/learn"
 	"github.com/e1i0r/orbit/internal/store"
+	"github.com/e1i0r/orbit/internal/ui"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -191,7 +192,7 @@ func TestEnginesAreNamedAndDrafted(t *testing.T) {
 		t.Error("the draft is empty")
 	}
 
-	if _, err := askSupervisorPort(nil, engines)("nobody", "", ""); err == nil {
+	if _, err := askSupervisorPort(nil, engines)("nobody", "", "", ui.Errand{}); err == nil {
 		t.Error("a supervisor nobody drives was accepted")
 	}
 

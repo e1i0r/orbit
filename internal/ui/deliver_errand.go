@@ -29,12 +29,20 @@ func (m Model) askSupervisorTo(e errand) (tea.Model, tea.Cmd) {
 			about("id", e.TaskID))), nil
 	}
 
+	// Which task and verb the line is for, so every step the supervisor
+	// takes is written onto the task while the verb is out.
+	if t, held := m.task(e.TaskID); held {
+		m.errandOut = Errand{Task: t, Verb: e.Caption}
+	}
+
 	// The branch the task was cut from, off the folded board: the pull
 	// request belongs against that and not against the repository's
 	// default. A task the board does not carry answers empty, and the
 	// brief tells the supervisor to go and read it.
 	next, cmd := m.sendSupervisorMessage(supervisor.Deliver(
 		"the cockpit", e.Caption, e.TaskID, path, m.taskBase(e.TaskID), e.Body))
+	next.errandOut = Errand{}
+
 	if cmd == nil {
 		// The thread refused the line. What it said about that is the
 		// only true sentence there is here.

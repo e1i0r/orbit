@@ -203,7 +203,7 @@ type Options struct {
 	// AskSupervisor asks the active engine to answer, in the conversation
 	// the reader has open. What the model is shown is that conversation and
 	// no other: what survives between them is what Orbit knows.
-	AskSupervisor func(engineName, conversation, prompt string) (string, error)
+	AskSupervisor func(engineName, conversation, prompt string, about Errand) (string, error)
 
 	// Draft asks an engine one question and nothing else: no thread, no
 	// history, no contract but the prompt it is given. The designer's third
