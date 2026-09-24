@@ -187,6 +187,7 @@ func fold(t *Task, e record.Event) {
 	case record.TaskQueued:
 		t.state = stateQueued
 		t.Reason = Reason{Key: ReasonQueued}
+		noAttemptYet(t)
 		stamp(&t.Since, e.At)
 	case record.TaskCancelled:
 		t.state = stateCancelled

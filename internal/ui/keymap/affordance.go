@@ -262,6 +262,10 @@ func whyNotTake(t view.Task, s Conditions) words.Arg {
 		return because(WhyMarkerUnreadable)
 	case Working(t):
 		return because(whyTakeStillRunning)
+	case t.Reason.Key == view.ReasonQueued:
+		// A run is about to start in this worktree: taking the old
+		// session now puts a second engine beside it.
+		return because(whyTakeQueued)
 	case !s.CanResume:
 		return about(whyTakeEngineCannotResume, t.Engine)
 	}
