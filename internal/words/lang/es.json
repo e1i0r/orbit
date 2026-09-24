@@ -2087,6 +2087,10 @@
       "source": "{open} edit · {up_down} move · {back} back",
       "value": "{open} editar · {up_down} mover · {back} volver"
     },
+    "settings.ways_out_fold": {
+      "source": "{open} open or close · {up_down} move · {back} back",
+      "value": "{open} abrir o cerrar · {up_down} mover · {back} volver"
+    },
     "settings.ways_out_edit": {
       "source": "{open} save · {back} cancel",
       "value": "{open} guardar · {back} cancelar"

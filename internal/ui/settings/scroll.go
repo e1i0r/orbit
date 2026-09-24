@@ -41,7 +41,7 @@ func (s State) Off(e Env) int {
 		return 0
 	}
 
-	_, lines := placed(s.Rows(e))
+	_, _, lines := s.placed(s.Rows(e))
 
 	return window(s.off, lines, room(e.Frame.Body.H))
 }
@@ -49,24 +49,30 @@ func (s State) Off(e Env) int {
 // headingLines is how tall a group's heading is.
 const headingLines = 1
 
-// placed is where each row starts in the table, and how many lines the
-// table is: rowLines a row, and a heading above the first row of every
-// group. Scrolling and clicks both read it, so neither can disagree with
-// what was drawn about where a setting is.
-func placed(rows []Row) ([]int, int) {
-	starts := make([]int, len(rows))
-	line := 0
+// placed is where each row starts in the table, where each group's
+// heading is, and how many lines the table is: rowLines a row, and a
+// heading above the first row of every group. A row of a folded group
+// starts at -1, because it is not drawn; heads is -1 for a row with no
+// heading above it. Scrolling and clicks both read it, so neither can
+// disagree with what was drawn about where a setting is.
+func (s State) placed(rows []Row) (starts, heads []int, lines int) {
+	starts, heads = make([]int, len(rows)), make([]int, len(rows))
 
 	for i := range rows {
+		heads[i], starts[i] = -1, -1
+
 		if headed(rows, i) {
-			line += headingLines
+			heads[i] = lines
+			lines += headingLines
 		}
 
-		starts[i] = line
-		line += rowLines
+		if !s.folded[rows[i].Group] {
+			starts[i] = lines
+			lines += rowLines
+		}
 	}
 
-	return starts, line
+	return starts, heads, lines
 }
 
 // headed is whether row i is the first of its group, and so drawn under
@@ -89,9 +95,7 @@ func (s State) Scroll(d int, e Env) State {
 		return s
 	}
 
-	s.sel = min(max(s.sel+d, 0), len(rows)-1)
-
-	return s.keepSeen(e)
+	return s.step(d, rows, false).keepSeen(e)
 }
 
 // keepSeen moves the table as little as it can to keep the row the cursor is
@@ -108,15 +112,20 @@ func (s State) keepSeen(e Env) State {
 		return s
 	}
 
-	starts, lines := placed(rows)
+	starts, heads, lines := s.placed(rows)
 	view := room(e.Frame.Body.H)
 	off := window(s.off, lines, view)
 
 	// The blank under a row is not part of what has to be seen. A dial with
 	// its name and its sentence both on the screen has been read, and
 	// scrolling one line further to show the gap beneath it would move the
-	// table for nothing.
+	// table for nothing. A heading is one line.
 	from, last := starts[s.sel], starts[s.sel]+1
+
+	if s.head != "" || from < 0 {
+		from = lineOfHead(rows, heads, s.headOf(rows))
+		last = from
+	}
 
 	switch {
 	case from < off:
@@ -125,7 +134,7 @@ func (s State) keepSeen(e Env) State {
 		off = last - view + 1
 	}
 
-	s.off = window(atTheTop(off, view, rows, starts), lines, view)
+	s.off = window(atTheTop(off, view, starts, heads), lines, view)
 
 	return s
 }
@@ -141,22 +150,16 @@ func (s State) keepSeen(e Env) State {
 //
 // Not on a screen with less room than a row, where rounding up would push
 // the row the cursor is on off the top of the view it was brought into.
-func atTheTop(off, view int, rows []Row, starts []int) int {
+func atTheTop(off, view int, starts, heads []int) int {
 	if view < rowLines {
 		return off
 	}
 
 	best := -1
 
-	for i, start := range starts {
-		for _, at := range []int{start - headingLines, start} {
-			if at == start-headingLines && !headed(rows, i) {
-				continue
-			}
-
-			if at >= off && (best < 0 || at < best) {
-				best = at
-			}
+	for _, at := range append(append([]int{}, starts...), heads...) {
+		if at >= off && (best < 0 || at < best) {
+			best = at
 		}
 	}
 
@@ -205,10 +208,10 @@ func (s State) RowAt(line int, e Env) (int, bool) {
 	}
 
 	at := on + s.Off(e)
-	starts, _ := placed(s.Rows(e))
+	starts, _, _ := s.placed(s.Rows(e))
 
 	for i, start := range starts {
-		if at >= start && at < start+rowLines {
+		if start >= 0 && at >= start && at < start+rowLines {
 			return i, true
 		}
 	}
@@ -221,8 +224,8 @@ func (s State) RowAt(line int, e Env) (int, bool) {
 // is on the screen at all: RowAt the other way round, for whoever has to
 // point at a setting rather than find one under the pointer.
 func (s State) LineOf(i int, e Env) (int, bool) {
-	starts, _ := placed(s.Rows(e))
-	if i < 0 || i >= len(starts) {
+	starts, _, _ := s.placed(s.Rows(e))
+	if i < 0 || i >= len(starts) || starts[i] < 0 {
 		return 0, false
 	}
 
@@ -232,4 +235,46 @@ func (s State) LineOf(i int, e Env) (int, bool) {
 	}
 
 	return headLines + on, true
+}
+
+// HeadAt is the group whose heading is drawn on a line of the body, and
+// whether there is one: RowAt for the lines between the rows.
+func (s State) HeadAt(line int, e Env) (string, bool) {
+	on := line - headLines
+	if on < 0 || on >= room(e.Frame.Body.H) {
+		return "", false
+	}
+
+	at := on + s.Off(e)
+	rows := s.Rows(e)
+	_, heads, _ := s.placed(rows)
+
+	for i, head := range heads {
+		if head >= 0 && head == at {
+			return rows[i].Group, true
+		}
+	}
+
+	return "", false
+}
+
+// headOf is the group the cursor is in: the heading it stands on, or the
+// group of its row.
+func (s State) headOf(rows []Row) string {
+	if s.head != "" || s.sel < 0 || s.sel >= len(rows) {
+		return s.head
+	}
+
+	return rows[s.sel].Group
+}
+
+// lineOfHead is the line a group's heading is drawn on.
+func lineOfHead(rows []Row, heads []int, group string) int {
+	for i, head := range heads {
+		if head >= 0 && rows[i].Group == group {
+			return head
+		}
+	}
+
+	return 0
 }

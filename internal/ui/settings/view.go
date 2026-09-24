@@ -4,6 +4,7 @@ package settings
 // at the bottom saying how to leave.
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/e1i0r/orbit/internal/ui/cells"
@@ -30,16 +31,67 @@ func (s State) View(h, w int, e Env) []string {
 	rows := s.Rows(e)
 	for i, r := range rows {
 		if headed(rows, i) {
-			heading := theme.Paint(theme.Accent).Bold(true).Render(r.Group)
-			body = append(body, cells.Fit("  "+heading, w))
+			body = append(body, cells.Fit("  "+s.heading(rows, r.Group), w))
 		}
 
-		body = append(body, s.row(r, i == s.sel, w)...)
+		if s.folded[r.Group] {
+			continue
+		}
+
+		lines := s.row(r, s.head == "" && i == s.sel, w)
+		if r.Group != "" {
+			lines = railed(lines, lastOf(rows, i), w)
+		}
+
+		body = append(body, lines...)
 	}
 
 	foot := []string{cells.Fit("  "+theme.Paint(theme.Dim).Render(s.waysOut(e)), w)}
 
 	return cells.Fill(framed(head, body, foot, h, s.off), h)
+}
+
+// heading is a group's name, with the sign that says whether it is open
+// and, folded, how many settings it hides. The cursor standing on it is
+// the heading drawn in the colour a chosen row's name is.
+func (s State) heading(rows []Row, group string) string {
+	role := theme.Accent
+	if s.head == group {
+		role = theme.Live
+	}
+
+	text := "▾ " + group
+	if s.folded[group] {
+		text = fmt.Sprintf("▸ %s (%d)", group, counted(rows, group))
+	}
+
+	return theme.Paint(role).Bold(true).Render(text)
+}
+
+// railed is a row of a group with the line down the side of it, drawn in
+// the margin under the heading's sign. The cursor's pointer stands on the
+// line, and the blank under a group's last row has none: that is where the
+// group ends.
+func railed(lines []string, last bool, w int) []string {
+	rail := theme.Paint(theme.Dim).Render("│")
+	out := make([]string, len(lines))
+
+	for i, l := range lines {
+		switch {
+		case i == 0 && strings.HasPrefix(l, "    "):
+			out[i] = cells.Fit("  "+rail+l[3:], w)
+		case i == 0:
+			out[i] = l
+		case i == len(lines)-1 && last:
+			out[i] = ""
+		case l == "":
+			out[i] = "  " + rail
+		default:
+			out[i] = cells.Fit("  "+rail+l[3:], w)
+		}
+	}
+
+	return out
 }
 
 // row is one setting drawn: its name, its pills, and the sentence under it.
@@ -114,6 +166,13 @@ func (s State) waysOut(e Env) string {
 	if s.editing {
 		return p.T("settings.ways_out_edit", "{open} save · {back} cancel",
 			words.Arg{Name: "open", Value: k.Open.Help().Key},
+			words.Arg{Name: "back", Value: k.Back.Help().Key})
+	}
+
+	if s.head != "" {
+		return p.T("settings.ways_out_fold", "{open} open or close · {up_down} move · {back} back",
+			words.Arg{Name: "open", Value: k.Open.Help().Key},
+			words.Arg{Name: "up_down", Value: k.Up.Help().Key + k.Down.Help().Key},
 			words.Arg{Name: "back", Value: k.Back.Help().Key})
 	}
 

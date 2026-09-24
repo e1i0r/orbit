@@ -32,19 +32,11 @@ func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
 	case key.Matches(msg, e.Keys.Back) || key.Matches(msg, e.Keys.Quit):
 		return s, Out{Close: true}
 	case key.Matches(msg, e.Keys.Up), msg.Text == "k":
-		s.sel--
-		if s.sel < 0 {
-			s.sel = len(rows) - 1
-		}
-
-		return s.keepSeen(e), Out{}
+		return s.step(-1, rows, true).keepSeen(e), Out{}
 	case key.Matches(msg, e.Keys.Down), msg.Text == "j":
-		s.sel++
-		if s.sel >= len(rows) {
-			s.sel = 0
-		}
-
-		return s.keepSeen(e), Out{}
+		return s.step(1, rows, true).keepSeen(e), Out{}
+	case s.head != "":
+		return s.onHeading(msg, e), Out{}
 	case key.Matches(msg, e.Keys.Open), msg.Text == " ", msg.Code == tea.KeyRight, msg.Text == "l":
 		return s, s.Cycle(1, e)
 	case msg.Code == tea.KeyLeft, msg.Text == "h":
@@ -58,6 +50,28 @@ func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
 	}
 
 	return s, Out{}
+}
+
+// onHeading is a keystroke with the cursor on a group's heading: enter or
+// space folds it or opens it again, right opens it and left folds it. The
+// keys that turn or clear a dial have no dial here and do nothing.
+func (s State) onHeading(msg tea.KeyPressMsg, e Env) State {
+	open := !s.folded[s.head]
+
+	switch {
+	case key.Matches(msg, e.Keys.Open), msg.Text == " ":
+		return s.Fold(s.head, e)
+	case msg.Code == tea.KeyRight, msg.Text == "l":
+		if !open {
+			return s.Fold(s.head, e)
+		}
+	case msg.Code == tea.KeyLeft, msg.Text == "h":
+		if open {
+			return s.Fold(s.head, e)
+		}
+	}
+
+	return s
 }
 
 // typing is the row being written into by hand, which is how a value that is
@@ -96,7 +110,7 @@ func (s State) typing(msg tea.KeyPressMsg, e Env, rows []Row) (State, Out) {
 // door because the wheel and a click on the row's name both turn it.
 func (s State) Cycle(delta int, e Env) Out {
 	rows := s.Rows(e)
-	if s.sel < 0 || s.sel >= len(rows) {
+	if s.head != "" || s.sel < 0 || s.sel >= len(rows) {
 		return Out{}
 	}
 
@@ -146,10 +160,29 @@ func (s State) Chosen() int { return s.sel }
 // the row under it is measured against a table that the board behind this
 // screen may have re-read in between.
 func (s State) Point(at int, e Env) State {
-	s.sel = at
+	s.sel, s.head = at, ""
 
 	return s.keepSeen(e)
 }
 
 // Editing is whether the chosen row is being typed into.
 func (s State) Editing() bool { return s.editing }
+
+// Fold shows or hides a group's settings, and leaves the cursor on its
+// heading. It is a door because a click on the heading does it, as enter
+// does with the cursor there.
+func (s State) Fold(group string, e Env) State {
+	folded := make(map[string]bool, len(s.folded)+1)
+	for g, on := range s.folded {
+		folded[g] = on
+	}
+
+	folded[group] = !folded[group]
+	s.folded, s.head = folded, group
+
+	return s.keepSeen(e)
+}
+
+// OnHeading is the group whose heading the cursor is on, and empty when it
+// is on a row.
+func (s State) OnHeading() string { return s.head }

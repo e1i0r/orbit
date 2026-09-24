@@ -207,7 +207,7 @@ func TestWheelMovesTheSettingsTable(t *testing.T) {
 	// Far enough down that the table has to move, and the last dial is on
 	// the screen when it gets there.
 	rows := m.settingRowsList()
-	for range len(rows) {
+	for range 2 * len(rows) {
 		m = m.wheel(tea.Mouse{X: 5, Y: y, Button: tea.MouseWheelDown})
 	}
 

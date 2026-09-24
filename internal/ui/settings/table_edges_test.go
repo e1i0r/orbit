@@ -153,9 +153,9 @@ func TestTheTopOfTheViewIsTheTopOfARow(t *testing.T) {
 		{2, 1, 2},
 	} {
 		rows := make([]Row, 5)
-		starts, _ := placed(rows)
+		starts, heads, _ := State{}.placed(rows)
 
-		if got := atTheTop(c.off, c.view, rows, starts); got != c.want {
+		if got := atTheTop(c.off, c.view, starts, heads); got != c.want {
 			t.Errorf("a view of %d lines starting at %d starts at %d, want %d",
 				c.view, c.off, got, c.want)
 		}

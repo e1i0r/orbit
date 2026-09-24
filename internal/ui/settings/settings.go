@@ -36,6 +36,11 @@ type State struct {
 	// what the drawing took off, and a count of rows would have to be
 	// multiplied out at both ends by whoever remembered to.
 	off int
+	// folded is the groups whose settings are hidden, and head the group
+	// whose heading the cursor is on, empty while it is on a row. See
+	// fold.go.
+	folded map[string]bool
+	head   string
 }
 
 // Env is what this screen needs of the world, and nothing more. It is built

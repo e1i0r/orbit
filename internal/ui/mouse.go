@@ -226,6 +226,12 @@ func (m Model) leftClick(t point.Target) (tea.Model, tea.Cmd) {
 
 		return m.jumpToBand(band)
 	case point.SettingsRow:
+		if t.Key == settingsFold {
+			m.settings = m.settings.Fold(t.Field, m.settingsEnv())
+
+			return m, nil
+		}
+
 		m.settings = m.settings.Point(t.Pane, m.settingsEnv())
 		if t.Key == settingsPointOnly {
 			return m, nil

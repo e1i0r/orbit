@@ -91,9 +91,14 @@ func TestEverySettingDrawnCanBeReached(t *testing.T) {
 	rows := m.settingRowsList()
 	seen := map[string]bool{}
 
-	for range rows {
+	// Twice the rows, because every group's heading is a stop on the way.
+	for range 2 * len(rows) {
 		seen[rows[m.settings.Chosen()].Key] = true
 		m = m.wheelSettings(1)
+
+		if m.settings.OnHeading() != "" {
+			continue
+		}
 
 		// Every row the cursor lands on is drawn, which is the half that
 		// the count alone cannot check.
