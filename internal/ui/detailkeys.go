@@ -215,9 +215,9 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 	}
 
-	// What is left of the verbs about a task, r and x among them: the ones
-	// whose letter this screen has not taken for something of its own.
-	if next, cmd, ok := m.taskVerb(k); ok {
+	// What is left of the verbs about a task, r and x among them, and of
+	// the window's own keys: the ones this screen has not taken.
+	if next, cmd, ok := m.leftOver(k); ok {
 		return next, cmd
 	}
 
