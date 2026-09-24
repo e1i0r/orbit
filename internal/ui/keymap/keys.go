@@ -41,6 +41,11 @@ type Keys struct {
 	EngineKnobs, Quota, Supervisor  key.Binding
 	Autopilot, Language, Help, Quit key.Binding
 	Flows, Knowledge                key.Binding
+
+	// What is done to a task's pull request. Capitals no other verb has,
+	// so each means the same on the board and on a task's screen.
+	CreatePR, UpdatePR, MergePR, ClosePR  key.Binding
+	FixChecks, MoreTests, Resolve, Review key.Binding
 }
 
 // New builds the key map, with every description translated.
@@ -136,7 +141,7 @@ func New(p *words.Printer) Keys {
 		// into, and one narrows what is already on screen while the other
 		// reaches everything no key was ever given to.
 		Commands: binding(":", p.T("key.commands", "commands"), ":"),
-		CLI:      binding("c", p.T("key.cli", "interactive CLI"), "c", "C"),
+		CLI:      binding("c", p.T("key.cli", "interactive CLI"), "c"),
 		Repos:    binding("R", p.T("key.repos", "repositories"), "R"),
 		// F for flows, in the same case as the four screens beside it: a
 		// capital opens a screen and a small letter does something to the
@@ -156,6 +161,15 @@ func New(p *words.Printer) Keys {
 		Language:    binding("L", p.T("key.language", "language"), "L"),
 		Help:        binding("?", p.T("key.help", "help"), "?"),
 		Quit:        binding("q", p.T("key.quit", "quit"), "q"),
+
+		CreatePR:  binding("P", p.T("key.create_pr", "create PR"), "P"),
+		UpdatePR:  binding("U", p.T("key.update_pr", "update PR"), "U"),
+		MergePR:   binding("J", p.T("key.merge_pr", "merge PR"), "J"),
+		ClosePR:   binding("X", p.T("key.close_pr", "close PR"), "X"),
+		FixChecks: binding("C", p.T("key.fix_checks", "fix checks"), "C"),
+		MoreTests: binding("T", p.T("key.more_tests", "more tests"), "T"),
+		Resolve:   binding("O", p.T("key.resolve", "resolve comments"), "O"),
+		Review:    binding("V", p.T("key.review", "deep review"), "V"),
 	}
 }
 

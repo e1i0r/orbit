@@ -152,7 +152,7 @@ func (m Model) openStart() (tea.Model, tea.Cmd) {
 		}
 
 		if r.head {
-			return m, nil
+			return m.noTaskHere(), nil
 		}
 
 		t = r.task

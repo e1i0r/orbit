@@ -101,6 +101,38 @@
       "source": "help",
       "value": "ayuda"
     },
+    "key.create_pr": {
+      "source": "create PR",
+      "value": "crear PR"
+    },
+    "key.update_pr": {
+      "source": "update PR",
+      "value": "actualizar PR"
+    },
+    "key.merge_pr": {
+      "source": "merge PR",
+      "value": "merge PR"
+    },
+    "key.close_pr": {
+      "source": "close PR",
+      "value": "cerrar PR"
+    },
+    "key.fix_checks": {
+      "source": "fix checks",
+      "value": "corregir checks"
+    },
+    "key.more_tests": {
+      "source": "more tests",
+      "value": "más pruebas"
+    },
+    "key.resolve": {
+      "source": "resolve comments",
+      "value": "resolver comentarios"
+    },
+    "key.review": {
+      "source": "deep review",
+      "value": "revisión a fondo"
+    },
     "key.quit": {
       "source": "quit",
       "value": "salir"
@@ -324,6 +356,14 @@
     "msg.confirm_delete_task": {
       "source": "delete task {id}? [y/n]",
       "value": "¿borrar la tarea {id}? [y/n]"
+    },
+    "msg.on_a_heading": {
+      "source": "the cursor is on a heading, not a task: move down to one",
+      "value": "el cursor está en un encabezado, no en una tarea: baja a una"
+    },
+    "msg.no_task_here": {
+      "source": "there is no task under the cursor",
+      "value": "no hay ninguna tarea bajo el cursor"
     },
     "msg.left_as_it_was": {
       "source": "{id} is left as it was",
@@ -3266,14 +3306,6 @@
         "other": "… y {n} archivos más"
       }
     },
-    "detail.thinking_changed": {
-      "source": "thinking mode set to {mode}",
-      "value": "modo de pensamiento cambiado a {mode}"
-    },
-    "detail.effort_changed": {
-      "source": "effort level set to {effort}",
-      "value": "nivel de esfuerzo cambiado a {effort}"
-    },
     "mcp.installing": {
       "source": "registering orbit as an mcp server",
       "value": "registrando orbit como servidor mcp"
@@ -3742,14 +3774,6 @@
       "source": "a deep review of the pull request, written on it; nothing is changed",
       "value": "una revisión a fondo del pull request, escrita en él; no se cambia nada"
     },
-    "tip.detail.thinking": {
-      "source": "turns the thinking mode the next run is asked with",
-      "value": "cambia el modo de thinking con el que se pide la próxima ejecución"
-    },
-    "tip.detail.effort": {
-      "source": "turns the effort the next run is asked to reason with",
-      "value": "cambia el esfuerzo con el que se pide razonar a la próxima ejecución"
-    },
     "tip.menu": {
       "source": "every verb for the thing under the cursor, including the ones it refuses and why",
       "value": "todos los verbos para lo que hay bajo el cursor, incluidos los que rechaza y por qué"
@@ -3807,8 +3831,8 @@
       "value": "elimina la tarea y todo su registro; nada devuelve ninguno de los dos"
     },
     "tip.edit": {
-      "source": "opens this task's own files in $EDITOR",
-      "value": "abre los ficheros propios de esta tarea en $EDITOR"
+      "source": "on a task's diff tab, opens the file on top of the pane in $EDITOR, at that line",
+      "value": "en la pestaña diff de una tarea, abre en $EDITOR el archivo que está arriba del panel, en esa línea"
     },
     "tip.cli": {
       "source": "opens an engine session in this task's worktree, in this terminal, with you at the keyboard",
