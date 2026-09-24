@@ -72,9 +72,11 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.jumpNextDiffFile(), nil
 	case m.tab == tabDiff && (k.String() == "[" || k.String() == "<"):
 		return m.jumpPrevDiffFile(), nil
-	case m.tab == tabDiff && k.String() == "n":
+	// } and { and not n and N: those start a run and write a task, on the
+	// board and here, and a key means one thing everywhere.
+	case m.tab == tabDiff && k.String() == "}":
 		return m.jumpNextDiffHunk(), nil
-	case m.tab == tabDiff && k.String() == "N":
+	case m.tab == tabDiff && k.String() == "{":
 		return m.jumpPrevDiffHunk(), nil
 	case m.tab == tabDiff && k.String() == "f":
 		return m.openDiffFilePicker(), nil
@@ -84,9 +86,10 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.foldAll(), nil
 	case m.tab == tabDiff && k.String() == "Z":
 		return m.toggleCollapseAll(), nil
-	case m.tab == tabImpact && (k.String() == "r" || k.String() == "R"):
+	// B for both sides, and H for the reasons: r lets a stopped run go.
+	case m.tab == tabImpact && k.String() == "B":
 		return m.compareSidesCmd()
-	case m.tab == tabDiff && (k.String() == "r" || k.String() == "R"):
+	case m.tab == tabDiff && k.String() == "H":
 		m.hideDiffRationale = !m.hideDiffRationale
 		p := m.opts.Words
 

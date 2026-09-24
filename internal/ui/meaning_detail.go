@@ -33,9 +33,9 @@ func (m Model) taskScreenMeaning(k string) (string, bool) {
 	p := m.opts.Words
 
 	switch {
-	case m.tab == tabDiff && k == "n":
+	case m.tab == tabDiff && k == "}":
 		return p.T("tip.detail.next_hunk", "jumps to the next change in the diff"), true
-	case m.tab == tabDiff && k == "N":
+	case m.tab == tabDiff && k == "{":
 		return p.T("tip.detail.prev_hunk", "jumps to the change before this one in the diff"), true
 	case m.tab == tabDiff && k == "f":
 		return p.T("tip.detail.file_picker", "lists the files of the diff, to jump to one"), true
@@ -45,9 +45,9 @@ func (m Model) taskScreenMeaning(k string) (string, bool) {
 		return p.T("tip.detail.fold_all", "folds every section of the overview to its heading, or opens them all"), true
 	case m.tab == tabDiff && k == "Z":
 		return p.T("tip.detail.fold_every_file", "folds every file of the diff away, or opens them all"), true
-	case m.tab == tabImpact && (k == "r" || k == "R"):
+	case m.tab == tabImpact && k == "B":
 		return p.T("tip.detail.compare", "runs the flow's own checks on both sides of the change, before and after it"), true
-	case m.tab == tabDiff && (k == "r" || k == "R"):
+	case m.tab == tabDiff && k == "H":
 		return p.T("tip.detail.rationale", "shows or hides the engine's reasons beside the lines it wrote"), true
 	}
 

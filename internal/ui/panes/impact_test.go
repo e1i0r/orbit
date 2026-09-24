@@ -197,7 +197,7 @@ func TestEachCheckSaysWhatBothSidesAnswered(t *testing.T) {
 		"passed before, fails now", "exit 1", "TestUpsertIsIdempotent", "items_test.go:31",
 		"failed before, passes now",
 		"could not be run", "no such directory",
-		"[r] runs them again",
+		"[B] runs them again",
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("the checks do not carry %q:\n%s", want, got)

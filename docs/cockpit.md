@@ -131,7 +131,9 @@ key printed against it there.
 | `F` | the flow this task runs |
 | `o` | open the file under the diff in `$EDITOR` |
 | `z` `Z` | fold every section (overview), collapse every file (diff) |
-| `r` | on impact and diff: read it again |
+| `B` | on impact: run the flow's checks on both sides again |
+| `H` | on diff: show or hide the engine's reasons |
+| `}` `{` | on diff: the next change, the one before |
 
 The task's own verbs work here too, on the task you are reading and not on
 whichever row the board was left on: `r` `s` `x` `b` `h` `d` resume, skip,
