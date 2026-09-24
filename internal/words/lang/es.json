@@ -3754,6 +3754,18 @@
       "source": "every verb for the thing under the cursor, including the ones it refuses and why",
       "value": "todos los verbos para lo que hay bajo el cursor, incluidos los que rechaza y por qué"
     },
+    "tip.board_menu": {
+      "source": "the board's own menu, whatever the cursor is on: what orbit can do, not what a task can",
+      "value": "el menú del tablero, esté donde esté el cursor: lo que orbit puede hacer, no lo que puede una tarea"
+    },
+    "tip.change_flow": {
+      "source": "in the start dialog, picks another flow for the run; on the diff, a file to jump to",
+      "value": "en el diálogo de inicio, elige otro flujo para la ejecución; en el diff, un archivo al que saltar"
+    },
+    "tip.retry_phase": {
+      "source": "runs the phase of this task that went wrong again",
+      "value": "vuelve a correr la fase de esta tarea que salió mal"
+    },
     "tip.pause": {
       "source": "asks a run to stop at its next phase; the phase it is inside finishes first",
       "value": "pide a una ejecución que pare en su próxima fase; la fase en la que está termina antes"
