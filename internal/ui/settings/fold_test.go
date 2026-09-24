@@ -34,6 +34,21 @@ func grouped(t *testing.T) Env {
 	return e
 }
 
+// unfolded is s with every group open and the cursor on the first row,
+// for a test about rows rather than folds.
+func unfolded(s State, e Env) State {
+	seen := map[string]bool{}
+
+	for _, r := range s.Rows(e) {
+		if r.Group != "" && !seen[r.Group] {
+			seen[r.Group] = true
+			s = s.Fold(r.Group, e)
+		}
+	}
+
+	return s.Point(0, e)
+}
+
 func stripped(s State, e Env) []string {
 	out := s.View(40, 100, e)
 	for i := range out {
@@ -62,7 +77,7 @@ func line(t *testing.T, lines []string, text string) string {
 // setting, so which settings are one group is seen rather than counted.
 func TestAGroupHasALineDownItsSide(t *testing.T) {
 	e := grouped(t)
-	s := Open(e).Point(2, e)
+	s := unfolded(Open(e), e).Point(2, e)
 	lines := stripped(s, e)
 
 	if got := line(t, lines, "Queue"); !strings.HasPrefix(got, "  ▾ Queue") {
@@ -92,22 +107,20 @@ func TestAGroupHasALineDownItsSide(t *testing.T) {
 	}
 }
 
-// TestAHeadingFoldsItsGroup: the cursor stands on it, enter hides the
-// group's settings and says how many, and enter again shows them.
+// TestAHeadingFoldsItsGroup. The screen opens with every group folded and
+// the cursor on the first heading; enter opens it, and enter again folds
+// it and says how many settings it hides.
 func TestAHeadingFoldsItsGroup(t *testing.T) {
 	e := grouped(t)
 	s := Open(e)
 
-	s, _ = s.Key(tea.KeyPressMsg{Code: tea.KeyUp}, e)
 	if s.OnHeading() != "Queue" {
-		t.Fatalf("up from the first row stood on %q, want the Queue heading", s.OnHeading())
+		t.Fatalf("the screen opened on %q, want the Queue heading", s.OnHeading())
 	}
 
-	s, _ = s.Key(tea.KeyPressMsg{Code: tea.KeyEnter}, e)
 	lines := strings.Join(stripped(s, e), "\n")
-
 	if !strings.Contains(lines, "▸ Queue (2)") || strings.Contains(lines, "max-running") {
-		t.Errorf("folded, the screen draws:\n%s\nwant the heading with its count and no rows", lines)
+		t.Errorf("opened, the screen draws:\n%s\nwant every group folded", lines)
 	}
 
 	// Down from a folded heading skips the rows it hides.
@@ -118,7 +131,12 @@ func TestAHeadingFoldsItsGroup(t *testing.T) {
 
 	s, _ = s.Key(tea.KeyPressMsg{Code: tea.KeyEnter}, e)
 	if !strings.Contains(strings.Join(stripped(s, e), "\n"), "max-running") {
-		t.Error("enter again left the group folded")
+		t.Error("enter left the group folded")
+	}
+
+	s, _ = s.Key(tea.KeyPressMsg{Code: tea.KeyEnter}, e)
+	if !strings.Contains(strings.Join(stripped(s, e), "\n"), "▸ Queue (2)") {
+		t.Error("enter again left the group open")
 	}
 }
 
@@ -126,7 +144,7 @@ func TestAHeadingFoldsItsGroup(t *testing.T) {
 // under any line of the screen.
 func TestAClickOnAHeadingFindsTheGroup(t *testing.T) {
 	e := grouped(t)
-	s := Open(e)
+	s := unfolded(Open(e), e)
 
 	first, _ := s.LineOf(0, e)
 

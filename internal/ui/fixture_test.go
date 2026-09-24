@@ -14,6 +14,7 @@ package ui
 // this repository.
 
 import (
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -301,4 +302,24 @@ func settingsLine(t *testing.T, m Model, key string) int {
 	t.Fatalf("the settings screen draws no row for %q", key)
 
 	return -1
+}
+
+// unfolded is the settings screen with every group open and the cursor on
+// the first setting, for a test about the rows rather than the folds:
+// the screen opens with every group folded.
+func unfolded(m Model) Model {
+	env := m.settingsEnv()
+
+	var seen []string
+
+	for _, r := range m.settingRowsList() {
+		if r.Group != "" && !slices.Contains(seen, r.Group) {
+			seen = append(seen, r.Group)
+			m.settings = m.settings.Fold(r.Group, env)
+		}
+	}
+
+	m.settings = m.settings.Point(0, env)
+
+	return m
 }

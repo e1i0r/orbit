@@ -118,6 +118,7 @@ func TestATabStripLeavesNoGapBetweenItsTabs(t *testing.T) {
 func TestEveryColumnOfASettingsRowBelongsToOnePillAtMost(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.screen = screenSettings
+	m = unfolded(m)
 
 	rows := m.settingRowsList()
 	if len(rows) == 0 {

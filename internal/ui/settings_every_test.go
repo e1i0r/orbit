@@ -27,7 +27,7 @@ import (
 // stopped agreeing. This is what fails now.
 func TestEverySettingDeclaredIsASettingDrawn(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m = m.openSettings()
+	m = unfolded(m.openSettings())
 
 	drawn := map[string]bool{}
 	for _, r := range m.settingRowsList() {
@@ -49,7 +49,7 @@ func TestEverySettingDeclaredIsASettingDrawn(t *testing.T) {
 // third one appearing has to be named too.
 func TestEveryRowDrawnIsASettingOrADial(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m = m.openSettings()
+	m = unfolded(m.openSettings())
 
 	declared := map[string]bool{}
 	for _, one := range verb.Shipped(m.opts.Words) {
@@ -72,7 +72,7 @@ func TestEveryRowDrawnIsASettingOrADial(t *testing.T) {
 // was — the screen is only worth opening if it explains itself.
 func TestEverySettingDrawnSaysWhatItIs(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m = m.openSettings()
+	m = unfolded(m.openSettings())
 
 	for _, r := range m.settingRowsList() {
 		if r.About == "" {
@@ -86,7 +86,7 @@ func TestEverySettingDrawnSaysWhatItIs(t *testing.T) {
 // the table is twice the height of the screen.
 func TestEverySettingDrawnCanBeReached(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m = m.openSettings()
+	m = unfolded(m.openSettings())
 
 	rows := m.settingRowsList()
 	seen := map[string]bool{}
@@ -134,7 +134,7 @@ func onScreen(rows []string, name string) bool {
 // instead, which is the only gesture that changes one at all.
 func TestARowWithNoDialIsWrittenInto(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m = m.openSettings()
+	m = unfolded(m.openSettings())
 
 	rows := m.settingRowsList()
 
@@ -168,7 +168,7 @@ func TestARowWithNoDialIsWrittenInto(t *testing.T) {
 // rather than one that is typed into.
 func TestARowWithNoDialShowsWhatItHolds(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m = m.openSettings()
+	m = unfolded(m.openSettings())
 
 	held := m.opts.Settings.Choose
 	if _, err := held(m.opts.Words, "chat-id", "7912204269"); err != nil {

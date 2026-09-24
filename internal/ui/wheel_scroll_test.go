@@ -190,7 +190,7 @@ func marked(rows []string) string {
 // because a setting is three lines tall.
 func TestWheelMovesTheSettingsTable(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m = m.openSettings()
+	m = unfolded(m.openSettings())
 
 	y := m.frame.Body.Y
 

@@ -14,7 +14,6 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
-	"slices"
 
 	"github.com/e1i0r/orbit/internal/engine"
 	"github.com/e1i0r/orbit/internal/lowly"
@@ -159,44 +158,19 @@ func doPort(lang interface{ Language() string }) func(string, []string, io.Write
 
 		p := words.For(lang.Language())
 
-		switch c.InWindow {
-		case WindowRefuses:
-			// The table owns the reason; this only delivers it.
+		// The table owns the reason; this only delivers it. A command the
+		// window answers with a screen never reaches here from the menu or
+		// the line (see the ui's launch); one with no screen of its own,
+		// rules or queue, prints into the watch like any other.
+		if c.InWindow == WindowRefuses {
 			return errors.New(c.Because(p))
-		case WindowOpens:
-			// The policy belongs to what is being run, and a parent's is
-			// about the parent: `orbit board` is a screen the window
-			// already is, while `board new` writes a task down. Refusing
-			// the child because the parent draws a screen is the window
-			// refusing the very thing it asked for — which is what the
-			// form's save did, silently, from the moment writing a task
-			// moved under board.
-			if !namesChild(name, args) {
-				return errors.New(p.T("msg.no_screen_yet",
-					"{name} opens a screen this window does not have yet", about(name)))
-			}
 		}
 
 		return c.Run(Context{Out: out, Err: out, Words: p}, args)
 	}
 }
 
-// namesChild is whether the first argument names one of this command's own
-// children, which is how `board new` is told from `board`.
-func namesChild(name string, args []string) bool {
-	if len(args) == 0 {
-		return false
-	}
-
-	v, declared := verb.One(name)
-	if !declared {
-		return false
-	}
-
-	return slices.ContainsFunc(v.Children(), func(kid verb.Verb) bool { return kid.Name == args[0] })
-}
-
-// about is the one substitution doPort's two sentences share.
+// about is the substitution doPort's sentence uses.
 func about(name string) words.Arg {
 	return words.Arg{Name: "name", Value: name}
 }

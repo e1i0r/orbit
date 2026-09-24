@@ -36,10 +36,10 @@ type State struct {
 	// what the drawing took off, and a count of rows would have to be
 	// multiplied out at both ends by whoever remembered to.
 	off int
-	// folded is the groups whose settings are hidden, and head the group
+	// opened is the groups whose settings are shown, and head the group
 	// whose heading the cursor is on, empty while it is on a row. See
 	// fold.go.
-	folded map[string]bool
+	opened map[string]bool
 	head   string
 }
 
@@ -153,5 +153,15 @@ func Open(e Env) State {
 		names = e.Flows()
 	}
 
-	return State{flows: names}
+	s := State{flows: names}
+
+	// The cursor starts on the first heading: every group is folded, so
+	// there is no row to stand on.
+	if e.Kept != nil {
+		if rows := s.Rows(e); len(rows) > 0 {
+			s.head = rows[0].Group
+		}
+	}
+
+	return s
 }

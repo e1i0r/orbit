@@ -56,7 +56,7 @@ func (s State) Key(msg tea.KeyPressMsg, e Env) (State, Out) {
 // space folds it or opens it again, right opens it and left folds it. The
 // keys that turn or clear a dial have no dial here and do nothing.
 func (s State) onHeading(msg tea.KeyPressMsg, e Env) State {
-	open := !s.folded[s.head]
+	open := !s.shut(s.head)
 
 	switch {
 	case key.Matches(msg, e.Keys.Open), msg.Text == " ":
@@ -172,13 +172,13 @@ func (s State) Editing() bool { return s.editing }
 // heading. It is a door because a click on the heading does it, as enter
 // does with the cursor there.
 func (s State) Fold(group string, e Env) State {
-	folded := make(map[string]bool, len(s.folded)+1)
-	for g, on := range s.folded {
-		folded[g] = on
+	opened := make(map[string]bool, len(s.opened)+1)
+	for g, on := range s.opened {
+		opened[g] = on
 	}
 
-	folded[group] = !folded[group]
-	s.folded, s.head = folded, group
+	opened[group] = !opened[group]
+	s.opened, s.head = opened, group
 
 	return s.keepSeen(e)
 }
