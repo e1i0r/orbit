@@ -3698,6 +3698,14 @@
       "source": "shows or hides the engine's reasons beside the lines it wrote",
       "value": "muestra u oculta las razones del motor junto a las líneas que escribió"
     },
+    "tip.detail.merge_pr": {
+      "source": "merges this task's pull request and removes its branch",
+      "value": "mergea el pull request de esta tarea y borra su rama"
+    },
+    "tip.detail.update_pr": {
+      "source": "asks the supervisor to bring the pull request up to date with its base branch",
+      "value": "le pide al supervisor que ponga el pull request al día con su rama base"
+    },
     "tip.detail.close_pr": {
       "source": "closes this task's pull request, after asking why",
       "value": "cierra el pull request de esta tarea, después de preguntar por qué"

@@ -17,6 +17,8 @@ func TestQuestionMarkOnATasksScreenSaysWhatTheKeyDoesThere(t *testing.T) {
 		"p": "pull request",
 		"E": "effort",
 		"k": "engine",
+		"J": "merges",
+		"U": "up to date",
 	} {
 		next, _ := m.armTip().tipKey(keystroke(k))
 		if got := asModel(t, next).message; !strings.Contains(got, want) {
