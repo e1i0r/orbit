@@ -135,6 +135,8 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 	case key.Matches(k, m.keys.Filter):
 		m.filtering = true
 		return m, nil
+	case m.isDeliver(k):
+		return m.deliverKey(k)
 	case key.Matches(k, m.keys.Repos):
 		return m.openRepos(), nil
 	case key.Matches(k, m.keys.Flows):

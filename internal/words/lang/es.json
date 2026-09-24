@@ -101,6 +101,38 @@
       "source": "help",
       "value": "ayuda"
     },
+    "key.create_pr": {
+      "source": "create PR",
+      "value": "crear PR"
+    },
+    "key.update_pr": {
+      "source": "update PR",
+      "value": "actualizar PR"
+    },
+    "key.merge_pr": {
+      "source": "merge PR",
+      "value": "merge PR"
+    },
+    "key.close_pr": {
+      "source": "close PR",
+      "value": "cerrar PR"
+    },
+    "key.fix_checks": {
+      "source": "fix checks",
+      "value": "corregir checks"
+    },
+    "key.more_tests": {
+      "source": "more tests",
+      "value": "más pruebas"
+    },
+    "key.resolve": {
+      "source": "resolve comments",
+      "value": "resolver comentarios"
+    },
+    "key.review": {
+      "source": "deep review",
+      "value": "revisión a fondo"
+    },
     "key.quit": {
       "source": "quit",
       "value": "salir"

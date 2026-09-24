@@ -161,14 +161,14 @@ func (e Env) actions(w int) []string {
 
 	out := []string{head}
 	for _, l := range prose.Fields([]prose.Field{
-		act("p", p.T("overview.action_pr", "create PR")),
+		act("P", p.T("overview.action_pr", "create PR")),
 		act("U", p.T("overview.action_update_pr", "update PR")),
 		act("J", p.T("overview.action_merge_pr", "merge PR")),
 		act("X", p.T("overview.action_close_pr", "close PR")),
 		act("C", p.T("overview.action_checks", "fix checks")),
 		act("T", p.T("overview.action_tests", "more tests")),
-		act("R", p.T("overview.action_resolve", "resolve comments")),
-		act("D", p.T("overview.action_review", "deep review")),
+		act("O", p.T("overview.action_resolve", "resolve comments")),
+		act("V", p.T("overview.action_review", "deep review")),
 		act("a", p.T("overview.action_feedback", "feedback")),
 		act("0", p.T("overview.action_diff", "diff")),
 	}, gridColumns(w), w-2*len(prose.Gutter)) {
