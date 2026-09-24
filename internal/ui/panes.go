@@ -118,7 +118,7 @@ func keyToPane(k string) (tab, bool) {
 		return tabImpact, true
 	case "w", "W":
 		return tabThinking, true
-	case "u", "U":
+	case "u":
 		return tabPrompt, true
 	case "y":
 		return tabHistory, true

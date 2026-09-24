@@ -112,11 +112,13 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.openMenu(""), nil
 	case key.Matches(k, m.keys.Menu), k.String() == "m":
 		return m.openMenuForContext(), nil
-	case k.String() == "M":
+	// J and not M: M is the board menu, matched above on every screen.
+	case k.String() == "J":
 		return m.mergePR()
 	case k.String() == "X":
 		return m.closePR()
-	case k.String() == "u" || k.String() == "U":
+	// U alone: u is the prompt pane's letter, taken by keyToPane above.
+	case k.String() == "U":
 		return m.updatePRBranch()
 	// w and W are not here: they are the thinking pane's own key, taken by
 	// keyToPane above, so this case never saw them.
