@@ -205,14 +205,25 @@ func TestSettingsKeyEditingAndNavigation(t *testing.T) {
 	next, _ := m.settingsKey(tea.KeyPressMsg{Code: 'k', Text: "k"})
 
 	m = asModel(t, next)
+	if m.settings.OnHeading() != rows[0].Group {
+		t.Errorf("up from row 0 went to heading %q, want its group's %q", m.settings.OnHeading(), rows[0].Group)
+	}
+
+	next, _ = m.settingsKey(tea.KeyPressMsg{Code: 'k', Text: "k"})
+
+	m = asModel(t, next)
 	if m.settings.Chosen() != len(rows)-1 {
 		t.Errorf("up from row 0 wrapped to %d, want %d", m.settings.Chosen(), len(rows)-1)
 	}
 
-	next, _ = m.settingsKey(tea.KeyPressMsg{Code: 'j', Text: "j"})
+	// Down from the last row wraps to the first heading, and once more to
+	// the first row.
+	for range 2 {
+		next, _ = m.settingsKey(tea.KeyPressMsg{Code: 'j', Text: "j"})
+		m = asModel(t, next)
+	}
 
-	m = asModel(t, next)
-	if m.settings.Chosen() != 0 {
+	if m.settings.OnHeading() != "" || m.settings.Chosen() != 0 {
 		t.Errorf("down from the last row wrapped to %d, want 0", m.settings.Chosen())
 	}
 

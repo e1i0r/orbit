@@ -199,6 +199,10 @@ func (m Model) hitStart(x, y int) point.Target {
 // under it: the cursor goes to the row and nothing is changed.
 const settingsPointOnly = "point"
 
+// settingsFold marks a click on a group's heading, which folds the group
+// or opens it again. Field is the group.
+const settingsFold = "fold"
+
 // hitSettings is the row of the table under the pointer, and the pill of it
 // if the pointer is on one.
 //
@@ -210,6 +214,10 @@ func (m Model) hitSettings(x, y int) point.Target {
 	line, ok := m.frame.BodyRow(y)
 	if !ok {
 		return point.Target{}
+	}
+
+	if group, on := m.settings.HeadAt(line, m.settingsEnv()); on {
+		return point.Target{Kind: point.SettingsRow, Key: settingsFold, Field: group}
 	}
 
 	rowIdx, on := m.settings.RowAt(line, m.settingsEnv())

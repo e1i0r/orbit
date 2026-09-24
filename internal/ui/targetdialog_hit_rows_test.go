@@ -153,9 +153,9 @@ func TestHitSettingsEveryOutcome(t *testing.T) {
 		t.Errorf("hitSettings above the table = %+v, want point.None", got)
 	}
 
-	// A heading is not a setting.
-	if got := m.hitSettings(10, y+4); got.Kind != point.None {
-		t.Errorf("hitSettings on the first group's heading = %+v, want point.None", got)
+	// A heading is not a setting: a click there folds its group.
+	if got := m.hitSettings(10, y+4); got.Key != settingsFold || got.Field == "" {
+		t.Errorf("hitSettings on the first group's heading = %+v, want its group folded", got)
 	}
 
 	// The language row, which offers pills, brought into view the way a
@@ -228,7 +228,7 @@ func TestHitSettingsFollowsTheScrolledTable(t *testing.T) {
 	}
 
 	// The cursor walks to the last dial, which is what pulls the table up.
-	for range len(rows) - 1 {
+	for range 2 * len(rows) {
 		m.settings = m.settings.Scroll(1, m.settingsEnv())
 	}
 

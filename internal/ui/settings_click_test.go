@@ -49,8 +49,9 @@ func TestASettingIsTurnedWhereItIsDrawn(t *testing.T) {
 		}
 
 		for line := range h {
+			// A heading folds its group and turns nothing.
 			got := at.hitSettings(settings.PillsAt+1, at.frame.Body.Y+line)
-			if got.Kind != point.SettingsRow {
+			if got.Kind != point.SettingsRow || got.Key == settingsFold {
 				continue
 			}
 
@@ -113,5 +114,31 @@ func TestAClickUnderASettingsNameChangesNothing(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+// TestAClickOnAGroupsHeadingFoldsIt, and a second click opens it. The
+// heading is drawn over the first row of the group, so the line above
+// that row is where the pointer finds it.
+func TestAClickOnAGroupsHeadingFoldsIt(t *testing.T) {
+	m, _ := testModel(t, 100, 30)
+	m = m.openSettings()
+
+	first := m.settingRowsList()[0]
+	name, _ := m.settings.LineOf(0, m.settingsEnv())
+
+	hit := m.hitSettings(4, m.frame.Body.Y+name-1)
+	if hit.Kind != point.SettingsRow || hit.Key != settingsFold || hit.Field != first.Group {
+		t.Fatalf("a click on the heading found %+v, want the %s group", hit, first.Group)
+	}
+
+	folded := clicked(t, m, hit)
+	if _, shown := folded.settings.LineOf(0, folded.settingsEnv()); shown {
+		t.Errorf("after a click on %s, %s is still drawn", first.Group, first.Key)
+	}
+
+	opened := clicked(t, folded, hit)
+	if _, shown := opened.settings.LineOf(0, opened.settingsEnv()); !shown {
+		t.Errorf("a second click on %s left %s hidden", first.Group, first.Key)
 	}
 }
