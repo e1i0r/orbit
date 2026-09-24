@@ -112,14 +112,8 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.openMenu(""), nil
 	case key.Matches(k, m.keys.Menu), k.String() == "m":
 		return m.openMenuForContext(), nil
-	// J and not M: M is the board menu, matched above on every screen.
-	case k.String() == "J":
-		return m.mergePR()
-	case k.String() == "X":
-		return m.closePR()
-	// U alone: u is the prompt pane's letter, taken by keyToPane above.
-	case k.String() == "U":
-		return m.updatePRBranch()
+	case m.isDeliver(k):
+		return m.deliverKey(k)
 	// w and W are not here: they are the thinking pane's own key, taken by
 	// keyToPane above, so this case never saw them.
 	case k.String() == "e":
@@ -132,7 +126,7 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		}
 
 		return m.syncPanes().say(msg), nil
-	case k.String() == "v" || k.String() == "V":
+	case k.String() == "v":
 		m.rawText = !m.rawText
 		p := m.opts.Words
 
@@ -142,26 +136,6 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		}
 
 		return m.syncPanes().say(msg), nil
-	case k.String() == "p" || k.String() == "P":
-		return m.deliverPR()
-	// Fix checks is C, and lower-case c is left to the interactive CLI.
-	// Both were c: the CLI is a binding the key bar draws as [c]
-	// interactive CLI on this screen and on the board, this case is
-	// matched by the letter and sits above it, and so the hint the reader
-	// clicked wrote an instruction note for the next run instead. Upper
-	// case is where the deliver toolbar puts its other verbs — M merge, X
-	// close, T more tests — and it costs the CLI only its alias, since c
-	// is what is drawn for it everywhere.
-	case k.String() == "C":
-		return m.fixChecks()
-	case k.String() == "T":
-		return m.addMoreTests()
-	// R and not r: r lets a parked run go, and a reader who meant to bring
-	// back a review would otherwise pass the gate it is waiting at.
-	case k.String() == "R":
-		return m.resolveComments()
-	case k.String() == "D":
-		return m.reviewPR()
 	case k.String() == "F":
 		return m.openFlows(), nil
 	case key.Matches(k, m.keys.Language):

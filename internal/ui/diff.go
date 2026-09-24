@@ -24,10 +24,8 @@ import (
 // silently does nothing is indistinguishable from a key that is broken, and
 // the reader's next move is to press it again.
 func (m Model) edit() (tea.Model, tea.Cmd) {
-	p := m.opts.Words
 	if m.tab != tabDiff {
-		return m.say(p.T("msg.only_the_diff", "{key} opens a file, and only the diff tab has one to open",
-			about("key", m.keys.Edit.Help().Key))), nil
+		return m.onlyTheDiff(), nil
 	}
 
 	cmd, err := m.editorFor()
@@ -39,6 +37,13 @@ func (m Model) edit() (tea.Model, tea.Cmd) {
 	// the alternate screen still up — is what makes a terminal program look
 	// like it has crashed.
 	return m, tea.ExecProcess(cmd, func(err error) tea.Msg { return editorMsg{Err: err} })
+}
+
+// onlyTheDiff is what o says anywhere but a task's diff tab, the board
+// among them: the file it opens is the one under the diff.
+func (m Model) onlyTheDiff() Model {
+	return m.say(m.opts.Words.T("msg.only_the_diff", "{key} opens a file, and only the diff tab has one to open",
+		about("key", m.keys.Edit.Help().Key)))
 }
 
 // editorFor builds the command $EDITOR would be run as: the file the top

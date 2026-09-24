@@ -129,6 +129,7 @@ var borrowedWholesale = map[string]string{
 	"overview.thinking":         "the dial, the flag and the engines all say thinking",
 	"key.supervisor":            "supervisor is supervisor",
 	"overview.action_merge_pr":  "merge and PR are what the forge calls them",
+	"key.merge_pr":              "merge and PR are what the forge calls them",
 	"upgrade.go_install_failed": "go install is the name of the command that failed",
 	"flows.until_placeholder":   "a shell command shown as an example, and a command is not translated",
 	"compare.base_said":         "the two sides of the comparison, named: base is the branch and worktree is what git calls the checkout",

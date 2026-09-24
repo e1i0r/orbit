@@ -118,14 +118,15 @@ keys are in its footer.
 ## On a task's screen
 
 The deliver keys are the toolbar at the foot of the overview, and each is the
-key printed against it there.
+key printed against it there. They are capitals no other verb has, so each one
+does the same on the board, to the task under the cursor.
 
 | Key | What |
 | :--- | :--- |
-| `p` `U` | create the pull request, update its branch |
+| `P` `U` | create the pull request, update its branch |
 | `J` `X` | merge it, close it |
 | `C` `T` | fix the failing checks, ask for more tests |
-| `R` `D` | bring the review comments back, ask for a deep review |
+| `O` `V` | answer the review comments, ask for a deep review |
 | `a` | leave a note |
 | `E` | engine and model, reasoning effort and thinking mode, as on the board |
 | `F` | the flow this task runs |

@@ -67,6 +67,8 @@ func (m Model) leftOver(k fmt.Stringer) (tea.Model, tea.Cmd, bool) {
 		return next, cmd, true
 	case key.Matches(k, m.keys.Commands):
 		return m.openPalette(), nil, true
+	case key.Matches(k, m.keys.Repos):
+		return m.openRepos(), nil, true
 	// The engines screen is where the effort and the thinking the next run
 	// is asked with are turned, on a task's screen as on the board.
 	case key.Matches(k, m.keys.EngineKnobs):
