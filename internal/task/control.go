@@ -150,9 +150,17 @@ func forget(s *store.Store, t Task) error {
 
 // ended is what a run does last: the word left for it is taken off, then
 // its claim. In that order, so no next run can start in between and find it.
+//
+// The claim comes off only over a record that says the run is over. One
+// that does not keeps its marker, and Reconcile, which skips a task with
+// no marker, closes it once this process is gone. See saidOver.
 func ended(s *store.Store, t Task, release func()) {
 	if err := forget(s, t); err != nil {
 		logger.Warn("task/run", "%s: %v", t.ID, err)
+	}
+
+	if !saidOver(s, t) {
+		return
 	}
 
 	release()

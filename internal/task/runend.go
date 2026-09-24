@@ -38,3 +38,29 @@ func failed(s *store.Store, t Task, err error) error {
 
 	return err
 }
+
+// errNoEnd is what a run that left without its last line is said to have
+// stopped for.
+var errNoEnd = errors.New("the run stopped without writing how it ended")
+
+// saidOver makes sure the record of a run that is ending says it ended, and
+// reports whether it does.
+//
+// A run can leave without its last line: a phase or a gate panics, or the
+// write of task.finished fails. Its claim was taken off all the same, and
+// Reconcile skips a task nothing claims, so the task read as running for
+// as long as anybody looked. The run writes task.failed for itself here.
+// If that write fails too, there is nothing more this process can do, and
+// false leaves the marker for Reconcile.
+func saidOver(s *store.Store, t Task) bool {
+	events, err := Events(s, t)
+	if err != nil {
+		return false
+	}
+
+	if !inFlight(events) {
+		return true
+	}
+
+	return emit(s, t, record.Event{Kind: record.TaskFailed, Text: errNoEnd.Error()}) == nil
+}
