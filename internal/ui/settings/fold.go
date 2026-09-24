@@ -3,9 +3,10 @@ package settings
 // Folding a group: its heading is a place the cursor can stand, and
 // choosing it shows or hides the settings under it.
 //
-// Every group starts open. Which are folded is the screen's own and goes
-// when it closes: a fold is a way of reading the table this once, not a
-// setting.
+// Every group starts folded, so the screen opens as a list of what there
+// is to set, and the reader opens the group they came for. Which are open
+// is the screen's own and goes when it closes: a fold is a way of reading
+// the table this once, not a setting.
 
 // stop is a place the cursor can stand: a group's heading, or a row. The
 // rows of a folded group are not stops, because they are not drawn.
@@ -23,7 +24,7 @@ func (s State) stops(rows []Row) []stop {
 			out = append(out, stop{group: r.Group, row: -1})
 		}
 
-		if !s.folded[r.Group] {
+		if !s.shut(r.Group) {
 			out = append(out, stop{group: r.Group, row: i})
 		}
 	}
@@ -86,6 +87,10 @@ func (s State) standOn(at stop) State {
 func lastOf(rows []Row, i int) bool {
 	return i == len(rows)-1 || rows[i+1].Group != rows[i].Group
 }
+
+// shut is whether a group's settings are hidden. A row in no group has no
+// heading to open it from, so it is never hidden.
+func (s State) shut(group string) bool { return group != "" && !s.opened[group] }
 
 // counted is how many settings a group holds, which a folded heading shows.
 func counted(rows []Row, group string) int {

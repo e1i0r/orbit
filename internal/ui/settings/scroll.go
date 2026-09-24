@@ -66,7 +66,7 @@ func (s State) placed(rows []Row) (starts, heads []int, lines int) {
 			lines += headingLines
 		}
 
-		if !s.folded[rows[i].Group] {
+		if !s.shut(rows[i].Group) {
 			starts[i] = lines
 			lines += rowLines
 		}
@@ -125,6 +125,12 @@ func (s State) keepSeen(e Env) State {
 	if s.head != "" || from < 0 {
 		from = lineOfHead(rows, heads, s.headOf(rows))
 		last = from
+	}
+
+	// The first row of a group is brought on with its heading, or the
+	// reader scrolling back up sees a setting with no group over it.
+	if s.head == "" && heads[s.sel] >= 0 {
+		from = heads[s.sel]
 	}
 
 	switch {

@@ -34,7 +34,7 @@ func (s State) View(h, w int, e Env) []string {
 			body = append(body, cells.Fit("  "+s.heading(rows, r.Group), w))
 		}
 
-		if s.folded[r.Group] {
+		if s.shut(r.Group) {
 			continue
 		}
 
@@ -61,7 +61,7 @@ func (s State) heading(rows []Row, group string) string {
 	}
 
 	text := "▾ " + group
-	if s.folded[group] {
+	if s.shut(group) {
 		text = fmt.Sprintf("▸ %s (%d)", group, counted(rows, group))
 	}
 

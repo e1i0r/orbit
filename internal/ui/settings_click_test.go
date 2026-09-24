@@ -26,7 +26,7 @@ import (
 // three screens this arithmetic was copied to.
 func TestASettingIsTurnedWhereItIsDrawn(t *testing.T) {
 	m, _ := testModel(t, 100, 24)
-	m = m.openSettings()
+	m = unfolded(m.openSettings())
 
 	list := m.settingRowsList()
 	if len(list) == 0 {
@@ -76,7 +76,7 @@ func TestASettingIsTurnedWhereItIsDrawn(t *testing.T) {
 // whole flow" turned autopilot off. There the click only moves the cursor.
 func TestAClickUnderASettingsNameChangesNothing(t *testing.T) {
 	m, _ := testModel(t, 100, 40)
-	m = m.openSettings()
+	m = unfolded(m.openSettings())
 
 	values := func(m Model) map[string]string {
 		held := map[string]string{}
@@ -117,28 +117,40 @@ func TestAClickUnderASettingsNameChangesNothing(t *testing.T) {
 	}
 }
 
-// TestAClickOnAGroupsHeadingFoldsIt, and a second click opens it. The
-// heading is drawn over the first row of the group, so the line above
-// that row is where the pointer finds it.
+// TestAClickOnAGroupsHeadingFoldsIt. The screen opens with every group
+// folded; a click on a heading opens its group, and a second click folds
+// it again.
 func TestAClickOnAGroupsHeadingFoldsIt(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m = m.openSettings()
 
 	first := m.settingRowsList()[0]
-	name, _ := m.settings.LineOf(0, m.settingsEnv())
-
-	hit := m.hitSettings(4, m.frame.Body.Y+name-1)
-	if hit.Kind != point.SettingsRow || hit.Key != settingsFold || hit.Field != first.Group {
-		t.Fatalf("a click on the heading found %+v, want the %s group", hit, first.Group)
+	if _, shown := m.settings.LineOf(0, m.settingsEnv()); shown {
+		t.Fatalf("%s is drawn on a screen that opens folded", first.Key)
 	}
 
-	folded := clicked(t, m, hit)
-	if _, shown := folded.settings.LineOf(0, folded.settingsEnv()); shown {
-		t.Errorf("after a click on %s, %s is still drawn", first.Group, first.Key)
+	var hit point.Target
+
+	for line := range m.frame.Body.H {
+		got := m.hitSettings(4, m.frame.Body.Y+line)
+		if got.Key == settingsFold && got.Field == first.Group {
+			hit = got
+
+			break
+		}
 	}
 
-	opened := clicked(t, folded, hit)
+	if hit.Key != settingsFold {
+		t.Fatalf("no line of the screen is the %s heading", first.Group)
+	}
+
+	opened := clicked(t, m, hit)
 	if _, shown := opened.settings.LineOf(0, opened.settingsEnv()); !shown {
-		t.Errorf("a second click on %s left %s hidden", first.Group, first.Key)
+		t.Errorf("after a click on %s, %s is still hidden", first.Group, first.Key)
+	}
+
+	folded := clicked(t, opened, hit)
+	if _, shown := folded.settings.LineOf(0, folded.settingsEnv()); shown {
+		t.Errorf("a second click on %s left %s drawn", first.Group, first.Key)
 	}
 }

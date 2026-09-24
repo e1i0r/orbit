@@ -87,7 +87,7 @@ func TestSettingsModalOperations(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 
 	// 1. Open settings
-	m = m.openSettings()
+	m = unfolded(m.openSettings())
 	if m.screen != screenSettings {
 		t.Errorf("screen = %v, want screenSettings", m.screen)
 	}
