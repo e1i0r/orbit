@@ -75,8 +75,8 @@ func TestTheDeliverActionsStandInColumns(t *testing.T) {
 		captions, keys int
 		caption, key   string
 	}{
-		{1, 2, "UPDATE PR", "u"},
-		{1, 2, "MERGE PR", "M"},
+		{1, 2, "UPDATE PR", "U"},
+		{1, 2, "MERGE PR", "J"},
 		{1, 2, "CLOSE PR", "X"},
 		{4, 5, "MORE TESTS", "T"},
 		{4, 5, "RESOLVE COMMENTS", "R"},

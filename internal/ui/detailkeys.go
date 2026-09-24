@@ -112,11 +112,13 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.openMenu(""), nil
 	case key.Matches(k, m.keys.Menu), k.String() == "m":
 		return m.openMenuForContext(), nil
-	case k.String() == "M":
+	// J and not M: M is the board menu, matched above on every screen.
+	case k.String() == "J":
 		return m.mergePR()
 	case k.String() == "X":
 		return m.closePR()
-	case k.String() == "u" || k.String() == "U":
+	// U alone: u is the prompt pane's letter, taken by keyToPane above.
+	case k.String() == "U":
 		return m.updatePRBranch()
 	// w and W are not here: they are the thinking pane's own key, taken by
 	// keyToPane above, so this case never saw them.
@@ -188,6 +190,8 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 			"effort level set to {effort}", about("effort", eff))), nil
 	case k.String() == "F":
 		return m.openFlows(), nil
+	case key.Matches(k, m.keys.Language):
+		return m.switchLanguage()
 	case key.Matches(k, m.keys.RetryPhase):
 		return m.retryPhase()
 	case key.Matches(k, m.keys.Ask):
@@ -215,9 +219,9 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 	}
 
-	// What is left of the verbs about a task, r and x among them: the ones
-	// whose letter this screen has not taken for something of its own.
-	if next, cmd, ok := m.taskVerb(k); ok {
+	// What is left of the verbs about a task, r and x among them, and of
+	// the window's own keys: the ones this screen has not taken.
+	if next, cmd, ok := m.leftOver(k); ok {
 		return next, cmd
 	}
 
@@ -293,52 +297,4 @@ func (m Model) newest() Model {
 	}
 
 	return m
-}
-
-// filesOf reads what one task's directory holds, off the event loop.
-func filesOf(r Reader, t view.Task) tea.Cmd {
-	return func() tea.Msg {
-		if r == nil {
-			return filesMsg{ID: t.ID, Err: errNoRecordPort}
-		}
-
-		files, err := r.Files(t.RepoPath, t.ID)
-		if err != nil {
-			return filesMsg{ID: t.ID, Err: err}
-		}
-
-		return filesMsg{ID: t.ID, Files: files}
-	}
-}
-
-// fileTextOf reads one file of a task's directory, off the event loop.
-func fileTextOf(r Reader, t view.Task, name string) tea.Cmd {
-	return func() tea.Msg {
-		if r == nil {
-			return fileTextMsg{ID: t.ID, Name: name, Err: errNoRecordPort}
-		}
-
-		text, err := r.FileText(t.RepoPath, t.ID, name)
-		if err != nil {
-			return fileTextMsg{ID: t.ID, Name: name, Err: err}
-		}
-
-		return fileTextMsg{ID: t.ID, Name: name, Text: text}
-	}
-}
-
-// logOf reads one task's record, off the event loop.
-func logOf(r Reader, t view.Task) tea.Cmd {
-	return func() tea.Msg {
-		if r == nil {
-			return logMsg{ID: t.ID, Err: errNoRecordPort}
-		}
-
-		entries, err := r.Log(t.RepoPath, t.ID)
-		if err != nil {
-			return logMsg{ID: t.ID, Err: err}
-		}
-
-		return logMsg{ID: t.ID, Entries: entries}
-	}
 }

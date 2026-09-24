@@ -149,6 +149,8 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.openSupervisor(), nil
 	case key.Matches(k, m.keys.Autopilot):
 		return m.autopilot()
+	case key.Matches(k, m.keys.Language):
+		return m.switchLanguage()
 	case key.Matches(k, m.keys.Pause):
 		return m.verb(m.keys.Pause, "pause")
 	case key.Matches(k, m.keys.Resume):

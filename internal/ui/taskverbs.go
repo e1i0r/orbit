@@ -50,3 +50,30 @@ func (m Model) taskVerb(k fmt.Stringer) (tea.Model, tea.Cmd, bool) {
 
 	return next, cmd, true
 }
+
+// leftOver is a key the task screen did not take for itself: a verb about
+// the task, or one the whole window answers. A is drawn in the bar on
+// every screen and : is the command line from anywhere, and both did
+// nothing here and said nothing.
+func (m Model) leftOver(k fmt.Stringer) (tea.Model, tea.Cmd, bool) {
+	if next, cmd, ok := m.taskVerb(k); ok {
+		return next, cmd, true
+	}
+
+	switch {
+	case key.Matches(k, m.keys.Autopilot):
+		next, cmd := m.autopilot()
+
+		return next, cmd, true
+	case key.Matches(k, m.keys.Commands):
+		return m.openPalette(), nil, true
+	// The filter is the board's, so / goes back to it with the filter
+	// open: a task is looked for among the others, not inside one.
+	case key.Matches(k, m.keys.Filter):
+		m.screen, m.filtering = screenList, true
+
+		return m, nil, true
+	}
+
+	return m, nil, false
+}

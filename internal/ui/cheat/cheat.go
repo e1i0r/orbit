@@ -239,13 +239,28 @@ func (s State) View(h, w int, e Env) []string {
 
 	out = append(out, "")
 
+	// The keys are read off the keymap, like the verbs above. This section
+	// kept its own copy of them, and gave the engine dial as M for as long
+	// as the copy outlived the move to E.
+	click := p.T("help.live.click", "click")
+	glyph := func(b key.Binding, icon string) string {
+		g := "[" + b.Help().Key + "]"
+		if icon != "" {
+			g += " / " + icon + " " + click
+		}
+
+		return g
+	}
+
 	renderSection(p.T("help.live.title", "⚡ 3. LIVE CONTROL AND SETTINGS"), [][2]string{
-		{p.T("help.live.autopilot_key", "[A] / ⚡ click"), p.T("help.live.autopilot", "Toggle autopilot: tasks in to do start on their own")},
-		{p.T("help.live.engine_key", "[M] / 🧠 click"), p.T("help.live.engine", "Engine dial: claude, codex, opencode, effort and thinking")},
-		{"[S]", p.T("help.live.supervisor", "The supervisor: what it has said about the board, and the line you answer it on")},
-		{p.T("help.live.repos_key", "[R] / 📦 click"), p.T("help.live.repos", "Pick which of the connected repositories the board shows")},
-		{p.T("help.live.quota_key", "[Q] / ⏳ click"), p.T("help.live.quota", "What is left of each engine's windows, and when each comes back")},
-		{p.T("help.live.lang_key", "🌐 ES / EN (click)"), p.T("help.live.lang", "Switch the language of the whole window, live")},
+		{glyph(e.Keys.Autopilot, "⚡"), p.T("help.live.autopilot", "Toggle autopilot: tasks in to do start on their own")},
+		{glyph(e.Keys.EngineKnobs, "🧠"), p.T("help.live.engine", "Engine dial: claude, codex, opencode, effort and thinking")},
+		{glyph(e.Keys.Flows, ""), p.T("help.live.flows", "The flows a run can be made of, and what each phase is asked")},
+		{glyph(e.Keys.Knowledge, ""), p.T("help.live.knowledge", "What orbit has learned about this code, and tells each run")},
+		{glyph(e.Keys.Supervisor, ""), p.T("help.live.supervisor", "The supervisor: what it has said about the board, and the line you answer it on")},
+		{glyph(e.Keys.Repos, "📦"), p.T("help.live.repos", "Pick which of the connected repositories the board shows")},
+		{glyph(e.Keys.Quota, "⏳"), p.T("help.live.quota", "What is left of each engine's windows, and when each comes back")},
+		{glyph(e.Keys.Language, "🌐"), p.T("help.live.lang", "Switch the language of the whole window, live")},
 	})
 
 	// The tab rows are the tab list itself, not a copy of it: same key, same
@@ -264,6 +279,7 @@ func (s State) View(h, w int, e Env) []string {
 	tabs = append(tabs,
 		[2]string{"[Tab / shift+tab]", p.T("help.tabs.cycle", "Next tab / previous tab")},
 		[2]string{"[r] / [s] / [a]", p.T("help.tabs.control", "Let a stopped run go / skip the phase it waits at / write it a note")},
+		[2]string{glyph(e.Keys.RetryPhase, ""), p.T("help.tabs.retry", "Run the phase that failed again")},
 	)
 	renderSection(tabsTitle, tabs)
 
