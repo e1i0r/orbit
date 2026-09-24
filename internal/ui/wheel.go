@@ -60,7 +60,11 @@ func (m Model) wheel(e tea.Mouse) Model {
 		// a notch that did nothing because the pointer happened to rest on
 		// a section head is a wheel that works in most of the window.
 		switch m.hit(e.X, e.Y).Kind {
-		case point.PaneBody, point.Fold, point.Seam, point.PaneRow, point.ScrollBar:
+		// A file on the map and a phase's button on the flow tree are
+		// rows of the pane too: left out, the wheel did nothing over a
+		// map's files, which is most of a map.
+		case point.PaneBody, point.Fold, point.Seam, point.PaneRow, point.ScrollBar,
+			point.MapFile, point.RunFrom:
 		default:
 			return m
 		}
