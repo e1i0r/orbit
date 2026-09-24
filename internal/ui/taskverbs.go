@@ -67,6 +67,8 @@ func (m Model) leftOver(k fmt.Stringer) (tea.Model, tea.Cmd, bool) {
 		return next, cmd, true
 	case key.Matches(k, m.keys.Commands):
 		return m.openPalette(), nil, true
+	case key.Matches(k, m.keys.Repos):
+		return m.openRepos(), nil, true
 	// The filter is the board's, so / goes back to it with the filter
 	// open: a task is looked for among the others, not inside one.
 	case key.Matches(k, m.keys.Filter):

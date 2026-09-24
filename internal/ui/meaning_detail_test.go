@@ -14,7 +14,7 @@ func TestQuestionMarkOnATasksScreenSaysWhatTheKeyDoesThere(t *testing.T) {
 	m, _ := openIn(t, words.For("en"), "ACME-2698", fixtureEntries(), wideDiff())
 
 	for k, want := range map[string]string{
-		"p": "pull request",
+		"P": "pull request",
 		"E": "effort",
 		"k": "engine",
 		"J": "merges",

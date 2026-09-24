@@ -66,6 +66,30 @@ func (m Model) meaning(k fmt.Stringer) string {
 		return p.T("tip.retry_phase", "runs the phase of this task that went wrong again")
 	case key.Matches(k, m.keys.Edit):
 		return p.T("tip.edit", "on a task's diff tab, opens the file on top of the pane in $EDITOR, at that line")
+	case key.Matches(k, m.keys.CreatePR):
+		return p.T("tip.detail.create_pr",
+			"opens a pull request for this task's branch")
+	case key.Matches(k, m.keys.UpdatePR):
+		return p.T("tip.detail.update_pr",
+			"asks the supervisor to bring the pull request up to date with its base branch")
+	case key.Matches(k, m.keys.MergePR):
+		return p.T("tip.detail.merge_pr",
+			"merges this task's pull request and removes its branch")
+	case key.Matches(k, m.keys.ClosePR):
+		return p.T("tip.detail.close_pr",
+			"closes this task's pull request, after asking why")
+	case key.Matches(k, m.keys.FixChecks):
+		return p.T("tip.detail.fix_checks",
+			"asks the supervisor to fix the checks that failed on the pull request")
+	case key.Matches(k, m.keys.MoreTests):
+		return p.T("tip.detail.more_tests",
+			"asks the supervisor for the tests this change is missing")
+	case key.Matches(k, m.keys.Resolve):
+		return p.T("tip.detail.resolve",
+			"asks the supervisor to answer the review comments on the pull request")
+	case key.Matches(k, m.keys.Review):
+		return p.T("tip.detail.review",
+			"a deep review of the pull request, written on it; nothing is changed")
 	case key.Matches(k, m.keys.CLI):
 		return p.T("tip.cli", "opens an engine session in this task's worktree, in this terminal, with you at the keyboard")
 	case key.Matches(k, m.keys.Filter):

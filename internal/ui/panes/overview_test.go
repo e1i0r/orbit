@@ -79,8 +79,8 @@ func TestTheDeliverActionsStandInColumns(t *testing.T) {
 		{1, 2, "MERGE PR", "J"},
 		{1, 2, "CLOSE PR", "X"},
 		{4, 5, "MORE TESTS", "T"},
-		{4, 5, "RESOLVE COMMENTS", "R"},
-		{4, 5, "DEEP REVIEW", "D"},
+		{4, 5, "RESOLVE COMMENTS", "O"},
+		{4, 5, "DEEP REVIEW", "V"},
 		// The ninth and tenth verbs start a third row of their own, which is
 		// what the grid does with anything past two full rows.
 		{7, 8, "FEEDBACK", "a"},
