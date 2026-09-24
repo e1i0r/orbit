@@ -32,7 +32,7 @@ func TestARetryFromAPhaseIsShownTheWorkBeforeIt(t *testing.T) {
 			}
 		}
 
-		return lastSaid(s, tk)
+		return lastSaid(s, tk, "review")
 	}
 
 	// An attempt that says nothing of where it began, as every one before
@@ -48,5 +48,35 @@ func TestARetryFromAPhaseIsShownTheWorkBeforeIt(t *testing.T) {
 
 	if got := said(record.Event{Kind: record.PhaseStarted, Phase: "implement"}); got != "" {
 		t.Errorf("implement running again was shown %q, the words of the run it replaces", got)
+	}
+}
+
+// TestARetryIsNotShownThePhasesOwnOldWords. Retried from review after
+// review failed, the last thing in the record is review's own failure,
+// from the attempt being replaced. The gate in front of review is asked
+// about the work before it: what implement said.
+func TestARetryIsNotShownThePhasesOwnOldWords(t *testing.T) {
+	s, r := fixture(t)
+
+	tk, err := Create(s, r, "ACME-81", "make the endpoint idempotent", "")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	for _, e := range []record.Event{
+		{Kind: record.TaskStarted},
+		{Kind: record.PhaseStarted, Phase: "implement"},
+		{Kind: record.PhaseFinished, Phase: "implement", Text: "make check is green"},
+		{Kind: record.PhaseStarted, Phase: "review"},
+		{Kind: record.PhaseFailed, Phase: "review", Text: "review crashed"},
+		{Kind: record.TaskStarted, Data: map[string]string{"from": "review"}},
+	} {
+		if err := emit(s, tk, e); err != nil {
+			t.Fatalf("emit: %v", err)
+		}
+	}
+
+	if got := lastSaid(s, tk, "review"); got != "make check is green" {
+		t.Errorf("the gate before review was shown %q, want what implement said", got)
 	}
 }

@@ -21,6 +21,7 @@ package task
 
 import (
 	"context"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -119,7 +120,7 @@ func (g fileGate) asked(
 		Task:  t.ID,
 		Asked: t.Text,
 		Phase: p.Name,
-		Said:  lastSaid(g.store, t),
+		Said:  lastSaid(g.store, t, p.Name),
 	})
 	if err != nil {
 		// A decision that did not arrive is not a decision. The run goes
@@ -155,8 +156,8 @@ func decisionEvent(p flow.Phase, v hunch.Verdict, mode string, acted bool) recor
 	}
 }
 
-// lastSaid is the last thing the run said before it stopped, which is what
-// a supervisor reads.
+// lastSaid is the last thing the run said before the gate in front of
+// phase before, which is what a supervisor reads.
 //
 // A phase's words stand until that phase runs again: then they are about
 // work that is being replaced. They used to be dropped at every new
@@ -164,28 +165,39 @@ func decisionEvent(p flow.Phase, v hunch.Verdict, mode string, acted bool) recor
 // before it, so ORB-121 was asked about twelve times at review with nothing
 // to read and answered "again" each time over an implement that had
 // reported make check green.
-func lastSaid(s *store.Store, t Task) string {
+//
+// The words of the phase the gate is in front of are not read. On a retry
+// from review the last thing said was review's own "review crashed", from
+// the attempt being replaced, and the gate asked about it rather than
+// about implement's work.
+func lastSaid(s *store.Store, t Task, before string) string {
 	events, err := Events(s, t)
 	if err != nil {
 		return ""
 	}
 
-	said, by := "", ""
+	var said []record.Event
 
 	for _, e := range events {
 		switch e.Kind {
 		case record.PhaseStarted:
-			if strings.EqualFold(e.Phase, by) {
-				said, by = "", ""
-			}
+			said = slices.DeleteFunc(said, func(w record.Event) bool {
+				return strings.EqualFold(w.Phase, e.Phase)
+			})
 		case record.PhaseFinished, record.PhaseFailed, record.GateFailed:
 			if e.Text != "" {
-				said, by = e.Text, e.Phase
+				said = append(said, e)
 			}
 		}
 	}
 
-	return said
+	for i := len(said) - 1; i >= 0; i-- {
+		if !strings.EqualFold(said[i].Phase, before) {
+			return said[i].Text
+		}
+	}
+
+	return ""
 }
 
 // attempt is what task.started says about the attempt it begins: the flow,
