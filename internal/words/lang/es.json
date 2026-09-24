@@ -153,6 +153,10 @@
       "source": "a phase is writing in this worktree; press p to stop it, then take the keyboard",
       "value": "hay una fase escribiendo en este árbol de trabajo; pulsa p para detenerla y luego toma el teclado"
     },
+    "why.take_queued": {
+      "source": "this task is waiting in the queue to run; press x to take it out, then take the keyboard",
+      "value": "esta tarea espera en la cola para correr; pulsa x para sacarla y luego toma el teclado"
+    },
     "why.take_engine_cannot_resume": {
       "source": "{engine} cannot resume a session, so there is nothing to take",
       "value": "{engine} no puede reanudar una sesión, así que no hay nada que tomar"
