@@ -3670,6 +3670,78 @@
       "source": "writes a new task down; nothing runs until you start it",
       "value": "anota una tarea nueva; no se ejecuta nada hasta que la arranques"
     },
+    "tip.detail.next_hunk": {
+      "source": "jumps to the next change in the diff",
+      "value": "salta al siguiente cambio del diff"
+    },
+    "tip.detail.prev_hunk": {
+      "source": "jumps to the change before this one in the diff",
+      "value": "salta al cambio anterior del diff"
+    },
+    "tip.detail.file_picker": {
+      "source": "lists the files of the diff, to jump to one",
+      "value": "lista los archivos del diff, para saltar a uno"
+    },
+    "tip.detail.fold_file": {
+      "source": "folds the file under the cursor away, or opens it again",
+      "value": "pliega el archivo bajo el cursor, o lo abre de nuevo"
+    },
+    "tip.detail.fold_all": {
+      "source": "folds every section of the overview to its heading, or opens them all",
+      "value": "pliega cada sección del resumen hasta su título, o las abre todas"
+    },
+    "tip.detail.fold_every_file": {
+      "source": "folds every file of the diff away, or opens them all",
+      "value": "pliega todos los archivos del diff, o los abre todos"
+    },
+    "tip.detail.compare": {
+      "source": "runs the flow's own checks on both sides of the change, before and after it",
+      "value": "corre los chequeos del flujo a ambos lados del cambio, antes y después"
+    },
+    "tip.detail.rationale": {
+      "source": "shows or hides the engine's reasons beside the lines it wrote",
+      "value": "muestra u oculta las razones del motor junto a las líneas que escribió"
+    },
+    "tip.detail.close_pr": {
+      "source": "closes this task's pull request, after asking why",
+      "value": "cierra el pull request de esta tarea, después de preguntar por qué"
+    },
+    "tip.detail.expand": {
+      "source": "switches the overview between one line per field and every field in full",
+      "value": "cambia el resumen entre una línea por campo y cada campo completo"
+    },
+    "tip.detail.raw": {
+      "source": "switches between the text formatted and the text as it was written",
+      "value": "cambia entre el texto con formato y el texto tal como se escribió"
+    },
+    "tip.detail.create_pr": {
+      "source": "opens a pull request for this task's branch",
+      "value": "abre un pull request para la rama de esta tarea"
+    },
+    "tip.detail.fix_checks": {
+      "source": "asks the supervisor to fix the checks that failed on the pull request",
+      "value": "le pide al supervisor que arregle los chequeos que fallaron en el pull request"
+    },
+    "tip.detail.more_tests": {
+      "source": "asks the supervisor for the tests this change is missing",
+      "value": "le pide al supervisor los tests que le faltan a este cambio"
+    },
+    "tip.detail.resolve": {
+      "source": "asks the supervisor to answer the review comments on the pull request",
+      "value": "le pide al supervisor que responda los comentarios de revisión del pull request"
+    },
+    "tip.detail.review": {
+      "source": "a deep review of the pull request, written on it; nothing is changed",
+      "value": "una revisión a fondo del pull request, escrita en él; no se cambia nada"
+    },
+    "tip.detail.thinking": {
+      "source": "turns the thinking mode the next run is asked with",
+      "value": "cambia el modo de thinking con el que se pide la próxima ejecución"
+    },
+    "tip.detail.effort": {
+      "source": "turns the effort the next run is asked to reason with",
+      "value": "cambia el esfuerzo con el que se pide razonar a la próxima ejecución"
+    },
     "tip.menu": {
       "source": "every verb for the thing under the cursor, including the ones it refuses and why",
       "value": "todos los verbos para lo que hay bajo el cursor, incluidos los que rechaza y por qué"
