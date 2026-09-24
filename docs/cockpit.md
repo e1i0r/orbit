@@ -60,6 +60,12 @@ things the supervisor did for it, the newest turning: `Bash: git push`,
 then `Bash: gh pr create`. The bar says the one in hand, and the timeline
 keeps every one of them as a `step`.
 
+Autopilot's own pass is one of those verbs. When it asks the supervisor about
+the tasks in needs you, each of them gets an `AUTOPILOT` verb out, and every
+step the supervisor takes is written onto the task it names — onto all of
+them when it names none, as reading the board does. The pass closes on each
+task when the supervisor answers, or breaks on each when it cannot.
+
 A verb is carried by the window it was asked in. If that window closes
 before the answer comes back, nothing is working on it any more, and the
 tree says it broke: on the next tick in a window that is open, or as soon

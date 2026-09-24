@@ -11,6 +11,7 @@ import (
 	"github.com/e1i0r/orbit/internal/quota"
 	"github.com/e1i0r/orbit/internal/store"
 	"github.com/e1i0r/orbit/internal/ui"
+	"github.com/e1i0r/orbit/internal/view"
 	"github.com/e1i0r/orbit/internal/words"
 )
 
@@ -74,7 +75,7 @@ func TestTheSupervisorAnswersOnTheEngineItWasAskedFor(t *testing.T) {
 		t.Errorf("the refusal does not name the engine: %v", err)
 	}
 
-	_, err = autoSupervisePort(s, engines)("an-engine-nobody-has", []string{"ACME-1"})
+	_, err = autoSupervisePort(s, engines)("an-engine-nobody-has", []view.Task{{ID: "ACME-1"}})
 	if err == nil {
 		t.Fatal("autopilot supervised on an engine that was not asked for")
 	}

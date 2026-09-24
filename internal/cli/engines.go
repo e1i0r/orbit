@@ -189,15 +189,21 @@ func draftPort(engines map[string]engine.Engine) func(string, string, string) (s
 }
 
 // autoSupervisePort is the same engine, asked on autopilot about the tasks
-// that are waiting for somebody.
-func autoSupervisePort(s *store.Store, engines map[string]engine.Engine) func(string, []string) (string, error) {
-	return func(name string, taskIDs []string) (string, error) {
+// that are waiting for somebody, with each step it takes written onto the
+// task it is about.
+func autoSupervisePort(s *store.Store, engines map[string]engine.Engine) func(string, []view.Task) (string, error) {
+	return func(name string, tasks []view.Task) (string, error) {
 		eng, err := engineNamed(engines, name)
 		if err != nil {
 			return "", err
 		}
 
-		return supervisor.AutoSupervise(context.Background(), s, eng, taskIDs)
+		ids := make([]string, 0, len(tasks))
+		for _, t := range tasks {
+			ids = append(ids, t.ID)
+		}
+
+		return supervisor.AutoSupervise(context.Background(), s, eng, ids, autopilotSteps(s, tasks))
 	}
 }
 

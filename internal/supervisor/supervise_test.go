@@ -70,7 +70,7 @@ func TestAutoSuperviseBuildsPromptWithTaskIDs(t *testing.T) {
 		Output: "Addressed failures in ACME-10 and ACME-12.",
 	}
 
-	res, err := AutoSupervise(context.Background(), s, fake, []string{"ACME-10", "ACME-12"})
+	res, err := AutoSupervise(context.Background(), s, fake, []string{"ACME-10", "ACME-12"}, nil)
 	if err != nil {
 		t.Fatalf("AutoSupervise failed: %v", err)
 	}
