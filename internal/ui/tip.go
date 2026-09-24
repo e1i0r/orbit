@@ -55,7 +55,7 @@ func (m Model) tipKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	return m.say(m.meaning(k)), nil
+	return m.say(m.meaningHere(k)), nil
 }
 
 // hover is the pointer resting on the key bar with no button down: the same
@@ -86,5 +86,5 @@ func (m Model) hovered() string {
 		return ""
 	}
 
-	return m.meaning(keystroke(m.tip.hover))
+	return m.meaningHere(keystroke(m.tip.hover))
 }

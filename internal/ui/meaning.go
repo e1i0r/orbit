@@ -36,8 +36,12 @@ func (m Model) meaning(k fmt.Stringer) string {
 		return p.T("tip.start", "opens the dialog that decides what the run will be — flow, engine, model — and starts it")
 	case key.Matches(k, m.keys.Compose):
 		return p.T("tip.compose", "writes a new task down; nothing runs until you start it")
+	case key.Matches(k, m.keys.ChangeFlow):
+		return p.T("tip.change_flow", "in the start dialog, picks another flow for the run; on the diff, a file to jump to")
 	case key.Matches(k, m.keys.Menu):
 		return p.T("tip.menu", "every verb for the thing under the cursor, including the ones it refuses and why")
+	case key.Matches(k, m.keys.Board):
+		return p.T("tip.board_menu", "the board's own menu, whatever the cursor is on: what orbit can do, not what a task can")
 	case key.Matches(k, m.keys.Pause):
 		return p.T("tip.pause", "asks a run to stop at its next phase; the phase it is inside finishes first")
 	case key.Matches(k, m.keys.Resume):
@@ -58,6 +62,8 @@ func (m Model) meaning(k fmt.Stringer) string {
 		return p.T("tip.read", "marks a finished task read, which is what takes it out of needs you")
 	case key.Matches(k, m.keys.Delete):
 		return p.T("tip.delete", "removes the task and its whole record; nothing brings either back")
+	case key.Matches(k, m.keys.RetryPhase):
+		return p.T("tip.retry_phase", "runs the phase of this task that went wrong again")
 	case key.Matches(k, m.keys.Edit):
 		return p.T("tip.edit", "on a task's diff tab, opens the file on top of the pane in $EDITOR, at that line")
 	case key.Matches(k, m.keys.CLI):
