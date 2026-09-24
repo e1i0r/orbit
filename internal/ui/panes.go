@@ -118,11 +118,12 @@ func keyToPane(k string) (tab, bool) {
 		return tabImpact, true
 	case "w", "W":
 		return tabThinking, true
-	case "u", "U":
+	case "u":
 		return tabPrompt, true
 	case "y":
 		return tabHistory, true
-	case "l", "L", ",":
+	// l and not L: L is the language, on the board and on a task's screen.
+	case "l", ",":
 		return tabMap, true
 	default:
 		return 0, false

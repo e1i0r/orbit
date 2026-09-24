@@ -2561,37 +2561,37 @@
       "source": "⚡ 3. LIVE CONTROL AND SETTINGS",
       "value": "⚡ 3. CONTROL Y CONFIGURACIÓN EN VIVO"
     },
-    "help.live.autopilot_key": {
-      "source": "[A] / ⚡ click",
-      "value": "[A] / ⚡ clic"
-    },
     "help.live.autopilot": {
       "source": "Toggle autopilot: tasks in to do start on their own",
       "value": "Alternar el piloto automático: las tareas por hacer arrancan solas"
-    },
-    "help.live.engine_key": {
-      "source": "[M] / 🧠 click",
-      "value": "[M] / 🧠 clic"
     },
     "help.live.engine": {
       "source": "Engine dial: claude, codex, opencode, effort and thinking",
       "value": "Selector de motor: claude, codex, opencode, esfuerzo y thinking"
     },
-    "help.live.repos_key": {
-      "source": "[R] / 📦 click",
-      "value": "[R] / 📦 clic"
-    },
     "help.live.repos": {
       "source": "Pick which of the connected repositories the board shows",
       "value": "Elegir qué repositorios conectados muestra el tablero"
     },
-    "help.live.lang_key": {
-      "source": "🌐 ES / EN (click)",
-      "value": "🌐 ES / EN (clic)"
-    },
     "help.live.lang": {
       "source": "Switch the language of the whole window, live",
       "value": "Cambiar el idioma de toda la ventana, en vivo"
+    },
+    "help.live.click": {
+      "source": "click",
+      "value": "clic"
+    },
+    "help.live.flows": {
+      "source": "The flows a run can be made of, and what each phase is asked",
+      "value": "Los flujos de una ejecución, y qué se le pide a cada fase"
+    },
+    "help.live.knowledge": {
+      "source": "What orbit has learned about this code, and tells each run",
+      "value": "Lo que orbit aprendió de este código, y le dice a cada ejecución"
+    },
+    "help.tabs.retry": {
+      "source": "Run the phase that failed again",
+      "value": "Volver a correr la fase que falló"
     },
     "help.tabs.cycle": {
       "source": "Next tab / previous tab",
@@ -2688,10 +2688,6 @@
     "key.quota": {
       "source": "quota",
       "value": "quota"
-    },
-    "help.live.quota_key": {
-      "source": "[Q] / ⏳ click",
-      "value": "[Q] / clic en ⏳"
     },
     "help.live.quota": {
       "source": "What is left of each engine's windows, and when each comes back",

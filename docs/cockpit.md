@@ -122,8 +122,8 @@ key printed against it there.
 
 | Key | What |
 | :--- | :--- |
-| `p` `u` | create the pull request, update its branch |
-| `M` `X` | merge it, close it |
+| `p` `U` | create the pull request, update its branch |
+| `J` `X` | merge it, close it |
 | `C` `T` | fix the failing checks, ask for more tests |
 | `R` `D` | bring the review comments back, ask for a deep review |
 | `a` | leave a note |

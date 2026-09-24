@@ -162,8 +162,8 @@ func (e Env) actions(w int) []string {
 	out := []string{head}
 	for _, l := range prose.Fields([]prose.Field{
 		act("p", p.T("overview.action_pr", "create PR")),
-		act("u", p.T("overview.action_update_pr", "update PR")),
-		act("M", p.T("overview.action_merge_pr", "merge PR")),
+		act("U", p.T("overview.action_update_pr", "update PR")),
+		act("J", p.T("overview.action_merge_pr", "merge PR")),
 		act("X", p.T("overview.action_close_pr", "close PR")),
 		act("C", p.T("overview.action_checks", "fix checks")),
 		act("T", p.T("overview.action_tests", "more tests")),

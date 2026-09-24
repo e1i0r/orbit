@@ -183,12 +183,7 @@ func (m Model) leftClick(t point.Target) (tea.Model, tea.Cmd) {
 		}
 
 		if t.Field == "lang" {
-			nextLang := "en"
-			if m.opts.Words.T("header.lang_badge", "EN") == "EN" {
-				nextLang = "es"
-			}
-
-			return m.applySetting("language", nextLang)
+			return m.switchLanguage()
 		}
 
 		if t.Field == "repos" {
