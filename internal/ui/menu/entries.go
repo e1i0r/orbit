@@ -12,6 +12,7 @@ package menu
 
 import (
 	"slices"
+	"strings"
 
 	"github.com/e1i0r/orbit/internal/ui/keymap"
 )
@@ -106,7 +107,17 @@ func boardEntries(e Env) []Entry {
 		out = append(out, row)
 	}
 
-	return out
+	return alphabetical(out)
+}
+
+// alphabetical is a block of the menu in the order of its titles, which is
+// the one order a reader can find a word in without reading the whole list.
+func alphabetical(es []Entry) []Entry {
+	slices.SortStableFunc(es, func(a, b Entry) int {
+		return strings.Compare(strings.ToLower(a.Title), strings.ToLower(b.Title))
+	})
+
+	return es
 }
 
 // taskEntries is what can be done to one task: one row per family.
@@ -156,7 +167,7 @@ func (s State) taskEntries(e Env) []Entry {
 		out = append(out, familyRow(e, want.name))
 	}
 
-	return out
+	return alphabetical(out)
 }
 
 // verbs asks what can be done to a task, and answers no for a window built
@@ -193,8 +204,9 @@ type saysSomething struct {
 }
 
 // taskCommands is the block of verbs that live only in the command table,
-// on the menu of the task they are about, in the order a reader meets them:
-// say something to the task, deliver what it did, answer what it asked.
+// on the menu of the task they are about. The menu shows them in
+// alphabetical order; the order here is only where each family's own row
+// is, first in its submenu.
 //
 // Everything the command line can do to a task, the window can do without
 // it. Some of those verbs are keys, and a key is not a menu: the reader who

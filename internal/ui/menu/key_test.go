@@ -174,9 +174,17 @@ func TestChoosingAVerbSendsItsKeystroke(t *testing.T) {
 	s := Open(theTask, e)
 	drilled, _ := s.Point(index(t, s, e, "task")).Enter(e)
 
-	_, out := drilled.Enter(e)
+	at := -1
+
+	for i, entry := range drilled.Entries(e) {
+		if entry.Glyph == "p" {
+			at = i
+		}
+	}
+
+	_, out := drilled.Point(at).Enter(e)
 	if out.Send != "p" {
-		t.Errorf("choosing the first verb asked for %+v, want the p it is bound to", out)
+		t.Errorf("choosing the verb on p asked for %+v, want the p it is bound to", out)
 	}
 }
 
@@ -212,8 +220,8 @@ func TestEnterChoosesWhatTheCursorIsOn(t *testing.T) {
 	e := world(t)
 
 	_, out := Open("", e).Key(enter, e)
-	if out.Run != "reconcile" {
-		t.Errorf("enter on the board's menu asked for %+v, want reconcile run", out)
+	if out.Run != "export" {
+		t.Errorf("enter on the board's menu asked for %+v, want export run", out)
 	}
 }
 
@@ -226,18 +234,18 @@ func TestAClickMovesTheCursorBeforeItChooses(t *testing.T) {
 
 	s := Open("", e)
 
-	next, out := s.Choose("export", e)
+	next, out := s.Choose("reconcile", e)
 	if !nothing(out) {
-		t.Fatalf("the first click on export asked for %+v, want the cursor moved and nothing done", out)
+		t.Fatalf("the first click on reconcile asked for %+v, want the cursor moved and nothing done", out)
 	}
 
-	if got := next.Entries(e)[next.At()]; got.Command != "export" {
-		t.Fatalf("the cursor moved to %+v, want export", got)
+	if got := next.Entries(e)[next.At()]; got.Command != "reconcile" {
+		t.Fatalf("the cursor moved to %+v, want reconcile", got)
 	}
 
-	_, out = next.Choose("export", e)
-	if out.Run != "export" {
-		t.Errorf("the second click asked for %+v, want export run", out)
+	_, out = next.Choose("reconcile", e)
+	if out.Run != "reconcile" {
+		t.Errorf("the second click asked for %+v, want reconcile run", out)
 	}
 }
 
