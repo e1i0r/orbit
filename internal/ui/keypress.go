@@ -318,7 +318,7 @@ func (m Model) open() (tea.Model, tea.Cmd) {
 func (m Model) verb(b key.Binding, word string) (Model, tea.Cmd) {
 	t, ok := m.pointedAt()
 	if !ok {
-		return m, nil
+		return m.noTaskHere(), nil
 	}
 
 	return m.verbOn(t, b, word)
