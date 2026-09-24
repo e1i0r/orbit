@@ -325,6 +325,10 @@
       "source": "delete task {id}? [y/n]",
       "value": "¿borrar la tarea {id}? [y/n]"
     },
+    "msg.left_as_it_was": {
+      "source": "{id} is left as it was",
+      "value": "{id} queda como estaba"
+    },
     "msg.delete_cancelled": {
       "source": "deletion cancelled",
       "value": "eliminación cancelada"
