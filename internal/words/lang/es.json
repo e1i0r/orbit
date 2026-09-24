@@ -357,6 +357,14 @@
       "source": "delete task {id}? [y/n]",
       "value": "¿borrar la tarea {id}? [y/n]"
     },
+    "msg.on_a_heading": {
+      "source": "the cursor is on a heading, not a task: move down to one",
+      "value": "el cursor está en un encabezado, no en una tarea: baja a una"
+    },
+    "msg.no_task_here": {
+      "source": "there is no task under the cursor",
+      "value": "no hay ninguna tarea bajo el cursor"
+    },
     "msg.left_as_it_was": {
       "source": "{id} is left as it was",
       "value": "{id} queda como estaba"
@@ -3839,8 +3847,8 @@
       "value": "elimina la tarea y todo su registro; nada devuelve ninguno de los dos"
     },
     "tip.edit": {
-      "source": "opens this task's own files in $EDITOR",
-      "value": "abre los ficheros propios de esta tarea en $EDITOR"
+      "source": "on a task's diff tab, opens the file on top of the pane in $EDITOR, at that line",
+      "value": "en la pestaña diff de una tarea, abre en $EDITOR el archivo que está arriba del panel, en esa línea"
     },
     "tip.cli": {
       "source": "opens an engine session in this task's worktree, in this terminal, with you at the keyboard",

@@ -56,6 +56,12 @@ func (s State) verbEntries(e Env) []Entry {
 	for i := range all {
 		a := &all[i]
 
+		// Inside a task, open is where the reader already is: the row sent
+		// ⏎, which the task's screen reads as "to the end of the pane".
+		if e.Detail && a.Key.Help().Key == e.Keys.Open.Help().Key {
+			continue
+		}
+
 		row := Entry{Glyph: a.Key.Help().Key, Title: a.Key.Help().Desc}
 		if e.Says != nil {
 			row.Detail = e.Says(a.Key)

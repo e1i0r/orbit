@@ -151,6 +151,8 @@ func (m Model) listKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.openSupervisor(), nil
 	case key.Matches(k, m.keys.Autopilot):
 		return m.autopilot()
+	case key.Matches(k, m.keys.Edit):
+		return m.onlyTheDiff(), nil
 	case key.Matches(k, m.keys.Language):
 		return m.switchLanguage()
 	case key.Matches(k, m.keys.Pause):
@@ -320,7 +322,7 @@ func (m Model) open() (tea.Model, tea.Cmd) {
 func (m Model) verb(b key.Binding, word string) (Model, tea.Cmd) {
 	t, ok := m.pointedAt()
 	if !ok {
-		return m, nil
+		return m.noTaskHere(), nil
 	}
 
 	return m.verbOn(t, b, word)
