@@ -69,7 +69,7 @@ func RunFrom(ctx context.Context, s *store.Store, t Task, f flow.Flow,
 	if err != nil {
 		return noted(t.ID, err)
 	}
-	defer release()
+	defer ended(s, t, release)
 
 	// task.started is written next — before the flow is validated, before
 	// the engines are checked, before the worktree exists — and the ordering

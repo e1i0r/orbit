@@ -21,6 +21,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/e1i0r/orbit/internal/logger"
 	"github.com/e1i0r/orbit/internal/store"
 )
 
@@ -127,4 +128,32 @@ func take(s *store.Store, t Task) (string, error) {
 	}
 
 	return word, nil
+}
+
+// forget takes off a word nobody took. A word belongs to the run it was
+// written for: left behind by a run that ended or died, the next run's first
+// gate took it, and a skip pressed during the last phase dropped the next
+// run's first phase with nothing in the record to say so. A word written
+// while no run holds the task stays: that is a pause asked for in advance.
+func forget(s *store.Store, t Task) error {
+	path, err := s.ControlPath(t.ID)
+	if err != nil {
+		return err
+	}
+
+	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("clear the control word of task %s: %w", t.ID, err)
+	}
+
+	return nil
+}
+
+// ended is what a run does last: the word left for it is taken off, then
+// its claim. In that order, so no next run can start in between and find it.
+func ended(s *store.Store, t Task, release func()) {
+	if err := forget(s, t); err != nil {
+		logger.Warn("task/run", "%s: %v", t.ID, err)
+	}
+
+	release()
 }
