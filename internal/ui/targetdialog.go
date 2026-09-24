@@ -158,6 +158,20 @@ func (m Model) hitStart(x, y int) point.Target {
 	// two lines down is a different flow. Where each one was drawn is
 	// answered by the thing that drew it, so a glyph changing width
 	// cannot move the zones out from under them.
+	// The last line of the block is not flows: it is "[+] new flow" and
+	// the chosen flow's origin. It answered as the row, so a click on
+	// "new flow" changed the flow instead; now it is the + it names.
+	if line == p.flow+p.nFlow-1 {
+		from := lipgloss.Width(startIndent)
+		tag := lipgloss.Width(m.opts.Words.T("start.new_flow_tag", "[+] new flow"))
+
+		if x >= from && x < from+tag {
+			return point.Target{Kind: point.BarHint, Key: "+"}
+		}
+
+		return point.Target{}
+	}
+
 	if line >= p.flow && line < p.flow+p.nFlow {
 		_, placed := m.flowRow(m.frame.Body.W)
 		if at, on := prose.At(placed, x, line-p.flow); on {
