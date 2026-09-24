@@ -2071,10 +2071,6 @@
       "source": "no such command: {name}",
       "value": "no existe ningún comando: {name}"
     },
-    "msg.no_screen_yet": {
-      "source": "{name} opens a screen this window does not have yet",
-      "value": "{name} abre una pantalla que esta ventana todavía no tiene"
-    },
     "settings.title": {
       "source": "Settings",
       "value": "Configuración"
