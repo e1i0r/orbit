@@ -65,7 +65,7 @@ func (m Model) meaning(k fmt.Stringer) string {
 	case key.Matches(k, m.keys.RetryPhase):
 		return p.T("tip.retry_phase", "runs the phase of this task that went wrong again")
 	case key.Matches(k, m.keys.Edit):
-		return p.T("tip.edit", "opens this task's own files in $EDITOR")
+		return p.T("tip.edit", "on a task's diff tab, opens the file on top of the pane in $EDITOR, at that line")
 	case key.Matches(k, m.keys.CLI):
 		return p.T("tip.cli", "opens an engine session in this task's worktree, in this terminal, with you at the keyboard")
 	case key.Matches(k, m.keys.Filter):
