@@ -57,7 +57,8 @@ func TestAVerbHandedToTheSupervisorIsWrittenOnTheTask(t *testing.T) {
 
 	// The answer lands minutes later, down the same wire every other
 	// supervisor reply comes back on.
-	done, _ := asModel(t, next).Update(supervisorReplyMsg{Text: "the checks are green"})
+	out := asModel(t, next)
+	done, _ := out.Update(supervisorReplyMsg{Text: "the checks are green", About: errandOf(out)})
 
 	if len(*written) != 2 {
 		t.Fatalf("wrote %d events, want the answer as well", len(*written))
@@ -81,7 +82,8 @@ func TestABrokenVerbIsWrittenDownAsAnAnswer(t *testing.T) {
 	m, written := deliverWindow(t)
 
 	next, _ := m.deliverPR()
-	asModel(t, next).Update(supervisorReplyMsg{Err: errors.New("gh is not logged in")})
+	out := asModel(t, next)
+	out.Update(supervisorReplyMsg{Err: errors.New("gh is not logged in"), About: errandOf(out)})
 
 	if len(*written) != 2 {
 		t.Fatalf("wrote %d events, want the ask and the answer", len(*written))

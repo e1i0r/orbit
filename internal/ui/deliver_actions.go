@@ -137,6 +137,15 @@ func (m Model) answered(text string, err error) Model {
 	return m.deliver(out.task, Delivery{Verb: out.verb, Text: text, Failure: err, Done: true})
 }
 
+// repliesTo is whether a supervisor reply is the answer to the verb that is
+// out: one the supervisor carries, sent for that task and that verb.
+func (m Model) repliesTo(about Errand) bool {
+	out := m.delivering
+
+	return out.verb != "" && out.cmd == "" &&
+		about.Verb == out.verb && about.Task.ID == out.task.ID
+}
+
 // answers says whether a command coming back is the answer to the verb
 // that is out: the same name, or its parent when the verb went through a
 // family — `pr merge` is watched as `pr` run.
