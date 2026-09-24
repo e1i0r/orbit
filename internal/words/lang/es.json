@@ -4473,8 +4473,8 @@
       "value": "el flujo de esta tarea no trae checks, así que no hay nada que correr de ninguno de los dos lados"
     },
     "compare.offer": {
-      "source": "[r] runs these on both sides — the base is checked out on its own and thrown away afterwards",
-      "value": "[r] los corre de los dos lados — la base se saca en un checkout aparte y se tira después"
+      "source": "[B] runs these on both sides — the base is checked out on its own and thrown away afterwards",
+      "value": "[B] los corre de los dos lados — la base se saca en un checkout aparte y se tira después"
     },
     "compare.same": {
       "source": "the same on both sides",
@@ -4565,8 +4565,8 @@
       "value": "corriendo {n} checks en los dos lados a la vez… {secs}"
     },
     "compare.again": {
-      "source": "[r] runs them again",
-      "value": "[r] los vuelve a correr"
+      "source": "[B] runs them again",
+      "value": "[B] los vuelve a correr"
     },
     "history.title": {
       "source": "Everything said about this task",

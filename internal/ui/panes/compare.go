@@ -46,7 +46,7 @@ func (e Env) compareRows() []string {
 	// The key stays on screen after the run, because the answer goes stale
 	// the moment the phase writes another line — and a reader who has just
 	// read a failure is exactly the one who wants to ask again.
-	return append(rows, "  "+theme.Paint(theme.Live).Render(p.T("compare.again", "[r] runs them again")), "")
+	return append(rows, "  "+theme.Paint(theme.Live).Render(p.T("compare.again", "[B] runs them again")), "")
 }
 
 // compareOffer is what it would run, and the key that runs it. It says the
@@ -65,7 +65,7 @@ func (e Env) compareOffer() []string {
 	}
 
 	rows := []string{"  " + theme.Paint(theme.Live).Render(p.T("compare.offer",
-		"[r] runs these on both sides — the base is checked out on its own and thrown away afterwards"))}
+		"[B] runs these on both sides — the base is checked out on its own and thrown away afterwards"))}
 
 	for _, c := range checks {
 		rows = append(rows, "    "+theme.Paint(theme.Dim).Render("· "+c.Name+" · "+c.Command))

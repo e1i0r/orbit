@@ -38,19 +38,31 @@ func TestTheTaskViewSaysWhyAResumeIsRefused(t *testing.T) {
 	}
 }
 
-// TestTheDiffTabKeepsItsOwnR is the case the new route is matched under: on
-// the diff tab r is the rationale, and a reader reading a change is not
-// resuming anything with it.
-func TestTheDiffTabKeepsItsOwnR(t *testing.T) {
+// TestOnTheDiffTabRResumesAndHShowsTheReasons. The diff tab took r for
+// the engine's reasons, so a reader parked on it could not let the run go
+// with the key that does it everywhere else. r is resume here too, and the
+// reasons are H.
+func TestOnTheDiffTabRResumesAndHShowsTheReasons(t *testing.T) {
 	m, got := parkedModel(t)
 	m.screen, m.detail, m.tab = screenDetail, "ACME-2705", tabDiff
 
-	after, _ := advance(t, m, press("r"))
-	if !after.hideDiffRationale {
-		t.Error("r on the diff tab no longer hides the rationale")
+	after, cmd := advance(t, m, press("r"))
+	if after.hideDiffRationale {
+		t.Error("r on the diff tab hid the reasons")
 	}
 
-	if got.word != "" {
-		t.Errorf("r on the diff tab wrote the control word %q", got.word)
+	wantControl(t, cmd, got, "ACME-2705", "resume")
+
+	after, _ = advance(t, m, press("H"))
+	if !after.hideDiffRationale {
+		t.Error("H on the diff tab left the reasons shown")
+	}
+
+	// And n starts a run here as it does on the board, with the next change
+	// of the diff on }.
+	// This run is parked, so the dialog may refuse; either way it answers.
+	if after, _ = advance(t, m, press("n")); after.screen != screenStart && after.message == "" {
+		t.Errorf("n on the diff tab left screen %v and said nothing, want the start dialog's answer",
+			after.screen)
 	}
 }
