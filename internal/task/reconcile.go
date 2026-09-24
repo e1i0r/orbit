@@ -62,6 +62,11 @@ func Reconcile(s *store.Store, t Task) (bool, error) {
 		return false, err
 	}
 
+	// The run is gone, so a word left for it is for nobody. See forget.
+	if err := forget(s, t); err != nil {
+		return false, err
+	}
+
 	if !inFlight(events) {
 		return false, removeMarker(s, t)
 	}
