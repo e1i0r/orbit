@@ -188,6 +188,8 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 			"effort level set to {effort}", about("effort", eff))), nil
 	case k.String() == "F":
 		return m.openFlows(), nil
+	case key.Matches(k, m.keys.Language):
+		return m.switchLanguage()
 	case key.Matches(k, m.keys.RetryPhase):
 		return m.retryPhase()
 	case key.Matches(k, m.keys.Ask):

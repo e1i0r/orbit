@@ -125,6 +125,17 @@ func (m Model) applySetting(name, val string) (tea.Model, tea.Cmd) {
 	return m.tookSettings(settings.Apply(name, val, m.settingsEnv()))
 }
 
+// switchLanguage turns the window to the language it is not in, for L and
+// for a click on the header's badge.
+func (m Model) switchLanguage() (tea.Model, tea.Cmd) {
+	next := "en"
+	if m.opts.Words.T("header.lang_badge", "EN") == "EN" {
+		next = "es"
+	}
+
+	return m.applySetting("language", next)
+}
+
 // cycleSetting turns the chosen row's dial by one.
 func (m Model) cycleSetting(delta int) (tea.Model, tea.Cmd) {
 	return m.tookSettings(m.settings.Cycle(delta, m.settingsEnv()))
