@@ -256,11 +256,12 @@ func TestDoPortAndTopHelpers(t *testing.T) {
 		t.Error("expected error for top in doPort")
 	}
 
-	// 3. Command opening screen (settings)
+	// 3. A command the window answers with a screen runs like any other
+	// if it reaches the port: the window opens the screen before that.
 	buf.Reset()
 
-	if err := dp("settings", nil, &buf); err == nil || !strings.Contains(err.Error(), "opens a screen") {
-		t.Errorf("expected WindowOpens error for settings in doPort, got %v", err)
+	if err := dp("settings", nil, &buf); err != nil {
+		t.Errorf("settings through doPort answered %v, want it run", err)
 	}
 
 	// 4. Command executing in window (reconcile)

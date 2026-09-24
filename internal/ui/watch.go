@@ -133,6 +133,17 @@ func (m Model) launch(c Command, args []string) (tea.Model, tea.Cmd) {
 		return m.openRepos(), nil
 	case "supervisor":
 		return m.openSupervisor(), nil
+	case "knowledge":
+		return m.openKnowledge(), nil
+	case "quota":
+		return m.openQuota(), nil
+	case "engines":
+		return m.openEngines(), nil
+	case "board":
+		// The board is the window's own first screen.
+		m.screen = screenList
+
+		return m, nil
 	}
 
 	// Then what is left to run, which cannot be run with nothing. The menu
