@@ -59,7 +59,7 @@ func (m Model) meaning(k fmt.Stringer) string {
 	case key.Matches(k, m.keys.Delete):
 		return p.T("tip.delete", "removes the task and its whole record; nothing brings either back")
 	case key.Matches(k, m.keys.Edit):
-		return p.T("tip.edit", "opens this task's own files in $EDITOR")
+		return p.T("tip.edit", "on a task's diff tab, opens the file on top of the pane in $EDITOR, at that line")
 	case key.Matches(k, m.keys.CLI):
 		return p.T("tip.cli", "opens an engine session in this task's worktree, in this terminal, with you at the keyboard")
 	case key.Matches(k, m.keys.Filter):
