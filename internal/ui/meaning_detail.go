@@ -56,12 +56,6 @@ func (m Model) taskScreenMeaning(k string) (string, bool) {
 		return p.T("tip.detail.expand", "switches the overview between one line per field and every field in full"), true
 	case "v":
 		return p.T("tip.detail.raw", "switches between the text formatted and the text as it was written"), true
-	case "t":
-		return p.T("tip.detail.thinking", "turns the thinking mode the next run is asked with"), true
-	case "k", "K":
-		return p.T("tip.engines", "which engine and model the next run is asked with, and how hard it is asked to think"), true
-	case "E":
-		return p.T("tip.detail.effort", "turns the effort the next run is asked to reason with"), true
 	}
 
 	return "", false
