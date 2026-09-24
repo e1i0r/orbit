@@ -15,8 +15,6 @@ func TestQuestionMarkOnATasksScreenSaysWhatTheKeyDoesThere(t *testing.T) {
 
 	for k, want := range map[string]string{
 		"p": "pull request",
-		"E": "effort",
-		"k": "engine",
 		"J": "merges",
 		"U": "up to date",
 	} {

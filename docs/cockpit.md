@@ -127,7 +127,7 @@ key printed against it there.
 | `C` `T` | fix the failing checks, ask for more tests |
 | `R` `D` | bring the review comments back, ask for a deep review |
 | `a` | leave a note |
-| `k` `E` `t` | engine and model, reasoning effort, thinking mode |
+| `E` | engine and model, reasoning effort and thinking mode, as on the board |
 | `F` | the flow this task runs |
 | `o` | open the file under the diff in `$EDITOR` |
 | `z` `Z` | fold every section (overview), collapse every file (diff) |

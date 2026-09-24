@@ -101,38 +101,28 @@ func TestDetailWhyRefusalFormatting(t *testing.T) {
 	_ = m.drawRow(row{task: tk}, 100, true)
 }
 
-func TestDetailMidTaskDialChanges(t *testing.T) {
+// TestTheKnobKeysMeanOnATaskWhatTheyMeanOnTheBoard. The task screen took
+// t for the thinking mode, E for the effort and k and K for the engines;
+// on the board t takes the keyboard, E opens the engines, k is up and K is
+// what orbit knows. Effort and thinking are turned on the engines screen.
+func TestTheKnobKeysMeanOnATaskWhatTheyMeanOnTheBoard(t *testing.T) {
 	m := openOn(t, "ACME-2662")
 
-	// 1. Press 't' toggles thinking
-	newM, _ := m.detailKey(keystroke("t"))
-
-	m = asModel(t, newM)
-	if m.knobs.Thinking == "" {
-		t.Error("expected thinking to be updated after 't'")
+	for k, want := range map[string]screen{
+		"E": screenEngines,
+		"K": screenKnowledge,
+		"F": screenFlows,
+		"k": screenDetail,
+	} {
+		next, _ := m.detailKey(keystroke(k))
+		if got := asModel(t, next).screen; got != want {
+			t.Errorf("%s on a task's screen opened screen %v, want %v", k, got, want)
+		}
 	}
 
-	// 2. Press 'E' cycles effort
-	newM, _ = m.detailKey(keystroke("E"))
-
-	m = asModel(t, newM)
-	if m.knobs.Effort == "" {
-		t.Error("expected effort to be updated after 'E'")
-	}
-
-	// 3. Press 'k' opens engines screen
-	newM, _ = m.detailKey(keystroke("k"))
-
-	mEngines := asModel(t, newM)
-	if mEngines.screen != screenEngines {
-		t.Errorf("expected screenEngines after 'k', got %v", mEngines.screen)
-	}
-
-	// 4. Press 'F' opens flows screen
-	newM, _ = m.detailKey(keystroke("F"))
-
-	mFlows := asModel(t, newM)
-	if mFlows.screen != screenFlows {
-		t.Errorf("expected screenFlows after 'F', got %v", mFlows.screen)
+	next, _ := m.detailKey(keystroke("t"))
+	if got := asModel(t, next); got.knobs.Thinking != m.knobs.Thinking {
+		t.Errorf("t on a task's screen turned the thinking to %q, want it left to the engines screen",
+			got.knobs.Thinking)
 	}
 }

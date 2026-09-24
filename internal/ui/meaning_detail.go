@@ -72,12 +72,6 @@ func (m Model) taskScreenMeaning(k string) (string, bool) {
 		return p.T("tip.detail.resolve", "asks the supervisor to answer the review comments on the pull request"), true
 	case "D":
 		return p.T("tip.detail.review", "a deep review of the pull request, written on it; nothing is changed"), true
-	case "t":
-		return p.T("tip.detail.thinking", "turns the thinking mode the next run is asked with"), true
-	case "k", "K":
-		return p.T("tip.engines", "which engine and model the next run is asked with, and how hard it is asked to think"), true
-	case "E":
-		return p.T("tip.detail.effort", "turns the effort the next run is asked to reason with"), true
 	}
 
 	return "", false

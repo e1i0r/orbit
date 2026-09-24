@@ -3266,14 +3266,6 @@
         "other": "… y {n} archivos más"
       }
     },
-    "detail.thinking_changed": {
-      "source": "thinking mode set to {mode}",
-      "value": "modo de pensamiento cambiado a {mode}"
-    },
-    "detail.effort_changed": {
-      "source": "effort level set to {effort}",
-      "value": "nivel de esfuerzo cambiado a {effort}"
-    },
     "mcp.installing": {
       "source": "registering orbit as an mcp server",
       "value": "registrando orbit como servidor mcp"
@@ -3741,14 +3733,6 @@
     "tip.detail.review": {
       "source": "a deep review of the pull request, written on it; nothing is changed",
       "value": "una revisión a fondo del pull request, escrita en él; no se cambia nada"
-    },
-    "tip.detail.thinking": {
-      "source": "turns the thinking mode the next run is asked with",
-      "value": "cambia el modo de thinking con el que se pide la próxima ejecución"
-    },
-    "tip.detail.effort": {
-      "source": "turns the effort the next run is asked to reason with",
-      "value": "cambia el esfuerzo con el que se pide razonar a la próxima ejecución"
     },
     "tip.menu": {
       "source": "every verb for the thing under the cursor, including the ones it refuses and why",

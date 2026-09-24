@@ -162,32 +162,6 @@ func (m Model) detailKey(k fmt.Stringer) (tea.Model, tea.Cmd) {
 		return m.resolveComments()
 	case k.String() == "D":
 		return m.reviewPR()
-	case k.String() == "t":
-		m = m.cycleThinking()
-
-		thk := m.knobs.Thinking
-		if thk == "" {
-			thk = "adaptive"
-		}
-
-		p := m.opts.Words
-
-		return m.syncPanes().say(p.T("detail.thinking_changed",
-			"thinking mode set to {mode}", about("mode", thk))), nil
-	case k.String() == "k" || k.String() == "K":
-		return m.openEngines(), nil
-	case k.String() == "E":
-		m = m.cycleEffort()
-
-		eff := m.knobs.Effort
-		if eff == "" {
-			eff = "high"
-		}
-
-		p := m.opts.Words
-
-		return m.syncPanes().say(p.T("detail.effort_changed",
-			"effort level set to {effort}", about("effort", eff))), nil
 	case k.String() == "F":
 		return m.openFlows(), nil
 	case key.Matches(k, m.keys.Language):
