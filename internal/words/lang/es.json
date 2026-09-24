@@ -325,6 +325,14 @@
       "source": "delete task {id}? [y/n]",
       "value": "¿borrar la tarea {id}? [y/n]"
     },
+    "msg.on_a_heading": {
+      "source": "the cursor is on a heading, not a task: move down to one",
+      "value": "el cursor está en un encabezado, no en una tarea: baja a una"
+    },
+    "msg.no_task_here": {
+      "source": "there is no task under the cursor",
+      "value": "no hay ninguna tarea bajo el cursor"
+    },
     "msg.left_as_it_was": {
       "source": "{id} is left as it was",
       "value": "{id} queda como estaba"

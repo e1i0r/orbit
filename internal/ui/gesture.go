@@ -47,7 +47,7 @@ import (
 func (m Model) gesture(b key.Binding) (view.Task, Model, bool) {
 	t, ok := m.pointedAt()
 	if !ok {
-		return view.Task{}, m, false
+		return view.Task{}, m.noTaskHere(), false
 	}
 
 	next, ok := m.allowed(t, b)
@@ -94,6 +94,18 @@ func (m Model) pointedAt() (view.Task, bool) {
 	return r.task, true
 }
 
+// noTaskHere is what a key about a task says when the cursor is on none:
+// on a band's heading, or on a board with no rows. Saying nothing is what a
+// reader reads as a key that is broken.
+func (m Model) noTaskHere() Model {
+	p := m.opts.Words
+	if r, ok := m.selected(); ok && r.head {
+		return m.say(p.T("msg.on_a_heading", "the cursor is on a heading, not a task: move down to one"))
+	}
+
+	return m.say(p.T("msg.no_task_here", "there is no task under the cursor"))
+}
+
 // ask opens the confirm in front of a cancel.
 //
 // Cancelling is the one gesture here that cannot be undone by pressing
@@ -118,7 +130,7 @@ func (m Model) ask() (tea.Model, tea.Cmd) {
 func (m Model) askSkip() (tea.Model, tea.Cmd) {
 	t, ok := m.pointedAt()
 	if !ok {
-		return m, nil
+		return m.noTaskHere(), nil
 	}
 
 	next, ok := m.allowed(t, m.keys.Skip)
