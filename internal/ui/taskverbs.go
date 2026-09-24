@@ -40,6 +40,10 @@ func (m Model) taskVerb(k fmt.Stringer) (tea.Model, tea.Cmd, bool) {
 		next, cmd = m.markReadKey()
 	case key.Matches(k, m.keys.Delete):
 		next, cmd = m.askDeleteTask()
+	// The start dialog, because the menu's "start a run" arrives as its
+	// letter, and on the diff tab that letter is the next hunk.
+	case key.Matches(k, m.keys.Start):
+		next, cmd = m.openStart()
 	default:
 		return m, nil, false
 	}
