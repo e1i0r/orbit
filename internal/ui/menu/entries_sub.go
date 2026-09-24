@@ -20,14 +20,25 @@ func (s State) subEntries(e Env) []Entry {
 	}
 
 	if s.sub != "task" {
-		return s.childEntries(e, s.sub)
+		return ownFirst(s.childEntries(e, s.sub))
 	}
 
-	out := s.verbEntries(e)
+	// The keys, the start dialog and the family's commands are one list
+	// to the reader, so they are in one order.
+	return alphabetical(append(s.verbEntries(e), s.childEntries(e, s.sub)...))
+}
 
-	// verbEntries already ends in the start dialog; what follows are the
-	// family's own commands.
-	return append(out, s.childEntries(e, s.sub)...)
+// ownFirst is a family's submenu with its own word on top and the rest in
+// alphabetical order. The own word is the family read bare, `settings`
+// before `settings set`, and it is the row the submenu is named after.
+func ownFirst(es []Entry) []Entry {
+	if len(es) == 0 || es[0].Child != "" {
+		return alphabetical(es)
+	}
+
+	alphabetical(es[1:])
+
+	return es
 }
 
 // verbEntries is what can be done to one task with a keystroke, refusals

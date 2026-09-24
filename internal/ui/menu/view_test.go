@@ -69,7 +69,7 @@ func TestTheMenuFillsTheRoomItIsGiven(t *testing.T) {
 		t.Errorf("the first row is %q, want the title of the menu", drawn[0])
 	}
 
-	if !strings.Contains(ansi.Strip(drawn[TitleRows]), "reconcile") {
+	if !strings.Contains(ansi.Strip(drawn[TitleRows]), "export") {
 		t.Errorf("the first entry is drawn at %q, want the first command", drawn[TitleRows])
 	}
 }
@@ -150,12 +150,12 @@ func TestAClickIsKeyedByWhatIdentifiesTheEntry(t *testing.T) {
 	e := world(t)
 
 	got := Open("", e).Hit(0, e.Frame.Body.Y+TitleRows, e)
-	if got.Kind != point.MenuEntry || got.Key != "reconcile" {
+	if got.Kind != point.MenuEntry || got.Key != "export" {
 		t.Errorf("clicking the board's first row answered %+v, want the command it names", got)
 	}
 
 	onTask := Open(theTask, e).Hit(0, e.Frame.Body.Y+TitleRows, e)
-	if onTask.Kind != point.MenuEntry || onTask.Key != "task" {
+	if onTask.Kind != point.MenuEntry || onTask.Key != "pr" {
 		t.Errorf("clicking a task's first row answered %+v, want the family it drills into", onTask)
 	}
 }

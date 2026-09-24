@@ -19,12 +19,51 @@ func TestTheBoardsMenuShowsRefusalsWhole(t *testing.T) {
 		t.Fatalf("the board's menu is %d entries, want the four commands that are not about one task", len(es))
 	}
 
-	if es[0].Dim || es[0].Detail != "read the board again" {
-		t.Errorf("the runnable command is %+v, want its description shown and not dimmed", es[0])
+	if es[1].Dim || es[1].Detail != "read the board again" {
+		t.Errorf("the runnable command is %+v, want its description shown and not dimmed", es[1])
 	}
 
-	if !es[1].Dim || es[1].Reason != "you are already in it" {
-		t.Errorf("the refused command is %+v, want it dimmed with its reason", es[1])
+	if !es[3].Dim || es[3].Reason != "you are already in it" {
+		t.Errorf("the refused command is %+v, want it dimmed with its reason", es[3])
+	}
+}
+
+// TestTheMenusAreInAlphabeticalOrder, the one order a reader can find a
+// word in without reading the whole list. A family's own row stays on top
+// of its submenu, the row the submenu is named after.
+func TestTheMenusAreInAlphabeticalOrder(t *testing.T) {
+	e := world(t)
+
+	titles := func(s State) []string {
+		var out []string
+		for _, entry := range s.Entries(e) {
+			out = append(out, entry.Title)
+		}
+
+		return out
+	}
+
+	want := []string{"export", "reconcile", "settings", "top"}
+	if got := titles(Open("", e)); !slices.Equal(got, want) {
+		t.Errorf("the board's menu is %v, want %v", got, want)
+	}
+
+	board := Open("", e)
+	settings, _ := board.Point(index(t, board, e, "settings")).Enter(e)
+
+	want = []string{"settings", "clear", "set"}
+	if got := titles(settings); !slices.Equal(got, want) {
+		t.Errorf("the settings submenu is %v, want %v", got, want)
+	}
+
+	s := Open(theTask, e)
+	drilled, _ := s.Point(index(t, s, e, "task")).Enter(e)
+
+	byWord := func(a, b string) int { return strings.Compare(strings.ToLower(a), strings.ToLower(b)) }
+
+	got := titles(drilled)
+	if !slices.IsSortedFunc(got, byWord) {
+		t.Errorf("the task's submenu is %v, want it in alphabetical order", got)
 	}
 }
 
@@ -71,7 +110,7 @@ func TestTheTaskMenuCarriesOneRowPerFamily(t *testing.T) {
 		}
 	}
 
-	want := []string{"task", "pr"}
+	want := []string{"pr", "task"}
 	if !slices.Equal(named, want) {
 		t.Errorf("the task's menu names %v, want %v", named, want)
 	}
@@ -94,7 +133,7 @@ func TestADrilledMenuCarriesTheVerbsThatOnlyACommandDoes(t *testing.T) {
 		}
 	}
 
-	want := []string{"note", "direct", "approve", "permit", "critical"}
+	want := []string{"approve", "critical", "direct", "note", "permit"}
 	if !slices.Equal(named, want) {
 		t.Errorf("the task's submenu names %v, want %v", named, want)
 	}
