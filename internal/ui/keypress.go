@@ -258,7 +258,7 @@ func (m Model) confirmKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	}
 
 	if msg.String() != confirmYes {
-		return m, nil
+		return m.say(m.opts.Words.T("msg.left_as_it_was", "{id} is left as it was", about("id", id))), nil
 	}
 
 	t, ok := m.task(id)
