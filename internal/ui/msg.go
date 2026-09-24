@@ -182,8 +182,9 @@ type (
 
 	// supervisorReplyMsg is the response the supervisor engine produced.
 	supervisorReplyMsg struct {
-		Text string
-		Err  error
+		Text  string
+		Err   error
+		About Errand // the delivery it answers; empty for any other line
 	}
 
 	// spinnerTickMsg powers the live animated thinking indicator at 100ms.
@@ -341,6 +342,6 @@ func askSupervisorCmd(ask askPort, engineName, conversation, prompt string, abou
 
 		ans, err := ask(engineName, conversation, prompt, about)
 
-		return supervisorReplyMsg{Text: ans, Err: err}
+		return supervisorReplyMsg{Text: ans, Err: err, About: about}
 	}
 }

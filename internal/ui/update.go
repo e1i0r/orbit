@@ -188,10 +188,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.supervisorBusy = false
 		// The delivery keys send their ask down this same wire, so the
 		// answer to one of them is written onto the task it was about
-		// before the thread is redrawn. A reply nobody was waiting on —
-		// a line the operator typed, a turn of autopilot — closes
-		// nothing, because answered is about a verb that is out.
-		m = m.answered(msg.Text, msg.Err).syncSupervisor()
+		// before the thread is redrawn. Only the answer to that ask: a
+		// line the operator typed, or a turn of autopilot, closed
+		// whichever verb was out, a pr merge included, and its real
+		// answer was dropped when it came.
+		if m.repliesTo(msg.About) {
+			m = m.answered(msg.Text, msg.Err)
+		}
+
+		m = m.syncSupervisor()
 		// An answer that has landed is the newest thing said, so the thread
 		// is pinned to its own end to show it.
 		m.supervisor = m.supervisor.Follow()
