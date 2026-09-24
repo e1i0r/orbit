@@ -47,7 +47,7 @@ func flowDialOf(t *testing.T, m Model) settings.Row {
 // built from the build, and the comment above them says why.
 func TestTheFlowDialOffersEveryFlowTheBuildShips(t *testing.T) {
 	m, _ := testModel(t, 120, 40)
-	m = m.openSettings()
+	m = unfolded(m.openSettings())
 
 	got := flowDialOf(t, m).Options
 	for _, name := range flow.BuiltinNames() {
@@ -63,7 +63,7 @@ func TestTheFlowDialOffersEveryFlowTheBuildShips(t *testing.T) {
 func TestTheFlowDialOffersAFlowTheReaderWrote(t *testing.T) {
 	m, _ := testModel(t, 120, 40)
 	m.opts.Flows = userFlows(t, "midnight")
-	m = m.openSettings()
+	m = unfolded(m.openSettings())
 
 	if got := flowDialOf(t, m).Options; !slices.Contains(got, "midnight") {
 		t.Errorf("the flow dial offers %v, and the reader wrote midnight", got)
@@ -81,7 +81,7 @@ func TestTheFlowDialOffersAFlowTheReaderWrote(t *testing.T) {
 func TestTheFlowDialIsReadWhenTheScreenOpens(t *testing.T) {
 	m, _ := testModel(t, 120, 40)
 	m.opts.Flows = userFlows(t)
-	m = m.openSettings()
+	m = unfolded(m.openSettings())
 
 	saveFlow(t, m.opts.Flows, "midnight")
 
@@ -101,7 +101,7 @@ func TestTheFlowDialPicksUpAFlowWrittenSinceItWasLastOpened(t *testing.T) {
 	m, _ := testModel(t, 120, 40)
 	m.opts.Flows = userFlows(t)
 
-	m = m.openSettings()
+	m = unfolded(m.openSettings())
 	if got := flowDialOf(t, m).Options; slices.Contains(got, "midnight") {
 		t.Fatalf("the flow dial already offers midnight before it was written: %v", got)
 	}
@@ -109,7 +109,7 @@ func TestTheFlowDialPicksUpAFlowWrittenSinceItWasLastOpened(t *testing.T) {
 	saveFlow(t, m.opts.Flows, "midnight")
 	left, _ := m.settingsKey(tea.KeyPressMsg{Code: tea.KeyEscape})
 	m = asModel(t, left)
-	m = m.openSettings()
+	m = unfolded(m.openSettings())
 
 	if got := flowDialOf(t, m).Options; !slices.Contains(got, "midnight") {
 		t.Errorf("the flow dial offers %v, and midnight was written before it was opened again", got)

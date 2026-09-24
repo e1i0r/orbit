@@ -30,7 +30,7 @@ func TestEachGroupIsDrawnUnderItsHeading(t *testing.T) {
 		}
 	}
 
-	var s State
+	s := unfolded(Open(e), e)
 
 	drawn := ansi.Strip(strings.Join(s.View(40, 100, e), "\n"))
 	for _, heading := range []string{"Queue", "Appearance"} {

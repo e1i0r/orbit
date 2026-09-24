@@ -198,6 +198,7 @@ func TestApplySettingEveryKey(t *testing.T) {
 func TestSettingsKeyEditingAndNavigation(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.screen = screenSettings
+	m = unfolded(m)
 
 	// 1. Navigating with j/k and arrow keys wraps at both ends.
 	rows := m.settingRowsList()

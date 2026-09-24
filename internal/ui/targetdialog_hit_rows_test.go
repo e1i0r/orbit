@@ -141,6 +141,7 @@ func TestHitStartEveryRow(t *testing.T) {
 func TestHitSettingsEveryOutcome(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.screen = screenSettings
+	m = unfolded(m)
 
 	rows := m.settingRowsList()
 	if len(rows) == 0 {
@@ -220,7 +221,7 @@ func TestHitReposEveryOutcome(t *testing.T) {
 // there — the one gesture in this window that turns a knob nobody pointed at.
 func TestHitSettingsFollowsTheScrolledTable(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
-	m = m.openSettings()
+	m = unfolded(m.openSettings())
 
 	rows := m.settingRowsList()
 	if len(rows) == 0 {
