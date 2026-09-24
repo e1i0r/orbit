@@ -109,9 +109,11 @@ func (s State) hitList(x, line int, e Env) point.Target {
 	}
 
 	d := s.listed[row.at]
-	s.sel = row.at
 
-	if row.head {
+	// Only the chosen row draws its pills, so only its cells answer as
+	// them: on any other row the same columns are blank, and a click there
+	// opened the designer, or deleted, on a flow that showed no button.
+	if row.head && row.at == s.sel {
 		if field := flowPill(d, x, e); field != "" {
 			return point.Target{Kind: point.FlowItem, Field: field, ID: d.Name}
 		}
