@@ -182,9 +182,10 @@ type (
 
 	// supervisorReplyMsg is the response the supervisor engine produced.
 	supervisorReplyMsg struct {
-		Text  string
-		Err   error
-		About Errand // the delivery it answers; empty for any other line
+		Text      string
+		Err       error
+		About     Errand      // the delivery it answers; empty for any other line
+		Autopilot []view.Task // an autopilot pass's tasks, whose AUTOPILOT verb this closes
 	}
 
 	// spinnerTickMsg powers the live animated thinking indicator at 100ms.
@@ -330,18 +331,5 @@ func takeSession(port func(view.Task) (*exec.Cmd, error), t view.Task) tea.Cmd {
 		cmd, err := port(t)
 
 		return sessionMsg{ID: t.ID, Cmd: cmd, Err: err}
-	}
-}
-
-// askSupervisorCmd queries the supervisor model in the background.
-func askSupervisorCmd(ask askPort, engineName, conversation, prompt string, about Errand) tea.Cmd {
-	return func() tea.Msg {
-		if ask == nil {
-			return supervisorReplyMsg{Err: errNoSupervisor}
-		}
-
-		ans, err := ask(engineName, conversation, prompt, about)
-
-		return supervisorReplyMsg{Text: ans, Err: err, About: about}
 	}
 }
