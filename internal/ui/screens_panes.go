@@ -314,7 +314,7 @@ func (m Model) shaping() panes.Shape {
 func (m Model) impactRows() []string { return panes.Impact(m.paneEnv(tabImpact)) }
 
 // mapRows is the repository as a tree, lit where this task changed it.
-func (m Model) mapRows() []string { return panes.Map(m.paneEnv(tabMap)) }
+func (m Model) mapRows() []string { return m.withMapCaret(panes.Map(m.paneEnv(tabMap))) }
 
 // impactMark is the count beside the impact tab's name.
 //

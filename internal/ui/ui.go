@@ -185,9 +185,11 @@ type Model struct {
 	heads  [tabCount]map[int]int
 
 	// tree is where the keyboard is standing on the flow tab, in
-	// treecursor.go. It is the one pane the arrows walk rather than
-	// scroll, because it is the one pane made of nodes.
+	// treecursor.go. It and the map are the panes the arrows walk rather
+	// than scroll, because they are the panes made of things to open.
 	tree treeAt
+	// mapAt is the file the map's cursor is on, by its path.
+	mapAt string
 
 	// errandOut is the delivery a line to the supervisor is being sent for,
 	// set only for the length of the send: see askSupervisorTo.
