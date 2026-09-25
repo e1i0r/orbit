@@ -34,6 +34,9 @@ func New(o Options) Model {
 		opts: o,
 		keys: keymap.New(o.Words),
 		now:  time.Now(),
+		// One drawing of the diff, shared by every copy of the model the
+		// window makes: see diffmemo.go.
+		diffMemo: &diffDrawn{},
 		// NeedsYou and Running are open and the other two are shut,
 		// because the window's question is "what needs me", and a screen
 		// that opens on forty finished tasks has answered a different one.

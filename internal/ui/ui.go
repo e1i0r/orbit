@@ -188,6 +188,8 @@ type Model struct {
 	// treecursor.go. It is the one pane the arrows walk rather than
 	// scroll, because it is the one pane made of nodes.
 	tree treeAt
+	// diffMemo is the last drawing of the diff pane, in diffmemo.go.
+	diffMemo *diffDrawn
 
 	// errandOut is the delivery a line to the supervisor is being sent for,
 	// set only for the length of the send: see askSupervisorTo.
