@@ -269,9 +269,22 @@ func (m Model) diffLines() []string {
 	return lines
 }
 
-// diffRows is that content and where each file's card landed.
+// diffRows is that content and where each file's card landed, drawn again
+// only when something it is drawn from has changed: see diffmemo.go.
 func (m Model) diffRows() ([]string, map[int]int) {
-	return panes.Diff(m.paneEnv(tabDiff))
+	e := m.paneEnv(tabDiff)
+	key := diffKeyOf(e)
+
+	if m.diffMemo != nil && m.diffMemo.key.same(key) {
+		return m.diffMemo.lines, m.diffMemo.heads
+	}
+
+	lines, heads := panes.Diff(e)
+	if m.diffMemo != nil {
+		*m.diffMemo = diffDrawn{key: key, lines: lines, heads: heads}
+	}
+
+	return lines, heads
 }
 
 // reading is what the window last read about what this change touches, in

@@ -190,6 +190,8 @@ type Model struct {
 	tree treeAt
 	// mapAt is the file the map's cursor is on, by its path.
 	mapAt string
+	// diffMemo is the last drawing of the diff pane, in diffmemo.go.
+	diffMemo *diffDrawn
 
 	// errandOut is the delivery a line to the supervisor is being sent for,
 	// set only for the length of the send: see askSupervisorTo.
