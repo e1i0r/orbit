@@ -211,8 +211,10 @@ type Options struct {
 	// left it nil says so rather than pretending the tab is there.
 	Draft func(engineName, model, prompt string) (string, error)
 
-	// AutoSupervise triggers the supervisor autonomously for tasks needing attention.
-	AutoSupervise func(engineName string, taskIDs []string) (string, error)
+	// AutoSupervise asks the supervisor, on autopilot, about the tasks
+	// waiting in needs you. Each step it takes is written onto the task it
+	// is about, under the AUTOPILOT verb, the way a delivery verb's are.
+	AutoSupervise func(engineName string, tasks []view.Task) (string, error)
 
 	// DeleteTask permanently deletes a task record and its worktree from the store.
 	DeleteTask func(t view.Task) error

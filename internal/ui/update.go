@@ -196,6 +196,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m = m.answered(msg.Text, msg.Err)
 		}
 
+		m = m.autopilotAnswered(msg.Autopilot, msg.Text, msg.Err)
+
 		m = m.syncSupervisor()
 		// An answer that has landed is the newest thing said, so the thread
 		// is pinned to its own end to show it.

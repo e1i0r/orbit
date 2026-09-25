@@ -1,8 +1,12 @@
 package supervisor
 
 import (
+	"context"
 	"fmt"
 	"strings"
+
+	"github.com/e1i0r/orbit/internal/engine"
+	"github.com/e1i0r/orbit/internal/store"
 )
 
 // The instructions the deliver verbs hand to the supervisor.
@@ -111,4 +115,26 @@ func Deliver(door, caption, taskID, path, base, body string) string {
 	}
 
 	return fmt.Sprintf(supervisorBrief, caption, door, taskID, path, base) + body
+}
+
+// AutoSupervise asks the supervisor, on autopilot, about the tasks that
+// require inspection or remediation, in the conversation that is open.
+// Every step it takes is handed to onEvent as it takes it, as a delivery
+// verb's are, so the reader sees what it is doing rather than a clock.
+func AutoSupervise(
+	ctx context.Context, s *store.Store, eng engine.Engine, needingAttention []string,
+	onEvent func(engine.StreamEvent),
+) (string, error) {
+	if s == nil {
+		return "", fmt.Errorf("store cannot be nil")
+	}
+
+	conversation, err := Current(s)
+	if err != nil {
+		return "", err
+	}
+
+	prompt := fmt.Sprintf("Autopilot is active. The following tasks require your inspection: %s. Inspect their records (orbit_inspect_task), analyze any errors or gates, direct or retry them if appropriate, and post a concise debriefing.", strings.Join(needingAttention, ", "))
+
+	return SuperviseWatched(ctx, s, eng, "", conversation, prompt, onEvent)
 }

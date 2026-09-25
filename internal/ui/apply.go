@@ -150,17 +150,24 @@ func (m Model) autoStartNext() (Model, tea.Cmd) {
 	return m, nil
 }
 
-// autoSuperviseNeedsYou inspects and remediates tasks needing attention under autopilot.
+// autoSuperviseNeedsYou asks the supervisor about the tasks in needs you,
+// under autopilot.
+//
+// Each of them has an AUTOPILOT verb put out on it first, the way a
+// delivery key does, so the steps the supervisor takes are drawn on the
+// task they are about, and a pass whose window died is said to have broken
+// rather than left "in progress". The band said "inspecting 2 tasks" and
+// nothing else for as long as the pass took.
 func (m Model) autoSuperviseNeedsYou() (Model, tea.Cmd) {
 	if !m.autopilotOn() || m.opts.AutoSupervise == nil || m.supervisorBusy {
 		return m, nil
 	}
 
-	var needing []string
+	var needing []view.Task
 
 	for _, t := range m.board.Tasks {
 		if view.BandOf(t) == view.NeedsYou && !m.taken[t.ID+"-sup"] {
-			needing = append(needing, t.ID)
+			needing = append(needing, t)
 		}
 	}
 
@@ -168,21 +175,35 @@ func (m Model) autoSuperviseNeedsYou() (Model, tea.Cmd) {
 		return m, nil
 	}
 
-	for _, id := range needing {
-		m = m.took(id+"-sup", true)
+	for _, t := range needing {
+		m = m.took(t.ID+"-sup", true).deliver(t, Delivery{Verb: autopilotVerb, By: deliverBySupervisor})
 	}
 
 	m.supervisorBusy, m.supervisorAt = true, m.now
 
 	eng := m.dialEngine(m.knobs.Engine)
+	port := m.opts.AutoSupervise
 
 	cmd := func() tea.Msg {
-		ans, err := m.opts.AutoSupervise(eng, needing)
-		return supervisorReplyMsg{Text: ans, Err: err}
+		ans, err := port(eng, needing)
+		return supervisorReplyMsg{Text: ans, Err: err, Autopilot: needing}
 	}
 	m, frame := m.say(m.opts.Words.T("supervisor.acting", "supervisor is autonomously inspecting {n} task(s)...", about("n", strconv.Itoa(len(needing))))).nextFrame()
 
 	return m, tea.Batch(cmd, frame)
+}
+
+// autopilotVerb is what the record calls an autopilot pass on a task.
+const autopilotVerb = "AUTOPILOT"
+
+// autopilotAnswered closes the AUTOPILOT verb on each task the pass was
+// about, with what came back or why it broke.
+func (m Model) autopilotAnswered(tasks []view.Task, text string, err error) Model {
+	for _, t := range tasks {
+		m = m.deliver(t, Delivery{Verb: autopilotVerb, Text: text, Failure: err, Done: true})
+	}
+
+	return m
 }
 
 // resize takes the new geometry, or refuses it with both numbers.

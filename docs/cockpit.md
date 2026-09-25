@@ -31,7 +31,7 @@ Open a task and twelve tabs cover it.
 | `8` | `artifacts` | every file the run left, and what each one is |
 | `9` | `notes` | notes you filed, sessions beside the run, questions it asked |
 | `0` | `diff` | the worktree diff, one card per file |
-| `l` | `map` | the repository as a tree, lit where the task changed it; click a file to open its diff |
+| `l` | `map` | the repository as a tree, lit where the task changed it; ↑↓ walk its files, and ↵ or a click opens one's diff |
 | `i` | `impact` | what the change reaches that the diff cannot show |
 | `w` | `thinking` | the reasoning the engine showed its work in |
 
@@ -59,6 +59,12 @@ While a verb the supervisor carries is out, its node lists the last five
 things the supervisor did for it, the newest turning: `Bash: git push`,
 then `Bash: gh pr create`. The bar says the one in hand, and the timeline
 keeps every one of them as a `step`.
+
+Autopilot's own pass is one of those verbs. When it asks the supervisor about
+the tasks in needs you, each of them gets an `AUTOPILOT` verb out, and every
+step the supervisor takes is written onto the task it names — onto all of
+them when it names none, as reading the board does. The pass closes on each
+task when the supervisor answers, or breaks on each when it cannot.
 
 A verb is carried by the window it was asked in. If that window closes
 before the answer comes back, nothing is working on it any more, and the

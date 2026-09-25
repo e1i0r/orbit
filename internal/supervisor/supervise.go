@@ -147,13 +147,6 @@ func SuperviseWatched(
 	return ans, nil
 }
 
-// AutoSupervise triggers the supervisor autonomously when autopilot is on and
-// tasks require inspection or remediation.
-func AutoSupervise(ctx context.Context, s *store.Store, eng engine.Engine, needingAttention []string) (string, error) {
-	prompt := fmt.Sprintf("Autopilot is active. The following tasks require your inspection: %s. Inspect their records (orbit_inspect_task), analyze any errors or gates, direct or retry them if appropriate, and post a concise debriefing.", strings.Join(needingAttention, ", "))
-	return Supervise(ctx, s, eng, prompt)
-}
-
 // buildSupervisorPrompt is what the supervisor is handed: who it is, the
 // thread so far, the message it is answering, and how to answer it.
 //

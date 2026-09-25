@@ -14,6 +14,8 @@ import (
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/e1i0r/orbit/internal/ui/compose"
+
+	"github.com/e1i0r/orbit/internal/view"
 )
 
 // TestEveryScreenOpensDrawsAndCloses. A screen the window can open and not
@@ -194,10 +196,10 @@ func TestAutopilotLooksAtWhatNeedsSomebodyOnceEach(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.opts.Settings = settingsWith(true, "en", 9)
 
-	var asked [][]string
+	var asked [][]view.Task
 
-	m.opts.AutoSupervise = func(_ string, ids []string) (string, error) {
-		asked = append(asked, ids)
+	m.opts.AutoSupervise = func(_ string, tasks []view.Task) (string, error) {
+		asked = append(asked, tasks)
 
 		return "looked at them", nil
 	}
@@ -242,7 +244,7 @@ func TestAutopilotLooksAtWhatNeedsSomebodyOnceEach(t *testing.T) {
 func TestAutopilotOffAsksNothing(t *testing.T) {
 	m, _ := testModel(t, 100, 30)
 	m.opts.Settings = settingsWith(false, "en", 0)
-	m.opts.AutoSupervise = func(string, []string) (string, error) { return "", nil }
+	m.opts.AutoSupervise = func(string, []view.Task) (string, error) { return "", nil }
 
 	if _, cmd := m.autoSuperviseNeedsYou(); cmd != nil {
 		t.Error("autopilot asked with the switch off")
