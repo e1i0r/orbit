@@ -97,3 +97,32 @@ func TestAClineStreamWithNothingInItIsSaid(t *testing.T) {
 		t.Error("a stream with no cline events in it was read as a run")
 	}
 }
+
+// TestAClineRunThatSpokeAndThenFailedSaysBoth. A sentence before the limit
+// hid the limit: the answer read as a normal one and RanOut missed the words
+// cline wrote on stdout.
+func TestAClineRunThatSpokeAndThenFailedSaysBoth(t *testing.T) {
+	run := `{"ts":"t","type":"agent_event","event":{"type":"content_end","contentType":"text","text":"Looking at it."}}
+{"ts":"t","type":"agent_event","event":{"type":"error","error":{"message":"ClinePass limit reached"},"errorClass":"unknown"}}
+{"ts":"t","type":"run_result","finishReason":"error","text":""}
+`
+
+	out, err := ParseClineStream(strings.NewReader(run), nil)
+	if err != nil {
+		t.Fatalf("ParseClineStream: %v", err)
+	}
+
+	if out.Output != "Looking at it.\n\nClinePass limit reached" {
+		t.Errorf("output = %q, want the sentence and the failure", out.Output)
+	}
+
+	if !NewCline().RanOut(out, nil) {
+		t.Error("a limit after a sentence was not read as the allowance gone")
+	}
+
+	// A run that ended short of completed with nothing said still says how.
+	out, err = ParseClineStream(strings.NewReader(`{"ts":"t","type":"run_result","finishReason":"mistake_limit"}`+"\n"), nil)
+	if err != nil || out.Output != "mistake_limit" {
+		t.Errorf("output = %q, %v; want the finish reason", out.Output, err)
+	}
+}

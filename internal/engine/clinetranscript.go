@@ -42,13 +42,14 @@ func (c Cline) Transcript(dir string, since time.Time) ([]Turn, error) {
 
 	var turns []Turn
 
+	// A session whose file cannot be read is skipped rather than fatal, for
+	// the reason a row of the other transcripts is: the shape is cline's,
+	// and a file cut short by a cline that died is still one session among
+	// several whose turns can be read.
 	for _, path := range paths {
-		said, err := clineTurns(path, c.Name(), since)
-		if err != nil {
-			return nil, err
+		if said, err := clineTurns(path, c.Name(), since); err == nil {
+			turns = append(turns, said...)
 		}
-
-		turns = append(turns, said...)
 	}
 
 	return sorted(turns), nil
@@ -126,12 +127,9 @@ func clineSessionFiles(dir string, since time.Time) (paths []string, err error) 
 // clineMessages is a session's messages file, as far as a transcript needs.
 type clineMessages struct {
 	Messages []struct {
-		Role    string `json:"role"`
-		TS      int64  `json:"ts"`
-		Content []struct {
-			Type string `json:"type"`
-			Text string `json:"text"`
-		} `json:"content"`
+		Role    string          `json:"role"`
+		TS      int64           `json:"ts"`
+		Content json.RawMessage `json:"content"`
 	} `json:"messages"`
 }
 
@@ -161,14 +159,7 @@ func clineTurns(path, engineName string, since time.Time) ([]Turn, error) {
 			continue
 		}
 
-		var text []string
-
-		for _, c := range m.Content {
-			if c.Type == "text" && strings.TrimSpace(c.Text) != "" {
-				text = append(text, strings.TrimSpace(c.Text))
-			}
-		}
-
+		text := clineText(m.Content)
 		if len(text) == 0 {
 			continue
 		}
@@ -182,4 +173,36 @@ func clineTurns(path, engineName string, since time.Time) ([]Turn, error) {
 	}
 
 	return turns, nil
+}
+
+// clineText is the words in a message's content, which is a list of blocks
+// or, the way a first prompt is often kept, a plain string.
+func clineText(content json.RawMessage) []string {
+	var plain string
+	if json.Unmarshal(content, &plain) == nil {
+		if t := strings.TrimSpace(plain); t != "" {
+			return []string{t}
+		}
+
+		return nil
+	}
+
+	var blocks []struct {
+		Type string `json:"type"`
+		Text string `json:"text"`
+	}
+
+	if json.Unmarshal(content, &blocks) != nil {
+		return nil
+	}
+
+	var text []string
+
+	for _, b := range blocks {
+		if b.Type == "text" && strings.TrimSpace(b.Text) != "" {
+			text = append(text, strings.TrimSpace(b.Text))
+		}
+	}
+
+	return text
 }

@@ -150,13 +150,19 @@ func opencodeConfig(home string) string {
 
 // clineConfig is where the Cline CLI keeps its MCP servers, as cline itself
 // resolves it: the file its variable names, or settings under its data
-// directory. Cline reads the same mcpServers entry Claude does.
+// directory, which is CLINE_DATA_DIR, or data under CLINE_DIR, or
+// ~/.cline/data — the order internal/engine reads the transcript in. Cline
+// reads the same mcpServers entry Claude does.
 func clineConfig(home string) string {
 	if path := os.Getenv("CLINE_MCP_SETTINGS_PATH"); path != "" {
 		return path
 	}
 
 	data := filepath.Join(home, ".cline", "data")
+	if root := os.Getenv("CLINE_DIR"); root != "" {
+		data = filepath.Join(root, "data")
+	}
+
 	if d := os.Getenv("CLINE_DATA_DIR"); d != "" {
 		data = d
 	}

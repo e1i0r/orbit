@@ -35,3 +35,16 @@ func TestClineKeepsTheServersItAlreadyHad(t *testing.T) {
 		t.Errorf("orbit is registered as %v, want its command", got["orbit"])
 	}
 }
+
+// TestClineIsFoundWhereCLINE_DIRPutsIt, as the transcript is: data under it.
+func TestClineIsFoundWhereCLINE_DIRPutsIt(t *testing.T) {
+	root := t.TempDir()
+	t.Setenv("CLINE_MCP_SETTINGS_PATH", "")
+	t.Setenv("CLINE_DATA_DIR", "")
+	t.Setenv("CLINE_DIR", root)
+
+	want := filepath.Join(root, "data", "settings", "cline_mcp_settings.json")
+	if got := clineConfig(t.TempDir()); got != want {
+		t.Errorf("clineConfig = %q, want %q", got, want)
+	}
+}

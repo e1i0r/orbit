@@ -117,3 +117,46 @@ func TestNoClineSessionsIsNoTranscript(t *testing.T) {
 		t.Errorf("Transcript = %+v, %v; want nothing", turns, err)
 	}
 }
+
+// TestAClineSessionThatCannotBeReadIsSkipped, and a prompt kept as a plain
+// string is read. Either one failed the whole transcript.
+func TestAClineSessionThatCannotBeReadIsSkipped(t *testing.T) {
+	dir := t.TempDir()
+	start := time.Date(2026, 9, 26, 10, 0, 0, 0, time.UTC)
+
+	clineStorage(t, dir, start, []map[string]any{
+		{"role": "user", "ts": start.Add(time.Second).UnixMilli(), "content": "look at the review gate"},
+	})
+
+	data := os.Getenv("CLINE_DATA_DIR")
+	broken := filepath.Join(data, "sessions", "s2.messages.json")
+
+	if err := os.WriteFile(broken, []byte(`{"messages":[{"role":"user","ts":`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	db, err := sql.Open("sqlite", filepath.Join(data, "db", "sessions.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer func() {
+		if err := db.Close(); err != nil {
+			t.Errorf("closing the index: %v", err)
+		}
+	}()
+
+	if _, err := db.Exec(`INSERT INTO sessions VALUES ('s2', ?, ?, ?)`,
+		dir, start.Add(time.Minute).UTC().Format(clineTime), broken); err != nil {
+		t.Fatal(err)
+	}
+
+	turns, err := NewCline().Transcript(dir, start.Add(-time.Minute))
+	if err != nil {
+		t.Fatalf("Transcript: %v", err)
+	}
+
+	if len(turns) != 1 || turns[0].Text != "look at the review gate" {
+		t.Errorf("turns = %+v, want the prompt kept as a string", turns)
+	}
+}

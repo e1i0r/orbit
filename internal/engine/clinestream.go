@@ -104,8 +104,8 @@ func ParseClineStream(r io.Reader, onEvent func(StreamEvent)) (Result, error) {
 		case "run_result":
 			found = true
 
-			if ev.Finish != "completed" && ev.Text != "" {
-				failed = ev.Text
+			if ev.Finish != "completed" {
+				failed = firstNonEmpty(failed, ev.Text, ev.Finish)
 			}
 		case "error":
 			found = true
@@ -120,7 +120,10 @@ func ParseClineStream(r io.Reader, onEvent func(StreamEvent)) (Result, error) {
 		return out, err
 	}
 
-	if len(texts) == 0 && failed != "" {
+	// Said after whatever the run said before it, and never dropped for it:
+	// a run that wrote a sentence and then hit its limit is a run that hit
+	// its limit, and RanOut reads the answer for the words that say so.
+	if failed != "" {
 		texts = append(texts, failed)
 	}
 
