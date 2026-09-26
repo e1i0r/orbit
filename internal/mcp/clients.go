@@ -50,6 +50,7 @@ func clientConfigs(home string) []clientConfig {
 		jsonClient("OpenCode", opencodeConfig(home), "mcp", opencodeEntry),
 		clientConfig{name: "Codex", path: filepath.Join(home, ".codex", "config.toml"), register: registerCodex},
 		jsonClient("Gemini", filepath.Join(home, ".gemini", "settings.json"), "mcpServers", entry),
+		jsonClient("Cline", clineConfig(home), "mcpServers", entry),
 	)
 }
 
@@ -145,4 +146,20 @@ func opencodeConfig(home string) string {
 	}
 
 	return filepath.Join(dir, "opencode.json")
+}
+
+// clineConfig is where the Cline CLI keeps its MCP servers, as cline itself
+// resolves it: the file its variable names, or settings under its data
+// directory. Cline reads the same mcpServers entry Claude does.
+func clineConfig(home string) string {
+	if path := os.Getenv("CLINE_MCP_SETTINGS_PATH"); path != "" {
+		return path
+	}
+
+	data := filepath.Join(home, ".cline", "data")
+	if d := os.Getenv("CLINE_DATA_DIR"); d != "" {
+		data = d
+	}
+
+	return filepath.Join(data, "settings", "cline_mcp_settings.json")
 }

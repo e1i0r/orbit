@@ -1887,6 +1887,18 @@
       "source": "3. Ensure 'codex' is in your PATH",
       "value": "3. Asegúrate de que 'codex' esté en tu PATH"
     },
+    "engine.setup.cline.install": {
+      "source": "1. Install the Cline CLI: npm install -g cline",
+      "value": "1. Instala la CLI de Cline: npm install -g cline"
+    },
+    "engine.setup.cline.login": {
+      "source": "2. Run 'cline auth' in a terminal and sign in, or set a provider's API key",
+      "value": "2. Ejecuta 'cline auth' en una terminal e inicia sesión, o define la API key de un proveedor"
+    },
+    "engine.setup.cline.path": {
+      "source": "3. Ensure 'cline' is in your PATH",
+      "value": "3. Asegúrate de que 'cline' esté en tu PATH"
+    },
     "engine.setup.opencode.install": {
       "source": "1. Install OpenCode CLI binary",
       "value": "1. Instala el binario de OpenCode CLI"

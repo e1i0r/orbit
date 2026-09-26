@@ -151,7 +151,8 @@ var doors = map[string][]string{
 	// in. The shape is the subject: adding an engine is adding three files
 	// and a line here.
 	"internal/engine": {
-		"agy.go", "agystream.go", "claude.go", "claudetranscript.go", "codex.go",
+		"agy.go", "agystream.go", "claude.go", "claudetranscript.go", "cline.go",
+		"clinestream.go", "clinetranscript.go", "codex.go",
 		"codexstream.go", "codextranscript.go", "engine.go", "fake.go", "opencode.go",
 		"opencodestream.go", "opencodetranscript.go", "permission.go", "prompt.go",
 		"stream.go", "transcript.go",

@@ -35,7 +35,7 @@ list to register: the directory you open it on is the answer, and `R` shows
 what it found.
 
 Orbit runs the CLI you already have under the subscription you already pay
-for: Claude Code, Codex, OpenCode, Antigravity. Press `M` and pick one, and the
+for: Claude Code, Codex, OpenCode, Antigravity, Cline. Press `E` and pick one, and the
 model dial fills with that engine's own catalogue. Nothing is called until you
 start a run. See [engines](engines.md).
 

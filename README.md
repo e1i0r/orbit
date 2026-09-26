@@ -54,7 +54,7 @@ Reference: [keys and screens](docs/cockpit.md) · [engines and models](docs/engi
 | --- | --- |
 | **Stable** | the cockpit, flows and gates, worktree isolation, the record in SQLite, the MCP server, GitHub pull requests |
 | **In use, still moving** | the supervisor, autopilot, what Orbit knows, the impact reading, quota tracking, the flow designer |
-| **Engines** | Claude Code, Codex, OpenCode, Antigravity (`agy`) |
+| **Engines** | Claude Code, Codex, OpenCode, Antigravity (`agy`), Cline |
 | **Platforms** | macOS and Linux |
 | **Not there yet** | the impact reading is per file, not per symbol; issue bodies come from Linear and no other tracker yet |
 

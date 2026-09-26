@@ -317,6 +317,14 @@ func setupGuide(name string) func(*words.Printer) []string {
 				p.T("engine.setup.opencode.path", "3. Ensure 'opencode' is in your PATH"),
 			}
 		}
+	case "cline":
+		return func(p *words.Printer) []string {
+			return []string{
+				p.T("engine.setup.cline.install", "1. Install the Cline CLI: npm install -g cline"),
+				p.T("engine.setup.cline.login", "2. Run 'cline auth' in a terminal and sign in, or set a provider's API key"),
+				p.T("engine.setup.cline.path", "3. Ensure 'cline' is in your PATH"),
+			}
+		}
 	}
 
 	return nil

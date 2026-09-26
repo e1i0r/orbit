@@ -24,10 +24,12 @@ type Step struct {
 //
 // Keyed in lower case and looked up that way, because the same tool is
 // spelled differently by each engine: claude writes Edit and Write, opencode
-// writes edit and write. Matched as claude spells them, the story pane drew
-// an empty walk for every run of any other engine.
+// writes edit and write, and cline has one tool for both, editor. Matched as
+// claude spells them, the story pane drew an empty walk for every run of any
+// other engine.
 var edits = map[string]bool{
 	"edit":         true,
+	"editor":       true,
 	"multiedit":    true,
 	"write":        true,
 	"notebookedit": true,

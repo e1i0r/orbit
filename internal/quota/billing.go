@@ -90,6 +90,10 @@ type metered struct {
 // there is no single endpoint that could answer for it and no arrangement in
 // which its use is not metered by somebody.
 //
+// cline is per token for opencode's reason: it drives whichever provider it
+// was signed into, on the reader's key or on cline's own subscription, and
+// neither publishes what is left of it where this package could read it.
+//
 // codex is the one engine read from a file rather than an endpoint. It
 // writes the limits the API answered with into its own rollouts after every
 // turn, so a machine with no proxy in front of it still has somewhere to
@@ -104,6 +108,7 @@ func FromEnv() *Meter {
 		{name: "claude", mode: keyed(env.AnthropicKey), from: New(env.Read(env.AnthropicBase))},
 		{name: "codex", mode: keyed("OPENAI_API_KEY"), from: codexQuota()},
 		{name: "opencode", mode: PerToken},
+		{name: "cline", mode: PerToken},
 	}}
 }
 

@@ -240,6 +240,7 @@ func TestEveryClientIsGivenTheFileItActuallyReads(t *testing.T) {
 		"Codex":       filepath.Join(home, ".codex", "config.toml"),
 		"Gemini":      filepath.Join(home, ".gemini", "settings.json"),
 		"OpenCode":    filepath.Join(home, ".config", "opencode", "opencode.json"),
+		"Cline":       filepath.Join(home, ".cline", "data", "settings", "cline_mcp_settings.json"),
 	}
 	for _, c := range clientConfigs(home) {
 		if expected, ok := want[c.name]; ok && c.path != expected {

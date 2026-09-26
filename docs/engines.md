@@ -66,6 +66,40 @@ to a worktree is answerable. What was said in it is not. Orbit says so rather
 than guessing. Walking that wire format field by field would be a guess written
 into a task's record as if it were an account of the session.
 
+## Cline
+
+Runs `cline --json -v`, headless. Model ids carry the provider in front,
+`cline-pass/glm-5.2`, the way OpenCode's do, and the dial shows them without it.
+The provider goes to `-P` as well: `-m` alone goes to whichever provider cline
+last used, and a `cline-pass` model sent to another one is a model it has never
+heard of.
+
+| | |
+| --- | --- |
+| **Models** | `default`, which is what you last chose in cline itself, and the ClinePass catalogue: `glm-5.3`, `kimi-k3`, `deepseek-v4-pro`, `qwen3.8-max`, `minimax-m3` and the rest |
+| **Reasoning effort** | `low`, `medium`, `high`, `xhigh` |
+
+The effort is cline's `--thinking` level, and there is no thinking dial beside
+it: they are the same flag.
+
+**The run stays here.** cline hands a run to a background hub when one is up,
+where it would run outside the phase's process and environment.
+`CLINE_SESSION_BACKEND_MODE=local` keeps it in the process Orbit started.
+
+**Only `repo`.** A headless cline denies every tool it would have to ask about
+and carries on, so a narrower posture would be written in the record and not
+held. `repo` runs with `--yolo`.
+
+**No resume.** cline resumes a session with `--id`, which opens its terminal and
+drops the prompt. A phase cannot be continued and `t` cannot take the keyboard
+of a cline run; `c` still opens cline in the task's worktree, with `-i`.
+
+**The transcript** is read from cline's own sessions index, `~/.cline/data/db/sessions.db`,
+and each session's messages file beside it.
+
+`orbit mcp install` adds Orbit to `~/.cline/data/settings/cline_mcp_settings.json`,
+beside the servers already there.
+
 ## Thinking
 
 The flow designer sets a phase's thinking mode to `adaptive`, `on` or `off`.

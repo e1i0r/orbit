@@ -67,7 +67,7 @@
   "reading_2": "<code class=\"mono\">r</code> corre los checks del propio flujo sobre la base y sobre el trabajo al mismo tiempo. Un código de salida decidió cada línea.",
   "reading_3": "Y lo que el agente dice que hizo: qué les pide ahora el cambio a quienes lo llaman, qué promete, y qué consideró y no hizo — que no existe en ningún otro lado.",
   "cli_title": "El CLI, en los dos sentidos",
-  "cli_lede": "Orbit no reemplaza el CLI que ya usas — Claude Code, Codex, OpenCode, Antigravity. <code class=\"mono\">c</code> le entrega la terminal, en el worktree de esa tarea, con el contexto de la tarea y el servidor MCP de Orbit.",
+  "cli_lede": "Orbit no reemplaza el CLI que ya usas — Claude Code, Codex, OpenCode, Antigravity, Cline. <code class=\"mono\">c</code> le entrega la terminal, en el worktree de esa tarea, con el contexto de la tarea y el servidor MCP de Orbit.",
   "cli_alt": "presionar c en una tarea, el CLI abriéndose en el worktree de esa tarea, salir, y orbit ofreciendo escribir la sesión como una tarea",
   "cli_1": "Sales de él y caes de vuelta en el tablero. Orbit pregunta si escribir la sesión como una tarea.",
   "cli_2": "Veintidós herramientas MCP, así que el flujo va en los dos sentidos: tu CLI escribe tareas, las corre, lee lo que pasó, y las dirige.",
@@ -90,7 +90,7 @@
   "flows_1": "La pantalla muestra cada flujo abierto — cada fase, sobre qué corre, y cuáles se detienen. Un flujo que no puedes leer antes de pagarlo es un flujo en el que confías en vez de elegirlo.",
   "flows_2": "Una fase marcada <code class=\"mono\">wait</code> es un gate. Así es como dices dónde van los controles.",
   "flows_3": "Los nombres de las fases son tuyos: un flujo de release, uno de migración, uno de triage tienen la misma forma, y todos reciben el mismo registro y la misma sala de control.",
-  "status": "v0.1.x, usado a diario por su autor. macOS y Linux. Claude Code, Codex, OpenCode, Antigravity.",
+  "status": "v0.1.x, usado a diario por su autor. macOS y Linux. Claude Code, Codex, OpenCode, Antigravity, Cline.",
   "footer_license": "Licencia Apache 2.0",
   "footer_contributing": "Se aceptan contribuciones — <a href=\"https://github.com/e1i0r/orbit/blob/main/CONTRIBUTING.md\" onclick=\"gtag('event','cta_click',{button:'footer_contributing'})\">lee la guía</a> y súmate.",
   "footer_author": "Hecho por"
