@@ -177,7 +177,9 @@ func openSays(engineName string, flagged bool, context string) []string {
 // "ENAMETOOLONG: name too long, lstat '<worktree>/I am looking at orbit task
 // ACME-1...'", the whole sentence lstat'ed as a path. agy reads no bare
 // argument at all, and the flag it does read is the one that opens a
-// terminal rather than the one that runs without one.
+// terminal rather than the one that runs without one. cline reads a bare
+// argument as a prompt to run once and exit; -i is its terminal, and the
+// sentence after it is where the terminal starts.
 //
 // It is a name check for the reason mcpConfigFlag is one.
 func promptFlag(engineName string) string {
@@ -189,6 +191,8 @@ func promptFlag(engineName string) string {
 		// without a terminal at all: the session would answer once into a
 		// window that is not looking and exit.
 		return "--prompt-interactive"
+	case "cline":
+		return "-i"
 	}
 
 	return ""

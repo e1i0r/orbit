@@ -212,5 +212,6 @@ func All() map[string]Engine {
 		"claude":   NewClaude(),
 		"codex":    NewCodex(),
 		"opencode": NewOpenCode(),
+		"cline":    NewCline(),
 	}
 }

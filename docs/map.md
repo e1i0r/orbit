@@ -47,7 +47,7 @@ board is told to look again.
 | --- | --- |
 | `internal/repo` | git. Worktrees, diffs, branches, what a task changed. |
 | `internal/flow` | the phases of a task, as data rather than as code. Adding one is writing a file. |
-| `internal/engine` | the CLIs Orbit runs: claude, codex, opencode, agy. Each answers for itself where it is, what models it has, what postures it can hold and how to read its transcript. The compiler is the reviewer for a new one. |
+| `internal/engine` | the CLIs Orbit runs: claude, codex, opencode, agy, cline. Each answers for itself where it is, what models it has, what postures it can hold and how to read its transcript. The compiler is the reviewer for a new one. |
 | `internal/task` | a run: prepare the worktree, walk the phases, run the gates, write down what happened. |
 | `internal/queue` | when a run starts: how many go at once, who waits, and the service that moves the line. See [the queue](#the-queue). |
 | `internal/lowly`, `internal/machine` | what the queue and the window need from the system: starting a program at the lowest priority, and how full memory is. |

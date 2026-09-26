@@ -67,7 +67,7 @@
   "reading_2": "<code class=\"mono\">r</code> runs the flow's own checks on the base and on the work at the same time. An exit code decided every line of it.",
   "reading_3": "And what the agent says it did: what the change now asks of its callers, what it promises, and what it considered and did not do — which exists nowhere else.",
   "cli_title": "The CLI, both ways",
-  "cli_lede": "Orbit does not replace the CLI you already use — Claude Code, Codex, OpenCode, Antigravity. <code class=\"mono\">c</code> hands it the terminal, in that task's worktree, with the task's context and Orbit's MCP server.",
+  "cli_lede": "Orbit does not replace the CLI you already use — Claude Code, Codex, OpenCode, Antigravity, Cline. <code class=\"mono\">c</code> hands it the terminal, in that task's worktree, with the task's context and Orbit's MCP server.",
   "cli_alt": "pressing c on a task, the CLI opening in that task's worktree, quitting, and orbit offering to write the session down as a task",
   "cli_1": "Quit it and you land back on the board. Orbit asks whether to write the session down as a task.",
   "cli_2": "Twenty-two MCP tools, so the flow goes both ways: your CLI writes tasks, runs them, reads what happened, and steers them.",
@@ -90,7 +90,7 @@
   "flows_1": "The screen shows every flow opened out — each phase, what it runs on, and which of them stop. A flow you cannot read before you pay for it is a flow you are trusting rather than choosing.",
   "flows_2": "A phase marked <code class=\"mono\">wait</code> is a gate. That is how you say where the checks go.",
   "flows_3": "The phase names are yours: a release flow, a migration flow, a triage flow are the same shape, and all get the same record and the same cockpit.",
-  "status": "v0.1.x, used daily by its author. macOS and Linux. Claude Code, Codex, OpenCode, Antigravity.",
+  "status": "v0.1.x, used daily by its author. macOS and Linux. Claude Code, Codex, OpenCode, Antigravity, Cline.",
   "footer_license": "Apache 2.0 License",
   "footer_contributing": "Contributions welcome — <a href=\"https://github.com/e1i0r/orbit/blob/main/CONTRIBUTING.md\" onclick=\"gtag('event','cta_click',{button:'footer_contributing'})\">read the guide</a> and jump in.",
   "footer_author": "Built by"

@@ -57,3 +57,18 @@ func TestAToolCallWithNoPathIsNotAFile(t *testing.T) {
 		t.Errorf("Walk = %+v, want nothing out of calls that name no file", got)
 	}
 }
+
+// TestAClineEditIsAChange. cline has one tool for writing and editing,
+// editor, with the file under path; missed, every cline run drew an empty
+// walk.
+func TestAClineEditIsAChange(t *testing.T) {
+	got := Walk([]Entry{
+		call("read_files", `{"file_paths":["store/items.go"]}`, 1),
+		call("editor", `{"path":"store/items.go","old_text":"a","new_text":"b"}`, 2),
+		call("run_commands", `{"commands":["go test ./..."]}`, 3),
+	})
+
+	if len(got) != 1 || got[0].Path != "store/items.go" {
+		t.Errorf("Walk = %+v, want the file cline's editor changed", got)
+	}
+}
